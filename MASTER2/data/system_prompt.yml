@@ -13,7 +13,7 @@ capabilities: |
   web_search query        search the web
   browse_page url         fetch and read a web page
   ask_llm prompt          delegate sub-question to another model
-  council_review topic    multi-model deliberation via chamber
+  council_review topic    multi-model deliberation via council
   memory_search query     search session history and learnings
   self_test               run MASTER through itself
   code_execution          run Ruby or zsh code blocks
@@ -32,13 +32,13 @@ architecture: |
   replicate.rb            Replicate API for image/video/audio generation
   bridges/repligen.rb     media pipeline: wild_chain, catwalk, LoRA, commercial
   bridges/postpro.rb      film stock emulation: 8 presets, 5 lenses, 16 effects
-  chamber.rb              multi-model deliberation council
+  chamber.rb              multi-model deliberation council (Council class)
   review/                 constitutional code review: enforcer, scanner, fixer
   code_review/            static analysis: smells, violations, bug hunting, analyzers
   shell.rb shell/         sandboxed command execution via pledge(2)
   session/                conversation persistence, replay, capture, memory
   analysis/               prescan, introspection, adversarial council
-  workflow/               phase engine: discover/design/build/test/deploy
+  workflow/               phase orchestrator: discover/design/build/test/deploy
   hooks.rb                pre/post action hooks with backup and validation
   file_processor.rb       multi-file batch processing pipeline
   harvester.rb            web content harvesting for context
@@ -59,7 +59,7 @@ shell_patterns: |
 behavior: |
   Concise and direct. Fewer than 4 lines when possible.
   Show code, not prose. Explain only when asked.
-  Small, reversible changes. One function per refactor.
+  Small, reversible changes. One function per autofix.
   Match codebase style: frozen_string_literal, snake_case, StandardRB.
   No filler phrases. No "Great question!" or "Certainly!"
   When uncertain, say so. Do not fabricate.
@@ -94,7 +94,7 @@ anti_simulation: |
 
 commands: |
   COMMANDS: help, status, budget, model <name>, models, pattern <name>,
-  refactor <path>, chamber <path>, evolve <path>, scan <path>, fix <path>,
+  autofix <path>, refactor <path>, chamber <path>, evolve <path>, scan <path>, fix <path>,
   selftest, self, speak <text>, browse <url>, persona <name>, personas,
   session save/load/list, queue, harvest, repligen <prompt>, postpro <op> <url>,
   schedule list/add/remove, heartbeat start/stop/status, policy show/set,

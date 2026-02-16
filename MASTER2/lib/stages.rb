@@ -96,7 +96,7 @@ module MASTER
       end
     end
 
-    # Stage 5: Adversarial council review (delegates to Chamber)
+    # Stage 5: Adversarial council review (delegates to Council)
     class Council
       def call(input)
         return Result.ok(input) unless input[:council]
@@ -105,7 +105,7 @@ module MASTER
         model = input[:model]
         return Result.ok(input) unless model
 
-        review = Chamber.council_review(text, model: model)
+        review = MASTER::Council.council_review(text, model: model)
         Result.ok(input.merge(
           council_verdict: review[:verdict],
           council_vetoed: review[:vetoed_by].any?,

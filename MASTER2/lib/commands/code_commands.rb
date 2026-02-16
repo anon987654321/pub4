@@ -4,10 +4,10 @@ module MASTER
   module Commands
     # Code analysis and refactoring commands
     module CodeCommands
-      REFACTOR_USAGE = "Usage: refactor <file> [--preview|--raw|--apply]"
+      REFACTOR_USAGE = "Usage: autofix <file> [-p|--preview|-r|--raw|-a|--apply]"
 
-      def refactor(args)
-        file, mode = validate_file_arg(args, "refactor")
+      def autofix(args)
+        file, mode = validate_file_arg(args, "autofix")
         return file if file.is_a?(Result) # early return on validation error
 
         path = File.expand_path(file)
@@ -43,7 +43,7 @@ module MASTER
       end
 
       def chamber(file)
-        refactor(file)
+        autofix(file)
       end
 
       def evolve(path)
@@ -145,10 +145,10 @@ module MASTER
         constitution_path = File.join(MASTER.root, 'data', 'constitution.yml')
 
         if File.exist?(constitution_path)
-          puts "+ Constitution file found"
-          puts "  Manual review recommended for complex conflicts"
+          puts "constitution: found"
+          puts "review: manual check recommended for complex conflicts"
         else
-          puts "! Constitution file not found at: #{constitution_path}"
+          puts "! constitution: not found at #{constitution_path}"
         end
       end
 
@@ -177,7 +177,7 @@ module MASTER
       private
 
       def validate_file_arg(args, command)
-        usage = "Usage: #{command} <file> [--preview|--raw|--apply]."
+        usage = "Usage: #{command} <file> [-p|--preview|-r|--raw|-a|--apply]."
         return [Result.err(usage), nil] unless args
 
         parts = args.strip.split(/\s+/)
@@ -191,23 +191,23 @@ module MASTER
       end
 
       def run_bug_hunting(code, file)
-        puts UI.bold("PHASE 1: Bug Hunting (8-phase analysis)...")
+        puts UI.bold("phase1: bug hunting...")
         hunt_result = BugHunting.analyze(code, file_path: file)
         pattern_matches = hunt_result.dig(:findings, :patterns, :matches) || []
         verification_bugs = hunt_result.dig(:findings, :verification, :bugs_found) || 0
         bugs_found = pattern_matches.size + verification_bugs
 
         if bugs_found > 0
-          puts "! Found #{bugs_found} potential bugs"
+          puts "bugs: #{bugs_found} found"
           puts BugHunting.format(hunt_result)
         else
-          puts "+ No bugs detected"
+          puts "bugs: clean"
         end
         [bugs_found, hunt_result, pattern_matches]
       end
 
       def run_constitutional_validation(code, file)
-        puts "\n" + UI.bold("PHASE 2: Constitutional Validation...")
+        puts UI.bold("phase2: constitutional validation...")
         violations = Violations.analyze(code, path: file, llm: nil, conceptual: false)
         critical_count = violations[:literal].count { |v| v[:severity] == :error }
 
@@ -215,40 +215,40 @@ module MASTER
           puts "#{critical_count} critical violations"
           puts Violations.report(violations)
         else
-          puts "+ No constitutional violations"
+          puts "violations: clean"
         end
         critical_count
       end
 
       def run_learnings_check(code)
-        puts "\n" + UI.bold("PHASE 3: Checking Learnings Database...")
+        puts UI.bold("phase3: checking learnings...")
         learned_issues = Learnings.apply_to(code)
 
         if learned_issues.any?
           puts "Found #{learned_issues.size} known patterns:"
           learned_issues.each { |issue| puts "  * #{issue[:description]} (#{issue[:severity]})" }
         else
-          puts "+ No known patterns detected"
+          puts "patterns: clean"
         end
         learned_issues
       end
 
       def run_smell_detection(code, file)
-        puts "\n" + UI.bold("PHASE 4: Code Smell Detection...")
+        puts UI.bold("phase4: smell detection...")
         smells = Smells.analyze(code, file)
 
         if smells.any?
           puts "Found #{smells.size} code smells"
           smells.first(5).each { |smell| puts "  * #{smell[:smell]}: #{smell[:message]}" }
         else
-          puts "+ No code smells"
+          puts "smells: clean"
         end
         smells
       end
 
       def print_refactor_summary(bugs_found, critical_count, learned_issues, smells, total_issues)
         puts [
-          "\n" + UI.bold("SUMMARY:"),
+          UI.bold("summary:"),
           "  Bugs: #{bugs_found}",
           "  Critical Violations: #{critical_count}",
           "  Known Patterns: #{learned_issues.size}",
@@ -258,8 +258,8 @@ module MASTER
       end
 
       def generate_and_apply_fixes(path, original_code, mode)
-        puts "\n" + UI.bold("PHASE 5: Generating Fixes...")
-        chamber = Chamber.new
+        puts UI.bold("phase5: generating fixes...")
+        chamber = Council.new
         result = chamber.deliberate(original_code, filename: File.basename(path))
 
         return result unless result.ok? && result.value[:final]
@@ -280,7 +280,7 @@ module MASTER
       def record_refactor_learnings(file, original_code, result, bugs_found, pattern_matches)
         return unless result.ok? && result.value[:final] && bugs_found > 0
 
-        puts "\n" + UI.bold("PHASE 6: Recording Learnings...")
+        puts UI.bold("phase6: recording learnings...")
         rendered = render_output(lint_output(result.value[:final]))
 
         pattern_matches.first(3).each do |match|
@@ -293,7 +293,7 @@ module MASTER
             example: "Fixed in #{file}", severity: :info
           )
         end
-        puts "+ Learnings updated"
+        puts "learnings: updated"
       end
 
       # Abstraction for user input to improve testability

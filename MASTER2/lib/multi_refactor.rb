@@ -11,7 +11,7 @@ module MASTER
     attr_reader :results, :graph
 
     def initialize(chamber: nil, dry_run: true, budget_cap: 2.0)
-      @chamber = chamber || Chamber.new
+      @chamber = chamber || Council.new
       @dry_run = dry_run
       @budget_cap = budget_cap
       @cost = 0.0
@@ -168,7 +168,7 @@ module MASTER
         return { file: file, skipped: true, reason: "too large (#{content.size} bytes)" }
       end
 
-      # Use Chamber for deliberation
+      # Use Council for deliberation
       result = @chamber.deliberate(content, filename: basename)
 
       if result.ok? && result.value[:final] && result.value[:final] != content

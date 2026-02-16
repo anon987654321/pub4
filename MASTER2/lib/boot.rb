@@ -3,7 +3,7 @@
 module MASTER
   module Boot
     OPTIONAL_MODULES = {
-      "Chamber" => :council_review,
+      "Council" => :council_review,
       "CodeReview" => :analyze,
       "AutoFixer" => :fix,
     }.freeze
@@ -100,7 +100,7 @@ module MASTER
       end
 
       def self_awareness_summary
-        SelfMap.summary
+        Introspection.summary
       rescue StandardError => e
         "unavailable"
       end

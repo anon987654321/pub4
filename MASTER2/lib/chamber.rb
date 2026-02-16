@@ -4,9 +4,9 @@ require_relative "chamber/creative"
 require_relative "chamber/swarm"
 
 module MASTER
-  # Chamber - Multi-model deliberation with council personas
+  # Council - Multi-model deliberation with council personas
   # Implements multi-round debate: Independent -> Synthesis -> Convergence
-  class Chamber
+  class Council
     MAX_ROUNDS = 25
     MAX_COST = 0.50
     CONSENSUS_THRESHOLD = 0.70
@@ -403,4 +403,5 @@ module MASTER
     end
   end
 
+  Chamber = Council # deprecated: use Council
 end

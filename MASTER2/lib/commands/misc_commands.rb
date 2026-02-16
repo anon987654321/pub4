@@ -371,8 +371,8 @@ module MASTER
             violations.concat(found) if found&.any?
           end
 
-          if defined?(MASTER::Engine)
-            r = Engine.scan(rel, silent: true) rescue nil
+          if defined?(MASTER::CodeQuality)
+            r = CodeQuality.scan(rel, silent: true) rescue nil
             violations.concat(r[:findings]) if r.is_a?(Hash) && r[:findings].is_a?(Array)
           end
 

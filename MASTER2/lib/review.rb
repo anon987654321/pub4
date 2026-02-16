@@ -26,17 +26,10 @@ require_relative "review/enforcer"
 require_relative "review/axiom_stats"
 require_relative "review/constitution"
 
-# Backward-compatible aliases
-CodeReview = MASTER::Review::Scanner
-AutoFixer = MASTER::Review::Fixer
-Enforcement = MASTER::Review::Enforcer
-QualityStandards = MASTER::Review::QualityStandards
-FileHygiene = MASTER::Review::Scanner::FileHygiene
-
 module MASTER
   Constitution = Review::Constitution
   AxiomStats = Review::AxiomStats
   LanguageAxioms = Review::LanguageAxioms
-  QualityStandards = Review::QualityStandards
-  CodeReview = Review::Scanner
+  QualityStandards = Review::QualityStandards # deprecated: use Review::QualityStandards
+  CodeReview = Review::Scanner # deprecated: use Review::Scanner
 end

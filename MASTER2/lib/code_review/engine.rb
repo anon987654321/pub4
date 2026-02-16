@@ -4,11 +4,11 @@ require 'yaml'
 require_relative 'analyzers'
 
 module MASTER
-  # Engine - Unified code quality scan facade
+  # CodeQuality - Unified code quality scan facade
   # Delegates to Smells, Violations, and BugHunting modules
   # Provides scan, deep_scan, and quick_scan entry points
   # Ported from MASTER v1, adapted for MASTER2's architecture
-  module Engine
+  module CodeQuality
     MAX_METHOD_LINES = 20
     MAX_FILE_LINES = 300
 
@@ -197,4 +197,6 @@ module MASTER
       end
     end
   end
+
+  Engine = CodeQuality # deprecated: use CodeQuality
 end

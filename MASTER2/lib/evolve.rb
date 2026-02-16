@@ -9,7 +9,7 @@ module MASTER
 
     def initialize(llm: LLM, chamber: nil, staged: false, validation_command: nil, language: :ruby)
       @llm = llm
-      @chamber = chamber || Chamber.new(llm: llm)
+      @chamber = chamber || Council.new(llm: llm)
       @staged = staged
       @validation_command = validation_command
       @language = language

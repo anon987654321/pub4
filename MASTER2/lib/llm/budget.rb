@@ -29,7 +29,7 @@ module MASTER
         select_model
       end
 
-      # Alias for pick (used by Chamber)
+      # Alias for pick (used by Council)
       def select_available_model
         select_model
       end

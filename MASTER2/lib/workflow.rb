@@ -9,7 +9,7 @@ require_relative 'workflow/convergence'
 
 module MASTER
   # Workflow - Unified workflow management combining planning, orchestration, and convergence detection
-  # Consolidates: Planner + WorkflowEngine + Convergence for DRY and Single Responsibility
+  # Consolidates: Planner + Workflow::Orchestrator + Convergence for DRY and Single Responsibility
   module Workflow
   end
 

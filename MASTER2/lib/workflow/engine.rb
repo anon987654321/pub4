@@ -2,9 +2,9 @@
 
 module MASTER
   module Workflow
-    # Engine - 8-phase workflow orchestrator
+    # Orchestrator - 8-phase workflow orchestrator
     # Orchestrates: discover -> analyze -> ideate -> design -> implement -> validate -> deliver -> reflect
-    module Engine
+    module Orchestrator
       extend self
 
       PHASES = %i[discover analyze ideate design implement validate deliver reflect].freeze
@@ -151,6 +151,5 @@ module MASTER
     end
   end
 
-  # Backward compatibility alias
-  WorkflowEngine = Workflow::Engine
+  WorkflowEngine = Workflow::Orchestrator # deprecated: use Workflow::Orchestrator
 end

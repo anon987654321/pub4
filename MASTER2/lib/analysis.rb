@@ -17,8 +17,5 @@ module MASTER
 
   Prescan = Analysis::Prescan
   Introspection = Analysis::Introspection
-  SelfMap = Analysis::Introspection
-  SelfCritique = Analysis::Introspection
-  SelfRepair = Analysis::Introspection
-  SelfTest = Analysis::Introspection
+  SelfTest = Analysis::Introspection # deprecated: use Analysis::Introspection
 end

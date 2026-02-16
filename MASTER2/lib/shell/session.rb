@@ -128,11 +128,11 @@ module MASTER
 
       puts UI.dim("Scanning #{path}...")
       if defined?(Engine)
-        result = Engine.scan(path)
+        result = CodeQuality.scan(path)
         if result.ok?
           issues = result.value[:issues]
           if issues.empty?
-            puts UI.green("+ No issues found")
+            puts UI.green("scan: clean")
           else
             puts "\nFound #{issues.size} issues:"
             issues.each do |issue|

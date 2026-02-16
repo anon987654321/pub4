@@ -184,11 +184,11 @@ module MASTER
       end
 
       def council_review(text)
-        if defined?(Chamber)
-          result = Chamber.council_review(text)
+        if defined?(Council)
+          result = Council.council_review(text)
           "Passed: #{result[:passed]}, Consensus: #{result[:consensus]}, Votes: #{result[:votes].size}"
         else
-          "Chamber module not available"
+          "Council module not available"
         end
       end
 

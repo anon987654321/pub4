@@ -99,7 +99,7 @@ module MASTER
     end
 
     # Fuzzy match for command suggestions (moved from Onboarding)
-    def did_you_mean(input)
+    def suggest_command(input)
       commands = Help::COMMANDS.keys.map(&:to_s)
       word = input.strip.split.first&.downcase
       return nil unless word
@@ -108,7 +108,7 @@ module MASTER
     end
 
     def show_did_you_mean(input)
-      suggestion = did_you_mean(input)
+      suggestion = suggest_command(input)
       return false unless suggestion
 
       puts UI.dim("  Did you mean: #{suggestion}?")
@@ -118,7 +118,7 @@ module MASTER
     # Shortcuts for power users
     SHORTCUTS = {
       "!!" => :repeat_last,
-      "!r" => "refactor",
+      "!r" => "autofix",
       "!c" => "chamber",
       "!e" => "evolve",
       "!s" => "status",
@@ -193,8 +193,8 @@ module MASTER
       when "axioms-stats", "stats"
         print_axiom_stats
         nil
-      when "refactor"
-        refactor(args)
+      when "refactor", "autofix"
+        autofix(args)
       when "chamber"
         chamber(args)
       when "evolve"
