@@ -356,24 +356,24 @@ module MASTER
 
           if defined?(MASTER::Enforcement)
             r = Enforcement.check(code, filename: rel) rescue nil
-            violations.concat(r) if r.is_a?(Array)
+            violations.concat(r[:violations]) if r.is_a?(Hash) && r[:violations].is_a?(Array)
           end
 
           if defined?(MASTER::Smells)
             r = Smells.analyze(code, rel) rescue nil
+            violations.concat(r[:findings] || r[:smells] || []) if r.is_a?(Hash)
             violations.concat(r) if r.is_a?(Array)
           end
 
           if defined?(MASTER::Violations)
-            r = Violations.analyze(code, path: rel) rescue nil
-            violations.concat(r) if r.is_a?(Array)
+            r = Violations.analyze(code, path: rel, llm: (LLM if defined?(LLM) && LLM.configured?)) rescue nil
+            found = (r[:literal] || []) + (r[:conceptual] || []) if r.is_a?(Hash)
+            violations.concat(found) if found&.any?
           end
 
           if defined?(MASTER::Engine)
             r = Engine.scan(rel, silent: true) rescue nil
-            if r.is_a?(Hash) && r[:findings].is_a?(Array)
-              violations.concat(r[:findings])
-            end
+            violations.concat(r[:findings]) if r.is_a?(Hash) && r[:findings].is_a?(Array)
           end
 
           next if violations.empty?
