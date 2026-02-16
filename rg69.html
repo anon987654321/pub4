@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="RG69 Mobile Beat Lab - A hardware-inspired beat machine and music sequencer with drum patterns, bass, keys, and pads. Create beats in your browser with Tone.js.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>RG69 | Mobile Beat Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,17 +11,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0a;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--text-dim:#808080;--cyan:#00ffff;--pink:#ff00ff;--green:#00ff00;--orange:#ff8800}
-[data-theme="light"]{--bg:#f0f0f0;--surface:#ffffff;--border:#d0d0d0;--text:#1a1a1a;--text-dim:#666666;--cyan:#0088aa;--pink:#cc0088;--green:#008800}
+:root{--bg:#141414;--surface:#1c1c1c;--border:#2a2a2a;--text:#cccccc;--text-dim:#888888;--accent:#c17f3e;--play:#8a6943;--mute:#c14a3e;--solo:#c17f3e}
+[data-theme="light"]{--bg:#edebe6;--surface:#ffffff;--border:#d0d0d0;--text:#1a1a1a;--text-dim:#666666;--accent:#9a6530;--play:#7a5535;--mute:#a13a2e;--solo:#9a6530}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;overflow-x:hidden;-webkit-user-select:none;user-select:none;padding-bottom:env(safe-area-inset-bottom)}
 .container{max-width:100%;padding:12px}
-h1{font-size:2em;margin:10px 0;background:linear-gradient(45deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+h1{font-size:2em;margin:10px 0;color:var(--accent);font-weight:600}
 #viz{width:100%;height:60px;display:block;background:var(--surface);border-radius:4px;margin-bottom:10px}
-.btn{min-height:48px;min-width:48px;padding:10px 16px;border:2px solid var(--cyan);background:var(--surface);color:var(--cyan);font-family:inherit;font-size:.9em;cursor:pointer;transition:all .2s;border-radius:4px;font-weight:600;touch-action:manipulation}
-.btn:hover,.btn:active{background:var(--cyan);color:var(--bg)}
-.btn.rec{border-color:var(--pink);color:var(--pink)}
-.btn.rec.active{background:var(--pink);animation:pulse 1s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.btn{min-height:48px;min-width:48px;padding:10px 16px;border:2px solid var(--accent);background:var(--surface);color:var(--accent);font-family:inherit;font-size:.9em;cursor:pointer;transition:all .2s;border-radius:4px;font-weight:600;touch-action:manipulation}
+.btn:hover,.btn:active{background:var(--accent);color:var(--bg)}
+.btn.rec{border-color:var(--mute);color:var(--mute)}
+.btn.rec.active{background:var(--mute)}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:10px;overflow:hidden}
 .panel-header{display:flex;justify-content:space-between;align-items:center;padding:12px;cursor:pointer;background:var(--bg);user-select:none}
 .panel-header::after{content:'▸';transition:transform .3s;font-size:1.2em}
@@ -31,28 +31,30 @@ h1{font-size:2em;margin:10px 0;background:linear-gradient(45deg,var(--cyan),var(
 .steps-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
 .steps{display:grid;grid-template-columns:repeat(16,minmax(20px,1fr));gap:2px;min-width:340px}
 .step{min-width:20px;min-height:36px;background:var(--bg);border:1px solid var(--border);cursor:pointer;border-radius:2px;transition:all .1s;touch-action:manipulation}
-.step.on{background:var(--cyan);border-color:var(--cyan)}
-.step.custom{border:2px solid var(--orange)}
-.step.playing{box-shadow:0 0 10px var(--pink)}
+.step.on{background:var(--accent);border-color:var(--accent)}
+.step.custom{border:2px solid var(--text-dim)}
+.step.playing{background:var(--play);border-color:var(--play)}
+.step:nth-child(4n+1){border-left:2px solid var(--border)}
 .track{margin-bottom:10px}
-.track-name{font-size:.8em;margin-bottom:5px;color:var(--text-dim);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.track-name{font-size:.8em;margin-bottom:5px;color:var(--text-dim);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;min-width:80px}
 .track-btns{display:flex;gap:3px}
 .track-btn{padding:2px 6px;font-size:.7em;border:1px solid var(--border);background:var(--bg);color:var(--text-dim);cursor:pointer;border-radius:2px}
-.track-btn.active{border-color:var(--green);color:var(--green);background:rgba(0,255,0,.1)}
+.track-btn.active.mute{border-color:var(--mute);color:var(--mute);background:rgba(193,74,62,.1)}
+.track-btn.active.solo{border-color:var(--solo);color:var(--solo);background:rgba(193,127,62,.1)}
 input[type=range]{width:100%;height:36px;background:var(--border);outline:none;border-radius:4px;cursor:pointer;appearance:none}
-input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;background:var(--cyan);border-radius:50%;cursor:pointer}
-input[type=range]::-moz-range-thumb{width:20px;height:20px;background:var(--cyan);border:none;border-radius:50%}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;background:var(--accent);border-radius:50%;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;background:var(--accent);border:none;border-radius:50%}
 select,input[type=number]{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px;font-family:inherit;font-size:1em;border-radius:4px;width:100%}
 .mood-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
 .mood-btn{padding:10px;background:var(--bg);border:1px solid var(--border);color:var(--text-dim);cursor:pointer;font-family:inherit;border-radius:4px;text-align:center;font-size:.85em;min-height:44px;touch-action:manipulation}
-.mood-btn.active{border-color:var(--pink);color:var(--pink);background:rgba(255,0,255,.1)}
+.mood-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(193,127,62,.1)}
 .control{margin-bottom:10px}
 .control label{display:block;font-size:.8em;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase}
 .fx-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
-.fx-tag{padding:3px 6px;background:rgba(0,255,255,.2);border:1px solid var(--cyan);border-radius:3px;font-size:.7em;color:var(--cyan)}
+.fx-tag{padding:3px 6px;background:rgba(193,127,62,.2);border:1px solid var(--accent);border-radius:3px;font-size:.7em;color:var(--accent)}
 .log{max-height:100px;overflow-y:auto;font-size:.75em;color:var(--text-dim);padding:8px;background:var(--bg);border-radius:4px;margin-top:10px}
 .transport{display:flex;justify-content:space-around;gap:8px;flex-wrap:wrap;margin:10px 0}
-.tooltip{position:fixed;background:var(--surface);border:1px solid var(--cyan);padding:6px 10px;border-radius:4px;font-size:.75em;pointer-events:none;z-index:1000;display:none}
+.tooltip{position:fixed;background:var(--surface);border:1px solid var(--accent);padding:6px 10px;border-radius:4px;font-size:.75em;pointer-events:none;z-index:1000;display:none}
 @media(min-width:768px){
   .container{max-width:900px;margin:0 auto;padding:20px}
   .steps{gap:3px}
@@ -69,38 +71,40 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
   input[type=range]::-moz-range-thumb{width:28px;height:28px}
 }
 .btn-help{font-size:.6em;padding:4px 8px;min-height:32px;min-width:32px}
-.btn-quickstart{background:var(--pink);color:var(--bg);border-color:var(--pink)}
+.btn-quickstart{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 .btn-full{width:100%;margin-top:10px}
-.btn:focus-visible,.step:focus-visible,.mood-btn:focus-visible,.track-btn:focus-visible,select:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.btn:focus-visible,.step:focus-visible,.mood-btn:focus-visible,.track-btn:focus-visible,select:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
-<div class="container">
-<h1>RG69 <button class="btn btn-help" id="helpBtn" title="Show help and tips">?</button></h1>
-<canvas id="viz" title="Audio waveform visualizer - shows the sound waves in real-time"></canvas>
-<div class="transport">
-<button class="btn" id="playBtn" title="Play/Pause - Start or stop the music (Spacebar)">▶</button>
-<button class="btn" id="stopBtn" title="Stop - Stop playback and return to beginning">■</button>
-<button class="btn btn-quickstart" id="quickStartBtn" title="Quick Start - Load a preset and start playing!">🚀 START</button>
-<button class="btn rec" id="recBtn" title="Record - Capture your creation as audio file">⏺</button>
-<button class="btn" id="wavBtn" title="Export WAV - Save as high-quality audio file">📀</button>
-<button class="btn" id="shareBtn" title="Share - Copy link to share your creation">🔗</button>
+<main class="container" role="main">
+<header>
+<h1>RG69 <button class="btn btn-help" id="helpBtn" title="Show help and tips" aria-label="Show help and tips">?</button></h1>
+</header>
+<canvas id="viz" title="Audio waveform visualizer - shows the sound waves in real-time" aria-label="Audio waveform visualizer"></canvas>
+<nav class="transport" role="toolbar" aria-label="Transport controls">
+<button class="btn" id="playBtn" title="Play/Pause - Start or stop the music (Spacebar)" aria-label="Play/Pause">▶</button>
+<button class="btn" id="stopBtn" title="Stop - Stop playback and return to beginning" aria-label="Stop">■</button>
+<button class="btn btn-quickstart" id="quickStartBtn" title="Quick Start - Load a preset and start playing!" aria-label="Quick Start">🚀 START</button>
+<button class="btn rec" id="recBtn" title="Record - Capture your creation as audio file" aria-label="Record">⏺</button>
+<button class="btn" id="wavBtn" title="Export WAV - Save as high-quality audio file" aria-label="Export WAV">📀</button>
+<button class="btn" id="shareBtn" title="Share - Copy link to share your creation" aria-label="Share">🔗</button>
 <button class="btn" id="undoBtn" title="Undo - Go back one step (Ctrl+Z)" aria-label="Undo">↶</button>
 <button class="btn" id="redoBtn" title="Redo - Go forward one step (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
-<button class="btn" id="tapBtn" title="Tap Tempo - Tap repeatedly to set tempo (T key)">🥁</button>
-<button class="btn" id="themeBtn" title="Toggle light/dark theme (L key)">🌓</button>
-</div>
+<button class="btn" id="tapBtn" title="Tap Tempo - Tap repeatedly to set tempo (T key)" aria-label="Tap Tempo">🥁</button>
+<button class="btn" id="themeBtn" title="Toggle light/dark theme (L key)" aria-label="Toggle theme">🌓</button>
+</nav>
 <div class="grid">
-<div class="panel open">
+<section class="panel open">
 <div class="panel-header">SEQUENCER</div>
 <div class="panel-body"><div id="sequencer"></div></div>
-</div>
-<div class="panel open">
+</section>
+<section class="panel open">
 <div class="panel-header">CONTROLS</div>
 <div class="panel-body"><div>
-<div class="control"><label title="Beats Per Minute - The speed/tempo of the music">BPM (Speed)</label><input type="range" id="bpmSlider" min="50" max="180" value="120" title="Drag to change tempo: slower (left) to faster (right)"><span id="bpmVal">120</span></div>
-<div class="control"><label title="Swing - Adds groove by delaying every other beat">Swing (Groove)</label><input type="range" id="swingSlider" min="0" max="50" value="0" title="Add swing/shuffle feel: 0 = straight, 50 = maximum shuffle"><span id="swingVal">0</span></div>
-<div class="control"><label title="Root Note - The musical key/pitch to play in">Root Note (Key)</label><select id="rootSel" title="Choose the musical key for melodies and bass"><option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option></select></div>
+<div class="control"><label title="Beats Per Minute - The speed/tempo of the music">BPM (Speed)</label><input type="range" id="bpmSlider" min="50" max="180" value="120" title="Drag to change tempo: slower (left) to faster (right)" aria-label="BPM tempo slider"><span id="bpmVal" aria-live="polite">120</span></div>
+<div class="control"><label title="Swing - Adds groove by delaying every other beat">Swing (Groove)</label><input type="range" id="swingSlider" min="0" max="50" value="0" title="Add swing/shuffle feel: 0 = straight, 50 = maximum shuffle" aria-label="Swing amount slider"><span id="swingVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Root Note - The musical key/pitch to play in">Root Note (Key)</label><select id="rootSel" title="Choose the musical key for melodies and bass" aria-label="Root note selector"><option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option></select></div>
 <div class="control"><label title="Genre/Style Presets - Quick ways to get started!">🎭 Style Presets (Try These!)</label><div class="mood-grid" id="moodGrid"></div></div>
 <div class="control"><label title="Drum Pattern - Different rhythmic patterns">🥁 Drum Pattern</label><select id="drumSel" title="Choose a drum rhythm"></select><div id="drumFx" class="fx-tags"></div></div>
 <div class="control"><label title="Bass Pattern - Low-end groove">🎸 Bass Pattern</label><select id="bassSel" title="Choose a bassline"></select><div id="bassFx" class="fx-tags"></div></div>
@@ -108,8 +112,8 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <div class="control"><label title="Background Pad - Atmospheric textures">🎼 Pads Pattern</label><select id="padsSel" title="Choose an atmospheric pad sound"></select><div id="padsFx" class="fx-tags"></div></div>
 <button class="btn btn-full" id="randomBtn" title="Generate random combination of patterns and effects">⚡ SURPRISE ME!</button>
 </div></div>
-</div>
-<div class="panel">
+</section>
+<section class="panel">
 <div class="panel-header">MIX</div>
 <div class="panel-body"><div>
 <div class="control"><label>Drums</label><input type="range" id="drumVol" min="0" max="100" value="80"></div>
@@ -118,8 +122,8 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <div class="control"><label>Pads</label><input type="range" id="padsVol" min="0" max="100" value="50"></div>
 <div class="control"><label>Master</label><input type="range" id="masterVol" min="0" max="100" value="75"></div>
 </div></div>
-</div>
-<div class="panel">
+</section>
+<section class="panel">
 <div class="panel-header">PER-TRACK SWING</div>
 <div class="panel-body"><div>
 <div class="control"><label>Drums</label><input type="range" id="drumSwing" min="0" max="50" value="0"></div>
@@ -127,28 +131,28 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 <div class="control"><label>Keys</label><input type="range" id="keysSwing" min="0" max="50" value="0"></div>
 <div class="control"><label>Pads</label><input type="range" id="padsSwing" min="0" max="50" value="0"></div>
 </div></div>
-</div>
-<div class="panel">
+</section>
+<section class="panel">
 <div class="panel-header">EXPERT CONTROLS</div>
 <div class="panel-body"><div>
-<div class="control"><label title="Kick timing lag (J Dilla style)">Kick Lag (ms)</label><input type="range" id="kickLag" min="0" max="80" value="0" step="1"><span id="kickLagVal">0</span></div>
-<div class="control"><label title="Snare timing rush (ahead of beat)">Snare Rush (ms)</label><input type="range" id="snareRush" min="0" max="60" value="0" step="1"><span id="snareRushVal">0</span></div>
-<div class="control"><label title="Hi-hat timing drift (upbeat variation)">Hat Drift (ms)</label><input type="range" id="hatDrift" min="0" max="50" value="0" step="1"><span id="hatDriftVal">0</span></div>
-<div class="control"><label title="Bass glide/portamento time">Glide (ms)</label><input type="range" id="glide" min="0" max="300" value="0" step="10"><span id="glideVal">0</span></div>
-<div class="control"><label title="Vinyl crackle intensity">Crackle</label><input type="range" id="crackle" min="0" max="100" value="0"><span id="crackleVal">0</span></div>
-<div class="control"><label title="Tape wow/flutter depth">Flutter</label><input type="range" id="flutter" min="0" max="100" value="0"><span id="flutterVal">0</span></div>
-<div class="control"><label title="Tape saturation/drive">Tape Drive</label><input type="range" id="tapeDrive" min="0" max="100" value="0"><span id="tapeDriveVal">0</span></div>
-<div class="control"><label title="Lo-fi processing mix">Lo-Fi Mix</label><input type="range" id="lofiMix" min="0" max="100" value="0"><span id="lofiMixVal">0</span></div>
-<div class="control"><label title="Master reverb amount">Reverb</label><input type="range" id="reverbAmt" min="0" max="100" value="30"><span id="reverbVal">30</span></div>
-<div class="control"><label title="Master drive/distortion">Drive</label><input type="range" id="driveAmt" min="0" max="100" value="0"><span id="driveVal">0</span></div>
-<div class="control"><label title="Bit crushing depth">Crush</label><input type="range" id="crushAmt" min="0" max="100" value="0"><span id="crushVal">0</span></div>
-<div class="control"><label title="Vinyl noise character">Vinyl</label><input type="range" id="vinylAmt" min="0" max="100" value="0"><span id="vinylVal">0</span></div>
+<div class="control"><label title="Kick timing lag (J Dilla style)">Kick Lag (ms)</label><input type="range" id="kickLag" min="0" max="80" value="0" step="1" aria-label="Kick timing lag"><span id="kickLagVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Snare timing rush (ahead of beat)">Snare Rush (ms)</label><input type="range" id="snareRush" min="0" max="60" value="0" step="1" aria-label="Snare timing rush"><span id="snareRushVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Hi-hat timing drift (upbeat variation)">Hat Drift (ms)</label><input type="range" id="hatDrift" min="0" max="50" value="0" step="1" aria-label="Hat timing drift"><span id="hatDriftVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Bass glide/portamento time">Glide (ms)</label><input type="range" id="glide" min="0" max="300" value="0" step="10" aria-label="Bass glide"><span id="glideVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Surface noise crackle">Surface / Crackle</label><input type="range" id="crackle" min="0" max="100" value="0" aria-label="Surface crackle"><span id="crackleVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Tape wow/flutter depth">Tape / Wow-Flutter</label><input type="range" id="flutter" min="0" max="100" value="0" aria-label="Tape flutter"><span id="flutterVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Tape saturation/drive">Saturation</label><input type="range" id="tapeDrive" min="0" max="100" value="0" aria-label="Tape saturation"><span id="tapeDriveVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Lo-fi processing mix">Lo-Fi Mix</label><input type="range" id="lofiMix" min="0" max="100" value="0" aria-label="Lo-fi mix"><span id="lofiMixVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Master reverb amount">Space (Reverb)</label><input type="range" id="reverbAmt" min="0" max="100" value="30" aria-label="Reverb amount"><span id="reverbVal" aria-live="polite">30</span></div>
+<div class="control"><label title="Master drive/distortion">Drive</label><input type="range" id="driveAmt" min="0" max="100" value="0" aria-label="Drive amount"><span id="driveVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Bit reduction depth">Degrade (Bitcrush)</label><input type="range" id="crushAmt" min="0" max="100" value="0" aria-label="Bitcrush amount"><span id="crushVal" aria-live="polite">0</span></div>
+<div class="control"><label title="Surface noise character">Surface / Noise Floor</label><input type="range" id="vinylAmt" min="0" max="100" value="0" aria-label="Surface noise"><span id="vinylVal" aria-live="polite">0</span></div>
 </div></div>
+</section>
 </div>
-</div>
-<div class="log" id="log"></div>
-<div class="tooltip" id="tooltip"></div>
-</div>
+<aside class="log" id="log" role="log" aria-live="polite" aria-label="Status log"></aside>
+<div class="tooltip" id="tooltip" role="tooltip"></div>
+</main>
 <script>
 // Pattern Data - All patterns from PR #249, #250 plus 5 new genre packs
 const D={
@@ -227,61 +231,61 @@ const B={
 };
 const K={
 // PR #250
-'tizita':[['C4','D4','E4','G4'],0,0,0,['G3','A3','C4','D4'],0,0,0],
-'bati':[['C4','D4','Eb4','G4'],0,0,0,['Eb4','G4','Ab4','C5'],0,0,0],
-'ambassel':[['C4','Db4','F4','G4'],0,0,0,['F3','G3','Ab3','C4'],0,0,0],
-'anchihoye':[['C4','Db4','F4','Gb4'],0,0,0,['Gb3','Ab3','C4','Db4'],0,0,0],
-'ethiomod':[['C4','Eb4','G4','Bb4'],0,0,0,['Ab3','C4','Eb4','G4'],0,0,0,['Bb3','D4','F4','Ab4'],0,0,0],
-'skank':[0,['C4','E4','G4'],0,['C4','E4','G4'],0,['F3','A3','C4'],0,['F3','A3','C4'],0,['G3','B3','D4'],0,['G3','B3','D4'],0,['C4','E4','G4'],0,['C4','E4','G4']],
-'roots':[['C4','Eb4','G4'],0,0,0,['Bb3','D4','F4'],0,0,0,['Ab3','C4','Eb4'],0,0,0,['Bb3','D4','F4'],0,0,0],
-'dubchord':[['C4','Eb4','G4'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'nyachord':[['C4','Eb4','G4'],0,0,0,0,0,['Ab3','C4','Eb4'],0,0,0,0,0,0,0,0,0],
-'indstab':[['C4','Eb4','Gb4'],0,0,0,0,0,0,0,['Bb3','Db4','F4'],0,0,0,0,0,0,0],
-'darkchrom':[['C4','Eb4','Gb4'],0,0,0,['Db4','E4','G4'],0,0,0,0,0,0,0,0,0,0,0],
-'noisechord':[['C3','Db3','Gb3'],0,0,0,['F3','Gb3','C4'],0,0,0,0,0,0,0,0,0,0,0],
-'acid':['C4',0,'Eb4',0,'Gb4',0,'Ab4',0,'C4',0,'Eb4',0,'Gb4',0,'Ab4',0],
-'dilla1':[['D4','F4','A4','C5'],0,0,0,['G3','Bb3','D4','F4'],0,0,0,['C4','E4','G4','Bb4'],0,0,0,0,0,0,0],
-'neosoul':[['C4','Eb4','G4','Bb4'],0,0,0,['Bb3','D4','F4','Ab4'],0,0,0,['Ab3','C4','Eb4','G4'],0,0,0,['G3','Bb3','D4','F4'],0,0,0],
-'gospel':[['F3','A3','C4','E4'],0,0,0,['G3','B3','D4','F4'],0,0,0,['C4','E4','G4','B4'],0,0,0,0,0,0,0],
-'badu':[['C4','E4','G4','B4','D5'],0,0,0,['F3','A3','C4','E4','G4'],0,0,0,0,0,0,0,0,0,0,0],
-'drunk':[['C4','E4','G4'],0,0,['F3','A3','C4'],0,0,0,['G3','B3','D4'],0,0,0,['C4','E4','G4'],0,0,0],
+'tizita':[['C4','D4','E4','G4'],null,null,null,['G3','A3','C4','D4'],null,null,null],
+'bati':[['C4','D4','Eb4','G4'],null,null,null,['Eb4','G4','Ab4','C5'],null,null,null],
+'ambassel':[['C4','Db4','F4','G4'],null,null,null,['F3','G3','Ab3','C4'],null,null,null],
+'anchihoye':[['C4','Db4','F4','Gb4'],null,null,null,['Gb3','Ab3','C4','Db4'],null,null,null],
+'ethiomod':[['C4','Eb4','G4','Bb4'],null,null,null,['Ab3','C4','Eb4','G4'],null,null,null,['Bb3','D4','F4','Ab4'],null,null,null],
+'skank':[null,['C4','E4','G4'],null,['C4','E4','G4'],null,['F3','A3','C4'],null,['F3','A3','C4'],null,['G3','B3','D4'],null,['G3','B3','D4'],null,['C4','E4','G4'],null,['C4','E4','G4']],
+'roots':[['C4','Eb4','G4'],null,null,null,['Bb3','D4','F4'],null,null,null,['Ab3','C4','Eb4'],null,null,null,['Bb3','D4','F4'],null,null,null],
+'dubchord':[['C4','Eb4','G4'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'nyachord':[['C4','Eb4','G4'],null,null,null,null,null,['Ab3','C4','Eb4'],null,null,null,null,null,null,null,null,null],
+'indstab':[['C4','Eb4','Gb4'],null,null,null,null,null,null,null,['Bb3','Db4','F4'],null,null,null,null,null,null,null],
+'darkchrom':[['C4','Eb4','Gb4'],null,null,null,['Db4','E4','G4'],null,null,null,null,null,null,null,null,null,null,null],
+'noisechord':[['C3','Db3','Gb3'],null,null,null,['F3','Gb3','C4'],null,null,null,null,null,null,null,null,null,null,null],
+'acid':['C4',null,'Eb4',null,'Gb4',null,'Ab4',null,'C4',null,'Eb4',null,'Gb4',null,'Ab4',null],
+'dilla1':[['D4','F4','A4','C5'],null,null,null,['G3','Bb3','D4','F4'],null,null,null,['C4','E4','G4','Bb4'],null,null,null,null,null,null,null],
+'neosoul':[['C4','Eb4','G4','Bb4'],null,null,null,['Bb3','D4','F4','Ab4'],null,null,null,['Ab3','C4','Eb4','G4'],null,null,null,['G3','Bb3','D4','F4'],null,null,null],
+'gospel':[['F3','A3','C4','E4'],null,null,null,['G3','B3','D4','F4'],null,null,null,['C4','E4','G4','B4'],null,null,null,null,null,null,null],
+'badu':[['C4','E4','G4','B4','D5'],null,null,null,['F3','A3','C4','E4','G4'],null,null,null,null,null,null,null,null,null,null,null],
+'drunk':[['C4','E4','G4'],null,null,['F3','A3','C4'],null,null,null,['G3','B3','D4'],null,null,null,['C4','E4','G4'],null,null,null],
 'bachdown':[['C4','E4','G4'],['B3','D4','G4'],['A3','C4','F4'],['G3','B3','E4'],['F3','A3','D4'],['E3','G3','C4'],['D3','F3','B3'],['C3','E3','A3']],
-'bachfugue':[['C4'],0,0,0,['E4'],0,['G4'],0,['C5'],0,0,0,['G4'],0,['E4'],0],
-'chorale':[['C4','E4','G4','C5'],0,0,0,['F3','A3','C4','F4'],0,0,0,['G3','B3','D4','G4'],0,0,0,['C4','E4','G4','C5'],0,0,0],
+'bachfugue':[['C4'],null,null,null,['E4'],null,['G4'],null,['C5'],null,null,null,['G4'],null,['E4'],null],
+'chorale':[['C4','E4','G4','C5'],null,null,null,['F3','A3','C4','F4'],null,null,null,['G3','B3','D4','G4'],null,null,null,['C4','E4','G4','C5'],null,null,null],
 'prelude':[['C4'],['E4'],['G4'],['C5'],['E5'],['G5'],['C5'],['E5'],['G4'],['C5'],['E4'],['G4'],['C4'],['E4'],['G3'],['C4']],
-'cadence':[['F3','A3','C4','F4'],0,0,0,['G3','B3','D4','G4'],0,['G3','B3','D4','F4'],0,['C4','E4','G4','C5'],0,0,0,0,0,0,0],
+'cadence':[['F3','A3','C4','F4'],null,null,null,['G3','B3','D4','G4'],null,['G3','B3','D4','F4'],null,['C4','E4','G4','C5'],null,null,null,null,null,null,null],
 // NEW genre keys
-'afrokeys':[['C4','Eb4','G4'],0,['Bb3','D4','F4'],0,['Ab3','C4','Eb4'],0,['Bb3','D4','F4'],0,['C4','Eb4','G4'],0,['Bb3','D4','F4'],0,['Ab3','C4','Eb4'],0,0,0],
-'bossachord':[['C4','E4','G4','B4'],0,0,0,['A3','C4','E4','G4'],0,0,0,['D4','F4','A4','C5'],0,0,0,['G3','B3','D4','F4'],0,0,0],
-'trapkeys':[['C4','Eb4','Gb4'],0,0,0,0,0,0,0,['Bb3','Db4','F4'],0,0,0,0,0,0,0],
-'ambientchord':[['C4','G4','D5','A5'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'brokenkeys':[['C4','Eb4','G4','Bb4'],0,0,['Ab3','C4','Eb4'],0,0,0,['Bb3','D4','F4','A4'],0,0,0,0,['G3','Bb3','D4','F4'],0,0,0],
+'afrokeys':[['C4','Eb4','G4'],null,['Bb3','D4','F4'],null,['Ab3','C4','Eb4'],null,['Bb3','D4','F4'],null,['C4','Eb4','G4'],null,['Bb3','D4','F4'],null,['Ab3','C4','Eb4'],null,null,null],
+'bossachord':[['C4','E4','G4','B4'],null,null,null,['A3','C4','E4','G4'],null,null,null,['D4','F4','A4','C5'],null,null,null,['G3','B3','D4','F4'],null,null,null],
+'trapkeys':[['C4','Eb4','Gb4'],null,null,null,null,null,null,null,['Bb3','Db4','F4'],null,null,null,null,null,null,null],
+'ambientchord':[['C4','G4','D5','A5'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'brokenkeys':[['C4','Eb4','G4','Bb4'],null,null,['Ab3','C4','Eb4'],null,null,null,['Bb3','D4','F4','A4'],null,null,null,null,['G3','Bb3','D4','F4'],null,null,null],
 // Version1 additions - Advanced voicings and melodies
-'cluster':[['C4','Db4','D4','Eb4'],0,0,0,['F4','Gb4','G4','Ab4'],0,0,0,['C4','Db4','D4','Eb4'],0,0,0,0,0,0,0],
-'v7b9':[['C4','E4','Bb4','Db5'],0,0,0,['F3','A3','Eb4','G4'],0,0,0,['G3','B3','F4','Ab4'],0,0,0,0,0,0,0],
-'min9-walk':[['C4','Eb4','Bb4','D5'],0,['Bb3','D4','Ab4','C5'],0,['Ab3','C4','Gb4','Bb4'],0,['G3','B3','F4','A4'],0,['C4','Eb4','Bb4','D5'],0,0,0,0,0],
-'canon':[['C4'],0,['D4'],0,['E4'],0,['C4'],0,['E4'],0,['F4'],0,['G4'],0,0,0],
+'cluster':[['C4','Db4','D4','Eb4'],null,null,null,['F4','Gb4','G4','Ab4'],null,null,null,['C4','Db4','D4','Eb4'],null,null,null,null,null,null,null],
+'v7b9':[['C4','E4','Bb4','Db5'],null,null,null,['F3','A3','Eb4','G4'],null,null,null,['G3','B3','F4','Ab4'],null,null,null,null,null,null,null],
+'min9-walk':[['C4','Eb4','Bb4','D5'],null,['Bb3','D4','Ab4','C5'],null,['Ab3','C4','Gb4','Bb4'],null,['G3','B3','F4','A4'],null,['C4','Eb4','Bb4','D5'],null,null,null,null,null],
+'canon':[['C4'],null,['D4'],null,['E4'],null,['C4'],null,['E4'],null,['F4'],null,['G4'],null,null,null],
 'contrary':[['C4','C5'],['D4','B4'],['E4','A4'],['F4','G4'],['G4','F4'],['A4','E4'],['B4','D4'],['C5','C4']],
-'descseq':[['E4'],['D4'],['C4'],['B3'],['A3'],['G3'],['F3'],['E3'],['D3'],['C3'],['B2'],['A2'],0,0,0,0],
-'pedaltone':[['C4','E4','G4'],['C4','F3','A3'],['C4','G3','B3'],['C4','E4','G4'],['C4','F3','A3'],['C4','G3','B3'],['C4','E4','G4'],0],
-'melodica':[['C4'],['E4'],['G4'],['A4'],['G4'],['E4'],['C4'],0,['D4'],['F4'],['A4'],['Bb4'],['A4'],['F4'],['D4'],0],
+'descseq':[['E4'],['D4'],['C4'],['B3'],['A3'],['G3'],['F3'],['E3'],['D3'],['C3'],['B2'],['A2'],null,null,null,null],
+'pedaltone':[['C4','E4','G4'],['C4','F3','A3'],['C4','G3','B3'],['C4','E4','G4'],['C4','F3','A3'],['C4','G3','B3'],['C4','E4','G4'],null],
+'melodica':[['C4'],['E4'],['G4'],['A4'],['G4'],['E4'],['C4'],null,['D4'],['F4'],['A4'],['Bb4'],['A4'],['F4'],['D4'],null],
 // PR #249
-'basic':[['C4','E4','G4'],0,0,0,['F3','A3','C4'],0,0,0,['G3','B3','D4'],0,0,0,['C4','E4','G4'],0,0,0],
-'dustykeys1':[['C4','Eb4','G4'],0,['Bb3','D4','F4'],0,['Ab3','C4','Eb4'],0,0,0]
+'basic':[['C4','E4','G4'],null,null,null,['F3','A3','C4'],null,null,null,['G3','B3','D4'],null,null,null,['C4','E4','G4'],null,null,null],
+'dustykeys1':[['C4','Eb4','G4'],null,['Bb3','D4','F4'],null,['Ab3','C4','Eb4'],null,null,null]
 };
 const P={
-'none':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'ethiodrone':[['C3','G3','C4','Eb4'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'dubwash':[['C3','G3','Eb4'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'rootsdrone':[['C3','Eb3','G3'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'industrialdrone':[['C2','Gb2','C3'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'noisewash':[['C2','Db2','Gb2'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'afrodrone':[['C3','G3','Bb3','Eb4'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'bossawash':[['C3','E3','G3','B3'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'ambientwash':[['C3','G3','D4','A4','E5'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+'none':[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'ethiodrone':[['C3','G3','C4','Eb4'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'dubwash':[['C3','G3','Eb4'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'rootsdrone':[['C3','Eb3','G3'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'industrialdrone':[['C2','Gb2','C3'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'noisewash':[['C2','Db2','Gb2'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'afrodrone':[['C3','G3','Bb3','Eb4'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'bossawash':[['C3','E3','G3','B3'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'ambientwash':[['C3','G3','D4','A4','E5'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
 // Version1 additions
-'ethiowash':[['C3','Db3','F3','Ab3'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-'choir':[['C3','E3','G3','C4','E4'],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+'ethiowash':[['C3','Db3','F3','Ab3'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+'choir':[['C3','E3','G3','C4','E4'],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]
 };
 const M={
 'ethio':{d:'eth-mulatu',b:'ethiobass',k:'tizita',p:'ethiodrone',bpm:[85,110],sw:[15,35]},
@@ -642,14 +646,34 @@ const updateStepViz=(s)=>{
 const buildUI=()=>{
   const seq=document.getElementById('sequencer');
   seq.innerHTML='';
+  // Add beat markers
+  const beatMarkers=document.createElement('div');
+  beatMarkers.style.cssText='display:grid;grid-template-columns:repeat(16,minmax(20px,1fr));gap:2px;min-width:340px;font-size:.7em;color:var(--text-dim);text-align:center;margin-bottom:5px;padding-left:80px';
+  for(let i=0;i<16;i++){
+    const m=document.createElement('div');
+    if(i%4===0)m.textContent=(i/4+1)+'·';
+    beatMarkers.appendChild(m);
+  }
+  seq.appendChild(beatMarkers);
+  const trackMap={'kick':'d','snare':'d','clap':'d','hat':'d','open':'d'};
   ['kick','snare','clap','hat','open'].forEach(t=>{
     const tr=document.createElement('div');tr.className='track';
     const tn=document.createElement('div');tn.className='track-name';
-    tn.innerHTML=`<span>${t.toUpperCase()}</span><div class="track-btns"><button class="track-btn" data-track="d" data-action="m">M</button><button class="track-btn" data-track="d" data-action="s">S</button></div>`;
+    const trackId=trackMap[t];
+    tn.innerHTML=`<span>${t.toUpperCase()}</span><div class="track-btns"><button class="track-btn mute" data-track="${trackId}" data-action="m" aria-label="Mute ${t}">M</button><button class="track-btn solo" data-track="${trackId}" data-action="s" aria-label="Solo ${t}">S</button></div>`;
     tr.appendChild(tn);
     const sw=document.createElement('div');sw.className='steps-wrap';
     const st=document.createElement('div');st.className='steps';
-    for(let i=0;i<16;i++){const s=document.createElement('div');s.className='step';s.dataset.track=t;s.dataset.step=i;st.appendChild(s);}
+    for(let i=0;i<16;i++){
+      const s=document.createElement('div');
+      s.className='step';
+      s.dataset.track=t;
+      s.dataset.step=i;
+      s.setAttribute('role','checkbox');
+      s.setAttribute('aria-label',`${t} step ${i+1}`);
+      s.setAttribute('aria-checked','false');
+      st.appendChild(s);
+    }
     sw.appendChild(st);tr.appendChild(sw);seq.appendChild(tr);
   });
   Object.keys(M).forEach(k=>{const btn=document.createElement('button');btn.className='mood-btn';btn.textContent=k.toUpperCase();btn.dataset.mood=k;document.getElementById('moodGrid').appendChild(btn);});
@@ -705,14 +729,32 @@ const attachEvents=()=>{
   document.getElementById('vinylAmt').oninput=e=>{vinylAmt=+e.target.value;document.getElementById('vinylVal').textContent=vinylAmt;hissNoise.volume.value=-32+vinylAmt*0.15;};
   document.querySelectorAll('.step').forEach(s=>{
     let lastToggle=0;
-    const toggle=()=>{const t=s.dataset.track,i=+s.dataset.step;SP[currentBank][t][i].on=1-SP[currentBank][t][i].on;SP[currentBank][t][i].custom=1;s.classList.toggle('on',SP[currentBank][t][i].on);s.classList.toggle('custom',SP[currentBank][t][i].custom);pushState();updateStepViz(step);};
+    const toggle=()=>{
+      const t=s.dataset.track,i=+s.dataset.step;
+      SP[currentBank][t][i].on=1-SP[currentBank][t][i].on;
+      SP[currentBank][t][i].custom=1;
+      s.classList.toggle('on',SP[currentBank][t][i].on);
+      s.classList.toggle('custom',SP[currentBank][t][i].custom);
+      s.setAttribute('aria-checked',SP[currentBank][t][i].on?'true':'false');
+      pushState();
+      updateStepViz(step);
+    };
     const guardedToggle=()=>{const now=Date.now();if(now-lastToggle<100)return;lastToggle=now;toggle();};
     s.onclick=guardedToggle;
     s.ontouchstart=e=>{e.preventDefault();guardedToggle();};
-    s.ontouchmove=e=>{e.preventDefault();const touch=e.changedTouches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);if(el&&el.classList.contains('step')&&el!==s){const t=el.dataset.track,i=+el.dataset.step;SP[currentBank][t][i].on=1;SP[currentBank][t][i].custom=1;el.classList.add('on');el.classList.add('custom');pushState();updateStepViz(step);}};
+    s.ontouchmove=e=>{e.preventDefault();const touch=e.changedTouches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);if(el&&el.classList.contains('step')&&el!==s){const t=el.dataset.track,i=+el.dataset.step;SP[currentBank][t][i].on=1;SP[currentBank][t][i].custom=1;el.classList.add('on');el.classList.add('custom');el.setAttribute('aria-checked','true');pushState();updateStepViz(step);}};
   });
   document.querySelectorAll('.mood-btn').forEach(b=>b.onclick=e=>{applyMood(e.target.dataset.mood);document.querySelectorAll('.mood-btn').forEach(x=>x.classList.remove('active'));e.target.classList.add('active');});
-  document.querySelectorAll('.track-btn').forEach(b=>b.onclick=e=>{const tr=e.target.dataset.track,act=e.target.dataset.action;if(act==='m'){muteSolo[tr].m=1-muteSolo[tr].m;e.target.classList.toggle('active',muteSolo[tr].m);}else{muteSolo[tr].s=1-muteSolo[tr].s;e.target.classList.toggle('active',muteSolo[tr].s);}});
+  document.querySelectorAll('.track-btn').forEach(b=>b.onclick=e=>{
+    const tr=e.target.dataset.track,act=e.target.dataset.action;
+    if(act==='m'){
+      muteSolo[tr].m=1-muteSolo[tr].m;
+      e.target.classList.toggle('active',muteSolo[tr].m);
+    }else{
+      muteSolo[tr].s=1-muteSolo[tr].s;
+      e.target.classList.toggle('active',muteSolo[tr].s);
+    }
+  });
   document.querySelectorAll('.panel-header').forEach(h=>h.onclick=e=>{e.currentTarget.parentElement.classList.toggle('open');});
   document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();document.getElementById('playBtn').click();}else if(e.key==='r'||e.key==='R'){randomizeAll();}else if(e.key==='e'||e.key==='E'){exportWAV();}else if(e.key==='t'||e.key==='T'){tapTempo();}else if(e.key==='l'||e.key==='L'){toggleTheme();}else if(e.key==='?'){showHelp();}else if(e.ctrlKey&&e.key==='z'){undo();}else if(e.ctrlKey&&e.shiftKey&&e.key==='Z'){redo();}});
   document.addEventListener('touchstart',()=>{if(Tone.context.state!=='running')Tone.context.resume();},{once:true});
@@ -733,7 +775,7 @@ const toggleTheme=()=>{const html=document.documentElement;const curr=html.getAt
 const autosave=()=>{try{localStorage.setItem('rg69_save',JSON.stringify({d:curD,b:curB,k:curK,p:curP,bpm,swing,rootNote,drumVol,bassVol,keysVol,padsVol,masterVol,SP}));}catch(e){}};
 const autoload=()=>{try{const s=localStorage.getItem('rg69_save');if(s){const st=JSON.parse(s);curD=st.d;curB=st.b;curK=st.k;curP=st.p;bpm=st.bpm;swing=st.swing;rootNote=st.rootNote;drumVol=st.drumVol;bassVol=st.bassVol;keysVol=st.keysVol;padsVol=st.padsVol;masterVol=st.masterVol;SP=st.SP;log('💾 Autoloaded');}}catch(e){}};
 const log=m=>{const l=document.getElementById('log');const line=document.createElement('div');line.textContent=`${new Date().toLocaleTimeString()} ${m}`;l.appendChild(line);l.scrollTop=l.scrollHeight;};
-const drawViz=()=>{requestAnimationFrame(drawViz);const c=document.getElementById('viz'),ctx=c.getContext('2d');c.width=c.offsetWidth;c.height=c.offsetHeight;const w=c.width,h=c.height;ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--bg');ctx.fillRect(0,0,w,h);if(!analyser)return;const data=analyser.getValue();ctx.beginPath();ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--cyan');ctx.lineWidth=2;for(let i=0;i<data.length;i++){const x=(i/data.length)*w;const y=(1-(data[i]+1)/2)*h;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();};
+const drawViz=()=>{requestAnimationFrame(drawViz);const c=document.getElementById('viz'),ctx=c.getContext('2d');c.width=c.offsetWidth;c.height=c.offsetHeight;const w=c.width,h=c.height;ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--bg');ctx.fillRect(0,0,w,h);if(!analyser)return;const data=analyser.getValue();ctx.beginPath();ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--accent');ctx.lineWidth=2;for(let i=0;i<data.length;i++){const x=(i/data.length)*w;const y=(1-(data[i]+1)/2)*h;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();};
 // Help overlay - Enhanced for beginners and musicians
 const showHelp=()=>{const help=`🎵 RG69 BEAT MACHINE - QUICK GUIDE
 
