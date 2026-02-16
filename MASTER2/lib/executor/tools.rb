@@ -204,9 +204,9 @@ module MASTER
       def self_test
         if defined?(SelfTest)
           result = SelfTest.run
-          result.ok? ? "Self-test completed" : "Self-test failed: #{result.error}"
+          result.ok? ? result.value : "introspect failed: #{result.error}"
         else
-          "SelfTest module not available"
+          "Introspection module not available"
         end
       end
 

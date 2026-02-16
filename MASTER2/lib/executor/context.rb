@@ -57,10 +57,14 @@ module MASTER
           sections << "\nACTIVE PERSONA:\n#{persona_prompt}" if persona_prompt && !persona_prompt.empty?
         end
 
+        # Inject working directory file tree (depth 2, compact)
+        tree = dir_snapshot(Dir.pwd, max_depth: 2)
+        sections << "WORKING DIRECTORY:\n#{tree}" unless tree.empty?
+
         # Check for project-specific MASTER.md
         master_md = File.join(Dir.pwd, "MASTER.md")
         if File.exist?(master_md)
-          sections << "\nPROJECT CONTEXT (from MASTER.md):\n#{File.read(master_md)[0..2000]}"
+          sections << "PROJECT CONTEXT (from MASTER.md):\n#{File.read(master_md)[0..2000]}"
         end
 
         sections.join("\n\n")
@@ -112,6 +116,28 @@ module MASTER
           { role: "system", content: Context.build_system_message(include_commands: true) },
           { role: "user", content: build_task_context(goal) }
         ]
+      end
+
+      # Compact file tree for system prompt injection
+      def self.dir_snapshot(root, max_depth: 2, depth: 0, exclude: %w[. .. .git vendor tmp node_modules var])
+        return "" if depth >= max_depth
+        begin
+          entries = Dir.children(root).sort.reject { |e| exclude.include?(e) || e.start_with?(".") }
+        rescue SystemCallError
+          return ""
+        end
+        lines = []
+        entries.each do |entry|
+          path = File.join(root, entry)
+          indent = "  " * depth
+          if File.directory?(path)
+            lines << "#{indent}#{entry}/"
+            lines << dir_snapshot(path, max_depth: max_depth, depth: depth + 1, exclude: exclude)
+          else
+            lines << "#{indent}#{entry}"
+          end
+        end
+        lines.join("\n")
       end
 
       def parse_response(text)

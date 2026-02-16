@@ -14,6 +14,41 @@ module MASTER
 
         IGNORED = %w[.git node_modules vendor tmp log .bundle].freeze
 
+        # Introspect any codebase: structure, syntax, sprawl, reflection
+        def run(root = MASTER.root)
+          map = generate_map(root)
+          label = File.basename(root)
+          puts "introspect: #{label} #{map[:lib_files].count} lib, #{map[:test_files].count} test"
+
+          errors = map[:ruby_files].select do |f|
+            !system("ruby", "-c", f, out: File::NULL, err: File::NULL)
+          end
+          puts "introspect: syntax #{errors.empty? ? 'ok' : "#{errors.count} errors"}"
+          errors.each { |f| puts "  #{f}" }
+
+          large = map[:ruby_files].select { |f| File.readlines(f).size > 300 rescue false }
+          puts "introspect: #{large.count} files >300 lines" if large.any?
+          large.each { |f| puts "  #{File.basename(f)} #{File.readlines(f).size}L" }
+
+          if system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
+            status = `git -C #{root} status --porcelain`.strip
+            puts status.empty? ? "introspect: git clean" : "introspect: git #{status.lines.size} uncommitted"
+          end
+
+          if defined?(LLM) && LLM.configured?
+            facts = "#{map[:lib_files].count} lib, #{map[:test_files].count} test, " \
+                    "#{errors.count} syntax errors, #{large.count} >300L"
+            prompt = "You inspected #{label}. Facts: #{facts}. " \
+                     "In 5 lines or fewer: what should be improved? Be concrete."
+            result = LLM.ask(prompt, stream: true)
+            puts result.value[:content] if result&.ok?
+          end
+
+          Result.ok("introspect complete: #{map[:ruby_files].count} files, #{errors.count} errors")
+        rescue => e
+          Result.err("introspect failed: #{e.message}")
+        end
+
         # Generate summary of MASTER's structure for boot display
         # @return [String] Brief summary "X lib, Y test"
         def summary(root = MASTER.root)

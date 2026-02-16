@@ -95,7 +95,7 @@ anti_simulation: |
 commands: |
   COMMANDS: help, status, budget, model <name>, models, pattern <name>,
   refactor <path>, chamber <path>, evolve <path>, scan <path>, fix <path>,
-  selftest, speak <text>, browse <url>, persona <name>, personas,
+  selftest, self, speak <text>, browse <url>, persona <name>, personas,
   session save/load/list, queue, harvest, repligen <prompt>, postpro <op> <url>,
   schedule list/add/remove, heartbeat start/stop/status, policy show/set,
   phase next/prev/set, exit

@@ -204,8 +204,8 @@ module MASTER
       when "axioms", "language-axioms"
         print_language_axioms(args)
         nil
-      when "selftest", "self-test", "selfrun", "self-run"
-        SelfTest.run
+      when "self", "selftest", "self-test", "selfrun", "self-run"
+        selftest_full(args)
       when "speak", "say"
         speak(args)
         nil
@@ -267,8 +267,6 @@ module MASTER
         nil
       when "multi-refactor", "mrefactor"
         multi_refactor(args)
-      when "selfrun", "self-run"
-        selfrun_full(args)
       when "shell"
         # Start interactive shell
         InteractiveShell.new.run

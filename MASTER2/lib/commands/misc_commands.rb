@@ -90,14 +90,13 @@ module MASTER
           result = SessionCapture.review
           if result.ok?
             captures = result.value[:captures]
-            puts "\n  #{captures.size} session captures:"
+            puts "#{captures.size} session captures:"
             captures.last(10).each do |c|
-              puts "\n  #{UI.dim(c[:timestamp])}"
+              puts "#{UI.dim(c[:timestamp])}"
               c[:answers].each do |category, answer|
-                puts "    #{UI.bold(category)}: #{answer}"
+                puts "  #{UI.bold(category)}: #{answer}"
               end
             end
-            puts
           else
             puts "  #{result.error}"
           end
@@ -132,13 +131,11 @@ module MASTER
 
         checks.each do |c|
           status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "  #{status} #{c[:name]}"
+          puts "#{status} #{c[:name]}"
         end
 
         all_ok = checks.all? { |c| c[:ok] }
-        puts
-        puts all_ok ? "  System healthy." : "  Some checks failed."
-        puts
+        puts all_ok ? "health: ok" : "health: some checks failed"
       end
 
       # Cinematic AI Pipeline Commands
@@ -183,12 +180,10 @@ module MASTER
         result = Cinematic.list_presets
         return puts "  Error: #{result.error}" if result.err?
 
-        puts "\nCinematic Presets\n" + ("-" * 40)
+        puts "Cinematic Presets"
         result.value[:presets].each do |preset|
           source = preset[:source] == 'builtin' ? '[builtin]' : '[custom]'
-          puts "  * #{preset[:name]} #{source}"
-          puts "    #{preset[:description]}"
-          puts
+          puts "  * #{preset[:name]} #{source} #{preset[:description]}"
         end
       end
 
@@ -207,8 +202,7 @@ module MASTER
 
         if result.ok?
           output = result.value[:final]
-          puts "  + Pipeline complete!"
-          puts "  Output: #{output}"
+          puts "pipeline: complete -> #{output}"
         else
           puts "  - Pipeline failed: #{result.error}"
         end
@@ -238,14 +232,8 @@ module MASTER
       end
 
       def build_cinematic_pipeline
-        puts "\nBuild Custom Pipeline\n" + ("-" * 40)
-        puts "  (Interactive pipeline builder coming soon)"
-        puts "  For now, use the Ruby API:"
-        puts
-        puts "    pipeline = MASTER::Cinematic::Pipeline.new"
-        puts "    pipeline.chain('stability-ai/sdxl', { prompt: 'cinematic' })"
-        puts "    result = pipeline.execute(input)"
-        puts
+        puts "pipeline: interactive builder (coming soon)"
+        puts "  pipeline = MASTER::Cinematic::Pipeline.new; pipeline.chain('stability-ai/sdxl', { prompt: 'cinematic' }); result = pipeline.execute(input)"
       end
 
       # Persona management commands
@@ -321,10 +309,7 @@ module MASTER
         when "stats", nil, ""
           stats = SemanticCache.stats
           UI.header("Semantic Cache")
-          puts "  Entries: #{stats[:entries]}"
-          puts "  Size: #{stats[:size_human]}"
-          puts "  Dir: #{stats[:cache_dir]}"
-          puts
+          puts "entries: #{stats[:entries]} size: #{stats[:size_human]} dir: #{stats[:cache_dir]}"
         else
           puts "  Usage: cache [stats|clear]"
         end
@@ -335,39 +320,101 @@ module MASTER
         return puts "  MultiRefactor not available" unless defined?(MultiRefactor)
 
         path = args&.split&.first || MASTER.root
-        dry_run = !args&.include?("--apply")
+        dry_run = !args&.include?("-a") && !args&.include?("--apply")
         mr = MultiRefactor.new(dry_run: dry_run)
         result = mr.run(path: path)
         result
       end
 
       # Full self-run across entire pub4 repo
-      def selfrun_full(args)
-        return puts "  MultiRefactor not available" unless defined?(MultiRefactor)
+      def selftest_full(args)
+        root = MASTER.root
+        apply = args&.include?("-a") || args&.include?("--apply")
+        lib_dir = File.join(root, "lib")
 
-        puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
-        pub4_root = File.expand_path("../..", MASTER.root)  # Go up from MASTER2/ to pub4/
+        rb_files = Dir.glob(File.join(lib_dir, "**", "*.rb")).sort
+        puts "self: #{rb_files.count} files, mode: #{apply ? 'apply' : 'dry-run'}"
 
-        # Phase 1: Self-refactor MASTER2 itself
-        puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
-        mr = MultiRefactor.new(dry_run: !args&.include?("--apply"), budget_cap: 1.0)
-        mr.run(path: File.join(pub4_root, "MASTER2", "lib"))
+        # phase 1: syntax
+        syntax_errors = rb_files.select { |f| !system("ruby", "-c", f, out: File::NULL, err: File::NULL) }
+        puts "self: syntax #{syntax_errors.empty? ? 'ok' : "#{syntax_errors.count} errors"}"
+        syntax_errors.each { |f| puts "  #{File.basename(f)}" }
 
-        # Phase 2: Deploy scripts
-        puts "\n=== Phase 2: Deploy Scripts ==="
-        mr2 = MultiRefactor.new(dry_run: !args&.include?("--apply"), budget_cap: 1.0)
-        mr2.run(path: File.join(pub4_root, "deploy"))
+        # phase 2: sprawl
+        large = rb_files.select { |f| File.readlines(f).size > 300 rescue false }
+        puts "self: #{large.count} files >300 lines" if large.any?
+        large.each { |f| puts "  #{File.basename(f)} #{File.readlines(f).size}L" }
 
-        # Phase 3: Business plans (HTML)
-        puts "\n=== Phase 3: Business Plans ==="
-        mr3 = MultiRefactor.new(dry_run: !args&.include?("--apply"), budget_cap: 0.5)
-        mr3.run(path: File.join(pub4_root, "bp"))
+        # phase 3: enforcement pipeline (same as any code gets)
+        total_violations = 0
+        fixed = 0
 
-        # Phase 4: Self-test
-        puts "\n=== Phase 4: Self-Test ==="
-        Introspection.run if defined?(Introspection)
+        rb_files.each do |file|
+          code = File.read(file)
+          rel = file.sub("#{root}/", "")
+          violations = []
 
-        Result.ok("Self-run complete")
+          if defined?(Enforcement::Layers)
+            r = Enforcement::Layers.check(code, filename: rel)
+            violations.concat(r) if r.is_a?(Array)
+          end
+
+          if defined?(CodeReview::Smells)
+            r = CodeReview::Smells.analyze(code, rel)
+            violations.concat(r) if r.is_a?(Array)
+          end
+
+          if defined?(CodeReview::Violations)
+            r = CodeReview::Violations.analyze(code, path: rel)
+            violations.concat(r) if r.is_a?(Array)
+          end
+
+          next if violations.empty?
+
+          total_violations += violations.count
+          puts "  #{rel}: #{violations.count} violations"
+          violations.each { |v| puts "    #{v[:axiom] || v[:type] || v[:pattern]}: #{v[:message]}" }
+
+          next unless apply && defined?(LLM) && LLM.configured?
+
+          prompt = "Fix these violations in #{rel}:\n" \
+                   "#{violations.map { |v| "- #{v[:message]}" }.join("\n")}\n\n" \
+                   "Return ONLY the corrected Ruby code, no explanation."
+          result = LLM.ask(prompt, stream: false)
+          if result&.ok? && result.value[:content].to_s.include?("def ")
+            File.write(file, result.value[:content])
+            if system("ruby", "-c", file, out: File::NULL, err: File::NULL)
+              fixed += violations.count
+              puts "    + fixed"
+            else
+              File.write(file, code)
+              puts "    - rollback (syntax error)"
+            end
+          end
+        end
+
+        puts "self: #{total_violations} violations#{apply ? ", #{fixed} fixed" : ""}"
+
+        # phase 4: git status
+        if system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
+          status = `git -C #{root} status --porcelain`.strip
+          puts status.empty? ? "self: git clean" : "self: git #{status.lines.size} uncommitted"
+        end
+
+        # phase 5: reflect via LLM
+        if defined?(LLM) && LLM.configured?
+          facts = "#{rb_files.count} files, #{syntax_errors.count} syntax errors, " \
+                  "#{large.count} >300L, #{total_violations} violations, #{fixed} fixed"
+          prompt = "You just ran self-inspection on your own codebase. " \
+                   "Facts: #{facts}. " \
+                   "In 5 lines or fewer: what should be improved next? Be concrete and terse."
+          r = LLM.ask(prompt, stream: true)
+          puts r.value[:content] if r&.ok?
+        end
+
+        Result.ok("self complete: #{total_violations} violations, #{fixed} fixed")
+      rescue => e
+        Result.err("self failed: #{e.message}")
       end
     end
   end
