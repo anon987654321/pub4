@@ -8,6 +8,8 @@ require "fileutils"
 require_relative "session/memory"
 require_relative "session/capture"
 require_relative "session/replay"
+require_relative "session/language"
+require_relative "session/persona"
 
 module MASTER
   # Session - Persistent session management with auto-save
@@ -202,74 +204,22 @@ module MASTER
       }
     end
 
-    # Language detection and multi-language support
+    # Delegate language methods to Language module
     def self.detect_language(text)
-      # Norwegian indicators
-      norwegian_words = %w[og men er på av til fra med som den det]
-      norwegian_count = norwegian_words.count { |word| text.downcase.include?(word) }
-
-      # English indicators
-      english_words = %w[the and but are on of to from with as that this]
-      english_count = english_words.count { |word| text.downcase.include?(word) }
-
-      # Safety: avoid division by zero
-      total_indicators = norwegian_count + english_count
-      return Result.ok(language: :english, confidence: 0.0) if total_indicators == 0
-
-      if norwegian_count > english_count
-        Result.ok(language: :norwegian, confidence: norwegian_count.to_f / (norwegian_count + english_count))
-      else
-        Result.ok(language: :english, confidence: english_count.to_f / (norwegian_count + english_count))
-      end
+      Language.detect_language(text)
     end
 
     def self.norwegian_style_check(text)
-      issues = []
-
-      # Load anglicisms from constitution.yml
-      constitution_file = File.join(MASTER.root, "data", "constitution.yml")
-      anglicisms = if File.exist?(constitution_file)
-        constitution = YAML.safe_load_file(constitution_file, symbolize_names: true)
-        constitution.dig(:language, :norwegian, :anglicisms) || {
-          "meeting" => "møte",
-          "deal" => "avtale",
-          "deadline" => "frist",
-          "feedback" => "tilbakemelding"
-        }
-      else
-        {
-          "meeting" => "møte",
-          "deal" => "avtale",
-          "deadline" => "frist",
-          "feedback" => "tilbakemelding"
-        }
-      end
-
-      anglicisms.each do |english, norwegian|
-        if text.downcase.include?(english.to_s)
-          issues << "Replace '#{english}' with '#{norwegian}'"
-        end
-      end
-
-      Result.ok(issues: issues)
+      Language.norwegian_style_check(text)
     end
 
-    # Persona management
+    # Delegate persona methods to Persona module
     def self.set_persona(persona)
-      # Load available personas from constitution.yml
-      constitution_file = File.join(MASTER.root, "data", "constitution.yml")
-      if File.exist?(constitution_file)
-        constitution = YAML.safe_load_file(constitution_file, symbolize_names: true)
-        available_personas = constitution.dig(:personas, :available)&.keys || [:ronin]
-        return Result.err("Unknown persona: #{persona}") unless available_personas.include?(persona.to_sym)
-      end
-
-      current.write_metadata(:persona, persona)
-      Result.ok(persona: persona)
+      Persona.set_persona(persona)
     end
 
     def self.current_persona
-      current.metadata_value(:persona) || :ronin
+      Persona.current_persona
     end
   end
 end
