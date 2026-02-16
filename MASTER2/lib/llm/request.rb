@@ -54,6 +54,7 @@ module MASTER
         configure_ruby_llm
 
         chat = RubyLLM.chat(model: model)
+        chat = chat.with_params(max_tokens: MAX_CHAT_TOKENS)
 
         # Validate reasoning effort values
         if reasoning

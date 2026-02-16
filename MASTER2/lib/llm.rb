@@ -13,6 +13,7 @@ module MASTER
     TIER_ORDER = %i[premium strong fast cheap].freeze
     SPENDING_CAP = 10.0
     MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
+    MAX_CHAT_TOKENS = 16_384  # cap output to avoid OpenRouter credit errors
 
     # Reasoning effort levels (OpenRouter normalized)
     REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
