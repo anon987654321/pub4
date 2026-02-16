@@ -24,7 +24,11 @@ module MASTER
         start_time = MASTER::Utils.monotonic_now
         timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
         user = ENV["USER"] || ENV["USERNAME"] || "user"
-        host = `hostname`.strip rescue "localhost"
+        host = begin
+          `hostname`.strip
+        rescue StandardError
+          "localhost"
+        end
 
         smoke_result = smoke_test
 

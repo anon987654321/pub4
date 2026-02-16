@@ -84,6 +84,7 @@ require_relative "bridges"
     require_relative mod
   rescue LoadError, StandardError => e
     warn "MASTER: #{mod} unavailable (#{e.message})"
+    Logging.warn("#{mod} unavailable", error: e.message) if defined?(Logging)
   end
 end
 
