@@ -45,7 +45,7 @@ module MASTER
           end
 
           Result.ok("introspect complete: #{map[:ruby_files].count} files, #{errors.count} errors")
-        rescue => e
+        rescue StandardError => e
           Result.err("introspect failed: #{e.message}")
         end
 

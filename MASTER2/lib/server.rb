@@ -2,10 +2,16 @@
 
 require "json"
 require "socket"
+require_relative "server/handlers"
+require_relative "server/websocket"
+require_relative "server/webrick"
 
 module MASTER
   # Server - Multimodal web UI with Falcon
   class Server
+    include Handlers
+    include WebSocket
+    include WEBrick
     JSON_TYPE = "application/json".freeze
     HTML_TYPE = "text/html".freeze
     TEXT_TYPE = "text/plain".freeze
@@ -157,163 +163,6 @@ module MASTER
           serve_static_file(path)
         end
       }
-    end
-
-    def handle_poll(queue)
-      text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
-      body = {
-        text: text, tier: LLM.tier,
-        budget: LLM.budget_remaining, version: VERSION,
-      }.to_json
-      [200, { CT_HEADER => JSON_TYPE }, [body]]
-    end
-
-    def handle_chat(env, pipeline, queue)
-      body = env["rack.input"].read
-      data = JSON.parse(body) rescue {}
-      message = data[:message].to_s.strip
-
-      if message.empty?
-        [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no message"}']]
-      else
-        Thread.new do
-          result = pipeline.call({ text: message })
-          output = result.ok? ? result.value[:rendered] : "Error: #{result.error}"
-          queue.push(output)
-        rescue StandardError => e
-          queue.push("Error: #{e.message}")
-        end
-        [200, { CT_HEADER => JSON_TYPE }, ['{"status":"processing"}']]
-      end
-    end
-
-    def handle_metrics
-      metrics = {
-        version: VERSION, tier: LLM.tier,
-        budget_remaining: LLM.budget_remaining,
-        models: LLM.models.size,
-        tts: defined?(Audio) ? Audio.engine_status : "unavailable",
-        self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
-      }.to_json
-      [200, { CT_HEADER => JSON_TYPE }, [metrics]]
-    end
-
-    def handle_tts(env)
-      body = env["rack.input"].read
-      data = JSON.parse(body) rescue {}
-      text = data[:text].to_s.strip
-
-      return [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no text provided"}']] if text.empty?
-      unless defined?(Speech) && Speech.respond_to?(:synthesize)
-        return [501, { CT_HEADER => JSON_TYPE }, ['{"error":"TTS not available"}']]
-      end
-
-      result = Speech.synthesize(text)
-      if result.respond_to?(:ok?) && result.ok?
-        audio_data = result.value[:audio] || result.value[:data]
-        [200, { CT_HEADER => "audio/mpeg" }, [audio_data]]
-      else
-        error = result.respond_to?(:error) ? result.error : "TTS failed"
-        [500, { CT_HEADER => JSON_TYPE }, [{ error: error }.to_json]]
-      end
-    end
-
-    def handle_tts_stream(env)
-      text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
-      return [400, {}, ["Missing text"]] unless text
-      unless defined?(Web::OrbTTS)
-        return [501, { CT_HEADER => TEXT_TYPE }, ["TTS not available"]]
-      end
-
-      headers = {
-        "Content-Type" => "text/event-stream",
-        "Cache-Control" => "no-cache",
-        "Connection" => "keep-alive",
-      }
-      [200, headers, Web::OrbTTS.stream(text)]
-    end
-
-    def serve_static_file(path)
-      clean_path = File.basename(path)
-      view_path = File.expand_path(clean_path, VIEWS_DIR)
-
-      if view_path.start_with?(VIEWS_DIR) && File.exist?(view_path) && File.file?(view_path)
-        ext = File.extname(path)
-        type = { ".html" => HTML_TYPE, ".js" => "application/javascript", ".css" => "text/css" }[ext] || TEXT_TYPE
-        [200, { CT_HEADER => type }, [File.read(view_path)]]
-      else
-        [404, { CT_HEADER => TEXT_TYPE }, ["Not found"]]
-      end
-    end
-
-    def handle_websocket(env, pipeline)
-      # Try to load async-websocket, return 501 if not available
-      begin
-        require "async"
-        require "async/websocket/adapters/rack"
-      rescue LoadError
-        Logging.warn("WebSocket", "async-websocket not available")
-        return [501, { CT_HEADER => TEXT_TYPE }, ["WebSocket not available"]]
-      end
-
-      Async::WebSocket::Adapters::Rack.open(env, protocols: ["chat"]) do |connection|
-        # WebSocket connection established
-        while (message = connection.read)
-          begin
-            data = JSON.parse(message, symbolize_names: true)
-
-            if data[:type] == "chat"
-              user_message = data[:message].to_s.strip
-
-              if user_message.empty?
-                connection.write({ type: "error", message: "Empty message" }.to_json)
-                connection.flush
-                next
-              end
-
-              # Process message through pipeline
-              result = pipeline.call({ text: user_message })
-
-              if result.ok?
-                response_text = result.value[:rendered] || result.value[:text] || ""
-
-                # Stream response in chunks (simulate streaming by sending full response)
-                # In a real implementation, you'd hook into the LLM's streaming API
-                connection.write({ type: "chunk", text: response_text }.to_json)
-                connection.flush
-
-                # Send done message with metadata
-                meta = {
-                  tier: LLM.tier,
-                  budget: LLM.budget_remaining,
-                  tokens: result.value[:tokens] || 0,
-                  cost: result.value[:cost] || 0.0,
-                }
-                connection.write({ type: "done", meta: meta }.to_json)
-                connection.flush
-              else
-                connection.write({ type: "error", message: result.error }.to_json)
-                connection.flush
-              end
-            else
-              connection.write({ type: "error", message: "Unknown message type" }.to_json)
-              connection.flush
-            end
-          rescue JSON::ParserError
-            connection.write({ type: "error", message: "Invalid JSON" }.to_json)
-            connection.flush
-          rescue StandardError => e
-            Logging.warn("WebSocket", "Error: #{e.message}")
-            connection.write({ type: "error", message: e.message }.to_json)
-            connection.flush
-          end
-        end
-      rescue StandardError => e
-        Logging.warn("WebSocket", "Connection error: #{e.message}")
-      end
-
-      # Return nil to indicate WebSocket handled the request
-      nil
     end
 
     def health_json

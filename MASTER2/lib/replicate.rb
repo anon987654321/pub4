@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'json'
-require 'uri'
-require_relative 'result'
+require "net/http"
+require "json"
+require "uri"
+require_relative "result"
 
 module MASTER
   # Replicate - Image generation via Replicate API

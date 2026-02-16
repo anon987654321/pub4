@@ -2,49 +2,65 @@
 
 require "json"
 require "time"
+require_relative "logging/dmesg"
 
 module MASTER
   # Logging - Unified logging system
   # Combines three logging approaches:
   #   1. Standard logging (debug/info/warn/error) - from log.rb
   #   2. Structured JSON logging - from logging.rb
-  #   3. OpenBSD kernel-style dmesg - from dmesg.rb
+  #   3. OpenBSD kernel-style dmesg - from dmesg.rb (extracted to logging/dmesg.rb)
   module Logging
+    extend self
     # CONFIGURATION
 
     LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 }.freeze
 
     @level = :info
-    @format = :human  # :json or :human
+    @format = :human
     @output = $stderr
     @request_id = nil
 
-    # Dmesg configuration
-    @buffer = []
-    @buffer_mutex = Mutex.new
-    @start_time = Time.now
-    BUFFER_CAP = 1000
-
-    # Trace levels (for dmesg-style logging)
-    SILENT = 0
-    LLM_ONLY = 1
-    ALL_EVENTS = 2
-    FULL_DEBUG = 3
+    # Import dmesg constants for backward compatibility
+    SILENT = Dmesg::SILENT
+    LLM_ONLY = Dmesg::LLM_ONLY
+    ALL_EVENTS = Dmesg::ALL_EVENTS
+    FULL_DEBUG = Dmesg::FULL_DEBUG
 
     class << self
       attr_accessor :level, :format, :output, :request_id
-      attr_reader :buffer
 
       def level=(val)
         @level = val.to_sym
       end
 
+      # Delegate dmesg methods
       def trace_level
-        (ENV['MASTER_TRACE'] || '1').to_i
+        Dmesg.trace_level
       end
 
       def enabled?(level = LLM_ONLY)
-        trace_level >= level
+        Dmesg.enabled?(level)
+      end
+
+      def buffer
+        Dmesg.buffer
+      end
+
+      def dmesg_log(...)
+        Dmesg.dmesg_log(...)
+      end
+
+      def dump(...)
+        Dmesg.dump(...)
+      end
+
+      def clear
+        Dmesg.clear
+      end
+
+      def reset_timer
+        Dmesg.reset_timer
       end
       # STANDARD LOGGING (from log.rb + logging.rb)
 
@@ -221,52 +237,7 @@ module MASTER
           warn("Tool failed", tool: tool, error: error, duration_ms: duration_ms)
         end
       end
-      # DMESG-STYLE LOGGING (from dmesg.rb)
 
-      def dmesg_log(device, parent: nil, message: nil, level: ALL_EVENTS)
-        timestamp = ((Time.now - @start_time) * 1000).round
-
-        line = if parent
-                 "#{device} at #{parent}#{message ? ": #{message}" : ''}"
-               else
-                 "#{device}#{message ? ": #{message}" : ''}"
-               end
-
-        entry = { time: timestamp, line: line, level: level }
-        @buffer_mutex.synchronize do
-          @buffer << entry
-          @buffer.shift if @buffer.size > BUFFER_CAP  # Cap buffer size
-        end
-
-        # Progressive disclosure (Yugen)
-        if enabled?(level) && $stdout.tty?
-          output = trace_level >= FULL_DEBUG ? "[#{timestamp}ms] #{line}" : line
-          if defined?(UI) && UI.respond_to?(:dim)
-            puts UI.dim(output)
-          else
-            puts output
-          end
-        end
-
-        line
-      end
-
-      # Dump buffer
-      def dump(last_n: nil, min_level: SILENT)
-        entries = @buffer_mutex.synchronize { @buffer.select { |e| e[:level] >= min_level } }
-        entries = entries.last(last_n) if last_n
-        entries.map { |e| "[#{e[:time]}ms] #{e[:line]}" }.join("\n")
-      end
-
-      def clear
-        @buffer_mutex.synchronize { @buffer.clear }
-      end
-
-      def reset_timer
-        @start_time = Time.now
-      end
-
-      public
       def log(severity, message, **context)
         return if LEVELS[severity] < LEVELS[@level]
 
@@ -278,6 +249,10 @@ module MASTER
         else
           @output.puts(format_human(entry))
         end
+      end
+
+      def logging_enabled?
+        @level != :silent && ENV['MASTER_LOG'] != '0'
       end
 
       private
@@ -308,11 +283,6 @@ module MASTER
         rid_str = entry[:request_id] ? "[#{entry[:request_id][0..7]}] " : ""
 
         "#{prefix}#{entry[:level][0]}#{reset} #{rid_str}#{entry[:message]}#{ctx_str}"
-      end
-
-      # Check if structured logging is enabled
-      def logging_enabled?
-        @level != :silent && ENV['MASTER_LOG'] != '0'
       end
     end
   end
