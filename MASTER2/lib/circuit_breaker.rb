@@ -27,15 +27,19 @@ rescue LoadError
   class StoplightMock
     attr_reader :name
 
-    @@warned = false
+    @warned = false
+
+    class << self
+      attr_accessor :warned
+    end
 
     def initialize(name, threshold = 3, cool_off_time = 300)
       @name = name
       @threshold = threshold
       @cool_off_time = cool_off_time
-      unless @@warned
+      unless self.class.warned
         warn "Warning: Stoplight gem not available - circuit breaker disabled"
-        @@warned = true
+        self.class.warned = true
       end
     end
 

@@ -195,7 +195,7 @@ module MASTER
       end
 
       # Auto-router - let OpenRouter pick best model
-      def ask_auto(prompt, allowed_models: nil, **opts)
+      def ask_auto(prompt, **opts)
         ask(prompt, model: "openrouter/auto", **opts)
       end
 
