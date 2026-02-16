@@ -3,7 +3,7 @@
 module MASTER
   class Executor
     module Context
-      SIMPLE_SECTIONS = %w[environment shell_patterns behavior].freeze
+      SIMPLE_SECTIONS = %w[capabilities architecture environment shell_patterns behavior].freeze
       LABELED_SECTIONS = {
         "task_workflow" => "TASK WORKFLOW",
         "safety" => "SAFETY",
@@ -25,7 +25,10 @@ module MASTER
 
         # Identity (interpolated)
         identity = if config["identity"]
-          config["identity"] % { version: MASTER::VERSION, platform: RUBY_PLATFORM, ruby_version: RUBY_VERSION }
+          config["identity"] % {
+            version: MASTER::VERSION, platform: RUBY_PLATFORM,
+            ruby_version: RUBY_VERSION, working_dir: Dir.pwd
+          }
         else
           "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant."
         end

@@ -7,7 +7,8 @@ module MASTER
 
     def self.spinner(message = nil, format: :dots)
       require "tty-spinner"
-      TTY::Spinner.new("[:spinner] #{message}", format: format)
+      TTY::Spinner.new(":spinner #{message}", format: format,
+        success_mark: "+", error_mark: "-")
     rescue LoadError
       SubtleSpinner.new(message)
     end
