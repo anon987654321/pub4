@@ -77,6 +77,12 @@ module MASTER
         end
       end
 
+      # Ask LLM with fallbacks, reasoning, and structured outputs
+      # Returns Result monad with value/error
+      #
+      # WARNING: CQS Violation - This query method mutates @current_model as a side effect
+      # for tracking purposes (line 106). This is intentional but non-standard.
+      #
       # Options:
       #   tier: :strong/:fast/:cheap - model tier selection
       #   model: explicit model ID

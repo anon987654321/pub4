@@ -160,16 +160,21 @@ module MASTER
 
       def git_info
         # Detect git branch and dirty status
-        branch = IO.popen(%w[git rev-parse --abbrev-ref HEAD], err: [:child, :out]) { |io| io.read.strip }
+        require "timeout"
+        branch = Timeout.timeout(2) do
+          IO.popen(%w[git rev-parse --abbrev-ref HEAD], err: [:child, :out]) { |io| io.read.strip }
+        end
         return nil if branch.empty? || $?.exitstatus != 0
 
         # Check for uncommitted changes
-        status = IO.popen(%w[git status --porcelain], err: [:child, :out]) { |io| io.read }
+        status = Timeout.timeout(2) do
+          IO.popen(%w[git status --porcelain], err: [:child, :out]) { |io| io.read }
+        end
         dirty = !status.empty? && $?.exitstatus == 0
 
         dirty_indicator = dirty ? "*" : ""
         UI.pastel.blue("#{branch}#{dirty_indicator}")
-      rescue StandardError => e
+      rescue Timeout::Error, StandardError => e
         nil
       end
 
