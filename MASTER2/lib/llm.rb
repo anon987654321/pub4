@@ -105,12 +105,11 @@ module MASTER
 
         @current_model = extract_model_name(primary)
 
-        # Auto-fallback: try all models in order
+        # Auto-fallback: only cascade on infrastructure errors, max 2 retries
         models_to_try = if fallbacks
                           [primary] + fallbacks
                         else
-                          remaining = all_models.reject { |m| m == primary }
-                          [primary] + remaining
+                          [primary]
                         end
         last_error = nil
 
@@ -128,7 +127,7 @@ module MASTER
           end
         end
 
-        Result.err("All models failed. Last error: #{last_error}")
+        Result.err("#{extract_model_name(primary)}: #{last_error}")
       rescue StandardError => e
         CircuitBreaker.open_circuit!(primary) if primary
         Result.err(Logging.format_error(e))
