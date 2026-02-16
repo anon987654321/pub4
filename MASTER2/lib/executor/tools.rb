@@ -233,7 +233,7 @@ module MASTER
 
       def record_history(entry)
         @history << entry
-        @history.shift if @history.size > MAX_HISTORY_ENTRIES
+        @history.shift if @history.size > 50
       end
 
       # deprecated: use dispatch_action
