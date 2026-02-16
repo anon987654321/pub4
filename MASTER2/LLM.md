@@ -24,6 +24,8 @@ User Input → Pipeline → Executor → LLM → Output
 
 ## File Responsibilities & Axiom Categories
 
+Note: Line counts are approximate and may change as code evolves.
+
 | File | Responsibility | Primary Axioms | Lines |
 |------|---------------|----------------|-------|
 | `lib/master.rb` | Module loader, namespace | PRESERVE_THEN_IMPROVE_NEVER_BREAK | 100 |

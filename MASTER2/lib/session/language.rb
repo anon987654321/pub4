@@ -20,33 +20,30 @@ module MASTER
         total_indicators = norwegian_count + english_count
         return Result.ok(language: :english, confidence: 0.0) if total_indicators == 0
 
-        if norwegian_count > english_count
-          Result.ok(language: :norwegian, confidence: norwegian_count.to_f / (norwegian_count + english_count))
-        else
-          Result.ok(language: :english, confidence: english_count.to_f / (norwegian_count + english_count))
-        end
+        language = norwegian_count > english_count ? :norwegian : :english
+        confidence = (norwegian_count > english_count ? norwegian_count : english_count).to_f / total_indicators
+
+        Result.ok(language: language, confidence: confidence)
       end
+
+      # Fallback to common anglicisms if constitution.yml doesn't exist
+      FALLBACK_ANGLICISMS = {
+        "meeting" => "møte",
+        "deal" => "avtale",
+        "deadline" => "frist",
+        "feedback" => "tilbakemelding"
+      }.freeze
 
       def norwegian_style_check(text)
         issues = []
 
-        # Load anglicisms from constitution.yml
+        # Load anglicisms from constitution.yml or use fallback
         constitution_file = File.join(MASTER.root, "data", "constitution.yml")
         anglicisms = if File.exist?(constitution_file)
           constitution = YAML.safe_load_file(constitution_file, symbolize_names: true)
-          constitution.dig(:language, :norwegian, :anglicisms) || {
-            "meeting" => "møte",
-            "deal" => "avtale",
-            "deadline" => "frist",
-            "feedback" => "tilbakemelding"
-          }
+          constitution.dig(:language, :norwegian, :anglicisms) || FALLBACK_ANGLICISMS
         else
-          {
-            "meeting" => "møte",
-            "deal" => "avtale",
-            "deadline" => "frist",
-            "feedback" => "tilbakemelding"
-          }
+          FALLBACK_ANGLICISMS
         end
 
         anglicisms.each do |english, norwegian|

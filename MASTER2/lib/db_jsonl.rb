@@ -168,17 +168,18 @@ module MASTER
       return unless read_collection("axioms").empty?
 
       axioms_file = File.join(MASTER.root, "data", "axioms.yml")
-      if File.exist?(axioms_file)
-        axioms_data = YAML.safe_load_file(axioms_file, symbolize_names: true)
-        axioms_data.each do |axiom|
-          add_axiom(
-            name: axiom[:id] || axiom[:name],
-            description: axiom[:statement] || axiom[:description],
-            category: axiom[:category] || "core"
-          )
-        end
-      else
-        Logging.error("axioms.yml not found at #{axioms_file}")
+      unless File.exist?(axioms_file)
+        Logging.error("CRITICAL: axioms.yml not found at #{axioms_file}")
+        raise "axioms.yml not found - cannot initialize MASTER2"
+      end
+
+      axioms_data = YAML.safe_load_file(axioms_file, symbolize_names: true)
+      axioms_data.each do |axiom|
+        add_axiom(
+          name: axiom[:id] || axiom[:name],
+          description: axiom[:statement] || axiom[:description],
+          category: axiom[:category] || "core"
+        )
       end
     end
 
@@ -186,18 +187,19 @@ module MASTER
       return unless read_collection("council").empty?
 
       council_file = File.join(MASTER.root, "data", "council.yml")
-      if File.exist?(council_file)
-        council_data = YAML.safe_load_file(council_file, symbolize_names: true)
-        council_data[:council]&.each do |member|
-          add_persona(
-            name: member[:name],
-            role: member[:slug],
-            style: "weight: #{member[:weight]}, temp: #{member[:temperature]}",
-            bias: member[:veto] ? "veto" : "advisory"
-          )
-        end
-      else
-        Logging.error("council.yml not found at #{council_file}")
+      unless File.exist?(council_file)
+        Logging.error("CRITICAL: council.yml not found at #{council_file}")
+        raise "council.yml not found - cannot initialize MASTER2"
+      end
+
+      council_data = YAML.safe_load_file(council_file, symbolize_names: true)
+      council_data[:council]&.each do |member|
+        add_persona(
+          name: member[:name],
+          role: member[:slug],
+          style: "weight: #{member[:weight]}, temp: #{member[:temperature]}",
+          bias: member[:veto] ? "veto" : "advisory"
+        )
       end
     end
   end

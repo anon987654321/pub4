@@ -170,6 +170,10 @@ language:
       - "Avoid anglicisms when Norwegian words exist"
       - "Match user's formality level"
     anglicisms:
+      meeting: "møte"
+      deal: "avtale"
+      deadline: "frist"
+      feedback: "tilbakemelding"
       issue: "problem"
       feature: "funksjon"
       user: "bruker"
