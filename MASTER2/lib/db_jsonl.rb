@@ -178,34 +178,27 @@ module MASTER
           )
         end
       else
-        # Fallback to hardcoded defaults
-        default_axioms = [
-          { name: "SRP", description: "Single Responsibility Principle", category: "solid" },
-          { name: "OCP", description: "Open/Closed - open for extension, closed for modification", category: "solid" },
-          { name: "DRY", description: "Don't Repeat Yourself", category: "core" },
-          { name: "KISS", description: "Keep It Simple - reduce complexity, preserve UI/UX", category: "core", scope: "internal_logic" },
-          { name: "small_files", description: "Files under 300 lines", category: "style" },
-          { name: "NN/g", description: "Follow Nielsen Norman Group usability heuristics", category: "ux" },
-        ]
-        default_axioms.each { |a| add_axiom(**a) }
+        Logging.error("axioms.yml not found at #{axioms_file}")
       end
     end
 
     def seed_council
       return unless read_collection("council").empty?
-      default_council = [
-        { name: "Architect", role: "system_design", style: "formal", bias: "structure" },
-        { name: "Skeptic", role: "devil_advocate", style: "critical", bias: "caution" },
-        { name: "Pragmatist", role: "implementation", style: "direct", bias: "shipping" },
-        { name: "Security", role: "security_review", style: "paranoid", bias: "safety" },
-        { name: "User", role: "ux_advocate", style: "empathetic", bias: "usability" },
-        { name: "Mentor", role: "code_review", style: "teaching", bias: "clarity" },
-        { name: "Historian", role: "precedent_analysis", style: "scholarly", bias: "context" },
-        { name: "Minimalist", role: "simplification", style: "terse", bias: "reduction" },
-        { name: "Devil", role: "adversarial_testing", style: "provocative", bias: "breaking" },
-        { name: "Diplomat", role: "conflict_resolution", style: "balanced", bias: "consensus" },
-      ]
-      default_council.each { |c| add_persona(**c) }
+
+      council_file = File.join(MASTER.root, "data", "council.yml")
+      if File.exist?(council_file)
+        council_data = YAML.safe_load_file(council_file, symbolize_names: true)
+        council_data[:council]&.each do |member|
+          add_persona(
+            name: member[:name],
+            role: member[:slug],
+            style: "weight: #{member[:weight]}, temp: #{member[:temperature]}",
+            bias: member[:veto] ? "veto" : "advisory"
+          )
+        end
+      else
+        Logging.error("council.yml not found at #{council_file}")
+      end
     end
   end
 end

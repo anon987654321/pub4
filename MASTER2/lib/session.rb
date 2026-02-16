@@ -18,15 +18,6 @@ module MASTER
     attr_reader :id, :created_at, :history, :metadata
 
     AUTOSAVE_INTERVAL = 30  # seconds
-    SUPPORTED_LANGUAGES = %i[english norwegian].freeze
-    SUPPORTED_PERSONAS = %i[ronin lawyer hacker architect sysadmin trader medic].freeze
-
-    NORWEGIAN_RULES = [
-      "Use bokmål, not nynorsk",
-      "Prefer short sentences",
-      "Avoid anglicisms when Norwegian words exist",
-      "Match user's formality level"
-    ].freeze
 
     def initialize(id: nil)
       @id = id || SecureRandom.uuid
@@ -235,16 +226,27 @@ module MASTER
     def self.norwegian_style_check(text)
       issues = []
 
-      # Check for common anglicisms
-      anglicisms = {
-        "meeting" => "møte",
-        "deal" => "avtale",
-        "deadline" => "frist",
-        "feedback" => "tilbakemelding"
-      }
+      # Load anglicisms from constitution.yml
+      constitution_file = File.join(MASTER.root, "data", "constitution.yml")
+      anglicisms = if File.exist?(constitution_file)
+        constitution = YAML.safe_load_file(constitution_file, symbolize_names: true)
+        constitution.dig(:language, :norwegian, :anglicisms) || {
+          "meeting" => "møte",
+          "deal" => "avtale",
+          "deadline" => "frist",
+          "feedback" => "tilbakemelding"
+        }
+      else
+        {
+          "meeting" => "møte",
+          "deal" => "avtale",
+          "deadline" => "frist",
+          "feedback" => "tilbakemelding"
+        }
+      end
 
       anglicisms.each do |english, norwegian|
-        if text.downcase.include?(english)
+        if text.downcase.include?(english.to_s)
           issues << "Replace '#{english}' with '#{norwegian}'"
         end
       end
@@ -254,7 +256,13 @@ module MASTER
 
     # Persona management
     def self.set_persona(persona)
-      return Result.err("Unknown persona: #{persona}") unless SUPPORTED_PERSONAS.include?(persona)
+      # Load available personas from constitution.yml
+      constitution_file = File.join(MASTER.root, "data", "constitution.yml")
+      if File.exist?(constitution_file)
+        constitution = YAML.safe_load_file(constitution_file, symbolize_names: true)
+        available_personas = constitution.dig(:personas, :available)&.keys || [:ronin]
+        return Result.err("Unknown persona: #{persona}") unless available_personas.include?(persona.to_sym)
+      end
 
       current.write_metadata(:persona, persona)
       Result.ok(persona: persona)
