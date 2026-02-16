@@ -182,8 +182,10 @@ module MASTER
       def install_crash_handlers
         %w[INT TERM].each do |signal|
           Signal.trap(signal) do
-            save_on_crash
-            exit(signal == "INT" ? 130 : 143)
+            # Use exit! to avoid deadlock - skips finalizers but safe in signal handler
+            # Do not call save_on_crash here as it acquires mutexes
+            exit_code = signal == "INT" ? 130 : 143
+            exit!(exit_code)
           end
         end
       rescue ArgumentError
@@ -192,6 +194,7 @@ module MASTER
 
       # Save current session on crash
       # @return [void]
+      # NOTE: Should not be called from signal handler - use exit! instead
       def save_on_crash
         return unless @current&.dirty?
 
@@ -215,13 +218,15 @@ module MASTER
 
     # Language detection and multi-language support
     def self.detect_language(text)
+      text_lower = text.downcase
+
       # Norwegian indicators
       norwegian_words = %w[og men er på av til fra med som den det]
-      norwegian_count = norwegian_words.count { |word| text.downcase.include?(word) }
+      norwegian_count = norwegian_words.count { |word| text_lower =~ /\b#{Regexp.escape(word)}\b/ }
 
       # English indicators
       english_words = %w[the and but are on of to from with as that this]
-      english_count = english_words.count { |word| text.downcase.include?(word) }
+      english_count = english_words.count { |word| text_lower =~ /\b#{Regexp.escape(word)}\b/ }
 
       if norwegian_count > english_count
         Result.ok(language: :norwegian, confidence: norwegian_count.to_f / (norwegian_count + english_count))

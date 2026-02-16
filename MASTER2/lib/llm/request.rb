@@ -77,48 +77,71 @@ module MASTER
           chat = chat.with_params(provider: provider)
         end
 
-        # Preserve full message history
-        msg_content = build_message_content(prompt, messages)
+        # Build proper message array for RubyLLM (preserves multi-turn conversations)
+        msg_array = build_message_array(prompt, messages)
 
         # Extract system message if present (proper role separation)
-        user_content = msg_content
-        if msg_content.start_with?("[system]")
-          parts = msg_content.split("\n\n[user] ", 2)
-          if parts.size == 2
-            system_text = parts[0].sub(/^\[system\]\s*/, "")
-            user_content = parts[1]
-            chat = chat.with_instructions(system_text)
-          end
+        system_msg = msg_array.find { |m| m[:role] == "system" }
+        if system_msg
+          chat = chat.with_instructions(system_msg[:content])
+          msg_array = msg_array.reject { |m| m[:role] == "system" }
         end
 
-        # Execute query
+        # Execute query with proper message array
         if stream
-          execute_streaming_ruby_llm(chat, user_content, model)
+          execute_streaming_ruby_llm(chat, msg_array, model)
         else
-          execute_blocking_ruby_llm(chat, user_content, model)
+          execute_blocking_ruby_llm(chat, msg_array, model)
         end
       rescue StandardError => e
         Result.err(Logging.format_error(e))
       end
 
-      # Build message content preserving full conversation history
-      def build_message_content(prompt, messages)
+      # Build message array preserving full conversation history with proper role separation
+      def build_message_array(prompt, messages)
+        result = []
+
         if messages && messages.is_a?(Array) && !messages.empty?
-          history = messages.map do |m|
+          # Convert existing messages to proper format
+          messages.each do |m|
             role = (m[:role] || m["role"]).to_s
             content = m[:content] || m["content"]
             next unless content
-            "[#{role}] #{content}"
-          end.compact
-          history << "[user] #{prompt}" if prompt && !prompt.to_s.empty?
-          history.join("\n\n")
+            result << { role: role, content: content }
+          end
+        end
+
+        # Add current prompt as user message if provided
+        if prompt && !prompt.to_s.empty?
+          result << { role: "user", content: prompt.to_s }
+        end
+
+        result
+      end
+
+      # Prepare message for RubyLLM chat API
+      def prepare_chat_message(msg_array)
+        if msg_array.is_a?(Array)
+          return "" if msg_array.empty?
+
+          if msg_array.size > 1
+            # Multi-turn conversation: use array form
+            msg_array
+          else
+            # Single message: extract content safely
+            first_msg = msg_array.first
+            first_msg.is_a?(Hash) ? (first_msg[:content] || first_msg["content"] || "") : ""
+          end
         else
-          prompt.to_s
+          # Fallback to string
+          msg_array.to_s
         end
       end
 
-      def execute_blocking_ruby_llm(chat, content, model)
-        response = chat.ask(content)
+      def execute_blocking_ruby_llm(chat, msg_array, model)
+        # RubyLLM supports both string and message array
+        message = prepare_chat_message(msg_array)
+        response = chat.ask(message)
 
         response_data = {
           content: response.content,
@@ -136,13 +159,15 @@ module MASTER
       end
 
       # Streaming with size limits and proper token counts
-      def execute_streaming_ruby_llm(chat, content, model)
+      def execute_streaming_ruby_llm(chat, msg_array, model)
         content_parts = []
         reasoning_parts = []
         total_size = 0
         final_response = nil
 
-        response = chat.ask(content) do |chunk|
+        # RubyLLM supports both string and message array
+        message = prepare_chat_message(msg_array)
+        response = chat.ask(message) do |chunk|
           # RubyLLM yields Chunk objects (inherits from Message)
           text = chunk.is_a?(String) ? chunk : chunk.content.to_s
           next if text.empty?

@@ -99,8 +99,6 @@ module MASTER
     # Stage 5: Adversarial council review (delegates to Council)
     class Council
       def call(input)
-        return Result.ok(input) unless input[:council]
-
         text = input[:text] || ""
         model = input[:model]
         return Result.ok(input) unless model

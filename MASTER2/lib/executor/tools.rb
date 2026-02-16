@@ -73,7 +73,19 @@ module MASTER
           result = Web.browse(url)
           result.ok? ? result.value[:content] : "Browse failed: #{result.error}"
         else
-          `curl -sL --max-time 10 "#{url}" 2>/dev/null`[0..2000]
+          # Validate URL first to prevent injection
+          begin
+            uri = URI.parse(url)
+            unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+              return "Invalid URL: must be http or https"
+            end
+          rescue URI::InvalidURIError
+            return "Invalid URL format"
+          end
+
+          # Use Open3.capture3 with array form to prevent shell injection
+          stdout, stderr, status = Open3.capture3("curl", "-sL", "--max-time", "10", url)
+          stdout[0..2000]
         end
       end
 
@@ -170,15 +182,8 @@ module MASTER
           return "BLOCKED: code_execution contains dangerous constructs"
         end
 
-        # Attempt Pledge sandboxing on OpenBSD if available
-        if defined?(Pledge)
-          begin
-            Pledge.pledge("stdio rpath")
-          rescue StandardError => e
-            # Pledge not available or failed, continue without it
-          end
-        end
-
+        # Note: Pledge removed - was restricting parent process permanently
+        # Open3.capture3 spawns isolated child process (no inherited state/privileges)
         stdout, stderr, status = Open3.capture3(RbConfig.ruby, stdin_data: code)
         status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
       end

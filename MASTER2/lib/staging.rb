@@ -49,8 +49,8 @@ module MASTER
       validation_cmd ||= "ruby -c"
 
       begin
-        # Run validation command
-        stdout, stderr, status = Open3.capture3("#{validation_cmd} #{staged_path}")
+        # Run validation command with array form to prevent shell injection
+        stdout, stderr, status = Open3.capture3(validation_cmd, staged_path)
 
         if status.success?
           Result.ok(output: stdout)
@@ -66,11 +66,26 @@ module MASTER
     def promote(staged_path, original_path)
       return Result.err("Staged file not found: #{staged_path}") unless File.exist?(staged_path)
 
+      temp_path = nil
       begin
-        # Atomic replace
-        FileUtils.cp(staged_path, original_path)
+        # Atomic replace: create temp file on same filesystem, then rename
+        original_dir = File.dirname(original_path)
+        temp_path = File.join(original_dir, ".tmp_#{Time.now.to_i}_#{File.basename(original_path)}")
+
+        # Copy to temp location on same filesystem
+        FileUtils.cp(staged_path, temp_path)
+
+        # Atomic rename (POSIX guarantee)
+        File.rename(temp_path, original_path)
+
         Result.ok(promoted: original_path)
       rescue StandardError => e
+        # Clean up temp file if it exists
+        begin
+          File.unlink(temp_path) if temp_path && File.exist?(temp_path)
+        rescue StandardError
+          # Ignore cleanup errors
+        end
         Result.err("Failed to promote: #{e.message}")
       end
     end

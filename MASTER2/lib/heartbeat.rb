@@ -14,6 +14,7 @@ module MASTER
     @thread = nil
     @interval = DEFAULT_INTERVAL
     @checks = []
+    @checks_mutex = Mutex.new
 
     class << self
       attr_reader :running, :interval
@@ -38,26 +39,34 @@ module MASTER
 
       # Register a check -- callable that returns work items or nil
       def register(name, &block)
-        @checks << { name: name, callable: block, last_run: nil, failures: 0 }
+        @checks_mutex.synchronize do
+          @checks << { name: name, callable: block, last_run: nil, failures: 0 }
+        end
       end
 
       def clear
-        @checks = []
+        @checks_mutex.synchronize do
+          @checks = []
+        end
       end
 
       def status
-        {
-          running: @running,
-          interval: @interval,
-          checks: @checks.map { |c| { name: c[:name], last_run: c[:last_run], failures: c[:failures] } }
-        }
+        @checks_mutex.synchronize do
+          {
+            running: @running,
+            interval: @interval,
+            checks: @checks.map { |c| { name: c[:name], last_run: c[:last_run], failures: c[:failures] } }
+          }
+        end
       end
 
       private
 
       def run_loop
         while @running
-          @checks.each { |check| run_check(check) }
+          @checks_mutex.synchronize do
+            @checks.each { |check| run_check(check) }
+          end
           sleep(@interval)
         end
       rescue StandardError => e
