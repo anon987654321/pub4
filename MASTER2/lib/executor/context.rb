@@ -77,8 +77,8 @@ module MASTER
         end.join("\n\n")
 
         # Build tool list and format from TOOLS hash
-        tool_list = TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
-        tool_format = TOOLS.map { |k, v| "- #{v[:usage]}" }.join("\n")
+        tool_list = Executor::TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
+        tool_format = Executor::TOOLS.map { |k, v| "- #{v[:usage]}" }.join("\n")
 
         <<~TASK
           TASK: #{goal}
