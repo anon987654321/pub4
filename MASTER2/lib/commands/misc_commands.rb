@@ -354,19 +354,26 @@ module MASTER
           rel = file.sub("#{root}/", "")
           violations = []
 
-          if defined?(Enforcement::Layers)
-            r = Enforcement::Layers.check(code, filename: rel)
+          if defined?(MASTER::Enforcement)
+            r = Enforcement.check(code, filename: rel) rescue nil
             violations.concat(r) if r.is_a?(Array)
           end
 
-          if defined?(CodeReview::Smells)
-            r = CodeReview::Smells.analyze(code, rel)
+          if defined?(MASTER::Smells)
+            r = Smells.analyze(code, rel) rescue nil
             violations.concat(r) if r.is_a?(Array)
           end
 
-          if defined?(CodeReview::Violations)
-            r = CodeReview::Violations.analyze(code, path: rel)
+          if defined?(MASTER::Violations)
+            r = Violations.analyze(code, path: rel) rescue nil
             violations.concat(r) if r.is_a?(Array)
+          end
+
+          if defined?(MASTER::Engine)
+            r = Engine.scan(rel, silent: true) rescue nil
+            if r.is_a?(Hash) && r[:findings].is_a?(Array)
+              violations.concat(r[:findings])
+            end
           end
 
           next if violations.empty?
