@@ -5,9 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>RG69 | Mobile Beat Lab</title>
+<meta property="og:title" content="RG69 | Mobile Beat Lab">
+<meta property="og:description" content="Browser-based beat machine with 30+ patterns, 14 genre presets, and real-time FX. Create music instantly.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+<script>
+if(typeof Tone==='undefined'){
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:monospace;color:#ff4444"><h1>RG69</h1><p>Audio engine failed to load. Check your connection and reload.</p><button onclick="location.reload()" style="padding:12px 24px;margin-top:20px;cursor:pointer">Reload</button></div>';
+  });
+}
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0a0a0a;--surface:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--text-dim:#808080;--cyan:#00ffff;--pink:#ff00ff;--green:#00ff00;--orange:#ff8800}
@@ -32,7 +41,8 @@ h1{font-size:2em;margin:10px 0;background:linear-gradient(45deg,var(--cyan),var(
 .steps{display:grid;grid-template-columns:repeat(16,minmax(20px,1fr));gap:2px;min-width:340px}
 .step{min-width:20px;min-height:36px;background:var(--bg);border:1px solid var(--border);cursor:pointer;border-radius:2px;transition:all .1s;touch-action:manipulation}
 .step.on{background:var(--cyan);border-color:var(--cyan)}
-.step.custom{border:2px solid var(--orange)}
+.step.on.custom::after{content:'';position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 4px 4px 0;border-color:transparent var(--orange) transparent transparent}
+.step.custom{border:2px solid var(--orange);position:relative}
 .step.playing{box-shadow:0 0 10px var(--pink)}
 .track{margin-bottom:10px}
 .track-name{font-size:.8em;margin-bottom:5px;color:var(--text-dim);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
@@ -72,6 +82,12 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 .btn-quickstart{background:var(--pink);color:var(--bg);border-color:var(--pink)}
 .btn-full{width:100%;margin-top:10px}
 .btn:focus-visible,.step:focus-visible,.mood-btn:focus-visible,.track-btn:focus-visible,select:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(pointer:coarse){
+  .step{min-height:28px}
+  .track-btn{min-height:32px;min-width:32px}
+  input[type=range]::-webkit-slider-thumb{width:24px;height:24px}
+  input[type=range]::-moz-range-thumb{width:24px;height:24px}
+}
 </style>
 </head>
 <body>
@@ -596,7 +612,8 @@ const updateStepViz=(stepIndex)=>{
       const isOn=velocity>0||sequencerPages[currentBank][trackName][stepNum].on;
       el.classList.toggle('on',isOn);
       if(isOn){
-        const opacity=Math.max(0.3,velocity||sequencerPages[currentBank][trackName][stepNum].velocity||1);
+        const velocity=drumPattern[trackKey][stepNum]||sequencerPages[currentBank][trackName][stepNum].velocity||1;
+        const opacity=0.25+velocity*0.75;
         el.style.opacity=opacity;
       }else{
         el.style.opacity='';
@@ -615,7 +632,7 @@ const buildUI=()=>{
     trackDiv.appendChild(trackNameDiv);
     const stepsWrap=document.createElement('div');stepsWrap.className='steps-wrap';
     const stepsGrid=document.createElement('div');stepsGrid.className='steps';
-    for(let i=0;i<16;i++){const stepDiv=document.createElement('div');stepDiv.className='step';stepDiv.dataset.track=trackName;stepDiv.dataset.step=i;stepsGrid.appendChild(stepDiv);}
+    for(let i=0;i<16;i++){const stepDiv=document.createElement('div');stepDiv.className='step';stepDiv.dataset.track=trackName;stepDiv.dataset.step=i;stepDiv.setAttribute('role','button');stepDiv.setAttribute('tabindex','0');stepDiv.setAttribute('aria-label',`${trackName} step ${i+1}`);stepDiv.setAttribute('aria-pressed','false');stepsGrid.appendChild(stepDiv);}
     stepsWrap.appendChild(stepsGrid);trackDiv.appendChild(stepsWrap);seq.appendChild(trackDiv);
   });
   Object.keys(MOOD_PRESETS).forEach(moodKey=>{const btn=document.createElement('button');btn.className='mood-btn';btn.textContent=moodKey.toUpperCase();btn.dataset.mood=moodKey;document.getElementById('moodGrid').appendChild(btn);});
@@ -629,7 +646,7 @@ const buildUI=()=>{
 const attachEvents=()=>{
   // Transport and new buttons
   document.getElementById('playBtn').onclick=()=>{if(!playing){if(Tone.context.state!=='running')Tone.context.resume();Tone.Transport.start();loop.start(0);playing=true;log('▶ Playing');}else{Tone.Transport.pause();playing=false;log('⏸ Paused');}};
-  document.getElementById('stopBtn').onclick=()=>{Tone.Transport.stop();loop.stop();playing=false;step=0;log('■ Stopped');};
+  document.getElementById('stopBtn').onclick=()=>{Tone.Transport.stop();loop.stop();keysN.releaseAll();padsN.releaseAll();playing=false;step=0;log('■ Stopped');};
   document.getElementById('quickStartBtn').onclick=quickStart;
   document.getElementById('helpBtn').onclick=showHelp;
   document.getElementById('recBtn').onclick=startRec;
@@ -671,16 +688,17 @@ const attachEvents=()=>{
   document.getElementById('vinylAmt').oninput=e=>{vinylAmt=+e.target.value;document.getElementById('vinylVal').textContent=vinylAmt;hissNoise.volume.value=-32+vinylAmt*0.15;};
   document.querySelectorAll('.step').forEach(stepEl=>{
     let lastToggle=0;
-    const toggle=()=>{const trackName=stepEl.dataset.track,stepNum=+stepEl.dataset.step;sequencerPages[currentBank][trackName][stepNum].on=1-sequencerPages[currentBank][trackName][stepNum].on;sequencerPages[currentBank][trackName][stepNum].custom=1;stepEl.classList.toggle('on',sequencerPages[currentBank][trackName][stepNum].on);stepEl.classList.toggle('custom',sequencerPages[currentBank][trackName][stepNum].custom);pushState();updateStepViz(step);};
+    const toggle=()=>{const trackName=stepEl.dataset.track,stepNum=+stepEl.dataset.step;sequencerPages[currentBank][trackName][stepNum].on=1-sequencerPages[currentBank][trackName][stepNum].on;sequencerPages[currentBank][trackName][stepNum].custom=1;const isOn=sequencerPages[currentBank][trackName][stepNum].on;stepEl.classList.toggle('on',isOn);stepEl.classList.toggle('custom',sequencerPages[currentBank][trackName][stepNum].custom);stepEl.setAttribute('aria-pressed',isOn?'true':'false');pushState();updateStepViz(step);};
     const guardedToggle=()=>{const now=Date.now();if(now-lastToggle<100)return;lastToggle=now;toggle();};
     stepEl.onclick=guardedToggle;
+    stepEl.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();guardedToggle();}};
     stepEl.ontouchstart=e=>{e.preventDefault();guardedToggle();};
-    stepEl.ontouchmove=e=>{e.preventDefault();const touch=e.changedTouches[0];const targetEl=document.elementFromPoint(touch.clientX,touch.clientY);if(targetEl&&targetEl.classList.contains('step')&&targetEl!==stepEl){const trackName=targetEl.dataset.track,stepNum=+targetEl.dataset.step;sequencerPages[currentBank][trackName][stepNum].on=1;sequencerPages[currentBank][trackName][stepNum].custom=1;targetEl.classList.add('on');targetEl.classList.add('custom');pushState();updateStepViz(step);}};
+    stepEl.ontouchmove=e=>{e.preventDefault();const touch=e.changedTouches[0];const targetEl=document.elementFromPoint(touch.clientX,touch.clientY);if(targetEl&&targetEl.classList.contains('step')&&targetEl!==stepEl){const trackName=targetEl.dataset.track,stepNum=+targetEl.dataset.step;sequencerPages[currentBank][trackName][stepNum].on=1;sequencerPages[currentBank][trackName][stepNum].custom=1;targetEl.classList.add('on');targetEl.classList.add('custom');targetEl.setAttribute('aria-pressed','true');pushState();updateStepViz(step);}};
   });
   document.querySelectorAll('.mood-btn').forEach(btn=>btn.onclick=e=>{applyMood(e.target.dataset.mood);document.querySelectorAll('.mood-btn').forEach(btn=>btn.classList.remove('active'));e.target.classList.add('active');});
   document.querySelectorAll('.track-btn').forEach(btn=>btn.onclick=e=>{const trackId=e.target.dataset.track,action=e.target.dataset.action;if(action==='m'){muteSolo[trackId].m=1-muteSolo[trackId].m;e.target.classList.toggle('active',muteSolo[trackId].m);}else{muteSolo[trackId].s=1-muteSolo[trackId].s;e.target.classList.toggle('active',muteSolo[trackId].s);}});
   document.querySelectorAll('.panel-header').forEach(header=>header.onclick=e=>{e.currentTarget.parentElement.classList.toggle('open');});
-  document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();document.getElementById('playBtn').click();}else if(e.key==='r'||e.key==='R'){randomizeAll();}else if(e.key==='e'||e.key==='E'){exportWAV();}else if(e.key==='t'||e.key==='T'){tapTempo();}else if(e.key==='l'||e.key==='L'){toggleTheme();}else if(e.key==='?'){showHelp();}else if(e.ctrlKey&&e.key==='z'){undo();}else if(e.ctrlKey&&e.shiftKey&&e.key==='Z'){redo();}});
+  document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();document.getElementById('playBtn').click();}else if(e.key==='r'||e.key==='R'){randomizeAll();}else if(e.key==='e'||e.key==='E'){exportWAV();}else if(e.key==='t'||e.key==='T'){tapTempo();}else if(e.key==='l'||e.key==='L'){toggleTheme();}else if(e.key==='?'){showHelp();}else if((e.ctrlKey||e.metaKey)&&e.key==='z'){undo();}else if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='Z'){redo();}});
   document.addEventListener('touchstart',()=>{if(Tone.context.state!=='running')Tone.context.resume();},{once:true});
 };
 const applyMood=moodName=>{const mood=MOOD_PRESETS[moodName];if(!mood)return;currentDrumPattern=mood.d;currentBassPattern=mood.b;currentKeysPattern=mood.k;currentPadPattern=mood.p;bpm=mood.bpm[0]+Math.random()*(mood.bpm[1]-mood.bpm[0]);swing=mood.sw[0]+Math.random()*(mood.sw[1]-mood.sw[0]);Tone.Transport.bpm.value=bpm;document.getElementById('drumSel').value=currentDrumPattern;document.getElementById('bassSel').value=currentBassPattern;document.getElementById('keysSel').value=currentKeysPattern;document.getElementById('padsSel').value=currentPadPattern;document.getElementById('bpmSlider').value=bpm;document.getElementById('bpmVal').textContent=Math.floor(bpm);document.getElementById('swingSlider').value=Math.floor(swing);document.getElementById('swingVal').textContent=Math.floor(swing);log(`🎭 Mood: ${moodName}`);pushState();};
