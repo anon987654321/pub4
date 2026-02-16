@@ -46,6 +46,14 @@ module MASTER
       def retryable_error?(error)
         return false unless error.is_a?(String) || error.is_a?(Hash)
         error_str = error.is_a?(Hash) ? error[:message].to_s : error.to_s
+
+        # Auto-reduce max_tokens on credit limit errors
+        if error_str.match?(/can only afford (\d+)/i)
+          affordable = error_str[/can only afford (\d+)/, 1].to_i
+          Thread.current[:llm_max_tokens] = [affordable - 100, 512].max
+          return true
+        end
+
         error_str.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
       end
 
@@ -54,7 +62,8 @@ module MASTER
         configure_ruby_llm
 
         chat = RubyLLM.chat(model: model)
-        chat = chat.with_params(max_tokens: MAX_CHAT_TOKENS)
+        cap = Thread.current[:llm_max_tokens] || MAX_CHAT_TOKENS
+        chat = chat.with_params(max_tokens: cap)
 
         # Validate reasoning effort values
         if reasoning

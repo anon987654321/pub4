@@ -206,6 +206,9 @@ module MASTER
         nil
       when "self", "selftest", "self-test", "selfrun", "self-run"
         selftest_full(args)
+      when "web", "server"
+        start_web_server(args)
+        nil
       when "speak", "say"
         speak(args)
         nil

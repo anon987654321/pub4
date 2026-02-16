@@ -21,9 +21,9 @@ module MASTER
 
     attr_reader :port, :output_queue
 
-    def initialize(pipeline: nil)
+    def initialize(pipeline: nil, port: nil)
       @pipeline = pipeline || Pipeline.new
-      @port = find_port
+      @port = port || find_port
       @output_queue = Queue.new
       @running = false
     end

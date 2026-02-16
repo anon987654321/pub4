@@ -194,7 +194,8 @@ when "help", "-h", "--help"
 
 when "--web", "-w"
   # Web-only mode (no REPL)
-  server = MASTER::Server.new
+  web_port = ARGV.shift&.to_i
+  server = MASTER::Server.new(port: web_port)
   MASTER::Boot.banner_with_web(server.port)
   server.start
   puts "Press Ctrl+C to stop"

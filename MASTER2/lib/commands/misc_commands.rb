@@ -170,6 +170,15 @@ module MASTER
         result = mr.run(path: path)
         result
       end
+
+      def start_web_server(args)
+        port = args.to_s.strip.match?(/\A\d+\z/) ? args.strip.to_i : nil
+        server = Server.new(port: port)
+        server.start
+        token = Server::AUTH_TOKEN
+        puts "  web: http://localhost:#{server.port}"
+        puts "  token: #{token}"
+      end
     end
   end
 end
