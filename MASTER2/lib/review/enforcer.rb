@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative 'enforcer/quality_standards'
+require_relative 'enforcer/language_axioms'
+
 module MASTER
   module Review
     module Enforcer
@@ -258,142 +261,6 @@ module MASTER
           eval(code, binding_obj)
         rescue StandardError => e
           :error
-        end
-      end
-    end
-
-    # QualityStandards - Unified quality thresholds from quality_thresholds.yml
-    module QualityStandards
-      extend self
-
-      THRESHOLDS_FILE = File.join(MASTER.root, "data", "quality_thresholds.yml")
-
-      def thresholds
-        @thresholds ||= begin
-          return defaults unless File.exist?(THRESHOLDS_FILE)
-          YAML.safe_load_file(THRESHOLDS_FILE, symbolize_names: true) || defaults
-        end
-      end
-
-      def defaults
-        {
-          file_lines: { warn: 250, error: 300, self_test_max: 300 },
-          method_lines: { warn: 15, error: 25 },
-          max_self_test_issues: 0,
-          max_self_test_violations: 0
-        }
-      end
-
-      def max_file_lines
-        thresholds.dig(:file_lines, :error) || 300
-      end
-
-      def max_file_lines_warn
-        thresholds.dig(:file_lines, :warn) || 250
-      end
-
-      def max_file_lines_self_test
-        thresholds.dig(:file_lines, :self_test_max) || 300
-      end
-
-      def max_method_lines
-        thresholds.dig(:method_lines, :error) || 25
-      end
-
-      def max_method_lines_warn
-        thresholds.dig(:method_lines, :warn) || 15
-      end
-
-      def max_self_test_issues
-        thresholds[:max_self_test_issues] || 0
-      end
-
-      def max_self_test_violations
-        thresholds[:max_self_test_violations] || 0
-      end
-    end
-
-    # LanguageAxioms - Language-specific beauty rules
-    # 78 axioms across Ruby, Rails, Zsh, HTML/ERB, CSS/SCSS, JavaScript, and universal
-    module LanguageAxioms
-      AXIOMS_FILE = File.join(MASTER.root, "data", "language_axioms.yml")
-
-      EXTENSION_MAP = {
-        ".rb"    => %w[ruby rails universal],
-        ".rake"  => %w[ruby rails universal],
-        ".gemspec" => %w[ruby universal],
-        ".sh"    => %w[zsh universal],
-        ".zsh"   => %w[zsh universal],
-        ".bash"  => %w[zsh universal],
-        ".html"  => %w[html_erb universal],
-        ".erb"   => %w[html_erb universal],
-        ".htm"   => %w[html_erb universal],
-        ".css"   => %w[css_scss universal],
-        ".scss"  => %w[css_scss universal],
-        ".sass"  => %w[css_scss universal],
-        ".js"    => %w[javascript universal],
-        ".mjs"   => %w[javascript universal],
-        ".jsx"   => %w[javascript universal],
-        ".ts"    => %w[javascript universal],
-        ".tsx"   => %w[javascript universal],
-      }.freeze
-
-      class << self
-        def axioms_data
-          @axioms_data ||= File.exist?(AXIOMS_FILE) ? YAML.safe_load_file(AXIOMS_FILE, symbolize_names: true) : {}
-        end
-
-        def all_axioms
-          axioms_data.flat_map { |lang, rules| (rules || []).map { |r| r.merge(language: lang) } }
-        end
-
-        def axioms_for(language)
-          axioms_data[language.to_sym] || []
-        end
-
-        def languages_for_file(filename)
-          ext = File.extname(filename).downcase
-          EXTENSION_MAP[ext] || %w[universal]
-        end
-
-        def check(code, filename: "code")
-          violations = []
-          languages = languages_for_file(filename)
-
-          languages.each do |lang|
-            axioms_for(lang).each do |axiom|
-              pattern_str = axiom[:detect]
-              next if pattern_str.nil? # Advisory-only axioms
-
-              begin
-                pattern = Regexp.new(pattern_str, Regexp::MULTILINE)
-              rescue RegexpError
-                next
-              end
-
-              next unless code.match?(pattern)
-
-              violations << {
-                layer: :language_axiom,
-                language: lang,
-                axiom_id: axiom[:id],
-                axiom_name: axiom[:name],
-                message: axiom[:suggest],
-                severity: axiom[:severity]&.to_sym || :info,
-                autofix: axiom[:autofix] || false,
-                file: filename,
-              }
-            end
-          end
-
-          violations
-        end
-
-        def summary
-          counts = {}
-          axioms_data.each { |lang, rules| counts[lang] = (rules || []).size }
-          counts[:total] = counts.values.sum
-          counts
         end
       end
     end
