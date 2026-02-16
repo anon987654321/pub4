@@ -10,7 +10,7 @@ module MASTER
       def stream(text, effect: :dark, voice: :guy, rate: "-25%", pitch: "-25Hz")
         python = Utils.find_python
         return Result.err("Python not found.") unless python
-        return Result.err("edge-tts not installed.") unless Speech.edge_installed?
+        return Result.err("edge-tts not installed.") unless Utils.edge_installed?
 
         voice_id = EDGE_VOICES[voice.to_sym] || EDGE_VOICES[:guy]
         fx_filter = STREAM_EFFECTS[effect.to_sym] || STREAM_EFFECTS[:dark]

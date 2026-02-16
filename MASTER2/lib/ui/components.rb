@@ -110,7 +110,7 @@ module MASTER
         rescue LoadError
           Object.new.tap do |r|
             r.define_singleton_method(:read_line) { |*| gets }
-            r.define_singleton_method(:read_keypress) { $stdin.getch rescue gets }
+            r.define_singleton_method(:read_keypress) { begin; $stdin.getch; rescue StandardError; gets; end }
           end
         end
       end
