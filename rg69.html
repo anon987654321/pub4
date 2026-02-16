@@ -301,7 +301,6 @@ const MOOD_PRESETS={
 // Version1 addition - Baroque/Classical preset
 'baroque':{d:'basic',b:'descseq',k:'canon',p:'choir',bpm:[100,120],sw:[0,8]}
 };
-// State
 let bpm=120,swing=0,rootNote=0,playing=false,recording=false,step=0,currentBank='A',currentDrumPattern='basic',currentBassPattern='basic',currentKeysPattern='basic',currentPadPattern='none';
 let drumVol=80,bassVol=70,keysVol=60,padsVol=50,masterVol=75;
 let drumSwing=0,bassSwing=0,keysSwing=0,padsSwing=0;
@@ -311,29 +310,24 @@ let reverbAmt=30; // Reverb amount (declare separately to avoid undefined refere
 let sequencerPages={A:{},B:{},C:{},D:{}};['kick','snare','clap','hat','open'].forEach(t=>['A','B','C','D'].forEach(b=>sequencerPages[b][t]=Array(16).fill(0).map(()=>({on:0,velocity:1,custom:0}))));
 let muteSolo={d:{m:0,s:0},b:{m:0,s:0},k:{m:0,s:0},p:{m:0,s:0}};
 let hist=[],histIdx=-1,tapTimes=[],recorder,mediaStream;
-// Tone.js setup - Audio components (SOLID: Single Responsibility)
 let kickN,kickClick,kickClickBP,snareN,snareRing,snareRingBP,clapN,hatN,openN,bassN,bassSub,keysN,padsN,padsFilter,padsLFO;
 let drumG,bassG,keysG,padsG,masterG,limiter,analyser;
 let analogSum,vintageSat,phaserFX,lofiNoise;
-// Lo-fi processing elements
 let crackleNoise,hissNoise,flutterLFO,vhsNoise,rumbleOsc,lofiCompressor,tapeSat,lofiFilter,lofiReverb;
-// FX chain elements
 let feedbackDelay,bassDist,keysTrem,keysCrush,masterReverb,masterDrive,masterCrush;
 const notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const fxPool=['AutoWah','AutoFilter','AutoPanner','BitCrusher','Chebyshev','Chorus','Distortion','FeedbackDelay','Freeverb','FrequencyShifter','JCReverb','Phaser','PingPongDelay','PitchShift','Tremolo','Vibrato','StereoWidener'];
 let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
 
-// Init audio engine with analog summing and lo-fi character (KISS: Keep It Simple)
 const initAudio=async()=>{
-  // Synths - Clear, self-explanatory names (POLA: Principle of Least Astonishment)
-  // Kick: layered MembraneSynth (body) + NoiseSynth (click transient)
+  // Kick: layered MembraneSynth + NoiseSynth for analog transient
   kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1,attackCurve:'exponential'}});
   kickClick=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.02,sustain:0}});
   kickClickBP=new Tone.Filter(1200,'bandpass');
   kickClickBP.Q.value=5;
   kickClick.connect(kickClickBP);
   
-  // Snare: layered NoiseSynth (body) + triangle ring (E4)
+  // Snare: layered NoiseSynth + triangle ring
   snareN=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.2,sustain:0}});
   snareRing=new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:.001,decay:.15,sustain:0}});
   snareRingBP=new Tone.Filter(400,'bandpass');
@@ -342,17 +336,14 @@ const initAudio=async()=>{
   
   clapN=new Tone.NoiseSynth({noise:{type:'pink'},envelope:{attack:.001,decay:.15,sustain:0}});
   
-  // Hats: MetalSynth with higher harmonicity and resonance
   hatN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.1,release:.01},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5});
   openN=new Tone.MetalSynth({frequency:200,envelope:{attack:.001,decay:.3,release:.2},harmonicity:5.1,modulationIndex:32,resonance:4000,octaves:1.5});
   
   bassN=new Tone.MonoSynth({oscillator:{type:'sawtooth'},envelope:{attack:.01,decay:.1,sustain:.5,release:.1}});
   bassSub=new Tone.Oscillator(40,'sine').start();bassSub.volume.value=-12;
   
-  // Keys: FM synth with velocity-reactive parameters
   keysN=new Tone.PolySynth(Tone.FMSynth,{maxPolyphony:16,harmonicity:7,modulationIndex:2.5,oscillator:{type:'sine'},envelope:{attack:.005,decay:.1,sustain:.3,release:.1},modulation:{type:'square'},modulationEnvelope:{attack:.01,decay:.2,sustain:.2,release:.3}});
   
-  // Pads: fatsawtooth (count:3, spread:25) with LFO-modulated lowpass filter
   padsN=new Tone.PolySynth(Tone.Synth,{maxPolyphony:16,oscillator:{type:'fatsawtooth',count:3,spread:25},envelope:{attack:2.2,decay:3.5,sustain:0.75,release:4.8}});
   padsFilter=new Tone.Filter(1000,'lowpass');
   padsLFO=new Tone.LFO(0.12,600,1400);
@@ -360,24 +351,20 @@ const initAudio=async()=>{
   padsLFO.connect(padsFilter.frequency);
   padsN.connect(padsFilter);
   
-  // Per-track gain nodes (analog-style summing mixer)
   drumG=new Tone.Gain(.8);
   bassG=new Tone.Gain(.7);
   keysG=new Tone.Gain(.6);
   padsG=new Tone.Gain(.5);
   masterG=new Tone.Gain(.75);
   
-  // Analog warmth: soft saturation on summing bus
-  vintageSat=new Tone.Chebyshev(2); // Analog-style harmonic distortion
+  vintageSat=new Tone.Chebyshev(2);
   vintageSat.wet.value=0.3;
   
-  // Phase effect: adds analog stereo width and movement
   phaserFX=new Tone.Phaser({frequency:0.5,octaves:2,baseFrequency:350,stages:4});
   phaserFX.wet.value=0.15;
   
-  // Lo-fi character: gentle noise floor like analog tape
   lofiNoise=new Tone.Noise('pink').start();
-  lofiNoise.volume.value=-45; // Very subtle, just adds warmth
+  lofiNoise.volume.value=-45;
   const noiseLP=new Tone.Filter(4000,'lowpass');
   lofiNoise.connect(noiseLP);
   
@@ -450,41 +437,31 @@ const initAudio=async()=>{
   masterCrush=new Tone.BitCrusher(8);
   masterCrush.wet.value=0;
   
-  // Connect synths to gain stages (DRY: reusable connection pattern)
-  // Layered kick and snare connect their filter outputs
-  [kickN,kickClickBP,snareN,snareRingBP,clapN,hatN,openN].forEach(s=>{s.disconnect();s.connect(drumG);});
+  [kickN,kickClickBP,snareN,snareRingBP,clapN,hatN,openN].forEach(synth=>{synth.disconnect();synth.connect(drumG);});
   bassN.disconnect();bassN.connect(bassG);
   bassSub.disconnect();bassSub.connect(bassG);
   keysN.disconnect();keysN.connect(keysG);
   padsFilter.disconnect();padsFilter.connect(padsG);
   
-  // Analog summing: all tracks merge into analogSum, then through master chain
-  analogSum=new Tone.Gain(1); // Summing node
+  analogSum=new Tone.Gain(1);
   
-  // Wire additional FX into chains
-  // Bass: gain → distortion → analogSum
   bassG.disconnect();
   bassG.chain(bassDist,analogSum);
   
-  // Keys: gain → tremolo → bitcrusher → analogSum
   keysG.disconnect();
   keysG.chain(keysTrem,keysCrush,analogSum);
   drumG.connect(analogSum);
-  // bassG and keysG connect through their FX chains (above)
   padsG.connect(analogSum);
-  noiseLP.connect(analogSum); // Lo-fi noise floor
+  noiseLP.connect(analogSum);
   crackleLP.connect(analogSum);
   hissBP.connect(analogSum);
   vhsNoise.connect(analogSum);
   rumbleOsc.connect(analogSum);
   
-  // Main chain with lo-fi processing
-  // feedbackDelay connects separately then merges at lofiFilter
   analogSum.chain(vintageSat,phaserFX,lofiCompressor,tapeSat,flutterPitch,lofiFilter);
   delayLP.connect(lofiFilter);
   lofiFilter.chain(lofiReverb,masterReverb,masterDrive,masterCrush,masterG);
   
-  // Output chain
   limiter=new Tone.Limiter(-1);
   analyser=new Tone.Analyser('waveform',256);
   masterG.connect(analyser);
@@ -494,14 +471,11 @@ const initAudio=async()=>{
   Tone.Transport.bpm.value=bpm;
   randomizeFX();
 };
-// FX randomizer - DRY principle with reusable helper functions
 const randomizeFX=()=>{
-  // Clear existing FX (DRY: single cleanup function)
-  const clearFXArray=(arr)=>arr.forEach(fx=>{try{fx.disconnect();fx.dispose();}catch(e){log('FX cleanup: '+e.message);}});
+  const clearFXArray=(arr)=>arr.forEach(fx=>{try{fx.disconnect();fx.dispose();}catch(error){log(`⚠️ FX cleanup: ${error.message}`);}});
   [drumFX,bassFX,keysFX,padsFX,masterFX].forEach(clearFXArray);
   drumFX.length=bassFX.length=keysFX.length=padsFX.length=masterFX.length=0;
   
-  // Create random FX chain (KISS: simple, clear logic)
   const createFX=(isMaster)=>{
     const num=isMaster?3+Math.floor(Math.random()*6):2+Math.floor(Math.random()*4);
     const wet=isMaster?0.08+Math.random()*0.19:0.15+Math.random()*0.35;
@@ -510,7 +484,6 @@ const randomizeFX=()=>{
       const type=fxPool[Math.floor(Math.random()*fxPool.length)];
       let eff;
       try{
-        // Effect factory (SOLID: Open/Closed Principle - easy to extend)
         switch(type){
           case'AutoWah':eff=new Tone.AutoWah(60+Math.random()*340,2+Math.random()*4,-40+Math.random()*30);break;
           case'AutoFilter':eff=new Tone.AutoFilter(0.1+Math.random()*7.9);eff.depth.value=0.3+Math.random()*0.7;eff.baseFrequency=100+Math.random()*1900;eff.start();break;
@@ -531,40 +504,36 @@ const randomizeFX=()=>{
           case'StereoWidener':eff=new Tone.StereoWidener(0.3+Math.random()*0.6);break;
         }
         if(eff){eff.wet.value=wet;fx.push(eff);}
-      }catch(e){log('FX create: '+e.message);} // Fail gracefully (POLA: no surprises)
+      }catch(error){log(`⚠️ FX ${type}: ${error.message}`);}
     }
     return fx;
   };
   
-  // Generate FX for each track (DRY: reusable pattern)
   drumFX=createFX(0);
   bassFX=createFX(0);
   keysFX=createFX(0);
   padsFX=createFX(0);
   masterFX=createFX(1);
   
-  // Chain FX helper (DRY: single chaining function)
-  const chainFX=(g,fx,target)=>{
-    g.disconnect();
-    if(!fx.length){g.connect(target);return;}
-    let last=g;
-    fx.forEach(f=>{last.connect(f);last=f;});
-    last.connect(target);
+  const chainFX=(gainNode,fxArray,target)=>{
+    gainNode.disconnect();
+    if(!fxArray.length){gainNode.connect(target);return;}
+    let lastNode=gainNode;
+    fxArray.forEach(effect=>{lastNode.connect(effect);lastNode=effect;});
+    lastNode.connect(target);
   };
   
-  // Reconnect with analog summing (respects new architecture)
   chainFX(drumG,drumFX,analogSum);
   chainFX(bassG,bassFX,analogSum);
   chainFX(keysG,keysFX,analogSum);
   chainFX(padsG,padsFX,analogSum);
   
-  // Master FX on output (after summing/saturation)
   if(masterFX.length){
     masterG.disconnect();
-    let lastM=masterG;
-    masterFX.forEach(f=>{lastM.connect(f);lastM=f;});
-    lastM.connect(analyser);
-    lastM.connect(limiter);
+    let lastNode=masterG;
+    masterFX.forEach(effect=>{lastNode.connect(effect);lastNode=effect;});
+    lastNode.connect(analyser);
+    lastNode.connect(limiter);
   }else{
     masterG.disconnect();
     masterG.connect(analyser);
@@ -577,9 +546,8 @@ const updateFXTags=()=>{
   const show=(id,fx)=>{const el=document.getElementById(id);el.innerHTML='';fx.forEach(f=>{const t=document.createElement('span');t.className='fx-tag';t.textContent=f.constructor.name;el.appendChild(t);});};
   show('drumFx',drumFX);show('bassFx',bassFX);show('keysFx',keysFX);show('padsFx',padsFX);
 };
-// Sequencer
-const getSwingDelay=(track,s)=>{if(s%2!==1)return 0;const ts={d:drumSwing,b:bassSwing,k:keysSwing,p:padsSwing}[track]||swing;return(ts/100)*(60/bpm/4);};
-// Micro-timing humanization (J Dilla style)
+const getSwingDelay=(track,stepIndex)=>{if(stepIndex%2!==1)return 0;const trackSwing={d:drumSwing,b:bassSwing,k:keysSwing,p:padsSwing}[track]??swing;return(trackSwing/100)*(60/bpm/4);};
+// Micro-timing humanization
 const getMicroTiming=(instrument,s)=>{
   let offset=0;
   if(instrument==='kick')offset=kickLag/1000; // Lag behind
@@ -728,8 +696,8 @@ const redo=()=>{if(histIdx<hist.length-1){histIdx++;applyState(JSON.parse(hist[h
 const applyState=stateObj=>{currentDrumPattern=stateObj.d;currentBassPattern=stateObj.b;currentKeysPattern=stateObj.k;currentPadPattern=stateObj.p;bpm=stateObj.bpm;swing=stateObj.swing;sequencerPages=JSON.parse(JSON.stringify(stateObj.seq));};
 const tapTempo=()=>{const now=Date.now();tapTimes.push(now);if(tapTimes.length>4)tapTimes.shift();if(tapTimes.length>1){const diffs=[];for(let i=1;i<tapTimes.length;i++)diffs.push(tapTimes[i]-tapTimes[i-1]);const avg=diffs.reduce((a,b)=>a+b)/diffs.length;bpm=Math.round(60000/avg);Tone.Transport.bpm.value=bpm;document.getElementById('bpmSlider').value=bpm;document.getElementById('bpmVal').textContent=bpm;log(`🥁 Tap BPM: ${bpm}`);}setTimeout(()=>{tapTimes=[];},2000);};
 const toggleTheme=()=>{const html=document.documentElement;const curr=html.getAttribute('data-theme');html.setAttribute('data-theme',curr==='dark'?'light':'dark');log(curr==='dark'?'🌞 Light theme':'🌙 Dark theme');};
-const autosave=()=>{try{localStorage.setItem('rg69_save',JSON.stringify({d:currentDrumPattern,b:currentBassPattern,k:currentKeysPattern,p:currentPadPattern,bpm,swing,rootNote,drumVol,bassVol,keysVol,padsVol,masterVol,sequencerPages}));}catch(e){}};
-const autoload=()=>{try{const savedData=localStorage.getItem('rg69_save');if(savedData){const state=JSON.parse(savedData);currentDrumPattern=state.d;currentBassPattern=state.b;currentKeysPattern=state.k;currentPadPattern=state.p;bpm=state.bpm;swing=state.swing;rootNote=state.rootNote;drumVol=state.drumVol;bassVol=state.bassVol;keysVol=state.keysVol;padsVol=state.padsVol;masterVol=state.masterVol;sequencerPages=state.sequencerPages;log('💾 Autoloaded');}}catch(e){}};
+const autosave=()=>{try{localStorage.setItem('rg69_save',JSON.stringify({d:currentDrumPattern,b:currentBassPattern,k:currentKeysPattern,p:currentPadPattern,bpm,swing,rootNote,drumVol,bassVol,keysVol,padsVol,masterVol,sequencerPages}));}catch(error){log(`⚠️ Autosave failed: ${error.message}`);}};
+const autoload=()=>{try{const savedData=localStorage.getItem('rg69_save');if(savedData){const state=JSON.parse(savedData);currentDrumPattern=state.d;currentBassPattern=state.b;currentKeysPattern=state.k;currentPadPattern=state.p;bpm=state.bpm;swing=state.swing;rootNote=state.rootNote;drumVol=state.drumVol;bassVol=state.bassVol;keysVol=state.keysVol;padsVol=state.padsVol;masterVol=state.masterVol;sequencerPages=state.sequencerPages;log('💾 Autoloaded');}}catch(error){log(`⚠️ Autoload failed: ${error.message}`);}};
 const log=message=>{const logEl=document.getElementById('log');const line=document.createElement('div');line.textContent=`${new Date().toLocaleTimeString()} ${message}`;logEl.appendChild(line);logEl.scrollTop=logEl.scrollHeight;};
 const drawViz=()=>{requestAnimationFrame(drawViz);const c=document.getElementById('viz'),ctx=c.getContext('2d');c.width=c.offsetWidth;c.height=c.offsetHeight;const w=c.width,h=c.height;ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--bg');ctx.fillRect(0,0,w,h);if(!analyser)return;const data=analyser.getValue();ctx.beginPath();ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--cyan');ctx.lineWidth=2;for(let i=0;i<data.length;i++){const x=(i/data.length)*w;const y=(1-(data[i]+1)/2)*h;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();};
 // Help overlay - Enhanced for beginners and musicians
@@ -802,7 +770,6 @@ const showTooltip=(el,text)=>{const tt=document.getElementById('tooltip');tt.tex
 const hideTooltip=()=>{document.getElementById('tooltip').style.display='none';};
 document.addEventListener('mouseover',e=>{if(e.target.title){showTooltip(e.target,e.target.title);}});
 document.addEventListener('mouseout',hideTooltip);
-// Init
 window.addEventListener('load',async()=>{await initAudio();buildUI();if(location.hash.length>1)decodeState(location.hash.slice(1));else autoload();monitorCPU();log('🎵 RG69 Ready');setInterval(()=>{if(playing)autosave();},10000);});
 </script>
 </body>
