@@ -73,7 +73,19 @@ module MASTER
           result = Web.browse(url)
           result.ok? ? result.value[:content] : "Browse failed: #{result.error}"
         else
-          `curl -sL --max-time 10 "#{url}" 2>/dev/null`[0..2000]
+          # Validate URL first to prevent injection
+          begin
+            uri = URI.parse(url)
+            unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+              return "Invalid URL: must be http or https"
+            end
+          rescue URI::InvalidURIError
+            return "Invalid URL format"
+          end
+
+          # Use Open3.capture3 with array form to prevent shell injection
+          stdout, stderr, status = Open3.capture3("curl", "-sL", "--max-time", "10", url)
+          stdout[0..2000]
         end
       end
 

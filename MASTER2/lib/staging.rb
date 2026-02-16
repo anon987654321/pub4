@@ -49,8 +49,8 @@ module MASTER
       validation_cmd ||= "ruby -c"
 
       begin
-        # Run validation command
-        stdout, stderr, status = Open3.capture3("#{validation_cmd} #{staged_path}")
+        # Run validation command with array form to prevent shell injection
+        stdout, stderr, status = Open3.capture3(validation_cmd, staged_path)
 
         if status.success?
           Result.ok(output: stdout)
