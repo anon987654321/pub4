@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'analyzers'
+
 module MASTER
   # Dual violation detection: literal (regex/AST) + conceptual (LLM semantic)
   # Catches both syntactic violations and semantic principle violations
@@ -252,26 +254,19 @@ module MASTER
 
       def check_method_lengths(lines)
         violations = []
-        method_start = nil
-        method_name = nil
+        code = lines.join
 
-        lines.each_with_index do |line, idx|
-          if line =~ /^\s*def\s+(\w+)/
-            method_start = idx
-            method_name = ::Regexp.last_match(1)
-          elsif method_start && line.strip == 'end'
-            length = idx - method_start
-            if length > 20
-              violations << {
-                type: :literal,
-                name: :long_method,
-                principle: 'Small Functions',
-                message: "Method '#{method_name}' is #{length} lines (>20)",
-                severity: :warning,
-                line: method_start + 1
-              }
-            end
-            method_start = nil
+        methods_info = Analyzers::MethodLengthAnalyzer.scan(code)
+        methods_info.each do |method|
+          if method[:length] > 20
+            violations << {
+              type: :literal,
+              name: :long_method,
+              principle: 'Small Functions',
+              message: "Method '#{method[:name]}' is #{method[:length]} lines (>20)",
+              severity: :warning,
+              line: method[:start_line]
+            }
           end
         end
 
@@ -294,17 +289,15 @@ module MASTER
 
       def check_repeated_strings(code)
         violations = []
-        strings = code.scan(/"[^"]{8,}"|'[^']{8,}'/).flatten
-        counts = strings.tally
 
-        counts.each do |str, count|
-          next if count < 3
-
+        duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 8, min_count: 3)
+        duplicates.each do |dup|
+          str_preview = dup[:string].length > 30 ? "#{dup[:string][0...30]}..." : dup[:string]
           violations << {
             type: :literal,
             name: :repeated_string,
             principle: 'DRY',
-            message: "String #{str[0..30]}... repeated #{count} times",
+            message: "String #{str_preview} repeated #{dup[:count]} times",
             severity: :warning
           }
         end

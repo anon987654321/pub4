@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../code_review/analyzers'
+
 module MASTER
   module Enforcement
     # Three enforcement scopes: Lines, Units, Framework
@@ -37,21 +39,11 @@ module MASTER
         violations = []
 
         # Method length
-        in_method = false
-        method_start = 0
-        method_name = nil
-        code.each_line.with_index(1) do |line, num|
-          if line.match?(/^\s*def\s+(\w+)/)
-            in_method = true
-            method_start = num
-            method_name = line[/def\s+(\w+)/, 1]
-          elsif in_method && line.match?(/^\s*end\s*$/)
-            method_length = num - method_start
-            limit = thresholds["method_length"] || 50
-            if method_length > limit
-              violations << { scope: :unit, message: "Method '#{method_name}' is #{method_length} lines (limit: #{limit})", file: filename }
-            end
-            in_method = false
+        methods_info = Analyzers::MethodLengthAnalyzer.scan(code)
+        limit = thresholds["method_length"] || 50
+        methods_info.each do |method|
+          if method[:length] > limit
+            violations << { scope: :unit, message: "Method '#{method[:name]}' is #{method[:length]} lines (limit: #{limit})", file: filename }
           end
         end
 

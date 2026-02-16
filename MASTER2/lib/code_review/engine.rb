@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'yaml'
+require_relative 'analyzers'
 
 module MASTER
   # Engine - Unified code quality scan facade
@@ -28,12 +29,8 @@ module MASTER
         axioms = load_axioms_for_profile(profile)
         puts UI.dim("Scanning with #{profile} profile (#{axioms.size} axioms)...") if axioms && !silent
 
-        if File.directory?(path)
-          files = Dir[File.join(path, '**', '*.rb')]
-          issues = files.flat_map { |f| scan_file(f) }
-        else
-          issues = scan_file(path)
-        end
+        files = Analyzers::FileCollector.ruby_files(path)
+        issues = files.flat_map { |f| scan_file(f) }
 
         Result.ok(issues)
       end
@@ -43,33 +40,23 @@ module MASTER
         return Result.err('Path not found') unless File.exist?(path)
 
         issues = []
+        files = Analyzers::FileCollector.ruby_files(path)
 
-        if File.directory?(path)
-          files = Dir[File.join(path, '**', '*.rb')]
-          files.each do |f|
-            content = File.read(f) rescue next
-            issues += scan_file(f)
+        files.each do |f|
+          content = File.read(f) rescue next
+          issues += scan_file(f)
 
-            # Add smell analysis if module is available
-            if defined?(Smells)
-              smells = Smells.detect(content, path: f) rescue []
-              issues += smells.map { |s| s.merge(file: f, type: :smell) }
-            end
-          end
-
-          # Check for cyclic dependencies if Smells module supports it
-          if defined?(Smells) && Smells.respond_to?(:cyclic_deps?)
-            cycle = begin; Smells.cyclic_deps?(files); rescue StandardError => e; Logging.warn("CodeReview", "cyclic_deps check failed: #{e.message}"); nil; end
-            issues << { file: path, type: :cyclic_dependency, cycle: cycle[:cycle] } if cycle
-          end
-        else
-          content = File.read(path)
-          issues = scan_file(path)
-
+          # Add smell analysis if module is available
           if defined?(Smells)
-            smells = Smells.detect(content, path: path) rescue []
-            issues += smells.map { |s| s.merge(file: path, type: :smell) }
+            smells = Smells.detect(content, path: f) rescue []
+            issues += smells.map { |s| s.merge(file: f, type: :smell) }
           end
+        end
+
+        # Check for cyclic dependencies if Smells module supports it
+        if File.directory?(path) && defined?(Smells) && Smells.respond_to?(:cyclic_deps?)
+          cycle = begin; Smells.cyclic_deps?(files); rescue StandardError => e; Logging.warn("CodeReview", "cyclic_deps check failed: #{e.message}"); nil; end
+          issues << { file: path, type: :cyclic_dependency, cycle: cycle[:cycle] } if cycle
         end
 
         Result.ok(issues.uniq { |i| [i[:file], i[:type] || i[:smell], i[:line]] })
@@ -79,7 +66,7 @@ module MASTER
       def quick_scan(path)
         return Result.err('Path not found') unless File.exist?(path)
 
-        files = File.directory?(path) ? Dir[File.join(path, '**', '*.rb')] : [path]
+        files = Analyzers::FileCollector.ruby_files(path)
 
         stats = {
           files: files.size,
@@ -107,7 +94,7 @@ module MASTER
         return Result.err('Path not found') unless File.exist?(path)
 
         issues = []
-        files = File.directory?(path) ? Dir[File.join(path, '**', '*.rb')] : [path]
+        files = Analyzers::FileCollector.ruby_files(path)
 
         files.each do |file|
           content = File.read(file) rescue next
@@ -167,15 +154,15 @@ module MASTER
         issues = []
 
         # Long methods
-        content.scan(/^\s*def\s+\w+.*?^\s*end/m).each do |method|
-          lines = method.lines.size
-          if lines > MAX_METHOD_LINES
+        methods = Analyzers::MethodLengthAnalyzer.scan(content)
+        methods.each do |method|
+          if method[:length] > MAX_METHOD_LINES
             issues << {
               file: path,
               type: :long_method,
-              lines: lines,
-              severity: lines > 50 ? :high : :medium,
-              message: "Method has #{lines} lines (max: #{MAX_METHOD_LINES})"
+              lines: method[:length],
+              severity: method[:length] > 50 ? :high : :medium,
+              message: "Method has #{method[:length]} lines (max: #{MAX_METHOD_LINES})"
             }
           end
         end
@@ -193,17 +180,7 @@ module MASTER
         end
 
         # Deep nesting (more than 3 levels)
-        max_nesting = 0
-        current_nesting = 0
-        content.each_line do |line|
-          # Count block starts
-          current_nesting += line.scan(/\b(if|unless|while|until|for|begin|class|module|def|case)\b/).size
-          current_nesting += line.scan(/\bdo\b|\{/).size
-          # Count block ends
-          current_nesting -= line.scan(/\bend\b|\}/).size
-          max_nesting = [max_nesting, current_nesting].max
-        end
-
+        max_nesting = Analyzers::NestingAnalyzer.depth(content)
         if max_nesting > 3
           issues << {
             file: path,
