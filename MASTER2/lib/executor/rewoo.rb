@@ -18,6 +18,7 @@ module MASTER
         UI.dim("  #{actions.size} actions")
 
         evidence = execute_rewoo_steps(actions, start_time)
+        return evidence unless evidence.is_a?(Hash)  # Handle timeout error
 
         synthesize_rewoo(goal, plan_text, evidence)
       end
