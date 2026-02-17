@@ -8,9 +8,9 @@ module MASTER
           thresholds = MASTER::Paths.load_yaml("budget")&.dig(:budget, :thresholds)
           unless thresholds
             MASTER::Logging.warn("budget.yml missing 'thresholds' — using emergency fallback", subsystem: "llm.budget") if defined?(MASTER::Logging)
-            return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
+
           end
-          thresholds
+          thresholds || { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
         end
       end
 
