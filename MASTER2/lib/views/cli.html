@@ -2,330 +2,211 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="color-scheme" content="dark">
 <title>MASTER</title>
 <style>
-:root {
-  --mint: #5af0b6;
-  --mint-dim: #2a7a5a;
-  --mint-ghost: #153a2d;
-  --bg: #050505;
-  --text: #c8d0cc;
-  --text-2: #5a6a62;
-  --error: #f06050;
-}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
-body{background:var(--bg);font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
-#orb{position:fixed;inset:0;width:100%;height:100%;border:none;z-index:1}
-#halation{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity 0.3s;z-index:9}
-#grain{position:fixed;inset:0;pointer-events:none;opacity:0.05;z-index:11;image-rendering:pixelated}
-#status{position:fixed;left:12px;right:12px;top:10px;display:flex;justify-content:space-between;gap:12px;color:var(--text-2);font-size:10px;z-index:20;pointer-events:none}
-#status .offline{color:var(--error)}
-#toast{position:fixed;top:34px;left:12px;padding:4px 8px;background:var(--mint-dim);border:1px solid var(--mint-ghost);color:var(--text);opacity:0;transition:opacity 0.2s;font-size:9px;z-index:21}
-dialog#help{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,5,5,0.75);color:var(--text);font-size:11px;z-index:30;border:none}
-dialog#help:not([open]){display:none}
-#help .panel{border:1px solid var(--mint-ghost);background:var(--bg);padding:16px;max-width:420px;line-height:1.5}
-output{position:fixed;left:12px;right:12px;bottom:52px;max-height:28vh;overflow-y:auto;color:var(--text);font-size:10px;z-index:20}
-output:empty{display:none}
-output p{margin:2px 0;opacity:0.85;color:var(--text)}
-output p.user{color:var(--mint)}
-output .loader{color:var(--mint);font-size:9px;margin:4px 0}
-@keyframes star{0%,100%{opacity:0.3}50%{opacity:1}}
-output .loader span{display:inline-block;animation:star 0.6s ease-in-out infinite}
-output .loader span:nth-child(2){animation-delay:0.1s}
-output .loader span:nth-child(3){animation-delay:0.2s}
-output .loader span:nth-child(4){animation-delay:0.3s}
-output .loader span:nth-child(5){animation-delay:0.4s}
-input{position:fixed;left:0;right:36px;bottom:0;background:transparent;border:none;border-top:1px solid var(--mint-ghost);color:var(--text);font:inherit;padding:8px 12px;outline:none;z-index:20}
-input::placeholder{color:var(--text-2)}
-input:focus{outline:2px solid var(--mint);outline-offset:2px}
-input:focus-visible{box-shadow:0 0 0 2px var(--mint);outline:none}
-input:disabled{opacity:0.6;cursor:not-allowed}
-#mic{position:fixed;right:0;bottom:0;width:36px;height:36px;background:transparent;border:none;border-top:1px solid var(--mint-ghost);color:var(--text-2);font-size:14px;cursor:pointer;z-index:20;display:flex;align-items:center;justify-content:center}
-#mic:hover{color:var(--mint)}
-#mic.active{color:var(--error);animation:pulse 1s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-#hint{position:fixed;left:12px;bottom:34px;color:var(--text-2);font-size:9px;z-index:20;pointer-events:none}
-@media (prefers-reduced-motion: reduce) {
-  * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+body{
+  background:#000;color:#fff;
+  font:14px/1.5 -apple-system,system-ui,sans-serif;
+  display:grid;grid-template-rows:1fr;
+  height:100dvh;
+}
+#scene{display:grid;place-items:center;overflow:hidden;grid-row:1/2;grid-column:1/2}
+#scene canvas{display:block;width:100%;height:100%}
+#chat{
+  grid-row:1/2;grid-column:1/2;align-self:end;
+  max-height:30vh;overflow-y:auto;padding:0 16px 80px;
+  scrollbar-width:none;pointer-events:none;
+  opacity:0;transition:opacity .4s;
+}
+#chat::-webkit-scrollbar{display:none}
+#chat.visible{opacity:1}
+#chat p{margin:4px 0;color:#666;font-size:13px}
+#chat .user{opacity:.4}
+#bar-wrap{
+  grid-row:1/2;grid-column:1/2;align-self:end;
+  padding:12px 16px;
+  transform:translateY(100%);opacity:0;
+  transition:transform .3s ease,opacity .3s ease;
+}
+#bar-wrap.visible{transform:translateY(0);opacity:1}
+#bar{
+  display:grid;grid-template-columns:1fr auto;
+  border:1px solid #333;border-radius:8px;
+  background:rgba(0,0,0,.8);backdrop-filter:blur(8px);
+}
+#bar input{
+  background:none;border:none;color:#fff;
+  font:inherit;padding:10px 14px;outline:none;min-width:0;
+}
+#bar input::placeholder{color:#666}
+#mic{
+  background:none;border:none;border-left:1px solid #333;
+  color:#666;font-size:18px;padding:0 14px;cursor:pointer;
+  display:flex;align-items:center;
+}
+#mic:hover{color:#fff}
+#mic.active{color:#f44}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
 </style>
 </head>
 <body>
-<iframe id="orb" src="orb_blob.html"></iframe>
-<canvas id="halation"></canvas>
-<canvas id="grain"></canvas>
-<div id="status"><span id="status-left"></span><span id="status-right"></span></div>
-<div id="toast"></div>
-<dialog id="help"><div class="panel">Keyboard: 1-4 switch orbs, ←/→ cycle, g toggles grain, v voice input, t toggles voice output, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></dialog>
-<output id="out"></output>
-<div id="hint">Type a message, press Enter, or click the mic for voice input</div>
-<input id="in" type="text" placeholder="Ask MASTER… (press Enter to send)" autofocus>
-<button id="mic" title="Voice input (v)">&#9679;</button>
+<div id="scene"></div>
+<div id="chat"></div>
+<div id="bar-wrap">
+  <div id="bar">
+    <input id="in" type="text" placeholder="type a message…">
+    <button id="mic" title="Voice (v)">&#9679;</button>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const ORBS=['orb_blob','orb_particle','orb_3d','orb_retro'];
-let currentOrb=0;
-let currentState='idle';
+// --- Three.js particle orb ---
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(50,1,.1,100);
+camera.position.z=3.2;
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setClearColor(0x000000);
+document.getElementById('scene').appendChild(renderer.domElement);
 
-const grainCanvas=document.getElementById('grain'),grainCtx=grainCanvas.getContext('2d');
-let gw,gh;
-function resizeGrain(){
-  gw=Math.floor(window.innerWidth/4);
-  gh=Math.floor(window.innerHeight/4);
-  grainCanvas.width=gw;grainCanvas.height=gh;
-  drawGrain();
+const N=4000,geo=new THREE.BufferGeometry();
+const pos=new Float32Array(N*3),base=new Float32Array(N*3);
+for(let i=0;i<N;i++){
+  const phi=Math.acos(2*Math.random()-1),theta=Math.random()*Math.PI*2;
+  const r=.9+Math.random()*.1;
+  const x=r*Math.sin(phi)*Math.cos(theta),y=r*Math.sin(phi)*Math.sin(theta),z=r*Math.cos(phi);
+  pos[i*3]=base[i*3]=x;pos[i*3+1]=base[i*3+1]=y;pos[i*3+2]=base[i*3+2]=z;
 }
-function drawGrain(){
-  const img=grainCtx.createImageData(gw,gh);
-  for(let i=0;i<img.data.length;i+=4){
-    const v=128+(Math.random()-0.5)*30;
-    img.data[i]=img.data[i+1]=img.data[i+2]=v;
-    img.data[i+3]=255;
+geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+geo.setAttribute('base',new THREE.BufferAttribute(base,3));
+const mat=new THREE.PointsMaterial({color:0xffffff,size:.012,sizeAttenuation:true});
+const points=new THREE.Points(geo,mat);
+scene.add(points);
+
+let orbState='idle',clock=new THREE.Clock();
+function orbResize(){
+  const w=window.innerWidth,h=window.innerHeight;
+  renderer.setSize(w,h);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  camera.aspect=w/h;camera.updateProjectionMatrix();
+}
+orbResize();window.addEventListener('resize',orbResize);
+
+function animateOrb(){
+  requestAnimationFrame(animateOrb);
+  const t=clock.getElapsedTime(),p=geo.attributes.position.array,b=geo.attributes.base.array;
+  let breathe=1+Math.sin(t*.8)*.03,rotSpeed=.08,jitter=.002;
+  if(orbState==='thinking'){breathe=1+Math.sin(t*2)*.06;rotSpeed=.3;jitter=.006;}
+  else if(orbState==='speaking'){breathe=1+Math.sin(t*4)*.08;rotSpeed=.12;jitter=.003;}
+  for(let i=0;i<N;i++){
+    const i3=i*3;
+    p[i3]=b[i3]*breathe+(Math.random()-.5)*jitter;
+    p[i3+1]=b[i3+1]*breathe+(Math.random()-.5)*jitter;
+    p[i3+2]=b[i3+2]*breathe+(Math.random()-.5)*jitter;
   }
-  grainCtx.putImageData(img,0,0);
+  geo.attributes.position.needsUpdate=true;
+  points.rotation.y+=rotSpeed*.016;points.rotation.x=Math.sin(t*.3)*.05;
+  renderer.render(scene,camera);
 }
-resizeGrain();
-window.addEventListener('resize',resizeGrain);
-(function animateGrain(){
-  drawGrain();
-  requestAnimationFrame(animateGrain);
-})();
+animateOrb();
 
-function switchOrb(idx){
-  if(idx>=0&&idx<ORBS.length){
-    currentOrb=idx;
-    const orbFrame=document.getElementById('orb');
-    orbFrame.src=ORBS[idx]+'.html';
-    orbFrame.onload=()=>{
-      if(orbFrame.contentWindow){
-        orbFrame.contentWindow.postMessage({type:'state',mode:currentState},'*');
-      }
-    };
-    localStorage.setItem('orb',ORBS[idx]);
-    updateStatus(lastStatusData);
-    showToast(`orb ${ORBS[idx].replace('orb_','')}`);
-  }
+// --- Progressive disclosure ---
+const barWrap=document.getElementById('bar-wrap'),inp=document.getElementById('in');
+const chatEl=document.getElementById('chat');
+let barTimer=null,chatTimer=null,barVisible=false;
+
+function showBar(){
+  barWrap.classList.add('visible');barVisible=true;inp.focus();
+  clearTimeout(barTimer);barTimer=setTimeout(hideBar,3000);
 }
+function hideBar(){
+  if(document.activeElement===inp&&inp.value)return;
+  barWrap.classList.remove('visible');barVisible=false;
+}
+function showChat(){chatEl.classList.add('visible');clearTimeout(chatTimer);chatTimer=setTimeout(()=>chatEl.classList.remove('visible'),5000)}
+function resetBarTimer(){clearTimeout(barTimer);barTimer=setTimeout(hideBar,3000)}
 
-const saved=localStorage.getItem('orb');
-if(saved){const idx=ORBS.indexOf(saved);if(idx>=0)switchOrb(idx)}
-
+document.getElementById('scene').addEventListener('click',showBar);
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape' && help.open){help.close();return}
-  if(document.activeElement===document.getElementById('in'))return;
-  const num=parseInt(e.key);
-  if(num>=1&&num<=4)switchOrb(num-1);
-  if(e.key==='ArrowRight')switchOrb((currentOrb+1)%ORBS.length);
-  if(e.key==='ArrowLeft')switchOrb((currentOrb-1+ORBS.length)%ORBS.length);
-  if(e.key==='g'){showToast(`grain ${toggleGrain()}`)}
-  if(e.key==='t'){ttsEnabled=!ttsEnabled;localStorage.setItem('tts',ttsEnabled?'on':'off');showToast(`voice ${ttsEnabled?'on':'off'}`);if(!ttsEnabled&&synth)synth.cancel()}
-  if(e.key==='?'){help.open?help.close():help.showModal()}
+  if(document.activeElement===inp)return;
+  if(e.key==='t'||e.key==='v')return;
+  if(!barVisible)showBar();
 });
+inp.addEventListener('input',resetBarTimer);
+inp.addEventListener('focus',()=>{clearTimeout(barTimer)});
+inp.addEventListener('blur',()=>{barTimer=setTimeout(hideBar,3000)});
 
-const out=document.getElementById('out'),inp=document.getElementById('in');
-const statusLeft=document.getElementById('status-left');
-const statusRight=document.getElementById('status-right');
-const toast=document.getElementById('toast');
-const help=document.getElementById('help');
-let pending=false;
-let lastSync=null;
-let offlineCount=0;
-let lastSent='';
-let lastStatusData={};
-let loaderEl=null;
-
-let ttsEnabled=localStorage.getItem('tts')!=='off';
+// --- TTS ---
+let ttsOn=localStorage.getItem('tts')!=='off';
 const synth=window.speechSynthesis;
-
-help.addEventListener('click',()=>{help.close()});
-function speakText(text){
-  if(!ttsEnabled||!synth)return;
-  synth.cancel();
+function speak(text){
+  if(!ttsOn||!synth)return;synth.cancel();
   const clean=text.replace(/```[\s\S]*?```/g,'code block').replace(/[*_#`~>|]/g,'').substring(0,500);
-  const u=new SpeechSynthesisUtterance(clean);
-  u.rate=1.1;u.pitch=1.0;
+  const u=new SpeechSynthesisUtterance(clean);u.rate=1.1;
+  u.onstart=()=>{orbState='speaking'};
+  u.onend=()=>{orbState='idle'};
   synth.speak(u);
 }
 
-function add(t,isUser){
-  removeLoader();
-  const p=document.createElement('p');
-  if(isUser)p.className='user';
-  p.textContent=isUser?'> '+t:t;
-  out.appendChild(p);
-  out.scrollTop=out.scrollHeight;
-  if(!isUser)speakText(t);
+// --- Chat ---
+let pending=false,offlineN=0,lastSent='';
+function addMsg(t,isUser){
+  const p=document.createElement('p');p.className=isUser?'user':'';
+  p.textContent=isUser?'› '+t:t;chatEl.appendChild(p);
+  chatEl.scrollTop=chatEl.scrollHeight;showChat();
+  if(!isUser){speak(t);if(!synth||!ttsOn){orbState='speaking';setTimeout(()=>orbState='idle',2000)}}
 }
-
-function showLoader(){
-  removeLoader();
-  currentState='thinking';
-  const orbFrame=document.getElementById('orb');
-  if(orbFrame.contentWindow){
-    orbFrame.contentWindow.postMessage({type:'state',mode:'thinking'},'*');
-  }
-  loaderEl=document.createElement('div');
-  loaderEl.className='loader';
-  loaderEl.innerHTML='<span>·</span><span>·</span><span>·</span><span>·</span><span>·</span>';
-  out.appendChild(loaderEl);
-  out.scrollTop=out.scrollHeight;
-}
-
-function removeLoader(){
-  if(loaderEl){
-    loaderEl.remove();
-    loaderEl=null;
-    currentState='idle';
-    const orbFrame=document.getElementById('orb');
-    if(orbFrame.contentWindow){
-      orbFrame.contentWindow.postMessage({type:'state',mode:'idle'},'*');
-    }
-  }
-}
-
-function setPending(state){
-  pending=state;
-  inp.disabled=state;
-  inp.placeholder=state?'Processing…':'Ask MASTER… (press Enter to send)';
-}
-
-function formatCost(cost){
-  if(cost==null)return'--';
-  return'$'+Number(cost).toFixed(4);
-}
-
-function updateStatus(data){
-  if(data && Object.keys(data).length){lastStatusData=data}
-  const tier=lastStatusData?.tier||'unknown';
-  const budget=formatCost(lastStatusData?.budget);
-  const orb=ORBS[currentOrb].replace('orb_','');
-  const sync=lastSync?lastSync.toLocaleTimeString():'--';
-  statusLeft.textContent=`${tier} · orb ${orb}`;
-  statusRight.textContent=`${budget} · sync ${sync}`;
-  statusRight.className=offlineCount>=2?'offline':'';
-}
-
-function showToast(text){
-  toast.textContent=text;
-  toast.style.opacity='1';
-  setTimeout(()=>{toast.style.opacity='0'},1200);
-}
+function setPending(v){pending=v;inp.disabled=v;inp.placeholder=v?'thinking…':'type a message…'}
 
 inp.addEventListener('keydown',e=>{
-  if(e.key==='ArrowUp' && !inp.value){inp.value=lastSent||'';return}
+  resetBarTimer();
+  if(e.key==='ArrowUp'&&!inp.value){inp.value=lastSent||'';return}
   if(e.key!=='Enter')return;
-  const m=inp.value.trim();
-  if(!m)return;
-  add(m,true);
-  lastSent=m;
-  inp.value='';
-  showLoader();
-  setPending(true);
+  const m=inp.value.trim();if(!m||pending)return;
+  addMsg(m,true);lastSent=m;inp.value='';
+  orbState='thinking';setPending(true);
   fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(window.MASTER_TOKEN||'')},body:JSON.stringify({message:m})})
     .then(r=>r.ok?r.json():r.json().then(err=>Promise.reject(err)))
-    .catch(err=>{
-      removeLoader();
-      add(err?.error||'[offline]');
-      setPending(false);
-      offlineCount+=1;
-      updateStatus({});
-    });
+    .catch(err=>{addMsg(err?.error||'[offline]');setPending(false);orbState='idle';offlineN++});
 });
 
+// --- Poll ---
 (function poll(){
-  // Exponential backoff: 800ms when online, increases from 3s to 30s max when offline
-  const pollDelay=offlineCount===0?800:Math.min(3000*Math.pow(2,offlineCount-1),30000);
+  const delay=offlineN===0?800:Math.min(3000*Math.pow(2,offlineN-1),30000);
   fetch('/poll',{signal:AbortSignal.timeout(10000),headers:{'Authorization':'Bearer '+(window.MASTER_TOKEN||'')}})
-    .then(r=>r.json())
-    .then(d=>{
-      offlineCount=0;
-      lastSync=new Date();
-      updateStatus(d);
-      if(d.text){
-        removeLoader();
-        add(d.text);
-        currentState='speaking';
-        const orbFrame=document.getElementById('orb');
-        if(orbFrame.contentWindow){
-          orbFrame.contentWindow.postMessage({type:'state',mode:'speaking'},'*');
-        }
-        setTimeout(()=>{
-          currentState='idle';
-          if(orbFrame.contentWindow){
-            orbFrame.contentWindow.postMessage({type:'state',mode:'idle'},'*');
-          }
-        },2000);
-      }
-      if(d.text){setPending(false)}
-      setTimeout(poll,pollDelay);
-    })
-    .catch(()=>{
-      offlineCount+=1;
-      updateStatus({});
-      setTimeout(poll,pollDelay);
-    });
+    .then(r=>r.json()).then(d=>{
+      offlineN=0;
+      if(d.text){addMsg(d.text);setPending(false);orbState=ttsOn?orbState:'idle'}
+      setTimeout(poll,delay);
+    }).catch(()=>{offlineN++;setTimeout(poll,delay)});
 })();
 
-function toggleGrain(){
-  const current=grainCanvas.style.display||'block';
-  const next=current==='none'?'block':'none';
-  grainCanvas.style.display=next;
-  localStorage.setItem('grain',next);
-  return next==='block'?'on':'off';
-}
-
-const savedGrain=localStorage.getItem('grain');
-if(savedGrain==='block'||savedGrain==='none'){grainCanvas.style.display=savedGrain}
-
-// Voice input via Web Speech API
+// --- Voice input ---
 const micBtn=document.getElementById('mic');
-const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SpeechRecognition){
-  const recognition=new SpeechRecognition();
-  recognition.continuous=false;
-  recognition.interimResults=true;
-  recognition.lang='en-US';
-  let listening=false;
-
-  function startVoice(){
-    if(pending)return;
-    recognition.start();
-    listening=true;
-    micBtn.classList.add('active');
-    micBtn.title='Listening... click to stop';
-    showToast('listening');
-  }
-  function stopVoice(){
-    recognition.stop();
-    listening=false;
-    micBtn.classList.remove('active');
-    micBtn.title='Voice input (v)';
-  }
-
-  micBtn.addEventListener('click',()=>{listening?stopVoice():startVoice()});
-
-  recognition.addEventListener('result',e=>{
-    const transcript=Array.from(e.results).map(r=>r[0].transcript).join('');
-    inp.value=transcript;
-    if(e.results[e.results.length-1].isFinal){
-      stopVoice();
-      if(transcript.trim()){
-        inp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}));
-      }
-    }
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SR){
+  const rec=new SR();rec.continuous=false;rec.interimResults=true;rec.lang='en-US';
+  let on=false;
+  function micStart(){if(pending)return;showBar();rec.start();on=true;micBtn.classList.add('active')}
+  function micStop(){rec.stop();on=false;micBtn.classList.remove('active')}
+  micBtn.addEventListener('click',()=>on?micStop():micStart());
+  rec.addEventListener('result',e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join('');inp.value=t;
+    if(e.results[e.results.length-1].isFinal){micStop();if(t.trim())inp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))}
   });
-  recognition.addEventListener('end',()=>{stopVoice()});
-  recognition.addEventListener('error',e=>{stopVoice();if(e.error!=='aborted')showToast('mic: '+e.error)});
+  rec.addEventListener('end',()=>micStop());
+  rec.addEventListener('error',e=>{micStop()});
+  document.addEventListener('keydown',e=>{if(e.key==='v'&&document.activeElement!==inp){on?micStop():micStart()}});
+}else{micBtn.style.display='none'}
 
-  document.addEventListener('keydown',e=>{
-    if(document.activeElement===inp&&e.key==='v'&&inp.value===''){return}
-    if(e.key==='v'&&document.activeElement!==inp){listening?stopVoice():startVoice()}
-  });
-} else {
-  micBtn.style.display='none';
-}
+// --- TTS toggle ---
+document.addEventListener('keydown',e=>{
+  if(document.activeElement===inp)return;
+  if(e.key==='t'){ttsOn=!ttsOn;localStorage.setItem('tts',ttsOn?'on':'off');if(!ttsOn&&synth)synth.cancel()}
+});
 </script>
 </body>
 </html>
