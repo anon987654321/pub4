@@ -6,6 +6,7 @@ module MASTER
   # Pipeline - Uses Executor with hybrid patterns
   class Pipeline
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
+    ALLOWED_STAGES = %w[Intake Compress Guard Route Council Ask Lint Render Execute].freeze
     MAX_INPUT_LENGTH = 100_000 # ~25k tokens
 
     @current_pattern = :auto
@@ -27,12 +28,11 @@ module MASTER
         if stage.respond_to?(:call)
           stage
         else
-          const_name = stage.to_s.capitalize.to_sym
-          unless Stages.const_defined?(const_name)
-            available = Stages.constants.join(", ")
-            raise ArgumentError, "Unknown pipeline stage: #{stage}. Available: #{available}"
+          const_name = stage.to_s.capitalize
+          unless ALLOWED_STAGES.include?(const_name)
+            raise ArgumentError, "Invalid pipeline stage: #{stage}. Allowed: #{ALLOWED_STAGES.join(', ')}"
           end
-          Stages.const_get(const_name).new
+          Stages.const_get(const_name.to_sym).new
         end
       end
     end
@@ -135,7 +135,7 @@ module MASTER
           # Gather context
           model = LLM.prompt_model_name
           tier = LLM.tier
-          budget = LLM.budget_remaining
+          budget = LLM.budget_remaining rescue Float::INFINITY
           tokens = Session.current.message_count rescue 0
           tripped = LLM.model_tiers[tier]&.any? { |m| !LLM.circuit_closed?(m) }
 

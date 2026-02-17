@@ -167,13 +167,7 @@ module MASTER
     private
 
     def simple_query?(goal)
-<<<<<<< HEAD
       @pattern == :direct
-=======
-      goal.length < 200 &&
-        !goal.match?(/\b(file|read|write|analyze|fix|search|browse|run|execute|test|review)\b/i) &&
-        !goal.match?(/\b(create|update|modify|delete|install|build)\b/i)
->>>>>>> origin/copilot/remove-dead-code-master2
     end
 
     def direct_ask(goal, tier: nil)

@@ -45,18 +45,12 @@ module MASTER
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
       loop do
-        budget = LLM.budget_remaining rescue 10.0
-        prompt_color = if budget > 5.0 then :green
-                       elsif budget > 1.0 then :yellow
-                       else :red
-                       end
         model_name = LLM.extract_model_name(LLM.prompt_model_name) rescue "?"
-        budget_str = UI.pastel.send(prompt_color, "$#{format('%.2f', budget)}")
 
         prompt_str = if phase
-                       "#{phase} #{model_name} #{budget_str}> "
+                       "#{phase} #{model_name}> "
                      else
-                       "#{model_name} #{budget_str}> "
+                       "#{model_name}> "
                      end
 
         begin

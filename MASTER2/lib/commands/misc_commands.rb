@@ -128,10 +128,6 @@ module MASTER
         model = LLM.select_model
         checks << { name: "Models available", ok: !model.nil? }
 
-        # Check budget
-        budget_ok = LLM.budget_remaining > 0
-        checks << { name: "Budget remaining", ok: budget_ok }
-
         checks.each do |c|
           status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
           puts "#{status} #{c[:name]}"

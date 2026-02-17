@@ -71,8 +71,6 @@ module MASTER
         configure_ruby_llm
 
         chat = RubyLLM.chat(model: model)
-        cap = Thread.current[:llm_max_tokens] || MAX_CHAT_TOKENS
-        chat = chat.with_params(max_tokens: cap)
 
         # Validate reasoning effort values
         if reasoning

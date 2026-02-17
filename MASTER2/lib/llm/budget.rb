@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Budgeting removed — OpenRouter handles credit limits natively.
+# Stub methods kept for backward compatibility.
+
 module MASTER
   module LLM
     class << self
@@ -15,7 +18,7 @@ module MASTER
       end
 
       def spending_cap
-        SPENDING_CAP
+        Float::INFINITY
       end
 
       def total_spent
@@ -24,23 +27,13 @@ module MASTER
       end
 
       def budget_remaining
-        [spending_cap - total_spent, 0.0].max
+        Float::INFINITY
       end
 
 
       def tier
         return @forced_tier if @forced_tier
-        r = budget_remaining
-        thresholds = budget_thresholds
-        if r > thresholds[:premium]
-          :premium
-        elsif r > thresholds[:strong]
-          :strong
-        elsif r > thresholds[:fast]
-          :fast
-        else
-          :cheap
-        end
+        :strong
       end
 
       def record_cost(model:, tokens_in:, tokens_out:)

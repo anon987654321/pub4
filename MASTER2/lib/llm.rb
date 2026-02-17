@@ -56,37 +56,9 @@ module MASTER
         Result.err("Key check failed: #{e.message}")
       end
 
-      # Thread-local per-agent budget tracking
-      def current_agent_budget
-        Thread.current[:agent_budget]
-      end
-
-      def set_agent_budget(budget)
-        Thread.current[:agent_budget] = budget
-        Thread.current[:agent_spent] = 0.0
-      end
-
-      def agent_spent
-        Thread.current[:agent_spent] || 0.0
-      end
-
-      def record_agent_cost(cost)
-        if Thread.current[:agent_budget]
-          Thread.current[:agent_spent] = (Thread.current[:agent_spent] || 0.0) + cost
-        end
-      end
-
-      def check_agent_budget
-        agent_budget = Thread.current[:agent_budget]
-        return Result.ok unless agent_budget
-
-        spent = Thread.current[:agent_spent] || 0.0
-        if spent >= agent_budget
-          Result.err("Agent budget exhausted: $#{spent.round(2)}/$#{agent_budget.round(2)}.")
-        else
-          Result.ok
-        end
-      end
+      # Stubs for backward compatibility (budgeting removed)
+      def set_agent_budget(_budget); end
+      def record_agent_cost(_cost); end
 
       # Ask LLM with fallbacks, reasoning, and structured outputs
       # Returns Result monad with value/error
@@ -176,9 +148,6 @@ module MASTER
         tokens_in = data[:tokens_in]
         tokens_out = data[:tokens_out]
         cost = data[:cost] || record_cost(model: current_model, tokens_in: tokens_in, tokens_out: tokens_out)
-
-        # Record per-agent cost if agent budget is set
-        record_agent_cost(cost)
 
         Logging.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Logging)
         SemanticCache.store(prompt, data, tier: :default) if defined?(SemanticCache) && !stream

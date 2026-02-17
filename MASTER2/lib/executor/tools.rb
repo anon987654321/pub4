@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module MASTER
+  # Freeze cwd at require time so chdir can't escape the sandbox
+  FROZEN_CWD = File.expand_path(".").freeze
+
   # ToolDispatch - extracted from Executor::Tools for module-level access
   module ToolDispatch
       def dispatch_action(action_str)
@@ -112,9 +115,8 @@ module MASTER
           end
         end
 
-        # Check working directory constraint
-        cwd = File.expand_path(".")
-        unless expanded.start_with?(cwd)
+        # Check working directory constraint (frozen at require time)
+        unless expanded.start_with?(FROZEN_CWD)
           return "BLOCKED: file_write path '#{path}' is outside working directory"
         end
 
@@ -174,10 +176,15 @@ module MASTER
           /system\s*\(/,
           /exec\s*\(/,
           /`[^`]*`/,
-          /Kernel\.exec/,
+          /%x[{\[(]/,
+          /Kernel\.\s*(system|exec|spawn)/,
+          /Process\.\s*(exec|spawn|fork|kill|daemon)/,
+          /Signal\./,
           /IO\.popen/,
           /Open3/,
-          /FileUtils\.rm_rf/
+          /FileUtils\.rm_rf/,
+          /\bspawn\s*\(/,
+          /\bfork\b/
         ]
 
         if dangerous_code.any? { |pattern| pattern.match?(code) }
