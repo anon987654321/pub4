@@ -130,51 +130,16 @@ module MASTER
       include PipelineRepl
 
       def prompt
-        # Starship-inspired multi-segment prompt
-        # Line 1: Info bar with context segments
-        # Line 2: Simple input prompt
         begin
-          pastel = UI.pastel
-
-          # Gather context
-          model = LLM.prompt_model_name
-          tier = LLM.tier
-          tokens = Session.current.message_count rescue 0
-          tripped = LLM.model_tiers[tier]&.any? { |m| !LLM.circuit_closed?(m) }
-
-          # Build segments
-          segments = []
-
-          # Ruby version segment
-          ruby_version = RUBY_VERSION
-          segments << pastel.cyan("ruby #{ruby_version}")
-
-          # Model + tier segment
-          tier_label = tier ? "(#{tier})" : ""
-          segments << pastel.yellow("#{model} #{tier_label}".strip)
-
-          # Turn count
-          if tokens > 0
-            segments << "^#{format_tokens(tokens)}"
-          end
-
-          # Circuit breaker status
-          status_icon = tripped ? pastel.red("tripped") : pastel.green("ok")
-          segments << status_icon
-
-          # Git branch (if in repo)
-          git_segment = git_info
-          segments << git_segment if git_segment
-
-          # Build prompt
-          sep = pastel.dim(" . ")
-          info_line = "+- #{segments.join(sep)}"
-          input_line = "+- master >>"
-
-          "#{info_line}\n#{input_line}"
-        rescue StandardError => e
-          # Fallback to simple prompt on any error
-          "master$ "
+          segments = [
+            "master",
+            LLM.prompt_model_name,
+            LLM.tier,
+            git_info
+          ].map { |s| s.to_s.strip }.reject(&:empty?)
+          "#{segments.join(" ")} > "
+        rescue StandardError
+          "master > "
         end
       end
 
@@ -193,8 +158,8 @@ module MASTER
         dirty = !status.empty? && $?.exitstatus == 0
 
         dirty_indicator = dirty ? "*" : ""
-        UI.pastel.blue("#{branch}#{dirty_indicator}")
-      rescue Timeout::Error, StandardError => e
+        "#{branch}#{dirty_indicator}"
+      rescue Timeout::Error, StandardError
         nil
       end
 

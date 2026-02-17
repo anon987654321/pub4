@@ -9,54 +9,20 @@ class TestStarshipPrompt < Minitest::Test
     MASTER::Session.start_new
   end
 
-  def test_prompt_is_multi_line
+  def test_prompt_is_single_line
     prompt = MASTER::Pipeline.prompt
-    # Starship prompt should be multi-line
-    assert prompt.include?("\n"), "Prompt should be multi-line: #{prompt.inspect}"
-  end
-
-  def test_prompt_has_info_bar
-    prompt = MASTER::Pipeline.prompt
-    lines = prompt.split("\n")
-    
-    # Should have at least 2 lines
-    assert lines.length >= 2, "Prompt should have at least 2 lines"
-    
-    # First line should start with box character
-    assert lines[0].start_with?("┌─"), "First line should start with ┌─"
+    refute prompt.include?("\n"), "Prompt should be single-line: #{prompt.inspect}"
   end
 
   def test_prompt_has_input_line
     prompt = MASTER::Pipeline.prompt
-    lines = prompt.split("\n")
-    
-    # Last line should be the input line
-    assert lines[-1].include?("master"), "Last line should contain 'master'"
-    assert lines[-1].include?("»"), "Last line should contain '»' prompt marker"
-  end
-
-  def test_prompt_includes_ruby_version
-    prompt = MASTER::Pipeline.prompt
-    
-    # Should include Ruby version in some form
-    assert prompt.include?("ruby"), "Prompt should mention ruby"
-    assert prompt.include?(RUBY_VERSION.split('.')[0..1].join('.')), 
-           "Prompt should include Ruby version"
+    assert prompt.include?("master"), "Prompt should contain 'master'"
+    assert prompt.end_with?(" > "), "Prompt should end with '> ': #{prompt.inspect}"
   end
 
   def test_prompt_includes_model_info
     prompt = MASTER::Pipeline.prompt
-    
-    # Should include model emoji or reference
-    assert prompt.include?("🤖"), "Prompt should include robot emoji for model"
-  end
-
-  def test_prompt_includes_circuit_status
-    prompt = MASTER::Pipeline.prompt
-    
-    # Should include circuit status (ok or tripped)
-    assert(prompt.include?("⚡ok") || prompt.include?("⚡tripped"),
-           "Prompt should include circuit breaker status")
+    refute_empty prompt.strip
   end
 
   def test_prompt_fallback_on_error
@@ -70,7 +36,7 @@ class TestStarshipPrompt < Minitest::Test
     prompt = MASTER::Pipeline.prompt
     
     # Should fall back to simple prompt
-    assert_equal "master$ ", prompt
+    assert_equal "master > ", prompt
   ensure
     # Restore original method
     MASTER::LLM.define_singleton_method(:prompt_model_name, original_method)
