@@ -10,7 +10,7 @@ module MASTER
           require "async"
           require "async/websocket/adapters/rack"
         rescue LoadError
-          Logging.warn("WebSocket", "async-websocket not available")
+          Logging.warn("async-websocket not available", subsystem: "WebSocket")
           return [501, { CT_HEADER => TEXT_TYPE }, ["WebSocket not available"]]
         end
 
@@ -61,13 +61,13 @@ module MASTER
               connection.write({ type: "error", message: "Invalid JSON" }.to_json)
               connection.flush
             rescue StandardError => e
-              Logging.warn("WebSocket", "Error: #{e.message}")
+              Logging.warn("Error: #{e.message}", subsystem: "WebSocket")
               connection.write({ type: "error", message: e.message }.to_json)
               connection.flush
             end
           end
         rescue StandardError => e
-          Logging.warn("WebSocket", "Connection error: #{e.message}")
+          Logging.warn("Connection error: #{e.message}", subsystem: "WebSocket")
         end
 
         # Return nil to indicate WebSocket handled the request

@@ -75,9 +75,9 @@ module MASTER
 
         optional_checks = OPTIONAL_MODULES.select do |name, method|
           mod = begin
-            Object.const_get(name)
+            MASTER.const_get(name)
           rescue NameError => e
-            MASTER::Logging.warn("boot", "Failed to resolve constant: #{name} — #{e.message}") if defined?(MASTER::Logging)
+            MASTER::Logging.warn("Failed to resolve constant: #{name} — #{e.message}", subsystem: "boot") if defined?(MASTER::Logging)
             nil
           end
           mod && !mod.respond_to?(method) && !mod.instance_methods.include?(method)

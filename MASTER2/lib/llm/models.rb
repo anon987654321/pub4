@@ -18,7 +18,7 @@ module MASTER
           begin
             YAML.safe_load_file(models_file, symbolize_names: true) || []
           rescue StandardError => e
-            MASTER::Logging.warn("llm.models", "Failed to load models: #{e.message}") if defined?(MASTER::Logging)
+            MASTER::Logging.warn("Failed to load models: #{e.message}", subsystem: "llm.models") if defined?(MASTER::Logging)
             []
           end
         end

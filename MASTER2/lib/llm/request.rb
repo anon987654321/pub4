@@ -53,13 +53,13 @@ module MASTER
           affordable = error_str[/can only afford (\d+)/, 1].to_i
           # Set to 90% of affordable to leave some margin
           Thread.current[:llm_max_tokens] = [(affordable * 0.9).to_i, 512].max
-          Logging.info("llm.budget", "Auto-reduced max_tokens to #{Thread.current[:llm_max_tokens]}")
+          Logging.info("Auto-reduced max_tokens to #{Thread.current[:llm_max_tokens]}", subsystem: "llm.budget")
           return true
         end
 
         # Handle prompt token limit exceeded
         if error_str.match?(/Prompt tokens limit exceeded: (\d+) > (\d+)/i)
-          Logging.warn("llm.context", "Prompt too large - consider clearing history with /clear")
+          Logging.warn("Prompt too large - consider clearing history with /clear", subsystem: "llm.context")
           return false  # Don't retry, need manual intervention
         end
 

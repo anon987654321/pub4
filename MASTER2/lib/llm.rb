@@ -133,7 +133,7 @@ module MASTER
 
         # Budget checking: warn but don't block
         if total_spent >= spending_cap
-          Logging.warn("llm.budget", "Budget limit reached: $#{total_spent.round(2)}/$#{spending_cap} - continuing anyway")
+          Logging.warn("Budget limit reached: $#{total_spent.round(2)}/$#{spending_cap} - continuing anyway", subsystem: "llm.budget")
         end
 
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream

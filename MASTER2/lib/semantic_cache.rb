@@ -174,7 +174,7 @@ module MASTER
         sorted = entries_with_data.sort_by { |e| [e[:hit_count], e[:last_hit]] }
         to_remove = sorted.first(entries.size - MAX_CACHE_SIZE)
         to_remove.each do |e|
-          begin; File.delete(e[:path]); rescue SystemCallError => err; Logging.warn("SemanticCache", "cleanup failed: #{err.message}"); end
+          begin; File.delete(e[:path]); rescue SystemCallError => err; Logging.warn("cleanup failed: #{err.message}", subsystem: "SemanticCache"); end
         end
       end
 

@@ -59,7 +59,7 @@ module MASTER
         begin
           YAML.safe_load_file(axioms_path) || []
         rescue StandardError => e
-          MASTER::Logging.warn("review.axiom_stats", "Failed to load axioms file: #{e.message}") if defined?(MASTER::Logging)
+          MASTER::Logging.warn("Failed to load axioms file: #{e.message}", subsystem: "review.axiom_stats") if defined?(MASTER::Logging)
           []
         end
       end
