@@ -14,9 +14,9 @@ module MASTER
       def rules
         return @rules_cache if @rules_cache
 
-        constitution_path = File.join(MASTER.root, "data", "constitution.yml")
+        constitution_path = MASTER::Paths.data_path("constitution")
 
-        @rules_cache = if File.exist?(constitution_path)
+        @rules_cache = if constitution_path && File.exist?(constitution_path)
           YAML.safe_load_file(constitution_path)
         else
           # Sensible defaults when constitution.yml is missing
@@ -59,8 +59,8 @@ module MASTER
           @axioms_cache = rules["axioms"]
         else
           # Fallback to separate axioms.yml file
-          axioms_path = File.join(MASTER.root, "data", "axioms.yml")
-          @axioms_cache = File.exist?(axioms_path) ? YAML.safe_load_file(axioms_path) : []
+          axioms_path = MASTER::Paths.data_path("axioms")
+          @axioms_cache = (axioms_path && File.exist?(axioms_path)) ? YAML.safe_load_file(axioms_path) : []
         end
 
         @axioms_cache
@@ -74,8 +74,8 @@ module MASTER
           @council_cache = rules["council"]
         else
           # Fallback to separate council.yml file
-          council_path = File.join(MASTER.root, "data", "council.yml")
-          @council_cache = File.exist?(council_path) ? YAML.safe_load_file(council_path) : []
+          council_path = MASTER::Paths.data_path("council")
+          @council_cache = (council_path && File.exist?(council_path)) ? YAML.safe_load_file(council_path) : []
         end
 
         @council_cache

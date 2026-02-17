@@ -52,20 +52,14 @@ module MASTER
       private
 
       def load_axioms
-        # MASTER.root points to the MASTER2 directory when running from within MASTER2
-        # or to pub4 directory when running from outside
-        axioms_paths = [
-          File.join(MASTER.root, "data", "axioms.yml"),              # When run from MASTER2
-          File.join(MASTER.root, "MASTER2", "data", "axioms.yml")   # When run from pub4
-        ]
+        axioms_path = MASTER::Paths.data_path("axioms")
 
-        axioms_file = axioms_paths.find { |path| File.exist?(path) }
-
-        return [] unless axioms_file
+        return [] unless axioms_path
 
         begin
-          YAML.safe_load_file(axioms_file) || []
+          YAML.safe_load_file(axioms_path) || []
         rescue StandardError => e
+          MASTER::Logging.warn("review.axiom_stats", "Failed to load axioms file: #{e.message}") if defined?(MASTER::Logging)
           []
         end
       end

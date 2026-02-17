@@ -6,10 +6,10 @@
 cognitive_load:
   total_budget: 1.0
   distribution:
-    reconnaissance: 0.15  # 15% - understand problem space
-    architecture: 0.25    # 25% - design solution
-    implementation: 0.45  # 45% - build and test
-    delivery: 0.15        # 15% - validate and ship
+    reconnaissance: 0.15  # 15% — Repository analysis and file inventory
+    architecture: 0.25    # 25% — Validation pipeline setup and configuration
+    implementation: 0.45  # 45% — Code quality enforcement and transformation
+    delivery: 0.15        # 15% — Compliance validation and reporting
   rationale: "Front-load understanding and design to minimize rework in implementation"
   monitoring:
     enabled: true

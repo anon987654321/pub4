@@ -70,6 +70,25 @@ module MASTER
         File.join(data, name)
       end
 
+      def data_path(name)
+        base = data
+        path = File.join(base, "#{name}.yml")
+        return path if File.exist?(path)
+
+        alt = File.join(base, name)
+        return alt if File.exist?(alt)
+
+        nil
+      end
+
+      def load_yaml(name)
+        path = data_path(name)
+        return nil unless path
+        YAML.safe_load_file(path, symbolize_names: true)
+      rescue StandardError
+        nil
+      end
+
       private
 
       def mkdir(path)

@@ -5,9 +5,12 @@ module MASTER
     class << self
       def budget_thresholds
         @budget_thresholds ||= begin
-          return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 } unless File.exist?(BUDGET_FILE)
-          data = YAML.safe_load_file(BUDGET_FILE, symbolize_names: true)
-          data.dig(:budget, :thresholds) || { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
+          thresholds = MASTER::Paths.load_yaml("budget")&.dig(:budget, :thresholds)
+          unless thresholds
+            MASTER::Logging.warn("llm.budget", "budget.yml missing 'thresholds' — using emergency fallback") if defined?(MASTER::Logging)
+            return { premium: 8.0, strong: 5.0, fast: 1.0, cheap: 0.0 }
+          end
+          thresholds
         end
       end
 
