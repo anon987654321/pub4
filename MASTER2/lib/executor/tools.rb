@@ -146,7 +146,7 @@ module MASTER
       end
 
       def shell_command(cmd)
-        if DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+        if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
           return "BLOCKED: dangerous shell command rejected"
         end
 
@@ -218,7 +218,7 @@ module MASTER
       end
 
       def sanitize_tool_input(action_str)
-        if DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
+        if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
           return "BLOCKED: dangerous pattern detected in tool input"
         end
         action_str

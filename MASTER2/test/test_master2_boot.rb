@@ -27,14 +27,13 @@ class TestMaster2Boot < Minitest::Test
   end
 
   def test_executor_depends_on_stages
-    # Verify that Executor's DANGEROUS_PATTERNS references Stages::Guard
-    assert_equal MASTER::Stages::Guard::DANGEROUS_PATTERNS, MASTER::Executor::DANGEROUS_PATTERNS
-    # Verify they are the same object (not just equal values)
-    assert_same MASTER::Stages::Guard::DANGEROUS_PATTERNS, MASTER::Executor::DANGEROUS_PATTERNS
+    # Verify that Stages::Guard defines DANGEROUS_PATTERNS
+    assert MASTER::Stages::Guard::DANGEROUS_PATTERNS.is_a?(Array)
+    assert !MASTER::Stages::Guard::DANGEROUS_PATTERNS.empty?
   end
 
   def test_dangerous_patterns_functionally_equivalent
-    # Verify both modules can detect the same dangerous patterns
+    # Verify Stages::Guard can detect dangerous patterns
     test_patterns = [
       "rm -rf /",
       "DROP TABLE users",
@@ -44,8 +43,6 @@ class TestMaster2Boot < Minitest::Test
     
     test_patterns.each do |dangerous_cmd|
       guard_matches = MASTER::Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(dangerous_cmd) }
-      executor_matches = MASTER::Executor::DANGEROUS_PATTERNS.any? { |p| p.match?(dangerous_cmd) }
-      assert_equal guard_matches, executor_matches, "Pattern detection mismatch for: #{dangerous_cmd}"
       assert guard_matches, "Should detect dangerous pattern: #{dangerous_cmd}"
     end
   end

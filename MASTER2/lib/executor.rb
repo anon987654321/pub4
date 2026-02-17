@@ -16,18 +16,8 @@ require_relative "executor/context"
 module MASTER
 
   class Executor
-    # Include pattern modules
-    include Context
-    include Tools
-    include React
-    include PreAct
-    include ReWOO
-    include Reflexion
-
     MAX_STEPS = 15
     WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
-    MAX_HISTORY_ENTRIES = 50
-    MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
 
     # Magic number constants extracted for clarity (Phase 5 - Style compliance)
     MAX_BROWSE_CONTENT = 5000
@@ -42,18 +32,12 @@ module MASTER
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
 
-    # Reference to dangerous patterns defined in Stages::Guard
-    DANGEROUS_PATTERNS = Stages::Guard::DANGEROUS_PATTERNS
-
     # Protected paths that cannot be written to
     PROTECTED_WRITE_PATHS = %w[
       data/constitution.yml
       /etc/
       /usr/
-      /sys/
-      /proc/
       /dev/
-      /boot/
     ].freeze
 
     # All available tools
@@ -183,7 +167,13 @@ module MASTER
     private
 
     def simple_query?(goal)
+<<<<<<< HEAD
       @pattern == :direct
+=======
+      goal.length < 200 &&
+        !goal.match?(/\b(file|read|write|analyze|fix|search|browse|run|execute|test|review)\b/i) &&
+        !goal.match?(/\b(create|update|modify|delete|install|build)\b/i)
+>>>>>>> origin/copilot/remove-dead-code-master2
     end
 
     def direct_ask(goal, tier: nil)

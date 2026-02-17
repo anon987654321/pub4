@@ -8,8 +8,7 @@ class TestIntegration < Minitest::Test
   def test_llm_public_methods_exist
     # Methods that must be callable
     assert MASTER::LLM.respond_to?(:ask), "LLM.ask must exist"
-    assert MASTER::LLM.respond_to?(:pick), "LLM.pick must exist"
-    assert MASTER::LLM.respond_to?(:select_available_model), "LLM.select_available_model must exist"
+    assert MASTER::LLM.respond_to?(:select_model), "LLM.select_model must exist"
     assert MASTER::LLM.respond_to?(:tier), "LLM.tier must exist"
     assert MASTER::LLM.respond_to?(:budget_remaining), "LLM.budget_remaining must exist"
     assert MASTER::LLM.respond_to?(:circuit_closed?), "LLM.circuit_closed? must exist"

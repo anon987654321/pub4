@@ -158,8 +158,4 @@ module MASTER
         { thought: thought, action: action }
       end
     end
-
-  class Executor
-    Context = ExecutionContext # deprecated: use MASTER::ExecutionContext
-  end
 end

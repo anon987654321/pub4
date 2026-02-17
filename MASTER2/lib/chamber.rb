@@ -19,9 +19,9 @@ module MASTER
     CONVERGENCE_THRESHOLD = 0.05
 
     MODELS = {
-      sonnet: nil,    # Will be resolved via LLM.pick
-      deepseek: nil,  # Will be resolved via LLM.pick
-      gemini: nil,    # Will be resolved via LLM.pick
+      sonnet: nil,    # Will be resolved via LLM.select_model
+      deepseek: nil,  # Will be resolved via LLM.select_model
+      gemini: nil,    # Will be resolved via LLM.select_model
     }.freeze
 
     ARBITER = :sonnet

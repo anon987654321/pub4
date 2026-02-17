@@ -45,7 +45,7 @@ class TestLLM < Minitest::Test
   end
 
   def test_select_model
-    model = MASTER::LLM.pick
+    model = MASTER::LLM.select_model
     assert model, "Should pick a model"
     assert model.is_a?(String), "Model should be a string ID"
   end

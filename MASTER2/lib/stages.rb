@@ -80,19 +80,9 @@ module MASTER
     class Route
       def call(input)
         tier = LLM.tier
-        model = if tier == :cheap
-                  "openrouter/auto"
-                else
-                  LLM.all_models.find { |m| LLM.circuit_closed?(m) }
-                end
-
+        model = LLM.select_model
         return Result.err("All models unavailable.") unless model
-
-        Result.ok(input.merge(
-          model: model,
-          tier: tier,
-          budget_remaining: LLM.budget_remaining,
-        ))
+        Result.ok(input.merge(model: model, tier: tier, budget_remaining: LLM.budget_remaining))
       end
     end
 

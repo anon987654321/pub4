@@ -116,17 +116,15 @@ module MASTER
         end
       end
 
-      private
-
       def select_model(tier = nil)
         candidates = all_models
         if tier
           candidates = candidates.select { |m| classify_tier(m) == tier }
         end
-        # Try tier-filtered candidates first, fall back to all models if none pass circuit breaker
-        # This ensures availability even if preferred tier models are all circuit-broken
         candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
       end
+
+      private
     end
   end
 end

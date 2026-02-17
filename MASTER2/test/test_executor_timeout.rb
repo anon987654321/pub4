@@ -13,12 +13,12 @@ class TestExecutorTimeout < Minitest::Test
   end
 
   def test_dangerous_patterns_references_guard
-    # Verify DANGEROUS_PATTERNS is defined and references Stages::Guard
-    assert_equal MASTER::Stages::Guard::DANGEROUS_PATTERNS, MASTER::Executor::DANGEROUS_PATTERNS
+    # Verify DANGEROUS_PATTERNS is defined in Stages::Guard
+    assert MASTER::Stages::Guard::DANGEROUS_PATTERNS.is_a?(Array)
   end
 
   def test_dangerous_patterns_not_empty
-    patterns = MASTER::Executor::DANGEROUS_PATTERNS
+    patterns = MASTER::Stages::Guard::DANGEROUS_PATTERNS
     refute_empty patterns
     assert_kind_of Array, patterns
     patterns.each do |p|
@@ -27,19 +27,19 @@ class TestExecutorTimeout < Minitest::Test
   end
 
   def test_dangerous_patterns_detects_rm_rf
-    patterns = MASTER::Executor::DANGEROUS_PATTERNS
+    patterns = MASTER::Stages::Guard::DANGEROUS_PATTERNS
     dangerous_cmd = "rm -rf /"
     assert patterns.any? { |p| p.match?(dangerous_cmd) }
   end
 
   def test_dangerous_patterns_detects_drop_table
-    patterns = MASTER::Executor::DANGEROUS_PATTERNS
+    patterns = MASTER::Stages::Guard::DANGEROUS_PATTERNS
     dangerous_cmd = "DROP TABLE users"
     assert patterns.any? { |p| p.match?(dangerous_cmd) }
   end
 
   def test_dangerous_patterns_detects_disk_operations
-    patterns = MASTER::Executor::DANGEROUS_PATTERNS
+    patterns = MASTER::Stages::Guard::DANGEROUS_PATTERNS
     assert patterns.any? { |p| p.match?("dd if=/dev/zero") }
     assert patterns.any? { |p| p.match?("mkfs.ext4") }
   end

@@ -9,15 +9,11 @@ module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
   # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
   module LLM
-    BUDGET_FILE = File.join(__dir__, "..", "data", "budget.yml")
     TIER_ORDER = %i[premium strong fast cheap].freeze
-    # NOTE: Evaluated at load time. Restart required if budget.yml changes.
-    SPENDING_CAP = MASTER::Paths.load_yaml("budget")&.dig(:spending_cap) || 10.0
+    _budget_config = MASTER::Paths.load_yaml("budget") || {}
+    SPENDING_CAP = _budget_config.dig(:spending_cap) || 10.0
     MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
-    MAX_CHAT_TOKENS = MASTER::Paths.load_yaml("budget")&.dig(:max_chat_tokens) || 16_384
-
-    # Reasoning effort levels (OpenRouter normalized)
-    REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
+    MAX_CHAT_TOKENS = _budget_config.dig(:max_chat_tokens) || 16_384
 
     # Thread-safe ruby_llm configuration
     CONFIGURE_MUTEX = Mutex.new
@@ -25,21 +21,11 @@ module MASTER
     @budget_warned = false
 
     class << self
-      attr_accessor :current_model, :current_tier
-      attr_reader :persona_prompt
+      attr_accessor :current_model, :persona_prompt
 
       # Tier setter for compatibility
       def tier=(value)
         @forced_tier = value.to_sym if value
-      end
-
-      def forced_tier
-        @forced_tier
-      end
-
-      # Set persona prompt (called from Personas module)
-      def persona_prompt=(value)
-        @persona_prompt = value
       end
 
       def api_key
@@ -64,21 +50,10 @@ module MASTER
       # Check API key status with lightweight test
       def check_key
         return Result.err("No API key.") unless configured?
-
-        begin
-          configure_ruby_llm
-          # TODO: Capture OpenRouter rate limit headers (X-RateLimit-*) when ruby_llm
-          # exposes response headers through high-level API
-          Result.ok(
-            label: "OpenRouter API Key",
-            limit: nil,
-            remaining: nil,
-            usage: nil,
-            is_free_tier: nil
-          )
-        rescue StandardError => e
-          Result.err("Key check failed: #{e.message}")
-        end
+        configure_ruby_llm
+        Result.ok(label: "OpenRouter API Key")
+      rescue StandardError => e
+        Result.err("Key check failed: #{e.message}")
       end
 
       # Thread-local per-agent budget tracking
@@ -309,11 +284,6 @@ module MASTER
       # Reasoning-enhanced query
       def ask_with_reasoning(prompt, effort: :medium, tier: :strong, **opts)
         ask(prompt, tier: tier, reasoning: { effort: effort }, **opts)
-      end
-
-      # Web-grounded query
-      def ask_online(prompt, tier: :fast, **opts)
-        ask(prompt, tier: tier, **opts)
       end
 
       # Auto-router - let OpenRouter pick best model

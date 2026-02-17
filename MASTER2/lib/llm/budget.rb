@@ -27,15 +27,6 @@ module MASTER
         [spending_cap - total_spent, 0.0].max
       end
 
-      # Pick best available model
-      def pick(_tier_override = nil)
-        select_model
-      end
-
-      # Alias for pick (used by Council)
-      def select_available_model
-        select_model
-      end
 
       def tier
         return @forced_tier if @forced_tier
