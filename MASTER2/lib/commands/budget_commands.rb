@@ -5,15 +5,9 @@ module MASTER
     # Budget and cost tracking commands
     module BudgetCommands
       def print_budget
-        tier = LLM.tier
-        remaining = LLM.budget_remaining
-        spent = LLM::SPENDING_CAP - remaining
-        pct = (spent / LLM::SPENDING_CAP * 100).round(1)
-
         UI.header("Budget Status")
-        puts "  Tier:      #{tier}"
-        puts "  Remaining: #{UI.currency(remaining)}"
-        puts "  Spent:     #{UI.currency(spent)} (#{pct}%)"
+        puts "  Tier:      #{LLM.tier}"
+        puts "  Budget:    unlimited (managed by OpenRouter)"
         puts
       end
 

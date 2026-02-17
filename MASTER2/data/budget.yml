@@ -1,13 +1,3 @@
-budget:
-  spending_cap: 100.0
-  max_chat_tokens: 4096
-  limit: 100.0
-  thresholds:
-    premium: 80.0
-    strong: 50.0
-    fast: 20.0
-    cheap: 0.0
-
 # Pricing cutoffs for classifying OpenRouter models into tiers
 # (input price per million tokens)
 model_tiers:

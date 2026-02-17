@@ -11,7 +11,7 @@ module MASTER
     class << self
       def smoke_test_methods
         {
-          LLM => %i[ask pick tier=],
+          LLM => %i[ask tier=],
           Executor => %i[call],
           Result => %i[ok err ok? err?],
         }

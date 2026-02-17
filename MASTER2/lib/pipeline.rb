@@ -135,7 +135,7 @@ module MASTER
           # Gather context
           model = LLM.prompt_model_name
           tier = LLM.tier
-          budget = LLM.budget_remaining rescue Float::INFINITY
+          budget = Float::INFINITY
           tokens = Session.current.message_count rescue 0
           tripped = LLM.model_tiers[tier]&.any? { |m| !LLM.circuit_closed?(m) }
 

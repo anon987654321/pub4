@@ -10,15 +10,12 @@ module MASTER
   # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
   module LLM
     TIER_ORDER = %i[premium strong fast cheap].freeze
-    _budget_config = MASTER::Paths.load_yaml("budget") || {}
-    SPENDING_CAP = _budget_config.dig(:spending_cap) || 10.0
     MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
-    MAX_CHAT_TOKENS = _budget_config.dig(:max_chat_tokens) || 16_384
+    MAX_CHAT_TOKENS = 16_384
 
     # Thread-safe ruby_llm configuration
     CONFIGURE_MUTEX = Mutex.new
     @ruby_llm_configured = false
-    @budget_warned = false
 
     class << self
       attr_accessor :current_model, :persona_prompt
@@ -81,12 +78,6 @@ module MASTER
 
         configure_ruby_llm
         CircuitBreaker.check_rate_limit!
-
-        # Budget checking: warn but don't block
-        if total_spent >= spending_cap && !@budget_warned
-          Logging.warn("Budget limit reached: $#{total_spent.round(2)}/$#{spending_cap} - continuing anyway", subsystem: "llm.budget") if defined?(Logging)
-          @budget_warned = true
-        end
 
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
         return cache_result if cache_result&.ok?
