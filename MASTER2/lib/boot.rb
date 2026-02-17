@@ -25,9 +25,12 @@ module MASTER
         timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
         user = ENV["USER"] || ENV["USERNAME"] || "user"
         host = begin
-          `hostname`.strip
+          require 'timeout'
+          Timeout.timeout(2) { `hostname`.strip }
+        rescue Timeout::Error
+          "unknown"
         rescue StandardError
-          "localhost"
+          "unknown"
         end
 
         smoke_result = smoke_test
@@ -71,7 +74,12 @@ module MASTER
         end
 
         optional_checks = OPTIONAL_MODULES.select do |name, method|
-          mod = Object.const_get(name) rescue nil
+          mod = begin
+            Object.const_get(name)
+          rescue NameError => e
+            MASTER::Logging.warn("boot", "Failed to resolve constant: #{name} — #{e.message}") if defined?(MASTER::Logging)
+            nil
+          end
           mod && !mod.respond_to?(method) && !mod.instance_methods.include?(method)
         end.keys
 

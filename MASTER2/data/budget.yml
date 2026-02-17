@@ -1,4 +1,6 @@
 budget:
+  spending_cap: 10.0
+  max_chat_tokens: 16384
   limit: 10.0
   thresholds:
     premium: 8.0

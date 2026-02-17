@@ -36,16 +36,13 @@ class TestSelfApply < Minitest::Test
     violations = []
     @lib_files.each do |file|
       content = File.read(file)
-      # Match "rescue =>" or "rescue\n" but not "rescue StandardError"
+      # Match "rescue =>" or "rescue\n" but not "rescue StandardError", "rescue LoadError", etc.
+      # Allow specific exception rescues like "rescue NameError", "rescue Timeout::Error"
       next unless content.match?(/rescue\s*(=>|$)/)
       violations << File.basename(file)
     end
-    # Allow bare rescues in UI/graceful degradation code
-    allowed = %w[ui.rb boot.rb autocomplete.rb creative_chamber.rb edge_tts.rb
-                 introspection.rb llm_friendly.rb momentum.rb problem_solver.rb
-                 progress.rb replicate.rb result.rb shell.rb swarm.rb weaviate.rb]
-    violations -= allowed
-    assert violations.empty?, "Files with bare rescue:\n  #{violations.join("\n  ")}"
+    # Assert zero violations - any file needing exception handling should use specific rescue
+    assert violations.empty?, "Files with bare rescue (use 'rescue SpecificError' instead):\n  #{violations.join("\n  ")}"
   end
 
   def test_all_modules_have_docstrings

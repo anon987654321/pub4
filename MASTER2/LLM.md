@@ -1,6 +1,23 @@
-# MASTER2 — Constitutional AI Code Quality System
+# MASTER2 — Self-Governing AI Development Partner
 
-Any LLM working in this repository must read, internalize, and follow MASTER2.
+MASTER2 is a Ruby gem that turns any LLM into a self-governing development
+partner. It enforces 68 axioms (from SOLID, Unix, Nielsen, Strunk & White)
+through a constitutional review pipeline, so generated code is correct,
+minimal, and auditable by design. It targets OpenBSD and Rails 8 projects.
+
+**Problem it solves**: LLMs generate plausible but sloppy code — wrong idioms,
+silent failures, god objects, truncated output. MASTER2 catches these at
+generation time through axiom-driven review, before code reaches production.
+
+## How It Works (30-second summary)
+
+1. User gives a task → `Session` creates context
+2. `Pipeline` runs stages: parse → plan → execute → review → deliver
+3. `Executor` picks a strategy (ReAct / PreAct / ReWOO / Reflexion)
+4. `LLM` calls an AI provider (OpenAI / Anthropic / Ollama) within budget
+5. `Review::Constitution` checks output against 68 axioms
+6. `QualityGates` enforces smell thresholds before commit
+7. `Result` monad wraps every return (Ok/Err) — no silent failures
 
 ## System Architecture at a Glance
 
@@ -21,6 +38,41 @@ User Input → Pipeline → Executor → LLM → Output
 **Request Flow:** `Pipeline.call(input)` → `Stages` (intake, guard, route, council, ask, lint, render) → `Executor` (React/PreAct/ReWOO/Reflexion patterns) → `LLM.ask` → `CircuitBreaker.run` → `ruby_llm` API call
 
 **Data Sources:** `data/*.yml` (constitution, axioms, council, language rules, patterns) are the single source of truth. No hardcoded fallbacks.
+
+## Core Files (read in this order)
+
+| File | Purpose |
+|------|---------|
+| `data/axioms.yml` | The 68 axioms — constitutional law |
+| `data/budget.yml` | Spending caps, token limits, tier thresholds |
+| `data/phases.yml` | Cognitive load budget per phase |
+| `lib/master.rb` | Entry point — wires all modules |
+| `lib/boot.rb` | Environment detection, autoloading |
+| `lib/pipeline.rb` | Stage-based execution engine |
+| `lib/executor.rb` | Strategy pattern for LLM interaction |
+| `lib/result.rb` | Ok/Err monad for every return value |
+| `lib/review/constitution.rb` | Axiom compliance checker |
+| `lib/quality_gates.rb` | Smell thresholds (lines, complexity) |
+
+## Data Sources — Single Source of Truth
+
+Every tunable lives in `data/*.yml`. No hardcoded fallbacks in `lib/`.
+
+| File | Governs |
+|------|---------|
+| `axioms.yml` | 68 axioms with tags and descriptions |
+| `budget.yml` | `spending_cap`, `max_chat_tokens`, tier thresholds |
+| `phases.yml` | Cognitive load allocation per phase |
+| `smells.yml` | Max method lines, class lines, complexity |
+| `models.yml` | LLM provider/model/tier mappings |
+| `personas.yml` | Agent personality definitions |
+| `constitution.yml` | Review pipeline configuration |
+
+## Three Most Critical Axioms
+
+1. **FAIL_VISIBLY** — Every error must be logged and surfaced, never swallowed
+2. **ONE_SOURCE** — Every fact lives in exactly one place
+3. **SELF_APPLY** — MASTER2's own code must pass its own rules
 
 ## File Responsibilities & Axiom Categories
 
@@ -46,13 +98,9 @@ Note: Line counts are approximate and may change as code evolves.
 | `data/axioms.yml` | 68 axioms across 11 categories | ALL | 2100 |
 | `data/council.yml` | 12 personas, 3 veto holders | COUNCIL_REVIEW | 234 |
 
-## Three Most Critical Axioms for Any Change
+## Additional Context — Target Platform & Requirements
 
-1. **PRESERVE_THEN_IMPROVE_NEVER_BREAK** — Never delete working code. Never break existing behavior. Improve surgically.
-2. **SELF_APPLY** — MASTER2 must obey its own rules. All changes to `MASTER2/` itself must pass its own validators.
-3. **FAIL_VISIBLY** — Never swallow exceptions silently. Always log errors. No `rescue nil`, no bare `rescue`.
-
-## Core files (read in order)
+Target platform: OpenBSD 7.8, Ruby 3.4, zsh. No python, bash, awk, sed, sudo.
 
 MASTER2 is a Constitutional AI code quality system that enforces software quality through:
 - **68 axioms** across 11 categories (DRY, SOLID, security, performance, etc.)
@@ -62,9 +110,7 @@ MASTER2 is a Constitutional AI code quality system that enforces software qualit
 - **Convergence detection** to avoid infinite loops and oscillation
 - **Budget management** with circuit breakers and graceful degradation
 
-Target platform: OpenBSD 7.8, Ruby 3.4, zsh. No python, bash, awk, sed, sudo.
-
-## Problem MASTER2 solves
+## What MASTER2 Provides Over Traditional Code Review
 
 Traditional code review is reactive, inconsistent, and human-bottlenecked. MASTER2 provides:
 1. **Proactive** — catches issues before commit (pre-commit hooks)
@@ -223,13 +269,6 @@ JSONL-based append-only database:
 **PRESERVE_THEN_IMPROVE_NEVER_BREAK**
 
 Never delete working code. Never break existing behavior. Improve surgically.
-
-## Platform Requirements
-
-- **OS**: OpenBSD 7.8 (Linux/macOS with zsh also supported)
-- **Ruby**: 3.4+
-- **Shell**: zsh (no bash, no python, no awk, no sed)
-- **Tools**: doas (not sudo), rcctl (service management), pkg_add (packages)
 
 ## Banned Patterns
 
