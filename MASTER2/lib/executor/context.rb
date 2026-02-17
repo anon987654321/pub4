@@ -86,7 +86,7 @@ module MASTER
         end.join("\n\n")
 
         # Build tool list and format from TOOLS hash
-        tool_list = Executor::TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
+        tool_list = Executor.tool_list_text
         tool_format = Executor::TOOLS.map { |k, v| "- #{v[:usage]}" }.join("\n")
 
         <<~TASK
@@ -110,8 +110,9 @@ module MASTER
 
       # Build context as messages array with system/user separation
       def build_context_messages(goal)
+        @cached_system_message ||= ExecutionContext.build_system_message(include_commands: true)
         [
-          { role: "system", content: ExecutionContext.build_system_message(include_commands: true) },
+          { role: "system", content: @cached_system_message },
           { role: "user", content: build_task_context(goal) }
         ]
       end

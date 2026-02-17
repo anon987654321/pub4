@@ -48,11 +48,7 @@ module MASTER
       private
 
       def format_tokens(n)
-        if n >= 1000
-          "#{(n / 1000.0).round(1)}k"
-        else
-          n.to_s
-        end
+        MASTER::Utils.format_tokens(n)
       end
     end
   end

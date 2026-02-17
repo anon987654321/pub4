@@ -64,7 +64,7 @@ module MASTER
                 LLM.ask(text, stream: true)
               end
             else
-              Executor.call(text, pattern: self.class.current_pattern)
+              raise ArgumentError, "Unknown pipeline mode: #{@mode}"
             end
 
       normalize_result(raw)
@@ -205,9 +205,7 @@ module MASTER
       end
 
       def format_tokens(n)
-        return "#{n}" if n < 1000
-        return "#{(n / 1000.0).round(1)}k" if n < 1_000_000
-        "#{(n / 1_000_000.0).round(1)}M"
+        MASTER::Utils.format_tokens(n)
       end
 
       def format_meta(value)

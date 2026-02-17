@@ -4,6 +4,8 @@ module MASTER
   class Executor
     module PreAct
       def execute_pre_act(goal, tier:)
+        start_time = MASTER::Utils.monotonic_now
+
         UI.dim("  planning...")
         plan_result = generate_plan(goal, tier: tier)
         return plan_result unless plan_result.ok?
@@ -14,6 +16,12 @@ module MASTER
         # Phase 2: Execute plan step by step
         results = []
         @plan.each_with_index do |planned_step, idx|
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
+          end
+
           @step = idx + 1
           UI.dim("  #{@step}/#{@plan.size}: #{planned_step[0..60]}")
 
@@ -38,7 +46,7 @@ module MASTER
       end
 
       def generate_plan(goal, tier:)
-        tool_list = TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
+        tool_list = Executor.tool_list_text
 
         prompt = <<~PLAN
           Create a step-by-step plan to accomplish this task:
