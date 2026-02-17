@@ -66,16 +66,7 @@ module MASTER
       def handle_tts_stream(env)
         text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
         return [400, {}, ["Missing text"]] unless text
-        unless defined?(Web::OrbTTS)
-          return [501, { CT_HEADER => TEXT_TYPE }, ["TTS not available"]]
-        end
-
-        headers = {
-          "Content-Type" => "text/event-stream",
-          "Cache-Control" => "no-cache",
-          "Connection" => "keep-alive",
-        }
-        [200, headers, Web::OrbTTS.stream(text)]
+        [501, { CT_HEADER => TEXT_TYPE }, ["TTS streaming not implemented"]]
       end
 
       def serve_static_file(path)

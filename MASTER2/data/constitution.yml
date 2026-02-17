@@ -204,17 +204,111 @@ autofix:
 formatting:
   indent: 2
   quotes: "double"
+  quote_policy: "universal_double_quotes"
   ruby:
     frozen_string_literal: true
   rails:
     convention: "standard Rails conventions"
   threshold: 0.98
 
+# Granular formatting rules — style + cosmetics by language
+granular_formatting_rules:
+  universal:
+    final_newline: required
+    trim_trailing_whitespace: true
+    normalize_line_endings: lf_only
+    no_tabs_for_indentation: true
+    quote_style: double
+  ruby:
+    indentation: 2
+    max_line_length: 120
+    string_quotes: double
+    hash_style: ruby_1_9
+    guard_clauses_preferred: true
+    frozen_string_literal: required
+  yaml:
+    indentation: 2
+    max_nesting_depth: 4
+    flow_style: avoid_for_complex_structures
+    quote_when_ambiguous: true
+    stable_key_order: preferred
+  html_erb:
+    indentation: 2
+    semantic_elements_required: true
+    attributes:
+      quote_style: double
+      boolean_style: html5
+    accessibility:
+      img_alt_required: true
+      form_controls_labeled: true
+  css_scss:
+    indentation: 2
+    property_spacing: "property: value;"
+    selector_specificity: minimal_required
+    custom_properties_preferred: true
+    no_important_unless_justified: true
+  javascript:
+    indentation: 2
+    semicolons: required
+    quote_style: double
+    trailing_commas: es5_multiline
+    prefer_const_over_let: true
+  rust:
+    formatter: rustfmt
+    edition: "2021"
+    max_line_length: 100
+    clippy_warnings: deny_for_ci
+  shell:
+    shebang_required: true
+    strict_mode: "set -euo pipefail"
+    quote_all_expansions: true
+    avoid_uuoc: true
+
+# Tech stack specifics — concrete targets and validators
+tech_stack_specifics:
+  languages:
+    primary: [ruby, zsh]
+    supported: [ruby, rails, zsh, html, erb, css, scss, javascript, rust, yaml]
+  runtime:
+    ruby: "3.4+"
+    rails: "8.x preferred when Rails is present"
+    node: "used for JS syntax checks when available"
+    rust: "edition 2021"
+  validation_matrix:
+    ruby: ["ruby -c", "tests if present"]
+    yaml: ["YAML.safe_load parse"]
+    html_erb: ["semantic/accessibility checks", "ERB parse validation"]
+    css_scss: ["brace/paren balance + optional stylelint"]
+    javascript: ["node --check when available"]
+    rust: ["rustc --emit=metadata when available", "cargo test/clippy in Rust projects"]
+  refactor_policy:
+    preserve_behavior_by_default: true
+    rollback_on: [syntax_error, test_failure, behavior_regression]
+    iterative_until_diminishing_returns: true
+
 # Constraints — allowed languages and banned tools
 constraints:
-  allowed_languages: [ruby, zsh]
+  allowed_languages: [ruby, zsh, html, erb, css, scss, javascript, rust, yaml]
   banned_tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
   enforcement: "critical"
+
+# Terminal philosophy — MASTER2 as a Unix CLI alternative to Codex/Claude/GitHub Copilot CLI
+terminal_philosophy:
+  mission: "MASTER2 is a first-class autonomous engineering CLI for Unix terminals."
+  positioning:
+    alternatives_to: ["Codex GPT", "Claude Code CLI", "GitHub Copilot CLI"]
+    target_runtime: "Any Unix terminal with modern zsh support"
+  shell_policy:
+    primary_shell: "zsh"
+    avoid_bashisms: true
+    prefer_modern_zsh_patterns: true
+    readable_commands_over_cryptic_oneliners: true
+    no_obfuscated_pipes: true
+  command_style:
+    require_explanatory_intent: true
+    avoid_encrypted_looking_syntax: true
+    enforce_progressive_disclosure: true
+    prefer_named_steps_over_dense_chains: true
 
 # Comment preservation policy
 # Strategy: Preserve valuable comments, remove noise

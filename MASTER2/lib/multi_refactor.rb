@@ -6,14 +6,19 @@ module MASTER
   # Handles: Ruby files, Shell scripts (with embedded Ruby), HTML files
   class MultiRefactor
     MAX_FILES = 100
-    SUPPORTED_EXTENSIONS = %w[.rb .sh .html .erb .yml .yaml].freeze
+    MAX_FILES_ALL = 2000
+    MAX_STRICT_PASSES = 4
+    SUPPORTED_EXTENSIONS = %w[.rb .sh .html .htm .erb .yml .yaml .css .scss .sass .js .mjs .cjs .rs].freeze
 
     attr_reader :results, :graph
 
-    def initialize(chamber: nil, dry_run: true, budget_cap: 2.0)
+    def initialize(chamber: nil, dry_run: true, budget_cap: 2.0, force_rewrite: false, align_axioms: false, include_all_files: false)
       @chamber = chamber || Council.new
       @dry_run = dry_run
       @budget_cap = budget_cap
+      @force_rewrite = force_rewrite
+      @align_axioms = align_axioms
+      @include_all_files = include_all_files
       @cost = 0.0
       @results = []
       @graph = {}  # file => [dependencies]
@@ -24,7 +29,8 @@ module MASTER
       Logging.dmesg_log('multi_refactor', message: 'ENTER multi_refactor.run')
       files = discover_files(path, pattern: pattern, exclude: exclude)
       return Result.err("No supported files found in #{path}") if files.empty?
-      return Result.err("Too many files (#{files.size} > #{MAX_FILES}). Use a more specific path.") if files.size > MAX_FILES
+      max_files = @include_all_files ? MAX_FILES_ALL : MAX_FILES
+      return Result.err("Too many files (#{files.size} > #{max_files}). Use a more specific path.") if files.size > max_files
 
       # Build dependency graph
       build_dependency_graph(files)
@@ -36,6 +42,9 @@ module MASTER
       puts "  Path: #{path}"
       puts "  Files: #{ordered.size}"
       puts "  Budget cap: #{UI.currency(@budget_cap)}"
+      puts "  Strict rewrite: #{@force_rewrite ? 'on' : 'off'}"
+      puts "  Axiom alignment: #{@align_axioms ? 'on' : 'off'}"
+      puts "  Include all files: #{@include_all_files ? 'on' : 'off'}"
       puts
 
       bar = UI.progress(ordered.size)
@@ -83,21 +92,28 @@ module MASTER
         return SUPPORTED_EXTENSIONS.include?(File.extname(path)) ? [path] : []
       end
 
-      patterns = pattern ? [pattern] : SUPPORTED_EXTENSIONS.map { |ext| "**/*#{ext}" }
-      files = patterns.flat_map { |p| Dir.glob(File.join(path, p)) }
+      files = if @include_all_files
+        Dir.glob(File.join(path, "**", "*")).select { |f| File.file?(f) }
+      else
+        patterns = pattern ? [pattern] : SUPPORTED_EXTENSIONS.map { |ext| "**/*#{ext}" }
+        patterns.flat_map { |p| Dir.glob(File.join(path, p)) }
+      end
 
-      # Default exclusions
+      # Default exclusions relative to the scan root.
       exclude_patterns = [
-        /vendor\//,
-        /node_modules\//,
-        /\.git\//,
-        /tmp\//,
-        /log\//,
-        /var\//,
+        %r{\Avendor/},
+        %r{\Anode_modules/},
+        %r{\A\.git/},
+        %r{\Atmp/},
+        %r{\Alog/},
+        %r{\Avar/},
       ]
       exclude_patterns << Regexp.new(exclude) if exclude
 
-      files.reject { |f| exclude_patterns.any? { |p| f.match?(p) } }
+      files.reject do |f|
+        rel = f.sub(/\A#{Regexp.escape(path)}\/?/, "")
+        exclude_patterns.any? { |p| rel.match?(p) }
+      end
     end
 
     def build_dependency_graph(files)
@@ -137,7 +153,7 @@ module MASTER
       files.each { |f| in_degree[f] ||= 0 }
 
       @graph.each do |file, deps|
-        deps.each { |d| in_degree[d] += 1 }
+        deps.each { |_d| in_degree[file] += 1 }
       end
 
       queue = files.select { |f| in_degree[f] == 0 }
@@ -147,9 +163,11 @@ module MASTER
         node = queue.shift
         sorted << node
 
-        (@graph[node] || []).each do |dep|
-          in_degree[dep] -= 1
-          queue << dep if in_degree[dep] == 0
+        @graph.each do |candidate, deps|
+          next unless deps.include?(node)
+
+          in_degree[candidate] -= 1
+          queue << candidate if in_degree[candidate] == 0
         end
       end
 
@@ -163,31 +181,33 @@ module MASTER
       ext = File.extname(file)
       basename = File.basename(file)
 
+      return { file: file, skipped: true, reason: "binary file" } if content.include?("\x00")
+
       # Skip files that are too large
       if content.size > 50_000
         return { file: file, skipped: true, reason: "too large (#{content.size} bytes)" }
       end
 
-      # Use Council for deliberation
-      result = @chamber.deliberate(content, filename: basename)
+      # Use strict rewrite mode when requested, otherwise council deliberation
+      result = if @force_rewrite
+        strict_rewrite(content, filename: basename, ext: ext)
+      else
+        @chamber.deliberate(content, filename: basename)
+      end
 
       if result.ok? && result.value[:final] && result.value[:final] != content
         cost = result.value[:cost] || 0.0
         @cost += cost
 
         unless @dry_run
+          unless valid_refactor?(file, result.value[:final])
+            return { file: file, error: "invalid syntax after refactor, not written" }
+          end
+
           # Safety: create backup
           backup = "#{file}.bak"
           File.write(backup, content)
           File.write(file, result.value[:final])
-
-          # Verify the file is still valid
-          if ext == ".rb" && !valid_ruby?(file)
-            # Rollback
-            File.write(file, content)
-            File.delete(backup) if File.exist?(backup)
-            return { file: file, error: "syntax error after refactor, rolled back" }
-          end
 
           File.delete(backup) if File.exist?(backup)
         end
@@ -201,12 +221,110 @@ module MASTER
       { file: file, error: e.message }
     end
 
-    def valid_ruby?(file)
-      system("ruby", "-c", file, out: File::NULL, err: File::NULL)
-    end
-
     def over_budget?
       @cost >= @budget_cap
+    end
+
+    def strict_rewrite(content, filename:, ext:)
+      return Result.err("LLM not configured") unless defined?(LLM) && LLM.respond_to?(:configured?) && LLM.configured?
+
+      language = case ext
+      when ".rb" then "Ruby"
+      when ".sh" then "Shell"
+      when ".html", ".erb" then "HTML/ERB"
+      when ".yml", ".yaml" then "YAML"
+      else "text"
+      end
+
+      total_cost = 0.0
+      current = content.dup
+      previous_violation_count = Float::INFINITY
+      passes = 0
+
+      MAX_STRICT_PASSES.times do |idx|
+        passes = idx + 1
+        violations = @align_axioms ? axiom_violations(current, filename) : []
+        violation_count = violations.size
+        violations_text = violations.first(60).map { |v| "- #{v}" }.join("\n")
+        violations_text = "None provided; still enforce axioms." if violations_text.empty?
+
+        prompt = <<~PROMPT
+          Strict rewrite pass #{passes}/#{MAX_STRICT_PASSES} for #{language}.
+          Rewrite this entire file end-to-end.
+          Requirements:
+          - Return ONLY final file contents (no markdown, no explanation).
+          - Preserve behavior and interfaces unless needed for correctness/security.
+          - Improve every line for clarity, consistency, and maintainability.
+          - Align with project axioms and reduce violations.
+
+          Current violation count: #{violation_count}
+          Axiom issues:
+          #{violations_text}
+
+          FILE:
+          #{filename}
+
+          CONTENT:
+          #{current}
+        PROMPT
+
+        result = LLM.ask(prompt, tier: :strong, stream: false)
+        return Result.err("strict rewrite failed on pass #{passes}") unless result&.ok?
+        total_cost += (result.value[:cost] || 0.0).to_f
+
+        candidate = extract_code_content(result.value[:content].to_s)
+        return Result.err("strict rewrite returned empty output on pass #{passes}") if candidate.strip.empty?
+        return Result.err("strict rewrite produced invalid syntax on pass #{passes}") unless valid_refactor?(filename, candidate)
+
+        new_violation_count = @align_axioms ? axiom_violations(candidate, filename).size : violation_count
+        changed = candidate != current
+        improved = new_violation_count < violation_count
+
+        current = candidate if changed
+
+        # Stop if we hit diminishing returns: no meaningful violation improvement.
+        break if @align_axioms && !improved && new_violation_count >= previous_violation_count
+        break unless @align_axioms
+
+        previous_violation_count = new_violation_count
+        break if new_violation_count.zero?
+      end
+
+      Result.ok(
+        original: content,
+        proposals: [],
+        council: nil,
+        final: current,
+        cost: total_cost,
+        rounds: passes
+      )
+    rescue StandardError => e
+      Result.err("strict rewrite error: #{e.message}")
+    end
+
+    def extract_code_content(text)
+      body = text.to_s.strip
+      fenced = body.match(/\A```[a-zA-Z0-9_-]*\n(.*)\n```\z/m)
+      fenced ? fenced[1] : body
+    end
+
+    def axiom_violations(content, filename)
+      return [] unless defined?(Review::Enforcer)
+
+      result = Review::Enforcer.check(content, filename: filename)
+      return [] unless result.is_a?(Array)
+
+      result.map { |v| "#{v[:axiom] || v[:axiom_id] || v[:layer]}: #{v[:message]}" }.compact
+    rescue StandardError
+      []
+    end
+
+    def valid_refactor?(file, content)
+      return true unless defined?(SyntaxValidator)
+
+      SyntaxValidator.valid?(file: file, content: content)
+    rescue StandardError
+      false
     end
   end
 end

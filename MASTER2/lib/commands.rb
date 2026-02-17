@@ -140,6 +140,7 @@ module MASTER
       # Guard against nil after shortcut resolution
       return Result.err("No previous command to repeat.") if input.nil?
 
+      input = normalize_intent_input(input)
       @last_command = input unless input.to_s.start_with?("!")
 
       parts = input.strip.split(/\s+/, 2)
@@ -280,6 +281,32 @@ module MASTER
       else
         nil
       end
+    end
+
+    private
+
+    def normalize_intent_input(input)
+      text = input.to_s.strip
+      lowered = text.downcase
+      return text if lowered.empty?
+
+      # Natural-language self-refactor requests
+      if lowered.match?(/\b(self[\s-]?run|run .* through itself|refactor .* every|rewrite .* every|all files|entire repo|codebase)\b/)
+        return "selfrun --strict --axioms --all-files" if lowered.match?(/\b(strict|axiom|every|all|entire|iterative|loop|diminishing)\b/)
+        return "selfrun"
+      end
+
+      # Natural-language lint/scan requests
+      if lowered.match?(/\b(lint|validate|syntax check|scan)\b/) &&
+         lowered.match?(/\b(html|erb|css|javascript|js|rust|yaml|yml|all files|repo)\b/)
+        return "multi-refactor . --strict --axioms --all-files"
+      end
+
+      # Health/status phrasing
+      return "health" if lowered.match?(/\b(health|diagnostic|doctor|check setup)\b/)
+      return "status" if lowered.match?(/\b(status|where are we|summary)\b/)
+
+      text
     end
   end
 end

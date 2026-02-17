@@ -10,6 +10,8 @@ require "time"
 require "shellwords"
 
 require_relative "utils"
+require_relative "decision_engine"
+require_relative "syntax_validator"
 require_relative "paths"
 require_relative "auto_install"
 require_relative "boot"

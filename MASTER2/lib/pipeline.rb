@@ -139,7 +139,6 @@ module MASTER
           # Gather context
           model = LLM.prompt_model_name
           tier = LLM.tier
-          budget = LLM.budget_remaining
           tokens = Session.current.message_count rescue 0
           tripped = LLM.model_tiers[tier]&.any? { |m| !LLM.circuit_closed?(m) }
 
@@ -157,11 +156,6 @@ module MASTER
           # Turn count
           if tokens > 0
             segments << "^#{format_tokens(tokens)}"
-          end
-
-          # Budget
-          if budget < 10.0
-            segments << "$#{format('%.2f', budget)}"
           end
 
           # Circuit breaker status

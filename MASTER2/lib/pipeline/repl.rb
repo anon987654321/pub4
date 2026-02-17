@@ -78,7 +78,7 @@ module MASTER
         end
 
         # Multi-line input: << opens block, blank line ends it
-        if line.strip == MULTILINE_OPENER
+        if line.strip.start_with?(MULTILINE_OPENER)
           line = read_multiline(reader)
           next if line.nil? || line.strip.empty?
         end

@@ -56,6 +56,31 @@ module MASTER
           Logging.dmesg_log("triggers", message: "budget low, switching to fast tier")
         end
 
+        register(:job_failed) do |ctx|
+          job = ctx[:job]
+          Logging.dmesg_log("triggers", message: "job_failed #{job&.id}: #{ctx[:error]}")
+          AgentAutonomy.record_correction(
+            original: job&.command.to_s[0..200],
+            corrected: "",
+            context: ctx[:error].to_s[0..200]
+          ) if defined?(AgentAutonomy)
+        end
+
+        register(:job_succeeded) do |ctx|
+          job = ctx[:job]
+          Logging.dmesg_log("triggers", message: "job_succeeded #{job&.id}")
+        end
+
+        register(:after_verify) do |ctx|
+          failed = Array(ctx[:checks]).count { |c| !c[:ok] }
+          Logging.dmesg_log("triggers", message: "verify complete failed=#{failed}")
+        end
+
+        register(:adversarial_review) do |ctx|
+          count = Array(ctx[:questions]).size
+          Logging.dmesg_log("triggers", message: "adversarial_review questions=#{count}")
+        end
+
         Logging.dmesg_log("triggers", message: "defaults installed")
       end
     end

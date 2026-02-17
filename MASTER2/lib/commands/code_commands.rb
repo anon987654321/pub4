@@ -28,14 +28,8 @@ module MASTER
         end
 
         print_refactor_summary(bugs_found, critical_count, learned_issues, smells, total_issues)
-
-        print "\nProceed with automatic fixes? (y/n): "
-        response = get_user_input&.chomp&.downcase
-
-        unless response == 'y' || response == 'yes'
-          puts "Cancelled."
-          return Result.ok({ message: "Cancelled by user" })
-        end
+        mode = :apply if mode == :preview
+        puts "\nAuto mode: applying fixes for all detected violations."
 
         result = generate_and_apply_fixes(path, original_code, mode)
         record_refactor_learnings(file, original_code, result, bugs_found, pattern_matches)
@@ -259,8 +253,12 @@ module MASTER
 
       def generate_and_apply_fixes(path, original_code, mode)
         puts UI.bold("phase5: generating fixes...")
-        chamber = Council.new
-        result = chamber.deliberate(original_code, filename: File.basename(path))
+        result = if obvious_issue?(path, original_code)
+          best_candidate_fix(path, original_code)
+        else
+          chamber = Council.new
+          chamber.deliberate(original_code, filename: File.basename(path))
+        end
 
         return result unless result.ok? && result.value[:final]
 
@@ -271,10 +269,129 @@ module MASTER
 
         case mode
         when :raw   then display_raw_output(result, rendered, council_info)
-        when :apply then apply_refactor(path, original_code, rendered, result, council_info)
+        when :apply then apply_refactor_auto(path, original_code, rendered, result, council_info)
         else             display_preview(path, original_code, rendered, result, council_info)
         end
         result
+      end
+
+      def apply_refactor_auto(path, original, proposed, result, council_info)
+        diff = DiffView.unified_diff(original, proposed, filename: File.basename(path))
+        puts "\n  Proposals: #{result.value[:proposals]&.size || 1}"
+        puts "  Cost: #{UI.currency_precise(result.value[:cost] || 0.0)}"
+        if (summary = format_council_summary(council_info))
+          puts summary
+        end
+        puts "\n#{diff}"
+
+        Undo.track_edit(path, original)
+        File.write(path, proposed)
+        puts "  refactor: applied to #{path}"
+        puts "  (Use 'undo' command to revert)"
+      end
+
+      def obvious_issue?(path, code)
+        ext = File.extname(path)
+        return true if code.match?(/[ \t]+$/) || code.include?("\r\n")
+        return true if code.match?(/\bteh\b/i) || code.match?(/\brecieve\b/i)
+        return true if code.match?(/^\s*\t+/)
+        return true if code.match?(/^\s*(binding\.pry|debugger|byebug)/)
+        return true if ext == ".rb" && !MASTER::Utils.valid_ruby?(code)
+
+        false
+      end
+
+      def best_candidate_fix(path, original_code)
+        puts "obvious-fix: generating multiple candidates and selecting best..."
+        candidates = []
+
+        candidates << { source: :heuristic, code: heuristic_fix(original_code) }
+
+        if defined?(Review::Fixer)
+          tmp = "#{path}.obvious_tmp"
+          begin
+            File.write(tmp, original_code)
+            fixer = Review::Fixer.new(mode: :aggressive)
+            fixer.fix(tmp)
+            candidates << { source: :review_fixer, code: File.read(tmp) } if File.exist?(tmp)
+          ensure
+            File.delete(tmp) if File.exist?(tmp)
+          end
+        end
+
+        chamber = Council.new
+        llm_result = chamber.deliberate(original_code, filename: File.basename(path))
+        if llm_result.ok? && llm_result.value[:final].to_s.strip != ""
+          candidates << {
+            source: :council,
+            code: llm_result.value[:final],
+            council: llm_result.value[:council],
+            proposals: llm_result.value[:proposals],
+            cost: llm_result.value[:cost]
+          }
+        end
+
+        scored = candidates.uniq { |c| c[:code] }.map do |candidate|
+          metrics = score_candidate(path, candidate[:code])
+          score = if defined?(DecisionEngine)
+            DecisionEngine.score(
+              impact: metrics[:impact],
+              confidence: metrics[:confidence],
+              cost: metrics[:cost]
+            )
+          else
+            metrics[:fallback_score]
+          end
+          candidate.merge(score: score)
+        end
+        best = scored.max_by { |c| c[:score] }
+        return Result.err("No viable fix candidate generated.") unless best
+
+        Result.ok(
+          final: best[:code],
+          council: best[:council],
+          proposals: best[:proposals] || [],
+          cost: best[:cost] || 0.0
+        )
+      end
+
+      def heuristic_fix(code)
+        code
+          .gsub("\r\n", "\n")
+          .gsub(/[ \t]+$/, "")
+          .gsub(/\bteh\b/i, "the")
+          .gsub(/\brecieve\b/i, "receive")
+          .gsub(/^\t+/) { |m| "  " * m.length }
+      end
+
+      def score_candidate(path, code)
+        impact = 1.0
+        confidence = 1.0
+        cost = 1.0
+        fallback_score = 0.0
+
+        if File.extname(path) == ".rb"
+          unless MASTER::Utils.valid_ruby?(code)
+            return { impact: 0.0, confidence: 0.0, cost: 10_000.0, fallback_score: -10_000.0 }
+          end
+          impact += 0.8
+          fallback_score += 200
+        end
+
+        violations = Violations.analyze(code, path: path, llm: nil, conceptual: false) rescue { literal: [], conceptual: [] }
+        literal = Array(violations[:literal]).size
+        conceptual = Array(violations[:conceptual]).size
+        confidence -= (literal * 0.08) + (conceptual * 0.04)
+        fallback_score -= literal * 5
+        fallback_score -= conceptual * 3
+
+        smells = Smells.analyze(code, path) rescue []
+        cost += (literal * 0.2) + (conceptual * 0.1) + (smells.size * 0.05)
+        confidence -= smells.size * 0.01
+        fallback_score -= smells.size
+
+        confidence = [[confidence, 0.01].max, 1.0].min
+        { impact: impact, confidence: confidence, cost: cost, fallback_score: fallback_score }
       end
 
       def record_refactor_learnings(file, original_code, result, bugs_found, pattern_matches)
@@ -296,10 +413,6 @@ module MASTER
         puts "learnings: updated"
       end
 
-      # Abstraction for user input to improve testability
-      def get_user_input
-        $stdin.gets
-      end
     end
   end
 end

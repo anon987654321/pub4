@@ -103,7 +103,15 @@ when "multi-refactor", "mrefactor"
   # Multi-file refactoring: master multi-refactor deploy/rails/
   path = args.first || "."
   dry_run = !args.include?("--apply")
-  mr = MASTER::MultiRefactor.new(dry_run: dry_run)
+  strict = args.include?("--strict")
+  align_axioms = strict || args.include?("--axioms")
+  include_all = args.include?("--all-files")
+  mr = MASTER::MultiRefactor.new(
+    dry_run: dry_run,
+    force_rewrite: strict,
+    align_axioms: align_axioms,
+    include_all_files: include_all
+  )
   result = mr.run(path: path)
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
 
@@ -115,20 +123,43 @@ when "selfrun", "self-run"
   # Full self-run: analyze and refactor the entire pub4 repo
   puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
   pub4_root = File.expand_path("../..", __dir__)  # Go up from MASTER2/bin/ to pub4/
+  strict = args.include?("--strict")
+  align_axioms = strict || args.include?("--axioms")
+  include_all = args.include?("--all-files")
+  apply = args.include?("--apply")
 
   # Phase 1: Self-refactor MASTER2 itself
   puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
-  mr = MASTER::MultiRefactor.new(dry_run: !args.include?("--apply"), budget_cap: 1.0)
-  mr.run(path: File.join(pub4_root, "MASTER2", "lib"))
+  mr = MASTER::MultiRefactor.new(
+    dry_run: !apply,
+    budget_cap: 1.0,
+    force_rewrite: strict,
+    align_axioms: align_axioms,
+    include_all_files: include_all
+  )
+  phase1_path = include_all ? File.join(pub4_root, "MASTER2") : File.join(pub4_root, "MASTER2", "lib")
+  mr.run(path: phase1_path)
 
   # Phase 2: Deploy scripts
   puts "\n=== Phase 2: Deploy Scripts ==="
-  mr2 = MASTER::MultiRefactor.new(dry_run: !args.include?("--apply"), budget_cap: 1.0)
+  mr2 = MASTER::MultiRefactor.new(
+    dry_run: !apply,
+    budget_cap: 1.0,
+    force_rewrite: strict,
+    align_axioms: align_axioms,
+    include_all_files: include_all
+  )
   mr2.run(path: File.join(pub4_root, "deploy"))
 
   # Phase 3: Business plans (HTML)
   puts "\n=== Phase 3: Business Plans ==="
-  mr3 = MASTER::MultiRefactor.new(dry_run: !args.include?("--apply"), budget_cap: 0.5)
+  mr3 = MASTER::MultiRefactor.new(
+    dry_run: !apply,
+    budget_cap: 0.5,
+    force_rewrite: strict,
+    align_axioms: align_axioms,
+    include_all_files: include_all
+  )
   mr3.run(path: File.join(pub4_root, "bp"))
 
   # Phase 4: Self-test
@@ -150,8 +181,8 @@ when "help", "-h", "--help"
 
     Commands:
       refactor <file>             Refactor file with LLM guidance
-      multi-refactor [path]       Refactor entire directory with dependency graph
-      selfrun [--apply]           Full self-run across entire pub4 repo
+      multi-refactor [path]       Refactor directory (add: --apply --strict --axioms --all-files)
+      selfrun [--apply]           Full self-run across pub4 (add: --strict --axioms --all-files)
       fix [--all|<path>]          Fix violations in files or directory
       scan [directory]            Scan for code smells (default: .)
       chamber <file>              Chamber review with multi-model deliberation
