@@ -35,7 +35,6 @@ module MASTER
     MAX_CURL_CONTENT = 2000
     MAX_LLM_RESPONSE_PREVIEW = 1000
     MAX_SHELL_OUTPUT = 1000
-    SIMPLE_QUERY_LENGTH_THRESHOLD = 200
     MAX_PARSE_FALLBACK_LENGTH = 100
 
     COMPLETION_PATTERN = /^(ANSWER|DONE|COMPLETE):\s*/i.freeze
@@ -86,6 +85,7 @@ module MASTER
       @reflections = []
       @plan = []
       @step = 0
+      @pattern = :react  # Default pattern, set properly in call()
     end
 
     include ExecutionContext
@@ -147,28 +147,43 @@ module MASTER
 
     # Pattern selection heuristics - moved before private
     def select_pattern(goal)
-      # Pre-Act: explicit multi-step tasks
-      return :pre_act if goal.match?(/\b(then|after that|next|finally|step\s*\d|first.*then)\b/i)
-      return :pre_act if goal.match?(/\b(build|create|implement|develop)\b.*\b(and|with)\b/i)
+      # Sanitize goal to prevent prompt injection
+      sanitized_goal = goal.to_s.gsub(/[\r\n]+/, ' ').strip.slice(0, 500)
+      
+      prompt = <<~CLASSIFY
+        You are a task router. Given a user's goal, pick the best execution pattern.
 
-      # ReWOO: cost-sensitive or pure reasoning
-      return :rewoo if goal.match?(/\b(explain|describe|summarize|compare|analyze)\b/i) &&
-                       !goal.match?(/\b(file|code|execute|run)\b/i)
+        PATTERNS:
+        - react: General exploration, unknown tasks, tool use with observation loops
+        - pre_act: Multi-step plans with clear sequential phases (build X then Y then Z)
+        - rewoo: Pure reasoning, research, comparison — minimal tool use, cost-efficient
+        - reflexion: Tasks requiring correctness — fixing, debugging, refactoring, safety-critical work
 
-      # Reflexion: learning/fixing tasks
-      return :reflexion if goal.match?(/\b(fix|debug|correct|improve|refactor)\b/i)
-      return :reflexion if goal.match?(/\b(don't break|carefully|safely)\b/i)
+        SPECIAL:
+        - direct: Simple questions, chitchat, greetings, no tools needed
 
-      # Default: ReAct for exploratory/unknown
+        USER GOAL: "#{sanitized_goal}"
+
+        Respond with ONLY one word: #{(PATTERNS + [:direct]).join(', ')}
+      CLASSIFY
+
+      result = LLM.ask(prompt, tier: :cheap)
+
+      if result.ok?
+        chosen = result.value[:content]&.strip&.downcase&.to_sym
+        return chosen if chosen && (PATTERNS.include?(chosen) || chosen == :direct)
+      end
+
+      # Fallback: if LLM fails or returns garbage, use react
+      :react
+    rescue StandardError
       :react
     end
 
     private
 
     def simple_query?(goal)
-      goal.length < SIMPLE_QUERY_LENGTH_THRESHOLD &&
-        !goal.match?(/\b(file|read|write|analyze|fix|search|browse|run|execute|test|review)\b/i) &&
-        !goal.match?(/\b(create|update|modify|delete|install|build)\b/i)
+      @pattern == :direct
     end
 
     def direct_ask(goal, tier: nil)

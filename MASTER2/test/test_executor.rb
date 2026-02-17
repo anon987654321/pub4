@@ -26,55 +26,89 @@ class TestExecutor < Minitest::Test
     assert_equal 12, tools.size
   end
 
-  # Pattern selection heuristics
+  # Pattern selection heuristics - now LLM-based
   def test_select_pattern_react_for_simple
-    pattern = @executor.select_pattern("What is Ruby?")
-    assert_equal :react, pattern
+    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "react") do
+      pattern = @executor.select_pattern("What is Ruby?")
+      assert_equal :react, pattern
+    end
   end
 
   def test_select_pattern_pre_act_for_multi_step
-    pattern = @executor.select_pattern("First read the file, then analyze it, finally fix issues")
-    assert_equal :pre_act, pattern
+    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "pre_act") do
+      pattern = @executor.select_pattern("First read the file, then analyze it, finally fix issues")
+      assert_equal :pre_act, pattern
+    end
   end
 
   def test_select_pattern_pre_act_for_build_task
-    pattern = @executor.select_pattern("Build a CLI tool and add tests")
-    assert_equal :pre_act, pattern
+    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "pre_act") do
+      pattern = @executor.select_pattern("Build a CLI tool and add tests")
+      assert_equal :pre_act, pattern
+    end
   end
 
   def test_select_pattern_rewoo_for_reasoning
-    pattern = @executor.select_pattern("Explain the difference between modules and classes")
-    assert_equal :rewoo, pattern
+    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "rewoo") do
+      pattern = @executor.select_pattern("Explain the difference between modules and classes")
+      assert_equal :rewoo, pattern
+    end
   end
 
   def test_select_pattern_reflexion_for_fix
-    pattern = @executor.select_pattern("Fix the bug in parser.rb")
-    assert_equal :reflexion, pattern
+    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "reflexion") do
+      pattern = @executor.select_pattern("Fix the bug in parser.rb")
+      assert_equal :reflexion, pattern
+    end
   end
 
   def test_select_pattern_reflexion_for_careful
-    pattern = @executor.select_pattern("Refactor carefully without breaking tests")
-    assert_equal :reflexion, pattern
+    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "reflexion") do
+      pattern = @executor.select_pattern("Refactor carefully without breaking tests")
+      assert_equal :reflexion, pattern
+    end
   end
 
-  # Simple query detection
-  def test_simple_query_short_question
+  def test_select_pattern_direct_for_simple_questions
+    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "direct") do
+      pattern = @executor.select_pattern("Hello!")
+      assert_equal :direct, pattern
+    end
+  end
+
+  def test_select_pattern_fallback_on_llm_error
+    MASTER::LLM.stub :ask, MASTER::Result.err("API error") do
+      pattern = @executor.select_pattern("Some task")
+      assert_equal :react, pattern
+    end
+  end
+
+  def test_select_pattern_fallback_on_invalid_response
+    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "invalid_pattern") do
+      pattern = @executor.select_pattern("Some task")
+      assert_equal :react, pattern
+    end
+  end
+
+  # Simple query detection - now based on @pattern
+  def test_simple_query_true_when_pattern_is_direct
+    @executor.instance_variable_set(:@pattern, :direct)
     assert @executor.send(:simple_query?, "What is 2+2?")
   end
 
-  def test_simple_query_false_for_file_operations
+  def test_simple_query_false_when_pattern_is_react
+    @executor.instance_variable_set(:@pattern, :react)
     refute @executor.send(:simple_query?, "Read the config file")
   end
 
-  def test_simple_query_false_for_long_input
-    long = "x" * 250
-    refute @executor.send(:simple_query?, long)
+  def test_simple_query_false_when_pattern_is_pre_act
+    @executor.instance_variable_set(:@pattern, :pre_act)
+    refute @executor.send(:simple_query?, "First build, then test")
   end
 
-  def test_simple_query_false_for_action_words
-    refute @executor.send(:simple_query?, "Execute the test suite")
-    refute @executor.send(:simple_query?, "Analyze this code")
-    refute @executor.send(:simple_query?, "Create a new file")
+  def test_simple_query_false_when_pattern_is_reflexion
+    @executor.instance_variable_set(:@pattern, :reflexion)
+    refute @executor.send(:simple_query?, "Fix the bug carefully")
   end
 
   # Response parsing
