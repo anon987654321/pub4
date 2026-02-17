@@ -14,6 +14,11 @@ elsif ARGV.delete("--quiet") || ARGV.delete("-q")
   ENV["MASTER_TRACE"] = "0"
 end
 
+# Auto-bundle install if gems missing
+ENV["BUNDLE_GEMFILE"] = File.expand_path("../Gemfile", __dir__)
+ENV["GEM_HOME"] ||= File.expand_path("~/.local/share/gem/ruby/#{RUBY_VERSION[0..2]}")
+ENV["PATH"] = "#{ENV["GEM_HOME"]}/bin:#{ENV["PATH"]}" unless ENV["PATH"].include?("#{ENV["GEM_HOME"]}/bin")
+begin; require "bundler/setup"; rescue Bundler::GemNotFound, Bundler::GitError => e; $stderr.puts "MASTER2 boot: missing gems, running bundle install..."; system("bundle", "install", "--quiet", exception: false) || ($stderr.puts("MASTER2 boot: bundle install failed: #{e.message}"); exit 1); retry; end
 require "json"
 require_relative "../lib/master"
 
@@ -42,13 +47,11 @@ when "fix"
   # Batch fixing: master fix --all, master fix file.rb
   arg_str = args.join(" ")
   MASTER::Commands.fix_code(arg_str)
-
 when "scan"
   # Directory scanning: master scan deploy/rails/
   path = args.first || "."
   result = MASTER::Commands.opportunities(path)
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
 when "chamber"
   # Open specific chamber: master chamber ruby
   if args.empty?
@@ -57,7 +60,6 @@ when "chamber"
   end
   result = MASTER::Commands.chamber(args.join(" "))
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
 when "ideate", "brainstorm"
   # Generate alternatives: master ideate "authentication system"
   if args.empty?
@@ -66,7 +68,6 @@ when "ideate", "brainstorm"
   end
   result = MASTER::Commands.ideate(args.join(" "))
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
 when "evolve"
   # Evolve codebase: master evolve
   result = MASTER::Commands.evolve(args.join(" "))
