@@ -37,6 +37,8 @@ module MASTER
           version: VERSION, tier: LLM.tier,
           budget_remaining: LLM.budget_remaining,
           models: LLM.models.count,
+          llm_provider: "openrouter",
+          media_provider: "replicate",
           tts: defined?(Audio) ? Audio.engine_status : "unavailable",
           self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
         }.to_json

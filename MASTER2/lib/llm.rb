@@ -7,7 +7,8 @@ require "ruby_llm"
 
 module MASTER
   # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
-  # Features: model fallbacks, reasoning tokens, structured outputs, provider shortcuts
+  # Policy: text/reasoning via OpenRouter; media generation/transcription via Replicate
+  # Features: model fallbacks, reasoning tokens, structured outputs
   module LLM
     TIER_ORDER = %i[premium strong fast cheap].freeze
     MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
@@ -182,36 +183,19 @@ module MASTER
         Result.err(e.message)
       end
 
-      # A6: Image generation via ruby_llm with Replicate fallback
+      # A6: Image generation (Replicate-only policy)
       def paint(prompt, model: nil)
-        configure_ruby_llm
-        begin
-          image = RubyLLM.paint(prompt)
-          Result.ok({ url: image.url, revised_prompt: image.revised_prompt })
-        rescue StandardError => e
-          # Fallback to Replicate if OpenRouter image gen fails
-          if defined?(Replicate) && Replicate.available?
-            Replicate.generate(prompt: prompt)
-          else
-            Result.err(e.message)
-          end
-        end
+        return Result.err("Replicate API token required for media generation.") unless defined?(Replicate) && Replicate.available?
+
+        Replicate.generate(prompt: prompt, model: model)
       end
 
-      # A7: Audio transcription via ruby_llm with Replicate fallback
+      # A7: Audio transcription (Replicate-only policy)
       def transcribe(audio_path, model: nil)
-        configure_ruby_llm
-        begin
-          result = RubyLLM.transcribe(audio_path)
-          Result.ok({ text: result.text })
-        rescue StandardError => e
-          # Fallback to Replicate Whisper
-          if defined?(Replicate) && Replicate.available?
-            Replicate.run(model_id: Replicate::MODELS[:whisper], input: { audio: audio_path })
-          else
-            Result.err(e.message)
-          end
-        end
+        return Result.err("Replicate API token required for media transcription.") unless defined?(Replicate) && Replicate.available?
+
+        model_id = model || Replicate::MODELS[:whisper]
+        Replicate.run(model_id: model_id, input: { audio: audio_path })
       end
 
       # A9: Structured output with ruby_llm Schema DSL

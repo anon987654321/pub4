@@ -11,6 +11,7 @@ class TestWebUiTemplate < Minitest::Test
 
   def test_chat_and_poll_hooks_present
     html = File.read(TEMPLATE)
+    assert_includes html, "master or+rep"
     assert_includes html, "fetch(\"/chat\""
     assert_includes html, "fetch(\"/poll\""
     assert_includes html, "window.MASTER_TOKEN||''"
