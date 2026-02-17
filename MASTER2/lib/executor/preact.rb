@@ -38,7 +38,7 @@ module MASTER
       end
 
       def generate_plan(goal, tier:)
-        tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
+        tool_list = TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
 
         prompt = <<~PLAN
           Create a step-by-step plan to accomplish this task:

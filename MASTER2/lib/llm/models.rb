@@ -14,13 +14,14 @@ module MASTER
       def load_models_config
         @models_config ||= begin
           models_file = File.join(__dir__, "..", "..", "data", "models.yml")
-          return [] unless File.exist?(models_file)
-          begin
+          if File.exist?(models_file)
             YAML.safe_load_file(models_file, symbolize_names: true) || []
-          rescue StandardError => e
-            MASTER::Logging.warn("llm.models", "Failed to load models: #{e.message}") if defined?(MASTER::Logging)
+          else
             []
           end
+        rescue StandardError => e
+          MASTER::Logging.warn("llm.models", "Failed to load models: #{e.message}") if defined?(MASTER::Logging)
+          []
         end
       end
 

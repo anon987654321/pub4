@@ -39,7 +39,7 @@ module MASTER
         entry = {
           version: CACHE_VERSION,
           key: key,
-          prompt_hash: Digest::SHA256.hexdigest(prompt),
+          prompt_hash: Digest::SHA256.hexdigest(prompt.strip.downcase),
           prompt_preview: prompt[0, 200],
           tier: tier&.to_s,
           response: response_data,
@@ -110,7 +110,7 @@ module MASTER
         return nil if expired?(entry)
 
         # Verify exact hash match
-        return nil unless entry[:prompt_hash] == Digest::SHA256.hexdigest(prompt)
+        return nil unless entry[:prompt_hash] == Digest::SHA256.hexdigest(prompt.strip.downcase)
 
         # Update hit count
         entry[:hit_count] += 1
