@@ -2,6 +2,12 @@ require "rake/testtask"
 
 Rake::TestTask.new(:test) { |t| t.pattern = "test/test_*.rb" }
 
+# Fast offline tests — no API key, no network, no hanging
+Rake::TestTask.new("test:fast") do |t|
+  t.pattern = "test/test_*.rb"
+  t.ruby_opts = ["-e", "ENV['MASTER_SKIP_SLOW']='1'"]
+end
+
 desc "Run tests with coverage report"
 task :coverage do
   ENV["COVERAGE"] = "true"

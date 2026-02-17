@@ -31,6 +31,7 @@ module MASTER
         context: { desc: "Context window usage", usage: "context", group: :system }.freeze,
         history: { desc: "Cost history", usage: "history", group: :system }.freeze,
         health: { desc: "Health check", usage: "health", group: :system }.freeze,
+        'style-guides': { desc: "List/sync style guides", usage: "style-guides [sync]", group: :system }.freeze,
         # Utility
         help: { desc: "Show this help", usage: "help [command]", group: :util }.freeze,
         speak: { desc: "Text-to-speech", usage: "speak <text>", group: :util }.freeze,

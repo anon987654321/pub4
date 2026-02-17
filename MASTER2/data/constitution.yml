@@ -258,6 +258,28 @@ granular_formatting_rules:
     edition: "2021"
     max_line_length: 100
     clippy_warnings: deny_for_ci
+
+# Doctrine and UX heuristics become first-class review inputs for planning/refactor.
+principles:
+  rails_doctrine:
+    - optimize_for_programmer_happiness
+    - convention_over_configuration
+    - the_menu_is_omakase
+    - integrated_systems_over_fragments
+    - progress_over_stability
+    - push_up_a_big_tent
+    - value_beautiful_code
+  nielsen_heuristics:
+    - visibility_of_system_status
+    - match_between_system_and_real_world
+    - user_control_and_freedom
+    - consistency_and_standards
+    - error_prevention
+    - recognition_rather_than_recall
+    - flexibility_and_efficiency_of_use
+    - aesthetic_and_minimalist_design
+    - help_users_recognize_diagnose_recover
+    - help_and_documentation
   shell:
     shebang_required: true
     strict_mode: "set -euo pipefail"

@@ -129,6 +129,27 @@ module MASTER
     HANDLED = Result.ok({ handled: true }).freeze
 
     def dispatch(input, pipeline:)
+      return Result.err("No previous command to repeat.") if input.nil?
+
+      # Split compound prompts into sequenced requests.
+      requests = split_requests(input)
+      return Result.err("Empty command.") if requests.empty?
+      return dispatch_one(requests.first, pipeline: pipeline) if requests.size <= 1
+
+      puts UI.dim("multi-intent: #{requests.size} items queued")
+      results = []
+
+      requests.each_with_index do |request, idx|
+        puts UI.dim("  [#{idx + 1}/#{requests.size}] #{request}")
+        result = dispatch_one(request, pipeline: pipeline)
+        results << { request: request, result: result }
+        break if result == :exit
+      end
+
+      Result.ok({ handled: true, multi_intent: true, items: results.size, results: results })
+    end
+
+    def dispatch_one(input, pipeline:)
       # Handle shortcuts
       if input.strip == "!!"
         return Result.err("No previous command.") unless @last_command
@@ -271,6 +292,9 @@ module MASTER
       when "cache"
         show_cache_stats(args)
         HANDLED
+      when "style-guides", "styleguides"
+        style_guides(args)
+        HANDLED
       when "multi-refactor", "mrefactor"
         multi_refactor(args)
       when "shell"
@@ -284,6 +308,27 @@ module MASTER
     end
 
     private
+
+    def split_requests(input)
+      raw = input.to_s.strip
+      return [] if raw.empty?
+
+      chunks = raw
+        .gsub("\r", "\n")
+        .split(/\n+/)
+        .flat_map { |line| line.split(/\s*;\s*/) }
+        .map { |item| item.sub(/\A\s*(?:[-*]|\d+[.)])\s*/, "").strip }
+        .reject(&:empty?)
+
+      return chunks if chunks.size > 1
+
+      qsplit = raw.split(/\?\s+/).map(&:strip).reject(&:empty?)
+      if qsplit.size > 1
+        return qsplit.map { |q| q.end_with?("?") ? q : "#{q}?" }
+      end
+
+      [raw]
+    end
 
     def normalize_intent_input(input)
       text = input.to_s.strip

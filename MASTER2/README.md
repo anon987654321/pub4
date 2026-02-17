@@ -50,6 +50,18 @@ cd pub4/MASTER2 && bundle install
 OPENROUTER_API_KEY="sk-..." ./bin/master help
 ```
 
+## Testing
+
+```sh
+rake test:fast            # Offline, no API key needed
+rake test                 # Full suite (needs OPENROUTER_API_KEY for some)
+ruby -Ilib -Itest test/test_result.rb   # Single file
+```
+
+## Debug
+
+`MASTER_TRACE=3` for full debug logging. See LLM.md for gotchas.
+
 Ruby 3.4+. OpenBSD 7.8+ recommended.
 
 ## License

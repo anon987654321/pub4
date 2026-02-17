@@ -8,6 +8,7 @@ module MASTER
     MAX_FILES = 100
     MAX_FILES_ALL = 2000
     MAX_STRICT_PASSES = 4
+    MAX_SYSTEMATIC_ROUNDS = 3
     SUPPORTED_EXTENSIONS = %w[.rb .sh .html .htm .erb .yml .yaml .css .scss .sass .js .mjs .cjs .rs].freeze
 
     attr_reader :results, :graph
@@ -27,6 +28,7 @@ module MASTER
     # Refactor all supported files under path
     def run(path:, pattern: nil, exclude: nil)
       Logging.dmesg_log('multi_refactor', message: 'ENTER multi_refactor.run')
+      Prescan.run(path) if defined?(Prescan) && File.directory?(path)
       files = discover_files(path, pattern: pattern, exclude: exclude)
       return Result.err("No supported files found in #{path}") if files.empty?
       max_files = @include_all_files ? MAX_FILES_ALL : MAX_FILES
@@ -36,25 +38,38 @@ module MASTER
       build_dependency_graph(files)
 
       # Topological sort for processing order
-      ordered = topological_sort(files)
+      ordered = systematic_order(topological_sort(files))
+      rounds = @dry_run ? 1 : MAX_SYSTEMATIC_ROUNDS
 
       UI.header("Multi-file Refactor#{@dry_run ? ' (dry run)' : ''}")
       puts "  Path: #{path}"
       puts "  Files: #{ordered.size}"
+      puts "  Rounds: #{rounds}"
       puts "  Budget cap: #{UI.currency(@budget_cap)}"
       puts "  Strict rewrite: #{@force_rewrite ? 'on' : 'off'}"
       puts "  Axiom alignment: #{@align_axioms ? 'on' : 'off'}"
       puts "  Include all files: #{@include_all_files ? 'on' : 'off'}"
       puts
 
-      bar = UI.progress(ordered.size)
+      bar = UI.progress(ordered.size * rounds)
 
-      ordered.each_with_index do |file, idx|
+      rounds.times do |round_idx|
+        round_num = round_idx + 1
+        round_improvements = 0
+        puts UI.dim("Round #{round_num}/#{rounds}...") if rounds > 1
+
+        ordered.each do |file|
+          break if over_budget?
+
+          bar.advance
+          result = refactor_file(file)
+          result[:round] = round_num
+          @results << result
+          round_improvements += 1 if result[:improved]
+        end
+
         break if over_budget?
-
-        bar.advance
-        result = refactor_file(file)
-        @results << result
+        break if round_improvements.zero?
       end
 
       bar.finish if bar.respond_to?(:finish)
@@ -176,6 +191,25 @@ module MASTER
       sorted + remaining
     end
 
+    def systematic_order(files)
+      files
+        .uniq
+        .sort_by { |file| [priority_for(file), file] }
+    end
+
+    def priority_for(file)
+      case File.extname(file)
+      when ".rb" then 0
+      when ".sh" then 1
+      when ".yml", ".yaml" then 2
+      when ".erb", ".html", ".htm" then 3
+      when ".js", ".mjs", ".cjs" then 4
+      when ".css", ".scss", ".sass" then 5
+      when ".rs" then 6
+      else 9
+      end
+    end
+
     def refactor_file(file)
       content = File.read(file)
       ext = File.extname(file)
@@ -208,6 +242,7 @@ module MASTER
           backup = "#{file}.bak"
           File.write(backup, content)
           File.write(file, result.value[:final])
+          enforce_ruby_style!(file)
 
           File.delete(backup) if File.exist?(backup)
         end
@@ -325,6 +360,15 @@ module MASTER
       SyntaxValidator.valid?(file: file, content: content)
     rescue StandardError
       false
+    end
+
+    def enforce_ruby_style!(file)
+      return unless File.extname(file) == ".rb"
+      return unless defined?(RubocopDetector) && RubocopDetector.installed?
+
+      system("rubocop", "-A", file, out: File::NULL, err: File::NULL)
+    rescue StandardError
+      nil
     end
   end
 end

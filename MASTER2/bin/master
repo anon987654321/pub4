@@ -98,6 +98,9 @@ when "opportunities", "opps"
   path = args.first
   result = MASTER::Commands.opportunities(path)
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+when "style-guides", "styleguides"
+  result = MASTER::Commands.style_guides(args.join(" "))
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
 
 when "multi-refactor", "mrefactor"
   # Multi-file refactoring: master multi-refactor deploy/rails/
@@ -194,6 +197,7 @@ when "help", "-h", "--help"
       cache [stats|clear]         Semantic cache management
       health                      System health check
       opportunities [path]        Find improvement opportunities
+      style-guides [sync]         List or sync style guide repos
       axioms-stats                Display axiom violation statistics
       version                     Show version
       help                        Show this help

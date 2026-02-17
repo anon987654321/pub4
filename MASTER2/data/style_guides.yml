@@ -1,0 +1,53 @@
+version: 1
+updated: "2026-02-17"
+
+guides:
+  ruby:
+    - name: "Ruby Style Guide"
+      repo: "https://github.com/rubocop/ruby-style-guide"
+  rails:
+    - name: "Rails Style Guide"
+      repo: "https://github.com/rubocop/rails-style-guide"
+  html:
+    - name: "Code Guide (HTML/CSS)"
+      repo: "https://github.com/mdo/code-guide"
+    - name: "Airbnb HTML/CSS Style Guide"
+      repo: "https://github.com/airbnb/css"
+  css:
+    - name: "Idiomatic CSS"
+      repo: "https://github.com/necolas/idiomatic-css"
+    - name: "Stylelint"
+      repo: "https://github.com/stylelint/stylelint"
+  javascript:
+    - name: "Airbnb JavaScript Style Guide"
+      repo: "https://github.com/airbnb/javascript"
+    - name: "StandardJS"
+      repo: "https://github.com/standard/standard"
+  rust:
+    - name: "Rust Style Guide"
+      repo: "https://github.com/rust-lang/rust-style-guide"
+    - name: "Clippy"
+      repo: "https://github.com/rust-lang/rust-clippy"
+  zsh:
+    - name: "Pure Zsh Patterns (zsh-users)"
+      repo: "https://github.com/zsh-users"
+    - name: "zsh-syntax-highlighting"
+      repo: "https://github.com/zsh-users/zsh-syntax-highlighting"
+
+awesome_lists:
+  - name: "Awesome Ruby"
+    repo: "https://github.com/markets/awesome-ruby"
+  - name: "Awesome Rails"
+    repo: "https://github.com/gramantin/awesome-rails"
+  - name: "Awesome JavaScript"
+    repo: "https://github.com/sorrycc/awesome-javascript"
+  - name: "Awesome CSS"
+    repo: "https://github.com/awesome-css-group/awesome-css"
+  - name: "Awesome Rust"
+    repo: "https://github.com/rust-unofficial/awesome-rust"
+  - name: "Awesome Zsh Plugins"
+    repo: "https://github.com/unixorn/awesome-zsh-plugins"
+  - name: "Awesome LLM"
+    repo: "https://github.com/Hannibal046/Awesome-LLM"
+  - name: "Ruby LLM"
+    repo: "https://github.com/crmne/ruby_llm"

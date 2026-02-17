@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "shellwords"
 
 module MASTER
   module Analysis
@@ -6,11 +7,15 @@ module MASTER
     # Ported from MASTER v1 cli.rb prescan ritual
     module Prescan
       extend self
+      TREE_EXCLUDES = %w[. .. .git vendor tmp node_modules var].freeze
 
       def run(path = MASTER.root)
+        path = File.expand_path(path)
         results = {
+          tree: project_tree(path),
           sprawl: detect_sprawl(path),
           git_status: check_git_status(path),
+          recent_commits: recent_commits(path),
         }
 
         warn_if_issues(results)
@@ -19,13 +24,11 @@ module MASTER
 
       private
 
-      def show_tree(path)
+      def project_tree(path, max_depth: 4)
+        lines = file_tree(path, max_depth: max_depth, exclude: TREE_EXCLUDES)
         puts UI.dim("Structure:")
-
-        # Ruby-native tree walker - no system dependencies
-        tree = file_tree(path, max_depth: 3, exclude: %w[. .. .git vendor tmp node_modules var])
-        puts tree.join("\n")
-        true
+        puts lines.join("\n")
+        lines
       end
 
       # Ruby-native tree walker
@@ -81,13 +84,16 @@ module MASTER
         status
       end
 
-      def show_recent_commits(path)
-        return nil unless system("git -C #{path} rev-parse --git-dir > /dev/null 2>&1")
+      def recent_commits(path, limit: 5)
+        return [] unless system("git", "-C", path, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
 
-        puts UI.dim("\nRecent commits:")
-        system("git", "-C", path, "log", "--oneline", "--decorate", "-5")
-
-        true
+        output = `git -C #{Shellwords.escape(path)} log --oneline --decorate -#{limit} 2>/dev/null`
+        commits = output.lines.map(&:strip).reject(&:empty?)
+        unless commits.empty?
+          puts UI.dim("\nRecent commits:")
+          commits.each { |line| puts line }
+        end
+        commits
       end
 
       def warn_if_issues(results)

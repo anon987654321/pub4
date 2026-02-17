@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "shellwords"
 
 module MASTER
   module Commands
@@ -7,8 +8,18 @@ module MASTER
       REFACTOR_USAGE = "Usage: autofix <file> [-p|--preview|-r|--raw|-a|--apply]"
 
       def autofix(args)
-        file, mode = validate_file_arg(args, "autofix")
-        return file if file.is_a?(Result) # early return on validation error
+        target = parse_refactor_target(args)
+        return Result.err(target[:error]) if target[:error]
+        mode = target[:mode]
+
+        case target[:type]
+        when :snippet
+          return autofix_snippet(target[:snippet], mode)
+        when :directory
+          return autofix_directory(target[:path], mode)
+        end
+
+        file = target[:path]
 
         path = File.expand_path(file)
         return Result.err("File not found: #{file}") unless File.exist?(path)
@@ -35,6 +46,7 @@ module MASTER
         record_refactor_learnings(file, original_code, result, bugs_found, pattern_matches)
         result
       end
+      alias refactor autofix
 
       def chamber(file)
         autofix(file)
@@ -58,6 +70,9 @@ module MASTER
 
       def opportunities(path)
         path ||= MASTER.root
+        if File.directory?(path) && defined?(Prescan)
+          Prescan.run(path)
+        end
         UI.header("Analyzing for opportunities")
         puts "  Path: #{path}"
         puts "  This may take a moment...\n\n"
@@ -170,18 +185,58 @@ module MASTER
 
       private
 
-      def validate_file_arg(args, command)
-        usage = "Usage: #{command} <file> [-p|--preview|-r|--raw|-a|--apply]."
-        return [Result.err(usage), nil] unless args
+      def parse_refactor_target(args)
+        usage = "#{REFACTOR_USAGE.sub("<file>", "<file|dir>")} or autofix --snippet \"<ruby code>\""
+        return { error: usage } if args.nil? || args.to_s.strip.empty?
 
-        parts = args.strip.split(/\s+/)
-        return [Result.err(usage), nil] if parts.empty?
+        parts = Shellwords.split(args.to_s)
+        mode = extract_mode(parts)
+        snippet_idx = parts.index("--snippet")
 
-        file = parts.first
-        return [Result.err(usage), nil] if file&.start_with?("--")
-        return [Result.err("File path cannot be empty."), nil] if file.nil? || file.empty?
+        if snippet_idx
+          snippet = parts[(snippet_idx + 1)..]&.join(" ").to_s.strip
+          return { error: "Snippet cannot be empty." } if snippet.empty?
+          return { type: :snippet, snippet: snippet, mode: mode }
+        end
 
-        [file, extract_mode(parts[1..-1])]
+        target = parts.find { |p| !p.start_with?("-") }
+        return { error: usage } if target.nil? || target.empty?
+
+        expanded = File.expand_path(target)
+        if File.directory?(expanded)
+          { type: :directory, path: expanded, mode: mode }
+        else
+          { type: :file, path: target, mode: mode }
+        end
+      rescue ArgumentError => e
+        { error: "Invalid arguments: #{e.message}" }
+      end
+
+      def autofix_directory(path, mode)
+        Prescan.run(path) if defined?(Prescan)
+        mr = MultiRefactor.new(
+          dry_run: mode != :apply,
+          force_rewrite: true,
+          align_axioms: true,
+          include_all_files: true
+        )
+        mr.run(path: path)
+      end
+
+      def autofix_snippet(snippet, mode)
+        filename = "snippet.rb"
+        result = best_candidate_fix(filename, snippet)
+        return result unless result.ok?
+
+        candidate = render_output(lint_output(result.value[:final].to_s))
+        case mode
+        when :raw
+          puts candidate
+        else
+          puts DiffView.unified_diff(snippet, candidate, filename: filename)
+        end
+
+        Result.ok(final: candidate, source: :snippet)
       end
 
       def run_bug_hunting(code, file)
@@ -286,8 +341,18 @@ module MASTER
 
         Undo.track_edit(path, original)
         File.write(path, proposed)
+        enforce_ruby_style!(path)
         puts "  refactor: applied to #{path}"
         puts "  (Use 'undo' command to revert)"
+      end
+
+      def enforce_ruby_style!(path)
+        return unless File.extname(path) == ".rb"
+        return unless defined?(RubocopDetector) && RubocopDetector.installed?
+
+        system("rubocop", "-A", path, out: File::NULL, err: File::NULL)
+      rescue StandardError
+        nil
       end
 
       def obvious_issue?(path, code)

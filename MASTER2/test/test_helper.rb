@@ -17,7 +17,19 @@ end
 
 require "minitest/autorun"
 require "tmpdir"
+require "timeout"
 require_relative "../lib/master"
+
+# Global test timeout — prevents tests from hanging indefinitely
+Minitest::Test.class_eval do
+  alias_method :run_without_timeout, :run
+  def run(*args)
+    Timeout.timeout(30) { run_without_timeout(*args) }
+  rescue Timeout::Error
+    failures << Minitest::UnexpectedError.new(Timeout::Error.new("Test timed out after 30s"))
+    self
+  end
+end
 
 # Shared test setup
 module TestHelper

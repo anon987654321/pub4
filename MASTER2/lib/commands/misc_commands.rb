@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "yaml"
+require "fileutils"
+
 require_relative 'misc_commands/selftest_full'
 require_relative 'misc_commands/cinematic_persona'
 
@@ -128,6 +131,10 @@ module MASTER
         model = LLM.select_model
         checks << { name: "Models available", ok: !model.nil? }
 
+        # Check style guide catalog
+        guides_ok = File.exist?(File.join(MASTER.root, "data", "style_guides.yml"))
+        checks << { name: "Style guides catalog", ok: guides_ok }
+
         checks.each do |c|
           status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
           puts "#{status} #{c[:name]}"
@@ -135,6 +142,52 @@ module MASTER
 
         all_ok = checks.all? { |c| c[:ok] }
         puts all_ok ? "health: ok" : "health: some checks failed"
+      end
+
+      def style_guides(args = nil)
+        catalog_path = File.join(MASTER.root, "data", "style_guides.yml")
+        return Result.err("style guide catalog missing: #{catalog_path}") unless File.exist?(catalog_path)
+
+        catalog = YAML.safe_load_file(catalog_path, symbolize_names: true) || {}
+        entries = Array(catalog[:guides]).flat_map { |_, list| Array(list) } + Array(catalog[:awesome_lists])
+
+        if args.to_s.include?("sync")
+          dest = File.join(Paths.var, "style_guides")
+          FileUtils.mkdir_p(dest)
+          synced = 0
+
+          entries.each do |entry|
+            repo = entry[:repo].to_s
+            next unless repo.start_with?("https://github.com/")
+
+            name = repo.split("/").last
+            path = File.join(dest, name)
+            if Dir.exist?(path)
+              system("git", "-C", path, "pull", "--ff-only", out: File::NULL, err: File::NULL)
+            else
+              system("git", "clone", "--depth", "1", repo, path, out: File::NULL, err: File::NULL)
+            end
+            synced += 1
+          end
+
+          puts "style-guides: synced #{synced} repos -> #{dest}"
+          return Result.ok(synced: synced, dest: dest)
+        end
+
+        puts "Style Guides:"
+        (catalog[:guides] || {}).each do |lang, list|
+          puts "  #{lang}:"
+          Array(list).each { |entry| puts "    - #{entry[:name]}: #{entry[:repo]}" }
+        end
+
+        puts "\nAwesome Lists:"
+        Array(catalog[:awesome_lists]).each do |entry|
+          puts "  - #{entry[:name]}: #{entry[:repo]}"
+        end
+
+        Result.ok(total: entries.size)
+      rescue StandardError => e
+        Result.err("style-guides failed: #{e.message}")
       end
 
       private
