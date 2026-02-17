@@ -107,10 +107,19 @@ module MASTER
     private
 
     def freeze_state
-      # NOTE: Shallow freeze only — nested structures remain mutable
+      # Deep-dup before freezing to prevent mutation via references
+      @value = deep_dup(@value) if @value.is_a?(Hash) || @value.is_a?(Array)
       @value.freeze if @value.is_a?(Hash) || @value.is_a?(Array) || @value.is_a?(String)
       @error.freeze if @error.is_a?(String)
       freeze
+    end
+
+    def deep_dup(obj)
+      case obj
+      when Hash then obj.transform_values { |v| deep_dup(v) }
+      when Array then obj.map { |v| deep_dup(v) }
+      else obj
+      end
     end
   end
 

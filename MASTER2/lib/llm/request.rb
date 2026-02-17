@@ -81,13 +81,13 @@ module MASTER
           unless REASONING_EFFORT.map(&:to_s).include?(effort_str)
             return Result.err("Invalid reasoning effort: #{effort_str}. Must be one of: #{REASONING_EFFORT.join(', ')}")
           end
-          chat = chat.with_thinking(effort: effort_str)
+          chat = chat.with_thinking(effort: effort_str.to_sym)
         end
 
         # JSON schema support
         if json_schema
           schema_data = json_schema[:schema] || json_schema
-          chat = chat.with_json_schema(schema_data)
+          chat = chat.with_schema(schema_data)
         end
 
         # Provider preferences
@@ -189,24 +189,32 @@ module MASTER
 
         # Replay history and extract final message string
         message = replay_chat_history(chat, msg_array)
-        response = chat.ask(message) do |chunk|
-          # RubyLLM yields Chunk objects (inherits from Message)
-          text = chunk.is_a?(String) ? chunk : chunk.content.to_s
-          next if text.empty?
+        
+        catch(:truncated) do
+          response = chat.ask(message) do |chunk|
+            # RubyLLM yields Chunk objects (inherits from Message)
+            text = chunk.is_a?(String) ? chunk : chunk.content.to_s
+            next if text.empty?
 
-          $stderr.print text
-          content_parts << text
-          total_size += text.bytesize
+            # Populate reasoning_parts from thinking chunks if available
+            if chunk.respond_to?(:thinking) && chunk.thinking
+              reasoning_parts << chunk.thinking
+            end
 
-          # Abort if response exceeds MAX_RESPONSE_SIZE
-          if total_size > MAX_RESPONSE_SIZE
-            Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
-            break
+            $stderr.print text
+            content_parts << text
+            total_size += text.bytesize
+
+            # Abort if response exceeds MAX_RESPONSE_SIZE
+            if total_size > MAX_RESPONSE_SIZE
+              Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
+              throw :truncated
+            end
           end
-        end
 
-        # Use final response object for token counts
-        final_response = response
+          # Use final response object for token counts
+          final_response = response
+        end
 
         $stderr.puts
 
@@ -214,8 +222,8 @@ module MASTER
           content: content_parts.join,
           reasoning: reasoning_parts.any? ? reasoning_parts.join : nil,
           model: model,
-          tokens_in: final_response.input_tokens || 0,
-          tokens_out: final_response.output_tokens || 0,
+          tokens_in: final_response&.input_tokens || 0,
+          tokens_out: final_response&.output_tokens || 0,
           cost: nil,
           finish_reason: "stop",
           streamed: true

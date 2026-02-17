@@ -13,7 +13,12 @@ module MASTER
 
       def self.system_prompt_config
         @system_prompt_config ||= if File.exist?(MASTER::Executor::SYSTEM_PROMPT_FILE)
-          YAML.safe_load_file(MASTER::Executor::SYSTEM_PROMPT_FILE) rescue {}
+          begin
+            YAML.safe_load_file(MASTER::Executor::SYSTEM_PROMPT_FILE)
+          rescue StandardError => e
+            MASTER::Logging.warn("executor.context", "Failed to load system prompt: #{e.message}") if defined?(MASTER::Logging)
+            {}
+          end
         else
           {}
         end
@@ -25,10 +30,14 @@ module MASTER
 
         # Identity (interpolated)
         identity = if config["identity"]
-          config["identity"] % {
-            version: MASTER::VERSION, platform: RUBY_PLATFORM,
-            ruby_version: RUBY_VERSION, working_dir: Dir.pwd
-          }
+          begin
+            config["identity"] % {
+              version: MASTER::VERSION, platform: RUBY_PLATFORM,
+              ruby_version: RUBY_VERSION, working_dir: Dir.pwd
+            }
+          rescue KeyError, ArgumentError
+            config["identity"]
+          end
         else
           "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant."
         end
@@ -119,7 +128,7 @@ module MASTER
       end
 
       # Compact file tree for system prompt injection
-      def self.dir_snapshot(root, max_depth: 2, depth: 0, exclude: %w[. .. .git vendor tmp node_modules var])
+      def self.dir_snapshot(root, max_depth: 2, depth: 0, exclude: %w[.git vendor tmp node_modules var])
         return "" if depth >= max_depth
         begin
           entries = Dir.children(root).sort.reject { |e| exclude.include?(e) || e.start_with?(".") }

@@ -120,7 +120,7 @@ module MASTER
       # for tracking purposes (line 106). This is intentional but non-standard.
       #
       # Options:
-      #   tier: :strong/:fast/:cheap - model tier selection
+      #   tier: :strong/:fast/:cheap - model tier selection (filters models by tier from models.yml)
       #   model: explicit model ID
       #   fallbacks: array of fallback model IDs
       #   reasoning: :none/:minimal/:low/:medium/:high/:xhigh or { effort:, max_tokens:, exclude: }
@@ -144,10 +144,10 @@ module MASTER
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
         return cache_result if cache_result&.ok?
 
-        primary = model || select_model
+        primary = model || select_model(tier)
         return Result.err("No model available.") unless primary
 
-        @current_model = extract_model_name(primary)
+        @current_model = primary
 
         # Auto-fallback: only cascade on infrastructure errors, max 2 retries
         models_to_try = if fallbacks

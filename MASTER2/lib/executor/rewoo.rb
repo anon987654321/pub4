@@ -4,7 +4,7 @@ module MASTER
   class Executor
     module ReWOO
       def execute_rewoo(goal, tier:)
-        tool_list = TOOLS.map { |k, v| "  #{k}: #{v}" }.join("\n")
+        tool_list = TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
 
         prompt = build_rewoo_prompt(goal, tool_list)
 

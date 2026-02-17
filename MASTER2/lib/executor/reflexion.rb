@@ -53,7 +53,7 @@ module MASTER
         # Intentionally cap inner loop to respect overall step budget
         start_time = MASTER::Utils.monotonic_now
 
-        [5, @max_steps - @step].max.times do
+        [5, @max_steps - @step].min.times do
           begin
             check_timeout!(start_time)
           rescue Result::Error => e

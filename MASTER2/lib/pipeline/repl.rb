@@ -104,28 +104,29 @@ module MASTER
         if defined?(Commands)
           cmd_result = Commands.dispatch(line.strip, pipeline: pipeline)
           break if cmd_result == :exit
-          next if cmd_result.nil?
 
-          if cmd_result.respond_to?(:ok?)
-            if cmd_result.ok?
-              output = cmd_result.value[:rendered] || cmd_result.value[:response]
-              streamed = cmd_result.value[:streamed]
-              if output && !output.empty? && !streamed
-                puts
-                puts output
+          unless cmd_result.nil?
+            if cmd_result.respond_to?(:ok?)
+              if cmd_result.ok?
+                output = cmd_result.value[:rendered] || cmd_result.value[:response]
+                streamed = cmd_result.value[:streamed]
+                if output && !output.empty? && !streamed
+                  puts
+                  puts output
+                end
+                if cmd_result.value[:cost]
+                  puts UI.dim("  #{format_meta(cmd_result.value)}")
+                end
+                session.add_assistant(output, cost: cmd_result.value[:cost]) if output
+              else
+                UI.error(cmd_result.failure)
               end
-              if cmd_result.value[:cost]
-                puts UI.dim("  #{format_meta(cmd_result.value)}")
-              end
-              session.add_assistant(output, cost: cmd_result.value[:cost]) if output
-            else
-              UI.error(cmd_result.failure)
+            elsif cmd_result.respond_to?(:err?) && cmd_result.err?
+              # Unknown command - suggest similar
+              Commands.show_did_you_mean(line.strip) if defined?(Commands)
             end
-          elsif cmd_result.respond_to?(:err?) && cmd_result.err?
-            # Unknown command - suggest similar
-            Commands.show_did_you_mean(line.strip) if defined?(Commands)
+            next
           end
-          next
         end
 
         result = pipeline.call({ text: line.strip })
