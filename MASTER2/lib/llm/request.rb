@@ -137,28 +137,32 @@ module MASTER
         result
       end
 
-      # Prepare message for RubyLLM chat API
-      def prepare_chat_message(msg_array)
-        if msg_array.is_a?(Array)
-          return "" if msg_array.empty?
+      # Replay conversation history into chat object and return final message
+      def replay_chat_history(chat, msg_array)
+        return "" if msg_array.nil? || msg_array.empty?
 
-          if msg_array.size > 1
-            # Multi-turn conversation: use array form
-            msg_array
-          else
-            # Single message: extract content safely
-            first_msg = msg_array.first
-            first_msg.is_a?(Hash) ? (first_msg[:content] || first_msg["content"] || "") : ""
+        # For multi-turn conversations, add all but the last message to history
+        if msg_array.size > 1
+          msg_array[0..-2].each do |msg|
+            role = msg[:role] || msg["role"]
+            content = msg[:content] || msg["content"]
+            next unless role && content
+            chat.add_message(role: role.to_sym, content: content)
           end
+        end
+
+        # Return the final user message content as a string
+        final_msg = msg_array.last
+        if final_msg.is_a?(Hash)
+          final_msg[:content] || final_msg["content"] || ""
         else
-          # Fallback to string
-          msg_array.to_s
+          final_msg.to_s
         end
       end
 
       def execute_blocking_ruby_llm(chat, msg_array, model)
-        # RubyLLM supports both string and message array
-        message = prepare_chat_message(msg_array)
+        # Replay history and extract final message string
+        message = replay_chat_history(chat, msg_array)
         response = chat.ask(message)
 
         response_data = {
@@ -183,8 +187,8 @@ module MASTER
         total_size = 0
         final_response = nil
 
-        # RubyLLM supports both string and message array
-        message = prepare_chat_message(msg_array)
+        # Replay history and extract final message string
+        message = replay_chat_history(chat, msg_array)
         response = chat.ask(message) do |chunk|
           # RubyLLM yields Chunk objects (inherits from Message)
           text = chunk.is_a?(String) ? chunk : chunk.content.to_s
