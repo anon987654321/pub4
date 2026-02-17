@@ -110,11 +110,13 @@ module MASTER
       end
 
       def select_model(tier = nil)
-        candidates = all_models
         if tier
-          candidates = candidates.select { |m| classify_tier(m) == tier }
+          # Use pre-computed model_tiers hash for O(1) tier lookup
+          candidates = model_tiers[tier] || []
+          candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
+        else
+          all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
         end
-        candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
       end
 
       private

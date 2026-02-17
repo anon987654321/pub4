@@ -19,7 +19,6 @@ class TestLLM < Minitest::Test
     rate = MASTER::LLM.model_rates["deepseek/deepseek-r1"]
     assert rate[:in], "Rate should have :in price"
     assert rate[:out], "Rate should have :out price"
-    assert rate[:tier], "Rate should have :tier"
   end
 
   def test_failures_before_trip
@@ -27,7 +26,7 @@ class TestLLM < Minitest::Test
   end
 
   def test_spending_cap
-    assert_equal 10.0, MASTER::LLM::SPENDING_CAP
+    assert_equal Float::INFINITY, MASTER::LLM.spending_cap
   end
 
   def test_circuit_closed_when_no_failures
@@ -36,12 +35,12 @@ class TestLLM < Minitest::Test
 
   def test_budget_remaining
     initial = MASTER::LLM.budget_remaining
-    assert_equal MASTER::LLM::SPENDING_CAP, initial
+    assert_equal Float::INFINITY, initial
   end
 
   def test_tier_with_full_budget
     tier = MASTER::LLM.tier
-    assert_equal :premium, tier
+    assert_equal :strong, tier
   end
 
   def test_select_model
@@ -52,7 +51,7 @@ class TestLLM < Minitest::Test
 
   def test_record_cost
     cost = MASTER::LLM.record_cost(model: "deepseek/deepseek-r1", tokens_in: 1000, tokens_out: 500)
-    assert cost > 0, "Cost should be positive"
-    assert MASTER::LLM.budget_remaining < MASTER::LLM::SPENDING_CAP, "Budget should decrease"
+    assert_equal 0.0, cost, "Cost should be 0.0 (budget tracking removed)"
+    assert_equal Float::INFINITY, MASTER::LLM.budget_remaining, "Budget should remain infinity"
   end
 end

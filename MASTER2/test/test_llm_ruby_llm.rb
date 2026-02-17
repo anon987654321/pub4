@@ -86,11 +86,13 @@ class TestLLMRubyLLM < Minitest::Test
       { role: "user", content: "Second message" }
     ]
     
-    content = MASTER::LLM.send(:build_message_content, "New prompt", messages)
-    assert content.include?("First message")
-    assert content.include?("First response")
-    assert content.include?("Second message")
-    assert content.include?("New prompt")
+    result = MASTER::LLM.send(:build_message_array, "New prompt", messages)
+    assert result.is_a?(Array), "Should return an array"
+    contents = result.map { |m| m[:content] }
+    assert contents.include?("First message")
+    assert contents.include?("First response")
+    assert contents.include?("Second message")
+    assert contents.include?("New prompt")
   end
 
   def test_error_preserves_type_and_backtrace
