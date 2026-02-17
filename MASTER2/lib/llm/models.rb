@@ -81,8 +81,8 @@ module MASTER
       end
 
       def prompt_model_name
-        extract_model_name(@current_model) if @current_model
-        @current_model || "unknown"
+        return extract_model_name(@current_model) if @current_model
+        "unknown"
       end
 
       def model_tiers
@@ -99,6 +99,8 @@ module MASTER
         if tier
           candidates = candidates.select { |m| classify_tier(m) == tier }
         end
+        # Try tier-filtered candidates first, fall back to all models if none pass circuit breaker
+        # This ensures availability even if preferred tier models are all circuit-broken
         candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
       end
     end

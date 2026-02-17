@@ -222,8 +222,8 @@ module MASTER
           content: content_parts.join,
           reasoning: reasoning_parts.any? ? reasoning_parts.join : nil,
           model: model,
-          tokens_in: final_response.input_tokens || 0,
-          tokens_out: final_response.output_tokens || 0,
+          tokens_in: final_response&.input_tokens || 0,
+          tokens_out: final_response&.output_tokens || 0,
           cost: nil,
           finish_reason: "stop",
           streamed: true
