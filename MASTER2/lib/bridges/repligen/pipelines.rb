@@ -48,7 +48,7 @@ module MASTER
         return Result.err("Unknown lighting: #{lighting}") unless CATWALK_LIGHTING.include?(lighting.to_s)
 
         full_prompt = "fashion photography, #{style} style, #{lighting} lighting, #{prompt}"
-        model_id = model || self.class.wild_chain[:image_gen].first[:model]
+        model_id = model || RepligenBridge.model_catalog[:image_gen].first[:model]
 
         return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
 
@@ -97,8 +97,8 @@ module MASTER
         return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
         return Result.err("No scenes provided.") if scenes.empty?
 
-        video_model = model || self.class.wild_chain[:video_gen].first[:model]
-        image_model = self.class.wild_chain[:image_gen].first[:model]
+        video_model = model || RepligenBridge.model_catalog[:video_gen].first[:model]
+        image_model = RepligenBridge.model_catalog[:image_gen].first[:model]
         results = []
 
         scenes.each_with_index do |scene, idx|
@@ -135,7 +135,7 @@ module MASTER
         results = []
         images.each_with_index do |img_path, i|
           name = File.basename(img_path, ".*")
-          img_data = File.read(img_path)
+          img_data = File.binread(img_path)
           img_url = "data:image/jpeg;base64,#{Base64.strict_encode64(img_data)}"
 
           enhanced = enhance_image(image_url: img_url)
@@ -152,57 +152,8 @@ module MASTER
         Result.ok({ count: results.length, total: images.length, output_dir: output_dir, files: results })
       end
 
-      # SQLite model index for searching Replicate catalog
-      def index_models(db_path: nil)
-        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
-
-        begin
-          require "sqlite3"
-        rescue LoadError
-          return Result.err("sqlite3 gem not available.")
-        end
-
-        db_path ||= File.join(MASTER::Paths.data_dir, "models.db")
-        db = SQLite3::Database.new(db_path)
-
-        db.execute <<-SQL
-          CREATE TABLE IF NOT EXISTS models (
-            id TEXT PRIMARY KEY, owner TEXT, name TEXT,
-            description TEXT, run_count INTEGER, category TEXT, indexed_at INTEGER
-          )
-        SQL
-
-        db.execute <<-SQL
-          CREATE TABLE IF NOT EXISTS collections (
-            slug TEXT PRIMARY KEY, name TEXT, description TEXT, model_count INTEGER
-          )
-        SQL
-
-        collections_resp = Replicate.send(:api_request, :get, "/collections") rescue nil
-        return Result.err("Failed to fetch collections.") unless collections_resp
-
-        collections = JSON.parse(collections_resp.body)["results"] || []
-        total = 0
-
-        collections.each do |coll|
-          db.execute("INSERT OR REPLACE INTO collections VALUES (?, ?, ?, ?)",
-            [coll["slug"], coll["name"], coll["description"], 0])
-
-          detail = Replicate.send(:api_request, :get, "/collections/#{coll["slug"]}") rescue nil
-          next unless detail
-
-          models = JSON.parse(detail.body)["models"] || []
-          models.each do |m|
-            model_id = "#{m["owner"]}/#{m["name"]}"
-            db.execute("INSERT OR REPLACE INTO models VALUES (?, ?, ?, ?, ?, ?, ?)",
-              [model_id, m["owner"], m["name"], m["description"], m["run_count"] || 0, coll["slug"], Time.now.to_i])
-            total += 1
-          end
-        end
-
-        db.close
-        Result.ok({ db: db_path, models: total, collections: collections.length })
-      end
+      # TODO: index_models method removed - used non-existent api_request method
+      # Re-implement with proper HTTP requests if needed in the future
     end
   end
 end

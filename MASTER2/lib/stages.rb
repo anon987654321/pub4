@@ -79,12 +79,12 @@ module MASTER
     # Stage 4: Route to model via circuit breaker + budget
     class Route
       def call(input)
-        text = input[:text] || ""
         tier = LLM.tier
-        model = nil
-
-        # Find an available model
-        model = LLM.all_models.find { |m| LLM.circuit_closed?(m) }
+        model = if tier == :cheap
+                  "openrouter/auto"
+                else
+                  LLM.all_models.find { |m| LLM.circuit_closed?(m) }
+                end
 
         return Result.err("All models unavailable.") unless model
 
@@ -103,6 +103,7 @@ module MASTER
         model = input[:model]
         return Result.ok(input) unless model
 
+        # NOTE: model: param is accepted by Council.council_review but currently unused
         review = MASTER::Council.council_review(text, model: model)
         Result.ok(input.merge(
           council_verdict: review[:verdict],
@@ -247,6 +248,9 @@ module MASTER
           f.write(code)
           f.flush
           begin
+            # WARNING: Pledge.pledge restricts the current process permanently.
+            # In IO.popen context, this affects the parent process, not just the child.
+            # On non-OpenBSD systems, this is a no-op.
             Pledge.unveil(f.path, "r")
             Pledge.pledge("stdio rpath")
           rescue StandardError => e

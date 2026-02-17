@@ -2,6 +2,7 @@
 
 require "json"
 require "time"
+require "securerandom"
 require_relative "logging/dmesg"
 
 module MASTER
@@ -28,7 +29,8 @@ module MASTER
     FULL_DEBUG = Dmesg::FULL_DEBUG
 
     class << self
-      attr_accessor :level, :format, :output, :request_id
+      attr_accessor :format, :output, :request_id
+      attr_reader :level
 
       def level=(val)
         @level = val.to_sym

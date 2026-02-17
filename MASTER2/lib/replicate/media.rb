@@ -68,7 +68,7 @@ module MASTER
       # @return [Array<Result>] Array of Result objects
       def batch_generate(prompts, model: DEFAULT_MODEL, params: {})
         unless available?
-          return prompts.map { Result.err(TOKEN_NOT_SET) }
+          return prompts.map { |_| Result.err(TOKEN_NOT_SET) }
         end
 
         prompts.map do |prompt|
@@ -77,17 +77,29 @@ module MASTER
       end
 
       # Download file from URL to local path
-      def download_file(url, path)
+      def download_file(url, path, max_redirects: 3)
         uri = URI(url)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
+        max_redirects.times do
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = (uri.scheme == 'https')
 
-        response = http.get(uri.path)
-        return false unless response.is_a?(Net::HTTPSuccess)
-
-        FileUtils.mkdir_p(File.dirname(path))
-        File.binwrite(path, response.body)
-        true
+          response = http.get(uri.request_uri)
+          case response
+          when Net::HTTPSuccess
+            FileUtils.mkdir_p(File.dirname(path))
+            File.binwrite(path, response.body)
+            return true
+          when Net::HTTPRedirection
+            uri = URI(response['location'])
+          else
+            return false
+          end
+        end
+        false
+      rescue StandardError => e
+        Logging.warn("Replicate: download failed for #{url}: #{e.message}") if defined?(MASTER::Logging)
+        false
+      end
       rescue StandardError => e
         $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
         false

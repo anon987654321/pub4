@@ -9,6 +9,7 @@ module MASTER
     end
 
     def valid_ruby?(code)
+      # NOTE: CRuby-specific (RubyVM::InstructionSequence). Will raise on JRuby/TruffleRuby.
       RubyVM::InstructionSequence.compile(code)
       true
     rescue SyntaxError

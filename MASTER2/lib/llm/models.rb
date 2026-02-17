@@ -14,19 +14,37 @@ module MASTER
       def load_models_config
         @models_config ||= begin
           models_file = File.join(__dir__, "..", "..", "data", "models.yml")
-          return [] unless File.exist?(models_file)
-          begin
-            YAML.safe_load_file(models_file, symbolize_names: true) || []
-          rescue StandardError => e
-            MASTER::Logging.warn("Failed to load models: #{e.message}", subsystem: "llm.models") if defined?(MASTER::Logging)
+          unless File.exist?(models_file)
             []
+          else
+            begin
+              YAML.safe_load_file(models_file, symbolize_names: true) || []
+            rescue StandardError => e
+              MASTER::Logging.warn("Failed to load models: #{e.message}", subsystem: "llm.models") if defined?(MASTER::Logging)
+              []
+            end
           end
         end
       end
 
       # Get curated models from models.yml
+      # A8: Falls back to ruby_llm registry if models.yml is empty
       def configured_models
-        load_models_config
+        config = load_models_config
+        return config unless config.empty?
+        
+        # Auto-populate from ruby_llm registry
+        @auto_models ||= RubyLLM.models.chat_models.map do |m|
+          {
+            id: m.id,
+            tier: classify_tier(m).to_s,
+            context_window: m.context_window || 32_000,
+            input_cost: m.input_price_per_million || 0,
+            output_cost: m.output_price_per_million || 0
+          }
+        end.first(20) # Limit to top 20 to avoid huge lists
+      rescue StandardError
+        []
       end
 
       # Hash lookup for O(1) access to configured models by ID
@@ -41,7 +59,7 @@ module MASTER
 
         model_id = model.is_a?(String) ? model : model.id
         configured_model = configured_models_by_id[model_id]
-        return configured_model[:tier].to_sym if configured_model&.dig(:tier)
+        return configured_model[:tier].to_sym if configured_model&.[](:tier)
 
         # Fallback to price-based classification for models not in models.yml
         price = model.is_a?(String) ? 0 : model.input_price_per_million || 0

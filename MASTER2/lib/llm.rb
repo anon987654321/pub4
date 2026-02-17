@@ -11,6 +11,7 @@ module MASTER
   module LLM
     BUDGET_FILE = File.join(__dir__, "..", "data", "budget.yml")
     TIER_ORDER = %i[premium strong fast cheap].freeze
+    # NOTE: Evaluated at load time. Restart required if budget.yml changes.
     SPENDING_CAP = MASTER::Paths.load_yaml("budget")&.dig(:spending_cap) || 10.0
     MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
     MAX_CHAT_TOKENS = MASTER::Paths.load_yaml("budget")&.dig(:max_chat_tokens) || 16_384
@@ -21,6 +22,7 @@ module MASTER
     # Thread-safe ruby_llm configuration
     CONFIGURE_MUTEX = Mutex.new
     @ruby_llm_configured = false
+    @budget_warned = false
 
     class << self
       attr_accessor :current_model, :current_tier
@@ -65,6 +67,8 @@ module MASTER
 
         begin
           configure_ruby_llm
+          # TODO: Capture OpenRouter rate limit headers (X-RateLimit-*) when ruby_llm
+          # exposes response headers through high-level API
           Result.ok(
             label: "OpenRouter API Key",
             limit: nil,
@@ -132,8 +136,9 @@ module MASTER
         CircuitBreaker.check_rate_limit!
 
         # Budget checking: warn but don't block
-        if total_spent >= spending_cap
-          Logging.warn("Budget limit reached: $#{total_spent.round(2)}/$#{spending_cap} - continuing anyway", subsystem: "llm.budget")
+        if total_spent >= spending_cap && !@budget_warned
+          Logging.warn("Budget limit reached: $#{total_spent.round(2)}/$#{spending_cap} - continuing anyway", subsystem: "llm.budget") if defined?(Logging)
+          @budget_warned = true
         end
 
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
@@ -152,16 +157,16 @@ module MASTER
                         end
         last_error = nil
 
-        models_to_try.each do |current_model|
-          next unless CircuitBreaker.circuit_closed?(current_model)
+        models_to_try.each do |candidate_model|
+          next unless CircuitBreaker.circuit_closed?(candidate_model)
 
-          result = try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
+          result = try_model(candidate_model, prompt, messages, reasoning, json_schema, provider, stream)
 
           if result.ok?
-            process_llm_response(result, current_model, prompt, stream)
+            process_llm_response(result, candidate_model, prompt, stream)
             return Result.ok(result.value)
           else
-            handle_llm_failure(result, current_model)
+            handle_llm_failure(result, candidate_model)
             last_error = result.error
           end
         end
@@ -211,6 +216,90 @@ module MASTER
       end
 
       public
+
+      # A3: Convenience method for creating a chat instance with optional tools
+      def chat(model: nil, tools: false)
+        configure_ruby_llm
+        m = model || select_model
+        c = RubyLLM.chat(model: m)
+        if tools
+          require_relative "llm/tools"
+          c.with_tools(*MASTER::LLM::TOOL_CLASSES)
+        end
+        c
+      end
+
+      # A4: Multi-modal query with file attachments
+      def ask_with_files(prompt, files:, model: nil, **opts)
+        configure_ruby_llm
+        m = model || select_model
+        return Result.err("No model available.") unless m
+        
+        c = RubyLLM.chat(model: m)
+        response = c.ask(prompt, with: files)
+        Result.ok({
+          content: response.content,
+          tokens_in: response.input_tokens || 0,
+          tokens_out: response.output_tokens || 0,
+          cost: 0
+        })
+      rescue StandardError => e
+        Result.err(e.message)
+      end
+
+      # A6: Image generation via ruby_llm with Replicate fallback
+      def paint(prompt, model: nil)
+        configure_ruby_llm
+        begin
+          image = RubyLLM.paint(prompt)
+          Result.ok({ url: image.url, revised_prompt: image.revised_prompt })
+        rescue StandardError => e
+          # Fallback to Replicate if OpenRouter image gen fails
+          if defined?(Replicate) && Replicate.available?
+            Replicate.generate(prompt: prompt)
+          else
+            Result.err(e.message)
+          end
+        end
+      end
+
+      # A7: Audio transcription via ruby_llm with Replicate fallback
+      def transcribe(audio_path, model: nil)
+        configure_ruby_llm
+        begin
+          result = RubyLLM.transcribe(audio_path)
+          Result.ok({ text: result.text })
+        rescue StandardError => e
+          # Fallback to Replicate Whisper
+          if defined?(Replicate) && Replicate.available?
+            Replicate.run(model_id: Replicate::MODELS[:whisper], input: { audio: audio_path })
+          else
+            Result.err(e.message)
+          end
+        end
+      end
+
+      # A9: Structured output with ruby_llm Schema DSL
+      def ask_structured(prompt, schema_class:, model: nil, **opts)
+        configure_ruby_llm
+        m = model || select_model
+        c = RubyLLM.chat(model: m).with_schema(schema_class)
+        response = c.ask(prompt)
+        Result.ok({ content: response.content, tokens_in: response.input_tokens || 0, tokens_out: response.output_tokens || 0 })
+      rescue StandardError => e
+        Result.err(e.message)
+      end
+
+      # A12: Content moderation
+      def moderate(text)
+        configure_ruby_llm
+        begin
+          result = RubyLLM.moderate(text)
+          Result.ok({ flagged: result.flagged?, categories: result.categories })
+        rescue StandardError => e
+          Result.err(e.message)
+        end
+      end
 
       # Structured output helper - guarantees valid JSON matching schema
       def ask_json(prompt, schema:, tier: :fast, **opts)

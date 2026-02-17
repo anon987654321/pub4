@@ -28,7 +28,7 @@ module MASTER
       end
 
       # Pick best available model
-      def pick(tier_override = nil)
+      def pick(_tier_override = nil)
         select_model
       end
 
@@ -55,7 +55,7 @@ module MASTER
       def record_cost(model:, tokens_in:, tokens_out:)
         # Simplified cost recording - prefer using response.cost from RubyLLM
         # Fallback to manual calculation if needed
-        base_model = model.split(":").first  # Remove suffixes
+        base_model = model.split(":").first  # Strip version suffixes (e.g., "model:free")
         rates = model_rates.fetch(base_model, { in: 1.0, out: 1.0 })
         cost = (tokens_in * rates[:in] + tokens_out * rates[:out]) / 1_000_000.0
         DB.log_cost(model: base_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(DB)

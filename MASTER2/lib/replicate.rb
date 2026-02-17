@@ -72,6 +72,10 @@ module MASTER
     HTTP_READ_TIMEOUT = (ENV['MASTER_HTTP_READ_TIMEOUT'] || 60).to_i
 
     class << self
+      def circuit_key
+        "replicate_api"
+      end
+
       def api_key
         ENV['REPLICATE_API_TOKEN'] || ENV['REPLICATE_API_KEY']
       end
@@ -83,7 +87,17 @@ module MASTER
       def generate(prompt:, model: DEFAULT_MODEL, params: {})
         return Result.err(TOKEN_NOT_SET) unless available?
 
-        model_id = MODELS[model.to_sym] || MODELS[DEFAULT_MODEL]
+        if defined?(CircuitBreaker) && !CircuitBreaker.circuit_closed?(circuit_key)
+          return Result.err("Replicate circuit open — API temporarily unavailable")
+        end
+
+        model_id = if MODELS.key?(model.to_sym)
+                     MODELS[model.to_sym]
+                   elsif MODELS.values.include?(model.to_s)
+                     model.to_s
+                   else
+                     MODELS[DEFAULT_MODEL]
+                   end
 
         input = { prompt: prompt }.merge(params)
 
@@ -93,16 +107,25 @@ module MASTER
         result = wait_for_completion(prediction[:id])
         return Result.err("Generation failed: #{result[:error]}") if result[:error]
 
+        Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id]) if defined?(MASTER::Logging)
+
         Result.ok({
           id: result[:id],
           urls: result[:output],
           model: model_id,
           prompt: prompt
         })
+      rescue StandardError => e
+        CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
+        Result.err("Replicate error: #{e.message}")
       end
 
       def upscale(image_url:, scale: 4)
         return Result.err(TOKEN_NOT_SET) unless available?
+
+        if defined?(CircuitBreaker) && !CircuitBreaker.circuit_closed?(circuit_key)
+          return Result.err("Replicate circuit open — API temporarily unavailable")
+        end
 
         model_id = MODELS[:esrgan]
         input = { image: image_url, scale: scale }
@@ -113,11 +136,20 @@ module MASTER
         result = wait_for_completion(prediction[:id])
         return Result.err("Upscale failed: #{result[:error]}") if result[:error]
 
+        Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id]) if defined?(MASTER::Logging)
+
         Result.ok({ url: result[:output], scale: scale })
+      rescue StandardError => e
+        CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
+        Result.err("Replicate error: #{e.message}")
       end
 
       def describe(image_url:)
         return Result.err(TOKEN_NOT_SET) unless available?
+
+        if defined?(CircuitBreaker) && !CircuitBreaker.circuit_closed?(circuit_key)
+          return Result.err("Replicate circuit open — API temporarily unavailable")
+        end
 
         model_id = MODELS[:blip]
         input = { image: image_url }
@@ -128,12 +160,21 @@ module MASTER
         result = wait_for_completion(prediction[:id])
         return Result.err("Describe failed: #{result[:error]}") if result[:error]
 
+        Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id]) if defined?(MASTER::Logging)
+
         Result.ok({ caption: result[:output] })
+      rescue StandardError => e
+        CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
+        Result.err("Replicate error: #{e.message}")
       end
 
       # Generic model runner - supports any Replicate model
       def run(model_id:, input:, params: {})
         return Result.err(TOKEN_NOT_SET) unless available?
+
+        if defined?(CircuitBreaker) && !CircuitBreaker.circuit_closed?(circuit_key)
+          return Result.err("Replicate circuit open — API temporarily unavailable")
+        end
 
         combined_input = input.merge(params)
 
@@ -143,11 +184,16 @@ module MASTER
         result = wait_for_completion(prediction[:id])
         return Result.err("Model run failed: #{result[:error]}") if result[:error]
 
+        Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id]) if defined?(MASTER::Logging)
+
         Result.ok({
           id: result[:id],
           output: result[:output],
           model: model_id
         })
+      rescue StandardError => e
+        CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
+        Result.err("Replicate error: #{e.message}")
       end
 
       # Lookup model ID by symbol name
@@ -181,7 +227,12 @@ module MASTER
         request['Content-Type'] = 'application/json'
 
         body = { input: input }
-        body[:version] = model if model
+        # Use 'model' for owner/name format, 'version' for SHA-pinned versions
+        if model&.include?("/")
+          body[:model] = model
+        else
+          body[:version] = model
+        end
         request.body = body.to_json
 
         response = http.request(request)
@@ -195,7 +246,7 @@ module MASTER
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Request timed out' }
       rescue StandardError => e
-        $stderr.puts "replicate: #{e.message}"
+        Logging.error("Replicate: #{e.message}") if defined?(MASTER::Logging)
         { error: e.message }
       end
 
@@ -204,37 +255,38 @@ module MASTER
         start_time = Time.now
         max_polls = (timeout / POLL_INTERVAL).to_i
 
-        max_polls.times do
-          http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = true
-          http.open_timeout = HTTP_OPEN_TIMEOUT
-          http.read_timeout = HTTP_READ_TIMEOUT
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        http.open_timeout = HTTP_OPEN_TIMEOUT
+        http.read_timeout = HTTP_READ_TIMEOUT
+        http.start do
+          max_polls.times do
+            request = Net::HTTP::Get.new(uri)
+            request['Authorization'] = "Bearer #{api_key}"
 
-          request = Net::HTTP::Get.new(uri)
-          request['Authorization'] = "Bearer #{api_key}"
+            response = http.request(request)
+            data = JSON.parse(response.body, symbolize_names: true)
 
-          response = http.request(request)
-          data = JSON.parse(response.body, symbolize_names: true)
+            case data[:status]
+            when 'succeeded'
+              return { id: id, output: data[:output] }
+            when 'failed', 'canceled'
+              return { error: data[:error] || 'Generation failed' }
+            when 'processing', 'starting'
+              sleep POLL_INTERVAL
+            else
+              return { error: "Unknown status: #{data[:status]}" }
+            end
 
-          case data[:status]
-          when 'succeeded'
-            return { id: id, output: data[:output] }
-          when 'failed', 'canceled'
-            return { error: data[:error] || 'Generation failed' }
-          when 'processing', 'starting'
-            sleep POLL_INTERVAL
-          else
-            return { error: "Unknown status: #{data[:status]}" }
+            return { error: 'Timeout waiting for generation' } if Time.now - start_time > timeout
           end
-
-          return { error: 'Timeout waiting for generation' } if Time.now - start_time > timeout
         end
 
         { error: 'Max polls exceeded' }
       rescue Net::OpenTimeout, Net::ReadTimeout
         { error: 'Poll request timed out' }
       rescue StandardError => e
-        $stderr.puts "replicate: #{e.message}"
+        Logging.error("Replicate poll: #{e.message}") if defined?(MASTER::Logging)
         { error: e.message }
       end
     end
