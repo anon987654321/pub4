@@ -80,7 +80,7 @@
   <div id="bar">
     <input id="in" type="text" placeholder="say or type" autocomplete="off">
     <button id="mic" title="voice">mic</button>
-    <button id="snd" title="speech output">tts</button>
+    <button id="snd" title="speech output">tts:l</button>
   </div>
 
   <script>
@@ -94,6 +94,10 @@
     let pending = false;
     let ttsOn = true;
     let offlineN = 0;
+    let voicesReady = false;
+    const TTS_BACKEND_KEY = "master_tts_backend";
+    let ttsBackend = localStorage.getItem(TTS_BACKEND_KEY) || "local";
+    const remoteAudio = new Audio();
 
     function parseJsonOrThrow(resp) {
       if (!resp.ok) throw new Error("http " + resp.status);
@@ -113,11 +117,58 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    function speak(text) {
-      if (!ttsOn || !window.speechSynthesis) return;
-      const u = new SpeechSynthesisUtterance((text || "").slice(0, 420));
+    function updateTtsLabel() {
+      sndBtn.textContent = ttsOn ? (ttsBackend === "local" ? "tts:l" : "tts:r") : "tts:off";
+      sndBtn.classList.toggle("on", ttsOn);
+    }
+
+    function localTtsAvailable() {
+      if (!window.speechSynthesis) return false;
+      const voices = window.speechSynthesis.getVoices();
+      return voicesReady || voices.length > 0;
+    }
+
+    function speakLocal(text) {
+      if (!localTtsAvailable()) return false;
+      const utterance = new SpeechSynthesisUtterance((text || "").slice(0, 420));
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find((v) => v.localService) || voices[0];
+      if (preferred) utterance.voice = preferred;
       window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
+      window.speechSynthesis.speak(utterance);
+      return true;
+    }
+
+    function speakRemote(text) {
+      return fetch("/tts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": AUTH
+        },
+        body: JSON.stringify({ text: (text || "").slice(0, 900) })
+      }).then((resp) => {
+        if (!resp.ok) throw new Error("tts http " + resp.status);
+        return resp.blob();
+      }).then((blob) => {
+        const url = URL.createObjectURL(blob);
+        remoteAudio.src = url;
+        remoteAudio.play().catch(() => {});
+        remoteAudio.onended = () => URL.revokeObjectURL(url);
+      });
+    }
+
+    function speak(text) {
+      if (!ttsOn) return;
+      if (ttsBackend === "local") {
+        if (!speakLocal(text)) {
+          speakRemote(text).catch(() => {});
+        }
+        return;
+      }
+      speakRemote(text).catch(() => {
+        speakLocal(text);
+      });
     }
 
     function setPending(v) {
@@ -212,11 +263,26 @@
     }
 
     sndBtn.addEventListener("click", () => {
-      ttsOn = !ttsOn;
-      sndBtn.classList.toggle("on", ttsOn);
+      if (!ttsOn) {
+        ttsOn = true;
+      } else if (ttsBackend === "local") {
+        ttsBackend = "remote";
+      } else {
+        ttsOn = false;
+      }
+      localStorage.setItem(TTS_BACKEND_KEY, ttsBackend);
       if (!ttsOn && window.speechSynthesis) window.speechSynthesis.cancel();
+      updateTtsLabel();
     });
-    sndBtn.classList.add("on");
+
+    if (window.speechSynthesis) {
+      const syncVoices = () => {
+        voicesReady = window.speechSynthesis.getVoices().length > 0;
+      };
+      syncVoices();
+      window.speechSynthesis.onvoiceschanged = syncVoices;
+    }
+    updateTtsLabel();
   </script>
 </body>
 </html>

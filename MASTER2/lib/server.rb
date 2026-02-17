@@ -23,7 +23,7 @@ module MASTER
     def initialize(pipeline: nil, port: nil)
       @pipeline = pipeline || Pipeline.new
       @port = port || find_port
-      @output_queue = Queue.new
+      @output_queue = Thread::Queue.new
       @running = false
     end
 

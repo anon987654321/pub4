@@ -24,7 +24,10 @@ class TestServer < Minitest::Test
   end
 
   def test_output_queue_exists
-    assert_kind_of Queue, @server.output_queue
+    queue = @server.output_queue
+    assert_respond_to queue, :push
+    assert_respond_to queue, :pop
+    assert_respond_to queue, :empty?
   end
 
   def test_views_dir_constant
