@@ -295,6 +295,7 @@ constraints:
 # Terminal philosophy — MASTER2 as a Unix CLI alternative to Codex/Claude/GitHub Copilot CLI
 terminal_philosophy:
   mission: "MASTER2 is a first-class autonomous engineering CLI for Unix terminals."
+  processing_model: "Treat all user input as streamable Unix text by default, regardless of content type."
   positioning:
     alternatives_to: ["Codex GPT", "Claude Code CLI", "GitHub Copilot CLI"]
     target_runtime: "Any Unix terminal with modern zsh support"
