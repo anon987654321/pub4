@@ -87,7 +87,7 @@ module MASTER
         # JSON schema support
         if json_schema
           schema_data = json_schema[:schema] || json_schema
-          chat = chat.with_json_schema(schema_data)
+          chat = chat.with_schema(schema_data)
         end
 
         # Provider preferences

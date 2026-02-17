@@ -139,7 +139,7 @@ module MASTER
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
         return cache_result if cache_result&.ok?
 
-        primary = model || select_model
+        primary = model || select_model(tier)
         return Result.err("No model available.") unless primary
 
         @current_model = extract_model_name(primary)

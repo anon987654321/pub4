@@ -83,10 +83,21 @@ module MASTER
         @current_model || "unknown"
       end
 
+      def model_tiers
+        @model_tiers ||= configured_models.each_with_object({}) do |m, hash|
+          tier = (m[:tier] || :cheap).to_sym
+          (hash[tier] ||= []) << m[:id]
+        end
+      end
+
       private
 
-      def select_model
-        all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
+      def select_model(tier = nil)
+        candidates = all_models
+        if tier
+          candidates = candidates.select { |m| classify_tier(m) == tier }
+        end
+        candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
       end
     end
   end
