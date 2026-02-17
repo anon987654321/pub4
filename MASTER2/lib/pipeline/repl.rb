@@ -3,6 +3,9 @@
 module MASTER
   module PipelineRepl
     MAX_INPUT_LENGTH = 10_000
+    MULTILINE_OPENER = "<<".freeze
+    HISTORY_FILE = ".master_history".freeze
+    MAX_HISTORY_LINES = 500
 
     def repl
       begin
@@ -11,10 +14,11 @@ module MASTER
         # TTY not available
       end
 
-      reader = defined?(TTY::Reader) ? TTY::Reader.new : nil
+      reader = defined?(TTY::Reader) ? TTY::Reader.new(history_cycle: true) : nil
+      load_input_history(reader)
       pipeline = new
       session = Session.current
-      last_interrupt = nil  # Track Ctrl+C timing
+      last_interrupt = nil
 
       Boot.banner
 
@@ -40,27 +44,18 @@ module MASTER
         phase = WorkflowEngine.current_phase(session) if workflow_result.ok?
       end
 
-      puts "session #{UI.truncate_id(session.id)}"
+      # Session name
+      session_label = session.metadata_value(:name) || UI.truncate_id(session.id)
+      puts "session #{session_label}"
 
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
       loop do
-        model_name = LLM.extract_model_name(LLM.prompt_model_name) rescue "?"
-
-        prompt_str = if phase
-                       "#{phase} #{model_name}> "
-                     else
-                       "#{model_name}> "
-                     end
+        prompt_str = build_prompt(phase)
 
         begin
-          line = if reader
-                   reader.read_line(prompt_str)
-                 else
-                   print prompt_str
-                   $stdin.gets
-                 end
-          last_interrupt = nil  # Reset on successful input
+          line = read_input(reader, prompt_str)
+          last_interrupt = nil
         rescue Interrupt
           now = Time.now
           if last_interrupt && (now - last_interrupt) < 1.0
@@ -82,72 +77,61 @@ module MASTER
           line = line.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
         end
 
+        # Multi-line input: << opens block, blank line ends it
+        if line.strip == MULTILINE_OPENER
+          line = read_multiline(reader)
+          next if line.nil? || line.strip.empty?
+        end
+
         # Validate length
         if line.length > MAX_INPUT_LENGTH
           UI.warn("Input too long (#{line.length} chars). Truncated to #{MAX_INPUT_LENGTH}.")
           line = line[0, MAX_INPUT_LENGTH]
         end
 
-        if line.strip.empty?
-          next
-        end
+        next if line.strip.empty?
+
+        # Save to history
+        save_history_line(reader, line.strip)
 
         # Track user input in session
         session.add_user(line.strip)
+
+        # Auto-name session from first user message
+        if session.message_count == 1 && !session.metadata_value(:name)
+          name = line.strip.split(/\s+/).first(5).join(" ")
+          name = name[0, 40]
+          session.write_metadata(:name, name)
+        end
 
         if defined?(Commands)
           cmd_result = Commands.dispatch(line.strip, pipeline: pipeline)
           break if cmd_result == :exit
 
-          unless cmd_result.nil?
-            if cmd_result.respond_to?(:ok?)
-              if cmd_result.ok?
-                output = cmd_result.value[:rendered] || cmd_result.value[:response]
-                streamed = cmd_result.value[:streamed]
-                if output && !output.empty? && !streamed
-                  puts
-                  puts output
-                end
-                if cmd_result.value[:cost]
-                  puts UI.dim("  #{format_meta(cmd_result.value)}")
-                end
-                session.add_assistant(output, cost: cmd_result.value[:cost]) if output
-              else
-                UI.error(cmd_result.failure)
+          if cmd_result.nil?
+            # Unknown command — try did-you-mean before LLM fallthrough
+            if line.strip.split.first =~ /\A[a-z!][a-z\-]*\z/i
+              shown = Commands.show_did_you_mean(line.strip)
+              if shown
+                next
               end
-            elsif cmd_result.respond_to?(:err?) && cmd_result.err?
-              # Unknown command - suggest similar
-              Commands.show_did_you_mean(line.strip) if defined?(Commands)
+            end
+          elsif cmd_result.respond_to?(:ok?)
+            unless cmd_result.value&.dig(:handled)
+              display_result(cmd_result, session)
             end
             next
           end
         end
 
         result = pipeline.call({ text: line.strip })
-
-        if result.ok?
-          output = result.value[:rendered] || result.value[:response]
-          streamed = result.value[:streamed]
-          if output && !output.empty? && !streamed
-            puts
-            puts output
-          end
-          if result.value[:cost]
-            puts UI.dim("  #{format_meta(result.value)}")
-          end
-          session.add_assistant(
-            output,
-            model: result.value[:model],
-            cost: result.value[:cost],
-          ) if output
-        else
-          UI.error(result.failure)
-        end
+        display_result(result, session)
 
         # Auto-save silently
         session.save if session.message_count % 5 == 0
       end
 
+      save_input_history(reader)
       session.save
 
       # Auto-capture if session was marked successful
@@ -156,6 +140,97 @@ module MASTER
       end
 
       show_exit_summary(session)
+    end
+
+    private
+
+    # Unified result display — eliminates duplicated rendering
+    def display_result(result, session)
+      if result.ok?
+        output = result.value[:rendered] || result.value[:response]
+        streamed = result.value[:streamed]
+        if output && !output.empty? && !streamed
+          puts
+          puts output
+        end
+        if result.value[:cost]
+          puts UI.dim("  #{format_meta(result.value)}")
+        end
+        session.add_assistant(
+          output,
+          model: result.value[:model],
+          cost: result.value[:cost],
+        ) if output
+      else
+        UI.error(result.failure)
+      end
+    end
+
+    # Build prompt using Pipeline.prompt with fallback
+    def build_prompt(phase)
+      Pipeline.prompt
+    rescue StandardError
+      model_name = LLM.extract_model_name(LLM.prompt_model_name) rescue "?"
+      phase ? "#{phase} #{model_name}> " : "#{model_name}> "
+    end
+
+    # Read single or multi-line input
+    def read_input(reader, prompt_str)
+      if reader
+        reader.read_line(prompt_str)
+      else
+        print prompt_str
+        $stdin.gets
+      end
+    end
+
+    # Read multi-line block until blank line
+    def read_multiline(reader)
+      lines = []
+      loop do
+        part = read_input(reader, "... ")
+        break if part.nil? || part.strip.empty?
+        lines << part.rstrip
+      end
+      lines.empty? ? nil : lines.join("\n")
+    end
+
+    # Load input history from file into TTY::Reader
+    def load_input_history(reader)
+      return unless reader
+      path = history_path
+      return unless File.exist?(path)
+
+      File.readlines(path, chomp: true).last(MAX_HISTORY_LINES).each do |line|
+        reader.add_to_history(line) rescue nil
+      end
+    rescue StandardError
+      # History load failure is non-critical
+    end
+
+    # Save a single line to TTY::Reader history
+    def save_history_line(reader, line)
+      return unless reader
+      reader.add_to_history(line) rescue nil
+    end
+
+    # Persist input history to file on exit
+    def save_input_history(reader)
+      return unless reader
+      path = history_path
+
+      history = []
+      reader.history.each { |h| history << h } rescue nil
+      return if history.empty?
+
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, history.last(MAX_HISTORY_LINES).join("\n") + "\n")
+    rescue StandardError
+      # History save failure is non-critical
+    end
+
+    def history_path
+      File.join(MASTER.root, HISTORY_FILE)
     end
   end
 end

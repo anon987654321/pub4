@@ -11,7 +11,10 @@ module MASTER
         case parts.first
         when "new"
           Session.start_new
-          puts "  New session: #{UI.truncate_id(Session.current.id)}"
+          name = parts[1..].join(" ") if parts.size > 1
+          Session.current.write_metadata(:name, name) if name && !name.empty?
+          label = name || UI.truncate_id(Session.current.id)
+          puts "  New session: #{label}"
         when "save"
           Session.current.save
           puts "  Session saved: #{UI.truncate_id(Session.current.id)}"
@@ -81,7 +84,7 @@ module MASTER
 
             Session Commands:
 
-              session new                  Start new session
+              session new [name]           Start new session (optional name)
               session save                 Save current session
               session load <id>            Load saved session
               session info                 Show current session info
@@ -105,7 +108,9 @@ module MASTER
             next unless data
 
             msgs = data[:history]&.size || 0
-            puts "  #{UI.truncate_id(id)} | #{msgs} messages"
+            name = data.dig(:metadata, :name)
+            label = name ? "#{name} (#{UI.truncate_id(id)})" : UI.truncate_id(id)
+            puts "  #{label} | #{msgs} messages"
           end
           puts
         end

@@ -126,6 +126,8 @@ module MASTER
       "!h" => "help",
     }.freeze
 
+    HANDLED = Result.ok({ handled: true }).freeze
+
     def dispatch(input, pipeline:)
       # Handle shortcuts
       if input.strip == "!!"
@@ -147,52 +149,52 @@ module MASTER
       case cmd
       when "help", "?"
         Help.show(args)
-        nil
+        HANDLED
       when "hunt"
         hunt_bugs(args)
-        nil
+        HANDLED
       when "critique"
         critique_code(args)
-        nil
+        HANDLED
       when "conflict"
         detect_conflicts
-        nil
+        HANDLED
       when "learn"
         show_learnings(args)
-        nil
+        HANDLED
       when "status"
         Dashboard.new.render
-        nil
+        HANDLED
       when "budget"
         print_budget
-        nil
+        HANDLED
       when "clear"
         print "\e[2J\e[H"
-        nil
+        HANDLED
       when "history"
         print_cost_history
-        nil
+        HANDLED
       when "context"
         print_context_usage
-        nil
+        HANDLED
       when "session"
         manage_session(args)
-        nil
+        HANDLED
       when "sessions"
         print_saved_sessions
-        nil
+        HANDLED
       when "forget", "undo"
         undo_last_exchange
-        nil
+        HANDLED
       when "summary"
         print_session_summary
-        nil
+        HANDLED
       when "health"
         print_health
-        nil
+        HANDLED
       when "axioms-stats", "stats"
         print_axiom_stats
-        nil
+        HANDLED
       when "refactor", "autofix"
         autofix(args)
       when "chamber"
@@ -203,81 +205,80 @@ module MASTER
         opportunities(args)
       when "axioms", "language-axioms"
         print_language_axioms(args)
-        nil
+        HANDLED
       when "self", "selftest", "self-test", "selfrun", "self-run"
         selftest_full(args)
       when "web", "server"
         start_web_server(args)
-        nil
+        HANDLED
       when "speak", "say"
         speak(args)
-        nil
+        HANDLED
       when "fix"
         fix_code(args)
-        nil
+        HANDLED
       when "browse"
         browse_url(args)
-        nil
+        HANDLED
       when "ideate", "brainstorm"
         ideate(args)
       when "model", "use"
         select_model(args)
-        nil
+        HANDLED
       when "models"
         list_models
-        nil
+        HANDLED
       when "pattern", "mode"
         select_pattern(args)
-        nil
+        HANDLED
       when "patterns", "modes"
         list_patterns
-        nil
+        HANDLED
       when "persona"
         manage_persona(args)
-        nil
+        HANDLED
       when "personas"
         list_personas
-        nil
+        HANDLED
       when "workflow"
         manage_workflow(args)
-        nil
+        HANDLED
       when "creative"
         creative_chamber(args)
-        nil
+        HANDLED
       when "scan"
         scan_code(args)
-        nil
+        HANDLED
       when "queue"
         manage_queue(args)
-        nil
+        HANDLED
       when "harvest"
         harvest_data(args)
-        nil
+        HANDLED
       when "capture", "session-capture"
         session_capture
-        nil
+        HANDLED
       when "review-captures"
         review_captures
-        nil
+        HANDLED
       when "repligen", "generate-image", "generate-video"
         repligen_command(cmd, args)
-        nil
+        HANDLED
       when "postpro", "enhance", "upscale"
         postpro_command(cmd, args)
-        nil
+        HANDLED
       when "cache"
         show_cache_stats(args)
-        nil
+        HANDLED
       when "multi-refactor", "mrefactor"
         multi_refactor(args)
       when "shell"
-        # Start interactive shell
         InteractiveShell.new.run
-        nil
+        HANDLED
       when "exit", "quit"
         :exit
       else
-        pipeline.call({ text: input })
+        nil
       end
     end
   end
