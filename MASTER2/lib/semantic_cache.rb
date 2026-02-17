@@ -163,6 +163,16 @@ module MASTER
         defined?(Weaviate) && Weaviate.respond_to?(:available?) && Weaviate.available?
       end
 
+      # A5: Embedding fallback using ruby_llm
+      def embed(text)
+        if defined?(RubyLLM)
+          embedding = RubyLLM.embed(text)
+          embedding.vectors
+        end
+      rescue StandardError
+        nil
+      end
+
       def evict_if_needed
         entries = Dir.glob(File.join(cache_dir, "*.json"))
         return if entries.size <= MAX_CACHE_SIZE

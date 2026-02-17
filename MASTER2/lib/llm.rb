@@ -67,6 +67,8 @@ module MASTER
 
         begin
           configure_ruby_llm
+          # TODO: Capture OpenRouter rate limit headers (X-RateLimit-*) when ruby_llm
+          # exposes response headers through high-level API
           Result.ok(
             label: "OpenRouter API Key",
             limit: nil,
@@ -214,6 +216,90 @@ module MASTER
       end
 
       public
+
+      # A3: Convenience method for creating a chat instance with optional tools
+      def chat(model: nil, tools: false)
+        configure_ruby_llm
+        m = model || select_model
+        c = RubyLLM.chat(model: m)
+        if tools
+          require_relative "llm/tools"
+          c.with_tools(*MASTER::LLM::TOOL_CLASSES)
+        end
+        c
+      end
+
+      # A4: Multi-modal query with file attachments
+      def ask_with_files(prompt, files:, model: nil, **opts)
+        configure_ruby_llm
+        m = model || select_model
+        return Result.err("No model available.") unless m
+        
+        c = RubyLLM.chat(model: m)
+        response = c.ask(prompt, with: files)
+        Result.ok({
+          content: response.content,
+          tokens_in: response.input_tokens || 0,
+          tokens_out: response.output_tokens || 0,
+          cost: 0
+        })
+      rescue StandardError => e
+        Result.err(e.message)
+      end
+
+      # A6: Image generation via ruby_llm with Replicate fallback
+      def paint(prompt, model: nil)
+        configure_ruby_llm
+        begin
+          image = RubyLLM.paint(prompt)
+          Result.ok({ url: image.url, revised_prompt: image.revised_prompt })
+        rescue StandardError => e
+          # Fallback to Replicate if OpenRouter image gen fails
+          if defined?(Replicate) && Replicate.available?
+            Replicate.generate(prompt: prompt)
+          else
+            Result.err(e.message)
+          end
+        end
+      end
+
+      # A7: Audio transcription via ruby_llm with Replicate fallback
+      def transcribe(audio_path, model: nil)
+        configure_ruby_llm
+        begin
+          result = RubyLLM.transcribe(audio_path)
+          Result.ok({ text: result.text })
+        rescue StandardError => e
+          # Fallback to Replicate Whisper
+          if defined?(Replicate) && Replicate.available?
+            Replicate.run(model_id: Replicate::MODELS[:whisper], input: { audio: audio_path })
+          else
+            Result.err(e.message)
+          end
+        end
+      end
+
+      # A9: Structured output with ruby_llm Schema DSL
+      def ask_structured(prompt, schema_class:, model: nil, **opts)
+        configure_ruby_llm
+        m = model || select_model
+        c = RubyLLM.chat(model: m).with_schema(schema_class)
+        response = c.ask(prompt)
+        Result.ok({ content: response.content, tokens_in: response.input_tokens || 0, tokens_out: response.output_tokens || 0 })
+      rescue StandardError => e
+        Result.err(e.message)
+      end
+
+      # A12: Content moderation
+      def moderate(text)
+        configure_ruby_llm
+        begin
+          result = RubyLLM.moderate(text)
+          Result.ok({ flagged: result.flagged?, categories: result.categories })
+        rescue StandardError => e
+          Result.err(e.message)
+        end
+      end
 
       # Structured output helper - guarantees valid JSON matching schema
       def ask_json(prompt, schema:, tier: :fast, **opts)

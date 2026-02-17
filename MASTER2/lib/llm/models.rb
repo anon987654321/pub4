@@ -28,8 +28,23 @@ module MASTER
       end
 
       # Get curated models from models.yml
+      # A8: Falls back to ruby_llm registry if models.yml is empty
       def configured_models
-        load_models_config
+        config = load_models_config
+        return config unless config.empty?
+        
+        # Auto-populate from ruby_llm registry
+        @auto_models ||= RubyLLM.models.chat_models.map do |m|
+          {
+            id: m.id,
+            tier: classify_tier(m).to_s,
+            context_window: m.context_window || 32_000,
+            input_cost: m.input_price_per_million || 0,
+            output_cost: m.output_price_per_million || 0
+          }
+        end.first(20) # Limit to top 20 to avoid huge lists
+      rescue StandardError
+        []
       end
 
       # Hash lookup for O(1) access to configured models by ID
