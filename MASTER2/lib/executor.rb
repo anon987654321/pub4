@@ -162,9 +162,9 @@ module MASTER
         SPECIAL:
         - direct: Simple questions, chitchat, greetings, no tools needed
 
-        USER GOAL: #{sanitized_goal}
+        USER GOAL: "#{sanitized_goal}"
 
-        Respond with ONLY one word: react, pre_act, rewoo, reflexion, or direct
+        Respond with ONLY one word: #{(PATTERNS + [:direct]).join(', ')}
       CLASSIFY
 
       result = LLM.ask(prompt, tier: :cheap)
