@@ -1,212 +1,438 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="color-scheme" content="dark">
-<title>MASTER</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden}
-body{
-  background:#000;color:#fff;
-  font:14px/1.5 -apple-system,system-ui,sans-serif;
-  display:grid;grid-template-rows:1fr;
-  height:100dvh;
-}
-#scene{display:grid;place-items:center;overflow:hidden;grid-row:1/2;grid-column:1/2}
-#scene canvas{display:block;width:100%;height:100%}
-#chat{
-  grid-row:1/2;grid-column:1/2;align-self:end;
-  max-height:30vh;overflow-y:auto;padding:0 16px 80px;
-  scrollbar-width:none;pointer-events:none;
-  opacity:0;transition:opacity .4s;
-}
-#chat::-webkit-scrollbar{display:none}
-#chat.visible{opacity:1}
-#chat p{margin:4px 0;color:#666;font-size:13px}
-#chat .user{opacity:.4}
-#bar-wrap{
-  grid-row:1/2;grid-column:1/2;align-self:end;
-  padding:12px 16px;
-  transform:translateY(100%);opacity:0;
-  transition:transform .3s ease,opacity .3s ease;
-}
-#bar-wrap.visible{transform:translateY(0);opacity:1}
-#bar{
-  display:grid;grid-template-columns:1fr auto;
-  border:1px solid #333;border-radius:8px;
-  background:rgba(0,0,0,.8);backdrop-filter:blur(8px);
-}
-#bar input{
-  background:none;border:none;color:#fff;
-  font:inherit;padding:10px 14px;outline:none;min-width:0;
-}
-#bar input::placeholder{color:#666}
-#mic{
-  background:none;border:none;border-left:1px solid #333;
-  color:#666;font-size:18px;padding:0 14px;cursor:pointer;
-  display:flex;align-items:center;
-}
-#mic:hover{color:#fff}
-#mic.active{color:#f44}
-@media(prefers-reduced-motion:reduce){
-  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CORE</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+            -webkit-font-smoothing: none;
+            font-smooth: never;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #050505;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 400;
+            touch-action: none;
+        }
+        
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        #in {
+            position: fixed;
+            bottom: 12vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            opacity: 0;
+            transition: width 0.2s steps(10), opacity 0.05s;
+            z-index: 10;
+        }
+        
+        #in.a {
+            width: 80vw;
+            max-width: 500px;
+            opacity: 1;
+        }
+        
+        #in input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            letter-spacing: 0.08em;
+            padding: 6px 0;
+            outline: none;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        
+        #in input::placeholder { 
+            color: #666; 
+        }
+        
+        #st {
+            position: fixed;
+            top: 3vh;
+            right: 3vw;
+            color: #888;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+        
+        #st.a { opacity: 1; }
+        #st.r { color: #e0e0e0; }
+        
+        #perm {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            background: #050505;
+            transition: opacity 0.3s;
+        }
+        
+        #perm.h { opacity: 0; pointer-events: none; }
+        
+        #perm span {
+            color: #666;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            animation: b 0.8s steps(2) infinite;
+        }
+        
+        @keyframes b { 50% { opacity: 0; } }
+    </style>
 </head>
 <body>
-<div id="scene"></div>
-<div id="chat"></div>
-<div id="bar-wrap">
-  <div id="bar">
-    <input id="in" type="text" placeholder="type a message…">
-    <button id="mic" title="Voice (v)">&#9679;</button>
-  </div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-// --- Three.js particle orb ---
-const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(50,1,.1,100);
-camera.position.z=3.2;
-const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
-renderer.setClearColor(0x000000);
-document.getElementById('scene').appendChild(renderer.domElement);
+    <div id="perm"><span>Initialize</span></div>
+    <div id="st">+</div>
+    <div id="in"><input type="text" placeholder="Transmit" autocomplete="off" maxlength="28"></div>
+    <canvas id="c"></canvas>
 
-const N=4000,geo=new THREE.BufferGeometry();
-const pos=new Float32Array(N*3),base=new Float32Array(N*3);
-for(let i=0;i<N;i++){
-  const phi=Math.acos(2*Math.random()-1),theta=Math.random()*Math.PI*2;
-  const r=.9+Math.random()*.1;
-  const x=r*Math.sin(phi)*Math.cos(theta),y=r*Math.sin(phi)*Math.sin(theta),z=r*Math.cos(phi);
-  pos[i*3]=base[i*3]=x;pos[i*3+1]=base[i*3+1]=y;pos[i*3+2]=base[i*3+2]=z;
-}
-geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-geo.setAttribute('base',new THREE.BufferAttribute(base,3));
-const mat=new THREE.PointsMaterial({color:0xffffff,size:.012,sizeAttenuation:true});
-const points=new THREE.Points(geo,mat);
-scene.add(points);
-
-let orbState='idle',clock=new THREE.Clock();
-function orbResize(){
-  const w=window.innerWidth,h=window.innerHeight;
-  renderer.setSize(w,h);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  camera.aspect=w/h;camera.updateProjectionMatrix();
-}
-orbResize();window.addEventListener('resize',orbResize);
-
-function animateOrb(){
-  requestAnimationFrame(animateOrb);
-  const t=clock.getElapsedTime(),p=geo.attributes.position.array,b=geo.attributes.base.array;
-  let breathe=1+Math.sin(t*.8)*.03,rotSpeed=.08,jitter=.002;
-  if(orbState==='thinking'){breathe=1+Math.sin(t*2)*.06;rotSpeed=.3;jitter=.006;}
-  else if(orbState==='speaking'){breathe=1+Math.sin(t*4)*.08;rotSpeed=.12;jitter=.003;}
-  for(let i=0;i<N;i++){
-    const i3=i*3;
-    p[i3]=b[i3]*breathe+(Math.random()-.5)*jitter;
-    p[i3+1]=b[i3+1]*breathe+(Math.random()-.5)*jitter;
-    p[i3+2]=b[i3+2]*breathe+(Math.random()-.5)*jitter;
-  }
-  geo.attributes.position.needsUpdate=true;
-  points.rotation.y+=rotSpeed*.016;points.rotation.x=Math.sin(t*.3)*.05;
-  renderer.render(scene,camera);
-}
-animateOrb();
-
-// --- Progressive disclosure ---
-const barWrap=document.getElementById('bar-wrap'),inp=document.getElementById('in');
-const chatEl=document.getElementById('chat');
-let barTimer=null,chatTimer=null,barVisible=false;
-
-function showBar(){
-  barWrap.classList.add('visible');barVisible=true;inp.focus();
-  clearTimeout(barTimer);barTimer=setTimeout(hideBar,3000);
-}
-function hideBar(){
-  if(document.activeElement===inp&&inp.value)return;
-  barWrap.classList.remove('visible');barVisible=false;
-}
-function showChat(){chatEl.classList.add('visible');clearTimeout(chatTimer);chatTimer=setTimeout(()=>chatEl.classList.remove('visible'),5000)}
-function resetBarTimer(){clearTimeout(barTimer);barTimer=setTimeout(hideBar,3000)}
-
-document.getElementById('scene').addEventListener('click',showBar);
-document.addEventListener('keydown',e=>{
-  if(document.activeElement===inp)return;
-  if(e.key==='t'||e.key==='v')return;
-  if(!barVisible)showBar();
-});
-inp.addEventListener('input',resetBarTimer);
-inp.addEventListener('focus',()=>{clearTimeout(barTimer)});
-inp.addEventListener('blur',()=>{barTimer=setTimeout(hideBar,3000)});
-
-// --- TTS ---
-let ttsOn=localStorage.getItem('tts')!=='off';
-const synth=window.speechSynthesis;
-function speak(text){
-  if(!ttsOn||!synth)return;synth.cancel();
-  const clean=text.replace(/```[\s\S]*?```/g,'code block').replace(/[*_#`~>|]/g,'').substring(0,500);
-  const u=new SpeechSynthesisUtterance(clean);u.rate=1.1;
-  u.onstart=()=>{orbState='speaking'};
-  u.onend=()=>{orbState='idle'};
-  synth.speak(u);
-}
-
-// --- Chat ---
-let pending=false,offlineN=0,lastSent='';
-function addMsg(t,isUser){
-  const p=document.createElement('p');p.className=isUser?'user':'';
-  p.textContent=isUser?'› '+t:t;chatEl.appendChild(p);
-  chatEl.scrollTop=chatEl.scrollHeight;showChat();
-  if(!isUser){speak(t);if(!synth||!ttsOn){orbState='speaking';setTimeout(()=>orbState='idle',2000)}}
-}
-function setPending(v){pending=v;inp.disabled=v;inp.placeholder=v?'thinking…':'type a message…'}
-
-inp.addEventListener('keydown',e=>{
-  resetBarTimer();
-  if(e.key==='ArrowUp'&&!inp.value){inp.value=lastSent||'';return}
-  if(e.key!=='Enter')return;
-  const m=inp.value.trim();if(!m||pending)return;
-  addMsg(m,true);lastSent=m;inp.value='';
-  orbState='thinking';setPending(true);
-  fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(window.MASTER_TOKEN||'')},body:JSON.stringify({message:m})})
-    .then(r=>r.ok?r.json():r.json().then(err=>Promise.reject(err)))
-    .catch(err=>{addMsg(err?.error||'[offline]');setPending(false);orbState='idle';offlineN++});
-});
-
-// --- Poll ---
-(function poll(){
-  const delay=offlineN===0?800:Math.min(3000*Math.pow(2,offlineN-1),30000);
-  fetch('/poll',{signal:AbortSignal.timeout(10000),headers:{'Authorization':'Bearer '+(window.MASTER_TOKEN||'')}})
-    .then(r=>r.json()).then(d=>{
-      offlineN=0;
-      if(d.text){addMsg(d.text);setPending(false);orbState=ttsOn?orbState:'idle'}
-      setTimeout(poll,delay);
-    }).catch(()=>{offlineN++;setTimeout(poll,delay)});
-})();
-
-// --- Voice input ---
-const micBtn=document.getElementById('mic');
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SR){
-  const rec=new SR();rec.continuous=false;rec.interimResults=true;rec.lang='en-US';
-  let on=false;
-  function micStart(){if(pending)return;showBar();rec.start();on=true;micBtn.classList.add('active')}
-  function micStop(){rec.stop();on=false;micBtn.classList.remove('active')}
-  micBtn.addEventListener('click',()=>on?micStop():micStart());
-  rec.addEventListener('result',e=>{
-    const t=Array.from(e.results).map(r=>r[0].transcript).join('');inp.value=t;
-    if(e.results[e.results.length-1].isFinal){micStop();if(t.trim())inp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))}
-  });
-  rec.addEventListener('end',()=>micStop());
-  rec.addEventListener('error',e=>{micStop()});
-  document.addEventListener('keydown',e=>{if(e.key==='v'&&document.activeElement!==inp){on?micStop():micStart()}});
-}else{micBtn.style.display='none'}
-
-// --- TTS toggle ---
-document.addEventListener('keydown',e=>{
-  if(document.activeElement===inp)return;
-  if(e.key==='t'){ttsOn=!ttsOn;localStorage.setItem('tts',ttsOn?'on':'off');if(!ttsOn&&synth)synth.cancel()}
-});
-</script>
+    <script>
+        const c = document.getElementById('c');
+        const x = c.getContext('2d', { alpha: false });
+        const st = document.getElementById('st');
+        const inp = document.getElementById('in');
+        const field = inp.querySelector('input');
+        const perm = document.getElementById('perm');
+        
+        let W, H, S;
+        const resize = () => {
+            W = window.innerWidth;
+            H = window.innerHeight;
+            S = Math.min(W, H) / 200;
+            c.width = W;
+            c.height = H;
+            x.imageSmoothingEnabled = false;
+        };
+        window.addEventListener('resize', resize);
+        resize();
+        
+        const sen = {
+            a: 0,
+            ax: 0, ay: 0, az: 0,
+            rx: 0, ry: 0, rz: 0,
+            ox: 0, oy: 0,
+            mx: 0, my: 0,
+            t: false,
+            shake: 0
+        };
+        
+        let actx, anl, data;
+        
+        const initAudio = async () => {
+            if (actx) return;
+            try {
+                actx = new (window.AudioContext || window.webkitAudioContext)();
+                const str = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                });
+                const src = actx.createMediaStreamSource(str);
+                anl = actx.createAnalyser();
+                anl.fftSize = 32;
+                anl.smoothingTimeConstant = 0.2;
+                src.connect(anl);
+                data = new Uint8Array(anl.frequencyBinCount);
+                st.classList.add('a', 'r');
+            } catch(e) {
+                st.classList.add('a');
+            }
+        };
+        
+        const initMotion = () => {
+            if (typeof DeviceMotionEvent !== 'undefined' && 
+                typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission().then(r => {
+                    if (r === 'granted') enableMotion();
+                });
+            } else {
+                enableMotion();
+            }
+        };
+        
+        const enableMotion = () => {
+            window.addEventListener('devicemotion', e => {
+                const a = e.accelerationIncludingGravity;
+                const r = e.rotationRate;
+                
+                if (a) {
+                    sen.ax = smooth(sen.ax, a.x / 10, 0.3);
+                    sen.ay = smooth(sen.ay, a.y / 10, 0.3);
+                    sen.az = smooth(sen.az, a.z / 10, 0.3);
+                    const shake = Math.abs(a.x) + Math.abs(a.y) + Math.abs(a.z);
+                    sen.shake = smooth(sen.shake, shake > 12 ? 1 : 0, 0.4);
+                }
+                
+                if (r) {
+                    sen.rx = smooth(sen.rx, r.beta / 90, 0.2);
+                    sen.ry = smooth(sen.ry, r.gamma / 90, 0.2);
+                    sen.rz = smooth(sen.rz, r.alpha / 90, 0.2);
+                }
+            }, true);
+            
+            window.addEventListener('deviceorientation', e => {
+                sen.ox = smooth(sen.ox, e.gamma / 45, 0.1);
+                sen.oy = smooth(sen.oy, e.beta / 45, 0.1);
+            }, true);
+        };
+        
+        const handleP = e => {
+            const p = e.touches ? e.touches[0] : e;
+            sen.mx = ((p.clientX / W) * 2 - 1) * 1.2;
+            sen.my = ((p.clientY / H) * 2 - 1) * 1.2;
+            sen.t = true;
+            
+            if (!inp.classList.contains('a')) {
+                inp.classList.add('a');
+                field.focus();
+            }
+        };
+        
+        const endP = () => {
+            sen.t = false;
+        };
+        
+        window.addEventListener('mousemove', handleP);
+        window.addEventListener('touchstart', handleP, {passive: true});
+        window.addEventListener('touchmove', handleP, {passive: true});
+        window.addEventListener('touchend', endP);
+        window.addEventListener('click', () => {
+            inp.classList.add('a');
+            field.focus();
+        });
+        
+        field.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && field.value) {
+                transmit();
+                field.value = '';
+                inp.classList.remove('a');
+                field.blur();
+            }
+        });
+        
+        const transmit = () => {
+            for (const p of pts) {
+                const a = Math.random() * Math.PI * 2;
+                const v = 80 + Math.random() * 120;
+                p.vx = Math.cos(a) * v;
+                p.vy = Math.sin(a) * v;
+                p.vz = (Math.random() - 0.5) * 80;
+            }
+            setTimeout(() => {
+                for (const p of pts) p.reset();
+            }, 800);
+        };
+        
+        const smooth = (c, t, f) => c + (t - c) * f;
+        const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+        
+        const N = 2048;
+        const pts = [];
+        
+        // Neutral palette
+        const pal = {
+            dim: '#333',
+            mid: '#666',
+            bright: '#999',
+            active: '#e0e0e0',
+            pulse: '#fff'
+        };
+        
+        class P {
+            constructor(i) {
+                this.i = i;
+                this.reset();
+            }
+            
+            reset() {
+                const phi = Math.acos(1 - 2 * (this.i + 0.5) / N);
+                const theta = Math.PI * (1 + Math.sqrt(5)) * this.i;
+                
+                this.ox = Math.cos(theta) * Math.sin(phi) * 60;
+                this.oy = Math.cos(phi) * 60;
+                this.oz = Math.sin(theta) * Math.sin(phi) * 60;
+                
+                this.px = this.ox;
+                this.py = this.oy;
+                this.pz = this.oz;
+                
+                this.vx = 0;
+                this.vy = 0;
+                this.vz = 0;
+                
+                this.c = 0;
+                this.age = 0;
+            }
+            
+            update(t) {
+                this.age++;
+                
+                const audioPulse = sen.a * 50;
+                const shakePulse = sen.shake * 80;
+                
+                let tx = this.ox * (1 + sen.a * 1.5);
+                let ty = this.oy * (1 + sen.a * 1.5);
+                let tz = this.oz * (1 + sen.a * 1.5);
+                
+                tx += sen.oy * 40 * (this.oz / 60);
+                ty += sen.ox * 40 * (this.oz / 60);
+                
+                tx += sen.rz * 25 * this.oy;
+                ty += sen.rz * 25 * this.ox;
+                
+                tx -= sen.ax * 50;
+                ty += sen.ay * 50;
+                
+                if (sen.t) {
+                    const dx = this.px - sen.mx * 120;
+                    const dy = this.py - sen.my * 120;
+                    const d = Math.sqrt(dx*dx + dy*dy);
+                    if (d < 50 && d > 0) {
+                        const f = (50 - d) * 1.5;
+                        tx += (dx / d) * f;
+                        ty += (dy / d) * f;
+                        tz += f;
+                    }
+                }
+                
+                if (sen.shake > 0.5) {
+                    tx += (Math.random() - 0.5) * shakePulse;
+                    ty += (Math.random() - 0.5) * shakePulse;
+                    tz += (Math.random() - 0.5) * shakePulse;
+                }
+                
+                const k = 0.06;
+                const d = 0.88;
+                
+                this.vx += (tx - this.px) * k;
+                this.vy += (ty - this.py) * k;
+                this.vz += (tz - this.pz) * k;
+                
+                this.vx *= d;
+                this.vy *= d;
+                this.vz *= d;
+                
+                this.px += this.vx;
+                this.py += this.vy;
+                this.pz += this.vz;
+                
+                const v = Math.abs(this.vx) + Math.abs(this.vy) + Math.abs(this.vz);
+                
+                // Color logic based on state
+                if (sen.a > 0.6 || v > 25) this.c = 3; // pulse
+                else if (sen.a > 0.3 || v > 15) this.c = 2; // bright
+                else if (sen.a > 0.1 || v > 8) this.c = 1; // mid
+                else if (this.pz > 20) this.c = 0; // dim (back)
+                else this.c = 1; // mid default
+            }
+            
+            project() {
+                const fl = 180;
+                const s = fl / (fl + this.pz);
+                return {
+                    x: Math.floor(W/2 + this.px * S * s),
+                    y: Math.floor(H/2 + this.py * S * s),
+                    s: Math.max(1, Math.floor(s * 2)),
+                    a: clamp(s * 1.2, 0.2, 1),
+                    z: this.pz,
+                    c: this.c
+                };
+            }
+        }
+        
+        for (let i = 0; i < N; i++) pts.push(new P(i));
+        
+        const cols = [pal.dim, pal.mid, pal.bright, pal.pulse];
+        
+        const init = () => {
+            perm.classList.add('h');
+            initAudio();
+            initMotion();
+        };
+        
+        perm.addEventListener('click', init);
+        document.addEventListener('click', () => {
+            if (!perm.classList.contains('h')) init();
+        }, {once: true});
+        
+        // Plus sign pattern - 3x3 with center clear or filled
+        const drawPlus = (px, py, sz, col) => {
+            x.fillStyle = col;
+            const h = Math.floor(sz / 2);
+            const c = Math.floor(sz / 2);
+            
+            // Vertical bar
+            x.fillRect(px + c, py, 1, sz);
+            // Horizontal bar
+            x.fillRect(px, py + c, sz, 1);
+        };
+        
+        let t = 0;
+        const animate = () => {
+            requestAnimationFrame(animate);
+            t += 0.016;
+            
+            if (anl) {
+                anl.getByteFrequencyData(data);
+                let sum = 0;
+                for (let i = 0; i < 6; i++) sum += data[i];
+                for (let i = 6; i < 12; i++) sum += data[i] * 0.6;
+                sen.a = smooth(sen.a, sum / 9 / 255, 0.25);
+            } else {
+                sen.a *= 0.92;
+            }
+            
+            x.fillStyle = '#050505';
+            x.fillRect(0, 0, W, H);
+            
+            for (const p of pts) p.update(t);
+            
+            const proj = pts.map(p => p.project()).filter(p => p.a > 0.1);
+            proj.sort((a, b) => b.z - a.z);
+            
+            for (const p of proj) {
+                x.globalAlpha = p.a;
+                const col = cols[p.c] || pal.mid;
+                
+                // Draw plus sign - always 3 pixels for crispness
+                // Scale 1 = 3x3 plus, Scale 2 = 5x5 plus, etc
+                const sz = p.s < 2 ? 3 : (p.s < 3 ? 5 : 7);
+                drawPlus(p.x - Math.floor(sz/2), p.y - Math.floor(sz/2), sz, col);
+            }
+            
+            x.globalAlpha = 1;
+        };
+        
+        animate();
+    </script>
 </body>
 </html>
