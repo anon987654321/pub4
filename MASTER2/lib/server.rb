@@ -2,16 +2,15 @@
 
 require "json"
 require "socket"
+require "rack/utils"
 require_relative "server/handlers"
 require_relative "server/websocket"
-require_relative "server/webrick"
 
 module MASTER
   # Server - Multimodal web UI with Falcon
   class Server
     include Handlers
     include WebSocket
-    include WEBrick
     JSON_TYPE = "application/json".freeze
     HTML_TYPE = "text/html".freeze
     TEXT_TYPE = "text/plain".freeze
@@ -31,10 +30,18 @@ module MASTER
     def start
       return if @running
 
+      kill_port_users(@port)
+      require "falcon"
+      require "async"
+      require "async/http/endpoint"
       @running = true
-      Thread.new { run_server }
-      sleep 0.3
-      begin; Dmesg.log("web0", message: "http://localhost:#{@port}"); rescue StandardError; end
+      @app = build_app
+      @server_thread = Thread.new { run_server }
+      # Wait for Falcon to bind
+      10.times do
+        sleep 0.3
+        break if port_open?(@port)
+      end
     end
 
     def stop
@@ -63,19 +70,29 @@ module MASTER
     end
 
     def run_server
-      require "falcon"
-      require "async"
-      require "async/http/endpoint"
-
-      app = build_app
-
-      Async do
+      Async do |task|
         endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{@port}")
-        server = Falcon::Server.new(Falcon::Server.middleware(app), endpoint)
+        server = Falcon::Server.new(Falcon::Server.middleware(@app), endpoint)
         server.run
+      rescue => e
+        $stderr.puts "Falcon error: #{e.class}: #{e.message}"
       end
-    rescue LoadError
-      run_webrick
+    end
+
+    def kill_port_users(port)
+      pids = `lsof -ti:#{port} 2>/dev/null`.strip.split("\n").map(&:to_i).reject(&:zero?)
+      pids.each { |pid| Process.kill("TERM", pid) rescue nil }
+      sleep 0.3 unless pids.empty?
+    rescue StandardError
+      # best-effort
+    end
+
+    def port_open?(port)
+      s = TCPSocket.new("127.0.0.1", port)
+      s.close
+      true
+    rescue StandardError
+      false
     end
 
     def build_app
@@ -88,6 +105,7 @@ module MASTER
 
         unless path == "/health"
           token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ")
+          token ||= Rack::Utils.parse_query(env["QUERY_STRING"] || "")["token"]
           return [401, {}, ["Unauthorized"]] unless token == AUTH_TOKEN
         end
 
