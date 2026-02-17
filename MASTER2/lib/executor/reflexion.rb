@@ -107,10 +107,10 @@ module MASTER
           IMPROVED_ANSWER: (better answer if needed)
         REFLECT
 
-        result = LLM.ask(prompt, tier: tier)
-        return { success: true, critique: "", lessons: "" } unless result.ok?
+        llm_result = LLM.ask(prompt, tier: tier)
+        return { success: false, critique: "Reflection LLM call failed", lessons: "" } unless llm_result.ok?
 
-        content = result.value[:content]
+        content = llm_result.value[:content]
         {
           success: content.match?(/SUCCESS:\s*yes/i),
           critique: content[/CRITIQUE:\s*(.+?)(?=LESSONS:|$)/mi, 1]&.strip || "",

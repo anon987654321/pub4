@@ -8,7 +8,7 @@ $stdout.set_encoding(Encoding::UTF_8)
 $stderr.set_encoding(Encoding::UTF_8)
 
 # CLI flags
-if ARGV.delete("--verbose") || ARGV.delete("-v")
+if ARGV.delete("--verbose")
   ENV["MASTER_TRACE"] = "3"
 elsif ARGV.delete("--quiet") || ARGV.delete("-q")
   ENV["MASTER_TRACE"] = "0"
@@ -195,7 +195,8 @@ when "help", "-h", "--help"
 
 when "--web", "-w"
   # Web-only mode (no REPL)
-  web_port = ARGV.shift&.to_i
+  web_port = args.first&.to_i
+  web_port = nil if web_port == 0
   server = MASTER::Server.new(port: web_port)
   MASTER::Boot.banner_with_web(server.port)
   server.start
@@ -270,6 +271,25 @@ when "heartbeat"
     s[:checks].each { |c| puts "  #{c[:name]} last=#{c[:last_run]} failures=#{c[:failures]}" }
   else
     puts "Usage: master heartbeat start [interval_sec]|stop|status"
+  end
+  exit 0
+
+when "cache"
+  # Cache management: master cache stats|clear
+  subcmd = args.first
+  if defined?(MASTER::SemanticCache)
+    case subcmd
+    when "stats"
+      stats = MASTER::SemanticCache.stats
+      puts "Entries: #{stats[:entries]}, Hits: #{stats[:hits]}, Size: #{stats[:size]}"
+    when "clear"
+      MASTER::SemanticCache.clear
+      puts "Cache cleared"
+    else
+      puts "Usage: master cache [stats|clear]"
+    end
+  else
+    puts "SemanticCache module not available"
   end
   exit 0
 
