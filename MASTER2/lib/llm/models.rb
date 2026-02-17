@@ -81,6 +81,7 @@ module MASTER
       end
 
       def prompt_model_name
+        extract_model_name(@current_model) if @current_model
         @current_model || "unknown"
       end
 

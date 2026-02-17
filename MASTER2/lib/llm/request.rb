@@ -81,7 +81,7 @@ module MASTER
           unless REASONING_EFFORT.map(&:to_s).include?(effort_str)
             return Result.err("Invalid reasoning effort: #{effort_str}. Must be one of: #{REASONING_EFFORT.join(', ')}")
           end
-          chat = chat.with_thinking(effort: effort_str)
+          chat = chat.with_thinking(effort: effort_str.to_sym)
         end
 
         # JSON schema support
@@ -195,6 +195,11 @@ module MASTER
             # RubyLLM yields Chunk objects (inherits from Message)
             text = chunk.is_a?(String) ? chunk : chunk.content.to_s
             next if text.empty?
+
+            # Populate reasoning_parts from thinking chunks if available
+            if chunk.respond_to?(:thinking) && chunk.thinking
+              reasoning_parts << chunk.thinking
+            end
 
             $stderr.print text
             content_parts << text

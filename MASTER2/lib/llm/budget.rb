@@ -20,7 +20,7 @@ module MASTER
 
       def total_spent
         return 0.0 unless defined?(DB)
-        DB.total_cost
+        DB.total_cost rescue 0.0
       end
 
       def budget_remaining
