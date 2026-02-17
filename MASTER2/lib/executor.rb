@@ -85,6 +85,7 @@ module MASTER
       @reflections = []
       @plan = []
       @step = 0
+      @pattern = :react  # Default pattern, set properly in call()
     end
 
     include ExecutionContext
@@ -146,6 +147,9 @@ module MASTER
 
     # Pattern selection heuristics - moved before private
     def select_pattern(goal)
+      # Sanitize goal to prevent prompt injection
+      sanitized_goal = goal.to_s.gsub(/[\r\n]+/, ' ').strip[0..500]
+      
       prompt = <<~CLASSIFY
         You are a task router. Given a user's goal, pick the best execution pattern.
 
@@ -158,7 +162,7 @@ module MASTER
         SPECIAL:
         - direct: Simple questions, chitchat, greetings, no tools needed
 
-        USER GOAL: #{goal}
+        USER GOAL: #{sanitized_goal}
 
         Respond with ONLY one word: react, pre_act, rewoo, reflexion, or direct
       CLASSIFY
