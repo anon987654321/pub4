@@ -108,17 +108,6 @@ module MASTER
         TASK
       end
 
-      def build_context(goal, system_only: false)
-        # Get comprehensive system message
-        system_msg = ExecutionContext.build_system_message(include_commands: true)
-
-        # If system_only flag set, return just system message (for messages array usage)
-        return system_msg if system_only
-
-        # Return full context with system + task
-        "#{system_msg}\n\n#{build_task_context(goal)}"
-      end
-
       # Build context as messages array with system/user separation
       def build_context_messages(goal)
         [

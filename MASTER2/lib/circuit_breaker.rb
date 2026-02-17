@@ -98,12 +98,15 @@ module MASTER
     # Supports Stoplight 4.x (chained), 5.x (keyword args, chained deprecated), 6.x+ (keyword only)
     # Build or retrieve cached Stoplight instance for a model
     def build_light(model)
+      @lights_mutex ||= Mutex.new
       @lights ||= {}
-      @lights[model] ||= begin
-        Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
-      rescue ArgumentError
-        # Older Stoplight API uses with_ methods
-        Stoplight("llm-#{model}").with_threshold(FAILURES_BEFORE_TRIP).with_cool_off_time(CIRCUIT_RESET_SECONDS)
+      @lights_mutex.synchronize { return @lights[model] if @lights[model] }
+      @lights_mutex.synchronize do
+        @lights[model] ||= begin
+          Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
+        rescue ArgumentError
+          Stoplight("llm-#{model}").with_threshold(FAILURES_BEFORE_TRIP).with_cool_off_time(CIRCUIT_RESET_SECONDS)
+        end
       end
     end
 

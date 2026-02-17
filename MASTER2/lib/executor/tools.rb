@@ -87,7 +87,7 @@ module MASTER
           end
 
           # Use Open3.capture3 with array form to prevent shell injection
-          stdout, stderr, status = Open3.capture3("curl", "-sL", "--max-time", "10", url)
+          stdout, stderr, status = Open3.capture3("curl", "-sL", "--max-redirs", "3", "--proto", "=http,https", "--max-time", "10", url)
           stdout[0..2000]
         end
       end
@@ -161,9 +161,7 @@ module MASTER
           result = Shell.execute(cmd)
           output = result.ok? ? result.value : "Error: #{result.error}"
         else
-          # WARNING: Single-string form invokes shell. DANGEROUS_PATTERNS check can be
-          # bypassed with shell escapes. Consider using array form when possible.
-          stdout, stderr, status = Open3.capture3(cmd)
+          stdout, stderr, status = Open3.capture3("sh", "-c", cmd)
           output = status.success? ? stdout : "Error: #{stderr}"
         end
 
@@ -245,11 +243,7 @@ module MASTER
         @history.shift if @history.size > 50
       end
 
-      # deprecated: use dispatch_action
       alias execute_tool dispatch_action
-    end
 
-  class Executor
-    Tools = ToolDispatch # deprecated: use MASTER::ToolDispatch
-  end
+    end
 end

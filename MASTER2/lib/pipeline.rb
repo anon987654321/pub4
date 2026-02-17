@@ -24,15 +24,19 @@ module MASTER
 
     def initialize(stages: DEFAULT_STAGES, mode: :executor)
       @mode = mode
-      @stages = stages.map do |stage|
-        if stage.respond_to?(:call)
-          stage
-        else
-          const_name = stage.to_s.capitalize
-          unless ALLOWED_STAGES.include?(const_name)
-            raise ArgumentError, "Invalid pipeline stage: #{stage}. Allowed: #{ALLOWED_STAGES.join(', ')}"
+      @stages = if mode == :executor
+        []
+      else
+        stages.map do |stage|
+          if stage.respond_to?(:call)
+            stage
+          else
+            const_name = stage.to_s.capitalize
+            unless ALLOWED_STAGES.include?(const_name)
+              raise ArgumentError, "Invalid pipeline stage: #{stage}. Allowed: #{ALLOWED_STAGES.join(', ')}"
+            end
+            Stages.const_get(const_name.to_sym).new
           end
-          Stages.const_get(const_name.to_sym).new
         end
       end
     end

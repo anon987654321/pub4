@@ -218,26 +218,13 @@ module MASTER
         dmesg_log('boot', message: "#{duration_ms}ms", level: SILENT)
         info("Boot complete", duration_ms: duration_ms) if logging_enabled?
       end
-      # CONVENIENCE METHODS (from logging.rb)
 
-      # Convenience: log LLM calls (alternative signature)
       def llm_call(model:, tokens_in:, tokens_out:, cost:, duration_ms:, success:)
-        info("LLM call",
-             model: model,
-             tokens_in: tokens_in,
-             tokens_out: tokens_out,
-             cost: cost,
-             duration_ms: duration_ms,
-             success: success)
+        info("LLM call", model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost, duration_ms: duration_ms, success: success)
       end
 
-      # Convenience: log tool executions (alternative signature)
       def tool_exec(tool:, args:, duration_ms:, success:, error: nil)
-        if success
-          debug("Tool executed", tool: tool, duration_ms: duration_ms)
-        else
-          warn("Tool failed", tool: tool, error: error, duration_ms: duration_ms)
-        end
+        success ? debug("Tool executed", tool: tool, duration_ms: duration_ms) : warn("Tool failed", tool: tool, error: error, duration_ms: duration_ms)
       end
 
       def log(severity, message, **context)

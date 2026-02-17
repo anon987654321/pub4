@@ -65,11 +65,7 @@ module MASTER
 
     def initialize(max_steps: MAX_STEPS)
       @max_steps = max_steps
-      @history = []
-      @reflections = []
-      @plan = []
-      @step = 0
-      @pattern = :react  # Default pattern, set properly in call()
+      @pattern = :react
     end
 
     include ExecutionContext

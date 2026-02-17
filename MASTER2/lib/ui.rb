@@ -58,5 +58,5 @@ module MASTER
   ErrorSuggestions = UI::ErrorSuggestions
   NNGChecklist = UI::NNGChecklist
   Confirmations = UI::Confirmations
-  ConfirmationGate = UI::Confirmations
+  ConfirmationGate = Confirmations
 end

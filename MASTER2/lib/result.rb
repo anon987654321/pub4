@@ -123,7 +123,4 @@ module MASTER
     end
   end
 
-  # Shortcuts
-  def self.Ok(v) = Result.ok(v)
-  def self.Err(e) = Result.err(e)
 end
