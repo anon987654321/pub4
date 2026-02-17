@@ -79,20 +79,10 @@ module MASTER
     # Stage 4: Route to model via circuit breaker + budget
     class Route
       def call(input)
-        text = input[:text] || ""
         tier = LLM.tier
-        model = nil
-
-        # Find an available model
-        model = LLM.all_models.find { |m| LLM.circuit_closed?(m) }
-
+        model = LLM.select_model
         return Result.err("All models unavailable.") unless model
-
-        Result.ok(input.merge(
-          model: model,
-          tier: tier,
-          budget_remaining: LLM.budget_remaining,
-        ))
+        Result.ok(input.merge(model: model, tier: tier, budget_remaining: LLM.budget_remaining))
       end
     end
 

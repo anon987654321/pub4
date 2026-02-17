@@ -83,11 +83,11 @@ module MASTER
         @current_model || "unknown"
       end
 
-      private
-
       def select_model
         all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
       end
+
+      private
     end
   end
 end

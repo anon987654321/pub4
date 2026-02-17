@@ -125,7 +125,7 @@ module MASTER
         checks << { name: "DB seeded", ok: db_ok }
 
         # Check models available
-        model = LLM.select_available_model
+        model = LLM.select_model
         checks << { name: "Models available", ok: !model.nil? }
 
         # Check budget

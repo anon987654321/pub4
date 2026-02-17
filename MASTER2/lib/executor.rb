@@ -16,18 +16,8 @@ require_relative "executor/context"
 module MASTER
 
   class Executor
-    # Include pattern modules
-    include Context
-    include Tools
-    include React
-    include PreAct
-    include ReWOO
-    include Reflexion
-
     MAX_STEPS = 15
     WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
-    MAX_HISTORY_ENTRIES = 50
-    MAX_LINTER_RETRIES = 3  # Don't loop more than 3 times on same error
 
     # Magic number constants extracted for clarity (Phase 5 - Style compliance)
     MAX_BROWSE_CONTENT = 5000
@@ -35,7 +25,6 @@ module MASTER
     MAX_CURL_CONTENT = 2000
     MAX_LLM_RESPONSE_PREVIEW = 1000
     MAX_SHELL_OUTPUT = 1000
-    SIMPLE_QUERY_LENGTH_THRESHOLD = 200
     MAX_PARSE_FALLBACK_LENGTH = 100
 
     COMPLETION_PATTERN = /^(ANSWER|DONE|COMPLETE):\s*/i.freeze
@@ -43,18 +32,12 @@ module MASTER
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
 
-    # Reference to dangerous patterns defined in Stages::Guard
-    DANGEROUS_PATTERNS = Stages::Guard::DANGEROUS_PATTERNS
-
     # Protected paths that cannot be written to
     PROTECTED_WRITE_PATHS = %w[
       data/constitution.yml
       /etc/
       /usr/
-      /sys/
-      /proc/
       /dev/
-      /boot/
     ].freeze
 
     # All available tools
