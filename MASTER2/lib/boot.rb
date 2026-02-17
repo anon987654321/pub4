@@ -39,10 +39,10 @@ module MASTER
           c("MASTER #{VERSION} (CONSTITUTIONAL) #1: #{timestamp}"),
           c("    #{user}@#{host}:#{MASTER.root}"),
           c("cpu0 at mainbus0: #{RUBY_PLATFORM}, ruby #{RUBY_VERSION}"),
-          c("db0 at cpu0: #{DB.axioms.size} axioms, #{DB.council.size} personas"),
+          c("db0 at cpu0: #{DB.axioms.size} axioms, #{defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0} personas"),
           c("llm0 at db0: #{tier_models}"),
           c("budget0 at llm0: #{UI.currency(LLM.budget_remaining)}"),
-          c("pledge0 at cpu0: #{Pledge.available? ? 'armed' : 'unavailable'}"),
+          c("pledge0 at cpu0: #{defined?(Pledge) && Pledge.available? ? 'armed' : 'unavailable'}"),
           c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}"),
           c("smoke0 at executor0: #{smoke_result}"),
         ]

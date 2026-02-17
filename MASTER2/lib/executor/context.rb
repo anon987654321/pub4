@@ -25,10 +25,14 @@ module MASTER
 
         # Identity (interpolated)
         identity = if config["identity"]
-          config["identity"] % {
-            version: MASTER::VERSION, platform: RUBY_PLATFORM,
-            ruby_version: RUBY_VERSION, working_dir: Dir.pwd
-          }
+          begin
+            config["identity"] % {
+              version: MASTER::VERSION, platform: RUBY_PLATFORM,
+              ruby_version: RUBY_VERSION, working_dir: Dir.pwd
+            }
+          rescue KeyError, ArgumentError
+            config["identity"]
+          end
         else
           "You are MASTER v#{MASTER::VERSION}, an autonomous coding assistant."
         end

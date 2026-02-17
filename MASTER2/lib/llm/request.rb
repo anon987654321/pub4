@@ -189,24 +189,27 @@ module MASTER
 
         # Replay history and extract final message string
         message = replay_chat_history(chat, msg_array)
-        response = chat.ask(message) do |chunk|
-          # RubyLLM yields Chunk objects (inherits from Message)
-          text = chunk.is_a?(String) ? chunk : chunk.content.to_s
-          next if text.empty?
+        
+        catch(:truncated) do
+          response = chat.ask(message) do |chunk|
+            # RubyLLM yields Chunk objects (inherits from Message)
+            text = chunk.is_a?(String) ? chunk : chunk.content.to_s
+            next if text.empty?
 
-          $stderr.print text
-          content_parts << text
-          total_size += text.bytesize
+            $stderr.print text
+            content_parts << text
+            total_size += text.bytesize
 
-          # Abort if response exceeds MAX_RESPONSE_SIZE
-          if total_size > MAX_RESPONSE_SIZE
-            Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
-            break
+            # Abort if response exceeds MAX_RESPONSE_SIZE
+            if total_size > MAX_RESPONSE_SIZE
+              Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
+              throw :truncated
+            end
           end
-        end
 
-        # Use final response object for token counts
-        final_response = response
+          # Use final response object for token counts
+          final_response = response
+        end
 
         $stderr.puts
 
