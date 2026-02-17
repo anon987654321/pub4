@@ -131,14 +131,10 @@ module MASTER
         configure_ruby_llm
         CircuitBreaker.check_rate_limit!
 
-        # Check global budget
+        # Budget checking: warn but don't block
         if total_spent >= spending_cap
-          return Result.err("Budget exhausted: $#{total_spent.round(2)}/$#{spending_cap}.")
+          Logging.warn("llm.budget", "Budget limit reached: $#{total_spent.round(2)}/$#{spending_cap} - continuing anyway")
         end
-
-        # Check per-agent budget if set
-        budget_check = check_agent_budget
-        return budget_check unless budget_check.ok?
 
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
         return cache_result if cache_result&.ok?
