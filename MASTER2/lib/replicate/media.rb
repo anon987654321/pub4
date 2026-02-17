@@ -100,10 +100,6 @@ module MASTER
         Logging.warn("Replicate: download failed for #{url}: #{e.message}") if defined?(MASTER::Logging)
         false
       end
-      rescue StandardError => e
-        $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
-        false
-      end
     end
   end
 end

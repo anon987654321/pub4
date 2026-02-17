@@ -49,11 +49,11 @@ module MASTER
         text = data[:text].to_s.strip
 
         return [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no text provided"}']] if text.empty?
-        unless defined?(Speech) && Speech.respond_to?(:synthesize)
+        unless defined?(Speech) && Speech.respond_to?(:speak)
           return [501, { CT_HEADER => JSON_TYPE }, ['{"error":"TTS not available"}']]
         end
 
-        result = Speech.synthesize(text)
+        result = Speech.speak(text, play: false)
         if result.respond_to?(:ok?) && result.ok?
           audio_data = result.value[:audio] || result.value[:data]
           [200, { CT_HEADER => "audio/mpeg" }, [audio_data]]

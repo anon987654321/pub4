@@ -7,10 +7,10 @@ module MASTER
       def run_webrick
         require "webrick"
 
-        server = WEBrick::HTTPServer.new(
+        server = ::WEBrick::HTTPServer.new(
           Port: @port,
-          BindAddress: "127.0.0.1",
-          Logger: WEBrick::Log.new("/dev/null"),
+          BindAddress: "0.0.0.0",
+          Logger: ::WEBrick::Log.new("/dev/null"),
           AccessLog: [],
         )
 
@@ -20,7 +20,9 @@ module MASTER
         # Protected endpoints
         server.mount_proc("/") do |req, res|
           next unless webrick_check_auth(req, res)
-          res.body = read_view("cli.html")
+          html = read_view("cli.html")
+          html = html.sub("window.MASTER_TOKEN||''", "window.MASTER_TOKEN||'#{AUTH_TOKEN}'")
+          res.body = html
           res.content_type = HTML_TYPE
         end
 
@@ -28,6 +30,34 @@ module MASTER
           next unless webrick_check_auth(req, res)
           res.body = poll_json
           res.content_type = JSON_TYPE
+        end
+
+        server.mount_proc("/chat") do |req, res|
+          next unless webrick_check_auth(req, res)
+          data = JSON.parse(req.body || "{}", symbolize_names: true) rescue {}
+          message = data[:message].to_s.strip
+          if message.empty?
+            res.status = 400
+            res.body = '{"error":"no message"}'
+          else
+            Thread.new do
+              result = @pipeline.call({ text: message })
+              output = result.ok? ? (result.value[:rendered] || result.value[:response] || result.value[:answer]) : "Error: #{result.error}"
+              @output_queue.push(output)
+            rescue StandardError => e
+              @output_queue.push("Error: #{e.message}")
+            end
+            res.body = '{"status":"processing"}'
+          end
+          res.content_type = JSON_TYPE
+        end
+
+        # Serve shared JS
+        server.mount_proc("/orb_shared.js") do |req, res|
+          next unless webrick_check_auth(req, res)
+          js_path = File.join(VIEWS_DIR, "orb_shared.js")
+          res.body = File.exist?(js_path) ? File.read(js_path) : ""
+          res.content_type = "application/javascript"
         end
 
         # Serve orb views - protected

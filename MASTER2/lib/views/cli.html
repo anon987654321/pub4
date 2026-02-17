@@ -59,7 +59,7 @@ input:disabled{opacity:0.6;cursor:not-allowed}
 <canvas id="grain"></canvas>
 <div id="status"><span id="status-left"></span><span id="status-right"></span></div>
 <div id="toast"></div>
-<dialog id="help"><div class="panel">Keyboard: 1-4 switch orbs, ←/→ cycle, g toggles grain, v voice input, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></dialog>
+<dialog id="help"><div class="panel">Keyboard: 1-4 switch orbs, ←/→ cycle, g toggles grain, v voice input, t toggles voice output, ? opens help, ↑ recalls last prompt. Press ? or Esc to close.</div></dialog>
 <output id="out"></output>
 <div id="hint">Type a message, press Enter, or click the mic for voice input</div>
 <input id="in" type="text" placeholder="Ask MASTER… (press Enter to send)" autofocus>
@@ -120,6 +120,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight')switchOrb((currentOrb+1)%ORBS.length);
   if(e.key==='ArrowLeft')switchOrb((currentOrb-1+ORBS.length)%ORBS.length);
   if(e.key==='g'){showToast(`grain ${toggleGrain()}`)}
+  if(e.key==='t'){ttsEnabled=!ttsEnabled;localStorage.setItem('tts',ttsEnabled?'on':'off');showToast(`voice ${ttsEnabled?'on':'off'}`);if(!ttsEnabled&&synth)synth.cancel()}
   if(e.key==='?'){help.open?help.close():help.showModal()}
 });
 
@@ -135,7 +136,18 @@ let lastSent='';
 let lastStatusData={};
 let loaderEl=null;
 
+let ttsEnabled=localStorage.getItem('tts')!=='off';
+const synth=window.speechSynthesis;
+
 help.addEventListener('click',()=>{help.close()});
+function speakText(text){
+  if(!ttsEnabled||!synth)return;
+  synth.cancel();
+  const clean=text.replace(/```[\s\S]*?```/g,'code block').replace(/[*_#`~>|]/g,'').substring(0,500);
+  const u=new SpeechSynthesisUtterance(clean);
+  u.rate=1.1;u.pitch=1.0;
+  synth.speak(u);
+}
 
 function add(t,isUser){
   removeLoader();
@@ -144,6 +156,7 @@ function add(t,isUser){
   p.textContent=isUser?'> '+t:t;
   out.appendChild(p);
   out.scrollTop=out.scrollHeight;
+  if(!isUser)speakText(t);
 }
 
 function showLoader(){

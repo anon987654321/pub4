@@ -70,61 +70,12 @@ module MASTER
       app = build_app
 
       Async do
-        endpoint = Async::HTTP::Endpoint.parse("http://127.0.0.1:#{@port}")
+        endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{@port}")
         server = Falcon::Server.new(Falcon::Server.middleware(app), endpoint)
         server.run
       end
     rescue LoadError
       run_webrick
-    end
-
-    def run_webrick
-      require "webrick"
-
-      server = WEBrick::HTTPServer.new(
-        Port: @port,
-        BindAddress: "127.0.0.1",
-        Logger: WEBrick::Log.new("/dev/null"),
-        AccessLog: [],
-      )
-
-      # Health endpoint - no auth required
-      server.mount_proc("/health") { |_, res| res.body = health_json; res.content_type = JSON_TYPE }
-
-      # Protected endpoints
-      server.mount_proc("/") do |req, res|
-        next unless webrick_check_auth(req, res)
-        res.body = read_view("cli.html").sub("</head>", "<script>window.MASTER_TOKEN='#{AUTH_TOKEN}';</script></head>")
-        res.content_type = HTML_TYPE
-      end
-
-      server.mount_proc("/poll") do |req, res|
-        next unless webrick_check_auth(req, res)
-        res.body = poll_json
-        res.content_type = JSON_TYPE
-      end
-
-      # Serve orb views - protected
-      Dir.glob(File.join(VIEWS_DIR, "*.html")).each do |file|
-        name = "/" + File.basename(file)
-        server.mount_proc(name) do |req, res|
-          next unless webrick_check_auth(req, res)
-          res.body = File.read(file)
-          res.content_type = HTML_TYPE
-        end
-      end
-
-      server.start
-    end
-
-    def webrick_check_auth(req, res)
-      token = req["Authorization"]&.delete_prefix("Bearer ")
-      unless token == AUTH_TOKEN
-        res.status = 401
-        res.body = "Unauthorized"
-        return false
-      end
-      true
     end
 
     def build_app
@@ -142,7 +93,7 @@ module MASTER
 
         case [method, path]
         when ["GET", "/"]
-          html = read_view("cli.html").sub("</head>", "<script>window.MASTER_TOKEN='#{AUTH_TOKEN}';</script></head>")
+          html = read_view("cli.html").sub("window.MASTER_TOKEN||''", "window.MASTER_TOKEN||'#{AUTH_TOKEN}'")
           [200, { CT_HEADER => HTML_TYPE }, [html]]
         when ["GET", "/health"]
           [200, { CT_HEADER => JSON_TYPE }, [health_json]]
