@@ -63,6 +63,11 @@ module MASTER
       new.call(goal, **opts)
     end
 
+    # Build formatted tool list for prompts (ONE_SOURCE)
+    def self.tool_list_text
+      TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
+    end
+
     def initialize(max_steps: MAX_STEPS)
       @max_steps = max_steps
       @pattern = :react

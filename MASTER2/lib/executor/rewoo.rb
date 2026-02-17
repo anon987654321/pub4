@@ -4,7 +4,9 @@ module MASTER
   class Executor
     module ReWOO
       def execute_rewoo(goal, tier:)
-        tool_list = TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
+        start_time = MASTER::Utils.monotonic_now
+
+        tool_list = Executor.tool_list_text
 
         prompt = build_rewoo_prompt(goal, tool_list)
 
@@ -15,7 +17,8 @@ module MASTER
         plan_text, actions = parse_rewoo_plan(result.value[:content])
         UI.dim("  #{actions.size} actions")
 
-        evidence = execute_rewoo_steps(actions)
+        evidence = execute_rewoo_steps(actions, start_time)
+        return evidence unless evidence.is_a?(Hash)  # Handle timeout error
 
         synthesize_rewoo(goal, plan_text, evidence)
       end
@@ -51,9 +54,15 @@ module MASTER
         [plan_text, actions]
       end
 
-      def execute_rewoo_steps(actions)
+      def execute_rewoo_steps(actions, start_time)
         evidence = {}
         actions.each do |num, action_str|
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
+          end
+
           @step = num.to_i
           resolved = action_str.gsub(/#E(\d+)/) { evidence[$1.to_i] || "" }
 

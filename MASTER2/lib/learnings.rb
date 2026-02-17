@@ -95,7 +95,7 @@ module MASTER
 
     # Quality evaluation methods (merged from LearningQuality)
     def evaluate(pattern)
-      return :unrated if pattern[:applications].to_i < MINIMUM_APPLICATIONS
+      return :unrated if pattern[:applied_count].to_i < MINIMUM_APPLICATIONS
 
       success_rate = calculate_success_rate(pattern)
 
@@ -148,9 +148,9 @@ module MASTER
           category: group.first[:category],
           fix_hash: group.first[:fix_hash],
           message_pattern: group.first[:message_pattern],
-          "successes" => successes,
-          "failures" => failures,
-          "applications" => applications
+          successes: successes,
+          failures: failures,
+          applied_count: applications
         }
 
         tier_result = evaluate(aggregated)
