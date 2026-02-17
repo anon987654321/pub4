@@ -122,7 +122,7 @@ module MASTER
 
         data[:content]
       rescue StandardError => e
-        DB.append("errors", { context: "chamber_synthesize", error: e.message, time: Time.now.utc.iso8601 })
+        DB.log_error(context: "chamber_synthesize", error: e.message)
         proposal
       end
 
@@ -164,7 +164,7 @@ module MASTER
           reason: content.split("\n").last,
         }
       rescue StandardError => e
-        DB.append("errors", { context: "chamber_vote", persona: persona[:name], error: e.message, time: Time.now.utc.iso8601 })
+        DB.log_error(context: "chamber_vote", error: e.message, persona: persona[:name])
         { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 }
       end
     end

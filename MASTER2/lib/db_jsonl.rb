@@ -38,7 +38,7 @@ module MASTER
       yml_path = File.join(File.dirname(__dir__), "data", "#{name}.yml")
       return {} unless File.exist?(yml_path)
 
-      YAML.safe_load_file(yml_path) || {}
+      YAML.safe_load_file(yml_path, symbolize_names: true) || {}
     rescue StandardError => e
       Logging.error("Failed to load #{name}.yml: #{e.message}")
       {}
@@ -89,8 +89,8 @@ module MASTER
       @cache[:council] ||= begin
         # Try loading from YAML first for new structure, fall back to JSONL for backward compatibility
         yml_data = load_yml("council")
-        if yml_data && yml_data["council"]
-          yml_data["council"]
+        if yml_data && yml_data[:council]
+          yml_data[:council]
         else
           read_collection("council")
         end
@@ -113,6 +113,16 @@ module MASTER
       }
       append("council", record.compact)
       @cache.delete(:council)
+    end
+
+    # Log an error to the errors collection
+    # @param context [String] Error context identifier
+    # @param error [String] Error message
+    # @param extra [Hash] Additional error metadata
+    # @return [Hash] Created error record
+    def log_error(context:, error:, **extra)
+      record = { context: context, error: error, time: Time.now.utc.iso8601 }.merge(extra)
+      append("errors", record)
     end
 
     private

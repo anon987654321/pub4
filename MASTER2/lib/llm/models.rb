@@ -73,6 +73,13 @@ module MASTER
         end
       end
 
+      def model_tiers
+        @model_tiers ||= configured_models.each_with_object(Hash.new { |h, k| h[k] = [] }) do |m, hash|
+          tier = (m[:tier] || :cheap).to_sym
+          hash[tier] << m[:id]
+        end
+      end
+
       def extract_model_name(model_id)
         name = model_id.split("/").last
         name = name.split(":").first

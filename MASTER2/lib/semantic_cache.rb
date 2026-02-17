@@ -105,7 +105,7 @@ module MASTER
         path = entry_path(key)
         return nil unless File.exist?(path)
 
-        entry = JSON.parse(File.read(path, symbolize_names: true), symbolize_names: true)
+        entry = JSON.parse(File.read(path), symbolize_names: true)
         return nil if entry[:version] != CACHE_VERSION
         return nil if expired?(entry)
 
@@ -117,7 +117,7 @@ module MASTER
         entry[:last_hit] = Time.now.utc.iso8601
         File.write(path, JSON.pretty_generate(entry))
 
-        Dmesg.log("cache0", message: "exact hit: #{key}") if defined?(Dmesg)
+        Dmesg.dmesg_log("cache0", message: "exact hit: #{key}") if defined?(Dmesg)
         entry[:response]
       end
 
@@ -137,10 +137,10 @@ module MASTER
         path = entry_path(source_key)
         return nil unless File.exist?(path)
 
-        entry = JSON.parse(File.read(path, symbolize_names: true), symbolize_names: true)
+        entry = JSON.parse(File.read(path), symbolize_names: true)
         return nil if expired?(entry)
 
-        Dmesg.log("cache0", message: "semantic hit: #{source_key} (dist=#{best[:distance]})") if defined?(Dmesg)
+        Dmesg.dmesg_log("cache0", message: "semantic hit: #{source_key} (dist=#{best[:distance]})") if defined?(Dmesg)
         entry[:response]
       end
 
@@ -160,7 +160,7 @@ module MASTER
         # Evict entries with lowest hit count, then oldest last_hit
         entries_with_data = entries.map do |path|
           begin
-            entry = JSON.parse(File.read(path, symbolize_names: true), symbolize_names: true)
+            entry = JSON.parse(File.read(path), symbolize_names: true)
             {
               path: path,
               hit_count: entry[:hit_count] || 0,

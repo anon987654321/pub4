@@ -36,14 +36,6 @@ module MASTER
         filled = ((u[:percent] / 100.0) * width).round
         empty = width - filled
 
-        color = if u[:percent] > 90
-                  :red
-                elsif u[:percent] > 70
-                  :yellow
-                else
-                  :green
-                end
-
         bar_str = "#" * filled + "." * empty
         "#{bar_str} #{u[:percent]}%"
       end
