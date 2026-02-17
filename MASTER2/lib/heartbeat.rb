@@ -67,8 +67,8 @@ module MASTER
           backoff_needed = 0
           @checks_mutex.synchronize do
             @checks.each do |check|
-              delay = run_check(check)
-              backoff_needed = [backoff_needed, delay || 0].max
+              backoff_delay = run_check(check)
+              backoff_needed = [backoff_needed, backoff_delay || 0].max
             end
           end
           # Sleep outside the mutex
@@ -87,12 +87,12 @@ module MASTER
         check[:last_run] = Time.now
         result = check[:callable].call
         check[:failures] = 0 if result
-        nil  # no backoff needed
+        nil  # Returns nil on success, backoff delay in seconds on failure
       rescue StandardError => e
         check[:failures] += 1
         backoff = [30 * (2**check[:failures]), MAX_INTERVAL].min
         Logging.dmesg_log("heartbeat", message: "#{check[:name]} failed (#{check[:failures]}x), backoff #{backoff}s: #{e.message}")
-        check[:failures] > 2 ? backoff : nil  # return delay but don't sleep here
+        check[:failures] > 2 ? backoff : nil  # Return delay but don't sleep here
       end
     end
   end
