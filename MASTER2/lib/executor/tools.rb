@@ -159,6 +159,8 @@ module MASTER
           result = Shell.execute(cmd)
           output = result.ok? ? result.value : "Error: #{result.error}"
         else
+          # WARNING: Single-string form invokes shell. DANGEROUS_PATTERNS check can be
+          # bypassed with shell escapes. Consider using array form when possible.
           stdout, stderr, status = Open3.capture3(cmd)
           output = status.success? ? stdout : "Error: #{stderr}"
         end

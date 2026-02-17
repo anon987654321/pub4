@@ -14,12 +14,15 @@ module MASTER
       def load_models_config
         @models_config ||= begin
           models_file = File.join(__dir__, "..", "..", "data", "models.yml")
-          return [] unless File.exist?(models_file)
-          begin
-            YAML.safe_load_file(models_file, symbolize_names: true) || []
-          rescue StandardError => e
-            MASTER::Logging.warn("llm.models", "Failed to load models: #{e.message}") if defined?(MASTER::Logging)
+          unless File.exist?(models_file)
             []
+          else
+            begin
+              YAML.safe_load_file(models_file, symbolize_names: true) || []
+            rescue StandardError => e
+              MASTER::Logging.warn("llm.models", "Failed to load models: #{e.message}") if defined?(MASTER::Logging)
+              []
+            end
           end
         end
       end
@@ -41,7 +44,7 @@ module MASTER
 
         model_id = model.is_a?(String) ? model : model.id
         configured_model = configured_models_by_id[model_id]
-        return configured_model[:tier].to_sym if configured_model&.dig(:tier)
+        return configured_model[:tier].to_sym if configured_model&.[](:tier)
 
         # Fallback to price-based classification for models not in models.yml
         price = model.is_a?(String) ? 0 : model.input_price_per_million || 0

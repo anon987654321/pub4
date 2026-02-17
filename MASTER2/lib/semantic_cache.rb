@@ -39,7 +39,7 @@ module MASTER
         entry = {
           version: CACHE_VERSION,
           key: key,
-          prompt_hash: Digest::SHA256.hexdigest(prompt),
+          prompt_hash: Digest::SHA256.hexdigest(prompt.strip.downcase),
           prompt_preview: prompt[0, 200],
           tier: tier&.to_s,
           response: response_data,
@@ -72,7 +72,13 @@ module MASTER
       # Cache stats
       def stats
         entries = Dir.glob(File.join(cache_dir, "*.json"))
-        total_size = entries.sum { |f| File.size(f) rescue 0 }
+        total_size = entries.sum do |f|
+          begin
+            File.size(f)
+          rescue SystemCallError
+            0
+          end
+        end
         {
           entries: entries.size,
           size_bytes: total_size,
@@ -110,7 +116,7 @@ module MASTER
         return nil if expired?(entry)
 
         # Verify exact hash match
-        return nil unless entry[:prompt_hash] == Digest::SHA256.hexdigest(prompt)
+        return nil unless entry[:prompt_hash] == Digest::SHA256.hexdigest(prompt.strip.downcase)
 
         # Update hit count
         entry[:hit_count] += 1
@@ -145,7 +151,11 @@ module MASTER
       end
 
       def expired?(entry)
-        created = Time.parse(entry[:created_at]) rescue Time.now
+        created = begin
+          Time.parse(entry[:created_at])
+        rescue ArgumentError, TypeError
+          return true  # Corrupted entries should be treated as expired
+        end
         (Time.now - created) > MAX_ENTRY_AGE
       end
 

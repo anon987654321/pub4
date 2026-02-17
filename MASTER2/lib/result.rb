@@ -85,7 +85,7 @@ module MASTER
 
     class << self
       # Create successful result
-      # @param value [Object] Success value (defaults to nil)
+      # @param value [Object] Success value (defaults to nil). Callers should check .value before use.
       # @return [Result] Ok result
       def ok(value = nil) = new(value: value, kind: :ok)
 
@@ -107,7 +107,7 @@ module MASTER
     private
 
     def freeze_state
-      # Don't deep-freeze, just prevent reassignment
+      # NOTE: Shallow freeze only — nested structures remain mutable
       @value.freeze if @value.is_a?(Hash) || @value.is_a?(Array) || @value.is_a?(String)
       @error.freeze if @error.is_a?(String)
       freeze

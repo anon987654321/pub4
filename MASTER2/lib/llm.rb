@@ -11,6 +11,7 @@ module MASTER
   module LLM
     BUDGET_FILE = File.join(__dir__, "..", "data", "budget.yml")
     TIER_ORDER = %i[premium strong fast cheap].freeze
+    # NOTE: Evaluated at load time. Restart required if budget.yml changes.
     SPENDING_CAP = MASTER::Paths.load_yaml("budget")&.dig(:spending_cap) || 10.0
     MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
     MAX_CHAT_TOKENS = MASTER::Paths.load_yaml("budget")&.dig(:max_chat_tokens) || 16_384
@@ -21,6 +22,7 @@ module MASTER
     # Thread-safe ruby_llm configuration
     CONFIGURE_MUTEX = Mutex.new
     @ruby_llm_configured = false
+    @budget_warned = false
 
     class << self
       attr_accessor :current_model, :current_tier
@@ -132,8 +134,9 @@ module MASTER
         CircuitBreaker.check_rate_limit!
 
         # Budget checking: warn but don't block
-        if total_spent >= spending_cap
-          Logging.warn("llm.budget", "Budget limit reached: $#{total_spent.round(2)}/$#{spending_cap} - continuing anyway")
+        if total_spent >= spending_cap && !@budget_warned
+          Logging.warn("Budget limit reached: $#{total_spent.round(2)}/$#{spending_cap} - continuing anyway") if defined?(Logging)
+          @budget_warned = true
         end
 
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
@@ -152,16 +155,16 @@ module MASTER
                         end
         last_error = nil
 
-        models_to_try.each do |current_model|
-          next unless CircuitBreaker.circuit_closed?(current_model)
+        models_to_try.each do |candidate_model|
+          next unless CircuitBreaker.circuit_closed?(candidate_model)
 
-          result = try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
+          result = try_model(candidate_model, prompt, messages, reasoning, json_schema, provider, stream)
 
           if result.ok?
-            process_llm_response(result, current_model, prompt, stream)
+            process_llm_response(result, candidate_model, prompt, stream)
             return Result.ok(result.value)
           else
-            handle_llm_failure(result, current_model)
+            handle_llm_failure(result, candidate_model)
             last_error = result.error
           end
         end
