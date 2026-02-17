@@ -43,6 +43,7 @@ module MASTER
         Result.err("Failed after #{max_retries} retries: #{last_error}")
       end
 
+      # Auto-reduce max_tokens on credit limit errors
       def retryable_error?(error)
         return false unless error.is_a?(String) || error.is_a?(Hash)
         error_str = error.is_a?(Hash) ? error[:message].to_s : error.to_s
@@ -50,8 +51,16 @@ module MASTER
         # Auto-reduce max_tokens on credit limit errors
         if error_str.match?(/can only afford (\d+)/i)
           affordable = error_str[/can only afford (\d+)/, 1].to_i
-          Thread.current[:llm_max_tokens] = [affordable - 100, 512].max
+          # Set to 90% of affordable to leave some margin
+          Thread.current[:llm_max_tokens] = [(affordable * 0.9).to_i, 512].max
+          Logging.info("llm.budget", "Auto-reduced max_tokens to #{Thread.current[:llm_max_tokens]}")
           return true
+        end
+
+        # Handle prompt token limit exceeded
+        if error_str.match?(/Prompt tokens limit exceeded: (\d+) > (\d+)/i)
+          Logging.warn("llm.context", "Prompt too large - consider clearing history with /clear")
+          return false  # Don't retry, need manual intervention
         end
 
         error_str.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
