@@ -149,7 +149,7 @@ module MASTER
     private
 
     def simple_query?(goal)
-      goal.length < SIMPLE_QUERY_LENGTH_THRESHOLD &&
+      goal.length < 200 &&
         !goal.match?(/\b(file|read|write|analyze|fix|search|browse|run|execute|test|review)\b/i) &&
         !goal.match?(/\b(create|update|modify|delete|install|build)\b/i)
     end
