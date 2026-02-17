@@ -102,9 +102,9 @@ module MASTER
     def suggest_command(input)
       commands = Help::COMMANDS.keys.map(&:to_s)
       word = input.strip.split.first&.downcase
-      return nil unless word
+      return nil unless word && word.length > 2
 
-      commands.find { |c| Utils.levenshtein(word, c) <= 2 }
+      commands.find { |c| Utils.levenshtein(word, c) <= 1 }
     end
 
     def show_did_you_mean(input)

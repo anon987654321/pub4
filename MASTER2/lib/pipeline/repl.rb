@@ -110,12 +110,8 @@ module MASTER
 
           if cmd_result.nil?
             # Unknown command — try did-you-mean before LLM fallthrough
-            if line.strip.split.first =~ /\A[a-z!][a-z\-]*\z/i
-              shown = Commands.show_did_you_mean(line.strip)
-              if shown
-                next
-              end
-            end
+            shown = Commands.show_did_you_mean(line.strip)
+            next if shown
           elsif cmd_result.respond_to?(:ok?)
             unless cmd_result.value&.dig(:handled)
               display_result(cmd_result, session)
@@ -168,7 +164,8 @@ module MASTER
 
     # Build prompt using Pipeline.prompt with fallback
     def build_prompt(phase)
-      Pipeline.prompt
+      base = Pipeline.prompt
+      phase ? "[#{phase}] #{base}" : base
     rescue StandardError
       model_name = LLM.extract_model_name(LLM.prompt_model_name) rescue "?"
       phase ? "#{phase} #{model_name}> " : "#{model_name}> "
@@ -208,23 +205,20 @@ module MASTER
       # History load failure is non-critical
     end
 
-    # Save a single line to TTY::Reader history
+    # Save a single line to TTY::Reader history and our tracking array
     def save_history_line(reader, line)
-      return unless reader
-      reader.add_to_history(line) rescue nil
+      @history_lines ||= []
+      @history_lines << line
+      reader&.add_to_history(line) rescue nil
     end
 
     # Persist input history to file on exit
-    def save_input_history(reader)
-      return unless reader
+    def save_input_history(_reader)
+      return if @history_lines.nil? || @history_lines.empty?
+
       path = history_path
-
-      history = []
-      reader.history.each { |h| history << h } rescue nil
-      return if history.empty?
-
       FileUtils.mkdir_p(File.dirname(path))
-      File.write(path, history.last(MAX_HISTORY_LINES).join("\n") + "\n")
+      File.write(path, @history_lines.last(MAX_HISTORY_LINES).join("\n") + "\n")
     rescue StandardError
       # History save failure is non-critical
     end
