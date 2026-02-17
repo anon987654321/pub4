@@ -148,7 +148,7 @@ module MASTER
     # Pattern selection heuristics - moved before private
     def select_pattern(goal)
       # Sanitize goal to prevent prompt injection
-      sanitized_goal = goal.to_s.gsub(/[\r\n]+/, ' ').strip[0..500]
+      sanitized_goal = goal.to_s.gsub(/[\r\n]+/, ' ').strip.slice(0, 500)
       
       prompt = <<~CLASSIFY
         You are a task router. Given a user's goal, pick the best execution pattern.
@@ -170,8 +170,8 @@ module MASTER
       result = LLM.ask(prompt, tier: :cheap)
 
       if result.ok?
-        chosen = result.value[:content].strip.downcase.to_sym
-        return chosen if PATTERNS.include?(chosen) || chosen == :direct
+        chosen = result.value[:content]&.strip&.downcase&.to_sym
+        return chosen if chosen && (PATTERNS.include?(chosen) || chosen == :direct)
       end
 
       # Fallback: if LLM fails or returns garbage, use react
