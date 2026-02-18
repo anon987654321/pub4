@@ -1,288 +1,697 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>MASTER</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="color-scheme" content="dark"/>
+  <title>NEURAL CORE</title>
+  <meta name="theme-color" content="#000000"/>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #050505;
-      color: #e8e8e8;
-      font-family: "Courier New", Courier, monospace;
+    :root{
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-right:env(safe-area-inset-right,0px);
+      --safe-bottom:env(safe-area-inset-bottom,0px);
+      --safe-left:env(safe-area-inset-left,0px);
     }
-    body {
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      gap: 8px;
-      padding: 10px;
+
+    html,body{
+      margin:0;
+      height:100%;
+      background:#000;
+      color:#dcdcdc;
+      font:16px/1.5 Helvetica,Arial,sans-serif;
+      overflow:hidden;
+      touch-action:none;
     }
-    #top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: #8a8a8a;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      min-height: 18px;
+
+    canvas{
+      position:fixed;
+      inset:0;
+      width:100dvw;
+      height:100dvh;
+      display:block;
+      background:#000;
+      touch-action:none;
+      image-rendering:pixelated;
+      image-rendering:crisp-edges;
     }
-    #state.on { color: #e8e8e8; }
-    #log {
-      border: 1px solid #1a1a1a;
-      padding: 8px;
-      overflow-y: auto;
-      scrollbar-width: none;
-      font-size: 13px;
-      line-height: 1.45;
-      white-space: pre-wrap;
-      word-break: break-word;
+
+    #orb-name{
+      position:fixed;
+      top:calc(10px + var(--safe-top));
+      left:calc(10px + var(--safe-left));
+      z-index:95;
+      pointer-events:none;
+      user-select:none;
+      font-weight:700;
+      font-size:clamp(16px,4vw,28px);
+      color:#dcdcdc;
+      letter-spacing:.02em;
+      text-transform:uppercase;
     }
-    #log::-webkit-scrollbar { display: none; }
-    .u { color: #9b9b9b; }
-    .a { color: #e8e8e8; }
-    .e { color: #c86b6b; }
-    #bar {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      border: 1px solid #1a1a1a;
+
+    #status{
+      position:fixed;
+      top:calc(10px + var(--safe-top));
+      right:calc(10px + var(--safe-right));
+      z-index:95;
+      pointer-events:none;
+      user-select:none;
+      font-size:12px;
+      color:#666;
+      transition:color 0.3s;
     }
-    #in {
-      background: transparent;
-      border: 0;
-      color: #e8e8e8;
-      font: inherit;
-      font-size: 14px;
-      padding: 10px;
-      outline: 0;
+
+    #status.think{color:#fff;}
+    #status.speak{color:#0ff;}
+
+    #ui{
+      position:fixed;
+      right:calc(12px + var(--safe-right));
+      bottom:calc(10px + var(--safe-bottom));
+      color:#dcdcdc;
+      font:9px/1.1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      text-transform:uppercase;
+      letter-spacing:.28em;
+      white-space:nowrap;
+      pointer-events:none;
+      user-select:none;
+      text-align:right;
+      opacity:.86;
     }
-    #in::placeholder { color: #666; }
-    button {
-      background: transparent;
-      border: 0;
-      border-left: 1px solid #1a1a1a;
-      color: #8a8a8a;
-      width: 42px;
-      cursor: pointer;
-      font: inherit;
-      font-size: 14px;
+
+    #ui .dots{
+      display:inline-block;
+      width:3ch;
+      text-align:left;
     }
-    button:hover { color: #e8e8e8; }
-    button.on { color: #e8e8e8; }
+
+    #input-field{
+      position:fixed;
+      bottom:15vh;
+      left:50%;
+      transform:translateX(-50%);
+      width:0;
+      opacity:0;
+      transition:all 0.3s ease;
+      z-index:10;
+    }
+
+    #input-field.active{
+      width:70vw;
+      max-width:500px;
+      opacity:1;
+    }
+
+    #input-field input{
+      width:100%;
+      background:transparent;
+      border:none;
+      border-bottom:1px solid #333;
+      color:#dcdcdc;
+      font-family:Helvetica,Arial,sans-serif;
+      font-size:18px;
+      font-weight:300;
+      letter-spacing:0.05em;
+      padding:12px 0;
+      outline:none;
+      text-align:center;
+      text-transform:uppercase;
+    }
+
+    #input-field input::placeholder{
+      color:#444;
+    }
+
+    .arrow{
+      position:fixed;
+      top:50%;
+      transform:translateY(-50%);
+      width:60px;
+      height:100px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      z-index:100;
+      opacity:0.3;
+      transition:opacity 0.2s;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .arrow:hover{opacity:0.8;}
+    .arrow:active{opacity:1;}
+
+    #arrow-left{left:calc(10px + var(--safe-left));}
+    #arrow-right{right:calc(10px + var(--safe-right));}
+
+    .arrow span{
+      color:#dcdcdc;
+      font-size:24px;
+      font-weight:300;
+    }
+
+    #overlay{
+      position:fixed;
+      inset:0;
+      display:grid;
+      place-items:center;
+      background:rgba(0,0,0,.9);
+      color:#9aa;
+      cursor:pointer;
+      user-select:none;
+      z-index:1000;
+      text-align:center;
+      padding:16px;
+      opacity:1;
+      transition:opacity 0.2s ease;
+    }
+
+    #overlay.ack{opacity:0;pointer-events:none;}
+    #overlay[hidden]{display:none;}
+
+    #overlay h2{
+      margin:0;
+      font-size:32px;
+      font-weight:300;
+      color:#dcdcdc;
+      font-family:Helvetica,Arial,sans-serif;
+    }
   </style>
 </head>
 <body>
-  <div id="top"><span>master or+rep</span><span id="state">idle</span></div>
-  <div id="log"></div>
-  <div id="bar">
-    <input id="in" type="text" placeholder="say or type" autocomplete="off">
-    <button id="mic" title="voice">mic</button>
-    <button id="snd" title="speech output">tts:l</button>
-  </div>
+  <section id="orb-name">VOID</section>
+  <section id="status">◉</section>
+  <section id="ui"><span id="ui-label">Neural Core</span><span class="dots" id="ui-dots"></span></section>
+  <button id="mic" hidden aria-label="microphone"></button>
+
+  <section id="arrow-left" class="arrow"><span>‹</span></section>
+  <section id="arrow-right" class="arrow"><span>›</span></section>
+
+  <section id="input-field"><input type="text" placeholder="SPEAK" autocomplete="off" maxlength="128"></section>
+
+  <section id="overlay" role="dialog" aria-modal="true"><h2>Tap to start</h2></section>
+
+  <canvas id="canvas"></canvas>
 
   <script>
-    const AUTH = "Bearer " + (window.MASTER_TOKEN||'');
-    const logEl = document.getElementById("log");
-    const stateEl = document.getElementById("state");
-    const inputEl = document.getElementById("in");
-    const micBtn = document.getElementById("mic");
-    const sndBtn = document.getElementById("snd");
+    "use strict";
 
-    let pending = false;
-    let ttsOn = true;
-    let offlineN = 0;
-    let voicesReady = false;
-    const TTS_BACKEND_KEY = "master_tts_backend";
-    let ttsBackend = localStorage.getItem(TTS_BACKEND_KEY) || "local";
-    const remoteAudio = new Audio();
+    const canvas=document.getElementById('canvas');
+    const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true});
+    const orbNameEl=document.getElementById('orb-name');
+    const statusEl=document.getElementById('status');
+    const uiLabel=document.getElementById('ui-label');
+    const uiDots=document.getElementById('ui-dots');
+    const inputField=document.getElementById('input-field');
+    const input=inputField.querySelector('input');
+    const overlay=document.getElementById('overlay');
+    const arrowLeft=document.getElementById('arrow-left');
+    const arrowRight=document.getElementById('arrow-right');
+    const micBtn=document.getElementById('mic');
+    const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+    const MASTER_TOKEN=window.MASTER_TOKEN||'';
+    const COMPAT_LABEL="master or+rep";
+    const TTS_BACKEND_KEY="master_tts_backend";
 
-    function parseJsonOrThrow(resp) {
-      if (!resp.ok) throw new Error("http " + resp.status);
-      return resp.json();
-    }
+    let W,H,S;
+    const resize=()=>{
+      W=window.innerWidth;
+      H=window.innerHeight;
+      S=Math.min(W,H)/100;
+      canvas.width=W;
+      canvas.height=H;
+      ctx.imageSmoothingEnabled=false;
+    };
+    window.addEventListener('resize',resize);
+    resize();
 
-    function setState(v) {
-      stateEl.textContent = v;
-      stateEl.className = v === "idle" ? "" : "on";
-    }
+    let audioCtx,analyser,dataArray;
+    let audioLevel=0;
+    let speechPulse=0;
+    let recognition=null;
+    let recognitionActive=false;
+    let isSpeaking=false;
+    const nonstopVoice=true;
+    const BRAIN_LOBES=[
+      {x:-22,y:-8,z:10,w:1.0},
+      {x:22,y:-8,z:10,w:1.0},
+      {x:0,y:18,z:-6,w:0.9},
+      {x:0,y:-20,z:18,w:0.8}
+    ];
 
-    function addLine(text, klass) {
-      const row = document.createElement("div");
-      row.className = klass;
-      row.textContent = text;
-      logEl.appendChild(row);
-      logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    function updateTtsLabel() {
-      sndBtn.textContent = ttsOn ? (ttsBackend === "local" ? "tts:l" : "tts:r") : "tts:off";
-      sndBtn.classList.toggle("on", ttsOn);
-    }
-
-    function localTtsAvailable() {
-      if (!window.speechSynthesis) return false;
-      const voices = window.speechSynthesis.getVoices();
-      return voicesReady || voices.length > 0;
-    }
-
-    function speakLocal(text) {
-      if (!localTtsAvailable()) return false;
-      const utterance = new SpeechSynthesisUtterance((text || "").slice(0, 420));
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find((v) => v.localService) || voices[0];
-      if (preferred) utterance.voice = preferred;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-      return true;
-    }
-
-    function speakRemote(text) {
-      return fetch("/tts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": AUTH
-        },
-        body: JSON.stringify({ text: (text || "").slice(0, 900) })
-      }).then((resp) => {
-        if (!resp.ok) throw new Error("tts http " + resp.status);
-        return resp.blob();
-      }).then((blob) => {
-        const url = URL.createObjectURL(blob);
-        remoteAudio.src = url;
-        remoteAudio.play().catch(() => {});
-        remoteAudio.onended = () => URL.revokeObjectURL(url);
-      });
-    }
-
-    function speak(text) {
-      if (!ttsOn) return;
-      if (ttsBackend === "local") {
-        if (!speakLocal(text)) {
-          speakRemote(text).catch(() => {});
-        }
-        return;
+    const initAudio=async()=>{
+      try{
+        audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+        const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+        const source=audioCtx.createMediaStreamSource(stream);
+        analyser=audioCtx.createAnalyser();
+        analyser.fftSize=32;
+        analyser.smoothingTimeConstant=0.2;
+        source.connect(analyser);
+        dataArray=new Uint8Array(analyser.frequencyBinCount);
+        statusEl.classList.add('think');
+      }catch(_e){
+        statusEl.textContent='○';
       }
-      speakRemote(text).catch(() => {
-        speakLocal(text);
-      });
-    }
+    };
 
-    function setPending(v) {
-      pending = v;
-      inputEl.disabled = v;
-      setState(v ? "thinking" : "idle");
-    }
+    const speakText=text=>{
+      if(!('speechSynthesis' in window)||!text) return;
+      const u=new SpeechSynthesisUtterance(String(text).slice(0,420));
+      u.rate=0.94;
+      u.pitch=1.0;
+      u.volume=0.9;
+      u.onstart=()=>{
+        isSpeaking=true;
+        speechPulse=1;
+        statusEl.classList.remove('think');
+        statusEl.classList.add('speak');
+        if(recognition&&recognitionActive){
+          try{recognition.stop();}catch(_e){}
+        }
+      };
+      u.onend=()=>{
+        isSpeaking=false;
+        statusEl.classList.remove('speak');
+        statusEl.classList.add('think');
+        if(nonstopVoice) startRecognition();
+      };
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    };
 
-    function send(text) {
-      const msg = (text || "").trim();
-      if (!msg || pending) return;
-      addLine("> " + msg, "u");
-      inputEl.value = "";
-      setPending(true);
-      fetch("/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": AUTH
-        },
-        body: JSON.stringify({ message: msg })
-      }).then(parseJsonOrThrow).catch(() => {
-        addLine("[send failed]", "e");
-        setPending(false);
-        offlineN += 1;
-      });
-    }
+    const localTtsAvailable=()=>!!window.speechSynthesis;
 
-    inputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") send(inputEl.value);
+    const speakLocal=text=>{
+      if(!localTtsAvailable()) return false;
+      speakText(text);
+      return true;
+    };
+
+    const speakRemote=async(text)=>{
+      try{
+        const resp=await fetch("/tts",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({text})
+        });
+        return resp.ok;
+      }catch(_e){
+        return false;
+      }
+    };
+
+    const startRecognition=()=>{
+      if(!recognition||isSpeaking) return;
+      try{ recognition.start(); }catch(_e){}
+    };
+
+    const setupRecognition=()=>{
+      if(!SpeechRecognition) return;
+      recognition=new SpeechRecognition();
+      recognition.continuous=true;
+      recognition.interimResults=true;
+      recognition.lang='en-US';
+      recognition.onstart=()=>{ recognitionActive=true; statusEl.classList.add('think'); };
+      recognition.onend=()=>{
+        recognitionActive=false;
+        if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,160);
+      };
+      recognition.onerror=()=>{};
+      recognition.onresult=(ev)=>{
+        let finalText='';
+        for(let i=ev.resultIndex;i<ev.results.length;i++){
+          if(ev.results[i].isFinal) finalText+=ev.results[i][0].transcript+" ";
+        }
+        finalText=finalText.trim();
+        if(finalText){
+          uiLabel.textContent=finalText.slice(0,60);
+          transmit(finalText);
+        }
+      };
+    };
+
+    let tiltX=0,tiltY=0;
+    const initMotion=()=>{
+      if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+        DeviceOrientationEvent.requestPermission().then(r=>{
+          if(r==='granted'){
+            window.addEventListener('deviceorientation',e=>{
+              tiltX=(e.gamma||0)/45;
+              tiltY=(e.beta||0)/45;
+            },true);
+          }
+        });
+      }else{
+        window.addEventListener('deviceorientation',e=>{
+          tiltX=(e.gamma||0)/45;
+          tiltY=(e.beta||0)/45;
+        },true);
+      }
+    };
+
+    let touchX=0,touchY=0,touching=false;
+    const handleTouch=e=>{
+      const p=e.touches?e.touches[0]:e;
+      touchX=((p.clientX/W)*2-1)*1.2;
+      touchY=((p.clientY/H)*2-1)*1.2;
+      touching=true;
+    };
+
+    window.addEventListener('mousemove',handleTouch);
+    window.addEventListener('touchstart',handleTouch,{passive:true});
+    window.addEventListener('touchend',()=>{touching=false;});
+
+    input.addEventListener('focus',()=>{
+      statusEl.classList.remove('think');
+      statusEl.classList.add('speak');
     });
 
-    (function poll() {
-      const delay = offlineN === 0 ? 700 : Math.min(1200 * (offlineN + 1), 8000);
-      fetch("/poll", {
-        signal: AbortSignal.timeout(9000),
-        headers: { "Authorization": AUTH }
-      }).then(parseJsonOrThrow).then((d) => {
-        offlineN = 0;
-        if (d.text) {
-          addLine(d.text, "a");
-          speak(d.text);
-          setPending(false);
-        }
-        setTimeout(poll, delay);
-      }).catch(() => {
-        offlineN += 1;
-        setTimeout(poll, delay);
-      });
-    })();
-
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      micBtn.disabled = true;
-      micBtn.textContent = "--";
-    } else {
-      const rec = new SR();
-      rec.continuous = false;
-      rec.interimResults = true;
-      rec.lang = "en-US";
-      let listening = false;
-
-      function stopMic() {
-        listening = false;
-        micBtn.classList.remove("on");
-        setState(pending ? "thinking" : "idle");
+    input.addEventListener('blur',()=>{
+      if(!input.value){
+        statusEl.classList.remove('speak');
+        statusEl.classList.add('think');
       }
+    });
 
-      micBtn.addEventListener("click", () => {
-        if (pending) return;
-        if (listening) {
-          rec.stop();
+    input.addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&input.value.trim()){
+        const msg=input.value.trim();
+        input.value='';
+        inputField.classList.remove('active');
+        input.blur();
+        statusEl.classList.remove('speak');
+        statusEl.classList.add('think');
+        transmit(msg);
+      }
+    });
+
+    const pollResponse=async(attempt=0)=>{
+      if(attempt>30) return;
+      try{
+        const resp=await fetch("/poll",{method:"GET"});
+        if(!resp.ok) throw new Error('poll failed');
+        const data=await resp.json();
+        if(data&&data.text){
+          const reply=String(data.text);
+          uiLabel.textContent=reply.slice(0,60);
+          speakText(reply);
+          for(const n of neurons){
+            n.vx+=(Math.random()-0.5)*140;
+            n.vy+=(Math.random()-0.5)*140;
+            n.vz+=(Math.random()-0.5)*140;
+          }
           return;
         }
-        listening = true;
-        micBtn.classList.add("on");
-        setState("listening");
-        rec.start();
-      });
+      }catch(_e){}
+      setTimeout(()=>pollResponse(attempt+1),350);
+    };
 
-      rec.addEventListener("result", (e) => {
-        const t = Array.from(e.results).map((r) => r[0].transcript).join("");
-        inputEl.value = t;
-        if (e.results[e.results.length - 1].isFinal) {
-          rec.stop();
-          send(t);
-        }
-      });
-
-      rec.addEventListener("end", stopMic);
-      rec.addEventListener("error", stopMic);
-    }
-
-    sndBtn.addEventListener("click", () => {
-      if (!ttsOn) {
-        ttsOn = true;
-      } else if (ttsBackend === "local") {
-        ttsBackend = "remote";
-      } else {
-        ttsOn = false;
+    const transmit=async(message)=>{
+      for(const n of neurons){
+        n.vx+=(Math.random()-0.5)*100;
+        n.vy+=(Math.random()-0.5)*100;
+        n.vz+=(Math.random()-0.5)*100;
       }
-      localStorage.setItem(TTS_BACKEND_KEY, ttsBackend);
-      if (!ttsOn && window.speechSynthesis) window.speechSynthesis.cancel();
-      updateTtsLabel();
+      try{
+        const resp=await fetch("/chat",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","Authorization":`Bearer ${MASTER_TOKEN}`},
+          body:JSON.stringify({message})
+        });
+        if(resp.ok){
+          uiLabel.textContent='Processing...';
+          pollResponse();
+        }else{
+          uiLabel.textContent='Chat failed';
+        }
+      }catch(_e){
+        uiLabel.textContent='Network error';
+      }
+    };
+
+    canvas.addEventListener('click',()=>{
+      inputField.classList.add('active');
+      input.focus();
     });
 
-    if (window.speechSynthesis) {
-      const syncVoices = () => {
-        voicesReady = window.speechSynthesis.getVoices().length > 0;
-      };
-      syncVoices();
-      window.speechSynthesis.onvoiceschanged = syncVoices;
+    const orbStates=[
+      {name:"VOID",desc:"Empty potential"},{name:"SPHERE",desc:"Perfect form"},{name:"CUBE",desc:"Solid geometry"},
+      {name:"TORUS",desc:"Endless loop"},{name:"CONE",desc:"Focal point"},{name:"CYLINDER",desc:"Rolling mass"},
+      {name:"SPIRAL",desc:"Golden growth"},{name:"HELIX",desc:"DNA strand"},{name:"RING",desc:"Orbital path"},
+      {name:"DISC",desc:"Flat world"},{name:"MOBIUS",desc:"One surface"},{name:"KLEIN",desc:"Bottle form"},
+      {name:"BOY",desc:"Immersion"},{name:"CROSS",desc:"Intersection"},{name:"SHELL",desc:"Logarithmic"},
+      {name:"WAVE",desc:"Sine terrain"},{name:"GRID",desc:"Lattice breath"},{name:"TUBE",desc:"Twisting pipe"},
+      {name:"STAR",desc:"Radial spikes"},{name:"CRYSTAL",desc:"Faceted light"},{name:"CELL",desc:"Division life"},
+      {name:"NEURAL",desc:"Firing net"},{name:"ROOT",desc:"Branching down"},{name:"FLOWER",desc:"Petal bloom"},
+      {name:"LEAF",desc:"Veined surface"},{name:"CORAL",desc:"Sea branch"},{name:"BRANCH",desc:"Tree growth"},
+      {name:"WEB",desc:"Silk circles"},{name:"VEIN",desc:"Vascular flow"},{name:"SPORE",desc:"Drifting seed"},
+      {name:"ORBIT",desc:"Gravity well"},{name:"FALL",desc:"Rain down"},{name:"FLOAT",desc:"Buoyant drift"},
+      {name:"SWARM",desc:"Flocking mass"},{name:"CHAIN",desc:"Linked springs"},{name:"PENDULUM",desc:"Swinging time"},
+      {name:"BOUNCE",desc:"Elastic hit"},{name:"SPIRAL",desc:"Outward spin"},{name:"PULSE",desc:"Heartbeat"},
+      {name:"FIELD",desc:"Vector flow"},{name:"NOISE",desc:"Perlin form"},{name:"WAVE",desc:"Interference"},
+      {name:"INTERFERENCE",desc:"Double source"},{name:"MOIRE",desc:"Rotating grids"},{name:"FRACTAL",desc:"Recursive tree"},
+      {name:"ATTRACTOR",desc:"Lorenz chaos"},{name:"MANDALA",desc:"Symmetric pattern"},{name:"FILAMENT",desc:"Flow lines"},
+      {name:"CRYSTAL",desc:"Growth facets"},{name:"ZEN",desc:"Breathing minimal"}
+    ];
+
+    let currentOrb=0;
+    const setOrb=(idx)=>{
+      currentOrb=((idx%orbStates.length)+orbStates.length)%orbStates.length;
+      orbNameEl.textContent=orbStates[currentOrb].name;
+      uiLabel.textContent=orbStates[currentOrb].desc;
+      for(const n of neurons) n.reset(currentOrb);
+    };
+
+    arrowLeft.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb-1);});
+    arrowRight.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb+1);});
+
+    window.addEventListener('keydown',e=>{
+      if(e.key==='ArrowLeft')setOrb(currentOrb-1);
+      if(e.key==='ArrowRight')setOrb(currentOrb+1);
+    });
+
+    const N=2000;
+    const neurons=[];
+
+    class Neuron{
+      constructor(i){this.i=i;this.reset(0);}
+
+      reset(stateIdx){
+        const s=stateIdx;
+        if(s===0){this.ox=0;this.oy=0;this.oz=0;}
+        else if(s===1){const phi=Math.acos(1-2*(this.i+0.5)/N);const theta=Math.PI*(1+Math.sqrt(5))*this.i;this.ox=Math.cos(theta)*Math.sin(phi)*50;this.oy=Math.cos(phi)*50;this.oz=Math.sin(theta)*Math.sin(phi)*50;}
+        else if(s===2){const face=Math.floor(this.i/(N/6));const u=(this.i%(N/6))/(N/6)*2-1;const v=Math.random()*2-1;const faces=[[1,u,v],[-1,u,v],[u,1,v],[u,-1,v],[u,v,1],[u,v,-1]];this.ox=faces[face][0]*40;this.oy=faces[face][1]*40;this.oz=faces[face][2]*40;}
+        else if(s===3){const u=(this.i/N)*Math.PI*2;const v=((this.i*7)%N/N)*Math.PI*2;const R=35,r=15;this.ox=(R+r*Math.cos(v))*Math.cos(u);this.oy=r*Math.sin(v);this.oz=(R+r*Math.cos(v))*Math.sin(u);}
+        else if(s===4){const h=(this.i/N)*60-30;const r=(1-this.i/N)*30;const a=(this.i*137.5)%360;this.ox=Math.cos(a)*r;this.oy=h;this.oz=Math.sin(a)*r;}
+        else if(s===5){const h=(this.i/N)*60-30;const a=(this.i*137.5)%360;this.ox=Math.cos(a)*30;this.oy=h;this.oz=Math.sin(a)*30;}
+        else if(s===6){const t=(this.i/N)*Math.PI*6;const r=(this.i/N)*40;this.ox=Math.cos(t)*r;this.oy=(this.i/N)*60-30;this.oz=Math.sin(t)*r;}
+        else if(s===7){const t=(this.i/N)*Math.PI*4;this.ox=Math.cos(t)*25;this.oy=(this.i/N)*60-30;this.oz=Math.sin(t)*25;}
+        else if(s===8){const a=(this.i/N)*Math.PI*2;this.ox=Math.cos(a)*40;this.oy=Math.sin(a)*40;this.oz=0;}
+        else if(s===9){const a=(this.i/N)*Math.PI*2;const r=Math.sqrt(this.i/N)*40;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=0;}
+        else if(s===10){const u=(this.i/N)*Math.PI*2;const v=((this.i*3)%N/N)*0.4-0.2;this.ox=(1+v*Math.cos(u/2))*Math.cos(u)*40;this.oy=(1+v*Math.cos(u/2))*Math.sin(u)*40;this.oz=v*Math.sin(u/2)*40;}
+        else if(s===11){const u=(this.i/N)*Math.PI*2;const v=((this.i*5)%N/N)*Math.PI*2;this.ox=(2+Math.cos(v/2)*Math.sin(u)-Math.sin(v/2)*Math.sin(2*u))*Math.cos(v)*20;this.oy=(2+Math.cos(v/2)*Math.sin(u)-Math.sin(v/2)*Math.sin(2*u))*Math.sin(v)*20;this.oz=(Math.sin(v/2)*Math.sin(u)+Math.cos(v/2)*Math.sin(2*u))*20;}
+        else if(s===12){const u=(this.i/N)*Math.PI;const v=((this.i*7)%N/N)*Math.PI;const d=2-Math.cos(2*u)*Math.sin(2*v);this.ox=(Math.cos(u)*Math.sin(2*v))/d*50;this.oy=(Math.sin(u)*Math.sin(2*v))/d*50;this.oz=(Math.sin(u)*Math.cos(v)*Math.cos(v))/d*50;}
+        else if(s===13){const u=(this.i/N)*Math.PI;const v=((this.i*11)%N/N)*Math.PI;this.ox=Math.sin(u)*Math.sin(2*v)*40;this.oy=Math.sin(2*u)*Math.cos(v)*Math.cos(v)*40;this.oz=Math.cos(2*u)*Math.cos(v)*Math.cos(v)*40;}
+        else if(s===14){const t=(this.i/N)*Math.PI*6;const r=Math.exp(t*0.1)*0.3;this.ox=Math.cos(t)*r;this.oy=Math.sin(t)*r;this.oz=(this.i/N)*30-15;}
+        else if(s===15){const x=(this.i%64)/64*80-40;const z=Math.floor(this.i/64)/32*80-40;this.ox=x;this.oy=0;this.oz=z;}
+        else if(s===16){const x=(this.i%45)/45*90-45;const y=Math.floor(this.i/45)/45*90-45;this.ox=x;this.oy=y;this.oz=0;}
+        else if(s===17){const a=(this.i/N)*Math.PI*2;const r=20+Math.sin(a*3)*8;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=(this.i/N)*60-30;}
+        else if(s===18){const a=(this.i/N)*Math.PI*2;const r=15+(this.i%5)*8;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=(Math.random()-0.5)*15;}
+        else if(s===19){const v=[[0,-50,0],[0,50,0],[40,-25,0],[-40,-25,0],[0,-25,40],[0,-25,-40],[40,25,0],[-40,25,0],[0,25,40],[0,25,-40]];const vi=this.i%10;this.ox=v[vi][0]+(Math.random()-0.5)*8;this.oy=v[vi][1]+(Math.random()-0.5)*8;this.oz=v[vi][2]+(Math.random()-0.5)*8;}
+        else if(s===20){const gen=Math.floor(Math.log2(this.i+1));const a=(this.i/Math.pow(2,gen))*Math.PI*2;const r=gen*10;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=gen*3;}
+        else if(s===21){const layer=Math.floor(this.i/400);const node=this.i%400;this.ox=(layer-2.5)*40;this.oy=((node%20)-10)*6;this.oz=Math.floor(node/20)*6;}
+        else if(s===22){this.ox=0;this.oy=30;this.oz=0;this.a=Math.random()*Math.PI*2;this.d=0;}
+        else if(s===23){const petal=Math.floor(this.i/(N/5));const a=(this.i%(N/5))/(N/5)*Math.PI;const r=Math.sin(a)*30;const pa=petal*(Math.PI*2/5);this.ox=Math.cos(pa)*r;this.oy=Math.sin(pa)*r;this.oz=(this.i%(N/5))/(N/5)*15-7;}
+        else if(s===24){const u=(this.i/N)*2-1;const vv=Math.random();const w=25*(1-Math.abs(u))*(0.5+0.5*Math.cos(vv*Math.PI));this.ox=u*30;this.oy=vv*60-30;this.oz=w*(Math.random()-0.5)*0.5;}
+        else if(s===25){const b=Math.floor(this.i/80);const ss=this.i%80;const a=b*0.5;this.ox=Math.cos(a)*ss;this.oy=Math.sin(a)*ss;this.oz=ss*0.4;}
+        else if(s===26){const d=this.i/N;const w=(1-d)*25;this.ox=(Math.random()-0.5)*w;this.oy=d*60-30;this.oz=(Math.random()-0.5)*w;}
+        else if(s===27){const ring=Math.floor(this.i/200);const a=(this.i%200)/200*Math.PI*2;const r=ring*10;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=(Math.random()-0.5)*4;}
+        else if(s===28){const x=(this.i%50)/50*45-22;const y=Math.floor(this.i/50)/40*60-30;this.ox=x+(Math.random()-0.5)*2;this.oy=y;this.oz=(Math.random()-0.5)*8;}
+        else if(s===29){this.ox=(Math.random()-0.5)*60;this.oy=(Math.random()-0.5)*60;this.oz=(Math.random()-0.5)*60;this.vx=0;this.vy=0;this.vz=0;}
+        else if(s===30){this.ox=(Math.random()-0.5)*80;this.oy=(Math.random()-0.5)*80;this.oz=(Math.random()-0.5)*15;this.vx=0;this.vy=0;}
+        else if(s===31){this.ox=(this.i%40)/40*60-30;this.oy=-40-Math.random()*40;this.oz=Math.floor(this.i/40)*8-40;this.vy=0;}
+        else if(s===32){this.ox=(Math.random()-0.5)*80;this.oy=(Math.random()-0.5)*80;this.oz=(Math.random()-0.5)*80;this.t=Math.random()*Math.PI*2;}
+        else if(s===33){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.oz=(Math.random()-0.5)*50;this.vx=0;this.vy=0;this.vz=0;}
+        else if(s===34){this.idx=this.i;this.ox=0;this.oy=(this.i/N)*60-30;this.oz=0;}
+        else if(s===35){this.a=(this.i/N)*Math.PI*4;this.l=15+(this.i%10)*4;this.v=0;}
+        else if(s===36){this.ox=(Math.random()-0.5)*60;this.oy=(Math.random()-0.5)*60;this.oz=(Math.random()-0.5)*30;this.vy=0;}
+        else if(s===37){this.t=(this.i/N)*Math.PI*8;this.r=(this.i/N)*40;this.vt=0.1;this.vr=0.1;}
+        else if(s===38){const a=(this.i/N)*Math.PI*2;this.ox=Math.cos(a)*25;this.oy=Math.sin(a)*25;this.oz=0;this.a=a;}
+        else if(s===39){this.ox=(this.i%32)/32*60-30;this.oy=Math.floor(this.i/32)/64*60-30;this.oz=0;}
+        else if(s===40){this.ox=(this.i%64)/64*80-40;this.oy=Math.floor(this.i/64)/32*80-40;this.oz=0;}
+        else if(s===41){const a=(this.i/N)*Math.PI*2;this.ox=Math.cos(a)*40;this.oy=Math.sin(a)*40;this.oz=0;this.a=a;}
+        else if(s===42){this.ox=(Math.random()-0.5)*80;this.oy=(Math.random()-0.5)*80;this.oz=0;}
+        else if(s===43){const x=(this.i%50)/50*60-30;const y=Math.floor(this.i/50)/40*60-30;this.ox=x;this.oy=y;this.oz=0;}
+        else if(s===44){let x=0,y=0;for(let j=0;j<8;j++){const bit=(this.i>>j)&1;const ang=bit*Math.PI/2;x+=Math.cos(ang)*Math.pow(0.6,j)*50;y+=Math.sin(ang)*Math.pow(0.6,j)*50;}this.ox=x;this.oy=y;this.oz=0;}
+        else if(s===45){this.ox=(Math.random()-0.5)*20;this.oy=(Math.random()-0.5)*20;this.oz=0;}
+        else if(s===46){const ring=Math.floor(this.i/128);const a=(this.i%128)/128*Math.PI*2;const r=ring*8;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=0;}
+        else if(s===47){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.oz=(Math.random()-0.5)*50;this.l=0;}
+        else if(s===48){const n=20;const f=this.i%n;const a=(f/n)*Math.PI*2;const r=25+Math.floor(this.i/n)*6;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=Math.floor(this.i/n)*3;}
+        else{const phi=Math.acos(1-2*(this.i+0.5)/N);const theta=Math.PI*(1+Math.sqrt(5))*this.i;this.ox=Math.cos(theta)*Math.sin(phi)*30;this.oy=Math.cos(phi)*30;this.oz=Math.sin(theta)*Math.sin(phi)*30;}
+
+        this.px=this.ox;this.py=this.oy;this.pz=this.oz;this.vx=0;this.vy=0;this.vz=0;this.c=0;
+        this.think=0;
+      }
+
+      update(t,stateIdx){
+        const s=stateIdx;
+
+        if(s===22){if(this.d===0)this.d=this.i/N*50;this.a+=(Math.random()-0.5)*0.3;this.d+=0.4;this.tx=Math.cos(this.a)*this.d;this.ty=30-this.d*0.4;this.tz=Math.sin(this.a)*this.d;if(this.d>60){this.d=0;this.a=Math.random()*Math.PI*2;}}
+        else if(s===29){this.vx=(this.vx||0)*0.95-0.01*this.ox+(Math.random()-0.5);this.vy=(this.vy||0)*0.95-0.01*this.oy+(Math.random()-0.5);this.vz=(this.vz||0)*0.95-0.01*this.oz+(Math.random()-0.5);this.tx=this.ox+this.vx;this.ty=this.oy+this.vy;this.tz=this.oz+this.vz;this.ox=this.tx;this.oy=this.ty;this.oz=this.tz;}
+        else if(s===30){const d=Math.sqrt(this.ox*this.ox+this.oy*this.oy);const f=80/(d*d+10);this.vx=(this.vx||0)*0.99-this.ox/d*f-this.oy/d*2;this.vy=(this.vy||0)*0.99-this.oy/d*f+this.ox/d*2;this.ox+=this.vx;this.oy+=this.vy;this.tx=this.ox*(1+audioLevel);this.ty=this.oy*(1+audioLevel);this.tz=this.oz;}
+        else if(s===31){this.vy=(this.vy||0)*0.99+0.4;this.oy+=this.vy;if(this.oy>40){this.oy=-40;this.vy=0;}this.tx=this.ox+Math.sin(t+this.oz)*audioLevel*10;this.ty=this.oy;this.tz=this.oz;}
+        else if(s===32){this.t+=0.02;this.tx=this.ox+Math.sin(this.t)*10*(1+audioLevel);this.ty=this.oy+Math.cos(this.t*0.7)*10*(1+audioLevel);this.tz=this.oz+Math.sin(this.t*1.3)*5;}
+        else if(s===33){let cx=0,cy=0,cz=0;for(let j=0;j<5;j++){const o=neurons[(this.i+j)%N];cx+=o.ox;cy+=o.oy;cz+=o.oz;}cx/=5;cy/=5;cz/=5;this.vx=(this.vx||0)*0.9+(cx-this.ox)*0.01;this.vy=(this.vy||0)*0.9+(cy-this.oy)*0.01;this.vz=(this.vz||0)*0.9+(cz-this.oz)*0.01;this.ox+=this.vx;this.oy+=this.vy;this.oz+=this.vz;this.tx=this.ox*(1+audioLevel);this.ty=this.oy*(1+audioLevel);this.tz=this.oz*(1+audioLevel);}
+        else if(s===34){const prev=neurons[(this.i+N-1)%N];const dx=prev.ox-this.ox;const dy=prev.oy-this.oy;const d=Math.sqrt(dx*dx+dy*dy);const target=2;if(d>target){this.ox+=dx/d*(d-target)*0.5;this.oy+=dy/d*(d-target)*0.5;}this.oy+=Math.sin(t+this.i*0.1)*0.4;this.tx=this.ox+tiltX*15;this.ty=this.oy;this.tz=this.oz;}
+        else if(s===35){const g=0.3;const f=-g/this.l*Math.sin(this.a);this.v=(this.v||0)*0.99+f;this.a+=this.v;this.tx=Math.sin(this.a)*this.l;this.ty=Math.cos(this.a)*this.l;this.tz=(this.i%5)*3-6;}
+        else if(s===36){this.vy=(this.vy||0)-0.4;this.oy+=this.vy;if(this.oy<-30){this.oy=-30;this.vy=-this.vy*0.8;}if(this.oy>30){this.oy=30;this.vy=-this.vy*0.8;}this.tx=this.ox;this.ty=this.oy;this.tz=this.oz;}
+        else if(s===37){this.vt=this.vt*0.99+0.04;this.vr=this.vr*0.98+0.02;this.t+=this.vt;this.r+=this.vr;if(this.r>50){this.r=0;this.t=0;}this.tx=Math.cos(this.t)*this.r;this.ty=Math.sin(this.t)*this.r;this.tz=this.r*0.3;}
+        else if(s===38){const beat=Math.exp(-Math.pow((t*2)%2-0.5,2)*4);const r=25+beat*15*(1+audioLevel*2);this.tx=Math.cos(this.a)*r;this.ty=Math.sin(this.a)*r;this.tz=beat*8;}
+        else if(s===39){const angle=Math.sin(this.ox*0.1)*Math.cos(this.oy*0.1)*Math.PI*2+t;const f=4+audioLevel*12;this.tx=this.ox+Math.cos(angle)*f;this.ty=this.oy+Math.sin(angle)*f;this.tz=this.oz+Math.sin(angle*2)*8;}
+        else if(s===40){const n=Math.sin(this.ox*0.3+t)*Math.sin(this.oy*0.3+t*0.7);this.tx=this.ox;this.ty=this.oy;this.tz=n*15*(1+audioLevel);}
+        else if(s===41){const waves=Math.sin(this.a*3-t*2)+Math.sin(this.a*7-t*3)*0.5;const r=40+waves*8*(1+audioLevel*2);this.tx=Math.cos(this.a)*r;this.ty=Math.sin(this.a)*r;this.tz=waves*4;}
+        else if(s===42){const d1=Math.sqrt((this.ox+25)*(this.ox+25)+this.oy*this.oy);const d2=Math.sqrt((this.ox-25)*(this.ox-25)+this.oy*this.oy);const amp=Math.sin(d1*0.2-t*3)+Math.sin(d2*0.2-t*3);this.tx=this.ox;this.ty=this.oy;this.tz=amp*12*(1+audioLevel);}
+        else if(s===43){const rot=t*0.2;const rx=this.ox*Math.cos(rot)-this.oy*Math.sin(rot);const ry=this.ox*Math.sin(rot)+this.oy*Math.cos(rot);const beat=Math.sin(t*4)>0?1+audioLevel:1;this.tx=rx*beat;this.ty=ry*beat;this.tz=this.oz;}
+        else if(s===44){const ss=1+Math.sin(t+this.i)*0.2*audioLevel;this.tx=this.ox*ss;this.ty=this.oy*ss;this.tz=this.oz;}
+        else if(s===45){const a=10,b=28,c=8/3;const dt=0.01;const dx=a*(this.oy-this.ox)*dt;const dy=(this.ox*(b-this.oz)-this.oy)*dt;const dz=(this.ox*this.oy-c*this.oz)*dt;this.ox+=dx;this.oy+=dy;this.oz+=dz;this.tx=this.ox*1.5;this.ty=this.oy*1.5;this.tz=this.oz*1.5;}
+        else if(s===46){const sym=6+Math.floor(Math.sin(t)*2);const sector=Math.floor(Math.atan2(this.oy,this.ox)/(Math.PI*2)*sym);const sa=sector*(Math.PI*2/sym);const r=Math.sqrt(this.ox*this.ox+this.oy*this.oy);const beat=1+Math.sin(t*3)*0.3*audioLevel;this.tx=Math.cos(sa)*r*beat;this.ty=Math.sin(sa)*r*beat;this.tz=this.oz;}
+        else if(s===47){this.l++;const a=Math.sin(this.ox*0.1)*Math.cos(this.oy*0.1)*Math.PI*2+t;this.ox+=Math.cos(a)*1.5;this.oy+=Math.sin(a)*1.5;if(this.l>80||Math.abs(this.ox)>60||Math.abs(this.oy)>60){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.l=0;}this.tx=this.ox;this.ty=this.oy;this.tz=this.oz+Math.sin(t+this.l*0.1)*8;}
+        else if(s===48){const tilt=Math.sin(t*0.5)*0.3;const rx=this.ox*Math.cos(tilt)-this.oz*Math.sin(tilt);const rz=this.ox*Math.sin(tilt)+this.oz*Math.cos(tilt);this.tx=rx*(1+audioLevel*0.5);this.ty=this.oy*(1+audioLevel*0.5);this.tz=rz;}
+        else if(s===49){const breath=(Math.sin(t*0.3)+1)/2;const ss=0.5+breath*0.5+audioLevel*0.5;this.tx=this.ox*ss;this.ty=this.oy*ss;this.tz=this.oz*ss;}
+        else{this.tx=this.ox*(1+audioLevel*1.5);this.ty=this.oy*(1+audioLevel*1.5);this.tz=this.oz*(1+audioLevel*1.5);}
+
+        let maxThink=0;
+        for(const l of BRAIN_LOBES){
+          const wobbleX=l.x+Math.sin(t*0.9+this.i*0.0007)*5;
+          const wobbleY=l.y+Math.cos(t*0.7+this.i*0.0009)*4;
+          const wobbleZ=l.z+Math.sin(t*0.5)*3;
+          const dx=wobbleX-this.tx;
+          const dy=wobbleY-this.ty;
+          const dz=wobbleZ-this.tz;
+          const d2=dx*dx+dy*dy+dz*dz+1;
+          const pull=(40/d2)*l.w*(0.8+audioLevel*1.5);
+          this.tx+=dx*pull;
+          this.ty+=dy*pull;
+          this.tz+=dz*pull;
+          const localThink=Math.min(1,55/d2);
+          if(localThink>maxThink) maxThink=localThink;
+        }
+        this.think=maxThink;
+
+        this.tx+=tiltX*25*(this.pz/50);
+        this.ty+=tiltY*25*(this.pz/50);
+
+        if(touching){
+          const dx=this.px-touchX*100;
+          const dy=this.py-touchY*100;
+          const d=Math.sqrt(dx*dx+dy*dy);
+          if(d<40&&d>0){const f=(40-d)*2;this.tx+=(dx/d)*f;this.ty+=(dy/d)*f;this.tz+=f;}
+        }
+
+        const k=0.06,damp=0.88;
+        this.vx+=(this.tx-this.px)*k;
+        this.vy+=(this.ty-this.py)*k;
+        this.vz+=(this.tz-this.pz)*k;
+        this.vx*=damp;this.vy*=damp;this.vz*=damp;
+        this.px+=this.vx;this.py+=this.vy;this.pz+=this.vz;
+
+        const v=Math.abs(this.vx)+Math.abs(this.vy)+Math.abs(this.vz);
+        if((audioLevel+this.think*0.8)>0.6||v>20)this.c=3;
+        else if(audioLevel>0.3||v>12)this.c=2;
+        else if(audioLevel>0.1||v>6)this.c=1;
+        else if(this.pz>15)this.c=0;
+        else this.c=1;
+      }
+
+      project(){
+        const fl=180;
+        const ss=fl/(fl+this.pz);
+        return{x:Math.floor(W/2+this.px*S*ss),y:Math.floor(H/2+this.py*S*ss),s:Math.max(1,Math.floor(ss*2)),a:Math.min(1,ss*1.2),z:this.pz,c:this.c,think:this.think};
+      }
     }
-    updateTtsLabel();
+
+    for(let i=0;i<N;i++) neurons.push(new Neuron(i));
+    currentOrb=Math.floor(Math.random()*orbStates.length);
+    setOrb(currentOrb);
+
+    const dotsPattern=[0,1,2,3,2,1];
+    let dotsIdx=0;
+    setInterval(()=>{uiDots.textContent='.'.repeat(dotsPattern[dotsIdx]);dotsIdx=(dotsIdx+1)%dotsPattern.length;},400);
+
+    overlay.addEventListener('click',()=>{
+      overlay.classList.add('ack');
+      initAudio();
+      initMotion();
+      setupRecognition();
+      if(nonstopVoice) startRecognition();
+      setTimeout(()=>overlay.hidden=true,300);
+    });
+
+    let t=0;
+    const animate=()=>{
+      requestAnimationFrame(animate);
+      t+=0.016;
+      speechPulse*=0.92;
+
+      if(analyser){
+        analyser.getByteFrequencyData(dataArray);
+        let sum=0;
+        for(let i=0;i<6;i++) sum+=dataArray[i];
+        for(let i=6;i<12;i++) sum+=dataArray[i]*0.6;
+        audioLevel=Math.min(1,sum/9/255+speechPulse*0.45);
+      }else{audioLevel*=0.92;}
+
+      const hue=(currentOrb*9)%360;
+      const grad=ctx.createRadialGradient(W*0.5,H*0.5,Math.min(W,H)*0.1,W*0.5,H*0.5,Math.max(W,H)*0.8);
+      grad.addColorStop(0,`hsl(${hue} 42% 8%)`);
+      grad.addColorStop(0.65,`hsl(${(hue+40)%360} 34% 5%)`);
+      grad.addColorStop(1,'#000');
+      ctx.fillStyle=grad;
+      ctx.fillRect(0,0,W,H);
+
+      for(const n of neurons) n.update(t,currentOrb);
+      const proj=neurons.map(n=>n.project()).filter(Boolean);
+      proj.sort((a,b)=>b.z-a.z);
+
+      const cols=['#2b2b2b','#575757','#8f8f8f','#f2f2f2'];
+      for(const p of proj){
+        const thinkDark=1-Math.min(0.78,p.think*1.2);
+        ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35));
+        if(p.think>0.22){
+          const v=Math.floor(220*thinkDark);
+          ctx.fillStyle=`rgb(${v},${v},${v})`;
+        }else{
+          ctx.fillStyle=cols[p.c]||'#666';
+        }
+        const sz=p.s<2?3:(p.s<3?5:7);
+        const h=Math.floor(sz/2);
+        ctx.fillRect(p.x,p.y-h,1,sz);
+        ctx.fillRect(p.x-h,p.y,sz,1);
+      }
+      ctx.globalAlpha=0.2;
+      ctx.strokeStyle='#7f7f7f';
+      ctx.lineWidth=1;
+      for(let i=0;i<proj.length-9;i+=9){
+        const a=proj[i];
+        const b=proj[i+9];
+        if(!a||!b) continue;
+        if(a.think<0.2&&b.think<0.2) continue;
+        const dx=a.x-b.x;
+        const dy=a.y-b.y;
+        if(dx*dx+dy*dy>900) continue;
+        ctx.beginPath();
+        ctx.moveTo(a.x,a.y);
+        ctx.lineTo(b.x,b.y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha=1;
+    };
+
+    animate();
   </script>
 </body>
 </html>

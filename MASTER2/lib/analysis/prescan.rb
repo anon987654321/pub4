@@ -76,7 +76,7 @@ module MASTER
         status = `git -C #{Shellwords.escape(path)} status --porcelain`.strip
 
         if status.empty?
-          UI.success("git clean")
+          UI.success("git status clean")
         else
           UI.warn("git: #{status.lines.size} uncommitted")
         end

@@ -14,6 +14,26 @@ elsif ARGV.delete("--quiet") || ARGV.delete("-q")
   ENV["MASTER_TRACE"] = "0"
 end
 
+require_relative "../lib/single_instance"
+require "digest"
+require "tmpdir"
+
+def enforce_single_master!(command)
+  return if %w[help -h --help version -v --version].include?(command)
+
+  root_hash = Digest::SHA256.hexdigest(File.expand_path("..", __dir__))[0, 12]
+  lock_path = ENV["MASTER_LOCK_PATH"] || File.join(Dir.tmpdir, "master2-#{root_hash}.lock")
+  MASTER::SingleInstance.acquire(lock_path: lock_path)
+rescue MASTER::SingleInstance::AlreadyRunningError => e
+  $stderr.puts e.message
+  $stderr.puts "Set MASTER_ALLOW_MULTI=1 to bypass this guard intentionally."
+  exit 1
+end
+
+command = ARGV[0]
+args = ARGV[1..-1] || []
+enforce_single_master!(command)
+
 # Auto-bundle install if gems missing
 ENV["BUNDLE_GEMFILE"] = File.expand_path("../Gemfile", __dir__)
 ENV["GEM_HOME"] ||= File.expand_path("~/.local/share/gem/ruby/#{RUBY_VERSION[0..2]}")
@@ -28,10 +48,6 @@ rescue StandardError => e
   $stderr.puts "DB setup failed: #{e.message} — running without persistence"
 end
 MASTER::Session.install_crash_handlers
-
-# Parse command line arguments
-command = ARGV[0]
-args = ARGV[1..-1] || []
 
 case command
 when "refactor"

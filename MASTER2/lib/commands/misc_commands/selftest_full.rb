@@ -87,7 +87,7 @@ module MASTER
         # phase 4: git status
         if system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
           status = `git -C #{root} status --porcelain`.strip
-          puts status.empty? ? "self: git clean" : "self: git #{status.lines.size} uncommitted"
+          puts status.empty? ? "self: git status clean" : "self: git #{status.lines.size} uncommitted"
         end
 
         # phase 5: reflect via LLM
