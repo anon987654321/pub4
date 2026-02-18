@@ -120,13 +120,13 @@ module MASTER
                  end
 
           if type && type != current[:type]
-            sections << current unless current[:lines].empty?
+            add_section(sections, current)
             current = { type: type, lines: [] }
           end
           current[:lines] << line
         end
 
-        sections << current unless current[:lines].empty?
+        add_section(sections, current)
         sections
       end
 
@@ -148,13 +148,13 @@ module MASTER
                  end
 
           if type && type != current[:type]
-            sections << current unless current[:lines].empty?
+            add_section(sections, current)
             current = { type: type, lines: [] }
           end
           current[:lines] << line
         end
 
-        sections << current unless current[:lines].empty?
+        add_section(sections, current)
         sections
       end
 
@@ -174,13 +174,13 @@ module MASTER
                  end
 
           if type && type != current[:type]
-            sections << current unless current[:lines].empty?
+            add_section(sections, current)
             current = { type: type, lines: [] }
           end
           current[:lines] << line
         end
 
-        sections << current unless current[:lines].empty?
+        add_section(sections, current)
         sections
       end
 
@@ -206,13 +206,13 @@ module MASTER
           end
 
           if type && type != current[:type]
-            sections << current unless current[:lines].empty?
+            add_section(sections, current)
             current = { type: type, lines: [] }
           end
           current[:lines] << line
         end
 
-        sections << current unless current[:lines].empty?
+        add_section(sections, current)
         sections
       end
 
@@ -229,13 +229,13 @@ module MASTER
                  end
 
           if type && type != current[:type]
-            sections << current unless current[:lines].empty?
+            add_section(sections, current)
             current = { type: type, lines: [] }
           end
           current[:lines] << line
         end
 
-        sections << current unless current[:lines].empty?
+        add_section(sections, current)
         sections
       end
 
@@ -263,6 +263,11 @@ module MASTER
       def needs_blank_line?(prev_section, curr_section)
         return false unless prev_section
         prev_section[:type] != curr_section[:type]
+      end
+
+      # Helper to add section to list only if it has content
+      def add_section(sections, section)
+        sections << section unless section[:lines].empty?
       end
     end
   end

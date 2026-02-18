@@ -48,28 +48,11 @@ module MASTER
     end
 
     # Color delegate methods - return colored strings without printing
-    def yellow(msg)
-      pastel.yellow(msg)
-    end
-
-    def green(msg)
-      pastel.green(msg)
-    end
-
-    def red(msg)
-      pastel.red(msg)
-    end
-
-    def cyan(msg)
-      pastel.cyan(msg)
-    end
-
-    def magenta(msg)
-      pastel.magenta(msg)
-    end
-
-    def blue(msg)
-      pastel.blue(msg)
+    # Define color methods dynamically to reduce duplication
+    %i[yellow green red cyan magenta blue].each do |color|
+      define_method(color) do |msg|
+        pastel.public_send(color, msg)
+      end
     end
 
     def colorize(text)
