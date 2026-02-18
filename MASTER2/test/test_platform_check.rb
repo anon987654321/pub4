@@ -63,7 +63,7 @@ class TestPlatformCheck < Minitest::Test
     issues = [
       { problem: "Test problem", fix: "Test fix" }
     ]
-    
+
     MASTER::PlatformCheck.stub :diagnose, issues do
       refute MASTER::PlatformCheck.print_diagnostics
     end
@@ -105,7 +105,7 @@ class TestPlatformCheck < Minitest::Test
       { problem: "Problem 1", fix: "Fix 1" },
       { problem: "Problem 2", fix: "Fix 2" }
     ]
-    
+
     MASTER::PlatformCheck.stub :openbsd?, true do
       MASTER::PlatformCheck.stub :diagnose, issues do
         MASTER::PlatformCheck.stub :openbsd_version, "7.8" do
