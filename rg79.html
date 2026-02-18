@@ -426,12 +426,59 @@ if(bitCrush)bitCrush.wet.value=(100-aud_.drive)/400;
 if(driftLFO)driftLFO.frequency.value=.05+aud_.drift*.15;
 }
 
+function triggerStep(stepIdx,baseTime){
+const dp=DRUM_PATTERNS[pat_.d]||DRUM_PATTERNS.basic;
+['k','s','c','h','o'].forEach(v=>{
+const vel=dp[v]?dp[v][stepIdx]:0;
+if(vel>0){
+const t=baseTime+seq_[v][stepIdx].t/1000;
+const vl=vel*seq_[v][stepIdx].v;
+if(v==='k'){
+const kpitch='C1';
+const drift=(Math.random()-0.5)*5;
+const kfreq=Tone.Frequency(kpitch).toFrequency()*(1+drift/1200);
+kickN.triggerAttackRelease(kfreq,'8n',t,vl);
+kickSub.triggerAttackRelease(Tone.Frequency(kpitch).transpose(-12),'8n',t,vl*.7);
+kickClk.triggerAttackRelease('32n',t,vl*0.3);
+kickBody.triggerAttackRelease(Tone.Frequency(kpitch).transpose(12),'32n',t,vl*.2);
+}
+else if(v==='s'){snareN.triggerAttackRelease('8n',t,vl);snareRng.triggerAttackRelease('E4','16n',t,vl*0.5)}
+else if(v==='c')clapN.triggerAttackRelease('16n',t,vl);
+else if(v==='h')hatN.triggerAttackRelease('32n',t,vl);
+else if(v==='o')openN.triggerAttackRelease('8n',t,vl);
+}
+});
+const bn=B[pat_.b]?.split(',')||[];
+if(bn[stepIdx]&&bn[stepIdx]!==''){
+const nt=bn[stepIdx];
+const drift=(Math.random()-0.5)*2;
+const freq=Tone.Frequency(nt).toFrequency()*(1+drift/1200);
+bassN.triggerAttackRelease(freq,'8n',baseTime+seq_.b[stepIdx].t/1000,seq_.b[stepIdx].v);
+bassSub.triggerAttackRelease(Tone.Frequency(nt).transpose(-12),'8n',baseTime+seq_.b[stepIdx].t/1000,seq_.b[stepIdx].v*.6);
+}
+const kn=K[pat_.k]||[];
+if(kn[stepIdx]&&kn[stepIdx]!==0){
+const ch=kn[stepIdx];
+if(Array.isArray(ch)){
+keysN.triggerAttackRelease(ch,'8n',baseTime+seq_.keys[stepIdx].t/1000,seq_.keys[stepIdx].v);
+}else if(typeof ch==='string'){
+keysN.triggerAttackRelease(ch,'8n',baseTime+seq_.keys[stepIdx].t/1000,seq_.keys[stepIdx].v);
+}
+}
+const pn=P[pat_.p]||[];
+if(pn[stepIdx]&&pn[stepIdx]!==0){
+const pad=pn[stepIdx];
+if(Array.isArray(pad)){
+padsN.triggerAttackRelease(pad,'2n',baseTime+seq_.p[stepIdx].t/1000,seq_.p[stepIdx].v*0.6);
+}
+}
+}
+
 function scheduleLoop(){
 if(!st_.playing)return;
 const sixteenth=60/aud_.bpm/4;
 st_.idx=(st_.idx+1)%16;
 const swingAmount = (st_.idx % 2 === 1) ? (aud_.swing / 100) * sixteenth * 0.5 : 0;
-const dp=DRUM_PATTERNS[pat_.d]||DRUM_PATTERNS.basic;
 const now=Tone.now()+swingAmount;
 const muteMap={};
 document.querySelectorAll('.track.muted').forEach(el=>{
@@ -442,6 +489,7 @@ if(nm.includes('clap'))muteMap.c=1;
 if(nm.includes('hat'))muteMap.h=1;
 if(nm.includes('open'))muteMap.o=1;
 });
+const dp=DRUM_PATTERNS[pat_.d]||DRUM_PATTERNS.basic;
 ['k','s','c','h','o'].forEach(v=>{
 if(muteMap[v])return;
 const vel=dp[v]?dp[v][st_.idx]:0;
@@ -594,42 +642,8 @@ const buf=await Tone.Offline(async()=>{
 await initAudio();
 for(let i=0;i<bars*16;i++){
 const sixteenth=60/aud_.bpm/4;
-const dp=DRUM_PATTERNS[pat_.d]||DRUM_PATTERNS.basic;
 const now=i*sixteenth;
-['k','s','c','h','o'].forEach(v=>{
-const vel=dp[v]?dp[v][i%16]:0;
-if(vel>0){
-const t=now+seq_[v][i%16].t/1000;
-const vl=vel*seq_[v][i%16].v;
-if(v==='k'){kickN.triggerAttackRelease('C1','8n',t,vl);kickSub.triggerAttackRelease('C0','8n',t,vl*.7);kickClk.triggerAttackRelease('32n',t,vl*0.3);kickBody.triggerAttackRelease('C2','32n',t,vl*.2)}
-else if(v==='s'){snareN.triggerAttackRelease('8n',t,vl);snareRng.triggerAttackRelease('E4','16n',t,vl*0.5)}
-else if(v==='c')clapN.triggerAttackRelease('16n',t,vl);
-else if(v==='h')hatN.triggerAttackRelease('32n',t,vl);
-else if(v==='o')openN.triggerAttackRelease('8n',t,vl);
-}
-});
-const bn=B[pat_.b]?.split(',')||[];
-if(bn[i%16]&&bn[i%16]!==''){
-const nt=bn[i%16];
-bassN.triggerAttackRelease(nt,'8n',now+seq_.b[i%16].t/1000,seq_.b[i%16].v);
-bassSub.triggerAttackRelease(Tone.Frequency(nt).transpose(-12),'8n',now+seq_.b[i%16].t/1000,seq_.b[i%16].v*.6);
-}
-const kn=K[pat_.k]||[];
-if(kn[i%16]&&kn[i%16]!==0){
-const ch=kn[i%16];
-if(Array.isArray(ch)){
-keysN.triggerAttackRelease(ch,'8n',now+seq_.keys[i%16].t/1000,seq_.keys[i%16].v);
-}else if(typeof ch==='string'){
-keysN.triggerAttackRelease(ch,'8n',now+seq_.keys[i%16].t/1000,seq_.keys[i%16].v);
-}
-}
-const pn=P[pat_.p]||[];
-if(pn[i%16]&&pn[i%16]!==0){
-const pad=pn[i%16];
-if(Array.isArray(pad)){
-padsN.triggerAttackRelease(pad,'2n',now+seq_.p[i%16].t/1000,seq_.p[i%16].v*0.6);
-}
-}
+triggerStep(i%16,now);
 const pct=Math.round((i/(bars*16))*100);
 if(i%(bars*2)===0){
 D('progress-pct').textContent=`${pct}%`;
