@@ -3,6 +3,15 @@
 module MASTER
   VERSION = "2.0.0"
   def self.root = File.expand_path("..", __dir__)
+
+  # Safe require helper for optional dependencies
+  def self.safe_require(path, label: nil)
+    require_relative path
+  rescue LoadError, StandardError => e
+    name = label || File.basename(path)
+    warn "MASTER: #{name} unavailable (#{e.message})"
+    Logging.warn("#{name} unavailable", error: e.message) if defined?(Logging)
+  end
 end
 
 require "fileutils"
@@ -30,11 +39,7 @@ require_relative "rubocop_detector"
 
 # Multi-language parsing and NLU (optional)
 %w[../../lib/parser/multi_language ../../lib/nlu ../../lib/conversation].each do |dep|
-  begin
-    require_relative dep
-  rescue LoadError => e
-    raise unless e.path.nil? || e.message.include?(File.basename(dep))
-  end
+  MASTER.safe_require(dep)
 end
 
 # Safe Autonomy Architecture
@@ -85,12 +90,7 @@ require_relative "bridges"
 
 # External services
 %w[weaviate replicate cinematic semantic_cache].each do |mod|
-  begin
-    require_relative mod
-  rescue LoadError, StandardError => e
-    warn "MASTER: #{mod} unavailable (#{e.message})"
-    Logging.warn("#{mod} unavailable", error: e.message) if defined?(Logging)
-  end
+  MASTER.safe_require(mod)
 end
 
 # Agents
@@ -111,11 +111,7 @@ require_relative "quality_gates"
 
 # Web UI
 %w[server].each do |mod|
-  begin
-    require_relative mod
-  rescue LoadError, StandardError => e
-    warn "MASTER: #{mod} unavailable (#{e.message})"
-  end
+  MASTER.safe_require(mod)
 end
 
 # Boot-time self-check
