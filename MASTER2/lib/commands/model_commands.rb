@@ -17,7 +17,7 @@ module MASTER
         if query == "auto" || query == "reset"
           LLM.clear_forced_model!
           LLM.current_model = nil
-          puts "\n  ✓ Reset to auto model selection\n"
+          puts "\n  + Reset to auto model selection\n"
           return
         end
 
@@ -25,7 +25,7 @@ module MASTER
 
         if found
           LLM.force_model!(found.id)
-          puts "\n  ✓ Switched to #{found.id} (forced)\n"
+          puts "\n  + Switched to #{found.id} (forced)\n"
         else
           puts "\n  - No model matching '#{args}' found."
           puts "  Use 'models' to list available models.\n"

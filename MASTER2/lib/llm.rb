@@ -32,7 +32,6 @@ module MASTER
       def force_model!(model_id)
         @forced_model = model_id
         @forced_tier = classify_tier(model_id)
-        @current_model = extract_model_name(model_id)
       end
 
       def clear_forced_model!

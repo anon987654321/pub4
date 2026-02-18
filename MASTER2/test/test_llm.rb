@@ -54,4 +54,32 @@ class TestLLM < Minitest::Test
     assert_equal 0.0, cost, "Cost should be 0.0 (budget tracking removed)"
     assert_equal Float::INFINITY, MASTER::LLM.budget_remaining, "Budget should remain infinity"
   end
+
+  def test_force_model
+    test_model = "deepseek/deepseek-r1"
+    MASTER::LLM.force_model!(test_model)
+    
+    assert MASTER::LLM.model_forced?, "Model should be marked as forced"
+    assert_equal test_model, MASTER::LLM.forced_model, "Forced model should be set"
+    assert_equal :fast, MASTER::LLM.forced_tier, "Forced tier should be classified"
+  end
+
+  def test_clear_forced_model
+    test_model = "deepseek/deepseek-r1"
+    MASTER::LLM.force_model!(test_model)
+    assert MASTER::LLM.model_forced?, "Model should be forced before clearing"
+    
+    MASTER::LLM.clear_forced_model!
+    
+    refute MASTER::LLM.model_forced?, "Model should not be forced after clearing"
+    assert_nil MASTER::LLM.forced_model, "Forced model should be nil"
+    assert_nil MASTER::LLM.forced_tier, "Forced tier should be nil"
+  end
+
+  def test_model_forced_returns_correct_value
+    refute MASTER::LLM.model_forced?, "Model should not be forced initially"
+    
+    MASTER::LLM.force_model!("deepseek/deepseek-r1")
+    assert MASTER::LLM.model_forced?, "Model should be forced after force_model!"
+  end
 end

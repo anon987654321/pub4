@@ -80,12 +80,12 @@ module MASTER
     class Route
       def call(input)
         # Respect forced model override (model command)
-        if LLM.model_forced? && LLM.forced_model
+        if LLM.model_forced?
           model = LLM.forced_model
           tier = LLM.classify_tier(model)
         else
           tier = LLM.tier
-          model = LLM.select_model
+          model = LLM.select_model(tier)
         end
         return Result.err("All models unavailable.") unless model
         Result.ok(input.merge(model: model, tier: tier))
