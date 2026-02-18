@@ -35,7 +35,7 @@ module MASTER
 
           if system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
             status = `git -C #{root} status --porcelain`.strip
-            puts status.empty? ? "introspect: git clean" : "introspect: git #{status.lines.size} uncommitted"
+            puts status.empty? ? "introspect: git status clean" : "introspect: git #{status.lines.size} uncommitted"
           end
 
           if defined?(LLM) && LLM.configured?

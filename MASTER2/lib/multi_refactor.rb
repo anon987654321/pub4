@@ -241,7 +241,8 @@ module MASTER
           # Safety: create backup
           backup = "#{file}.bak"
           File.write(backup, content)
-          File.write(file, result.value[:final])
+          cleaned = TextHygiene.normalize(result.value[:final], filename: file)
+          File.write(file, cleaned)
           enforce_ruby_style!(file)
 
           File.delete(backup) if File.exist?(backup)

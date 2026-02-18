@@ -340,7 +340,8 @@ module MASTER
         puts "\n#{diff}"
 
         Undo.track_edit(path, original)
-        File.write(path, proposed)
+        clean = TextHygiene.normalize(proposed, filename: path)
+        File.write(path, clean)
         enforce_ruby_style!(path)
         puts "  refactor: applied to #{path}"
         puts "  (Use 'undo' command to revert)"
