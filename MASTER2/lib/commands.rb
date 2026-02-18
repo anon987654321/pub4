@@ -52,42 +52,36 @@ module MASTER
 
     # Narrate command handler
     def narrate_command(args)
-      unless Replicate.available?
-        $stderr.puts "narrate: REPLICATE_API_TOKEN not set"
-        return Result.err("REPLICATE_API_TOKEN not set")
-      end
+      return Result.err("REPLICATE_API_TOKEN not set") unless Replicate.available?
+      return Result.err("narration module not loaded") unless defined?(MASTER::Replicate::Narration)
 
-      unless defined?(MASTER::Replicate::Narration)
-        $stderr.puts "narrate: narration module not loaded"
-        return Result.err("narration module not loaded")
-      end
+      selected_segments = parse_segment_selection(args)
+      return selected_segments if selected_segments.err?
 
-      selected_segments = nil
-      if args && args.include?("--segments")
-        parts = args.split("--segments", 2)
-        if parts.size > 1
-          segment_ids = parts[1].strip.split(",").map { |s| s.strip.to_sym }
-          all_segments = MASTER::Replicate::Narration::NARRATION_SEGMENTS
-          selected_segments = all_segments.select { |seg| segment_ids.include?(seg[:id]) }
-          if selected_segments.empty?
-            $stderr.puts "narrate: no matching segments for: #{segment_ids.join(', ')}"
-            return Result.err("no matching segments")
-          end
-        end
-      end
-
-      result = MASTER::Replicate::Narration.generate_narration(segments: selected_segments)
-      if result.ok?
-        result.value[:segments].each do |seg|
-          puts "+ narrate: #{seg[:id]} completed"
-        end
-      else
-        $stderr.puts "- narrate: #{result.error}"
-      end
+      result = MASTER::Replicate::Narration.generate_narration(segments: selected_segments.value)
+      print_narration_results(result) if result.ok?
       result
     rescue StandardError => e
       $stderr.puts "narrate: #{e.message}"
       Result.err(e.message)
+    end
+
+    def parse_segment_selection(args)
+      return Result.ok(nil) unless args&.include?("--segments")
+
+      parts = args.split("--segments", 2)
+      return Result.ok(nil) if parts.size <= 1
+
+      segment_ids = parts[1].strip.split(",").map { |s| s.strip.to_sym }
+      all_segments = MASTER::Replicate::Narration::NARRATION_SEGMENTS
+      selected = all_segments.select { |seg| segment_ids.include?(seg[:id]) }
+
+      return Result.err("no matching segments") if selected.empty?
+      Result.ok(selected)
+    end
+
+    def print_narration_results(result)
+      result.value[:segments].each { |seg| puts "+ narrate: #{seg[:id]} completed" }
     end
 
     # PostPro command handler
