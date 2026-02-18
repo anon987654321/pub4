@@ -155,6 +155,18 @@ module MASTER
           puts "#{status} #{c[:name]}#{c[:detail] ? " (#{c[:detail]})" : ""}"
         end
 
+        # Platform checks
+        if defined?(PlatformCheck)
+          issues = PlatformCheck.diagnose
+          if issues.empty?
+            summary = PlatformCheck.summary
+            puts "#{UI.pastel.green("+")} platform: #{summary}" if summary
+          else
+            puts "#{UI.pastel.red("-")} platform: #{issues.size} issue(s) found"
+            PlatformCheck.print_diagnostics
+          end
+        end
+
         missing_gems = AutoInstall.missing_gems rescue []
         if missing_gems.any?
           puts UI.dim("Installing #{missing_gems.size} missing gems into local bundle path...")
