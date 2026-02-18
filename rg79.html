@@ -88,6 +88,7 @@ footer{border:1px solid var(--brd);background:var(--surf);padding:6px 8px;margin
 <fieldset><legend>Master</legend>
 <label>BPM <output id="bpm-o">94</output></label><input id="bpm" type="range" min="60" max="170" value="94" title="Beats per minute">
 <label>Swing <output id="swing-o">30</output></label><input id="swing" type="range" min="0" max="90" value="30" title="Swing amount">
+<label>Root <output id="root-o">C</output></label><select id="root" title="Root note/key"><option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option></select>
 <label>Drive <output id="drive-o">25</output></label><input id="drive" type="range" min="0" max="100" value="25" title="Analog drive">
 <label>Tape <output id="tape-o">8</output></label><input id="tape" type="range" min="0" max="100" value="8" title="Tape saturation">
 <label>Comp <output id="comp-o">70</output></label><input id="comp" type="range" min="0" max="100" value="70" title="Compression">
@@ -100,6 +101,12 @@ footer{border:1px solid var(--brd);background:var(--surf);padding:6px 8px;margin
 <label>Wobble <output id="wobble-o">5</output></label><input id="wobble" type="range" min="0" max="100" value="5" title="Wow/flutter">
 <label>Vinyl <output id="vinyl-o">15</output></label><input id="vinyl" type="range" min="0" max="100" value="15" title="Vinyl noise">
 <label>Crackle <output id="crackle-o">10</output></label><input id="crackle" type="range" min="0" max="100" value="10" title="Dust/crackle">
+</fieldset>
+<fieldset><legend>Per-Track Swing</legend>
+<label>Drums <output id="drum-swing-o">0</output></label><input id="drum-swing" type="range" min="-50" max="50" value="0" title="Drum swing offset">
+<label>Bass <output id="bass-swing-o">0</output></label><input id="bass-swing" type="range" min="-50" max="50" value="0" title="Bass swing offset">
+<label>Keys <output id="keys-swing-o">0</output></label><input id="keys-swing" type="range" min="-50" max="50" value="0" title="Keys swing offset">
+<label>Pads <output id="pads-swing-o">0</output></label><input id="pads-swing" type="range" min="-50" max="50" value="0" title="Pads swing offset">
 </fieldset>
 </section>
 <section aria-label="Mixer" role="region">
@@ -147,6 +154,17 @@ const tp=(a,t)=>Array.isArray(a)?a:Array(t||16).fill(a);
 const tpP=o=>{let r={};for(let k in o)r[k]=tp(o[k]);return r};
 const debounce=(f,d)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f(...a),d)}};
 const rnd=(n,x)=>n+Math.random()*(x-n);
+const transpose=(note,root)=>{
+const notes=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const rootIdx=notes.indexOf(root)||0;
+if(!note||rootIdx===0)return note;
+const match=note.match(/^([A-G]#?)(\d+)$/);
+if(!match)return note;
+const[,n,oct]=match;
+const nIdx=notes.indexOf(n);
+const newIdx=(nIdx+rootIdx)%12;
+return notes[newIdx]+oct;
+};
 
 const DRUM_PATTERNS={
 'eth-mulatu':tpP({k:[1,0,0,.5,0,0,.7,0,0,1,0,0,.5,0,.6,0],s:[0,0,0,0,.8,0,0,.3,0,0,0,0,.9,0,0,.3],c:[0,0,0,0,0,0,0,0,0,0,.4,0,0,0,0,0],h:[.6,.3,.5,.3,.6,.3,.5,.3,.6,.3,.5,.3,.6,.3,.5,.3],o:[0,0,0,0,0,0,0,.4,0,0,0,0,0,0,0,.3]}),
@@ -244,8 +262,9 @@ const STYLES=[
 ];
 
 let st_={started:false,playing:false,idx:-1,timer:null,layoutIdx:49,heartbeat:null,paintMode:false,tapTimes:[],history:[],historyIdx:-1,midiMap:{},theme:'dark',rafId:null,peakL:0,peakR:0};
-let aud_={bpm:94,swing:30,drive:25,tape:8,comp:70,width:40,reverb:30,delay:20,filter:80,wobble:5,vinyl:15,crackle:10,drift:0.05};
+let aud_={bpm:94,swing:30,drive:25,tape:8,comp:70,width:40,reverb:30,delay:20,filter:80,wobble:5,vinyl:15,crackle:10,drift:0.05,root:'C'};
 let mix_={drum:80,bass:70,keys:60,pads:50,master:75};
+let swing_={drum:0,bass:0,keys:0,pads:0};
 let pat_={d:'basic',b:'basic',k:'basic',p:'none'};
 let seq_={};
 ['k','s','c','h','o'].forEach(t=>{seq_[t]=Array(16).fill(0).map(()=>({v:0.85+rnd(0,0.15),t:rnd(-15,15),p:100,r:1}))});
@@ -311,6 +330,8 @@ D('bpm').value=aud_.bpm;D('bpm-o').textContent=Math.round(aud_.bpm);
 D('swing').value=aud_.swing;D('swing-o').textContent=Math.round(aud_.swing);
 D('drive').value=aud_.drive;D('drive-o').textContent=Math.round(aud_.drive);
 D('tape').value=aud_.tape;D('tape-o').textContent=Math.round(aud_.tape);
+if(D('root'))D('root').value=aud_.root||'C';
+if(D('root-o'))D('root-o').textContent=aud_.root||'C';
 D('drum-pat').value=pat_.d;
 D('bass-pat').value=pat_.b;
 D('keys-pat').value=pat_.k;
@@ -524,26 +545,31 @@ else if(v==='o')openN.triggerAttackRelease('8n',tr,vl);
 });
 const bn=B[pat_.b]?.split(',')||[];
 if(bn[st_.idx]&&bn[st_.idx]!==''){
-const nt=bn[st_.idx];
+const nt=transpose(bn[st_.idx],aud_.root);
 const drift=(Math.random()-0.5)*2;
 const freq=Tone.Frequency(nt).toFrequency()*(1+drift/1200);
-bassN.triggerAttackRelease(freq,'8n',now+seq_.b[st_.idx].t/1000,seq_.b[st_.idx].v);
-bassSub.triggerAttackRelease(Tone.Frequency(nt).transpose(-12),'8n',now+seq_.b[st_.idx].t/1000,seq_.b[st_.idx].v*.6);
+const bassSwingAmt=(st_.idx%2===1)?(swing_.bass/100)*sixteenth*0.5:0;
+bassN.triggerAttackRelease(freq,'8n',now+seq_.b[st_.idx].t/1000+bassSwingAmt,seq_.b[st_.idx].v);
+bassSub.triggerAttackRelease(Tone.Frequency(nt).transpose(-12),'8n',now+seq_.b[st_.idx].t/1000+bassSwingAmt,seq_.b[st_.idx].v*.6);
 }
 const kn=K[pat_.k]||[];
 if(kn[st_.idx]&&kn[st_.idx]!==0){
 const ch=kn[st_.idx];
+const keysSwingAmt=(st_.idx%2===1)?(swing_.keys/100)*sixteenth*0.5:0;
 if(Array.isArray(ch)){
-keysN.triggerAttackRelease(ch,'8n',now+seq_.keys[st_.idx].t/1000,seq_.keys[st_.idx].v);
+const transposed=ch.map(n=>transpose(n,aud_.root));
+keysN.triggerAttackRelease(transposed,'8n',now+seq_.keys[st_.idx].t/1000+keysSwingAmt,seq_.keys[st_.idx].v);
 }else if(typeof ch==='string'){
-keysN.triggerAttackRelease(ch,'8n',now+seq_.keys[st_.idx].t/1000,seq_.keys[st_.idx].v);
+keysN.triggerAttackRelease(transpose(ch,aud_.root),'8n',now+seq_.keys[st_.idx].t/1000+keysSwingAmt,seq_.keys[st_.idx].v);
 }
 }
 const pn=P[pat_.p]||[];
 if(pn[st_.idx]&&pn[st_.idx]!==0){
 const pad=pn[st_.idx];
+const padsSwingAmt=(st_.idx%2===1)?(swing_.pads/100)*sixteenth*0.5:0;
 if(Array.isArray(pad)){
-padsN.triggerAttackRelease(pad,'2n',now+seq_.p[st_.idx].t/1000,seq_.p[st_.idx].v*0.6);
+const transposed=pad.map(n=>transpose(n,aud_.root));
+padsN.triggerAttackRelease(transposed,'2n',now+seq_.p[st_.idx].t/1000+padsSwingAmt,seq_.p[st_.idx].v*0.6);
 }
 }
 updateStepUI();
@@ -728,7 +754,7 @@ D('record').style.background='';
 }
 
 function shareURL(){
-const state={pat:pat_,seq:seq_,aud:aud_,mix:mix_};
+const state={pat:pat_,seq:seq_,aud:aud_,mix:mix_,swing:swing_};
 const encoded=btoa(JSON.stringify(state));
 const url=`${location.origin}${location.pathname}#${encoded}`;
 navigator.clipboard.writeText(url).then(()=>tr('URL copied to clipboard',"k")).catch(()=>tr('Copy failed',"e"));
@@ -742,6 +768,7 @@ if(state.pat)pat_=state.pat;
 if(state.seq)seq_=state.seq;
 if(state.aud)aud_=state.aud;
 if(state.mix)mix_=state.mix;
+if(state.swing)swing_=state.swing;
 syncUIFromState();
 tr('State loaded from URL',"k");
 return true;
@@ -755,7 +782,7 @@ return false;
 
 function autosave(){
 try{
-const state={pat:pat_,seq:seq_,aud:aud_,mix:mix_,history:st_.history.slice(-10)};
+const state={pat:pat_,seq:seq_,aud:aud_,mix:mix_,swing:swing_,history:st_.history.slice(-10)};
 localStorage.setItem('rg79_autosave',JSON.stringify(state));
 }catch(e){}
 }
@@ -769,6 +796,7 @@ if(state.pat)pat_=state.pat;
 if(state.seq)seq_=state.seq;
 if(state.aud)aud_=state.aud;
 if(state.mix)mix_=state.mix;
+if(state.swing)swing_=state.swing;
 if(state.history&&state.history.length>0){
 st_.history=state.history;
 st_.historyIdx=st_.history.length-1;
@@ -944,11 +972,11 @@ const bar=document.createElement('div');
 bar.className='vu-bar';
 vu.appendChild(bar);
 }
-['bpm','swing','drive','tape','comp','width','reverb','delay','filter','wobble','vinyl','crackle','drum-vol','bass-vol','keys-vol','pads-vol','master-vol'].forEach(id=>{
+['bpm','swing','drive','tape','comp','width','reverb','delay','filter','wobble','vinyl','crackle','drum-vol','bass-vol','keys-vol','pads-vol','master-vol','drum-swing','bass-swing','keys-swing','pads-swing'].forEach(id=>{
 const inp=D(id),out=D(`${id}-o`);
 const handler=debounce(()=>{
 const v=parseFloat(inp.value);
-out.textContent=Math.round(v);
+if(out)out.textContent=Math.round(v);
 if(id==='bpm')aud_.bpm=v;
 else if(id==='swing')aud_.swing=v;
 else if(id==='drive')aud_.drive=v;
@@ -966,9 +994,18 @@ else if(id==='bass-vol')mix_.bass=v;
 else if(id==='keys-vol')mix_.keys=v;
 else if(id==='pads-vol')mix_.pads=v;
 else if(id==='master-vol')mix_.master=v;
+else if(id==='drum-swing')swing_.drum=v;
+else if(id==='bass-swing')swing_.bass=v;
+else if(id==='keys-swing')swing_.keys=v;
+else if(id==='pads-swing')swing_.pads=v;
 applyFX();
 },50);
 inp.addEventListener('input',handler,{passive:true});
+});
+D('root').addEventListener('change',e=>{
+aud_.root=e.target.value;
+D('root-o').textContent=aud_.root;
+tr(`root: ${aud_.root}`);
 });
 }
 
