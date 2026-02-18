@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+# Language-specific rules for MASTER2 session management
+# Per ONE_SOURCE axiom: language rules live in data/, not hardcoded in lib/
+
+norwegian:
+  rules:
+    - "Use bokmål, not nynorsk"
+    - "Prefer short sentences"
+    - "Avoid anglicisms when Norwegian words exist"
+    - "Match user's formality level"

@@ -2,8 +2,10 @@
 
 require "securerandom"
 require "json"
+require "yaml"
 require "time"
 require "fileutils"
+require "forwardable"
 
 require_relative "session/memory"
 require_relative "session/capture"
@@ -22,15 +24,16 @@ module MASTER
     AUTOSAVE_INTERVAL = 30  # seconds
     SUPPORTED_LANGUAGES = %i[english norwegian].freeze
 
-    # SUPPORTED_PERSONAS moved to Personas module; kept here for backward compat
-    SUPPORTED_PERSONAS = (defined?(Personas) && Personas.respond_to?(:supported_list) ? Personas.supported_list : %i[ronin lawyer hacker architect sysadmin trader medic]).freeze # deprecated: use Personas::SUPPORTED_PERSONAS
+    # SUPPORTED_PERSONAS - delegate to Personas module
+    SUPPORTED_PERSONAS = Personas.supported_list.freeze
 
-    NORWEGIAN_RULES = [
-      "Use bokmål, not nynorsk",
-      "Prefer short sentences",
-      "Avoid anglicisms when Norwegian words exist",
-      "Match user's formality level"
-    ].freeze
+    # Load language rules from data/language_rules.yml per ONE_SOURCE axiom
+    LANGUAGE_RULES_PATH = File.join(MASTER.root, "data", "language_rules.yml")
+    NORWEGIAN_RULES = if File.exist?(LANGUAGE_RULES_PATH)
+                        YAML.load_file(LANGUAGE_RULES_PATH).dig("norwegian", "rules").freeze
+                      else
+                        [].freeze
+                      end
 
     def initialize(id: nil)
       @id = id || SecureRandom.uuid
@@ -219,21 +222,10 @@ module MASTER
     end
 
     # Delegate language methods to Language module
-    def self.detect_language(text)
-      Language.detect_language(text)
-    end
-
-    def self.norwegian_style_check(text)
-      Language.norwegian_style_check(text)
-    end
-
-    # Delegate persona methods to Persona module
-    def self.set_persona(persona)
-      Persona.set_persona(persona)
-    end
-
-    def self.current_persona
-      Persona.current_persona
+    class << self
+      extend Forwardable
+      def_delegators :Language, :detect_language, :norwegian_style_check
+      def_delegators :Persona, :set_persona, :current_persona
     end
   end
 end
