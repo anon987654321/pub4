@@ -130,6 +130,89 @@ module MASTER
       "!h" => "help",
     }.freeze
 
+    # Command routing table: command => [method_name, returns_handled?]
+    # If returns_handled is true, wraps result in HANDLED constant
+    # If false, returns method result directly (may be Result, :exit, or nil)
+    COMMAND_TABLE = {
+      "help" => [:show_help, true],
+      "?" => [:show_help, true],
+      "hunt" => [:hunt_bugs, true],
+      "critique" => [:critique_code, true],
+      "conflict" => [:detect_conflicts, true],
+      "learn" => [:show_learnings, true],
+      "status" => [:show_status, true],
+      "budget" => [:print_budget, true],
+      "clear" => [:clear_screen, true],
+      "history" => [:print_cost_history, true],
+      "context" => [:print_context_usage, true],
+      "session" => [:manage_session, true],
+      "sessions" => [:print_saved_sessions, true],
+      "forget" => [:undo_last_exchange, true],
+      "undo" => [:undo_last_exchange, true],
+      "summary" => [:print_session_summary, true],
+      "health" => [:print_health, true],
+      "doctor" => [:doctor, true],
+      "bootstrap" => [:bootstrap, true],
+      "history-dig" => [:history_dig, true],
+      "codify" => [:codify, true],
+      "axioms-stats" => [:print_axiom_stats, true],
+      "stats" => [:print_axiom_stats, true],
+      "refactor" => [:autofix, false],
+      "autofix" => [:autofix, false],
+      "chamber" => [:chamber, false],
+      "evolve" => [:evolve, false],
+      "opportunities" => [:opportunities, false],
+      "opps" => [:opportunities, false],
+      "axioms" => [:print_language_axioms, true],
+      "language-axioms" => [:print_language_axioms, true],
+      "self" => [:selftest_full, false],
+      "selftest" => [:selftest_full, false],
+      "self-test" => [:selftest_full, false],
+      "selfrun" => [:selftest_full, false],
+      "self-run" => [:selftest_full, false],
+      "web" => [:start_web_server, true],
+      "server" => [:start_web_server, true],
+      "speak" => [:speak, true],
+      "say" => [:speak, true],
+      "fix" => [:fix_code, true],
+      "browse" => [:browse_url, true],
+      "chat" => [:enter_chat_mode, true],
+      "ideate" => [:ideate, false],
+      "brainstorm" => [:ideate, false],
+      "model" => [:select_model, true],
+      "use" => [:select_model, true],
+      "models" => [:list_models, true],
+      "pattern" => [:select_pattern, true],
+      "mode" => [:select_pattern, true],
+      "patterns" => [:list_patterns, true],
+      "modes" => [:list_patterns, true],
+      "persona" => [:manage_persona, true],
+      "personas" => [:list_personas, true],
+      "workflow" => [:manage_workflow, true],
+      "creative" => [:creative_chamber, true],
+      "scan" => [:scan_code, true],
+      "queue" => [:manage_queue, true],
+      "harvest" => [:harvest_data, true],
+      "capture" => [:session_capture, true],
+      "session-capture" => [:session_capture, true],
+      "review-captures" => [:review_captures, true],
+      "replicate" => [:handle_replicate, true],
+      "repligen" => [:handle_replicate, true],
+      "generate-image" => [:handle_replicate, true],
+      "generate-video" => [:handle_replicate, true],
+      "postpro" => [:handle_postpro, true],
+      "enhance" => [:handle_postpro, true],
+      "upscale" => [:handle_postpro, true],
+      "cache" => [:show_cache_stats, true],
+      "style-guides" => [:style_guides, true],
+      "styleguides" => [:style_guides, true],
+      "multi-refactor" => [:multi_refactor, false],
+      "mrefactor" => [:multi_refactor, false],
+      "shell" => [:start_shell, true],
+      "exit" => [:exit_repl, false],
+      "quit" => [:exit_repl, false],
+    }.freeze
+
     HANDLED = Result.ok({ handled: true }).freeze
 
     def dispatch(input, pipeline:)
@@ -162,7 +245,6 @@ module MASTER
         input = shortcut.is_a?(Symbol) ? @last_command : shortcut
       end
 
-      # Guard against nil after shortcut resolution
       return Result.err("No previous command to repeat.") if input.nil?
 
       input = normalize_intent_input(input)
@@ -331,6 +413,15 @@ module MASTER
         nil
       end
     end
+
+    # Wrapper methods for command table routing
+    def show_help(args) = Help.show(args)
+    def show_status(_args) = Dashboard.new.render
+    def clear_screen(_args) = print("\e[2J\e[H")
+    def handle_replicate(args) = replicate_command(@last_cmd || "replicate", args)
+    def handle_postpro(args) = postpro_command(@last_cmd || "postpro", args)
+    def start_shell(_args) = InteractiveShell.new.run
+    def exit_repl(_args) = :exit
 
     private
 

@@ -190,7 +190,7 @@ module MASTER
       end
 
       # A4: Multi-modal query with file attachments
-      def ask_with_files(prompt, files:, model: nil, **opts)
+      def ask_with_files(prompt, files:, model: nil)
         configure_ruby_llm
         m = model || select_model
         return Result.err("No model available.") unless m
@@ -223,7 +223,7 @@ module MASTER
       end
 
       # A9: Structured output with ruby_llm Schema DSL
-      def ask_structured(prompt, schema_class:, model: nil, **opts)
+      def ask_structured(prompt, schema_class:, model: nil)
         configure_ruby_llm
         m = model || select_model
         c = RubyLLM.chat(model: m).with_schema(schema_class)
@@ -236,12 +236,10 @@ module MASTER
       # A12: Content moderation
       def moderate(text)
         configure_ruby_llm
-        begin
-          result = RubyLLM.moderate(text)
-          Result.ok({ flagged: result.flagged?, categories: result.categories })
-        rescue StandardError => e
-          Result.err(e.message)
-        end
+        result = RubyLLM.moderate(text)
+        Result.ok({ flagged: result.flagged?, categories: result.categories })
+      rescue StandardError => e
+        Result.err(e.message)
       end
 
       # Structured output helper - guarantees valid JSON matching schema
