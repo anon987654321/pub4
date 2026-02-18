@@ -1148,7 +1148,7 @@ tr("RG-79 v17 ready (60 enhancements)","k");
 
 setInterval(autosave,10000);
 
-if('serviceWorker'in navigator){
+if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
 navigator.serviceWorker.register('/sw.js').catch(e=>tr('sw: '+e.message,'e'));
 }
 </script>
