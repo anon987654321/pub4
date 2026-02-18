@@ -10,21 +10,21 @@
   <meta name="description" content="Classic warp tunnel with multiple views. Tilt device for parallax."/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>"/>
   <style>
-    :root{--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--zoom:1}
+    :root{--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--zoom:1;--transition-fast:180ms;--transition-normal:300ms;--z-base:10;--z-ui:90;--z-modal:1000}
     html,body{margin:0;height:100%;background:#000;color:#dcdcdc;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
-    canvas{position:fixed;inset:0;width:100dvw;height:100dvh;display:block;background:#000;touch-action:none;image-rendering:pixelated;transition:filter 140ms ease,transform 120ms ease;transform-origin:center;transform:scale(var(--zoom))}
+    canvas{position:fixed;inset:0;width:100dvw;height:100dvh;display:block;background:#000;touch-action:none;image-rendering:pixelated;transition:filter var(--transition-fast) ease,transform var(--transition-fast) ease;transform-origin:center;transform:scale(var(--zoom));will-change:transform,filter}
     canvas.canvas-inverted{filter:invert(1) hue-rotate(180deg)}
     @keyframes start-ack{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}canvas.start-ack{animation:start-ack 240ms ease-out}
-    h1.city-carousel{position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:95;pointer-events:none;user-select:none;overflow:hidden;margin:0;font-family:Helvetica,sans-serif}
+    h1.city-carousel{position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:calc(var(--z-ui) + 5);pointer-events:none;user-select:none;overflow:hidden;margin:0;font-family:Helvetica,sans-serif}
     .carousel-container{width:100%;height:100%;position:relative;overflow:hidden}
-    .carousel-slide{height:100%;display:flex;align-items:center;justify-content:flex-start;font-weight:700;font-size:clamp(16px,4vw,28px);color:#dcdcdc;letter-spacing:.02em;transition:transform .3s ease,opacity .3s ease;position:absolute;top:0;left:0;width:100%;opacity:0;transform:translateY(100%);white-space:nowrap}
+    .carousel-slide{height:100%;display:flex;align-items:center;justify-content:flex-start;font-weight:700;font-size:clamp(16px,4vw,28px);color:#dcdcdc;letter-spacing:.02em;transition:transform var(--transition-normal) ease,opacity var(--transition-normal) ease;position:absolute;top:0;left:0;width:100%;opacity:0;transform:translateY(100%);white-space:nowrap;will-change:transform,opacity}
     .carousel-slide.active{opacity:1;transform:translateY(0%)}
-    .ui{position:fixed;right:calc(12px + var(--safe-right));bottom:calc(10px + var(--safe-bottom));color:#dcdcdc;font:9px/1.1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;text-transform:uppercase;letter-spacing:.28em;white-space:nowrap;pointer-events:none;user-select:none;text-align:right;max-width:min(72vw,800px);overflow:hidden;text-overflow:ellipsis;z-index:90;opacity:.86;background:#000;padding:0 1px}
+    .ui{position:fixed;right:calc(12px + var(--safe-right));bottom:calc(10px + var(--safe-bottom));color:#dcdcdc;font:9px/1.1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;text-transform:uppercase;letter-spacing:.28em;white-space:nowrap;pointer-events:none;user-select:none;text-align:right;max-width:min(72vw,800px);overflow:hidden;text-overflow:ellipsis;z-index:var(--z-ui);opacity:.86;background:#000;padding:0 1px}
     .ui .label{margin-right:6px}.ui .dots{display:inline-block;width:3ch;text-align:left}.ui-inverted{color:#dcdcdc!important}
-    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.86);color:#9aa;cursor:pointer;user-select:none;z-index:1000;text-align:center;padding:16px;opacity:1;transition:opacity .18s ease}
+    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.86);color:#9aa;cursor:pointer;user-select:none;z-index:var(--z-modal);text-align:center;padding:16px;opacity:1;transition:opacity var(--transition-fast) ease}
     .overlay.ack{opacity:0}.overlay[hidden]{display:none}
-    .overlay h2{margin:0 0 20px 0;font-size:32px;font-weight:300;color:#dcdcdc;transition:transform .18s ease}.overlay h2.clicked{transform:scale(1.06)}
-    .swipe-hint{position:fixed;bottom:calc(50px + var(--safe-bottom));left:50%;transform:translateX(-50%);color:#9aa;font-size:16px;opacity:0;transition:opacity .5s ease;z-index:99}
+    .overlay h2{margin:0 0 20px 0;font-size:32px;font-weight:300;color:#dcdcdc;transition:transform var(--transition-fast) ease}.overlay h2.clicked{transform:scale(1.06)}
+    .swipe-hint{position:fixed;bottom:calc(50px + var(--safe-bottom));left:50%;transform:translateX(-50%);color:#9aa;font-size:16px;opacity:0;transition:opacity var(--transition-normal) ease;z-index:var(--z-ui)}
     .swipe-hint.show{opacity:1}
     :focus-visible{outline:2px solid #dcdcdc;outline-offset:2px}*,*::before,*::after{box-sizing:border-box}
     @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -70,12 +70,23 @@
     // - DEADLINES: YouTube API timeout (10s), frame throttling, emergency brake
     // ============================================================================
 
+    // Global error handlers for FAIL_VISIBLY axiom
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      // Don't prevent default to allow browser's error reporting
+    });
+
+    window.addEventListener('error', (event) => {
+      console.error('Global error:', event.error || event.message);
+    });
+
     // Environment & Performance Config - Single Source of Truth
-    const IN_SANDBOX = false;
-    const FADE_MS = 3500;
-    const START_FADE_IN = true;
+    // Browser requirements: Chrome 108+, Safari 15.4+, Firefox 110+ (for dvh/dvw units)
+    const IN_SANDBOX = false;  // Set true when running in sandboxed iframe
+    const FADE_MS = 3500;      // Crossfade duration between tracks
+    const START_FADE_IN = true; // Fade in first track
     const MAX_TRACK_MS = 40000; // 40 seconds max per track (for podcast/sample mode)
-    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const DPR = Math.min(2, window.devicePixelRatio || 1); // Cap DPR for performance
     const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || 
                      (navigator.deviceMemory && navigator.deviceMemory <= 2);
 
@@ -95,7 +106,11 @@
       };
       
       updateDots();
-      try { clearInterval(window.__RB_DOTS_IV); } catch {}
+      try { 
+        clearInterval(window.__RB_DOTS_IV); 
+      } catch (e) { 
+        // Safe to ignore: interval may not exist on first load
+      }
       window.__RB_DOTS_IV = setInterval(updateDots, 600);
     })();
 

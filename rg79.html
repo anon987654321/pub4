@@ -1,13 +1,18 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#111">
+<meta name="description" content="RG-79 analog beat machine with restored synth engine. Single HTML file sequencer.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎹</text></svg>">
 <title>RG-79 v18</title>
 <script src="assets/tone-14.8.49.min.js"></script>
 <style>
-:root{--bg:#111;--surf:#1a1a1a;--surf2:#222;--brd:#333;--txt:#eee;--mut:#999;--acc:#d79a42;--dng:#c85a5a}
-[data-theme="light"]{--bg:#f5f5f5;--surf:#fff;--surf2:#e0e0e0;--brd:#ccc;--txt:#222;--mut:#666;--acc:#d79a42;--dng:#c85a5a}
+:root{--bg:#111;--surf:#1a1a1a;--surf2:#222;--brd:#333;--txt:#eee;--mut:#aaa;--acc:#d79a42;--dng:#c85a5a;--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--transition-fast:180ms;--transition-normal:300ms;--z-base:10;--z-ui:90;--z-modal:1000}
+[data-theme="light"]{--bg:#f5f5f5;--surf:#fff;--surf2:#e0e0e0;--brd:#ccc;--txt:#222;--mut:#888;--acc:#d79a42;--dng:#c85a5a}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.35 system-ui,sans-serif}body{padding:8px}
 header,main,section,aside,footer,article,nav{display:block}
 header{border:1px solid var(--brd);background:var(--surf);padding:8px;contain:layout style paint}
@@ -17,7 +22,7 @@ p{margin:4px 0;color:var(--mut);font-size:12px;text-transform:uppercase;letter-s
 main{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 section,aside,article{border:1px solid var(--brd);background:var(--surf);padding:8px;contain:layout style paint}
 nav{display:flex;flex-wrap:wrap;gap:6px}
-button{border:1px solid var(--brd);background:var(--surf2);color:var(--txt);min-height:60px;min-width:120px;padding:10px 16px;font:700 14px/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;transition:transform 0.05s}
+button{border:1px solid var(--brd);background:var(--surf2);color:var(--txt);min-height:60px;min-width:120px;padding:10px 16px;font:700 14px/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;transition:transform var(--transition-fast);touch-action:manipulation}
 button:active{transform:scale(0.98)}
 button[data-kind="primary"]{background:var(--acc);color:#201305;border-color:var(--acc)}
 button[data-kind="danger"]{border-color:var(--dng);color:#ffd6d6}
@@ -35,39 +40,47 @@ article[aria-label="Sequencer"]{grid-column:1/-1}
 .track.muted{opacity:0.4}
 .track-name{min-width:80px;font-size:11px;text-transform:uppercase;color:var(--mut)}
 .steps-grid{display:grid;grid-template-columns:repeat(16,minmax(22px,1fr));gap:2px;flex:1}
-.step{min-height:36px;background:var(--bg);border:1px solid var(--brd);cursor:pointer;position:relative}
+.step{min-height:44px;background:var(--bg);border:1px solid var(--brd);cursor:pointer;position:relative;touch-action:manipulation}
 .step[aria-pressed="true"]{background:var(--acc);border-color:var(--acc)}
-.step.playing{box-shadow:inset 0 0 0 2px #fff0c8;animation:pulse 0.15s ease-out}
+.step.playing{box-shadow:inset 0 0 0 2px #fff0c8;animation:pulse var(--transition-fast) ease-out;will-change:transform}
 .step[data-prob="25"]::after,.step[data-prob="50"]::after,.step[data-prob="75"]::after{content:attr(data-prob)'%';font-size:8px;position:absolute;top:2px;right:2px;opacity:0.6}
 .step[data-ratchet]::before{content:'';position:absolute;bottom:2px;left:2px;width:4px;height:4px;background:var(--txt);opacity:0.6}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
 .track-ctrl{display:flex;gap:2px}
-.track-btn{min-width:32px;min-height:32px;padding:4px;font-size:10px}
+.track-btn{min-width:44px;min-height:44px;padding:4px;font-size:10px;touch-action:manipulation}
 .styles{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
-.style-chip{padding:6px 12px;background:var(--surf2);border:1px solid var(--brd);cursor:pointer;font-size:11px;text-transform:uppercase;transition:all 0.15s}
+.style-chip{padding:6px 12px;background:var(--surf2);border:1px solid var(--brd);cursor:pointer;font-size:11px;text-transform:uppercase;transition:all var(--transition-fast);touch-action:manipulation;will-change:transform}
 .style-chip:hover{transform:translateY(-2px)}
 .style-chip.active{background:var(--acc);color:#201305;border-color:var(--acc)}
-aside{max-height:200px;overflow:auto;background:#0e0f11;font:11px/1.4 ui-monospace,monospace;color:#cfd6dd}
+aside{max-height:200px;overflow:auto;background:#0e0f11;font:11px/1.4 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:#cfd6dd}
 aside b{color:#f3be72}
-footer{border:1px solid var(--brd);background:var(--surf);padding:6px 8px;margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:0.05em}
-.tooltip{position:fixed;background:rgba(0,0,0,0.9);color:#fff;padding:4px 8px;font-size:11px;border-radius:4px;pointer-events:none;z-index:1000;display:none}
-.ctx-menu{position:fixed;background:var(--surf);border:1px solid var(--brd);padding:4px;font-size:12px;z-index:1001;display:none}
+footer{border:1px solid var(--brd);background:var(--surf);padding:6px 8px;margin-top:8px;font:11px/1.4 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:var(--mut);text-transform:uppercase;letter-spacing:0.05em}
+.tooltip{position:fixed;background:rgba(0,0,0,0.9);color:#fff;padding:4px 8px;font-size:11px;border-radius:4px;pointer-events:none;z-index:var(--z-modal);display:none}
+.ctx-menu{position:fixed;background:var(--surf);border:1px solid var(--brd);padding:4px;font-size:12px;z-index:calc(var(--z-modal) + 1);display:none}
 .ctx-menu button{min-width:auto;min-height:auto;padding:6px 12px;width:100%;text-align:left}
 .vu-meter{display:flex;gap:2px;height:8px;margin-top:4px}
 .vu-bar{flex:1;background:var(--bg);border:1px solid var(--brd)}
 .vu-bar.active{background:var(--acc)}
 #progress-wrap{display:none;margin-top:8px;padding:8px;background:var(--surf2);border:1px solid var(--brd)}
 #progress-bar{width:100%;height:20px;background:var(--bg);border:1px solid var(--brd);position:relative;overflow:hidden}
-#progress-fill{height:100%;background:var(--acc);width:0;transition:width 0.1s}
+#progress-fill{height:100%;background:var(--acc);width:0;transition:width var(--transition-fast)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+*,*::before,*::after{box-sizing:border-box}
+.welcome-overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(17,17,17,0.96);z-index:var(--z-modal)}
+.welcome-dialog{text-align:center;border:1px solid var(--brd);background:var(--surf);padding:24px;max-width:400px}
+.welcome-dialog h2{font-size:24px;margin:0 0 12px}
+.welcome-dialog p{margin:0 0 16px}
+.welcome-dialog button{min-height:60px;min-width:200px;padding:10px 24px;font:700 16px system-ui;border:1px solid var(--acc);background:var(--acc);color:#201305;cursor:pointer}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media(max-width:920px){main{grid-template-columns:1fr}.steps-grid{grid-template-columns:repeat(8,minmax(22px,1fr))}}
 </style>
 </head>
 <body>
-<div id="welcome" style="position:fixed;inset:0;display:grid;place-items:center;background:rgba(17,17,17,0.96);z-index:1000">
-<div style="text-align:center;border:1px solid var(--brd);background:var(--surf);padding:24px;max-width:400px">
-<h2 style="font-size:24px;margin:0 0 12px">RG-79</h2>
-<p style="margin:0 0 16px">Analog beat machine — tap to initialize audio engine</p>
-<button id="welcome-start" data-kind="primary" style="min-height:60px;min-width:200px;padding:10px 24px;font:700 16px system-ui;border:1px solid var(--acc);background:var(--acc);color:#201305;cursor:pointer">Start Engine</button>
+<div id="welcome" class="welcome-overlay">
+<div class="welcome-dialog">
+<h2>RG-79</h2>
+<p>Analog beat machine — tap to initialize audio engine</p>
+<button id="welcome-start" data-kind="primary">Start Engine</button>
 </div>
 </div>
 <header>
@@ -145,6 +158,17 @@ footer{border:1px solid var(--brd);background:var(--surf);padding:6px 8px;margin
 <div class="ctx-menu" id="ctx-menu"></div>
 <script>
 "use strict";
+
+// Global error handlers for FAIL_VISIBLY axiom (MASTER2)
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason);
+  // Don't prevent default to allow browser's error reporting
+});
+
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error || event.message);
+});
+
 const INSTANCE_KEY="rg79_inst",INSTANCE_TTL=8e3,selfId=`${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const bc=("BroadcastChannel"in window)?new BroadcastChannel("rg79"):null;
 const D=s=>document.getElementById(s),DP=s=>D(s).parentElement;
