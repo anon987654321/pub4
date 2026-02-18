@@ -69,10 +69,26 @@ begin
   require "bundler/setup"
 rescue LoadError, StandardError => e
   $stderr.puts "MASTER2 boot: preparing local dependencies..."
+  
+  # Run platform diagnostics before retrying
+  require_relative "../lib/platform_check"
+  if defined?(MASTER::PlatformCheck)
+    issues = MASTER::PlatformCheck.diagnose
+    unless issues.empty?
+      $stderr.puts "MASTER2 boot: platform issues detected"
+      MASTER::PlatformCheck.print_diagnostics
+    end
+  end
+  
   ok = system("bundle", "install", "--quiet", exception: false)
   unless ok
     $stderr.puts "MASTER2 boot: bundle install failed: #{e.message}"
-    $stderr.puts "MASTER2 boot: check network access and OpenRouter key setup, then re-run: bin/master"
+    if defined?(MASTER::PlatformCheck) && MASTER::PlatformCheck.openbsd?
+      $stderr.puts "MASTER2 boot: OpenBSD detected. Common fixes:"
+      MASTER::PlatformCheck.print_diagnostics
+    else
+      $stderr.puts "MASTER2 boot: check network access and re-run: bin/master"
+    end
     exit 1
   end
   retry
