@@ -24,12 +24,12 @@ module MASTER
 
     @last_command = nil
 
-    # RepLigen command handler
-    def repligen_command(cmd, args)
+    # Replicate command handler (repligen kept as alias)
+    def replicate_command(cmd, args)
       case cmd
-      when "repligen", "generate-image"
-        return puts "Usage: repligen <prompt>" if args.nil? || args.empty?
-        result = RepligenBridge.generate_image(prompt: args)
+      when "replicate", "repligen", "generate-image"
+        return puts "Usage: replicate <prompt>" if args.nil? || args.empty?
+        result = ReplicateBridge.generate_image(prompt: args)
         if result.ok?
           puts "+ image: #{result.value[:urls]&.first || result.value}"
         else
@@ -37,7 +37,7 @@ module MASTER
         end
       when "generate-video"
         return puts "Usage: generate-video <prompt>" if args.nil? || args.empty?
-        result = RepligenBridge.generate_video(prompt: args)
+        result = ReplicateBridge.generate_video(prompt: args)
         if result.ok?
           puts "+ video: #{result.value[:urls]&.first || result.value}"
         else
@@ -45,7 +45,7 @@ module MASTER
         end
       end
     rescue StandardError => e
-      $stderr.puts "repligen: #{e.message}"
+      $stderr.puts "replicate: #{e.message}"
     end
 
     # PostPro command handler
@@ -102,7 +102,7 @@ module MASTER
 
     # Fuzzy match for command suggestions (moved from Onboarding)
     def suggest_command(input)
-      commands = Help::COMMANDS.keys.map(&:to_s)
+      commands = CommandRegistry.primary_commands
       word = input.strip.split.first&.downcase
       return nil unless word && word.length > 2
 
@@ -216,6 +216,18 @@ module MASTER
       when "health"
         print_health
         HANDLED
+      when "doctor"
+        doctor(args)
+        HANDLED
+      when "bootstrap"
+        bootstrap(args)
+        HANDLED
+      when "history-dig"
+        history_dig(args)
+        HANDLED
+      when "codify"
+        codify(args)
+        HANDLED
       when "axioms-stats", "stats"
         print_axiom_stats
         HANDLED
@@ -288,8 +300,8 @@ module MASTER
       when "review-captures"
         review_captures
         HANDLED
-      when "repligen", "generate-image", "generate-video"
-        repligen_command(cmd, args)
+      when "replicate", "repligen", "generate-image", "generate-video"
+        replicate_command(cmd, args)
         HANDLED
       when "postpro", "enhance", "upscale"
         postpro_command(cmd, args)

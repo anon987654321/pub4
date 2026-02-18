@@ -6,40 +6,7 @@ module MASTER
     module Help
       extend self
 
-      COMMANDS = {
-        # Queries
-        ask: { desc: "Ask the LLM a question", usage: "ask <question>", group: :query }.freeze,
-        refactor: { desc: "Refactor a file with 6-phase analysis", usage: "refactor <file>", group: :query }.freeze,
-        chamber: { desc: "Multi-model deliberation", usage: "chamber <file>", group: :query }.freeze,
-        evolve: { desc: "Self-improvement cycle", usage: "evolve [path]", group: :query }.freeze,
-        opportunities: { desc: "Find improvements", usage: "opportunities [path]", group: :query }.freeze,
-        # Analysis
-        hunt: { desc: "8-phase bug analysis", usage: "hunt <file>", group: :analysis }.freeze,
-        critique: { desc: "Constitutional validation", usage: "critique <file>", group: :analysis }.freeze,
-        learn: { desc: "Show matching learned patterns", usage: "learn <file>", group: :analysis }.freeze,
-        conflict: { desc: "Detect principle conflicts", usage: "conflict", group: :analysis }.freeze,
-        scan: { desc: "Scan for code smells", usage: "scan [path]", group: :analysis }.freeze,
-        # Session
-        session: { desc: "Session management", usage: "session [new|save|load]", group: :session }.freeze,
-        sessions: { desc: "List saved sessions", usage: "sessions", group: :session }.freeze,
-        forget: { desc: "Undo last exchange", usage: "forget", group: :session }.freeze,
-        summary: { desc: "Conversation summary", usage: "summary", group: :session }.freeze,
-        capture: { desc: "Capture session insights", usage: "capture", group: :session }.freeze,
-        'review-captures': { desc: "Review captured insights", usage: "review-captures", group: :session }.freeze,
-        # System
-        status: { desc: "System status", usage: "status", group: :system }.freeze,
-        budget: { desc: "Budget remaining", usage: "budget", group: :system }.freeze,
-        context: { desc: "Context window usage", usage: "context", group: :system }.freeze,
-        history: { desc: "Cost history", usage: "history", group: :system }.freeze,
-        health: { desc: "Health check", usage: "health", group: :system }.freeze,
-        'style-guides': { desc: "List/sync style guides", usage: "style-guides [sync]", group: :system }.freeze,
-        # Utility
-        help: { desc: "Show this help", usage: "help [command]", group: :util }.freeze,
-        speak: { desc: "Text-to-speech", usage: "speak <text>", group: :util }.freeze,
-        shell: { desc: "Interactive shell", usage: "shell", group: :util }.freeze,
-        clear: { desc: "Clear screen", usage: "clear", group: :util }.freeze,
-        exit: { desc: "Exit MASTER", usage: "exit", group: :util }.freeze,
-      }.freeze
+      COMMANDS = MASTER::CommandRegistry.help_commands.freeze
 
       TIPS = [
         "Tab for autocomplete",

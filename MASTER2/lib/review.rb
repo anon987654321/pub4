@@ -25,11 +25,13 @@ require_relative "review/fixer"
 require_relative "review/enforcer"
 require_relative "review/axiom_stats"
 require_relative "review/constitution"
+require_relative "review/design_codex"
 
 module MASTER
   Constitution = Review::Constitution
   AxiomStats = Review::AxiomStats
   LanguageAxioms = Review::LanguageAxioms
+  DesignCodex = Review::DesignCodex
   QualityStandards = Review::QualityStandards # deprecated: use Review::QualityStandards
   CodeReview = Review::Scanner # deprecated: use Review::Scanner
 end

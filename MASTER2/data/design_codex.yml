@@ -1,0 +1,137 @@
+version: 1
+name: "Design + Refactor Codex"
+description: "Programmatic rules for typography, layout, visual hierarchy, and code craftsmanship."
+
+typography:
+  line_length:
+    min_ch: 45
+    max_ch: 75
+    ideal_ch: 66
+    mobile_min_ch: 35
+    mobile_max_ch: 50
+  line_height:
+    body:
+      min: 1.4
+      max: 1.6
+      preferred: 1.5
+    headings:
+      min: 1.0
+      max: 1.2
+    coupling_rule:
+      condition: "line_length_ch > 60"
+      required_min_line_height: 1.5
+  type_scale:
+    default_ratio: 1.25
+    alternatives:
+      - 1.2
+      - 1.333
+      - 1.618
+  letter_spacing:
+    all_caps:
+      min_em: 0.05
+      max_em: 0.15
+    heading_min_em: -0.02
+    body_lowercase_recommended: 0.0
+  contrast:
+    normal_text_min: 4.5
+    large_text_min: 3.0
+  limits:
+    max_font_families: 2
+    max_font_weights: 3
+    max_distinct_font_sizes: 8
+  mobile:
+    min_input_font_px: 16
+    min_touch_target_px: 44
+    recommended_touch_target_px: 48
+
+layout:
+  grid:
+    default_columns: 12
+    base_spacing_unit_px: 8
+    spacing_scale_px: [4, 8, 16, 24, 32, 48, 64]
+  ratio:
+    golden: 1.618
+    preferred_two_column_split: [62, 38]
+  white_space:
+    rule: "internal <= external"
+  reading_patterns:
+    - "f_pattern"
+    - "z_pattern"
+    - "gutenberg_diagram"
+  anti_patterns:
+    - "long centered body text"
+    - "justified text without hyphenation"
+    - "critical CTA outside thumb-safe zone"
+
+visual_hierarchy:
+  size_ratios:
+    min_step: 1.2
+    h1_body_min: 2.0
+    h1_body_max: 3.0
+    h2_body_min: 1.5
+    h2_body_max: 2.0
+    h3_body_min: 1.25
+    h3_body_max: 1.5
+  weight_contrast:
+    min_delta: 200
+
+tufte:
+  data_ink_ratio_target: 0.9
+  lie_factor_target: 1.0
+  chartjunk_forbidden:
+    - "gratuitous_3d"
+    - "decorative_backgrounds"
+    - "heavy_non_data_grids"
+    - "moire_patterns"
+
+code_craft:
+  naming:
+    classes: "CamelCase nouns"
+    methods: "snake_case verbs"
+    predicates: "question_mark_suffix"
+    mutators: "bang_suffix_when_dangerous"
+    constants: "SCREAMING_SNAKE_CASE"
+  functions:
+    max_lines: 20
+    ideal_lines: 5
+    max_params: 3
+    single_responsibility: true
+    no_side_effects_for_queries: true
+    command_query_separation: true
+    avoid_flag_arguments: true
+  clean_code:
+    boy_scout_rule: true
+    dry: true
+    guard_clauses_preferred: true
+    law_of_demeter: true
+    no_null_return_preferred: true
+  refactoring:
+    behavior_preserving: true
+    two_hats_required: true
+    small_steps_only: true
+    tests_required_before_refactor: true
+    separate_refactor_from_feature_work: true
+  smells:
+    long_method: { threshold: 15, preferred_fix: "extract_method" }
+    long_parameter_list: { threshold: 3, preferred_fix: "introduce_parameter_object" }
+    deep_nesting: { threshold: 3, preferred_fix: "guard_clauses" }
+    duplicate_code: { similarity_threshold: 0.8, preferred_fix: "extract_shared_unit" }
+    feature_envy: { preferred_fix: "move_method" }
+    repeated_switch: { preferred_fix: "replace_with_polymorphism" }
+
+automation:
+  css_detection:
+    flag_if:
+      - "line_length_ch < 45 or line_length_ch > 75"
+      - "line_height < 1.4 for body text"
+      - "all_caps && (letter_spacing_em < 0.05 || letter_spacing_em > 0.15)"
+      - "font_size_px < 16 for body/input text"
+      - "contrast_ratio < 4.5 for normal text"
+      - "font_families_count > 2"
+      - "font_weights_count > 3"
+      - "touch_target_px < 44"
+  output_profiles:
+    concise:
+      detail: "summary_only"
+    audit:
+      detail: "include_violation_evidence_and_fix_hints"

@@ -109,6 +109,58 @@ module MASTER
           }
         end
 
+        # Lightweight CSS rule checks for automated design audits.
+        def analyze_css(css_text)
+          return { issues: [], grade: "N/A" } if css_text.to_s.strip.empty?
+
+          codex = defined?(DesignCodex) ? DesignCodex.section(:typography) : {}
+          min_body_lh = codex.dig(:line_height, :body, :min) || 1.4
+          min_font_px = codex.dig(:mobile, :min_input_font_px) || 16
+          caps_min_ls = codex.dig(:letter_spacing, :all_caps, :min_em) || 0.05
+          caps_max_ls = codex.dig(:letter_spacing, :all_caps, :max_em) || 0.15
+          max_families = codex.dig(:limits, :max_font_families) || 2
+          max_weights = codex.dig(:limits, :max_font_weights) || 3
+
+          issues = []
+          body_lh_hits = css_text.scan(/line-height:\s*([0-9.]+)\s*;?/i).flatten.map(&:to_f)
+          if body_lh_hits.any? && body_lh_hits.min < min_body_lh
+            issues << { check: :line_height, severity: :major, message: "line-height below #{min_body_lh}" }
+          end
+
+          font_sizes = css_text.scan(/font-size:\s*([0-9.]+)px\s*;?/i).flatten.map(&:to_f)
+          if font_sizes.any? && font_sizes.min < min_font_px
+            issues << { check: :font_size, severity: :major, message: "font-size below #{min_font_px}px" }
+          end
+
+          all_caps_selectors = css_text.scan(/([^{]+)\{[^}]*text-transform:\s*uppercase[^}]*\}/im).flatten
+          all_caps_selectors.each do |sel|
+            block = css_text[/#{Regexp.escape(sel)}\{([^}]*)\}/im, 1].to_s
+            ls = block[/letter-spacing:\s*([\-0-9.]+)em/i, 1]
+            next if ls && ls.to_f >= caps_min_ls && ls.to_f <= caps_max_ls
+
+            issues << { check: :all_caps_letter_spacing, severity: :minor, message: "ALL CAPS missing letter-spacing #{caps_min_ls}-#{caps_max_ls}em" }
+          end
+
+          family_values = css_text.scan(/font-family:\s*([^;]+);/i).flatten
+          family_count = family_values.flat_map { |v| v.split(",") }.map { |s| s.strip.gsub(/["']/, "") }.reject(&:empty?).uniq.size
+          if family_count > max_families
+            issues << { check: :font_family_count, severity: :minor, message: "font families #{family_count} > #{max_families}" }
+          end
+
+          weight_count = css_text.scan(/font-weight:\s*([0-9]+)/i).flatten.uniq.size
+          if weight_count > max_weights
+            issues << { check: :font_weight_count, severity: :minor, message: "font weights #{weight_count} > #{max_weights}" }
+          end
+
+          grade = case issues.size
+                  when 0 then "A"
+                  when 1..2 then "B"
+                  when 3..4 then "C"
+                  else "D"
+                  end
+          { issues: issues, grade: grade }
+        end
+
         private
 
         def aggregate_code(path)

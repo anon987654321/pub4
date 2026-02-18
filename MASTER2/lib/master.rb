@@ -15,6 +15,7 @@ require_relative "syntax_validator"
 require_relative "paths"
 require_relative "single_instance"
 require_relative "text_hygiene"
+require_relative "command_registry"
 require_relative "auto_install"
 require_relative "boot"
 

@@ -4,10 +4,10 @@ require_relative 'repligen/pipelines'
 
 module MASTER
   module Bridges
-    # Repligen Bridge - Interface to AI media generation pipeline
+    # Replicate Bridge - Interface to AI media generation pipeline
     # Based on repligen.rb WILD_CHAIN model catalog
     # Provides access to image, video, and enhancement models
-    module RepligenBridge
+    module ReplicateBridge
       extend self
 
       # Model catalog - delegates to Replicate::MODELS for DRY
@@ -45,17 +45,17 @@ module MASTER
 
       # Get all models for a category
       def models_for(category)
-        RepligenBridge.model_catalog[category.to_sym] || []
+        ReplicateBridge.model_catalog[category.to_sym] || []
       end
 
       # List all available categories
       def categories
-        RepligenBridge.model_catalog.keys
+        ReplicateBridge.model_catalog.keys
       end
 
       # Generate image using Replicate API
       def generate_image(prompt:, model: nil)
-        model_id = model || RepligenBridge.model_catalog[:image_gen].first[:model]
+        model_id = model || ReplicateBridge.model_catalog[:image_gen].first[:model]
 
         return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
 
@@ -64,7 +64,7 @@ module MASTER
 
       # Generate video using Replicate API
       def generate_video(prompt:, model: nil)
-        model_id = model || RepligenBridge.model_catalog[:video_gen].first[:model]
+        model_id = model || ReplicateBridge.model_catalog[:video_gen].first[:model]
 
         return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
 
@@ -73,7 +73,7 @@ module MASTER
 
       # Enhance image using upscaling models
       def enhance_image(image_url:, model: nil)
-        model_id = model || RepligenBridge.model_catalog[:enhance].first[:model]
+        model_id = model || ReplicateBridge.model_catalog[:enhance].first[:model]
 
         return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
 
@@ -82,7 +82,7 @@ module MASTER
 
       # Get model info
       def model_info(model_id)
-        RepligenBridge.model_catalog.each do |category, models|
+        ReplicateBridge.model_catalog.each do |category, models|
           models.each do |m|
             return { category: category, **m } if m[:model] == model_id
           end
@@ -93,7 +93,7 @@ module MASTER
       # List all models
       def all_models
         result = []
-        RepligenBridge.model_catalog.each do |category, models|
+        ReplicateBridge.model_catalog.each do |category, models|
           models.each do |m|
             result << { category: category, **m }
           end
@@ -112,8 +112,7 @@ module MASTER
         chain = []
         steps.times do
           category = [:image_gen, :enhance, :video_gen].sample(random: rng)
-          models = RepligenBridge.model_catalog[category]
-
+          models = ReplicateBridge.model_catalog[category]
           next if models.nil? || models.empty?
 
           model = models.sample(random: rng)
@@ -128,5 +127,8 @@ module MASTER
         Result.ok(chain)
       end
     end
+
+    # Backward compatibility
+    RepligenBridge = ReplicateBridge unless const_defined?(:RepligenBridge, false)
   end
 end

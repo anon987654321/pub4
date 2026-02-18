@@ -4,9 +4,7 @@ module MASTER
   module Autocomplete
     extend self
 
-    COMMANDS = %w[help status budget clear history refactor chamber evolve speak exit quit ask scan
-                  model models pattern persona personas session schedule heartbeat policy phase
-                  selftest fix harvest repligen postpro browse queue].freeze
+    COMMANDS = MASTER::CommandRegistry.autocomplete_commands.freeze
 
     def complete(partial, context: nil)
       completions = []

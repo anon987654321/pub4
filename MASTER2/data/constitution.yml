@@ -55,6 +55,128 @@ communication:
     - Evidence-based claims
     - Actionable information
 
+preserve:
+  boot_message:
+    format: "OpenBSD dmesg style startup lines"
+    reason: "Diagnostic output is signal, not noise"
+    never: "Collapse to a cryptic single line"
+  diagnostic_output:
+    rule: "Keep structured multi-line diagnostics when useful"
+    never: "Hide actionable context behind terse slogans"
+  help_text:
+    rule: "Help remains scannable and complete"
+    minimum_info: ["command syntax", "brief description", "one concrete example"]
+  spinner_feedback:
+    rule: "Progress indicators should show motion and current status"
+  polish_rules:
+    - "Streamline means remove redundancy, not information."
+    - "Minimize token waste, not operational diagnostics."
+
+structural_analysis:
+  config_hierarchy:
+    - question: "Are top-level keys semantically grouped?"
+      fix: "Group by governance, quality, workflow, platform."
+    - question: "Is there duplicate policy across files?"
+      fix: "Keep one source of truth and reference it."
+  code_hierarchy:
+    - question: "Are related classes/modules colocated?"
+      fix: "Namespace by domain and reduce cross-file drift."
+    - question: "Are modules doing one job?"
+      fix: "Split responsibilities when a module grows broad."
+  bloaters:
+    - smell: "long_method"
+      check: "> 20 lines or deep nesting"
+      fix: "Extract focused helper methods."
+    - smell: "god_class"
+      check: "> 300 lines or many unrelated methods"
+      fix: "Extract classes by concern."
+    - smell: "long_parameter_list"
+      check: "> 4 parameters"
+      fix: "Use keyword args or parameter objects."
+  dispensables:
+    - smell: "dead_code"
+      fix: "Delete it."
+    - smell: "duplicate_code"
+      fix: "Extract shared helper after duplication proves stable."
+  architecture:
+    - smell: "cyclic_dependency"
+      fix: "Apply dependency inversion at boundaries."
+    - smell: "scattered_functionality"
+      fix: "Colocate behavior with ownership."
+  simulated_execution:
+    - scenario: "empty_input"
+      cases: ["nil", "empty string", "empty array", "false"]
+    - scenario: "boundary_values"
+      cases: ["very long string", "unicode input", "large files"]
+    - scenario: "malformed_input"
+      cases: ["invalid JSON", "truncated file", "injection attempt"]
+
+generation_templates:
+  policy:
+    - "Minimal structure, maximal readability."
+    - "No extra dependencies unless essential."
+    - "Prefer explicit naming over shorthand tricks."
+  html:
+    rules: ["semantic HTML5", "avoid wrapper-heavy markup", "minimal attributes"]
+    template: |
+      <!doctype html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>%{title}</title>
+        <link rel="stylesheet" href="style.css">
+      </head>
+      <body>
+        <header><h1>%{title}</h1></header>
+        <main>%{content}</main>
+      </body>
+      </html>
+  css:
+    rules: ["custom properties", "mobile-first", "reduced visual noise"]
+    template: |
+      :root {
+        --bg: #f6f7f9;
+        --fg: #111318;
+        --muted: #5a6270;
+        --accent: #1570ef;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+      }
+  ruby:
+    rules: ["frozen string literal", "guard clauses", "small methods"]
+    template: |
+      # frozen_string_literal: true
+
+      module %{name}
+        module_function
+
+        def call(input)
+          return if input.nil?
+          process(input)
+        end
+
+        def process(data)
+          data
+        end
+      end
+  zsh:
+    rules: ["#!/usr/bin/env zsh", "set -euo pipefail", "quote expansions"]
+    template: |
+      #!/usr/bin/env zsh
+      set -euo pipefail
+
+      main() {
+        %{body}
+      }
+
+      main "$@"
+
 quality_gates:
   metz_strict:
     description: "For lib/ files - Sandi Metz rules"

@@ -1,470 +1,721 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <meta name="mobile-web-app-capable" content="yes"/>
-  <meta name="color-scheme" content="dark"/>
-  <title>Warp Tunnel</title>
-  <meta name="theme-color" content="#000000"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="description" content="RG-69 browser beat machine">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>RG-69</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
   <style>
-    :root{
-      --safe-top:env(safe-area-inset-top,0px);
-      --safe-right:env(safe-area-inset-right,0px);
-      --safe-bottom:env(safe-area-inset-bottom,0px);
-      --safe-left:env(safe-area-inset-left,0px);
+    :root {
+      --bg: #121212;
+      --surface: #1b1b1b;
+      --surface-2: #242424;
+      --border: #343434;
+      --text: #e8e8e8;
+      --muted: #a1a1a1;
+      --accent: #d99742;
+      --accent-2: #f3b55a;
+      --danger: #c74848;
+      --ok: #58b26a;
+      --hit: #3f3528;
+      --play: #57442a;
+      --font: "IBM Plex Mono", ui-monospace, monospace;
+      --headline: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
     }
-    
-    html,body{
-      margin:0;
-      height:100%;
-      background:#000;
-      color:#dcdcdc;
-      font:16px/1.5 Helvetica,Arial,sans-serif;
-      overflow:hidden;
-      touch-action:none;
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100%;
     }
-    
-    canvas{
-      position:fixed;
-      inset:0;
-      width:100dvw;
-      height:100dvh;
-      display:block;
-      background:#000;
-      touch-action:none;
-      image-rendering:pixelated;
-      image-rendering:crisp-edges;
+
+    body {
+      padding: 30px;
+      line-height: 1.6;
     }
-    
-    #status{
-      position:fixed;
-      top:calc(10px + var(--safe-top));
-      left:calc(10px + var(--safe-left));
-      z-index:95;
-      pointer-events:none;
-      user-select:none;
-      font-weight:700;
-      font-size:clamp(16px,4vw,28px);
-      color:#dcdcdc;
-      letter-spacing:.02em;
-      text-transform:uppercase;
+
+    .shell {
+      max-width: 1260px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
     }
-    
-    #ui{
-      position:fixed;
-      right:calc(12px + var(--safe-right));
-      bottom:calc(10px + var(--safe-bottom));
-      color:#dcdcdc;
-      font:9px/1.1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-      text-transform:uppercase;
-      letter-spacing:.28em;
-      white-space:nowrap;
-      pointer-events:none;
-      user-select:none;
-      text-align:right;
-      opacity:.86;
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
     }
-    
-    #ui .dots{
-      display:inline-block;
-      width:3ch;
-      text-align:left;
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
     }
-    
-    #overlay{
-      position:fixed;
-      inset:0;
-      display:grid;
-      place-items:center;
-      background:rgba(0,0,0,.9);
-      color:#9aa;
-      cursor:pointer;
-      user-select:none;
-      z-index:1000;
-      text-align:center;
-      padding:16px;
-      opacity:1;
-      transition:opacity .2s ease;
+
+    .title {
+      margin-bottom: 12px;
     }
-    
-    #overlay.ack{opacity:0;pointer-events:none;}
-    #overlay[hidden]{display:none;}
-    
-    #overlay h2{
-      margin:0;
-      font-size:32px;
-      font-weight:300;
-      color:#dcdcdc;
-      font-family:Helvetica,Arial,sans-serif;
+
+    .hero-title {
+      margin: 0;
+      font-family: var(--headline);
+      font-size: clamp(42px, 9vw, 94px);
+      letter-spacing: 0.04em;
+      line-height: 0.92;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .hero-title .tm {
+      font-size: 0.18em;
+      vertical-align: super;
+      margin-left: 0.22em;
+      opacity: 0.78;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--text);
+      font: 600 14px/1 var(--font);
+      min-height: 66px;
+      min-width: 166px;
+      padding: 18px 22px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: 0.12s ease;
+    }
+
+    .btn:hover { border-color: var(--accent); }
+    .btn:active { transform: translateY(1px); }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #18120b;
+      border-color: var(--accent);
+    }
+
+    .btn.danger {
+      background: color-mix(in srgb, var(--danger) 20%, var(--surface-2));
+      border-color: var(--danger);
+    }
+
+    .transport {
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .knob-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-top: 12px;
+    }
+
+    .knob {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .knob label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .knob .value {
+      font-size: 13px;
+      margin-top: 8px;
+      color: var(--accent-2);
+      font-weight: 600;
+    }
+
+    .knob input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 20px;
+      background: #303030;
+      outline: none;
+    }
+
+    .knob input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #2b1e0f;
+      cursor: pointer;
+    }
+
+    .knob input[type="range"]::-moz-range-thumb {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #2b1e0f;
+      cursor: pointer;
+    }
+
+    .grid-wrap {
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .track {
+      margin-bottom: 12px;
+    }
+
+    .track-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .track-name {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(16, minmax(28px, 1fr));
+      gap: 6px;
+      min-width: 620px;
+    }
+
+    .step {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      border-radius: 8px;
+      min-height: 58px;
+      cursor: pointer;
+      transition: 0.08s ease;
+    }
+
+    .step.hit { background: var(--hit); }
+    .step.on { background: var(--accent); border-color: var(--accent); }
+    .step.playing { box-shadow: inset 0 0 0 2px var(--play); }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .wf {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .wf b {
+      display: block;
+      color: var(--text);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 10px;
+    }
+
+    .terminal-head {
+      margin-top: 10px;
+      margin-bottom: 6px;
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .terminal {
+      min-height: 150px;
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #0f0f0f;
+      padding: 8px 10px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #c8d0d4;
+    }
+
+    .terminal .entry {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .terminal .entry b {
+      color: var(--accent-2);
+      font-weight: 500;
+    }
+
+    .welcome {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(18, 18, 18, 0.96);
+      z-index: 20;
+    }
+
+    .welcome-card {
+      width: min(560px, 94vw);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      padding: 24px;
+      text-align: center;
+      display: grid;
+      gap: 14px;
+    }
+
+    .welcome-card h2 {
+      margin: 0;
+      font-family: var(--headline);
+      font-size: 40px;
+      letter-spacing: 0.06em;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .welcome-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .btn { min-width: 132px; min-height: 58px; }
+      .steps { min-width: 560px; }
     }
   </style>
 </head>
 <body>
-  <div id="status">WARP</div>
-  <div id="ui"><span id="ui-label">Tunnel</span><span class="dots" id="ui-dots"></span></div>
-  <div id="overlay" role="dialog" aria-modal="true"><h2>Tap to start</h2></div>
-  <canvas id="canvas"></canvas>
+  <div class="welcome" id="welcome">
+    <div class="welcome-card">
+      <h2>RG-69</h2>
+      <p>Human-only instrument server. One instance only. Hard reset on every start.</p>
+      <button class="btn primary" id="startGate">Start Engine</button>
+      <p style="font-size:11px">This is an instrument system surface, not a chat UI.</p>
+    </div>
+  </div>
+
+  <div class="shell">
+    <section class="panel">
+      <div class="title">
+        <h1 class="hero-title">RG-69 <span class="tm">TM</span></h1>
+      </div>
+      <div class="status" id="status">idle</div>
+      <div class="row transport">
+        <button class="btn primary" id="playBtn">Play</button>
+        <button class="btn" id="stopBtn">Stop</button>
+        <button class="btn" id="randomBtn">Randomize</button>
+        <button class="btn danger" id="panicBtn">Kill Residual</button>
+      </div>
+      <div class="terminal-head">RG-69 System Trace</div>
+      <div class="terminal" id="log" aria-live="polite"></div>
+    </section>
+
+    <section class="panel">
+      <div class="title"><h1 style="font-size:14px">Performance Knobs</h1></div>
+      <div class="knob-grid">
+        <div class="knob">
+          <label for="bpm">BPM</label>
+          <input id="bpm" type="range" min="60" max="170" value="96">
+          <div class="value" id="bpmVal">96</div>
+        </div>
+        <div class="knob">
+          <label for="swing">Swing</label>
+          <input id="swing" type="range" min="0" max="80" value="28">
+          <div class="value" id="swingVal">28%</div>
+        </div>
+        <div class="knob">
+          <label for="drive">Drive</label>
+          <input id="drive" type="range" min="0" max="100" value="22">
+          <div class="value" id="driveVal">22%</div>
+        </div>
+        <div class="knob">
+          <label for="room">Room</label>
+          <input id="room" type="range" min="0" max="100" value="20">
+          <div class="value" id="roomVal">20%</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="title"><h1 style="font-size:14px">Step Grid</h1></div>
+      <div class="grid-wrap" id="sequencer"></div>
+    </section>
+
+    <section class="panel">
+      <div class="title"><h1 style="font-size:14px">Workflow</h1></div>
+      <div class="workflow">
+        <div class="wf"><b>Discover</b>Read current state and stale locks.</div>
+        <div class="wf"><b>Analyze</b>Check singleton ownership and transport state.</div>
+        <div class="wf"><b>Design</b>Apply clear controls and spacing hierarchy.</div>
+        <div class="wf"><b>Implement</b>Schedule playback with strict sequencing.</div>
+        <div class="wf"><b>Validate</b>Ensure one instance, no residual audio loops.</div>
+        <div class="wf"><b>Deliver</b>Stable interaction with low cognitive load.</div>
+      </div>
+    </section>
+  </div>
 
   <script>
     "use strict";
-    
-    // Canvas setup
-    const canvas=document.getElementById('canvas');
-    const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true});
-    const statusEl=document.getElementById('status');
-    const uiLabel=document.getElementById('ui-label');
-    const uiDots=document.getElementById('ui-dots');
-    const overlay=document.getElementById('overlay');
-    
-    let W,H,S;
-    const resize=()=>{
-      W=window.innerWidth;
-      H=window.innerHeight;
-      S=Math.min(W,H)/100;
-      canvas.width=W;
-      canvas.height=H;
-      ctx.imageSmoothingEnabled=false;
-    };
-    window.addEventListener('resize',resize);
-    resize();
-    
-    // Audio system - FIXED: proper context handling
-    let audioCtx,analyser,dataArray;
-    let audioLevel=0;
-    let audioStarted=false;
-    
-    const initAudio=async()=>{
-      if(audioStarted)return;
-      audioStarted=true;
-      
-      try{
-        audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-        
-        // Resume if suspended (iOS requirement)
-        if(audioCtx.state==='suspended'){
-          await audioCtx.resume();
-        }
-        
-        const stream=await navigator.mediaDevices.getUserMedia({
-          audio:{
-            echoCancellation:false,
-            noiseSuppression:false,
-            autoGainControl:false,
-            sampleRate:44100
-          }
-        });
-        
-        const source=audioCtx.createMediaStreamSource(stream);
-        analyser=audioCtx.createAnalyser();
-        analyser.fftSize=64; // Smaller = faster
-        analyser.smoothingTimeConstant=0.3;
-        source.connect(analyser);
-        dataArray=new Uint8Array(analyser.frequencyBinCount);
-        
-        statusEl.textContent='ACTIVE';
-      }catch(e){
-        console.log('Audio init:',e);
-        statusEl.textContent='SILENT';
-      }
-    };
-    
-    // Motion sensors
-    let tiltX=0,tiltY=0;
-    const initMotion=()=>{
-      if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
-        DeviceOrientationEvent.requestPermission().then(r=>{
-          if(r==='granted'){
-            window.addEventListener('deviceorientation',e=>{
-              tiltX=(e.gamma||0)/45;
-              tiltY=(e.beta||0)/45;
-            },true);
-          }
-        });
-      }else{
-        window.addEventListener('deviceorientation',e=>{
-          tiltX=(e.gamma||0)/45;
-          tiltY=(e.beta||0)/45;
-        },true);
-      }
-    };
-    
-    // Touch/Mouse
-    let mouseX=0,mouseY=0,mouseDown=false;
-    
-    const handleMove=e=>{
-      const p=e.touches?e.touches[0]:e;
-      mouseX=((p.clientX/W)*2-1);
-      mouseY=((p.clientY/H)*2-1);
-    };
-    
-    window.addEventListener('mousemove',handleMove);
-    window.addEventListener('touchmove',handleMove,{passive:true});
-    
-    canvas.addEventListener('mousedown',()=>{mouseDown=true;});
-    canvas.addEventListener('mouseup',()=>{mouseDown=false;});
-    canvas.addEventListener('touchstart',()=>{mouseDown=true;},{passive:true});
-    canvas.addEventListener('touchend',()=>{mouseDown=false;},{passive:true});
-    
-    // Color palettes
-    const palettes=[
-      {name:'VOID',bg:'#000',dim:'#111',mid:'#333',bright:'#666',active:'#999',pulse:'#fff'},
-      {name:'PLASMA',bg:'#0a0014',dim:'#1a0033',mid:'#4a0088',bright:'#8800ff',active:'#cc00ff',pulse:'#ff00ff'},
-      {name:'CYAN',bg:'#000a0a',dim:'#001a1a',mid:'#004a4a',bright:'#008888',active:'#00cccc',pulse:'#00ffff'},
-      {name:'AMBER',bg:'#140a00',dim:'#331a00',mid:'#884a00',bright:'#cc8800',active:'#ffaa00',pulse:'#ffff00'},
-      {name:'FOREST',bg:'#0a1400',dim:'#1a3300',mid:'#4a8800',bright:'#88cc00',active:'#aaff00',pulse:'#ccff00'},
-      {name:'BLOOD',bg:'#140000',dim:'#330000',mid:'#880000',bright:'#cc0000',active:'#ff0000',pulse:'#ff6666'},
-      {name:'GOLD',bg:'#141000',dim:'#332200',mid:'#886600',bright:'#ccaa00',active:'#ffcc00',pulse:'#ffff66'},
-      {name:'ICE',bg:'#001014',dim:'#002233',mid:'#004466',bright:'#0088aa',active:'#00ccff',pulse:'#66ffff'},
-      {name:'RUST',bg:'#140800',dim:'#331a0a',mid:'#884422',bright:'#cc6633',active:'#ff8844',pulse:'#ffaa66'},
-      {name:'SMOKE',bg:'#0a0a0a',dim:'#1a1a1a',mid:'#4a4a4a',bright:'#888888',active:'#bbbbbb',pulse:'#eeeeee'}
-    ];
-    
-    let currentPalette=0;
-    
-    const setPalette=idx=>{
-      currentPalette=((idx%palettes.length)+palettes.length)%palettes.length;
-      uiLabel.textContent=palettes[currentPalette].name;
-    };
-    
-    // Arrow key palette switching
-    window.addEventListener('keydown',e=>{
-      if(e.key==='ArrowLeft')setPalette(currentPalette-1);
-      if(e.key==='ArrowRight')setPalette(currentPalette+1);
+
+    const MASTER_AXIOMS = Object.freeze({
+      clarity_over_cleverness: true,
+      one_instance_policy: true,
+      preserve_then_improve: true,
+      progressive_disclosure: true,
+      strong_feedback: true
     });
-    
-    // WARP TUNNEL SYSTEM
-    const N=1200; // Particle count - reduced for performance
-    const particles=[];
-    const stars=[];
-    
-    // Initialize stars
-    for(let i=0;i<100;i++){
-      stars.push({
-        x:(Math.random()-0.5)*W*3,
-        y:(Math.random()-0.5)*H*3,
-        z:Math.random()*400-200,
-        speed:2+Math.random()*3
+
+    const INSTANCE_KEY = "rg69_active_instance";
+    const INSTANCE_TTL_MS = 7000;
+    const instanceId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const channel = ("BroadcastChannel" in window) ? new BroadcastChannel("rg69-instance") : null;
+
+    const tracks = ["kick", "snare", "hat", "bass"];
+    const stepsPerBar = 16;
+    const state = {
+      started: false,
+      playing: false,
+      currentStep: -1,
+      eventId: null,
+      engine: null,
+      seq: {
+        kick: [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
+        snare:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+        hat:  [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        bass: [1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0]
+      }
+    };
+
+    const refs = {
+      welcome: document.getElementById("welcome"),
+      startGate: document.getElementById("startGate"),
+      status: document.getElementById("status"),
+      log: document.getElementById("log"),
+      playBtn: document.getElementById("playBtn"),
+      stopBtn: document.getElementById("stopBtn"),
+      randomBtn: document.getElementById("randomBtn"),
+      panicBtn: document.getElementById("panicBtn"),
+      bpm: document.getElementById("bpm"),
+      swing: document.getElementById("swing"),
+      drive: document.getElementById("drive"),
+      room: document.getElementById("room"),
+      bpmVal: document.getElementById("bpmVal"),
+      swingVal: document.getElementById("swingVal"),
+      driveVal: document.getElementById("driveVal"),
+      roomVal: document.getElementById("roomVal"),
+      sequencer: document.getElementById("sequencer")
+    };
+
+    function log(message, level = "info") {
+      const ts = new Date().toISOString().replace("T", " ").slice(11, 19);
+      const row = document.createElement("span");
+      row.className = `entry ${level}`;
+      row.innerHTML = `<b>${ts}</b> ${String(message)}`;
+      refs.log.appendChild(row);
+      while (refs.log.children.length > 80) refs.log.removeChild(refs.log.firstChild);
+      refs.log.scrollTop = refs.log.scrollHeight;
+    }
+
+    function setStatus(value) {
+      refs.status.textContent = value;
+    }
+
+    function ownerRecord() {
+      return { id: instanceId, ts: Date.now() };
+    }
+
+    function readOwner() {
+      try {
+        return JSON.parse(localStorage.getItem(INSTANCE_KEY) || "null");
+      } catch {
+        return null;
+      }
+    }
+
+    function claimInstance() {
+      const owner = readOwner();
+      if (owner && owner.id !== instanceId && (Date.now() - owner.ts) < INSTANCE_TTL_MS) {
+        channel?.postMessage({ type: "remote-stop", to: owner.id, from: instanceId });
+      }
+      localStorage.setItem(INSTANCE_KEY, JSON.stringify(ownerRecord()));
+      channel?.postMessage({ type: "claim", from: instanceId });
+    }
+
+    function heartbeatOwner() {
+      localStorage.setItem(INSTANCE_KEY, JSON.stringify(ownerRecord()));
+    }
+
+    function releaseInstance() {
+      const owner = readOwner();
+      if (owner && owner.id === instanceId) localStorage.removeItem(INSTANCE_KEY);
+    }
+
+    function stopPlayback(reason = "stopped") {
+      if (state.eventId !== null) {
+        Tone.Transport.clear(state.eventId);
+        state.eventId = null;
+      }
+      Tone.Transport.stop();
+      Tone.Transport.cancel();
+      state.playing = false;
+      state.currentStep = -1;
+      paintSteps();
+      setStatus(reason);
+    }
+
+    function hardResetAudio() {
+      try { stopPlayback("resetting"); } catch {}
+      if (state.engine) {
+        try { state.engine.kick.dispose(); } catch {}
+        try { state.engine.snare.dispose(); } catch {}
+        try { state.engine.hat.dispose(); } catch {}
+        try { state.engine.bass.dispose(); } catch {}
+        try { state.engine.drive.dispose(); } catch {}
+        try { state.engine.room.dispose(); } catch {}
+        try { state.engine.master.dispose(); } catch {}
+      }
+      state.engine = null;
+      log("Residual nodes killed.");
+    }
+
+    async function bootEngine() {
+      claimInstance();
+      hardResetAudio();
+
+      await Tone.start();
+      Tone.Transport.bpm.value = Number(refs.bpm.value);
+      Tone.Transport.swing = Number(refs.swing.value) / 100;
+
+      const master = new Tone.Gain(0.8).toDestination();
+      const drive = new Tone.Distortion(Number(refs.drive.value) / 100).connect(master);
+      const room = new Tone.FeedbackDelay("8n", Number(refs.room.value) / 100).connect(master);
+
+      const kick = new Tone.Player("https://tonejs.github.io/audio/drum-samples/CR78/kick.mp3").connect(drive);
+      const snare = new Tone.Player("https://tonejs.github.io/audio/drum-samples/CR78/snare.mp3").connect(drive);
+      const hat = new Tone.Player("https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3").connect(drive);
+
+      const bass = new Tone.Sampler({
+        urls: { C2: "C2.mp3", E2: "E2.mp3", G2: "G2.mp3" },
+        baseUrl: "https://tonejs.github.io/audio/salamander/"
+      }).connect(room);
+
+      const keys = new Tone.Sampler({
+        urls: { C3: "C3.mp3", E3: "E3.mp3", G3: "G3.mp3", C4: "C4.mp3" },
+        baseUrl: "https://tonejs.github.io/audio/salamander/"
+      }).connect(room);
+
+      await Tone.loaded();
+      state.engine = { master, drive, room, kick, snare, hat, bass, keys };
+      state.started = true;
+      setStatus("ready");
+      log("Engine booted with singleton lock and sampled instruments.", "ok");
+    }
+
+    function scheduleTransport() {
+      if (!state.engine) return;
+      if (state.eventId !== null) Tone.Transport.clear(state.eventId);
+
+      let i = 0;
+      state.eventId = Tone.Transport.scheduleRepeat((time) => {
+        const step = i % stepsPerBar;
+        state.currentStep = step;
+
+        if (state.seq.kick[step]) state.engine.kick.start(time);
+        if (state.seq.snare[step]) state.engine.snare.start(time);
+        if (state.seq.hat[step]) state.engine.hat.start(time);
+        if (state.seq.bass[step]) state.engine.bass.triggerAttackRelease("C2", "8n", time, 0.7);
+        if (step % 4 === 0) state.engine.keys.triggerAttackRelease(["C3", "E3", "G3"], "4n", time, 0.45);
+
+        paintSteps();
+        i += 1;
+      }, "16n");
+    }
+
+    async function startPlayback() {
+      if (!state.started) await bootEngine();
+      claimInstance();
+      scheduleTransport();
+      Tone.Transport.start("+0.02");
+      state.playing = true;
+      setStatus("playing");
+      log("Playing. One RG-69 instance enforced.");
+    }
+
+    function randomize() {
+      tracks.forEach((track) => {
+        state.seq[track] = state.seq[track].map(() => (Math.random() > 0.62 ? 1 : 0));
+      });
+      paintSteps();
+      log("Pattern randomized.");
+    }
+
+    function paintSteps() {
+      document.querySelectorAll(".step").forEach((el) => {
+        const track = el.dataset.track;
+        const step = Number(el.dataset.step);
+        el.classList.toggle("on", Boolean(state.seq[track][step]));
+        el.classList.toggle("hit", !state.seq[track][step]);
+        el.classList.toggle("playing", step === state.currentStep);
       });
     }
-    
-    class Particle{
-      constructor(i){
-        this.i=i;
-        this.reset();
-      }
-      
-      reset(){
-        // Ring distribution in XY plane
-        const angle=(this.i/N)*Math.PI*8; // Multiple rings
-        const radius=20+Math.random()*60;
-        
-        this.ox=Math.cos(angle)*radius;
-        this.oy=Math.sin(angle)*radius;
-        this.oz=(Math.random()-0.5)*200;
-        
-        this.px=this.ox;
-        this.py=this.oy;
-        this.pz=this.oz;
-        
-        this.vz=-2-Math.random()*2; // Moving toward viewer
-        
-        this.size=1+Math.random()*2;
-      }
-      
-      update(){
-        const pal=palettes[currentPalette];
-        
-        // Move in Z (toward viewer)
-        this.pz+=this.vz*(1+audioLevel*2);
-        
-        // Reset when past viewer
-        if(this.pz>100){
-          this.pz=-200;
-          const angle=(this.i/N)*Math.PI*8;
-          const radius=20+Math.random()*60;
-          this.ox=Math.cos(angle)*radius;
-          this.oy=Math.sin(angle)*radius;
+
+    function buildGrid() {
+      refs.sequencer.innerHTML = "";
+      tracks.forEach((track) => {
+        const row = document.createElement("div");
+        row.className = "track";
+
+        const head = document.createElement("div");
+        head.className = "track-head";
+        head.innerHTML = `<div class="track-name">${track}</div>`;
+        row.appendChild(head);
+
+        const steps = document.createElement("div");
+        steps.className = "steps";
+
+        for (let i = 0; i < stepsPerBar; i += 1) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "step";
+          btn.dataset.track = track;
+          btn.dataset.step = String(i);
+          btn.addEventListener("click", () => {
+            state.seq[track][i] = state.seq[track][i] ? 0 : 1;
+            paintSteps();
+          });
+          steps.appendChild(btn);
         }
-        
-        // Audio reactivity - expand rings
-        const expand=1+audioLevel*1.5;
-        this.px=this.ox*expand;
-        this.py=this.oy*expand;
-        
-        // Tilt parallax
-        this.px+=tiltX*30*(this.pz/100);
-        this.py+=tiltY*30*(this.pz/100);
-        
-        // Mouse influence
-        this.px+=mouseX*20;
-        this.py+=mouseY*20;
-      }
-      
-      project(){
-        const fl=150;
-        if(this.pz<=-fl)return null;
-        
-        const scale=fl/(fl+this.pz);
-        return{
-          x:Math.floor(W/2+this.px*S*scale),
-          y:Math.floor(H/2+this.py*S*scale),
-          z:this.pz,
-          scale:scale,
-          size:Math.max(1,Math.floor(this.size*scale*S))
-        };
-      }
+
+        row.appendChild(steps);
+        refs.sequencer.appendChild(row);
+      });
+
+      paintSteps();
     }
-    
-    // Initialize particles
-    for(let i=0;i<N;i++)particles.push(new Particle(i));
-    
-    // Dots animation
-    const dotsPattern=[0,1,2,3,2,1];
-    let dotsIdx=0;
-    setInterval(()=>{
-      uiDots.textContent='.'.repeat(dotsPattern[dotsIdx]);
-      dotsIdx=(dotsIdx+1)%dotsPattern.length;
-    },400);
-    
-    // Start
-    overlay.addEventListener('click',()=>{
-      overlay.classList.add('ack');
-      initAudio();
-      initMotion();
-      setTimeout(()=>overlay.hidden=true,300);
+
+    function bindKnobs() {
+      const map = [
+        [refs.bpm, refs.bpmVal, (v) => `${v}`],
+        [refs.swing, refs.swingVal, (v) => `${v}%`],
+        [refs.drive, refs.driveVal, (v) => `${v}%`],
+        [refs.room, refs.roomVal, (v) => `${v}%`]
+      ];
+
+      map.forEach(([input, out, fmt]) => {
+        input.addEventListener("input", () => {
+          const v = Number(input.value);
+          out.textContent = fmt(v);
+          if (!state.engine) return;
+          if (input === refs.bpm) Tone.Transport.bpm.value = v;
+          if (input === refs.swing) Tone.Transport.swing = v / 100;
+          if (input === refs.drive) state.engine.drive.distortion = v / 100;
+          if (input === refs.room) state.engine.room.feedback.value = v / 100;
+        });
+      });
+    }
+
+    function installInstanceGuards() {
+      window.addEventListener("beforeunload", releaseInstance);
+
+      channel?.addEventListener("message", (ev) => {
+        const msg = ev.data || {};
+        if (msg.type === "claim" && msg.from !== instanceId && state.playing) {
+          stopPlayback("stopped by other tab");
+          log("Another RG-69 tab claimed playback. This tab stopped.");
+        }
+        if (msg.type === "remote-stop" && msg.to === instanceId) {
+          stopPlayback("remote stop");
+          hardResetAudio();
+        }
+      });
+
+      window.addEventListener("storage", (ev) => {
+        if (ev.key !== INSTANCE_KEY) return;
+        const owner = readOwner();
+        if (owner && owner.id !== instanceId && state.playing) {
+          stopPlayback("instance handoff");
+        }
+      });
+
+      setInterval(() => {
+        const owner = readOwner();
+        if (state.playing && (!owner || owner.id === instanceId)) heartbeatOwner();
+        if (state.playing && owner && owner.id !== instanceId && (Date.now() - owner.ts) < INSTANCE_TTL_MS) {
+          stopPlayback("lost ownership");
+        }
+      }, 2000);
+    }
+
+    refs.startGate.addEventListener("click", async () => {
+      refs.welcome.style.display = "none";
+      await bootEngine();
     });
-    
-    // Draw functions
-    const drawLine=(x1,y1,x2,y2,col,alpha)=>{
-      ctx.globalAlpha=alpha;
-      ctx.strokeStyle=col;
-      ctx.lineWidth=1;
-      ctx.beginPath();
-      ctx.moveTo(x1,y1);
-      ctx.lineTo(x2,y2);
-      ctx.stroke();
-    };
-    
-    const drawPlus=(x,y,size,col)=>{
-      ctx.globalAlpha=1;
-      ctx.fillStyle=col;
-      const h=Math.floor(size/2);
-      ctx.fillRect(x,y-h,1,size);
-      ctx.fillRect(x-h,y,size,1);
-    };
-    
-    // Animation
-    let t=0;
-    const animate=()=>{
-      requestAnimationFrame(animate);
-      t+=0.016;
-      
-      // Get audio data
-      if(analyser&&audioCtx&&audioCtx.state==='running'){
-        analyser.getByteFrequencyData(dataArray);
-        // Focus on bass for reactivity
-        let bass=0;
-        for(let i=0;i<8;i++)bass+=dataArray[i];
-        audioLevel=bass/8/255;
-      }else{
-        audioLevel*=0.95;
+
+    refs.playBtn.addEventListener("click", async () => {
+      if (state.playing) {
+        stopPlayback("paused");
+      } else {
+        await startPlayback();
       }
-      
-      const pal=palettes[currentPalette];
-      
-      // Clear with fade for trails
-      ctx.fillStyle=pal.bg;
-      ctx.fillRect(0,0,W,H);
-      
-      // Draw stars (background)
-      ctx.fillStyle=pal.dim;
-      for(const s of stars){
-        s.z+=s.speed;
-        if(s.z>200)s.z=-200;
-        
-        const fl=300;
-        const scale=fl/(fl+s.z);
-        const x=Math.floor(W/2+s.x*scale);
-        const y=Math.floor(H/2+s.y*scale);
-        
-        if(x>=0&&x<W&&y>=0&&y<H){
-          ctx.globalAlpha=0.3*scale;
-          ctx.fillRect(x,y,1,1);
-        }
-      }
-      
-      // Update and draw particles
-      const proj=[];
-      for(const p of particles){
-        p.update();
-        const pr=p.project();
-        if(pr)proj.push(pr);
-      }
-      
-      // Sort by Z (back to front)
-      proj.sort((a,b)=>b.z-a.z);
-      
-      // Draw connections (wireframe effect)
-      ctx.globalAlpha=0.15;
-      ctx.strokeStyle=pal.mid;
-      for(let i=0;i<proj.length-1;i++){
-        const p1=proj[i];
-        const p2=proj[i+1];
-        // Connect nearby particles
-        const dx=p1.x-p2.x;
-        const dy=p1.y-p2.y;
-        const dist=Math.sqrt(dx*dx+dy*dy);
-        if(dist<50&&p1.z>0&&p2.z>0){
-          ctx.beginPath();
-          ctx.moveTo(p1.x,p1.y);
-          ctx.lineTo(p2.x,p2.y);
-          ctx.stroke();
-        }
-      }
-      
-      // Draw particles
-      for(const p of proj){
-        // Color based on depth
-        let col;
-        if(p.z>50)col=pal.dim;
-        else if(p.z>0)col=pal.mid;
-        else if(p.z>-50)col=pal.bright;
-        else if(p.z>-100)col=pal.active;
-        else col=pal.pulse;
-        
-        // Audio pulse makes bright
-        if(audioLevel>0.5&&p.z>-50)col=pal.pulse;
-        
-        drawPlus(p.x,p.y,p.size,col);
-      }
-      
-      // Center orb (the "singularity")
-      const orbSize=10+audioLevel*20;
-      const orbPulse=Math.sin(t*3)*2*audioLevel;
-      
-      ctx.globalAlpha=0.8;
-      ctx.fillStyle=pal.active;
-      const cx=Math.floor(W/2);
-      const cy=Math.floor(H/2);
-      
-      // Draw orb as plus
-      drawPlus(cx,cy,orbSize+orbPulse,pal.pulse);
-      
-      // Glow
-      ctx.globalAlpha=0.2;
-      ctx.fillStyle=pal.bright;
-      for(let r=2;r<6;r++){
-        ctx.fillRect(cx-r,cy-r,r*2,r*2);
-      }
-      
-      ctx.globalAlpha=1;
-    };
-    
-    // Random startup palette
-    setPalette(Math.floor(Math.random()*palettes.length));
-    
-    animate();
+    });
+
+    refs.stopBtn.addEventListener("click", () => stopPlayback("stopped"));
+    refs.randomBtn.addEventListener("click", randomize);
+    refs.panicBtn.addEventListener("click", () => {
+      stopPlayback("panic");
+      hardResetAudio();
+      releaseInstance();
+      setStatus("panic reset");
+    });
+
+    buildGrid();
+    bindKnobs();
+    installInstanceGuards();
   </script>
 </body>
 </html>

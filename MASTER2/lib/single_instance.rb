@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "time"
+require "socket"
 
 module MASTER
   module SingleInstance
@@ -44,13 +45,23 @@ module MASTER
 
       unless locked
         owner_pid = read_owner_pid(lock_path)
+        if stale_lock?(owner_pid)
+          io.close
+          FileUtils.rm_f(lock_path)
+          io = File.open(lock_path, File::RDWR | File::CREAT, 0o644)
+          locked = io.flock(File::LOCK_EX | File::LOCK_NB)
+        end
+      end
+
+      unless locked
+        owner_pid = read_owner_pid(lock_path)
         io.close
         raise AlreadyRunningError.new(lock_path: lock_path, owner_pid: owner_pid)
       end
 
       io.rewind
       io.truncate(0)
-      io.write("pid=#{Process.pid}\nstarted_at=#{Time.now.utc.iso8601}\n")
+      io.write("pid=#{Process.pid}\nstarted_at=#{Time.now.utc.iso8601}\nhost=#{Socket.gethostname}\n")
       io.flush
 
       handle = LockHandle.new(io)
@@ -66,6 +77,17 @@ module MASTER
       m[1].to_i
     rescue StandardError
       nil
+    end
+
+    def stale_lock?(pid)
+      return true unless pid.is_a?(Integer) && pid.positive?
+
+      Process.kill(0, pid)
+      false
+    rescue Errno::ESRCH
+      true
+    rescue Errno::EPERM
+      false
     end
   end
 end

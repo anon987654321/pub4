@@ -2,7 +2,7 @@
 
 module MASTER
   module Bridges
-    module RepligenBridge
+    module ReplicateBridge
       # Execute a multi-model pipeline sequentially
       def execute_chain(chain)
         return Result.err("Chain cannot be empty.") if chain.nil? || chain.empty?
@@ -48,7 +48,7 @@ module MASTER
         return Result.err("Unknown lighting: #{lighting}") unless CATWALK_LIGHTING.include?(lighting.to_s)
 
         full_prompt = "fashion photography, #{style} style, #{lighting} lighting, #{prompt}"
-        model_id = model || RepligenBridge.model_catalog[:image_gen].first[:model]
+        model_id = model || ReplicateBridge.model_catalog[:image_gen].first[:model]
 
         return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
 
@@ -97,8 +97,8 @@ module MASTER
         return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
         return Result.err("No scenes provided.") if scenes.empty?
 
-        video_model = model || RepligenBridge.model_catalog[:video_gen].first[:model]
-        image_model = RepligenBridge.model_catalog[:image_gen].first[:model]
+        video_model = model || ReplicateBridge.model_catalog[:video_gen].first[:model]
+        image_model = ReplicateBridge.model_catalog[:image_gen].first[:model]
         results = []
 
         scenes.each_with_index do |scene, idx|

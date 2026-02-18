@@ -16,38 +16,13 @@ module MASTER
 
         constitution_path = MASTER::Paths.data_path("constitution")
 
-        @rules_cache = if constitution_path && File.exist?(constitution_path)
+        loaded = if constitution_path && File.exist?(constitution_path)
           YAML.safe_load_file(constitution_path)
         else
-          # Sensible defaults when constitution.yml is missing
-          {
-            "safety_policies" => {
-              "self_modification" => { "require_staging" => true },
-              "environment_control" => { "direct_control" => false }
-            },
-            "tool_permissions" => {
-              "granted" => ["shell_command", "code_execution", "file_write"]
-            },
-            "shell_patterns" => {
-              "allowed" => ["^(ls|pwd|echo|git|cat|head|tail|wc|find|grep)", "^ruby", "^bundle"],
-              "blocked" => ["rm -rf /", "DROP TABLE", "mkfs", "dd if=", ":(){ :|:& };:"]
-            },
-            "protected_paths" => ["data/constitution.yml", "/etc/", "/usr/", "/sys/"],
-            "resource_limits" => {
-              "max_file_size" => 1048576,
-              "max_concurrent_tools" => 5,
-              "max_staging_files" => 10,
-              "max_shell_output" => 10000
-            },
-            "staging" => {
-              "validation" => {
-                "default_command" => "ruby -c",
-                "require_tests" => true
-              }
-            }
-          }
+          {}
         end
 
+        @rules_cache = deep_merge_hash(legacy_defaults, loaded || {})
         @rules_cache
       end
 
@@ -164,6 +139,47 @@ module MASTER
       end
 
       private
+
+      def legacy_defaults
+        {
+          "safety_policies" => {
+            "self_modification" => { "require_staging" => true },
+            "environment_control" => { "direct_control" => false }
+          },
+          "tool_permissions" => {
+            "granted" => ["shell_command", "code_execution", "file_write"]
+          },
+          "shell_patterns" => {
+            "allowed" => ["^(ls|pwd|echo|git|cat|head|tail|wc|find|grep)", "^ruby", "^bundle"],
+            "blocked" => ["rm -rf /", "DROP TABLE", "mkfs", "dd if=", ":(){ :|:& };:"]
+          },
+          "protected_paths" => ["data/constitution.yml", "/etc/", "/usr/", "/sys/"],
+          "resource_limits" => {
+            "max_file_size" => 1048576,
+            "max_concurrent_tools" => 5,
+            "max_staging_files" => 10,
+            "max_shell_output" => 10000
+          },
+          "staging" => {
+            "validation" => {
+              "default_command" => "ruby -c",
+              "require_tests" => true
+            }
+          }
+        }
+      end
+
+      def deep_merge_hash(base, override)
+        merged = base.dup
+        override.each do |key, value|
+          if merged[key].is_a?(Hash) && value.is_a?(Hash)
+            merged[key] = deep_merge_hash(merged[key], value)
+          else
+            merged[key] = value
+          end
+        end
+        merged
+      end
 
       def check_shell_command(cmd)
         blocked = rules.dig("shell_patterns", "blocked") || []
