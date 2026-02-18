@@ -247,6 +247,10 @@ when "selfrun", "self-run"
   # Full self-run: analyze and refactor the entire pub4 repo
   run_selfrun(args)
 
+when "narrate", "narration"
+  result = MASTER::Commands.narrate_command(args.join(" "))
+  exit result.respond_to?(:ok?) && result.ok? ? 0 : 1
+
 else
   if command.nil?
     # No command = interactive REPL mode (default)

@@ -50,6 +50,40 @@ module MASTER
       $stderr.puts "replicate: #{e.message}"
     end
 
+    # Narrate command handler
+    def narrate_command(args)
+      return Result.err("REPLICATE_API_TOKEN not set") unless Replicate.available?
+      return Result.err("narration module not loaded") unless defined?(MASTER::Replicate::Narration)
+
+      selected_segments = parse_segment_selection(args)
+      return selected_segments if selected_segments.err?
+
+      result = MASTER::Replicate::Narration.generate_narration(segments: selected_segments.value)
+      print_narration_results(result) if result.ok?
+      result
+    rescue StandardError => e
+      $stderr.puts "narrate: #{e.message}"
+      Result.err(e.message)
+    end
+
+    def parse_segment_selection(args)
+      return Result.ok(nil) unless args&.include?("--segments")
+
+      parts = args.split("--segments", 2)
+      return Result.ok(nil) if parts.size <= 1
+
+      segment_ids = parts[1].strip.split(",").map { |s| s.strip.to_sym }
+      all_segments = MASTER::Replicate::Narration::NARRATION_SEGMENTS
+      selected = all_segments.select { |seg| segment_ids.include?(seg[:id]) }
+
+      return Result.err("no matching segments") if selected.empty?
+      Result.ok(selected)
+    end
+
+    def print_narration_results(result)
+      result.value[:segments].each { |seg| puts "+ narrate: #{seg[:id]} completed" }
+    end
+
     # PostPro command handler
     def postpro_command(cmd, args)
       case cmd
@@ -386,6 +420,9 @@ module MASTER
         HANDLED
       when "replicate", "repligen", "generate-image", "generate-video"
         replicate_command(cmd, args)
+        HANDLED
+      when "narrate", "narration"
+        narrate_command(args)
         HANDLED
       when "postpro", "enhance", "upscale"
         postpro_command(cmd, args)
