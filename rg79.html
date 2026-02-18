@@ -222,6 +222,7 @@ const P={
 };
 
 const STYLES=[
+{n:'Analog Haze',m:['Lush','Magical'],d:'dusty1',b:'dustybass1',k:'neosoul',p:'ambientwash',bpm:[72,88],sw:[28,44],dr:[35,55],tm:[45,70]},
 {n:'Ethio-Jazz',m:['Joyful','Mysterious'],d:'eth-mulatu',b:'ethiobass',k:'tizita',p:'ethiodrone',bpm:[85,110],sw:[15,35],dr:[20,40],tm:[5,15]},
 {n:'Ethio-Funk',m:['Groovy','Joyful'],d:'eth-funk',b:'ethiovamp',k:'bati',p:'ethiowash',bpm:[100,120],sw:[20,35],dr:[25,45],tm:[5,15]},
 {n:'Reggae',m:['Relaxed','Spiritual'],d:'reg-onedrop',b:'reggaebass',k:'skank',p:'rootsdrone',bpm:[62,75],sw:[10,25],dr:[15,30],tm:[8,18]},
@@ -245,9 +246,9 @@ const STYLES=[
 ];
 
 let st_={started:false,playing:false,idx:-1,timer:null,layoutIdx:49,heartbeat:null,paintMode:false,tapTimes:[],history:[],historyIdx:-1,midiMap:{},theme:'dark',rafId:null,peakL:0,peakR:0};
-let aud_={bpm:94,swing:30,drive:25,tape:8,comp:70,width:40,reverb:30,delay:20,filter:80,wobble:5,vinyl:15,crackle:10,drift:0.05};
+let aud_={bpm:82,swing:36,drive:44,tape:58,comp:72,width:58,reverb:58,delay:34,filter:72,wobble:16,vinyl:22,crackle:14,drift:0.05};
 let mix_={drum:80,bass:70,keys:60,pads:50,master:75};
-let pat_={d:'basic',b:'basic',k:'basic',p:'none'};
+let pat_={d:'dusty1',b:'dustybass1',k:'neosoul',p:'ambientwash'};
 let seq_={};
 ['k','s','c','h','o'].forEach(t=>{seq_[t]=Array(16).fill(0).map(()=>({v:0.85+rnd(0,0.15),t:rnd(-15,15),p:100,r:1}))});
 ['b','keys','p'].forEach(t=>{seq_[t]=Array(16).fill(0).map(()=>({v:0.85+rnd(0,0.15),t:rnd(-15,15),p:100,r:1}))});
@@ -672,7 +673,7 @@ Object.keys(DRUM_PATTERNS).forEach(k=>{const o=document.createElement('option');
 Object.keys(B).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel_b.appendChild(o)});
 Object.keys(K).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel_k.appendChild(o)});
 Object.keys(P).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel_p.appendChild(o)});
-sel_d.value='basic';sel_b.value='basic';sel_k.value='basic';sel_p.value='none';
+sel_d.value=pat_.d;sel_b.value=pat_.b;sel_k.value=pat_.k;sel_p.value=pat_.p;
 sel_d.addEventListener('change',e=>{pushHistory();pat_.d=e.target.value;tr(`drum: ${pat_.d}`)});
 sel_b.addEventListener('change',e=>{pushHistory();pat_.b=e.target.value;tr(`bass: ${pat_.b}`)});
 sel_k.addEventListener('change',e=>{pushHistory();pat_.k=e.target.value;tr(`keys: ${pat_.k}`)});
@@ -708,6 +709,8 @@ tr(`style: ${s.n}`,"k");
 });
 styles_c.appendChild(chip);
 });
+const defaultChip=[...styles_c.querySelectorAll('.style-chip')].find(c=>c.textContent==='Analog Haze');
+if(defaultChip)defaultChip.classList.add('active');
 const tracks_c=D('tracks');
 ['Kick','Snare','Clap','Hat','Open'].forEach((nm,ti)=>{
 const tr_=document.createElement('div');
