@@ -77,154 +77,67 @@ rescue StandardError => e
 end
 MASTER::Session.install_crash_handlers
 
-case command
-when "refactor"
-  # Direct refactoring: master refactor file.rb
-  if args.empty?
-    puts "Usage: master refactor <file> [--preview|--raw|--apply]"
-    exit 1
-  end
-  result = MASTER::Commands.refactor(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
-when "fix"
-  # Batch fixing: master fix --all, master fix file.rb
-  arg_str = args.join(" ")
-  MASTER::Commands.fix_code(arg_str)
-when "scan"
-  # Directory scanning: master scan deploy/rails/
-  path = args.first || "."
-  result = MASTER::Commands.opportunities(path)
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "chamber"
-  # Open specific chamber: master chamber ruby
-  if args.empty?
-    puts "Usage: master chamber <file>"
-    exit 1
-  end
-  result = MASTER::Commands.chamber(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "ideate", "brainstorm"
-  # Generate alternatives: master ideate "authentication system"
-  if args.empty?
-    puts "Usage: master ideate <topic>"
-    exit 1
-  end
-  result = MASTER::Commands.ideate(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "evolve"
-  # Evolve codebase: master evolve
-  result = MASTER::Commands.evolve(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
-when "browse"
-  # Web browser: master browse <url>
-  if args.empty?
-    puts "Usage: master browse <url>"
-    exit 1
-  end
-  MASTER::Commands.browse_url(args.join(" "))
-
-when "speak", "say"
-  # Voice interaction: master speak <text>
-  MASTER::Commands.speak(args.join(" "))
-
-when "session"
-  # Session management: master session show, master session save
-  MASTER::Commands.manage_session(args.join(" "))
-
-when "health"
-  # System health: master health
-  MASTER::Commands.print_health
-when "doctor"
-  MASTER::Commands.doctor(args.join(" "))
-when "bootstrap"
-  result = MASTER::Commands.bootstrap(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "history-dig"
-  result = MASTER::Commands.history_dig(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "codify"
-  result = MASTER::Commands.codify(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
-when "opportunities", "opps"
-  # Code improvements: master opportunities file.rb
-  path = args.first
-  result = MASTER::Commands.opportunities(path)
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "style-guides", "styleguides"
-  result = MASTER::Commands.style_guides(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "multi-refactor", "mrefactor"
-  # Multi-file refactoring: master multi-refactor deploy/rails/
-  path = args.first || "."
-  dry_run = !args.include?("--apply")
-  strict = args.include?("--strict")
-  align_axioms = strict || args.include?("--axioms")
-  include_all = args.include?("--all-files")
-  mr = MASTER::MultiRefactor.new(
-    dry_run: dry_run,
-    force_rewrite: strict,
-    align_axioms: align_axioms,
-    include_all_files: include_all
-  )
-  result = mr.run(path: path)
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
-when "axioms-stats", "stats"
-  # Statistics: master axioms-stats
-  MASTER::Commands.print_axiom_stats
-
-when "selfrun", "self-run"
-  # Full self-run: analyze and refactor the entire pub4 repo
+# Helper: Execute full self-run across pub4 repo
+def run_selfrun(args)
   puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
-  pub4_root = File.expand_path("../..", __dir__)  # Go up from MASTER2/bin/ to pub4/
+  pub4_root = File.expand_path("../..", __dir__)
   strict = args.include?("--strict")
   align_axioms = strict || args.include?("--axioms")
   include_all = args.include?("--all-files")
   apply = args.include?("--apply")
 
-  # Phase 1: Self-refactor MASTER2 itself
+  run_phase1(pub4_root, apply, strict, align_axioms, include_all)
+  run_phase2(pub4_root, apply, strict, align_axioms, include_all)
+  run_phase3(pub4_root, apply, strict, align_axioms, include_all)
+  run_phase4
+  exit 0
+end
+
+def run_phase1(root, apply, strict, align_axioms, include_all)
   puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
-  mr = MASTER::MultiRefactor.new(
-    dry_run: !apply,
-    budget_cap: 1.0,
-    force_rewrite: strict,
-    align_axioms: align_axioms,
-    include_all_files: include_all
-  )
-  phase1_path = include_all ? File.join(pub4_root, "MASTER2") : File.join(pub4_root, "MASTER2", "lib")
+  mr = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict, align_axioms: align_axioms, include_all_files: include_all)
+  phase1_path = include_all ? File.join(root, "MASTER2") : File.join(root, "MASTER2", "lib")
   mr.run(path: phase1_path)
+end
 
-  # Phase 2: Deploy scripts
+def run_phase2(root, apply, strict, align_axioms, include_all)
   puts "\n=== Phase 2: Deploy Scripts ==="
-  mr2 = MASTER::MultiRefactor.new(
-    dry_run: !apply,
-    budget_cap: 1.0,
-    force_rewrite: strict,
-    align_axioms: align_axioms,
-    include_all_files: include_all
-  )
-  mr2.run(path: File.join(pub4_root, "deploy"))
+  mr2 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict, align_axioms: align_axioms, include_all_files: include_all)
+  mr2.run(path: File.join(root, "deploy"))
+end
 
-  # Phase 3: Business plans (HTML)
+def run_phase3(root, apply, strict, align_axioms, include_all)
   puts "\n=== Phase 3: Business Plans ==="
-  mr3 = MASTER::MultiRefactor.new(
-    dry_run: !apply,
-    budget_cap: 0.5,
-    force_rewrite: strict,
-    align_axioms: align_axioms,
-    include_all_files: include_all
-  )
-  mr3.run(path: File.join(pub4_root, "bp"))
+  mr3 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 0.5, force_rewrite: strict, align_axioms: align_axioms, include_all_files: include_all)
+  mr3.run(path: File.join(root, "bp"))
+end
 
-  # Phase 4: Self-test
+def run_phase4
   puts "\n=== Phase 4: Self-Test ==="
   MASTER::Introspection.run if defined?(MASTER::Introspection)
+end
 
-  exit 0
+# Helper: Delegate command to Commands.dispatch_one
+def delegate_to_commands(command, args)
+  input = [command, *args].join(" ")
+  pipeline = MASTER::Pipeline.new
+  result = MASTER::Commands.dispatch_one(input, pipeline: pipeline)
 
+  case result
+  when nil
+    puts "Unknown command: #{command}"
+    puts "Run 'master help' for usage information"
+    exit 1
+  when :exit
+    exit 0
+  when MASTER::Commands::HANDLED
+    exit 0
+  else
+    exit(result.respond_to?(:ok?) && result.ok? ? 0 : 1)
+  end
+end
+
+case command
 when "version", "-v", "--version"
   puts "MASTER2 v#{MASTER::VERSION}"
   exit 0
@@ -261,6 +174,9 @@ when "help", "-h", "--help"
       opportunities [path]        Find improvement opportunities
       style-guides [sync]         List or sync style guide repos
       axioms-stats                Display axiom violation statistics
+      schedule <cmd>              Job scheduler (list|add|remove|enable|disable)
+      heartbeat <cmd>             Heartbeat control (start|stop|status)
+      policy [set <profile>]      Policy profile management
       version                     Show version
       help                        Show this help
 
@@ -317,92 +233,9 @@ when "--daemon", "-d"
   # Daemon mode for agentd
   require_relative "../sbin/agentd" if File.exist?(File.join(__dir__, "../sbin/agentd"))
 
-when "schedule"
-  # Job scheduler: master schedule list|add|remove|enable|disable
-  subcmd = args.shift
-  MASTER::Scheduler.load
-  case subcmd
-  when "list"
-    jobs = MASTER::Scheduler.list
-    if jobs.empty?
-      puts "No scheduled jobs"
-    else
-      jobs.each { |j| puts "#{j[:id]}  #{j[:enabled] ? '✓' : '✗'}  every #{j[:interval]}s  #{j[:command]}" }
-    end
-  when "add"
-    cmd = args[0]
-    interval = (args[1] || "3600").to_i
-    result = MASTER::Scheduler.add(cmd, interval: interval)
-    puts result.ok? ? "Scheduled: #{result.value[:job_id]}" : result.error
-  when "remove"
-    result = MASTER::Scheduler.remove(args[0])
-    puts result.ok? ? "Removed" : result.error
-  when "enable"
-    result = MASTER::Scheduler.enable(args[0])
-    puts result.ok? ? "Enabled" : result.error
-  when "disable"
-    result = MASTER::Scheduler.disable(args[0])
-    puts result.ok? ? "Disabled" : result.error
-  else
-    puts "Usage: master schedule list|add <cmd> [interval_sec]|remove <id>|enable <id>|disable <id>"
-  end
-  exit 0
-
-when "heartbeat"
-  # Heartbeat control: master heartbeat start|stop|status
-  subcmd = args.shift
-  case subcmd
-  when "start"
-    interval = (args[0] || "60").to_i
-    MASTER::Triggers.install_defaults
-    MASTER::Scheduler.load
-    MASTER::Heartbeat.register("scheduler") { MASTER::Scheduler.tick }
-    MASTER::Heartbeat.start(interval: interval)
-    puts "Heartbeat started (#{interval}s interval). Press Ctrl+C to stop."
-    sleep
-  when "stop"
-    MASTER::Heartbeat.stop
-    puts "Heartbeat stopped"
-  when "status"
-    s = MASTER::Heartbeat.status
-    puts "running=#{s[:running]} interval=#{s[:interval]}s checks=#{s[:checks].size}"
-    s[:checks].each { |c| puts "  #{c[:name]} last=#{c[:last_run]} failures=#{c[:failures]}" }
-  else
-    puts "Usage: master heartbeat start [interval_sec]|stop|status"
-  end
-  exit 0
-
-when "cache"
-  # Cache management: master cache stats|clear
-  subcmd = args.first
-  if defined?(MASTER::SemanticCache)
-    case subcmd
-    when "stats"
-      stats = MASTER::SemanticCache.stats
-      puts "Entries: #{stats[:entries]}, Hits: #{stats[:hits]}, Size: #{stats[:size]}"
-    when "clear"
-      MASTER::SemanticCache.clear
-      puts "Cache cleared"
-    else
-      puts "Usage: master cache [stats|clear]"
-    end
-  else
-    puts "SemanticCache module not available"
-  end
-  exit 0
-
-when "policy"
-  # Policy profile: master policy [set <profile>]
-  subcmd = args.shift
-  case subcmd
-  when "set"
-    result = MASTER::AgentFirewall::Policy.set(args[0]&.to_sym)
-    puts result.ok? ? "Policy: #{result.value[:profile]}" : result.error
-  else
-    puts "Current policy: #{MASTER::AgentFirewall::Policy.current}"
-    puts "Available: #{MASTER::AgentFirewall::Policy::PROFILES.keys.join(', ')}"
-  end
-  exit 0
+when "selfrun", "self-run"
+  # Full self-run: analyze and refactor the entire pub4 repo
+  run_selfrun(args)
 
 else
   if command.nil?
@@ -411,8 +244,7 @@ else
     Thread.new { server.start }
     MASTER::Pipeline.repl
   else
-    puts "Unknown command: #{command}"
-    puts "Run 'master help' for usage information"
-    exit 1
+    # Delegate all other commands to Commands.dispatch_one
+    delegate_to_commands(command, args)
   end
 end

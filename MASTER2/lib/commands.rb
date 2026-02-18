@@ -8,6 +8,7 @@ require_relative "commands/chat_commands"
 require_relative "commands/misc_commands"
 require_relative "commands/refactor_helpers"
 require_relative "commands/workflow_commands"
+require_relative "commands/system_commands"
 
 module MASTER
   # Commands - REPL command dispatcher
@@ -21,6 +22,7 @@ module MASTER
     include MiscCommands
     include RefactorHelpers
     include WorkflowCommands
+    include SystemCommands
 
     @last_command = nil
 
@@ -314,6 +316,12 @@ module MASTER
         HANDLED
       when "multi-refactor", "mrefactor"
         multi_refactor(args)
+      when "schedule"
+        manage_schedule(args)
+      when "heartbeat"
+        manage_heartbeat(args)
+      when "policy"
+        manage_policy(args)
       when "shell"
         InteractiveShell.new.run
         HANDLED
