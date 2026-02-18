@@ -252,7 +252,7 @@ const STYLES=[
 {n:'Basic',m:['Simple','Groovy'],d:'basic',b:'basic',k:'basic',p:'none',bpm:[90,120],sw:[10,30],dr:[15,35],tm:[5,15]}
 ];
 
-let st_={started:false,playing:false,idx:-1,timer:null,layoutIdx:49,heartbeat:null,paintMode:false,tapTimes:[],history:[],historyIdx:-1,midiMap:{},theme:'dark',rafId:null,peakL:0,peakR:0};
+let st_={started:false,playing:false,idx:-1,timer:null,layoutIdx:49,heartbeat:null,paintMode:false,tapTimes:[],history:[],historyIdx:-1,midiMap:{},theme:'dark',rafId:null,peakL:0,peakR:0,muteState:{k:0,s:0,c:0,h:0,o:0}};
 let aud_={bpm:82,swing:36,drive:44,tape:58,comp:72,width:58,reverb:58,delay:34,filter:72,wobble:16,vinyl:22,crackle:14,drift:0.05};
 let mix_={drum:80,bass:70,keys:60,pads:50,master:75};
 let pat_={d:'dusty1',b:'dustybass1',k:'neosoul',p:'ambientwash'};
@@ -288,8 +288,20 @@ document.documentElement.style.setProperty("--acc",`hsl(${cfg.ac} 65% 56%)`);
 D("meta").textContent=`layout: ${nm} / instance: ${selfId.slice(-6)}`;
 }
 
+
+// Helper for efficient deep clone without JSON overhead
+function deepClone(obj){
+if(obj===null||typeof obj!=='object')return obj;
+if(Array.isArray(obj))return obj.map(deepClone);
+const cloned={};
+for(const k in obj){
+if(obj.hasOwnProperty(k))cloned[k]=deepClone(obj[k]);
+}
+return cloned;
+}
+
 function pushHistory(){
-const snap={pat:JSON.parse(JSON.stringify(pat_)),seq:JSON.parse(JSON.stringify(seq_)),aud:JSON.parse(JSON.stringify(aud_)),mix:JSON.parse(JSON.stringify(mix_))};
+const snap={pat:deepClone(pat_),seq:deepClone(seq_),aud:deepClone(aud_),mix:deepClone(mix_)};
 st_.history=st_.history.slice(0,st_.historyIdx+1);
 st_.history.push(snap);
 st_.historyIdx=st_.history.length-1;
@@ -300,10 +312,10 @@ function undo(){
 if(st_.historyIdx>0){
 st_.historyIdx--;
 const snap=st_.history[st_.historyIdx];
-pat_=JSON.parse(JSON.stringify(snap.pat));
-seq_=JSON.parse(JSON.stringify(snap.seq));
-aud_=JSON.parse(JSON.stringify(snap.aud));
-mix_=JSON.parse(JSON.stringify(snap.mix));
+pat_=deepClone(snap.pat);
+seq_=deepClone(snap.seq);
+aud_=deepClone(snap.aud);
+mix_=deepClone(snap.mix);
 syncUIFromState();
 tr("undo");
 }}
@@ -312,10 +324,10 @@ function redo(){
 if(st_.historyIdx<st_.history.length-1){
 st_.historyIdx++;
 const snap=st_.history[st_.historyIdx];
-pat_=JSON.parse(JSON.stringify(snap.pat));
-seq_=JSON.parse(JSON.stringify(snap.seq));
-aud_=JSON.parse(JSON.stringify(snap.aud));
-mix_=JSON.parse(JSON.stringify(snap.mix));
+pat_=deepClone(snap.pat);
+seq_=deepClone(snap.seq);
+aud_=deepClone(snap.aud);
+mix_=deepClone(snap.mix);
 syncUIFromState();
 tr("redo");
 }}
@@ -485,15 +497,8 @@ const sixteenth=60/aud_.bpm/4;
 st_.idx=(st_.idx+1)%16;
 const dp=DRUM_PATTERNS[pat_.d]||DRUM_PATTERNS.basic;
 const now=Tone.now();
-const muteMap={};
-document.querySelectorAll('.track.muted').forEach(el=>{
-const nm=el.querySelector('.track-name').textContent.toLowerCase();
-if(nm.includes('kick'))muteMap.k=1;
-if(nm.includes('snare'))muteMap.s=1;
-if(nm.includes('clap'))muteMap.c=1;
-if(nm.includes('hat'))muteMap.h=1;
-if(nm.includes('open'))muteMap.o=1;
-});
+// Use cached mute state instead of DOM query
+const muteMap=st_.muteState;
 ['k','s','c','h','o'].forEach(v=>{
 if(muteMap[v])return;
 const vel=dp[v]?dp[v][st_.idx]:0;
@@ -567,8 +572,24 @@ for(let i=0;i<10;i++){
 if(bars[i])bars[i].classList.toggle('active',i<lBars);
 if(bars[i+10])bars[i+10].classList.toggle('active',i<rBars);
 }
+// Throttle to ~30 FPS instead of 60 for better performance
+if(!st_.vuLastUpdate)st_.vuLastUpdate=0;
+const now=Date.now();
+if(now-st_.vuLastUpdate>=33){ // ~30 FPS
+st_.vuLastUpdate=now;
 st_.rafId=requestAnimationFrame(updateVU);
+}else{
+setTimeout(()=>st_.rafId=requestAnimationFrame(updateVU),16);
 }
+}
+
+// Stop VU meter updates when page unloads
+window.addEventListener('beforeunload',()=>{
+if(st_.rafId){
+cancelAnimationFrame(st_.rafId);
+st_.rafId=null;
+}
+});
 
 function randomize(){
 const style=STYLES[Math.floor(Math.random()*STYLES.length)];
@@ -827,7 +848,11 @@ name.setAttribute('tabindex','0');
 name.addEventListener('click',e=>{
 if(e.altKey){
 tr_.classList.toggle('muted');
-tr(`${nm} ${tr_.classList.contains('muted')?'muted':'unmuted'}`);
+const isMuted=tr_.classList.contains('muted');
+// Update cached mute state
+const trackKey=['k','s','c','h','o'][ti];
+st_.muteState[trackKey]=isMuted?1:0;
+tr(`${nm} ${isMuted?'muted':'unmuted'}`);
 }
 });
 const grid=document.createElement('div');
