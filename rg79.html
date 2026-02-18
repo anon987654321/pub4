@@ -38,14 +38,14 @@ article[aria-label="Sequencer"]{grid-column:1/-1}
 .track.muted{opacity:0.4}
 .track-name{min-width:80px;font-size:11px;text-transform:uppercase;color:var(--mut)}
 .steps-grid{display:grid;grid-template-columns:repeat(16,minmax(22px,1fr));gap:2px;flex:1}
-.step{min-height:36px;background:var(--bg);border:1px solid var(--brd);cursor:pointer;position:relative}
+.step{min-height:44px;background:var(--bg);border:1px solid var(--brd);cursor:pointer;position:relative;touch-action:manipulation}
 .step[aria-pressed="true"]{background:var(--acc);border-color:var(--acc)}
 .step.playing{box-shadow:inset 0 0 0 2px #fff0c8;animation:pulse 0.15s ease-out}
 .step[data-prob="25"]::after,.step[data-prob="50"]::after,.step[data-prob="75"]::after{content:attr(data-prob)'%';font-size:8px;position:absolute;top:2px;right:2px;opacity:0.6}
 .step[data-ratchet]::before{content:'';position:absolute;bottom:2px;left:2px;width:4px;height:4px;background:var(--txt);opacity:0.6}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
 .track-ctrl{display:flex;gap:2px}
-.track-btn{min-width:32px;min-height:32px;padding:4px;font-size:10px}
+.track-btn{min-width:44px;min-height:44px;padding:4px;font-size:10px;touch-action:manipulation}
 .styles{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .style-chip{padding:6px 12px;background:var(--surf2);border:1px solid var(--brd);cursor:pointer;font-size:11px;text-transform:uppercase;transition:all var(--transition-fast);touch-action:manipulation}
 .style-chip:hover{transform:translateY(-2px)}
@@ -156,6 +156,17 @@ footer{border:1px solid var(--brd);background:var(--surf);padding:6px 8px;margin
 <div class="ctx-menu" id="ctx-menu"></div>
 <script>
 "use strict";
+
+// Global error handlers for FAIL_VISIBLY axiom (MASTER2)
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason);
+  // Don't prevent default to allow browser's error reporting
+});
+
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error || event.message);
+});
+
 const INSTANCE_KEY="rg79_inst",INSTANCE_TTL=8e3,selfId=`${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const bc=("BroadcastChannel"in window)?new BroadcastChannel("rg79"):null;
 const D=s=>document.getElementById(s),DP=s=>D(s).parentElement;

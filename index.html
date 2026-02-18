@@ -70,12 +70,23 @@
     // - DEADLINES: YouTube API timeout (10s), frame throttling, emergency brake
     // ============================================================================
 
+    // Global error handlers for FAIL_VISIBLY axiom
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      // Don't prevent default to allow browser's error reporting
+    });
+
+    window.addEventListener('error', (event) => {
+      console.error('Global error:', event.error || event.message);
+    });
+
     // Environment & Performance Config - Single Source of Truth
-    const IN_SANDBOX = false;
-    const FADE_MS = 3500;
-    const START_FADE_IN = true;
+    // Browser requirements: Chrome 108+, Safari 15.4+, Firefox 110+ (for dvh/dvw units)
+    const IN_SANDBOX = false;  // Set true when running in sandboxed iframe
+    const FADE_MS = 3500;      // Crossfade duration between tracks
+    const START_FADE_IN = true; // Fade in first track
     const MAX_TRACK_MS = 40000; // 40 seconds max per track (for podcast/sample mode)
-    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const DPR = Math.min(2, window.devicePixelRatio || 1); // Cap DPR for performance
     const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || 
                      (navigator.deviceMemory && navigator.deviceMemory <= 2);
 
@@ -95,7 +106,11 @@
       };
       
       updateDots();
-      try { clearInterval(window.__RB_DOTS_IV); } catch {}
+      try { 
+        clearInterval(window.__RB_DOTS_IV); 
+      } catch (e) { 
+        // Safe to ignore: interval may not exist on first load
+      }
       window.__RB_DOTS_IV = setInterval(updateDots, 600);
     })();
 
