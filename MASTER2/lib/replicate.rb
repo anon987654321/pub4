@@ -5,6 +5,7 @@ require "json"
 require "uri"
 require_relative "result"
 require_relative "replicate/media"
+require_relative "replicate/narration"
 
 module MASTER
   # Replicate - Image generation via Replicate API
