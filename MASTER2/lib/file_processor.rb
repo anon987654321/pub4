@@ -37,7 +37,8 @@ module MASTER
           result = process(content, filename: file, dry_run: dry_run)
 
           if result[:changed] && !dry_run
-            File.write(file, result[:final])
+            clean = TextHygiene.normalize(result[:final], filename: file)
+            File.write(file, clean)
             log("file0: wrote #{File.basename(file)}")
           end
 

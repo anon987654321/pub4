@@ -17,6 +17,7 @@ end
 require_relative "../lib/single_instance"
 require "digest"
 require "tmpdir"
+require "fileutils"
 
 def enforce_single_master!(command)
   return if %w[help -h --help version -v --version].include?(command)
@@ -35,10 +36,37 @@ args = ARGV[1..-1] || []
 enforce_single_master!(command)
 
 # Auto-bundle install if gems missing
-ENV["BUNDLE_GEMFILE"] = File.expand_path("../Gemfile", __dir__)
-ENV["GEM_HOME"] ||= File.expand_path("~/.local/share/gem/ruby/#{RUBY_VERSION[0..2]}")
-ENV["PATH"] = "#{ENV["GEM_HOME"]}/bin:#{ENV["PATH"]}" unless ENV["PATH"].include?("#{ENV["GEM_HOME"]}/bin")
-begin; require "bundler/setup"; rescue Bundler::GemNotFound, Bundler::GitError => e; $stderr.puts "MASTER2 boot: missing gems, running bundle install..."; system("bundle", "install", "--quiet", exception: false) || ($stderr.puts("MASTER2 boot: bundle install failed: #{e.message}"); exit 1); retry; end
+project_root = File.expand_path("..", __dir__)
+ruby_abi = RUBY_VERSION.split(".")[0, 2].join(".")
+gem_home = ENV["GEM_HOME"] || File.expand_path("~/.local/share/gem/ruby/#{ruby_abi}")
+bundle_path = ENV["MASTER_BUNDLE_PATH"] || File.join(project_root, "var", "bundle")
+bundle_cache_path = ENV["MASTER_BUNDLE_CACHE_PATH"] || File.join(project_root, "var", "bundle-cache")
+bundle_app_config = ENV["MASTER_BUNDLE_APP_CONFIG"] || File.join(project_root, "var", "bundle-config")
+
+[gem_home, bundle_path, bundle_cache_path, bundle_app_config].each { |p| FileUtils.mkdir_p(p) }
+
+ENV["BUNDLE_GEMFILE"] = File.join(project_root, "Gemfile")
+ENV["GEM_HOME"] = gem_home
+ENV["GEM_PATH"] = gem_home
+ENV["PATH"] = "#{gem_home}/bin:#{ENV["PATH"]}" unless ENV["PATH"].include?("#{gem_home}/bin")
+ENV["BUNDLE_PATH"] ||= bundle_path
+ENV["BUNDLE_CACHE_PATH"] ||= bundle_cache_path
+ENV["BUNDLE_APP_CONFIG"] ||= bundle_app_config
+ENV["BUNDLE_DISABLE_SHARED_GEMS"] ||= "true"
+ENV["BUNDLE_FROZEN"] ||= "false"
+
+begin
+  require "bundler/setup"
+rescue LoadError, StandardError => e
+  $stderr.puts "MASTER2 boot: preparing local dependencies..."
+  ok = system("bundle", "install", "--quiet", exception: false)
+  unless ok
+    $stderr.puts "MASTER2 boot: bundle install failed: #{e.message}"
+    $stderr.puts "MASTER2 boot: check network access and OpenRouter key setup, then re-run: bin/master"
+    exit 1
+  end
+  retry
+end
 require "json"
 require_relative "../lib/master"
 
@@ -195,6 +223,10 @@ when "help", "-h", "--help"
   puts <<~HELP
     MASTER2 - Constitutional AI Code Quality System
 
+    OpenBSD + zsh quick start:
+      dev% bin/master
+      dev% bin/master help
+
     Usage:
       master [command] [arguments]
 
@@ -225,12 +257,12 @@ when "help", "-h", "--help"
       -d, --daemon                Daemon mode for agentd
 
     Examples:
-      master refactor deploy/openbsd/openbsd.sh
-      master fix --all
-      master scan deploy/rails/
-      master chamber lib/master.rb
-      master ideate "authentication system"
-      master session save milestone-1
+      dev% bin/master refactor deploy/openbsd/openbsd.sh
+      dev% bin/master fix --all
+      dev% bin/master scan deploy/rails/
+      dev% bin/master chamber lib/master.rb
+      dev% bin/master ideate "authentication system"
+      dev% bin/master session save milestone-1
 
     Environment Variables:
       OPENROUTER_API_KEY          Required for LLM operations
@@ -240,7 +272,8 @@ when "help", "-h", "--help"
     Documentation:
       https://github.com/anon987654321/pub4/tree/main/MASTER2
 
-    No command specified starts REPL mode with integrated web server.
+    No command starts REPL mode with integrated web server.
+    One command is enough: run `bin/master` and follow prompts.
   HELP
   exit 0
 

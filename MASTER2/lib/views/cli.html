@@ -235,6 +235,10 @@
     let recognitionActive=false;
     let isSpeaking=false;
     const nonstopVoice=true;
+    let isProcessing=false;
+    let repoDirtyCount=0;
+    let spinnerIntervalMs=180;
+    let spinnerColor="#9aa";
     const BRAIN_LOBES=[
       {x:-22,y:-8,z:10,w:1.0},
       {x:22,y:-8,z:10,w:1.0},
@@ -334,6 +338,33 @@
       };
     };
 
+    const applyMessinessProfile=()=>{
+      if(repoDirtyCount===0){
+        spinnerIntervalMs=320; // super clean: calm and slow
+        spinnerColor="#9fd7cc";
+      }else if(repoDirtyCount<=8){
+        spinnerIntervalMs=180; // tidy-ish: normal
+        spinnerColor="#a8b2c1";
+      }else{
+        spinnerIntervalMs=270; // messy: deliberately slower
+        spinnerColor="#c9a88f";
+      }
+      uiDots.style.color=spinnerColor;
+    };
+
+    const refreshMetrics=async()=>{
+      try{
+        const resp=await fetch("/metrics",{
+          method:"GET",
+          headers:{"Authorization":`Bearer ${MASTER_TOKEN}`}
+        });
+        if(!resp.ok) return;
+        const data=await resp.json();
+        repoDirtyCount=Number(data.repo_dirty_count||0);
+        applyMessinessProfile();
+      }catch(_e){}
+    };
+
     let tiltX=0,tiltY=0;
     const initMotion=()=>{
       if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
@@ -399,6 +430,7 @@
           const reply=String(data.text);
           uiLabel.textContent=reply.slice(0,60);
           speakText(reply);
+          isProcessing=false;
           for(const n of neurons){
             n.vx+=(Math.random()-0.5)*140;
             n.vy+=(Math.random()-0.5)*140;
@@ -411,6 +443,8 @@
     };
 
     const transmit=async(message)=>{
+      isProcessing=true;
+      activeSpinner=spinnerSets[Math.floor(Math.random()*spinnerSets.length)] || spinnerFallback;
       for(const n of neurons){
         n.vx+=(Math.random()-0.5)*100;
         n.vy+=(Math.random()-0.5)*100;
@@ -427,9 +461,11 @@
           pollResponse();
         }else{
           uiLabel.textContent='Chat failed';
+          isProcessing=false;
         }
       }catch(_e){
         uiLabel.textContent='Network error';
+        isProcessing=false;
       }
     };
 
@@ -619,8 +655,28 @@
     setOrb(currentOrb);
 
     const dotsPattern=[0,1,2,3,2,1];
+    const spinnerSets=[
+      ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"],
+      ["⠁","⠂","⠄","⡀","⢀","⠠","⠐","⠈"],
+      ["▏","▎","▍","▌","▋","▊","▉","█","▉","▊","▋","▌","▍","▎"]
+    ];
+    const spinnerFallback=["|","/","-","\\"];
+    let activeSpinner=spinnerSets[0];
     let dotsIdx=0;
-    setInterval(()=>{uiDots.textContent='.'.repeat(dotsPattern[dotsIdx]);dotsIdx=(dotsIdx+1)%dotsPattern.length;},400);
+    let spinIdx=0;
+    const tickSpinner=()=>{
+      if(isProcessing){
+        const frames=(activeSpinner&&activeSpinner.length)?activeSpinner:spinnerFallback;
+        uiDots.textContent=frames[spinIdx];
+        spinIdx=(spinIdx+1)%frames.length;
+      }else{
+        uiDots.textContent='.'.repeat(dotsPattern[dotsIdx]);
+        dotsIdx=(dotsIdx+1)%dotsPattern.length;
+      }
+      setTimeout(tickSpinner,spinnerIntervalMs);
+    };
+    applyMessinessProfile();
+    tickSpinner();
 
     overlay.addEventListener('click',()=>{
       overlay.classList.add('ack');
@@ -628,6 +684,8 @@
       initMotion();
       setupRecognition();
       if(nonstopVoice) startRecognition();
+      refreshMetrics();
+      setInterval(refreshMetrics,6000);
       setTimeout(()=>overlay.hidden=true,300);
     });
 

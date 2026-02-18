@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require "shellwords"
 
 module MASTER
   class Server
@@ -33,6 +34,7 @@ module MASTER
       end
 
       def handle_metrics
+        dirty_count = git_dirty_count
         metrics = {
           version: VERSION, tier: LLM.tier,
           budget_remaining: LLM.budget_remaining,
@@ -41,6 +43,8 @@ module MASTER
           media_provider: "replicate",
           tts: defined?(Audio) ? Audio.engine_status : "unavailable",
           self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
+          repo_dirty_count: dirty_count,
+          repo_state: dirty_count.zero? ? "clean" : "dirty",
         }.to_json
         [200, { CT_HEADER => JSON_TYPE }, [metrics]]
       end
@@ -82,6 +86,18 @@ module MASTER
         else
           [404, { CT_HEADER => TEXT_TYPE }, ["Not found"]]
         end
+      end
+
+      private
+
+      def git_dirty_count
+        root = defined?(MASTER) && MASTER.respond_to?(:root) ? MASTER.root : Dir.pwd
+        output = `git -C #{Shellwords.escape(root)} status --porcelain 2>/dev/null`
+        return 0 unless $?.success?
+
+        output.lines.size
+      rescue StandardError
+        0
       end
     end
   end

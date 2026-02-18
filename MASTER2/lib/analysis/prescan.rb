@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require "shellwords"
+require "digest"
 
 module MASTER
   module Analysis
@@ -9,16 +10,25 @@ module MASTER
       extend self
       TREE_EXCLUDES = %w[. .. .git vendor tmp node_modules var].freeze
 
-      def run(path = MASTER.root)
+      def run(path = MASTER.root, tree_depth: 4, cache: false)
         path = File.expand_path(path)
+        @cache ||= {}
+        if cache && @cache.key?(path)
+          return @cache[path]
+        end
+
+        tree_lines = project_tree(path, max_depth: tree_depth)
         results = {
-          tree: project_tree(path),
+          tree: tree_lines,
+          tree_digest: Digest::SHA256.hexdigest(tree_lines.join("\n")),
+          tree_nodes: tree_lines.size,
           sprawl: detect_sprawl(path),
           git_status: check_git_status(path),
           recent_commits: recent_commits(path),
         }
 
         warn_if_issues(results)
+        @cache[path] = results if cache
         results
       end
 
@@ -33,7 +43,7 @@ module MASTER
 
       # Ruby-native tree walker
       def file_tree(root, indent: "", max_depth: 3, depth: 0, exclude: [])
-        return [] if depth >= max_depth
+        return [] if max_depth && depth >= max_depth
 
         entries = Dir.children(root).sort.reject { |e| exclude.include?(e) }
         lines = []

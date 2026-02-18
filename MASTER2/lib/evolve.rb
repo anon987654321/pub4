@@ -80,7 +80,8 @@ module MASTER
             # Use staging workflow when enabled
             staging = Staging.new
             stage_result = staging.staged_modify(file, validation_command: @validation_command) do |staged_path|
-              File.write(staged_path, result.value[:final])
+              clean = TextHygiene.normalize(result.value[:final], filename: staged_path)
+              File.write(staged_path, clean)
             end
 
             unless stage_result.ok?
@@ -88,7 +89,8 @@ module MASTER
             end
           else
             # Default behavior - direct write
-            File.write(file, result.value[:final])
+            clean = TextHygiene.normalize(result.value[:final], filename: file)
+            File.write(file, clean)
           end
         end
 
@@ -138,7 +140,8 @@ module MASTER
         end
 
         unless dry_run
-          File.write(file, new_code)
+          clean = TextHygiene.normalize(new_code, filename: file)
+          File.write(file, clean)
         end
 
         @cost += total_cost
