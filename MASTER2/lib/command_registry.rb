@@ -47,6 +47,7 @@ module MASTER
       queue: { desc: "Queue operations", usage: "queue <cmd>", group: :system, aliases: [] },
       harvest: { desc: "Data harvesting", usage: "harvest <target>", group: :system, aliases: [] },
       replicate: { desc: "Generate media via Replicate", usage: "replicate <prompt>", group: :util, aliases: %w[repligen generate-image generate-video] },
+      narrate: { desc: "Generate narrated video demo", usage: "narrate [--segments 1,3,5]", group: :util, aliases: %w[narration] },
       postpro: { desc: "Post-processing operations", usage: "postpro <operation> <path|url>", group: :util, aliases: %w[enhance upscale] },
     }.freeze
 
