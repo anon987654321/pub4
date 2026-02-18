@@ -87,85 +87,32 @@ rescue StandardError => e
 end
 MASTER::Session.install_crash_handlers
 
+# Helper to dispatch common commands through Commands.dispatch_one
+def dispatch_cli_command(command, args)
+  input = [command, *args].join(" ")
+  result = MASTER::Commands.dispatch_one(input, pipeline: nil)
+  
+  # Handle different result types
+  case result
+  when :exit
+    exit 0
+  when MASTER::Commands::HANDLED
+    exit 0
+  when nil
+    return false  # Command not found, continue to case/when
+  else
+    exit(result.respond_to?(:ok?) && result.ok? ? 0 : 1)
+  end
+end
+
 case command
-when "refactor"
-  # Direct refactoring: master refactor file.rb
-  if args.empty?
-    puts "Usage: master refactor <file> [--preview|--raw|--apply]"
-    exit 1
-  end
-  result = MASTER::Commands.refactor(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+when "refactor", "fix", "scan", "chamber", "ideate", "brainstorm", "evolve",
+     "browse", "speak", "session", "health", "doctor", "bootstrap", 
+     "history-dig", "codify", "opportunities", "opps", "style-guides", 
+     "styleguides", "axioms-stats", "stats"
+  # Delegate to Commands.dispatch_one
+  dispatch_cli_command(command, args)
 
-when "fix"
-  # Batch fixing: master fix --all, master fix file.rb
-  arg_str = args.join(" ")
-  MASTER::Commands.fix_code(arg_str)
-when "scan"
-  # Directory scanning: master scan deploy/rails/
-  path = args.first || "."
-  result = MASTER::Commands.opportunities(path)
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "chamber"
-  # Open specific chamber: master chamber ruby
-  if args.empty?
-    puts "Usage: master chamber <file>"
-    exit 1
-  end
-  result = MASTER::Commands.chamber(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "ideate", "brainstorm"
-  # Generate alternatives: master ideate "authentication system"
-  if args.empty?
-    puts "Usage: master ideate <topic>"
-    exit 1
-  end
-  result = MASTER::Commands.ideate(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "evolve"
-  # Evolve codebase: master evolve
-  result = MASTER::Commands.evolve(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
-when "browse"
-  # Web browser: master browse <url>
-  if args.empty?
-    puts "Usage: master browse <url>"
-    exit 1
-  end
-  MASTER::Commands.browse_url(args.join(" "))
-
-when "speak", "say"
-  # Voice interaction: master speak <text>
-  MASTER::Commands.speak(args.join(" "))
-
-when "session"
-  # Session management: master session show, master session save
-  MASTER::Commands.manage_session(args.join(" "))
-
-when "health"
-  # System health: master health
-  MASTER::Commands.print_health
-when "doctor"
-  MASTER::Commands.doctor(args.join(" "))
-when "bootstrap"
-  result = MASTER::Commands.bootstrap(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "history-dig"
-  result = MASTER::Commands.history_dig(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "codify"
-  result = MASTER::Commands.codify(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
-when "opportunities", "opps"
-  # Code improvements: master opportunities file.rb
-  path = args.first
-  result = MASTER::Commands.opportunities(path)
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-when "style-guides", "styleguides"
-  result = MASTER::Commands.style_guides(args.join(" "))
-  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
 when "multi-refactor", "mrefactor"
   # Multi-file refactoring: master multi-refactor deploy/rails/
   path = args.first || "."
@@ -181,10 +128,6 @@ when "multi-refactor", "mrefactor"
   )
   result = mr.run(path: path)
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
-when "axioms-stats", "stats"
-  # Statistics: master axioms-stats
-  MASTER::Commands.print_axiom_stats
 
 when "selfrun", "self-run"
   # Full self-run: analyze and refactor the entire pub4 repo
