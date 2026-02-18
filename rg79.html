@@ -64,17 +64,19 @@ footer{border:1px solid var(--brd);background:var(--surf);padding:6px 8px;margin
 <body>
 <header>
 <h1>RG-79 <small>v17</small></h1>
-<p>Analog beat machine with 60 enhancements / Single HTML file</p>
+<p>Analog beat machine with 60 enhancements / Single HTML file <button id="help" style="font-size:11px;padding:2px 6px;border:1px solid var(--brd);background:var(--surf2);color:var(--txt);cursor:pointer;margin-left:8px">?</button></p>
 </header>
 <main>
 <section aria-label="Transport" role="region">
+<canvas id="viz" width="800" height="60" style="width:100%;height:60px;background:var(--bg);border:1px solid var(--brd);display:block;margin-bottom:8px"></canvas>
 <nav>
 <button id="start" data-kind="primary" title="Initialize audio engine (Space)">Start</button>
 <button id="play" data-kind="primary" title="Play/Pause (P)">Play</button>
 <button id="stop" title="Stop (S)">Stop</button>
 <button id="random" title="Randomize (R)">Random</button>
 <button id="export" title="Export WAV (E)">Export WAV</button>
-<button id="record" data-kind="danger" title="Record">● Record</button>
+<button id="record" data-kind="danger" title="Record WebM">● Record</button>
+<button id="share" title="Share URL">Share</button>
 <button id="layout" title="Cycle layout (L)">Layout</button>
 <button id="theme" title="Toggle theme (T)">Theme</button>
 <button id="panic" data-kind="danger" title="Kill all (Esc)">Kill</button>
@@ -252,7 +254,8 @@ let seq_={};
 let kickN,kickSub,kickClk,kickBody,snareN,snareRng,clapN,hatN,openN,bassN,bassSub,keysN,keysChorus,padsN,padsFlt,padsShift;
 let drumG,bassG,keysG,padsG,masterG,limiter,vinylNoise,crackleNoise,wobbLFO,driftLFO;
 let fxRev,fxDly,fxFlt,tapeSat,compPar,sslComp,widener,kickSat,keySat,drumSat,outSat,bitCrush,revSend,dlySend;
-let kickComp,vuMeter;
+let kickComp,vuMeter,analyser;
+let mediaStream,recorder,recording=false;
 
 const layouts=Array.from({length:50},(_,i)=>({id:i+1,gap:4+(i%7),pp:6+(i%5),bh:54+(i%5)*3,sh:46+(i%6)*2,ac:24+i}));
 const finalBlend={id:"final",gap:8,pp:8,bh:60,sh:52,ac:35};
@@ -357,11 +360,13 @@ bitCrush=new Tone.BitCrusher(8);
 limiter=new Tone.Limiter(-1);
 outSat=new Tone.Distortion(0.01);
 vuMeter=new Tone.Meter({channels:2});
+analyser=new Tone.Analyser('waveform',256);
 masterG=new Tone.Gain(0.8).connect(bitCrush);
 bitCrush.wet.value=0;
 bitCrush.connect(outSat);
 outSat.connect(limiter);
-limiter.connect(vuMeter);
+limiter.connect(analyser);
+analyser.connect(vuMeter);
 vuMeter.connect(Tone.Destination);
 masterG.disconnect();
 masterG.connect(fxFlt);
@@ -403,6 +408,7 @@ padsFlt.connect(padsShift);
 padsShift.connect(padsG);
 [drumG,bassG,keysG,padsG].forEach(g=>{g.connect(masterG);g.connect(revSend);g.connect(dlySend);});
 tr("audio engine init (analog++)","k");
+drawViz();
 }
 
 function applyFX(){
@@ -667,6 +673,155 @@ tr("export failed: "+err.message,"e");
 }
 }
 
+function drawViz(){
+requestAnimationFrame(drawViz);
+const c=D('viz'),ctx=c.getContext('2d');
+if(!c||!ctx||!analyser)return;
+c.width=c.offsetWidth;
+c.height=c.offsetHeight;
+const w=c.width,h=c.height;
+ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--bg');
+ctx.fillRect(0,0,w,h);
+const data=analyser.getValue();
+ctx.beginPath();
+ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--acc');
+ctx.lineWidth=2;
+for(let i=0;i<data.length;i++){
+const x=(i/data.length)*w;
+const y=(1-(data[i]+1)/2)*h;
+i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+}
+ctx.stroke();
+}
+
+async function toggleRecord(){
+if(!recording){
+try{
+const dest=Tone.context.createMediaStreamDestination();
+masterG.connect(dest);
+mediaStream=dest.stream;
+recorder=new MediaRecorder(mediaStream);
+const chunks=[];
+recorder.ondataavailable=e=>chunks.push(e.data);
+recorder.onstop=()=>{
+const blob=new Blob(chunks,{type:'audio/webm'});
+const url=URL.createObjectURL(blob);
+const a=document.createElement('a');
+a.href=url;
+a.download=`rg79-${Date.now()}.webm`;
+a.click();
+URL.revokeObjectURL(url);
+tr('WebM saved',"k");
+};
+recorder.start();
+recording=true;
+D('record').style.background='var(--dng)';
+tr('Recording...',"k");
+}catch(e){
+tr('Record failed: '+e.message,"e");
+}
+}else{
+recorder.stop();
+recording=false;
+D('record').style.background='';
+}
+}
+
+function shareURL(){
+const state={pat:pat_,seq:seq_,aud:aud_,mix:mix_};
+const encoded=btoa(JSON.stringify(state));
+const url=`${location.origin}${location.pathname}#${encoded}`;
+navigator.clipboard.writeText(url).then(()=>tr('URL copied to clipboard',"k")).catch(()=>tr('Copy failed',"e"));
+}
+
+function decodeURL(){
+if(location.hash.length>1){
+try{
+const state=JSON.parse(atob(location.hash.slice(1)));
+if(state.pat)pat_=state.pat;
+if(state.seq)seq_=state.seq;
+if(state.aud)aud_=state.aud;
+if(state.mix)mix_=state.mix;
+syncUIFromState();
+tr('State loaded from URL',"k");
+return true;
+}catch(e){
+tr('URL decode failed',"e");
+return false;
+}
+}
+return false;
+}
+
+function autosave(){
+try{
+const state={pat:pat_,seq:seq_,aud:aud_,mix:mix_,history:st_.history.slice(-10)};
+localStorage.setItem('rg79_autosave',JSON.stringify(state));
+}catch(e){}
+}
+
+function autoload(){
+try{
+const saved=localStorage.getItem('rg79_autosave');
+if(saved){
+const state=JSON.parse(saved);
+if(state.pat)pat_=state.pat;
+if(state.seq)seq_=state.seq;
+if(state.aud)aud_=state.aud;
+if(state.mix)mix_=state.mix;
+if(state.history&&state.history.length>0){
+st_.history=state.history;
+st_.historyIdx=st_.history.length-1;
+}
+syncUIFromState();
+tr('Autoloaded previous session',"k");
+}
+}catch(e){}
+}
+
+function showHelp(){
+const help=`RG-79 v17 - Beat Machine
+
+KEYBOARD SHORTCUTS:
+Space - Play/Pause
+P - Play
+S - Stop
+R - Randomize
+E - Export WAV
+T - Toggle Theme
+L - Cycle Layout
+Esc - Panic (Kill All)
+Ctrl+Z - Undo
+Ctrl+Shift+Z - Redo
+Ctrl+C - Copy State
+Ctrl+V - Paste State
+
+FEATURES:
+• 60+ drum/bass/keys/pads patterns
+• 20 mood/style presets
+• Real-time waveform visualizer
+• WAV export (4 bars, offline render)
+• WebM live recording
+• URL state sharing
+• Undo/redo (50 steps)
+• Autosave every 10 seconds
+• Per-track mute/solo
+• Probabilistic steps (right-click)
+• Ratcheting (Shift+click)
+• Paint mode (Shift+drag)
+• 5-track sequencer
+• Analog-modeled FX chain
+• Lo-fi processing
+
+TIPS:
+• Alt+click track name to mute
+• Right-click steps for probability
+• Shift+click for ratcheting
+• Shift+drag to paint patterns
+• Style presets set BPM & patterns automatically`;
+alert(help);
+}
+
 function buildUI(){
 const sel_d=D('drum-pat'),sel_b=D('bass-pat'),sel_k=D('keys-pat'),sel_p=D('pads-pat');
 Object.keys(DRUM_PATTERNS).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel_d.appendChild(o)});
@@ -875,6 +1030,7 @@ else if(k==='e'){e.preventDefault();D('export').click();}
 else if(k==='l'){e.preventDefault();D('layout').click();}
 else if(k==='t'){e.preventDefault();D('theme').click();}
 else if(k==='escape'){e.preventDefault();D('panic').click();}
+else if(k==='?'){e.preventDefault();showHelp();}
 else if(k==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(e.shiftKey)redo();else undo();}
 else if(k==='c'&&(e.ctrlKey||e.metaKey)){e.preventDefault();navigator.clipboard.writeText(JSON.stringify({pat:pat_,seq:seq_,aud:aud_,mix:mix_}));tr('copied to clipboard');}
 else if(k==='v'&&(e.ctrlKey||e.metaKey)){e.preventDefault();navigator.clipboard.readText().then(t=>{try{const d=JSON.parse(t);if(d.pat&&d.seq){pushHistory();pat_=d.pat;seq_=d.seq;if(d.aud)aud_=d.aud;if(d.mix)mix_=d.mix;syncUIFromState();tr('pasted from clipboard',"k")}}catch(err){tr('paste failed: invalid data',"e")}});}
@@ -917,7 +1073,9 @@ tr("playback stopped");
 });
 D('random').addEventListener('click',randomize);
 D('export').addEventListener('click',exportWAV);
-D('record').addEventListener('click',()=>{tr("record: not yet implemented","e")});
+D('record').addEventListener('click',toggleRecord);
+D('share').addEventListener('click',shareURL);
+D('help').addEventListener('click',showHelp);
 D('layout').addEventListener('click',()=>{
 st_.layoutIdx=(st_.layoutIdx+1)%51;
 const cfg=st_.layoutIdx===50?finalBlend:layouts[st_.layoutIdx];
@@ -959,9 +1117,15 @@ const savedTheme=localStorage.getItem('rg79_theme')||'dark';
 st_.theme=savedTheme;
 document.documentElement.setAttribute('data-theme',st_.theme);
 
+if(!decodeURL()){
+autoload();
+}
+
 applyLayout(finalBlend,'final blend');
 buildUI();
 tr("RG-79 v17 ready (60 enhancements)","k");
+
+setInterval(autosave,10000);
 
 if('serviceWorker'in navigator){
 navigator.serviceWorker.register('/sw.js').catch(e=>tr('sw: '+e.message,'e'));
