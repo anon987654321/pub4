@@ -31,6 +31,34 @@ class TestStages < Minitest::Test
     assert result.value[:tier], "Should have a tier"
   end
 
+  def test_route_respects_forced_model
+    # Force a specific model
+    test_model = "deepseek/deepseek-r1"
+    MASTER::LLM.force_model!(test_model)
+    
+    stage = MASTER::Stages::Route.new
+    result = stage.call({ text: "Hello world" })
+    
+    assert result.ok?
+    assert_equal test_model, result.value[:model], "Should use forced model"
+    assert_equal :fast, result.value[:tier], "Should classify forced model tier"
+    
+    # Clean up
+    MASTER::LLM.clear_forced_model!
+  end
+
+  def test_route_falls_back_to_tier_when_no_forced_model
+    # Ensure no forced model
+    MASTER::LLM.clear_forced_model!
+    
+    stage = MASTER::Stages::Route.new
+    result = stage.call({ text: "Hello world" })
+    
+    assert result.ok?
+    assert result.value[:model], "Should select a model via tier"
+    assert result.value[:tier], "Should have a tier"
+  end
+
   def test_lint_checks_axioms
     stage = MASTER::Stages::Lint.new
     result = stage.call({ response: "Some response text" })
