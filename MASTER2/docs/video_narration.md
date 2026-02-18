@@ -13,3 +13,7 @@ The interface also reflects this philosophy. The orb-based UI is intentionally l
 For a practical demonstration, run a refactor workflow on a real target file and show the full cycle from command to output. Highlight where risk is surfaced, where policy intervenes, and how rollback safety is preserved. That sequence communicates both the essence and the engineering details in one continuous story.
 
 In short, MASTER2 is about disciplined autonomy: faster delivery, higher confidence, lower entropy.
+
+---
+
+**Note:** This narration script has been codified as `MASTER::Replicate::Narration` — see `lib/replicate/narration.rb` for the structured implementation.
