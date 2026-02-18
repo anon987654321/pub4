@@ -7,16 +7,25 @@ module MASTER
       def select_model(args)
         unless args && !args.strip.empty?
           puts "\n  Current model: #{LLM.current_model || 'auto'}"
-          puts "  Use 'model <name>' to switch, 'models' to list.\n"
+          puts "  Forced:        #{LLM.model_forced? ? 'yes' : 'no (auto-select)'}"
+          puts "  Use 'model <name>' to switch, 'model auto' to reset, 'models' to list.\n"
           return
         end
 
         query = args.strip.downcase
+
+        if query == "auto" || query == "reset"
+          LLM.clear_forced_model!
+          LLM.current_model = nil
+          puts "\n  + Reset to auto model selection\n"
+          return
+        end
+
         found = LLM.models.find { |m| m.id.downcase.include?(query) || m.name&.downcase&.include?(query) }
 
         if found
-          LLM.current_model = LLM.extract_model_name(found.id)
-          puts "\n  model: switched to #{found.id}\n"
+          LLM.force_model!(found.id)
+          puts "\n  + Switched to #{found.id} (forced)\n"
         else
           puts "\n  - No model matching '#{args}' found."
           puts "  Use 'models' to list available models.\n"

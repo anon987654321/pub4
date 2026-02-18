@@ -20,10 +20,27 @@ module MASTER
 
     class << self
       attr_accessor :current_model, :persona_prompt
+      attr_reader :forced_model
 
       # Tier setter for compatibility
       def tier=(value)
         @forced_tier = value.to_sym if value
+      end
+
+      # Force a specific model (set by `model` command).
+      # When set, ask() uses this model directly instead of tier-based selection.
+      def force_model!(model_id)
+        @forced_model = model_id
+        @forced_tier = classify_tier(model_id)
+      end
+
+      def clear_forced_model!
+        @forced_model = nil
+        @forced_tier = nil
+      end
+
+      def model_forced?
+        !@forced_model.nil?
       end
 
       def api_key
@@ -82,6 +99,13 @@ module MASTER
 
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
         return cache_result if cache_result&.ok?
+
+        # Honor forced model override (set by `model` command).
+        # When a user explicitly sets a model, use it instead of tier selection.
+        if model.nil? && @forced_model
+          model = @forced_model
+          tier = @forced_tier || tier
+        end
 
         primary = model || select_model(tier)
         return Result.err("No model available.") unless primary

@@ -79,8 +79,14 @@ module MASTER
     # Stage 4: Route to model via circuit breaker + budget
     class Route
       def call(input)
-        tier = LLM.tier
-        model = LLM.select_model
+        # Respect forced model override (model command)
+        if LLM.model_forced?
+          model = LLM.forced_model
+          tier = LLM.classify_tier(model)
+        else
+          tier = LLM.tier
+          model = LLM.select_model(tier)
+        end
         return Result.err("All models unavailable.") unless model
         Result.ok(input.merge(model: model, tier: tier))
       end
