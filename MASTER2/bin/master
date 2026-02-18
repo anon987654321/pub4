@@ -136,6 +136,17 @@ when "session"
 when "health"
   # System health: master health
   MASTER::Commands.print_health
+when "doctor"
+  MASTER::Commands.doctor(args.join(" "))
+when "bootstrap"
+  result = MASTER::Commands.bootstrap(args.join(" "))
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+when "history-dig"
+  result = MASTER::Commands.history_dig(args.join(" "))
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
+when "codify"
+  result = MASTER::Commands.codify(args.join(" "))
+  exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
 
 when "opportunities", "opps"
   # Code improvements: master opportunities file.rb
@@ -145,7 +156,6 @@ when "opportunities", "opps"
 when "style-guides", "styleguides"
   result = MASTER::Commands.style_guides(args.join(" "))
   exit result.ok? ? 0 : 1 if result.respond_to?(:ok?)
-
 when "multi-refactor", "mrefactor"
   # Multi-file refactoring: master multi-refactor deploy/rails/
   path = args.first || "."
@@ -244,6 +254,10 @@ when "help", "-h", "--help"
       session <cmd>               Session management (replay|ls|diff|export)
       cache [stats|clear]         Semantic cache management
       health                      System health check
+      doctor [--verbose]          Deep diagnostics and fix hints
+      bootstrap                   First-run setup and dependency bootstrap
+      history-dig [file]          Recover deleted historical file (master.yml/master.json)
+      codify [export-json]        Show or export codified design+code rules
       opportunities [path]        Find improvement opportunities
       style-guides [sync]         List or sync style guide repos
       axioms-stats                Display axiom violation statistics

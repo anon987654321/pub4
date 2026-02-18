@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="RG-79 human-only instrument system">
+  <title>RG-79</title>
+  <style>
+    :root {
+      --bg: #111;
+      --surface: #1a1a1a;
+      --surface2: #222;
+      --border: #333;
+      --text: #eee;
+      --muted: #999;
+      --accent: #d79a42;
+      --danger: #c85a5a;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.35 system-ui, sans-serif; }
+    body { padding: 8px; }
+
+    header, main, section, aside, footer, article, nav { display: block; }
+
+    header {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font: 900 clamp(46px, 10vw, 108px)/0.88 "Arial Black", Impact, sans-serif;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    h1 small {
+      font-size: 0.16em;
+      vertical-align: super;
+      opacity: 0.75;
+      margin-left: 0.25em;
+    }
+
+    p { margin: 4px 0; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    section, aside, article {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 8px;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      min-height: 60px;
+      min-width: 160px;
+      padding: 10px 16px;
+      font: 700 14px/1 system-ui, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+
+    button[data-kind="primary"] { background: var(--accent); color: #201305; border-color: var(--accent); }
+    button[data-kind="danger"] { border-color: var(--danger); color: #ffd6d6; }
+
+    fieldset {
+      margin: 0;
+      padding: 6px;
+      border: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    legend {
+      padding: 0 4px;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    output { font-size: 12px; color: var(--accent); font-weight: 700; }
+
+    input[type="range"] {
+      width: 100%;
+      margin: 2px 0;
+      accent-color: var(--accent);
+    }
+
+    article[aria-label="Sequencer"] { grid-column: 1 / -1; }
+
+    ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(16, minmax(30px, 1fr));
+      gap: 5px;
+    }
+
+    li { min-height: 52px; }
+
+    .step {
+      width: 100%;
+      height: 100%;
+      min-height: 52px;
+      min-width: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0;
+      min-height: 52px;
+    }
+
+    .step[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); }
+    .step.playing { box-shadow: inset 0 0 0 2px #fff0c8; }
+
+    aside {
+      max-height: 260px;
+      overflow: auto;
+      background: #0e0f11;
+      font: 12px/1.4 ui-monospace, monospace;
+      color: #cfd6dd;
+    }
+
+    aside b { color: #f3be72; }
+
+    footer {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 6px 8px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; }
+      ol { grid-template-columns: repeat(8, minmax(30px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>RG-79 <small>TM</small></h1>
+    <p>Human-only instrument surface / single self-contained HTML</p>
+  </header>
+
+  <main>
+    <section aria-label="Transport">
+      <nav aria-label="Transport controls">
+        <button id="start" data-kind="primary">Start</button>
+        <button id="play" data-kind="primary">Play</button>
+        <button id="stop">Stop</button>
+        <button id="random">Random</button>
+        <button id="next-layout">Next Layout</button>
+        <button id="final-layout">Final Blend</button>
+        <button id="panic" data-kind="danger">Kill Residual</button>
+      </nav>
+      <p id="status">status: idle</p>
+    </section>
+
+    <section aria-label="Controls">
+      <fieldset>
+        <legend>Knobs</legend>
+        <label for="bpm">BPM <output id="bpm-o">94</output></label>
+        <input id="bpm" type="range" min="60" max="170" value="94">
+        <label for="swing">Swing <output id="swing-o">30%</output></label>
+        <input id="swing" type="range" min="0" max="90" value="30">
+        <label for="drive">Drive <output id="drive-o">25%</output></label>
+        <input id="drive" type="range" min="0" max="100" value="25">
+        <label for="tone">Tone <output id="tone-o">55%</output></label>
+        <input id="tone" type="range" min="0" max="100" value="55">
+      </fieldset>
+    </section>
+
+    <aside id="trace" aria-label="System Trace"></aside>
+
+    <article aria-label="Sequencer">
+      <p>Step Grid</p>
+      <ol id="steps"></ol>
+    </article>
+  </main>
+
+  <footer id="meta">layout: final blend / instance: local</footer>
+
+  <script>
+    "use strict";
+
+    const INSTANCE_KEY = "rg79_instance";
+    const INSTANCE_TTL = 8000;
+    const selfId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("rg79") : null;
+
+    const stepsEl = document.getElementById("steps");
+    const traceEl = document.getElementById("trace");
+    const statusEl = document.getElementById("status");
+    const metaEl = document.getElementById("meta");
+
+    const state = {
+      started: false,
+      playing: false,
+      index: -1,
+      timer: null,
+      audio: null,
+      layoutIndex: 49,
+      seq: Array.from({ length: 16 }, (_, i) => (i % 4 === 0 ? 1 : 0))
+    };
+
+    const layouts = Array.from({ length: 50 }, (_, i) => ({
+      id: i + 1,
+      gap: 4 + (i % 7),
+      panelPad: 6 + (i % 5),
+      buttonH: 54 + (i % 5) * 3,
+      stepH: 46 + (i % 6) * 2,
+      accent: 24 + i
+    }));
+
+    const finalBlend = { id: "final", gap: 8, panelPad: 8, buttonH: 60, stepH: 52, accent: 35 };
+
+    function trace(msg, level = "info") {
+      const ts = new Date().toISOString().slice(11, 19);
+      const line = document.createElement("span");
+      line.innerHTML = `<b>${ts}</b> ${msg}`;
+      line.style.display = "block";
+      line.style.color = level === "err" ? "#ef9a9a" : level === "ok" ? "#9fe0b0" : "#cfd6dd";
+      traceEl.appendChild(line);
+      while (traceEl.children.length > 90) traceEl.removeChild(traceEl.firstChild);
+      traceEl.scrollTop = traceEl.scrollHeight;
+    }
+
+    function setStatus(s) { statusEl.textContent = `status: ${s}`; }
+
+    function readOwner() {
+      try { return JSON.parse(localStorage.getItem(INSTANCE_KEY) || "null"); } catch { return null; }
+    }
+
+    function claimOwner() {
+      const owner = readOwner();
+      if (owner && owner.id !== selfId && (Date.now() - owner.ts) < INSTANCE_TTL) {
+        bc?.postMessage({ t: "stop", to: owner.id });
+      }
+      localStorage.setItem(INSTANCE_KEY, JSON.stringify({ id: selfId, ts: Date.now() }));
+    }
+
+    function keepOwner() {
+      localStorage.setItem(INSTANCE_KEY, JSON.stringify({ id: selfId, ts: Date.now() }));
+    }
+
+    function releaseOwner() {
+      const owner = readOwner();
+      if (owner && owner.id === selfId) localStorage.removeItem(INSTANCE_KEY);
+    }
+
+    function applyLayout(cfg, name) {
+      document.querySelector("main").style.gap = `${cfg.gap}px`;
+      document.querySelectorAll("section,aside,article").forEach((n) => { n.style.padding = `${cfg.panelPad}px`; });
+      document.querySelectorAll("button").forEach((n) => { n.style.minHeight = `${cfg.buttonH}px`; });
+      document.querySelectorAll(".step").forEach((n) => { n.style.minHeight = `${cfg.stepH}px`; });
+      document.documentElement.style.setProperty("--accent", `hsl(${cfg.accent} 65% 56%)`);
+      metaEl.textContent = `layout: ${name} / instance: ${selfId.slice(-6)}`;
+    }
+
+    function buildGrid() {
+      stepsEl.innerHTML = "";
+      for (let i = 0; i < 16; i += 1) {
+        const item = document.createElement("li");
+        const step = document.createElement("button");
+        step.className = "step";
+        step.type = "button";
+        step.setAttribute("aria-pressed", String(Boolean(state.seq[i])));
+        step.addEventListener("click", () => {
+          state.seq[i] = state.seq[i] ? 0 : 1;
+          step.setAttribute("aria-pressed", String(Boolean(state.seq[i])));
+        });
+        item.appendChild(step);
+        stepsEl.appendChild(item);
+      }
+    }
+
+    function paintPlaying(i) {
+      document.querySelectorAll(".step").forEach((el, idx) => {
+        el.classList.toggle("playing", idx === i);
+        el.setAttribute("aria-pressed", String(Boolean(state.seq[idx])));
+      });
+    }
+
+    function resetAudio() {
+      if (state.timer) {
+        clearInterval(state.timer);
+        state.timer = null;
+      }
+      state.playing = false;
+      state.index = -1;
+      paintPlaying(-1);
+      if (state.audio) {
+        try { state.audio.close(); } catch {}
+      }
+      state.audio = null;
+      trace("Residual processes/audio cleared.", "ok");
+    }
+
+    function blip(freq, dur = 0.08) {
+      if (!state.audio) return;
+      const now = state.audio.currentTime;
+      const o = state.audio.createOscillator();
+      const g = state.audio.createGain();
+      const f = state.audio.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.value = (Number(document.getElementById("tone").value) / 100) * 4000 + 200;
+      o.frequency.value = freq;
+      o.type = "triangle";
+      const drive = Number(document.getElementById("drive").value) / 100;
+      g.gain.value = 0.001;
+      g.gain.exponentialRampToValueAtTime(0.2 + drive * 0.2, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      o.connect(f).connect(g).connect(state.audio.destination);
+      o.start(now);
+      o.stop(now + dur + 0.02);
+    }
+
+    function stepPlay() {
+      state.index = (state.index + 1) % 16;
+      paintPlaying(state.index);
+      if (!state.seq[state.index]) return;
+      const pos = state.index % 4;
+      if (pos === 0) blip(90, 0.11);
+      else if (pos === 2) blip(180, 0.07);
+      else blip(420, 0.05);
+    }
+
+    function startPlay() {
+      if (!state.started) return;
+      claimOwner();
+      resetAudio();
+      state.audio = new (window.AudioContext || window.webkitAudioContext)();
+      state.playing = true;
+      const bpm = Number(document.getElementById("bpm").value);
+      const stepMs = (60000 / bpm) / 4;
+      state.timer = setInterval(stepPlay, stepMs);
+      setStatus("playing");
+      trace("Playback started; singleton lock asserted.", "ok");
+    }
+
+    function stopPlay() {
+      resetAudio();
+      setStatus("stopped");
+      trace("Playback stopped.");
+    }
+
+    function randomize() {
+      state.seq = state.seq.map(() => (Math.random() > 0.62 ? 1 : 0));
+      paintPlaying(state.index);
+      trace("Pattern randomized.");
+    }
+
+    function bind() {
+      document.getElementById("start").addEventListener("click", () => {
+        claimOwner();
+        resetAudio();
+        state.started = true;
+        setStatus("ready");
+        trace("Engine start sequence complete.", "ok");
+      });
+
+      document.getElementById("play").addEventListener("click", startPlay);
+      document.getElementById("stop").addEventListener("click", stopPlay);
+      document.getElementById("random").addEventListener("click", randomize);
+
+      document.getElementById("next-layout").addEventListener("click", () => {
+        state.layoutIndex = (state.layoutIndex + 1) % layouts.length;
+        const cfg = layouts[state.layoutIndex];
+        applyLayout(cfg, `alt-${String(cfg.id).padStart(2, "0")}`);
+        trace(`Applied alt-${String(cfg.id).padStart(2, "0")}.`, "warn");
+      });
+
+      document.getElementById("final-layout").addEventListener("click", () => {
+        applyLayout(finalBlend, "final blend");
+        trace("Applied final blend.", "ok");
+      });
+
+      document.getElementById("panic").addEventListener("click", () => {
+        stopPlay();
+        releaseOwner();
+        setStatus("panic-reset");
+        trace("Panic reset complete.", "err");
+      });
+
+      ["bpm", "swing", "drive", "tone"].forEach((id) => {
+        const input = document.getElementById(id);
+        const out = document.getElementById(`${id}-o`);
+        input.addEventListener("input", () => {
+          const v = Number(input.value);
+          out.value = id === "bpm" ? String(v) : `${v}%`;
+          if (id === "bpm" && state.playing) startPlay();
+        });
+      });
+
+      bc?.addEventListener("message", (e) => {
+        const m = e.data || {};
+        if (m.t === "stop" && m.to === selfId) {
+          stopPlay();
+          trace("Remote owner requested stop.", "warn");
+        }
+      });
+
+      setInterval(() => {
+        const owner = readOwner();
+        if (state.playing && (!owner || owner.id === selfId)) keepOwner();
+        if (state.playing && owner && owner.id !== selfId && (Date.now() - owner.ts) < INSTANCE_TTL) {
+          stopPlay();
+          trace("Ownership moved to another tab.", "warn");
+        }
+      }, 1800);
+
+      window.addEventListener("beforeunload", releaseOwner);
+    }
+
+    buildGrid();
+    bind();
+    applyLayout(finalBlend, "final blend");
+    trace("RG-79 loaded: self-contained semantic instrument surface.", "ok");
+  </script>
+</body>
+</html>
