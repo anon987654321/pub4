@@ -35,6 +35,7 @@ $10 session cap. Circuit breaker. Rate limiting. Staging + syntax validation + r
 master scan [dir]          master fix [--all|file]
 master refactor <file>     master chamber <file>
 master evolve              master ideate <topic>
+master chat                master model <name|auto>
 master schedule <cmd>      master heartbeat <cmd>
 master policy [set ...]    master health
 master version             master help

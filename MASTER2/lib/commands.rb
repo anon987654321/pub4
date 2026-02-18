@@ -4,6 +4,7 @@ require_relative "commands/session_commands"
 require_relative "commands/model_commands"
 require_relative "commands/budget_commands"
 require_relative "commands/code_commands"
+require_relative "commands/chat_commands"
 require_relative "commands/misc_commands"
 require_relative "commands/refactor_helpers"
 require_relative "commands/workflow_commands"
@@ -16,6 +17,7 @@ module MASTER
     include ModelCommands
     include BudgetCommands
     include CodeCommands
+    include ChatCommands
     include MiscCommands
     include RefactorHelpers
     include WorkflowCommands
@@ -241,6 +243,9 @@ module MASTER
         HANDLED
       when "browse"
         browse_url(args)
+        HANDLED
+      when "chat"
+        enter_chat_mode(args)
         HANDLED
       when "ideate", "brainstorm"
         ideate(args)

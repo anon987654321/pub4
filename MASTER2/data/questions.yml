@@ -109,3 +109,107 @@ reflect:
     - "What patterns emerged?"
     - "What should we document?"
 
+# Adversarial cluster question banks
+# Restored from master.yml archaeology (v58.2.0 / v16.0.0 monolithic)
+# These map to the adversarial_clusters in constitution.yml
+
+assumptions:
+  purpose: "Challenge hidden assumptions"
+  questions:
+    - "What are we assuming that could be false?"
+    - "If a key assumption flips, what still works?"
+    - "Which assumptions have we never tested?"
+    - "What would happen if the opposite were true?"
+    - "Which assumptions are load-bearing vs convenience?"
+    - "How do we validate assumptions incrementally?"
+
+failure_modes:
+  purpose: "Anticipate catastrophic failures"
+  questions:
+    - "How does this fail catastrophically?"
+    - "What breaks first under load or outage?"
+    - "Which single point of failure is most likely?"
+    - "What happens when it fails silently?"
+    - "How do cascading failures propagate?"
+    - "What are blast radius containment strategies?"
+
+attacker:
+  purpose: "Think like a malicious actor"
+  questions:
+    - "What would an attacker do here?"
+    - "Where can inputs be abused or poisoned?"
+    - "Which trust boundaries are weakest?"
+    - "How would we exploit this ourselves?"
+    - "What attack vectors are we not considering?"
+    - "How do we defend against insider threats?"
+
+scale:
+  purpose: "Evaluate behavior at scale"
+  questions:
+    - "What happens at 10x users or data?"
+    - "What performance cliff exists and where?"
+    - "Which bottleneck appears first?"
+    - "How does complexity grow with scale?"
+    - "What are the economics at different scales?"
+    - "Which architectural decisions become problematic at scale?"
+
+degradation:
+  purpose: "Plan graceful degradation"
+  questions:
+    - "How do we degrade gracefully?"
+    - "What is minimal viable behavior under stress?"
+    - "Which features can we sacrifice first?"
+    - "How do we maintain core function during failure?"
+    - "What are UX implications of degradation?"
+    - "How do we communicate degraded service to users?"
+
+edge_cases:
+  purpose: "Find unhandled edge cases"
+  questions:
+    - "Which edge cases will users hit first?"
+    - "Which rare but high-impact case is unhandled?"
+    - "What happens with malformed inputs?"
+    - "How do we handle impossible combinations?"
+    - "Which edge cases become common at scale?"
+    - "What edge cases exist in integration points?"
+
+ops_maint:
+  purpose: "Evaluate operational and maintenance burden"
+  questions:
+    - "What is the long-term maintenance burden?"
+    - "How do we observe, debug, and rollback quickly?"
+    - "Which operational complexity is hidden?"
+    - "How do we troubleshoot under pressure?"
+    - "What skills and knowledge are required for operations?"
+    - "How do we prevent operational knowledge from being siloed?"
+
+compliance_ethics:
+  purpose: "Assess regulatory and ethical risks"
+  questions:
+    - "Any privacy, safety, or fairness risks?"
+    - "Which regulations apply and how do we prove compliance?"
+    - "What are the ethical implications?"
+    - "How do we audit and demonstrate adherence?"
+    - "What happens when regulations change?"
+    - "How do we balance compliance with innovation?"
+
+a11y_ux:
+  purpose: "Ensure accessibility and usability"
+  questions:
+    - "Is it operable by keyboard and screen readers?"
+    - "What happens with reduced motion or low bandwidth?"
+    - "How does this work for colorblind users?"
+    - "Can this be used with assistive technology?"
+    - "What are multilingual and cultural considerations?"
+    - "How do we test accessibility with actual users?"
+
+economics:
+  purpose: "Evaluate cost and ROI"
+  questions:
+    - "Where is waste or needless complexity?"
+    - "What is ROI vs simpler alternatives?"
+    - "Which costs are hidden or deferred?"
+    - "How do we optimize for total cost of ownership?"
+    - "What are opportunity costs of this approach?"
+    - "How do the economics change over time and scale?"
+
