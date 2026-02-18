@@ -428,7 +428,8 @@
         snare:[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
         hat:  [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
         bass: [1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0]
-      }
+      },
+      stepElements: [] // Cache for step button DOM elements
     };
 
     const refs = {
@@ -455,7 +456,10 @@
       const ts = new Date().toISOString().replace("T", " ").slice(11, 19);
       const row = document.createElement("span");
       row.className = `entry ${level}`;
-      row.innerHTML = `<b>${ts}</b> ${String(message)}`;
+      const bold = document.createElement("b");
+      bold.textContent = ts;
+      row.appendChild(bold);
+      row.appendChild(document.createTextNode(` ${String(message)}`));
       refs.log.appendChild(row);
       while (refs.log.children.length > 80) refs.log.removeChild(refs.log.firstChild);
       refs.log.scrollTop = refs.log.scrollHeight;
@@ -595,17 +599,37 @@
     }
 
     function paintSteps() {
-      document.querySelectorAll(".step").forEach((el) => {
+      // Use cached step elements instead of querySelectorAll
+      for (const el of state.stepElements) {
         const track = el.dataset.track;
         const step = Number(el.dataset.step);
         el.classList.toggle("on", Boolean(state.seq[track][step]));
         el.classList.toggle("hit", !state.seq[track][step]);
         el.classList.toggle("playing", step === state.currentStep);
-      });
+      }
     }
 
     function buildGrid() {
       refs.sequencer.innerHTML = "";
+      state.stepElements = []; // Clear cache
+      
+      // Use event delegation: single listener on sequencer
+      const handleStepClick = (e) => {
+        const btn = e.target.closest(".step");
+        if (!btn) return;
+        const track = btn.dataset.track;
+        const step = Number(btn.dataset.step);
+        state.seq[track][step] = state.seq[track][step] ? 0 : 1;
+        paintSteps();
+      };
+      
+      // Remove old listener if exists
+      if (refs.sequencer._stepClickHandler) {
+        refs.sequencer.removeEventListener("click", refs.sequencer._stepClickHandler);
+      }
+      refs.sequencer._stepClickHandler = handleStepClick;
+      refs.sequencer.addEventListener("click", handleStepClick);
+      
       tracks.forEach((track) => {
         const row = document.createElement("div");
         row.className = "track";
@@ -624,11 +648,8 @@
           btn.className = "step";
           btn.dataset.track = track;
           btn.dataset.step = String(i);
-          btn.addEventListener("click", () => {
-            state.seq[track][i] = state.seq[track][i] ? 0 : 1;
-            paintSteps();
-          });
           steps.appendChild(btn);
+          state.stepElements.push(btn); // Cache reference
         }
 
         row.appendChild(steps);
