@@ -8,6 +8,7 @@ require_relative "commands/chat_commands"
 require_relative "commands/misc_commands"
 require_relative "commands/refactor_helpers"
 require_relative "commands/workflow_commands"
+require_relative "commands/system_commands"
 
 module MASTER
   # Commands - REPL command dispatcher
@@ -21,6 +22,7 @@ module MASTER
     include MiscCommands
     include RefactorHelpers
     include WorkflowCommands
+    include SystemCommands
 
     @last_command = nil
 
@@ -252,14 +254,164 @@ module MASTER
       cmd = parts[0]&.downcase
       args = parts[1]
 
-      # Look up command in table
-      entry = COMMAND_TABLE[cmd]
-      return nil unless entry
-
-      method_name, returns_handled = entry
-      @last_cmd = cmd  # Store for wrapper methods that need original command
-      result = send(method_name, args)
-      returns_handled ? HANDLED : result
+      case cmd
+      when "help", "?"
+        Help.show(args)
+        HANDLED
+      when "hunt"
+        hunt_bugs(args)
+        HANDLED
+      when "critique"
+        critique_code(args)
+        HANDLED
+      when "conflict"
+        detect_conflicts
+        HANDLED
+      when "learn"
+        show_learnings(args)
+        HANDLED
+      when "status"
+        Dashboard.new.render
+        HANDLED
+      when "budget"
+        print_budget
+        HANDLED
+      when "clear"
+        print "\e[2J\e[H"
+        HANDLED
+      when "history"
+        print_cost_history
+        HANDLED
+      when "context"
+        print_context_usage
+        HANDLED
+      when "session"
+        manage_session(args)
+        HANDLED
+      when "sessions"
+        print_saved_sessions
+        HANDLED
+      when "forget", "undo"
+        undo_last_exchange
+        HANDLED
+      when "summary"
+        print_session_summary
+        HANDLED
+      when "health"
+        print_health
+        HANDLED
+      when "doctor"
+        doctor(args)
+        HANDLED
+      when "bootstrap"
+        bootstrap(args)
+        HANDLED
+      when "history-dig"
+        history_dig(args)
+        HANDLED
+      when "codify"
+        codify(args)
+        HANDLED
+      when "axioms-stats", "stats"
+        print_axiom_stats
+        HANDLED
+      when "refactor", "autofix"
+        autofix(args)
+      when "chamber"
+        chamber(args)
+      when "evolve"
+        evolve(args)
+      when "opportunities", "opps"
+        opportunities(args)
+      when "axioms", "language-axioms"
+        print_language_axioms(args)
+        HANDLED
+      when "self", "selftest", "self-test", "selfrun", "self-run"
+        selftest_full(args)
+      when "web", "server"
+        start_web_server(args)
+        HANDLED
+      when "speak", "say"
+        speak(args)
+        HANDLED
+      when "fix"
+        fix_code(args)
+        HANDLED
+      when "browse"
+        browse_url(args)
+        HANDLED
+      when "chat"
+        enter_chat_mode(args)
+        HANDLED
+      when "ideate", "brainstorm"
+        ideate(args)
+      when "model", "use"
+        select_model(args)
+        HANDLED
+      when "models"
+        list_models
+        HANDLED
+      when "pattern", "mode"
+        select_pattern(args)
+        HANDLED
+      when "patterns", "modes"
+        list_patterns
+        HANDLED
+      when "persona"
+        manage_persona(args)
+        HANDLED
+      when "personas"
+        list_personas
+        HANDLED
+      when "workflow"
+        manage_workflow(args)
+        HANDLED
+      when "creative"
+        creative_chamber(args)
+        HANDLED
+      when "scan"
+        scan_code(args)
+        HANDLED
+      when "queue"
+        manage_queue(args)
+        HANDLED
+      when "harvest"
+        harvest_data(args)
+        HANDLED
+      when "capture", "session-capture"
+        session_capture
+        HANDLED
+      when "review-captures"
+        review_captures
+        HANDLED
+      when "replicate", "repligen", "generate-image", "generate-video"
+        replicate_command(cmd, args)
+        HANDLED
+      when "postpro", "enhance", "upscale"
+        postpro_command(cmd, args)
+        HANDLED
+      when "cache"
+        show_cache_stats(args)
+        HANDLED
+      when "style-guides", "styleguides"
+        style_guides(args)
+        HANDLED
+      when "multi-refactor", "mrefactor"
+        multi_refactor(args)
+      when "schedule"
+        manage_schedule(args)
+      when "heartbeat"
+        manage_heartbeat(args)
+      when "policy"
+        manage_policy(args)
+      when "shell"
+        InteractiveShell.new.run
+        HANDLED
+      when "exit", "quit"
+        :exit
+      else
+        nil
+      end
     end
 
     # Wrapper methods for command table routing
