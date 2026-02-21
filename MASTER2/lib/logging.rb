@@ -105,13 +105,17 @@ module MASTER
         raise
       end
 
-      # Set request ID for tracing through pipeline
+      # Set request ID for tracing through pipeline (Thread.current for thread safety)
       def with_request_id(id = nil)
-        old_id = @request_id
-        @request_id = id || SecureRandom.hex(8)
+        old_id = Thread.current[:master_request_id]
+        Thread.current[:master_request_id] = id || SecureRandom.hex(8)
         yield
       ensure
-        @request_id = old_id
+        Thread.current[:master_request_id] = old_id
+      end
+
+      def request_id
+        Thread.current[:master_request_id] || @request_id
       end
 
       # Format exception with error class, message, and optional backtrace

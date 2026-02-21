@@ -124,6 +124,5 @@ module MASTER
       end
     end
 
-    # --- ReWOO pattern implementation ---
   end
 end

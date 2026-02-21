@@ -18,8 +18,7 @@ module MASTER
     # Boot time for dmesg-style timestamps
     MASTER_BOOT_TIME = Time.now
 
-    # --- Typography Icons (minimal vocabulary per Strunk & White) ---
-    # --- Typography Icons (Starship-inspired, Nerd Font compatible) ---
+    # Typography icons (minimal set, Nerd Font compatible)
     ICONS = {
       success: "+",
       failure: "-",

@@ -110,7 +110,7 @@ module MASTER
       end
     end
 
-    # Stage 6: Query LLM, stream to stderr
+    # Stage 6: Query LLM with streaming output
     class Ask
       def call(input)
         model = input[:model]

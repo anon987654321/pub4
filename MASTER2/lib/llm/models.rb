@@ -119,6 +119,8 @@ module MASTER
         end
       end
 
+      public :select_model
+
       private
     end
   end

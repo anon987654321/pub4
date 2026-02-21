@@ -265,8 +265,9 @@ module MASTER
       end
 
       def show_exit_summary(session)
-        cost = session.total_cost
         msgs = session.message_count
+        return if msgs == 0
+        cost = session.total_cost
         puts UI.dim("#{msgs}msg #{UI.currency(cost)}")
       end
 

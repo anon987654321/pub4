@@ -104,7 +104,7 @@ module MASTER
       end
 
       # Final fallback to direct if all else fails
-      if !result.ok? && @step > 0
+      unless result.ok?
         UI.warn("All patterns failed, attempting direct response")
         result = direct_ask("Given this context, provide the best answer you can:\n\n#{goal}", tier: :fast)
       end
@@ -130,11 +130,26 @@ module MASTER
       end
     end
 
-    # Pattern selection heuristics - moved before private
+    # Pattern selection heuristics - local regex first, LLM only for ambiguous cases
     def select_pattern(goal)
-      # Sanitize goal to prevent prompt injection
-      sanitized_goal = goal.to_s.gsub(/[\r\n]+/, ' ').strip.slice(0, 500)
-      
+      g = goal.to_s.strip.downcase
+
+      # Direct: greetings, chitchat, simple one-word queries — no LLM cost
+      return :direct if g.match?(/\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i)
+      return :direct if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|build|create|update|debug|write|read|find)\b/)
+
+      # Reflexion: correctness-critical keywords
+      return :reflexion if g.match?(/\b(fix|debug|repair|refactor|correct|safe|security|validate|test)\b/)
+
+      # PreAct: clear multi-step plans
+      return :pre_act if g.match?(/\b(then|step \d|phase \d|first.*then|build.*deploy|create.*and then)\b/)
+
+      # ReWOO: pure research/comparison (no tools needed)
+      return :rewoo if g.match?(/\b(compare|explain|summarize|research|what is|how does|why is|difference between)\b/) && !g.match?(/\b(file|code|write|fix)\b/)
+
+      # Sanitize for LLM call — prevent prompt injection
+      sanitized_goal = goal.to_s.gsub(/[\r\n]+/, " ").strip.slice(0, 500)
+
       prompt = <<~CLASSIFY
         You are a task router. Given a user's goal, pick the best execution pattern.
 
@@ -149,7 +164,7 @@ module MASTER
 
         USER GOAL: "#{sanitized_goal}"
 
-        Respond with ONLY one word: #{(PATTERNS + [:direct]).join(', ')}
+        Respond with ONLY one word: #{(PATTERNS + [:direct]).join(", ")}
       CLASSIFY
 
       result = LLM.ask(prompt, tier: :cheap)
@@ -159,7 +174,6 @@ module MASTER
         return chosen if chosen && (PATTERNS.include?(chosen) || chosen == :direct)
       end
 
-      # Fallback: if LLM fails or returns garbage, use react
       :react
     rescue StandardError
       :react

@@ -101,6 +101,5 @@ module MASTER
       end
     end
 
-    # --- Reflexion pattern implementation ---
   end
 end

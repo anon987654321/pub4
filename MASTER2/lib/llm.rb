@@ -128,7 +128,7 @@ module MASTER
 
           if result.ok?
             process_llm_response(result, candidate_model, prompt, stream)
-            return Result.ok(result.value)
+            return result
           else
             handle_llm_failure(result, candidate_model)
             last_error = result.error

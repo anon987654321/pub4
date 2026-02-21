@@ -21,7 +21,9 @@ module MASTER
 
         return Result.err("No proposals generated.") if @proposals.empty?
 
-        council_result = multi_round_review(code, @proposals.first[:proposal])
+        # Review combined proposals so council sees all perspectives, not just the first
+        combined = @proposals.map { |p| "=== #{p[:model]} ===\n#{p[:proposal]}" }.join("\n\n")
+        council_result = multi_round_review(code, combined)
 
         arbiter_model = MODELS[ARBITER] || LLM.select_model
         if @llm.circuit_closed?(arbiter_model)
