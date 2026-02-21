@@ -4,8 +4,6 @@ module MASTER
   module UI
     extend self
 
-    # --- Colorization for dmesg and system output ---
-
     def dmesg(subsystem, message, level: :info)
       elapsed = (Time.now - MASTER_BOOT_TIME).round(6)
       prefix = format("[%12.6f]", elapsed)
@@ -15,8 +13,6 @@ module MASTER
       else puts line
       end
     end
-
-    # --- Special rendering methods ---
 
     def render_response(text)
       # Try markdown rendering, fallback to plain

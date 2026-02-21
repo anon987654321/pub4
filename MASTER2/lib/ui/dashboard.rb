@@ -82,7 +82,7 @@ module MASTER
         axioms: DB.axioms.size,
         council: DB.council.size,
       }
-    rescue StandardError => e
+    rescue StandardError
       { tier: :unknown, remaining: 0, limit: 10, circuits_ok: 0, circuits_tripped: 0, axioms: 0, council: 0 }
     end
   end

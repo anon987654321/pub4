@@ -195,7 +195,7 @@ module MASTER
         configure_ruby_llm
         m = model || select_model
         return Result.err("No model available.") unless m
-        
+
         c = RubyLLM.chat(model: m)
         response = c.ask(prompt, with: files)
         Result.ok({

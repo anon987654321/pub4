@@ -24,7 +24,11 @@ module MASTER
 
       # Set initial model so prompt shows it immediately
       if LLM.configured?
-        initial_model = LLM.select_model rescue nil
+        initial_model = begin
+          LLM.select_model
+        rescue StandardError
+          nil
+        end
         LLM.current_model = LLM.extract_model_name(initial_model) if initial_model
       end
 
@@ -202,7 +206,7 @@ module MASTER
       return unless File.exist?(path)
 
       File.readlines(path, chomp: true).last(MAX_HISTORY_LINES).each do |line|
-        reader.add_to_history(line) rescue nil
+        reader.add_to_history(line) rescue StandardError
       end
     rescue StandardError
       # History load failure is non-critical
@@ -212,7 +216,7 @@ module MASTER
     def save_history_line(reader, line)
       @history_lines ||= []
       @history_lines << line
-      reader&.add_to_history(line) rescue nil
+      reader&.add_to_history(line) rescue StandardError
     end
 
     # Persist input history to file on exit

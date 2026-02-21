@@ -183,7 +183,7 @@ module MASTER
 
         # Replay history and extract final message string
         message = replay_chat_history(chat, msg_array)
-        
+
         catch(:truncated) do
           response = chat.ask(message) do |chunk|
             # RubyLLM yields Chunk objects (inherits from Message)

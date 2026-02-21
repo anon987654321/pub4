@@ -4,7 +4,6 @@ module MASTER
   module UI
     extend self
 
-    # --- Formatting Helpers (DRY) ---
     def currency(n)
       format("$%.2f", n)
     end
