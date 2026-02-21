@@ -60,7 +60,9 @@ module MASTER
     # Value used to test circuit state without side effects
     PROBE_VALUE = :probe
 
-    # Rate limiting state
+    # Pre-initialize all mutexes at load time to avoid race on first use
+    @lights_mutex = Mutex.new
+    @lights = {}
     @rate_limit_mutex = Mutex.new
     @rate_limit_state = { requests: [], window_start: Time.now }
 
@@ -94,12 +96,9 @@ module MASTER
       end
     end
 
-    # Build a Stoplight light with standard thresholds
-    # Supports Stoplight 4.x (chained), 5.x (keyword args, chained deprecated), 6.x+ (keyword only)
-    # Build or retrieve cached Stoplight instance for a model
+    # Build or retrieve cached Stoplight instance for a model.
+    # Supports Stoplight 4.x (chained), 5.x (keyword args), 6.x+ (keyword only).
     def build_light(model)
-      @lights_mutex ||= Mutex.new
-      @lights ||= {}
       @lights_mutex.synchronize { return @lights[model] if @lights[model] }
       @lights_mutex.synchronize do
         @lights[model] ||= begin

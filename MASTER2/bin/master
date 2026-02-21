@@ -65,11 +65,17 @@ ENV["BUNDLE_APP_CONFIG"] ||= bundle_app_config
 ENV["BUNDLE_DISABLE_SHARED_GEMS"] ||= "true"
 ENV["BUNDLE_FROZEN"] ||= "false"
 
+boot_retries = 0
 begin
   require "bundler/setup"
 rescue LoadError, StandardError => e
+  if boot_retries >= 1
+    $stderr.puts "MASTER2 boot: bundler setup failed after install: #{e.message}"
+    exit 1
+  end
+  boot_retries += 1
   $stderr.puts "MASTER2 boot: preparing local dependencies..."
-  
+
   # Run platform diagnostics before retrying
   require_relative "../lib/platform_check"
   if defined?(MASTER::PlatformCheck)
@@ -79,7 +85,7 @@ rescue LoadError, StandardError => e
       MASTER::PlatformCheck.print_diagnostics
     end
   end
-  
+
   ok = system("bundle", "install", "--quiet", exception: false)
   unless ok
     $stderr.puts "MASTER2 boot: bundle install failed: #{e.message}"

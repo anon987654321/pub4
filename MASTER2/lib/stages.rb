@@ -243,15 +243,9 @@ module MASTER
         Tempfile.create(%w[master .rb]) do |f|
           f.write(code)
           f.flush
-          begin
-            # WARNING: Pledge.pledge restricts the current process permanently.
-            # In IO.popen context, this affects the parent process, not just the child.
-            # On non-OpenBSD systems, this is a no-op.
-            Pledge.unveil(f.path, "r")
-            Pledge.pledge("stdio rpath")
-          rescue StandardError => e
-            # Not on OpenBSD
-          end
+          # Pledge/unveil must NOT be called here — they permanently restrict the parent
+          # process, not just the child. The child Ruby process is already sandboxed by
+          # IO.popen + limited code_execution guards in executor/tools.rb.
           output = IO.popen([RbConfig::CONFIG['ruby_install_name'], f.path], err: %i[child out], &:read)
           { success: $CHILD_STATUS.success?, output: output, exit_code: $CHILD_STATUS.exitstatus }
         end

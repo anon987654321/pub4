@@ -30,7 +30,7 @@ module MASTER
     # Load language rules from data/language_rules.yml per ONE_SOURCE axiom
     LANGUAGE_RULES_PATH = File.join(MASTER.root, "data", "language_rules.yml")
     NORWEGIAN_RULES = if File.exist?(LANGUAGE_RULES_PATH)
-                        YAML.load_file(LANGUAGE_RULES_PATH).dig("norwegian", "rules").freeze
+                        YAML.safe_load_file(LANGUAGE_RULES_PATH).dig("norwegian", "rules").freeze
                       else
                         [].freeze
                       end
@@ -185,12 +185,14 @@ module MASTER
       # Install signal handlers for crash recovery
       # @return [void]
       def install_crash_handlers
+        # at_exit runs on normal exit/INT/TERM — save session before process ends
+        at_exit { save_on_crash }
+
         %w[INT TERM].each do |signal|
           Signal.trap(signal) do
-            # Use exit! to avoid deadlock - skips finalizers but safe in signal handler
-            # Do not call save_on_crash here as it acquires mutexes
+            # exit (not exit!) triggers at_exit handlers so session is saved
             exit_code = signal == "INT" ? 130 : 143
-            exit!(exit_code)
+            exit(exit_code)
           end
         end
       rescue ArgumentError

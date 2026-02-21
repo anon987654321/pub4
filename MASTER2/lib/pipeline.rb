@@ -212,7 +212,7 @@ module MASTER
     end
 
     def pressure_pass_enabled?
-      val = ENV.fetch("MASTER_PRESSURE_PASS", "true").to_s.strip.downcase
+      val = ENV.fetch("MASTER_PRESSURE_PASS", "false").to_s.strip.downcase
       !%w[0 false off no].include?(val)
     end
 
