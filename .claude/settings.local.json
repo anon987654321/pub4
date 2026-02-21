@@ -1,15 +1,16 @@
 {
-  "master_yml": "G:/pub/master.yml",
-  "executor": "G:/pub/cli.rb",
-  "auto_load": true,
   "permissions": {
     "allow": [
       "Zsh(*)",
       "Bash(ruby:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []
   },
+  "master_yml": "G:/pub/master.yml",
+  "executor": "G:/pub/cli.rb",
+  "auto_load": true,
   "comment": "Per master.yml v49.6 - see claude_integration section"
 }
