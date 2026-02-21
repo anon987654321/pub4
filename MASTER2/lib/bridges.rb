@@ -23,10 +23,7 @@ module MASTER
     end
   end
 
-  # ===================================================================
-  # BACKWARD COMPATIBILITY ALIASES
-  # ===================================================================
-
+  # Backward compatibility aliases
   PostproBridge = Bridges::PostproBridge
   ReplicateBridge = Bridges::ReplicateBridge
   RepligenBridge = Bridges::RepligenBridge
