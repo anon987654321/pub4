@@ -183,6 +183,57 @@ module MASTER
         end
       end
 
+      def scan_code(args)
+        path = (args.nil? || args.strip.empty?) ? MASTER.root : File.expand_path(args.strip)
+
+        unless File.exist?(path)
+          puts "Path not found: #{path}"
+          return Result.err("Path not found: #{path}")
+        end
+
+        state_path = Paths.var_file("scan_state.json")
+
+        if args.nil? || args.strip.empty?
+          if File.exist?(state_path)
+            cached = JSON.parse(File.read(state_path), symbolize_names: true)
+            age = ((Time.now - Time.parse(cached[:scanned_at])) / 60).round
+            puts "Last scan: #{cached[:scanned_at]} (#{age}m ago)"
+            puts "  Issues: #{cached[:total_issues]} (#{cached[:critical]} critical, #{cached[:major]} major)"
+            puts "  Pass 'scan .' to re-scan"
+            return Result.ok(cached)
+          end
+        end
+
+        UI.header("Scanning: #{path}")
+        result = Review::Scanner.analyze_directory(path)
+
+        result[:files].each do |file, r|
+          next if r[:issues].empty?
+          rel = file.sub("#{MASTER.root}/", "")
+          puts "  #{r[:grade]} #{rel}"
+          r[:issues].each { |issue| puts "    #{issue[:severity].to_s.upcase}: #{issue[:message]}" }
+        end
+
+        puts
+        puts "  Files: #{result[:files].size}"
+        puts "  Total issues: #{result[:total_issues]} (#{result[:critical]} critical, #{result[:major]} major)"
+        puts "  Average score: #{result[:average_score].round(2)}/#{Review::Scanner::GOOD_PATTERNS.size}"
+
+        state = {
+          scanned_at: Time.now.utc.iso8601,
+          path: path,
+          total_issues: result[:total_issues],
+          critical: result[:critical],
+          major: result[:major],
+          average_score: result[:average_score].round(2),
+          files: result[:files].transform_values { |r| { issues: r[:issues].size, score: r[:score], grade: r[:grade] } }
+        }
+        File.write(state_path, JSON.generate(state))
+        puts "  Scan state saved → var/scan_state.json"
+
+        Result.ok(state)
+      end
+
       private
 
       def parse_refactor_target(args)

@@ -4,6 +4,10 @@ module MASTER
   VERSION = "2.0.0"
   def self.root = File.expand_path("..", __dir__)
 
+  def self.source_files
+    Dir.glob(File.join(root, "lib", "**", "*.rb")).sort
+  end
+
   # Safe require helper for optional dependencies
   def self.safe_require(path, label: nil)
     require_relative path
