@@ -51,6 +51,5 @@ module MASTER
       end
     end
 
-    # --- Pre-Act pattern implementation ---
   end
 end

@@ -54,8 +54,6 @@ module MASTER
       @cache.clear
     end
 
-    # --- Axioms (cached) ---
-
     # Get all axioms (cached)
     # @return [Array<Hash>] Array of axiom records
     def axioms
@@ -79,8 +77,6 @@ module MASTER
       append("axioms", record.compact)
       @cache.delete(:axioms)
     end
-
-    # --- Council (cached) ---
 
     # Get all council personas (cached)
     # @return [Array<Hash>] Array of persona records

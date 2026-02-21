@@ -120,6 +120,5 @@ module MASTER
       end
     end
 
-    # --- Tools module ---
   end
 end

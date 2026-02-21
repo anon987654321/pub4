@@ -118,6 +118,7 @@ module MASTER
       case obj
       when Hash then obj.transform_values { |v| deep_dup(v) }
       when Array then obj.map { |v| deep_dup(v) }
+      when String then obj.dup
       else obj
       end
     end

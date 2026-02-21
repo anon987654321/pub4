@@ -24,7 +24,7 @@ module MASTER
 
       # Set initial model so prompt shows it immediately
       if LLM.configured?
-        initial_model = LLM.send(:select_model) rescue nil
+        initial_model = LLM.select_model rescue nil
         LLM.current_model = LLM.extract_model_name(initial_model) if initial_model
       end
 
@@ -34,7 +34,7 @@ module MASTER
       end
 
       unless ENV["OPENROUTER_API_KEY"]
-        UI.warn("OPENROUTER_API_KEY not set")
+        UI.warn("OPENROUTER_API_KEY not set — get yours at openrouter.ai/keys then: export OPENROUTER_API_KEY=or-...")
       end
 
       # Initialize workflow
@@ -63,7 +63,7 @@ module MASTER
             session.save
             break
           else
-            puts " (again to quit)"
+            $stdout.print "\n (Ctrl+C again to quit)\n"
             last_interrupt = now
             next
           end
@@ -150,7 +150,10 @@ module MASTER
           puts output
         end
         if result.value[:cost]
-          puts UI.dim("  #{format_meta(result.value)}")
+          this_cost = result.value[:cost].to_f
+          running_total = session.total_cost + this_cost
+          total_str = running_total > 0 ? " [$#{running_total.round(4)} total]" : ""
+          puts UI.dim("  #{format_meta(result.value)}#{total_str}")
         end
         session.add_assistant(
           output,
@@ -224,7 +227,7 @@ module MASTER
     end
 
     def history_path
-      File.join(MASTER.root, HISTORY_FILE)
+      File.join(MASTER.root, "var", HISTORY_FILE)
     end
   end
 end

@@ -3,13 +3,13 @@
 module MASTER
   # ExecutionContext - extracted from Executor::Context for module-level access
   module ExecutionContext
-      SIMPLE_SECTIONS = %w[capabilities architecture environment shell_patterns behavior].freeze
-      LABELED_SECTIONS = {
-        "task_workflow" => "TASK WORKFLOW",
-        "safety" => "SAFETY",
-        "critical_axioms" => "CORE AXIOMS",
-        "anti_simulation" => "EVIDENCE RULES",
-      }.freeze
+    SIMPLE_SECTIONS = %w[capabilities architecture environment shell_patterns behavior].freeze
+    LABELED_SECTIONS = {
+      "task_workflow" => "TASK WORKFLOW",
+      "safety" => "SAFETY",
+      "critical_axioms" => "CORE AXIOMS",
+      "anti_simulation" => "EVIDENCE RULES",
+    }.freeze
 
       def self.system_prompt_config
         @system_prompt_config ||= if File.exist?(MASTER::Executor::SYSTEM_PROMPT_FILE)

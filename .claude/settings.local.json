@@ -5,7 +5,8 @@
       "Bash(ruby:*)",
       "Bash(git:*)",
       "WebFetch(domain:github.com)",
-      "Bash(gh pr list --repo anon987654321/pub4 --state all --limit 20 2>&1)"
+      "Bash(gh pr list --repo anon987654321/pub4 --state all --limit 20 2>&1)",
+      "WebFetch(domain:api.github.com)"
     ],
     "deny": [],
     "ask": []
