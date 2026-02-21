@@ -255,7 +255,7 @@ module MASTER
           timestamp: Time.now.utc.iso8601(3),
           level: severity.to_s.upcase,
           message: message,
-          request_id: @request_id,
+          request_id: request_id,
           **context.compact
         }.compact
       end
