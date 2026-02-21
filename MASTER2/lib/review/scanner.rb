@@ -38,6 +38,21 @@ module MASTER
           message: "Bare rescue catches all exceptions - use StandardError",
           severity: :minor,
         }.freeze,
+        rescue_nil: {
+          pattern: /rescue\s+nil\b/,
+          message: "rescue nil swallows all exceptions silently — use rescue StandardError",
+          severity: :major,
+        }.freeze,
+        ascii_decoration: {
+          pattern: /^#\s*[-=]{3,}/,
+          message: "ASCII decoration comment adds visual noise — use plain # Section header",
+          severity: :minor,
+        }.freeze,
+        unused_rescue_var: {
+          pattern: /rescue(?:\s+\w+)?\s*=>\s*e\s*(?:;\s*(?:nil|\{\}|\[\])|[\r\n]\s*(?:nil|end|\{\}|\[\]))/,
+          message: "Rescue captures 'e' but body is empty — drop => e if variable unused",
+          severity: :minor,
+        }.freeze,
       }.freeze
 
       # Patterns that indicate good code
