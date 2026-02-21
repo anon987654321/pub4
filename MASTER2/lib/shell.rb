@@ -80,7 +80,7 @@ module MASTER
         # Use Open3 instead of backticks
         stdout, status = Open3.capture2("which", cmd.to_s)
         status.success? ? stdout.strip : nil
-      rescue StandardError => e
+      rescue StandardError
         nil
       end
 
