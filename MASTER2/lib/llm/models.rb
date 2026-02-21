@@ -32,7 +32,7 @@ module MASTER
       def configured_models
         config = load_models_config
         return config unless config.empty?
-        
+
         # Auto-populate from ruby_llm registry
         @auto_models ||= RubyLLM.models.chat_models.map do |m|
           {

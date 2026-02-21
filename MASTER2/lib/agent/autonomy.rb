@@ -266,7 +266,7 @@ module MASTER
     def load_learning
       return {} unless File.exist?(LEARNING_FILE)
       YAML.safe_load_file(LEARNING_FILE, symbolize_names: true) || {}
-    rescue StandardError => e
+    rescue StandardError
       {}
     end
 
