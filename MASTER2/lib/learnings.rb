@@ -249,7 +249,7 @@ module MASTER
       # Extract a simple regex pattern
       # Example: "foo.bar" becomes "foo\.bar"
       Regexp.escape(original_part[0..50]) # First 50 chars
-    rescue StandardError => e
+    rescue StandardError
       nil
     end
 
