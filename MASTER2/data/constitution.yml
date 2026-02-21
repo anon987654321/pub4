@@ -433,7 +433,7 @@ tech_stack_specifics:
 # Constraints — allowed languages and banned tools
 constraints:
   allowed_languages: [ruby, zsh, html, erb, css, scss, javascript, rust, yaml]
-  banned_tools: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
+  banned_tools: [python, sed, awk, tr, wc, head, tail, cut, find, sudo]
   enforcement: "critical"
 
 # Terminal philosophy — MASTER2 as a Unix CLI alternative to Codex/Claude/GitHub Copilot CLI

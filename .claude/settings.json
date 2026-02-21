@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Zsh(*)",
+      "Bash(git:*)",
+      "Bash(ruby:*)",
+      "Bash(bundle:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "comment": "Per MASTER2 LLM.md — bash permitted for git/ruby/bundle invocations only. All other shell ops use zsh."
+}

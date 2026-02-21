@@ -138,12 +138,12 @@ module MASTER
       end
 
       def fix_code(path)
-        if defined?(AutoFixer)
-          fixer = AutoFixer.new(mode: :moderate)
+        if defined?(Review::Fixer)
+          fixer = Review::Fixer.new(mode: :moderate)
           result = fixer.fix(path)
           result.ok? ? "Fixed #{result.value[:fixed]} issues in #{path}" : "Fix failed: #{result.error}"
         else
-          "AutoFixer module not available"
+          "Review::Fixer module not available"
         end
       end
 

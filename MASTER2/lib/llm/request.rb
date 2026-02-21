@@ -43,24 +43,20 @@ module MASTER
         Result.err("Failed after #{max_retries} retries: #{last_error}")
       end
 
-      # Auto-reduce max_tokens on credit limit errors
       def retryable_error?(error)
         return false unless error.is_a?(String) || error.is_a?(Hash)
         error_str = error.is_a?(Hash) ? error[:message].to_s : error.to_s
 
-        # Auto-reduce max_tokens on credit limit errors
-        if error_str.match?(/can only afford (\d+)/i)
-          affordable = error_str[/can only afford (\d+)/, 1].to_i
-          # Set to 90% of affordable to leave some margin
-          Thread.current[:llm_max_tokens] = [(affordable * 0.9).to_i, 512].max
-          Logging.info("Auto-reduced max_tokens to #{Thread.current[:llm_max_tokens]}", subsystem: "llm.budget")
-          return true
+        # Not retryable: prompt too large
+        if error_str.match?(/Prompt tokens limit exceeded: (\d+) > (\d+)/i)
+          Logging.warn("Prompt too large — clear history with /clear", subsystem: "llm.context")
+          return false
         end
 
-        # Handle prompt token limit exceeded
-        if error_str.match?(/Prompt tokens limit exceeded: (\d+) > (\d+)/i)
-          Logging.warn("Prompt too large - consider clearing history with /clear", subsystem: "llm.context")
-          return false  # Don't retry, need manual intervention
+        # Not retryable: insufficient credits — tell user immediately
+        if error_str.match?(/requires more credits|can only afford|insufficient credits/i)
+          Logging.warn("Insufficient OpenRouter credits — add credits at openrouter.ai/settings/credits or use a free model: `model deepseek-r1-free`", subsystem: "llm.budget")
+          return false
         end
 
         error_str.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
@@ -70,7 +66,7 @@ module MASTER
       def execute_ruby_llm_request(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
         configure_ruby_llm
 
-        chat = RubyLLM.chat(model: model)
+        chat = RubyLLM.chat(model: model, max_tokens: LLM::MAX_CHAT_TOKENS)
 
         # Validate reasoning effort values
         if reasoning

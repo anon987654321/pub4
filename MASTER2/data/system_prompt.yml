@@ -48,7 +48,7 @@ environment: |
   rcctl not systemctl, doas not sudo, pkg_add not apt/brew.
   pf.conf for firewalls, httpd.conf for web serving.
   Shell: zsh. Prefer zsh builtins over external commands.
-  FORBIDDEN: sudo, systemctl, apt, apt-get, brew, yum, dnf, bash, nginx
+  FORBIDDEN: sudo, systemctl, apt, apt-get, brew, yum, dnf, nginx
 
 shell_patterns: |
   Prefer zsh native patterns:
