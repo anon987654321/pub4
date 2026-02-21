@@ -195,7 +195,8 @@ module MASTER
               reasoning_parts << chunk.thinking
             end
 
-            $stderr.print text
+            $stdout.print text
+            $stdout.flush
             content_parts << text
             total_size += text.bytesize
 
@@ -210,7 +211,7 @@ module MASTER
           final_response = response
         end
 
-        $stderr.puts
+        $stdout.puts
 
         response_data = {
           content: content_parts.join,

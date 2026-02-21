@@ -11,6 +11,7 @@ module MASTER
   # Features: model fallbacks, reasoning tokens, structured outputs
   module LLM
     TIER_ORDER = %i[premium strong fast cheap free].freeze
+    REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
     MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
     MAX_CHAT_TOKENS = 8_192   # cap OpenRouter max_tokens reservation
 
