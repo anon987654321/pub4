@@ -5,7 +5,6 @@ module MASTER
     OPTIONAL_MODULES = {
       "Council" => :council_review,
       "CodeReview" => :analyze,
-      "AutoFixer" => :fix,
     }.freeze
 
     class << self

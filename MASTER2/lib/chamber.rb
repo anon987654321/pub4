@@ -19,9 +19,11 @@ module MASTER
     CONVERGENCE_THRESHOLD = 0.05
 
     MODELS = {
-      sonnet: nil,    # Will be resolved via LLM.select_model
-      deepseek: nil,  # Will be resolved via LLM.select_model
-      gemini: nil,    # Will be resolved via LLM.select_model
+      sonnet:   "anthropic/claude-sonnet-4.6",
+      grok:     "x-ai/grok-code-fast-1",
+      deepseek: "deepseek/deepseek-chat",
+      kimi:     "moonshotai/kimi-k2.5",
+      glm:      "z-ai/glm-5",
     }.freeze
 
     ARBITER = :sonnet
@@ -36,7 +38,7 @@ module MASTER
     end
 
     def arbiter_model
-      LLM.model_tiers[:strong]&.first || "anthropic/claude-sonnet-4"
+      LLM.model_tiers[:strong]&.first || "anthropic/claude-sonnet-4.6"
     end
 
     # Convenience method for single council review

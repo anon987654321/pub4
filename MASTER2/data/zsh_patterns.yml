@@ -20,8 +20,6 @@ forbidden_commands:
     replacement: "zsh unique flag: ${(u)arr}"
   - command: "sort"
     replacement: "zsh sort flags: ${(o)arr} ascending, ${(O)arr} descending"
-  - command: "bash"
-    replacement: "zsh — never use bash"
   - command: "find"
     replacement: "zsh glob qualifiers: **/*.rb(.)"
   - command: "wc"
@@ -96,7 +94,7 @@ exceptions:
   - "Binary data processing"
 
 # Banned commands — restored from master.yml v71.3.0
-banned_commands: [python, bash, sed, awk, tr, wc, head, tail, cut, find, sudo]
+banned_commands: [python, sed, awk, tr, wc, head, tail, cut, find, sudo]
 
 # Auto-remediation — zsh-native replacements for banned commands
 auto_remediation:

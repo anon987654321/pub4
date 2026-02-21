@@ -20,6 +20,10 @@ gem "tty-screen"     # Terminal dimensions
 gem "tty-platform"   # Platform detection
 gem "tty-which"      # Command location
 
+# stdlib gems required explicitly for Ruby 3.5+
+gem "fiddle"
+gem "ostruct"
+
 # Utilities
 gem "pastel"         # Terminal colors
 gem "rouge"          # Syntax highlighting

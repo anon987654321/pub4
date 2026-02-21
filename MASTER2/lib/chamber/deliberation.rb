@@ -5,7 +5,7 @@ module MASTER
     # Deliberation methods - proposal generation and arbiter decisions
     module Deliberation
       # Main deliberation flow - gather proposals and reach consensus
-      def deliberate(code, filename: "code", participants: %i[sonnet deepseek])
+      def deliberate(code, filename: "code", participants: %i[grok deepseek kimi glm])
         @proposals = []
         @rounds = 0
 
