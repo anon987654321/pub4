@@ -724,6 +724,7 @@ document.getElementById('startGate').addEventListener('click',async()=>{
   claimInstance();
   setStatus('booting…');
   log('🔧 Initializing audio engine…');
+  await Tone.start();
   await initAudio();
   buildUI();
   if(location.hash.length>1)decodeState(location.hash.slice(1));
