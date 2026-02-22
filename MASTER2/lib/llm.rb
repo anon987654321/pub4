@@ -72,9 +72,22 @@ module MASTER
         Result.err("Key check failed: #{e.message}")
       end
 
-      # Stubs for backward compatibility (budgeting removed)
-      def set_agent_budget(_budget); end
-      def record_agent_cost(_cost); end
+      def tier
+        return @forced_tier if @forced_tier
+        :strong
+      end
+
+      def spending_cap
+        Float::INFINITY
+      end
+
+      def budget_remaining
+        Float::INFINITY
+      end
+
+      def record_cost(model:, tokens_in:, tokens_out:)
+        0.0
+      end
 
       # Ask LLM with fallbacks, reasoning, and structured outputs
       # Returns Result monad with value/error
@@ -164,7 +177,7 @@ module MASTER
         data = result.value
         tokens_in = data[:tokens_in]
         tokens_out = data[:tokens_out]
-        cost = data[:cost] || record_cost(model: current_model, tokens_in: tokens_in, tokens_out: tokens_out)
+        cost = data[:cost] || 0.0
 
         Logging.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Logging)
         SemanticCache.store(prompt, data, tier: :default) if defined?(SemanticCache) && !stream
@@ -267,6 +280,5 @@ module MASTER
 end
 
 require_relative "llm/models"
-require_relative "llm/budget"
 require_relative "llm/request"
 require_relative "llm/context_window"

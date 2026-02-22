@@ -165,7 +165,7 @@ module MASTER
             false
           end
         when "warn_user"
-          UI.warn("Budget low: #{UI.currency(LLM.budget_remaining)} remaining")
+          true
         when "switch_to_cheap_tier"
           true # LLM auto-switches based on budget
         else

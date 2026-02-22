@@ -44,7 +44,6 @@ User Input → Pipeline → Executor → LLM → Output
 | File | Purpose |
 |------|---------|
 | `data/axioms.yml` | The 68 axioms — constitutional law |
-| `data/budget.yml` | Spending caps, token limits, tier thresholds |
 | `data/phases.yml` | Cognitive load budget per phase |
 | `lib/master.rb` | Entry point — wires all modules |
 | `lib/boot.rb` | Environment detection, autoloading |
@@ -64,7 +63,7 @@ Every tunable lives in `data/*.yml`. No hardcoded fallbacks in `lib/`.
 | `budget.yml` | Model tiers, token limits |
 | `phases.yml` | Cognitive load allocation per phase |
 | `smells.yml` | Max method lines, class lines, complexity |
-| `models.yml` | LLM provider/model/tier mappings |
+| `models.yml` | LLM provider/model/tier mappings (includes tier pricing) |
 | `personas.yml` | Agent personality definitions |
 | `constitution.yml` | Review pipeline configuration |
 
@@ -261,8 +260,7 @@ JSONL-based append-only database:
 7. **data/quality_thresholds.yml** — Minimum quality scores and enforcement levels
 8. **data/personas.yml** — Persona definitions for LLM role-playing
 9. **data/system_prompt.yml** — Base system prompts for different modes
-10. **data/budget.yml** — Budget limits, tier costs, circuit breaker thresholds
-11. **data/phases.yml** — 8-phase workflow definitions
+10. **data/phases.yml** — 8-phase workflow definitions
 
 ## Golden Rule
 
@@ -360,8 +358,7 @@ Or use `git commit --no-verify` (but the hook's kill may still fire).
 MUST happen BEFORE `Thread.new`. The Rack app MUST be built BEFORE the thread.
 If done inside the thread, Async doesn't bind. See `lib/server.rb`.
 
-**Budget system is gutted.** `lib/llm/budget.rb` returns stubs (spending_cap=∞,
-total_spent=0). OpenRouter handles rate limiting. Don't add budget logic back.
+**Budget system removed.** `lib/llm/budget.rb` is empty; stubs (`tier`, `spending_cap`, `budget_remaining`, `record_cost`) live in `lib/llm.rb`. OpenRouter handles credit limits. Don't add budget logic back.
 
 **`lib/replicate/media.rb` has a recurring syntax bug.** Duplicate rescue blocks
 keep getting reintroduced by rebases/merges. Always `ruby -c` check it.

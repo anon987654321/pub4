@@ -31,7 +31,7 @@ module MASTER
 
       puts "  #{@ui.bold('System Status')}"
       puts "    Model Tier:    #{stats[:tier]}"
-      puts "    Budget:        #{UI.currency(stats[:remaining])} / #{UI.currency(stats[:limit])}"
+      puts "    Budget:        managed by OpenRouter"
       puts "    Circuit:       #{stats[:circuits_ok]} ok, #{stats[:circuits_tripped]} tripped"
       puts "    Axioms:        #{stats[:axioms]}"
       puts "    Council:       #{stats[:council]} personas"
@@ -39,14 +39,8 @@ module MASTER
     end
 
     def budget_box
-      cap = LLM.spending_cap
-      spent = cap - LLM.budget_remaining
-      pct = (spent / cap * 100).round(1)
-
-      bar = UI.render_bar(pct)
-
       puts "  #{@ui.bold('Budget Usage')}"
-      puts "    #{bar} #{pct}%"
+      puts "    managed by OpenRouter"
       puts
     end
 
@@ -75,15 +69,13 @@ module MASTER
     def fetch_stats
       {
         tier: LLM.tier,
-        remaining: LLM.budget_remaining,
-        limit: LLM.spending_cap,
         circuits_ok: LLM.models.count { |m| LLM.circuit_closed?(m.id) },
         circuits_tripped: LLM.models.count { |m| !LLM.circuit_closed?(m.id) },
         axioms: DB.axioms.size,
         council: DB.council.size,
       }
     rescue StandardError
-      { tier: :unknown, remaining: 0, limit: 10, circuits_ok: 0, circuits_tripped: 0, axioms: 0, council: 0 }
+      { tier: :unknown, circuits_ok: 0, circuits_tripped: 0, axioms: 0, council: 0 }
     end
   end
 end
