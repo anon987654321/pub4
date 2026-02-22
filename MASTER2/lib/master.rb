@@ -130,6 +130,10 @@ require_relative "review/tool_scanner"
 require_relative "llm/hesitation_detector"
 require_relative "agent/behavior_monitor"
 require_relative "session/per_step_reflection"
+require_relative "mcp_server"
+require_relative "introspection/friction_recorder"
+require_relative "introspection/session_retrospective"
+require_relative "boot/modes"
 
 # Web UI
 %w[server].each do |mod|

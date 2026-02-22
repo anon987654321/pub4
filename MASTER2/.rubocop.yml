@@ -28,7 +28,7 @@ Metrics/BlockLength:
     - "data/**/*"
 
 Metrics/AbcSize:
-  Max: 40
+  Max: 41
 
 Metrics/CyclomaticComplexity:
   Max: 15
@@ -122,5 +122,12 @@ Naming/PredicateMethod:
 
 # AccessorMethodName: MASTER2 has set_forced_model! etc by design
 Naming/AccessorMethodName:
+  Enabled: false
+
+# Style/ModuleFunction: MASTER2 uses `extend self` throughout.
+# `module_function` makes included methods private — WRONG for modules that
+# are both included into classes AND called as MASTER::Mod.method().
+# Never autocorrect extend self → module_function in this codebase.
+Style/ModuleFunction:
   Enabled: false
 

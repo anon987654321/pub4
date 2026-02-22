@@ -290,6 +290,16 @@ else
     # No command = interactive REPL mode (default)
     server = MASTER::Server.new
     Thread.new { server.start }
+
+    # Print session retrospective on clean exit
+    at_exit do
+      if defined?(MASTER::Friction::FrictionRecorder) &&
+         MASTER::Friction::FrictionRecorder.events.any?
+        report = MASTER::Friction::SessionRetrospective.run
+        puts "\n" + MASTER::Friction::SessionRetrospective.format(report)
+      end
+    end
+
     MASTER::Pipeline.repl
   else
     # Delegate all other commands to Commands.dispatch_one

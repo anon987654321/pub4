@@ -550,7 +550,62 @@ module MASTER
             example: "Fixed in #{file}", severity: :info
           )
         end
-        puts "learnings: updated"
+      end
+
+      # `deps [symbol]` — show what files require a given module/symbol.
+      # Uses DependencyMap which is more accurate than grepping require lines.
+      def print_deps(args)
+        require_relative "../dependency_map"
+        require_relative "../introspection/friction_recorder"
+
+        if args.nil? || args.strip.empty?
+          # No argument: show full graph summary
+          graph = DependencyMap.build
+          puts "dependency graph: #{graph.size} files"
+          graph.each do |file, info|
+            rel = file.sub("#{MASTER.root}/", "")
+            next if info[:defines].empty?
+
+            puts "  #{rel}: defines #{info[:defines].first(3).join(', ')}"
+          end
+        else
+          # Argument: show who requires this symbol
+          symbol = args.strip
+          graph  = DependencyMap.build
+          lib_root = File.join(MASTER.root, "lib")
+          matches = graph.select { |_, info| info[:references].any? { |r| r.include?(symbol) } }
+          if matches.empty?
+            puts "deps: no references to #{symbol} found"
+          else
+            puts "deps: #{matches.size} file(s) reference #{symbol}"
+            matches.each_key { |f| puts "  #{f.sub("#{lib_root}/", "")}" }
+          end
+          # Record if agent was greping for deps — friction signal 8
+          MASTER::Friction::FrictionRecorder.record(:dep_graph_blind, symbol: symbol) if args.include?("grep")
+        end
+        HANDLED
+      end
+
+      # `introspect` — session retrospective: friction events, remedies, config drift.
+      def print_introspection(args)
+        require_relative "../introspection/session_retrospective"
+        use_llm = args.to_s.include?("--llm")
+        report  = Friction::SessionRetrospective.run(use_llm: use_llm)
+        puts Friction::SessionRetrospective.format(report)
+        HANDLED
+      end
+
+      # `config-drift` — find YAML keys in data/ with no Ruby reader.
+      def print_config_drift
+        require_relative "../introspection/session_retrospective"
+        orphans = Friction::SessionRetrospective.audit_config_drift
+        if orphans.empty?
+          puts "config-drift: clean — all YAML keys have Ruby readers"
+        else
+          puts "config-drift: #{orphans.size} orphaned key(s):"
+          orphans.each { |o| puts "  #{o[:file]}: #{o[:key]}" }
+        end
+        HANDLED
       end
     end
   end

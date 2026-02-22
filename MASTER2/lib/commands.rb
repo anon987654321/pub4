@@ -356,6 +356,15 @@ module MASTER
       when "axioms-stats", "stats"
         print_axiom_stats
         HANDLED
+      when "deps", "who-requires"
+        print_deps(args)
+        HANDLED
+      when "introspect", "retrospect", "friction"
+        print_introspection(args)
+        HANDLED
+      when "config-drift"
+        print_config_drift
+        HANDLED
       when "refactor", "autofix"
         autofix(args)
       when "chamber"
