@@ -607,6 +607,14 @@ module MASTER
         end
         HANDLED
       end
+
+      # `architect` — automated fresh-eyes architectural health assessment.
+      def print_architect
+        require_relative "../introspection/architect"
+        report = Friction::Architect.run
+        puts Friction::Architect.format_report(report)
+        HANDLED
+      end
     end
   end
 end
