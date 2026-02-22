@@ -364,7 +364,7 @@ const M={
 'baroque':{d:'basic',b:'descseq',k:'canon',p:'choir',bpm:[100,120],sw:[0,8]}
 };
 // State
-let bpm=120,swing=0,rootNote=0,playing=false,recording=false,step=0,currentBank='A',curD='basic',curB='basic',curK='basic',curP='none';
+let bpm=120,swing=0,rootNote=0,playing=false,recording=false,step=0,currentBank='A',curD='basic',curB='basic',curK='basic',curP='none',audioReady=false;
 let drumVol=80,bassVol=70,keysVol=60,padsVol=50,masterVol=75;
 let drumSwing=0,bassSwing=0,keysSwing=0,padsSwing=0;
 let kickLag=0,snareRush=0,hatDrift=0,glide=0;
@@ -406,7 +406,7 @@ const initAudio=async()=>{
   lofiCompressor=new Tone.Compressor(-24,3);lofiCompressor.attack.value=0.003;lofiCompressor.release.value=0.1;
   tapeSat=new Tone.WaveShaper((val)=>Math.tanh(val*1.5),4096);tapeSat.oversample='2x';
   lofiFilter=new Tone.Filter(3500,'lowpass');
-  lofiReverb=new Tone.Reverb(1.2);await lofiReverb.generate();lofiReverb.wet.value=0.2;
+  lofiReverb=new Tone.JCReverb(0.3);lofiReverb.wet.value=0.2;
   crackleNoise=new Tone.Noise('brown').start();crackleNoise.volume.value=-35;
   const crackleLP=new Tone.Filter(380,'lowpass');crackleNoise.connect(crackleLP);
   hissNoise=new Tone.Noise('pink').start();hissNoise.volume.value=-32;
@@ -421,7 +421,7 @@ const initAudio=async()=>{
   bassDist=new Tone.Distortion({distortion:0.08,wet:0.12,oversample:'2x'});
   keysTrem=new Tone.Tremolo({frequency:3.2,depth:0.2,wet:0.25,spread:90});keysTrem.start();
   keysCrush=new Tone.BitCrusher(4);keysCrush.wet.value=0.15;
-  masterReverb=new Tone.Reverb(2.5);await masterReverb.generate();masterReverb.wet.value=reverbAmt/100;
+  masterReverb=new Tone.JCReverb(0.5);masterReverb.wet.value=reverbAmt/100;
   masterDrive=new Tone.Distortion(0.4);masterDrive.wet.value=0;
   masterCrush=new Tone.BitCrusher(8);masterCrush.wet.value=0;
   [kickN,kickClickBP,snareN,snareRingBP,clapN,hatN,openN].forEach(s=>{s.disconnect();s.connect(drumG);});
@@ -564,6 +564,7 @@ const buildUI=()=>{
 
 const attachEvents=()=>{
   document.getElementById('playBtn').onclick=()=>{
+    if(!audioReady){log('⚠️ Audio not ready — tap Start Engine first');return;}
     if(!playing){
       if(Tone.context.state!=='running')Tone.context.resume();
       claimInstance();
@@ -724,8 +725,18 @@ document.getElementById('startGate').addEventListener('click',async()=>{
   claimInstance();
   setStatus('booting…');
   log('🔧 Initializing audio engine…');
-  await Tone.start();
-  await initAudio();
+  try{
+    await Tone.start();
+    log('✅ AudioContext running: '+Tone.context.state);
+    await initAudio();
+    audioReady=true;
+    log('✅ Audio engine ready');
+  }catch(err){
+    log('❌ Audio init failed: '+err.message);
+    setStatus('audio error');
+    console.error('RG69 audio init error:',err);
+    return;
+  }
   buildUI();
   if(location.hash.length>1)decodeState(location.hash.slice(1));
   else autoload();
