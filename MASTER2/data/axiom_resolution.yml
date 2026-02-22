@@ -22,3 +22,15 @@ deferred_debt:
     - reason_deferred
     - blocking_axiom
     - timestamp
+
+# Explicit conflict rules — lower-level tensions between NEGOTIABLE axioms
+conflict_rules:
+  - condition: "ONE_SOURCE conflicts with WET or AHA"
+    resolution: "Favor WET/AHA when duplication count < 3. Favor ONE_SOURCE when count >= 3."
+    rationale: "Rule of Three: extract only after pattern proves stable."
+  - condition: "SIMPLEST_WORKS conflicts with FUNCTIONAL_CORE"
+    resolution: "Favor SIMPLEST_WORKS for scripts and utilities; FUNCTIONAL_CORE for library/pipeline code."
+  - condition: "BE_CONCISE conflicts with SELF_EXPLAINING"
+    resolution: "Favor SELF_EXPLAINING. Clarity beats brevity in code."
+  - condition: "CACHE_FIRST conflicts with IDEMPOTENT"
+    resolution: "Ensure cache keys include all inputs that affect the result. Never cache non-deterministic output without TTL."
