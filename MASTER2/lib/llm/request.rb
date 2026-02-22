@@ -68,7 +68,8 @@ module MASTER
       def execute_ruby_llm_request(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
         configure_ruby_llm
 
-        chat = RubyLLM.chat(model: model).with_params(max_tokens: LLM::MAX_CHAT_TOKENS)
+        chat = RubyLLM.chat(model: model, assume_model_exists: true, provider: :openrouter)
+                      .with_params(max_tokens: LLM::MAX_CHAT_TOKENS)
 
         # Validate reasoning effort values
         if reasoning

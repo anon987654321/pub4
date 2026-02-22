@@ -205,7 +205,7 @@ module MASTER
       def chat(model: nil, tools: false)
         configure_ruby_llm
         m = model || select_model
-        c = RubyLLM.chat(model: m)
+        c = RubyLLM.chat(model: m, assume_model_exists: true, provider: :openrouter)
         if tools
           require_relative "llm/tools"
           c.with_tools(*MASTER::LLM::TOOL_CLASSES)
@@ -219,7 +219,7 @@ module MASTER
         m = model || select_model
         return Result.err("No model available.", category: :infrastructure) unless m
 
-        c = RubyLLM.chat(model: m)
+        c = RubyLLM.chat(model: m, assume_model_exists: true, provider: :openrouter)
         response = c.ask(prompt, with: files)
         Result.ok({
           content: response.content,
@@ -250,7 +250,7 @@ module MASTER
       def ask_structured(prompt, schema_class:, model: nil)
         configure_ruby_llm
         m = model || select_model
-        c = RubyLLM.chat(model: m).with_schema(schema_class)
+        c = RubyLLM.chat(model: m, assume_model_exists: true, provider: :openrouter).with_schema(schema_class)
         response = c.ask(prompt)
         Result.ok({ content: response.content, tokens_in: response.input_tokens || 0, tokens_out: response.output_tokens || 0 })
       rescue StandardError => e
