@@ -45,6 +45,9 @@ gem "fast-mcp", "~> 1.6"
 # Safe experiments with automatic rollback (scientist pattern)
 gem "scientist", "~> 1.6"
 
+# Background job scheduling (replaces bare sleep loop in Heartbeat)
+gem "rufus-scheduler", "~> 3.9"
+
 group :development, :test do
   gem "rubocop", "~> 1.0",  require: false
   gem "reek",    "~> 6.0",  require: false
