@@ -8,6 +8,8 @@
     Extract on second use.
   source: The Pragmatic Programmer
   suggest: Possible duplicate constant. Consider extracting to a shared location.
+  auto_fixable: true
+  llm_strategies: [extract_constant, extract_method]
 - id: SIMPLEST_WORKS
   category: engineering
   protection: PROTECTED
@@ -15,6 +17,8 @@
   title: Simplest Thing That Works
   statement: The simplest working solution wins. Complexity multiplies failure modes.
   source: Unix Philosophy
+  auto_fixable: true
+  llm_strategies: [inline, remove_abstraction, simplify]
 - id: ONE_JOB
   category: engineering
   protection: PROTECTED
@@ -23,6 +27,8 @@
   statement: A module, class, or function has one reason to change. Do one thing well.
   source: Clean Code by Robert C. Martin
   suggest: Multiple classes in one file. Consider splitting into separate files.
+  auto_fixable: true
+  llm_strategies: [extract_class, extract_method, split_file]
 - id: EXTEND_DONT_MODIFY
   category: engineering
   protection: PROTECTED
@@ -31,6 +37,8 @@
   statement: Open for extension, closed for modification. Add behavior without changing
     existing code.
   source: SOLID Principles
+  auto_fixable: true
+  llm_strategies: [introduce_polymorphism, extract_strategy]
 - id: SUBSTITUTABLE
   category: engineering
   protection: PROTECTED
@@ -63,6 +71,7 @@
   statement: Systems behave as users expect. Match mental models. Surprising behavior
     is a bug.
   source: The Pragmatic Programmer
+  auto_fixable: false
 - id: COMPOSABLE
   category: engineering
   protection: PROTECTED
@@ -80,6 +89,8 @@
     compound into disasters.
   source: Release It! by Michael Nygard
   suggest: Don't use bare rescue. Specify exception type and handle or re-raise.
+  auto_fixable: true
+  llm_strategies: [add_rescue_clause, specify_exception]
 - id: DEADLINES
   category: engineering
   protection: PROTECTED
@@ -90,6 +101,8 @@
   source: Release It! by Michael Nygard
   suggest: 'Add explicit timeout to external call (e.g., open_timeout: 5, read_timeout:
     10).'
+  auto_fixable: true
+  llm_strategies: [add_timeout, wrap_net_call]
 - id: MERGE
   category: structural
   protection: PROTECTED
@@ -98,6 +111,8 @@
   statement: Combine duplicates into one source. Two representations of the same knowledge
     become one.
   source: Refactoring by Martin Fowler
+  auto_fixable: true
+  llm_strategies: [extract_method, extract_constant]
 - id: FLATTEN
   category: structural
   protection: PROTECTED
@@ -108,6 +123,8 @@
   source: Refactoring by Martin Fowler
   suggest: Deep nesting detected (>6 levels). Consider extracting methods or using
     guard clauses.
+  auto_fixable: true
+  llm_strategies: [guard_clause, extract_method, flatten_nesting]
 - id: DEFRAGMENT
   category: structural
   protection: PROTECTED
@@ -124,6 +141,8 @@
   statement: Hidden dependencies become explicit. Every coupling point is a failure
     point.
   source: Refactoring by Martin Fowler
+  auto_fixable: true
+  llm_strategies: [inject_dependency, extract_interface]
 - id: HOIST
   category: structural
   protection: PROTECTED
@@ -140,6 +159,8 @@
   statement: Remove dead and unreachable code. Dead code hides bugs and burdens maintenance.
   source: Refactoring by Martin Fowler
   suggest: Dead code marker found. Remove or fix the code.
+  auto_fixable: true
+  llm_strategies: [delete_dead_code]
 - id: COALESCE
   category: structural
   protection: PROTECTED
@@ -209,6 +230,7 @@
   title: Be Concise
   statement: Vigorous writing is concise. No unnecessary words, sentences, or tokens.
   source: The Elements of Style by Strunk & White
+  auto_fixable: false
 - id: SELF_EXPLAINING
   category: communication
   protection: PROTECTED
@@ -385,6 +407,8 @@
   statement: Pure logic at the center, side effects at the edges. Testable core, thin
     IO boundary.
   source: Gary Bernhardt
+  auto_fixable: true
+  llm_strategies: [extract_pure_function, move_io_to_boundary]
 - id: IDEMPOTENT
   category: functional
   protection: PROTECTED
@@ -392,6 +416,7 @@
   title: Idempotent Operations
   statement: Same input produces same result regardless of repetition. Safe to retry.
   source: Distributed Systems
+  auto_fixable: false
 - id: EXPLICIT
   category: functional
   protection: PROTECTED
@@ -406,6 +431,8 @@
   title: Command-Query Separation
   statement: Methods either change state or return data, never both.
   source: Bertrand Meyer
+  auto_fixable: true
+  llm_strategies: [split_command_query]
 - id: PURE_FUNCTIONS
   category: functional
   protection: NEGOTIABLE
@@ -429,6 +456,8 @@
   statement: Cache LLM responses, computations, and lookups. Semantic cache before
     API call.
   source: MASTER/principles.yml
+  auto_fixable: true
+  llm_strategies: [add_memoize, add_semantic_cache]
 - id: GUARD_EXPENSIVE
   category: performance
   protection: PROTECTED
@@ -514,3 +543,68 @@
   title: Mass Generation with Curation
   statement: Generate many alternatives, curate ruthlessly. Quantity enables quality.
   source: MASTER/principles.yml
+- id: WET
+  category: engineering
+  protection: NEGOTIABLE
+  priority: 7
+  title: Write Everything Twice
+  statement: Duplication is better than the wrong abstraction. Copy first, abstract
+    after the pattern has proven stable. The Rule of Three applies.
+  source: Sandi Metz / Programmer's Oath
+  conflicts_with: [ONE_SOURCE]
+  when: "Before the pattern has been used 3+ times"
+  note: "Overrides ONE_SOURCE in early feature work. After 3 uses, extract."
+
+- id: AHA
+  category: engineering
+  protection: NEGOTIABLE
+  priority: 7
+  title: Avoid Hasty Abstractions
+  statement: Optimize for change, not for eliminating duplication. Prefer duplication
+    over an abstraction you're not sure about. Wrong abstractions are worse than wet
+    code.
+  source: Kent C. Dodds
+  conflicts_with: [ONE_SOURCE]
+  when: "Abstraction would serve fewer than 3 concrete cases"
+  note: "Overrides ONE_SOURCE when abstraction is premature."
+
+- id: RUBBER_DUCK
+  category: process
+  protection: NEGOTIABLE
+  priority: 5
+  title: Rubber Duck Debugging
+  statement: Explain the problem aloud to find clarity. Articulating to an imaginary
+    listener surfaces hidden assumptions and reveals the answer.
+  source: The Pragmatic Programmer
+  auto_fixable: false
+
+- id: BLAME_SELF
+  category: process
+  protection: NEGOTIABLE
+  priority: 7
+  title: Assume Your Bug First
+  statement: The framework, library, and OS work correctly. Start from that assumption.
+    Blame your own code first; blame the tool only after exhausting all other options.
+  source: The Pragmatic Programmer
+  auto_fixable: false
+
+- id: GIT_BISECT
+  category: process
+  protection: NEGOTIABLE
+  priority: 5
+  title: Version Control as Time Machine
+  statement: Use git bisect to find regressions. Huge commits and uncommitted changes
+    are a safety hazard. Commit small, commit often.
+  source: The Pragmatic Programmer
+  auto_fixable: false
+  smells: [huge_commits, uncommitted_code]
+
+- id: READ_SOURCE
+  category: process
+  protection: PROTECTED
+  priority: 7
+  title: Read the Source Code
+  statement: The source code is the ground truth. Documentation lies, blog posts age,
+    Stack Overflow guesses. When in doubt, read the actual source.
+  source: The Pragmatic Programmer
+  auto_fixable: false

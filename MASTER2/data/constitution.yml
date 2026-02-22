@@ -71,6 +71,7 @@ preserve:
   polish_rules:
     - "Streamline means remove redundancy, not information."
     - "Minimize token waste, not operational diagnostics."
+    - "Polish means refine wording, not delete output."
 
 structural_analysis:
   config_hierarchy:
@@ -154,7 +155,7 @@ generation_templates:
       # frozen_string_literal: true
 
       module %{name}
-        module_function
+        extend self
 
         def call(input)
           return if input.nil?
