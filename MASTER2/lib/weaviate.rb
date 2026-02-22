@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
-require 'net/http'
 require 'json'
 require 'uri'
+require 'async'
+require 'async/http/internet'
 
 module MASTER
   # Weaviate - Vector database for semantic memory
@@ -30,17 +31,20 @@ module MASTER
       end
 
       def health_check
-        uri = URI("#{base_url}/v1/.well-known/ready")
-        request = Net::HTTP::Get.new(uri)
-        add_auth_headers(request)
-
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
-        http.open_timeout = 5
-        http.read_timeout = 10
-        response = http.request(request)
-        response.is_a?(Net::HTTPSuccess)
-      rescue StandardError => e
+        status = nil
+        Async do |task|
+          task.with_timeout(15) do
+            internet = Async::HTTP::Internet.new
+            begin
+              response = internet.get("#{base_url}/v1/.well-known/ready", auth_headers)
+              status = response.status
+            ensure
+              internet.close
+            end
+          end
+        end
+        status == 200
+      rescue StandardError
         false
       end
 
@@ -197,18 +201,20 @@ module MASTER
       end
 
       def delete(id:)
-        uri = URI("#{base_url}/v1/objects/#{CLASS_NAME}/#{id}")
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
-        http.open_timeout = 10
-        http.read_timeout = 30
-
-        request = Net::HTTP::Delete.new(uri)
-        request['Content-Type'] = 'application/json'
-
-        response = http.request(request)
-        response.is_a?(Net::HTTPSuccess)
-      rescue StandardError => e
+        status = nil
+        Async do |task|
+          task.with_timeout(40) do
+            internet = Async::HTTP::Internet.new
+            begin
+              response = internet.delete("#{base_url}/v1/objects/#{CLASS_NAME}/#{id}", auth_headers)
+              status = response.status
+            ensure
+              internet.close
+            end
+          end
+        end
+        (200..299).cover?(status)
+      rescue StandardError
         false
       end
 
@@ -218,31 +224,34 @@ module MASTER
         "#{SCHEME}://#{HOST}:#{PORT}"
       end
 
-      def add_auth_headers(request)
-        request['Content-Type'] = 'application/json'
-        request['Authorization'] = "Bearer #{API_KEY}" if API_KEY
+      def auth_headers
+        headers = [["Content-Type", "application/json"]]
+        headers << ["Authorization", "Bearer #{API_KEY}"] if API_KEY
+        headers
       end
 
       def post(path, body, retries: MAX_RETRIES)
-        uri = URI("#{base_url}#{path}")
+        url = "#{base_url}#{path}"
         last_error = nil
 
         retries.times do |attempt|
+          result = nil
           begin
-            http = Net::HTTP.new(uri.host, uri.port)
-            http.use_ssl = (uri.scheme == 'https')
-            http.open_timeout = 10
-            http.read_timeout = 30
-
-            request = Net::HTTP::Post.new(uri)
-            add_auth_headers(request)
-            request.body = body.to_json
-
-            response = http.request(request)
-            return JSON.parse(response.body)
-          rescue JSON::ParserError
-            return { 'error' => response&.body || 'Parse error' }
-          rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED => e
+            Async do |task|
+              task.with_timeout(40) do
+                internet = Async::HTTP::Internet.new
+                begin
+                  response = internet.post(url, auth_headers, body.to_json)
+                  result = JSON.parse(response.read)
+                ensure
+                  internet.close
+                end
+              end
+            end
+            return result if result
+          rescue JSON::ParserError => e
+            return { 'error' => "Parse error: #{e.message}" }
+          rescue Async::TimeoutError, Errno::ECONNREFUSED => e
             last_error = e.message
             sleep(RETRY_BACKOFF_BASE ** attempt) if attempt < retries - 1
           end
