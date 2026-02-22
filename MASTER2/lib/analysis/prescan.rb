@@ -36,10 +36,8 @@ module MASTER
 
       def project_tree(path, max_depth: 4)
         lines = file_tree(path, max_depth: max_depth, exclude: TREE_EXCLUDES)
-        if ENV["MASTER_VERBOSE"] || ENV["MASTER_DEBUG"]
-          puts UI.dim("Structure:")
-          puts lines.join("\n")
-        end
+        puts UI.dim("Structure:")
+        puts lines.join("\n")
         lines
       end
 
