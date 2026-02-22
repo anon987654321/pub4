@@ -40,8 +40,13 @@ module MASTER
             )
           end
 
-          # Execute tool and get observation
-          observation = dispatch_action(parsed[:action])
+          # Execute tool and get observation; sanitize to prevent injection from tool output
+          raw_observation = dispatch_action(parsed[:action])
+          observation = if defined?(Security::Sanitizer)
+            Security::Sanitizer.sanitize(raw_observation)
+          else
+            raw_observation
+          end
           @history.last[:observation] = observation
 
           UI.dim("  = #{observation[0..100]}")

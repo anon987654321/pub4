@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "pipeline/repl"
+require_relative "pipeline/context"
 
 module MASTER
   # Pipeline - Uses Executor with hybrid patterns
@@ -45,6 +46,10 @@ module MASTER
       Logging.dmesg_log('pipeline', message: 'ENTER pipeline.call')
       text = input.is_a?(Hash) ? input[:text] : input.to_s
 
+      # Emit preamble to inform user what is being processed
+      UI.info("Processing: #{text[0..60]}#{text.length > 60 ? '...' : ''}")
+
+      Logging.with_request_id do
       raw = case @mode
             when :executor
               # Default: Use autonomous executor with pattern selection
@@ -72,6 +77,7 @@ module MASTER
             end
 
       normalize_result(raw, text)
+      end # with_request_id
     end
 
     private

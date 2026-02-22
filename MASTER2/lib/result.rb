@@ -7,16 +7,22 @@ module MASTER
     # Custom error class for raising within Result flows
     class Error < StandardError; end
 
-    attr_reader :value, :error, :kind
+    CATEGORIES = %i[infrastructure validation timeout budget axiom_violation unknown].freeze
+
+    attr_reader :value, :error, :kind, :category, :metadata
 
     # Initialize Result
     # @param value [Object, nil] Success value
     # @param error [String, nil] Error message
     # @param kind [Symbol, nil] Result kind (:ok or :err)
-    def initialize(value: nil, error: nil, kind: nil)
+    # @param category [Symbol, nil] Error category (see CATEGORIES)
+    # @param metadata [Hash] Additional metadata
+    def initialize(value: nil, error: nil, kind: nil, category: nil, metadata: {})
       @value = value
       @error = error
       @kind = kind || (error.nil? ? :ok : :err)
+      @category = category || :unknown
+      @metadata = metadata
       freeze_state
     end
 
@@ -83,6 +89,24 @@ module MASTER
       Result.err("#{label ? "#{label}: " : ""}#{e.message}")
     end
 
+    # Predicate: can this error be retried?
+    # @return [Boolean] true for infrastructure or timeout errors
+    def retriable?
+      err? && %i[infrastructure timeout].include?(@category)
+    end
+
+    # Predicate: is this error permanent (no retry)?
+    # @return [Boolean] true for validation, axiom_violation, or budget errors
+    def permanent?
+      err? && %i[validation axiom_violation budget].include?(@category)
+    end
+
+    # Predicate: is this an infrastructure error?
+    # @return [Boolean] true if category is :infrastructure
+    def infrastructure?
+      err? && @category == :infrastructure
+    end
+
     class << self
       # Create successful result
       # @param value [Object] Success value (defaults to nil). Callers should check .value before use.
@@ -91,8 +115,12 @@ module MASTER
 
       # Create error result
       # @param error [String] Error message
+      # @param category [Symbol] Error category (see CATEGORIES)
+      # @param metadata [Hash] Additional metadata
       # @return [Result] Err result
-      def err(error) = new(error: error, kind: :err)
+      def err(error, category: :unknown, metadata: {})
+        new(error: error, kind: :err, category: category, metadata: metadata)
+      end
 
       # Try block and wrap in Result
       # @yield Block to execute
@@ -111,6 +139,9 @@ module MASTER
       @value = deep_dup(@value) if @value.is_a?(Hash) || @value.is_a?(Array)
       @value.freeze if @value.is_a?(Hash) || @value.is_a?(Array) || @value.is_a?(String)
       @error.freeze if @error.is_a?(String)
+      @category.freeze
+      @metadata = deep_dup(@metadata) if @metadata.is_a?(Hash)
+      @metadata.freeze
       freeze
     end
 

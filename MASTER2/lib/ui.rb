@@ -35,6 +35,31 @@ module MASTER
       lightning: "!",
       gear: "*",
     }.freeze
+
+    # Output channel separation (Gist #6)
+
+    # Internal logging - goes to structured log only, not user-visible
+    # @param message [String] Internal diagnostic message
+    # @param context [Hash] Additional context
+    def internal(message, **context)
+      return unless defined?(Logging) && Logging.respond_to?(:debug)
+      Logging.debug("[internal] #{message}", **context)
+    end
+
+    # Progress output - goes to stderr/dmesg ring buffer
+    # @param message [String] Progress message
+    def progress(message)
+      if defined?(Logging) && Logging.respond_to?(:dmesg_log)
+        Logging.dmesg_log('progress0', message: message, level: Logging::ALL_EVENTS)
+      end
+      $stderr.puts dim("  #{message}")
+    end
+
+    # User-facing output - goes to stdout (what the user sees)
+    # @param message [String] Message for the user
+    def user(message)
+      $stdout.puts message
+    end
   end
 end
 

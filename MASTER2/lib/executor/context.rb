@@ -82,7 +82,10 @@ module MASTER
       # Build task context (tools + format + history)
       def build_task_context(goal)
         history_text = @history.map do |h|
-          "Step #{h[:step]}:\nThought: #{h[:thought]}\nAction: #{h[:action]}\nObservation: #{h[:observation]&.[](0..400)}"
+          obs = h[:observation]&.[](0..400)
+          # Mark tool results as untrusted to prevent prompt injection via tool output
+          obs_line = obs ? "[Tool Result - Untrusted] #{obs}" : nil
+          "Step #{h[:step]}:\nThought: #{h[:thought]}\nAction: #{h[:action]}#{obs_line ? "\nObservation: #{obs_line}" : ''}"
         end.join("\n\n")
 
         # Build tool list and format from TOOLS hash
