@@ -79,6 +79,9 @@ module MASTER
       conventions = ConventionExtractor.extract(root: MASTER.root) rescue ""
       sections << conventions unless conventions.empty?
 
+      # Zsh native patterns: forbid legacy forks in shell code
+      sections << ZshPatternInjector.prompt_section
+
       sections.join("\n\n")
     end
 
