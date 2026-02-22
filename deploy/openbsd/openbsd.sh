@@ -1092,6 +1092,60 @@ RENEWSCRIPT
 
 }
 
+# Bootstrap MASTER2 CLI agent
+setup_master2() {
+  typeset master2_dir="/home/dev/pub4/MASTER2"
+  typeset repo="https://github.com/anon987654321/pub4.git"
+
+  log INFO "Setting up MASTER2"
+
+  # Clone or update repo
+  if [[ -d /home/dev/pub4/.git ]]; then
+    su -l dev -c "cd /home/dev/pub4 && git pull --ff-only origin main" || log WARN "MASTER2: git pull failed"
+  else
+    su -l dev -c "git clone $repo /home/dev/pub4" || { log ERROR "MASTER2: git clone failed"; return 1 }
+  fi
+
+  # Install gems
+  su -l dev -c "
+    export GEM_HOME=\$HOME/.gem/ruby/3.3
+    export PATH=\$GEM_HOME/bin:\$PATH
+    cd $master2_dir && bundle install --quiet
+  " || { log ERROR "MASTER2: bundle install failed"; return 1 }
+
+  # Create .env if missing (user must fill OPENROUTER_API_KEY)
+  [[ -f $master2_dir/.env ]] || cp $master2_dir/.env.example $master2_dir/.env
+
+  # Install rc.d script
+  cat > /etc/rc.d/master2 <<'EOF'
+#!/bin/ksh
+daemon="/home/dev/pub4/MASTER2/bin/master"
+daemon_flags="--daemon"
+daemon_user="dev"
+daemon_logger="daemon.info"
+daemon_timeout=30
+. /etc/rc.d/rc.subr
+rc_bg=YES
+rc_reload=NO
+rc_start() {
+  export HOME=/home/dev
+  export GEM_HOME=$HOME/.gem/ruby/3.3
+  export PATH=$GEM_HOME/bin:/usr/local/bin:/usr/bin:/bin
+  [[ -f /home/dev/pub4/MASTER2/.env ]] && . /home/dev/pub4/MASTER2/.env
+  rc_exec "${daemon} ${daemon_flags}"
+}
+rc_check() { pgrep -q -f "bin/master"; }
+rc_stop()  { pkill -f "bin/master" 2>/dev/null || true; }
+rc_cmd "$1"
+EOF
+  chmod 555 /etc/rc.d/master2
+
+  rcctl enable master2
+  rcctl start master2 || log WARN "MASTER2: start failed — set OPENROUTER_API_KEY in $master2_dir/.env then: doas rcctl start master2"
+
+  log INFO "MASTER2 ready. Web UI at http://localhost:$(su -l dev -c "grep MASTER_PORT $master2_dir/.env 2>/dev/null | cut -d= -f2" || echo '(dynamic)')"
+}
+
 # Service management functions
 setup_services() {
   # Start core services, but only enable relayd (don't start it yet)
@@ -1415,6 +1469,9 @@ EOF
 
   # Configure and start relayd now that APP_PORTS is populated
   configure_relayd
+
+  # Bootstrap MASTER2
+  setup_master2
 
   print -r -- stage_2_complete > $STATE_FILE
   log INFO "Stage 2 complete. Setup complete. Test: 'curl https://brgen.no', 'curl https://ai.brgen.no'."
