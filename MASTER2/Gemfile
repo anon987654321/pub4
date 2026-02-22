@@ -1,5 +1,8 @@
 source "https://rubygems.org"
 
+# OpenBSD uses LibreSSL/libtls — do not add openssl gem, it conflicts.
+# Ruby's built-in openssl extension links against LibreSSL on OpenBSD natively.
+
 # TTY toolkit - restored full integration from MASTER v1
 gem "tty-reader", "~> 0.9"
 gem "tty-spinner"
