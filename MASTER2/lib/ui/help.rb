@@ -103,7 +103,7 @@ module MASTER
         lines = [""]
         words.each do |word|
           if lines.last.empty?
-            lines.last = word
+            lines[-1] = word
           elsif (lines.last.length + 1 + word.length) <= width
             lines.last << " #{word}"
           else
