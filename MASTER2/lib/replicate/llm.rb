@@ -59,8 +59,8 @@ module MASTER
 
         case owner
         when "anthropic"
-          h = { prompt: prompt, max_tokens: max_tokens, temperature: temperature }
-          h[:system] = system_prompt if system_prompt
+          h = { prompt: prompt, max_tokens: [max_tokens, 1024].max, temperature: temperature }
+          h[:system_prompt] = system_prompt if system_prompt
           h
         when "deepseek-ai"
           h = { prompt: prompt, max_tokens: max_tokens, temperature: temperature, top_p: top_p }

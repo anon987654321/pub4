@@ -2,15 +2,15 @@
 
 require "json"
 require "uri"
-require "async"
-require "async/http/internet"
+require "net/http"
 
 module MASTER
   module Replicate
     # API client - low-level HTTP interaction with Replicate API
-    # HTTP client: async-http (Falcon ecosystem) — consistent with server stack
+    # HTTP client: net/http — avoids async-http getifaddrs permission issues in containers
     module Client
-      API_URL = "https://api.replicate.com/v1/predictions"
+      API_URL        = "https://api.replicate.com/v1/predictions"
+      MODELS_API_URL = "https://api.replicate.com/v1/models"
 
       HTTP_OPEN_TIMEOUT  = (ENV["MASTER_HTTP_OPEN_TIMEOUT"]  || 10).to_i
       HTTP_READ_TIMEOUT  = (ENV["MASTER_HTTP_READ_TIMEOUT"]  || 60).to_i
@@ -22,40 +22,22 @@ module MASTER
       # Create a new prediction
       def create_prediction(model:, input:)
         body = { input: input }
-        # Use 'model' key for owner/name format; 'version' key for SHA-pinned versions
-        if model&.include?("/")
-          body[:model] = model
+        # Official models (owner/name) use /v1/models/{owner}/{name}/predictions
+        # Version-pinned models use /v1/predictions with a version SHA
+        if model&.include?("/") && !model.match?(/[0-9a-f]{40,}/)
+          owner, name = model.split("/", 2)
+          url = "#{MODELS_API_URL}/#{owner}/#{name}/predictions"
         elsif model
           body[:version] = model
+          url = API_URL
         end
 
-        data = nil
-        Async do |task|
-          task.with_timeout(HTTP_OPEN_TIMEOUT + HTTP_READ_TIMEOUT) do
-            internet = Async::HTTP::Internet.new
-            begin
-              response = internet.post(
-                API_URL,
-                [
-                  ["Authorization", "Bearer #{Replicate.api_key}"],
-                  ["Content-Type",  "application/json"],
-                ],
-                body.to_json,
-              )
-              data = JSON.parse(response.read, symbolize_names: true)
-            ensure
-              internet.close
-            end
-          end
-        end
-
+        data = http_post(url, body)
         if data&.dig(:id)
           { id: data[:id] }
         else
           { error: data&.dig(:detail) || "Unknown error" }
         end
-      rescue Async::TimeoutError
-        { error: "Request timed out" }
       rescue StandardError => e
         $stderr.puts "Replicate: create_prediction error: #{e.class} - #{e.message}"
         { error: e.message }
@@ -65,23 +47,11 @@ module MASTER
       def wait_for_completion(id, timeout: REPLICATE_TIMEOUT)
         poll_url = "#{API_URL}/#{id}"
         start_time = Time.now
-        auth_header = [["Authorization", "Bearer #{Replicate.api_key}"]]
 
         loop do
           return { error: "Timeout waiting for generation" } if Time.now - start_time > timeout
 
-          data = nil
-          Async do |task|
-            task.with_timeout(HTTP_OPEN_TIMEOUT + HTTP_READ_TIMEOUT) do
-              internet = Async::HTTP::Internet.new
-              begin
-                response = internet.get(poll_url, auth_header)
-                data = JSON.parse(response.read, symbolize_names: true)
-              ensure
-                internet.close
-              end
-            end
-          end
+          data = http_get(poll_url)
 
           case data&.dig(:status)
           when "succeeded"
@@ -93,8 +63,6 @@ module MASTER
           else
             return { error: "Unknown status: #{data&.dig(:status)}" }
           end
-        rescue Async::TimeoutError
-          return { error: "Poll request timed out" }
         end
       rescue StandardError => e
         $stderr.puts "Replicate: wait_for_completion error: #{e.class} - #{e.message}"
@@ -103,27 +71,45 @@ module MASTER
 
       # Download file from URL to local path
       def download_file(url, path)
-        content = nil
-        Async do |task|
-          task.with_timeout(HTTP_READ_TIMEOUT) do
-            internet = Async::HTTP::Internet.new
-            begin
-              response = internet.get(url)
-              content = response.read if response.status == 200
-            ensure
-              internet.close
-            end
-          end
+        uri = URI(url)
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https",
+                                   open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|
+          http.get(uri.request_uri)
         end
-
-        return false unless content
+        return false unless response.is_a?(Net::HTTPSuccess)
 
         FileUtils.mkdir_p(File.dirname(path))
-        File.binwrite(path, content)
+        File.binwrite(path, response.body)
         true
       rescue StandardError => e
         $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
         false
+      end
+
+      def http_post(url, body)
+        uri = URI(url)
+        req = Net::HTTP::Post.new(uri)
+        req["Authorization"] = "Bearer #{Replicate.api_key}"
+        req["Content-Type"]  = "application/json"
+        req.body = body.to_json
+
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true,
+                                   open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|
+          http.request(req)
+        end
+        JSON.parse(response.body, symbolize_names: true)
+      end
+
+      def http_get(url)
+        uri = URI(url)
+        req = Net::HTTP::Get.new(uri)
+        req["Authorization"] = "Bearer #{Replicate.api_key}"
+
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true,
+                                   open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|
+          http.request(req)
+        end
+        JSON.parse(response.body, symbolize_names: true)
       end
     end
   end
