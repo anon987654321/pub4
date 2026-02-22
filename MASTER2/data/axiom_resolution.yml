@@ -1,0 +1,24 @@
+---
+# Axiom conflict resolution protocol
+# When two ABSOLUTE axioms deadlock, precedence breaks the tie.
+# The losing axiom is logged as deferred debt, not silently dropped.
+
+absolute_precedence:
+  - PRESERVE_FIRST
+  - SELF_APPLY
+
+resolution_strategy:
+  same_level: "Higher-precedence axiom wins. Losing axiom logged as deferred_debt."
+  cross_level: "ABSOLUTE always beats PROTECTED. PROTECTED always beats NEGOTIABLE."
+
+deferred_debt:
+  description: "Violations that cannot be fixed without breaking a higher-precedence axiom."
+  storage: "data/deferred_debt.jsonl"
+  review_trigger: "on next major refactor or when blocking axiom is relaxed"
+  fields:
+    - axiom_id
+    - file
+    - line
+    - reason_deferred
+    - blocking_axiom
+    - timestamp

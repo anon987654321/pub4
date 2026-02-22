@@ -77,7 +77,8 @@ module MASTER
 
           # Injection defense: halt loop on detected injection (gist item #3).
           # Sanitize-and-continue is insufficient — abort with error instead.
-          if defined?(Security::Sanitizer) && !Security::Sanitizer.safe?(raw_observation)
+          sanitizer = defined?(Security::InjectionGuard) ? Security::InjectionGuard : (defined?(Security::Sanitizer) ? Security::Sanitizer : nil)
+          if sanitizer && !sanitizer.safe?(raw_observation)
             return Result.err(
               "Injection attempt detected in tool response from '#{tool_name}'. Aborting.",
               category: :validation,

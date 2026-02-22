@@ -119,6 +119,12 @@ module MASTER
           return Result.ok(input)
         end
 
+        # iMAD: only invoke council when primary response shows uncertainty
+        if defined?(LLM::HesitationDetector)
+          hesitation = LLM::HesitationDetector.evaluate(input[:response].to_s, context: "pipeline_council")
+          skip_council = !hesitation[:escalate]
+        end
+
         # NOTE: model: param is accepted by Council.council_review but currently unused
         review = MASTER::Council.council_review(text, model: model)
         Result.ok(input.merge(

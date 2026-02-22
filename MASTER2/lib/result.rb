@@ -73,7 +73,11 @@ module MASTER
     # @return [Result] Result from block or same err
     def flat_map
       return self if err?
-      yield(@value)
+      result = yield(@value)
+      raise TypeError, "flat_map block must return Result, got #{result.class}" unless result.is_a?(Result)
+      result
+    rescue TypeError
+      raise
     rescue StandardError => e
       Result.err(e.message)
     end
@@ -84,9 +88,21 @@ module MASTER
     # @return [Result] Result from block or labeled err
     def and_then(label = nil)
       return self if err?
-      yield(@value)
+      result = yield(@value)
+      raise TypeError, "and_then block must return Result, got #{result.class}" unless result.is_a?(Result)
+      result
+    rescue TypeError
+      raise
     rescue StandardError => e
       Result.err("#{label ? "#{label}: " : ""}#{e.message}")
+    end
+
+    def inspect
+      if ok?
+        "#<Result.ok #{@value.inspect}>"
+      else
+        "#<Result.err(#{@category}) #{@error.inspect}>"
+      end
     end
 
     # Predicate: can this error be retried?
@@ -149,8 +165,10 @@ module MASTER
       case obj
       when Hash then obj.transform_values { |v| deep_dup(v) }
       when Array then obj.map { |v| deep_dup(v) }
+      when Set then Set.new(obj.map { |v| deep_dup(v) })
       when String then obj.dup
-      else obj
+      else
+        obj.frozen? ? obj : (obj.dup rescue obj)
       end
     end
   end

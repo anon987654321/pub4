@@ -94,7 +94,7 @@ exceptions:
   - "Binary data processing"
 
 # Banned commands — restored from master.yml v71.3.0
-banned_commands: [python, sed, awk, tr, wc, head, tail, cut, find, sudo]
+banned_commands: [python, sed, awk, tr, wc, head, tail, cut, find, sudo, bash, xargs, readlink, basename, dirname, realpath, seq, expr, getopts]
 
 # Auto-remediation — zsh-native replacements for banned commands
 auto_remediation:
@@ -109,6 +109,15 @@ auto_remediation:
   sort: "${(o)arr} or ${(O)arr}"
   find: "**/*.ext(.)"
   sudo: "doas"
+  bash: "zsh"
+  xargs: "for f in **/*; do ...; done (zsh glob iteration)"
+  readlink: '${file:A} (zsh absolute path modifier)'
+  basename: '${file:t} (zsh tail modifier)'
+  dirname: '${file:h} (zsh head modifier)'
+  realpath: '${file:A} (zsh absolute path modifier)'
+  seq: '"{1..N}" (zsh range expansion)'
+  expr: '$((expression)) (zsh arithmetic)'
+  getopts: 'zparseopts (zsh native option parsing)'
 
 # Token economics — why pure zsh saves LLM tokens
 token_economics:
