@@ -599,12 +599,14 @@
   auto_fixable: false
   smells: [huge_commits, uncommitted_code]
 
-- id: READ_SOURCE
+- id: FINISH_FIRST
   category: process
   protection: PROTECTED
-  priority: 7
-  title: Read the Source Code
-  statement: The source code is the ground truth. Documentation lies, blog posts age,
-    Stack Overflow guesses. When in doubt, read the actual source.
-  source: The Pragmatic Programmer
+  priority: 9
+  title: Finish One Task Fully Before Starting the Next
+  statement: Never abandon a task mid-flight to start another. Complete, verify, and
+    commit the current task before moving on. Partial work compounds into drift, broken
+    state, and lost context. If interrupted, leave a clear checkpoint before switching.
+  source: MASTER2 operating principles
   auto_fixable: false
+  smells: [task_drift, context_switch, incomplete_work]
