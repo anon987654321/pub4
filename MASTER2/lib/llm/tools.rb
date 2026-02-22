@@ -13,7 +13,7 @@ module MASTER
       param :query, desc: "Search query string"
 
       def execute(query:)
-        MASTER::Executor::ToolDispatch.web_search(query)
+        MASTER::ToolDispatch.web_search(query)
       end
     end
 
@@ -22,7 +22,7 @@ module MASTER
       param :url, desc: "URL to browse (http or https)"
 
       def execute(url:)
-        MASTER::Executor::ToolDispatch.browse_page(url)
+        MASTER::ToolDispatch.browse_page(url)
       end
     end
 
@@ -31,7 +31,7 @@ module MASTER
       param :path, desc: "Path to the file to read"
 
       def execute(path:)
-        MASTER::Executor::ToolDispatch.file_read(path)
+        MASTER::ToolDispatch.file_read(path)
       end
     end
 
@@ -41,7 +41,7 @@ module MASTER
       param :content, desc: "Content to write to the file"
 
       def execute(path:, content:)
-        MASTER::Executor::ToolDispatch.file_write(path, content)
+        MASTER::ToolDispatch.file_write(path, content)
       end
     end
 
@@ -50,7 +50,7 @@ module MASTER
       param :path, desc: "Path to the code file to analyze"
 
       def execute(path:)
-        MASTER::Executor::ToolDispatch.analyze_code(path)
+        MASTER::ToolDispatch.analyze_code(path)
       end
     end
 
@@ -59,7 +59,7 @@ module MASTER
       param :command, desc: "Shell command to execute"
 
       def execute(command:)
-        MASTER::Executor::ToolDispatch.shell_command(command)
+        MASTER::ToolDispatch.shell_command(command)
       end
     end
 
@@ -68,7 +68,7 @@ module MASTER
       param :query, desc: "Search query for memories"
 
       def execute(query:)
-        MASTER::Executor::ToolDispatch.memory_search(query)
+        MASTER::ToolDispatch.memory_search(query)
       end
     end
 

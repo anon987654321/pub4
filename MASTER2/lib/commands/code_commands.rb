@@ -205,7 +205,18 @@ module MASTER
         end
 
         UI.header("Scanning: #{path}")
-        result = Review::Scanner.analyze_directory(path)
+        result = if File.file?(path)
+          file_result = Review::Scanner.analyze_file(path)
+          {
+            files: { path => file_result },
+            total_issues: file_result[:issues].size,
+            critical: file_result[:issues].count { |i| i[:severity] == :critical },
+            major: file_result[:issues].count { |i| i[:severity] == :major },
+            average_score: file_result[:score].to_f,
+          }
+        else
+          Review::Scanner.analyze_directory(path)
+        end
 
         result[:files].each do |file, r|
           next if r[:issues].empty?
