@@ -68,70 +68,11 @@ end
 
 cleanup_stale_locks!
 
-# Auto-bundle install if gems missing
-project_root = File.expand_path("..", __dir__)
-ruby_abi = RUBY_VERSION.split(".")[0, 2].join(".")
-gem_home = ENV["GEM_HOME"] || File.expand_path("~/.local/share/gem/ruby/#{ruby_abi}")
-bundle_path = ENV["MASTER_BUNDLE_PATH"] || File.join(project_root, "var", "bundle")
-bundle_cache_path = ENV["MASTER_BUNDLE_CACHE_PATH"] || File.join(project_root, "var", "bundle-cache")
-bundle_app_config = ENV["MASTER_BUNDLE_APP_CONFIG"] || File.join(project_root, "var", "bundle-config")
-
-[gem_home, bundle_path, bundle_cache_path, bundle_app_config].each { |p| FileUtils.mkdir_p(p) }
-
-# Write .bundle/config so standalone 'bundle install' works (OpenBSD 7.8 fix)
-bundle_config_file = File.join(bundle_app_config, "config")
-bundle_config_content = <<~YAML
-  ---
-  BUNDLE_PATH: "var/bundle"
-  BUNDLE_CACHE_PATH: "var/bundle-cache"
-  BUNDLE_DISABLE_SHARED_GEMS: "true"
-YAML
-File.write(bundle_config_file, bundle_config_content) unless File.exist?(bundle_config_file)
-
-ENV["BUNDLE_GEMFILE"] = File.join(project_root, "Gemfile")
-ENV["GEM_HOME"] = gem_home
-ENV["GEM_PATH"] = gem_home
-ENV["PATH"] = "#{gem_home}/bin:#{ENV['PATH']}" unless ENV["PATH"].include?("#{gem_home}/bin")
-ENV["BUNDLE_PATH"] ||= bundle_path
-ENV["BUNDLE_CACHE_PATH"] ||= bundle_cache_path
-ENV["BUNDLE_APP_CONFIG"] ||= bundle_app_config
-ENV["BUNDLE_DISABLE_SHARED_GEMS"] ||= "true"
-ENV["BUNDLE_FROZEN"] ||= "false"
-
-boot_retries = 0
-begin
-  require "bundler/setup"
-rescue LoadError, StandardError => e
-  if boot_retries >= 1
-    warn "MASTER2 boot: bundler setup failed after install: #{e.message}"
-    exit 1
-  end
-  boot_retries += 1
-  warn "MASTER2 boot: preparing local dependencies..."
-
-  # Run platform diagnostics before retrying
-  require_relative "../lib/platform_check"
-  if defined?(MASTER::PlatformCheck)
-    issues = MASTER::PlatformCheck.diagnose
-    unless issues.empty?
-      warn "MASTER2 boot: platform issues detected"
-      MASTER::PlatformCheck.print_diagnostics
-    end
-  end
-
-  ok = system("bundle", "install", "--quiet", exception: false)
-  unless ok
-    warn "MASTER2 boot: bundle install failed: #{e.message}"
-    if defined?(MASTER::PlatformCheck) && MASTER::PlatformCheck.openbsd?
-      warn "MASTER2 boot: OpenBSD detected. Common fixes:"
-      MASTER::PlatformCheck.print_diagnostics
-    else
-      warn "MASTER2 boot: check network access and re-run: bin/master"
-    end
-    exit 1
-  end
-  retry
-end
+# Gem loading — use system gems directly, no bundler isolation.
+# On OpenBSD, gems live in /usr/local/lib/ruby/gems; on Linux, /var/lib/gems.
+# AutoInstall handles any genuinely missing gems via `gem install`.
+require_relative "../lib/auto_install"
+MASTER::AutoInstall.setup
 require "json"
 require_relative "../lib/master"
 
