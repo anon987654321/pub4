@@ -35,6 +35,39 @@ command = ARGV[0]
 args = ARGV[1..] || []
 enforce_single_master!(command)
 
+# Clean up leftover lock files from crashed prior runs
+def cleanup_stale_locks!
+  Dir[File.join(Dir.tmpdir, "master2-*.lock")].each do |lock|
+    next unless File.exist?(lock)
+
+    pid = begin
+      raw = File.read(lock)
+      (m = raw.match(/pid=(\d+)/)) ? m[1].to_i : nil
+    rescue StandardError
+      nil
+    end
+
+    stale = if pid.nil? || pid <= 0
+              true
+            else
+              begin
+                Process.kill(0, pid)
+                false
+              rescue Errno::ESRCH
+                true
+              rescue Errno::EPERM
+                false
+              end
+            end
+
+    FileUtils.rm_f(lock) if stale
+  end
+rescue StandardError
+  nil
+end
+
+cleanup_stale_locks!
+
 # Auto-bundle install if gems missing
 project_root = File.expand_path("..", __dir__)
 ruby_abi = RUBY_VERSION.split(".")[0, 2].join(".")
@@ -291,8 +324,8 @@ else
     server = MASTER::Server.new
     Thread.new { server.start }
 
-    # Print session retrospective on clean exit
     at_exit do
+      server.stop
       if defined?(MASTER::Friction::FrictionRecorder) &&
          MASTER::Friction::FrictionRecorder.events.any?
         report = MASTER::Friction::SessionRetrospective.run
@@ -300,7 +333,10 @@ else
       end
     end
 
-    MASTER::Pipeline.repl
+    trap("INT")  { puts; exit }
+    trap("TERM") { exit }
+
+    MASTER::Pipeline.repl(web_port: server.port)
   else
     # Delegate all other commands to Commands.dispatch_one
     delegate_to_commands(command, args)
