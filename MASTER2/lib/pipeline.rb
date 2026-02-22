@@ -52,6 +52,9 @@ module MASTER
       Logging.with_request_id do
       raw = case @mode
             when :executor
+              # Guard must run even in executor mode to prevent dangerous ops
+              guard_result = Stages::Guard.new.call({ text: text })
+              return guard_result if guard_result.err?
               # Default: Use autonomous executor with pattern selection
               Executor.call(text, pattern: self.class.current_pattern)
             when :stages

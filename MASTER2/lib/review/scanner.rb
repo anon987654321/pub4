@@ -120,7 +120,7 @@ module MASTER
             total_issues: results.values.sum { |r| r[:issues].size },
             critical: results.values.flat_map { |r| r[:issues] }.count { |i| i[:severity] == :critical },
             major: results.values.flat_map { |r| r[:issues] }.count { |i| i[:severity] == :major },
-            average_score: results.values.sum { |r| r[:score] }.to_f / results.size,
+            average_score: results.empty? ? 0.0 : results.values.sum { |r| r[:score] }.to_f / results.size,
           }
         end
 

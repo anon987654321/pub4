@@ -6,6 +6,7 @@ module MASTER
 
   # ToolDispatch - extracted from Executor::Tools for module-level access
   module ToolDispatch
+      extend self
       def dispatch_action(action_str)
         # Sanitize input before processing
         action_str = sanitize_tool_input(action_str)
@@ -239,6 +240,7 @@ module MASTER
       end
 
       def record_history(entry)
+        return unless @history
         @history << entry
         @history.shift if @history.size > 50
       end
