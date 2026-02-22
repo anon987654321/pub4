@@ -4,18 +4,25 @@ require "json"
 require "time"
 require "securerandom"
 require_relative "logging/dmesg"
+require_relative "logging/structured"
 
 module MASTER
   # Logging - Unified logging system
   # Combines three logging approaches:
   #   1. Standard logging (debug/info/warn/error) - from log.rb
-  #   2. Structured JSON logging - from logging.rb
+  #   2. Structured JSON logging - delegated to logging/structured.rb
   #   3. OpenBSD kernel-style dmesg - from dmesg.rb (extracted to logging/dmesg.rb)
   module Logging
     extend self
     # CONFIGURATION
 
     LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 }.freeze
+
+    # Verbosity levels for output control
+    VERBOSITY_DMESG    = 0  # ring buffer only
+    VERBOSITY_STANDARD = 1  # normal (default)
+    VERBOSITY_DETAILED = 2  # + debug info
+    VERBOSITY_TEACHING = 3  # + explanations
 
     @level = :info
     @format = :human
@@ -145,7 +152,7 @@ module MASTER
       # Log autonomy event
       def autonomy(subsystem, event, details = nil)
         dmesg_log('autonomy0', parent: subsystem, message: "#{event}#{details ? ", #{details}" : ''}", level: ALL_EVENTS)
-        if logging_enabled?
+        if structured_enabled?
           info("Autonomy event", subsystem: subsystem, event: event, details: details)
         end
       end
@@ -153,7 +160,7 @@ module MASTER
       # Log circuit breaker event
       def circuit(provider, state)
         dmesg_log('circuit0', parent: 'autonomy0', message: "#{provider} #{state}", level: ALL_EVENTS)
-        info("Circuit", provider: provider, state: state) if logging_enabled?
+        info("Circuit", provider: provider, state: state) if structured_enabled?
       end
 
       def retry_event(attempt, max, reason)
@@ -168,7 +175,7 @@ module MASTER
       def tool(name, action, approved: nil)
         approval = approved.nil? ? '' : (approved ? ', auto' : ', manual')
         dmesg_log('tool0', parent: 'executor0', message: "#{name} #{action}#{approval}", level: ALL_EVENTS)
-        if logging_enabled?
+        if structured_enabled?
           debug("Tool", name: name, action: action, approved: approved)
         end
       end
@@ -176,7 +183,7 @@ module MASTER
       # Log file operation
       def file(action, path, details = nil)
         dmesg_log('file0', parent: 'executor0', message: "#{action} #{File.basename(path)}#{details ? " (#{details})" : ''}", level: ALL_EVENTS)
-        if logging_enabled?
+        if structured_enabled?
           debug("File", action: action, path: path, details: details)
         end
       end
@@ -184,7 +191,7 @@ module MASTER
       # Log memory operation
       def memory(action, details)
         dmesg_log('mem0', parent: 'agent0', message: "#{action}: #{details}", level: ALL_EVENTS)
-        debug("Memory", action: action, details: details) if logging_enabled?
+        debug("Memory", action: action, details: details) if structured_enabled?
       end
 
       def prune(before, after)
@@ -212,7 +219,7 @@ module MASTER
       # Boot complete event
       def boot_complete(duration_ms)
         dmesg_log('boot', message: "#{duration_ms}ms", level: SILENT)
-        info("Boot complete", duration_ms: duration_ms) if logging_enabled?
+        info("Boot complete", duration_ms: duration_ms) if structured_enabled?
       end
 
       def llm_call(model:, tokens_in:, tokens_out:, cost:, duration_ms:, success:)
@@ -223,51 +230,32 @@ module MASTER
         success ? debug("Tool executed", tool: tool, duration_ms: duration_ms) : warn("Tool failed", tool: tool, error: error, duration_ms: duration_ms)
       end
 
+      # Current verbosity level from environment
+      # @return [Integer] verbosity level (0-3)
+      def verbosity
+        (ENV['MASTER_VERBOSITY'] || 1).to_i
+      end
+
+      # Structured logging enabled when MASTER_LOG is not '0'
+      # @return [Boolean]
+      def structured_enabled?
+        @level != :silent && ENV['MASTER_LOG'] != '0' && verbosity >= VERBOSITY_STANDARD
+      end
+
+      # Backward-compatible alias
+      alias logging_enabled? structured_enabled?
+
+      # Delegate to Structured module for actual log output
+      # @param severity [Symbol] Log severity level
+      # @param message [String] Log message
+      # @param context [Hash] Additional context key-values
       def log(severity, message, **context)
-        return if LEVELS[severity] < LEVELS[@level]
-
-        entry = build_entry(severity, message, context)
-
-        case @format
-        when :json
-          @output.puts(JSON.generate(entry))
-        else
-          @output.puts(format_human(entry))
-        end
-      end
-
-      def logging_enabled?
-        @level != :silent && ENV['MASTER_LOG'] != '0'
-      end
-
-      private
-
-      def build_entry(severity, message, context)
-        {
-          timestamp: Time.now.utc.iso8601(3),
-          level: severity.to_s.upcase,
-          message: message,
-          request_id: request_id,
-          **context.compact
-        }.compact
-      end
-
-      def format_human(entry)
-        prefix = case entry[:level]
-                 when "DEBUG" then "\e[37m"    # gray
-                 when "INFO"  then "\e[36m"    # cyan
-                 when "WARN"  then "\e[33m"    # yellow
-                 when "ERROR" then "\e[31m"    # red
-                 when "FATAL" then "\e[31;1m" # bold red
-                 else ""
-                 end
-        reset = "\e[0m"
-
-        ctx = entry.except(:timestamp, :level, :message, :request_id)
-        ctx_str = ctx.any? ? " #{ctx.map { |k, v| "#{k}=#{v}" }.join(' ')}" : ""
-        rid_str = entry[:request_id] ? "[#{entry[:request_id][0..7]}] " : ""
-
-        "#{prefix}#{entry[:level][0]}#{reset} #{rid_str}#{entry[:message]}#{ctx_str}"
+        return unless structured_enabled?
+        # Sync format/output settings to Structured module
+        Structured.format = @format
+        Structured.output = @output
+        Structured.level = @level
+        Structured.log(severity, message, **context)
       end
     end
   end

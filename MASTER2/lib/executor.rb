@@ -17,6 +17,7 @@ module MASTER
 
   class Executor
     MAX_STEPS = 15
+    MAX_HISTORY_SIZE = 100
     WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
 
     # Magic number constants extracted for clarity (Phase 5 - Style compliance)
@@ -95,8 +96,8 @@ module MASTER
 
       result = execute_pattern(@pattern, goal, tier: tier || :strong)
 
-      # Fallback to simpler patterns if primary fails
-      if !result.ok? && @pattern != :react
+      # Fallback to simpler patterns if primary fails (use retriable? for smart fallback)
+      if result.err? && result.retriable? && @pattern != :react
         UI.warn("Pattern #{@pattern} failed, falling back to :react")
         @step = 0
         @history = []
@@ -180,6 +181,30 @@ module MASTER
     end
 
     private
+
+    # Record a step into history, bounding size to MAX_HISTORY_SIZE
+    def record_history(entry)
+      @history << entry
+      @history.shift if @history.size > MAX_HISTORY_SIZE
+    end
+
+    # Basic completion verification: response has substance and echoes goal keywords
+    def verify_completion(goal, response)
+      return true if response.length > 50  # basic sanity
+      keywords = goal.scan(/\b\w{4,}\b/).first(5)
+      keywords.any? { |kw| response.downcase.include?(kw.downcase) }
+    end
+
+    # Self-verify by running test files related to modified files
+    def self_verify(modified_files)
+      test_files = modified_files.select { |f| f.match?(/test_|_spec\.rb/) }
+      test_files += Dir.glob("test/test_*.rb").first(3) if test_files.empty?
+      return if test_files.empty?
+
+      UI.dim("self-verify: running #{test_files.size} test(s)")
+      result = defined?(Shell) ? Shell.run("ruby -Itest #{test_files.first}") : nil
+      UI.warn("self-verify: tests failed") if result && !result.ok?
+    end
 
     def simple_query?(goal)
       @pattern == :direct

@@ -106,7 +106,7 @@ module MASTER
       def ask(prompt, tier: nil, model: nil, fallbacks: nil, reasoning: nil,
               json_schema: nil, provider: nil, stream: false, messages: nil)
 
-        return Result.err("Missing OPENROUTER_API_KEY.") unless configured?
+        return Result.err("Missing OPENROUTER_API_KEY.", category: :infrastructure) unless configured?
 
         configure_ruby_llm
         CircuitBreaker.check_rate_limit!
@@ -122,7 +122,7 @@ module MASTER
         end
 
         primary = model || select_model(tier)
-        return Result.err("No model available.") unless primary
+        return Result.err("No model available.", category: :infrastructure) unless primary
 
         @current_model = primary
 
@@ -148,10 +148,10 @@ module MASTER
           end
         end
 
-        Result.err("#{extract_model_name(primary)}: #{last_error}")
+        Result.err("#{extract_model_name(primary)}: #{last_error}", category: :infrastructure)
       rescue StandardError => e
         CircuitBreaker.open_circuit!(primary) if primary
-        Result.err(Logging.format_error(e))
+        Result.err(Logging.format_error(e), category: :infrastructure)
       end
 
       private
@@ -182,6 +182,16 @@ module MASTER
         Logging.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Logging)
         SemanticCache.store(prompt, data, tier: :default) if defined?(SemanticCache) && !stream
         CircuitBreaker.close_circuit!(current_model)
+
+        # Publish LLM response event for interested subscribers
+        if defined?(EventBus)
+          EventBus.publish(:llm_response,
+            model: current_model,
+            tokens_in: tokens_in,
+            tokens_out: tokens_out,
+            cost: cost,
+            streamed: stream)
+        end
       end
 
       def handle_llm_failure(result, current_model)
@@ -207,7 +217,7 @@ module MASTER
       def ask_with_files(prompt, files:, model: nil)
         configure_ruby_llm
         m = model || select_model
-        return Result.err("No model available.") unless m
+        return Result.err("No model available.", category: :infrastructure) unless m
 
         c = RubyLLM.chat(model: m)
         response = c.ask(prompt, with: files)
@@ -218,7 +228,7 @@ module MASTER
           cost: 0
         })
       rescue StandardError => e
-        Result.err(e.message)
+        Result.err(e.message, category: :infrastructure)
       end
 
       # A6: Image generation (Replicate-only policy)

@@ -54,10 +54,26 @@ module MASTER
       @cache.clear
     end
 
-    # Get all axioms (cached)
+    # Get all axioms - YAML is the single source of truth
+    # Falls back to JSONL collection if YAML unavailable
     # @return [Array<Hash>] Array of axiom records
     def axioms
-      @cache[:axioms] ||= read_collection("axioms")
+      @cache[:axioms] ||= begin
+        axioms_file = File.join(File.dirname(__dir__), "data", "axioms.yml")
+        if File.exist?(axioms_file)
+          data = YAML.safe_load_file(axioms_file, symbolize_names: true) || []
+          data.map do |axiom|
+            {
+              name: axiom[:id] || axiom[:name],
+              description: axiom[:statement] || axiom[:description],
+              category: axiom[:category] || "core",
+              pattern: axiom[:pattern],
+            }.compact
+          end
+        else
+          read_collection("axioms")
+        end
+      end
     end
 
     # Add new axiom to database

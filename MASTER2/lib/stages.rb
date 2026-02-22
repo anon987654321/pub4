@@ -74,15 +74,21 @@ module MASTER
       ].freeze
 
       def call(input)
+        Logging.dmesg_log('guard0', parent: 'pipeline0', message: 'ENTER guard', level: Logging::ALL_EVENTS) if defined?(Logging)
         text = input[:text] || ""
         match = DANGEROUS_PATTERNS.find { |p| p.match?(text) }
-        match ? Result.err("Blocked: dangerous pattern detected.") : Result.ok(input)
+        if match
+          Result.err("Blocked: dangerous pattern detected.", category: :validation)
+        else
+          Result.ok(input)
+        end
       end
     end
 
     # Stage 4: Route to model via circuit breaker + budget
     class Route
       def call(input)
+        Logging.dmesg_log('route0', parent: 'pipeline0', message: 'ENTER route', level: Logging::ALL_EVENTS) if defined?(Logging)
         # Respect forced model override (model command)
         if LLM.model_forced?
           model = LLM.forced_model
@@ -91,17 +97,27 @@ module MASTER
           tier = LLM.tier
           model = LLM.select_model(tier)
         end
-        return Result.err("All models unavailable.") unless model
+        return Result.err("All models unavailable.", category: :infrastructure) unless model
         Result.ok(input.merge(model: model, tier: tier))
       end
     end
 
     # Stage 5: Adversarial council review (delegates to Council)
     class Council
+      # Keywords indicating code-related queries that warrant council review
+      CODE_RELATED_PATTERN = /\b(fix|refactor|debug|code|script|function|class|method|file|write|implement|build|deploy|test|security|sql|shell|command)\b/i.freeze
+
       def call(input)
+        Logging.dmesg_log('council0', parent: 'pipeline0', message: 'ENTER council', level: Logging::ALL_EVENTS) if defined?(Logging)
         text = input[:text] || ""
         model = input[:model]
         return Result.ok(input) unless model
+
+        # Skip council for non-code queries (reduce latency for simple questions)
+        unless code_related?(text)
+          Logging.dmesg_log('council0', message: 'skipped: non-code query', level: Logging::ALL_EVENTS) if defined?(Logging)
+          return Result.ok(input)
+        end
 
         # NOTE: model: param is accepted by Council.council_review but currently unused
         review = MASTER::Council.council_review(text, model: model)
@@ -112,13 +128,20 @@ module MASTER
           council_votes: review[:votes],
         ))
       end
+
+      private
+
+      def code_related?(text)
+        CODE_RELATED_PATTERN.match?(text)
+      end
     end
 
     # Stage 6: Query LLM with streaming output
     class Ask
       def call(input)
+        Logging.dmesg_log('ask0', parent: 'pipeline0', message: 'ENTER ask', level: Logging::ALL_EVENTS) if defined?(Logging)
         model = input[:model]
-        return Result.err("No model selected.") unless model
+        return Result.err("No model selected.", category: :infrastructure) unless model
 
         model_short = model.split("/").last
         tier = input[:tier] || :unknown
@@ -143,7 +166,9 @@ module MASTER
             cost: cost,
           ))
         else
-          Result.err("LLM error (#{model}): #{result.error}.")
+          # Propagate category from underlying LLM result if available
+          cat = result.respond_to?(:category) ? result.category : :infrastructure
+          Result.err("LLM error (#{model}): #{result.error}.", category: cat)
         end
       end
     end
