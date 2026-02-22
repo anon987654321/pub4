@@ -7,7 +7,7 @@ module MASTER
     HISTORY_FILE = ".master_history"
     MAX_HISTORY_LINES = 500
 
-    def repl
+    def repl(web_port: nil)
       begin
         require "tty-reader"
       rescue LoadError
@@ -20,7 +20,7 @@ module MASTER
       session = Session.current
       last_interrupt = nil
 
-      Boot.banner
+      web_port ? Boot.banner_with_web(web_port) : Boot.banner
 
       # Set initial model so prompt shows it immediately
       if LLM.configured?
