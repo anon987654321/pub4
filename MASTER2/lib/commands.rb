@@ -365,6 +365,9 @@ module MASTER
       when "config-drift"
         print_config_drift
         HANDLED
+      when "architect", "arch", "architecture"
+        print_architect
+        HANDLED
       when "refactor", "autofix"
         autofix(args)
       when "chamber"
