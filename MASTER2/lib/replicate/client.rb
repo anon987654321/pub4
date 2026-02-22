@@ -22,7 +22,12 @@ module MASTER
       # Create a new prediction
       def create_prediction(model:, input:)
         body = { input: input }
-        body[:version] = model if model
+        # Use 'model' key for owner/name format; 'version' key for SHA-pinned versions
+        if model&.include?("/")
+          body[:model] = model
+        elsif model
+          body[:version] = model
+        end
 
         data = nil
         Async do |task|
