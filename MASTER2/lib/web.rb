@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
 require "uri"
-require "async"
-require "async/http/internet"
+require "net/http"
 
 module MASTER
   # Web - Browse and fetch web content with LLM-powered automation
-  # HTTP client: async-http (Falcon ecosystem) — consistent with server stack
+  # HTTP client: net/http — avoids async-http getifaddrs permission issues in containers
   # Security: Uses nokogiri for safe HTML parsing (prevents ReDoS)
   # Features: Dynamic CSS selector discovery via LLM
   module Web
@@ -24,29 +23,21 @@ module MASTER
       uri = URI(url)
       return Result.err("Invalid URL scheme: #{uri.scheme}") unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
 
-      status  = nil
-      content = nil
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = uri.is_a?(URI::HTTPS)
+      http.open_timeout = HTTP_OPEN_TIMEOUT
+      http.read_timeout = WEB_TIMEOUT
 
-      Async do |task|
-        task.with_timeout(WEB_TIMEOUT) do
-          internet = Async::HTTP::Internet.new
-          begin
-            response = internet.get(url)
-            status = response.status.to_s
-            body   = response.read
-            content = extract_text(body) if status.start_with?("2")
-          ensure
-            internet.close
-          end
-        end
-      end
+      response = http.get(uri.request_uri)
+      status = response.code
+      content = extract_text(response.body) if status.start_with?("2")
 
       if content
         Result.ok(content: content[0, MAX_CONTENT_LENGTH], url: url, status: status)
       else
         Result.err("HTTP #{status} for #{url}")
       end
-    rescue Async::TimeoutError => e
+    rescue Net::OpenTimeout, Net::ReadTimeout => e
       Result.err("Browse timeout after #{WEB_TIMEOUT}s: #{e.message}")
     rescue StandardError => e
       Result.err("Browse failed: #{e.message}")

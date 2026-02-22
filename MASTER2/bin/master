@@ -279,7 +279,7 @@ when "selfrun", "self-run"
 when "narrate", "narration"
   if MASTER::Commands.respond_to?(:narrate_command)
     result = MASTER::Commands.narrate_command(args.join(" "))
-    exit result.respond_to?(:ok?) && result.ok? ? 0 : 1
+    exit(result.respond_to?(:ok?) && result.ok? ? 0 : 1)
   else
     warn "narrate: Replicate not loaded (set REPLICATE_API_TOKEN)"
     exit 1
