@@ -194,7 +194,7 @@ select,input[type=number]{background:var(--bg);border:1px solid var(--border);co
 </div></div>
 </div>
 </div>
-<div class="log" id="log"></div>
+<div class="log-wrap"><div class="log" id="log"></div><button class="btn btn-copy-log" onclick="const t=[...document.getElementById('log').children].map(l=>l.textContent).join('\n');navigator.clipboard.writeText(t).then(()=>log('📋 Logs copied')).catch(()=>log('❌ Copy failed'))">Copy logs</button></div>
 <div class="tooltip" id="tooltip"></div>
 </div>
 
