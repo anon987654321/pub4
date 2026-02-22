@@ -36,7 +36,7 @@ module MASTER
       Prescan.run(MASTER.root) if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
 
       unless ENV["OPENROUTER_API_KEY"]
-        UI.warn("OPENROUTER_API_KEY not set — get yours at openrouter.ai/keys then: export OPENROUTER_API_KEY=or-...")
+        UI.warn("llm0: OPENROUTER_API_KEY not set — export OPENROUTER_API_KEY=or-...")
       end
 
       # Initialize workflow
@@ -48,7 +48,7 @@ module MASTER
 
       # Session name
       session_label = session.metadata_value(:name) || UI.truncate_id(session.id)
-      puts "session #{session_label}"
+      puts "session0 at master0: #{session_label}"
 
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
