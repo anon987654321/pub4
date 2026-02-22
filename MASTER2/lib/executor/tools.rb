@@ -150,6 +150,10 @@ module MASTER
 
     def fix_code(path)
       if defined?(Review::Fixer)
+        unless defined?(AgentAutonomy) && AgentAutonomy.may_apply_without_asking?
+          return "Autonomy level '#{defined?(AgentAutonomy) ? AgentAutonomy.autonomy_level : :ask_always}': " \
+                 "review proposed fix before applying — show diff first with review_code(#{path.inspect})"
+        end
         fixer = Review::Fixer.new(mode: :moderate)
         result = fixer.fix(path)
         if result.ok?

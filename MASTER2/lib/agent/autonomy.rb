@@ -272,5 +272,35 @@ module MASTER
       FileUtils.mkdir_p(File.dirname(LEARNING_FILE))
       File.write(LEARNING_FILE, YAML.dump(data))
     end
+
+    # Resolve current autonomy level from graduation config + session history.
+    # Returns one of: :ask_always, :preview_changes, :apply_safe, :apply_all
+    def autonomy_level
+      @graduation ||= begin
+        f = File.join(MASTER.root, "data", "quality_thresholds.yml")
+        YAML.safe_load_file(f)["graduation"] rescue {}
+      end
+      successful = DB.total_successful_tasks rescue 0
+      reverts_7d = DB.recent_reverts(days: 7) rescue 0
+
+      level = :ask_always
+      @graduation.each do |_tier, cfg|
+        reqs = Array(cfg["requires"])
+        met  = reqs.all? do |req|
+          case req
+          when /^(\d+)_successful_tasks/ then successful >= $1.to_i
+          when /zero_reverts_(\d+)d/     then reverts_7d == 0
+          else true
+          end
+        end
+        level = cfg["autonomy"].to_sym if met
+      end
+      level
+    end
+
+    # True when the current autonomy level permits applying a change without asking.
+    def may_apply_without_asking?
+      %i[apply_safe apply_all].include?(autonomy_level)
+    end
   end
 end

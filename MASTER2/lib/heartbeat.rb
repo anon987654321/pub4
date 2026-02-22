@@ -36,6 +36,8 @@ module MASTER
 
       def stop
         @running = false
+        @rufus&.shutdown(:wait)
+        @rufus = nil
         @thread&.join(5)
         @thread = nil
         Logging.dmesg_log("heartbeat", message: "EXIT stop")
@@ -68,19 +70,31 @@ module MASTER
       private
 
       def run_loop
-        while @running
-          backoff_needed = 0
-          @checks_mutex.synchronize do
-            @checks.each do |check|
-              backoff_delay = run_check(check)
-              backoff_needed = [backoff_needed, backoff_delay || 0].max
+        if (require "rufus-scheduler" rescue false)
+          @rufus = Rufus::Scheduler.new
+          @rufus.every("#{@interval}s") do
+            next unless @running
+
+            backoff_needed = 0
+            @checks_mutex.synchronize do
+              @checks.each do |check|
+                backoff_delay = run_check(check)
+                backoff_needed = [backoff_needed, backoff_delay || 0].max
+              end
             end
+            @rufus.every("#{backoff_needed}s", :once => true) {} if backoff_needed > 0
           end
-          # Sleep outside the mutex
-          if backoff_needed > 0
-            sleep(backoff_needed)
-          else
-            sleep(@interval)
+          @rufus.join
+        else
+          while @running
+            backoff_needed = 0
+            @checks_mutex.synchronize do
+              @checks.each do |check|
+                backoff_delay = run_check(check)
+                backoff_needed = [backoff_needed, backoff_delay || 0].max
+              end
+            end
+            sleep(backoff_needed > 0 ? backoff_needed : @interval)
           end
         end
       rescue StandardError => e

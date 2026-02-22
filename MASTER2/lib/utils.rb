@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "did_you_mean"
+
 module MASTER
   module Utils
     module_function
@@ -17,21 +19,7 @@ module MASTER
     end
 
     def levenshtein(a, b)
-      return b.length if a.empty?
-      return a.length if b.empty?
-
-      m = Array.new(a.length + 1) { Array.new(b.length + 1, 0) }
-      (0..a.length).each { |i| m[i][0] = i }
-      (0..b.length).each { |j| m[0][j] = j }
-
-      (1..a.length).each do |i|
-        (1..b.length).each do |j|
-          cost = a[i - 1] == b[j - 1] ? 0 : 1
-          m[i][j] = [m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + cost].min
-        end
-      end
-
-      m[a.length][b.length]
+      DidYouMean::Levenshtein.distance(a.to_s, b.to_s)
     end
 
     def similarity(a, b)

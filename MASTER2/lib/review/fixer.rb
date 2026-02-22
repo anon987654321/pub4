@@ -50,16 +50,15 @@ module MASTER
         original = code.dup
         @backups[file] = original
 
-        fixable = violations&.select { |v| can_fix?(v[:type]) } || auto_detect(code)
-        fixable = fixable.take(MAX_FIXES_PER_RUN)
-
-        return Result.ok(file: file, fixed: 0, message: "No fixable violations") if fixable.empty?
+        all_violations = violations || auto_detect(code)
+        rule_fixable   = all_violations.select { |v| can_fix?(v[:type]) }.take(MAX_FIXES_PER_RUN)
+        llm_fixable    = all_violations.reject { |v| can_fix?(v[:type]) }
+                                       .select { |v| llm_strategies_for(v[:axiom_id] || v[:type]).any? }
 
         fixed_count = 0
-        fixable.each do |violation|
-          type = violation[:type]&.to_sym
-          next unless can_fix?(type)
 
+        rule_fixable.each do |violation|
+          type = violation[:type]&.to_sym
           fixer = FIXERS[type]
           next unless fixer
 
@@ -69,6 +68,18 @@ module MASTER
           code = new_code
           fixed_count += 1
           @fixes_applied << { file: file, type: type }
+        end
+
+        llm_fixable.first(3).each do |violation|
+          result = llm_fix(code, violation, filename: file)
+          next unless result.ok?
+
+          new_code = result.value[:code]
+          next unless new_code != code && valid_syntax?(new_code, file)
+
+          code = new_code
+          fixed_count += 1
+          @fixes_applied << { file: file, type: :llm, axiom: violation[:axiom_id], strategies: result.value[:strategies] }
         end
 
         return Result.ok(file: file, fixed: 0, message: "No changes needed") if code == original
@@ -136,6 +147,44 @@ module MASTER
         type = type.to_sym
         allowed = MODE_FIXES[@mode] || []
         allowed.include?(type)
+      end
+
+      # Look up llm_strategies for an axiom_id from axioms.yml.
+      # Returns array of strategy strings, e.g. ["extract_constant", "extract_method"]
+      def llm_strategies_for(axiom_id)
+        @axioms_cache ||= begin
+          f = File.join(MASTER.root, "data", "axioms.yml")
+          YAML.safe_load_file(f) rescue []
+        end
+        axiom = @axioms_cache.find { |a| a["id"] == axiom_id.to_s }
+        axiom&.dig("llm_strategies") || []
+      end
+
+      # Ask the LLM to fix a violation, using llm_strategies as a hint.
+      # Returns Result with :code (fixed source) or error.
+      def llm_fix(code, violation, filename: "code")
+        return Result.err("LLM not available") unless defined?(LLM)
+
+        axiom_id  = violation[:axiom_id] || violation[:type]
+        strategies = llm_strategies_for(axiom_id)
+        strategy_hint = strategies.any? ? "Preferred strategies: #{strategies.join(", ")}." : ""
+
+        prompt = <<~PROMPT
+          Fix the following violation in this #{File.extname(filename).delete(".").upcase} code.
+          Violation: #{violation[:message] || violation[:description] || axiom_id}
+          #{strategy_hint}
+          Return ONLY the corrected code, no explanations.
+
+          ```
+          #{code}
+          ```
+        PROMPT
+
+        result = LLM.ask(prompt, tier: :fast)
+        return result unless result.ok?
+
+        fixed = result.value[:content].gsub(/\A```\w*\n/, "").gsub(/\n```\z/, "").strip
+        Result.ok(code: fixed, strategies: strategies)
       end
 
       def auto_detect(code)

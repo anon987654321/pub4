@@ -9,6 +9,29 @@ module MASTER
     MAX_CODE_PREVIEW = 3000
     MAX_ANALYSIS_PREVIEW = 200
 
+    # Looks up enrichment data from MASTER1-ported principles.yml.
+    module PrinciplesDb
+      PRINCIPLES_FILE = File.join(MASTER.root, "data", "principles.yml")
+
+      # Returns { smell:, fix: } for the closest matching anti-pattern, or nil.
+      def self.enrich(principle_name)
+        @data ||= begin
+          YAML.safe_load_file(PRINCIPLES_FILE)["principles"] rescue {}
+        end
+        slug = principle_name.to_s.downcase.gsub(/[^a-z0-9]/, "")
+        entry = @data.values.find do |p|
+          pslug = p["name"].to_s.downcase.gsub(/[^a-z0-9]/, "")
+          pslug.include?(slug) || slug.include?(pslug[0, 4])
+        end
+        return nil unless entry
+
+        ap = Array(entry["anti_patterns"]).first
+        return nil unless ap
+
+        { smell: ap["smell"], fix: ap["fix"], principle_full: entry["name"] }
+      end
+    end
+
     # Literal patterns for fast detection (no LLM needed)
     LITERAL_PATTERNS = {
       deep_nesting: {
@@ -149,6 +172,7 @@ module MASTER
           lines.each_with_index do |line, idx|
             next unless line.match?(config[:pattern])
 
+            enrichment = PrinciplesDb.enrich(config[:principle])
             violations << {
               type: :literal,
               name: name,
@@ -157,6 +181,8 @@ module MASTER
               severity: config[:severity],
               line: idx + 1,
               match: line.strip[0..50],
+              smell: enrichment&.dig(:smell),
+              fix: enrichment&.dig(:fix),
             }
           end
         end
