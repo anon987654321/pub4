@@ -13,7 +13,7 @@ module MASTER
       end
 
       def warn(msg)
-        warn pastel.yellow("! #{msg}")
+        Kernel.warn pastel.yellow("! #{msg}")
       end
 
       def info(msg)

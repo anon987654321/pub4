@@ -75,6 +75,10 @@ module MASTER
       master_md = File.join(Dir.pwd, "MASTER.md")
       sections << "PROJECT CONTEXT (from MASTER.md):\n#{File.read(master_md)[0..2000]}" if File.exist?(master_md)
 
+      # Gist #9: Inject detected project conventions so LLM mimics existing style
+      conventions = ConventionExtractor.extract(root: MASTER.root) rescue ""
+      sections << conventions unless conventions.empty?
+
       sections.join("\n\n")
     end
 
