@@ -120,6 +120,14 @@ module MASTER
           end
         end
 
+        # Gist #7: Elicitation checkpoint — pause before complex/ambiguous tasks
+        pre_check = Stages::Intake.new.call({ text: line.strip })
+        if pre_check.ok? && pre_check.value[:needs_elicitation]
+          print "This looks complex — any constraints or preferences? (enter to skip) "
+          clarification = $stdin.gets&.chomp
+          line = "#{line.strip} [context: #{clarification}]" if clarification && !clarification.empty?
+        end
+
         result = pipeline.call({ text: line.strip })
         display_result(result, session)
 

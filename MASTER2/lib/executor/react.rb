@@ -70,6 +70,20 @@ module MASTER
 
           UI.dim("  > #{tool_name}(#{parsed[:args].to_json[0..60]})")
 
+          # Gist #12: Human-readable preamble before each tool call (Codex CLI "Responsiveness")
+          preamble = case tool_name.to_s
+                     when "file_read"      then "Reading #{parsed[:args][:path] || '...'}"
+                     when "file_write"     then "Writing #{parsed[:args][:path] || '...'}"
+                     when "analyze_code"   then "Analysing #{parsed[:args][:path] || 'code'}"
+                     when "fix_code"       then "Applying fixes to #{parsed[:args][:path] || '...'}"
+                     when "shell_command"  then "Running: #{(parsed[:args][:command] || '').to_s[0..60]}"
+                     when "web_search"     then "Searching: #{(parsed[:args][:query] || '').to_s[0..60]}"
+                     when "browse_page"    then "Browsing #{parsed[:args][:url] || '...'}"
+                     when "council_review" then "Asking council..."
+                     when "memory_search"  then "Searching memory: #{(parsed[:args][:query] || '').to_s[0..50]}"
+                     end
+          UI.dim("  … #{preamble}") if preamble
+
           # Dispatch typed tool call (args is already a Hash from JSON parse)
           raw_observation = dispatch_typed(tool_name, parsed[:args] || {})
 
