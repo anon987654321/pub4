@@ -5,8 +5,6 @@ require "ostruct"
 module MASTER
   # CrossRef - Cross-reference analyzer for constants and methods
   module CrossRef
-    extend self
-
     # Analyzer class for building reference maps
     class Analyzer
       attr_reader :constant_defs, :constant_uses, :method_defs, :method_calls
@@ -27,7 +25,7 @@ module MASTER
           begin
             content = File.read(file)
             analyze_file(file, content)
-          rescue StandardError => e
+          rescue StandardError
             # Skip files that can't be read
             next
           end
@@ -70,7 +68,7 @@ module MASTER
               method: method_name,
               file: file,
               calls: called,
-              count: count
+              count: count,
             }
           end
         end
@@ -81,26 +79,26 @@ module MASTER
       # Generate audit report
       def to_audit_report
         report = if defined?(Audit::Report)
-          Audit::Report.new
-        else
-          # Fallback if Audit not available
-          OpenStruct.new(findings: [])
-        end
+                   Audit::Report.new
+                 else
+                   # Fallback if Audit not available
+                   OpenStruct.new(findings: [])
+                 end
 
         # Add findings for unused constants
         unused_constants.each do |const|
           location = @constant_defs[const]
           finding = if defined?(Audit::Finding)
-            Audit::Finding.new(
-              file: location[0],
-              line: location[1],
-              severity: :low,
-              effort: :easy,
-              category: :unused_code,
-              message: "Constant '#{const}' is defined but never used",
-              suggestion: "Remove if not needed, or use it"
-            )
-          end
+                      Audit::Finding.new(
+                        file: location[0],
+                        line: location[1],
+                        severity: :low,
+                        effort: :easy,
+                        category: :unused_code,
+                        message: "Constant '#{const}' is defined but never used",
+                        suggestion: "Remove if not needed, or use it",
+                      )
+                    end
           report.findings << finding if finding
         end
 
@@ -108,16 +106,16 @@ module MASTER
         uncalled_methods.each do |method|
           location = @method_defs[method]
           finding = if defined?(Audit::Finding)
-            Audit::Finding.new(
-              file: location[0],
-              line: location[1],
-              severity: :medium,
-              effort: :moderate,
-              category: :unused_code,
-              message: "Method '#{method}' is defined but never called",
-              suggestion: "Remove if dead code, or add tests"
-            )
-          end
+                      Audit::Finding.new(
+                        file: location[0],
+                        line: location[1],
+                        severity: :medium,
+                        effort: :moderate,
+                        category: :unused_code,
+                        message: "Method '#{method}' is defined but never called",
+                        suggestion: "Remove if dead code, or add tests",
+                      )
+                    end
           report.findings << finding if finding
         end
 
@@ -135,7 +133,7 @@ module MASTER
           # Detect constant definitions (simplified)
           defined_const = nil
           if line =~ /^\s*([A-Z][A-Z0-9_]*)\s*=/
-            const_name = $1
+            const_name = ::Regexp.last_match(1)
             @constant_defs[const_name] = [file, line_num]
             defined_const = const_name
           end
@@ -143,14 +141,15 @@ module MASTER
           # Detect constant uses (excluding the one being defined on this line)
           line.scan(/\b([A-Z][A-Z0-9_]*)\b/) do |match|
             const_name = match[0]
-            next if const_name == defined_const  # Skip if this is the constant being defined
+            next if const_name == defined_const # Skip if this is the constant being defined
+
             @constant_uses[const_name] ||= []
             @constant_uses[const_name] << [file, line_num]
           end
 
           # Detect method definitions
           if line =~ /^\s*def\s+([a-z_][a-z0-9_?!]*)/
-            method_name = $1
+            method_name = ::Regexp.last_match(1)
             @method_defs[method_name] = [file, line_num]
           end
 

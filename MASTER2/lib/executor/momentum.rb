@@ -11,7 +11,7 @@ module MASTER
       refactor: 5,
       evolve: 10,
       fix: 3,
-      test: 2
+      test: 2,
     }.freeze
 
     LEVELS = [
@@ -19,7 +19,7 @@ module MASTER
       { xp: 50, title: "Apprentice" },
       { xp: 150, title: "Journeyman" },
       { xp: 300, title: "Expert" },
-      { xp: 500, title: "Master" }
+      { xp: 500, title: "Master" },
     ].freeze
 
     def fresh
@@ -27,7 +27,7 @@ module MASTER
         xp: 0,
         level: 1,
         streak: 0,
-        achievements: []
+        achievements: [],
       }
     end
 
@@ -75,7 +75,7 @@ module MASTER
         tasks_completed: state[:xp] / TASKS_PER_XP,
         streak: state[:streak],
         level: state[:level],
-        title: title
+        title: title,
       }
     end
 

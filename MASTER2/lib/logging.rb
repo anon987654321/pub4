@@ -13,7 +13,6 @@ module MASTER
   #   2. Structured JSON logging - delegated to logging/structured.rb
   #   3. OpenBSD kernel-style dmesg - from dmesg.rb (extracted to logging/dmesg.rb)
   module Logging
-    extend self
     # CONFIGURATION
 
     LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 }.freeze
@@ -75,27 +74,27 @@ module MASTER
 
       def debug(message, **context)
         log(:debug, message, **context)
-        dmesg_log('debug0', message: message, level: FULL_DEBUG) if enabled?(FULL_DEBUG)
+        dmesg_log("debug0", message: message, level: FULL_DEBUG) if enabled?(FULL_DEBUG)
       end
 
       def info(message, **context)
         log(:info, message, **context)
-        dmesg_log('info0', message: message, level: ALL_EVENTS) if enabled?(ALL_EVENTS)
+        dmesg_log("info0", message: message, level: ALL_EVENTS) if enabled?(ALL_EVENTS)
       end
 
       def warn(message, **context)
         log(:warn, message, **context)
-        dmesg_log('warn0', message: message, level: ALL_EVENTS) if enabled?(ALL_EVENTS)
+        dmesg_log("warn0", message: message, level: ALL_EVENTS) if enabled?(ALL_EVENTS)
       end
 
       def error(message, **context)
         log(:error, message, **context)
-        dmesg_log('error0', message: message, level: SILENT)
+        dmesg_log("error0", message: message, level: SILENT)
       end
 
       def fatal(message, **context)
         log(:fatal, message, **context)
-        dmesg_log('fatal0', message: message, level: SILENT)
+        dmesg_log("fatal0", message: message, level: SILENT)
       end
 
       # Track operation duration with automatic timing
@@ -129,7 +128,7 @@ module MASTER
       def format_error(exception, backtrace_lines: 5)
         error_msg = "#{exception.class.name}: #{exception.message}"
         if exception.backtrace && backtrace_lines > 0
-          error_msg += "\n  " + exception.backtrace.first(backtrace_lines).join("\n  ")
+          error_msg += "\n  #{exception.backtrace.first(backtrace_lines).join("\n  ")}"
         end
         error_msg
       end
@@ -140,106 +139,114 @@ module MASTER
         details = "#{tokens_in}->#{tokens_out}tok"
         details += " $#{cost.round(4)}" if cost.positive?
         details += " #{latency}ms" if latency
-        dmesg_log('llm0', parent: tier.to_s, message: "#{model} #{details}", level: ALL_EVENTS)
+        dmesg_log("llm0", parent: tier.to_s, message: "#{model} #{details}", level: ALL_EVENTS)
       end
 
       # Log LLM error
       def llm_error(tier:, error:)
-        msg = error.to_s.gsub(/\s+/, ' ')[0..60]
-        dmesg_log('llm0', parent: tier.to_s, message: "unavailable: #{msg}", level: ALL_EVENTS)
+        msg = error.to_s.gsub(/\s+/, " ")[0..60]
+        dmesg_log("llm0", parent: tier.to_s, message: "unavailable: #{msg}", level: ALL_EVENTS)
       end
 
       # Log autonomy event
       def autonomy(subsystem, event, details = nil)
-        dmesg_log('autonomy0', parent: subsystem, message: "#{event}#{details ? ", #{details}" : ''}", level: ALL_EVENTS)
-        if structured_enabled?
-          info("Autonomy event", subsystem: subsystem, event: event, details: details)
-        end
+        dmesg_log("autonomy0", parent: subsystem, message: "#{event}#{", #{details}" if details}",
+                               level: ALL_EVENTS)
+        info("Autonomy event", subsystem: subsystem, event: event, details: details) if structured_enabled?
       end
 
       # Log circuit breaker event
       def circuit(provider, state)
-        dmesg_log('circuit0', parent: 'autonomy0', message: "#{provider} #{state}", level: ALL_EVENTS)
+        dmesg_log("circuit0", parent: "autonomy0", message: "#{provider} #{state}", level: ALL_EVENTS)
         info("Circuit", provider: provider, state: state) if structured_enabled?
       end
 
       def retry_event(attempt, max, reason)
-        dmesg_log('retry0', parent: 'autonomy0', message: "attempt #{attempt}/#{max}, #{reason}", level: ALL_EVENTS)
+        dmesg_log("retry0", parent: "autonomy0", message: "attempt #{attempt}/#{max}, #{reason}", level: ALL_EVENTS)
       end
 
       def fallback(from, to)
-        dmesg_log('fallback0', parent: 'autonomy0', message: "#{from} -> #{to}", level: LLM_ONLY)
+        dmesg_log("fallback0", parent: "autonomy0", message: "#{from} -> #{to}", level: LLM_ONLY)
       end
 
       # Log tool execution
       def tool(name, action, approved: nil)
-        approval = approved.nil? ? '' : (approved ? ', auto' : ', manual')
-        dmesg_log('tool0', parent: 'executor0', message: "#{name} #{action}#{approval}", level: ALL_EVENTS)
-        if structured_enabled?
-          debug("Tool", name: name, action: action, approved: approved)
-        end
+        approval = if approved.nil?
+                     ""
+                   else
+                     (approved ? ", auto" : ", manual")
+                   end
+        dmesg_log("tool0", parent: "executor0", message: "#{name} #{action}#{approval}", level: ALL_EVENTS)
+        debug("Tool", name: name, action: action, approved: approved) if structured_enabled?
       end
 
       # Log file operation
       def file(action, path, details = nil)
-        dmesg_log('file0', parent: 'executor0', message: "#{action} #{File.basename(path)}#{details ? " (#{details})" : ''}", level: ALL_EVENTS)
-        if structured_enabled?
-          debug("File", action: action, path: path, details: details)
-        end
+        dmesg_log("file0", parent: "executor0",
+                           message: "#{action} #{File.basename(path)}#{" (#{details})" if details}", level: ALL_EVENTS)
+        debug("File", action: action, path: path, details: details) if structured_enabled?
       end
 
       # Log memory operation
       def memory(action, details)
-        dmesg_log('mem0', parent: 'agent0', message: "#{action}: #{details}", level: ALL_EVENTS)
+        dmesg_log("mem0", parent: "agent0", message: "#{action}: #{details}", level: ALL_EVENTS)
         debug("Memory", action: action, details: details) if structured_enabled?
       end
 
       def prune(before, after)
-        dmesg_log('mem0', parent: 'agent0', message: "pruned #{before} -> #{after}", level: ALL_EVENTS)
+        dmesg_log("mem0", parent: "agent0", message: "pruned #{before} -> #{after}", level: ALL_EVENTS)
       end
 
       # Learning events
       def learn(type, details)
-        dmesg_log('learn0', parent: 'agent0', message: "#{type}: #{details}", level: ALL_EVENTS)
+        dmesg_log("learn0", parent: "agent0", message: "#{type}: #{details}", level: ALL_EVENTS)
       end
 
       def skill(name, action)
-        dmesg_log('skill0', parent: 'learn0', message: "#{name} #{action}", level: ALL_EVENTS)
+        dmesg_log("skill0", parent: "learn0", message: "#{name} #{action}", level: ALL_EVENTS)
       end
 
       # Task events
       def task(id, action, details = nil)
-        dmesg_log("task#{id}", parent: 'planner0', message: "#{action}#{details ? ": #{details}" : ''}", level: ALL_EVENTS)
+        dmesg_log("task#{id}", parent: "planner0", message: "#{action}#{": #{details}" if details}",
+                               level: ALL_EVENTS)
       end
 
       def goal(name, status)
-        dmesg_log('goal0', parent: 'planner0', message: "#{status}: #{name[0..40]}", level: LLM_ONLY)
+        dmesg_log("goal0", parent: "planner0", message: "#{status}: #{name[0..40]}", level: LLM_ONLY)
       end
 
       # Boot complete event
       def boot_complete(duration_ms)
-        dmesg_log('boot', message: "#{duration_ms}ms", level: SILENT)
+        dmesg_log("boot", message: "#{duration_ms}ms", level: SILENT)
         info("Boot complete", duration_ms: duration_ms) if structured_enabled?
       end
 
       def llm_call(model:, tokens_in:, tokens_out:, cost:, duration_ms:, success:)
-        info("LLM call", model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost, duration_ms: duration_ms, success: success)
+        info("LLM call", model: model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost,
+                         duration_ms: duration_ms, success: success)
       end
 
       def tool_exec(tool:, args:, duration_ms:, success:, error: nil)
-        success ? debug("Tool executed", tool: tool, duration_ms: duration_ms) : warn("Tool failed", tool: tool, error: error, duration_ms: duration_ms)
+        if success
+          debug("Tool executed", tool: tool,
+                                 duration_ms: duration_ms)
+        else
+          warn("Tool failed", tool: tool, error: error,
+                              duration_ms: duration_ms)
+        end
       end
 
       # Current verbosity level from environment
       # @return [Integer] verbosity level (0-3)
       def verbosity
-        (ENV['MASTER_VERBOSITY'] || 1).to_i
+        (ENV["MASTER_VERBOSITY"] || 1).to_i
       end
 
       # Structured logging enabled when MASTER_LOG is not '0'
       # @return [Boolean]
       def structured_enabled?
-        @level != :silent && ENV['MASTER_LOG'] != '0' && verbosity >= VERBOSITY_STANDARD
+        @level != :silent && ENV["MASTER_LOG"] != "0" && verbosity >= VERBOSITY_STANDARD
       end
 
       # Backward-compatible alias
@@ -251,6 +258,7 @@ module MASTER
       # @param context [Hash] Additional context key-values
       def log(severity, message, **context)
         return unless structured_enabled?
+
         # Sync format/output settings to Structured module
         Structured.format = @format
         Structured.output = @output

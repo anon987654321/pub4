@@ -16,7 +16,7 @@ module MASTER
           if stripped =~ /^\s*(def|class|module|if|unless|case|while|until|for|begin|do)\b/
             nesting += 1
             max_seen = [max_seen, nesting].max
-          elsif stripped == 'end'
+          elsif stripped == "end"
             nesting = [0, nesting - 1].max
           end
         end
@@ -37,22 +37,23 @@ module MASTER
         lines.each_with_index do |line, idx|
           stripped = line.strip
 
-          if stripped =~ /^\s*def\s+(\w+)/
+          case stripped
+          when /^\s*def\s+(\w+)/
             method_name = ::Regexp.last_match(1)
             method_starts << { line: idx + 1, nesting: nesting, name: method_name }
             nesting += 1
-          elsif stripped == 'end'
+          when "end"
             if method_starts.any? && nesting.positive?
               start = method_starts.pop
               length = idx - start[:line]
               results << {
                 name: start[:name],
                 start_line: start[:line],
-                length: length
+                length: length,
               }
             end
             nesting = [0, nesting - 1].max
-          elsif stripped =~ /^\s*(class|module|if|unless|case|while|until|for|begin|do)\b/
+          when /^\s*(class|module|if|unless|case|while|until|for|begin|do)\b/
             nesting += 1
           end
         end
@@ -72,7 +73,7 @@ module MASTER
         counts = strings.tally
 
         counts.select { |_, count| count >= min_count }
-              .map { |string, count| { string: string, count: count } }
+          .map { |string, count| { string: string, count: count } }
       end
     end
 
@@ -81,7 +82,7 @@ module MASTER
     module FileCollector
       def self.ruby_files(path)
         if File.directory?(path)
-          Dir[File.join(path, '**', '*.rb')]
+          Dir[File.join(path, "**", "*.rb")]
         else
           [path]
         end

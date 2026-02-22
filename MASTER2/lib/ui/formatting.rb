@@ -2,7 +2,7 @@
 
 module MASTER
   module UI
-    extend self
+    module_function
 
     def currency(n)
       format("$%.2f", n)
@@ -43,6 +43,7 @@ module MASTER
       return false unless $stdout.tty?
       return false if ENV["NO_COLOR"]
       return false if ENV["TERM"] == "dumb"
+
       true
     end
 
@@ -56,14 +57,15 @@ module MASTER
 
     def colorize(text)
       return text unless color_enabled?
+
       text
-        .gsub(/^(MASTER .+)$/) { pastel.bold($1) }
-        .gsub(/^(\w+) at (\w+):(.*)/) { "#{pastel.blue($1)} at #{pastel.cyan($2)}:#{$3}" }
-        .gsub(/(\d+) (axioms|personas|stages)/) { "#{pastel.bright_magenta($1)} #{$2}" }
-        .gsub(/(\$[\d.]+)/) { pastel.bright_cyan($1) }
-        .gsub(/(armed|ok)\b/) { pastel.green($1) }
-        .gsub(/(unavailable|error|FAIL)\b/) { pastel.red($1) }
-        .gsub(/(\d+ms)$/) { pastel.bright_black($1) }
+        .gsub(/^(MASTER .+)$/) { pastel.bold(::Regexp.last_match(1)) }
+        .gsub(/^(\w+) at (\w+):(.*)/) { "#{pastel.blue(::Regexp.last_match(1))} at #{pastel.cyan(::Regexp.last_match(2))}:#{::Regexp.last_match(3)}" }
+        .gsub(/(\d+) (axioms|personas|stages)/) { "#{pastel.bright_magenta(::Regexp.last_match(1))} #{::Regexp.last_match(2)}" }
+        .gsub(/(\$[\d.]+)/) { pastel.bright_cyan(::Regexp.last_match(1)) }
+        .gsub(/(armed|ok)\b/) { pastel.green(::Regexp.last_match(1)) }
+        .gsub(/(unavailable|error|FAIL)\b/) { pastel.red(::Regexp.last_match(1)) }
+        .gsub(/(\d+ms)$/) { pastel.bright_black(::Regexp.last_match(1)) }
     end
   end
 end

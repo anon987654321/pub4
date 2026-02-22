@@ -10,16 +10,20 @@ module MASTER
         lib_dir = File.join(root, "lib")
         Thread.current[:llm_quiet] = true
 
-        rb_files = Dir.glob(File.join(lib_dir, "**", "*.rb")).sort
+        rb_files = Dir.glob(File.join(lib_dir, "**", "*.rb"))
         puts "self: #{rb_files.count} files, mode: #{apply ? 'apply' : 'dry-run'}"
 
         # phase 1: syntax
-        syntax_errors = rb_files.select { |f| !system("ruby", "-c", f, out: File::NULL, err: File::NULL) }
+        syntax_errors = rb_files.reject { |f| system("ruby", "-c", f, out: File::NULL, err: File::NULL) }
         puts "self: syntax #{syntax_errors.empty? ? 'ok' : "#{syntax_errors.count} errors"}"
         syntax_errors.each { |f| puts "  #{File.basename(f)}" }
 
         # phase 2: sprawl
-        large = rb_files.select { |f| File.readlines(f).size > 600 rescue false }
+        large = rb_files.select do |f|
+          File.readlines(f).size > 600
+        rescue StandardError
+          false
+        end
         puts "self: #{large.count} files >600 lines" if large.any?
         large.each { |f| puts "  #{File.basename(f)} #{File.readlines(f).size}L" }
 
@@ -33,24 +37,40 @@ module MASTER
           violations = []
 
           if defined?(MASTER::Enforcement)
-            r = Enforcement.check(code, filename: rel) rescue nil
+            r = begin
+              Enforcement.check(code, filename: rel)
+            rescue StandardError
+              nil
+            end
             violations.concat(r[:violations]) if r.is_a?(Hash) && r[:violations].is_a?(Array)
           end
 
           if defined?(MASTER::Smells)
-            r = Smells.analyze(code, rel) rescue nil
+            r = begin
+              Smells.analyze(code, rel)
+            rescue StandardError
+              nil
+            end
             violations.concat(r[:findings] || r[:smells] || []) if r.is_a?(Hash)
             violations.concat(r) if r.is_a?(Array)
           end
 
           if defined?(MASTER::Violations)
-            r = Violations.analyze(code, path: rel, llm: (LLM if defined?(LLM) && LLM.configured?)) rescue nil
+            r = begin
+              Violations.analyze(code, path: rel, llm: (LLM if defined?(LLM) && LLM.configured?))
+            rescue StandardError
+              nil
+            end
             found = (r[:literal] || []) + (r[:conceptual] || []) if r.is_a?(Hash)
             violations.concat(found) if found&.any?
           end
 
           if defined?(MASTER::CodeQuality)
-            r = CodeQuality.quality_scan(rel, silent: true) rescue nil
+            r = begin
+              CodeQuality.quality_scan(rel, silent: true)
+            rescue StandardError
+              nil
+            end
             violations.concat(r[:findings]) if r.is_a?(Hash) && r[:findings].is_a?(Array)
           end
 
@@ -61,6 +81,7 @@ module MASTER
           violations.each do |v|
             msg = v[:message].to_s.strip
             next if msg.empty?
+
             puts "    #{v[:axiom] || v[:type] || v[:pattern]}: #{msg}"
           end
 
@@ -70,19 +91,19 @@ module MASTER
                    "#{violations.map { |v| "- #{v[:message]}" }.join("\n")}\n\n" \
                    "Return ONLY the corrected Ruby code, no explanation."
           result = LLM.ask(prompt, stream: false)
-          if result&.ok? && result.value[:content].to_s.include?("def ")
-            File.write(file, result.value[:content])
-            if system("ruby", "-c", file, out: File::NULL, err: File::NULL)
-              fixed += violations.count
-              puts "    + fixed"
-            else
-              File.write(file, code)
-              puts "    - rollback (syntax error)"
-            end
+          next unless result&.ok? && result.value[:content].to_s.include?("def ")
+
+          File.write(file, result.value[:content])
+          if system("ruby", "-c", file, out: File::NULL, err: File::NULL)
+            fixed += violations.count
+            puts "    + fixed"
+          else
+            File.write(file, code)
+            puts "    - rollback (syntax error)"
           end
         end
 
-        puts "self: #{total_violations} violations#{apply ? ", #{fixed} fixed" : ""}"
+        puts "self: #{total_violations} violations#{", #{fixed} fixed" if apply}"
 
         # phase 4: git status
         if system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)

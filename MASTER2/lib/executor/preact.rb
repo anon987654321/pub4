@@ -41,13 +41,11 @@ module MASTER
 
           UI.dim("  = #{observation[0..80]}")
 
-          if observation.match?(/\bError\b|\bERROR\b|: error:|^error:/i) || observation.include?("not found")
-            UI.dim("  replanning...")
-            replan_result = replan(goal, results, tier: tier)
-            if replan_result.ok? && replan_result.value[:steps].any?
-              @plan = @plan[0..idx] + replan_result.value[:steps]
-            end
-          end
+          next unless observation.match?(/\bError\b|\bERROR\b|: error:|^error:/i) || observation.include?("not found")
+
+          UI.dim("  replanning...")
+          replan_result = replan(goal, results, tier: tier)
+          @plan = @plan[0..idx] + replan_result.value[:steps] if replan_result.ok? && replan_result.value[:steps].any?
         end
 
         # Phase 3: Synthesize final answer
@@ -128,10 +126,9 @@ module MASTER
           steps: @step,
           pattern: :pre_act,
           plan: @plan,
-          history: @history
+          history: @history,
         )
       end
     end
-
   end
 end

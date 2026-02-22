@@ -23,11 +23,11 @@ module MASTER
         return Result.err("Generation failed: #{result[:error]}") if result[:error]
 
         Result.ok({
-          id: result[:id],
-          urls: result[:output],
-          model: model_id,
-          prompt: prompt
-        })
+                    id: result[:id],
+                    urls: result[:output],
+                    model: model_id,
+                    prompt: prompt,
+                  })
       end
 
       # Upscale an image
@@ -79,11 +79,11 @@ module MASTER
         return Result.err("Video generation failed: #{result[:error]}") if result[:error]
 
         Result.ok({
-          id: result[:id],
-          urls: result[:output],
-          model: model_id,
-          prompt: prompt
-        })
+                    id: result[:id],
+                    urls: result[:output],
+                    model: model_id,
+                    prompt: prompt,
+                  })
       end
 
       # Generate music from prompt
@@ -103,19 +103,17 @@ module MASTER
         return Result.err("Music generation failed: #{result[:error]}") if result[:error]
 
         Result.ok({
-          id: result[:id],
-          urls: result[:output],
-          model: model_id,
-          prompt: prompt,
-          duration: duration
-        })
+                    id: result[:id],
+                    urls: result[:output],
+                    model: model_id,
+                    prompt: prompt,
+                    duration: duration,
+                  })
       end
 
       # Batch generate multiple prompts
       def batch_generate(prompts, model: Models::DEFAULT_MODEL, params: {})
-        unless Replicate.available?
-          return prompts.map { Result.err(TOKEN_NOT_SET) }
-        end
+        return prompts.map { Result.err(TOKEN_NOT_SET) } unless Replicate.available?
 
         prompts.map do |prompt|
           generate(prompt: prompt, model: model, params: params)
@@ -135,10 +133,10 @@ module MASTER
         return Result.err("Model run failed: #{result[:error]}") if result[:error]
 
         Result.ok({
-          id: result[:id],
-          output: result[:output],
-          model: model_id
-        })
+                    id: result[:id],
+                    output: result[:output],
+                    model: model_id,
+                  })
       end
     end
   end

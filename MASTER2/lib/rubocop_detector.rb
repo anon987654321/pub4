@@ -12,7 +12,7 @@ module MASTER
       return Result.err("File not found: #{file_path}") unless File.exist?(file_path)
 
       begin
-        require 'rubocop'
+        require "rubocop"
 
         # Configure RuboCop
         config_store = RuboCop::ConfigStore.new
@@ -66,7 +66,7 @@ module MASTER
         if result.ok?
           all_results << result.value
         else
-          return result  # Early exit on error
+          return result # Early exit on error
         end
       end
 
@@ -74,14 +74,14 @@ module MASTER
       Result.ok(
         files: all_results,
         total_violations: total_violations,
-        files_scanned: file_paths.size
+        files_scanned: file_paths.size,
       )
     end
 
     # Check if RuboCop is available
     # @return [Boolean] true if RuboCop gem is installed
     def self.installed?
-      require 'rubocop'
+      require "rubocop"
       true
     rescue LoadError
       false
@@ -91,11 +91,10 @@ module MASTER
     # @return [String, nil] Version string or nil if not installed
     def self.version
       return nil unless installed?
-      require 'rubocop'
+
+      require "rubocop"
       RuboCop::Version.version
     end
-
-    private
 
     # Format RuboCop offense into consistent hash
     # @param offense [RuboCop::Cop::Offense] RuboCop offense object

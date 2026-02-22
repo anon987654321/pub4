@@ -2,7 +2,7 @@
 
 module MASTER
   module DB
-    extend self
+    module_function
 
     # --- Costs ---
 

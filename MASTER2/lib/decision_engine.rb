@@ -3,7 +3,7 @@
 module MASTER
   # DecisionEngine - shared scoring and convergence logic across autonomy flows.
   module DecisionEngine
-    extend self
+    module_function
 
     EPSILON = 1e-6
 
@@ -21,7 +21,7 @@ module MASTER
         data.merge(score: score(
           impact: data.fetch(:impact, 1.0),
           confidence: data.fetch(:confidence, 1.0),
-          cost: data.fetch(:cost, 1.0)
+          cost: data.fetch(:cost, 1.0),
         ))
       end
       rows.max_by { |r| r[:score] }

@@ -6,246 +6,244 @@ module MASTER
 
   # ToolDispatch - extracted from Executor::Tools for module-level access
   module ToolDispatch
-      extend self
-      def dispatch_action(action_str)
-        # Sanitize input before processing
-        action_str = sanitize_tool_input(action_str)
-        return action_str if action_str.start_with?("BLOCKED:")
+    extend self
 
-        case action_str
-        when /^ask_llm\s+["']?(.+?)["']?\s*$/i
-          ask_llm($1)
+    def dispatch_action(action_str)
+      # Sanitize input before processing
+      action_str = sanitize_tool_input(action_str)
+      return action_str if action_str.start_with?("BLOCKED:")
 
-        when /^web_search\s+["']?([^"']+)["']?/i
-          web_search($1)
+      case action_str
+      when /^ask_llm\s+["']?(.+?)["']?\s*$/i
+        ask_llm(::Regexp.last_match(1))
 
-        when /^browse_page\s+["']?(https?:\/\/[^\s"']+)["']?/i
-          browse_page($1)
+      when /^web_search\s+["']?([^"']+)["']?/i
+        web_search(::Regexp.last_match(1))
 
-        when /^file_read\s+["']?([^"'\n]+)["']?/i
-          file_read($1.strip)
+      when %r{^browse_page\s+["']?(https?://[^\s"']+)["']?}i
+        browse_page(::Regexp.last_match(1))
 
-        when /^file_write\s+["']?([^"'\n]+)["']?\s+["']?(.+)["']?/mi
-          file_write($1.strip, $2)
+      when /^file_read\s+["']?([^"'\n]+)["']?/i
+        file_read(::Regexp.last_match(1).strip)
 
-        when /^analyze_code\s+["']?([^"'\n]+)["']?/i
-          analyze_code($1.strip)
+      when /^file_write\s+["']?([^"'\n]+)["']?\s+["']?(.+)["']?/mi
+        file_write(::Regexp.last_match(1).strip, ::Regexp.last_match(2))
 
-        when /^fix_code\s+["']?([^"'\n]+)["']?/i
-          fix_code($1.strip)
+      when /^analyze_code\s+["']?([^"'\n]+)["']?/i
+        analyze_code(::Regexp.last_match(1).strip)
 
-        when /^shell_command\s+["']?([^"'\n]+)["']?/i
-          shell_command($1)
+      when /^fix_code\s+["']?([^"'\n]+)["']?/i
+        fix_code(::Regexp.last_match(1).strip)
 
-        when /^code_execution.*```(\w*)?\n(.+?)```/mi
-          code_execution($2)
+      when /^shell_command\s+["']?([^"'\n]+)["']?/i
+        shell_command(::Regexp.last_match(1))
 
-        when /^council_review\s+["']?(.+?)["']?\s*$/i
-          council_review($1)
+      when /^code_execution.*```(\w*)?\n(.+?)```/mi
+        code_execution(::Regexp.last_match(2))
 
-        when /^memory_search\s+["']?([^"']+)["']?/i
-          memory_search($1)
+      when /^council_review\s+["']?(.+?)["']?\s*$/i
+        council_review(::Regexp.last_match(1))
 
-        when /^self_test/i
-          self_test
+      when /^memory_search\s+["']?([^"']+)["']?/i
+        memory_search(::Regexp.last_match(1))
 
-        else
-          "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
-        end
-      rescue StandardError => e
-        "Tool error: #{e.message}"
+      when /^self_test/i
+        self_test
+
+      else
+        "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
       end
-
-      # Tool implementations
-
-      def ask_llm(prompt)
-        result = LLM.ask(prompt, tier: :fast)
-        result.ok? ? result.value[:content][0..Executor::MAX_LLM_RESPONSE_PREVIEW] : "LLM error: #{result.error}"
-      end
-
-      def web_search(query)
-        if defined?(Web)
-          result = Web.browse("https://duckduckgo.com/html/?q=#{URI.encode_www_form_component(query)}")
-          result.ok? ? result.value[:content] : "Search failed: #{result.error}"
-        else
-          "Web module not available"
-        end
-      end
-
-      def browse_page(url)
-        if defined?(Web)
-          result = Web.browse(url)
-          result.ok? ? result.value[:content] : "Browse failed: #{result.error}"
-        else
-          # Validate URL first to prevent injection
-          begin
-            uri = URI.parse(url)
-            unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
-              return "Invalid URL: must be http or https"
-            end
-          rescue URI::InvalidURIError
-            return "Invalid URL format"
-          end
-
-          # Use Open3.capture3 with array form to prevent shell injection
-          stdout, stderr, status = Open3.capture3("curl", "-sL", "--max-redirs", "3", "--proto", "=http,https", "--max-time", "10", url)
-          stdout[0..Executor::MAX_CURL_CONTENT]
-        end
-      end
-
-      def file_read(path)
-        return "File not found: #{path}" unless File.exist?(path)
-        content = File.read(path)
-        content.length > Executor::MAX_FILE_CONTENT ? "#{content[0..Executor::MAX_FILE_CONTENT]}... (truncated, #{content.length} chars total)" : content
-      end
-
-      def file_write(path, content)
-        expanded = File.expand_path(path)
-
-        # Check protected paths first
-        PROTECTED_WRITE_PATHS.each do |protected|
-          # For absolute paths, compare directly; for relative, expand from root
-          protected_expanded = if protected.start_with?("/")
-            protected
-          else
-            File.expand_path(protected, MASTER.root)
-          end
-
-          if expanded.start_with?(protected_expanded) || expanded == protected_expanded
-            return "BLOCKED: file_write to protected path '#{path}'"
-          end
-        end
-
-        # Check working directory constraint (frozen at require time)
-        unless expanded.start_with?(FROZEN_CWD)
-          return "BLOCKED: file_write path '#{path}' is outside working directory"
-        end
-
-        FileUtils.mkdir_p(File.dirname(expanded))
-        File.write(expanded, content)
-        "Written #{content.length} bytes to #{path}"
-      end
-
-      def analyze_code(path)
-        return "File not found: #{path}" unless File.exist?(path)
-        code = File.read(path)
-
-        if defined?(CodeReview)
-          result = CodeReview.analyze(code, filename: File.basename(path))
-          "Issues: #{result[:issues].size}, Score: #{result[:score]}/#{result[:max_score]}, Grade: #{result[:grade]}"
-        else
-          "CodeReview module not available"
-        end
-      end
-
-      def fix_code(path)
-        if defined?(Review::Fixer)
-          fixer = Review::Fixer.new(mode: :moderate)
-          result = fixer.fix(path)
-          result.ok? ? "Fixed #{result.value[:fixed]} issues in #{path}" : "Fix failed: #{result.error}"
-        else
-          "Review::Fixer module not available"
-        end
-      end
-
-      def shell_command(cmd)
-        if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
-          return "BLOCKED: dangerous shell command rejected"
-        end
-
-        if defined?(Constitution)
-          check = Constitution.check_operation(:shell_command, command: cmd)
-          return "BLOCKED: #{check.error}" unless check.ok?
-        end
-
-        if defined?(Shell)
-          result = Shell.execute(cmd)
-          output = result.ok? ? result.value : "Error: #{result.error}"
-        else
-          stdout, stderr, status = Open3.capture3("sh", "-c", cmd)
-          output = status.success? ? stdout : "Error: #{stderr}"
-        end
-
-        output.length > Executor::MAX_SHELL_OUTPUT ? "#{output[0..Executor::MAX_SHELL_OUTPUT]}... (truncated)" : output
-      end
-
-      def code_execution(code)
-        # Block dangerous Ruby constructs
-        dangerous_code = [
-          /system\s*\(/,
-          /exec\s*\(/,
-          /`[^`]*`/,
-          /%x[{\[(]/,
-          /Kernel\.\s*(system|exec|spawn)/,
-          /Process\.\s*(exec|spawn|fork|kill|daemon)/,
-          /Signal\./,
-          /IO\.popen/,
-          /Open3/,
-          /FileUtils\.rm_rf/,
-          /\bspawn\s*\(/,
-          /\bfork\b/
-        ]
-
-        if dangerous_code.any? { |pattern| pattern.match?(code) }
-          return "BLOCKED: code_execution contains dangerous constructs"
-        end
-
-        # Note: Pledge removed - was restricting parent process permanently
-        # Open3.capture3 spawns isolated child process (no inherited state/privileges)
-        stdout, stderr, status = Open3.capture3(RbConfig.ruby, stdin_data: code)
-        status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
-      end
-
-      def council_review(text)
-        if defined?(Council)
-          result = Council.council_review(text)
-          "Passed: #{result[:passed]}, Consensus: #{result[:consensus]}, Votes: #{result[:votes].size}"
-        else
-          "Council module not available"
-        end
-      end
-
-      def memory_search(query)
-        if defined?(Memory)
-          results = Memory.search(query, limit: 3)
-          results.empty? ? "No memories found for: #{query}" : results.join("\n")
-        else
-          "Memory module not available"
-        end
-      end
-
-      def self_test
-        if defined?(SelfTest)
-          result = SelfTest.run
-          result.ok? ? result.value : "introspect failed: #{result.error}"
-        else
-          "Introspection module not available"
-        end
-      end
-
-      def sanitize_tool_input(action_str)
-        if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
-          return "BLOCKED: dangerous pattern detected in tool input"
-        end
-        action_str
-      end
-
-      def check_tool_permission(tool_name)
-        if defined?(Constitution)
-          unless Constitution.permission?(tool_name)
-            return Result.err("Tool '#{tool_name}' not permitted by constitution")
-          end
-        end
-        Result.ok
-      end
-
-      def record_history(entry)
-        return unless @history
-        @history << entry
-        @history.shift if @history.size > 50
-      end
-
-      alias execute_tool dispatch_action
-
+    rescue StandardError => e
+      "Tool error: #{e.message}"
     end
+
+    # Tool implementations
+
+    def ask_llm(prompt)
+      result = LLM.ask(prompt, tier: :fast)
+      result.ok? ? result.value[:content][0..Executor::MAX_LLM_RESPONSE_PREVIEW] : "LLM error: #{result.error}"
+    end
+
+    def web_search(query)
+      if defined?(Web)
+        result = Web.browse("https://duckduckgo.com/html/?q=#{URI.encode_www_form_component(query)}")
+        result.ok? ? result.value[:content] : "Search failed: #{result.error}"
+      else
+        "Web module not available"
+      end
+    end
+
+    def browse_page(url)
+      if defined?(Web)
+        result = Web.browse(url)
+        result.ok? ? result.value[:content] : "Browse failed: #{result.error}"
+      else
+        # Validate URL first to prevent injection
+        begin
+          uri = URI.parse(url)
+          return "Invalid URL: must be http or https" unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+        rescue URI::InvalidURIError
+          return "Invalid URL format"
+        end
+
+        # Use Open3.capture3 with array form to prevent shell injection
+        stdout, = Open3.capture3("curl", "-sL", "--max-redirs", "3", "--proto", "=http,https",
+                                 "--max-time", "10", url)
+        stdout[0..Executor::MAX_CURL_CONTENT]
+      end
+    end
+
+    def file_read(path)
+      return "File not found: #{path}" unless File.exist?(path)
+
+      content = File.read(path)
+      content.length > Executor::MAX_FILE_CONTENT ? "#{content[0..Executor::MAX_FILE_CONTENT]}... (truncated, #{content.length} chars total)" : content
+    end
+
+    def file_write(path, content)
+      expanded = File.expand_path(path)
+
+      # Check protected paths first
+      PROTECTED_WRITE_PATHS.each do |protected|
+        # For absolute paths, compare directly; for relative, expand from root
+        protected_expanded = if protected.start_with?("/")
+                               protected
+                             else
+                               File.expand_path(protected, MASTER.root)
+                             end
+
+        if expanded.start_with?(protected_expanded) || expanded == protected_expanded
+          return "BLOCKED: file_write to protected path '#{path}'"
+        end
+      end
+
+      # Check working directory constraint (frozen at require time)
+      return "BLOCKED: file_write path '#{path}' is outside working directory" unless expanded.start_with?(FROZEN_CWD)
+
+      FileUtils.mkdir_p(File.dirname(expanded))
+      File.write(expanded, content)
+      "Written #{content.length} bytes to #{path}"
+    end
+
+    def analyze_code(path)
+      return "File not found: #{path}" unless File.exist?(path)
+
+      code = File.read(path)
+
+      if defined?(CodeReview)
+        result = CodeReview.analyze(code, filename: File.basename(path))
+        "Issues: #{result[:issues].size}, Score: #{result[:score]}/#{result[:max_score]}, Grade: #{result[:grade]}"
+      else
+        "CodeReview module not available"
+      end
+    end
+
+    def fix_code(path)
+      if defined?(Review::Fixer)
+        fixer = Review::Fixer.new(mode: :moderate)
+        result = fixer.fix(path)
+        result.ok? ? "Fixed #{result.value[:fixed]} issues in #{path}" : "Fix failed: #{result.error}"
+      else
+        "Review::Fixer module not available"
+      end
+    end
+
+    def shell_command(cmd)
+      return "BLOCKED: dangerous shell command rejected" if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+
+      if defined?(Constitution)
+        check = Constitution.check_operation(:shell_command, command: cmd)
+        return "BLOCKED: #{check.error}" unless check.ok?
+      end
+
+      if defined?(Shell)
+        result = Shell.execute(cmd)
+        output = result.ok? ? result.value : "Error: #{result.error}"
+      else
+        stdout, stderr, status = Open3.capture3("sh", "-c", cmd)
+        output = status.success? ? stdout : "Error: #{stderr}"
+      end
+
+      output.length > Executor::MAX_SHELL_OUTPUT ? "#{output[0..Executor::MAX_SHELL_OUTPUT]}... (truncated)" : output
+    end
+
+    def code_execution(code)
+      # Block dangerous Ruby constructs
+      dangerous_code = [
+        /system\s*\(/,
+        /exec\s*\(/,
+        /`[^`]*`/,
+        /%x[{\[(]/,
+        /Kernel\.\s*(system|exec|spawn)/,
+        /Process\.\s*(exec|spawn|fork|kill|daemon)/,
+        /Signal\./,
+        /IO\.popen/,
+        /Open3/,
+        /FileUtils\.rm_rf/,
+        /\bspawn\s*\(/,
+        /\bfork\b/,
+      ]
+
+      if dangerous_code.any? { |pattern| pattern.match?(code) }
+        return "BLOCKED: code_execution contains dangerous constructs"
+      end
+
+      # NOTE: Pledge removed - was restricting parent process permanently
+      # Open3.capture3 spawns isolated child process (no inherited state/privileges)
+      stdout, stderr, status = Open3.capture3(RbConfig.ruby, stdin_data: code)
+      status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
+    end
+
+    def council_review(text)
+      if defined?(Council)
+        result = Council.council_review(text)
+        "Passed: #{result[:passed]}, Consensus: #{result[:consensus]}, Votes: #{result[:votes].size}"
+      else
+        "Council module not available"
+      end
+    end
+
+    def memory_search(query)
+      if defined?(Memory)
+        results = Memory.search(query, limit: 3)
+        results.empty? ? "No memories found for: #{query}" : results.join("\n")
+      else
+        "Memory module not available"
+      end
+    end
+
+    def self_test
+      if defined?(SelfTest)
+        result = SelfTest.run
+        result.ok? ? result.value : "introspect failed: #{result.error}"
+      else
+        "Introspection module not available"
+      end
+    end
+
+    def sanitize_tool_input(action_str)
+      if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
+        return "BLOCKED: dangerous pattern detected in tool input"
+      end
+
+      action_str
+    end
+
+    def check_tool_permission(tool_name)
+      if defined?(Constitution) && !Constitution.permission?(tool_name)
+        return Result.err("Tool '#{tool_name}' not permitted by constitution")
+      end
+
+      Result.ok
+    end
+
+    def record_history(entry)
+      return unless @history
+
+      @history << entry
+      @history.shift if @history.size > 50
+    end
+
+    alias execute_tool dispatch_action
+  end
 end

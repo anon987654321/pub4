@@ -17,10 +17,10 @@ module MASTER
         constitution_path = MASTER::Paths.data_path("constitution")
 
         loaded = if constitution_path && File.exist?(constitution_path)
-          YAML.safe_load_file(constitution_path)
-        else
-          {}
-        end
+                   YAML.safe_load_file(constitution_path)
+                 else
+                   {}
+                 end
 
         @rules_cache = deep_merge_hash(legacy_defaults, loaded || {})
         @rules_cache
@@ -35,7 +35,7 @@ module MASTER
         else
           # Fallback to separate axioms.yml file
           axioms_path = MASTER::Paths.data_path("axioms")
-          @axioms_cache = (axioms_path && File.exist?(axioms_path)) ? YAML.safe_load_file(axioms_path) : []
+          @axioms_cache = axioms_path && File.exist?(axioms_path) ? YAML.safe_load_file(axioms_path) : []
         end
 
         @axioms_cache
@@ -50,7 +50,7 @@ module MASTER
         else
           # Fallback to separate council.yml file
           council_path = MASTER::Paths.data_path("council")
-          @council_cache = (council_path && File.exist?(council_path)) ? YAML.safe_load_file(council_path) : []
+          @council_cache = council_path && File.exist?(council_path) ? YAML.safe_load_file(council_path) : []
         end
 
         @council_cache
@@ -84,17 +84,17 @@ module MASTER
       def check_operation(op, context = {})
         case op
         when :self_modification
-          if rules.dig("safety_policies", "self_modification", "require_staging")
-            unless context[:staged]
-              return Result.err("Self-modification requires staging.")
-            end
+          if rules.dig("safety_policies", "self_modification", "require_staging") && !context[:staged]
+            return Result.err("Self-modification requires staging.")
           end
+
           Result.ok
 
         when :environment_control
           if rules.dig("safety_policies", "environment_control", "direct_control") == false
             return Result.err("Direct environment control not permitted.")
           end
+
           Result.ok
 
         when :shell_command
@@ -124,10 +124,10 @@ module MASTER
         protected.any? do |protected_path|
           # For absolute paths, compare directly; for relative, expand from root
           expanded_protected = if protected_path.start_with?("/")
-            protected_path
-          else
-            File.expand_path(protected_path, MASTER.root)
-          end
+                                 protected_path
+                               else
+                                 File.expand_path(protected_path, MASTER.root)
+                               end
 
           expanded.start_with?(expanded_protected) || expanded == expanded_protected
         end
@@ -144,39 +144,39 @@ module MASTER
         {
           "safety_policies" => {
             "self_modification" => { "require_staging" => true },
-            "environment_control" => { "direct_control" => false }
+            "environment_control" => { "direct_control" => false },
           },
           "tool_permissions" => {
-            "granted" => ["shell_command", "code_execution", "file_write"]
+            "granted" => ["shell_command", "code_execution", "file_write"],
           },
           "shell_patterns" => {
             "allowed" => ["^(ls|pwd|echo|git|cat|head|tail|wc|find|grep)", "^ruby", "^bundle"],
-            "blocked" => ["rm -rf /", "DROP TABLE", "mkfs", "dd if=", ":(){ :|:& };:"]
+            "blocked" => ["rm -rf /", "DROP TABLE", "mkfs", "dd if=", ":(){ :|:& };:"],
           },
           "protected_paths" => ["data/constitution.yml", "/etc/", "/usr/", "/sys/"],
           "resource_limits" => {
-            "max_file_size" => 1048576,
+            "max_file_size" => 1_048_576,
             "max_concurrent_tools" => 5,
             "max_staging_files" => 10,
-            "max_shell_output" => 10000
+            "max_shell_output" => 10_000,
           },
           "staging" => {
             "validation" => {
               "default_command" => "ruby -c",
-              "require_tests" => true
-            }
-          }
+              "require_tests" => true,
+            },
+          },
         }
       end
 
       def deep_merge_hash(base, override)
         merged = base.dup
         override.each do |key, value|
-          if merged[key].is_a?(Hash) && value.is_a?(Hash)
-            merged[key] = deep_merge_hash(merged[key], value)
-          else
-            merged[key] = value
-          end
+          merged[key] = if merged[key].is_a?(Hash) && value.is_a?(Hash)
+                          deep_merge_hash(merged[key], value)
+                        else
+                          value
+                        end
         end
         merged
       end
@@ -198,13 +198,11 @@ module MASTER
         end
 
         # Check allowed patterns
-        if allowed.any?
-          unless allowed.any? do |pattern|
-            re = begin; Regexp.new(pattern); rescue RegexpError; nil; end
-            re && cmd.match?(re)
-          end
-            return Result.err("Shell command not in allowed list.")
-          end
+        if allowed.any? && allowed.none? do |pattern|
+          re = begin; Regexp.new(pattern); rescue RegexpError; nil; end
+          re && cmd.match?(re)
+        end
+          return Result.err("Shell command not in allowed list.")
         end
 
         Result.ok

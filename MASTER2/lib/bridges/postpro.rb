@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'postpro/vips_effects'
+require_relative "postpro/vips_effects"
 
 module MASTER
   module Bridges
@@ -8,7 +8,7 @@ module MASTER
     # Analog film emulation and psychological color grading
     # Applied as final layer on all Replicate outputs
     module PostproBridge
-      extend self
+      module_function
 
       # Film stock emotional parameters
       STOCKS = {
@@ -39,13 +39,13 @@ module MASTER
         ektachrome_100: {
           grain: 10, gamma: 0.72, toe: 0.06, shoulder: 0.94, lift: 0.04,
           feeling: "Slide film transparency, rich blues, vintage travel"
-        }
+        },
       }.freeze
 
       PRINTS = {
         print_2383: { contrast: 1.1, saturation: 1.15, feeling: "Standard cinema projection" },
         print_3510: { contrast: 1.05, saturation: 1.0, feeling: "Subtle archival look" },
-        vision_premiere: { contrast: 1.2, saturation: 1.1, feeling: "Modern theatrical release" }
+        vision_premiere: { contrast: 1.2, saturation: 1.1, feeling: "Modern theatrical release" },
       }.freeze
 
       LENSES = {
@@ -68,7 +68,7 @@ module MASTER
         anamorphic_kowa: {
           flare: 0.7, oval_bokeh: true, squeeze: 2.0,
           feeling: "Widescreen epic, horizontal streaks, theatrical scope"
-        }
+        },
       }.freeze
 
       PRESETS = {
@@ -111,7 +111,7 @@ module MASTER
           stock: :kodak_portra, print: :print_3510, lens: :helios_44,
           grain: 0.7, shadow_lift: 0.15,
           feeling: "Authentic, unpolished, genuine humanity"
-        }
+        },
       }.freeze
 
       EFFECTS = %i[
@@ -124,7 +124,7 @@ module MASTER
       # Replicate-backed enhancement operations
       OPERATIONS = {
         upscale: { name: "Upscale 4x", models: ["nightmareai/real-esrgan", "lucataco/clarity-upscaler"] },
-        face_restore: { name: "Face Restoration", models: ["tencentarc/gfpgan", "sczhou/codeformer"] }
+        face_restore: { name: "Face Restoration", models: ["tencentarc/gfpgan", "sczhou/codeformer"] },
       }.freeze
 
       # --- Main entry points ---
@@ -180,7 +180,7 @@ module MASTER
         stock = STOCKS[config[:stock]] || {}
 
         filters = []
-        filters << "contrast(#{1 + (stock[:gamma] || 0.65) * 0.2})"
+        filters << "contrast(#{1 + ((stock[:gamma] || 0.65) * 0.2)})"
         filters << "saturate(#{config[:teal_orange] || 1.0})"
         filters << "sepia(#{config[:warmth] || 0})" if config[:warmth]
         filters << "grayscale(#{config[:desaturate] || 0})" if config[:desaturate]

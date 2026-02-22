@@ -25,6 +25,7 @@ module MASTER
         end
 
         return unless content
+
         File.binwrite(temp_file, content)
         play_audio(temp_file)
         FileUtils.rm_f(temp_file)

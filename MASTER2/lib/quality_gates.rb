@@ -57,7 +57,7 @@ module MASTER
             passed: passed,
             checks: results,
             enforcement: gate[:enforcement],
-            summary: summarize_results(results)
+            summary: summarize_results(results),
           )
         end
 
@@ -77,7 +77,7 @@ module MASTER
           Result.ok(
             passed: passed,
             gates: results,
-            summary: summarize_all_gates(results)
+            summary: summarize_all_gates(results),
           )
         end
 
@@ -86,6 +86,7 @@ module MASTER
 
           files.each do |file|
             next unless File.exist?(file)
+
             begin
               RubyVM::InstructionSequence.compile_file(file) if file.end_with?(".rb")
             rescue SyntaxError
@@ -154,7 +155,7 @@ module MASTER
                 enabled: true,
                 enforcement: :block,
                 checks: [
-                  { name: "No syntax errors", type: :exact, metric: :syntax_errors, threshold: 0, severity: :error }
+                  { name: "No syntax errors", type: :exact, metric: :syntax_errors, threshold: 0, severity: :error },
                 ],
               },
               {
@@ -164,7 +165,8 @@ module MASTER
                 enforcement: :block,
                 checks: [
                   { name: "No failing tests", type: :exact, metric: :tests_failed, threshold: 0, severity: :error },
-                  { name: "Minimum pass rate", type: :minimum, metric: :pass_rate, threshold: 95.0, severity: :warning },
+                  { name: "Minimum pass rate", type: :minimum, metric: :pass_rate, threshold: 95.0,
+                    severity: :warning },
                 ],
               },
               {
@@ -173,8 +175,10 @@ module MASTER
                 enabled: true,
                 enforcement: :warn,
                 checks: [
-                  { name: "Max cyclomatic", type: :maximum, metric: :cyclomatic_complexity, threshold: 15, severity: :warning },
-                  { name: "Max method lines", type: :maximum, metric: :max_method_lines, threshold: 50, severity: :warning },
+                  { name: "Max cyclomatic", type: :maximum, metric: :cyclomatic_complexity, threshold: 15,
+                    severity: :warning },
+                  { name: "Max method lines", type: :maximum, metric: :max_method_lines, threshold: 50,
+                    severity: :warning },
                 ],
               },
               {
@@ -183,7 +187,8 @@ module MASTER
                 enabled: false,
                 enforcement: :warn,
                 checks: [
-                  { name: "Min line coverage", type: :minimum, metric: :line_coverage, threshold: 80.0, severity: :warning },
+                  { name: "Min line coverage", type: :minimum, metric: :line_coverage, threshold: 80.0,
+                    severity: :warning },
                 ],
               },
             ],
@@ -215,7 +220,7 @@ module MASTER
             result[:passed] = metric_value == threshold
           when :range
             min, max = threshold
-            result[:passed] = metric_value >= min && metric_value <= max
+            result[:passed] = metric_value.between?(min, max)
           end
 
           result
@@ -224,6 +229,7 @@ module MASTER
         def calculate_pass_rate(test_data)
           total = test_data[:passed].to_i + test_data[:failed].to_i
           return 0.0 if total.zero?
+
           (test_data[:passed].to_f / total * 100).round(2)
         end
 

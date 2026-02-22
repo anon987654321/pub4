@@ -7,8 +7,6 @@ module MASTER
   module Logging
     # Structured - JSON and human-readable structured logging
     module Structured
-      extend self
-
       LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 }.freeze
 
       @level = :info

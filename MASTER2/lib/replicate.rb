@@ -9,15 +9,13 @@ require_relative "replicate/narration"
 module MASTER
   # Replicate - Image generation via Replicate API
   module Replicate
-    extend self
-
     TOKEN_NOT_SET = "REPLICATE_API_TOKEN not set."
 
-    API_URL = 'https://api.replicate.com/v1/predictions'
+    API_URL = "https://api.replicate.com/v1/predictions"
 
     # MODELS and MODEL_CATEGORIES are derived from data/replicate_models.yml.
     # The YAML is the single source of truth; these constants are convenience aliases.
-    MODELS_FILE = File.expand_path("../../data/replicate_models.yml", __FILE__).freeze
+    MODELS_FILE = File.expand_path("../data/replicate_models.yml", __dir__).freeze
 
     def self.configured_models
       @configured_models ||= begin
@@ -43,16 +41,24 @@ module MASTER
     end
 
     # Backward-compatible constant aliases (populated lazily after YAML load)
-    MODELS           = Hash.new { |_, k| models_hash[k] }.tap { |h| h.merge!(models_hash) rescue {} }.freeze
-    MODEL_CATEGORIES = Hash.new { |_, k| categories_hash[k] }.tap { |h| h.merge!(categories_hash) rescue {} }.freeze
+    MODELS = Hash.new { |_, k| models_hash[k] }.tap do |h|
+      h.merge!(models_hash)
+    rescue StandardError
+      {}
+    end.freeze
+    MODEL_CATEGORIES = Hash.new { |_, k| categories_hash[k] }.tap do |h|
+      h.merge!(categories_hash)
+    rescue StandardError
+      {}
+    end.freeze
 
     DEFAULT_MODEL = :flux
 
     # Timeout constants (from timeouts.rb)
-    REPLICATE_TIMEOUT = (ENV['MASTER_REPLICATE_TIMEOUT'] || 300).to_i
-    POLL_INTERVAL = (ENV['MASTER_POLL_INTERVAL'] || 2).to_i
-    HTTP_OPEN_TIMEOUT = (ENV['MASTER_HTTP_OPEN_TIMEOUT'] || 10).to_i
-    HTTP_READ_TIMEOUT = (ENV['MASTER_HTTP_READ_TIMEOUT'] || 60).to_i
+    REPLICATE_TIMEOUT = (ENV["MASTER_REPLICATE_TIMEOUT"] || 300).to_i
+    POLL_INTERVAL = (ENV["MASTER_POLL_INTERVAL"] || 2).to_i
+    HTTP_OPEN_TIMEOUT = (ENV["MASTER_HTTP_OPEN_TIMEOUT"] || 10).to_i
+    HTTP_READ_TIMEOUT = (ENV["MASTER_HTTP_READ_TIMEOUT"] || 60).to_i
 
     class << self
       def circuit_key
@@ -60,7 +66,7 @@ module MASTER
       end
 
       def api_key
-        ENV['REPLICATE_API_TOKEN'] || ENV['REPLICATE_API_KEY']
+        ENV["REPLICATE_API_TOKEN"] || ENV.fetch("REPLICATE_API_KEY", nil)
       end
 
       def available?
@@ -90,14 +96,16 @@ module MASTER
         result = wait_for_completion(prediction[:id])
         return Result.err("Generation failed: #{result[:error]}") if result[:error]
 
-        Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id]) if defined?(MASTER::Logging)
+        if defined?(MASTER::Logging)
+          Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id])
+        end
 
         Result.ok({
-          id: result[:id],
-          urls: result[:output],
-          model: model_id,
-          prompt: prompt
-        })
+                    id: result[:id],
+                    urls: result[:output],
+                    model: model_id,
+                    prompt: prompt,
+                  })
       rescue StandardError => e
         CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
         Result.err("Replicate error: #{e.message}")
@@ -119,7 +127,9 @@ module MASTER
         result = wait_for_completion(prediction[:id])
         return Result.err("Upscale failed: #{result[:error]}") if result[:error]
 
-        Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id]) if defined?(MASTER::Logging)
+        if defined?(MASTER::Logging)
+          Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id])
+        end
 
         Result.ok({ url: result[:output], scale: scale })
       rescue StandardError => e
@@ -143,7 +153,9 @@ module MASTER
         result = wait_for_completion(prediction[:id])
         return Result.err("Describe failed: #{result[:error]}") if result[:error]
 
-        Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id]) if defined?(MASTER::Logging)
+        if defined?(MASTER::Logging)
+          Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id])
+        end
 
         Result.ok({ caption: result[:output] })
       rescue StandardError => e
@@ -167,13 +179,15 @@ module MASTER
         result = wait_for_completion(prediction[:id])
         return Result.err("Model run failed: #{result[:error]}") if result[:error]
 
-        Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id]) if defined?(MASTER::Logging)
+        if defined?(MASTER::Logging)
+          Logging.info("Replicate prediction completed", model: model_id, prediction_id: result[:id])
+        end
 
         Result.ok({
-          id: result[:id],
-          output: result[:output],
-          model: model_id
-        })
+                    id: result[:id],
+                    output: result[:output],
+                    model: model_id,
+                  })
       rescue StandardError => e
         CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
         Result.err("Replicate error: #{e.message}")
@@ -183,6 +197,7 @@ module MASTER
       def model_id(name)
         model = MODELS[name.to_sym]
         raise ArgumentError, "Unknown model: #{name}" unless model
+
         model
       end
 

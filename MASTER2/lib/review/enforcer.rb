@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
-require_relative 'enforcer/quality_standards'
-require_relative 'enforcer/language_axioms'
+require_relative "enforcer/quality_standards"
+require_relative "enforcer/language_axioms"
 
 module MASTER
   module Review
     module Enforcer
-      extend self
       extend Enforcement::Layers
       extend Enforcement::Scopes
 
@@ -22,22 +21,22 @@ module MASTER
             guidelines: [
               "Check if concept fits inside existing module first",
               "New file only justified if would exceed 200 lines when added to existing code",
-              "Prefer adding methods to existing modules over creating new modules"
-            ].freeze
+              "Prefer adding methods to existing modules over creating new modules",
+            ].freeze,
           }.freeze,
           file_size: {
             guidelines: [
               "Files under 30 lines should be merged into parent module",
-              "Target: 15-25 files in lib/, not 60+"
-            ].freeze
+              "Target: 15-25 files in lib/, not 60+",
+            ].freeze,
           }.freeze,
           pr_rules: {
             guidelines: [
               "Never create a PR that overlaps with an existing open PR",
               "Every PR must list which existing files it modifies (not just new files)",
-              "Bug fixes and new features must be in separate PRs"
-            ].freeze
-          }.freeze
+              "Bug fixes and new features must be in separate PRs",
+            ].freeze,
+          }.freeze,
         }.freeze,
         canonical_map: {
           "result.rb" => "Result monad (do not duplicate)",
@@ -48,8 +47,8 @@ module MASTER
           "code_review.rb" => "All static analysis (smells, violations, bug hunting)",
           "introspection.rb" => "All self-analysis (critique, reflection)",
           "self_test.rb" => "All testing and self-repair",
-          "enforcement.rb" => "Axiom enforcement (single entry point)"
-        }.freeze
+          "enforcement.rb" => "Axiom enforcement (single entry point)",
+        }.freeze,
       }.freeze
 
       # Simulated execution scenarios for safety pre-checks
@@ -58,16 +57,16 @@ module MASTER
       SIMULATED_SCENARIOS = [
         {
           scenario: "empty_input",
-          cases: [nil, "", [], 0, false].freeze
+          cases: [nil, "", [], 0, false].freeze,
         }.freeze,
         {
           scenario: "boundary_values",
           cases: [
-            2**63 - 1,
+            (2**63) - 1,
             "x" * 10_000,
             "\u{1F600}",
-            Float::INFINITY
-          ].freeze
+            Float::INFINITY,
+          ].freeze,
         }.freeze,
         {
           scenario: "malformed_input",
@@ -75,9 +74,9 @@ module MASTER
             "{ invalid json",
             "SELECT * FROM users; DROP TABLE users;",
             "<script>alert('xss')</script>",
-            "../../../etc/passwd"
-          ].freeze
-        }.freeze
+            "../../../etc/passwd",
+          ].freeze,
+        }.freeze,
       ].freeze
 
       @smells_mutex = Mutex.new
@@ -124,7 +123,7 @@ module MASTER
 
         # Run all 6 layers on single file
         def check(code, axioms: nil, filename: "code")
-          Logging.dmesg_log('enforcer', message: 'ENTER enforcer.check')
+          Logging.dmesg_log("enforcer", message: "ENTER enforcer.check")
           axioms ||= defined?(Constitution) ? Constitution.axioms : DB.axioms
           violations = []
 
@@ -147,7 +146,7 @@ module MASTER
           issues = []
 
           # Check for code blocks
-          if text.include?('```')
+          if text.include?("```")
             code_blocks = text.scan(/```\w*\n(.*?)```/m).flatten
             code_blocks.each do |code|
               result = check(code, filename: "llm_response")
@@ -199,16 +198,14 @@ module MASTER
             timestamp: Time.now,
             files_checked: 1,
             absolute_violations: violations,
-            passed: violations.empty?
+            passed: violations.empty?,
           }
         end
 
         def warn_self_check_violations(violations)
           return unless violations && !violations.empty?
 
-          if defined?(Dmesg)
-            Dmesg.warn("SELF_APPLY: #{violations.size} ABSOLUTE violations in own source")
-          end
+          Dmesg.warn("SELF_APPLY: #{violations.size} ABSOLUTE violations in own source") if defined?(Dmesg)
         end
 
         # Get last self-check result
@@ -259,7 +256,7 @@ module MASTER
           binding_obj = binding
           binding_obj.local_variable_set(:input, input)
           eval(code, binding_obj)
-        rescue StandardError => e
+        rescue StandardError
           :error
         end
       end

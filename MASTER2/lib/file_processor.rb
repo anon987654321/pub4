@@ -91,7 +91,7 @@ module MASTER
 
         # Normalize indentation (tabs -> spaces for non-Makefile)
         if !filename.include?("Makefile") && output.include?("\t")
-          output.gsub!(/\t/, "  ")
+          output.gsub!("\t", "  ")
           changes << "Tabs -> spaces"
         end
 
@@ -99,7 +99,7 @@ module MASTER
       end
 
       # Phase 2: Rename/Rephrase - improve naming
-      def phase_rename(content, filename)
+      def phase_rename(content, _filename)
         changes = []
         output = content.dup
 
@@ -131,7 +131,7 @@ module MASTER
 
         # Boolean method naming
         output.scan(/def\s+(is_\w+)\b/).flatten.each do |method|
-          new_name = method.sub(/^is_/, "") + "?"
+          new_name = "#{method.sub(/^is_/, '')}?"
           unless output.match?(/def\s+#{Regexp.escape(new_name)}\b/)
             output.gsub!(/\b#{method}\b(?!\?)/, new_name)
             changes << "#{method} -> #{new_name}"
@@ -164,7 +164,7 @@ module MASTER
           output.gsub!(/^require\s+['"]#{Regexp.escape(req)}['"]\n/) do
             if first
               first = false
-              $&
+              ::Regexp.last_match(0)
             else
               changes << "Removed duplicate require '#{req}'"
               ""
@@ -187,9 +187,7 @@ module MASTER
         original_bytes = content.bytesize
 
         # Assess if file should be split
-        if original_lines > 600
-          changes << "Consider splitting: #{original_lines} lines exceeds 600 limit"
-        end
+        changes << "Consider splitting: #{original_lines} lines exceeds 600 limit" if original_lines > 600
 
         # Assess if file is too small (maybe merge with related)
         if original_lines < 20 && !filename.match?(/test|spec|config/)
@@ -198,15 +196,11 @@ module MASTER
 
         # Check method count
         method_count = content.scan(/^\s*def\s+/).size
-        if method_count > 15
-          changes << "High method count (#{method_count}): consider splitting by responsibility"
-        end
+        changes << "High method count (#{method_count}): consider splitting by responsibility" if method_count > 15
 
         # Check class count
         class_count = content.scan(/^\s*class\s+/).size
-        if class_count > 1
-          changes << "Multiple classes (#{class_count}): one class per file preferred"
-        end
+        changes << "Multiple classes (#{class_count}): one class per file preferred" if class_count > 1
 
         {
           phase: :assess,

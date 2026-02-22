@@ -41,13 +41,15 @@ module MASTER
       participants.times do |i|
         break if over_budget?
 
-        result = ask_llm("You are a creative thinker brainstorming ideas about: #{topic}\n\nGenerate 3-5 distinct, innovative ideas. Be specific and actionable.", tier: :fast)
+        result = ask_llm(
+          "You are a creative thinker brainstorming ideas about: #{topic}\n\nGenerate 3-5 distinct, innovative ideas. Be specific and actionable.", tier: :fast
+        )
         next unless result.ok?
 
         proposal = {
           model: i,
           ideas: result.value[:content],
-          critique: nil
+          critique: nil,
         }
         @results << { type: :proposal, **proposal }
         proposals << proposal
@@ -97,7 +99,9 @@ module MASTER
       return Result.ok({ storyboard: [], cost: @cost }) unless Replicate.available?
 
       # Step 1: Generate scene descriptions
-      result = ask_llm("Create a #{scenes}-scene video storyboard for: #{concept}\n\nFor each scene, describe the visual composition, camera angle, mood, and key elements. Be vivid and specific.", tier: :strong)
+      result = ask_llm(
+        "Create a #{scenes}-scene video storyboard for: #{concept}\n\nFor each scene, describe the visual composition, camera angle, mood, and key elements. Be vivid and specific.", tier: :strong
+      )
       return Result.err("Failed to generate storyboard.") unless result.ok?
 
       scene_text = result.value[:content]
@@ -132,11 +136,11 @@ module MASTER
           prompt = "Scenario: #{scenario}\n\nConversation so far:\n#{context}\n\nYou are Speaker #{speaker + 1}. Respond naturally to continue the conversation."
 
           result = ask_llm(prompt, tier: :fast)
-          if result.ok?
-            line = { speaker: speaker + 1, turn: turn + 1, text: result.value[:content] }
-            dialogue << line
-            @results << { type: :dialogue, **line }
-          end
+          next unless result.ok?
+
+          line = { speaker: speaker + 1, turn: turn + 1, text: result.value[:content] }
+          dialogue << line
+          @results << { type: :dialogue, **line }
         end
       end
 
@@ -152,18 +156,22 @@ module MASTER
         break if over_budget?
 
         # Get enhancement suggestions
-        result = ask_llm("This is an AI prompt:\n\n#{current}\n\nSuggest 3 specific improvements to make it more effective, clear, and detailed. Focus on actionable changes.", tier: :fast)
+        result = ask_llm(
+          "This is an AI prompt:\n\n#{current}\n\nSuggest 3 specific improvements to make it more effective, clear, and detailed. Focus on actionable changes.", tier: :fast
+        )
         next unless result.ok?
 
         suggestions = result.value[:content]
 
         # Apply improvements
-        enhance_result = ask_llm("Original prompt:\n#{current}\n\nSuggestions:\n#{suggestions}\n\nRewrite the prompt incorporating these improvements. Return only the improved prompt.", tier: :strong)
-        if enhance_result.ok?
-          current = enhance_result.value[:content]
-          history << { version: i + 1, prompt: current, suggestions: suggestions }
-          @results << { type: :enhancement, version: i + 1, suggestions: suggestions }
-        end
+        enhance_result = ask_llm(
+          "Original prompt:\n#{current}\n\nSuggestions:\n#{suggestions}\n\nRewrite the prompt incorporating these improvements. Return only the improved prompt.", tier: :strong
+        )
+        next unless enhance_result.ok?
+
+        current = enhance_result.value[:content]
+        history << { version: i + 1, prompt: current, suggestions: suggestions }
+        @results << { type: :enhancement, version: i + 1, suggestions: suggestions }
       end
 
       Result.ok({ final_prompt: current, history: history, cost: @cost })
@@ -180,11 +188,11 @@ module MASTER
         prompt = "Analyze this competitor: #{competitor}\n\nIn the context of building: #{product}\n\nIdentify their strengths, weaknesses, and unique features. Be specific and critical."
         result = ask_llm(prompt, tier: :strong)
 
-        if result.ok?
-          analysis = { competitor: competitor, analysis: result.value[:content] }
-          @results << { type: :competitor_analysis, **analysis }
-          analysis
-        end
+        next unless result.ok?
+
+        analysis = { competitor: competitor, analysis: result.value[:content] }
+        @results << { type: :competitor_analysis, **analysis }
+        analysis
       end.compact
 
       # Synthesize gaps and opportunities
@@ -220,9 +228,7 @@ module MASTER
 
     def ask_llm(prompt, tier: :fast)
       LLM.ask(prompt, tier: tier).tap do |result|
-        if result.ok?
-          @cost += result.value[:cost] || 0.0
-        end
+        @cost += result.value[:cost] || 0.0 if result.ok?
       end
     end
 
@@ -240,8 +246,6 @@ module MASTER
         synthesis = result.value[:content]
         @results << { type: :synthesis, content: synthesis }
         synthesis
-      else
-        nil
       end
     end
 

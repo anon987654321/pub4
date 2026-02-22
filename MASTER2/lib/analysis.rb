@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'yaml'
+require "yaml"
 
-require_relative 'analysis/prescan'
-require_relative 'analysis/introspection'
+require_relative "analysis/prescan"
+require_relative "analysis/introspection"
 
 module MASTER
   # Analysis - Situational awareness and introspection

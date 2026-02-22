@@ -12,7 +12,7 @@ module MASTER
       @context = {
         cwd: Dir.pwd,
         history: [],
-        last_result: nil
+        last_result: nil,
       }
     end
 
@@ -42,25 +42,25 @@ module MASTER
 
       case input
       when "exit", "quit", "q"
-        return :exit
+        :exit
       when "help", "?"
         show_help
       when "history"
         show_history
       when /^cd\s+(.+)$/
-        change_directory($1)
+        change_directory(::Regexp.last_match(1))
       when /^(ls|pwd|tree|find|cat|grep|wc|head|tail|file|stat)\b/
         execute_unix_command(input)
       when /^scan\s+(.+)$/
-        scan_file($1)
+        scan_file(::Regexp.last_match(1))
       when /^analyze\s+(.+)$/
-        analyze_file($1)
+        analyze_file(::Regexp.last_match(1))
       when /^fix\s+(.+)$/
-        fix_file($1)
+        fix_file(::Regexp.last_match(1))
       when /^session\s+(.+)$/
-        session_command($1)
+        session_command(::Regexp.last_match(1))
       when /^ask\s+(.+)$/
-        ask_llm($1)
+        ask_llm(::Regexp.last_match(1))
       else
         # Treat unmatched input as natural language query for better UX
         ask_llm(input)
@@ -70,7 +70,7 @@ module MASTER
     private
 
     def prompt
-      dir = @context[:cwd].sub(ENV['HOME'] || '', '~')
+      dir = @context[:cwd].sub(Dir.home || "", "~")
       "master:#{dir}$ "
     end
 

@@ -35,8 +35,6 @@ module MASTER
           pct = (council_info[:consensus] * 100).round(0)
           verdict = council_info[:verdict] || :unknown
           "  Council: #{verdict.to_s.upcase} (#{pct}% consensus)"
-        else
-          nil
         end
       end
 
@@ -75,7 +73,7 @@ module MASTER
         print "\n  Apply these changes? [y/N] "
         response = $stdin.gets&.strip&.downcase
 
-        if response == "y" || response == "yes"
+        if ["y", "yes"].include?(response)
           # Track original content for undo
           Undo.track_edit(path, original)
 

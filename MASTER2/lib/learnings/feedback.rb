@@ -16,7 +16,7 @@ module MASTER
         message_pattern: generalize_message(finding.message),
         fix_hash: hash_fix(fix),
         success: success,
-        timestamp: Time.now.to_i
+        timestamp: Time.now.to_i,
       }
 
       # Append to JSONL
@@ -87,7 +87,7 @@ module MASTER
       # Remove specific numbers and paths to create pattern
       message
         .gsub(/\d+/, "N")
-        .gsub(/\/[^\s]+/, "PATH")
+        .gsub(%r{/[^\s]+}, "PATH")
         .gsub(/'[^']+'/, "'X'")
     end
 

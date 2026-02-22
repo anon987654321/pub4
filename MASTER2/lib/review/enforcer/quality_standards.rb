@@ -4,14 +4,15 @@ module MASTER
   module Review
     # QualityStandards - Unified quality thresholds from quality_thresholds.yml
     module QualityStandards
-      extend self
+      module_function
 
       THRESHOLDS_FILE = File.join(MASTER.root, "data", "quality_thresholds.yml")
 
       def thresholds
-        @thresholds ||= begin
-          return defaults unless File.exist?(THRESHOLDS_FILE)
+        @thresholds ||= if File.exist?(THRESHOLDS_FILE)
           YAML.safe_load_file(THRESHOLDS_FILE, symbolize_names: true) || defaults
+        else
+          defaults
         end
       end
 
@@ -20,7 +21,7 @@ module MASTER
           file_lines: { warn: 500, error: 600, self_test_max: 600 },
           method_lines: { warn: 15, error: 25 },
           max_self_test_issues: 0,
-          max_self_test_violations: 0
+          max_self_test_violations: 0,
         }
       end
 

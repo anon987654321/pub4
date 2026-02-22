@@ -39,6 +39,11 @@ gem "stoplight", "~> 4.0"
 gem "falcon", "~> 0.47"
 gem "async-websocket"
 
+group :development, :test do
+  gem "rubocop", "~> 1.0",  require: false
+  gem "reek",    "~> 6.0",  require: false
+end
+
 group :test do
   gem "minitest"
   gem "rake"

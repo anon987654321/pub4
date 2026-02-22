@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'introspection/self_critique'
-require_relative 'introspection/self_repair'
+require_relative "introspection/self_critique"
+require_relative "introspection/self_repair"
 
 module MASTER
   module Analysis
@@ -23,13 +23,17 @@ module MASTER
           label = File.basename(root)
           puts "introspect: #{label} #{map[:lib_files].count} lib, #{map[:test_files].count} test"
 
-          errors = map[:ruby_files].select do |f|
-            !system("ruby", "-c", f, out: File::NULL, err: File::NULL)
+          errors = map[:ruby_files].reject do |f|
+            system("ruby", "-c", f, out: File::NULL, err: File::NULL)
           end
           puts "introspect: syntax #{errors.empty? ? 'ok' : "#{errors.count} errors"}"
           errors.each { |f| puts "  #{f}" }
 
-          large = map[:ruby_files].select { |f| File.readlines(f).size > 300 rescue false }
+          large = map[:ruby_files].select do |f|
+            File.readlines(f).size > 300
+          rescue StandardError
+            false
+          end
           puts "introspect: #{large.count} files >300 lines" if large.any?
           large.each { |f| puts "  #{File.basename(f)} #{File.readlines(f).size}L" }
 
@@ -57,7 +61,7 @@ module MASTER
         def summary(root = MASTER.root)
           map = generate_map(root)
           "#{map[:lib_files].count} lib, #{map[:test_files].count} test"
-        rescue StandardError => e
+        rescue StandardError
           "unavailable"
         end
 
@@ -68,7 +72,9 @@ module MASTER
             files: collect_files(root, root),
             ruby_files: collect_files(root, root).select { |f| f.end_with?(".rb") },
             lib_files: collect_files(root, root).select { |f| f.include?("/lib/") && f.end_with?(".rb") },
-            test_files: collect_files(root, root).select { |f| (f.include?("/test/") || f.include?("_test.rb") || f.include?("test_")) && f.end_with?(".rb") }
+            test_files: collect_files(root, root).select do |f|
+              (f.include?("/test/") || f.include?("_test.rb") || f.include?("test_")) && f.end_with?(".rb")
+            end,
           }
         end
 
@@ -80,22 +86,20 @@ module MASTER
           result = []
           entries = Dir.entries(dir).sort.reject { |e| e.start_with?(".") || IGNORED.include?(e) }
 
-          entries.each_with_index do |entry, idx|
+          entries.each_with_index do |entry, _idx|
             path = File.join(dir, entry)
             is_dir = File.directory?(path)
 
             # Only append slash for directories
-            result << "#{prefix}#{entry}#{is_dir ? '/' : ''}"
+            result << "#{prefix}#{entry}#{'/' if is_dir}"
 
-            if is_dir
-              result << tree_string(path, "#{prefix}  ")
-            end
+            result << tree_string(path, "#{prefix}  ") if is_dir
           end
 
           result.join("\n")
         end
 
-        require_relative '../introspection/self_map'
+        require_relative "../introspection/self_map"
       end
 
       # Instance methods for LLM-based introspection
@@ -148,8 +152,6 @@ module MASTER
             issue: response[/ISSUE:\s*(.+)/, 1],
             why: response[/WHY:\s*(.+)/, 1],
           }
-        else
-          nil
         end
       end
 
@@ -183,8 +185,6 @@ module MASTER
           passed: content.include?("APPROVE"),
         }
       end
-
-      private
 
       class << self
         private

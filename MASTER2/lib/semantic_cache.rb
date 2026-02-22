@@ -12,7 +12,7 @@ module MASTER
     CACHE_VERSION = 1
     MAX_CACHE_SIZE = 1000        # Max cached entries
     SIMILARITY_THRESHOLD = 0.92  # Cosine similarity threshold for cache hits
-    MAX_ENTRY_AGE = 7 * 24 * 3600  # 7 days TTL
+    MAX_ENTRY_AGE = 7 * 24 * 3600 # 7 days TTL
 
     class << self
       # Check cache for a similar prompt
@@ -44,7 +44,7 @@ module MASTER
           tier: tier&.to_s,
           response: response_data,
           created_at: Time.now.utc.iso8601,
-          hit_count: 0
+          hit_count: 0,
         }
 
         # Write to file cache
@@ -58,7 +58,7 @@ module MASTER
             content: prompt,
             type: "cache",
             source: key,
-            metadata: { tier: tier&.to_s, cost: response_data[:cost] }
+            metadata: { tier: tier&.to_s, cost: response_data[:cost] },
           )
         end
 
@@ -73,17 +73,15 @@ module MASTER
       def stats
         entries = Dir.glob(File.join(cache_dir, "*.json"))
         total_size = entries.sum do |f|
-          begin
-            File.size(f)
-          rescue SystemCallError
-            0
-          end
+          File.size(f)
+        rescue SystemCallError
+          0
         end
         {
           entries: entries.size,
           size_bytes: total_size,
           size_human: format_size(total_size),
-          cache_dir: cache_dir
+          cache_dir: cache_dir,
         }
       end
 
@@ -154,7 +152,7 @@ module MASTER
         created = begin
           Time.parse(entry[:created_at])
         rescue ArgumentError, TypeError
-          return true  # Corrupted entries should be treated as expired
+          return true # Corrupted entries should be treated as expired
         end
         (Time.now - created) > MAX_ENTRY_AGE
       end
@@ -179,31 +177,31 @@ module MASTER
 
         # Evict entries with lowest hit count, then oldest last_hit
         entries_with_data = entries.map do |path|
-          begin
-            entry = JSON.parse(File.read(path), symbolize_names: true)
-            {
-              path: path,
-              hit_count: entry[:hit_count] || 0,
-              last_hit: entry[:last_hit] ? Time.parse(entry[:last_hit]) : File.mtime(path)
-            }
-          rescue StandardError => e
-            { path: path, hit_count: 0, last_hit: File.mtime(path) }
-          end
+          entry = JSON.parse(File.read(path), symbolize_names: true)
+          {
+            path: path,
+            hit_count: entry[:hit_count] || 0,
+            last_hit: entry[:last_hit] ? Time.parse(entry[:last_hit]) : File.mtime(path),
+          }
+        rescue StandardError
+          { path: path, hit_count: 0, last_hit: File.mtime(path) }
         end
 
         sorted = entries_with_data.sort_by { |e| [e[:hit_count], e[:last_hit]] }
         to_remove = sorted.first(entries.size - MAX_CACHE_SIZE)
         to_remove.each do |e|
-          begin; File.delete(e[:path]); rescue SystemCallError => err; Logging.warn("cleanup failed: #{err.message}", subsystem: "SemanticCache"); end
+          File.delete(e[:path])
+        rescue SystemCallError => e; Logging.warn("cleanup failed: #{e.message}", subsystem: "SemanticCache")
         end
       end
 
       def format_size(bytes)
         return "0B" if bytes == 0
+
         units = %w[B KB MB GB]
         exp = (Math.log(bytes) / Math.log(1024)).to_i
         exp = units.size - 1 if exp >= units.size
-        "#{(bytes.to_f / 1024**exp).round(1)}#{units[exp]}"
+        "#{(bytes.to_f / (1024**exp)).round(1)}#{units[exp]}"
       end
     end
   end

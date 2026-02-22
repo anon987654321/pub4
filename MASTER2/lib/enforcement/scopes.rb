@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../code_review/analyzers'
+require_relative "../code_review/analyzers"
 
 module MASTER
   module Enforcement
@@ -22,7 +22,8 @@ module MASTER
 
           # Line length
           if line.chomp.length > (thresholds["line_length"] || 120)
-            violations << { scope: :line, line: num, message: "Line too long (#{line.chomp.length} chars)", file: filename }
+            violations << { scope: :line, line: num, message: "Line too long (#{line.chomp.length} chars)",
+                            file: filename }
           end
 
           # Bare rescue StandardError => e
@@ -43,7 +44,8 @@ module MASTER
         limit = thresholds["method_length"] || 50
         methods_info.each do |method|
           if method[:length] > limit
-            violations << { scope: :unit, message: "Method '#{method[:name]}' is #{method[:length]} lines (limit: #{limit})", file: filename }
+            violations << { scope: :unit,
+                            message: "Method '#{method[:name]}' is #{method[:length]} lines (limit: #{limit})", file: filename }
           end
         end
 
@@ -52,13 +54,14 @@ module MASTER
           param_count = params.split(",").size
           limit = thresholds["param_count"] || 5
           if param_count > limit
-            violations << { scope: :unit, message: "Method '#{method}' has #{param_count} parameters (limit: #{limit})", file: filename }
+            violations << { scope: :unit,
+                            message: "Method '#{method}' has #{param_count} parameters (limit: #{limit})", file: filename }
           end
         end
 
         # Generic verbs
         generic_verbs = smells["generic_verbs"] || {}
-        generic_verbs.keys.each do |verb|
+        generic_verbs.each_key do |verb|
           matches = code.scan(/def\s+(#{verb}_\w+)/)
           matches.each do |method_match|
             method = method_match.first
@@ -77,7 +80,7 @@ module MASTER
       end
 
       # Scope 4: Framework-level (cross-file DRY violations)
-      def check_framework(files, axioms)
+      def check_framework(files, _axioms)
         violations = []
 
         # DRY: duplicate constants across files
@@ -91,6 +94,7 @@ module MASTER
 
         constants.each do |name, occurrences|
           next if occurrences.size <= 1
+
           unique_values = occurrences.map { |o| o[:value] }.uniq
           if unique_values.size == 1
             files_list = occurrences.map { |o| o[:file] }.join(", ")
@@ -109,7 +113,8 @@ module MASTER
 
         class_names.each do |name, file_list|
           if file_list.size > 1
-            violations << { scope: :framework, axiom: "ONE_SOURCE", message: "Duplicate class '#{name}' in: #{file_list.join(', ')}" }
+            violations << { scope: :framework, axiom: "ONE_SOURCE",
+                            message: "Duplicate class '#{name}' in: #{file_list.join(', ')}" }
           end
         end
 

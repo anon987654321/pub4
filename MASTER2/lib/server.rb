@@ -11,10 +11,11 @@ module MASTER
   class Server
     include Handlers
     include WebSocket
-    JSON_TYPE = "application/json".freeze
-    HTML_TYPE = "text/html".freeze
-    TEXT_TYPE = "text/plain".freeze
-    CT_HEADER = "content-type".freeze
+
+    JSON_TYPE = "application/json"
+    HTML_TYPE = "text/html"
+    TEXT_TYPE = "text/plain"
+    CT_HEADER = "content-type"
     AUTH_TOKEN = ENV["MASTER_TOKEN"] || SecureRandom.hex(16)
     VIEWS_DIR = File.join(File.dirname(__FILE__), "views")
 
@@ -65,23 +66,27 @@ module MASTER
       port = server.addr[1]
       server.close
       port
-    rescue StandardError => e
+    rescue StandardError
       8080
     end
 
     def run_server
-      Async do |task|
+      Async do |_task|
         endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{@port}")
         server = Falcon::Server.new(Falcon::Server.middleware(@app), endpoint)
         server.run
-      rescue => e
-        $stderr.puts "Falcon error: #{e.class}: #{e.message}"
+      rescue StandardError => e
+        warn "Falcon error: #{e.class}: #{e.message}"
       end
     end
 
     def kill_port_users(port)
       pids = `lsof -ti:#{port} 2>/dev/null`.strip.split("\n").map(&:to_i).reject(&:zero?)
-      pids.each { |pid| Process.kill("TERM", pid) rescue nil }
+      pids.each do |pid|
+        Process.kill("TERM", pid)
+      rescue StandardError
+        nil
+      end
       sleep 0.3 unless pids.empty?
     rescue StandardError
       # best-effort
@@ -146,7 +151,7 @@ module MASTER
 
     def read_view(name)
       File.read(File.join(VIEWS_DIR, name))
-    rescue StandardError => e
+    rescue StandardError
       "<!DOCTYPE html><html><body><h1>MASTER #{VERSION}</h1><p>View not found: #{name}</p></body></html>"
     end
   end

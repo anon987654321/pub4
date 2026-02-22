@@ -62,12 +62,12 @@ module MASTER
       points += 1 if code.match?(/#.*example:|#.*usage:/i)
 
       # Consistent style (all extend self OR all class << self)
-      extend_count = code.scan(/extend self/).size
-      class_self_count = code.scan(/class << self/).size
+      extend_count = code.scan("extend self").size
+      class_self_count = code.scan("class << self").size
       points += 1 if extend_count == 0 || class_self_count == 0
 
       # No magic numbers
-      points += 1 unless code.match?(/[^0-9\.]\d{3,}[^0-9]/) # 3+ digit numbers
+      points += 1 unless code.match?(/[^0-9.]\d{3,}[^0-9]/) # 3+ digit numbers
 
       # Descriptive method names (at least 8 chars average)
       methods = code.scan(/def (\w+)/).flatten
@@ -81,21 +81,13 @@ module MASTER
     def self.suggest(code)
       suggestions = []
 
-      unless code.match?(/^# frozen_string_literal: true/)
-        suggestions << "Add frozen_string_literal pragma at top"
-      end
+      suggestions << "Add frozen_string_literal pragma at top" unless code.match?(/^# frozen_string_literal: true/)
 
-      unless code.match?(/module \w+\n\s+# [A-Z]/)
-        suggestions << "Add module docstring: # ModuleName - What it does"
-      end
+      suggestions << "Add module docstring: # ModuleName - What it does" unless code.match?(/module \w+\n\s+# [A-Z]/)
 
-      if code.match?(/rescue\s*$/)
-        suggestions << "Change bare 'rescue' to 'rescue StandardError'"
-      end
+      suggestions << "Change bare 'rescue' to 'rescue StandardError'" if code.match?(/rescue\s*$/)
 
-      if code.lines.size > 600
-        suggestions << "File is #{code.lines.size} lines - consider splitting"
-      end
+      suggestions << "File is #{code.lines.size} lines - consider splitting" if code.lines.size > 600
 
       suggestions
     end

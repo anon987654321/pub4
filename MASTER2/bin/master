@@ -26,13 +26,13 @@ def enforce_single_master!(command)
   lock_path = ENV["MASTER_LOCK_PATH"] || File.join(Dir.tmpdir, "master2-#{root_hash}.lock")
   MASTER::SingleInstance.acquire(lock_path: lock_path)
 rescue MASTER::SingleInstance::AlreadyRunningError => e
-  $stderr.puts e.message
-  $stderr.puts "Set MASTER_ALLOW_MULTI=1 to bypass this guard intentionally."
+  warn e.message
+  warn "Set MASTER_ALLOW_MULTI=1 to bypass this guard intentionally."
   exit 1
 end
 
 command = ARGV[0]
-args = ARGV[1..-1] || []
+args = ARGV[1..] || []
 enforce_single_master!(command)
 
 # Auto-bundle install if gems missing
@@ -58,7 +58,7 @@ File.write(bundle_config_file, bundle_config_content) unless File.exist?(bundle_
 ENV["BUNDLE_GEMFILE"] = File.join(project_root, "Gemfile")
 ENV["GEM_HOME"] = gem_home
 ENV["GEM_PATH"] = gem_home
-ENV["PATH"] = "#{gem_home}/bin:#{ENV["PATH"]}" unless ENV["PATH"].include?("#{gem_home}/bin")
+ENV["PATH"] = "#{gem_home}/bin:#{ENV['PATH']}" unless ENV["PATH"].include?("#{gem_home}/bin")
 ENV["BUNDLE_PATH"] ||= bundle_path
 ENV["BUNDLE_CACHE_PATH"] ||= bundle_cache_path
 ENV["BUNDLE_APP_CONFIG"] ||= bundle_app_config
@@ -70,30 +70,30 @@ begin
   require "bundler/setup"
 rescue LoadError, StandardError => e
   if boot_retries >= 1
-    $stderr.puts "MASTER2 boot: bundler setup failed after install: #{e.message}"
+    warn "MASTER2 boot: bundler setup failed after install: #{e.message}"
     exit 1
   end
   boot_retries += 1
-  $stderr.puts "MASTER2 boot: preparing local dependencies..."
+  warn "MASTER2 boot: preparing local dependencies..."
 
   # Run platform diagnostics before retrying
   require_relative "../lib/platform_check"
   if defined?(MASTER::PlatformCheck)
     issues = MASTER::PlatformCheck.diagnose
     unless issues.empty?
-      $stderr.puts "MASTER2 boot: platform issues detected"
+      warn "MASTER2 boot: platform issues detected"
       MASTER::PlatformCheck.print_diagnostics
     end
   end
 
   ok = system("bundle", "install", "--quiet", exception: false)
   unless ok
-    $stderr.puts "MASTER2 boot: bundle install failed: #{e.message}"
+    warn "MASTER2 boot: bundle install failed: #{e.message}"
     if defined?(MASTER::PlatformCheck) && MASTER::PlatformCheck.openbsd?
-      $stderr.puts "MASTER2 boot: OpenBSD detected. Common fixes:"
+      warn "MASTER2 boot: OpenBSD detected. Common fixes:"
       MASTER::PlatformCheck.print_diagnostics
     else
-      $stderr.puts "MASTER2 boot: check network access and re-run: bin/master"
+      warn "MASTER2 boot: check network access and re-run: bin/master"
     end
     exit 1
   end
@@ -105,7 +105,7 @@ require_relative "../lib/master"
 begin
   MASTER::DB.setup
 rescue StandardError => e
-  $stderr.puts "DB setup failed: #{e.message} — running without persistence"
+  warn "DB setup failed: #{e.message} — running without persistence"
 end
 MASTER::Session.install_crash_handlers
 
@@ -127,20 +127,23 @@ end
 
 def run_phase1(root, apply, strict, align_axioms, include_all)
   puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
-  mr = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict, align_axioms: align_axioms, include_all_files: include_all)
+  mr = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict, align_axioms: align_axioms,
+                                 include_all_files: include_all)
   phase1_path = include_all ? File.join(root, "MASTER2") : File.join(root, "MASTER2", "lib")
   mr.run(path: phase1_path)
 end
 
 def run_phase2(root, apply, strict, align_axioms, include_all)
   puts "\n=== Phase 2: Deploy Scripts ==="
-  mr2 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict, align_axioms: align_axioms, include_all_files: include_all)
+  mr2 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict, align_axioms: align_axioms,
+                                  include_all_files: include_all)
   mr2.run(path: File.join(root, "deploy"))
 end
 
 def run_phase3(root, apply, strict, align_axioms, include_all)
   puts "\n=== Phase 3: Business Plans ==="
-  mr3 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 0.5, force_rewrite: strict, align_axioms: align_axioms, include_all_files: include_all)
+  mr3 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 0.5, force_rewrite: strict, align_axioms: align_axioms,
+                                  include_all_files: include_all)
   mr3.run(path: File.join(root, "bp"))
 end
 
@@ -251,7 +254,11 @@ when "--web", "-w"
 
 when "--pipe", "-p"
   # Pipe mode for automation
-  input = JSON.parse($stdin.read) rescue { "text" => $stdin.read }
+  input = begin
+    JSON.parse($stdin.read)
+  rescue StandardError
+    { "text" => $stdin.read }
+  end
   result = MASTER::Pipeline.new.call(input)
   puts JSON.generate(result.ok? ? result.value : { error: result.error })
 
@@ -274,7 +281,7 @@ when "narrate", "narration"
     result = MASTER::Commands.narrate_command(args.join(" "))
     exit result.respond_to?(:ok?) && result.ok? ? 0 : 1
   else
-    $stderr.puts "narrate: Replicate not loaded (set REPLICATE_API_TOKEN)"
+    warn "narrate: Replicate not loaded (set REPLICATE_API_TOKEN)"
     exit 1
   end
 

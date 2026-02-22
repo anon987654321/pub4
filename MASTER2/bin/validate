@@ -53,6 +53,7 @@ checks_passed += 1 if check("Council weights sum to 1.0") do
   council = YAML.safe_load_file("#{DATA}/council.yml", permitted_classes: [Symbol])
   personas = council.is_a?(Array) ? council : council["personas"]
   return false unless personas
+
   sum = personas.sum { |p| p["weight"] || 0 }
   sum > 0.5 && sum < 3.0
 end

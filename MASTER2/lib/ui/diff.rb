@@ -21,7 +21,7 @@ module MASTER
         output.concat(hunk[:lines])
       end
 
-      output.join("\n") + "\n"
+      "#{output.join("\n")}\n"
     end
 
     private
@@ -35,16 +35,16 @@ module MASTER
         orig_line = original[i]
         mod_line = modified[i]
 
-        if orig_line == mod_line
-          changes << { type: :same, orig: i, mod: i }
-        elsif orig_line.nil?
-          changes << { type: :add, orig: i, mod: i }
-        elsif mod_line.nil?
-          changes << { type: :delete, orig: i, mod: i }
-        else
-          # Line changed
-          changes << { type: :change, orig: i, mod: i }
-        end
+        changes << if orig_line == mod_line
+                     { type: :same, orig: i, mod: i }
+                   elsif orig_line.nil?
+                     { type: :add, orig: i, mod: i }
+                   elsif mod_line.nil?
+                     { type: :delete, orig: i, mod: i }
+                   else
+                     # Line changed
+                     { type: :change, orig: i, mod: i }
+                   end
       end
 
       # Group into hunks
@@ -57,6 +57,7 @@ module MASTER
           # Look ahead to find next change
           next_change = find_next_change(changes, i)
           break if next_change && (next_change - i) <= context * 2
+
           i += 1
         end
 
@@ -68,10 +69,7 @@ module MASTER
         # Find end of hunk (include context after last change)
         hunk_end = i
         while hunk_end < changes.length
-          if changes[hunk_end][:type] != :same
-            # Found a change, continue
-            hunk_end += 1
-          else
+          if changes[hunk_end][:type] == :same
             # Check if there's another change within context
             next_change = find_next_change(changes, hunk_end)
             if next_change && (next_change - hunk_end) <= context * 2
@@ -81,6 +79,9 @@ module MASTER
               hunk_end = [hunk_end + context, changes.length].min
               break
             end
+          else
+            # Found a change, continue
+            hunk_end += 1
           end
         end
 
@@ -115,7 +116,7 @@ module MASTER
         unless lines.empty?
           hunks << {
             header: "@@ -#{orig_start + 1},#{orig_count} +#{mod_start + 1},#{mod_count} @@",
-            lines: lines
+            lines: lines,
           }
         end
 

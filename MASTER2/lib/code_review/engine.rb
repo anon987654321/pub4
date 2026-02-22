@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'yaml'
-require_relative 'analyzers'
+require "yaml"
+require_relative "analyzers"
 
 module MASTER
   # CodeQuality - Unified code quality scan facade
@@ -16,7 +16,7 @@ module MASTER
     SCAN_PROFILES = {
       quick: { min_priority: 9, description: "Critical axioms only (~5 axioms)" },
       standard: { min_priority: 7, description: "Important axioms (~12 axioms)" },
-      full: { min_priority: 0, description: "All axioms (32 axioms)" }
+      full: { min_priority: 0, description: "All axioms (32 axioms)" },
     }.freeze
 
     class << self
@@ -25,16 +25,28 @@ module MASTER
         results = { smells: [], violations: [], bugs: [], summary: {} }
 
         if defined?(Smells)
-          results[:smells] = Smells.analyze(code, path) rescue []
+          results[:smells] = begin
+            Smells.analyze(code, path)
+          rescue StandardError
+            []
+          end
         end
 
         if defined?(Violations)
-          v = Violations.analyze(code, path: path) rescue {}
+          v = begin
+            Violations.analyze(code, path: path)
+          rescue StandardError
+            {}
+          end
           results[:violations] = (v[:literal] || []) + (v[:conceptual] || [])
         end
 
         if defined?(BugHunting)
-          report = BugHunting.analyze(code, file_path: path || 'inline') rescue {}
+          report = begin
+            BugHunting.analyze(code, file_path: path || "inline")
+          rescue StandardError
+            {}
+          end
           results[:bugs] = report.is_a?(Hash) ? report : []
         end
 
@@ -46,8 +58,8 @@ module MASTER
       # Basic structural scan - long methods, god classes, deep nesting
       # Now supports profile parameter for axiom filtering
       def quality_scan(path, profile: :standard, silent: false)
-        Logging.dmesg_log('code_review', message: 'ENTER code_review.scan')
-        return Result.err('Path not found') unless File.exist?(path)
+        Logging.dmesg_log("code_review", message: "ENTER code_review.scan")
+        return Result.err("Path not found") unless File.exist?(path)
 
         axioms = load_axioms_for_profile(profile)
         puts UI.dim("Scanning with #{profile} profile (#{axioms.size} axioms)...") if axioms && !silent
@@ -62,25 +74,38 @@ module MASTER
 
       # Deep scan - adds smell analysis and cyclic dependency detection
       def deep_quality_scan(path)
-        return Result.err('Path not found') unless File.exist?(path)
+        return Result.err("Path not found") unless File.exist?(path)
 
         issues = []
         files = Analyzers::FileCollector.ruby_files(path)
 
         files.each do |f|
-          content = File.read(f) rescue next
+          content = begin
+            File.read(f)
+          rescue StandardError
+            next
+          end
           issues += scan_file(f)
 
           # Add smell analysis if module is available
-          if defined?(Smells)
-            smells = Smells.detect(content, path: f) rescue []
-            issues += smells.map { |s| s.merge(file: f, type: :smell) }
+          next unless defined?(Smells)
+
+          smells = begin
+            Smells.detect(content, path: f)
+          rescue StandardError
+            []
           end
+          issues += smells.map { |s| s.merge(file: f, type: :smell) }
         end
 
         # Check for cyclic dependencies if Smells module supports it
         if File.directory?(path) && defined?(Smells) && Smells.respond_to?(:cyclic_deps?)
-          cycle = begin; Smells.cyclic_deps?(files); rescue StandardError => e; Logging.warn("cyclic_deps check failed: #{e.message}", subsystem: "CodeReview"); nil; end
+          cycle = begin
+            Smells.cyclic_deps?(files)
+          rescue StandardError => e
+            Logging.warn("cyclic_deps check failed: #{e.message}", subsystem: "CodeReview")
+            nil
+          end
           issues << { file: path, type: :cyclic_dependency, cycle: cycle[:cycle] } if cycle
         end
 
@@ -91,26 +116,44 @@ module MASTER
 
       # Quick scan - fast summary stats without detailed analysis
       def quick_quality_scan(path)
-        return Result.err('Path not found') unless File.exist?(path)
+        return Result.err("Path not found") unless File.exist?(path)
 
         files = Analyzers::FileCollector.ruby_files(path)
 
         stats = {
           files: files.size,
-          total_lines: files.sum { |f| File.read(f).lines.size rescue 0 },
-          long_files: files.count { |f| (File.read(f).lines.size rescue 0) > MAX_FILE_LINES },
-          avg_file_size: 0
+          total_lines: files.sum do |f|
+            File.read(f).lines.size
+          rescue StandardError
+            0
+          end,
+          long_files: files.count do |f|
+            begin
+              File.read(f).lines.size
+            rescue StandardError
+              0
+            end > MAX_FILE_LINES
+          end,
+          avg_file_size: 0,
         }
 
         stats[:avg_file_size] = (stats[:total_lines].to_f / files.size).round(1) if files.any?
 
         # Add module counts if available
         if defined?(MASTER::Axioms)
-          stats[:axioms] = MASTER::Axioms.count rescue 0
+          stats[:axioms] = begin
+            MASTER::Axioms.count
+          rescue StandardError
+            0
+          end
         end
 
         if defined?(Smells)
-          stats[:smell_patterns] = Smells.all_patterns.size rescue 0
+          stats[:smell_patterns] = begin
+            Smells.all_patterns.size
+          rescue StandardError
+            0
+          end
         end
 
         Result.ok(stats)
@@ -120,27 +163,39 @@ module MASTER
 
       # Scan with specific focus areas
       def focused_scan(path, focus: [:complexity, :duplication, :security])
-        return Result.err('Path not found') unless File.exist?(path)
+        return Result.err("Path not found") unless File.exist?(path)
 
         issues = []
         files = Analyzers::FileCollector.ruby_files(path)
 
         files.each do |file|
-          content = File.read(file) rescue next
-
-          if focus.include?(:complexity)
-            issues += scan_file(file)
+          content = begin
+            File.read(file)
+          rescue StandardError
+            next
           end
 
+          issues += scan_file(file) if focus.include?(:complexity)
+
           if focus.include?(:duplication) && defined?(Smells)
-            dups = Smells.detect(content, path: file, types: [:duplication]) rescue []
+            dups = begin
+              Smells.detect(content, path: file, types: [:duplication])
+            rescue StandardError
+              []
+            end
             issues += dups.map { |d| d.merge(file: file, type: :duplication) }
           end
 
-          if focus.include?(:security) && defined?(BugHunting)
-            bugs = BugHunting.analyze(content, file_path: file) rescue []
-            issues += (bugs.is_a?(Hash) ? bugs[:findings]&.values&.flatten || [] : [bugs]).select { |b| b.is_a?(Hash) }.map { |b| b.merge(file: file, type: :security) }
+          next unless focus.include?(:security) && defined?(BugHunting)
+
+          bugs = begin
+            BugHunting.analyze(content, file_path: file)
+          rescue StandardError
+            []
           end
+          issues += (bugs.is_a?(Hash) ? bugs[:findings]&.values&.flatten || [] : [bugs]).select do |b|
+            b.is_a?(Hash)
+          end.map { |b| b.merge(file: file, type: :security) }
         end
 
         Result.ok(issues)
@@ -155,7 +210,7 @@ module MASTER
           total_issues: issues.size,
           by_type: issues.group_by { |i| i[:type] }.transform_values(&:size),
           by_severity: issues.group_by { |i| i[:severity] || :medium }.transform_values(&:size),
-          files_affected: issues.map { |i| i[:file] }.uniq.size
+          files_affected: issues.map { |i| i[:file] }.uniq.size,
         }
       end
 
@@ -167,11 +222,11 @@ module MASTER
         config = SCAN_PROFILES[profile]
         min_priority = config[:min_priority]
 
-        axioms_path = File.join(MASTER.root, 'data', 'axioms.yml')
+        axioms_path = File.join(MASTER.root, "data", "axioms.yml")
         return nil unless File.exist?(axioms_path)
 
         all_axioms = YAML.safe_load_file(axioms_path)
-        all_axioms.select { |a| (a['priority'] || a[:priority] || 5) >= min_priority }
+        all_axioms.select { |a| (a["priority"] || a[:priority] || 5) >= min_priority }
       rescue StandardError => e
         UI.warn("Failed to load axioms: #{e.message}")
         nil
@@ -185,15 +240,15 @@ module MASTER
         # Long methods
         methods = Analyzers::MethodLengthAnalyzer.scan(content)
         methods.each do |method|
-          if method[:length] > MAX_METHOD_LINES
-            issues << {
-              file: path,
-              type: :long_method,
-              lines: method[:length],
-              severity: method[:length] > 50 ? :high : :medium,
-              message: "Method has #{method[:length]} lines (max: #{MAX_METHOD_LINES})"
-            }
-          end
+          next unless method[:length] > MAX_METHOD_LINES
+
+          issues << {
+            file: path,
+            type: :long_method,
+            lines: method[:length],
+            severity: method[:length] > 50 ? :high : :medium,
+            message: "Method has #{method[:length]} lines (max: #{MAX_METHOD_LINES})",
+          }
         end
 
         # God class
@@ -204,7 +259,7 @@ module MASTER
             type: :god_class,
             lines: lines,
             severity: lines > 500 ? :high : :medium,
-            message: "File has #{lines} lines (max: #{MAX_FILE_LINES})"
+            message: "File has #{lines} lines (max: #{MAX_FILE_LINES})",
           }
         end
 
@@ -216,7 +271,7 @@ module MASTER
             type: :deep_nesting,
             depth: max_nesting,
             severity: max_nesting > 5 ? :high : :medium,
-            message: "Maximum nesting depth: #{max_nesting}"
+            message: "Maximum nesting depth: #{max_nesting}",
           }
         end
 

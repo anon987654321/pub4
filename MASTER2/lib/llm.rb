@@ -12,8 +12,8 @@ module MASTER
   module LLM
     TIER_ORDER = %i[premium strong fast cheap free].freeze
     REASONING_EFFORT = %i[none minimal low medium high xhigh].freeze
-    MAX_RESPONSE_SIZE = 5_000_000  # 5MB max for streaming
-    MAX_CHAT_TOKENS = 8_192   # cap OpenRouter max_tokens reservation
+    MAX_RESPONSE_SIZE = 5_000_000 # 5MB max for streaming
+    MAX_CHAT_TOKENS = 8_192 # cap OpenRouter max_tokens reservation
 
     # Thread-safe ruby_llm configuration
     CONFIGURE_MUTEX = Mutex.new
@@ -49,7 +49,7 @@ module MASTER
       end
 
       def replicate_api_key
-        ENV["REPLICATE_API_TOKEN"] || ENV["REPLICATE_API_KEY"]
+        ENV["REPLICATE_API_TOKEN"] || ENV.fetch("REPLICATE_API_KEY", nil)
       end
 
       # Configured if either OpenRouter or Replicate API key is present
@@ -69,6 +69,7 @@ module MASTER
       def configure_ruby_llm
         CONFIGURE_MUTEX.synchronize do
           return if @ruby_llm_configured
+
           RubyLLM.configure do |c|
             c.openrouter_api_key = api_key if api_key
           end
@@ -79,6 +80,7 @@ module MASTER
       # Check API key status
       def check_key
         return Result.err("No API key (set REPLICATE_API_TOKEN or OPENROUTER_API_KEY).") unless configured?
+
         configure_ruby_llm if configured_for_openrouter?
         label = [
           configured_for_replicate? ? "Replicate" : nil,
@@ -91,6 +93,7 @@ module MASTER
 
       def tier
         return @forced_tier if @forced_tier
+
         :strong
       end
 
@@ -122,8 +125,10 @@ module MASTER
       #   stream: true/false
       def ask(prompt, tier: nil, model: nil, fallbacks: nil, reasoning: nil,
               json_schema: nil, provider: nil, stream: false, messages: nil)
-
-        return Result.err("No API key — set REPLICATE_API_TOKEN or OPENROUTER_API_KEY.", category: :infrastructure) unless configured?
+        unless configured?
+          return Result.err("No API key — set REPLICATE_API_TOKEN or OPENROUTER_API_KEY.",
+                            category: :infrastructure)
+        end
 
         configure_ruby_llm if configured_for_openrouter?
         CircuitBreaker.check_rate_limit!
@@ -196,18 +201,21 @@ module MASTER
         tokens_out = data[:tokens_out]
         cost = data[:cost] || 0.0
 
-        Logging.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out, cost: cost) if defined?(Logging)
+        if defined?(Logging)
+          Logging.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out,
+                      cost: cost)
+        end
         SemanticCache.store(prompt, data, tier: :default) if defined?(SemanticCache) && !stream
         CircuitBreaker.close_circuit!(current_model)
 
         # Publish LLM response event for interested subscribers
         if defined?(EventBus)
           EventBus.publish(:llm_response,
-            model: current_model,
-            tokens_in: tokens_in,
-            tokens_out: tokens_out,
-            cost: cost,
-            streamed: stream)
+                           model: current_model,
+                           tokens_in: tokens_in,
+                           tokens_out: tokens_out,
+                           cost: cost,
+                           streamed: stream)
         end
       end
 
@@ -239,25 +247,29 @@ module MASTER
         c = RubyLLM.chat(model: m, assume_model_exists: true, provider: :openrouter)
         response = c.ask(prompt, with: files)
         Result.ok({
-          content: response.content,
-          tokens_in: response.input_tokens || 0,
-          tokens_out: response.output_tokens || 0,
-          cost: 0
-        })
+                    content: response.content,
+                    tokens_in: response.input_tokens || 0,
+                    tokens_out: response.output_tokens || 0,
+                    cost: 0,
+                  })
       rescue StandardError => e
         Result.err(e.message, category: :infrastructure)
       end
 
       # A6: Image generation (Replicate-only policy)
       def paint(prompt, model: nil)
-        return Result.err("Replicate API token required for media generation.") unless defined?(Replicate) && Replicate.available?
+        unless defined?(Replicate) && Replicate.available?
+          return Result.err("Replicate API token required for media generation.")
+        end
 
         Replicate.generate(prompt: prompt, model: model)
       end
 
       # A7: Audio transcription (Replicate-only policy)
       def transcribe(audio_path, model: nil)
-        return Result.err("Replicate API token required for media transcription.") unless defined?(Replicate) && Replicate.available?
+        unless defined?(Replicate) && Replicate.available?
+          return Result.err("Replicate API token required for media transcription.")
+        end
 
         model_id = model || Replicate::MODELS[:whisper]
         Replicate.run(model_id: model_id, input: { audio: audio_path })
@@ -269,7 +281,8 @@ module MASTER
         m = model || select_model
         c = RubyLLM.chat(model: m, assume_model_exists: true, provider: :openrouter).with_schema(schema_class)
         response = c.ask(prompt)
-        Result.ok({ content: response.content, tokens_in: response.input_tokens || 0, tokens_out: response.output_tokens || 0 })
+        Result.ok({ content: response.content, tokens_in: response.input_tokens || 0,
+                    tokens_out: response.output_tokens || 0 })
       rescue StandardError => e
         Result.err(e.message)
       end
@@ -284,18 +297,18 @@ module MASTER
       end
 
       # Structured output helper - guarantees valid JSON matching schema
-      def ask_json(prompt, schema:, tier: :fast, **opts)
-        ask(prompt, tier: tier, json_schema: schema, **opts)
+      def ask_json(prompt, schema:, tier: :fast, **)
+        ask(prompt, tier: tier, json_schema: schema, **)
       end
 
       # Reasoning-enhanced query
-      def ask_with_reasoning(prompt, effort: :medium, tier: :strong, **opts)
-        ask(prompt, tier: tier, reasoning: { effort: effort }, **opts)
+      def ask_with_reasoning(prompt, effort: :medium, tier: :strong, **)
+        ask(prompt, tier: tier, reasoning: { effort: effort }, **)
       end
 
       # Auto-router - let OpenRouter pick best model
-      def ask_auto(prompt, **opts)
-        ask(prompt, model: "openrouter/auto", **opts)
+      def ask_auto(prompt, **)
+        ask(prompt, model: "openrouter/auto", **)
       end
 
       # Delegate circuit_closed? to CircuitBreaker for callers that use LLM.circuit_closed?

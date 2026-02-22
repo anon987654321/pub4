@@ -78,10 +78,10 @@ module MASTER
 
       def toggle_scheduled_job(action, job_id)
         result = case action
-        when "remove" then Scheduler.remove(job_id)
-        when "enable" then Scheduler.enable(job_id)
-        when "disable" then Scheduler.disable(job_id)
-        end
+                 when "remove" then Scheduler.remove(job_id)
+                 when "enable" then Scheduler.enable(job_id)
+                 when "disable" then Scheduler.disable(job_id)
+                 end
         puts result.ok? ? action.capitalize : result.error
       end
 

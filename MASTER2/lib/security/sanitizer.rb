@@ -18,6 +18,7 @@ module MASTER
       # @return [String] Sanitized text
       def self.sanitize(text)
         return text unless text.is_a?(String)
+
         INJECTION_PATTERNS.each do |pattern|
           text = text.gsub(pattern, "[SANITIZED]")
         end
@@ -29,6 +30,7 @@ module MASTER
       # @return [Boolean] true if no injection patterns found
       def self.safe?(text)
         return true unless text.is_a?(String)
+
         INJECTION_PATTERNS.none? { |p| p.match?(text) }
       end
     end

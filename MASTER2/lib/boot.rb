@@ -26,7 +26,7 @@ module MASTER
         shell = ENV["SHELL"] ? File.basename(ENV["SHELL"]) : "unknown-shell"
         prompt_hint = shell == "zsh" ? "%" : "$"
         host = begin
-          require 'timeout'
+          require "timeout"
           Timeout.timeout(2) { `hostname`.strip }
         rescue Timeout::Error
           "unknown"
@@ -43,7 +43,11 @@ module MASTER
           c("sh0 at cpu0: #{shell} prompt #{user}#{prompt_hint}"),
           c("db0 at cpu0: #{DB.axioms.size} axioms, #{defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0} personas"),
           c("llm0 at db0: #{tier_models}"),
-          c("budget0 at llm0: #{LLM.configured_for_replicate? ? '(Replicate primary' + (LLM.configured_for_openrouter? ? ', OpenRouter fallback)' : ')') : '(managed by OpenRouter)'}"),
+          c("budget0 at llm0: #{if LLM.configured_for_replicate?
+                                  "(Replicate primary#{LLM.configured_for_openrouter? ? ', OpenRouter fallback)' : ')'}"
+                                else
+                                  '(managed by OpenRouter)'
+                                end}"),
           c("pledge0 at cpu0: #{defined?(Pledge) && Pledge.available? ? 'armed' : 'unavailable'}"),
           c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}"),
           c("smoke0 at executor0: #{smoke_result}"),
@@ -70,7 +74,7 @@ module MASTER
 
         smoke_test_methods.each do |mod, methods|
           methods.each do |method|
-            unless mod.respond_to?(method) || (mod.is_a?(Class) && mod.instance_methods.include?(method))
+            unless mod.respond_to?(method) || (mod.is_a?(Class) && mod.method_defined?(method))
               missing << "#{mod}##{method}"
             end
           end
@@ -80,10 +84,12 @@ module MASTER
           mod = begin
             MASTER.const_get(name)
           rescue NameError => e
-            MASTER::Logging.warn("Failed to resolve constant: #{name} — #{e.message}", subsystem: "boot") if defined?(MASTER::Logging)
+            if defined?(MASTER::Logging)
+              MASTER::Logging.warn("Failed to resolve constant: #{name} — #{e.message}", subsystem: "boot")
+            end
             nil
           end
-          mod && !mod.respond_to?(method) && !mod.instance_methods.include?(method)
+          mod && !mod.respond_to?(method) && !mod.method_defined?(method)
         end.keys
 
         if missing.any?

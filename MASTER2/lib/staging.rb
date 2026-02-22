@@ -107,7 +107,7 @@ module MASTER
       return Result.err("No backups to rollback.") if @backups.empty?
 
       results = []
-      @backups.each do |original_path, backup_path|
+      @backups.each_key do |original_path|
         result = rollback(original_path)
         results << { path: original_path, success: result.ok?, error: result.error }
       end
@@ -138,7 +138,7 @@ module MASTER
 
       begin
         # Yield to the block for modification
-        block.call(staged_path) if block
+        block&.call(staged_path)
 
         # Validate the changes
         validate_result = validate(staged_path, command: validation_command)

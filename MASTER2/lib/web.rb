@@ -22,9 +22,7 @@ module MASTER
 
     def browse(url)
       uri = URI(url)
-      unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
-        return Result.err("Invalid URL scheme: #{uri.scheme}")
-      end
+      return Result.err("Invalid URL scheme: #{uri.scheme}") unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
 
       status  = nil
       content = nil
@@ -71,7 +69,11 @@ module MASTER
     rescue StandardError => e
       Result.err("Browse JS failed: #{e.message}")
     ensure
-      browser&.quit rescue StandardError
+      begin
+        browser&.quit
+      rescue StandardError
+        StandardError
+      end
     end
 
     # Dynamic CSS selector discovery using LLM + vision
@@ -83,8 +85,8 @@ module MASTER
       page.go_to(url)
       sleep BROWSER_LOAD_DELAY
 
-      html_snippet    = page.body[0..MAX_HTML_FOR_DISCOVERY]
-      screenshot_b64  = page.screenshot(format: :png, encoding: :base64)
+      html_snippet = page.body[0..MAX_HTML_FOR_DISCOVERY]
+      page.screenshot(format: :png, encoding: :base64)
 
       browser.quit
 

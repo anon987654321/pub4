@@ -25,13 +25,16 @@ module MASTER
                    "--pitch=#{pitch}",
                    "--write-media", "-"]
 
-        null = RUBY_PLATFORM =~ /mingw|mswin|cygwin/ ? "NUL" : "/dev/null"
+        null = RUBY_PLATFORM =~ /mingw|mswin|cygwin/ ? File::NULL : File::NULL
 
         tts = IO.popen(tts_cmd, "rb", err: null)
         fx = IO.popen([ffmpeg, "-i", "pipe:0", "-af", fx_filter, "-f", "wav", "pipe:1"], "r+b", err: null)
         play = IO.popen([ffplay, "-nodisp", "-autoexit", "-i", "pipe:0"], "wb", err: null)
 
-        Thread.new { IO.copy_stream(tts, fx); fx.close_write }
+        Thread.new do
+          IO.copy_stream(tts, fx)
+          fx.close_write
+        end
         IO.copy_stream(fx, play)
 
         [tts, fx, play].each(&:close)

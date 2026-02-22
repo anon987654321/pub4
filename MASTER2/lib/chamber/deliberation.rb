@@ -75,7 +75,7 @@ module MASTER
         @cost += data[:cost] || 0
 
         data[:content]
-      rescue StandardError => e
+      rescue StandardError
         @llm.open_circuit!(model)
         nil
       end
@@ -103,7 +103,7 @@ module MASTER
         @cost += data[:cost] || 0
 
         data[:content]
-      rescue StandardError => e
+      rescue StandardError
         proposals.first[:proposal]
       end
     end

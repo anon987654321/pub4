@@ -11,7 +11,7 @@ module MASTER
         system_msg = {
           role: "system",
           content: "You are a concise, thoughtful assistant. Respond naturally in prose. " \
-                   "Keep replies short unless asked to elaborate. No bullet points unless requested."
+                   "Keep replies short unless asked to elaborate. No bullet points unless requested.",
         }
 
         loop do
@@ -32,15 +32,15 @@ module MASTER
             input,
             messages: messages,
             tier: :fast,
-            stream: true
+            stream: true,
           )
 
           if result.ok?
             content = result.value[:content]
             puts
             session.add_assistant(content, cost: result.value[:cost]) if session.respond_to?(:add_assistant)
-          else
-            UI.error(result.error) if defined?(UI)
+          elsif defined?(UI)
+            UI.error(result.error)
           end
         end
 

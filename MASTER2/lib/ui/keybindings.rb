@@ -3,20 +3,20 @@
 module MASTER
   module Keybindings
     BINDINGS = {
-      ctrl_c:    { action: :interrupt,   desc: "Cancel current operation" },
-      ctrl_d:    { action: :exit,        desc: "Exit MASTER" },
-      ctrl_l:    { action: :clear,       desc: "Clear screen" },
-      ctrl_r:    { action: :history,     desc: "Search history" },
-      ctrl_z:    { action: :undo,        desc: "Undo last operation" },
-      ctrl_y:    { action: :redo,        desc: "Redo undone operation" },
-      tab:       { action: :autocomplete, desc: "Tab completion" },
-      up:        { action: :history_up,  desc: "Previous command" },
-      down:      { action: :history_down, desc: "Next command" },
-      f1:        { action: :help,        desc: "Show help" },
-      f2:        { action: :status,      desc: "Show status" }
+      ctrl_c: { action: :interrupt,   desc: "Cancel current operation" },
+      ctrl_d: { action: :exit,        desc: "Exit MASTER" },
+      ctrl_l: { action: :clear,       desc: "Clear screen" },
+      ctrl_r: { action: :history,     desc: "Search history" },
+      ctrl_z: { action: :undo,        desc: "Undo last operation" },
+      ctrl_y: { action: :redo,        desc: "Redo undone operation" },
+      tab: { action: :autocomplete, desc: "Tab completion" },
+      up: { action: :history_up, desc: "Previous command" },
+      down: { action: :history_down, desc: "Next command" },
+      f1: { action: :help,        desc: "Show help" },
+      f2: { action: :status,      desc: "Show status" },
     }.freeze
 
-    extend self
+    module_function
 
     def setup(reader)
       return unless reader.respond_to?(:on)
@@ -29,11 +29,10 @@ module MASTER
     def help_text
       lines = ["Keyboard Shortcuts:", ""]
       BINDINGS.each do |key, info|
-        key_name = key.to_s.gsub('_', '+').gsub('ctrl', 'Ctrl')
+        key_name = key.to_s.gsub("_", "+").gsub("ctrl", "Ctrl")
         lines << "  #{key_name.ljust(12)} #{info[:desc]}"
       end
       lines.join("\n")
     end
   end
-
 end

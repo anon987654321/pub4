@@ -3,7 +3,7 @@
 module MASTER
   # ProblemSolver - Systematic 5-fix approach to debugging
   module ProblemSolver
-    extend self
+    module_function
 
     HOSTILE = [
       "What if the bug is in a different file?",
@@ -15,18 +15,18 @@ module MASTER
       "What if it's data, not code?",
       "What if it only works on your machine?",
       "What if you're fixing symptoms, not cause?",
-      "What if deleting the feature is simpler?"
+      "What if deleting the feature is simpler?",
     ].freeze
 
     FIXES = {
-      surgical:   { effort: 1, desc: "Minimal change to exact broken line" },
-      defensive:  { effort: 2, desc: "Add guards, nil checks, validations" },
-      refactor:   { effort: 3, desc: "Restructure to eliminate bug class" },
+      surgical: { effort: 1, desc: "Minimal change to exact broken line" },
+      defensive: { effort: 2, desc: "Add guards, nil checks, validations" },
+      refactor: { effort: 3, desc: "Restructure to eliminate bug class" },
       workaround: { effort: 2, desc: "Route around it, don't touch it" },
-      rewrite:    { effort: 4, desc: "Rewrite function from scratch" }
+      rewrite: { effort: 4, desc: "Rewrite function from scratch" },
     }.freeze
 
-    PROMPT = <<~P.freeze
+    PROMPT = <<~P
       You are a senior debugger. Analyze this bug systematically.
 
       ERROR: {{ERROR}}
@@ -50,14 +50,14 @@ module MASTER
 
     def analyze(error:, code:, llm: LLM)
       prompt = PROMPT.gsub("{{ERROR}}", error.to_s[0, 1000])
-                     .gsub("{{CODE}}", code.to_s[0, 3000])
+        .gsub("{{CODE}}", code.to_s[0, 3000])
 
       result = llm.ask(prompt, tier: :fast)
       if result.ok?
         {
           analysis: result.value[:content],
           hostile_check: HOSTILE.sample,
-          fixes: FIXES.keys
+          fixes: FIXES.keys,
         }
       else
         { error: result.error }

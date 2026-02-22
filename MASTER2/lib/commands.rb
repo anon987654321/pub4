@@ -31,23 +31,25 @@ module MASTER
       case cmd
       when "replicate", "repligen", "generate-image"
         return puts "Usage: replicate <prompt>" if args.nil? || args.empty?
+
         result = ReplicateBridge.generate_image(prompt: args)
         if result.ok?
           puts "+ image: #{result.value[:urls]&.first || result.value}"
         else
-          $stderr.puts "- #{result.error}"
+          warn "- #{result.error}"
         end
       when "generate-video"
         return puts "Usage: generate-video <prompt>" if args.nil? || args.empty?
+
         result = ReplicateBridge.generate_video(prompt: args)
         if result.ok?
           puts "+ video: #{result.value[:urls]&.first || result.value}"
         else
-          $stderr.puts "- #{result.error}"
+          warn "- #{result.error}"
         end
       end
     rescue StandardError => e
-      $stderr.puts "replicate: #{e.message}"
+      warn "replicate: #{e.message}"
     end
 
     # Narrate command handler
@@ -62,7 +64,7 @@ module MASTER
       print_narration_results(result) if result.ok?
       result
     rescue StandardError => e
-      $stderr.puts "narrate: #{e.message}"
+      warn "narrate: #{e.message}"
       Result.err(e.message)
     end
 
@@ -77,6 +79,7 @@ module MASTER
       selected = all_segments.select { |seg| segment_ids.include?(seg[:id]) }
 
       return Result.err("no matching segments") if selected.empty?
+
       Result.ok(selected)
     end
 
@@ -109,31 +112,34 @@ module MASTER
           if result.ok?
             puts "+ #{operation}: #{result.value}"
           else
-            $stderr.puts "- #{result.error}"
+            warn "- #{result.error}"
           end
         elsif target
           result = PostproBridge.enhance(image_url: target, operation: operation)
           if result.ok?
             puts "+ #{operation}: #{result.value[:urls]&.first || result.value}"
           else
-            $stderr.puts "- #{result.error}"
+            warn "- #{result.error}"
           end
         else
           puts "Usage: postpro <operation|preset> <path|url>"
         end
       when "enhance", "upscale"
         return puts "Usage: #{cmd} <image_url>" if args.nil? || args.empty?
-        result = cmd == "upscale" ?
-          PostproBridge.upscale(image_url: args) :
-          PostproBridge.enhance(image_url: args, operation: :upscale)
+
+        result = if cmd == "upscale"
+                   PostproBridge.upscale(image_url: args)
+                 else
+                   PostproBridge.enhance(image_url: args, operation: :upscale)
+                 end
         if result.ok?
           puts "+ #{result.value[:urls]&.first || result.value}"
         else
-          $stderr.puts "- #{result.error}"
+          warn "- #{result.error}"
         end
       end
     rescue StandardError => e
-      $stderr.puts "postpro: #{e.message}"
+      warn "postpro: #{e.message}"
     end
 
     # Fuzzy match for command suggestions (moved from Onboarding)
@@ -274,6 +280,7 @@ module MASTER
       # Handle shortcuts
       if input.strip == "!!"
         return Result.err("No previous command.") unless @last_command
+
         input = @last_command
       elsif (shortcut = SHORTCUTS[input.strip])
         input = shortcut.is_a?(Symbol) ? @last_command : shortcut
@@ -446,8 +453,6 @@ module MASTER
         HANDLED
       when "exit", "quit"
         :exit
-      else
-        nil
       end
     end
 
@@ -490,7 +495,10 @@ module MASTER
 
       # Natural-language self-refactor requests
       if lowered.match?(/\b(self[\s-]?run|run .* through itself|refactor .* every|rewrite .* every|all files|entire repo|codebase)\b/)
-        return "selfrun --strict --axioms --all-files" if lowered.match?(/\b(strict|axiom|every|all|entire|iterative|loop|diminishing)\b/)
+        if lowered.match?(/\b(strict|axiom|every|all|entire|iterative|loop|diminishing)\b/)
+          return "selfrun --strict --axioms --all-files"
+        end
+
         return "selfrun"
       end
 

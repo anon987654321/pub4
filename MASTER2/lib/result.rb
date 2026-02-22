@@ -43,6 +43,7 @@ module MASTER
     # @raise [RuntimeError] if err
     def value!
       raise(@error.to_s) if err?
+
       @value
     end
 
@@ -63,6 +64,7 @@ module MASTER
     # @return [Result] New result with transformed value or same err
     def map
       return self if err?
+
       Result.ok(yield(@value))
     rescue StandardError => e
       Result.err(e.message)
@@ -73,8 +75,10 @@ module MASTER
     # @return [Result] Result from block or same err
     def flat_map
       return self if err?
+
       result = yield(@value)
       raise TypeError, "flat_map block must return Result, got #{result.class}" unless result.is_a?(Result)
+
       result
     rescue TypeError
       raise
@@ -88,13 +92,15 @@ module MASTER
     # @return [Result] Result from block or labeled err
     def and_then(label = nil)
       return self if err?
+
       result = yield(@value)
       raise TypeError, "and_then block must return Result, got #{result.class}" unless result.is_a?(Result)
+
       result
     rescue TypeError
       raise
     rescue StandardError => e
-      Result.err("#{label ? "#{label}: " : ""}#{e.message}")
+      Result.err("#{"#{label}: " if label}#{e.message}")
     end
 
     def inspect
@@ -168,9 +174,16 @@ module MASTER
       when Set then Set.new(obj.map { |v| deep_dup(v) })
       when String then obj.dup
       else
-        obj.frozen? ? obj : (obj.dup rescue obj)
+        if obj.frozen?
+          obj
+        else
+          begin
+            obj.dup
+          rescue StandardError
+            obj
+          end
+        end
       end
     end
   end
-
 end

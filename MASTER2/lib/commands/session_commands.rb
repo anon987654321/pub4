@@ -32,15 +32,17 @@ module MASTER
             "  ID:       #{s.id}",
             "  Messages: #{s.message_count}",
             "  Cost:     #{UI.currency_precise(s.total_cost)}",
-            "  Created:  #{s.created_at}"
+            "  Created:  #{s.created_at}",
           ].join("\n")
           puts
         when "replay"
           return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
+
           id = parts[1] || Session.current.id
           SessionReplay.replay(id)
         when "list-detail", "ls"
           return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
+
           result = SessionReplay.list_with_summaries
           if result.ok?
             UI.header("Sessions (detailed)")
@@ -53,6 +55,7 @@ module MASTER
           end
         when "diff"
           return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
+
           if parts.size >= 3
             result = SessionReplay.diff_sessions(parts[1], parts[2])
             if result.ok?
@@ -70,6 +73,7 @@ module MASTER
           end
         when "export"
           return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
+
           id = parts[1] || Session.current.id
           format = args&.include?("--md") ? :markdown : :json
           result = SessionReplay.replay(id, format: format)
@@ -124,7 +128,8 @@ module MASTER
         end
 
         # IMMUTABLE_HISTORY: append tombstone instead of mutating
-        session.history << { role: :system, content: "[UNDO: Previous 2 messages hidden]", tombstone: true, undone_at: Time.now.utc.iso8601 }
+        session.history << { role: :system, content: "[UNDO: Previous 2 messages hidden]", tombstone: true,
+                             undone_at: Time.now.utc.iso8601 }
         session.instance_variable_set(:@undo_count, (session.instance_variable_get(:@undo_count) || 0) + 1)
         session.instance_variable_set(:@dirty, true)
         puts "  Marked last exchange as undone. Context preserved for history."
@@ -150,6 +155,7 @@ module MASTER
 
       def truncate(str, max)
         return str if str.length <= max
+
         "#{str[0, max - 3]}..."
       end
     end

@@ -82,9 +82,7 @@ module MASTER
           max_len = [diff1.length, diff2.length].max
           return 0.0 if max_len == 0
 
-          unless defined?(Utils) && Utils.respond_to?(:levenshtein)
-            return 0.0
-          end
+          return 0.0 unless defined?(Utils) && Utils.respond_to?(:levenshtein)
 
           distance = Utils.levenshtein(diff1, diff2)
           1.0 - (distance.to_f / max_len)
@@ -149,9 +147,13 @@ module MASTER
         end
 
         def content_hash(path)
-          require 'digest'
-          files = Dir.glob(File.join(path, 'lib', '**', '*.rb'))
-          content = files.sort.map { |f| File.read(f) rescue '' }.join
+          require "digest"
+          files = Dir.glob(File.join(path, "lib", "**", "*.rb"))
+          content = files.sort.map do |f|
+            File.read(f)
+          rescue StandardError
+            ""
+          end.join
           Digest::SHA256.hexdigest(content)
         end
 
@@ -169,20 +171,24 @@ module MASTER
           distance.to_f / max_length
         end
 
-        def audit(path, compare_ref: 'HEAD~5')
+        def audit(path, compare_ref: "HEAD~5")
           features = extract_features(path)
           {
             current_count: features.size,
-            features: features
+            features: features,
           }
         end
 
         def extract_features(path)
-          files = Dir.glob(File.join(path, 'lib', '**', '*.rb'))
+          files = Dir.glob(File.join(path, "lib", "**", "*.rb"))
           features = []
 
           files.each do |file|
-            content = File.read(file) rescue next
+            content = begin
+              File.read(file)
+            rescue StandardError
+              next
+            end
             content.scan(/(?:class|module)\s+(\w+)/) { |m| features << m[0] }
             content.scan(/def\s+(\w+)/) { |m| features << m[0] }
           end
@@ -203,14 +209,12 @@ module MASTER
 
           scores = history.map { |h| h[:score] || h[:violations] || 0 }
 
-          (2..history.size / 2).each do |len|
+          (2..(history.size / 2)).each do |len|
             cycle = scores.last(len * 2)
             first_half = cycle.first(len)
             second_half = cycle.last(len)
 
-            if first_half.zip(second_half).all? { |a, b| (a - b).abs < MIN_DELTA }
-              return len
-            end
+            return len if first_half.zip(second_half).all? { |a, b| (a - b).abs < MIN_DELTA }
           end
 
           nil

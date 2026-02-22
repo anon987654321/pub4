@@ -86,7 +86,7 @@ module MASTER
       private
 
       def detect_language(filename)
-        LANGUAGE_PATTERNS.find { |lang, pattern| filename.match?(pattern) }&.first || :unknown
+        LANGUAGE_PATTERNS.find { |_lang, pattern| filename.match?(pattern) }&.first || :unknown
       end
 
       def extract_sections(content, lang)
@@ -112,11 +112,12 @@ module MASTER
                  when /^require/ then :imports
                  when /^[A-Z][A-Z0-9_]*\s*=/ then :constants
                  when /^(module|class)\s/ then :types
-                 when "private" then visibility = :private; nil
-                 when "protected" then visibility = :internal; nil
+                 when "private" then visibility = :private
+                                     nil
+                 when "protected" then visibility = :internal
+                                       nil
                  when /^def\s+self\./ then :public_api
                  when /^def\s/ then visibility
-                 else nil
                  end
 
           if type && type != current[:type]
@@ -137,14 +138,13 @@ module MASTER
         content.each_line do |line|
           type = case line.strip
                  when /^['"]use strict['"]/ then :meta
-                 when /^\/\*\*/ then :meta  # JSDoc
+                 when %r{^/\*\*} then :meta # JSDoc
                  when /^(import|require)\s/ then :imports
                  when /^(const|let|var)\s+[A-Z][A-Z0-9_]*\s*=/ then :constants
                  when /^(interface|type)\s/ then :types
                  when /^(class|function)\s/ then :public_api
                  when /^export\s/ then :public_api
                  when /^(const|let|var)\s+_/ then :private
-                 else nil
                  end
 
           if type && type != current[:type]
@@ -170,7 +170,6 @@ module MASTER
                  when /^const\s/ then :constants
                  when /^func\s+[A-Z]/ then :public_api  # Exported (uppercase)
                  when /^func\s+[a-z]/ then :private     # Unexported (lowercase)
-                 else nil
                  end
 
           if type && type != current[:type]
@@ -201,7 +200,6 @@ module MASTER
                    when /^#\s/ then :public_api      # h1 = main content
                    when /^##\s/ then :internal       # h2 = subsections
                    when /^###/ then :private         # h3+ = details
-                   else nil
                    end
           end
 
@@ -225,7 +223,6 @@ module MASTER
           type = case line
                  when /^#/ then :meta
                  when /^[a-z_]+:/ then :public_api
-                 else nil
                  end
 
           if type && type != current[:type]
@@ -262,6 +259,7 @@ module MASTER
 
       def needs_blank_line?(prev_section, curr_section)
         return false unless prev_section
+
         prev_section[:type] != curr_section[:type]
       end
 
@@ -272,4 +270,3 @@ module MASTER
     end
   end
 end
-

@@ -14,7 +14,7 @@ module MASTER
           total: axioms.size,
           by_category: count_by_key(axioms, "category"),
           by_protection: count_by_key(axioms, "protection"),
-          axioms: axioms
+          axioms: axioms,
         }
       end
 
@@ -24,7 +24,7 @@ module MASTER
 
         lines = []
         lines << "Language Axioms Summary"
-        lines << "=" * 40
+        lines << ("=" * 40)
         lines << ""
         lines << "Total axioms: #{data[:total]}"
         lines << ""
@@ -59,7 +59,10 @@ module MASTER
         begin
           YAML.safe_load_file(axioms_path) || []
         rescue StandardError => e
-          MASTER::Logging.warn("Failed to load axioms file: #{e.message}", subsystem: "review.axiom_stats") if defined?(MASTER::Logging)
+          if defined?(MASTER::Logging)
+            MASTER::Logging.warn("Failed to load axioms file: #{e.message}",
+                                 subsystem: "review.axiom_stats")
+          end
           []
         end
       end

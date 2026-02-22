@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "shellwords"
 require "digest"
 
@@ -8,14 +9,13 @@ module MASTER
     # Ported from MASTER v1 cli.rb prescan ritual
     module Prescan
       extend self
+
       TREE_EXCLUDES = %w[. .. .git vendor tmp node_modules var].freeze
 
       def run(path = MASTER.root, tree_depth: 4, cache: false)
         path = File.expand_path(path)
         @cache ||= {}
-        if cache && @cache.key?(path)
-          return @cache[path]
-        end
+        return @cache[path] if cache && @cache.key?(path)
 
         tree_lines = project_tree(path, max_depth: tree_depth)
         results = {
@@ -54,10 +54,11 @@ module MASTER
           connector = last ? "+-- " : "|-- "
           lines << "#{indent}#{connector}#{entry}"
 
-          if File.directory?(path)
-            extension = last ? "    " : "|   "
-            lines.concat(file_tree(path, indent: "#{indent}#{extension}", max_depth: max_depth, depth: depth + 1, exclude: exclude))
-          end
+          next unless File.directory?(path)
+
+          extension = last ? "    " : "|   "
+          lines.concat(file_tree(path, indent: "#{indent}#{extension}", max_depth: max_depth, depth: depth + 1,
+                                       exclude: exclude))
         end
 
         lines
@@ -68,14 +69,10 @@ module MASTER
 
         Dir.glob(File.join(path, "**", "*.rb")).each do |file|
           lines = File.readlines(file).size
-          if lines > 500
-            large_files << { file: file, lines: lines }
-          end
+          large_files << { file: file, lines: lines } if lines > 500
         end
 
-        if large_files.any?
-          UI.warn("sprawl: #{large_files.size} files >500 lines")
-        end
+        UI.warn("sprawl: #{large_files.size} files >500 lines") if large_files.any?
 
         large_files
       end
@@ -99,7 +96,7 @@ module MASTER
 
         output = `git -C #{Shellwords.escape(path)} log --oneline --decorate -#{limit} 2>/dev/null`
         commits = output.lines.map(&:strip).reject(&:empty?)
-        if (ENV["MASTER_VERBOSE"] || ENV["MASTER_DEBUG"]) && !commits.empty?
+        if (ENV["MASTER_VERBOSE"] || ENV.fetch("MASTER_DEBUG", nil)) && !commits.empty?
           puts UI.dim("\nRecent commits:")
           commits.each { |line| puts line }
         end

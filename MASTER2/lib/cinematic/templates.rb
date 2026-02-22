@@ -5,31 +5,31 @@ module MASTER
     # Cinematic presets - film looks and color grades
     def self.presets
       @presets ||= {
-        'blade-runner' => {
-          description: 'Cyberpunk aesthetic: neon, rain, cyan/orange split tones',
+        "blade-runner" => {
+          description: "Cyberpunk aesthetic: neon, rain, cyan/orange split tones",
           models: [Replicate::MODELS[:sdxl], Replicate::MODELS[:gfpgan]],
-          params: { guidance_scale: 12.0, strength: 0.6 }
+          params: { guidance_scale: 12.0, strength: 0.6 },
         },
-        'wes-anderson' => {
-          description: 'Symmetrical, pastel palette, centered compositions',
+        "wes-anderson" => {
+          description: "Symmetrical, pastel palette, centered compositions",
           models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 8.0, strength: 0.5 }
+          params: { guidance_scale: 8.0, strength: 0.5 },
         },
-        'noir' => {
-          description: 'High contrast black and white, dramatic shadows',
+        "noir" => {
+          description: "High contrast black and white, dramatic shadows",
           models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 10.0, strength: 0.7 }
+          params: { guidance_scale: 10.0, strength: 0.7 },
         },
-        'golden-hour' => {
-          description: 'Warm, soft, glowing light',
+        "golden-hour" => {
+          description: "Warm, soft, glowing light",
           models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 9.0, strength: 0.5 }
+          params: { guidance_scale: 9.0, strength: 0.5 },
         },
-        'teal-orange' => {
-          description: 'Hollywood blockbuster: teal shadows, orange highlights',
+        "teal-orange" => {
+          description: "Hollywood blockbuster: teal shadows, orange highlights",
           models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 11.0, strength: 0.6 }
-        }
+          params: { guidance_scale: 11.0, strength: 0.6 },
+        },
       }.freeze
     end
 
@@ -50,8 +50,6 @@ module MASTER
 
         Result.ok(pipeline)
       end
-
-      private
 
       def self.discover_models(category)
         # Use Replicate.models_for to get model IDs from categories
@@ -78,9 +76,9 @@ module MASTER
 
       def self.generate_creative_params
         {
-          'seed' => rand(1..999999),
-          'guidance_scale' => rand(5.0..15.0).round(1),
-          'num_inference_steps' => rand(20..50)
+          "seed" => rand(1..999_999),
+          "guidance_scale" => rand(5.0..15.0).round(1),
+          "num_inference_steps" => rand(20..50),
         }
       end
     end

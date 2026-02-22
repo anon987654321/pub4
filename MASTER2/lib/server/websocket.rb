@@ -48,15 +48,13 @@ module MASTER
                     cost: result.value[:cost] || 0.0,
                   }
                   connection.write({ type: "done", meta: meta }.to_json)
-                  connection.flush
                 else
                   connection.write({ type: "error", message: result.error }.to_json)
-                  connection.flush
                 end
               else
                 connection.write({ type: "error", message: "Unknown message type" }.to_json)
-                connection.flush
               end
+              connection.flush
             rescue JSON::ParserError
               connection.write({ type: "error", message: "Invalid JSON" }.to_json)
               connection.flush

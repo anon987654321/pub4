@@ -45,7 +45,7 @@ module MASTER
           duration: calculate_duration(history),
           has_diffs: history.any? { |h| h.dig(:metadata, :contains_diff) || h[:type] == :diff },
           crashed: data.dig(:metadata, :crashed) || false,
-          metadata: data[:metadata] || {}
+          metadata: data[:metadata] || {},
         }
       end.compact
 
@@ -127,7 +127,7 @@ module MASTER
       Result.ok(messages: history.size, cost: total_cost)
     end
 
-    def render_json(data, history)
+    def render_json(data, _history)
       Result.ok(data)
     end
 
@@ -143,7 +143,7 @@ module MASTER
         cost = msg[:cost]
 
         lines << "## Turn #{idx + 1} (#{role})"
-        lines << "#{content}"
+        lines << content.to_s
         lines << "*Cost: #{UI.currency_precise(cost)}*" if cost && cost > 0
         lines << ""
       end
@@ -154,7 +154,9 @@ module MASTER
     def calculate_duration(history)
       return "unknown" if history.empty?
 
-      timestamps = history.map { |h| begin; Time.parse(h[:timestamp]); rescue ArgumentError, TypeError; nil; end }.compact
+      timestamps = history.map do |h|
+        Time.parse(h[:timestamp]); rescue ArgumentError, TypeError; nil
+      end.compact
       return "unknown" if timestamps.size < 2
 
       seconds = (timestamps.last - timestamps.first).to_i

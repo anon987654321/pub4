@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "English"
 require "yaml"
 require "time"
 require "fileutils"
@@ -28,11 +29,12 @@ module MASTER
 
       def load_config
         return {} unless File.exist?(HOOKS_FILE)
+
         YAML.safe_load_file(HOOKS_FILE) || {}
       end
 
       def run(event, context = {})
-        Logging.dmesg_log('hooks', message: 'ENTER hooks.run')
+        Logging.dmesg_log("hooks", message: "ENTER hooks.run")
         actions = config[event.to_s] || []
         results = []
 
@@ -118,7 +120,7 @@ module MASTER
             event: event,
             executed: results.size,
             results: results,
-            success: results.all? { |r| r[:result].is_a?(Result) ? r[:result].ok? : true }
+            success: results.all? { |r| r[:result].is_a?(Result) ? r[:result].ok? : true },
           }
         end
       end
@@ -178,6 +180,7 @@ module MASTER
 
       def backup_file(file)
         return false unless file && File.exist?(file)
+
         backup = "#{file}.bak"
         FileUtils.cp(file, backup)
         true
@@ -185,6 +188,7 @@ module MASTER
 
       def validate_ruby_syntax(target)
         return true unless target
+
         if File.exist?(target.to_s)
           # Use array form to avoid shell interpretation - prevents injection attacks
           system("ruby", "-c", target.to_s, out: File::NULL, err: File::NULL)
@@ -202,7 +206,7 @@ module MASTER
         return Result.err("No test files found") if test_files.empty?
 
         output = `ruby -e "ARGV.each { |f| load f }" #{test_files.map { |f| Shellwords.escape(f) }.join(" ")} 2>&1`
-        $?.success? ? Result.ok("Tests passed") : Result.err("Tests failed: #{output.lines.last(5).join}")
+        $CHILD_STATUS.success? ? Result.ok("Tests passed") : Result.err("Tests failed: #{output.lines.last(5).join}")
       end
 
       def log(msg)

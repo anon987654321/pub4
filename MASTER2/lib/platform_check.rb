@@ -32,6 +32,7 @@ module MASTER
 
     def system_headers_accessible?
       return true unless openbsd?
+
       File.exist?("/usr/include/libxml2/libxml/tree.h")
     end
 
@@ -41,7 +42,7 @@ module MASTER
       unless bundler_available?
         issues << {
           problem: "Bundler not installed",
-          fix: "gem install bundler --no-document"
+          fix: "gem install bundler --no-document",
         }
       end
 
@@ -49,14 +50,14 @@ module MASTER
         unless nokogiri_configured?
           issues << {
             problem: "Nokogiri not configured for OpenBSD system libraries",
-            fix: "bundle config build.nokogiri --use-system-libraries"
+            fix: "bundle config build.nokogiri --use-system-libraries",
           }
         end
 
         unless system_headers_accessible?
           issues << {
             problem: "OpenBSD system headers not accessible",
-            fix: "verify /usr/include exists (should be in base system)"
+            fix: "verify /usr/include exists (should be in base system)",
           }
         end
       end
@@ -64,7 +65,7 @@ module MASTER
       unless platform_in_lockfile?
         issues << {
           problem: "Gemfile.lock missing ruby platform",
-          fix: "bundle lock --add-platform ruby"
+          fix: "bundle lock --add-platform ruby",
         }
       end
 
@@ -76,14 +77,15 @@ module MASTER
       return true if issues.empty?
 
       issues.each do |issue|
-        $stderr.puts "  - #{issue[:problem]}"
-        $stderr.puts "    fix: #{issue[:fix]}"
+        warn "  - #{issue[:problem]}"
+        warn "    fix: #{issue[:fix]}"
       end
       false
     end
 
     def openbsd_version
       return nil unless openbsd?
+
       version = `uname -r 2>/dev/null`.strip
       version.empty? ? "unknown" : version
     rescue StandardError

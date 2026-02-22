@@ -62,6 +62,7 @@ module MASTER
       # Fallback syntax heuristic when no external linter is present.
       return false unless balanced?(content, "{", "}")
       return false unless balanced?(content, "(", ")")
+
       true
     end
 
@@ -104,7 +105,7 @@ module MASTER
     end
 
     def basic_tag_balance?(content)
-      opens = content.scan(/<([a-zA-Z][\w:-]*)\b(?![^>]*\/>)[^>]*>/).flatten
+      opens = content.scan(%r{<([a-zA-Z][\w:-]*)\b(?![^>]*/>)[^>]*>}).flatten
       closes = content.scan(%r{</([a-zA-Z][\w:-]*)>}).flatten
       opens.tally == closes.tally
     end

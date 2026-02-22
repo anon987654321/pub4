@@ -6,7 +6,7 @@ module MASTER
     # Inspired by OpenClaw PR #23110 credential firewall pattern (gistfile10)
     # A credential registered for api.openai.com CANNOT be used for any other domain.
     module CredentialStore
-      extend self
+      module_function
 
       @store = {}
       @store_mutex = Mutex.new
@@ -39,7 +39,8 @@ module MASTER
           return Result.err("Unknown credential: #{name}") unless entry
 
           unless entry[:domains].include?(for_domain)
-            Logging.dmesg_log("cred0", message: "action=BLOCKED name=#{name} requested_domain=#{for_domain} pinned=#{entry[:domains].to_a.join(',')}")
+            Logging.dmesg_log("cred0",
+                              message: "action=BLOCKED name=#{name} requested_domain=#{for_domain} pinned=#{entry[:domains].to_a.join(',')}")
             return Result.err("Credential '#{name}' not authorized for domain '#{for_domain}'")
           end
 

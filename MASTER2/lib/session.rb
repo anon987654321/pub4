@@ -21,7 +21,7 @@ module MASTER
   class Session
     attr_reader :id, :created_at, :history, :metadata
 
-    AUTOSAVE_INTERVAL = 30  # seconds
+    AUTOSAVE_INTERVAL = 30 # seconds
     SESSION_MUTEX = Mutex.new
     SUPPORTED_LANGUAGES = %i[english norwegian].freeze
 
@@ -114,6 +114,7 @@ module MASTER
     def autosave_if_needed
       return unless @dirty
       return if Time.now - @last_save < AUTOSAVE_INTERVAL
+
       save
     end
 
@@ -162,9 +163,7 @@ module MASTER
 
       # Set current session
       # @param session [Session] Session to set as current
-      def current=(session)
-        @current = session
-      end
+      attr_writer :current
 
       # Resume existing session by ID
       # @param id [String] Session ID to resume
@@ -207,10 +206,10 @@ module MASTER
         return unless @current&.dirty?
 
         @current.instance_variable_set(:@metadata,
-          @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
+                                       @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
         @current.save
       rescue StandardError => e
-        $stderr.puts "session: crash save failed: #{e.message}"
+        warn "session: crash save failed: #{e.message}"
       end
     end
 
@@ -227,6 +226,7 @@ module MASTER
     # Delegate language methods to Language module
     class << self
       extend Forwardable
+
       def_delegators :Language, :detect_language, :norwegian_style_check
       def_delegators :Persona, :set_persona, :current_persona
     end

@@ -6,7 +6,7 @@ module MASTER
     # Based on iMAD (AAAI 2026, arXiv:2511.11306): saves ~92% council compute
     # by only escalating to multi-agent debate when primary agent shows uncertainty.
     module HesitationDetector
-      extend self
+      module_function
 
       # Linguistic uncertainty markers (calibrated from iMAD paper)
       UNCERTAINTY_PATTERNS = [
@@ -47,7 +47,9 @@ module MASTER
         score = confidence_score(response)
         escalate = score < CONFIDENCE_THRESHOLD
 
-          Logging.dmesg_log("hesit0", message: "score=#{score.round(2)} escalate=#{escalate} context=#{context&.to_s&.slice(0, 60)}")
+        Logging.dmesg_log("hesit0",
+                          message: "score=#{score.round(2)} escalate=#{escalate} context=#{context&.to_s&.slice(0,
+                                                                                                                60)}")
 
         { score: score, escalate: escalate }
       end

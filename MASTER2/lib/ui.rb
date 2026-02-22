@@ -10,7 +10,8 @@ require_relative "ui/convenience"
 
 module MASTER
   module UI
-    extend self
+    module_function
+
     extend Components
     extend Utilities
     extend Convenience
@@ -43,6 +44,7 @@ module MASTER
     # @param context [Hash] Additional context
     def internal(message, **context)
       return unless defined?(Logging) && Logging.respond_to?(:debug)
+
       Logging.debug("[internal] #{message}", **context)
     end
 
@@ -50,9 +52,9 @@ module MASTER
     # @param message [String] Progress message
     def progress(message)
       if defined?(Logging) && Logging.respond_to?(:dmesg_log)
-        Logging.dmesg_log('progress0', message: message, level: Logging::ALL_EVENTS)
+        Logging.dmesg_log("progress0", message: message, level: Logging::ALL_EVENTS)
       end
-      $stderr.puts dim("  #{message}")
+      warn dim("  #{message}")
     end
 
     # User-facing output - goes to stdout (what the user sees)

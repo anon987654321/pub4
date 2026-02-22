@@ -32,7 +32,7 @@ module MASTER
         fn = Fiddle::Function.new(
           LIBC["pledge"],
           [Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP],
-          Fiddle::TYPE_INT
+          Fiddle::TYPE_INT,
         )
         r = fn.call(promises, execpromises)
         raise Error, "pledge(2) failed: errno #{Fiddle.last_error}" unless r.zero?
@@ -49,7 +49,7 @@ module MASTER
         fn = Fiddle::Function.new(
           LIBC["unveil"],
           [Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP],
-          Fiddle::TYPE_INT
+          Fiddle::TYPE_INT,
         )
         r = fn.call(path, permissions)
         raise Error, "unveil(2) failed: errno #{Fiddle.last_error}" unless r.zero?

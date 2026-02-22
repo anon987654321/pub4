@@ -18,10 +18,10 @@ module MASTER
 
           # Step 1: Audit scan
           audit_result = if defined?(Audit)
-            Audit.scan(files)
-          else
-            return Result.err("Audit module not available.")
-          end
+                           Audit.scan(files)
+                         else
+                           return Result.err("Audit module not available.")
+                         end
 
           return audit_result unless audit_result.ok?
 
@@ -40,17 +40,15 @@ module MASTER
             end
 
             # Step 3: Confirmation gate (unless auto_confirm)
-            unless auto_confirm
-              if defined?(ConfirmationGate)
-                gate_result = ConfirmationGate.gate(
-                  "Repair #{finding.category}",
-                  description: finding.message
-                ) { true }
+            if !auto_confirm && defined?(ConfirmationGate)
+              gate_result = ConfirmationGate.gate(
+                "Repair #{finding.category}",
+                description: finding.message,
+              ) { true }
 
-                unless gate_result.ok?
-                  skipped += 1
-                  next
-                end
+              unless gate_result.ok?
+                skipped += 1
+                next
               end
             end
 
@@ -86,7 +84,7 @@ module MASTER
             repaired: repaired,
             failed: failed,
             skipped: skipped,
-            total: findings.size
+            total: findings.size,
           )
         end
 
@@ -104,10 +102,8 @@ module MASTER
           end
 
           # Try known fix from learning
-          if defined?(LearningFeedback)
-            if LearningFeedback.known_fix?(finding)
-              return LearningFeedback.apply_known(finding)
-            end
+          if defined?(LearningFeedback) && LearningFeedback.known_fix?(finding)
+            return LearningFeedback.apply_known(finding)
           end
 
           Result.err("No fix available for this finding.")
@@ -123,9 +119,7 @@ module MASTER
 
         def record_learning(finding, fix, success:)
           # Record pattern in learning feedback
-          if defined?(LearningFeedback)
-            LearningFeedback.record(finding, fix, success: success)
-          end
+          LearningFeedback.record(finding, fix, success: success) if defined?(LearningFeedback)
         end
       end
     end

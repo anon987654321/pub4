@@ -3,8 +3,6 @@
 module MASTER
   module Review
     module Scanner
-      extend self
-
       OPPORTUNITY_PROMPT = <<~PROMPT
         Analyze this code. Return ONLY a JSON object with four keys:
         architectural, micro, ui_ux, typography.
@@ -85,14 +83,14 @@ module MASTER
           issues = []
 
           CHECKS.each do |name, check|
-            if code.match?(check[:pattern])
-              issues << {
-                check: name,
-                message: check[:message],
-                severity: check[:severity],
-                file: filename,
-              }
-            end
+            next unless code.match?(check[:pattern])
+
+            issues << {
+              check: name,
+              message: check[:message],
+              severity: check[:severity],
+              file: filename,
+            }
           end
 
           score = GOOD_PATTERNS.count { |_, pattern| code.match?(pattern) }
@@ -150,21 +148,26 @@ module MASTER
           all_caps_selectors = css_text.scan(/([^{]+)\{[^}]*text-transform:\s*uppercase[^}]*\}/im).flatten
           all_caps_selectors.each do |sel|
             block = css_text[/#{Regexp.escape(sel)}\{([^}]*)\}/im, 1].to_s
-            ls = block[/letter-spacing:\s*([\-0-9.]+)em/i, 1]
+            ls = block[/letter-spacing:\s*([-0-9.]+)em/i, 1]
             next if ls && ls.to_f >= caps_min_ls && ls.to_f <= caps_max_ls
 
-            issues << { check: :all_caps_letter_spacing, severity: :minor, message: "ALL CAPS missing letter-spacing #{caps_min_ls}-#{caps_max_ls}em" }
+            issues << { check: :all_caps_letter_spacing, severity: :minor,
+                        message: "ALL CAPS missing letter-spacing #{caps_min_ls}-#{caps_max_ls}em" }
           end
 
           family_values = css_text.scan(/font-family:\s*([^;]+);/i).flatten
-          family_count = family_values.flat_map { |v| v.split(",") }.map { |s| s.strip.gsub(/["']/, "") }.reject(&:empty?).uniq.size
+          family_count = family_values.flat_map do |v|
+            v.split(",")
+          end.map { |s| s.strip.gsub(/["']/, "") }.reject(&:empty?).uniq.size
           if family_count > max_families
-            issues << { check: :font_family_count, severity: :minor, message: "font families #{family_count} > #{max_families}" }
+            issues << { check: :font_family_count, severity: :minor,
+                        message: "font families #{family_count} > #{max_families}" }
           end
 
           weight_count = css_text.scan(/font-weight:\s*([0-9]+)/i).flatten.uniq.size
           if weight_count > max_weights
-            issues << { check: :font_weight_count, severity: :minor, message: "font weights #{weight_count} > #{max_weights}" }
+            issues << { check: :font_weight_count, severity: :minor,
+                        message: "font weights #{weight_count} > #{max_weights}" }
           end
 
           grade = case issues.size
@@ -244,20 +247,19 @@ module MASTER
           content = strip_bom(content)
           content = normalize_line_endings(content)
           content = strip_trailing_whitespace(content)
-          content = ensure_final_newline(content)
-          content
+          ensure_final_newline(content)
         end
 
         def clean_file(path)
           original = File.read(path)
           cleaned = clean(original)
 
-          if original != cleaned
+          if original == cleaned
+            false
+          else
             Undo.track_edit(path, original) if defined?(Undo)
             File.write(path, cleaned)
             true
-          else
-            false
           end
         end
 
@@ -276,7 +278,7 @@ module MASTER
         private
 
         def strip_bom(content)
-          content.sub(/\A\xEF\xBB\xBF/, '')
+          content.sub(/\A\xEF\xBB\xBF/, "")
         end
 
         def normalize_line_endings(content)
@@ -284,7 +286,7 @@ module MASTER
         end
 
         def strip_trailing_whitespace(content)
-          content.gsub(/[ \t]+$/, '')
+          content.gsub(/[ \t]+$/, "")
         end
 
         def ensure_final_newline(content)

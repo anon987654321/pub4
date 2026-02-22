@@ -4,7 +4,7 @@ module MASTER
   class Session
     # Persona management
     module Persona
-      extend self
+      module_function
 
       # Set current persona
       def set_persona(persona)

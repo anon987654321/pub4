@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+
+require "English"
 require "shellwords"
 
 module MASTER
@@ -9,14 +11,18 @@ module MASTER
         text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
         body = {
           text: text, tier: LLM.tier,
-          budget: "unlimited", version: VERSION,
+          budget: "unlimited", version: VERSION
         }.to_json
         [200, { CT_HEADER => JSON_TYPE }, [body]]
       end
 
       def handle_chat(env, pipeline, queue)
         body = env["rack.input"].read
-        data = JSON.parse(body, symbolize_names: true) rescue {}
+        data = begin
+          JSON.parse(body, symbolize_names: true)
+        rescue StandardError
+          {}
+        end
         message = data[:message].to_s.strip
 
         if message.empty?
@@ -44,14 +50,18 @@ module MASTER
           tts: defined?(Audio) ? Audio.engine_status : "unavailable",
           self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
           repo_dirty_count: dirty_count,
-          repo_state: dirty_count.zero? ? "clean" : "dirty",
+          repo_state: dirty_count.zero? ? "clean" : "dirty"
         }.to_json
         [200, { CT_HEADER => JSON_TYPE }, [metrics]]
       end
 
       def handle_tts(env)
         body = env["rack.input"].read
-        data = JSON.parse(body, symbolize_names: true) rescue {}
+        data = begin
+          JSON.parse(body, symbolize_names: true)
+        rescue StandardError
+          {}
+        end
         text = data[:text].to_s.strip
 
         return [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no text provided"}']] if text.empty?
@@ -72,6 +82,7 @@ module MASTER
       def handle_tts_stream(env)
         text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
         return [400, {}, ["Missing text"]] unless text
+
         [501, { CT_HEADER => TEXT_TYPE }, ["TTS streaming not implemented"]]
       end
 
@@ -93,7 +104,7 @@ module MASTER
       def git_dirty_count
         root = defined?(MASTER) && MASTER.respond_to?(:root) ? MASTER.root : Dir.pwd
         output = `git -C #{Shellwords.escape(root)} status --porcelain 2>/dev/null`
-        return 0 unless $?.success?
+        return 0 unless $CHILD_STATUS.success?
 
         output.lines.size
       rescue StandardError

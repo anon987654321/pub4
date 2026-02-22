@@ -7,8 +7,6 @@ module MASTER
   # Inspired by OpenClaw's heartbeat-runner: fires periodically,
   # evaluates what needs doing, acts without user prompting
   module Heartbeat
-    extend self
-
     DEFAULT_INTERVAL = 60 # seconds
     MAX_INTERVAL = 3600
     MAX_WATER_ITERATIONS = 5
@@ -62,7 +60,7 @@ module MASTER
             running: @running,
             interval: @interval,
             last_cycle: @last_cycle,
-            checks: @checks.map { |c| { name: c[:name], last_run: c[:last_run], failures: c[:failures] } }
+            checks: @checks.map { |c| { name: c[:name], last_run: c[:last_run], failures: c[:failures] } },
           }
         end
       end
@@ -94,12 +92,13 @@ module MASTER
         check[:last_run] = Time.now
         result = check[:callable].call
         check[:failures] = 0 if result
-        nil  # Returns nil on success, backoff delay in seconds on failure
+        nil # Returns nil on success, backoff delay in seconds on failure
       rescue StandardError => e
         check[:failures] += 1
         backoff = [30 * (2**check[:failures]), MAX_INTERVAL].min
-        Logging.dmesg_log("heartbeat", message: "#{check[:name]} failed (#{check[:failures]}x), backoff #{backoff}s: #{e.message}")
-        check[:failures] > 2 ? backoff : nil  # Return delay but don't sleep here
+        Logging.dmesg_log("heartbeat",
+                          message: "#{check[:name]} failed (#{check[:failures]}x), backoff #{backoff}s: #{e.message}")
+        check[:failures] > 2 ? backoff : nil # Return delay but don't sleep here
       end
 
       # Default O-P-E-V-L autonomous loop:
@@ -111,7 +110,7 @@ module MASTER
             observed_at: Time.now.to_i,
             observed: observe,
             iterations: [],
-            learned: []
+            learned: [],
           }
 
           state = cycle[:observed]
@@ -132,7 +131,7 @@ module MASTER
               planned: planned,
               executed: executed,
               verified: verified,
-              score: score
+              score: score,
             }
 
             break if converged?(previous_score, score)
@@ -155,7 +154,7 @@ module MASTER
           scheduler_jobs: (defined?(Scheduler) ? Scheduler.list : []),
           llm_configured: (defined?(LLM) && LLM.respond_to?(:configured?) ? LLM.configured? : false),
           budget_remaining: (defined?(LLM) && LLM.respond_to?(:budget_remaining) ? LLM.budget_remaining : Float::INFINITY),
-          timestamp: Time.now.to_i
+          timestamp: Time.now.to_i,
         }
       end
 
@@ -166,12 +165,8 @@ module MASTER
         if jobs.any? { |j| j[:failures].to_i > 0 }
           questions << "Which repeated failure pattern suggests flawed retry/backoff?"
         end
-        if jobs.empty?
-          questions << "What high-value autonomous task is missing from the schedule?"
-        end
-        if !observed[:llm_configured]
-          questions << "What non-LLM maintenance tasks can still improve quality now?"
-        end
+        questions << "What high-value autonomous task is missing from the schedule?" if jobs.empty?
+        questions << "What non-LLM maintenance tasks can still improve quality now?" if !observed[:llm_configured]
         questions << "What would an attacker exploit first in current automation flow?"
 
         Triggers.fire(:adversarial_review, questions: questions, observed: observed) if defined?(Triggers)
@@ -201,7 +196,7 @@ module MASTER
           and pick the strongest one.
 
           CONTEXT:
-          - Jobs: #{Array(observed[:scheduler_jobs]).map { |j| "#{j[:id]}:#{j[:command]}(fail=#{j[:failures]})" }.join(", ")}
+          - Jobs: #{Array(observed[:scheduler_jobs]).map { |j| "#{j[:id]}:#{j[:command]}(fail=#{j[:failures]})" }.join(', ')}
           - LLM configured: #{observed[:llm_configured]}
           - Budget remaining: #{observed[:budget_remaining]}
 
@@ -230,20 +225,24 @@ module MASTER
                   name: { type: "string" },
                   commands: { type: "array", items: { type: "string" } },
                   rationale: { type: "string" },
-                  risk: { type: "number" }
-                }
-              }
+                  risk: { type: "number" },
+                },
+              },
             },
             selected_index: { type: "integer" },
             selected_commands: { type: "array", items: { type: "string" } },
-            selected_reason: { type: "string" }
-          }
+            selected_reason: { type: "string" },
+          },
         }
 
         result = LLM.ask_json(prompt, schema: schema, tier: :strong)
         return heuristic_adversarial_review(observed, questions) unless result.ok?
 
-        parsed = JSON.parse(result.value[:content], symbolize_names: true) rescue nil
+        parsed = begin
+          JSON.parse(result.value[:content], symbolize_names: true)
+        rescue StandardError
+          nil
+        end
         return heuristic_adversarial_review(observed, questions) unless parsed.is_a?(Hash)
 
         {
@@ -251,7 +250,7 @@ module MASTER
           solution_candidates: Array(parsed[:solution_candidates]),
           selected_index: parsed[:selected_index],
           selected_commands: Array(parsed[:selected_commands]),
-          selected_reason: parsed[:selected_reason].to_s
+          selected_reason: parsed[:selected_reason].to_s,
         }
       rescue StandardError
         heuristic_adversarial_review(observed, questions)
@@ -269,7 +268,7 @@ module MASTER
           risk: 4,
           impact: 0.8,
           confidence: 0.75,
-          cost: 1.1
+          cost: 1.1,
         }
         candidate_b = {
           name: "priority_first",
@@ -278,7 +277,7 @@ module MASTER
           risk: 6,
           impact: 0.95,
           confidence: 0.65,
-          cost: 1.3
+          cost: 1.3,
         }
         candidate_c = {
           name: "confidence_first",
@@ -287,22 +286,22 @@ module MASTER
           risk: 3,
           impact: 0.7,
           confidence: 0.9,
-          cost: 0.9
+          cost: 0.9,
         }
 
         candidates = [candidate_a, candidate_b, candidate_c]
         selected = if defined?(DecisionEngine)
-          DecisionEngine.pick_best(candidates)
-        else
-          candidates.min_by { |c| c[:risk] }
-        end || candidate_b
+                     DecisionEngine.pick_best(candidates)
+                   else
+                     candidates.min_by { |c| c[:risk] }
+                   end || candidate_b
 
         {
           answers: Array(questions).map { |q| "answered: #{q}" },
           solution_candidates: candidates,
           selected_index: candidates.index(selected) || 1,
           selected_commands: selected[:commands],
-          selected_reason: selected[:rationale]
+          selected_reason: selected[:rationale],
         }
       end
 
@@ -349,7 +348,7 @@ module MASTER
         DecisionEngine.converged?(
           previous_score: previous_score,
           current_score: current_score,
-          min_improvement: MIN_IMPROVEMENT
+          min_improvement: MIN_IMPROVEMENT,
         )
       end
     end

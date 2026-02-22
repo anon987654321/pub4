@@ -8,8 +8,6 @@ module MASTER
   # Stolen from OpenClaw: agents schedule their own future work,
   # jobs persist across restarts, exponential backoff on failure
   module Scheduler
-    extend self
-
     JOBS_FILE = File.join(MASTER.root, "data", "scheduled_jobs.json")
     MAX_JOBS = 50
 
@@ -41,7 +39,7 @@ module MASTER
             retry_backoff: j[:retry_backoff] || "exponential",
             confidence: j[:confidence] || 1.0,
             last_status: j[:last_status],
-            last_error: j[:last_error]
+            last_error: j[:last_error],
           )
         end
         Logging.dmesg_log("scheduler", message: "loaded #{@jobs.size} jobs")
@@ -83,7 +81,7 @@ module MASTER
           retry_backoff: retry_backoff,
           confidence: confidence,
           last_status: nil,
-          last_error: nil
+          last_error: nil,
         )
 
         @mutex.synchronize { @jobs << job }
@@ -167,7 +165,8 @@ module MASTER
         job.last_status = "failed"
         job.last_error = e.message
         backoff = backoff_seconds(job)
-        Logging.dmesg_log("scheduler", message: "run #{job.id} failed (#{job.failures}x): #{e.message}; backoff=#{backoff}s")
+        Logging.dmesg_log("scheduler",
+                          message: "run #{job.id} failed (#{job.failures}x): #{e.message}; backoff=#{backoff}s")
         job.next_at = Time.now + backoff
         false
       end
@@ -208,11 +207,13 @@ module MASTER
             job: j,
             impact: impact,
             confidence: confidence,
-            cost: cost
+            cost: cost,
           }
         end
 
-        DecisionEngine.rank(scored.map { |s| s.merge(score: DecisionEngine.score(impact: s[:impact], confidence: s[:confidence], cost: s[:cost])) })
+        DecisionEngine.rank(scored.map do |s|
+          s.merge(score: DecisionEngine.score(impact: s[:impact], confidence: s[:confidence], cost: s[:cost]))
+        end)
           .map { |row| row[:job] }
       end
     end

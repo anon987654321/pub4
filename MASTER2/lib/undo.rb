@@ -3,8 +3,6 @@
 module MASTER
   # Undo - Undo support for operations (NN/g: user control and freedom)
   module Undo
-    extend self
-
     STACK_SIZE = 50
 
     @stack = []

@@ -80,7 +80,7 @@ module MASTER
       FileWriteTool,
       AnalyzeCodeTool,
       ShellCommandTool,
-      MemorySearchTool
+      MemorySearchTool,
     ].freeze
   end
 end

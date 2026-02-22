@@ -4,8 +4,6 @@ module MASTER
   # Triggers -- proactive event-driven actions without user prompting
   # Stolen from OpenClaw: auto-reply on patterns, file changes, system events
   module Triggers
-    extend self
-
     @rules = []
 
     class << self
@@ -44,11 +42,13 @@ module MASTER
 
         # On error, record for learning
         register(:on_error) do |ctx|
-          AgentAutonomy.record_correction(
-            original: ctx[:output].to_s[0..200],
-            corrected: "",
-            context: ctx[:error].to_s[0..200]
-          ) if defined?(AgentAutonomy)
+          if defined?(AgentAutonomy)
+            AgentAutonomy.record_correction(
+              original: ctx[:output].to_s[0..200],
+              corrected: "",
+              context: ctx[:error].to_s[0..200],
+            )
+          end
         end
 
         # Budget low -- switch to cheap tier proactively
@@ -59,11 +59,13 @@ module MASTER
         register(:job_failed) do |ctx|
           job = ctx[:job]
           Logging.dmesg_log("triggers", message: "job_failed #{job&.id}: #{ctx[:error]}")
-          AgentAutonomy.record_correction(
-            original: job&.command.to_s[0..200],
-            corrected: "",
-            context: ctx[:error].to_s[0..200]
-          ) if defined?(AgentAutonomy)
+          if defined?(AgentAutonomy)
+            AgentAutonomy.record_correction(
+              original: job&.command.to_s[0..200],
+              corrected: "",
+              context: ctx[:error].to_s[0..200],
+            )
+          end
         end
 
         register(:job_succeeded) do |ctx|

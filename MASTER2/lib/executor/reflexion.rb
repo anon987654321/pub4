@@ -14,11 +14,11 @@ module MASTER
 
           # Build augmented goal from original + all lessons so far
           augmented_goal = if @reflections.any?
-            lessons = @reflections.map { |r| r[:lessons] }.compact.reject(&:empty?)
-            "#{original_goal}\n\nLESSONS FROM PREVIOUS ATTEMPTS:\n#{lessons.join("\n")}"
-          else
-            original_goal
-          end
+                             lessons = @reflections.map { |r| r[:lessons] }.compact.reject(&:empty?)
+                             "#{original_goal}\n\nLESSONS FROM PREVIOUS ATTEMPTS:\n#{lessons.join("\n")}"
+                           else
+                             original_goal
+                           end
 
           # Execute using ReAct
           result = execute_react_inner(augmented_goal, tier: tier)
@@ -35,7 +35,7 @@ module MASTER
               pattern: :reflexion,
               attempts: attempt,
               reflections: @reflections,
-              history: @history
+              history: @history,
             )
           end
 
@@ -115,10 +115,9 @@ module MASTER
           success: content.match?(/SUCCESS:\s*yes/i),
           critique: content[/CRITIQUE:\s*(.+?)(?=LESSONS:|$)/mi, 1]&.strip || "",
           lessons: content[/LESSONS:\s*(.+?)(?=IMPROVED_ANSWER:|$)/mi, 1]&.strip || "",
-          improved_answer: content[/IMPROVED_ANSWER:\s*(.+)/mi, 1]&.strip
+          improved_answer: content[/IMPROVED_ANSWER:\s*(.+)/mi, 1]&.strip,
         }
       end
     end
-
   end
 end

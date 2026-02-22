@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require 'yaml'
+require "yaml"
 
 module MASTER
   # Personas - Character persona management system
   # Loads personas from consolidated YAML for behavioral modes
   # Ported from MASTER v1, adapted for MASTER2's architecture
   class Personas
-    PERSONAS_FILE = File.join(Paths.data, 'personas.yml')
+    PERSONAS_FILE = File.join(Paths.data, "personas.yml")
     SUPPORTED_PERSONAS = %i[ronin lawyer hacker architect sysadmin trader medic].freeze
 
     class << self
@@ -19,7 +19,7 @@ module MASTER
         return [] unless File.exist?(PERSONAS_FILE)
 
         data = load_personas_data
-        personas_hash = data['personas'] || data[:personas]
+        personas_hash = data["personas"] || data[:personas]
         return [] unless personas_hash
 
         personas_hash.map do |key, persona|
@@ -31,7 +31,7 @@ module MASTER
         return nil unless File.exist?(PERSONAS_FILE)
 
         data = load_personas_data
-        personas_hash = data['personas'] || data[:personas]
+        personas_hash = data["personas"] || data[:personas]
         return nil unless personas_hash
 
         # Try both string and symbol keys
@@ -46,7 +46,7 @@ module MASTER
         return [] unless File.exist?(PERSONAS_FILE)
 
         data = load_personas_data
-        personas_hash = data['personas'] || data[:personas]
+        personas_hash = data["personas"] || data[:personas]
         return [] unless personas_hash
 
         personas_hash.keys.map(&:to_s).sort
@@ -73,7 +73,7 @@ module MASTER
       private
 
       def load_personas_data
-        @personas_cache ||= begin
+        @load_personas_data ||= begin
           YAML.safe_load_file(PERSONAS_FILE, symbolize_names: true)
         rescue ArgumentError
           # Fallback for older YAML versions or different parameter order
@@ -83,22 +83,23 @@ module MASTER
 
       def normalize_persona(key, persona)
         {
-          name: persona['name'] || persona[:name] || key.to_s.capitalize,
-          description: persona['description'] || persona[:description],
-          greeting: persona['greeting'] || persona[:greeting],
-          traits: normalize_array(persona['traits'] || persona[:traits]),
-          style: persona['style'] || persona[:style],
-          focus: normalize_array(persona['focus'] || persona[:focus]),
-          sources: normalize_array(persona['sources'] || persona[:sources]),
-          rules: normalize_array(persona['rules'] || persona[:rules]),
-          voice: persona['voice'] || persona[:voice],
-          system_prompt: persona['system_prompt'] || persona[:system_prompt]
+          name: persona["name"] || persona[:name] || key.to_s.capitalize,
+          description: persona["description"] || persona[:description],
+          greeting: persona["greeting"] || persona[:greeting],
+          traits: normalize_array(persona["traits"] || persona[:traits]),
+          style: persona["style"] || persona[:style],
+          focus: normalize_array(persona["focus"] || persona[:focus]),
+          sources: normalize_array(persona["sources"] || persona[:sources]),
+          rules: normalize_array(persona["rules"] || persona[:rules]),
+          voice: persona["voice"] || persona[:voice],
+          system_prompt: persona["system_prompt"] || persona[:system_prompt],
         }
       end
 
       def normalize_array(value)
         return [] if value.nil?
         return value if value.is_a?(Array)
+
         [value]
       end
 
@@ -107,19 +108,13 @@ module MASTER
         parts << "You are #{persona[:name]}."
         parts << persona[:description] if persona[:description]
 
-        if persona[:traits] && !persona[:traits].empty?
-          parts << "Traits: #{persona[:traits].join(', ')}"
-        end
+        parts << "Traits: #{persona[:traits].join(', ')}" if persona[:traits] && !persona[:traits].empty?
 
-        if persona[:style]
-          parts << "Style: #{persona[:style]}"
-        end
+        parts << "Style: #{persona[:style]}" if persona[:style]
 
-        if persona[:focus] && !persona[:focus].empty?
-          parts << "Focus: #{persona[:focus].join(', ')}"
-        end
+        parts << "Focus: #{persona[:focus].join(', ')}" if persona[:focus] && !persona[:focus].empty?
 
-        parts.join(' ')
+        parts.join(" ")
       end
     end
 
@@ -186,9 +181,7 @@ module MASTER
         @active_persona = persona
 
         # Set LLM system prompt via proper accessor
-        if defined?(LLM) && persona[:system_prompt]
-          LLM.persona_prompt = persona[:system_prompt]
-        end
+        LLM.persona_prompt = persona[:system_prompt] if defined?(LLM) && persona[:system_prompt]
 
         # Register behavior hooks
         register_behaviors(persona) if persona[:behaviors]
@@ -222,22 +215,18 @@ module MASTER
         return unless persona[:behaviors]
 
         # Register "find gaps" behavior
-        if persona[:behaviors].include?("Identify missing features without being asked")
+        if persona[:behaviors].include?("Identify missing features without being asked") && defined?(Hooks) && defined?(Hooks)
           Hooks.register(:after_phase, ->(data) {
             # Check for common gaps after implement phase
-            if data[:phase] == :implement
-              check_for_gaps(data)
-            end
-          }) if defined?(Hooks)
+            check_for_gaps(data) if data[:phase] == :implement
+          })
         end
 
         # Register "research similar" behavior
-        if persona[:behaviors].include?("Research similar projects for inspiration")
+        if persona[:behaviors].include?("Research similar projects for inspiration") && defined?(Hooks) && defined?(Hooks)
           Hooks.register(:before_phase, ->(data) {
-            if data[:phase] == :ideate
-              suggest_research(data)
-            end
-          }) if defined?(Hooks)
+            suggest_research(data) if data[:phase] == :ideate
+          })
         end
       end
 
@@ -246,7 +235,7 @@ module MASTER
         Hooks.clear_handlers if defined?(Hooks)
       end
 
-      def check_for_gaps(data)
+      def check_for_gaps(_data)
         puts UI.dim("\n[Persona] Checking for common gaps...")
 
         gaps = []
@@ -260,7 +249,7 @@ module MASTER
         end
       end
 
-      def suggest_research(data)
+      def suggest_research(_data)
         puts UI.dim("\n[Persona] Consider researching similar projects for inspiration")
       end
     end

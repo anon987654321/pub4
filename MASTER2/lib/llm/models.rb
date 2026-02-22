@@ -12,17 +12,19 @@ module MASTER
       end
 
       def load_models_config
-        @models_config ||= begin
+        @load_models_config ||= begin
           models_file = File.join(__dir__, "..", "..", "data", "models.yml")
-          unless File.exist?(models_file)
-            []
-          else
+          if File.exist?(models_file)
             begin
               YAML.safe_load_file(models_file, symbolize_names: true) || []
             rescue StandardError => e
-              MASTER::Logging.warn("Failed to load models: #{e.message}", subsystem: "llm.models") if defined?(MASTER::Logging)
+              if defined?(MASTER::Logging)
+                MASTER::Logging.warn("Failed to load models: #{e.message}", subsystem: "llm.models")
+              end
               []
             end
+          else
+            []
           end
         end
       end
@@ -40,7 +42,7 @@ module MASTER
             tier: classify_tier(m).to_s,
             context_window: m.context_window || 32_000,
             input_cost: m.input_price_per_million || 0,
-            output_cost: m.output_price_per_million || 0
+            output_cost: m.output_price_per_million || 0,
           }
         end.first(20) # Limit to top 20 to avoid huge lists
       rescue StandardError
@@ -93,12 +95,12 @@ module MASTER
 
       def extract_model_name(model_id)
         name = model_id.split("/").last
-        name = name.split(":").first
-        name
+        name.split(":").first
       end
 
       def prompt_model_name
         return extract_model_name(@current_model) if @current_model
+
         "unknown"
       end
 
@@ -113,15 +115,15 @@ module MASTER
         if tier
           # Use pre-computed model_tiers hash for O(1) tier lookup
           candidates = model_tiers[tier] || []
-          candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
+          candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find do |m|
+            CircuitBreaker.circuit_closed?(m)
+          end
         else
           all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
         end
       end
 
       public :select_model
-
-      private
     end
   end
 end

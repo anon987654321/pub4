@@ -32,9 +32,7 @@ module MASTER
           puts UI.green("workflow: advanced to #{new_phase.to_s.upcase}")
 
           # Show phase questions
-          if defined?(Questions)
-            Questions.ask_phase(new_phase)
-          end
+          Questions.ask_phase(new_phase) if defined?(Questions)
 
           session.save
           Result.ok(result.value)

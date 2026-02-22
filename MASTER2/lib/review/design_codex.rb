@@ -6,14 +6,15 @@ require "yaml"
 module MASTER
   module Review
     module DesignCodex
-      extend self
+      module_function
 
       CODEX_FILE = File.join(MASTER.root, "data", "design_codex.yml")
 
       def rules
-        @rules ||= begin
-          return {} unless File.exist?(CODEX_FILE)
+        @rules ||= if File.exist?(CODEX_FILE)
           YAML.safe_load_file(CODEX_FILE, symbolize_names: true) || {}
+        else
+          {}
         end
       end
 
@@ -32,7 +33,7 @@ module MASTER
           typography_rules: section(:typography).size,
           layout_rules: section(:layout).size,
           hierarchy_rules: section(:visual_hierarchy).size,
-          code_rules: section(:code_craft).size
+          code_rules: section(:code_craft).size,
         }
       end
 

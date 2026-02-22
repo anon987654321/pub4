@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "tty-screen"
 
 module MASTER
@@ -51,7 +52,7 @@ module MASTER
             body_width = [width - head.length - 1, 24].max
             lines = wrap_text(info[:desc], body_width)
             puts "#{head}#{lines.first}"
-            lines.drop(1).each { |line| puts "#{" " * head.length}#{line}" }
+            lines.drop(1).each { |line| puts "#{' ' * head.length}#{line}" }
           end
           puts
         end
@@ -112,6 +113,5 @@ module MASTER
         lines
       end
     end
-
   end
 end

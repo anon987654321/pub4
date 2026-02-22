@@ -18,7 +18,7 @@ module MASTER
       promote: { min: 0.90, description: "Auto-apply (>90% success)" },
       keep: { min: 0.50, description: "Keep learning (50-90%)" },
       demote: { min: 0.20, description: "Needs review (20-50%)" },
-      retire: { min: 0.00, description: "Remove (<20%)" }
+      retire: { min: 0.00, description: "Remove (<20%)" },
     }.freeze
 
     MINIMUM_APPLICATIONS = 3
@@ -137,7 +137,7 @@ module MASTER
       pruned = 0
       kept_patterns = []
 
-      grouped.each do |(_category, _hash), group|
+      grouped.each_value do |group|
         successes = group.count { |p| p[:success] }
         failures = group.count { |p| !p[:success] }
         applications = successes + failures
@@ -150,7 +150,7 @@ module MASTER
           message_pattern: group.first[:message_pattern],
           successes: successes,
           failures: failures,
-          applied_count: applications
+          applied_count: applications,
         }
 
         tier_result = evaluate(aggregated)
@@ -265,5 +265,4 @@ module MASTER
       end
     end
   end
-
 end
