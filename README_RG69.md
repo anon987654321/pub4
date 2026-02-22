@@ -66,7 +66,6 @@ A comprehensive, self-contained beat machine and sequencer in a single HTML file
 - MediaRecorder API for live recording
 - Base64 URL state encoding
 - JCReverb (real-time) used instead of Reverb (avoids OfflineAudioContext on init, safer on Android)
-- Terminal log relay: log() POSTs to localhost:3001 — run `python3 pub4/rg69-log.py` to receive in terminal
 
 ## Genre Packs
 
