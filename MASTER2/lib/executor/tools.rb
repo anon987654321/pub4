@@ -125,7 +125,8 @@ module MASTER
 
       FileUtils.mkdir_p(File.dirname(expanded))
       File.write(expanded, content)
-      "Written #{content.length} bytes to #{path}"
+      verification = verify_change(expanded)
+      verification.ok? ? "Written #{content.length} bytes to #{path}" : "Written #{content.length} bytes to #{path} [verify: #{verification.error}]"
     end
 
     def analyze_code(path)
@@ -145,7 +146,13 @@ module MASTER
       if defined?(Review::Fixer)
         fixer = Review::Fixer.new(mode: :moderate)
         result = fixer.fix(path)
-        result.ok? ? "Fixed #{result.value[:fixed]} issues in #{path}" : "Fix failed: #{result.error}"
+        if result.ok?
+          verification = verify_change(path)
+          msg = "Fixed #{result.value[:fixed]} issues in #{path}"
+          verification.ok? ? msg : "#{msg} [verify: #{verification.error}]"
+        else
+          "Fix failed: #{result.error}"
+        end
       else
         "Review::Fixer module not available"
       end
@@ -243,6 +250,40 @@ module MASTER
       lines.join("\n")
     rescue StandardError => e
       "who_requires error: #{e.message}"
+    end
+
+    # Gist #15: Self-verification after code modification (Gemini CLI + Codex CLI pattern).
+    # Runs: syntax check → related test file → quick axiom scan.
+    # Returns Result.ok or Result.err with first failure reason.
+    def verify_change(path)
+      return Result.ok unless path.to_s.end_with?(".rb")
+
+      # 1. Syntax check
+      _, stderr, status = Open3.capture3(RbConfig.ruby, "-c", path.to_s)
+      return Result.err("syntax: #{stderr.strip[0..120]}") unless status.success?
+
+      # 2. Related test file (lib/foo/bar.rb → test/test_foo_bar.rb or test/foo/test_bar.rb)
+      rel       = path.to_s.sub("#{MASTER.root}/lib/", "")
+      test_path = File.join(MASTER.root, "test", "test_#{rel.gsub('/', '_')}")
+      if File.exist?(test_path)
+        _, t_stderr, t_status = Open3.capture3(
+          RbConfig.ruby, "-I#{File.join(MASTER.root, 'lib')}",
+          "-I#{File.join(MASTER.root, 'test')}", test_path
+        )
+        return Result.err("tests failed: #{t_stderr.strip[0..160]}") unless t_status.success?
+      end
+
+      # 3. Quick axiom scan (critical axioms only — no LLM, just static patterns)
+      if defined?(CodeReview)
+        code   = File.read(path.to_s)
+        result = CodeReview.analyze(code, filename: File.basename(path.to_s), profile: :quick)
+        issues = result[:issues]&.reject { |i| i[:priority].to_i < 9 } || []
+        return Result.err("axiom violations: #{issues.map { |i| i[:axiom_id] }.join(', ')}") if issues.any?
+      end
+
+      Result.ok
+    rescue StandardError => e
+      Result.err("verify_change error: #{e.message}")
     end
 
     def sanitize_tool_input(action_str)

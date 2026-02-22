@@ -60,7 +60,17 @@ module MASTER
                 return guard_result if guard_result.err?
 
                 # Default: Use autonomous executor with pattern selection
-                Executor.call(text, pattern: self.class.current_pattern)
+                exec_result = Executor.call(text, pattern: self.class.current_pattern)
+
+                # Gist #3: Lint post-flight so axiom violations are caught in executor mode too
+                if exec_result.ok?
+                  response_text = exec_result.value[:answer] || exec_result.value[:response].to_s
+                  lint_result = Stages::Lint.new.call({ text: text, response: response_text })
+                  violations = lint_result.value&.dig(:axiom_violations) || []
+                  Logging.dmesg_log("pipeline", message: "executor_lint violations=#{violations.size}") if violations.any?
+                end
+
+                exec_result
               when :stages
                 # Legacy: Stage-based pipeline
                 @stages.reduce(Result.ok(input)) do |result, stage|
