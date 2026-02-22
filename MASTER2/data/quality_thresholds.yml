@@ -87,3 +87,9 @@ profiles:
     test_coverage_min: 50
     enable_gates: [syntax, security]
   default_profile: "standard"
+
+cost_protection:
+  max_per_session: 10.00
+  max_per_request: 1.00
+  warn_at: 0.50
+  enforcement: "warn at warn_at, block at max_per_request"

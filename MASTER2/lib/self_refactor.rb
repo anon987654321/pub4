@@ -1,184 +1,92 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "scientist"
-require_relative "staging"
-require_relative "convergence_tracker"
-require_relative "axiom_resolver"
-require_relative "dependency_map"
+require "json"
 
 module MASTER
-  # Staged self-modification engine. Applies one atomic change at a time
-  # using Staging#staged_modify, validates syntax + axioms after each,
-  # tracks convergence, and rolls back on any regression.
+  # SelfRefactor — applies MASTER2's own refactor pipeline to its own source.
+  # Delegates to Evolve (LLM + Staging) for fixes and Workflow::Convergence
+  # for stopping criteria. Identical path to what runs on user code.
   module SelfRefactor
-    MAX_ITERATIONS = 20
-    HARD_LINE_LIMIT = 500
+    _c = begin
+           require "yaml"
+           f = File.expand_path("../../data/constitution.yml", __FILE__)
+           YAML.safe_load_file(f).dig("convergence", "max_iterations")
+         rescue StandardError
+           nil
+         end
+    MAX_ITERATIONS = (_c || 20).freeze
+    RESUME_FILE = File.join(MASTER.root, "var", "self_refactor_resume.json").freeze
 
     module_function
 
-    # Main entry point. Iterates until convergence or max_iterations.
-    # Returns Result with summary of what changed, what deferred, why stopped.
+    # Iterate Evolve over MASTER2's own lib/ until Convergence says stop.
+    # Resumes from RESUME_FILE if interrupted (FINISH_FIRST).
     def run(max_iterations: MAX_ITERATIONS)
-      ConvergenceTracker.reset!
-      staging = Staging.new
-      files   = target_files
-      summary = { fixed: [], deferred: [], errors: [], iterations: 0, halted_reason: nil }
+      evolve  = Evolve.new(staged: true, llm: LLM)
+      history = []
+      summary, start_iter = resume_state || [{ iterations: 0, improvements: 0, errors: [], stop_reason: nil }, 0]
 
       max_iterations.times do |i|
+        next if i < start_iter
+
         summary[:iterations] = i + 1
-        halt_reason = apply_iteration(i, files, staging, summary)
-        if halt_reason
-          summary[:halted_reason] = halt_reason
+        save_resume_state(summary, i + 1)
+
+        pass = evolve.run(path: MASTER.root, dry_run: false)
+        summary[:improvements] += pass[:improvements].to_i
+        summary[:errors].concat(pass[:history].filter_map { |h| h[:error] })
+
+        violations = count_violations
+        status = Workflow::Convergence.track(history, { violations: violations, score: pass[:improvements].to_i })
+        Logging.dmesg_log("self_refactor", message: "iter #{i + 1}: #{violations} violations, #{pass[:improvements]} improved") if defined?(Logging)
+
+        if status[:should_stop]
+          summary[:stop_reason] = status[:reason]
           break
         end
       end
 
-      summary[:halted_reason] ||= "max_iterations" if summary[:iterations] >= max_iterations
+      summary[:stop_reason] ||= :max_iterations
+      clear_resume_state
       Result.ok(summary)
     rescue StandardError => e
       Result.err("SelfRefactor crashed: #{e.message}")
     end
 
-    # One iteration: scan → partition → fix → re-scan → track convergence.
-    # Returns halt_reason string if the loop should stop, nil to continue.
-    def apply_iteration(i, files, staging, summary)
-      violations         = scan_violations(files)
-      fixable, deferred  = partition_violations(violations)
-
-      deferred.each { |v| record_deferred(v) }
-      summary[:deferred].concat(deferred.map { |v| v[:description] })
-
-      applied = apply_fixes(fixable, staging: staging)
-      summary[:fixed].concat(applied[:fixed])
-      summary[:errors].concat(applied[:errors])
-
-      remaining = scan_violations(files)
-      ConvergenceTracker.record_iteration(
-        violations: remaining.size,
-        fixed: applied[:fixed].size,
-        deferred: deferred.size,
-      )
-      log_iteration(i + 1)
-
-      ConvergenceTracker.should_halt? ? halt_reason : nil
-    end
-
-    # All lib/**/*.rb files, sorted for deterministic ordering
-    def target_files
-      Dir.glob(File.join(MASTER.root, "lib", "**", "*.rb"))
-    end
-
-    # Scan all files for violations. Returns array of violation hashes.
-    # Each: { file:, line:, axiom_id:, description:, fixable: bool }
-    def scan_violations(files)
-      violations = []
-      files.each do |file|
-        lines = File.readlines(file)
-
-        # Check hard line limit (SELF_APPLY)
-        if lines.size > HARD_LINE_LIMIT
-          violations << {
-            file: file, line: lines.size, axiom_id: "SELF_APPLY",
-            description: "File exceeds #{HARD_LINE_LIMIT} lines (#{lines.size})",
-            fixable: false
-          }
-        end
-
-        # Check frozen_string_literal
-        next if lines.first&.strip == "# frozen_string_literal: true"
-
-        violations << {
-          file: file, line: 1, axiom_id: "SELF_APPLY",
-          description: "Missing frozen_string_literal: true",
-          fixable: true
-        }
-      end
-      violations
-    end
-
-    # Split violations into fixable vs deferred (blocked by higher axiom)
-    def partition_violations(violations)
-      fixable = violations.select { |v| v[:fixable] }
-      deferred = violations.reject { |v| v[:fixable] }
-      [fixable, deferred]
-    end
-
-    # Apply fixable violations one at a time through Staging.
-    # Uses scientist to compare old vs new violation counts and roll back regressions.
-    def apply_fixes(fixable, staging:)
-      result = { fixed: [], errors: [] }
-      fixable.each do |violation|
-        fix_result = scientist_fix(violation, staging: staging)
-        if fix_result.ok?
-          result[:fixed] << violation[:description]
-        else
-          result[:errors] << "#{violation[:file]}: #{fix_result.error}"
-        end
-      end
-      result
-    end
-
-    # Scientist experiment: run the fix, verify violation count doesn't increase.
-    # Rolls back if the candidate path raises or introduces new violations.
-    def scientist_fix(violation, staging:)
-      candidate_result = nil
-
-      Scientist.run("self_refactor_fix") do |e|
-        # Control: count violations before fix (baseline)
-        e.use { scan_violations([violation[:file]]).size }
-
-        # Candidate: apply fix and count violations after
-        e.try do
-          candidate_result = staging.staged_modify(violation[:file]) do |staged_path|
-            apply_single_fix(staged_path, violation)
-          end
-          scan_violations([violation[:file]]).size
-        end
-
-        # Mismatched = fix introduced new violations → log but don't fail
-        e.on_result do |exp|
-          if exp.mismatched? && defined?(Logging)
-            ctrl = exp.control.value
-            cand = exp.candidate.value
-            Logging.dmesg_log("scientist", message: "mismatch on #{violation[:file]}: #{ctrl} vs #{cand}")
-          end
-        end
-      end
-
-      # Return the staging result regardless (scientist is observational here)
-      candidate_result || Result.err("scientist: fix did not run")
-    rescue StandardError => e
-      Result.err("scientist error: #{e.message}")
-    end
-
-    def apply_single_fix(staged_path, violation)
-      case violation[:description]
-      when /Missing frozen_string_literal/
-        content = File.read(staged_path)
-        File.write(staged_path, "# frozen_string_literal: true\n\n#{content}")
+    # Count total violations across all lib/ files using the real enforcer.
+    def count_violations
+      files = Dir.glob(File.join(MASTER.root, "lib", "**", "*.rb"))
+      files.sum do |f|
+        code = File.read(f)
+        defined?(Review::Enforcer) ? Review::Enforcer.check(code, filename: f)[:violations].size : 0
+      rescue StandardError
+        0
       end
     end
 
-    def record_deferred(violation)
-      AxiomResolver.defer(
-        axiom_id: violation[:axiom_id], file: violation[:file],
-        line: violation[:line], reason: violation[:description],
-        blocking_axiom: "PRESERVE_FIRST"
-      )
+    def resume_state
+      return nil unless File.exist?(RESUME_FILE)
+
+      data = JSON.parse(File.read(RESUME_FILE), symbolize_names: true)
+      start_iter = data.delete(:_resume_iter) || 0
+      Logging.dmesg_log("self_refactor0", message: "resuming from iteration #{start_iter}") if defined?(Logging)
+      [data, start_iter]
+    rescue StandardError
+      nil
     end
 
-    def log_iteration(_n)
-      Logging.dmesg_log("self_refactor", message: ConvergenceTracker.summary) if defined?(Logging)
+    def save_resume_state(summary, iter)
+      FileUtils.mkdir_p(File.dirname(RESUME_FILE))
+      File.write(RESUME_FILE, JSON.generate(summary.merge(_resume_iter: iter)))
+    rescue StandardError
+      nil
     end
 
-    def halt_reason
-      h = ConvergenceTracker.history.last
-      return "no_violations" if h[:violations].zero?
-      return "stalled" if h[:violation_delta].zero?
-      return "low_success_rate" if h[:autofix_success_rate] < 0.1
-
-      "unknown"
+    def clear_resume_state
+      File.delete(RESUME_FILE) if File.exist?(RESUME_FILE)
+    rescue StandardError
+      nil
     end
   end
 end

@@ -288,6 +288,60 @@ module MASTER
 
         violations
       end
+
+      # Check metaprogramming policy (constitution.yml metaprogramming_policy.banned_patterns)
+      def check_metaprogramming(code, filename: "code")
+        @meta_banned ||= begin
+          f = File.join(MASTER.root, "data", "constitution.yml")
+          YAML.safe_load_file(f)&.dig("metaprogramming_policy", "banned_patterns") || []
+        rescue StandardError
+          []
+        end
+        violations = []
+        @meta_banned.each do |pattern|
+          re = /\b#{Regexp.escape(pattern)}\b/
+          code.each_line.with_index(1) do |line, lineno|
+            next if line.strip.start_with?("#")
+
+            if re.match?(line)
+              violations << {
+                layer: :semantic, axiom: "EXPLICIT",
+                message: "Banned metaprogramming: #{pattern} — prefer explicit method definition",
+                file: filename, line: lineno,
+              }
+            end
+          end
+        end
+        violations
+      end
+
+      def check_learned_smells(code, filename: "code")
+        smells = defined?(DB) ? DB.learned_smells : []
+        return [] if smells.empty?
+
+        violations = []
+        smells.each do |smell|
+          next if smell[:pattern].to_s.empty?
+
+          begin
+            re = Regexp.new(smell[:pattern], Regexp::MULTILINE)
+          rescue RegexpError
+            next
+          end
+
+          next unless code.match?(re)
+
+          DB.increment_smell_hit(smell[:pattern]) rescue nil
+          violations << {
+            layer: :learned_smell,
+            axiom: "QUALITY",
+            message: smell[:description] || "Learned smell: #{smell[:pattern]}",
+            severity: (smell[:severity] || :info).to_sym,
+            file: filename,
+          }
+        end
+        violations
+      end
     end
   end
 end

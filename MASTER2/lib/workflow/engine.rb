@@ -29,6 +29,7 @@ module MASTER
           session.metadata[:workflow][:current_phase] = :discover
           session.metadata[:workflow][:phase_history] = []
           session.metadata[:workflow][:started_at] = Time.now.iso8601
+          session.metadata[:project_context] ||= load_project_context
           session
         end
       end
@@ -120,6 +121,11 @@ module MASTER
         YAML.safe_load_file(path, permitted_classes: [Symbol])
       rescue Errno::ENOENT
         {}
+      end
+
+      def load_project_context
+        path = File.join(MASTER.root, "data", "session_template.yml")
+        YAML.safe_load_file(path)["project_context"] rescue nil
       end
 
       def load_questions
