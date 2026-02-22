@@ -9,183 +9,237 @@
 <meta name="description" content="RG-69 analog beat machine. Single HTML file sequencer with Tone.js.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎹</text></svg>">
 <title>RG-69 | Beat Machine</title>
-<script src="assets/tone-14.8.49.min.js" onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js';document.head.appendChild(s);"></script>
+<script src="assets/tone-14.8.49.min.js"></script>
 <style>
-:root{--bg:#111;--surf:#1a1a1a;--surf2:#222;--brd:#333;--txt:#eee;--mut:#aaa;--acc:#d79a42;--dng:#c85a5a;--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--transition-fast:180ms;--transition-normal:300ms;--z-base:10;--z-ui:90;--z-modal:1000}
-[data-theme="light"]{--bg:#f5f5f5;--surf:#fff;--surf2:#e0e0e0;--brd:#ccc;--txt:#222;--mut:#888;--acc:#d79a42;--dng:#c85a5a}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.35 system-ui,sans-serif}body{padding:8px}
-header,main,section,aside,footer,article,nav{display:block}
-header{border:1px solid var(--brd);background:var(--surf);padding:8px;contain:layout style paint}
-h1{margin:0;font:900 clamp(46px,10vw,108px)/0.88 "Arial Black",Impact,sans-serif;letter-spacing:0.03em;text-transform:uppercase}
-h1 small{font-size:0.16em;vertical-align:super;opacity:0.75;margin-left:0.25em}
-p{margin:4px 0;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:0.05em}
-main{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-section,aside,article{border:1px solid var(--brd);background:var(--surf);padding:8px;contain:layout style paint}
-nav{display:flex;flex-wrap:wrap;gap:6px}
-button{border:1px solid var(--brd);background:var(--surf2);color:var(--txt);min-height:44px;min-width:72px;padding:8px 12px;font:700 13px/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;transition:background var(--transition-fast),transform var(--transition-fast);touch-action:manipulation}
-button:active{opacity:0.7}
-button[data-kind="primary"]{background:var(--acc);color:#201305;border-color:var(--acc)}
-button[data-kind="danger"]{border-color:var(--dng);color:#ffd6d6}
-button:disabled{opacity:0.4;cursor:not-allowed}
-fieldset{margin:0;padding:6px;border:1px solid var(--brd);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-legend{padding:0 4px;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:0.06em}
-label{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:0.04em}
-output{font-size:12px;color:var(--acc);font-weight:700}
-input[type="range"]{width:100%;margin:2px 0;accent-color:var(--acc)}
-input[type="text"]{width:100%;padding:6px;background:var(--bg);border:1px solid var(--brd);color:var(--txt);font:12px system-ui}
-select{background:var(--bg);border:1px solid var(--brd);color:var(--txt);padding:6px;font:12px system-ui;width:100%}
-article[aria-label="Sequencer"]{grid-column:1/-1}
-.tracks{display:grid;gap:4px}
-.track{display:flex;align-items:center;gap:4px;padding:4px;background:var(--surf2);border:1px solid var(--brd)}
-.track.muted{opacity:0.4}
-.track-name{min-width:80px;font-size:11px;text-transform:uppercase;color:var(--mut)}
-.steps-grid{display:grid;grid-template-columns:repeat(16,minmax(22px,1fr));gap:2px;flex:1}
-.step{min-height:44px;background:var(--bg);border:1px solid var(--brd);cursor:pointer;position:relative;overflow:hidden;touch-action:manipulation}
-.step[aria-pressed="true"]{border-color:var(--acc)}
-.vel-fill{position:absolute;bottom:0;left:0;right:0;height:80%;pointer-events:none;transition:height 80ms}
-.step[aria-pressed="false"] .vel-fill{height:0!important}
-.step.playing{outline:2px solid #fff0c8;outline-offset:-2px}
-.step[data-prob="25"]::after,.step[data-prob="50"]::after,.step[data-prob="75"]::after{content:attr(data-prob)'%';font-size:8px;position:absolute;top:2px;right:2px;opacity:0.6}
-.step[data-ratchet]::before{content:'';position:absolute;bottom:2px;left:2px;width:4px;height:4px;background:var(--txt);opacity:0.6}
-@keyframes pulse{}
-.track-ctrl{display:flex;gap:2px}
-.track-btn{min-width:44px;min-height:44px;padding:4px;font-size:10px;touch-action:manipulation}
-.styles{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
-.style-chip{padding:6px 12px;background:var(--surf2);border:1px solid var(--brd);cursor:pointer;font-size:11px;text-transform:uppercase;transition:background var(--transition-fast),color var(--transition-fast);touch-action:manipulation}
-.style-chip:hover{background:var(--brd)}
-.style-chip.active{background:var(--acc);color:#201305;border-color:var(--acc)}
-.tab-btn.active{background:var(--acc);color:#201305;border-color:var(--acc)}
-aside{max-height:200px;overflow:auto;background:#0e0f11;font:11px/1.4 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:#cfd6dd}
-aside b{color:#f3be72}
-/* per-track step colors */
-.step[data-track="k"][aria-pressed="true"]{border-color:#d79a42}
-.step[data-track="s"][aria-pressed="true"]{border-color:#5b9bd5}
-.step[data-track="c"][aria-pressed="true"]{border-color:#a367dc}
-.step[data-track="h"][aria-pressed="true"]{border-color:#4caf7d}
-.step[data-track="o"][aria-pressed="true"]{border-color:#e06c5a}
-.step[data-track="k"] .vel-fill{background:#d79a42}
-.step[data-track="s"] .vel-fill{background:#5b9bd5}
-.step[data-track="c"] .vel-fill{background:#a367dc}
-.step[data-track="h"] .vel-fill{background:#4caf7d}
-.step[data-track="o"] .vel-fill{background:#e06c5a}
-/* beat group dividers every 4 steps */
-.step:nth-child(4n+1){margin-left:6px}
-.step:first-child{margin-left:0}
-footer{border:1px solid var(--brd);background:var(--surf);padding:6px 8px;margin-top:8px;font:11px/1.4 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:var(--mut);text-transform:uppercase;letter-spacing:0.05em}
-#viz{width:100%;height:60px;display:block;background:var(--surf2);border-radius:4px;margin-top:6px}
-.tooltip{position:fixed;background:#000;color:#fff;padding:4px 8px;font-size:11px;border-radius:4px;pointer-events:none;z-index:var(--z-modal);display:none;border:1px solid var(--brd)}
-.ctx-menu{position:fixed;background:var(--surf);border:1px solid var(--brd);padding:4px;font-size:12px;z-index:calc(var(--z-modal) + 1);display:none}
-.ctx-menu button{min-width:auto;min-height:auto;padding:6px 12px;width:100%;text-align:left}
-.vu-meter{display:flex;gap:2px;height:8px;margin-top:4px}
-.vu-bar{flex:1;background:var(--bg);border:1px solid var(--brd)}
+:root{--bg:#0c0c0c;--brd:#252525;--txt:#d0d0d0;--mut:#484848;--acc:#c8902e;--dng:#8c3030;--z-modal:1000;--transition-fast:100ms}
+[data-theme="light"]{--bg:#f2f2f2;--brd:#c0c0c0;--txt:#111;--mut:#888;--acc:#9c6a10;--dng:#993030}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--txt);font:11px/1.5 ui-monospace,"SFMono-Regular",Menlo,monospace}
+body{padding:8px 12px}
+
+/* header */
+header{display:flex;align-items:baseline;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid var(--brd);margin-bottom:6px}
+h1{font:700 clamp(24px,6vw,64px)/1 "Arial Black",Impact,sans-serif;letter-spacing:0.04em;text-transform:uppercase}
+#pos-display{font-size:0.24em;color:var(--acc);font-weight:400;letter-spacing:0.06em;vertical-align:middle;display:inline-block}
+#pos-display.beat-active{animation:beat-pulse 0.16s ease-out}
+@keyframes beat-pulse{0%,100%{opacity:1}50%{opacity:0.4;transform:scale(1.18)}}
+
+/* transport */
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:3px;padding:4px 0;border-bottom:1px solid var(--brd);margin-bottom:5px}
+#status{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:0.08em;margin:2px 0 4px}
+.vu-meter{display:flex;gap:1px;height:3px;margin-bottom:5px}
+.vu-bar{flex:1;background:var(--brd)}
 .vu-bar.active{background:var(--acc)}
-#progress-wrap{display:none;margin-top:8px;padding:8px;background:var(--surf2);border:1px solid var(--brd)}
-#progress-bar{width:100%;height:20px;background:var(--bg);border:1px solid var(--brd);position:relative;overflow:hidden}
-#progress-fill{height:100%;background:var(--acc);width:0;transition:width var(--transition-fast)}
-kbd{font:11px ui-monospace,monospace;border:1px solid var(--brd);padding:1px 4px;background:var(--surf2)}
-#seq-hint{font-size:11px;color:var(--mut);margin-bottom:4px}
-.lock-btn{min-height:20px;min-width:24px;padding:0 4px;font-size:12px;border:none;background:none;cursor:pointer;color:var(--mut);line-height:1}
+
+/* buttons — flat, text-forward */
+button{background:none;border:1px solid var(--brd);color:var(--mut);padding:3px 8px;font:10px/1.5 ui-monospace,monospace;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;touch-action:manipulation;min-height:28px}
+button:hover{border-color:var(--mut);color:var(--txt)}
+button:active{opacity:0.5}
+button[data-kind="primary"]{border-color:var(--acc);color:var(--acc)}
+button[data-kind="primary"]:hover{background:var(--acc);color:#160a00}
+button[data-kind="danger"]{border-color:var(--dng);color:var(--dng)}
+button:disabled{opacity:0.25;cursor:not-allowed}
+
+/* inline bpm control */
+.ctrl-bpm{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mut);padding:0 4px}
+.ctrl-bpm input[type="range"]{width:72px;accent-color:var(--acc);height:2px;cursor:pointer}
+.ctrl-bpm output{color:var(--acc);font-weight:700;min-width:22px}
+
+/* sequencer */
+article[aria-label="Sequencer"]{border-bottom:1px solid var(--brd);padding-bottom:6px;margin-bottom:0}
+.tracks{display:grid;gap:2px;margin-bottom:4px}
+.track{display:flex;align-items:center;gap:4px}
+.track.muted{opacity:0.25}
+.track-name{min-width:44px;font-size:9px;text-transform:uppercase;color:var(--mut);letter-spacing:0.06em}
+.steps-grid{display:grid;grid-template-columns:repeat(16,minmax(16px,1fr));gap:1px;flex:1}
+.step{min-height:32px;background:var(--brd);border:1px solid transparent;cursor:pointer;position:relative;overflow:hidden;touch-action:manipulation}
+.step[aria-pressed="true"]{border-color:var(--acc);background:var(--brd)}
+.vel-fill{position:absolute;bottom:0;left:0;right:0;pointer-events:none;transition:height 60ms}
+.step[aria-pressed="false"] .vel-fill{height:0!important}
+.step.playing{border-color:var(--txt)}
+.step.inactive{opacity:0.12;pointer-events:none}
+.step[data-track="k"][aria-pressed="true"]{border-color:#c8902e}.step[data-track="k"] .vel-fill{background:#c8902e}
+.step[data-track="s"][aria-pressed="true"]{border-color:#4a8ec0}.step[data-track="s"] .vel-fill{background:#4a8ec0}
+.step[data-track="c"][aria-pressed="true"]{border-color:#8050a8}.step[data-track="c"] .vel-fill{background:#8050a8}
+.step[data-track="h"][aria-pressed="true"]{border-color:#3a9050}.step[data-track="h"] .vel-fill{background:#3a9050}
+.step[data-track="o"][aria-pressed="true"]{border-color:#a84838}.step[data-track="o"] .vel-fill{background:#a84838}
+.step[data-prob]::after{content:attr(data-prob)'%';font-size:7px;position:absolute;top:1px;right:2px;opacity:0.45;color:var(--txt)}
+.step[data-ratchet]::before{content:'';position:absolute;bottom:2px;left:2px;width:3px;height:3px;background:var(--txt);opacity:0.45}
+.step:nth-child(4n+1){margin-inline-start:4px}
+.step:first-child{margin-inline-start:0}
+.track-btn{min-width:24px;min-height:24px;padding:1px 3px;font-size:9px}
+#viz{width:100%;height:28px;display:block;background:var(--brd);margin-top:2px}
+#seq-hint{font-size:9px;color:var(--mut);margin-bottom:3px;letter-spacing:0.02em}
+
+/* progressive disclosure — details */
+details{border-top:1px solid var(--brd)}
+summary{padding:5px 0;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--mut);cursor:pointer;list-style:none;display:flex;align-items:center;gap:5px;user-select:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'▸';font-size:8px;color:var(--mut)}
+details[open]>summary::before{content:'▾'}
+summary:hover{color:var(--txt)}
+details>*:not(summary){padding:4px 0 6px}
+
+/* forms inside details */
+fieldset{border:none;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 12px}
+legend{grid-column:1/-1;font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:0.08em;padding:0 0 3px;border-bottom:1px solid var(--brd);width:100%;margin-bottom:2px}
+label{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:0.04em;display:flex;align-items:center;justify-content:space-between;gap:4px}
+output{color:var(--acc);font-weight:700;font-size:10px;min-width:22px;text-align:right;flex-shrink:0}
+input[type="range"]{width:100%;accent-color:var(--acc);margin:1px 0;height:2px;cursor:pointer}
+input[type="text"]{background:none;border:none;border-bottom:1px solid var(--brd);color:var(--txt);font:10px ui-monospace,monospace;padding:2px 0;width:100%;outline:none}
+input[type="text"]:focus{border-bottom-color:var(--acc)}
+select{background:var(--bg);border:1px solid var(--brd);color:var(--txt);padding:3px;font:10px ui-monospace,monospace;width:100%;appearance:none;cursor:pointer}
+select:focus{outline:1px solid var(--acc)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* styles/moods */
+.tab-bar{display:flex;gap:3px;margin-bottom:4px;align-items:center}
+.tab-sm{min-height:22px!important;padding:1px 7px!important;font-size:9px!important}
+.tab-search{flex:1;background:none;border:none;border-bottom:1px solid var(--brd);color:var(--txt);font:10px ui-monospace,monospace;padding:2px 4px;outline:none}
+.tab-search:focus{border-bottom-color:var(--acc)}
+.tab-btn.active{border-color:var(--acc);color:var(--acc)}
+.styles{display:flex;flex-wrap:wrap;gap:2px}
+.style-chip{padding:2px 7px;border:1px solid var(--brd);cursor:pointer;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:var(--mut)}
+.style-chip:hover{border-color:var(--mut);color:var(--txt)}
+.style-chip.active{border-color:var(--acc);color:var(--acc)}
+
+/* patterns */
+#root-display{color:var(--acc);font-weight:700}
+.lock-btn{padding:0 2px;font-size:9px;border:none;background:none;cursor:pointer;color:var(--mut);min-height:auto;line-height:1}
 .lock-btn.locked{color:var(--acc)}
-*,*::before,*::after{box-sizing:border-box}
+
+/* terminal */
+#trace-wrap{padding:0}
+#trace{max-height:110px;overflow:auto;color:var(--mut);line-height:1.45}
+#trace b{color:var(--acc)}
+#trace span{display:block}
+.term-input-row{display:flex;align-items:center;gap:5px;border-top:1px solid var(--brd);padding-top:4px;margin-top:3px}
+.term-prompt{color:var(--acc);user-select:none;flex-shrink:0}
+#term-input{flex:1;background:none;border:none;color:var(--txt);font:11px ui-monospace,monospace;outline:none}
+#term-input::placeholder{color:var(--mut)}
+
+/* overlays */
+.ctx-menu{position:fixed;background:var(--bg);border:1px solid var(--brd);padding:0;font-size:10px;z-index:calc(var(--z-modal)+1);display:none}
+.ctx-menu button{min-width:130px;min-height:auto;padding:4px 10px;width:100%;text-align:left;border:none;border-bottom:1px solid var(--brd);letter-spacing:0.03em}
+.ctx-menu button:last-child{border-bottom:none}
+.tooltip{position:fixed;background:var(--bg);color:var(--txt);padding:2px 6px;font-size:9px;pointer-events:none;z-index:var(--z-modal);display:none;border:1px solid var(--brd)}
+#progress-wrap{display:none;padding:4px 0}
+#progress-bar{width:100%;height:3px;background:var(--brd);overflow:hidden}
+#progress-fill{height:100%;background:var(--acc);width:0;transition:width var(--transition-fast)}
+#progress-wrap p{font-size:10px;color:var(--mut);margin-bottom:3px}
+kbd{font:9px ui-monospace,monospace;border:1px solid var(--brd);padding:0 3px}
+
+/* footer */
+footer{border-top:1px solid var(--brd);margin-top:6px;padding-top:4px;font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:0.06em}
+
+/* welcome */
 .welcome-overlay{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:var(--z-modal)}
-.welcome-dialog{text-align:center;border:1px solid var(--brd);background:var(--surf);padding:24px;max-width:400px}
-.welcome-dialog h2{font-size:24px;margin:0 0 12px}
-.welcome-dialog p{margin:0 0 16px}
-.welcome-dialog button{min-height:60px;min-width:200px;padding:10px 24px;font:700 16px system-ui;border:1px solid var(--acc);background:var(--acc);color:#201305;cursor:pointer}
+.welcome-dialog{border:1px solid var(--brd);padding:28px 32px;max-width:280px;text-align:center}
+.welcome-dialog p{color:var(--mut);font-size:10px;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.07em}
+.welcome-dialog button{width:100%;padding:10px;font-size:12px;border-color:var(--acc);color:var(--acc);letter-spacing:0.1em}
+.welcome-dialog button:hover{background:var(--acc);color:#160a00}
+
+/* responsive */
+@media(max-width:920px){.steps-grid{grid-template-columns:repeat(8,minmax(16px,1fr))}.two-col{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media(max-width:920px){main{grid-template-columns:1fr}.steps-grid{grid-template-columns:repeat(8,minmax(22px,1fr))}}
 </style>
 </head>
 <body>
 <div id="welcome" class="welcome-overlay">
 <div class="welcome-dialog">
-<h2>RG-69</h2>
-<p>Analog beat machine — tap to initialize audio engine</p>
-<button id="welcome-start" data-kind="primary">Start Engine</button>
+<p>RG-69 — analog beat machine</p>
+<button id="welcome-start">▶ play</button>
 </div>
 </div>
 <header>
-<h1>RG-69 <span id="pos-display" style="font-size:0.2em;color:var(--acc);font-weight:400;letter-spacing:0.05em;vertical-align:middle">●</span></h1>
-<p>RG-69 analog beat machine / Single HTML file</p>
+<h1>RG-69 <span id="pos-display">●</span></h1>
+<button id="theme" title="Toggle theme (T)">◑</button>
 </header>
-<main>
-<article aria-label="Sequencer" role="region" style="grid-column:1/-1">
-<p id="seq-hint">5-Track Sequencer — Mute: <kbd>M</kbd> button · Probability: right-click step · Ratchet: Shift+click</p>
-<div class="tracks" id="tracks"></div>
-</article>
-<section aria-label="Transport" role="region">
-<nav>
-<button id="start" data-kind="primary" title="Initialize audio engine (Space)">⚡ Start</button>
-<button id="play" data-kind="primary" title="Play/Pause (P)">▶ Play</button>
-<button id="stop" title="Stop (S)">⏹ Stop</button>
-<button id="random" title="Randomize (R)">🎲 Random</button>
-<button id="export" title="Export WAV (E)">💾 Export</button>
-<button id="record" data-kind="danger" title="Record">● Rec</button>
-<button id="layout" title="Cycle layout (L)">⊞ Layout</button>
-<button id="theme" title="Toggle theme (T)">◑ Theme</button>
-<button id="shareBtn" title="Share URL (Ctrl+Shift+S)">🔗 Share</button>
-<button id="tap" title="Tap Tempo">🎵 Tap</button>
-<button id="undobtn" title="Undo (Ctrl+Z)">⟲ Undo</button>
-<button id="panic" data-kind="danger" title="Kill all notes (Esc)">✖ Panic</button>
-</nav>
-<p id="status">status: idle</p>
+<div class="transport">
+<button id="play" data-kind="primary" title="Play/Pause (Space)">▶ play</button>
+<button id="stop" title="Stop (S)">⏹</button>
+<label class="ctrl-bpm">bpm <input id="bpm" type="range" min="60" max="170" value="94"> <output id="bpm-o">94</output></label>
+<button id="tap" title="Tap Tempo">tap</button>
+<button id="steps" title="Step count">⟨16⟩</button>
+<button id="random" title="Randomize (R)">⇌ rnd</button>
+<button id="export" title="Export WAV (E)">↓ wav</button>
+<button id="record" data-kind="danger" title="Record">● rec</button>
+<button id="shareBtn" title="Share URL">link</button>
+<button id="layout" title="Cycle layout (L)">⊞</button>
+<button id="undobtn" title="Undo (Ctrl+Z)">⟲</button>
+<button id="panic" data-kind="danger" title="Panic (Esc)">✖ panic</button>
+</div>
+<p id="status">idle</p>
 <div class="vu-meter" id="vu" aria-label="VU Meter"></div>
-<canvas id="viz" width="400" height="60" title="Audio waveform visualizer"></canvas>
-</section>
-<section aria-label="Controls" role="region">
+<main>
+<article aria-label="Sequencer" role="region">
+<p id="seq-hint">Mute: <kbd>M</kbd> · Probability: right-click · Ratchet: shift+click</p>
+<div class="tracks" id="tracks"></div>
+<canvas id="viz" width="400" height="28" title="Waveform" aria-label="Audio waveform visualizer" role="img"></canvas>
+</article>
+<details open>
+<summary>Styles</summary>
+<div class="tab-bar">
+<button class="tab-btn tab-sm active" id="tab-styles">Styles</button>
+<button class="tab-btn tab-sm" id="tab-moods">Moods</button>
+<input type="text" id="style-search" class="tab-search" placeholder="filter…" aria-label="Search presets">
+</div>
+<div class="styles" id="styles"></div>
+<div class="styles" id="moods" style="display:none"></div>
+</details>
+<details>
+<summary>Controls</summary>
+<div class="two-col">
 <fieldset><legend>Master</legend>
-<label>BPM <output id="bpm-o">94</output></label><input id="bpm" type="range" min="60" max="170" value="94" title="Beats per minute">
-<label>Swing <output id="swing-o">30</output></label><input id="swing" type="range" min="0" max="90" value="30" title="Swing amount">
-<label>Drive <output id="drive-o">25</output></label><input id="drive" type="range" min="0" max="100" value="25" title="Analog drive">
-<label>Tape <output id="tape-o">8</output></label><input id="tape" type="range" min="0" max="100" value="8" title="Tape saturation">
-<label>Comp <output id="comp-o">70</output></label><input id="comp" type="range" min="0" max="100" value="70" title="Compression">
-<label>Width <output id="width-o">40</output></label><input id="width" type="range" min="0" max="100" value="40" title="Stereo width">
+<label>Swing <output id="swing-o">30</output></label><input id="swing" type="range" min="0" max="90" value="30" title="Swing">
+<label>Drive <output id="drive-o">25</output></label><input id="drive" type="range" min="0" max="100" value="25" title="Drive">
+<label>Tape <output id="tape-o">8</output></label><input id="tape" type="range" min="0" max="100" value="8" title="Tape">
+<label>Comp <output id="comp-o">70</output></label><input id="comp" type="range" min="0" max="100" value="70" title="Comp">
+<label>Width <output id="width-o">40</output></label><input id="width" type="range" min="0" max="100" value="40" title="Width">
 </fieldset>
 <fieldset><legend>FX</legend>
-<label>Reverb <output id="reverb-o">30</output></label><input id="reverb" type="range" min="0" max="100" value="30" title="Reverb amount">
-<label>Delay <output id="delay-o">20</output></label><input id="delay" type="range" min="0" max="100" value="20" title="Delay feedback">
-<label>Filter <output id="filter-o">80</output></label><input id="filter" type="range" min="0" max="100" value="80" title="Lowpass filter">
-<label>Wobble <output id="wobble-o">5</output></label><input id="wobble" type="range" min="0" max="100" value="5" title="Wow/flutter">
-<label>Vinyl <output id="vinyl-o">15</output></label><input id="vinyl" type="range" min="0" max="100" value="15" title="Vinyl noise">
-<label>Crackle <output id="crackle-o">10</output></label><input id="crackle" type="range" min="0" max="100" value="10" title="Dust/crackle">
+<label>Reverb <output id="reverb-o">30</output></label><input id="reverb" type="range" min="0" max="100" value="30" title="Reverb">
+<label>Delay <output id="delay-o">20</output></label><input id="delay" type="range" min="0" max="100" value="20" title="Delay">
+<label>Filter <output id="filter-o">80</output></label><input id="filter" type="range" min="0" max="100" value="80" title="Filter">
+<label>Wobble <output id="wobble-o">5</output></label><input id="wobble" type="range" min="0" max="100" value="5" title="Wobble">
+<label>Vinyl <output id="vinyl-o">15</output></label><input id="vinyl" type="range" min="0" max="100" value="15" title="Vinyl">
+<label>Crackle <output id="crackle-o">10</output></label><input id="crackle" type="range" min="0" max="100" value="10" title="Crackle">
 </fieldset>
-</section>
-<section aria-label="Mixer" role="region">
-<fieldset><legend>Levels</legend>
+</div>
+</details>
+<details>
+<summary>Mix</summary>
+<fieldset>
 <label>Drums <output id="drum-vol-o">80</output></label><input id="drum-vol" type="range" min="0" max="100" value="80">
 <label>Bass <output id="bass-vol-o">70</output></label><input id="bass-vol" type="range" min="0" max="100" value="70">
 <label>Keys <output id="keys-vol-o">60</output></label><input id="keys-vol" type="range" min="0" max="100" value="60">
 <label>Pads <output id="pads-vol-o">50</output></label><input id="pads-vol" type="range" min="0" max="100" value="50">
 <label>Master <output id="master-vol-o">75</output></label><input id="master-vol" type="range" min="0" max="100" value="75">
 </fieldset>
-</section>
-<section aria-label="Styles" role="region">
-<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
-  <button class="tab-btn active" id="tab-styles" style="min-height:32px;min-width:auto;padding:4px 12px;font-size:11px">Styles</button>
-  <button class="tab-btn" id="tab-moods" style="min-height:32px;min-width:auto;padding:4px 12px;font-size:11px">Moods</button>
-  <input type="text" id="style-search" placeholder="Search…" aria-label="Search presets" style="flex:1;padding:4px 8px;font-size:11px">
-</div>
-<div class="styles" id="styles"></div>
-<div class="styles" id="moods" style="display:none"></div>
-</section>
-<section aria-label="Patterns" role="region">
-<fieldset><legend>Patterns <span id="root-display" style="color:var(--acc);font-weight:700;float:right"></span></legend>
-<label>Drums <button class="lock-btn" data-lock="drum" title="Lock drum pattern">🔓</button></label><select id="drum-pat" aria-label="Drum pattern"></select>
-<label>Bass <button class="lock-btn" data-lock="bass" title="Lock bass pattern">🔓</button></label><select id="bass-pat" aria-label="Bass pattern"></select>
-<label>Keys <button class="lock-btn" data-lock="keys" title="Lock keys pattern">🔓</button></label><select id="keys-pat" aria-label="Keys pattern"></select>
-<label>Pads <button class="lock-btn" data-lock="pads" title="Lock pads pattern">🔓</button></label><select id="pads-pat" aria-label="Pads pattern"></select>
+</details>
+<details>
+<summary>Patterns</summary>
+<fieldset>
+<label>Drums <button class="lock-btn" data-lock="drum" title="Lock">🔓</button> <span id="root-display"></span></label><select id="drum-pat" aria-label="Drum pattern"></select>
+<label>Bass <button class="lock-btn" data-lock="bass" title="Lock">🔓</button></label><select id="bass-pat" aria-label="Bass pattern"></select>
+<label>Keys <button class="lock-btn" data-lock="keys" title="Lock">🔓</button></label><select id="keys-pat" aria-label="Keys pattern"></select>
+<label>Pads <button class="lock-btn" data-lock="pads" title="Lock">🔓</button></label><select id="pads-pat" aria-label="Pads pattern"></select>
 </fieldset>
-</section>
-<aside id="trace-wrap" style="border:1px solid var(--brd);background:#0e0f11">
-<div id="trace-hdr" style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;cursor:pointer;font:11px ui-monospace,monospace;color:var(--mut);user-select:none" onclick="const t=D('trace');const a=D('trace-arrow');t.style.display=t.style.display==='none'?'block':'none';a.textContent=t.style.display==='none'?'▶':'▼'">
-  <span>Log</span><span id="trace-arrow">▶</span>
+</details>
+<details>
+<summary>Terminal</summary>
+<div id="trace-wrap">
+<aside id="trace" aria-label="Terminal output" role="log" aria-live="polite"></aside>
+<div class="term-input-row">
+<span class="term-prompt">$</span>
+<input id="term-input" type="text" autocomplete="off" spellcheck="false" placeholder="help">
 </div>
-<aside id="trace" aria-label="Trace" role="log" aria-live="polite" style="display:none;max-height:160px;overflow:auto;padding:4px 8px;font:11px/1.4 ui-monospace,monospace;color:#cfd6dd"></aside>
-</aside>
+</div>
+</details>
 </main>
-<footer id="meta">layout: final / instance: init</footer>
+<footer id="meta">rg-69 / init</footer>
 <div id="progress-wrap">
-<p>Exporting... <span id="progress-pct">0%</span></p>
+<p>Exporting… <span id="progress-pct">0%</span></p>
 <div id="progress-bar"><div id="progress-fill"></div></div>
 </div>
 <div class="tooltip" id="tooltip"></div>
@@ -298,7 +352,7 @@ const K={
 // Soul/Gospel progressions
 'soulwalk':[['C4','E4','G4','B4'],0,0,0,['A3','C4','E4','G4'],0,0,0,['D4','F4','A4','C5'],0,0,0,['G3','B3','D4','F4'],0,0,0],
 'hathaway':[['C4','E4','G4','B4'],0,0,0,['B3','D4','F4','A4'],0,0,0,['A3','C4','E4','G4'],0,0,0,['G3','B3','D4','F4'],0,0,0],
-'marvin':[['C4','E4','G4'],0,0,0,['E3','G3','B3'],0,0,0,['F3','A3','C4'],0,0,0,['Fm3','Ab3','C4'],0,0,0],
+'marvin':[['C4','E4','G4'],0,0,0,['E3','G3','B3'],0,0,0,['F3','A3','C4'],0,0,0,['F3','Ab3','C4'],0,0,0],
 'tender':[['C4','Eb4','G4','Bb4','D5'],0,0,0,0,0,0,0,['Ab3','C4','Eb4','G4','Bb4'],0,0,0,0,0,0,0],
 'wonder':[['C4','E4','G4','A4','D5'],0,0,0,['F3','A3','C4','E4','G4'],0,0,0,['G3','B3','D4','F4','A4'],0,0,0,['C4','E4','G4','B4'],0,0,0]
 }
@@ -350,7 +404,7 @@ const M={
 'steppers':{d:'reg-steppers',b:'stepperbass',k:'roots',p:'rootsdrone',bpm:[70,85],sw:[8,18]},
 'industrial':{d:'hate-pummel',b:'industrialbass',k:'indstab',p:'industrialdrone',bpm:[140,160],sw:[0,5]},
 'hardtechno':{d:'hate-grind',b:'dronebass',k:'darkchrom',p:'noisewash',bpm:[145,160],sw:[0,3]},
-'hatestyle':{d:'hate-broken',b:'acidbass',k:'acid',p:'noisewash',bpm:[150,165],sw:[0,5]},
+'hatestyle':{d:'hate-grind',b:'dronebass',k:'acid',p:'noisewash',bpm:[150,165],sw:[0,5]},
 'dusty':{d:'dusty1',b:'dustybass1',k:'dustykeys1',p:'dubwash',bpm:[85,95],sw:[25,40]},
 'wonky':{d:'wonky1',b:'wonkybass1',k:'drunk',p:'ambientwash',bpm:[90,105],sw:[20,35]},
 'afrobeat':{d:'afro-tony',b:'afrobass',k:'afrokeys',p:'afrodrone',bpm:[105,125],sw:[10,25]},
@@ -376,7 +430,7 @@ tr('mood applied','k');
 }
 
 
-let st_={started:false,playing:false,idx:-1,timer:null,layoutIdx:49,heartbeat:null,paintMode:false,tapTimes:[],history:[],historyIdx:-1,midiMap:{},theme:'dark',rafId:null,peakL:0,peakR:0,muteState:{k:0,s:0,c:0,h:0,o:0}};
+let st_={started:false,playing:false,idx:-1,timer:null,layoutIdx:49,heartbeat:null,paintMode:false,tapTimes:[],history:[],historyIdx:-1,stepCount:16,theme:'dark',rafId:null,peakL:0,peakR:0,muteState:{k:0,s:0,c:0,h:0,o:0}};
 let aud_={bpm:82,swing:36,drive:44,tape:58,comp:72,width:58,reverb:58,delay:34,filter:72,wobble:16,vinyl:22,crackle:14,drift:0.05};
 let mix_={drum:80,bass:70,keys:60,pads:50,master:75};
 let pat_={d:'dusty1',b:'dustybass1',k:'neosoul',p:'ambientwash'};
@@ -384,7 +438,7 @@ let seq_={};
 ['k','s','c','h','o'].forEach(t=>{seq_[t]=Array(16).fill(0).map(()=>({v:0.85+rnd(0,0.15),t:rnd(-15,15),p:100,r:1}))});
 ['b','keys','p'].forEach(t=>{seq_[t]=Array(16).fill(0).map(()=>({v:0.85+rnd(0,0.15),t:rnd(-15,15),p:100,r:1}))});
 
-let T_={},kickN,kickSub,kickClk,kickBody,snareN,snareRng,clapN,hatN,openN,bassN,bassSub,keysN,keysChorus,padsN,padsFlt,padsShift;
+let kickN,kickSub,kickClk,kickBody,snareN,snareRng,clapN,hatN,openN,bassN,bassSub,keysN,keysChorus,padsN,padsFlt,padsShift;
 let drumG,bassG,keysG,padsG,masterG,limiter,vinylNoise,crackleNoise,wobbLFO,flutterLFO,driftLFO,analyser;
 let fxRev,fxDly,fxFlt,tapeSat,compPar,sslComp,widener,kickSat,keySat,drumSat,outSat,bitCrush,revSend,dlySend;
 let drumTube,kickComp,vintageSat,phaserFX,lofiNoise,lofiComp,tapeWS,padsLFO,kickClkBP,snareRngBP,keysTrem,keysCrush;
@@ -456,6 +510,12 @@ syncUIFromState();
 tr("redo");
 }}
 
+function highlightActiveChip(){
+const match=STYLES.find(s=>s.d===pat_.d&&s.b===pat_.b&&s.k===pat_.k&&s.p===pat_.p);
+document.querySelectorAll('#styles .style-chip').forEach(c=>c.classList.remove('active'));
+if(match){const chip=[...D('styles').querySelectorAll('.style-chip')].find(c=>c.textContent===match.n);if(chip)chip.classList.add('active');}
+}
+
 function syncUIFromState(){
 D('bpm').value=aud_.bpm;D('bpm-o').textContent=Math.round(aud_.bpm);
 D('swing').value=aud_.swing;D('swing-o').textContent=Math.round(aud_.swing);
@@ -480,10 +540,16 @@ D('keys-pat').value=pat_.k;
 D('pads-pat').value=pat_.p;
 updateRootDisplay();
 applyFX();
+highlightActiveChip();
 }
 
 async function initAudio(){
 await Tone.start();
+Tone.getContext().rawContext.addEventListener('statechange',()=>{
+  if(Tone.getContext().rawContext.state==='suspended'){
+    st_.playing=false;clearTimeout(st_.timer);st('suspended — tap to resume');tr('⚠ audio suspended by browser','w');
+  }
+});
 driftLFO=new Tone.LFO(rnd(0.05,0.2),0.9995,1.0005).start();
 kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001*rnd(.97,1.03),decay:.4*rnd(.97,1.03),sustain:0,release:.1*rnd(.97,1.03)}});
 kickSub=new Tone.Synth({oscillator:{type:'sine'},envelope:{attack:.001,decay:.5,sustain:0,release:.1}});
@@ -699,7 +765,9 @@ synths.pads.triggerAttackRelease(pad,'2n',baseTime+seq_.p[stepIdx].t/1000,seq_.p
 function scheduleLoop(){
 if(!st_.playing)return;
 const sixteenth=60/aud_.bpm/4;
-st_.idx=(st_.idx+1)%16;
+st_.idx=(st_.idx+1)%st_.stepCount;
+// beat pulse on every quarter note
+if(st_.idx%4===0){const posEl=D('pos-display');posEl.classList.remove('beat-active');void posEl.offsetWidth;posEl.classList.add('beat-active');}
 // update bar/beat display
 const beat=Math.floor(st_.idx/4)+1;
 const bar=Math.floor((st_.barCount||0)/16)+1;
@@ -764,9 +832,10 @@ setTimeout(()=>st_.rafId=requestAnimationFrame(updateVU),16);
 }
 
 function drawViz(){
-requestAnimationFrame(drawViz);
 const cv=document.getElementById('viz');
-if(!cv||!analyser)return;
+if(!cv||!analyser){return;}
+if(!st_.started){return;}
+requestAnimationFrame(drawViz);
 const ctx=cv.getContext('2d');
 cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
 const w=cv.width,h=cv.height;
@@ -985,7 +1054,9 @@ const blob=new Blob([wav],{type:'audio/wav'});
 const url=URL.createObjectURL(blob);
 const a=document.createElement('a');
 a.href=url;
-a.download=`rg69-${Date.now()}.wav`;
+const activeChip=document.querySelector('#styles .style-chip.active,#moods .style-chip.active');
+const styleName=activeChip?activeChip.textContent.toLowerCase().replace(/\s+/g,'-'):'loop';
+a.download=`rg69-${styleName}-${Date.now()}.wav`;
 a.click();
 URL.revokeObjectURL(url);
 D('progress-wrap').style.display='none';
@@ -1300,7 +1371,7 @@ navigator.clipboard.writeText(url).then(()=>tr('URL copied to clipboard','k')).c
 function handleKeys(e){
 if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
 const k=e.key.toLowerCase();
-if(k===' '&&!e.repeat){e.preventDefault();D('start').click();}
+if(k===' '&&!e.repeat){e.preventDefault();D('play').click();}
 else if(k==='p'){e.preventDefault();D('play').click();}
 else if(k==='s'){e.preventDefault();D('stop').click();}
 else if(k==='r'){e.preventDefault();D('random').click();}
@@ -1326,7 +1397,7 @@ st_.rafId=requestAnimationFrame(updateVU);
 drawViz();
 pushHistory();
 });
-D('start').addEventListener('click',async()=>{
+D('play').addEventListener('click',async()=>{
 if(!st_.started){
 D('welcome').style.display='none';
 await initAudio();
@@ -1334,25 +1405,23 @@ applyFX();
 st_.started=true;
 claimOwner();
 st_.heartbeat=setInterval(keepOwner,1800);
-st('started');
 st_.rafId=requestAnimationFrame(updateVU);
 drawViz();
-tr("engine started","k");
+tr('engine started','k');
 pushHistory();
 }
-});
-D('play').addEventListener('click',()=>{
-if(!st_.started)return;
 st_.playing=!st_.playing;
 if(st_.playing){
 st_.idx=-1;
 scheduleLoop();
 st('playing');
-tr("playback started","k");
+D('play').textContent='⏸ Pause';
+tr('playback started','k');
 }else{
 clearTimeout(st_.timer);
 st('paused');
-tr("playback paused");
+D('play').textContent='▶ Play';
+tr('playback paused');
 }
 });
 D('stop').addEventListener('click',()=>{
@@ -1377,6 +1446,12 @@ tr(`layout: ${nm}`);
 });
 D('theme').addEventListener('click',toggleTheme);
 D('tap').addEventListener('click',tapTempo);
+D('steps').addEventListener('click',()=>{
+st_.stepCount=st_.stepCount===16?8:16;
+D('steps').textContent=`⟨${st_.stepCount}⟩ Steps`;
+document.querySelectorAll('.step').forEach((el,i)=>el.classList.toggle('inactive',i%16>=st_.stepCount));
+tr(`steps: ${st_.stepCount}`);
+});
 D('undobtn').addEventListener('click',undo);
 // lock buttons
 document.querySelectorAll('.lock-btn').forEach(btn=>{
@@ -1420,25 +1495,107 @@ tr("remote stop","e");
 });
 }
 
-const obs=new IntersectionObserver(entries=>{
-entries.forEach(e=>{
-if(!e.isIntersecting&&e.target.id==='trace'){
-}
-});
-});
-obs.observe(D('trace'));
-
 const savedTheme=localStorage.getItem('rg79_theme')||'dark';
 st_.theme=savedTheme;
 document.documentElement.setAttribute('data-theme',st_.theme);
 
 applyLayout(finalBlend,'final blend');
 buildUI();
-tr("RG-69 ready","k");
+tr("RG-69 ready — type <b>help</b> in terminal","k");
 
-if('serviceWorker'in navigator){
-navigator.serviceWorker.register('/sw.js').catch((e)=>{tr('sw-register: '+e.message,'w');});
+// ─── terminal ───────────────────────────────────────────────────────────────
+const TERM_CMDS=[
+'play / stop / pause / panic / undo / redo / random / export / record / share / theme / tap / layout',
+'bpm <60-170>  swing/drive/tape/comp/width/reverb/delay/filter/wobble/vinyl/crackle <0-100>',
+'steps <8|16>  mute/unmute <k|s|c|h|o>',
+'style <name>  mood <name>',
+'ls [styles|moods|patterns]  status  clear',
+];
+const termHist=[];
+let termHistIdx=-1;
+
+function execCmd(raw){
+const line=raw.trim();
+if(!line)return;
+termHist.unshift(line);
+termHistIdx=-1;
+tr(`<span style="color:var(--acc)">$ ${line}</span>`);
+const [cmd,...args]=line.toLowerCase().split(/\s+/);
+const n=parseFloat(args[0]);
+const PARAMS={swing:1,drive:1,tape:1,comp:1,width:1,reverb:1,delay:1,filter:1,wobble:1,vinyl:1,crackle:1};
+
+switch(cmd){
+case'help':case'?':TERM_CMDS.forEach(l=>tr(l));break;
+case'clear':case'cls':D('trace').innerHTML='';break;
+case'play':case'p':D('play').click();break;
+case'stop':D('stop').click();break;
+case'pause':if(st_.playing)D('play').click();break;
+case'panic':D('panic').click();break;
+case'undo':undo();break;
+case'redo':redo();break;
+case'random':case'rnd':randomize();break;
+case'export':case'wav':exportWAV();break;
+case'record':case'rec':toggleRecord();break;
+case'theme':toggleTheme();break;
+case'tap':tapTempo();break;
+case'share':shareURL();break;
+case'layout':D('layout').click();break;
+case'bpm':
+if(!isNaN(n)&&n>=60&&n<=170){aud_.bpm=n;D('bpm').value=n;D('bpm-o').textContent=Math.round(n);applyFX();tr(`bpm → ${Math.round(n)}`,'k');}
+else tr('usage: bpm <60-170>','e');
+break;
+case'steps':{
+const s=parseInt(args[0]);
+if(s===8||s===16){st_.stepCount=s;D('steps').textContent=`⟨${s}⟩`;document.querySelectorAll('.step').forEach((el,i)=>el.classList.toggle('inactive',i%16>=s));tr(`steps → ${s}`,'k');}
+else tr('usage: steps <8|16>','e');
+break;}
+case'style':{
+const nm=args.join(' ');
+const match=STYLES.find(s=>s.n.toLowerCase()===nm||s.n.toLowerCase().replace(/\s+/g,'-')===nm.replace(/\s+/g,'-'));
+if(match){pushHistory();pat_.d=match.d;pat_.b=match.b;pat_.k=match.k;pat_.p=match.p;aud_.bpm=match.bpm[0]+Math.random()*(match.bpm[1]-match.bpm[0]);aud_.swing=match.sw[0]+Math.random()*(match.sw[1]-match.sw[0]);syncUIFromState();tr(`style → ${match.n}`,'k');}
+else tr(`not found: ${nm}  (try: ls styles)`,'e');
+break;}
+case'mood':{
+const m=M[args[0]];
+if(m){applyMood(m);tr(`mood → ${args[0]}`,'k');}
+else tr(`not found: ${args[0]}  (try: ls moods)`,'e');
+break;}
+case'mute':case'unmute':{
+const t=args[0];
+if(['k','s','c','h','o'].includes(t)){
+const mute=cmd==='mute';
+st_.muteState[t]=mute?1:0;
+const row=[...document.querySelectorAll('.track')].find(el=>el.querySelector(`.step[data-track="${t}"]`));
+if(row)row.classList.toggle('muted',mute);
+tr(`${cmd} → ${t}`,'k');
+}else tr(`usage: ${cmd} <k|s|c|h|o>`,'e');
+break;}
+case'ls':
+if(args[0]==='styles')tr(STYLES.map(s=>s.n).join(' · '));
+else if(args[0]==='moods')tr(Object.keys(M).join(' · '));
+else if(args[0]==='patterns'){tr('drums: '+Object.keys(DRUM_PATTERNS).join(' '));tr('bass: '+Object.keys(B).join(' '));tr('keys: '+Object.keys(K).join(' '));tr('pads: '+Object.keys(P).join(' '));}
+else tr('ls [styles|moods|patterns]');
+break;
+case'status':case'info':
+tr(`bpm:${Math.round(aud_.bpm)} swing:${Math.round(aud_.swing)} steps:${st_.stepCount} playing:${st_.playing}`);
+tr(`d:${pat_.d}  b:${pat_.b}  k:${pat_.k}  p:${pat_.p}`);
+break;
+default:
+if(PARAMS[cmd]){
+if(!isNaN(n)&&n>=0&&n<=100){aud_[cmd]=n;const el=D(cmd);if(el)el.value=n;const out=D(`${cmd}-o`);if(out)out.textContent=Math.round(n);applyFX();tr(`${cmd} → ${Math.round(n)}`,'k');}
+else tr(`usage: ${cmd} <0-100>`,'e');
+}else{tr(`unknown: ${cmd}  (help for commands)`,'e');}
 }
+}
+
+D('term-input').addEventListener('keydown',e=>{
+if(e.key==='Enter'){const v=D('term-input').value;D('term-input').value='';execCmd(v);}
+else if(e.key==='ArrowUp'){e.preventDefault();if(termHistIdx<termHist.length-1){termHistIdx++;D('term-input').value=termHist[termHistIdx];}}
+else if(e.key==='ArrowDown'){e.preventDefault();if(termHistIdx>0){termHistIdx--;D('term-input').value=termHist[termHistIdx];}else{termHistIdx=-1;D('term-input').value='';}}
+});
+// ────────────────────────────────────────────────────────────────────────────
+
+// serviceWorker intentionally omitted — sw.js not present
 </script>
 </body>
 </html>

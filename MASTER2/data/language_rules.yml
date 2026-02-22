@@ -8,3 +8,19 @@ norwegian:
     - "Prefer short sentences"
     - "Avoid anglicisms when Norwegian words exist"
     - "Match user's formality level"
+
+ruby_footguns:
+  description: "Ruby-specific pitfalls that cause hard-to-debug failures"
+  rules:
+    - id: array_last_assign
+      bad: "lines.last = value"
+      good: "lines[-1] = value"
+      reason: "Array#last returns a copy. Assignment to last= is a NoMethodError."
+    - id: kernel_warn_explicit
+      bad: "def warn(msg); warn(msg); end"
+      good: "def warn(msg); Kernel.warn(msg); end"
+      reason: "def warn calling warn recurses infinitely. Always qualify as Kernel.warn."
+    - id: no_redefine_warn_without_kernel
+      bad: "module UI; def self.warn(m); warn m; end; end"
+      good: "module UI; def self.warn(m); Kernel.warn m; end; end"
+      reason: "Same as above — module-level warn shadows Kernel.warn"

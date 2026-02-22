@@ -66,8 +66,24 @@ module MASTER
                 if exec_result.ok?
                   response_text = exec_result.value[:answer] || exec_result.value[:response].to_s
                   lint_result = Stages::Lint.new.call({ text: text, response: response_text })
-                  violations = lint_result.value&.dig(:axiom_violations) || []
-                  Logging.dmesg_log("pipeline", message: "executor_lint violations=#{violations.size}") if violations.any?
+                  if lint_result.ok?
+                    lv = lint_result.value
+                    Logging.dmesg_log("pipeline",
+                                      message: "executor_lint violations=#{lv[:axiom_violations]&.size || 0}") if lv[:axiom_violations]&.any?
+
+                    # Security veto: check if any executor council_review step vetoed on security grounds
+                    security_veto = exec_result.value[:steps]&.any? do |s|
+                      s[:tool] == "council_review" &&
+                        s[:result].to_s.match?(/security|auth|injection|unsafe/i) &&
+                        s[:result].to_s.match?(/REJECT|veto/i)
+                    end
+
+                    exec_result = Result.ok(exec_result.value.merge(
+                                              axiom_violations:     lv[:axiom_violations],
+                                              zsh_violations:       lv[:zsh_violations],
+                                              council_security_veto: security_veto,
+                                            ))
+                  end
                 end
 
                 exec_result

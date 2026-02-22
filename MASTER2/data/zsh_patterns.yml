@@ -88,6 +88,74 @@ advanced_expansion:
   word_splitting: "${=var}"
   quote_each: "${(q)var}"
   expand_escapes: "${(e)var}"
+  extension: "${f:e}"
+  strip_extension: "${f:r}"
+  file_basename: "${f:t}"
+  file_dirname: "${f:h}"
+  absolute_path: "${f:A}"
+
+ternary:
+  # If $VAR non-empty → "yes", else "no"  (replaces 4-line if/else)
+  basic: "${${VAR:+yes}:-no}"
+  # If var equals literal "abc" → "is abc", else "not abc"
+  equality: "${${${(M)var:#abc}:+is abc}:-not abc}"
+  # C-style ternary inside arithmetic
+  math: "(( result = val > 0 ? val : -val ))"
+
+pattern_matching:
+  # AND-fashion: must match *abc* AND *efg*
+  and_match: '[[ "$str" = *abc*~^*efg* ]] && print match'
+  # Case-insensitive filter on array
+  icase_filter: "${(M)arr:#(#i)*pattern*}"
+  # Multi-line grep (extendedglob): line starts with ?
+  multiline: '[[ "$output" = *((#s)|$nl)\?* ]]'
+  # Enable $match captures
+  captures: '[[ "aabbb" = (#b)(a##)*(b(#c2,2)) ]] && print ${match[1]}-${match[2]}'
+
+read_file:
+  # Read file preserving empty lines
+  with_empty: 'local -a lines; lines=("${(@f)"$(<path/file)"}")'
+  # Read file stripping empty lines
+  no_empty: 'local -a lines; lines=(${(f)"$(<path/file)"})'
+  # Read command output into array
+  from_cmd: 'local -a lines; lines=("${(f@)$(command arg1)}")'
+
+option_parsing:
+  # zparseopts — replaces banned getopts
+  # -D strips matched opts from $@
+  # -E stops at first non-option
+  # -F (zsh 5.9+) aborts on unrecognized options
+  basic: |
+    zmodload zsh/zutil
+    local -a verbose_opt output_opt
+    zparseopts -D -E -F v=verbose_opt -verbose=verbose_opt o:=output_opt -output:=output_opt
+    (( ${#verbose_opt} )) && print "verbose"
+    local outfile=${output_opt[-1]:-/dev/stdout}
+
+associative_arrays:
+  # Frequency map — replaces awk '{count[$1]++}'
+  frequency: |
+    typeset -A counts
+    for item in $items; do (( counts[$item]++ )); done
+    for k in ${(kons)counts}; do print "$k: ${counts[$k]}"; done
+  # Sorted by value desc: (kOns), asc: (kons)
+  sort_by_value_desc: "${(kOns)hash}"
+  sort_by_value_asc: "${(kons)hash}"
+
+serialization:
+  # Serialize hash to string and back — no JSON tools needed
+  serialize: 'serialized="${(j: :)${(qkv@)hsh}}"'
+  deserialize: 'typeset -A restored; restored=("${(Q@)${(z@)serialized}}")'
+
+glob_modifiers:
+  # Path component modifiers
+  tail: "${f:t}"          # basename (replaces basename cmd)
+  head: "${f:h}"          # dirname  (replaces dirname cmd)
+  absolute: "${f:A}"      # realpath (replaces realpath cmd)
+  root: "${f:r}"          # strip extension
+  ext: "${f:e}"           # extension only
+  # Chaining: strip dir AND extension
+  stem: "${${f:t}:r}"
 
 exceptions:
   - "Complex regex requiring PCRE"
