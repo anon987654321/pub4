@@ -32,8 +32,12 @@ module MASTER
           design_violations = result.value if result.ok?
         end
 
+        # Detect forbidden shell tools in generated shell code blocks
+        zsh_violations = ZshPatternInjector.scan_violations(text)
+
         Result.ok(input.merge(
                     axiom_violations: violations,
+                    zsh_violations: zsh_violations,
                     design_violations: design_violations,
                     linted: true,
                   ))

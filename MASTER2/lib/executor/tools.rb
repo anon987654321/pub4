@@ -167,6 +167,13 @@ module MASTER
     def shell_command(cmd)
       return "BLOCKED: dangerous shell command rejected" if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
 
+      # Zsh pattern enforcement: block legacy file-op tools, force zsh native rewrite
+      banned_hit = ZshPatternInjector.banned_tool_in?(cmd)
+      if banned_hit
+        replacement = ZshPatternInjector.replacement_for(banned_hit)
+        return "BLOCKED: `#{banned_hit}` is forbidden — use #{replacement} instead. Rewrite using zsh native patterns."
+      end
+
       # Tier permission check (gist #4)
       if defined?(Security::Permissions)
         perm = Security::Permissions.check!(:shell_command, command: cmd)
