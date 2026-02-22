@@ -1,0 +1,220 @@
+# MASTER2 Replicate Model Configuration — February 2026
+# Two categories here:
+#   text  → LLM text generation (also listed in models.yml with api: replicate)
+#   image | video | audio | upscale | 3d | transcription | captioning → media generation
+
+# --- TEXT GENERATION (LLMs via Replicate) ---
+
+- id: anthropic/claude-sonnet-4-6
+  alias: claude-sonnet-4.6
+  category: text
+  provider: replicate
+  cost_per_run: null   # per-token pricing; see models.yml
+  description: Claude Sonnet 4.6 — default primary LLM via Replicate
+
+- id: anthropic/claude-opus-4-6
+  alias: claude-opus-4.6
+  category: text
+  provider: replicate
+  cost_per_run: null
+  description: Claude Opus 4.6 — premium LLM via Replicate
+
+- id: anthropic/claude-haiku-4-5
+  alias: claude-haiku-4.5
+  category: text
+  provider: replicate
+  cost_per_run: null
+  description: Claude Haiku 4.5 — fast LLM via Replicate
+
+- id: deepseek-ai/deepseek-r1
+  alias: deepseek-r1
+  category: text
+  provider: replicate
+  cost_per_run: null
+  description: DeepSeek R1 671B — reasoning model, strong fallback
+
+- id: deepseek-ai/deepseek-v3
+  alias: deepseek-v3
+  category: text
+  provider: replicate
+  cost_per_run: null
+  description: DeepSeek V3 685B — fast capable chat model
+# provider: replicate
+# category: image | video | audio | upscale | 3d | transcription | captioning
+# cost_per_run: approximate USD per prediction (replicate pricing varies by hardware)
+# alias: short key used in code / CLI
+
+# --- IMAGE GENERATION ---
+
+- id: black-forest-labs/flux-1.1-pro
+  alias: flux
+  category: image
+  provider: replicate
+  cost_per_run: 0.04
+  description: FLUX 1.1 Pro — highest quality diffusion image generation
+
+- id: black-forest-labs/flux-pro
+  alias: flux_pro
+  category: image
+  provider: replicate
+  cost_per_run: 0.055
+  description: FLUX Pro — professional tier FLUX model
+
+- id: black-forest-labs/flux-dev
+  alias: flux_dev
+  category: image
+  provider: replicate
+  cost_per_run: 0.025
+  description: FLUX Dev — open weights development variant
+
+- id: stability-ai/sdxl
+  alias: sdxl
+  category: image
+  provider: replicate
+  cost_per_run: 0.0039
+  description: Stable Diffusion XL — standard open source base model
+
+- id: ai-forever/kandinsky-2.2
+  alias: kandinsky
+  category: image
+  provider: replicate
+  cost_per_run: 0.008
+  description: Kandinsky 2.2 — multilingual diffusion model
+
+- id: ideogram-ai/ideogram-v2
+  alias: ideogram_v2
+  category: image
+  provider: replicate
+  cost_per_run: 0.08
+  description: Ideogram v2 — strong text rendering in images
+
+- id: recraft-ai/recraft-v3
+  alias: recraft_v3
+  category: image
+  provider: replicate
+  cost_per_run: 0.04
+  description: Recraft v3 — vector-style and design-focused image gen
+
+# --- UPSCALING ---
+
+- id: nightmareai/real-esrgan
+  alias: esrgan
+  category: upscale
+  provider: replicate
+  cost_per_run: 0.0009
+  description: Real-ESRGAN — fast 4x upscaling for photos and art
+
+- id: tencentarc/gfpgan
+  alias: gfpgan
+  category: upscale
+  provider: replicate
+  cost_per_run: 0.001
+  description: GFPGAN — face restoration and enhancement
+
+- id: sczhou/codeformer
+  alias: codeformer
+  category: upscale
+  provider: replicate
+  cost_per_run: 0.001
+  description: CodeFormer — robust face restoration via discrete codebook
+
+- id: lucataco/clarity-upscaler
+  alias: clarity
+  category: upscale
+  provider: replicate
+  cost_per_run: 0.023
+  description: Clarity Upscaler — detail-preserving 2x/4x upscaler
+
+# --- VIDEO GENERATION ---
+
+- id: stability-ai/stable-video-diffusion
+  alias: svd
+  category: video
+  provider: replicate
+  cost_per_run: 0.13
+  description: Stable Video Diffusion — image-to-video generation
+
+- id: minimax/video-01
+  alias: hailuo
+  category: video
+  provider: replicate
+  cost_per_run: 0.50
+  description: Hailuo Video-01 — cinematic video generation
+
+- id: kwaivgi/kling-v2.5-turbo-pro
+  alias: kling
+  category: video
+  provider: replicate
+  cost_per_run: 0.60
+  description: Kling v2.5 Turbo Pro — high-motion video generation
+
+- id: luma/ray-2
+  alias: luma_ray
+  category: video
+  provider: replicate
+  cost_per_run: 0.50
+  description: Luma Ray 2 — photorealistic video generation
+
+- id: wan-video/wan-2.5-i2v
+  alias: wan
+  category: video
+  provider: replicate
+  cost_per_run: 0.45
+  description: WAN 2.5 I2V — image-to-video with strong motion
+
+- id: openai/sora-2
+  alias: sora
+  category: video
+  provider: replicate
+  cost_per_run: 2.50
+  description: Sora 2 — OpenAI's high-quality video generation model
+
+# --- AUDIO ---
+
+- id: meta/musicgen
+  alias: musicgen
+  category: audio
+  provider: replicate
+  cost_per_run: 0.008
+  description: MusicGen — text-to-music generation by Meta
+
+- id: suno/bark
+  alias: bark
+  category: audio
+  provider: replicate
+  cost_per_run: 0.004
+  description: Bark — expressive TTS with music and sound effects
+
+- id: minimax/speech-02-turbo
+  alias: speech_turbo
+  category: audio
+  provider: replicate
+  cost_per_run: 0.002
+  description: MiniMax Speech-02 Turbo — fast high-quality TTS
+
+# --- TRANSCRIPTION ---
+
+- id: openai/whisper
+  alias: whisper
+  category: transcription
+  provider: replicate
+  cost_per_run: 0.001
+  description: Whisper — multilingual speech recognition by OpenAI
+
+# --- CAPTIONING ---
+
+- id: salesforce/blip
+  alias: blip
+  category: captioning
+  provider: replicate
+  cost_per_run: 0.0003
+  description: BLIP — image captioning and visual question answering
+
+# --- 3D ---
+
+- id: openai/shap-e
+  alias: shap_e
+  category: 3d
+  provider: replicate
+  cost_per_run: 0.006
+  description: Shap-E — text/image to 3D asset generation by OpenAI
