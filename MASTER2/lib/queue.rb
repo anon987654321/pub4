@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'fileutils'
-require 'json'
+require "fileutils"
+require "json"
 
 module MASTER
   # Queue - Priority-based task queue with checkpoint persistence
@@ -18,7 +18,7 @@ module MASTER
       @paused = false
       @budget = nil
       @spent = 0.0
-      @checkpoint_file = checkpoint_file || File.join(Paths.data, 'queue_checkpoint.json')
+      @checkpoint_file = checkpoint_file || File.join(Paths.data, "queue_checkpoint.json")
     end
 
     # Add item to queue with optional priority (higher = processed first)
@@ -42,7 +42,7 @@ module MASTER
 
     # Add all files from directory with optional filters
     def add_directory(path, extensions: %w[.rb .py .js .ts .sh .yml .yaml], recursive: true)
-      pattern = recursive ? File.join(path, '**', '*') : File.join(path, '*')
+      pattern = recursive ? File.join(path, "**", "*") : File.join(path, "*")
       files = Dir.glob(pattern).select { |f| File.file?(f) }
       files = files.select { |f| extensions.include?(File.extname(f)) }
       files = files.reject { |f| binary?(f) }
@@ -107,14 +107,14 @@ module MASTER
         remaining: @items.size,
         percent: total.zero? ? 100 : (done * 100.0 / total).round(1),
         spent: @spent,
-        budget: @budget
+        budget: @budget,
       }
     end
 
     # Get human-readable status string
     def status
       p = progress
-      budget_str = @budget ? " / $#{'%.2f' % @budget} budget" : ""
+      budget_str = @budget ? " / $#{format('%.2f', @budget)} budget" : ""
       "#{p[:done]}/#{p[:total]} (#{p[:percent]}%) | $#{'%.4f' % p[:spent]}#{budget_str} | #{p[:remaining]} remaining"
     end
 
@@ -127,7 +127,7 @@ module MASTER
         paused: @paused,
         budget: @budget,
         spent: @spent,
-        saved_at: Time.now.iso8601
+        saved_at: Time.now.iso8601,
       }
       FileUtils.mkdir_p(File.dirname(@checkpoint_file))
       File.write(@checkpoint_file, JSON.pretty_generate(data))
@@ -155,7 +155,7 @@ module MASTER
 
     # Delete checkpoint file
     def clear_checkpoint
-      File.delete(@checkpoint_file) if File.exist?(@checkpoint_file)
+      FileUtils.rm_f(@checkpoint_file)
       Result.ok("Checkpoint cleared")
     rescue StandardError => e
       Result.err("Failed to clear checkpoint: #{e.message}")
@@ -221,7 +221,7 @@ module MASTER
       begin
         chunk = File.read(file, 8192)
         chunk&.include?("\x00")
-      rescue StandardError => e
+      rescue StandardError
         true
       end
     end

@@ -10,28 +10,28 @@ module MASTER
       {
         question: "What new techniques were discovered?",
         action: "Add to structural_analysis or principles",
-        category: :technique
+        category: :technique,
       }.freeze,
       {
         question: "What patterns kept recurring?",
         action: "Codify as detection rules",
-        category: :pattern
+        category: :pattern,
       }.freeze,
       {
         question: "What questions yielded good results?",
         action: "Add to hierarchy questions for reuse",
-        category: :question
+        category: :question,
       }.freeze,
       {
         question: "What manual steps could be automated?",
         action: "Add as new command or automation",
-        category: :automation
+        category: :automation,
       }.freeze,
       {
         question: "What external tools/APIs were useful?",
         action: "Add to providers/integrations",
-        category: :tool
-      }.freeze
+        category: :tool,
+      }.freeze,
     ].freeze
 
     def capture_file
@@ -42,16 +42,16 @@ module MASTER
     def capture(session_id: nil)
       session_id ||= Session.current.id
 
-      puts UI.bold("Session Capture") + " " + UI.dim("extracting patterns...")
+      puts "#{UI.bold('Session Capture')} #{UI.dim('extracting patterns...')}"
 
       answers = {}
 
       QUESTIONS.each do |q|
-        puts UI.yellow("#{q[:question]}") + " " + UI.dim("Action: #{q[:action]}")
+        puts "#{UI.yellow(q[:question].to_s)} #{UI.dim("Action: #{q[:action]}")}"
         print "  Answer (or skip): "
 
         answer = $stdin.gets&.chomp&.strip
-        next if answer.nil? || answer.empty? || answer.downcase == 'skip'
+        next if answer.nil? || answer.empty? || answer.downcase == "skip"
 
         answers[q[:category]] = answer
       end
@@ -65,7 +65,7 @@ module MASTER
       capture_entry = {
         session_id: session_id,
         timestamp: Time.now.utc.iso8601,
-        answers: answers
+        answers: answers,
       }
 
       File.open(capture_file, "a") do |f|
@@ -75,14 +75,14 @@ module MASTER
       # Add to learnings automatically
       answers.each do |category, answer|
         learning_category = map_to_learning_category(category)
-        if learning_category
-          Learnings.record(
-            category: learning_category,
-            pattern: nil,
-            description: answer,
-            severity: :info
-          )
-        end
+        next unless learning_category
+
+        Learnings.record(
+          category: learning_category,
+          pattern: nil,
+          description: answer,
+          severity: :info,
+        )
       end
 
       puts UI.green("session: #{answers.size} insights captured")
@@ -135,7 +135,6 @@ module MASTER
       when :question then :ux_insight
       when :automation then :architecture
       when :tool then :architecture
-      else nil
       end
     end
   end

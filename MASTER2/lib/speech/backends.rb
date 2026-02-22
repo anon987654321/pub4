@@ -70,7 +70,7 @@ module MASTER
 
       # Replicate TTS (paid cloud) — uses Replicate::Client (async-http)
       def speak_replicate(text, play: true)
-        token = ENV["REPLICATE_API_TOKEN"]
+        token = ENV.fetch("REPLICATE_API_TOKEN", nil)
         return Result.err("No REPLICATE_API_TOKEN.") unless token
 
         result = Replicate::Client.create_prediction(

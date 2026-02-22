@@ -19,7 +19,7 @@ module MASTER
     end
 
     def run(path: MASTER.root, dry_run: true)
-      Logging.dmesg_log('evolve', message: 'ENTER evolve.run')
+      Logging.dmesg_log("evolve", message: "ENTER evolve.run")
       @iteration = 0
       @checkpoint = create_safety_checkpoint unless dry_run
       files = find_files(path)
@@ -38,7 +38,7 @@ module MASTER
         files_processed: @history.size,
         improvements: @history.count { |h| h[:improved] },
         history: @history,
-        checkpoint: @checkpoint
+        checkpoint: @checkpoint,
       }
     end
 
@@ -68,9 +68,7 @@ module MASTER
       return { file: file, skipped: true, reason: "too large" } if code.size > 10_000
 
       # Handle shell scripts with embedded Ruby
-      if @language == :shell || shell_file?(file)
-        return improve_shell_file(file, code, dry_run: dry_run)
-      end
+      return improve_shell_file(file, code, dry_run: dry_run) if @language == :shell || shell_file?(file)
 
       result = @chamber.deliberate(code, filename: File.basename(file))
 
@@ -84,9 +82,7 @@ module MASTER
               File.write(staged_path, clean)
             end
 
-            unless stage_result.ok?
-              return { file: file, improved: false, error: stage_result.error }
-            end
+            return { file: file, improved: false, error: stage_result.error } unless stage_result.ok?
           else
             # Default behavior - direct write
             clean = TextHygiene.normalize(result.value[:final], filename: file)
@@ -111,7 +107,10 @@ module MASTER
       parser = MASTER::Parser::MultiLanguage.new(code, file_path: file)
       parsed = parser.parse
 
-      return { file: file, skipped: true, reason: "no embedded Ruby" } if parsed[:embedded].nil? || parsed[:embedded].empty?
+      if parsed[:embedded].nil? || parsed[:embedded].empty?
+        return { file: file, skipped: true,
+                 reason: "no embedded Ruby" }
+      end
 
       ruby_blocks = parsed[:embedded][:ruby] || []
       return { file: file, skipped: true, reason: "no Ruby heredocs" } if ruby_blocks.empty?

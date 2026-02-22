@@ -39,7 +39,7 @@ module MASTER
           { error: data&.dig(:detail) || "Unknown error" }
         end
       rescue StandardError => e
-        $stderr.puts "Replicate: create_prediction error: #{e.class} - #{e.message}"
+        warn "Replicate: create_prediction error: #{e.class} - #{e.message}"
         { error: e.message }
       end
 
@@ -65,7 +65,7 @@ module MASTER
           end
         end
       rescue StandardError => e
-        $stderr.puts "Replicate: wait_for_completion error: #{e.class} - #{e.message}"
+        warn "Replicate: wait_for_completion error: #{e.class} - #{e.message}"
         { error: e.message }
       end
 
@@ -73,7 +73,7 @@ module MASTER
       def download_file(url, path)
         uri = URI(url)
         response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https",
-                                   open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|
+                                                           open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|
           http.get(uri.request_uri)
         end
         return false unless response.is_a?(Net::HTTPSuccess)
@@ -82,7 +82,7 @@ module MASTER
         File.binwrite(path, response.body)
         true
       rescue StandardError => e
-        $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
+        warn "Replicate: download_file failed for #{url}: #{e.message}"
         false
       end
 
@@ -94,7 +94,7 @@ module MASTER
         req.body = body.to_json
 
         response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true,
-                                   open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|
+                                                           open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|
           http.request(req)
         end
         JSON.parse(response.body, symbolize_names: true)
@@ -106,7 +106,7 @@ module MASTER
         req["Authorization"] = "Bearer #{Replicate.api_key}"
 
         response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true,
-                                   open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|
+                                                           open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|
           http.request(req)
         end
         JSON.parse(response.body, symbolize_names: true)

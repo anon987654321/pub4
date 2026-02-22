@@ -39,6 +39,7 @@ module MASTER
       # max_tokens is a future hook for token-aware trimming; currently uses message count heuristic.
       def compress(history, max_tokens: 4000)
         return history if history.size <= COMPRESS_AFTER_MESSAGES
+
         history.first(KEEP_FIRST_N) + history.last(KEEP_LAST_N)
       end
 
@@ -79,16 +80,14 @@ module MASTER
             content = msg[:content].to_s.downcase
             # Score by number of matching words
             score = query_words.count { |w| content.include?(w) }
-            if score > 0
-              results << { score: score, content: msg[:content][0..200], session: session_id }
-            end
+            results << { score: score, content: msg[:content][0..200], session: session_id } if score > 0
           end
         end
 
         results.sort_by { |r| -r[:score] }
-               .first(limit)
-               .map { |r| r[:content] }
-      rescue StandardError => e
+          .first(limit)
+          .map { |r| r[:content] }
+      rescue StandardError
         []
       end
     end

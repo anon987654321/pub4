@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "English"
 require_relative "pipeline/repl"
 require_relative "pipeline/context"
 require_relative "pressure_pass"
@@ -27,61 +28,63 @@ module MASTER
     def initialize(stages: DEFAULT_STAGES, mode: :executor)
       @mode = mode
       @stages = if mode == :executor
-        []
-      else
-        stages.map do |stage|
-          if stage.respond_to?(:call)
-            stage
-          else
-            const_name = stage.to_s.capitalize
-            unless ALLOWED_STAGES.include?(const_name)
-              raise ArgumentError, "Invalid pipeline stage: #{stage}. Allowed: #{ALLOWED_STAGES.join(', ')}"
-            end
-            Stages.const_get(const_name.to_sym).new
-          end
-        end
-      end
+                  []
+                else
+                  stages.map do |stage|
+                    if stage.respond_to?(:call)
+                      stage
+                    else
+                      const_name = stage.to_s.capitalize
+                      unless ALLOWED_STAGES.include?(const_name)
+                        raise ArgumentError, "Invalid pipeline stage: #{stage}. Allowed: #{ALLOWED_STAGES.join(', ')}"
+                      end
+
+                      Stages.const_get(const_name.to_sym).new
+                    end
+                  end
+                end
     end
 
     def call(input)
-      Logging.dmesg_log('pipeline', message: 'ENTER pipeline.call')
+      Logging.dmesg_log("pipeline", message: "ENTER pipeline.call")
       text = input.is_a?(Hash) ? input[:text] : input.to_s
 
       # Emit preamble to inform user what is being processed
-      UI.info("Processing: #{text[0..60]}#{text.length > 60 ? '...' : ''}")
+      UI.info("Processing: #{text[0..60]}#{'...' if text.length > 60}")
 
       Logging.with_request_id do
-      raw = case @mode
-            when :executor
-              # Guard must run even in executor mode to prevent dangerous ops
-              guard_result = Stages::Guard.new.call({ text: text })
-              return guard_result if guard_result.err?
-              # Default: Use autonomous executor with pattern selection
-              Executor.call(text, pattern: self.class.current_pattern)
-            when :stages
-              # Legacy: Stage-based pipeline
-              @stages.reduce(Result.ok(input)) do |result, stage|
-                stage_name = stage.class.name&.split("::")&.last || stage.class.name
-                result.and_then(stage_name) { |data| stage.call(data) }
-              end
-            when :direct
-              # Simple: Direct LLM call with system context
-              sys = begin
-                ExecutionContext.build_system_message(include_commands: false)
-              rescue StandardError
-                nil
-              end
-              if sys
-                LLM.ask(text, messages: [{ role: "system", content: sys }], stream: true)
-              else
-                LLM.ask(text, stream: true)
-              end
-            else
-              raise ArgumentError, "Unknown pipeline mode: #{@mode}"
-            end
+        raw = case @mode
+              when :executor
+                # Guard must run even in executor mode to prevent dangerous ops
+                guard_result = Stages::Guard.new.call({ text: text })
+                return guard_result if guard_result.err?
 
-      normalize_result(raw, text)
-      end # with_request_id
+                # Default: Use autonomous executor with pattern selection
+                Executor.call(text, pattern: self.class.current_pattern)
+              when :stages
+                # Legacy: Stage-based pipeline
+                @stages.reduce(Result.ok(input)) do |result, stage|
+                  stage_name = stage.class.name&.split("::")&.last || stage.class.name
+                  result.and_then(stage_name) { |data| stage.call(data) }
+                end
+              when :direct
+                # Simple: Direct LLM call with system context
+                sys = begin
+                  ExecutionContext.build_system_message(include_commands: false)
+                rescue StandardError
+                  nil
+                end
+                if sys
+                  LLM.ask(text, messages: [{ role: "system", content: sys }], stream: true)
+                else
+                  LLM.ask(text, stream: true)
+                end
+              else
+                raise ArgumentError, "Unknown pipeline mode: #{@mode}"
+              end
+
+        normalize_result(raw, text)
+      end
     end
 
     private
@@ -137,7 +140,10 @@ module MASTER
       cleaned = text.gsub(/```(?:sh|ruby|bash|shell)?\n\s*(?:#{tool_names})\b.*?```/m, "")
 
       # Remove tool output blocks: bare ``` blocks immediately after a tool call removal (>10 lines)
-      cleaned.gsub!(/```\n(?:[^\n]*\n){10,}```/m) { |block| lines = block.count("\n"); "[#{lines} lines omitted]" }
+      cleaned.gsub!(/```\n(?:[^\n]*\n){10,}```/m) do |block|
+        lines = block.count("\n")
+        "[#{lines} lines omitted]"
+      end
 
       # Remove standalone tool call lines
       cleaned.gsub!(/^\s*(?:#{tool_names})\s+["'].+$/m, "")
@@ -152,17 +158,15 @@ module MASTER
       include PipelineRepl
 
       def prompt
-        begin
-          segments = [
-            "master",
-            LLM.prompt_model_name,
-            LLM.tier,
-            git_info
-          ].map { |s| s.to_s.strip }.reject(&:empty?)
-          "#{segments.join(" ")} > "
-        rescue StandardError
-          "master > "
-        end
+        segments = [
+          "master",
+          LLM.prompt_model_name,
+          LLM.tier,
+          git_info,
+        ].map { |s| s.to_s.strip }.reject(&:empty?)
+        "#{segments.join(' ')} > "
+      rescue StandardError
+        "master > "
       end
 
       def git_info
@@ -171,13 +175,13 @@ module MASTER
         branch = Timeout.timeout(2) do
           IO.popen(%w[git rev-parse --abbrev-ref HEAD], err: [:child, :out]) { |io| io.read.strip }
         end
-        return nil if branch.empty? || $?.exitstatus != 0
+        return nil if branch.empty? || $CHILD_STATUS.exitstatus != 0
 
         # Check for uncommitted changes
         status = Timeout.timeout(2) do
-          IO.popen(%w[git status --porcelain], err: [:child, :out]) { |io| io.read }
+          IO.popen(%w[git status --porcelain], err: [:child, :out], &:read)
         end
-        dirty = !status.empty? && $?.exitstatus == 0
+        dirty = !status.empty? && $CHILD_STATUS.exitstatus == 0
 
         dirty_indicator = dirty ? "*" : ""
         "#{branch}#{dirty_indicator}"
@@ -199,6 +203,7 @@ module MASTER
       def show_exit_summary(session)
         msgs = session.message_count
         return if msgs == 0
+
         cost = session.total_cost
         puts UI.dim("#{msgs}msg #{UI.currency(cost)}")
       end

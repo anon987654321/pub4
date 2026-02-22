@@ -1,48 +1,48 @@
 # frozen_string_literal: true
 
-require 'yaml'
-require 'json'
-require 'fileutils'
-require 'uri'
-require 'async'
-require 'async/http/internet'
+require "yaml"
+require "json"
+require "fileutils"
+require "uri"
+require "async"
+require "async/http/internet"
 
 module MASTER
   # Harvester - Ecosystem intelligence gathering
   # Gathers information from open source ecosystems (GitHub, etc.)
   # Ported from MASTER v1, adapted for MASTER2's Result monad
   class Harvester
-    GITHUB_API = 'https://api.github.com'
+    GITHUB_API = "https://api.github.com"
     RATE_LIMIT_DELAY = 1.0 # seconds between requests
 
     attr_reader :harvested_data, :stats
 
     def initialize(github_token: nil)
-      @github_token = github_token || ENV['GITHUB_TOKEN']
+      @github_token = github_token || ENV.fetch("GITHUB_TOKEN", nil)
       @harvested_data = []
       @stats = {
         repos_scanned: 0,
         items_found: 0,
         errors: 0,
-        started_at: Time.now
+        started_at: Time.now,
       }
     end
 
     # Search GitHub for repositories
     def search_repos(query, limit: 10)
       uri = URI("#{GITHUB_API}/search/repositories")
-      uri.query = URI.encode_www_form(q: query, per_page: limit, sort: 'stars')
+      uri.query = URI.encode_www_form(q: query, per_page: limit, sort: "stars")
 
       response = github_request(uri)
       return Result.err("Search failed.") unless response
 
-      repos = response['items']&.map do |item|
+      repos = response["items"]&.map do |item|
         {
-          name: item['full_name'],
-          description: item['description'],
-          stars: item['stargazers_count'],
-          language: item['language'],
-          url: item['html_url']
+          name: item["full_name"],
+          description: item["description"],
+          stars: item["stargazers_count"],
+          language: item["language"],
+          url: item["html_url"],
         }
       end || []
 
@@ -60,15 +60,15 @@ module MASTER
       return Result.err("Repository not found.") unless response
 
       info = {
-        name: response['full_name'],
-        description: response['description'],
-        stars: response['stargazers_count'],
-        forks: response['forks_count'],
-        language: response['language'],
-        topics: response['topics'] || [],
-        created_at: response['created_at'],
-        updated_at: response['updated_at'],
-        url: response['html_url']
+        name: response["full_name"],
+        description: response["description"],
+        stars: response["stargazers_count"],
+        forks: response["forks_count"],
+        language: response["language"],
+        topics: response["topics"] || [],
+        created_at: response["created_at"],
+        updated_at: response["updated_at"],
+        url: response["html_url"],
       }
 
       @stats[:repos_scanned] += 1
@@ -79,11 +79,9 @@ module MASTER
     end
 
     # Get trending repositories
-    def get_trending(language: nil, since: 'daily')
+    def get_trending(language: nil, since: "daily")
       # Use Web module's GitHub helper if available
-      if defined?(Web::GitHub)
-        return Web::GitHub.trending(language: language, since: since)
-      end
+      return Web::GitHub.trending(language: language, since: since) if defined?(Web::GitHub)
 
       Result.err("Web::GitHub module not available.")
     end
@@ -132,9 +130,9 @@ module MASTER
       data = {
         metadata: {
           harvested_at: Time.now.iso8601,
-          stats: @stats
+          stats: @stats,
         },
-        data: @harvested_data
+        data: @harvested_data,
       }
 
       File.write(output_path, YAML.dump(data))
@@ -152,7 +150,7 @@ module MASTER
       {
         languages: language_distribution,
         avg_stars: average_stars,
-        total_items: @harvested_data.size
+        total_items: @harvested_data.size,
       }
     end
 
@@ -194,6 +192,7 @@ module MASTER
     def average_stars
       stars = @harvested_data.map { |d| d[:stars] }.compact
       return 0 if stars.empty?
+
       (stars.sum.to_f / stars.size).round(1)
     end
   end

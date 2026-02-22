@@ -14,18 +14,19 @@ module MASTER
         while retry_count < max_retries
           begin
             result = if replicate_model?(model)
-              execute_replicate_llm_request(prompt: prompt, messages: messages, model: model, reasoning: reasoning)
-            else
-              execute_ruby_llm_request(
-                prompt: prompt,
-                messages: messages,
-                model: model,
-                reasoning: reasoning,
-                json_schema: json_schema,
-                provider: provider,
-                stream: stream,
-              )
-            end
+                       execute_replicate_llm_request(prompt: prompt, messages: messages, model: model,
+                                                     reasoning: reasoning)
+                     else
+                       execute_ruby_llm_request(
+                         prompt: prompt,
+                         messages: messages,
+                         model: model,
+                         reasoning: reasoning,
+                         json_schema: json_schema,
+                         provider: provider,
+                         stream: stream,
+                       )
+                     end
 
             # Success or non-retryable error
             return result if result.ok? || !retryable_error?(result.error)
@@ -41,7 +42,7 @@ module MASTER
           break if retry_count >= max_retries
 
           # Exponential backoff: 1s, 2s, 4s
-          sleep_time = 2 ** (retry_count - 1)
+          sleep_time = 2**(retry_count - 1)
           Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error)
           sleep(sleep_time)
         end
@@ -51,6 +52,7 @@ module MASTER
 
       def retryable_error?(error)
         return false unless error.is_a?(String) || error.is_a?(Hash)
+
         error_str = error.is_a?(Hash) ? error[:message].to_s : error.to_s
 
         # Not retryable: prompt too large
@@ -61,7 +63,9 @@ module MASTER
 
         # Not retryable: insufficient credits — tell user immediately
         if error_str.match?(/requires more credits|can only afford|insufficient credits/i)
-          Logging.warn("Insufficient OpenRouter credits — add credits at openrouter.ai/settings/credits or use a free model: `model deepseek-r1-free`", subsystem: "llm.budget")
+          Logging.warn(
+            "Insufficient OpenRouter credits — add credits at openrouter.ai/settings/credits or use a free model: `model deepseek-r1-free`", subsystem: "llm.budget"
+          )
           return false
         end
 
@@ -73,7 +77,7 @@ module MASTER
         configure_ruby_llm
 
         chat = RubyLLM.chat(model: model, assume_model_exists: true, provider: :openrouter)
-                      .with_params(max_tokens: LLM::MAX_CHAT_TOKENS)
+          .with_params(max_tokens: LLM::MAX_CHAT_TOKENS)
 
         # Validate reasoning effort values
         if reasoning
@@ -82,6 +86,7 @@ module MASTER
           unless REASONING_EFFORT.map(&:to_s).include?(effort_str)
             return Result.err("Invalid reasoning effort: #{effort_str}. Must be one of: #{REASONING_EFFORT.join(', ')}")
           end
+
           chat = chat.with_thinking(effort: effort_str.to_sym)
         end
 
@@ -92,9 +97,7 @@ module MASTER
         end
 
         # Provider preferences
-        if provider && provider.is_a?(Hash)
-          chat = chat.with_params(provider: provider)
-        end
+        chat = chat.with_params(provider: provider) if provider.is_a?(Hash)
 
         # Build proper message array for RubyLLM (preserves multi-turn conversations)
         msg_array = build_message_array(prompt, messages)
@@ -120,20 +123,19 @@ module MASTER
       def build_message_array(prompt, messages)
         result = []
 
-        if messages && messages.is_a?(Array) && !messages.empty?
+        if messages.is_a?(Array) && !messages.empty?
           # Convert existing messages to proper format
           messages.each do |m|
             role = (m[:role] || m["role"]).to_s
             content = m[:content] || m["content"]
             next unless content
+
             result << { role: role, content: content }
           end
         end
 
         # Add current prompt as user message if provided
-        if prompt && !prompt.to_s.empty?
-          result << { role: "user", content: prompt.to_s }
-        end
+        result << { role: "user", content: prompt.to_s } if prompt && !prompt.to_s.empty?
 
         result
       end
@@ -148,6 +150,7 @@ module MASTER
             role = msg[:role] || msg["role"]
             content = msg[:content] || msg["content"]
             next unless role && content
+
             chat.add_message(role: role.to_sym, content: content)
           end
         end
@@ -173,7 +176,7 @@ module MASTER
           tokens_in: response.input_tokens || 0,
           tokens_out: response.output_tokens || 0,
           cost: nil,
-          finish_reason: "stop"
+          finish_reason: "stop",
         }
 
         validate_response(response_data, model)
@@ -198,9 +201,7 @@ module MASTER
             next if text.empty?
 
             # Populate reasoning_parts from thinking chunks if available
-            if chunk.respond_to?(:thinking) && chunk.thinking
-              reasoning_parts << chunk.thinking
-            end
+            reasoning_parts << chunk.thinking if chunk.respond_to?(:thinking) && chunk.thinking
 
             $stdout.print text
             $stdout.flush
@@ -228,7 +229,7 @@ module MASTER
           tokens_out: final_response&.output_tokens || 0,
           cost: nil,
           finish_reason: "stop",
-          streamed: true
+          streamed: true,
         }
 
         validate_response(response_data, model)
@@ -251,16 +252,16 @@ module MASTER
         # Replicate's predictions API uses a single prompt field, not a messages array.
         msg_array  = build_message_array(prompt, messages)
         sys_msg    = msg_array.find { |m| m[:role] == "system" }
-        user_msgs  = msg_array.select { |m| m[:role] == "user" }
-        asst_msgs  = msg_array.select { |m| m[:role] == "assistant" }
+        msg_array.select { |m| m[:role] == "user" }
+        msg_array.select { |m| m[:role] == "assistant" }
 
         # Interleave user/assistant turns into a conversation-style prompt
         turns = msg_array.reject { |m| m[:role] == "system" }
         flat_prompt = if turns.size == 1
-          turns.first[:content]
-        else
-          turns.map { |m| "#{m[:role].capitalize}: #{m[:content]}" }.join("\n\n")
-        end
+                        turns.first[:content]
+                      else
+                        turns.map { |m| "#{m[:role].capitalize}: #{m[:content]}" }.join("\n\n")
+                      end
 
         system_prompt = sys_msg&.dig(:content)
 
@@ -271,7 +272,7 @@ module MASTER
           model,
           flat_prompt,
           system_prompt: system_prompt,
-          max_tokens:    max_tokens,
+          max_tokens: max_tokens,
         )
       rescue StandardError => e
         Result.err("Replicate LLM request failed: #{e.message}", category: :infrastructure)
@@ -286,17 +287,11 @@ module MASTER
           return Result.err("Empty response from #{extract_model_name(model_id)}")
         end
 
-        unless data[:tokens_in].is_a?(Integer) || data[:tokens_in].is_a?(Float)
-          data[:tokens_in] = 0
-        end
+        data[:tokens_in] = 0 unless data[:tokens_in].is_a?(Integer) || data[:tokens_in].is_a?(Float)
 
-        unless data[:tokens_out].is_a?(Integer) || data[:tokens_out].is_a?(Float)
-          data[:tokens_out] = 0
-        end
+        data[:tokens_out] = 0 unless data[:tokens_out].is_a?(Integer) || data[:tokens_out].is_a?(Float)
 
-        if data[:cost] && !data[:cost].is_a?(Numeric)
-          data[:cost] = nil
-        end
+        data[:cost] = nil if data[:cost] && !data[:cost].is_a?(Numeric)
 
         Result.ok(data)
       end

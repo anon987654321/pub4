@@ -23,7 +23,7 @@ module MASTER
           # Execute step
           result = Replicate.run(
             model_id: step[:model],
-            input: { prompt: step[:prompt] || "" }.merge(params)
+            input: { prompt: step[:prompt] || "" }.merge(params),
           )
 
           return result if result.err?
@@ -32,7 +32,7 @@ module MASTER
           results << {
             step: idx + 1,
             model: step[:name],
-            output: current_output
+            output: current_output,
           }
         end
 
@@ -55,7 +55,7 @@ module MASTER
         Replicate.generate(
           prompt: full_prompt,
           model: model_id,
-          params: { style: style, lighting: lighting }
+          params: { style: style, lighting: lighting },
         )
       end
 
@@ -87,8 +87,8 @@ module MASTER
             input_images: training_data,
             trigger_word: trigger_word,
             steps: 1000,
-            learning_rate: 0.0004
-          }
+            learning_rate: 0.0004,
+          },
         )
       end
 
@@ -112,10 +112,11 @@ module MASTER
 
           vid_result = Replicate.run(
             model_id: video_model,
-            input: { image: image_url, prompt: scene[:video_prompt] || "", duration: scene[:duration] || 10 }
+            input: { image: image_url, prompt: scene[:video_prompt] || "", duration: scene[:duration] || 10 },
           )
 
-          results << { step: idx + 1, name: scene[:name], image: image_url, video: vid_result.ok? ? vid_result.value[:output] : nil }
+          results << { step: idx + 1, name: scene[:name], image: image_url,
+                       video: vid_result.ok? ? vid_result.value[:output] : nil }
         end
 
         Result.ok(results)
@@ -129,11 +130,11 @@ module MASTER
         output_dir ||= "#{input_dir}_enhanced"
         FileUtils.mkdir_p(output_dir)
 
-        images = Dir[File.join(input_dir, "*.{jpg,jpeg,png}")].sort
+        images = Dir[File.join(input_dir, "*.{jpg,jpeg,png}")]
         return Result.err("No images found in #{input_dir}") if images.empty?
 
         results = []
-        images.each_with_index do |img_path, i|
+        images.each_with_index do |img_path, _i|
           name = File.basename(img_path, ".*")
           img_data = File.binread(img_path)
           img_url = "data:image/jpeg;base64,#{Base64.strict_encode64(img_data)}"

@@ -21,6 +21,7 @@ module MASTER
       def edge_installed?
         python = find_python
         return false unless python
+
         system("#{python} -c \"import edge_tts\" 2>/dev/null")
       end
 
@@ -35,6 +36,7 @@ module MASTER
         return :piper if piper_installed?
         return :edge if edge_installed?
         return :replicate if ENV["REPLICATE_API_TOKEN"]
+
         nil
       end
 
@@ -44,7 +46,7 @@ module MASTER
           case e
           when :piper then piper_installed?
           when :edge then edge_installed?
-          when :replicate then ENV["REPLICATE_API_TOKEN"]
+          when :replicate then ENV.fetch("REPLICATE_API_TOKEN", nil)
           end
         end
       end
@@ -53,6 +55,7 @@ module MASTER
       def engine_status
         engines = available_engines
         return "off" if engines.empty?
+
         engines.map(&:to_s).join("/")
       end
     end

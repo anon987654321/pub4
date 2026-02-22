@@ -77,8 +77,8 @@ module MASTER
         return image unless intensity > 0
 
         r, g, b = image.bandsplit
-        r = r.linear([1 + 0.2 * intensity], [5 * intensity])
-        b = b.linear([1 + 0.25 * intensity], [0])
+        r = r.linear([1 + (0.2 * intensity)], [5 * intensity])
+        b = b.linear([1 + (0.25 * intensity)], [0])
         Vips::Image.bandjoin([r, g, b])
       rescue StandardError
         image
@@ -100,7 +100,7 @@ module MASTER
         return image unless amount > 0
 
         gray = image.colourspace("grey16").colourspace("srgb")
-        image * (1.0 - amount) + gray * amount
+        (image * (1.0 - amount)) + (gray * amount)
       rescue StandardError
         image
       end
@@ -109,7 +109,7 @@ module MASTER
         return image unless tint_color.is_a?(Array)
 
         tint_layer = Vips::Image.black(image.width, image.height, bands: 3) + tint_color
-        image * 0.95 + tint_layer * 0.05
+        (image * 0.95) + (tint_layer * 0.05)
       rescue StandardError
         image
       end
@@ -122,7 +122,7 @@ module MASTER
 
         if lens[:glow]&.positive?
           glow = image.gaussblur(20) * lens[:glow]
-          image = image + glow
+          image += glow
         end
 
         image
@@ -133,7 +133,7 @@ module MASTER
       def apply_vignette_effect(image, intensity)
         cx = image.width / 2.0
         cy = image.height / 2.0
-        max_dist = Math.sqrt(cx * cx + cy * cy)
+        max_dist = Math.sqrt((cx * cx) + (cy * cy))
 
         x = Vips::Image.xyz(image.width, image.height)
         dist = ((x[0] - cx).pow(2) + (x[1] - cy).pow(2)).pow(0.5)

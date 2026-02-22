@@ -39,14 +39,14 @@ module MASTER
 
       # Lower index = higher precedence
       winner = if idx_a.nil?
-        b
-      elsif idx_b.nil?
-        a
-      elsif idx_a <= idx_b
-        a
-      else
-        b
-      end
+                 b
+               elsif idx_b.nil?
+                 a
+               elsif idx_a <= idx_b
+                 a
+               else
+                 b
+               end
 
       Result.ok(winner: winner, loser: winner == a ? b : a)
     end

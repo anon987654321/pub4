@@ -18,7 +18,7 @@ module MASTER
         UI.dim("  #{actions.size} actions")
 
         evidence = execute_rewoo_steps(actions, start_time)
-        return evidence unless evidence.is_a?(Hash)  # Handle timeout error
+        return evidence unless evidence.is_a?(Hash) # Handle timeout error
 
         synthesize_rewoo(goal, plan_text, evidence)
       end
@@ -64,7 +64,7 @@ module MASTER
           end
 
           @step = num.to_i
-          resolved = action_str.gsub(/#E(\d+)/) { evidence[$1.to_i] || "" }
+          resolved = action_str.gsub(/#E(\d+)/) { evidence[::Regexp.last_match(1).to_i] || "" }
 
           UI.dim("  #E#{num}: #{resolved[0..60]}")
           observation = dispatch_action(resolved.strip)
@@ -105,10 +105,9 @@ module MASTER
           steps: @step,
           pattern: :rewoo,
           evidence: evidence,
-          history: @history
+          history: @history,
         )
       end
     end
-
   end
 end

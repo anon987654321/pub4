@@ -15,7 +15,7 @@ module MASTER
 
       # Fan out - get multiple responses using different approaches
       @size.times do |i|
-        tier = i < 2 ? :strong : :fast  # Mix of tiers for diversity
+        tier = i < 2 ? :strong : :fast # Mix of tiers for diversity
 
         begin
           result = LLM.ask(prompt, tier: tier)
@@ -29,9 +29,9 @@ module MASTER
             index: i,
             model: data[:model],
             content: data[:content],
-            tokens: (data[:tokens_in] || 0) + (data[:tokens_out] || 0)
+            tokens: (data[:tokens_in] || 0) + (data[:tokens_out] || 0),
           }
-        rescue StandardError => e
+        rescue StandardError
           # Continue with other attempts
         end
       end
@@ -43,11 +43,11 @@ module MASTER
       total_cost += best[:curation_cost] || 0
 
       Result.ok({
-        responses: responses,
-        best: best[:selected],
-        reasoning: best[:reasoning],
-        cost: total_cost
-      })
+                  responses: responses,
+                  best: best[:selected],
+                  reasoning: best[:reasoning],
+                  cost: total_cost,
+                })
     end
 
     private
@@ -65,12 +65,16 @@ module MASTER
 
       # Parse selection
       content = data[:content].to_s
-      selected_idx = content.match(/\[(\d+)\]/)[1].to_i rescue 0
+      selected_idx = begin
+        content.match(/\[(\d+)\]/)[1].to_i
+      rescue StandardError
+        0
+      end
 
       {
         selected: responses[selected_idx] || responses.first,
         reasoning: content,
-        curation_cost: cost
+        curation_cost: cost,
       }
     rescue StandardError => e
       { selected: responses.first, reasoning: "Curation failed: #{e.message}", curation_cost: 0 }

@@ -18,7 +18,7 @@ module MASTER
       extend self
 
       DEFAULT_MAX_TOKENS  = 4_096
-      DEFAULT_TEMPERATURE = 0.6   # recommended for R1; 0.7–1.0 for other models
+      DEFAULT_TEMPERATURE = 0.6 # recommended for R1; 0.7–1.0 for other models
       DEFAULT_TOP_P       = 0.95
 
       def complete(model_id, prompt, system_prompt: nil, max_tokens: DEFAULT_MAX_TOKENS,
@@ -34,17 +34,15 @@ module MASTER
         # Output is an array of token strings on Replicate; join for full text
         content = Array(completion[:output]).join
 
-        if content.strip.empty?
-          return Result.err("Empty response from #{model_id.split('/').last}")
-        end
+        return Result.err("Empty response from #{model_id.split('/').last}") if content.strip.empty?
 
         Result.ok(
-          content:      content,
-          model:        model_id,
-          provider:     :replicate,
-          tokens_in:    0,    # Replicate predictions API doesn't surface token counts
-          tokens_out:   0,
-          cost:         nil,
+          content: content,
+          model: model_id,
+          provider: :replicate,
+          tokens_in: 0, # Replicate predictions API doesn't surface token counts
+          tokens_out: 0,
+          cost: nil,
           finish_reason: "stop",
         )
       rescue StandardError => e
@@ -57,21 +55,17 @@ module MASTER
       def build_input(model_id, prompt, system_prompt, max_tokens, temperature, top_p)
         owner = model_id.split("/").first
 
-        case owner
-        when "anthropic"
-          h = { prompt: prompt, max_tokens: [max_tokens, 1024].max, temperature: temperature }
-          h[:system_prompt] = system_prompt if system_prompt
-          h
-        when "deepseek-ai"
-          h = { prompt: prompt, max_tokens: max_tokens, temperature: temperature, top_p: top_p }
-          h[:system_prompt] = system_prompt if system_prompt
-          h
-        else
-          # Default: deepseek-style (most open LLMs on Replicate use this schema)
-          h = { prompt: prompt, max_tokens: max_tokens, temperature: temperature, top_p: top_p }
-          h[:system_prompt] = system_prompt if system_prompt
-          h
-        end
+        h = case owner
+            when "anthropic"
+              { prompt: prompt, max_tokens: [max_tokens, 1024].max, temperature: temperature }
+            when "deepseek-ai"
+              { prompt: prompt, max_tokens: max_tokens, temperature: temperature, top_p: top_p }
+            else
+              # Default: deepseek-style (most open LLMs on Replicate use this schema)
+              { prompt: prompt, max_tokens: max_tokens, temperature: temperature, top_p: top_p }
+            end
+        h[:system_prompt] = system_prompt if system_prompt
+        h
       end
     end
   end

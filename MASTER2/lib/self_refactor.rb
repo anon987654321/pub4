@@ -59,7 +59,7 @@ module MASTER
 
     # All lib/**/*.rb files, sorted for deterministic ordering
     def target_files
-      Dir.glob(File.join(MASTER.root, "lib", "**", "*.rb")).sort
+      Dir.glob(File.join(MASTER.root, "lib", "**", "*.rb"))
     end
 
     # Scan all files for violations. Returns array of violation hashes.
@@ -74,18 +74,18 @@ module MASTER
           violations << {
             file: file, line: lines.size, axiom_id: "SELF_APPLY",
             description: "File exceeds #{HARD_LINE_LIMIT} lines (#{lines.size})",
-            fixable: false,
+            fixable: false
           }
         end
 
         # Check frozen_string_literal
-        unless lines.first&.strip == "# frozen_string_literal: true"
-          violations << {
-            file: file, line: 1, axiom_id: "SELF_APPLY",
-            description: "Missing frozen_string_literal: true",
-            fixable: true,
-          }
-        end
+        next if lines.first&.strip == "# frozen_string_literal: true"
+
+        violations << {
+          file: file, line: 1, axiom_id: "SELF_APPLY",
+          description: "Missing frozen_string_literal: true",
+          fixable: true
+        }
       end
       violations
     end
@@ -125,11 +125,11 @@ module MASTER
       AxiomResolver.defer(
         axiom_id: violation[:axiom_id], file: violation[:file],
         line: violation[:line], reason: violation[:description],
-        blocking_axiom: "PRESERVE_FIRST",
+        blocking_axiom: "PRESERVE_FIRST"
       )
     end
 
-    def log_iteration(n)
+    def log_iteration(_n)
       Logging.dmesg_log("self_refactor", message: ConvergenceTracker.summary) if defined?(Logging)
     end
 

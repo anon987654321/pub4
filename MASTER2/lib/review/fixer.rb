@@ -11,18 +11,27 @@ module MASTER
         debug_code: ->(code) { code.gsub(/^\s*(binding\.pry|debugger|byebug).*\n/, "") },
         puts_debug: ->(code) { code.gsub(/^\s*puts\s+["']debug.*["'].*\n/i, "") },
         empty_lines_excess: ->(code) { code.gsub(/\n{3,}/, "\n\n") },
-        trailing_newlines: ->(code) { code.rstrip + "\n" },
+        trailing_newlines: ->(code) { "#{code.rstrip}\n" },
         mixed_indentation: ->(code) { code.gsub(/^(\t+)/) { |m| "  " * m.length } },
         crlf_to_lf: ->(code) { code.gsub("\r\n", "\n") },
         bom_strip: ->(code) { code.sub(/\A\xEF\xBB\xBF/, "") },
         # Language axiom auto-fixes
-        freeze_constants: ->(code) { code.gsub(/^(\s*[A-Z][A-Z_]*\s*=\s*[\[{].*)$/m) { |m| m.include?(".freeze") ? m : m.rstrip + ".freeze" } },
-        safe_navigation: ->(code) { code.gsub(/(\w+)\s*&&\s*\1\.(\w+)/) { "#{Regexp.last_match(1)}&.#{Regexp.last_match(2)}" } },
+        freeze_constants: ->(code) {
+          code.gsub(/^(\s*[A-Z][A-Z_]*\s*=\s*[\[{].*)$/m) do |m|
+            m.include?(".freeze") ? m : "#{m.rstrip}.freeze"
+          end
+        },
+        safe_navigation: ->(code) {
+          code.gsub(/(\w+)\s*&&\s*\1\.(\w+)/) do
+            "#{Regexp.last_match(1)}&.#{Regexp.last_match(2)}"
+          end
+        },
       }.freeze
 
       MODE_FIXES = {
         conservative: %i[trailing_whitespace empty_lines_excess trailing_newlines crlf_to_lf bom_strip],
-        moderate: %i[trailing_whitespace empty_lines_excess trailing_newlines puts_debug crlf_to_lf bom_strip mixed_indentation],
+        moderate: %i[trailing_whitespace empty_lines_excess trailing_newlines puts_debug crlf_to_lf bom_strip
+                     mixed_indentation],
         aggressive: FIXERS.keys,
       }.freeze
 
@@ -55,25 +64,23 @@ module MASTER
           next unless fixer
 
           new_code = fixer.call(code)
-          if new_code != code
-            code = new_code
-            fixed_count += 1
-            @fixes_applied << { file: file, type: type }
-          end
+          next unless new_code != code
+
+          code = new_code
+          fixed_count += 1
+          @fixes_applied << { file: file, type: type }
         end
 
         return Result.ok(file: file, fixed: 0, message: "No changes needed") if code == original
 
-        unless valid_syntax?(code, file)
-          return Result.err("Fix produced invalid syntax - not writing.")
-        end
+        return Result.err("Fix produced invalid syntax - not writing.") unless valid_syntax?(code, file)
 
         File.write(file, code)
 
         Result.ok(
           file: file,
           fixed: fixed_count,
-          types: @fixes_applied.select { |f| f[:file] == file }.map { |f| f[:type] }
+          types: @fixes_applied.select { |f| f[:file] == file }.map { |f| f[:type] },
         )
       end
 
@@ -93,7 +100,7 @@ module MASTER
           files_processed: files.size,
           files_fixed: successful,
           total_fixes: total_fixed,
-          details: results.map { |r| r.ok? ? r.value : { error: r.error } }
+          details: results.map { |r| r.ok? ? r.value : { error: r.error } },
         )
       end
 
@@ -168,7 +175,7 @@ module MASTER
         require "yaml"
         YAML.safe_load(code)
         true
-      rescue StandardError => e
+      rescue StandardError
         false
       end
 
@@ -176,7 +183,7 @@ module MASTER
         require "json"
         JSON.parse(code, symbolize_names: true)
         true
-      rescue StandardError => e
+      rescue StandardError
         false
       end
     end

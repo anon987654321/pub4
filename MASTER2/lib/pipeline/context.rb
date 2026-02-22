@@ -27,14 +27,14 @@ module MASTER
       :pattern,           # [Symbol] Execution pattern used
       :steps,             # [Integer] Number of executor steps taken
       :history,           # [Array] Executor step history
-      keyword_init: true
+      keyword_init: true,
     ) do
       # Build a Context from a plain hash (symbolized keys)
       # @param hash [Hash] Source hash
       # @return [Context] New context instance
       def self.from_hash(hash)
         known_keys = members
-        filtered = hash.transform_keys(&:to_sym).select { |k, _| known_keys.include?(k) }
+        filtered = hash.transform_keys(&:to_sym).slice(*known_keys)
         new(**filtered)
       end
 

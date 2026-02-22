@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'repligen/pipelines'
+require_relative "repligen/pipelines"
 
 module MASTER
   module Bridges
@@ -8,7 +8,7 @@ module MASTER
     # Based on repligen.rb WILD_CHAIN model catalog
     # Provides access to image, video, and enhancement models
     module ReplicateBridge
-      extend self
+      module_function
 
       # Model catalog - delegates to Replicate::MODELS for DRY
       def self.model_catalog
@@ -18,28 +18,28 @@ module MASTER
             { model: MASTER::Replicate::MODELS[:flux_dev], name: "Flux Dev" },
             { model: MASTER::Replicate::MODELS[:sdxl], name: "SDXL" },
             { model: MASTER::Replicate::MODELS[:ideogram_v2], name: "Ideogram V2" },
-            { model: MASTER::Replicate::MODELS[:recraft_v3], name: "Recraft V3" }
+            { model: MASTER::Replicate::MODELS[:recraft_v3], name: "Recraft V3" },
           ],
           video_gen: [
             { model: MASTER::Replicate::MODELS[:hailuo], name: "Hailuo 2.3" },
             { model: MASTER::Replicate::MODELS[:kling], name: "Kling 2.5" },
             { model: MASTER::Replicate::MODELS[:luma_ray], name: "Luma Ray 2" },
             { model: MASTER::Replicate::MODELS[:wan], name: "WAN 2.5" },
-            { model: MASTER::Replicate::MODELS[:sora], name: "Sora 2" }
+            { model: MASTER::Replicate::MODELS[:sora], name: "Sora 2" },
           ],
           enhance: [
             { model: MASTER::Replicate::MODELS[:esrgan], name: "Real-ESRGAN 4x" },
             { model: MASTER::Replicate::MODELS[:gfpgan], name: "GFPGAN Face" },
             { model: MASTER::Replicate::MODELS[:codeformer], name: "CodeFormer" },
-            { model: MASTER::Replicate::MODELS[:clarity], name: "Clarity 4x" }
+            { model: MASTER::Replicate::MODELS[:clarity], name: "Clarity 4x" },
           ],
           audio: [
             { model: MASTER::Replicate::MODELS[:musicgen], name: "MusicGen" },
-            { model: MASTER::Replicate::MODELS[:bark], name: "Bark TTS" }
+            { model: MASTER::Replicate::MODELS[:bark], name: "Bark TTS" },
           ],
           transcribe: [
-            { model: MASTER::Replicate::MODELS[:whisper], name: "Whisper" }
-          ]
+            { model: MASTER::Replicate::MODELS[:whisper], name: "Whisper" },
+          ],
         }.freeze
       end
 
@@ -120,7 +120,7 @@ module MASTER
             step: chain.length + 1,
             category: category,
             model: model[:model],
-            name: model[:name]
+            name: model[:name],
           }
         end
 

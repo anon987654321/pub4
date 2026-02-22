@@ -18,7 +18,7 @@ module MASTER
       promote: { threshold: 0.85, action: "Promote to core patterns" },
       keep: { threshold: 0.60, action: "Keep in active set" },
       demote: { threshold: 0.30, action: "Demote to experimental" },
-      retire: { threshold: 0.0, action: "Retire pattern" }
+      retire: { threshold: 0.0, action: "Retire pattern" },
     }.freeze
 
     def assess(learning)
@@ -26,12 +26,12 @@ module MASTER
       {
         confidence: confidence,
         quality: confidence >= MIN_CONFIDENCE ? :acceptable : :low,
-        usable: confidence >= MIN_CONFIDENCE
+        usable: confidence >= MIN_CONFIDENCE,
       }
     end
 
     def evaluate(pattern)
-      applications = pattern[:applications] || pattern[:applications] || 0
+      applications = pattern[:applications] || pattern[:applied_count] || 0
       return :unrated if applications < MINIMUM_APPLICATIONS
 
       success_rate = calculate_success_rate(pattern)
@@ -49,11 +49,12 @@ module MASTER
     end
 
     def calculate_success_rate(pattern)
-      successes = (pattern[:successes] || pattern[:successes] || 0).to_f
-      failures = (pattern[:failures] || pattern[:failures] || 0).to_f
+      successes = (pattern[:successes] || pattern[:success_count] || 0).to_f
+      failures = (pattern[:failures] || pattern[:failure_count] || 0).to_f
       total = successes + failures
 
       return 0.0 if total.zero?
+
       successes / total
     end
 

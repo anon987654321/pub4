@@ -14,7 +14,7 @@ module MASTER
       :category,
       :message,
       :suggestion,
-      keyword_init: true
+      keyword_init: true,
     )
 
     # Report class for collecting and analyzing findings
@@ -47,7 +47,7 @@ module MASTER
         {
           total: @findings.size,
           by_severity: by_severity.transform_values(&:count),
-          by_category: by_category.transform_values(&:count)
+          by_category: by_category.transform_values(&:count),
         }
       end
     end
@@ -69,17 +69,16 @@ module MASTER
 
           # Check method and variable names
           check_naming(file, content, report)
-
         rescue StandardError => e
           report.add(Finding.new(
-            file: file,
-            line: 0,
-            severity: :low,
-            effort: :easy,
-            category: :error,
-            message: "Could not scan file: #{e.message}",
-            suggestion: nil
-          ))
+                       file: file,
+                       line: 0,
+                       severity: :low,
+                       effort: :easy,
+                       category: :error,
+                       message: "Could not scan file: #{e.message}",
+                       suggestion: nil,
+                     ))
         end
       end
 
@@ -90,37 +89,37 @@ module MASTER
 
     def check_file_length(file, lines, report)
       thresholds = if defined?(MASTER::Smells)
-        smells_thresholds = MASTER::Smells.thresholds
-        {
-          warn: smells_thresholds[:max_file_lines],
-          error: smells_thresholds[:max_file_lines] * 2
-        }
-      else
-        { warn: 250, error: 500 }
-      end
+                     smells_thresholds = MASTER::Smells.thresholds
+                     {
+                       warn: smells_thresholds[:max_file_lines],
+                       error: smells_thresholds[:max_file_lines] * 2,
+                     }
+                   else
+                     { warn: 250, error: 500 }
+                   end
 
       length = lines.size
 
       if length > thresholds[:error]
         report.add(Finding.new(
-          file: file,
-          line: 0,
-          severity: :high,
-          effort: :hard,
-          category: :file_length,
-          message: "File is too long (#{length} lines, threshold: #{thresholds[:error]})",
-          suggestion: "Split into smaller, focused modules"
-        ))
+                     file: file,
+                     line: 0,
+                     severity: :high,
+                     effort: :hard,
+                     category: :file_length,
+                     message: "File is too long (#{length} lines, threshold: #{thresholds[:error]})",
+                     suggestion: "Split into smaller, focused modules",
+                   ))
       elsif length > thresholds[:warn]
         report.add(Finding.new(
-          file: file,
-          line: 0,
-          severity: :medium,
-          effort: :moderate,
-          category: :file_length,
-          message: "File is getting long (#{length} lines, threshold: #{thresholds[:warn]})",
-          suggestion: "Consider refactoring into smaller files"
-        ))
+                     file: file,
+                     line: 0,
+                     severity: :medium,
+                     effort: :moderate,
+                     category: :file_length,
+                     message: "File is getting long (#{length} lines, threshold: #{thresholds[:warn]})",
+                     suggestion: "Consider refactoring into smaller files",
+                   ))
       end
     end
 
@@ -133,17 +132,17 @@ module MASTER
         method_name = match[0]
 
         generic_verbs.each do |verb|
-          if method_name.start_with?(verb) && method_name.length < 15
-            report.add(Finding.new(
-              file: file,
-              line: 0,
-              severity: :low,
-              effort: :easy,
-              category: :naming,
-              message: "Method '#{method_name}' uses generic verb '#{verb}'",
-              suggestion: "Use more specific verb that describes what is being #{verb}d"
-            ))
-          end
+          next unless method_name.start_with?(verb) && method_name.length < 15
+
+          report.add(Finding.new(
+                       file: file,
+                       line: 0,
+                       severity: :low,
+                       effort: :easy,
+                       category: :naming,
+                       message: "Method '#{method_name}' uses generic verb '#{verb}'",
+                       suggestion: "Use more specific verb that describes what is being #{verb}d",
+                     ))
         end
       end
 
@@ -155,17 +154,17 @@ module MASTER
         var_name = match[0]
 
         vague_nouns.each do |noun|
-          if var_name.include?(noun) && var_name.length < 10
-            report.add(Finding.new(
-              file: file,
-              line: 0,
-              severity: :low,
-              effort: :easy,
-              category: :naming,
-              message: "Variable '#{var_name}' uses vague noun '#{noun}'",
-              suggestion: "Use more descriptive name that indicates purpose"
-            ))
-          end
+          next unless var_name.include?(noun) && var_name.length < 10
+
+          report.add(Finding.new(
+                       file: file,
+                       line: 0,
+                       severity: :low,
+                       effort: :easy,
+                       category: :naming,
+                       message: "Variable '#{var_name}' uses vague noun '#{noun}'",
+                       suggestion: "Use more descriptive name that indicates purpose",
+                     ))
         end
       end
     end

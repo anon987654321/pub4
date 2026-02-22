@@ -4,8 +4,6 @@ module MASTER
   # EventBus - Simple publish/subscribe event system
   # Provides decoupled communication between subsystems
   module EventBus
-    extend self
-
     @subscribers = Hash.new { |h, k| h[k] = [] }
     @mutex = Mutex.new
 
@@ -35,7 +33,7 @@ module MASTER
         rescue StandardError => e
           # Silently rescue handler errors; only log at high trace levels
           if defined?(Logging) && Logging.respond_to?(:trace_level) && Logging.trace_level >= 3
-            Logging.dmesg_log('eventbus0', message: "handler error for #{event}: #{e.message}", level: Logging::ALL_EVENTS)
+            Logging.dmesg_log("eventbus0", message: "handler error for #{event}: #{e.message}", level: Logging::ALL_EVENTS)
           end
         end
       end

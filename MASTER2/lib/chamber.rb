@@ -13,17 +13,18 @@ module MASTER
     include Review
     include Deliberation
     include Ideation
+
     MAX_ROUNDS = 25
     MAX_COST = 0.50
     CONSENSUS_THRESHOLD = 0.70
     CONVERGENCE_THRESHOLD = 0.05
 
     MODELS = {
-      sonnet:   "anthropic/claude-sonnet-4.6",
-      grok:     "x-ai/grok-code-fast-1",
+      sonnet: "anthropic/claude-sonnet-4.6",
+      grok: "x-ai/grok-code-fast-1",
       deepseek: "deepseek/deepseek-chat",
-      kimi:     "moonshotai/kimi-k2.5",
-      glm:      "z-ai/glm-5",
+      kimi: "moonshotai/kimi-k2.5",
+      glm: "z-ai/glm-5",
     }.freeze
 
     ARBITER = :sonnet

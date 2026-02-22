@@ -61,8 +61,8 @@ module MASTER
     # Stage 3: Block dangerous patterns
     class Guard
       DANGEROUS_PATTERNS = [
-        /rm\s+-r[f]?\s+\//,
-        />\s*\/dev\/[sh]da/,
+        %r{rm\s+-rf?\s+/},
+        %r{>\s*/dev/[sh]da},
         /DROP\s+TABLE/i,
         /FORMAT\s+[A-Z]:/i,
         /mkfs\./,
@@ -74,7 +74,10 @@ module MASTER
       ].freeze
 
       def call(input)
-        Logging.dmesg_log('guard0', parent: 'pipeline0', message: 'ENTER guard', level: Logging::ALL_EVENTS) if defined?(Logging)
+        if defined?(Logging)
+          Logging.dmesg_log("guard0", parent: "pipeline0", message: "ENTER guard",
+                                      level: Logging::ALL_EVENTS)
+        end
         text = input[:text] || ""
         match = DANGEROUS_PATTERNS.find { |p| p.match?(text) }
         if match
@@ -88,7 +91,10 @@ module MASTER
     # Stage 4: Route to model via circuit breaker + budget
     class Route
       def call(input)
-        Logging.dmesg_log('route0', parent: 'pipeline0', message: 'ENTER route', level: Logging::ALL_EVENTS) if defined?(Logging)
+        if defined?(Logging)
+          Logging.dmesg_log("route0", parent: "pipeline0", message: "ENTER route",
+                                      level: Logging::ALL_EVENTS)
+        end
         # Respect forced model override (model command)
         if LLM.model_forced?
           model = LLM.forced_model
@@ -98,6 +104,7 @@ module MASTER
           model = LLM.select_model(tier)
         end
         return Result.err("All models unavailable.", category: :infrastructure) unless model
+
         Result.ok(input.merge(model: model, tier: tier))
       end
     end
@@ -105,34 +112,40 @@ module MASTER
     # Stage 5: Adversarial council review (delegates to Council)
     class Council
       # Keywords indicating code-related queries that warrant council review
-      CODE_RELATED_PATTERN = /\b(fix|refactor|debug|code|script|function|class|method|file|write|implement|build|deploy|test|security|sql|shell|command)\b/i.freeze
+      CODE_RELATED_PATTERN = /\b(fix|refactor|debug|code|script|function|class|method|file|write|implement|build|deploy|test|security|sql|shell|command)\b/i
 
       def call(input)
-        Logging.dmesg_log('council0', parent: 'pipeline0', message: 'ENTER council', level: Logging::ALL_EVENTS) if defined?(Logging)
+        if defined?(Logging)
+          Logging.dmesg_log("council0", parent: "pipeline0", message: "ENTER council",
+                                        level: Logging::ALL_EVENTS)
+        end
         text = input[:text] || ""
         model = input[:model]
         return Result.ok(input) unless model
 
         # Skip council for non-code queries (reduce latency for simple questions)
         unless code_related?(text)
-          Logging.dmesg_log('council0', message: 'skipped: non-code query', level: Logging::ALL_EVENTS) if defined?(Logging)
+          if defined?(Logging)
+            Logging.dmesg_log("council0", message: "skipped: non-code query",
+                                          level: Logging::ALL_EVENTS)
+          end
           return Result.ok(input)
         end
 
         # iMAD: only invoke council when primary response shows uncertainty
         if defined?(LLM::HesitationDetector)
           hesitation = LLM::HesitationDetector.evaluate(input[:response].to_s, context: "pipeline_council")
-          skip_council = !hesitation[:escalate]
+          !hesitation[:escalate]
         end
 
         # NOTE: model: param is accepted by Council.council_review but currently unused
         review = MASTER::Council.council_review(text, model: model)
         Result.ok(input.merge(
-          council_verdict: review[:verdict],
-          council_vetoed: review[:vetoed_by].any?,
-          council_vetoes: review[:vetoed_by],
-          council_votes: review[:votes],
-        ))
+                    council_verdict: review[:verdict],
+                    council_vetoed: review[:vetoed_by].any?,
+                    council_vetoes: review[:vetoed_by],
+                    council_votes: review[:votes],
+                  ))
       end
 
       private
@@ -145,7 +158,10 @@ module MASTER
     # Stage 6: Query LLM with streaming output
     class Ask
       def call(input)
-        Logging.dmesg_log('ask0', parent: 'pipeline0', message: 'ENTER ask', level: Logging::ALL_EVENTS) if defined?(Logging)
+        if defined?(Logging)
+          Logging.dmesg_log("ask0", parent: "pipeline0", message: "ENTER ask",
+                                    level: Logging::ALL_EVENTS)
+        end
         model = input[:model]
         return Result.err("No model selected.", category: :infrastructure) unless model
 
@@ -166,11 +182,11 @@ module MASTER
           puts UI.dim("llm0: #{tokens_in}->#{tokens_out} tok, #{UI.currency_precise(cost)}")
 
           Result.ok(input.merge(
-            response: data[:content],
-            tokens_in: tokens_in,
-            tokens_out: tokens_out,
-            cost: cost,
-          ))
+                      response: data[:content],
+                      tokens_in: tokens_in,
+                      tokens_out: tokens_out,
+                      cost: cost,
+                    ))
         else
           # Propagate category from underlying LLM result if available
           cat = result.respond_to?(:category) ? result.category : :infrastructure
@@ -204,22 +220,22 @@ module MASTER
 
         # Run NNG usability heuristics check if enabled
         design_violations = []
-        if ENV['MASTER_CHECK_DESIGN'] == 'true' && defined?(NNGChecklist)
+        if ENV["MASTER_CHECK_DESIGN"] == "true" && defined?(NNGChecklist)
           result = NNGChecklist.validate(text)
           design_violations = result.value if result.ok?
         end
 
         Result.ok(input.merge(
-          axiom_violations: violations,
-          design_violations: design_violations,
-          linted: true
-        ))
+                    axiom_violations: violations,
+                    design_violations: design_violations,
+                    linted: true,
+                  ))
       end
     end
 
     # Stage 8: Format output (typography)
     class Render
-      CODE_FENCE = /^```/.freeze
+      CODE_FENCE = /^```/
 
       def call(input)
         text = input[:response] || ""
@@ -255,7 +271,7 @@ module MASTER
         text
           .gsub(/"([^"]*?)"/) { "\u201C#{Regexp.last_match(1)}\u201D" }
           .gsub(/\s--\s/, " \u2014 ")
-          .gsub(/\.\.\./, "\u2026")
+          .gsub("...", "\u2026")
       end
     end
 
@@ -281,7 +297,7 @@ module MASTER
           # Pledge/unveil must NOT be called here — they permanently restrict the parent
           # process, not just the child. The child Ruby process is already sandboxed by
           # IO.popen + limited code_execution guards in executor/tools.rb.
-          output = IO.popen([RbConfig::CONFIG['ruby_install_name'], f.path], err: %i[child out], &:read)
+          output = IO.popen([RbConfig::CONFIG["ruby_install_name"], f.path], err: %i[child out], &:read)
           { success: $CHILD_STATUS.success?, output: output, exit_code: $CHILD_STATUS.exitstatus }
         end
       end

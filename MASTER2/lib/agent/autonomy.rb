@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require 'yaml'
-require 'fileutils'
-require 'set'
+require "yaml"
+require "fileutils"
 
 module MASTER
   # AgentAutonomy - Higher-level autonomous behaviors for intelligent agents
@@ -11,7 +10,7 @@ module MASTER
   module AgentAutonomy
     extend self
 
-    LEARNING_FILE = File.join(MASTER.root, 'data', 'agent_learning.yml')
+    LEARNING_FILE = File.join(MASTER.root, "data", "agent_learning.yml")
 
     # Goal decomposition - break complex goals into subtasks via LLM
     def decompose_goal(goal)
@@ -29,7 +28,7 @@ module MASTER
       return Result.err("Goal decomposition failed.") unless result.ok?
 
       tasks = result.value[:content].split("\n")
-        .map { |line| line.gsub(/^\d+\.\s*/, '').strip }
+        .map { |line| line.gsub(/^\d+\.\s*/, "").strip }
         .reject(&:empty?)
 
       Result.ok(tasks: tasks)
@@ -45,7 +44,7 @@ module MASTER
         @progress[:pending] << {
           id: task_id,
           description: description,
-          started_at: Time.now
+          started_at: Time.now,
         }
       end
 
@@ -84,7 +83,7 @@ module MASTER
           completed: @progress[:completed].size,
           failed: @progress[:failed].size,
           completion_rate: completion_rate,
-          total: @progress[:pending].size + @progress[:completed].size + @progress[:failed].size
+          total: @progress[:pending].size + @progress[:completed].size + @progress[:failed].size,
         }
       end
 
@@ -132,7 +131,7 @@ module MASTER
         original: original[0..500],
         corrected: corrected[0..500],
         context: context&.[](0..200),
-        recorded_at: Time.now.to_i
+        recorded_at: Time.now.to_i,
       }
 
       # Keep last 100 corrections
@@ -150,21 +149,19 @@ module MASTER
 
       # Find similar contexts if context provided
       relevant = if context
-        corrections.select do |c|
-          c[:context] && similarity(c[:context], context) > 0.5
-        end
-      else
-        corrections.last(10) # Use recent corrections if no context
-      end
+                   corrections.select do |c|
+                     c[:context] && similarity(c[:context], context) > 0.5
+                   end
+                 else
+                   corrections.last(10) # Use recent corrections if no context
+                 end
 
       return output if relevant.empty?
 
       # Apply pattern-based corrections
       result = output
       relevant.each do |c|
-        if result.include?(c[:original])
-          result = result.gsub(c[:original], c[:corrected])
-        end
+        result = result.gsub(c[:original], c[:corrected]) if result.include?(c[:original])
       end
 
       result
@@ -191,7 +188,7 @@ module MASTER
         description: description,
         examples: examples.map { |e| e[0..200] },
         learned_at: Time.now.to_i,
-        use_count: 0
+        use_count: 0,
       }
 
       # Update if exists, add if new
@@ -265,6 +262,7 @@ module MASTER
 
     def load_learning
       return {} unless File.exist?(LEARNING_FILE)
+
       YAML.safe_load_file(LEARNING_FILE, symbolize_names: true) || {}
     rescue StandardError
       {}

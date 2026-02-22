@@ -6,7 +6,7 @@ module MASTER
     # Based on SAMULE: Multi-Level Reflection (EMNLP 2025, gistfile14 §2)
     # Adds per-step reflection layer; cross-task patterns logged to db_jsonl
     module PerStepReflection
-      extend self
+      module_function
 
       # Reflect on a single ReAct step.
       # @param goal [String] original task goal
@@ -18,13 +18,13 @@ module MASTER
         obs = observation.to_s
 
         # Quick heuristics for progress assessment (avoids extra LLM call for most cases)
-        if obs.start_with?("BLOCKED:", "Tool error:", "Error:") || obs.include?("not found")
-          result = { useful: false, progress: :stalled, note: "Step #{step}: #{tool} produced error/block" }
-        elsif obs.length < 10
-          result = { useful: false, progress: :stalled, note: "Step #{step}: #{tool} returned empty/minimal output" }
-        else
-          result = { useful: true, progress: :advancing, note: "Step #{step}: #{tool} returned #{obs.length} chars" }
-        end
+        result = if obs.start_with?("BLOCKED:", "Tool error:", "Error:") || obs.include?("not found")
+                   { useful: false, progress: :stalled, note: "Step #{step}: #{tool} produced error/block" }
+                 elsif obs.length < 10
+                   { useful: false, progress: :stalled, note: "Step #{step}: #{tool} returned empty/minimal output" }
+                 else
+                   { useful: true, progress: :advancing, note: "Step #{step}: #{tool} returned #{obs.length} chars" }
+                 end
 
         Logging.dmesg_log("refl0", message: "step=#{step} tool=#{tool} progress=#{result[:progress]}")
         result
@@ -50,7 +50,8 @@ module MASTER
           efficiency: history.empty? ? 0 : ((history.size - stalled_steps).to_f / history.size).round(2),
         }
 
-        Logging.dmesg_log("xtask0", message: "goal=#{goal.to_s[0..80]} steps=#{history.size} stalled=#{stalled_steps} success=#{success}")
+        Logging.dmesg_log("xtask0",
+                          message: "goal=#{goal.to_s[0..80]} steps=#{history.size} stalled=#{stalled_steps} success=#{success}")
         insight
       end
     end

@@ -25,9 +25,7 @@ module MASTER
       out.gsub!(/[ \t]+$/, "")
 
       # Ensure newline at EOF for text files.
-      if ensure_final_newline && text_like?(filename) && !out.empty? && !out.end_with?("\n")
-        out << "\n"
-      end
+      out << "\n" if ensure_final_newline && text_like?(filename) && !out.empty? && !out.end_with?("\n")
 
       out
     end

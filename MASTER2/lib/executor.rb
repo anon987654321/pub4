@@ -14,11 +14,10 @@ require_relative "executor/tools"
 require_relative "executor/context"
 
 module MASTER
-
   class Executor
     MAX_STEPS = 15
     MAX_HISTORY_SIZE = 100
-    WALL_CLOCK_LIMIT_SECONDS = 120  # seconds
+    WALL_CLOCK_LIMIT_SECONDS = 120 # seconds
 
     # Magic number constants extracted for clarity (Phase 5 - Style compliance)
     MAX_BROWSE_CONTENT = 5000
@@ -28,7 +27,7 @@ module MASTER
     MAX_SHELL_OUTPUT = 1000
     MAX_PARSE_FALLBACK_LENGTH = 100
 
-    COMPLETION_PATTERN = /^(ANSWER|DONE|COMPLETE):\s*/i.freeze
+    COMPLETION_PATTERN = /^(ANSWER|DONE|COMPLETE):\s*/i
 
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
@@ -54,14 +53,14 @@ module MASTER
       shell_command: { desc: "Run a shell command", usage: 'shell_command "command"' },
       code_execution: { desc: "Execute Ruby code", usage: "code_execution ```ruby\n  code here\n  ```" },
       council_review: { desc: "Run adversarial council review", usage: 'council_review "text to review"' },
-      self_test: { desc: "Run self-test on MASTER", usage: 'self_test' },
+      self_test: { desc: "Run self-test on MASTER", usage: "self_test" },
     }.freeze
 
     attr_reader :history, :step, :pattern, :plan, :reflections, :max_steps
 
     # Class method entry point
-    def self.call(goal, **opts)
-      new.call(goal, **opts)
+    def self.call(goal, **)
+      new.call(goal, **)
     end
 
     # Build formatted tool list for prompts (ONE_SOURCE)
@@ -82,7 +81,7 @@ module MASTER
     include Reflexion
 
     def call(goal, pattern: :auto, tier: nil)
-      Logging.dmesg_log('executor', message: 'ENTER executor.call')
+      Logging.dmesg_log("executor", message: "ENTER executor.call")
       @history = []
       @reflections = []
       @plan = []
@@ -127,7 +126,8 @@ module MASTER
       elapsed = MASTER::Utils.monotonic_now - start_time
       if elapsed > WALL_CLOCK_LIMIT_SECONDS
         best_answer = @history.last&.[](:observation) || "Timed out"
-        raise Result::Error.new("Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}")
+        raise Result::Error,
+              "Timed out after #{elapsed.round}s (#{@step} steps). Last observation: #{best_answer[0..200]}"
       end
     end
 
@@ -136,8 +136,12 @@ module MASTER
       g = goal.to_s.strip.downcase
 
       # Direct: greetings, chitchat, simple one-word queries — no LLM cost
-      return :direct if g.match?(/\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i)
-      return :direct if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|build|create|update|debug|write|read|find)\b/)
+      if g.match?(/\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i)
+        return :direct
+      end
+      if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|build|create|update|debug|write|read|find)\b/)
+        return :direct
+      end
 
       # Reflexion: correctness-critical keywords
       return :reflexion if g.match?(/\b(fix|debug|repair|refactor|correct|safe|security|validate|test)\b/)
@@ -146,7 +150,9 @@ module MASTER
       return :pre_act if g.match?(/\b(then|step \d|phase \d|first.*then|build.*deploy|create.*and then)\b/)
 
       # ReWOO: pure research/comparison (no tools needed)
-      return :rewoo if g.match?(/\b(compare|explain|summarize|research|what is|how does|why is|difference between)\b/) && !g.match?(/\b(file|code|write|fix)\b/)
+      if g.match?(/\b(compare|explain|summarize|research|what is|how does|why is|difference between)\b/) && !g.match?(/\b(file|code|write|fix)\b/)
+        return :rewoo
+      end
 
       # Sanitize for LLM call — prevent prompt injection
       sanitized_goal = goal.to_s.gsub(/[\r\n]+/, " ").strip.slice(0, 500)
@@ -165,7 +171,7 @@ module MASTER
 
         USER GOAL: "#{sanitized_goal}"
 
-        Respond with ONLY one word: #{(PATTERNS + [:direct]).join(", ")}
+        Respond with ONLY one word: #{(PATTERNS + [:direct]).join(', ')}
       CLASSIFY
 
       result = LLM.ask(prompt, tier: :cheap)
@@ -190,14 +196,15 @@ module MASTER
 
     # Basic completion verification: response has substance and echoes goal keywords
     def verify_completion(goal, response)
-      return true if response.length > 50  # basic sanity
+      return true if response.length > 50 # basic sanity
+
       keywords = goal.scan(/\b\w{4,}\b/).first(5)
       keywords.any? { |kw| response.downcase.include?(kw.downcase) }
     end
 
     # Self-verify by running test files related to modified files
     def self_verify(modified_files)
-      test_files = modified_files.select { |f| f.match?(/test_|_spec\.rb/) }
+      test_files = modified_files.grep(/test_|_spec\.rb/)
       test_files += Dir.glob("test/test_*.rb").first(3) if test_files.empty?
       return if test_files.empty?
 
@@ -206,7 +213,7 @@ module MASTER
       UI.warn("self-verify: tests failed") if result && !result.ok?
     end
 
-    def simple_query?(goal)
+    def simple_query?(_goal)
       @pattern == :direct
     end
 
@@ -214,8 +221,8 @@ module MASTER
       system_msg = ExecutionContext.build_system_message(include_commands: false)
 
       result = LLM.ask(goal, messages: [
-        { role: "system", content: system_msg }
-      ], stream: true)
+                         { role: "system", content: system_msg },
+                       ], stream: true)
 
       if result.ok?
         Result.ok(
@@ -224,7 +231,7 @@ module MASTER
           mode: :direct,
           pattern: :direct,
           cost: result.value[:cost],
-          streamed: result.value[:streamed]
+          streamed: result.value[:streamed],
         )
       else
         result

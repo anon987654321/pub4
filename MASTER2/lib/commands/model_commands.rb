@@ -14,7 +14,7 @@ module MASTER
 
         query = args.strip.downcase
 
-        if query == "auto" || query == "reset"
+        if ["auto", "reset"].include?(query)
           LLM.clear_forced_model!
           LLM.current_model = nil
           puts "\n  + Reset to auto model selection\n"
@@ -46,7 +46,11 @@ module MASTER
 
       def select_pattern(args)
         unless args && !args.strip.empty?
-          current = Pipeline.current_pattern rescue :auto
+          current = begin
+            Pipeline.current_pattern
+          rescue StandardError
+            :auto
+          end
           puts "\n  Current pattern: #{current}"
           puts "  Available: #{Executor::PATTERNS.join(', ')}, auto"
           puts "  Use 'pattern <name>' to switch.\n"
@@ -70,10 +74,14 @@ module MASTER
           pre_act: "Plan first, then execute. Best for multi-step tasks (70% better recall).",
           rewoo: "Batch reasoning upfront. Best for cost-sensitive tasks.",
           reflexion: "Self-critique and retry. Best for fixing/debugging.",
-          auto: "Auto-select based on task characteristics (default)."
+          auto: "Auto-select based on task characteristics (default).",
         }
 
-        current = Pipeline.current_pattern rescue :auto
+        current = begin
+          Pipeline.current_pattern
+        rescue StandardError
+          :auto
+        end
         patterns.each do |name, desc|
           marker = name == current ? ">" : " "
           puts "  #{marker} #{name.to_s.ljust(10)} #{desc}"

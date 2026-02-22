@@ -9,11 +9,11 @@ module MASTER
       end
 
       def error(msg)
-        $stderr.puts pastel.red("- #{msg}")
+        warn pastel.red("- #{msg}")
       end
 
       def warn(msg)
-        $stderr.puts pastel.yellow("! #{msg}")
+        warn pastel.yellow("! #{msg}")
       end
 
       def info(msg)
@@ -28,34 +28,38 @@ module MASTER
         pastel.bold(msg)
       end
 
-      def with_spinner(message, &block)
+      def with_spinner(message)
         s = spinner(message)
         s.auto_spin
         result = yield
         s.success
         result
-      rescue StandardError => e
+      rescue StandardError
         s.error
         raise
       end
 
       def select(question, choices)
         return nil unless prompt
+
         prompt.select(question, choices, cycle: true)
       end
 
       def multi_select(question, choices)
         return [] unless prompt
+
         prompt.multi_select(question, choices, cycle: true)
       end
 
       def confirm(question, default: true)
         return default unless prompt
+
         prompt.yes?(question, default: default)
       end
 
       def ask(question, default: nil)
         return default unless prompt
+
         prompt.ask(question, default: default)
       end
 
@@ -71,7 +75,7 @@ module MASTER
         print cursor.up(n)
       end
 
-      def hide_cursor(&block)
+      def hide_cursor
         print cursor.hide
         yield
       ensure

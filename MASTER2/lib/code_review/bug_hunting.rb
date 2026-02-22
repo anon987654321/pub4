@@ -3,12 +3,11 @@
 # 8-Phase Bug Hunting Protocol
 # Systematic debugging methodology
 
-require_relative 'bug_hunting/phases'
+require "English"
+require_relative "bug_hunting/phases"
 
 module MASTER
   module BugHunting
-    extend self
-
     # Diagnostic escalation levels (cheap to expensive)
     ESCALATION_LEVELS = %i[syntax logic history llm].freeze
 
@@ -22,59 +21,59 @@ module MASTER
         end
       end
 
-      def analyze(code, file_path: 'inline')
+      def analyze(code, file_path: "inline")
         report = {
           file_path: file_path,
           phases: [],
           findings: {},
-          timestamp: Time.now
+          timestamp: Time.now,
         }
 
         report[:findings][:lexical] = Phase1Lexical.analyze(code)
-        report[:phases] << 'Phase 1: Lexical Analysis'
+        report[:phases] << "Phase 1: Lexical Analysis"
 
         report[:findings][:execution] = Phase2Execution.analyze(code)
-        report[:phases] << 'Phase 2: Simulated Execution'
+        report[:phases] << "Phase 2: Simulated Execution"
 
         report[:findings][:assumptions] = Phase3Assumptions.analyze(code)
-        report[:phases] << 'Phase 3: Assumption Interrogation'
+        report[:phases] << "Phase 3: Assumption Interrogation"
 
         report[:findings][:dataflow] = Phase4DataFlow.analyze(code)
-        report[:phases] << 'Phase 4: Data Flow Analysis'
+        report[:phases] << "Phase 4: Data Flow Analysis"
 
         report[:findings][:state] = Phase5State.analyze(code)
-        report[:phases] << 'Phase 5: State Reconstruction'
+        report[:phases] << "Phase 5: State Reconstruction"
 
         report[:findings][:patterns] = Phase6Patterns.analyze(code)
-        report[:phases] << 'Phase 6: Pattern Recognition'
+        report[:phases] << "Phase 6: Pattern Recognition"
 
         report[:findings][:understanding] = Phase7Proof.validate(report)
-        report[:phases] << 'Phase 7: Proof of Understanding'
+        report[:phases] << "Phase 7: Proof of Understanding"
 
         report[:findings][:verification] = Phase8Verify.check(report)
-        report[:phases] << 'Phase 8: Verification'
+        report[:phases] << "Phase 8: Verification"
 
         report
       end
 
       def format(report)
-        lines = ["BUG HUNT: #{report[:file_path]}", '']
+        lines = ["BUG HUNT: #{report[:file_path]}", ""]
 
         if (lex = report[:findings][:lexical])
           lines << "1. LEXICAL (#{lex[:count]} identifiers)"
           lex[:issues].each { |i| lines << "   - #{i}" }
-          lines << '   + clean' if lex[:issues].empty?
+          lines << "   + clean" if lex[:issues].empty?
         end
 
         if (exec = report[:findings][:execution])
-          lines << '2. EXECUTION'
+          lines << "2. EXECUTION"
           exec[:perspectives].each { |p| lines << "   #{p[:name]}: #{p[:status]}" }
         end
 
         if (assume = report[:findings][:assumptions])
-          lines << '3. ASSUMPTIONS'
+          lines << "3. ASSUMPTIONS"
           assume[:found].each { |a| lines << "   ! #{a[:category]}: #{a[:desc]}" }
-          lines << '   + none risky' if assume[:found].empty?
+          lines << "   + none risky" if assume[:found].empty?
         end
 
         if (flow = report[:findings][:dataflow])
@@ -83,26 +82,26 @@ module MASTER
         end
 
         if (state = report[:findings][:state])
-          lines << '5. STATE'
+          lines << "5. STATE"
           lines << "   edge: #{state[:edges].join(', ')}" if state[:edges].any?
         end
 
         if (pats = report[:findings][:patterns])
-          lines << '6. PATTERNS'
+          lines << "6. PATTERNS"
           pats[:matches].each do |m|
             lines << "   #{m[:confidence]} #{m[:name]}"
             lines << "      fix: #{m[:fix]}"
           end
-          lines << '   + no patterns matched' if pats[:matches].empty?
+          lines << "   + no patterns matched" if pats[:matches].empty?
         end
 
         if (proof = report[:findings][:understanding])
-          status = proof[:complete] ? '+' : '-'
+          status = proof[:complete] ? "+" : "-"
           lines << "7. UNDERSTANDING #{status}"
         end
 
         if (verify = report[:findings][:verification])
-          status = verify[:passed] ? '+ COMPLETE' : '- INCOMPLETE'
+          status = verify[:passed] ? "+ COMPLETE" : "- INCOMPLETE"
           lines << "8. VERIFICATION #{status}"
         end
 
@@ -134,16 +133,16 @@ module MASTER
       def level_syntax(target)
         puts UI.dim("  Level 1: Syntax check...")
 
-        if target.end_with?('.rb')
+        if target.end_with?(".rb")
           output = `ruby -c #{Shellwords.escape(target)} 2>&1`
-          if $?.success?
+          if $CHILD_STATUS.success?
             { level: :syntax, fixed: false, message: "No syntax errors" }
           else
             { level: :syntax, fixed: true, error: output, fix: "Run rubocop -a #{Shellwords.escape(target)}" }
           end
-        elsif target.end_with?('.sh')
+        elsif target.end_with?(".sh")
           output = `zsh -n #{Shellwords.escape(target)} 2>&1`
-          { level: :syntax, fixed: !$?.success?, error: output }
+          { level: :syntax, fixed: !$CHILD_STATUS.success?, error: output }
         else
           { level: :syntax, fixed: false }
         end
@@ -152,9 +151,9 @@ module MASTER
       def level_logic(target)
         puts UI.dim("  Level 2: Logic check (tests)...")
 
-        test_file = target.sub('/lib/', '/test/').sub('.rb', '_test.rb')
+        test_file = target.sub("/lib/", "/test/").sub(".rb", "_test.rb")
         if File.exist?(test_file)
-          require 'open3'
+          require "open3"
           output, status = Open3.capture2e("ruby", test_file)
           if status.success?
             { level: :logic, fixed: false, message: "Tests pass" }
@@ -192,8 +191,6 @@ module MASTER
           { level: :llm, fixed: false, error: "File not found: #{target}" }
         end
       end
-
-      public
     end
   end
 end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "shellwords"
 
 module MASTER
@@ -10,6 +11,7 @@ module MASTER
       def autofix(args)
         target = parse_refactor_target(args)
         return Result.err(target[:error]) if target[:error]
+
         mode = target[:mode]
 
         case target[:type]
@@ -26,7 +28,7 @@ module MASTER
 
         original_code = File.read(path)
 
-        bugs_found, hunt_result, pattern_matches = run_bug_hunting(original_code, file)
+        bugs_found, _, pattern_matches = run_bug_hunting(original_code, file)
         critical_count = run_constitutional_validation(original_code, file)
         learned_issues = run_learnings_check(original_code)
         smells = run_smell_detection(original_code, file)
@@ -61,7 +63,7 @@ module MASTER
         puts [
           "  Files processed: #{result[:files_processed]}",
           "  Improvements found: #{result[:improvements]}",
-          "  Cost: #{UI.currency_precise(result[:cost])}"
+          "  Cost: #{UI.currency_precise(result[:cost])}",
         ].join("\n")
         puts
 
@@ -70,9 +72,7 @@ module MASTER
 
       def opportunities(path)
         path ||= MASTER.root
-        if File.directory?(path) && defined?(Prescan)
-          Prescan.run(path)
-        end
+        Prescan.run(path) if File.directory?(path) && defined?(Prescan)
         UI.header("Analyzing for opportunities")
         puts "  Path: #{path}"
         puts "  This may take a moment...\n\n"
@@ -103,7 +103,7 @@ module MASTER
         puts
       end
 
-      def print_language_axioms(args)
+      def print_language_axioms(_args)
         axioms = DB.axioms
         if axioms.empty?
           puts "\n  No language axioms found.\n"
@@ -151,7 +151,7 @@ module MASTER
         puts
 
         # For now, provide a simple implementation
-        constitution_path = File.join(MASTER.root, 'data', 'constitution.yml')
+        constitution_path = File.join(MASTER.root, "data", "constitution.yml")
 
         if File.exist?(constitution_path)
           puts "constitution: found"
@@ -184,7 +184,7 @@ module MASTER
       end
 
       def scan_code(args)
-        path = (args.nil? || args.strip.empty?) ? MASTER.root : File.expand_path(args.strip)
+        path = args.nil? || args.strip.empty? ? MASTER.root : File.expand_path(args.strip)
 
         unless File.exist?(path)
           puts "Path not found: #{path}"
@@ -193,33 +193,32 @@ module MASTER
 
         state_path = Paths.var_file("scan_state.json")
 
-        if args.nil? || args.strip.empty?
-          if File.exist?(state_path)
-            cached = JSON.parse(File.read(state_path), symbolize_names: true)
-            age = ((Time.now - Time.parse(cached[:scanned_at])) / 60).round
-            puts "Last scan: #{cached[:scanned_at]} (#{age}m ago)"
-            puts "  Issues: #{cached[:total_issues]} (#{cached[:critical]} critical, #{cached[:major]} major)"
-            puts "  Pass 'scan .' to re-scan"
-            return Result.ok(cached)
-          end
+        if (args.nil? || args.strip.empty?) && File.exist?(state_path)
+          cached = JSON.parse(File.read(state_path), symbolize_names: true)
+          age = ((Time.now - Time.parse(cached[:scanned_at])) / 60).round
+          puts "Last scan: #{cached[:scanned_at]} (#{age}m ago)"
+          puts "  Issues: #{cached[:total_issues]} (#{cached[:critical]} critical, #{cached[:major]} major)"
+          puts "  Pass 'scan .' to re-scan"
+          return Result.ok(cached)
         end
 
         UI.header("Scanning: #{path}")
         result = if File.file?(path)
-          file_result = Review::Scanner.analyze_file(path)
-          {
-            files: { path => file_result },
-            total_issues: file_result[:issues].size,
-            critical: file_result[:issues].count { |i| i[:severity] == :critical },
-            major: file_result[:issues].count { |i| i[:severity] == :major },
-            average_score: file_result[:score].to_f,
-          }
-        else
-          Review::Scanner.analyze_directory(path)
-        end
+                   file_result = Review::Scanner.analyze_file(path)
+                   {
+                     files: { path => file_result },
+                     total_issues: file_result[:issues].size,
+                     critical: file_result[:issues].count { |i| i[:severity] == :critical },
+                     major: file_result[:issues].count { |i| i[:severity] == :major },
+                     average_score: file_result[:score].to_f,
+                   }
+                 else
+                   Review::Scanner.analyze_directory(path)
+                 end
 
         result[:files].each do |file, r|
           next if r[:issues].empty?
+
           rel = file.sub("#{MASTER.root}/", "")
           puts "  #{r[:grade]} #{rel}"
           r[:issues].each { |issue| puts "    #{issue[:severity].to_s.upcase}: #{issue[:message]}" }
@@ -237,7 +236,9 @@ module MASTER
           critical: result[:critical],
           major: result[:major],
           average_score: result[:average_score].round(2),
-          files: result[:files].transform_values { |r| { issues: r[:issues].size, score: r[:score], grade: r[:grade] } }
+          files: result[:files].transform_values do |r|
+            { issues: r[:issues].size, score: r[:score], grade: r[:grade] }
+          end,
         }
         File.write(state_path, JSON.generate(state))
         puts "  Scan state saved → var/scan_state.json"
@@ -248,7 +249,7 @@ module MASTER
       private
 
       def parse_refactor_target(args)
-        usage = "#{REFACTOR_USAGE.sub("<file>", "<file|dir>")} or autofix --snippet \"<ruby code>\""
+        usage = "#{REFACTOR_USAGE.sub('<file>', '<file|dir>')} or autofix --snippet \"<ruby code>\""
         return { error: usage } if args.nil? || args.to_s.strip.empty?
 
         parts = Shellwords.split(args.to_s)
@@ -258,6 +259,7 @@ module MASTER
         if snippet_idx
           snippet = parts[(snippet_idx + 1)..]&.join(" ").to_s.strip
           return { error: "Snippet cannot be empty." } if snippet.empty?
+
           return { type: :snippet, snippet: snippet, mode: mode }
         end
 
@@ -280,7 +282,7 @@ module MASTER
           dry_run: mode != :apply,
           force_rewrite: true,
           align_axioms: true,
-          include_all_files: true
+          include_all_files: true,
         )
         mr.run(path: path)
       end
@@ -364,18 +366,18 @@ module MASTER
           "  Critical Violations: #{critical_count}",
           "  Known Patterns: #{learned_issues.size}",
           "  Code Smells: #{smells.size}",
-          "  TOTAL: #{total_issues} issues"
+          "  TOTAL: #{total_issues} issues",
         ].join("\n")
       end
 
       def generate_and_apply_fixes(path, original_code, mode)
         puts UI.bold("phase5: generating fixes...")
         result = if obvious_issue?(path, original_code)
-          best_candidate_fix(path, original_code)
-        else
-          chamber = Council.new
-          chamber.deliberate(original_code, filename: File.basename(path))
-        end
+                   best_candidate_fix(path, original_code)
+                 else
+                   chamber = Council.new
+                   chamber.deliberate(original_code, filename: File.basename(path))
+                 end
 
         return result unless result.ok? && result.value[:final]
 
@@ -443,7 +445,7 @@ module MASTER
             fixer.fix(tmp)
             candidates << { source: :review_fixer, code: File.read(tmp) } if File.exist?(tmp)
           ensure
-            File.delete(tmp) if File.exist?(tmp)
+            FileUtils.rm_f(tmp)
           end
         end
 
@@ -455,21 +457,21 @@ module MASTER
             code: llm_result.value[:final],
             council: llm_result.value[:council],
             proposals: llm_result.value[:proposals],
-            cost: llm_result.value[:cost]
+            cost: llm_result.value[:cost],
           }
         end
 
         scored = candidates.uniq { |c| c[:code] }.map do |candidate|
           metrics = score_candidate(path, candidate[:code])
           score = if defined?(DecisionEngine)
-            DecisionEngine.score(
-              impact: metrics[:impact],
-              confidence: metrics[:confidence],
-              cost: metrics[:cost]
-            )
-          else
-            metrics[:fallback_score]
-          end
+                    DecisionEngine.score(
+                      impact: metrics[:impact],
+                      confidence: metrics[:confidence],
+                      cost: metrics[:cost],
+                    )
+                  else
+                    metrics[:fallback_score]
+                  end
           candidate.merge(score: score)
         end
         best = scored.max_by { |c| c[:score] }
@@ -479,7 +481,7 @@ module MASTER
           final: best[:code],
           council: best[:council],
           proposals: best[:proposals] || [],
-          cost: best[:cost] || 0.0
+          cost: best[:cost] || 0.0,
         )
       end
 
@@ -502,18 +504,28 @@ module MASTER
           unless MASTER::Utils.valid_ruby?(code)
             return { impact: 0.0, confidence: 0.0, cost: 10_000.0, fallback_score: -10_000.0 }
           end
+
           impact += 0.8
           fallback_score += 200
         end
 
-        violations = Violations.analyze(code, path: path, llm: nil, conceptual: false) rescue { literal: [], conceptual: [] }
+        violations = begin
+          Violations.analyze(code, path: path, llm: nil,
+                                   conceptual: false)
+        rescue StandardError
+          { literal: [], conceptual: [] }
+        end
         literal = Array(violations[:literal]).size
         conceptual = Array(violations[:conceptual]).size
         confidence -= (literal * 0.08) + (conceptual * 0.04)
         fallback_score -= literal * 5
         fallback_score -= conceptual * 3
 
-        smells = Smells.analyze(code, path) rescue []
+        smells = begin
+          Smells.analyze(code, path)
+        rescue StandardError
+          []
+        end
         cost += (literal * 0.2) + (conceptual * 0.1) + (smells.size * 0.05)
         confidence -= smells.size * 0.01
         fallback_score -= smells.size
@@ -540,7 +552,6 @@ module MASTER
         end
         puts "learnings: updated"
       end
-
     end
   end
 end

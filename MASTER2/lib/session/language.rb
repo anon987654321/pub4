@@ -4,7 +4,7 @@ module MASTER
   class Session
     # Language detection and style checking
     module Language
-      extend self
+      module_function
 
       # Language detection and multi-language support
       def detect_language(text)
@@ -21,7 +21,7 @@ module MASTER
         return Result.ok(language: :english, confidence: 0.0) if total_indicators == 0
 
         language = norwegian_count > english_count ? :norwegian : :english
-        confidence = (norwegian_count > english_count ? norwegian_count : english_count).to_f / total_indicators
+        confidence = [norwegian_count, english_count].max.to_f / total_indicators
 
         Result.ok(language: language, confidence: confidence)
       end
@@ -31,7 +31,7 @@ module MASTER
         "meeting" => "møte",
         "deal" => "avtale",
         "deadline" => "frist",
-        "feedback" => "tilbakemelding"
+        "feedback" => "tilbakemelding",
       }.freeze
 
       def norwegian_style_check(text)
@@ -40,16 +40,14 @@ module MASTER
         # Load anglicisms from constitution.yml or use fallback
         constitution_file = File.join(MASTER.root, "data", "constitution.yml")
         anglicisms = if File.exist?(constitution_file)
-          constitution = YAML.safe_load_file(constitution_file, symbolize_names: true)
-          constitution.dig(:language, :norwegian, :anglicisms) || FALLBACK_ANGLICISMS
-        else
-          FALLBACK_ANGLICISMS
-        end
+                       constitution = YAML.safe_load_file(constitution_file, symbolize_names: true)
+                       constitution.dig(:language, :norwegian, :anglicisms) || FALLBACK_ANGLICISMS
+                     else
+                       FALLBACK_ANGLICISMS
+                     end
 
         anglicisms.each do |english, norwegian|
-          if text.downcase.include?(english.to_s)
-            issues << "Replace '#{english}' with '#{norwegian}'"
-          end
+          issues << "Replace '#{english}' with '#{norwegian}'" if text.downcase.include?(english.to_s)
         end
 
         Result.ok(issues: issues)

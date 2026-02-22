@@ -12,14 +12,15 @@ module MASTER
   # Priority: Piper (local) -> Edge (free cloud) -> Replicate (paid cloud)
   # Stream mode uses FFmpeg for real-time effects
   module Speech
-    extend self
+    module_function
+
     extend Backends
     extend Playback
     extend Streaming
     extend Utils
 
-    ZERO_RATE = "+0%".freeze
-    ZERO_PITCH = "+0Hz".freeze
+    ZERO_RATE = "+0%"
+    ZERO_PITCH = "+0Hz"
 
     # Engine selection priority
     ENGINES = %i[piper edge replicate].freeze

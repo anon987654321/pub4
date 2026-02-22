@@ -3,8 +3,8 @@
 module MASTER
   module PipelineRepl
     MAX_INPUT_LENGTH = 10_000
-    MULTILINE_OPENER = "<<".freeze
-    HISTORY_FILE = ".master_history".freeze
+    MULTILINE_OPENER = "<<"
+    HISTORY_FILE = ".master_history"
     MAX_HISTORY_LINES = 500
 
     def repl
@@ -33,9 +33,7 @@ module MASTER
       end
 
       # Prescan
-      if ENV['MASTER_PRESCAN'] != 'false'
-        Prescan.run(MASTER.root) if defined?(Prescan)
-      end
+      Prescan.run(MASTER.root) if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
 
       unless ENV["OPENROUTER_API_KEY"]
         UI.warn("OPENROUTER_API_KEY not set — get yours at openrouter.ai/keys then: export OPENROUTER_API_KEY=or-...")
@@ -117,9 +115,7 @@ module MASTER
             shown = Commands.show_did_you_mean(line.strip)
             next if shown
           elsif cmd_result.respond_to?(:ok?)
-            unless cmd_result.value&.dig(:handled)
-              display_result(cmd_result, session)
-            end
+            display_result(cmd_result, session) unless cmd_result.value&.dig(:handled)
             next
           end
         end
@@ -135,9 +131,7 @@ module MASTER
       session.save
 
       # Auto-capture if session was marked successful
-      if defined?(SessionCapture) && session.metadata_value(:successful)
-        SessionCapture.auto_capture_if_successful
-      end
+      SessionCapture.auto_capture_if_successful if defined?(SessionCapture) && session.metadata_value(:successful)
 
       show_exit_summary(session)
     end
@@ -159,11 +153,13 @@ module MASTER
           total_str = running_total > 0 ? " [$#{running_total.round(4)} total]" : ""
           puts UI.dim("  #{format_meta(result.value)}#{total_str}")
         end
-        session.add_assistant(
-          output,
-          model: result.value[:model],
-          cost: result.value[:cost],
-        ) if output
+        if output
+          session.add_assistant(
+            output,
+            model: result.value[:model],
+            cost: result.value[:cost],
+          )
+        end
       else
         UI.error(result.failure)
       end
@@ -174,7 +170,11 @@ module MASTER
       base = Pipeline.prompt
       phase ? "[#{phase}] #{base}" : base
     rescue StandardError
-      model_name = LLM.extract_model_name(LLM.prompt_model_name) rescue "?"
+      model_name = begin
+        LLM.extract_model_name(LLM.prompt_model_name)
+      rescue StandardError
+        "?"
+      end
       phase ? "#{phase} #{model_name}> " : "#{model_name}> "
     end
 
@@ -194,6 +194,7 @@ module MASTER
       loop do
         part = read_input(reader, "... ")
         break if part.nil? || part.strip.empty?
+
         lines << part.rstrip
       end
       lines.empty? ? nil : lines.join("\n")
@@ -202,11 +203,14 @@ module MASTER
     # Load input history from file into TTY::Reader
     def load_input_history(reader)
       return unless reader
+
       path = history_path
       return unless File.exist?(path)
 
       File.readlines(path, chomp: true).last(MAX_HISTORY_LINES).each do |line|
-        reader.add_to_history(line) rescue StandardError
+        reader.add_to_history(line)
+      rescue StandardError
+        StandardError
       end
     rescue StandardError
       # History load failure is non-critical
@@ -216,7 +220,11 @@ module MASTER
     def save_history_line(reader, line)
       @history_lines ||= []
       @history_lines << line
-      reader&.add_to_history(line) rescue StandardError
+      begin
+        reader&.add_to_history(line)
+      rescue StandardError
+        StandardError
+      end
     end
 
     # Persist input history to file on exit
@@ -225,7 +233,7 @@ module MASTER
 
       path = history_path
       FileUtils.mkdir_p(File.dirname(path))
-      File.write(path, @history_lines.last(MAX_HISTORY_LINES).join("\n") + "\n")
+      File.write(path, "#{@history_lines.last(MAX_HISTORY_LINES).join("\n")}\n")
     rescue StandardError
       # History save failure is non-critical
     end

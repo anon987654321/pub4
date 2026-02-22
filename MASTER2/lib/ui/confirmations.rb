@@ -3,7 +3,7 @@
 module MASTER
   module UI
     module Confirmations
-      extend self
+      module_function
 
       DESTRUCTIVE_PATTERNS = [
         /rm\s+-rf/i,
@@ -12,7 +12,7 @@ module MASTER
         /truncate/i,
         /reset/i,
         /--force/i,
-        /overwrite/i
+        /overwrite/i,
       ].freeze
 
       @auto_confirm = false
@@ -35,6 +35,7 @@ module MASTER
           response = $stdin.gets&.strip&.downcase
 
           return default if response.nil? || response.empty?
+
           %w[y yes].include?(response)
         end
       end
@@ -77,9 +78,7 @@ module MASTER
         unless @auto_confirm
           confirmed = Confirmations.confirm("Proceed with this operation?")
 
-          unless confirmed
-            return Result.err("Cancelled by user.")
-          end
+          return Result.err("Cancelled by user.") unless confirmed
         end
 
         # Phase 3: Execute

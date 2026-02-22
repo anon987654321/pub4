@@ -12,14 +12,14 @@ module MASTER
       def phases
         @phases ||= begin
           config = load_config
-          config['phases'] || default_phases
+          config["phases"] || default_phases
         end
       end
 
       def transitions
         @transitions ||= begin
           config = load_config
-          config['transitions'] || {}
+          config["transitions"] || {}
         end
       end
 
@@ -62,9 +62,9 @@ module MASTER
 
           {
             phase: phase,
-            purpose: phase_data&.dig('purpose'),
-            questions: phase_data&.dig('questions') || [],
-            note: phase_data&.dig('note')
+            purpose: phase_data&.dig("purpose"),
+            questions: phase_data&.dig("questions") || [],
+            note: phase_data&.dig("note"),
           }
         end
       end
@@ -73,17 +73,17 @@ module MASTER
         Result.try do
           raise "Invalid phase: #{phase}" unless PHASES.include?(phase.to_sym)
 
-          phase_data = phases.find { |p| (p['id'] || p[:id]).to_sym == phase.to_sym }
+          phase_data = phases.find { |p| (p["id"] || p[:id]).to_sym == phase.to_sym }
           questions = phase_questions(phase).value_or({})
 
           trigger_hook(:before_phase, phase: phase, session: session, context: context)
 
           result = {
             phase: phase,
-            introspection: phase_data&.dig('introspection') || phase_data&.dig(:introspection),
+            introspection: phase_data&.dig("introspection") || phase_data&.dig(:introspection),
             questions: questions[:questions],
             purpose: questions[:purpose],
-            outputs: phase_data&.dig('outputs') || phase_data&.dig(:outputs) || []
+            outputs: phase_data&.dig("outputs") || phase_data&.dig(:outputs) || [],
           }
 
           trigger_hook(:after_phase, phase: phase, session: session, result: result)
@@ -99,7 +99,7 @@ module MASTER
           to: to,
           gate: gate,
           outputs: outputs,
-          timestamp: Time.now.iso8601
+          timestamp: Time.now.iso8601,
         }
       end
 
@@ -116,14 +116,14 @@ module MASTER
       private
 
       def load_config
-        path = File.join(MASTER.root, 'data', 'phases.yml')
+        path = File.join(MASTER.root, "data", "phases.yml")
         YAML.safe_load_file(path, permitted_classes: [Symbol])
       rescue Errno::ENOENT
         {}
       end
 
       def load_questions
-        path = File.join(MASTER.root, 'data', 'questions.yml')
+        path = File.join(MASTER.root, "data", "questions.yml")
         YAML.safe_load_file(path, permitted_classes: [Symbol])
       rescue Errno::ENOENT
         {}
@@ -131,21 +131,22 @@ module MASTER
 
       def default_phases
         [
-          { id: :discover, name: 'Discover', gate: 'requirements_clear' },
-          { id: :analyze, name: 'Analyze', gate: 'codebase_understood' },
-          { id: :ideate, name: 'Ideate', gate: 'options_explored' },
-          { id: :design, name: 'Design', gate: 'design_approved' },
-          { id: :implement, name: 'Implement', gate: 'code_complete' },
-          { id: :validate, name: 'Validate', gate: 'quality_verified' },
-          { id: :deliver, name: 'Deliver', gate: 'user_satisfied' },
-          { id: :reflect, name: 'Reflect', gate: 'learnings_captured' }
+          { id: :discover, name: "Discover", gate: "requirements_clear" },
+          { id: :analyze, name: "Analyze", gate: "codebase_understood" },
+          { id: :ideate, name: "Ideate", gate: "options_explored" },
+          { id: :design, name: "Design", gate: "design_approved" },
+          { id: :implement, name: "Implement", gate: "code_complete" },
+          { id: :validate, name: "Validate", gate: "quality_verified" },
+          { id: :deliver, name: "Deliver", gate: "user_satisfied" },
+          { id: :reflect, name: "Reflect", gate: "learnings_captured" },
         ]
       end
 
       def trigger_hook(event, **data)
         return unless defined?(Hooks)
+
         Hooks.run(event, data)
-      rescue StandardError => e
+      rescue StandardError
         nil
       end
     end

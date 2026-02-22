@@ -6,7 +6,7 @@ module MASTER
     # Fills the "behavioral monitoring" gap identified in gistfile14 §4
     # (847 Test Cases paper: combined defenses cut attacks 73% → 8.7%)
     module BehaviorMonitor
-      extend self
+      module_function
 
       # Baseline window: track last N actions for anomaly detection
       BASELINE_WINDOW = 50
@@ -47,7 +47,10 @@ module MASTER
           anomalous = score >= 0.8
           reason = anomalous ? "Action '#{action}' anomalous (score=#{score.round(2)}, freq=#{freq.round(2)})" : nil
 
-          Logging.dmesg_log("behav0", message: "action=#{action} score=#{score.round(2)} anomalous=#{anomalous}") if anomalous
+          if anomalous
+            Logging.dmesg_log("behav0",
+                              message: "action=#{action} score=#{score.round(2)} anomalous=#{anomalous}")
+          end
 
           { anomalous: anomalous, reason: reason, score: score }
         end

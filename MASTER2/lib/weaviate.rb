@@ -1,32 +1,30 @@
 # frozen_string_literal: true
 
-require 'json'
-require 'uri'
-require 'async'
-require 'async/http/internet'
+require "json"
+require "uri"
+require "async"
+require "async/http/internet"
 
 module MASTER
   # Weaviate - Vector database for semantic memory
   module Weaviate
-    extend self
+    NOT_AVAILABLE = "Weaviate not available."
 
-    NOT_AVAILABLE = "Weaviate not available.".freeze
+    HOST = ENV["WEAVIATE_HOST"] || "localhost"
+    PORT = (ENV["WEAVIATE_PORT"] || 8080).to_i
+    SCHEME = ENV["WEAVIATE_SCHEME"] || "http"
+    API_KEY = ENV.fetch("WEAVIATE_API_KEY", nil)
 
-    HOST = ENV['WEAVIATE_HOST'] || 'localhost'
-    PORT = (ENV['WEAVIATE_PORT'] || 8080).to_i
-    SCHEME = ENV['WEAVIATE_SCHEME'] || 'http'
-    API_KEY = ENV['WEAVIATE_API_KEY']
-
-    CLASS_NAME = 'MasterMemory'
+    CLASS_NAME = "MasterMemory"
 
     # Retry configuration
     MAX_RETRIES = 3
-    RETRY_BACKOFF_BASE = 2  # seconds, exponential
+    RETRY_BACKOFF_BASE = 2 # seconds, exponential
 
     class << self
       def available?
         health_check
-      rescue StandardError => e
+      rescue StandardError
         false
       end
 
@@ -51,32 +49,32 @@ module MASTER
       def setup_schema
         schema = {
           class: CLASS_NAME,
-          vectorizer: 'text2vec-openai',
+          vectorizer: "text2vec-openai",
           moduleConfig: {
-            'text2vec-openai' => {
-              model: 'text-embedding-3-small',
-              type: 'text'
-            }
+            "text2vec-openai" => {
+              model: "text-embedding-3-small",
+              type: "text",
+            },
           },
           properties: [
-            { name: 'content', dataType: ['text'] },
-            { name: 'type', dataType: ['string'] },
-            { name: 'source', dataType: ['string'] },
-            { name: 'timestamp', dataType: ['date'] },
-            { name: 'metadata', dataType: ['text'] }
-          ]
+            { name: "content", dataType: ["text"] },
+            { name: "type", dataType: ["string"] },
+            { name: "source", dataType: ["string"] },
+            { name: "timestamp", dataType: ["date"] },
+            { name: "metadata", dataType: ["text"] },
+          ],
         }
 
-        post('/v1/schema', schema)
+        post("/v1/schema", schema)
       end
 
       # Create a custom schema class
       def create_schema(schema_def)
         return Result.err(NOT_AVAILABLE) unless available?
 
-        response = post('/v1/schema', schema_def)
+        response = post("/v1/schema", schema_def)
 
-        if response['error']
+        if response["error"]
           Result.err("Failed to create schema: #{response['error']}")
         else
           Result.ok({ class: schema_def[:class] })
@@ -91,14 +89,14 @@ module MASTER
 
         object = {
           class: class_name,
-          properties: properties
+          properties: properties,
         }
         object[:vector] = vector if vector
 
-        response = post('/v1/objects', object)
+        response = post("/v1/objects", object)
 
-        if response['id']
-          Result.ok({ id: response['id'] })
+        if response["id"]
+          Result.ok({ id: response["id"] })
         else
           Result.err("Failed to index: #{response['error'] || 'unknown error'}")
         end
@@ -111,13 +109,13 @@ module MASTER
         return Result.err(NOT_AVAILABLE) unless available?
 
         filter_clause = if filters.any?
-          filter_conditions = filters.map do |field, value|
-            "path: [\"#{field}\"], operator: Equal, valueString: \"#{value}\""
-          end.join(', ')
-          ", where: { #{filter_conditions} }"
-        else
-          ""
-        end
+                          filter_conditions = filters.map do |field, value|
+                            "path: [\"#{field}\"], operator: Equal, valueString: \"#{value}\""
+                          end.join(", ")
+                          ", where: { #{filter_conditions} }"
+                        else
+                          ""
+                        end
 
         gql = <<~GQL
           {
@@ -136,10 +134,10 @@ module MASTER
           }
         GQL
 
-        response = post('/v1/graphql', { query: gql })
+        response = post("/v1/graphql", { query: gql })
 
-        if response.dig('data', 'Get', class_name)
-          results = response['data']['Get'][class_name]
+        if response.dig("data", "Get", class_name)
+          results = response["data"]["Get"][class_name]
           Result.ok(results)
         else
           Result.err("Search failed: #{response['errors']&.first&.dig('message') || 'unknown'}")
@@ -148,7 +146,7 @@ module MASTER
         Result.err("Search failed: #{e.message}")
       end
 
-      def store(content:, type: 'chat', source: nil, metadata: {})
+      def store(content:, type: "chat", source: nil, metadata: {})
         return Result.err(NOT_AVAILABLE) unless available?
 
         object = {
@@ -158,14 +156,14 @@ module MASTER
             type: type,
             source: source,
             timestamp: Time.now.utc.iso8601,
-            metadata: metadata.to_json
-          }
+            metadata: metadata.to_json,
+          },
         }
 
-        response = post('/v1/objects', object)
+        response = post("/v1/objects", object)
 
-        if response['id']
-          Result.ok({ id: response['id'] })
+        if response["id"]
+          Result.ok({ id: response["id"] })
         else
           Result.err("Failed to store: #{response['error'] || 'unknown error'}")
         end
@@ -177,15 +175,15 @@ module MASTER
         return Result.err(NOT_AVAILABLE) unless available?
 
         gql = build_search_query(query, limit, type)
-        response = post('/v1/graphql', { query: gql })
+        response = post("/v1/graphql", { query: gql })
 
-        if response.dig('data', 'Get', CLASS_NAME)
-          results = response['data']['Get'][CLASS_NAME].map do |obj|
+        if response.dig("data", "Get", CLASS_NAME)
+          results = response["data"]["Get"][CLASS_NAME].map do |obj|
             {
-              content: obj['content'],
-              type: obj['type'],
-              source: obj['source'],
-              distance: obj['_additional']['distance']
+              content: obj["content"],
+              type: obj["type"],
+              source: obj["source"],
+              distance: obj["_additional"]["distance"],
             }
           end
           Result.ok(results)
@@ -250,14 +248,14 @@ module MASTER
             end
             return result if result
           rescue JSON::ParserError => e
-            return { 'error' => "Parse error: #{e.message}" }
+            return { "error" => "Parse error: #{e.message}" }
           rescue Async::TimeoutError, Errno::ECONNREFUSED => e
             last_error = e.message
-            sleep(RETRY_BACKOFF_BASE ** attempt) if attempt < retries - 1
+            sleep(RETRY_BACKOFF_BASE**attempt) if attempt < retries - 1
           end
         end
 
-        { 'error' => "Failed after #{retries} retries: #{last_error}" }
+        { "error" => "Failed after #{retries} retries: #{last_error}" }
       end
 
       def build_search_query(text, limit, type)

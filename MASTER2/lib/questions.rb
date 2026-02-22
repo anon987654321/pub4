@@ -17,6 +17,7 @@ module MASTER
 
       def load_config
         return {} unless File.exist?(QUESTIONS_FILE)
+
         YAML.safe_load_file(QUESTIONS_FILE) || {}
       end
 

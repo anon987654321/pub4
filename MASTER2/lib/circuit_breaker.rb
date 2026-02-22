@@ -50,7 +50,8 @@ module MASTER
   # CircuitBreaker - Rate limiting and failure handling for LLM calls using Stoplight
   # Prevents cascading failures and manages request throttling
   module CircuitBreaker
-    extend self
+    module_function
+
     # Custom exception for intentional circuit breaker state changes
     class TestFailure < StandardError; end
 
@@ -121,9 +122,9 @@ module MASTER
     end
 
     # Run a block with circuit breaker protection
-    def run(model, &block)
+    def run(model, &)
       check_rate_limit!
-      build_light(model).run(&block)
+      build_light(model).run(&)
     end
 
     # Record a failure to potentially trip the circuit

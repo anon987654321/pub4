@@ -19,9 +19,7 @@ module MASTER
           round_result = council_review(original, proposal, model: nil)
           all_rounds << round_result
 
-          if round_result[:vetoed_by]&.any?
-            return round_result.merge(rounds: round_num + 1, all_rounds: all_rounds)
-          end
+          return round_result.merge(rounds: round_num + 1, all_rounds: all_rounds) if round_result[:vetoed_by]&.any?
 
           current_consensus = round_result[:consensus] || 0
           delta = (current_consensus - previous_consensus).abs
@@ -38,9 +36,7 @@ module MASTER
             return round_result.merge(rounds: round_num + 1, all_rounds: all_rounds)
           end
 
-          if round_num < MAX_ROUNDS - 1 && !over_budget?
-            proposal = synthesize(proposal, round_result[:votes])
-          end
+          proposal = synthesize(proposal, round_result[:votes]) if round_num < MAX_ROUNDS - 1 && !over_budget?
 
           previous_consensus = current_consensus
           final_result = round_result
@@ -66,6 +62,7 @@ module MASTER
 
         veto_personas.first(3).each do |persona|
           break if over_budget?
+
           vote = get_persona_vote(persona, original, proposal)
           votes << vote
           if vote[:veto]
@@ -76,6 +73,7 @@ module MASTER
 
         advisory_personas.first(3).each do |persona|
           break if over_budget?
+
           votes << get_persona_vote(persona, original, proposal)
         end
 
@@ -96,7 +94,7 @@ module MASTER
 
       # Synthesize proposal based on council feedback
       def synthesize(proposal, votes)
-        rejections = votes.select { |v| !v[:approve] }
+        rejections = votes.reject { |v| v[:approve] }
         return proposal if rejections.empty? || over_budget?
 
         concerns = rejections.map { |v| "#{v[:name]}: #{v[:reason]}" }.join("\n")

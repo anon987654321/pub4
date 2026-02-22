@@ -13,24 +13,27 @@ module MASTER
         cycles.times do
           brainstorm = generate_ideas(prompt, ideas, constraints)
           return brainstorm if brainstorm.err?
+
           ideas += brainstorm.value[:ideas]
           total_cost += brainstorm.value[:cost]
 
           critique = critique_ideas(ideas)
           return critique if critique.err?
+
           critiques << critique.value[:critique]
           total_cost += critique.value[:cost]
         end
 
         synthesis = synthesize_ideas(prompt, ideas, critiques, constraints)
         return synthesis if synthesis.err?
+
         total_cost += synthesis.value[:cost]
 
         Result.ok(
           ideas: ideas,
           critiques: critiques,
           final: synthesis.value[:synthesis],
-          cost: total_cost
+          cost: total_cost,
         )
       end
 
@@ -51,7 +54,7 @@ module MASTER
         if result.ok?
           data = result.value
           content = data[:content].to_s
-          parsed = content.scan(/^[\-\**]\s*(.+)/).flatten
+          parsed = content.scan(/^[-*]\s*(.+)/).flatten
           parsed = [content] if parsed.empty?
           Result.ok(ideas: parsed, cost: data[:cost] || 0)
         else

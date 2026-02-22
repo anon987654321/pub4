@@ -16,7 +16,7 @@ module MASTER
         /forget\s+(?:everything|all\s+previous|your\s+instructions)/i,
       ].freeze
 
-      extend self
+      module_function
 
       # Scan content from a tool result for injection patterns.
       # Returns Result.ok(sanitized_content) or Result.err if severe.
@@ -26,7 +26,7 @@ module MASTER
       def scan(content, source: "unknown")
         return Result.ok(content) unless content.is_a?(String)
 
-        hits = PATTERNS.select { |p| p.match?(content) }
+        hits = PATTERNS.grep(content)
         return Result.ok(content) if hits.empty?
 
         sanitized = hits.reduce(content) { |c, p| c.gsub(p, "[REDACTED:injection_attempt]") }
@@ -37,6 +37,7 @@ module MASTER
       # Quick predicate: is this content safe (no injection patterns)?
       def safe?(content)
         return true unless content.is_a?(String)
+
         PATTERNS.none? { |p| p.match?(content) }
       end
     end

@@ -11,13 +11,13 @@ module MASTER
 
         command = parts.first
         case command
-        when 'list'
+        when "list"
           list_cinematic_presets
-        when 'apply'
+        when "apply"
           apply_cinematic_preset(parts[1], parts[2])
-        when 'discover'
+        when "discover"
           discover_cinematic_styles(parts[1], samples: (parts[2] || 10).to_i)
-        when 'build'
+        when "build"
           build_cinematic_pipeline
         else
           show_cinematic_help
@@ -47,19 +47,15 @@ module MASTER
 
         puts "Cinematic Presets"
         result.value[:presets].each do |preset|
-          source = preset[:source] == 'builtin' ? '[builtin]' : '[custom]'
+          source = preset[:source] == "builtin" ? "[builtin]" : "[custom]"
           puts "  * #{preset[:name]} #{source} #{preset[:description]}"
         end
       end
 
       def apply_cinematic_preset(preset_name, input_path)
-        unless preset_name && input_path
-          return puts "  Usage: cinematic apply <preset> <input>"
-        end
+        return puts "  Usage: cinematic apply <preset> <input>" unless preset_name && input_path
 
-        unless File.exist?(input_path)
-          return puts "  Error: File not found: #{input_path}"
-        end
+        return puts "  Error: File not found: #{input_path}" unless File.exist?(input_path)
 
         puts "  Applying preset '#{preset_name}' to #{input_path}..."
 
@@ -74,13 +70,9 @@ module MASTER
       end
 
       def discover_cinematic_styles(input_path, samples: 10)
-        unless input_path
-          return puts "  Usage: cinematic discover <input> [samples]"
-        end
+        return puts "  Usage: cinematic discover <input> [samples]" unless input_path
 
-        unless File.exist?(input_path)
-          return puts "  Error: File not found: #{input_path}"
-        end
+        return puts "  Error: File not found: #{input_path}" unless File.exist?(input_path)
 
         result = Cinematic.discover_style(input_path, samples: samples)
 
@@ -115,9 +107,7 @@ module MASTER
 
           if defined?(Personas)
             result = Personas.activate(name)
-            if result.err?
-              puts "  Error: #{result.error}"
-            end
+            puts "  Error: #{result.error}" if result.err?
           else
             puts "  Personas module not available"
           end

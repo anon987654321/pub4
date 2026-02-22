@@ -44,8 +44,8 @@ module MASTER
       {}
     end
 
-    def synchronize(&block)
-      @mutex.synchronize(&block)
+    def synchronize(&)
+      @mutex.synchronize(&)
     end
 
     # Clear all cached data
@@ -203,7 +203,7 @@ module MASTER
         add_axiom(
           name: axiom[:id] || axiom[:name],
           description: axiom[:statement] || axiom[:description],
-          category: axiom[:category] || "core"
+          category: axiom[:category] || "core",
         )
       end
     end
@@ -223,7 +223,7 @@ module MASTER
           name: member[:name],
           role: member[:slug],
           style: "weight: #{member[:weight]}, temp: #{member[:temperature]}",
-          bias: member[:veto] ? "veto" : "advisory"
+          bias: member[:veto] ? "veto" : "advisory",
         )
       end
     end

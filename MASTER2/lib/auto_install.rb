@@ -44,6 +44,7 @@ module MASTER
         puts "Installing #{missing.size} gems..." if verbose
         missing.each do |gem|
           next unless gem.match?(/\A[a-z0-9_-]+\z/)
+
           system("gem", "install", gem, "--no-document")
         end
       end
@@ -53,8 +54,9 @@ module MASTER
       rescue LoadError
         return if @installed&.dig(name)
         return unless name.to_s.match?(/\A[a-z0-9_-]+\z/)
+
         @installed ||= {}
-        $stderr.puts "Installing #{name}..."
+        warn "Installing #{name}..."
         @installed[name] = system("gem", "install", name, "--no-document")
         require name
       end
@@ -65,6 +67,7 @@ module MASTER
 
       def missing_packages
         return [] unless openbsd?
+
         OPENBSD_PACKAGES.reject { |p| package_installed?(p) }
       end
 
@@ -74,11 +77,12 @@ module MASTER
 
       def install_packages(verbose: false)
         return unless openbsd?
+
         missing = missing_packages
         return if missing.empty?
 
         puts "Installing #{missing.size} packages..." if verbose
-        valid_packages = missing.select { |p| p.match?(/\A[a-z0-9_-]+\z/) }
+        valid_packages = missing.grep(/\A[a-z0-9_-]+\z/)
         system("doas", "pkg_add", *valid_packages) unless valid_packages.empty?
       end
 
@@ -90,7 +94,10 @@ module MASTER
       def status
         {
           gems: { installed: GEMS.size - missing_gems.size, missing: missing_gems },
-          packages: openbsd? ? { installed: OPENBSD_PACKAGES.size - missing_packages.size, missing: missing_packages } : nil
+          packages: if openbsd?
+                      { installed: OPENBSD_PACKAGES.size - missing_packages.size,
+                        missing: missing_packages }
+                    end,
         }
       end
     end

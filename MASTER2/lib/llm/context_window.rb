@@ -36,7 +36,7 @@ module MASTER
         filled = ((u[:percent] / 100.0) * width).round
         empty = width - filled
 
-        bar_str = "#" * filled + "." * empty
+        bar_str = ("#" * filled) + ("." * empty)
         "#{bar_str} #{u[:percent]}%"
       end
 

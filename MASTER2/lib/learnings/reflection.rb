@@ -16,7 +16,7 @@ module MASTER
       @memory.remember(
         "#{content} | strength:#{strength} | task:#{task_id} | created:#{Time.now.to_i}",
         :long,
-        tags: (tags + [:reflexion]).uniq
+        tags: (tags + [:reflexion]).uniq,
       )
     end
 
@@ -49,7 +49,7 @@ module MASTER
           age_days: age_days.round(1),
           decay: decay_multiplier,
           weight: adjusted_weight,
-          priority: adjusted_weight >= HIGH_PRIORITY_THRESHOLD ? :high : :normal
+          priority: adjusted_weight >= HIGH_PRIORITY_THRESHOLD ? :high : :normal,
         }
       end
 
@@ -103,8 +103,8 @@ module MASTER
       store_reflection(
         content: "DISTILLED: #{summary}",
         strength: 0.9,
-        task_id: 'meta',
-        tags: %i[distilled_lesson meta]
+        task_id: "meta",
+        tags: %i[distilled_lesson meta],
       )
 
       summary
@@ -113,8 +113,8 @@ module MASTER
     private
 
     def format_reflection(ref)
-      prefix = ref[:priority] == :high ? '  *' : '  -'
-      decay_note = ref[:decay] < 1.0 ? " [aged #{ref[:age_days]}d, decayed]" : ''
+      prefix = ref[:priority] == :high ? "  *" : "  -"
+      decay_note = ref[:decay] < 1.0 ? " [aged #{ref[:age_days]}d, decayed]" : ""
       "#{prefix} [#{ref[:strength].round(2)}] #{ref[:content]}#{decay_note}"
     end
   end

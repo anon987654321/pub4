@@ -5,8 +5,8 @@ require "fileutils"
 require "open3"
 require "timeout"
 
-require_relative 'misc_commands/selftest_full'
-require_relative 'misc_commands/cinematic_persona'
+require_relative "misc_commands/selftest_full"
+require_relative "misc_commands/cinematic_persona"
 
 module MASTER
   module Commands
@@ -21,12 +21,10 @@ module MASTER
 
       def fix_code(args)
         path = args&.strip
-        if path.nil? || path.empty?
-          path = "."
-        end
+        path = "." if path.nil? || path.empty?
 
+        fixer = AutoFixer.new(mode: :moderate)
         if File.directory?(path)
-          fixer = AutoFixer.new(mode: :moderate)
           result = fixer.fix_directory(path)
           if result.ok?
             puts "  Fixed #{result.value[:files_fixed]} files, #{result.value[:issues_fixed]} issues"
@@ -34,7 +32,6 @@ module MASTER
             puts "  Error: #{result.error}"
           end
         else
-          fixer = AutoFixer.new(mode: :moderate)
           result = fixer.fix(path)
           if result.ok?
             puts "  Fixed: #{path}"
@@ -100,7 +97,7 @@ module MASTER
             captures = result.value[:captures]
             puts "#{captures.size} session captures:"
             captures.last(10).each do |c|
-              puts "#{UI.dim(c[:timestamp])}"
+              puts UI.dim(c[:timestamp])
               c[:answers].each do |category, answer|
                 puts "  #{UI.bold(category)}: #{answer}"
               end
@@ -122,11 +119,19 @@ module MASTER
         checks << { name: "API Key", ok: !api_key.nil? && !api_key.empty? }
 
         # Check var directory writable
-        var_ok = File.writable?(Paths.var) rescue false
+        var_ok = begin
+          File.writable?(Paths.var)
+        rescue StandardError
+          false
+        end
         checks << { name: "Var writable", ok: var_ok }
 
         # Check DB initialized
-        db_ok = DB.axioms.any? rescue false
+        db_ok = begin
+          DB.axioms.any?
+        rescue StandardError
+          false
+        end
         checks << { name: "DB seeded", ok: db_ok }
 
         # Check models available
@@ -152,7 +157,7 @@ module MASTER
 
         checks.each do |c|
           status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{c[:name]}#{c[:detail] ? " (#{c[:detail]})" : ""}"
+          puts "#{status} #{c[:name]}#{" (#{c[:detail]})" if c[:detail]}"
         end
 
         # Platform checks
@@ -160,14 +165,18 @@ module MASTER
           issues = PlatformCheck.diagnose
           if issues.empty?
             summary = PlatformCheck.summary
-            puts "#{UI.pastel.green("+")} platform: #{summary}" if summary
+            puts "#{UI.pastel.green('+')} platform: #{summary}" if summary
           else
-            puts "#{UI.pastel.red("-")} platform: #{issues.size} issue(s) found"
+            puts "#{UI.pastel.red('-')} platform: #{issues.size} issue(s) found"
             PlatformCheck.print_diagnostics
           end
         end
 
-        missing_gems = AutoInstall.missing_gems rescue []
+        missing_gems = begin
+          AutoInstall.missing_gems
+        rescue StandardError
+          []
+        end
         if missing_gems.any?
           puts UI.dim("Installing #{missing_gems.size} missing gems into local bundle path...")
           ok = system("bundle", "install")
@@ -184,17 +193,17 @@ module MASTER
         checks = startup_checks
         checks.each do |c|
           status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{c[:name]}#{c[:detail] ? " (#{c[:detail]})" : ""}"
+          puts "#{status} #{c[:name]}#{" (#{c[:detail]})" if c[:detail]}"
           puts UI.dim("    fix: #{c[:fix]}") if verbose && !c[:ok] && c[:fix]
         end
 
         plugin_check = plugin_manifest_check
         plugin_icon = plugin_check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-        puts "#{plugin_icon} Plugins#{plugin_check[:detail] ? " (#{plugin_check[:detail]})" : ""}"
+        puts "#{plugin_icon} Plugins#{" (#{plugin_check[:detail]})" if plugin_check[:detail]}"
         puts UI.dim("    fix: #{plugin_check[:fix]}") if verbose && !plugin_check[:ok] && plugin_check[:fix]
 
         tidy = repo_cleanliness
-        puts "#{UI.pastel.cyan("*")} Repo dirtiness #{tidy[:dirty_count]} files (#{tidy[:state]})"
+        puts "#{UI.pastel.cyan('*')} Repo dirtiness #{tidy[:dirty_count]} files (#{tidy[:state]})"
 
         all_ok = (checks + [plugin_check]).all? { |c| c[:ok] }
         puts all_ok ? "doctor: ok" : "doctor: attention required"
@@ -204,7 +213,8 @@ module MASTER
       def history_dig(args = nil)
         target = args.to_s.strip
         target = "master.yml" if target.empty?
-        return Result.err("history-dig target must be master.yml or master.json") unless %w[master.yml master.json].include?(target)
+        return Result.err("history-dig target must be master.yml or master.json") unless %w[master.yml
+                                                                                            master.json].include?(target)
 
         commits_out, status = Open3.capture2("git", "rev-list", "--all", "--", target)
         return Result.err("git history unavailable for #{target}") unless status.success?
@@ -231,7 +241,7 @@ module MASTER
         summary = Review::DesignCodex.summary
         mode = args.to_s.strip
 
-        if mode == "json" || mode == "export-json"
+        if ["json", "export-json"].include?(mode)
           out = File.join(Paths.var, "design_codex.json")
           File.write(out, Review::DesignCodex.to_json)
           puts "codify: exported #{out}"
@@ -309,33 +319,36 @@ module MASTER
           {
             name: "Constitution parses",
             ok: File.exist?(File.join(MASTER.root, "data", "constitution.yml")),
-            fix: "Ensure data/constitution.yml exists"
+            fix: "Ensure data/constitution.yml exists",
           },
           {
             name: "Bundler metadata",
             ok: bundle_ok,
-            fix: "Run: bin/master bootstrap"
+            fix: "Run: bin/master bootstrap",
           },
           {
             name: "Writable var/",
             ok: File.writable?(Paths.var),
-            fix: "Ensure #{Paths.var} is writable"
+            fix: "Ensure #{Paths.var} is writable",
           },
           {
             name: "OpenRouter key",
             ok: ENV.fetch("OPENROUTER_API_KEY", "").strip != "",
-            fix: "Set OPENROUTER_API_KEY for LLM features"
-          }
+            fix: "Set OPENROUTER_API_KEY for LLM features",
+          },
         ]
       end
 
       def plugin_manifest_check
-        return { ok: false, detail: "bridges unavailable", fix: "require bridges before doctor" } unless defined?(Bridges)
+        unless defined?(Bridges)
+          return { ok: false, detail: "bridges unavailable",
+                   fix: "require bridges before doctor" }
+        end
 
         missing = (Bridges.respond_to?(:validate_plugins) ? Bridges.validate_plugins : [])
         return { ok: true, detail: "all bridge plugins resolved" } if missing.empty?
 
-        { ok: false, detail: "missing: #{missing.join(", ")}", fix: "reinstall dependencies or restore bridge files" }
+        { ok: false, detail: "missing: #{missing.join(', ')}", fix: "reinstall dependencies or restore bridge files" }
       rescue StandardError => e
         { ok: false, detail: e.message, fix: "check bridge plugin wiring" }
       end
@@ -349,12 +362,12 @@ module MASTER
         {
           dirty_count: count,
           state: if count == 0
-            "clean"
-          elsif count <= 8
-            "tidy"
-          else
-            "messy"
-          end
+                   "clean"
+                 elsif count <= 8
+                   "tidy"
+                 else
+                   "messy"
+                 end,
         }
       rescue StandardError
         { dirty_count: 0, state: "unknown" }
@@ -384,8 +397,7 @@ module MASTER
         path = args&.split&.first || MASTER.root
         dry_run = !args&.include?("-a") && !args&.include?("--apply")
         mr = MultiRefactor.new(dry_run: dry_run)
-        result = mr.run(path: path)
-        result
+        mr.run(path: path)
       end
 
       def start_web_server(args)

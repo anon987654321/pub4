@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'fileutils'
-require 'yaml'
+require "fileutils"
+require "yaml"
 
 require_relative "cinematic/templates"
 
@@ -23,9 +23,9 @@ module MASTER
       def chain(model_id, params = {})
         @stages << {
           model: model_id,
-          params: params
+          params: params,
         }
-        self  # Return self for chaining
+        self # Return self for chaining
       end
 
       # Execute pipeline on input
@@ -46,7 +46,7 @@ module MASTER
           result = Replicate.run(
             model_id: stage[:model],
             input: {},
-            params: combined_params
+            params: combined_params,
           )
 
           return result if result.err?
@@ -55,57 +55,55 @@ module MASTER
           current_output = extract_output(result.value[:output])
 
           # Save intermediate if requested
-          if save_intermediates
-            save_intermediate(current_output, idx, stage[:model])
-          end
+          save_intermediate(current_output, idx, stage[:model]) if save_intermediates
 
           results << {
             stage: idx,
             model: stage[:model],
-            output: current_output
+            output: current_output,
           }
         end
 
         Result.ok({
-          final: current_output,
-          stages: results
-        })
+                    final: current_output,
+                    stages: results,
+                  })
       end
 
       # Save pipeline as preset
       def save_preset(name:, description:, tags: [])
         preset = {
-          'name' => name,
-          'description' => description,
-          'tags' => tags,
-          'stages' => @stages.map { |s| { 'model' => s[:model], 'params' => s[:params] } },
-          'created_at' => Time.now.utc.iso8601
+          "name" => name,
+          "description" => description,
+          "tags" => tags,
+          "stages" => @stages.map { |s| { "model" => s[:model], "params" => s[:params] } },
+          "created_at" => Time.now.utc.iso8601,
         }
 
         # Ensure pipelines directory exists
-        pipelines_dir = File.join(Paths.data, 'pipelines')
+        pipelines_dir = File.join(Paths.data, "pipelines")
         FileUtils.mkdir_p(pipelines_dir)
 
         # Save to filesystem
-        filename = name.downcase.gsub(/[^a-z0-9]+/, '-') + '.yml'
+        filename = "#{name.downcase.gsub(/[^a-z0-9]+/, '-')}.yml"
         path = File.join(pipelines_dir, filename)
         File.write(path, YAML.dump(preset))
 
         # Index in Weaviate if available
         if Weaviate.available?
           embedding = generate_embedding(description)
-          Weaviate.index('Pipeline', preset.merge('vector' => embedding)) if embedding
+          Weaviate.index("Pipeline", preset.merge("vector" => embedding)) if embedding
         end
 
         Result.ok({ path: path })
       rescue StandardError => e
-        $stderr.puts "cinematic: #{e.message}"
+        warn "cinematic: #{e.message}"
         Result.err("Failed to save preset: #{e.message}")
       end
 
       def self.load(name)
-        pipelines_dir = File.join(Paths.data, 'pipelines')
-        filename = name.downcase.gsub(/[^a-z0-9]+/, '-') + '.yml'
+        pipelines_dir = File.join(Paths.data, "pipelines")
+        filename = "#{name.downcase.gsub(/[^a-z0-9]+/, '-')}.yml"
         path = File.join(pipelines_dir, filename)
 
         return Result.err("Preset not found: #{name}") unless File.exist?(path)
@@ -113,32 +111,32 @@ module MASTER
         preset = YAML.safe_load_file(path, permitted_classes: [Symbol])
         pipeline = new
 
-        preset['stages'].each do |stage|
-          pipeline.chain(stage['model'], stage['params'] || {})
+        preset["stages"].each do |stage|
+          pipeline.chain(stage["model"], stage["params"] || {})
         end
 
         Result.ok(pipeline)
       rescue StandardError => e
-        $stderr.puts "cinematic: #{e.message}"
+        warn "cinematic: #{e.message}"
         Result.err("Failed to load preset: #{e.message}")
       end
 
       private
 
-      def detect_input_type(output, model_id)
+      def detect_input_type(output, _model_id)
         # Detect if output is image, video, or text
         if output.is_a?(String)
           if output.match?(/\.(jpg|jpeg|png|webp)$/i)
-            { 'image' => output }
+            { "image" => output }
           elsif output.match?(/\.(mp4|mov|avi)$/i)
-            { 'video' => output }
+            { "video" => output }
           else
-            { 'prompt' => output }
+            { "prompt" => output }
           end
         elsif output.is_a?(Array)
-          { 'image' => output.first }
+          { "image" => output.first }
         else
-          { 'input' => output }
+          { "input" => output }
         end
       end
 
@@ -156,26 +154,25 @@ module MASTER
       def save_intermediate(output, stage_idx, model_id)
         return unless output.is_a?(String) && output.match?(/^https?:/)
 
-        model_name = model_id.split('/').last.gsub(/[^a-z0-9]/i, '_')
+        model_name = model_id.split("/").last.gsub(/[^a-z0-9]/i, "_")
         filename = "stage_#{stage_idx}_#{model_name}.png"
 
-        intermediate_dir = File.join(Paths.var, 'pipeline')
+        intermediate_dir = File.join(Paths.var, "pipeline")
         FileUtils.mkdir_p(intermediate_dir)
 
         path = File.join(intermediate_dir, filename)
         Replicate.download_file(output, path)
       rescue StandardError => e
-        $stderr.puts "Cinematic: save_intermediate failed: #{e.message}"
+        warn "Cinematic: save_intermediate failed: #{e.message}"
       end
 
-      def generate_embedding(text)
+      def generate_embedding(_text)
         return nil unless defined?(LLM) && LLM.configured?
 
         # Use OpenRouter for embeddings if available
         # For now, return nil - embeddings can be added later
         nil
       end
-
     end
 
     # Apply a named preset
@@ -211,7 +208,7 @@ module MASTER
         results << {
           pipeline: pipeline,
           result: result.value,
-          score: score
+          score: score,
         }
       end
 
@@ -226,29 +223,29 @@ module MASTER
     # List available presets
     def list_presets
       builtin = self.class.presets.keys.map do |name|
-        { name: name, description: self.class.presets[name][:description], source: 'builtin' }
+        { name: name, description: self.class.presets[name][:description], source: "builtin" }
       end
 
-      pipelines_dir = File.join(Paths.data, 'pipelines')
+      pipelines_dir = File.join(Paths.data, "pipelines")
       custom = if Dir.exist?(pipelines_dir)
-        Dir.glob(File.join(pipelines_dir, '*.yml')).map do |path|
-          preset = YAML.safe_load_file(path, permitted_classes: [Symbol])
-          {
-            name: preset['name'],
-            description: preset['description'],
-            source: 'custom'
-          }
-        end
-      else
-        []
-      end
+                 Dir.glob(File.join(pipelines_dir, "*.yml")).map do |path|
+                   preset = YAML.safe_load_file(path, permitted_classes: [Symbol])
+                   {
+                     name: preset["name"],
+                     description: preset["description"],
+                     source: "custom",
+                   }
+                 end
+               else
+                 []
+               end
 
       Result.ok({ presets: builtin + custom })
     end
 
     private
 
-    def score_aesthetic(result)
+    def score_aesthetic(_result)
       # Simple placeholder scoring
       # In production, could use LAION aesthetic predictor or similar
       rand(0.5..1.0)

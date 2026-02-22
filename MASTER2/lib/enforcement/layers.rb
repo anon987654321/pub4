@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require_relative '../code_review/analyzers'
+require_relative "../code_review/analyzers"
 
 module MASTER
   module Enforcement
-    extend self
+    module_function
 
     def self_check!
       MASTER::Review::Enforcer.self_check!
     end
 
-    def check(code, **opts)
-      MASTER::Review::Enforcer.check(code, **opts)
+    def check(code, **)
+      MASTER::Review::Enforcer.check(code, **)
     end
 
     LAYERS = %i[literal lexical structural semantic behavioral cognitive].freeze
@@ -22,12 +22,13 @@ module MASTER
       def check_literal(code, axioms, filename)
         violations = []
 
-        # Note: TODO/FIXME/XXX/HACK and bare rescue checks are in check_lines (scope 1)
+        # NOTE: TODO/FIXME/XXX/HACK and bare rescue checks are in check_lines (scope 1)
         # to avoid double-counting violations
 
         # Hardcoded secrets
         if code.match?(/['"][A-Za-z0-9]{32,}['"]/)
-          violations << { layer: :literal, axiom: "SINGLE_SOURCE", message: "Possible hardcoded secret", file: filename }
+          violations << { layer: :literal, axiom: "SINGLE_SOURCE", message: "Possible hardcoded secret",
+                          file: filename }
         end
 
         # Check core axioms with detect patterns from axioms.yml
@@ -56,7 +57,7 @@ module MASTER
                 axiom: axiom_id,
                 message: suggest || "Axiom #{axiom_id} violation detected",
                 protection: axiom["protection"] || axiom[:protection],
-                file: filename
+                file: filename,
               }
             end
           rescue RegexpError
@@ -69,29 +70,30 @@ module MASTER
       end
 
       # Layer 2: Lexical - token/syntax analysis
-      def check_lexical(code, axioms, filename)
-        violations = []
+      def check_lexical(code, _axioms, filename)
         nesting_limit = thresholds["nesting_depth"] || 4
         method_limit = thresholds["method_length"] || 50
 
         # DRY: duplicate method definitions
         methods = code.scan(/def\s+(\w+)/).flatten
         duplicates = methods.select { |m| methods.count(m) > 1 }.uniq
-        duplicates.each do |method|
-          violations << { layer: :lexical, axiom: "DRY", message: "Duplicate method: #{method}", file: filename }
+        violations = duplicates.map do |method|
+          { layer: :lexical, axiom: "DRY", message: "Duplicate method: #{method}", file: filename }
         end
 
         # STRUCTURAL_FLATTEN: excessive nesting
         max_nesting = Analyzers::NestingAnalyzer.depth(code)
         if max_nesting > nesting_limit
-          violations << { layer: :lexical, axiom: "STRUCTURAL_FLATTEN", message: "Excessive nesting (#{max_nesting} levels)", file: filename }
+          violations << { layer: :lexical, axiom: "STRUCTURAL_FLATTEN",
+                          message: "Excessive nesting (#{max_nesting} levels)", file: filename }
         end
 
         # KISS: overly long methods
         methods_info = Analyzers::MethodLengthAnalyzer.scan(code)
         methods_info.each do |method|
           if method[:length] > method_limit
-            violations << { layer: :lexical, axiom: "KISS", message: "Method too long: #{method[:name]} (#{method[:length]} lines)", file: filename }
+            violations << { layer: :lexical, axiom: "KISS",
+                            message: "Method too long: #{method[:name]} (#{method[:length]} lines)", file: filename }
           end
         end
 
@@ -99,7 +101,7 @@ module MASTER
       end
 
       # Layer 3: Conceptual - structural patterns
-      def check_conceptual(code, axioms, filename)
+      def check_conceptual(code, _axioms, filename)
         violations = []
 
         # STRUCTURAL_DEFRAGMENT: related code scattered
@@ -117,86 +119,93 @@ module MASTER
         loop_patterns = code.scan(/(?:while|until|loop|each|map|select)\s*(?:do|\{)[\s\S]*?(?:end|\})/)
         loop_patterns.each do |loop_body|
           if loop_body.scan(/File\.read|DB\.|Net::HTTP/).size > 1
-            violations << { layer: :conceptual, axiom: "STRUCTURAL_HOIST", message: "I/O operation inside loop", file: filename }
+            violations << { layer: :conceptual, axiom: "STRUCTURAL_HOIST", message: "I/O operation inside loop",
+                            file: filename }
           end
         end
 
         # STRUCTURAL_COALESCE: sequential same-type operations
         if code.scan(/\.save\b/).size > 3
-          violations << { layer: :conceptual, axiom: "STRUCTURAL_COALESCE", message: "Multiple sequential saves - consider bulk operation", file: filename }
+          violations << { layer: :conceptual, axiom: "STRUCTURAL_COALESCE",
+                          message: "Multiple sequential saves - consider bulk operation", file: filename }
         end
 
         violations
       end
 
       # Layer 4: Semantic - meaning/intent analysis
-      def check_semantic(code, axioms, filename)
+      def check_semantic(code, _axioms, filename)
         violations = []
         generic_verbs = smells["generic_verbs"] || {}
         vague_nouns = smells["vague_nouns"] || {}
 
         # Check for generic verbs in method names
-        generic_verbs.keys.each do |verb|
-          if code.match?(/def\s+#{verb}_\w+/)
-            better = generic_verbs[verb]&.first
-            msg = better ? "Generic verb '#{verb}' - try '#{better}'" : "Generic verb '#{verb}'"
-            violations << { layer: :semantic, axiom: "OMIT_WORDS", message: msg, file: filename }
-          end
+        generic_verbs.each_key do |verb|
+          next unless code.match?(/def\s+#{verb}_\w+/)
+
+          better = generic_verbs[verb]&.first
+          msg = better ? "Generic verb '#{verb}' - try '#{better}'" : "Generic verb '#{verb}'"
+          violations << { layer: :semantic, axiom: "OMIT_WORDS", message: msg, file: filename }
         end
 
         # Check for vague nouns in variable/class names
-        vague_nouns.keys.each do |noun|
-          if code.match?(/\b#{noun}\s*=/) || code.match?(/class\s+\w*#{noun.capitalize}/)
-            better = vague_nouns[noun]&.first
-            msg = better ? "Vague noun '#{noun}' - try '#{better}'" : "Vague noun '#{noun}'"
-            violations << { layer: :semantic, axiom: "OMIT_WORDS", message: msg, file: filename }
-          end
+        vague_nouns.each_key do |noun|
+          next unless code.match?(/\b#{noun}\s*=/) || code.match?(/class\s+\w*#{noun.capitalize}/)
+
+          better = vague_nouns[noun]&.first
+          msg = better ? "Vague noun '#{noun}' - try '#{better}'" : "Vague noun '#{noun}'"
+          violations << { layer: :semantic, axiom: "OMIT_WORDS", message: msg, file: filename }
         end
 
         # ACTIVE_VOICE: passive method names
         passive_patterns = [/is_(\w+)_by/, /was_(\w+)/, /been_(\w+)/]
         passive_patterns.each do |pattern|
-          if code.match?(pattern)
-            violations << { layer: :semantic, axiom: "ACTIVE_VOICE", message: "Passive voice in method name", file: filename }
-            break
-          end
+          next unless code.match?(pattern)
+
+          violations << { layer: :semantic, axiom: "ACTIVE_VOICE", message: "Passive voice in method name",
+                          file: filename }
+          break
         end
 
         violations
       end
 
       # Layer 5: Cognitive - human understanding
-      def check_cognitive(code, axioms, filename)
+      def check_cognitive(code, _axioms, filename)
         violations = []
 
         # HIERARCHY: inconsistent structure
         class_count = code.scan(/^\s*class\s+\w+/).size
         module_count = code.scan(/^\s*module\s+\w+/).size
         if class_count > 3 || module_count > 3
-          violations << { layer: :cognitive, axiom: "HIERARCHY", message: "Too many classes/modules in one file", file: filename }
+          violations << { layer: :cognitive, axiom: "HIERARCHY", message: "Too many classes/modules in one file",
+                          file: filename }
         end
 
         # RHYTHM: inconsistent spacing
         blank_line_gaps = code.scan(/\n(\n+)/).map { |m| m.first.length }
         if blank_line_gaps.uniq.size > 2
-          violations << { layer: :cognitive, axiom: "RHYTHM", message: "Inconsistent blank line spacing", file: filename }
+          violations << { layer: :cognitive, axiom: "RHYTHM", message: "Inconsistent blank line spacing",
+                          file: filename }
         end
 
         # POLA: surprising patterns
         if code.match?(/def\s+\[\]=?/) && !filename.include?("collection")
-          violations << { layer: :cognitive, axiom: "POLA", message: "Operator overloading may surprise users", file: filename }
+          violations << { layer: :cognitive, axiom: "POLA", message: "Operator overloading may surprise users",
+                          file: filename }
         end
 
         # PROGRESSIVE_DISCLOSURE: all complexity upfront
         if code.lines.first(20).join.scan(/def\s+/).size > 5
-          violations << { layer: :cognitive, axiom: "PROGRESSIVE_DISCLOSURE", message: "Too many methods defined before any implementation", file: filename }
+          violations << { layer: :cognitive, axiom: "PROGRESSIVE_DISCLOSURE",
+                          message: "Too many methods defined before any implementation", file: filename }
         end
 
         violations
       end
 
       # Layer 6: Language axiom - language-specific beauty rules
-      def check_language_axiom(code, axioms, filename)
+      def check_language_axiom(code, _axioms, filename)
         if defined?(LanguageAxioms)
           LanguageAxioms.check(code, filename: filename)
         else
@@ -220,7 +229,8 @@ module MASTER
         # Check for too many class definitions
         classes = code.scan(/^\s*class\s+\w+/).size
         if classes > 1
-          violations << { layer: :lexical, axiom: "ONE_JOB", message: "Multiple classes in single file", file: filename }
+          violations << { layer: :lexical, axiom: "ONE_JOB", message: "Multiple classes in single file",
+                          file: filename }
         end
 
         # Check for too many public methods
@@ -242,7 +252,8 @@ module MASTER
         # Check for deeply nested code (internal logic complexity)
         max_nesting = Analyzers::NestingAnalyzer.depth(code)
         if max_nesting > 6
-          violations << { layer: :lexical, axiom: "KISS", message: "Deeply nested internal logic (>6 levels)", file: filename }
+          violations << { layer: :lexical, axiom: "KISS", message: "Deeply nested internal logic (>6 levels)",
+                          file: filename }
         end
 
         violations
@@ -257,7 +268,8 @@ module MASTER
 
         duplicates.each do |dup|
           str_preview = dup[:string].length > 30 ? "#{dup[:string][0...30]}..." : dup[:string]
-          violations << { layer: :lexical, axiom: "ONE_SOURCE", message: "Repeated string: '#{str_preview}' (#{dup[:count]} times)", file: filename }
+          violations << { layer: :lexical, axiom: "ONE_SOURCE",
+                          message: "Repeated string: '#{str_preview}' (#{dup[:count]} times)", file: filename }
         end
 
         violations
@@ -270,7 +282,8 @@ module MASTER
         max_lines = QualityStandards.max_file_lines
 
         if lines > max_lines
-          violations << { layer: :cognitive, axiom: "JUST_ENOUGH", message: "File too large: #{lines} lines (limit: #{max_lines})", file: filename }
+          violations << { layer: :cognitive, axiom: "JUST_ENOUGH",
+                          message: "File too large: #{lines} lines (limit: #{max_lines})", file: filename }
         end
 
         violations

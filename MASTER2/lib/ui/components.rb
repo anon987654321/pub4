@@ -42,14 +42,14 @@ module MASTER
         lines.join("\n")
       end
 
-      def box(content, title: nil, **opts)
+      def box(content, title: nil, **)
         require "tty-box"
         TTY::Box.frame(
           content,
           title: title ? { top_left: " #{title} " } : nil,
           padding: [0, 1],
           border: :round,
-          **opts
+          **,
         )
       rescue LoadError
         lines = []
@@ -72,13 +72,16 @@ module MASTER
         TTY::ProgressBar.new(
           "[:bar] :percent :eta",
           total: total,
-          bar_format: format == :block ? :block : :classic
+          bar_format: format == :block ? :block : :classic,
         )
       rescue LoadError
         Object.new.tap do |p|
           p.instance_variable_set(:@current, 0)
           p.instance_variable_set(:@total, total)
-          p.define_singleton_method(:advance) { |n = 1| @current += n; print "\r  [#{@current}/#{@total}]" }
+          p.define_singleton_method(:advance) do |n = 1|
+            @current += n
+            print "\r  [#{@current}/#{@total}]"
+          end
           p.define_singleton_method(:finish) { puts " done" }
         end
       end
@@ -89,16 +92,16 @@ module MASTER
           TTY::Cursor
         rescue LoadError
           Module.new do
-            def self.hide; ""; end
-            def self.show; ""; end
-            def self.up(n=1); ""; end
-            def self.down(n=1); ""; end
-            def self.forward(n=1); ""; end
-            def self.backward(n=1); ""; end
-            def self.column(n); ""; end
-            def self.move_to(x, y); ""; end
-            def self.clear_line; "\r"; end
-            def self.clear_screen; ""; end
+            def self.hide = ""
+            def self.show = ""
+            def self.up(_n = 1) = ""
+            def self.down(_n = 1) = ""
+            def self.forward(_n = 1) = ""
+            def self.backward(_n = 1) = ""
+            def self.column(_n) = ""
+            def self.move_to(_x, _y) = ""
+            def self.clear_line = "\r"
+            def self.clear_screen = ""
           end
         end
       end
@@ -119,11 +122,12 @@ module MASTER
         require "tty-tree"
         TTY::Tree.new(data)
       rescue LoadError
-        def self.format_tree(data, indent=0)
+        def self.format_tree(data, indent = 0)
           return "" unless data.is_a?(Hash) || data.is_a?(Array)
+
           lines = []
           (data.is_a?(Hash) ? data : data.each_with_index.to_a).each do |k, v|
-            lines << "  " * indent + "- #{k}"
+            lines << (("  " * indent) + "- #{k}")
             lines << format_tree(v, indent + 1) if v.is_a?(Hash) || v.is_a?(Array)
           end
           lines.join("\n")
@@ -183,9 +187,9 @@ module MASTER
         end
       end
 
-      def command(*cmd, **opts)
+      def command(*cmd, **)
         require "tty-command"
-        TTY::Command.new(printer: :quiet).run(*cmd, **opts)
+        TTY::Command.new(printer: :quiet).run(*cmd, **)
       rescue LoadError
         system(*cmd)
       end

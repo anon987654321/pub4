@@ -24,11 +24,11 @@ module MASTER
         return Result.err("Video generation failed: #{result[:error]}") if result[:error]
 
         Result.ok({
-          id: result[:id],
-          urls: result[:output],
-          model: model_id,
-          prompt: prompt
-        })
+                    id: result[:id],
+                    urls: result[:output],
+                    model: model_id,
+                    prompt: prompt,
+                  })
       end
 
       # Generate music from prompt
@@ -53,12 +53,12 @@ module MASTER
         return Result.err("Music generation failed: #{result[:error]}") if result[:error]
 
         Result.ok({
-          id: result[:id],
-          urls: result[:output],
-          model: model_id,
-          prompt: prompt,
-          duration: duration
-        })
+                    id: result[:id],
+                    urls: result[:output],
+                    model: model_id,
+                    prompt: prompt,
+                    duration: duration,
+                  })
       end
 
       # Batch generate multiple prompts
@@ -67,9 +67,7 @@ module MASTER
       # @param params [Hash] Additional parameters to pass to all generations
       # @return [Array<Result>] Array of Result objects
       def batch_generate(prompts, model: DEFAULT_MODEL, params: {})
-        unless available?
-          return prompts.map { |_| Result.err(TOKEN_NOT_SET) }
-        end
+        return prompts.map { |_| Result.err(TOKEN_NOT_SET) } unless available?
 
         prompts.map do |prompt|
           generate(prompt: prompt, model: model, params: params)
@@ -81,7 +79,7 @@ module MASTER
         uri = URI(url)
         max_redirects.times do
           http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = (uri.scheme == 'https')
+          http.use_ssl = (uri.scheme == "https")
 
           response = http.get(uri.request_uri)
           case response
@@ -90,7 +88,7 @@ module MASTER
             File.binwrite(path, response.body)
             return true
           when Net::HTTPRedirection
-            uri = URI(response['location'])
+            uri = URI(response["location"])
           else
             return false
           end

@@ -2,14 +2,14 @@
 
 module MASTER
   module Progress
-    extend self
+    module_function
 
     SPINNERS = {
-      dots:    %w[| / - \ | / - \ | /],
-      line:    %w[- \\ | /],
-      blocks:  %w[| | | | | | | #],
-      arrows:  %w[<- <- ^ -> -> -> v <-],
-      circuit: %w[o o o o *]
+      dots: %w[| / - \ | / - \ | /],
+      line: %w[- \\ | /],
+      blocks: %w[| | | | | | | #],
+      arrows: %w[<- <- ^ -> -> -> v <-],
+      circuit: %w[o o o o *],
     }.freeze
 
     class Spinner
@@ -45,7 +45,7 @@ module MASTER
       end
 
       def success(message)
-        stop("#{message}")
+        stop(message.to_s)
       end
 
       def error(message)
@@ -93,7 +93,7 @@ module MASTER
       end
     end
 
-    def spinner(message = "Processing...", style: :dots, &block)
+    def spinner(message = "Processing...", style: :dots)
       s = Spinner.new(message, style: style)
       s.start
 
@@ -105,7 +105,7 @@ module MASTER
       raise
     end
 
-    def progress_bar(total:, message: "Progress", &block)
+    def progress_bar(total:, message: "Progress")
       bar = ProgressBar.new(total: total, message: message)
       yield bar
       bar.finish
@@ -130,5 +130,4 @@ module MASTER
       end
     end
   end
-
 end

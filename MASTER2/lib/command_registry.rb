@@ -3,11 +3,12 @@
 module MASTER
   # CommandRegistry - single source of truth for command metadata.
   module CommandRegistry
-    extend self
+    module_function
 
     COMMANDS = {
       ask: { desc: "Ask the LLM a question", usage: "ask <question>", group: :query, aliases: [] },
-      refactor: { desc: "Refactor a file with 6-phase analysis", usage: "refactor <file>", group: :query, aliases: %w[autofix] },
+      refactor: { desc: "Refactor a file with 6-phase analysis", usage: "refactor <file>", group: :query,
+                  aliases: %w[autofix] },
       chamber: { desc: "Multi-model deliberation", usage: "chamber <file>", group: :query, aliases: [] },
       evolve: { desc: "Self-improvement cycle", usage: "evolve [path]", group: :query, aliases: [] },
       opportunities: { desc: "Find improvements", usage: "opportunities [path]", group: :query, aliases: %w[opps] },
@@ -29,9 +30,11 @@ module MASTER
       health: { desc: "Health check", usage: "health", group: :system, aliases: [] },
       doctor: { desc: "Deep diagnostics", usage: "doctor [--verbose]", group: :system, aliases: [] },
       bootstrap: { desc: "First-run setup", usage: "bootstrap", group: :system, aliases: [] },
-      "history-dig": { desc: "Recover deleted historical file", usage: "history-dig [master.yml|master.json]", group: :system, aliases: [] },
+      "history-dig": { desc: "Recover deleted historical file", usage: "history-dig [master.yml|master.json]",
+                       group: :system, aliases: [] },
       codify: { desc: "Show/export codified design rules", usage: "codify [export-json]", group: :system, aliases: [] },
-      "style-guides": { desc: "List/sync style guides", usage: "style-guides [sync]", group: :system, aliases: %w[styleguides] },
+      "style-guides": { desc: "List/sync style guides", usage: "style-guides [sync]", group: :system,
+                        aliases: %w[styleguides] },
       help: { desc: "Show this help", usage: "help [command]", group: :util, aliases: %w[?] },
       speak: { desc: "Text-to-speech", usage: "speak <text>", group: :util, aliases: %w[say] },
       shell: { desc: "Interactive shell", usage: "shell", group: :util, aliases: [] },
@@ -46,9 +49,12 @@ module MASTER
       workflow: { desc: "Workflow control", usage: "workflow <cmd>", group: :system, aliases: [] },
       queue: { desc: "Queue operations", usage: "queue <cmd>", group: :system, aliases: [] },
       harvest: { desc: "Data harvesting", usage: "harvest <target>", group: :system, aliases: [] },
-      replicate: { desc: "Generate media via Replicate", usage: "replicate <prompt>", group: :util, aliases: %w[repligen generate-image generate-video] },
-      narrate: { desc: "Generate narrated video demo", usage: "narrate [--segments 1,3,5]", group: :util, aliases: %w[narration] },
-      postpro: { desc: "Post-processing operations", usage: "postpro <operation> <path|url>", group: :util, aliases: %w[enhance upscale] },
+      replicate: { desc: "Generate media via Replicate", usage: "replicate <prompt>", group: :util,
+                   aliases: %w[repligen generate-image generate-video] },
+      narrate: { desc: "Generate narrated video demo", usage: "narrate [--segments 1,3,5]", group: :util,
+                 aliases: %w[narration] },
+      postpro: { desc: "Post-processing operations", usage: "postpro <operation> <path|url>", group: :util,
+                 aliases: %w[enhance upscale] },
     }.freeze
 
     def help_commands

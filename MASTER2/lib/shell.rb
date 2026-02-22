@@ -6,8 +6,6 @@ require "open3"
 module MASTER
   # Shell integration - zsh-native patterns
   module Shell
-    extend self
-
     BUILTINS = %w[cd pwd echo print printf export alias source].freeze
 
     ZSH_PREFERRED = {
@@ -16,7 +14,7 @@ module MASTER
       "cat" => "cat -v",
       "rm" => "rm -i",
       "mv" => "mv -i",
-      "cp" => "cp -i"
+      "cp" => "cp -i",
     }.freeze
 
     FORBIDDEN = {
@@ -25,7 +23,7 @@ module MASTER
       "apt-get" => "pkg_add",
       "yum" => "pkg_add",
       "systemctl" => "rcctl",
-      "journalctl" => "tail -f /var/log/messages"
+      "journalctl" => "tail -f /var/log/messages",
     }.freeze
 
     class << self
@@ -42,19 +40,17 @@ module MASTER
         end
 
         # Apply zsh preferences
-        if ZSH_PREFERRED.key?(base) && parts.size == 1
-          return ZSH_PREFERRED[base]
-        end
+        return ZSH_PREFERRED[base] if ZSH_PREFERRED.key?(base) && parts.size == 1
 
         cmd
       end
 
       def safe?(cmd)
         dangerous = [
-          /rm\s+-rf?\s+\//, />\s*\/dev\/[sh]da/, /dd\s+if=/,
-          /mkfs/, /fdisk/, /format\s+[a-z]:/i, /del\s+\/[sq]/i
+          %r{rm\s+-rf?\s+/}, %r{>\s*/dev/[sh]da}, /dd\s+if=/,
+          /mkfs/, /fdisk/, /format\s+[a-z]:/i, %r{del\s+/[sq]}i
         ]
-        !dangerous.any? { |p| cmd.match?(p) }
+        dangerous.none? { |p| cmd.match?(p) }
       end
 
       def execute(cmd, timeout: 30)
@@ -99,4 +95,3 @@ module MASTER
 end
 
 require_relative "shell/session"
-

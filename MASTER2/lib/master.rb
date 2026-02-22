@@ -5,7 +5,7 @@ module MASTER
   def self.root = File.expand_path("..", __dir__)
 
   def self.source_files
-    Dir.glob(File.join(root, "lib", "**", "*.rb")).sort
+    Dir.glob(File.join(root, "lib", "**", "*.rb"))
   end
 
   # Safe require helper for optional dependencies

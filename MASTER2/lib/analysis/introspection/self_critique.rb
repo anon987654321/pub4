@@ -81,7 +81,7 @@ module MASTER
             clarity: parsed[:clarity]&.to_f || 0.5,
             overall_confidence: parsed[:overall_confidence]&.to_f || 0.5,
             issues: Array(parsed[:issues]),
-            suggestions: Array(parsed[:suggestions])
+            suggestions: Array(parsed[:suggestions]),
           }
         rescue JSON::ParserError
           default_critique
@@ -93,8 +93,8 @@ module MASTER
             completeness: 0.5,
             clarity: 0.5,
             overall_confidence: 0.5,
-            issues: ['Unable to parse self-critique'],
-            suggestions: []
+            issues: ["Unable to parse self-critique"],
+            suggestions: [],
           }
         end
       end

@@ -19,8 +19,8 @@ module MASTER
       Rule.new(action: :block, direction: :in, pattern: /\bpfctl\s+-f\b/, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /\brcctl\s+restart\b/, quick: true),
       # Block destructive operations (inbound only)
-      Rule.new(action: :block, direction: :in, pattern: /\brm\s+-rf?\s+\//, quick: true),
-      Rule.new(action: :block, direction: :in, pattern: />\s*\/dev\/[sh]da/, quick: true),
+      Rule.new(action: :block, direction: :in, pattern: %r{\brm\s+-rf?\s+/}, quick: true),
+      Rule.new(action: :block, direction: :in, pattern: %r{>\s*/dev/[sh]da}, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /DROP\s+TABLE/i, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /mkfs\./, quick: true),
       Rule.new(action: :block, direction: :in, pattern: /dd\s+if=/, quick: true),
@@ -42,7 +42,10 @@ module MASTER
           next if rule.direction && rule.direction != direction
           next unless text.match?(rule.pattern)
 
-          return { verdict: :block, rule: rule, reason: "Blocked by rule: #{rule.pattern.source}" } if rule.action == :block
+          if rule.action == :block
+            return { verdict: :block, rule: rule,
+                     reason: "Blocked by rule: #{rule.pattern.source}" }
+          end
           return { verdict: :pass, tag: rule.tag } if rule.tag
           return { verdict: :pass } if rule.action == :pass
         end

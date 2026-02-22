@@ -6,9 +6,9 @@ module MASTER
     # Prevents axiom drift in long sessions.
     # Pattern: Anthropic's Claude Sonnet 4.5 reminder mechanism (gistfile10 §3)
     module Reminders
-      extend self
+      module_function
 
-      REMINDER_INTERVAL = 8   # inject a reminder every N messages
+      REMINDER_INTERVAL = 8 # inject a reminder every N messages
       CRITICAL_AXIOMS = %w[
         FAIL_VISIBLY
         ONE_SOURCE
@@ -27,10 +27,10 @@ module MASTER
       def build_reminder(context = {})
         violations = context[:recent_violations] || []
         active_axioms = if violations.any?
-          violations.map { |v| v[:axiom] }.uniq.first(5)
-        else
-          CRITICAL_AXIOMS
-        end
+                          violations.map { |v| v[:axiom] }.uniq.first(5)
+                        else
+                          CRITICAL_AXIOMS
+                        end
 
         axiom_text = active_axioms.map { |a| "- #{a}" }.join("\n")
         budget_note = context[:budget_remaining] ? "Session budget remaining: #{context[:budget_remaining]}" : nil

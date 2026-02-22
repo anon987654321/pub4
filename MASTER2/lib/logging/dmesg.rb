@@ -4,8 +4,6 @@ module MASTER
   module Logging
     # Dmesg - OpenBSD kernel-style logging
     module Dmesg
-      extend self
-
       @buffer = []
       @buffer_mutex = Mutex.new
       @start_time = Time.now
@@ -20,7 +18,7 @@ module MASTER
         attr_reader :buffer
 
         def trace_level
-          (ENV['MASTER_TRACE'] || '1').to_i
+          (ENV["MASTER_TRACE"] || "1").to_i
         end
 
         def enabled?(level = LLM_ONLY)
@@ -31,9 +29,9 @@ module MASTER
           timestamp = ((Time.now - @start_time) * 1000).round
 
           line = if parent
-                   "#{device} at #{parent}#{message ? ": #{message}" : ''}"
+                   "#{device} at #{parent}#{": #{message}" if message}"
                  else
-                   "#{device}#{message ? ": #{message}" : ''}"
+                   "#{device}#{": #{message}" if message}"
                  end
 
           entry = { time: timestamp, line: line, level: level }

@@ -2,9 +2,8 @@
 
 require "securerandom"
 require "timeout"
-require 'yaml'
-require 'fileutils'
-require 'set'
+require "yaml"
+require "fileutils"
 
 require_relative "agent/pool"
 require_relative "agent/firewall"
@@ -35,7 +34,7 @@ module MASTER
     end
 
     def run
-      Logging.dmesg_log('agent', message: 'ENTER agent.run')
+      Logging.dmesg_log("agent", message: "ENTER agent.run")
       @status = :running
       @started_at = Time.now
 

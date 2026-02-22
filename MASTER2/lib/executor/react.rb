@@ -11,9 +11,9 @@ module MASTER
         required: %w[thought],
         properties: {
           thought: { type: "string", description: "Brief reasoning about the next step" },
-          tool:    { type: "string", description: "Tool to invoke (omit when answering)" },
-          args:    { type: "object", description: "Named arguments for the tool" },
-          answer:  { type: "string", description: "Final answer (set this to complete the task)" },
+          tool: { type: "string", description: "Tool to invoke (omit when answering)" },
+          args: { type: "object", description: "Named arguments for the tool" },
+          answer: { type: "string", description: "Final answer (set this to complete the task)" },
         },
       }.freeze
 
@@ -40,9 +40,7 @@ module MASTER
             tier: tier,
           )
 
-          unless result.ok?
-            return Result.err("LLM error at step #{@step}: #{result.error}")
-          end
+          return Result.err("LLM error at step #{@step}: #{result.error}") unless result.ok?
 
           parsed = parse_step(result.value[:content])
           record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
@@ -77,7 +75,11 @@ module MASTER
 
           # Injection defense: halt loop on detected injection (gist item #3).
           # Sanitize-and-continue is insufficient — abort with error instead.
-          sanitizer = defined?(Security::InjectionGuard) ? Security::InjectionGuard : (defined?(Security::Sanitizer) ? Security::Sanitizer : nil)
+          sanitizer = if defined?(Security::InjectionGuard)
+                        Security::InjectionGuard
+                      else
+                        (defined?(Security::Sanitizer) ? Security::Sanitizer : nil)
+                      end
           if sanitizer && !sanitizer.safe?(raw_observation)
             return Result.err(
               "Injection attempt detected in tool response from '#{tool_name}'. Aborting.",
@@ -101,7 +103,11 @@ module MASTER
       def parse_step(payload)
         data = case payload
                when Hash   then payload
-               when String then (JSON.parse(payload, symbolize_names: true) rescue {})
+               when String then begin
+                 JSON.parse(payload, symbolize_names: true)
+               rescue StandardError
+                 {}
+               end
                else {}
                end
 
@@ -113,7 +119,11 @@ module MASTER
         answer  = nil if answer.empty?
 
         # Legacy: if no tool/answer but action key present (transitional fallback)
-        action = tool ? "#{tool} #{args.to_json}" : (answer ? "ANSWER: #{answer}" : thought)
+        action = if tool
+                   "#{tool} #{args.to_json}"
+                 else
+                   (answer ? "ANSWER: #{answer}" : thought)
+                 end
 
         { thought: thought, tool: tool, args: args, answer: answer, action: action }
       end

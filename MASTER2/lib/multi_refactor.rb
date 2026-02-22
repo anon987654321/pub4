@@ -13,7 +13,8 @@ module MASTER
 
     attr_reader :results, :graph
 
-    def initialize(chamber: nil, dry_run: true, budget_cap: 2.0, force_rewrite: false, align_axioms: false, include_all_files: false)
+    def initialize(chamber: nil, dry_run: true, budget_cap: 2.0, force_rewrite: false, align_axioms: false,
+                   include_all_files: false)
       @chamber = chamber || Council.new
       @dry_run = dry_run
       @budget_cap = budget_cap
@@ -22,17 +23,20 @@ module MASTER
       @include_all_files = include_all_files
       @cost = 0.0
       @results = []
-      @graph = {}  # file => [dependencies]
+      @graph = {} # file => [dependencies]
     end
 
     # Refactor all supported files under path
     def run(path:, pattern: nil, exclude: nil)
-      Logging.dmesg_log('multi_refactor', message: 'ENTER multi_refactor.run')
+      Logging.dmesg_log("multi_refactor", message: "ENTER multi_refactor.run")
       Prescan.run(path) if defined?(Prescan) && File.directory?(path)
       files = discover_files(path, pattern: pattern, exclude: exclude)
       return Result.err("No supported files found in #{path}") if files.empty?
+
       max_files = @include_all_files ? MAX_FILES_ALL : MAX_FILES
-      return Result.err("Too many files (#{files.size} > #{max_files}). Use a more specific path.") if files.size > max_files
+      if files.size > max_files
+        return Result.err("Too many files (#{files.size} > #{max_files}). Use a more specific path.")
+      end
 
       # Build dependency graph
       build_dependency_graph(files)
@@ -41,7 +45,7 @@ module MASTER
       ordered = systematic_order(topological_sort(files))
       rounds = @dry_run ? 1 : MAX_SYSTEMATIC_ROUNDS
 
-      UI.header("Multi-file Refactor#{@dry_run ? ' (dry run)' : ''}")
+      UI.header("Multi-file Refactor#{' (dry run)' if @dry_run}")
       puts "  Path: #{path}"
       puts "  Files: #{ordered.size}"
       puts "  Rounds: #{rounds}"
@@ -82,7 +86,7 @@ module MASTER
         files_failed: @results.count { |r| r[:error] },
         total_cost: @cost,
         dry_run: @dry_run,
-        results: @results
+        results: @results,
       }
 
       UI.header("Results")
@@ -108,11 +112,11 @@ module MASTER
       end
 
       files = if @include_all_files
-        Dir.glob(File.join(path, "**", "*")).select { |f| File.file?(f) }
-      else
-        patterns = pattern ? [pattern] : SUPPORTED_EXTENSIONS.map { |ext| "**/*#{ext}" }
-        patterns.flat_map { |p| Dir.glob(File.join(path, p)) }
-      end
+                Dir.glob(File.join(path, "**", "*")).select { |f| File.file?(f) }
+              else
+                patterns = pattern ? [pattern] : SUPPORTED_EXTENSIONS.map { |ext| "**/*#{ext}" }
+                patterns.flat_map { |p| Dir.glob(File.join(path, p)) }
+              end
 
       # Default exclusions relative to the scan root.
       exclude_patterns = [
@@ -126,7 +130,7 @@ module MASTER
       exclude_patterns << Regexp.new(exclude) if exclude
 
       files.reject do |f|
-        rel = f.sub(/\A#{Regexp.escape(path)}\/?/, "")
+        rel = f.sub(%r{\A#{Regexp.escape(path)}/?}, "")
         exclude_patterns.any? { |p| rel.match?(p) }
       end
     end
@@ -136,13 +140,17 @@ module MASTER
 
       files.each do |file|
         @graph[file] = []
-        content = File.read(file) rescue next
+        content = begin
+          File.read(file)
+        rescue StandardError
+          next
+        end
 
         case File.extname(file)
         when ".rb"
           # Extract require_relative dependencies
           content.scan(/require_relative\s+["']([^"']+)["']/).each do |match|
-            dep_path = File.expand_path(match[0] + ".rb", File.dirname(file))
+            dep_path = File.expand_path("#{match[0]}.rb", File.dirname(file))
             @graph[file] << dep_path if file_set.include?(dep_path)
           end
         when ".sh"
@@ -154,7 +162,7 @@ module MASTER
         when ".html"
           # HTML files reference each other via links
           # Capture relative links: ./file.html, file.html, ../file.html
-          content.scan(/href=["'](?:\.\/)?\.\.?\/?([^"'\/]+\.html)["']/i).each do |match|
+          content.scan(%r{href=["'](?:\./)?\.\.?/?([^"'/]+\.html)["']}i).each do |match|
             dep_path = File.expand_path(match[0], File.dirname(file))
             @graph[file] << dep_path if file_set.include?(dep_path)
           end
@@ -218,16 +226,14 @@ module MASTER
       return { file: file, skipped: true, reason: "binary file" } if content.include?("\x00")
 
       # Skip files that are too large
-      if content.size > 50_000
-        return { file: file, skipped: true, reason: "too large (#{content.size} bytes)" }
-      end
+      return { file: file, skipped: true, reason: "too large (#{content.size} bytes)" } if content.size > 50_000
 
       # Use strict rewrite mode when requested, otherwise council deliberation
       result = if @force_rewrite
-        strict_rewrite(content, filename: basename, ext: ext)
-      else
-        @chamber.deliberate(content, filename: basename)
-      end
+                 strict_rewrite(content, filename: basename, ext: ext)
+               else
+                 @chamber.deliberate(content, filename: basename)
+               end
 
       if result.ok? && result.value[:final] && result.value[:final] != content
         cost = result.value[:cost] || 0.0
@@ -245,7 +251,7 @@ module MASTER
           File.write(file, cleaned)
           enforce_ruby_style!(file)
 
-          File.delete(backup) if File.exist?(backup)
+          FileUtils.rm_f(backup)
         end
 
         { file: file, improved: true, cost: cost, dry_run: @dry_run }
@@ -265,12 +271,12 @@ module MASTER
       return Result.err("LLM not configured") unless defined?(LLM) && LLM.respond_to?(:configured?) && LLM.configured?
 
       language = case ext
-      when ".rb" then "Ruby"
-      when ".sh" then "Shell"
-      when ".html", ".erb" then "HTML/ERB"
-      when ".yml", ".yaml" then "YAML"
-      else "text"
-      end
+                 when ".rb" then "Ruby"
+                 when ".sh" then "Shell"
+                 when ".html", ".erb" then "HTML/ERB"
+                 when ".yml", ".yaml" then "YAML"
+                 else "text"
+                 end
 
       total_cost = 0.0
       current = content.dup
@@ -306,11 +312,13 @@ module MASTER
 
         result = LLM.ask(prompt, tier: :strong, stream: false)
         return Result.err("strict rewrite failed on pass #{passes}") unless result&.ok?
+
         total_cost += (result.value[:cost] || 0.0).to_f
 
         candidate = extract_code_content(result.value[:content].to_s)
         return Result.err("strict rewrite returned empty output on pass #{passes}") if candidate.strip.empty?
-        return Result.err("strict rewrite produced invalid syntax on pass #{passes}") unless valid_refactor?(filename, candidate)
+        return Result.err("strict rewrite produced invalid syntax on pass #{passes}") unless valid_refactor?(filename,
+                                                                                                             candidate)
 
         new_violation_count = @align_axioms ? axiom_violations(candidate, filename).size : violation_count
         changed = candidate != current
@@ -332,7 +340,7 @@ module MASTER
         council: nil,
         final: current,
         cost: total_cost,
-        rounds: passes
+        rounds: passes,
       )
     rescue StandardError => e
       Result.err("strict rewrite error: #{e.message}")

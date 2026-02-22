@@ -3,14 +3,14 @@
 module MASTER
   module Generators
     module HTML
-      extend self
+      module_function
 
       RULES = [
         "Semantic HTML5 only",
         "No div soup - use semantic elements",
         "Minimal attributes (only what's needed)",
         "Progressive enhancement",
-        "Accessible by default (WCAG 2.2 AAA)"
+        "Accessible by default (WCAG 2.2 AAA)",
       ].freeze
 
       TEMPLATE = <<~HTML
@@ -46,7 +46,7 @@ module MASTER
         errors << "Missing semantic elements" if html !~ /<(header|nav|main|article|section|aside|footer)/
 
         # Check for div soup
-        div_count = html.scan(/<div/).length
+        div_count = html.scan("<div").length
         errors << "Too many divs (#{div_count}) - use semantic HTML" if div_count > 10
 
         # Check accessibility
