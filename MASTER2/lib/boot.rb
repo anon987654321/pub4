@@ -43,7 +43,7 @@ module MASTER
           c("sh0 at cpu0: #{shell} prompt #{user}#{prompt_hint}"),
           c("db0 at cpu0: #{DB.axioms.size} axioms, #{defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0} personas"),
           c("llm0 at db0: #{tier_models}"),
-          c("budget0 at llm0: (managed by OpenRouter)"),
+          c("budget0 at llm0: #{LLM.configured_for_replicate? ? '(Replicate primary' + (LLM.configured_for_openrouter? ? ', OpenRouter fallback)' : ')') : '(managed by OpenRouter)'}"),
           c("pledge0 at cpu0: #{defined?(Pledge) && Pledge.available? ? 'armed' : 'unavailable'}"),
           c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}"),
           c("smoke0 at executor0: #{smoke_result}"),
