@@ -27,6 +27,15 @@ module MASTER
 
           # Execute the planned action
           observation = dispatch_action(planned_step)
+
+          # Injection defense: halt on detected injection (gist item #3)
+          if defined?(Security::Sanitizer) && !Security::Sanitizer.safe?(observation)
+            return Result.err(
+              "Injection attempt detected in tool response at step #{@step}. Aborting.",
+              category: :validation,
+            )
+          end
+
           results << { step: @step, action: planned_step, observation: observation }
           record_history(results.last)
 

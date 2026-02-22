@@ -68,6 +68,15 @@ module MASTER
 
           UI.dim("  #E#{num}: #{resolved[0..60]}")
           observation = dispatch_action(resolved.strip)
+
+          # Injection defense: halt on detected injection (gist item #3)
+          if defined?(Security::Sanitizer) && !Security::Sanitizer.safe?(observation)
+            return Result.err(
+              "Injection attempt detected in tool response at #E#{num}. Aborting.",
+              category: :validation,
+            )
+          end
+
           evidence[num.to_i] = observation
           record_history({ step: @step, action: resolved, observation: observation })
           UI.dim("  = #{observation[0..60]}")
