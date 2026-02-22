@@ -3,7 +3,14 @@
 module MASTER
   # Evolve - Self-improvement workflow
   class Evolve
-    MAX_ITERATIONS = 10
+    _c = begin
+           require "yaml"
+           f = File.expand_path("../../data/constitution.yml", __FILE__)
+           YAML.safe_load_file(f).dig("convergence", "evolve_max_iterations")
+         rescue StandardError
+           nil
+         end
+    MAX_ITERATIONS = (_c || 10).freeze
     CONVERGENCE_THRESHOLD = 0.02
     PER_FILE_BUDGET = 0.25
 

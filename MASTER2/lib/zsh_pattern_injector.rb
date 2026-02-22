@@ -11,7 +11,8 @@ module MASTER
   module ZshPatternInjector
     extend self
 
-    DATA_FILE = File.join(MASTER.root, "data", "zsh_patterns.yml")
+    DATA_FILE       = File.join(MASTER.root, "data", "zsh_patterns.yml")
+    CONSTITUTION    = File.join(MASTER.root, "data", "constitution.yml")
 
     def data
       @data ||= YAML.load_file(DATA_FILE)
@@ -20,9 +21,20 @@ module MASTER
     end
 
     # Returns { "awk" => "zsh array/string...", "sed" => "...", ... }
+    # Merges data/zsh_patterns.yml (rich) with constitution.constraints.banned_tools (authoritative list)
     def forbidden
-      @forbidden ||= (data["forbidden_commands"] || []).each_with_object({}) do |entry, h|
-        h[entry["command"]] = entry["replacement"]
+      @forbidden ||= begin
+        base = (data["forbidden_commands"] || []).each_with_object({}) do |entry, h|
+          h[entry["command"]] = entry["replacement"]
+        end
+        # constitution.yml is ONE_SOURCE for the banned tool list — supplement base with any extras
+        extra = begin
+          YAML.safe_load_file(CONSTITUTION)&.dig("constraints", "banned_tools") || []
+        rescue StandardError
+          []
+        end
+        extra.each { |tool| base[tool.to_s] ||= "a native zsh equivalent" }
+        base
       end
     end
 

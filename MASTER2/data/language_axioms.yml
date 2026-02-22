@@ -235,7 +235,42 @@ zsh:
     severity: info
     autofix: false
 
-html_erb:
+  - id: banned_external_commands
+    name: "Banned external commands — use pure zsh"
+    detect: '\b(sed|awk|tr|grep|cut|wc|head|tail|find|sort|uniq|basename|dirname|realpath|readlink|seq|expr|xargs|python|python3|bash|getopts|sudo)\b'
+    suggest: "Replace with pure zsh: sed→${var//a/b}, awk→${(s:,:)str}[n], grep→${(M)arr:#*pat*}, find→**/*.ext(.), basename→${f:t}, dirname→${f:h}, realpath→${f:A}, sort→${(o)arr}, uniq→${(u)arr}, wc→${#arr}, head→${arr[1,n]}, tail→${arr[-n,-1]}"
+    severity: error
+    autofix: false
+
+  - id: no_modifier_t_without_full_path
+    name: "Glob :t modifier loses full path context"
+    detect: '\*\*\/\*\(\/\s*:t\)'
+    suggest: "Remove :t from glob qualifier — iterate full paths and use ${f:t} inline if basename needed. :t in glob loses the directory component causing broken path reconstruction."
+    severity: error
+    autofix: false
+
+  - id: zparseopts_over_getopts
+    name: "Use zparseopts instead of getopts"
+    detect: '\bgetopts\b'
+    suggest: "Use zparseopts -D -E -F (zsh/zutil) — supports long options, cleaner than getopts"
+    severity: warning
+    autofix: false
+
+  - id: setopt_extended_glob
+    name: "setopt extendedglob required for advanced patterns"
+    detect: '^#!/.*zsh\n(?!.*setopt.*extendedglob)'
+    suggest: "Add 'setopt nullglob extendedglob' after set -euo pipefail"
+    severity: warning
+    autofix: true
+
+  - id: typeset_A_for_dicts
+    name: "Use typeset -A for associative arrays"
+    detect: 'declare\s+-A\b'
+    suggest: "Prefer typeset -A over declare -A in zsh (typeset is the canonical zsh form)"
+    severity: info
+    autofix: true
+
+
   - id: semantic_elements
     name: "Enforce semantic HTML5 elements"
     detect: '<div\s+class="(header|footer|nav|main|sidebar|article|section)"'

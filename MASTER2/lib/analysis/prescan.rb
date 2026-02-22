@@ -28,6 +28,7 @@ module MASTER
         }
 
         warn_if_issues(results)
+        openbsd_config_scan if RUBY_PLATFORM.include?("openbsd") || ENV["MASTER_OPENBSD_SCAN"] == "true"
         @cache[path] = results if cache
         results
       end
@@ -102,6 +103,20 @@ module MASTER
 
       def warn_if_issues(results)
         # Individual checks already printed. Nothing extra needed.
+      end
+
+      def openbsd_config_scan
+        return unless defined?(MASTER::Analysis::OpenBSDConfigValidator)
+
+        issues = OpenBSDConfigValidator.scan_dir("/etc")
+        issues.each do |_file, file_issues|
+          file_issues.each do |issue|
+            UI.warn("pf0: #{issue[:message]}") if issue[:severity] == :warn
+            UI.warn("pf0: #{issue[:message]} (man #{issue[:man]})") if issue[:severity] == :error
+          end
+        end
+      rescue StandardError
+        # non-critical — /etc may not be readable
       end
     end
   end

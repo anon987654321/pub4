@@ -39,7 +39,7 @@ gem "ruby_llm", "~> 1.11"
 gem "stoplight", "~> 4.0"
 
 # Web server
-gem "falcon", "~> 0.47"
+gem "falcon", "~> 0.54"
 gem "async-websocket"
 
 # MCP server — expose MASTER2 tools via Model Context Protocol

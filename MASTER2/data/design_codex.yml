@@ -135,3 +135,33 @@ automation:
       detail: "summary_only"
     audit:
       detail: "include_violation_evidence_and_fix_hints"
+
+boot_invariants:
+  dmesg_format: "device0 at parent0: description — no prefix symbols, no box art, no brackets"
+  single_entry_point: "banner called exactly once, from pipeline/repl.rb. bin/master never calls Boot directly"
+  stale_locks_at_start: "cleanup_stale_locks! runs before REPL loop, never after"
+  deploy_dir_only: "deploy scripts live exclusively under deploy/. No ad-hoc scripts in sh/ or root"
+
+safe_require_pattern:
+  description: "Optional modules use safe_require with silent: true. Never warn at boot for expected-absent modules"
+  usage: "safe_require 'module_name', silent: true"
+  rationale: "Clean dmesg boot output — noise-free unless genuinely unexpected"
+
+preserve:
+  rationale: "Streamline means remove redundancy, not information"
+  polish_rules:
+    - "'Streamline' means remove redundancy, not information"
+    - "'Polish' means refine wording, not delete output"
+    - "'Minimize' applies to tokens in prompts, not diagnostic output"
+    - "'Simplify' means reduce complexity, not reduce completeness"
+  boot_message:
+    format: "OpenBSD dmesg style, 5-7 lines"
+    never: "Collapse to single cryptic line"
+  diagnostic_output:
+    rule: "Structured multi-line output is intentional — verbose is correct here"
+    never: "Compress to cryptic abbreviations"
+  help_text:
+    minimum_info: ["command name and syntax", "brief description", "at least one example"]
+    never: "Truncate below minimum_info"
+  spinner_feedback:
+    rule: "Progress indicators show elapsed time and current step"

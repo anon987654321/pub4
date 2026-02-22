@@ -167,10 +167,22 @@ generation_templates:
         end
       end
   zsh:
-    rules: ["#!/usr/bin/env zsh", "set -euo pipefail", "quote expansions"]
+    rules: ["#!/usr/bin/env zsh", "set -euo pipefail", "setopt nullglob extendedglob", "quote expansions", "pure zsh — no sed/awk/tr/find/grep/cut/wc/head/tail/basename/dirname/realpath/seq/expr/getopts/sudo/bash/xargs"]
     template: |
       #!/usr/bin/env zsh
       set -euo pipefail
+      setopt nullglob extendedglob
+
+      main() {
+        %{body}
+      }
+
+      main "$@"
+  sh:
+    rules: ["#!/bin/sh for portability", "set -eu", "quote all variables", "meaningful exit codes"]
+    template: |
+      #!/bin/sh
+      set -eu
 
       main() {
         %{body}
@@ -199,12 +211,7 @@ workflow:
   mandatory_alternatives_in_ideate: 15
   oscillation_threshold: 25
 
-hooks:
-  before_edit: [backup_original, run_tests]
-  after_fix: [validate_syntax, check_principles]
-  before_commit: [full_test_suite, security_scan]
-  on_stuck: [broaden_search, change_perspective, ask_user]
-  on_oscillation: [freeze, analyze_cycle, break_deadlock]
+# hooks: section removed — data/hooks.yml is ONE_SOURCE for hook definitions
 
 enforcement_layers:
   - name: meta
@@ -227,8 +234,11 @@ golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
 convergence:
   enabled: true
   algorithm: "Keep iterating until no violations remain and no further improvements possible"
-  max_iterations: 20
+  max_iterations: 20        # SelfRefactor staged-modification cap
+  history_window: 25        # Workflow::Convergence plateau/oscillation window
+  evolve_max_iterations: 10 # Evolve per-session budget cap
   threshold: 0.001
+  resume_on_interrupt: true # FINISH_FIRST — resume aborted loops rather than restart
   on_stuck: [broaden_search, change_perspective, ask_user]
   on_oscillation: [freeze, analyze_cycle, break_deadlock]
 
@@ -237,7 +247,10 @@ anti_sprawl:
   enabled: true
   rationale: "File sprawl violates DRY — single source of truth"
   enforcement: "Edit existing files directly, never create analysis/summary/report/todo files"
-  banned_outputs: [summary.md, analysis.md, report.md, todo.md, notes.md, changelog.md]
+  banned_outputs: [summary.md, analysis.md, report.md, todo.md, notes.md, changelog.md,
+    IMPLEMENTATION_SUMMARY.md, IMPLEMENTATION_NOTES.md, AGENT_WORK_MERGE_STATUS.md,
+    MERGE_COMPLETION_SUMMARY.md, "*_ANALYSIS.md", "*_STATUS.md", "README_*.md"]
+  rule: "One README.md per folder maximum. No session-artifact markdown files."
   exceptions: [test_files, user_requested_deliverables]
 
 # Self-protection — prevent destructive self-modification
@@ -551,6 +564,18 @@ principle_interactions:
       winner: "readable"
       reason: "Readability trumps DRY when abstraction obscures intent"
       example: "Duplicate simple code rather than create unclear abstraction"
+    dry_vs_wet_or_aha:
+      winner: "wet_or_aha"
+      condition: "fewer than 3 duplications"
+      reason: "Rule of Three — duplication is better than wrong abstraction before pattern is proven"
+      example: "Copy code twice before extracting — on third use, extract"
+    clarity_vs_simplicity:
+      winner: "clarity"
+      reason: "Reader comprehension always wins over token efficiency"
+    fix_priority_inversion:
+      rule: "reject_fix"
+      reason: "A fix that introduces a higher-priority violation must be rejected and deferred"
+      enforcement: ABSOLUTE
     performance_vs_simplicity:
       winner: "simplicity"
       reason: "Optimize only when measured bottleneck found"

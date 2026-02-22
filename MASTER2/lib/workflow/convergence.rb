@@ -7,7 +7,14 @@ module MASTER
     module Convergence
       PLATEAU_WINDOW = 3
       MIN_DELTA = 0.02
-      MAX_ITERATIONS = 25
+      _c = begin
+             require "yaml"
+             f = File.expand_path("../../../data/constitution.yml", __FILE__)
+             YAML.safe_load_file(f).dig("convergence", "history_window")
+           rescue StandardError
+             nil
+           end
+      MAX_ITERATIONS = (_c || 25).freeze
       DIFF_THRESHOLD = 0.02
 
       class << self
