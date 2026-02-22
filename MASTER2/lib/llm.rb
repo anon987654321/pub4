@@ -48,26 +48,43 @@ module MASTER
         ENV.fetch("OPENROUTER_API_KEY", nil)
       end
 
-      def configured?
-        !api_key.nil? && !api_key.empty?
+      def replicate_api_key
+        ENV["REPLICATE_API_TOKEN"] || ENV["REPLICATE_API_KEY"]
       end
 
-      # Configure ruby_llm with thread safety
+      # Configured if either OpenRouter or Replicate API key is present
+      def configured?
+        (api_key && !api_key.empty?) || (replicate_api_key && !replicate_api_key.empty?)
+      end
+
+      def configured_for_openrouter?
+        api_key && !api_key.empty?
+      end
+
+      def configured_for_replicate?
+        replicate_api_key && !replicate_api_key.empty?
+      end
+
+      # Configure ruby_llm with thread safety (only needed for OpenRouter models)
       def configure_ruby_llm
         CONFIGURE_MUTEX.synchronize do
           return if @ruby_llm_configured
           RubyLLM.configure do |c|
-            c.openrouter_api_key = api_key
+            c.openrouter_api_key = api_key if api_key
           end
           @ruby_llm_configured = true
         end
       end
 
-      # Check API key status with lightweight test
+      # Check API key status
       def check_key
-        return Result.err("No API key.") unless configured?
-        configure_ruby_llm
-        Result.ok(label: "OpenRouter API Key")
+        return Result.err("No API key (set REPLICATE_API_TOKEN or OPENROUTER_API_KEY).") unless configured?
+        configure_ruby_llm if configured_for_openrouter?
+        label = [
+          configured_for_replicate? ? "Replicate" : nil,
+          configured_for_openrouter? ? "OpenRouter" : nil,
+        ].compact.join(" + ")
+        Result.ok(label: label)
       rescue StandardError => e
         Result.err("Key check failed: #{e.message}")
       end
@@ -106,9 +123,9 @@ module MASTER
       def ask(prompt, tier: nil, model: nil, fallbacks: nil, reasoning: nil,
               json_schema: nil, provider: nil, stream: false, messages: nil)
 
-        return Result.err("Missing OPENROUTER_API_KEY.", category: :infrastructure) unless configured?
+        return Result.err("No API key — set REPLICATE_API_TOKEN or OPENROUTER_API_KEY.", category: :infrastructure) unless configured?
 
-        configure_ruby_llm
+        configure_ruby_llm if configured_for_openrouter?
         CircuitBreaker.check_rate_limit!
 
         cache_result = SemanticCache.lookup(prompt, tier: tier) if defined?(SemanticCache) && !stream
@@ -292,3 +309,5 @@ end
 require_relative "llm/models"
 require_relative "llm/request"
 require_relative "llm/context_window"
+require_relative "replicate/llm"
+require_relative "replicate/client"

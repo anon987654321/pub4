@@ -13,15 +13,19 @@ module MASTER
 
         while retry_count < max_retries
           begin
-            result = execute_ruby_llm_request(
-              prompt: prompt,
-              messages: messages,
-              model: model,
-              reasoning: reasoning,
-              json_schema: json_schema,
-              provider: provider,
-              stream: stream
-            )
+            result = if replicate_model?(model)
+              execute_replicate_llm_request(prompt: prompt, messages: messages, model: model, reasoning: reasoning)
+            else
+              execute_ruby_llm_request(
+                prompt: prompt,
+                messages: messages,
+                model: model,
+                reasoning: reasoning,
+                json_schema: json_schema,
+                provider: provider,
+                stream: stream,
+              )
+            end
 
             # Success or non-retryable error
             return result if result.ok? || !retryable_error?(result.error)
@@ -230,6 +234,47 @@ module MASTER
         validate_response(response_data, model)
       rescue StandardError => e
         Result.err("ruby_llm streaming error: #{e.message}")
+      end
+
+      # True when this model is configured with api: replicate in models.yml
+      def replicate_model?(model_id)
+        cfg = configured_models_by_id[model_id]
+        cfg&.dig(:api)&.to_s == "replicate"
+      end
+
+      # Execute text-generation via Replicate::LLM (bypass ruby_llm / OpenRouter)
+      def execute_replicate_llm_request(prompt:, messages:, model:, reasoning:)
+        require_relative "../replicate/llm"
+        require_relative "../replicate/client"
+
+        # Flatten messages + prompt into a single prompt string.
+        # Replicate's predictions API uses a single prompt field, not a messages array.
+        msg_array  = build_message_array(prompt, messages)
+        sys_msg    = msg_array.find { |m| m[:role] == "system" }
+        user_msgs  = msg_array.select { |m| m[:role] == "user" }
+        asst_msgs  = msg_array.select { |m| m[:role] == "assistant" }
+
+        # Interleave user/assistant turns into a conversation-style prompt
+        turns = msg_array.reject { |m| m[:role] == "system" }
+        flat_prompt = if turns.size == 1
+          turns.first[:content]
+        else
+          turns.map { |m| "#{m[:role].capitalize}: #{m[:content]}" }.join("\n\n")
+        end
+
+        system_prompt = sys_msg&.dig(:content)
+
+        # Reasoning budget hint → increase max_tokens for reasoning models
+        max_tokens = reasoning ? 8_192 : Replicate::LLM::DEFAULT_MAX_TOKENS
+
+        Replicate::LLM.complete(
+          model,
+          flat_prompt,
+          system_prompt: system_prompt,
+          max_tokens:    max_tokens,
+        )
+      rescue StandardError => e
+        Result.err("Replicate LLM request failed: #{e.message}", category: :infrastructure)
       end
 
       public

@@ -2,27 +2,42 @@
 # Pricing: $/million tokens (input/output)
 # First model is default. Order = fallback priority.
 # tier: premium | strong | fast | cheap
+# api: replicate  → routed via Replicate predictions API (REPLICATE_API_TOKEN)
+#      openrouter → routed via ruby_llm/OpenRouter (OPENROUTER_API_KEY) [default]
 
 # --- PREMIUM ---
 
-- id: anthropic/claude-opus-4.6
+- id: anthropic/claude-opus-4-6
   alias: claude-opus-4.6
   tier: premium
   input_cost: 15.00
   output_cost: 75.00
   context_window: 200000
   provider: anthropic
+  api: replicate
   reasoning: true
 
 # --- STRONG (default + council arbiter) ---
+# Sonnet 4.6 via Replicate is the primary default; DeepSeek R1 is the fallback.
 
-- id: anthropic/claude-sonnet-4.6
+- id: anthropic/claude-sonnet-4-6
   alias: claude-sonnet-4.6
   tier: strong
   input_cost: 3.00
   output_cost: 15.00
   context_window: 200000
   provider: anthropic
+  api: replicate
+  reasoning: true
+
+- id: deepseek-ai/deepseek-r1
+  alias: deepseek-r1
+  tier: strong
+  input_cost: 3.00
+  output_cost: 8.19
+  context_window: 128000
+  provider: deepseek
+  api: replicate
   reasoning: true
 
 - id: x-ai/grok-code-fast-1
@@ -35,7 +50,7 @@
   reasoning: true
 
 - id: deepseek/deepseek-r1
-  alias: deepseek-r1
+  alias: deepseek-r1-openrouter
   tier: strong
   input_cost: 0.55
   output_cost: 2.19
@@ -54,8 +69,26 @@
 
 # --- FAST (council members + fallbacks) ---
 
-- id: deepseek/deepseek-chat
+- id: deepseek-ai/deepseek-v3
   alias: deepseek-v3
+  tier: fast
+  input_cost: 0.90
+  output_cost: 0.90
+  context_window: 128000
+  provider: deepseek
+  api: replicate
+
+- id: anthropic/claude-haiku-4-5
+  alias: claude-haiku-4.5
+  tier: fast
+  input_cost: 0.80
+  output_cost: 4.00
+  context_window: 200000
+  provider: anthropic
+  api: replicate
+
+- id: deepseek/deepseek-chat
+  alias: deepseek-v3-openrouter
   tier: fast
   input_cost: 0.27
   output_cost: 1.10

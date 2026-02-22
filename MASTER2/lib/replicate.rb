@@ -15,53 +15,36 @@ module MASTER
 
     API_URL = 'https://api.replicate.com/v1/predictions'
 
-    MODELS = {
-      # Image generation
-      flux:         'black-forest-labs/flux-1.1-pro',
-      flux_pro:     'black-forest-labs/flux-pro',
-      flux_dev:     'black-forest-labs/flux-dev',
-      sdxl:         'stability-ai/sdxl',
-      kandinsky:    'ai-forever/kandinsky-2.2',
-      ideogram_v2:  'ideogram-ai/ideogram-v2',
-      recraft_v3:   'recraft-ai/recraft-v3',
+    # MODELS and MODEL_CATEGORIES are derived from data/replicate_models.yml.
+    # The YAML is the single source of truth; these constants are convenience aliases.
+    MODELS_FILE = File.expand_path("../../data/replicate_models.yml", __FILE__).freeze
 
-      # Upscaling
-      esrgan:       'nightmareai/real-esrgan',
-      gfpgan:       'tencentarc/gfpgan',
-      codeformer:   'sczhou/codeformer',
-      clarity:      'lucataco/clarity-upscaler',
+    def self.configured_models
+      @configured_models ||= begin
+        YAML.safe_load_file(MODELS_FILE, symbolize_names: true)
+      rescue StandardError
+        []
+      end
+    end
 
-      # Video generation
-      svd:          'stability-ai/stable-video-diffusion',
-      hailuo:       'minimax/video-01',
-      kling:        'kwaivgi/kling-v2.5-turbo-pro',
-      luma_ray:     'luma/ray-2',
-      wan:          'wan-video/wan-2.5-i2v',
-      sora:         'openai/sora-2',
+    # { flux: 'black-forest-labs/flux-1.1-pro', ... }
+    def self.models_hash
+      @models_hash ||= configured_models.each_with_object({}) do |m, h|
+        h[m[:alias].to_sym] = m[:id]
+      end.freeze
+    end
 
-      # Audio
-      musicgen:     'meta/musicgen',
-      bark:         'suno/bark',
+    # { image: [:flux, :flux_pro, ...], video: [...], ... }
+    def self.categories_hash
+      @categories_hash ||= configured_models.each_with_object({}) do |m, h|
+        key = m[:category].to_sym
+        (h[key] ||= []) << m[:alias].to_sym
+      end.transform_values(&:freeze).freeze
+    end
 
-      # Transcription
-      whisper:      'openai/whisper',
-
-      # Captioning
-      blip:         'salesforce/blip',
-
-      # 3D
-      shap_e:       'openai/shap-e'
-    }.freeze
-
-    MODEL_CATEGORIES = {
-      image: [:flux, :flux_pro, :flux_dev, :sdxl, :kandinsky, :ideogram_v2, :recraft_v3],
-      video: [:svd, :hailuo, :kling, :luma_ray, :wan, :sora],
-      upscale: [:esrgan, :gfpgan, :codeformer, :clarity],
-      audio: [:musicgen, :bark],
-      transcribe: [:whisper],
-      caption: [:blip],
-      threed: [:shap_e]
-    }.freeze
+    # Backward-compatible constant aliases (populated lazily after YAML load)
+    MODELS           = Hash.new { |_, k| models_hash[k] }.tap { |h| h.merge!(models_hash) rescue {} }.freeze
+    MODEL_CATEGORIES = Hash.new { |_, k| categories_hash[k] }.tap { |h| h.merge!(categories_hash) rescue {} }.freeze
 
     DEFAULT_MODEL = :flux
 
