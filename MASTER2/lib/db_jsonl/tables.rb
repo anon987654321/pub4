@@ -174,5 +174,26 @@ module MASTER
       s[:hits] = (s[:hits] || 0) + 1
       write_collection("learned_smells", smells)
     end
+
+    # --- Autonomy / Graduation ---
+
+    def log_task_outcome(status:, description: nil)
+      append("tasks", { status: status.to_s, description: description, ts: Time.now.utc.iso8601 }.compact)
+    end
+
+    def total_successful_tasks
+      read_collection("tasks").count { |r| r[:status] == "completed" || r[:status] == "success" }
+    end
+
+    def log_revert(description: nil)
+      append("reverts", { ts: Time.now.utc.iso8601, description: description }.compact)
+    end
+
+    def recent_reverts(days:)
+      cutoff = Time.now - (days * 86_400)
+      read_collection("reverts").count do |r|
+        Time.parse(r[:ts]) > cutoff rescue false
+      end
+    end
   end
 end

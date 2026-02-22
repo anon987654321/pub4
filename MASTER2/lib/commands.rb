@@ -463,6 +463,9 @@ module MASTER
       when "shell"
         InteractiveShell.new.run
         HANDLED
+      when "version", "ver", "--version", "-v"
+        puts "MASTER #{MASTER::VERSION}"
+        HANDLED
       when "exit", "quit"
         :exit
       end

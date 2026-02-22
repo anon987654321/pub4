@@ -17,6 +17,7 @@ module MASTER
       rouge
       falcon
       async-websocket
+      rufus-scheduler
     ].freeze
 
     OPENBSD_PACKAGES = %w[
