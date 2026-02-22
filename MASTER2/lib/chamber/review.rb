@@ -128,9 +128,17 @@ module MASTER
       def get_persona_vote(persona, original, proposal)
         return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } if over_budget?
 
+        # Free-MAD: advisory personas take turns as devil's advocate to prevent groupthink
+        is_devils_advocate = !persona[:veto] && (@cost * 10).to_i.odd?
+        dissent_nudge = if is_devils_advocate
+          "\nYour role this round is DEVIL'S ADVOCATE. Actively seek flaws, risks, and reasons to REJECT — do not conform to expected approval."
+        else
+          ""
+        end
+
         prompt = <<~PROMPT
           You are #{persona[:name]}.
-          #{persona[:directive] || persona[:style]}
+          #{persona[:directive] || persona[:style]}#{dissent_nudge}
 
           Review this proposed change:
 
