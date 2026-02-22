@@ -36,8 +36,10 @@ module MASTER
 
       def project_tree(path, max_depth: 4)
         lines = file_tree(path, max_depth: max_depth, exclude: TREE_EXCLUDES)
-        puts UI.dim("Structure:")
-        puts lines.join("\n")
+        if ENV["MASTER_VERBOSE"] || ENV["MASTER_DEBUG"]
+          puts UI.dim("Structure:")
+          puts lines.join("\n")
+        end
         lines
       end
 
@@ -99,7 +101,7 @@ module MASTER
 
         output = `git -C #{Shellwords.escape(path)} log --oneline --decorate -#{limit} 2>/dev/null`
         commits = output.lines.map(&:strip).reject(&:empty?)
-        unless commits.empty?
+        if (ENV["MASTER_VERBOSE"] || ENV["MASTER_DEBUG"]) && !commits.empty?
           puts UI.dim("\nRecent commits:")
           commits.each { |line| puts line }
         end
