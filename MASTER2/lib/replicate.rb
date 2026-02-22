@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "net/http"
 require "json"
 require "uri"
 require_relative "result"
