@@ -106,6 +106,12 @@ module MASTER
     def file_write(path, content)
       expanded = File.expand_path(path)
 
+      # Tier permission check (gist #4)
+      if defined?(Security::Permissions)
+        perm = Security::Permissions.check!(:file_write, path: expanded)
+        return "BLOCKED: #{perm.error}" if perm.err?
+      end
+
       # Check protected paths first
       PROTECTED_WRITE_PATHS.each do |protected|
         # For absolute paths, compare directly; for relative, expand from root
@@ -160,6 +166,12 @@ module MASTER
 
     def shell_command(cmd)
       return "BLOCKED: dangerous shell command rejected" if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+
+      # Tier permission check (gist #4)
+      if defined?(Security::Permissions)
+        perm = Security::Permissions.check!(:shell_command, command: cmd)
+        return "BLOCKED: #{perm.error}" if perm.err?
+      end
 
       # Friction signal: agent grepping for require relationships instead of using DependencyMap
       if cmd.match?(/grep.*require|rg.*require_relative/) && defined?(MASTER::Friction::FrictionRecorder)

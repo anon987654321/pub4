@@ -19,6 +19,11 @@ module MASTER
 
       def execute_react(goal, tier:)
         start_time = MASTER::Utils.monotonic_now
+        plan       = Plan.new
+
+        # Gist #8: Understand-before-act (Gemini CLI 4-phase model).
+        # Scan files mentioned in goal text before entering the planning loop.
+        understand_context(goal)
 
         while @step < @max_steps
           begin
@@ -45,15 +50,21 @@ module MASTER
           parsed = parse_step(result.value[:content])
           record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
 
+          # Update plan: add thought as a step and mark it in_progress
+          plan.add(parsed[:thought][0..80]) if plan.size < @step
+          plan.start(@step - 1)
           UI.dim("  #{@step}: #{parsed[:thought][0..80]}")
+          Output.progress(plan.summary, source: "plan") if defined?(Output) && @step > 1
 
           # Completion: answer field is set
           if parsed[:answer]
+            plan.complete(@step - 1)
             return Result.ok(
               answer: parsed[:answer],
               steps: @step,
               pattern: :react,
               history: @history,
+              plan: plan.to_dmesg,
             )
           end
 
@@ -111,6 +122,39 @@ module MASTER
       end
 
       private
+
+      # Gist #8: Understand phase — scan files mentioned in the goal before planning.
+      # Reads file content and adds it to history context so the first plan step
+      # is grounded in actual code rather than hallucinated structure.
+      def understand_context(goal)
+        # Extract file-like tokens from goal text (e.g. lib/foo.rb, executor.rb)
+        candidates = goal.scan(/[\w\/.]+\.rb/).uniq.first(4)
+        return if candidates.empty?
+
+        files_scanned = []
+        candidates.each do |token|
+          paths = [
+            token,
+            File.join(MASTER.root, token),
+            File.join(MASTER.root, "lib", token),
+          ]
+          found = paths.find { |p| File.exist?(p) }
+          next unless found
+
+          content = File.read(found)[0..800]
+          record_history({
+            step: 0,
+            thought: "understand: read #{token}",
+            action: "file_read #{token}",
+            observation: content,
+          })
+          files_scanned << token
+        end
+
+        return if files_scanned.empty?
+
+        Output.progress("Scanned #{files_scanned.size} file(s): #{files_scanned.join(', ')}", source: "understand") if defined?(Output)
+      end
 
       # Parse the JSON step response into a normalised hash.
       # Handles both Hash (already parsed by ask_json) and String fallback.

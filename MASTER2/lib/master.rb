@@ -39,6 +39,7 @@ require_relative "logging"
 require_relative "db_jsonl"
 require_relative "event_bus"
 require_relative "security/sanitizer"
+require_relative "security/permissions"
 require_relative "llm"
 require_relative "personas"
 require_relative "session"
@@ -55,6 +56,7 @@ require_relative "staging"
 
 # UI & NN/g compliance
 require_relative "ui"
+require_relative "output"
 require_relative "undo"
 require_relative "commands"
 
