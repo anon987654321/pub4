@@ -35,10 +35,7 @@ module MASTER
       private
 
       def project_tree(path, max_depth: 4)
-        lines = file_tree(path, max_depth: max_depth, exclude: TREE_EXCLUDES)
-        puts UI.dim("Structure:")
-        puts lines.join("\n")
-        lines
+        file_tree(path, max_depth: max_depth, exclude: TREE_EXCLUDES)
       end
 
       # Ruby-native tree walker
