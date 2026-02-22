@@ -40,8 +40,11 @@ module MASTER
 
       # Halt if no progress for 2 consecutive iterations
       last_two = history.last(2)
-      stalled = last_two.all? { |h| h[:violation_delta] == 0 }
-      return true if stalled
+      stalled  = last_two.all? { |h| h[:violation_delta] == 0 }
+      if stalled
+        record_friction(:wasted_iteration, iterations: history.size, last: last_two.last)
+        return true
+      end
 
       # Halt if autofix success rate dropped below 10%
       latest = history.last
@@ -76,6 +79,14 @@ module MASTER
       signs = deltas.map { |d| d <=> 0 }
       # Oscillation: positive, negative, positive (or vice versa)
       signs[0] != 0 && signs[0] == -signs[1] && signs[1] == -signs[2] ? 1 : 0
+    end
+
+    def record_friction(pattern_id, context = {})
+      return unless defined?(MASTER::Friction::FrictionRecorder)
+
+      MASTER::Friction::FrictionRecorder.record(pattern_id, context)
+    rescue StandardError
+      # never let friction recording break the main loop
     end
   end
 end

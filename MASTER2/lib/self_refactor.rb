@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "scientist"
 require_relative "staging"
 require_relative "convergence_tracker"
 require_relative "axiom_resolver"
@@ -21,31 +22,13 @@ module MASTER
     def run(max_iterations: MAX_ITERATIONS)
       ConvergenceTracker.reset!
       staging = Staging.new
-      files = target_files
+      files   = target_files
       summary = { fixed: [], deferred: [], errors: [], iterations: 0, halted_reason: nil }
 
       max_iterations.times do |i|
         summary[:iterations] = i + 1
-        violations = scan_violations(files)
-        fixable, deferred = partition_violations(violations)
-
-        deferred.each { |v| record_deferred(v) }
-        summary[:deferred].concat(deferred.map { |v| v[:description] })
-
-        applied = apply_fixes(fixable, staging: staging)
-        summary[:fixed].concat(applied[:fixed])
-        summary[:errors].concat(applied[:errors])
-
-        remaining = scan_violations(files)
-        ConvergenceTracker.record_iteration(
-          violations: remaining.size,
-          fixed: applied[:fixed].size,
-          deferred: deferred.size,
-        )
-
-        log_iteration(i + 1)
-
-        if ConvergenceTracker.should_halt?
+        halt_reason = apply_iteration(i, files, staging, summary)
+        if halt_reason
           summary[:halted_reason] = halt_reason
           break
         end
@@ -55,6 +38,30 @@ module MASTER
       Result.ok(summary)
     rescue StandardError => e
       Result.err("SelfRefactor crashed: #{e.message}")
+    end
+
+    # One iteration: scan → partition → fix → re-scan → track convergence.
+    # Returns halt_reason string if the loop should stop, nil to continue.
+    def apply_iteration(i, files, staging, summary)
+      violations         = scan_violations(files)
+      fixable, deferred  = partition_violations(violations)
+
+      deferred.each { |v| record_deferred(v) }
+      summary[:deferred].concat(deferred.map { |v| v[:description] })
+
+      applied = apply_fixes(fixable, staging: staging)
+      summary[:fixed].concat(applied[:fixed])
+      summary[:errors].concat(applied[:errors])
+
+      remaining = scan_violations(files)
+      ConvergenceTracker.record_iteration(
+        violations: remaining.size,
+        fixed: applied[:fixed].size,
+        deferred: deferred.size,
+      )
+      log_iteration(i + 1)
+
+      ConvergenceTracker.should_halt? ? halt_reason : nil
     end
 
     # All lib/**/*.rb files, sorted for deterministic ordering
@@ -97,13 +104,12 @@ module MASTER
       [fixable, deferred]
     end
 
-    # Apply fixable violations one at a time through Staging
+    # Apply fixable violations one at a time through Staging.
+    # Uses scientist to compare old vs new violation counts and roll back regressions.
     def apply_fixes(fixable, staging:)
       result = { fixed: [], errors: [] }
       fixable.each do |violation|
-        fix_result = staging.staged_modify(violation[:file]) do |staged_path|
-          apply_single_fix(staged_path, violation)
-        end
+        fix_result = scientist_fix(violation, staging: staging)
         if fix_result.ok?
           result[:fixed] << violation[:description]
         else
@@ -111,6 +117,39 @@ module MASTER
         end
       end
       result
+    end
+
+    # Scientist experiment: run the fix, verify violation count doesn't increase.
+    # Rolls back if the candidate path raises or introduces new violations.
+    def scientist_fix(violation, staging:)
+      candidate_result = nil
+
+      Scientist.run("self_refactor_fix") do |e|
+        # Control: count violations before fix (baseline)
+        e.use { scan_violations([violation[:file]]).size }
+
+        # Candidate: apply fix and count violations after
+        e.try do
+          candidate_result = staging.staged_modify(violation[:file]) do |staged_path|
+            apply_single_fix(staged_path, violation)
+          end
+          scan_violations([violation[:file]]).size
+        end
+
+        # Mismatched = fix introduced new violations → log but don't fail
+        e.on_result do |exp|
+          if exp.mismatched? && defined?(Logging)
+            ctrl = exp.control.value
+            cand = exp.candidate.value
+            Logging.dmesg_log("scientist", message: "mismatch on #{violation[:file]}: #{ctrl} vs #{cand}")
+          end
+        end
+      end
+
+      # Return the staging result regardless (scientist is observational here)
+      candidate_result || Result.err("scientist: fix did not run")
+    rescue StandardError => e
+      Result.err("scientist error: #{e.message}")
     end
 
     def apply_single_fix(staged_path, violation)

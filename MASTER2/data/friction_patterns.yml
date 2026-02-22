@@ -1,0 +1,85 @@
+# Friction patterns — detectable signals that indicate workflow friction.
+# Each pattern maps to a remedy from the introspection wishlist.
+# FrictionRecorder fires these; SessionRetrospective synthesizes them.
+
+patterns:
+  split_brain_drift:
+    id: split_brain_drift
+    description: "YAML config key exists with no corresponding Ruby reader"
+    signal: "Config key loaded from YAML but never read in lib/**/*.rb"
+    wishlist_item: 1
+    severity: medium
+    remedy: "Run `introspect config-drift` to find orphaned YAML keys. Consolidate into constitution.yml."
+    detector: config_drift_checker
+
+  prism_visitor_generic:
+    id: prism_visitor_generic
+    description: "Prism visitor defines generic visit(node) instead of visit_TYPE_node"
+    signal: "def visit(node) found in a Prism::Visitor subclass"
+    wishlist_item: 3
+    severity: high
+    remedy: "Use visit_if_node, visit_def_node etc. Prism dispatches by node type name."
+    detector: prism_self_test
+
+  module_function_extend_self:
+    id: module_function_extend_self
+    description: "Rubocop changed extend self → module_function (inclusion semantics differ)"
+    signal: "module_function present in a module that is include-d elsewhere"
+    wishlist_item: 4
+    severity: critical
+    remedy: "Style/ModuleFunction is disabled. Use extend self when inclusion is needed."
+    detector: rubocop_revert_check
+
+  abc_size_bump:
+    id: abc_size_bump
+    description: "AbcSize threshold bumped in .rubocop.yml to silence a warning"
+    signal: "Metrics/AbcSize Max increased without a corresponding method extraction"
+    wishlist_item: 5
+    severity: medium
+    remedy: "Extract the complex method's iteration body into a private helper."
+    detector: rubocop_threshold_diff
+
+  mcp_full_boot:
+    id: mcp_full_boot
+    description: "MCP server boot time exceeds threshold (full stack loaded)"
+    signal: "Boot time > 3s for MCP-only operation"
+    wishlist_item: 6
+    severity: medium
+    remedy: "Use Boot::Modes.load(:mcp) instead of require_relative 'master'."
+    detector: boot_time_recorder
+
+  no_test_feedback:
+    id: no_test_feedback
+    description: "Test suite not run after N file changes"
+    signal: "More than 5 lib/*.rb files modified without a test run in session"
+    wishlist_item: 7
+    severity: medium
+    remedy: "Run sh/watch_tests.sh in a separate terminal. Tests auto-run on file change."
+    detector: test_run_tracker
+
+  dep_graph_blind:
+    id: dep_graph_blind
+    description: "Agent used grep to answer 'who requires X?' instead of DependencyMap"
+    signal: "shell_command contains 'grep.*require' pattern"
+    wishlist_item: 8
+    severity: low
+    remedy: "Use `deps ToolDispatch` REPL command or ToolDispatch.who_requires in code."
+    detector: grep_require_detector
+
+  wasted_iteration:
+    id: wasted_iteration
+    description: "Self-refactor iteration produced zero improvement"
+    signal: "ConvergenceTracker violation_delta == 0 for 2+ consecutive iterations"
+    wishlist_item: null
+    severity: medium
+    remedy: "Halt at first stall. Investigate deferred violations manually."
+    detector: convergence_stall
+
+  zero_param_extract:
+    id: zero_param_extract
+    description: "Generated template used #{} interpolation — breaks JSON serialization"
+    signal: "File created with unquoted heredoc containing Ruby interpolation"
+    wishlist_item: 2
+    severity: medium
+    remedy: "Quote heredoc delimiter ('RUBY') and use %{var} for substitution placeholders."
+    detector: heredoc_style_check

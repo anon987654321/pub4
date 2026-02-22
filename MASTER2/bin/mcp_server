@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# MASTER2 MCP Server — stdio transport for Claude Desktop / VS Code Copilot
+# Uses Boot::Modes.load(:mcp) — only loads ToolDispatch + LLM, not Falcon/Chamber/Speech.
+#
+# Configure in claude_desktop_config.json:
+#   "mcpServers": {
+#     "master2": {
+#       "command": "bundle",
+#       "args": ["exec", "ruby", "bin/mcp_server"],
+#       "cwd": "/path/to/MASTER2"
+#     }
+#   }
+
+$LOAD_PATH.unshift(File.join(__dir__, "../lib"))
+
+require_relative "../lib/boot/modes"
+MASTER::Boot::Modes.load(:mcp)
+
+MASTER::McpServer.start_stdio

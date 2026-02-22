@@ -50,6 +50,9 @@ module MASTER
       when /^self_test/i
         self_test
 
+      when /^who_requires\s+["']?([^"'\n]+)["']?/i
+        who_requires(::Regexp.last_match(1).strip)
+
       else
         "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
       end
@@ -151,6 +154,11 @@ module MASTER
     def shell_command(cmd)
       return "BLOCKED: dangerous shell command rejected" if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
 
+      # Friction signal: agent grepping for require relationships instead of using DependencyMap
+      if cmd.match?(/grep.*require|rg.*require_relative/) && defined?(MASTER::Friction::FrictionRecorder)
+        MASTER::Friction::FrictionRecorder.record(:dep_graph_blind, cmd: cmd[0..80])
+      end
+
       if defined?(Constitution)
         check = Constitution.check_operation(:shell_command, command: cmd)
         return "BLOCKED: #{check.error}" unless check.ok?
@@ -219,6 +227,22 @@ module MASTER
       else
         "Introspection module not available"
       end
+    end
+
+    # Return files that require a given symbol — answers "who depends on X?".
+    # More accurate than grep: uses DependencyMap's AST-based reference scan.
+    def who_requires(symbol)
+      require_relative "../dependency_map"
+      graph    = DependencyMap.build
+      lib_root = File.join(MASTER.root, "lib")
+      matches  = graph.select { |_, info| info[:references].any? { |r| r.include?(symbol.to_s) } }
+      return "who_requires: no references to #{symbol} found" if matches.empty?
+
+      lines = ["who_requires #{symbol}: #{matches.size} file(s)"]
+      matches.each_key { |f| lines << "  #{f.sub("#{lib_root}/", "")}" }
+      lines.join("\n")
+    rescue StandardError => e
+      "who_requires error: #{e.message}"
     end
 
     def sanitize_tool_input(action_str)
