@@ -69,7 +69,7 @@ module MASTER
           large_files << { file: file, lines: lines } if lines > 500
         end
 
-        UI.warn("sprawl: #{large_files.size} files >500 lines") if large_files.any?
+        UI.warn("master0: sprawl #{large_files.size} files >500 lines") if large_files.any?
 
         large_files
       end
@@ -80,9 +80,9 @@ module MASTER
         status = `git -C #{Shellwords.escape(path)} status --porcelain`.strip
 
         if status.empty?
-          UI.success("git status clean")
+          UI.success("master0: git clean")
         else
-          UI.warn("git: #{status.lines.size} uncommitted")
+          UI.warn("master0: #{status.lines.size} uncommitted files")
         end
 
         status

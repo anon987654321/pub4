@@ -28,9 +28,7 @@ module MASTER
         host = begin
           require "timeout"
           Timeout.timeout(2) { `hostname`.strip }
-        rescue Timeout::Error
-          "unknown"
-        rescue StandardError
+        rescue Timeout::Error, StandardError
           "unknown"
         end
 
@@ -44,20 +42,19 @@ module MASTER
           c("db0 at cpu0: #{DB.axioms.size} axioms, #{defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0} personas"),
           c("llm0 at db0: #{tier_models}"),
           c("budget0 at llm0: #{if LLM.configured_for_replicate?
-                                  "(Replicate primary#{LLM.configured_for_openrouter? ? ', OpenRouter fallback)' : ')'}"
+                                  "Replicate primary#{LLM.configured_for_openrouter? ? ', OpenRouter fallback' : ''}"
                                 else
-                                  '(managed by OpenRouter)'
+                                  'managed by OpenRouter'
                                 end}"),
           c("pledge0 at cpu0: #{defined?(Pledge) && Pledge.available? ? 'armed' : 'unavailable'}"),
           c("executor0 at pledge0: #{Executor::PATTERNS.join('/')}"),
           c("smoke0 at executor0: #{smoke_result}"),
-          c("hint0 at smoke0: run `bin/master help` to start"),
         ]
 
         yield(lines) if block_given?
 
         elapsed = ((MASTER::Utils.monotonic_now - start_time) * 1000).round
-        lines << c("boot: #{elapsed}ms")
+        lines << c("boot0 at smoke0: #{elapsed}ms")
 
         puts lines.join("\n")
         puts

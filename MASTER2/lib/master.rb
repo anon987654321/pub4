@@ -9,9 +9,11 @@ module MASTER
   end
 
   # Safe require helper for optional dependencies
-  def self.safe_require(path, label: nil)
+  def self.safe_require(path, label: nil, silent: false)
     require_relative path
   rescue LoadError, StandardError => e
+    return if silent
+
     name = label || File.basename(path)
     warn "MASTER: #{name} unavailable (#{e.message})"
     Logging.warn("#{name} unavailable", error: e.message) if defined?(Logging)
@@ -46,9 +48,11 @@ require_relative "session"
 require_relative "pledge"
 require_relative "rubocop_detector"
 
-# Multi-language parsing and NLU (optional)
-%w[../../lib/parser/multi_language ../../lib/nlu ../../lib/conversation].each do |dep|
-  MASTER.safe_require(dep)
+# Multi-language parsing (now in MASTER2); NLU and conversation are optional stubs
+MASTER.safe_require("parser/multi_language")
+# nlu and conversation are MASTER v4 stubs — silently absent, not an error
+%w[../../lib/nlu ../../lib/conversation].each do |dep|
+  MASTER.safe_require(dep, silent: true)
 end
 
 # Safe Autonomy Architecture

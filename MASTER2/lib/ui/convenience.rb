@@ -5,19 +5,19 @@ module MASTER
     # Convenience - high-level convenience methods
     module Convenience
       def success(msg)
-        puts pastel.green("+ #{msg}")
+        puts pastel.green(msg)
       end
 
       def error(msg)
-        warn pastel.red("- #{msg}")
+        Kernel.warn pastel.red(msg)
       end
 
       def warn(msg)
-        Kernel.warn pastel.yellow("! #{msg}")
+        Kernel.warn pastel.yellow(msg)
       end
 
       def info(msg)
-        puts pastel.dim("  #{msg}")
+        puts pastel.dim(msg)
       end
 
       def dim(msg)
