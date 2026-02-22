@@ -1,73 +1,84 @@
 # frozen_string_literal: true
 
-require "net/http"
 require "json"
 require "uri"
+require "async"
+require "async/http/internet"
 
 module MASTER
   module Replicate
     # API client - low-level HTTP interaction with Replicate API
+    # HTTP client: async-http (Falcon ecosystem) — consistent with server stack
     module Client
       API_URL = "https://api.replicate.com/v1/predictions"
 
-      # Timeout constants
-      HTTP_OPEN_TIMEOUT = (ENV["MASTER_HTTP_OPEN_TIMEOUT"] || 10).to_i
-      HTTP_READ_TIMEOUT = (ENV["MASTER_HTTP_READ_TIMEOUT"] || 60).to_i
-      REPLICATE_TIMEOUT = (ENV["MASTER_REPLICATE_TIMEOUT"] || 300).to_i
-      POLL_INTERVAL = (ENV["MASTER_POLL_INTERVAL"] || 2).to_i
+      HTTP_OPEN_TIMEOUT  = (ENV["MASTER_HTTP_OPEN_TIMEOUT"]  || 10).to_i
+      HTTP_READ_TIMEOUT  = (ENV["MASTER_HTTP_READ_TIMEOUT"]  || 60).to_i
+      REPLICATE_TIMEOUT  = (ENV["MASTER_REPLICATE_TIMEOUT"]  || 300).to_i
+      POLL_INTERVAL      = (ENV["MASTER_POLL_INTERVAL"]      || 2).to_i
 
       module_function
 
       # Create a new prediction
       def create_prediction(model:, input:)
-        uri = URI(API_URL)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        http.open_timeout = HTTP_OPEN_TIMEOUT
-        http.read_timeout = HTTP_READ_TIMEOUT
-
-        request = Net::HTTP::Post.new(uri)
-        request["Authorization"] = "Bearer #{Replicate.api_key}"
-        request["Content-Type"] = "application/json"
-
         body = { input: input }
         body[:version] = model if model
-        request.body = body.to_json
 
-        response = http.request(request)
-        data = JSON.parse(response.body, symbolize_names: true)
+        data = nil
+        Async do |task|
+          task.with_timeout(HTTP_OPEN_TIMEOUT + HTTP_READ_TIMEOUT) do
+            internet = Async::HTTP::Internet.new
+            begin
+              response = internet.post(
+                API_URL,
+                [
+                  ["Authorization", "Bearer #{Replicate.api_key}"],
+                  ["Content-Type",  "application/json"],
+                ],
+                body.to_json,
+              )
+              data = JSON.parse(response.read, symbolize_names: true)
+            ensure
+              internet.close
+            end
+          end
+        end
 
-        if data[:id]
+        if data&.dig(:id)
           { id: data[:id] }
         else
-          { error: data[:detail] || "Unknown error" }
+          { error: data&.dig(:detail) || "Unknown error" }
         end
-      rescue Net::OpenTimeout, Net::ReadTimeout
+      rescue Async::TimeoutError
         { error: "Request timed out" }
       rescue StandardError => e
         $stderr.puts "Replicate: create_prediction error: #{e.class} - #{e.message}"
         { error: e.message }
       end
 
-      # Wait for prediction to complete
+      # Wait for prediction to complete (polling loop)
       def wait_for_completion(id, timeout: REPLICATE_TIMEOUT)
-        uri = URI("#{API_URL}/#{id}")
+        poll_url = "#{API_URL}/#{id}"
         start_time = Time.now
-        max_polls = (timeout / POLL_INTERVAL).to_i
+        auth_header = [["Authorization", "Bearer #{Replicate.api_key}"]]
 
-        max_polls.times do
-          http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = true
-          http.open_timeout = HTTP_OPEN_TIMEOUT
-          http.read_timeout = HTTP_READ_TIMEOUT
+        loop do
+          return { error: "Timeout waiting for generation" } if Time.now - start_time > timeout
 
-          request = Net::HTTP::Get.new(uri)
-          request["Authorization"] = "Bearer #{Replicate.api_key}"
+          data = nil
+          Async do |task|
+            task.with_timeout(HTTP_OPEN_TIMEOUT + HTTP_READ_TIMEOUT) do
+              internet = Async::HTTP::Internet.new
+              begin
+                response = internet.get(poll_url, auth_header)
+                data = JSON.parse(response.read, symbolize_names: true)
+              ensure
+                internet.close
+              end
+            end
+          end
 
-          response = http.request(request)
-          data = JSON.parse(response.body, symbolize_names: true)
-
-          case data[:status]
+          case data&.dig(:status)
           when "succeeded"
             return { id: id, output: data[:output] }
           when "failed", "canceled"
@@ -75,15 +86,11 @@ module MASTER
           when "processing", "starting"
             sleep POLL_INTERVAL
           else
-            return { error: "Unknown status: #{data[:status]}" }
+            return { error: "Unknown status: #{data&.dig(:status)}" }
           end
-
-          return { error: "Timeout waiting for generation" } if Time.now - start_time > timeout
+        rescue Async::TimeoutError
+          return { error: "Poll request timed out" }
         end
-
-        { error: "Max polls exceeded" }
-      rescue Net::OpenTimeout, Net::ReadTimeout
-        { error: "Poll request timed out" }
       rescue StandardError => e
         $stderr.puts "Replicate: wait_for_completion error: #{e.class} - #{e.message}"
         { error: e.message }
@@ -91,15 +98,23 @@ module MASTER
 
       # Download file from URL to local path
       def download_file(url, path)
-        uri = URI(url)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == "https")
+        content = nil
+        Async do |task|
+          task.with_timeout(HTTP_READ_TIMEOUT) do
+            internet = Async::HTTP::Internet.new
+            begin
+              response = internet.get(url)
+              content = response.read if response.status == 200
+            ensure
+              internet.close
+            end
+          end
+        end
 
-        response = http.get(uri.path)
-        return false unless response.is_a?(Net::HTTPSuccess)
+        return false unless content
 
         FileUtils.mkdir_p(File.dirname(path))
-        File.binwrite(path, response.body)
+        File.binwrite(path, content)
         true
       rescue StandardError => e
         $stderr.puts "Replicate: download_file failed for #{url}: #{e.message}"
