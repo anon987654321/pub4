@@ -515,64 +515,89 @@ if(bitCrush)bitCrush.wet.value=(100-aud_.drive)/400;
 if(driftLFO)driftLFO.frequency.value=.05+aud_.drift*.15;
 }
 
-function scheduleLoop(){
-if(!st_.playing)return;
-const sixteenth=60/aud_.bpm/4;
-st_.idx=(st_.idx+1)%16;
+// Shared helper function for triggering notes - eliminates duplication between scheduleLoop and exportWAV
+function triggerNotes(stepIdx,baseTime,synths,opts){
+const sixteenth=opts.sixteenth||60/aud_.bpm/4;
 const dp=DRUM_PATTERNS[pat_.d]||DRUM_PATTERNS.basic;
-const now=Tone.now();
-// Use cached mute state instead of DOM query
-const muteMap=st_.muteState;
 ['k','s','c','h','o'].forEach(v=>{
-if(muteMap[v])return;
-const vel=dp[v]?dp[v][st_.idx]:0;
-const prob=seq_[v][st_.idx].p||100;
-if(vel>0&&Math.random()*100<prob){
-const drift=(Math.random()-0.5)*5;
-const t=now+seq_[v][st_.idx].t/1000;
-const vl=vel*seq_[v][st_.idx].v;
-const ratch=seq_[v][st_.idx].r||1;
+if(opts.muteMap&&opts.muteMap[v])return;
+const vel=dp[v]?dp[v][stepIdx]:0;
+const prob=seq_[v][stepIdx].p||100;
+if(vel>0&&(!opts.applyProb||Math.random()*100<prob)){
+const drift=opts.applyTranspose?(Math.random()-0.5)*5:0;
+const t=baseTime+seq_[v][stepIdx].t/1000;
+const vl=vel*seq_[v][stepIdx].v;
+const ratch=opts.applyRatchet?seq_[v][stepIdx].r||1:1;
 for(let r=0;r<ratch;r++){
-const tr=t+r*(sixteenth/ratch);
+const tr=t+(opts.addSwing?r*(sixteenth/ratch):r*(sixteenth/ratch));
 if(v==='k'){
 const kpitch='C1';
-const kfreq=Tone.Frequency(kpitch).toFrequency()*(1+drift/1200);
-kickN.triggerAttackRelease(kfreq,'8n',tr,vl);
-kickSub.triggerAttackRelease(Tone.Frequency(kpitch).transpose(-12),'8n',tr,vl*.7);
-kickClk.triggerAttackRelease(tr,vl*0.3);
-kickBody.triggerAttackRelease(Tone.Frequency(kpitch).transpose(12),'32n',tr,vl*.2);
+const kfreq=opts.applyTranspose?Tone.Frequency(kpitch).toFrequency()*(1+drift/1200):Tone.Frequency(kpitch).toFrequency();
+synths.kick.triggerAttackRelease(kfreq,'8n',tr,vl);
+synths.kickSub.triggerAttackRelease(opts.applyTranspose?Tone.Frequency(kpitch).transpose(-12):'C0','8n',tr,vl*.7);
+synths.kickClk.triggerAttackRelease(tr,vl*0.3);
+synths.kickBody.triggerAttackRelease(opts.applyTranspose?Tone.Frequency(kpitch).transpose(12):'C2','32n',tr,vl*.2);
 }
-else if(v==='s'){snareN.triggerAttackRelease(tr,vl);snareRng.triggerAttackRelease('E4','16n',tr,vl*0.5)}
-else if(v==='c')clapN.triggerAttackRelease(tr,vl);
-else if(v==='h')hatN.triggerAttackRelease(tr,vl);
-else if(v==='o')openN.triggerAttackRelease(tr,vl);
+else if(v==='s'){synths.snare.triggerAttackRelease(tr,vl);synths.snareRng.triggerAttackRelease('E4','16n',tr,vl*0.5)}
+else if(v==='c')synths.clap.triggerAttackRelease(tr,vl);
+else if(v==='h')synths.hat.triggerAttackRelease(tr,vl);
+else if(v==='o')synths.open.triggerAttackRelease(tr,vl);
 }
 }
 });
 const bn=B[pat_.b]?.split(',')||[];
-if(bn[st_.idx]&&bn[st_.idx]!==''){
-const nt=bn[st_.idx];
-const drift=(Math.random()-0.5)*2;
-const freq=Tone.Frequency(nt).toFrequency()*(1+drift/1200);
-bassN.triggerAttackRelease(freq,'8n',now+seq_.b[st_.idx].t/1000,seq_.b[st_.idx].v);
-bassSub.frequency.setValueAtTime(Tone.Frequency(nt).toFrequency()/2,now+seq_.b[st_.idx].t/1000);
+if(bn[stepIdx]&&bn[stepIdx]!==''){
+const nt=bn[stepIdx];
+const drift=opts.applyTranspose?(Math.random()-0.5)*2:0;
+const freq=opts.applyTranspose?Tone.Frequency(nt).toFrequency()*(1+drift/1200):Tone.Frequency(nt).toFrequency();
+synths.bass.triggerAttackRelease(freq,'8n',baseTime+seq_.b[stepIdx].t/1000,seq_.b[stepIdx].v);
+synths.bassSub.frequency.setValueAtTime(Tone.Frequency(nt).toFrequency()/2,baseTime+seq_.b[stepIdx].t/1000);
 }
 const kn=K[pat_.k]||[];
-if(kn[st_.idx]&&kn[st_.idx]!==0){
-const ch=kn[st_.idx];
+if(kn[stepIdx]&&kn[stepIdx]!==0){
+const ch=kn[stepIdx];
 if(Array.isArray(ch)){
-keysN.triggerAttackRelease(ch,'8n',now+seq_.keys[st_.idx].t/1000,seq_.keys[st_.idx].v);
+synths.keys.triggerAttackRelease(ch,'8n',baseTime+seq_.keys[stepIdx].t/1000,seq_.keys[stepIdx].v);
 }else if(typeof ch==='string'){
-keysN.triggerAttackRelease(ch,'8n',now+seq_.keys[st_.idx].t/1000,seq_.keys[st_.idx].v);
+synths.keys.triggerAttackRelease(ch,'8n',baseTime+seq_.keys[stepIdx].t/1000,seq_.keys[stepIdx].v);
 }
 }
 const pn=P[pat_.p]||[];
-if(pn[st_.idx]&&pn[st_.idx]!==0){
-const pad=pn[st_.idx];
+if(pn[stepIdx]&&pn[stepIdx]!==0){
+const pad=pn[stepIdx];
 if(Array.isArray(pad)){
-padsN.triggerAttackRelease(pad,'2n',now+seq_.p[st_.idx].t/1000,seq_.p[st_.idx].v*0.6);
+synths.pads.triggerAttackRelease(pad,'2n',baseTime+seq_.p[stepIdx].t/1000,seq_.p[stepIdx].v*0.6);
 }
 }
+}
+
+function scheduleLoop(){
+if(!st_.playing)return;
+const sixteenth=60/aud_.bpm/4;
+st_.idx=(st_.idx+1)%16;
+const now=Tone.now();
+triggerNotes(st_.idx,now,{
+kick:kickN,
+kickSub:kickSub,
+kickClk:kickClk,
+kickBody:kickBody,
+snare:snareN,
+snareRng:snareRng,
+clap:clapN,
+hat:hatN,
+open:openN,
+bass:bassN,
+bassSub:bassSub,
+keys:keysN,
+pads:padsN
+},{
+muteMap:st_.muteState,
+applyProb:true,
+applyRatchet:true,
+sixteenth:sixteenth,
+addSwing:true,
+applyTranspose:true
+});
 updateStepUI();
 if(st_.playing){
 const peakVol=masterG?masterG.gain.value:0;
@@ -699,12 +724,14 @@ tr('FX randomized','k');
 }
 
 async function exportWAV(){
+try{
 const bars=8,len=bars*4*(60/aud_.bpm);
 D('progress-wrap').style.display='block';
 D('progress-pct').textContent='0%';
 D('progress-fill').style.width='0%';
 tr("exporting WAV...","i");
 const buf=await Tone.Offline(async()=>{
+// Create isolated audio graph for offline rendering - never touch global synth variables
 const oDrumG=new Tone.Gain(mix_.drum/100);
 const oBassG=new Tone.Gain(mix_.bass/100);
 const oKeysG=new Tone.Gain(mix_.keys/100);
@@ -730,6 +757,7 @@ oRevSend.connect(oRev);
 oDlySend.connect(oDly);
 oRev.connect(oComp);
 oDly.connect(oComp);
+// Create isolated synths in offline context
 const oKickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1}});
 const oKickSub=new Tone.Synth({oscillator:{type:'sine'},envelope:{attack:.001,decay:.5,sustain:0,release:.1}});
 const oKickClk=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.02,sustain:0}});
@@ -759,44 +787,32 @@ oBassN.connect(oBassG);oBassSub.connect(oBassG);
 oKeysN.connect(oKeySat);oKeySat.connect(oKeysChorus);oKeysChorus.connect(oKeysG);
 oPadsN.connect(oPadsFlt);oPadsFlt.connect(oPadsShift);oPadsShift.connect(oPadsG);
 for(const g of [oDrumG,oBassG,oKeysG,oPadsG]){g.connect(oMaster);g.connect(oRevSend);g.connect(oDlySend);}
+// Schedule all steps using the shared triggerNotes helper
 for(let i=0;i<bars*16;i++){
 const sixteenth=60/aud_.bpm/4;
-const dp=DRUM_PATTERNS[pat_.d]||DRUM_PATTERNS.basic;
 const now=i*sixteenth;
-['k','s','c','h','o'].forEach(v=>{
-const vel=dp[v]?dp[v][i%16]:0;
-if(vel>0){
-const t=now+seq_[v][i%16].t/1000;
-const vl=vel*seq_[v][i%16].v;
-if(v==='k'){oKickN.triggerAttackRelease('C1','8n',t,vl);oKickSub.triggerAttackRelease('C0','8n',t,vl*.7);oKickClk.triggerAttackRelease(t,vl*0.3);oKickBody.triggerAttackRelease('C2','32n',t,vl*.2)}
-else if(v==='s'){oSnareN.triggerAttackRelease(t,vl);oSnareRng.triggerAttackRelease('E4','16n',t,vl*0.5)}
-else if(v==='c')oClapN.triggerAttackRelease(t,vl);
-else if(v==='h')oHatN.triggerAttackRelease(t,vl);
-else if(v==='o')oOpenN.triggerAttackRelease(t,vl);
-}
+triggerNotes(i%16,now,{
+kick:oKickN,
+kickSub:oKickSub,
+kickClk:oKickClk,
+kickBody:oKickBody,
+snare:oSnareN,
+snareRng:oSnareRng,
+clap:oClapN,
+hat:oHatN,
+open:oOpenN,
+bass:oBassN,
+bassSub:oBassSub,
+keys:oKeysN,
+pads:oPadsN
+},{
+muteMap:null,
+applyProb:false,
+applyRatchet:false,
+sixteenth:sixteenth,
+addSwing:false,
+applyTranspose:false
 });
-const bn=B[pat_.b]?.split(',')||[];
-if(bn[i%16]&&bn[i%16]!==''){
-const nt=bn[i%16];
-oBassN.triggerAttackRelease(nt,'8n',now+seq_.b[i%16].t/1000,seq_.b[i%16].v);
-oBassSub.frequency.setValueAtTime(Tone.Frequency(nt).toFrequency()/2,now+seq_.b[i%16].t/1000);
-}
-const kn=K[pat_.k]||[];
-if(kn[i%16]&&kn[i%16]!==0){
-const ch=kn[i%16];
-if(Array.isArray(ch)){
-oKeysN.triggerAttackRelease(ch,'8n',now+seq_.keys[i%16].t/1000,seq_.keys[i%16].v);
-}else if(typeof ch==='string'){
-oKeysN.triggerAttackRelease(ch,'8n',now+seq_.keys[i%16].t/1000,seq_.keys[i%16].v);
-}
-}
-const pn=P[pat_.p]||[];
-if(pn[i%16]&&pn[i%16]!==0){
-const pad=pn[i%16];
-if(Array.isArray(pad)){
-oPadsN.triggerAttackRelease(pad,'2n',now+seq_.p[i%16].t/1000,seq_.p[i%16].v*0.6);
-}
-}
 const pct=Math.round((i/(bars*16))*100);
 if(i%(bars*2)===0){
 D('progress-pct').textContent=`${pct}%`;
@@ -814,6 +830,52 @@ a.click();
 URL.revokeObjectURL(url);
 D('progress-wrap').style.display='none';
 tr("WAV exported","k");
+}catch(err){
+tr("export failed: "+err.message,"e");
+D('progress-wrap').style.display='none';
+}
+}
+
+let mediaRecorder=null;
+let recordedChunks=[];
+
+async function toggleRecord(){
+try{
+if(!st_.started){
+tr("start engine first","w");
+return;
+}
+if(!mediaRecorder){
+const dest=Tone.context.createMediaStreamDestination();
+masterG.connect(dest);
+mediaRecorder=new MediaRecorder(dest.stream);
+recordedChunks=[];
+mediaRecorder.ondataavailable=e=>{
+if(e.data.size>0)recordedChunks.push(e.data);
+};
+mediaRecorder.onstop=()=>{
+const blob=new Blob(recordedChunks,{type:'video/webm'});
+const url=URL.createObjectURL(blob);
+const a=document.createElement('a');
+a.href=url;
+a.download=`rg79-${Date.now()}.webm`;
+a.click();
+URL.revokeObjectURL(url);
+tr("recording saved","k");
+D('record').textContent='● Record';
+};
+mediaRecorder.start();
+D('record').textContent='■ Stop';
+tr("recording...","i");
+}else{
+mediaRecorder.stop();
+mediaRecorder=null;
+}
+}catch(err){
+tr("Record failed: "+err.message,"e");
+mediaRecorder=null;
+D('record').textContent='● Record';
+}
 }
 
 function buildUI(){
@@ -1085,6 +1147,7 @@ tr("playback stopped");
 });
 D('random').addEventListener('click',randomize);
 D('export').addEventListener('click',exportWAV);
+D('record').addEventListener('click',toggleRecord);
 D('layout').addEventListener('click',()=>{
 st_.layoutIdx=(st_.layoutIdx+1)%51;
 const cfg=st_.layoutIdx===50?finalBlend:layouts[st_.layoutIdx];
