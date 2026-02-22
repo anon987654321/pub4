@@ -160,7 +160,9 @@ module MASTER
           running_total = session.total_cost + this_cost
           total_str = running_total > 0 ? " [$#{running_total.round(4)} total]" : ""
           puts UI.dim("  #{format_meta(result.value)}#{total_str}")
+          check_cost_limits(this_cost, running_total)
         end
+        show_violations(result.value)
         if output
           session.add_assistant(
             output,
@@ -170,6 +172,44 @@ module MASTER
         end
       else
         UI.error(result.failure)
+      end
+    end
+
+    def check_cost_limits(this_cost, session_total)
+      @cost_limits ||= begin
+        f = File.join(MASTER.root, "data", "quality_thresholds.yml")
+        YAML.safe_load_file(f)["cost_protection"] rescue {}
+      end
+      warn_at     = @cost_limits["warn_at"]&.to_f     || 0.50
+      max_request = @cost_limits["max_per_request"]&.to_f  || 1.00
+      max_session = @cost_limits["max_per_session"]&.to_f  || 10.00
+      if this_cost >= max_request
+        UI.warn("cost0: request cost $#{this_cost.round(4)} exceeds max_per_request $#{max_request}")
+      elsif this_cost >= warn_at
+        puts UI.dim("  cost0: approaching request limit ($#{this_cost.round(4)} / $#{max_request})")
+      end
+      if session_total >= max_session
+        UI.warn("cost0: session total $#{session_total.round(4)} exceeds max_per_session $#{max_session}")
+      elsif session_total >= max_session * 0.8
+        puts UI.dim("  cost0: session at $#{session_total.round(4)} / $#{max_session}")
+      end
+    end
+
+    def show_violations(value)
+      av = value[:axiom_violations]
+      zv = value[:zsh_violations]
+      cv = value[:council_vetoes]
+      sv = value[:council_security_veto]
+      if sv
+        UI.warn("council0: security veto — review before deploying (#{cv&.join(', ')})")
+      elsif cv&.any?
+        puts UI.dim("  council vetoed by: #{cv.join(', ')}")
+      end
+      if av&.any?
+        puts UI.dim("  axiom violations: #{av.join(', ')}")
+      end
+      if zv&.any?
+        puts UI.dim("  zsh violations: #{zv.map { |v| v[:tool] }.join(', ')}")
       end
     end
 

@@ -145,5 +145,34 @@ module MASTER
       record = { name: name, tier: tier, rate_in: rate_in, rate_out: rate_out }
       append("models", record)
     end
+
+    # --- Learned Smells ---
+    # Dynamic smell patterns discovered during sessions and stored persistently.
+    def learned_smells
+      read_collection("learned_smells")
+    end
+
+    def add_smell(pattern:, language: "universal", description: nil, severity: :info, source: nil)
+      record = {
+        pattern: pattern,
+        language: language.to_s,
+        description: description,
+        severity: severity.to_s,
+        source: source,
+        created_at: Time.now.utc.iso8601,
+        hits: 0,
+      }
+      append("learned_smells", record.compact)
+      record
+    end
+
+    def increment_smell_hit(pattern)
+      smells = read_collection("learned_smells")
+      s = smells.find { |r| r[:pattern] == pattern }
+      return unless s
+
+      s[:hits] = (s[:hits] || 0) + 1
+      write_collection("learned_smells", smells)
+    end
   end
 end

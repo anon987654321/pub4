@@ -5,27 +5,25 @@ module MASTER
     # LanguageAxioms - Language-specific beauty rules
     # 78 axioms across Ruby, Rails, Zsh, HTML/ERB, CSS/SCSS, JavaScript, and universal
     module LanguageAxioms
-      AXIOMS_FILE = File.join(MASTER.root, "data", "language_axioms.yml")
+      AXIOMS_FILE     = File.join(MASTER.root, "data", "language_axioms.yml")
+      DETECTION_FILE  = File.join(MASTER.root, "data", "language_detection.yml")
 
-      EXTENSION_MAP = {
-        ".rb" => %w[ruby rails universal],
-        ".rake" => %w[ruby rails universal],
-        ".gemspec" => %w[ruby universal],
-        ".sh" => %w[zsh universal],
-        ".zsh" => %w[zsh universal],
-        ".bash" => %w[zsh universal],
-        ".html" => %w[html_erb universal],
-        ".erb" => %w[html_erb universal],
-        ".htm" => %w[html_erb universal],
-        ".css" => %w[css_scss universal],
-        ".scss" => %w[css_scss universal],
-        ".sass" => %w[css_scss universal],
-        ".js" => %w[javascript universal],
-        ".mjs" => %w[javascript universal],
-        ".jsx" => %w[javascript universal],
-        ".ts" => %w[javascript universal],
-        ".tsx" => %w[javascript universal],
-      }.freeze
+      class << self
+        def extension_map
+          @extension_map ||= begin
+            data = File.exist?(DETECTION_FILE) ? YAML.safe_load_file(DETECTION_FILE) : {}
+            raw  = data["extension_map"] || {}
+            raw.transform_values { |v| Array(v).map(&:to_s) }
+          end
+        end
+
+        def content_indicators
+          @content_indicators ||= begin
+            data = File.exist?(DETECTION_FILE) ? YAML.safe_load_file(DETECTION_FILE) : {}
+            data["content_indicators"] || {}
+          end
+        end
+      end
 
       class << self
         def axioms_data
@@ -40,9 +38,24 @@ module MASTER
           axioms_data[language.to_sym] || []
         end
 
-        def languages_for_file(filename)
-          ext = File.extname(filename).downcase
-          EXTENSION_MAP[ext] || %w[universal]
+        def languages_for_file(filename, content: nil)
+          ext = File.extname(filename.to_s).downcase
+          from_ext = extension_map[ext]
+          return from_ext if from_ext
+
+          if content
+            content_indicators.each do |lang, patterns|
+              patterns.each do |pat|
+                begin
+                  return [lang.to_s, "universal"] if content.match?(Regexp.new(pat))
+                rescue RegexpError
+                  next
+                end
+              end
+            end
+          end
+
+          %w[universal]
         end
 
         def check(code, filename: "code")
