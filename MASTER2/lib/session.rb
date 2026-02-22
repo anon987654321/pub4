@@ -22,6 +22,7 @@ module MASTER
     attr_reader :id, :created_at, :history, :metadata
 
     AUTOSAVE_INTERVAL = 30  # seconds
+    SESSION_MUTEX = Mutex.new
     SUPPORTED_LANGUAGES = %i[english norwegian].freeze
 
     # SUPPORTED_PERSONAS - delegate to Personas module
@@ -156,7 +157,7 @@ module MASTER
       # Get current session (creates new if none exists)
       # @return [Session] Current session
       def current
-        @current ||= new
+        SESSION_MUTEX.synchronize { @current ||= new }
       end
 
       # Set current session

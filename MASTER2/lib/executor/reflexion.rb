@@ -66,7 +66,7 @@ module MASTER
           result = LLM.ask(msgs.last[:content], messages: [msgs.first], tier: tier)
           return Result.err("LLM error.") unless result.ok?
 
-          parsed = parse_response(result.value[:content])
+          parsed = parse_response(result.value[:content].to_s)
           record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
 
           if parsed[:action] =~ COMPLETION_PATTERN

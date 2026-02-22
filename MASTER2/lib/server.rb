@@ -141,7 +141,7 @@ module MASTER
 
     def poll_json
       text = begin; @output_queue.pop(true) unless @output_queue.empty?; rescue ThreadError; nil; end
-      { text: text, tier: LLM.tier, budget: LLM.budget_remaining }.to_json
+      { text: text, tier: LLM.tier, budget: "unlimited" }.to_json
     end
 
     def read_view(name)

@@ -43,7 +43,7 @@ module MASTER
                   # Send done message with metadata
                   meta = {
                     tier: LLM.tier,
-                    budget: LLM.budget_remaining,
+                    budget: "unlimited",
                     tokens: result.value[:tokens] || 0,
                     cost: result.value[:cost] || 0.0,
                   }

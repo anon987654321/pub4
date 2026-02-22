@@ -22,7 +22,7 @@ module MASTER
             return Result.err("LLM error at step #{@step}: #{result.error}")
           end
 
-          parsed = parse_response(result.value[:content])
+          parsed = parse_response(result.value[:content].to_s)
           record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
 
           # Show progress

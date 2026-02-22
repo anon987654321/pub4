@@ -9,7 +9,7 @@ module MASTER
         text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
         body = {
           text: text, tier: LLM.tier,
-          budget: LLM.budget_remaining, version: VERSION,
+          budget: "unlimited", version: VERSION,
         }.to_json
         [200, { CT_HEADER => JSON_TYPE }, [body]]
       end
@@ -37,7 +37,7 @@ module MASTER
         dirty_count = git_dirty_count
         metrics = {
           version: VERSION, tier: LLM.tier,
-          budget_remaining: LLM.budget_remaining,
+          budget_remaining: "unlimited",
           models: LLM.models.count,
           llm_provider: "openrouter",
           media_provider: "replicate",

@@ -150,14 +150,6 @@ module MASTER
         end
       end
 
-      # Log budget event
-      def budget(action, amount, remaining)
-        dmesg_log('budget0', parent: 'autonomy0', message: "#{action} $#{amount.round(4)}, $#{remaining.round(4)} remaining", level: ALL_EVENTS)
-        if logging_enabled?
-          info("Budget event", action: action, amount: amount, remaining: remaining)
-        end
-      end
-
       # Log circuit breaker event
       def circuit(provider, state)
         dmesg_log('circuit0', parent: 'autonomy0', message: "#{provider} #{state}", level: ALL_EVENTS)

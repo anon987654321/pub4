@@ -27,6 +27,8 @@ module MASTER
             return result if result.ok? || !retryable_error?(result.error)
 
             last_error = result.error
+          rescue ArgumentError => e
+            return Result.err("ArgumentError: #{e.message}")
           rescue StandardError => e
             last_error = e.message
           end
@@ -66,7 +68,7 @@ module MASTER
       def execute_ruby_llm_request(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
         configure_ruby_llm
 
-        chat = RubyLLM.chat(model: model, max_tokens: LLM::MAX_CHAT_TOKENS)
+        chat = RubyLLM.chat(model: model).with_params(max_tokens: LLM::MAX_CHAT_TOKENS)
 
         # Validate reasoning effort values
         if reasoning
