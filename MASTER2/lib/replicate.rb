@@ -215,79 +215,13 @@ module MASTER
 
       private
 
+      # Delegate all HTTP to Client (async-http, Falcon ecosystem)
       def create_prediction(model:, input:)
-        uri = URI(API_URL)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        http.open_timeout = HTTP_OPEN_TIMEOUT
-        http.read_timeout = HTTP_READ_TIMEOUT
-
-        request = Net::HTTP::Post.new(uri)
-        request['Authorization'] = "Bearer #{api_key}"
-        request['Content-Type'] = 'application/json'
-
-        body = { input: input }
-        # Use 'model' for owner/name format, 'version' for SHA-pinned versions
-        if model&.include?("/")
-          body[:model] = model
-        else
-          body[:version] = model
-        end
-        request.body = body.to_json
-
-        response = http.request(request)
-        data = JSON.parse(response.body, symbolize_names: true)
-
-        if data[:id]
-          { id: data[:id] }
-        else
-          { error: data[:detail] || 'Unknown error' }
-        end
-      rescue Net::OpenTimeout, Net::ReadTimeout
-        { error: 'Request timed out' }
-      rescue StandardError => e
-        Logging.error("Replicate: #{e.message}") if defined?(MASTER::Logging)
-        { error: e.message }
+        Client.create_prediction(model: model, input: input)
       end
 
       def wait_for_completion(id, timeout: REPLICATE_TIMEOUT)
-        uri = URI("#{API_URL}/#{id}")
-        start_time = Time.now
-        max_polls = (timeout / POLL_INTERVAL).to_i
-
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        http.open_timeout = HTTP_OPEN_TIMEOUT
-        http.read_timeout = HTTP_READ_TIMEOUT
-        http.start do
-          max_polls.times do
-            request = Net::HTTP::Get.new(uri)
-            request['Authorization'] = "Bearer #{api_key}"
-
-            response = http.request(request)
-            data = JSON.parse(response.body, symbolize_names: true)
-
-            case data[:status]
-            when 'succeeded'
-              return { id: id, output: data[:output] }
-            when 'failed', 'canceled'
-              return { error: data[:error] || 'Generation failed' }
-            when 'processing', 'starting'
-              sleep POLL_INTERVAL
-            else
-              return { error: "Unknown status: #{data[:status]}" }
-            end
-
-            return { error: 'Timeout waiting for generation' } if Time.now - start_time > timeout
-          end
-        end
-
-        { error: 'Max polls exceeded' }
-      rescue Net::OpenTimeout, Net::ReadTimeout
-        { error: 'Poll request timed out' }
-      rescue StandardError => e
-        Logging.error("Replicate poll: #{e.message}") if defined?(MASTER::Logging)
-        { error: e.message }
+        Client.wait_for_completion(id, timeout: timeout)
       end
     end
   end
