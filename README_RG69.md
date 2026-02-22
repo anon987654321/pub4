@@ -1,21 +1,23 @@
 # RG69 - Mobile-First Beat Machine
 
-A comprehensive, self-contained beat machine and sequencer in a single HTML file (45KB).
+A comprehensive, self-contained beat machine and sequencer in a single HTML file (~42KB).
 
 ## Quick Start
 1. Open `rg69.html` in any modern browser
-2. Press **Space** to play
-3. Click sequencer grid to add/remove steps
-4. Select **mood presets** for instant genre styles
-5. Press **E** to export WAV, **R** to randomize
+2. Tap **Start Engine** (required to unlock audio on mobile)
+3. Press **Space** to play
+4. Click sequencer grid to add/remove steps
+5. Select **mood presets** for instant genre styles
+6. Press **E** to export WAV, **R** to randomize
 
 ## Features
 
 ### Audio Engine
-- **Synthesizers:** Kick (MembraneSynth), Snare/Clap (NoiseSynth), Hats (MetalSynth), Bass (MonoSynth + Sub), Keys & Pads (PolySynth)
-- **Effects:** 17 types including AutoWah, Chorus, Distortion, Reverb, Delay, BitCrusher, Phaser, etc.
+- **Synthesizers:** Kick (MembraneSynth), Snare/Clap (NoiseSynth), Hats (MetalSynth), Bass (MonoSynth + Sub), Keys & Pads (PolySynth) — fully synthesized, no CDN samples
+- **Effects:** 17 types including AutoWah, Chorus, Distortion, JCReverb, Delay, BitCrusher, Phaser, etc.
 - **FX Chains:** Per-track (2-5 FX) + Master (3-8 FX) with randomization
-- **Lo-Fi Processing:** Tape saturation, crackle, hiss, flutter, rumble
+- **Lo-Fi Processing:** Tape saturation, crackle, hiss, flutter, VHS noise, rumble
+- **Welcome gate:** Required user-gesture tap before audio init (mobile AudioContext policy)
 
 ### Pattern Library (60+ patterns total)
 - **28 Drum Patterns:** Ethio-Jazz, Reggae/Dub, Industrial, Afrobeat, Bossa Nova, Trap, Ambient, Broken Beat
@@ -36,6 +38,9 @@ A comprehensive, self-contained beat machine and sequencer in a single HTML file
 - **State:** Undo/redo (50 steps), autosave, URL sharing
 - **Controls:** Per-track mute/solo, swing, volume
 - **Themes:** Dark/light toggle
+- **Singleton tab policy:** BroadcastChannel + localStorage heartbeat prevents multiple instances playing simultaneously
+- **Panic button:** Kill all audio + release instance lock
+- **CPU monitor:** Auto-drops FX when frame time > 50ms
 
 ### Keyboard Shortcuts
 - `Space` - Play/Pause
@@ -47,7 +52,7 @@ A comprehensive, self-contained beat machine and sequencer in a single HTML file
 - `?` - Help
 
 ## Technical Specs
-- **Size:** 45KB (self-contained)
+- **Size:** ~42KB (self-contained)
 - **Dependencies:** Tone.js 14.8.49 CDN only
 - **Browser:** Chrome 90+, Safari 14+, Firefox 88+
 - **Mobile:** iOS 14+, Android 10+
@@ -60,6 +65,8 @@ A comprehensive, self-contained beat machine and sequencer in a single HTML file
 - OfflineAudioContext for WAV export
 - MediaRecorder API for live recording
 - Base64 URL state encoding
+- JCReverb (real-time) used instead of Reverb (avoids OfflineAudioContext on init, safer on Android)
+- Terminal log relay: log() POSTs to localhost:3001 — run `python3 pub4/rg69-log.py` to receive in terminal
 
 ## Genre Packs
 
