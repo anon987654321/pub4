@@ -35,7 +35,8 @@ module MASTER
         @sessions.size
       end
 
-      # Compress history to fit token limits
+      # Compress history to fit token limits.
+      # max_tokens is a future hook for token-aware trimming; currently uses message count heuristic.
       def compress(history, max_tokens: 4000)
         return history if history.size <= COMPRESS_AFTER_MESSAGES
         history.first(KEEP_FIRST_N) + history.last(KEEP_LAST_N)
@@ -51,7 +52,7 @@ module MASTER
         path = Paths.session_file(session_id)
         return nil unless File.exist?(path)
 
-        JSON.parse(File.read(path, symbolize_names: true), symbolize_names: true)
+        JSON.parse(File.read(path), symbolize_names: true)
       end
 
       def list_sessions

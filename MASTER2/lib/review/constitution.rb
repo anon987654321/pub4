@@ -187,14 +187,22 @@ module MASTER
 
         # Check blocked patterns first
         blocked.each do |pattern|
-          if cmd.include?(pattern) || cmd.match?(Regexp.new(pattern))
+          begin
+            re = Regexp.new(pattern)
+          rescue RegexpError
+            re = nil
+          end
+          if cmd.include?(pattern) || (re && cmd.match?(re))
             return Result.err("Shell command blocked by constitution: #{pattern}")
           end
         end
 
         # Check allowed patterns
         if allowed.any?
-          unless allowed.any? { |pattern| cmd.match?(Regexp.new(pattern)) }
+          unless allowed.any? do |pattern|
+            re = begin; Regexp.new(pattern); rescue RegexpError; nil; end
+            re && cmd.match?(re)
+          end
             return Result.err("Shell command not in allowed list.")
           end
         end

@@ -116,6 +116,21 @@ require_relative "html_generator"
 # Quality gates
 require_relative "quality_gates"
 
+# Self-refactoring infrastructure
+require_relative "axiom_resolver"
+require_relative "dependency_map"
+require_relative "convergence_tracker"
+require_relative "pressure_pass"
+require_relative "self_refactor"
+require_relative "security/injection_guard"
+require_relative "agent/credential_store"
+require_relative "session/reminders"
+require_relative "executor/tool_protocol"
+require_relative "review/tool_scanner"
+require_relative "llm/hesitation_detector"
+require_relative "agent/behavior_monitor"
+require_relative "session/per_step_reflection"
+
 # Web UI
 %w[server].each do |mod|
   MASTER.safe_require(mod)

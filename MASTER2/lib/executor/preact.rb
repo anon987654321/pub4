@@ -41,7 +41,7 @@ module MASTER
 
           UI.dim("  = #{observation[0..80]}")
 
-          if observation.include?("error") || observation.include?("not found")
+          if observation.match?(/\bError\b|\bERROR\b|: error:|^error:/i) || observation.include?("not found")
             UI.dim("  replanning...")
             replan_result = replan(goal, results, tier: tier)
             if replan_result.ok? && replan_result.value[:steps].any?
