@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
-require "net/http"
 require "uri"
+require "async"
+require "async/http/internet"
 
 module MASTER
   # Web - Browse and fetch web content with LLM-powered automation
+  # HTTP client: async-http (Falcon ecosystem) — consistent with server stack
   # Security: Uses nokogiri for safe HTML parsing (prevents ReDoS)
   # Features: Dynamic CSS selector discovery via LLM
   module Web
@@ -15,27 +17,39 @@ module MASTER
     BROWSER_LOAD_DELAY = 2
     MAX_HTML_FOR_DISCOVERY = 5000
 
-    # Timeout constants (from timeouts.rb)
-    WEB_TIMEOUT = (ENV['MASTER_WEB_TIMEOUT'] || 30).to_i
-    HTTP_OPEN_TIMEOUT = (ENV['MASTER_HTTP_OPEN_TIMEOUT'] || 10).to_i
+    WEB_TIMEOUT        = (ENV["MASTER_WEB_TIMEOUT"]       || 30).to_i
+    HTTP_OPEN_TIMEOUT  = (ENV["MASTER_HTTP_OPEN_TIMEOUT"] || 10).to_i
 
     def browse(url)
       uri = URI(url)
-      http = Net::HTTP.new(uri.hostname, uri.port)
-      http.use_ssl = uri.scheme == "https"
-      http.open_timeout = HTTP_OPEN_TIMEOUT
-      http.read_timeout = WEB_TIMEOUT
-
-      response = http.request(Net::HTTP::Get.new(uri))
-
-      if response.code.start_with?("2")
-        # Use nokogiri for safe HTML parsing
-        text = extract_text(response.body)
-
-        Result.ok(content: text[0, MAX_CONTENT_LENGTH], url: url, status: response.code)
-      else
-        Result.err("HTTP #{response.code} for #{url}")
+      unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+        return Result.err("Invalid URL scheme: #{uri.scheme}")
       end
+
+      status  = nil
+      content = nil
+
+      Async do |task|
+        task.with_timeout(WEB_TIMEOUT) do
+          internet = Async::HTTP::Internet.new
+          begin
+            response = internet.get(url)
+            status = response.status.to_s
+            body   = response.read
+            content = extract_text(body) if status.start_with?("2")
+          ensure
+            internet.close
+          end
+        end
+      end
+
+      if content
+        Result.ok(content: content[0, MAX_CONTENT_LENGTH], url: url, status: status)
+      else
+        Result.err("HTTP #{status} for #{url}")
+      end
+    rescue Async::TimeoutError => e
+      Result.err("Browse timeout after #{WEB_TIMEOUT}s: #{e.message}")
     rescue StandardError => e
       Result.err("Browse failed: #{e.message}")
     end
@@ -57,11 +71,10 @@ module MASTER
     rescue StandardError => e
       Result.err("Browse JS failed: #{e.message}")
     ensure
-      browser&.quit rescue StandardError => e
+      browser&.quit rescue StandardError
     end
 
     # Dynamic CSS selector discovery using LLM + vision
-    # Instead of hardcoding selectors that break, ask LLM to find them
     def discover_selector(url, action)
       require "ferrum"
 
@@ -70,8 +83,8 @@ module MASTER
       page.go_to(url)
       sleep BROWSER_LOAD_DELAY
 
-      html_snippet = page.body[0..MAX_HTML_FOR_DISCOVERY]
-      screenshot_b64 = page.screenshot(format: :png, encoding: :base64)
+      html_snippet    = page.body[0..MAX_HTML_FOR_DISCOVERY]
+      screenshot_b64  = page.screenshot(format: :png, encoding: :base64)
 
       browser.quit
 
@@ -85,13 +98,11 @@ module MASTER
         Example: button.submit-btn, input#search, div.login-form
       PROMPT
 
-      # Use vision model if possible for better accuracy
       result = LLM.ask(prompt, tier: :fast)
       return Result.err("LLM request failed.") unless result.ok?
 
-      # Clean up response - extract just the selector
       selector = result.value[:content].to_s.strip.split("\n").first.to_s.strip
-      selector = selector.gsub(/^['"`]|['"`]$/, "") # Remove quotes
+      selector = selector.gsub(/^['"`]|['"`]$/, "")
 
       Result.ok(selector: selector)
     rescue LoadError
@@ -169,10 +180,9 @@ module MASTER
 
       doc = Nokogiri::HTML(html)
       doc.css("script, style").remove
-      text = doc.text.squeeze(" \n").strip
-      text
+      doc.text.squeeze(" \n").strip
     rescue LoadError
-      raise "nokogiri gem required for HTML parsing. Install with: gem install nokogiri"
+      raise "nokogiri gem required for HTML parsing"
     end
   end
 end
