@@ -68,28 +68,23 @@ module MASTER
         Result.ok(engine: :edge, voice: voice_id, style: style)
       end
 
-      # Replicate TTS (paid cloud)
+      # Replicate TTS (paid cloud) — uses Replicate::Client (async-http)
       def speak_replicate(text, play: true)
-        require "net/http"
-        require "json"
-
         token = ENV["REPLICATE_API_TOKEN"]
         return Result.err("No REPLICATE_API_TOKEN.") unless token
 
-        uri = URI("https://api.replicate.com/v1/models/minimax/speech-02-turbo/predictions")
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
+        result = Replicate::Client.create_prediction(
+          model: "minimax/speech-02-turbo",
+          input: { text: text, voice_id: "Casual_Guy" },
+        )
+        return Result.err("Replicate error: #{result[:error]}") if result[:error]
 
-        request = Net::HTTP::Post.new(uri)
-        request["Authorization"] = "Bearer #{token}"
-        request["Content-Type"] = "application/json"
-        request["Prefer"] = "wait"
-        request.body = { input: { text: text, voice_id: "Casual_Guy" } }.to_json
+        # Speech predictions complete synchronously with Prefer: wait —
+        # poll until done to retrieve the audio URL.
+        poll = Replicate::Client.wait_for_completion(result[:id])
+        return Result.err("Replicate poll error: #{poll[:error]}") if poll[:error]
 
-        response = http.request(request)
-        data = JSON.parse(response.body, symbolize_names: true)
-
-        audio_url = data[:output]
+        audio_url = poll[:output]
         return Result.err("No audio URL returned.") unless audio_url
 
         if play

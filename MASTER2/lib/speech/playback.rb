@@ -6,14 +6,26 @@ module MASTER
     module Playback
       module_function
 
-      # Download audio from URL and play it
+      # Download audio from URL and play it — async-http (Falcon ecosystem)
       def download_and_play(url, temp_file)
-        require "net/http"
-        uri = URI(url)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = uri.scheme == "https"
-        response = http.get(uri.request_uri)
-        File.binwrite(temp_file, response.body)
+        require "async"
+        require "async/http/internet"
+
+        content = nil
+        Async do |task|
+          task.with_timeout(60) do
+            internet = Async::HTTP::Internet.new
+            begin
+              response = internet.get(url)
+              content = response.read if response.status == 200
+            ensure
+              internet.close
+            end
+          end
+        end
+
+        return unless content
+        File.binwrite(temp_file, content)
         play_audio(temp_file)
         FileUtils.rm_f(temp_file)
       end

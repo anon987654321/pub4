@@ -3,8 +3,9 @@
 require 'yaml'
 require 'json'
 require 'fileutils'
-require 'net/http'
 require 'uri'
+require 'async'
+require 'async/http/internet'
 
 module MASTER
   # Harvester - Ecosystem intelligence gathering
@@ -158,20 +159,26 @@ module MASTER
     private
 
     def github_request(uri)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.open_timeout = 10
-      http.read_timeout = 30
+      headers = [
+        ["Accept",     "application/vnd.github.v3+json"],
+        ["User-Agent", "MASTER2-Harvester"],
+      ]
+      headers << ["Authorization", "token #{@github_token}"] if @github_token
 
-      request = Net::HTTP::Get.new(uri)
-      request['Accept'] = 'application/vnd.github.v3+json'
-      request['User-Agent'] = 'MASTER2-Harvester'
-      request['Authorization'] = "token #{@github_token}" if @github_token
+      body = nil
+      Async do |task|
+        task.with_timeout(40) do
+          internet = Async::HTTP::Internet.new
+          begin
+            response = internet.get(uri.to_s, headers)
+            body = response.read if response.status.to_s.start_with?("2")
+          ensure
+            internet.close
+          end
+        end
+      end
 
-      response = http.request(request)
-
-      return nil unless response.code.start_with?('2')
-      JSON.parse(response.body)
+      body ? JSON.parse(body) : nil
     rescue JSON::ParserError
       nil
     rescue StandardError => e
