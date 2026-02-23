@@ -84,7 +84,9 @@ module MASTER
                             message: "executor_lint violations=#{lv[:axiom_violations]&.size || 0}") if lv[:axiom_violations]&.any?
 
           # Security veto: check if any executor council_review step vetoed on security grounds
-          security_veto = exec_result.value[:steps]&.any? do |s|
+          steps = exec_result.value[:steps]
+          steps = [] unless steps.is_a?(Array)
+          security_veto = steps.any? do |s|
             s[:tool] == "council_review" &&
               s[:result].to_s.match?(/security|auth|injection|unsafe/i) &&
               s[:result].to_s.match?(/REJECT|veto/i)
