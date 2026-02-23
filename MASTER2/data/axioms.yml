@@ -610,3 +610,38 @@
   source: MASTER2 operating principles
   auto_fixable: false
   smells: [task_drift, context_switch, incomplete_work]
+- id: STRUCTURAL_INTEGRITY
+  category: architecture
+  protection: PROTECTED
+  priority: 9
+  title: Structural Integrity
+  statement: >
+    Code and data must be structurally sound at every level: atomic (method/key),
+    local (module/file), systemic (layer/service), and holistic (whole codebase).
+    Defects at any level propagate upward. Apply merge, defrag, decouple, hoist,
+    dead-code removal, naming normalisation, and layering enforcement continuously.
+  source: MASTER2 structural audit doctrine
+  suggest: >
+    Run structural_optimization analysis. Check for: god objects, naming drift,
+    data duplication, layering violations, scattered related logic, buried constants.
+  auto_fixable: true
+  llm_strategies: [merge_duplicates, extract_module, hoist_constant, split_god_object]
+  smells: [god_class, data_duplication, naming_drift, layering_violation, dead_code, defrag_opportunity]
+- id: META_COHERENCE
+  category: architecture
+  protection: PROTECTED
+  priority: 8
+  title: Meta-Coherence
+  statement: >
+    The system must be coherent at every meta-level: code reflects data, data reflects
+    constitution, constitution reflects axioms, axioms reflect intent. When a rule is
+    added at one level it must be propagated to all relevant levels. When an insight is
+    discovered through analysis it must be encoded back into the system so it can
+    detect and fix itself.
+  source: MASTER2 self-improvement doctrine
+  suggest: >
+    When adding a rule or insight, ask: is this in the data layer? in the axioms? in
+    the constitution? in the smell detectors? in the selfrun pipeline? If not, codify it.
+  auto_fixable: false
+  llm_strategies: [codify_insight, propagate_rule, encode_pattern]
+  smells: [uncodified_insight, rule_lives_only_in_code, data_without_detector]

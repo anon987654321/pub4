@@ -47,30 +47,6 @@ module MASTER
         results
       end
 
-      def before_edit(context = {})
-        run(:before_edit, context)
-      end
-
-      def after_fix(context = {})
-        run(:after_fix, context)
-      end
-
-      def on_stuck(context = {})
-        run(:on_stuck, context)
-      end
-
-      def on_oscillation(context = {})
-        run(:on_oscillation, context)
-      end
-
-      def on_error(context = {})
-        run(:on_error, context)
-      end
-
-      def on_budget_low(context = {})
-        run(:on_budget_low, context)
-      end
-
       def register(event, handler)
         Result.try do
           raise "Unknown event: #{event}" unless EVENTS.include?(event.to_sym)
@@ -105,7 +81,7 @@ module MASTER
           hook_names = config[event.to_s] || []
 
           hook_names.each do |hook_name|
-            result = execute_hook(hook_name, data)
+            result = execute_action(hook_name, data)
             results << { hook: hook_name, result: result }
           end
 
@@ -211,10 +187,6 @@ module MASTER
 
       def log(msg)
         puts UI.dim(msg)
-      end
-
-      def execute_hook(hook_name, data)
-        execute_action(hook_name, data)
       end
 
       def execute_handler(handler, data)

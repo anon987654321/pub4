@@ -315,6 +315,42 @@ module MASTER
         violations
       end
 
+      # Structural optimization smell detector — uses structural_optimization section of smells.yml
+      # Catches atomic/local patterns: buried constants, dead assigns, generic get_ names, etc.
+      STRUCTURAL_PATTERNS = [
+        { smell: :buried_constant,    axiom: "STRUCTURAL_INTEGRITY",
+          re: /^\s+(SCREAMING_SNAKE|[A-Z][A-Z_]{2,})\s*=\s*[^=]/,
+          message: "Constant defined inside method body — hoist to module level" },
+        { smell: :naming_drift,       axiom: "STRUCTURAL_INTEGRITY",
+          re: /\bdef\s+get_\w+/,
+          message: "get_ prefix is a generic verb smell — rename to noun (fetch/load/find)" },
+        { smell: :abstraction_gap,    axiom: "STRUCTURAL_INTEGRITY",
+          re: /YAML\.safe_load_file\(.+\)\s*rescue/,
+          message: "Inline YAML load+rescue repeated — extract to Paths.load_data_file helper" },
+        { smell: :abstraction_gap,    axiom: "STRUCTURAL_INTEGRITY",
+          re: /File\.join\(.*['"]data['"].*\.yml['"]\)/,
+          message: "Hardcoded data/ path — use Paths.data_file(name) abstraction" },
+        { smell: :layering_violation, axiom: "META_COHERENCE",
+          re: /^\s+puts\s|^\s+print\s|UI\.(warn|info|success)\b/,
+          message: "UI output inside business logic — return result; let caller display" },
+      ].freeze
+
+      def check_structural_smells(code, filename: "code")
+        violations = []
+        STRUCTURAL_PATTERNS.each do |p|
+          next unless code.match?(p[:re])
+
+          violations << {
+            layer: :structural,
+            axiom: p[:axiom],
+            message: p[:message],
+            severity: :warning,
+            file: filename,
+          }
+        end
+        violations
+      end
+
       def check_learned_smells(code, filename: "code")
         smells = defined?(DB) ? DB.learned_smells : []
         return [] if smells.empty?

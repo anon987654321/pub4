@@ -223,7 +223,7 @@ module MASTER
       rescue StandardError
         "?"
       end
-      phase ? "#{phase} #{model_name}> " : "#{model_name}> "
+      phase ? "#{phase} #{model_name} ❯ " : "#{model_name} ❯ "
     end
 
     # Read single or multi-line input

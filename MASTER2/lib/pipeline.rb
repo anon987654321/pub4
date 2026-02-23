@@ -54,59 +54,10 @@ module MASTER
 
       Logging.with_request_id do
         raw = case @mode
-              when :executor
-                # Guard must run even in executor mode to prevent dangerous ops
-                guard_result = Stages::Guard.new.call({ text: text })
-                return guard_result if guard_result.err?
-
-                # Default: Use autonomous executor with pattern selection
-                exec_result = Executor.call(text, pattern: self.class.current_pattern)
-
-                # Gist #3: Lint post-flight so axiom violations are caught in executor mode too
-                if exec_result.ok?
-                  response_text = exec_result.value[:answer] || exec_result.value[:response].to_s
-                  lint_result = Stages::Lint.new.call({ text: text, response: response_text })
-                  if lint_result.ok?
-                    lv = lint_result.value
-                    Logging.dmesg_log("pipeline",
-                                      message: "executor_lint violations=#{lv[:axiom_violations]&.size || 0}") if lv[:axiom_violations]&.any?
-
-                    # Security veto: check if any executor council_review step vetoed on security grounds
-                    security_veto = exec_result.value[:steps]&.any? do |s|
-                      s[:tool] == "council_review" &&
-                        s[:result].to_s.match?(/security|auth|injection|unsafe/i) &&
-                        s[:result].to_s.match?(/REJECT|veto/i)
-                    end
-
-                    exec_result = Result.ok(exec_result.value.merge(
-                                              axiom_violations:     lv[:axiom_violations],
-                                              zsh_violations:       lv[:zsh_violations],
-                                              council_security_veto: security_veto,
-                                            ))
-                  end
-                end
-
-                exec_result
-              when :stages
-                # Legacy: Stage-based pipeline
-                @stages.reduce(Result.ok(input)) do |result, stage|
-                  stage_name = stage.class.name&.split("::")&.last || stage.class.name
-                  result.and_then(stage_name) { |data| stage.call(data) }
-                end
-              when :direct
-                # Simple: Direct LLM call with system context
-                sys = begin
-                  ExecutionContext.build_system_message(include_commands: false)
-                rescue StandardError
-                  nil
-                end
-                if sys
-                  LLM.ask(text, messages: [{ role: "system", content: sys }], stream: true)
-                else
-                  LLM.ask(text, stream: true)
-                end
-              else
-                raise ArgumentError, "Unknown pipeline mode: #{@mode}"
+              when :executor then call_executor(text)
+              when :stages   then call_stages(input)
+              when :direct   then call_direct(text)
+              else raise ArgumentError, "Unknown pipeline mode: #{@mode}"
               end
 
         normalize_result(raw, text)
@@ -114,6 +65,65 @@ module MASTER
     end
 
     private
+
+    def call_executor(text)
+      # Guard must run even in executor mode to prevent dangerous ops
+      guard_result = Stages::Guard.new.call({ text: text })
+      return guard_result if guard_result.err?
+
+      # Default: Use autonomous executor with pattern selection
+      exec_result = Executor.call(text, pattern: self.class.current_pattern)
+
+      # Gist #3: Lint post-flight so axiom violations are caught in executor mode too
+      if exec_result.ok?
+        response_text = exec_result.value[:answer] || exec_result.value[:response].to_s
+        lint_result = Stages::Lint.new.call({ text: text, response: response_text })
+        if lint_result.ok?
+          lv = lint_result.value
+          Logging.dmesg_log("pipeline",
+                            message: "executor_lint violations=#{lv[:axiom_violations]&.size || 0}") if lv[:axiom_violations]&.any?
+
+          # Security veto: check if any executor council_review step vetoed on security grounds
+          security_veto = exec_result.value[:steps]&.any? do |s|
+            s[:tool] == "council_review" &&
+              s[:result].to_s.match?(/security|auth|injection|unsafe/i) &&
+              s[:result].to_s.match?(/REJECT|veto/i)
+          end
+
+          exec_result = Result.ok(exec_result.value.merge(
+                                    axiom_violations:      lv[:axiom_violations],
+                                    zsh_violations:        lv[:zsh_violations],
+                                    council_security_veto: security_veto,
+                                  ))
+        end
+      end
+
+      exec_result
+    end
+
+    def call_stages(input)
+      # Legacy: Stage-based pipeline
+      @stages.reduce(Result.ok(input)) do |result, stage|
+        stage_name = stage.class.name&.split("::")&.last || stage.class.name
+        result.and_then(stage_name) { |data| stage.call(data) }
+      end
+    end
+
+    def call_direct(text)
+      # Simple: Direct LLM call with system context
+      sys = begin
+        ExecutionContext.build_system_message(include_commands: false)
+      rescue StandardError
+        nil
+      end
+      if sys
+        LLM.ask(text, messages: [{ role: "system", content: sys }], stream: true)
+      else
+        LLM.ask(text, stream: true)
+      end
+    end
+
+    public
 
     def normalize_result(result, input_text = nil)
       return result if result.err?
@@ -184,33 +194,37 @@ module MASTER
       include PipelineRepl
 
       def prompt
-        segments = [
-          "master",
-          LLM.prompt_model_name,
-          LLM.tier,
-          git_info,
-        ].map { |s| s.to_s.strip }.reject(&:empty?)
-        "#{segments.join(' ')} > "
+        p = MASTER::UI.pastel
+        parts = []
+        parts << p.bold("master")
+        model = LLM.prompt_model_name.to_s.strip
+        parts << p.cyan(model) unless model.empty?
+        tier = LLM.tier.to_s.strip
+        parts << p.dim(tier) unless tier.empty?
+        git = git_info
+        parts << git if git
+        cost = Session.current.total_cost
+        parts << p.yellow("$#{format('%.2f', cost)}") if cost && cost > 0
+        "#{parts.join(p.dim(' · '))} #{p.bold('❯')} "
       rescue StandardError
-        "master > "
+        "master ❯ "
       end
 
       def git_info
-        # Detect git branch and dirty status
+        # Detect git branch and dirty status — Starship-style: green clean, yellow dirty
         require "timeout"
+        p = MASTER::UI.pastel
         branch = Timeout.timeout(2) do
           IO.popen(%w[git rev-parse --abbrev-ref HEAD], err: [:child, :out]) { |io| io.read.strip }
         end
         return nil if branch.empty? || $CHILD_STATUS.exitstatus != 0
 
-        # Check for uncommitted changes
         status = Timeout.timeout(2) do
           IO.popen(%w[git status --porcelain], err: [:child, :out], &:read)
         end
         dirty = !status.empty? && $CHILD_STATUS.exitstatus == 0
 
-        dirty_indicator = dirty ? "*" : ""
-        "#{branch}#{dirty_indicator}"
+        dirty ? p.yellow("#{branch}✗") : p.green(branch)
       rescue Timeout::Error, StandardError
         nil
       end

@@ -165,3 +165,133 @@ preserve:
     never: "Truncate below minimum_info"
   spinner_feedback:
     rule: "Progress indicators show elapsed time and current step"
+
+structural_optimization:
+  description: >
+    Taxonomy of structural optimization techniques, applicable at atomic (method/key),
+    local (module/file), systemic (layer), holistic (whole codebase), and meta
+    (the system's model of itself) levels. Apply continuously during selfrun and review.
+
+  techniques:
+    merge:
+      description: "Combine identical or near-identical units into one authoritative version"
+      triggers: ["same logic in 2+ places", "parallel class hierarchies", "duplicate YAML keys", "synonym constants"]
+      levels: [atomic, local, systemic]
+      anti_pattern: "copy-paste with minor variation"
+      fix: "extract to shared method/module/constant; parameterise differences"
+
+    defrag:
+      description: "Relocate scattered related logic so cohesive things are co-located"
+      triggers: ["feature split across 3+ files", "YAML keys for same concept in different files", "half the logic here, half there"]
+      levels: [local, systemic]
+      anti_pattern: "logic about X living in a file named Y"
+      fix: "move to canonical home; update all call-sites"
+
+    decouple:
+      description: "Sever direct dependencies; inject or configure instead of hard-wiring"
+      triggers: ["hardcoded class name", "hardcoded path constant", "module calling up its own stack", "UI inside business logic"]
+      levels: [atomic, local, systemic]
+      anti_pattern: "FeatureEnvy, InappropriateIntimacy, LayeringViolation"
+      fix: "dependency injection, config-driven, event bus, interface boundary"
+
+    hoist:
+      description: "Lift buried logic to the appropriate higher level where it belongs"
+      triggers: ["constant computed inside method on every call", "regex recompiled in hot path", "config read inline", "magic number without name"]
+      levels: [atomic, local]
+      anti_pattern: "premature burial — logic deeper than its natural home"
+      fix: "extract to initializer, class constant, or config file"
+
+    dead_code_removal:
+      description: "Delete unreachable methods, unused constants, never-read YAML keys, orphaned files"
+      triggers: ["method never called", "YAML key never grep'd in lib/", "constant defined but not referenced", "commented-out blocks > 5 lines"]
+      levels: [atomic, local, systemic]
+      anti_pattern: "code commented 'just in case'"
+      fix: "delete; git history is the backup"
+
+    normalise:
+      description: "Make the same concept represented identically everywhere (naming, schema, scale)"
+      triggers: ["banned vs forbidden vs blocked vs prohibited", "priority vs weight vs tier vs level", "axiom schema differs per file"]
+      levels: [atomic, local, systemic, data]
+      anti_pattern: "naming drift, schema drift"
+      fix: "pick canonical name/schema; migrate all sites; add linter rule"
+
+    abstract:
+      description: "Introduce a missing abstraction where a pattern repeats without a name"
+      triggers: ["same 4-line idiom in 5+ places", "caller has to know too much about callee internals", "no word for a concept that clearly exists"]
+      levels: [local, systemic]
+      anti_pattern: "abstraction gap"
+      fix: "name the concept; extract class/module/YAML section; document"
+
+    layer:
+      description: "Enforce strict layering — each layer may only call downward"
+      triggers: ["UI code in business logic", "persistence in domain model", "enforcement calling LLM", "analysis writing to disk"]
+      levels: [systemic, holistic]
+      anti_pattern: "LayeringViolation, GoThroughTheRoof"
+      fix: "move code to correct layer; return result upward; inject dependencies"
+
+    split:
+      description: "Divide a god object into focused single-responsibility units"
+      triggers: ["file > 300 lines", "module with 4+ unrelated concerns", "class with > 10 public methods", "YAML file mixing 3 concepts"]
+      levels: [local, systemic]
+      anti_pattern: "GodClass, GodModule, GodYAML"
+      fix: "extract by responsibility axis; one file per concept"
+
+    codify:
+      description: "Encode discovered insights, rules, patterns back into the data layer so the system can detect and fix itself"
+      triggers: ["insight exists only in a PR comment", "rule enforced only in code review", "pattern found manually but no smell detector", "analysis question asked but not persisted"]
+      levels: [meta, meta_meta]
+      anti_pattern: "uncodified insight — knowledge that lives only in human heads or chat history"
+      fix: "add to axioms.yml / smells.yml / design_codex.yml / language_axioms.yml; wire to selfrun"
+
+  levels:
+    atomic: "single method, key, constant, line"
+    local: "file, module, class, YAML section"
+    systemic: "layer, subsystem, feature area"
+    holistic: "whole codebase, all data, all config"
+    meta: "the system's rules about itself (axioms, constitution, codex)"
+    meta_meta: "the system's rules about its rules (how axioms are structured, how codex evolves)"
+
+  application_order:
+    - dead_code_removal    # clear the ground first
+    - normalise            # establish canonical vocabulary
+    - merge                # collapse duplicates
+    - defrag               # co-locate related things
+    - hoist                # lift buried logic
+    - abstract             # name recurring patterns
+    - decouple             # sever hard dependencies
+    - layer                # enforce stack discipline
+    - split                # break god objects
+    - codify               # encode what was learned back into data
+
+  selfrun_phases:
+    phase1_static: [dead_code_removal, normalise, merge, hoist]
+    phase2_semantic: [defrag, abstract, decouple]
+    phase3_architectural: [layer, split]
+    phase4_meta: [codify]
+
+  checklist:
+    atomic:
+      - "Are there 2+ methods that do the same thing?"
+      - "Is there a magic number/string that needs a name?"
+      - "Is there a regex compiled inside a hot path?"
+      - "Is there a method named get_X (smell: generic verb)?"
+    local:
+      - "Does this file do more than one job?"
+      - "Is there logic about X living in a file named Y?"
+      - "Are there dead methods (never called)?"
+      - "Does this YAML key appear in another file too?"
+    systemic:
+      - "Does any layer call upward in the stack?"
+      - "Are there 3+ ways to load the same config?"
+      - "Is the same concept named differently in different modules?"
+      - "Do multiple modules implement the same pattern independently?"
+    holistic:
+      - "Is every rule in code also in the data layer?"
+      - "Does the constitution reflect the axioms?"
+      - "Are all analysis insights encoded as smell detectors?"
+      - "Is there a single canonical home for each type of knowledge?"
+    meta:
+      - "When we discover a new pattern, do we codify it immediately?"
+      - "Do the axioms cover all the techniques in this taxonomy?"
+      - "Is the taxonomy itself versioned and evolvable?"
+      - "Can selfrun detect violations of its own structural rules?"

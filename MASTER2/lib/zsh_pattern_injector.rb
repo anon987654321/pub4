@@ -42,7 +42,7 @@ module MASTER
     def prompt_section
       return "" if forbidden.empty?
 
-      lines = ["ZSH NATIVE PATTERNS (mandatory — never use legacy forks in shell code):"]
+      lines = ["Zsh native patterns (mandatory — never use legacy forks in shell code):"]
       forbidden.each { |cmd, replacement| lines << "  NEVER `#{cmd}` → #{replacement}" }
       lines << "  Use zsh glob qualifiers (**/*.rb(.) etc.) instead of find."
       lines << "  Use doas, not sudo, on OpenBSD."
