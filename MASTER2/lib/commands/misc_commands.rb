@@ -42,6 +42,8 @@ module MASTER
 
           lines = File.readlines(File.join(Dir.pwd, rel), encoding: "utf-8:utf-8", chomp: true)
           n = lines.size
+          # Skip bulky data YAMLs — loaded at runtime, not useful in snapshots
+          next if rel.start_with?("data/") && ext == "yml" && n > 300
           buf.puts "## `#{rel}`"
           buf.puts "```#{ext}"
           if n > max
