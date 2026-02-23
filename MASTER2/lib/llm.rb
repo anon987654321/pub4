@@ -181,6 +181,7 @@ module MASTER
           end
         end
 
+        $stderr.puts "! all models failed: #{last_error}" if last_error
         Result.err("all models exhausted: #{last_error}", category: :infrastructure)
       rescue StandardError => err
         CircuitBreaker.open_circuit!(primary) if primary
@@ -205,7 +206,7 @@ module MASTER
           provider: provider, stream: stream
         )
 
-        result.ok? ? spinner&.success : spinner&.error
+        result.ok? ? spinner&.success : spinner&.success  # clear silently; final error reported by caller
         result
       end
 
