@@ -30,11 +30,11 @@ module MASTER
       stats = fetch_stats
 
       puts "  #{@ui.bold('System Status')}"
-      puts "    Model Tier:    #{stats[:tier]}"
+      puts "    Model Tier:    #{stats[:tier].to_s.rjust(8)}"
       puts "    Budget:        managed by OpenRouter"
-      puts "    Circuit:       #{stats[:circuits_ok]} ok, #{stats[:circuits_tripped]} tripped"
-      puts "    Axioms:        #{stats[:axioms]}"
-      puts "    Council:       #{stats[:council]} personas"
+      puts "    Circuit:       #{stats[:circuits_ok].to_s.rjust(3)} ok, #{stats[:circuits_tripped].to_s.rjust(3)} tripped"
+      puts "    #{UI.pluralize(stats[:axioms],  'axiom').rjust(12)}"
+      puts "    #{UI.pluralize(stats[:council], 'persona').rjust(12)}"
       puts
     end
 
@@ -53,10 +53,10 @@ module MASTER
         puts "    (no activity yet)"
       else
         costs.each do |row|
-          model = row[:model].split("/").last
-          cost = row[:cost]
-          created = row[:created_at]
-          puts "    #{created[11, 5]} | #{model.ljust(15)} | #{UI.currency_precise(cost)}"
+          model  = row[:model].split("/").last
+          cost   = row[:cost]
+          ts     = row[:created_at]
+          puts "    #{ts[11, 5]} #{@ui.dim('│')} #{model.ljust(20)} #{@ui.dim('│')} #{UI.currency_precise(cost).rjust(9)}"
         end
       end
       puts

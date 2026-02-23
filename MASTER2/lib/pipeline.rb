@@ -178,7 +178,7 @@ module MASTER
       # Remove tool output blocks: bare ``` blocks immediately after a tool call removal (>10 lines)
       cleaned.gsub!(/```\n(?:[^\n]*\n){10,}```/m) do |block|
         lines = block.count("\n")
-        "[#{lines} lines omitted]"
+        UI.dim("[#{lines} lines omitted]")
       end
 
       # Remove standalone tool call lines

@@ -4,64 +4,15 @@ module MASTER
   module Progress
     module_function
 
-    SPINNERS = {
-      dots: %w[| / - \ | / - \ | /],
-      line: %w[- \\ | /],
-      blocks: %w[| | | | | | | #],
-      arrows: %w[<- <- ^ -> -> -> v <-],
-      circuit: %w[o o o o *],
-    }.freeze
-
-    class Spinner
-      def initialize(message = "Processing...", style: :dots)
-        @message = message
-        @frames = SPINNERS[style] || SPINNERS[:dots]
-        @index = 0
-        @running = false
-        @thread = nil
-      end
-
-      def start
-        @running = true
-        @thread = Thread.new do
-          while @running
-            print "\r  #{@frames[@index % @frames.size]} #{@message}"
-            @index += 1
-            sleep 0.1
-          end
-        end
-        self
-      end
-
-      def update(message)
-        @message = message
-      end
-
-      def stop(final_message = nil)
-        @running = false
-        @thread&.join
-        print "\r#{' ' * 60}\r"
-        puts "  + #{final_message}" if final_message
-      end
-
-      def success(message)
-        stop(message.to_s)
-      end
-
-      def error(message)
-        @running = false
-        @thread&.join
-        print "\r#{' ' * 60}\r"
-        puts "  - #{message}"
-      end
-    end
+    # Progress::Spinner delegates to the canonical UI::SubtleSpinner
+    Spinner = MASTER::UI::SubtleSpinner
 
     class ProgressBar
       def initialize(total:, message: "Progress")
-        @total = total
+        @total   = total.to_f
         @current = 0
         @message = message
-        @start_time = Time.now
+        @start   = Time.now
       end
 
       def advance(by = 1)
@@ -83,20 +34,20 @@ module MASTER
       private
 
       def render
-        pct = (@current.to_f / @total * 100).round(1)
-        bar = UI.render_bar(pct)
-
-        elapsed = Time.now - @start_time
-        eta = @current > 0 ? (elapsed / @current * (@total - @current)).round : 0
-
-        print "\r  #{@message}: #{bar} #{pct}% (#{@current}/#{@total}) ETA: #{eta}s"
+        pct     = [(@current / @total * 100), 100].min
+        bar     = UI.render_bar(pct)
+        elapsed = Time.now - @start
+        eta     = @current > 0 ? (elapsed / @current * (@total - @current)).round : 0
+        pct_str = UI.format_percent(pct)
+        count   = "#{@current.to_i}/#{@total.to_i}"
+        print "\r  #{@message}: #{bar} #{pct_str} (#{count}) ETA: #{eta}s"
+        $stdout.flush
       end
     end
 
-    def spinner(message = "Processing...", style: :dots)
+    def spinner(message = "Processing…", style: :dots)
       s = Spinner.new(message, style: style)
-      s.start
-
+      s.auto_spin
       result = yield
       s.success("Done")
       result
@@ -111,22 +62,15 @@ module MASTER
       bar.finish
     end
 
-    def thinking(duration = nil)
-      frames = %w[thinking. thinking.. thinking...]
-      spinner = Spinner.new(frames.first, style: :circuit)
-      spinner.start
-
+    def thinking(message = "thinking…")
+      s = Spinner.new(message, style: :braille)
+      s.auto_spin
       if block_given?
         result = yield
-        spinner.success("Complete")
+        s.success("done")
         result
       else
-        # Auto-stop after duration if given
-        if duration
-          sleep duration
-          spinner.stop
-        end
-        spinner
+        s
       end
     end
   end

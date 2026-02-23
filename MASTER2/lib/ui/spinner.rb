@@ -2,62 +2,77 @@
 
 module MASTER
   module UI
-    # Subtle spinner (Shibui - understated elegance)
-    SPIN_FRAMES = %w[- \\ | /].freeze
+    # Canonical spinner — one implementation, three style variants.
+    # style: :dots (default) | :line | :braille
+    # Replaces SubtleSpinner, Progress::Spinner, and the Components inline stub.
+    SPIN_FRAMES = {
+      dots:    %w[⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏].freeze,
+      line:    %w[— \\ | /].freeze,
+      braille: %w[⣾ ⣽ ⣻ ⢿ ⡿ ⣟ ⣯ ⣷].freeze,
+    }.freeze
 
-    def self.spinner(message = nil, format: :dots)
+    def self.spinner(message = nil, style: :dots)
       require "tty-spinner"
-      TTY::Spinner.new(":spinner #{message}", format: format,
-                                              success_mark: "+", error_mark: "-")
+      TTY::Spinner.new(
+        "  :spinner #{message}",
+        format:       style == :line ? :classic : :dots,
+        success_mark: MASTER::UI::ICONS[:success],
+        error_mark:   MASTER::UI::ICONS[:failure],
+      )
     rescue LoadError
-      SubtleSpinner.new(message)
+      SubtleSpinner.new(message, style: style)
     end
 
     class SubtleSpinner
-      ICONS = {
-        success: "+",
-        failure: "-",
-        pending: "...",
-      }.freeze
+      CLEAR_WIDTH = 80
 
-      def initialize(message)
-        @message = message
+      def initialize(message, style: :dots)
+        @message = message.to_s
+        @frames  = SPIN_FRAMES[style] || SPIN_FRAMES[:dots]
         @running = false
-        @thread = nil
-        @start_time = nil
+        @thread  = nil
+        @start   = nil
       end
 
       def auto_spin
         @running = true
-        @start_time = Time.now
-        @thread = Thread.new do
+        @start   = Time.now
+        @thread  = Thread.new do
           i = 0
           while @running
-            elapsed = (Time.now - @start_time).round
+            elapsed  = (Time.now - @start).round
             time_str = elapsed > 5 ? " (#{elapsed}s)" : ""
-            print "\r  #{SPIN_FRAMES[i % 4]} #{@message}#{time_str}  "
+            print "\r  #{@frames[i % @frames.size]} #{@message}#{time_str}  "
+            $stdout.flush
             i += 1
-            sleep 0.15
+            sleep 0.1
           end
         end
       end
 
       def success(msg = nil)
         stop
-        suffix = msg ? " #{msg}" : ""
-        puts "\r  #{ICONS[:success]} #{@message}#{suffix}"
+        suffix = msg ? " — #{msg}" : ""
+        puts MASTER::UI.pastel.green("  #{MASTER::UI::ICONS[:success]} #{@message}#{suffix}")
+        puts
       end
 
       def error(msg = nil)
         stop
-        suffix = msg ? " #{msg}" : ""
-        puts "\r  #{ICONS[:failure]} #{@message}#{suffix}"
+        suffix = msg ? " — #{msg}" : ""
+        puts MASTER::UI.pastel.red("  #{MASTER::UI::ICONS[:failure]} #{@message}#{suffix}")
+        puts
+      end
+
+      def update(msg)
+        @message = msg.to_s
       end
 
       def stop
         @running = false
         @thread&.join(0.2)
-        print "\r#{' ' * 70}\r"
+        print "\r#{' ' * CLEAR_WIDTH}\r"
+        $stdout.flush
       end
     end
   end
