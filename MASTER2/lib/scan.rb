@@ -13,6 +13,11 @@ module MASTER
   module Scan
     DEPTHS = %i[quick standard deep].freeze
 
+    # Namespace for auto-loaded Scan::Rule plugin modules.
+    # Files under lib/scan/rules/*.rb are required at :deep depth and must
+    # define a module here that responds to .check(code, path:) → Array<Hash>.
+    module Rules; end
+
     # A Rule is anything that responds to .check(code, path:) → Array<Hash>
     # Each hash must have: { rule:, message:, line:, severity:, autofix: }
     module Rule
@@ -100,6 +105,13 @@ module MASTER
           end
         end
 
+        # :deep — Scan::Rule plugins loaded from lib/scan/rules/
+        loaded_plugin_rules.each do |rule_mod|
+          rule_mod.check(code, path: file).each do |finding|
+            findings << normalise(finding, rule: finding[:rule] || :scanner_check)
+          end
+        end
+
         findings
       end
 
@@ -114,6 +126,17 @@ module MASTER
           autofix:   finding.fetch(:autofix, false),
           principle: finding[:principle],
         }
+      end
+
+      # Require lib/scan/rules/*.rb once and return all modules that respond to .check.
+      def loaded_plugin_rules
+        @loaded_plugin_rules ||= begin
+          rules_glob = File.join(__dir__, "scan", "rules", "*.rb")
+          Dir.glob(rules_glob).sort.each { |rule_file| require rule_file }
+          MASTER::Scan::Rules.constants
+                             .map    { |const_name| MASTER::Scan::Rules.const_get(const_name) }
+                             .select { |mod| mod.respond_to?(:check) }
+        end
       end
     end
   end
