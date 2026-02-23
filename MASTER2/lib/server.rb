@@ -21,10 +21,12 @@ module MASTER
 
     PORT_WAIT_ATTEMPTS = 10
     PORT_WAIT_DELAY    = 0.3
+    PID_FILE           = File.join(MASTER.root, "var", "web.pid").freeze
 
     attr_reader :port, :output_queue
 
     def initialize(pipeline: nil, port: nil)
+      kill_ghost_servers
       @pipeline = pipeline || Pipeline.new
       @port = port || find_port
       @output_queue = Thread::Queue.new
@@ -46,6 +48,7 @@ module MASTER
         sleep PORT_WAIT_DELAY
         break if port_open?(@port)
       end
+      write_pid_file
     end
 
     def stop
@@ -81,6 +84,32 @@ module MASTER
       rescue StandardError => err
         warn "Falcon error: #{err.class}: #{err.message}"
       end
+    end
+
+    def kill_ghost_servers
+      return unless File.exist?(PID_FILE)
+
+      old_pid = File.read(PID_FILE).strip.to_i
+      return if old_pid.zero? || old_pid == Process.pid
+
+      begin
+        Process.kill("TERM", old_pid)
+        sleep 0.3
+        Process.kill("KILL", old_pid) rescue nil
+      rescue Errno::ESRCH
+        # already gone
+      ensure
+        FileUtils.rm_f(PID_FILE)
+      end
+    rescue StandardError
+      nil
+    end
+
+    def write_pid_file
+      FileUtils.mkdir_p(File.dirname(PID_FILE))
+      File.write(PID_FILE, Process.pid.to_s)
+    rescue StandardError
+      nil
     end
 
     def kill_port_users(port)
