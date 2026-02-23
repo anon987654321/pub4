@@ -16,7 +16,8 @@ module MASTER
         @cache[strategy] ||= begin
           file = File.join(PROMPTS_DIR, "#{strategy}.yml")
           File.exist?(file) ? YAML.safe_load_file(file) : {}
-        rescue StandardError
+        rescue StandardError => e
+          Logging.warn("Failed to load prompt file #{file}: #{e.message}", subsystem: "executor.prompts")
           {}
         end
       end
