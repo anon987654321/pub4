@@ -1,4 +1,4 @@
-# Programming language detection — maps file extensions to rule families.
+# Programming language detection -- maps file extensions to rule families.
 # Loaded by Review::LanguageAxioms. Add new languages here, not in code.
 
 extension_map:

@@ -2,7 +2,7 @@
 
 module MASTER
   class Session
-    # PerStepReflection — evaluate each tool call's contribution toward the goal
+    # PerStepReflection -- evaluate each tool call's contribution toward the goal
     # Based on SAMULE: Multi-Level Reflection (EMNLP 2025, gistfile14 §2)
     # Adds per-step reflection layer; cross-task patterns logged to db_jsonl
     module PerStepReflection

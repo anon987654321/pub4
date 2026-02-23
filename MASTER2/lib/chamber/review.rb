@@ -57,7 +57,7 @@ module MASTER
 
         votes    = []
         vetoed_by = []
-        thread   = [] # shared deliberation — each model reads prior voices before speaking
+        thread   = [] # shared deliberation -- each model reads prior voices before speaking
 
         personas.each do |persona|
           break if over_budget?
@@ -134,7 +134,7 @@ module MASTER
         thread_section = if thread.any?
           prior = thread.map { |t| "#{t[:name]} (#{t[:model] || 'unknown'}): #{t[:feedback]}" }.join("\n")
           <<~THREAD
-            DELIBERATION SO FAR — read this before forming your view:
+            DELIBERATION SO FAR -- read this before forming your view:
             #{prior}
 
           THREAD

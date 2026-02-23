@@ -68,7 +68,7 @@ module MASTER
         Result.ok(engine: :edge, voice: voice_id, style: style)
       end
 
-      # Replicate TTS (paid cloud) — uses Replicate::Client (async-http)
+      # Replicate TTS (paid cloud) -- uses Replicate::Client (async-http)
       def speak_replicate(text, play: true)
         token = ENV.fetch("REPLICATE_API_TOKEN", nil)
         return Result.err("No REPLICATE_API_TOKEN.") unless token
@@ -79,7 +79,7 @@ module MASTER
         )
         return Result.err("Replicate error: #{result[:error]}") if result[:error]
 
-        # Speech predictions complete synchronously with Prefer: wait —
+        # Speech predictions complete synchronously with Prefer: wait --
         # poll until done to retrieve the audio URL.
         poll = Replicate::Client.wait_for_completion(result[:id])
         return Result.err("Replicate poll error: #{poll[:error]}") if poll[:error]

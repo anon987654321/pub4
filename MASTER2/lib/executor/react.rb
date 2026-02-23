@@ -66,7 +66,7 @@ module MASTER
 
           tool_name = parsed[:tool]
           unless tool_name
-            # No tool and no answer — treat thought as final response
+            # No tool and no answer -- treat thought as final response
             return Result.ok(
               answer: parsed[:thought],
               steps: @step,
@@ -89,13 +89,13 @@ module MASTER
                      when "council_review" then "Asking council..."
                      when "memory_search"  then "Searching memory: #{(parsed[:args][:query] || '').to_s[0..50]}"
                      end
-          UI.dim("  … #{preamble}") if preamble
+          UI.dim("  ... #{preamble}") if preamble
 
           # Dispatch typed tool call (args is already a Hash from JSON parse)
           raw_observation = dispatch_typed(tool_name, parsed[:args] || {})
 
           # Injection defense: halt loop on detected injection (gist item #3).
-          # Sanitize-and-continue is insufficient — abort with error instead.
+          # Sanitize-and-continue is insufficient -- abort with error instead.
           return err if (err = injection_error_for(raw_observation, source: tool_name))
 
           observation = raw_observation.to_s
@@ -109,7 +109,7 @@ module MASTER
 
       private
 
-      # Gist #8: Understand phase — scan files mentioned in the goal before planning.
+      # Gist #8: Understand phase -- scan files mentioned in the goal before planning.
       # Reads file content and adds it to history context so the first plan step
       # is grounded in actual code rather than hallucinated structure.
       def understand_context(goal)

@@ -295,10 +295,19 @@ module MASTER
       cmd = parts[0]&.downcase
       args = parts[1]
 
-      # ! prefix — run directly in shell, bypass LLM entirely
+      # ! prefix -- run directly in shell, bypass LLM entirely
       if cmd&.start_with?("!")
         shell_cmd = "#{cmd[1..]} #{args}".strip
         output = `#{shell_cmd} 2>&1`
+        print output
+        puts unless output.end_with?("\n")
+        return HANDLED
+      end
+
+      # Bare Unix commands -- run in shell without requiring ! prefix.
+      # Prevents cat/ls/doas/git/etc from being sent to the LLM.
+      if bare_shell_command?(cmd)
+        output = `#{input.strip} 2>&1`
         print output
         puts unless output.end_with?("\n")
         return HANDLED
@@ -504,6 +513,29 @@ module MASTER
     def exit_repl(_args) = :exit
 
     private
+
+    def bare_shell_command?(cmd)
+      return false unless cmd.is_a?(String)
+      BARE_SHELL_COMMANDS.include?(cmd.downcase)
+    end
+
+    # Common Unix commands that should run directly without ! prefix.
+    BARE_SHELL_COMMANDS = %w[
+      ls ll la cat head tail grep rg find wc less more
+      pwd cd mkdir rm mv cp touch chmod chown ln
+      ps top htop kill pkill
+      git svn
+      ssh scp rsync curl wget
+      doas sudo su
+      uname hostname whoami id
+      env printenv export
+      echo printf
+      ruby python python3 node npm gem bundle
+      make rake cargo go
+      df du free
+      tar gzip gunzip zip unzip
+      date cal
+    ].freeze
 
     def split_requests(input)
       raw = input.to_s.strip

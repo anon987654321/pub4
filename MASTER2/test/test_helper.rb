@@ -20,7 +20,7 @@ require "tmpdir"
 require "timeout"
 require_relative "../lib/master"
 
-# Global test timeout — prevents tests from hanging indefinitely
+# Global test timeout -- prevents tests from hanging indefinitely
 Minitest::Test.class_eval do
   alias_method :run_without_timeout, :run
   def run(*args)

@@ -26,7 +26,7 @@ class:
 coverage:
   minimum: 95
 
-# Graduation path — levels of autonomy earned
+# Graduation path -- levels of autonomy earned
 graduation:
   apprentice:
     requires: []
@@ -41,7 +41,7 @@ graduation:
     requires: [200_successful_tasks, zero_reverts_90d, positive_user_feedback]
     autonomy: apply_all
 
-# Profile system — from pub2 master.json v225.0.0
+# Profile system -- from pub2 master.json v225.0.0
 # Different quality gate profiles for different project types
 profiles:
   minimal:

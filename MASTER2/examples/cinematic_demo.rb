@@ -15,12 +15,12 @@ puts
 puts "1. Listing available presets..."
 result = MASTER::Cinematic.list_presets
 if result.ok?
-  puts "   ✓ Found #{result.value[:presets].size} presets"
+  puts "   [ok] Found #{result.value[:presets].size} presets"
   result.value[:presets].first(3).each do |preset|
     puts "     - #{preset[:name]} (#{preset[:source]})"
   end
 else
-  puts "   ✗ Failed: #{result.error}"
+  puts "   [fail] Failed: #{result.error}"
 end
 puts
 
@@ -31,7 +31,7 @@ pipeline.chain('stability-ai/sdxl', {
   prompt: 'cinematic movie scene, dramatic lighting',
   guidance_scale: 10.0 
 })
-puts "   ✓ Pipeline created with #{pipeline.stages.size} stage(s)"
+puts "   [ok] Pipeline created with #{pipeline.stages.size} stage(s)"
 puts
 
 # Test 3: Save pipeline
@@ -42,9 +42,9 @@ result = pipeline.save_preset(
   tags: ['demo', 'test']
 )
 if result.ok?
-  puts "   ✓ Saved to: #{result.value[:path]}"
+  puts "   [ok] Saved to: #{result.value[:path]}"
 else
-  puts "   ✗ Failed: #{result.error}"
+  puts "   [fail] Failed: #{result.error}"
 end
 puts
 
@@ -53,9 +53,9 @@ puts "4. Loading saved pipeline..."
 result = MASTER::Cinematic::Pipeline.load('demo-pipeline')
 if result.ok?
   loaded_pipeline = result.value
-  puts "   ✓ Loaded pipeline with #{loaded_pipeline.stages.size} stage(s)"
+  puts "   [ok] Loaded pipeline with #{loaded_pipeline.stages.size} stage(s)"
 else
-  puts "   ✗ Failed: #{result.error}"
+  puts "   [fail] Failed: #{result.error}"
 end
 puts
 
@@ -64,12 +64,12 @@ puts "5. Generating random pipeline..."
 result = MASTER::Cinematic::Pipeline.random(length: 3, category: :image)
 if result.ok?
   random_pipeline = result.value
-  puts "   ✓ Generated pipeline with #{random_pipeline.stages.size} stages:"
+  puts "   [ok] Generated pipeline with #{random_pipeline.stages.size} stages:"
   random_pipeline.stages.each_with_index do |stage, i|
     puts "     #{i+1}. #{stage[:model]}"
   end
 else
-  puts "   ✗ Failed: #{result.error}"
+  puts "   [fail] Failed: #{result.error}"
 end
 puts
 

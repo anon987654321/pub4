@@ -37,7 +37,7 @@ module MASTER
               response = internet.get("#{base_url}/v1/.well-known/ready", auth_headers)
               status = response.status
             rescue Errno::ECONNREFUSED, Async::TimeoutError
-              # Weaviate not running — expected in offline environments
+              # Weaviate not running -- expected in offline environments
             ensure
               internet.close
             end

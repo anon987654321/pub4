@@ -4,7 +4,7 @@ require "yaml"
 
 module MASTER
   class Executor
-    # Prompts — loads strategy prompt templates from data/prompts/*.yml
+    # Prompts -- loads strategy prompt templates from data/prompts/*.yml
     # Templates use Ruby's % formatting: "%{goal}", "%{tool_list}", etc.
     module Prompts
       PROMPTS_DIR = Paths.data_file("prompts").freeze

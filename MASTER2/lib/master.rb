@@ -50,7 +50,7 @@ require_relative "rubocop_detector"
 
 # Multi-language parsing (now in MASTER2); NLU and conversation are optional stubs
 MASTER.safe_require("parser/multi_language")
-# nlu and conversation are MASTER v4 stubs — silently absent, not an error
+# nlu and conversation are MASTER v4 stubs -- silently absent, not an error
 %w[../../lib/nlu ../../lib/conversation].each do |dep|
   MASTER.safe_require(dep, silent: true)
 end

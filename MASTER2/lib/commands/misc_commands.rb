@@ -12,7 +12,7 @@ module MASTER
   module Commands
     # Miscellaneous commands
     module MiscCommands
-      TEXT_EXTENSIONS = %w[rb py js ts zsh sh bash md yml yaml json toml gemspec txt erb conf ini env].freeze
+      TEXT_EXTENSIONS = %w[rb py js ts css svg zsh sh bash md yml yaml json toml gemspec txt erb conf ini env].freeze
       TEXT_BASENAMES  = %w[Gemfile Rakefile Makefile Dockerfile].freeze
       SKIP_DIRS       = %w[.git vendor tmp var node_modules .bundle coverage log dist].freeze
 

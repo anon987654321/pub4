@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Plan — Live step-status tracker for the ReAct execution loop.
+# Plan -- Live step-status tracker for the ReAct execution loop.
 # Implements gist item #2: Codex CLI's update_plan with step statuses.
 #
 # Each step has one of: :pending, :in_progress, :completed, :skipped, :failed
@@ -102,7 +102,7 @@ module MASTER
         done  = @steps.count { |s| s.status == :completed }
         total = @steps.size
         cur   = @steps.find { |s| s.status == :in_progress }
-        cur_text = cur ? " → #{cur.description[0..50]}" : ""
+        cur_text = cur ? " -> #{cur.description[0..50]}" : ""
         "plan: #{done}/#{total}#{cur_text}"
       end
     end

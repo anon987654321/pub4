@@ -4,7 +4,7 @@ require "fileutils"
 require "json"
 
 module MASTER
-  # SelfRefactor — applies MASTER2's own refactor pipeline to its own source.
+  # SelfRefactor -- applies MASTER2's own refactor pipeline to its own source.
   # Delegates to Evolve (LLM + Staging) for fixes and Workflow::Convergence
   # for stopping criteria. Identical path to what runs on user code.
   module SelfRefactor
@@ -26,6 +26,11 @@ module MASTER
       evolve  = Evolve.new(staged: true, llm: LLM)
       history = []
       summary, start_iter = resume_state || [{ iterations: 0, improvements: 0, errors: [], stop_reason: nil }, 0]
+
+      # Pre-pass: apply all mechanical fixes (encoding, CRLF, etc.) before LLM loop
+      fix_result = Scan.fix_all!(MASTER.root)
+      summary[:autofix_count] = fix_result[:fixed]
+      Logging.dmesg_log("self_refactor", message: "autofix: #{fix_result[:fixed]} files normalised") if defined?(Logging) && fix_result[:fixed] > 0
 
       max_iterations.times do |idx|
         next if idx < start_iter

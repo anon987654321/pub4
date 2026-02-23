@@ -3,21 +3,21 @@ name: "Design + Refactor Codex"
 description: "Programmatic rules for typography, layout, visual hierarchy, and code craftsmanship."
 
 terminal_typography:
-  description: "Rules for terminal/CLI output — enforced by check_structural_smells on lib/ui/"
+  description: "Rules for terminal/CLI output -- enforced by check_structural_smells on lib/ui/"
   max_line_length: 100          # wrap or truncate beyond this
   indent_unit: 2                # spaces; never tabs
   section_gap: 1                # blank lines between logical sections
   column_min_width: 8           # minimum column width for tabular output
-  truncation_glyph: "…"        # U+2026; never "..."
+  truncation_glyph: "..."        # U+2026; never "..."
   numeric_alignment: right      # numbers right-aligned in tables
   status_icons:
-    success: "✓"
-    failure: "✗"
+    success: "[ok]"
+    failure: "[fail]"
     warning: "⚠"
     info:    "ℹ"
     pending: "◦"
-    bullet:  "•"
-    arrow:   "→"
+    bullet:  "*"
+    arrow:   "->"
     chevron: "❯"               # prompt character only
   color_semantics:
     green:   "success, clean state"
@@ -28,12 +28,12 @@ terminal_typography:
     bold:    "emphasis, section header, prompt character"
   actionable_errors:
     required: true
-    format: "⚠  device0: description\n   → action hint"
+    format: "⚠  device0: description\n   -> action hint"
   spinner_exit:
     blank_line_after: true      # always puts after success/error
     success_color: green
     failure_color: red
-  dmesg_format: "device0 at parent0: description — no prefix symbols, no box art"
+  dmesg_format: "device0 at parent0: description -- no prefix symbols, no box art"
 
 typography:
   line_length:
@@ -170,7 +170,7 @@ automation:
       detail: "include_violation_evidence_and_fix_hints"
 
 boot_invariants:
-  dmesg_format: "device0 at parent0: description — no prefix symbols, no box art, no brackets"
+  dmesg_format: "device0 at parent0: description -- no prefix symbols, no box art, no brackets"
   single_entry_point: "banner called exactly once, from pipeline/repl.rb. bin/master never calls Boot directly"
   stale_locks_at_start: "cleanup_stale_locks! runs before REPL loop, never after"
   deploy_dir_only: "deploy scripts live exclusively under deploy/. No ad-hoc scripts in sh/ or root"
@@ -178,7 +178,7 @@ boot_invariants:
 safe_require_pattern:
   description: "Optional modules use safe_require with silent: true. Never warn at boot for expected-absent modules"
   usage: "safe_require 'module_name', silent: true"
-  rationale: "Clean dmesg boot output — noise-free unless genuinely unexpected"
+  rationale: "Clean dmesg boot output -- noise-free unless genuinely unexpected"
 
 preserve:
   rationale: "Streamline means remove redundancy, not information"
@@ -191,7 +191,7 @@ preserve:
     format: "OpenBSD dmesg style, 5-7 lines"
     never: "Collapse to single cryptic line"
   diagnostic_output:
-    rule: "Structured multi-line output is intentional — verbose is correct here"
+    rule: "Structured multi-line output is intentional -- verbose is correct here"
     never: "Compress to cryptic abbreviations"
   help_text:
     minimum_info: ["command name and syntax", "brief description", "at least one example"]
@@ -231,7 +231,7 @@ structural_optimization:
       description: "Lift buried logic to the appropriate higher level where it belongs"
       triggers: ["constant computed inside method on every call", "regex recompiled in hot path", "config read inline", "magic number without name"]
       levels: [atomic, local]
-      anti_pattern: "premature burial — logic deeper than its natural home"
+      anti_pattern: "premature burial -- logic deeper than its natural home"
       fix: "extract to initializer, class constant, or config file"
 
     dead_code_removal:
@@ -256,7 +256,7 @@ structural_optimization:
       fix: "name the concept; extract class/module/YAML section; document"
 
     layer:
-      description: "Enforce strict layering — each layer may only call downward"
+      description: "Enforce strict layering -- each layer may only call downward"
       triggers: ["UI code in business logic", "persistence in domain model", "enforcement calling LLM", "analysis writing to disk"]
       levels: [systemic, holistic]
       anti_pattern: "LayeringViolation, GoThroughTheRoof"
@@ -273,7 +273,7 @@ structural_optimization:
       description: "Encode discovered insights, rules, patterns back into the data layer so the system can detect and fix itself"
       triggers: ["insight exists only in a PR comment", "rule enforced only in code review", "pattern found manually but no smell detector", "analysis question asked but not persisted"]
       levels: [meta, meta_meta]
-      anti_pattern: "uncodified insight — knowledge that lives only in human heads or chat history"
+      anti_pattern: "uncodified insight -- knowledge that lives only in human heads or chat history"
       fix: "add to axioms.yml / smells.yml / design_codex.yml / language_axioms.yml; wire to selfrun"
 
   levels:
@@ -333,10 +333,10 @@ importance_flow:
   description: >
     Every file is a document. Documents are read top-to-bottom.
     The most important content must be at the top. Apply the inverted pyramid
-    at every level of granularity — file, section, method, line, argument.
+    at every level of granularity -- file, section, method, line, argument.
     This is not optional formatting; it is structural communication.
 
-  principle: "most important first, least important last — always"
+  principle: "most important first, least important last -- always"
 
   levels:
     file:
@@ -346,12 +346,12 @@ importance_flow:
           - "# frozen_string_literal: true"
           - "require / require_relative"
           - "Module/class constants (SCREAMING_SNAKE)"
-          - "Class-level DSL (attr_*, validates, belongs_to, has_many…)"
-          - "Public class methods (.new, .call, .build…)"
-          - "Public instance methods — core interface"
-          - "Public instance methods — secondary"
+          - "Class-level DSL (attr_*, validates, belongs_to, has_many...)"
+          - "Public class methods (.new, .call, .build...)"
+          - "Public instance methods -- core interface"
+          - "Public instance methods -- secondary"
           - "protected methods"
-          - "private methods — called most → called least"
+          - "private methods -- called most -> called least"
           - "END: private one-liners, aliases"
         yaml:
           - "version, name, description (metadata)"
@@ -364,10 +364,10 @@ importance_flow:
           - "set -euo pipefail + setopt"
           - "Constants / configuration"
           - "Main function (main())"
-          - "Helper functions — by call order"
+          - "Helper functions -- by call order"
           - "main call site (main \"$@\")"
         markdown:
-          - "# Title — one line"
+          - "# Title -- one line"
           - "One-sentence summary"
           - "Key concept or TL;DR"
           - "Usage / quickstart"
@@ -407,9 +407,9 @@ importance_flow:
       description: "Within a single expression"
       rule: "Subject (what acts) before predicate (what happens); condition before consequence"
       examples:
-        - "result = compute(x) — not compute(x) => result"
-        - "return early if invalid? — not if invalid? then return end"
-        - "important && secondary — not secondary && important"
+        - "result = compute(x) -- not compute(x) => result"
+        - "return early if invalid? -- not if invalid? then return end"
+        - "important && secondary -- not secondary && important"
 
   smells:
     private_before_public:
@@ -452,14 +452,14 @@ importance_flow:
       Reflow this file top-to-bottom by descending importance.
       Most important content first: public interface, core logic, guards.
       Least important last: private helpers, cleanup, edge cases.
-      Preserve all logic exactly — only reorder sections.
+      Preserve all logic exactly -- only reorder sections.
       Output the complete reflowed file.
 
   linting:
     ruby_checks:
       - "private before def: scan for 'private' keyword followed immediately by a method that is called from public context"
       - "rescue wraps def body: def foo ... rescue ... end pattern"
-      - "optional param before required: def foo(a = 1, b) — SyntaxError in Ruby but watch for keyword variants"
+      - "optional param before required: def foo(a = 1, b) -- SyntaxError in Ruby but watch for keyword variants"
     yaml_checks:
       - "examples before rules: scan for 'example' or 'template' key appearing before 'rules' or 'detect'"
       - "ADJUSTABLE before PROTECTED"
@@ -468,33 +468,33 @@ importance_flow:
       - "main call site before function definitions"
 
 prose_style:
-  # Strunk & White — Elements of Style — applied to every word in every file.
+  # Strunk & White -- Elements of Style -- applied to every word in every file.
   # Rule zero: if a word does not add meaning, remove it.
 
   source: "Strunk & White, The Elements of Style (4th ed.) mapped to code"
 
-  principle: "omit needless words — in names, comments, messages, and data"
+  principle: "omit needless words -- in names, comments, messages, and data"
 
   rules:
     omit_needless_words:
       description: "Every identifier, comment, and string is as short as it can be without losing meaning."
       banned_filler_identifiers:
-        - data       # → name what the data IS: axiom_list, violation_count, persona
-        - info       # → specific noun: file_stats, build_result
+        - data       # -> name what the data IS: axiom_list, violation_count, persona
+        - info       # -> specific noun: file_stats, build_result
         - thing      # always replaceable
-        - item       # → element, axiom, violation, persona
-        - object     # → the actual Ruby class name
-        - value      # → cost, score, count, ratio
+        - item       # -> element, axiom, violation, persona
+        - object     # -> the actual Ruby class name
+        - value      # -> cost, score, count, ratio
         - result     # only acceptable as a Result monad variable; never as a concept
-        - temp       # → name what it holds
+        - temp       # -> name what it holds
         - tmp        # same
         - stuff       # unconditionally banned
         - misc       # unconditionally banned
-        - helper     # → name what the help IS
-        - util       # → name the domain
-        - manager    # → Coordinator, Registry, Router, Store
-        - handler    # → name what is handled: ViolationReporter, AxiomLoader
-        - processor  # → name the transform: Reflower, Enforcer, Scanner
+        - helper     # -> name what the help IS
+        - util       # -> name the domain
+        - manager    # -> Coordinator, Registry, Router, Store
+        - handler    # -> name what is handled: ViolationReporter, AxiomLoader
+        - processor  # -> name the transform: Reflower, Enforcer, Scanner
       banned_filler_phrases:
         - "in order to"
         - "the fact that"
@@ -549,7 +549,7 @@ prose_style:
         - [scan, enforce, reflow, review]          # all verbs, all present tense
         - [shallow, own, deep, full]               # all adjectives
         - [build, load, write, parse]              # all verbs
-      anti_pattern: "scan / do_enforcement / run_reflow — inconsistent verb form"
+      anti_pattern: "scan / do_enforcement / run_reflow -- inconsistent verb form"
 
     do_not_explain_the_obvious:
       description: "Comments explain WHY, never WHAT the next line does."
@@ -569,7 +569,7 @@ prose_style:
           - "Could not process"
         good:
           - "GroundedContext: file not found: lib/executor/context.rb"
-          - "Enforcer: ABSOLUTE axiom DRY violated in pipeline.rb:42 — duplicate require"
+          - "Enforcer: ABSOLUTE axiom DRY violated in pipeline.rb:42 -- duplicate require"
           - "LLM: token budget exceeded (128 000 / 60 000). Pass depth: :shallow to reduce context."
 
     zombie_nouns:
@@ -577,7 +577,7 @@ prose_style:
       examples:
         bad:  [the refactoring of, a validation of, the enforcement of, the processing of]
         good: [refactor, validate, enforce, process]
-      pattern: "If a noun ends in -tion, -ment, -ance, -ence, -ity, and a verb form exists — use the verb."
+      pattern: "If a noun ends in -tion, -ment, -ance, -ence, -ity, and a verb form exists -- use the verb."
 
   linting:
     applies_to: [comments, string_literals, error_messages, yaml_descriptions, method_names, variable_names]
@@ -615,7 +615,7 @@ aesthetic_excellence:
         test: "All names in a module drawn from one semantic field (e.g. all judicial, all musical, all geometric)"
       composable_chain:
         points: 1
-        test: "Method chain reads as natural subject→verb→object English"
+        test: "Method chain reads as natural subject->verb->object English"
       orthogonal_module:
         points: 2
         test: "Module has zero shared mutable state with any other module"
@@ -632,11 +632,11 @@ aesthetic_excellence:
       Methods and modules so well-crafted they serve as positive examples
       in future LLM prompts. Stored with name, file, why it's beautiful.
     fields: [name, file, lines, beauty_score, virtue, why]
-    injection: "Cited in LLM system message as: EXEMPLARS: {name} in {file} — {why}"
+    injection: "Cited in LLM system message as: EXEMPLARS: {name} in {file} -- {why}"
 
   constitutional_alignment:
     description: >
-      For each axiom, a score 0–10 of how well the codebase embodies it —
+      For each axiom, a score 0-10 of how well the codebase embodies it --
       not just avoids violations. Rendered as a sparkline in `status`.
     sparkline_chars: "░▒▓█"
     display_example: "DRY ████░  KISS █████  ZEN ███░░"
@@ -653,8 +653,8 @@ aesthetic_excellence:
       Code that reads as fluent English prose when spoken aloud is structurally beautiful.
       Injected as a heuristic into the LLM prompt.
     prompt_hint: >
-      Read your output aloud (mentally). If it flows as natural English —
-      subject acts on object, guards come first, the important thing is named first —
+      Read your output aloud (mentally). If it flows as natural English --
+      subject acts on object, guards come first, the important thing is named first --
       then it is well-structured. Revise until it reads cleanly.
 
   interface_ratio:
@@ -666,6 +666,6 @@ aesthetic_excellence:
   fractal_consistency:
     description: >
       The same design principles applied at method, class, module, and system level.
-      When detected at all four levels simultaneously, the codebase is self-similar — beautiful.
+      When detected at all four levels simultaneously, the codebase is self-similar -- beautiful.
     levels: [method, class, module, system]
     detection: "DRY, KISS, and inverted pyramid each satisfied at all four levels"

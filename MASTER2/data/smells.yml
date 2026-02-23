@@ -254,14 +254,14 @@ importance_flow:
     autofix: true
 
   rescue_wraps_def:
-    check: "def foo / rescue / end pattern — rescue wrapping entire method body"
+    check: "def foo / rescue / end pattern -- rescue wrapping entire method body"
     fix: "Narrow rescue to the expression that can raise; move guard to first line"
     severity: medium
     autofix: false
 
   required_after_optional:
-    check: "def foo(a=1, b) — required keyword param after optional positional"
-    fix: "Reorder: required positional → optional positional → required kw → optional kw"
+    check: "def foo(a=1, b) -- required keyword param after optional positional"
+    fix: "Reorder: required positional -> optional positional -> required kw -> optional kw"
     severity: high
     autofix: true
 
@@ -279,7 +279,7 @@ importance_flow:
 
   yaml_adjustable_before_protected:
     check: "ADJUSTABLE protection entry appears before PROTECTED entry in same YAML file"
-    fix: "Reorder: ABSOLUTE → PROTECTED → ADJUSTABLE"
+    fix: "Reorder: ABSOLUTE -> PROTECTED -> ADJUSTABLE"
     severity: medium
     autofix: true
 
@@ -296,13 +296,13 @@ importance_flow:
     autofix: false
 
   argument_entropy:
-    check: "Method has 4+ params and they are not ordered: required → optional → keyword → block"
+    check: "Method has 4+ params and they are not ordered: required -> optional -> keyword -> block"
     fix: "Reorder params by importance; extract to options hash if > 5"
     severity: medium
     autofix: true
 
 strunk_white:
-  # Prose quality detectors — Strunk & White applied to identifiers, comments, and strings.
+  # Prose quality detectors -- Strunk & White applied to identifiers, comments, and strings.
   # Reference: data/design_codex.yml prose_style, axiom STRUNK_WHITE
 
   filler_identifier:
@@ -313,7 +313,7 @@ strunk_white:
 
   vague_noun_identifier:
     check: "Method or class named *Manager, *Handler, *Processor, *Helper, *Util, *Service without a domain prefix"
-    fix: "Name by domain role: ViolationReporter, AxiomLoader, CostTracker — not DataManager"
+    fix: "Name by domain role: ViolationReporter, AxiomLoader, CostTracker -- not DataManager"
     severity: medium
     autofix: false
 

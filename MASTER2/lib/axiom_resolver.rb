@@ -34,7 +34,7 @@ module MASTER
       idx_a = order.index(a)
       idx_b = order.index(b)
 
-      # Neither in precedence list — no resolution possible
+      # Neither in precedence list -- no resolution possible
       return Result.err("No precedence defined for #{a} vs #{b}") if idx_a.nil? && idx_b.nil?
 
       # Lower index = higher precedence

@@ -3,7 +3,7 @@
 module MASTER
   module Scan
     module Rules
-      # CodeStyle — flags namespace inconsistencies, mixed symbol/string access,
+      # CodeStyle -- flags namespace inconsistencies, mixed symbol/string access,
       # missing dirty-flag on mutation, and ASCII decoration comments.
       # Migrated from Review::Scanner::CHECKS.
       module CodeStyle
@@ -27,7 +27,7 @@ module MASTER
           }.freeze,
           ascii_decoration: {
             pattern:  /^#\s*[-=]{3,}/,
-            message:  "ASCII decoration comment adds visual noise — use plain # Section header",
+            message:  "ASCII decoration comment adds visual noise -- use plain # Section header",
             severity: :minor,
           }.freeze,
         }.freeze

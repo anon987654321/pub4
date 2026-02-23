@@ -13,22 +13,11 @@ module MASTER
         end
       end
 
-      def spinner(message = nil, style: :dots)
-        require "tty-spinner"
-        TTY::Spinner.new(
-          "  :spinner #{message}",
-          format:       style == :line ? :classic : :dots,
-          success_mark: MASTER::UI::ICONS[:success],
-          error_mark:   MASTER::UI::ICONS[:failure],
-        )
-      rescue LoadError
-        SubtleSpinner.new(message.to_s, style: style)
+      def spinner(message = nil, style: :line)
+        MASTER::UI::SubtleSpinner.new(message)
       end
 
       def multi_spinner
-        require "tty-spinner"
-        TTY::Spinner::Multi.new("[:spinner] Processing", format: :dots)
-      rescue LoadError
         Object.new.tap { |s| s.define_singleton_method(:register) { |*| spinner } }
       end
 

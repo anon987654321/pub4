@@ -649,7 +649,7 @@
   category: layout
   protection: PROTECTED
   priority: 9
-  title: Inverted Pyramid — Most Important First
+  title: Inverted Pyramid -- Most Important First
   statement: >
     Every file, module, class, method, and document is laid out top-to-bottom
     by descending importance. Readers and LLMs consume from the top; the most
@@ -659,11 +659,11 @@
   source: Journalism inverted pyramid + LLM context-window locality
   suggest: >
     Reflow this unit so the most critical content is at the top.
-    For Ruby: constants → public interface → core logic → helpers → private.
-    For YAML: metadata → ABSOLUTE rules → PROTECTED → ADJUSTABLE → examples.
-    For Zsh: shebang+options → constants → main function → helpers → call site.
-    For Markdown: title+summary → key concepts → usage → detail → edge cases.
-    For method bodies: guard clauses → happy path → error handling → cleanup.
+    For Ruby: constants -> public interface -> core logic -> helpers -> private.
+    For YAML: metadata -> ABSOLUTE rules -> PROTECTED -> ADJUSTABLE -> examples.
+    For Zsh: shebang+options -> constants -> main function -> helpers -> call site.
+    For Markdown: title+summary -> key concepts -> usage -> detail -> edge cases.
+    For method bodies: guard clauses -> happy path -> error handling -> cleanup.
   auto_fixable: true
   llm_strategies: [reflow_by_importance, hoist_public_interface, sink_private_helpers]
   smells: [private_before_public, helpers_before_core, detail_before_summary,
@@ -672,7 +672,7 @@
   category: prose
   protection: PROTECTED
   priority: 9
-  title: "Elements of Style — Brevity, Clarity, Meaning"
+  title: "Elements of Style -- Brevity, Clarity, Meaning"
   statement: >
     Every word, name, and character in every file earns its place or is cut.
     Apply Strunk & White at every layer: identifier names, method bodies,
@@ -696,7 +696,7 @@
     positive_form:
       statement: "Put statements in positive form. Avoid tame, colourless, hesitating negatives."
       code_translation: "Guard clauses state what is wrong, not what is missing.
-        'raise if path.nil?' → 'raise \"path required\"'. Prefer presence checks over absence checks."
+        'raise if path.nil?' -> 'raise \"path required\"'. Prefer presence checks over absence checks."
     definite_concrete:
       statement: "Prefer the specific to the general, the definite to the vague, the concrete to the abstract."
       code_translation: "Name things by what they ARE, not what they contain.
@@ -711,7 +711,7 @@
       code_translation: "In a method chain, the transforming verb comes last.
         In an error message, the actionable instruction is the final clause."
     no_qualifiers:
-      statement: "Do not overstate. Rather, very, little, pretty — cut them."
+      statement: "Do not overstate. Rather, very, little, pretty -- cut them."
       code_translation: "No 'basically', 'essentially', 'actually', 'simply', 'just',
         'really', 'quite' in comments, messages, or doc strings."
     do_not_explain_the_obvious:
@@ -737,7 +737,7 @@
   category: craft
   protection: PROTECTED
   priority: 8
-  title: Zen Method — One Thing, Perfectly
+  title: Zen Method -- One Thing, Perfectly
   statement: >
     Every method does exactly one thing at exactly one level of abstraction.
     It has the right name (a single active verb or specific noun), fits in 7 lines
@@ -759,10 +759,10 @@
   category: craft
   protection: ADJUSTABLE
   priority: 7
-  title: Aesthetic Virtue — Exalt Beautiful Code
+  title: Aesthetic Virtue -- Exalt Beautiful Code
   statement: >
     Code quality is not only the absence of defects; it is the presence of beauty.
-    Beautiful code is recognised, named, and celebrated — not just the absence of noise.
+    Beautiful code is recognised, named, and celebrated -- not just the absence of noise.
     The system actively scores beauty: naming elegance, composability, orthogonality,
     domain language purity, density, and constitutional alignment.
     A codebase that satisfies its own axioms is self-referentially beautiful.
@@ -782,6 +782,6 @@
     exemplar:
       description: "A method or module so well-crafted it is stored as a positive example for future LLM prompts"
     constitutional_alignment:
-      description: "0–10 score per axiom: how well the codebase embodies the axiom (not just avoids violating it)"
+      description: "0-10 score per axiom: how well the codebase embodies the axiom (not just avoids violating it)"
   auto_fixable: false
   llm_strategies: [identify_exemplar, score_beauty, praise_virtue, store_exemplar]

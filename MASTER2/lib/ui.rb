@@ -19,25 +19,25 @@ module MASTER
     # Boot time for dmesg-style timestamps
     MASTER_BOOT_TIME = Time.now
 
-    # Typography icons — standardised symbol set
+    # Typography icons -- standardised symbol set
     ICONS = {
-      success:   "✓",
-      failure:   "✗",
+      success:   "[ok]",
+      failure:   "[fail]",
       warning:   "⚠",
       info:      "ℹ",
       pending:   "◦",
-      detail:    "·",
-      bullet:    "•",
-      arrow:     "→",
+      detail:    "*",
+      bullet:    "*",
+      arrow:     "->",
       chevron:   "❯",   # prompt character only
       pipe:      "│",   # tree / indent continuation
-      thinking:  "…",
-      done:      "✓",
+      thinking:  "...",
+      done:      "[ok]",
       prompt_ok: "❯",
-      prompt_err: "✗",
+      prompt_err: "[fail]",
       lock:      "🔒",
-      separator: "—",
-      ellipsis:  "…",   # U+2026, one glyph
+      separator: "--",
+      ellipsis:  "...",   # U+2026, one glyph
       lightning: "⚡",
       gear:      "⚙",
     }.freeze

@@ -3,8 +3,8 @@
 module MASTER
   module Analysis
     class Introspection
-      COUNCIL_RATING_EXCELLENT   = 8  # council score ≥ this → strong alignment
-      COUNCIL_RATING_ACCEPTABLE  = 6  # council score ≥ this → fundamentals solid
+      COUNCIL_RATING_EXCELLENT   = 8  # council score ≥ this -> strong alignment
+      COUNCIL_RATING_ACCEPTABLE  = 6  # council score ≥ this -> fundamentals solid
 
       class << self
         def print_prose_summary(results)

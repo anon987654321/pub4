@@ -187,7 +187,7 @@ module MASTER
       # Install signal handlers for crash recovery
       # @return [void]
       def install_crash_handlers
-        # at_exit runs on normal exit/INT/TERM — save session before process ends
+        # at_exit runs on normal exit/INT/TERM -- save session before process ends
         at_exit { save_on_crash }
 
         %w[INT TERM].each do |signal|

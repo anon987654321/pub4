@@ -125,7 +125,13 @@ module MASTER
         end
       end
 
-      public :select_model
+      # Same-tier paid peers for graceful fallback (excludes primary and :free tier models).
+      def tier_peers(primary_id)
+        tier = classify_tier(primary_id)
+        (model_tiers[tier] || []).reject { |id| id == primary_id || classify_tier(id) == :free }
+      end
+
+      public :select_model, :tier_peers
     end
   end
 end

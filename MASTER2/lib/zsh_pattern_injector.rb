@@ -2,7 +2,7 @@
 
 require "yaml"
 
-# ZshPatternInjector — wires data/zsh_patterns.yml into three active enforcement points:
+# ZshPatternInjector -- wires data/zsh_patterns.yml into three active enforcement points:
 #   1. System prompt: tells LLM to avoid legacy forks (preventive)
 #   2. shell_command tool: returns SUGGESTION when LLM uses a banned tool (enforcement)
 #   3. Lint stage: detects forbidden tools in generated shell code blocks (detective)
@@ -27,7 +27,7 @@ module MASTER
         base = (data["forbidden_commands"] || []).each_with_object({}) do |entry, h|
           h[entry["command"]] = entry["replacement"]
         end
-        # constitution.yml is ONE_SOURCE for the banned tool list — supplement base with any extras
+        # constitution.yml is ONE_SOURCE for the banned tool list -- supplement base with any extras
         extra = begin
           YAML.safe_load_file(CONSTITUTION)&.dig("constraints", "banned_tools") || []
         rescue StandardError
@@ -42,8 +42,8 @@ module MASTER
     def prompt_section
       return "" if forbidden.empty?
 
-      lines = ["Zsh native patterns (mandatory — never use legacy forks in shell code):"]
-      forbidden.each { |cmd, replacement| lines << "  NEVER `#{cmd}` → #{replacement}" }
+      lines = ["Zsh native patterns (mandatory -- never use legacy forks in shell code):"]
+      forbidden.each { |cmd, replacement| lines << "  NEVER `#{cmd}` -> #{replacement}" }
       lines << "  Use zsh glob qualifiers (**/*.rb(.) etc.) instead of find."
       lines << "  Use doas, not sudo, on OpenBSD."
       lines.join("\n")

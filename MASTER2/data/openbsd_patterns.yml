@@ -1,4 +1,4 @@
-# OpenBSD system knowledge — agents generate OpenBSD-native commands
+# OpenBSD system knowledge -- agents generate OpenBSD-native commands
 
 service_management:
   enable: "rcctl enable ${service}"
@@ -75,7 +75,7 @@ config_validation:
       - "set skip on lo"
     warnings:
       - pattern: "pass all"
-        message: "Overly permissive — restrict to specific interfaces and protocols"
+        message: "Overly permissive -- restrict to specific interfaces and protocols"
       - pattern: "block drop in quick on egress proto tcp from <bruteforce>"
         absent_message: "Consider brute-force table for SSH protection"
 
@@ -87,7 +87,7 @@ config_validation:
       - "zone:"
     warnings:
       - pattern: "rrl-size"
-        absent_message: "Missing RRL config — vulnerable to DNS amplification DDoS"
+        absent_message: "Missing RRL config -- vulnerable to DNS amplification DDoS"
       - pattern: "hide-version"
         absent_message: "Consider hide-version: yes to reduce information disclosure"
 
@@ -100,7 +100,7 @@ config_validation:
       - pattern: "hsts"
         absent_message: "Consider HSTS header for HTTPS enforcement"
       - pattern: "directory auto index"
-        message: "Directory listing enabled — intentional?"
+        message: "Directory listing enabled -- intentional?"
 
   smtpd.conf:
     daemon: smtpd
@@ -111,9 +111,9 @@ config_validation:
       - "match"
     warnings:
       - pattern: "match from any action relay"
-        message: "Open relay risk — restrict relay to authenticated senders"
+        message: "Open relay risk -- restrict relay to authenticated senders"
       - pattern: "tls"
-        absent_message: "No TLS configured — all mail sent in plaintext"
+        absent_message: "No TLS configured -- all mail sent in plaintext"
 
   relayd.conf:
     daemon: relayd
@@ -122,7 +122,7 @@ config_validation:
       - "relay"
     warnings:
       - pattern: "timeout"
-        absent_message: "No timeout configured — consider connection timeouts"
+        absent_message: "No timeout configured -- consider connection timeouts"
 
   acme-client.conf:
     daemon: acme-client
@@ -138,7 +138,7 @@ config_validation:
       - "permit"
     warnings:
       - pattern: "nopass"
-        message: "nopass allows passwordless privilege escalation — intentional?"
+        message: "nopass allows passwordless privilege escalation -- intentional?"
       - pattern: "permit keepenv"
         message: "keepenv may leak sensitive env vars to elevated process"
 
@@ -147,9 +147,9 @@ config_validation:
     man: sshd_config.5
     warnings:
       - pattern: "PermitRootLogin yes"
-        message: "Root login enabled — use PermitRootLogin prohibit-password at minimum"
+        message: "Root login enabled -- use PermitRootLogin prohibit-password at minimum"
       - pattern: "PasswordAuthentication yes"
-        message: "Password auth enabled — consider key-only authentication"
+        message: "Password auth enabled -- consider key-only authentication"
       - pattern: "X11Forwarding yes"
         message: "X11 forwarding increases attack surface on headless servers"
 
@@ -166,4 +166,4 @@ config_validation:
       - "server:"
     warnings:
       - pattern: "access-control: 0.0.0.0/0 allow"
-        message: "Open resolver — restrict to localhost and trusted ranges"
+        message: "Open resolver -- restrict to localhost and trusted ranges"

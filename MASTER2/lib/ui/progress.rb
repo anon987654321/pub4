@@ -45,8 +45,8 @@ module MASTER
       end
     end
 
-    def spinner(message = "Processing…", style: :dots)
-      s = Spinner.new(message, style: style)
+    def spinner(message = "Processing...")
+      s = Spinner.new(message)
       s.auto_spin
       result = yield
       s.success("Done")
@@ -62,8 +62,8 @@ module MASTER
       bar.finish
     end
 
-    def thinking(message = "thinking…")
-      s = Spinner.new(message, style: :braille)
+    def thinking(message = "thinking...")
+      s = Spinner.new(message)
       s.auto_spin
       if block_given?
         result = yield

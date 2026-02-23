@@ -21,7 +21,7 @@ module MASTER
         Tempfile.create(%w[master .rb]) do |f|
           f.write(code)
           f.flush
-          # Pledge/unveil must NOT be called here — they permanently restrict the parent
+          # Pledge/unveil must NOT be called here -- they permanently restrict the parent
           # process, not just the child. The child Ruby process is already sandboxed by
           # IO.popen + limited code_execution guards in executor/tools.rb.
           output = IO.popen([RbConfig::CONFIG["ruby_install_name"], f.path], err: %i[child out], &:read)

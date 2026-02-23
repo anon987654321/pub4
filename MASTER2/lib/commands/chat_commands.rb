@@ -16,7 +16,7 @@ module MASTER
         }
 
         loop do
-          print "→ "
+          print "-> "
           input = $stdin.gets&.strip
           break if input.nil? || input.empty? || input.downcase == "exit"
 

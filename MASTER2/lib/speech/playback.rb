@@ -6,7 +6,7 @@ module MASTER
     module Playback
       module_function
 
-      # Download audio from URL and play it — async-http (Falcon ecosystem)
+      # Download audio from URL and play it -- async-http (Falcon ecosystem)
       def download_and_play(url, temp_file)
         require "async"
         require "async/http/internet"

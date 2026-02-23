@@ -241,7 +241,7 @@ module MASTER
           end,
         }
         File.write(state_path, JSON.generate(state))
-        puts "  Scan state saved → var/scan_state.json"
+        puts "  Scan state saved -> var/scan_state.json"
 
         Result.ok(state)
       end
@@ -552,7 +552,7 @@ module MASTER
         end
       end
 
-      # `deps [symbol]` — show what files require a given module/symbol.
+      # `deps [symbol]` -- show what files require a given module/symbol.
       # Uses DependencyMap which is more accurate than grepping require lines.
       def print_deps(args)
         require_relative "../dependency_map"
@@ -580,13 +580,13 @@ module MASTER
             puts "deps: #{matches.size} file(s) reference #{symbol}"
             matches.each_key { |filepath| puts "  #{filepath.sub("#{lib_root}/", "")}" }
           end
-          # Record if agent was greping for deps — friction signal 8
+          # Record if agent was greping for deps -- friction signal 8
           MASTER::Friction::FrictionRecorder.record(:dep_graph_blind, symbol: symbol) if args.include?("grep")
         end
         HANDLED
       end
 
-      # `introspect` — session retrospective: friction events, remedies, config drift.
+      # `introspect` -- session retrospective: friction events, remedies, config drift.
       def print_introspection(args)
         require_relative "../introspection/session_retrospective"
         use_llm = args.to_s.include?("--llm")
@@ -595,12 +595,12 @@ module MASTER
         HANDLED
       end
 
-      # `config-drift` — find YAML keys in data/ with no Ruby reader.
+      # `config-drift` -- find YAML keys in data/ with no Ruby reader.
       def print_config_drift
         require_relative "../introspection/session_retrospective"
         orphans = Friction::SessionRetrospective.audit_config_drift
         if orphans.empty?
-          puts "config-drift: clean — all YAML keys have Ruby readers"
+          puts "config-drift: clean -- all YAML keys have Ruby readers"
         else
           puts "config-drift: #{orphans.size} orphaned key(s):"
           orphans.each { |orphan| puts "  #{orphan[:file]}: #{orphan[:key]}" }
@@ -608,7 +608,7 @@ module MASTER
         HANDLED
       end
 
-      # `architect` — automated fresh-eyes architectural health assessment.
+      # `architect` -- automated fresh-eyes architectural health assessment.
       def print_architect
         require_relative "../introspection/architect"
         report = Friction::Architect.run
@@ -616,7 +616,7 @@ module MASTER
         HANDLED
       end
 
-      # `converge` — iterate SelfRefactor until violations plateau (convergence).
+      # `converge` -- iterate SelfRefactor until violations plateau (convergence).
       # Runs on every invocation, not just selfrun, because quality is continuous.
       def run_converge(args)
         return Result.err("SelfRefactor not loaded") unless defined?(SelfRefactor)
@@ -635,7 +635,7 @@ module MASTER
         final   = SelfRefactor.count_violations
         delta   = baseline - final
 
-        puts "converge0: done in #{summary[:iterations]} iterations · #{delta >= 0 ? "-#{delta}" : "+#{delta.abs}"} violations · #{summary[:improvements]} improvements · stopped: #{summary[:stop_reason]}"
+        puts "converge0: done in #{summary[:iterations]} iterations * #{delta >= 0 ? "-#{delta}" : "+#{delta.abs}"} violations * #{summary[:improvements]} improvements * stopped: #{summary[:stop_reason]}"
         puts "converge0: #{final} violations remaining" if final.positive?
 
         Result.ok(summary)

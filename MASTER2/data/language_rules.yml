@@ -23,4 +23,4 @@ ruby_footguns:
     - id: no_redefine_warn_without_kernel
       bad: "module UI; def self.warn(m); warn m; end; end"
       good: "module UI; def self.warn(m); Kernel.warn m; end; end"
-      reason: "Same as above — module-level warn shadows Kernel.warn"
+      reason: "Same as above -- module-level warn shadows Kernel.warn"
