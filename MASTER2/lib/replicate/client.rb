@@ -58,10 +58,10 @@ module MASTER
             return { id: id, output: data[:output] }
           when "failed", "canceled"
             return { error: data[:error] || "Generation failed" }
-          when "processing", "starting"
+          when "processing", "starting", "queued"
             sleep POLL_INTERVAL
           else
-            return { error: "Unknown status: #{data&.dig(:status)}" }
+            return { error: "Unknown status: #{data&.dig(:status) || 'nil'}" }
           end
         end
       rescue StandardError => e

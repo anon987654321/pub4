@@ -36,7 +36,7 @@ module MASTER
       Prescan.run(MASTER.root) if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
 
       unless ENV["OPENROUTER_API_KEY"]
-        UI.warn("llm0: OPENROUTER_API_KEY not set")
+        UI.warn("models0: OPENROUTER_API_KEY not set")
         UI.info("   #{UI.icon(:arrow)} export OPENROUTER_API_KEY=sk-or-v1-...")
       end
 
@@ -50,7 +50,7 @@ module MASTER
       # Session name
       session_label = session.metadata_value(:name) || UI.truncate_id(session.id)
       name_or_id    = session.metadata_value(:name) ? session_label : "id=#{session_label}"
-      puts "session0 at master0: #{name_or_id}"
+      puts "session0: #{name_or_id}"
 
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
@@ -169,7 +169,8 @@ module MASTER
         show_violations(result.value)
         session.add_assistant(output, model: result.value[:model], cost: result.value[:cost]) if output
       else
-        $stderr.puts UI.dim("! #{result.failure}")
+        # Print errors to stdout so they're always visible in the REPL
+        puts "! #{result.failure}"
       end
     end
 
@@ -193,7 +194,7 @@ module MASTER
       # Compact one-liners to stderr — no noise when clean
       $stderr.puts UI.dim("council0: security veto#{cv&.any? ? " (#{cv.join(', ')})" : ""}") if sv
       $stderr.puts UI.dim("enforcer0: #{UI.pluralize(av.size, 'violation')} — #{av.join(', ')}") if av&.any?
-      $stderr.puts UI.dim("zsh0: #{UI.pluralize(zv.size, 'violation')} — #{zv.map { |v| v[:tool] }.join(', ')}") if zv&.any?
+      $stderr.puts UI.dim("lint0: #{UI.pluralize(zv.size, 'violation')} — #{zv.map { |v| v[:tool] }.join(', ')}") if zv&.any?
       bs = value[:beauty_score]
       $stderr.puts UI.dim("✦ #{bs}") if bs&.> 0
     end
