@@ -62,6 +62,7 @@ require_relative "staging"
 require_relative "ui"
 require_relative "output"
 require_relative "zsh_pattern_injector"
+require_relative "project_memory"
 require_relative "undo"
 require_relative "commands"
 

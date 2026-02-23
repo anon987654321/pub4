@@ -9,3 +9,4 @@ nul
 OUTPUT_*.md
 var/
 coverage/
+.master/
