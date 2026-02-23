@@ -245,34 +245,17 @@ module MASTER
         cfg&.dig(:api)&.to_s == "replicate"
       end
 
-      # Execute text-generation via Replicate::LLM (bypass ruby_llm / OpenRouter)
+      # Execute text-generation via Replicate::Client.complete (single-hop, no intermediate module)
       def execute_replicate_llm_request(prompt:, messages:, model:, reasoning:)
-        require_relative "../replicate/llm"
-        require_relative "../replicate/client"
-
-        # Flatten messages + prompt into a single prompt string.
-        # Replicate's predictions API uses a single prompt field, not a messages array.
-        msg_array  = build_message_array(prompt, messages)
-        sys_msg    = msg_array.find { |msg| msg[:role] == "system" }
-        # Interleave user/assistant turns into a conversation-style prompt
-        turns = msg_array.reject { |msg| msg[:role] == "system" }
-        flat_prompt = if turns.size == 1
-                        turns.first[:content]
-                      else
-                        turns.map { |msg| "#{msg[:role].capitalize}: #{msg[:content]}" }.join("\n\n")
-                      end
+        msg_array   = build_message_array(prompt, messages)
+        sys_msg     = msg_array.find { |msg| msg[:role] == "system" }
+        turns       = msg_array.reject { |msg| msg[:role] == "system" }
+        flat_prompt = turns.size == 1 ? turns.first[:content] : turns.map { |msg| "#{msg[:role].capitalize}: #{msg[:content]}" }.join("\n\n")
 
         system_prompt = sys_msg&.dig(:content)
+        max_tokens    = reasoning ? 8_192 : Replicate::Client::DEFAULT_MAX_TOKENS
 
-        # Reasoning budget hint → increase max_tokens for reasoning models
-        max_tokens = reasoning ? 8_192 : Replicate::LLM::DEFAULT_MAX_TOKENS
-
-        Replicate::LLM.complete(
-          model,
-          flat_prompt,
-          system_prompt: system_prompt,
-          max_tokens: max_tokens,
-        )
+        Replicate::Client.complete(model, flat_prompt, system_prompt: system_prompt, max_tokens: max_tokens)
       rescue StandardError => err
         Result.err("Replicate LLM request failed: #{err.message}", category: :infrastructure)
       end

@@ -111,28 +111,12 @@ module MASTER
       end
 
       # Lightweight violation tally using literal pattern matching only (no LLM).
+      # Delegates to Scan.run when available; falls back to direct check otherwise.
       # Returns { total:, autofix_eligible:, files:, by_file: { path => [violations] } }
       def violation_summary(path)
-        return { total: 0, autofix_eligible: 0, files: 0, by_file: {} } unless defined?(CodeReview::Violations)
+        return { total: 0, autofix_eligible: 0, files: 0, by_file: {} } unless defined?(Scan)
 
-        rb_files = Dir.glob(File.join(path, "**", "*.rb")).reject { |f| f.include?("/vendor/") || f.include?("/tmp/") }
-        by_file  = {}
-        total    = 0
-        autofix  = 0
-
-        rb_files.each do |file|
-          code = File.read(file)
-          violations = CodeReview::Violations.check_literal(code)
-          next if violations.empty?
-
-          by_file[file] = violations
-          total   += violations.size
-          autofix += violations.count { |v| v[:autofix] }
-        rescue StandardError
-          next
-        end
-
-        { total: total, autofix_eligible: autofix, files: by_file.size, by_file: by_file }
+        Scan.run(path, depth: :quick).tap { |r| r[:files] = r[:scanned] }
       rescue StandardError
         { total: 0, autofix_eligible: 0, files: 0, by_file: {} }
       end

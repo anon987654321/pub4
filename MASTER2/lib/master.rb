@@ -112,6 +112,7 @@ end
 require_relative "agent"
 
 # Meta/Self-improvement
+require_relative "scan"
 require_relative "review"
 require_relative "learnings"
 require_relative "file_processor"
@@ -149,6 +150,8 @@ require_relative "boot/modes"
 %w[server].each do |mod|
   MASTER.safe_require(mod)
 end
+
+Scan = MASTER::Scan if defined?(MASTER::Scan)
 
 # Boot-time self-check
 if ENV["MASTER_SELF_CHECK"] == "true" && defined?(MASTER::Enforcement)
