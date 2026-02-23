@@ -8,7 +8,7 @@ require_relative "pressure_pass"
 module MASTER
   # Pipeline - Uses Executor with hybrid patterns
   class Pipeline
-    DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
+    DEFAULT_STAGES = %i[intake compress guard route council ask strunk lint render].freeze
     ALLOWED_STAGES = %w[Intake Compress Guard Route Council Ask Lint Render Execute].freeze
     MAX_INPUT_LENGTH = 100_000 # ~25k tokens
 

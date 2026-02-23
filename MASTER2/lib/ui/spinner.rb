@@ -69,16 +69,13 @@ module MASTER
 
       def success(msg = nil)
         stop
-        line = "\e[38;5;82m  #{MASTER::UI::ICONS[:success]}"
-        line += "  #{msg}" if msg && !msg.empty?
-        puts line + RESET
+        # dmesg style: silent success -- just clear the spinner line
       end
 
       def error(msg = nil)
         stop
-        line = "\e[38;5;196m  #{MASTER::UI::ICONS[:failure]}"
-        line += "  #{msg}" if msg && !msg.empty?
-        puts line + RESET
+        msg_str = msg && !msg.empty? ? " #{msg}" : ""
+        $stderr.puts "!#{msg_str}"
       end
 
       def update(msg) = nil  # no-op: spinner is frameless
