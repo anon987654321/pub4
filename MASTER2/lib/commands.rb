@@ -474,6 +474,9 @@ module MASTER
       when "forget-goal"
         project_forget
         HANDLED
+      when "snapshot", "showp"
+        run_snapshot(args)
+        HANDLED
       when "version", "ver", "--version", "-v"
         puts "MASTER #{MASTER::VERSION}"
         HANDLED
