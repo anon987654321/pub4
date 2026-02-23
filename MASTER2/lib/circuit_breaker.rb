@@ -4,9 +4,12 @@
 begin
   require "stoplight"
   # Silence Stoplight's default stderr notifier -- circuit state is managed internally
-  Stoplight::Light.default_notifiers = [] if Stoplight::Light.respond_to?(:default_notifiers=)
-  # Stoplight 4.x+ moved default_notifiers to top-level module
-  Stoplight.default_notifiers = [] if Stoplight.respond_to?(:default_notifiers=)
+  # Stoplight 4.x+ uses top-level module; older uses Stoplight::Light
+  if Stoplight.respond_to?(:default_notifiers=)
+    Stoplight.default_notifiers = []
+  elsif Stoplight::Light.respond_to?(:default_notifiers=)
+    Stoplight::Light.default_notifiers = []
+  end
 rescue LoadError
   # Simple mock for when Stoplight is not available
   module Stoplight
