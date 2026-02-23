@@ -26,11 +26,7 @@ module MASTER
         understand_context(goal)
 
         while @step < @max_steps
-          begin
-            check_timeout!(start_time)
-          rescue Result::Error => err
-            return Result.err(err.message)
-          end
+          return err if (err = timeout_error_for(start_time))
 
           @step += 1
 
@@ -100,17 +96,7 @@ module MASTER
 
           # Injection defense: halt loop on detected injection (gist item #3).
           # Sanitize-and-continue is insufficient — abort with error instead.
-          sanitizer = if defined?(Security::InjectionGuard)
-                        Security::InjectionGuard
-                      else
-                        (defined?(Security::Sanitizer) ? Security::Sanitizer : nil)
-                      end
-          if sanitizer && !sanitizer.safe?(raw_observation)
-            return Result.err(
-              "Injection attempt detected in tool response from '#{tool_name}'. Aborting.",
-              category: :validation,
-            )
-          end
+          return err if (err = injection_error_for(raw_observation, source: tool_name))
 
           observation = raw_observation.to_s
           @history.last[:observation] = observation
