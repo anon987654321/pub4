@@ -105,7 +105,7 @@
     }
 
     #input-field input{
-      width:100%;
+      width:calc(100% - 28px);
       background:transparent;
       border:none;
       border-bottom:1px solid #333;
@@ -122,6 +122,29 @@
 
     #input-field input::placeholder{
       color:#444;
+    }
+
+    #attach-btn{
+      background:none;
+      border:none;
+      color:#444;
+      cursor:pointer;
+      font-size:18px;
+      padding:0 0 0 6px;
+      vertical-align:middle;
+      transition:color 0.2s;
+    }
+    #attach-btn:hover,#attach-btn.has-file{color:#aaa;}
+    #attach-label{
+      display:block;
+      font-size:10px;
+      color:#555;
+      text-align:center;
+      letter-spacing:0.08em;
+      margin-top:4px;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
     }
 
     .arrow{
@@ -190,7 +213,12 @@
   <section id="arrow-left" class="arrow"><span>‹</span></section>
   <section id="arrow-right" class="arrow"><span>›</span></section>
 
-  <section id="input-field"><input type="text" placeholder="SPEAK" autocomplete="off" maxlength="128"></section>
+  <section id="input-field">
+    <input type="text" placeholder="SPEAK" autocomplete="off" maxlength="512">
+    <button id="attach-btn" title="Attach image">+</button>
+    <input type="file" id="file-input" accept="image/*,text/*,.pdf" hidden>
+    <span id="attach-label"></span>
+  </section>
 
   <section id="overlay" role="dialog" aria-modal="true"><h2>Tap to start</h2></section>
 
@@ -206,7 +234,10 @@
     const uiLabel=document.getElementById('ui-label');
     const uiDots=document.getElementById('ui-dots');
     const inputField=document.getElementById('input-field');
-    const input=inputField.querySelector('input');
+    const input=inputField.querySelector('input[type=text]');
+    const fileInput=document.getElementById('file-input');
+    const attachBtn=document.getElementById('attach-btn');
+    const attachLabel=document.getElementById('attach-label');
     const overlay=document.getElementById('overlay');
     const arrowLeft=document.getElementById('arrow-left');
     const arrowRight=document.getElementById('arrow-right');
@@ -215,6 +246,22 @@
     const MASTER_TOKEN=window.MASTER_TOKEN||'';
     const COMPAT_LABEL="master or+rep";
     const TTS_BACKEND_KEY="master_tts_backend";
+
+    let pendingFile=null;
+
+    attachBtn.addEventListener('click',e=>{e.stopPropagation();fileInput.click();});
+    fileInput.addEventListener('change',()=>{
+      const f=fileInput.files[0];
+      if(f){
+        pendingFile=f;
+        attachBtn.classList.add('has-file');
+        attachLabel.textContent=f.name;
+      }else{
+        pendingFile=null;
+        attachBtn.classList.remove('has-file');
+        attachLabel.textContent='';
+      }
+    });
 
     let W,H,S;
     const resize=()=>{
@@ -494,10 +541,24 @@
         n.vz+=(Math.random()-0.5)*100;
       }
       try{
+        const payload={message};
+        if(pendingFile){
+          const b64=await new Promise((res,rej)=>{
+            const fr=new FileReader();
+            fr.onload=()=>res(fr.result.split(',')[1]);
+            fr.onerror=rej;
+            fr.readAsDataURL(pendingFile);
+          });
+          payload.image={data:b64,mime:pendingFile.type,name:pendingFile.name};
+          pendingFile=null;
+          attachBtn.classList.remove('has-file');
+          attachLabel.textContent='';
+          fileInput.value='';
+        }
         const resp=await fetch("/chat",{
           method:"POST",
           headers:{"Content-Type":"application/json","Authorization":`Bearer ${MASTER_TOKEN}`},
-          body:JSON.stringify({message})
+          body:JSON.stringify(payload)
         });
         if(resp.ok){
           uiLabel.textContent='Processing...';

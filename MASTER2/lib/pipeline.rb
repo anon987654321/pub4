@@ -51,11 +51,15 @@ module MASTER
 
       Logging.with_request_id do
         detect_context_shift(text)
-        raw = case @mode
-              when :executor then call_executor(text)
-              when :stages   then call_stages(input)
-              when :direct   then call_direct(text)
-              else call_executor(text)  # degrade to executor rather than raise
+        raw = if input.is_a?(Hash) && input[:image_data]
+                call_with_image(text, input[:image_data], input[:image_mime], input[:image_name])
+              else
+                case @mode
+                when :executor then call_executor(text)
+                when :stages   then call_stages(input)
+                when :direct   then call_direct(text)
+                else call_executor(text)
+                end
               end
 
         track_task(text)
@@ -132,6 +136,20 @@ module MASTER
       end
 
       exec_result
+    end
+
+    def call_with_image(text, image_data, image_mime, image_name)
+      require "base64"
+      require "stringio"
+      raw_bytes = Base64.strict_decode64(image_data)
+      io = StringIO.new(raw_bytes)
+      io.instance_variable_set(:@path, image_name.to_s)
+      def io.path; @path; end
+      attachment = RubyLLM::Attachment.new(io, filename: image_name.to_s)
+      LLM.ask_with_files(text, files: [attachment])
+    rescue StandardError => err
+      Logging.dmesg_log("pipeline", message: "image call failed: #{err.message}")
+      LLM.ask(text, stream: true)
     end
 
     def call_stages(input)
