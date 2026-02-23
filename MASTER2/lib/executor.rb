@@ -161,33 +161,7 @@ module MASTER
         return :rewoo
       end
 
-      # Sanitize for LLM call -- prevent prompt injection
-      sanitized_goal = goal.to_s.gsub(/[\r\n]+/, " ").strip.slice(0, 500)
-
-      prompt = <<~CLASSIFY
-        You are a task router. Given a user's goal, pick the best execution pattern.
-
-        PATTERNS:
-        - react: General exploration, unknown tasks, tool use with observation loops
-        - pre_act: Multi-step plans with clear sequential phases (build X then Y then Z)
-        - rewoo: Pure reasoning, research, comparison -- minimal tool use, cost-efficient
-        - reflexion: Tasks requiring correctness -- fixing, debugging, refactoring, safety-critical work
-
-        SPECIAL:
-        - direct: Simple questions, chitchat, greetings, no tools needed
-
-        USER GOAL: "#{sanitized_goal}"
-
-        Respond with ONLY one word: #{(PATTERNS + [:direct]).join(', ')}
-      CLASSIFY
-
-      result = LLM.ask(prompt, tier: :cheap)
-
-      if result.ok?
-        chosen = result.value[:content]&.strip&.downcase&.to_sym
-        return chosen if chosen && (PATTERNS.include?(chosen) || chosen == :direct)
-      end
-
+      # Fallthrough: default to react for unknown intent (no LLM cost)
       :react
     rescue StandardError
       :react

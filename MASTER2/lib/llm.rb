@@ -157,7 +157,9 @@ module MASTER
                           [primary] + fallbacks
                         else
                           peers = tier_peers(primary)
-                          [primary] + peers + FREE_FALLBACKS.reject { |id| peers.include?(id) || id == primary }
+                          # Only include FREE_FALLBACKS when OpenRouter is configured
+                          free = configured_for_openrouter? ? FREE_FALLBACKS.reject { |id| peers.include?(id) || id == primary } : []
+                          [primary] + peers + free
                         end
         last_error = nil
 
