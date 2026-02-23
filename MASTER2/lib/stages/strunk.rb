@@ -78,7 +78,7 @@ module MASTER
 
       # If prose exceeds ~8 lines, paraphrase through the LLM with Strunk & White scrutiny.
       # Preserves all meaning and code references -- no truncation.
-      PARAPHRASE_LINE_THRESHOLD = 8
+      PARAPHRASE_LINE_THRESHOLD = 15
 
       PARAPHRASE_PROMPT = <<~PROMPT.freeze
         Rewrite the following response applying maximum Strunk & White scrutiny:
