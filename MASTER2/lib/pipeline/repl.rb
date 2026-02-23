@@ -36,7 +36,8 @@ module MASTER
       Prescan.run(MASTER.root) if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
 
       unless ENV["OPENROUTER_API_KEY"]
-        UI.warn("llm0: OPENROUTER_API_KEY not set — export OPENROUTER_API_KEY=or-...")
+        UI.warn("llm0: OPENROUTER_API_KEY not set")
+        UI.info("   #{UI.icon(:arrow)} export OPENROUTER_API_KEY=sk-or-v1-...")
       end
 
       # Initialize workflow
@@ -48,7 +49,8 @@ module MASTER
 
       # Session name
       session_label = session.metadata_value(:name) || UI.truncate_id(session.id)
-      puts "session0 at master0: #{session_label}"
+      name_or_id    = session.metadata_value(:name) ? session_label : "id=#{session_label}"
+      puts "session0 at master0: #{name_or_id}"
 
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
@@ -158,7 +160,7 @@ module MASTER
         if result.value[:cost]
           this_cost = result.value[:cost].to_f
           running_total = session.total_cost + this_cost
-          total_str = running_total > 0 ? " [$#{running_total.round(4)} total]" : ""
+          total_str = running_total > 0 ? " [#{UI.currency_precise(running_total)} total]" : ""
           puts UI.dim("  #{format_meta(result.value)}#{total_str}")
           check_cost_limits(this_cost, running_total)
         end
@@ -184,14 +186,15 @@ module MASTER
       max_request = @cost_limits["max_per_request"]&.to_f  || 1.00
       max_session = @cost_limits["max_per_session"]&.to_f  || 10.00
       if this_cost >= max_request
-        UI.warn("cost0: request cost $#{this_cost.round(4)} exceeds max_per_request $#{max_request}")
+        UI.warn("cost0: request #{UI.currency_precise(this_cost)} exceeds max_per_request #{UI.currency(max_request)}")
+        UI.info("   #{UI.icon(:arrow)} set max_per_request in data/quality_thresholds.yml")
       elsif this_cost >= warn_at
-        puts UI.dim("  cost0: approaching request limit ($#{this_cost.round(4)} / $#{max_request})")
+        puts UI.dim("  cost0: approaching request limit (#{UI.currency_precise(this_cost)} / #{UI.currency(max_request)})")
       end
       if session_total >= max_session
-        UI.warn("cost0: session total $#{session_total.round(4)} exceeds max_per_session $#{max_session}")
+        UI.warn("cost0: session #{UI.currency_precise(session_total)} exceeds max_per_session #{UI.currency(max_session)}")
       elsif session_total >= max_session * 0.8
-        puts UI.dim("  cost0: session at $#{session_total.round(4)} / $#{max_session}")
+        puts UI.dim("  cost0: session at #{UI.currency_precise(session_total)} / #{UI.currency(max_session)}")
       end
     end
 
@@ -201,16 +204,13 @@ module MASTER
       cv = value[:council_vetoes]
       sv = value[:council_security_veto]
       if sv
-        UI.warn("council0: security veto — review before deploying (#{cv&.join(', ')})")
+        UI.warn("council0: security veto — review before deploying")
+        UI.info("   #{UI.icon(:arrow)} vetoed by: #{cv&.join(', ')}") if cv&.any?
       elsif cv&.any?
-        puts UI.dim("  council vetoed by: #{cv.join(', ')}")
+        puts UI.dim("  council0: vetoed by #{cv.join(', ')}")
       end
-      if av&.any?
-        puts UI.dim("  axiom violations: #{av.join(', ')}")
-      end
-      if zv&.any?
-        puts UI.dim("  zsh violations: #{zv.map { |v| v[:tool] }.join(', ')}")
-      end
+      puts UI.dim("  enforcer0: #{UI.pluralize(av.size, 'axiom violation')} — #{av.join(', ')}") if av&.any?
+      puts UI.dim("  zsh0: #{UI.pluralize(zv.size, 'violation')} — #{zv.map { |v| v[:tool] }.join(', ')}") if zv&.any?
     end
 
     # Build prompt using Pipeline.prompt with fallback

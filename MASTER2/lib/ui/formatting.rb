@@ -13,7 +13,7 @@ module MASTER
     end
 
     def truncate_id(id, len = 8)
-      "#{id[0, len]}..."
+      id.length > len ? "#{id[0, len]}#{ICONS[:ellipsis]}" : id
     end
 
     def header(title, width: 40)
@@ -66,6 +66,22 @@ module MASTER
         .gsub(/(armed|ok)\b/) { pastel.green(::Regexp.last_match(1)) }
         .gsub(/(unavailable|error|FAIL)\b/) { pastel.red(::Regexp.last_match(1)) }
         .gsub(/(\d+ms)$/) { pastel.bright_black(::Regexp.last_match(1)) }
+    end
+
+    # "1 axiom" / "3 axioms" — never "1 axioms"
+    def pluralize(n, word)
+      "#{n} #{n == 1 ? word : "#{word}s"}"
+    end
+
+    # "12.3%" — single decimal, consistent everywhere
+    def format_percent(n)
+      format("%.1f%%", n.to_f)
+    end
+
+    # "1.2k" for thousands, plain integer otherwise
+    def format_number(n)
+      n = n.to_i
+      n >= 1_000 ? format("%.1fk", n / 1_000.0) : n.to_s
     end
   end
 end

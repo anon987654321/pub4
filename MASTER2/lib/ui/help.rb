@@ -9,6 +9,8 @@ module MASTER
 
       COMMANDS = MASTER::CommandRegistry.help_commands.freeze
 
+      def pastel = MASTER::UI.pastel
+
       TIPS = [
         "Tab for autocomplete",
         "Ctrl+C to cancel",
@@ -44,9 +46,11 @@ module MASTER
 
         GROUPS.each_key do |group_key|
           entries = COMMANDS.select { |_cmd, info| info[:group] == group_key }
-          next if entries.empty?
+          return if entries.empty?
 
-          puts GROUPS[group_key].upcase
+          puts
+          puts pastel.dim("  #{'─' * (width - 4)}")
+          puts "  #{pastel.bold(GROUPS[group_key])}"
           entries.sort_by { |cmd, _| cmd.to_s }.each do |cmd, info|
             head = "  #{cmd.to_s.ljust(name_col)}"
             body_width = [width - head.length - 1, 24].max
@@ -57,13 +61,13 @@ module MASTER
           puts
         end
 
-        puts "TIP  #{tip}"
+        puts pastel.dim("  #{MASTER::UI::ICONS[:detail]} #{tip}")
         puts
       end
 
       def show_tips
         puts
-        TIPS.each { |t| puts "  . #{t}" }
+        TIPS.each { |t| puts "  #{MASTER::UI::ICONS[:bullet]} #{t}" }
         puts
       end
 

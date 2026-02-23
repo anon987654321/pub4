@@ -2,6 +2,39 @@ version: 1
 name: "Design + Refactor Codex"
 description: "Programmatic rules for typography, layout, visual hierarchy, and code craftsmanship."
 
+terminal_typography:
+  description: "Rules for terminal/CLI output — enforced by check_structural_smells on lib/ui/"
+  max_line_length: 100          # wrap or truncate beyond this
+  indent_unit: 2                # spaces; never tabs
+  section_gap: 1                # blank lines between logical sections
+  column_min_width: 8           # minimum column width for tabular output
+  truncation_glyph: "…"        # U+2026; never "..."
+  numeric_alignment: right      # numbers right-aligned in tables
+  status_icons:
+    success: "✓"
+    failure: "✗"
+    warning: "⚠"
+    info:    "ℹ"
+    pending: "◦"
+    bullet:  "•"
+    arrow:   "→"
+    chevron: "❯"               # prompt character only
+  color_semantics:
+    green:   "success, clean state"
+    red:     "error, failure, blocked"
+    yellow:  "warning, dirty state, cost"
+    cyan:    "model name, identifier"
+    dim:     "metadata, secondary info, omitted content"
+    bold:    "emphasis, section header, prompt character"
+  actionable_errors:
+    required: true
+    format: "⚠  device0: description\n   → action hint"
+  spinner_exit:
+    blank_line_after: true      # always puts after success/error
+    success_color: green
+    failure_color: red
+  dmesg_format: "device0 at parent0: description — no prefix symbols, no box art"
+
 typography:
   line_length:
     min_ch: 45

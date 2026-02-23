@@ -19,22 +19,27 @@ module MASTER
     # Boot time for dmesg-style timestamps
     MASTER_BOOT_TIME = Time.now
 
-    # Typography icons (minimal set, Nerd Font compatible)
+    # Typography icons — standardised symbol set
     ICONS = {
-      success: "+",
-      failure: "-",
-      warning: "!",
-      bullet: "*",
-      arrow: "->",
-      thinking: ".",
-      done: "*",
-      prompt_ok: ">",
-      prompt_err: ">",
-      lock: "#",
-      separator: "|",
-      ellipsis: "...",
-      lightning: "!",
-      gear: "*",
+      success:   "✓",
+      failure:   "✗",
+      warning:   "⚠",
+      info:      "ℹ",
+      pending:   "◦",
+      detail:    "·",
+      bullet:    "•",
+      arrow:     "→",
+      chevron:   "❯",   # prompt character only
+      pipe:      "│",   # tree / indent continuation
+      thinking:  "…",
+      done:      "✓",
+      prompt_ok: "❯",
+      prompt_err: "✗",
+      lock:      "🔒",
+      separator: "—",
+      ellipsis:  "…",   # U+2026, one glyph
+      lightning: "⚡",
+      gear:      "⚙",
     }.freeze
 
     # Output channel separation (Gist #6)
@@ -74,9 +79,9 @@ require_relative "ui/confirmations"
 require_relative "ui/autocomplete"
 require_relative "ui/dashboard"
 require_relative "ui/keybindings"
+require_relative "ui/spinner"
 require_relative "ui/progress"
 require_relative "ui/diff"
-require_relative "ui/spinner"
 require_relative "ui/table"
 
 module MASTER
