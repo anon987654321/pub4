@@ -181,7 +181,7 @@ module MASTER
           end
         end
 
-        $stderr.puts "! all models failed: #{last_error}" if last_error
+        $stderr.puts "! all models failed: #{last_error}" if last_error && !Thread.current[:llm_quiet]
         Result.err("all models exhausted: #{last_error}", category: :infrastructure)
       rescue StandardError => err
         CircuitBreaker.open_circuit!(primary) if primary
