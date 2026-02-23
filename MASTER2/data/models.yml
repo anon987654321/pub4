@@ -194,24 +194,6 @@
   provider: meta
   api: replicate
 
-- id: google/gemini-2.5-flash-lite
-  alias: gemini-flash-lite
-  tier: cheap
-  input_cost: 0.10
-  output_cost: 0.40
-  context_window: 1048576
-  provider: google
-  api: openrouter
-
-- id: openai/gpt-4.1-nano
-  alias: gpt-4.1-nano
-  tier: cheap
-  input_cost: 0.10
-  output_cost: 0.40
-  context_window: 1047576
-  provider: openai
-  api: openrouter
-
 - id: qwen/qwen3-8b
   alias: qwen3-8b
   tier: cheap
