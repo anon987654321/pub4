@@ -202,9 +202,30 @@
       color:#dcdcdc;
       font-family:Helvetica,Arial,sans-serif;
     }
+    #chat-log{
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:200;
+      background:rgba(0,0,0,.92);
+      overflow-y:auto;
+      padding:48px 5vw 80px;
+      font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      color:#aaa;
+    }
+    #chat-log.open{display:block;}
+    #chat-log .entry{margin-bottom:1.4em;white-space:pre-wrap;word-break:break-word;}
+    #chat-log .entry.user{color:#dcdcdc;}
+    #chat-log .entry.master{color:#666;}
+    #chat-log .entry.user::before{content:'> ';color:#555;}
+    #chat-log .tab-hint{
+      position:fixed;top:12px;right:16px;
+      font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
+    }
   </style>
 </head>
 <body>
+  <div id="chat-log"><span class="tab-hint">TAB TO CLOSE</span></div>
   <section id="orb-name">VOID</section>
   <section id="status">◉</section>
   <section id="ui"><span id="ui-label">Neural Core</span><span class="dots" id="ui-dots"></span></section>
@@ -238,6 +259,7 @@
     const fileInput=document.getElementById('file-input');
     const attachBtn=document.getElementById('attach-btn');
     const attachLabel=document.getElementById('attach-label');
+    const chatLog=document.getElementById('chat-log');
     const overlay=document.getElementById('overlay');
     const arrowLeft=document.getElementById('arrow-left');
     const arrowRight=document.getElementById('arrow-right');
@@ -246,6 +268,42 @@
     const MASTER_TOKEN=window.MASTER_TOKEN||'';
     const COMPAT_LABEL="master or+rep";
     const TTS_BACKEND_KEY="master_tts_backend";
+
+    // Chat log helpers
+    const logAppend=(role,text)=>{
+      const e=document.createElement('div');
+      e.className=`entry ${role}`;
+      e.textContent=text;
+      chatLog.appendChild(e);
+      chatLog.scrollTop=chatLog.scrollHeight;
+    };
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Tab'){e.preventDefault();chatLog.classList.toggle('open');}
+    });
+
+    // SSE -- replaces poll loop
+    const sseConnect=()=>{
+      const es=new EventSource(`/sse?token=${encodeURIComponent(MASTER_TOKEN)}`);
+      es.onmessage=ev=>{
+        try{
+          const d=JSON.parse(ev.data);
+          if(d.text){
+            const reply=String(d.text);
+            logAppend('master',reply);
+            uiLabel.textContent=reply.slice(0,60);
+            speakWithAudio(reply).then(ok=>{if(!ok)speakText(reply);});
+            isProcessing=false;
+            for(const n of neurons){
+              n.vx+=(Math.random()-0.5)*140;
+              n.vy+=(Math.random()-0.5)*140;
+              n.vz+=(Math.random()-0.5)*140;
+            }
+          }
+        }catch(_){}
+      };
+      es.onerror=()=>{es.close();setTimeout(sseConnect,2000);};
+    };
+    sseConnect();
 
     let pendingFile=null;
 
@@ -509,30 +567,8 @@
       }
     });
 
-    const pollResponse=async(attempt=0)=>{
-      if(attempt>30) return;
-      try{
-        const resp=await fetch("/poll",{method:"GET"});
-        if(!resp.ok) throw new Error('poll failed');
-        const data=await resp.json();
-        if(data&&data.text){
-          const reply=String(data.text);
-          uiLabel.textContent=reply.slice(0,60);
-          // Try audio-reactive backend TTS first; fall back to Web Speech
-          speakWithAudio(reply).then(ok=>{ if(!ok) speakText(reply); });
-          isProcessing=false;
-          for(const n of neurons){
-            n.vx+=(Math.random()-0.5)*140;
-            n.vy+=(Math.random()-0.5)*140;
-            n.vz+=(Math.random()-0.5)*140;
-          }
-          return;
-        }
-      }catch(_e){}
-      setTimeout(()=>pollResponse(attempt+1),350);
-    };
-
     const transmit=async(message)=>{
+      logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
       isProcessing=true;
       activeSpinner=spinnerSets[Math.floor(Math.random()*spinnerSets.length)] || spinnerFallback;
       for(const n of neurons){
@@ -562,7 +598,6 @@
         });
         if(resp.ok){
           uiLabel.textContent='Processing...';
-          pollResponse();
         }else{
           uiLabel.textContent='Chat failed';
           isProcessing=false;

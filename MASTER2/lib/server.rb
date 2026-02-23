@@ -154,6 +154,8 @@ module MASTER
           [200, { CT_HEADER => JSON_TYPE }, [health_json]]
         when ["GET", "/poll"]
           handle_poll(queue)
+        when ["GET", "/sse"]
+          handle_sse(queue)
         when ["POST", "/chat"]
           handle_chat(env, pipeline, queue)
         when ["GET", "/metrics"]

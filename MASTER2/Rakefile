@@ -14,4 +14,49 @@ task :coverage do
   Rake::Task[:test].invoke
 end
 
+desc "Probe each Replicate model ID and remove any that return 404/error"
+task :verify_models do
+  require "yaml"
+  require "net/http"
+  require "uri"
+
+  models_path = File.expand_path("data/models.yml", __dir__)
+  models = YAML.safe_load_file(models_path)
+  token = ENV["REPLICATE_API_TOKEN"]
+
+  unless token
+    puts "REPLICATE_API_TOKEN not set -- skipping Replicate probes"
+    next
+  end
+
+  kept = []
+  removed = []
+
+  models.each do |m|
+    if m["api"] == "replicate"
+      id = m["id"]
+      uri = URI("https://api.replicate.com/v1/models/#{id.split(':').first}")
+      req = Net::HTTP::Get.new(uri)
+      req["Authorization"] = "Bearer #{token}"
+      resp = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
+      if resp.code.to_i == 200
+        print "  ok  #{id}\n"
+        kept << m
+      else
+        print "  rm  #{id}  (#{resp.code})\n"
+        removed << m
+      end
+    else
+      kept << m
+    end
+  end
+
+  if removed.any?
+    File.write(models_path, YAML.dump(kept))
+    puts "\nRemoved #{removed.size} invalid model(s). models.yml updated."
+  else
+    puts "\nAll Replicate models verified ok."
+  end
+end
+
 task default: :test
