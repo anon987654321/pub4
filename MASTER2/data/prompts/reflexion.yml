@@ -1,0 +1,19 @@
+reflect: |
+  Task: %{goal}
+
+  Execution trace:
+  %{history}
+
+  Result: %{result}
+
+  Reflect on this execution:
+  1. Did it successfully complete the task? (yes/no)
+  2. What went wrong or could be improved?
+  3. What lessons should be applied to the next attempt?
+  4. If the answer was incomplete, provide an improved answer.
+
+  Respond in this format:
+  SUCCESS: yes/no
+  CRITIQUE: (what went wrong)
+  LESSONS: (what to do differently)
+  IMPROVED_ANSWER: (better answer if needed)

@@ -86,27 +86,8 @@ module MASTER
         history_text = @history.map do |h|
           "#{h[:thought]} -> #{h[:action]} -> #{h[:observation]&.[](0..200)}"
         end.join("\n")
-
-        prompt = <<~REFLECT
-          Task: #{goal}
-
-          Execution trace:
-          #{history_text}
-
-          Result: #{result.ok? ? result.value[:answer] : result.error}
-
-          Reflect on this execution:
-          1. Did it successfully complete the task? (yes/no)
-          2. What went wrong or could be improved?
-          3. What lessons should be applied to the next attempt?
-          4. If the answer was incomplete, provide an improved answer.
-
-          Respond in this format:
-          SUCCESS: yes/no
-          CRITIQUE: (what went wrong)
-          LESSONS: (what to do differently)
-          IMPROVED_ANSWER: (better answer if needed)
-        REFLECT
+        result_text  = result.ok? ? result.value[:answer] : result.error
+        prompt = Prompts.get(:reflexion, :reflect, goal: goal, history: history_text, result: result_text)
 
         llm_result = LLM.ask(prompt, tier: tier)
         return { success: false, critique: "Reflection LLM call failed", lessons: "" } unless llm_result.ok?
