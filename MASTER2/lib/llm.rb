@@ -325,11 +325,211 @@ module MASTER
       def circuit_closed?(model)
         CircuitBreaker.circuit_closed?(model)
       end
+
+      private
+
+      # Retry logic with exponential backoff (3 attempts, 1s/2s/4s delays)
+      EXECUTE_MAX_RETRIES = 3
+      BACKOFF_BASE = 2
+
+      def execute_with_retry(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
+        retry_count = 0
+        last_error  = nil
+
+        while retry_count < EXECUTE_MAX_RETRIES
+          begin
+            result = if replicate_model?(model)
+                       execute_replicate_llm_request(prompt: prompt, messages: messages, model: model, reasoning: reasoning)
+                     else
+                       execute_ruby_llm_request(prompt: prompt, messages: messages, model: model,
+                                                reasoning: reasoning, json_schema: json_schema,
+                                                provider: provider, stream: stream)
+                     end
+            return result if result.ok? || !retryable_error?(result.error)
+
+            last_error = result.error
+          rescue ArgumentError => err
+            return Result.err("ArgumentError: #{err.message}")
+          rescue StandardError => err
+            last_error = err.message
+          end
+
+          retry_count += 1
+          break if retry_count >= EXECUTE_MAX_RETRIES
+
+          sleep_time = BACKOFF_BASE**(retry_count - 1)
+          Logging.warn("LLM retry #{retry_count}/#{EXECUTE_MAX_RETRIES}", delay: sleep_time, error: last_error)
+          sleep(sleep_time)
+        end
+
+        Result.err("Failed after #{EXECUTE_MAX_RETRIES} retries: #{last_error}")
+      end
+
+      def retryable_error?(error)
+        return false unless error.is_a?(String) || error.is_a?(Hash)
+
+        error_str = error.is_a?(Hash) ? error[:message].to_s : error.to_s
+
+        if error_str.match?(/Prompt tokens limit exceeded: (\d+) > (\d+)/i)
+          Logging.warn("Prompt too large — clear history with /clear", subsystem: "llm.context")
+          return false
+        end
+
+        if error_str.match?(/requires more credits|can only afford|insufficient credits/i)
+          Logging.warn("Insufficient OpenRouter credits — add credits at openrouter.ai/settings/credits or use a free model: `model deepseek-r1-free`", subsystem: "llm.budget")
+          return false
+        end
+
+        error_str.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
+      end
+
+      def execute_ruby_llm_request(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
+        configure_ruby_llm
+        chat = RubyLLM.chat(model: model, assume_model_exists: true, provider: :openrouter)
+                      .with_params(max_tokens: LLM::MAX_CHAT_TOKENS)
+
+        if reasoning
+          effort     = reasoning.is_a?(Hash) ? reasoning[:effort] : reasoning
+          effort_str = effort.to_s
+          unless REASONING_EFFORT.map(&:to_s).include?(effort_str)
+            return Result.err("Invalid reasoning effort: #{effort_str}. Must be one of: #{REASONING_EFFORT.join(', ')}")
+          end
+          chat = chat.with_thinking(effort: effort_str.to_sym)
+        end
+
+        chat = chat.with_schema(json_schema[:schema] || json_schema) if json_schema
+        chat = chat.with_params(provider: provider)                   if provider.is_a?(Hash)
+
+        msg_array  = build_message_array(prompt, messages)
+        system_msg = msg_array.find { |msg| msg[:role] == "system" }
+        if system_msg
+          chat      = chat.with_instructions(system_msg[:content])
+          msg_array = msg_array.reject { |msg| msg[:role] == "system" }
+        end
+
+        stream ? execute_streaming_ruby_llm(chat, msg_array, model)
+               : execute_blocking_ruby_llm(chat, msg_array, model)
+      rescue StandardError => err
+        Result.err(Logging.format_error(err))
+      end
+
+      def build_message_array(prompt, messages)
+        result = []
+        if messages.is_a?(Array) && !messages.empty?
+          messages.each do |msg|
+            role    = (msg[:role] || msg["role"]).to_s
+            content = msg[:content] || msg["content"]
+            result << { role: role, content: content } if content
+          end
+        end
+        result << { role: "user", content: prompt.to_s } if prompt && !prompt.to_s.empty?
+        result
+      end
+
+      def replay_chat_history(chat, msg_array)
+        return "" if msg_array.nil? || msg_array.empty?
+
+        if msg_array.size > 1
+          msg_array[0..-2].each do |msg|
+            role    = msg[:role] || msg["role"]
+            content = msg[:content] || msg["content"]
+            chat.add_message(role: role.to_sym, content: content) if role && content
+          end
+        end
+
+        final_msg = msg_array.last
+        final_msg.is_a?(Hash) ? (final_msg[:content] || final_msg["content"] || "") : final_msg.to_s
+      end
+
+      def execute_blocking_ruby_llm(chat, msg_array, model)
+        message  = replay_chat_history(chat, msg_array)
+        response = chat.ask(message)
+        validate_response({
+          content:      response.content,
+          reasoning:    (response.thinking if response.respond_to?(:thinking)),
+          model:        model,
+          tokens_in:    response.input_tokens  || 0,
+          tokens_out:   response.output_tokens || 0,
+          cost:         nil,
+          finish_reason: "stop",
+        }, model)
+      rescue StandardError => err
+        Result.err("ruby_llm error: #{err.message}")
+      end
+
+      def execute_streaming_ruby_llm(chat, msg_array, model)
+        content_parts   = []
+        reasoning_parts = []
+        total_size      = 0
+        final_response  = nil
+        message         = replay_chat_history(chat, msg_array)
+
+        catch(:truncated) do
+          response = chat.ask(message) do |chunk|
+            text = chunk.is_a?(String) ? chunk : chunk.content.to_s
+            next if text.empty?
+
+            reasoning_parts << chunk.thinking if chunk.respond_to?(:thinking) && chunk.thinking
+            $stdout.print text
+            $stdout.flush
+            content_parts << text
+            total_size    += text.bytesize
+            if total_size > MAX_RESPONSE_SIZE
+              Logging.warn("Response exceeds #{MAX_RESPONSE_SIZE} bytes, truncating")
+              throw :truncated
+            end
+          end
+          final_response = response
+        end
+        $stdout.puts
+
+        validate_response({
+          content:      content_parts.join,
+          reasoning:    reasoning_parts.any? ? reasoning_parts.join : nil,
+          model:        model,
+          tokens_in:    final_response&.input_tokens  || 0,
+          tokens_out:   final_response&.output_tokens || 0,
+          cost:         nil,
+          finish_reason: "stop",
+          streamed:     true,
+        }, model)
+      rescue StandardError => err
+        Result.err("ruby_llm streaming error: #{err.message}")
+      end
+
+      def replicate_model?(model_id)
+        cfg = configured_models_by_id[model_id]
+        cfg&.dig(:api)&.to_s == "replicate"
+      end
+
+      def execute_replicate_llm_request(prompt:, messages:, model:, reasoning:)
+        msg_array   = build_message_array(prompt, messages)
+        sys_msg     = msg_array.find { |msg| msg[:role] == "system" }
+        turns       = msg_array.reject { |msg| msg[:role] == "system" }
+        flat_prompt = turns.size == 1 ? turns.first[:content] : turns.map { |msg| "#{msg[:role].capitalize}: #{msg[:content]}" }.join("\n\n")
+
+        Replicate::Client.complete(model, flat_prompt,
+                                   system_prompt: sys_msg&.dig(:content),
+                                   max_tokens:    reasoning ? 8_192 : Replicate::Client::DEFAULT_MAX_TOKENS)
+      rescue StandardError => err
+        Result.err("Replicate LLM request failed: #{err.message}", category: :infrastructure)
+      end
+
+      public
+
+      def validate_response(data, model_id)
+        content = data[:content]
+        return Result.err("Empty response from #{extract_model_name(model_id)}") if content.nil? || (content.is_a?(String) && content.strip.empty?)
+
+        data[:tokens_in]  = 0   unless data[:tokens_in].is_a?(Numeric)
+        data[:tokens_out] = 0   unless data[:tokens_out].is_a?(Numeric)
+        data[:cost]       = nil if data[:cost] && !data[:cost].is_a?(Numeric)
+        Result.ok(data)
+      end
     end
   end
 end
 
 require_relative "llm/models"
-require_relative "llm/request"
 require_relative "llm/context_window"
 require_relative "replicate/client"
