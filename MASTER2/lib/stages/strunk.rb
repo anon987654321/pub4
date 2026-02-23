@@ -31,12 +31,25 @@ module MASTER
         text = strip_preambles(text)
         text = strip_hedges(text)
         text = strip_endings(text)
+        text = strip_markdown(text)
         text = text.strip
 
         Result.ok(input.merge(response: text))
       end
 
       private
+
+      # Strip markdown decorations unsuitable for dmesg-style terminal output
+      def strip_markdown(text)
+        text = text.gsub(/\*\*(.+?)\*\*/, '\1')       # **bold** → plain
+        text = text.gsub(/\*(.+?)\*/, '\1')            # *italic* → plain
+        text = text.gsub(/`{3}[a-z]*\n?/, '')         # fenced code blocks (keep content)
+        text = text.gsub(/^[-*]\s+/, '')               # bullet list markers
+        text = text.gsub(/^\d+\.\s+/, '')              # numbered list markers
+        text = text.gsub(/[😊🎉✅❌⚠️💡🚀🔥👋]/, '')  # common emoji
+        text = text.gsub(/#{Regexp.escape("😊")}/, '') # catch escaped too
+        text
+      end
 
       def strip_preambles(text)
         self.class.patterns[:preambles].each do |phrase|

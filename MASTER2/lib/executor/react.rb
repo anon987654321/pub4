@@ -50,7 +50,6 @@ module MASTER
           plan.add(parsed[:thought][0..80]) if plan.size < @step
           plan.start(@step - 1)
           UI.dim("  #{@step}: #{parsed[:thought][0..80]}")
-          Output.progress(plan.summary, source: "plan") if defined?(Output) && @step > 1
 
           # Completion: answer field is set
           if parsed[:answer]
