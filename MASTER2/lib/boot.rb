@@ -14,8 +14,8 @@ module MASTER
           Executor => %i[call],
           Result => %i[ok err ok? err?],
         }
-      rescue NameError => e
-        warn "Smoke test skipped: #{e.message}"
+      rescue NameError => err
+        warn "Smoke test skipped: #{err.message}"
         {}
       end
 
@@ -79,9 +79,9 @@ module MASTER
         optional_checks = OPTIONAL_MODULES.select do |name, method|
           mod = begin
             MASTER.const_get(name)
-          rescue NameError => e
+          rescue NameError => err
             if defined?(MASTER::Logging)
-              MASTER::Logging.warn("Failed to resolve constant: #{name} — #{e.message}", subsystem: "boot")
+              MASTER::Logging.warn("Failed to resolve constant: #{name} — #{err.message}", subsystem: "boot")
             end
             nil
           end
@@ -96,8 +96,8 @@ module MASTER
         else
           "ok"
         end
-      rescue StandardError => e
-        "FAIL #{e.message[0..30]}"
+      rescue StandardError => err
+        "FAIL #{err.message[0..30]}"
       end
 
       private

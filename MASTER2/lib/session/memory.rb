@@ -10,7 +10,9 @@ module MASTER
   module Memory
     COMPRESS_AFTER_MESSAGES = 10
     KEEP_FIRST_N = 2
-    KEEP_LAST_N = 8
+    KEEP_LAST_N  = 8
+    SECONDS_PER_HOUR      = 3600
+    CONTENT_PREVIEW_LENGTH = 200
 
     @sessions = {}
 
@@ -61,7 +63,7 @@ module MASTER
       end
 
       def delete_old_sessions(max_age_hours: 24)
-        cutoff = Time.now - (max_age_hours * 3600)
+        cutoff = Time.now - (max_age_hours * SECONDS_PER_HOUR)
         Dir.glob(File.join(Paths.sessions, "*.json")).each { |f| File.delete(f) if File.mtime(f) < cutoff }
       end
 
@@ -80,7 +82,7 @@ module MASTER
             content = msg[:content].to_s.downcase
             # Score by number of matching words
             score = query_words.count { |w| content.include?(w) }
-            results << { score: score, content: msg[:content][0..200], session: session_id } if score > 0
+            results << { score: score, content: msg[:content][0..CONTENT_PREVIEW_LENGTH], session: session_id } if score > 0
           end
         end
 

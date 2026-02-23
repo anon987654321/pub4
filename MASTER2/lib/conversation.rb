@@ -45,8 +45,8 @@ module MASTER
       update_context(intent, result)
 
       result
-    rescue StandardError => e
-      error_response("Conversation error: #{e.message}")
+    rescue StandardError => err
+      error_response("Conversation error: #{err.message}")
     end
 
     # Get conversation summary

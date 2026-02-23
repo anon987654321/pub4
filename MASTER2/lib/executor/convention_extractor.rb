@@ -9,7 +9,9 @@
 
 module MASTER
   module ConventionExtractor
-    SAMPLE_COUNT = 3  # files to sample; small to keep system prompt lean
+    SAMPLE_COUNT      = 3    # files to sample; small to keep system prompt lean
+    SAMPLE_CHAR_LIMIT = 1500 # chars read per sampled file
+    RESULT_CHAR_LIMIT = 800  # chars read from result.rb
 
     module_function
 
@@ -19,8 +21,8 @@ module MASTER
                     .reject { |f| f.include?("test") || f.include?("vendor") }
       return "" if rb_files.empty?
 
-      samples = rb_files.sample(sample_count).map { |f| File.read(f)[0..1500] rescue "" }
-      all_content = File.read(File.join(root, "lib", "result.rb"))[0..800] rescue ""
+      samples = rb_files.sample(sample_count).map { |f| File.read(f)[0..SAMPLE_CHAR_LIMIT] rescue "" }
+      all_content = File.read(File.join(root, "lib", "result.rb"))[0..RESULT_CHAR_LIMIT] rescue ""
       all_content += "\n" + samples.join("\n")
 
       lines = ["PROJECT CONVENTIONS (mimic exactly — do not invent new patterns):"]

@@ -66,8 +66,8 @@ module MASTER
       return self if err?
 
       Result.ok(yield(@value))
-    rescue StandardError => e
-      Result.err(e.message)
+    rescue StandardError => err
+      Result.err(err.message)
     end
 
     # Flat map over value if ok
@@ -82,8 +82,8 @@ module MASTER
       result
     rescue TypeError
       raise
-    rescue StandardError => e
-      Result.err(e.message)
+    rescue StandardError => err
+      Result.err(err.message)
     end
 
     # Chain operations with labeled error context
@@ -99,8 +99,8 @@ module MASTER
       result
     rescue TypeError
       raise
-    rescue StandardError => e
-      Result.err("#{"#{label}: " if label}#{e.message}")
+    rescue StandardError => err
+      Result.err("#{"#{label}: " if label}#{err.message}")
     end
 
     def inspect
@@ -149,8 +149,8 @@ module MASTER
       # @return [Result] Ok with result or Err with error message
       def try
         ok(yield)
-      rescue StandardError => e
-        err(e.message)
+      rescue StandardError => err
+        self.err(err.message)
       end
     end
 

@@ -76,7 +76,7 @@ module MASTER
 
         # DRY: duplicate method definitions
         methods = code.scan(/def\s+(\w+)/).flatten
-        duplicates = methods.select { |m| methods.count(m) > 1 }.uniq
+        duplicates = methods.select { |method_name| methods.count(method_name) > 1 }.uniq
         violations = duplicates.map do |method|
           { layer: :lexical, axiom: "DRY", message: "Duplicate method: #{method}", file: filename }
         end
@@ -183,7 +183,7 @@ module MASTER
         end
 
         # RHYTHM: inconsistent spacing
-        blank_line_gaps = code.scan(/\n(\n+)/).map { |m| m.first.length }
+        blank_line_gaps = code.scan(/\n(\n+)/).map { |match| match.first.length }
         if blank_line_gaps.uniq.size > 2
           violations << { layer: :cognitive, axiom: "RHYTHM", message: "Inconsistent blank line spacing",
                           file: filename }
@@ -292,7 +292,7 @@ module MASTER
       # Check metaprogramming policy (constitution.yml metaprogramming_policy.banned_patterns)
       def check_metaprogramming(code, filename: "code")
         @meta_banned ||= begin
-          f = File.join(MASTER.root, "data", "constitution.yml")
+          f = Paths.data_file("constitution.yml")
           YAML.safe_load_file(f)&.dig("metaprogramming_policy", "banned_patterns") || []
         rescue StandardError
           []
@@ -336,13 +336,13 @@ module MASTER
         return [] unless filename.end_with?(".rb")
 
         violations = []
-        IMPORTANCE_PATTERNS.each do |p|
-          next unless code.match?(p[:re])
+        IMPORTANCE_PATTERNS.each do |pat|
+          next unless code.match?(pat[:re])
 
           violations << {
             layer: :structural,
-            axiom: p[:axiom],
-            message: p[:message],
+            axiom: pat[:axiom],
+            message: pat[:message],
             severity: :warning,
             file: filename,
           }
@@ -372,13 +372,13 @@ module MASTER
 
       def check_structural_smells(code, filename: "code")
         violations = []
-        STRUCTURAL_PATTERNS.each do |p|
-          next unless code.match?(p[:re])
+        STRUCTURAL_PATTERNS.each do |pat|
+          next unless code.match?(pat[:re])
 
           violations << {
             layer: :structural,
-            axiom: p[:axiom],
-            message: p[:message],
+            axiom: pat[:axiom],
+            message: pat[:message],
             severity: :warning,
             file: filename,
           }
@@ -414,13 +414,13 @@ module MASTER
 
       def check_prose_style(code, filename: "code")
         violations = []
-        PROSE_PATTERNS.each do |p|
-          next unless code.match?(p[:re])
+        PROSE_PATTERNS.each do |pat|
+          next unless code.match?(pat[:re])
 
           violations << {
             layer: :prose,
-            axiom: p[:axiom],
-            message: p[:message],
+            axiom: pat[:axiom],
+            message: pat[:message],
             severity: :warning,
             file: filename,
           }

@@ -59,8 +59,8 @@ module MASTER
         actions.each do |num, action_str|
           begin
             check_timeout!(start_time)
-          rescue Result::Error => e
-            return Result.err(e.message)
+          rescue Result::Error => err
+            return Result.err(err.message)
           end
 
           @step = num.to_i

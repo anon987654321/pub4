@@ -86,8 +86,8 @@ module MASTER
         return nil unless path
 
         YAML.safe_load_file(path, symbolize_names: true)
-      rescue StandardError => e
-        Logging.warn("paths: failed to load #{name}: #{e.message}") if defined?(Logging)
+      rescue StandardError => err
+        Logging.warn("paths: failed to load #{name}: #{err.message}") if defined?(Logging)
         nil
       end
 

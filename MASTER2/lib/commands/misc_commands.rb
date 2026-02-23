@@ -96,9 +96,9 @@ module MASTER
           if result.ok?
             captures = result.value[:captures]
             puts "#{captures.size} session captures:"
-            captures.last(10).each do |c|
-              puts UI.dim(c[:timestamp])
-              c[:answers].each do |category, answer|
+            captures.last(10).each do |capture|
+              puts UI.dim(capture[:timestamp])
+              capture[:answers].each do |category, answer|
                 puts "  #{UI.bold(category)}: #{answer}"
               end
             end
@@ -139,15 +139,15 @@ module MASTER
         checks << { name: "Models available", ok: !model.nil? }
 
         # Check style guide catalog
-        guides_ok = File.exist?(File.join(MASTER.root, "data", "style_guides.yml"))
+        guides_ok = File.exist?(Paths.data_file("style_guides.yml"))
         checks << { name: "Style guides catalog", ok: guides_ok }
 
-        checks.each do |c|
-          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{c[:name]}"
+        checks.each do |check|
+          status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{check[:name]}"
         end
 
-        all_ok = checks.all? { |c| c[:ok] }
+        all_ok = checks.all? { |check| check[:ok] }
         puts all_ok ? "health: ok" : "health: some checks failed"
       end
 
@@ -155,9 +155,9 @@ module MASTER
         UI.header("Bootstrap")
         checks = startup_checks
 
-        checks.each do |c|
-          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{c[:name]}#{" (#{c[:detail]})" if c[:detail]}"
+        checks.each do |check|
+          status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{check[:name]}#{" (#{check[:detail]})" if check[:detail]}"
         end
 
         # Platform checks
@@ -191,10 +191,10 @@ module MASTER
         UI.header("Doctor")
 
         checks = startup_checks
-        checks.each do |c|
-          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{c[:name]}#{" (#{c[:detail]})" if c[:detail]}"
-          puts UI.dim("    fix: #{c[:fix]}") if verbose && !c[:ok] && c[:fix]
+        checks.each do |check|
+          status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{check[:name]}#{" (#{check[:detail]})" if check[:detail]}"
+          puts UI.dim("    fix: #{check[:fix]}") if verbose && !check[:ok] && check[:fix]
         end
 
         plugin_check = plugin_manifest_check
@@ -205,7 +205,7 @@ module MASTER
         tidy = repo_cleanliness
         puts "#{UI.pastel.cyan('*')} Repo dirtiness #{tidy[:dirty_count]} files (#{tidy[:state]})"
 
-        all_ok = (checks + [plugin_check]).all? { |c| c[:ok] }
+        all_ok = (checks + [plugin_check]).all? { |check| check[:ok] }
         puts all_ok ? "doctor: ok" : "doctor: attention required"
         Result.ok(ok: all_ok, checks: checks, plugins: plugin_check, cleanliness: tidy)
       end
@@ -259,7 +259,7 @@ module MASTER
       end
 
       def style_guides(args = nil)
-        catalog_path = File.join(MASTER.root, "data", "style_guides.yml")
+        catalog_path = Paths.data_file("style_guides.yml")
         return Result.err("style guide catalog missing: #{catalog_path}") unless File.exist?(catalog_path)
 
         catalog = YAML.safe_load_file(catalog_path, symbolize_names: true) || {}
@@ -300,8 +300,8 @@ module MASTER
         end
 
         Result.ok(total: entries.size)
-      rescue StandardError => e
-        Result.err("style-guides failed: #{e.message}")
+      rescue StandardError => err
+        Result.err("style-guides failed: #{err.message}")
       end
 
       private
@@ -318,7 +318,7 @@ module MASTER
         [
           {
             name: "Constitution parses",
-            ok: File.exist?(File.join(MASTER.root, "data", "constitution.yml")),
+            ok: File.exist?(Paths.data_file("constitution.yml")),
             fix: "Ensure data/constitution.yml exists",
           },
           {
@@ -349,8 +349,8 @@ module MASTER
         return { ok: true, detail: "all bridge plugins resolved" } if missing.empty?
 
         { ok: false, detail: "missing: #{missing.join(', ')}", fix: "reinstall dependencies or restore bridge files" }
-      rescue StandardError => e
-        { ok: false, detail: e.message, fix: "check bridge plugin wiring" }
+      rescue StandardError => err
+        { ok: false, detail: err.message, fix: "check bridge plugin wiring" }
       end
 
       def repo_cleanliness
@@ -438,7 +438,7 @@ module MASTER
           puts UI.dim("goal: #{ctx['goal']}") if ctx["goal"]
           puts UI.dim("stack: #{ctx['stack']}") if ctx["stack"]
           puts UI.dim("constraints: #{ctx['constraints']}") if ctx["constraints"]
-          Array(ctx["decisions"]).each { |d| puts UI.dim("  · #{d}") }
+          Array(ctx["decisions"]).each { |decision| puts UI.dim("  · #{decision}") }
         end
       end
     end

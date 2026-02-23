@@ -9,8 +9,8 @@ module MASTER
       MIN_DELTA = 0.02
       _c = begin
              require "yaml"
-             f = File.expand_path("../../../data/constitution.yml", __FILE__)
-             YAML.safe_load_file(f).dig("convergence", "history_window")
+             config_path = File.expand_path("../../../data/constitution.yml", __FILE__)
+             YAML.safe_load_file(config_path).dig("convergence", "history_window")
            rescue StandardError
              nil
            end

@@ -31,15 +31,15 @@ module MASTER
       end
 
       def ask_phase(phase)
-        info = for_phase(phase)
-        return if info[:questions].empty?
+        phase_info = for_phase(phase)
+        return if phase_info[:questions].empty?
 
         puts
-        puts UI.bold("#{phase.to_s.capitalize}: #{info[:purpose]}")
-        info[:questions].each_with_index do |q, i|
-          puts "  #{i + 1}. #{q}"
+        puts UI.bold("#{phase.to_s.capitalize}: #{phase_info[:purpose]}")
+        phase_info[:questions].each_with_index do |q, idx|
+          puts "  #{idx + 1}. #{q}"
         end
-        puts UI.dim("  Note: #{info[:note]}") if info[:note]
+        puts UI.dim("  Note: #{phase_info[:note]}") if phase_info[:note]
         puts
       end
 
@@ -48,12 +48,12 @@ module MASTER
         answers = {}
 
         phases.each do |phase|
-          info = for_phase(phase)
-          next if info[:questions].empty?
+          phase_info = for_phase(phase)
+          next if phase_info[:questions].empty?
 
-          puts UI.bold("\n#{phase.to_s.upcase}: #{info[:purpose]}")
+          puts UI.bold("\n#{phase.to_s.upcase}: #{phase_info[:purpose]}")
 
-          info[:questions].each do |question|
+          phase_info[:questions].each do |question|
             print "  #{question} "
             answer = $stdin.gets&.strip
             answers[phase] ||= []
@@ -76,13 +76,13 @@ module MASTER
       end
 
       def prompt_for_phase(phase, context = "")
-        info = for_phase(phase)
-        return "" if info[:questions].empty?
+        phase_info = for_phase(phase)
+        return "" if phase_info[:questions].empty?
 
-        questions = info[:questions].map { |q| "- #{q}" }.join("\n")
+        questions = phase_info[:questions].map { |q| "- #{q}" }.join("\n")
         <<~PROMPT
           Phase: #{phase.to_s.upcase}
-          Purpose: #{info[:purpose]}
+          Purpose: #{phase_info[:purpose]}
 
           Consider these questions:
           #{questions}

@@ -8,7 +8,8 @@ module MASTER
     module Reminders
       module_function
 
-      REMINDER_INTERVAL = 8 # inject a reminder every N messages
+      REMINDER_INTERVAL  = 8 # inject a reminder every N messages
+      MAX_REMINDER_AXIOMS = 5
       CRITICAL_AXIOMS = %w[
         FAIL_VISIBLY
         ONE_SOURCE
@@ -27,7 +28,7 @@ module MASTER
       def build_reminder(context = {})
         violations = context[:recent_violations] || []
         active_axioms = if violations.any?
-                          violations.map { |v| v[:axiom] }.uniq.first(5)
+                          violations.map { |v| v[:axiom] }.uniq.first(MAX_REMINDER_AXIOMS)
                         else
                           CRITICAL_AXIOMS
                         end

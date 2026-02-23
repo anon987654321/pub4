@@ -48,8 +48,8 @@ module MASTER
           warn "- #{result.error}"
         end
       end
-    rescue StandardError => e
-      warn "replicate: #{e.message}"
+    rescue StandardError => err
+      warn "replicate: #{err.message}"
     end
 
     # Narrate command handler
@@ -63,9 +63,9 @@ module MASTER
       result = MASTER::Replicate::Narration.generate_narration(segments: selected_segments.value)
       print_narration_results(result) if result.ok?
       result
-    rescue StandardError => e
-      warn "narrate: #{e.message}"
-      Result.err(e.message)
+    rescue StandardError => err
+      warn "narrate: #{err.message}"
+      Result.err(err.message)
     end
 
     def parse_segment_selection(args)
@@ -74,7 +74,7 @@ module MASTER
       parts = args.split("--segments", 2)
       return Result.ok(nil) if parts.size <= 1
 
-      segment_ids = parts[1].strip.split(",").map { |s| s.strip.to_sym }
+      segment_ids = parts[1].strip.split(",").map { |seg_str| seg_str.strip.to_sym }
       all_segments = MASTER::Replicate::Narration::NARRATION_SEGMENTS
       selected = all_segments.select { |seg| segment_ids.include?(seg[:id]) }
 
@@ -138,8 +138,8 @@ module MASTER
           warn "- #{result.error}"
         end
       end
-    rescue StandardError => e
-      warn "postpro: #{e.message}"
+    rescue StandardError => err
+      warn "postpro: #{err.message}"
     end
 
     # Fuzzy match for command suggestions (moved from Onboarding)
@@ -148,7 +148,7 @@ module MASTER
       word = input.strip.split.first&.downcase
       return nil unless word && word.length > 2
 
-      commands.find { |c| Utils.levenshtein(word, c) <= 1 }
+      commands.find { |cmd| Utils.levenshtein(word, cmd) <= 1 }
     end
 
     def show_did_you_mean(input)
@@ -506,7 +506,7 @@ module MASTER
 
       qsplit = raw.split(/\?\s+/).map(&:strip).reject(&:empty?)
       if qsplit.size > 1
-        return qsplit.map { |q| q.end_with?("?") ? q : "#{q}?" }
+        return qsplit.map { |query| query.end_with?("?") ? query : "#{query}?" }
       end
 
       [raw]

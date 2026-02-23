@@ -4,6 +4,8 @@ module MASTER
   module Commands
     # System commands: schedule, heartbeat, policy
     module SystemCommands
+      DEFAULT_SCHEDULE_INTERVAL  = 3600 # seconds
+      DEFAULT_HEARTBEAT_INTERVAL = 60   # seconds
       def manage_schedule(args)
         parts = args.to_s.strip.split(/\s+/)
         subcmd = parts.shift
@@ -71,7 +73,7 @@ module MASTER
 
       def add_scheduled_job(parts)
         cmd = parts[0]
-        interval = (parts[1] || "3600").to_i
+        interval = (parts[1] || DEFAULT_SCHEDULE_INTERVAL.to_s).to_i
         result = Scheduler.add(cmd, interval: interval)
         puts result.ok? ? "Scheduled: #{result.value[:job_id]}" : result.error
       end
@@ -90,7 +92,7 @@ module MASTER
       end
 
       def start_heartbeat(parts)
-        interval = (parts[0] || "60").to_i
+        interval = (parts[0] || DEFAULT_HEARTBEAT_INTERVAL.to_s).to_i
         Triggers.install_defaults
         Scheduler.load
         Heartbeat.register("scheduler") { Scheduler.tick }

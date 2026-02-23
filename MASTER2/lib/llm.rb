@@ -94,8 +94,8 @@ module MASTER
           configured_for_openrouter? ? "OpenRouter" : nil,
         ].compact.join(" + ")
         Result.ok(label: label)
-      rescue StandardError => e
-        Result.err("Key check failed: #{e.message}")
+      rescue StandardError => err
+        Result.err("Key check failed: #{err.message}")
       end
 
       def tier
@@ -158,7 +158,7 @@ module MASTER
         models_to_try = if fallbacks
                           [primary] + fallbacks
                         else
-                          [primary] + FREE_FALLBACKS.reject { |m| m == primary }
+                          [primary] + FREE_FALLBACKS.reject { |model_id| model_id == primary }
                         end
         last_error = nil
 
@@ -178,9 +178,9 @@ module MASTER
         end
 
         Result.err("all models exhausted: #{last_error}", category: :infrastructure)
-      rescue StandardError => e
+      rescue StandardError => err
         CircuitBreaker.open_circuit!(primary) if primary
-        Result.err(Logging.format_error(e), category: :infrastructure)
+        Result.err(Logging.format_error(err), category: :infrastructure)
       end
 
       private
@@ -206,16 +206,16 @@ module MASTER
       end
 
       def process_llm_response(result, current_model, prompt, stream)
-        data = result.value
-        tokens_in = data[:tokens_in]
-        tokens_out = data[:tokens_out]
-        cost = data[:cost] || 0.0
+        response_data = result.value
+        tokens_in = response_data[:tokens_in]
+        tokens_out = response_data[:tokens_out]
+        cost = response_data[:cost] || 0.0
 
         if defined?(Logging)
           Logging.llm(tier: :default, model: @current_model, tokens_in: tokens_in, tokens_out: tokens_out,
                       cost: cost)
         end
-        SemanticCache.store(prompt, data, tier: :default) if defined?(SemanticCache) && !stream
+        SemanticCache.store(prompt, response_data, tier: :default) if defined?(SemanticCache) && !stream
         CircuitBreaker.close_circuit!(current_model)
 
         # Publish LLM response event for interested subscribers
@@ -239,31 +239,31 @@ module MASTER
       # A3: Convenience method for creating a chat instance with optional tools
       def chat(model: nil, tools: false)
         configure_ruby_llm
-        m = model || select_model
-        c = RubyLLM.chat(model: m, assume_model_exists: true, provider: :openrouter)
+        selected = model || select_model
+        chat_session = RubyLLM.chat(model: selected, assume_model_exists: true, provider: :openrouter)
         if tools
           require_relative "llm/tools"
-          c.with_tools(*MASTER::LLM::TOOL_CLASSES)
+          chat_session.with_tools(*MASTER::LLM::TOOL_CLASSES)
         end
-        c
+        chat_session
       end
 
       # A4: Multi-modal query with file attachments
       def ask_with_files(prompt, files:, model: nil)
         configure_ruby_llm
-        m = model || select_model
-        return Result.err("No model available.", category: :infrastructure) unless m
+        selected = model || select_model
+        return Result.err("No model available.", category: :infrastructure) unless selected
 
-        c = RubyLLM.chat(model: m, assume_model_exists: true, provider: :openrouter)
-        response = c.ask(prompt, with: files)
+        chat_session = RubyLLM.chat(model: selected, assume_model_exists: true, provider: :openrouter)
+        response = chat_session.ask(prompt, with: files)
         Result.ok({
                     content: response.content,
                     tokens_in: response.input_tokens || 0,
                     tokens_out: response.output_tokens || 0,
                     cost: 0,
                   })
-      rescue StandardError => e
-        Result.err(e.message, category: :infrastructure)
+      rescue StandardError => err
+        Result.err(err.message, category: :infrastructure)
       end
 
       # A6: Image generation (Replicate-only policy)
@@ -288,13 +288,13 @@ module MASTER
       # A9: Structured output with ruby_llm Schema DSL
       def ask_structured(prompt, schema_class:, model: nil)
         configure_ruby_llm
-        m = model || select_model
-        c = RubyLLM.chat(model: m, assume_model_exists: true, provider: :openrouter).with_schema(schema_class)
-        response = c.ask(prompt)
+        selected = model || select_model
+        chat_session = RubyLLM.chat(model: selected, assume_model_exists: true, provider: :openrouter).with_schema(schema_class)
+        response = chat_session.ask(prompt)
         Result.ok({ content: response.content, tokens_in: response.input_tokens || 0,
                     tokens_out: response.output_tokens || 0 })
-      rescue StandardError => e
-        Result.err(e.message)
+      rescue StandardError => err
+        Result.err(err.message)
       end
 
       # A12: Content moderation
@@ -302,8 +302,8 @@ module MASTER
         configure_ruby_llm
         result = RubyLLM.moderate(text)
         Result.ok({ flagged: result.flagged?, categories: result.categories })
-      rescue StandardError => e
-        Result.err(e.message)
+      rescue StandardError => err
+        Result.err(err.message)
       end
 
       # Structured output helper - guarantees valid JSON matching schema

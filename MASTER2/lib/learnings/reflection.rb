@@ -3,10 +3,11 @@
 module MASTER
   # ReflectionMemory - Weighted learning from self-critiques with decay
   class ReflectionMemory
-    DECAY_DAYS = 30
-    DECAY_FACTOR = 0.4
+    DECAY_DAYS             = 30
+    DECAY_FACTOR           = 0.4
     HIGH_PRIORITY_THRESHOLD = 0.75
-    MAX_CONTEXT_ITEMS = 10
+    MAX_CONTEXT_ITEMS      = 10
+    SECONDS_PER_DAY        = 86_400.0
 
     def initialize(memory = nil)
       @memory = memory || Memory
@@ -38,7 +39,7 @@ module MASTER
         strength_match = ref.match(/strength:([0-9.]+)/)
         strength = strength_match ? strength_match[1].to_f : 0.5
 
-        age_days = (now - created_at) / 86_400.0
+        age_days = (now - created_at) / SECONDS_PER_DAY
 
         decay_multiplier = age_days > DECAY_DAYS ? DECAY_FACTOR : 1.0
         adjusted_weight = strength * decay_multiplier

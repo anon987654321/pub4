@@ -17,11 +17,11 @@ module MASTER
     # :impact, :confidence, :cost and optional metadata.
     def pick_best(candidates)
       rows = Array(candidates).map do |c|
-        data = c.is_a?(Hash) ? c : { value: c }
-        data.merge(score: score(
-          impact: data.fetch(:impact, 1.0),
-          confidence: data.fetch(:confidence, 1.0),
-          cost: data.fetch(:cost, 1.0),
+        candidate_hash = c.is_a?(Hash) ? c : { value: c }
+        candidate_hash.merge(score: score(
+          impact: candidate_hash.fetch(:impact, 1.0),
+          confidence: candidate_hash.fetch(:confidence, 1.0),
+          cost: candidate_hash.fetch(:cost, 1.0),
         ))
       end
       rows.max_by { |r| r[:score] }

@@ -21,9 +21,11 @@ module MASTER
   class Session
     attr_reader :id, :created_at, :history, :metadata
 
-    AUTOSAVE_INTERVAL = 30 # seconds
-    SESSION_MUTEX = Mutex.new
+    AUTOSAVE_INTERVAL   = 30 # seconds
+    SESSION_MUTEX       = Mutex.new
     SUPPORTED_LANGUAGES = %i[english norwegian].freeze
+    SIGINT_EXIT_CODE    = 130
+    SIGTERM_EXIT_CODE   = 143
 
     # SUPPORTED_PERSONAS - delegate to Personas module
     SUPPORTED_PERSONAS = Personas.supported_list.freeze
@@ -191,7 +193,7 @@ module MASTER
         %w[INT TERM].each do |signal|
           Signal.trap(signal) do
             # exit (not exit!) triggers at_exit handlers so session is saved
-            exit_code = signal == "INT" ? 130 : 143
+            exit_code = signal == "INT" ? SIGINT_EXIT_CODE : SIGTERM_EXIT_CODE
             exit(exit_code)
           end
         end
@@ -208,8 +210,8 @@ module MASTER
         @current.instance_variable_set(:@metadata,
                                        @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
         @current.save
-      rescue StandardError => e
-        warn "session: crash save failed: #{e.message}"
+      rescue StandardError => err
+        warn "session: crash save failed: #{err.message}"
       end
     end
 

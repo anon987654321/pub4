@@ -33,12 +33,12 @@ module MASTER
         end
 
         if defined?(Violations)
-          v = begin
+          violation_data = begin
             Violations.analyze(code, path: path)
           rescue StandardError
             {}
           end
-          results[:violations] = (v[:literal] || []) + (v[:conceptual] || [])
+          results[:violations] = (violation_data[:literal] || []) + (violation_data[:conceptual] || [])
         end
 
         if defined?(BugHunting)
@@ -102,8 +102,8 @@ module MASTER
         if File.directory?(path) && defined?(Smells) && Smells.respond_to?(:cyclic_deps?)
           cycle = begin
             Smells.cyclic_deps?(files)
-          rescue StandardError => e
-            Logging.warn("cyclic_deps check failed: #{e.message}", subsystem: "CodeReview")
+          rescue StandardError => err
+            Logging.warn("cyclic_deps check failed: #{err.message}", subsystem: "CodeReview")
             nil
           end
           issues << { file: path, type: :cyclic_dependency, cycle: cycle[:cycle] } if cycle
@@ -226,8 +226,8 @@ module MASTER
         return nil unless all_axioms
 
         all_axioms.select { |a| (a["priority"] || a[:priority] || 5) >= min_priority }
-      rescue StandardError => e
-        UI.warn("Failed to load axioms: #{e.message}")
+      rescue StandardError => err
+        UI.warn("Failed to load axioms: #{err.message}")
         nil
       end
 
@@ -275,8 +275,8 @@ module MASTER
         end
 
         issues
-      rescue StandardError => e
-        [{ file: path, type: :error, message: e.message, severity: :low }]
+      rescue StandardError => err
+        [{ file: path, type: :error, message: err.message, severity: :low }]
       end
     end
   end

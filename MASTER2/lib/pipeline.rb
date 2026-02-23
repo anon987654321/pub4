@@ -59,9 +59,9 @@ module MASTER
 
         normalize_result(raw, text)
       end
-    rescue StandardError => e
-      Logging.dmesg_log("pipeline", message: "unhandled: #{e.message}")
-      Result.err(e.message)
+    rescue StandardError => err
+      Logging.dmesg_log("pipeline", message: "unhandled: #{err.message}")
+      Result.err(err.message)
     end
 
     private
@@ -80,8 +80,9 @@ module MASTER
         lint_result = Stages::Lint.new.call({ text: text, response: response_text })
         if lint_result.ok?
           lv = lint_result.value
+          lv_violations = lv[:axiom_violations]
           Logging.dmesg_log("pipeline",
-                            message: "executor_lint violations=#{lv[:axiom_violations]&.size || 0}") if lv[:axiom_violations]&.any?
+                            message: "executor_lint violations=#{lv_violations&.size || 0}") if lv_violations&.any?
 
           # Security veto: check if any executor council_review step vetoed on security grounds
           steps = exec_result.value[:steps]
@@ -130,20 +131,20 @@ module MASTER
     def normalize_result(result, input_text = nil)
       return result if result.err?
 
-      v = result.value
-      return result unless v.is_a?(Hash)
+      payload = result.value
+      return result unless payload.is_a?(Hash)
 
       # Normalize known keys
       normalized = {
-        response: v[:response] || v[:answer] || v[:content],
-        rendered: v[:rendered],
-        model: v[:model],
-        cost: v[:cost],
-        tokens_in: v[:tokens_in],
-        tokens_out: v[:tokens_out],
-        pattern: v[:pattern],
-        steps: v[:steps],
-        history: v[:history],
+        response: payload[:response] || payload[:answer] || payload[:content],
+        rendered: payload[:rendered],
+        model: payload[:model],
+        cost: payload[:cost],
+        tokens_in: payload[:tokens_in],
+        tokens_out: payload[:tokens_out],
+        pattern: payload[:pattern],
+        steps: payload[:steps],
+        history: payload[:history],
       }.compact
 
       # Apply typography rendering if we have a response but no rendered version
@@ -162,8 +163,8 @@ module MASTER
       end
 
       # Preserve any custom keys from the original value
-      v.each do |key, val|
-        normalized[key] = val unless normalized.key?(key)
+      payload.each do |key, val_item|
+        normalized[key] = val_item unless normalized.key?(key)
       end
 
       Result.ok(normalized)
@@ -259,8 +260,8 @@ module MASTER
           warn JSON.generate({ error: result.failure })
           exit 1
         end
-      rescue JSON::ParserError => e
-        warn JSON.generate({ error: "Invalid JSON: #{e.message}" })
+      rescue JSON::ParserError => err
+        warn JSON.generate({ error: "Invalid JSON: #{err.message}" })
         exit 1
       end
     end

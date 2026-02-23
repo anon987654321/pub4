@@ -3,14 +3,15 @@
 module MASTER
   class Executor
     module Reflexion
+      REFLEXION_MAX_ATTEMPTS  = 3
+      INNER_REACT_MAX_STEPS   = 5
       def execute_reflexion(goal, tier:)
         original_goal = goal.dup.freeze
-        max_attempts = 3
         attempt = 0
 
-        while attempt < max_attempts
+        while attempt < REFLEXION_MAX_ATTEMPTS
           attempt += 1
-          UI.dim("  attempt #{attempt}/#{max_attempts}")
+          UI.dim("  attempt #{attempt}/#{REFLEXION_MAX_ATTEMPTS}")
 
           # Build augmented goal from original + all lessons so far
           augmented_goal = if @reflections.any?
@@ -45,7 +46,7 @@ module MASTER
           @step = 0
         end
 
-        Result.err("Failed after #{max_attempts} attempts with reflection")
+        Result.err("Failed after #{REFLEXION_MAX_ATTEMPTS} attempts with reflection")
       end
 
       def execute_react_inner(goal, tier:)
@@ -53,11 +54,11 @@ module MASTER
         # Intentionally cap inner loop to respect overall step budget
         start_time = MASTER::Utils.monotonic_now
 
-        [5, @max_steps - @step].min.times do
+        [INNER_REACT_MAX_STEPS, @max_steps - @step].min.times do
           begin
             check_timeout!(start_time)
-          rescue Result::Error => e
-            return Result.err(e.message)
+          rescue Result::Error => err
+            return Result.err(err.message)
           end
 
           @step += 1
@@ -78,7 +79,7 @@ module MASTER
           @history.last[:observation] = observation
         end
 
-        Result.err("No answer in 5 steps.")
+        Result.err("No answer in #{INNER_REACT_MAX_STEPS} steps.")
       end
 
       def reflect_on_result(goal, result, tier:)

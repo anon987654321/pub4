@@ -37,10 +37,10 @@ module MASTER
       else
         Result.err("HTTP #{status} for #{url}")
       end
-    rescue Net::OpenTimeout, Net::ReadTimeout => e
-      Result.err("Browse timeout after #{WEB_TIMEOUT}s: #{e.message}")
-    rescue StandardError => e
-      Result.err("Browse failed: #{e.message}")
+    rescue Net::OpenTimeout, Net::ReadTimeout => err
+      Result.err("Browse timeout after #{WEB_TIMEOUT}s: #{err.message}")
+    rescue StandardError => err
+      Result.err("Browse failed: #{err.message}")
     end
 
     # JavaScript-rendered pages using Ferrum (optional)
@@ -57,8 +57,8 @@ module MASTER
       Result.ok(content: text[0, MAX_CONTENT_LENGTH], url: url)
     rescue LoadError
       Result.err("Ferrum gem not available - install for JS-rendered pages.")
-    rescue StandardError => e
-      Result.err("Browse JS failed: #{e.message}")
+    rescue StandardError => err
+      Result.err("Browse JS failed: #{err.message}")
     ensure
       begin
         browser&.quit
@@ -100,8 +100,8 @@ module MASTER
       Result.ok(selector: selector)
     rescue LoadError
       Result.err("Ferrum not available - install gem 'ferrum' for browser automation.")
-    rescue StandardError => e
-      Result.err("Selector discovery failed: #{e.message}")
+    rescue StandardError => err
+      Result.err("Selector discovery failed: #{err.message}")
     end
 
     # Click an element discovered dynamically
@@ -132,8 +132,8 @@ module MASTER
       Result.ok(selector: selector, result: result_html)
     rescue LoadError
       Result.err("Ferrum not available - install gem 'ferrum'.")
-    rescue StandardError => e
-      Result.err("Click failed: #{e.message}")
+    rescue StandardError => err
+      Result.err("Click failed: #{err.message}")
     end
 
     # Fill a form field discovered dynamically
@@ -162,8 +162,8 @@ module MASTER
       Result.ok(selector: selector, filled: value)
     rescue LoadError
       Result.err("Ferrum not available - install gem 'ferrum'.")
-    rescue StandardError => e
-      Result.err("Fill failed: #{e.message}")
+    rescue StandardError => err
+      Result.err("Fill failed: #{err.message}")
     end
 
     private

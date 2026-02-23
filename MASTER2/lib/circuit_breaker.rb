@@ -135,8 +135,8 @@ module MASTER
       rescue TestFailure, Stoplight::Error::RedLight
         # Expected
       end
-    rescue StandardError => e
-      Logging.warn("Failed to open circuit", model: model, error: e.message)
+    rescue StandardError => err
+      Logging.warn("Failed to open circuit", model: model, error: err.message)
     end
 
     # Run a successful probe to clear failure counts
@@ -147,8 +147,8 @@ module MASTER
       rescue Stoplight::Error::RedLight
         # Circuit may still be open
       end
-    rescue StandardError => e
-      Logging.warn("Failed to close circuit", model: model, error: e.message)
+    rescue StandardError => err
+      Logging.warn("Failed to close circuit", model: model, error: err.message)
     end
   end
 end

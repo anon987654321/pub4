@@ -52,18 +52,18 @@ module MASTER
       prompt = PROMPT.gsub("{{ERROR}}", error.to_s[0, 1000])
         .gsub("{{CODE}}", code.to_s[0, 3000])
 
-      result = llm.ask(prompt, tier: :fast)
-      if result.ok?
+      llm_result = llm.ask(prompt, tier: :fast)
+      if llm_result.ok?
         {
-          analysis: result.value[:content],
+          analysis: llm_result.value[:content],
           hostile_check: HOSTILE.sample,
           fixes: FIXES.keys,
         }
       else
-        { error: result.error }
+        { error: llm_result.error }
       end
-    rescue StandardError => e
-      { error: e.message }
+    rescue StandardError => err
+      { error: err.message }
     end
 
     def hostile_check

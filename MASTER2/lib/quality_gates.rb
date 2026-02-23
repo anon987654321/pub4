@@ -25,8 +25,8 @@ module MASTER
           @config = YAML.safe_load_file(path, symbolize_names: true)
           @config_mtime = current_mtime
           @config
-        rescue StandardError => e
-          warn "Failed to load quality gates config: #{e.message}"
+          rescue StandardError => err
+            warn "Failed to load quality gates config: #{err.message}"
           @config = default_config
         end
 
@@ -66,7 +66,7 @@ module MASTER
           passed = true
 
           enabled_gates.each do |gate|
-            gate_metrics = metrics[gate[:name]] || {}
+            gate_metrics = metrics.fetch(gate[:name], {})
             result = check_gate(gate[:name], gate_metrics)
             if result.ok?
               results[gate[:name]] = result.value
@@ -99,9 +99,9 @@ module MASTER
 
         def check_tests(test_results)
           metrics = {
-            tests_passed: test_results[:passed] || 0,
-            tests_failed: test_results[:failed] || 0,
-            tests_skipped: test_results[:skipped] || 0,
+            tests_passed: test_results.fetch(:passed, 0),
+            tests_failed: test_results.fetch(:failed, 0),
+            tests_skipped: test_results.fetch(:skipped, 0),
             pass_rate: calculate_pass_rate(test_results),
           }
 
@@ -110,9 +110,9 @@ module MASTER
 
         def check_complexity(complexity_data)
           metrics = {
-            cyclomatic_complexity: complexity_data[:cyclomatic] || 0,
-            cognitive_complexity: complexity_data[:cognitive] || 0,
-            max_method_lines: complexity_data[:max_method_lines] || 0,
+            cyclomatic_complexity: complexity_data.fetch(:cyclomatic, 0),
+            cognitive_complexity: complexity_data.fetch(:cognitive, 0),
+            max_method_lines: complexity_data.fetch(:max_method_lines, 0),
           }
 
           check_gate(:complexity, metrics)
@@ -120,8 +120,8 @@ module MASTER
 
         def check_coverage(coverage_data)
           metrics = {
-            line_coverage: coverage_data[:line_coverage] || 0,
-            branch_coverage: coverage_data[:branch_coverage] || 0,
+            line_coverage: coverage_data.fetch(:line_coverage, 0),
+            branch_coverage: coverage_data.fetch(:branch_coverage, 0),
           }
 
           check_gate(:coverage, metrics)

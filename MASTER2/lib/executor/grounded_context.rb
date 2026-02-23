@@ -13,7 +13,8 @@ module MASTER
   # Token budget is enforced: files are prioritised then truncated to fit.
   # Encoding: ~4 chars per token (conservative estimate).
   module GroundedContext
-    CHARS_PER_TOKEN = 4
+    CHARS_PER_TOKEN  = 4
+    GEMS_BUNDLE_PATH = "var/bundle/ruby"
     BUDGETS = {
       shallow: 0,
       own:     60_000 * CHARS_PER_TOKEN,  # ~60k tokens
@@ -104,8 +105,8 @@ module MASTER
       header = "GROUNDED SOURCE CONTEXT (#{tokens_used}k tokens, depth: #{depth}):\n" \
                "The following is the actual MASTER2 source. Reason from this, not memory.\n"
       header + sections.join("\n\n")
-    rescue StandardError => e
-      Logging.warn("grounded_context: #{e.message}") if defined?(Logging)
+    rescue StandardError => err
+      Logging.warn("grounded_context: #{err.message}") if defined?(Logging)
       ""
     end
 
@@ -124,31 +125,31 @@ module MASTER
     end
 
     def gem_readmes(root)
-      gems_dir = File.join(root, "var", "bundle", "ruby")
-      result = {}
-      return result unless Dir.exist?(gems_dir)
+      gems_dir = File.join(root, GEMS_BUNDLE_PATH)
+      readmes = {}
+      return readmes unless Dir.exist?(gems_dir)
 
       Dir.glob("#{gems_dir}/**/gems/*/README*").each do |path|
         name = path.split("/gems/").last.split("/").first
-        result[name] ||= File.read(path)[0, 4000]
+        readmes[name] ||= File.read(path)[0, 4000]
       rescue StandardError
         next
       end
-      result
+      readmes
     end
 
     def gem_sources(root)
-      gems_dir = File.join(root, "var", "bundle", "ruby")
-      result = {}
-      return result unless Dir.exist?(gems_dir)
+      gems_dir = File.join(root, GEMS_BUNDLE_PATH)
+      sources = {}
+      return sources unless Dir.exist?(gems_dir)
 
       Dir.glob("#{gems_dir}/**/gems/*/lib/**/*.rb").each do |path|
         rel = path.sub("#{root}/", "")
-        result[rel] = File.read(path)
+        sources[rel] = File.read(path)
       rescue StandardError
         next
       end
-      result
+      sources
     end
 
     def safe_read(path, budget)

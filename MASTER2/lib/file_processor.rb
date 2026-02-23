@@ -25,8 +25,8 @@ module MASTER
         result
       end
 
-      # Process entire directory
-      def process_directory(path, dry_run: true)
+      # Transform all supported files in a directory through all 4 phases
+      def transform_directory(path, dry_run: true)
         patterns = %w[*.rb *.py *.js *.ts *.go *.rs *.md *.yml *.yaml *.zsh]
         files = patterns.flat_map { |p| Dir.glob(File.join(path, "**", p)) }
         # Also include bare executables in sbin/ and scripts/ (no extension)

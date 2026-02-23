@@ -3,6 +3,18 @@
 module MASTER
   module UI
     module NNGChecklist
+      WCAG_AA_RATIO       = 4.5
+      WCAG_AAA_RATIO      = 7.0
+      CONTRAST_OFFSET     = 0.05
+      LUMINANCE_THRESHOLD = 0.03928
+      LINEAR_DIVISOR      = 12.92
+      GAMMA_OFFSET        = 0.055
+      GAMMA_DIVISOR       = 1.055
+      GAMMA_EXPONENT      = 2.4
+      RED_WEIGHT          = 0.2126
+      GREEN_WEIGHT        = 0.7152
+      BLUE_WEIGHT         = 0.0722
+
       HEURISTICS = {
         visibility: {
           name: "Visibility of System Status",
@@ -217,12 +229,12 @@ module MASTER
         # Calculate contrast ratio
         lighter = [fg_lum, bg_lum].max
         darker = [fg_lum, bg_lum].min
-        ratio = (lighter + 0.05) / (darker + 0.05)
+        ratio = (lighter + CONTRAST_OFFSET) / (darker + CONTRAST_OFFSET)
 
         {
           ratio: ratio.round(2),
-          wcag_aa: ratio >= 4.5,
-          wcag_aaa: ratio >= 7.0,
+          wcag_aa: ratio >= WCAG_AA_RATIO,
+          wcag_aaa: ratio >= WCAG_AAA_RATIO,
         }
       end
 
@@ -230,9 +242,9 @@ module MASTER
 
       def relative_luminance(rgb)
         rgb.map do |c|
-          c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055)**2.4
+          c <= LUMINANCE_THRESHOLD ? c / LINEAR_DIVISOR : ((c + GAMMA_OFFSET) / GAMMA_DIVISOR)**GAMMA_EXPONENT
         end.then do |r, g, b|
-          (0.2126 * r) + (0.7152 * g) + (0.0722 * b)
+          (RED_WEIGHT * r) + (GREEN_WEIGHT * g) + (BLUE_WEIGHT * b)
         end
       end
     end

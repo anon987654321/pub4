@@ -32,8 +32,8 @@ module MASTER
             result = pipeline.call({ text: message })
             output = result.ok? ? result.value[:rendered] : "Error: #{result.error}"
             queue.push(output)
-          rescue StandardError => e
-            queue.push("Error: #{e.message}")
+          rescue StandardError => err
+            queue.push("Error: #{err.message}")
           end
           [200, { CT_HEADER => JSON_TYPE }, ['{"status":"processing"}']]
         end

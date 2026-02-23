@@ -191,10 +191,10 @@ module MASTER
             violations.concat(absolute)
           end
           violations
-        rescue StandardError => e
+        rescue StandardError => err
           @last_self_check = {
             timestamp: Time.now, files_checked: 0,
-            absolute_violations: [], passed: false, error: e.message
+            absolute_violations: [], passed: false, error: err.message
           }
           nil
         end

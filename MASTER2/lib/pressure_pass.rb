@@ -10,9 +10,14 @@ module MASTER
   module PressurePass
     module_function
 
+    # Max chars of user input included in adversarial prompt
+    USER_INPUT_LIMIT = 4000
+    # Max chars of candidate answer included in adversarial prompt
+    CANDIDATE_TEXT_LIMIT = 6000
+
     def enabled?
-      val = ENV.fetch("MASTER_PRESSURE_PASS", "false").to_s.strip.downcase
-      !%w[0 false off no].include?(val)
+      env_val = ENV.fetch("MASTER_PRESSURE_PASS", "false").to_s.strip.downcase
+      !%w[0 false off no].include?(env_val)
     end
 
     def schema
@@ -37,10 +42,10 @@ module MASTER
         The goal is stronger truthfulness and utility, not aggression for its own sake.
 
         User request:
-        #{user_input.to_s[0, 4000]}
+        #{user_input.to_s[0, USER_INPUT_LIMIT]}
 
         Candidate answer:
-        #{candidate_text.to_s[0, 6000]}
+        #{candidate_text.to_s[0, CANDIDATE_TEXT_LIMIT]}
 
         Perform serial pressure testing:
         1) Strongest counterargument against the candidate answer.
@@ -62,22 +67,22 @@ module MASTER
       return nil unless candidate.is_a?(String) && !candidate.strip.empty?
       return nil unless user_input.is_a?(String) && !user_input.strip.empty?
 
-      result = LLM.ask_json(prompt(user_input, candidate), schema: schema, tier: tier, stream: false)
-      return nil unless result&.ok?
+      llm_result = LLM.ask_json(prompt(user_input, candidate), schema: schema, tier: tier, stream: false)
+      return nil unless llm_result&.ok?
 
-      parsed = normalize_payload(result.value[:content])
-      return nil unless parsed.is_a?(Hash)
+      review_data = normalize_payload(llm_result.value[:content])
+      return nil unless review_data.is_a?(Hash)
 
-      selected = parsed[:selected_answer].to_s.strip
+      selected = review_data[:selected_answer].to_s.strip
       return nil if selected.empty?
 
       {
-        counterargument: parsed[:counterargument].to_s,
-        failure_modes: Array(parsed[:failure_modes]).map(&:to_s),
-        alternatives: Array(parsed[:alternatives]).map(&:to_s),
-        selected_index: parsed[:selected_index].to_i,
+        counterargument: review_data[:counterargument].to_s,
+        failure_modes: Array(review_data[:failure_modes]).map(&:to_s),
+        alternatives: Array(review_data[:alternatives]).map(&:to_s),
+        selected_index: review_data[:selected_index].to_i,
         selected_answer: selected,
-        rationale: parsed[:rationale].to_s,
+        rationale: review_data[:rationale].to_s,
       }
     rescue StandardError
       nil

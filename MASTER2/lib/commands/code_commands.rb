@@ -151,7 +151,7 @@ module MASTER
         puts
 
         # For now, provide a simple implementation
-        constitution_path = File.join(MASTER.root, "data", "constitution.yml")
+        constitution_path = Paths.data_file("constitution.yml")
 
         if File.exist?(constitution_path)
           puts "constitution: found"
@@ -208,20 +208,20 @@ module MASTER
                    {
                      files: { path => file_result },
                      total_issues: file_result[:issues].size,
-                     critical: file_result[:issues].count { |i| i[:severity] == :critical },
-                     major: file_result[:issues].count { |i| i[:severity] == :major },
+                     critical: file_result[:issues].count { |issue| issue[:severity] == :critical },
+                     major: file_result[:issues].count { |issue| issue[:severity] == :major },
                      average_score: file_result[:score].to_f,
                    }
                  else
                    Review::Scanner.analyze_directory(path)
                  end
 
-        result[:files].each do |file, r|
-          next if r[:issues].empty?
+        result[:files].each do |file, file_scan|
+          next if file_scan[:issues].empty?
 
           rel = file.sub("#{MASTER.root}/", "")
-          puts "  #{r[:grade]} #{rel}"
-          r[:issues].each { |issue| puts "    #{issue[:severity].to_s.upcase}: #{issue[:message]}" }
+          puts "  #{file_scan[:grade]} #{rel}"
+          file_scan[:issues].each { |issue| puts "    #{issue[:severity].to_s.upcase}: #{issue[:message]}" }
         end
 
         puts
@@ -236,8 +236,8 @@ module MASTER
           critical: result[:critical],
           major: result[:major],
           average_score: result[:average_score].round(2),
-          files: result[:files].transform_values do |r|
-            { issues: r[:issues].size, score: r[:score], grade: r[:grade] }
+          files: result[:files].transform_values do |file_result|
+            { issues: file_result[:issues].size, score: file_result[:score], grade: file_result[:grade] }
           end,
         }
         File.write(state_path, JSON.generate(state))
@@ -263,7 +263,7 @@ module MASTER
           return { type: :snippet, snippet: snippet, mode: mode }
         end
 
-        target = parts.find { |p| !p.start_with?("-") }
+        target = parts.find { |part| !part.start_with?("-") }
         return { error: usage } if target.nil? || target.empty?
 
         expanded = File.expand_path(target)
@@ -272,8 +272,8 @@ module MASTER
         else
           { type: :file, path: target, mode: mode }
         end
-      rescue ArgumentError => e
-        { error: "Invalid arguments: #{e.message}" }
+      rescue ArgumentError => err
+        { error: "Invalid arguments: #{err.message}" }
       end
 
       def autofix_directory(path, mode)
@@ -322,7 +322,7 @@ module MASTER
       def run_constitutional_validation(code, file)
         puts UI.bold("phase2: constitutional validation...")
         violations = Violations.analyze(code, path: file, llm: nil, conceptual: false)
-        critical_count = violations[:literal].count { |v| v[:severity] == :error }
+        critical_count = violations[:literal].count { |violation| violation[:severity] == :error }
 
         if critical_count > 0
           puts "#{critical_count} critical violations"
@@ -461,7 +461,7 @@ module MASTER
           }
         end
 
-        scored = candidates.uniq { |c| c[:code] }.map do |candidate|
+        scored = candidates.uniq { |candidate| candidate[:code] }.map do |candidate|
           metrics = score_candidate(path, candidate[:code])
           score = if defined?(DecisionEngine)
                     DecisionEngine.score(
@@ -474,7 +474,7 @@ module MASTER
                   end
           candidate.merge(score: score)
         end
-        best = scored.max_by { |c| c[:score] }
+        best = scored.max_by { |candidate| candidate[:score] }
         return Result.err("No viable fix candidate generated.") unless best
 
         Result.ok(
@@ -491,7 +491,7 @@ module MASTER
           .gsub(/[ \t]+$/, "")
           .gsub(/\bteh\b/i, "the")
           .gsub(/\brecieve\b/i, "receive")
-          .gsub(/^\t+/) { |m| "  " * m.length }
+          .gsub(/^\t+/) { |tabs| "  " * tabs.length }
       end
 
       def score_candidate(path, code)
@@ -573,12 +573,12 @@ module MASTER
           symbol = args.strip
           graph  = DependencyMap.build
           lib_root = File.join(MASTER.root, "lib")
-          matches = graph.select { |_, info| info[:references].any? { |r| r.include?(symbol) } }
+          matches = graph.select { |_, info| info[:references].any? { |ref| ref.include?(symbol) } }
           if matches.empty?
             puts "deps: no references to #{symbol} found"
           else
             puts "deps: #{matches.size} file(s) reference #{symbol}"
-            matches.each_key { |f| puts "  #{f.sub("#{lib_root}/", "")}" }
+            matches.each_key { |filepath| puts "  #{filepath.sub("#{lib_root}/", "")}" }
           end
           # Record if agent was greping for deps — friction signal 8
           MASTER::Friction::FrictionRecorder.record(:dep_graph_blind, symbol: symbol) if args.include?("grep")
@@ -603,7 +603,7 @@ module MASTER
           puts "config-drift: clean — all YAML keys have Ruby readers"
         else
           puts "config-drift: #{orphans.size} orphaned key(s):"
-          orphans.each { |o| puts "  #{o[:file]}: #{o[:key]}" }
+          orphans.each { |orphan| puts "  #{orphan[:file]}: #{orphan[:key]}" }
         end
         HANDLED
       end

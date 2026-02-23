@@ -106,9 +106,9 @@ module MASTER
                     model: model_id,
                     prompt: prompt,
                   })
-      rescue StandardError => e
+      rescue StandardError => err
         CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
-        Result.err("Replicate error: #{e.message}")
+        Result.err("Replicate error: #{err.message}")
       end
 
       def upscale(image_url:, scale: 4)
@@ -132,9 +132,9 @@ module MASTER
         end
 
         Result.ok({ url: result[:output], scale: scale })
-      rescue StandardError => e
+      rescue StandardError => err
         CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
-        Result.err("Replicate error: #{e.message}")
+        Result.err("Replicate error: #{err.message}")
       end
 
       def describe(image_url:)
@@ -158,9 +158,9 @@ module MASTER
         end
 
         Result.ok({ caption: result[:output] })
-      rescue StandardError => e
+      rescue StandardError => err
         CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
-        Result.err("Replicate error: #{e.message}")
+        Result.err("Replicate error: #{err.message}")
       end
 
       # Generic model runner - supports any Replicate model
@@ -188,9 +188,9 @@ module MASTER
                     output: result[:output],
                     model: model_id,
                   })
-      rescue StandardError => e
+      rescue StandardError => err
         CircuitBreaker.open_circuit!(circuit_key) if defined?(CircuitBreaker)
-        Result.err("Replicate error: #{e.message}")
+        Result.err("Replicate error: #{err.message}")
       end
 
       # Lookup model ID by symbol name

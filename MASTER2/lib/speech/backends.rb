@@ -93,8 +93,8 @@ module MASTER
         end
 
         Result.ok(engine: :replicate, url: audio_url)
-      rescue StandardError => e
-        Result.err("Replicate error: #{e.message}")
+      rescue StandardError => err
+        Result.err("Replicate error: #{err.message}")
       end
     end
   end

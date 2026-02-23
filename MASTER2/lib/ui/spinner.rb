@@ -38,13 +38,13 @@ module MASTER
         @running = true
         @start   = Time.now
         @thread  = Thread.new do
-          i = 0
+          frame_idx = 0
           while @running
             elapsed  = (Time.now - @start).round
             time_str = elapsed > 5 ? " (#{elapsed}s)" : ""
-            print "\r  #{@frames[i % @frames.size]} #{@message}#{time_str}  "
+            print "\r  #{@frames[frame_idx % @frames.size]} #{@message}#{time_str}  "
             $stdout.flush
-            i += 1
+            frame_idx += 1
             sleep 0.1
           end
         end

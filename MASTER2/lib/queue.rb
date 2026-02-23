@@ -8,6 +8,9 @@ module MASTER
   # Features: budget tracking, batch processing, pause/resume, binary filtering
   # Ported from MASTER v1, adapted for MASTER2's Paths and Result monad
   class Queue
+    MAX_FILE_SIZE_BYTES          = 1_000_000
+    BINARY_DETECTION_CHUNK_SIZE  = 8_192
+
     attr_reader :items, :completed, :failed, :current
 
     def initialize(checkpoint_file: nil)
@@ -132,33 +135,33 @@ module MASTER
       FileUtils.mkdir_p(File.dirname(@checkpoint_file))
       File.write(@checkpoint_file, JSON.pretty_generate(data))
       Result.ok("Checkpoint saved")
-    rescue StandardError => e
-      Result.err("Failed to save checkpoint: #{e.message}")
+    rescue StandardError => err
+      Result.err("Failed to save checkpoint: #{err.message}")
     end
 
     def load_checkpoint
       return Result.err("Checkpoint file not found.") unless File.exist?(@checkpoint_file)
 
       data = JSON.parse(File.read(@checkpoint_file, symbolize_names: true), symbolize_names: true)
-      @items = data[:items] || []
-      @completed = data[:completed] || []
-      @failed = data[:failed] || []
-      @paused = data[:paused] || false
+      @items = data.fetch(:items, [])
+      @completed = data.fetch(:completed, [])
+      @failed = data.fetch(:failed, [])
+      @paused = data.fetch(:paused, false)
       @budget = data[:budget]
-      @spent = data[:spent] || 0.0
+      @spent = data.fetch(:spent, 0.0)
       Result.ok("Checkpoint loaded: #{status}")
-    rescue JSON::ParserError => e
-      Result.err("Failed to parse checkpoint: #{e.message}")
-    rescue StandardError => e
-      Result.err("Failed to load checkpoint: #{e.message}")
+    rescue JSON::ParserError => err
+      Result.err("Failed to parse checkpoint: #{err.message}")
+    rescue StandardError => err
+      Result.err("Failed to load checkpoint: #{err.message}")
     end
 
     # Delete checkpoint file
     def clear_checkpoint
       FileUtils.rm_f(@checkpoint_file)
       Result.ok("Checkpoint cleared")
-    rescue StandardError => e
-      Result.err("Failed to clear checkpoint: #{e.message}")
+    rescue StandardError => err
+      Result.err("Failed to clear checkpoint: #{err.message}")
     end
 
     # Reset queue to empty state
@@ -202,7 +205,7 @@ module MASTER
     # Check if file is binary (to filter out non-text files)
     def binary?(file)
       # Size check
-      return true if File.size(file) > 1_000_000
+      return true if File.size(file) > MAX_FILE_SIZE_BYTES
 
       # Extension check
       binary_extensions = %w[
@@ -219,7 +222,7 @@ module MASTER
 
       # Content check - look for null bytes
       begin
-        chunk = File.read(file, 8192)
+        chunk = File.read(file, BINARY_DETECTION_CHUNK_SIZE)
         chunk&.include?("\x00")
       rescue StandardError
         true

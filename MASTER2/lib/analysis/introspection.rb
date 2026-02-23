@@ -52,8 +52,8 @@ module MASTER
           end
 
           Result.ok("introspect complete: #{map[:ruby_files].count} files, #{errors.count} errors")
-        rescue StandardError => e
-          Result.err("introspect failed: #{e.message}")
+        rescue StandardError => err
+          Result.err("introspect failed: #{err.message}")
         end
 
         # Generate summary of MASTER's structure for boot display
@@ -190,20 +190,20 @@ module MASTER
         private
 
         def collect_files(dir, root = dir)
-          result = []
+          paths = []
 
           Dir.entries(dir).each do |entry|
             next if entry.start_with?(".") || IGNORED.include?(entry)
 
             path = File.join(dir, entry)
             if File.directory?(path)
-              result.concat(collect_files(path, root))
+              paths.concat(collect_files(path, root))
             else
-              result << path.sub("#{root}/", "")
+              paths << path.sub("#{root}/", "")
             end
           end
 
-          result
+          paths
         end
       end
     end

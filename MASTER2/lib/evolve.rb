@@ -13,6 +13,7 @@ module MASTER
     MAX_ITERATIONS = (_c || 10).freeze
     CONVERGENCE_THRESHOLD = 0.02
     PER_FILE_BUDGET = 0.25
+    MAX_FILE_SIZE = 10_000 # bytes; files larger than this are skipped
 
     def initialize(llm: LLM, chamber: nil, staged: false, validation_command: nil, language: :ruby)
       @llm = llm
@@ -72,7 +73,7 @@ module MASTER
 
     def improve_file(file, dry_run:)
       code = File.read(file)
-      return { file: file, skipped: true, reason: "too large" } if code.size > 10_000
+      return { file: file, skipped: true, reason: "too large" } if code.size > MAX_FILE_SIZE
 
       # Handle shell scripts with embedded Ruby
       return improve_shell_file(file, code, dry_run: dry_run) if @language == :shell || shell_file?(file)
@@ -102,8 +103,8 @@ module MASTER
       else
         { file: file, improved: false, reason: result.err? ? result.error : "no changes" }
       end
-    rescue StandardError => e
-      { file: file, error: e.message }
+    rescue StandardError => err
+      { file: file, error: err.message }
     end
 
     def shell_file?(file)
@@ -155,8 +156,8 @@ module MASTER
       else
         { file: file, improved: false, reason: "no improvements suggested" }
       end
-    rescue StandardError => e
-      { file: file, error: e.message }
+    rescue StandardError => err
+      { file: file, error: err.message }
     end
 
     def create_safety_checkpoint

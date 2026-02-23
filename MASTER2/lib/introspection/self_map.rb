@@ -127,7 +127,7 @@ module MASTER
         end
 
         def run_file_processing
-          result = FileProcessor.process_directory(File.join(MASTER.root, "lib"), dry_run: true)
+          result = FileProcessor.transform_directory(File.join(MASTER.root, "lib"), dry_run: true)
           changes_needed = result[:files_changed]
 
           {
@@ -190,8 +190,8 @@ module MASTER
           else
             { passed: false, message: "LLM error: #{result.failure}" }
           end
-        rescue StandardError => e
-          { passed: false, message: "Failed: #{e.message}" }
+        rescue StandardError => err
+          { passed: false, message: "Failed: #{err.message}" }
         end
 
         def check_error_message_format(content, file)

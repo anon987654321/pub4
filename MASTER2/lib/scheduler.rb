@@ -8,7 +8,7 @@ module MASTER
   # Stolen from OpenClaw: agents schedule their own future work,
   # jobs persist across restarts, exponential backoff on failure
   module Scheduler
-    JOBS_FILE = File.join(MASTER.root, "data", "scheduled_jobs.json")
+    JOBS_FILE = Paths.data_file("scheduled_jobs.json")
     MAX_JOBS = 50
 
     Job = Struct.new(
@@ -43,8 +43,8 @@ module MASTER
           )
         end
         Logging.dmesg_log("scheduler", message: "loaded #{@jobs.size} jobs")
-      rescue StandardError => e
-        Logging.dmesg_log("scheduler", message: "load error: #{e.message}")
+      rescue StandardError => err
+        Logging.dmesg_log("scheduler", message: "load error: #{err.message}")
         @jobs = []
       end
 
@@ -113,8 +113,8 @@ module MASTER
         return if due.empty?
 
         due.each do |job|
-          ok = run_job(job)
-          if ok
+          run_succeeded = run_job(job)
+          if run_succeeded
             if job.interval
               job.next_at = Time.now + job.interval
             else
@@ -160,13 +160,13 @@ module MASTER
         job.last_error = nil
         Logging.dmesg_log("scheduler", message: "EXIT run #{job.id} ok")
         true
-      rescue StandardError => e
+      rescue StandardError => err
         job.failures += 1
         job.last_status = "failed"
-        job.last_error = e.message
+        job.last_error = err.message
         backoff = backoff_seconds(job)
         Logging.dmesg_log("scheduler",
-                          message: "run #{job.id} failed (#{job.failures}x): #{e.message}; backoff=#{backoff}s")
+                          message: "run #{job.id} failed (#{job.failures}x): #{err.message}; backoff=#{backoff}s")
         job.next_at = Time.now + backoff
         false
       end

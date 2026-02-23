@@ -30,8 +30,8 @@ module MASTER
     end
 
     def status(prefix, message, success: true)
-      i = success ? icon(:success) : icon(:failure)
-      "#{prefix}: #{message} #{i}"
+      status_icon = success ? icon(:success) : icon(:failure)
+      "#{prefix}: #{message} #{status_icon}"
     end
 
     def progress_line(current, total, message = nil)

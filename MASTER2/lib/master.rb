@@ -11,12 +11,12 @@ module MASTER
   # Safe require helper for optional dependencies
   def self.safe_require(path, label: nil, silent: false)
     require_relative path
-  rescue LoadError, StandardError => e
+  rescue LoadError, StandardError => err
     return if silent
 
     name = label || File.basename(path)
-    warn "MASTER: #{name} unavailable (#{e.message})"
-    Logging.warn("#{name} unavailable", error: e.message) if defined?(Logging)
+    warn "MASTER: #{name} unavailable (#{err.message})"
+    Logging.warn("#{name} unavailable", error: err.message) if defined?(Logging)
   end
 end
 
@@ -156,8 +156,8 @@ if ENV["MASTER_SELF_CHECK"] == "true" && defined?(MASTER::Enforcement)
     sleep (ENV["MASTER_SELF_CHECK_DELAY"] || "1").to_i
     begin
       MASTER::Enforcement.self_check!
-    rescue StandardError => e
-      warn "MASTER: self_check! failed (#{e.message})"
+    rescue StandardError => err
+      warn "MASTER: self_check! failed (#{err.message})"
     end
   end
 end
