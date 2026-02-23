@@ -158,7 +158,7 @@ module MASTER
       private
 
       def load_config
-        path = Paths.data_file("smells.yml")
+        path = Paths.data_file("detectors.yml")
         YAML.safe_load_file(path, permitted_classes: [Symbol])
       rescue Errno::ENOENT
         {}

@@ -11,7 +11,7 @@ module MASTER
 
       LAYERS = %i[literal lexical conceptual semantic cognitive language_axiom].freeze
       SCOPES = %i[line unit file framework].freeze
-      SMELLS_FILE = File.join(MASTER.root, "data", "smells.yml")
+      SMELLS_FILE = File.join(MASTER.root, "data", "detectors.yml")
 
       # MASTER2 contribution rules and architecture
       ARCHITECTURE = {

@@ -5,7 +5,7 @@ module MASTER
     # LanguageAxioms - Language-specific beauty rules
     # 78 axioms across Ruby, Rails, Zsh, HTML/ERB, CSS/SCSS, JavaScript, and universal
     module LanguageAxioms
-      AXIOMS_FILE     = File.join(MASTER.root, "data", "language_axioms.yml")
+      AXIOMS_FILE     = File.join(MASTER.root, "data", "detectors.yml")
       DETECTION_FILE  = File.join(MASTER.root, "data", "language_detection.yml")
 
       class << self

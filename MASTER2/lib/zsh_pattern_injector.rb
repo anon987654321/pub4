@@ -11,7 +11,7 @@ module MASTER
   module ZshPatternInjector
     extend self
 
-    DATA_FILE       = File.join(MASTER.root, "data", "zsh_patterns.yml")
+    DATA_FILE       = File.join(MASTER.root, "data", "platform.yml")
     CONSTITUTION    = File.join(MASTER.root, "data", "constitution.yml")
 
     def data

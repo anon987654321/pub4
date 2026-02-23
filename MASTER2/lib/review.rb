@@ -27,7 +27,7 @@ require_relative "review/reflow"
 require_relative "review/enforcer"
 require_relative "review/axiom_stats"
 require_relative "review/constitution"
-require_relative "review/design_codex"
+require_relative "review/design_codex" # design.yml
 
 module MASTER
   Constitution = Review::Constitution
