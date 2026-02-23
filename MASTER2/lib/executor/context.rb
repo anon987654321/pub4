@@ -92,6 +92,22 @@ module MASTER
       end
       sections << conventions unless conventions.empty?
 
+      # Inject top-5 highest-priority axioms so every LLM call has them on the hot path
+      if defined?(MASTER::Review::Constitution)
+        begin
+          top_axioms = MASTER::Review::Constitution.axioms
+                         .select { |a| a["name"] && a["description"] }
+                         .sort_by { |a| -(a["priority"] || 5) }
+                         .first(5)
+          unless top_axioms.empty?
+            axiom_lines = top_axioms.map { |a| "#{a['name']}: #{a['description']}" }.join("\n")
+            sections << "ACTIVE AXIOMS (highest priority):\n#{axiom_lines}"
+          end
+        rescue StandardError
+          nil
+        end
+      end
+
       # Zsh native patterns: forbid legacy forks in shell code
       sections << ZshPatternInjector.prompt_section
 

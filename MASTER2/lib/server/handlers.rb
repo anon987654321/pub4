@@ -16,6 +16,27 @@ module MASTER
         [200, { CT_HEADER => JSON_TYPE }, [body]]
       end
 
+      def handle_sse(queue)
+        body = Enumerator.new do |y|
+          y << "retry: 1000\n\n"
+          loop do
+            text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
+            if text
+              data = { text: text, tier: LLM.tier }.to_json
+              y << "data: #{data}\n\n"
+            else
+              y << ": keep-alive\n\n"
+            end
+            sleep 0.3
+          end
+        end
+        [200, {
+          CT_HEADER          => "text/event-stream",
+          "Cache-Control"    => "no-cache",
+          "X-Accel-Buffering" => "no",
+        }, body]
+      end
+
       def handle_chat(env, pipeline, queue)
         body = env["rack.input"].read
         data = begin
