@@ -3,7 +3,7 @@
 module MASTER
   # ExecutionContext - extracted from Executor::Context for module-level access
   module ExecutionContext
-    SIMPLE_SECTIONS = %w[capabilities architecture environment shell_patterns behavior].freeze
+    SIMPLE_SECTIONS = %w[personality capabilities architecture environment shell_patterns behavior].freeze
     LABELED_SECTIONS = {
       "task_workflow" => "TASK WORKFLOW",
       "safety" => "SAFETY",
