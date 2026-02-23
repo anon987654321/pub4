@@ -1,3 +1,172 @@
+# OpenBSD system knowledge -- agents generate OpenBSD-native commands
+
+service_management:
+  enable: "rcctl enable ${service}"
+  start: "rcctl start ${service}"
+  restart: "rcctl restart ${service}"
+  check: "rcctl check ${service}"
+  disable: "rcctl disable ${service}"
+
+config_paths:
+  pf: "/etc/pf.conf"
+  httpd: "/etc/httpd.conf"
+  relayd: "/etc/relayd.conf"
+  smtpd: "/etc/mail/smtpd.conf"
+  acme: "/etc/acme-client.conf"
+  ssh: "/etc/ssh/sshd_config"
+  ntp: "/etc/ntpd.conf"
+  cron: "/var/cron/tabs/${user}"
+
+package_management:
+  install: "pkg_add ${package}"
+  remove: "pkg_delete ${package}"
+  search: "pkg_info -Q ${query}"
+  update: "pkg_add -u"
+  firmware: "fw_update"
+
+forbidden:
+  - command: "systemctl"
+    replacement: "rcctl"
+  - command: "apt"
+    replacement: "pkg_add"
+  - command: "apt-get"
+    replacement: "pkg_add"
+  - command: "brew"
+    replacement: "pkg_add"
+  - command: "yum"
+    replacement: "pkg_add"
+  - command: "ip addr"
+    replacement: "ifconfig"
+  - command: "ip route"
+    replacement: "route"
+  - command: "journalctl"
+    replacement: "cat /var/log/messages"
+  - command: "sudo"
+    replacement: "doas"
+  - command: "ufw"
+    replacement: "pfctl"
+  - command: "iptables"
+    replacement: "pf"
+  - command: "nginx"
+    replacement: "httpd (OpenBSD native)"
+  - command: "docker"
+    replacement: "vmctl"
+  - command: "systemd"
+    replacement: "rcctl"
+  - command: "gsed"
+    replacement: "sed (POSIX)"
+  - command: "gawk"
+    replacement: "awk (POSIX)"
+  - command: "ggrep"
+    replacement: "grep (POSIX)"
+
+security:
+  pledge: "pledge(2) restricts syscalls after initialization"
+  unveil: "unveil(2) restricts filesystem visibility"
+  doas: "doas.conf for privilege escalation (never sudo)"
+  signify: "signify(1) for cryptographic signing"
+  chroot: "httpd runs chrooted by default"
+
+config_validation:
+  pf.conf:
+    daemon: pf
+    man: pf.conf.5
+    required_patterns:
+      - "set skip on lo"
+    warnings:
+      - pattern: "pass all"
+        message: "Overly permissive -- restrict to specific interfaces and protocols"
+      - pattern: "block drop in quick on egress proto tcp from <bruteforce>"
+        absent_message: "Consider brute-force table for SSH protection"
+
+  nsd.conf:
+    daemon: nsd
+    man: nsd.conf.5
+    required_patterns:
+      - "server:"
+      - "zone:"
+    warnings:
+      - pattern: "rrl-size"
+        absent_message: "Missing RRL config -- vulnerable to DNS amplification DDoS"
+      - pattern: "hide-version"
+        absent_message: "Consider hide-version: yes to reduce information disclosure"
+
+  httpd.conf:
+    daemon: httpd
+    man: httpd.conf.5
+    required_patterns:
+      - "server"
+    warnings:
+      - pattern: "hsts"
+        absent_message: "Consider HSTS header for HTTPS enforcement"
+      - pattern: "directory auto index"
+        message: "Directory listing enabled -- intentional?"
+
+  smtpd.conf:
+    daemon: smtpd
+    man: smtpd.conf.5
+    required_patterns:
+      - "listen on"
+      - "action"
+      - "match"
+    warnings:
+      - pattern: "match from any action relay"
+        message: "Open relay risk -- restrict relay to authenticated senders"
+      - pattern: "tls"
+        absent_message: "No TLS configured -- all mail sent in plaintext"
+
+  relayd.conf:
+    daemon: relayd
+    man: relayd.conf.5
+    required_patterns:
+      - "relay"
+    warnings:
+      - pattern: "timeout"
+        absent_message: "No timeout configured -- consider connection timeouts"
+
+  acme-client.conf:
+    daemon: acme-client
+    man: acme-client.conf.5
+    required_patterns:
+      - "authority"
+      - "domain"
+
+  doas.conf:
+    daemon: doas
+    man: doas.conf.5
+    required_patterns:
+      - "permit"
+    warnings:
+      - pattern: "nopass"
+        message: "nopass allows passwordless privilege escalation -- intentional?"
+      - pattern: "permit keepenv"
+        message: "keepenv may leak sensitive env vars to elevated process"
+
+  sshd_config:
+    daemon: sshd
+    man: sshd_config.5
+    warnings:
+      - pattern: "PermitRootLogin yes"
+        message: "Root login enabled -- use PermitRootLogin prohibit-password at minimum"
+      - pattern: "PasswordAuthentication yes"
+        message: "Password auth enabled -- consider key-only authentication"
+      - pattern: "X11Forwarding yes"
+        message: "X11 forwarding increases attack surface on headless servers"
+
+  ntpd.conf:
+    daemon: ntpd
+    man: ntpd.conf.5
+    required_patterns:
+      - "server"
+
+  unbound.conf:
+    daemon: unbound
+    man: unbound.conf.5
+    required_patterns:
+      - "server:"
+    warnings:
+      - pattern: "access-control: 0.0.0.0/0 allow"
+        message: "Open resolver -- restrict to localhost and trusted ranges"
 # Zsh-native patterns -- replace external forks with pure zsh
 # Source: pub2/ZSH_NATIVE_PATTERNS.md
 

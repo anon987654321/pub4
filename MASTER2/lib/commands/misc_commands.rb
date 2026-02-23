@@ -297,7 +297,7 @@ module MASTER
         mode = args.to_s.strip
 
         if ["json", "export-json"].include?(mode)
-          out = File.join(Paths.var, "design_codex.json")
+          out = File.join(Paths.var, "design.json")
           File.write(out, Review::DesignCodex.to_json)
           puts "codify: exported #{out}"
           return Result.ok(path: out, summary: summary)

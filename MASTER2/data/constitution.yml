@@ -1,18 +1,3 @@
-# MASTER Constitution - Immutable governance policy for safe autonomous operation
-#
-# NOTE: This file can be extended to include axioms, council, principles, and workflows
-# for a single-source-of-truth configuration. The Constitution module will automatically
-# load these sections if present, otherwise it falls back to separate YAML files:
-#   - data/axioms.yml
-#   - data/council.yml
-#
-# Example consolidated structure:
-#   axioms: []          # List of axiom definitions
-#   council: []         # List of council personas
-#   principles: {}      # SOLID, Clean Code principles
-#   workflows: {}       # 8-phase workflow definitions
-#
-# Current implementation maintains backward compatibility with separate files.
 
 protection_levels:
   ABSOLUTE:
@@ -29,8 +14,6 @@ protection_levels:
     examples: [output_format, emoji_set]
 
 anti_simulation:
-  # Note: These forbidden phrases apply to LLM output claims about actions taken,
-  # not to prescriptive axiom definitions. Axiom statements use "should" prescriptively.
   context: "Applies to LLM output claims about actions taken, not to prescriptive axiom definitions."
   forbidden_phrases: ["will", "would", "could", "might"]
   required_evidence:
@@ -152,7 +135,6 @@ generation_templates:
   ruby:
     rules: ["frozen string literal", "guard clauses", "small methods"]
     template: |
-      # frozen_string_literal: true
 
       module %{name}
         extend self
@@ -169,7 +151,6 @@ generation_templates:
   zsh:
     rules: ["#!/usr/bin/env zsh", "set -euo pipefail", "setopt nullglob extendedglob", "quote expansions", "pure zsh -- no sed/awk/tr/find/grep/cut/wc/head/tail/basename/dirname/realpath/seq/expr/getopts/sudo/bash/xargs"]
     template: |
-      #!/usr/bin/env zsh
       set -euo pipefail
       setopt nullglob extendedglob
 
@@ -181,7 +162,6 @@ generation_templates:
   sh:
     rules: ["#!/bin/sh for portability", "set -eu", "quote all variables", "meaningful exit codes"]
     template: |
-      #!/bin/sh
       set -eu
 
       main() {
@@ -211,8 +191,6 @@ workflow:
   mandatory_alternatives_in_ideate: 15
   oscillation_threshold: 25
 
-# hooks: section removed -- data/hooks.yml is ONE_SOURCE for hook definitions
-
 enforcement_layers:
   - name: meta
     description: "Protection levels, immutability"
@@ -227,10 +205,8 @@ enforcement_layers:
   - name: security
     description: "Input validation, privilege separation"
 
-# Golden rule -- restored from master.yml v71.3.0
 golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
 
-# Convergence loop -- iterate until no violations remain
 convergence:
   enabled: true
   algorithm: "Keep iterating until no violations remain and no further improvements possible"
@@ -242,7 +218,6 @@ convergence:
   on_stuck: [broaden_search, change_perspective, ask_user]
   on_oscillation: [freeze, analyze_cycle, break_deadlock]
 
-# Anti-sprawl -- prevent file proliferation
 anti_sprawl:
   enabled: true
   rationale: "File sprawl violates DRY -- single source of truth"
@@ -253,7 +228,6 @@ anti_sprawl:
   rule: "One README.md per folder maximum. No session-artifact markdown files."
   exceptions: [test_files, user_requested_deliverables]
 
-# Self-protection -- prevent destructive self-modification
 self_protection:
   enabled: true
   backup_before_modify: true
@@ -263,14 +237,12 @@ self_protection:
     - "axioms section immutable -- add only, never delete"
     - "version must increment on changes"
 
-# Deep trace logging -- OpenBSD dmesg-inspired
 deep_trace:
   enabled: true
   style: "OpenBSD dmesg-inspired"
   format: "component0 at tier: message"
   levels: [info, warn, error, fatal]
 
-# Detectors -- automated code quality checks
 detectors:
   duplicate_code:
     enabled: true
@@ -293,7 +265,6 @@ detectors:
     enabled: true
     description: "Enforce naming conventions, formatting, idioms"
 
-# Language support
 language:
   supported: [english, norwegian]
   style: "Strunk & White"
@@ -315,7 +286,6 @@ language:
       user: "bruker"
       system: "system"
 
-# Self-improvement -- convergence mandate
 self_improvement:
   continuous: true
   mandate: "ALL violations found MUST be autofixed -- zero tolerance for manual fixes"
@@ -325,7 +295,6 @@ self_improvement:
     trigger: "on_every_violation"
     mode: "convergence"
 
-# Autofix -- safe transformations
 autofix:
   enabled: true
   confidence_threshold: 0.90
@@ -336,7 +305,6 @@ autofix:
     trailing_comma_addition: true
     frozen_string_literal: true
 
-# Formatting rules
 formatting:
   indent: 2
   quotes: "double"
@@ -347,7 +315,6 @@ formatting:
     convention: "standard Rails conventions"
   threshold: 0.98
 
-# Granular formatting rules -- style + cosmetics by language
 granular_formatting_rules:
   universal:
     final_newline: required
@@ -395,7 +362,6 @@ granular_formatting_rules:
     max_line_length: 100
     clippy_warnings: deny_for_ci
 
-# Doctrine and UX heuristics become first-class review inputs for planning/refactor.
 principles:
   rails_doctrine:
     - optimize_for_programmer_happiness
@@ -422,7 +388,6 @@ principles:
     quote_all_expansions: true
     avoid_uuoc: true
 
-# Tech stack specifics -- concrete targets and validators
 tech_stack_specifics:
   languages:
     primary: [ruby, zsh]
@@ -444,13 +409,11 @@ tech_stack_specifics:
     rollback_on: [syntax_error, test_failure, behavior_regression]
     iterative_until_diminishing_returns: true
 
-# Constraints -- allowed languages and banned tools
 constraints:
   allowed_languages: [ruby, zsh, html, erb, css, scss, javascript, rust, yaml]
   banned_tools: [python, sed, awk, tr, wc, head, tail, cut, find, sudo]
   enforcement: "critical"
 
-# Terminal philosophy -- MASTER2 as a Unix CLI alternative to Codex/Claude/GitHub Copilot CLI
 terminal_philosophy:
   mission: "MASTER2 is a first-class autonomous engineering CLI for Unix terminals."
   processing_model: "Treat all user input as streamable Unix text by default, regardless of content type."
@@ -469,8 +432,6 @@ terminal_philosophy:
     enforce_progressive_disclosure: true
     prefer_named_steps_over_dense_chains: true
 
-# Comment preservation policy
-# Strategy: Preserve valuable comments, remove noise
 comments:
   preserve: true
   rule: "Preserve ALL existing comments when editing unless they fall into removal criteria"
@@ -480,7 +441,6 @@ comments:
     keep: ["workarounds", "performance notes", "decision context", "warnings", "TODO", "FIXME", "HACK"]
     remove: ["restates the code", "obvious getters/setters", "auto-generated boilerplate"]
 
-# CLI integration -- supported platforms
 cli_integration:
   primary_platform: "OpenBSD 7.8+"
   primary_shell: "zsh"
@@ -490,7 +450,6 @@ cli_integration:
     - "macOS with Zsh"
   session_management: true
 
-# Heredoc editing -- in-place atomic editing of embedded apps
 heredoc_editing:
   description: "Ruby/Rails apps embedded in zsh heredocs within .sh deployers are single source of truth"
   locations: ["deploy/rails/*.sh", "deploy/openbsd/*.sh"]
@@ -552,8 +511,6 @@ metaprogramming_policy:
   reason: "Violates EXPLICIT axiom -- prefer explicit method definitions"
   severity: error
 
-# Principle interactions -- from pub2 master.json v225.0.0
-# Documents how principles reinforce or conflict with each other
 principle_interactions:
   conflicts:
     minimalism_vs_explicit:
@@ -591,8 +548,6 @@ principle_interactions:
       effect: "safe_evolution"
       description: "Tests enable confident refactoring"
 
-# Approval taxonomy -- from pub2 governance.approval
-# Defines which changes can auto-proceed vs require manual approval
 approval_taxonomy:
   auto_proceed:
     - syntax_fixes

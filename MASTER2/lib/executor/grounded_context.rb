@@ -27,12 +27,12 @@ module MASTER
       LLM.md
       data/constitution.yml
       data/axioms.yml
-      data/language_axioms.yml
-      data/design_codex.yml
+      data/detectors.yml
+      data/design.yml
       data/models.yml
       data/council.yml
       data/system_prompt.yml
-      data/smells.yml
+      data/detectors.yml
       lib/result.rb
       lib/llm.rb
       lib/pipeline.rb
