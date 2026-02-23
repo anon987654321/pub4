@@ -291,7 +291,7 @@ else
     trap("INT")  { puts; exit }
     trap("TERM") { exit }
 
-    MASTER::Pipeline.repl(web_port: server.port)
+    MASTER::Pipeline.repl(web_port: server.port, web_token: MASTER::Server::AUTH_TOKEN)
   else
     # Delegate all other commands to Commands.dispatch_one
     delegate_to_commands(command, args)

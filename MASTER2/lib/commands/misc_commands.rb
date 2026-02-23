@@ -17,7 +17,8 @@ module MASTER
       SKIP_DIRS       = %w[.git vendor tmp var node_modules .bundle coverage log dist].freeze
 
       def run_snapshot(args)
-        out = args&.strip&.then { |a| a.empty? ? nil : a } || Paths.var_file("snapshot.md")
+        ts  = Time.now.utc.strftime("%Y%m%dT%H%M%SZ")
+        out = args&.strip&.then { |a| a.empty? ? nil : a } || Paths.var_file("snapshot-#{ts}.md")
         max = 400
         puts "  generating snapshot..."
 
