@@ -408,6 +408,39 @@ module MASTER
         puts "  web: http://localhost:#{server.port}"
         puts "  token: #{token}"
       end
+
+      # Project memory — persistent goal/context across sessions and models
+      def project_goal(args)
+        return show_project_context unless args&.strip&.length&.> 0
+
+        ProjectMemory.save(root: Dir.pwd, goal: args.strip)
+        puts UI.dim("goal: #{args.strip}")
+      end
+
+      def project_remember(args)
+        return puts UI.dim("usage: remember <decision or fact>") unless args&.strip&.length&.> 0
+
+        ProjectMemory.save(root: Dir.pwd, decisions: args.strip)
+        puts UI.dim("remembered.")
+      end
+
+      def project_forget
+        path = File.join(Dir.pwd, ".master", "context.yml")
+        File.delete(path) if File.exist?(path)
+        puts UI.dim("context cleared.")
+      end
+
+      def show_project_context
+        ctx = defined?(ProjectMemory) ? ProjectMemory.load(root: Dir.pwd) : {}
+        if ctx.empty?
+          puts UI.dim("no project context — set one with: goal <text>")
+        else
+          puts UI.dim("goal: #{ctx['goal']}") if ctx["goal"]
+          puts UI.dim("stack: #{ctx['stack']}") if ctx["stack"]
+          puts UI.dim("constraints: #{ctx['constraints']}") if ctx["constraints"]
+          Array(ctx["decisions"]).each { |d| puts UI.dim("  · #{d}") }
+        end
+      end
     end
   end
 end

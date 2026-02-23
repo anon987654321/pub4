@@ -67,7 +67,7 @@ module MASTER
             session.save
             break
           else
-            $stdout.print "\n (Ctrl+C again to quit)\n"
+            $stderr.print "\r(^C again to quit)\n"
             last_interrupt = now
             next
           end
@@ -158,22 +158,18 @@ module MASTER
           puts output
         end
         if result.value[:cost]
-          this_cost = result.value[:cost].to_f
+          this_cost     = result.value[:cost].to_f
           running_total = session.total_cost + this_cost
-          total_str = running_total > 0 ? " [#{UI.currency_precise(running_total)} total]" : ""
-          puts UI.dim("  #{format_meta(result.value)}#{total_str}")
+          # Show meta only when cost is non-trivial or there's a model name
+          model_str = UI.dim(result.value[:model]&.split("/")&.last || "")
+          cost_str  = running_total > 0.001 ? UI.dim("  #{UI.currency_precise(running_total)}") : ""
+          $stderr.print "#{model_str}#{cost_str}\n" unless model_str.empty? && cost_str.empty?
           check_cost_limits(this_cost, running_total)
         end
         show_violations(result.value)
-        if output
-          session.add_assistant(
-            output,
-            model: result.value[:model],
-            cost: result.value[:cost],
-          )
-        end
+        session.add_assistant(output, model: result.value[:model], cost: result.value[:cost]) if output
       else
-        UI.error(result.failure)
+        $stderr.puts UI.dim("! #{result.failure}")
       end
     end
 
@@ -182,20 +178,11 @@ module MASTER
         f = File.join(MASTER.root, "data", "quality_thresholds.yml")
         YAML.safe_load_file(f)["cost_protection"] rescue {}
       end
-      warn_at     = @cost_limits["warn_at"]&.to_f     || 0.50
-      max_request = @cost_limits["max_per_request"]&.to_f  || 1.00
-      max_session = @cost_limits["max_per_session"]&.to_f  || 10.00
-      if this_cost >= max_request
-        UI.warn("cost0: request #{UI.currency_precise(this_cost)} exceeds max_per_request #{UI.currency(max_request)}")
-        UI.info("   #{UI.icon(:arrow)} set max_per_request in data/quality_thresholds.yml")
-      elsif this_cost >= warn_at
-        puts UI.dim("  cost0: approaching request limit (#{UI.currency_precise(this_cost)} / #{UI.currency(max_request)})")
-      end
-      if session_total >= max_session
-        UI.warn("cost0: session #{UI.currency_precise(session_total)} exceeds max_per_session #{UI.currency(max_session)}")
-      elsif session_total >= max_session * 0.8
-        puts UI.dim("  cost0: session at #{UI.currency_precise(session_total)} / #{UI.currency(max_session)}")
-      end
+      max_request = @cost_limits["max_per_request"]&.to_f || 1.00
+      max_session = @cost_limits["max_per_session"]&.to_f || 10.00
+      # Warn only at hard limits — no noise below threshold
+      $stderr.puts UI.dim("cost0: #{UI.currency_precise(this_cost)} > max_per_request #{UI.currency(max_request)}") if this_cost >= max_request
+      $stderr.puts UI.dim("cost0: session #{UI.currency_precise(session_total)} > max_per_session #{UI.currency(max_session)}") if session_total >= max_session
     end
 
     def show_violations(value)
@@ -203,14 +190,10 @@ module MASTER
       zv = value[:zsh_violations]
       cv = value[:council_vetoes]
       sv = value[:council_security_veto]
-      if sv
-        UI.warn("council0: security veto — review before deploying")
-        UI.info("   #{UI.icon(:arrow)} vetoed by: #{cv&.join(', ')}") if cv&.any?
-      elsif cv&.any?
-        puts UI.dim("  council0: vetoed by #{cv.join(', ')}")
-      end
-      puts UI.dim("  enforcer0: #{UI.pluralize(av.size, 'axiom violation')} — #{av.join(', ')}") if av&.any?
-      puts UI.dim("  zsh0: #{UI.pluralize(zv.size, 'violation')} — #{zv.map { |v| v[:tool] }.join(', ')}") if zv&.any?
+      # Compact one-liners to stderr — no noise when clean
+      $stderr.puts UI.dim("council0: security veto#{cv&.any? ? " (#{cv.join(', ')})" : ""}") if sv
+      $stderr.puts UI.dim("enforcer0: #{UI.pluralize(av.size, 'violation')} — #{av.join(', ')}") if av&.any?
+      $stderr.puts UI.dim("zsh0: #{UI.pluralize(zv.size, 'violation')} — #{zv.map { |v| v[:tool] }.join(', ')}") if zv&.any?
     end
 
     # Build prompt using Pipeline.prompt with fallback

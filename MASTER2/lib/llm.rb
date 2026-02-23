@@ -148,11 +148,18 @@ module MASTER
 
         @current_model = primary
 
-        # Auto-fallback: only cascade on infrastructure errors, max 2 retries
+        # Auto-fallback: cascade through free tier rather than erroring out
+        FREE_FALLBACKS = %w[
+          deepseek/deepseek-r1-0528:free
+          deepseek/deepseek-chat:free
+          google/gemini-2.0-flash-thinking-exp:free
+          meta-llama/llama-3.1-8b-instruct:free
+        ].freeze
+
         models_to_try = if fallbacks
                           [primary] + fallbacks
                         else
-                          [primary]
+                          [primary] + FREE_FALLBACKS.reject { |m| m == primary }
                         end
         last_error = nil
 
@@ -163,6 +170,7 @@ module MASTER
 
           if result.ok?
             process_llm_response(result, candidate_model, prompt, stream)
+            $stderr.puts UI.dim("llm0: #{extract_model_name(candidate_model)}") if candidate_model != primary
             return result
           else
             handle_llm_failure(result, candidate_model)
@@ -170,7 +178,7 @@ module MASTER
           end
         end
 
-        Result.err("#{extract_model_name(primary)}: #{last_error}", category: :infrastructure)
+        Result.err("all models exhausted: #{last_error}", category: :infrastructure)
       rescue StandardError => e
         CircuitBreaker.open_circuit!(primary) if primary
         Result.err(Logging.format_error(e), category: :infrastructure)

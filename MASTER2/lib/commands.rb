@@ -324,7 +324,7 @@ module MASTER
         print_cost_history
         HANDLED
       when "context"
-        print_context_usage
+        show_project_context
         HANDLED
       when "session"
         manage_session(args)
@@ -462,6 +462,15 @@ module MASTER
         manage_policy(args)
       when "shell"
         InteractiveShell.new.run
+        HANDLED
+      when "goal"
+        project_goal(args)
+        HANDLED
+      when "remember"
+        project_remember(args)
+        HANDLED
+      when "forget-goal"
+        project_forget
         HANDLED
       when "version", "ver", "--version", "-v"
         puts "MASTER #{MASTER::VERSION}"

@@ -49,19 +49,19 @@ module MASTER
       Logging.dmesg_log("pipeline", message: "ENTER pipeline.call")
       text = input.is_a?(Hash) ? input[:text] : input.to_s
 
-      # Emit preamble to inform user what is being processed
-      UI.info("Processing: #{text[0..60]}#{'...' if text.length > 60}")
-
       Logging.with_request_id do
         raw = case @mode
               when :executor then call_executor(text)
               when :stages   then call_stages(input)
               when :direct   then call_direct(text)
-              else raise ArgumentError, "Unknown pipeline mode: #{@mode}"
+              else call_executor(text)  # degrade to executor rather than raise
               end
 
         normalize_result(raw, text)
       end
+    rescue StandardError => e
+      Logging.dmesg_log("pipeline", message: "unhandled: #{e.message}")
+      Result.err(e.message)
     end
 
     private
