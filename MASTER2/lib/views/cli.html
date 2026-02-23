@@ -64,7 +64,7 @@
     }
 
     #status.think{color:#fff;}
-    #status.speak{color:#0ff;}
+    #status.speak{color:#6af;}
 
     #ui{
       position:fixed;
@@ -262,29 +262,71 @@
       }
     };
 
+    // Pick the most soothing available voice: prefer named natural voices,
+    // fall back to first English voice. Voices load async so we call lazily.
+    const pickVoice=()=>{
+      const voices=window.speechSynthesis.getVoices();
+      if(!voices.length) return null;
+      const want=['Samantha','Google UK English Female','Karen','Moira','Tessa','Fiona','Victoria','Allison','Ava'];
+      for(const name of want){
+        const v=voices.find(v=>v.name.includes(name));
+        if(v) return v;
+      }
+      return voices.find(v=>v.lang==='en-GB')||voices.find(v=>v.lang.startsWith('en'))||voices[0];
+    };
+
+    const _onSpeakEnd=()=>{
+      isSpeaking=false;
+      statusEl.classList.remove('speak');
+      statusEl.classList.add('think');
+      if(nonstopVoice) startRecognition();
+    };
+
     const speakText=text=>{
       if(!('speechSynthesis' in window)||!text) return;
-      const u=new SpeechSynthesisUtterance(String(text).slice(0,420));
-      u.rate=0.94;
-      u.pitch=1.0;
-      u.volume=0.9;
+      const u=new SpeechSynthesisUtterance(String(text).slice(0,500));
+      u.rate=0.88;   // calm, unhurried
+      u.pitch=0.95;  // slightly lower — warm, grounded
+      u.volume=0.92;
+      const v=pickVoice(); if(v) u.voice=v;
       u.onstart=()=>{
         isSpeaking=true;
-        speechPulse=1;
+        speechPulse=0.6;
         statusEl.classList.remove('think');
         statusEl.classList.add('speak');
-        if(recognition&&recognitionActive){
-          try{recognition.stop();}catch(_e){}
-        }
+        if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
       };
-      u.onend=()=>{
-        isSpeaking=false;
-        statusEl.classList.remove('speak');
-        statusEl.classList.add('think');
-        if(nonstopVoice) startRecognition();
-      };
+      u.onend=_onSpeakEnd;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
+    };
+
+    // Route backend TTS audio through Web Audio analyser so the orb reacts
+    // to the actual speech waveform. Falls back gracefully to local TTS.
+    const speakWithAudio=async(text)=>{
+      if(!audioCtx||!MASTER_TOKEN) return false;
+      try{
+        const resp=await fetch("/tts",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","Authorization":`Bearer ${MASTER_TOKEN}`},
+          body:JSON.stringify({text})
+        });
+        if(!resp.ok) return false;
+        const buf=await resp.arrayBuffer();
+        if(!buf.byteLength) return false;
+        const decoded=await audioCtx.decodeAudioData(buf);
+        const src=audioCtx.createBufferSource();
+        src.buffer=decoded;
+        src.connect(analyser);
+        src.connect(audioCtx.destination);
+        isSpeaking=true; speechPulse=0.6;
+        statusEl.classList.remove('think');
+        statusEl.classList.add('speak');
+        if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
+        src.onended=_onSpeakEnd;
+        src.start();
+        return true;
+      }catch(_e){ return false; }
     };
 
     const localTtsAvailable=()=>!!window.speechSynthesis;
@@ -429,7 +471,8 @@
         if(data&&data.text){
           const reply=String(data.text);
           uiLabel.textContent=reply.slice(0,60);
-          speakText(reply);
+          // Try audio-reactive backend TTS first; fall back to Web Speech
+          speakWithAudio(reply).then(ok=>{ if(!ok) speakText(reply); });
           isProcessing=false;
           for(const n of neurons){
             n.vx+=(Math.random()-0.5)*140;
@@ -678,6 +721,9 @@
     applyMessinessProfile();
     tickSpinner();
 
+    // Pre-load voices so pickVoice() works on first call
+    if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged=()=>{};
+
     overlay.addEventListener('click',()=>{
       overlay.classList.add('ack');
       initAudio();
@@ -701,12 +747,19 @@
         for(let i=0;i<6;i++) sum+=dataArray[i];
         for(let i=6;i<12;i++) sum+=dataArray[i]*0.6;
         audioLevel=Math.min(1,sum/9/255+speechPulse*0.45);
-      }else{audioLevel*=0.92;}
+      }else{
+        // When speaking without a mic analyser, simulate syllable rhythm so the
+        // orb pulses naturally. ~4 Hz = average conversational syllable rate.
+        if(isSpeaking) speechPulse=0.38+Math.abs(Math.sin(t*12.6))*0.42;
+        else speechPulse*=0.92;
+        audioLevel*=0.92;
+      }
 
-      const hue=(currentOrb*9)%360;
+      // Background: dark navy-to-black gradient, subtle blue tint when speaking
+      const speakHint=isSpeaking?0.08:0;
       const grad=ctx.createRadialGradient(W*0.5,H*0.5,Math.min(W,H)*0.1,W*0.5,H*0.5,Math.max(W,H)*0.8);
-      grad.addColorStop(0,`hsl(${hue} 42% 8%)`);
-      grad.addColorStop(0.65,`hsl(${(hue+40)%360} 34% 5%)`);
+      grad.addColorStop(0,`rgba(14,18,38,${0.82+speakHint})`);
+      grad.addColorStop(0.6,'rgba(6,8,18,0.93)');
       grad.addColorStop(1,'#000');
       ctx.fillStyle=grad;
       ctx.fillRect(0,0,W,H);
@@ -715,7 +768,8 @@
       const proj=neurons.map(n=>n.project()).filter(Boolean);
       proj.sort((a,b)=>b.z-a.z);
 
-      const cols=['#2b2b2b','#575757','#8f8f8f','#f2f2f2'];
+      // Particle palette: dark grey → mid grey → off-white → cool blue-white
+      const cols=['#2b2d33','#575c6a','#8f96a8','#dde2f0'];
       for(const p of proj){
         const thinkDark=1-Math.min(0.78,p.think*1.2);
         ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35));
