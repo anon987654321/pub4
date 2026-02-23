@@ -368,6 +368,8 @@ module MASTER
       when "architect", "arch", "architecture"
         print_architect
         HANDLED
+      when "converge"
+        run_converge(args)
       when "refactor", "autofix"
         autofix(args)
       when "chamber"

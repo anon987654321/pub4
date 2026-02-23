@@ -615,6 +615,31 @@ module MASTER
         puts Friction::Architect.format_report(report)
         HANDLED
       end
+
+      # `converge` — iterate SelfRefactor until violations plateau (convergence).
+      # Runs on every invocation, not just selfrun, because quality is continuous.
+      def run_converge(args)
+        return Result.err("SelfRefactor not loaded") unless defined?(SelfRefactor)
+
+        max_iter = (args.first&.to_i&.positive? ? args.first.to_i : nil) || SelfRefactor::MAX_ITERATIONS
+        puts "converge0: starting (max #{max_iter} iterations, stops at plateau)"
+
+        # Baseline violation count before any fixes.
+        baseline = SelfRefactor.count_violations
+        puts "converge0: baseline #{baseline} violations"
+
+        result = SelfRefactor.run(max_iterations: max_iter)
+        return Result.err(result.error) unless result.ok?
+
+        summary = result.value
+        final   = SelfRefactor.count_violations
+        delta   = baseline - final
+
+        puts "converge0: done in #{summary[:iterations]} iterations · #{delta >= 0 ? "-#{delta}" : "+#{delta.abs}"} violations · #{summary[:improvements]} improvements · stopped: #{summary[:stop_reason]}"
+        puts "converge0: #{final} violations remaining" if final.positive?
+
+        Result.ok(summary)
+      end
     end
   end
 end

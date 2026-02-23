@@ -25,6 +25,7 @@ module MASTER
           sprawl: detect_sprawl(path),
           git_status: git_status(path),
           recent_commits: recent_commits(path),
+          violations: violation_summary(path),
         }
 
         warn_if_issues(results)
@@ -102,7 +103,38 @@ module MASTER
       end
 
       def warn_if_issues(results)
-        # Individual checks already printed. Nothing extra needed.
+        vs = results[:violations]
+        return unless vs && vs[:total].positive?
+
+        autofix_note = vs[:autofix_eligible].positive? ? " · #{vs[:autofix_eligible]} autofix-eligible — run: converge" : ""
+        UI.warn("quality0: #{vs[:total]} violations across #{vs[:files]} files#{autofix_note}")
+      end
+
+      # Lightweight violation tally using literal pattern matching only (no LLM).
+      # Returns { total:, autofix_eligible:, files:, by_file: { path => [violations] } }
+      def violation_summary(path)
+        return { total: 0, autofix_eligible: 0, files: 0, by_file: {} } unless defined?(CodeReview::Violations)
+
+        rb_files = Dir.glob(File.join(path, "**", "*.rb")).reject { |f| f.include?("/vendor/") || f.include?("/tmp/") }
+        by_file  = {}
+        total    = 0
+        autofix  = 0
+
+        rb_files.each do |file|
+          code = File.read(file)
+          violations = CodeReview::Violations.check_literal(code)
+          next if violations.empty?
+
+          by_file[file] = violations
+          total   += violations.size
+          autofix += violations.count { |v| v[:autofix] }
+        rescue StandardError
+          next
+        end
+
+        { total: total, autofix_eligible: autofix, files: by_file.size, by_file: by_file }
+      rescue StandardError
+        { total: 0, autofix_eligible: 0, files: 0, by_file: {} }
       end
 
       def openbsd_config_scan
