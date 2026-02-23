@@ -38,7 +38,8 @@ module MASTER
       fields.each do |k, v|
         key = k.to_s
         if key == "decisions" && v
-          current["decisions"] = ([v] + Array(current["decisions"])).first(MAX_DECISIONS)
+          # Append new decision; keep most recent MAX_DECISIONS (newest last)
+          current["decisions"] = (Array(current["decisions"]) + [v.to_s.strip]).last(MAX_DECISIONS)
         elsif v && !v.to_s.strip.empty?
           current[key] = v.to_s.strip
         end

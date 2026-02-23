@@ -39,8 +39,8 @@ module MASTER
           id:      :no_comment_needed,
           points:  2,
           axiom:   "AESTHETIC_VIRTUE",
-          test:    ->(code, _f) {
-            return false unless code.end_with?(".rb")
+          test:    ->(code, filename) {
+            return false unless filename.to_s.end_with?(".rb")
 
             # Ruby file with zero # comments (except frozen_string_literal)
             comment_lines = code.lines.count { |l| l.strip.start_with?("#") && !l.include?("frozen_string_literal") }
@@ -135,7 +135,11 @@ module MASTER
       # Store an exemplar in data/exemplars.yml
       def register_exemplar(name:, file:, lines: nil, score: 0, virtue: nil, why: nil)
         path = File.join(MASTER.root, "data", "exemplars.yml")
-        data = YAML.safe_load_file(path) rescue { "exemplars" => [] }
+        data = begin
+          YAML.safe_load_file(path) || { "exemplars" => [] }
+        rescue StandardError
+          { "exemplars" => [] }
+        end
         data["exemplars"] ||= []
 
         # Avoid duplicates
@@ -159,7 +163,11 @@ module MASTER
       # Inject top exemplars into LLM system message
       def exemplars_prompt(max: 3)
         path = File.join(MASTER.root, "data", "exemplars.yml")
-        data = YAML.safe_load_file(path) rescue {}
+        data = begin
+          YAML.safe_load_file(path) || {}
+        rescue StandardError
+          {}
+        end
         list = Array(data["exemplars"])
                  .sort_by { |e| -(e["beauty_score"] || 0) }
                  .first(max)

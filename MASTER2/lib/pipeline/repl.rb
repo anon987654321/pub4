@@ -243,7 +243,7 @@ module MASTER
       File.readlines(path, chomp: true).last(MAX_HISTORY_LINES).each do |line|
         reader.add_to_history(line)
       rescue StandardError
-        StandardError
+        nil  # history loss is non-critical
       end
     rescue StandardError
       # History load failure is non-critical
@@ -256,7 +256,7 @@ module MASTER
       begin
         reader&.add_to_history(line)
       rescue StandardError
-        StandardError
+        nil  # non-critical
       end
     end
 
