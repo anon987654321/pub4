@@ -117,7 +117,7 @@ module MASTER
             shown = Commands.show_did_you_mean(line.strip)
             next if shown
           elsif cmd_result.respond_to?(:ok?)
-            display_result(cmd_result, session) unless cmd_result.value&.dig(:handled)
+            display_result(cmd_result, session) unless cmd_result.value.is_a?(Hash) && cmd_result.value[:handled]
             next
           end
         end
