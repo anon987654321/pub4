@@ -22,6 +22,8 @@ end
 
 require_relative "review/scanner"
 require_relative "review/fixer"
+require_relative "review/beauty"
+require_relative "review/reflow"
 require_relative "review/enforcer"
 require_relative "review/axiom_stats"
 require_relative "review/constitution"

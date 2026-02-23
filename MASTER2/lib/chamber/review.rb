@@ -165,16 +165,29 @@ module MASTER
         @cost  += data[:cost] || 0
 
         content = data[:content].to_s.strip
-        approve = content.upcase.start_with?("APPROVE")
+        approve = content.upcase.start_with?("APPROVE") || content.upcase.start_with?("PRAISE")
+        praise  = content.upcase.start_with?("PRAISE")
         veto    = persona[:veto] && content.upcase.start_with?("REJECT")
 
+        # Register praise votes as exemplars
+        if praise && defined?(BeautyScorer)
+          BeautyScorer.register_exemplar(
+            name:   "council:#{persona[:name]}",
+            file:   "chamber/review",
+            score:  5,
+            virtue: :council_praise,
+            why:    content.lines.last&.strip,
+          )
+        end
+
         {
-          name:   persona[:name],
-          model:  persona[:model],
+          name:    persona[:name],
+          model:   persona[:model],
           approve: approve,
-          veto:   veto,
-          weight: persona[:weight] || 0.1,
-          reason: content.lines.last&.strip,
+          praise:  praise,
+          veto:    veto,
+          weight:  persona[:weight] || 0.1,
+          reason:  content.lines.last&.strip,
         }
       rescue StandardError => e
         DB.log_error(context: "chamber_vote", error: e.message, persona: persona[:name])

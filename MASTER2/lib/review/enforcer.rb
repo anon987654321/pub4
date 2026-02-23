@@ -143,7 +143,10 @@ module MASTER
           violations.concat(check_prose_style(code, filename: filename))
           violations.concat(check_learned_smells(code, filename: filename))
 
-          { filename: filename, violations: violations, layers_checked: LAYERS }
+          beauty = defined?(BeautyScorer) ? BeautyScorer.score(code, filename: filename) : { score: 0, virtues: [] }
+
+          { filename: filename, violations: violations, layers_checked: LAYERS,
+            beauty_score: beauty[:score], virtues: beauty[:virtues] }
         end
 
         # Validate LLM response text by extracting and checking code blocks

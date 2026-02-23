@@ -89,16 +89,22 @@ module MASTER
       # Zsh native patterns: forbid legacy forks in shell code
       sections << ZshPatternInjector.prompt_section
 
-      # Strunk & White — injected into every LLM system message
+      # Strunk & White — every LLM system message
       sections << <<~SW
         PROSE STYLE — ELEMENTS OF STYLE (Strunk & White):
         Omit needless words. Every identifier, comment, error message, and string earns its place or is cut.
         Name things by what they ARE: axiom_list not data; violation_count not value; model_name not info.
         Use the active voice: "Enforcer rejected X" not "X was rejected". Methods are active verbs: enforce, scan, reflow.
         Never use: basically, essentially, actually, simply, really, quite, very in prose.
-        Never explain what the reader can see. Comments explain WHY, never WHAT.
-        Parallel ideas take parallel form. Error messages: [actor] [verb] [noun]: [specific detail].
+        Comments explain WHY, never WHAT. Error messages: [actor] [verb] [noun]: [specific detail].
+        Read-aloud test: mentally read your output. If it flows as natural English, it is well-structured.
       SW
+
+      # Exemplars — positive models from the registry
+      if defined?(BeautyScorer)
+        ex = BeautyScorer.exemplars_prompt(max: 3)
+        sections << ex unless ex.empty?
+      end
 
       # Grounded source injection — depth :own/:deep/:full loads real source files
       if depth != :shallow && defined?(GroundedContext)
