@@ -173,8 +173,11 @@ module MASTER
           else
             handle_llm_failure(result, candidate_model)
             last_error = result.error
-            # Credit exhaustion is permanent -- no point trying remaining paid models
-            break if last_error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
+            # Credit exhaustion only kills OpenRouter models -- Replicate has its own key, keep trying
+            if last_error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
+              models_to_try.each { |m| CircuitBreaker.open_circuit!(m) unless replicate_model?(m) }
+              next # continue to Replicate candidates
+            end
           end
         end
 
@@ -233,7 +236,7 @@ module MASTER
       def handle_llm_failure(result, current_model)
         CircuitBreaker.open_circuit!(current_model)
         if result.error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
-          FREE_FALLBACKS.each { |model_id| CircuitBreaker.open_circuit!(model_id) }
+          # Only warn once; caller handles tripping other OpenRouter models
           Logging.warn("No OpenRouter credits -- top up at openrouter.ai/settings/credits", subsystem: "llm.budget")
         else
           Logging.llm_error(tier: :default, error: result.error) if defined?(Logging)
