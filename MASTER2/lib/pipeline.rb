@@ -179,9 +179,12 @@ module MASTER
 
       # Apply typography rendering if we have a response but no rendered version
       if normalized[:response] && !normalized[:rendered]
+        cleaned = Stages::Strunk.new.call({ response: normalized[:response] })
+        normalized[:response] = cleaned.ok? ? cleaned.value[:response] : normalized[:response]
         normalized[:rendered] = strip_tool_blocks(normalized[:response])
       elsif normalized[:rendered]
-        normalized[:rendered] = strip_tool_blocks(normalized[:rendered])
+        cleaned = Stages::Strunk.new.call({ response: normalized[:rendered] })
+        normalized[:rendered] = strip_tool_blocks(cleaned.ok? ? cleaned.value[:response] : normalized[:rendered])
       end
 
       # Pressure-pass: delegate to extracted PressurePass module
