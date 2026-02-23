@@ -36,7 +36,7 @@ module MASTER
 
     def progress_line(current, total, message = nil)
       msg = message ? " #{message}" : ""
-      "  [#{current}/#{total}]#{msg}"
+      "  #{current}/#{total}#{msg}"
     end
 
     def color_enabled?

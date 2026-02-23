@@ -67,7 +67,7 @@ module MASTER
         if jobs.empty?
           puts "No scheduled jobs"
         else
-          jobs.each { |j| puts "#{j[:id]}  #{j[:enabled] ? '[ok]' : '[fail]'}  every #{j[:interval]}s  #{j[:command]}" }
+          jobs.each { |j| puts "#{j[:id]}  #{j[:enabled] ? UI.pastel.green('ok') : UI.pastel.red('!!')}  every #{j[:interval]}s  #{j[:command]}" }
         end
       end
 

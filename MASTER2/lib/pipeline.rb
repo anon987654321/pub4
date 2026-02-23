@@ -234,7 +234,7 @@ module MASTER
         hw    = badge ? p.bright_black("*#{badge}") : ""
         cost  = Session.current.total_cost
         cost_str = cost && cost > 0 ? p.bright_black(" [$#{format('%.2f', cost)}]") : ""
-        "#{p.bold.green('master')}#{p.bright_black('@')}#{p.bold.blue(model)}#{hw}#{cost_str}#{p.bold.white('$')} "
+        "#{p.bold.white('master')}#{p.bright_black('@')}#{p.cyan(model)}#{hw}#{cost_str}#{p.bold.white('$')} "
       rescue StandardError
         "master$ "
       end
@@ -252,7 +252,7 @@ module MASTER
         end
         dirty = !status.empty? && $CHILD_STATUS.exitstatus == 0
 
-        dirty ? p.yellow("#{branch}[fail]") : p.white(branch)
+        dirty ? p.yellow("#{branch}!!") : p.white(branch)
       rescue Timeout::Error, StandardError
         nil
       end

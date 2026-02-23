@@ -558,7 +558,7 @@ module MASTER
 
         pass = results.count { |r| r[:status] == :ok }
         fail_count = results.size - pass
-        results.each { |r| puts "  #{r[:status] == :ok ? '[ok]' : '[fail]'} #{r[:label]}" }
+        results.each { |r| puts "  #{r[:status] == :ok ? UI.pastel.green('ok') : UI.pastel.red('!!')} #{r[:label]}" }
         puts fail_count.zero? ? UI.success("webtest: #{pass}/#{results.size} passed") : UI.warn("webtest: #{fail_count} failed")
       end
 
