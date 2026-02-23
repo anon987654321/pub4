@@ -114,7 +114,8 @@ def run_phase1(root, apply, strict, align_axioms, include_all, depth = :own)
                                  align_axioms: align_axioms, include_all_files: include_all,
                                  grounded_depth: depth)
   phase1_path = include_all ? File.join(root, "MASTER2") : File.join(root, "MASTER2", "lib")
-  mr.run(path: phase1_path)
+  result = mr.run(path: phase1_path)
+  puts "! Phase 1 failed: #{result.error}" if result.respond_to?(:err?) && result.err?
 end
 
 def run_phase2(root, apply, strict, align_axioms, include_all, depth = :own)

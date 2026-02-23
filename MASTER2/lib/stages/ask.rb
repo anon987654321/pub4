@@ -14,7 +14,7 @@ module MASTER
 
         model_short = model.split("/").last
         tier = input[:tier] || :unknown
-        puts UI.dim("llm0: #{tier} #{model_short}")
+        puts UI.dim("models0: #{tier} #{model_short}")
 
         text = input[:text] || ""
 
@@ -26,7 +26,7 @@ module MASTER
           tokens_out = data[:tokens_out] || 0
           cost = data[:cost] || 0
 
-          puts UI.dim("llm0: #{tokens_in}->#{tokens_out} tok, #{UI.currency_precise(cost)}")
+          puts UI.dim("models0: #{tokens_in}->#{tokens_out} tok, #{UI.currency_precise(cost)}")
 
           Result.ok(input.merge(
                       response: data[:content],

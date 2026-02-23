@@ -38,7 +38,7 @@ module MASTER
       @status = :running
       @started_at = Time.now
 
-      puts "agent0 at master0: #{@id} (parent:#{@parent_id}, scope:#{@scope}, " \
+      puts "agent0: #{@id} (parent:#{@parent_id}, scope:#{@scope}, " \
            "budget:$#{format('%.2f', @budget)})"
 
       pipeline = Pipeline.new

@@ -197,21 +197,20 @@ module MASTER
 
       def prompt(phase: nil)
         p = MASTER::UI.pastel
-        parts = [p.bold("master")]
+        parts = [p.bold.white("master")]
         git = git_info
         parts << git if git
         model = LLM.prompt_model_name.to_s.strip
-        parts << p.cyan(model) unless model.empty?
-        parts << p.dim(phase) if phase
+        parts << p.blue(model) unless model.empty?
+        parts << p.bright_black(phase) if phase
         cost = Session.current.total_cost
-        parts << p.yellow("$#{format('%.2f', cost)}") if cost && cost > 0
-        "#{parts.join(p.dim(' · '))} #{p.bold('❯')} "
+        parts << p.bright_black("$#{format('%.2f', cost)}") if cost && cost > 0
+        "#{parts.join(p.bright_black(' · '))} #{p.bold.white('❯')} "
       rescue StandardError
         "master ❯ "
       end
 
       def git_info
-        # Detect git branch and dirty status — Starship-style: green clean, yellow dirty
         require "timeout"
         p = MASTER::UI.pastel
         branch = Timeout.timeout(2) do
@@ -224,7 +223,7 @@ module MASTER
         end
         dirty = !status.empty? && $CHILD_STATUS.exitstatus == 0
 
-        dirty ? p.yellow("#{branch}✗") : p.green(branch)
+        dirty ? p.yellow("#{branch}✗") : p.white(branch)
       rescue Timeout::Error, StandardError
         nil
       end

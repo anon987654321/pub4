@@ -53,7 +53,7 @@ module MASTER
       def success(msg = nil)
         stop
         suffix = msg ? " — #{msg}" : ""
-        puts MASTER::UI.pastel.green("  #{MASTER::UI::ICONS[:success]} #{@message}#{suffix}")
+        puts MASTER::UI.pastel.white("  #{MASTER::UI::ICONS[:success]} #{@message}#{suffix}")
         puts
       end
 

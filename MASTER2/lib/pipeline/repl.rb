@@ -160,10 +160,6 @@ module MASTER
         if result.value[:cost]
           this_cost     = result.value[:cost].to_f
           running_total = session.total_cost + this_cost
-          # Show meta only when cost is non-trivial or there's a model name
-          model_str = UI.dim(result.value[:model]&.split("/")&.last || "")
-          cost_str  = running_total > 0.001 ? UI.dim("  #{UI.currency_precise(running_total)}") : ""
-          $stderr.print "#{model_str}#{cost_str}\n" unless model_str.empty? && cost_str.empty?
           check_cost_limits(this_cost, running_total)
         end
         show_violations(result.value)

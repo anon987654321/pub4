@@ -4,12 +4,12 @@ Constitutional AI coding assistant. Every edit is a decision with consequences.
 
 ```
 MASTER 2.0.0 (CONSTITUTIONAL) #1
-cpu0: x86_64-openbsd · ruby 3.4
-db0:  79 axioms · 12 personas
-llm0: claude-sonnet-4.6 → deepseek-r1:free
-boot: 52ms · smoke ok
+runtime0: x86_64-openbsd · ruby 3.4 · zsh dev%
+corpus0:  80 axioms · 12 personas
+models0:  claude-sonnet-4-6 · deepseek-v3-2 · deepseek-r1
+boot0:    52ms · smoke ok
 
-master · claude-sonnet-4.6 · strong · main ❯
+master · main · claude-sonnet-4-6 ❯
 ```
 
 ---

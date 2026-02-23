@@ -5,7 +5,7 @@ module MASTER
     # Convenience - high-level convenience methods
     module Convenience
       def success(msg)
-        puts pastel.green(msg)
+        puts pastel.white(msg)
       end
 
       def error(msg)

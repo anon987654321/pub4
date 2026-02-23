@@ -115,12 +115,13 @@ module MASTER
     # @param style [String] Communication style
     # @param bias [String, nil] Decision bias
     # @return [Hash] Created persona record
-    def add_persona(name:, role:, style:, bias: nil)
+    def add_persona(name:, role:, style:, bias: nil, model: nil)
       record = {
         name: name,
         role: role,
         style: style,
         bias: bias,
+        model: model,
         created_at: Time.now.utc.iso8601,
       }
       append("council", record.compact)
@@ -224,6 +225,7 @@ module MASTER
           role: member[:slug],
           style: "weight: #{member[:weight]}, temp: #{member[:temperature]}",
           bias: member[:veto] ? "veto" : "advisory",
+          model: member[:model],
         )
       end
     end

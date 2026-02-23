@@ -34,17 +34,9 @@ module MASTER
       end
 
       def run(event, context = {})
-        Logging.dmesg_log("hooks", message: "ENTER hooks.run")
-        actions = config[event.to_s] || []
-        results = []
-
-        actions.each do |action|
-          result = execute_action(action, context)
-          results << { action: action, result: result }
-          log("hooks0: #{event}.#{action} #{result ? '+' : '-'}")
-        end
-
-        results
+        # Delegate to dispatch: executes YAML hooks + runtime handlers in one path
+        result = dispatch(event, context)
+        result.ok? ? result.value[:results] : []
       end
 
       def register(event, handler)
