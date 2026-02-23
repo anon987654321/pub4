@@ -47,7 +47,8 @@ module MASTER
             output_cost: m.output_price_per_million || 0,
           }
         end.first(20) # Limit to top 20 to avoid huge lists
-      rescue StandardError
+      rescue StandardError => e
+        Logging.warn("Failed to load models from RubyLLM: #{e.message}", subsystem: "llm.models")
         []
       end
 

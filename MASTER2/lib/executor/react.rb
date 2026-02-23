@@ -149,7 +149,8 @@ module MASTER
                when Hash   then payload
                when String then begin
                  JSON.parse(payload, symbolize_names: true)
-               rescue StandardError
+               rescue StandardError => e
+                 Logging.warn("JSON parse failed in react step: #{e.message}", subsystem: "executor.react")
                  {}
                end
                else {}
