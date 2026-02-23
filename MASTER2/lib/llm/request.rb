@@ -252,9 +252,6 @@ module MASTER
         # Replicate's predictions API uses a single prompt field, not a messages array.
         msg_array  = build_message_array(prompt, messages)
         sys_msg    = msg_array.find { |m| m[:role] == "system" }
-        msg_array.select { |m| m[:role] == "user" }
-        msg_array.select { |m| m[:role] == "assistant" }
-
         # Interleave user/assistant turns into a conversation-style prompt
         turns = msg_array.reject { |m| m[:role] == "system" }
         flat_prompt = if turns.size == 1
