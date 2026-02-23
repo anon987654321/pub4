@@ -55,11 +55,7 @@ module MASTER
         start_time = MASTER::Utils.monotonic_now
 
         [INNER_REACT_MAX_STEPS, @max_steps - @step].min.times do
-          begin
-            check_timeout!(start_time)
-          rescue Result::Error => err
-            return Result.err(err.message)
-          end
+          return err if (err = timeout_error_for(start_time))
 
           @step += 1
           msgs = build_context_messages(goal)

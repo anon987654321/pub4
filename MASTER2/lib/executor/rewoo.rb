@@ -38,11 +38,7 @@ module MASTER
       def execute_rewoo_steps(actions, start_time)
         evidence = {}
         actions.each do |num, action_str|
-          begin
-            check_timeout!(start_time)
-          rescue Result::Error => err
-            return Result.err(err.message)
-          end
+          return err if (err = timeout_error_for(start_time))
 
           @step = num.to_i
           resolved = action_str.gsub(/#E(\d+)/) { evidence[::Regexp.last_match(1).to_i] || "" }
@@ -50,13 +46,7 @@ module MASTER
           UI.dim("  #E#{num}: #{resolved[0..60]}")
           observation = dispatch_action(resolved.strip)
 
-          # Injection defense: halt on detected injection (gist item #3)
-          if defined?(Security::Sanitizer) && !Security::Sanitizer.safe?(observation)
-            return Result.err(
-              "Injection attempt detected in tool response at #E#{num}. Aborting.",
-              category: :validation,
-            )
-          end
+          return err if (err = injection_error_for(observation, source: "#E#{num}"))
 
           evidence[num.to_i] = observation
           record_history({ step: @step, action: resolved, observation: observation })

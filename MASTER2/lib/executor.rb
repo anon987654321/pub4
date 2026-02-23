@@ -6,6 +6,7 @@ require "yaml"
 require "rbconfig"
 require "fileutils"
 require "uri"
+require_relative "executor/strategy"
 require_relative "executor/prompts"
 require_relative "executor/plan"
 require_relative "executor/convention_extractor"
@@ -77,6 +78,7 @@ module MASTER
       @pattern = :react
     end
 
+    include Strategy
     include Prompts
     include ExecutionContext
     include ToolDispatch

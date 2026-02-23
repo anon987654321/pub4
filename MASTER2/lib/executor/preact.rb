@@ -16,11 +16,7 @@ module MASTER
         # Phase 2: Execute plan step by step
         results = []
         @plan.each_with_index do |planned_step, idx|
-          begin
-            check_timeout!(start_time)
-          rescue Result::Error => err
-            return Result.err(err.message)
-          end
+          return err if (err = timeout_error_for(start_time))
 
           @step = idx + 1
           UI.dim("  #{@step}/#{@plan.size}: #{planned_step[0..60]}")
@@ -28,13 +24,7 @@ module MASTER
           # Execute the planned action
           observation = dispatch_action(planned_step)
 
-          # Injection defense: halt on detected injection (gist item #3)
-          if defined?(Security::Sanitizer) && !Security::Sanitizer.safe?(observation)
-            return Result.err(
-              "Injection attempt detected in tool response at step #{@step}. Aborting.",
-              category: :validation,
-            )
-          end
+          return err if (err = injection_error_for(observation, source: "step #{@step}"))
 
           results << { step: @step, action: planned_step, observation: observation }
           record_history(results.last)
