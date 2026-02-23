@@ -72,7 +72,31 @@ module MASTER
         text = strip_hedges(text)
         text = strip_endings(text)
         text = strip_markdown(text)
-        text = truncate_to_essentials(text)
+        text = paraphrase_if_verbose(text)
+        text
+      end
+
+      # If prose exceeds ~8 lines, paraphrase through the LLM with Strunk & White scrutiny.
+      # Preserves all meaning and code references -- no truncation.
+      PARAPHRASE_LINE_THRESHOLD = 8
+
+      PARAPHRASE_PROMPT = <<~PROMPT.freeze
+        Rewrite the following response applying maximum Strunk & White scrutiny:
+        - Omit every needless word. Use active voice. One idea per sentence.
+        - No markdown, no headers, no bullet lists, no numbered lists.
+        - Preserve every fact, code reference, and file name exactly.
+        - Plain prose only. As few lines as possible without losing meaning.
+
+        RESPONSE TO COMPRESS:
+      PROMPT
+
+      def paraphrase_if_verbose(text)
+        return text if text.lines.count <= PARAPHRASE_LINE_THRESHOLD
+        return text unless defined?(LLM) && LLM.configured? && !Thread.current[:llm_quiet]
+
+        result = LLM.ask("#{PARAPHRASE_PROMPT}#{text}", tier: :strong, stream: false)
+        result.ok? ? result.value[:content].to_s.strip : text
+      rescue StandardError
         text
       end
 
