@@ -94,11 +94,28 @@ module MASTER
       msgs = compressed.last(max_messages).map do |h|
         { role: h[:role].to_s, content: h[:content] }
       end
-      # Inject task boundary marker when active task is set
       if (task = @metadata[:active_task])
         msgs.unshift({ role: "system", content: "Current task: #{task}" })
       end
+      if (pending = @metadata[:pending_tasks])&.any?
+        msgs.unshift({ role: "system", content: "Pending (complete these): #{pending.join(' | ')}" })
+      end
       msgs
+    end
+
+    def add_pending_task(desc)
+      @metadata[:pending_tasks] ||= []
+      @metadata[:pending_tasks] << desc.to_s.strip unless @metadata[:pending_tasks].include?(desc.to_s.strip)
+      @dirty = true
+    end
+
+    def complete_pending_task(desc)
+      @metadata[:pending_tasks]&.delete(desc.to_s.strip)
+      @dirty = true
+    end
+
+    def pending_tasks
+      @metadata[:pending_tasks] || []
     end
 
     # Set the active task label — injected into every LLM context window.
