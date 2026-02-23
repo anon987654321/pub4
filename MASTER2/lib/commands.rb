@@ -277,6 +277,12 @@ module MASTER
     end
 
     def dispatch_one(input, pipeline:)
+      # Identity intercept -- Claude's RLHF overrides system prompt on this question
+      if input.strip.downcase.match?(/\bwho are you\b|\bwhat are you\b|\byour name\b|\bintroduce yourself\b/)
+        puts "\nMASTER v#{MASTER::VERSION} -- constitutional autonomous coding agent."
+        return HANDLED
+      end
+
       # Handle shortcuts
       if input.strip == "!!"
         return Result.err("No previous command.") unless @last_command
@@ -307,6 +313,17 @@ module MASTER
       # Bare Unix commands -- run in shell without requiring ! prefix.
       # Prevents cat/ls/doas/git/etc from being sent to the LLM.
       if bare_shell_command?(cmd)
+        # cd is a shell builtin -- must change Ruby process directory
+        if cmd == "cd"
+          target = args&.strip || Dir.home
+          target = File.expand_path(target.empty? ? Dir.home : target, Dir.pwd)
+          if Dir.exist?(target)
+            Dir.chdir(target)
+          else
+            $stderr.puts "cd: #{target}: No such file or directory"
+          end
+          return HANDLED
+        end
         output = `#{input.strip} 2>&1`
         print output
         puts unless output.end_with?("\n")

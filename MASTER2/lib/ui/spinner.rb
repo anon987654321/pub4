@@ -59,8 +59,8 @@ module MASTER
                     end
             color = PALETTE[band + (i % 2)]
 
-            print "\r  #{color}#{FRAMES[i % 4]}#{RESET}"
-            $stdout.flush
+            $stderr.print "\r  #{color}#{FRAMES[i % 4]}#{RESET}"
+            $stderr.flush
             i += 1
             sleep interval
           end
@@ -83,8 +83,8 @@ module MASTER
       def stop
         @running = false
         @thread&.join(0.2)
-        print "\r     \r"
-        $stdout.flush
+        $stderr.print "\r     \r"
+        $stderr.flush
       end
     end
   end
