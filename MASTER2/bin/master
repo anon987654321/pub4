@@ -178,6 +178,7 @@ when "help", "-h", "--help"
     Commands:
       refactor <file>             Refactor file with LLM guidance
       multi-refactor [path]       Refactor directory (add: --apply --strict --axioms --all-files)
+      converge [max_iter]         Iterate SelfRefactor until violations plateau (convergence)
       selfrun [--apply]           Full self-run across pub4 (add: --strict --axioms --all-files)
       fix [--all|<path>]          Fix violations in files or directory
       scan [directory]            Scan for code smells (default: .)
