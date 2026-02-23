@@ -195,16 +195,14 @@ module MASTER
     class << self
       include PipelineRepl
 
-      def prompt
+      def prompt(phase: nil)
         p = MASTER::UI.pastel
-        parts = []
-        parts << p.bold("master")
-        model = LLM.prompt_model_name.to_s.strip
-        parts << p.cyan(model) unless model.empty?
-        tier = LLM.tier.to_s.strip
-        parts << p.dim(tier) unless tier.empty?
+        parts = [p.bold("master")]
         git = git_info
         parts << git if git
+        model = LLM.prompt_model_name.to_s.strip
+        parts << p.cyan(model) unless model.empty?
+        parts << p.dim(phase) if phase
         cost = Session.current.total_cost
         parts << p.yellow("$#{format('%.2f', cost)}") if cost && cost > 0
         "#{parts.join(p.dim(' · '))} #{p.bold('❯')} "

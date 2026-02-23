@@ -49,12 +49,12 @@ module MASTER
         entries.each_with_index do |entry, i|
           path = File.join(root, entry)
           last = i == entries.size - 1
-          connector = last ? "+-- " : "|-- "
+          connector = last ? "└── " : "├── "
           lines << "#{indent}#{connector}#{entry}"
 
           next unless File.directory?(path)
 
-          extension = last ? "    " : "|   "
+          extension = last ? "    " : "│   "
           lines.concat(file_tree(path, indent: "#{indent}#{extension}", max_depth: max_depth, depth: depth + 1,
                                        exclude: exclude))
         end
@@ -108,11 +108,13 @@ module MASTER
       def openbsd_config_scan
         return unless defined?(MASTER::Analysis::OpenBSDConfigValidator)
 
+        p = UI.pastel
         issues = OpenBSDConfigValidator.scan_dir("/etc")
-        issues.each do |_file, file_issues|
+        issues.each do |file, file_issues|
+          fname = p.bold(File.basename(file.to_s))
           file_issues.each do |issue|
-            UI.warn("pf0: #{issue[:message]}") if issue[:severity] == :warn
-            UI.warn("pf0: #{issue[:message]} (man #{issue[:man]})") if issue[:severity] == :error
+            UI.warn("pf0: #{fname}: #{issue[:message]}") if issue[:severity] == :warn
+            UI.warn("pf0: #{fname}: #{issue[:message]} (man #{issue[:man]})") if issue[:severity] == :error
           end
         end
       rescue StandardError

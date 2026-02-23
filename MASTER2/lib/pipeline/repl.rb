@@ -200,15 +200,14 @@ module MASTER
 
     # Build prompt using Pipeline.prompt with fallback
     def build_prompt(phase)
-      base = Pipeline.prompt
-      phase ? "[#{phase}] #{base}" : base
+      Pipeline.prompt(phase: phase)
     rescue StandardError
       model_name = begin
         LLM.extract_model_name(LLM.prompt_model_name)
       rescue StandardError
         "?"
       end
-      phase ? "#{phase} #{model_name} ❯ " : "#{model_name} ❯ "
+      phase ? "master · #{model_name} · #{phase} ❯ " : "master · #{model_name} ❯ "
     end
 
     # Read single or multi-line input
