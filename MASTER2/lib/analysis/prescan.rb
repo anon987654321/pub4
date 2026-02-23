@@ -82,9 +82,18 @@ module MASTER
         status = `git -C #{Shellwords.escape(path)} status --porcelain`.strip
 
         if status.empty?
-          UI.success("vcs0: clean")
+          # Check for unpushed commits
+          unpushed = `git -C #{Shellwords.escape(path)} log @{u}..HEAD --oneline 2>/dev/null`.strip
+          if unpushed.empty?
+            UI.success("vcs0: clean")
+          else
+            count = unpushed.lines.size
+            UI.warn("vcs0: #{count} unpushed commit#{count == 1 ? "" : "s"}")
+          end
         else
-          UI.warn("vcs0: #{status.lines.size} uncommitted files")
+          files = status.lines.map { |l| l.strip.split(" ", 2).last }.first(3)
+          tail  = status.lines.size > 3 ? " +#{status.lines.size - 3} more" : ""
+          UI.warn("vcs0: #{status.lines.size} uncommitted -- #{files.join(", ")}#{tail}")
         end
 
         status
