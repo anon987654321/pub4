@@ -222,10 +222,9 @@ module MASTER
         config = SCAN_PROFILES[profile]
         min_priority = config[:min_priority]
 
-        axioms_path = File.join(MASTER.root, "data", "axioms.yml")
-        return nil unless File.exist?(axioms_path)
+        all_axioms = MASTER::Review::Constitution.axioms
+        return nil unless all_axioms
 
-        all_axioms = YAML.safe_load_file(axioms_path)
         all_axioms.select { |a| (a["priority"] || a[:priority] || 5) >= min_priority }
       rescue StandardError => e
         UI.warn("Failed to load axioms: #{e.message}")

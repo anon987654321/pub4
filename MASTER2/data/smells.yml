@@ -156,3 +156,83 @@ language_axiom_categories:
   - javascript
   - universal
 
+
+structural_optimization:
+  # Detectors for each technique in the structural_optimization codex
+  # Reference: data/design_codex.yml structural_optimization.techniques
+
+  merge_opportunity:
+    check: "Same logic (≥4 lines) appears in 2+ locations"
+    fix: "Extract to shared method/module; parameterise differences"
+    severity: high
+    autofix: true
+
+  defrag_opportunity:
+    check: "Logic about concept X lives primarily in file named Y"
+    fix: "Move to canonical home module; update call-sites"
+    severity: medium
+    autofix: false
+
+  naming_drift:
+    check: "Same concept referred to by different names across files"
+    examples: ["banned/forbidden/blocked/prohibited", "priority/weight/tier/level", "council/chamber"]
+    fix: "Pick canonical name; migrate all sites; add normalise rule"
+    severity: medium
+    autofix: true
+
+  data_duplication:
+    check: "Same fact (model ID, rule text, constant value) defined in 2+ YAML files"
+    fix: "Single source file; other files reference or import"
+    severity: high
+    autofix: true
+
+  layering_violation:
+    check: "Module calls upward in stack (UI in domain, enforcement calling LLM, analysis writing disk)"
+    fix: "Return result upward; inject dependencies; use event pattern"
+    severity: critical
+    autofix: false
+
+  dead_code:
+    check: "Method/constant/YAML key defined but never referenced in lib/"
+    fix: "Delete; git history is the backup"
+    severity: medium
+    autofix: true
+
+  uncodified_insight:
+    check: "Analysis insight or discovered pattern not present in axioms.yml/smells.yml/design_codex.yml"
+    fix: "Codify immediately: add to appropriate data file; wire to selfrun detector"
+    severity: high
+    autofix: false
+
+  god_yaml:
+    check: "Single YAML file mixes 3+ unrelated concept categories"
+    fix: "Split by responsibility axis; one file per concept domain"
+    severity: medium
+    autofix: false
+
+  schema_drift:
+    check: "Same type of data structured with different keys/types/scales in different YAML files"
+    examples: ["axiom schemas: {id,priority} vs {id,severity} vs {name,tier}", "ranking: integer vs float vs categorical"]
+    fix: "Normalise to single canonical schema; migrate all instances"
+    severity: medium
+    autofix: true
+
+  abstraction_gap:
+    check: "Same 3+ line idiom repeated 5+ times without a named abstraction"
+    examples: ["YAML.safe_load_file + File.exist? + rescue pattern (18+ occurrences)", "File.join(MASTER.root,'data',name) pattern (35+ occurrences)"]
+    fix: "Name the concept; extract to Paths.load_data_file or equivalent"
+    severity: medium
+    autofix: true
+
+  buried_constant:
+    check: "Magic string/number/regex defined inside a method body rather than hoisted to constant"
+    fix: "Extract to named constant at module level"
+    severity: low
+    autofix: true
+
+  unused_yaml_key:
+    check: "YAML key defined but never grep'd in any .rb file under lib/"
+    examples: ["language_axioms.yml html/css axioms", "council.yml config: section", "axioms.yml llm_strategies key"]
+    fix: "Delete or wire to a detector/consumer"
+    severity: low
+    autofix: false

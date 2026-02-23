@@ -6,7 +6,7 @@
 #      openrouter → routed via ruby_llm/OpenRouter (OPENROUTER_API_KEY) [default]
 
 # --- STRONG (default + council arbiter) ---
-# Sonnet 4.6 via Replicate is the primary default; DeepSeek R1 is the fallback.
+# Sonnet 4.6 via Replicate is primary; free DeepSeek R1 via OpenRouter is fallback.
 
 - id: anthropic/claude-4.5-sonnet
   alias: claude-sonnet-4.5
@@ -47,6 +47,15 @@
   output_cost: 15.00
   context_window: 131072
   provider: xai
+  reasoning: true
+
+- id: deepseek/deepseek-r1:free
+  alias: deepseek-r1-free
+  tier: strong
+  input_cost: 0.00
+  output_cost: 0.00
+  context_window: 64000
+  provider: deepseek
   reasoning: true
 
 - id: deepseek/deepseek-r1
@@ -188,15 +197,6 @@
   provider: meta
 
 # --- FREE (zero credits required, rate-limited) ---
-
-- id: deepseek/deepseek-r1:free
-  alias: deepseek-r1-free
-  tier: free
-  input_cost: 0.00
-  output_cost: 0.00
-  context_window: 64000
-  provider: deepseek
-  reasoning: true
 
 - id: meta-llama/llama-3.3-70b-instruct:free
   alias: llama-3.3-70b-free

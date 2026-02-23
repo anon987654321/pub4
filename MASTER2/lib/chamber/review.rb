@@ -53,40 +53,36 @@ module MASTER
       # Single round of council review with persona voting
       def council_review(original, proposal, model: nil)
         personas = DB.council
-        return { passed: true, votes: [], vetoed_by: [] } if personas.empty?
+        return { passed: true, votes: [], vetoed_by: [], thread: [] } if personas.empty?
 
-        votes = []
+        votes    = []
         vetoed_by = []
-        veto_personas = personas.select { |p| p[:veto] }
-        advisory_personas = personas.reject { |p| p[:veto] }
+        thread   = [] # shared deliberation — each model reads prior voices before speaking
 
-        veto_personas.first(3).each do |persona|
+        personas.each do |persona|
           break if over_budget?
 
-          vote = get_persona_vote(persona, original, proposal)
+          vote = get_persona_vote(persona, original, proposal, thread: thread)
           votes << vote
+          thread << { name: vote[:name], model: persona[:model], feedback: vote[:reason] }
+
           if vote[:veto]
-            vetoed_by << persona[:name]
-            return { passed: false, verdict: :rejected, vetoed_by: vetoed_by, votes: votes }
+            vetoed_by << vote[:name]
+            return { passed: false, verdict: :rejected, vetoed_by: vetoed_by, votes: votes, thread: thread }
           end
         end
 
-        advisory_personas.first(3).each do |persona|
-          break if over_budget?
-
-          votes << get_persona_vote(persona, original, proposal)
-        end
-
-        total_weight = votes.sum { |v| v[:weight] || 0.1 }
+        total_weight   = votes.sum { |v| v[:weight] || 0.1 }
         approve_weight = votes.select { |v| v[:approve] }.sum { |v| v[:weight] || 0.1 }
-        consensus = total_weight > 0 ? (approve_weight / total_weight) : 0
+        consensus      = total_weight > 0 ? (approve_weight / total_weight) : 0
 
         {
-          passed: consensus >= CONSENSUS_THRESHOLD,
-          verdict: consensus >= CONSENSUS_THRESHOLD ? :approved : :rejected,
+          passed:    consensus >= CONSENSUS_THRESHOLD,
+          verdict:   consensus >= CONSENSUS_THRESHOLD ? :approved : :rejected,
           consensus: consensus.round(2),
           vetoed_by: [],
-          votes: votes,
+          votes:     votes,
+          thread:    thread,
         }
       end
 
@@ -124,14 +120,24 @@ module MASTER
         proposal
       end
 
-      # Get individual persona vote on a proposal
-      def get_persona_vote(persona, original, proposal)
+      # Get individual persona vote, aware of the deliberation thread so far
+      def get_persona_vote(persona, original, proposal, thread: [])
         return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } if over_budget?
 
-        # Free-MAD: advisory personas take turns as devil's advocate to prevent groupthink
         is_devils_advocate = !persona[:veto] && (@cost * 10).to_i.odd?
         dissent_nudge = if is_devils_advocate
-          "\nYour role this round is DEVIL'S ADVOCATE. Actively seek flaws, risks, and reasons to REJECT — do not conform to expected approval."
+          "\nYour role this round is DEVIL'S ADVOCATE. Actively seek flaws and reasons to REJECT."
+        else
+          ""
+        end
+
+        thread_section = if thread.any?
+          prior = thread.map { |t| "#{t[:name]} (#{t[:model] || 'unknown'}): #{t[:feedback]}" }.join("\n")
+          <<~THREAD
+            DELIBERATION SO FAR — read this before forming your view:
+            #{prior}
+
+          THREAD
         else
           ""
         end
@@ -140,34 +146,35 @@ module MASTER
           You are #{persona[:name]}.
           #{persona[:directive] || persona[:style]}#{dissent_nudge}
 
-          Review this proposed change:
-
-          ORIGINAL (first 500 chars):
+          #{thread_section}ORIGINAL (first 500 chars):
           #{original[0, 500]}
 
           PROPOSED (first 500 chars):
           #{proposal[0, 500]}
 
+          You have read what your colleagues said above. Now give YOUR independent assessment.
           Respond with ONLY one word: APPROVE or REJECT
-          Then one sentence explaining why.
+          Then one sentence explaining your reasoning, referencing prior feedback if relevant.
         PROMPT
 
-        result = @llm.ask(prompt, tier: :fast)
+        ask_opts = persona[:model] ? { model: persona[:model] } : { tier: :fast }
+        result   = @llm.ask(prompt, **ask_opts)
         return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } unless result.ok?
 
-        data = result.value
-        @cost += data[:cost] || 0
+        data    = result.value
+        @cost  += data[:cost] || 0
 
         content = data[:content].to_s.strip
         approve = content.upcase.start_with?("APPROVE")
-        veto = persona[:veto] && content.upcase.start_with?("REJECT")
+        veto    = persona[:veto] && content.upcase.start_with?("REJECT")
 
         {
-          name: persona[:name],
+          name:   persona[:name],
+          model:  persona[:model],
           approve: approve,
-          veto: veto,
+          veto:   veto,
           weight: persona[:weight] || 0.1,
-          reason: content.split("\n").last,
+          reason: content.lines.last&.strip,
         }
       rescue StandardError => e
         DB.log_error(context: "chamber_vote", error: e.message, persona: persona[:name])

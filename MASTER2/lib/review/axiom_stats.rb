@@ -52,19 +52,10 @@ module MASTER
       private
 
       def load_axioms
-        axioms_path = MASTER::Paths.data_path("axioms")
-
-        return [] unless axioms_path
-
-        begin
-          YAML.safe_load_file(axioms_path) || []
-        rescue StandardError => e
-          if defined?(MASTER::Logging)
-            MASTER::Logging.warn("Failed to load axioms file: #{e.message}",
-                                 subsystem: "review.axiom_stats")
-          end
-          []
-        end
+        Review::Constitution.axioms || []
+      rescue StandardError => e
+        MASTER::Logging.warn("Failed to load axioms: #{e.message}", subsystem: "review.axiom_stats") if defined?(MASTER::Logging)
+        []
       end
 
       def count_by_key(axioms, key)
