@@ -28,7 +28,8 @@ module MASTER
     end
 
     # Build comprehensive system message with all YAML sections + persona
-    def self.build_system_message(include_commands: true)
+    # depth: :shallow (default) | :own | :deep | :full — controls source injection
+    def self.build_system_message(include_commands: true, depth: :shallow)
       config = system_prompt_config
 
       # Identity (interpolated)
@@ -81,6 +82,23 @@ module MASTER
 
       # Zsh native patterns: forbid legacy forks in shell code
       sections << ZshPatternInjector.prompt_section
+
+      # Strunk & White — injected into every LLM system message
+      sections << <<~SW
+        PROSE STYLE — ELEMENTS OF STYLE (Strunk & White):
+        Omit needless words. Every identifier, comment, error message, and string earns its place or is cut.
+        Name things by what they ARE: axiom_list not data; violation_count not value; model_name not info.
+        Use the active voice: "Enforcer rejected X" not "X was rejected". Methods are active verbs: enforce, scan, reflow.
+        Never use: basically, essentially, actually, simply, really, quite, very in prose.
+        Never explain what the reader can see. Comments explain WHY, never WHAT.
+        Parallel ideas take parallel form. Error messages: [actor] [verb] [noun]: [specific detail].
+      SW
+
+      # Grounded source injection — depth :own/:deep/:full loads real source files
+      if depth != :shallow && defined?(GroundedContext)
+        grounded = GroundedContext.build(depth: depth, root: MASTER.root)
+        sections << grounded unless grounded.empty?
+      end
 
       sections.join("\n\n")
     end

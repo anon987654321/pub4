@@ -17,7 +17,8 @@ if ! command -v ruby >/dev/null 2>&1; then
   echo "fail: ruby not found"
   exit 1
 fi
-echo "ok: ruby $(ruby -v | awk '{print $1, $2}')"
+local rv=(${(s: :)$(ruby -v)})
+echo "ok: ruby ${rv[1]} ${rv[2]}"
 
 if ! command -v bundle >/dev/null 2>&1; then
   echo "fail: bundler not found"
