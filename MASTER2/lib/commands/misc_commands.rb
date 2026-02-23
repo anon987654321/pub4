@@ -12,19 +12,57 @@ module MASTER
   module Commands
     # Miscellaneous commands
     module MiscCommands
-      SHOWP_SCRIPT = File.join(MASTER.root, "..", "sh", "showp.sh")
+      TEXT_EXTENSIONS = %w[rb py js ts zsh sh bash md yml yaml json toml gemspec txt erb conf ini env].freeze
+      TEXT_BASENAMES  = %w[Gemfile Rakefile Makefile Dockerfile].freeze
+      SKIP_DIRS       = %w[.git vendor tmp var node_modules .bundle coverage log dist].freeze
 
       def run_snapshot(args)
-        out  = args&.strip&.then { |a| a.empty? ? nil : a } || Paths.var_file("snapshot.md")
-        max  = 400
-        script = File.expand_path(SHOWP_SCRIPT)
-        unless File.exist?(script)
-          puts "  snapshot: showp.sh not found at #{script}"
-          return
+        out = args&.strip&.then { |a| a.empty? ? nil : a } || Paths.var_file("snapshot.md")
+        max = 400
+        puts "  generating snapshot..."
+
+        n_files = n_lines = n_trunc = 0
+        buf = StringIO.new
+        buf.puts "# Project Snapshot - #{Time.now.utc.strftime('%Y-%m-%dT%H:%M:%SZ')}"
+        buf.puts
+        buf.puts "## Tree"
+        buf.puts "```"
+        buf.puts ascii_tree(Dir.pwd)
+        buf.puts "```"
+        buf.puts
+
+        Dir.glob("**/*", base: Dir.pwd).sort.each do |rel|
+          next if File.directory?(File.join(Dir.pwd, rel))
+          next if rel == out
+          parts = rel.split("/")
+          next if parts.any? { |p| SKIP_DIRS.include?(p) }
+          ext  = File.extname(rel).delete_prefix(".")
+          base = File.basename(rel)
+          next unless TEXT_EXTENSIONS.include?(ext) || TEXT_BASENAMES.include?(base)
+
+          lines = File.readlines(File.join(Dir.pwd, rel), encoding: "utf-8:utf-8", chomp: true)
+          n = lines.size
+          buf.puts "## `#{rel}`"
+          buf.puts "```#{ext}"
+          if n > max
+            buf.puts lines.first(max).join("\n")
+            buf.puts "... #{n - max} lines truncated (#{n} total)"
+            n_trunc += 1
+          else
+            buf.puts lines.join("\n")
+          end
+          buf.puts "```"
+          buf.puts
+          n_files += 1
+          n_lines  += n
+        rescue Errno::ENOENT, Encoding::UndefinedConversionError
+          next
         end
-        puts "  generating snapshot…"
-        output = `zsh #{script.shellescape} #{out.shellescape} #{max} 2>&1`
-        puts "  #{output.strip}"
+
+        est = n_lines * 6 / 5
+        buf.puts "files: #{n_files} / lines: #{n_lines} / truncated: #{n_trunc} / est. tokens: ~#{est}"
+        File.write(out, buf.string)
+        puts "  saved: #{out}  (#{n_files} files, #{n_lines} lines, ~#{est} tokens)"
       end
 
       def speak(text)
@@ -321,6 +359,21 @@ module MASTER
 
       private
 
+      def ascii_tree(root, prefix = "", path = root, buf = [])
+        entries = Dir.entries(path).reject { |e| e.start_with?(".") || SKIP_DIRS.include?(e) }.sort
+        entries.each_with_index do |entry, idx|
+          last    = idx == entries.size - 1
+          pointer = last ? "`-- " : "|-- "
+          buf << "#{prefix}#{pointer}#{entry}"
+          child = File.join(path, entry)
+          if File.directory?(child)
+            extension = last ? "    " : "|   "
+            ascii_tree(root, prefix + extension, child, buf)
+          end
+        end
+        buf.join("\n")
+      end
+
       def startup_checks
         bundle_ok = begin
           gemfile_lock = File.join(MASTER.root, "Gemfile.lock")
@@ -423,7 +476,7 @@ module MASTER
         puts "  web: http://localhost:#{server.port}/?token=#{token}"
       end
 
-      # Project memory — persistent goal/context across sessions and models
+      # Project memory - persistent goal/context across sessions and models
       def project_goal(args)
         return show_project_context unless args&.strip&.length&.> 0
 
@@ -447,12 +500,12 @@ module MASTER
       def show_project_context
         ctx = defined?(ProjectMemory) ? ProjectMemory.load(root: Dir.pwd) : {}
         if ctx.empty?
-          puts UI.dim("no project context — set one with: goal <text>")
+          puts UI.dim("no project context - set one with: goal <text>")
         else
           puts UI.dim("goal: #{ctx['goal']}") if ctx["goal"]
           puts UI.dim("stack: #{ctx['stack']}") if ctx["stack"]
           puts UI.dim("constraints: #{ctx['constraints']}") if ctx["constraints"]
-          Array(ctx["decisions"]).each { |decision| puts UI.dim("  · #{decision}") }
+          Array(ctx["decisions"]).each { |decision| puts UI.dim("  * #{decision}") }
         end
       end
     end
