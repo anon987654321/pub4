@@ -110,6 +110,9 @@ module MASTER
         text = text.gsub(/^\d+\.\s+/, '')          # numbered list markers
         text = text.gsub(/\n{3,}/, "\n\n")         # collapse excess blank lines
         text = text.gsub(/[\u{1F300}-\u{1FFFF}]|\u{2600}-\u{26FF}|\u{2700}-\u{27BF}/, '')
+        text = text.gsub(/[\u2018\u2019]/, "'")    # curly single quotes → straight
+        text = text.gsub(/[\u201C\u201D]/, '"')    # curly double quotes → straight
+        text = text.gsub(/[\u2014\u2013]/, '--')   # em/en dash → --
         text
       end
 
