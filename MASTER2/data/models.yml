@@ -40,15 +40,7 @@
   api: replicate
   reasoning: true
 
-- id: x-ai/grok-code-fast-1
-  alias: grok-code-fast-1
-  tier: strong
-  input_cost: 3.00
-  output_cost: 15.00
-  context_window: 131072
-  provider: xai
-  api: openrouter
-  reasoning: true
+
 
 - id: deepseek/deepseek-r1:free
   alias: deepseek-r1-free
@@ -118,11 +110,20 @@
   provider: deepseek
   api: openrouter
 
+- id: x-ai/grok-code-fast-1
+  alias: grok-code-fast-1
+  tier: fast
+  input_cost: 0.20
+  output_cost: 1.50
+  context_window: 256000
+  provider: xai
+  api: openrouter
+
 - id: moonshotai/kimi-k2.5
   alias: kimi-k2.5
   tier: fast
   input_cost: 0.45
-  output_cost: 0.44
+  output_cost: 2.20
   context_window: 262144
   provider: moonshot
   api: openrouter
