@@ -6,17 +6,7 @@
 #      openrouter → routed via ruby_llm/OpenRouter (OPENROUTER_API_KEY) [default]
 
 # --- STRONG (default + council arbiter) ---
-# Sonnet 4.6 via Replicate is primary; free DeepSeek R1 via OpenRouter is fallback.
-
-- id: anthropic/claude-sonnet-4-6
-  alias: claude-sonnet-4.6
-  tier: strong
-  input_cost: 3.00
-  output_cost: 15.00
-  context_window: 200000
-  provider: anthropic
-  api: replicate
-  reasoning: true
+# Sonnet 4.5 via Replicate is primary; free DeepSeek R1 via OpenRouter is fallback.
 
 - id: anthropic/claude-4.5-sonnet
   alias: claude-sonnet-4.5
@@ -92,8 +82,8 @@
 
 # --- FAST (council members + fallbacks) ---
 
-- id: deepseek-ai/deepseek-v3-2
-  alias: deepseek-v3.2
+- id: deepseek-ai/deepseek-v3.1
+  alias: deepseek-v3.1
   tier: fast
   input_cost: 0.90
   output_cost: 0.90

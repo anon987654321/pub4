@@ -187,7 +187,10 @@ module MASTER
 
       def try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
         spinner = nil
-        unless stream || Thread.current[:llm_quiet]
+        # Replicate never streams (blocking poll) — always show spinner so the user
+        # knows something is happening even when stream: true was requested.
+        use_spinner = !Thread.current[:llm_quiet] && (!stream || replicate_model?(current_model))
+        if use_spinner
           spinner = UI.spinner
           spinner.auto_spin
         end
