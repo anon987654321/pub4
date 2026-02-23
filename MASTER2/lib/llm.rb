@@ -231,6 +231,10 @@ module MASTER
 
       def handle_llm_failure(result, current_model)
         CircuitBreaker.open_circuit!(current_model)
+        # Credit exhaustion is permanent for this session — trip all OpenRouter models at once.
+        if result.error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
+          FREE_FALLBACKS.each { |model_id| CircuitBreaker.open_circuit!(model_id) }
+        end
         Logging.llm_error(tier: :default, error: result.error) if defined?(Logging)
       end
 
