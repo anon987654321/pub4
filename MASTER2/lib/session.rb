@@ -91,9 +91,29 @@ module MASTER
 
     def context_for_llm(max_messages: 20)
       compressed = Memory.compress(@history)
-      compressed.last(max_messages).map do |h|
+      msgs = compressed.last(max_messages).map do |h|
         { role: h[:role].to_s, content: h[:content] }
       end
+      # Inject task boundary marker when active task is set
+      if (task = @metadata[:active_task])
+        msgs.unshift({ role: "system", content: "Current task: #{task}" })
+      end
+      msgs
+    end
+
+    # Set the active task label — injected into every LLM context window.
+    # Call with nil to clear (signals topic shift to the LLM).
+    def set_task(label)
+      if label.nil?
+        @metadata.delete(:active_task)
+      else
+        @metadata[:active_task] = label.to_s.strip
+      end
+      @dirty = true
+    end
+
+    def active_task
+      @metadata[:active_task]
     end
 
     def write_metadata(key, value)

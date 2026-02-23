@@ -50,6 +50,7 @@ module MASTER
       text = input.is_a?(Hash) ? input[:text] : input.to_s
 
       Logging.with_request_id do
+        detect_context_shift(text)
         raw = case @mode
               when :executor then call_executor(text)
               when :stages   then call_stages(input)
@@ -57,6 +58,7 @@ module MASTER
               else call_executor(text)  # degrade to executor rather than raise
               end
 
+        track_task(text)
         normalize_result(raw, text)
       end
     rescue StandardError => err
@@ -65,6 +67,34 @@ module MASTER
     end
 
     private
+
+    # Signals that clearly start a new independent task — wipe active_task
+    # so the LLM gets no inherited context from the previous topic.
+    CONTEXT_SHIFT_PATTERNS = [
+      /\b(now|next|separately|forget|ignore|done with|moving on|new task|reset|start fresh)\b/i,
+      /^(ok|okay|right|fine|good|cool|thanks)[,.]?\s+(now|so|let'?s|can you)/i,
+      /^(run|test|try|check|show|do)\s+(?:the\s+)?snapshot\b/i,
+    ].freeze
+
+    def detect_context_shift(text)
+      session = Session.current
+      return unless session.active_task
+      return unless CONTEXT_SHIFT_PATTERNS.any? { |p| text.match?(p) }
+
+      session.set_task(nil)
+      Logging.dmesg_log("session", message: "context shift detected -- task cleared") if defined?(Logging)
+    end
+
+    def track_task(text)
+      session = Session.current
+      return if session.active_task # already have one
+      return if text.strip.length < 8
+
+      # Use first 60 chars of input as the working task label
+      session.set_task(text.strip.slice(0, 60))
+    rescue StandardError
+      nil
+    end
 
     def call_executor(text)
       # Guard must run even in executor mode to prevent dangerous ops
