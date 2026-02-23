@@ -200,9 +200,11 @@ module MASTER
         p     = MASTER::UI.pastel
         model = LLM.prompt_model_name.to_s.strip
         model = model.empty? ? "?" : model
+        badge = PlatformCheck.compute_badge
+        hw    = badge ? p.bright_black("·#{badge}") : ""
         cost  = Session.current.total_cost
         cost_str = cost && cost > 0 ? p.bright_black(" [$#{format('%.2f', cost)}]") : ""
-        "#{p.bold.green('master')}#{p.bright_black('@')}#{p.bold.blue(model)}#{cost_str}#{p.bold.white('$')} "
+        "#{p.bold.green('master')}#{p.bright_black('@')}#{p.bold.blue(model)}#{hw}#{cost_str}#{p.bold.white('$')} "
       rescue StandardError
         "master$ "
       end

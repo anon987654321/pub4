@@ -39,6 +39,7 @@ module MASTER
           c("    #{user}@#{host}:#{MASTER.root}"),
           c("runtime0: #{RUBY_PLATFORM} · ruby #{RUBY_VERSION} · #{shell} #{user}#{prompt_hint}"),
           c("host0: #{PlatformCheck.hypervisor} · #{PlatformCheck.provider}"),
+          c("hw0: #{PlatformCheck.cpu_cores}c · #{PlatformCheck.total_mem_mb}M RAM · #{PlatformCheck.free_mem_mb}M free"),
           c("corpus0: #{UI.pluralize(DB.axioms.size, 'axiom')} · #{UI.pluralize(defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0, 'persona')}"),
           c("models0: #{tier_models}"),
           c("routing0: #{if LLM.configured_for_replicate?
