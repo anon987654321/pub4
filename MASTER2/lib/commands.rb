@@ -295,6 +295,15 @@ module MASTER
       cmd = parts[0]&.downcase
       args = parts[1]
 
+      # ! prefix — run directly in shell, bypass LLM entirely
+      if cmd&.start_with?("!")
+        shell_cmd = "#{cmd[1..]} #{args}".strip
+        output = `#{shell_cmd} 2>&1`
+        print output
+        puts unless output.end_with?("\n")
+        return HANDLED
+      end
+
       case cmd
       when "help", "?"
         Help.show(args)
@@ -503,7 +512,7 @@ module MASTER
       chunks = raw
         .gsub("\r", "\n")
         .split(/\n+/)
-        .flat_map { |line| line.split(/\s*;\s*/) }
+        .flat_map { |line| line.split(/\s*(?:&&|;)\s*/) }
         .map { |item| item.sub(/\A\s*(?:[-*]|\d+[.)])\s*/, "").strip }
         .reject(&:empty?)
 

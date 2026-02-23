@@ -197,18 +197,14 @@ module MASTER
       include PipelineRepl
 
       def prompt(phase: nil)
-        p = MASTER::UI.pastel
-        parts = [p.bold.white("master")]
-        git = git_info
-        parts << git if git
+        p     = MASTER::UI.pastel
         model = LLM.prompt_model_name.to_s.strip
-        parts << p.blue(model) unless model.empty?
-        parts << p.bright_black(phase) if phase
-        cost = Session.current.total_cost
-        parts << p.bright_black("$#{format('%.2f', cost)}") if cost && cost > 0
-        "#{parts.join(p.bright_black(' · '))} #{p.bold.white('❯')} "
+        model = model.empty? ? "?" : model
+        cost  = Session.current.total_cost
+        cost_str = cost && cost > 0 ? p.bright_black(" [$#{format('%.2f', cost)}]") : ""
+        "#{p.bold.green('master')}#{p.bright_black('@')}#{p.bold.blue(model)}#{cost_str}#{p.bold.white('$')} "
       rescue StandardError
-        "master ❯ "
+        "master$ "
       end
 
       def git_info
