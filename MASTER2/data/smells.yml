@@ -236,3 +236,125 @@ structural_optimization:
     fix: "Delete or wire to a detector/consumer"
     severity: low
     autofix: false
+
+importance_flow:
+  # Detectors for INVERTED_PYRAMID axiom violations
+  # Reference: data/design_codex.yml importance_flow
+
+  private_before_public:
+    check: "private/protected keyword appears above a public method in same class scope"
+    fix: "Move private block to bottom of class; hoist public methods above it"
+    severity: high
+    autofix: true
+
+  helpers_before_core:
+    check: "A method is defined before the public method that is its primary caller"
+    fix: "Move helper below its caller; readers encounter call-site before implementation"
+    severity: medium
+    autofix: true
+
+  rescue_wraps_def:
+    check: "def foo / rescue / end pattern — rescue wrapping entire method body"
+    fix: "Narrow rescue to the expression that can raise; move guard to first line"
+    severity: medium
+    autofix: false
+
+  required_after_optional:
+    check: "def foo(a=1, b) — required keyword param after optional positional"
+    fix: "Reorder: required positional → optional positional → required kw → optional kw"
+    severity: high
+    autofix: true
+
+  setup_after_core:
+    check: "Variable assignment line after a non-assignment core logic expression in same method"
+    fix: "Hoist setup to top of method; core logic follows"
+    severity: low
+    autofix: true
+
+  yaml_examples_before_rules:
+    check: "YAML key named 'example', 'template', or 'sample' appears before 'rules', 'detect', or 'check'"
+    fix: "Move examples/templates to bottom of their section"
+    severity: low
+    autofix: true
+
+  yaml_adjustable_before_protected:
+    check: "ADJUSTABLE protection entry appears before PROTECTED entry in same YAML file"
+    fix: "Reorder: ABSOLUTE → PROTECTED → ADJUSTABLE"
+    severity: medium
+    autofix: true
+
+  zsh_helper_before_main:
+    check: "Function definition appears before the 'main' or primary function in a Zsh script"
+    fix: "Define main() first; helper functions follow in call order"
+    severity: low
+    autofix: true
+
+  detail_before_summary:
+    check: "File or section opens with implementation detail (private method, edge case, cleanup) before any public contract"
+    fix: "Add public interface summary at top; push detail down"
+    severity: medium
+    autofix: false
+
+  argument_entropy:
+    check: "Method has 4+ params and they are not ordered: required → optional → keyword → block"
+    fix: "Reorder params by importance; extract to options hash if > 5"
+    severity: medium
+    autofix: true
+
+strunk_white:
+  # Prose quality detectors — Strunk & White applied to identifiers, comments, and strings.
+  # Reference: data/design_codex.yml prose_style, axiom STRUNK_WHITE
+
+  filler_identifier:
+    check: "Variable or method named 'data', 'info', 'thing', 'stuff', 'misc', 'temp', 'tmp', 'item', 'object', 'value' without qualification"
+    fix: "Replace with the specific domain noun: axiom_list, violation_count, model_name"
+    severity: high
+    autofix: false
+
+  vague_noun_identifier:
+    check: "Method or class named *Manager, *Handler, *Processor, *Helper, *Util, *Service without a domain prefix"
+    fix: "Name by domain role: ViolationReporter, AxiomLoader, CostTracker — not DataManager"
+    severity: medium
+    autofix: false
+
+  redundant_comment:
+    check: "Comment that restates the immediately following method name or expression (e.g., '# This method returns X' above 'def return_x')"
+    fix: "Delete the comment. If intent is opaque, rewrite it to explain WHY, not WHAT."
+    severity: medium
+    autofix: true
+
+  passive_error_message:
+    check: "Error or warning string containing 'was rejected', 'were found', 'was created', 'is handled', 'be processed'"
+    fix: "Rewrite in active voice: 'Enforcer rejected X', 'Scanner found N violations'"
+    severity: medium
+    autofix: true
+
+  filler_phrase_in_string:
+    check: "String literal containing 'in order to', 'the fact that', 'it is important to note', 'it should be noted', 'please note', 'as you can see', 'needless to say'"
+    fix: "Cut the filler phrase; state the substance directly"
+    severity: low
+    autofix: true
+
+  qualifier_word:
+    check: "Comment or string containing 'basically', 'essentially', 'actually', 'simply', 'really', 'quite', 'very', 'pretty', 'rather', 'sort of', 'kind of'"
+    fix: "Cut the qualifier. If the statement needs hedging, rewrite it to be precise instead."
+    severity: low
+    autofix: true
+
+  zombie_noun:
+    check: "Comment or prose string using nominalization when a verb form exists: 'the refactoring of', 'the enforcement of', 'a validation of', 'the processing of'"
+    fix: "Convert to verb: 'refactor', 'enforce', 'validate', 'process'"
+    severity: low
+    autofix: true
+
+  obvious_comment:
+    check: "Comment text matches the immediately following identifier (e.g., '# loads the file' above 'File.read')"
+    fix: "Delete comment. Code already says what it does. Comment only when WHY is non-obvious."
+    severity: low
+    autofix: true
+
+  passive_prefix_method:
+    check: "Method defined with banned passive prefix: get_, do_, perform_, process_, run_, handle_, execute_, manage_"
+    fix: "Rename to active verb: fetch, scan, enforce, reflow. Exception: run_phase1/2/3 by convention."
+    severity: medium
+    autofix: false

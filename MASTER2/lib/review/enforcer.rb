@@ -139,6 +139,8 @@ module MASTER
           violations.concat(check_file_size_violation(code, filename: filename))
           violations.concat(check_metaprogramming(code, filename: filename))
           violations.concat(check_structural_smells(code, filename: filename))
+          violations.concat(check_importance_flow(code, filename: filename))
+          violations.concat(check_prose_style(code, filename: filename))
           violations.concat(check_learned_smells(code, filename: filename))
 
           { filename: filename, violations: violations, layers_checked: LAYERS }

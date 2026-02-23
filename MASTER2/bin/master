@@ -87,37 +87,49 @@ MASTER::Session.install_crash_handlers
 def run_selfrun(args)
   puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
   pub4_root = File.expand_path("../..", __dir__)
-  strict = args.include?("--strict")
+  strict       = args.include?("--strict")
   align_axioms = strict || args.include?("--axioms")
-  include_all = args.include?("--all-files")
-  apply = args.include?("--apply")
+  include_all  = args.include?("--all-files")
+  apply        = args.include?("--apply")
+  depth        = args.include?("--deep") ? :deep : :own  # default :own for selfrun
 
-  run_phase1(pub4_root, apply, strict, align_axioms, include_all)
-  run_phase2(pub4_root, apply, strict, align_axioms, include_all)
-  run_phase3(pub4_root, apply, strict, align_axioms, include_all)
+  # Ground the LLM in MASTER2's actual source before any analysis
+  if defined?(MASTER::GroundedContext) && defined?(MASTER::ExecutionContext)
+    puts "  grounding LLM in own source (depth: #{depth})…"
+    MASTER::ExecutionContext.instance_variable_set(
+      :@grounded_depth, depth
+    )
+  end
+
+  run_phase1(pub4_root, apply, strict, align_axioms, include_all, depth)
+  run_phase2(pub4_root, apply, strict, align_axioms, include_all, depth)
+  run_phase3(pub4_root, apply, strict, align_axioms, include_all, depth)
   run_phase4
   exit 0
 end
 
-def run_phase1(root, apply, strict, align_axioms, include_all)
+def run_phase1(root, apply, strict, align_axioms, include_all, depth = :own)
   puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
-  mr = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict, align_axioms: align_axioms,
-                                 include_all_files: include_all)
+  mr = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict,
+                                 align_axioms: align_axioms, include_all_files: include_all,
+                                 grounded_depth: depth)
   phase1_path = include_all ? File.join(root, "MASTER2") : File.join(root, "MASTER2", "lib")
   mr.run(path: phase1_path)
 end
 
-def run_phase2(root, apply, strict, align_axioms, include_all)
+def run_phase2(root, apply, strict, align_axioms, include_all, depth = :own)
   puts "\n=== Phase 2: Deploy Scripts ==="
-  mr2 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict, align_axioms: align_axioms,
-                                  include_all_files: include_all)
+  mr2 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict,
+                                  align_axioms: align_axioms, include_all_files: include_all,
+                                  grounded_depth: depth)
   mr2.run(path: File.join(root, "deploy"))
 end
 
-def run_phase3(root, apply, strict, align_axioms, include_all)
+def run_phase3(root, apply, strict, align_axioms, include_all, depth = :own)
   puts "\n=== Phase 3: Business Plans ==="
-  mr3 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 0.5, force_rewrite: strict, align_axioms: align_axioms,
-                                  include_all_files: include_all)
+  mr3 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 0.5, force_rewrite: strict,
+                                  align_axioms: align_axioms, include_all_files: include_all,
+                                  grounded_depth: depth)
   mr3.run(path: File.join(root, "bp"))
 end
 

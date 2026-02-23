@@ -328,3 +328,263 @@ structural_optimization:
       - "Do the axioms cover all the techniques in this taxonomy?"
       - "Is the taxonomy itself versioned and evolvable?"
       - "Can selfrun detect violations of its own structural rules?"
+
+importance_flow:
+  description: >
+    Every file is a document. Documents are read top-to-bottom.
+    The most important content must be at the top. Apply the inverted pyramid
+    at every level of granularity — file, section, method, line, argument.
+    This is not optional formatting; it is structural communication.
+
+  principle: "most important first, least important last — always"
+
+  levels:
+    file:
+      description: "Macro layout of a source file"
+      order:
+        ruby:
+          - "# frozen_string_literal: true"
+          - "require / require_relative"
+          - "Module/class constants (SCREAMING_SNAKE)"
+          - "Class-level DSL (attr_*, validates, belongs_to, has_many…)"
+          - "Public class methods (.new, .call, .build…)"
+          - "Public instance methods — core interface"
+          - "Public instance methods — secondary"
+          - "protected methods"
+          - "private methods — called most → called least"
+          - "END: private one-liners, aliases"
+        yaml:
+          - "version, name, description (metadata)"
+          - "ABSOLUTE protection rules"
+          - "PROTECTED rules"
+          - "ADJUSTABLE / contextual rules"
+          - "Examples, templates, commentary"
+        zsh:
+          - "#!/usr/bin/env zsh"
+          - "set -euo pipefail + setopt"
+          - "Constants / configuration"
+          - "Main function (main())"
+          - "Helper functions — by call order"
+          - "main call site (main \"$@\")"
+        markdown:
+          - "# Title — one line"
+          - "One-sentence summary"
+          - "Key concept or TL;DR"
+          - "Usage / quickstart"
+          - "Reference / details"
+          - "Edge cases / appendix"
+
+    section:
+      description: "Within any coherent block (class body, YAML section, doc section)"
+      rule: "Lead with the invariant/contract, follow with implementation detail"
+      examples:
+        - "YAML: required keys before optional keys"
+        - "Ruby method: guard clauses before happy path"
+        - "Comment block: what/why before how"
+
+    method:
+      description: "Within a method body"
+      order:
+        - "Guard clauses (early returns for invalid input)"
+        - "Setup / variable binding"
+        - "Core logic (the one thing the method does)"
+        - "Result construction"
+        - "Error handling / rescue"
+        - "Cleanup / ensure"
+      anti_pattern: "Rescue clause before main logic; setup after core logic"
+
+    argument:
+      description: "Method/function parameter ordering"
+      order:
+        - "Required positional arguments"
+        - "Optional positional arguments (with defaults)"
+        - "Required keyword arguments"
+        - "Optional keyword arguments"
+        - "Block (always last)"
+      anti_pattern: "Optional param before required; **opts before named keywords"
+
+    line:
+      description: "Within a single expression"
+      rule: "Subject (what acts) before predicate (what happens); condition before consequence"
+      examples:
+        - "result = compute(x) — not compute(x) => result"
+        - "return early if invalid? — not if invalid? then return end"
+        - "important && secondary — not secondary && important"
+
+  smells:
+    private_before_public:
+      check: "private keyword appears before any public method definition"
+      severity: high
+      autofix: true
+
+    helpers_before_core:
+      check: "Helper/utility method defined above the primary method that calls it"
+      severity: medium
+      autofix: true
+
+    detail_before_summary:
+      check: "File/section opens with implementation detail rather than public contract"
+      severity: medium
+      autofix: false
+
+    required_after_optional:
+      check: "Required method parameter follows an optional one"
+      severity: high
+      autofix: true
+
+    setup_after_logic:
+      check: "Variable assignment after core logic expression in same method"
+      severity: low
+      autofix: true
+
+    rescue_before_logic:
+      check: "rescue clause wraps the entire method body instead of minimal scope"
+      severity: medium
+      autofix: false
+
+  reflow_command:
+    trigger: "reflow <path>"
+    description: >
+      LLM-assisted reflow pass. Reads the file, scores each section by importance
+      (public API > private helper, summary > detail, required > optional),
+      reorders sections preserving all logic, writes result. Runs enforcer after.
+    prompt_hint: >
+      Reflow this file top-to-bottom by descending importance.
+      Most important content first: public interface, core logic, guards.
+      Least important last: private helpers, cleanup, edge cases.
+      Preserve all logic exactly — only reorder sections.
+      Output the complete reflowed file.
+
+  linting:
+    ruby_checks:
+      - "private before def: scan for 'private' keyword followed immediately by a method that is called from public context"
+      - "rescue wraps def body: def foo ... rescue ... end pattern"
+      - "optional param before required: def foo(a = 1, b) — SyntaxError in Ruby but watch for keyword variants"
+    yaml_checks:
+      - "examples before rules: scan for 'example' or 'template' key appearing before 'rules' or 'detect'"
+      - "ADJUSTABLE before PROTECTED"
+    zsh_checks:
+      - "helper function defined before main function"
+      - "main call site before function definitions"
+
+prose_style:
+  # Strunk & White — Elements of Style — applied to every word in every file.
+  # Rule zero: if a word does not add meaning, remove it.
+
+  source: "Strunk & White, The Elements of Style (4th ed.) mapped to code"
+
+  principle: "omit needless words — in names, comments, messages, and data"
+
+  rules:
+    omit_needless_words:
+      description: "Every identifier, comment, and string is as short as it can be without losing meaning."
+      banned_filler_identifiers:
+        - data       # → name what the data IS: axiom_list, violation_count, persona
+        - info       # → specific noun: file_stats, build_result
+        - thing      # always replaceable
+        - item       # → element, axiom, violation, persona
+        - object     # → the actual Ruby class name
+        - value      # → cost, score, count, ratio
+        - result     # only acceptable as a Result monad variable; never as a concept
+        - temp       # → name what it holds
+        - tmp        # same
+        - stuff       # unconditionally banned
+        - misc       # unconditionally banned
+        - helper     # → name what the help IS
+        - util       # → name the domain
+        - manager    # → Coordinator, Registry, Router, Store
+        - handler    # → name what is handled: ViolationReporter, AxiomLoader
+        - processor  # → name the transform: Reflower, Enforcer, Scanner
+      banned_filler_phrases:
+        - "in order to"
+        - "the fact that"
+        - "it is important to note"
+        - "it should be noted"
+        - "please note"
+        - "as you can see"
+        - "needless to say"
+        - "at the end of the day"
+        - "basically"
+        - "essentially"
+        - "actually"
+        - "simply"
+        - "just"       # in prose; fine in code as keyword
+        - "really"
+        - "quite"
+        - "very"
+        - "a little"
+        - "sort of"
+        - "kind of"
+      banned_qualifier_words_in_prose:
+        - rather
+        - little
+        - pretty
+        - fairly
+
+    active_voice:
+      description: "Methods, error messages, and comments use active voice."
+      good_examples:
+        - "Enforcer rejected axiom STRUNK_WHITE"
+        - "Scanner found 3 violations"
+        - "reflow rewrites the file"
+      bad_examples:
+        - "X was rejected by the enforcer"
+        - "3 violations were found"
+        - "the file is rewritten by reflow"
+      method_naming:
+        rule: "Method names are active verbs: enforce, scan, reflow, build, load, write."
+        banned_passive_prefixes: [get_, do_, perform_, process_, run_, handle_, execute_, manage_]
+        exceptions: [run_phase1, run_phase2, run_phase3]  # selfrun phases use run_ by convention
+
+    definite_concrete:
+      description: "Name things by what they ARE, not what they contain or do in the abstract."
+      pattern: "noun = domain concept, not container type"
+      examples:
+        bad:  [data_list, info_hash, value_array, item_count, object_map]
+        good: [axiom_list, violation_hash, cost_array, persona_count, model_map]
+
+    parallel_form:
+      description: "Coordinate things share grammatical structure."
+      method_families:
+        - [scan, enforce, reflow, review]          # all verbs, all present tense
+        - [shallow, own, deep, full]               # all adjectives
+        - [build, load, write, parse]              # all verbs
+      anti_pattern: "scan / do_enforcement / run_reflow — inconsistent verb form"
+
+    do_not_explain_the_obvious:
+      description: "Comments explain WHY, never WHAT the next line does."
+      rule: "If the comment restates the method name or the expression, delete the comment."
+      good_comment: "# Weaviate throws on cold-start; suppress until first successful ping"
+      bad_comment:  "# This calls the LLM with the prompt"
+      test: "Cover the comment. Can you still understand the code? If yes, cut the comment."
+
+    sharpen_error_messages:
+      description: "Error messages name the exact constraint, file, and value violated."
+      structure: "[actor] [verb] [noun]: [specific detail]. [optional: action hint]"
+      examples:
+        bad:
+          - "An error occurred"
+          - "Invalid value"
+          - "Something went wrong"
+          - "Could not process"
+        good:
+          - "GroundedContext: file not found: lib/executor/context.rb"
+          - "Enforcer: ABSOLUTE axiom DRY violated in pipeline.rb:42 — duplicate require"
+          - "LLM: token budget exceeded (128 000 / 60 000). Pass depth: :shallow to reduce context."
+
+    zombie_nouns:
+      description: "Zombie nouns (nominalizations) drain vigour. Convert to verbs."
+      examples:
+        bad:  [the refactoring of, a validation of, the enforcement of, the processing of]
+        good: [refactor, validate, enforce, process]
+      pattern: "If a noun ends in -tion, -ment, -ance, -ence, -ity, and a verb form exists — use the verb."
+
+  linting:
+    applies_to: [comments, string_literals, error_messages, yaml_descriptions, method_names, variable_names]
+    severity_map:
+      filler_identifier: high      # data, info, thing, stuff, misc
+      redundant_comment: medium    # comment restates method name
+      passive_error_message: medium
+      filler_phrase_in_string: low
+      qualifier_word_in_string: low
+      zombie_noun: low

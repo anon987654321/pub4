@@ -645,3 +645,91 @@
   auto_fixable: false
   llm_strategies: [codify_insight, propagate_rule, encode_pattern]
   smells: [uncodified_insight, rule_lives_only_in_code, data_without_detector]
+- id: INVERTED_PYRAMID
+  category: layout
+  protection: PROTECTED
+  priority: 9
+  title: Inverted Pyramid — Most Important First
+  statement: >
+    Every file, module, class, method, and document is laid out top-to-bottom
+    by descending importance. Readers and LLMs consume from the top; the most
+    signal-dense content must appear first. Apply at every level: file (public
+    API before private helpers), section (summary before detail), line (subject
+    before predicate), argument (required before optional).
+  source: Journalism inverted pyramid + LLM context-window locality
+  suggest: >
+    Reflow this unit so the most critical content is at the top.
+    For Ruby: constants → public interface → core logic → helpers → private.
+    For YAML: metadata → ABSOLUTE rules → PROTECTED → ADJUSTABLE → examples.
+    For Zsh: shebang+options → constants → main function → helpers → call site.
+    For Markdown: title+summary → key concepts → usage → detail → edge cases.
+    For method bodies: guard clauses → happy path → error handling → cleanup.
+  auto_fixable: true
+  llm_strategies: [reflow_by_importance, hoist_public_interface, sink_private_helpers]
+  smells: [private_before_public, helpers_before_core, detail_before_summary,
+           required_after_optional, critical_after_trivial, setup_after_logic]
+- id: STRUNK_WHITE
+  category: prose
+  protection: PROTECTED
+  priority: 9
+  title: "Elements of Style — Brevity, Clarity, Meaning"
+  statement: >
+    Every word, name, and character in every file earns its place or is cut.
+    Apply Strunk & White at every layer: identifier names, method bodies,
+    comments, error messages, YAML prose, and LLM-generated output.
+    Omit needless words. Prefer the active voice. Use definite, specific,
+    concrete language. Put the emphatic idea last in a sentence; most important
+    section first in a file. Express parallel ideas in parallel form.
+    Never affect a breezy or bureaucratic manner.
+  source: "Strunk & White, The Elements of Style (4th ed.)"
+  rules:
+    omit_needless_words:
+      statement: "Vigorous writing is concise. Omit every word that serves no purpose."
+      code_translation: "No filler identifiers (data, info, thing, object, value, result alone),
+        no filler comments ('This method does X' when def name already says so),
+        no filler phrases in strings ('in order to', 'the fact that', 'it is important to note')."
+    active_voice:
+      statement: "Prefer the active voice. The active voice is usually more direct and vigorous."
+      code_translation: "Method names are verbs in active form: enforce (not be_enforced),
+        scan (not be_scanned), reflow (not get_reflowed). Error messages name the actor:
+        'Enforcer rejected X' not 'X was rejected'."
+    positive_form:
+      statement: "Put statements in positive form. Avoid tame, colourless, hesitating negatives."
+      code_translation: "Guard clauses state what is wrong, not what is missing.
+        'raise if path.nil?' → 'raise \"path required\"'. Prefer presence checks over absence checks."
+    definite_concrete:
+      statement: "Prefer the specific to the general, the definite to the vague, the concrete to the abstract."
+      code_translation: "Name things by what they ARE, not what they contain.
+        axiom_list not data; violation_count not number; council_persona not item.
+        Error messages name the exact file, value, or constraint violated."
+    parallel_form:
+      statement: "Express coordinate ideas in similar form."
+      code_translation: "Method families share grammatical structure: scan/enforce/reflow, not
+        scan/do_enforcement/run_reflow. Enum members parallel: :shallow/:own/:deep/:full."
+    emphatic_end:
+      statement: "The emphatic word belongs at the end of a sentence."
+      code_translation: "In a method chain, the transforming verb comes last.
+        In an error message, the actionable instruction is the final clause."
+    no_qualifiers:
+      statement: "Do not overstate. Rather, very, little, pretty — cut them."
+      code_translation: "No 'basically', 'essentially', 'actually', 'simply', 'just',
+        'really', 'quite' in comments, messages, or doc strings."
+    do_not_explain_the_obvious:
+      statement: "Do not explain what the reader can see for themselves."
+      code_translation: "Comments explain WHY, never WHAT. 'def reflow' needs no comment
+        saying '# This method reflows a file'. Comment only when intent would be opaque."
+  auto_fixable: false
+  llm_strategies:
+    - omit_filler_words
+    - rename_to_concrete_noun
+    - convert_passive_to_active
+    - remove_redundant_comment
+    - sharpen_error_message
+  smells:
+    - filler_identifier
+    - redundant_comment
+    - passive_error_message
+    - filler_phrase_in_string
+    - vague_noun_identifier
+    - zombie_noun
+    - qualifier_word

@@ -14,13 +14,14 @@ module MASTER
     attr_reader :results, :graph
 
     def initialize(chamber: nil, dry_run: true, budget_cap: 2.0, force_rewrite: false, align_axioms: false,
-                   include_all_files: false)
+                   include_all_files: false, grounded_depth: :shallow)
       @chamber = chamber || Council.new
       @dry_run = dry_run
       @budget_cap = budget_cap
       @force_rewrite = force_rewrite
       @align_axioms = align_axioms
       @include_all_files = include_all_files
+      @grounded_depth = grounded_depth
       @cost = 0.0
       @results = []
       @graph = {} # file => [dependencies]
@@ -53,6 +54,7 @@ module MASTER
       puts "  Strict rewrite: #{@force_rewrite ? 'on' : 'off'}"
       puts "  Axiom alignment: #{@align_axioms ? 'on' : 'off'}"
       puts "  Include all files: #{@include_all_files ? 'on' : 'off'}"
+      puts "  Grounded depth: #{@grounded_depth}"
       puts
 
       bar = UI.progress(ordered.size * rounds)
