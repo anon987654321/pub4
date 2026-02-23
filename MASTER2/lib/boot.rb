@@ -37,9 +37,10 @@ module MASTER
         lines = [
           c("MASTER #{VERSION} (CONSTITUTIONAL) #1: #{timestamp}"),
           c("    #{user}@#{host}:#{MASTER.root}"),
+          c("mainbus0 at root"),
           c("cpu0 at mainbus0: #{RUBY_PLATFORM}, ruby #{RUBY_VERSION}"),
-          c("sh0 at cpu0: #{shell} prompt #{user}#{prompt_hint}"),
-          c("db0 at cpu0: #{UI.pluralize(DB.axioms.size, 'axiom')}, #{UI.pluralize(defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0, 'persona')}"),
+          c("sh0 at cpu0: #{shell} #{user}#{prompt_hint}"),
+          c("db0 at mainbus0: #{UI.pluralize(DB.axioms.size, 'axiom')}, #{UI.pluralize(defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0, 'persona')}"),
           c("llm0 at db0: #{tier_models}"),
           c("budget0 at llm0: #{if LLM.configured_for_replicate?
                                   "Replicate primary#{LLM.configured_for_openrouter? ? ', OpenRouter fallback' : ''}"
@@ -108,7 +109,13 @@ module MASTER
       end
 
       def tier_models
-        LLM.all_models.map { |m| LLM.extract_model_name(m) }.first(6).join(", ")
+        tiers = LLM.model_tiers
+        %i[strong fast free].filter_map do |t|
+          m = tiers[t]&.first
+          m && LLM.extract_model_name(m)
+        end.join(", ")
+      rescue StandardError
+        LLM.all_models.map { |m| LLM.extract_model_name(m) }.uniq.first(3).join(", ")
       end
     end
   end
