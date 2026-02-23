@@ -236,8 +236,10 @@ module MASTER
       def handle_llm_failure(result, current_model)
         CircuitBreaker.open_circuit!(current_model)
         if result.error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
-          # Only warn once; caller handles tripping other OpenRouter models
-          Logging.warn("No OpenRouter credits -- top up at openrouter.ai/settings/credits", subsystem: "llm.budget")
+          unless @credit_warned
+            @credit_warned = true
+            Logging.warn("No OpenRouter credits -- top up at openrouter.ai/settings/credits", subsystem: "llm.budget")
+          end
         else
           Logging.llm_error(tier: :default, error: result.error) if defined?(Logging)
         end
