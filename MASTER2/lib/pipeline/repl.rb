@@ -35,9 +35,10 @@ module MASTER
       # Prescan
       Prescan.run(MASTER.root) if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
 
-      unless ENV["OPENROUTER_API_KEY"]
-        UI.warn("models0: OPENROUTER_API_KEY not set")
-        UI.info("   #{UI.icon(:arrow)} export OPENROUTER_API_KEY=sk-or-v1-...")
+      # Only warn about missing OpenRouter key if Replicate is also absent
+      unless ENV["OPENROUTER_API_KEY"] || LLM.configured_for_replicate?
+        UI.warn("models0: no LLM API key set")
+        UI.info("   #{UI.icon(:arrow)} export REPLICATE_API_KEY=r8_... or OPENROUTER_API_KEY=sk-or-v1-...")
       end
 
       # Initialize workflow
