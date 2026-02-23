@@ -112,7 +112,7 @@ module MASTER
 
       # Final fallback to direct if all else fails
       unless result.ok?
-        UI.warn("All patterns failed, attempting direct response")
+        Logging.dmesg_log("executor", message: "all patterns failed, falling back to direct")
         result = direct_ask("Given this context, provide the best answer you can:\n\n#{goal}", tier: :fast)
       end
 
@@ -146,9 +146,12 @@ module MASTER
       if g.match?(/\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i)
         return :direct
       end
-      if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|build|create|update|debug|write|read|find)\b/)
+      if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|analyse|build|create|update|debug|write|read|find|show|list)\b/)
         return :direct
       end
+
+      # React: file/code operations -- needs tools
+      return :react if g.match?(/\b(analyze|analyse|scan|review|read|show|list|find|explore|audit|check|inspect)\b/)
 
       # Reflexion: correctness-critical keywords
       return :reflexion if g.match?(/\b(fix|debug|repair|refactor|correct|safe|security|validate|test)\b/)
