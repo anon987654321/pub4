@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# showp — dump project source files as fenced Markdown for LLM context.
+# showp - dump project source files as fenced Markdown for LLM context.
 # Usage: showp [output_file] [max_lines_per_file]
 setopt extended_glob null_glob
 
@@ -28,7 +28,7 @@ main() {
   local -i max="${2:-400}" n_files=0 n_lines=0 n_trunc=0
 
   {
-    print "# Project Snapshot — $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    print "# Project Snapshot - $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
     print
 
     for file in **/*(-.); do
@@ -43,7 +43,7 @@ main() {
       print '```'"${file:e}"
       if [[ $n -gt $max ]]; then
         print -l -- "${(@)body[1,$max]}"
-        print "… $((n - max)) lines truncated ($n total)"
+        print "... $((n - max)) lines truncated ($n total)"
         n_trunc=$(( n_trunc + 1 ))
       else
         print -l -- "${body[@]}"
@@ -55,7 +55,7 @@ main() {
       n_lines=$(( n_lines + n ))
     done
 
-    printf 'files: %d · lines: %d · truncated: %d · est. tokens: ~%d\n' \
+    printf 'files: %d / lines: %d / truncated: %d / est. tokens: ~%d\n' \
       $n_files $n_lines $n_trunc $(( n_lines * 6 / 5 ))
   } > "$out"
 
