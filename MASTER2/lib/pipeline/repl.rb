@@ -35,13 +35,6 @@ module MASTER
       # Prescan
       Prescan.run(MASTER.root) if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
 
-      # Auto-snapshot: gives LLM full project context from session start
-      if ENV["MASTER_SNAPSHOT"] != "false"
-        snap_out = Paths.var_file("snapshot.md")
-        pipeline.run_snapshot(nil) rescue nil
-        $stderr.puts UI.dim("snapshot0: #{snap_out}") if File.exist?(snap_out)
-      end
-
       unless ENV["OPENROUTER_API_KEY"]
         UI.warn("models0: OPENROUTER_API_KEY not set")
         UI.info("   #{UI.icon(:arrow)} export OPENROUTER_API_KEY=sk-or-v1-...")
