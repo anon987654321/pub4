@@ -55,24 +55,7 @@ module MASTER
       def generate_plan(goal, tier:)
         tool_list = Executor.tool_list_text
 
-        prompt = <<~PLAN
-          Create a step-by-step plan to accomplish this task:
-
-          TASK: #{goal}
-
-          TOOLS AVAILABLE:
-          #{tool_list}
-
-          Respond with a numbered list of tool invocations, one per line.
-          Each step should be a complete tool command.
-
-          Example:
-          1. file_read "config.yml"
-          2. analyze_code "src/main.rb"
-          3. fix_code "src/main.rb"
-
-          PLAN:
-        PLAN
+        prompt = Prompts.get(:preact, :generate_plan, goal: goal, tool_list: tool_list)
 
         result = LLM.ask(prompt, tier: tier)
         return result unless result.ok?
@@ -87,15 +70,7 @@ module MASTER
       def replan(goal, completed, tier:)
         history_text = completed.map { |r| "#{r[:action]} -> #{r[:observation][0..100]}" }.join("\n")
 
-        prompt = <<~REPLAN
-          Original task: #{goal}
-
-          Completed steps:
-          #{history_text}
-
-          The last step had an unexpected result. What additional steps are needed?
-          Respond with numbered tool commands only:
-        REPLAN
+        prompt = Prompts.get(:preact, :replan, goal: goal, history: history_text)
 
         result = LLM.ask(prompt, tier: :fast)
         return result unless result.ok?
@@ -105,18 +80,9 @@ module MASTER
       end
 
       def synthesize_answer(goal, results, tier:)
-        history_text = results.map do |r|
-          "Step #{r[:step]}: #{r[:action]}\nResult: #{r[:observation][0..300]}"
-        end.join("\n\n")
+        history_text = results.map { |r| "Step #{r[:step]}: #{r[:action]}\nResult: #{r[:observation][0..300]}" }.join("\n\n")
 
-        prompt = <<~SYNTH
-          Task: #{goal}
-
-          Execution results:
-          #{history_text}
-
-          Provide a concise final answer based on these results:
-        SYNTH
+        prompt = Prompts.get(:preact, :synthesize, goal: goal, history: history_text)
 
         result = LLM.ask(prompt, tier: :fast)
         return result unless result.ok?
