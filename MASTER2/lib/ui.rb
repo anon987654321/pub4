@@ -21,25 +21,25 @@ module MASTER
 
     # Typography icons -- standardised symbol set
     ICONS = {
-      success:   "[ok]",
-      failure:   "[fail]",
-      warning:   "⚠",
-      info:      "ℹ",
+      success:   "ok",
+      failure:   "!!",
+      warning:   "!",
+      info:      "->",
       pending:   "◦",
       detail:    "*",
       bullet:    "*",
       arrow:     "->",
       chevron:   "❯",   # prompt character only
-      pipe:      "│",   # tree / indent continuation
+      pipe:      " ",   # tree / indent (no box drawing)
       thinking:  "...",
-      done:      "[ok]",
+      done:      "ok",
       prompt_ok: "❯",
-      prompt_err: "[fail]",
-      lock:      "🔒",
+      prompt_err: "!!",
+      lock:      "lock",
       separator: "--",
-      ellipsis:  "...",   # U+2026, one glyph
-      lightning: "⚡",
-      gear:      "⚙",
+      ellipsis:  "...",
+      lightning: "!",
+      gear:      "*",
     }.freeze
 
     # Output channel separation (Gist #6)

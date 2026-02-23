@@ -267,7 +267,7 @@ module MASTER
       results = []
 
       requests.each_with_index do |request, idx|
-        puts UI.dim("  [#{idx + 1}/#{requests.size}] #{request}")
+        puts UI.dim("  #{idx + 1}/#{requests.size} #{request}")
         result = dispatch_one(request, pipeline: pipeline)
         results << { request: request, result: result }
         break if result == :exit

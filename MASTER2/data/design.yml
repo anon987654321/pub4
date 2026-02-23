@@ -11,8 +11,8 @@ terminal_typography:
   truncation_glyph: "..."        # U+2026; never "..."
   numeric_alignment: right      # numbers right-aligned in tables
   status_icons:
-    success: "[ok]"
-    failure: "[fail]"
+    success: "ok"
+    failure: "!!"
     warning: "⚠"
     info:    "ℹ"
     pending: "◦"

@@ -70,7 +70,7 @@ module MASTER
           p.instance_variable_set(:@total, total)
           p.define_singleton_method(:advance) do |n = 1|
             @current += n
-            print "\r  [#{@current}/#{@total}]"
+            print "\r  #{@current}/#{@total}"
           end
           p.define_singleton_method(:finish) { puts " done" }
         end
