@@ -20,10 +20,8 @@ module MASTER
     @ruby_llm_configured = false
 
     FREE_FALLBACKS = %w[
-      deepseek/deepseek-r1-0528:free
-      deepseek/deepseek-chat:free
-      google/gemini-2.0-flash-thinking-exp:free
-      meta-llama/llama-3.1-8b-instruct:free
+      meta-llama/llama-3.3-70b-instruct:free
+      google/gemma-3-12b-it:free
     ].freeze
 
     class << self
@@ -158,7 +156,8 @@ module MASTER
         models_to_try = if fallbacks
                           [primary] + fallbacks
                         else
-                          [primary] + FREE_FALLBACKS.reject { |model_id| model_id == primary }
+                          peers = tier_peers(primary)
+                          [primary] + peers + FREE_FALLBACKS.reject { |id| peers.include?(id) || id == primary }
                         end
         last_error = nil
 
@@ -169,11 +168,13 @@ module MASTER
 
           if result.ok?
             process_llm_response(result, candidate_model, prompt, stream)
-            $stderr.puts UI.dim("models0: #{extract_model_name(candidate_model)}") if candidate_model != primary
+            $stderr.puts UI.dim("  → #{extract_model_name(candidate_model)}") if candidate_model != primary
             return result
           else
             handle_llm_failure(result, candidate_model)
             last_error = result.error
+            # Credit exhaustion is permanent — no point trying remaining paid models
+            break if last_error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
           end
         end
 
@@ -231,11 +232,12 @@ module MASTER
 
       def handle_llm_failure(result, current_model)
         CircuitBreaker.open_circuit!(current_model)
-        # Credit exhaustion is permanent for this session — trip all OpenRouter models at once.
         if result.error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
           FREE_FALLBACKS.each { |model_id| CircuitBreaker.open_circuit!(model_id) }
+          Logging.warn("No OpenRouter credits — top up at openrouter.ai/settings/credits", subsystem: "llm.budget")
+        else
+          Logging.llm_error(tier: :default, error: result.error) if defined?(Logging)
         end
-        Logging.llm_error(tier: :default, error: result.error) if defined?(Logging)
       end
 
       public
@@ -312,7 +314,11 @@ module MASTER
 
       # Structured output helper - guarantees valid JSON matching schema
       def ask_json(prompt, schema:, tier: :fast, **)
-        ask(prompt, tier: tier, json_schema: schema, **)
+        # Structured output requires OpenRouter — Replicate drops json_schema silently.
+        # Force to a non-Replicate model: use forced model only if it's not Replicate.
+        forced = @forced_model
+        forced = nil if forced && replicate_model?(forced)
+        ask(prompt, tier: tier, json_schema: schema, model: forced, provider: :openrouter, **)
       end
 
       # Reasoning-enhanced query
@@ -379,10 +385,8 @@ module MASTER
           return false
         end
 
-        if error_str.match?(/requires more credits|can only afford|insufficient credits/i)
-          Logging.warn("Insufficient OpenRouter credits — add credits at openrouter.ai/settings/credits or use a free model: `model deepseek-r1-free`", subsystem: "llm.budget")
-          return false
-        end
+        # Credit errors are handled+warned once in handle_llm_failure — don't warn again here
+        return false if error_str.match?(/requires more credits|can only afford|insufficient credits/i)
 
         error_str.match?(/timeout|connection|network|429|502|503|504|overloaded/i)
       end
