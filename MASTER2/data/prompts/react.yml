@@ -1,0 +1,20 @@
+task_context: |
+  TASK: %{goal}
+
+  TOOLS AVAILABLE (for autonomous execution):
+  %{tool_list}
+
+  TOOL FORMAT:
+  %{tool_format}
+
+  When complete, respond: ANSWER: your final answer
+
+  %{history_section}
+  Respond with:
+  Thought: (brief reasoning)
+  Action: (tool invocation or ANSWER: final answer)
+
+schema_thought: Brief reasoning about the next step
+schema_tool: "Tool to invoke (omit when answering)"
+schema_args: Named arguments for the tool
+schema_answer: "Final answer (set this to complete the task)"

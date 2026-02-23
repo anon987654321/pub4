@@ -119,7 +119,7 @@ module MASTER
       sections.join("\n\n")
     end
 
-    # Build task context (tools + format + history)
+    # Build task context (tools + format + history) — template loaded from data/prompts/react.yml
     def build_task_context(goal)
       history_text = @history.map do |h|
         obs = h[:observation]&.[](0..400)
@@ -128,27 +128,15 @@ module MASTER
         "Step #{h[:step]}:\nThought: #{h[:thought]}\nAction: #{h[:action]}#{"\nObservation: #{obs_line}" if obs_line}"
       end.join("\n\n")
 
-      # Build tool list and format from TOOLS hash
-      tool_list = Executor.tool_list_text
+      tool_list   = Executor.tool_list_text
       tool_format = Executor::TOOLS.map { |_k, v| "- #{v[:usage]}" }.join("\n")
+      history_section = history_text.empty? ? "" : "PREVIOUS STEPS:\n#{history_text}\n"
 
-      <<~TASK
-        TASK: #{goal}
-
-        TOOLS AVAILABLE (for autonomous execution):
-        #{tool_list}
-
-        TOOL FORMAT:
-        #{tool_format}
-
-        When complete, respond: ANSWER: your final answer
-
-        #{"PREVIOUS STEPS:\n#{history_text}\n" unless history_text.empty?}
-
-        Respond with:
-        Thought: (brief reasoning)
-        Action: (tool invocation or ANSWER: final answer)
-      TASK
+      Executor::Prompts.get(:react, :task_context,
+        goal: goal,
+        tool_list: tool_list,
+        tool_format: tool_format,
+        history_section: history_section)
     end
 
     # Build context as messages array with system/user separation
