@@ -33,7 +33,7 @@ module MASTER
     COMPLETION_PATTERN = /^(ANSWER|DONE|COMPLETE):\s*/i
 
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
-    SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
+    SYSTEM_PROMPT_FILE = Paths.data_file("system_prompt.yml")
 
     # Protected paths that cannot be written to
     PROTECTED_WRITE_PATHS = %w[
@@ -68,7 +68,7 @@ module MASTER
 
     # Build formatted tool list for prompts (ONE_SOURCE)
     def self.tool_list_text
-      TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
+      TOOLS.map { |tool_name, tool_def| "  #{tool_name}: #{tool_def[:desc]}" }.join("\n")
     end
 
     def initialize(max_steps: MAX_STEPS)

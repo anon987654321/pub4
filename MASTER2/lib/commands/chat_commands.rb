@@ -4,6 +4,7 @@ module MASTER
   module Commands
     # Lightweight conversational mode that bypasses the full engineering pipeline
     module ChatCommands
+      CHAT_MAX_MESSAGES = 12
       def enter_chat_mode(_args)
         puts "\n  Entering conversational mode. Type 'exit' or Ctrl+D to return.\n"
         session = Session.current
@@ -23,24 +24,24 @@ module MASTER
 
           messages = [system_msg]
           if session.respond_to?(:context_for_llm)
-            messages += session.context_for_llm(max_messages: 12)
+            messages += session.context_for_llm(max_messages: CHAT_MAX_MESSAGES)
           else
             messages << { role: "user", content: input }
           end
 
-          result = LLM.ask(
+          llm_response = LLM.ask(
             input,
             messages: messages,
             tier: :fast,
             stream: true,
           )
 
-          if result.ok?
-            content = result.value[:content]
+          if llm_response.ok?
+            content = llm_response.value[:content]
             puts
-            session.add_assistant(content, cost: result.value[:cost]) if session.respond_to?(:add_assistant)
+            session.add_assistant(content, cost: llm_response.value[:cost]) if session.respond_to?(:add_assistant)
           elsif defined?(UI)
-            UI.error(result.error)
+            UI.error(llm_response.error)
           end
         end
 

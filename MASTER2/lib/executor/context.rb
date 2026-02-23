@@ -15,10 +15,10 @@ module MASTER
       @system_prompt_config ||= if File.exist?(MASTER::Executor::SYSTEM_PROMPT_FILE)
                                   begin
                                     YAML.safe_load_file(MASTER::Executor::SYSTEM_PROMPT_FILE)
-                                  rescue StandardError => e
+                                  rescue StandardError => err
                                     if defined?(MASTER::Logging)
                                       MASTER::Logging.warn("executor.context",
-                                                           "Failed to load system prompt: #{e.message}")
+                                                           "Failed to load system prompt: #{err.message}")
                                     end
                                     {}
                                   end
@@ -83,7 +83,11 @@ module MASTER
       end
 
       # Gist #9: Inject detected project conventions so LLM mimics existing style
-      conventions = ConventionExtractor.extract(root: MASTER.root) rescue ""
+      conventions = begin
+        ConventionExtractor.extract(root: MASTER.root)
+      rescue StandardError
+        ""
+      end
       sections << conventions unless conventions.empty?
 
       # Zsh native patterns: forbid legacy forks in shell code

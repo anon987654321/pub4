@@ -45,8 +45,8 @@ module MASTER
           cost: nil,
           finish_reason: "stop",
         )
-      rescue StandardError => e
-        Result.err("Replicate LLM error: #{e.message}", category: :infrastructure)
+      rescue StandardError => err
+        Result.err("Replicate LLM error: #{err.message}", category: :infrastructure)
       end
 
       private
@@ -59,7 +59,7 @@ module MASTER
       def build_input(model_id, prompt, system_prompt, max_tokens, temperature, top_p)
         owner = model_id.split("/").first
 
-        h = case owner
+        input_params = case owner
             when "anthropic"
               base = { prompt: prompt, max_tokens: [max_tokens, 1024].max, temperature: temperature }
               base[:system] = system_prompt if system_prompt  # Anthropic uses :system, not :system_prompt
@@ -73,7 +73,7 @@ module MASTER
               base[:system_prompt] = system_prompt if system_prompt
               base
             end
-        h
+        input_params
       end
     end
   end

@@ -11,12 +11,14 @@ module MASTER
 
     # Looks up enrichment data from MASTER1-ported principles.yml.
     module PrinciplesDb
-      PRINCIPLES_FILE = File.join(MASTER.root, "data", "principles.yml")
+      PRINCIPLES_FILE = Paths.data_file("principles.yml")
 
       # Returns { smell:, fix: } for the closest matching anti-pattern, or nil.
       def self.enrich(principle_name)
         @data ||= begin
-          YAML.safe_load_file(PRINCIPLES_FILE)["principles"] rescue {}
+          YAML.safe_load_file(PRINCIPLES_FILE)["principles"]
+        rescue StandardError
+          {}
         end
         slug = principle_name.to_s.downcase.gsub(/[^a-z0-9]/, "")
         entry = @data.values.find do |p|
@@ -145,8 +147,8 @@ module MASTER
         }
 
         results[:literal] = detect_literal(code, path)
-        results[:literal].each do |v|
-          key = v[:severity]
+        results[:literal].each do |violation|
+          key = violation[:severity]
           results[:summary][key] = (results[:summary][key] || 0) + 1
           results[:summary][:total] += 1
         end
@@ -214,16 +216,16 @@ module MASTER
             If clean, say "No violations found."
           PROMPT
 
-          result = llm.ask(prompt, tier: :cheap)
-          next unless result.ok?
+          llm_result = llm.ask(prompt, tier: :cheap)
+          next unless llm_result.ok?
 
-          response = result.value.to_s.downcase
+          response = llm_result.value.to_s.downcase
           next if response.include?("no violations") || response.include?("code is clean")
 
           violations << {
             type: :conceptual,
             principle: principle.to_s.tr("_", " ").upcase,
-            analysis: result.value[0..MAX_ANALYSIS_PREVIEW],
+            analysis: llm_result.value[0..MAX_ANALYSIS_PREVIEW],
             severity: :warning,
           }
         end

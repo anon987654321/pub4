@@ -110,13 +110,13 @@ module MASTER
         result = @llm.ask(prompt, tier: :strong)
         return proposal unless result.ok?
 
-        data = result.value
-        @cost += data[:cost] || 0
+        llm_response = result.value
+        @cost += llm_response[:cost] || 0
         @rounds += 1
 
-        data[:content]
-      rescue StandardError => e
-        DB.log_error(context: "chamber_synthesize", error: e.message)
+        llm_response[:content]
+      rescue StandardError => err
+        DB.log_error(context: "chamber_synthesize", error: err.message)
         proposal
       end
 
@@ -161,10 +161,10 @@ module MASTER
         result   = @llm.ask(prompt, **ask_opts)
         return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } unless result.ok?
 
-        data    = result.value
-        @cost  += data[:cost] || 0
+        llm_response = result.value
+        @cost  += llm_response[:cost] || 0
 
-        content = data[:content].to_s.strip
+        content = llm_response[:content].to_s.strip
         verdict = content.upcase.split.first  # APPROVE / REJECT / PRAISE
         praise  = verdict == "PRAISE"
         approve = verdict == "APPROVE" || praise
@@ -190,8 +190,8 @@ module MASTER
           weight:  persona[:weight] || 0.1,
           reason:  content.lines.last&.strip,
         }
-      rescue StandardError => e
-        DB.log_error(context: "chamber_vote", error: e.message, persona: persona[:name])
+      rescue StandardError => err
+        DB.log_error(context: "chamber_vote", error: err.message, persona: persona[:name])
         { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 }
       end
     end

@@ -28,8 +28,8 @@ module MASTER
         # Run NNG usability heuristics check if enabled
         design_violations = []
         if ENV["MASTER_CHECK_DESIGN"] == "true" && defined?(NNGChecklist)
-          result = NNGChecklist.validate(text)
-          design_violations = result.value if result.ok?
+          nng_check = NNGChecklist.validate(text)
+          design_violations = nng_check.value if nng_check.ok?
         end
 
         # Detect forbidden shell tools in generated shell code blocks

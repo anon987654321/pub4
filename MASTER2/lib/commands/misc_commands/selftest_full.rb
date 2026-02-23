@@ -37,41 +37,41 @@ module MASTER
           violations = []
 
           if defined?(MASTER::Enforcement)
-            r = begin
+            enforcement_result = begin
               Enforcement.check(code, filename: rel)
             rescue StandardError
               nil
             end
-            violations.concat(r[:violations]) if r.is_a?(Hash) && r[:violations].is_a?(Array)
+            violations.concat(enforcement_result[:violations]) if enforcement_result.is_a?(Hash) && enforcement_result[:violations].is_a?(Array)
           end
 
           if defined?(MASTER::Smells)
-            r = begin
+            smells_result = begin
               Smells.analyze(code, rel)
             rescue StandardError
               nil
             end
-            violations.concat(r[:findings] || r[:smells] || []) if r.is_a?(Hash)
-            violations.concat(r) if r.is_a?(Array)
+            violations.concat(smells_result[:findings] || smells_result[:smells] || []) if smells_result.is_a?(Hash)
+            violations.concat(smells_result) if smells_result.is_a?(Array)
           end
 
           if defined?(MASTER::Violations)
-            r = begin
+            violations_result = begin
               Violations.analyze(code, path: rel, llm: (LLM if defined?(LLM) && LLM.configured?))
             rescue StandardError
               nil
             end
-            found = (r[:literal] || []) + (r[:conceptual] || []) if r.is_a?(Hash)
+            found = (violations_result[:literal] || []) + (violations_result[:conceptual] || []) if violations_result.is_a?(Hash)
             violations.concat(found) if found&.any?
           end
 
           if defined?(MASTER::CodeQuality)
-            r = begin
+            quality_result = begin
               CodeQuality.quality_scan(rel, silent: true)
             rescue StandardError
               nil
             end
-            violations.concat(r[:findings]) if r.is_a?(Hash) && r[:findings].is_a?(Array)
+            violations.concat(quality_result[:findings]) if quality_result.is_a?(Hash) && quality_result[:findings].is_a?(Array)
           end
 
           next if violations.empty?
@@ -124,9 +124,9 @@ module MASTER
 
         Thread.current[:llm_quiet] = false
         Result.ok("self complete: #{total_violations} violations, #{fixed} fixed")
-      rescue StandardError => e
+      rescue StandardError => err
         Thread.current[:llm_quiet] = false
-        Result.err("self failed: #{e.message}")
+        Result.err("self failed: #{err.message}")
       end
     end
   end

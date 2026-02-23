@@ -2,6 +2,8 @@
 
 module MASTER
   module LLM
+    DEFAULT_CONTEXT_WINDOW = 32_000
+
     class << self
       def models
         RubyLLM.models
@@ -17,9 +19,9 @@ module MASTER
           if File.exist?(models_file)
             begin
               YAML.safe_load_file(models_file, symbolize_names: true) || []
-            rescue StandardError => e
+            rescue StandardError => err
               if defined?(MASTER::Logging)
-                MASTER::Logging.warn("Failed to load models: #{e.message}", subsystem: "llm.models")
+                MASTER::Logging.warn("Failed to load models: #{err.message}", subsystem: "llm.models")
               end
               []
             end
@@ -40,7 +42,7 @@ module MASTER
           {
             id: m.id,
             tier: classify_tier(m).to_s,
-            context_window: m.context_window || 32_000,
+            context_window: m.context_window || DEFAULT_CONTEXT_WINDOW,
             input_cost: m.input_price_per_million || 0,
             output_cost: m.output_price_per_million || 0,
           }
@@ -89,7 +91,7 @@ module MASTER
 
       def context_limits
         @context_limits ||= configured_models.each_with_object({}) do |m, hash|
-          hash[m[:id]] = m[:context_window] || 32_000
+          hash[m[:id]] = m[:context_window] || DEFAULT_CONTEXT_WINDOW
         end
       end
 

@@ -48,13 +48,13 @@ module MASTER
         sorted = sections.sort_by { |s| IMPORTANCE_ORDER.index(s[:type]) || 999 }
 
         # Rebuild with proper spacing
-        result = []
+        reflowed_lines = []
         sorted.each_with_index do |section, idx|
-          result << "\n" if idx > 0 && needs_blank_line?(sections[idx - 1], section)
-          result.concat(section[:lines])
+          reflowed_lines << "\n" if idx > 0 && needs_blank_line?(sections[idx - 1], section)
+          reflowed_lines.concat(section[:lines])
         end
 
-        result.join
+        reflowed_lines.join
       end
 
       # Batch reflow directory

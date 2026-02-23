@@ -151,8 +151,8 @@ module MASTER
         output_path = generate_output_path(path, preset)
         save_image(image, output_path)
         Result.ok(output_path)
-      rescue StandardError => e
-        Result.err("Preset failed: #{e.message}")
+      rescue StandardError => err
+        Result.err("Preset failed: #{err.message}")
       end
 
       def apply_random(path, count: 3)
@@ -171,8 +171,8 @@ module MASTER
         output_path = generate_output_path(path, :random)
         save_image(image, output_path)
         Result.ok({ path: output_path, effects: effects })
-      rescue StandardError => e
-        Result.err("Random effects failed: #{e.message}")
+      rescue StandardError => err
+        Result.err("Random effects failed: #{err.message}")
       end
 
       def css_filter(preset: :portrait)

@@ -84,9 +84,9 @@ module MASTER
           save_plan
 
           Result.ok(task)
-        rescue StandardError => e
+        rescue StandardError => err
           task[:status] = :failed
-          task[:error] = e.message
+          task[:error] = err.message
           task[:retries] = (task[:retries] || 0) + 1
 
           if task[:retries] < MAX_RETRIES
@@ -96,7 +96,7 @@ module MASTER
           end
 
           save_plan
-          Result.err(e.message)
+          Result.err(err.message)
         end
       end
 
@@ -150,7 +150,7 @@ module MASTER
 
         lines = ["Plan: #{@current_plan[:goal]}", ""]
 
-        @current_plan[:tasks].each_with_index do |task, i|
+        @current_plan[:tasks].each_with_index do |task, idx|
           marker = case task[:status]
                    when :complete then "+"
                    when :running then "->"
@@ -159,8 +159,8 @@ module MASTER
                    else "."
                    end
 
-          current = i == @current_plan[:current_task] ? " <-" : ""
-          lines << "  #{marker} #{i + 1}. #{task[:action]}#{current}"
+          current = idx == @current_plan[:current_task] ? " <-" : ""
+          lines << "  #{marker} #{idx + 1}. #{task[:action]}#{current}"
         end
 
         prog = progress

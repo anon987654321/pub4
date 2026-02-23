@@ -51,8 +51,8 @@ module MASTER
       result = yield
       s.success("Done")
       result
-    rescue StandardError => e
-      s.error(e.message)
+    rescue StandardError => err
+      s.error(err.message)
       raise
     end
 

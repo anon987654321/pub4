@@ -172,27 +172,44 @@ module MASTER
 
     def check_cost_limits(this_cost, session_total)
       @cost_limits ||= begin
-        f = File.join(MASTER.root, "data", "quality_thresholds.yml")
-        YAML.safe_load_file(f)["cost_protection"] rescue {}
+        thresholds = YAML.safe_load_file(Paths.data_file("quality_thresholds.yml"))
+        thresholds["cost_protection"] || {}
+      rescue StandardError
+        {}
       end
       max_request = @cost_limits["max_per_request"]&.to_f || 1.00
       max_session = @cost_limits["max_per_session"]&.to_f || 10.00
       # Warn only at hard limits — no noise below threshold
-      $stderr.puts UI.dim("cost0: #{UI.currency_precise(this_cost)} > max_per_request #{UI.currency(max_request)}") if this_cost >= max_request
-      $stderr.puts UI.dim("cost0: session #{UI.currency_precise(session_total)} > max_per_session #{UI.currency(max_session)}") if session_total >= max_session
+      if this_cost >= max_request
+        $stderr.puts UI.dim("cost0: #{UI.currency_precise(this_cost)} > " \
+                            "max_per_request #{UI.currency(max_request)}")
+      end
+      if session_total >= max_session
+        $stderr.puts UI.dim("cost0: session #{UI.currency_precise(session_total)} > " \
+                            "max_per_session #{UI.currency(max_session)}")
+      end
     end
 
     def show_violations(value)
-      av = value[:axiom_violations]
-      zv = value[:zsh_violations]
-      cv = value[:council_vetoes]
-      sv = value[:council_security_veto]
+      axiom_violations    = value[:axiom_violations]
+      zsh_violations      = value[:zsh_violations]
+      council_vetoes      = value[:council_vetoes]
+      security_veto       = value[:council_security_veto]
       # Compact one-liners to stderr — no noise when clean
-      $stderr.puts UI.dim("council0: security veto#{cv&.any? ? " (#{cv.join(', ')})" : ""}") if sv
-      $stderr.puts UI.dim("enforcer0: #{UI.pluralize(av.size, 'violation')} — #{av.join(', ')}") if av&.any?
-      $stderr.puts UI.dim("lint0: #{UI.pluralize(zv.size, 'violation')} — #{zv.map { |v| v[:tool] }.join(', ')}") if zv&.any?
-      bs = value[:beauty_score]
-      $stderr.puts UI.dim("✦ #{bs}") if bs&.> 0
+      if security_veto
+        veto_detail = council_vetoes&.any? ? " (#{council_vetoes.join(', ')})" : ""
+        $stderr.puts UI.dim("council0: security veto#{veto_detail}")
+      end
+      if axiom_violations&.any?
+        msg = "enforcer0: #{UI.pluralize(axiom_violations.size, 'violation')} — #{axiom_violations.join(', ')}"
+        $stderr.puts UI.dim(msg)
+      end
+      if zsh_violations&.any?
+        $stderr.puts UI.dim("lint0: #{UI.pluralize(zsh_violations.size, 'violation')} — " \
+                            "#{zsh_violations.map { |v| v[:tool] }.join(', ')}")
+      end
+      beauty_score = value[:beauty_score]
+      $stderr.puts UI.dim("✦ #{beauty_score}") if beauty_score&.> 0
     end
 
     # Build prompt using Pipeline.prompt with fallback

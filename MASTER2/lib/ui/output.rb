@@ -23,13 +23,13 @@ module MASTER
 
     def token_chart(prompt_tokens:, completion_tokens:, cached: 0)
       total = prompt_tokens + completion_tokens
-      data = [
+      token_segments = [
         { name: "prompt",     value: prompt_tokens,     color: :blue },
         { name: "completion", value: completion_tokens,  color: :white },
       ]
-      data << { name: "cached", value: cached, color: :bright_black } if cached > 0
+      token_segments << { name: "cached", value: cached, color: :bright_black } if cached > 0
 
-      puts pie(data).render
+      puts pie(token_segments).render
       puts dim("Total: #{total} tokens")
     end
 

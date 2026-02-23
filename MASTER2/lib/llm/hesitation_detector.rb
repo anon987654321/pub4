@@ -22,6 +22,12 @@ module MASTER
 
       # Confidence threshold: below this, escalate to council
       CONFIDENCE_THRESHOLD = 0.7
+      # Confidence reduction per uncertainty marker
+      UNCERTAINTY_PENALTY = 0.12
+      # Floor confidence score — never drop below this
+      MIN_CONFIDENCE_SCORE = 0.1
+      # Max chars of context shown in log
+      CONTEXT_PREVIEW_LENGTH = 60
 
       # Estimate confidence score of LLM response (0.0–1.0).
       # Lower score = more uncertainty = more likely to need council.
@@ -31,8 +37,8 @@ module MASTER
         return 0.0 unless response.is_a?(String) && !response.empty?
 
         matches = UNCERTAINTY_PATTERNS.count { |p| p.match?(response) }
-        # Each uncertainty marker reduces confidence by 0.12 (capped)
-        [1.0 - (matches * 0.12), 0.1].max
+        # Each uncertainty marker reduces confidence by UNCERTAINTY_PENALTY (capped)
+        [1.0 - (matches * UNCERTAINTY_PENALTY), MIN_CONFIDENCE_SCORE].max
       end
 
       # Should the council be invoked for this response?
@@ -48,8 +54,7 @@ module MASTER
         escalate = score < CONFIDENCE_THRESHOLD
 
         Logging.dmesg_log("hesit0",
-                          message: "score=#{score.round(2)} escalate=#{escalate} context=#{context&.to_s&.slice(0,
-                                                                                                                60)}")
+                          message: "score=#{score.round(2)} escalate=#{escalate} context=#{context&.to_s&.slice(0, CONTEXT_PREVIEW_LENGTH)}")
 
         { score: score, escalate: escalate }
       end

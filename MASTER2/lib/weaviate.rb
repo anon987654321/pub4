@@ -83,8 +83,8 @@ module MASTER
         else
           Result.ok({ class: schema_def[:class] })
         end
-      rescue StandardError => e
-        Result.err("Schema creation failed: #{e.message}")
+      rescue StandardError => err
+        Result.err("Schema creation failed: #{err.message}")
       end
 
       # Index an object in a specific class
@@ -104,8 +104,8 @@ module MASTER
         else
           Result.err("Failed to index: #{response['error'] || 'unknown error'}")
         end
-      rescue StandardError => e
-        Result.err("Index failed: #{e.message}")
+      rescue StandardError => err
+        Result.err("Index failed: #{err.message}")
       end
 
       # Search in a specific class
@@ -146,8 +146,8 @@ module MASTER
         else
           Result.err("Search failed: #{response['errors']&.first&.dig('message') || 'unknown'}")
         end
-      rescue StandardError => e
-        Result.err("Search failed: #{e.message}")
+      rescue StandardError => err
+        Result.err("Search failed: #{err.message}")
       end
 
       def store(content:, type: "chat", source: nil, metadata: {})
@@ -171,8 +171,8 @@ module MASTER
         else
           Result.err("Failed to store: #{response['error'] || 'unknown error'}")
         end
-      rescue StandardError => e
-        Result.err("Store failed: #{e.message}")
+      rescue StandardError => err
+        Result.err("Store failed: #{err.message}")
       end
 
       def search(query:, limit: 5, type: nil)
@@ -194,8 +194,8 @@ module MASTER
         else
           Result.err("Search failed: #{response['errors']&.first&.dig('message') || 'unknown'}")
         end
-      rescue StandardError => e
-        Result.err("Search failed: #{e.message}")
+      rescue StandardError => err
+        Result.err("Search failed: #{err.message}")
       end
 
       def similar(content:, limit: 5)
@@ -251,10 +251,10 @@ module MASTER
               end
             end
             return result if result
-          rescue JSON::ParserError => e
-            return { "error" => "Parse error: #{e.message}" }
-          rescue Async::TimeoutError, Errno::ECONNREFUSED => e
-            last_error = e.message
+          rescue JSON::ParserError => err
+            return { "error" => "Parse error: #{err.message}" }
+          rescue Async::TimeoutError, Errno::ECONNREFUSED => err
+            last_error = err.message
             sleep(RETRY_BACKOFF_BASE**attempt) if attempt < retries - 1
           end
         end

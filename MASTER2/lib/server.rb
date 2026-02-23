@@ -19,6 +19,9 @@ module MASTER
     AUTH_TOKEN = ENV["MASTER_TOKEN"] || SecureRandom.hex(16)
     VIEWS_DIR = File.join(File.dirname(__FILE__), "views")
 
+    PORT_WAIT_ATTEMPTS = 10
+    PORT_WAIT_DELAY    = 0.3
+
     attr_reader :port, :output_queue
 
     def initialize(pipeline: nil, port: nil)
@@ -39,8 +42,8 @@ module MASTER
       @app = build_app
       @server_thread = Thread.new { run_server }
       # Wait for Falcon to bind
-      10.times do
-        sleep 0.3
+      PORT_WAIT_ATTEMPTS.times do
+        sleep PORT_WAIT_DELAY
         break if port_open?(@port)
       end
     end
@@ -75,8 +78,8 @@ module MASTER
         endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{@port}")
         server = Falcon::Server.new(Falcon::Server.middleware(@app), endpoint)
         server.run
-      rescue StandardError => e
-        warn "Falcon error: #{e.class}: #{e.message}"
+      rescue StandardError => err
+        warn "Falcon error: #{err.class}: #{err.message}"
       end
     end
 
@@ -87,7 +90,7 @@ module MASTER
       rescue StandardError
         nil
       end
-      sleep 0.3 unless pids.empty?
+      sleep PORT_WAIT_DELAY unless pids.empty?
     rescue StandardError
       # best-effort
     end

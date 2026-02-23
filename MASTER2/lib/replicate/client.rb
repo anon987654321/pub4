@@ -38,9 +38,9 @@ module MASTER
         else
           { error: data&.dig(:detail) || "Unknown error" }
         end
-      rescue StandardError => e
-        warn "Replicate: create_prediction error: #{e.class} - #{e.message}"
-        { error: e.message }
+      rescue StandardError => err
+        warn "Replicate: create_prediction error: #{err.class} - #{err.message}"
+        { error: err.message }
       end
 
       # Wait for prediction to complete (polling loop)
@@ -64,9 +64,9 @@ module MASTER
             return { error: "Unknown status: #{data&.dig(:status) || 'nil'}" }
           end
         end
-      rescue StandardError => e
-        warn "Replicate: wait_for_completion error: #{e.class} - #{e.message}"
-        { error: e.message }
+      rescue StandardError => err
+        warn "Replicate: wait_for_completion error: #{err.class} - #{err.message}"
+        { error: err.message }
       end
 
       # Download file from URL to local path
@@ -81,8 +81,8 @@ module MASTER
         FileUtils.mkdir_p(File.dirname(path))
         File.binwrite(path, response.body)
         true
-      rescue StandardError => e
-        warn "Replicate: download_file failed for #{url}: #{e.message}"
+      rescue StandardError => err
+        warn "Replicate: download_file failed for #{url}: #{err.message}"
         false
       end
 

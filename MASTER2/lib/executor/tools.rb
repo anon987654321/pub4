@@ -56,8 +56,8 @@ module MASTER
       else
         "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
       end
-    rescue StandardError => e
-      "Tool error: #{e.message}"
+    rescue StandardError => err
+      "Tool error: #{err.message}"
     end
 
     # Tool implementations
@@ -271,8 +271,8 @@ module MASTER
       lines = ["who_requires #{symbol}: #{matches.size} file(s)"]
       matches.each_key { |f| lines << "  #{f.sub("#{lib_root}/", "")}" }
       lines.join("\n")
-    rescue StandardError => e
-      "who_requires error: #{e.message}"
+    rescue StandardError => err
+      "who_requires error: #{err.message}"
     end
 
     # Gist #15: Self-verification after code modification (Gemini CLI + Codex CLI pattern).
@@ -305,8 +305,8 @@ module MASTER
       end
 
       Result.ok
-    rescue StandardError => e
-      Result.err("verify_change error: #{e.message}")
+    rescue StandardError => err
+      Result.err("verify_change error: #{err.message}")
     end
 
     def sanitize_tool_input(action_str)

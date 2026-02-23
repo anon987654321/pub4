@@ -15,8 +15,11 @@
 module MASTER
   module Friction
     module Architect
-      THIN_FILE_THRESHOLD = 20   # lines of non-blank, non-comment code
-      ACCRETION_WARNING   = 10.0 # lib_files / data_concepts ratio above this is suspicious
+      THIN_FILE_THRESHOLD      = 20   # lines of non-blank, non-comment code
+      ACCRETION_WARNING        = 10.0 # lib_files / data_concepts ratio above this is suspicious
+      MAX_NAMESPACE_DISPLAY    = 10   # top namespaces shown in report
+      MAX_CRITICAL_PATH_DISPLAY = 8   # critical-path entries shown in report
+      DEAD_FILE_MAX_LINES      = 3    # data files with ≤ this many non-blank lines are considered dead
 
       def self.run
         root      = MASTER.root
@@ -42,7 +45,7 @@ module MASTER
                  "#{lib[:namespaces].size} top-level namespaces"
         lines << ""
         lines << "  Top namespaces by file count:"
-        lib[:namespaces].sort_by { |_, v| -v[:files] }.first(10).each do |ns, data|
+        lib[:namespaces].sort_by { |_, v| -v[:files] }.first(MAX_NAMESPACE_DISPLAY).each do |ns, data|
           lines << "    %-22s  %3d files  %5d LOC" % [ns, data[:files], data[:loc]]
         end
         lines << ""
@@ -71,8 +74,8 @@ module MASTER
         thin = report[:thin_files]
         if thin.any?
           lines << "THIN FILES  #{thin.size} file(s) with < #{THIN_FILE_THRESHOLD} code lines:"
-          thin.first(10).each { |f| lines << "    #{f[:path].sub(MASTER.root + '/', '')}  (#{f[:loc]} LOC)" }
-          lines << "    ... #{thin.size - 10} more" if thin.size > 10
+          thin.first(MAX_NAMESPACE_DISPLAY).each { |f| lines << "    #{f[:path].sub(MASTER.root + '/', '')}  (#{f[:loc]} LOC)" }
+          lines << "    ... #{thin.size - MAX_NAMESPACE_DISPLAY} more" if thin.size > MAX_NAMESPACE_DISPLAY
         else
           lines << "THIN FILES  none"
         end
@@ -87,7 +90,7 @@ module MASTER
 
         # 6. Critical path
         lines << "CRITICAL PATH  (most required-by: likely core files)"
-        report[:critical_path].first(8).each do |f|
+        report[:critical_path].first(MAX_CRITICAL_PATH_DISPLAY).each do |f|
           lines << "    %-40s  required by %d" % [f[:name], f[:required_by]]
         end
         lines << ""
@@ -124,7 +127,7 @@ module MASTER
         # A data file is "dead" if it has ≤ 3 lines and they're all comments or blank
         def dead_data_file?(path)
           lines = File.readlines(path).map(&:strip).reject(&:empty?)
-          lines.size <= 3 && lines.all? { |l| l.start_with?("#") }
+          lines.size <= DEAD_FILE_MAX_LINES && lines.all? { |l| l.start_with?("#") }
         end
 
         def find_namespace_duplication(lib_root)

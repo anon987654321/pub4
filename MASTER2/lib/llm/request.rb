@@ -6,12 +6,14 @@ module MASTER
       private
 
       # Retry logic with exponential backoff (3 attempts, 1s/2s/4s delays)
+      EXECUTE_MAX_RETRIES = 3
+      BACKOFF_BASE = 2
+
       def execute_with_retry(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
-        max_retries = 3
         retry_count = 0
         last_error = nil
 
-        while retry_count < max_retries
+        while retry_count < EXECUTE_MAX_RETRIES
           begin
             result = if replicate_model?(model)
                        execute_replicate_llm_request(prompt: prompt, messages: messages, model: model,
@@ -32,22 +34,22 @@ module MASTER
             return result if result.ok? || !retryable_error?(result.error)
 
             last_error = result.error
-          rescue ArgumentError => e
-            return Result.err("ArgumentError: #{e.message}")
-          rescue StandardError => e
-            last_error = e.message
+          rescue ArgumentError => err
+            return Result.err("ArgumentError: #{err.message}")
+          rescue StandardError => err
+            last_error = err.message
           end
 
           retry_count += 1
-          break if retry_count >= max_retries
+          break if retry_count >= EXECUTE_MAX_RETRIES
 
           # Exponential backoff: 1s, 2s, 4s
-          sleep_time = 2**(retry_count - 1)
-          Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error)
+          sleep_time = BACKOFF_BASE**(retry_count - 1)
+          Logging.warn("LLM retry #{retry_count}/#{EXECUTE_MAX_RETRIES}", delay: sleep_time, error: last_error)
           sleep(sleep_time)
         end
 
-        Result.err("Failed after #{max_retries} retries: #{last_error}")
+        Result.err("Failed after #{EXECUTE_MAX_RETRIES} retries: #{last_error}")
       end
 
       def retryable_error?(error)
@@ -103,10 +105,10 @@ module MASTER
         msg_array = build_message_array(prompt, messages)
 
         # Extract system message if present (proper role separation)
-        system_msg = msg_array.find { |m| m[:role] == "system" }
+        system_msg = msg_array.find { |msg| msg[:role] == "system" }
         if system_msg
           chat = chat.with_instructions(system_msg[:content])
-          msg_array = msg_array.reject { |m| m[:role] == "system" }
+          msg_array = msg_array.reject { |msg| msg[:role] == "system" }
         end
 
         # Execute query with proper message array
@@ -115,8 +117,8 @@ module MASTER
         else
           execute_blocking_ruby_llm(chat, msg_array, model)
         end
-      rescue StandardError => e
-        Result.err(Logging.format_error(e))
+      rescue StandardError => err
+        Result.err(Logging.format_error(err))
       end
 
       # Build message array preserving full conversation history with proper role separation
@@ -125,9 +127,9 @@ module MASTER
 
         if messages.is_a?(Array) && !messages.empty?
           # Convert existing messages to proper format
-          messages.each do |m|
-            role = (m[:role] || m["role"]).to_s
-            content = m[:content] || m["content"]
+          messages.each do |msg|
+            role = (msg[:role] || msg["role"]).to_s
+            content = msg[:content] || msg["content"]
             next unless content
 
             result << { role: role, content: content }
@@ -180,8 +182,8 @@ module MASTER
         }
 
         validate_response(response_data, model)
-      rescue StandardError => e
-        Result.err("ruby_llm error: #{e.message}")
+      rescue StandardError => err
+        Result.err("ruby_llm error: #{err.message}")
       end
 
       # Streaming with size limits and proper token counts
@@ -233,8 +235,8 @@ module MASTER
         }
 
         validate_response(response_data, model)
-      rescue StandardError => e
-        Result.err("ruby_llm streaming error: #{e.message}")
+      rescue StandardError => err
+        Result.err("ruby_llm streaming error: #{err.message}")
       end
 
       # True when this model is configured with api: replicate in models.yml
@@ -251,13 +253,13 @@ module MASTER
         # Flatten messages + prompt into a single prompt string.
         # Replicate's predictions API uses a single prompt field, not a messages array.
         msg_array  = build_message_array(prompt, messages)
-        sys_msg    = msg_array.find { |m| m[:role] == "system" }
+        sys_msg    = msg_array.find { |msg| msg[:role] == "system" }
         # Interleave user/assistant turns into a conversation-style prompt
-        turns = msg_array.reject { |m| m[:role] == "system" }
+        turns = msg_array.reject { |msg| msg[:role] == "system" }
         flat_prompt = if turns.size == 1
                         turns.first[:content]
                       else
-                        turns.map { |m| "#{m[:role].capitalize}: #{m[:content]}" }.join("\n\n")
+                        turns.map { |msg| "#{msg[:role].capitalize}: #{msg[:content]}" }.join("\n\n")
                       end
 
         system_prompt = sys_msg&.dig(:content)
@@ -271,8 +273,8 @@ module MASTER
           system_prompt: system_prompt,
           max_tokens: max_tokens,
         )
-      rescue StandardError => e
-        Result.err("Replicate LLM request failed: #{e.message}", category: :infrastructure)
+      rescue StandardError => err
+        Result.err("Replicate LLM request failed: #{err.message}", category: :infrastructure)
       end
 
       public

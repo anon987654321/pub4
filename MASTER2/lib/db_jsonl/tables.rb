@@ -168,10 +168,10 @@ module MASTER
 
     def increment_smell_hit(pattern)
       smells = read_collection("learned_smells")
-      s = smells.find { |r| r[:pattern] == pattern }
-      return unless s
+      smell_record = smells.find { |r| r[:pattern] == pattern }
+      return unless smell_record
 
-      s[:hits] = (s[:hits] || 0) + 1
+      smell_record[:hits] = (smell_record[:hits] || 0) + 1
       write_collection("learned_smells", smells)
     end
 
@@ -192,7 +192,11 @@ module MASTER
     def recent_reverts(days:)
       cutoff = Time.now - (days * 86_400)
       read_collection("reverts").count do |r|
-        Time.parse(r[:ts]) > cutoff rescue false
+        begin
+          Time.parse(r[:ts]) > cutoff
+        rescue ArgumentError, TypeError
+          false
+        end
       end
     end
   end

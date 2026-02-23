@@ -23,7 +23,7 @@ module MASTER
           tree_digest: Digest::SHA256.hexdigest(tree_lines.join("\n")),
           tree_nodes: tree_lines.size,
           sprawl: detect_sprawl(path),
-          git_status: check_git_status(path),
+          git_status: git_status(path),
           recent_commits: recent_commits(path),
         }
 
@@ -75,7 +75,7 @@ module MASTER
         large_files
       end
 
-      def check_git_status(path)
+      def git_status(path)
         return nil unless system("git", "-C", path, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
 
         status = `git -C #{Shellwords.escape(path)} status --porcelain`.strip

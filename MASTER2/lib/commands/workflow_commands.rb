@@ -4,6 +4,7 @@ module MASTER
   module Commands
     # Workflow commands for phase management
     module WorkflowCommands
+      TOTAL_PHASES = 7
       def workflow_status
         session = Session.current
         return Result.err("Workflow not started.") unless session.metadata[:workflow]
@@ -13,7 +14,7 @@ module MASTER
 
         puts UI.bold("Workflow Status")
         puts "phase: #{phase.to_s.upcase}"
-        puts "progress: #{history.size}/7 phases"
+        puts "progress: #{history.size}/#{TOTAL_PHASES} phases"
         history.each do |transition|
           puts "#{transition[:from]} -> #{transition[:to]} (#{transition[:gate]})"
         end

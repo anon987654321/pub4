@@ -74,8 +74,8 @@ module MASTER
           return Result.err("No model available.") unless result.ok?
 
           parse_opportunities_json(result.value[:content])
-        rescue StandardError => e
-          Result.err("Analysis failed: #{e.message}")
+        rescue StandardError => err
+          Result.err("Analysis failed: #{err.message}")
         end
 
         # Quick static analysis (no LLM)
@@ -224,8 +224,8 @@ module MASTER
           end
 
           Result.ok(categories)
-        rescue JSON::ParserError => e
-          Result.err("JSON parse failed: #{e.message}")
+        rescue JSON::ParserError => err
+          Result.err("JSON parse failed: #{err.message}")
         end
 
         def grade_for(score)

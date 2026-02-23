@@ -18,8 +18,8 @@ module MASTER
       def load_all
         return [] unless File.exist?(PERSONAS_FILE)
 
-        data = load_personas_data
-        personas_hash = data["personas"] || data[:personas]
+        yaml_data = load_personas_data
+        personas_hash = yaml_data["personas"] || yaml_data[:personas]
         return [] unless personas_hash
 
         personas_hash.map do |key, persona|
@@ -30,8 +30,8 @@ module MASTER
       def load(name)
         return nil unless File.exist?(PERSONAS_FILE)
 
-        data = load_personas_data
-        personas_hash = data["personas"] || data[:personas]
+        yaml_data = load_personas_data
+        personas_hash = yaml_data["personas"] || yaml_data[:personas]
         return nil unless personas_hash
 
         # Try both string and symbol keys
@@ -45,8 +45,8 @@ module MASTER
       def list
         return [] unless File.exist?(PERSONAS_FILE)
 
-        data = load_personas_data
-        personas_hash = data["personas"] || data[:personas]
+        yaml_data = load_personas_data
+        personas_hash = yaml_data["personas"] || yaml_data[:personas]
         return [] unless personas_hash
 
         personas_hash.keys.map(&:to_s).sort

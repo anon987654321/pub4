@@ -30,10 +30,10 @@ module MASTER
 
         handlers.each do |entry|
           entry[:handler].call(data)
-        rescue StandardError => e
+        rescue StandardError => err
           # Silently rescue handler errors; only log at high trace levels
           if defined?(Logging) && Logging.respond_to?(:trace_level) && Logging.trace_level >= 3
-            Logging.dmesg_log("eventbus0", message: "handler error for #{event}: #{e.message}", level: Logging::ALL_EVENTS)
+            Logging.dmesg_log("eventbus0", message: "handler error for #{event}: #{err.message}", level: Logging::ALL_EVENTS)
           end
         end
       end

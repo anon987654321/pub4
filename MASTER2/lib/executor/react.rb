@@ -28,8 +28,8 @@ module MASTER
         while @step < @max_steps
           begin
             check_timeout!(start_time)
-          rescue Result::Error => e
-            return Result.err(e.message)
+          rescue Result::Error => err
+            return Result.err(err.message)
           end
 
           @step += 1
@@ -138,7 +138,7 @@ module MASTER
             File.join(MASTER.root, token),
             File.join(MASTER.root, "lib", token),
           ]
-          found = paths.find { |p| File.exist?(p) }
+          found = paths.find { |candidate_path| File.exist?(candidate_path) }
           next unless found
 
           content = File.read(found)[0..800]
@@ -159,7 +159,7 @@ module MASTER
       # Parse the JSON step response into a normalised hash.
       # Handles both Hash (already parsed by ask_json) and String fallback.
       def parse_step(payload)
-        data = case payload
+        step_data = case payload
                when Hash   then payload
                when String then begin
                  JSON.parse(payload, symbolize_names: true)
@@ -169,11 +169,11 @@ module MASTER
                else {}
                end
 
-        thought = data[:thought].to_s.strip.then { |t| t.empty? ? "Continuing" : t }
-        tool    = data[:tool].to_s.strip
+        thought = step_data[:thought].to_s.strip.then { |val| val.empty? ? "Continuing" : val }
+        tool    = step_data[:tool].to_s.strip
         tool    = nil if tool.empty? || tool == "none"
-        args    = data[:args].is_a?(Hash) ? data[:args] : {}
-        answer  = data[:answer].to_s.strip
+        args    = step_data[:args].is_a?(Hash) ? step_data[:args] : {}
+        answer  = step_data[:answer].to_s.strip
         answer  = nil if answer.empty?
 
         # Legacy: if no tool/answer but action key present (transitional fallback)
@@ -204,8 +204,8 @@ module MASTER
         when "self_test"      then self_test
         else "Unknown tool: #{tool_name}. Available: #{TOOLS.keys.join(', ')}"
         end
-      rescue StandardError => e
-        "Tool error (#{tool_name}): #{e.message}"
+      rescue StandardError => err
+        "Tool error (#{tool_name}): #{err.message}"
       end
     end
   end

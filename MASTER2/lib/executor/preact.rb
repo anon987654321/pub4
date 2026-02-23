@@ -18,8 +18,8 @@ module MASTER
         @plan.each_with_index do |planned_step, idx|
           begin
             check_timeout!(start_time)
-          rescue Result::Error => e
-            return Result.err(e.message)
+          rescue Result::Error => err
+            return Result.err(err.message)
           end
 
           @step = idx + 1

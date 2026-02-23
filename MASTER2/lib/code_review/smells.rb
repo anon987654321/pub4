@@ -46,26 +46,26 @@ module MASTER
       def analyze(code, file_path = nil)
         results = []
         lines = code.lines
-        t = thresholds
-        p = patterns
+        limits = thresholds
+        smell_patterns = patterns
 
         results += analyze_ruby_methods(code, lines) if file_path&.end_with?(".rb")
 
-        if lines.size > t[:max_file_lines]
+        if lines.size > limits[:max_file_lines]
           results << {
             smell: :god_class,
-            message: "File has #{lines.size} lines (> #{t[:max_file_lines]})",
-            fix: p.dig(:god_class, :fix) || p.dig(:god_class, "fix") || "Extract class",
+            message: "File has #{lines.size} lines (> #{limits[:max_file_lines]})",
+            fix: smell_patterns.dig(:god_class, :fix) || smell_patterns.dig(:god_class, "fix") || "Extract class",
           }
         end
 
         code.scan(/def\s+\w+\(([^)]+)\)/) do |params|
           count = params[0].split(",").size
-          if count > t[:max_parameters]
+          if count > limits[:max_parameters]
             results << {
               smell: :long_parameter_list,
-              message: "Method has #{count} parameters (> #{t[:max_parameters]})",
-              fix: p.dig(:long_parameter_list, :fix) || p.dig(:long_parameter_list, "fix") || "Parameter object",
+              message: "Method has #{count} parameters (> #{limits[:max_parameters]})",
+              fix: smell_patterns.dig(:long_parameter_list, :fix) || smell_patterns.dig(:long_parameter_list, "fix") || "Parameter object",
             }
           end
         end
@@ -74,11 +74,11 @@ module MASTER
           results << {
             smell: :message_chains,
             message: "Long chain: #{chain[0..40]}...",
-            fix: p.dig(:message_chains, :fix) || p.dig(:message_chains, "fix") || "Hide delegate",
+            fix: smell_patterns.dig(:message_chains, :fix) || smell_patterns.dig(:message_chains, "fix") || "Hide delegate",
           }
         end
 
-        duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 10, min_count: t[:min_duplicate_count])
+        duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 10, min_count: limits[:min_duplicate_count])
         duplicates.each do |dup|
           str_preview = dup[:string].length > 30 ? "#{dup[:string][0...30]}..." : dup[:string]
           results << {
@@ -93,18 +93,18 @@ module MASTER
 
       def analyze_ruby_methods(code, _lines)
         results = []
-        t = thresholds
-        p = patterns
+        limits = thresholds
+        smell_patterns = patterns
 
         methods_info = Analyzers::MethodLengthAnalyzer.scan(code)
         methods_info.each do |method|
-          next unless method[:length] > t[:max_method_lines]
+          next unless method[:length] > limits[:max_method_lines]
 
           results << {
             smell: :long_method,
-            message: "def #{method[:name]} is #{method[:length]} lines (> #{t[:max_method_lines]})",
+            message: "def #{method[:name]} is #{method[:length]} lines (> #{limits[:max_method_lines]})",
             line: method[:start_line],
-            fix: p.dig(:long_method, :fix) || p.dig(:long_method, "fix") || "Extract method",
+            fix: smell_patterns.dig(:long_method, :fix) || smell_patterns.dig(:long_method, "fix") || "Extract method",
           }
         end
 
@@ -145,11 +145,11 @@ module MASTER
         return "No smells detected." if results.empty?
 
         output = ["Code Smells (#{results.size})", ""]
-        results.each_with_index do |r, i|
-          output << "  #{i + 1}. #{r[:smell]}"
-          output << "     #{r[:message]}"
-          output << "     Fix: #{r[:fix]}"
-          output << "     Line #{r[:line]}" if r[:line]
+        results.each_with_index do |smell_item, idx|
+          output << "  #{idx + 1}. #{smell_item[:smell]}"
+          output << "     #{smell_item[:message]}"
+          output << "     Fix: #{smell_item[:fix]}"
+          output << "     Line #{smell_item[:line]}" if smell_item[:line]
           output << ""
         end
         output.join("\n")
@@ -158,7 +158,7 @@ module MASTER
       private
 
       def load_config
-        path = File.join(MASTER.root, "data", "smells.yml")
+        path = Paths.data_file("smells.yml")
         YAML.safe_load_file(path, permitted_classes: [Symbol])
       rescue Errno::ENOENT
         {}

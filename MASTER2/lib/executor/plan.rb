@@ -91,9 +91,9 @@ module MASTER
       def to_dmesg
         return "plan: empty" if @steps.empty?
 
-        @steps.each_with_index.map do |s, i|
-          glyph = STATUS_GLYPH[s.status] || "?"
-          "[#{glyph}] #{i + 1}. #{s.description}"
+        @steps.each_with_index.map do |step, idx|
+          glyph = STATUS_GLYPH[step.status] || "?"
+          "[#{glyph}] #{idx + 1}. #{step.description}"
         end.join("\n")
       end
 

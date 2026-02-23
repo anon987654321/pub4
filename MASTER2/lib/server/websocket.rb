@@ -5,7 +5,6 @@ module MASTER
     # WebSocket - WebSocket connection handler
     module WebSocket
       def handle_websocket(env, pipeline)
-        # Try to load async-websocket, return 501 if not available
         begin
           require "async"
           require "async/websocket/adapters/rack"
@@ -15,61 +14,58 @@ module MASTER
         end
 
         Async::WebSocket::Adapters::Rack.open(env, protocols: ["chat"]) do |connection|
-          # WebSocket connection established
           while (message = connection.read)
-            begin
-              data = JSON.parse(message, symbolize_names: true)
-
-              if data[:type] == "chat"
-                user_message = data[:message].to_s.strip
-
-                if user_message.empty?
-                  connection.write({ type: "error", message: "Empty message" }.to_json)
-                  connection.flush
-                  next
-                end
-
-                # Process message through pipeline
-                result = pipeline.call({ text: user_message })
-
-                if result.ok?
-                  response_text = result.value[:rendered] || result.value[:text] || ""
-
-                  # Stream response in chunks (simulate streaming by sending full response)
-                  # In a real implementation, you'd hook into the LLM's streaming API
-                  connection.write({ type: "chunk", text: response_text }.to_json)
-                  connection.flush
-
-                  # Send done message with metadata
-                  meta = {
-                    tier: LLM.tier,
-                    budget: "unlimited",
-                    tokens: result.value[:tokens] || 0,
-                    cost: result.value[:cost] || 0.0,
-                  }
-                  connection.write({ type: "done", meta: meta }.to_json)
-                else
-                  connection.write({ type: "error", message: result.error }.to_json)
-                end
-              else
-                connection.write({ type: "error", message: "Unknown message type" }.to_json)
-              end
-              connection.flush
-            rescue JSON::ParserError
-              connection.write({ type: "error", message: "Invalid JSON" }.to_json)
-              connection.flush
-            rescue StandardError => e
-              Logging.warn("Error: #{e.message}", subsystem: "WebSocket")
-              connection.write({ type: "error", message: e.message }.to_json)
-              connection.flush
-            end
+            handle_ws_message(message, connection, pipeline)
           end
-        rescue StandardError => e
-          Logging.warn("Connection error: #{e.message}", subsystem: "WebSocket")
+        rescue StandardError => err
+          Logging.warn("Connection error: #{err.message}", subsystem: "WebSocket")
         end
 
-        # Return nil to indicate WebSocket handled the request
         nil
+      end
+
+      private
+
+      def handle_ws_message(message, connection, pipeline)
+        data = JSON.parse(message, symbolize_names: true)
+
+        unless data[:type] == "chat"
+          connection.write({ type: "error", message: "Unknown message type" }.to_json)
+          connection.flush
+          return
+        end
+
+        user_message = data[:message].to_s.strip
+        if user_message.empty?
+          connection.write({ type: "error", message: "Empty message" }.to_json)
+          connection.flush
+          return
+        end
+
+        result = pipeline.call({ text: user_message })
+
+        if result.ok?
+          response_text = result.value[:rendered] || result.value[:text] || ""
+          connection.write({ type: "chunk", text: response_text }.to_json)
+          connection.flush
+          meta = {
+            tier: LLM.tier,
+            budget: "unlimited",
+            tokens: result.value[:tokens] || 0,
+            cost: result.value[:cost] || 0.0,
+          }
+          connection.write({ type: "done", meta: meta }.to_json)
+        else
+          connection.write({ type: "error", message: result.error }.to_json)
+        end
+        connection.flush
+      rescue JSON::ParserError
+        connection.write({ type: "error", message: "Invalid JSON" }.to_json)
+        connection.flush
+      rescue StandardError => err
+        Logging.warn("Error: #{err.message}", subsystem: "WebSocket")
+        connection.write({ type: "error", message: err.message }.to_json)
+        connection.flush
       end
     end
   end

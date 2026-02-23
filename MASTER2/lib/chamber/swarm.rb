@@ -14,22 +14,22 @@ module MASTER
       total_cost = 0
 
       # Fan out - get multiple responses using different approaches
-      @size.times do |i|
-        tier = i < 2 ? :strong : :fast # Mix of tiers for diversity
+      @size.times do |idx|
+        tier = idx < 2 ? :strong : :fast # Mix of tiers for diversity
 
         begin
           result = LLM.ask(prompt, tier: tier)
           next unless result.ok?
 
-          data = result.value
-          cost = data[:cost] || 0
+          response = result.value
+          cost = response.fetch(:cost, 0)
           total_cost += cost
 
           responses << {
-            index: i,
-            model: data[:model],
-            content: data[:content],
-            tokens: (data[:tokens_in] || 0) + (data[:tokens_out] || 0),
+            index: idx,
+            model: response[:model],
+            content: response[:content],
+            tokens: (response.fetch(:tokens_in, 0)) + (response.fetch(:tokens_out, 0)),
           }
         rescue StandardError
           # Continue with other attempts
@@ -60,11 +60,11 @@ module MASTER
       result = LLM.ask(curation_prompt, tier: :fast)
       return { selected: responses.first, reasoning: "Curation failed", curation_cost: 0 } unless result.ok?
 
-      data = result.value
-      cost = data[:cost] || 0
+      response = result.value
+      cost = response.fetch(:cost, 0)
 
       # Parse selection
-      content = data[:content].to_s
+      content = response[:content].to_s
       selected_idx = begin
         content.match(/\[(\d+)\]/)[1].to_i
       rescue StandardError
@@ -76,13 +76,13 @@ module MASTER
         reasoning: content,
         curation_cost: cost,
       }
-    rescue StandardError => e
-      { selected: responses.first, reasoning: "Curation failed: #{e.message}", curation_cost: 0 }
+    rescue StandardError => err
+      { selected: responses.first, reasoning: "Curation failed: #{err.message}", curation_cost: 0 }
     end
 
     def build_curation_prompt(responses, original_prompt)
-      options = responses.map.with_index do |r, i|
-        "response[#{i}] (#{r[:model]})\n#{r[:content][0, 500]}"
+      options = responses.map.with_index do |r, idx|
+        "response[#{idx}] (#{r[:model]})\n#{r[:content][0, 500]}"
       end.join("\n\n")
 
       <<~PROMPT
