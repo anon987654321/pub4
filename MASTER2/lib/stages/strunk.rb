@@ -41,13 +41,15 @@ module MASTER
 
       # Strip markdown decorations unsuitable for dmesg-style terminal output
       def strip_markdown(text)
-        text = text.gsub(/\*\*(.+?)\*\*/, '\1')       # **bold** → plain
-        text = text.gsub(/\*(.+?)\*/, '\1')            # *italic* → plain
-        text = text.gsub(/`{3}[a-z]*\n?/, '')         # fenced code blocks (keep content)
-        text = text.gsub(/^[-*]\s+/, '')               # bullet list markers
-        text = text.gsub(/^\d+\.\s+/, '')              # numbered list markers
-        text = text.gsub(/[😊🎉✅❌⚠️💡🚀🔥👋]/, '')  # common emoji
-        text = text.gsub(/#{Regexp.escape("😊")}/, '') # catch escaped too
+        text = text.gsub(/^#+\s+/, '')             # ## headers → plain
+        text = text.gsub(/\*\*(.+?)\*\*/m, '\1')  # **bold** → plain
+        text = text.gsub(/\*(.+?)\*/m, '\1')       # *italic* → plain
+        text = text.gsub(/`{3}[a-z]*\n?/, '')      # fenced code block markers
+        text = text.gsub(/^[-*]\s+/, '')            # bullet list markers
+        text = text.gsub(/^\d+\.\s+/, '')           # numbered list markers
+        text = text.gsub(/\n{3,}/, "\n\n")          # collapse excess blank lines
+        # Strip all emoji (broad unicode ranges)
+        text = text.gsub(/[\u{1F300}-\u{1FFFF}]|\u{2600}-\u{26FF}|\u{2700}-\u{27BF}/, '')
         text
       end
 
