@@ -38,6 +38,7 @@ module MASTER
           c("MASTER #{VERSION} (CONSTITUTIONAL) #1: #{timestamp}"),
           c("    #{user}@#{host}:#{MASTER.root}"),
           c("runtime0: #{RUBY_PLATFORM} · ruby #{RUBY_VERSION} · #{shell} #{user}#{prompt_hint}"),
+          c("host0: #{PlatformCheck.hypervisor} · #{PlatformCheck.provider}"),
           c("corpus0: #{UI.pluralize(DB.axioms.size, 'axiom')} · #{UI.pluralize(defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0, 'persona')}"),
           c("models0: #{tier_models}"),
           c("routing0: #{if LLM.configured_for_replicate?
@@ -59,9 +60,10 @@ module MASTER
         puts
       end
 
-      def banner_with_web(port)
+      def banner_with_web(port, token = nil)
         banner do |lines|
-          lines << c("web0: http://localhost:#{port}")
+          url = token ? "http://localhost:#{port}/?token=#{token}" : "http://localhost:#{port}"
+          lines << c("web0: #{url}")
         end
       end
 

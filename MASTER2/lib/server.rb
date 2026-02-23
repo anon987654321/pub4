@@ -111,7 +111,7 @@ module MASTER
         path = env["PATH_INFO"]
         method = env["REQUEST_METHOD"]
 
-        unless path == "/health"
+        unless path == "/health" || (method == "GET" && path == "/")
           token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ")
           token ||= Rack::Utils.parse_query(env["QUERY_STRING"] || "")["token"]
           return [401, {}, ["Unauthorized"]] unless token == AUTH_TOKEN
