@@ -588,3 +588,84 @@ prose_style:
       filler_phrase_in_string: low
       qualifier_word_in_string: low
       zombie_noun: low
+
+aesthetic_excellence:
+  # How the system recognises, scores, and exalts beautiful code.
+  # Beauty is the presence of virtue, not only the absence of defect.
+
+  principle: "exalt the excellent; do not only punish the poor"
+
+  beauty_score:
+    description: >
+      A positive integer displayed alongside violation count.
+      High score = beautiful. Zero violations + high score = exemplary.
+    display: "✦ {score}"
+    virtues:
+      zen_method:
+        points: 3
+        test: "Method ≤ 7 lines, one responsibility, one abstraction level, no rescue, nesting ≤ 1"
+      no_comment_needed:
+        points: 2
+        test: "Method/class has zero comments and is self-evident from names alone"
+      perfect_name:
+        points: 2
+        test: "Name is a single active verb or specific domain noun; makes its comment redundant"
+      domain_language_pure:
+        points: 2
+        test: "All names in a module drawn from one semantic field (e.g. all judicial, all musical, all geometric)"
+      composable_chain:
+        points: 1
+        test: "Method chain reads as natural subject→verb→object English"
+      orthogonal_module:
+        points: 2
+        test: "Module has zero shared mutable state with any other module"
+      dense_expressive:
+        points: 1
+        test: "Method expresses ≥ 3 meaningful operations in ≤ 5 lines"
+      self_referential:
+        points: 3
+        test: "System satisfies its own axioms when run against itself"
+
+  exemplar_registry:
+    file: "data/exemplars.yml"
+    description: >
+      Methods and modules so well-crafted they serve as positive examples
+      in future LLM prompts. Stored with name, file, why it's beautiful.
+    fields: [name, file, lines, beauty_score, virtue, why]
+    injection: "Cited in LLM system message as: EXEMPLARS: {name} in {file} — {why}"
+
+  constitutional_alignment:
+    description: >
+      For each axiom, a score 0–10 of how well the codebase embodies it —
+      not just avoids violations. Rendered as a sparkline in `status`.
+    sparkline_chars: "░▒▓█"
+    display_example: "DRY ████░  KISS █████  ZEN ███░░"
+
+  council_praise:
+    description: >
+      Council personas can emit PRAISE votes in addition to APPROVE/REJECT.
+      A PRAISE vote logs the reason to the exemplar registry.
+    verdict_values: [APPROVE, REJECT, PRAISE]
+    praise_format: "PRAISE: {what} because {why}"
+
+  read_aloud_test:
+    description: >
+      Code that reads as fluent English prose when spoken aloud is structurally beautiful.
+      Injected as a heuristic into the LLM prompt.
+    prompt_hint: >
+      Read your output aloud (mentally). If it flows as natural English —
+      subject acts on object, guards come first, the important thing is named first —
+      then it is well-structured. Revise until it reads cleanly.
+
+  interface_ratio:
+    description: "Public methods : private helpers. Ideal ≥ 1.0. Penalise ratios below 0.3."
+    beauty_threshold: 1.0
+    smell_threshold: 0.3
+    label: "interface dominates implementation"
+
+  fractal_consistency:
+    description: >
+      The same design principles applied at method, class, module, and system level.
+      When detected at all four levels simultaneously, the codebase is self-similar — beautiful.
+    levels: [method, class, module, system]
+    detection: "DRY, KISS, and inverted pyramid each satisfied at all four levels"

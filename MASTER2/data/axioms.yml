@@ -733,3 +733,55 @@
     - vague_noun_identifier
     - zombie_noun
     - qualifier_word
+- id: ZEN_METHOD
+  category: craft
+  protection: PROTECTED
+  priority: 8
+  title: Zen Method — One Thing, Perfectly
+  statement: >
+    Every method does exactly one thing at exactly one level of abstraction.
+    It has the right name (a single active verb or specific noun), fits in 7 lines
+    or fewer, requires no rescue clause, nests no deeper than one conditional,
+    and needs no comment to explain what it does.
+    A method that satisfies all five conditions is beautiful. Name it when found.
+  source: Kent Beck, SLAP principle, Unix philosophy
+  virtues:
+    - single_responsibility
+    - one_abstraction_level
+    - right_name
+    - minimal_lines
+    - no_defensive_clutter
+  auto_fixable: false
+  llm_strategies: [extract_method, rename_to_intent, flatten_abstraction, remove_rescue_noise]
+  smells: [multi_responsibility, mixed_abstraction, over_long_method, rescue_in_pure_method]
+
+- id: AESTHETIC_VIRTUE
+  category: craft
+  protection: ADJUSTABLE
+  priority: 7
+  title: Aesthetic Virtue — Exalt Beautiful Code
+  statement: >
+    Code quality is not only the absence of defects; it is the presence of beauty.
+    Beautiful code is recognised, named, and celebrated — not just the absence of noise.
+    The system actively scores beauty: naming elegance, composability, orthogonality,
+    domain language purity, density, and constitutional alignment.
+    A codebase that satisfies its own axioms is self-referentially beautiful.
+  source: "Knuth, The Art of Computer Programming; Dijkstra, The Humble Programmer"
+  dimensions:
+    beauty_score:
+      description: "Positive integer counting aesthetic virtues detected in a file or method"
+      increments:
+        - zen_method_found: +3
+        - no_comment_needed: +2
+        - perfect_name: +2
+        - domain_language_pure: +2
+        - composable_chain: +1
+        - orthogonal_module: +2
+        - dense_expressive: +1
+        - constitutional_alignment: +3
+    exemplar:
+      description: "A method or module so well-crafted it is stored as a positive example for future LLM prompts"
+    constitutional_alignment:
+      description: "0–10 score per axiom: how well the codebase embodies the axiom (not just avoids violating it)"
+  auto_fixable: false
+  llm_strategies: [identify_exemplar, score_beauty, praise_virtue, store_exemplar]

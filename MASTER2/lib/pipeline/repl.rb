@@ -194,6 +194,8 @@ module MASTER
       $stderr.puts UI.dim("council0: security veto#{cv&.any? ? " (#{cv.join(', ')})" : ""}") if sv
       $stderr.puts UI.dim("enforcer0: #{UI.pluralize(av.size, 'violation')} — #{av.join(', ')}") if av&.any?
       $stderr.puts UI.dim("zsh0: #{UI.pluralize(zv.size, 'violation')} — #{zv.map { |v| v[:tool] }.join(', ')}") if zv&.any?
+      bs = value[:beauty_score]
+      $stderr.puts UI.dim("✦ #{bs}") if bs&.> 0
     end
 
     # Build prompt using Pipeline.prompt with fallback
