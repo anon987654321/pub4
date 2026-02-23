@@ -780,7 +780,7 @@ principles:
       fix: Use attack-decay envelope for beat pulse
   44-typography-discipline:
     name: Typography Discipline
-    description: Structure through contrast, whitespace, and restraint—not decoration
+    description: Structure through contrast, whitespace, and restraint--not decoration
     category: interface
     priority: high
     guidelines:
@@ -804,7 +804,7 @@ principles:
       - print.*[╭╮╰╯]
     examples:
       good:
-      - "✓ Committed 3 files"
+      - "[ok] Committed 3 files"
       - |
         Status     Active
         Commits    1,247
@@ -833,7 +833,7 @@ principles:
       prompt: Does this output say more than necessary for successful operations?
     examples:
       good:
-      - "✓ Done"
+      - "[ok] Done"
       - 3 files updated
       bad:
       - |

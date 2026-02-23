@@ -28,7 +28,7 @@ module MASTER
     end
 
     # Build comprehensive system message with all YAML sections + persona
-    # depth: :shallow (default) | :own | :deep | :full — controls source injection
+    # depth: :shallow (default) | :own | :deep | :full -- controls source injection
     def self.build_system_message(include_commands: true, depth: :shallow)
       config = system_prompt_config
 
@@ -78,7 +78,7 @@ module MASTER
       master_md = File.join(Dir.pwd, "MASTER.md")
       sections << "PROJECT CONTEXT (from MASTER.md):\n#{File.read(master_md)[0..2000]}" if File.exist?(master_md)
 
-      # Persistent project memory — goal, stack, recent decisions across all sessions/models
+      # Persistent project memory -- goal, stack, recent decisions across all sessions/models
       if defined?(ProjectMemory)
         mem = ProjectMemory.inject(root: Dir.pwd)
         sections << mem unless mem.empty?
@@ -95,9 +95,9 @@ module MASTER
       # Zsh native patterns: forbid legacy forks in shell code
       sections << ZshPatternInjector.prompt_section
 
-      # Strunk & White — every LLM system message
+      # Strunk & White -- every LLM system message
       sections << <<~SW
-        PROSE STYLE — ELEMENTS OF STYLE (Strunk & White):
+        PROSE STYLE -- ELEMENTS OF STYLE (Strunk & White):
         Omit needless words. Every identifier, comment, error message, and string earns its place or is cut.
         Name things by what they ARE: axiom_list not data; violation_count not value; model_name not info.
         Use the active voice: "Enforcer rejected X" not "X was rejected". Methods are active verbs: enforce, scan, reflow.
@@ -106,13 +106,13 @@ module MASTER
         Read-aloud test: mentally read your output. If it flows as natural English, it is well-structured.
       SW
 
-      # Exemplars — positive models from the registry
+      # Exemplars -- positive models from the registry
       if defined?(BeautyScorer)
         ex = BeautyScorer.exemplars_prompt(max: 3)
         sections << ex unless ex.empty?
       end
 
-      # Grounded source injection — depth :own/:deep/:full loads real source files
+      # Grounded source injection -- depth :own/:deep/:full loads real source files
       if depth != :shallow && defined?(GroundedContext)
         grounded = GroundedContext.build(depth: depth, root: MASTER.root)
         sections << grounded unless grounded.empty?
@@ -121,7 +121,7 @@ module MASTER
       sections.join("\n\n")
     end
 
-    # Build task context (tools + format + history) — template loaded from data/prompts/react.yml
+    # Build task context (tools + format + history) -- template loaded from data/prompts/react.yml
     def build_task_context(goal)
       history_text = @history.map do |h|
         obs = h[:observation]&.[](0..400)

@@ -131,7 +131,7 @@ module MASTER
       def ask(prompt, tier: nil, model: nil, fallbacks: nil, reasoning: nil,
               json_schema: nil, provider: nil, stream: false, messages: nil)
         unless configured?
-          return Result.err("No API key — set REPLICATE_API_TOKEN or OPENROUTER_API_KEY.",
+          return Result.err("No API key -- set REPLICATE_API_TOKEN or OPENROUTER_API_KEY.",
                             category: :infrastructure)
         end
 
@@ -168,12 +168,12 @@ module MASTER
 
           if result.ok?
             process_llm_response(result, candidate_model, prompt, stream)
-            $stderr.puts UI.dim("  → #{extract_model_name(candidate_model)}") if candidate_model != primary
+            $stderr.puts UI.dim("  -> #{extract_model_name(candidate_model)}") if candidate_model != primary
             return result
           else
             handle_llm_failure(result, candidate_model)
             last_error = result.error
-            # Credit exhaustion is permanent — no point trying remaining paid models
+            # Credit exhaustion is permanent -- no point trying remaining paid models
             break if last_error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
           end
         end
@@ -188,7 +188,7 @@ module MASTER
 
       def try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
         spinner = nil
-        # Replicate never streams (blocking poll) — always show spinner so the user
+        # Replicate never streams (blocking poll) -- always show spinner so the user
         # knows something is happening even when stream: true was requested.
         use_spinner = !Thread.current[:llm_quiet] && (!stream || replicate_model?(current_model))
         if use_spinner
@@ -234,7 +234,7 @@ module MASTER
         CircuitBreaker.open_circuit!(current_model)
         if result.error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
           FREE_FALLBACKS.each { |model_id| CircuitBreaker.open_circuit!(model_id) }
-          Logging.warn("No OpenRouter credits — top up at openrouter.ai/settings/credits", subsystem: "llm.budget")
+          Logging.warn("No OpenRouter credits -- top up at openrouter.ai/settings/credits", subsystem: "llm.budget")
         else
           Logging.llm_error(tier: :default, error: result.error) if defined?(Logging)
         end
@@ -314,11 +314,25 @@ module MASTER
 
       # Structured output helper - guarantees valid JSON matching schema
       def ask_json(prompt, schema:, tier: :fast, **)
-        # Structured output requires OpenRouter — Replicate drops json_schema silently.
-        # Force to a non-Replicate model: use forced model only if it's not Replicate.
-        forced = @forced_model
-        forced = nil if forced && replicate_model?(forced)
-        ask(prompt, tier: tier, json_schema: schema, model: forced, provider: :openrouter, **)
+        # Inject JSON schema into the prompt so Replicate (which drops json_schema) still works.
+        # OpenRouter will also receive json_schema natively for strict structured output.
+        schema_hint = schema.respond_to?(:json_schema) ? schema.json_schema : schema.to_h
+        augmented = <<~PROMPT
+          #{prompt}
+
+          Respond with valid JSON only. No prose, no markdown fences. Schema:
+          #{JSON.generate(schema_hint)}
+        PROMPT
+        result = ask(augmented, tier: tier, json_schema: schema, **)
+        return result unless result.ok?
+
+        # Ensure content is parseable JSON even when Replicate returns plain text
+        content = result.value[:content].to_s.strip
+        content = content.gsub(/\A```(?:json)?\s*/i, "").gsub(/\s*```\z/, "").strip
+        JSON.parse(content) # raises if unparseable -- caller handles
+        result
+      rescue JSON::ParserError => e
+        Result.err("ask_json parse error: #{e.message}")
       end
 
       # Reasoning-enhanced query
@@ -381,11 +395,11 @@ module MASTER
         error_str = error.is_a?(Hash) ? error[:message].to_s : error.to_s
 
         if error_str.match?(/Prompt tokens limit exceeded: (\d+) > (\d+)/i)
-          Logging.warn("Prompt too large — clear history with /clear", subsystem: "llm.context")
+          Logging.warn("Prompt too large -- clear history with /clear", subsystem: "llm.context")
           return false
         end
 
-        # Credit errors are handled+warned once in handle_llm_failure — don't warn again here
+        # Credit errors are handled+warned once in handle_llm_failure -- don't warn again here
         return false if error_str.match?(/requires more credits|can only afford|insufficient credits/i)
 
         error_str.match?(/timeout|connection|network|429|502|503|504|overloaded/i)

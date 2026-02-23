@@ -142,7 +142,7 @@ module MASTER
     def select_pattern(goal)
       g = goal.to_s.strip.downcase
 
-      # Direct: greetings, chitchat, simple one-word queries — no LLM cost
+      # Direct: greetings, chitchat, simple one-word queries -- no LLM cost
       if g.match?(/\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i)
         return :direct
       end
@@ -161,7 +161,7 @@ module MASTER
         return :rewoo
       end
 
-      # Sanitize for LLM call — prevent prompt injection
+      # Sanitize for LLM call -- prevent prompt injection
       sanitized_goal = goal.to_s.gsub(/[\r\n]+/, " ").strip.slice(0, 500)
 
       prompt = <<~CLASSIFY
@@ -170,8 +170,8 @@ module MASTER
         PATTERNS:
         - react: General exploration, unknown tasks, tool use with observation loops
         - pre_act: Multi-step plans with clear sequential phases (build X then Y then Z)
-        - rewoo: Pure reasoning, research, comparison — minimal tool use, cost-efficient
-        - reflexion: Tasks requiring correctness — fixing, debugging, refactoring, safety-critical work
+        - rewoo: Pure reasoning, research, comparison -- minimal tool use, cost-efficient
+        - reflexion: Tasks requiring correctness -- fixing, debugging, refactoring, safety-critical work
 
         SPECIAL:
         - direct: Simple questions, chitchat, greetings, no tools needed

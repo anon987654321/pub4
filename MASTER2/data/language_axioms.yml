@@ -5,7 +5,7 @@ ruby:
   - id: prefer_each_with_object
     name: "Prefer each_with_object over inject for hash building"
     detect: '\.(inject|reduce)\(\s*\{\s*\}\s*\)'
-    suggest: "Use .each_with_object({}) instead — eliminates mutable-return footgun"
+    suggest: "Use .each_with_object({}) instead -- eliminates mutable-return footgun"
     severity: warning
     autofix: false
 
@@ -139,7 +139,7 @@ rails:
   - id: no_update_attribute
     name: "Replace update_attribute with update!"
     detect: '\.update_attribute\('
-    suggest: "update_attribute skips validations — use update!"
+    suggest: "update_attribute skips validations -- use update!"
     severity: error
     autofix: true
 
@@ -196,7 +196,7 @@ zsh:
   - id: dollar_paren_over_backtick
     name: "Replace backticks with $(command)"
     detect: '`[^`]+`'
-    suggest: "Use $(command) — nestable and readable"
+    suggest: "Use $(command) -- nestable and readable"
     severity: warning
     autofix: true
 
@@ -236,23 +236,23 @@ zsh:
     autofix: false
 
   - id: banned_external_commands
-    name: "Banned external commands — use pure zsh"
+    name: "Banned external commands -- use pure zsh"
     detect: '\b(sed|awk|tr|grep|cut|wc|head|tail|find|sort|uniq|basename|dirname|realpath|readlink|seq|expr|xargs|python|python3|bash|getopts|sudo)\b'
-    suggest: "Replace with pure zsh: sed→${var//a/b}, awk→${(s:,:)str}[n], grep→${(M)arr:#*pat*}, find→**/*.ext(.), basename→${f:t}, dirname→${f:h}, realpath→${f:A}, sort→${(o)arr}, uniq→${(u)arr}, wc→${#arr}, head→${arr[1,n]}, tail→${arr[-n,-1]}"
+    suggest: "Replace with pure zsh: sed->${var//a/b}, awk->${(s:,:)str}[n], grep->${(M)arr:#*pat*}, find->**/*.ext(.), basename->${f:t}, dirname->${f:h}, realpath->${f:A}, sort->${(o)arr}, uniq->${(u)arr}, wc->${#arr}, head->${arr[1,n]}, tail->${arr[-n,-1]}"
     severity: error
     autofix: false
 
   - id: no_modifier_t_without_full_path
     name: "Glob :t modifier loses full path context"
     detect: '\*\*\/\*\(\/\s*:t\)'
-    suggest: "Remove :t from glob qualifier — iterate full paths and use ${f:t} inline if basename needed. :t in glob loses the directory component causing broken path reconstruction."
+    suggest: "Remove :t from glob qualifier -- iterate full paths and use ${f:t} inline if basename needed. :t in glob loses the directory component causing broken path reconstruction."
     severity: error
     autofix: false
 
   - id: zparseopts_over_getopts
     name: "Use zparseopts instead of getopts"
     detect: '\bgetopts\b'
-    suggest: "Use zparseopts -D -E -F (zsh/zutil) — supports long options, cleaner than getopts"
+    suggest: "Use zparseopts -D -E -F (zsh/zutil) -- supports long options, cleaner than getopts"
     severity: warning
     autofix: false
 
@@ -288,7 +288,7 @@ zsh:
   - id: button_over_anchor
     name: "Prefer <button> over <a href=\"#\">"
     detect: '<a\s+href=["'']#["'']'
-    suggest: "Use <button> for actions — accessible by default"
+    suggest: "Use <button> for actions -- accessible by default"
     severity: warning
     autofix: false
 
@@ -380,7 +380,7 @@ css_scss:
   - id: use_forward_over_import
     name: "Replace @import with @use/@forward in SCSS"
     detect: '@import\s+["\x27]'
-    suggest: "@import is deprecated — use @use/@forward"
+    suggest: "@import is deprecated -- use @use/@forward"
     severity: warning
     autofix: false
 
@@ -515,7 +515,7 @@ universal:
   - id: consistent_file_structure
     name: "Consistent file structure order"
     detect: null
-    suggest: "Order: magic comments → requires → module → constants → public → private → end"
+    suggest: "Order: magic comments -> requires -> module -> constants -> public -> private -> end"
     severity: info
     autofix: false
 
@@ -529,7 +529,7 @@ universal:
   - id: immutability_by_default
     name: "Immutability by default"
     detect: null
-    suggest: "Prefer frozen/const/immutable forms — mutate only when necessary"
+    suggest: "Prefer frozen/const/immutable forms -- mutate only when necessary"
     severity: info
     autofix: false
 
@@ -543,7 +543,7 @@ universal:
   - id: typographic_excellence
     name: "Typographic excellence in user-facing text"
     detect: '["'']\.\.\.["'']|["'']--["'']'
-    suggest: 'Use … (ellipsis), — (em dash), "" (curly quotes) in UI strings'
+    suggest: 'Use ... (ellipsis), -- (em dash), "" (curly quotes) in UI strings'
     severity: info
     autofix: true
 
@@ -588,7 +588,7 @@ universal:
     suggest: "Split files >300 lines at module boundaries"
     severity: warning
     autofix: false
-# RUBY BEAUTY — Design philosophy (restored from master.yml v71.3.0)
+# RUBY BEAUTY -- Design philosophy (restored from master.yml v71.3.0)
 
 ruby_beauty:
   frozen_string_literals:
@@ -616,12 +616,12 @@ ruby_beauty:
     rule: "Methods under 10 lines ideal, max 20"
     technique: "Extract till you drop"
   stepdown_rule:
-    rule: "Code reads like newspaper — most important first"
-    structure: "Public methods → Private helpers → Implementation details"
+    rule: "Code reads like newspaper -- most important first"
+    structure: "Public methods -> Private helpers -> Implementation details"
   boy_scout_rule:
     rule: "Leave code better than you found it"
     application: "Fix small issues while working on features"
-# RAILS DOCTRINE — Framework philosophy (restored from master.yml v71.3.0)
+# RAILS DOCTRINE -- Framework philosophy (restored from master.yml v71.3.0)
 
 rails_doctrine:
   convention_over_configuration:
@@ -647,7 +647,7 @@ rails_doctrine:
   beautiful_code:
     rule: "Code should be elegant, not just functional"
     criteria: [readable, maintainable, expressive, concise]
-# HTML/CSS PRINCIPLES — Markup and styling philosophy
+# HTML/CSS PRINCIPLES -- Markup and styling philosophy
 
 html_css_principles:
   semantic_html:
@@ -669,7 +669,7 @@ html_css_principles:
   mobile_first:
     rule: "Base styles mobile, @media min-width for desktop"
     pattern: "min-width media queries, not max-width"
-# LARGE HTML DOCUMENTS — Inline CSS/JS strategy
+# LARGE HTML DOCUMENTS -- Inline CSS/JS strategy
 
 large_html_documents:
   rationale: "Business plans, presentations, visualizations often require inline CSS/JS"
@@ -681,14 +681,14 @@ large_html_documents:
       characteristics: [minified, compressed, performance_critical]
       formatting: minimal_whitespace
   inline_css:
-    organization: "CSS variables → Resets → Layout → Components → Utilities"
+    organization: "CSS variables -> Resets -> Layout -> Components -> Utilities"
     css_variables: "Define all colors/spacing/fonts in :root"
-    modern_only: "Flexbox, grid, container queries — no floats or positioning hacks"
+    modern_only: "Flexbox, grid, container queries -- no floats or positioning hacks"
     mobile_first: "Base styles mobile, min-width media queries for desktop"
     performance: "will-change only on animating elements, CSS containment for sections"
   inline_js:
     production: "Minified, compressed vars, no whitespace"
-    development: "Readable, commented, structured: Config → Utils → Classes → Init → Events"
+    development: "Readable, commented, structured: Config -> Utils -> Classes -> Init -> Events"
     es6: "const/let, arrow functions, destructuring, template literals"
     dom_safety: "Check element existence before manipulation"
     memory: "Track timers in Set, clear on beforeunload"
@@ -697,7 +697,7 @@ large_html_documents:
     production: "Minify JS/CSS, inline everything, optimize for size"
     business_plan: "Readable formatting, comments, educational"
     default: "Extract to separate files"
-# NORWEGIAN LANGUAGE — Bokmål writing rules
+# NORWEGIAN LANGUAGE -- Bokmål writing rules
 
 norwegian:
   dialect: "bokmål"
@@ -715,11 +715,11 @@ norwegian:
         rule: "Methods must not exceed 10 lines"
         severity: warning
       - id: predicate_naming
-        rule: "Predicate methods end with ? — no is_/has_/can_ prefix"
+        rule: "Predicate methods end with ? -- no is_/has_/can_ prefix"
         detect: 'def\s+(is_|has_|can_|does_)\w+'
         severity: warning
       - id: no_and_or
-        rule: "Use && and || — never and/or for control flow"
+        rule: "Use && and || -- never and/or for control flow"
         detect: '\b(and|or)\b'
         severity: warning
       - id: no_nested_ternary
@@ -731,7 +731,7 @@ norwegian:
         severity: info
     rails:
       - id: skinny_controllers
-        rule: "Controllers delegate to models/services — no business logic"
+        rule: "Controllers delegate to models/services -- no business logic"
         severity: warning
       - id: no_inline_render
         rule: "Never render inline: in controllers"
@@ -744,6 +744,6 @@ norwegian:
         rule: "Prefer scope over class method for queries"
         severity: info
       - id: no_default_scope
-        rule: "Avoid default_scope — use explicit scopes"
+        rule: "Avoid default_scope -- use explicit scopes"
         detect: '\bdefault_scope\b'
         severity: warning

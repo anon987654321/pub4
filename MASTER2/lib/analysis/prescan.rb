@@ -106,7 +106,7 @@ module MASTER
         vs = results[:violations]
         return unless vs && vs[:total].positive?
 
-        autofix_note = vs[:autofix_eligible].positive? ? " · #{vs[:autofix_eligible]} autofix-eligible — run: converge" : ""
+        autofix_note = vs[:autofix_eligible].positive? ? " * #{vs[:autofix_eligible]} autofix-eligible -- run: converge" : ""
         UI.warn("quality0: #{vs[:total]} violations across #{vs[:files]} files#{autofix_note}")
       end
 
@@ -134,7 +134,7 @@ module MASTER
           end
         end
       rescue StandardError
-        # non-critical — /etc may not be readable
+        # non-critical -- /etc may not be readable
       end
     end
   end

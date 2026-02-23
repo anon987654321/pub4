@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 module MASTER
-  # GroundedContext — injects MASTER2's own source + gem READMEs into the LLM
+  # GroundedContext -- injects MASTER2's own source + gem READMEs into the LLM
   # system message so the model reasons from real code, not hallucinated APIs.
   #
   # Depth levels:
-  #   :shallow   — current default: system_prompt.yml + dir tree only
-  #   :own        — MASTER2 lib/ key files + data/ YAMLs + LLM.md  (selfrun default)
-  #   :deep       — :own + gem READMEs from Gemfile dependencies
-  #   :full       — :deep + complete gem source (expensive; 1M+ ctx models only)
+  #   :shallow   -- current default: system_prompt.yml + dir tree only
+  #   :own        -- MASTER2 lib/ key files + data/ YAMLs + LLM.md  (selfrun default)
+  #   :deep       -- :own + gem READMEs from Gemfile dependencies
+  #   :full       -- :deep + complete gem source (expensive; 1M+ ctx models only)
   #
   # Token budget is enforced: files are prioritised then truncated to fit.
   # Encoding: ~4 chars per token (conservative estimate).
@@ -19,7 +19,7 @@ module MASTER
       shallow: 0,
       own:     60_000 * CHARS_PER_TOKEN,  # ~60k tokens
       deep:    120_000 * CHARS_PER_TOKEN, # ~120k tokens
-      full:    400_000 * CHARS_PER_TOKEN, # ~400k tokens — kimi/gemini only
+      full:    400_000 * CHARS_PER_TOKEN, # ~400k tokens -- kimi/gemini only
     }.freeze
 
     # Files loaded first (highest signal for self-analysis)
@@ -58,7 +58,7 @@ module MASTER
       sections = []
       used = 0
 
-      # Own source files — priority list first, then remaining lib/
+      # Own source files -- priority list first, then remaining lib/
       own_files = priority_files(root) + remaining_lib_files(root)
       own_files.uniq.each do |rel|
         break if used >= budget

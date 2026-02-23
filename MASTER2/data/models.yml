@@ -2,11 +2,21 @@
 # Pricing: $/million tokens (input/output)
 # First model is default. Order = fallback priority.
 # tier: premium | strong | fast | cheap
-# api: replicate  → routed via Replicate predictions API (REPLICATE_API_TOKEN)
-#      openrouter → routed via ruby_llm/OpenRouter (OPENROUTER_API_KEY) [default]
+# api: replicate  -> routed via Replicate predictions API (REPLICATE_API_TOKEN)
+#      openrouter -> routed via ruby_llm/OpenRouter (OPENROUTER_API_KEY) [default]
+# Note: claude-sonnet-4.6 is NOT on Replicate (only up to 4.5-sonnet); use OpenRouter.
 
 # --- STRONG (default + council arbiter) ---
-# Sonnet 4.5 via Replicate is primary; free DeepSeek R1 via OpenRouter is fallback.
+
+- id: anthropic/claude-sonnet-4.6
+  alias: claude-sonnet-4.6
+  tier: strong
+  input_cost: 3.00
+  output_cost: 15.00
+  context_window: 1000000
+  provider: anthropic
+  api: openrouter
+  reasoning: true
 
 - id: anthropic/claude-4.5-sonnet
   alias: claude-sonnet-4.5

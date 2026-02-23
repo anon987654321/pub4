@@ -16,4 +16,4 @@ In short, MASTER2 is about disciplined autonomy: faster delivery, higher confide
 
 ---
 
-**Note:** This narration script has been codified as `MASTER::Replicate::Narration` — see `lib/replicate/narration.rb` for the structured implementation.
+**Note:** This narration script has been codified as `MASTER::Replicate::Narration` -- see `lib/replicate/narration.rb` for the structured implementation.

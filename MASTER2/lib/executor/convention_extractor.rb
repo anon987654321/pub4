@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# ConventionExtractor — Samples the project's actual Ruby style and injects it
+# ConventionExtractor -- Samples the project's actual Ruby style and injects it
 # into the system prompt so the LLM mimics existing conventions instead of
 # inventing its own. Implements gist item #9 (Gemini CLI / Warp 2.0 pattern).
 #
@@ -25,7 +25,7 @@ module MASTER
       all_content = File.read(File.join(root, "lib", "result.rb"))[0..RESULT_CHAR_LIMIT] rescue ""
       all_content += "\n" + samples.join("\n")
 
-      lines = ["PROJECT CONVENTIONS (mimic exactly — do not invent new patterns):"]
+      lines = ["PROJECT CONVENTIONS (mimic exactly -- do not invent new patterns):"]
       lines << "- Frozen string literals: #{frozen_string_style(all_content)}"
       lines << "- Module pattern: #{module_pattern(all_content)}"
       lines << "- Indent: #{indent_style(all_content)}"
@@ -54,7 +54,7 @@ module MASTER
         elsif modfunc_count > extend_count
           "module_function"
         else
-          "mixed — prefer extend self per rubocop config"
+          "mixed -- prefer extend self per rubocop config"
         end
       end
 
@@ -68,7 +68,7 @@ module MASTER
         result_count = content.scan(/Result\.ok|Result\.err/).size
         raise_count  = content.scan(/raise\s+\w/).size
         if result_count > raise_count
-          "Result monad (Result.ok / Result.err) — prefer over exceptions"
+          "Result monad (Result.ok / Result.err) -- prefer over exceptions"
         else
           "raise/rescue exceptions"
         end

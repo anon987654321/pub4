@@ -3,7 +3,7 @@
 module MASTER
   module Scan
     module Rules
-      # RescueHygiene — flags bare-rescue, rescue-nil, and unused rescue variables.
+      # RescueHygiene -- flags bare-rescue, rescue-nil, and unused rescue variables.
       # Migrated from Review::Scanner::CHECKS.
       module RescueHygiene
         include Scan::Rule
@@ -16,12 +16,12 @@ module MASTER
           }.freeze,
           rescue_nil: {
             pattern:  /rescue\s+nil\b/,
-            message:  "rescue nil swallows all exceptions silently — use rescue StandardError",
+            message:  "rescue nil swallows all exceptions silently -- use rescue StandardError",
             severity: :major,
           }.freeze,
           unused_rescue_var: {
             pattern:  /rescue(?:\s+\w+)?\s*=>\s*e\s*(?:;\s*(?:nil|\{\}|\[\])|[\r\n]\s*(?:nil|end|\{\}|\[\]))/,
-            message:  "Rescue captures 'e' but body is empty — drop => e if variable unused",
+            message:  "Rescue captures 'e' but body is empty -- drop => e if variable unused",
             severity: :minor,
           }.freeze,
         }.freeze

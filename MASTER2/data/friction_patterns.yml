@@ -1,4 +1,4 @@
-# Friction patterns — detectable signals that indicate workflow friction.
+# Friction patterns -- detectable signals that indicate workflow friction.
 # Each pattern maps to a remedy from the introspection wishlist.
 # FrictionRecorder fires these; SessionRetrospective synthesizes them.
 
@@ -23,7 +23,7 @@ patterns:
 
   module_function_extend_self:
     id: module_function_extend_self
-    description: "Rubocop changed extend self → module_function (inclusion semantics differ)"
+    description: "Rubocop changed extend self -> module_function (inclusion semantics differ)"
     signal: "module_function present in a module that is include-d elsewhere"
     wishlist_item: 4
     severity: critical
@@ -77,7 +77,7 @@ patterns:
 
   zero_param_extract:
     id: zero_param_extract
-    description: "Generated template used #{} interpolation — breaks JSON serialization"
+    description: "Generated template used #{} interpolation -- breaks JSON serialization"
     signal: "File created with unquoted heredoc containing Ruby interpolation"
     wishlist_item: 2
     severity: medium

@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# Architect — Automated fresh-eyes architectural health assessment.
+# Architect -- Automated fresh-eyes architectural health assessment.
 # Produces the same "step back and look at the whole codebase" analysis
 # that was previously done manually, now runnable anytime via `> architect`.
 #
 # Checks:
 #   1. File counts and LOC per top-level lib/ namespace
 #   2. Namespace duplication (two dirs doing similar things)
-#   3. Thin files (< 20 LOC of actual code — likely should be merged)
+#   3. Thin files (< 20 LOC of actual code -- likely should be merged)
 #   4. Data file inventory: orphaned, tiny, or comment-only
 #   5. Accretion index: ratio of lib files to data concepts (signal for over-engineering)
 #   6. Critical path estimation: which files are on the hot path (most required-by others)

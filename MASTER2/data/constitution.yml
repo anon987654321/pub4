@@ -167,7 +167,7 @@ generation_templates:
         end
       end
   zsh:
-    rules: ["#!/usr/bin/env zsh", "set -euo pipefail", "setopt nullglob extendedglob", "quote expansions", "pure zsh — no sed/awk/tr/find/grep/cut/wc/head/tail/basename/dirname/realpath/seq/expr/getopts/sudo/bash/xargs"]
+    rules: ["#!/usr/bin/env zsh", "set -euo pipefail", "setopt nullglob extendedglob", "quote expansions", "pure zsh -- no sed/awk/tr/find/grep/cut/wc/head/tail/basename/dirname/realpath/seq/expr/getopts/sudo/bash/xargs"]
     template: |
       #!/usr/bin/env zsh
       set -euo pipefail
@@ -211,7 +211,7 @@ workflow:
   mandatory_alternatives_in_ideate: 15
   oscillation_threshold: 25
 
-# hooks: section removed — data/hooks.yml is ONE_SOURCE for hook definitions
+# hooks: section removed -- data/hooks.yml is ONE_SOURCE for hook definitions
 
 enforcement_layers:
   - name: meta
@@ -227,10 +227,10 @@ enforcement_layers:
   - name: security
     description: "Input validation, privilege separation"
 
-# Golden rule — restored from master.yml v71.3.0
+# Golden rule -- restored from master.yml v71.3.0
 golden_rule: "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
 
-# Convergence loop — iterate until no violations remain
+# Convergence loop -- iterate until no violations remain
 convergence:
   enabled: true
   algorithm: "Keep iterating until no violations remain and no further improvements possible"
@@ -238,14 +238,14 @@ convergence:
   history_window: 25        # Workflow::Convergence plateau/oscillation window
   evolve_max_iterations: 10 # Evolve per-session budget cap
   threshold: 0.001
-  resume_on_interrupt: true # FINISH_FIRST — resume aborted loops rather than restart
+  resume_on_interrupt: true # FINISH_FIRST -- resume aborted loops rather than restart
   on_stuck: [broaden_search, change_perspective, ask_user]
   on_oscillation: [freeze, analyze_cycle, break_deadlock]
 
-# Anti-sprawl — prevent file proliferation
+# Anti-sprawl -- prevent file proliferation
 anti_sprawl:
   enabled: true
-  rationale: "File sprawl violates DRY — single source of truth"
+  rationale: "File sprawl violates DRY -- single source of truth"
   enforcement: "Edit existing files directly, never create analysis/summary/report/todo files"
   banned_outputs: [summary.md, analysis.md, report.md, todo.md, notes.md, changelog.md,
     IMPLEMENTATION_SUMMARY.md, IMPLEMENTATION_NOTES.md, AGENT_WORK_MERGE_STATUS.md,
@@ -253,24 +253,24 @@ anti_sprawl:
   rule: "One README.md per folder maximum. No session-artifact markdown files."
   exceptions: [test_files, user_requested_deliverables]
 
-# Self-protection — prevent destructive self-modification
+# Self-protection -- prevent destructive self-modification
 self_protection:
   enabled: true
   backup_before_modify: true
   min_principle_count: 40
   validation_rules:
     - "golden_rule must exist"
-    - "axioms section immutable — add only, never delete"
+    - "axioms section immutable -- add only, never delete"
     - "version must increment on changes"
 
-# Deep trace logging — OpenBSD dmesg-inspired
+# Deep trace logging -- OpenBSD dmesg-inspired
 deep_trace:
   enabled: true
   style: "OpenBSD dmesg-inspired"
   format: "component0 at tier: message"
   levels: [info, warn, error, fatal]
 
-# Detectors — automated code quality checks
+# Detectors -- automated code quality checks
 detectors:
   duplicate_code:
     enabled: true
@@ -315,17 +315,17 @@ language:
       user: "bruker"
       system: "system"
 
-# Self-improvement — convergence mandate
+# Self-improvement -- convergence mandate
 self_improvement:
   continuous: true
-  mandate: "ALL violations found MUST be autofixed — zero tolerance for manual fixes"
+  mandate: "ALL violations found MUST be autofixed -- zero tolerance for manual fixes"
   convergence_loop: "Iterate until no violations remain and no further improvements possible"
   auto_refine:
     enabled: true
     trigger: "on_every_violation"
     mode: "convergence"
 
-# Autofix — safe transformations
+# Autofix -- safe transformations
 autofix:
   enabled: true
   confidence_threshold: 0.90
@@ -347,7 +347,7 @@ formatting:
     convention: "standard Rails conventions"
   threshold: 0.98
 
-# Granular formatting rules — style + cosmetics by language
+# Granular formatting rules -- style + cosmetics by language
 granular_formatting_rules:
   universal:
     final_newline: required
@@ -422,7 +422,7 @@ principles:
     quote_all_expansions: true
     avoid_uuoc: true
 
-# Tech stack specifics — concrete targets and validators
+# Tech stack specifics -- concrete targets and validators
 tech_stack_specifics:
   languages:
     primary: [ruby, zsh]
@@ -444,13 +444,13 @@ tech_stack_specifics:
     rollback_on: [syntax_error, test_failure, behavior_regression]
     iterative_until_diminishing_returns: true
 
-# Constraints — allowed languages and banned tools
+# Constraints -- allowed languages and banned tools
 constraints:
   allowed_languages: [ruby, zsh, html, erb, css, scss, javascript, rust, yaml]
   banned_tools: [python, sed, awk, tr, wc, head, tail, cut, find, sudo]
   enforcement: "critical"
 
-# Terminal philosophy — MASTER2 as a Unix CLI alternative to Codex/Claude/GitHub Copilot CLI
+# Terminal philosophy -- MASTER2 as a Unix CLI alternative to Codex/Claude/GitHub Copilot CLI
 terminal_philosophy:
   mission: "MASTER2 is a first-class autonomous engineering CLI for Unix terminals."
   processing_model: "Treat all user input as streamable Unix text by default, regardless of content type."
@@ -480,7 +480,7 @@ comments:
     keep: ["workarounds", "performance notes", "decision context", "warnings", "TODO", "FIXME", "HACK"]
     remove: ["restates the code", "obvious getters/setters", "auto-generated boilerplate"]
 
-# CLI integration — supported platforms
+# CLI integration -- supported platforms
 cli_integration:
   primary_platform: "OpenBSD 7.8+"
   primary_shell: "zsh"
@@ -490,7 +490,7 @@ cli_integration:
     - "macOS with Zsh"
   session_management: true
 
-# Heredoc editing — in-place atomic editing of embedded apps
+# Heredoc editing -- in-place atomic editing of embedded apps
 heredoc_editing:
   description: "Ruby/Rails apps embedded in zsh heredocs within .sh deployers are single source of truth"
   locations: ["deploy/rails/*.sh", "deploy/openbsd/*.sh"]
@@ -515,9 +515,9 @@ llm_output_handling:
   principle: "Outsource pattern detection and parsing to the LLM itself"
   rules:
     - "Request structured JSON output instead of markdown or prose"
-    - "Never regex-parse free-form LLM text — let the LLM reason about structure"
+    - "Never regex-parse free-form LLM text -- let the LLM reason about structure"
     - "Validate JSON schema on receipt, reject and retry on malformed output"
-    - "Keep prompts terse — specify keys and types, not formatting examples"
+    - "Keep prompts terse -- specify keys and types, not formatting examples"
   rationale: >
     LLMs produce inconsistent markdown across providers and temperatures.
     Regex parsers break on every format variation. Requesting JSON
@@ -530,29 +530,29 @@ gem_outsourcing:
     - area: "Result monad"
       current: "lib/result.rb"
       gem: "dry-monads"
-      status: "evaluate — current impl is 122L and sufficient"
+      status: "evaluate -- current impl is 122L and sufficient"
     - area: "Code formatting"
       current: "lib/reflow.rb"
       gem: "rubocop --autocorrect"
-      status: "evaluate — rubocop already detected"
+      status: "evaluate -- rubocop already detected"
     - area: "JSONL persistence"
       current: "lib/db_jsonl.rb"
       gem: "sqlite3 or lmdb"
-      status: "evaluate — JSONL is simple and portable"
+      status: "evaluate -- JSONL is simple and portable"
   keep_custom:
-    - "lib/pledge.rb — OpenBSD-specific, no gem"
-    - "lib/harvester.rb — domain-specific file collection"
-    - "lib/staging.rb — git-free staging with rollback"
+    - "lib/pledge.rb -- OpenBSD-specific, no gem"
+    - "lib/harvester.rb -- domain-specific file collection"
+    - "lib/staging.rb -- git-free staging with rollback"
 
 metaprogramming_policy:
   banned_patterns:
     - method_missing
     - const_missing
     - define_method
-  reason: "Violates EXPLICIT axiom — prefer explicit method definitions"
+  reason: "Violates EXPLICIT axiom -- prefer explicit method definitions"
   severity: error
 
-# Principle interactions — from pub2 master.json v225.0.0
+# Principle interactions -- from pub2 master.json v225.0.0
 # Documents how principles reinforce or conflict with each other
 principle_interactions:
   conflicts:
@@ -567,8 +567,8 @@ principle_interactions:
     dry_vs_wet_or_aha:
       winner: "wet_or_aha"
       condition: "fewer than 3 duplications"
-      reason: "Rule of Three — duplication is better than wrong abstraction before pattern is proven"
-      example: "Copy code twice before extracting — on third use, extract"
+      reason: "Rule of Three -- duplication is better than wrong abstraction before pattern is proven"
+      example: "Copy code twice before extracting -- on third use, extract"
     clarity_vs_simplicity:
       winner: "clarity"
       reason: "Reader comprehension always wins over token efficiency"
@@ -591,7 +591,7 @@ principle_interactions:
       effect: "safe_evolution"
       description: "Tests enable confident refactoring"
 
-# Approval taxonomy — from pub2 governance.approval
+# Approval taxonomy -- from pub2 governance.approval
 # Defines which changes can auto-proceed vs require manual approval
 approval_taxonomy:
   auto_proceed:

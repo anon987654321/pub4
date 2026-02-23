@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module MASTER
-  # Scan — single traversal, pluggable rule modules.
+  # Scan -- single traversal, pluggable rule modules.
   # Replaces three separate Dir.glob loops in code_review/, review/, analysis/.
   #
   # Usage:
-  #   Scan.run("lib/")                    # :quick — literal patterns only, no LLM
+  #   Scan.run("lib/")                    # :quick -- literal patterns only, no LLM
   #   Scan.run("lib/", depth: :standard)  # + structural smells (CodeReview::Engine)
   #   Scan.run("lib/", depth: :deep)      # + constitutional enforcer (Review::Enforcer)
   #
@@ -15,10 +15,10 @@ module MASTER
 
     # Namespace for auto-loaded Scan::Rule plugin modules.
     # Files under lib/scan/rules/*.rb are required at :deep depth and must
-    # define a module here that responds to .check(code, path:) → Array<Hash>.
+    # define a module here that responds to .check(code, path:) -> Array<Hash>.
     module Rules; end
 
-    # A Rule is anything that responds to .check(code, path:) → Array<Hash>
+    # A Rule is anything that responds to .check(code, path:) -> Array<Hash>
     # Each hash must have: { rule:, message:, line:, severity:, autofix: }
     module Rule
       def self.included(base)
@@ -62,7 +62,43 @@ module MASTER
           autofix_eligible: autofix, by_rule: by_rule, by_file: by_file }
       end
 
+      # Apply all rules that respond to .fix(content) to every source file under path.
+      # Returns { fixed: N, errors: [] }.
+      def fix_all!(path = MASTER.root)
+        path  = File.expand_path(path.to_s)
+        rules = fixable_rules
+        return { fixed: 0, errors: [] } if rules.empty?
+
+        exts  = %w[.rb .yml .yaml .md .sh .txt .erb .conf .gemspec .js .ts .css .svg .json]
+        files = Dir.glob(File.join(path, "**", "*")).select do |f|
+          File.file?(f) && exts.include?(File.extname(f)) &&
+            !f.match?(%r{/(vendor|var/bundle|\.git|node_modules)/})
+        end
+
+        fixed  = 0
+        errors = []
+
+        files.each do |file|
+          orig = File.binread(file)
+          content = orig.dup.force_encoding("utf-8")
+          content = content.encode("utf-8", invalid: :replace, undef: :replace)
+          rules.each { |rule| content = rule.fix(content) }
+          next if content.b == orig.b
+
+          File.binwrite(file, content)
+          fixed += 1
+        rescue StandardError => e
+          errors << "#{file}: #{e.message}"
+        end
+
+        { fixed: fixed, errors: errors }
+      end
+
       private
+
+      def fixable_rules
+        loaded_plugin_rules.select { |r| r.respond_to?(:fix) }
+      end
 
       def ruby_files(path)
         if File.file?(path)
@@ -75,7 +111,7 @@ module MASTER
       def collect(code, file, depth:)
         findings = []
 
-        # :quick — fast literal pattern check, no LLM (always runs)
+        # :quick -- fast literal pattern check, no LLM (always runs)
         if defined?(CodeReview::Violations)
           literals = CodeReview::Violations.check_literal(code)
           findings.concat(literals.map { |v| normalise(v, rule: :literal) })
@@ -83,7 +119,7 @@ module MASTER
 
         return findings if depth == :quick
 
-        # :standard — structural smells via CodeReview::Engine
+        # :standard -- structural smells via CodeReview::Engine
         if depth == :standard || depth == :deep
           if defined?(CodeReview::Engine)
             engine_result = CodeReview::Engine.analyze_all(code, path: file)
@@ -97,7 +133,7 @@ module MASTER
 
         return findings unless depth == :deep
 
-        # :deep — constitutional enforcer (LLM-optional)
+        # :deep -- constitutional enforcer (LLM-optional)
         if defined?(Review::Enforcer)
           enforcer_result = Review::Enforcer.check(code, filename: file)
           (enforcer_result[:violations] || []).each do |v|
@@ -105,7 +141,7 @@ module MASTER
           end
         end
 
-        # :deep — Scan::Rule plugins loaded from lib/scan/rules/
+        # :deep -- Scan::Rule plugins loaded from lib/scan/rules/
         loaded_plugin_rules.each do |rule_mod|
           rule_mod.check(code, path: file).each do |finding|
             findings << normalise(finding, rule: finding[:rule] || :scanner_check)

@@ -150,9 +150,9 @@ module MASTER
       end
 
       # Build model-family-aware input hash.
-      # anthropic/*   → prompt, system, max_tokens, temperature
-      # deepseek-ai/* → prompt, system_prompt, max_tokens, temperature, top_p
-      # default       → deepseek-style schema (most open LLMs on Replicate)
+      # anthropic/*   -> prompt, system, max_tokens, temperature
+      # deepseek-ai/* -> prompt, system_prompt, max_tokens, temperature, top_p
+      # default       -> deepseek-style schema (most open LLMs on Replicate)
       def build_llm_input(model_id, prompt, system_prompt, max_tokens, temperature, top_p)
         owner = model_id.split("/").first
         case owner

@@ -23,7 +23,7 @@ deferred_debt:
     - blocking_axiom
     - timestamp
 
-# Explicit conflict rules — lower-level tensions between NEGOTIABLE axioms
+# Explicit conflict rules -- lower-level tensions between NEGOTIABLE axioms
 conflict_rules:
   - condition: "ONE_SOURCE conflicts with WET or AHA"
     resolution: "Favor WET/AHA when duplication count < 3. Favor ONE_SOURCE when count >= 3."

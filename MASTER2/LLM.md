@@ -1,30 +1,30 @@
-# MASTER2 — Self-Governing AI Development Partner
+# MASTER2 -- Self-Governing AI Development Partner
 
 MASTER2 is a Ruby gem that turns any LLM into a self-governing development
 partner. It enforces 68 axioms (from SOLID, Unix, Nielsen, Strunk & White)
 through a constitutional review pipeline, so generated code is correct,
 minimal, and auditable by design. It targets OpenBSD and Rails 8 projects.
 
-**Problem it solves**: LLMs generate plausible but sloppy code — wrong idioms,
+**Problem it solves**: LLMs generate plausible but sloppy code -- wrong idioms,
 silent failures, god objects, truncated output. MASTER2 catches these at
 generation time through axiom-driven review, before code reaches production.
 
 ## How It Works (30-second summary)
 
-1. User gives a task → `Session` creates context
-2. `Pipeline` runs stages: parse → plan → execute → review → deliver
+1. User gives a task -> `Session` creates context
+2. `Pipeline` runs stages: parse -> plan -> execute -> review -> deliver
 3. `Executor` picks a strategy (ReAct / PreAct / ReWOO / Reflexion)
 4. `LLM` calls an AI provider (OpenAI / Anthropic / Ollama) within budget
 5. `Review::Constitution` checks output against 68 axioms
 6. `QualityGates` enforces smell thresholds before commit
-7. `Result` monad wraps every return (Ok/Err) — no silent failures
+7. `Result` monad wraps every return (Ok/Err) -- no silent failures
 
 ## System Architecture at a Glance
 
 MASTER2 is a self-enforcing constitutional AI system that validates and improves code against 68 axioms. The data flow is:
 
 ```
-User Input → Pipeline → Executor → LLM → Output
+User Input -> Pipeline -> Executor -> LLM -> Output
              ↓          ↓         ↓
           Stages     Patterns  CircuitBreaker
              ↓          ↓         ↓
@@ -33,9 +33,9 @@ User Input → Pipeline → Executor → LLM → Output
           Council    Context  Logging
 ```
 
-**Boot Flow:** `boot.rb` → loads `master.rb` → initializes `DB`, `LLM`, `Pipeline`, `Executor`
+**Boot Flow:** `boot.rb` -> loads `master.rb` -> initializes `DB`, `LLM`, `Pipeline`, `Executor`
 
-**Request Flow:** `Pipeline.call(input)` → `Stages` (intake, guard, route, council, ask, lint, render) → `Executor` (React/PreAct/ReWOO/Reflexion patterns) → `LLM.ask` → `CircuitBreaker.run` → `ruby_llm` API call
+**Request Flow:** `Pipeline.call(input)` -> `Stages` (intake, guard, route, council, ask, lint, render) -> `Executor` (React/PreAct/ReWOO/Reflexion patterns) -> `LLM.ask` -> `CircuitBreaker.run` -> `ruby_llm` API call
 
 **Data Sources:** `data/*.yml` (constitution, axioms, council, language rules, patterns) are the single source of truth. No hardcoded fallbacks.
 
@@ -43,9 +43,9 @@ User Input → Pipeline → Executor → LLM → Output
 
 | File | Purpose |
 |------|---------|
-| `data/axioms.yml` | The 68 axioms — constitutional law |
+| `data/axioms.yml` | The 68 axioms -- constitutional law |
 | `data/phases.yml` | Cognitive load budget per phase |
-| `lib/master.rb` | Entry point — wires all modules |
+| `lib/master.rb` | Entry point -- wires all modules |
 | `lib/boot.rb` | Environment detection, autoloading |
 | `lib/pipeline.rb` | Stage-based execution engine |
 | `lib/executor.rb` | Strategy pattern for LLM interaction |
@@ -53,7 +53,7 @@ User Input → Pipeline → Executor → LLM → Output
 | `lib/review/constitution.rb` | Axiom compliance checker |
 | `lib/quality_gates.rb` | Smell thresholds (lines, complexity) |
 
-## Data Sources — Single Source of Truth
+## Data Sources -- Single Source of Truth
 
 Every tunable lives in `data/*.yml`. No hardcoded fallbacks in `lib/`.
 
@@ -69,9 +69,9 @@ Every tunable lives in `data/*.yml`. No hardcoded fallbacks in `lib/`.
 
 ## Three Most Critical Axioms
 
-1. **FAIL_VISIBLY** — Every error must be logged and surfaced, never swallowed
-2. **ONE_SOURCE** — Every fact lives in exactly one place
-3. **SELF_APPLY** — MASTER2's own code must pass its own rules
+1. **FAIL_VISIBLY** -- Every error must be logged and surfaced, never swallowed
+2. **ONE_SOURCE** -- Every fact lives in exactly one place
+3. **SELF_APPLY** -- MASTER2's own code must pass its own rules
 
 ## File Responsibilities & Axiom Categories
 
@@ -97,7 +97,7 @@ Note: Line counts are approximate and may change as code evolves.
 | `data/axioms.yml` | 68 axioms across 11 categories | ALL | 2100 |
 | `data/council.yml` | 12 personas, 3 veto holders | COUNCIL_REVIEW | 234 |
 
-## Additional Context — Target Platform & Requirements
+## Additional Context -- Target Platform & Requirements
 
 Target platform: OpenBSD 7.8, Ruby 3.4, zsh. No python, bash, awk, sed, sudo.
 
@@ -112,12 +112,12 @@ MASTER2 is a Constitutional AI code quality system that enforces software qualit
 ## What MASTER2 Provides Over Traditional Code Review
 
 Traditional code review is reactive, inconsistent, and human-bottlenecked. MASTER2 provides:
-1. **Proactive** — catches issues before commit (pre-commit hooks)
-2. **Consistent** — same standards applied every time via axioms
-3. **Constitutional** — immutable governance rules prevent drift
-4. **Adversarial** — multiple personas debate to find hidden flaws
-5. **Autonomous** — can self-improve and fix issues without human intervention
-6. **Explainable** — every decision traced back to specific axiom violations
+1. **Proactive** -- catches issues before commit (pre-commit hooks)
+2. **Consistent** -- same standards applied every time via axioms
+3. **Constitutional** -- immutable governance rules prevent drift
+4. **Adversarial** -- multiple personas debate to find hidden flaws
+5. **Autonomous** -- can self-improve and fix issues without human intervention
+6. **Explainable** -- every decision traced back to specific axiom violations
 
 ## Architecture Map
 
@@ -167,13 +167,13 @@ Commands.refactor(file)
 Pipeline.new.call(task)
   │
   v
-Stages: intake → compress → guard → route → council → ask → lint → render
+Stages: intake -> compress -> guard -> route -> council -> ask -> lint -> render
   │
   v
 Executor.call(input, pattern: :react)  # Auto-selects best pattern
   │
   v
-LLM.ask(prompt, tier: :tier1) → Result.ok(response) | Result.err(reason)
+LLM.ask(prompt, tier: :tier1) -> Result.ok(response) | Result.err(reason)
 ```
 
 ### 2. Autonomous Agent Flow
@@ -185,7 +185,7 @@ Agent.spawn(policy: :refactor)
   │
   v
 loop:
-  Scheduler.poll → Triggers.evaluate → Executor.call → Memory.store
+  Scheduler.poll -> Triggers.evaluate -> Executor.call -> Memory.store
 ```
 
 ### 3. Chamber (Multi-Model) Flow
@@ -196,7 +196,7 @@ $ master chamber file.rb
 Chamber.deliberate(modes: [:swarm, :creative])
   │
   v
-Council personas debate → Weighted consensus → Best solution
+Council personas debate -> Weighted consensus -> Best solution
 ```
 
 ## Key Subsystems
@@ -222,9 +222,9 @@ Auto-selected based on task complexity:
 
 ### LLM Interface (lib/llm.rb)
 Tier-based fallback with budget management:
-- Tier 1: claude-opus-4, gpt-4o → highest quality
-- Tier 2: claude-sonnet-4, gpt-4 → balanced
-- Tier 3: claude-haiku-4, gpt-3.5 → fast/cheap
+- Tier 1: claude-opus-4, gpt-4o -> highest quality
+- Tier 2: claude-sonnet-4, gpt-4 -> balanced
+- Tier 3: claude-haiku-4, gpt-3.5 -> fast/cheap
 - Circuit breaker: Auto-disables failing providers
 - Semantic cache: Avoid duplicate LLM calls
 - Budget: $10 session cap with warnings
@@ -251,16 +251,16 @@ JSONL-based append-only database:
 
 ## Data Files (read in order)
 
-1. **data/constitution.yml** — Golden rule, protection levels, quality gates, enforcement layers
-2. **data/axioms.yml** — 68 axioms across 11 categories (every code change must satisfy relevant axioms)
-3. **data/language_axioms.yml** — Detection rules for ruby, rails, zsh, html, css, js
-4. **data/zsh_patterns.yml** — Banned commands, auto-remediation, token economics
-5. **data/openbsd_patterns.yml** — Service management, forbidden commands, platform mappings
-6. **data/council.yml** — 12 adversarial personas (3 have veto power)
-7. **data/quality_thresholds.yml** — Minimum quality scores and enforcement levels
-8. **data/personas.yml** — Persona definitions for LLM role-playing
-9. **data/system_prompt.yml** — Base system prompts for different modes
-10. **data/phases.yml** — 8-phase workflow definitions
+1. **data/constitution.yml** -- Golden rule, protection levels, quality gates, enforcement layers
+2. **data/axioms.yml** -- 68 axioms across 11 categories (every code change must satisfy relevant axioms)
+3. **data/language_axioms.yml** -- Detection rules for ruby, rails, zsh, html, css, js
+4. **data/zsh_patterns.yml** -- Banned commands, auto-remediation, token economics
+5. **data/openbsd_patterns.yml** -- Service management, forbidden commands, platform mappings
+6. **data/council.yml** -- 12 adversarial personas (3 have veto power)
+7. **data/quality_thresholds.yml** -- Minimum quality scores and enforcement levels
+8. **data/personas.yml** -- Persona definitions for LLM role-playing
+9. **data/system_prompt.yml** -- Base system prompts for different modes
+10. **data/phases.yml** -- 8-phase workflow definitions
 
 ## Golden Rule
 
@@ -270,8 +270,8 @@ Never delete working code. Never break existing behavior. Improve surgically.
 
 ## Banned Patterns
 
-- `rescue nil` — always rescue specific exceptions
-- File sprawl — never create summary.md, analysis.md, report.md, todo.md, notes.md, changelog.md
+- `rescue nil` -- always rescue specific exceptions
+- File sprawl -- never create summary.md, analysis.md, report.md, todo.md, notes.md, changelog.md
 - ASCII decoration comments (`# ====`, `# ----`, `# ****`)
 - Comments that restate the code
 - Files over 300 lines (split along module boundaries)
@@ -368,7 +368,7 @@ Tests needing an API key should call `skip_unless_llm` in setup. If a test
 hangs, it's missing this guard.
 
 **Commands.dispatch returns 3 types.** `HANDLED` (Result with `{handled: true}`),
-a normal `Result`, `:exit`, or `nil` (unknown command → falls through to LLM).
+a normal `Result`, `:exit`, or `nil` (unknown command -> falls through to LLM).
 The REPL handles all four. Don't add a fifth.
 
 **ENV vars:**
@@ -383,7 +383,7 @@ The REPL handles all four. Don't add a fifth.
 
 ## Further Reading
 
-- `README.md` — Quick start guide
-- `data/constitution.yml` — Immutable governance rules
-- `data/axioms.yml` — Complete axiom reference
-- `lib/` — Implementation details
+- `README.md` -- Quick start guide
+- `data/constitution.yml` -- Immutable governance rules
+- `data/axioms.yml` -- Complete axiom reference
+- `lib/` -- Implementation details

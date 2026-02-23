@@ -3,7 +3,7 @@
 require "fast_mcp"
 
 module MASTER
-  # McpServer — exposes MASTER2 tools via the Model Context Protocol.
+  # McpServer -- exposes MASTER2 tools via the Model Context Protocol.
   # Claude Desktop, VS Code Copilot, and any MCP client can call these directly.
   #
   # stdio transport:  bundle exec ruby bin/mcp_server

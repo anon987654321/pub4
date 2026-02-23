@@ -45,7 +45,7 @@ class TestPipeline < Minitest::Test
     valid = prompt.match?(/master/) && (
       prompt.match?(/\[(strong|fast|cheap|none|unknown)/) ||
       prompt.match?(/@/) ||
-      prompt.match?(/\$|›/)
+      prompt.match?(/\$|>/)
     )
     assert valid, "Prompt should be a valid MASTER prompt: #{prompt}"
   end

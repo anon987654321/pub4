@@ -2,7 +2,7 @@
 
 module MASTER
   module ToolProtocol
-    # ToolProtocol — self-registering typed tool manifest system
+    # ToolProtocol -- self-registering typed tool manifest system
     # Replaces the case/when regex dispatch in ToolDispatch with a governed registry.
     # Each tool declares what it needs; the constitution gates every call.
     # Pattern: MASTER3 Federated Tool Protocol (gistfile10 §1)

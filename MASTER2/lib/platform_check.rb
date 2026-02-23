@@ -121,17 +121,17 @@ module MASTER
       vmm_guest? ? "vmm(4)/vmd(8)" : "bare metal"
     end
 
-    # CPU core count — read once and cached.
+    # CPU core count -- read once and cached.
     def cpu_cores
       @cpu_cores ||= read_cpu_cores
     end
 
-    # Free memory in MB — re-read each call (live pressure indicator).
+    # Free memory in MB -- re-read each call (live pressure indicator).
     def free_mem_mb
       read_free_mem_mb
     end
 
-    # Terse compute badge for the REPL prompt: "8c·862M"
+    # Terse compute badge for the REPL prompt: "8c*862M"
     # Cached for cores; live for memory so pressure is visible.
     def compute_badge
       cores = cpu_cores
@@ -141,7 +141,7 @@ module MASTER
       parts = []
       parts << "#{cores}c"   if cores
       parts << "#{free}M"    if free
-      parts.join("·")
+      parts.join("*")
     end
 
     def total_mem_mb
@@ -153,9 +153,9 @@ module MASTER
 
       issues = diagnose
       if issues.empty?
-        "OpenBSD #{openbsd_version} — all checks passed"
+        "OpenBSD #{openbsd_version} -- all checks passed"
       else
-        "OpenBSD #{openbsd_version} — #{issues.size} issue(s) found"
+        "OpenBSD #{openbsd_version} -- #{issues.size} issue(s) found"
       end
     end
 

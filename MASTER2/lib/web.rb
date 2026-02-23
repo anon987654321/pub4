@@ -5,7 +5,7 @@ require "net/http"
 
 module MASTER
   # Web - Browse and fetch web content with LLM-powered automation
-  # HTTP client: net/http — avoids async-http getifaddrs permission issues in containers
+  # HTTP client: net/http -- avoids async-http getifaddrs permission issues in containers
   # Security: Uses nokogiri for safe HTML parsing (prevents ReDoS)
   # Features: Dynamic CSS selector discovery via LLM
   module Web

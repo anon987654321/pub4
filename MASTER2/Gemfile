@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-# OpenBSD uses LibreSSL/libtls — do not add openssl gem, it conflicts.
+# OpenBSD uses LibreSSL/libtls -- do not add openssl gem, it conflicts.
 # Ruby's built-in openssl extension links against LibreSSL on OpenBSD natively.
 
 # TTY toolkit - restored full integration from MASTER v1
@@ -42,7 +42,7 @@ gem "stoplight", "~> 4.0"
 gem "falcon", "~> 0.54"
 gem "async-websocket"
 
-# MCP server — expose MASTER2 tools via Model Context Protocol
+# MCP server -- expose MASTER2 tools via Model Context Protocol
 gem "fast-mcp", "~> 1.6"
 
 # Safe experiments with automatic rollback (scientist pattern)

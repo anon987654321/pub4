@@ -1,4 +1,4 @@
-# Compression patterns — filler words and verbose phrases stripped before LLM
+# Compression patterns -- filler words and verbose phrases stripped before LLM
 # Used by Stages::Compress to reduce token usage per GUARD_EXPENSIVE axiom
 
 fillers:

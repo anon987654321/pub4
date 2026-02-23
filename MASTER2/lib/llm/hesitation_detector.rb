@@ -2,7 +2,7 @@
 
 module MASTER
   module LLM
-    # HesitationDetector — predict whether council debate will help
+    # HesitationDetector -- predict whether council debate will help
     # Based on iMAD (AAAI 2026, arXiv:2511.11306): saves ~92% council compute
     # by only escalating to multi-agent debate when primary agent shows uncertainty.
     module HesitationDetector
@@ -24,15 +24,15 @@ module MASTER
       CONFIDENCE_THRESHOLD = 0.7
       # Confidence reduction per uncertainty marker
       UNCERTAINTY_PENALTY = 0.12
-      # Floor confidence score — never drop below this
+      # Floor confidence score -- never drop below this
       MIN_CONFIDENCE_SCORE = 0.1
       # Max chars of context shown in log
       CONTEXT_PREVIEW_LENGTH = 60
 
-      # Estimate confidence score of LLM response (0.0–1.0).
+      # Estimate confidence score of LLM response (0.0-1.0).
       # Lower score = more uncertainty = more likely to need council.
       # @param response [String] LLM primary response
-      # @return [Float] confidence score 0.0–1.0
+      # @return [Float] confidence score 0.0-1.0
       def confidence_score(response)
         return 0.0 unless response.is_a?(String) && !response.empty?
 

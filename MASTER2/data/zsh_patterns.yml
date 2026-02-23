@@ -1,4 +1,4 @@
-# Zsh-native patterns — replace external forks with pure zsh
+# Zsh-native patterns -- replace external forks with pure zsh
 # Source: pub2/ZSH_NATIVE_PATTERNS.md
 
 forbidden_commands:
@@ -95,9 +95,9 @@ advanced_expansion:
   absolute_path: "${f:A}"
 
 ternary:
-  # If $VAR non-empty → "yes", else "no"  (replaces 4-line if/else)
+  # If $VAR non-empty -> "yes", else "no"  (replaces 4-line if/else)
   basic: "${${VAR:+yes}:-no}"
-  # If var equals literal "abc" → "is abc", else "not abc"
+  # If var equals literal "abc" -> "is abc", else "not abc"
   equality: "${${${(M)var:#abc}:+is abc}:-not abc}"
   # C-style ternary inside arithmetic
   math: "(( result = val > 0 ? val : -val ))"
@@ -121,7 +121,7 @@ read_file:
   from_cmd: 'local -a lines; lines=("${(f@)$(command arg1)}")'
 
 option_parsing:
-  # zparseopts — replaces banned getopts
+  # zparseopts -- replaces banned getopts
   # -D strips matched opts from $@
   # -E stops at first non-option
   # -F (zsh 5.9+) aborts on unrecognized options
@@ -133,7 +133,7 @@ option_parsing:
     local outfile=${output_opt[-1]:-/dev/stdout}
 
 associative_arrays:
-  # Frequency map — replaces awk '{count[$1]++}'
+  # Frequency map -- replaces awk '{count[$1]++}'
   frequency: |
     typeset -A counts
     for item in $items; do (( counts[$item]++ )); done
@@ -143,7 +143,7 @@ associative_arrays:
   sort_by_value_asc: "${(kons)hash}"
 
 serialization:
-  # Serialize hash to string and back — no JSON tools needed
+  # Serialize hash to string and back -- no JSON tools needed
   serialize: 'serialized="${(j: :)${(qkv@)hsh}}"'
   deserialize: 'typeset -A restored; restored=("${(Q@)${(z@)serialized}}")'
 
@@ -161,10 +161,10 @@ exceptions:
   - "Complex regex requiring PCRE"
   - "Binary data processing"
 
-# Banned commands — restored from master.yml v71.3.0
+# Banned commands -- restored from master.yml v71.3.0
 banned_commands: [python, sed, awk, tr, wc, head, tail, cut, find, sudo, bash, xargs, readlink, basename, dirname, realpath, seq, expr, getopts]
 
-# Auto-remediation — zsh-native replacements for banned commands
+# Auto-remediation -- zsh-native replacements for banned commands
 auto_remediation:
   sed: "${var//old/new}"
   awk: "${${(s: :)line}[n]}"
@@ -187,13 +187,13 @@ auto_remediation:
   expr: '$((expression)) (zsh arithmetic)'
   getopts: 'zparseopts (zsh native option parsing)'
 
-# Token economics — why pure zsh saves LLM tokens
+# Token economics -- why pure zsh saves LLM tokens
 token_economics:
   philosophy: >
     Replacing multi-tool shell pipelines with pure zsh parameter expansion
     eliminates process boundaries, collapses multiple grammars into one,
     reduces reasoning entropy for LLMs, and converts runtime overhead
-    into in-memory transforms — saving both tokens and wall-clock time.
+    into in-memory transforms -- saving both tokens and wall-clock time.
   example_bad:
     code: "awk -F, '{print $4}' | sed 's/\\r//g' | tr '[:upper:]' '[:lower:]'"
     cost: "3 grammars, pipes + subshells, I/O transformations"
