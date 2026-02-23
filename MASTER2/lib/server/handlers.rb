@@ -28,8 +28,15 @@ module MASTER
         if message.empty?
           [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no message"}']]
         else
+          image = data[:image]  # { data: base64, mime: "image/...", name: "file.jpg" }
+          input = { text: message }
+          if image && image[:data] && !image[:data].empty?
+            input[:image_data] = image[:data]
+            input[:image_mime] = image[:mime].to_s
+            input[:image_name] = image[:name].to_s
+          end
           Thread.new do
-            result = pipeline.call({ text: message })
+            result = pipeline.call(input)
             output = result.ok? ? result.value[:rendered] : "Error: #{result.error}"
             queue.push(output)
           rescue StandardError => err
