@@ -495,6 +495,9 @@ module MASTER
       when "snapshot", "showp"
         run_snapshot(args)
         HANDLED
+      when "webtest", "web-test"
+        run_webtest(args)
+        HANDLED
       when "version", "ver", "--version", "-v"
         puts "MASTER #{MASTER::VERSION}"
         HANDLED

@@ -508,6 +508,82 @@ module MASTER
           Array(ctx["decisions"]).each { |decision| puts UI.dim("  * #{decision}") }
         end
       end
+
+      def run_webtest(_args)
+        require "net/http"
+        require "json"
+
+        server = defined?(MASTER::Server) ? ObjectSpace.each_object(MASTER::Server).first : nil
+        unless server&.running?
+          puts UI.warn("webtest: web server not running")
+          return
+        end
+
+        base = "http://localhost:#{server.port}"
+        token = MASTER::Server::AUTH_TOKEN
+        results = []
+
+        # 1. GET /health -- no auth required
+        results << web_probe("GET", "#{base}/health") do |body|
+          data = JSON.parse(body)
+          data["status"] == "ok" ? "ok" : "bad status: #{data['status']}"
+        end
+
+        # 2. GET / -- verify chat UI with orb + canvas + TTS
+        results << web_probe("GET", base) do |body|
+          missing = %w[canvas orb-name NEURAL\ CORE].reject { |el| body.include?(el) }
+          missing.empty? ? "ok" : "missing: #{missing.join(', ')}"
+        end
+
+        # 3. POST /chat -- returns {"status":"processing"} async; poll /poll for result
+        results << web_probe("POST", "#{base}/chat",
+                             body: { message: "ping", session_id: "webtest" }.to_json,
+                             token: token,
+                             content_type: "application/json") do |body|
+          data = JSON.parse(body)
+          data["status"] == "processing" ? "ok" : "unexpected: #{body[0, 40]}"
+        rescue JSON::ParserError
+          "non-json response"
+        end
+
+        # 4. GET /poll -- should return queued output from chat
+        sleep 2 # give pipeline time to respond
+        results << web_probe("GET", "#{base}/poll", token: token) do |body|
+          JSON.parse(body).key?("text") ? "ok" : "missing text key"
+        rescue JSON::ParserError
+          "non-json"
+        end
+
+        pass = results.count { |r| r[:status] == :ok }
+        fail_count = results.size - pass
+        results.each { |r| puts "  #{r[:status] == :ok ? '[ok]' : '[fail]'} #{r[:label]}" }
+        puts fail_count.zero? ? UI.success("webtest: #{pass}/#{results.size} passed") : UI.warn("webtest: #{fail_count} failed")
+      end
+
+      private
+
+      def web_probe(method, url, body: nil, token: nil, content_type: nil, &check)
+        uri = URI(url)
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.open_timeout = 5
+        http.read_timeout = 10
+
+        req = (method == "POST" ? Net::HTTP::Post : Net::HTTP::Get).new(uri)
+        req["Authorization"] = "Bearer #{token}" if token
+        req["Content-Type"] = content_type if content_type
+        req.body = body if body
+
+        resp = http.request(req)
+        label = "#{method} #{uri.path.empty? ? '/' : uri.path} -> #{resp.code}"
+        if resp.code.start_with?("2")
+          result = check ? check.call(resp.body) : "ok"
+          { status: result == "ok" ? :ok : :fail, label: "#{label} (#{result})" }
+        else
+          { status: :fail, label: "#{label}" }
+        end
+      rescue StandardError => err
+        { status: :fail, label: "#{method} #{url} -> #{err.message}" }
+      end
     end
   end
 end

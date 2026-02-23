@@ -183,6 +183,7 @@
   output_cost: 0.30
   context_window: 262144
   provider: alibaba
+  api: replicate
 
 - id: meta-llama/llama-3.3-70b-instruct
   alias: llama-3.3-70b
@@ -191,6 +192,7 @@
   output_cost: 0.32
   context_window: 131072
   provider: meta
+  api: replicate
 
 - id: google/gemini-2.5-flash-lite
   alias: gemini-flash-lite
@@ -199,6 +201,7 @@
   output_cost: 0.40
   context_window: 1048576
   provider: google
+  api: openrouter
 
 - id: openai/gpt-4.1-nano
   alias: gpt-4.1-nano
@@ -207,6 +210,7 @@
   output_cost: 0.40
   context_window: 1047576
   provider: openai
+  api: openrouter
 
 - id: qwen/qwen3-8b
   alias: qwen3-8b
@@ -215,6 +219,7 @@
   output_cost: 0.40
   context_window: 32000
   provider: alibaba
+  api: replicate
 
 - id: meta-llama/llama-3.2-3b-instruct
   alias: llama-3.2-3b
@@ -223,6 +228,7 @@
   output_cost: 0.02
   context_window: 131072
   provider: meta
+  api: replicate
 
 # --- FREE (zero credits required, rate-limited) ---
 
