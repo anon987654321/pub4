@@ -57,15 +57,17 @@
   output_cost: 15.00
   context_window: 131072
   provider: xai
+  api: openrouter
   reasoning: true
 
 - id: deepseek/deepseek-r1:free
   alias: deepseek-r1-free
-  tier: strong
+  tier: free
   input_cost: 0.00
   output_cost: 0.00
   context_window: 64000
   provider: deepseek
+  api: openrouter
   reasoning: true
 
 - id: deepseek/deepseek-r1
@@ -75,6 +77,7 @@
   output_cost: 2.19
   context_window: 64000
   provider: deepseek
+  api: openrouter
   reasoning: true
 
 - id: google/gemini-2.5-pro
@@ -84,6 +87,7 @@
   output_cost: 10.00
   context_window: 1048576
   provider: google
+  api: openrouter
   reasoning: true
 
 # --- FAST (council members + fallbacks) ---
@@ -122,6 +126,7 @@
   output_cost: 1.10
   context_window: 163840
   provider: deepseek
+  api: openrouter
 
 - id: moonshotai/kimi-k2.5
   alias: kimi-k2.5
@@ -130,6 +135,7 @@
   output_cost: 0.44
   context_window: 262144
   provider: moonshot
+  api: openrouter
   reasoning: true
 
 - id: z-ai/glm-5
@@ -139,6 +145,7 @@
   output_cost: 2.55
   context_window: 204800
   provider: zhipu
+  api: openrouter
 
 - id: google/gemini-2.5-flash
   alias: gemini-2.5-flash
@@ -147,6 +154,7 @@
   output_cost: 0.60
   context_window: 1048576
   provider: google
+  api: openrouter
   reasoning: true
 
 - id: openai/gpt-4.1-mini

@@ -77,8 +77,8 @@ module MASTER
     end
 
     def sparkline(score)
-      filled = (score / 2.5).ceil.clamp(0, 4)
-      (SPARK[filled] * 10).chars.each_with_index.map { |_, i| i < (score * 10 / 10).round ? SPARK[[filled, 1].max] : SPARK[0] }.join
+      filled = (score * 4.0 / 10).round.clamp(0, 4)
+      (SPARK[4] * filled) + (SPARK[0] * (4 - filled))
     end
   end
 end

@@ -19,6 +19,13 @@ module MASTER
     CONFIGURE_MUTEX = Mutex.new
     @ruby_llm_configured = false
 
+    FREE_FALLBACKS = %w[
+      deepseek/deepseek-r1-0528:free
+      deepseek/deepseek-chat:free
+      google/gemini-2.0-flash-thinking-exp:free
+      meta-llama/llama-3.1-8b-instruct:free
+    ].freeze
+
     class << self
       attr_accessor :current_model, :persona_prompt
       attr_reader :forced_model
@@ -147,14 +154,6 @@ module MASTER
         return Result.err("No model available.", category: :infrastructure) unless primary
 
         @current_model = primary
-
-        # Auto-fallback: cascade through free tier rather than erroring out
-        FREE_FALLBACKS = %w[
-          deepseek/deepseek-r1-0528:free
-          deepseek/deepseek-chat:free
-          google/gemini-2.0-flash-thinking-exp:free
-          meta-llama/llama-3.1-8b-instruct:free
-        ].freeze
 
         models_to_try = if fallbacks
                           [primary] + fallbacks

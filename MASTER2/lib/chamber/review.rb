@@ -165,9 +165,10 @@ module MASTER
         @cost  += data[:cost] || 0
 
         content = data[:content].to_s.strip
-        approve = content.upcase.start_with?("APPROVE") || content.upcase.start_with?("PRAISE")
-        praise  = content.upcase.start_with?("PRAISE")
-        veto    = persona[:veto] && content.upcase.start_with?("REJECT")
+        verdict = content.upcase.split.first  # APPROVE / REJECT / PRAISE
+        praise  = verdict == "PRAISE"
+        approve = verdict == "APPROVE" || praise
+        veto    = persona[:veto] && verdict == "REJECT"
 
         # Register praise votes as exemplars
         if praise && defined?(BeautyScorer)
