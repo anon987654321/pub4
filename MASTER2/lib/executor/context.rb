@@ -36,7 +36,9 @@ module MASTER
       identity = if config["identity"]
                    begin
                      format(config["identity"], version: MASTER::VERSION, platform: RUBY_PLATFORM, ruby_version: RUBY_VERSION,
-                                                working_dir: Dir.pwd)
+                                                working_dir: Dir.pwd, hypervisor: PlatformCheck.hypervisor,
+                                                provider: PlatformCheck.provider,
+                                                openbsd_version: PlatformCheck.openbsd_version || RUBY_PLATFORM)
                    rescue KeyError, ArgumentError
                      config["identity"]
                    end

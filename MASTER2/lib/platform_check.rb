@@ -92,6 +92,35 @@ module MASTER
       "unknown"
     end
 
+    # True when running inside an OpenBSD vmm(4)/vmd(8) virtual machine.
+    def vmm_guest?
+      return false unless openbsd?
+
+      `sysctl -n hw.product 2>/dev/null`.strip.include?("VMM")
+    rescue StandardError
+      false
+    end
+
+    # True when hostname resolves to the openbsd.amsterdam provider domain.
+    def openbsd_amsterdam?
+      return false unless vmm_guest?
+
+      `hostname 2>/dev/null`.strip.end_with?(".openbsd.amsterdam")
+    rescue StandardError
+      false
+    end
+
+    def provider
+      return "openbsd.amsterdam" if openbsd_amsterdam?
+      return "vmm/vmd (unknown host)" if vmm_guest?
+
+      "bare metal / unknown"
+    end
+
+    def hypervisor
+      vmm_guest? ? "vmm(4)/vmd(8)" : "bare metal"
+    end
+
     def summary
       return nil unless openbsd?
 

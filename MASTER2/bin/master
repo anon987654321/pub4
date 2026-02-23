@@ -235,7 +235,7 @@ when "--web", "-w"
   web_port = args.first&.to_i
   web_port = nil if web_port == 0
   server = MASTER::Server.new(port: web_port)
-  MASTER::Boot.banner_with_web(server.port)
+  MASTER::Boot.banner_with_web(server.port, MASTER::Server::AUTH_TOKEN)
   server.start
   puts "Press Ctrl+C to stop"
   sleep

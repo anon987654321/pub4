@@ -420,8 +420,7 @@ module MASTER
         server = Server.new(port: port)
         server.start
         token = Server::AUTH_TOKEN
-        puts "  web: http://localhost:#{server.port}"
-        puts "  token: #{token}"
+        puts "  web: http://localhost:#{server.port}/?token=#{token}"
       end
 
       # Project memory — persistent goal/context across sessions and models
