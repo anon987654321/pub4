@@ -12,6 +12,21 @@ module MASTER
   module Commands
     # Miscellaneous commands
     module MiscCommands
+      SHOWP_SCRIPT = File.join(MASTER.root, "..", "sh", "showp.sh")
+
+      def run_snapshot(args)
+        out  = args&.strip&.then { |a| a.empty? ? nil : a } || Paths.var_file("snapshot.md")
+        max  = 400
+        script = File.expand_path(SHOWP_SCRIPT)
+        unless File.exist?(script)
+          puts "  snapshot: showp.sh not found at #{script}"
+          return
+        end
+        puts "  generating snapshot…"
+        output = `zsh #{script.shellescape} #{out.shellescape} #{max} 2>&1`
+        puts "  #{output.strip}"
+      end
+
       def speak(text)
         return puts "  Usage: speak <text>" unless text
 
