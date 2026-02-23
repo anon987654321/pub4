@@ -169,7 +169,7 @@ module MASTER
 
           if result.ok?
             process_llm_response(result, candidate_model, prompt, stream)
-            $stderr.puts UI.dim("llm0: #{extract_model_name(candidate_model)}") if candidate_model != primary
+            $stderr.puts UI.dim("models0: #{extract_model_name(candidate_model)}") if candidate_model != primary
             return result
           else
             handle_llm_failure(result, candidate_model)
@@ -188,7 +188,7 @@ module MASTER
       def try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
         spinner = nil
         unless stream || Thread.current[:llm_quiet]
-          spinner = UI.spinner(extract_model_name(current_model))
+          spinner = UI.spinner
           spinner.auto_spin
         end
 

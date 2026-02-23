@@ -34,12 +34,12 @@ module MASTER
           config[:gates] || []
         end
 
-        def get_gate(name)
+        def gate(name)
           gates.find { |g| g[:name] == name.to_sym }
         end
 
         def check_gate(name, metrics = {})
-          gate = get_gate(name)
+          gate = gate(name)
           return Result.err("Gate not found: #{name}") unless gate
           return Result.err("Gate disabled: #{name}") unless gate[:enabled]
 

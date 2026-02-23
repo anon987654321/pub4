@@ -62,7 +62,7 @@ module MASTER
         personas.each do |persona|
           break if over_budget?
 
-          vote = get_persona_vote(persona, original, proposal, thread: thread)
+          vote = persona_vote(persona, original, proposal, thread: thread)
           votes << vote
           thread << { name: vote[:name], model: persona[:model], feedback: vote[:reason] }
 
@@ -107,7 +107,7 @@ module MASTER
           Output ONLY the revised proposal, no explanation.
         PROMPT
 
-        result = @llm.ask(prompt, tier: :fast)
+        result = @llm.ask(prompt, tier: :strong)
         return proposal unless result.ok?
 
         data = result.value
@@ -121,7 +121,7 @@ module MASTER
       end
 
       # Get individual persona vote, aware of the deliberation thread so far
-      def get_persona_vote(persona, original, proposal, thread: [])
+      def persona_vote(persona, original, proposal, thread: [])
         return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } if over_budget?
 
         is_devils_advocate = !persona[:veto] && (@cost * 10).to_i.odd?

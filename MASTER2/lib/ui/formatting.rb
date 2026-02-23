@@ -48,8 +48,7 @@ module MASTER
     end
 
     # Color delegate methods - return colored strings without printing
-    # Define color methods dynamically to reduce duplication
-    %i[yellow green red cyan magenta blue].each do |color|
+    %i[yellow red blue white bright_black].each do |color|
       define_method(color) do |msg|
         pastel.public_send(color, msg)
       end
@@ -59,11 +58,11 @@ module MASTER
       return text unless color_enabled?
 
       text
-        .gsub(/^(MASTER .+)$/) { pastel.bold(::Regexp.last_match(1)) }
-        .gsub(/^(\w+) at (\w+):(.*)/) { "#{pastel.blue(::Regexp.last_match(1))} at #{pastel.cyan(::Regexp.last_match(2))}:#{::Regexp.last_match(3)}" }
-        .gsub(/(\d+) (axioms|personas|stages)/) { "#{pastel.bright_magenta(::Regexp.last_match(1))} #{::Regexp.last_match(2)}" }
-        .gsub(/(\$[\d.]+)/) { pastel.bright_cyan(::Regexp.last_match(1)) }
-        .gsub(/(armed|ok)\b/) { pastel.green(::Regexp.last_match(1)) }
+        .gsub(/^(MASTER .+)$/) { pastel.bold.white(::Regexp.last_match(1)) }
+        .gsub(/^(    .+)$/) { pastel.bright_black(::Regexp.last_match(1)) }
+        .gsub(/^(\w+0):(.*)$/) { "#{pastel.blue(::Regexp.last_match(1))}:#{::Regexp.last_match(2)}" }
+        .gsub(/(\d+) (axioms?|personas?|stages?)/) { "#{pastel.white(::Regexp.last_match(1))} #{::Regexp.last_match(2)}" }
+        .gsub(/(armed|ok)\b/) { pastel.bold.white(::Regexp.last_match(1)) }
         .gsub(/(unavailable|error|FAIL)\b/) { pastel.red(::Regexp.last_match(1)) }
         .gsub(/(\d+ms)$/) { pastel.bright_black(::Regexp.last_match(1)) }
     end

@@ -139,13 +139,13 @@ module MASTER
         details = "#{tokens_in}->#{tokens_out}tok"
         details += " $#{cost.round(4)}" if cost.positive?
         details += " #{latency}ms" if latency
-        dmesg_log("llm0", parent: tier.to_s, message: "#{model} #{details}", level: ALL_EVENTS)
+        dmesg_log("models0", parent: tier.to_s, message: "#{model} #{details}", level: ALL_EVENTS)
       end
 
       # Log LLM error
       def llm_error(tier:, error:)
         msg = error.to_s.gsub(/\s+/, " ")[0..60]
-        dmesg_log("llm0", parent: tier.to_s, message: "unavailable: #{msg}", level: ALL_EVENTS)
+        dmesg_log("models0", parent: tier.to_s, message: "unavailable: #{msg}", level: ALL_EVENTS)
       end
 
       # Log autonomy event
@@ -176,13 +176,13 @@ module MASTER
                    else
                      (approved ? ", auto" : ", manual")
                    end
-        dmesg_log("tool0", parent: "executor0", message: "#{name} #{action}#{approval}", level: ALL_EVENTS)
+        dmesg_log("tool0", parent: "engine0", message: "#{name} #{action}#{approval}", level: ALL_EVENTS)
         debug("Tool", name: name, action: action, approved: approved) if structured_enabled?
       end
 
       # Log file operation
       def file(action, path, details = nil)
-        dmesg_log("file0", parent: "executor0",
+        dmesg_log("file0", parent: "engine0",
                            message: "#{action} #{File.basename(path)}#{" (#{details})" if details}", level: ALL_EVENTS)
         debug("File", action: action, path: path, details: details) if structured_enabled?
       end

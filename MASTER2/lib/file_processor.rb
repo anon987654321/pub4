@@ -27,8 +27,13 @@ module MASTER
 
       # Process entire directory
       def process_directory(path, dry_run: true)
-        patterns = %w[*.rb *.py *.js *.ts *.go *.rs *.md *.yml *.yaml]
+        patterns = %w[*.rb *.py *.js *.ts *.go *.rs *.md *.yml *.yaml *.zsh]
         files = patterns.flat_map { |p| Dir.glob(File.join(path, "**", p)) }
+        # Also include bare executables in sbin/ and scripts/ (no extension)
+        %w[sbin scripts].each do |dir|
+          Dir.glob(File.join(path, dir, "*")).each { |f| files << f if File.file?(f) }
+        end
+        files.uniq!
         log("file0: scanning #{files.size} files in #{path}")
         results = []
 

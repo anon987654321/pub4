@@ -54,7 +54,7 @@ module MASTER
     end
 
     # Get repository info
-    def get_repo_info(owner, repo)
+    def repo_info(owner, repo)
       uri = URI("#{GITHUB_API}/repos/#{owner}/#{repo}")
       response = github_request(uri)
       return Result.err("Repository not found.") unless response
@@ -79,7 +79,7 @@ module MASTER
     end
 
     # Get trending repositories
-    def get_trending(language: nil, since: "daily")
+    def trending(language: nil, since: "daily")
       # Use Web module's GitHub helper if available
       return Web::GitHub.trending(language: language, since: since) if defined?(Web::GitHub)
 
@@ -94,7 +94,7 @@ module MASTER
         begin
           if source.is_a?(Hash) && source[:owner] && source[:repo]
             puts "  Scanning #{source[:owner]}/#{source[:repo]}..."
-            result = get_repo_info(source[:owner], source[:repo])
+            result = repo_info(source[:owner], source[:repo])
             @harvested_data << result.value if result.ok?
           elsif source.is_a?(String)
             puts "  Searching: #{source}..."
