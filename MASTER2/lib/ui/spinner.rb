@@ -1,10 +1,20 @@
 # frozen_string_literal: true
 
+require "etc"
+
 module MASTER
   module UI
-    # Pure ASCII spinner -- no gems, single line, dynamic speed + animated color.
-    # Color shifts from cool->warm->hot as elapsed time grows (ANSI 256-color).
-    # Speed ramps up from 120ms -> 30ms over the first 15s.
+    # Pure ASCII spinner -- speed and color reflect problem depth + system load.
+    #
+    # Semantics (intentionally opposite to the old behaviour):
+    #   Light/fast task   -> fast spin, bright teal      (0.12s interval)
+    #   Deep/heavy task   -> slow spin, near-black       (0.80s interval)
+    #   High CPU/mem load -> additional slowdown + darkening
+    #
+    # Depth score (0.0–1.0) is a weighted blend of:
+    #   40% elapsed time   (saturates at 30 s)
+    #   40% CPU load avg   (saturates at 2× CPU count)
+    #   20% memory pressure (Linux /proc/meminfo; 0 elsewhere)
 
     def self.spinner(message = nil, style: :line)
       SubtleSpinner.new(message)
@@ -14,19 +24,26 @@ module MASTER
       FRAMES = %w[| / - \\].freeze
       RESET  = "\e[0m".freeze
 
-      # 256-color palette bands: cool (cyan/teal) -> warm (green/yellow) -> hot (orange/red)
+      # Palette: bright → dim → dark → near-black (index 0 = freshest)
       PALETTE = [
-        "\e[38;5;51m",   # bright cyan       0-2s
-        "\e[38;5;45m",   # cyan-blue         0-2s
-        "\e[38;5;82m",   # bright green      3-5s
-        "\e[38;5;118m",  # lime              3-5s
-        "\e[38;5;154m",  # yellow-green      6-9s
-        "\e[38;5;226m",  # bright yellow     6-9s
-        "\e[38;5;214m",  # orange           10-14s
-        "\e[38;5;208m",  # deep orange      10-14s
-        "\e[38;5;196m",  # bright red       15s+
-        "\e[38;5;197m",  # red-pink         15s+
+        "\e[38;5;51m",   # bright cyan        depth 0.0–0.1
+        "\e[38;5;37m",   # medium teal        depth 0.1–0.2
+        "\e[38;5;30m",   # dark teal          depth 0.2–0.3
+        "\e[38;5;23m",   # very dark teal     depth 0.3–0.4
+        "\e[38;5;22m",   # dark green         depth 0.4–0.5
+        "\e[38;5;58m",   # olive              depth 0.5–0.6
+        "\e[38;5;94m",   # dark brown/orange  depth 0.6–0.7
+        "\e[38;5;88m",   # dark red           depth 0.7–0.8
+        "\e[38;5;52m",   # maroon             depth 0.8–0.9
+        "\e[38;5;236m",  # near-black gray    depth 0.9–1.0
       ].freeze
+
+      # Interval range: fast (light) → slow (heavy), in seconds
+      MIN_INTERVAL = 0.12
+      MAX_INTERVAL = 0.80
+
+      # Sample system load every N frames to avoid overhead
+      LOAD_SAMPLE_EVERY = 8
 
       def initialize(message = nil, style: :line)
         @running = false
@@ -38,26 +55,22 @@ module MASTER
         @running = true
         @start   = Time.now
         @thread  = Thread.new do
-          i = 0
+          i           = 0
+          cached_load = 0.0
+          cached_mem  = 0.0
+
           while @running
             elapsed = Time.now - @start
 
-            interval = case elapsed
-                       when (0...3)  then 0.12
-                       when (3...8)  then 0.08
-                       when (8...15) then 0.05
-                       else               0.03
-                       end
+            # Refresh system metrics periodically (not every frame)
+            if (i % LOAD_SAMPLE_EVERY).zero?
+              cached_load = cpu_load_factor
+              cached_mem  = memory_pressure
+            end
 
-            # Two palette entries per time band; cycle between them with frame index
-            band  = case elapsed
-                    when (0...3)  then 0
-                    when (3...6)  then 2
-                    when (6...10) then 4
-                    when (10...15) then 6
-                    else               8
-                    end
-            color = PALETTE[band + (i % 2)]
+            score    = depth_score(elapsed, cached_load, cached_mem)
+            interval = MIN_INTERVAL + (MAX_INTERVAL - MIN_INTERVAL) * score
+            color    = PALETTE[(score * (PALETTE.size - 1)).round]
 
             $stderr.print "\r  #{color}#{FRAMES[i % 4]}#{RESET}"
             $stderr.flush
@@ -69,7 +82,6 @@ module MASTER
 
       def success(msg = nil)
         stop
-        # dmesg style: silent success -- just clear the spinner line
       end
 
       def error(msg = nil)
@@ -78,13 +90,44 @@ module MASTER
         $stderr.puts "!#{msg_str}"
       end
 
-      def update(msg) = nil  # no-op: spinner is frameless
+      def update(msg) = nil
 
       def stop
         @running = false
-        @thread&.join(0.2)
+        @thread&.join(0.3)
         $stderr.print "\r     \r"
         $stderr.flush
+      end
+
+      private
+
+      # Blended depth score in 0.0–1.0
+      def depth_score(elapsed, load_factor, mem_factor)
+        time_factor = [elapsed / 30.0, 1.0].min
+        ((time_factor * 0.4) + (load_factor * 0.4) + (mem_factor * 0.2)).clamp(0.0, 1.0)
+      end
+
+      # Normalised CPU load: 0.0 = idle, 1.0 = saturated (2× all cores busy)
+      def cpu_load_factor
+        load1 = Process.loadavg[0]
+        cpus  = [Etc.nprocessors, 1].max
+        [load1 / (cpus * 2.0), 1.0].min
+      rescue StandardError
+        0.0
+      end
+
+      # Memory pressure from /proc/meminfo (Linux); 0.0 elsewhere
+      def memory_pressure
+        return 0.0 unless File.exist?("/proc/meminfo")
+
+        lines     = File.read("/proc/meminfo").lines
+        total     = lines.find { |l| l.start_with?("MemTotal:") }&.split&.[](1).to_i
+        available = lines.find { |l| l.start_with?("MemAvailable:") }&.split&.[](1).to_i
+        return 0.0 if total.nil? || total.zero?
+
+        ((total - available).to_f / total).clamp(0.0, 1.0)
+      rescue StandardError
+        0.0
       end
     end
   end

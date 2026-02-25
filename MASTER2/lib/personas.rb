@@ -215,7 +215,7 @@ module MASTER
         return unless persona[:behaviors]
 
         # Register "find gaps" behavior
-        if persona[:behaviors].include?("Identify missing features without being asked") && defined?(Hooks) && defined?(Hooks)
+        if persona[:behaviors].include?("Identify missing features without being asked") && defined?(Hooks)
           Hooks.register(:after_phase, ->(data) {
             # Check for common gaps after implement phase
             check_for_gaps(data) if data[:phase] == :implement
@@ -223,7 +223,7 @@ module MASTER
         end
 
         # Register "research similar" behavior
-        if persona[:behaviors].include?("Research similar projects for inspiration") && defined?(Hooks) && defined?(Hooks)
+        if persona[:behaviors].include?("Research similar projects for inspiration") && defined?(Hooks)
           Hooks.register(:before_phase, ->(data) {
             suggest_research(data) if data[:phase] == :ideate
           })

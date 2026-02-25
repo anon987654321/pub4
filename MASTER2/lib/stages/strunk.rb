@@ -91,14 +91,6 @@ module MASTER
         text
       end
 
-      # Keep only the first 3 non-empty paragraphs -- omit "other options", "which to use", etc.
-      def truncate_to_essentials(text)
-        paras = text.split(/\n{2,}/).map(&:strip).reject(&:empty?)
-        return text if paras.size <= 3
-
-        paras.first(3).join("\n\n")
-      end
-
       def strip_preambles(text)
         self.class.patterns[:preambles].each do |phrase|
           text = text.sub(/\A\s*#{Regexp.escape(phrase)}\s*/i, "")

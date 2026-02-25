@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+require "shellwords"
 require_relative "commands/session_commands"
 require_relative "commands/model_commands"
 require_relative "commands/budget_commands"
@@ -168,6 +170,12 @@ module MASTER
       "!s" => "status",
       "!b" => "budget",
       "!h" => "help",
+      "go on" => :repeat_last,
+      "continue" => :repeat_last,
+      "continue?" => :repeat_last,
+      "keep going" => :repeat_last,
+      "proceed" => :repeat_last,
+      "carry on" => :repeat_last,
     }.freeze
 
     # Command routing table: command => [method_name, returns_handled?]
@@ -304,7 +312,7 @@ module MASTER
       # ! prefix -- run directly in shell, bypass LLM entirely
       if cmd&.start_with?("!")
         shell_cmd = "#{cmd[1..]} #{args}".strip
-        output = `#{shell_cmd} 2>&1`
+        output = Open3.capture2e(*Shellwords.split(shell_cmd)).first rescue `#{shell_cmd} 2>&1`
         print output
         puts unless output.end_with?("\n")
         return HANDLED
@@ -527,8 +535,8 @@ module MASTER
     def show_help(args) = Help.show(args)
     def show_status(_args) = Dashboard.new.render
     def clear_screen(_args) = print("\e[2J\e[H")
-    def handle_replicate(args) = replicate_command(@last_cmd || "replicate", args)
-    def handle_postpro(args) = postpro_command(@last_cmd || "postpro", args)
+    def handle_replicate(args) = replicate_command(@last_command || "replicate", args)
+    def handle_postpro(args) = postpro_command(@last_command || "postpro", args)
     def start_shell(_args) = InteractiveShell.new.run
     def exit_repl(_args) = :exit
 
@@ -551,7 +559,7 @@ module MASTER
       env printenv export
       echo printf
       ruby python python3 node npm gem bundle
-      make rake cargo go
+      make rake cargo
       df du free
       tar gzip gunzip zip unzip
       date cal

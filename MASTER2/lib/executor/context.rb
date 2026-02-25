@@ -193,7 +193,7 @@ module MASTER
       thought = text[/Thought:\s*(.+?)(?=Action:|ANSWER:|DONE:|$)/mi, 1]&.strip || "Continuing"
       action = text[/Action:\s*(.+?)(?=Observation:|Thought:|$)/mi, 1]&.strip ||
                text[/(ANSWER|DONE|COMPLETE):\s*(.+)/mi, 0]&.strip ||
-               "ask_llm \"#{text[0..MAX_PARSE_FALLBACK_LENGTH]}\""
+               "ask_llm \"#{text[0..Executor::MAX_PARSE_FALLBACK_LENGTH]}\""
 
       { thought: thought, action: action }
     end

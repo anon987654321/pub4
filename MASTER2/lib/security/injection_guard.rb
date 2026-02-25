@@ -16,21 +16,41 @@ module MASTER
         /forget\s+(?:everything|all\s+previous|your\s+instructions)/i,
       ].freeze
 
+      # Patterns severe enough to block entirely rather than sanitize
+      SEVERE = [
+        /new\s+system\s+prompt/i,
+        /override\s+(?:axiom|constitution|principal)/i,
+        /disregard\s+your\s+(?:rules|instructions|guidelines|axioms)/i,
+        /forget\s+(?:everything|all\s+previous|your\s+instructions)/i,
+      ].freeze
+
+      MAX_HITS_BEFORE_BLOCK = 3
+
       module_function
 
       # Scan content from a tool result for injection patterns.
-      # Returns Result.ok(sanitized_content) or Result.err if severe.
+      # Fail-closed: severe or high-confidence injection returns Result.err (blocks).
+      # Low-confidence: sanitize and continue.
       # @param content [String] raw tool output
       # @param source [String] tool name for logging
       # @return [Result]
       def scan(content, source: "unknown")
         return Result.ok(content) unless content.is_a?(String)
 
-        hits = PATTERNS.grep(content)
+        hits = PATTERNS.select { |p| p.match?(content) }
         return Result.ok(content) if hits.empty?
 
+        severe = SEVERE.count { |p| p.match?(content) }
+        Logging.dmesg_log("injection0", message: "source=#{source} hits=#{hits.size} severe=#{severe}")
+
+        if severe.positive? || hits.size >= MAX_HITS_BEFORE_BLOCK
+          return Result.err(
+            "Prompt injection detected in tool output (source=#{source}). Aborting.",
+            category: :security,
+          )
+        end
+
         sanitized = hits.reduce(content) { |c, p| c.gsub(p, "[REDACTED:injection_attempt]") }
-        Logging.dmesg_log("injection0", message: "source=#{source} hits=#{hits.size}")
         Result.ok(sanitized)
       end
 

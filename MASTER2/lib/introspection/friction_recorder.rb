@@ -17,11 +17,15 @@ module MASTER
       LOG_PATH = File.join(File.dirname(__FILE__), "../../data/friction_log.jsonl")
 
       def reset!
-        @events = []
+        mutex.synchronize { @events = [] }
       end
 
       def events
-        @events ||= []
+        mutex.synchronize { @events ||= [] }
+      end
+
+      def mutex
+        @mutex ||= Mutex.new
       end
 
       # Record a friction event.
@@ -33,7 +37,7 @@ module MASTER
           timestamp: Time.now.utc.iso8601,
           context: context,
         }
-        events << event
+        mutex.synchronize { (@events ||= []) << event }
         persist(event) if ENV["MASTER_FRICTION_LOG"]
         Logging.dmesg_log("friction", message: "signal=#{pattern_id} ctx=#{context.inspect}") if defined?(Logging)
         event

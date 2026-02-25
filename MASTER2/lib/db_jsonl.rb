@@ -3,6 +3,7 @@
 require "json"
 require "fileutils"
 require "yaml"
+require "monitor"
 
 require_relative "db_jsonl/tables"
 

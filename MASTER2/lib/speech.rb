@@ -73,6 +73,11 @@ module MASTER
       pernille: "nb-NO-PernilleNeural",
     }.freeze
 
+    # Speak a short status message with a random fun voice style
+    def chatter(text, style: STYLES.keys.sample, **opts)
+      speak(text, style: style, **opts)
+    end
+
     # Speak text using best available engine
     def speak(text, engine: nil, voice: nil, style: :normal, play: true)
       return Result.err("Empty text.") if text.nil? || text.strip.empty?

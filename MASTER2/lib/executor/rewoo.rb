@@ -44,13 +44,15 @@ module MASTER
           resolved = action_str.gsub(/#E(\d+)/) { evidence[::Regexp.last_match(1).to_i] || "" }
 
           UI.dim("  #E#{num}: #{resolved[0..60]}")
-          observation = dispatch_action(resolved.strip)
+          raw_obs      = dispatch_action(resolved.strip)
 
-          return err if (err = injection_error_for(observation, source: "#E#{num}"))
+          return err if (err = injection_error_for(raw_obs, source: "#E#{num}"))
 
+          evidence_obj     = ToolResult.normalize("shell_command", raw_obs)
+          observation      = evidence_obj.to_prompt
           evidence[num.to_i] = observation
-          record_history({ step: @step, action: resolved, observation: observation })
-          UI.dim("  = #{observation[0..60]}")
+          record_history({ step: @step, action: resolved, observation: observation, evidence_hash: evidence_obj.content_hash })
+          UI.dim("  = #{observation.lines.first.to_s.strip[0..60]}")
         end
         evidence
       end

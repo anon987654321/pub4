@@ -65,6 +65,12 @@ module MASTER
 
           tool_name = parsed[:tool]
           unless tool_name
+            # No tool and no answer on step 1 -- likely malformed JSON from LLM; retry once.
+            if @step == 1 && parsed[:thought] == "Continuing"
+              UI.dim("  retrying (empty response)...")
+              @step = 0
+              next
+            end
             # No tool and no answer -- treat thought as final response
             return Result.ok(
               answer: parsed[:thought],
@@ -93,14 +99,17 @@ module MASTER
           # Dispatch typed tool call (args is already a Hash from JSON parse)
           raw_observation = dispatch_typed(tool_name, parsed[:args] || {})
 
-          # Injection defense: halt loop on detected injection (gist item #3).
-          # Sanitize-and-continue is insufficient -- abort with error instead.
+          # Injection defense: fail-closed on detected injection.
           return err if (err = injection_error_for(raw_observation, source: tool_name))
 
-          observation = raw_observation.to_s
-          @history.last[:observation] = observation
+          # Tool Firewall: normalize raw output into structured Evidence.
+          # LLM only sees facts summary — never the raw string.
+          evidence    = ToolResult.normalize(tool_name, raw_observation)
+          observation = evidence.to_prompt
+          @history.last[:observation]    = observation
+          @history.last[:evidence_hash]  = evidence.content_hash
 
-          UI.dim("  = #{observation[0..100]}")
+          UI.dim("  = #{observation.lines.first.to_s.strip[0..100]}")
         end
 
         Result.err("Max steps (#{@max_steps}) reached without completion")
