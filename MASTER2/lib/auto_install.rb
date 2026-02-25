@@ -73,7 +73,7 @@ module MASTER
       end
 
       def package_installed?(name)
-        system("pkg_info -e '#{name}-*' > /dev/null 2>&1")
+        system("pkg_info", "-e", "#{name}-*", out: File::NULL, err: File::NULL)
       end
 
       def install_packages(verbose: false)
