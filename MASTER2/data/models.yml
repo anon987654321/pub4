@@ -163,7 +163,7 @@
   tier: fast
   input_cost: 0.40
   output_cost: 1.60
-  context_window: 1047576
+  context_window: 131072
   provider: openai
 
 - id: minimax/minimax-m2.5

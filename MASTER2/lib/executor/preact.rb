@@ -22,16 +22,18 @@ module MASTER
           UI.dim("  #{@step}/#{@plan.size}: #{planned_step[0..60]}")
 
           # Execute the planned action
-          observation = dispatch_action(planned_step)
+          raw_observation = dispatch_action(planned_step)
 
-          return err if (err = injection_error_for(observation, source: "step #{@step}"))
+          return err if (err = injection_error_for(raw_observation, source: "step #{@step}"))
 
-          results << { step: @step, action: planned_step, observation: observation }
+          evidence_obj = ToolResult.normalize("shell_command", raw_observation)
+          observation  = evidence_obj.to_prompt
+          results << { step: @step, action: planned_step, observation: observation, evidence_hash: evidence_obj.content_hash }
           record_history(results.last)
 
-          UI.dim("  = #{observation[0..80]}")
+          UI.dim("  = #{observation.lines.first.to_s.strip[0..80]}")
 
-          next unless observation.match?(/\bError\b|\bERROR\b|: error:|^error:/i) || observation.include?("not found")
+          next unless raw_observation.to_s.match?(/\bError\b|\bERROR\b|: error:|^error:/i) || raw_observation.to_s.include?("not found")
 
           UI.dim("  replanning...")
           replan_result = replan(goal, results, tier: tier)
@@ -62,7 +64,7 @@ module MASTER
 
         prompt = Prompts.get(:preact, :replan, goal: goal, history: history_text)
 
-        result = LLM.ask(prompt, tier: :fast)
+        result = LLM.ask(prompt, tier: tier)
         return result unless result.ok?
 
         steps = result.value[:content].scan(/^\d+\.\s*(.+)$/m).flatten

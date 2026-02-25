@@ -159,7 +159,11 @@ module MASTER
       return "unknown" if history.empty?
 
       timestamps = history.map do |h|
-        Time.parse(h[:timestamp]); rescue ArgumentError, TypeError; nil
+        begin
+          Time.parse(h[:timestamp])
+        rescue ArgumentError, TypeError
+          nil
+        end
       end.compact
       return "unknown" if timestamps.size < 2
 

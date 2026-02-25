@@ -210,7 +210,7 @@ module MASTER
 
       def detect_conceptual(code, _path, llm)
         violations = []
-        checks_to_run = CONCEPTUAL_CHECKS.keys.sample(3)
+        checks_to_run = CONCEPTUAL_CHECKS.keys.first(3)
 
         checks_to_run.each do |principle|
           config = CONCEPTUAL_CHECKS[principle]

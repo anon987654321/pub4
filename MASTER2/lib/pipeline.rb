@@ -1,9 +1,15 @@
 # frozen_string_literal: true
 
 require "English"
+require "digest"
 require_relative "pipeline/repl"
 require_relative "pipeline/context"
-require_relative "pressure_pass"
+require_relative "pressure_pass"   # legacy alias
+require_relative "refinement"
+require_relative "intent_classifier"
+require_relative "output_guard"
+require_relative "policy/enforcer"
+require_relative "policy/profile"
 
 module MASTER
   # Pipeline - Uses Executor with hybrid patterns
@@ -49,7 +55,17 @@ module MASTER
       Logging.dmesg_log("pipeline", message: "ENTER pipeline.call")
       text = input.is_a?(Hash) ? input[:text] : input.to_s
 
+      if text.bytesize > MAX_INPUT_LENGTH
+        fp = Digest::SHA256.hexdigest(text)[0, 12]
+        Logging.dmesg_log("pipeline", message: "input_too_large bytes=#{text.bytesize} fp=#{fp}")
+        return Result.err("Input too large (#{text.bytesize} bytes). Please send a smaller chunk.", category: :input)
+      end
+
+      @intent = IntentClassifier.detect(text)
+      @profile = Policy::Profile.apply(@intent)
+
       Logging.with_request_id do
+        Thread.current[:master_intent] = @intent
         detect_context_shift(text)
         raw = if input.is_a?(Hash) && input[:image_data]
                 call_with_image(text, input[:image_data], input[:image_mime], input[:image_name])
@@ -205,10 +221,10 @@ module MASTER
         normalized[:rendered] = strip_tool_blocks(cleaned.ok? ? cleaned.value[:response] : normalized[:rendered])
       end
 
-      # Pressure-pass: delegate to extracted PressurePass module
-      pressure = PressurePass.review(user_input: input_text, candidate: normalized[:rendered] || normalized[:response])
+      # Refinement pass (was PressurePass)
+      pressure = Refinement.review(user_input: input_text, candidate: normalized[:rendered] || normalized[:response])
       if pressure
-        normalized[:pressure_pass] = pressure
+        normalized[:refinement] = pressure
         normalized[:response] = pressure[:selected_answer] if pressure[:selected_answer]
         normalized[:rendered] = pressure[:selected_answer] if pressure[:selected_answer]
       end
@@ -216,6 +232,23 @@ module MASTER
       # Preserve any custom keys from the original value
       payload.each do |key, val_item|
         normalized[key] = val_item unless normalized.key?(key)
+      end
+
+      # OutputGuard + PolicyEnforcer on the final human-facing text
+      candidate = normalized[:rendered] || normalized[:response]
+      if candidate.is_a?(String) && @intent
+        guard_result = OutputGuard.check(mode: @intent, candidate_text: candidate)
+        return guard_result if guard_result.err?
+
+        enforcement = Policy::Enforcer.new.evaluate(mode: @intent, input: input_text, output: candidate)
+        if enforcement.ok? && enforcement.value.is_a?(Hash)
+          violations = enforcement.value[:policy_violations] || []
+          normalized[:policy_violations] = violations unless violations.empty?
+          unless enforcement.value[:ok]
+            ids = violations.select { |v| v[:severity] == :hard }.map { |v| v[:id] }.join(", ")
+            return Result.err("Policy violation(s): #{ids}", category: :policy)
+          end
+        end
       end
 
       Result.ok(normalized)

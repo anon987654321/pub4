@@ -178,7 +178,7 @@ module MASTER
       files.each { |f| in_degree[f] ||= 0 }
 
       @graph.each do |file, deps|
-        deps.each { |_d| in_degree[file] += 1 }
+        deps.each { |d| in_degree[d] += 1 }
       end
 
       queue = files.select { |f| in_degree[f] == 0 }

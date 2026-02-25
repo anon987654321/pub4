@@ -39,7 +39,8 @@ module MASTER
     end
 
     def arbiter_model
-      LLM.model_tiers[:strong]&.first || "anthropic/claude-sonnet-4.6"
+      tiers = LLM.load_models_config.group_by { |m| m[:tier]&.to_sym }
+      tiers[:strong]&.first&.dig(:id) || "anthropic/claude-sonnet-4.6"
     end
 
     # Convenience method for single council review

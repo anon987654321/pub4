@@ -15,7 +15,7 @@ module MASTER
     CONSTITUTION    = File.join(MASTER.root, "data", "constitution.yml")
 
     def data
-      @data ||= YAML.load_file(DATA_FILE)
+      @data ||= YAML.safe_load_file(DATA_FILE, symbolize_names: false)
     rescue StandardError
       {}
     end

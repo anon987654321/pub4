@@ -54,7 +54,7 @@ module MASTER
         who_requires(::Regexp.last_match(1).strip)
 
       else
-        "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
+        "Unknown tool. Available: #{Executor::TOOLS.keys.join(', ')}"
       end
     rescue StandardError => err
       "Tool error: #{err.message}"
@@ -105,6 +105,30 @@ module MASTER
 
     def file_write(path, content)
       expanded = File.expand_path(path)
+
+      # Capability gate: writing files requires level 2+
+      if defined?(Capabilities)
+        begin
+          Capabilities.require!(:write, context: "file_write #{path}")
+        rescue Capabilities::InsufficientCapabilityError => e
+          return "BLOCKED: #{e.message}"
+        end
+      end
+
+      # Branch safety: refactor writes must not land on main/master/develop
+      if defined?(RefactorBranch) && defined?(Capabilities) && Capabilities.level >= 2
+        intent = Thread.current[:master_intent]
+        if intent == :refactor
+          request_id = Thread.current[:master_request_id]
+          result = RefactorBranch.ensure_safe_branch(request_id: request_id)
+          if result == :created
+            branch = RefactorBranch.current_branch
+            return "BLOCKED: switched to branch '#{branch}' — re-run to apply write on safe branch." \
+              unless @_branch_switched
+          end
+          @_branch_switched = true
+        end
+      end
 
       # Tier permission check (gist #4)
       if defined?(Security::Permissions)
@@ -170,6 +194,15 @@ module MASTER
 
     def shell_command(cmd)
       return "BLOCKED: dangerous shell command rejected" if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+
+      # Capability gate: executing shell requires level 3+
+      if defined?(Capabilities)
+        begin
+          Capabilities.require!(:execute, context: "shell_command")
+        rescue Capabilities::InsufficientCapabilityError => e
+          return "BLOCKED: #{e.message}"
+        end
+      end
 
       # Zsh pattern enforcement: block legacy file-op tools, force zsh native rewrite
       banned_hit = ZshPatternInjector.banned_tool_in?(cmd)

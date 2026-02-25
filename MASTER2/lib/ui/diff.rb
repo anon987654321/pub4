@@ -67,7 +67,7 @@ module MASTER
         hunk_start = [idx - context, 0].max
 
         # Find end of hunk (include context after last change)
-        hunk_end = i
+        hunk_end = idx
         while hunk_end < changes.length
           if changes[hunk_end][:type] == :same
             # Check if there's another change within context

@@ -261,9 +261,14 @@ module MASTER
         # SECURITY NOTE: This uses eval() to execute code in a controlled binding.
         # for syntax-only validation, or execute in a subprocess with timeout.
         def simulate_with_input(code, input)
-          binding_obj = binding
-          binding_obj.local_variable_set(:input, input)
-          eval(code, binding_obj)
+          require "open3"
+          escaped_input = input.to_s.gsub("'", "'\\\\''")
+          escaped_code  = code.gsub("'", "'\\\\''")
+          out, _err, status = Open3.capture2e(
+            "ruby", "--disable=gems", "-e", "input=#{escaped_input.inspect}; #{code}",
+            stdin_data: "",
+          )
+          status.success? ? out : :error
         rescue StandardError
           :error
         end

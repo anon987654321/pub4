@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 module MASTER
   module Speech
     # Backends - TTS engine implementations (Piper, Edge, Replicate)
@@ -16,15 +18,14 @@ module MASTER
         model = File.join(voices_dir, "#{voice}.onnx")
 
         output = File.join(Dir.tmpdir, "piper_#{SecureRandom.hex(4)}.wav")
-        escaped = text.gsub('"', '\\"').gsub("`", "\\`")
 
-        cmd = if RUBY_PLATFORM =~ /mingw|mswin|cygwin/
-                "echo #{escaped} | py -m piper --model #{model} --output #{output} --length_scale #{params[:length_scale]} --noise_scale #{params[:noise_scale]}"
-              else
-                "echo \"#{escaped}\" | piper --model #{model} --output_file #{output} --length_scale #{params[:length_scale]} --noise_scale #{params[:noise_scale]} 2>/dev/null"
-              end
-
-        success = system(cmd)
+        # Use Open3 with array form: text piped via stdin, no shell injection risk
+        piper_cmd = ["piper", "--model", model,
+                     "--output_file", output,
+                     "--length_scale", params[:length_scale].to_s,
+                     "--noise_scale", params[:noise_scale].to_s]
+        _out, _err, status = Open3.capture3(*piper_cmd, stdin_data: text)
+        success = status.success?
         return Result.err("Piper generation failed.") unless success && File.exist?(output)
 
         Playback.play_audio(output) if play

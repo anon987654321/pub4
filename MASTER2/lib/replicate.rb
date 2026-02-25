@@ -20,7 +20,8 @@ module MASTER
     def self.configured_models
       @configured_models ||= begin
         YAML.safe_load_file(MODELS_FILE, symbolize_names: true)
-      rescue StandardError
+      rescue StandardError => e
+        Logging.warn("replicate: failed to load #{MODELS_FILE}: #{e.message}", subsystem: "replicate") if defined?(Logging)
         []
       end
     end

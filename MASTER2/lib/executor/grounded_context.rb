@@ -32,7 +32,6 @@ module MASTER
       data/models.yml
       data/council.yml
       data/system_prompt.yml
-      data/detectors.yml
       lib/result.rb
       lib/llm.rb
       lib/pipeline.rb

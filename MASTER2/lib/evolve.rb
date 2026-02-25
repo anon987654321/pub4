@@ -72,7 +72,12 @@ module MASTER
 
       raw = result.value[:content].to_s.strip
                   .gsub(/\A```(?:json)?\s*/i, "").gsub(/\s*```\z/, "")
-      suggestions = JSON.parse(raw)
+      begin
+        suggestions = JSON.parse(raw)
+      rescue JSON::ParserError => e
+        Logging.warn("evolve: LLM returned invalid JSON: #{e.message}", subsystem: "evolve") if defined?(Logging)
+        return files.map { |f| { file: f, improved: false, reason: "invalid JSON from LLM" } }
+      end
       @cost += result.value[:cost].to_f
 
       suggestions.map do |s|

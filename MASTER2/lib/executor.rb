@@ -10,6 +10,8 @@ require_relative "executor/strategy"
 require_relative "executor/prompts"
 require_relative "executor/plan"
 require_relative "executor/convention_extractor"
+require_relative "executor/tool_result"
+require_relative "refactor_branch"
 require_relative "executor/react"
 require_relative "executor/preact"
 require_relative "executor/rewoo"
@@ -76,6 +78,10 @@ module MASTER
     def initialize(max_steps: MAX_STEPS)
       @max_steps = max_steps
       @pattern = :react
+      @history = []
+      @reflections = []
+      @plan = []
+      @step = 0
     end
 
     include Strategy
