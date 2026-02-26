@@ -177,17 +177,16 @@ module MASTER
     end
 
     def call_direct(text)
-      # Simple: Direct LLM call with system context
+      # Direct LLM call with system context + session history
       sys = begin
         ExecutionContext.build_system_message(include_commands: false)
       rescue StandardError
         nil
       end
-      if sys
-        LLM.ask(text, messages: [{ role: "system", content: sys }], stream: true)
-      else
-        LLM.ask(text, stream: true)
-      end
+      prior = Session.current.context_for_llm(max_messages: 12)
+      prior = prior.reject { |m| m[:role].to_s == "user" && m[:content].to_s.strip == text.strip }
+      messages = sys ? [{ role: "system", content: sys }] + prior : prior
+      LLM.ask(text, messages: messages, stream: true)
     end
 
     public

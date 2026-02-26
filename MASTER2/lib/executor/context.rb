@@ -157,13 +157,16 @@ module MASTER
         history_section: history_section)
     end
 
-    # Build context as messages array with system/user separation
+    # Build context as messages array with system/user separation.
+    # Injects prior conversation history from Session so the LLM has continuity.
     def build_context_messages(goal)
       @cached_system_message ||= ExecutionContext.build_system_message(include_commands: true)
-      [
-        { role: "system", content: @cached_system_message },
-        { role: "user", content: build_task_context(goal) },
-      ]
+      prior = Session.current.context_for_llm(max_messages: 12)
+      # prior already contains role/content pairs; drop any stale user msg that
+      # duplicates the current goal to avoid sending the same turn twice.
+      prior = prior.reject { |m| m[:role].to_s == "user" && m[:content].to_s.strip == goal.strip }
+      [{ role: "system", content: @cached_system_message }] + prior +
+        [{ role: "user", content: build_task_context(goal) }]
     end
 
     # Compact file tree for system prompt injection
