@@ -1254,6 +1254,8 @@
 
     let currentOrb=0;
     let orbFade=1; // 0→1 crossfade on orb change
+    // Persist prefs (defined early so setOrb can call it)
+    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({orb:currentOrb,fx:fxIdx}));}catch(_){}};
     const setOrb=(idx)=>{
       currentOrb=((idx%orbStates.length)+orbStates.length)%orbStates.length;
       if(!isProcessing) uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;
@@ -1440,9 +1442,6 @@
       if(saved.fx!=null&&saved.fx>=0&&saved.fx<FX_MODES.length) fxIdx=saved.fx;
     }catch(_){currentOrb=Math.floor(Math.random()*orbStates.length);}
     setOrb(currentOrb);
-
-    // Persist on change
-    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({orb:currentOrb,fx:fxIdx}));}catch(_){}};
 
     // Ambient narrator — continuous gentle stream of varied content
     const AMBIENT=[
