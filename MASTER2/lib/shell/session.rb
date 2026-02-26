@@ -176,7 +176,7 @@ module MASTER
           UI.error(result.error)
         end
       else
-        UI.error("AutoFixer not available")
+        UI.error("Review::Fixer not available")
       end
     end
 

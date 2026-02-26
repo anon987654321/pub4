@@ -91,9 +91,9 @@ module MASTER
         private
 
         def attempt_fix(finding)
-          # Try AutoFixer if available
-          if defined?(AutoFixer)
-            fixer = AutoFixer.new(mode: :moderate)
+          # Try Review::Fixer if available
+          if defined?(MASTER::Review::Fixer)
+            fixer = MASTER::Review::Fixer.new(mode: :moderate)
 
             if File.exist?(finding.file)
               result = fixer.fix(finding.file)
