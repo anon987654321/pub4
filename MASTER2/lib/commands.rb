@@ -289,7 +289,8 @@ module MASTER
 
     def dispatch_one(input, pipeline:)
       # Identity intercept -- Claude's RLHF overrides system prompt on this question
-      if input.strip.downcase.match?(/\bwho are you\b|\bwhat are you\b|\byour name\b|\bintroduce yourself\b/)
+      signals = defined?(NLU) ? NLU.classify_signals(input.strip) : Set.new
+      if signals.include?(:identity_query)
         puts "\nMASTER v#{MASTER::VERSION} -- constitutional autonomous coding agent."
         return HANDLED
       end
@@ -399,27 +400,19 @@ module MASTER
 
     def normalize_intent_input(input)
       text = input.to_s.strip
-      lowered = text.downcase
-      return text if lowered.empty?
+      return text if text.empty?
 
-      # Natural-language self-refactor requests
-      if lowered.match?(/\b(self[\s-]?run|run .* through itself|refactor .* every|rewrite .* every|all files|entire repo|codebase)\b/)
-        if lowered.match?(/\b(strict|axiom|every|all|entire|iterative|loop|diminishing)\b/)
-          return "selfrun --strict --axioms --all-files"
-        end
+      signals = defined?(NLU) ? NLU.classify_signals(text) : Set.new
 
+      if signals.include?(:self_run_request)
+        low = text.downcase
+        return "selfrun --strict --axioms --all-files" if low.match?(/\b(strict|axiom|every|all|entire)\b/)
         return "selfrun"
       end
 
-      # Natural-language lint/scan requests
-      if lowered.match?(/\b(lint|validate|syntax check|scan)\b/) &&
-         lowered.match?(/\b(html|erb|css|javascript|js|rust|yaml|yml|all files|repo)\b/)
-        return "multi-refactor . --strict --axioms --all-files"
-      end
-
-      # Health/status phrasing
-      return "health" if lowered.match?(/\b(health|diagnostic|doctor|check setup)\b/)
-      return "status" if lowered.match?(/\b(status|where are we|summary)\b/)
+      return "multi-refactor . --strict --axioms --all-files" if signals.include?(:lint_request)
+      return "health" if signals.include?(:health_request)
+      return "status" if signals.include?(:status_request)
 
       text
     end

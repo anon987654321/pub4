@@ -88,18 +88,12 @@ module MASTER
 
     private
 
-    # Signals that clearly start a new independent task — wipe active_task
-    # so the LLM gets no inherited context from the previous topic.
-    CONTEXT_SHIFT_PATTERNS = [
-      /\b(now|next|separately|forget|ignore|done with|moving on|new task|reset|start fresh)\b/i,
-      /^(ok|okay|right|fine|good|cool|thanks)[,.]?\s+(now|so|let'?s|can you)/i,
-      /^(run|test|try|check|show|do)\s+(?:the\s+)?snapshot\b/i,
-    ].freeze
-
     def detect_context_shift(text)
       session = Session.current
       return unless session.active_task
-      return unless CONTEXT_SHIFT_PATTERNS.any? { |p| text.match?(p) }
+
+      signals = defined?(NLU) ? NLU.classify_signals(text) : Set.new
+      return unless signals.include?(:context_shift)
 
       session.set_task(nil)
       Logging.dmesg_log("session", message: "context shift detected -- task cleared") if defined?(Logging)
@@ -139,9 +133,9 @@ module MASTER
           steps = exec_result.value[:steps]
           steps = [] unless steps.is_a?(Array)
           security_veto = steps.any? do |s|
-            s[:tool] == "council_review" &&
-              s[:result].to_s.match?(/security|auth|injection|unsafe/i) &&
-              s[:result].to_s.match?(/REJECT|veto/i)
+            next false unless s[:tool] == "council_review"
+            review_signals = defined?(NLU) ? NLU.classify_signals(s[:result].to_s) : Set.new
+            review_signals.include?(:security_concern) && s[:result].to_s.match?(/REJECT|veto/i)
           end
 
           exec_result = Result.ok(exec_result.value.merge(

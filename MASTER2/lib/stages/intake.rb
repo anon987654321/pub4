@@ -5,19 +5,20 @@ module MASTER
     # Stage 1: Pass text through, enrich with memory context, flag for elicitation.
     # Implements gist items #7 (elicitation) and #10 (memory triggers).
     class Intake
-      # Gist #10: Patterns from Claude Opus/Sonnet 4.6 -- trigger automatic memory recall
-      MEMORY_TRIGGERS = /\b(you suggested|we decided|last time|the bug|my project|our approach|as before|continue|what about that|as I mentioned|the strategy|the plan)\b/i
-
-      # Gist #7: Claude for Excel elicitation pattern -- detect complex ambiguous requests
-      COMPLEX_TASK = /\b(build|create|implement|redesign|migrate|architect|refactor|spawn|start|deploy|run|connect|watch|monitor|scrape|generate|write)\b.{0,80}\b(system|app|module|feature|pipeline|service|framework|agent|bot|daemon|worker|server|script|api|integration)\b/i
-      SIMPLE_TASK  = /\A\s*\b(scan|fix|lint|check|test|help|version|clear|exit|quit|show|list|print|deps)\b/i
-
       def call(input)
         text = input[:text] || ""
         enriched = input.merge(text: text)
 
+        # Classify all signals via NLU (LLM with deterministic fallback)
+        signals = if defined?(MASTER::NLU)
+                    MASTER::NLU.classify_signals(text)
+                  else
+                    Set.new
+                  end
+        enriched = enriched.merge(signals: signals)
+
         # Auto-enrich with semantic memory if trigger words detected
-        if text.match?(MEMORY_TRIGGERS) && defined?(MASTER::Session)
+        if signals.include?(:memory_trigger) && defined?(MASTER::Session)
           history = begin
             MASTER::Session.current&.recent_messages(3) || []
           rescue StandardError
@@ -27,11 +28,11 @@ module MASTER
         end
 
         # Flag complex/ambiguous requests for elicitation checkpoint in REPL
-        if !text.match?(SIMPLE_TASK) && text.match?(COMPLEX_TASK)
+        if signals.include?(:complex_task) && !signals.include?(:simple_command)
           enriched = enriched.merge(needs_elicitation: true)
         end
 
-        # NLU: classify intent for executor routing and context
+        # NLU: structured intent for executor routing
         if defined?(MASTER::NLU) && !text.empty?
           nlu = MASTER::NLU.parse(text, context: input[:memory_context] || {})
           enriched = enriched.merge(nlu_intent: nlu) unless nlu[:intent] == :unknown
