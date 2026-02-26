@@ -160,7 +160,9 @@ module MASTER
         primary = model || select_model(tier)
         return Result.err("No model available.", category: :infrastructure) unless primary
 
-        @current_model = primary
+        # Only update prompt-visible current_model for user-facing tiers
+        user_facing = tier.nil? || tier == :strong || tier == :premium
+        Thread.current[:master_current_model] = primary if user_facing
 
         models_to_try = if fallbacks
                           [primary] + fallbacks

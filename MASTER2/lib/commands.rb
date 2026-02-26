@@ -147,17 +147,33 @@ module MASTER
     end
 
     # Fuzzy match for command suggestions (moved from Onboarding)
+    # Common words that are NOT typos of commands — skip did-you-mean
+    NATURAL_WORDS = %w[
+      hello hey hi thanks thank you yes no ok okay sure create update
+      delete remove change make build run start stop please what how
+      why where when who which can could would should do does did
+      the this that these those a an is are was were be been being
+      deploy install setup configure fix help me my it its
+    ].to_set.freeze
+
     def suggest_command(input)
       commands = CommandRegistry.primary_commands
       word = input.strip.split.first&.downcase
-      return nil unless word && word.length > 1
+      return nil unless word && word.length > 2
       return nil if commands.include?(word)
+      return nil if NATURAL_WORDS.include?(word)
 
-      scored = commands.map { |cmd| [cmd, Utils.levenshtein(word, cmd)] }
-                       .select { |_, d| d <= 3 }
-                       .sort_by { |_, d| d }
-                       .first(3)
-                       .map(&:first)
+      # Only suggest for plausible typos: distance ≤ 2, shares first char,
+      # and similar length.
+      scored = commands.filter_map do |cmd|
+        d = Utils.levenshtein(word, cmd)
+        next unless d <= 2 && d < word.length
+        next unless word[0] == cmd[0] || word[-1] == cmd[-1]
+        next unless (word.length - cmd.length).abs <= 2
+
+        [cmd, d]
+      end.sort_by { |_, d| d }.first(3).map(&:first)
+
       scored.empty? ? nil : scored
     end
 
