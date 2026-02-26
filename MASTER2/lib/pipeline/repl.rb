@@ -104,6 +104,7 @@ module MASTER
         session.add_user(line.strip)
 
         # % sigil: direct meta-op dispatch, bypasses LLM entirely
+        # % sigil: direct meta-op dispatch, bypasses LLM entirely
         if line.strip.start_with?("%")
           meta_input = line.strip[1..].strip
           parts = meta_input.split(/\s+/, 2)
@@ -112,6 +113,15 @@ module MASTER
           next if cmd_result
           UI.warn("unknown meta-op: %#{parts[0]}  (try %help)")
           next
+        end
+
+        # "command?" suffix → show help for that command
+        if line.strip.end_with?("?") && !line.strip.include?(" ")
+          cmd_name = line.strip.chomp("?")
+          if CommandRegistry::ALIAS_MAP.key?(cmd_name)
+            UI::Help.show(cmd_name)
+            next
+          end
         end
 
         # Auto-name session from first user message
