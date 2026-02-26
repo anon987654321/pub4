@@ -210,7 +210,7 @@ module MASTER
     end
 
     def direct_ask(goal, tier: nil)
-      system_msg = ExecutionContext.build_system_message(include_commands: false)
+      system_msg = ExecutionContext.build_system_message(include_commands: false, depth: ExecutionContext.current_depth)
 
       result = LLM.ask(goal, messages: [
                          { role: "system", content: system_msg },

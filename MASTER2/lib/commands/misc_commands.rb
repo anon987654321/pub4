@@ -5,7 +5,7 @@ require "fileutils"
 require "open3"
 require "timeout"
 
-require_relative "misc_commands/selftest_full"
+require_relative "misc_commands/self_run"
 require_relative "misc_commands/cinematic_persona"
 
 module MASTER

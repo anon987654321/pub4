@@ -9,6 +9,7 @@ module MASTER
         apply = args&.include?("-a") || args&.include?("--apply")
         lib_dir = File.join(root, "lib")
         Thread.current[:llm_quiet] = true
+        ExecutionContext.current_depth = :own
 
         rb_files = Dir.glob(File.join(lib_dir, "**", "*.rb"))
         puts "self: #{rb_files.count} files, mode: #{apply ? 'apply' : 'dry-run'}"
@@ -123,9 +124,11 @@ module MASTER
         end
 
         Thread.current[:llm_quiet] = false
+        ExecutionContext.current_depth = :shallow
         Result.ok("self complete: #{total_violations} violations, #{fixed} fixed")
       rescue StandardError => err
         Thread.current[:llm_quiet] = false
+        ExecutionContext.current_depth = :shallow
         Result.err("self failed: #{err.message}")
       end
     end

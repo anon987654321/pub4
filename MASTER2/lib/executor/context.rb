@@ -11,6 +11,12 @@ module MASTER
       "anti_simulation" => "EVIDENCE RULES",
     }.freeze
 
+    # Class-level depth: :shallow (default) | :own | :deep | :full
+    # Set to :own before evolve/selftest/chamber for grounded context.
+    @current_depth = :shallow
+    def self.current_depth; @current_depth; end
+    def self.current_depth=(d); @current_depth = d; end
+
     def self.system_prompt_config
       @system_prompt_config ||= if File.exist?(MASTER::Executor::SYSTEM_PROMPT_FILE)
                                   begin
@@ -99,10 +105,32 @@ module MASTER
           top_axioms = MASTER::Review::Constitution.axioms
                          .select { |a| (a["id"] || a["name"]) && (a["statement"] || a["description"]) }
                          .sort_by { |a| -(a["priority"] || 5) }
-                         .first(5)
+                         .first(10)
           unless top_axioms.empty?
             axiom_lines = top_axioms.map { |a| "#{a['id'] || a['name']}: #{a['statement'] || a['description']}" }.join("\n")
             sections << "ACTIVE AXIOMS (highest priority):\n#{axiom_lines}"
+          end
+        rescue StandardError
+          nil
+        end
+      end
+
+      # Inject full platform.yml so OpenBSD rules are always present
+      platform_file = Paths.data_file("platform.yml")
+      if File.exist?(platform_file)
+        sections << "PLATFORM RULES (OpenBSD):\n#{File.read(platform_file)}"
+      end
+
+      # Inject violated axioms from previous response so LLM self-corrects
+      if (violated_ids = Thread.current[:last_axiom_violations])&.any? && defined?(MASTER::Review::Constitution)
+        begin
+          all_axioms = MASTER::Review::Constitution.axioms
+          texts = violated_ids.filter_map do |id|
+            all_axioms.find { |a| (a["id"] || a["name"]) == id }
+          end
+          if texts.any?
+            detail = texts.map { |a| "#{a['id'] || a['name']}: #{a['statement'] || a['description']}" }.join("\n")
+            sections << "VIOLATED AXIOMS (self-correct in your next response):\n#{detail}"
           end
         rescue StandardError
           nil
@@ -161,7 +189,7 @@ module MASTER
     # Build context as messages array with system/user separation.
     # Injects prior conversation history from Session so the LLM has continuity.
     def build_context_messages(goal)
-      @cached_system_message ||= ExecutionContext.build_system_message(include_commands: true)
+      @cached_system_message ||= ExecutionContext.build_system_message(include_commands: true, depth: ExecutionContext.current_depth)
       prior = Session.current.context_for_llm(max_messages: 12)
       # prior already contains role/content pairs; drop any stale user msg that
       # duplicates the current goal to avoid sending the same turn twice.

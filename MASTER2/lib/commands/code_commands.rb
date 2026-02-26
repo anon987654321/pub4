@@ -51,7 +51,10 @@ module MASTER
       alias refactor autofix
 
       def chamber(file)
+        ExecutionContext.current_depth = :own
         autofix(file)
+      ensure
+        ExecutionContext.current_depth = :shallow
       end
 
       def evolve(args)
@@ -63,6 +66,7 @@ module MASTER
           return Result.err("no LLM configured")
         end
 
+        ExecutionContext.current_depth = :own
         evolver = Evolve.new
         result = evolver.run(path: path, dry_run: true)
 
