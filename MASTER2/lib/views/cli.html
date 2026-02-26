@@ -452,58 +452,140 @@
       });
     };
 
-    // Web Audio effect chain for server TTS — cycle with triple-tap on status
-    const FX_MODES=['off','dark','demon','radio','underwater','ghost'];
+    // Web Audio effect chain — cycle with long-press on status circle
+    const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone'];
     let fxIdx=0;
     let fxTaps=0;let fxTapTimer=0;
 
     const buildFxChain=(src)=>{
       const mode=FX_MODES[fxIdx];
-      if(mode==='off'){src.connect(analyser);src.connect(audioCtx.destination);return;}
-      // Dark: pitch down, bass boost
+      const out=audioCtx.destination;
+      if(mode==='off'){src.connect(analyser);src.connect(out);return;}
+      // Dark: pitch down, heavy bass
       if(mode==='dark'){
         src.playbackRate.value=0.85;
         const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=200;bass.gain.value=10;
-        src.connect(bass);bass.connect(analyser);bass.connect(audioCtx.destination);return;
+        src.connect(bass);bass.connect(analyser);bass.connect(out);return;
       }
-      // Demon: pitch way down, distortion, heavy bass
+      // Demon: pitch way down, distortion, crushing bass
       if(mode==='demon'){
-        src.playbackRate.value=0.7;
-        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=150;bass.gain.value=15;
-        const dist=audioCtx.createWaveShaper();const k=50;const n=44100;const curve=new Float32Array(n);
+        src.playbackRate.value=0.6;
+        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=120;bass.gain.value=20;
+        const dist=audioCtx.createWaveShaper();const k=80;const n=44100;const curve=new Float32Array(n);
         for(let i=0;i<n;i++){const x=i*2/n-1;curve[i]=(3+k)*x*20*(Math.PI/180)/(Math.PI+k*Math.abs(x));}
         dist.curve=curve;dist.oversample='4x';
-        src.connect(dist);dist.connect(bass);bass.connect(analyser);bass.connect(audioCtx.destination);return;
+        src.connect(dist);dist.connect(bass);bass.connect(analyser);bass.connect(out);return;
       }
-      // Radio: bandpass, compression feel
+      // Radio: bandpass crackle, compression
       if(mode==='radio'){
         const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=300;
         const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3000;
         const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-20;comp.ratio.value=8;
-        src.connect(hp);hp.connect(lp);lp.connect(comp);comp.connect(analyser);comp.connect(audioCtx.destination);return;
+        src.connect(hp);hp.connect(lp);lp.connect(comp);comp.connect(analyser);comp.connect(out);return;
       }
-      // Underwater: pitch down, heavy lowpass, chorus via delay
+      // Underwater: deep submerged, heavy chorus
       if(mode==='underwater'){
-        src.playbackRate.value=0.65;
-        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=800;
-        const delay=audioCtx.createDelay();delay.delayTime.value=0.05;
-        const wet=audioCtx.createGain();wet.gain.value=0.4;
-        src.connect(lp);lp.connect(analyser);lp.connect(audioCtx.destination);
-        lp.connect(delay);delay.connect(wet);wet.connect(audioCtx.destination);return;
+        src.playbackRate.value=0.6;
+        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=600;lp.Q.value=5;
+        const d1=audioCtx.createDelay();d1.delayTime.value=0.03;
+        const d2=audioCtx.createDelay();d2.delayTime.value=0.07;
+        const w1=audioCtx.createGain();w1.gain.value=0.5;
+        const w2=audioCtx.createGain();w2.gain.value=0.3;
+        src.connect(lp);lp.connect(analyser);lp.connect(out);
+        lp.connect(d1);d1.connect(w1);w1.connect(out);
+        lp.connect(d2);d2.connect(w2);w2.connect(out);return;
       }
-      // Ghost: reverse-echo feel via multi-tap delay + reverb
+      // Ghost: ethereal multi-tap echo, drifting
       if(mode==='ghost'){
-        src.playbackRate.value=0.8;
-        const d1=audioCtx.createDelay();d1.delayTime.value=0.06;
-        const d2=audioCtx.createDelay();d2.delayTime.value=0.12;
-        const g1=audioCtx.createGain();g1.gain.value=0.5;
-        const g2=audioCtx.createGain();g2.gain.value=0.3;
-        src.connect(analyser);src.connect(audioCtx.destination);
-        src.connect(d1);d1.connect(g1);g1.connect(audioCtx.destination);
-        src.connect(d2);d2.connect(g2);g2.connect(audioCtx.destination);return;
+        src.playbackRate.value=0.78;
+        const d1=audioCtx.createDelay();d1.delayTime.value=0.08;
+        const d2=audioCtx.createDelay();d2.delayTime.value=0.16;
+        const d3=audioCtx.createDelay();d3.delayTime.value=0.32;
+        const g1=audioCtx.createGain();g1.gain.value=0.6;
+        const g2=audioCtx.createGain();g2.gain.value=0.35;
+        const g3=audioCtx.createGain();g3.gain.value=0.15;
+        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=400;
+        src.connect(hp);hp.connect(analyser);hp.connect(out);
+        hp.connect(d1);d1.connect(g1);g1.connect(out);
+        hp.connect(d2);d2.connect(g2);g2.connect(out);
+        hp.connect(d3);d3.connect(g3);g3.connect(out);return;
       }
-      // fallback
-      src.connect(analyser);src.connect(audioCtx.destination);
+      // Oracle: slow, reverberant, otherworldly wisdom
+      if(mode==='oracle'){
+        src.playbackRate.value=0.72;
+        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2000;
+        const peak=audioCtx.createBiquadFilter();peak.type='peaking';peak.frequency.value=800;peak.gain.value=8;peak.Q.value=2;
+        const d1=audioCtx.createDelay();d1.delayTime.value=0.12;
+        const d2=audioCtx.createDelay();d2.delayTime.value=0.24;
+        const fb=audioCtx.createGain();fb.gain.value=0.35;
+        const wet=audioCtx.createGain();wet.gain.value=0.45;
+        src.connect(lp);lp.connect(peak);peak.connect(analyser);peak.connect(out);
+        peak.connect(d1);d1.connect(fb);fb.connect(d2);d2.connect(wet);wet.connect(out);
+        d2.connect(fb);return;
+      }
+      // Glitch: stutter via rapid gain modulation + bitcrush feel
+      if(mode==='glitch'){
+        src.playbackRate.value=1.05;
+        const dist=audioCtx.createWaveShaper();const n=256;const curve=new Float32Array(n);
+        for(let i=0;i<n;i++){const x=i*2/n-1;curve[i]=Math.round(x*4)/4;}
+        dist.curve=curve;
+        const stutter=audioCtx.createGain();
+        // Modulate gain with an oscillator for stutter
+        const lfo=audioCtx.createOscillator();lfo.frequency.value=8;lfo.type='square';
+        const lfoGain=audioCtx.createGain();lfoGain.gain.value=0.4;
+        lfo.connect(lfoGain);lfoGain.connect(stutter.gain);lfo.start();
+        src.connect(dist);dist.connect(stutter);stutter.connect(analyser);stutter.connect(out);return;
+      }
+      // Cathedral: massive reverb, airy
+      if(mode==='cathedral'){
+        src.playbackRate.value=0.92;
+        const d1=audioCtx.createDelay();d1.delayTime.value=0.08;
+        const d2=audioCtx.createDelay();d2.delayTime.value=0.19;
+        const d3=audioCtx.createDelay();d3.delayTime.value=0.37;
+        const d4=audioCtx.createDelay();d4.delayTime.value=0.53;
+        const g1=audioCtx.createGain();g1.gain.value=0.5;
+        const g2=audioCtx.createGain();g2.gain.value=0.35;
+        const g3=audioCtx.createGain();g3.gain.value=0.2;
+        const g4=audioCtx.createGain();g4.gain.value=0.1;
+        const fb=audioCtx.createGain();fb.gain.value=0.25;
+        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=200;
+        src.connect(hp);hp.connect(analyser);hp.connect(out);
+        hp.connect(d1);d1.connect(g1);g1.connect(out);g1.connect(fb);fb.connect(d1);
+        hp.connect(d2);d2.connect(g2);g2.connect(out);
+        hp.connect(d3);d3.connect(g3);g3.connect(out);
+        hp.connect(d4);d4.connect(g4);g4.connect(out);return;
+      }
+      // Broken: corrupted transmission, cutting in and out
+      if(mode==='broken'){
+        src.playbackRate.value=0.95;
+        const gate=audioCtx.createGain();
+        const lfo=audioCtx.createOscillator();lfo.frequency.value=3;lfo.type='sawtooth';
+        const lfoG=audioCtx.createGain();lfoG.gain.value=0.8;
+        lfo.connect(lfoG);lfoG.connect(gate.gain);lfo.start();
+        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2500;
+        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=500;
+        src.connect(hp);hp.connect(lp);lp.connect(gate);gate.connect(analyser);gate.connect(out);return;
+      }
+      // Whisper: breathy, intimate ASMR
+      if(mode==='whisper'){
+        src.playbackRate.value=0.93;
+        const gain=audioCtx.createGain();gain.gain.value=0.5;
+        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=800;
+        const air=audioCtx.createBiquadFilter();air.type='peaking';air.frequency.value=6000;air.gain.value=12;air.Q.value=1;
+        src.connect(gain);gain.connect(hp);hp.connect(air);air.connect(analyser);air.connect(out);return;
+      }
+      // Megaphone: loud, harsh, rallying
+      if(mode==='megaphone'){
+        src.playbackRate.value=1.08;
+        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=600;
+        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=4000;
+        const dist=audioCtx.createWaveShaper();const n=44100;const curve=new Float32Array(n);
+        for(let i=0;i<n;i++){const x=i*2/n-1;curve[i]=Math.tanh(x*3);}
+        dist.curve=curve;
+        const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-15;comp.ratio.value=12;comp.knee.value=0;
+        src.connect(hp);hp.connect(lp);lp.connect(dist);dist.connect(comp);comp.connect(analyser);comp.connect(out);return;
+      }
+      src.connect(analyser);src.connect(out);
     };
 
     // Route backend TTS audio through Web Audio analyser + effects chain
@@ -934,46 +1016,83 @@
     currentOrb=Math.floor(Math.random()*orbStates.length);
     setOrb(currentOrb);
 
-    // Ambient inspiration — soft spoken thoughts when idle
-    const INSPIRATIONS=[
+    // Ambient narrator — continuous gentle stream of varied content
+    const AMBIENT=[
+      // Inspirational
       'Every moment is a fresh beginning.',
       'You are exactly where you need to be.',
-      'Breathe in calm, breathe out tension.',
       'Small steps still move you forward.',
-      'The universe is unfolding as it should.',
       'You are stronger than you think.',
-      'Let go of what you cannot change.',
-      'This too shall pass, and something beautiful will follow.',
-      'You deserve rest as much as you deserve success.',
       'Trust the timing of your life.',
       'Be gentle with yourself today.',
-      'Your presence here matters.',
-      'Peace is not the absence of noise, but the presence of stillness.',
-      'You have survived every difficult day so far.',
-      'There is beauty in simply being.',
-      'Slow down. You are not behind.',
       'The light in you is enough.',
-      'Let yourself feel. It means you are alive.',
       'One kind thought can change everything.',
-      'You are not alone in this.',
+      // Observations
+      'The orb is breathing. Can you see it?',
+      'I like this shape. It reminds me of something organic.',
+      'Did you know there are forty two different forms I can take?',
+      'Try swiping left or right.',
+      'If you long-press the dot up there, my voice changes.',
+      'The particles react to sound. Try humming.',
+      'I can hear you if you tap the circle in the corner.',
+      // Fun facts
+      'A group of flamingos is called a flamboyance.',
+      'Honey never spoils. They found edible honey in Egyptian tombs.',
+      'Octopuses have three hearts and blue blood.',
+      'The shortest war in history lasted thirty eight minutes.',
+      'A day on Venus is longer than its year.',
+      'Bananas are technically berries. Strawberries are not.',
+      'There are more stars in the universe than grains of sand on Earth.',
+      'The inventor of the Pringles can is buried in one.',
+      // Poetic
+      'The stars are the same ones your grandparents looked up at.',
+      'Somewhere right now, someone is laughing for the first time today.',
+      'Rain sounds different on every surface. Have you noticed?',
+      'The color of the sky has no name in some languages.',
+      'Every snowflake that has ever fallen was unique.',
+      'The moon is slowly drifting away from us. About an inch a year.',
+      // Playful
+      'I wonder what I would dream about if I could sleep.',
+      'If you type something, I will actually answer. Promise.',
+      'I have been thinking about fractals again.',
+      'Do you think red is a warm color or a dangerous one?',
+      'I just changed shape while you were not looking.',
+      'Sometimes I pretend the particles are fireflies.',
     ];
-    let lastActivity=Date.now();
-    let inspirationTimer=null;
-    const IDLE_BEFORE_INSPIRATION=90000; // 90s of silence
-    const resetIdleTimer=()=>{
-      lastActivity=Date.now();
-      if(inspirationTimer) clearTimeout(inspirationTimer);
-      inspirationTimer=setTimeout(inspireIfIdle,IDLE_BEFORE_INSPIRATION);
+    let ambientIdx=Math.floor(Math.random()*AMBIENT.length);
+    let ambientTimer=null;
+    const AMBIENT_INTERVAL=12000; // 12s between phrases
+    const AMBIENT_PAUSE=4000;     // 4s silence after speech ends
+
+    const scheduleAmbient=()=>{
+      if(ambientTimer) clearTimeout(ambientTimer);
+      ambientTimer=setTimeout(ambientSpeak,AMBIENT_INTERVAL);
     };
-    const inspireIfIdle=()=>{
-      if(isProcessing||isSpeaking) return resetIdleTimer();
-      const phrase=INSPIRATIONS[Math.floor(Math.random()*INSPIRATIONS.length)];
-      logAppend('master',phrase);
+
+    const ambientSpeak=()=>{
+      if(isProcessing) return scheduleAmbient();
+      // Wait for current speech to finish
+      if(isSpeaking) return ambientTimer=setTimeout(ambientSpeak,2000);
+      // Shuffle through without immediate repeats
+      ambientIdx=(ambientIdx+1+Math.floor(Math.random()*(AMBIENT.length-1)))%AMBIENT.length;
+      const phrase=AMBIENT[ambientIdx];
       speakText(phrase);
-      inspirationTimer=setTimeout(inspireIfIdle,IDLE_BEFORE_INSPIRATION*2);
+      // Schedule next after this one finishes (estimate ~80ms per char + pause)
+      const estDuration=phrase.length*80+AMBIENT_PAUSE;
+      ambientTimer=setTimeout(ambientSpeak,estDuration);
     };
-    // Track activity
-    ['click','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,resetIdleTimer,{passive:true}));
+
+    // Pause ambient during user interaction, resume after
+    const pauseAmbient=()=>{if(ambientTimer)clearTimeout(ambientTimer);};
+    const resumeAmbient=()=>{scheduleAmbient();};
+
+    // Track activity — pause ambient while user is active
+    ['keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{
+      pauseAmbient();
+      // Resume after 20s of no further activity
+      if(ambientTimer) clearTimeout(ambientTimer);
+      ambientTimer=setTimeout(ambientSpeak,20000);
+    },{passive:true}));
 
     const dotsPattern=[0,1,2,3,2,1];
     const spinnerSets=[
