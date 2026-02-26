@@ -934,6 +934,47 @@
     currentOrb=Math.floor(Math.random()*orbStates.length);
     setOrb(currentOrb);
 
+    // Ambient inspiration — soft spoken thoughts when idle
+    const INSPIRATIONS=[
+      'Every moment is a fresh beginning.',
+      'You are exactly where you need to be.',
+      'Breathe in calm, breathe out tension.',
+      'Small steps still move you forward.',
+      'The universe is unfolding as it should.',
+      'You are stronger than you think.',
+      'Let go of what you cannot change.',
+      'This too shall pass, and something beautiful will follow.',
+      'You deserve rest as much as you deserve success.',
+      'Trust the timing of your life.',
+      'Be gentle with yourself today.',
+      'Your presence here matters.',
+      'Peace is not the absence of noise, but the presence of stillness.',
+      'You have survived every difficult day so far.',
+      'There is beauty in simply being.',
+      'Slow down. You are not behind.',
+      'The light in you is enough.',
+      'Let yourself feel. It means you are alive.',
+      'One kind thought can change everything.',
+      'You are not alone in this.',
+    ];
+    let lastActivity=Date.now();
+    let inspirationTimer=null;
+    const IDLE_BEFORE_INSPIRATION=90000; // 90s of silence
+    const resetIdleTimer=()=>{
+      lastActivity=Date.now();
+      if(inspirationTimer) clearTimeout(inspirationTimer);
+      inspirationTimer=setTimeout(inspireIfIdle,IDLE_BEFORE_INSPIRATION);
+    };
+    const inspireIfIdle=()=>{
+      if(isProcessing||isSpeaking) return resetIdleTimer();
+      const phrase=INSPIRATIONS[Math.floor(Math.random()*INSPIRATIONS.length)];
+      logAppend('master',phrase);
+      speakText(phrase);
+      inspirationTimer=setTimeout(inspireIfIdle,IDLE_BEFORE_INSPIRATION*2);
+    };
+    // Track activity
+    ['click','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,resetIdleTimer,{passive:true}));
+
     const dotsPattern=[0,1,2,3,2,1];
     const spinnerSets=[
       ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"],
@@ -975,8 +1016,12 @@
         if(window.innerWidth>768) input.focus();
         const today=new Date();
         const isMomBday=(today.getMonth()===1&&today.getDate()===26);
-        const greeting=isMomBday?'Happy birthday momma!':'Hey. What can I help with?';
-        speakWithAudio(greeting).then(ok=>{if(!ok)speakText(greeting);});
+        const hour=today.getHours();
+        const timeGreet=hour<12?'Good morning.':hour<17?'Good afternoon.':'Good evening.';
+        const greeting=isMomBday?'Happy birthday momma!':timeGreet;
+        speakText(greeting);
+        speakWithAudio(greeting);
+        resetIdleTimer();
       },850);
     });
 
