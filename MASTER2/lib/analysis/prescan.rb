@@ -71,7 +71,14 @@ module MASTER
           large_files << { file: file, lines: lines } if lines > 500
         end
 
-        UI.warn("health0: sprawl #{large_files.size} files >500 lines") if large_files.any?
+        if large_files.any?
+          sorted = large_files.sort_by { |f| -f[:lines] }
+          UI.warn("health0: sprawl #{sorted.size} files >500 lines")
+          sorted.each do |f|
+            rel = f[:file].delete_prefix(path + "/")
+            $stderr.puts UI.dim("  #{rel} (#{f[:lines]} lines)")
+          end
+        end
 
         large_files
       end
