@@ -96,11 +96,11 @@ module MASTER
       if defined?(MASTER::Review::Constitution)
         begin
           top_axioms = MASTER::Review::Constitution.axioms
-                         .select { |a| a["name"] && a["description"] }
+                         .select { |a| (a["id"] || a["name"]) && (a["statement"] || a["description"]) }
                          .sort_by { |a| -(a["priority"] || 5) }
                          .first(5)
           unless top_axioms.empty?
-            axiom_lines = top_axioms.map { |a| "#{a['name']}: #{a['description']}" }.join("\n")
+            axiom_lines = top_axioms.map { |a| "#{a['id'] || a['name']}: #{a['statement'] || a['description']}" }.join("\n")
             sections << "ACTIVE AXIOMS (highest priority):\n#{axiom_lines}"
           end
         rescue StandardError
