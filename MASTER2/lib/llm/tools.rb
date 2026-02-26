@@ -82,5 +82,12 @@ module MASTER
       ShellCommandTool,
       MemorySearchTool,
     ].freeze
+
+    # Append CommandRegistry-generated tools when available
+    def self.all_tool_classes
+      base = TOOL_CLASSES.dup
+      base.concat(CommandRegistry.to_tool_classes) if defined?(CommandRegistry)
+      base
+    end
   end
 end
