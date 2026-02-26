@@ -305,6 +305,70 @@ module MASTER
         puts "  web: http://localhost:#{server.port}/?token=#{token}"
       end
 
+      def creative_chamber(args)
+        prompt = args.to_s.strip
+        return Result.err("Usage: creative <prompt>") if prompt.empty?
+
+        if defined?(Chamber)
+          result = Chamber.deliberate(prompt)
+          if result.respond_to?(:ok?) && result.ok?
+            puts result.value[:summary] || result.value[:response]
+          else
+            puts result.respond_to?(:error) ? result.error : result.to_s
+          end
+        else
+          # Fall back to LLM with creative framing
+          result = LLM.ask("Creative exploration: #{prompt}", tier: :strong)
+          puts result.ok? ? result.value[:content] : "Error: #{result.error}"
+        end
+        Result.ok
+      end
+
+      def harvest_data(args)
+        target = args.to_s.strip
+        return Result.err("Usage: harvest <url|topic>") if target.empty?
+
+        if target.match?(%r{\Ahttps?://})
+          if defined?(Web)
+            result = Web.browse(target)
+            if result.ok?
+              puts result.value[:content].to_s[0, 2000]
+            else
+              puts "Error: #{result.error}"
+            end
+          else
+            puts "Web module not available"
+          end
+        else
+          result = LLM.ask("Research and summarize: #{target}", tier: :fast)
+          puts result.ok? ? result.value[:content] : "Error: #{result.error}"
+        end
+        Result.ok
+      end
+
+      def manage_queue(args)
+        cmd = args.to_s.strip.split.first
+        case cmd
+        when "list", nil, ""
+          if defined?(Scheduler)
+            jobs = Scheduler.list_jobs
+            if jobs.empty?
+              puts "queue: empty"
+            else
+              jobs.each { |j| puts "  #{j[:id]} #{j[:status]} #{j[:description]}" }
+            end
+          else
+            puts "Scheduler not available"
+          end
+        when "clear"
+          Scheduler.clear! if defined?(Scheduler)
+          puts "queue: cleared"
+        else
+          puts "Usage: queue [list|clear]"
+        end
+        Result.ok
+      end
+
       private
 
       def bootstrap_setup

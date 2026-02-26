@@ -41,6 +41,29 @@ module MASTER
           Result.err(result.error)
         end
       end
+
+      def manage_workflow(args)
+        cmd = args.to_s.strip.split.first
+        case cmd
+        when "start"
+          session = Session.current
+          session.metadata[:workflow] = true
+          session.save
+          puts "workflow: started"
+        when "advance"
+          workflow_advance
+        when "status", nil, ""
+          workflow_status
+        when "stop"
+          session = Session.current
+          session.metadata.delete(:workflow)
+          session.save
+          puts "workflow: stopped"
+        else
+          puts "Usage: workflow [start|advance|status|stop]"
+        end
+        Result.ok
+      end
     end
   end
 end
