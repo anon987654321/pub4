@@ -40,6 +40,14 @@ install_dependencies() {
 
   install_gem "chartkick"
 
+  # Patch ApplicationController with Pagy::Backend (idempotent)
+  grep -q "Pagy::Backend" app/controllers/application_controller.rb 2>/dev/null || \
+    sed -i 's/class ApplicationController < ActionController::Base/class ApplicationController < ActionController::Base\n  include Pagy::Backend/' \
+    app/controllers/application_controller.rb
+  grep -q "Pagy::Frontend" app/helpers/application_helper.rb 2>/dev/null || \
+    sed -i 's/module ApplicationHelper/module ApplicationHelper\n  include Pagy::Frontend/' \
+    app/helpers/application_helper.rb
+
 }
 
 generate_models() {
