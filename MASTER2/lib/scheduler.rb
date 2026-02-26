@@ -98,34 +98,38 @@ module MASTER
       end
 
       def list
-        @jobs.map do |j|
-          { id: j.id, command: j.command, interval: j.interval,
-            next_at: j.next_at, enabled: j.enabled, failures: j.failures,
-            priority: j.priority, max_retries: j.max_retries, confidence: j.confidence,
-            last_status: j.last_status, last_error: j.last_error }
+        @mutex.synchronize do
+          @jobs.map do |j|
+            { id: j.id, command: j.command, interval: j.interval,
+              next_at: j.next_at, enabled: j.enabled, failures: j.failures,
+              priority: j.priority, max_retries: j.max_retries, confidence: j.confidence,
+              last_status: j.last_status, last_error: j.last_error }
+          end
         end
       end
 
       # Check and run due jobs -- called by Heartbeat
       def tick
         now = Time.now
-        due = @jobs.select { |j| j.enabled && j.next_at <= now }
+        due = @mutex.synchronize { @jobs.select { |j| j.enabled && j.next_at <= now } }
         due = rank_due_jobs(due)
         return if due.empty?
 
         due.each do |job|
           run_succeeded = run_job(job)
-          if run_succeeded
-            if job.interval
-              job.next_at = Time.now + job.interval
-            else
-              job.enabled = false # one-shot
+          @mutex.synchronize do
+            if run_succeeded
+              if job.interval
+                job.next_at = Time.now + job.interval
+              else
+                job.enabled = false # one-shot
+              end
+            elsif job.failures >= job.max_retries.to_i
+              job.enabled = false
+              Logging.dmesg_log("scheduler", message: "disabled #{job.id}: max retries reached")
             end
-          elsif job.failures >= job.max_retries.to_i
-            job.enabled = false
-            Logging.dmesg_log("scheduler", message: "disabled #{job.id}: max retries reached")
+            job.last_run = Time.now
           end
-          job.last_run = Time.now
         end
         save
       end
