@@ -85,71 +85,61 @@ require_relative "scheduler"
 require_relative "triggers"
 
 # Deliberation engines
-require_relative "chamber"
-
-# Tools
+# Core tools (always needed)
 require_relative "shell"
 require_relative "analysis"
 require_relative "problem_solver"
 require_relative "evolve"
 require_relative "queue"
 require_relative "harvester"
-
-# Web browsing
 require_relative "web"
+require_relative "chamber"
 
-# Speech
-require_relative "speech"
-
-# Media generation and post-processing bridges
-require_relative "bridges"
-
-# External services
-%w[weaviate replicate cinematic semantic_cache].each do |mod|
-  MASTER.safe_require(mod)
-end
-
-# Agents
-require_relative "agent"
-
-# Meta/Self-improvement
+# Meta/Self-improvement (always needed — scan/review back every command)
 require_relative "scan"
 require_relative "review"
+require_relative "review_gate"
 require_relative "learnings"
 require_relative "file_processor"
 require_relative "reflow"
 require_relative "multi_refactor"
-
-# Generators
-require_relative "html_generator"
-
-# Quality gates
 require_relative "quality_gates"
-
-# Self-refactoring infrastructure
 require_relative "axiom_resolver"
 require_relative "dependency_map"
 require_relative "convergence_tracker"
 require_relative "pressure_pass"
 require_relative "self_refactor"
-require_relative "nlu"
-require_relative "conversation"
+require_relative "html_generator"
 require_relative "security/injection_guard"
-require_relative "agent/credential_store"
-require_relative "session/reminders"
 require_relative "executor/tool_protocol"
 require_relative "review/tool_scanner"
 require_relative "llm/hesitation_detector"
-require_relative "agent/behavior_monitor"
+require_relative "session/reminders"
 require_relative "session/per_step_reflection"
-require_relative "mcp_server"
 require_relative "introspection/friction_recorder"
 require_relative "introspection/session_retrospective"
 require_relative "boot/modes"
 
-# Web UI
-%w[server].each do |mod|
-  MASTER.safe_require(mod)
+# On-demand: heavy media/agent/server stack -- loaded only when first used
+ON_DEMAND = %w[
+  speech
+  bridges
+  weaviate
+  replicate
+  cinematic
+  semantic_cache
+  agent
+  agent/credential_store
+  agent/behavior_monitor
+  mcp_server
+  server
+  nlu
+  conversation
+].freeze
+
+ON_DEMAND.each do |mod|
+  autoload_path = File.join(__dir__, "#{mod}.rb")
+  MASTER.safe_require(mod, silent: true) if File.exist?(autoload_path)
 end
 
 Scan = MASTER::Scan if defined?(MASTER::Scan)

@@ -125,14 +125,16 @@ module MASTER
       result
     end
 
+    STRATEGIES = {
+      react:     :execute_react,
+      pre_act:   :execute_pre_act,
+      rewoo:     :execute_rewoo,
+      reflexion: :execute_reflexion,
+    }.freeze
+
     def execute_pattern(pattern, goal, tier:)
-      case pattern
-      when :react     then execute_react(goal, tier: tier)
-      when :pre_act   then execute_pre_act(goal, tier: tier)
-      when :rewoo     then execute_rewoo(goal, tier: tier)
-      when :reflexion then execute_reflexion(goal, tier: tier)
-      else execute_react(goal, tier: tier)
-      end
+      method_name = STRATEGIES.fetch(pattern, :execute_react)
+      send(method_name, goal, tier: tier)
     end
 
     def check_timeout!(start_time)
