@@ -11,6 +11,7 @@ require_relative "commands/misc_commands"
 require_relative "commands/refactor_helpers"
 require_relative "commands/workflow_commands"
 require_relative "commands/system_commands"
+require_relative "commands/init_commands"
 
 module MASTER
   # Commands - REPL command dispatcher
@@ -25,6 +26,7 @@ module MASTER
     include RefactorHelpers
     include WorkflowCommands
     include SystemCommands
+    include InitCommands
 
     @last_command = nil
 
@@ -149,6 +151,7 @@ module MASTER
       commands = CommandRegistry.primary_commands
       word = input.strip.split.first&.downcase
       return nil unless word && word.length > 2
+      return nil if commands.include?(word)
 
       commands.find { |cmd| Utils.levenshtein(word, cmd) <= 1 }
     end
@@ -389,6 +392,9 @@ module MASTER
         HANDLED
       when "bootstrap"
         bootstrap(args)
+        HANDLED
+      when "init-instructions", "init-llm"
+        init_instructions(args)
         HANDLED
       when "history-dig"
         history_dig(args)
