@@ -137,40 +137,10 @@ module MASTER
       end
 
       # Manual deep-dive bug analysis
-      def hunt_bugs(args)
-        args = "." if args.nil? || args.strip.empty?
-        path = File.expand_path(args.strip)
-        return puts "Path not found: #{args.strip}" unless File.exist?(path)
-
-        result = Scan.run(path, depth: :hunt)
-        display_scan_result(result, path)
-      end
-
-      # Manual constitutional validation
-      def critique_code(args)
-        args = "." if args.nil? || args.strip.empty?
-        path = File.expand_path(args.strip)
-        return puts "Path not found: #{args.strip}" unless File.exist?(path)
-
-        result = Scan.run(path, depth: :critique)
-        display_scan_result(result, path)
-      end
-
-      # Detect principle conflicts in constitution
-      def detect_conflicts
-        puts "Analyzing constitution for principle conflicts..."
-        puts
-
-        # For now, provide a simple implementation
-        constitution_path = Paths.data_file("constitution.yml")
-
-        if File.exist?(constitution_path)
-          puts "constitution: found"
-          puts "review: manual check recommended for complex conflicts"
-        else
-          puts "! constitution: not found at #{constitution_path}"
-        end
-      end
+      # Legacy aliases — delegate to unified scan_code
+      def hunt_bugs(args)    = scan_code("#{args} --hunt")
+      def critique_code(args) = scan_code("#{args} --critique")
+      def detect_conflicts    = scan_code("--critique")
 
       # Show what learnings would apply to this code
       def show_learnings(args)
@@ -195,7 +165,13 @@ module MASTER
       end
 
       def scan_code(args)
-        path = args.nil? || args.strip.empty? ? MASTER.root : File.expand_path(args.strip)
+        tokens = args.to_s.split
+        depth  = if tokens.delete("--hunt")     then :hunt
+                 elsif tokens.delete("--critique") then :critique
+                 else :standard
+                 end
+        raw_path = tokens.reject { |t| t.start_with?("--") }.first
+        path = raw_path.nil? || raw_path.empty? ? MASTER.root : File.expand_path(raw_path)
 
         unless File.exist?(path)
           puts "Path not found: #{path}"
@@ -204,7 +180,7 @@ module MASTER
 
         state_path = Paths.var_file("scan_state.json")
 
-        if (args.nil? || args.strip.empty?) && File.exist?(state_path)
+        if depth == :standard && raw_path.nil? && File.exist?(state_path)
           cached = JSON.parse(File.read(state_path), symbolize_names: true)
           age = ((Time.now - Time.parse(cached[:scanned_at])) / 60).round
           puts "Last scan: #{cached[:scanned_at]} (#{age}m ago)"
@@ -213,8 +189,8 @@ module MASTER
           return Result.ok(cached)
         end
 
-        UI.header("Scanning: #{path}")
-        result = Scan.run(path, depth: :standard)
+        UI.header("Scanning (#{depth}): #{path}")
+        result = Scan.run(path, depth: depth)
         display_scan_result(result, path)
 
         state = {
