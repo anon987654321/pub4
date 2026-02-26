@@ -4,9 +4,9 @@ module MASTER
   module Commands
     module MiscCommands
       # Full self-run across entire pub4 repo
-      def selftest_full(args)
+      def self_run(args)
         root = MASTER.root
-        apply = args&.include?("-a") || args&.include?("--apply")
+        apply = !args&.include?("--dry-run")
         lib_dir = File.join(root, "lib")
         Thread.current[:llm_quiet] = true
         ExecutionContext.current_depth = :own
