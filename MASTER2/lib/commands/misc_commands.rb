@@ -14,7 +14,7 @@ module MASTER
     module MiscCommands
       TEXT_EXTENSIONS = %w[rb py js ts css svg zsh sh bash md yml yaml json toml gemspec txt erb conf ini env].freeze
       TEXT_BASENAMES  = %w[Gemfile Rakefile Makefile Dockerfile].freeze
-      SKIP_DIRS       = %w[.git vendor tmp var node_modules .bundle coverage log dist].freeze
+      SKIP_DIRS       = Paths::SKIP_DIRS
 
       def run_snapshot(args)
         ts  = Time.now.utc.strftime("%Y%m%dT%H%M%SZ")

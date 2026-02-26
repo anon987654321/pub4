@@ -25,8 +25,17 @@ module MASTER
     ].freeze
 
     class << self
-      attr_accessor :current_model, :persona_prompt
+      attr_accessor :persona_prompt
       attr_reader :forced_model
+
+      # Thread-local current_model: fixes CQS violation and thread-safety in Falcon async.
+      def current_model
+        Thread.current[:master_current_model] || @forced_model
+      end
+
+      def current_model=(val)
+        Thread.current[:master_current_model] = val
+      end
 
       # Tier setter for compatibility
       def tier=(value)

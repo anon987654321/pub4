@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "securerandom"
 
 module MASTER
   # Scheduler -- persistent job scheduling (cron-style)
@@ -69,7 +70,7 @@ module MASTER
         return Result.err("Too many jobs (max #{MAX_JOBS}).") if @jobs.size >= MAX_JOBS
 
         job = Job.new(
-          id: id || "job_#{Time.now.to_i}_#{rand(1000)}",
+          id: id || "job_#{SecureRandom.hex(8)}",
           command: command,
           interval: interval == :once ? nil : interval,
           next_at: Time.now,

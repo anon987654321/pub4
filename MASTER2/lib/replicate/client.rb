@@ -55,7 +55,6 @@ module MASTER
         Result.err("Replicate LLM error: #{err.message}", category: :infrastructure)
       end
 
-
       # Create a new prediction
       def create_prediction(model:, input:)
         body = { input: input }

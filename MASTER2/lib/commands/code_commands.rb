@@ -251,7 +251,6 @@ module MASTER
         puts "  #{result[:files]} files  #{total} findings  #{result[:autofix_eligible]} autofix-eligible"
       end
 
-
       def parse_evolve_args(args)
         return [MASTER.root, nil] if args.nil? || args.to_s.strip.empty?
 

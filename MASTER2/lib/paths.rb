@@ -4,6 +4,9 @@ require "fileutils"
 
 module MASTER
   module Paths
+    # Single source for all directory exclusions (ONE_SOURCE axiom).
+    SKIP_DIRS = %w[.git vendor tmp var node_modules .bundle coverage log dist].freeze
+
     class << self
       def root
         MASTER.root

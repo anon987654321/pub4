@@ -257,7 +257,6 @@ module MASTER
       Result.ok(normalized)
     end
 
-
     def strip_tool_blocks(text)
       return text unless text.is_a?(String)
 

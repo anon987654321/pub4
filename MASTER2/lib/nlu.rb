@@ -55,7 +55,7 @@ module MASTER
         # Try to use LLM with JSON schema if available
         if defined?(MASTER::LLM) && MASTER::LLM.respond_to?(:ask_json)
           result = MASTER::LLM.ask_json(prompt, schema: schema, tier: :fast)
-          
+
           if result.ok?
             response_data = result.value[:content]
             return normalize_intent(response_data) if response_data.is_a?(Hash)
@@ -128,7 +128,7 @@ module MASTER
       # @return [String] Formatted prompt
       def build_classification_prompt(input, context)
         prompt = <<~PROMPT
-          You are analyzing a command for a code refactoring system. 
+          You are analyzing a command for a code refactoring system.
           Classify the intent and extract relevant entities.
 
           Available intents:
@@ -251,7 +251,7 @@ module MASTER
       # @return [Symbol] Extracted intent
       def extract_intent_from_text(text)
         normalized = text.downcase
-        
+
         INTENTS.each do |intent|
           return intent if normalized.include?(intent.to_s)
         end

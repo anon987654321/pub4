@@ -40,8 +40,11 @@ Gem::Specification.new do |s|
   s.add_dependency "nokogiri", "~> 1.19"
   s.add_dependency "ruby_llm", "~> 1.11"
   s.add_dependency "stoplight", "~> 4.0"
-  s.add_dependency "falcon", "~> 0.47"
+  s.add_dependency "falcon", "~> 0.54"
   s.add_dependency "async-websocket"
+  s.add_dependency "fast-mcp", "~> 1.6"
+  s.add_dependency "scientist", "~> 1.6"
+  s.add_dependency "rufus-scheduler", "~> 3.9"
 
   # Development dependencies
   s.add_development_dependency "minitest"

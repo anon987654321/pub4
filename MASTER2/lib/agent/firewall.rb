@@ -63,6 +63,20 @@ module MASTER
 
         return Result.err("Agent output blocked: #{verdict[:reason]}") if verdict[:verdict] == :block
 
+        # :needs_review escalations must be gated — never pass silently (GUARD axiom).
+        if verdict[:tag] == :needs_review
+          if defined?(MASTER::Confirmations) && MASTER::Confirmations.respond_to?(:gate)
+            approved = MASTER::Confirmations.gate(
+              "AgentFirewall: escalation detected. Proceed?",
+              default: false
+            )
+            return Result.err("AgentFirewall: escalation denied.") unless approved
+          else
+            Logging.warn("AgentFirewall: :needs_review with no Confirmations gate",
+                         subsystem: "firewall") if defined?(Logging)
+          end
+        end
+
         clean_text = text.gsub(/```system.*?```/m, "[REDACTED SYSTEM BLOCK]")
 
         Result.ok(output.merge(text: clean_text, sanitized: true, firewall_tag: verdict[:tag]))

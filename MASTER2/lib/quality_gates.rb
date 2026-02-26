@@ -11,20 +11,14 @@ module MASTER
 
       class << self
         def config
-          load_config unless @config
-          @config
+          @config ||= load_config
         end
 
         def load_config
           path = config_path
           return @config = default_config unless File.exist?(path)
 
-          current_mtime = File.mtime(path)
-          return @config if @config && @config_mtime == current_mtime
-
           @config = YAML.safe_load_file(path, symbolize_names: true)
-          @config_mtime = current_mtime
-          @config
           rescue StandardError => err
             warn "Failed to load quality gates config: #{err.message}"
           @config = default_config
