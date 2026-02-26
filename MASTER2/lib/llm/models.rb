@@ -118,6 +118,7 @@ module MASTER
         if tier
           # Use pre-computed model_tiers hash for O(1) tier lookup
           candidates = model_tiers[tier] || []
+          candidates = candidates.sort_by { |m| replicate_model?(m) ? 0 : 1 } if configured_for_replicate?
           candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find do |m|
             CircuitBreaker.circuit_closed?(m)
           end

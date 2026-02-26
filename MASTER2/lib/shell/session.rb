@@ -167,8 +167,8 @@ module MASTER
       return UI.error("File not found: #{path}") unless File.exist?(path)
 
       puts UI.dim("Fixing #{path}...")
-      if defined?(AutoFixer)
-        fixer = AutoFixer.new(mode: :moderate)
+      if defined?(MASTER::Review::Fixer)
+        fixer = MASTER::Review::Fixer.new(mode: :moderate)
         result = fixer.fix(path)
         if result.ok?
           UI.success("Fixed: #{path}")

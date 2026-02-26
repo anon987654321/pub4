@@ -24,9 +24,10 @@ module MASTER
 
           data = YAML.safe_load_file(PATTERNS_FILE)
           {
-            preambles: Array(data["preambles"]),
-            hedges:    Array(data["hedges"]),
-            endings:   Array(data["endings"]),
+            preambles:       Array(data["preambles"]),
+            hedges:          Array(data["hedges"]),
+            endings:         Array(data["endings"]),
+            code_preambles:  Array(data["code_preambles"]),
           }
         end
       end
@@ -69,6 +70,7 @@ module MASTER
 
       def clean_prose(text)
         text = strip_preambles(text)
+        text = strip_code_preambles(text)
         text = strip_hedges(text)
         text = strip_endings(text)
         text = strip_markdown(text)
@@ -110,6 +112,13 @@ module MASTER
       def strip_endings(text)
         self.class.patterns[:endings].each do |phrase|
           text = text.sub(/\s*#{Regexp.escape(phrase)}\s*\z/i, "")
+        end
+        text
+      end
+
+      def strip_code_preambles(text)
+        self.class.patterns[:code_preambles].each do |phrase|
+          text = text.sub(/\A\s*#{Regexp.escape(phrase)}[^\n]*\n?/i, "")
         end
         text
       end
