@@ -112,14 +112,17 @@ module MASTER
 
     def call_executor(text)
       # Guard must run even in executor mode to prevent dangerous ops
+      $stderr.print UI.dim("guard ") if defined?(UI)
       guard_result = Stages::Guard.new.call({ text: text })
       return guard_result if guard_result.err?
 
       # Default: Use autonomous executor with pattern selection
+      $stderr.print UI.dim("→ llm ") if defined?(UI)
       exec_result = Executor.call(text, pattern: self.class.current_pattern)
 
       # Gist #3: Lint post-flight so axiom violations are caught in executor mode too
       if exec_result.ok?
+        $stderr.print UI.dim("→ lint ") if defined?(UI)
         response_text = exec_result.value[:answer] || exec_result.value[:response].to_s
         lint_result = Stages::Lint.new.call({ text: text, response: response_text })
         if lint_result.ok?
@@ -209,6 +212,7 @@ module MASTER
       }.compact
 
       # Apply typography rendering if we have a response but no rendered version
+      $stderr.print UI.dim("→ render") if defined?(UI)
       if normalized[:response] && !normalized[:rendered]
         cleaned = Stages::Strunk.new.call({ response: normalized[:response] })
         normalized[:response] = cleaned.ok? ? cleaned.value[:response] : normalized[:response]
@@ -263,6 +267,7 @@ module MASTER
         end
       end
 
+      $stderr.puts if defined?(UI) # end phase progress line
       Result.ok(normalized)
     end
 

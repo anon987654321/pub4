@@ -150,17 +150,22 @@ module MASTER
     def suggest_command(input)
       commands = CommandRegistry.primary_commands
       word = input.strip.split.first&.downcase
-      return nil unless word && word.length > 2
+      return nil unless word && word.length > 1
       return nil if commands.include?(word)
 
-      commands.find { |cmd| Utils.levenshtein(word, cmd) <= 1 }
+      scored = commands.map { |cmd| [cmd, Utils.levenshtein(word, cmd)] }
+                       .select { |_, d| d <= 3 }
+                       .sort_by { |_, d| d }
+                       .first(3)
+                       .map(&:first)
+      scored.empty? ? nil : scored
     end
 
     def show_did_you_mean(input)
-      suggestion = suggest_command(input)
-      return false unless suggestion
+      suggestions = suggest_command(input)
+      return false unless suggestions&.any?
 
-      puts UI.dim("  Did you mean: #{suggestion}?")
+      puts UI.dim("  Did you mean: #{suggestions.join(', ')}?")
       true
     end
 
@@ -247,6 +252,7 @@ module MASTER
       "capture" => [:session_capture, true],
       "session-capture" => [:session_capture, true],
       "review-captures" => [:review_captures, true],
+      "recent" => [:show_recent_commands, true],
       "replicate" => [:handle_replicate, true],
       "repligen" => [:handle_replicate, true],
       "generate-image" => [:handle_replicate, true],

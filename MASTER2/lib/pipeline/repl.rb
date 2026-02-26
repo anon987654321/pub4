@@ -56,6 +56,16 @@ module MASTER
 
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
+      # First-run onboarding — no history file means brand new user
+      if !File.exist?(history_path) && session.message_count == 0
+        puts
+        puts "Welcome to MASTER. Type naturally or use commands."
+        puts "  scan .         — scan current directory for issues"
+        puts "  health         — check system status"
+        puts "  help beginner  — quick start guide"
+        puts
+      end
+
       loop do
         prompt_str = build_prompt(phase)
 
@@ -187,6 +197,8 @@ module MASTER
         if result.value[:cost]
           this_cost     = result.value[:cost].to_f
           running_total = session.total_cost + this_cost
+          model_name = result.value[:model] || "?"
+          $stderr.puts UI.dim("#{model_name} #{UI.currency_precise(this_cost)}")
           check_cost_limits(this_cost, running_total)
         end
         show_violations(result.value)

@@ -135,6 +135,18 @@ module MASTER
         puts "  Marked last exchange as undone. Context preserved for history."
       end
 
+      def show_recent_commands
+        path = File.join(MASTER.root, "var", ".master_history")
+        unless File.exist?(path)
+          puts "  No command history yet."
+          return
+        end
+
+        lines = File.readlines(path, chomp: true).last(10)
+        puts "  Recent commands:"
+        lines.each_with_index { |l, i| puts "  #{i + 1}. #{l}" }
+      end
+
       def print_session_summary
         session = Session.current
         if session.history.empty?

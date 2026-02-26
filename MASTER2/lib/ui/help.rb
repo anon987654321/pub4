@@ -9,15 +9,26 @@ module MASTER
 
       COMMANDS = MASTER::CommandRegistry.help_commands.freeze
       ALIASES  = MASTER::CommandRegistry::COMMANDS.transform_values { |v| v[:aliases] || [] }.freeze
+      EXAMPLES = MASTER::CommandRegistry::EXAMPLES
 
       def pastel = MASTER::UI.pastel
 
       TIPS = [
         "Tab for autocomplete",
-        "Ctrl+C to cancel",
+        "Ctrl+C to cancel, twice to quit",
         "!! repeats last command",
         "%help for meta-ops (bypass LLM)",
         "command? shows help for that command",
+        "Just type naturally — NLU routes to the right command",
+        "<< opens multi-line input mode",
+        "scan --hunt for deep bug analysis",
+        "health --deep for full diagnostics",
+        "forget undoes the last exchange",
+        "session save <name> to bookmark progress",
+        "model <name> switches LLM on the fly",
+        "self runs full codebase analysis + auto-fix",
+        "recent shows your last 10 commands",
+        "help <keyword> to search commands",
       ].freeze
 
       GROUPS = {
@@ -36,12 +47,16 @@ module MASTER
           command = command.chomp("?")
         end
 
-        if command == "tips"
+        if command.nil? || command.empty?
+          show_all
+        elsif command == "tips"
           show_tips
-        elsif command && COMMANDS[command.to_sym]
+        elsif command == "beginner"
+          show_beginner
+        elsif COMMANDS[command.to_sym]
           show_command(command.to_sym)
         else
-          show_all
+          search_help(command)
         end
       end
 
@@ -95,7 +110,43 @@ module MASTER
         als = ALIASES[cmd]
         puts "  aliases: #{als.join(', ')}" if als&.any?
         puts
-        puts "  usage  #{info[:usage]}"
+        puts "  usage    #{info[:usage]}"
+        ex = EXAMPLES[cmd]
+        puts "  example  #{ex}" if ex
+        puts
+      end
+
+      def search_help(keyword)
+        low = keyword.downcase
+        matches = COMMANDS.select do |cmd, info|
+          cmd.to_s.include?(low) || info[:desc].downcase.include?(low)
+        end
+
+        if matches.empty?
+          puts "  No commands matching '#{keyword}'."
+          puts "  Try: help tips"
+        else
+          puts
+          puts "Commands matching '#{keyword}':"
+          matches.each do |cmd, info|
+            puts "  #{cmd.to_s.ljust(20)} #{info[:desc]}"
+          end
+          puts
+        end
+      end
+
+      def show_beginner
+        puts
+        puts "MASTER QUICK START"
+        puts
+        puts "  1. Just type naturally — MASTER understands plain English"
+        puts "  2. For code analysis:  scan .          (scan current directory)"
+        puts "  3. For refactoring:    refactor <file> (6-phase analysis)"
+        puts "  4. For diagnostics:    health          (check system status)"
+        puts "  5. For self-repair:    self            (analyze + fix everything)"
+        puts
+        puts "  #{pastel.dim('Prefix with % for instant commands: %help, %exit, %model')}"
+        puts "  #{pastel.dim('Append ? to any command for help: scan? refactor?')}"
         puts
       end
 
