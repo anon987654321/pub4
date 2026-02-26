@@ -345,6 +345,12 @@ module MASTER
       when "help", "?"
         Help.show(args)
         HANDLED
+      when "ask"
+        if args.nil? || args.strip.empty?
+          puts UI.dim("Usage: ask <question>")
+          return HANDLED
+        end
+        pipeline.call(args)
       when "hunt"
         hunt_bugs(args)
         HANDLED

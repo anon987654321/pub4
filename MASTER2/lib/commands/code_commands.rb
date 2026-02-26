@@ -54,10 +54,18 @@ module MASTER
         autofix(file)
       end
 
-      def evolve(path)
-        path ||= MASTER.root
+      def evolve(args)
+        path, use_model = parse_evolve_args(args)
+        LLM.use_model(use_model) if use_model && LLM.respond_to?(:use_model)
+
         evolver = Evolve.new
         result = evolver.run(path: path, dry_run: true)
+
+        if result.is_a?(Hash) && result[:error]&.match?(/Insufficient credits|all models failed/i)
+          puts UI.warn("evolve: #{result[:error]}")
+          puts UI.dim("  Add credits: https://openrouter.ai/settings/credits")
+          return Result.err(result[:error])
+        end
 
         UI.header("Evolution Analysis (dry run)")
         puts [
@@ -248,6 +256,18 @@ module MASTER
 
       private
 
+      # Parse "evolve [path] [using <model>]" -- extract path and optional model hint
+      def parse_evolve_args(args)
+        return [MASTER.root, nil] if args.nil? || args.to_s.strip.empty?
+
+        parts = args.to_s.strip.split(/\s+/)
+        model_idx = parts.index("using")
+        model = model_idx ? parts[(model_idx + 1)..].join(" ").strip : nil
+        path_parts = model_idx ? parts[0...model_idx] : parts
+        path = path_parts.empty? ? MASTER.root : File.expand_path(path_parts.join(" "))
+        [path, model&.empty? ? nil : model]
+      end
+
       def parse_refactor_target(args)
         usage = "#{REFACTOR_USAGE.sub('<file>', '<file|dir>')} or autofix --snippet \"<ruby code>\""
         return { error: usage } if args.nil? || args.to_s.strip.empty?
@@ -265,6 +285,9 @@ module MASTER
 
         target = parts.find { |part| !part.start_with?("-") }
         return { error: usage } if target.nil? || target.empty?
+
+        # Treat bare glob wildcards as cwd
+        target = Dir.pwd if target == "*" || target == "."
 
         expanded = File.expand_path(target)
         if File.directory?(expanded)
