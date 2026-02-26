@@ -50,7 +50,7 @@ module MASTER
         unless nokogiri_configured?
           issues << {
             problem: "Nokogiri not configured for OpenBSD system libraries",
-            fix: "bundle config build.nokogiri --use-system-libraries",
+            fix: "bundle config set build.nokogiri --use-system-libraries",
           }
         end
 
