@@ -280,43 +280,7 @@ Never delete working code. Never break existing behavior. Improve surgically.
 
 ## Shell & File Operations
 
-Target: zsh on OpenBSD. No bash, awk, sed, tr, python, sudo.
-
-**Prefer built-in tools over external processes:**
-
-| Prefer | Avoid |
-|--------|-------|
-| `view` / `grep` / `glob` agent tools | `cat`, `head`, `tail`, `find` in bash |
-| `${var//old/new}` | `sed 's/old/new/'` |
-| `${var:u}` / `${var:l}` | `tr '[:lower:]' '[:upper:]'` |
-| `${#var}`, `${var[1,5]}` | `awk '{print}'`, `cut` |
-| `**/*(.)` (glob qualifier) | `find . -type f` |
-| `*(Om)` / `*(mh-1)` | `find . -newer` / `ls -t` |
-| `print -l array` | `echo` with loops |
-| `zstat +size file` | `stat -f %z file` |
-| `<(cmd)` process substitution | temp files |
-
-**Glob qualifiers (replace find entirely):**
-```zsh
-**/*(.)        # regular files only
-**/*(/)        # directories only
-*(Om)          # oldest first
-*(Om[1])       # single oldest file
-*(mh-1)        # modified in last hour
-*(L+1m)        # larger than 1MB
-**/*.rb(.)     # all .rb files recursively
-```
-
-**Parameter expansion (replace sed/tr/awk):**
-```zsh
-${var//pattern/replacement}   # global replace
-${var/#prefix/}               # strip prefix
-${var/%suffix/}               # strip suffix
-${var:u} / ${var:l}           # upper/lower case
-${var:t} / ${var:h}           # basename / dirname
-${(f)$(cat file)}             # split on newlines into array
-${(s:,:)csv_line}             # split on delimiter
-```
+Covered by `data/platform.yml` (forbidden commands, native zsh replacements, glob qualifiers).
 
 ## Communication Style
 

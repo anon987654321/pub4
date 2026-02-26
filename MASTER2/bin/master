@@ -82,6 +82,7 @@ rescue StandardError => e
   warn "DB setup failed: #{e.message} — running without persistence"
 end
 MASTER::Session.install_crash_handlers
+MASTER::Commands.init_instructions
 
 # Helper: Execute full self-run across pub4 repo
 def run_selfrun(args)
