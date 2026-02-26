@@ -25,16 +25,10 @@ module MASTER
                           handler: ->(args, pipeline:) { MASTER::Commands.evolve(args) } },
       opportunities:    { desc: "Find improvements",                   usage: "opportunities [path]",             group: :query,    aliases: %w[opps],
                           handler: ->(args, pipeline:) { MASTER::Commands.opportunities(args) } },
-      hunt:             { desc: "8-phase bug analysis",                usage: "hunt [path]",                      group: :analysis,
-                          handler: ->(args, pipeline:) { MASTER::Commands.hunt_bugs(args);  MASTER::Commands::HANDLED } },
-      critique:         { desc: "Constitutional validation",           usage: "critique [path]",                  group: :analysis,
-                          handler: ->(args, pipeline:) { MASTER::Commands.critique_code(args); MASTER::Commands::HANDLED } },
+      scan:             { desc: "Scan for code smells",                usage: "scan [path] [--hunt|--critique]",  group: :analysis, aliases: %w[hunt critique conflict],
+                          handler: ->(args, pipeline:) { MASTER::Commands.scan_code(args);    MASTER::Commands::HANDLED } },
       learn:            { desc: "Show matching learned patterns",      usage: "learn <file>",                     group: :analysis,
                           handler: ->(args, pipeline:) { MASTER::Commands.show_learnings(args); MASTER::Commands::HANDLED } },
-      conflict:         { desc: "Detect principle conflicts",          usage: "conflict",                         group: :analysis,
-                          handler: ->(args, pipeline:) { MASTER::Commands.detect_conflicts;   MASTER::Commands::HANDLED } },
-      scan:             { desc: "Scan for code smells",                usage: "scan [path]",                      group: :analysis,
-                          handler: ->(args, pipeline:) { MASTER::Commands.scan_code(args);    MASTER::Commands::HANDLED } },
       fix:              { desc: "Fix violations in file or directory", usage: "fix [--all|path]",                 group: :analysis,
                           handler: ->(args, pipeline:) { MASTER::Commands.fix_code(args);     MASTER::Commands::HANDLED } },
       converge:         { desc: "Iterate until violations plateau",    usage: "converge [max_iter]",              group: :analysis,
@@ -63,12 +57,8 @@ module MASTER
                           handler: ->(args, pipeline:) { MASTER::Commands.show_project_context; MASTER::Commands::HANDLED } },
       history:          { desc: "Cost history",                        usage: "history",                          group: :system,
                           handler: ->(args, pipeline:) { MASTER::Commands.print_cost_history;  MASTER::Commands::HANDLED } },
-      health:           { desc: "Health check",                        usage: "health",                           group: :system,
-                          handler: ->(args, pipeline:) { MASTER::Commands.print_health;        MASTER::Commands::HANDLED } },
-      doctor:           { desc: "Deep diagnostics",                    usage: "doctor [--verbose]",               group: :system,
-                          handler: ->(args, pipeline:) { MASTER::Commands.doctor(args);        MASTER::Commands::HANDLED } },
-      bootstrap:        { desc: "First-run setup",                     usage: "bootstrap",                        group: :system,
-                          handler: ->(args, pipeline:) { MASTER::Commands.bootstrap(args);     MASTER::Commands::HANDLED } },
+      health:           { desc: "Health check and diagnostics",          usage: "health [--deep|--setup]",          group: :system,   aliases: %w[doctor bootstrap],
+                          handler: ->(args, pipeline:) { MASTER::Commands.print_health(args);   MASTER::Commands::HANDLED } },
       "history-dig":    { desc: "Recover deleted historical file",     usage: "history-dig [file]",               group: :system,
                           handler: ->(args, pipeline:) { MASTER::Commands.history_dig(args);   MASTER::Commands::HANDLED } },
       codify:           { desc: "Show/export codified design rules",   usage: "codify [export-json]",             group: :system,
@@ -161,10 +151,22 @@ module MASTER
       (meta[:aliases] || []).each { |a| map[a] = key }
     end.freeze
 
+    # When an alias needs to inject flags (e.g. "hunt" → "scan --hunt")
+    ALIAS_FLAGS = {
+      "hunt"      => "--hunt",
+      "critique"  => "--critique",
+      "conflict"  => "--critique",
+      "doctor"    => "--deep",
+      "bootstrap" => "--setup",
+    }.freeze
+
     # Look up and call the handler for +cmd+. Returns nil if unknown.
     def dispatch(cmd, args, pipeline:)
       key = ALIAS_MAP[cmd.to_s.downcase]
       return nil unless key
+
+      flag = ALIAS_FLAGS[cmd.to_s.downcase]
+      args = "#{args} #{flag}".strip if flag
 
       COMMANDS[key][:handler].call(args, pipeline: pipeline)
     end

@@ -166,105 +166,42 @@ module MASTER
         end
       end
 
-      def print_health
-        UI.header("Health Check")
-        checks = []
+      def print_health(args = nil)
+        tokens = args.to_s.split
+        deep   = tokens.delete("--deep") || tokens.delete("--verbose")
+        setup  = tokens.delete("--setup")
 
-        # Check API key
-        api_key = ENV.fetch("OPENROUTER_API_KEY", nil)
-        checks << { name: "API Key", ok: !api_key.nil? && !api_key.empty? }
-
-        # Check var directory writable
-        var_ok = begin
-          File.writable?(Paths.var)
-        rescue StandardError
-          false
-        end
-        checks << { name: "Var writable", ok: var_ok }
-
-        # Check DB initialized
-        db_ok = begin
-          DB.axioms.any?
-        rescue StandardError
-          false
-        end
-        checks << { name: "DB seeded", ok: db_ok }
-
-        # Check models available
-        model = LLM.select_model
-        checks << { name: "Models available", ok: !model.nil? }
-
-        # Check style guide catalog
-        guides_ok = File.exist?(Paths.data_file("style_guides.yml"))
-        checks << { name: "Style guides catalog", ok: guides_ok }
-
-        checks.each do |check|
-          status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{check[:name]}"
+        if setup
+          return bootstrap_setup
         end
 
-        all_ok = checks.all? { |check| check[:ok] }
-        puts all_ok ? "health: ok" : "health: some checks failed"
-      end
-
-      def bootstrap(_args = nil)
-        UI.header("Bootstrap")
+        UI.header(deep ? "Health (deep)" : "Health Check")
         checks = startup_checks
 
         checks.each do |check|
           status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
           puts "#{status} #{check[:name]}#{" (#{check[:detail]})" if check[:detail]}"
+          puts UI.dim("    fix: #{check[:fix]}") if deep && !check[:ok] && check[:fix]
         end
 
-        # Platform checks
-        if defined?(PlatformCheck)
-          issues = PlatformCheck.diagnose
-          if issues.empty?
-            summary = PlatformCheck.summary
-            puts "#{UI.pastel.green('+')} platform: #{summary}" if summary
-          else
-            puts "#{UI.pastel.red('-')} platform: #{issues.size} issue(s) found"
-            PlatformCheck.print_diagnostics
-          end
+        if deep
+          plugin_check = plugin_manifest_check
+          plugin_icon = plugin_check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{plugin_icon} Plugins#{" (#{plugin_check[:detail]})" if plugin_check[:detail]}"
+          puts UI.dim("    fix: #{plugin_check[:fix]}") if !plugin_check[:ok] && plugin_check[:fix]
+
+          tidy = repo_cleanliness
+          puts "#{UI.pastel.cyan('*')} Repo dirtiness #{tidy[:dirty_count]} files (#{tidy[:state]})"
         end
 
-        missing_gems = begin
-          AutoInstall.missing_gems
-        rescue StandardError
-          []
-        end
-        if missing_gems.any?
-          puts UI.dim("Installing #{missing_gems.size} missing gems into local bundle path...")
-          ok = system("bundle", "install")
-          return Result.err("bundle install failed") unless ok
-        end
-
-        Result.ok(checks: checks, installed: missing_gems.size)
+        all_ok = checks.all? { |c| c[:ok] }
+        puts all_ok ? "health: ok" : "health: attention required"
+        Result.ok(ok: all_ok, checks: checks)
       end
 
-      def doctor(args = nil)
-        verbose = args.to_s.include?("--verbose")
-        UI.header("Doctor")
-
-        checks = startup_checks
-        checks.each do |check|
-          status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{check[:name]}#{" (#{check[:detail]})" if check[:detail]}"
-          puts UI.dim("    fix: #{check[:fix]}") if verbose && !check[:ok] && check[:fix]
-        end
-
-        plugin_check = plugin_manifest_check
-        plugin_icon = plugin_check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-        puts "#{plugin_icon} Plugins#{" (#{plugin_check[:detail]})" if plugin_check[:detail]}"
-        puts UI.dim("    fix: #{plugin_check[:fix]}") if verbose && !plugin_check[:ok] && plugin_check[:fix]
-
-        tidy = repo_cleanliness
-        puts "#{UI.pastel.cyan('*')} Repo dirtiness #{tidy[:dirty_count]} files (#{tidy[:state]})"
-
-        all_ok = (checks + [plugin_check]).all? { |check| check[:ok] }
-        puts all_ok ? "doctor: ok" : "doctor: attention required"
-        Result.ok(ok: all_ok, checks: checks, plugins: plugin_check, cleanliness: tidy)
-      end
+      # Legacy aliases — delegate to unified print_health
+      def doctor(args = nil)  = print_health("#{args} --deep")
+      def bootstrap(args = nil) = print_health("#{args} --setup")
 
       def history_dig(args = nil)
         target = args.to_s.strip
@@ -369,6 +306,40 @@ module MASTER
       end
 
       private
+
+      def bootstrap_setup
+        UI.header("Bootstrap")
+        checks = startup_checks
+
+        checks.each do |check|
+          status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{check[:name]}#{" (#{check[:detail]})" if check[:detail]}"
+        end
+
+        if defined?(PlatformCheck)
+          issues = PlatformCheck.diagnose
+          if issues.empty?
+            summary = PlatformCheck.summary
+            puts "#{UI.pastel.green('+')} platform: #{summary}" if summary
+          else
+            puts "#{UI.pastel.red('-')} platform: #{issues.size} issue(s) found"
+            PlatformCheck.print_diagnostics
+          end
+        end
+
+        missing_gems = begin
+          AutoInstall.missing_gems
+        rescue StandardError
+          []
+        end
+        if missing_gems.any?
+          puts UI.dim("Installing #{missing_gems.size} missing gems into local bundle path...")
+          ok = system("bundle", "install")
+          return Result.err("bundle install failed") unless ok
+        end
+
+        Result.ok(checks: checks, installed: missing_gems.size)
+      end
 
       def ascii_tree(root, prefix = "", path = root, buf = [])
         entries = Dir.entries(path).reject { |e| e.start_with?(".") || SKIP_DIRS.include?(e) }.sort
