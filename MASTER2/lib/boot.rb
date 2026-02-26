@@ -35,7 +35,7 @@ module MASTER
         smoke_result = smoke_test
 
         lines = [
-          c("MASTER #{VERSION} (CONSTITUTIONAL) #1: #{timestamp}"),
+          c("MASTER2 #{VERSION} (CONSTITUTIONAL) #1: #{timestamp}"),
           c("    #{user}@#{host}:#{MASTER.root}"),
           c("runtime0: #{RUBY_PLATFORM} * ruby #{RUBY_VERSION} * #{shell} #{user}#{prompt_hint}"),
           c("host0: #{PlatformCheck.hypervisor} * #{PlatformCheck.provider}"),

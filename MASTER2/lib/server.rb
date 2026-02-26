@@ -137,39 +137,43 @@ module MASTER
       queue = @output_queue
 
       ->(env) {
-        path = env["PATH_INFO"]
-        method = env["REQUEST_METHOD"]
+        begin
+          path = env["PATH_INFO"]
+          method = env["REQUEST_METHOD"]
 
-        unless path == "/health" || (method == "GET" && path == "/")
-          token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ")
-          token ||= Rack::Utils.parse_query(env["QUERY_STRING"] || "")["token"]
-          return [401, {}, ["Unauthorized"]] unless token == AUTH_TOKEN
-        end
+          unless path == "/health" || (method == "GET" && path == "/")
+            token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ")
+            token ||= Rack::Utils.parse_query(env["QUERY_STRING"] || "")["token"]
+            return [401, {}, ["Unauthorized"]] unless token == AUTH_TOKEN
+          end
 
-        case [method, path]
-        when ["GET", "/"]
-          html = read_view("cli.html").sub("window.MASTER_TOKEN||''", "window.MASTER_TOKEN||'#{AUTH_TOKEN}'")
-          [200, { CT_HEADER => HTML_TYPE }, [html]]
-        when ["GET", "/health"]
-          [200, { CT_HEADER => JSON_TYPE }, [health_json]]
-        when ["GET", "/poll"]
-          handle_poll(queue)
-        when ["GET", "/sse"]
-          handle_sse(queue)
-        when ["POST", "/chat"]
-          handle_chat(env, pipeline, queue)
-        when ["GET", "/metrics"]
-          handle_metrics
-        when ["POST", "/tts"]
-          handle_tts(env)
-        when ["GET", "/tts/stream"]
-          handle_tts_stream(env)
-        when ["GET", "/ws"]
-          handle_websocket(env, pipeline)
-        when ["GET", "/ws-test"]
-          [200, { CT_HEADER => HTML_TYPE }, [read_view("ws_test.html")]]
-        else
-          serve_static_file(path)
+          case [method, path]
+          when ["GET", "/"]
+            html = read_view("cli.html").sub("window.MASTER_TOKEN||''", "window.MASTER_TOKEN||'#{AUTH_TOKEN}'")
+            [200, { CT_HEADER => HTML_TYPE }, [html]]
+          when ["GET", "/health"]
+            [200, { CT_HEADER => JSON_TYPE }, [health_json]]
+          when ["GET", "/poll"]
+            handle_poll(queue)
+          when ["GET", "/sse"]
+            handle_sse(queue)
+          when ["POST", "/chat"]
+            handle_chat(env, pipeline, queue)
+          when ["GET", "/metrics"]
+            handle_metrics
+          when ["POST", "/tts"]
+            handle_tts(env)
+          when ["GET", "/tts/stream"]
+            handle_tts_stream(env)
+          when ["GET", "/ws"]
+            handle_websocket(env, pipeline)
+          when ["GET", "/ws-test"]
+            [200, { CT_HEADER => HTML_TYPE }, [read_view("ws_test.html")]]
+          else
+            serve_static_file(path)
+          end
+        rescue Errno::EPIPE, IOError
+          [0, {}, []]
         end
       }
     end

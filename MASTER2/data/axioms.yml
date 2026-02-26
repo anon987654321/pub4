@@ -314,8 +314,8 @@
   category: meta
   protection: ABSOLUTE
   title: Apply to Itself
-  statement: A system that asserts quality must achieve its own standards. MASTER
-    passes through MASTER.
+  statement: A system that asserts quality must achieve its own standards. MASTER2
+    passes through MASTER2.
   source: Recursive Quality
 - id: SHOW_COST_FIRST
   category: meta
@@ -455,7 +455,7 @@
   title: Cache Aggressively
   statement: Cache LLM responses, computations, and lookups. Semantic cache before
     API call.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
   auto_fixable: true
   llm_strategies: [add_memoize, add_semantic_cache]
 - id: GUARD_EXPENSIVE
@@ -464,7 +464,7 @@
   priority: 7
   title: Guard Expensive Operations
   statement: Check preconditions before costly work. Fail fast, fail cheap.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: PRECOMPUTE
   category: performance
   protection: NEGOTIABLE
@@ -472,28 +472,28 @@
   title: Precompute Expensive Math
   statement: Move invariant calculations outside loops. Lookup tables over repeated
     computation.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: PROSE_NOT_LISTS
   category: communication
   protection: PROTECTED
   priority: 7
   title: Prose Over Lists
   statement: Write connected prose. Bullet lists fragment reasoning and hide relationships.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: ACCESSIBLE_FIRST
   category: communication
   protection: PROTECTED
   priority: 7
   title: Accessible Then Technical
   statement: Lead with plain language, layer in technical detail. Never jargon-first.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: NO_ABBREVIATIONS
   category: communication
   protection: NEGOTIABLE
   priority: 5
   title: No Abbreviations
   statement: Spell it out. Abbreviations exclude newcomers and create ambiguity.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: SQUINT_TEST
   category: aesthetic
   protection: PROTECTED
@@ -507,42 +507,42 @@
   priority: 5
   title: Analog Warmth Over Digital Perfection
   statement: Slight imperfection feels human. Over-polished feels sterile.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: TYPOGRAPHY
   category: aesthetic
   protection: PROTECTED
   priority: 7
   title: Typography Discipline
   statement: Curly quotes, em dashes, proper ellipsis. Typographic care signals quality.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: AUDIO_SMOOTH
   category: aesthetic
   protection: NEGOTIABLE
   priority: 3
   title: Audio-Reactive Smoothing
   statement: Audio visualizations use exponential smoothing. Never raw FFT data.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: DUAL_DETECT
   category: verification
   protection: PROTECTED
   priority: 7
   title: Dual Detection
   statement: Check both literal patterns and conceptual violations. Regex + LLM together.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: SILENCE_DEFAULT
   category: verification
   protection: PROTECTED
   priority: 7
   title: Silence by Default
   statement: Only report actionable findings. No noise, no filler, no congratulations.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: MASS_CURATE
   category: verification
   protection: NEGOTIABLE
   priority: 5
   title: Mass Generation with Curation
   statement: Generate many alternatives, curate ruthlessly. Quantity enables quality.
-  source: MASTER/principles.yml
+  source: MASTER2 constitutional principles
 - id: WET
   category: engineering
   protection: NEGOTIABLE

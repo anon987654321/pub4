@@ -34,6 +34,6 @@ module MASTER
   AxiomStats = Review::AxiomStats
   LanguageAxioms = Review::LanguageAxioms
   DesignCodex = Review::DesignCodex
-  QualityStandards = Review::QualityStandards # deprecated: use Review::QualityStandards
-  CodeReview = Review::Scanner # deprecated: use Review::Scanner
+  QualityStandards = Review::QualityStandards
+  CodeReview = Review::Scanner
 end

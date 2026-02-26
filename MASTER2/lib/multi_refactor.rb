@@ -144,7 +144,8 @@ module MASTER
         @graph[file] = []
         content = begin
           File.read(file)
-        rescue StandardError
+        rescue StandardError => e
+          Logging.warn("unreadable: #{file}: #{e.message}", subsystem: "MultiRefactor") if defined?(Logging)
           next
         end
 
