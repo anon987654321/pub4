@@ -29,6 +29,9 @@ module MASTER
       when /^file_write\s+["']?([^"'\n]+)["']?\s+["']?(.+)["']?/mi
         file_write(::Regexp.last_match(1).strip, ::Regexp.last_match(2))
 
+      when /^file_edit\s+["']?([^"'\n]+)["']?\s+<<<OLD\n(.+?)\n>>>OLD\s+<<<NEW\n(.+?)\n>>>NEW/mi
+        file_edit_lines(::Regexp.last_match(1).strip, ::Regexp.last_match(2), ::Regexp.last_match(3))
+
       when /^analyze_code\s+["']?([^"'\n]+)["']?/i
         analyze_code(::Regexp.last_match(1).strip)
 
@@ -153,10 +156,63 @@ module MASTER
       # Check working directory constraint (frozen at require time)
       return "BLOCKED: file_write path '#{path}' is outside working directory" unless expanded.start_with?(FROZEN_CWD)
 
+      # Adversarial gate: question proposed code before writing
+      if defined?(AdversarialPass) && path.to_s.end_with?(".rb", ".sh", ".zsh")
+        existing = File.exist?(expanded) ? File.read(expanded) : nil
+        adv = existing ? AdversarialPass.question_change(existing, content, context: { path: path }) : AdversarialPass.quick_check(content, context: { path: path })
+        if adv.is_a?(Hash) && !adv[:pass] && adv[:critical]&.any?
+          return "BLOCKED: adversarial check found critical issues: #{adv[:critical].map { |f| f[:issue] }.join('; ')}"
+        elsif adv.is_a?(Result) && adv.ok? && adv.value[:verdict] == :reject
+          return "BLOCKED: adversarial check rejected change: #{adv.value[:new_issues].map { |f| f[:issue] }.join('; ')}"
+        end
+
+        # Multi-solution challenge for non-trivial code (>20 lines)
+        if content.lines.size > 20
+          challenge = AdversarialPass.challenge(content, intent: Thread.current[:master_intent].to_s, context: { path: path })
+          if challenge && challenge[:selected_code] && challenge[:selected_code] != content
+            content = challenge[:selected_code]
+          end
+        end
+      end
+
       FileUtils.mkdir_p(File.dirname(expanded))
       File.write(expanded, content)
       verification = verify_change(expanded)
       verification.ok? ? "Written #{content.length} bytes to #{path}" : "Written #{content.length} bytes to #{path} [verify: #{verification.error}]"
+    end
+
+    # Surgical line editing — replaces old_str with new_str in file.
+    # Unlike file_write which overwrites the entire file, this only changes
+    # the matched region, preserving everything else untouched.
+    def file_edit_lines(path, old_str, new_str)
+      expanded = File.expand_path(path)
+      return "File not found: #{path}" unless File.exist?(expanded)
+      return "BLOCKED: file_edit to protected path '#{path}'" if PROTECTED_WRITE_PATHS.any? { |p| expanded.start_with?(File.expand_path(p, MASTER.root)) }
+      return "BLOCKED: file_edit path '#{path}' is outside working directory" unless expanded.start_with?(FROZEN_CWD)
+
+      if defined?(Capabilities)
+        begin
+          Capabilities.require!(:write, context: "file_edit #{path}")
+        rescue Capabilities::InsufficientCapabilityError => e
+          return "BLOCKED: #{e.message}"
+        end
+      end
+
+      content = File.read(expanded)
+      occurrences = content.scan(old_str).size
+      return "BLOCKED: old_str not found in #{path}" if occurrences.zero?
+      return "BLOCKED: old_str matches #{occurrences} locations in #{path} — must be unique (1)" if occurrences > 1
+
+      new_content = content.sub(old_str, new_str)
+      File.write(expanded, new_content)
+      verification = verify_change(expanded)
+      if verification.ok?
+        "Edited #{path}: replaced #{old_str.lines.size} lines with #{new_str.lines.size} lines"
+      else
+        # Rollback on verification failure
+        File.write(expanded, content)
+        "ROLLED BACK: edit to #{path} failed verification: #{verification.error}"
+      end
     end
 
     def analyze_code(path)
@@ -181,6 +237,12 @@ module MASTER
         fixer = MASTER::Review::Fixer.new(mode: :moderate)
         result = fixer.fix(path)
         if result.ok?
+          # Challenge the fix: generate alternatives and cherry-pick
+          if defined?(AdversarialPass) && File.exist?(path)
+            fixed_code = File.read(path)
+            challenge = AdversarialPass.challenge(fixed_code, intent: "fix_code", context: { path: path })
+            File.write(path, challenge[:selected_code]) if challenge&.dig(:selected_code)
+          end
           verification = verify_change(path)
           msg = "Fixed #{result.value[:fixed]} issues in #{path}"
           verification.ok? ? msg : "#{msg} [verify: #{verification.error}]"
@@ -335,6 +397,13 @@ module MASTER
         result = CodeReview.analyze(code, filename: File.basename(path.to_s), profile: :quick)
         issues = result[:issues]&.reject { |i| i[:priority].to_i < 9 } || []
         return Result.err("axiom violations: #{issues.map { |i| i[:axiom_id] }.join(', ')}") if issues.any?
+      end
+
+      # 4. Adversarial heuristic gate (zero cost — no LLM)
+      if defined?(AdversarialPass)
+        code ||= File.read(path.to_s)
+        check = AdversarialPass.quick_check(code, context: { path: path.to_s })
+        return Result.err("adversarial: #{check[:critical].map { |f| f[:issue] }.join('; ')}") if check[:critical]&.any?
       end
 
       Result.ok
