@@ -291,6 +291,13 @@
     document.addEventListener('keydown',e=>{
       if(e.key==='Tab'){e.preventDefault();chatLog.classList.toggle('open');}
     });
+    // #7: Mobile chat toggle — double-tap canvas area
+    let lastCanvasTap=0;
+    canvas.addEventListener('touchend',()=>{
+      const now=Date.now();
+      if(now-lastCanvasTap<350) chatLog.classList.toggle('open');
+      lastCanvasTap=now;
+    },{passive:true});
 
     // SSE with exponential backoff
     let sseDelay=1000;
@@ -309,9 +316,12 @@
             uiEl.classList.add('highlight');
             setTimeout(()=>uiEl.classList.remove('highlight'),2000);
             // Try server audio first; fall back to local TTS if slow
+            // #3: Pause ambient narrator so real response isn't stomped
+            pauseAmbient();
+            if('speechSynthesis' in window) window.speechSynthesis.cancel();
             let serverAnswered=false;
-            speakWithAudio(reply).then(ok=>{serverAnswered=ok;});
-            setTimeout(()=>{if(!serverAnswered) speakText(reply);},1500);
+            speakWithAudio(reply).then(ok=>{serverAnswered=ok; scheduleAmbient();});
+            setTimeout(()=>{if(!serverAnswered){speakText(reply);scheduleAmbient();}},1500);
             isProcessing=false;
             statusEl.classList.remove('processing');
             for(const n of neurons){
@@ -389,6 +399,210 @@
       }
     };
 
+    // ── Ambient Pad Engine ──────────────────────────────────────────
+    // Continuously evolving background pads using raw Web Audio API.
+    // Multiple detuned oscillators, LFO-swept filters, creative FX,
+    // ducked low so voice is never overpowered.
+    let padMaster=null;
+    let padDuck=null; // gain node for voice ducking
+    let padOscs=[];
+    let padDriftTimer=null;
+
+    const PAD_CHORDS=[
+      [130.81,164.81,196.00,261.63],  // Cm
+      [116.54,146.83,174.61,233.08],  // Ab
+      [123.47,155.56,185.00,246.94],  // Bb
+      [138.59,174.61,207.65,277.18],  // Db
+      [103.83,130.81,155.56,207.65],  // Eb
+      [146.83,185.00,220.00,293.66],  // Fm7
+      [110.00,138.59,164.81,220.00],  // Bbm
+      [97.999,123.47,146.83,196.00],  // Gb
+    ];
+
+    const initPads=()=>{
+      if(!audioCtx||padMaster) return;
+      const out=audioCtx.destination;
+
+      // Master bus: very quiet so voice dominates
+      padMaster=audioCtx.createGain();
+      padMaster.gain.value=0.06;
+
+      // Voice ducking node — speech lowers pads further
+      padDuck=audioCtx.createGain();
+      padDuck.gain.value=1.0;
+
+      // ── FX Chain ──
+
+      // 1. Stereo widener via slight delay offset
+      const widenerL=audioCtx.createDelay();widenerL.delayTime.value=0.012;
+      const widenerR=audioCtx.createDelay();widenerR.delayTime.value=0.018;
+      const merger=audioCtx.createChannelMerger(2);
+      const splitter=audioCtx.createChannelSplitter(2);
+
+      // 2. Slow filter sweep — evolving texture
+      const sweepFilter=audioCtx.createBiquadFilter();
+      sweepFilter.type='lowpass';sweepFilter.frequency.value=800;sweepFilter.Q.value=2;
+      const sweepLFO=audioCtx.createOscillator();sweepLFO.type='sine';sweepLFO.frequency.value=0.04;
+      const sweepDepth=audioCtx.createGain();sweepDepth.gain.value=600;
+      sweepLFO.connect(sweepDepth);sweepDepth.connect(sweepFilter.frequency);sweepLFO.start();
+
+      // 3. Resonant peak — adds warmth
+      const warmth=audioCtx.createBiquadFilter();
+      warmth.type='peaking';warmth.frequency.value=440;warmth.gain.value=4;warmth.Q.value=0.8;
+
+      // 4. Slow tremolo — breathing feel
+      const tremGain=audioCtx.createGain();tremGain.gain.value=0.7;
+      const tremLFO=audioCtx.createOscillator();tremLFO.type='sine';tremLFO.frequency.value=0.15;
+      const tremDepth=audioCtx.createGain();tremDepth.gain.value=0.3;
+      tremLFO.connect(tremDepth);tremDepth.connect(tremGain.gain);tremLFO.start();
+
+      // 5. Phaser — slow sweep for movement
+      const allpass1=audioCtx.createBiquadFilter();allpass1.type='allpass';allpass1.frequency.value=600;
+      const allpass2=audioCtx.createBiquadFilter();allpass2.type='allpass';allpass2.frequency.value=1200;
+      const phaserLFO=audioCtx.createOscillator();phaserLFO.type='triangle';phaserLFO.frequency.value=0.08;
+      const phaserDepth=audioCtx.createGain();phaserDepth.gain.value=500;
+      phaserLFO.connect(phaserDepth);phaserDepth.connect(allpass1.frequency);phaserDepth.connect(allpass2.frequency);phaserLFO.start();
+
+      // 6. Multi-tap reverb (4 taps, feedback)
+      const rv1=audioCtx.createDelay();rv1.delayTime.value=0.11;
+      const rv2=audioCtx.createDelay();rv2.delayTime.value=0.23;
+      const rv3=audioCtx.createDelay();rv3.delayTime.value=0.37;
+      const rv4=audioCtx.createDelay();rv4.delayTime.value=0.53;
+      const rvG1=audioCtx.createGain();rvG1.gain.value=0.35;
+      const rvG2=audioCtx.createGain();rvG2.gain.value=0.25;
+      const rvG3=audioCtx.createGain();rvG3.gain.value=0.15;
+      const rvG4=audioCtx.createGain();rvG4.gain.value=0.08;
+      const rvFb=audioCtx.createGain();rvFb.gain.value=0.2;
+      const rvMix=audioCtx.createGain();rvMix.gain.value=0.55;
+      const rvLP=audioCtx.createBiquadFilter();rvLP.type='lowpass';rvLP.frequency.value=2500;
+
+      // 7. Chorus — 3 modulated delays for thickness
+      const ch1=audioCtx.createDelay();ch1.delayTime.value=0.025;
+      const ch2=audioCtx.createDelay();ch2.delayTime.value=0.035;
+      const ch3=audioCtx.createDelay();ch3.delayTime.value=0.045;
+      const chLFO1=audioCtx.createOscillator();chLFO1.type='sine';chLFO1.frequency.value=0.7;
+      const chLFO2=audioCtx.createOscillator();chLFO2.type='sine';chLFO2.frequency.value=0.9;
+      const chLFO3=audioCtx.createOscillator();chLFO3.type='sine';chLFO3.frequency.value=1.1;
+      const chD1=audioCtx.createGain();chD1.gain.value=0.005;
+      const chD2=audioCtx.createGain();chD2.gain.value=0.005;
+      const chD3=audioCtx.createGain();chD3.gain.value=0.005;
+      chLFO1.connect(chD1);chD1.connect(ch1.delayTime);chLFO1.start();
+      chLFO2.connect(chD2);chD2.connect(ch2.delayTime);chLFO2.start();
+      chLFO3.connect(chD3);chD3.connect(ch3.delayTime);chLFO3.start();
+      const chMix=audioCtx.createGain();chMix.gain.value=0.3;
+
+      // 8. Soft saturation — warm analog feel
+      const saturation=audioCtx.createWaveShaper();
+      const satCurve=new Float32Array(1024);
+      for(let i=0;i<1024;i++){const x=i*2/1023-1;satCurve[i]=Math.tanh(x*1.5);}
+      saturation.curve=satCurve;
+
+      // 9. Sub-bass drone — low sine for depth
+      const subOsc=audioCtx.createOscillator();subOsc.type='sine';subOsc.frequency.value=55;
+      const subGain=audioCtx.createGain();subGain.gain.value=0.15;
+      const subLP=audioCtx.createBiquadFilter();subLP.type='lowpass';subLP.frequency.value=80;
+      subOsc.connect(subLP);subLP.connect(subGain);subOsc.start();
+
+      // 10. High shimmer — octave-up sparkle
+      const shimmerOsc=audioCtx.createOscillator();shimmerOsc.type='sine';shimmerOsc.frequency.value=523.25;
+      const shimmerGain=audioCtx.createGain();shimmerGain.gain.value=0.02;
+      const shimmerTrem=audioCtx.createGain();shimmerTrem.gain.value=0.5;
+      const shimmerLFO=audioCtx.createOscillator();shimmerLFO.type='sine';shimmerLFO.frequency.value=0.3;
+      const shimmerD=audioCtx.createGain();shimmerD.gain.value=0.5;
+      shimmerLFO.connect(shimmerD);shimmerD.connect(shimmerTrem.gain);shimmerLFO.start();
+      shimmerOsc.connect(shimmerTrem);shimmerTrem.connect(shimmerGain);shimmerOsc.start();
+
+      // ── Signal routing ──
+      // Pad oscillators → sweepFilter → warmth → phaser → saturation → tremolo → chorus+dry → reverb → stereo → duck → master → out
+
+      // Chorus routing
+      const chorusBus=audioCtx.createGain();chorusBus.gain.value=1;
+      chorusBus.connect(ch1);chorusBus.connect(ch2);chorusBus.connect(ch3);
+      ch1.connect(chMix);ch2.connect(chMix);ch3.connect(chMix);
+
+      // Main chain
+      const dryBus=audioCtx.createGain();dryBus.gain.value=1;
+
+      // Reverb routing
+      const reverbIn=audioCtx.createGain();reverbIn.gain.value=1;
+      reverbIn.connect(rv1);reverbIn.connect(rv2);reverbIn.connect(rv3);reverbIn.connect(rv4);
+      rv1.connect(rvG1);rv2.connect(rvG2);rv3.connect(rvG3);rv4.connect(rvG4);
+      rvG1.connect(rvLP);rvG2.connect(rvLP);rvG3.connect(rvLP);rvG4.connect(rvLP);
+      rvLP.connect(rvMix);rvLP.connect(rvFb);rvFb.connect(rv1);
+
+      // Stereo widening
+      const preOut=audioCtx.createGain();preOut.gain.value=1;
+      preOut.connect(splitter);
+      splitter.connect(widenerL,0);splitter.connect(widenerR,1);
+      widenerL.connect(merger,0,0);widenerR.connect(merger,0,1);
+
+      // Final routing
+      merger.connect(padDuck);
+      padDuck.connect(padMaster);
+      padMaster.connect(out);
+
+      // Wire the chain
+      sweepFilter.connect(warmth);
+      warmth.connect(allpass1);allpass1.connect(allpass2);
+      allpass2.connect(saturation);
+      saturation.connect(tremGain);
+      tremGain.connect(dryBus);
+      tremGain.connect(chorusBus);
+      dryBus.connect(preOut);
+      chMix.connect(preOut);
+      tremGain.connect(reverbIn);
+      rvMix.connect(preOut);
+
+      // Sub + shimmer → duck → master
+      subGain.connect(padDuck);
+      shimmerGain.connect(padDuck);
+
+      // Create 4 oscillator layers per chord note (fat detuned pads)
+      const chord=PAD_CHORDS[0];
+      chord.forEach(freq=>{
+        const types=['sawtooth','triangle','sine','square'];
+        const detunes=[-12,-4,4,12];
+        types.forEach((type,j)=>{
+          const osc=audioCtx.createOscillator();
+          osc.type=type;
+          osc.frequency.value=freq;
+          osc.detune.value=detunes[j]+Math.random()*2-1;
+          const g=audioCtx.createGain();
+          g.gain.value=type==='sawtooth'?0.08:type==='triangle'?0.06:type==='square'?0.03:0.05;
+          osc.connect(g);g.connect(sweepFilter);
+          osc.start();
+          padOscs.push({osc,gain:g,baseFreq:freq,sub:subOsc,shimmer:shimmerOsc});
+        });
+      });
+
+      // Evolving chord drift — change chord every 20-40s
+      let chordIdx=0;
+      const driftChord=()=>{
+        chordIdx=(chordIdx+1)%PAD_CHORDS.length;
+        const chord=PAD_CHORDS[chordIdx];
+        const now=audioCtx.currentTime;
+        padOscs.forEach((p,i)=>{
+          const noteIdx=Math.floor(i/4);
+          const freq=chord[noteIdx%chord.length];
+          p.osc.frequency.linearRampToValueAtTime(freq+Math.random()*2-1,now+8);
+          p.baseFreq=freq;
+        });
+        // Drift sub bass
+        subOsc.frequency.linearRampToValueAtTime(chord[0]/2,now+6);
+        // Drift shimmer
+        shimmerOsc.frequency.linearRampToValueAtTime(chord[chord.length-1]*2,now+6);
+        // Random sweep target
+        sweepFilter.frequency.linearRampToValueAtTime(400+Math.random()*1200,now+10);
+        warmth.frequency.linearRampToValueAtTime(300+Math.random()*600,now+8);
+        padDriftTimer=setTimeout(driftChord,20000+Math.random()*20000);
+      };
+      padDriftTimer=setTimeout(driftChord,15000+Math.random()*10000);
+    };
+
+    // Duck pads when speaking
+    const duckPads=()=>{if(padDuck)padDuck.gain.linearRampToValueAtTime(0.15,audioCtx.currentTime+0.3);};
+    const unduckPads=()=>{if(padDuck)padDuck.gain.linearRampToValueAtTime(1.0,audioCtx.currentTime+1.5);};
+
     // Pick the most soothing available voice: prefer neural/enhanced voices,
     // then named natural voices, then first English voice.
     let _cachedVoice=null;
@@ -413,6 +627,7 @@
       isSpeaking=false;
       statusEl.classList.remove('speak');
       statusEl.classList.add('think');
+      unduckPads();
       if(nonstopVoice) startRecognition();
     };
 
@@ -423,12 +638,15 @@
       return parts&&parts.length?parts.map(s=>s.trim()).filter(Boolean):[raw];
     };
 
+    // #1: Route local TTS through Web Audio FX chain when audioCtx is available
     const speakText=text=>{
-      if(!('speechSynthesis' in window)||!text) return;
+      if(!text) return;
+      // If audioCtx available, use MediaStreamDestination to capture speechSynthesis
+      // and route through FX chain — otherwise fall back to plain speechSynthesis
+      if(!('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
       const sentences=splitSentences(text);
       const v=pickVoice();
-      // Base rate/pitch tuned warmer; neural voices tolerate closer to 1.0
       const isNeural=v&&/Natural|Online|Enhanced|Premium/i.test(v.name);
       const baseRate=isNeural?0.95:0.88;
       const basePitch=isNeural?1.0:0.94;
@@ -442,11 +660,13 @@
           u.onstart=()=>{
             isSpeaking=true;
             speechPulse=0.6;
+            duckPads();
             statusEl.classList.remove('think');
             statusEl.classList.add('speak');
             if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
           };
         }
+        // #2: Drive orb pulse from word boundaries
         u.onboundary=ev=>{if(ev.name==='word')speechPulse=0.5+Math.random()*0.3;};
         if(i===sentences.length-1) u.onend=_onSpeakEnd;
         window.speechSynthesis.speak(u);
@@ -457,6 +677,12 @@
     const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone'];
     let fxIdx=1+Math.floor(Math.random()*(FX_MODES.length-1)); // random effect on by default
     let fxTaps=0;let fxTapTimer=0;
+
+    // #4: Flash FX mode name when it changes
+    const showFxMode=()=>{
+      uiLabel.textContent='♪ '+FX_MODES[fxIdx];
+      setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
+    };
 
     const buildFxChain=(src)=>{
       const mode=FX_MODES[fxIdx];
@@ -608,6 +834,7 @@
         src.buffer=decoded;
         buildFxChain(src);
         isSpeaking=true; speechPulse=0.6;
+        duckPads();
         statusEl.classList.remove('think');
         statusEl.classList.add('speak');
         if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
@@ -618,25 +845,6 @@
     };
 
     const localTtsAvailable=()=>!!window.speechSynthesis;
-
-    const speakLocal=text=>{
-      if(!localTtsAvailable()) return false;
-      speakText(text);
-      return true;
-    };
-
-    const speakRemote=async(text)=>{
-      try{
-        const resp=await fetch("/tts",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({text})
-        });
-        return resp.ok;
-      }catch(_e){
-        return false;
-      }
-    };
 
     const startRecognition=()=>{
       if(!recognition||isSpeaking) return;
@@ -842,9 +1050,11 @@
     ];
 
     let currentOrb=0;
+    let orbFade=1; // 0→1 crossfade on orb change
     const setOrb=(idx)=>{
       currentOrb=((idx%orbStates.length)+orbStates.length)%orbStates.length;
       if(!isProcessing) uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;
+      orbFade=0; // trigger crossfade
       for(const n of neurons) n.reset(orbStates[currentOrb].s);
     };
 
@@ -1075,6 +1285,7 @@
       if(isSpeaking) return ambientTimer=setTimeout(ambientSpeak,2000);
       // Randomize FX each phrase for variety
       fxIdx=1+Math.floor(Math.random()*(FX_MODES.length-1));
+      showFxMode();
       ambientIdx=(ambientIdx+1+Math.floor(Math.random()*(AMBIENT.length-1)))%AMBIENT.length;
       const phrase=AMBIENT[ambientIdx];
       speakText(phrase);
@@ -1086,7 +1297,9 @@
     const pauseAmbient=()=>{if(ambientTimer)clearTimeout(ambientTimer);};
     const resumeAmbient=()=>{scheduleAmbient();};
 
-    // Track activity — pause ambient while user is active
+    // #8: Resume suspended AudioContext on user gesture (iOS Safari)
+    const resumeAudioCtx=()=>{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();};
+    ['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,resumeAudioCtx,{once:false,passive:true}));
     ['keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{
       pauseAmbient();
       // Resume after 20s of no further activity
@@ -1126,6 +1339,8 @@
       initAudio();
       initMotion();
       setupRecognition();
+      // Start ambient pads after a brief delay for audioCtx to settle
+      setTimeout(initPads,500);
       refreshMetrics();
       setInterval(refreshMetrics,30000);
       setTimeout(()=>{
@@ -1151,7 +1366,7 @@
       statusLongPress=setTimeout(()=>{
         statusLongPress='long';
         fxIdx=(fxIdx+1)%FX_MODES.length;
-        uiLabel.textContent='Voice: '+FX_MODES[fxIdx];
+        showFxMode();
       },600);
     });
     statusEl.addEventListener('pointerup',()=>{
@@ -1194,6 +1409,8 @@
       requestAnimationFrame(animate);
       t+=0.016;
       speechPulse*=0.92;
+      // #6: Smooth orb crossfade
+      if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
 
       // Cinematic camera drift — slow, organic
       camX=Math.sin(t*0.13)*8+Math.sin(t*0.31)*3;
@@ -1235,7 +1452,7 @@
         const gy=Math.round((p.y+camY)/GRID)*GRID;
 
         const thinkDark=1-Math.min(0.78,p.think*1.2);
-        ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35));
+        ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35)*orbFade);
         if(isProcessing){
           // Deep pulsing crimson when thinking — brighter for visibility
           const pulse=0.5+Math.sin(t*6)*0.35;
