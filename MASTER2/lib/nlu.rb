@@ -6,6 +6,13 @@ module MASTER
   class NLU
     INTENTS = %i[refactor analyze explain fix search show list help unknown].freeze
 
+    # Signal types detected by classify_signals — replaces scattered regexes
+    SIGNAL_TYPES = %i[
+      context_shift memory_trigger complex_task simple_command
+      self_run_request lint_request health_request status_request
+      shell_paste diff_paste security_concern identity_query
+    ].freeze
+
     INTENT_DESCRIPTIONS = {
       refactor: "Improve or refactor code in files",
       analyze: "Analyze code quality, patterns, or issues",
@@ -42,7 +49,71 @@ module MASTER
         error_result("NLU error: #{err.message}")
       end
 
-      # Parse with explicit JSON schema for structured output
+      # Classify all semantic signals in one LLM call.
+      # Replaces scattered detection regexes across intake, pipeline, commands.
+      # Returns a Set of matched SIGNAL_TYPES symbols.
+      def classify_signals(text)
+        return Set.new if text.nil? || text.strip.empty?
+
+        prompt = <<~PROMPT
+          Classify which signals are present in this user input. Return ONLY a JSON array of matching signal names.
+
+          Signals:
+          - context_shift: user is changing topic ("now", "next", "moving on", "new task", "ok so", "let's")
+          - memory_trigger: references prior conversation ("you suggested", "last time", "as before", "continue")
+          - complex_task: requests building/creating/deploying a system, app, or service
+          - simple_command: a short directive command (scan, fix, lint, help, version, exit, show, list)
+          - self_run_request: wants to refactor/rewrite the entire codebase or all files
+          - lint_request: wants to lint, validate, or syntax-check files across a project
+          - health_request: asking about system health, diagnostics, or setup
+          - status_request: asking about current status, summary, or progress
+          - shell_paste: pasted terminal output (user@host$, "Last login:", command output)
+          - diff_paste: pasted a code diff (diff --git, +++, ---, @@)
+          - security_concern: mentions security, auth, injection, credentials, or unsafe patterns
+          - identity_query: asking "who are you" or "what are you"
+
+          Input: "#{text.gsub('"', '\"').slice(0, 500)}"
+
+          Respond with ONLY a JSON array, e.g. ["context_shift","simple_command"]
+        PROMPT
+
+        if defined?(MASTER::LLM) && MASTER::LLM.configured?
+          result = MASTER::LLM.ask(prompt, tier: :fast)
+          if result.respond_to?(:ok?) && result.ok?
+            raw = result.value[:content].to_s.strip
+            raw = raw[/\[.*\]/m] || "[]"
+            signals = JSON.parse(raw).map(&:to_sym) & SIGNAL_TYPES
+            return Set.new(signals)
+          end
+        end
+
+        fallback_classify_signals(text)
+      rescue StandardError
+        fallback_classify_signals(text)
+      end
+
+      # Deterministic fallback when LLM unavailable — keeps old regex behavior
+      def fallback_classify_signals(text)
+        signals = Set.new
+        t = text.to_s
+        low = t.downcase
+
+        signals << :shell_paste   if t.match?(/^\w+@[\w.-]+.*\$\s+/) || low.include?("last login:")
+        signals << :diff_paste    if t.match?(/^\s*diff --git\b/) || t.match?(/^\s*@@\s+/)
+        signals << :context_shift if low.match?(/\b(now|next|moving on|new task|start fresh|forget|done with)\b/) ||
+                                     low.match?(/^(ok|okay|right|fine|good|cool|thanks)[,.]?\s+(now|so|let'?s|can you)/)
+        signals << :memory_trigger if low.match?(/\b(you suggested|we decided|last time|as before|continue|the plan)\b/)
+        signals << :complex_task   if low.match?(/\b(build|create|implement|deploy|architect|refactor)\b.*\b(system|app|service|pipeline|server|api)\b/)
+        signals << :simple_command if low.match?(/\A\s*(scan|fix|lint|check|test|help|version|clear|exit|quit|show|list)\b/)
+        signals << :self_run_request if low.match?(/\b(self.?run|entire repo|all files|codebase|every file)\b/)
+        signals << :lint_request     if low.match?(/\b(lint|validate|syntax.check)\b.*\b(all|repo|files)\b/)
+        signals << :health_request   if low.match?(/\b(health|diagnostic|doctor|check setup)\b/)
+        signals << :status_request   if low.match?(/\b(status|where are we|summary)\b/)
+        signals << :security_concern if low.match?(/\b(security|auth|injection|unsafe|credential)\b/)
+        signals << :identity_query   if low.match?(/\bwho are you\b|\bwhat are you\b|\byour name\b/)
+
+        signals
+      end
       # @param input [String] Natural language command
       # @param context [Hash] Optional conversation context
       # @return [Hash] Structured intent with entities and confidence
