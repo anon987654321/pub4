@@ -58,6 +58,11 @@ module MASTER
         path, use_model = parse_evolve_args(args)
         LLM.use_model(use_model) if use_model && LLM.respond_to?(:use_model)
 
+        unless LLM.configured?
+          puts UI.warn("evolve: no LLM configured -- set OPENROUTER_API_KEY or REPLICATE_API_TOKEN")
+          return Result.err("no LLM configured")
+        end
+
         evolver = Evolve.new
         result = evolver.run(path: path, dry_run: true)
 
@@ -129,7 +134,7 @@ module MASTER
 
       # Manual deep-dive bug analysis
       def hunt_bugs(args)
-        return puts "Usage: hunt <file>" unless args
+        args = "." if args.nil? || args.strip.empty?
 
         file = args.strip
         path = File.expand_path(file)
@@ -142,7 +147,7 @@ module MASTER
 
       # Manual constitutional validation
       def critique_code(args)
-        return puts "Usage: critique <file>" unless args
+        args = "." if args.nil? || args.strip.empty?
 
         file = args.strip
         path = File.expand_path(file)
