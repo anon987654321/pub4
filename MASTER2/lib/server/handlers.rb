@@ -98,9 +98,9 @@ module MASTER
         end
 
         result = Speech.speak(text, play: false)
-        if result.respond_to?(:ok?) && result.ok?
-          audio_data = result.value[:audio] || result.value[:data]
-          [200, { CT_HEADER => "audio/mpeg" }, [audio_data]]
+        if result.respond_to?(:ok?) && result.ok? && result.value[:audio]
+          ct = result.value[:content_type] || "audio/mpeg"
+          [200, { CT_HEADER => ct }, [result.value[:audio]]]
         else
           error = result.respond_to?(:error) ? result.error : "TTS failed"
           [500, { CT_HEADER => JSON_TYPE }, [{ error: error }.to_json]]
