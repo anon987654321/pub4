@@ -49,6 +49,8 @@ module MASTER
                           handler: ->(args, pipeline:) { MASTER::Commands.session_capture;     MASTER::Commands::HANDLED } },
       "review-captures": { desc: "Review captured insights",          usage: "review-captures",                  group: :session,
                           handler: ->(args, pipeline:) { MASTER::Commands.review_captures;     MASTER::Commands::HANDLED } },
+      recent:           { desc: "Show recent commands",                usage: "recent",                           group: :session,
+                          handler: ->(args, pipeline:) { MASTER::Commands.show_recent_commands; MASTER::Commands::HANDLED } },
       status:           { desc: "System status",                       usage: "status",                           group: :system,
                           handler: ->(args, pipeline:) { MASTER::Dashboard.new.render;         MASTER::Commands::HANDLED } },
       budget:           { desc: "Budget remaining",                    usage: "budget",                           group: :system,
@@ -143,6 +145,24 @@ module MASTER
                           handler: ->(args, pipeline:) { puts "MASTER #{MASTER::VERSION}";     MASTER::Commands::HANDLED } },
       exit:             { desc: "Exit MASTER",                         usage: "exit",                             group: :util,     aliases: %w[quit],
                           handler: ->(args, pipeline:) { :exit } },
+    }.freeze
+
+    # Examples for key commands — shown by help <command> and command?
+    EXAMPLES = {
+      refactor:         "refactor lib/pipeline.rb",
+      scan:             "scan lib/ --hunt",
+      fix:              "fix --all",
+      chamber:          "chamber lib/master.rb",
+      self:             "self --dry-run",
+      health:           "health --deep",
+      session:          "session save milestone-1",
+      evolve:           "evolve lib/",
+      ask:              "ask how does the pipeline work?",
+      browse:           "browse https://example.com",
+      speak:            "speak hello world",
+      model:            "model gpt-4o",
+      "multi-refactor": "multi-refactor lib/ --apply",
+      ideate:           "ideate authentication system",
     }.freeze
 
     # Flat alias → canonical key map, built once.
