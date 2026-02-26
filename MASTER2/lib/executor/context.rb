@@ -59,7 +59,8 @@ module MASTER
       # Commands (optional)
       if include_commands
         commands = config["commands"] || <<~CMD
-          YOUR COMMANDS: model <name>, models, pattern <name>, budget, selftest, help, exit
+          YOU ARE INSIDE THE MASTER REPL. Type: ask, scan, fix, refactor, evolve, hunt, model, help, exit
+          NEVER suggest shell flags like --apply or --exec. You are already inside master.
         CMD
         sections << commands
       end

@@ -79,7 +79,7 @@ module MASTER
         path = args&.strip
         path = "." if path.nil? || path.empty?
 
-        fixer = AutoFixer.new(mode: :moderate)
+        fixer = MASTER::Review::Fixer.new(mode: :moderate)
         if File.directory?(path)
           result = fixer.fix_directory(path)
           if result.ok?
