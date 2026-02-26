@@ -298,6 +298,20 @@
       if(now-lastCanvasTap<350) chatLog.classList.toggle('open');
       lastCanvasTap=now;
     },{passive:true});
+    // #4: Pull-down to reveal chat — swipe down from top 80px
+    let pullStartY=0,pullStartX=0,pullActive=false;
+    window.addEventListener('touchstart',e=>{
+      const touch=e.touches[0];
+      if(touch.clientY<80&&!chatLog.classList.contains('open')){pullStartY=touch.clientY;pullStartX=touch.clientX;pullActive=true;}
+      else pullActive=false;
+    },{passive:true});
+    window.addEventListener('touchend',e=>{
+      if(!pullActive) return;
+      const dy=e.changedTouches[0].clientY-pullStartY;
+      const dx=Math.abs(e.changedTouches[0].clientX-pullStartX);
+      if(dy>60&&dx<40){chatLog.classList.add('open');haptic(10);}
+      pullActive=false;
+    },{passive:true});
 
     // SSE with exponential backoff
     let sseDelay=1000;
@@ -1048,10 +1062,15 @@
           if(ev.results[i].isFinal) finalText+=ev.results[i][0].transcript+" ";
         }
         finalText=finalText.trim();
-        if(finalText){
-          uiLabel.textContent=finalText.slice(0,60);
-          transmit(finalText);
+        if(!finalText) return;
+        // #6: Wake word — "hey master" activates without sending
+        if(/^hey\s+master$/i.test(finalText)){
+          haptic(25);
+          uiLabel.textContent='Listening…';
+          return;
         }
+        uiLabel.textContent=finalText.slice(0,60);
+        transmit(finalText);
       };
     };
 
@@ -1114,13 +1133,20 @@
     window.addEventListener('touchstart',handleTouch,{passive:true});
     window.addEventListener('touchend',()=>{touching=false;});
 
+    // #1: Haptic feedback helper
+    const haptic=(ms=10)=>{try{navigator.vibrate(ms);}catch(_){}};
+
     // Swipe left/right to change orb
     let swipeStartX=0;
     window.addEventListener('touchstart',e=>{swipeStartX=e.touches[0].clientX;},{passive:true});
     window.addEventListener('touchend',e=>{
       const dx=e.changedTouches[0].clientX-swipeStartX;
-      if(Math.abs(dx)>60){setOrb(currentOrb+(dx<0?1:-1));}
+      if(Math.abs(dx)>60){setOrb(currentOrb+(dx<0?1:-1));haptic(15);}
     },{passive:true});
+
+    // #5: Typing indicator — orb contracts when user is typing
+    let isTyping=false;
+    input.addEventListener('input',()=>{isTyping=input.value.length>0;});
 
     input.addEventListener('focus',()=>{
       statusEl.classList.remove('think');
@@ -1129,6 +1155,7 @@
 
     input.addEventListener('blur',()=>{
       statusEl.classList.remove('speak');
+      isTyping=false;
     });
 
     input.addEventListener('keydown',e=>{
@@ -1140,10 +1167,12 @@
       if(e.key==='Enter'&&input.value.trim()){
         const msg=input.value.trim();
         input.value='';
+        isTyping=false;
         inputField.classList.remove('active');
         input.blur();
         statusEl.classList.remove('speak');
         statusEl.classList.add('think');
+        haptic(20);
         transmit(msg);
       }
     });
@@ -1228,8 +1257,9 @@
     const setOrb=(idx)=>{
       currentOrb=((idx%orbStates.length)+orbStates.length)%orbStates.length;
       if(!isProcessing) uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;
-      orbFade=0; // trigger crossfade
+      orbFade=0;
       for(const n of neurons) n.reset(orbStates[currentOrb].s);
+      savePrefs();
     };
 
     arrowLeft.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb-1);});
@@ -1373,6 +1403,10 @@
         this.vx+=(Math.random()-0.5)*2.5;
         this.vy+=(Math.random()-0.5)*2.5;
       }
+      // #5: Typing — orb tightens, listening closely
+      if(isTyping&&!isProcessing){
+        this.tx*=0.7;this.ty*=0.7;this.tz*=0.7;
+      }
 
         const k=0.04,damp=0.91;
         this.vx+=(this.tx-this.px)*k;
@@ -1398,8 +1432,17 @@
     }
 
     for(let i=0;i<N;i++) neurons.push(new Neuron(i));
-    currentOrb=Math.floor(Math.random()*orbStates.length);
+    // #8: Restore persisted orb + FX from localStorage
+    try{
+      const saved=JSON.parse(localStorage.getItem('m2_prefs')||'{}');
+      if(saved.orb!=null&&saved.orb>=0&&saved.orb<orbStates.length) currentOrb=saved.orb;
+      else currentOrb=Math.floor(Math.random()*orbStates.length);
+      if(saved.fx!=null&&saved.fx>=0&&saved.fx<FX_MODES.length) fxIdx=saved.fx;
+    }catch(_){currentOrb=Math.floor(Math.random()*orbStates.length);}
     setOrb(currentOrb);
+
+    // Persist on change
+    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({orb:currentOrb,fx:fxIdx}));}catch(_){}};
 
     // Ambient narrator — continuous gentle stream of varied content
     const AMBIENT=[
@@ -1525,8 +1568,13 @@
         const today=new Date();
         const isMomBday=(today.getMonth()===1&&today.getDate()===26);
         const hour=today.getHours();
-        const timeGreet=hour<12?'Good morning.':hour<17?'Good afternoon.':'Good evening.';
-        const greeting=isMomBday?'Happy birthday momma!':timeGreet;
+        // #7: Dark-adapt — late night gets calmer greeting
+        let greeting;
+        if(isMomBday) greeting='Happy birthday momma!';
+        else if(hour>=22||hour<5) greeting=["Can't sleep?","Night owl.","The quiet hours.","Just us and the dark."][Math.floor(Math.random()*4)];
+        else if(hour<12) greeting='Good morning.';
+        else if(hour<17) greeting='Good afternoon.';
+        else greeting='Good evening.';
         let greetServer=false;
         speakWithAudio(greeting).then(ok=>{greetServer=ok;});
         setTimeout(()=>{if(!greetServer) speakText(greeting);},1500);
@@ -1541,6 +1589,8 @@
         statusLongPress='long';
         fxIdx=(fxIdx+1)%FX_MODES.length;
         showFxMode();
+        haptic(12);
+        savePrefs();
       },600);
     });
     statusEl.addEventListener('pointerup',()=>{
@@ -1597,28 +1647,29 @@
         for(let i=6;i<12;i++) sum+=dataArray[i]*0.6;
         audioLevel=Math.min(1,sum/9/255+speechPulse*0.45);
       }else{
-        // When speaking without a mic analyser, simulate syllable rhythm so the
-        // orb pulses naturally. ~4 Hz = average conversational syllable rate.
+        // Simulate syllable rhythm when speaking, pad breathing when idle
         if(isSpeaking) speechPulse=0.38+Math.abs(Math.sin(t*12.6))*0.42;
         else speechPulse*=0.92;
-        audioLevel*=0.92;
+        // #3: Orb breathes with pad music even without mic analyser
+        const padBreath=padMaster?0.08+Math.abs(Math.sin(t*0.8))*0.12:0;
+        audioLevel=audioLevel*0.92+padBreath;
       }
 
-      // Background: pitch black, subtle brightening when speaking
-      ctx.fillStyle='#000';
+      // Background: motion trail instead of hard clear — ghostly afterimage
+      const trailAlpha=isProcessing?0.12:isSpeaking?0.08:0.06;
+      ctx.fillStyle=`rgba(0,0,0,${1-trailAlpha})`;
       ctx.fillRect(0,0,W,H);
 
       for(const n of neurons) n.update(t,orbStates[currentOrb].s);
       const proj=neurons.map(n=>n.project()).filter(Boolean);
       proj.sort((a,b)=>b.z-a.z);
 
-      // Particle palette: dark red → crimson → bright red → orange-red
-      const GRID=2; // 16-bit pixel snap
-      const cols=['#0a0101','#1a0404','#330909','#551515'];
-      const colsSpeak=['#0a0500','#1a0c00','#331a08','#553010'];
-      const colsThink=['#0a0000','#1a0303','#330808','#551010'];
+      // LA beat scene palette — deep amber, crimson, purple haze, neon
+      const GRID=2;
+      const cols=['#0a0201','#1a0806','#33120a','#551a10'];
+      const colsSpeak=['#0a0504','#1a0a08','#33180e','#664020'];
+      const colsThink=['#080008','#140014','#200020','#400040'];
       const activeCol=isProcessing?colsThink:(isSpeaking?colsSpeak:cols);
-      // Audio-reactive color boost: lerp toward bright on loud audio
       const audioBoost=Math.min(1,audioLevel*1.8);
 
       for(const p of proj){
@@ -1628,33 +1679,41 @@
         const thinkDark=1-Math.min(0.78,p.think*1.2);
         ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35)*orbFade);
         if(isProcessing){
-          // Deep pulsing crimson when thinking — brighter for visibility
+          // Purple-crimson pulse when thinking
           const pulse=0.5+Math.sin(t*6)*0.35;
-          const r=Math.floor(80+pulse*70);
-          ctx.fillStyle=`rgb(${r},${Math.floor(r*0.1)},0)`;
+          const r=Math.floor(60+pulse*50);
+          const b=Math.floor(20+pulse*40);
+          ctx.fillStyle=`rgb(${r},${Math.floor(r*0.08)},${b})`;
         }else if(p.think>0.22){
           const v=Math.floor(80*thinkDark);
-          ctx.fillStyle=`rgb(${v},${Math.floor(v*0.1)},${Math.floor(v*0.05)})`;
+          ctx.fillStyle=`rgb(${v},${Math.floor(v*0.08)},${Math.floor(v*0.15)})`;
         }else{
-          // Smooth color interpolation based on audio level
           const base=activeCol[p.c]||activeCol[1];
           if(audioBoost>0.08){
-            const bright=isSpeaking?'#884422':'#662222';
+            // Audio-reactive: warm amber when speaking, deep crimson idle
+            const bright=isSpeaking?'#995530':'#772233';
             const mix=Math.min(1,audioBoost*1.5);
             ctx.fillStyle=mix>0.7?bright:base;
           }else{
             ctx.fillStyle=base;
           }
         }
-        // Audio-reactive particle size: bass makes them bigger
-        const audioSz=Math.floor(audioBoost*2);
-        const sz=(p.s<1.5?2:(p.s<2.5?3:(p.s<3.5?4:5)))+audioSz;
-        // Square pixels — 16-bit sprite style
+        // Audio-reactive particle size + depth-based size variation
+        const audioSz=Math.floor(audioBoost*3);
+        const depthSz=p.s<1.5?1:(p.s<2.5?2:(p.s<3.5?3:4));
+        const sz=depthSz+audioSz;
         ctx.fillRect(gx,gy,sz,sz);
+
+        // Hot particles emit a subtle radial highlight
+        if(audioBoost>0.5&&p.c>=2&&Math.random()<0.15){
+          ctx.globalAlpha=audioBoost*0.08;
+          ctx.fillStyle=isSpeaking?'#ff6622':'#cc2244';
+          ctx.fillRect(gx-1,gy-1,sz+2,sz+2);
+        }
       }
-      // Connection lines in dark red
-      ctx.globalAlpha=0.15;
-      ctx.strokeStyle=isProcessing?'#330000':(isSpeaking?'#332008':'#220505');
+      // Connection lines — color-matched to state
+      ctx.globalAlpha=0.12;
+      ctx.strokeStyle=isProcessing?'#220022':(isSpeaking?'#332010':'#1a0508');
       ctx.lineWidth=1;
       for(let i=0;i<proj.length-9;i+=9){
         const a=proj[i];
@@ -1669,22 +1728,44 @@
         ctx.lineTo(b.x,b.y);
         ctx.stroke();
       }
-      // Flat thinking indicator — small pulsing bar below center
+
+      // Heat shimmer — subtle horizontal scanline displacement
+      if(audioBoost>0.15){
+        const shimmerH=Math.floor(H*0.3);
+        const shimmerY=Math.floor(H/2-shimmerH/2+Math.sin(t*1.7)*20);
+        const shimmerAmt=Math.floor(audioBoost*2)+1;
+        try{
+          const strip=ctx.getImageData(0,shimmerY,W,shimmerH);
+          const sd=strip.data;
+          for(let row=0;row<shimmerH;row+=3){
+            const offset=Math.floor(Math.sin(t*8+row*0.3)*shimmerAmt)*4;
+            if(offset===0) continue;
+            const rowStart=row*W*4;
+            for(let x=Math.abs(offset);x<W*4-Math.abs(offset);x+=4){
+              sd[rowStart+x]=sd[rowStart+x+offset]||sd[rowStart+x];
+            }
+          }
+          ctx.putImageData(strip,0,shimmerY);
+        }catch(_){}
+      }
+
+      // Flat thinking indicator — pulsing bar below center
       if(isProcessing){
         const barW=Math.floor(S*8+Math.sin(t*3)*S*4);
         const barX=Math.floor(W/2-barW/2+camX);
         const barY=Math.floor(H/2+S*22+camY);
         ctx.globalAlpha=0.35+Math.sin(t*4)*0.15;
-        ctx.fillStyle='#441111';
+        ctx.fillStyle='#331133';
         ctx.fillRect(barX,barY,barW,2);
       }
-      // Analog film grain — fine cinematic noise, randomised sampling
+
+      // Analog film grain — fine cinematic noise
       const grain=ctx.getImageData(0,0,W,H);
       const gd=grain.data;
       const glen=gd.length;
       for(let i=(Math.random()*12|0)*4;i<glen;i+=12){
-        const n=((Math.random()-0.5)*12)|0;
-        gd[i]+=n; gd[i+1]+=n>>1; gd[i+2]+=n>>2;
+        const n=((Math.random()-0.5)*10)|0;
+        gd[i]+=n; gd[i+1]+=n>>1; gd[i+2]+=n>>1;
       }
       ctx.putImageData(grain,0,0);
       ctx.globalAlpha=1;
