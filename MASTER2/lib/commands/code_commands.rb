@@ -135,27 +135,21 @@ module MASTER
       # Manual deep-dive bug analysis
       def hunt_bugs(args)
         args = "." if args.nil? || args.strip.empty?
+        path = File.expand_path(args.strip)
+        return puts "Path not found: #{args.strip}" unless File.exist?(path)
 
-        file = args.strip
-        path = File.expand_path(file)
-        return puts "File not found: #{file}" unless File.exist?(path)
-
-        code = File.read(path)
-        result = BugHunting.analyze(code, file_path: file)
-        puts BugHunting.format(result)
+        result = Scan.run(path, depth: :hunt)
+        display_scan_result(result, path)
       end
 
       # Manual constitutional validation
       def critique_code(args)
         args = "." if args.nil? || args.strip.empty?
+        path = File.expand_path(args.strip)
+        return puts "Path not found: #{args.strip}" unless File.exist?(path)
 
-        file = args.strip
-        path = File.expand_path(file)
-        return puts "File not found: #{file}" unless File.exist?(path)
-
-        code = File.read(path)
-        violations = Violations.analyze(code, path: file, llm: nil, conceptual: false)
-        puts Violations.report(violations)
+        result = Scan.run(path, depth: :critique)
+        display_scan_result(result, path)
       end
 
       # Detect principle conflicts in constitution
@@ -210,48 +204,21 @@ module MASTER
           cached = JSON.parse(File.read(state_path), symbolize_names: true)
           age = ((Time.now - Time.parse(cached[:scanned_at])) / 60).round
           puts "Last scan: #{cached[:scanned_at]} (#{age}m ago)"
-          puts "  Issues: #{cached[:total_issues]} (#{cached[:critical]} critical, #{cached[:major]} major)"
+          puts "  Issues: #{cached[:total_issues]}  autofix: #{cached[:autofix_eligible]}  files: #{cached[:files]}"
           puts "  Pass 'scan .' to re-scan"
           return Result.ok(cached)
         end
 
         UI.header("Scanning: #{path}")
-        result = if File.file?(path)
-                   file_result = Review::Scanner.analyze_file(path)
-                   {
-                     files: { path => file_result },
-                     total_issues: file_result[:issues].size,
-                     critical: file_result[:issues].count { |issue| issue[:severity] == :critical },
-                     major: file_result[:issues].count { |issue| issue[:severity] == :major },
-                     average_score: file_result[:score].to_f,
-                   }
-                 else
-                   Review::Scanner.analyze_directory(path)
-                 end
-
-        result[:files].each do |file, file_scan|
-          next if file_scan[:issues].empty?
-
-          rel = file.sub("#{MASTER.root}/", "")
-          puts "  #{file_scan[:grade]} #{rel}"
-          file_scan[:issues].each { |issue| puts "    #{issue[:severity].to_s.upcase}: #{issue[:message]}" }
-        end
-
-        puts
-        puts "  Files: #{result[:files].size}"
-        puts "  Total issues: #{result[:total_issues]} (#{result[:critical]} critical, #{result[:major]} major)"
-        puts "  Average score: #{result[:average_score].round(2)}/#{Review::Scanner::GOOD_PATTERNS.size}"
+        result = Scan.run(path, depth: :standard)
+        display_scan_result(result, path)
 
         state = {
-          scanned_at: Time.now.utc.iso8601,
-          path: path,
-          total_issues: result[:total_issues],
-          critical: result[:critical],
-          major: result[:major],
-          average_score: result[:average_score].round(2),
-          files: result[:files].transform_values do |file_result|
-            { issues: file_result[:issues].size, score: file_result[:score], grade: file_result[:grade] }
-          end,
+          scanned_at:        Time.now.utc.iso8601,
+          path:              path,
+          total_issues:      result[:total],
+          autofix_eligible:  result[:autofix_eligible],
+          files:             result[:files],
         }
         File.write(state_path, JSON.generate(state))
         puts "  Scan state saved -> var/scan_state.json"
@@ -261,7 +228,26 @@ module MASTER
 
       private
 
-      # Parse "evolve [path] [using <model>]" -- extract path and optional model hint
+      # Shared Scan.run result renderer — used by hunt, critique, scan
+      def display_scan_result(result, path)
+        rel_base = "#{MASTER.root}/"
+        by_file  = result[:by_file] || {}
+        total    = result[:total].to_i
+
+        if total == 0
+          puts UI.dim("scan: clean (#{result[:files]} files)")
+          return
+        end
+
+        by_file.each do |file, findings|
+          rel = file.sub(rel_base, "")
+          findings.each { |f| puts "  #{f[:severity].to_s.upcase}  #{rel}:#{f[:line]}  #{f[:message]}" }
+        end
+        puts
+        puts "  #{result[:files]} files  #{total} findings  #{result[:autofix_eligible]} autofix-eligible"
+      end
+
+
       def parse_evolve_args(args)
         return [MASTER.root, nil] if args.nil? || args.to_s.strip.empty?
 

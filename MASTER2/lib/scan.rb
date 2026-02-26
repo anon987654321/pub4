@@ -2,16 +2,17 @@
 
 module MASTER
   # Scan -- single traversal, pluggable rule modules.
-  # Replaces three separate Dir.glob loops in code_review/, review/, analysis/.
+  # THE one interface for all code analysis. Depth controls what runs:
   #
-  # Usage:
-  #   Scan.run("lib/")                    # :quick -- literal patterns only, no LLM
-  #   Scan.run("lib/", depth: :standard)  # + structural smells (CodeReview::Engine)
-  #   Scan.run("lib/", depth: :deep)      # + constitutional enforcer (Review::Enforcer)
+  #   Scan.run("lib/")                     # :quick    -- literal patterns only, no LLM
+  #   Scan.run("lib/", depth: :standard)   # :standard -- + structural smells (CodeReview::Engine)
+  #   Scan.run("lib/", depth: :hunt)       # :hunt     -- 8-phase bug analysis (BugHunting)
+  #   Scan.run("lib/", depth: :critique)   # :critique -- constitutional validation (Violations)
+  #   Scan.run("lib/", depth: :deep)       # :deep     -- all of the above + enforcer + plugins
   #
   # Returns: { files: N, total: N, autofix_eligible: N, by_rule: { rule_name => [findings] }, by_file: { path => [findings] } }
   module Scan
-    DEPTHS = %i[quick standard deep].freeze
+    DEPTHS = %i[quick standard hunt critique deep].freeze
 
     # Namespace for auto-loaded Scan::Rule plugin modules.
     # Files under lib/scan/rules/*.rb are required at :deep depth and must
@@ -120,7 +121,7 @@ module MASTER
         return findings if depth == :quick
 
         # :standard -- structural smells via CodeReview::Engine
-        if depth == :standard || depth == :deep
+        if %i[standard deep].include?(depth)
           if defined?(CodeReview::Engine)
             engine_result = CodeReview::Engine.analyze_all(code, path: file)
             if engine_result.ok?
@@ -131,13 +132,33 @@ module MASTER
           end
         end
 
+        # :hunt -- 8-phase bug analysis via BugHunting
+        if %i[hunt deep].include?(depth)
+          if defined?(BugHunting)
+            hunt_result = BugHunting.analyze(code, file_path: file)
+            (hunt_result[:bugs] || hunt_result[:issues] || []).each do |bug|
+              findings << normalise(bug, rule: :bug)
+            end
+          end
+        end
+
+        # :critique -- constitutional validation via Violations
+        if %i[critique deep].include?(depth)
+          if defined?(Violations)
+            violations = Violations.analyze(code, path: file, llm: nil, conceptual: false)
+            (violations || []).each do |v|
+              findings << normalise(v, rule: :constitution)
+            end
+          end
+        end
+
         return findings unless depth == :deep
 
         # :deep -- constitutional enforcer (LLM-optional)
         if defined?(Review::Enforcer)
           enforcer_result = Review::Enforcer.check(code, filename: file)
           (enforcer_result[:violations] || []).each do |v|
-            findings << normalise(v, rule: :constitution)
+            findings << normalise(v, rule: :enforcer)
           end
         end
 

@@ -2,7 +2,7 @@
 
 require "English"
 require "digest"
-require_relative "pipeline/repl"
+require_relative "ui/repl"
 require_relative "pipeline/context"
 require_relative "pressure_pass"   # legacy alias
 require_relative "refinement"
@@ -149,6 +149,9 @@ module MASTER
                                     council_security_veto: security_veto,
                                   ))
         end
+
+        # Auto-scan all code touched by this response
+        exec_result = ReviewGate.run(exec_result, input: text)
       end
 
       exec_result
@@ -253,7 +256,7 @@ module MASTER
       Result.ok(normalized)
     end
 
-    # Strip tool invocation blocks from LLM output so users see only the summary
+
     def strip_tool_blocks(text)
       return text unless text.is_a?(String)
 
@@ -277,7 +280,7 @@ module MASTER
     end
 
     class << self
-      include PipelineRepl
+      include Repl
 
       def prompt(phase: nil)
         p     = MASTER::UI.pastel
