@@ -28,10 +28,11 @@ module MASTER
         success = status.success?
         return Result.err("Piper generation failed.") unless success && File.exist?(output)
 
+        audio = File.binread(output)
         Playback.play_audio(output) if play
-        FileUtils.rm_f(output) if play
+        FileUtils.rm_f(output)
 
-        Result.ok(engine: :piper, voice: voice, preset: preset)
+        Result.ok(engine: :piper, voice: voice, preset: preset, audio: audio, content_type: "audio/wav")
       end
 
       # Edge TTS (free cloud)
@@ -63,10 +64,11 @@ module MASTER
         success = system("#{python} -c #{script.inspect} 2>/dev/null")
         return Result.err("Edge TTS generation failed.") unless success && File.exist?(output)
 
+        audio = File.binread(output)
         Playback.play_audio(output) if play
-        FileUtils.rm_f(output) if play
+        FileUtils.rm_f(output)
 
-        Result.ok(engine: :edge, voice: voice_id, style: style)
+        Result.ok(engine: :edge, voice: voice_id, style: style, audio: audio, content_type: "audio/mpeg")
       end
 
       # Replicate TTS (paid cloud) -- uses Replicate::Client (async-http)

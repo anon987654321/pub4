@@ -11,6 +11,7 @@ module MASTER
       context_shift memory_trigger complex_task simple_command
       self_run_request lint_request health_request status_request
       shell_paste diff_paste security_concern identity_query
+      conversational
     ].freeze
 
     INTENT_DESCRIPTIONS = {
@@ -111,6 +112,8 @@ module MASTER
         signals << :status_request   if low.match?(/\b(status|where are we|summary)\b/)
         signals << :security_concern if low.match?(/\b(security|auth|injection|unsafe|credential)\b/)
         signals << :identity_query   if low.match?(/\bwho are you\b|\bwhat are you\b|\byour name\b/)
+        signals << :conversational   if low.match?(/\A\s*(hi|hey|hello|yo|sup|good (morning|evening|night|afternoon)|thanks|thank you|cheers|how are you|what'?s up|how'?s it going|nice|cool|awesome|haha|lol|wow|whoa)\b/) ||
+                                        low.match?(/\b(how do you feel|what do you think|your opinion|agree|disagree|favorite|prefer)\b/)
 
         signals
       end
