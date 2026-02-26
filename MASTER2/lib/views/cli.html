@@ -1729,26 +1729,6 @@
         ctx.stroke();
       }
 
-      // Heat shimmer — subtle horizontal scanline displacement
-      if(audioBoost>0.15){
-        const shimmerH=Math.floor(H*0.3);
-        const shimmerY=Math.floor(H/2-shimmerH/2+Math.sin(t*1.7)*20);
-        const shimmerAmt=Math.floor(audioBoost*2)+1;
-        try{
-          const strip=ctx.getImageData(0,shimmerY,W,shimmerH);
-          const sd=strip.data;
-          for(let row=0;row<shimmerH;row+=3){
-            const offset=Math.floor(Math.sin(t*8+row*0.3)*shimmerAmt)*4;
-            if(offset===0) continue;
-            const rowStart=row*W*4;
-            for(let x=Math.abs(offset);x<W*4-Math.abs(offset);x+=4){
-              sd[rowStart+x]=sd[rowStart+x+offset]||sd[rowStart+x];
-            }
-          }
-          ctx.putImageData(strip,0,shimmerY);
-        }catch(_){}
-      }
-
       // Flat thinking indicator — pulsing bar below center
       if(isProcessing){
         const barW=Math.floor(S*8+Math.sin(t*3)*S*4);
