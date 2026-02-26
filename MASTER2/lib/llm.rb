@@ -157,9 +157,9 @@ module MASTER
                           [primary] + fallbacks
                         else
                           peers = tier_peers(primary)
-                          # Only include FREE_FALLBACKS when OpenRouter is configured
                           free = configured_for_openrouter? ? FREE_FALLBACKS.reject { |id| peers.include?(id) || id == primary } : []
-                          [primary] + peers + free
+                          all = [primary] + peers + free
+                          configured_for_replicate? ? all.sort_by { |m| replicate_model?(m) ? 0 : 1 } : all
                         end
         last_error = nil
 

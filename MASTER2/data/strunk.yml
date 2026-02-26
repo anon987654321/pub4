@@ -77,3 +77,22 @@ endings:
   - "Is there anything else I can help you with?"
   - "Is there anything else you'd like to know?"
   - "Do you have any other questions?"
+
+# Code-flooding preambles -- strip when LLM narrates before dumping a block
+code_preambles:
+  - "Here is the updated "
+  - "Here's the updated "
+  - "Here is the full "
+  - "Here's the full "
+  - "Here is the complete "
+  - "Here's the complete "
+  - "Below is the "
+  - "The following code "
+  - "Here is the code"
+  - "Here's the code"
+  - "I have updated "
+  - "I've updated "
+  - "I have added "
+  - "I've added "
+  - "I have made the following changes"
+  - "I've made the following changes"
