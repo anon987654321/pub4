@@ -454,7 +454,7 @@
 
     // Web Audio effect chain — cycle with long-press on status circle
     const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone'];
-    let fxIdx=0;
+    let fxIdx=1+Math.floor(Math.random()*(FX_MODES.length-1)); // random effect on by default
     let fxTaps=0;let fxTapTimer=0;
 
     const buildFxChain=(src)=>{
@@ -1071,13 +1071,12 @@
 
     const ambientSpeak=()=>{
       if(isProcessing) return scheduleAmbient();
-      // Wait for current speech to finish
       if(isSpeaking) return ambientTimer=setTimeout(ambientSpeak,2000);
-      // Shuffle through without immediate repeats
+      // Randomize FX each phrase for variety
+      fxIdx=1+Math.floor(Math.random()*(FX_MODES.length-1));
       ambientIdx=(ambientIdx+1+Math.floor(Math.random()*(AMBIENT.length-1)))%AMBIENT.length;
       const phrase=AMBIENT[ambientIdx];
       speakText(phrase);
-      // Schedule next after this one finishes (estimate ~80ms per char + pause)
       const estDuration=phrase.length*80+AMBIENT_PAUSE;
       ambientTimer=setTimeout(ambientSpeak,estDuration);
     };
@@ -1140,7 +1139,7 @@
         const greeting=isMomBday?'Happy birthday momma!':timeGreet;
         speakText(greeting);
         speakWithAudio(greeting);
-        resetIdleTimer();
+        scheduleAmbient();
       },850);
     });
 
