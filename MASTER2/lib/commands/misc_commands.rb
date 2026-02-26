@@ -360,6 +360,14 @@ module MASTER
         Result.err("style-guides failed: #{err.message}")
       end
 
+      def start_web_server(args)
+        port = args.to_s.strip.match?(/\A\d+\z/) ? args.strip.to_i : nil
+        server = Server.new(port: port)
+        server.start
+        token = Server::AUTH_TOKEN
+        puts "  web: http://localhost:#{server.port}/?token=#{token}"
+      end
+
       private
 
       def ascii_tree(root, prefix = "", path = root, buf = [])
@@ -469,14 +477,6 @@ module MASTER
         dry_run = !args&.include?("-a") && !args&.include?("--apply")
         mr = MultiRefactor.new(dry_run: dry_run)
         mr.run(path: path)
-      end
-
-      def start_web_server(args)
-        port = args.to_s.strip.match?(/\A\d+\z/) ? args.strip.to_i : nil
-        server = Server.new(port: port)
-        server.start
-        token = Server::AUTH_TOKEN
-        puts "  web: http://localhost:#{server.port}/?token=#{token}"
       end
 
       # Project memory - persistent goal/context across sessions and models
