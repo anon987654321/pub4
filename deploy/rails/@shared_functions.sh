@@ -98,7 +98,7 @@ generate_secure_controller() {
   typeset -r target="app/controllers/${model}_controller.rb"
 
   [[ -d ${target:h} ]] || mkdir -p ${target:h}
-  print -r > $target << RUBY
+  cat > $target << RUBY
 class ${model_class}Controller < ApplicationController
 
   before_action :authenticate_user!, except: [:index, :show]
@@ -241,7 +241,7 @@ generate_application_layout() {
   typeset description="$2"
 
   mkdir -p app/views/layouts
-  cat > app/views/layouts/application.html.erb << 'LAYOUT'
+  cat > app/views/layouts/application.html.erb << LAYOUT
 <!DOCTYPE html>
 
 <html lang="<%= I18n.locale %>">
@@ -394,27 +394,13 @@ check_app_exists() {
 # Setup Rails 8 authentication
 setup_authentication() {
 
-  if grep -q "devise" Gemfile; then
+  if [[ -f "app/models/session.rb" ]]; then
 
-    log "Devise already in Gemfile"
+    log "Rails 8 authentication already generated"
 
   else
 
-    cat >> Gemfile << 'GEMS'
-
-gem "devise"
-
-gem "devise-guests"
-
-GEMS
-
-    bundle install
-
-    bin/rails generate devise:install
-
-    bin/rails generate devise User
-
-    bin/rails generate devise_guests:install
+    bin/rails generate authentication
 
     bin/rails db:migrate
 
@@ -636,7 +622,7 @@ generate_turbo_views() {
   
   cat > "app/views/${plural}/create.turbo_stream.erb" << ERB
 <%= turbo_stream.prepend "${plural}", partial: "${plural}/${singular}", locals: { ${singular}: @${singular} } %>
-<%= turbo_stream.update "new_${singular}_form", partial: "${plural}/form", locals: { ${singular}: ${singular^}.new } %>
+<%= turbo_stream.update "new_${singular}_form", partial: "${plural}/form", locals: { ${singular}: ${(C)singular}.new } %>
 ERB
 
   cat > "app/views/${plural}/update.turbo_stream.erb" << ERB

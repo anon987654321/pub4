@@ -32,7 +32,19 @@ command_exists "psql"
 
 install_gem "faker"
 
+# Setup Rails 8 authentication
+[[ -f "app/models/session.rb" ]] || { bin/rails generate authentication; bin/rails db:migrate; }
+
 # Generate enhanced food delivery models
+
+
+# Patch ApplicationController with Pagy::Backend (idempotent)
+grep -q "Pagy::Backend" app/controllers/application_controller.rb 2>/dev/null || \
+  sed -i 's/class ApplicationController < ActionController::Base/class ApplicationController < ActionController::Base\n  include Pagy::Backend/' \
+  app/controllers/application_controller.rb
+grep -q "Pagy::Frontend" app/helpers/application_helper.rb 2>/dev/null || \
+  sed -i 's/module ApplicationHelper/module ApplicationHelper\n  include Pagy::Frontend/' \
+  app/helpers/application_helper.rb
 
 bin/rails generate model Restaurant name:string description:text user:references address:string lat:decimal lng:decimal phone:string cuisine_type:string delivery_fee:decimal min_order:decimal
 

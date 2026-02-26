@@ -55,7 +55,20 @@ GEMFILE
 
 bundle install
 
-# Database with engagement_score per innovation_research_2024
+# Setup Devise authentication
+[[ -f "app/models/user.rb" ]] || {
+  bin/rails generate devise:install
+  bin/rails generate devise User
+  bin/rails db:migrate
+}
+
+# Patch ApplicationController with Pagy::Backend (idempotent)
+grep -q "Pagy::Backend" app/controllers/application_controller.rb 2>/dev/null || \
+  sed -i 's/class ApplicationController < ActionController::Base/class ApplicationController < ActionController::Base\n  include Pagy::Backend/' \
+  app/controllers/application_controller.rb
+grep -q "Pagy::Frontend" app/helpers/application_helper.rb 2>/dev/null || \
+  sed -i 's/module ApplicationHelper/module ApplicationHelper\n  include Pagy::Frontend/' \
+  app/helpers/application_helper.rb
 
 bin/rails generate model Blog user:references title:string slug:string description:text published:boolean:default[false]
 
@@ -165,17 +178,13 @@ class FeedController < ApplicationController
 
   def index
 
-    @posts = Post.feed.includes(:user, :blog, :likes, :comments)
-
-                     .page(params[:page])
+    @pagy, @posts = pagy(Post.feed.includes(:user, :blog, :likes, :comments))
 
   end
 
   def trending
 
-    @posts = Post.trending.includes(:user, :blog)
-
-                          .page(params[:page])
+    @pagy, @posts = pagy(Post.trending.includes(:user, :blog))
 
   end
 
@@ -194,7 +203,7 @@ class PostsController < ApplicationController
   before_action :authorize_user!, only: [:edit, :update, :destroy]
 
   def index
-    @posts = Post.feed.page(params[:page])
+    @pagy, @posts = pagy(Post.feed)
 
   end
 
