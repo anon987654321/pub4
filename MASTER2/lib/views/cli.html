@@ -399,209 +399,383 @@
       }
     };
 
-    // ── Ambient Pad Engine ──────────────────────────────────────────
-    // Continuously evolving background pads using raw Web Audio API.
-    // Multiple detuned oscillators, LFO-swept filters, creative FX,
-    // ducked low so voice is never overpowered.
+    // ── Ambient Pad Engine v2 ─────────────────────────────────────────
+    // Analog-modeled evolving drone. Inspired by Madlib's dusty warmth,
+    // FlyLo's cosmic textures, Dilla's wonky drift. Every parameter
+    // slowly mutates so it never repeats. Voice-ducked to stay under.
     let padMaster=null;
-    let padDuck=null; // gain node for voice ducking
+    let padDuck=null;
     let padOscs=[];
     let padDriftTimer=null;
 
+    // Minor/modal voicings — dark, cinematic, hip-hop soul
     const PAD_CHORDS=[
-      [130.81,164.81,196.00,261.63],  // Cm
-      [116.54,146.83,174.61,233.08],  // Ab
-      [123.47,155.56,185.00,246.94],  // Bb
-      [138.59,174.61,207.65,277.18],  // Db
-      [103.83,130.81,155.56,207.65],  // Eb
-      [146.83,185.00,220.00,293.66],  // Fm7
-      [110.00,138.59,164.81,220.00],  // Bbm
-      [97.999,123.47,146.83,196.00],  // Gb
+      [65.41,77.78,98.00,130.81],      // Cm (low, rumbling)
+      [58.27,73.42,87.31,116.54],      // Abmaj7
+      [61.74,77.78,92.50,123.47],      // Bbsus4
+      [55.00,65.41,82.41,110.00],      // Am (Dilla minor)
+      [51.91,65.41,77.78,103.83],      // Eb
+      [73.42,92.50,110.00,146.83],     // Fm9
+      [49.00,61.74,73.42,98.00],       // Db (low rumble)
+      [55.00,69.30,82.41,110.00],      // A half-dim
     ];
 
     const initPads=()=>{
       if(!audioCtx||padMaster) return;
+      const now=audioCtx.currentTime;
       const out=audioCtx.destination;
 
-      // Master bus: very quiet so voice dominates
       padMaster=audioCtx.createGain();
-      padMaster.gain.value=0.06;
-
-      // Voice ducking node — speech lowers pads further
+      padMaster.gain.value=0.07;
       padDuck=audioCtx.createGain();
       padDuck.gain.value=1.0;
 
-      // ── FX Chain ──
+      // ── VCO drift LFOs — simulate analog oscillator instability ──
+      // Each oscillator gets its own slow random-ish detune drift
+      const makeDriftLFO=(rate,depth)=>{
+        const lfo=audioCtx.createOscillator();
+        lfo.type='triangle';
+        lfo.frequency.value=rate;
+        const g=audioCtx.createGain();
+        g.gain.value=depth;
+        lfo.connect(g);
+        lfo.start();
+        return g;
+      };
 
-      // 1. Stereo widener via slight delay offset
-      const widenerL=audioCtx.createDelay();widenerL.delayTime.value=0.012;
-      const widenerR=audioCtx.createDelay();widenerR.delayTime.value=0.018;
+      // ── Tape saturation — asymmetric waveshaper like worn Tascam ──
+      const tapeSat=audioCtx.createWaveShaper();
+      const tapeN=2048;const tapeCurve=new Float32Array(tapeN);
+      for(let i=0;i<tapeN;i++){
+        const x=i*2/(tapeN-1)-1;
+        // Asymmetric: positive side softer, negative side harder
+        tapeCurve[i]=x>=0
+          ?Math.tanh(x*1.2)*0.9+x*0.1
+          :Math.tanh(x*2.0)*0.7+x*0.3;
+      }
+      tapeSat.curve=tapeCurve;tapeSat.oversample='2x';
+
+      // ── Vinyl noise layer — hiss + crackle ──
+      const noiseLen=audioCtx.sampleRate*4;
+      const noiseBuf=audioCtx.createBuffer(1,noiseLen,audioCtx.sampleRate);
+      const noiseData=noiseBuf.getChannelData(0);
+      for(let i=0;i<noiseLen;i++){
+        // Mix white noise (hiss) with sparse impulses (crackle)
+        noiseData[i]=(Math.random()*2-1)*0.15;
+        if(Math.random()<0.0003) noiseData[i]+=(Math.random()-0.5)*0.8; // crackle pop
+        if(Math.random()<0.0001) noiseData[i]+=Math.random()*1.2; // louder pop
+      }
+      const vinylSrc=audioCtx.createBufferSource();
+      vinylSrc.buffer=noiseBuf;vinylSrc.loop=true;
+      const vinylGain=audioCtx.createGain();vinylGain.gain.value=0.08;
+      // Bandpass to shape noise like vinyl — not too bright, not too boomy
+      const vinylBP=audioCtx.createBiquadFilter();vinylBP.type='bandpass';
+      vinylBP.frequency.value=2000;vinylBP.Q.value=0.5;
+      vinylSrc.connect(vinylBP);vinylBP.connect(vinylGain);vinylSrc.start();
+
+      // ── Lo-fi filter — Madlib SP-303 style bitcrush feel ──
+      const lofiLP=audioCtx.createBiquadFilter();
+      lofiLP.type='lowpass';lofiLP.frequency.value=3500;lofiLP.Q.value=0.7;
+      const lofiHP=audioCtx.createBiquadFilter();
+      lofiHP.type='highpass';lofiHP.frequency.value=60;
+
+      // ── Moog-style ladder filter (4-pole lowpass cascade) ──
+      const lad1=audioCtx.createBiquadFilter();lad1.type='lowpass';lad1.Q.value=1.5;
+      const lad2=audioCtx.createBiquadFilter();lad2.type='lowpass';lad2.Q.value=1.5;
+      const lad3=audioCtx.createBiquadFilter();lad3.type='lowpass';lad3.Q.value=0.8;
+      const lad4=audioCtx.createBiquadFilter();lad4.type='lowpass';lad4.Q.value=0.8;
+      [lad1,lad2,lad3,lad4].forEach(f=>f.frequency.value=900);
+
+      // Slow LFO sweeps the ladder — deep analog sweep
+      const ladLFO=audioCtx.createOscillator();ladLFO.type='sine';ladLFO.frequency.value=0.025;
+      const ladDepth=audioCtx.createGain();ladDepth.gain.value=700;
+      ladLFO.connect(ladDepth);
+      [lad1,lad2,lad3,lad4].forEach(f=>ladDepth.connect(f.frequency));
+      ladLFO.start();
+
+      // Secondary triangle LFO for filter movement
+      const ladLFO2=audioCtx.createOscillator();ladLFO2.type='triangle';ladLFO2.frequency.value=0.07;
+      const ladDepth2=audioCtx.createGain();ladDepth2.gain.value=300;
+      ladLFO2.connect(ladDepth2);
+      [lad1,lad2].forEach(f=>ladDepth2.connect(f.frequency));
+      ladLFO2.start();
+
+      // ── Resonant peak — warm analog body ──
+      const warmth=audioCtx.createBiquadFilter();
+      warmth.type='peaking';warmth.frequency.value=300;warmth.gain.value=5;warmth.Q.value=0.6;
+
+      // ── Sub harmonics — deep Dilla bass weight ──
+      const subOsc=audioCtx.createOscillator();subOsc.type='sine';subOsc.frequency.value=32.7;
+      const subOsc2=audioCtx.createOscillator();subOsc2.type='triangle';subOsc2.frequency.value=32.7;
+      subOsc2.detune.value=3;
+      const subGain=audioCtx.createGain();subGain.gain.value=0.2;
+      const subLP=audioCtx.createBiquadFilter();subLP.type='lowpass';subLP.frequency.value=65;subLP.Q.value=2;
+      subOsc.connect(subLP);subOsc2.connect(subLP);subLP.connect(subGain);
+      subOsc.start();subOsc2.start();
+
+      // ── Sidechain pump — fake compressor pumping like Dilla/Madlib ──
+      const pumpGain=audioCtx.createGain();pumpGain.gain.value=1.0;
+      const pumpLFO=audioCtx.createOscillator();pumpLFO.type='sine';
+      pumpLFO.frequency.value=0.4; // slow breathing pump
+      const pumpDepth=audioCtx.createGain();pumpDepth.gain.value=0.2;
+      pumpLFO.connect(pumpDepth);pumpDepth.connect(pumpGain.gain);pumpLFO.start();
+
+      // ── 6-stage phaser — deep analog sweep ──
+      const phaserStages=[];
+      for(let i=0;i<6;i++){
+        const ap=audioCtx.createBiquadFilter();ap.type='allpass';
+        ap.frequency.value=200+i*300;ap.Q.value=0.5;
+        phaserStages.push(ap);
+      }
+      const phaserLFO=audioCtx.createOscillator();phaserLFO.type='triangle';phaserLFO.frequency.value=0.05;
+      const phaserDepth=audioCtx.createGain();phaserDepth.gain.value=800;
+      phaserLFO.connect(phaserDepth);
+      phaserStages.forEach(ap=>phaserDepth.connect(ap.frequency));
+      phaserLFO.start();
+      // Chain stages
+      for(let i=0;i<phaserStages.length-1;i++) phaserStages[i].connect(phaserStages[i+1]);
+
+      // ── Tremolo — drunken Dilla swing feel (irregular) ──
+      const tremGain=audioCtx.createGain();tremGain.gain.value=0.75;
+      const tremLFO=audioCtx.createOscillator();tremLFO.type='sine';tremLFO.frequency.value=0.12;
+      const tremDepth=audioCtx.createGain();tremDepth.gain.value=0.25;
+      tremLFO.connect(tremDepth);tremDepth.connect(tremGain.gain);tremLFO.start();
+      // Second irregular tremolo for wonky feel
+      const trem2LFO=audioCtx.createOscillator();trem2LFO.type='triangle';trem2LFO.frequency.value=0.19;
+      const trem2D=audioCtx.createGain();trem2D.gain.value=0.1;
+      trem2LFO.connect(trem2D);trem2D.connect(tremGain.gain);trem2LFO.start();
+
+      // ── Chorus — thick 4-voice Juno-style ──
+      const chorusBus=audioCtx.createGain();chorusBus.gain.value=0.35;
+      const chorusVoices=[];
+      [0.018,0.027,0.037,0.048].forEach((dt,i)=>{
+        const d=audioCtx.createDelay();d.delayTime.value=dt;
+        const lfo=audioCtx.createOscillator();lfo.type='sine';
+        lfo.frequency.value=0.5+i*0.3;
+        const mod=audioCtx.createGain();mod.gain.value=0.004;
+        lfo.connect(mod);mod.connect(d.delayTime);lfo.start();
+        chorusVoices.push(d);
+      });
+
+      // ── Spring reverb — lo-fi, metallic, like a guitar amp spring ──
+      const springD1=audioCtx.createDelay();springD1.delayTime.value=0.031;
+      const springD2=audioCtx.createDelay();springD2.delayTime.value=0.059;
+      const springD3=audioCtx.createDelay();springD3.delayTime.value=0.097;
+      const springFb1=audioCtx.createGain();springFb1.gain.value=0.6;
+      const springFb2=audioCtx.createGain();springFb2.gain.value=0.5;
+      const springFb3=audioCtx.createGain();springFb3.gain.value=0.4;
+      springD1.connect(springFb1);springFb1.connect(springD2);
+      springD2.connect(springFb2);springFb2.connect(springD3);
+      springD3.connect(springFb3);springFb3.connect(springD1);
+      const springLP=audioCtx.createBiquadFilter();springLP.type='lowpass';springLP.frequency.value=3000;
+      const springHP=audioCtx.createBiquadFilter();springHP.type='highpass';springHP.frequency.value=400;
+      const springMix=audioCtx.createGain();springMix.gain.value=0.3;
+
+      // ── Hall reverb — large space, long tail ──
+      const hallTaps=[0.11,0.23,0.37,0.53,0.71,0.89];
+      const hallGains=[0.3,0.22,0.16,0.10,0.06,0.03];
+      const hallBus=audioCtx.createGain();hallBus.gain.value=0.4;
+      const hallLP=audioCtx.createBiquadFilter();hallLP.type='lowpass';hallLP.frequency.value=2200;
+      const hallFb=audioCtx.createGain();hallFb.gain.value=0.15;
+      const hallDelays=hallTaps.map((t,i)=>{
+        const d=audioCtx.createDelay();d.delayTime.value=t;
+        const g=audioCtx.createGain();g.gain.value=hallGains[i];
+        d.connect(g);g.connect(hallLP);
+        return d;
+      });
+      hallLP.connect(hallBus);hallLP.connect(hallFb);hallFb.connect(hallDelays[0]);
+
+      // ── Ping-pong delay — FlyLo cosmic echoes ──
+      const ppL=audioCtx.createDelay();ppL.delayTime.value=0.375;
+      const ppR=audioCtx.createDelay();ppR.delayTime.value=0.5;
+      const ppFbL=audioCtx.createGain();ppFbL.gain.value=0.3;
+      const ppFbR=audioCtx.createGain();ppFbR.gain.value=0.3;
+      const ppLP=audioCtx.createBiquadFilter();ppLP.type='lowpass';ppLP.frequency.value=1800;
+      ppL.connect(ppFbL);ppFbL.connect(ppLP);ppLP.connect(ppR);
+      ppR.connect(ppFbR);ppFbR.connect(ppL);
+      const ppMix=audioCtx.createGain();ppMix.gain.value=0.15;
+      const ppSplitter=audioCtx.createChannelMerger(2);
+
+      // ── Stereo widener — Haas effect ──
+      const widenerL=audioCtx.createDelay();widenerL.delayTime.value=0.011;
+      const widenerR=audioCtx.createDelay();widenerR.delayTime.value=0.019;
       const merger=audioCtx.createChannelMerger(2);
       const splitter=audioCtx.createChannelSplitter(2);
 
-      // 2. Slow filter sweep — evolving texture
-      const sweepFilter=audioCtx.createBiquadFilter();
-      sweepFilter.type='lowpass';sweepFilter.frequency.value=800;sweepFilter.Q.value=2;
-      const sweepLFO=audioCtx.createOscillator();sweepLFO.type='sine';sweepLFO.frequency.value=0.04;
-      const sweepDepth=audioCtx.createGain();sweepDepth.gain.value=600;
-      sweepLFO.connect(sweepDepth);sweepDepth.connect(sweepFilter.frequency);sweepLFO.start();
+      // ── FlyLo frequency shifter feel — slow pitch wobble on aux send ──
+      const wobbleD=audioCtx.createDelay();wobbleD.delayTime.value=0.1;
+      const wobbleLFO=audioCtx.createOscillator();wobbleLFO.type='sine';wobbleLFO.frequency.value=0.06;
+      const wobbleMod=audioCtx.createGain();wobbleMod.gain.value=0.015;
+      wobbleLFO.connect(wobbleMod);wobbleMod.connect(wobbleD.delayTime);wobbleLFO.start();
+      const wobbleMix=audioCtx.createGain();wobbleMix.gain.value=0.12;
+      const wobbleLP=audioCtx.createBiquadFilter();wobbleLP.type='lowpass';wobbleLP.frequency.value=1200;
 
-      // 3. Resonant peak — adds warmth
-      const warmth=audioCtx.createBiquadFilter();
-      warmth.type='peaking';warmth.frequency.value=440;warmth.gain.value=4;warmth.Q.value=0.8;
-
-      // 4. Slow tremolo — breathing feel
-      const tremGain=audioCtx.createGain();tremGain.gain.value=0.7;
-      const tremLFO=audioCtx.createOscillator();tremLFO.type='sine';tremLFO.frequency.value=0.15;
-      const tremDepth=audioCtx.createGain();tremDepth.gain.value=0.3;
-      tremLFO.connect(tremDepth);tremDepth.connect(tremGain.gain);tremLFO.start();
-
-      // 5. Phaser — slow sweep for movement
-      const allpass1=audioCtx.createBiquadFilter();allpass1.type='allpass';allpass1.frequency.value=600;
-      const allpass2=audioCtx.createBiquadFilter();allpass2.type='allpass';allpass2.frequency.value=1200;
-      const phaserLFO=audioCtx.createOscillator();phaserLFO.type='triangle';phaserLFO.frequency.value=0.08;
-      const phaserDepth=audioCtx.createGain();phaserDepth.gain.value=500;
-      phaserLFO.connect(phaserDepth);phaserDepth.connect(allpass1.frequency);phaserDepth.connect(allpass2.frequency);phaserLFO.start();
-
-      // 6. Multi-tap reverb (4 taps, feedback)
-      const rv1=audioCtx.createDelay();rv1.delayTime.value=0.11;
-      const rv2=audioCtx.createDelay();rv2.delayTime.value=0.23;
-      const rv3=audioCtx.createDelay();rv3.delayTime.value=0.37;
-      const rv4=audioCtx.createDelay();rv4.delayTime.value=0.53;
-      const rvG1=audioCtx.createGain();rvG1.gain.value=0.35;
-      const rvG2=audioCtx.createGain();rvG2.gain.value=0.25;
-      const rvG3=audioCtx.createGain();rvG3.gain.value=0.15;
-      const rvG4=audioCtx.createGain();rvG4.gain.value=0.08;
-      const rvFb=audioCtx.createGain();rvFb.gain.value=0.2;
-      const rvMix=audioCtx.createGain();rvMix.gain.value=0.55;
-      const rvLP=audioCtx.createBiquadFilter();rvLP.type='lowpass';rvLP.frequency.value=2500;
-
-      // 7. Chorus — 3 modulated delays for thickness
-      const ch1=audioCtx.createDelay();ch1.delayTime.value=0.025;
-      const ch2=audioCtx.createDelay();ch2.delayTime.value=0.035;
-      const ch3=audioCtx.createDelay();ch3.delayTime.value=0.045;
-      const chLFO1=audioCtx.createOscillator();chLFO1.type='sine';chLFO1.frequency.value=0.7;
-      const chLFO2=audioCtx.createOscillator();chLFO2.type='sine';chLFO2.frequency.value=0.9;
-      const chLFO3=audioCtx.createOscillator();chLFO3.type='sine';chLFO3.frequency.value=1.1;
-      const chD1=audioCtx.createGain();chD1.gain.value=0.005;
-      const chD2=audioCtx.createGain();chD2.gain.value=0.005;
-      const chD3=audioCtx.createGain();chD3.gain.value=0.005;
-      chLFO1.connect(chD1);chD1.connect(ch1.delayTime);chLFO1.start();
-      chLFO2.connect(chD2);chD2.connect(ch2.delayTime);chLFO2.start();
-      chLFO3.connect(chD3);chD3.connect(ch3.delayTime);chLFO3.start();
-      const chMix=audioCtx.createGain();chMix.gain.value=0.3;
-
-      // 8. Soft saturation — warm analog feel
-      const saturation=audioCtx.createWaveShaper();
-      const satCurve=new Float32Array(1024);
-      for(let i=0;i<1024;i++){const x=i*2/1023-1;satCurve[i]=Math.tanh(x*1.5);}
-      saturation.curve=satCurve;
-
-      // 9. Sub-bass drone — low sine for depth
-      const subOsc=audioCtx.createOscillator();subOsc.type='sine';subOsc.frequency.value=55;
-      const subGain=audioCtx.createGain();subGain.gain.value=0.15;
-      const subLP=audioCtx.createBiquadFilter();subLP.type='lowpass';subLP.frequency.value=80;
-      subOsc.connect(subLP);subLP.connect(subGain);subOsc.start();
-
-      // 10. High shimmer — octave-up sparkle
-      const shimmerOsc=audioCtx.createOscillator();shimmerOsc.type='sine';shimmerOsc.frequency.value=523.25;
-      const shimmerGain=audioCtx.createGain();shimmerGain.gain.value=0.02;
+      // ── High shimmer — ghostly harmonic sparkle ──
+      const shimmerOsc=audioCtx.createOscillator();shimmerOsc.type='sine';
+      shimmerOsc.frequency.value=PAD_CHORDS[0][3]*4; // 2 octaves up
+      const shimmerGain=audioCtx.createGain();shimmerGain.gain.value=0.012;
       const shimmerTrem=audioCtx.createGain();shimmerTrem.gain.value=0.5;
-      const shimmerLFO=audioCtx.createOscillator();shimmerLFO.type='sine';shimmerLFO.frequency.value=0.3;
-      const shimmerD=audioCtx.createGain();shimmerD.gain.value=0.5;
-      shimmerLFO.connect(shimmerD);shimmerD.connect(shimmerTrem.gain);shimmerLFO.start();
+      const shimmerLFO=audioCtx.createOscillator();shimmerLFO.type='sine';shimmerLFO.frequency.value=0.22;
+      const shimmerMod=audioCtx.createGain();shimmerMod.gain.value=0.5;
+      shimmerLFO.connect(shimmerMod);shimmerMod.connect(shimmerTrem.gain);shimmerLFO.start();
       shimmerOsc.connect(shimmerTrem);shimmerTrem.connect(shimmerGain);shimmerOsc.start();
+      // Shimmer detune drift
+      const shimDrift=makeDriftLFO(0.03,8);shimDrift.connect(shimmerOsc.detune);
 
-      // ── Signal routing ──
-      // Pad oscillators → sweepFilter → warmth → phaser → saturation → tremolo → chorus+dry → reverb → stereo → duck → master → out
+      // ══════════════════════════════════════════════════════════
+      // SIGNAL ROUTING
+      // Oscillators → ladder filter → tape sat → warmth → phaser →
+      // tremolo → lofi → {chorus, dry, spring reverb, hall reverb,
+      // ping-pong, wobble} → pump → stereo → duck → master → out
+      // ══════════════════════════════════════════════════════════
 
-      // Chorus routing
-      const chorusBus=audioCtx.createGain();chorusBus.gain.value=1;
-      chorusBus.connect(ch1);chorusBus.connect(ch2);chorusBus.connect(ch3);
-      ch1.connect(chMix);ch2.connect(chMix);ch3.connect(chMix);
+      // Ladder filter chain
+      lad1.connect(lad2);lad2.connect(lad3);lad3.connect(lad4);
 
-      // Main chain
-      const dryBus=audioCtx.createGain();dryBus.gain.value=1;
+      // Post-ladder chain
+      lad4.connect(tapeSat);
+      tapeSat.connect(warmth);
+      warmth.connect(phaserStages[0]);
+      phaserStages[phaserStages.length-1].connect(tremGain);
+      tremGain.connect(lofiLP);lofiLP.connect(lofiHP);
 
-      // Reverb routing
-      const reverbIn=audioCtx.createGain();reverbIn.gain.value=1;
-      reverbIn.connect(rv1);reverbIn.connect(rv2);reverbIn.connect(rv3);reverbIn.connect(rv4);
-      rv1.connect(rvG1);rv2.connect(rvG2);rv3.connect(rvG3);rv4.connect(rvG4);
-      rvG1.connect(rvLP);rvG2.connect(rvLP);rvG3.connect(rvLP);rvG4.connect(rvLP);
-      rvLP.connect(rvMix);rvLP.connect(rvFb);rvFb.connect(rv1);
+      // Parallel sends from lofi output
+      const dryBus=audioCtx.createGain();dryBus.gain.value=0.7;
+      lofiHP.connect(dryBus);
 
-      // Stereo widening
+      // Chorus send
+      chorusVoices.forEach(d=>{lofiHP.connect(d);d.connect(chorusBus);});
+
+      // Spring reverb send
+      const springSend=audioCtx.createGain();springSend.gain.value=0.25;
+      lofiHP.connect(springSend);
+      springSend.connect(springD1);
+      springD3.connect(springHP);springHP.connect(springLP);springLP.connect(springMix);
+
+      // Hall reverb send
+      const hallSend=audioCtx.createGain();hallSend.gain.value=0.3;
+      lofiHP.connect(hallSend);
+      hallDelays.forEach(d=>hallSend.connect(d));
+
+      // Ping-pong send
+      const ppSend=audioCtx.createGain();ppSend.gain.value=0.1;
+      lofiHP.connect(ppSend);ppSend.connect(ppL);
+      ppL.connect(ppMix);ppR.connect(ppMix);
+
+      // Wobble send
+      lofiHP.connect(wobbleD);wobbleD.connect(wobbleLP);wobbleLP.connect(wobbleMix);
+
+      // Sum to pre-pump bus
+      const prePump=audioCtx.createGain();prePump.gain.value=1;
+      dryBus.connect(prePump);
+      chorusBus.connect(prePump);
+      springMix.connect(prePump);
+      hallBus.connect(prePump);
+      ppMix.connect(prePump);
+      wobbleMix.connect(prePump);
+
+      // Pump → stereo widener → duck → master
+      prePump.connect(pumpGain);
+
       const preOut=audioCtx.createGain();preOut.gain.value=1;
+      pumpGain.connect(preOut);
       preOut.connect(splitter);
       splitter.connect(widenerL,0);splitter.connect(widenerR,1);
       widenerL.connect(merger,0,0);widenerR.connect(merger,0,1);
-
-      // Final routing
       merger.connect(padDuck);
-      padDuck.connect(padMaster);
-      padMaster.connect(out);
 
-      // Wire the chain
-      sweepFilter.connect(warmth);
-      warmth.connect(allpass1);allpass1.connect(allpass2);
-      allpass2.connect(saturation);
-      saturation.connect(tremGain);
-      tremGain.connect(dryBus);
-      tremGain.connect(chorusBus);
-      dryBus.connect(preOut);
-      chMix.connect(preOut);
-      tremGain.connect(reverbIn);
-      rvMix.connect(preOut);
-
-      // Sub + shimmer → duck → master
+      // Vinyl + sub + shimmer bypass main chain, go direct to duck
+      vinylGain.connect(padDuck);
       subGain.connect(padDuck);
       shimmerGain.connect(padDuck);
 
-      // Create 4 oscillator layers per chord note (fat detuned pads)
+      padDuck.connect(padMaster);
+      padMaster.connect(out);
+
+      // ── Create oscillators — 5 layers per note, analog-detuned ──
       const chord=PAD_CHORDS[0];
-      chord.forEach(freq=>{
-        const types=['sawtooth','triangle','sine','square'];
-        const detunes=[-12,-4,4,12];
-        types.forEach((type,j)=>{
+      const oscConfigs=[
+        {type:'sawtooth',gain:0.06,detune:-15},  // fat analog saw
+        {type:'sawtooth',gain:0.05,detune:7},     // second saw, slightly sharp
+        {type:'triangle',gain:0.04,detune:-3},    // warm body
+        {type:'square',  gain:0.015,detune:12},   // hollow color
+        {type:'sine',    gain:0.03,detune:0.3},   // fundamental anchor
+      ];
+      chord.forEach((freq,ni)=>{
+        oscConfigs.forEach((cfg,ci)=>{
           const osc=audioCtx.createOscillator();
-          osc.type=type;
+          osc.type=cfg.type;
           osc.frequency.value=freq;
-          osc.detune.value=detunes[j]+Math.random()*2-1;
-          const g=audioCtx.createGain();
-          g.gain.value=type==='sawtooth'?0.08:type==='triangle'?0.06:type==='square'?0.03:0.05;
-          osc.connect(g);g.connect(sweepFilter);
-          osc.start();
-          padOscs.push({osc,gain:g,baseFreq:freq,sub:subOsc,shimmer:shimmerOsc});
+          // Analog-style random detune spread
+          osc.detune.value=cfg.detune+(Math.random()*6-3);
+          const g=audioCtx.createGain();g.gain.value=cfg.gain;
+
+          // VCO drift — each osc drifts independently (analog instability)
+          const drift=makeDriftLFO(
+            0.02+Math.random()*0.08,     // very slow, irregular
+            2+Math.random()*4            // subtle cent drift
+          );
+          drift.connect(osc.detune);
+
+          osc.connect(g);g.connect(lad1);
+          osc.start(now+Math.random()*0.1); // stagger starts
+          padOscs.push({osc,gain:g,baseFreq:freq});
         });
       });
 
-      // Evolving chord drift — change chord every 20-40s
+      // ── Chord evolution — 25-45s morphs, with parameter mutations ──
       let chordIdx=0;
       const driftChord=()=>{
         chordIdx=(chordIdx+1)%PAD_CHORDS.length;
         const chord=PAD_CHORDS[chordIdx];
-        const now=audioCtx.currentTime;
+        const t=audioCtx.currentTime;
+        const rampTime=6+Math.random()*6; // 6-12s glide
+
         padOscs.forEach((p,i)=>{
-          const noteIdx=Math.floor(i/4);
+          const noteIdx=Math.floor(i/oscConfigs.length);
           const freq=chord[noteIdx%chord.length];
-          p.osc.frequency.linearRampToValueAtTime(freq+Math.random()*2-1,now+8);
+          p.osc.frequency.exponentialRampToValueAtTime(
+            Math.max(20,freq+(Math.random()*3-1.5)),t+rampTime
+          );
           p.baseFreq=freq;
         });
-        // Drift sub bass
-        subOsc.frequency.linearRampToValueAtTime(chord[0]/2,now+6);
-        // Drift shimmer
-        shimmerOsc.frequency.linearRampToValueAtTime(chord[chord.length-1]*2,now+6);
-        // Random sweep target
-        sweepFilter.frequency.linearRampToValueAtTime(400+Math.random()*1200,now+10);
-        warmth.frequency.linearRampToValueAtTime(300+Math.random()*600,now+8);
-        padDriftTimer=setTimeout(driftChord,20000+Math.random()*20000);
+
+        // Sub follows root
+        subOsc.frequency.exponentialRampToValueAtTime(chord[0]/2,t+rampTime);
+        subOsc2.frequency.exponentialRampToValueAtTime(chord[0]/2+0.5,t+rampTime);
+        // Shimmer follows top
+        shimmerOsc.frequency.exponentialRampToValueAtTime(chord[3]*4,t+rampTime*0.8);
+
+        // Mutate FX parameters — everything slowly evolves
+        const ladFreq=400+Math.random()*1400;
+        [lad1,lad2,lad3,lad4].forEach(f=>f.frequency.linearRampToValueAtTime(ladFreq,t+rampTime*1.5));
+        lad1.Q.linearRampToValueAtTime(0.5+Math.random()*3,t+rampTime);
+
+        warmth.frequency.linearRampToValueAtTime(200+Math.random()*500,t+rampTime);
+        warmth.gain.linearRampToValueAtTime(3+Math.random()*6,t+rampTime);
+
+        lofiLP.frequency.linearRampToValueAtTime(2000+Math.random()*3000,t+rampTime);
+
+        // Drift pump rate
+        pumpLFO.frequency.linearRampToValueAtTime(0.2+Math.random()*0.5,t+5);
+
+        // Evolve reverb mix
+        hallBus.gain.linearRampToValueAtTime(0.2+Math.random()*0.4,t+rampTime);
+        springMix.gain.linearRampToValueAtTime(0.1+Math.random()*0.35,t+rampTime);
+        ppMix.gain.linearRampToValueAtTime(0.05+Math.random()*0.2,t+rampTime);
+        wobbleMix.gain.linearRampToValueAtTime(0.05+Math.random()*0.2,t+rampTime);
+
+        // Evolve chorus depth
+        chorusBus.gain.linearRampToValueAtTime(0.2+Math.random()*0.3,t+rampTime);
+
+        padDriftTimer=setTimeout(driftChord,25000+Math.random()*20000);
       };
-      padDriftTimer=setTimeout(driftChord,15000+Math.random()*10000);
+      padDriftTimer=setTimeout(driftChord,12000+Math.random()*8000);
     };
 
-    // Duck pads when speaking
-    const duckPads=()=>{if(padDuck)padDuck.gain.linearRampToValueAtTime(0.15,audioCtx.currentTime+0.3);};
-    const unduckPads=()=>{if(padDuck)padDuck.gain.linearRampToValueAtTime(1.0,audioCtx.currentTime+1.5);};
+    // Duck pads when speaking — fast attack, slow release (sidechain style)
+    const duckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(0.12,audioCtx.currentTime+0.08);}};
+    const unduckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(1.0,audioCtx.currentTime+2.0);}};
 
     // Pick the most soothing available voice: prefer neural/enhanced voices,
     // then named natural voices, then first English voice.
@@ -648,13 +822,13 @@
       const sentences=splitSentences(text);
       const v=pickVoice();
       const isNeural=v&&/Natural|Online|Enhanced|Premium/i.test(v.name);
-      const baseRate=isNeural?0.95:0.88;
-      const basePitch=isNeural?1.0:0.94;
+      const baseRate=isNeural?0.78:0.72;
+      const basePitch=isNeural?0.88:0.82;
       sentences.forEach((s,i)=>{
         const u=new SpeechSynthesisUtterance(s);
         u.rate=baseRate+(Math.random()*0.04-0.02);
-        u.pitch=basePitch+(Math.random()*0.04-0.02);
-        u.volume=0.92;
+        u.pitch=basePitch+(Math.random()*0.03-0.015);
+        u.volume=0.65;
         if(v) u.voice=v;
         if(i===0){
           u.onstart=()=>{
@@ -1272,8 +1446,8 @@
     ];
     let ambientIdx=Math.floor(Math.random()*AMBIENT.length);
     let ambientTimer=null;
-    const AMBIENT_INTERVAL=12000; // 12s between phrases
-    const AMBIENT_PAUSE=4000;     // 4s silence after speech ends
+    const AMBIENT_INTERVAL=18000; // 18s between phrases — unhurried
+    const AMBIENT_PAUSE=6000;     // 6s silence after speech ends
 
     const scheduleAmbient=()=>{
       if(ambientTimer) clearTimeout(ambientTimer);
@@ -1289,7 +1463,7 @@
       ambientIdx=(ambientIdx+1+Math.floor(Math.random()*(AMBIENT.length-1)))%AMBIENT.length;
       const phrase=AMBIENT[ambientIdx];
       speakText(phrase);
-      const estDuration=phrase.length*80+AMBIENT_PAUSE;
+      const estDuration=phrase.length*120+AMBIENT_PAUSE;
       ambientTimer=setTimeout(ambientSpeak,estDuration);
     };
 
