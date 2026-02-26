@@ -30,7 +30,7 @@ module MASTER
       findings = {}
 
       targets.each do |path|
-        scan = Scan.run(path, depth: :quick) rescue nil
+        scan = Scan.run(path, depth: :quick) rescue StandardError; nil
         next unless scan.is_a?(Hash) && scan[:total].to_i > 0
 
         scan[:by_file].each do |file, file_findings|

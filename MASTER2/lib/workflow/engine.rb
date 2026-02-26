@@ -125,7 +125,7 @@ module MASTER
 
       def load_project_context
         path = File.join(MASTER.root, "data", "session_template.yml")
-        YAML.safe_load_file(path)["project_context"] rescue nil
+        YAML.safe_load_file(path)["project_context"] rescue StandardError; nil
       end
 
       def load_questions
