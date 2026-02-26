@@ -91,7 +91,7 @@ def run_selfrun(args)
   strict       = args.include?("--strict")
   align_axioms = strict || args.include?("--axioms")
   include_all  = args.include?("--all-files")
-  apply        = args.include?("--apply")
+  apply        = !args.include?("--dry-run")  # apply by default, like REPL
   depth        = args.include?("--deep") ? :deep : :own  # default :own for selfrun
 
   # Ground the LLM in MASTER2's actual source before any analysis
@@ -180,7 +180,7 @@ when "help", "-h", "--help"
       refactor <file>             Refactor file with LLM guidance
       multi-refactor [path]       Refactor directory (add: --apply --strict --axioms --all-files)
       converge [max_iter]         Iterate SelfRefactor until violations plateau (convergence)
-      selfrun [--apply]           Full self-run across pub4 (add: --strict --axioms --all-files)
+      selfrun [--dry-run]          Full self-run across pub4 (add: --strict --axioms --all-files)
       fix [--all|<path>]          Fix violations in files or directory
       scan [directory]            Scan for code smells (default: .)
       chamber <file>              Chamber review with multi-model deliberation
