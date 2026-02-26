@@ -8,6 +8,7 @@ module MASTER
       extend self
 
       COMMANDS = MASTER::CommandRegistry.help_commands.freeze
+      ALIASES  = MASTER::CommandRegistry::COMMANDS.transform_values { |v| v[:aliases] || [] }.freeze
 
       def pastel = MASTER::UI.pastel
 
@@ -15,6 +16,8 @@ module MASTER
         "Tab for autocomplete",
         "Ctrl+C to cancel",
         "!! repeats last command",
+        "%help for meta-ops (bypass LLM)",
+        "command? shows help for that command",
       ].freeze
 
       GROUPS = {
@@ -26,6 +29,13 @@ module MASTER
       }.freeze
 
       def show(command = nil)
+        command = command.to_s.strip if command
+
+        # "scan?" → show help for "scan"
+        if command&.end_with?("?")
+          command = command.chomp("?")
+        end
+
         if command == "tips"
           show_tips
         elsif command && COMMANDS[command.to_sym]
@@ -54,7 +64,10 @@ module MASTER
           entries.sort_by { |cmd, _| cmd.to_s }.each do |cmd, info|
             head = "  #{cmd.to_s.ljust(name_col)}"
             body_width = [width - head.length - 1, 24].max
-            lines = wrap_text(info[:desc], body_width)
+            desc = info[:desc]
+            als = ALIASES[cmd]
+            desc = "#{desc} (#{als.join(', ')})" if als&.any?
+            lines = wrap_text(desc, body_width)
             puts "#{head}#{lines.first}"
             lines.drop(1).each { |line| puts "#{' ' * head.length}#{line}" }
           end
@@ -79,6 +92,8 @@ module MASTER
         puts
         puts cmd.to_s.upcase
         wrap_text(info[:desc], width - 2).each { |line| puts "  #{line}" }
+        als = ALIASES[cmd]
+        puts "  aliases: #{als.join(', ')}" if als&.any?
         puts
         puts "  usage  #{info[:usage]}"
         puts
