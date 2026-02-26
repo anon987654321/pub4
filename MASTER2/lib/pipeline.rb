@@ -232,6 +232,21 @@ module MASTER
         normalized[:rendered] = pressure[:selected_answer] if pressure[:selected_answer]
       end
 
+      # Adversarial pass: question any code blocks in the response
+      if defined?(AdversarialPass)
+        candidate_text = normalized[:rendered] || normalized[:response]
+        if candidate_text.is_a?(String) && candidate_text.match?(/```(?:ruby|sh|zsh)?\n/)
+          code_blocks = candidate_text.scan(/```\w*\n(.+?)```/m).flatten
+          code_blocks.each do |block|
+            check = AdversarialPass.quick_check(block)
+            if check[:critical]&.any?
+              normalized[:adversarial_warnings] ||= []
+              normalized[:adversarial_warnings].concat(check[:critical])
+            end
+          end
+        end
+      end
+
       # Preserve any custom keys from the original value
       payload.each do |key, val_item|
         normalized[key] = val_item unless normalized.key?(key)
