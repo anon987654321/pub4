@@ -157,6 +157,10 @@ module MASTER
         if output && !output.empty? && !streamed
           puts
           puts output
+        elsif streamed
+          # Streamed content may not end with newline -- ensure prompt starts clean
+          $stdout.print "\n"
+          $stdout.flush
         end
         if result.value[:cost]
           this_cost     = result.value[:cost].to_f
