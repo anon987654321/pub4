@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="color-scheme" content="dark"/>
-  <title>NEURAL CORE</title>
+  <title>JOHANN SIN AI</title>
   <meta name="theme-color" content="#000000"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
   <style>
     :root{
       --safe-top:env(safe-area-inset-top,0px);
@@ -49,6 +50,24 @@
       color:#dcdcdc;
       letter-spacing:.02em;
       text-transform:uppercase;
+    }
+
+    h1{
+      position:fixed;
+      top:calc(10px + var(--safe-top));
+      left:50%;
+      transform:translateX(-50%);
+      z-index:95;
+      pointer-events:none;
+      user-select:none;
+      margin:0;
+      font-family:'Inter',sans-serif;
+      font-weight:700;
+      font-size:clamp(11px,2.5vw,16px);
+      color:#888;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      white-space:nowrap;
     }
 
     #status{
@@ -232,6 +251,7 @@
 </head>
 <body>
   <div id="chat-log"><span class="tab-hint">TAB TO CLOSE</span></div>
+  <h1>JOHANN SIN AI</h1>
   <section id="orb-name">VOID</section>
   <section id="status">◉</section>
   <section id="ui"><span id="ui-label">Neural Core</span><span class="dots" id="ui-dots"></span></section>
@@ -773,6 +793,16 @@
           if(d<40&&d>0){const f=(40-d)*2;this.tx+=(dx/d)*f;this.ty+=(dy/d)*f;this.tz+=f;}
         }
 
+      // When processing (waiting for LLM), contract orb and add turbulence
+      if(isProcessing){
+        const breathe=0.45+Math.sin(t*3.5)*0.15;
+        this.tx*=breathe;
+        this.ty*=breathe;
+        this.tz*=breathe;
+        this.vx+=(Math.random()-0.5)*2.5;
+        this.vy+=(Math.random()-0.5)*2.5;
+      }
+
         const k=0.06,damp=0.88;
         this.vx+=(this.tx-this.px)*k;
         this.vy+=(this.ty-this.py)*k;
@@ -839,7 +869,9 @@
         inputField.classList.add('active');
         input.focus();
         // TTS greeting
-        const greeting='Neural core online. Ready for input.';
+        const today=new Date();
+        const isMomBday=(today.getMonth()===1&&today.getDate()===26);
+        const greeting=isMomBday?'Happy birthday momma!':'Neural core online. Ready for input.';
         speakWithAudio(greeting).then(ok=>{if(!ok)speakText(greeting);});
       },300);
     });
