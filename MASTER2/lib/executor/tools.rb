@@ -13,6 +13,11 @@ module MASTER
       action_str = sanitize_tool_input(action_str)
       return action_str if action_str.start_with?("BLOCKED:")
 
+      # Extract tool name and check permission
+      tool_name = action_str.split(/\s/, 2).first&.downcase&.to_sym
+      perm = check_tool_permission(tool_name)
+      return "BLOCKED: #{perm.error}" unless perm.ok?
+
       case action_str
       when /^ask_llm\s+["']?(.+?)["']?\s*$/i
         ask_llm(::Regexp.last_match(1))

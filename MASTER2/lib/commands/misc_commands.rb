@@ -200,8 +200,9 @@ module MASTER
       end
 
       # Legacy aliases — delegate to unified print_health
-      def doctor(args = nil)  = print_health("#{args} --deep")
-      def bootstrap(args = nil) = print_health("#{args} --setup")
+      # Note: ALIAS_FLAGS already injects --deep / --setup, so we pass args through
+      def doctor(args = nil)  = print_health(args)
+      def bootstrap(args = nil) = print_health(args)
 
       def history_dig(args = nil)
         target = args.to_s.strip
@@ -509,7 +510,7 @@ module MASTER
         return puts "  MultiRefactor not available" unless defined?(MultiRefactor)
 
         path = args&.split&.first || MASTER.root
-        dry_run = !args&.include?("-a") && !args&.include?("--apply")
+        dry_run = args&.include?("--dry-run")  # apply by default, like selfrun
         mr = MultiRefactor.new(dry_run: dry_run)
         mr.run(path: path)
       end
