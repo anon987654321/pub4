@@ -1,0 +1,50 @@
+# MASTER2 Target Stack — canonical technology choices
+# Referenced by system_prompt and grounded_context for consistent recommendations
+
+platform:
+  os: "OpenBSD 7.8+"
+  shell: "zsh"
+  privilege: "doas (never sudo)"
+  init: "rcctl"
+  firewall: "pf"
+  httpd: "httpd(8) + relayd(8)"
+  packages: "pkg_add"
+
+languages:
+  primary: "Ruby 3.4+"
+  secondary:
+    - "POSIX shell (zsh)"
+    - "SQL (PostgreSQL)"
+    - "HTML/CSS (vanilla)"
+    - "JavaScript (vanilla, minimal)"
+
+ruby:
+  version: "3.4+"
+  style: "frozen_string_literal, snake_case, 2-space indent"
+  gems:
+    web: "falcon"
+    http: "async-http"
+    llm: "ruby_llm, replicate-ruby"
+    test: "minitest"
+    cli: "tty-reader, tty-prompt, pastel"
+  avoid:
+    - "rails (too heavy for this use case)"
+    - "bundler exec (use direct gem require)"
+    - "monkey-patching core classes"
+
+web:
+  server: "falcon (async)"
+  frontend: "vanilla HTML + CSS + minimal JS"
+  api: "JSON over HTTP"
+  websocket: "async-websocket"
+  tls: "relayd(8) terminates TLS"
+
+database:
+  primary: "PostgreSQL"
+  embedded: "JSONL files (var/db/)"
+  cache: "in-memory Hash with TTL"
+
+deployment:
+  method: "git pull + rcctl restart"
+  ci: "none (self-testing via bin/master selfrun)"
+  containers: "none (bare metal OpenBSD)"

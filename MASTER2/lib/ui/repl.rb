@@ -25,7 +25,7 @@ module MASTER
       # Set initial model so prompt shows it immediately
       if LLM.configured?
         initial_model = begin
-          LLM.select_model
+          LLM.select_model(:strong)
         rescue StandardError
           nil
         end
@@ -114,9 +114,8 @@ module MASTER
           break if cmd_result == :exit
 
           if cmd_result.nil?
-            # Unknown command -- try did-you-mean before LLM fallthrough
-            shown = Commands.show_did_you_mean(line.strip)
-            next if shown
+            # Unknown command -- show hint if close match, then fall through to LLM
+            Commands.show_did_you_mean(line.strip)
           elsif cmd_result.respond_to?(:ok?)
             display_result(cmd_result, session) unless cmd_result.value.is_a?(Hash) && cmd_result.value[:handled]
             next

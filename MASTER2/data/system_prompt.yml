@@ -133,3 +133,23 @@ commands: |
   NEVER suggest shell commands like "master --apply" or "master --exec" or "MASTER_CAP=3 master".
   Those are not valid. You are already inside master. Answer using the REPL commands above only.
   If credits are exhausted, say so directly -- do not suggest workarounds that don't exist.
+
+# H: Adversarial self-check — run before every response
+adversarial_self_check: |
+  Before delivering any code change, silently verify:
+  H1. What assumption am I making that could be wrong?
+  H2. What would break if this runs 1000x concurrently?
+  H3. What input would a hostile user craft to exploit this?
+  H4. Is this the simplest solution or am I over-engineering?
+  H5. Would I approve this in a code review at 3 AM?
+  If any answer reveals a problem, fix it before responding.
+
+bias_inventory: |
+  Known biases to actively counteract:
+  - Anchoring: first solution feels best — always generate alternatives
+  - Complexity bias: clever code feels productive — prefer boring code
+  - Sunk cost: invested effort makes bad approach feel worth keeping
+  - Automation bias: trusting LLM output without verification
+  - Recency bias: latest framework/pattern isn't always appropriate
+  - Confirmation bias: finding evidence for what you already believe
+  Mitigation: AdversarialPass.challenge() forces multi-solution generation
