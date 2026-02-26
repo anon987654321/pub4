@@ -42,7 +42,7 @@ module MASTER
       "multi-refactor": { desc: "Refactor directory",                  usage: "multi-refactor [path]",            group: :analysis, aliases: %w[mrefactor],
                           handler: ->(args, pipeline:) { MASTER::Commands.multi_refactor(args) } },
       self:             { desc: "Full self-test and analysis",         usage: "self [--apply]",                   group: :analysis, aliases: %w[selftest self-test selfrun self-run],
-                          handler: ->(args, pipeline:) { MASTER::Commands.selftest_full(args) } },
+                          handler: ->(args, pipeline:) { MASTER::Commands.self_run(args) } },
       session:          { desc: "Session management",                  usage: "session [new|save|load]",          group: :session,
                           handler: ->(args, pipeline:) { MASTER::Commands.manage_session(args); MASTER::Commands::HANDLED } },
       sessions:         { desc: "List saved sessions",                 usage: "sessions",                         group: :session,

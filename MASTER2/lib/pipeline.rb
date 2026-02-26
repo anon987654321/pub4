@@ -131,6 +131,7 @@ module MASTER
         if lint_result.ok?
           lv = lint_result.value
           lv_violations = lv[:axiom_violations]
+          Thread.current[:last_axiom_violations] = lv_violations&.any? ? lv_violations : nil
           Logging.dmesg_log("pipeline",
                             message: "executor_lint violations=#{lv_violations&.size || 0}") if lv_violations&.any?
 
@@ -182,7 +183,7 @@ module MASTER
     def call_direct(text)
       # Direct LLM call with system context + session history
       sys = begin
-        ExecutionContext.build_system_message(include_commands: false)
+        ExecutionContext.build_system_message(include_commands: false, depth: ExecutionContext.current_depth)
       rescue StandardError
         nil
       end
