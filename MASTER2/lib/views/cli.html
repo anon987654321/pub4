@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="color-scheme" content="dark"/>
-  <title>JOHANN SIN AI</title>
+  <title>Johann Sin AI</title>
   <meta name="theme-color" content="#000000"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
   <style>
@@ -47,28 +47,11 @@
       user-select:none;
       font-weight:700;
       font-size:clamp(16px,4vw,28px);
-      color:#dcdcdc;
+      color:#aa2222;
       letter-spacing:.02em;
       text-transform:uppercase;
     }
 
-    h1{
-      position:fixed;
-      top:calc(10px + var(--safe-top));
-      left:50%;
-      transform:translateX(-50%);
-      z-index:95;
-      pointer-events:none;
-      user-select:none;
-      margin:0;
-      font-family:'Inter',sans-serif;
-      font-weight:700;
-      font-size:clamp(11px,2.5vw,16px);
-      color:#888;
-      letter-spacing:.18em;
-      text-transform:uppercase;
-      white-space:nowrap;
-    }
 
     #status{
       position:fixed;
@@ -83,14 +66,16 @@
       transition:color 0.3s;
     }
 
-    #status.think{color:#fff;}
-    #status.speak{color:#6af;}
+    #status.think{color:#cc3333;}
+    #status.speak{color:#ff6644;}
+    #status.processing{color:#ff2222;animation:pulse-status 1.2s ease-in-out infinite;}
+    @keyframes pulse-status{0%,100%{opacity:1;}50%{opacity:0.3;}}
 
     #ui{
       position:fixed;
       right:calc(12px + var(--safe-right));
       bottom:calc(10px + var(--safe-bottom));
-      color:#dcdcdc;
+      color:#cc4444;
       font:9px/1.1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
       text-transform:uppercase;
       letter-spacing:.28em;
@@ -128,7 +113,7 @@
       width:calc(100% - 28px);
       background:transparent;
       border:none;
-      color:#dcdcdc;
+      color:#cc4444;
       font-family:Helvetica,Arial,sans-serif;
       font-size:18px;
       font-weight:300;
@@ -140,20 +125,20 @@
     }
 
     #input-field input::placeholder{
-      color:#444;
+      color:#441111;
     }
 
     #attach-btn{
       background:none;
       border:none;
-      color:#444;
+      color:#441111;
       cursor:pointer;
       font-size:18px;
       padding:0 0 0 6px;
       vertical-align:middle;
       transition:color 0.2s;
     }
-    #attach-btn:hover,#attach-btn.has-file{color:#aaa;}
+    #attach-btn:hover,#attach-btn.has-file{color:#aa3333;}
     #attach-label{
       display:block;
       font-size:10px;
@@ -190,7 +175,7 @@
     #arrow-right{right:calc(10px + var(--safe-right));}
 
     .arrow span{
-      color:#dcdcdc;
+      color:#6b1515;
       font-size:24px;
       font-weight:300;
     }
@@ -201,7 +186,7 @@
       display:grid;
       place-items:center;
       background:rgba(0,0,0,.9);
-      color:#9aa;
+      color:#663333;
       cursor:pointer;
       user-select:none;
       z-index:1000;
@@ -216,15 +201,16 @@
 
     #overlay h2{
       margin:0;
-      font-size:32px;
-      font-weight:300;
-      color:#dcdcdc;
-      font-family:Helvetica,Arial,sans-serif;
+      font-family:'Inter',sans-serif;
+      font-weight:700;
+      font-size:clamp(24px,5vw,36px);
+      color:#cc3333;
+      letter-spacing:.18em;
     }
     #overlay p{
       margin:12px 0 0;
       font-size:13px;
-      color:#555;
+      color:#441111;
       letter-spacing:.06em;
     }
     #chat-log{
@@ -240,34 +226,32 @@
     }
     #chat-log.open{display:block;}
     #chat-log .entry{margin-bottom:1.4em;white-space:pre-wrap;word-break:break-word;}
-    #chat-log .entry.user{color:#dcdcdc;}
-    #chat-log .entry.master{color:#666;}
-    #chat-log .entry.user::before{content:'> ';color:#555;}
+    #chat-log .entry.user{color:#cc4444;}
+    #chat-log .entry.master{color:#662222;}
+    #chat-log .entry.user::before{content:'> ';color:#441111;}
     #chat-log .tab-hint{
       position:fixed;top:12px;right:16px;
-      font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
+      font-size:10px;color:#331111;letter-spacing:.1em;pointer-events:none;
     }
   </style>
 </head>
 <body>
   <div id="chat-log"><span class="tab-hint">TAB TO CLOSE</span></div>
-  <h1>JOHANN SIN AI</h1>
   <section id="orb-name">VOID</section>
   <section id="status">◉</section>
-  <section id="ui"><span id="ui-label">Neural Core</span><span class="dots" id="ui-dots"></span></section>
-  <button id="mic" hidden aria-label="microphone"></button>
+  <section id="ui"><span id="ui-label">MASTER2</span><span class="dots" id="ui-dots"></span></section>
 
   <section id="arrow-left" class="arrow"><span>‹</span></section>
   <section id="arrow-right" class="arrow"><span>›</span></section>
 
   <section id="input-field">
-    <input type="text" placeholder="SPEAK" autocomplete="off" maxlength="512">
+    <input type="text" placeholder="ASK ANYTHING" autocomplete="off" maxlength="512">
     <button id="attach-btn" title="Attach image">+</button>
     <input type="file" id="file-input" accept="image/*,text/*,.pdf" hidden>
     <span id="attach-label"></span>
   </section>
 
-  <section id="overlay" role="dialog" aria-modal="true"><div><h2>Enable Audio</h2><p>MICROPHONE · SPEECH · VOICE CONTROL</p></div></section>
+  <section id="overlay" role="dialog" aria-modal="true"><div><h2>Johann Sin AI</h2><p>MICROPHONE · SPEECH · VOICE CONTROL</p></div></section>
 
   <canvas id="canvas"></canvas>
 
@@ -289,7 +273,6 @@
     const overlay=document.getElementById('overlay');
     const arrowLeft=document.getElementById('arrow-left');
     const arrowRight=document.getElementById('arrow-right');
-    const micBtn=document.getElementById('mic');
     const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
     const MASTER_TOKEN=window.MASTER_TOKEN||'';
     const COMPAT_LABEL="master or+rep";
@@ -922,24 +905,49 @@
       const proj=neurons.map(n=>n.project()).filter(Boolean);
       proj.sort((a,b)=>b.z-a.z);
 
-      // Particle palette: dark grey → mid grey → off-white → cool blue-white
-      const cols=['#2b2d33','#575c6a','#8f96a8','#dde2f0'];
+      // Particle palette: dark red → crimson → bright red → orange-red
+      const GRID=4; // 8-bit pixel snap
+      const cols=['#1a0505','#3a0808','#6b1515','#aa2222'];
+      const colsSpeak=['#331100','#663311','#aa4422','#ff6644'];
+      const colsThink=['#220000','#550000','#880000','#cc0000'];
+      const activeCol=isProcessing?colsThink:(isSpeaking?colsSpeak:cols);
+      // Audio-reactive color boost: lerp toward bright on loud audio
+      const audioBoost=Math.min(1,audioLevel*1.8);
+
       for(const p of proj){
+        // Grid-snap for chunky 8-bit look
+        const gx=Math.round(p.x/GRID)*GRID;
+        const gy=Math.round(p.y/GRID)*GRID;
+
         const thinkDark=1-Math.min(0.78,p.think*1.2);
         ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35));
-        if(p.think>0.22){
-          const v=Math.floor(220*thinkDark);
-          ctx.fillStyle=`rgb(${v},${v},${v})`;
+        if(isProcessing){
+          // Deep pulsing crimson when thinking
+          const pulse=0.5+Math.sin(t*6)*0.3;
+          const r=Math.floor(140+pulse*100);
+          ctx.fillStyle=`rgb(${r},${Math.floor(r*0.1)},0)`;
+        }else if(p.think>0.22){
+          const v=Math.floor(180*thinkDark);
+          ctx.fillStyle=`rgb(${v},${Math.floor(v*0.15)},${Math.floor(v*0.08)})`;
         }else{
-          ctx.fillStyle=cols[p.c]||'#666';
+          // Blend base color toward bright on audio
+          const base=activeCol[p.c]||activeCol[1];
+          if(audioBoost>0.15){
+            const bright=isSpeaking?'#ffaa66':'#cc3333';
+            ctx.fillStyle=audioBoost>0.5?bright:base;
+          }else{
+            ctx.fillStyle=base;
+          }
         }
-        const sz=p.s<2?3:(p.s<3?5:7);
-        const h=Math.floor(sz/2);
-        ctx.fillRect(p.x,p.y-h,1,sz);
-        ctx.fillRect(p.x-h,p.y,sz,1);
+        // Audio-reactive particle size: bass makes them bigger
+        const audioSz=Math.floor(audioBoost*3);
+        const sz=(p.s<2?4:(p.s<3?4:8))+audioSz;
+        // Square pixels only — 8-bit sprite style
+        ctx.fillRect(gx,gy,sz,sz);
       }
-      ctx.globalAlpha=0.2;
-      ctx.strokeStyle='#7f7f7f';
+      // Connection lines in dark red
+      ctx.globalAlpha=0.15;
+      ctx.strokeStyle=isProcessing?'#880000':(isSpeaking?'#884422':'#441111');
       ctx.lineWidth=1;
       for(let i=0;i<proj.length-9;i+=9){
         const a=proj[i];
@@ -954,6 +962,14 @@
         ctx.lineTo(b.x,b.y);
         ctx.stroke();
       }
+      // Analog film grain — subtle per-frame noise
+      const grain=ctx.getImageData(0,0,W,H);
+      const gd=grain.data;
+      for(let i=0;i<gd.length;i+=16){
+        const n=((Math.random()-0.5)*18)|0;
+        gd[i]+=n; gd[i+1]+=n>>1; gd[i+2]+=n>>2;
+      }
+      ctx.putImageData(grain,0,0);
       ctx.globalAlpha=1;
     };
 
