@@ -17,6 +17,7 @@ module MASTER
       reader = defined?(TTY::Reader) ? TTY::Reader.new(history_cycle: true) : nil
       load_input_history(reader)
       pipeline = new
+      Thread.current[:repl_pipeline] = pipeline
       session = Session.current
       last_interrupt = nil
 
@@ -101,6 +102,17 @@ module MASTER
 
         # Track user input in session
         session.add_user(line.strip)
+
+        # % sigil: direct meta-op dispatch, bypasses LLM entirely
+        if line.strip.start_with?("%")
+          meta_input = line.strip[1..].strip
+          parts = meta_input.split(/\s+/, 2)
+          cmd_result = CommandRegistry.dispatch(parts[0], parts[1], pipeline: pipeline)
+          break if cmd_result == :exit
+          next if cmd_result
+          UI.warn("unknown meta-op: %#{parts[0]}  (try %help)")
+          next
+        end
 
         # Auto-name session from first user message
         if session.message_count == 1 && !session.metadata_value(:name)

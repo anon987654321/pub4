@@ -171,6 +171,36 @@ module MASTER
       COMMANDS[key][:handler].call(args, pipeline: pipeline)
     end
 
+    # Meta-ops: commands that stay as % sigil shortcuts, never sent through LLM tool-call
+    META_OPS = %i[help version exit clear status budget context history model models
+                  pattern patterns persona personas undo forget sessions].to_set.freeze
+
+    # Generate RubyLLM::Tool subclasses from non-meta commands.
+    # LLM can invoke these as tool-calls instead of user typing command names.
+    def to_tool_classes
+      COMMANDS.filter_map do |key, meta|
+        next if META_OPS.include?(key)
+
+        cmd_name = key.to_s
+        cmd_desc = meta[:desc]
+        # Build a dynamic RubyLLM::Tool subclass
+        Class.new(RubyLLM::Tool) do
+          @cmd_key = cmd_name
+          description "MASTER command: #{cmd_desc}"
+          param :args, desc: "Arguments for '#{cmd_name}' (e.g. file path, flags)", required: false
+
+          class << self
+            attr_reader :cmd_key
+          end
+
+          define_method(:execute) do |args: ""|
+            pipeline = Thread.current[:repl_pipeline]
+            MASTER::CommandRegistry.dispatch(self.class.cmd_key, args, pipeline: pipeline)
+          end
+        end
+      end
+    end
+
     def help_commands
       COMMANDS.transform_values { |v| v.slice(:desc, :usage, :group) }
     end

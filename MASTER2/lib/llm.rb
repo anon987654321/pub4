@@ -266,7 +266,7 @@ module MASTER
         chat_session = RubyLLM.chat(model: selected, assume_model_exists: true, provider: :openrouter)
         if tools
           require_relative "llm/tools"
-          chat_session.with_tools(*MASTER::LLM::TOOL_CLASSES)
+          chat_session.with_tools(*MASTER::LLM.all_tool_classes)
         end
         chat_session
       end
