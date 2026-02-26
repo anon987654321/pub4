@@ -56,10 +56,11 @@
       top:calc(10px + var(--safe-top));
       right:calc(10px + var(--safe-right));
       z-index:95;
-      pointer-events:none;
       user-select:none;
       font-size:12px;
       color:#666;
+      cursor:pointer;
+      padding:8px;
       transition:color 0.3s;
     }
 
@@ -108,7 +109,6 @@
       width:calc(100% - 28px);
       background:transparent;
       border:none;
-      border-bottom:1px solid #333;
       color:#dcdcdc;
       font-family:Helvetica,Arial,sans-serif;
       font-size:18px;
@@ -202,6 +202,12 @@
       color:#dcdcdc;
       font-family:Helvetica,Arial,sans-serif;
     }
+    #overlay p{
+      margin:12px 0 0;
+      font-size:13px;
+      color:#555;
+      letter-spacing:.06em;
+    }
     #chat-log{
       display:none;
       position:fixed;
@@ -241,7 +247,7 @@
     <span id="attach-label"></span>
   </section>
 
-  <section id="overlay" role="dialog" aria-modal="true"><h2>Tap to start</h2></section>
+  <section id="overlay" role="dialog" aria-modal="true"><div><h2>Enable Audio</h2><p>MICROPHONE · SPEECH · VOICE CONTROL</p></div></section>
 
   <canvas id="canvas"></canvas>
 
@@ -825,10 +831,35 @@
       initAudio();
       initMotion();
       setupRecognition();
-      if(nonstopVoice) startRecognition();
       refreshMetrics();
       setInterval(refreshMetrics,6000);
-      setTimeout(()=>overlay.hidden=true,300);
+      setTimeout(()=>{
+        overlay.hidden=true;
+        // Show input field so user knows they can type
+        inputField.classList.add('active');
+        input.focus();
+        // TTS greeting
+        const greeting='Neural core online. Ready for input.';
+        speakWithAudio(greeting).then(ok=>{if(!ok)speakText(greeting);});
+      },300);
+    });
+
+    // Status circle toggles microphone
+    statusEl.addEventListener('click',e=>{
+      e.stopPropagation();
+      if(!recognition){
+        setupRecognition();
+        if(!audioCtx) initAudio();
+      }
+      if(recognitionActive){
+        try{recognition.stop();}catch(_e){}
+        statusEl.textContent='○';
+        statusEl.classList.remove('think');
+      }else{
+        startRecognition();
+        statusEl.textContent='◉';
+        statusEl.classList.add('think');
+      }
     });
 
     let t=0;
@@ -851,13 +882,8 @@
         audioLevel*=0.92;
       }
 
-      // Background: dark navy-to-black gradient, subtle blue tint when speaking
-      const speakHint=isSpeaking?0.08:0;
-      const grad=ctx.createRadialGradient(W*0.5,H*0.5,Math.min(W,H)*0.1,W*0.5,H*0.5,Math.max(W,H)*0.8);
-      grad.addColorStop(0,`rgba(14,18,38,${0.82+speakHint})`);
-      grad.addColorStop(0.6,'rgba(6,8,18,0.93)');
-      grad.addColorStop(1,'#000');
-      ctx.fillStyle=grad;
+      // Background: pitch black, subtle brightening when speaking
+      ctx.fillStyle='#000';
       ctx.fillRect(0,0,W,H);
 
       for(const n of neurons) n.update(t,currentOrb);
