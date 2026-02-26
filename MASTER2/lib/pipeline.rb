@@ -4,8 +4,8 @@ require "English"
 require "digest"
 require_relative "ui/repl"
 require_relative "pipeline/context"
-require_relative "pressure_pass"   # legacy alias
 require_relative "refinement"
+require_relative "pressure_pass"   # legacy alias (depends on Refinement)
 require_relative "intent_classifier"
 require_relative "output_guard"
 require_relative "policy/enforcer"

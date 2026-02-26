@@ -107,7 +107,6 @@ module MASTER
     # Build or retrieve cached Stoplight instance for a model.
     # Supports Stoplight 4.x (chained), 5.x (keyword args), 6.x+ (keyword only).
     def build_light(model)
-      @lights_mutex.synchronize { return @lights[model] if @lights[model] }
       @lights_mutex.synchronize do
         @lights[model] ||= begin
           Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
