@@ -102,14 +102,14 @@ def run_selfrun(args)
     )
   end
 
-  run_phase1(pub4_root, apply, strict, align_axioms, include_all, depth)
-  run_phase2(pub4_root, apply, strict, align_axioms, include_all, depth)
-  run_phase3(pub4_root, apply, strict, align_axioms, include_all, depth)
-  run_phase4
+  refactor_master2(pub4_root, apply, strict, align_axioms, include_all, depth)
+  refactor_deploy_scripts(pub4_root, apply, strict, align_axioms, include_all, depth)
+  refactor_business_plans(pub4_root, apply, strict, align_axioms, include_all, depth)
+  run_self_test
   exit 0
 end
 
-def run_phase1(root, apply, strict, align_axioms, include_all, depth = :own)
+def refactor_master2(root, apply, strict, align_axioms, include_all, depth = :own)
   puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
   mr = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict,
                                  align_axioms: align_axioms, include_all_files: include_all,
@@ -119,7 +119,7 @@ def run_phase1(root, apply, strict, align_axioms, include_all, depth = :own)
   puts "! Phase 1 failed: #{result.error}" if result.respond_to?(:err?) && result.err?
 end
 
-def run_phase2(root, apply, strict, align_axioms, include_all, depth = :own)
+def refactor_deploy_scripts(root, apply, strict, align_axioms, include_all, depth = :own)
   puts "\n=== Phase 2: Deploy Scripts ==="
   mr2 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict,
                                   align_axioms: align_axioms, include_all_files: include_all,
@@ -127,7 +127,7 @@ def run_phase2(root, apply, strict, align_axioms, include_all, depth = :own)
   mr2.run(path: File.join(root, "deploy"))
 end
 
-def run_phase3(root, apply, strict, align_axioms, include_all, depth = :own)
+def refactor_business_plans(root, apply, strict, align_axioms, include_all, depth = :own)
   puts "\n=== Phase 3: Business Plans ==="
   mr3 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 0.5, force_rewrite: strict,
                                   align_axioms: align_axioms, include_all_files: include_all,
@@ -135,7 +135,7 @@ def run_phase3(root, apply, strict, align_axioms, include_all, depth = :own)
   mr3.run(path: File.join(root, "bp"))
 end
 
-def run_phase4
+def run_self_test
   puts "\n=== Phase 4: Self-Test ==="
   MASTER::Introspection.run if defined?(MASTER::Introspection)
 end
