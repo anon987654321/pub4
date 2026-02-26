@@ -393,8 +393,8 @@ module MASTER
       when "bootstrap"
         bootstrap(args)
         HANDLED
-      when "init-instructions", "init-llm"
-        init_instructions(args)
+      when "init-instructions"
+        init_instructions(force: args.to_s.include?("--force"))
         HANDLED
       when "history-dig"
         history_dig(args)
