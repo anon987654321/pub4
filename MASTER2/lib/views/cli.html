@@ -308,9 +308,10 @@
             const uiEl=document.getElementById('ui');
             uiEl.classList.add('highlight');
             setTimeout(()=>uiEl.classList.remove('highlight'),2000);
-            // Start local TTS immediately; if server audio arrives, it replaces
-            speakText(reply);
-            speakWithAudio(reply);
+            // Try server audio first; fall back to local TTS if slow
+            let serverAnswered=false;
+            speakWithAudio(reply).then(ok=>{serverAnswered=ok;});
+            setTimeout(()=>{if(!serverAnswered) speakText(reply);},1500);
             isProcessing=false;
             statusEl.classList.remove('processing');
             for(const n of neurons){
@@ -1137,8 +1138,9 @@
         const hour=today.getHours();
         const timeGreet=hour<12?'Good morning.':hour<17?'Good afternoon.':'Good evening.';
         const greeting=isMomBday?'Happy birthday momma!':timeGreet;
-        speakText(greeting);
-        speakWithAudio(greeting);
+        let greetServer=false;
+        speakWithAudio(greeting).then(ok=>{greetServer=ok;});
+        setTimeout(()=>{if(!greetServer) speakText(greeting);},1500);
         scheduleAmbient();
       },850);
     });
