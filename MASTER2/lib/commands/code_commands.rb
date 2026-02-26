@@ -451,11 +451,11 @@ module MASTER
 
         candidates << { source: :heuristic, code: heuristic_fix(original_code) }
 
-        if defined?(Review::Fixer)
+        if defined?(MASTER::Review::Fixer)
           tmp = "#{path}.obvious_tmp"
           begin
             File.write(tmp, original_code)
-            fixer = Review::Fixer.new(mode: :aggressive)
+            fixer = MASTER::Review::Fixer.new(mode: :aggressive)
             fixer.fix(tmp)
             candidates << { source: :review_fixer, code: File.read(tmp) } if File.exist?(tmp)
           ensure
