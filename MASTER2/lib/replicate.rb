@@ -275,7 +275,6 @@ module MASTER
         Result.err("Replicate error: #{err.message}")
       end
 
-
       def run(model_id:, input:, params: {})
         return Result.err(TOKEN_NOT_SET) unless available?
 

@@ -105,7 +105,7 @@ module MASTER
         if File.file?(path)
           [path]
         else
-          Dir.glob(File.join(path, "**", "*.rb")).reject { |f| f.include?("/vendor/") || f.include?("/tmp/") }
+          Dir.glob(File.join(path, "**", "*.rb")).reject { |f| Paths::SKIP_DIRS.any? { |d| f.include?("/#{d}/") } }
         end
       end
 

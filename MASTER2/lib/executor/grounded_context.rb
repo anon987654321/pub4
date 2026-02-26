@@ -162,7 +162,9 @@ module MASTER
       else
         content
       end
-    rescue StandardError
+    rescue StandardError => err
+      Logging.warn("grounded_context: cannot read #{path}: #{err.message}",
+                   subsystem: "grounded_context") if defined?(Logging)
       ""
     end
   end

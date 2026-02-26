@@ -201,7 +201,7 @@ module MASTER
       return if test_files.empty?
 
       UI.dim("self-verify: running #{test_files.size} test(s)")
-      result = defined?(Shell) ? Shell.run("ruby -Itest #{test_files.first}") : nil
+      result = defined?(Shell) ? Shell.execute("ruby -Itest #{test_files.first}") : nil
       UI.warn("self-verify: tests failed") if result && !result.ok?
     end
 

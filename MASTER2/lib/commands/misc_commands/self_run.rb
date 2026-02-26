@@ -86,15 +86,30 @@ module MASTER
             puts "    #{v[:axiom] || v[:type] || v[:pattern]}: #{msg}"
           end
 
-          next unless apply && defined?(LLM) && LLM.configured?
+          next unless apply
+
+          # Prefer deterministic fixer; fall back to LLM if configured
+          if defined?(MASTER::Review::Fixer)
+            fixer = MASTER::Review::Fixer.new(mode: :moderate)
+            result = fixer.fix(file)
+            if result.ok? && system("ruby", "-c", file, out: File::NULL, err: File::NULL)
+              fixed += violations.count
+              puts "    + fixed"
+              next
+            else
+              File.write(file, code)
+            end
+          end
+
+          next unless defined?(LLM) && LLM.configured?
 
           prompt = "Fix these violations in #{rel}:\n" \
                    "#{violations.map { |v| "- #{v[:message]}" }.join("\n")}\n\n" \
                    "Return ONLY the corrected Ruby code, no explanation."
-          result = LLM.ask(prompt, stream: false)
-          next unless result&.ok? && result.value[:content].to_s.include?("def ")
+          llm_result = LLM.ask(prompt, stream: false)
+          next unless llm_result&.ok? && llm_result.value[:content].to_s.include?("def ")
 
-          File.write(file, result.value[:content])
+          File.write(file, llm_result.value[:content])
           if system("ruby", "-c", file, out: File::NULL, err: File::NULL)
             fixed += violations.count
             puts "    + fixed"

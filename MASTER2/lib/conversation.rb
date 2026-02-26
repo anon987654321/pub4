@@ -164,7 +164,7 @@ module MASTER
     # @return [Hash] Result
     def execute_refactor(intent)
       files = intent[:entities][:files] || []
-      
+
       if files.empty?
         return {
           status: :error,
