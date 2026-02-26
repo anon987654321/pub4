@@ -94,6 +94,24 @@ ruby:
     suggest: "Use a single 'private' keyword with methods below it"
     severity: info
     autofix: false
+  - id: silent_rescue_nil
+    name: "Rescue swallows error and returns nil"
+    detect: 'rescue\s+StandardError\s*\n\s*nil\s*$'
+    suggest: "FAIL_VISIBLY: log the error before returning nil -- rescue StandardError => e; Logging.warn(...); nil"
+    severity: warning
+    autofix: true
+  - id: streaming_without_epipe
+    name: "Streaming write without EPIPE rescue"
+    detect: 'connection\.write.*\n(?:(?!rescue Errno::EPIPE)[\s\S])*?connection\.flush'
+    suggest: "EXPECT_FAILURE: SSE/WebSocket writes must rescue Errno::EPIPE for client disconnect"
+    severity: warning
+    autofix: true
+  - id: stale_deprecation_marker
+    name: "Deprecated marker on actively-used alias"
+    detect: '#\s*deprecated:\s*use\s+'
+    suggest: "PRUNE: either migrate all callers to the new name or remove the deprecated marker"
+    severity: info
+    autofix: false
 
 rails:
   - id: detect_n_plus_one

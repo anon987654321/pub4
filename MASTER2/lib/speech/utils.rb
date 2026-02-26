@@ -31,10 +31,13 @@ module MASTER
         system("#{python} -m pip install edge-tts --quiet") if python
       end
 
-      # Determine best available engine
+      # Determine best available engine (auto-installs Edge TTS if Python found)
       def best_engine
         return :piper if piper_installed?
-        return :edge if edge_installed?
+        if find_python
+          install_edge! unless edge_installed?
+          return :edge if edge_installed?
+        end
         return :replicate if ENV["REPLICATE_API_TOKEN"]
 
         nil

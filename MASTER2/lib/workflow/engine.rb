@@ -158,5 +158,5 @@ module MASTER
     end
   end
 
-  WorkflowEngine = Workflow::Orchestrator # deprecated: use Workflow::Orchestrator
+  WorkflowEngine = Workflow::Orchestrator
 end

@@ -12,9 +12,6 @@ module MASTER
     #
     # Typical usage in a step loop:
     #
-    #   return err if (err = timeout_error_for(start_time))
-    #   return err if (err = injection_error_for(observation, source: label))
-    #
     module Strategy
       private
 

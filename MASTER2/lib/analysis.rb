@@ -18,5 +18,5 @@ module MASTER
 
   Prescan = Analysis::Prescan
   Introspection = Analysis::Introspection
-  SelfTest = Analysis::Introspection # deprecated: use Analysis::Introspection
+  SelfTest = Analysis::Introspection
 end

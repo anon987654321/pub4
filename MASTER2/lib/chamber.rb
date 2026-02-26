@@ -61,5 +61,5 @@ module MASTER
     end
   end
 
-  Chamber = Council # deprecated: use Council
+  Chamber = Council
 end

@@ -70,8 +70,6 @@ module MASTER
         Result.ok(issues)
       end
 
-      alias scan quality_scan # deprecated: use quality_scan
-
       # Deep scan - adds smell analysis and cyclic dependency detection
       def deep_quality_scan(path)
         return Result.err("Path not found") unless File.exist?(path)
@@ -111,8 +109,6 @@ module MASTER
 
         Result.ok(issues.uniq { |i| [i[:file], i[:type] || i[:smell], i[:line]] })
       end
-
-      alias deep_scan deep_quality_scan # deprecated: use deep_quality_scan
 
       # Quick scan - fast summary stats without detailed analysis
       def quick_quality_scan(path)
@@ -158,8 +154,6 @@ module MASTER
 
         Result.ok(stats)
       end
-
-      alias quick_scan quick_quality_scan # deprecated: use quick_quality_scan
 
       # Scan with specific focus areas
       def focused_scan(path, focus: [:complexity, :duplication, :security])
@@ -281,5 +275,5 @@ module MASTER
     end
   end
 
-  Engine = CodeQuality # deprecated: use CodeQuality
+  Engine = CodeQuality
 end

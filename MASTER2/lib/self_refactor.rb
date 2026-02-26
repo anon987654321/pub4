@@ -12,7 +12,8 @@ module MASTER
            require "yaml"
            f = File.expand_path("../../data/constitution.yml", __FILE__)
            YAML.safe_load_file(f).dig("convergence", "max_iterations")
-         rescue StandardError
+         rescue StandardError => e
+           Logging.warn("constitution load failed: #{e.message}", subsystem: "SelfRefactor") if defined?(Logging)
            nil
          end
     MAX_ITERATIONS = (_c || 20).freeze
@@ -77,20 +78,23 @@ module MASTER
       start_iter = data.delete(:_resume_iter) || 0
       Logging.dmesg_log("self_refactor0", message: "resuming from iteration #{start_iter}") if defined?(Logging)
       [data, start_iter]
-    rescue StandardError
+    rescue StandardError => e
+      Logging.warn("resume state load failed: #{e.message}", subsystem: "SelfRefactor") if defined?(Logging)
       nil
     end
 
     def save_resume_state(summary, iter)
       FileUtils.mkdir_p(File.dirname(RESUME_FILE))
       File.write(RESUME_FILE, JSON.generate(summary.merge(_resume_iter: iter)))
-    rescue StandardError
+    rescue StandardError => e
+      Logging.warn("resume state save failed: #{e.message}", subsystem: "SelfRefactor") if defined?(Logging)
       nil
     end
 
     def clear_resume_state
       File.delete(RESUME_FILE) if File.exist?(RESUME_FILE)
-    rescue StandardError
+    rescue StandardError => e
+      Logging.warn("resume state clear failed: #{e.message}", subsystem: "SelfRefactor") if defined?(Logging)
       nil
     end
   end

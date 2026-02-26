@@ -29,6 +29,8 @@ module MASTER
             end
             sleep 0.3
           end
+        rescue Errno::EPIPE, IOError
+          # Client disconnected — normal for SSE
         end
         [200, {
           CT_HEADER          => "text/event-stream",
@@ -56,9 +58,16 @@ module MASTER
             input[:image_mime] = image[:mime].to_s
             input[:image_name] = image[:name].to_s
           end
+
+          # Record user turn for conversation continuity
+          session = Session.current
+          session.add_user(message) if session.respond_to?(:add_user)
+
           Thread.new do
             result = pipeline.call(input)
             output = result.ok? ? result.value[:rendered] : "Error: #{result.error}"
+            # Record assistant turn
+            session.add_assistant(output, model: result.value&.dig(:model), cost: result.value&.dig(:cost)) if session.respond_to?(:add_assistant)
             queue.push(output)
           rescue StandardError => err
             queue.push("Error: #{err.message}")

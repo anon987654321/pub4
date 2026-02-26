@@ -225,7 +225,7 @@ module MASTER
       rescue StandardError
         "?"
       end
-      phase ? "master@#{model_name}$ " : "master@#{model_name}$ "
+      phase ? "master2@#{model_name}$ " : "master2@#{model_name}$ "
     end
 
     # Read single or multi-line input

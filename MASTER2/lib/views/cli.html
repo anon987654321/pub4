@@ -7,7 +7,6 @@
   <meta name="color-scheme" content="dark"/>
   <title>Johann Sin AI</title>
   <meta name="theme-color" content="#000000"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
   <style>
     :root{
       --safe-top:env(safe-area-inset-top,0px);
@@ -34,24 +33,7 @@
       display:block;
       background:#000;
       touch-action:none;
-      image-rendering:pixelated;
-      image-rendering:crisp-edges;
     }
-
-    #orb-name{
-      position:fixed;
-      top:calc(10px + var(--safe-top));
-      left:calc(10px + var(--safe-left));
-      z-index:95;
-      pointer-events:none;
-      user-select:none;
-      font-weight:700;
-      font-size:clamp(16px,4vw,28px);
-      color:#aa2222;
-      letter-spacing:.02em;
-      text-transform:uppercase;
-    }
-
 
     #status{
       position:fixed;
@@ -59,23 +41,23 @@
       right:calc(10px + var(--safe-right));
       z-index:95;
       user-select:none;
-      font-size:12px;
-      color:#666;
+      font-size:14px;
+      color:#333;
       cursor:pointer;
-      padding:8px;
+      padding:12px;
       transition:color 0.3s;
     }
 
-    #status.think{color:#cc3333;}
-    #status.speak{color:#ff6644;}
-    #status.processing{color:#ff2222;animation:pulse-status 1.2s ease-in-out infinite;}
+    #status.think{color:#888;}
+    #status.speak{color:#aaa;}
+    #status.processing{color:#999;animation:pulse-status 1.2s ease-in-out infinite;}
     @keyframes pulse-status{0%,100%{opacity:1;}50%{opacity:0.3;}}
 
     #ui{
       position:fixed;
       right:calc(12px + var(--safe-right));
       bottom:calc(10px + var(--safe-bottom));
-      color:#cc4444;
+      color:#444;
       font:9px/1.1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
       text-transform:uppercase;
       letter-spacing:.28em;
@@ -83,8 +65,10 @@
       pointer-events:none;
       user-select:none;
       text-align:right;
-      opacity:.86;
+      opacity:.5;
+      transition:opacity 0.6s, color 0.3s;
     }
+    #ui.highlight{opacity:1;color:#888;}
 
     #ui .dots{
       display:inline-block;
@@ -99,7 +83,7 @@
       transform:translateX(-50%);
       width:0;
       opacity:0;
-      transition:all 0.3s ease;
+      transition:width 0.3s ease-out, opacity 0.2s ease;
       z-index:10;
     }
 
@@ -113,7 +97,8 @@
       width:calc(100% - 28px);
       background:transparent;
       border:none;
-      color:#cc4444;
+      border-bottom:1px solid #222;
+      color:#ccc;
       font-family:Helvetica,Arial,sans-serif;
       font-size:18px;
       font-weight:300;
@@ -121,24 +106,30 @@
       padding:12px 0;
       outline:none;
       text-align:center;
-      text-transform:uppercase;
+      transition:border-color 0.3s;
+    }
+
+    #input-field input:focus{
+      border-bottom-color:#444;
     }
 
     #input-field input::placeholder{
-      color:#441111;
+      color:#333;
     }
 
     #attach-btn{
       background:none;
       border:none;
-      color:#441111;
+      color:#333;
       cursor:pointer;
       font-size:18px;
       padding:0 0 0 6px;
       vertical-align:middle;
-      transition:color 0.2s;
+      transition:color 0.2s, opacity 0.3s;
+      opacity:0;
     }
-    #attach-btn:hover,#attach-btn.has-file{color:#aa3333;}
+    #input-field.active #attach-btn{opacity:1;}
+    #attach-btn:hover,#attach-btn.has-file{color:#888;}
     #attach-label{
       display:block;
       font-size:10px;
@@ -162,20 +153,20 @@
       justify-content:center;
       cursor:pointer;
       z-index:100;
-      opacity:0.3;
-      transition:opacity 0.2s;
+      opacity:0;
+      transition:opacity 0.4s;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
 
-    .arrow:hover{opacity:0.8;}
-    .arrow:active{opacity:1;}
+    .arrow:hover{opacity:0.5;}
+    .arrow:active{opacity:0.8;}
 
     #arrow-left{left:calc(10px + var(--safe-left));}
     #arrow-right{right:calc(10px + var(--safe-right));}
 
     .arrow span{
-      color:#6b1515;
+      color:#333;
       font-size:24px;
       font-weight:300;
     }
@@ -185,34 +176,27 @@
       inset:0;
       display:grid;
       place-items:center;
-      background:rgba(0,0,0,.9);
-      color:#663333;
+      background:#000;
       cursor:pointer;
       user-select:none;
       z-index:1000;
       text-align:center;
-      padding:16px;
       opacity:1;
-      transition:opacity 0.2s ease;
+      transition:opacity 0.8s ease;
     }
 
     #overlay.ack{opacity:0;pointer-events:none;}
     #overlay[hidden]{display:none;}
 
-    #overlay h2{
-      margin:0;
-      font-family:'Inter',sans-serif;
-      font-weight:700;
-      font-size:clamp(24px,5vw,36px);
-      color:#cc3333;
-      letter-spacing:.18em;
-    }
     #overlay p{
-      margin:12px 0 0;
+      margin:0;
       font-size:13px;
-      color:#441111;
-      letter-spacing:.06em;
+      color:#333;
+      font-weight:300;
+      letter-spacing:.12em;
+      animation:overlay-pulse 3s ease-in-out infinite;
     }
+    @keyframes overlay-pulse{0%,100%{opacity:.4;}50%{opacity:.8;}}
     #chat-log{
       display:none;
       position:fixed;
@@ -226,18 +210,17 @@
     }
     #chat-log.open{display:block;}
     #chat-log .entry{margin-bottom:1.4em;white-space:pre-wrap;word-break:break-word;}
-    #chat-log .entry.user{color:#cc4444;}
-    #chat-log .entry.master{color:#662222;}
-    #chat-log .entry.user::before{content:'> ';color:#441111;}
+    #chat-log .entry.user{color:#ccc;}
+    #chat-log .entry.master{color:#777;}
+    #chat-log .entry.user::before{content:'> ';color:#555;}
     #chat-log .tab-hint{
       position:fixed;top:12px;right:16px;
-      font-size:10px;color:#331111;letter-spacing:.1em;pointer-events:none;
+      font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
     }
   </style>
 </head>
 <body>
   <div id="chat-log"><span class="tab-hint">TAB TO CLOSE</span></div>
-  <section id="orb-name">VOID</section>
   <section id="status">◉</section>
   <section id="ui"><span id="ui-label">MASTER2</span><span class="dots" id="ui-dots"></span></section>
 
@@ -245,13 +228,13 @@
   <section id="arrow-right" class="arrow"><span>›</span></section>
 
   <section id="input-field">
-    <input type="text" placeholder="ASK ANYTHING" autocomplete="off" maxlength="512">
+    <input type="text" placeholder="Ask anything…" autocomplete="off" maxlength="512" aria-label="Message">
     <button id="attach-btn" title="Attach image">+</button>
     <input type="file" id="file-input" accept="image/*,text/*,.pdf" hidden>
     <span id="attach-label"></span>
   </section>
 
-  <section id="overlay" role="dialog" aria-modal="true"><div><h2>Johann Sin AI</h2><p>MICROPHONE · SPEECH · VOICE CONTROL</p></div></section>
+  <section id="overlay" role="dialog" aria-modal="true"><div><p>Tap to start</p></div></section>
 
   <canvas id="canvas"></canvas>
 
@@ -260,7 +243,6 @@
 
     const canvas=document.getElementById('canvas');
     const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true});
-    const orbNameEl=document.getElementById('orb-name');
     const statusEl=document.getElementById('status');
     const uiLabel=document.getElementById('ui-label');
     const uiDots=document.getElementById('ui-dots');
@@ -278,39 +260,68 @@
     const COMPAT_LABEL="master or+rep";
     const TTS_BACKEND_KEY="master_tts_backend";
 
-    // Chat log helpers
+    // Chat log helpers with localStorage persistence
+    const CHAT_KEY='m2_chat';
+    const MAX_STORED=50;
     const logAppend=(role,text)=>{
       const e=document.createElement('div');
       e.className=`entry ${role}`;
       e.textContent=text;
       chatLog.appendChild(e);
       chatLog.scrollTop=chatLog.scrollHeight;
+      // Persist
+      try{
+        const stored=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
+        stored.push({r:role,t:text});
+        if(stored.length>MAX_STORED) stored.splice(0,stored.length-MAX_STORED);
+        localStorage.setItem(CHAT_KEY,JSON.stringify(stored));
+      }catch(_){}
     };
+    // Restore chat history on load
+    try{
+      const stored=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
+      for(const m of stored){
+        const e=document.createElement('div');
+        e.className=`entry ${m.r}`;
+        e.textContent=m.t;
+        chatLog.appendChild(e);
+      }
+      chatLog.scrollTop=chatLog.scrollHeight;
+    }catch(_){}
     document.addEventListener('keydown',e=>{
       if(e.key==='Tab'){e.preventDefault();chatLog.classList.toggle('open');}
     });
 
-    // SSE -- replaces poll loop
+    // SSE with exponential backoff
+    let sseDelay=1000;
     const sseConnect=()=>{
       const es=new EventSource(`/sse?token=${encodeURIComponent(MASTER_TOKEN)}`);
+      es.onopen=()=>{sseDelay=1000;};
       es.onmessage=ev=>{
         try{
           const d=JSON.parse(ev.data);
           if(d.text){
             const reply=String(d.text);
             logAppend('master',reply);
-            uiLabel.textContent=reply.slice(0,60);
-            speakWithAudio(reply).then(ok=>{if(!ok)speakText(reply);});
+            uiLabel.textContent=reply.slice(0,40);
+            // Flash ui-label briefly on response
+            const uiEl=document.getElementById('ui');
+            uiEl.classList.add('highlight');
+            setTimeout(()=>uiEl.classList.remove('highlight'),2000);
+            // Start local TTS immediately; if server audio arrives, it replaces
+            speakText(reply);
+            speakWithAudio(reply);
             isProcessing=false;
+            statusEl.classList.remove('processing');
             for(const n of neurons){
-              n.vx+=(Math.random()-0.5)*140;
-              n.vy+=(Math.random()-0.5)*140;
-              n.vz+=(Math.random()-0.5)*140;
+              n.vx+=(Math.random()-0.5)*80;
+              n.vy+=(Math.random()-0.5)*80;
+              n.vz+=(Math.random()-0.5)*80;
             }
           }
         }catch(_){}
       };
-      es.onerror=()=>{es.close();setTimeout(sseConnect,2000);};
+      es.onerror=()=>{es.close();setTimeout(sseConnect,sseDelay);sseDelay=Math.min(sseDelay*2,30000);};
     };
     sseConnect();
 
@@ -337,9 +348,10 @@
       S=Math.min(W,H)/100;
       canvas.width=W;
       canvas.height=H;
-      ctx.imageSmoothingEnabled=false;
+      ctx.imageSmoothingEnabled=true;
     };
     window.addEventListener('resize',resize);
+    window.addEventListener('orientationchange',()=>setTimeout(resize,100));
     resize();
 
     let audioCtx,analyser,dataArray;
@@ -352,7 +364,7 @@
     let isProcessing=false;
     let repoDirtyCount=0;
     let spinnerIntervalMs=180;
-    let spinnerColor="#9aa";
+    let spinnerColor="#555";
     const BRAIN_LOBES=[
       {x:-22,y:-8,z:10,w:1.0},
       {x:22,y:-8,z:10,w:1.0},
@@ -376,17 +388,24 @@
       }
     };
 
-    // Pick the most soothing available voice: prefer named natural voices,
-    // fall back to first English voice. Voices load async so we call lazily.
+    // Pick the most soothing available voice: prefer neural/enhanced voices,
+    // then named natural voices, then first English voice.
+    let _cachedVoice=null;
     const pickVoice=()=>{
+      if(_cachedVoice) return _cachedVoice;
       const voices=window.speechSynthesis.getVoices();
       if(!voices.length) return null;
+      const en=voices.filter(v=>v.lang.startsWith('en'));
+      // Prefer neural/premium voices (Chrome "Natural", Edge "Online", Safari "Enhanced")
+      const neural=en.find(v=>/Natural|Online|Enhanced|Premium/i.test(v.name));
+      if(neural){_cachedVoice=neural;return neural;}
       const want=['Samantha','Google UK English Female','Karen','Moira','Tessa','Fiona','Victoria','Allison','Ava'];
       for(const name of want){
-        const v=voices.find(v=>v.name.includes(name));
-        if(v) return v;
+        const v=en.find(v=>v.name.includes(name));
+        if(v){_cachedVoice=v;return v;}
       }
-      return voices.find(v=>v.lang==='en-GB')||voices.find(v=>v.lang.startsWith('en'))||voices[0];
+      _cachedVoice=en.find(v=>v.lang==='en-GB')||en[0]||voices[0];
+      return _cachedVoice;
     };
 
     const _onSpeakEnd=()=>{
@@ -396,27 +415,98 @@
       if(nonstopVoice) startRecognition();
     };
 
-    const speakText=text=>{
-      if(!('speechSynthesis' in window)||!text) return;
-      const u=new SpeechSynthesisUtterance(String(text).slice(0,500));
-      u.rate=0.88;   // calm, unhurried
-      u.pitch=0.95;  // slightly lower — warm, grounded
-      u.volume=0.92;
-      const v=pickVoice(); if(v) u.voice=v;
-      u.onstart=()=>{
-        isSpeaking=true;
-        speechPulse=0.6;
-        statusEl.classList.remove('think');
-        statusEl.classList.add('speak');
-        if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
-      };
-      u.onend=_onSpeakEnd;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
+    // Split text into sentences for more natural pacing
+    const splitSentences=text=>{
+      const raw=String(text).slice(0,800);
+      const parts=raw.match(/[^.!?]+[.!?]+[\s]?|[^.!?]+$/g);
+      return parts&&parts.length?parts.map(s=>s.trim()).filter(Boolean):[raw];
     };
 
-    // Route backend TTS audio through Web Audio analyser so the orb reacts
-    // to the actual speech waveform. Falls back gracefully to local TTS.
+    const speakText=text=>{
+      if(!('speechSynthesis' in window)||!text) return;
+      window.speechSynthesis.cancel();
+      const sentences=splitSentences(text);
+      const v=pickVoice();
+      // Base rate/pitch tuned warmer; neural voices tolerate closer to 1.0
+      const isNeural=v&&/Natural|Online|Enhanced|Premium/i.test(v.name);
+      const baseRate=isNeural?0.95:0.88;
+      const basePitch=isNeural?1.0:0.94;
+      sentences.forEach((s,i)=>{
+        const u=new SpeechSynthesisUtterance(s);
+        u.rate=baseRate+(Math.random()*0.04-0.02);
+        u.pitch=basePitch+(Math.random()*0.04-0.02);
+        u.volume=0.92;
+        if(v) u.voice=v;
+        if(i===0){
+          u.onstart=()=>{
+            isSpeaking=true;
+            speechPulse=0.6;
+            statusEl.classList.remove('think');
+            statusEl.classList.add('speak');
+            if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
+          };
+        }
+        u.onboundary=ev=>{if(ev.name==='word')speechPulse=0.5+Math.random()*0.3;};
+        if(i===sentences.length-1) u.onend=_onSpeakEnd;
+        window.speechSynthesis.speak(u);
+      });
+    };
+
+    // Web Audio effect chain for server TTS — cycle with triple-tap on status
+    const FX_MODES=['off','dark','demon','radio','underwater','ghost'];
+    let fxIdx=0;
+    let fxTaps=0;let fxTapTimer=0;
+
+    const buildFxChain=(src)=>{
+      const mode=FX_MODES[fxIdx];
+      if(mode==='off'){src.connect(analyser);src.connect(audioCtx.destination);return;}
+      // Dark: pitch down, bass boost
+      if(mode==='dark'){
+        src.playbackRate.value=0.85;
+        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=200;bass.gain.value=10;
+        src.connect(bass);bass.connect(analyser);bass.connect(audioCtx.destination);return;
+      }
+      // Demon: pitch way down, distortion, heavy bass
+      if(mode==='demon'){
+        src.playbackRate.value=0.7;
+        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=150;bass.gain.value=15;
+        const dist=audioCtx.createWaveShaper();const k=50;const n=44100;const curve=new Float32Array(n);
+        for(let i=0;i<n;i++){const x=i*2/n-1;curve[i]=(3+k)*x*20*(Math.PI/180)/(Math.PI+k*Math.abs(x));}
+        dist.curve=curve;dist.oversample='4x';
+        src.connect(dist);dist.connect(bass);bass.connect(analyser);bass.connect(audioCtx.destination);return;
+      }
+      // Radio: bandpass, compression feel
+      if(mode==='radio'){
+        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=300;
+        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3000;
+        const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-20;comp.ratio.value=8;
+        src.connect(hp);hp.connect(lp);lp.connect(comp);comp.connect(analyser);comp.connect(audioCtx.destination);return;
+      }
+      // Underwater: pitch down, heavy lowpass, chorus via delay
+      if(mode==='underwater'){
+        src.playbackRate.value=0.65;
+        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=800;
+        const delay=audioCtx.createDelay();delay.delayTime.value=0.05;
+        const wet=audioCtx.createGain();wet.gain.value=0.4;
+        src.connect(lp);lp.connect(analyser);lp.connect(audioCtx.destination);
+        lp.connect(delay);delay.connect(wet);wet.connect(audioCtx.destination);return;
+      }
+      // Ghost: reverse-echo feel via multi-tap delay + reverb
+      if(mode==='ghost'){
+        src.playbackRate.value=0.8;
+        const d1=audioCtx.createDelay();d1.delayTime.value=0.06;
+        const d2=audioCtx.createDelay();d2.delayTime.value=0.12;
+        const g1=audioCtx.createGain();g1.gain.value=0.5;
+        const g2=audioCtx.createGain();g2.gain.value=0.3;
+        src.connect(analyser);src.connect(audioCtx.destination);
+        src.connect(d1);d1.connect(g1);g1.connect(audioCtx.destination);
+        src.connect(d2);d2.connect(g2);g2.connect(audioCtx.destination);return;
+      }
+      // fallback
+      src.connect(analyser);src.connect(audioCtx.destination);
+    };
+
+    // Route backend TTS audio through Web Audio analyser + effects chain
     const speakWithAudio=async(text)=>{
       if(!audioCtx||!MASTER_TOKEN) return false;
       try{
@@ -429,10 +519,11 @@
         const buf=await resp.arrayBuffer();
         if(!buf.byteLength) return false;
         const decoded=await audioCtx.decodeAudioData(buf);
+        // Cancel local TTS — server audio is higher quality
+        if('speechSynthesis' in window) window.speechSynthesis.cancel();
         const src=audioCtx.createBufferSource();
         src.buffer=decoded;
-        src.connect(analyser);
-        src.connect(audioCtx.destination);
+        buildFxChain(src);
         isSpeaking=true; speechPulse=0.6;
         statusEl.classList.remove('think');
         statusEl.classList.add('speak');
@@ -480,7 +571,12 @@
         recognitionActive=false;
         if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,160);
       };
-      recognition.onerror=()=>{};
+      recognition.onerror=(ev)=>{
+        if(ev.error==='not-allowed') uiLabel.textContent='Microphone blocked';
+        else if(ev.error==='no-speech') {}
+        else if(ev.error==='network') uiLabel.textContent='No network';
+        else uiLabel.textContent='Mic: '+ev.error;
+      };
       recognition.onresult=(ev)=>{
         let finalText='';
         for(let i=ev.resultIndex;i<ev.results.length;i++){
@@ -496,14 +592,14 @@
 
     const applyMessinessProfile=()=>{
       if(repoDirtyCount===0){
-        spinnerIntervalMs=320; // super clean: calm and slow
-        spinnerColor="#9fd7cc";
+        spinnerIntervalMs=320;
+        spinnerColor="#666";
       }else if(repoDirtyCount<=8){
-        spinnerIntervalMs=180; // tidy-ish: normal
-        spinnerColor="#a8b2c1";
+        spinnerIntervalMs=180;
+        spinnerColor="#555";
       }else{
-        spinnerIntervalMs=270; // messy: deliberately slower
-        spinnerColor="#c9a88f";
+        spinnerIntervalMs=270;
+        spinnerColor="#444";
       }
       uiDots.style.color=spinnerColor;
     };
@@ -549,8 +645,17 @@
     };
 
     window.addEventListener('mousemove',handleTouch);
+    window.addEventListener('touchmove',handleTouch,{passive:true});
     window.addEventListener('touchstart',handleTouch,{passive:true});
     window.addEventListener('touchend',()=>{touching=false;});
+
+    // Swipe left/right to change orb
+    let swipeStartX=0;
+    window.addEventListener('touchstart',e=>{swipeStartX=e.touches[0].clientX;},{passive:true});
+    window.addEventListener('touchend',e=>{
+      const dx=e.changedTouches[0].clientX-swipeStartX;
+      if(Math.abs(dx)>60){setOrb(currentOrb+(dx<0?1:-1));}
+    },{passive:true});
 
     input.addEventListener('focus',()=>{
       statusEl.classList.remove('think');
@@ -558,13 +663,15 @@
     });
 
     input.addEventListener('blur',()=>{
-      if(!input.value){
-        statusEl.classList.remove('speak');
-        statusEl.classList.add('think');
-      }
+      statusEl.classList.remove('speak');
     });
 
     input.addEventListener('keydown',e=>{
+      if(e.key==='Escape'){
+        inputField.classList.remove('active');
+        input.blur();
+        return;
+      }
       if(e.key==='Enter'&&input.value.trim()){
         const msg=input.value.trim();
         input.value='';
@@ -579,6 +686,8 @@
     const transmit=async(message)=>{
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
       isProcessing=true;
+      statusEl.classList.remove('think','speak');
+      statusEl.classList.add('processing');
       activeSpinner=spinnerSets[Math.floor(Math.random()*spinnerSets.length)] || spinnerFallback;
       for(const n of neurons){
         n.vx+=(Math.random()-0.5)*100;
@@ -606,48 +715,54 @@
           body:JSON.stringify(payload)
         });
         if(resp.ok){
-          uiLabel.textContent='Processing...';
+          uiLabel.textContent='Thinking\u2026';
         }else{
-          uiLabel.textContent='Chat failed';
+          uiLabel.textContent='Something went wrong';
           isProcessing=false;
+          statusEl.classList.remove('processing');
         }
       }catch(_e){
-        uiLabel.textContent='Network error';
+        uiLabel.textContent='Can\u2019t reach server';
         isProcessing=false;
+        statusEl.classList.remove('processing');
       }
     };
 
-    canvas.addEventListener('click',()=>{
-      inputField.classList.add('active');
-      input.focus();
+    canvas.addEventListener('click',(e)=>{
+      if(inputField.classList.contains('active')){
+        inputField.classList.remove('active');
+        input.blur();
+      }else{
+        inputField.classList.add('active');
+        input.focus();
+      }
     });
 
     const orbStates=[
-      {name:"VOID",desc:"Empty potential"},{name:"SPHERE",desc:"Perfect form"},{name:"CUBE",desc:"Solid geometry"},
-      {name:"TORUS",desc:"Endless loop"},{name:"CONE",desc:"Focal point"},{name:"CYLINDER",desc:"Rolling mass"},
-      {name:"SPIRAL",desc:"Golden growth"},{name:"HELIX",desc:"DNA strand"},{name:"RING",desc:"Orbital path"},
-      {name:"DISC",desc:"Flat world"},{name:"MOBIUS",desc:"One surface"},{name:"KLEIN",desc:"Bottle form"},
-      {name:"BOY",desc:"Immersion"},{name:"CROSS",desc:"Intersection"},{name:"SHELL",desc:"Logarithmic"},
-      {name:"WAVE",desc:"Sine terrain"},{name:"GRID",desc:"Lattice breath"},{name:"TUBE",desc:"Twisting pipe"},
-      {name:"STAR",desc:"Radial spikes"},{name:"CRYSTAL",desc:"Faceted light"},{name:"CELL",desc:"Division life"},
-      {name:"NEURAL",desc:"Firing net"},{name:"ROOT",desc:"Branching down"},{name:"FLOWER",desc:"Petal bloom"},
-      {name:"LEAF",desc:"Veined surface"},{name:"CORAL",desc:"Sea branch"},{name:"BRANCH",desc:"Tree growth"},
-      {name:"WEB",desc:"Silk circles"},{name:"VEIN",desc:"Vascular flow"},{name:"SPORE",desc:"Drifting seed"},
-      {name:"ORBIT",desc:"Gravity well"},{name:"FALL",desc:"Rain down"},{name:"FLOAT",desc:"Buoyant drift"},
-      {name:"SWARM",desc:"Flocking mass"},{name:"CHAIN",desc:"Linked springs"},{name:"PENDULUM",desc:"Swinging time"},
-      {name:"BOUNCE",desc:"Elastic hit"},{name:"SPIRAL",desc:"Outward spin"},{name:"PULSE",desc:"Heartbeat"},
-      {name:"FIELD",desc:"Vector flow"},{name:"NOISE",desc:"Perlin form"},{name:"WAVE",desc:"Interference"},
-      {name:"INTERFERENCE",desc:"Double source"},{name:"MOIRE",desc:"Rotating grids"},{name:"FRACTAL",desc:"Recursive tree"},
-      {name:"ATTRACTOR",desc:"Lorenz chaos"},{name:"MANDALA",desc:"Symmetric pattern"},{name:"FILAMENT",desc:"Flow lines"},
-      {name:"CRYSTAL",desc:"Growth facets"},{name:"ZEN",desc:"Breathing minimal"}
+      {name:"SPHERE",desc:"Perfect form",s:1},{name:"CUBE",desc:"Solid geometry",s:2},
+      {name:"TORUS",desc:"Endless loop",s:3},{name:"CONE",desc:"Focal point",s:4},{name:"CYLINDER",desc:"Rolling mass",s:5},
+      {name:"SPIRAL",desc:"Golden growth",s:6},{name:"HELIX",desc:"DNA strand",s:7},{name:"RING",desc:"Orbital path",s:8},
+      {name:"DISC",desc:"Flat world",s:9},{name:"MOBIUS",desc:"One surface",s:10},{name:"KLEIN",desc:"Bottle form",s:11},
+      {name:"BOY",desc:"Immersion",s:12},{name:"CROSS",desc:"Intersection",s:13},
+      {name:"TUBE",desc:"Twisting pipe",s:17},{name:"STAR",desc:"Radial spikes",s:18},
+      {name:"CRYSTAL",desc:"Faceted light",s:19},{name:"CELL",desc:"Division life",s:20},
+      {name:"NEURAL",desc:"Firing net",s:21},{name:"ROOT",desc:"Branching down",s:22},{name:"FLOWER",desc:"Petal bloom",s:23},
+      {name:"LEAF",desc:"Veined surface",s:24},{name:"CORAL",desc:"Sea branch",s:25},{name:"BRANCH",desc:"Tree growth",s:26},
+      {name:"SPORE",desc:"Drifting seed",s:29},
+      {name:"ORBIT",desc:"Gravity well",s:30},{name:"FALL",desc:"Rain down",s:31},{name:"FLOAT",desc:"Buoyant drift",s:32},
+      {name:"SWARM",desc:"Flocking mass",s:33},{name:"CHAIN",desc:"Linked springs",s:34},{name:"PENDULUM",desc:"Swinging time",s:35},
+      {name:"BOUNCE",desc:"Elastic hit",s:36},{name:"PULSE",desc:"Heartbeat",s:38},
+      {name:"FIELD",desc:"Vector flow",s:39},{name:"NOISE",desc:"Perlin form",s:40},{name:"WAVE",desc:"Interference",s:41},
+      {name:"INTERFERENCE",desc:"Double source",s:42},{name:"MOIRE",desc:"Rotating grids",s:43},{name:"FRACTAL",desc:"Recursive tree",s:44},
+      {name:"ATTRACTOR",desc:"Lorenz chaos",s:45},{name:"MANDALA",desc:"Symmetric pattern",s:46},{name:"FILAMENT",desc:"Flow lines",s:47},
+      {name:"ZEN",desc:"Breathing minimal",s:49}
     ];
 
     let currentOrb=0;
     const setOrb=(idx)=>{
       currentOrb=((idx%orbStates.length)+orbStates.length)%orbStates.length;
-      orbNameEl.textContent=orbStates[currentOrb].name;
-      uiLabel.textContent=orbStates[currentOrb].desc;
-      for(const n of neurons) n.reset(currentOrb);
+      if(!isProcessing) uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;
+      for(const n of neurons) n.reset(orbStates[currentOrb].s);
     };
 
     arrowLeft.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb-1);});
@@ -662,7 +777,7 @@
     const neurons=[];
 
     class Neuron{
-      constructor(i){this.i=i;this.reset(0);}
+      constructor(i){this.i=i;this.reset(1);}
 
       reset(stateIdx){
         const s=stateIdx;
@@ -746,7 +861,13 @@
         else if(s===47){this.l++;const a=Math.sin(this.ox*0.1)*Math.cos(this.oy*0.1)*Math.PI*2+t;this.ox+=Math.cos(a)*1.5;this.oy+=Math.sin(a)*1.5;if(this.l>80||Math.abs(this.ox)>60||Math.abs(this.oy)>60){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.l=0;}this.tx=this.ox;this.ty=this.oy;this.tz=this.oz+Math.sin(t+this.l*0.1)*8;}
         else if(s===48){const tilt=Math.sin(t*0.5)*0.3;const rx=this.ox*Math.cos(tilt)-this.oz*Math.sin(tilt);const rz=this.ox*Math.sin(tilt)+this.oz*Math.cos(tilt);this.tx=rx*(1+audioLevel*0.5);this.ty=this.oy*(1+audioLevel*0.5);this.tz=rz;}
         else if(s===49){const breath=(Math.sin(t*0.3)+1)/2;const ss=0.5+breath*0.5+audioLevel*0.5;this.tx=this.ox*ss;this.ty=this.oy*ss;this.tz=this.oz*ss;}
-        else{this.tx=this.ox*(1+audioLevel*1.5);this.ty=this.oy*(1+audioLevel*1.5);this.tz=this.oz*(1+audioLevel*1.5);}
+        else{
+          // Idle breathing — never fully static
+          const breath=1+Math.sin(t*0.8+this.i*0.003)*0.06;
+          this.tx=this.ox*breath*(1+audioLevel*1.5);
+          this.ty=this.oy*breath*(1+audioLevel*1.5);
+          this.tz=this.oz*breath*(1+audioLevel*1.5);
+        }
 
         let maxThink=0;
         for(const l of BRAIN_LOBES){
@@ -786,7 +907,7 @@
         this.vy+=(Math.random()-0.5)*2.5;
       }
 
-        const k=0.06,damp=0.88;
+        const k=0.04,damp=0.91;
         this.vx+=(this.tx-this.px)*k;
         this.vy+=(this.ty-this.py)*k;
         this.vz+=(this.tz-this.pz)*k;
@@ -804,7 +925,8 @@
       project(){
         const fl=180;
         const ss=fl/(fl+this.pz);
-        return{x:Math.floor(W/2+this.px*S*ss),y:Math.floor(H/2+this.py*S*ss),s:Math.max(1,Math.floor(ss*2)),a:Math.min(1,ss*1.2),z:this.pz,c:this.c,think:this.think};
+        const depthFade=Math.max(0.15,Math.min(1,(1-this.pz/80)));
+        return{x:Math.floor(W/2+this.px*S*ss),y:Math.floor(H/2+this.py*S*ss),s:Math.max(1,Math.floor(ss*2)),a:Math.min(1,ss*1.2*depthFade),z:this.pz,c:this.c,think:this.think};
       }
     }
 
@@ -837,7 +959,7 @@
     tickSpinner();
 
     // Pre-load voices so pickVoice() works on first call
-    if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged=()=>{};
+    if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged=()=>{_cachedVoice=null;pickVoice();};
 
     overlay.addEventListener('click',()=>{
       overlay.classList.add('ack');
@@ -845,26 +967,50 @@
       initMotion();
       setupRecognition();
       refreshMetrics();
-      setInterval(refreshMetrics,6000);
+      setInterval(refreshMetrics,30000);
       setTimeout(()=>{
         overlay.hidden=true;
-        // Show input field so user knows they can type
         inputField.classList.add('active');
-        input.focus();
-        // TTS greeting
+        // Only auto-focus on desktop — on mobile the keyboard is intrusive
+        if(window.innerWidth>768) input.focus();
         const today=new Date();
         const isMomBday=(today.getMonth()===1&&today.getDate()===26);
-        const greeting=isMomBday?'Happy birthday momma!':'Neural core online. Ready for input.';
+        const greeting=isMomBday?'Happy birthday momma!':'Hey. What can I help with?';
         speakWithAudio(greeting).then(ok=>{if(!ok)speakText(greeting);});
-      },300);
+      },850);
     });
 
-    // Status circle toggles microphone
+    // Status circle: tap toggles mic, long-press cycles voice effect
+    let statusLongPress=null;
+    statusEl.addEventListener('pointerdown',()=>{
+      statusLongPress=setTimeout(()=>{
+        statusLongPress='long';
+        fxIdx=(fxIdx+1)%FX_MODES.length;
+        uiLabel.textContent='Voice: '+FX_MODES[fxIdx];
+      },600);
+    });
+    statusEl.addEventListener('pointerup',()=>{
+      if(statusLongPress==='long'){statusLongPress=null;return;}
+      clearTimeout(statusLongPress);statusLongPress=null;
+    });
     statusEl.addEventListener('click',e=>{
       e.stopPropagation();
+      if(statusLongPress==='long') return;
+      if(!SpeechRecognition){
+        uiLabel.textContent='Voice not supported';
+        return;
+      }
+      if(location.protocol!=='https:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
+        uiLabel.textContent='Mic needs HTTPS';
+        return;
+      }
       if(!recognition){
         setupRecognition();
         if(!audioCtx) initAudio();
+      }
+      if(!recognition){
+        uiLabel.textContent='Voice not available';
+        return;
       }
       if(recognitionActive){
         try{recognition.stop();}catch(_e){}
@@ -878,10 +1024,15 @@
     });
 
     let t=0;
+    let camX=0,camY=0;
     const animate=()=>{
       requestAnimationFrame(animate);
       t+=0.016;
       speechPulse*=0.92;
+
+      // Cinematic camera drift — slow, organic
+      camX=Math.sin(t*0.13)*8+Math.sin(t*0.31)*3;
+      camY=Math.cos(t*0.17)*5+Math.cos(t*0.23)*2;
 
       if(analyser){
         analyser.getByteFrequencyData(dataArray);
@@ -901,53 +1052,53 @@
       ctx.fillStyle='#000';
       ctx.fillRect(0,0,W,H);
 
-      for(const n of neurons) n.update(t,currentOrb);
+      for(const n of neurons) n.update(t,orbStates[currentOrb].s);
       const proj=neurons.map(n=>n.project()).filter(Boolean);
       proj.sort((a,b)=>b.z-a.z);
 
       // Particle palette: dark red → crimson → bright red → orange-red
-      const GRID=4; // 8-bit pixel snap
-      const cols=['#1a0505','#3a0808','#6b1515','#aa2222'];
-      const colsSpeak=['#331100','#663311','#aa4422','#ff6644'];
-      const colsThink=['#220000','#550000','#880000','#cc0000'];
+      const GRID=2; // 16-bit pixel snap
+      const cols=['#0a0101','#1a0404','#330909','#551515'];
+      const colsSpeak=['#0a0500','#1a0c00','#331a08','#553010'];
+      const colsThink=['#0a0000','#1a0303','#330808','#551010'];
       const activeCol=isProcessing?colsThink:(isSpeaking?colsSpeak:cols);
       // Audio-reactive color boost: lerp toward bright on loud audio
       const audioBoost=Math.min(1,audioLevel*1.8);
 
       for(const p of proj){
-        // Grid-snap for chunky 8-bit look
-        const gx=Math.round(p.x/GRID)*GRID;
-        const gy=Math.round(p.y/GRID)*GRID;
+        const gx=Math.round((p.x+camX)/GRID)*GRID;
+        const gy=Math.round((p.y+camY)/GRID)*GRID;
 
         const thinkDark=1-Math.min(0.78,p.think*1.2);
         ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35));
         if(isProcessing){
-          // Deep pulsing crimson when thinking
-          const pulse=0.5+Math.sin(t*6)*0.3;
-          const r=Math.floor(140+pulse*100);
+          // Deep pulsing crimson when thinking — brighter for visibility
+          const pulse=0.5+Math.sin(t*6)*0.35;
+          const r=Math.floor(80+pulse*70);
           ctx.fillStyle=`rgb(${r},${Math.floor(r*0.1)},0)`;
         }else if(p.think>0.22){
-          const v=Math.floor(180*thinkDark);
-          ctx.fillStyle=`rgb(${v},${Math.floor(v*0.15)},${Math.floor(v*0.08)})`;
+          const v=Math.floor(80*thinkDark);
+          ctx.fillStyle=`rgb(${v},${Math.floor(v*0.1)},${Math.floor(v*0.05)})`;
         }else{
-          // Blend base color toward bright on audio
+          // Smooth color interpolation based on audio level
           const base=activeCol[p.c]||activeCol[1];
-          if(audioBoost>0.15){
-            const bright=isSpeaking?'#ffaa66':'#cc3333';
-            ctx.fillStyle=audioBoost>0.5?bright:base;
+          if(audioBoost>0.08){
+            const bright=isSpeaking?'#884422':'#662222';
+            const mix=Math.min(1,audioBoost*1.5);
+            ctx.fillStyle=mix>0.7?bright:base;
           }else{
             ctx.fillStyle=base;
           }
         }
         // Audio-reactive particle size: bass makes them bigger
-        const audioSz=Math.floor(audioBoost*3);
-        const sz=(p.s<2?4:(p.s<3?4:8))+audioSz;
-        // Square pixels only — 8-bit sprite style
+        const audioSz=Math.floor(audioBoost*2);
+        const sz=(p.s<1.5?2:(p.s<2.5?3:(p.s<3.5?4:5)))+audioSz;
+        // Square pixels — 16-bit sprite style
         ctx.fillRect(gx,gy,sz,sz);
       }
       // Connection lines in dark red
       ctx.globalAlpha=0.15;
-      ctx.strokeStyle=isProcessing?'#880000':(isSpeaking?'#884422':'#441111');
+      ctx.strokeStyle=isProcessing?'#330000':(isSpeaking?'#332008':'#220505');
       ctx.lineWidth=1;
       for(let i=0;i<proj.length-9;i+=9){
         const a=proj[i];
@@ -962,11 +1113,21 @@
         ctx.lineTo(b.x,b.y);
         ctx.stroke();
       }
-      // Analog film grain — subtle per-frame noise
+      // Flat thinking indicator — small pulsing bar below center
+      if(isProcessing){
+        const barW=Math.floor(S*8+Math.sin(t*3)*S*4);
+        const barX=Math.floor(W/2-barW/2+camX);
+        const barY=Math.floor(H/2+S*22+camY);
+        ctx.globalAlpha=0.35+Math.sin(t*4)*0.15;
+        ctx.fillStyle='#441111';
+        ctx.fillRect(barX,barY,barW,2);
+      }
+      // Analog film grain — fine cinematic noise, randomised sampling
       const grain=ctx.getImageData(0,0,W,H);
       const gd=grain.data;
-      for(let i=0;i<gd.length;i+=16){
-        const n=((Math.random()-0.5)*18)|0;
+      const glen=gd.length;
+      for(let i=(Math.random()*12|0)*4;i<glen;i+=12){
+        const n=((Math.random()-0.5)*12)|0;
         gd[i]+=n; gd[i+1]+=n>>1; gd[i+2]+=n>>2;
       }
       ctx.putImageData(grain,0,0);

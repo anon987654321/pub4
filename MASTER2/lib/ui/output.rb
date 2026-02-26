@@ -15,9 +15,9 @@ module MASTER
     end
 
     def render_response(text)
-      # Try markdown rendering, fallback to plain
       markdown(text)
-    rescue StandardError
+    rescue StandardError => e
+      Logging.warn("markdown render failed: #{e.message}", subsystem: "Output") if defined?(Logging)
       text
     end
 

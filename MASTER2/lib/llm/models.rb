@@ -104,7 +104,8 @@ module MASTER
       def prompt_model_name
         return extract_model_name(@current_model) if @current_model
 
-        "unknown"
+        first = configured_models.first
+        first ? extract_model_name(first[:id]) : "m2"
       end
 
       def model_tiers

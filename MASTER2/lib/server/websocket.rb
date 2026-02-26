@@ -62,6 +62,8 @@ module MASTER
       rescue JSON::ParserError
         connection.write({ type: "error", message: "Invalid JSON" }.to_json)
         connection.flush
+      rescue Errno::EPIPE, IOError
+        # Client disconnected — normal for WebSocket
       rescue StandardError => err
         Logging.warn("Error: #{err.message}", subsystem: "WebSocket")
         connection.write({ type: "error", message: err.message }.to_json)
