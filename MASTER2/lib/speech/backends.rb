@@ -9,8 +9,8 @@ module MASTER
       module_function
 
       # Piper TTS (local, high-quality neural TTS)
-      def speak_piper(text, voice: nil, preset: :normal, play: true)
-        voice_file = PIPER_VOICES[voice&.to_sym] || PIPER_VOICES[:lessac]
+      def speak_piper(text, voice: nil, preset: :normal, effect: :demon, play: true)
+        voice_file = PIPER_VOICES[voice&.to_sym] || PIPER_VOICES[:ryan]
         params = PIPER_PRESETS[preset.to_sym] || PIPER_PRESETS[:normal]
 
         voices_dir = File.join(Paths.var, "piper_voices")
@@ -26,11 +26,30 @@ module MASTER
         _out, _err, status = Open3.capture3(*piper_cmd, stdin_data: text)
         return Result.err("Piper generation failed.") unless status.success? && File.exist?(output)
 
+        content_type = "audio/wav"
+
+        # Bake FFmpeg effect server-side — same chain as edge backend
+        if effect && (fx_filter = STREAM_EFFECTS[effect.to_sym])
+          ffmpeg = ENV.fetch("FFMPEG_PATH", "ffmpeg")
+          processed = File.join(File.dirname(output), "piper_fx_#{SecureRandom.hex(4)}.mp3")
+          cmd = if fx_filter.start_with?("fc:")
+            [ffmpeg, "-y", "-i", output, "-filter_complex", fx_filter[3..], "-map", "[out]", processed]
+          else
+            [ffmpeg, "-y", "-i", output, "-af", fx_filter, processed]
+          end
+          _fo, _fe, fst = Open3.capture3(*cmd)
+          if fst.success? && File.exist?(processed)
+            FileUtils.rm_f(output)
+            output = processed
+            content_type = "audio/mpeg"
+          end
+        end
+
         audio = File.binread(output)
         Playback.play_audio(output) if play
         FileUtils.rm_f(output)
 
-        Result.ok(engine: :piper, voice: voice_file, preset: preset, audio: audio, content_type: "audio/wav")
+        Result.ok(engine: :piper, voice: voice_file, preset: preset, audio: audio, content_type: content_type)
       end
 
       # Edge TTS via CLI binary (no Python dependency at call time)
