@@ -58,6 +58,7 @@ module MASTER
 
       @history << entry
       @dirty = true
+      @context_cache = nil
 
       # Auto-save periodically
       autosave_if_needed
@@ -90,16 +91,14 @@ module MASTER
     end
 
     def context_for_llm(max_messages: 20)
+      cache_key = [@history.size, max_messages, @metadata[:active_task], @metadata[:pending_tasks]&.size]
+      return @context_cache[:v] if @context_cache&.[](:k) == cache_key
+
       compressed = Memory.compress(@history)
-      msgs = compressed.last(max_messages).map do |h|
-        { role: h[:role].to_s, content: h[:content] }
-      end
-      if (task = @metadata[:active_task])
-        msgs.unshift({ role: "system", content: "Current task: #{task}" })
-      end
-      if (pending = @metadata[:pending_tasks])&.any?
-        msgs.unshift({ role: "system", content: "Pending (complete these): #{pending.join(' | ')}" })
-      end
+      msgs = compressed.last(max_messages).map { |h| { role: h[:role].to_s, content: h[:content] } }
+      msgs.unshift({ role: "system", content: "Current task: #{@metadata[:active_task]}" }) if @metadata[:active_task]
+      msgs.unshift({ role: "system", content: "Pending: #{@metadata[:pending_tasks].join(' | ')}" }) if @metadata[:pending_tasks]&.any?
+      @context_cache = { k: cache_key, v: msgs }
       msgs
     end
 

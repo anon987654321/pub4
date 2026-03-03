@@ -52,6 +52,15 @@ module MASTER
 
       def chamber(file)
         ExecutionContext.current_depth = :own
+        return Result.err("Usage: chamber <file>") if file.nil? || file.strip.empty?
+
+        # Council deliberation first, then autofix if approved
+        review = MASTER::Council.council_review(file, model: LLM.current_model)
+        if review[:vetoed_by]&.any?
+          puts UI.dim("council: vetoed by #{review[:vetoed_by].join(', ')}")
+          return Result.err("Chamber vetoed: #{review[:verdict]}")
+        end
+        puts UI.dim("council: #{review[:verdict]&.slice(0, 120)}")
         autofix(file)
       ensure
         ExecutionContext.current_depth = :shallow

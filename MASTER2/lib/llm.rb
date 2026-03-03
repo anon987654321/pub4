@@ -176,7 +176,7 @@ module MASTER
 
           if result.ok?
             process_llm_response(result, candidate_model, prompt, stream)
-            $stderr.puts UI.dim("  -> #{extract_model_name(candidate_model)}") if candidate_model != primary
+            puts UI.dim("↳ #{extract_model_name(candidate_model)}") if candidate_model != primary
             return result
           else
             handle_llm_failure(result, candidate_model)

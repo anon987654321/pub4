@@ -32,8 +32,8 @@ module MASTER
         LLM.current_model = LLM.extract_model_name(initial_model) if initial_model
       end
 
-      # Prescan
-      Prescan.run(MASTER.root) if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
+      # Prescan runs in background so the REPL accepts input immediately
+      Thread.new { Prescan.run(MASTER.root) } if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
 
       # Only warn about missing OpenRouter key if Replicate is also absent
       unless ENV["OPENROUTER_API_KEY"] || LLM.configured_for_replicate?

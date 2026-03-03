@@ -151,13 +151,11 @@ module MASTER
     def select_pattern(goal)
       g = goal.to_s.strip.downcase
 
-      # Direct: greetings, chitchat, simple one-word queries -- no LLM cost
-      if g.match?(/\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i)
-        return :direct
-      end
-      if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|analyse|build|create|update|debug|write|read|find|show|list)\b/)
-        return :direct
-      end
+      # Direct: greetings, chitchat, short queries, pure Q&A without file/code actions
+      return :direct if g.match?(/\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i)
+      return :direct if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|analyse|build|create|update|debug|write|read|find|show|list)\b/)
+      return :direct if g.match?(/\A(what|how|why|can you|could you|tell me|explain|describe|is it|are there|do you)\b/i) &&
+                        !g.match?(/\b(file|code|fix|refactor|scan|write|create|build|modify|edit|update|delete|read)\b/)
 
       # React: file/code operations -- needs tools
       return :react if g.match?(/\b(analyze|analyse|scan|review|read|show|list|find|explore|audit|check|inspect)\b/)

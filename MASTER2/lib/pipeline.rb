@@ -303,8 +303,10 @@ module MASTER
         badge = PlatformCheck.compute_badge
         hw    = badge ? p.bright_black("*#{badge}") : ""
         cost  = Session.current.total_cost
-        cost_str = cost && cost > 0 ? p.bright_black(" [$#{format('%.2f', cost)}]") : ""
-        "#{p.bold.white('master')}#{p.bright_black('@')}#{p.cyan(model)}#{hw}#{cost_str}#{p.bold.white('$')} "
+        cost_str = cost && cost > 0 ? p.bright_black("*#{format('%.0fc', cost * 100)}") : ""
+        name  = Session.current.metadata_value(:name)
+        ctx   = name ? p.bright_black("[#{name}]") : ""
+        "#{p.bold.white('master')}#{p.bright_black('@')}#{p.cyan(model)}#{hw}#{cost_str}#{ctx}#{p.bold.white('$')} "
       rescue StandardError
         "master$ "
       end
