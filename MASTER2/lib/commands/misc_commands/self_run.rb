@@ -91,13 +91,18 @@ module MASTER
           # Prefer deterministic fixer; fall back to LLM if configured
           if defined?(MASTER::Review::Fixer)
             fixer = MASTER::Review::Fixer.new(mode: :moderate)
-            result = fixer.fix(file)
-            if result.ok? && system("ruby", "-c", file, out: File::NULL, err: File::NULL)
+            result = fixer.fix(file, violations)
+            # Only accept if fixer actually changed something AND syntax is valid
+            if result.ok? && result.value[:fixed].to_i > 0 &&
+               system("ruby", "-c", file, out: File::NULL, err: File::NULL)
               fixed += violations.count
-              puts "    + fixed"
+              puts "    + fixed (fixer)"
               next
+            elsif result.ok? && result.value[:fixed].to_i == 0
+              # Fixer made no changes — fall through to LLM (don't restore)
+              nil
             else
-              File.write(file, code)
+              File.write(file, code) # restore on syntax error
             end
           end
 
@@ -107,9 +112,15 @@ module MASTER
                    "#{violations.map { |v| "- #{v[:message]}" }.join("\n")}\n\n" \
                    "Return ONLY the corrected Ruby code, no explanation."
           llm_result = LLM.ask(prompt, stream: false)
-          next unless llm_result&.ok? && llm_result.value[:content].to_s.include?("def ")
+          next unless llm_result&.ok?
 
-          File.write(file, llm_result.value[:content])
+          new_code = llm_result.value[:content].to_s
+          # Strip markdown fences LLMs add despite instructions
+          new_code = new_code.gsub(/\A```\w*\n/, "").gsub(/\n```\s*\z/, "")
+          next if new_code.strip.empty? || new_code == code
+          next unless MASTER::Utils.valid_ruby?(new_code)
+
+          File.write(file, new_code)
           if system("ruby", "-c", file, out: File::NULL, err: File::NULL)
             fixed += violations.count
             puts "    + fixed"
@@ -121,13 +132,17 @@ module MASTER
 
         puts "self: #{total_violations} violations#{", #{fixed} fixed" if apply}"
 
-        # phase 4: git status
+        # phase 4: git commit if fixes were applied
+        git_commit_fixes(root, fixed, "self") if apply && fixed > 0
+
+        # phase 5: git status report
         if system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
-          status = `git -C #{root} status --porcelain`.strip
-          puts status.empty? ? "self: git status clean" : "self: git #{status.lines.size} uncommitted"
+          require "open3"
+          status, = Open3.capture2("git", "-C", root, "status", "--porcelain")
+          puts status.strip.empty? ? "self: git clean" : "self: git #{status.lines.size} uncommitted"
         end
 
-        # phase 5: reflect via LLM
+        # phase 6: reflect via LLM
         if defined?(LLM) && LLM.configured?
           facts = "#{rb_files.count} files, #{syntax_errors.count} syntax errors, " \
                   "#{large.count} >600L, #{total_violations} violations, #{fixed} fixed"

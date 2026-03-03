@@ -146,9 +146,9 @@ module MASTER
           break if cmd_result == :exit
 
           if cmd_result.nil?
-            # Unknown command -- try did-you-mean before LLM fallthrough
-            shown = Commands.show_did_you_mean(line.strip)
-            next if shown
+            # Single-word typo: show suggestion but still fall through to LLM.
+            # Multi-word natural language always goes to LLM directly.
+            Commands.show_did_you_mean(line.strip) if line.strip.split.size == 1
           elsif cmd_result.respond_to?(:ok?)
             display_result(cmd_result, session) unless cmd_result.value.is_a?(Hash) && cmd_result.value[:handled]
             next
