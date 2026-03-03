@@ -28,7 +28,7 @@ module MASTER
     # FFmpeg effect presets — all include BASE_VOLUME for consistent loudness
     STREAM_EFFECTS = {
       dark:       "asetrate=44100*0.8,atempo=1.25,bass=g=10,#{BASE_VOLUME}",
-      demon:      "asetrate=44100*0.65,atempo=1.54,bass=g=22,treble=g=-12,acompressor=threshold=0.04:ratio=25:attack=5:release=50,#{BASE_VOLUME}",
+      demon:      "fc:[0:a]asplit=2[a][b];[b]asetrate=22050,atempo=2.0,volume=0.12[sub];[a]asetrate=28665,atempo=1.54,bass=g=22,treble=g=-14,aecho=0.6:0.72:88:0.30,chorus=0.5:0.6:50:0.28:0.2:1.6[proc];[proc][sub]amix=inputs=2:weights=1 0.22:normalize=0[mix];[mix]acompressor=threshold=0.04:ratio=25:attack=5:release=50,extrastereo=m=2.5,#{BASE_VOLUME}[out]",
       robot:      "asetrate=44100*0.9,atempo=1.1,flanger,tremolo=f=10:d=0.5,#{BASE_VOLUME}",
       radio:      "highpass=f=300,lowpass=f=3000,acompressor=threshold=0.1:ratio=8,#{BASE_VOLUME}",
       telephone:  "highpass=f=400,lowpass=f=3400,#{BASE_VOLUME}",
