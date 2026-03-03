@@ -509,6 +509,13 @@
       }
       tapeSat.curve=tapeCurve;tapeSat.oversample='4x';
 
+      // ── Chebyshev(2) harmonic saturation — valve coloring, even harmonics ──
+      // rg69: vintageSat + padsSat. 15% wet adds 2nd harmonic warmth without mud.
+      const chebSat=audioCtx.createWaveShaper();
+      const chebN=4096;const chebCurve=new Float32Array(chebN);
+      for(let i=0;i<chebN;i++){const x=i*2/(chebN-1)-1;chebCurve[i]=x*0.85+(2*x*x-1)*0.15;}
+      chebSat.curve=chebCurve;chebSat.oversample='2x';
+
       // ── Tape flutter LFO — collective pitch wobble (all voices together) ──
       // Simulates tape moving unevenly past the head. Very slow, irregular.
       const flutterLFO=audioCtx.createOscillator();flutterLFO.type='sine';flutterLFO.frequency.value=0.9;
@@ -705,16 +712,17 @@
 
       // ══════════════════════════════════════════════════════════
       // SIGNAL ROUTING
-      // Oscillators → ladder filter → tape sat → warmth → phaser →
-      // tremolo → dropout → lofi → {chorus, dry, spring reverb, hall,
-      // ping-pong, wobble} → pump → stereo → duck → master → out
+      // Oscillators → ladder filter → cheb(2) sat → tape sat → warmth →
+      // phaser → tremolo → dropout → lofi → {chorus, dry, spring reverb,
+      // hall, ping-pong, wobble, ring mod} → dual comp → pump → stereo →
+      // duck → master → out
       // ══════════════════════════════════════════════════════════
 
       // Ladder filter chain
       lad1.connect(lad2);lad2.connect(lad3);lad3.connect(lad4);
 
       // Post-ladder chain
-      lad4.connect(tapeSat);
+      lad4.connect(chebSat);chebSat.connect(tapeSat);
       tapeSat.connect(warmth);
       warmth.connect(phaserStages[0]);
       phaserStages[phaserStages.length-1].connect(tremGain);
@@ -746,6 +754,14 @@
       // Wobble send
       lofiHP.connect(wobbleD);wobbleD.connect(wobbleLP);wobbleLP.connect(wobbleMix);
 
+      // Ring mod send — 1.7Hz FrequencyShifter approximation (rg69: padsShift ±2Hz)
+      // Slight beating/shimmer without audible tremolo; adds iridescent movement.
+      const rmCarrier=audioCtx.createGain();rmCarrier.gain.value=0;
+      const rmOsc=audioCtx.createOscillator();rmOsc.frequency.value=1.7;rmOsc.type='sine';
+      const rmMix=audioCtx.createGain();rmMix.gain.value=0.07;
+      rmOsc.connect(rmCarrier.gain);rmOsc.start();
+      lofiHP.connect(rmCarrier);rmCarrier.connect(rmMix);
+
       // Sum to pre-pump bus
       const prePump=audioCtx.createGain();prePump.gain.value=1;
       dryBus.connect(prePump);
@@ -754,9 +770,17 @@
       hallBus.connect(prePump);
       ppMix.connect(prePump);
       wobbleMix.connect(prePump);
+      rmMix.connect(prePump);
 
-      // Pump → stereo widener → duck → master
-      prePump.connect(pumpGain);
+      // Dual compressor glue — rg69: compPar + sslComp (-18dB, ratio 4/6)
+      // Stage 1: gentle bus glue. Stage 2: SSL-style limiting.
+      const padComp1=audioCtx.createDynamicsCompressor();
+      padComp1.threshold.value=-24;padComp1.ratio.value=3;padComp1.attack.value=0.003;padComp1.release.value=0.1;
+      const padComp2=audioCtx.createDynamicsCompressor();
+      padComp2.threshold.value=-18;padComp2.ratio.value=6;padComp2.attack.value=0.01;padComp2.release.value=0.3;
+
+      // Pump → dual comp → stereo widener → duck → master
+      prePump.connect(padComp1);padComp1.connect(padComp2);padComp2.connect(pumpGain);
 
       const preOut=audioCtx.createGain();preOut.gain.value=1;
       pumpGain.connect(preOut);
