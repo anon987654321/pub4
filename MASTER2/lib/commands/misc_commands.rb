@@ -172,23 +172,56 @@ module MASTER
         target = "master.yml" if target.empty?
         return Result.err("history-dig target must be master.yml or master.json") unless %w[master.yml master.json].include?(target)
 
-        commits_out, status = Open3.capture2("git", "rev-list", "--all", "--", target)
-        return Result.err("git history unavailable for #{target}") unless status.success?
+        paths = historical_paths_for(target)
+        return Result.err(history_dig_missing_message(target)) if paths.empty?
 
-        commit = commits_out.lines.map(&:strip).find do |sha|
-          _out, ok = Open3.capture2("git", "cat-file", "-e", "#{sha}:#{target}")
-          ok.success?
+        commit = nil
+        found_path = nil
+
+        paths.each do |path|
+          commits_out, status = Open3.capture2("git", "rev-list", "--all", "--", path)
+          next unless status.success?
+
+          sha = commits_out.lines.map(&:strip).find do |candidate|
+            _out, ok = Open3.capture2("git", "cat-file", "-e", "#{candidate}:#{path}")
+            ok.success?
+          end
+          next if sha.nil?
+
+          commit = sha
+          found_path = path
+          break
         end
-        return Result.err("No historical blob found for #{target}") if commit.nil?
 
-        content, show_status = Open3.capture2("git", "show", "#{commit}:#{target}")
+        return Result.err(history_dig_missing_message(target)) if commit.nil? || found_path.nil?
+
+        content, show_status = Open3.capture2("git", "show", "#{commit}:#{found_path}")
         return Result.err("Failed to extract #{target} from #{commit}") unless show_status.success?
 
         dest = File.join(Paths.var, "#{target}.history.snapshot")
         File.write(dest, content)
         puts "history-dig: #{target} -> #{dest}"
         puts "history-dig: source commit #{commit}"
-        Result.ok(target: target, commit: commit, snapshot: dest)
+        puts "history-dig: source path #{found_path}" unless found_path == target
+        Result.ok(target: target, commit: commit, source_path: found_path, snapshot: dest)
+      end
+
+      def historical_paths_for(target)
+        out, status = Open3.capture2("git", "log", "--all", "--name-only", "--pretty=format:", "--", target, "*/#{target}")
+        return [target] unless status.success?
+
+        candidates = out.lines.map(&:strip).reject(&:empty?).select { |line| line.end_with?(target) }
+        ordered = [target] + candidates
+        ordered.uniq
+      end
+
+      def history_dig_missing_message(target)
+        shallow_out, shallow_status = Open3.capture2("git", "rev-parse", "--is-shallow-repository")
+        return "No historical blob found for #{target}" unless shallow_status.success?
+
+        return "No historical blob found for #{target}" unless shallow_out.strip == "true"
+
+        "No historical blob found for #{target}; repository is shallow, fetch full history and retry"
       end
 
       def codify(args = nil)
