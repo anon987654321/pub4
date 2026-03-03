@@ -477,6 +477,7 @@
       if(!audioCtx||padMaster) return;
       const now=audioCtx.currentTime;
       const out=audioCtx.destination;
+      const startChordIdx=Math.floor(Math.random()*PAD_CHORDS.length);
 
       padMaster=audioCtx.createGain();
       padMaster.gain.value=0.22; // FlyLo pads dominate the mix
@@ -681,7 +682,7 @@
 
       // ── High shimmer — ghostly harmonic sparkle ──
       const shimmerOsc=audioCtx.createOscillator();shimmerOsc.type='sine';
-      shimmerOsc.frequency.value=PAD_CHORDS[0][3]*4; // 2 octaves up
+      shimmerOsc.frequency.value=PAD_CHORDS[startChordIdx][3]*4; // 2 octaves up
       const shimmerGain=audioCtx.createGain();shimmerGain.gain.value=0.012;
       const shimmerTrem=audioCtx.createGain();shimmerTrem.gain.value=0.5;
       const shimmerLFO=audioCtx.createOscillator();shimmerLFO.type='sine';shimmerLFO.frequency.value=0.22;
@@ -694,7 +695,7 @@
       // ── Bach cantus firmus — choral soprano voice, contrary motion to sub ──
       // Moves in the opposite direction of the bass; slow vibrato like a choir.
       const cantusOsc=audioCtx.createOscillator();cantusOsc.type='sine';
-      cantusOsc.frequency.value=PAD_CHORDS[0][3]*2; // start at top, 2 octaves up
+      cantusOsc.frequency.value=PAD_CHORDS[startChordIdx][3]*2; // start at top, 2 octaves up
       const cantusGain=audioCtx.createGain();cantusGain.gain.value=0.016;
       const cantusVib=audioCtx.createOscillator();cantusVib.type='sine';cantusVib.frequency.value=4.2;
       const cantusVibD=audioCtx.createGain();cantusVibD.gain.value=3;
@@ -777,7 +778,7 @@
       dropoutGain.gain.value=1.0; // baseline; dropLFO dips it slightly
 
       // ── Create oscillators — 5 layers per note, heavy analog detune ──
-      const chord=PAD_CHORDS[0];
+      const chord=PAD_CHORDS[startChordIdx];
       const oscConfigs=[
         {type:'sawtooth',gain:0.07,detune:-22},  // fat dark saw
         {type:'sawtooth',gain:0.06,detune:11},   // second saw, wide spread
@@ -811,7 +812,7 @@
       });
 
       // ── Chord evolution — 25-45s morphs, with parameter mutations ──
-      let chordIdx=0;
+      let chordIdx=startChordIdx;
       const driftChord=()=>{
         chordIdx=(chordIdx+1)%PAD_CHORDS.length;
         const chord=PAD_CHORDS[chordIdx];
