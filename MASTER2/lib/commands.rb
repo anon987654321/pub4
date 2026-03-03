@@ -341,9 +341,9 @@ module MASTER
       return text if text.empty?
 
       signals = defined?(NLU) ? NLU.classify_signals(text) : Set.new
+      low = text.downcase
 
       if signals.include?(:self_run_request)
-        low = text.downcase
         return "selfrun --strict --axioms --all-files" if low.match?(/\b(strict|axiom|every|all|entire)\b/)
         return "selfrun"
       end
@@ -351,6 +351,22 @@ module MASTER
       return "multi-refactor . --strict --axioms --all-files" if signals.include?(:lint_request)
       return "health" if signals.include?(:health_request)
       return "status" if signals.include?(:status_request)
+
+      # "fix everything" / "autofix all" / "fix all issues"
+      return "fix --all" if low.match?(/\b(fix|autofix|repair)\b.{0,20}\b(all|everything|entire|whole)\b/i) ||
+                            low.match?(/\b(autofix|fix)\s+all\b/i)
+
+      # "evolve using <model>" / "evolve with claude" -> model select + evolve
+      if low.start_with?("evolve") && (m = low.match(/\busing\s+([\w.\-]+)\s*$/))
+        model = m[1]
+        return "model #{model}\nevolve"
+      end
+
+      # "scan everything" / "check all files" / "audit codebase"
+      return "scan ." if low.match?(/\b(scan|check|audit|analyze|analyse)\b.{0,20}\b(all|everything|codebase|entire|whole)\b/i)
+
+      # "commit" / "save changes" / "commit changes"
+      return "shell git add -A && git commit -m 'manual commit'" if low.match?(/\A(commit|commit changes|save changes)\z/i)
 
       text
     end

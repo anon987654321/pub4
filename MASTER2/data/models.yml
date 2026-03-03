@@ -4,7 +4,7 @@
 # tier: premium | strong | fast | cheap
 # api: replicate  -> routed via Replicate predictions API (REPLICATE_API_TOKEN)
 #      openrouter -> routed via ruby_llm/OpenRouter (OPENROUTER_API_KEY) [default]
-# Note: claude-sonnet-4.6 is OpenRouter only; claude-4.5-sonnet is Replicate primary.
+# Note: claude-sonnet-4.5 and claude-sonnet-4.6 both route via Replicate primary.
 
 # --- STRONG (default + council arbiter) ---
 
@@ -25,7 +25,7 @@
   output_cost: 15.00
   context_window: 1000000
   provider: anthropic
-  api: openrouter
+  api: replicate
   reasoning: true
 
 # --- PREMIUM ---

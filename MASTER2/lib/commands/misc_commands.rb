@@ -76,24 +76,48 @@ module MASTER
       end
 
       def fix_code(args)
+        require "open3"
         path = args&.strip
-        path = "." if path.nil? || path.empty?
+        root = MASTER.root
+        path = root if path.nil? || path.empty? || path == "--all"
 
         fixer = MASTER::Review::Fixer.new(mode: :moderate)
         if File.directory?(path)
           result = fixer.fix_directory(path)
           if result.ok?
-            puts "  Fixed #{result.value[:files_fixed]} files, #{result.value[:issues_fixed]} issues"
+            fixed = result.value[:total_fixes].to_i
+            puts "fix: #{result.value[:files_fixed]} files, #{fixed} fixes"
+            git_commit_fixes(root, fixed, "fix") if fixed > 0
           else
-            puts "  Error: #{result.error}"
+            puts "fix: error: #{result.error}"
           end
         else
+          return puts "fix: not found: #{path}" unless File.exist?(path)
+
           result = fixer.fix(path)
           if result.ok?
-            puts "  Fixed: #{path}"
+            fixed = result.value[:fixed].to_i
+            puts fixed > 0 ? "fix: #{path} (#{fixed} fixes)" : "fix: #{path} clean"
+            git_commit_fixes(root, fixed, "fix") if fixed > 0
           else
-            puts "  Error: #{result.error}"
+            puts "fix: #{result.error}"
           end
+        end
+      end
+
+      def git_commit_fixes(root, fixed, cmd)
+        return unless system("git", "-C", root, "rev-parse", "--git-dir",
+                              out: File::NULL, err: File::NULL)
+
+        porcelain, = Open3.capture2("git", "-C", root, "status", "--porcelain")
+        return if porcelain.strip.empty?
+
+        system("git", "-C", root, "add", "-A")
+        msg = "#{cmd}: #{fixed} fixes [#{Time.now.utc.iso8601}]"
+        if system("git", "-C", root, "commit", "-m", msg)
+          puts "#{cmd}: committed"
+        else
+          puts "#{cmd}: git commit failed"
         end
       end
 

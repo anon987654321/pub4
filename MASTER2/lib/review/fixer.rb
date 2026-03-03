@@ -116,7 +116,8 @@ module MASTER
       end
 
       def fix_directory(dir, pattern: "**/*.rb")
-        files = Dir.glob(File.join(dir, pattern))
+        skip = defined?(Paths::SKIP_DIRS) ? Paths::SKIP_DIRS : %w[.git vendor tmp var node_modules .bundle coverage log dist]
+        files = Dir.glob(File.join(dir, pattern)).reject { |f| skip.any? { |d| f.include?("/#{d}/") } }
         fix_all(files)
       end
 

@@ -4,9 +4,9 @@ module MASTER
   # Capability levels — explicit escalation required for destructive operations.
   #
   # Level 0: read-only  (safe inspection, no side effects)
-  # Level 1: propose    (generate patches/plans, write nothing)  ← default
-  # Level 2: write      (--apply: write files, update configs)
-  # Level 3: execute    (run shell commands, run tests)
+  # Level 1: propose    (generate patches/plans, write nothing)
+  # Level 2: write      (write files, update configs)
+  # Level 3: execute    (run shell commands, run tests)  ← default
   # Level 4: deploy     (network ops, service restarts, production changes)
   #
   # Usage:
@@ -41,7 +41,7 @@ module MASTER
         @mutex.synchronize do
           @level ||= begin
             env = ENV["MASTER_CAP"].to_i
-            env.positive? ? env.clamp(0, 4) : LEVELS[:propose]
+            env.positive? ? env.clamp(0, 4) : LEVELS[:execute]
           end
         end
       end
