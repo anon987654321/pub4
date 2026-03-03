@@ -25,7 +25,7 @@ module MASTER
                           handler: ->(args, pipeline:) { MASTER::Commands.evolve(args) } },
       opportunities:    { desc: "Find improvements",                   usage: "opportunities [path]",             group: :query,    aliases: %w[opps],
                           handler: ->(args, pipeline:) { MASTER::Commands.opportunities(args) } },
-      scan:             { desc: "Scan for code smells",                usage: "scan [path] [--hunt|--critique]",  group: :analysis, aliases: %w[hunt critique conflict],
+      scan:             { desc: "Scan for code smells",                usage: "scan [path] [--debug|--critique]", group: :analysis, aliases: %w[debug hunt critique conflict],
                           handler: ->(args, pipeline:) { MASTER::Commands.scan_code(args);    MASTER::Commands::HANDLED } },
       learn:            { desc: "Show matching learned patterns",      usage: "learn <file>",                     group: :analysis,
                           handler: ->(args, pipeline:) { MASTER::Commands.show_learnings(args); MASTER::Commands::HANDLED } },
@@ -150,7 +150,7 @@ module MASTER
     # Examples for key commands — shown by help <command> and command?
     EXAMPLES = {
       refactor:         "refactor lib/pipeline.rb",
-      scan:             "scan lib/ --hunt",
+      scan:             "scan lib/ --debug",
       fix:              "fix --all",
       chamber:          "chamber lib/master.rb",
       self:             "self --dry-run",
@@ -171,8 +171,9 @@ module MASTER
       (meta[:aliases] || []).each { |a| map[a] = key }
     end.freeze
 
-    # When an alias needs to inject flags (e.g. "hunt" → "scan --hunt")
+    # When an alias needs to inject flags (e.g. "debug" → "scan --hunt")
     ALIAS_FLAGS = {
+      "debug"     => "--hunt",
       "hunt"      => "--hunt",
       "critique"  => "--critique",
       "conflict"  => "--critique",
