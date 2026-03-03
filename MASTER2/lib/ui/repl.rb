@@ -6,6 +6,18 @@ module MASTER
     MULTILINE_OPENER = "<<"
     HISTORY_FILE = ".master_history"
     MAX_HISTORY_LINES = 500
+    GREETINGS = [
+      "Ready when you are. Or not. I'll wait.",
+      "Fully loaded. Let's break something beautiful.",
+      "Good. You're here. I was starting to worry.",
+      "All systems nominal. Opinions fully armed.",
+      "The axioms are hungry. Feed them something interesting.",
+      "Back again? Same codebase or a fresh disaster?",
+      "No judgment on what you typed last time. Let's go.",
+      "I've read your code. I have thoughts. Many thoughts.",
+      "Constitutional, caffeinated, ready to commit.",
+      "Your code won't fix itself. Actually — it might. That's why I'm here.",
+    ].freeze
 
     def repl(web_port: nil, web_token: nil)
       begin
@@ -52,6 +64,9 @@ module MASTER
       session_label = session.metadata_value(:name) || UI.truncate_id(session.id)
       name_or_id    = session.metadata_value(:name) ? session_label : "id=#{session_label}"
       puts "session0: #{name_or_id}"
+
+      puts UI.dim(GREETINGS.sample)
+      puts
 
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
 
