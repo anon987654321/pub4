@@ -1,16 +1,16 @@
 # MASTER2
 
-A constitutional AI coding agent. Forged in Ruby and zsh on OpenBSD.
-No framework. No scaffold. 30,000 lines of hand-written Ruby governing
-80 axioms, 12 adversarial personas, and a portfolio of Rails 8 mobile-first PWAs.
+Constitutional AI coding agent. Ruby + zsh on OpenBSD.
+No framework. No scaffold. 30,000 lines governing 80 axioms,
+12 adversarial personas, and a portfolio of Rails 8 PWAs.
 
 ```
 MASTER2 2.0.0 (CONSTITUTIONAL) #1
 runtime0: x86_64-openbsd * ruby 3.4 * zsh dev%
 host0: vmm(4)/vmd(8) * openbsd.amsterdam
 corpus0: 80 axioms * 12 personas
-models0: claude-4.5-sonnet * deepseek-v3.1 * deepseek-r1
-routing0: Replicate primary, OpenRouter fallback
+models0: gpt-5.2 * claude-4-sonnet * gemini-3.1-pro
+routing0: Replicate primary → free OpenRouter fallback
 security0: pledge armed
 engine0: react * pre_act * rewoo * reflexion
 boot0: 145ms
@@ -18,23 +18,20 @@ boot0: 145ms
 
 ## What it is
 
-MASTER2 is the keeper and builder of: Amber (marketplace), Baibl (encyclopedia),
+MASTER2 keeps and builds: Amber (marketplace), Baibl (encyclopedia),
 Blognet (publishing), BSDPorts (package tracker), Brgen (city platform),
-Hjerterom (dating), Privcam (private streaming), and more — all Rails 8
-mobile-first PWAs deployed on OpenBSD with pf, httpd, and relayd.
+Hjerterom (dating), Privcam (streaming) — Rails 8 PWAs on OpenBSD.
 
 Every intent flows through a pipeline that earns the right to touch code:
 
 ```
-intake → guard → route → pressure → execute → lint → render
+intake → guard → route → execute → lint → render
 ```
 
-80 axioms enforce at every stage. The council debates before merging.
-Beautiful code gets scored. The system runs its own constitution on itself.
+80 axioms enforce at every stage. Council debates before merging.
+The system runs its own constitution on itself. Beautiful code gets scored.
 
 ## Axioms
-
-Ranked, immutable governance loaded from `data/axioms.yml`.
 
 | Priority | Axiom | Meaning |
 |---|---|---|
@@ -44,32 +41,28 @@ Ranked, immutable governance loaded from `data/axioms.yml`.
 | 9 | `STRUNK_WHITE` | Omit needless words |
 | 9 | `ZEN_METHOD` | One thing, perfectly, ≤ 7 lines |
 | 8 | `KISS` | Simpler is better |
-| 8 | `ZSH_NATIVE` | Pure zsh — no bash, sed, awk, tr |
+| 8 | `ZSH_NATIVE` | Pure zsh — no bash, sed, awk |
 | 7 | `AESTHETIC_VIRTUE` | Exalt the excellent |
-
-Cascade: ABSOLUTE → PROTECTED → ADJUSTABLE. Nothing overrides an ABSOLUTE axiom.
 
 ## Architecture
 
 ```
-bin/master              CLI + REPL entry point
-└── Pipeline            intake * guard * executor * lint * render
+bin/master              CLI + REPL
+└── Pipeline            guard * executor * lint * render
     ├── Executor        ReAct * PreAct * ReWOO * Reflexion
-    ├── Enforcer        14 layer checks + beauty scoring
+    ├── Enforcer        axiom checks + beauty scoring
     ├── Chamber         12-persona adversarial council
-    ├── LLM             Replicate primary, OpenRouter fallback
-    ├── Speech          Piper TTS + Edge + Replicate, FFmpeg effects
-    ├── Server          Web UI via Falcon — canvas orb, SSE, TTS
-    └── ProjectMemory   .master/context.yml across sessions
+    ├── LLM             Replicate(0) → free OpenRouter(1) → paid(2)
+    ├── Speech          Piper TTS + Edge + Replicate
+    ├── Server          Falcon — canvas orb, SSE, /chat, /tts
+    └── Session         continuity across models and turns
 
 data/
-├── axioms.yml          80 axioms — the constitution
+├── axioms.yml          80 axioms
+├── models.yml          tier registry: premium→strong→fast→cheap→free
 ├── council.yml         12 personas, 3 veto holders
-├── models.yml          model registry with fallback chains
-├── personas.yml        8 persona definitions
-├── system_prompt.yml   identity, behavior, safety rules
-├── exemplars.yml       beautiful patterns cited in prompts
-└── 22 more .yml files  platform, typography, quality, detection
+├── system_prompt.yml   identity, behavior, safety
+└── 24 more .yml files  platform, language, quality, detection
 ```
 
 ## Install
@@ -85,39 +78,38 @@ bin/master
 
 ## Commands
 
+Free-form text goes directly to the LLM — no prefix needed.
+
 ```
-hello                 talk naturally
 scan [path]           enforce axioms
-reflow <path>         reorder by importance (inverted pyramid)
-refactor [path]       LLM-guided multi-pass refactor
-self                  run MASTER2 on itself
-chamber <text>        12-persona echo chamber debate
+fix [path]            auto-fix violations
+refactor [path]       LLM-guided refactor
+chamber <file>        12-persona adversarial review
+evolve [path]         self-improvement cycle
 model <name>          switch model
 models                list available models
-goal <text>           set project goal (persists across sessions)
-remember <text>       store a decision in project memory
-context               show goal and recent decisions
-status                constitutional alignment dashboard
-budget                cost summary
+health                system health check
+status                constitutional alignment
 help                  full command list
 ```
 
 ## Graceful degradation
 
-Never errors out. Primary model fails, it cascades:
+```
+gpt-5.2 (Replicate)
+  → claude-4-sonnet (Replicate)
+  → gemini-3.1-pro (Replicate)
+  → qwen3-coder:free (OpenRouter)
+  → hermes-3-405b:free (OpenRouter)
+  → ... 7 more free models
+```
 
-```
-claude-4.5-sonnet (Replicate)
-  → deepseek-r1:free (OpenRouter)
-  → gemini-flash:free
-  → llama-3.1-8b:free
-```
+Credit exhaustion opens paid circuits only — free models always reachable.
 
 ## Web UI
 
-Canvas-based neural orb visualization with 50 geometric states.
-Voice-first: TTS greeting, continuous mic listening, orb reacts to audio.
-Pitch black. Minimal. The orb contracts and pulses red while thinking.
+Canvas neural orb, 50 geometric states. Voice-first.
+Pitch black. Orb contracts and pulses red while thinking.
 
 ```
 web0: http://localhost:36413/?token=...
@@ -125,9 +117,9 @@ web0: http://localhost:36413/?token=...
 
 ## Platform
 
-Primary: OpenBSD 7.8 · vmm(4)/vmd(8) · pledge(2) · pf(4)
+Primary: OpenBSD 7.8 · vmm(4) · pledge(2) · pf(4)
 Runtime: Ruby 3.4 · zsh · no bash, sed, awk, tr
-Also runs on: Linux · macOS
+Also: Linux · macOS
 
 ## Design
 

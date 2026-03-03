@@ -19,11 +19,6 @@ module MASTER
     CONFIGURE_MUTEX = Mutex.new
     @ruby_llm_configured = false
 
-    FREE_FALLBACKS = %w[
-      meta-llama/llama-3.3-70b-instruct:free
-      google/gemma-3-12b-it:free
-    ].freeze
-
     class << self
       attr_accessor :persona_prompt
       attr_reader :forced_model
@@ -168,9 +163,9 @@ module MASTER
                           [primary] + fallbacks
                         else
                           peers = tier_peers(primary)
-                          free = configured_for_openrouter? ? FREE_FALLBACKS.reject { |id| peers.include?(id) || id == primary } : []
+                          free = configured_for_openrouter? ? (model_tiers[:free] || []).reject { |id| peers.include?(id) || id == primary } : []
                           all = [primary] + peers + free
-                          configured_for_replicate? ? all.sort_by { |m| replicate_model?(m) ? 0 : 1 } : all
+                          configured_for_replicate? ? all.sort_by { |m| replicate_model?(m) ? 0 : free_model?(m) ? 1 : 2 } : all
                         end
         last_error = nil
 
@@ -186,10 +181,10 @@ module MASTER
           else
             handle_llm_failure(result, candidate_model)
             last_error = result.error
-            # Credit exhaustion only kills OpenRouter models -- Replicate has its own key, keep trying
+            # Credit exhaustion kills paid OpenRouter models; free models and Replicate are unaffected
             if last_error.to_s.match?(/insufficient credits|can only afford|requires more credits/i)
-              models_to_try.each { |m| CircuitBreaker.open_circuit!(m) unless replicate_model?(m) }
-              next # continue to Replicate candidates
+              models_to_try.each { |m| CircuitBreaker.open_circuit!(m) unless replicate_model?(m) || free_model?(m) }
+              next
             end
           end
         end
@@ -539,8 +534,11 @@ module MASTER
       end
 
       def replicate_model?(model_id)
-        cfg = configured_models_by_id[model_id]
-        cfg&.dig(:api)&.to_s == "replicate"
+        configured_models_by_id[model_id]&.dig(:api)&.to_s == "replicate"
+      end
+
+      def free_model?(model_id)
+        (model_tiers[:free] || []).include?(model_id)
       end
 
       def execute_replicate_llm_request(prompt:, messages:, model:, reasoning:)

@@ -9,14 +9,6 @@ module MASTER
     module_function
 
     COMMANDS = {
-      ask:              { desc: "Ask the LLM a question",              usage: "ask <question>",                    group: :query,
-                          handler: ->(args, pipeline:) {
-                            if args.nil? || args.strip.empty?
-                              puts UI.dim("Usage: ask <question>")
-                              return MASTER::Commands::HANDLED
-                            end
-                            pipeline.call(args)
-                          } },
       refactor:         { desc: "Refactor a file with 6-phase analysis", usage: "refactor <file>",                group: :query,    aliases: %w[autofix],
                           handler: ->(args, pipeline:) { MASTER::Commands.autofix(args) } },
       chamber:          { desc: "Multi-model deliberation",            usage: "chamber <file>",                   group: :query,
@@ -157,7 +149,6 @@ module MASTER
       health:           "health --deep",
       session:          "session save milestone-1",
       evolve:           "evolve lib/",
-      ask:              "ask how does the pipeline work?",
       browse:           "browse https://example.com",
       speak:            "speak hello world",
       model:            "model gpt-4o",

@@ -371,6 +371,9 @@ principles:
     - progress_over_stability
     - push_up_a_big_tent
     - value_beautiful_code
+    - exalt_beautiful_code      # Flag exemplary patterns, not just violations
+    - adversarial_questioning   # Challenge every assumption; probe edges ruthlessly
+    - ultra_minimalistic_style  # Remove everything that does not earn its place
   nielsen_heuristics:
     - visibility_of_system_status
     - match_between_system_and_real_world
