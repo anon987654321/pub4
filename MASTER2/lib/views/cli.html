@@ -18,7 +18,7 @@
     html,body{
       margin:0;
       height:100%;
-      background:#000805;
+      background:#020000;
       color:#dcdcdc;
       font:16px/1.5 Helvetica,Arial,sans-serif;
       overflow:hidden;
@@ -31,7 +31,7 @@
       width:100dvw;
       height:100dvh;
       display:block;
-      background:#000805;
+      background:#020000;
       touch-action:none;
     }
 
@@ -48,16 +48,16 @@
       transition:color 0.3s;
     }
 
-    #status.think{color:#009966;}
-    #status.speak{color:#00cc88;}
-    #status.processing{color:#0077ff;animation:pulse-status 1.2s ease-in-out infinite;}
+    #status.think{color:#662222;}
+    #status.speak{color:#993333;}
+    #status.processing{color:#7a3a0a;animation:pulse-status 1.2s ease-in-out infinite;}
     @keyframes pulse-status{0%,100%{opacity:1;}50%{opacity:0.3;}}
 
     #ui{
       position:fixed;
       right:calc(12px + var(--safe-right));
       bottom:calc(10px + var(--safe-bottom));
-      color:#003322;
+      color:#2a0808;
       font:9px/1.1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
       text-transform:uppercase;
       letter-spacing:.28em;
@@ -68,7 +68,7 @@
       opacity:.5;
       transition:opacity 0.6s, color 0.3s;
     }
-    #ui.highlight{opacity:1;color:#00aa77;}
+    #ui.highlight{opacity:1;color:#993333;}
 
     #ui .dots{
       display:inline-block;
@@ -389,7 +389,7 @@
             setTimeout(()=>{if(!serverAnswered){speakText(reply);scheduleAmbient();}},1500);
             isProcessing=false;
             statusEl.classList.remove('processing');
-            spawnRing(Math.min(W,H)*0.44,'#285a3e');
+            spawnRing(Math.min(W,H)*0.44,'#7a2020');
             for(const n of neurons){
               n.vx+=(Math.random()-0.5)*80;
               n.vy+=(Math.random()-0.5)*80;
@@ -474,16 +474,18 @@
     let padOscs=[];
     let padDriftTimer=null;
 
-    // Minor/modal voicings — dark, cinematic, hip-hop soul
+    // Flying Lotus / Alice Coltrane harmonic palette —
+    // Extended modal jazz: m9, m11, sus, quartal, tritone.
+    // Roots live in octave 1-2; wide open voicings, no triads.
     const PAD_CHORDS=[
-      [65.41,77.78,98.00,130.81],      // Cm (low, rumbling)
-      [58.27,73.42,87.31,116.54],      // Abmaj7
-      [61.74,77.78,92.50,123.47],      // Bbsus4
-      [55.00,65.41,82.41,110.00],      // Am (Dilla minor)
-      [51.91,65.41,77.78,103.83],      // Eb
-      [73.42,92.50,110.00,146.83],     // Fm9
-      [49.00,61.74,73.42,98.00],       // Db (low rumble)
-      [55.00,69.30,82.41,110.00],      // A half-dim
+      [32.70, 65.41,  98.00, 155.56],  // Cm11 open — C1-C2-G2-Eb3 (FlyLo deep cosmos)
+      [41.20, 82.41, 103.83, 138.59],  // Abmaj9 — Ab1-G2-Eb3-Db3 (Alice Coltrane)
+      [36.71, 73.42, 110.00, 130.81],  // Fm(add9) quartal — F1-D2-A2-C3 (dark drift)
+      [27.50, 55.00,  82.41, 116.54],  // Am11 low — A1-A2-E3-Bb2 (Dilla×Coltrane)
+      [30.87, 61.74,  92.50, 138.59],  // Cm/Eb tritone — Eb1-B2-Gb2-Db3 (maximum shadow)
+      [43.65, 65.41,  97.99, 146.83],  // Fsus2 open — F1-C2-G2-D3 (suspended cosmos)
+      [24.50, 49.00,  77.78, 110.00],  // Bb+#11 phrygian — Bb0-Bb1-Eb2-A2 (abyss)
+      [36.71, 77.78, 103.83, 155.56],  // Fm(maj7) — F1-Eb2-Eb3-Eb3 (cosmic resolve)
     ];
 
     const initPads=()=>{
@@ -492,7 +494,7 @@
       const out=audioCtx.destination;
 
       padMaster=audioCtx.createGain();
-      padMaster.gain.value=0.07;
+      padMaster.gain.value=0.11; // louder — FlyLo pads are present, not shy
       padDuck=audioCtx.createGain();
       padDuck.gain.value=1.0;
 
@@ -509,48 +511,68 @@
         return g;
       };
 
-      // ── Tape saturation — asymmetric waveshaper like worn Tascam ──
+      // ── Tape saturation — heavy Ampex 440 style, driven hard ──
       const tapeSat=audioCtx.createWaveShaper();
-      const tapeN=2048;const tapeCurve=new Float32Array(tapeN);
+      const tapeN=4096;const tapeCurve=new Float32Array(tapeN);
       for(let i=0;i<tapeN;i++){
         const x=i*2/(tapeN-1)-1;
-        // Asymmetric: positive side softer, negative side harder
+        // Asymmetric hard drive: positive crushes soft, negative grinds
         tapeCurve[i]=x>=0
-          ?Math.tanh(x*1.2)*0.9+x*0.1
-          :Math.tanh(x*2.0)*0.7+x*0.3;
+          ?Math.tanh(x*2.8)*0.88+x*0.08
+          :Math.tanh(x*3.5)*0.72+x*0.18;
       }
-      tapeSat.curve=tapeCurve;tapeSat.oversample='2x';
+      tapeSat.curve=tapeCurve;tapeSat.oversample='4x';
 
-      // ── Vinyl noise layer — hiss + crackle ──
-      const noiseLen=audioCtx.sampleRate*4;
+      // ── Tape flutter LFO — collective pitch wobble (all voices together) ──
+      // Simulates tape moving unevenly past the head. Very slow, irregular.
+      const flutterLFO=audioCtx.createOscillator();flutterLFO.type='sine';flutterLFO.frequency.value=0.9;
+      const flutterDepth=audioCtx.createGain();flutterDepth.gain.value=18; // ±18 cents flutter
+      flutterLFO.connect(flutterDepth);flutterLFO.start();
+      // Wow LFO — even slower, larger drift (capstan speed variation)
+      const wowLFO=audioCtx.createOscillator();wowLFO.type='triangle';wowLFO.frequency.value=0.18;
+      const wowDepth=audioCtx.createGain();wowDepth.gain.value=28; // ±28 cents wow
+      wowLFO.connect(wowDepth);wowLFO.start();
+      // Tape dropout — irregular gain dips simulating oxide shedding
+      const dropoutGain=audioCtx.createGain();dropoutGain.gain.value=1.0;
+      const dropLFO=audioCtx.createOscillator();dropLFO.type='sine';dropLFO.frequency.value=0.04;
+      const dropDepth=audioCtx.createGain();dropDepth.gain.value=0.06; // subtle dips
+      dropLFO.connect(dropDepth);dropDepth.connect(dropoutGain.gain);dropLFO.start();
+
+      // ── Vinyl + tape noise — SP-1200 / Tascam 388 grit ──
+      const noiseLen=audioCtx.sampleRate*8; // 8s loop for more variation
       const noiseBuf=audioCtx.createBuffer(1,noiseLen,audioCtx.sampleRate);
       const noiseData=noiseBuf.getChannelData(0);
       for(let i=0;i<noiseLen;i++){
-        // Mix white noise (hiss) with sparse impulses (crackle)
-        noiseData[i]=(Math.random()*2-1)*0.15;
-        if(Math.random()<0.0003) noiseData[i]+=(Math.random()-0.5)*0.8; // crackle pop
-        if(Math.random()<0.0001) noiseData[i]+=Math.random()*1.2; // louder pop
+        noiseData[i]=(Math.random()*2-1)*0.22;           // heavier base hiss
+        if(Math.random()<0.0008) noiseData[i]+=(Math.random()-0.5)*1.2; // crackle
+        if(Math.random()<0.0002) noiseData[i]+=Math.random()*1.8;       // loud pop
+        if(Math.random()<0.00005) noiseData[i]+=Math.random()*3.0;      // dropout click
       }
       const vinylSrc=audioCtx.createBufferSource();
       vinylSrc.buffer=noiseBuf;vinylSrc.loop=true;
-      const vinylGain=audioCtx.createGain();vinylGain.gain.value=0.08;
-      // Bandpass to shape noise like vinyl — not too bright, not too boomy
+      const vinylGain=audioCtx.createGain();vinylGain.gain.value=0.16;
+      // Dual bandpass: vinyl surface hiss + tape hiss frequencies
       const vinylBP=audioCtx.createBiquadFilter();vinylBP.type='bandpass';
-      vinylBP.frequency.value=2000;vinylBP.Q.value=0.5;
-      vinylSrc.connect(vinylBP);vinylBP.connect(vinylGain);vinylSrc.start();
+      vinylBP.frequency.value=1800;vinylBP.Q.value=0.4;
+      const tapeBP=audioCtx.createBiquadFilter();tapeBP.type='bandpass';
+      tapeBP.frequency.value=4200;tapeBP.Q.value=0.6;
+      const tapeNoiseGain=audioCtx.createGain();tapeNoiseGain.gain.value=0.5;
+      vinylSrc.connect(vinylBP);vinylBP.connect(vinylGain);
+      vinylSrc.connect(tapeBP);tapeBP.connect(tapeNoiseGain);
+      vinylSrc.start();
 
-      // ── Lo-fi filter — Madlib SP-303 style bitcrush feel ──
+      // ── Lo-fi filter — SP-1200 / MPC3000 dark rolloff ──
       const lofiLP=audioCtx.createBiquadFilter();
-      lofiLP.type='lowpass';lofiLP.frequency.value=3500;lofiLP.Q.value=0.7;
+      lofiLP.type='lowpass';lofiLP.frequency.value=2000;lofiLP.Q.value=0.8; // FlyLo dark rolloff
       const lofiHP=audioCtx.createBiquadFilter();
-      lofiHP.type='highpass';lofiHP.frequency.value=60;
+      lofiHP.type='highpass';lofiHP.frequency.value=40;
 
       // ── Moog-style ladder filter (4-pole lowpass cascade) ──
-      const lad1=audioCtx.createBiquadFilter();lad1.type='lowpass';lad1.Q.value=1.5;
-      const lad2=audioCtx.createBiquadFilter();lad2.type='lowpass';lad2.Q.value=1.5;
-      const lad3=audioCtx.createBiquadFilter();lad3.type='lowpass';lad3.Q.value=0.8;
-      const lad4=audioCtx.createBiquadFilter();lad4.type='lowpass';lad4.Q.value=0.8;
-      [lad1,lad2,lad3,lad4].forEach(f=>f.frequency.value=900);
+      const lad1=audioCtx.createBiquadFilter();lad1.type='lowpass';lad1.Q.value=2.8; // more resonance
+      const lad2=audioCtx.createBiquadFilter();lad2.type='lowpass';lad2.Q.value=2.8;
+      const lad3=audioCtx.createBiquadFilter();lad3.type='lowpass';lad3.Q.value=1.4;
+      const lad4=audioCtx.createBiquadFilter();lad4.type='lowpass';lad4.Q.value=1.4;
+      [lad1,lad2,lad3,lad4].forEach(f=>f.frequency.value=700); // darker starting point
 
       // Slow LFO sweeps the ladder — deep analog sweep
       const ladLFO=audioCtx.createOscillator();ladLFO.type='sine';ladLFO.frequency.value=0.025;
@@ -574,8 +596,8 @@
       const subOsc=audioCtx.createOscillator();subOsc.type='sine';subOsc.frequency.value=32.7;
       const subOsc2=audioCtx.createOscillator();subOsc2.type='triangle';subOsc2.frequency.value=32.7;
       subOsc2.detune.value=3;
-      const subGain=audioCtx.createGain();subGain.gain.value=0.2;
-      const subLP=audioCtx.createBiquadFilter();subLP.type='lowpass';subLP.frequency.value=65;subLP.Q.value=2;
+      const subGain=audioCtx.createGain();subGain.gain.value=0.34; // FlyLo sub is massive
+      const subLP=audioCtx.createBiquadFilter();subLP.type='lowpass';subLP.frequency.value=80;subLP.Q.value=3;
       subOsc.connect(subLP);subOsc2.connect(subLP);subLP.connect(subGain);
       subOsc.start();subOsc2.start();
 
@@ -637,12 +659,12 @@
       const springHP=audioCtx.createBiquadFilter();springHP.type='highpass';springHP.frequency.value=400;
       const springMix=audioCtx.createGain();springMix.gain.value=0.3;
 
-      // ── Hall reverb — large space, long tail ──
-      const hallTaps=[0.11,0.23,0.37,0.53,0.71,0.89];
-      const hallGains=[0.3,0.22,0.16,0.10,0.06,0.03];
-      const hallBus=audioCtx.createGain();hallBus.gain.value=0.4;
-      const hallLP=audioCtx.createBiquadFilter();hallLP.type='lowpass';hallLP.frequency.value=2200;
-      const hallFb=audioCtx.createGain();hallFb.gain.value=0.15;
+      // ── Hall reverb — FlyLo drenched in space, long dark tail ──
+      const hallTaps=[0.13,0.27,0.43,0.61,0.83,1.07,1.31]; // longer taps
+      const hallGains=[0.35,0.28,0.22,0.16,0.10,0.06,0.03];
+      const hallBus=audioCtx.createGain();hallBus.gain.value=0.75; // much more reverb
+      const hallLP=audioCtx.createBiquadFilter();hallLP.type='lowpass';hallLP.frequency.value=1800;
+      const hallFb=audioCtx.createGain();hallFb.gain.value=0.22; // more feedback = longer tail
       const hallDelays=hallTaps.map((t,i)=>{
         const d=audioCtx.createDelay();d.delayTime.value=t;
         const g=audioCtx.createGain();g.gain.value=hallGains[i];
@@ -702,7 +724,7 @@
       // ══════════════════════════════════════════════════════════
       // SIGNAL ROUTING
       // Oscillators → ladder filter → tape sat → warmth → phaser →
-      // tremolo → lofi → {chorus, dry, spring reverb, hall reverb,
+      // tremolo → dropout → lofi → {chorus, dry, spring reverb, hall,
       // ping-pong, wobble} → pump → stereo → duck → master → out
       // ══════════════════════════════════════════════════════════
 
@@ -714,7 +736,7 @@
       tapeSat.connect(warmth);
       warmth.connect(phaserStages[0]);
       phaserStages[phaserStages.length-1].connect(tremGain);
-      tremGain.connect(lofiLP);lofiLP.connect(lofiHP);
+      tremGain.connect(dropoutGain);dropoutGain.connect(lofiLP);lofiLP.connect(lofiHP);
 
       // Parallel sends from lofi output
       const dryBus=audioCtx.createGain();dryBus.gain.value=0.7;
@@ -761,38 +783,45 @@
       widenerL.connect(merger,0,0);widenerR.connect(merger,0,1);
       merger.connect(padDuck);
 
-      // Vinyl + sub + shimmer bypass main chain, go direct to duck
+      // Vinyl + tape noise + sub + shimmer bypass main chain, go direct to duck
       vinylGain.connect(padDuck);
+      tapeNoiseGain.connect(padDuck);
       subGain.connect(padDuck);
       shimmerGain.connect(padDuck);
 
       padDuck.connect(padMaster);
       padMaster.connect(out);
 
-      // ── Create oscillators — 5 layers per note, analog-detuned ──
+      // Pump dropout through main chain too (tape artifacts on the pad)
+      dropoutGain.gain.value=1.0; // baseline; dropLFO dips it slightly
+
+      // ── Create oscillators — 5 layers per note, heavy analog detune ──
       const chord=PAD_CHORDS[0];
       const oscConfigs=[
-        {type:'sawtooth',gain:0.06,detune:-15},  // fat analog saw
-        {type:'sawtooth',gain:0.05,detune:7},     // second saw, slightly sharp
-        {type:'triangle',gain:0.04,detune:-3},    // warm body
-        {type:'square',  gain:0.015,detune:12},   // hollow color
-        {type:'sine',    gain:0.03,detune:0.3},   // fundamental anchor
+        {type:'sawtooth',gain:0.07,detune:-22},  // fat dark saw
+        {type:'sawtooth',gain:0.06,detune:11},   // second saw, wide spread
+        {type:'triangle',gain:0.05,detune:-5},   // warm low body
+        {type:'square',  gain:0.018,detune:18},  // hollow formant color
+        {type:'sine',    gain:0.035,detune:0.5}, // fundamental anchor
       ];
       chord.forEach((freq,ni)=>{
         oscConfigs.forEach((cfg,ci)=>{
           const osc=audioCtx.createOscillator();
           osc.type=cfg.type;
           osc.frequency.value=freq;
-          // Analog-style random detune spread
-          osc.detune.value=cfg.detune+(Math.random()*6-3);
+          // Wide analog detune — lots of spread for that thick FlyLo texture
+          osc.detune.value=cfg.detune+(Math.random()*18-9);
           const g=audioCtx.createGain();g.gain.value=cfg.gain;
 
-          // VCO drift — each osc drifts independently (analog instability)
+          // VCO drift — heavy per-oscillator instability
           const drift=makeDriftLFO(
-            0.02+Math.random()*0.08,     // very slow, irregular
-            2+Math.random()*4            // subtle cent drift
+            0.01+Math.random()*0.06,     // very slow
+            5+Math.random()*10           // wide cent drift — cassette instability
           );
           drift.connect(osc.detune);
+          // Tape flutter + wow collective pitch — all voices wobble together
+          flutterDepth.connect(osc.detune);
+          wowDepth.connect(osc.detune);
 
           osc.connect(g);g.connect(lad1);
           osc.start(now+Math.random()*0.1); // stagger starts
@@ -883,7 +912,7 @@
 
     const _onSpeakEnd=()=>{
       isSpeaking=false;
-      spawnRing(Math.min(W,H)*0.12,'#1a3328');
+      spawnRing(Math.min(W,H)*0.12,'#2a0a08');
       statusEl.classList.remove('speak');
       statusEl.classList.add('think');
       unduckPads();
@@ -1210,7 +1239,7 @@
 
     // Motion graphics: spawn expanding ring from center on state change
     const spawnRing=(maxR,col)=>{
-      ringPulses.push({r:2,maxR:maxR||Math.min(W,H)*0.38,a:0.55,col:col||'#2d5a42'});
+      ringPulses.push({r:2,maxR:maxR||Math.min(W,H)*0.38,a:0.55,col:col||'#4a1410'});
     };
 
     // Swipe left/right to change orb
@@ -1259,7 +1288,7 @@
       isProcessing=true;
       statusEl.classList.remove('think','speak');
       statusEl.classList.add('processing');
-      spawnRing(Math.min(W,H)*0.16,'#1a3050');
+      spawnRing(Math.min(W,H)*0.16,'#4a2a04');
       activeSpinner=spinnerSets[Math.floor(Math.random()*spinnerSets.length)] || spinnerFallback;
       for(const n of neurons){
         n.vx+=(Math.random()-0.5)*100;
@@ -1753,42 +1782,39 @@
         audioLevel=audioLevel*0.92+padBreath;
       }
 
-      // Background: motion trail instead of hard clear — ghostly afterimage
+      // Background: motion trail — deep black fade
       const trailAlpha=isProcessing?0.12:isSpeaking?0.08:0.06;
-      ctx.fillStyle=`rgba(0,5,3,${1-trailAlpha})`;
+      ctx.fillStyle=`rgba(2,0,0,${1-trailAlpha})`; // near-black with red bias
       ctx.fillRect(0,0,W,H);
 
       for(const n of neurons) n.update(t,orbStates[currentOrb].s);
       const proj=neurons.map(n=>n.project()).filter(Boolean);
       proj.sort((a,b)=>b.z-a.z);
 
-      // Professional color grading — teal hue family, luminance = intensity
-      // Idle: dark teal ramp. Speaking: brighter teal. Thinking: blue-shifted teal.
-      // Brightness signals activity — flat, no glows, no shadows.
-      const cols     =['#0d1c17','#1a3328','#2d5a42','#3d7a58'];
-      const colsSpeak=['#162e22','#285a3e','#429966','#5bbf80'];
-      const colsThink=['#0e1a2a','#1a3050','#2e5588','#4a80bb'];
+      // Dark crimson-to-ember palette — reddish, fades to black
+      // Idle: near-black embers. Speaking: deep crimson-rose. Processing: dark amber.
+      const cols     =['#150505','#2a0a08','#4a1410','#6b2018']; // ember ramp
+      const colsSpeak=['#1f0808','#3d1212','#7a2020','#b03030']; // crimson on speech
+      const colsThink=['#140a02','#281402','#4a2a04','#6b4008']; // dark amber on think
       const activeCol=isProcessing?colsThink:(isSpeaking?colsSpeak:cols);
       const audioBoost=Math.min(1,audioLevel*1.8);
 
       for(const p of proj){
         const px=p.x+camX;
         const py=p.y+camY;
-        const r=Math.max(0.5,(p.s<1.5?0.7:p.s<2.5?1.1:p.s<3.5?1.6:2.2)+(audioBoost*1.2));
+        // Smaller particles — fine grain, not chunky
+        const r=Math.max(0.3,(p.s<1.5?0.5:p.s<2.5?0.8:p.s<3.5?1.1:1.5)+(audioBoost*0.7));
 
         ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35)*orbFade);
         if(isProcessing){
-          // Blue-shifted teal pulse: luminance steps with beat
           const pulse=0.45+Math.sin(t*6)*0.3;
           const idx=Math.min(3,p.c+Math.round(pulse*1.5));
           ctx.fillStyle=colsThink[idx];
         }else if(p.think>0.22){
-          // Brighter step for neurons near a brain lobe attractor
           ctx.fillStyle=activeCol[Math.min(3,p.c+1)];
         }else{
           if(audioBoost>0.08){
-            // Audio-reactive: step one level brighter on the ramp
-            const bright=isSpeaking?'#7dccaa':'#4a9a72';
+            const bright=isSpeaking?'#cc4444':'#882222'; // bright ember on audio
             const mix=Math.min(1,audioBoost*1.5);
             ctx.fillStyle=mix>0.7?bright:(activeCol[Math.min(3,p.c+1)]);
           }else{
@@ -1799,9 +1825,9 @@
         ctx.arc(px,py,r,0,Math.PI*2);
         ctx.fill();
       }
-      // Connection lines — thin filaments, teal-graded to state
-      ctx.globalAlpha=0.18;
-      ctx.strokeStyle=isProcessing?'#1a3050':(isSpeaking?'#285a3e':'#1a3328');
+      // Connection lines — dark red filaments
+      ctx.globalAlpha=0.14;
+      ctx.strokeStyle=isProcessing?'#3d1a04':(isSpeaking?'#4a1010':'#2a0808');
       ctx.lineWidth=0.8;
       for(let i=0;i<proj.length-9;i+=9){
         const a=proj[i];
@@ -1837,7 +1863,7 @@
         scanPhase=(scanPhase+0.003)%1;
         const sy=Math.floor(scanPhase*H);
         ctx.globalAlpha=0.08+Math.sin(t*6)*0.03;
-        ctx.strokeStyle='#1a3050';
+        ctx.strokeStyle='#4a1a04';
         ctx.lineWidth=1;
         ctx.beginPath();ctx.moveTo(0,sy);ctx.lineTo(W,sy);ctx.stroke();
       }
@@ -1847,7 +1873,7 @@
         const barX=Math.floor(W/2-barW/2+camX);
         const barY=Math.floor(H/2+S*22+camY);
         ctx.globalAlpha=0.35+Math.sin(t*4)*0.15;
-        ctx.fillStyle='#003366';
+        ctx.fillStyle='#3d1008';
         ctx.fillRect(barX,barY,barW,2);
       }
 

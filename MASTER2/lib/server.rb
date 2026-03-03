@@ -65,15 +65,12 @@ module MASTER
 
     private
 
+    DEFAULT_PORT = 4567
+
     def find_port
       return ENV["MASTER_PORT"].to_i if ENV["MASTER_PORT"]
 
-      server = TCPServer.new("127.0.0.1", 0)
-      port = server.addr[1]
-      server.close
-      port
-    rescue StandardError
-      8080
+      DEFAULT_PORT
     end
 
     def run_server
