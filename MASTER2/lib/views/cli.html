@@ -895,12 +895,11 @@
     const duckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(0.06,audioCtx.currentTime+0.03);}};
     const unduckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(1.0,audioCtx.currentTime+1.4);}};
 
-    // ── Techno Drum Engine ─────────────────────────────────────────────────
-    // Roland TR-909/808 inspired synthesis. 16-step sequencer at ~130 BPM.
-    // Intricate euclidean patterns: kick/snare/clap/hat/rim/conga/cowbell.
+    // ── Drum Engine ────────────────────────────────────────────────────────
+    // Slow dark groove — trip-hop / doom-funk feel. Swing + micro-jitter humanize.
     let drumClock=null;
     let drumStep=0;
-    const DRUM_BPM=140; // industrial tempo
+    const DRUM_BPM=88; // slow, heavy
     const DRUM_STEPS=16;
     const DRUM_GAIN_MASTER=0.26;
 
@@ -992,76 +991,74 @@
       startDrumSequencer();
     };
 
-    // ── Industrial patterns — ported from rg69.html hate-pummel / hate-grind ──
-    // Values 0.x = ghost velocity; 1 = full hit; 0 = rest
+    // ── Slow groove patterns — trip-hop backbone, breathing room ──
+    // Values: 1=full, 0.x=ghost, 0=rest
     const DRUM_PATTERNS={
-      // hate-pummel: kick every 2nd 16th with velocity variation
-      kick:  [1,0,.7,0, 1,0,.8,0, 1,0,.7,0, 1,0,.9,0],
-      snare: [0,0,0,0,  1,0,0,0,  0,0,0,0,  1,0,0,0],
-      clap:  [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
-      ohat:  [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
-      chat:  [1,.8,1,.7, 1,.8,1,.7, 1,.8,1,.7, 1,.8,1,.7], // 16th hat wall
-      rim:   [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
-      conga: [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
-      cowbell:[0,0,0,0, 0,0,0,0,  0,0,0,0,  0,0,0,0],
+      // Pattern A: steady backbeat, open hi-hat on &2 &4
+      kick:  [1,0,0,0,  0,0,.7,0,  .5,0,0,0,  .9,0,0,0],
+      snare: [0,0,0,0,  1,0,0,0,   0,0,0,0,   1,0,0,0],
+      chat:  [.8,0,.5,0, .8,0,.5,0, .8,0,.5,0, .8,0,.5,0],
+      ohat:  [0,0,0,0,  0,0,0,.7,  0,0,0,0,   0,0,0,.6],
+      rim:   [0,0,0,0,  0,0,0,0,   0,0,.4,0,  0,.3,0,0],
+      clap:  [0,0,0,0,  0,0,0,0,   0,0,0,0,   0,0,0,0],
+      conga: [0,0,0,0,  0,0,0,0,   0,0,0,0,   0,0,0,0],
+      cowbell:[0,0,0,0, 0,0,0,0,   0,0,0,0,   0,0,0,0],
     };
-
-    // hate-grind: syncopated kick, snare with ghosts
     const DRUM_PATTERNS_B={
-      kick:  [1,0,0,.5, 1,0,0,.6, 1,0,0,.5, 1,0,0,.7],
-      snare: [0,0,0,0,  .9,0,0,.3, 0,0,0,0,  .9,0,0,.4],
-      clap:  [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
-      ohat:  [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
-      chat:  [.9,.8,.9,.7, .9,.8,.9,.7, .9,.8,.9,.7, .9,.8,.9,.7],
-      rim:   [0,0,.6,0,  0,0,0,0,  .7,0,0,0, 0,.5,0,0],
-      conga: [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
-      cowbell:[0,0,0,0, 0,0,0,0,  0,0,0,0,  0,0,0,0],
+      // Pattern B: syncopated kick, ghost snare on &2
+      kick:  [1,0,0,.4,  0,0,.8,0,  1,0,0,0,   0,0,.6,0],
+      snare: [0,0,0,0,   1,0,0,.3,  0,0,0,0,   1,0,0,0],
+      chat:  [.7,0,.4,0, .7,0,.4,0, .7,0,.4,0, .7,0,.4,0],
+      ohat:  [0,0,0,0,   0,0,1,0,   0,0,0,0,   0,0,1,0],
+      rim:   [0,0,0,0,   0,.5,0,0,  0,0,0,0,   0,0,0,.4],
+      clap:  [0,0,0,0,   0,0,0,0,   0,0,0,0,   0,0,0,0],
+      conga: [0,0,0,0,   0,0,0,0,   .6,0,0,0,  0,0,0,0],
+      cowbell:[0,0,0,0,  0,0,0,0,   0,0,0,0,   0,0,0,0],
     };
 
     let drumBar=0;
+    let drumActive=false;
+    const DRUM_BARS_ON=8;  // play 8 bars then rest
+    const DRUM_BARS_OFF=16; // rest 16 bars (long ambient gaps)
     const startDrumSequencer=()=>{
-      const stepDur=60/(DRUM_BPM*4); // 16th note duration
+      const stepDur=60/(DRUM_BPM*4);
       const lookahead=0.08;
       let nextTime=audioCtx.currentTime+0.1;
+      let barsInPhase=0;
+      drumActive=true;
       const tick=()=>{
         while(nextTime<audioCtx.currentTime+lookahead*2){
-          const pat=drumBar%4<2?DRUM_PATTERNS:DRUM_PATTERNS_B;
           const s=drumStep%DRUM_STEPS;
-          if(pat.kick[s])   synthKick(nextTime,s===0?1:0.75);
-          if(pat.snare[s])  synthSnare(nextTime,0.85);
-          if(pat.clap[s])   synthClap(nextTime,0.7);
-          if(pat.ohat[s])   synthHat(nextTime,true,0.5);
-          if(pat.chat[s])   synthHat(nextTime,false,pat.chat[s]===1?0.4:0.2);
-          if(pat.rim[s])    synthRim(nextTime,0.6);
-          if(pat.conga[s])  synthConga(nextTime,s%2===0?220:180,0.55);
-          if(pat.cowbell[s])synthCowbell(nextTime,0.4);
+          if(drumActive){
+            const pat=drumBar%2===0?DRUM_PATTERNS:DRUM_PATTERNS_B;
+            // Swing: push even-indexed 16ths slightly late (Dilla feel)
+            const sw=(s%2===1)?stepDur*0.13:0;
+            // Micro-jitter: human imprecision ±5ms
+            const jit=()=>(Math.random()-0.5)*0.010;
+            if(pat.kick[s])    synthKick(nextTime+sw+jit(),   s===0?1:pat.kick[s]*0.8);
+            if(pat.snare[s])   synthSnare(nextTime+sw+jit(),  pat.snare[s]*0.85);
+            if(pat.clap[s])    synthClap(nextTime+sw+jit(),   0.7);
+            if(pat.ohat[s])    synthHat(nextTime+sw+jit(),    true, pat.ohat[s]*0.55);
+            if(pat.chat[s])    synthHat(nextTime+sw+jit(),    false,pat.chat[s]*0.38);
+            if(pat.rim[s])     synthRim(nextTime+sw+jit(),    pat.rim[s]*0.6);
+            if(pat.conga[s])   synthConga(nextTime+sw+jit(),  s%2===0?220:180,0.55);
+            if(pat.cowbell[s]) synthCowbell(nextTime+sw+jit(),0.35);
+          }
           nextTime+=stepDur;
           drumStep++;
-          if(drumStep%DRUM_STEPS===0) drumBar++;
+          if(drumStep%DRUM_STEPS===0){
+            drumBar++;
+            barsInPhase++;
+            if(drumActive && barsInPhase>=DRUM_BARS_ON){
+              drumActive=false; barsInPhase=0;
+            } else if(!drumActive && barsInPhase>=DRUM_BARS_OFF){
+              drumActive=true; barsInPhase=0;
+            }
+          }
         }
         drumClock=setTimeout(tick,lookahead*1000);
       };
       tick();
-    };
-
-    // Pick the most soothing available voice: prefer neural/enhanced voices,
-    // then named natural voices, then first English voice.
-    let _cachedVoice=null;
-    const pickVoice=()=>{
-      if(_cachedVoice) return _cachedVoice;
-      const voices=window.speechSynthesis.getVoices();
-      if(!voices.length) return null;
-      const en=voices.filter(v=>v.lang.startsWith('en'));
-      // Prefer neural/premium voices (Chrome "Natural", Edge "Online", Safari "Enhanced")
-      const neural=en.find(v=>/Natural|Online|Enhanced|Premium/i.test(v.name));
-      if(neural){_cachedVoice=neural;return neural;}
-      const want=['Samantha','Google UK English Female','Karen','Moira','Tessa','Fiona','Victoria','Allison','Ava'];
-      for(const name of want){
-        const v=en.find(v=>v.name.includes(name));
-        if(v){_cachedVoice=v;return v;}
-      }
-      _cachedVoice=en.find(v=>v.lang==='en-GB')||en[0]||voices[0];
-      return _cachedVoice;
     };
 
     const _onSpeakEnd=()=>{
@@ -1102,14 +1099,32 @@
         const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=200;bass.gain.value=10;
         src.connect(bass);bass.connect(analyser);bass.connect(out);return;
       }
-      // Demon: pitch way down, distortion, crushing bass
+      // Demon: ring mod growl + crypt reverb + sub bass crush — nobody fucks with Osman
       if(mode==='demon'){
-        src.playbackRate.value=0.6;
-        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=120;bass.gain.value=20;
-        const dist=audioCtx.createWaveShaper();const k=80;const n=44100;const curve=new Float32Array(n);
-        for(let i=0;i<n;i++){const x=i*2/n-1;curve[i]=(3+k)*x*20*(Math.PI/180)/(Math.PI+k*Math.abs(x));}
-        dist.curve=curve;dist.oversample='4x';
-        src.connect(dist);dist.connect(bass);bass.connect(analyser);bass.connect(out);return;
+        // Hard distortion into sub bass shelf
+        const dist=audioCtx.createWaveShaper();const dn=2048;const dc=new Float32Array(dn);
+        for(let i=0;i<dn;i++){const x=i*2/(dn-1)-1;dc[i]=Math.tanh(x*7)*0.85;}
+        dist.curve=dc;dist.oversample='4x';
+        const sub=audioCtx.createBiquadFilter();sub.type='lowshelf';sub.frequency.value=100;sub.gain.value=16;
+        const cut=audioCtx.createBiquadFilter();cut.type='highshelf';cut.frequency.value=3200;cut.gain.value=-20;
+        // Ring modulation at 35Hz — demonic growl texture
+        const rm=audioCtx.createGain();rm.gain.value=0.55;
+        const rmOsc=audioCtx.createOscillator();rmOsc.frequency.value=35;rmOsc.type='sine';
+        const rmD=audioCtx.createGain();rmD.gain.value=0.42;
+        rmOsc.connect(rmD);rmD.connect(rm.gain);rmOsc.start();
+        // Crypt reverb: 3 long echoes with feedback
+        const r1=audioCtx.createDelay();r1.delayTime.value=0.11;
+        const r2=audioCtx.createDelay();r2.delayTime.value=0.28;
+        const r3=audioCtx.createDelay();r3.delayTime.value=0.55;
+        const rg1=audioCtx.createGain();rg1.gain.value=0.38;
+        const rg2=audioCtx.createGain();rg2.gain.value=0.20;
+        const rg3=audioCtx.createGain();rg3.gain.value=0.09;
+        const rfb=audioCtx.createGain();rfb.gain.value=0.30;
+        src.connect(dist);dist.connect(sub);sub.connect(cut);cut.connect(rm);
+        rm.connect(analyser);rm.connect(out);
+        cut.connect(r1);r1.connect(rg1);rg1.connect(out);rg1.connect(rfb);rfb.connect(r1);
+        cut.connect(r2);r2.connect(rg2);rg2.connect(out);
+        cut.connect(r3);r3.connect(rg3);rg3.connect(out);return;
       }
       // Radio: bandpass crackle, compression
       if(mode==='radio'){
@@ -1252,8 +1267,6 @@
         return true;
       }catch(_e){ return false; }
     };
-
-    const localTtsAvailable=()=>!!window.speechSynthesis;
 
     const startRecognition=()=>{
       if(!recognition||isSpeaking) return;
@@ -1774,9 +1787,6 @@
     };
     applyMessinessProfile();
     tickSpinner();
-
-    // Pre-load voices so pickVoice() works on first call
-    if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged=()=>{_cachedVoice=null;pickVoice();};
 
     // Chip clicks send command directly without dismissing overlay first
     document.querySelectorAll('#overlay .chip').forEach(chip=>{

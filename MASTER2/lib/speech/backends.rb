@@ -62,7 +62,12 @@ module MASTER
         if effect && (fx_filter = STREAM_EFFECTS[effect.to_sym])
           ffmpeg = ENV.fetch("FFMPEG_PATH", "ffmpeg")
           processed = File.join(output_dir, "edge_fx_#{SecureRandom.hex(4)}.mp3")
-          _fo, _fe, fst = Open3.capture3(ffmpeg, "-y", "-i", output, "-af", fx_filter, processed)
+          cmd = if fx_filter.start_with?("fc:")
+            [ffmpeg, "-y", "-i", output, "-filter_complex", fx_filter[3..], "-map", "[out]", processed]
+          else
+            [ffmpeg, "-y", "-i", output, "-af", fx_filter, processed]
+          end
+          _fo, _fe, fst = Open3.capture3(*cmd)
           if fst.success? && File.exist?(processed)
             FileUtils.rm_f(output)
             output = processed
