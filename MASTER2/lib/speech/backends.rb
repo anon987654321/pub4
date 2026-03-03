@@ -48,10 +48,11 @@ module MASTER
         FileUtils.mkdir_p(output_dir)
         output = File.join(output_dir, "edge_#{SecureRandom.hex(4)}.mp3")
 
+        # Use = form so negative values (e.g. -35%) aren't parsed as flags
         tts_cmd = [cmd,
                    "--voice", voice_id,
-                   "--rate",  params[:rate],
-                   "--pitch", params[:pitch],
+                   "--rate=#{params[:rate]}",
+                   "--pitch=#{params[:pitch]}",
                    "--text",  text,
                    "--write-media", output]
 

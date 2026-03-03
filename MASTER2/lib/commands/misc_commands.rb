@@ -291,7 +291,8 @@ module MASTER
         port = args.to_s.strip.match?(/\A\d+\z/) ? args.strip.to_i : nil
         server = Server.new(port: port)
         server.start
-        puts "  web: http://localhost:#{server.port}/?token=#{Server::AUTH_TOKEN}"
+        host = ENV.fetch("MASTER_HOST", "brgen.no")
+        puts "  web: http://#{host}:#{server.port}/?token=#{Server::AUTH_TOKEN}"
       end
 
       def creative_chamber(args)
