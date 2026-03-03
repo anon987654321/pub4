@@ -48,6 +48,8 @@ module MASTER
 
           system("gem", "install", gem, "--no-document")
         end
+
+        Gem.clear_paths
       end
 
       def require_gem(name)
@@ -59,6 +61,7 @@ module MASTER
         @installed ||= {}
         warn "Installing #{name}..."
         @installed[name] = system("gem", "install", name, "--no-document")
+        Gem.clear_paths if @installed[name]
         require name
       end
 
