@@ -16,7 +16,7 @@ module MASTER
   # BACKWARD COMPATIBILITY ALIASES
   # ===================================================================
 
-  Prescan = Analysis::Prescan
-  Introspection = Analysis::Introspection
-  SelfTest = Analysis::Introspection
+  Prescan = Analysis::Prescan if Analysis.const_defined?(:Prescan, false)
+  Introspection = Analysis::Introspection if Analysis.const_defined?(:Introspection, false)
+  SelfTest = Analysis::Introspection if Analysis.const_defined?(:Introspection, false)
 end
