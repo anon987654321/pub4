@@ -380,13 +380,10 @@
             const uiEl=document.getElementById('ui');
             uiEl.classList.add('highlight');
             setTimeout(()=>uiEl.classList.remove('highlight'),2000);
-            // Try server audio first; fall back to local TTS if slow
-            // #3: Pause ambient narrator so real response isn't stomped
+            // Server TTS only — no browser fallback (browser voice is wrong)
             pauseAmbient();
             if('speechSynthesis' in window) window.speechSynthesis.cancel();
-            let serverAnswered=false;
-            speakWithAudio(reply).then(ok=>{serverAnswered=ok; scheduleAmbient();});
-            setTimeout(()=>{if(!serverAnswered){speakText(reply);scheduleAmbient();}},1500);
+            speakWithAudio(reply).then(()=>scheduleAmbient());
             isProcessing=false;
             statusEl.classList.remove('processing');
             spawnRing(Math.min(W,H)*0.44,'#7a2020');
@@ -1606,12 +1603,12 @@
     const ambientSpeak=()=>{
       if(isProcessing) return scheduleAmbient();
       if(isSpeaking) return ambientTimer=setTimeout(ambientSpeak,2000);
-      // Randomize FX each phrase for variety
-      fxIdx=1+Math.floor(Math.random()*(FX_MODES.length-1));
-      showFxMode();
       ambientIdx=(ambientIdx+1+Math.floor(Math.random()*(AMBIENT.length-1)))%AMBIENT.length;
       const phrase=AMBIENT[ambientIdx];
-      speakText(phrase);
+      // Server TTS only — routes through Osman demon filter same as responses
+      speakWithAudio(phrase).then(ok=>{
+        if(!ok) _onSpeakEnd(); // advance state even if TTS unavailable
+      });
       const estDuration=phrase.length*120+AMBIENT_PAUSE;
       ambientTimer=setTimeout(ambientSpeak,estDuration);
     };
@@ -1700,9 +1697,7 @@
         else if(hour<12) greeting='Good morning.';
         else if(hour<17) greeting='Good afternoon.';
         else greeting='Good evening.';
-        let greetServer=false;
-        speakWithAudio(greeting).then(ok=>{greetServer=ok;});
-        setTimeout(()=>{if(!greetServer) speakText(greeting);},1500);
+        speakWithAudio(greeting);
         scheduleAmbient();
       },850);
     });
