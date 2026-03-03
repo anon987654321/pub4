@@ -1092,12 +1092,13 @@
     const buildFxChain=(src)=>{
       const mode=FX_MODES[fxIdx];
       const out=audioCtx.destination;
-      if(mode==='off'){src.connect(analyser);src.connect(out);return;}
+      const an=analyser||audioCtx.createGain(); // guard: null when mic denied
+      if(mode==='off'){src.connect(an);src.connect(out);return;}
       // Dark: pitch down, heavy bass
       if(mode==='dark'){
         src.playbackRate.value=0.85;
         const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=200;bass.gain.value=10;
-        src.connect(bass);bass.connect(analyser);bass.connect(out);return;
+        src.connect(bass);bass.connect(an);bass.connect(out);return;
       }
       // Demon: ring mod growl + crypt reverb + sub bass crush — nobody fucks with Osman
       if(mode==='demon'){
@@ -1121,7 +1122,7 @@
         const rg3=audioCtx.createGain();rg3.gain.value=0.09;
         const rfb=audioCtx.createGain();rfb.gain.value=0.30;
         src.connect(dist);dist.connect(sub);sub.connect(cut);cut.connect(rm);
-        rm.connect(analyser);rm.connect(out);
+        rm.connect(an);rm.connect(out);
         cut.connect(r1);r1.connect(rg1);rg1.connect(out);rg1.connect(rfb);rfb.connect(r1);
         cut.connect(r2);r2.connect(rg2);rg2.connect(out);
         cut.connect(r3);r3.connect(rg3);rg3.connect(out);return;
@@ -1131,7 +1132,7 @@
         const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=300;
         const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3000;
         const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-20;comp.ratio.value=8;
-        src.connect(hp);hp.connect(lp);lp.connect(comp);comp.connect(analyser);comp.connect(out);return;
+        src.connect(hp);hp.connect(lp);lp.connect(comp);comp.connect(an);comp.connect(out);return;
       }
       // Underwater: deep submerged, heavy chorus
       if(mode==='underwater'){
@@ -1141,7 +1142,7 @@
         const d2=audioCtx.createDelay();d2.delayTime.value=0.07;
         const w1=audioCtx.createGain();w1.gain.value=0.5;
         const w2=audioCtx.createGain();w2.gain.value=0.3;
-        src.connect(lp);lp.connect(analyser);lp.connect(out);
+        src.connect(lp);lp.connect(an);lp.connect(out);
         lp.connect(d1);d1.connect(w1);w1.connect(out);
         lp.connect(d2);d2.connect(w2);w2.connect(out);return;
       }
@@ -1155,7 +1156,7 @@
         const g2=audioCtx.createGain();g2.gain.value=0.35;
         const g3=audioCtx.createGain();g3.gain.value=0.15;
         const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=400;
-        src.connect(hp);hp.connect(analyser);hp.connect(out);
+        src.connect(hp);hp.connect(an);hp.connect(out);
         hp.connect(d1);d1.connect(g1);g1.connect(out);
         hp.connect(d2);d2.connect(g2);g2.connect(out);
         hp.connect(d3);d3.connect(g3);g3.connect(out);return;
@@ -1169,7 +1170,7 @@
         const d2=audioCtx.createDelay();d2.delayTime.value=0.24;
         const fb=audioCtx.createGain();fb.gain.value=0.35;
         const wet=audioCtx.createGain();wet.gain.value=0.45;
-        src.connect(lp);lp.connect(peak);peak.connect(analyser);peak.connect(out);
+        src.connect(lp);lp.connect(peak);peak.connect(an);peak.connect(out);
         peak.connect(d1);d1.connect(fb);fb.connect(d2);d2.connect(wet);wet.connect(out);
         d2.connect(fb);return;
       }
@@ -1184,7 +1185,7 @@
         const lfo=audioCtx.createOscillator();lfo.frequency.value=8;lfo.type='square';
         const lfoGain=audioCtx.createGain();lfoGain.gain.value=0.4;
         lfo.connect(lfoGain);lfoGain.connect(stutter.gain);lfo.start();
-        src.connect(dist);dist.connect(stutter);stutter.connect(analyser);stutter.connect(out);return;
+        src.connect(dist);dist.connect(stutter);stutter.connect(an);stutter.connect(out);return;
       }
       // Cathedral: massive reverb, airy
       if(mode==='cathedral'){
@@ -1199,7 +1200,7 @@
         const g4=audioCtx.createGain();g4.gain.value=0.1;
         const fb=audioCtx.createGain();fb.gain.value=0.25;
         const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=200;
-        src.connect(hp);hp.connect(analyser);hp.connect(out);
+        src.connect(hp);hp.connect(an);hp.connect(out);
         hp.connect(d1);d1.connect(g1);g1.connect(out);g1.connect(fb);fb.connect(d1);
         hp.connect(d2);d2.connect(g2);g2.connect(out);
         hp.connect(d3);d3.connect(g3);g3.connect(out);
@@ -1214,7 +1215,7 @@
         lfo.connect(lfoG);lfoG.connect(gate.gain);lfo.start();
         const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2500;
         const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=500;
-        src.connect(hp);hp.connect(lp);lp.connect(gate);gate.connect(analyser);gate.connect(out);return;
+        src.connect(hp);hp.connect(lp);lp.connect(gate);gate.connect(an);gate.connect(out);return;
       }
       // Whisper: breathy, intimate ASMR
       if(mode==='whisper'){
@@ -1222,7 +1223,7 @@
         const gain=audioCtx.createGain();gain.gain.value=0.5;
         const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=800;
         const air=audioCtx.createBiquadFilter();air.type='peaking';air.frequency.value=6000;air.gain.value=12;air.Q.value=1;
-        src.connect(gain);gain.connect(hp);hp.connect(air);air.connect(analyser);air.connect(out);return;
+        src.connect(gain);gain.connect(hp);hp.connect(air);air.connect(an);air.connect(out);return;
       }
       // Megaphone: loud, harsh, rallying
       if(mode==='megaphone'){
@@ -1233,14 +1234,15 @@
         for(let i=0;i<n;i++){const x=i*2/n-1;curve[i]=Math.tanh(x*3);}
         dist.curve=curve;
         const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-15;comp.ratio.value=12;comp.knee.value=0;
-        src.connect(hp);hp.connect(lp);lp.connect(dist);dist.connect(comp);comp.connect(analyser);comp.connect(out);return;
+        src.connect(hp);hp.connect(lp);lp.connect(dist);dist.connect(comp);comp.connect(an);comp.connect(out);return;
       }
-      src.connect(analyser);src.connect(out);
+      src.connect(an);src.connect(out);
     };
 
     // Route backend TTS audio through Web Audio analyser + effects chain
     const speakWithAudio=async(text)=>{
       if(!audioCtx||!MASTER_TOKEN) return false;
+      if(audioCtx.state==='suspended') await audioCtx.resume();
       try{
         const resp=await fetch("/tts",{
           method:"POST",
