@@ -1,307 +1,147 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "fileutils"
+module Agent
+  module Autonomy
+    module_function
 
-module MASTER
-  # AgentAutonomy - Higher-level autonomous behaviors for intelligent agents
-  # Features: goal decomposition, progress tracking, self-correction, learning from feedback
-  # Ported from MASTER v1, adapted for MASTER2's architecture
-  module AgentAutonomy
-    extend self
+    DEFAULT_AUTONOMY_LEVEL = 0
+    MIN_AUTONOMY_LEVEL = 0
+    MAX_AUTONOMY_LEVEL = 5
 
-    LEARNING_FILE = ::MASTER::Paths.data_file("agent_learning.yml")
+    RECENT_SESSION_LIMIT = 20
+    SKILL_SUCCESS_WEIGHT = 1
+    SKILL_FAILURE_WEIGHT = -2
+    CONFIDENCE_FLOOR = 0.0
+    CONFIDENCE_CEILING = 1.0
 
-    # Goal decomposition - break complex goals into subtasks via LLM
-    def decompose_goal(goal)
-      prompt = <<~PROMPT
-        Break this goal into 3-7 concrete, actionable subtasks.
-        Each subtask should be completable in one step.
+    TASK_PREFIX_START = 0
+    TASK_PREFIX_LENGTH = 24
+    TASK_TOKEN_SEPARATOR = /\s+/
 
-        Goal: #{goal}
+    AUTONOMY_TRIGGERS = %w[
+      run
+      execute
+      deploy
+      delete
+      drop
+      migrate
+      production
+    ].freeze
 
-        Return as numbered list, one task per line.
-        No explanations, just the tasks.
-      PROMPT
+    def autonomy_level(agent, context: {})
+      return DEFAULT_AUTONOMY_LEVEL unless agent
 
-      result = LLM.ask(prompt, tier: :fast)
-      return Result.err("Goal decomposition failed.") unless result.ok?
+      confidence = clamp_confidence(context.fetch(:confidence, nil))
+      base_level = context.fetch(:base_level, DEFAULT_AUTONOMY_LEVEL)
+      level = base_level + confidence_adjustment(confidence)
 
-      tasks = result.value[:content].split("\n")
-        .map { |line| line.gsub(/^\d+\.\s*/, "").strip }
-        .reject(&:empty?)
+      risky = context.fetch(:risky, nil)
+      risky = task_risky?(context.fetch(:task, "")) if risky.nil?
 
-      Result.ok(tasks: tasks)
+      level -= 1 if risky
+      clamp_level(level)
     end
 
-    # Progress tracking - track started/completed/failed tasks
-    @progress = { pending: [], completed: [], failed: [] }
+    def apply_learned_corrections(agent, task_text, corrections:)
+      return task_text.to_s if task_text.to_s.empty?
+      return task_text.to_s unless agent
+      return task_text.to_s unless corrections.is_a?(Hash) && corrections.any?
 
-    class << self
-      attr_accessor :progress
-
-      def track_start(task_id, description)
-        @progress[:pending] << {
-          id: task_id,
-          description: description,
-          started_at: Time.now,
-        }
+      corrected_text = task_text.to_s.dup
+      corrections.each do |pattern, replacement|
+        corrected_text = corrected_text.gsub(pattern, replacement.to_s)
+      rescue RegexpError
+        next
       end
 
-      def track_complete(task_id, result: nil)
-        task = @progress[:pending].find { |t| t[:id] == task_id }
-        return unless task
-
-        @progress[:pending].delete(task)
-        task[:completed_at] = Time.now
-        task[:duration] = (task[:completed_at] - task[:started_at]).round(2)
-        task[:result] = result
-        @progress[:completed] << task
-      end
-
-      def track_fail(task_id, error)
-        task = @progress[:pending].find { |t| t[:id] == task_id }
-        return unless task
-
-        @progress[:pending].delete(task)
-        task[:failed_at] = Time.now
-        task[:duration] = (task[:failed_at] - task[:started_at]).round(2)
-        task[:error] = error.to_s
-        @progress[:failed] << task
-      end
-
-      def completion_rate
-        total = @progress[:completed].size + @progress[:failed].size
-        return 1.0 if total.zero?
-
-        (@progress[:completed].size.to_f / total).round(3)
-      end
-
-      def progress_summary
-        {
-          pending: @progress[:pending].size,
-          completed: @progress[:completed].size,
-          failed: @progress[:failed].size,
-          completion_rate: completion_rate,
-          total: @progress[:pending].size + @progress[:completed].size + @progress[:failed].size,
-        }
-      end
-
-      def reset_progress
-        @progress = { pending: [], completed: [], failed: [] }
-      end
+      corrected_text
     end
 
-    # Self-correction - detect own mistakes and auto-fix via LLM
-    def self_correct(original_output, error)
-      prompt = <<~PROMPT
-        Your previous output caused an error. Fix it.
+    def record_skill(agent, skill_name, outcome:, metadata: {})
+      return nil unless agent
+      return nil if skill_name.to_s.strip.empty?
 
-        Original output:
-        #{original_output[0..1000]}
-
-        Error:
-        #{error[0..500]}
-
-        Provide corrected output only, no explanations.
-      PROMPT
-
-      result = LLM.ask(prompt, tier: :strong)
-      return Result.err("Self-correction failed.") unless result.ok?
-
-      Result.ok(corrected: result.value[:content])
-    end
-
-    # Mistake detection - pattern-based output validation
-    def detect_mistake(output, expected_pattern: nil)
-      return :empty if output.nil? || output.strip.empty?
-      return :too_short if output.length < 10
-      return :error_message if output.match?(/\b(error|exception|failed|undefined)\b/i)
-      return :pattern_mismatch if expected_pattern && !output.match?(expected_pattern)
-
-      nil
-    end
-
-    # Learning from feedback - record user corrections
-    def record_correction(original:, corrected:, context: nil)
-      learning = load_learning
-      learning[:corrections] ||= []
-
-      learning[:corrections] << {
-        original: original[0..500],
-        corrected: corrected[0..500],
-        context: context&.[](0..200),
-        recorded_at: Time.now.to_i,
+      normalized_outcome = normalize_outcome(outcome)
+      attributes = {
+        name: skill_name.to_s,
+        outcome: normalized_outcome,
+        task_prefix: task_prefix(metadata.fetch(:task, "")),
+        details: metadata.fetch(:details, {}),
+        occurred_at: metadata.fetch(:occurred_at, Time.current)
       }
 
-      # Keep last 100 corrections
-      learning[:corrections] = learning[:corrections].last(100)
-      save_learning(learning)
-      Result.ok("Correction recorded")
+      persist_skill_record(agent, attributes)
     end
 
-    # Apply learned corrections to new output
-    def apply_learned_corrections(output, context: nil)
-      learning = load_learning
-      corrections = learning[:corrections] || []
+    def eligible_for_autonomy?(agent, task_text, context: {})
+      return false unless agent
+      return false if task_text.to_s.strip.empty?
 
-      return output if corrections.empty?
+      required_level = context.fetch(:required_level, DEFAULT_AUTONOMY_LEVEL)
+      current_level = autonomy_level(agent, context: context.merge(task: task_text))
 
-      # Find similar contexts if context provided
-      relevant = if context
-                   corrections.select do |c|
-                     c[:context] && similarity(c[:context], context) > 0.5
-                   end
-                 else
-                   corrections.last(10) # Use recent corrections if no context
-                 end
-
-      return output if relevant.empty?
-
-      # Apply pattern-based corrections
-      result = output
-      relevant.each do |c|
-        result = result.gsub(c[:original], c[:corrected]) if result.include?(c[:original])
-      end
-
-      result
+      current_level >= required_level
     end
 
-    # Context awareness - check if task requires specific context
-    def requires_context?(task)
-      context_keywords = %w[
-        understand explain describe analyze
-        current recent previous existing
-        this that these those
-      ]
+    def recent_sessions(agent, limit: RECENT_SESSION_LIMIT)
+      return [] unless agent
+      return [] unless defined?(AgentSession)
 
-      task.downcase.split.any? { |word| context_keywords.include?(word) }
-    end
-
-    # Skill acquisition - track learned capabilities
-    def record_skill(name, description: nil, examples: [])
-      learning = load_learning
-      learning[:skills] ||= []
-
-      skill = {
-        name: name,
-        description: description,
-        examples: examples.map { |e| e[0..200] },
-        learned_at: Time.now.to_i,
-        use_count: 0,
-      }
-
-      # Update if exists, add if new
-      existing = learning[:skills].find { |s| s[:name] == name }
-      if existing
-        existing[:examples] = (existing[:examples] + skill[:examples]).last(5)
-        existing[:description] = description if description
-      else
-        learning[:skills] << skill
-      end
-
-      save_learning(learning)
-      Result.ok("Skill recorded: #{name}")
-    end
-
-    def increment_skill_usage(name)
-      learning = load_learning
-      learning[:skills] ||= []
-
-      skill = learning[:skills].find { |s| s[:name] == name }
-      if skill
-        skill[:use_count] = (skill[:use_count] || 0) + 1
-        skill[:last_used] = Time.now.to_i
-        save_learning(learning)
-      end
-    end
-
-    def list_skills
-      learning = load_learning
-      (learning[:skills] || []).sort_by { |s| -(s[:use_count] || 0) }
-    end
-
-    # Error recovery - suggest recovery actions based on error type
-    def suggest_recovery(error_message)
-      case error_message
-      when /file not found|no such file/i
-        "Check file path and ensure file exists"
-      when /permission denied/i
-        "Verify file permissions or run with appropriate privileges"
-      when /timeout|timed out/i
-        "Increase timeout duration or check network connectivity"
-      when /connection refused|unreachable/i
-        "Verify service is running and network is accessible"
-      when /syntax error/i
-        "Review code syntax and formatting"
-      when /undefined method|no method/i
-        "Check method name and ensure required modules are loaded"
-      when /api key|authentication|unauthorized/i
-        "Verify API credentials are set correctly"
-      else
-        "Review error details and consult documentation"
-      end
+      AgentSession
+        .where(agent_id: agent.id)
+        .includes(:skill_records)
+        .order(created_at: :desc)
+        .limit(limit)
     end
 
     private
 
-    # Text similarity using Jaccard index
-    def similarity(text_a, text_b)
-      return 0.0 if text_a.nil? || text_b.nil?
+    def confidence_adjustment(confidence)
+      return 0 if confidence.nil?
 
-      words_a = text_a.downcase.scan(/\w+/).to_set
-      words_b = text_b.downcase.scan(/\w+/).to_set
-
-      return 0.0 if words_a.empty? || words_b.empty?
-
-      intersection = (words_a & words_b).size
-      union = (words_a | words_b).size
-
-      (intersection.to_f / union).round(3)
+      (confidence * MAX_AUTONOMY_LEVEL).round - 2
     end
 
-    def load_learning
-      return {} unless File.exist?(LEARNING_FILE)
-
-      YAML.safe_load_file(LEARNING_FILE, symbolize_names: true) || {}
-    rescue StandardError
-      {}
+    def clamp_level(level)
+      [[level, MIN_AUTONOMY_LEVEL].max, MAX_AUTONOMY_LEVEL].min
     end
 
-    def save_learning(data)
-      FileUtils.mkdir_p(File.dirname(LEARNING_FILE))
-      File.write(LEARNING_FILE, YAML.dump(data))
+    def clamp_confidence(confidence)
+      return nil if confidence.nil?
+
+      numeric = Float(confidence)
+      [[numeric, CONFIDENCE_FLOOR].max, CONFIDENCE_CEILING].min
+    rescue ArgumentError, TypeError
+      nil
     end
 
-    # Resolve current autonomy level from graduation config + session history.
-    # Returns one of: :ask_always, :preview_changes, :apply_safe, :apply_all
-    def autonomy_level
-      @graduation ||= begin
-        YAML.safe_load_file(Paths.data_file("quality_thresholds.yml"))["graduation"] || {}
-      rescue StandardError
-        {}
-      end
-      successful = DB.total_successful_tasks rescue 0
-      reverts_7d = DB.recent_reverts(days: 7) rescue 0
-
-      level = :ask_always
-      @graduation.each do |_tier, cfg|
-        reqs = Array(cfg["requires"])
-        met  = reqs.all? do |req|
-          case req
-          when /^(\d+)_successful_tasks/ then successful >= $1.to_i
-          when /zero_reverts_(\d+)d/     then reverts_7d == 0
-          else true
-          end
-        end
-        level = cfg["autonomy"].to_sym if met
-      end
-      level
+    def task_risky?(task_text)
+      tokens = normalize_tokens(task_text)
+      AUTONOMY_TRIGGERS.any? { |trigger| tokens.include?(trigger) }
     end
 
-    # True when the current autonomy level permits applying a change without asking.
-    def may_apply_without_asking?
-      %i[apply_safe apply_all].include?(autonomy_level)
+    def normalize_tokens(text)
+      text.to_s.downcase.split(TASK_TOKEN_SEPARATOR).reject(&:empty?)
+    end
+
+    def task_prefix(task_text)
+      task_text.to_s[TASK_PREFIX_START, TASK_PREFIX_LENGTH].to_s
+    end
+
+    def normalize_outcome(outcome)
+      value = outcome.to_s.downcase
+      return "success" if value == "success" || value == "ok" || value == "passed"
+      return "failure" if value == "failure" || value == "fail" || value == "error"
+
+      "unknown"
+    end
+
+    def persist_skill_record(agent, attributes)
+      return nil unless agent.respond_to?(:skill_records)
+
+      agent.skill_records.create!(attributes)
+    rescue ActiveRecord::RecordInvalid
+      nil
     end
   end
 end

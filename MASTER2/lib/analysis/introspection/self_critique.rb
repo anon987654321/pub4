@@ -1,102 +1,98 @@
 # frozen_string_literal: true
 
-module MASTER
-  module Analysis
-    class Introspection
-      CONFIDENCE_THRESHOLD = 0.6
-      MAX_RETRIES = 3
+require "json"
 
-      class << self
-        # LLM evaluates its own work with confidence scoring
-        # @param task [String] The task description
-        # @param response [String] The response to critique
-        # @param llm [Object] LLM instance
-        # @param tier [Symbol] Tier to use (:cheap, :fast, :smart, :genius)
-        # @return [Hash] Critique with scores and suggestions
-        def critique_response(task:, response:, llm:, tier: :cheap)
-          prompt = <<~PROMPT
-            You are evaluating your own work. Be brutally honest.
+module Analysis
+  module Introspection
+    class SelfCritique
+      DEFAULT_MAX_FINDINGS = 5
+      RESPONSE_SNIPPET_LENGTH = 200
+      SLICE_START_INDEX = 0
+      CODE_FENCE = "```"
+      JSON_OBJECT_START = "{"
+      JSON_OBJECT_END = "}"
 
-            Task: #{task}
+      def initialize(model_client:, max_findings: DEFAULT_MAX_FINDINGS)
+        @model_client = model_client
+        @max_findings = max_findings
+      end
 
-            Your response: #{response[0..2000]}
+      def critique_response(response_text)
+        return [] if response_text.nil? || response_text.strip.empty?
 
-            Rate this response on:
-            1. Correctness (0-1): Does it solve the task?
-            2. Completeness (0-1): Does it address all aspects?
-            3. Clarity (0-1): Is it clear and well-structured?
+        critique_payload = request_self_critique(response_text)
+        critique_data = parse_json_object(critique_payload)
+        normalize_findings(critique_data)
+      end
 
-            Return ONLY valid JSON:
-            {
-              "correctness": 0.0-1.0,
-              "completeness": 0.0-1.0,
-              "clarity": 0.0-1.0,
-              "overall_confidence": 0.0-1.0,
-              "issues": ["issue1", "issue2"],
-              "suggestions": ["suggestion1", "suggestion2"]
-            }
-          PROMPT
+      private
 
-          result = llm.ask(prompt, tier: tier)
-          return default_critique unless result.ok?
+      attr_reader :model_client, :max_findings
 
-          parse_critique(result.value)
+      def request_self_critique(response_text)
+        prompt = build_prompt(response_text)
+        model_client.call(prompt)
+      end
+
+      def build_prompt(response_text)
+        snippet = response_text[SLICE_START_INDEX, RESPONSE_SNIPPET_LENGTH].to_s
+        <<~PROMPT
+          You are reviewing an assistant response for quality issues.
+          Return ONLY valid JSON with keys: findings (array).
+          Each finding: { "category": "...", "detail": "...", "severity": "low|medium|high" }.
+
+          Response snippet:
+          #{CODE_FENCE}
+          #{snippet}
+          #{CODE_FENCE}
+        PROMPT
+      end
+
+      def parse_json_object(text)
+        json_text = extract_json_object(text)
+        return {} if json_text.nil?
+
+        JSON.parse(json_text)
+      rescue JSON::ParserError
+        {}
+      end
+
+      def extract_json_object(text)
+        return nil if text.nil?
+
+        stripped = text.strip
+        return stripped if stripped.start_with?(JSON_OBJECT_START) && stripped.end_with?(JSON_OBJECT_END)
+
+        start_idx = stripped.index(JSON_OBJECT_START)
+        end_idx = stripped.rindex(JSON_OBJECT_END)
+        return nil if start_idx.nil? || end_idx.nil? || end_idx < start_idx
+
+        stripped[start_idx..end_idx]
+      end
+
+      def normalize_findings(critique_data)
+        findings = critique_data.is_a?(Hash) ? critique_data["findings"] : nil
+        findings = [] unless findings.is_a?(Array)
+
+        findings.first(max_findings).map do |finding|
+          normalize_finding(finding)
         end
+      end
 
-        # Check if response should be retried based on confidence
-        # @param critique [Hash] Critique hash
-        # @return [Boolean] True if should retry
-        def should_retry?(critique)
-          return false unless critique
+      def normalize_finding(finding)
+        finding_hash = finding.is_a?(Hash) ? finding : {}
+        {
+          "category" => finding_hash["category"].to_s,
+          "detail" => finding_hash["detail"].to_s,
+          "severity" => normalize_severity(finding_hash["severity"])
+        }
+      end
 
-          critique[:overall_confidence] < CONFIDENCE_THRESHOLD
-        end
+      def normalize_severity(severity)
+        value = severity.to_s.downcase
+        return value if %w[low medium high].include?(value)
 
-        # Extract strength score from critique
-        # @param critique [Hash] Critique hash
-        # @return [Float] Weighted strength score 0.0-1.0
-        def extract_strength(critique)
-          return 0.5 unless critique
-
-          weights = { correctness: 0.4, completeness: 0.3, clarity: 0.3 }
-
-          weighted_sum = weights.sum do |key, weight|
-            (critique[key] || 0.5) * weight
-          end
-
-          weighted_sum.clamp(0.0, 1.0)
-        end
-
-        private
-
-        def parse_critique(text)
-          json_match = text.match(/\{[^{}]*\}/m)
-          return default_critique unless json_match
-
-          parsed = JSON.parse(json_match[0], symbolize_names: true)
-
-          {
-            correctness: parsed[:correctness]&.to_f || 0.5,
-            completeness: parsed[:completeness]&.to_f || 0.5,
-            clarity: parsed[:clarity]&.to_f || 0.5,
-            overall_confidence: parsed[:overall_confidence]&.to_f || 0.5,
-            issues: Array(parsed[:issues]),
-            suggestions: Array(parsed[:suggestions]),
-          }
-        rescue JSON::ParserError
-          default_critique
-        end
-
-        def default_critique
-          {
-            correctness: 0.5,
-            completeness: 0.5,
-            clarity: 0.5,
-            overall_confidence: 0.5,
-            issues: ["Unable to parse self-critique"],
-            suggestions: [],
-          }
-        end
+        "low"
       end
     end
   end

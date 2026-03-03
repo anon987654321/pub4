@@ -1,112 +1,102 @@
 # frozen_string_literal: true
 
-module MASTER
-  class Council
-    # Ideation methods - creative brainstorming cycle
-    module Ideation
-      # Creative mode: Brainstorm -> Critique -> Synthesize cycle
-      def ideate(prompt:, constraints: [], cycles: 2)
-        ideas = []
-        critiques = []
-        total_cost = 0
+module Chamber
+  class Ideation
+    def initialize(generator:, scorer: nil, logger: nil)
+      @generator = generator
+      @scorer = scorer
+      @logger = logger
+    end
 
-        cycles.times do
-          brainstorm = generate_ideas(prompt, ideas, constraints)
-          return brainstorm if brainstorm.err?
+    def ideate(prompt:, idea_count: 5, context: nil, constraints: [], seed_ideas: [])
+      return [] unless prompt.to_s.strip.length.positive?
+      return [] unless idea_count.to_i.positive?
 
-          ideas += brainstorm.value[:ideas]
-          total_cost += brainstorm.value[:cost]
+      generated_ideas = generate_ideas(
+        prompt: prompt,
+        idea_count: idea_count,
+        context: context,
+        constraints: constraints,
+        seed_ideas: seed_ideas
+      )
 
-          critique = critique_ideas(ideas)
-          return critique if critique.err?
+      synthesize_ideas(
+        raw_ideas: generated_ideas,
+        prompt: prompt,
+        idea_count: idea_count,
+        constraints: constraints
+      )
+    end
 
-          critiques << critique.value[:critique]
-          total_cost += critique.value[:cost]
-        end
+    def synthesize_ideas(raw_ideas:, prompt:, idea_count:, constraints: [])
+      return [] unless raw_ideas.is_a?(Array)
+      return [] if raw_ideas.empty?
 
-        synthesis = synthesize_ideas(prompt, ideas, critiques, constraints)
-        return synthesis if synthesis.err?
+      candidate_ideas = normalize_ideas(raw_ideas)
+      candidate_ideas = apply_constraints(candidate_ideas, constraints: constraints)
+      return [] if candidate_ideas.empty?
 
-        total_cost += synthesis.value[:cost]
+      ranked_ideas = rank_ideas(candidate_ideas, prompt: prompt)
+      ranked_ideas.first(idea_count)
+    end
 
-        Result.ok(
-          ideas: ideas,
-          critiques: critiques,
-          final: synthesis.value[:synthesis],
-          cost: total_cost,
-        )
+    private
+
+    attr_reader :generator, :scorer, :logger
+
+    def generate_ideas(prompt:, idea_count:, context:, constraints:, seed_ideas:)
+      generator.generate(
+        prompt: prompt,
+        count: idea_count,
+        context: context,
+        constraints: constraints,
+        seeds: seed_ideas
+      )
+    rescue StandardError => e
+      logger&.warn("Ideation generator failed: #{e.class}: #{e.message}")
+      []
+    end
+
+    def normalize_ideas(raw_ideas)
+      raw_ideas
+        .compact
+        .map { |idea| idea.is_a?(Hash) ? idea[:text] || idea["text"] : idea }
+        .map { |text| text.to_s.strip }
+        .reject(&:empty?)
+        .uniq
+    end
+
+    def apply_constraints(candidate_ideas, constraints:)
+      return candidate_ideas if constraints.nil? || constraints.empty?
+
+      candidate_ideas.select do |idea_text|
+        constraints.all? { |constraint| constraint_satisfied?(idea_text, constraint) }
       end
+    end
 
-      private
-
-      # Generate new ideas based on prompt and constraints
-      def generate_ideas(prompt, existing_ideas, constraints)
-        system_prompt = <<~SYS
-          You are a creative visionary. Generate 3-5 novel ideas.
-          Be bold, unconventional, surprising.
-          Constraints to respect: #{constraints.join(', ')}
-          #{"Previous ideas (don't repeat): #{existing_ideas.join(', ')}" if existing_ideas.any?}
-        SYS
-
-        full_prompt = "#{system_prompt}\n\nGenerate ideas for: #{prompt}"
-        result = @llm.ask(full_prompt, tier: :strong)
-
-        if result.ok?
-          llm_resp = result.value
-          content = llm_resp[:content].to_s
-          parsed = content.scan(/^[-*]\s*(.+)/).flatten
-          parsed = [content] if parsed.empty?
-          Result.ok(ideas: parsed, cost: llm_resp.fetch(:cost, 0))
-        else
-          Result.err("Brainstorm failed: #{result.error}")
-        end
+    def constraint_satisfied?(idea_text, constraint)
+      case constraint
+      when Regexp
+        idea_text.match?(constraint)
+      when Proc
+        constraint.call(idea_text)
+      when String
+        idea_text.include?(constraint)
+      else
+        true
       end
+    end
 
-      # Critique existing ideas to find weaknesses
-      def critique_ideas(ideas)
-        critique_prompt = <<~PROMPT
-          Critique these ideas honestly. What are the weaknesses, blind spots, implementation challenges?
+    def rank_ideas(candidate_ideas, prompt:)
+      return candidate_ideas unless scorer
 
-          Ideas:
-          #{ideas.map { |i| "- #{i}" }.join("\n")}
-        PROMPT
-
-        result = @llm.ask(critique_prompt, tier: :fast)
-
-        if result.ok?
-          llm_resp = result.value
-          Result.ok(critique: llm_resp[:content], cost: llm_resp.fetch(:cost, 0))
-        else
-          Result.err("Critique failed: #{result.error}")
-        end
-      end
-
-      # Synthesize best elements from ideas and critiques
-      def synthesize_ideas(original_prompt, ideas, critiques, constraints)
-        prompt = <<~PROMPT
-          Original goal: #{original_prompt}
-          Constraints: #{constraints.join(', ')}
-
-          Ideas generated:
-          #{ideas.map { |i| "- #{i}" }.join("\n")}
-
-          Critiques:
-          #{critiques.join("\n---\n")}
-
-          Synthesize the best elements into a cohesive recommendation.
-          Address the valid critiques.
-          Be practical but preserve innovation.
-        PROMPT
-
-        result = @llm.ask(prompt, tier: :strong)
-
-        if result.ok?
-          llm_resp = result.value
-          Result.ok(synthesis: llm_resp[:content], cost: llm_resp.fetch(:cost, 0))
-        else
-          Result.err("Synthesis failed: #{result.error}")
-        end
-      end
+      candidate_ideas
+        .map { |idea_text| [idea_text, scorer.score(prompt: prompt, idea: idea_text)] }
+        .sort_by { |(_, score)| -score.to_f }
+        .map(&:first)
+    rescue StandardError => e
+      logger&.warn("Ideation scoring failed: #{e.class}: #{e.message}")
+      candidate_ideas
     end
   end
 end

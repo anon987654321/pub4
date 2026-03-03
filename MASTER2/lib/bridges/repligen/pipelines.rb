@@ -1,158 +1,121 @@
 # frozen_string_literal: true
 
-module MASTER
-  module Bridges
-    module ReplicateBridge
-      # Execute a multi-model pipeline sequentially
-      def execute_chain(chain)
-        return Result.err("Chain cannot be empty.") if chain.nil? || chain.empty?
-        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
+module Bridges
+  module Repligen
+    class Pipelines
+      MAX_TRAINING_PHOTOS = 24
+      COMMERCIAL_VARIATIONS = 4
 
-        results = []
-        current_output = nil
-
-        chain.each_with_index do |step, idx|
-          params = {}
-
-          # If not first step and previous output exists, use it as input
-          if idx > 0 && current_output
-            params[:image] = current_output if step[:category] == :enhance
-            params[:init_image] = current_output if step[:category] == :image_gen
-          end
-
-          # Execute step
-          result = Replicate.run(
-            model_id: step[:model],
-            input: { prompt: step[:prompt] || "" }.merge(params),
-          )
-
-          return result if result.err?
-
-          current_output = result.value[:output]
-          results << {
-            step: idx + 1,
-            model: step[:name],
-            output: current_output,
-          }
-        end
-
-        Result.ok(results)
+      def initialize(actor:, account:, options: {})
+        @actor = actor
+        @account = account
+        @options = options || {}
       end
 
-      # Generate catwalk fashion image
-      def generate_catwalk(prompt:, style: nil, lighting: nil, model: nil)
-        style ||= CATWALK_STYLES.sample
-        lighting ||= CATWALK_LIGHTING.sample
+      def execute_chain
+        enforce_replicate!
 
-        return Result.err("Unknown style: #{style}") unless CATWALK_STYLES.include?(style.to_s)
-        return Result.err("Unknown lighting: #{lighting}") unless CATWALK_LIGHTING.include?(lighting.to_s)
+        pipeline_steps = build_pipeline_steps
+        return if pipeline_steps.empty?
 
-        full_prompt = "fashion photography, #{style} style, #{lighting} lighting, #{prompt}"
-        model_id = model || ReplicateBridge.model_catalog[:image_gen].first[:model]
-
-        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
-
-        Replicate.generate(
-          prompt: full_prompt,
-          model: model_id,
-          params: { style: style, lighting: lighting },
-        )
-      end
-
-      # Search models by keyword
-      def search_models(query)
-        query_lower = query.to_s.downcase
-        matches = []
-
-        self.class.wild_chain.each do |category, models|
-          models.each do |m|
-            if m[:name].downcase.include?(query_lower) || m[:model].downcase.include?(query_lower)
-              matches << { category: category, **m }
-            end
+        pipeline_steps.each do |step|
+          case step[:type]
+          when :commercial
+            generate_commercial(step)
+          when :training_photos
+            enhance_training_photos(step)
+          else
+            raise ArgumentError, "Unknown pipeline step type: #{step[:type]}"
           end
         end
-
-        Result.ok(matches)
       end
 
-      # Train LoRA wrapper
-      def train_lora(training_data:, trigger_word:, model: "ostris/flux-dev-lora-trainer")
-        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
-        return Result.err("Training data cannot be empty.") if training_data.nil? || training_data.empty?
-        return Result.err("Trigger word required.") if trigger_word.nil? || trigger_word.empty?
+      private
 
-        Replicate.run(
-          model_id: model,
-          input: {
-            input_images: training_data,
-            trigger_word: trigger_word,
-            steps: 1000,
-            learning_rate: 0.0004,
-          },
-        )
+      attr_reader :actor, :account, :options
+
+      def enforce_replicate!
+        return if defined?(Replicate)
+
+        raise LoadError, %(Replicate gem is required for Bridges::Repligen::Pipelines)
       end
 
-      # Generate commercial video (multi-scene pipeline)
-      def generate_commercial(subject:, lora: nil, model: nil, scenes: [])
-        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
-        return Result.err("No scenes provided.") if scenes.empty?
+      def build_pipeline_steps
+        chain = self.class.pipeline_chain
+        return [] if chain.nil? || chain.empty?
 
-        video_model = model || ReplicateBridge.model_catalog[:video_gen].first[:model]
-        image_model = ReplicateBridge.model_catalog[:image_gen].first[:model]
-        results = []
+        chain.map do |chain_step|
+          normalize_pipeline_step(chain_step)
+        end
+      end
 
-        scenes.each_with_index do |scene, idx|
-          img_params = { prompt: scene[:image_prompt] }
-          img_params[:lora] = lora if lora
-          img_result = Replicate.generate(prompt: scene[:image_prompt], model: image_model, params: img_params)
-          next if img_result.err?
+      def normalize_pipeline_step(chain_step)
+        step_hash = chain_step.is_a?(Hash) ? chain_step : { type: chain_step }
+        {
+          type: step_hash.fetch(:type, nil)&.to_sym,
+          model: step_hash.fetch(:model, nil),
+          prompt: step_hash.fetch(:prompt, nil),
+          training_album_id: step_hash.fetch(:training_album_id, nil),
+          commercial_count: step_hash.fetch(:commercial_count, COMMERCIAL_VARIATIONS)
+        }
+      end
 
-          image_url = img_result.value[:urls]&.first || img_result.value[:output]
-          next unless image_url
+      def generate_commercial(step)
+        enforce_replicate!
 
-          vid_result = Replicate.run(
-            model_id: video_model,
-            input: { image: image_url, prompt: scene[:video_prompt] || "", duration: scene[:duration] || 10 },
-          )
+        commercial_model = step.fetch(:model, nil)
+        prompt_text = step.fetch(:prompt, nil)
+        count = step.fetch(:commercial_count, COMMERCIAL_VARIATIONS).to_i
 
-          results << { step: idx + 1, name: scene[:name], image: image_url,
-                       video: vid_result.ok? ? vid_result.value[:output] : nil }
+        return if commercial_model.nil? || prompt_text.nil?
+        return if count <= 0
+
+        count.times do
+          Replicate.run(commercial_model, input: { prompt: prompt_text })
+        end
+      end
+
+      def enhance_training_photos(step)
+        enforce_replicate!
+
+        training_album_id = step.fetch(:training_album_id, nil)
+        return if training_album_id.nil?
+
+        training_album = training_albums_scope.find_by(id: training_album_id)
+        return if training_album.nil?
+
+        photos_to_enhance = training_album.photos.limit(MAX_TRAINING_PHOTOS)
+        return if photos_to_enhance.empty?
+
+        photos_to_enhance.each do |photo|
+          enhance_photo(photo)
+        end
+      end
+
+      def training_albums_scope
+        account
+          .training_albums
+          .includes(:photos)
+      end
+
+      def enhance_photo(photo)
+        model = options.fetch(:training_model, nil)
+        prompt = options.fetch(:training_prompt, nil)
+
+        return if model.nil? || prompt.nil?
+
+        Replicate.run(model, input: { image: photo.url, prompt: prompt })
+      end
+
+      class << self
+        def pipeline_chain
+          @pipeline_chain ||= []
         end
 
-        Result.ok(results)
-      end
-
-      # Enhance training photos for LoRA
-      def enhance_training_photos(input_dir:, output_dir: nil)
-        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
-        return Result.err("Directory not found: #{input_dir}") unless Dir.exist?(input_dir)
-
-        output_dir ||= "#{input_dir}_enhanced"
-        FileUtils.mkdir_p(output_dir)
-
-        images = Dir[File.join(input_dir, "*.{jpg,jpeg,png}")]
-        return Result.err("No images found in #{input_dir}") if images.empty?
-
-        results = []
-        images.each_with_index do |img_path, _i|
-          name = File.basename(img_path, ".*")
-          img_data = File.binread(img_path)
-          img_url = "data:image/jpeg;base64,#{Base64.strict_encode64(img_data)}"
-
-          enhanced = enhance_image(image_url: img_url)
-          next if enhanced.err?
-
-          output_url = enhanced.value[:output] || enhanced.value[:urls]&.first
-          next unless output_url
-
-          output_path = File.join(output_dir, "#{name}.png")
-          Replicate.download_file(output_url, output_path) if Replicate.respond_to?(:download_file)
-          results << { name: name, path: output_path }
+        def configure_chain(chain_steps)
+          @pipeline_chain = Array(chain_steps)
         end
-
-        Result.ok({ count: results.length, total: images.length, output_dir: output_dir, files: results })
       end
-
     end
   end
 end

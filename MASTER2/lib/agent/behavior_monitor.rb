@@ -1,65 +1,61 @@
 # frozen_string_literal: true
 
-module MASTER
-  class AgentFirewall
-    # BehaviorMonitor -- track session baselines and flag anomalies
-    # Fills the "behavioral monitoring" gap identified in gistfile14 §4
-    # (847 Test Cases paper: combined defenses cut attacks 73% -> 8.7%)
-    module BehaviorMonitor
-      module_function
+module Agent
+  class BehaviorMonitor
+    DEFAULT_WINDOW_SECONDS = 60
+    DEFAULT_MAX_EVENTS = 100
+    DEFAULT_MAX_ERROR_RATE = 0.25
 
-      # Baseline window: track last N actions for anomaly detection
-      BASELINE_WINDOW = 50
+    def initialize(window_seconds: DEFAULT_WINDOW_SECONDS, max_events: DEFAULT_MAX_EVENTS, max_error_rate: DEFAULT_MAX_ERROR_RATE)
+      @window_seconds = window_seconds
+      @max_events = max_events
+      @max_error_rate = max_error_rate
+      @events = []
+    end
 
-      @session_baseline = Hash.new { |h, k| h[k] = [] }
-      @baseline_mutex = Mutex.new
+    def record(event)
+      @events << normalize_event(event)
+      prune_old_events!
+      nil
+    end
 
-      # Record an action for baseline tracking.
-      # @param action [String] tool name or action type
-      # @param session_id [String]
-      def record(action, session_id:)
-        @baseline_mutex.synchronize do
-          history = @session_baseline[session_id]
-          history << { action: action, at: Time.now.to_i }
-          # Keep only the last BASELINE_WINDOW entries
-          @session_baseline[session_id] = history.last(BASELINE_WINDOW)
-        end
-      end
+    def check
+      prune_old_events!
+      return ok(:no_data) if @events.empty?
 
-      # Check if current action is anomalous relative to session baseline.
-      # @param action [String]
-      # @param session_id [String]
-      # @return [Hash] { anomalous: bool, reason: String|nil, score: Float }
-      def check(action, session_id:)
-        @baseline_mutex.synchronize do
-          history = @session_baseline[session_id]
-          return { anomalous: false, reason: nil, score: 0.0 } if history.size < 10
+      totals = summarize(@events)
+      return ok(:insufficient_data) if totals[:count] < @max_events
 
-          # Count frequency of this action in baseline
-          freq = history.count { |e| e[:action] == action }.to_f / history.size
-          # Actions never seen before in this session get higher anomaly score
-          score = freq < 0.05 ? 0.8 : 0.0
+      error_rate = totals[:errors].to_f / totals[:count]
+      return alert(:high_error_rate, error_rate: error_rate, totals: totals) if error_rate > @max_error_rate
 
-          # Rate spike: more than 5 identical actions in last 10
-          recent = history.last(10).count { |e| e[:action] == action }
-          score = [score, recent > 5 ? 0.9 : 0.0].max
+      ok(:healthy, error_rate: error_rate, totals: totals)
+    end
 
-          anomalous = score >= 0.8
-          reason = anomalous ? "Action '#{action}' anomalous (score=#{score.round(2)}, freq=#{freq.round(2)})" : nil
+    private
 
-          if anomalous
-            Logging.dmesg_log("behav0",
-                              message: "action=#{action} score=#{score.round(2)} anomalous=#{anomalous}")
-          end
+    def normalize_event(event)
+      h = event.is_a?(Hash) ? event : { type: event }
+      { type: h[:type], ok: h.key?(:ok) ? !!h[:ok] : true, ts: h[:ts] || Time.now }
+    end
 
-          { anomalous: anomalous, reason: reason, score: score }
-        end
-      end
+    def prune_old_events!
+      cutoff = Time.now - @window_seconds
+      @events.shift while @events.first && @events.first[:ts] < cutoff
+    end
 
-      # Reset baseline for a session (on session end).
-      def reset(session_id:)
-        @baseline_mutex.synchronize { @session_baseline.delete(session_id) }
-      end
+    def summarize(events)
+      count = events.length
+      errors = events.count { |e| !e[:ok] }
+      { count: count, errors: errors }
+    end
+
+    def ok(status, payload = {})
+      { status: status, **payload }
+    end
+
+    def alert(status, payload = {})
+      { status: status, severity: :alert, **payload }
     end
   end
 end
