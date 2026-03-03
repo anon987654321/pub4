@@ -10,14 +10,13 @@ module MASTER
   # Council - Multi-model deliberation with council personas
   # Implements multi-round debate: Independent -> Synthesis -> Convergence
   class Council
-    {
-      Review: "chamber/review",
-      Deliberation: "chamber/deliberation",
-      Ideation: "chamber/ideation",
-    }.each do |mixin_name, mixin_file|
-      require_relative mixin_file unless const_defined?(mixin_name, false)
-      include const_get(mixin_name, false)
-    end
+    CHAMBER_COMPONENTS = {
+      review: "chamber/review",
+      deliberation: "chamber/deliberation",
+      ideation: "chamber/ideation",
+    }.freeze
+
+    CHAMBER_COMPONENTS.each_value { |component_file| require_relative component_file }
 
     MAX_ROUNDS = 25
     MAX_COST = 0.50
