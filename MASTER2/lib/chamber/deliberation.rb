@@ -1,111 +1,191 @@
 # frozen_string_literal: true
 
-module MASTER
-  class Council
-    # Deliberation methods - proposal generation and arbiter decisions
-    module Deliberation
-      # Main deliberation flow - gather proposals and reach consensus
-      def deliberate(code, filename: "code", participants: %i[grok deepseek kimi glm])
-        @proposals = []
-        @rounds = 0
+module Chamber
+  class Deliberation
+    DEFAULT_MAX_ROUNDS = 3
+    DEFAULT_QUORUM_RATIO = 0.5
+    DEFAULT_MAJORITY_RATIO = 0.5
 
-        participants.each do |model_key|
-          break if over_budget?
+    attr_reader :members, :arbiter, :logger, :max_rounds, :quorum_ratio, :majority_ratio
 
-          model = MODELS[model_key] || LLM.select_model
-          next unless model && @llm.circuit_closed?(model)
+    def initialize(members:, arbiter:, logger: nil, max_rounds: DEFAULT_MAX_ROUNDS,
+                   quorum_ratio: DEFAULT_QUORUM_RATIO, majority_ratio: DEFAULT_MAJORITY_RATIO)
+      @members = Array(members)
+      @arbiter = arbiter
+      @logger = logger
+      @max_rounds = Integer(max_rounds)
+      @quorum_ratio = Float(quorum_ratio)
+      @majority_ratio = Float(majority_ratio)
+    end
 
-          proposal = propose(code, model, filename)
-          @proposals << { model: model_key, proposal: proposal } if proposal
+    def deliberate(issue:, initial_proposal:)
+      validate_members!
+      validate_issue!(issue)
+      validate_proposal!(initial_proposal)
+
+      proposal = initial_proposal
+      round = 0
+
+      while round < max_rounds
+        round += 1
+
+        proposal = propose(issue: issue, proposal: proposal, round: round)
+        ballots = collect_ballots(issue: issue, proposal: proposal)
+
+        return decision_for(ballots: ballots, proposal: proposal, issue: issue) if decision_reached?(ballots)
+
+        proposal = revise_proposal(issue: issue, proposal: proposal, ballots: ballots, round: round)
+        return arbiter_decision(issue: issue, proposal: proposal, ballots: ballots) if round == max_rounds
+      end
+
+      arbiter_decision(issue: issue, proposal: proposal, ballots: collect_ballots(issue: issue, proposal: proposal))
+    end
+
+    def propose(issue:, proposal:, round:)
+      validate_issue!(issue)
+      validate_proposal!(proposal)
+
+      notify_members(:proposal_opened, issue: issue, proposal: proposal, round: round)
+
+      updated_proposal = proposal
+      suggestions = collect_suggestions(issue: issue, proposal: proposal, round: round)
+      updated_proposal = apply_suggestions(base_proposal: proposal, suggestions: suggestions) if suggestions.any?
+
+      notify_members(:proposal_closed, issue: issue, proposal: updated_proposal, round: round)
+
+      updated_proposal
+    end
+
+    def arbiter_decision(issue:, proposal:, ballots:)
+      validate_issue!(issue)
+      validate_proposal!(proposal)
+
+      notify_members(:arbiter_requested, issue: issue, proposal: proposal)
+
+      decision =
+        begin
+          arbiter.call(issue: issue, proposal: proposal, ballots: ballots)
+        rescue StandardError => e
+          log(:error, "Arbiter decision failed: #{e.class}: #{e.message}")
+          { outcome: :no_decision, reason: :arbiter_error, error: e }
         end
 
-        return Result.err("No proposals generated.") if @proposals.empty?
+      normalized = normalize_arbiter_decision(decision, proposal: proposal)
+      notify_members(:arbiter_decided, issue: issue, proposal: proposal, decision: normalized)
 
-        # Review combined proposals so council sees all perspectives, not just the first
-        combined = @proposals.map { |p| "=== #{p[:model]} ===\n#{p[:proposal]}" }.join("\n\n")
-        council_result = multi_round_review(code, combined)
+      normalized
+    end
 
-        arbiter_model = MODELS[ARBITER] || LLM.select_model
-        if @llm.circuit_closed?(arbiter_model)
-          final = arbiter_decision(code, @proposals, arbiter_model)
-          Result.ok(
-            original: code,
-            proposals: @proposals,
-            council: council_result,
-            final: final,
-            cost: @cost,
-            rounds: @rounds,
-          )
-        else
-          Result.ok(
-            original: code,
-            proposals: @proposals,
-            council: council_result,
-            final: @proposals.first[:proposal],
-            cost: @cost,
-            rounds: @rounds,
-          )
-        end
+    private
+
+    def validate_members!
+      return if members.any?
+
+      raise ArgumentError, "members must not be empty"
+    end
+
+    def validate_issue!(issue)
+      return unless issue.nil?
+
+      raise ArgumentError, "issue must be provided"
+    end
+
+    def validate_proposal!(proposal)
+      return unless proposal.nil?
+
+      raise ArgumentError, "proposal must be provided"
+    end
+
+    def notify_members(event, payload)
+      return unless logger
+
+      log(:info, "#{event}: #{payload.inspect}")
+    end
+
+    def log(level, message)
+      return unless logger
+
+      logger.public_send(level, message)
+    end
+
+    def collect_suggestions(issue:, proposal:, round:)
+      members.filter_map do |member|
+        next unless member.respond_to?(:suggest)
+
+        member.suggest(issue: issue, proposal: proposal, round: round)
       end
+    end
 
-      private
+    def apply_suggestions(base_proposal:, suggestions:)
+      base_proposal.respond_to?(:merge) ? suggestions.reduce(base_proposal) { |p, s| p.merge(s) } : base_proposal
+    end
 
-      # Generate a proposal for code improvement
-      def propose(code, model, filename)
-        @rounds += 1
+    def collect_ballots(issue:, proposal:)
+      members.map { |member| ballot_from(member, issue: issue, proposal: proposal) }.compact
+    end
 
-        prompt = <<~PROMPT
-          Review this code and propose improvements:
-          FILE: #{filename}
+    def ballot_from(member, issue:, proposal:)
+      return unless member.respond_to?(:vote)
 
-          ```
-          #{code[0, 4000]}
-          ```
+      member.vote(issue: issue, proposal: proposal)
+    rescue StandardError => e
+      log(:warn, "Vote failed for #{member.inspect}: #{e.class}: #{e.message}")
+      nil
+    end
 
-          Provide:
-          1. ISSUES: What's wrong (bullet points)
-          2. DIFF: Proposed changes (unified diff format)
-          3. RATIONALE: Why these changes (one paragraph)
-        PROMPT
+    def decision_reached?(ballots)
+      return false unless quorum_met?(ballots)
 
-        result = @llm.ask(prompt, model: model)
-        return nil unless result.ok?
+      yes_ratio(ballots) > majority_ratio
+    end
 
-        llm_resp = result.value
-        @cost += llm_resp.fetch(:cost, 0)
+    def quorum_met?(ballots)
+      ballots.count >= required_quorum
+    end
 
-        llm_resp[:content]
-      rescue StandardError
-        @llm.open_circuit!(model)
-        nil
-      end
+    def required_quorum
+      (members.count * quorum_ratio).ceil
+    end
 
-      # Arbiter makes final decision from multiple proposals
-      def arbiter_decision(original, proposals, model)
-        prompt = <<~PROMPT
-          You are the arbiter. Given these proposals, pick the best changes:
+    def yes_ratio(ballots)
+      return 0.0 if ballots.empty?
 
-          ORIGINAL:
-          ```
-          #{original[0, 2000]}
-          ```
+      yes_count = ballots.count { |b| truthy_vote?(b) }
+      yes_count.to_f / ballots.count
+    end
 
-          PROPOSALS:
-          #{proposals.map { |p| "#{p[:model]}:\n#{p[:proposal][0, 1000]}" }.join("\n\n")}
+    def truthy_vote?(ballot)
+      return ballot[:yes] if ballot.is_a?(Hash) && ballot.key?(:yes)
+      return ballot.yes? if ballot.respond_to?(:yes?)
 
-          Output ONLY the final improved code. No explanation.
-        PROMPT
+      ballot == true || ballot.to_s.casecmp("yes").zero?
+    end
 
-        result = @llm.ask(prompt, model: model)
-        return proposals.first[:proposal] unless result.ok?
+    def decision_for(ballots:, proposal:, issue:)
+      notify_members(:decision_reached, issue: issue, proposal: proposal, ballots: ballots)
 
-        llm_resp = result.value
-        @cost += llm_resp.fetch(:cost, 0)
+      {
+        outcome: :accepted,
+        proposal: proposal,
+        ballots: ballots,
+        quorum: required_quorum,
+        yes_ratio: yes_ratio(ballots)
+      }
+    end
 
-        llm_resp[:content]
-      rescue StandardError
-        proposals.first[:proposal]
-      end
+    def revise_proposal(issue:, proposal:, ballots:, round:)
+      return proposal unless proposal.respond_to?(:revise)
+
+      proposal.revise(issue: issue, ballots: ballots, round: round)
+    rescue StandardError => e
+      log(:warn, "Proposal revision failed: #{e.class}: #{e.message}")
+      proposal
+    end
+
+    def normalize_arbiter_decision(decision, proposal:)
+      return decision if decision.is_a?(Hash) && decision.key?(:outcome)
+
+      { outcome: decision || :no_decision, proposal: proposal }
     end
   end
 end

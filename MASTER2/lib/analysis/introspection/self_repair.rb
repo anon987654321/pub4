@@ -1,126 +1,104 @@
 # frozen_string_literal: true
 
-module MASTER
-  module Analysis
-    class Introspection
-      class << self
-        # Full repair pipeline with audit -> confirm -> fix -> test -> learn
-        # @param files [String, Array<String>] File(s) to repair
-        # @param dry_run [Boolean] Preview changes without writing
-        # @param auto_confirm [Boolean] Skip confirmation gates
-        # @return [Result] Ok with repair summary or Err
-        def repair(files, dry_run: true, auto_confirm: false)
-          files = [files] unless files.is_a?(Array)
+module Analysis
+  module Introspection
+    class SelfRepair
+      def initialize(relation:, logger: nil)
+        @relation = relation
+        @logger = logger
+      end
 
-          repaired = 0
-          failed = 0
-          skipped = 0
+      def repair
+        return [] unless repairable_relation?
 
-          # Step 1: Audit scan
-          audit_result = if defined?(Audit)
-                           Audit.scan(files)
-                         else
-                           return Result.err("Audit module not available.")
-                         end
-
-          return audit_result unless audit_result.ok?
-
-          report = audit_result.value[:report]
-          findings = report.prioritized
-
-          UI.dim("  Found #{findings.size} issues") if defined?(UI)
-
-          # Step 2: Process each finding
-          findings.each do |finding|
-            # Skip if dry_run
-            if dry_run
-              UI.dim("  [DRY RUN] Would repair: #{finding.message}") if defined?(UI)
-              skipped += 1
-              next
-            end
-
-            # Step 3: Confirmation gate (unless auto_confirm)
-            if !auto_confirm && defined?(ConfirmationGate)
-              gate_result = ConfirmationGate.gate(
-                "Repair #{finding.category}",
-                description: finding.message,
-              ) { true }
-
-              unless gate_result.ok?
-                skipped += 1
-                next
-              end
-            end
-
-            # Step 4: Attempt fix
-            fix_result = attempt_fix(finding)
-
-            if fix_result.ok?
-              # Step 5: Run self-test if available
-              if respond_to?(:run)
-                test_result = run
-                unless test_result.ok?
-                  # Rollback on test failure
-                  rollback_fix(finding)
-                  failed += 1
-
-                  # Record failure
-                  record_learning(finding, fix_result.value, success: false)
-                  next
-                end
-              end
-
-              repaired += 1
-
-              # Step 6: Record success
-              record_learning(finding, fix_result.value, success: true)
-            else
-              failed += 1
-              skipped += 1 if fix_result.error.include?("not available")
-            end
-          end
-
-          Result.ok(
-            repaired: repaired,
-            failed: failed,
-            skipped: skipped,
-            total: findings.size,
-          )
+        repair_findings = []
+        load_repairable_findings.find_each do |finding|
+          repair_findings.concat(repair_finding(finding))
         end
+        repair_findings
+      end
 
-        private
+      private
 
-        def attempt_fix(finding)
-          # Try Review::Fixer if available
-          if defined?(MASTER::Review::Fixer)
-            fixer = MASTER::Review::Fixer.new(mode: :moderate)
+      attr_reader :relation, :logger
 
-            if File.exist?(finding.file)
-              result = fixer.fix(finding.file)
-              return result if result.ok?
-            end
-          end
+      def repairable_relation?
+        relation.respond_to?(:find_each)
+      end
 
-          # Try known fix from learning
-          if defined?(LearningFeedback) && LearningFeedback.known_fix?(finding)
-            return LearningFeedback.apply_known(finding)
-          end
+      def load_repairable_findings
+        base = relation
+        base = base.includes(:introspection_source) if supports_includes?(base)
+        base
+      end
 
-          Result.err("No fix available for this finding.")
-        end
+      def supports_includes?(active_record_relation)
+        active_record_relation.respond_to?(:includes)
+      end
 
-        def rollback_fix(finding)
-          # Use Staging rollback if available
-          if defined?(Staging)
-            staging = Staging.new
-            staging.rollback(finding.file)
-          end
-        end
+      def repair_finding(finding)
+        return [] unless finding_needs_repair?(finding)
 
-        def record_learning(finding, fix, success:)
-          # Record pattern in learning feedback
-          LearningFeedback.record(finding, fix, success: success) if defined?(LearningFeedback)
-        end
+        applied_repairs = []
+        applied_repairs << fix_missing_introspection_source(finding) if missing_introspection_source?(finding)
+        applied_repairs << normalize_introspection_payload(finding) if payload_needs_normalization?(finding)
+        applied_repairs.compact
+      end
+
+      def finding_needs_repair?(finding)
+        missing_introspection_source?(finding) || payload_needs_normalization?(finding)
+      end
+
+      def missing_introspection_source?(finding)
+        finding.respond_to?(:introspection_source) && finding.introspection_source.nil?
+      end
+
+      def fix_missing_introspection_source(finding)
+        return unless finding.respond_to?(:build_introspection_source)
+        return unless finding.respond_to?(:save!)
+
+        finding.build_introspection_source
+        finding.save!
+        log_repair(finding, :created_introspection_source)
+        :created_introspection_source
+      rescue StandardError => e
+        log_error(finding, e)
+        nil
+      end
+
+      def payload_needs_normalization?(finding)
+        finding.respond_to?(:payload) && finding.payload.is_a?(String)
+      end
+
+      def normalize_introspection_payload(finding)
+        return unless finding.respond_to?(:payload=)
+        return unless finding.respond_to?(:save!)
+
+        finding.payload = finding.payload.strip
+        finding.save!
+        log_repair(finding, :normalized_payload)
+        :normalized_payload
+      rescue StandardError => e
+        log_error(finding, e)
+        nil
+      end
+
+      def log_repair(finding, action)
+        return unless logger
+
+        logger.info("[SelfRepair] #{action} for #{finding.class}(id=#{safe_id(finding)})")
+      end
+
+      def log_error(finding, error)
+        return unless logger
+
+        logger.warn(
+          "[SelfRepair] failed for #{finding.class}(id=#{safe_id(finding)}): #{error.class} - #{error.message}"
+        )
+      end
+
+      def safe_id(record)
+        record.respond_to?(:id) ? record.id : "unknown"
       end
     end
   end
