@@ -29,9 +29,13 @@ module MASTER
           LLM.force_model!(found[:id])
           puts "\n  + model: #{found[:id]}\n"
         else
-          # Accept exact IDs even if not in our YAML
-          LLM.force_model!(args.strip)
-          puts "\n  + model: #{args.strip} (unverified)\n"
+          id = args.strip
+          unless id.match?(%r{\A[\w.\-]+/[\w.\-:@+]+\z})
+            puts "\n  - '#{id}' is not a valid model ID (expected provider/name). Use 'models' to list.\n"
+            return
+          end
+          LLM.force_model!(id)
+          puts "\n  + model: #{id} (unverified)\n"
         end
       end
 

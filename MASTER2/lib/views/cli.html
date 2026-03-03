@@ -97,7 +97,6 @@
       width:calc(100% - 28px);
       background:transparent;
       border:none;
-      border-bottom:1px solid #222;
       color:#ccc;
       font-family:Helvetica,Arial,sans-serif;
       font-size:18px;
@@ -106,11 +105,6 @@
       padding:12px 0;
       outline:none;
       text-align:center;
-      transition:border-color 0.3s;
-    }
-
-    #input-field input:focus{
-      border-bottom-color:#444;
     }
 
     #input-field input::placeholder{
@@ -242,19 +236,6 @@
 
     @keyframes overlay-pulse{0%,100%{opacity:.4;}50%{opacity:.8;}}
 
-    #metrics-bar{
-      position:fixed;
-      top:calc(8px + var(--safe-top));
-      left:calc(12px + var(--safe-left));
-      font:9px/1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-      color:#2a2a2a;
-      letter-spacing:.06em;
-      z-index:90;
-      pointer-events:none;
-      transition:color 0.4s;
-    }
-
-    #metrics-bar.active{color:#444;}
     #chat-log{
       display:none;
       position:fixed;
@@ -291,8 +272,6 @@
     <input type="file" id="file-input" accept="image/*,text/*,.pdf" hidden>
     <span id="attach-label"></span>
   </section>
-
-  <div id="metrics-bar"></div>
 
   <section id="overlay" role="dialog" aria-modal="true">
     <h1>MASTER2</h1>
@@ -1624,7 +1603,6 @@
     if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged=()=>{_cachedVoice=null;pickVoice();};
 
     // Chip clicks send command directly without dismissing overlay first
-    const metricsBar=document.getElementById('metrics-bar');
     document.querySelectorAll('#overlay .chip').forEach(chip=>{
       chip.addEventListener('click',e=>{
         e.stopPropagation();
@@ -1641,17 +1619,7 @@
       });
     });
 
-    const updateMetricsBar=(data)=>{
-      if(!metricsBar) return;
-      const parts=[];
-      if(data.model) parts.push(data.model.replace('anthropic/',''));
-      if(data.violations!=null) parts.push(`${data.violations} violations`);
-      if(data.repo_state) parts.push(data.repo_state);
-      if(data.scheduled_jobs!=null) parts.push(`${data.scheduled_jobs} jobs`);
-      if(data.autonomy) parts.push(data.autonomy);
-      metricsBar.textContent=parts.join(' · ');
-      metricsBar.classList.add('active');
-    };
+    const updateMetricsBar=(_data)=>{}; // metrics-bar removed
 
     overlay.addEventListener('click',()=>{
       overlay.classList.add('ack');

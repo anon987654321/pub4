@@ -77,6 +77,12 @@ module MASTER
         sections << "\nACTIVE PERSONA:\n#{persona_prompt}" if persona_prompt && !persona_prompt.empty?
       end
 
+      # Inject user-pinned context note (set via `context pin <text>`)
+      if defined?(Session)
+        pin = Session.current.metadata_value(:context_pin)
+        sections << "PINNED CONTEXT:\n#{pin}" if pin && !pin.empty?
+      end
+
       # Inject working directory file tree (depth 2, compact)
       tree = dir_snapshot(Dir.pwd, max_depth: 2)
       sections << "WORKING DIRECTORY:\n#{tree}" unless tree.empty?
@@ -190,7 +196,8 @@ module MASTER
     # Injects prior conversation history from Session so the LLM has continuity.
     def build_context_messages(goal)
       @cached_system_message ||= ExecutionContext.build_system_message(include_commands: true, depth: ExecutionContext.current_depth)
-      prior = Session.current.context_for_llm(max_messages: 12)
+      hist_max = Session.current.metadata_value(:context_history_max) || 12
+      prior = Session.current.context_for_llm(max_messages: hist_max)
       # prior already contains role/content pairs; drop any stale user msg that
       # duplicates the current goal to avoid sending the same turn twice.
       prior = prior.reject { |m| m[:role].to_s == "user" && m[:content].to_s.strip == goal.strip }

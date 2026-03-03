@@ -25,7 +25,10 @@ def enforce_single_master!(command)
   root_hash = Digest::SHA256.hexdigest(File.expand_path("..", __dir__))[0, 12]
   lock_path = ENV["MASTER_LOCK_PATH"] || File.join(Dir.tmpdir, "master2-#{root_hash}.lock")
   MASTER::SingleInstance.acquire(lock_path: lock_path)
-rescue MASTER::SingleInstance::AlreadyRunningError => e
+rescue => e
+  raise unless defined?(MASTER::SingleInstance::AlreadyRunningError) &&
+               e.is_a?(MASTER::SingleInstance::AlreadyRunningError)
+
   warn e.message
   warn "Set MASTER_ALLOW_MULTI=1 to bypass this guard intentionally."
   exit 1

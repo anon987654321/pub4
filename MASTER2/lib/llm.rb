@@ -420,6 +420,8 @@ module MASTER
       end
 
       def execute_ruby_llm_request(prompt:, messages:, model:, reasoning:, json_schema:, provider:, stream:)
+        return Result.err("Invalid model ID: #{model.inspect}") if model.to_s.match?(/\s/)
+
         configure_ruby_llm
         chat = RubyLLM.chat(model: model, assume_model_exists: true, provider: :openrouter)
                       .with_params(max_tokens: LLM::MAX_CHAT_TOKENS)
