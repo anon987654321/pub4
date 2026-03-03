@@ -29,7 +29,7 @@ module MASTER
                           handler: ->(args, pipeline:) { MASTER::Commands.scan_code(args);    MASTER::Commands::HANDLED } },
       learn:            { desc: "Show matching learned patterns",      usage: "learn <file>",                     group: :analysis,
                           handler: ->(args, pipeline:) { MASTER::Commands.show_learnings(args); MASTER::Commands::HANDLED } },
-      fix:              { desc: "Fix violations in file or directory", usage: "fix [--all|path]",                 group: :analysis,
+      fix:              { desc: "Fix violations in file or directory", usage: "fix [path]",                      group: :analysis,
                           handler: ->(args, pipeline:) { MASTER::Commands.fix_code(args);     MASTER::Commands::HANDLED } },
       converge:         { desc: "Iterate until violations plateau",    usage: "converge [max_iter]",              group: :analysis,
                           handler: ->(args, pipeline:) { MASTER::Commands.run_converge(args) } },

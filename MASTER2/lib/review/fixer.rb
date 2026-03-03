@@ -145,9 +145,9 @@ module MASTER
       private
 
       def can_fix?(type)
-        type = type.to_sym
+        return false unless type
         allowed = MODE_FIXES[@mode] || []
-        allowed.include?(type)
+        allowed.include?(type.to_sym)
       end
 
       # Look up llm_strategies for an axiom_id from axioms.yml.

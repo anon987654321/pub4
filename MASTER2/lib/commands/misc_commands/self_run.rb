@@ -65,6 +65,7 @@ module MASTER
 
         Result.ok("fix: #{total} violations, #{fixed} fixed")
       rescue StandardError => err
+        warn "fix: error: #{err.message} (#{err.backtrace.first})"
         Result.err("fix failed: #{err.message}")
       ensure
         Thread.current[:llm_quiet] = false
