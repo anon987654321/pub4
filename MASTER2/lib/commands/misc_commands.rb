@@ -16,10 +16,10 @@ module MASTER
       TEXT_BASENAMES  = %w[Gemfile Rakefile Makefile Dockerfile].freeze
       SKIP_DIRS       = Paths::SKIP_DIRS
 
-      # fix <path|--all> — unified scan+fix+commit pipeline (same as self-fix)
+      # fix [path] — unified scan+fix+commit pipeline; defaults to project root
       def fix_code(args)
         path = args&.strip
-        path = nil if path.nil? || path.empty? || path == "--all"
+        path = nil if path.nil? || path.empty? || path.start_with?("--")
         self_run(path || MASTER.root)
       end
 

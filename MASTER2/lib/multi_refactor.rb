@@ -67,7 +67,7 @@ module MASTER
         ordered.each do |file|
           break if over_budget?
 
-          bar.advance
+          bar&.advance
           result = refactor_file(file)
           result[:round] = round_num
           @results << result
