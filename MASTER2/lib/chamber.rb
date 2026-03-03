@@ -10,9 +10,9 @@ module MASTER
   # Council - Multi-model deliberation with council personas
   # Implements multi-round debate: Independent -> Synthesis -> Convergence
   class Council
-    include Review
-    include Deliberation
-    include Ideation
+    include ::MASTER::Council::Review
+    include ::MASTER::Council::Deliberation
+    include ::MASTER::Council::Ideation
 
     MAX_ROUNDS = 25
     MAX_COST = 0.50
