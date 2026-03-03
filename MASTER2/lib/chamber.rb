@@ -10,6 +10,10 @@ module MASTER
   # Council - Multi-model deliberation with council personas
   # Implements multi-round debate: Independent -> Synthesis -> Convergence
   class Council
+    require_relative "chamber/review" unless const_defined?(:Review, false)
+    require_relative "chamber/deliberation" unless const_defined?(:Deliberation, false)
+    require_relative "chamber/ideation" unless const_defined?(:Ideation, false)
+
     include ::MASTER::Council::Review
     include ::MASTER::Council::Deliberation
     include ::MASTER::Council::Ideation
