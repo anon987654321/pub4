@@ -1,135 +1,138 @@
 # MASTER2 — LLM Context
 
-MASTER2 is a 30,000-line Ruby constitutional AI agent running on OpenBSD.
-It governs itself via 80 axioms and manages a portfolio of Rails 8 mobile-first PWAs.
-Built from scratch — no framework, no scaffold — pure Ruby with pledge(2) sandboxing.
+Ruby constitutional AI agent on OpenBSD. 30,000 lines, no framework.
+80 axioms. 12 adversarial personas. A portfolio of Rails 8 PWAs.
 
-## What it does
-
-Every user intent flows through a staged pipeline. Each stage earns the right to proceed:
+## Pipeline
 
 ```
-intake → compress → guard → route → council → execute → lint → render
+intake → guard → route → execute → lint → render
 ```
 
-The executor picks a strategy (ReAct / PreAct / ReWOO / Reflexion) based on task complexity.
-The constitutional engine checks output against 80 axioms. The Result monad wraps every
-return — Ok or Err, never nil, never an unhandled exception.
+Executor picks a strategy per task: ReAct / PreAct / ReWOO / Reflexion.
+Every return is `Result.ok(value)` or `Result.err(reason)`. Never nil.
 
-## Core files (read order)
+## Core files
 
 | File | Purpose |
 |------|---------|
 | `data/axioms.yml` | 80 axioms — the constitution |
-| `data/system_prompt.yml` | Identity, behavior, safety rules |
-| `lib/master.rb` | Entry point — wires all modules |
-| `lib/boot.rb` | Environment detection, banner, smoke tests |
-| `lib/pipeline.rb` | Stage-based orchestration engine |
-| `lib/executor.rb` | Strategy pattern for LLM interaction |
-| `lib/result.rb` | Ok/Err monad for every return value |
-| `lib/llm.rb` | Replicate + OpenRouter with circuit breaker |
-| `lib/review/constitution.rb` | Axiom compliance checker |
-| `lib/commands.rb` | REPL command dispatch |
+| `data/models.yml` | Model registry, tier order, fallback chain |
+| `data/system_prompt.yml` | Identity, behavior, safety |
+| `lib/master.rb` | Entry point |
+| `lib/pipeline.rb` | Staged orchestration |
+| `lib/executor.rb` | Strategy pattern + session continuity |
+| `lib/result.rb` | Ok/Err monad |
+| `lib/llm.rb` | Replicate primary, free OpenRouter fallback |
+| `lib/circuit_breaker.rb` | Auto-disables failing providers |
+| `lib/review/constitution.rb` | Axiom compliance |
+| `lib/commands.rb` | REPL dispatch |
 
-## Data files — single source of truth
+## Data files
 
 28 YAML files in `data/`. No hardcoded fallbacks in `lib/`.
 
 | File | Governs |
 |------|---------|
-| `axioms.yml` | 80 axioms across 11 categories |
-| `constitution.yml` | Golden rule, protection levels, enforcement |
+| `axioms.yml` | 80 axioms, 11 categories |
+| `constitution.yml` | Golden rule, protection levels |
 | `council.yml` | 12 adversarial personas, 3 veto holders |
-| `models.yml` | LLM provider/model/tier mappings |
-| `personas.yml` | 8 agent personality definitions |
-| `system_prompt.yml` | Runtime identity and behavior |
-| `phases.yml` | Cognitive load allocation per phase |
-| `quality_thresholds.yml` | Smell thresholds and enforcement levels |
+| `models.yml` | LLM tiers: premium → strong → fast → cheap → free |
 | `language_rules.yml` | Ruby, Rails, zsh, HTML, CSS, JS rules |
 | `platform.yml` | OpenBSD commands, forbidden patterns |
 
 ## Architecture
 
 ```
-bin/master (CLI + REPL)
-│
-├── lib/pipeline.rb         7 stages, Result monad (first error halts)
-├── lib/executor.rb         ReAct / PreAct / ReWOO / Reflexion
-├── lib/llm.rb              Replicate primary, OpenRouter fallback
-├── lib/circuit_breaker.rb  Auto-disables failing providers
-├── lib/commands.rb         REPL dispatch + SHORTCUTS + CommandRegistry
+bin/master
+├── lib/pipeline.rb         staged pipeline, Result monad
+├── lib/executor.rb         ReAct/PreAct/ReWOO/Reflexion + session history
+├── lib/llm.rb              Replicate(0) → free OpenRouter(1) → paid(2)
+├── lib/circuit_breaker.rb  Stoplight, 3 failures trip, 300s cooldown
+├── lib/commands.rb         REPL dispatch, SHORTCUTS, CommandRegistry
 ├── lib/council.rb          12-persona adversarial debate
 ├── lib/review/             Constitutional scanner + enforcer + fixer
-├── lib/server/             Falcon web server: SSE, /chat, /tts, /metrics
-├── lib/speech/             Piper + Edge + Replicate TTS backends
+├── lib/server/             Falcon: SSE, /chat, /tts, /metrics
+├── lib/speech/             Piper + Edge + Replicate TTS
 ├── lib/session/            Conversation state, replay, memory
-├── lib/nlu.rb              Signal detection: conversational, shell, code
-├── lib/ui/                 REPL, dashboard, autocomplete, output
-└── data/*.yml              28 config files — the single source of truth
+├── lib/nlu.rb              Signal detection
+├── lib/ui/                 REPL, dashboard, autocomplete
+└── data/*.yml              28 config files — single source of truth
 ```
 
 ## Request flow
 
 ```
-Pipeline.call(input)
-  → Stages: intake → compress → guard → route → council → ask → lint → render
-  → Executor: selects pattern based on complexity
-  → LLM.ask: tier fallback with circuit breaker
+pipeline.call(input)
+  → guard → executor (pattern selection)
+  → LLM.ask: Replicate first, free OpenRouter fallback
+  → credit exhaustion: opens paid circuits, preserves free + Replicate
   → Result.ok(response) | Result.err(reason)
+```
+
+## Model priority (March 2026)
+
+```
+Replicate (has credits):
+  gpt-5.2 · gpt-5 · claude-opus-4.6 · grok-4          [premium]
+  claude-4-sonnet · gemini-3.1-pro · deepseek-r1        [strong]
+  gemini-3-flash · gpt-4o-mini · kimi-k2.5              [fast]
+
+Free OpenRouter (no credits needed):
+  qwen3-coder · hermes-3-405b · qwen3-80b · gpt-oss-120b [fallback]
 ```
 
 ## Three critical axioms
 
-1. **FAIL_VISIBLY** — every error logged and surfaced, never swallowed
+1. **FAIL_VISIBLY** — errors logged and surfaced, never swallowed
 2. **ONE_SOURCE** — every fact lives in exactly one place
-3. **SELF_APPLY** — MASTER2's own code must pass its own rules
+3. **SELF_APPLY** — MASTER2's code must pass MASTER2's rules
 
 ## Golden rule
 
-**PRESERVE_THEN_IMPROVE_NEVER_BREAK** — never delete working code, never break existing behavior, improve surgically.
+**PRESERVE_THEN_IMPROVE_NEVER_BREAK**
 
 ## Platform
 
 OpenBSD 7.8 · Ruby 3.4 · zsh · pledge(2) · pf(4) · httpd(8) · relayd(8)
-No bash, sed, awk, sudo, systemctl, apt, nginx. Pure zsh builtins for shell.
+No bash, sed, awk, sudo, systemctl. Pure zsh builtins.
 
 ## Commands (REPL)
 
-```
-ask, scan, fix, refactor, autofix, evolve, chamber, hunt, critique, conflict,
-model, models, pattern, patterns, persona, personas, session, summary, forget,
-capture, schedule, heartbeat, policy, budget, health, doctor, bootstrap,
-status, history, context, speak, browse, snapshot, codify, style-guides,
-axioms-stats, opportunities, queue, harvest, workflow, help, clear, exit
-```
+Free-form text → LLM directly. Commands:
 
-Free-form text falls through to the LLM as conversation.
+```
+scan, fix, refactor, evolve, chamber, model, models, pattern, patterns,
+persona, personas, session, summary, forget, capture, schedule, heartbeat,
+policy, health, doctor, bootstrap, status, history, context, speak, browse,
+snapshot, codify, style-guides, axioms-stats, opportunities, help, exit
+```
 
 ## Gotchas
 
-- `Commands.dispatch` returns: `Result` (handled), `:exit`, or `nil` (→ LLM fallthrough)
-- `rescue nil` is banned — always rescue specific exceptions
-- Files over 300 lines should be split along module boundaries
-- Require order matters: `refinement.rb` before `pressure_pass.rb`
-- Budget system removed — OpenRouter handles credit limits
+- `Commands.dispatch` returns: `Result` (handled), `:exit`, `nil` (→ LLM fallthrough)
+- `rescue nil` banned — rescue specific exceptions
+- `free_model?` check prevents credit-exhaustion from killing zero-cost fallbacks
+- Session history injected into `direct_ask` for inter-model continuity
+- Require order: `refinement.rb` before `pressure_pass.rb`
 - Tests need `skip_unless_llm` guard or they hang
 
 ## ENV vars
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `OPENROUTER_API_KEY` | *(required)* | LLM API key |
-| `REPLICATE_API_KEY` | *(optional)* | Media + primary LLM |
-| `MASTER_TOKEN` | `SecureRandom.hex(16)` | Web UI auth |
-| `MASTER_TRACE` | `0` | Verbosity: 0=silent, 3=debug |
-| `MASTER_PRESCAN` | `true` | REPL startup code scan |
+| Variable | Purpose |
+|----------|---------|
+| `REPLICATE_API_KEY` | Primary LLM + media generation |
+| `OPENROUTER_API_KEY` | OpenRouter fallback + free models |
+| `MASTER_TOKEN` | Web UI auth (`SecureRandom.hex(16)`) |
+| `MASTER_TRACE` | Verbosity: 0=silent, 3=debug |
+| `MASTER_PRESCAN` | REPL startup scan (default: true) |
 
 ## Communication style
 
 dmesg-inspired. Terse, factual. No filler.
 
 ```
-llm0 at tier1: claude-4.5-sonnet 1234→567tok $0.02 123ms
-file0 at executor0: modified lib/logging.rb (fixed visibility)
-boot: 45ms
+llm0: claude-4-sonnet 1234→567tok $0.02
+executor0: modified lib/logging.rb
+boot0: 45ms
 ```

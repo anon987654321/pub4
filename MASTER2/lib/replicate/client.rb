@@ -149,9 +149,12 @@ module MASTER
       end
 
       # Build model-family-aware input hash.
-      # anthropic/*   -> prompt, system, max_tokens, temperature
-      # deepseek-ai/* -> prompt, system_prompt, max_tokens, temperature, top_p
-      # default       -> deepseek-style schema (most open LLMs on Replicate)
+      # anthropic/*  -> system, prompt, max_tokens, temperature
+      # deepseek-ai/*-> system_prompt, prompt, max_tokens, temperature, top_p
+      # google/*     -> system_instruction, prompt, max_tokens, temperature
+      # openai/*     -> system_prompt, prompt, max_tokens, temperature
+      # xai/*        -> system_prompt, prompt, max_tokens, temperature
+      # default      -> system_prompt, prompt (most open models on Replicate)
       def build_llm_input(model_id, prompt, system_prompt, max_tokens, temperature, top_p)
         owner = model_id.split("/").first
         case owner
@@ -159,7 +162,11 @@ module MASTER
           base = { prompt: prompt, max_tokens: [max_tokens, 1024].max, temperature: temperature }
           base[:system] = system_prompt if system_prompt
           base
-        when "deepseek-ai"
+        when "google"
+          base = { prompt: prompt, max_tokens: max_tokens, temperature: temperature }
+          base[:system_instruction] = system_prompt if system_prompt
+          base
+        when "deepseek-ai", "openai", "xai", "moonshotai"
           base = { prompt: prompt, max_tokens: max_tokens, temperature: temperature, top_p: top_p }
           base[:system_prompt] = system_prompt if system_prompt
           base

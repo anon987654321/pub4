@@ -285,10 +285,10 @@ module MASTER
 
     def direct_ask(goal, tier: nil)
       system_msg = ExecutionContext.build_system_message(include_commands: false, depth: ExecutionContext.current_depth)
+      prior = Session.current.context_for_llm(max_messages: 12) rescue []
+      messages = [{ role: "system", content: system_msg }] + prior
 
-      result = LLM.ask(goal, messages: [
-                         { role: "system", content: system_msg },
-                       ], stream: true)
+      result = LLM.ask(goal, messages: messages, stream: true)
 
       if result.ok?
         Result.ok(

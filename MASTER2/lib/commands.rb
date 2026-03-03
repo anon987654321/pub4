@@ -154,6 +154,7 @@ module MASTER
       why where when who which can could would should do does did
       the this that these those a an is are was were be been being
       deploy install setup configure fix help me my it its
+      ask tell show explain describe
     ].to_set.freeze
 
     def suggest_command(input)
