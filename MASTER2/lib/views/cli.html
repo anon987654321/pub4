@@ -18,7 +18,7 @@
     html,body{
       margin:0;
       height:100%;
-      background:#000;
+      background:#000805;
       color:#dcdcdc;
       font:16px/1.5 Helvetica,Arial,sans-serif;
       overflow:hidden;
@@ -31,7 +31,7 @@
       width:100dvw;
       height:100dvh;
       display:block;
-      background:#000;
+      background:#000805;
       touch-action:none;
     }
 
@@ -48,16 +48,16 @@
       transition:color 0.3s;
     }
 
-    #status.think{color:#888;}
-    #status.speak{color:#aaa;}
-    #status.processing{color:#999;animation:pulse-status 1.2s ease-in-out infinite;}
+    #status.think{color:#009966;}
+    #status.speak{color:#00cc88;}
+    #status.processing{color:#0077ff;animation:pulse-status 1.2s ease-in-out infinite;}
     @keyframes pulse-status{0%,100%{opacity:1;}50%{opacity:0.3;}}
 
     #ui{
       position:fixed;
       right:calc(12px + var(--safe-right));
       bottom:calc(10px + var(--safe-bottom));
-      color:#444;
+      color:#003322;
       font:9px/1.1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
       text-transform:uppercase;
       letter-spacing:.28em;
@@ -68,7 +68,7 @@
       opacity:.5;
       transition:opacity 0.6s, color 0.3s;
     }
-    #ui.highlight{opacity:1;color:#888;}
+    #ui.highlight{opacity:1;color:#00aa77;}
 
     #ui .dots{
       display:inline-block;
@@ -389,6 +389,7 @@
             setTimeout(()=>{if(!serverAnswered){speakText(reply);scheduleAmbient();}},1500);
             isProcessing=false;
             statusEl.classList.remove('processing');
+            spawnRing(Math.min(W,H)*0.44,'#285a3e');
             for(const n of neurons){
               n.vx+=(Math.random()-0.5)*80;
               n.vy+=(Math.random()-0.5)*80;
@@ -687,6 +688,17 @@
       // Shimmer detune drift
       const shimDrift=makeDriftLFO(0.03,8);shimDrift.connect(shimmerOsc.detune);
 
+      // ── Bach cantus firmus — choral soprano voice, contrary motion to sub ──
+      // Moves in the opposite direction of the bass; slow vibrato like a choir.
+      const cantusOsc=audioCtx.createOscillator();cantusOsc.type='sine';
+      cantusOsc.frequency.value=PAD_CHORDS[0][3]*2; // start at top, 2 octaves up
+      const cantusGain=audioCtx.createGain();cantusGain.gain.value=0.016;
+      const cantusVib=audioCtx.createOscillator();cantusVib.type='sine';cantusVib.frequency.value=4.2;
+      const cantusVibD=audioCtx.createGain();cantusVibD.gain.value=3;
+      cantusVib.connect(cantusVibD);cantusVibD.connect(cantusOsc.detune);cantusVib.start();
+      const cantusDrift=makeDriftLFO(0.025,5);cantusDrift.connect(cantusOsc.detune);
+      cantusOsc.connect(cantusGain);cantusGain.connect(lad1);cantusOsc.start();
+
       // ══════════════════════════════════════════════════════════
       // SIGNAL ROUTING
       // Oscillators → ladder filter → tape sat → warmth → phaser →
@@ -833,14 +845,21 @@
         // Evolve chorus depth
         chorusBus.gain.linearRampToValueAtTime(0.2+Math.random()*0.3,t+rampTime);
 
+        // Cantus firmus: contrary motion — when bass ascends, soprano descends
+        // Alternate between outer voices for Bach-style voice leading
+        const cantusDegree=chordIdx%2===0?3:0; // top when chordIdx even, root when odd
+        const cantusTarget=Math.max(20,chord[cantusDegree]*2);
+        cantusOsc.frequency.exponentialRampToValueAtTime(cantusTarget,t+rampTime*0.55);
+
         padDriftTimer=setTimeout(driftChord,25000+Math.random()*20000);
       };
       padDriftTimer=setTimeout(driftChord,12000+Math.random()*8000);
     };
 
     // Duck pads when speaking — fast attack, slow release (sidechain style)
-    const duckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(0.12,audioCtx.currentTime+0.08);}};
-    const unduckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(1.0,audioCtx.currentTime+2.0);}};
+    // Sidechain to TTS — fast attack (30ms), medium release (1.4s)
+    const duckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(0.06,audioCtx.currentTime+0.03);}};
+    const unduckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(1.0,audioCtx.currentTime+1.4);}};
 
     // Pick the most soothing available voice: prefer neural/enhanced voices,
     // then named natural voices, then first English voice.
@@ -864,6 +883,7 @@
 
     const _onSpeakEnd=()=>{
       isSpeaking=false;
+      spawnRing(Math.min(W,H)*0.12,'#1a3328');
       statusEl.classList.remove('speak');
       statusEl.classList.add('think');
       unduckPads();
@@ -1188,6 +1208,11 @@
     // #1: Haptic feedback helper
     const haptic=(ms=10)=>{try{navigator.vibrate(ms);}catch(_){}};
 
+    // Motion graphics: spawn expanding ring from center on state change
+    const spawnRing=(maxR,col)=>{
+      ringPulses.push({r:2,maxR:maxR||Math.min(W,H)*0.38,a:0.55,col:col||'#2d5a42'});
+    };
+
     // Swipe left/right to change orb
     let swipeStartX=0;
     window.addEventListener('touchstart',e=>{swipeStartX=e.touches[0].clientX;},{passive:true});
@@ -1234,6 +1259,7 @@
       isProcessing=true;
       statusEl.classList.remove('think','speak');
       statusEl.classList.add('processing');
+      spawnRing(Math.min(W,H)*0.16,'#1a3050');
       activeSpinner=spinnerSets[Math.floor(Math.random()*spinnerSets.length)] || spinnerFallback;
       for(const n of neurons){
         n.vx+=(Math.random()-0.5)*100;
@@ -1490,7 +1516,7 @@
     try{
       const saved=JSON.parse(localStorage.getItem('m2_prefs')||'{}');
       if(saved.orb!=null&&saved.orb>=0&&saved.orb<orbStates.length) currentOrb=saved.orb;
-      else currentOrb=Math.floor(Math.random()*orbStates.length);
+      else{const ni=orbStates.findIndex(o=>o.name==='NEURAL');currentOrb=ni>=0?ni:Math.floor(Math.random()*orbStates.length);}
       if(saved.fx!=null&&saved.fx>=0&&saved.fx<FX_MODES.length) fxIdx=saved.fx;
     }catch(_){currentOrb=Math.floor(Math.random()*orbStates.length);}
     setOrb(currentOrb);
@@ -1698,6 +1724,8 @@
     });
 
     let t=0;
+    const ringPulses=[]; // motion graphics: ring events {r,maxR,a,col}
+    let scanPhase=0;
     let camX=0,camY=0;
     const animate=()=>{
       requestAnimationFrame(animate);
@@ -1727,64 +1755,54 @@
 
       // Background: motion trail instead of hard clear — ghostly afterimage
       const trailAlpha=isProcessing?0.12:isSpeaking?0.08:0.06;
-      ctx.fillStyle=`rgba(0,0,0,${1-trailAlpha})`;
+      ctx.fillStyle=`rgba(0,5,3,${1-trailAlpha})`;
       ctx.fillRect(0,0,W,H);
 
       for(const n of neurons) n.update(t,orbStates[currentOrb].s);
       const proj=neurons.map(n=>n.project()).filter(Boolean);
       proj.sort((a,b)=>b.z-a.z);
 
-      // LA beat scene palette — deep amber, crimson, purple haze, neon
-      const GRID=2;
-      const cols=['#0a0201','#1a0806','#33120a','#551a10'];
-      const colsSpeak=['#0a0504','#1a0a08','#33180e','#664020'];
-      const colsThink=['#080008','#140014','#200020','#400040'];
+      // Professional color grading — teal hue family, luminance = intensity
+      // Idle: dark teal ramp. Speaking: brighter teal. Thinking: blue-shifted teal.
+      // Brightness signals activity — flat, no glows, no shadows.
+      const cols     =['#0d1c17','#1a3328','#2d5a42','#3d7a58'];
+      const colsSpeak=['#162e22','#285a3e','#429966','#5bbf80'];
+      const colsThink=['#0e1a2a','#1a3050','#2e5588','#4a80bb'];
       const activeCol=isProcessing?colsThink:(isSpeaking?colsSpeak:cols);
       const audioBoost=Math.min(1,audioLevel*1.8);
 
       for(const p of proj){
-        const gx=Math.round((p.x+camX)/GRID)*GRID;
-        const gy=Math.round((p.y+camY)/GRID)*GRID;
+        const px=p.x+camX;
+        const py=p.y+camY;
+        const r=Math.max(0.5,(p.s<1.5?0.7:p.s<2.5?1.1:p.s<3.5?1.6:2.2)+(audioBoost*1.2));
 
-        const thinkDark=1-Math.min(0.78,p.think*1.2);
         ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35)*orbFade);
         if(isProcessing){
-          // Purple-crimson pulse when thinking
-          const pulse=0.5+Math.sin(t*6)*0.35;
-          const r=Math.floor(60+pulse*50);
-          const b=Math.floor(20+pulse*40);
-          ctx.fillStyle=`rgb(${r},${Math.floor(r*0.08)},${b})`;
+          // Blue-shifted teal pulse: luminance steps with beat
+          const pulse=0.45+Math.sin(t*6)*0.3;
+          const idx=Math.min(3,p.c+Math.round(pulse*1.5));
+          ctx.fillStyle=colsThink[idx];
         }else if(p.think>0.22){
-          const v=Math.floor(80*thinkDark);
-          ctx.fillStyle=`rgb(${v},${Math.floor(v*0.08)},${Math.floor(v*0.15)})`;
+          // Brighter step for neurons near a brain lobe attractor
+          ctx.fillStyle=activeCol[Math.min(3,p.c+1)];
         }else{
-          const base=activeCol[p.c]||activeCol[1];
           if(audioBoost>0.08){
-            // Audio-reactive: warm amber when speaking, deep crimson idle
-            const bright=isSpeaking?'#995530':'#772233';
+            // Audio-reactive: step one level brighter on the ramp
+            const bright=isSpeaking?'#7dccaa':'#4a9a72';
             const mix=Math.min(1,audioBoost*1.5);
-            ctx.fillStyle=mix>0.7?bright:base;
+            ctx.fillStyle=mix>0.7?bright:(activeCol[Math.min(3,p.c+1)]);
           }else{
-            ctx.fillStyle=base;
+            ctx.fillStyle=activeCol[p.c]||activeCol[1];
           }
         }
-        // Audio-reactive particle size + depth-based size variation
-        const audioSz=Math.floor(audioBoost*3);
-        const depthSz=p.s<1.5?1:(p.s<2.5?2:(p.s<3.5?3:4));
-        const sz=depthSz+audioSz;
-        ctx.fillRect(gx,gy,sz,sz);
-
-        // Hot particles emit a subtle radial highlight
-        if(audioBoost>0.5&&p.c>=2&&Math.random()<0.15){
-          ctx.globalAlpha=audioBoost*0.08;
-          ctx.fillStyle=isSpeaking?'#ff6622':'#cc2244';
-          ctx.fillRect(gx-1,gy-1,sz+2,sz+2);
-        }
+        ctx.beginPath();
+        ctx.arc(px,py,r,0,Math.PI*2);
+        ctx.fill();
       }
-      // Connection lines — color-matched to state
-      ctx.globalAlpha=0.12;
-      ctx.strokeStyle=isProcessing?'#220022':(isSpeaking?'#332010':'#1a0508');
-      ctx.lineWidth=1;
+      // Connection lines — thin filaments, teal-graded to state
+      ctx.globalAlpha=0.18;
+      ctx.strokeStyle=isProcessing?'#1a3050':(isSpeaking?'#285a3e':'#1a3328');
+      ctx.lineWidth=0.8;
       for(let i=0;i<proj.length-9;i+=9){
         const a=proj[i];
         const b=proj[i+9];
@@ -1793,19 +1811,43 @@
         const dx=a.x-b.x;
         const dy=a.y-b.y;
         if(dx*dx+dy*dy>900) continue;
+        const mx=(a.x+b.x)/2+(Math.random()-0.5)*4;
+        const my=(a.y+b.y)/2+(Math.random()-0.5)*4;
         ctx.beginPath();
         ctx.moveTo(a.x,a.y);
-        ctx.lineTo(b.x,b.y);
+        ctx.quadraticCurveTo(mx,my,b.x,b.y);
         ctx.stroke();
       }
 
+      // Motion graphics: expanding ring pulses on state transitions
+      for(let i=ringPulses.length-1;i>=0;i--){
+        const rp=ringPulses[i];
+        rp.r+=rp.maxR*0.045;
+        rp.a*=0.91;
+        if(rp.a<0.012){ringPulses.splice(i,1);continue;}
+        ctx.globalAlpha=rp.a;
+        ctx.strokeStyle=rp.col;
+        ctx.lineWidth=1;
+        ctx.beginPath();
+        ctx.arc(W/2+camX,H/2+camY,rp.r,0,Math.PI*2);
+        ctx.stroke();
+      }
+      // Scanning line — single horizontal sweep during processing (radar feel)
+      if(isProcessing){
+        scanPhase=(scanPhase+0.003)%1;
+        const sy=Math.floor(scanPhase*H);
+        ctx.globalAlpha=0.08+Math.sin(t*6)*0.03;
+        ctx.strokeStyle='#1a3050';
+        ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(0,sy);ctx.lineTo(W,sy);ctx.stroke();
+      }
       // Flat thinking indicator — pulsing bar below center
       if(isProcessing){
         const barW=Math.floor(S*8+Math.sin(t*3)*S*4);
         const barX=Math.floor(W/2-barW/2+camX);
         const barY=Math.floor(H/2+S*22+camY);
         ctx.globalAlpha=0.35+Math.sin(t*4)*0.15;
-        ctx.fillStyle='#331133';
+        ctx.fillStyle='#003366';
         ctx.fillRect(barX,barY,barW,2);
       }
 
@@ -1813,9 +1855,9 @@
       const grain=ctx.getImageData(0,0,W,H);
       const gd=grain.data;
       const glen=gd.length;
-      for(let i=(Math.random()*12|0)*4;i<glen;i+=12){
-        const n=((Math.random()-0.5)*10)|0;
-        gd[i]+=n; gd[i+1]+=n>>1; gd[i+2]+=n>>1;
+      for(let i=(Math.random()*16|0)*4;i<glen;i+=16){
+        const n=((Math.random()-0.5)*6)|0;
+        gd[i]+=n>>1; gd[i+1]+=n; gd[i+2]+=n>>1;
       }
       ctx.putImageData(grain,0,0);
       ctx.globalAlpha=1;
