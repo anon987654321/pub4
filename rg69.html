@@ -134,8 +134,11 @@ footer{border-top:1px solid var(--brd);margin-top:6px;padding-top:4px;font-size:
 
 /* welcome */
 .welcome-overlay{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:var(--z-modal)}
-.welcome-dialog{border:1px solid var(--brd);padding:28px 32px;max-width:280px;text-align:center}
-.welcome-dialog p{color:var(--mut);font-size:10px;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.07em}
+.welcome-dialog{border:1px solid var(--brd);padding:32px 36px;max-width:320px;text-align:center}
+.welcome-dialog h2{font:700 clamp(2.4rem,8vw,4rem)/1 "Arial Black",Impact,sans-serif;letter-spacing:0.04em;text-transform:uppercase;color:var(--txt);margin:0 0 4px}
+.welcome-sub{color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 20px}
+.welcome-chips{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:20px}
+.welcome-chip{padding:2px 8px;border:1px solid var(--brd);font:9px/1.5 ui-monospace,monospace;text-transform:uppercase;letter-spacing:0.06em;color:var(--mut)}
 .welcome-dialog button{width:100%;padding:10px;font-size:12px;border-color:var(--acc);color:var(--acc);letter-spacing:0.1em}
 .welcome-dialog button:hover{background:var(--acc);color:#160a00}
 
@@ -146,10 +149,19 @@ footer{border-top:1px solid var(--brd);margin-top:6px;padding-top:4px;font-size:
 </head>
 <body>
 <div id="welcome" class="welcome-overlay">
-<div class="welcome-dialog">
-<p>RG-69 — analog beat machine</p>
-<button id="welcome-start">▶ play</button>
-</div>
+  <div class="welcome-dialog">
+    <h2>RG-69</h2>
+    <p class="welcome-sub">Analog beat machine</p>
+    <div class="welcome-chips">
+      <span class="welcome-chip">Space play</span>
+      <span class="welcome-chip">R randomize</span>
+      <span class="welcome-chip">E export wav</span>
+      <span class="welcome-chip">T theme</span>
+      <span class="welcome-chip">M mute track</span>
+      <span class="welcome-chip">Ctrl+Z undo</span>
+    </div>
+    <button id="welcome-start">▶ start</button>
+  </div>
 </div>
 <header>
 <h1>RG-69 <span id="pos-display">●</span></h1>
