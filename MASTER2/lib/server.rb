@@ -77,12 +77,15 @@ module MASTER
     end
 
     def run_server
+      # Suppress EPIPE/connection-drop noise -- clients disconnect mid-stream constantly
+      Console.logger.level = :error if defined?(Console) && Console.respond_to?(:logger)
       Async do |_task|
         endpoint = Async::HTTP::Endpoint.parse("http://0.0.0.0:#{@port}")
-        server = Falcon::Server.new(Falcon::Server.middleware(@app), endpoint)
-        server.run
+        Falcon::Server.new(Falcon::Server.middleware(@app), endpoint).run
+      rescue Errno::EPIPE, Errno::ECONNRESET, IOError
+        nil
       rescue StandardError => err
-        warn "Falcon error: #{err.class}: #{err.message}"
+        warn "server: #{err.class}: #{err.message}"
       end
     end
 
