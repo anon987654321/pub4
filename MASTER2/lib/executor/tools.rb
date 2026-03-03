@@ -123,18 +123,16 @@ module MASTER
         end
       end
 
-      # Branch safety: refactor writes must not land on main/master/develop
+      # Branch safety: refactor writes must not land on main/master/develop.
+      # Self-improvement writes (paths inside MASTER.root) skip this — dogfood
+      # runs on main intentionally.
       if defined?(RefactorBranch) && defined?(Capabilities) && Capabilities.level >= 2
-        intent = Thread.current[:master_intent]
-        if intent == :refactor
+        intent   = Thread.current[:master_intent]
+        self_run = defined?(MASTER) && expanded.start_with?(MASTER.root.to_s)
+        if intent == :refactor && !self_run
           request_id = Thread.current[:master_request_id]
-          result = RefactorBranch.ensure_safe_branch(request_id: request_id)
-          if result == :created
-            branch = RefactorBranch.current_branch
-            return "BLOCKED: switched to branch '#{branch}' — re-run to apply write on safe branch." \
-              unless @_branch_switched
-          end
-          @_branch_switched = true
+          RefactorBranch.ensure_safe_branch(request_id: request_id)
+          # Proceed on whichever branch we're now on — no BLOCKED return.
         end
       end
 

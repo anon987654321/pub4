@@ -77,17 +77,26 @@ module MASTER
       end
 
       def handle_metrics
-        dirty_count = git_dirty_count
+        dirty_count  = git_dirty_count
+        jobs_count   = defined?(Scheduler) ? Scheduler.list.count { |j| j[:enabled] } : 0
+        last_scan    = defined?(Scan) && Scan.respond_to?(:last_result) ? Scan.last_result : nil
+        violations   = last_scan ? (last_scan[:total_violations] || 0) : 0
+        autonomy_lvl = defined?(Capabilities) ? Capabilities.name : "unknown"
+        model_name   = defined?(LLM) && LLM.respond_to?(:current_model) ? LLM.current_model.to_s : "unknown"
         metrics = {
           version: VERSION, tier: LLM.tier,
           budget_remaining: "unlimited",
           models: LLM.models.count,
-          llm_provider: "openrouter",
+          model: model_name,
+          llm_provider: "replicate+openrouter",
           media_provider: "replicate",
           tts: defined?(Audio) ? Audio.engine_status : "unavailable",
           self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
           repo_dirty_count: dirty_count,
-          repo_state: dirty_count.zero? ? "clean" : "dirty"
+          repo_state: dirty_count.zero? ? "clean" : "dirty",
+          violations: violations,
+          scheduled_jobs: jobs_count,
+          autonomy: autonomy_lvl,
         }.to_json
         [200, { CT_HEADER => JSON_TYPE }, [metrics]]
       end
