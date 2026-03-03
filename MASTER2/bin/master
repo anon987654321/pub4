@@ -75,7 +75,11 @@ cleanup_stale_locks!
 # On OpenBSD, gems live in /usr/local/lib/ruby/gems; on Linux, /var/lib/gems.
 # AutoInstall handles any genuinely missing gems via `gem install`.
 require_relative "../lib/auto_install"
-MASTER::AutoInstall.setup
+unless defined?(MASTER::AutoInstall)
+  warn "MASTER::AutoInstall unavailable; skipping dependency auto-install"
+else
+  MASTER::AutoInstall.setup
+end
 require "json"
 require_relative "../lib/master"
 
