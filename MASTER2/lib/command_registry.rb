@@ -35,7 +35,7 @@ module MASTER
                           handler: ->(args, pipeline:) { MASTER::Commands.run_converge(args) } },
       "multi-refactor": { desc: "Refactor directory",                  usage: "multi-refactor [path]",            group: :analysis, aliases: %w[mrefactor],
                           handler: ->(args, pipeline:) { MASTER::Commands.multi_refactor(args) } },
-      self:             { desc: "Full self-test and auto-fix",         usage: "self [--dry-run]",                 group: :analysis, aliases: %w[selftest self-test selfrun self-run],
+      "self-fix":       { desc: "Scan, fix, and commit MASTER2 itself", usage: "self-fix [--dry-run]",             group: :analysis, aliases: %w[selfrun self-run selftest self-test self],
                           handler: ->(args, pipeline:) { MASTER::Commands.self_run(args) } },
       session:          { desc: "Session management",                  usage: "session [new|save|load]",          group: :session,
                           handler: ->(args, pipeline:) { MASTER::Commands.manage_session(args); MASTER::Commands::HANDLED } },

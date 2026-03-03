@@ -86,58 +86,33 @@ MASTER::Commands.init_instructions
 
 # Helper: Execute full self-run across pub4 repo
 def run_selfrun(args)
-  puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
   pub4_root = File.expand_path("../..", __dir__)
-  strict       = args.include?("--strict")
-  align_axioms = strict || args.include?("--axioms")
-  include_all  = args.include?("--all-files")
-  apply        = !args.include?("--dry-run")  # apply by default, like REPL
-  depth        = args.include?("--deep") ? :deep : :own  # default :own for selfrun
+  dry_run   = args.include?("--dry-run")
 
-  # Ground the LLM in MASTER2's actual source before any analysis
-  if defined?(MASTER::GroundedContext) && defined?(MASTER::ExecutionContext)
-    puts "  grounding LLM in own source (depth: #{depth})…"
-    MASTER::ExecutionContext.instance_variable_set(
-      :@grounded_depth, depth
-    )
+  puts "selfrun: #{dry_run ? 'dry-run' : 'apply'}"
+
+  # Phase 1: violation scan + deterministic fixer + LLM fixes on MASTER2 itself
+  puts "\n=== Phase 1: MASTER2 self-fix ==="
+  MASTER::Commands.self_run(dry_run ? "--dry-run" : "")
+
+  # Phase 2-3: LLM-driven multi-file refactor on deploy scripts and business plans
+  # include_all_files: true raises the per-run cap to 2000 so large dirs don't fail
+  [
+    ["Phase 2: Deploy Scripts", File.join(pub4_root, "deploy"), 1.0],
+    ["Phase 3: Business Plans", File.join(pub4_root, "bp"),     0.5],
+  ].each do |label, path, budget|
+    next unless Dir.exist?(path)
+    puts "\n=== #{label} ==="
+    mr = MASTER::MultiRefactor.new(dry_run: dry_run, budget_cap: budget,
+                                   include_all_files: true)
+    result = mr.run(path: path)
+    puts "  ! #{result.error}" if result.respond_to?(:err?) && result.err?
   end
 
-  refactor_master2(pub4_root, apply, strict, align_axioms, include_all, depth)
-  refactor_deploy_scripts(pub4_root, apply, strict, align_axioms, include_all, depth)
-  refactor_business_plans(pub4_root, apply, strict, align_axioms, include_all, depth)
-  run_self_test
-  exit 0
-end
-
-def refactor_master2(root, apply, strict, align_axioms, include_all, depth = :own)
-  puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
-  mr = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict,
-                                 align_axioms: align_axioms, include_all_files: include_all,
-                                 grounded_depth: depth)
-  phase1_path = include_all ? File.join(root, "MASTER2") : File.join(root, "MASTER2", "lib")
-  result = mr.run(path: phase1_path)
-  puts "! Phase 1 failed: #{result.error}" if result.respond_to?(:err?) && result.err?
-end
-
-def refactor_deploy_scripts(root, apply, strict, align_axioms, include_all, depth = :own)
-  puts "\n=== Phase 2: Deploy Scripts ==="
-  mr2 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict,
-                                  align_axioms: align_axioms, include_all_files: include_all,
-                                  grounded_depth: depth)
-  mr2.run(path: File.join(root, "deploy"))
-end
-
-def refactor_business_plans(root, apply, strict, align_axioms, include_all, depth = :own)
-  puts "\n=== Phase 3: Business Plans ==="
-  mr3 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 0.5, force_rewrite: strict,
-                                  align_axioms: align_axioms, include_all_files: include_all,
-                                  grounded_depth: depth)
-  mr3.run(path: File.join(root, "bp"))
-end
-
-def run_self_test
   puts "\n=== Phase 4: Self-Test ==="
   MASTER::Introspection.run if defined?(MASTER::Introspection)
+
+  exit 0
 end
 
 # Helper: Delegate command to Commands.dispatch_one
@@ -177,12 +152,12 @@ when "help", "-h", "--help"
       master [command] [arguments]
 
     Commands:
+      self-fix                    Scan, fix, and commit MASTER2 + pub4 (add --dry-run to preview)
+      fix [path]                  Fix violations (default: entire codebase)
+      scan [path]                 Scan for code smells (default: .)
       refactor <file>             Refactor file with LLM guidance
-      multi-refactor [path]       Refactor directory (add: --dry-run --strict)
-      converge [max_iter]         Iterate SelfRefactor until violations plateau (convergence)
-      selfrun [--dry-run]          Full self-run across pub4 (add: --strict --axioms --all-files)
-      fix [<path>]                Fix violations in file or directory (default: .)
-      scan [directory]            Scan for code smells (default: .)
+      multi-refactor [path]       Refactor directory
+      converge [max_iter]         Iterate until violations plateau
       chamber <file>              Chamber review with multi-model deliberation
       ideate <topic>              Generate 15+ alternatives for a topic
       evolve [args]               Evolve entire codebase
@@ -261,8 +236,7 @@ when "--daemon", "-d"
   # Daemon mode for agentd
   require_relative "../sbin/agentd" if File.exist?(File.join(__dir__, "../sbin/agentd"))
 
-when "selfrun", "self-run"
-  # Full self-run: analyze and refactor the entire pub4 repo
+when "self-fix", "selfrun", "self-run"
   run_selfrun(args)
 
 when "narrate", "narration"
