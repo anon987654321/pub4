@@ -102,7 +102,8 @@ module MASTER
       end
 
       def prompt_model_name
-        return extract_model_name(@current_model) if @current_model
+        m = current_model
+        return extract_model_name(m) if m && !m.to_s.match?(/\s/)
 
         first = configured_models.first
         first ? extract_model_name(first[:id]) : "m2"

@@ -364,6 +364,63 @@ module MASTER
         end
       end
 
+      CONTEXT_DEPTHS = %w[shallow own deep full].freeze
+
+      def manage_context(args)
+        parts = args.to_s.strip.split(" ", 2)
+        sub   = parts[0].to_s.downcase
+        val   = parts[1].to_s.strip
+
+        case sub
+        when "", "show"
+          depth   = ExecutionContext.current_depth
+          hist    = Session.current.metadata_value(:context_history_max) || 12
+          pinned  = Session.current.metadata_value(:context_pin)
+          approx  = ExecutionContext.build_system_message(depth: depth).length / 4
+
+          puts UI.dim("depth:   #{depth}  (shallow|own|deep|full)")
+          puts UI.dim("history: #{hist} messages")
+          puts UI.dim("tokens:  ~#{approx} in system message")
+          puts UI.dim("pin:     #{pinned || 'none'}")
+          puts
+          puts UI.dim("  context depth shallow     -- code-free, conversational")
+          puts UI.dim("  context depth full        -- inject full source files")
+          puts UI.dim("  context history 6         -- limit to 6 prior exchanges")
+          puts UI.dim("  context pin <note>        -- append note to every prompt")
+          puts UI.dim("  context unpin             -- remove pinned note")
+
+        when "depth"
+          unless CONTEXT_DEPTHS.include?(val)
+            puts UI.dim("depth must be: #{CONTEXT_DEPTHS.join(' | ')}")
+            return
+          end
+          ExecutionContext.current_depth = val.to_sym
+          puts UI.dim("context depth: #{val}")
+
+        when "history"
+          n = val.to_i
+          if n < 1 || n > 100
+            puts UI.dim("history must be 1..100")
+            return
+          end
+          Session.current.set_metadata(:context_history_max, n)
+          puts UI.dim("context history: #{n} messages")
+
+        when "pin"
+          return puts UI.dim("usage: context pin <note>") if val.empty?
+
+          Session.current.set_metadata(:context_pin, val)
+          puts UI.dim("pinned: #{val}")
+
+        when "unpin"
+          Session.current.set_metadata(:context_pin, nil)
+          puts UI.dim("pin cleared")
+
+        else
+          puts UI.dim("context [show|depth|history|pin|unpin]")
+        end
+      end
+
       def run_webtest(_args)
         require "net/http"
 

@@ -6,38 +6,33 @@ module MASTER
     module Utils
       module_function
 
-      # Find Python executable
-      def find_python
-        %w[py python3 python].find { |p| system("#{p} --version > /dev/null 2>&1") } || "python"
+      # Find edge-tts CLI binary (installed by `pip install edge-tts` or `pipx install edge-tts`)
+      # Returns the command string or nil.  No Python needed at call time.
+      def find_edge_tts
+        %w[edge-tts edge_tts].find { |cmd| system("#{cmd} --version > /dev/null 2>&1") }
       end
 
       # Check if Piper is installed
       def piper_installed?
         system("piper --version > /dev/null 2>&1") ||
-          system("py -m piper --version > nul 2>&1")
+          system("piper-tts --version > /dev/null 2>&1")
       end
 
-      # Check if Edge TTS is installed
+      # Check if espeak-ng is installed (fallback local TTS)
+      def espeak_installed?
+        system("espeak-ng --version > /dev/null 2>&1")
+      end
+
+      # Check if Edge TTS CLI is available
       def edge_installed?
-        python = find_python
-        return false unless python
-
-        system("#{python} -c \"import edge_tts\" 2>/dev/null")
+        !find_edge_tts.nil?
       end
 
-      # Install Edge TTS
-      def install_edge!
-        python = find_python
-        system("#{python} -m pip install edge-tts --quiet") if python
-      end
-
-      # Determine best available engine (auto-installs Edge TTS if Python found)
+      # Determine best available engine
       def best_engine
-        return :piper if piper_installed?
-        if find_python
-          install_edge! unless edge_installed?
-          return :edge if edge_installed?
-        end
+        return :piper    if piper_installed?
+        return :edge     if edge_installed?
+        return :espeak   if espeak_installed?
         return :replicate if ENV["REPLICATE_API_TOKEN"]
 
         nil
@@ -47,8 +42,9 @@ module MASTER
       def available_engines
         ENGINES.select do |eng|
           case eng
-          when :piper then piper_installed?
-          when :edge then edge_installed?
+          when :piper     then piper_installed?
+          when :edge      then edge_installed?
+          when :espeak    then espeak_installed?
           when :replicate then ENV.fetch("REPLICATE_API_TOKEN", nil)
           end
         end
