@@ -344,8 +344,8 @@ module MASTER
       low = text.downcase
 
       if signals.include?(:self_run_request)
-        return "selfrun --strict --axioms --all-files" if low.match?(/\b(strict|axiom|every|all|entire)\b/)
-        return "selfrun"
+        return "self-fix --dry-run" if low.match?(/\b(dry.?run|preview|what would)\b/)
+        return "self-fix"
       end
 
       return "multi-refactor . --strict --axioms --all-files" if signals.include?(:lint_request)

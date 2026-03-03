@@ -1,165 +1,143 @@
 # frozen_string_literal: true
 
+require "open3"
+
 module MASTER
   module Commands
     module MiscCommands
-      # Full self-run across entire pub4 repo
+      # Unified fix pipeline: scan violations → deterministic fixer → LLM → commit.
+      # Called by both `fix` (specific path) and `self-fix` (entire MASTER2 lib).
       def self_run(args)
-        root = MASTER.root
-        apply = !args&.include?("--dry-run")
-        lib_dir = File.join(root, "lib")
+        root    = MASTER.root
+        dry_run = args.to_s.include?("--dry-run")
+
+        # Path from args (strip flags); default to lib/ for self-improvement
+        raw     = args.to_s.split.reject { |a| a.start_with?("--") }.first
+        target  = if raw && (File.exist?(raw) || Dir.exist?(raw))
+                    raw
+                  else
+                    File.join(root, "lib")
+                  end
+
+        skip = defined?(Paths::SKIP_DIRS) ? Paths::SKIP_DIRS : %w[.git vendor tmp var node_modules .bundle]
+        files = if File.directory?(target)
+                  Dir.glob(File.join(target, "**", "*.rb")).reject { |f| skip.any? { |d| f.include?("/#{d}/") } }
+                else
+                  [target]
+                end
+
         Thread.current[:llm_quiet] = true
-        ExecutionContext.current_depth = :own
+        ExecutionContext.current_depth = :own if defined?(ExecutionContext)
 
-        rb_files = Dir.glob(File.join(lib_dir, "**", "*.rb"))
-        puts "self: #{rb_files.count} files, mode: #{apply ? 'apply' : 'dry-run'}"
+        puts "fix: #{files.size} files#{dry_run ? ' (dry-run)' : ''}"
 
-        # phase 1: syntax
-        syntax_errors = rb_files.reject { |f| system("ruby", "-c", f, out: File::NULL, err: File::NULL) }
-        puts "self: syntax #{syntax_errors.empty? ? 'ok' : "#{syntax_errors.count} errors"}"
-        syntax_errors.each { |f| puts "  #{File.basename(f)}" }
+        syntax_errors = files.reject { |f| system("ruby", "-c", f, out: File::NULL, err: File::NULL) }
+        puts "fix: #{syntax_errors.any? ? "#{syntax_errors.size} syntax errors" : "syntax ok"}"
 
-        # phase 2: sprawl
-        large = rb_files.select do |f|
-          File.readlines(f).size > 600
-        rescue StandardError
-          false
-        end
-        puts "self: #{large.count} files >600 lines" if large.any?
-        large.each { |f| puts "  #{File.basename(f)} #{File.readlines(f).size}L" }
+        large = files.select { |f| File.readlines(f).size > 600 rescue false }
+        puts "fix: #{large.size} files >600 lines" if large.any?
 
-        # phase 3: enforcement pipeline (same as any code gets)
-        total_violations = 0
+        total = 0
         fixed = 0
 
-        rb_files.each do |file|
-          code = File.read(file)
-          rel = file.sub("#{root}/", "")
-          violations = []
-
-          if defined?(MASTER::Enforcement)
-            enforcement_result = begin
-              Enforcement.check(code, filename: rel)
-            rescue StandardError
-              nil
-            end
-            violations.concat(enforcement_result[:violations]) if enforcement_result.is_a?(Hash) && enforcement_result[:violations].is_a?(Array)
-          end
-
-          if defined?(MASTER::Smells)
-            smells_result = begin
-              Smells.analyze(code, rel)
-            rescue StandardError
-              nil
-            end
-            violations.concat(smells_result[:findings] || smells_result[:smells] || []) if smells_result.is_a?(Hash)
-            violations.concat(smells_result) if smells_result.is_a?(Array)
-          end
-
-          if defined?(MASTER::Violations)
-            violations_result = begin
-              Violations.analyze(code, path: rel, llm: (LLM if defined?(LLM) && LLM.configured?))
-            rescue StandardError
-              nil
-            end
-            found = (violations_result[:literal] || []) + (violations_result[:conceptual] || []) if violations_result.is_a?(Hash)
-            violations.concat(found) if found&.any?
-          end
-
-          if defined?(MASTER::CodeQuality)
-            quality_result = begin
-              CodeQuality.quality_scan(rel, silent: true)
-            rescue StandardError
-              nil
-            end
-            violations.concat(quality_result[:findings]) if quality_result.is_a?(Hash) && quality_result[:findings].is_a?(Array)
-          end
-
+        files.each do |file|
+          code       = File.read(file)
+          rel        = file.sub("#{root}/", "")
+          violations = collect_violations(code, rel)
           next if violations.empty?
 
-          total_violations += violations.count
-          puts "  #{rel}: #{violations.count} violations"
-          violations.each do |v|
-            msg = v[:message].to_s.strip
-            next if msg.empty?
+          total += violations.size
+          puts "  #{rel}: #{violations.size}"
+          violations.each { |v| puts "    #{v[:type] || v[:axiom] || v[:pattern]}: #{v[:message]}" }
+          next if dry_run
 
-            puts "    #{v[:axiom] || v[:type] || v[:pattern]}: #{msg}"
-          end
-
-          next unless apply
-
-          # Prefer deterministic fixer; fall back to LLM if configured
-          if defined?(MASTER::Review::Fixer)
-            fixer = MASTER::Review::Fixer.new(mode: :moderate)
-            result = fixer.fix(file, violations)
-            # Only accept if fixer actually changed something AND syntax is valid
-            if result.ok? && result.value[:fixed].to_i > 0 &&
-               system("ruby", "-c", file, out: File::NULL, err: File::NULL)
-              fixed += violations.count
-              puts "    + fixed (fixer)"
-              next
-            elsif result.ok? && result.value[:fixed].to_i == 0
-              # Fixer made no changes — fall through to LLM (don't restore)
-              nil
-            else
-              File.write(file, code) # restore on syntax error
-            end
-          end
-
-          next unless defined?(LLM) && LLM.configured?
-
-          prompt = "Fix these violations in #{rel}:\n" \
-                   "#{violations.map { |v| "- #{v[:message]}" }.join("\n")}\n\n" \
-                   "Return ONLY the corrected Ruby code, no explanation."
-          llm_result = LLM.ask(prompt, stream: false)
-          next unless llm_result&.ok?
-
-          new_code = llm_result.value[:content].to_s
-          # Strip markdown fences LLMs add despite instructions
-          new_code = new_code.gsub(/\A```\w*\n/, "").gsub(/\n```\s*\z/, "")
-          next if new_code.strip.empty? || new_code == code
-          next unless MASTER::Utils.valid_ruby?(new_code)
-
-          File.write(file, new_code)
-          if system("ruby", "-c", file, out: File::NULL, err: File::NULL)
-            fixed += violations.count
-            puts "    + fixed"
-          else
-            File.write(file, code)
-            puts "    - rollback (syntax error)"
-          end
+          fixed += apply_fix(file, code, violations, rel)
         end
 
-        puts "self: #{total_violations} violations#{", #{fixed} fixed" if apply}"
+        puts "fix: #{total} violations#{fixed > 0 ? ", #{fixed} fixed" : ''}"
 
-        # phase 4: git commit if fixes were applied
-        git_commit_fixes(root, fixed, "self") if apply && fixed > 0
+        git_commit_fixes(root, fixed, "fix") if !dry_run && fixed > 0
 
-        # phase 5: git status report
         if system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
-          require "open3"
           status, = Open3.capture2("git", "-C", root, "status", "--porcelain")
-          puts status.strip.empty? ? "self: git clean" : "self: git #{status.lines.size} uncommitted"
+          puts status.strip.empty? ? "fix: git clean" : "fix: git #{status.lines.size} uncommitted"
         end
 
-        # phase 6: reflect via LLM
-        if defined?(LLM) && LLM.configured?
-          facts = "#{rb_files.count} files, #{syntax_errors.count} syntax errors, " \
-                  "#{large.count} >600L, #{total_violations} violations, #{fixed} fixed"
-          prompt = "You just ran self-inspection on your own codebase. " \
-                   "Facts: #{facts}. " \
-                   "In 5 lines or fewer: what should be improved next? Be concrete and terse."
-          r = LLM.ask(prompt, stream: true)
-          puts r.value[:content] if r&.ok?
-        end
-
-        Thread.current[:llm_quiet] = false
-        ExecutionContext.current_depth = :shallow
-        Result.ok("self complete: #{total_violations} violations, #{fixed} fixed")
+        Result.ok("fix: #{total} violations, #{fixed} fixed")
       rescue StandardError => err
+        Result.err("fix failed: #{err.message}")
+      ensure
         Thread.current[:llm_quiet] = false
-        ExecutionContext.current_depth = :shallow
-        Result.err("self failed: #{err.message}")
+        ExecutionContext.current_depth = :shallow if defined?(ExecutionContext)
+      end
+
+      private
+
+      def collect_violations(code, rel)
+        v = []
+
+        if defined?(MASTER::Enforcement)
+          r = Enforcement.check(code, filename: rel) rescue nil
+          v.concat(r[:violations]) if r.is_a?(Hash) && r[:violations].is_a?(Array)
+        end
+
+        if defined?(MASTER::Smells)
+          r = Smells.analyze(code, rel) rescue nil
+          v.concat(r[:findings] || r[:smells] || []) if r.is_a?(Hash)
+          v.concat(r) if r.is_a?(Array)
+        end
+
+        if defined?(MASTER::Violations)
+          r = Violations.analyze(code, path: rel) rescue nil
+          if r.is_a?(Hash)
+            v.concat(r[:literal] || [])
+            v.concat(r[:conceptual] || [])
+          end
+        end
+
+        if defined?(MASTER::CodeQuality)
+          r = CodeQuality.quality_scan(rel, silent: true) rescue nil
+          v.concat(r[:findings]) if r.is_a?(Hash) && r[:findings].is_a?(Array)
+        end
+
+        v
+      end
+
+      def apply_fix(file, original, violations, rel)
+        # 1. Deterministic fixer
+        if defined?(MASTER::Review::Fixer)
+          result = MASTER::Review::Fixer.new(mode: :moderate).fix(file, violations)
+          if result.ok? && result.value[:fixed].to_i > 0 &&
+             system("ruby", "-c", file, out: File::NULL, err: File::NULL)
+            puts "    + fixed (rules)"
+            return violations.size
+          elsif result.err?
+            File.write(file, original) # restore on syntax failure
+          end
+        end
+
+        # 2. LLM fallback
+        return 0 unless defined?(LLM) && LLM.configured?
+
+        prompt = "Fix these violations in #{rel}:\n" \
+                 "#{violations.map { |v| "- #{v[:message]}" }.join("\n")}\n\n" \
+                 "Return ONLY the corrected Ruby code, no explanation."
+        result = LLM.ask(prompt, stream: false)
+        return 0 unless result&.ok?
+
+        new_code = result.value[:content].to_s.gsub(/\A```\w*\n/, "").gsub(/\n```\s*\z/, "")
+        return 0 if new_code.strip.empty? || new_code == original
+        return 0 unless MASTER::Utils.valid_ruby?(new_code)
+
+        File.write(file, new_code)
+        if system("ruby", "-c", file, out: File::NULL, err: File::NULL)
+          puts "    + fixed (llm)"
+          violations.size
+        else
+          File.write(file, original)
+          puts "    - rollback"
+          0
+        end
       end
     end
   end
