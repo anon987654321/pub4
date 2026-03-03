@@ -174,13 +174,17 @@
     #overlay{
       position:fixed;
       inset:0;
-      display:grid;
-      place-items:center;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:28px;
       background:#000;
       cursor:pointer;
       user-select:none;
       z-index:1000;
       text-align:center;
+      padding:32px;
       opacity:1;
       transition:opacity 0.8s ease;
     }
@@ -188,15 +192,69 @@
     #overlay.ack{opacity:0;pointer-events:none;}
     #overlay[hidden]{display:none;}
 
-    #overlay p{
+    #overlay h1{
       margin:0;
-      font-size:13px;
+      font-size:clamp(18px,4vw,28px);
+      font-weight:300;
+      color:#666;
+      letter-spacing:.25em;
+      text-transform:uppercase;
+    }
+
+    #overlay .tagline{
+      margin:0;
+      font-size:clamp(11px,2vw,14px);
       color:#333;
       font-weight:300;
-      letter-spacing:.12em;
+      letter-spacing:.08em;
+      line-height:1.7;
+      max-width:480px;
+    }
+
+    #overlay .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      justify-content:center;
+      max-width:520px;
+    }
+
+    #overlay .chip{
+      font:11px/1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      color:#444;
+      border:1px solid #222;
+      border-radius:3px;
+      padding:6px 10px;
+      cursor:pointer;
+      transition:color 0.2s,border-color 0.2s;
+      text-transform:lowercase;
+      letter-spacing:.05em;
+    }
+
+    #overlay .chip:hover{color:#888;border-color:#444;}
+
+    #overlay .hint{
+      font-size:10px;
+      color:#222;
+      letter-spacing:.15em;
       animation:overlay-pulse 3s ease-in-out infinite;
     }
+
     @keyframes overlay-pulse{0%,100%{opacity:.4;}50%{opacity:.8;}}
+
+    #metrics-bar{
+      position:fixed;
+      top:calc(8px + var(--safe-top));
+      left:calc(12px + var(--safe-left));
+      font:9px/1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      color:#2a2a2a;
+      letter-spacing:.06em;
+      z-index:90;
+      pointer-events:none;
+      transition:color 0.4s;
+    }
+
+    #metrics-bar.active{color:#444;}
     #chat-log{
       display:none;
       position:fixed;
@@ -234,7 +292,21 @@
     <span id="attach-label"></span>
   </section>
 
-  <section id="overlay" role="dialog" aria-modal="true"><div><p>Tap to start</p></div></section>
+  <div id="metrics-bar"></div>
+
+  <section id="overlay" role="dialog" aria-modal="true">
+    <h1>MASTER2</h1>
+    <p class="tagline">Autonomous coding agent — scans, fixes, refactors, and self-improves your codebase.<br>Powered by Claude Sonnet via Replicate.</p>
+    <div class="chips">
+      <span class="chip" data-cmd="scan .">scan .</span>
+      <span class="chip" data-cmd="fix --all">fix --all</span>
+      <span class="chip" data-cmd="selfrun">selfrun</span>
+      <span class="chip" data-cmd="evolve lib/">evolve lib/</span>
+      <span class="chip" data-cmd="status">status</span>
+      <span class="chip" data-cmd="help">help</span>
+    </div>
+    <p class="hint">tap anywhere to begin · click a chip to run a command</p>
+  </section>
 
   <canvas id="canvas"></canvas>
 
@@ -1098,6 +1170,7 @@
         const data=await resp.json();
         repoDirtyCount=Number(data.repo_dirty_count||0);
         applyMessinessProfile();
+        updateMetricsBar(data);
       }catch(_e){}
     };
 
@@ -1549,6 +1622,36 @@
 
     // Pre-load voices so pickVoice() works on first call
     if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged=()=>{_cachedVoice=null;pickVoice();};
+
+    // Chip clicks send command directly without dismissing overlay first
+    const metricsBar=document.getElementById('metrics-bar');
+    document.querySelectorAll('#overlay .chip').forEach(chip=>{
+      chip.addEventListener('click',e=>{
+        e.stopPropagation();
+        const cmd=chip.dataset.cmd;
+        overlay.classList.add('ack');
+        initAudio(); initMotion(); setupRecognition();
+        setTimeout(initPads,500);
+        refreshMetrics(); setInterval(refreshMetrics,30000);
+        setTimeout(()=>{
+          overlay.hidden=true;
+          inputField.classList.add('active');
+          transmit(cmd);
+        },850);
+      });
+    });
+
+    const updateMetricsBar=(data)=>{
+      if(!metricsBar) return;
+      const parts=[];
+      if(data.model) parts.push(data.model.replace('anthropic/',''));
+      if(data.violations!=null) parts.push(`${data.violations} violations`);
+      if(data.repo_state) parts.push(data.repo_state);
+      if(data.scheduled_jobs!=null) parts.push(`${data.scheduled_jobs} jobs`);
+      if(data.autonomy) parts.push(data.autonomy);
+      metricsBar.textContent=parts.join(' · ');
+      metricsBar.classList.add('active');
+    };
 
     overlay.addEventListener('click',()=>{
       overlay.classList.add('ack');

@@ -21,9 +21,19 @@ module MASTER
     @jobs = []
     @mutex = Mutex.new
 
+    # Default jobs seeded on first boot (skipped if file already exists).
+    DEFAULT_JOBS = [
+      { id: "default_scan",    command: "scan .",      interval: 3600,  priority: 40, confidence: 1.0 },
+      { id: "default_selfrun", command: "selfrun",     interval: 7200,  priority: 60, confidence: 1.0 },
+      { id: "default_evolve",  command: "evolve lib/", interval: 21600, priority: 30, confidence: 0.8 },
+    ].freeze
+
     class << self
       def load
-        return unless File.exist?(JOBS_FILE)
+        unless File.exist?(JOBS_FILE)
+          install_defaults
+          return
+        end
 
         raw = JSON.parse(File.read(JOBS_FILE), symbolize_names: true)
         @jobs = (raw || []).map do |j|
@@ -47,6 +57,26 @@ module MASTER
       rescue StandardError => err
         Logging.dmesg_log("scheduler", message: "load error: #{err.message}")
         @jobs = []
+      end
+
+      # Seed default jobs on a fresh install (no saved state).
+      # Staggers first runs so they don't all fire simultaneously at boot.
+      def install_defaults
+        stagger = 0
+        DEFAULT_JOBS.each do |d|
+          stagger += 300 # 5-minute stagger between first runs
+          job = Job.new(
+            id: d[:id], command: d[:command], interval: d[:interval],
+            next_at: Time.now + stagger, last_run: nil,
+            failures: 0, enabled: true,
+            priority: d[:priority], max_retries: 5,
+            retry_backoff: "exponential", confidence: d[:confidence],
+            last_status: nil, last_error: nil,
+          )
+          @mutex.synchronize { @jobs << job }
+        end
+        save
+        Logging.dmesg_log("scheduler", message: "installed #{DEFAULT_JOBS.size} default jobs")
       end
 
       def save
@@ -95,6 +125,19 @@ module MASTER
         @mutex.synchronize { @jobs.reject! { |j| j.id == job_id } }
         save
         Result.ok(removed: job_id)
+      end
+
+      # Move a job's next_at forward so it runs within +delay+ seconds.
+      def schedule_soon(job_id, delay: 60)
+        @mutex.synchronize do
+          job = @jobs.find { |j| j.id == job_id }
+          return Result.err("Job not found: #{job_id}") unless job
+
+          target = Time.now + delay
+          job.next_at = target if job.next_at > target
+        end
+        save
+        Result.ok(job_id: job_id)
       end
 
       def list

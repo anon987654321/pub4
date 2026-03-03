@@ -347,6 +347,18 @@ module MASTER
         final_score = last[:score] || 0.0
         summary = "obs=#{obs_count} iter=#{iter_count} score=#{final_score}"
         AgentAutonomy.record_skill("heartbeat_autonomy_cycle", description: summary, examples: [summary])
+
+        # Dogfood: if score is low, nudge the selfrun job to run sooner.
+        if final_score < 1.2 && defined?(Scheduler)
+          selfrun_job = Scheduler.list.find { |j| j[:command]&.start_with?("selfrun") && j[:enabled] }
+          if selfrun_job
+            Scheduler.schedule_soon(selfrun_job[:id], delay: 120)
+          else
+            Scheduler.add("selfrun", interval: 7200, id: "dogfood_selfrun_#{Time.now.to_i}",
+                                     priority: 70, confidence: 0.9)
+          end
+        end
+
         [{ skill: "heartbeat_autonomy_cycle", summary: summary }]
       rescue StandardError
         []
