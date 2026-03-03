@@ -18,6 +18,7 @@ module MASTER
       standard: { min_priority: 7, description: "Important axioms (~12 axioms)" },
       full: { min_priority: 0, description: "All axioms (32 axioms)" },
     }.freeze
+    DEFAULT_SCAN_PROFILE = :full
 
     class << self
       # Unified entry point: runs Smells + Violations + BugHunting and merges results
@@ -57,7 +58,7 @@ module MASTER
 
       # Basic structural scan - long methods, god classes, deep nesting
       # Now supports profile parameter for axiom filtering
-      def quality_scan(path, profile: :standard, silent: false)
+      def quality_scan(path, profile: DEFAULT_SCAN_PROFILE, silent: false)
         Logging.dmesg_log("code_review", message: "ENTER code_review.scan")
         return Result.err("Path not found") unless File.exist?(path)
 
