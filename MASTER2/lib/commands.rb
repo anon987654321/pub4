@@ -326,7 +326,7 @@ module MASTER
 
       return chunks if chunks.size > 1
 
-      # Comma-separated commands: "conflict, critique, hunt" -> three dispatches
+      # Comma-separated commands: "conflict, critique, debug" -> three dispatches
       # Only split if each segment looks like a known command word (no spaces in first token)
       comma_chunks = raw.split(/,\s*/).map(&:strip).reject(&:empty?)
       if comma_chunks.size > 1 && comma_chunks.all? { |c| c.split.first&.match?(/\A[a-z][\w-]*\z/) }
