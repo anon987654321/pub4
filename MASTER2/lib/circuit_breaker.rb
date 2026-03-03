@@ -3,14 +3,16 @@
 # Try to load Stoplight, fall back to simple implementation if not available
 begin
   require "stoplight"
+  STOPLIGHT_AVAILABLE = true
   # Silence Stoplight's default stderr notifier -- circuit state is managed internally
   # Stoplight 4.x+ uses top-level module; older uses Stoplight::Light
   if Stoplight.respond_to?(:default_notifiers=)
     Stoplight.default_notifiers = []
-  elsif Stoplight::Light.respond_to?(:default_notifiers=)
+  elsif defined?(Stoplight::Light) && Stoplight::Light.respond_to?(:default_notifiers=)
     Stoplight::Light.default_notifiers = []
   end
 rescue LoadError
+  STOPLIGHT_AVAILABLE = false
   # Simple mock for when Stoplight is not available
   module Stoplight
     class Light
