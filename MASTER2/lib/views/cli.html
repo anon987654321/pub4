@@ -195,16 +195,6 @@
       text-transform:uppercase;
     }
 
-    #overlay .tagline{
-      margin:0;
-      font-size:clamp(11px,2vw,14px);
-      color:#333;
-      font-weight:300;
-      letter-spacing:.08em;
-      line-height:1.7;
-      max-width:480px;
-    }
-
     #overlay .chips{
       display:flex;
       flex-wrap:wrap;
@@ -275,16 +265,13 @@
 
   <section id="overlay" role="dialog" aria-modal="true">
     <h1>MASTER2</h1>
-    <p class="tagline">Autonomous coding agent — scans, fixes, refactors, and self-improves your codebase.<br>Powered by Claude Sonnet via Replicate.</p>
     <div class="chips">
       <span class="chip" data-cmd="scan .">scan .</span>
       <span class="chip" data-cmd="fix">fix</span>
       <span class="chip" data-cmd="self-fix">self-fix</span>
-      <span class="chip" data-cmd="evolve lib/">evolve lib/</span>
       <span class="chip" data-cmd="status">status</span>
-      <span class="chip" data-cmd="help">help</span>
     </div>
-    <p class="hint">tap anywhere to begin · click a chip to run a command</p>
+    <p class="hint">tap to begin</p>
   </section>
 
   <canvas id="canvas"></canvas>
@@ -436,6 +423,7 @@
     let isSpeaking=false;
     const nonstopVoice=true;
     let isProcessing=false;
+    let padModulate=null;
     let repoDirtyCount=0;
     let spinnerIntervalMs=180;
     let spinnerColor="#555";
@@ -531,8 +519,8 @@
       wowLFO.connect(wowDepth);wowLFO.start();
       // Tape dropout — irregular gain dips simulating oxide shedding
       const dropoutGain=audioCtx.createGain();dropoutGain.gain.value=1.0;
-      const dropLFO=audioCtx.createOscillator();dropLFO.type='sine';dropLFO.frequency.value=0.04;
-      const dropDepth=audioCtx.createGain();dropDepth.gain.value=0.06; // subtle dips
+      const dropLFO=audioCtx.createOscillator();dropLFO.type='sine';dropLFO.frequency.value=0.02;
+      const dropDepth=audioCtx.createGain();dropDepth.gain.value=0.02; // almost inaudible — texture only
       dropLFO.connect(dropDepth);dropDepth.connect(dropoutGain.gain);dropLFO.start();
 
       // ── Vinyl + tape noise — SP-1200 / Tascam 388 grit ──
@@ -601,8 +589,8 @@
       // ── Sidechain pump — fake compressor pumping like Dilla/Madlib ──
       const pumpGain=audioCtx.createGain();pumpGain.gain.value=1.0;
       const pumpLFO=audioCtx.createOscillator();pumpLFO.type='sine';
-      pumpLFO.frequency.value=0.4; // slow breathing pump
-      const pumpDepth=audioCtx.createGain();pumpDepth.gain.value=0.2;
+      pumpLFO.frequency.value=0.25; // very slow breathing
+      const pumpDepth=audioCtx.createGain();pumpDepth.gain.value=0.06; // barely perceptible
       pumpLFO.connect(pumpDepth);pumpDepth.connect(pumpGain.gain);pumpLFO.start();
 
       // ── 6-stage phaser — deep analog sweep ──
@@ -620,15 +608,11 @@
       // Chain stages
       for(let i=0;i<phaserStages.length-1;i++) phaserStages[i].connect(phaserStages[i+1]);
 
-      // ── Tremolo — drunken Dilla swing feel (irregular) ──
-      const tremGain=audioCtx.createGain();tremGain.gain.value=0.75;
-      const tremLFO=audioCtx.createOscillator();tremLFO.type='sine';tremLFO.frequency.value=0.12;
-      const tremDepth=audioCtx.createGain();tremDepth.gain.value=0.25;
+      // ── Tremolo — very slow, barely perceptible swell (not choppy) ──
+      const tremGain=audioCtx.createGain();tremGain.gain.value=0.9;
+      const tremLFO=audioCtx.createOscillator();tremLFO.type='sine';tremLFO.frequency.value=0.04;
+      const tremDepth=audioCtx.createGain();tremDepth.gain.value=0.08; // gentle swell only
       tremLFO.connect(tremDepth);tremDepth.connect(tremGain.gain);tremLFO.start();
-      // Second irregular tremolo for wonky feel
-      const trem2LFO=audioCtx.createOscillator();trem2LFO.type='triangle';trem2LFO.frequency.value=0.19;
-      const trem2D=audioCtx.createGain();trem2D.gain.value=0.1;
-      trem2LFO.connect(trem2D);trem2D.connect(tremGain.gain);trem2LFO.start();
 
       // ── Chorus — thick 4-voice Juno-style ──
       const chorusBus=audioCtx.createGain();chorusBus.gain.value=0.35;
@@ -880,12 +864,185 @@
         padDriftTimer=setTimeout(driftChord,25000+Math.random()*20000);
       };
       padDriftTimer=setTimeout(driftChord,12000+Math.random()*8000);
+
+      // State-reactive modulations — filter/phaser/shimmer morph on state changes
+      padModulate=(state)=>{
+        const t=audioCtx.currentTime;
+        if(state==='think'){
+          // Close filter, speed phaser, flood reverb — tension / searching
+          [lad1,lad2,lad3,lad4].forEach(f=>{f.frequency.cancelScheduledValues(t);f.frequency.linearRampToValueAtTime(280,t+2);});
+          phaserLFO.frequency.linearRampToValueAtTime(0.22,t+2);
+          shimmerGain.gain.linearRampToValueAtTime(0.036,t+1);
+          hallBus.gain.linearRampToValueAtTime(0.95,t+2);
+        } else if(state==='speak'){
+          // Filter slams shut, phaser stills — voice cuts through dark space
+          [lad1,lad2,lad3,lad4].forEach(f=>{f.frequency.cancelScheduledValues(t);f.frequency.linearRampToValueAtTime(200,t+0.4);});
+          phaserLFO.frequency.linearRampToValueAtTime(0.03,t+1);
+          ppMix.gain.linearRampToValueAtTime(0.45,t+1.5);
+        } else {
+          // Reopen — slow drift back to ambient baseline
+          [lad1,lad2,lad3,lad4].forEach(f=>{f.frequency.cancelScheduledValues(t);f.frequency.linearRampToValueAtTime(700,t+5);});
+          phaserLFO.frequency.linearRampToValueAtTime(0.05,t+4);
+          shimmerGain.gain.linearRampToValueAtTime(0.012,t+4);
+          hallBus.gain.linearRampToValueAtTime(0.75,t+4);
+          ppMix.gain.linearRampToValueAtTime(0.15,t+4);
+        }
+      };
     };
 
     // Duck pads when speaking — fast attack, slow release (sidechain style)
     // Sidechain to TTS — fast attack (30ms), medium release (1.4s)
     const duckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(0.06,audioCtx.currentTime+0.03);}};
     const unduckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(1.0,audioCtx.currentTime+1.4);}};
+
+    // ── Techno Drum Engine ─────────────────────────────────────────────────
+    // Roland TR-909/808 inspired synthesis. 16-step sequencer at ~130 BPM.
+    // Intricate euclidean patterns: kick/snare/clap/hat/rim/conga/cowbell.
+    let drumClock=null;
+    let drumStep=0;
+    const DRUM_BPM=140; // industrial tempo
+    const DRUM_STEPS=16;
+    const DRUM_GAIN_MASTER=0.26;
+
+    // Industrial kick — hard clip, longer punch, sub thud
+    const synthKick=(t,gain=1)=>{
+      const g=audioCtx.createGain();g.gain.setValueAtTime(gain,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.7);
+      const o=audioCtx.createOscillator();o.frequency.setValueAtTime(200,t);o.frequency.exponentialRampToValueAtTime(35,t+0.09);
+      const dist=audioCtx.createWaveShaper();const n=512;const c=new Float32Array(n);
+      for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=x>0.3?1:x<-0.3?-1:x/0.3;} // hard clip
+      dist.curve=c;dist.oversample='4x';
+      const sub=audioCtx.createOscillator();sub.frequency.setValueAtTime(55,t);sub.frequency.exponentialRampToValueAtTime(25,t+0.15);
+      const subG=audioCtx.createGain();subG.gain.setValueAtTime(gain*0.6,t);subG.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      o.connect(dist);dist.connect(g);g.connect(drumMaster);
+      sub.connect(subG);subG.connect(drumMaster);
+      o.start(t);o.stop(t+0.75);sub.start(t);sub.stop(t+0.45);
+    };
+
+    // 909-style open/closed hi-hat (white noise burst)
+    const synthHat=(t,open=false,gain=1)=>{
+      const dur=open?0.28:0.045;
+      const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*dur,audioCtx.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+      const src=audioCtx.createBufferSource();src.buffer=buf;
+      const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=7000;
+      const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=10000;bp.Q.value=0.5;
+      const g=audioCtx.createGain();g.gain.setValueAtTime(gain*(open?0.22:0.32),t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+      src.connect(hp);hp.connect(bp);bp.connect(g);g.connect(drumMaster);src.start(t);src.stop(t+dur+0.01);
+    };
+
+    // Industrial snare — distorted crack, long noise tail
+    const synthSnare=(t,gain=1)=>{
+      const o=audioCtx.createOscillator();o.type='square';o.frequency.setValueAtTime(240,t);o.frequency.exponentialRampToValueAtTime(90,t+0.08);
+      const og=audioCtx.createGain();og.gain.setValueAtTime(gain*0.5,t);og.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      const dist=audioCtx.createWaveShaper();const n=256;const c=new Float32Array(n);
+      for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=Math.tanh(x*8);}dist.curve=c;
+      const buf=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*0.35),audioCtx.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+      const src=audioCtx.createBufferSource();src.buffer=buf;
+      const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=800;
+      const ng=audioCtx.createGain();ng.gain.setValueAtTime(gain*0.7,t);ng.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+      o.connect(dist);dist.connect(og);og.connect(drumMaster);
+      src.connect(hp);hp.connect(ng);ng.connect(drumMaster);
+      o.start(t);o.stop(t+0.12);src.start(t);src.stop(t+0.38);
+    };
+
+    // Clap (layered noise bursts)
+    const synthClap=(t,gain=1)=>{
+      [0,0.008,0.016].forEach(off=>{
+        const buf=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*0.06),audioCtx.sampleRate);
+        const d=buf.getChannelData(0);for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+        const src=audioCtx.createBufferSource();src.buffer=buf;
+        const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1100;bp.Q.value=0.8;
+        const g=audioCtx.createGain();g.gain.setValueAtTime(gain*0.4,t+off);g.gain.exponentialRampToValueAtTime(0.001,t+off+0.07);
+        src.connect(bp);bp.connect(g);g.connect(drumMaster);src.start(t+off);src.stop(t+off+0.08);
+      });
+    };
+
+    // Rim shot (short click + tone)
+    const synthRim=(t,gain=1)=>{
+      const o=audioCtx.createOscillator();o.type='square';o.frequency.value=400;
+      const g=audioCtx.createGain();g.gain.setValueAtTime(gain*0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+      o.connect(g);g.connect(drumMaster);o.start(t);o.stop(t+0.045);
+    };
+
+    // Conga (pitched resonant body)
+    const synthConga=(t,freq=200,gain=1)=>{
+      const o=audioCtx.createOscillator();o.type='sine';o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(freq*0.6,t+0.18);
+      const g=audioCtx.createGain();g.gain.setValueAtTime(gain*0.45,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+      o.connect(g);g.connect(drumMaster);o.start(t);o.stop(t+0.25);
+    };
+
+    // Cowbell (dual tone, metallic)
+    const synthCowbell=(t,gain=1)=>{
+      [562,845].forEach(f=>{
+        const o=audioCtx.createOscillator();o.type='square';o.frequency.value=f;
+        const g=audioCtx.createGain();g.gain.setValueAtTime(gain*0.18,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+        o.connect(g);g.connect(drumMaster);o.start(t);o.stop(t+0.2);
+      });
+    };
+
+    // Master drum bus with compression
+    let drumMaster=null;
+    const initDrums=()=>{
+      if(!audioCtx||drumMaster) return;
+      drumMaster=audioCtx.createGain();drumMaster.gain.value=DRUM_GAIN_MASTER;
+      const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=6;comp.attack.value=0.003;comp.release.value=0.12;
+      const eq=audioCtx.createBiquadFilter();eq.type='peaking';eq.frequency.value=80;eq.gain.value=6;eq.Q.value=1;
+      drumMaster.connect(comp);comp.connect(eq);eq.connect(audioCtx.destination);
+      startDrumSequencer();
+    };
+
+    // ── Industrial patterns — ported from rg69.html hate-pummel / hate-grind ──
+    // Values 0.x = ghost velocity; 1 = full hit; 0 = rest
+    const DRUM_PATTERNS={
+      // hate-pummel: kick every 2nd 16th with velocity variation
+      kick:  [1,0,.7,0, 1,0,.8,0, 1,0,.7,0, 1,0,.9,0],
+      snare: [0,0,0,0,  1,0,0,0,  0,0,0,0,  1,0,0,0],
+      clap:  [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
+      ohat:  [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
+      chat:  [1,.8,1,.7, 1,.8,1,.7, 1,.8,1,.7, 1,.8,1,.7], // 16th hat wall
+      rim:   [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
+      conga: [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
+      cowbell:[0,0,0,0, 0,0,0,0,  0,0,0,0,  0,0,0,0],
+    };
+
+    // hate-grind: syncopated kick, snare with ghosts
+    const DRUM_PATTERNS_B={
+      kick:  [1,0,0,.5, 1,0,0,.6, 1,0,0,.5, 1,0,0,.7],
+      snare: [0,0,0,0,  .9,0,0,.3, 0,0,0,0,  .9,0,0,.4],
+      clap:  [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
+      ohat:  [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
+      chat:  [.9,.8,.9,.7, .9,.8,.9,.7, .9,.8,.9,.7, .9,.8,.9,.7],
+      rim:   [0,0,.6,0,  0,0,0,0,  .7,0,0,0, 0,.5,0,0],
+      conga: [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
+      cowbell:[0,0,0,0, 0,0,0,0,  0,0,0,0,  0,0,0,0],
+    };
+
+    let drumBar=0;
+    const startDrumSequencer=()=>{
+      const stepDur=60/(DRUM_BPM*4); // 16th note duration
+      const lookahead=0.08;
+      let nextTime=audioCtx.currentTime+0.1;
+      const tick=()=>{
+        while(nextTime<audioCtx.currentTime+lookahead*2){
+          const pat=drumBar%4<2?DRUM_PATTERNS:DRUM_PATTERNS_B;
+          const s=drumStep%DRUM_STEPS;
+          if(pat.kick[s])   synthKick(nextTime,s===0?1:0.75);
+          if(pat.snare[s])  synthSnare(nextTime,0.85);
+          if(pat.clap[s])   synthClap(nextTime,0.7);
+          if(pat.ohat[s])   synthHat(nextTime,true,0.5);
+          if(pat.chat[s])   synthHat(nextTime,false,pat.chat[s]===1?0.4:0.2);
+          if(pat.rim[s])    synthRim(nextTime,0.6);
+          if(pat.conga[s])  synthConga(nextTime,s%2===0?220:180,0.55);
+          if(pat.cowbell[s])synthCowbell(nextTime,0.4);
+          nextTime+=stepDur;
+          drumStep++;
+          if(drumStep%DRUM_STEPS===0) drumBar++;
+        }
+        drumClock=setTimeout(tick,lookahead*1000);
+      };
+      tick();
+    };
 
     // Pick the most soothing available voice: prefer neural/enhanced voices,
     // then named natural voices, then first English voice.
@@ -913,6 +1070,7 @@
       statusEl.classList.remove('speak');
       statusEl.classList.add('think');
       unduckPads();
+      if(padModulate) padModulate('idle');
       if(nonstopVoice) startRecognition();
     };
 
@@ -921,41 +1079,6 @@
       const raw=String(text).slice(0,800);
       const parts=raw.match(/[^.!?]+[.!?]+[\s]?|[^.!?]+$/g);
       return parts&&parts.length?parts.map(s=>s.trim()).filter(Boolean):[raw];
-    };
-
-    // #1: Route local TTS through Web Audio FX chain when audioCtx is available
-    const speakText=text=>{
-      if(!text) return;
-      // If audioCtx available, use MediaStreamDestination to capture speechSynthesis
-      // and route through FX chain — otherwise fall back to plain speechSynthesis
-      if(!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      const sentences=splitSentences(text);
-      const v=pickVoice();
-      const isNeural=v&&/Natural|Online|Enhanced|Premium/i.test(v.name);
-      const baseRate=isNeural?0.78:0.72;
-      const basePitch=isNeural?0.88:0.82;
-      sentences.forEach((s,i)=>{
-        const u=new SpeechSynthesisUtterance(s);
-        u.rate=baseRate+(Math.random()*0.04-0.02);
-        u.pitch=basePitch+(Math.random()*0.03-0.015);
-        u.volume=0.65;
-        if(v) u.voice=v;
-        if(i===0){
-          u.onstart=()=>{
-            isSpeaking=true;
-            speechPulse=0.6;
-            duckPads();
-            statusEl.classList.remove('think');
-            statusEl.classList.add('speak');
-            if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
-          };
-        }
-        // #2: Drive orb pulse from word boundaries
-        u.onboundary=ev=>{if(ev.name==='word')speechPulse=0.5+Math.random()*0.3;};
-        if(i===sentences.length-1) u.onend=_onSpeakEnd;
-        window.speechSynthesis.speak(u);
-      });
     };
 
     // Web Audio effect chain — cycle with long-press on status circle
@@ -1120,6 +1243,7 @@
         buildFxChain(src);
         isSpeaking=true; speechPulse=0.6;
         duckPads();
+        if(padModulate) padModulate('speak');
         statusEl.classList.remove('think');
         statusEl.classList.add('speak');
         if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
@@ -1195,7 +1319,6 @@
         const data=await resp.json();
         repoDirtyCount=Number(data.repo_dirty_count||0);
         applyMessinessProfile();
-        updateMetricsBar(data);
       }catch(_e){}
     };
 
@@ -1283,6 +1406,7 @@
     const transmit=async(message)=>{
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
       isProcessing=true;
+      if(padModulate) padModulate('think');
       statusEl.classList.remove('think','speak');
       statusEl.classList.add('processing');
       spawnRing(Math.min(W,H)*0.16,'#4a2a04');
@@ -1661,7 +1785,7 @@
         const cmd=chip.dataset.cmd;
         overlay.classList.add('ack');
         initAudio(); initMotion(); setupRecognition();
-        setTimeout(initPads,500);
+        setTimeout(initPads,500); setTimeout(initDrums,650);
         refreshMetrics(); setInterval(refreshMetrics,30000);
         setTimeout(()=>{
           overlay.hidden=true;
@@ -1671,15 +1795,14 @@
       });
     });
 
-    const updateMetricsBar=(_data)=>{}; // metrics-bar removed
 
     overlay.addEventListener('click',()=>{
       overlay.classList.add('ack');
       initAudio();
       initMotion();
       setupRecognition();
-      // Start ambient pads after a brief delay for audioCtx to settle
-      setTimeout(initPads,500);
+      // Start ambient pads + drums after a brief delay for audioCtx to settle
+      setTimeout(initPads,500); setTimeout(initDrums,650);
       refreshMetrics();
       setInterval(refreshMetrics,30000);
       setTimeout(()=>{
