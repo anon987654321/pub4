@@ -7,7 +7,7 @@ begin
   # Stoplight 4.x+ uses top-level module; older uses Stoplight::Light
   if Stoplight.respond_to?(:default_notifiers=)
     Stoplight.default_notifiers = []
-  elsif Stoplight::Light.respond_to?(:default_notifiers=)
+  elsif defined?(Stoplight::Light) && Stoplight::Light.respond_to?(:default_notifiers=)
     Stoplight::Light.default_notifiers = []
   end
 rescue LoadError
