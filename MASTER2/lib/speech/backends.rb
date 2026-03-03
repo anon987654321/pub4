@@ -35,7 +35,9 @@ module MASTER
 
       # Edge TTS via CLI binary (no Python dependency at call time)
       # Install once: pip install edge-tts  OR  pipx install edge-tts
-      def speak_edge(text, voice: nil, style: :normal, play: true)
+      # effect: FFmpeg filter applied after synthesis to bake in dark character server-side.
+      # Defaults to :demon — guarantees the voice sounds deep/dark regardless of browser FX.
+      def speak_edge(text, voice: nil, style: :normal, effect: :demon, play: true)
         cmd = Utils.find_edge_tts
         return Result.err("edge-tts not found. Install: pipx install edge-tts") unless cmd
 
@@ -56,11 +58,23 @@ module MASTER
         _out, err, status = Open3.capture3(*tts_cmd)
         return Result.err("Edge TTS failed: #{err.strip}") unless status.success? && File.exist?(output)
 
+        # Bake FFmpeg effect into the audio server-side so browser always gets dark voice
+        if effect && (fx_filter = STREAM_EFFECTS[effect.to_sym])
+          ffmpeg = ENV.fetch("FFMPEG_PATH", "ffmpeg")
+          processed = File.join(output_dir, "edge_fx_#{SecureRandom.hex(4)}.mp3")
+          _fo, _fe, fst = Open3.capture3(ffmpeg, "-y", "-i", output, "-af", fx_filter, processed)
+          if fst.success? && File.exist?(processed)
+            FileUtils.rm_f(output)
+            output = processed
+          end
+          # FFmpeg failure is non-fatal — raw audio still has rate/pitch from synthesis
+        end
+
         audio = File.binread(output)
         Playback.play_audio(output) if play
         FileUtils.rm_f(output)
 
-        Result.ok(engine: :edge, voice: voice_id, style: style, audio: audio, content_type: "audio/mpeg")
+        Result.ok(engine: :edge, voice: voice_id, style: style, effect: effect, audio: audio, content_type: "audio/mpeg")
       end
 
       # espeak-ng TTS (local fallback, robotic but zero deps)
