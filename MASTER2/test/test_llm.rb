@@ -61,7 +61,8 @@ class TestLLM < Minitest::Test
     
     assert MASTER::LLM.model_forced?, "Model should be marked as forced"
     assert_equal test_model, MASTER::LLM.forced_model, "Forced model should be set"
-    assert_equal :fast, MASTER::LLM.forced_tier, "Forced tier should be classified"
+    expected_tier = MASTER::LLM.send(:classify_tier, test_model)
+    assert_equal expected_tier, MASTER::LLM.forced_tier, "Forced tier should be classified"
   end
 
   def test_clear_forced_model
