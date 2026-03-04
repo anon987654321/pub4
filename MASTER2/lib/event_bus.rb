@@ -1,63 +1,59 @@
 # frozen_string_literal: true
 
-module MASTER
-  # EventBus - Simple publish/subscribe event system
-  # Provides decoupled communication between subsystems
-  module EventBus
-    @subscribers = Hash.new { |h, k| h[k] = [] }
+require "set"
+
+class EventBus
+  def initialize
+    @subscribers = Hash.new { |h, k| h[k] = Set.new }
     @mutex = Mutex.new
+  end
 
-    class << self
-      # Subscribe to an event
-      # @param event [Symbol, String] Event name to subscribe to
-      # @param subscriber [Object, nil] Optional subscriber identifier (for unsubscribing)
-      # @yield [Hash] Called with event data when event is published
-      def subscribe(event, subscriber: nil, &handler)
-        raise ArgumentError, "Block required for subscribe" unless handler
+  def subscribe(event, listener = nil, &block)
+    callable = listener || block
+    raise ArgumentError, "listener or block required" unless callable
 
-        event = event.to_sym
-        @mutex.synchronize do
-          @subscribers[event] << { handler: handler, subscriber: subscriber }
-        end
-      end
+    @mutex.synchronize do
+      @subscribers[event.to_sym].add(callable)
+    end
 
-      # Publish an event to all subscribers
-      # @param event [Symbol, String] Event name to publish
-      # @param data [Hash] Event data passed to handlers
-      def publish(event, **data)
-        event = event.to_sym
-        handlers = @mutex.synchronize { @subscribers[event].dup }
+    callable
+  end
 
-        handlers.each do |entry|
-          entry[:handler].call(data)
-        rescue StandardError => e
-          # Silently rescue handler errors; only log at high trace levels
-          if defined?(Logging) && Logging.respond_to?(:trace_level) && Logging.trace_level >= 3
-            Logging.dmesg_log("eventbus0", message: "handler error for #{event}: #{e.message}", level: Logging::ALL_EVENTS)
-          end
-        end
-      end
+  def unsubscribe(event, listener)
+    return unless listener
 
-      # Unsubscribe a subscriber from all events
-      # @param subscriber [Object] Subscriber identifier to remove
-      def unsubscribe(subscriber)
-        @mutex.synchronize do
-          @subscribers.each_value do |handlers|
-            handlers.reject! { |entry| entry[:subscriber] == subscriber }
-          end
-        end
-      end
+    @mutex.synchronize do
+      @subscribers[event.to_sym].delete(listener)
+      @subscribers.delete(event.to_sym) if @subscribers[event.to_sym].empty?
+    end
 
-      # Clear all subscribers (useful for testing)
-      def clear!
-        @mutex.synchronize { @subscribers.clear }
-      end
+    listener
+  end
 
-      # Return list of registered event names
-      # @return [Array<Symbol>] List of event names with subscribers
-      def registered
-        @mutex.synchronize { @subscribers.keys.select { |k| @subscribers[k].any? } }
+  def publish(event, payload = nil)
+    listeners = listeners_for(event)
+    return if listeners.empty?
+
+    listeners.each do |listener|
+      begin
+        listener.call(payload)
+      rescue StandardError => e
+        handle_error(e, event, listener, payload)
       end
     end
+
+    nil
+  end
+
+  private
+
+  def listeners_for(event)
+    @mutex.synchronize do
+      @subscribers[event.to_sym].to_a
+    end
+  end
+
+  def handle_error(error, event, listener, payload)
+    raise error
   end
 end

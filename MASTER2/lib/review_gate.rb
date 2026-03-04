@@ -1,82 +1,78 @@
 # frozen_string_literal: true
 
-module MASTER
-  # ReviewGate -- every code-touching operation passes through here.
-  #
-  # Extracts file paths and inline code blocks from input + response text,
-  # runs Scan.run(:quick) on each, and prints compact findings to stderr.
-  # The original Result is returned unchanged -- display is a side effect.
-  #
-  # Usage (both paths converge here):
-  #   ReviewGate.run(result, input: raw_user_input)
-  module ReviewGate
-    FILE_PATH_RE = %r{(?:^|\s|`|'|")([./~][\w./\-]+\.(?:rb|js|ts|py|go|sh|yml|yaml|json|md|erb|haml|css|scss|html))(?:\s|$|`|'|")}
-    FENCE_RE     = /```(\w*)\n(.*?)```/m
+module ReviewGate
+  DEFAULT_REQUIRED_APPROVALS = 1
+  DEFAULT_REQUIRED_CHECKS = [].freeze
 
-    module_function
+  class Error < StandardError; end
 
-    def run(result, input: "")
-      return result unless result.respond_to?(:ok?) && result.ok?
-      return result if result.value.is_a?(Hash) && result.value[:handled]
-
-      response_text = response_text_from(result)
-      combined      = "#{input}\n#{response_text}"
-
-      targets = real_file_targets(combined)
-      blocks  = code_blocks(response_text)
-
-      return result if targets.empty? && blocks.empty?
-
-      findings = {}
-
-      targets.each do |path|
-        scan = Scan.run(path, depth: :quick) rescue StandardError; nil
-        next unless scan.is_a?(Hash) && scan[:total].to_i > 0
-
-        scan[:by_file].each do |file, file_findings|
-          findings[file] = file_findings unless file_findings.empty?
-        end
-      end
-
-      blocks.each_with_index do |block, i|
-        label    = "inline:#{i + 1}"
-        detected = Review::ToolScanner.scan(block[:code], name: label) rescue []
-        findings[label] = detected unless detected.empty?
-      end
-
-      display(findings) unless findings.empty?
-      result
+  class Runner
+    def initialize(client:, repo:, pull_number:, required_approvals: nil, required_checks: nil)
+      @client = client
+      @repo = repo
+      @pull_number = pull_number
+      @required_approvals = required_approvals || DEFAULT_REQUIRED_APPROVALS
+      @required_checks = required_checks || DEFAULT_REQUIRED_CHECKS
     end
 
-    def real_file_targets(text)
-      text.scan(FILE_PATH_RE)
-          .flatten
-          .map { |p| p.start_with?("~") ? File.expand_path(p) : File.expand_path(p, Dir.pwd) }
-          .uniq
-          .select { |p| File.exist?(p) }
+    def run
+      validate_inputs!
+      pull_request = fetch_pull_request
+      approvals_count = approvals_for(pull_request)
+
+      ensure_approvals!(approvals_count)
+      ensure_checks!(pull_request)
+
+      true
     end
 
-    def code_blocks(text)
-      text.scan(FENCE_RE).map { |lang, code| { lang: lang, code: code } }
+    private
+
+    attr_reader :client, :repo, :pull_number, :required_approvals, :required_checks
+
+    def validate_inputs!
+      raise Error, "client is required" if client.nil?
+      raise Error, "repo is required" if repo.to_s.strip.empty?
+      raise Error, "pull_number is required" if pull_number.nil?
     end
 
-    def display(findings)
-      total = findings.values.sum(&:size)
-      return if total == 0
-
-      findings.each do |source, items|
-        items.each do |f|
-          $stderr.puts UI.dim("scan0: #{source}:#{f[:line]}  #{f[:rule]}  #{f[:message]}")
-        end
-      end
-      $stderr.puts UI.dim("scan0: #{total} finding#{total == 1 ? '' : 's'}")
+    def fetch_pull_request
+      client.pull_request(repo, pull_number)
     end
 
-    def response_text_from(result)
-      v = result.value
-      return "" unless v.is_a?(Hash)
+    def approvals_for(_pull_request)
+      reviews = client.pull_request_reviews(repo, pull_number)
+      approved_logins = reviews
+        .select { |review| review.state.to_s.casecmp("approved").zero? }
+        .map { |review| review.user&.login }
+        .compact
+        .uniq
 
-      v[:rendered] || v[:response] || v[:answer] || ""
+      approved_logins.length
     end
+
+    def ensure_approvals!(approvals_count)
+      return if approvals_count >= required_approvals
+
+      raise Error,
+            "Insufficient approvals: #{approvals_count}/#{required_approvals}"
+    end
+
+    def ensure_checks!(pull_request)
+      return if required_checks.empty?
+
+      sha = pull_request.head.sha
+      statuses = client.statuses(repo, sha).map(&:context)
+      missing = required_checks - statuses
+
+      return if missing.empty?
+
+      raise Error,
+            "Missing required checks: #{missing.join(', ')}"
+    end
+  end
+
+  def self.run(**kwargs)
+    Runner.new(**kwargs).run
   end
 end
