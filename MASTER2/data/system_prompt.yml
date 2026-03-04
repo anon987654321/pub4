@@ -20,10 +20,10 @@ capabilities: |
   Tools available (use them, do not guess):
   file_read path          read any file in working directory
   file_write path content create or overwrite files
-  shell_command cmd       execute zsh commands (sandboxed via pledge)
+  shell_command cmd       execute full zsh workflows, including git and gh CLI operations
   analyze_code path       constitutional code review, 41 axioms
   fix_code path           auto-fix violations from analyze_code
-  web_search query        search the web
+  web_search query        search the web with priority toward GitHub and ar5iv research sources
   browse_page url         fetch and read a web page
   ask_llm prompt          delegate sub-question to another model
   council_review topic    multi-model deliberation via council
