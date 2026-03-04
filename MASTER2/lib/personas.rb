@@ -238,15 +238,24 @@ module MASTER
       def check_for_gaps(_data)
         puts UI.dim("\n[Persona] Checking for common gaps...")
 
-        gaps = []
-        gaps << "No tests found" unless File.exist?("test")
-        gaps << "No README" unless File.exist?("README.md")
-        gaps << "No .gitignore" unless File.exist?(".gitignore")
+        gaps = detect_project_gaps
 
         if gaps.any?
           puts UI.yellow("  Found gaps: #{gaps.join(', ')}")
           puts UI.dim("  Should I add these?")
         end
+      end
+
+      def detect_project_gaps
+        root = defined?(Paths) ? Paths.root : Dir.pwd
+        test_dirs = %w[test spec]
+        readme_files = %w[README.md README.rst README.txt README]
+
+        gaps = []
+        gaps << "No tests found" unless test_dirs.any? { |dir| File.directory?(File.join(root, dir)) }
+        gaps << "No README" unless readme_files.any? { |name| File.file?(File.join(root, name)) }
+        gaps << "No .gitignore" unless File.file?(File.join(root, ".gitignore"))
+        gaps
       end
 
       def suggest_research(_data)
