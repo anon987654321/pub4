@@ -91,10 +91,14 @@ module MASTER
         false
       end
 
+      def api_token
+        ENV["REPLICATE_API_TOKEN"] || ENV["REPLICATE_API_KEY"]
+      end
+
       def http_post(url, body)
         uri = URI(url)
         req = Net::HTTP::Post.new(uri)
-        req["Authorization"] = "Bearer #{Replicate.api_key}"
+        req["Authorization"] = "Bearer #{api_token}"
         req["Content-Type"]  = "application/json"
         req.body = body.to_json
 
@@ -108,7 +112,7 @@ module MASTER
       def http_get(url)
         uri = URI(url)
         req = Net::HTTP::Get.new(uri)
-        req["Authorization"] = "Bearer #{Replicate.api_key}"
+        req["Authorization"] = "Bearer #{api_token}"
 
         response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true,
                                                            open_timeout: HTTP_OPEN_TIMEOUT, read_timeout: HTTP_READ_TIMEOUT) do |http|

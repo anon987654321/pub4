@@ -444,7 +444,7 @@ module MASTER
 
           next unless code.match?(re)
 
-          DB.increment_smell_hit(smell[:pattern]) rescue nil
+          DB.increment_smell_hit(smell[:pattern]) rescue StandardError
           violations << {
             layer: :learned_smell,
             axiom: "QUALITY",
