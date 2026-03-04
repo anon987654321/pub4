@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-module Enforcement
-  class Scopes
+module MASTER
+  module Enforcement
+    class Scopes
     REQUIRED_FRAMEWORK_KEYS = %w[name version].freeze
 
     class << self
@@ -102,5 +103,6 @@ module Enforcement
         end
       end
     end
+  end
   end
 end
