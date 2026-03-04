@@ -1,0 +1,43 @@
+profile: openclaw_telegram_local_ai_high_signal
+updated_at: "2026-03-04"
+repos:
+  - name: litellm
+    repo: https://github.com/BerriAI/litellm
+    category: model_routing
+    stars: 37665
+    fit: Unified LLM gateway with retries and fallback routing across local and hosted providers.
+  - name: openclaw
+    repo: https://github.com/openclaw/openclaw
+    category: agent_runtime
+    stars: 256617
+    fit: Primary OpenClaw runtime for local-first autonomous agents with messaging integrations.
+  - name: opencrabs
+    repo: https://github.com/adolfousier/opencrabs
+    category: unix_agent_runtime
+    stars: 471
+    fit: Lightweight terminal-first Rust runtime for Unix-native automation agents.
+  - name: astrbot
+    repo: https://github.com/AstrBotDevs/AstrBot
+    category: messaging_agents
+    stars: 18830
+    fit: Production-grade Telegram/Discord/Slack agent infrastructure for multi-channel operations.
+  - name: lobehub
+    repo: https://github.com/lobehub/lobehub
+    category: multi_agent
+    stars: 73017
+    fit: Mature collaborative multi-agent orchestration for parallel workflows.
+  - name: docsgpt
+    repo: https://github.com/arc53/DocsGPT
+    category: rag_knowledge
+    stars: 17741
+    fit: Private RAG stack for document-grounded agent responses.
+  - name: openviking
+    repo: https://github.com/volcengine/OpenViking
+    category: memory_context
+    stars: 4563
+    fit: Persistent context and memory substrate for long-running autonomous agents.
+  - name: telegram_link_summarizer_agent
+    repo: https://github.com/kargarisaac/telegram_link_summarizer_agent
+    category: telegram_automation
+    stars: 151
+    fit: Focused Telegram automation reference for link ingestion and summarization flows.
