@@ -1,275 +1,220 @@
 # frozen_string_literal: true
 
-require_relative "learnings/feedback"
-require_relative "learnings/quality"
-require_relative "learnings/reflection"
+require "time"
 
-module MASTER
-  # Learnings - Captures insights from sessions for future use
-  # When something is discovered (bug pattern, good practice, UX insight),
-  # it gets recorded here so MASTER can apply it automatically next time
-  module Learnings
-    extend self
+module Learnings
+  DEFAULT_PRUNE_AGE_DAYS = 90
+  PRUNE_BATCH_SIZE = 500
+  MAX_SEED_ENTRIES = 1_000
 
-    CATEGORIES = %i[bug_pattern good_practice ux_insight architecture security].freeze
+  LOG_INFO = { severity: :info }.freeze
+  LOG_WARN = { severity: :warn }.freeze
 
-    # Quality tiers based on success rate (merged from LearningQuality)
-    QUALITY_TIERS = {
-      promote: { min: 0.90, description: "Auto-apply (>90% success)" },
-      keep: { min: 0.50, description: "Keep learning (50-90%)" },
-      demote: { min: 0.20, description: "Needs review (20-50%)" },
-      retire: { min: 0.00, description: "Remove (<20%)" },
-    }.freeze
+  module_function
 
-    MINIMUM_APPLICATIONS = 3
+  def apply_to(scope, fix:, actor: nil, at: nil)
+    Applier.new(scope:, fix:, actor:, at: at || utc_now).call
+  end
 
-    def file_path
-      File.join(Paths.var, "learnings.jsonl")
+  def prune!(relation: Learning.all, older_than_days: DEFAULT_PRUNE_AGE_DAYS, at: nil)
+    older_than = (at || utc_now) - (older_than_days * 86_400)
+    Pruner.new(relation:, older_than:).call
+  end
+
+  def build_seed_entries(fixes:, limit: MAX_SEED_ENTRIES)
+    SeedBuilder.new(fixes:, limit:).call
+  end
+
+  def extract_pattern_from_fix(fix)
+    PatternExtractor.new(fix:).call
+  end
+
+  def utc_now
+    time = Time.now.utc
+    time
+  end
+
+  def utc_iso8601(time = utc_now)
+    time.iso8601
+  end
+
+  class Applier
+    def initialize(scope:, fix:, actor:, at:)
+      @scope = scope
+      @fix = fix
+      @actor = actor
+      @at = at
     end
 
-    def record(category:, pattern:, description:, example: nil, severity: :info)
-      raise ArgumentError, "Invalid category" unless CATEGORIES.include?(category)
+    def call
+      pattern = Learnings.extract_pattern_from_fix(@fix)
+      return @scope unless pattern
 
-      learning = {
-        id: SecureRandom.hex(8),
-        category: category,
-        pattern: pattern,
-        description: description,
-        example: example,
-        severity: severity,
-        discovered_at: Time.now.utc.iso8601,
-        applied_count: 0,
+      apply_scope(@scope, pattern)
+    rescue StandardError => e
+      Logging.warn("learnings.apply_to failed: #{e.class}: #{e.message}", **LOG_WARN)
+      @scope
+    end
+
+    private
+
+    def apply_scope(scope, pattern)
+      return scope.where(pattern:) if scope.respond_to?(:where)
+
+      scope
+    rescue StandardError => e
+      Logging.warn("learnings.apply_scope failed: #{e.class}: #{e.message}", **LOG_WARN)
+      scope
+    end
+  end
+
+  class Pruner
+    def initialize(relation:, older_than:)
+      @relation = relation
+      @older_than = older_than
+    end
+
+    def call
+      return 0 unless @relation
+
+      prunable = base_relation
+      return 0 unless prunable.respond_to?(:in_batches)
+
+      deleted = 0
+      prunable.in_batches(of: PRUNE_BATCH_SIZE) do |batch|
+        deleted += delete_batch(batch)
+      end
+      deleted
+    rescue StandardError => e
+      Logging.warn("learnings.prune failed: #{e.class}: #{e.message}", **LOG_WARN)
+      0
+    end
+
+    private
+
+    def base_relation
+      rel = @relation
+      rel = rel.where("created_at < ?", @older_than) if rel.respond_to?(:where)
+      rel
+    rescue StandardError => e
+      Logging.warn("learnings.prune base_relation failed: #{e.class}: #{e.message}", **LOG_WARN)
+      @relation
+    end
+
+    def delete_batch(batch)
+      return batch.delete_all if batch.respond_to?(:delete_all)
+
+      0
+    rescue StandardError => e
+      Logging.warn("learnings.prune delete_batch failed: #{e.class}: #{e.message}", **LOG_WARN)
+      0
+    end
+  end
+
+  class SeedBuilder
+    def initialize(fixes:, limit:)
+      @fixes = fixes
+      @limit = limit
+    end
+
+    def call
+      fixes = preload(@fixes)
+      return [] unless fixes
+
+      entries = []
+      each_fix(fixes) do |fix|
+        entry = build_entry_for_fix(fix)
+        next unless entry
+
+        entries << entry
+        break if entries.size >= @limit
+      end
+
+      entries
+    rescue StandardError => e
+      Logging.warn("learnings.build_seed_entries failed: #{e.class}: #{e.message}", **LOG_WARN)
+      []
+    end
+
+    private
+
+    def preload(fixes)
+      return fixes.includes(:learnings, :author) if fixes.respond_to?(:includes)
+
+      fixes
+    rescue StandardError => e
+      Logging.warn("learnings.build_seed_entries preload failed: #{e.class}: #{e.message}", **LOG_WARN)
+      fixes
+    end
+
+    def each_fix(fixes, &block)
+      return fixes.find_each(&block) if fixes.respond_to?(:find_each)
+
+      Array(fixes).each(&block)
+    end
+
+    def build_entry_for_fix(fix)
+      pattern = Learnings.extract_pattern_from_fix(fix)
+      return nil unless pattern
+
+      {
+        fix_id: id_for(fix),
+        pattern:,
+        created_at: Learnings.utc_iso8601,
+        meta: seed_meta(fix)
       }
-
-      File.open(file_path, "a") { |f| f.puts(JSON.generate(learning)) }
-      learning
+    rescue StandardError => e
+      Logging.warn("learnings.build_seed_entries build_entry_for_fix failed: #{e.class}: #{e.message}", **LOG_WARN)
+      nil
     end
 
-    def all
-      return [] unless File.exist?(file_path)
-
-      File.readlines(file_path).filter_map do |line|
-        JSON.parse(line.strip, symbolize_names: true)
-      rescue JSON::ParserError
-        nil
-      end
+    def seed_meta(fix)
+      {
+        source: "seed",
+        fix_class: fix.class.name,
+        fix_ref: id_for(fix)
+      }
     end
 
-    def by_category(category)
-      all.select { |l| l[:category] == category }
+    def id_for(obj)
+      return obj.id if obj.respond_to?(:id)
+
+      obj.to_s
+    end
+  end
+
+  class PatternExtractor
+    def initialize(fix:)
+      @fix = fix
     end
 
-    def apply_to(code)
-      learnings = by_category(:bug_pattern)
-      issues = []
+    def call
+      return nil unless @fix
 
-      learnings.each do |learning|
-        next unless learning[:pattern]
+      raw = extract_raw(@fix)
+      return nil if raw.nil? || raw.to_s.strip.empty?
 
-        begin
-          regex = Regexp.new(learning[:pattern])
-          if code.match?(regex)
-            issues << {
-              learning_id: learning[:id],
-              description: learning[:description],
-              severity: learning[:severity],
-            }
-            increment_applied(learning[:id])
-          end
-        rescue RegexpError
-          # Invalid pattern, skip
-        end
-      end
-
-      issues
-    end
-
-    def increment_applied(id)
-      learnings = all
-      learning = learnings.find { |l| l[:id] == id }
-      return unless learning
-
-      learning[:applied_count] += 1
-      rewrite(learnings)
-    end
-
-    # Quality evaluation methods (merged from LearningQuality)
-    def evaluate(pattern)
-      return :unrated if pattern[:applied_count].to_i < MINIMUM_APPLICATIONS
-
-      success_rate = calculate_success_rate(pattern)
-
-      promote_min = QUALITY_TIERS[:promote][:min]
-      keep_min    = QUALITY_TIERS[:keep][:min]
-      demote_min  = QUALITY_TIERS[:demote][:min]
-
-      if success_rate >= promote_min
-        :promote
-      elsif success_rate >= keep_min
-        :keep
-      elsif success_rate >= demote_min
-        :demote
-      else
-        :retire
-      end
-    end
-
-    def tier(pattern)
-      evaluate(pattern)
-    end
-
-    def calculate_success_rate(pattern)
-      if pattern.is_a?(Hash)
-        successes = pattern[:successes].to_i
-        failures = pattern[:failures].to_i
-        total = successes + failures
-
-        return 0.0 if total.zero?
-
-        successes.to_f / total
-      else
-        0.0
-      end
-    end
-
-    # Prune retired patterns from database
-    def prune!
-      return Result.err("LearningFeedback not available.") unless defined?(LearningFeedback)
-
-      patterns = LearningFeedback.load_patterns
-
-      # Group by category and fix_hash to aggregate stats
-      grouped = patterns.group_by { |p| [p[:category], p[:fix_hash]] }
-
-      pruned = 0
-      kept_patterns = []
-
-      grouped.each_value do |group|
-        successes = group.count { |p| p[:success] }
-        failures = group.count { |p| !p[:success] }
-        applications = successes + failures
-
-        next if applications < MINIMUM_APPLICATIONS
-
-        aggregated = {
-          category: group.first[:category],
-          fix_hash: group.first[:fix_hash],
-          message_pattern: group.first[:message_pattern],
-          successes: successes,
-          failures: failures,
-          applied_count: applications,
-        }
-
-        tier_result = evaluate(aggregated)
-
-        if tier_result == :retire
-          pruned += 1
-        else
-          kept_patterns << aggregated
-        end
-      end
-
-      # Rewrite database with kept patterns only
-      if pruned > 0
-        db_path = File.join(MASTER.root, LearningFeedback::DB_FILE)
-        File.open(db_path, "w") do |f|
-          kept_patterns.each do |pattern|
-            f.puts(pattern.to_json)
-          end
-        end
-      end
-
-      Result.ok(pruned: pruned, kept: kept_patterns.size)
-    rescue StandardError => err
-      Result.err("Failed to prune: #{err.message}")
-    end
-
-    def seed_from_session
-      build_seed_entries.each do |learning|
-        record(**learning) unless exists?(learning[:description])
-      end
-    end
-
-    def build_seed_entries
-      # Learnings discovered in the Feb 7 2026 deep analysis session
-      [
-        { category: :bug_pattern, pattern: 'DB\.setup(?!\s*\()',
-          description: "DB.setup without MASTER:: prefix in bin/ scripts",
-          example: "bin/master line 5: DB.setup should be MASTER::DB.setup",
-          severity: :critical },
-        { category: :bug_pattern, pattern: '\.start_with\?\(["\']',
-          description: "Calling .start_with? on value that might be a symbol",
-          example: "SHORTCUTS[input] returns symbol, then .start_with? crashes",
-          severity: :critical },
-        { category: :bug_pattern, pattern: '\.pop\(\d+\)(?!.*@dirty)',
-          description: "Mutating collection without setting dirty flag",
-          example: "session.history.pop(2) needs session.@dirty = true",
-          severity: :major },
-        { category: :bug_pattern, pattern: '\["[a-z_]+"\]\s*\|\|\s*\[:[a-z_]+\]',
-          description: "Mixed string/symbol hash access - use symbolize_names",
-          example: 'row["model"] || row[:model] -> just use row[:model]',
-          severity: :minor },
-        { category: :good_practice, pattern: "symbolize_names:\\s*true",
-          description: "Always use symbolize_names: true with JSON.parse",
-          severity: :info },
-        { category: :ux_insight, pattern: nil,
-          description: "Show context % in prompt when > 5%",
-          example: "master[strong|$9.50|ctx:12%]$",
-          severity: :info },
-        { category: :ux_insight, pattern: nil,
-          description: "Provide 'did you mean?' for typos within edit distance 2",
-          severity: :info },
-        { category: :ux_insight, pattern: nil,
-          description: "Auto-save session every 5 messages AND on Ctrl+C",
-          severity: :info },
-        { category: :security, pattern: 'rm\s+-rf?\s+/',
-          description: "Block destructive shell commands in Guard stage",
-          severity: :critical },
-        { category: :architecture, pattern: nil,
-          description: "Two session systems exist (Memory JSON, DB JSONL) - Session uses Memory",
-          severity: :info },
-      ]
-    end
-
-    # Extract regex pattern from code diff (simple heuristic)
-    def self.extract_pattern_from_fix(original, fixed)
-      # Find the line that changed
-      original_lines = original.lines
-      fixed_lines = fixed.lines
-
-      # Handle length differences by iterating through the shorter array
-      min_length = [original_lines.length, fixed_lines.length].min
-      diff_line = nil
-
-      min_length.times do |idx|
-        if original_lines[idx] != fixed_lines[idx]
-          diff_line = [original_lines[idx], fixed_lines[idx]]
-          break
-        end
-      end
-
-      return nil unless diff_line
-
-      original_part = diff_line[0]&.strip
-      return nil unless original_part
-
-      # Extract a simple regex pattern
-      # Example: "foo.bar" becomes "foo\.bar"
-      Regexp.escape(original_part[0..50]) # First 50 chars
-    rescue StandardError
+      compile(raw.to_s)
+    rescue StandardError => e
+      Logging.warn("learnings.extract_pattern_from_fix failed: #{e.class}: #{e.message}", **LOG_WARN)
       nil
     end
 
     private
 
-    def exists?(description)
-      all.any? { |l| l[:description] == description }
+    def extract_raw(fix)
+      return fix.pattern if fix.respond_to?(:pattern)
+      return fix.regex if fix.respond_to?(:regex)
+      return fix.text if fix.respond_to?(:text)
+
+      nil
     end
 
-    def rewrite(learnings)
-      File.open(file_path, "w") do |f|
-        learnings.each { |l| f.puts(JSON.generate(l)) }
-      end
+    def compile(raw)
+      Regexp.new(raw).source
+    rescue StandardError => e
+      Logging.warn("learnings.extract_pattern_from_fix compile failed: #{e.class}: #{e.message}", **LOG_WARN)
+      nil
     end
   end
 end

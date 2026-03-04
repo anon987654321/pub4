@@ -4,143 +4,78 @@ require "open3"
 
 module Analysis
   class Prescan
-    GIT_TIMEOUT_SECONDS = 10
-    STALE_DAYS_THRESHOLD = 30
-    MAX_BRANCH_NAME_LENGTH = 80
+    SEPARATOR = "\",\n        \""
+    LS_FILES_CMD = %w[git ls-files].freeze
 
-    Result = Struct.new(
-      :projects,
-      :repositories,
-      :git,
-      :warnings,
-      keyword_init: true
-    )
-
-    def initialize(projects_relation: Project.all, now: Time.current)
-      @projects_relation = projects_relation
-      @now = now
+    def initialize(repo_path:, repo_model: Repository, file_model: RepoFile, runner: Open3)
+      @repo_path = repo_path
+      @repo_model = repo_model
+      @file_model = file_model
+      @runner = runner
     end
 
     def call
-      projects = load_projects
-      repositories = load_repositories(projects)
-      git = repositories.each_with_object({}) do |repository, memo|
-        memo[repository.id] = git_status(repository.path)
-      end
+      normalized_path = normalize_repo_path(@repo_path)
+      return [] if normalized_path.nil?
 
-      Result.new(
-        projects: projects,
-        repositories: repositories,
-        git: git,
-        warnings: build_warnings(projects: projects, repositories: repositories, git: git)
-      )
+      repo = load_repo(normalized_path)
+      return [] unless repo
+
+      paths = file_list(normalized_path)
+      return [] if paths.empty?
+
+      upsert_files(repo, paths)
     end
 
-    private
+    def normalize_repo_path(path)
+      value = path.to_s.strip
+      return nil if value.empty?
 
-    attr_reader :projects_relation, :now
-
-    def load_projects
-      projects_relation
-        .includes(:owner, :repository)
-        .where(active: true)
-        .to_a
+      value
     end
 
-    def load_repositories(projects)
-      repository_ids = projects.map(&:repository_id).compact
-      return [] if repository_ids.empty?
-
-      Repository
-        .includes(:project)
-        .where(id: repository_ids)
-        .to_a
+    def load_repo(path)
+      @repo_model.includes(:project).find_by(path:)
     end
 
-    def build_warnings(projects:, repositories:, git:)
-      warnings = []
-      warnings.concat(stale_projects_warning(projects))
-      warnings.concat(missing_repo_warning(repositories))
-      warnings.concat(dirty_worktree_warning(repositories, git))
-      warnings
+    def file_list(path)
+      stdout = run_cmd(LS_FILES_CMD, chdir: path)
+      parse_stdout_lines(stdout)
     end
 
-    def stale_projects_warning(projects)
-      cutoff = now - STALE_DAYS_THRESHOLD.days
-      stale_ids = Project.where(id: projects.map(&:id)).where("updated_at < ?", cutoff).pluck(:id)
-
-      return [] if stale_ids.empty?
-
-      [{ type: :stale_projects, project_ids: stale_ids, cutoff: cutoff }]
+    def parse_stdout_lines(stdout)
+      stdout.to_s.lines.map { |l| l.to_s.strip }.reject(&:empty?)
     end
 
-    def missing_repo_warning(repositories)
-      missing_ids = repositories.select { |repository| repository.path.blank? }.map(&:id)
-      return [] if missing_ids.empty?
+    def upsert_files(repo, paths)
+      existing = existing_paths(repo, paths)
+      missing = paths - existing
+      return existing if missing.empty?
 
-      [{ type: :missing_repository_path, repository_ids: missing_ids }]
+      rows = missing.map { |p| { repository_id: repo.id, path: p } }
+      @file_model.insert_all(rows) # rubocop:disable Rails/SkipsModelValidations
+      existing + missing
     end
 
-    def dirty_worktree_warning(repositories, git)
-      dirty_ids = repositories.filter_map do |repository|
-        status = git[repository.id]
-        repository.id if status[:ok] && status[:dirty]
-      end
-
-      return [] if dirty_ids.empty?
-
-      [{ type: :dirty_worktree, repository_ids: dirty_ids }]
+    def existing_paths(repo, paths)
+      @file_model.where(repository_id: repo.id, path: paths).pluck(:path)
     end
 
-    def git_status(repo_path)
-      return { ok: false, error: :missing_path } if repo_path.to_s.strip.empty?
+    def run_cmd(cmd, chdir:)
+      stdout, _stderr, status = @runner.capture3(*cmd, chdir: chdir)
+      return stdout if status.success?
 
-      stdout, stderr, status = run_git_status(repo_path)
-      return { ok: false, error: :command_failed, stderr: stderr.to_s.strip } unless status&.success?
-
-      porcelain = stdout.to_s.lines.map(&:strip).reject(&:empty?)
-      branches = extract_branches(repo_path)
-
-      {
-        ok: true,
-        dirty: porcelain.any?,
-        changes: porcelain,
-        branches: branches
-      }
+      ""
+    rescue SystemCallError
+      ""
     end
 
-    def run_git_status(repo_path)
-      Open3.capture3(
-        "git",
-        "-C",
-        repo_path,
-        "status",
-        "--porcelain",
-        timeout: GIT_TIMEOUT_SECONDS
-      )
-    rescue StandardError => error
-      ["", error.message, nil]
-    end
-
-    def extract_branches(repo_path)
-      stdout, _stderr, status = Open3.capture3(
-        "git",
-        "-C",
-        repo_path,
-        "branch",
-        "--format=%(refname:short)",
-        timeout: GIT_TIMEOUT_SECONDS
-      )
-
-      return [] unless status&.success?
-
-      stdout
-        .to_s
-        .lines
-        .map { |line| line.strip.first(MAX_BRANCH_NAME_LENGTH) }
-        .reject(&:empty?)
-    rescue StandardError
-      []
-    end
+    private :normalize_repo_path,
+            :load_repo,
+            :file_list,
+            :parse_stdout_lines,
+            :upsert_files,
+            :existing_paths,
+            :run_cmd
   end
 end

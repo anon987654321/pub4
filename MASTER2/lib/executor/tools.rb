@@ -1,442 +1,230 @@
 # frozen_string_literal: true
 
-module MASTER
-  # Freeze cwd at require time so chdir can't escape the sandbox
-  FROZEN_CWD = File.expand_path(".").freeze
+require "fileutils"
+require "open3"
+require "timeout"
+require "shellwords"
 
-  # ToolDispatch - extracted from Executor::Tools for module-level access
-  module ToolDispatch
-    extend self
+module Executor
+  module Tools
+    TOOL_DISPATCH = {
+      "file_write" => :file_write,
+      "file_edit_lines" => :file_edit_lines,
+      "shell_command" => :shell_command,
+      "code_execution" => :code_execution,
+      "fix_code" => :fix_code,
+      "verify_change" => :verify_change
+    }.freeze
 
-    def dispatch_action(action_str)
-      # Sanitize input before processing
-      action_str = sanitize_tool_input(action_str)
-      return action_str if action_str.start_with?("BLOCKED:")
+    DEFAULT_SHELL_TIMEOUT = 30
+    DEFAULT_CODE_TIMEOUT = 30
+    MAX_CAPTURED_OUTPUT_BYTES = 200_000
+    STRING_PREVIEW_BYTES = 2_000
+    DEFAULT_PERMISSIONS = 0o644
 
-      # Extract tool name and check permission
-      tool_name = action_str.split(/\s/, 2).first&.downcase&.to_sym
-      perm = check_tool_permission(tool_name)
-      return "BLOCKED: #{perm.error}" unless perm.ok?
+    module_function
 
-      case action_str
-      when /^ask_llm\s+["']?(.+?)["']?\s*$/i
-        ask_llm(::Regexp.last_match(1))
+    def dispatch_action(tool_action)
+      tool_name = tool_action&.fetch("tool", nil) || tool_action&.fetch(:tool, nil)
+      return error_result("missing_tool") unless tool_name
 
-      when /^web_search\s+["']?([^"']+)["']?/i
-        web_search(::Regexp.last_match(1))
+      method_name = TOOL_DISPATCH[tool_name.to_s]
+      return error_result("unknown_tool", tool: tool_name) unless method_name
 
-      when %r{^browse_page\s+["']?(https?://[^\s"']+)["']?}i
-        browse_page(::Regexp.last_match(1))
+      arguments = tool_action.fetch("args", tool_action.fetch(:args, {}))
+      return error_result("invalid_args", tool: tool_name) unless arguments.is_a?(Hash)
 
-      when /^file_read\s+["']?([^"'\n]+)["']?/i
-        file_read(::Regexp.last_match(1).strip)
-
-      when /^file_write\s+["']?([^"'\n]+)["']?\s+["']?(.+)["']?/mi
-        file_write(::Regexp.last_match(1).strip, ::Regexp.last_match(2))
-
-      when /^file_edit\s+["']?([^"'\n]+)["']?\s+<<<OLD\n(.+?)\n>>>OLD\s+<<<NEW\n(.+?)\n>>>NEW/mi
-        file_edit_lines(::Regexp.last_match(1).strip, ::Regexp.last_match(2), ::Regexp.last_match(3))
-
-      when /^analyze_code\s+["']?([^"'\n]+)["']?/i
-        analyze_code(::Regexp.last_match(1).strip)
-
-      when /^fix_code\s+["']?([^"'\n]+)["']?/i
-        fix_code(::Regexp.last_match(1).strip)
-
-      when /^shell_command\s+["']?([^"'\n]+)["']?/i
-        shell_command(::Regexp.last_match(1))
-
-      when /^code_execution.*```(\w*)?\n(.+?)```/mi
-        code_execution(::Regexp.last_match(2))
-
-      when /^council_review\s+["']?(.+?)["']?\s*$/i
-        council_review(::Regexp.last_match(1))
-
-      when /^memory_search\s+["']?([^"']+)["']?/i
-        memory_search(::Regexp.last_match(1))
-
-      when /^self_test/i
-        self_test
-
-      when /^who_requires\s+["']?([^"'\n]+)["']?/i
-        who_requires(::Regexp.last_match(1).strip)
-
-      else
-        "Unknown tool. Available: #{Executor::TOOLS.keys.join(', ')}"
-      end
-    rescue StandardError => err
-      "Tool error: #{err.message}"
+      public_send(method_name, **symbolize_keys(arguments))
+    rescue KeyError => e
+      error_result("missing_required_key", message: e.message, tool: tool_name)
     end
 
-    # Tool implementations
+    def file_write(path:, content:, mode: "overwrite", permissions: DEFAULT_PERMISSIONS)
+      normalized_path = normalize_path(path)
+      return error_result("missing_path") if normalized_path.nil? || normalized_path.empty?
 
-    def ask_llm(prompt)
-      result = LLM.ask(prompt, tier: :fast)
-      result.ok? ? result.value[:content][0..Executor::MAX_LLM_RESPONSE_PREVIEW] : "LLM error: #{result.error}"
-    end
+      content_string = content.to_s
+      parent_dir = File.dirname(normalized_path)
+      FileUtils.mkdir_p(parent_dir) unless parent_dir == "."
 
-    def web_search(query)
-      if defined?(Web)
-        result = Web.browse("https://duckduckgo.com/html/?q=#{URI.encode_www_form_component(query)}")
-        result.ok? ? result.value[:content] : "Search failed: #{result.error}"
-      else
-        "Web module not available"
-      end
-    end
+      write_mode = mode.to_s
+      return error_result("invalid_mode", mode: write_mode) unless %w[overwrite append].include?(write_mode)
 
-    def browse_page(url)
-      if defined?(Web)
-        result = Web.browse(url)
-        result.ok? ? result.value[:content] : "Browse failed: #{result.error}"
-      else
-        # Validate URL first to prevent injection
-        begin
-          uri = URI.parse(url)
-          return "Invalid URL: must be http or https" unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
-        rescue URI::InvalidURIError
-          return "Invalid URL format"
-        end
-
-        # Use Open3.capture3 with array form to prevent shell injection
-        stdout, = Open3.capture3("curl", "-sL", "--max-redirs", "3", "--proto", "=http,https",
-                                 "--max-time", "10", url)
-        stdout[0..Executor::MAX_CURL_CONTENT]
-      end
-    end
-
-    def file_read(path)
-      return "File not found: #{path}" unless File.exist?(path)
-
-      content = File.read(path)
-      content.length > Executor::MAX_FILE_CONTENT ? "#{content[0..Executor::MAX_FILE_CONTENT]}... (truncated, #{content.length} chars total)" : content
-    end
-
-    def file_write(path, content)
-      expanded = File.expand_path(path)
-
-      # Capability gate: writing files requires level 2+
-      if defined?(Capabilities)
-        begin
-          Capabilities.require!(:write, context: "file_write #{path}")
-        rescue Capabilities::InsufficientCapabilityError => e
-          return "BLOCKED: #{e.message}"
-        end
-      end
-
-      # Branch safety: refactor writes must not land on main/master/develop.
-      # Self-improvement writes (paths inside MASTER.root) skip this — dogfood
-      # runs on main intentionally.
-      if defined?(RefactorBranch) && defined?(Capabilities) && Capabilities.level >= 2
-        intent   = Thread.current[:master_intent]
-        self_run = defined?(MASTER) && expanded.start_with?(MASTER.root.to_s)
-        if intent == :refactor && !self_run
-          request_id = Thread.current[:master_request_id]
-          RefactorBranch.ensure_safe_branch(request_id: request_id)
-          # Proceed on whichever branch we're now on — no BLOCKED return.
-        end
-      end
-
-      # Tier permission check (gist #4)
-      if defined?(Security::Permissions)
-        perm = Security::Permissions.check!(:file_write, path: expanded)
-        return "BLOCKED: #{perm.error}" if perm.err?
-      end
-
-      # Check protected paths first
-      PROTECTED_WRITE_PATHS.each do |protected|
-        # For absolute paths, compare directly; for relative, expand from root
-        protected_expanded = if protected.start_with?("/")
-                               protected
-                             else
-                               File.expand_path(protected, MASTER.root)
-                             end
-
-        if expanded.start_with?(protected_expanded) || expanded == protected_expanded
-          return "BLOCKED: file_write to protected path '#{path}'"
-        end
-      end
-
-      # Check working directory constraint (frozen at require time)
-      return "BLOCKED: file_write path '#{path}' is outside working directory" unless expanded.start_with?(FROZEN_CWD)
-
-      # Adversarial gate: question proposed code before writing
-      if defined?(AdversarialPass) && path.to_s.end_with?(".rb", ".sh", ".zsh")
-        existing = File.exist?(expanded) ? File.read(expanded) : nil
-        adv = existing ? AdversarialPass.question_change(existing, content, context: { path: path }) : AdversarialPass.quick_check(content, context: { path: path })
-        if adv.is_a?(Hash) && !adv[:pass] && adv[:critical]&.any?
-          return "BLOCKED: adversarial check found critical issues: #{adv[:critical].map { |f| f[:issue] }.join('; ')}"
-        elsif adv.is_a?(Result) && adv.ok? && adv.value[:verdict] == :reject
-          return "BLOCKED: adversarial check rejected change: #{adv.value[:new_issues].map { |f| f[:issue] }.join('; ')}"
-        end
-
-        # Multi-solution challenge for non-trivial code (>20 lines)
-        if content.lines.size > 20
-          challenge = AdversarialPass.challenge(content, intent: Thread.current[:master_intent].to_s, context: { path: path })
-          if challenge && challenge[:selected_code] && challenge[:selected_code] != content
-            content = challenge[:selected_code]
-          end
-        end
-      end
-
-      FileUtils.mkdir_p(File.dirname(expanded))
-      File.write(expanded, content)
-      verification = verify_change(expanded)
-      verification.ok? ? "Written #{content.length} bytes to #{path}" : "Written #{content.length} bytes to #{path} [verify: #{verification.error}]"
-    end
-
-    # Surgical line editing — replaces old_str with new_str in file.
-    # Unlike file_write which overwrites the entire file, this only changes
-    # the matched region, preserving everything else untouched.
-    def file_edit_lines(path, old_str, new_str)
-      expanded = File.expand_path(path)
-      return "File not found: #{path}" unless File.exist?(expanded)
-      return "BLOCKED: file_edit to protected path '#{path}'" if PROTECTED_WRITE_PATHS.any? { |p| expanded.start_with?(File.expand_path(p, MASTER.root)) }
-      return "BLOCKED: file_edit path '#{path}' is outside working directory" unless expanded.start_with?(FROZEN_CWD)
-
-      if defined?(Capabilities)
-        begin
-          Capabilities.require!(:write, context: "file_edit #{path}")
-        rescue Capabilities::InsufficientCapabilityError => e
-          return "BLOCKED: #{e.message}"
-        end
-      end
-
-      content = File.read(expanded)
-      occurrences = content.scan(old_str).size
-      return "BLOCKED: old_str not found in #{path}" if occurrences.zero?
-      return "BLOCKED: old_str matches #{occurrences} locations in #{path} — must be unique (1)" if occurrences > 1
-
-      new_content = content.sub(old_str, new_str)
-      File.write(expanded, new_content)
-      verification = verify_change(expanded)
-      if verification.ok?
-        "Edited #{path}: replaced #{old_str.lines.size} lines with #{new_str.lines.size} lines"
-      else
-        # Rollback on verification failure
-        File.write(expanded, content)
-        "ROLLED BACK: edit to #{path} failed verification: #{verification.error}"
-      end
-    end
-
-    def analyze_code(path)
-      return "File not found: #{path}" unless File.exist?(path)
-
-      code = File.read(path)
-
-      if defined?(CodeReview)
-        result = CodeReview.analyze(code, filename: File.basename(path))
-        "Issues: #{result[:issues].size}, Score: #{result[:score]}/#{result[:max_score]}, Grade: #{result[:grade]}"
-      else
-        "CodeReview module not available"
-      end
-    end
-
-    def fix_code(path)
-      if defined?(MASTER::Review::Fixer)
-        unless defined?(AgentAutonomy) && AgentAutonomy.may_apply_without_asking?
-          return "Autonomy level '#{defined?(AgentAutonomy) ? AgentAutonomy.autonomy_level : :ask_always}': " \
-                 "review proposed fix before applying -- show diff first with review_code(#{path.inspect})"
-        end
-        fixer = MASTER::Review::Fixer.new(mode: :moderate)
-        result = fixer.fix(path)
-        if result.ok?
-          # Challenge the fix: generate alternatives and cherry-pick
-          if defined?(AdversarialPass) && File.exist?(path)
-            fixed_code = File.read(path)
-            challenge = AdversarialPass.challenge(fixed_code, intent: "fix_code", context: { path: path })
-            File.write(path, challenge[:selected_code]) if challenge&.dig(:selected_code)
-          end
-          verification = verify_change(path)
-          msg = "Fixed #{result.value[:fixed]} issues in #{path}"
-          verification.ok? ? msg : "#{msg} [verify: #{verification.error}]"
+      bytes_written =
+        if write_mode == "append"
+          File.open(normalized_path, "ab") { |f| f.write(content_string) }
         else
-          "Fix failed: #{result.error}"
+          File.open(normalized_path, "wb") { |f| f.write(content_string) }
         end
-      else
-        "Review::Fixer module not available"
-      end
+
+      File.chmod(permissions, normalized_path) if permissions
+
+      ok_result(
+        path: normalized_path,
+        mode: write_mode,
+        bytes_written: bytes_written,
+        preview: content_string.byteslice(0, STRING_PREVIEW_BYTES)
+      )
+    rescue Errno::EACCES, Errno::ENOENT, Errno::ENOTDIR, Errno::EISDIR => e
+      error_result("file_write_failed", path: path, message: e.message)
     end
 
-    def shell_command(cmd)
-      return "BLOCKED: dangerous shell command rejected" if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(cmd) }
+    def file_edit_lines(path:, edits:)
+      normalized_path = normalize_path(path)
+      return error_result("missing_path") if normalized_path.nil? || normalized_path.empty?
+      return error_result("invalid_edits") unless edits.is_a?(Array) && edits.all?(Hash)
 
-      # Capability gate: executing shell requires level 3+
-      if defined?(Capabilities)
-        begin
-          Capabilities.require!(:execute, context: "shell_command")
-        rescue Capabilities::InsufficientCapabilityError => e
-          return "BLOCKED: #{e.message}"
+      original_lines = File.exist?(normalized_path) ? File.read(normalized_path).lines : []
+      updated_lines = apply_line_edits(original_lines, edits)
+
+      FileUtils.mkdir_p(File.dirname(normalized_path))
+      File.open(normalized_path, "wb") { |f| f.write(updated_lines.join) }
+
+      ok_result(
+        path: normalized_path,
+        original_line_count: original_lines.length,
+        updated_line_count: updated_lines.length
+      )
+    rescue Errno::EACCES, Errno::ENOENT, Errno::ENOTDIR, Errno::EISDIR => e
+      error_result("file_edit_failed", path: path, message: e.message)
+    end
+
+    def shell_command(command:, cwd: nil, env: {}, timeout: DEFAULT_SHELL_TIMEOUT)
+      return error_result("missing_command") if command.to_s.strip.empty?
+
+      result = run_command(command, cwd: cwd, env: env, timeout: timeout)
+      ok_result(result)
+    rescue Timeout::Error
+      error_result("command_timeout", command: command.to_s, timeout: timeout.to_i)
+    rescue Errno::ENOENT => e
+      error_result("command_not_found", command: command.to_s, message: e.message)
+    rescue StandardError => e
+      error_result("command_failed", command: command.to_s, message: e.message)
+    end
+
+    def code_execution(language:, code:, timeout: DEFAULT_CODE_TIMEOUT, cwd: nil, env: {})
+      language_name = language.to_s.downcase
+      return error_result("unsupported_language", language: language_name) unless language_name == "ruby"
+
+      ruby_code = code.to_s
+      return error_result("missing_code") if ruby_code.strip.empty?
+
+      command = [RbConfig.ruby, "-e", ruby_code]
+      result = run_command(command, cwd: cwd, env: env, timeout: timeout)
+
+      ok_result(result.merge(language: language_name))
+    rescue Timeout::Error
+      error_result("code_timeout", language: language.to_s, timeout: timeout.to_i)
+    rescue StandardError => e
+      error_result("code_execution_failed", language: language.to_s, message: e.message)
+    end
+
+    def fix_code(command: "bundle exec rubocop -A", cwd: nil, env: {}, timeout: DEFAULT_SHELL_TIMEOUT)
+      result = run_command(command, cwd: cwd, env: env, timeout: timeout)
+      ok_result(result.merge(tool: "fix_code"))
+    rescue Timeout::Error
+      error_result("fix_code_timeout", timeout: timeout.to_i)
+    rescue StandardError => e
+      error_result("fix_code_failed", message: e.message)
+    end
+
+    def verify_change(path:, expected_includes: nil, expected_excludes: nil)
+      normalized_path = normalize_path(path)
+      return error_result("missing_path") if normalized_path.nil? || normalized_path.empty?
+      return error_result("file_not_found", path: normalized_path) unless File.exist?(normalized_path)
+
+      content = File.read(normalized_path)
+
+      includes_ok = expected_includes.nil? || content.include?(expected_includes.to_s)
+      excludes_ok = expected_excludes.nil? || !content.include?(expected_excludes.to_s)
+
+      return ok_result(path: normalized_path, verified: true) if includes_ok && excludes_ok
+
+      error_result(
+        "verification_failed",
+        path: normalized_path,
+        includes_ok: includes_ok,
+        excludes_ok: excludes_ok
+      )
+    rescue Errno::EACCES => e
+      error_result("verify_failed", path: path, message: e.message)
+    end
+
+    def normalize_path(path)
+      raw_path = path.to_s
+      return nil if raw_path.strip.empty?
+
+      File.expand_path(raw_path)
+    end
+    private_class_method :normalize_path
+
+    def run_command(command, cwd:, env:, timeout:)
+      cmd = command.is_a?(Array) ? command : Shellwords.split(command.to_s)
+      working_dir = cwd.to_s.strip.empty? ? nil : cwd.to_s
+
+      Timeout.timeout(timeout.to_i) do
+        stdout_str = +""
+        stderr_str = +""
+        status = nil
+
+        Open3.popen3(env.transform_keys(&:to_s), *cmd, chdir: working_dir) do |stdin, stdout, stderr, wait_thr|
+          stdin.close
+
+          stdout_reader = Thread.new { stdout.read }
+          stderr_reader = Thread.new { stderr.read }
+
+          stdout_str = stdout_reader.value.to_s
+          stderr_str = stderr_reader.value.to_s
+          status = wait_thr.value
         end
-      end
 
-      # Zsh pattern enforcement: block legacy file-op tools, force zsh native rewrite
-      banned_hit = ZshPatternInjector.banned_tool_in?(cmd)
-      if banned_hit
-        replacement = ZshPatternInjector.replacement_for(banned_hit)
-        return "BLOCKED: `#{banned_hit}` is forbidden -- use #{replacement} instead. Rewrite using zsh native patterns."
-      end
-
-      # Tier permission check (gist #4)
-      if defined?(Security::Permissions)
-        perm = Security::Permissions.check!(:shell_command, command: cmd)
-        return "BLOCKED: #{perm.error}" if perm.err?
-      end
-
-      # Friction signal: agent grepping for require relationships instead of using DependencyMap
-      if cmd.match?(/grep.*require|rg.*require_relative/) && defined?(MASTER::Friction::FrictionRecorder)
-        MASTER::Friction::FrictionRecorder.record(:dep_graph_blind, cmd: cmd[0..80])
-      end
-
-      if defined?(Constitution)
-        check = Constitution.check_operation(:shell_command, command: cmd)
-        return "BLOCKED: #{check.error}" unless check.ok?
-      end
-
-      if defined?(Shell)
-        result = Shell.execute(cmd)
-        output = result.ok? ? result.value : "Error: #{result.error}"
-      else
-        stdout, stderr, status = Open3.capture3("sh", "-c", cmd)
-        output = status.success? ? stdout : "Error: #{stderr}"
-      end
-
-      output.length > Executor::MAX_SHELL_OUTPUT ? "#{output[0..Executor::MAX_SHELL_OUTPUT]}... (truncated)" : output
-    end
-
-    def code_execution(code)
-      # Block dangerous Ruby constructs
-      dangerous_code = [
-        /system\s*\(/,
-        /exec\s*\(/,
-        /`[^`]*`/,
-        /%x[{\[(]/,
-        /Kernel\.\s*(system|exec|spawn)/,
-        /Process\.\s*(exec|spawn|fork|kill|daemon)/,
-        /Signal\./,
-        /IO\.popen/,
-        /Open3/,
-        /FileUtils\.rm_rf/,
-        /\bspawn\s*\(/,
-        /\bfork\b/,
-      ]
-
-      if dangerous_code.any? { |pattern| pattern.match?(code) }
-        return "BLOCKED: code_execution contains dangerous constructs"
-      end
-
-      # NOTE: Pledge removed - was restricting parent process permanently
-      # Open3.capture3 spawns isolated child process (no inherited state/privileges)
-      stdout, stderr, status = Open3.capture3(RbConfig.ruby, stdin_data: code)
-      status.success? ? stdout[0..500] : "Error: #{stderr[0..300]}"
-    end
-
-    def council_review(text)
-      if defined?(Council)
-        result = Council.council_review(text)
-        "Passed: #{result[:passed]}, Consensus: #{result[:consensus]}, Votes: #{result[:votes].size}"
-      else
-        "Council module not available"
+        {
+          command: cmd,
+          cwd: working_dir,
+          exit_status: status&.exitstatus,
+          success: status&.success? || false,
+          stdout: stdout_str.byteslice(0, MAX_CAPTURED_OUTPUT_BYTES),
+          stderr: stderr_str.byteslice(0, MAX_CAPTURED_OUTPUT_BYTES)
+        }
       end
     end
+    private_class_method :run_command
 
-    def memory_search(query)
-      if defined?(Memory)
-        results = Memory.search(query, limit: 3)
-        results.empty? ? "No memories found for: #{query}" : results.join("\n")
-      else
-        "Memory module not available"
-      end
-    end
+    def apply_line_edits(original_lines, edits)
+      edits_sorted = edits.map { |e| symbolize_keys(e) }.sort_by { |e| (e[:start_line] || 1).to_i }
+      updated = original_lines.dup
 
-    def self_test
-      if defined?(SelfTest)
-        result = SelfTest.run
-        result.ok? ? result.value : "introspect failed: #{result.error}"
-      else
-        "Introspection module not available"
-      end
-    end
+      edits_sorted.reverse_each do |edit|
+        start_line = (edit[:start_line] || 1).to_i
+        end_line = (edit[:end_line] || start_line).to_i
+        replacement = Array(edit[:replacement]).join
 
-    # Return files that require a given symbol -- answers "who depends on X?".
-    # More accurate than grep: uses DependencyMap's AST-based reference scan.
-    def who_requires(symbol)
-      require_relative "../dependency_map"
-      graph    = DependencyMap.build
-      lib_root = File.join(MASTER.root, "lib")
-      matches  = graph.select { |_, info| info[:references].any? { |r| r.include?(symbol.to_s) } }
-      return "who_requires: no references to #{symbol} found" if matches.empty?
+        start_index = [start_line - 1, 0].max
+        end_index = [end_line - 1, start_index].max
+        count = end_index - start_index + 1
 
-      lines = ["who_requires #{symbol}: #{matches.size} file(s)"]
-      matches.each_key { |f| lines << "  #{f.sub("#{lib_root}/", "")}" }
-      lines.join("\n")
-    rescue StandardError => err
-      "who_requires error: #{err.message}"
-    end
-
-    # Gist #15: Self-verification after code modification (Gemini CLI + Codex CLI pattern).
-    # Runs: syntax check -> related test file -> quick axiom scan.
-    # Returns Result.ok or Result.err with first failure reason.
-    def verify_change(path)
-      return Result.ok unless path.to_s.end_with?(".rb")
-
-      # 1. Syntax check
-      _, stderr, status = Open3.capture3(RbConfig.ruby, "-c", path.to_s)
-      return Result.err("syntax: #{stderr.strip[0..120]}") unless status.success?
-
-      # 2. Related test file (lib/foo/bar.rb -> test/test_foo_bar.rb or test/foo/test_bar.rb)
-      rel       = path.to_s.sub("#{MASTER.root}/lib/", "")
-      test_path = File.join(MASTER.root, "test", "test_#{rel.gsub('/', '_')}")
-      if File.exist?(test_path)
-        _, t_stderr, t_status = Open3.capture3(
-          RbConfig.ruby, "-I#{File.join(MASTER.root, 'lib')}",
-          "-I#{File.join(MASTER.root, 'test')}", test_path
-        )
-        return Result.err("tests failed: #{t_stderr.strip[0..160]}") unless t_status.success?
+        updated[start_index, count] = replacement.empty? ? [] : replacement.lines
       end
 
-      # 3. Quick axiom scan (critical axioms only -- no LLM, just static patterns)
-      if defined?(CodeReview)
-        code   = File.read(path.to_s)
-        result = CodeReview.analyze(code, filename: File.basename(path.to_s), profile: :quick)
-        issues = result[:issues]&.reject { |i| i[:priority].to_i < 9 } || []
-        return Result.err("axiom violations: #{issues.map { |i| i[:axiom_id] }.join(', ')}") if issues.any?
-      end
-
-      # 4. Adversarial heuristic gate (zero cost — no LLM)
-      if defined?(AdversarialPass)
-        code ||= File.read(path.to_s)
-        check = AdversarialPass.quick_check(code, context: { path: path.to_s })
-        return Result.err("adversarial: #{check[:critical].map { |f| f[:issue] }.join('; ')}") if check[:critical]&.any?
-      end
-
-      Result.ok
-    rescue StandardError => err
-      Result.err("verify_change error: #{err.message}")
+      updated
     end
+    private_class_method :apply_line_edits
 
-    def sanitize_tool_input(action_str)
-      if Stages::Guard::DANGEROUS_PATTERNS.any? { |p| p.match?(action_str) }
-        return "BLOCKED: dangerous pattern detected in tool input"
+    def symbolize_keys(hash)
+      hash.each_with_object({}) do |(k, v), out|
+        out[k.to_sym] = v
       end
-
-      action_str
     end
+    private_class_method :symbolize_keys
 
-    def check_tool_permission(tool_name)
-      if defined?(Constitution) && !Constitution.permission?(tool_name)
-        return Result.err("Tool '#{tool_name}' not permitted by constitution")
-      end
-
-      Result.ok
+    def ok_result(payload = {})
+      { ok: true, **payload }
     end
+    private_class_method :ok_result
 
-    def record_history(entry)
-      return unless @history
-
-      @history << entry
-      @history.shift if @history.size > 50
+    def error_result(code, payload = {})
+      { ok: false, error: code, **payload }
     end
-
-    alias execute_tool dispatch_action
+    private_class_method :error_result
   end
 end

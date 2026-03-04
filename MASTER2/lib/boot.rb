@@ -1,136 +1,51 @@
 # frozen_string_literal: true
 
-module MASTER
-  module Boot
-    TIME_FORMAT = "%Y-%m-%d %H:%M:%S UTC"
-    BANNER_WIDTH = 72
-    BANNER_INDENT = " " * 2
+module Boot
+  APP_NAMESPACE = Rails.application.class.module_parent_name
+  DEFAULT_BANNER_WIDTH = 72
 
-    class Runner
-      def banner(app_name: default_app_name, now: Time.now.utc)
-        timestamp = format_time(now)
+  SmokeTestResult = Struct.new(:ok, :messages, keyword_init: true)
 
-        lines = [
-          c("=" * BANNER_WIDTH, :cyan),
-          c("#{BANNER_INDENT}#{app_name}", :green),
-          c("#{BANNER_INDENT}Booting at #{timestamp}", :yellow),
-          c("=" * BANNER_WIDTH, :cyan)
-        ]
+  module_function
 
-        lines.join("\n")
-      end
+  def application_namespace
+    APP_NAMESPACE
+  end
 
-      def banner_with_web(port, token = nil, app_name: default_app_name, now: Time.now.utc)
-        url = token ? "http://localhost:#{port}/?token=#{token}" : "http://localhost:#{port}"
-        [banner(app_name:, now:), c("#{BANNER_INDENT}Web UI: #{url}", :green)].join("\n")
-      end
+  def banner(width: DEFAULT_BANNER_WIDTH)
+    title = "#{application_namespace} Boot"
+    line = "-" * width
+    [line, title.center(width), line].join("\n")
+  end
 
-      def smoke_test(models: default_models)
-        return { ok: true, checks: [], errors: [] } unless rails_with_active_record?
+  def banner_with_web(web_url:, width: DEFAULT_BANNER_WIDTH)
+    [banner(width: width), "Web: #{web_url}"].join("\n")
+  end
 
-        checks = []
-        errors = []
+  def smoke_test
+    messages = check_database + check_cache
+    ok = messages.none? { |msg| msg[:level] == :error }
+    SmokeTestResult.new(ok: ok, messages: messages)
+  end
 
-        models.each do |model_config|
-          result = run_smoke_check(model_config)
-          checks << result
-          errors << result[:error] if result[:error]
-        end
+  # Use when rendering a dashboard/list to avoid N+1 queries.
+  def preload_for_dashboard(scope)
+    scope.includes(:account, :profile)
+  end
 
-        { ok: errors.empty?, checks:, errors: }
-      end
+  def check_database
+    ActiveRecord::Base.connection_pool.with_connection(&:active?)
+    [{ level: :info, code: :database, message: "database ok" }]
+  rescue ActiveRecord::NoDatabaseError, ActiveRecord::ConnectionNotEstablished => e
+    [{ level: :error, code: :database, message: e.message }]
+  end
 
-      private
+  def check_cache
+    Rails.cache.write("boot_smoke_test", "1", expires_in: 1.second)
+    return [{ level: :error, code: :cache, message: "cache read/write failed" }] unless Rails.cache.read("boot_smoke_test") == "1"
 
-      def default_app_name
-        return Rails.application.class.module_parent_name if defined?(Rails)
-
-        "Application"
-      end
-
-      def rails_with_active_record?
-        defined?(Rails) && defined?(ActiveRecord::Base)
-      end
-
-      def default_models
-        return [] unless rails_with_active_record?
-
-        [
-          { name: "User", klass: safe_constantize("User"), includes: [:account], limit: 25 },
-          { name: "Account", klass: safe_constantize("Account"), includes: [:users], limit: 25 }
-        ].compact.select { |cfg| cfg[:klass] }
-      end
-
-      def run_smoke_check(model_config)
-        model_name = model_config.fetch(:name)
-        model_klass = model_config.fetch(:klass)
-        includes_associations = Array(model_config[:includes])
-        limit = model_config.fetch(:limit, 25)
-
-        relation = model_klass.all
-        relation = relation.includes(*includes_associations) unless includes_associations.empty?
-        relation = relation.limit(limit)
-
-        count = begin
-          relation.count
-        rescue ActiveRecord::StatementInvalid => e
-          return { model: model_name, ok: false, count: 0, error: e.message }
-        end
-
-        { model: model_name, ok: true, count:, error: nil }
-      end
-
-      def safe_constantize(name)
-        return name.safe_constantize if name.respond_to?(:safe_constantize)
-
-        Object.const_get(name)
-      rescue NameError
-        nil
-      end
-
-      def format_time(time)
-        time.strftime(TIME_FORMAT)
-      end
-
-      def c(text, color)
-        return text unless colorize?
-
-        color_method = color.to_sym
-        "\e[#{ansi_code(color_method)}m#{text}\e[0m"
-      end
-
-      def colorize?
-        $stdout.respond_to?(:tty?) && $stdout.tty?
-      end
-
-      def ansi_code(color)
-        {
-          cyan: 36,
-          green: 32,
-          yellow: 33,
-          red: 31
-        }.fetch(color, 0)
-      end
-    end
-
-    class << self
-      def runner
-        @runner ||= Runner.new
-      end
-
-      def banner(...)
-        puts runner.banner(...)
-      end
-
-      def banner_with_web(...)
-        puts runner.banner_with_web(...)
-      end
-
-      def smoke_test(...)
-        runner.smoke_test(...)
-      end
-    end
+    [{ level: :info, code: :cache, message: "cache ok" }]
+  rescue StandardError => e
+    [{ level: :error, code: :cache, message: e.message }]
   end
 end
-
-Boot = MASTER::Boot unless defined?(Boot)

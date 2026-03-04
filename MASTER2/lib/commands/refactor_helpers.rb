@@ -1,91 +1,51 @@
 # frozen_string_literal: true
 
-module MASTER
-  module Commands
-    # Helper methods for refactor command
-    module RefactorHelpers
-      def extract_mode(args)
-        mode_arg = args.find { |a| a.start_with?("-") }
-        case mode_arg
-        when "-r", "--raw" then :raw
-        when "-a", "--apply" then :apply
-        when "-p", "--preview" then :preview
-        else :preview # default
-        end
-      end
+module Commands
+  module RefactorHelpers
+    PROPOSALS_LINE_TEMPLATE = "\n  Proposals: %<proposals>s"
+    COST_LINE_TEMPLATE = "  Cost: %<cost>s"
 
-      def lint_output(text)
-        lint_stage = Stages::Lint.new
-        result = lint_stage.call({ response: text })
-        result.ok? ? result.value[:response] : text
-      end
+    Result = Struct.new(:success?, :value, :error, keyword_init: true) do
+      def self.ok(value = nil) = new(success?: true, value: value, error: nil)
+      def self.err(error) = new(success?: false, value: nil, error: error)
+    end
 
-      def render_output(text)
-        render_stage = Stages::Render.new
-        result = render_stage.call({ response: text })
-        result.ok? ? result.value[:rendered] : text
-      end
+    def apply_refactor(refactor_context:, execute: false)
+      proposals = Array(refactor_context.fetch(:proposals, []))
+      return Result.err(:no_proposals) if proposals.empty?
 
-      def format_council_summary(council_info)
-        return nil unless council_info
+      cost_value = refactor_context.fetch(:cost, nil)
+      summary_lines = build_refactor_summary_lines(
+        proposals: proposals,
+        cost_value: cost_value,
+        currency_formatter: refactor_context.fetch(:currency_formatter, method(:default_currency_formatter))
+      )
 
-        if council_info[:vetoed_by]&.any?
-          "  Council: VETOED by #{council_info[:vetoed_by].join(', ')}"
-        elsif council_info[:consensus]
-          pct = (council_info[:consensus] * 100).round(0)
-          verdict = council_info[:verdict] || :unknown
-          "  Council: #{verdict.to_s.upcase} (#{pct}% consensus)"
-        end
-      end
+      return Result.ok(summary_lines: summary_lines, applied: false) unless execute
 
-      def display_raw_output(result, rendered, council_info)
-        puts "\n  Proposals: #{result.value[:proposals].size}"
-        puts "  Cost: #{UI.currency_precise(result.value[:cost])}"
-        if (summary = format_council_summary(council_info))
-          puts summary
-        end
-        puts "\n#{rendered}\n"
-      end
+      executor = refactor_context.fetch(:executor, nil)
+      return Result.err(:missing_executor) unless executor
 
-      def display_preview(path, original, proposed, result, council_info)
-        diff = DiffView.unified_diff(original, proposed, filename: File.basename(path))
+      apply_result = executor.call(proposals: proposals)
+      Result.ok(summary_lines: summary_lines, applied: true, apply_result: apply_result)
+    end
 
-        puts "\n  Proposals: #{result.value[:proposals].size}"
-        puts "  Cost: #{UI.currency_precise(result.value[:cost])}"
-        if (summary = format_council_summary(council_info))
-          puts summary
-        end
-        puts "\n#{diff}"
-        puts "  Use -a to write changes, -r to see full output"
-      end
+    def build_refactor_summary_lines(proposals:, cost_value:, currency_formatter:)
+      lines = [format(PROPOSALS_LINE_TEMPLATE, proposals: proposals.count)]
+      lines << format(COST_LINE_TEMPLATE, cost: currency_formatter.call(cost_value)) unless cost_value.nil?
+      lines
+    end
 
-      def apply_refactor(path, original, proposed, result, council_info)
-        diff = DiffView.unified_diff(original, proposed, filename: File.basename(path))
+    def default_currency_formatter(cost_value)
+      return "" if cost_value.nil?
 
-        puts "\n  Proposals: #{result.value[:proposals].size}"
-        puts "  Cost: #{UI.currency_precise(result.value[:cost])}"
-        if (summary = format_council_summary(council_info))
-          puts summary
-        end
-        puts "\n#{diff}"
-
-        # Prompt for confirmation
-        print "\n  Apply these changes? [y/N] "
-        response = $stdin.gets&.strip&.downcase
-
-        if ["y", "yes"].include?(response)
-          # Track original content for undo
-          Undo.track_edit(path, original)
-
-          # Write changes to disk
-          File.write(path, proposed)
-
-          puts "  refactor: applied to #{path}"
-          puts "  (Use 'undo' command to revert)"
-        else
-          puts "  Changes not applied"
-        end
+      if defined?(UI) && UI.respond_to?(:currency_precise)
+        UI.currency_precise(cost_value)
+      else
+        cost_value.to_s
       end
     end
+
+    private :build_refactor_summary_lines, :default_currency_formatter
   end
 end

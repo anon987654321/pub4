@@ -1,100 +1,63 @@
 # frozen_string_literal: true
 
-module MASTER
-  # LearningFeedback - Pattern storage and retrieval for automated fixes
-  module LearningFeedback
-    extend self
+require "digest"
 
-    DB_FILE = "tmp/learning_feedback.jsonl"
-    MIN_KNOWN_FIX_APPLICATIONS  = 3   # minimum pattern applications before trusting it
-    MIN_KNOWN_FIX_SUCCESS_RATE  = 0.7 # success rate required to consider a pattern reliable
+module Learnings
+  class Feedback
+    TOKEN_SALT = "learnings-feedback".freeze
 
-    # Record a finding + fix pattern with success/fail
-    def record(finding, fix, success:)
-      ensure_db_exists
-
-      pattern = {
-        category: finding.category,
-        message_pattern: generalize_message(finding.message),
-        fix_hash: hash_fix(fix),
-        success: success,
-        timestamp: Time.now.to_i,
-      }
-
-      # Append to JSONL
-      File.open(db_path, "a") do |f|
-        f.puts(pattern.to_json)
-      end
-
-      Result.ok
-    rescue StandardError => err
-      Result.err("Failed to record learning: #{err.message}")
+    def self.for_training(training_id)
+      ::Feedback.includes(:user, :training).where(training_id: training_id)
     end
 
-    # Check if we have a known successful fix for this finding
-    def known_fix?(finding)
-      patterns = load_patterns
-
-      category_patterns = patterns.select do |p|
-        p[:category] == finding.category.to_s
-      end
-
-      # Count successes
-      successes = category_patterns.count { |p| p[:success] }
-      total = category_patterns.size
-
-      # Need at least 3 applications and >70% success rate
-      total >= MIN_KNOWN_FIX_APPLICATIONS && (successes.to_f / total) > MIN_KNOWN_FIX_SUCCESS_RATE
+    def initialize(feedback)
+      @feedback = feedback
     end
 
-    # Apply a known fix without LLM
-    def apply_known(finding)
-      patterns = load_patterns
-
-      successful_patterns = patterns.select do |p|
-        p[:category] == finding.category.to_s && p[:success]
-      end
-
-      return Result.err("No successful pattern found.") if successful_patterns.empty?
-
-      # Use the most recent successful pattern
-      pattern = successful_patterns.last
-
-      # In a real system, this would reconstruct and apply the actual fix
-      Result.ok(applied: pattern[:fix_hash])
+    def anonymized_token
+      raw = "#{TOKEN_SALT}:#{@feedback.id}:#{@feedback.user_id}"
+      Digest::SHA256.hexdigest(raw)
     end
 
-    def load_patterns
-      return [] unless File.exist?(db_path)
+    def submit_to_analytics
+      return unless @feedback
+      return unless @feedback.user_id
 
-      File.readlines(db_path).map do |line|
-        JSON.parse(line.strip, symbolize_names: true)
-      rescue JSON::ParserError
+      payload = build_payload
+
+      begin
+        Analytics.track(payload)
+      rescue Analytics::Error => e
+        Rails.logger.warn(
+          "Analytics track failed for feedback_id=#{@feedback.id}: #{e.class}: #{e.message}"
+        )
         nil
-      end.compact
+      end
+    end
+
+    def build_payload
+      user = @feedback.user
+      training = @feedback.training
+
+      {
+        event: "training_feedback_submitted",
+        user_id: user&.id,
+        training_id: training&.id,
+        training_title: training&.title,
+        rating: @feedback.rating,
+        comment: @feedback.comment.to_s,
+        token: anonymized_token
+      }
+    end
+
+    def instructor_name
+      training = @feedback.training
+      instructor = training&.instructor
+      instructor&.full_name
     end
 
     private
 
-    def ensure_db_exists
-      FileUtils.mkdir_p(File.dirname(db_path))
-      FileUtils.touch(db_path) unless File.exist?(db_path)
-    end
-
-    def db_path
-      File.join(MASTER.root, DB_FILE)
-    end
-
-    def generalize_message(message)
-      # Remove specific numbers and paths to create pattern
-      message
-        .gsub(/\d+/, "N")
-        .gsub(%r{/[^\s]+}, "PATH")
-        .gsub(/'[^']+'/, "'X'")
-    end
-
-    def hash_fix(fix)
-      fix.to_s.hash.to_s
-    end
+    attr_reader :feedback
   end
 end

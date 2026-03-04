@@ -1,201 +1,125 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "analyzers"
 
-module MASTER
-  # Code smell detection - complements Violations with structural analysis
-  module Smells
-    module_function
+module CodeReview
+  module Paths
+    def self.load_data_file(path)
+      YAML.safe_load(File.read(path), permitted_classes: [], aliases: true) || {}
+    rescue Errno::ENOENT, Psych::SyntaxError
+      {}
+    end
+  end
 
-    def thresholds
-      @thresholds ||= begin
-        config = load_config
-        {
-          max_method_lines: config.dig("thresholds", "method_length") || 20,
-          max_file_lines: config.dig("thresholds", "file_lines") || 600,
-          max_parameters: config.dig("thresholds", "parameter_count") || 4,
-          max_nesting: config.dig("thresholds", "nesting_depth") || 5,
-          max_public_methods: config.dig("thresholds", "class_methods") || 10,
-          min_duplicate_count: config.dig("thresholds", "min_duplicate_count") || 3,
-        }
+  class Smells
+    THRESHOLDS_KEY = "thresholds"
+    EXTRACT_CLASS = "Extract class"
+    OUTPUT_APPEND_PREFIX = "\n          output << "
+    DEFAULT_THRESHOLD = 10
+
+    def initialize(project:, repo:, data_path:)
+      @project = project
+      @repo = repo
+      @data_path = data_path
+    end
+
+    def analyze
+      config = load_config
+      thresholds = config.fetch(THRESHOLDS_KEY, {})
+
+      smells = fetch_smells
+      return [] if smells.empty?
+
+      report = []
+      smells.each do |smell|
+        next unless smell.exceeded?(thresholds)
+
+        report << build_entry(smell)
+      end
+
+      report
+    end
+
+    def cyclic_deps?
+      deps = dependency_graph
+      return false if deps.empty?
+
+      nodes = deps.keys | deps.values.flatten
+      visited = {}
+      in_stack = {}
+
+      nodes.any? do |node|
+        next false if visited[node]
+
+        cycle_from?(node, deps, visited, in_stack)
       end
     end
 
-    def patterns
-      @patterns ||= begin
-        config = load_config
-        bloaters = config["bloaters"] || default_bloaters
-        couplers = config["couplers"] || default_couplers
-        dispensables = config["dispensables"] || default_dispensables
-        architecture = config["architecture"] || default_architecture
-        rails = config["rails_specific"] || {}
-        pwa = config["pwa_specific"] || {}
-        html_css = config["html_css_quality"] || {}
+    private
 
-        bloaters.merge(couplers).merge(dispensables).merge(architecture)
-          .merge(rails).merge(pwa).merge(html_css)
-      end
+    def load_config
+      path = File.join(@data_path, "config.yml")
+      Paths.load_data_file(path)
     end
 
-    class << self
-      def all_patterns
-        patterns
-      end
+    def fetch_smells
+      return [] unless @repo.respond_to?(:smells)
 
-      def analyze(code, file_path = nil)
-        results = []
-        lines = code.lines
-        limits = thresholds
-        smell_patterns = patterns
+      relation = @repo.smells
+      relation = relation.includes(:association) if relation.respond_to?(:includes)
+      relation.to_a
+    end
 
-        results += analyze_ruby_methods(code, lines) if file_path&.end_with?(".rb")
+    def build_entry(smell)
+      parts = []
+      append_output(parts, EXTRACT_CLASS) if smell.extract_class?
+      append_output(parts, thresholds_line(smell))
+      parts.join
+    end
 
-        if lines.size > limits[:max_file_lines]
-          results << {
-            smell: :god_class,
-            message: "File has #{lines.size} lines (> #{limits[:max_file_lines]})",
-            fix: smell_patterns.dig(:god_class, :fix) || smell_patterns.dig(:god_class, "fix") || "Extract class",
-          }
+    def thresholds_line(smell)
+      threshold = smell.threshold || DEFAULT_THRESHOLD
+      %(#{THRESHOLDS_KEY}: #{threshold})
+    end
+
+    def append_output(parts, text)
+      parts << "#{OUTPUT_APPEND_PREFIX}#{text.inspect}"
+    end
+
+    def dependency_graph
+      path = File.join(@data_path, "dependencies.yml")
+      data = Paths.load_data_file(path)
+      (data["dependencies"] || {}).transform_values { |value| Array(value) }
+    end
+
+    def cycle_from?(start_node, graph, visited, in_stack)
+      stack = [[start_node, graph[start_node] || [], 0]]
+
+      while (frame = stack.last)
+        node, neighbors, index = frame
+
+        unless visited[node]
+          visited[node] = true
+          in_stack[node] = true
         end
 
-        code.scan(/def\s+\w+\(([^)]+)\)/) do |params|
-          count = params[0].split(",").size
-          if count > limits[:max_parameters]
-            results << {
-              smell: :long_parameter_list,
-              message: "Method has #{count} parameters (> #{limits[:max_parameters]})",
-              fix: smell_patterns.dig(:long_parameter_list, :fix) || smell_patterns.dig(:long_parameter_list, "fix") || "Parameter object",
-            }
-          end
+        if index >= neighbors.length
+          in_stack.delete(node)
+          stack.pop
+          next
         end
 
-        code.scan(/\w+(?:\.\w+){3,}/) do |chain|
-          results << {
-            smell: :message_chains,
-            message: "Long chain: #{chain[0..40]}...",
-            fix: smell_patterns.dig(:message_chains, :fix) || smell_patterns.dig(:message_chains, "fix") || "Hide delegate",
-          }
-        end
+        neighbor = neighbors[index]
+        frame[2] += 1
 
-        duplicates = Analyzers::RepeatedStringDetector.find(code, min_length: 10, min_count: limits[:min_duplicate_count])
-        duplicates.each do |dup|
-          str_preview = dup[:string].length > 30 ? "#{dup[:string][0...30]}..." : dup[:string]
-          results << {
-            smell: :primitive_obsession,
-            message: "String #{str_preview} repeated #{dup[:count]}x",
-            fix: "Extract to constant",
-          }
-        end
+        return true if in_stack[neighbor]
 
-        results
+        next if visited[neighbor]
+
+        stack << [neighbor, graph[neighbor] || [], 0]
       end
 
-      def analyze_ruby_methods(code, _lines)
-        results = []
-        limits = thresholds
-        smell_patterns = patterns
-
-        methods_info = Analyzers::MethodLengthAnalyzer.scan(code)
-        methods_info.each do |method|
-          next unless method[:length] > limits[:max_method_lines]
-
-          results << {
-            smell: :long_method,
-            message: "def #{method[:name]} is #{method[:length]} lines (> #{limits[:max_method_lines]})",
-            line: method[:start_line],
-            fix: smell_patterns.dig(:long_method, :fix) || smell_patterns.dig(:long_method, "fix") || "Extract method",
-          }
-        end
-
-        results
-      end
-
-      def deep_nesting?(code, max_depth = nil)
-        max_depth ||= thresholds[:max_nesting]
-        max_seen = Analyzers::NestingAnalyzer.depth(code)
-        max_seen > max_depth
-      end
-
-      def cyclic_deps?(files)
-        deps = {}
-
-        files.each do |f|
-          next unless File.exist?(f)
-
-          code = begin
-            File.read(f, encoding: "UTF-8")
-          rescue StandardError
-            next
-          end
-          requires = code.scan(/require(?:_relative)?\s+["']([^"']+)["']/).flatten
-          deps[File.basename(f)] = requires.map { |r| "#{File.basename(r)}.rb" }
-        end
-
-        deps.each do |file, required|
-          required.each do |req|
-            return { cycle: [file, req] } if deps[req]&.include?(File.basename(file, ".rb"))
-          end
-        end
-
-        false
-      end
-
-      def report(results)
-        return "No smells detected." if results.empty?
-
-        output = ["Code Smells (#{results.size})", ""]
-        results.each_with_index do |smell_item, idx|
-          output << "  #{idx + 1}. #{smell_item[:smell]}"
-          output << "     #{smell_item[:message]}"
-          output << "     Fix: #{smell_item[:fix]}"
-          output << "     Line #{smell_item[:line]}" if smell_item[:line]
-          output << ""
-        end
-        output.join("\n")
-      end
-
-      private
-
-      def load_config
-        path = Paths.data_file("detectors.yml")
-        YAML.safe_load_file(path, permitted_classes: [Symbol])
-      rescue Errno::ENOENT
-        {}
-      end
-
-      def default_bloaters
-        t = thresholds
-        {
-          "long_method" => { "check" => "> #{t[:max_method_lines]} lines", "fix" => "Extract method" },
-          "god_class" => { "check" => "> #{t[:max_file_lines]} lines", "fix" => "Extract class" },
-          "primitive_obsession" => { "check" => "Repeated primitive patterns", "fix" => "Introduce value object" },
-          "long_parameter_list" => { "check" => "> #{t[:max_parameters]} parameters", "fix" => "Parameter object" },
-        }
-      end
-
-      def default_couplers
-        {
-          "feature_envy" => { "check" => "Method uses other class more than self", "fix" => "Move method" },
-          "inappropriate_intimacy" => { "check" => "Classes know too much", "fix" => "Extract class" },
-          "message_chains" => { "check" => "Long chains like a.b.c.d", "fix" => "Hide delegate" },
-        }
-      end
-
-      def default_dispensables
-        {
-          "dead_code" => { "check" => "Unreachable or unused code", "fix" => "Delete it" },
-          "lazy_class" => { "check" => "Class does almost nothing", "fix" => "Inline or merge" },
-          "duplicate_code" => { "check" => "Same logic in multiple places", "fix" => "Extract method/class" },
-        }
-      end
-
-      def default_architecture
-        {
-          "cyclic_dependency" => { "check" => "A requires B requires A", "fix" => "Dependency inversion" },
-          "scattered_functionality" => { "check" => "Related code in many files", "fix" => "Colocate" },
-        }
-      end
+      false
     end
   end
 end

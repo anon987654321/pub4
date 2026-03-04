@@ -1,141 +1,107 @@
 # frozen_string_literal: true
 
-module MASTER
-  module LLM
-    DEFAULT_CONTEXT_WINDOW = 32_000
+require "yaml"
 
-    class << self
-      def models
-        RubyLLM.models
+module LLM
+  module Models
+    DATA_FILE_NAME = "models.yml"
+
+    class LoadError < StandardError; end
+
+    class RecordWrapper
+      extend Forwardable
+
+      def initialize(record)
+        @record = record
       end
 
-      def chat_models
-        @chat_models ||= models.chat_models
+      attr_reader :record
+
+      def_delegators :record, :id, :name, :kind, :enabled?
+      def_delegators :provider, :key, :display_name
+
+      delegate :key, :display_name, to: :provider
+
+      private
+
+      def provider
+        record.provider
+      end
+    end
+
+    class ModelStore
+      def all_records
+        Model.includes(:provider).order(:name)
       end
 
-      def load_models_config
-        @load_models_config ||= begin
-          models_file = File.join(__dir__, "..", "..", "data", "models.yml")
-          if File.exist?(models_file)
-            begin
-              YAML.safe_load_file(models_file, symbolize_names: true) || []
-            rescue StandardError => err
-              if defined?(MASTER::Logging)
-                MASTER::Logging.warn("Failed to load models: #{err.message}", subsystem: "llm.models")
-              end
-              []
-            end
-          else
-            []
-          end
-        end
+      def enabled_records
+        all_records.where(enabled: true)
+      end
+    end
+
+    class Catalog
+      def initialize(store: ModelStore.new, paths: Paths)
+        @store = store
+        @paths = paths
       end
 
-      # Get curated models from models.yml
-      # A8: Falls back to ruby_llm registry if models.yml is empty
-      def configured_models
-        config = load_models_config
-        return config unless config.empty?
-
-        # Auto-populate from ruby_llm registry
-        @auto_models ||= RubyLLM.models.chat_models.map do |m|
-          {
-            id: m.id,
-            tier: classify_tier(m).to_s,
-            context_window: m.context_window || DEFAULT_CONTEXT_WINDOW,
-            input_cost: m.input_price_per_million || 0,
-            output_cost: m.output_price_per_million || 0,
-          }
-        end.first(20) # Limit to top 20 to avoid huge lists
-      rescue StandardError => e
-        Logging.warn("Failed to load models from RubyLLM: #{e.message}", subsystem: "llm.models")
-        []
+      def all(enabled_only: true)
+        scope = enabled_only ? store.enabled_records : store.all_records
+        scope.map { |record| RecordWrapper.new(record) }
       end
 
-      # Hash lookup for O(1) access to configured models by ID
-      def configured_models_by_id
-        @configured_models_by_id ||= configured_models.each_with_object({}) { |m, h| h[m[:id]] = m }
+      def chat_models(enabled_only: true)
+        filter_by_kind("chat", enabled_only: enabled_only)
       end
 
-      # Classify a model into a tier based on models.yml configuration
-      def classify_tier(model)
-        # For configured models, look up tier from models.yml with O(1) hash access
-        return :cheap unless model.is_a?(String) || model&.id
-
-        model_id = model.is_a?(String) ? model : model.id
-        configured_model = configured_models_by_id[model_id]
-        return configured_model[:tier].to_sym if configured_model&.[](:tier)
-
-        # Fallback to price-based classification for models not in models.yml
-        price = model.is_a?(String) ? 0 : model.input_price_per_million || 0
-
-        case price
-        when (10.0..) then :premium
-        when (2.0...10.0) then :strong
-        when (0.1...2.0) then :fast
-        else :cheap
-        end
+      def embedding_models(enabled_only: true)
+        filter_by_kind("embedding", enabled_only: enabled_only)
       end
 
-      def all_models
-        @all_models ||= configured_models.map { |m| m[:id] }
+      def find(name, enabled_only: true)
+        return nil unless name
+
+        records = all(enabled_only: enabled_only)
+        records.find { |wrapper| wrapper.name == name }
       end
 
-      def model_rates
-        @model_rates ||= configured_models.each_with_object({}) do |m, hash|
-          hash[m[:id]] = {
-            in: m[:input_cost] || 0,
-            out: m[:output_cost] || 0,
-          }
-        end
+      def metadata
+        @metadata ||= load_metadata
       end
 
-      def context_limits
-        @context_limits ||= configured_models.each_with_object({}) do |m, hash|
-          hash[m[:id]] = m[:context_window] || DEFAULT_CONTEXT_WINDOW
-        end
+      def reload!
+        @metadata = nil
+        self
       end
 
-      def extract_model_name(model_id)
-        name = model_id.split("/").last
-        name.split(":").first
+      private
+
+      attr_reader :store, :paths
+
+      def filter_by_kind(kind, enabled_only:)
+        models = all(enabled_only: enabled_only)
+        models.select { |wrapper| wrapper.kind == kind }
       end
 
-      def prompt_model_name
-        m = current_model
-        return extract_model_name(m) if m && !m.to_s.match?(/\s/)
+      def load_metadata
+        file_path = paths.data_file(DATA_FILE_NAME)
+        yaml = File.read(file_path)
+        parsed = YAML.safe_load(yaml, permitted_classes: [], aliases: false)
 
-        first = configured_models.first
-        first ? extract_model_name(first[:id]) : "m2"
+        parsed.fetch("models", [])
+      rescue Errno::ENOENT, Psych::SyntaxError => e
+        raise LoadError, "Failed to load models metadata from #{file_path}: #{e.message}"
       end
+    end
 
-      def model_tiers
-        @model_tiers ||= configured_models.each_with_object({}) do |m, hash|
-          tier = (m[:tier] || :cheap).to_sym
-          (hash[tier] ||= []) << m[:id]
-        end
+    module RubyLLMAdapter
+      module_function
+
+      def chat_model_names(ruby_llm: RubyLLM)
+        models = ruby_llm.models
+        chat_models = models.chat_models
+        chat_models.map(&:name)
       end
-
-      def select_model(tier = nil)
-        if tier
-          # Use pre-computed model_tiers hash for O(1) tier lookup
-          candidates = model_tiers[tier] || []
-          candidates = candidates.sort_by { |m| replicate_model?(m) ? 0 : 1 } if configured_for_replicate?
-          candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find do |m|
-            CircuitBreaker.circuit_closed?(m)
-          end
-        else
-          all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
-        end
-      end
-
-      # Same-tier paid peers for graceful fallback (excludes primary and :free tier models).
-      def tier_peers(primary_id)
-        tier = classify_tier(primary_id)
-        (model_tiers[tier] || []).reject { |id| id == primary_id || classify_tier(id) == :free }
-      end
-
-      public :select_model, :tier_peers
     end
   end
 end

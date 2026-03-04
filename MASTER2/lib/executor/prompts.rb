@@ -1,33 +1,42 @@
 # frozen_string_literal: true
 
-require "yaml"
+module Executor
+  module Prompts
+    YES_VALUES = %w[y yes].freeze
+    NO_VALUES  = %w[n no].freeze
 
-module MASTER
-  class Executor
-    # Prompts -- loads strategy prompt templates from data/prompts/*.yml
-    # Templates use Ruby's % formatting: "%{goal}", "%{tool_list}", etc.
-    module Prompts
-      PROMPTS_DIR = Paths.data_file("prompts").freeze
+    module_function
 
-      module_function
+    def confirm(message, default: true, input: $stdin, output: $stdout)
+      suffix = default ? " [Y/n] " : " [y/N] "
 
-      def load(strategy)
-        @cache ||= {}
-        @cache[strategy] ||= begin
-          file = File.join(PROMPTS_DIR, "#{strategy}.yml")
-          File.exist?(file) ? YAML.safe_load_file(file) : {}
-        rescue StandardError => e
-          Logging.warn("Failed to load prompt file #{file}: #{e.message}", subsystem: "executor.prompts")
-          {}
-        end
+      loop do
+        output.print("#{message}#{suffix}")
+        line = input.gets
+        return default if line.nil?
+
+        answer = line.strip.downcase
+        return default if answer.empty?
+        return true if YES_VALUES.include?(answer)
+        return false if NO_VALUES.include?(answer)
+
+        output.puts("Please answer yes or no.")
       end
+    end
 
-      def get(strategy, key, **vars)
-        template = load(strategy).fetch(key.to_s, "")
-        vars.empty? ? template : template % vars
-      rescue KeyError => err
-        raise ArgumentError, "Prompt #{strategy}/#{key} missing variable: #{err.message}"
-      end
+    def ask(message, default: nil, input: $stdin, output: $stdout)
+      output.print("#{message}#{default ? " (#{default})" : ""}: ")
+      line = input.gets
+      return default if line.nil?
+
+      answer = line.chomp
+      answer.empty? ? default : answer
+    end
+
+    def read_file(path)
+      File.read(path)
+    rescue Errno::ENOENT, Errno::EACCES => e
+      raise e.class, "Unable to read #{path}: #{e.message}"
     end
   end
 end

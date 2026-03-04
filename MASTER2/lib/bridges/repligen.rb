@@ -2,40 +2,49 @@
 
 module Bridges
   module Repligen
-    MODEL_CATALOG = [
-      {
-        model: Patient,
-        name: :patients,
-        includes: %i[addresses primary_provider]
-      },
-      {
-        model: Order,
-        name: :orders,
-        includes: %i[patient line_items]
-      },
-      {
-        model: Specimen,
-        name: :specimens,
-        includes: %i[patient order]
-      }
-    ].freeze
+    DEFAULT_PORT = 50_25
+    DEFAULT_TIMEOUT_SECONDS = 5
+    DEFAULT_BUFFER_SIZE_BYTES = 1024
 
-    module_function
+    class Client
+      attr_reader :host, :port, :timeout
 
-    def model_catalog
-      MODEL_CATALOG
-    end
+      def initialize(host:, port: DEFAULT_PORT, timeout: DEFAULT_TIMEOUT_SECONDS)
+        @host = host
+        @port = port
+        @timeout = timeout
+      end
 
-    def each_record(batch_size: 1000, &block)
-      raise ArgumentError, "block required" unless block
+      def connect
+        return socket if defined?(@socket) && @socket && !@socket.closed?
 
-      model_catalog.each do |entry|
-        relation = entry[:model].all
-        relation = relation.includes(entry[:includes]) if entry[:includes].present?
+        @socket = TCPSocket.new(host, port)
+      end
 
-        relation.find_in_batches(batch_size: batch_size) do |records|
-          records.each { |record| block.call(entry[:name], record) }
-        end
+      def disconnect
+        return unless defined?(@socket) && @socket
+
+        @socket.close unless @socket.closed?
+        @socket = nil
+      end
+
+      def write(data)
+        connect
+        socket.write(data)
+        true
+      end
+
+      def read(max_bytes: DEFAULT_BUFFER_SIZE_BYTES)
+        connect
+        socket.readpartial(max_bytes)
+      rescue EOFError
+        nil
+      end
+
+      private
+
+      def socket
+        @socket || raise("Not connected")
       end
     end
   end
