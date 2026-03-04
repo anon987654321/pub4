@@ -90,6 +90,7 @@ model <name>          switch model
 models                list available models
 health                system health check
 status                constitutional alignment
+integrations [sync]  OpenClaw/Telegram/local-AI repo pack
 help                  full command list
 ```
 
