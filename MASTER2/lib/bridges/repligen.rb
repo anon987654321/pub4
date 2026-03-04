@@ -1,51 +1,134 @@
 # frozen_string_literal: true
 
-module Bridges
-  module Repligen
-    DEFAULT_PORT = 50_25
-    DEFAULT_TIMEOUT_SECONDS = 5
-    DEFAULT_BUFFER_SIZE_BYTES = 1024
+require_relative "repligen/pipelines"
 
-    class Client
-      attr_reader :host, :port, :timeout
+module MASTER
+  module Bridges
+    # Replicate Bridge - Interface to AI media generation pipeline
+    # Based on repligen.rb WILD_CHAIN model catalog
+    # Provides access to image, video, and enhancement models
+    module ReplicateBridge
+      module_function
 
-      def initialize(host:, port: DEFAULT_PORT, timeout: DEFAULT_TIMEOUT_SECONDS)
-        @host = host
-        @port = port
-        @timeout = timeout
+      # Model catalog - delegates to Replicate::MODELS for DRY
+      def self.model_catalog
+        @model_catalog ||= {
+          image_gen: [
+            { model: MASTER::Replicate::MODELS[:flux_pro], name: "Flux Pro" },
+            { model: MASTER::Replicate::MODELS[:flux_dev], name: "Flux Dev" },
+            { model: MASTER::Replicate::MODELS[:sdxl], name: "SDXL" },
+            { model: MASTER::Replicate::MODELS[:ideogram_v2], name: "Ideogram V2" },
+            { model: MASTER::Replicate::MODELS[:recraft_v3], name: "Recraft V3" },
+          ],
+          video_gen: [
+            { model: MASTER::Replicate::MODELS[:hailuo], name: "Hailuo 2.3" },
+            { model: MASTER::Replicate::MODELS[:kling], name: "Kling 2.5" },
+            { model: MASTER::Replicate::MODELS[:luma_ray], name: "Luma Ray 2" },
+            { model: MASTER::Replicate::MODELS[:wan], name: "WAN 2.5" },
+            { model: MASTER::Replicate::MODELS[:sora], name: "Sora 2" },
+          ],
+          enhance: [
+            { model: MASTER::Replicate::MODELS[:esrgan], name: "Real-ESRGAN 4x" },
+            { model: MASTER::Replicate::MODELS[:gfpgan], name: "GFPGAN Face" },
+            { model: MASTER::Replicate::MODELS[:codeformer], name: "CodeFormer" },
+            { model: MASTER::Replicate::MODELS[:clarity], name: "Clarity 4x" },
+          ],
+          audio: [
+            { model: MASTER::Replicate::MODELS[:musicgen], name: "MusicGen" },
+            { model: MASTER::Replicate::MODELS[:bark], name: "Bark TTS" },
+          ],
+          transcribe: [
+            { model: MASTER::Replicate::MODELS[:whisper], name: "Whisper" },
+          ],
+        }.freeze
       end
 
-      def connect
-        return socket if defined?(@socket) && @socket && !@socket.closed?
-
-        @socket = TCPSocket.new(host, port)
+      # Get all models for a category
+      def models_for(category)
+        ReplicateBridge.model_catalog[category.to_sym] || []
       end
 
-      def disconnect
-        return unless defined?(@socket) && @socket
-
-        @socket.close unless @socket.closed?
-        @socket = nil
+      # List all available categories
+      def categories
+        ReplicateBridge.model_catalog.keys
       end
 
-      def write(data)
-        connect
-        socket.write(data)
-        true
+      # Generate image using Replicate API
+      def generate_image(prompt:, model: nil)
+        model_id = model || ReplicateBridge.model_catalog[:image_gen].first[:model]
+
+        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
+
+        Replicate.generate(prompt: prompt, model: model_id)
       end
 
-      def read(max_bytes: DEFAULT_BUFFER_SIZE_BYTES)
-        connect
-        socket.readpartial(max_bytes)
-      rescue EOFError
+      # Generate video using Replicate API
+      def generate_video(prompt:, model: nil)
+        model_id = model || ReplicateBridge.model_catalog[:video_gen].first[:model]
+
+        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
+
+        Replicate.run(model_id: model_id, input: { prompt: prompt })
+      end
+
+      # Enhance image using upscaling models
+      def enhance_image(image_url:, model: nil)
+        model_id = model || ReplicateBridge.model_catalog[:enhance].first[:model]
+
+        return Result.err("Replicate not available.") unless defined?(Replicate) && Replicate.available?
+
+        Replicate.run(model_id: model_id, input: { image: image_url })
+      end
+
+      # Get model info
+      def model_info(model_id)
+        ReplicateBridge.model_catalog.each do |category, models|
+          models.each do |m|
+            return { category: category, **m } if m[:model] == model_id
+          end
+        end
         nil
       end
 
-      private
+      # List all models
+      def all_models
+        result = []
+        ReplicateBridge.model_catalog.each do |category, models|
+          models.each do |m|
+            result << { category: category, **m }
+          end
+        end
+        result
+      end
 
-      def socket
-        @socket || raise("Not connected")
+      # Catwalk styles and lighting constants
+      CATWALK_STYLES = %w[haute_couture streetwear avant_garde minimalist sportswear editorial fantasy cyberpunk].freeze
+      CATWALK_LIGHTING = %w[runway studio natural dramatic neon golden cinematic].freeze
+
+      # Wild chain - random creative pipeline combos
+      def wild_chain(steps: 3, seed: nil)
+        rng = seed ? Random.new(seed) : Random.new
+
+        chain = []
+        steps.times do
+          category = [:image_gen, :enhance, :video_gen].sample(random: rng)
+          models = ReplicateBridge.model_catalog[category]
+          next if models.nil? || models.empty?
+
+          model = models.sample(random: rng)
+          chain << {
+            step: chain.length + 1,
+            category: category,
+            model: model[:model],
+            name: model[:name],
+          }
+        end
+
+        Result.ok(chain)
       end
     end
+
+    # Backward compatibility
+    RepligenBridge = ReplicateBridge unless const_defined?(:RepligenBridge, false)
   end
 end

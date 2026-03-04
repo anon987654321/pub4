@@ -99,8 +99,8 @@ module MASTER
     end
 
     def show_history
-      @context[:history].each_with_index do |cmd, idx|
-        puts "  #{idx + 1}  #{cmd}"
+      @context[:history].each_with_index do |cmd, i|
+        puts "  #{i + 1}  #{cmd}"
       end
     end
 
@@ -167,8 +167,8 @@ module MASTER
       return UI.error("File not found: #{path}") unless File.exist?(path)
 
       puts UI.dim("Fixing #{path}...")
-      if defined?(MASTER::Review::Fixer)
-        fixer = MASTER::Review::Fixer.new(mode: :moderate)
+      if defined?(AutoFixer)
+        fixer = AutoFixer.new(mode: :moderate)
         result = fixer.fix(path)
         if result.ok?
           UI.success("Fixed: #{path}")
@@ -176,7 +176,7 @@ module MASTER
           UI.error(result.error)
         end
       else
-        UI.error("Review::Fixer not available")
+        UI.error("AutoFixer not available")
       end
     end
 

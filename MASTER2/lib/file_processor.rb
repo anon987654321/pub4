@@ -1,194 +1,224 @@
 # frozen_string_literal: true
 
-require "fileutils"
-require "pathname"
+module MASTER
+  # FileProcessor - 4-phase file processing
+  # Clean -> Rename/Rephrase -> Structural Transform -> Expand/Contract
+  module FileProcessor
+    PHASES = %i[clean rename transform assess].freeze
 
-module FileProcessing
-  CHANGE_APPEND = "\")\n          changes << \""
-  CHANGE_JOIN = "\",\n          \""
-  MAX_RENAME_ATTEMPTS = 10
-  VALID_EXTENSIONS = %w[.pdf .txt .md .csv .json .xml .jpg .jpeg .png].freeze
+    class << self
+      # Process a file through all 4 phases
+      def process(content, filename: "file", dry_run: true)
+        log("file0: processing #{File.basename(filename)}")
+        result = { filename: filename, original: content, phases: {} }
+        current = content
 
-  Result = Struct.new(
-    :directory,
-    :assessments,
-    :renames,
-    :transformations,
-    :deletions,
-    :errors,
-    keyword_init: true
-  )
+        PHASES.each do |phase|
+          phase_result = send(:"phase_#{phase}", current, filename)
+          result[:phases][phase] = phase_result
+          current = phase_result[:output] unless dry_run && phase_result[:changes].any?
+        end
 
-  class FileProcessor
-    def initialize(directory_path:, records_scope: nil, transformer: nil)
-      @directory = Pathname.new(directory_path)
-      @records_scope = records_scope
-      @transformer = transformer
-    end
-
-    def transform_directory
-      return empty_result unless directory.exist?
-
-      payload = {
-        directory: directory.to_s,
-        assessments: [],
-        renames: [],
-        transformations: [],
-        deletions: [],
-        errors: []
-      }
-
-      payload[:assessments] = phase_assess
-      payload[:deletions] = phase_clean
-      payload[:renames] = phase_rename
-      payload[:transformations] = phase_transform
-
-      Result.new(**payload)
-    end
-
-    def phase_assess
-      files = discover_files(directory)
-      files.map { |path| assess_file(path) }.compact
-    end
-
-    def phase_clean
-      files = discover_files(directory)
-      files.filter_map { |path| delete_if_invalid(path) }
-    end
-
-    def phase_rename
-      files = discover_files(directory)
-      files.filter_map { |path| rename_if_needed(path) }
-    end
-
-    def phase_transform
-      return [] unless transformer
-
-      files = discover_files(directory)
-      files.filter_map { |path| transform_file(path) }
-    end
-
-    private
-
-    attr_reader :directory, :records_scope, :transformer
-
-    def empty_result
-      Result.new(
-        directory: directory.to_s,
-        assessments: [],
-        renames: [],
-        transformations: [],
-        deletions: [],
-        errors: []
-      )
-    end
-
-    def discover_files(root)
-      return [] unless root.directory?
-
-      root.children.flat_map do |entry|
-        entry.directory? ? discover_files(entry) : [entry]
-      end
-    end
-
-    def assess_file(path)
-      return unless path.file?
-
-      {
-        path: path.to_s,
-        size: path.size,
-        ext: path.extname.downcase,
-        valid_extension: valid_extension?(path),
-        has_records: associated_records_for(path).any?
-      }
-    rescue StandardError => e
-      record_error("assess", path, e)
-      nil
-    end
-
-    def delete_if_invalid(path)
-      return unless path.file?
-      return if valid_extension?(path)
-
-      FileUtils.rm_f(path.to_s)
-      { action: "deleted", path: path.to_s, reason: "invalid_extension" }
-    rescue StandardError => e
-      record_error("clean", path, e)
-      nil
-    end
-
-    def rename_if_needed(path)
-      return unless path.file?
-
-      normalized = normalize_filename(path.basename.to_s)
-      return if normalized == path.basename.to_s
-
-      target = unique_target_path(path, normalized)
-      FileUtils.mv(path.to_s, target.to_s)
-
-      { action: "renamed", from: path.to_s, to: target.to_s }
-    rescue StandardError => e
-      record_error("rename", path, e)
-      nil
-    end
-
-    def transform_file(path)
-      return unless path.file?
-      return unless valid_extension?(path)
-
-      output_path = transformer.call(path)
-      return unless output_path
-
-      { action: "transformed", from: path.to_s, to: output_path.to_s }
-    rescue StandardError => e
-      record_error("transform", path, e)
-      nil
-    end
-
-    def normalize_filename(filename)
-      filename
-        .strip
-        .gsub(/\s+/, "_")
-        .gsub(/[^\w.\-]/, "")
-    end
-
-    def unique_target_path(source_path, desired_basename)
-      base = source_path.dirname.join(desired_basename)
-      return base unless base.exist?
-
-      stem = File.basename(desired_basename, ".*")
-      ext = File.extname(desired_basename)
-
-      1.upto(MAX_RENAME_ATTEMPTS) do |suffix|
-        candidate = source_path.dirname.join("#{stem}_#{suffix}#{ext}")
-        return candidate unless candidate.exist?
+        result[:final] = current
+        result[:changed] = current != content
+        log("file0: #{result[:changed] ? 'changed' : 'unchanged'}")
+        result
       end
 
-      source_path.dirname.join("#{stem}_#{Time.now.to_i}#{ext}")
-    end
+      # Process entire directory
+      def process_directory(path, dry_run: true)
+        patterns = %w[*.rb *.py *.js *.ts *.go *.rs *.md *.yml *.yaml *.zsh]
+        files = patterns.flat_map { |p| Dir.glob(File.join(path, "**", p)) }
+        # Also include bare executables in sbin/ and scripts/ (no extension)
+        %w[sbin scripts].each do |dir|
+          Dir.glob(File.join(path, dir, "*")).each { |f| files << f if File.file?(f) }
+        end
+        files.uniq!
+        log("file0: scanning #{files.size} files in #{path}")
+        results = []
 
-    def valid_extension?(path)
-      VALID_EXTENSIONS.include?(path.extname.downcase)
-    end
+        files.each do |file|
+          content = File.read(file)
+          result = process(content, filename: file, dry_run: dry_run)
 
-    def associated_records_for(path)
-      return [] unless records_scope
+          if result[:changed] && !dry_run
+            clean = TextHygiene.normalize(result[:final], filename: file)
+            File.write(file, clean)
+            log("file0: wrote #{File.basename(file)}")
+          end
 
-      # Prevent N+1 when callers pass ActiveRecord relations that will be enumerated.
-      scope = records_scope
-      scope = scope.includes(:attachments) if scope.respond_to?(:includes)
+          results << result if result[:changed]
+        end
 
-      file_key = path.basename.to_s
-      scope.respond_to?(:where) ? scope.where(file_name: file_key) : []
-    end
+        { files_checked: files.size, files_changed: results.size, results: results }
+      end
 
-    def record_error(phase, path, error)
-      @errors ||= []
-      @errors << { phase: phase, path: path.to_s, error: error.class.name, message: error.message }
-    end
+      def log(msg)
+        puts UI.dim(msg)
+      end
 
-    def change_lines(segments)
-      segments.join(CHANGE_JOIN)
+      private
+
+      # Phase 1: Clean - deterministic hygiene
+      def phase_clean(content, filename)
+        changes = []
+        output = content.dup
+
+        # CRLF -> LF
+        if output.include?("\r\n")
+          output.gsub!("\r\n", "\n")
+          changes << "CRLF -> LF"
+        end
+
+        # Trailing whitespace
+        if output.match?(/[ \t]+$/)
+          output.gsub!(/[ \t]+$/, "")
+          changes << "Trailing whitespace removed"
+        end
+
+        # BOM
+        if output.start_with?("\xEF\xBB\xBF")
+          output = output[3..]
+          changes << "BOM removed"
+        end
+
+        # Zero-width characters
+        if output.match?(/[\u200B\u200C\u200D\uFEFF]/)
+          output.gsub!(/[\u200B\u200C\u200D\uFEFF]/, "")
+          changes << "Zero-width characters removed"
+        end
+
+        # Ensure final newline
+        unless output.end_with?("\n")
+          output += "\n"
+          changes << "Final newline added"
+        end
+
+        # Normalize indentation (tabs -> spaces for non-Makefile)
+        if !filename.include?("Makefile") && output.include?("\t")
+          output.gsub!("\t", "  ")
+          changes << "Tabs -> spaces"
+        end
+
+        { phase: :clean, changes: changes, output: output }
+      end
+
+      # Phase 2: Rename/Rephrase - improve naming
+      def phase_rename(content, _filename)
+        changes = []
+        output = content.dup
+
+        # get_ prefix removal (Ruby convention)
+        renames = output.scan(/def\s+get_(\w+)/).flatten
+        renames.each do |name|
+          # Only rename if not a collision
+          unless output.match?(/def\s+#{name}\b/)
+            output.gsub!(/\bget_#{name}\b/, name)
+            changes << "get_#{name} -> #{name}"
+          end
+        end
+
+        # Verbose suffixes
+        {
+          "_value" => "",
+          "_data" => "",
+          "_info" => "",
+          "_object" => "",
+        }.each do |suffix, replacement|
+          output.scan(/def\s+(\w+#{suffix})\b/).flatten.each do |method|
+            new_name = method.sub(suffix, replacement)
+            unless output.match?(/def\s+#{new_name}\b/)
+              output.gsub!(/\b#{method}\b/, new_name)
+              changes << "#{method} -> #{new_name}"
+            end
+          end
+        end
+
+        # Boolean method naming
+        output.scan(/def\s+(is_\w+)\b/).flatten.each do |method|
+          new_name = "#{method.sub(/^is_/, '')}?"
+          unless output.match?(/def\s+#{Regexp.escape(new_name)}\b/)
+            output.gsub!(/\b#{method}\b(?!\?)/, new_name)
+            changes << "#{method} -> #{new_name}"
+          end
+        end
+
+        { phase: :rename, changes: changes, output: output }
+      end
+
+      # Phase 3: Structural Transform - apply structural axioms
+      def phase_transform(content, filename)
+        changes = []
+        output = content.dup
+
+        # STRUCTURAL_REFLOW: reorder by importance
+        if filename.end_with?(".rb")
+          reflow_result = Reflow.analyze(output, filename: filename)
+          if reflow_result[:issues].any?
+            output = Reflow.reflow(output, filename: filename)
+            changes << "Reflowed by importance"
+          end
+        end
+
+        # STRUCTURAL_MERGE: combine duplicate requires
+        requires = output.scan(/^require\s+['"]([^'"]+)['"]/).flatten
+        duplicates = requires.select { |r| requires.count(r) > 1 }.uniq
+        duplicates.each do |req|
+          # Keep first, remove rest
+          first = true
+          output.gsub!(/^require\s+['"]#{Regexp.escape(req)}['"]\n/) do
+            if first
+              first = false
+              ::Regexp.last_match(0)
+            else
+              changes << "Removed duplicate require '#{req}'"
+              ""
+            end
+          end
+        end
+
+        # STRUCTURAL_FLATTEN: early returns
+        # Simple pattern: if condition / long block / else / short / end
+
+        { phase: :transform, changes: changes, output: output }
+      end
+
+      # Phase 4: Expand/Contract Assessment - evaluate size changes
+      def phase_assess(content, filename)
+        changes = []
+        output = content
+
+        original_lines = content.lines.size
+        original_bytes = content.bytesize
+
+        # Assess if file should be split
+        changes << "Consider splitting: #{original_lines} lines exceeds 600 limit" if original_lines > 600
+
+        # Assess if file is too small (maybe merge with related)
+        if original_lines < 20 && !filename.match?(/test|spec|config/)
+          changes << "Consider merging: #{original_lines} lines may be too granular"
+        end
+
+        # Check method count
+        method_count = content.scan(/^\s*def\s+/).size
+        changes << "High method count (#{method_count}): consider splitting by responsibility" if method_count > 15
+
+        # Check class count
+        class_count = content.scan(/^\s*class\s+/).size
+        changes << "Multiple classes (#{class_count}): one class per file preferred" if class_count > 1
+
+        {
+          phase: :assess,
+          changes: changes,
+          output: output,
+          metrics: {
+            lines: original_lines,
+            bytes: original_bytes,
+            methods: method_count,
+            classes: class_count,
+          },
+        }
+      end
     end
   end
 end

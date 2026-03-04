@@ -1,83 +1,74 @@
 # frozen_string_literal: true
 
-require "json"
+require "yaml"
 
-module Analysis
-  class OpenbsdConfigValidator
-    REQUIRED_CONFIG_KEYS = %w[hostname interfaces pf_rules].freeze
+module MASTER
+  module Analysis
+    # Validates OpenBSD daemon config files against rules from data/openbsd_patterns.yml.
+    # Used by prescan and by the shell_command tool when it detects a .conf file path.
+    module OpenBSDConfigValidator
+      extend self
 
-    def initialize(scope:, logger: nil)
-      @scope = scope
-      @logger = logger
-    end
+      PATTERNS_FILE = File.join(MASTER.root, "data", "openbsd_patterns.yml")
 
-    def call
-      hosts = load_hosts
-      return [] if hosts.empty?
-
-      configs_by_host_id = load_configs_by_host_id(host_ids: hosts.map(&:id))
-
-      errors = []
-      errors.concat(missing_config_errors(hosts: hosts, configs_by_host_id: configs_by_host_id))
-      errors.concat(invalid_payload_errors(configs_by_host_id: configs_by_host_id))
-      errors.concat(duplicate_pf_rule_errors(configs_by_host_id: configs_by_host_id))
-      errors
-    end
-
-    private
-
-    attr_reader :scope, :logger
-
-    def load_hosts
-      scope.includes(:openbsd_config).to_a
-    end
-
-    def load_configs_by_host_id(host_ids:)
-      OpenbsdConfig.where(host_id: host_ids).pluck(:host_id, :payload).to_h
-    end
-
-    def missing_config_errors(hosts:, configs_by_host_id:)
-      missing = hosts.reject { |h| configs_by_host_id.key?(h.id) }
-
-      missing.map do |host|
-        { host_id: host.id, error: "missing_openbsd_config" }
+      def rules
+        @rules ||= begin
+          YAML.safe_load_file(PATTERNS_FILE)&.dig("config_validation") || {}
+        rescue StandardError
+          {}
+        end
       end
-    end
 
-    def invalid_payload_errors(configs_by_host_id:)
-      configs_by_host_id.each_with_object([]) do |(host_id, payload), errors|
-        next if payload.present?
+      # Validate a config file by name. Returns array of issue hashes.
+      # @param filename [String] basename like "pf.conf" or "sshd_config"
+      # @param content  [String] file content to validate
+      # @return [Array<Hash>] [{severity:, message:, daemon:, man:}]
+      def validate(filename, content)
+        rule = rules[File.basename(filename)]
+        return [] unless rule
 
-        errors << { host_id: host_id, error: "empty_payload" }
-      end
-    end
+        issues = []
+        daemon = rule["daemon"]
+        man    = rule["man"]
 
-    def duplicate_pf_rule_errors(configs_by_host_id:)
-      configs_by_host_id.each_with_object([]) do |(host_id, payload), errors|
-        next if payload.blank?
-
-        parsed = parse_payload(payload)
-        next if parsed.nil?
-
-        missing_keys = REQUIRED_CONFIG_KEYS - parsed.keys
-        unless missing_keys.empty?
-          errors << { host_id: host_id, error: "missing_required_keys", details: missing_keys.sort }
-          next
+        (rule["required_patterns"] || []).each do |pat|
+          unless content.include?(pat)
+            issues << {
+              severity: :error,
+              daemon:   daemon,
+              man:      man,
+              message:  "#{filename}: missing required pattern: #{pat.inspect}  (see man #{man})",
+            }
+          end
         end
 
-        rules = Array(parsed["pf_rules"]).map(&:to_s)
-        dups = rules.group_by(&:itself).select { |_k, v| v.size > 1 }.keys
-        next if dups.empty?
+        (rule["warnings"] || []).each do |w|
+          pat = w["pattern"]
+          if w["absent_message"] && pat && !content.match?(/#{Regexp.escape(pat)}/i)
+            issues << { severity: :warn, daemon: daemon, man: man,
+                        message: "#{filename}: #{w['absent_message']}" }
+          elsif w["message"] && pat && content.match?(/#{Regexp.escape(pat)}/i)
+            issues << { severity: :warn, daemon: daemon, man: man,
+                        message: "#{filename}: #{w['message']}" }
+          end
+        end
 
-        errors << { host_id: host_id, error: "duplicate_pf_rules", details: dups.sort }
+        issues
       end
-    end
 
-    def parse_payload(payload)
-      JSON.parse(payload)
-    rescue JSON::ParserError => e
-      logger&.warn("OpenbsdConfigValidator: invalid JSON payload: #{e.message}")
-      nil
+      # Scan a directory for known OpenBSD config files and validate each.
+      def scan_dir(dir = "/etc")
+        results = {}
+        rules.each_key do |filename|
+          path = File.join(dir, filename)
+          next unless File.readable?(path)
+
+          content = File.read(path)
+          issues = validate(filename, content)
+          results[filename] = issues if issues.any?
+        end
+        results
+      end
     end
   end
 end

@@ -1,83 +1,55 @@
 # frozen_string_literal: true
 
-module Llm
-  class ContextWindow
-    DEFAULT_MAX_TOKENS = 8_192
-    DEFAULT_RESERVED_OUTPUT_TOKENS = 1_024
-    DEFAULT_OVERHEAD_TOKENS = 50
+module MASTER
+  # ContextWindow - Track and display token usage
+  # Uses LLM.context_limits as single source of truth
+  module ContextWindow
+    DEFAULT_LIMIT = 32_000
 
-    attr_reader :max_tokens, :reserved_output_tokens, :overhead_tokens
-
-    def initialize(
-      max_tokens: DEFAULT_MAX_TOKENS,
-      reserved_output_tokens: DEFAULT_RESERVED_OUTPUT_TOKENS,
-      overhead_tokens: DEFAULT_OVERHEAD_TOKENS,
-      tokenizer: nil
-    )
-      @max_tokens = Integer(max_tokens)
-      @reserved_output_tokens = Integer(reserved_output_tokens)
-      @overhead_tokens = Integer(overhead_tokens)
-      @tokenizer = tokenizer
-    end
-
-    def available_prompt_tokens
-      [@max_tokens - @reserved_output_tokens - @overhead_tokens, 0].max
-    end
-
-    def fits?(messages, extra_tokens: 0)
-      tokens_for_messages(messages) + Integer(extra_tokens) <= available_prompt_tokens
-    end
-
-    def trim(messages, extra_tokens: 0)
-      extra_token_count = Integer(extra_tokens)
-      budget = available_prompt_tokens - extra_token_count
-      return [] if budget <= 0
-
-      pruned_messages = Array(messages).dup
-      while pruned_messages.any? && tokens_for_messages(pruned_messages) > budget
-        pruned_messages.shift
+    class << self
+      def estimate_tokens(char_count)
+        (char_count.to_i / 4.0).ceil
       end
-      pruned_messages
-    end
 
-    def tokens_for(text)
-      return 0 if text.nil? || text == ""
-
-      if @tokenizer
-        @tokenizer.call(text)
-      else
-        approximate_tokens(text)
+      def limit_for(model)
+        LLM.context_limits[model] || DEFAULT_LIMIT
       end
-    end
 
-    def tokens_for_messages(messages)
-      Array(messages).sum do |message|
-        tokens_for(message_content(message)) + message_overhead_tokens(message)
+      def usage(session, model: nil)
+        model ||= LLM.model_tiers[:strong]&.first
+        limit = limit_for(model)
+
+        total_chars = session.history.sum { |h| h[:content].to_s.length }
+        used = estimate_tokens(total_chars)
+        percent = ((used.to_f / limit) * 100).round(1)
+
+        {
+          used: used,
+          limit: limit,
+          percent: percent,
+          remaining: limit - used,
+        }
       end
-    end
 
-    private
+      def bar(session, model: nil, width: 20)
+        u = usage(session, model: model)
+        filled = ((u[:percent] / 100.0) * width).round
+        empty = width - filled
 
-    def approximate_tokens(text)
-      (text.to_s.length / 4.0).ceil
-    end
-
-    def message_content(message)
-      case message
-      when String
-        message
-      when Hash
-        message[:content] || message["content"] || message.to_s
-      else
-        message.to_s
+        bar_str = ("#" * filled) + ("." * empty)
+        "#{bar_str} #{u[:percent]}%"
       end
-    end
 
-    def message_overhead_tokens(message)
-      return 0 unless message.is_a?(Hash)
+      def status(session, model: nil)
+        u = usage(session, model: model)
+        "Context: #{format_tokens(u[:used])}/#{format_tokens(u[:limit])} (#{u[:percent]}%)"
+      end
 
-      role = message[:role] || message["role"]
-      role ? 2 : 0
+      private
+
+      def format_tokens(n)
+        MASTER::Utils.format_tokens(n)
+      end
     end
   end
 end

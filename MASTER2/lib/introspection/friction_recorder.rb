@@ -1,75 +1,71 @@
 # frozen_string_literal: true
 
-require "json"
-require "time"
+require "yaml"
 
-module Introspection
-  class FrictionRecorder
-    DEFAULT_SOURCE = "friction".freeze
-    DEFAULT_VERSION = 1
+module MASTER
+  module Friction
+    # FrictionRecorder — lightweight session-scoped event log.
+    # Call FrictionRecorder.record(:pattern_id, context) from any subsystem
+    # when a known friction signal fires. SessionRetrospective reads this at
+    # session end to synthesise the retrospective.
+    #
+    # Design: append-only in-memory array (APPEND_ONLY axiom).
+    # Persisted to data/friction_log.jsonl if MASTER_FRICTION_LOG is set.
+    module FrictionRecorder
+      extend self
 
-    def initialize(client:, logger:, enabled: true, source: DEFAULT_SOURCE)
-      @client = client
-      @logger = logger
-      @enabled = enabled
-      @source = source
-    end
+      LOG_PATH = File.join(File.dirname(__FILE__), "../../data/friction_log.jsonl")
 
-    def record(event_name, payload = {})
-      return unless @enabled
-      return if event_name.nil? || event_name.to_s.empty?
-
-      event = build_event(event_name, payload)
-
-      begin
-        @client.write(event)
-      rescue StandardError => e
-        log_error(e, event: event)
+      def reset!
+        @events = []
       end
-    end
 
-    def record_from_json(event_name, json_payload)
-      return unless @enabled
-      return if event_name.nil? || event_name.to_s.empty?
+      def events
+        @events ||= []
+      end
 
-      payload = parse_json(json_payload)
-      return unless payload
+      # Record a friction event.
+      # @param pattern_id [Symbol] must match a key in friction_patterns.yml
+      # @param context [Hash] file:, line:, detail: etc.
+      def record(pattern_id, context = {})
+        event = {
+          id: pattern_id.to_sym,
+          timestamp: Time.now.utc.iso8601,
+          context: context,
+        }
+        events << event
+        persist(event) if ENV["MASTER_FRICTION_LOG"]
+        Logging.dmesg_log("friction", message: "signal=#{pattern_id} ctx=#{context.inspect}") if defined?(Logging)
+        event
+      end
 
-      record(event_name, payload)
-    end
+      # Summary grouped by pattern_id for retrospective.
+      def summary
+        events.group_by { |e| e[:id] }
+              .transform_values(&:size)
+      end
 
-    private
+      # Were any critical-severity patterns fired this session?
+      def critical?
+        patterns = load_patterns
+        events.any? do |e|
+          patterns.dig(e[:id].to_s, "severity") == "critical"
+        end
+      end
 
-    def build_event(event_name, payload)
-      {
-        version: DEFAULT_VERSION,
-        source: @source,
-        name: event_name.to_s,
-        timestamp: current_timestamp,
-        payload: payload
-      }
-    end
+      private
 
-    def current_timestamp(time = Time.now)
-      time.utc.iso8601
-    end
+      def persist(event)
+        File.open(LOG_PATH, "a") { |f| f.puts(JSON.generate(event)) }
+      rescue StandardError
+        # best-effort
+      end
 
-    def parse_json(json_payload)
-      return {} if json_payload.nil? || json_payload == ""
-
-      JSON.parse(json_payload)
-    rescue JSON::ParserError => e
-      log_error(e, json_payload: json_payload)
-      nil
-    end
-
-    def log_error(error, context)
-      message = "FrictionRecorder error: #{error.class}: #{error.message}"
-
-      if @logger.respond_to?(:error)
-        @logger.error(message, context: context)
-      else
-        warn(message)
+      def load_patterns
+        path = File.join(File.dirname(__FILE__), "../../data/friction_patterns.yml")
+        YAML.safe_load_file(path, permitted_classes: [Symbol])&.fetch("patterns", {}) || {}
+      rescue StandardError
+        {}
       end
     end
   end

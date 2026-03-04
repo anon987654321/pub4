@@ -1,85 +1,163 @@
 # frozen_string_literal: true
 
-module Commands
-  module SessionCommands
-    OUTPUT_JOINER = "\",\n            \""
-    PUTS_LINE_PREFIX = "\"\n              puts \""
+module MASTER
+  module Commands
+    # Session management commands
+    module SessionCommands
+      REPLAY_UNAVAILABLE = "  SessionReplay not available."
 
-    def manage_session(session_identifier:, current_user:, tags: nil)
-      session_record = fetch_session(session_identifier, current_user)
-      return result(:not_found, ["Session not found"]) unless session_record
+      def manage_session(args)
+        parts = args&.split || []
+        case parts.first
+        when "new"
+          Session.start_new
+          name = parts[1..].join(" ") if parts.size > 1
+          Session.current.write_metadata(:name, name) if name && !name.empty?
+          label = name || UI.truncate_id(Session.current.id)
+          puts "  New session: #{label}"
+        when "save"
+          Session.current.save
+          puts "  Session saved: #{UI.truncate_id(Session.current.id)}"
+        when "load", "resume"
+          id = parts[1]
+          if id && Session.resume(id)
+            puts "  Resumed session: #{UI.truncate_id(Session.current.id)}"
+          else
+            puts "  Session not found: #{id}"
+          end
+        when "info"
+          s = Session.current
+          UI.header("Session Info")
+          puts [
+            "  ID:       #{s.id}",
+            "  Messages: #{s.message_count}",
+            "  Cost:     #{UI.currency_precise(s.total_cost)}",
+            "  Created:  #{s.created_at}",
+          ].join("\n")
+          puts
+        when "replay"
+          return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
 
-      tag_list = Array(tags)
-      action = decide_session_action(session_record, tag_list)
+          id = parts[1] || Session.current.id
+          SessionReplay.replay(id)
+        when "list-detail", "ls"
+          return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
 
-      perform_session_action(action, session_record, current_user, tag_list)
-    end
+          result = SessionReplay.list_with_summaries
+          if result.ok?
+            UI.header("Sessions (detailed)")
+            result.value.each do |s|
+              status = s[:crashed] ? UI.red("CRASHED") : UI.green("ok")
+              cost_str = s[:cost] > 0 ? UI.currency_precise(s[:cost]) : "free"
+              puts "  #{s[:short_id]} | #{s[:messages]} msgs | #{cost_str} | #{s[:duration]} | #{status}"
+            end
+            puts
+          end
+        when "diff"
+          return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
 
-    private
+          if parts.size >= 3
+            result = SessionReplay.diff_sessions(parts[1], parts[2])
+            if result.ok?
+              diff = result.value
+              puts "\n  Session Diff:"
+              puts "  A: #{diff[:session_a][:messages]} messages"
+              puts "  B: #{diff[:session_b][:messages]} messages"
+              puts "  Cost diff: #{UI.currency_precise(diff[:cost_diff].abs)} (#{diff[:cost_diff] > 0 ? '+' : '-'})"
+              puts
+            else
+              puts "  Error: #{result.error}"
+            end
+          else
+            puts "  Usage: session diff <id_a> <id_b>"
+          end
+        when "export"
+          return puts REPLAY_UNAVAILABLE unless defined?(SessionReplay)
 
-    def fetch_session(session_identifier, current_user)
-      Session
-        .includes(:user, :events)
-        .find_by(id: session_identifier, user_id: current_user.id)
-    end
+          id = parts[1] || Session.current.id
+          format = args&.include?("--md") ? :markdown : :json
+          result = SessionReplay.replay(id, format: format)
+          if result.ok?
+            puts result.value if format == :markdown
+            puts JSON.pretty_generate(result.value) if format == :json
+          else
+            puts "  Error: #{result.error}"
+          end
+        else
+          puts <<~HELP
 
-    def decide_session_action(session_record, tag_list)
-      return :resume if session_record.active?
-      return :start if tag_list.any?
+            Session Commands:
 
-      :show
-    end
+              session new [name]           Start new session (optional name)
+              session save                 Save current session
+              session load <id>            Load saved session
+              session info                 Show current session info
+              session replay [id]          Replay session conversation
+              session ls                   List sessions with details
+              session diff <a> <b>         Diff two sessions
+              session export [id] [--md]   Export session as JSON or Markdown
 
-    def perform_session_action(action, session_record, current_user, tag_list)
-      case action
-      when :start
-        start_session(session_record, current_user, tag_list)
-      when :resume
-        resume_session(session_record, current_user)
-      when :show
-        show_session(session_record)
-      else
-        result(:invalid_action, ["Invalid session action: #{action}"])
+          HELP
+        end
       end
-    end
 
-    def start_session(session_record, current_user, tag_list)
-      session_record.update!(
-        started_at: current_timestamp,
-        status: "active",
-        tag_list: tag_list
-      )
+      def print_saved_sessions
+        sessions = Session.list
+        if sessions.empty?
+          puts "\n  No saved sessions.\n"
+        else
+          UI.header("Saved Sessions")
+          sessions.each do |id|
+            data = Memory.load_session(id)
+            next unless data
 
-      result(:started, ["Session started", session_payload(session_record, current_user)])
-    end
+            msgs = data[:history]&.size || 0
+            name = data.dig(:metadata, :name)
+            label = name ? "#{name} (#{UI.truncate_id(id)})" : UI.truncate_id(id)
+            puts "  #{label} | #{msgs} messages"
+          end
+          puts
+        end
+      end
 
-    def resume_session(session_record, current_user)
-      session_record.update!(resumed_at: current_timestamp)
+      def undo_last_exchange
+        session = Session.current
+        if session.history.size < 2
+          puts "  Nothing to forget."
+          return
+        end
 
-      result(:resumed, ["Session resumed", session_payload(session_record, current_user)])
-    end
+        # IMMUTABLE_HISTORY: append tombstone instead of mutating
+        session.history << { role: :system, content: "[UNDO: Previous 2 messages hidden]", tombstone: true,
+                             undone_at: Time.now.utc.iso8601 }
+        session.instance_variable_set(:@undo_count, (session.instance_variable_get(:@undo_count) || 0) + 1)
+        session.instance_variable_set(:@dirty, true)
+        puts "  Marked last exchange as undone. Context preserved for history."
+      end
 
-    def show_session(session_record)
-      result(:shown, [session_payload(session_record, session_record.user)])
-    end
+      def print_session_summary
+        session = Session.current
+        if session.history.empty?
+          puts "  No conversation yet."
+          return
+        end
 
-    def current_timestamp
-      Time.current.utc.iso8601
-    end
+        UI.header("Conversation Summary")
+        puts "  Messages: #{session.message_count}"
+        puts "  Cost:     #{UI.currency_precise(session.total_cost)}"
+        puts
 
-    def session_payload(session_record, user_record)
-      {
-        id: session_record.id,
-        user_id: user_record.id,
-        status: session_record.status,
-        started_at: session_record.started_at&.utc&.iso8601,
-        resumed_at: session_record.resumed_at&.utc&.iso8601,
-        events_count: session_record.events.size
-      }
-    end
+        history = session.history
+        puts "  First message: #{truncate(history.first[:content], 60)}"
+        puts "  Last message:  #{truncate(history.last[:content], 60)}" if history.size > 1
+        puts
+      end
 
-    def result(status, messages)
-      { status: status, messages: messages }
+      def truncate(str, max)
+        return str if str.length <= max
+
+        "#{str[0, max - 3]}..."
+      end
     end
   end
 end

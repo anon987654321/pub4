@@ -1,87 +1,165 @@
 # frozen_string_literal: true
 
-module CodeReview
-  class CrossRef
-    def initialize(relation:)
-      @relation = relation
-    end
+require "ostruct"
 
-    def analyze_file(path)
-      return [] if path.nil? || path.to_s.strip.empty?
+module MASTER
+  # CrossRef - Cross-reference analyzer for constants and methods
+  module CrossRef
+    # Analyzer class for building reference maps
+    class Analyzer
+      attr_reader :constant_defs, :constant_uses, :method_defs, :method_calls
 
-      source = File.read(path)
-    rescue Errno::ENOENT, Errno::EACCES
-      return []
-    else
-      extract_calls(source, path)
-    end
+      def initialize
+        @constant_defs = {}   # { constant_name => [file, line] }
+        @constant_uses = {}   # { constant_name => [[file, line], ...] }
+        @method_defs = {}     # { method_name => [file, line] }
+        @method_calls = {}    # { method_name => [[file, line], ...] }
+      end
 
-    def duplicate_calls(file_id: nil)
-      scoped = base_scope(file_id)
-      grouped = scoped.group_by { |call| duplicate_key(call) }
+      def analyze(files)
+        files = [files] unless files.is_a?(Array)
 
-      grouped.values.select { |calls| calls.size > 1 }
-    end
+        files.each do |file|
+          next unless File.exist?(file) && file.end_with?(".rb")
 
-    def to_audit_report(file_id: nil)
-      duplicates = duplicate_calls(file_id:)
-      return [] if duplicates.empty?
+          begin
+            content = File.read(file)
+            analyze_file(file, content)
+          rescue StandardError
+            # Skip files that can't be read
+            next
+          end
+        end
 
-      duplicates.map { |calls| build_report_row(calls) }
-    rescue StandardError => e
-      [{ error: e.class.name, message: e.message }]
-    end
+        Result.ok(analyzer: self)
+      end
 
-    private
+      # Find unused constants
+      def unused_constants
+        @constant_defs.keys.reject { |name| @constant_uses[name]&.any? }
+      end
 
-    attr_reader :relation
+      # Find uncalled public methods
+      def uncalled_methods
+        @method_defs.keys.reject { |name| @method_calls[name]&.any? }
+      end
 
-    def base_scope(file_id)
-      scope = relation.includes(:association)
-      file_id ? scope.where(file_id:) : scope
-    end
+      # Find duplicate method calls in same method
+      def duplicate_calls
+        # Simplified: find methods that call the same method multiple times
+        duplicates = []
 
-    def duplicate_key(call)
-      [
-        call.try(:file_id),
-        call.try(:line),
-        call.try(:column),
-        call.try(:name)
-      ]
-    end
+        @method_defs.each do |method_name, location|
+          file, _line = location
+          next unless File.exist?(file)
 
-    def build_report_row(calls)
-      first = calls.first
-      {
-        file_id: first.try(:file_id),
-        location: location_hash(first),
-        name: first.try(:name),
-        count: calls.size,
-        call_ids: calls.map(&:id)
-      }
-    end
+          content = File.read(file)
+          method_match = content.match(/def\s+#{Regexp.escape(method_name)}.*?(?=def\s+|\z)/m)
+          next unless method_match
 
-    def location_hash(call)
-      {
-        line: call.try(:line),
-        column: call.try(:column)
-      }
-    end
+          method_body = method_match[0]
+          calls = method_body.scan(/\b([a-z_][a-z0-9_]*)\s*\(/).flatten
 
-    def extract_calls(source, path)
-      lines = source.each_line.with_index(1)
-      lines.flat_map { |line, line_no| extract_calls_from_line(line, path, line_no) }
-    end
+          call_counts = calls.group_by(&:itself).transform_values(&:count)
+          repeated = call_counts.select { |_name, count| count > 2 }
 
-    def extract_calls_from_line(line, path, line_no)
-      return [] if line.strip.empty?
+          repeated.each do |called, count|
+            duplicates << {
+              method: method_name,
+              file: file,
+              calls: called,
+              count: count,
+            }
+          end
+        end
 
-      line.scan(/\b([a-z_]\w*)\s*\(/).flatten.map do |name|
-        {
-          path:,
-          line: line_no,
-          name:
-        }
+        duplicates
+      end
+
+      # Generate audit report
+      def to_audit_report
+        report = if defined?(Audit::Report)
+                   Audit::Report.new
+                 else
+                   # Fallback if Audit not available
+                   OpenStruct.new(findings: [])
+                 end
+
+        # Add findings for unused constants
+        unused_constants.each do |const|
+          location = @constant_defs[const]
+          finding = if defined?(Audit::Finding)
+                      Audit::Finding.new(
+                        file: location[0],
+                        line: location[1],
+                        severity: :low,
+                        effort: :easy,
+                        category: :unused_code,
+                        message: "Constant '#{const}' is defined but never used",
+                        suggestion: "Remove if not needed, or use it",
+                      )
+                    end
+          report.findings << finding if finding
+        end
+
+        # Add findings for uncalled methods
+        uncalled_methods.each do |method|
+          location = @method_defs[method]
+          finding = if defined?(Audit::Finding)
+                      Audit::Finding.new(
+                        file: location[0],
+                        line: location[1],
+                        severity: :medium,
+                        effort: :moderate,
+                        category: :unused_code,
+                        message: "Method '#{method}' is defined but never called",
+                        suggestion: "Remove if dead code, or add tests",
+                      )
+                    end
+          report.findings << finding if finding
+        end
+
+        report
+      end
+
+      private
+
+      def analyze_file(file, content)
+        lines = content.lines
+
+        lines.each_with_index do |line, idx|
+          line_num = idx + 1
+
+          # Detect constant definitions (simplified)
+          defined_const = nil
+          if line =~ /^\s*([A-Z][A-Z0-9_]*)\s*=/
+            const_name = ::Regexp.last_match(1)
+            @constant_defs[const_name] = [file, line_num]
+            defined_const = const_name
+          end
+
+          # Detect constant uses (excluding the one being defined on this line)
+          line.scan(/\b([A-Z][A-Z0-9_]*)\b/) do |match|
+            const_name = match[0]
+            next if const_name == defined_const # Skip if this is the constant being defined
+
+            @constant_uses[const_name] ||= []
+            @constant_uses[const_name] << [file, line_num]
+          end
+
+          # Detect method definitions
+          if line =~ /^\s*def\s+([a-z_][a-z0-9_?!]*)/
+            method_name = ::Regexp.last_match(1)
+            @method_defs[method_name] = [file, line_num]
+          end
+
+          # Detect method calls (simplified)
+          line.scan(/\b([a-z_][a-z0-9_]*)\s*\(/) do |match|
+            method_name = match[0]
+            @method_calls[method_name] ||= []
+            @method_calls[method_name] << [file, line_num]
+          end
+        end
       end
     end
   end

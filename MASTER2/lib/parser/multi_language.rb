@@ -1,62 +1,97 @@
 # frozen_string_literal: true
 
-module Parser
-  class MultiLanguage
-    HEREDOC_START = /<<[-~]?(['"]?)([A-Za-z_]\w*)\1/.freeze
+module MASTER
+  module Parser
+    # Multi-language parser for shell scripts with embedded languages.
+    # Handles .sh/.zsh/.bash scripts containing Ruby/Python heredocs.
+    # Ported from MASTER v4 lib/parser/multi_language.rb — live dependency of evolve.rb.
+    class MultiLanguage
+      HEREDOC_PATTERNS = {
+        ruby:   /<<-?(\w*RUBY\w*)\s*\n(.*?)\n\s*\1/m,
+        python: /<<-?(\w*PYTHON\w*)\s*\n(.*?)\n\s*\1/m,
+      }.freeze
 
-    def initialize(language_registry, default_language: nil)
-      @language_registry = language_registry
-      @default_language = default_language
-    end
+      SHELL_EXTENSIONS = %w[.sh .zsh .bash].freeze
+      SHELL_SHEBANGS    = %w[
+        #!/bin/sh #!/bin/bash #!/bin/zsh
+        #!/usr/bin/env sh #!/usr/bin/env bash #!/usr/bin/env zsh
+      ].freeze
 
-    def parse(source_code, language_name, filename: nil)
-      language = resolve_language(language_name || @default_language, filename: filename)
-      sanitized_source, heredocs = extract_heredocs(source_code)
+      attr_reader :file_path, :content
 
-      {
-        language: language,
-        source: sanitized_source,
-        heredocs: heredocs
-      }
-    end
-
-    def extract_heredocs(source_code)
-      heredocs = []
-      sanitized = +""
-      index = 0
-
-      while (match = HEREDOC_START.match(source_code, index))
-        sanitized << source_code[index...match.begin(0)]
-        heredocs << read_heredoc(source_code, match.end(0), match[2])
-        index = heredocs[-1][:end_index]
-        sanitized << match[0]
+      def initialize(content = nil, file_path: nil)
+        @content   = content
+        @file_path = file_path
       end
 
-      sanitized << source_code[index..] if index < source_code.length
-      [sanitized, heredocs]
-    end
+      def self.parse_file(file_path)
+        new(File.read(file_path), file_path: file_path).parse
+      end
 
-    private
+      def parse
+        return { error: "No content to parse" } unless @content
 
-    def resolve_language(language_name, filename:)
-      return @language_registry.fetch(language_name) if language_name
+        shell_script? ? parse_shell_script : { type: :unknown, content: @content }
+      end
 
-      inferred = filename && @language_registry.infer_from_filename(filename)
-      inferred || @language_registry.default
-    end
+      def shell_script?
+        return false unless @content
 
-    def read_heredoc(source_code, content_start_index, terminator)
-      terminator_regex = /^[ \t]*#{Regexp.escape(terminator)}\r?\n/
+        SHELL_SHEBANGS.any? { |s| @content.start_with?(s) } ||
+          (file_path && SHELL_EXTENSIONS.any? { |ext| file_path.end_with?(ext) })
+      end
 
-      terminator_match = source_code.match(terminator_regex, content_start_index)
-      content_end_index = terminator_match ? terminator_match.begin(0) : source_code.length
+      # Reconstruct script with a modified heredoc block in-place.
+      def replace_heredoc(original_block, new_code)
+        @content.sub(original_block[:raw_block]) do
+          "<<-#{original_block[:marker]}\n#{new_code}\n#{original_block[:marker]}"
+        end
+      end
 
-      {
-        terminator: terminator,
-        content: source_code[content_start_index...content_end_index],
-        start_index: content_start_index,
-        end_index: terminator_match ? terminator_match.end(0) : source_code.length
-      }
+      private
+
+      def parse_shell_script
+        result = { type: :shell, shell_code: @content, embedded: {}, language_blocks: [] }
+
+        HEREDOC_PATTERNS.each do |lang, pattern|
+          blocks = extract_heredocs(lang, pattern)
+          result[:embedded][lang] = blocks unless blocks.empty?
+          result[:language_blocks].concat(blocks)
+        end
+
+        result[:language_blocks].sort_by! { |b| b[:start_line] }
+        result
+      end
+
+      def extract_heredocs(lang, pattern)
+        blocks = []
+        offset = 0
+
+        @content.scan(pattern) do |match|
+          marker = match[0]
+          code   = match[1]
+
+          match_start = @content.index(Regexp.last_match(0), offset)
+          next unless match_start
+
+          marker_line = @content[0...match_start].count("\n") + 1
+          start_line  = marker_line + 1
+          end_line    = start_line + code.count("\n")
+
+          blocks << {
+            language:  lang,
+            code:      code,
+            start_line: start_line,
+            end_line:   end_line,
+            marker:    marker,
+            raw_block: Regexp.last_match(0),
+          }
+
+          offset = match_start + Regexp.last_match(0).length
+        end
+
+        blocks
+      end
     end
   end
 end

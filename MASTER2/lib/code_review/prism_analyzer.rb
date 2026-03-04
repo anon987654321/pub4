@@ -1,128 +1,120 @@
 # frozen_string_literal: true
 
-module CodeReview
-  class PrismAnalyzer
-    DEFAULT_RULE_SET = %i[
-      unused_variables
-      shadowing
-      suspicious_assignment
-      unreachable_code
-    ].freeze
+require "prism"
 
-    DEFAULT_SEVERITY = "warning"
-    PARSER_TIMEOUT_SECONDS = 5
+# PRISM VISITOR API NOTE:
+# Prism dispatches via visit_TYPE_node methods — NOT a generic visit(node).
+# Examples: visit_def_node, visit_if_node, visit_while_node, visit_block_node
+# Define specific methods per node type, call super(node) to recurse.
+# Gotcha: a generic def visit(node) override silently does nothing — depth stays 0.
+# Self-test below catches this at load time: raises if known-nested code returns 0.
 
-    def initialize(rule_set: DEFAULT_RULE_SET, logger: nil)
-      @rule_set = rule_set
-      @logger = logger
+module MASTER
+  # PrismAnalyzer — accurate code analysis using Prism's AST.
+  # Replaces regex/line-counting heuristics in Analyzers with parse-accurate results.
+  # Falls back gracefully if Prism fails (syntax errors in target file).
+  module PrismAnalyzer
+    module_function
+
+    # Returns [{name:, start_line:, end_line:, length:, param_count:}, ...]
+    # Accurate: counts AST lines, handles nested defs, single-line methods.
+    def scan_methods(source)
+      result = Prism.parse(source)
+      return [] if result.errors.any?
+
+      visitor = MethodCollector.new
+      result.value.accept(visitor)
+      visitor.methods
     end
 
-    def analyze_pull_requests(pull_request_relation)
-      pull_request_relation.includes(:repository, :author).find_each.map do |pull_request|
-        analyze_pull_request(pull_request)
+    # Returns integer max nesting depth.
+    # Counts real block nesting (if/unless/case/while/until/for/begin/rescue).
+    def nesting_depth(source)
+      result = Prism.parse(source)
+      return 0 if result.errors.any?
+
+      visitor = NestingDepthVisitor.new
+      result.value.accept(visitor)
+      visitor.max_depth
+    end
+
+    # Returns parse errors as [{message:, line:}] — useful for syntax checking.
+    def parse_errors(source)
+      Prism.parse(source).errors.map { |e| { message: e.message, line: e.location.start_line } }
+    end
+
+    # Walk the AST collecting DefNode entries with accurate line counts.
+    class MethodCollector < Prism::Visitor
+      attr_reader :methods
+
+      def initialize
+        @methods = []
+      end
+
+      def visit_def_node(node)
+        loc   = node.location
+        lines = loc.end_line - loc.start_line
+        param_count = count_params(node.parameters)
+
+        @methods << {
+          name: node.name.to_s,
+          start_line: loc.start_line,
+          end_line: loc.end_line,
+          length: lines,
+          param_count: param_count,
+        }
+
+        super # recurse into nested defs
+      end
+
+      private
+
+      def count_params(params)
+        return 0 if params.nil?
+
+        [
+          params.requireds,
+          params.optionals,
+          params.keywords,
+          params.posts,
+        ].sum(&:size)
       end
     end
 
-    def analyze_pull_request(pull_request)
-      source_files = fetch_source_files_for(pull_request)
+    # Walk the AST tracking nesting depth of block constructs.
+    # Prism dispatches via visit_TYPE_node methods, not a generic #visit.
+    class NestingDepthVisitor < Prism::Visitor
+      attr_reader :max_depth
 
-      source_files.map do |source_file|
-        analyze_source_file(source_file)
-      end.flatten
-    end
-
-    def analyze_source_file(source_file)
-      parse_result = parse_ruby_source(source_file.content)
-      return [] unless parse_result
-
-      violations = run_rules(parse_result, source_file: source_file)
-      violations.map do |violation|
-        build_violation_payload(violation, source_file: source_file)
-      end
-    end
-
-    def parse_ruby_source(source)
-      Prism.parse(source)
-    rescue StandardError => e
-      log_parse_error(e, source)
-      nil
-    end
-
-    private
-
-    attr_reader :rule_set, :logger
-
-    def fetch_source_files_for(pull_request)
-      if pull_request.respond_to?(:source_files)
-        pull_request.source_files.includes(:blob)
-      elsif pull_request.respond_to?(:files)
-        pull_request.files.includes(:blob)
-      else
-        []
-      end
-    end
-
-    def run_rules(parse_result, source_file:)
-      violations = []
-
-      rule_set.each do |rule_name|
-        violations.concat(run_rule(rule_name, parse_result, source_file: source_file))
+      def initialize
+        @depth     = 0
+        @max_depth = 0
       end
 
-      violations
-    end
+      NESTING_VISITOR_METHODS = %i[
+        visit_if_node visit_unless_node visit_case_node
+        visit_while_node visit_until_node visit_for_node
+        visit_begin_node visit_rescue_node visit_ensure_node
+        visit_block_node visit_lambda_node visit_in_node
+      ].freeze
 
-    def run_rule(rule_name, parse_result, source_file:)
-      case rule_name
-      when :unused_variables
-        analyze_unused_variables(parse_result, source_file: source_file)
-      when :shadowing
-        analyze_shadowing(parse_result, source_file: source_file)
-      when :suspicious_assignment
-        analyze_suspicious_assignment(parse_result, source_file: source_file)
-      when :unreachable_code
-        analyze_unreachable_code(parse_result, source_file: source_file)
-      else
-        []
+      NESTING_VISITOR_METHODS.each do |method_name|
+        define_method(method_name) do |node|
+          @depth += 1
+          @max_depth = [@max_depth, @depth].max
+          super(node)
+          @depth -= 1
+        end
       end
-    end
-
-    def analyze_unused_variables(_parse_result, source_file:)
-      # Placeholder for a concrete rule implementation.
-      []
-    end
-
-    def analyze_shadowing(_parse_result, source_file:)
-      # Placeholder for a concrete rule implementation.
-      []
-    end
-
-    def analyze_suspicious_assignment(_parse_result, source_file:)
-      # Placeholder for a concrete rule implementation.
-      []
-    end
-
-    def analyze_unreachable_code(_parse_result, source_file:)
-      # Placeholder for a concrete rule implementation.
-      []
-    end
-
-    def build_violation_payload(violation, source_file:)
-      {
-        file_path: source_file.respond_to?(:path) ? source_file.path : source_file.to_s,
-        message: violation.fetch(:message),
-        rule: violation.fetch(:rule),
-        severity: violation.fetch(:severity, DEFAULT_SEVERITY),
-        location: violation[:location]
-      }
-    end
-
-    def log_parse_error(error, source)
-      return unless logger
-
-      logger.warn(
-        "PrismAnalyzer parse error: #{error.class}: #{error.message} (source_length=#{source.to_s.length})"
-      )
     end
   end
+end
+
+# Self-test: verify visitor dispatch works at load time.
+# A generic visit(node) override silently returns 0 — this catches that.
+begin
+  _depth = MASTER::PrismAnalyzer.nesting_depth("def f; if true; while x; end; end; end")
+  raise "PrismAnalyzer nesting_depth self-test failed: got #{_depth}, expected >= 2" unless _depth >= 2
+rescue => e
+  raise "PrismAnalyzer load-time self-test failed: #{e.message}"
 end

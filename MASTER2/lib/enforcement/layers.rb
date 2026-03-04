@@ -76,7 +76,7 @@ module MASTER
 
         # DRY: duplicate method definitions
         methods = code.scan(/def\s+(\w+)/).flatten
-        duplicates = methods.select { |method_name| methods.count(method_name) > 1 }.uniq
+        duplicates = methods.select { |m| methods.count(m) > 1 }.uniq
         violations = duplicates.map do |method|
           { layer: :lexical, axiom: "DRY", message: "Duplicate method: #{method}", file: filename }
         end
@@ -183,7 +183,7 @@ module MASTER
         end
 
         # RHYTHM: inconsistent spacing
-        blank_line_gaps = code.scan(/\n(\n+)/).map { |match| match.first.length }
+        blank_line_gaps = code.scan(/\n(\n+)/).map { |m| m.first.length }
         if blank_line_gaps.uniq.size > 2
           violations << { layer: :cognitive, axiom: "RHYTHM", message: "Inconsistent blank line spacing",
                           file: filename }
@@ -292,7 +292,7 @@ module MASTER
       # Check metaprogramming policy (constitution.yml metaprogramming_policy.banned_patterns)
       def check_metaprogramming(code, filename: "code")
         @meta_banned ||= begin
-          f = Paths.data_file("constitution.yml")
+          f = File.join(MASTER.root, "data", "constitution.yml")
           YAML.safe_load_file(f)&.dig("metaprogramming_policy", "banned_patterns") || []
         rescue StandardError
           []
@@ -306,7 +306,7 @@ module MASTER
             if re.match?(line)
               violations << {
                 layer: :semantic, axiom: "EXPLICIT",
-                message: "Banned metaprogramming: #{pattern} -- prefer explicit method definition",
+                message: "Banned metaprogramming: #{pattern} — prefer explicit method definition",
                 file: filename, line: lineno,
               }
             end
@@ -320,29 +320,29 @@ module MASTER
       IMPORTANCE_PATTERNS = [
         { smell: :rescue_wraps_def,   axiom: "INVERTED_PYRAMID",
           re: /\bdef\s+\w+[^#\n]*\n(?:.*\n)*?\s+rescue\b/m,
-          message: "rescue wraps entire method body -- narrow to the raising expression; move guard first" },
+          message: "rescue wraps entire method body — narrow to the raising expression; move guard first" },
         { smell: :private_before_public, axiom: "INVERTED_PYRAMID",
           re: /\bprivate\b[\s\S]*?\bdef\s+\w/m,
-          message: "private keyword appears before a method definition -- move private block to bottom of class" },
+          message: "private keyword appears before a method definition — move private block to bottom of class" },
         { smell: :required_after_optional, axiom: "INVERTED_PYRAMID",
           re: /def\s+\w+\([^)]*\w\s*=\s*[^,)]+,\s*\w+[^=,)]*\)/,
-          message: "optional param before required -- reorder: required -> optional -> keyword -> block" },
+          message: "optional param before required — reorder: required → optional → keyword → block" },
         { smell: :helpers_before_core, axiom: "INVERTED_PYRAMID",
           re: /\bprivate\b.*\ndef\s+\w+.*\bpublic\b/m,
-          message: "public method defined after private block -- hoist public interface to top" },
+          message: "public method defined after private block — hoist public interface to top" },
       ].freeze
 
       def check_importance_flow(code, filename: "code")
         return [] unless filename.end_with?(".rb")
 
         violations = []
-        IMPORTANCE_PATTERNS.each do |pat|
-          next unless code.match?(pat[:re])
+        IMPORTANCE_PATTERNS.each do |p|
+          next unless code.match?(p[:re])
 
           violations << {
             layer: :structural,
-            axiom: pat[:axiom],
-            message: pat[:message],
+            axiom: p[:axiom],
+            message: p[:message],
             severity: :warning,
             file: filename,
           }
@@ -350,41 +350,35 @@ module MASTER
         violations
       end
 
-      # Structural optimization smell detector -- uses structural_optimization section of smells.yml
+      # Structural optimization smell detector — uses structural_optimization section of smells.yml
       # Catches atomic/local patterns: buried constants, dead assigns, generic get_ names, etc.
       STRUCTURAL_PATTERNS = [
         { smell: :buried_constant,    axiom: "STRUCTURAL_INTEGRITY",
           re: /^\s+(SCREAMING_SNAKE|[A-Z][A-Z_]{2,})\s*=\s*[^=]/,
-          message: "Constant defined inside method body -- hoist to module level" },
+          message: "Constant defined inside method body — hoist to module level" },
         { smell: :naming_drift,       axiom: "STRUCTURAL_INTEGRITY",
           re: /\bdef\s+get_\w+/,
-          message: "get_ prefix is a generic verb smell -- rename to noun (fetch/load/find)" },
-        { smell: :identity_drift,     axiom: "SELF_APPLY",
-          re: /['"]MASTER(?!2)\b(?!_)['"\s]/,
-          message: "Identity drift -- bare 'MASTER' should be 'MASTER2' (SELF_APPLY)" },
-        { smell: :silent_rescue,      axiom: "FAIL_VISIBLY",
-          re: /rescue\s+StandardError\s*\n\s*nil\s*$/,
-          message: "Silent rescue returns nil -- log the error before fallback (FAIL_VISIBLY)" },
+          message: "get_ prefix is a generic verb smell — rename to noun (fetch/load/find)" },
         { smell: :abstraction_gap,    axiom: "STRUCTURAL_INTEGRITY",
           re: /YAML\.safe_load_file\(.+\)\s*rescue/,
-          message: "Inline YAML load+rescue repeated -- extract to Paths.load_data_file helper" },
+          message: "Inline YAML load+rescue repeated — extract to Paths.load_data_file helper" },
         { smell: :abstraction_gap,    axiom: "STRUCTURAL_INTEGRITY",
           re: /File\.join\(.*['"]data['"].*\.yml['"]\)/,
-          message: "Hardcoded data/ path -- use Paths.data_file(name) abstraction" },
+          message: "Hardcoded data/ path — use Paths.data_file(name) abstraction" },
         { smell: :layering_violation, axiom: "META_COHERENCE",
           re: /^\s+puts\s|^\s+print\s|UI\.(warn|info|success)\b/,
-          message: "UI output inside business logic -- return result; let caller display" },
+          message: "UI output inside business logic — return result; let caller display" },
       ].freeze
 
       def check_structural_smells(code, filename: "code")
         violations = []
-        STRUCTURAL_PATTERNS.each do |pat|
-          next unless code.match?(pat[:re])
+        STRUCTURAL_PATTERNS.each do |p|
+          next unless code.match?(p[:re])
 
           violations << {
             layer: :structural,
-            axiom: pat[:axiom],
-            message: pat[:message],
+            axiom: p[:axiom],
+            message: p[:message],
             severity: :warning,
             file: filename,
           }
@@ -392,41 +386,41 @@ module MASTER
         violations
       end
 
-      # Strunk & White prose quality detectors -- STRUNK_WHITE axiom.
+      # Strunk & White prose quality detectors — STRUNK_WHITE axiom.
       # Applied to identifiers, comments, strings, and error messages.
       PROSE_PATTERNS = [
         { smell: :filler_identifier,    axiom: "STRUNK_WHITE",
           re: /\b(?:local\s+)?(?:var\s+)?(data|info|thing|stuff|misc|temp|tmp)\b\s*=/,
-          message: "Filler identifier -- replace with the specific domain noun (axiom_list, cost_ratio, violation_count)" },
+          message: "Filler identifier — replace with the specific domain noun (axiom_list, cost_ratio, violation_count)" },
         { smell: :passive_prefix_method, axiom: "STRUNK_WHITE",
           re: /\bdef\s+(?:do|perform|process|handle|execute|manage)_\w+/,
-          message: "Passive prefix method -- rename to active verb (enforce, scan, reflow, build)" },
+          message: "Passive prefix method — rename to active verb (enforce, scan, reflow, build)" },
         { smell: :filler_phrase,        axiom: "STRUNK_WHITE",
           re: /['"].*(?:in order to|the fact that|it is important to|it should be noted|please note|as you can see).*['"]/i,
-          message: "Filler phrase in string -- cut the preamble; state the substance directly" },
+          message: "Filler phrase in string — cut the preamble; state the substance directly" },
         { smell: :qualifier_word,       axiom: "STRUNK_WHITE",
           re: /['"].*\b(?:basically|essentially|actually|simply|really|quite|very)\b.*['"]/i,
-          message: "Qualifier word in string -- cut it; rewrite with precision instead" },
+          message: "Qualifier word in string — cut it; rewrite with precision instead" },
         { smell: :passive_error_message, axiom: "STRUNK_WHITE",
           re: /(?:raise|warn|error|Error\.new).*(?:was rejected|were found|was created|is handled|be processed)/i,
-          message: "Passive error message -- rewrite in active voice: 'Enforcer rejected X' not 'X was rejected'" },
+          message: "Passive error message — rewrite in active voice: 'Enforcer rejected X' not 'X was rejected'" },
         { smell: :zombie_noun,          axiom: "STRUNK_WHITE",
           re: /#.*\b(?:the refactoring of|the enforcement of|a validation of|the processing of)\b/i,
-          message: "Zombie noun in comment -- convert to verb: 'refactor', 'enforce', 'validate'" },
+          message: "Zombie noun in comment — convert to verb: 'refactor', 'enforce', 'validate'" },
         { smell: :vague_class_name,     axiom: "STRUNK_WHITE",
           re: /\bclass\s+\w*(?:Manager|Handler|Processor|Helper|Util)\b/,
-          message: "Vague class name suffix -- name by domain role: ViolationReporter, AxiomLoader, CostTracker" },
+          message: "Vague class name suffix — name by domain role: ViolationReporter, AxiomLoader, CostTracker" },
       ].freeze
 
       def check_prose_style(code, filename: "code")
         violations = []
-        PROSE_PATTERNS.each do |pat|
-          next unless code.match?(pat[:re])
+        PROSE_PATTERNS.each do |p|
+          next unless code.match?(p[:re])
 
           violations << {
             layer: :prose,
-            axiom: pat[:axiom],
-            message: pat[:message],
+            axiom: p[:axiom],
+            message: p[:message],
             severity: :warning,
             file: filename,
           }
@@ -450,7 +444,7 @@ module MASTER
 
           next unless code.match?(re)
 
-          DB.increment_smell_hit(smell[:pattern]) rescue StandardError; nil
+          DB.increment_smell_hit(smell[:pattern]) rescue nil
           violations << {
             layer: :learned_smell,
             axiom: "QUALITY",

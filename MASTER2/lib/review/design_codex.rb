@@ -8,7 +8,7 @@ module MASTER
     module DesignCodex
       module_function
 
-      CODEX_FILE = File.join(MASTER.root, "data", "design.yml")
+      CODEX_FILE = File.join(MASTER.root, "data", "design_codex.yml")
 
       def rules
         @rules ||= if File.exist?(CODEX_FILE)

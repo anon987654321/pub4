@@ -116,8 +116,7 @@ module MASTER
       end
 
       def fix_directory(dir, pattern: "**/*.rb")
-        skip = defined?(Paths::SKIP_DIRS) ? Paths::SKIP_DIRS : %w[.git vendor tmp var node_modules .bundle coverage log dist]
-        files = Dir.glob(File.join(dir, pattern)).reject { |f| skip.any? { |d| f.include?("/#{d}/") } }
+        files = Dir.glob(File.join(dir, pattern))
         fix_all(files)
       end
 
@@ -145,9 +144,9 @@ module MASTER
       private
 
       def can_fix?(type)
-        return false unless type
+        type = type.to_sym
         allowed = MODE_FIXES[@mode] || []
-        allowed.include?(type.to_sym)
+        allowed.include?(type)
       end
 
       # Look up llm_strategies for an axiom_id from axioms.yml.

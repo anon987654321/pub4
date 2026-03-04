@@ -31,43 +31,43 @@ module MASTER
       changes = []
       max_len = [original.length, modified.length].max
 
-      (0...max_len).each do |idx|
-        orig_line = original[idx]
-        mod_line = modified[idx]
+      (0...max_len).each do |i|
+        orig_line = original[i]
+        mod_line = modified[i]
 
         changes << if orig_line == mod_line
-                     { type: :same, orig: idx, mod: idx }
+                     { type: :same, orig: i, mod: i }
                    elsif orig_line.nil?
-                     { type: :add, orig: idx, mod: idx }
+                     { type: :add, orig: i, mod: i }
                    elsif mod_line.nil?
-                     { type: :delete, orig: idx, mod: idx }
+                     { type: :delete, orig: i, mod: i }
                    else
                      # Line changed
-                     { type: :change, orig: idx, mod: idx }
+                     { type: :change, orig: i, mod: i }
                    end
       end
 
       # Group into hunks
       hunks = []
-      idx = 0
+      i = 0
 
-      while idx < changes.length
+      while i < changes.length
         # Skip unchanged lines that are far from changes
-        while idx < changes.length && changes[idx][:type] == :same
+        while i < changes.length && changes[i][:type] == :same
           # Look ahead to find next change
-          next_change = find_next_change(changes, idx)
-          break if next_change && (next_change - idx) <= context * 2
+          next_change = find_next_change(changes, i)
+          break if next_change && (next_change - i) <= context * 2
 
-          idx += 1
+          i += 1
         end
 
-        next if idx >= changes.length
+        next if i >= changes.length
 
         # Start a new hunk
-        hunk_start = [idx - context, 0].max
+        hunk_start = [i - context, 0].max
 
         # Find end of hunk (include context after last change)
-        hunk_end = idx
+        hunk_end = i
         while hunk_end < changes.length
           if changes[hunk_end][:type] == :same
             # Check if there's another change within context
@@ -92,8 +92,8 @@ module MASTER
         mod_count = 0
         lines = []
 
-        (hunk_start...hunk_end).each do |jdx|
-          change = changes[jdx]
+        (hunk_start...hunk_end).each do |j|
+          change = changes[j]
           case change[:type]
           when :same
             lines << " #{original[change[:orig]]}"
@@ -120,15 +120,15 @@ module MASTER
           }
         end
 
-        idx = hunk_end
+        i = hunk_end
       end
 
       hunks
     end
 
     def find_next_change(changes, start)
-      (start...changes.length).each do |idx|
-        return idx if changes[idx][:type] != :same
+      (start...changes.length).each do |i|
+        return i if changes[i][:type] != :same
       end
       nil
     end

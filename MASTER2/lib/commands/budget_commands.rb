@@ -4,8 +4,6 @@ module MASTER
   module Commands
     # Budget and cost tracking commands
     module BudgetCommands
-      TOKENS_PER_K        = 1000
-      COST_HISTORY_LIMIT  = 10
       def print_budget
         UI.header("Budget Status")
         puts "  Tier:      #{LLM.tier}"
@@ -15,23 +13,23 @@ module MASTER
 
       def print_context_usage
         session = Session.current
-        usage = ContextWindow.usage(session)
+        u = ContextWindow.usage(session)
 
         UI.header("Context Window")
         puts "  #{ContextWindow.bar(session)}"
-        puts "  Used:      #{humanize_tokens(usage[:used])}"
-        puts "  Limit:     #{humanize_tokens(usage[:limit])}"
-        puts "  Remaining: #{humanize_tokens(usage[:remaining])}"
+        puts "  Used:      #{humanize_tokens(u[:used])}"
+        puts "  Limit:     #{humanize_tokens(u[:limit])}"
+        puts "  Remaining: #{humanize_tokens(u[:remaining])}"
         puts "  Messages:  #{session.message_count}"
         puts
       end
 
       def humanize_tokens(n)
-        n >= TOKENS_PER_K ? "#{(n / TOKENS_PER_K.to_f).round(1)}k" : n.to_s
+        n >= 1000 ? "#{(n / 1000.0).round(1)}k" : n.to_s
       end
 
       def print_cost_history
-        costs = DB.recent_costs(limit: COST_HISTORY_LIMIT)
+        costs = DB.recent_costs(limit: 10)
 
         if costs.empty?
           puts "\n  No history yet.\n"

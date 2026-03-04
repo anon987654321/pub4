@@ -1,64 +1,70 @@
 # frozen_string_literal: true
 
-require "open3"
+module MASTER
+  module Logging
+    # Dmesg - OpenBSD kernel-style logging
+    module Dmesg
+      @buffer = []
+      @buffer_mutex = Mutex.new
+      @start_time = Time.now
+      BUFFER_CAP = 1000
 
-module Logging
-  module Dmesg
-    DMESG_BINARY = "dmesg"
-    DMESG_TIME_ARGS = "--ctime"
-    DMESG_TAIL_ARGS = "--nopager"
-    DEFAULT_DMESG_LINES = 200
-    EMPTY_RESULT = "".freeze
+      SILENT = 0
+      LLM_ONLY = 1
+      ALL_EVENTS = 2
+      FULL_DEBUG = 3
 
-    module_function
+      class << self
+        attr_reader :buffer
 
-    def dmesg_log(logger: nil, lines: DEFAULT_DMESG_LINES)
-      output = collect_dmesg(lines: lines)
-      logger&.info(output) unless output.empty?
-      output
-    end
+        def trace_level
+          (ENV["MASTER_TRACE"] || "1").to_i
+        end
 
-    def collect_dmesg(lines:)
-      return EMPTY_RESULT unless dmesg_available?
+        def enabled?(level = LLM_ONLY)
+          trace_level >= level
+        end
 
-      stdout, status = Open3.capture2e(*dmesg_command(lines))
-      return EMPTY_RESULT unless status.success?
+        def dmesg_log(device, parent: nil, message: nil, level: ALL_EVENTS)
+          timestamp = ((Time.now - @start_time) * 1000).round
 
-      stdout.to_s.strip
-    rescue StandardError
-      EMPTY_RESULT
-    end
+          line = if parent
+                   "#{device} at #{parent}#{": #{message}" if message}"
+                 else
+                   "#{device}#{": #{message}" if message}"
+                 end
 
-    def dmesg_available?
-      system("command -v #{DMESG_BINARY} >/dev/null 2>&1")
-    end
+          entry = { time: timestamp, line: line, level: level }
+          @buffer_mutex.synchronize do
+            @buffer << entry
+            @buffer.shift if @buffer.size > BUFFER_CAP
+          end
 
-    def dmesg_command(lines)
-      args = [DMESG_BINARY, DMESG_TIME_ARGS]
-      args.concat([DMESG_TAIL_ARGS]) if supports_nopager?
-      args.concat(["-T"]) if supports_timestamps? == false # keep compatibility (no-op if already ctime)
-      args.concat(["-n", lines.to_i.to_s]) if supports_line_limit?
-      args
-    end
+          if enabled?(level) && $stdout.tty?
+            output = trace_level >= FULL_DEBUG ? "[#{timestamp}ms] #{line}" : line
+            if defined?(UI) && UI.respond_to?(:dim)
+              puts UI.dim(output)
+            else
+              puts output
+            end
+          end
 
-    def supports_nopager?
-      @supports_nopager ||= help_text.include?(DMESG_TAIL_ARGS)
-    end
+          line
+        end
 
-    def supports_line_limit?
-      @supports_line_limit ||= help_text.match?(/\B-n\b/)
-    end
+        def dump(last_n: nil, min_level: SILENT)
+          entries = @buffer_mutex.synchronize { @buffer.select { |e| e[:level] >= min_level } }
+          entries = entries.last(last_n) if last_n
+          entries.map { |e| "[#{e[:time]}ms] #{e[:line]}" }.join("\n")
+        end
 
-    def supports_timestamps?
-      @supports_timestamps ||= help_text.match?(/\B-T\b/)
-    end
+        def clear
+          @buffer_mutex.synchronize { @buffer.clear }
+        end
 
-    def help_text
-      @help_text ||= begin
-        stdout, _status = Open3.capture2e(DMESG_BINARY, "--help")
-        stdout.to_s
-      rescue StandardError
-        EMPTY_RESULT
+        def reset_timer
+          @start_time = Time.now
+        end
       end
     end
   end

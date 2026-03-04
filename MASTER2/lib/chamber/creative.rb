@@ -1,372 +1,256 @@
 # frozen_string_literal: true
 
-module Chamber
-  class Creative
-    DEFAULT_IDEA_COUNT = 8
-    DEFAULT_SCENE_COUNT = 6
-    DEFAULT_TURN_COUNT = 10
-    DEFAULT_SUMMARY_SENTENCE_COUNT = 5
-    DEFAULT_TOP_COMPETITOR_LIMIT = 10
-    DEFAULT_COMPETITOR_SAMPLE_LIMIT = 25
+module MASTER
+  # CreativeChamber - Multi-model deliberation for CREATIVE IDEATION
+  # Generates ideas/conversations, scores them, then generates multimedia via Replicate
+  # NOTE: One of four deliberation/generation engines:
+  #   - Council: Code refinement via multi-model debate
+  #   - CreativeChamber (this class): Creative ideation for concepts/multimedia
+  #   - Stages::Council: Opinion/judgment deliberation with fixed member roles
+  #   - Swarm: Generate many variations, curate best via scoring
+  # Ported from MASTER v1, adapted for MASTER2's Result monad and LLM.ask API
+  class CreativeChamber
+    # String slice limits for output truncation
+    MAX_IDEA_PREVIEW = 500
+    MAX_PROPOSAL_PREVIEW = 600
+    MAX_DIALOGUE_PREVIEW = 400
+    MAX_LETTER_PREVIEW = 300
+    MAX_HISTORY_PREVIEW = 200
+    MAX_TRANSCRIPT_PREVIEW = 150
+    MAX_CODE_PREVIEW = 4000
+    MAX_FEATURE_DESC = 100
+    MAX_DETAIL_PREVIEW = 200
+    MAX_IDEA_DESC = 150
 
-    MAX_IDEA_COUNT = 20
-    MAX_SCENE_COUNT = 12
-    MAX_TURN_COUNT = 20
+    ARBITER_TIER = :strong
+    MAX_COST = 2.00
 
-    ASSOCIATIONS_FOR_COMPETITOR_PRELOAD = %i[products channels campaigns].freeze
+    attr_reader :cost, :results
 
-    def initialize(llm: nil)
-      @llm = llm
+    def initialize
+      @cost = 0.0
+      @results = []
     end
 
-    def brainstorm(brief:, options: {})
-      config = normalize_options(options)
+    # Idea brainstorming - multiple models propose and debate
+    def brainstorm(topic, rounds: 2, participants: 3)
+      @results = []
 
-      idea_count = clamp_count(
-        config.fetch(:idea_count, DEFAULT_IDEA_COUNT),
-        max: MAX_IDEA_COUNT
-      )
+      # Round 1: Each model proposes ideas
+      proposals = []
+      participants.times do |i|
+        break if over_budget?
 
-      target_audience = config.fetch(:target_audience, nil)
-      tone = config.fetch(:tone, nil)
-      constraints = Array(config.fetch(:constraints, []))
-      key_messages = Array(config.fetch(:key_messages, []))
+        result = ask_llm(
+          "You are a creative thinker brainstorming ideas about: #{topic}\n\nGenerate 3-5 distinct, innovative ideas. Be specific and actionable.", tier: :fast
+        )
+        next unless result.ok?
 
-      return [] if brief.to_s.strip.empty?
-
-      prompt = build_brainstorm_prompt(
-        brief: brief,
-        idea_count: idea_count,
-        target_audience: target_audience,
-        tone: tone,
-        constraints: constraints,
-        key_messages: key_messages
-      )
-
-      llm_response = call_llm(prompt, config)
-      ideas = parse_bullets(llm_response).first(idea_count)
-
-      ideas.map.with_index(1) do |idea_text, index|
-        {
-          index: index,
-          concept: idea_text,
-          rationale: nil,
-          hook: extract_hook(idea_text),
-          call_to_action: nil
+        proposal = {
+          model: i,
+          ideas: result.value[:content],
+          critique: nil,
         }
+        @results << { type: :proposal, **proposal }
+        proposals << proposal
       end
-    end
 
-    def video_storyboard(concept:, options: {})
-      config = normalize_options(options)
+      return Result.ok({ ideas: [], cost: @cost }) if proposals.empty?
 
-      scene_count = clamp_count(
-        config.fetch(:scene_count, DEFAULT_SCENE_COUNT),
-        max: MAX_SCENE_COUNT
-      )
+      # Round 2: Each model critiques others and defends their own
+      proposals.each_with_index do |prop, i|
+        break if over_budget?
 
-      format = config.fetch(:format, "short-form")
-      aspect_ratio = config.fetch(:aspect_ratio, "9:16")
-      platform = config.fetch(:platform, nil)
+        others = proposals.reject.with_index { |_, j| j == i }.map { |p| p[:ideas][0...MAX_IDEA_PREVIEW] }.join("\n\n")
+        critique_prompt = "You proposed these ideas:\n#{prop[:ideas][0...MAX_PROPOSAL_PREVIEW]}\n\nOthers proposed:\n#{others}\n\nCritique the other ideas and explain why yours are better. Be constructive but persuasive."
 
-      return [] if concept.to_s.strip.empty?
-
-      prompt = build_storyboard_prompt(
-        concept: concept,
-        scene_count: scene_count,
-        format: format,
-        aspect_ratio: aspect_ratio,
-        platform: platform
-      )
-
-      llm_response = call_llm(prompt, config)
-      raw_scenes = parse_numbered_sections(llm_response).first(scene_count)
-
-      raw_scenes.map.with_index(1) do |scene_text, index|
-        {
-          scene: index,
-          visual: extract_labeled(scene_text, "Visual"),
-          audio: extract_labeled(scene_text, "Audio"),
-          on_screen_text: extract_labeled(scene_text, "On-screen"),
-          notes: extract_labeled(scene_text, "Notes")
-        }
+        result = ask_llm(critique_prompt, tier: :fast)
+        if result.ok?
+          prop[:critique] = result.value[:content]
+          @results << { type: :critique, model: i, content: prop[:critique] }
+        end
       end
+
+      # Arbiter synthesizes best ideas
+      synthesis = arbiter_synthesize(topic, proposals)
+      Result.ok({ ideas: proposals, synthesis: synthesis, cost: @cost })
     end
 
-    def simulate_conversation(persona:, topic:, options: {})
-      config = normalize_options(options)
+    # Image variations - multiple models interpret same prompt
+    def image_variations(prompt, count: 2)
+      return Result.ok({ images: [], cost: @cost }) unless Replicate.available?
 
-      turn_count = clamp_count(
-        config.fetch(:turn_count, DEFAULT_TURN_COUNT),
-        max: MAX_TURN_COUNT
-      )
+      images = []
+      count.times do
+        break if over_budget?
 
-      agent_name = config.fetch(:agent_name, "Guide")
-      customer_name = config.fetch(:customer_name, "Customer")
-      goal = config.fetch(:goal, nil)
-
-      return [] if persona.to_s.strip.empty? || topic.to_s.strip.empty?
-
-      prompt = build_conversation_prompt(
-        persona: persona,
-        topic: topic,
-        turn_count: turn_count,
-        agent_name: agent_name,
-        customer_name: customer_name,
-        goal: goal
-      )
-
-      llm_response = call_llm(prompt, config)
-      lines = parse_dialogue_lines(llm_response, agent_name: agent_name, customer_name: customer_name)
-
-      lines.first(turn_count * 2).map.with_index(1) do |line, index|
-        speaker, text = line
-        { index: index, speaker: speaker, text: text }
+        result = Replicate.generate(prompt: prompt, model: :flux)
+        if result.ok?
+          images << result.value
+          @results << { type: :image, **result.value }
+        end
       end
+
+      Result.ok({ images: images, cost: @cost })
     end
 
-    def enhance_prompt(prompt:, context: nil, options: {})
-      config = normalize_options(options)
+    # Video storyboard - LLMs propose scenes, arbiter picks, generate via Replicate
+    def video_storyboard(concept, scenes: 3)
+      return Result.ok({ storyboard: [], cost: @cost }) unless Replicate.available?
 
-      return "" if prompt.to_s.strip.empty?
-
-      summary_sentence_count = config.fetch(
-        :summary_sentence_count,
-        DEFAULT_SUMMARY_SENTENCE_COUNT
+      # Step 1: Generate scene descriptions
+      result = ask_llm(
+        "Create a #{scenes}-scene video storyboard for: #{concept}\n\nFor each scene, describe the visual composition, camera angle, mood, and key elements. Be vivid and specific.", tier: :strong
       )
+      return Result.err("Failed to generate storyboard.") unless result.ok?
 
-      style = config.fetch(:style, "clear and specific")
-      output_format = config.fetch(:output_format, "prompt")
-      constraints = Array(config.fetch(:constraints, []))
-      do_not_include = Array(config.fetch(:do_not_include, []))
+      scene_text = result.value[:content]
+      @results << { type: :storyboard_text, content: scene_text }
 
-      enhancement_prompt = build_enhancement_prompt(
-        prompt: prompt,
-        context: context,
-        style: style,
-        output_format: output_format,
-        summary_sentence_count: summary_sentence_count,
-        constraints: constraints,
-        do_not_include: do_not_include
-      )
+      # Step 2: Extract individual scenes and generate images
+      storyboard = []
+      scene_text.split(/Scene \d+/).drop(1).take(scenes).each_with_index do |scene_desc, i|
+        break if over_budget?
 
-      call_llm(enhancement_prompt, config).to_s.strip
+        prompt = "Cinematic scene: #{scene_desc[0...MAX_DETAIL_PREVIEW]}"
+        img_result = Replicate.generate(prompt: prompt, model: :flux)
+        if img_result.ok?
+          storyboard << { scene: i + 1, description: scene_desc.strip, **img_result.value }
+          @results << { type: :scene, scene: i + 1, **img_result.value }
+        end
+      end
+
+      Result.ok({ storyboard: storyboard, cost: @cost })
     end
 
-    def analyze_competitors(brand:, competitors:, options: {})
-      config = normalize_options(options)
+    # Simulate conversation - role-play dialogue across turns
+    def simulate_conversation(scenario, turns: 4, participants: 2)
+      @results = []
+      dialogue = []
 
-      top_limit = clamp_count(
-        config.fetch(:top_limit, DEFAULT_TOP_COMPETITOR_LIMIT),
-        max: DEFAULT_COMPETITOR_SAMPLE_LIMIT
-      )
+      turns.times do |turn|
+        participants.times do |speaker|
+          break if over_budget?
 
-      competitor_scope = preload_competitor_associations(competitors)
-      competitor_records = take_records(competitor_scope, DEFAULT_COMPETITOR_SAMPLE_LIMIT)
+          context = dialogue.map { |d| "#{d[:speaker]}: #{d[:text]}" }.join("\n")
+          prompt = "Scenario: #{scenario}\n\nConversation so far:\n#{context}\n\nYou are Speaker #{speaker + 1}. Respond naturally to continue the conversation."
 
-      return { brand: brand, competitors: [], summary: nil } if competitor_records.empty?
+          result = ask_llm(prompt, tier: :fast)
+          next unless result.ok?
 
-      prompt = build_competitor_analysis_prompt(
-        brand: brand,
-        competitors: competitor_records,
-        top_limit: top_limit
-      )
+          line = { speaker: speaker + 1, turn: turn + 1, text: result.value[:content] }
+          dialogue << line
+          @results << { type: :dialogue, **line }
+        end
+      end
 
-      llm_response = call_llm(prompt, config)
-      bullet_points = parse_bullets(llm_response)
+      Result.ok({ dialogue: dialogue, cost: @cost })
+    end
 
-      {
-        brand: brand,
-        competitors: competitor_records.first(top_limit).map { |record| competitor_snapshot(record) },
-        summary: bullet_points.first(top_limit)
-      }
+    # Enhance prompt - iterative refinement through multi-model debate
+    def enhance_prompt(initial_prompt, iterations: 2)
+      current = initial_prompt
+      history = [{ version: 0, prompt: current }]
+
+      iterations.times do |i|
+        break if over_budget?
+
+        # Get enhancement suggestions
+        result = ask_llm(
+          "This is an AI prompt:\n\n#{current}\n\nSuggest 3 specific improvements to make it more effective, clear, and detailed. Focus on actionable changes.", tier: :fast
+        )
+        next unless result.ok?
+
+        suggestions = result.value[:content]
+
+        # Apply improvements
+        enhance_result = ask_llm(
+          "Original prompt:\n#{current}\n\nSuggestions:\n#{suggestions}\n\nRewrite the prompt incorporating these improvements. Return only the improved prompt.", tier: :strong
+        )
+        next unless enhance_result.ok?
+
+        current = enhance_result.value[:content]
+        history << { version: i + 1, prompt: current, suggestions: suggestions }
+        @results << { type: :enhancement, version: i + 1, suggestions: suggestions }
+      end
+
+      Result.ok({ final_prompt: current, history: history, cost: @cost })
+    end
+
+    # Analyze competitors - research competitive landscape & identify gaps
+    def analyze_competitors(product, competitors: [])
+      @results = []
+
+      # Analyze each competitor
+      analyses = competitors.map do |competitor|
+        break if over_budget?
+
+        prompt = "Analyze this competitor: #{competitor}\n\nIn the context of building: #{product}\n\nIdentify their strengths, weaknesses, and unique features. Be specific and critical."
+        result = ask_llm(prompt, tier: :strong)
+
+        next unless result.ok?
+
+        analysis = { competitor: competitor, analysis: result.value[:content] }
+        @results << { type: :competitor_analysis, **analysis }
+        analysis
+      end.compact
+
+      # Synthesize gaps and opportunities
+      if analyses.any? && !over_budget?
+        all_analyses = analyses.map { |a| "#{a[:competitor]}:\n#{a[:analysis][0...MAX_DETAIL_PREVIEW]}" }.join("\n\n")
+        synthesis_prompt = "Based on these competitor analyses:\n\n#{all_analyses}\n\nFor building: #{product}\n\nIdentify 5 key opportunities or gaps in the market. What features or approaches are missing?"
+
+        synthesis_result = ask_llm(synthesis_prompt, tier: :strong)
+        if synthesis_result.ok?
+          @results << { type: :synthesis, content: synthesis_result.value[:content] }
+          return Result.ok({ analyses: analyses, opportunities: synthesis_result.value[:content], cost: @cost })
+        end
+      end
+
+      Result.ok({ analyses: analyses, opportunities: nil, cost: @cost })
+    end
+
+    # Feature ideation - generate new feature ideas
+    def ideate_features(product_description, constraints: nil, count: 5)
+      constraints_text = constraints ? "\n\nConstraints:\n#{constraints}" : ""
+      prompt = "Product: #{product_description}#{constraints_text}\n\nGenerate #{count} innovative feature ideas. For each:\n1. Name\n2. One-line description\n3. User value\n4. Technical complexity (Low/Med/High)\n\nBe creative but realistic."
+
+      result = ask_llm(prompt, tier: :strong)
+      return Result.err("Failed to generate features.") unless result.ok?
+
+      content = result.value[:content]
+      @results << { type: :features, content: content }
+
+      Result.ok({ features: content, cost: @cost })
     end
 
     private
 
-    attr_reader :llm
-
-    def normalize_options(options)
-      options.is_a?(Hash) ? options : {}
-    end
-
-    def clamp_count(value, max:)
-      integer_value = value.to_i
-      integer_value = 1 if integer_value < 1
-      integer_value = max if integer_value > max
-      integer_value
-    end
-
-    def call_llm(prompt, config)
-      return prompt if llm.nil?
-
-      temperature = config.fetch(:temperature, nil)
-      model = config.fetch(:model, nil)
-
-      if llm.respond_to?(:call)
-        llm.call(prompt: prompt, temperature: temperature, model: model)
-      elsif llm.respond_to?(:complete)
-        llm.complete(prompt: prompt, temperature: temperature, model: model)
-      else
-        prompt
+    def ask_llm(prompt, tier: :fast)
+      LLM.ask(prompt, tier: tier).tap do |result|
+        @cost += result.value[:cost] || 0.0 if result.ok?
       end
     end
 
-    def build_brainstorm_prompt(brief:, idea_count:, target_audience:, tone:, constraints:, key_messages:)
-      lines = []
-      lines << "Generate #{idea_count} creative campaign ideas."
-      lines << "Brief: #{brief.strip}"
-      lines << "Target audience: #{target_audience}" if target_audience.to_s.strip != ""
-      lines << "Tone: #{tone}" if tone.to_s.strip != ""
-      lines << "Key messages: #{key_messages.join('; ')}" if key_messages.any?
-      lines << "Constraints: #{constraints.join('; ')}" if constraints.any?
-      lines << "Return as bullet points, one idea per line."
-      lines.join("\n")
-    end
+    def arbiter_synthesize(topic, proposals)
+      return nil if over_budget?
 
-    def build_storyboard_prompt(concept:, scene_count:, format:, aspect_ratio:, platform:)
-      lines = []
-      lines << "Create a video storyboard with #{scene_count} scenes."
-      lines << "Concept: #{concept.strip}"
-      lines << "Format: #{format}"
-      lines << "Aspect ratio: #{aspect_ratio}"
-      lines << "Platform: #{platform}" if platform.to_s.strip != ""
-      lines << "For each scene, include:"
-      lines << "Visual:, Audio:, On-screen:, Notes:"
-      lines << "Return as numbered sections."
-      lines.join("\n")
-    end
+      ideas_summary = proposals.map.with_index do |p, i|
+        "Model #{i + 1} Ideas:\n#{p[:ideas][0...MAX_IDEA_PREVIEW]}\n\nCritique:\n#{p[:critique]&.[](0...MAX_LETTER_PREVIEW) || 'None'}"
+      end.join("\n\n---\n\n")
 
-    def build_conversation_prompt(persona:, topic:, turn_count:, agent_name:, customer_name:, goal:)
-      lines = []
-      lines << "Simulate a helpful conversation with #{turn_count} turns per participant."
-      lines << "Persona: #{persona.strip}"
-      lines << "Topic: #{topic.strip}"
-      lines << "Goal: #{goal}" if goal.to_s.strip != ""
-      lines << "Use exactly these speaker labels: #{agent_name}: and #{customer_name}:"
-      lines << "Return as alternating dialogue lines."
-      lines.join("\n")
-    end
+      prompt = "Topic: #{topic}\n\nMultiple models brainstormed ideas and critiqued each other:\n\n#{ideas_summary}\n\nAs an impartial arbiter, synthesize the BEST 3 ideas from all proposals. Explain why each is strong. Be objective and decisive."
 
-    def build_enhancement_prompt(
-      prompt:,
-      context:,
-      style:,
-      output_format:,
-      summary_sentence_count:,
-      constraints:,
-      do_not_include:
-    )
-      lines = []
-      lines << "Rewrite the following into a #{style} #{output_format}."
-      lines << "Original: #{prompt.strip}"
-      lines << "Context: #{context.strip}" if context.to_s.strip != ""
-      lines << "Constraints: #{constraints.join('; ')}" if constraints.any?
-      lines << "Do not include: #{do_not_include.join('; ')}" if do_not_include.any?
-      lines << "Then provide a #{summary_sentence_count}-sentence rationale."
-      lines.join("\n")
-    end
-
-    def build_competitor_analysis_prompt(brand:, competitors:, top_limit:)
-      competitor_names = competitors.map { |record| competitor_display_name(record) }.compact
-      lines = []
-      lines << "Analyze competitors for brand: #{brand}"
-      lines << "Competitors (sample): #{competitor_names.join(', ')}"
-      lines << "Provide top #{top_limit} differentiators and opportunities as bullet points."
-      lines.join("\n")
-    end
-
-    def parse_bullets(text)
-      return [] if text.to_s.strip.empty?
-
-      text
-        .to_s
-        .lines
-        .map(&:strip)
-        .reject(&:empty?)
-        .map { |line| line.sub(/\A[-*•]\s+/, "") }
-        .reject(&:empty?)
-    end
-
-    def parse_numbered_sections(text)
-      return [] if text.to_s.strip.empty?
-
-      sections = []
-      current = +""
-
-      text.to_s.lines.each do |line|
-        if line.strip.match?(/\A\d+[\).\s]/)
-          sections << current.strip unless current.strip.empty?
-          current = line.sub(/\A\d+[\).\s]+\s*/, "")
-        else
-          current << line
-        end
-      end
-
-      sections << current.strip unless current.strip.empty?
-      sections.reject(&:empty?)
-    end
-
-    def parse_dialogue_lines(text, agent_name:, customer_name:)
-      return [] if text.to_s.strip.empty?
-
-      speakers = [agent_name, customer_name].map { |name| Regexp.escape(name) }.join("|")
-      pattern = /\A(#{speakers})\s*:\s*(.+)\z/
-
-      text
-        .to_s
-        .lines
-        .map(&:strip)
-        .filter_map do |line|
-          match = pattern.match(line)
-          match ? [match[1], match[2]] : nil
-        end
-    end
-
-    def extract_labeled(scene_text, label)
-      return nil if scene_text.to_s.strip.empty?
-
-      pattern = /\b#{Regexp.escape(label)}\s*:\s*(.+?)(?:\n[A-Za-z][A-Za-z\s-]*:\s*|\z)/m
-      match = pattern.match(scene_text.to_s)
-      match ? match[1].to_s.strip.gsub(/\s+/, " ") : nil
-    end
-
-    def extract_hook(text)
-      return nil if text.to_s.strip.empty?
-
-      match = text.to_s.match(/["“](.+?)["”]/)
-      match ? match[1].strip : nil
-    end
-
-    def preload_competitor_associations(competitors)
-      return competitors unless competitors.respond_to?(:includes)
-
-      competitors.includes(*ASSOCIATIONS_FOR_COMPETITOR_PRELOAD)
-    rescue StandardError
-      competitors
-    end
-
-    def take_records(scope, limit)
-      if scope.respond_to?(:limit)
-        scope.limit(limit).to_a
-      else
-        Array(scope).first(limit)
+      result = ask_llm(prompt, tier: ARBITER_TIER)
+      if result.ok?
+        synthesis = result.value[:content]
+        @results << { type: :synthesis, content: synthesis }
+        synthesis
       end
     end
 
-    def competitor_snapshot(record)
-      {
-        name: competitor_display_name(record),
-        website: record.respond_to?(:website) ? record.website : nil,
-        category: record.respond_to?(:category) ? record.category : nil
-      }
-    end
-
-    def competitor_display_name(record)
-      return record.name if record.respond_to?(:name) && record.name.to_s.strip != ""
-      return record.title if record.respond_to?(:title) && record.title.to_s.strip != ""
-
-      record.to_s
+    def over_budget?
+      @cost >= MAX_COST
     end
   end
 end

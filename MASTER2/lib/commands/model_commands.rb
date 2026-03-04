@@ -1,49 +1,93 @@
 # frozen_string_literal: true
 
-module Commands
-  class ModelCommands
-    class SelectionError < StandardError; end
+module MASTER
+  module Commands
+    # Model and pattern selection commands
+    module ModelCommands
+      def select_model(args)
+        unless args && !args.strip.empty?
+          puts "\n  Current model: #{LLM.current_model || 'auto'}"
+          puts "  Forced:        #{LLM.model_forced? ? 'yes' : 'no (auto-select)'}"
+          puts "  Use 'model <name>' to switch, 'model auto' to reset, 'models' to list.\n"
+          return
+        end
 
-    def select_model(arg, relation: Model.all)
-      normalized = normalize_token(arg)
-      scoped = relation.includes(:patterns)
+        query = args.strip.downcase
 
-      return scoped.find(normalized.to_i) if integer_string?(normalized)
+        if ["auto", "reset"].include?(query)
+          LLM.clear_forced_model!
+          LLM.current_model = nil
+          puts "\n  + Reset to auto model selection\n"
+          return
+        end
 
-      return scoped.find_by!(slug: normalized) if scoped.column_names.include?("slug")
+        found = LLM.models.find { |m| m.id.downcase.include?(query) || m.name&.downcase&.include?(query) }
 
-      scoped.find_by!(name: normalized)
-    rescue ActiveRecord::RecordNotFound => e
-      raise SelectionError, e.message
-    end
+        if found
+          LLM.force_model!(found.id)
+          puts "\n  + Switched to #{found.id} (forced)\n"
+        else
+          puts "\n  - No model matching '#{args}' found."
+          puts "  Use 'models' to list available models.\n"
+        end
+      end
 
-    def select_pattern(model, arg, association: :patterns)
-      patterns = model.public_send(association)
-      patterns = patterns.includes(:tags) if patterns.respond_to?(:includes)
+      def list_models
+        UI.header("Available Models")
+        LLM.all_models.each do |m|
+          status = CircuitBreaker.circuit_closed?(m) ? "+" : "-"
+          rate = LLM.model_rates[m]
+          cost = rate ? "$#{rate[:in]}/$#{rate[:out]}" : ""
+          short = m.split("/").last[0, 30]
+          puts "  #{status} #{short.ljust(32)} #{cost}"
+        end
+        puts
+      end
 
-      normalized = normalize_token(arg)
+      def select_pattern(args)
+        unless args && !args.strip.empty?
+          current = begin
+            Pipeline.current_pattern
+          rescue StandardError
+            :auto
+          end
+          puts "\n  Current pattern: #{current}"
+          puts "  Available: #{Executor::PATTERNS.join(', ')}, auto"
+          puts "  Use 'pattern <name>' to switch.\n"
+          return
+        end
 
-      return patterns.find(normalized.to_i) if integer_string?(normalized)
+        pattern = args.strip.downcase.to_sym
+        if pattern == :auto || Executor::PATTERNS.include?(pattern)
+          Pipeline.current_pattern = pattern
+          puts "\n  + Pattern set to: #{pattern}\n"
+        else
+          puts "\n  - Unknown pattern '#{args}'."
+          puts "  Available: #{Executor::PATTERNS.join(', ')}, auto\n"
+        end
+      end
 
-      return patterns.find_by!(slug: normalized) if patterns.respond_to?(:column_names) && patterns.column_names.include?("slug")
+      def list_patterns
+        UI.header("Executor Patterns")
+        patterns = {
+          react: "Tight thought-action-observation loop. Best for exploration.",
+          pre_act: "Plan first, then execute. Best for multi-step tasks (70% better recall).",
+          rewoo: "Batch reasoning upfront. Best for cost-sensitive tasks.",
+          reflexion: "Self-critique and retry. Best for fixing/debugging.",
+          auto: "Auto-select based on task characteristics (default).",
+        }
 
-      patterns.find_by!(name: normalized)
-    rescue ActiveRecord::RecordNotFound => e
-      raise SelectionError, e.message
-    end
-
-    def normalize_list(value)
-      Array(value).compact
-    end
-
-    private
-
-    def normalize_token(value)
-      value.to_s.strip.downcase
-    end
-
-    def integer_string?(str)
-      /\A\d+\z/.match?(str)
+        current = begin
+          Pipeline.current_pattern
+        rescue StandardError
+          :auto
+        end
+        patterns.each do |name, desc|
+          marker = name == current ? ">" : " "
+          puts "  #{marker} #{name.to_s.ljust(10)} #{desc}"
+        end
+        puts
+      end
     end
   end
 end

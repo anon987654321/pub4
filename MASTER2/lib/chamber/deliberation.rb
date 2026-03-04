@@ -1,63 +1,111 @@
 # frozen_string_literal: true
 
-module Chamber
-  class Deliberation
-    DEFAULT_LIMIT = 50
+module MASTER
+  class Council
+    # Deliberation methods - proposal generation and arbiter decisions
+    module Deliberation
+      # Main deliberation flow - gather proposals and reach consensus
+      def deliberate(code, filename: "code", participants: %i[grok deepseek kimi glm])
+        @proposals = []
+        @rounds = 0
 
-    def deliberate(session:, actor:, motion_id:, limit: DEFAULT_LIMIT, now: Time.current)
-      motion = load_motion(motion_id)
-      guard_actor!(actor, motion)
+        participants.each do |model_key|
+          break if over_budget?
 
-      build_context(session: session, actor: actor, motion: motion, now: now).then { |ctx|
-        validate_context(ctx)
-      }.then { |ctx|
-        apply_votes(ctx, limit: limit)
-      }.then { |ctx|
-        finalize(ctx)
-      }
-    rescue ActiveRecord::RecordNotFound
-      nil
-    end
+          model = MODELS[model_key] || LLM.select_model
+          next unless model && @llm.circuit_closed?(model)
 
-    def build_context(session:, actor:, motion:, now:)
-      { session: session, actor: actor, motion: motion, now: now, votes: [] }
-    end
+          proposal = propose(code, model, filename)
+          @proposals << { model: model_key, proposal: proposal } if proposal
+        end
 
-    def validate_context(ctx)
-      motion = ctx.fetch(:motion)
-      raise ArgumentError, "motion is not open" unless motion.open?
+        return Result.err("No proposals generated.") if @proposals.empty?
 
-      ctx
-    end
+        # Review combined proposals so council sees all perspectives, not just the first
+        combined = @proposals.map { |p| "=== #{p[:model]} ===\n#{p[:proposal]}" }.join("\n\n")
+        council_result = multi_round_review(code, combined)
 
-    def apply_votes(ctx, limit:)
-      motion = ctx.fetch(:motion)
-      votes = motion.votes.order(created_at: :asc).limit(limit).to_a
+        arbiter_model = MODELS[ARBITER] || LLM.select_model
+        if @llm.circuit_closed?(arbiter_model)
+          final = arbiter_decision(code, @proposals, arbiter_model)
+          Result.ok(
+            original: code,
+            proposals: @proposals,
+            council: council_result,
+            final: final,
+            cost: @cost,
+            rounds: @rounds,
+          )
+        else
+          Result.ok(
+            original: code,
+            proposals: @proposals,
+            council: council_result,
+            final: @proposals.first[:proposal],
+            cost: @cost,
+            rounds: @rounds,
+          )
+        end
+      end
 
-      ctx.merge(votes: votes)
-    end
+      private
 
-    def finalize(ctx)
-      motion = ctx.fetch(:motion)
-      votes = ctx.fetch(:votes)
+      # Generate a proposal for code improvement
+      def propose(code, model, filename)
+        @rounds += 1
 
-      result = motion.tally(votes)
-      motion.update!(result: result, deliberated_at: ctx.fetch(:now))
+        prompt = <<~PROMPT
+          Review this code and propose improvements:
+          FILE: #{filename}
 
-      ctx.merge(result: result)
-    end
+          ```
+          #{code[0, 4000]}
+          ```
 
-    private
+          Provide:
+          1. ISSUES: What's wrong (bullet points)
+          2. DIFF: Proposed changes (unified diff format)
+          3. RATIONALE: Why these changes (one paragraph)
+        PROMPT
 
-    def load_motion(motion_id)
-      Motion.includes(:proposer, :participants, votes: :voter).find(motion_id)
-    rescue ActiveRecord::StatementInvalid
-      raise ActiveRecord::RecordNotFound
-    end
+        result = @llm.ask(prompt, model: model)
+        return nil unless result.ok?
 
-    def guard_actor!(actor, motion)
-      raise ArgumentError, "actor required" if actor.nil?
-      raise ArgumentError, "not permitted" unless motion.participants.include?(actor)
+        data = result.value
+        @cost += data[:cost] || 0
+
+        data[:content]
+      rescue StandardError
+        @llm.open_circuit!(model)
+        nil
+      end
+
+      # Arbiter makes final decision from multiple proposals
+      def arbiter_decision(original, proposals, model)
+        prompt = <<~PROMPT
+          You are the arbiter. Given these proposals, pick the best changes:
+
+          ORIGINAL:
+          ```
+          #{original[0, 2000]}
+          ```
+
+          PROPOSALS:
+          #{proposals.map { |p| "#{p[:model]}:\n#{p[:proposal][0, 1000]}" }.join("\n\n")}
+
+          Output ONLY the final improved code. No explanation.
+        PROMPT
+
+        result = @llm.ask(prompt, model: model)
+        return proposals.first[:proposal] unless result.ok?
+
+        data = result.value
+        @cost += data[:cost] || 0
+
+        data[:content]
+      rescue StandardError
+        proposals.first[:proposal]
+      end
     end
   end
 end

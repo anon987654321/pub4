@@ -1,72 +1,66 @@
 # frozen_string_literal: true
 
-require "etc"
-require "timeout"
+module MASTER
+  class AgentPool
+    MAX_CONCURRENT = 4
+    AGENT_TIMEOUT = 300
 
-module Agent
-  class Pool
-    DEFAULT_POOL_SIZE = 5
-    DEFAULT_TIMEOUT_SECONDS = 30
-    JOIN_TIMEOUT_SECONDS = 0.1
+    attr_reader :agents
 
-    def initialize(size: DEFAULT_POOL_SIZE, logger: nil)
-      @size = Integer(size)
-      @logger = logger
+    def initialize(parent_budget:)
+      @agents = []
+      @parent_budget = parent_budget
+      @mutex = Mutex.new
     end
 
-    def run_all(jobs, timeout: DEFAULT_TIMEOUT_SECONDS)
-      return [] if jobs.nil? || jobs.empty?
+    def spawn(task:, scope: "general", budget_fraction: 0.25, axiom_filter: nil, parent_id: nil)
+      agent_budget = @parent_budget * budget_fraction
 
-      queue = build_queue(jobs)
-      workers = start_workers(queue)
-      results = collect_results(workers, timeout: timeout)
+      agent = Agent.new(
+        task: task,
+        budget: agent_budget,
+        scope: scope,
+        axiom_filter: axiom_filter,
+        parent_id: parent_id,
+      )
 
-      stop_workers(workers, queue)
+      @mutex.synchronize { @agents << agent }
+      agent
+    end
+
+    def run_all
+      results = {}
+
+      @agents.each_slice(MAX_CONCURRENT) do |batch|
+        threads = batch.map do |agent|
+          Thread.new do
+            Timeout.timeout(AGENT_TIMEOUT) { agent.run }
+          rescue Timeout::Error
+            agent.instance_variable_set(:@status, :timeout)
+            agent.instance_variable_set(
+              :@result,
+              Result.err("Agent #{agent.id} timed out after #{AGENT_TIMEOUT}s"),
+            )
+          end
+        end
+
+        threads.each(&:join)
+      end
+
+      @agents.each { |a| results[a.id] = a }
       results
     end
 
-    private
-
-    def build_queue(jobs)
-      Queue.new.tap { |q| jobs.each { |job| q << job } }
+    def completed
+      @agents.select { |a| a.status == :completed }
     end
 
-    def start_workers(queue)
-      Array.new([@size, queue.size].min) do
-        Thread.new { worker_loop(queue) }
-      end
+    def failed
+      @agents.reject { |a| a.status == :completed }
     end
 
-    def worker_loop(queue)
-      loop do
-        job = queue.pop
-        break if job.equal?(:__stop__)
-
-        job.call
-      rescue StandardError => e
-        log_error(e)
-      end
-    end
-
-    def collect_results(workers, timeout:)
-      Timeout.timeout(timeout) { workers.each { |t| t.join } }
-      []
-    rescue Timeout::Error => e
-      log_error(e)
-      []
-    end
-
-    def stop_workers(workers, queue)
-      workers.size.times { queue << :__stop__ }
-      workers.each { |t| t.join(JOIN_TIMEOUT_SECONDS) rescue nil }
-    end
-
-    def log_error(error)
-      return unless @logger
-
-      @logger.error(error.message)
-    rescue StandardError
-      nil
+    def total_budget_used
+      @agents.sum(&:budget)
     end
   end
 end

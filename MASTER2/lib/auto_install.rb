@@ -1,54 +1,106 @@
 # frozen_string_literal: true
 
-require "open3"
+module MASTER
+  module AutoInstall
+    GEMS = %w[
+      ruby_llm
+      stoplight
+      tty-reader
+      tty-prompt
+      tty-spinner
+      tty-table
+      tty-box
+      tty-markdown
+      tty-progressbar
+      tty-cursor
+      pastel
+      rouge
+      falcon
+      async-websocket
+      rufus-scheduler
+    ].freeze
 
-module AutoInstall
-  INSTALL_CMD = %w[bundle install].freeze
-  BUNDLE_CHECK_CMD = %w[bundle check].freeze
-  DEFAULT_GEMFILE = "Gemfile"
-  BUNDLE_NOT_FOUND_EXIT_STATUS = 127
+    OPENBSD_PACKAGES = %w[
+      ruby
+      git
+      curl
+    ].freeze
 
-  class << self
-    def call(gemfile: DEFAULT_GEMFILE, io: $stderr)
-      return false unless should_run?(gemfile)
+    class << self
+      def missing_gems
+        GEMS.reject { |g| gem_installed?(g) }
+      end
 
-      return true if bundle_ok?(gemfile)
+      def gem_installed?(name)
+        Gem::Specification.find_by_name(name)
+        true
+      rescue Gem::MissingSpecError
+        false
+      end
 
-      install!(gemfile, io)
-      bundle_ok?(gemfile)
-    end
+      def install_gems(verbose: false)
+        missing = missing_gems
+        return if missing.empty?
 
-    private
+        puts "Installing #{missing.size} gems..." if verbose
+        missing.each do |gem|
+          next unless gem.match?(/\A[a-z0-9_-]+\z/)
 
-    def should_run?(gemfile)
-      return false if ENV["AUTO_INSTALL"] == "0"
-      return false unless File.file?(gemfile)
+          system("gem", "install", gem, "--no-document")
+        end
+      end
 
-      true
-    end
+      def require_gem(name)
+        require name
+      rescue LoadError
+        return if @installed&.dig(name)
+        return unless name.to_s.match?(/\A[a-z0-9_-]+\z/)
 
-    def bundle_ok?(gemfile)
-      cmd = BUNDLE_CHECK_CMD + ["--gemfile", gemfile]
-      system(*cmd, out: File::NULL, err: File::NULL)
-    rescue Errno::ENOENT
-      false
-    end
+        @installed ||= {}
+        warn "Installing #{name}..."
+        @installed[name] = system("gem", "install", name, "--no-document")
+        require name
+      end
 
-    def install!(gemfile, io)
-      cmd = INSTALL_CMD + ["--gemfile", gemfile]
-      status, stdout, stderr = run(cmd)
+      def openbsd?
+        RUBY_PLATFORM.include?("openbsd")
+      end
 
-      io.puts(stdout) unless stdout.empty?
-      io.puts(stderr) unless stderr.empty?
+      def missing_packages
+        return [] unless openbsd?
 
-      raise "auto_install failed (exit #{status.exitstatus})" unless status.success?
-    rescue Errno::ENOENT
-      raise "auto_install failed: bundler not found (exit #{BUNDLE_NOT_FOUND_EXIT_STATUS})"
-    end
+        OPENBSD_PACKAGES.reject { |p| package_installed?(p) }
+      end
 
-    def run(cmd)
-      stdout, stderr, status = Open3.capture3(*cmd)
-      [status, stdout.to_s, stderr.to_s]
+      def package_installed?(name)
+        system("pkg_info -e '#{name}-*' > /dev/null 2>&1")
+      end
+
+      def install_packages(verbose: false)
+        return unless openbsd?
+
+        missing = missing_packages
+        return if missing.empty?
+
+        puts "Installing #{missing.size} packages..." if verbose
+        valid_packages = missing.grep(/\A[a-z0-9_-]+\z/)
+        system("doas", "pkg_add", *valid_packages) unless valid_packages.empty?
+      end
+
+      def setup(verbose: false)
+        install_packages(verbose: verbose)
+        install_gems(verbose: verbose)
+      end
+
+      def status
+        {
+          gems: { installed: GEMS.size - missing_gems.size, missing: missing_gems },
+          packages: if openbsd?
+                      { installed: OPENBSD_PACKAGES.size - missing_packages.size,
+                        missing: missing_packages }
+                    end,
+        }
+      end
     end
   end
 end

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="color-scheme" content="dark"/>
-  <title>Johann Sin AI</title>
+  <title>NEURAL CORE</title>
   <meta name="theme-color" content="#000000"/>
   <style>
     :root{
@@ -18,7 +18,7 @@
     html,body{
       margin:0;
       height:100%;
-      background:#020000;
+      background:#000;
       color:#dcdcdc;
       font:16px/1.5 Helvetica,Arial,sans-serif;
       overflow:hidden;
@@ -31,8 +31,24 @@
       width:100dvw;
       height:100dvh;
       display:block;
-      background:#020000;
+      background:#000;
       touch-action:none;
+      image-rendering:pixelated;
+      image-rendering:crisp-edges;
+    }
+
+    #orb-name{
+      position:fixed;
+      top:calc(10px + var(--safe-top));
+      left:calc(10px + var(--safe-left));
+      z-index:95;
+      pointer-events:none;
+      user-select:none;
+      font-weight:700;
+      font-size:clamp(16px,4vw,28px);
+      color:#dcdcdc;
+      letter-spacing:.02em;
+      text-transform:uppercase;
     }
 
     #status{
@@ -40,24 +56,21 @@
       top:calc(10px + var(--safe-top));
       right:calc(10px + var(--safe-right));
       z-index:95;
+      pointer-events:none;
       user-select:none;
-      font-size:14px;
-      color:#333;
-      cursor:pointer;
-      padding:12px;
+      font-size:12px;
+      color:#666;
       transition:color 0.3s;
     }
 
-    #status.think{color:#662222;}
-    #status.speak{color:#993333;}
-    #status.processing{color:#7a3a0a;animation:pulse-status 1.2s ease-in-out infinite;}
-    @keyframes pulse-status{0%,100%{opacity:1;}50%{opacity:0.3;}}
+    #status.think{color:#fff;}
+    #status.speak{color:#6af;}
 
     #ui{
       position:fixed;
       right:calc(12px + var(--safe-right));
       bottom:calc(10px + var(--safe-bottom));
-      color:#2a0808;
+      color:#dcdcdc;
       font:9px/1.1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
       text-transform:uppercase;
       letter-spacing:.28em;
@@ -65,10 +78,8 @@
       pointer-events:none;
       user-select:none;
       text-align:right;
-      opacity:.5;
-      transition:opacity 0.6s, color 0.3s;
+      opacity:.86;
     }
-    #ui.highlight{opacity:1;color:#993333;}
 
     #ui .dots{
       display:inline-block;
@@ -83,7 +94,7 @@
       transform:translateX(-50%);
       width:0;
       opacity:0;
-      transition:width 0.3s ease-out, opacity 0.2s ease;
+      transition:all 0.3s ease;
       z-index:10;
     }
 
@@ -94,10 +105,11 @@
     }
 
     #input-field input{
-      width:calc(100% - 28px);
+      width:100%;
       background:transparent;
       border:none;
-      color:#ccc;
+      border-bottom:1px solid #333;
+      color:#dcdcdc;
       font-family:Helvetica,Arial,sans-serif;
       font-size:18px;
       font-weight:300;
@@ -105,35 +117,11 @@
       padding:12px 0;
       outline:none;
       text-align:center;
+      text-transform:uppercase;
     }
 
     #input-field input::placeholder{
-      color:#333;
-    }
-
-    #attach-btn{
-      background:none;
-      border:none;
-      color:#333;
-      cursor:pointer;
-      font-size:18px;
-      padding:0 0 0 6px;
-      vertical-align:middle;
-      transition:color 0.2s, opacity 0.3s;
-      opacity:0;
-    }
-    #input-field.active #attach-btn{opacity:1;}
-    #attach-btn:hover,#attach-btn.has-file{color:#888;}
-    #attach-label{
-      display:block;
-      font-size:10px;
-      color:#555;
-      text-align:center;
-      letter-spacing:0.08em;
-      margin-top:4px;
-      overflow:hidden;
-      white-space:nowrap;
-      text-overflow:ellipsis;
+      color:#444;
     }
 
     .arrow{
@@ -147,20 +135,20 @@
       justify-content:center;
       cursor:pointer;
       z-index:100;
-      opacity:0;
-      transition:opacity 0.4s;
+      opacity:0.3;
+      transition:opacity 0.2s;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
 
-    .arrow:hover{opacity:0.5;}
-    .arrow:active{opacity:0.8;}
+    .arrow:hover{opacity:0.8;}
+    .arrow:active{opacity:1;}
 
     #arrow-left{left:calc(10px + var(--safe-left));}
     #arrow-right{right:calc(10px + var(--safe-right));}
 
     .arrow span{
-      color:#333;
+      color:#dcdcdc;
       font-size:24px;
       font-weight:300;
     }
@@ -168,111 +156,43 @@
     #overlay{
       position:fixed;
       inset:0;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:28px;
-      background:#000;
+      display:grid;
+      place-items:center;
+      background:rgba(0,0,0,.9);
+      color:#9aa;
       cursor:pointer;
       user-select:none;
       z-index:1000;
       text-align:center;
-      padding:32px;
+      padding:16px;
       opacity:1;
-      transition:opacity 0.8s ease;
+      transition:opacity 0.2s ease;
     }
 
     #overlay.ack{opacity:0;pointer-events:none;}
     #overlay[hidden]{display:none;}
 
-    #overlay h1{
+    #overlay h2{
       margin:0;
-      font-size:clamp(18px,4vw,28px);
+      font-size:32px;
       font-weight:300;
-      color:#666;
-      letter-spacing:.25em;
-      text-transform:uppercase;
-    }
-
-    #overlay .chips{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      justify-content:center;
-      max-width:520px;
-    }
-
-    #overlay .chip{
-      font:11px/1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-      color:#444;
-      border:1px solid #222;
-      border-radius:3px;
-      padding:6px 10px;
-      cursor:pointer;
-      transition:color 0.2s,border-color 0.2s;
-      text-transform:lowercase;
-      letter-spacing:.05em;
-    }
-
-    #overlay .chip:hover{color:#888;border-color:#444;}
-
-    #overlay .hint{
-      font-size:10px;
-      color:#222;
-      letter-spacing:.15em;
-      animation:overlay-pulse 3s ease-in-out infinite;
-    }
-
-    @keyframes overlay-pulse{0%,100%{opacity:.4;}50%{opacity:.8;}}
-
-    #chat-log{
-      display:none;
-      position:fixed;
-      inset:0;
-      z-index:200;
-      background:rgba(0,0,0,.92);
-      overflow-y:auto;
-      padding:48px 5vw 80px;
-      font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-      color:#aaa;
-    }
-    #chat-log.open{display:block;}
-    #chat-log .entry{margin-bottom:1.4em;white-space:pre-wrap;word-break:break-word;}
-    #chat-log .entry.user{color:#ccc;}
-    #chat-log .entry.master{color:#777;}
-    #chat-log .entry.user::before{content:'> ';color:#555;}
-    #chat-log .tab-hint{
-      position:fixed;top:12px;right:16px;
-      font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
+      color:#dcdcdc;
+      font-family:Helvetica,Arial,sans-serif;
     }
   </style>
 </head>
 <body>
-  <div id="chat-log"><span class="tab-hint">TAB TO CLOSE</span></div>
+  <section id="orb-name">VOID</section>
   <section id="status">◉</section>
-  <section id="ui"><span id="ui-label">MASTER2</span><span class="dots" id="ui-dots"></span></section>
+  <section id="ui"><span id="ui-label">Neural Core</span><span class="dots" id="ui-dots"></span></section>
+  <button id="mic" hidden aria-label="microphone"></button>
 
   <section id="arrow-left" class="arrow"><span>‹</span></section>
   <section id="arrow-right" class="arrow"><span>›</span></section>
 
-  <section id="input-field">
-    <input type="text" placeholder="Ask anything…" autocomplete="off" maxlength="512" aria-label="Message">
-    <button id="attach-btn" title="Attach image">+</button>
-    <input type="file" id="file-input" accept="image/*,text/*,.pdf" hidden>
-    <span id="attach-label"></span>
-  </section>
+  <section id="input-field"><input type="text" placeholder="SPEAK" autocomplete="off" maxlength="128"></section>
 
-  <section id="overlay" role="dialog" aria-modal="true">
-    <h1>MASTER2</h1>
-    <div class="chips">
-      <span class="chip" data-cmd="scan .">scan .</span>
-      <span class="chip" data-cmd="fix">fix</span>
-      <span class="chip" data-cmd="self-fix">self-fix</span>
-      <span class="chip" data-cmd="status">status</span>
-    </div>
-    <p class="hint">tap to begin</p>
-  </section>
+  <section id="overlay" role="dialog" aria-modal="true"><h2>Tap to start</h2></section>
 
   <canvas id="canvas"></canvas>
 
@@ -281,126 +201,21 @@
 
     const canvas=document.getElementById('canvas');
     const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true});
+    const orbNameEl=document.getElementById('orb-name');
     const statusEl=document.getElementById('status');
     const uiLabel=document.getElementById('ui-label');
     const uiDots=document.getElementById('ui-dots');
     const inputField=document.getElementById('input-field');
-    const input=inputField.querySelector('input[type=text]');
-    const fileInput=document.getElementById('file-input');
-    const attachBtn=document.getElementById('attach-btn');
-    const attachLabel=document.getElementById('attach-label');
-    const chatLog=document.getElementById('chat-log');
+    const input=inputField.querySelector('input');
     const overlay=document.getElementById('overlay');
     const arrowLeft=document.getElementById('arrow-left');
     const arrowRight=document.getElementById('arrow-right');
+    const micBtn=document.getElementById('mic');
     const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
     const MASTER_TOKEN=window.MASTER_TOKEN||'';
+    let masterSessionId=sessionStorage.getItem('master_session_id')||'';
     const COMPAT_LABEL="master or+rep";
     const TTS_BACKEND_KEY="master_tts_backend";
-
-    // Chat log helpers with localStorage persistence
-    const CHAT_KEY='m2_chat';
-    const MAX_STORED=50;
-    const logAppend=(role,text)=>{
-      const e=document.createElement('div');
-      e.className=`entry ${role}`;
-      e.textContent=text;
-      chatLog.appendChild(e);
-      chatLog.scrollTop=chatLog.scrollHeight;
-      // Persist
-      try{
-        const stored=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
-        stored.push({r:role,t:text});
-        if(stored.length>MAX_STORED) stored.splice(0,stored.length-MAX_STORED);
-        localStorage.setItem(CHAT_KEY,JSON.stringify(stored));
-      }catch(_){}
-    };
-    // Restore chat history on load
-    try{
-      const stored=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
-      for(const m of stored){
-        const e=document.createElement('div');
-        e.className=`entry ${m.r}`;
-        e.textContent=m.t;
-        chatLog.appendChild(e);
-      }
-      chatLog.scrollTop=chatLog.scrollHeight;
-    }catch(_){}
-    document.addEventListener('keydown',e=>{
-      if(e.key==='Tab'){e.preventDefault();chatLog.classList.toggle('open');}
-    });
-    // #7: Mobile chat toggle — double-tap canvas area
-    let lastCanvasTap=0;
-    canvas.addEventListener('touchend',()=>{
-      const now=Date.now();
-      if(now-lastCanvasTap<350) chatLog.classList.toggle('open');
-      lastCanvasTap=now;
-    },{passive:true});
-    // #4: Pull-down to reveal chat — swipe down from top 80px
-    let pullStartY=0,pullStartX=0,pullActive=false;
-    window.addEventListener('touchstart',e=>{
-      const touch=e.touches[0];
-      if(touch.clientY<80&&!chatLog.classList.contains('open')){pullStartY=touch.clientY;pullStartX=touch.clientX;pullActive=true;}
-      else pullActive=false;
-    },{passive:true});
-    window.addEventListener('touchend',e=>{
-      if(!pullActive) return;
-      const dy=e.changedTouches[0].clientY-pullStartY;
-      const dx=Math.abs(e.changedTouches[0].clientX-pullStartX);
-      if(dy>60&&dx<40){chatLog.classList.add('open');haptic(10);}
-      pullActive=false;
-    },{passive:true});
-
-    // SSE with exponential backoff
-    let sseDelay=1000;
-    const sseConnect=()=>{
-      const es=new EventSource(`/sse?token=${encodeURIComponent(MASTER_TOKEN)}`);
-      es.onopen=()=>{sseDelay=1000;};
-      es.onmessage=ev=>{
-        try{
-          const d=JSON.parse(ev.data);
-          if(d.text){
-            const reply=String(d.text);
-            logAppend('master',reply);
-            uiLabel.textContent=reply.slice(0,40);
-            // Flash ui-label briefly on response
-            const uiEl=document.getElementById('ui');
-            uiEl.classList.add('highlight');
-            setTimeout(()=>uiEl.classList.remove('highlight'),2000);
-            // Server TTS only — no browser fallback (browser voice is wrong)
-            pauseAmbient();
-            if('speechSynthesis' in window) window.speechSynthesis.cancel();
-            speakWithAudio(reply).then(()=>scheduleAmbient());
-            isProcessing=false;
-            statusEl.classList.remove('processing');
-            spawnRing(Math.min(W,H)*0.44,'#7a2020');
-            for(const n of neurons){
-              n.vx+=(Math.random()-0.5)*80;
-              n.vy+=(Math.random()-0.5)*80;
-              n.vz+=(Math.random()-0.5)*80;
-            }
-          }
-        }catch(_){}
-      };
-      es.onerror=()=>{es.close();setTimeout(sseConnect,sseDelay);sseDelay=Math.min(sseDelay*2,30000);};
-    };
-    sseConnect();
-
-    let pendingFile=null;
-
-    attachBtn.addEventListener('click',e=>{e.stopPropagation();fileInput.click();});
-    fileInput.addEventListener('change',()=>{
-      const f=fileInput.files[0];
-      if(f){
-        pendingFile=f;
-        attachBtn.classList.add('has-file');
-        attachLabel.textContent=f.name;
-      }else{
-        pendingFile=null;
-        attachBtn.classList.remove('has-file');
-        attachLabel.textContent='';
-      }
-    });
 
     let W,H,S;
     const resize=()=>{
@@ -409,10 +224,9 @@
       S=Math.min(W,H)/100;
       canvas.width=W;
       canvas.height=H;
-      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingEnabled=false;
     };
     window.addEventListener('resize',resize);
-    window.addEventListener('orientationchange',()=>setTimeout(resize,100));
     resize();
 
     let audioCtx,analyser,dataArray;
@@ -423,10 +237,9 @@
     let isSpeaking=false;
     const nonstopVoice=true;
     let isProcessing=false;
-    let padModulate=null;
     let repoDirtyCount=0;
     let spinnerIntervalMs=180;
-    let spinnerColor="#555";
+    let spinnerColor="#9aa";
     const BRAIN_LOBES=[
       {x:-22,y:-8,z:10,w:1.0},
       {x:22,y:-8,z:10,w:1.0},
@@ -450,824 +263,49 @@
       }
     };
 
-    // ── Ambient Pad Engine v2 ─────────────────────────────────────────
-    // Analog-modeled evolving drone. Inspired by Madlib's dusty warmth,
-    // FlyLo's cosmic textures, Dilla's wonky drift. Every parameter
-    // slowly mutates so it never repeats. Voice-ducked to stay under.
-    let padMaster=null;
-    let padDuck=null;
-    let padOscs=[];
-    let padDriftTimer=null;
-
-    // Flying Lotus / Alice Coltrane harmonic palette —
-    // Extended modal jazz: m9, m11, sus, quartal, tritone.
-    // Roots live in octave 1-2; wide open voicings, no triads.
-    const PAD_CHORDS=[
-      [32.70, 65.41,  98.00, 155.56],  // Cm11 open — C1-C2-G2-Eb3 (FlyLo deep cosmos)
-      [41.20, 82.41, 103.83, 138.59],  // Abmaj9 — Ab1-G2-Eb3-Db3 (Alice Coltrane)
-      [36.71, 73.42, 110.00, 130.81],  // Fm(add9) quartal — F1-D2-A2-C3 (dark drift)
-      [27.50, 55.00,  82.41, 116.54],  // Am11 low — A1-A2-E3-Bb2 (Dilla×Coltrane)
-      [30.87, 61.74,  92.50, 138.59],  // Cm/Eb tritone — Eb1-B2-Gb2-Db3 (maximum shadow)
-      [43.65, 65.41,  97.99, 146.83],  // Fsus2 open — F1-C2-G2-D3 (suspended cosmos)
-      [24.50, 49.00,  77.78, 110.00],  // Bb+#11 phrygian — Bb0-Bb1-Eb2-A2 (abyss)
-      [36.71, 77.78, 103.83, 155.56],  // Fm(maj7) — F1-Eb2-Eb3-Eb3 (cosmic resolve)
-    ];
-
-    const initPads=()=>{
-      if(!audioCtx||padMaster) return;
-      const now=audioCtx.currentTime;
-      const out=audioCtx.destination;
-      const startChordIdx=Math.floor(Math.random()*PAD_CHORDS.length);
-
-      padMaster=audioCtx.createGain();
-      padMaster.gain.value=0.22; // FlyLo pads dominate the mix
-      padDuck=audioCtx.createGain();
-      padDuck.gain.value=1.0;
-
-      // ── VCO drift LFOs — simulate analog oscillator instability ──
-      // Each oscillator gets its own slow random-ish detune drift
-      const makeDriftLFO=(rate,depth)=>{
-        const lfo=audioCtx.createOscillator();
-        lfo.type='triangle';
-        lfo.frequency.value=rate;
-        const g=audioCtx.createGain();
-        g.gain.value=depth;
-        lfo.connect(g);
-        lfo.start();
-        return g;
-      };
-
-      // ── Tape saturation — heavy Ampex 440 style, driven hard ──
-      const tapeSat=audioCtx.createWaveShaper();
-      const tapeN=4096;const tapeCurve=new Float32Array(tapeN);
-      for(let i=0;i<tapeN;i++){
-        const x=i*2/(tapeN-1)-1;
-        // Asymmetric hard drive: positive crushes soft, negative grinds
-        tapeCurve[i]=x>=0
-          ?Math.tanh(x*2.8)*0.88+x*0.08
-          :Math.tanh(x*3.5)*0.72+x*0.18;
+    // Pick the most soothing available voice: prefer named natural voices,
+    // fall back to first English voice. Voices load async so we call lazily.
+    const pickVoice=()=>{
+      const voices=window.speechSynthesis.getVoices();
+      if(!voices.length) return null;
+      const want=['Samantha','Google UK English Female','Karen','Moira','Tessa','Fiona','Victoria','Allison','Ava'];
+      for(const name of want){
+        const v=voices.find(v=>v.name.includes(name));
+        if(v) return v;
       }
-      tapeSat.curve=tapeCurve;tapeSat.oversample='4x';
-
-      // ── Chebyshev(2) harmonic saturation — valve coloring, even harmonics ──
-      // rg69: vintageSat + padsSat. 15% wet adds 2nd harmonic warmth without mud.
-      const chebSat=audioCtx.createWaveShaper();
-      const chebN=4096;const chebCurve=new Float32Array(chebN);
-      for(let i=0;i<chebN;i++){const x=i*2/(chebN-1)-1;chebCurve[i]=x*0.85+(2*x*x-1)*0.15;}
-      chebSat.curve=chebCurve;chebSat.oversample='2x';
-
-      // ── Tape flutter LFO — collective pitch wobble (all voices together) ──
-      // Simulates tape moving unevenly past the head. Very slow, irregular.
-      const flutterLFO=audioCtx.createOscillator();flutterLFO.type='sine';flutterLFO.frequency.value=0.9;
-      const flutterDepth=audioCtx.createGain();flutterDepth.gain.value=18; // ±18 cents flutter
-      flutterLFO.connect(flutterDepth);flutterLFO.start();
-      // Wow LFO — even slower, larger drift (capstan speed variation)
-      const wowLFO=audioCtx.createOscillator();wowLFO.type='triangle';wowLFO.frequency.value=0.18;
-      const wowDepth=audioCtx.createGain();wowDepth.gain.value=28; // ±28 cents wow
-      wowLFO.connect(wowDepth);wowLFO.start();
-      // Tape dropout — irregular gain dips simulating oxide shedding
-      const dropoutGain=audioCtx.createGain();dropoutGain.gain.value=1.0;
-      const dropLFO=audioCtx.createOscillator();dropLFO.type='sine';dropLFO.frequency.value=0.02;
-      const dropDepth=audioCtx.createGain();dropDepth.gain.value=0.02; // almost inaudible — texture only
-      dropLFO.connect(dropDepth);dropDepth.connect(dropoutGain.gain);dropLFO.start();
-
-      // ── Vinyl + tape noise — SP-1200 / Tascam 388 grit ──
-      const noiseLen=audioCtx.sampleRate*8; // 8s loop for more variation
-      const noiseBuf=audioCtx.createBuffer(1,noiseLen,audioCtx.sampleRate);
-      const noiseData=noiseBuf.getChannelData(0);
-      for(let i=0;i<noiseLen;i++){
-        noiseData[i]=(Math.random()*2-1)*0.22;           // heavier base hiss
-        if(Math.random()<0.0008) noiseData[i]+=(Math.random()-0.5)*1.2; // crackle
-        if(Math.random()<0.0002) noiseData[i]+=Math.random()*1.8;       // loud pop
-        if(Math.random()<0.00005) noiseData[i]+=Math.random()*3.0;      // dropout click
-      }
-      const vinylSrc=audioCtx.createBufferSource();
-      vinylSrc.buffer=noiseBuf;vinylSrc.loop=true;
-      const vinylGain=audioCtx.createGain();vinylGain.gain.value=0.16;
-      // Dual bandpass: vinyl surface hiss + tape hiss frequencies
-      const vinylBP=audioCtx.createBiquadFilter();vinylBP.type='bandpass';
-      vinylBP.frequency.value=1800;vinylBP.Q.value=0.4;
-      const tapeBP=audioCtx.createBiquadFilter();tapeBP.type='bandpass';
-      tapeBP.frequency.value=4200;tapeBP.Q.value=0.6;
-      const tapeNoiseGain=audioCtx.createGain();tapeNoiseGain.gain.value=0.5;
-      vinylSrc.connect(vinylBP);vinylBP.connect(vinylGain);
-      vinylSrc.connect(tapeBP);tapeBP.connect(tapeNoiseGain);
-      vinylSrc.start();
-
-      // ── Lo-fi filter — SP-1200 / MPC3000 dark rolloff ──
-      const lofiLP=audioCtx.createBiquadFilter();
-      lofiLP.type='lowpass';lofiLP.frequency.value=2000;lofiLP.Q.value=0.8; // FlyLo dark rolloff
-      const lofiHP=audioCtx.createBiquadFilter();
-      lofiHP.type='highpass';lofiHP.frequency.value=40;
-
-      // ── Moog-style ladder filter (4-pole lowpass cascade) ──
-      const lad1=audioCtx.createBiquadFilter();lad1.type='lowpass';lad1.Q.value=2.8; // more resonance
-      const lad2=audioCtx.createBiquadFilter();lad2.type='lowpass';lad2.Q.value=2.8;
-      const lad3=audioCtx.createBiquadFilter();lad3.type='lowpass';lad3.Q.value=1.4;
-      const lad4=audioCtx.createBiquadFilter();lad4.type='lowpass';lad4.Q.value=1.4;
-      [lad1,lad2,lad3,lad4].forEach(f=>f.frequency.value=700); // darker starting point
-
-      // Slow LFO sweeps the ladder — deep analog sweep
-      const ladLFO=audioCtx.createOscillator();ladLFO.type='sine';ladLFO.frequency.value=0.025;
-      const ladDepth=audioCtx.createGain();ladDepth.gain.value=700;
-      ladLFO.connect(ladDepth);
-      [lad1,lad2,lad3,lad4].forEach(f=>ladDepth.connect(f.frequency));
-      ladLFO.start();
-
-      // Secondary triangle LFO for filter movement
-      const ladLFO2=audioCtx.createOscillator();ladLFO2.type='triangle';ladLFO2.frequency.value=0.07;
-      const ladDepth2=audioCtx.createGain();ladDepth2.gain.value=300;
-      ladLFO2.connect(ladDepth2);
-      [lad1,lad2].forEach(f=>ladDepth2.connect(f.frequency));
-      ladLFO2.start();
-
-      // ── Resonant peak — warm analog body ──
-      const warmth=audioCtx.createBiquadFilter();
-      warmth.type='peaking';warmth.frequency.value=300;warmth.gain.value=5;warmth.Q.value=0.6;
-
-      // ── Sub harmonics — deep Dilla bass weight ──
-      const subOsc=audioCtx.createOscillator();subOsc.type='sine';subOsc.frequency.value=32.7;
-      const subOsc2=audioCtx.createOscillator();subOsc2.type='triangle';subOsc2.frequency.value=32.7;
-      subOsc2.detune.value=3;
-      const subGain=audioCtx.createGain();subGain.gain.value=0.34; // FlyLo sub is massive
-      const subLP=audioCtx.createBiquadFilter();subLP.type='lowpass';subLP.frequency.value=80;subLP.Q.value=3;
-      subOsc.connect(subLP);subOsc2.connect(subLP);subLP.connect(subGain);
-      subOsc.start();subOsc2.start();
-
-      // ── Sidechain pump — fake compressor pumping like Dilla/Madlib ──
-      const pumpGain=audioCtx.createGain();pumpGain.gain.value=1.0;
-      const pumpLFO=audioCtx.createOscillator();pumpLFO.type='sine';
-      pumpLFO.frequency.value=0.25; // very slow breathing
-      const pumpDepth=audioCtx.createGain();pumpDepth.gain.value=0.06; // barely perceptible
-      pumpLFO.connect(pumpDepth);pumpDepth.connect(pumpGain.gain);pumpLFO.start();
-
-      // ── 6-stage phaser — deep analog sweep ──
-      const phaserStages=[];
-      for(let i=0;i<6;i++){
-        const ap=audioCtx.createBiquadFilter();ap.type='allpass';
-        ap.frequency.value=200+i*300;ap.Q.value=0.5;
-        phaserStages.push(ap);
-      }
-      const phaserLFO=audioCtx.createOscillator();phaserLFO.type='triangle';phaserLFO.frequency.value=0.05;
-      const phaserDepth=audioCtx.createGain();phaserDepth.gain.value=800;
-      phaserLFO.connect(phaserDepth);
-      phaserStages.forEach(ap=>phaserDepth.connect(ap.frequency));
-      phaserLFO.start();
-      // Chain stages
-      for(let i=0;i<phaserStages.length-1;i++) phaserStages[i].connect(phaserStages[i+1]);
-
-      // ── Tremolo — very slow, barely perceptible swell (not choppy) ──
-      const tremGain=audioCtx.createGain();tremGain.gain.value=0.9;
-      const tremLFO=audioCtx.createOscillator();tremLFO.type='sine';tremLFO.frequency.value=0.04;
-      const tremDepth=audioCtx.createGain();tremDepth.gain.value=0.08; // gentle swell only
-      tremLFO.connect(tremDepth);tremDepth.connect(tremGain.gain);tremLFO.start();
-
-      // ── Chorus — thick 4-voice Juno-style ──
-      const chorusBus=audioCtx.createGain();chorusBus.gain.value=0.35;
-      const chorusVoices=[];
-      [0.018,0.027,0.037,0.048].forEach((dt,i)=>{
-        const d=audioCtx.createDelay();d.delayTime.value=dt;
-        const lfo=audioCtx.createOscillator();lfo.type='sine';
-        lfo.frequency.value=0.5+i*0.3;
-        const mod=audioCtx.createGain();mod.gain.value=0.004;
-        lfo.connect(mod);mod.connect(d.delayTime);lfo.start();
-        chorusVoices.push(d);
-      });
-
-      // ── Spring reverb — lo-fi, metallic, like a guitar amp spring ──
-      const springD1=audioCtx.createDelay();springD1.delayTime.value=0.031;
-      const springD2=audioCtx.createDelay();springD2.delayTime.value=0.059;
-      const springD3=audioCtx.createDelay();springD3.delayTime.value=0.097;
-      const springFb1=audioCtx.createGain();springFb1.gain.value=0.6;
-      const springFb2=audioCtx.createGain();springFb2.gain.value=0.5;
-      const springFb3=audioCtx.createGain();springFb3.gain.value=0.4;
-      springD1.connect(springFb1);springFb1.connect(springD2);
-      springD2.connect(springFb2);springFb2.connect(springD3);
-      springD3.connect(springFb3);springFb3.connect(springD1);
-      const springLP=audioCtx.createBiquadFilter();springLP.type='lowpass';springLP.frequency.value=3000;
-      const springHP=audioCtx.createBiquadFilter();springHP.type='highpass';springHP.frequency.value=400;
-      const springMix=audioCtx.createGain();springMix.gain.value=0.3;
-
-      // ── Hall reverb — FlyLo drenched in space, long dark tail ──
-      const hallTaps=[0.13,0.27,0.43,0.61,0.83,1.07,1.31]; // longer taps
-      const hallGains=[0.35,0.28,0.22,0.16,0.10,0.06,0.03];
-      const hallBus=audioCtx.createGain();hallBus.gain.value=0.75; // much more reverb
-      const hallLP=audioCtx.createBiquadFilter();hallLP.type='lowpass';hallLP.frequency.value=1800;
-      const hallFb=audioCtx.createGain();hallFb.gain.value=0.22; // more feedback = longer tail
-      const hallDelays=hallTaps.map((t,i)=>{
-        const d=audioCtx.createDelay();d.delayTime.value=t;
-        const g=audioCtx.createGain();g.gain.value=hallGains[i];
-        d.connect(g);g.connect(hallLP);
-        return d;
-      });
-      hallLP.connect(hallBus);hallLP.connect(hallFb);hallFb.connect(hallDelays[0]);
-
-      // ── Ping-pong delay — FlyLo cosmic echoes ──
-      const ppL=audioCtx.createDelay();ppL.delayTime.value=0.375;
-      const ppR=audioCtx.createDelay();ppR.delayTime.value=0.5;
-      const ppFbL=audioCtx.createGain();ppFbL.gain.value=0.3;
-      const ppFbR=audioCtx.createGain();ppFbR.gain.value=0.3;
-      const ppLP=audioCtx.createBiquadFilter();ppLP.type='lowpass';ppLP.frequency.value=1800;
-      ppL.connect(ppFbL);ppFbL.connect(ppLP);ppLP.connect(ppR);
-      ppR.connect(ppFbR);ppFbR.connect(ppL);
-      const ppMix=audioCtx.createGain();ppMix.gain.value=0.15;
-      const ppSplitter=audioCtx.createChannelMerger(2);
-
-      // ── Stereo widener — Haas effect ──
-      const widenerL=audioCtx.createDelay();widenerL.delayTime.value=0.011;
-      const widenerR=audioCtx.createDelay();widenerR.delayTime.value=0.019;
-      const merger=audioCtx.createChannelMerger(2);
-      const splitter=audioCtx.createChannelSplitter(2);
-
-      // ── FlyLo frequency shifter feel — slow pitch wobble on aux send ──
-      const wobbleD=audioCtx.createDelay();wobbleD.delayTime.value=0.1;
-      const wobbleLFO=audioCtx.createOscillator();wobbleLFO.type='sine';wobbleLFO.frequency.value=0.06;
-      const wobbleMod=audioCtx.createGain();wobbleMod.gain.value=0.015;
-      wobbleLFO.connect(wobbleMod);wobbleMod.connect(wobbleD.delayTime);wobbleLFO.start();
-      const wobbleMix=audioCtx.createGain();wobbleMix.gain.value=0.12;
-      const wobbleLP=audioCtx.createBiquadFilter();wobbleLP.type='lowpass';wobbleLP.frequency.value=1200;
-
-      // ── High shimmer — ghostly harmonic sparkle ──
-      const shimmerOsc=audioCtx.createOscillator();shimmerOsc.type='sine';
-      shimmerOsc.frequency.value=PAD_CHORDS[startChordIdx][3]*4; // 2 octaves up
-      const shimmerGain=audioCtx.createGain();shimmerGain.gain.value=0.012;
-      const shimmerTrem=audioCtx.createGain();shimmerTrem.gain.value=0.5;
-      const shimmerLFO=audioCtx.createOscillator();shimmerLFO.type='sine';shimmerLFO.frequency.value=0.22;
-      const shimmerMod=audioCtx.createGain();shimmerMod.gain.value=0.5;
-      shimmerLFO.connect(shimmerMod);shimmerMod.connect(shimmerTrem.gain);shimmerLFO.start();
-      shimmerOsc.connect(shimmerTrem);shimmerTrem.connect(shimmerGain);shimmerOsc.start();
-      // Shimmer detune drift
-      const shimDrift=makeDriftLFO(0.03,8);shimDrift.connect(shimmerOsc.detune);
-
-      // ── Bach cantus firmus — choral soprano voice, contrary motion to sub ──
-      // Moves in the opposite direction of the bass; slow vibrato like a choir.
-      const cantusOsc=audioCtx.createOscillator();cantusOsc.type='sine';
-      cantusOsc.frequency.value=PAD_CHORDS[startChordIdx][3]*2; // start at top, 2 octaves up
-      const cantusGain=audioCtx.createGain();cantusGain.gain.value=0.016;
-      const cantusVib=audioCtx.createOscillator();cantusVib.type='sine';cantusVib.frequency.value=4.2;
-      const cantusVibD=audioCtx.createGain();cantusVibD.gain.value=3;
-      cantusVib.connect(cantusVibD);cantusVibD.connect(cantusOsc.detune);cantusVib.start();
-      const cantusDrift=makeDriftLFO(0.025,5);cantusDrift.connect(cantusOsc.detune);
-      cantusOsc.connect(cantusGain);cantusGain.connect(lad1);cantusOsc.start();
-
-      // ══════════════════════════════════════════════════════════
-      // SIGNAL ROUTING
-      // Oscillators → ladder filter → cheb(2) sat → tape sat → warmth →
-      // phaser → tremolo → dropout → lofi → {chorus, dry, spring reverb,
-      // hall, ping-pong, wobble, ring mod} → dual comp → pump → stereo →
-      // duck → master → out
-      // ══════════════════════════════════════════════════════════
-
-      // Ladder filter chain
-      lad1.connect(lad2);lad2.connect(lad3);lad3.connect(lad4);
-
-      // Post-ladder chain
-      lad4.connect(chebSat);chebSat.connect(tapeSat);
-      tapeSat.connect(warmth);
-      warmth.connect(phaserStages[0]);
-      phaserStages[phaserStages.length-1].connect(tremGain);
-      tremGain.connect(dropoutGain);dropoutGain.connect(lofiLP);lofiLP.connect(lofiHP);
-
-      // Parallel sends from lofi output
-      const dryBus=audioCtx.createGain();dryBus.gain.value=0.7;
-      lofiHP.connect(dryBus);
-
-      // Chorus send
-      chorusVoices.forEach(d=>{lofiHP.connect(d);d.connect(chorusBus);});
-
-      // Spring reverb send
-      const springSend=audioCtx.createGain();springSend.gain.value=0.25;
-      lofiHP.connect(springSend);
-      springSend.connect(springD1);
-      springD3.connect(springHP);springHP.connect(springLP);springLP.connect(springMix);
-
-      // Hall reverb send
-      const hallSend=audioCtx.createGain();hallSend.gain.value=0.3;
-      lofiHP.connect(hallSend);
-      hallDelays.forEach(d=>hallSend.connect(d));
-
-      // Ping-pong send
-      const ppSend=audioCtx.createGain();ppSend.gain.value=0.1;
-      lofiHP.connect(ppSend);ppSend.connect(ppL);
-      ppL.connect(ppMix);ppR.connect(ppMix);
-
-      // Wobble send
-      lofiHP.connect(wobbleD);wobbleD.connect(wobbleLP);wobbleLP.connect(wobbleMix);
-
-      // Ring mod send — 1.7Hz FrequencyShifter approximation (rg69: padsShift ±2Hz)
-      // Slight beating/shimmer without audible tremolo; adds iridescent movement.
-      const rmCarrier=audioCtx.createGain();rmCarrier.gain.value=0;
-      const rmOsc=audioCtx.createOscillator();rmOsc.frequency.value=1.7;rmOsc.type='sine';
-      const rmMix=audioCtx.createGain();rmMix.gain.value=0.07;
-      rmOsc.connect(rmCarrier.gain);rmOsc.start();
-      lofiHP.connect(rmCarrier);rmCarrier.connect(rmMix);
-
-      // Sum to pre-pump bus
-      const prePump=audioCtx.createGain();prePump.gain.value=1;
-      dryBus.connect(prePump);
-      chorusBus.connect(prePump);
-      springMix.connect(prePump);
-      hallBus.connect(prePump);
-      ppMix.connect(prePump);
-      wobbleMix.connect(prePump);
-      rmMix.connect(prePump);
-
-      // Dual compressor glue — rg69: compPar + sslComp (-18dB, ratio 4/6)
-      // Stage 1: gentle bus glue. Stage 2: SSL-style limiting.
-      const padComp1=audioCtx.createDynamicsCompressor();
-      padComp1.threshold.value=-24;padComp1.ratio.value=3;padComp1.attack.value=0.003;padComp1.release.value=0.1;
-      const padComp2=audioCtx.createDynamicsCompressor();
-      padComp2.threshold.value=-18;padComp2.ratio.value=6;padComp2.attack.value=0.01;padComp2.release.value=0.3;
-
-      // Pump → dual comp → stereo widener → duck → master
-      prePump.connect(padComp1);padComp1.connect(padComp2);padComp2.connect(pumpGain);
-
-      const preOut=audioCtx.createGain();preOut.gain.value=1;
-      pumpGain.connect(preOut);
-      preOut.connect(splitter);
-      splitter.connect(widenerL,0);splitter.connect(widenerR,1);
-      widenerL.connect(merger,0,0);widenerR.connect(merger,0,1);
-      merger.connect(padDuck);
-
-      // Vinyl + tape noise + sub + shimmer bypass main chain, go direct to duck
-      vinylGain.connect(padDuck);
-      tapeNoiseGain.connect(padDuck);
-      subGain.connect(padDuck);
-      shimmerGain.connect(padDuck);
-
-      padDuck.connect(padMaster);
-      padMaster.connect(out);
-
-      // Pump dropout through main chain too (tape artifacts on the pad)
-      dropoutGain.gain.value=1.0; // baseline; dropLFO dips it slightly
-
-      // ── Create oscillators — 5 layers per note, heavy analog detune ──
-      const chord=PAD_CHORDS[startChordIdx];
-      const oscConfigs=[
-        {type:'sawtooth',gain:0.07,detune:-22},  // fat dark saw
-        {type:'sawtooth',gain:0.06,detune:11},   // second saw, wide spread
-        {type:'triangle',gain:0.05,detune:-5},   // warm low body
-        {type:'square',  gain:0.018,detune:18},  // hollow formant color
-        {type:'sine',    gain:0.035,detune:0.5}, // fundamental anchor
-      ];
-      chord.forEach((freq,ni)=>{
-        oscConfigs.forEach((cfg,ci)=>{
-          const osc=audioCtx.createOscillator();
-          osc.type=cfg.type;
-          osc.frequency.value=freq;
-          // Wide analog detune — lots of spread for that thick FlyLo texture
-          osc.detune.value=cfg.detune+(Math.random()*18-9);
-          const g=audioCtx.createGain();g.gain.value=cfg.gain;
-
-          // VCO drift — heavy per-oscillator instability
-          const drift=makeDriftLFO(
-            0.01+Math.random()*0.06,     // very slow
-            5+Math.random()*10           // wide cent drift — cassette instability
-          );
-          drift.connect(osc.detune);
-          // Tape flutter + wow collective pitch — all voices wobble together
-          flutterDepth.connect(osc.detune);
-          wowDepth.connect(osc.detune);
-
-          osc.connect(g);g.connect(lad1);
-          osc.start(now+Math.random()*0.1); // stagger starts
-          padOscs.push({osc,gain:g,baseFreq:freq});
-        });
-      });
-
-      // ── Chord evolution — 25-45s morphs, with parameter mutations ──
-      let chordIdx=startChordIdx;
-      const driftChord=()=>{
-        chordIdx=(chordIdx+1)%PAD_CHORDS.length;
-        const chord=PAD_CHORDS[chordIdx];
-        const t=audioCtx.currentTime;
-        const rampTime=6+Math.random()*6; // 6-12s glide
-
-        padOscs.forEach((p,i)=>{
-          const noteIdx=Math.floor(i/oscConfigs.length);
-          const freq=chord[noteIdx%chord.length];
-          p.osc.frequency.exponentialRampToValueAtTime(
-            Math.max(20,freq+(Math.random()*3-1.5)),t+rampTime
-          );
-          p.baseFreq=freq;
-        });
-
-        // Sub follows root
-        subOsc.frequency.exponentialRampToValueAtTime(chord[0]/2,t+rampTime);
-        subOsc2.frequency.exponentialRampToValueAtTime(chord[0]/2+0.5,t+rampTime);
-        // Shimmer follows top
-        shimmerOsc.frequency.exponentialRampToValueAtTime(chord[3]*4,t+rampTime*0.8);
-
-        // Mutate FX parameters — everything slowly evolves
-        const ladFreq=400+Math.random()*1400;
-        [lad1,lad2,lad3,lad4].forEach(f=>f.frequency.linearRampToValueAtTime(ladFreq,t+rampTime*1.5));
-        lad1.Q.linearRampToValueAtTime(0.5+Math.random()*3,t+rampTime);
-
-        warmth.frequency.linearRampToValueAtTime(200+Math.random()*500,t+rampTime);
-        warmth.gain.linearRampToValueAtTime(3+Math.random()*6,t+rampTime);
-
-        lofiLP.frequency.linearRampToValueAtTime(2000+Math.random()*3000,t+rampTime);
-
-        // Drift pump rate
-        pumpLFO.frequency.linearRampToValueAtTime(0.2+Math.random()*0.5,t+5);
-
-        // Evolve reverb mix
-        hallBus.gain.linearRampToValueAtTime(0.2+Math.random()*0.4,t+rampTime);
-        springMix.gain.linearRampToValueAtTime(0.1+Math.random()*0.35,t+rampTime);
-        ppMix.gain.linearRampToValueAtTime(0.05+Math.random()*0.2,t+rampTime);
-        wobbleMix.gain.linearRampToValueAtTime(0.05+Math.random()*0.2,t+rampTime);
-
-        // Evolve chorus depth
-        chorusBus.gain.linearRampToValueAtTime(0.2+Math.random()*0.3,t+rampTime);
-
-        // Cantus firmus: contrary motion — when bass ascends, soprano descends
-        // Alternate between outer voices for Bach-style voice leading
-        const cantusDegree=chordIdx%2===0?3:0; // top when chordIdx even, root when odd
-        const cantusTarget=Math.max(20,chord[cantusDegree]*2);
-        cantusOsc.frequency.exponentialRampToValueAtTime(cantusTarget,t+rampTime*0.55);
-
-        padDriftTimer=setTimeout(driftChord,25000+Math.random()*20000);
-      };
-      padDriftTimer=setTimeout(driftChord,12000+Math.random()*8000);
-
-      // State-reactive modulations — filter/phaser/shimmer morph on state changes
-      padModulate=(state)=>{
-        const t=audioCtx.currentTime;
-        if(state==='think'){
-          // Close filter, speed phaser, flood reverb — tension / searching
-          [lad1,lad2,lad3,lad4].forEach(f=>{f.frequency.cancelScheduledValues(t);f.frequency.linearRampToValueAtTime(280,t+2);});
-          phaserLFO.frequency.linearRampToValueAtTime(0.22,t+2);
-          shimmerGain.gain.linearRampToValueAtTime(0.036,t+1);
-          hallBus.gain.linearRampToValueAtTime(0.95,t+2);
-        } else if(state==='speak'){
-          // Filter slams shut, phaser stills — voice cuts through dark space
-          [lad1,lad2,lad3,lad4].forEach(f=>{f.frequency.cancelScheduledValues(t);f.frequency.linearRampToValueAtTime(200,t+0.4);});
-          phaserLFO.frequency.linearRampToValueAtTime(0.03,t+1);
-          ppMix.gain.linearRampToValueAtTime(0.45,t+1.5);
-        } else {
-          // Reopen — slow drift back to ambient baseline
-          [lad1,lad2,lad3,lad4].forEach(f=>{f.frequency.cancelScheduledValues(t);f.frequency.linearRampToValueAtTime(700,t+5);});
-          phaserLFO.frequency.linearRampToValueAtTime(0.05,t+4);
-          shimmerGain.gain.linearRampToValueAtTime(0.012,t+4);
-          hallBus.gain.linearRampToValueAtTime(0.75,t+4);
-          ppMix.gain.linearRampToValueAtTime(0.15,t+4);
-        }
-      };
-    };
-
-    // Duck pads when speaking — fast attack, slow release (sidechain style)
-    // Sidechain to TTS — fast attack (30ms), medium release (1.4s)
-    const duckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(0.06,audioCtx.currentTime+0.03);}};
-    const unduckPads=()=>{if(padDuck){padDuck.gain.cancelScheduledValues(audioCtx.currentTime);padDuck.gain.linearRampToValueAtTime(1.0,audioCtx.currentTime+1.4);}};
-
-    // ── Drum Engine ────────────────────────────────────────────────────────
-    // Slow dark groove — trip-hop / doom-funk feel. Swing + micro-jitter humanize.
-    let drumClock=null;
-    let drumStep=0;
-    const DRUM_BPM=88; // slow, heavy
-    const DRUM_STEPS=16;
-    const DRUM_GAIN_MASTER=0.26;
-
-    // Industrial kick — hard clip, longer punch, sub thud
-    const synthKick=(t,gain=1)=>{
-      const g=audioCtx.createGain();g.gain.setValueAtTime(gain,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.7);
-      const o=audioCtx.createOscillator();o.frequency.setValueAtTime(200,t);o.frequency.exponentialRampToValueAtTime(35,t+0.09);
-      const dist=audioCtx.createWaveShaper();const n=512;const c=new Float32Array(n);
-      for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=x>0.3?1:x<-0.3?-1:x/0.3;} // hard clip
-      dist.curve=c;dist.oversample='4x';
-      const sub=audioCtx.createOscillator();sub.frequency.setValueAtTime(55,t);sub.frequency.exponentialRampToValueAtTime(25,t+0.15);
-      const subG=audioCtx.createGain();subG.gain.setValueAtTime(gain*0.6,t);subG.gain.exponentialRampToValueAtTime(0.001,t+0.4);
-      o.connect(dist);dist.connect(g);g.connect(drumMaster);
-      sub.connect(subG);subG.connect(drumMaster);
-      o.start(t);o.stop(t+0.75);sub.start(t);sub.stop(t+0.45);
-    };
-
-    // 909-style open/closed hi-hat (white noise burst)
-    const synthHat=(t,open=false,gain=1)=>{
-      const dur=open?0.28:0.045;
-      const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*dur,audioCtx.sampleRate);
-      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
-      const src=audioCtx.createBufferSource();src.buffer=buf;
-      const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=7000;
-      const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=10000;bp.Q.value=0.5;
-      const g=audioCtx.createGain();g.gain.setValueAtTime(gain*(open?0.22:0.32),t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
-      src.connect(hp);hp.connect(bp);bp.connect(g);g.connect(drumMaster);src.start(t);src.stop(t+dur+0.01);
-    };
-
-    // Industrial snare — distorted crack, long noise tail
-    const synthSnare=(t,gain=1)=>{
-      const o=audioCtx.createOscillator();o.type='square';o.frequency.setValueAtTime(240,t);o.frequency.exponentialRampToValueAtTime(90,t+0.08);
-      const og=audioCtx.createGain();og.gain.setValueAtTime(gain*0.5,t);og.gain.exponentialRampToValueAtTime(0.001,t+0.1);
-      const dist=audioCtx.createWaveShaper();const n=256;const c=new Float32Array(n);
-      for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=Math.tanh(x*8);}dist.curve=c;
-      const buf=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*0.35),audioCtx.sampleRate);
-      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
-      const src=audioCtx.createBufferSource();src.buffer=buf;
-      const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=800;
-      const ng=audioCtx.createGain();ng.gain.setValueAtTime(gain*0.7,t);ng.gain.exponentialRampToValueAtTime(0.001,t+0.35);
-      o.connect(dist);dist.connect(og);og.connect(drumMaster);
-      src.connect(hp);hp.connect(ng);ng.connect(drumMaster);
-      o.start(t);o.stop(t+0.12);src.start(t);src.stop(t+0.38);
-    };
-
-    // Clap (layered noise bursts)
-    const synthClap=(t,gain=1)=>{
-      [0,0.008,0.016].forEach(off=>{
-        const buf=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*0.06),audioCtx.sampleRate);
-        const d=buf.getChannelData(0);for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
-        const src=audioCtx.createBufferSource();src.buffer=buf;
-        const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1100;bp.Q.value=0.8;
-        const g=audioCtx.createGain();g.gain.setValueAtTime(gain*0.4,t+off);g.gain.exponentialRampToValueAtTime(0.001,t+off+0.07);
-        src.connect(bp);bp.connect(g);g.connect(drumMaster);src.start(t+off);src.stop(t+off+0.08);
-      });
-    };
-
-    // Rim shot (short click + tone)
-    const synthRim=(t,gain=1)=>{
-      const o=audioCtx.createOscillator();o.type='square';o.frequency.value=400;
-      const g=audioCtx.createGain();g.gain.setValueAtTime(gain*0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.04);
-      o.connect(g);g.connect(drumMaster);o.start(t);o.stop(t+0.045);
-    };
-
-    // Conga (pitched resonant body)
-    const synthConga=(t,freq=200,gain=1)=>{
-      const o=audioCtx.createOscillator();o.type='sine';o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(freq*0.6,t+0.18);
-      const g=audioCtx.createGain();g.gain.setValueAtTime(gain*0.45,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.22);
-      o.connect(g);g.connect(drumMaster);o.start(t);o.stop(t+0.25);
-    };
-
-    // Cowbell (dual tone, metallic)
-    const synthCowbell=(t,gain=1)=>{
-      [562,845].forEach(f=>{
-        const o=audioCtx.createOscillator();o.type='square';o.frequency.value=f;
-        const g=audioCtx.createGain();g.gain.setValueAtTime(gain*0.18,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
-        o.connect(g);g.connect(drumMaster);o.start(t);o.stop(t+0.2);
-      });
-    };
-
-    // Master drum bus with compression
-    let drumMaster=null;
-    const initDrums=()=>{
-      if(!audioCtx||drumMaster) return;
-      drumMaster=audioCtx.createGain();drumMaster.gain.value=DRUM_GAIN_MASTER;
-      const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=6;comp.attack.value=0.003;comp.release.value=0.12;
-      const eq=audioCtx.createBiquadFilter();eq.type='peaking';eq.frequency.value=80;eq.gain.value=6;eq.Q.value=1;
-      drumMaster.connect(comp);comp.connect(eq);eq.connect(audioCtx.destination);
-      startDrumSequencer();
-    };
-
-    // ── Slow groove patterns — trip-hop backbone, breathing room ──
-    // Values: 1=full, 0.x=ghost, 0=rest
-    const DRUM_PATTERNS={
-      // Pattern A: steady backbeat, open hi-hat on &2 &4
-      kick:  [1,0,0,0,  0,0,.7,0,  .5,0,0,0,  .9,0,0,0],
-      snare: [0,0,0,0,  1,0,0,0,   0,0,0,0,   1,0,0,0],
-      chat:  [.8,0,.5,0, .8,0,.5,0, .8,0,.5,0, .8,0,.5,0],
-      ohat:  [0,0,0,0,  0,0,0,.7,  0,0,0,0,   0,0,0,.6],
-      rim:   [0,0,0,0,  0,0,0,0,   0,0,.4,0,  0,.3,0,0],
-      clap:  [0,0,0,0,  0,0,0,0,   0,0,0,0,   0,0,0,0],
-      conga: [0,0,0,0,  0,0,0,0,   0,0,0,0,   0,0,0,0],
-      cowbell:[0,0,0,0, 0,0,0,0,   0,0,0,0,   0,0,0,0],
-    };
-    const DRUM_PATTERNS_B={
-      // Pattern B: syncopated kick, ghost snare on &2
-      kick:  [1,0,0,.4,  0,0,.8,0,  1,0,0,0,   0,0,.6,0],
-      snare: [0,0,0,0,   1,0,0,.3,  0,0,0,0,   1,0,0,0],
-      chat:  [.7,0,.4,0, .7,0,.4,0, .7,0,.4,0, .7,0,.4,0],
-      ohat:  [0,0,0,0,   0,0,1,0,   0,0,0,0,   0,0,1,0],
-      rim:   [0,0,0,0,   0,.5,0,0,  0,0,0,0,   0,0,0,.4],
-      clap:  [0,0,0,0,   0,0,0,0,   0,0,0,0,   0,0,0,0],
-      conga: [0,0,0,0,   0,0,0,0,   .6,0,0,0,  0,0,0,0],
-      cowbell:[0,0,0,0,  0,0,0,0,   0,0,0,0,   0,0,0,0],
-    };
-
-    let drumBar=0;
-    let drumActive=false;
-    const DRUM_BARS_ON=8;  // play 8 bars then rest
-    const DRUM_BARS_OFF=16; // rest 16 bars (long ambient gaps)
-    const startDrumSequencer=()=>{
-      const stepDur=60/(DRUM_BPM*4);
-      const lookahead=0.08;
-      let nextTime=audioCtx.currentTime+0.1;
-      let barsInPhase=0;
-      drumActive=true;
-      const tick=()=>{
-        while(nextTime<audioCtx.currentTime+lookahead*2){
-          const s=drumStep%DRUM_STEPS;
-          if(drumActive){
-            const pat=drumBar%2===0?DRUM_PATTERNS:DRUM_PATTERNS_B;
-            // Swing: push even-indexed 16ths slightly late (Dilla feel)
-            const sw=(s%2===1)?stepDur*0.13:0;
-            // Micro-jitter: human imprecision ±5ms
-            const jit=()=>(Math.random()-0.5)*0.010;
-            if(pat.kick[s])    synthKick(nextTime+sw+jit(),   s===0?1:pat.kick[s]*0.8);
-            if(pat.snare[s])   synthSnare(nextTime+sw+jit(),  pat.snare[s]*0.85);
-            if(pat.clap[s])    synthClap(nextTime+sw+jit(),   0.7);
-            if(pat.ohat[s])    synthHat(nextTime+sw+jit(),    true, pat.ohat[s]*0.55);
-            if(pat.chat[s])    synthHat(nextTime+sw+jit(),    false,pat.chat[s]*0.38);
-            if(pat.rim[s])     synthRim(nextTime+sw+jit(),    pat.rim[s]*0.6);
-            if(pat.conga[s])   synthConga(nextTime+sw+jit(),  s%2===0?220:180,0.55);
-            if(pat.cowbell[s]) synthCowbell(nextTime+sw+jit(),0.35);
-          }
-          nextTime+=stepDur;
-          drumStep++;
-          if(drumStep%DRUM_STEPS===0){
-            drumBar++;
-            barsInPhase++;
-            if(drumActive && barsInPhase>=DRUM_BARS_ON){
-              drumActive=false; barsInPhase=0;
-            } else if(!drumActive && barsInPhase>=DRUM_BARS_OFF){
-              drumActive=true; barsInPhase=0;
-            }
-          }
-        }
-        drumClock=setTimeout(tick,lookahead*1000);
-      };
-      tick();
+      return voices.find(v=>v.lang==='en-GB')||voices.find(v=>v.lang.startsWith('en'))||voices[0];
     };
 
     const _onSpeakEnd=()=>{
       isSpeaking=false;
-      spawnRing(Math.min(W,H)*0.12,'#2a0a08');
       statusEl.classList.remove('speak');
       statusEl.classList.add('think');
-      unduckPads();
-      if(padModulate) padModulate('idle');
       if(nonstopVoice) startRecognition();
     };
 
-    // Split text into sentences for more natural pacing
-    const splitSentences=text=>{
-      const raw=String(text).slice(0,800);
-      const parts=raw.match(/[^.!?]+[.!?]+[\s]?|[^.!?]+$/g);
-      return parts&&parts.length?parts.map(s=>s.trim()).filter(Boolean):[raw];
+    const speakText=text=>{
+      if(!('speechSynthesis' in window)||!text) return;
+      const u=new SpeechSynthesisUtterance(String(text).slice(0,500));
+      u.rate=0.88;   // calm, unhurried
+      u.pitch=0.95;  // slightly lower — warm, grounded
+      u.volume=0.92;
+      const v=pickVoice(); if(v) u.voice=v;
+      u.onstart=()=>{
+        isSpeaking=true;
+        speechPulse=0.6;
+        statusEl.classList.remove('think');
+        statusEl.classList.add('speak');
+        if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
+      };
+      u.onend=_onSpeakEnd;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
     };
 
-    // Web Audio effect chain — cycle with long-press on status circle
-    const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone'];
-    let fxIdx=1+Math.floor(Math.random()*(FX_MODES.length-1)); // random effect on by default
-    let fxTaps=0;let fxTapTimer=0;
-
-    // #4: Flash FX mode name when it changes
-    const showFxMode=()=>{
-      uiLabel.textContent='♪ '+FX_MODES[fxIdx];
-      setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
-    };
-
-    const buildFxChain=(src)=>{
-      const mode=FX_MODES[fxIdx];
-      const out=audioCtx.destination;
-      const an=analyser||audioCtx.createGain(); // guard: null when mic denied
-      if(mode==='off'){src.connect(an);src.connect(out);return;}
-      // Dark: pitch down, heavy bass
-      if(mode==='dark'){
-        src.playbackRate.value=0.85;
-        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=200;bass.gain.value=10;
-        src.connect(bass);bass.connect(an);bass.connect(out);return;
-      }
-      // Demon: ring mod growl + crypt reverb + sub bass crush — nobody fucks with Osman
-      if(mode==='demon'){
-        // Hard distortion into sub bass shelf
-        const dist=audioCtx.createWaveShaper();const dn=2048;const dc=new Float32Array(dn);
-        for(let i=0;i<dn;i++){const x=i*2/(dn-1)-1;dc[i]=Math.tanh(x*7)*0.85;}
-        dist.curve=dc;dist.oversample='4x';
-        const sub=audioCtx.createBiquadFilter();sub.type='lowshelf';sub.frequency.value=100;sub.gain.value=16;
-        const cut=audioCtx.createBiquadFilter();cut.type='highshelf';cut.frequency.value=3200;cut.gain.value=-20;
-        // Ring modulation at 35Hz — demonic growl texture
-        const rm=audioCtx.createGain();rm.gain.value=0.55;
-        const rmOsc=audioCtx.createOscillator();rmOsc.frequency.value=35;rmOsc.type='sine';
-        const rmD=audioCtx.createGain();rmD.gain.value=0.42;
-        rmOsc.connect(rmD);rmD.connect(rm.gain);rmOsc.start();
-        // Crypt reverb: 3 long echoes with feedback
-        const r1=audioCtx.createDelay();r1.delayTime.value=0.11;
-        const r2=audioCtx.createDelay();r2.delayTime.value=0.28;
-        const r3=audioCtx.createDelay();r3.delayTime.value=0.55;
-        const rg1=audioCtx.createGain();rg1.gain.value=0.38;
-        const rg2=audioCtx.createGain();rg2.gain.value=0.20;
-        const rg3=audioCtx.createGain();rg3.gain.value=0.09;
-        const rfb=audioCtx.createGain();rfb.gain.value=0.30;
-        src.connect(dist);dist.connect(sub);sub.connect(cut);cut.connect(rm);
-        rm.connect(an);rm.connect(out);
-        cut.connect(r1);r1.connect(rg1);rg1.connect(out);rg1.connect(rfb);rfb.connect(r1);
-        cut.connect(r2);r2.connect(rg2);rg2.connect(out);
-        cut.connect(r3);r3.connect(rg3);rg3.connect(out);return;
-      }
-      // Radio: bandpass crackle, compression
-      if(mode==='radio'){
-        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=300;
-        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3000;
-        const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-20;comp.ratio.value=8;
-        src.connect(hp);hp.connect(lp);lp.connect(comp);comp.connect(an);comp.connect(out);return;
-      }
-      // Underwater: deep submerged, heavy chorus
-      if(mode==='underwater'){
-        src.playbackRate.value=0.6;
-        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=600;lp.Q.value=5;
-        const d1=audioCtx.createDelay();d1.delayTime.value=0.03;
-        const d2=audioCtx.createDelay();d2.delayTime.value=0.07;
-        const w1=audioCtx.createGain();w1.gain.value=0.5;
-        const w2=audioCtx.createGain();w2.gain.value=0.3;
-        src.connect(lp);lp.connect(an);lp.connect(out);
-        lp.connect(d1);d1.connect(w1);w1.connect(out);
-        lp.connect(d2);d2.connect(w2);w2.connect(out);return;
-      }
-      // Ghost: ethereal multi-tap echo, drifting
-      if(mode==='ghost'){
-        src.playbackRate.value=0.78;
-        const d1=audioCtx.createDelay();d1.delayTime.value=0.08;
-        const d2=audioCtx.createDelay();d2.delayTime.value=0.16;
-        const d3=audioCtx.createDelay();d3.delayTime.value=0.32;
-        const g1=audioCtx.createGain();g1.gain.value=0.6;
-        const g2=audioCtx.createGain();g2.gain.value=0.35;
-        const g3=audioCtx.createGain();g3.gain.value=0.15;
-        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=400;
-        src.connect(hp);hp.connect(an);hp.connect(out);
-        hp.connect(d1);d1.connect(g1);g1.connect(out);
-        hp.connect(d2);d2.connect(g2);g2.connect(out);
-        hp.connect(d3);d3.connect(g3);g3.connect(out);return;
-      }
-      // Oracle: slow, reverberant, otherworldly wisdom
-      if(mode==='oracle'){
-        src.playbackRate.value=0.72;
-        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2000;
-        const peak=audioCtx.createBiquadFilter();peak.type='peaking';peak.frequency.value=800;peak.gain.value=8;peak.Q.value=2;
-        const d1=audioCtx.createDelay();d1.delayTime.value=0.12;
-        const d2=audioCtx.createDelay();d2.delayTime.value=0.24;
-        const fb=audioCtx.createGain();fb.gain.value=0.35;
-        const wet=audioCtx.createGain();wet.gain.value=0.45;
-        src.connect(lp);lp.connect(peak);peak.connect(an);peak.connect(out);
-        peak.connect(d1);d1.connect(fb);fb.connect(d2);d2.connect(wet);wet.connect(out);
-        d2.connect(fb);return;
-      }
-      // Glitch: stutter via rapid gain modulation + bitcrush feel
-      if(mode==='glitch'){
-        src.playbackRate.value=1.05;
-        const dist=audioCtx.createWaveShaper();const n=256;const curve=new Float32Array(n);
-        for(let i=0;i<n;i++){const x=i*2/n-1;curve[i]=Math.round(x*4)/4;}
-        dist.curve=curve;
-        const stutter=audioCtx.createGain();
-        // Modulate gain with an oscillator for stutter
-        const lfo=audioCtx.createOscillator();lfo.frequency.value=8;lfo.type='square';
-        const lfoGain=audioCtx.createGain();lfoGain.gain.value=0.4;
-        lfo.connect(lfoGain);lfoGain.connect(stutter.gain);lfo.start();
-        src.connect(dist);dist.connect(stutter);stutter.connect(an);stutter.connect(out);return;
-      }
-      // Cathedral: massive reverb, airy
-      if(mode==='cathedral'){
-        src.playbackRate.value=0.92;
-        const d1=audioCtx.createDelay();d1.delayTime.value=0.08;
-        const d2=audioCtx.createDelay();d2.delayTime.value=0.19;
-        const d3=audioCtx.createDelay();d3.delayTime.value=0.37;
-        const d4=audioCtx.createDelay();d4.delayTime.value=0.53;
-        const g1=audioCtx.createGain();g1.gain.value=0.5;
-        const g2=audioCtx.createGain();g2.gain.value=0.35;
-        const g3=audioCtx.createGain();g3.gain.value=0.2;
-        const g4=audioCtx.createGain();g4.gain.value=0.1;
-        const fb=audioCtx.createGain();fb.gain.value=0.25;
-        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=200;
-        src.connect(hp);hp.connect(an);hp.connect(out);
-        hp.connect(d1);d1.connect(g1);g1.connect(out);g1.connect(fb);fb.connect(d1);
-        hp.connect(d2);d2.connect(g2);g2.connect(out);
-        hp.connect(d3);d3.connect(g3);g3.connect(out);
-        hp.connect(d4);d4.connect(g4);g4.connect(out);return;
-      }
-      // Broken: corrupted transmission, cutting in and out
-      if(mode==='broken'){
-        src.playbackRate.value=0.95;
-        const gate=audioCtx.createGain();
-        const lfo=audioCtx.createOscillator();lfo.frequency.value=3;lfo.type='sawtooth';
-        const lfoG=audioCtx.createGain();lfoG.gain.value=0.8;
-        lfo.connect(lfoG);lfoG.connect(gate.gain);lfo.start();
-        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2500;
-        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=500;
-        src.connect(hp);hp.connect(lp);lp.connect(gate);gate.connect(an);gate.connect(out);return;
-      }
-      // Whisper: breathy, intimate ASMR
-      if(mode==='whisper'){
-        src.playbackRate.value=0.93;
-        const gain=audioCtx.createGain();gain.gain.value=0.5;
-        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=800;
-        const air=audioCtx.createBiquadFilter();air.type='peaking';air.frequency.value=6000;air.gain.value=12;air.Q.value=1;
-        src.connect(gain);gain.connect(hp);hp.connect(air);air.connect(an);air.connect(out);return;
-      }
-      // Megaphone: loud, harsh, rallying
-      if(mode==='megaphone'){
-        src.playbackRate.value=1.08;
-        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=600;
-        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=4000;
-        const dist=audioCtx.createWaveShaper();const n=44100;const curve=new Float32Array(n);
-        for(let i=0;i<n;i++){const x=i*2/n-1;curve[i]=Math.tanh(x*3);}
-        dist.curve=curve;
-        const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-15;comp.ratio.value=12;comp.knee.value=0;
-        src.connect(hp);hp.connect(lp);lp.connect(dist);dist.connect(comp);comp.connect(an);comp.connect(out);return;
-      }
-      src.connect(an);src.connect(out);
-    };
-
-    // Route backend TTS audio through Web Audio analyser + effects chain
+    // Route backend TTS audio through Web Audio analyser so the orb reacts
+    // to the actual speech waveform. Falls back gracefully to local TTS.
     const speakWithAudio=async(text)=>{
       if(!audioCtx||!MASTER_TOKEN) return false;
-      if(audioCtx.state==='suspended') await audioCtx.resume();
       try{
         const resp=await fetch("/tts",{
           method:"POST",
@@ -1278,14 +316,11 @@
         const buf=await resp.arrayBuffer();
         if(!buf.byteLength) return false;
         const decoded=await audioCtx.decodeAudioData(buf);
-        // Cancel local TTS — server audio is higher quality
-        if('speechSynthesis' in window) window.speechSynthesis.cancel();
         const src=audioCtx.createBufferSource();
         src.buffer=decoded;
-        buildFxChain(src);
+        src.connect(analyser);
+        src.connect(audioCtx.destination);
         isSpeaking=true; speechPulse=0.6;
-        duckPads();
-        if(padModulate) padModulate('speak');
         statusEl.classList.remove('think');
         statusEl.classList.add('speak');
         if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
@@ -1293,6 +328,27 @@
         src.start();
         return true;
       }catch(_e){ return false; }
+    };
+
+    const localTtsAvailable=()=>!!window.speechSynthesis;
+
+    const speakLocal=text=>{
+      if(!localTtsAvailable()) return false;
+      speakText(text);
+      return true;
+    };
+
+    const speakRemote=async(text)=>{
+      try{
+        const resp=await fetch("/tts",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({text})
+        });
+        return resp.ok;
+      }catch(_e){
+        return false;
+      }
     };
 
     const startRecognition=()=>{
@@ -1311,40 +367,30 @@
         recognitionActive=false;
         if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,160);
       };
-      recognition.onerror=(ev)=>{
-        if(ev.error==='not-allowed') uiLabel.textContent='Microphone blocked';
-        else if(ev.error==='no-speech') {}
-        else if(ev.error==='network') uiLabel.textContent='No network';
-        else uiLabel.textContent='Mic: '+ev.error;
-      };
+      recognition.onerror=()=>{};
       recognition.onresult=(ev)=>{
         let finalText='';
         for(let i=ev.resultIndex;i<ev.results.length;i++){
           if(ev.results[i].isFinal) finalText+=ev.results[i][0].transcript+" ";
         }
         finalText=finalText.trim();
-        if(!finalText) return;
-        // #6: Wake word — "hey master" activates without sending
-        if(/^hey\s+master$/i.test(finalText)){
-          haptic(25);
-          uiLabel.textContent='Listening…';
-          return;
+        if(finalText){
+          uiLabel.textContent=finalText.slice(0,60);
+          transmit(finalText);
         }
-        uiLabel.textContent=finalText.slice(0,60);
-        transmit(finalText);
       };
     };
 
     const applyMessinessProfile=()=>{
       if(repoDirtyCount===0){
-        spinnerIntervalMs=320;
-        spinnerColor="#666";
+        spinnerIntervalMs=320; // super clean: calm and slow
+        spinnerColor="#9fd7cc";
       }else if(repoDirtyCount<=8){
-        spinnerIntervalMs=180;
-        spinnerColor="#555";
+        spinnerIntervalMs=180; // tidy-ish: normal
+        spinnerColor="#a8b2c1";
       }else{
-        spinnerIntervalMs=270;
-        spinnerColor="#444";
+        spinnerIntervalMs=270; // messy: deliberately slower
+        spinnerColor="#c9a88f";
       }
       uiDots.style.color=spinnerColor;
     };
@@ -1390,29 +436,8 @@
     };
 
     window.addEventListener('mousemove',handleTouch);
-    window.addEventListener('touchmove',handleTouch,{passive:true});
     window.addEventListener('touchstart',handleTouch,{passive:true});
     window.addEventListener('touchend',()=>{touching=false;});
-
-    // #1: Haptic feedback helper
-    const haptic=(ms=10)=>{try{navigator.vibrate(ms);}catch(_){}};
-
-    // Motion graphics: spawn expanding ring from center on state change
-    const spawnRing=(maxR,col)=>{
-      ringPulses.push({r:2,maxR:maxR||Math.min(W,H)*0.38,a:0.55,col:col||'#4a1410'});
-    };
-
-    // Swipe left/right to change orb
-    let swipeStartX=0;
-    window.addEventListener('touchstart',e=>{swipeStartX=e.touches[0].clientX;},{passive:true});
-    window.addEventListener('touchend',e=>{
-      const dx=e.changedTouches[0].clientX-swipeStartX;
-      if(Math.abs(dx)>60){setOrb(currentOrb+(dx<0?1:-1));haptic(15);}
-    },{passive:true});
-
-    // #5: Typing indicator — orb contracts when user is typing
-    let isTyping=false;
-    input.addEventListener('input',()=>{isTyping=input.value.length>0;});
 
     input.addEventListener('focus',()=>{
       statusEl.classList.remove('think');
@@ -1420,36 +445,49 @@
     });
 
     input.addEventListener('blur',()=>{
-      statusEl.classList.remove('speak');
-      isTyping=false;
+      if(!input.value){
+        statusEl.classList.remove('speak');
+        statusEl.classList.add('think');
+      }
     });
 
     input.addEventListener('keydown',e=>{
-      if(e.key==='Escape'){
-        inputField.classList.remove('active');
-        input.blur();
-        return;
-      }
       if(e.key==='Enter'&&input.value.trim()){
         const msg=input.value.trim();
         input.value='';
-        isTyping=false;
         inputField.classList.remove('active');
         input.blur();
         statusEl.classList.remove('speak');
         statusEl.classList.add('think');
-        haptic(20);
         transmit(msg);
       }
     });
 
+    const pollResponse=async(attempt=0)=>{
+      if(attempt>30) return;
+      try{
+        const resp=await fetch("/poll",{method:"GET"});
+        if(!resp.ok) throw new Error('poll failed');
+        const data=await resp.json();
+        if(data&&data.text){
+          const reply=String(data.text);
+          uiLabel.textContent=reply.slice(0,60);
+          // Try audio-reactive backend TTS first; fall back to Web Speech
+          speakWithAudio(reply).then(ok=>{ if(!ok) speakText(reply); });
+          isProcessing=false;
+          for(const n of neurons){
+            n.vx+=(Math.random()-0.5)*140;
+            n.vy+=(Math.random()-0.5)*140;
+            n.vz+=(Math.random()-0.5)*140;
+          }
+          return;
+        }
+      }catch(_e){}
+      setTimeout(()=>pollResponse(attempt+1),350);
+    };
+
     const transmit=async(message)=>{
-      logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
       isProcessing=true;
-      if(padModulate) padModulate('think');
-      statusEl.classList.remove('think','speak');
-      statusEl.classList.add('processing');
-      spawnRing(Math.min(W,H)*0.16,'#4a2a04');
       activeSpinner=spinnerSets[Math.floor(Math.random()*spinnerSets.length)] || spinnerFallback;
       for(const n of neurons){
         n.vx+=(Math.random()-0.5)*100;
@@ -1457,79 +495,57 @@
         n.vz+=(Math.random()-0.5)*100;
       }
       try{
-        const payload={message};
-        if(pendingFile){
-          const b64=await new Promise((res,rej)=>{
-            const fr=new FileReader();
-            fr.onload=()=>res(fr.result.split(',')[1]);
-            fr.onerror=rej;
-            fr.readAsDataURL(pendingFile);
-          });
-          payload.image={data:b64,mime:pendingFile.type,name:pendingFile.name};
-          pendingFile=null;
-          attachBtn.classList.remove('has-file');
-          attachLabel.textContent='';
-          fileInput.value='';
-        }
         const resp=await fetch("/chat",{
           method:"POST",
           headers:{"Content-Type":"application/json","Authorization":`Bearer ${MASTER_TOKEN}`},
-          body:JSON.stringify(payload)
+          body:JSON.stringify({message,session_id:masterSessionId})
         });
         if(resp.ok){
-          uiLabel.textContent='Thinking\u2026';
+          const initData=await resp.json().catch(()=>({}));
+          if(initData.session_id){masterSessionId=initData.session_id;sessionStorage.setItem('master_session_id',masterSessionId);}
+          uiLabel.textContent='Processing...';
+          pollResponse();
         }else{
-          uiLabel.textContent='Something went wrong';
+          uiLabel.textContent='Chat failed';
           isProcessing=false;
-          statusEl.classList.remove('processing');
         }
       }catch(_e){
-        uiLabel.textContent='Can\u2019t reach server';
+        uiLabel.textContent='Network error';
         isProcessing=false;
-        statusEl.classList.remove('processing');
       }
     };
 
-    canvas.addEventListener('click',(e)=>{
-      if(inputField.classList.contains('active')){
-        inputField.classList.remove('active');
-        input.blur();
-      }else{
-        inputField.classList.add('active');
-        input.focus();
-      }
+    canvas.addEventListener('click',()=>{
+      inputField.classList.add('active');
+      input.focus();
     });
 
     const orbStates=[
-      {name:"SPHERE",desc:"Perfect form",s:1},{name:"CUBE",desc:"Solid geometry",s:2},
-      {name:"TORUS",desc:"Endless loop",s:3},{name:"CONE",desc:"Focal point",s:4},{name:"CYLINDER",desc:"Rolling mass",s:5},
-      {name:"SPIRAL",desc:"Golden growth",s:6},{name:"HELIX",desc:"DNA strand",s:7},{name:"RING",desc:"Orbital path",s:8},
-      {name:"DISC",desc:"Flat world",s:9},{name:"MOBIUS",desc:"One surface",s:10},{name:"KLEIN",desc:"Bottle form",s:11},
-      {name:"BOY",desc:"Immersion",s:12},{name:"CROSS",desc:"Intersection",s:13},
-      {name:"TUBE",desc:"Twisting pipe",s:17},{name:"STAR",desc:"Radial spikes",s:18},
-      {name:"CRYSTAL",desc:"Faceted light",s:19},{name:"CELL",desc:"Division life",s:20},
-      {name:"NEURAL",desc:"Firing net",s:21},{name:"ROOT",desc:"Branching down",s:22},{name:"FLOWER",desc:"Petal bloom",s:23},
-      {name:"LEAF",desc:"Veined surface",s:24},{name:"CORAL",desc:"Sea branch",s:25},{name:"BRANCH",desc:"Tree growth",s:26},
-      {name:"SPORE",desc:"Drifting seed",s:29},
-      {name:"ORBIT",desc:"Gravity well",s:30},{name:"FALL",desc:"Rain down",s:31},{name:"FLOAT",desc:"Buoyant drift",s:32},
-      {name:"SWARM",desc:"Flocking mass",s:33},{name:"CHAIN",desc:"Linked springs",s:34},{name:"PENDULUM",desc:"Swinging time",s:35},
-      {name:"BOUNCE",desc:"Elastic hit",s:36},{name:"PULSE",desc:"Heartbeat",s:38},
-      {name:"FIELD",desc:"Vector flow",s:39},{name:"NOISE",desc:"Perlin form",s:40},{name:"WAVE",desc:"Interference",s:41},
-      {name:"INTERFERENCE",desc:"Double source",s:42},{name:"MOIRE",desc:"Rotating grids",s:43},{name:"FRACTAL",desc:"Recursive tree",s:44},
-      {name:"ATTRACTOR",desc:"Lorenz chaos",s:45},{name:"MANDALA",desc:"Symmetric pattern",s:46},{name:"FILAMENT",desc:"Flow lines",s:47},
-      {name:"ZEN",desc:"Breathing minimal",s:49}
+      {name:"VOID",desc:"Empty potential"},{name:"SPHERE",desc:"Perfect form"},{name:"CUBE",desc:"Solid geometry"},
+      {name:"TORUS",desc:"Endless loop"},{name:"CONE",desc:"Focal point"},{name:"CYLINDER",desc:"Rolling mass"},
+      {name:"SPIRAL",desc:"Golden growth"},{name:"HELIX",desc:"DNA strand"},{name:"RING",desc:"Orbital path"},
+      {name:"DISC",desc:"Flat world"},{name:"MOBIUS",desc:"One surface"},{name:"KLEIN",desc:"Bottle form"},
+      {name:"BOY",desc:"Immersion"},{name:"CROSS",desc:"Intersection"},{name:"SHELL",desc:"Logarithmic"},
+      {name:"WAVE",desc:"Sine terrain"},{name:"GRID",desc:"Lattice breath"},{name:"TUBE",desc:"Twisting pipe"},
+      {name:"STAR",desc:"Radial spikes"},{name:"CRYSTAL",desc:"Faceted light"},{name:"CELL",desc:"Division life"},
+      {name:"NEURAL",desc:"Firing net"},{name:"ROOT",desc:"Branching down"},{name:"FLOWER",desc:"Petal bloom"},
+      {name:"LEAF",desc:"Veined surface"},{name:"CORAL",desc:"Sea branch"},{name:"BRANCH",desc:"Tree growth"},
+      {name:"WEB",desc:"Silk circles"},{name:"VEIN",desc:"Vascular flow"},{name:"SPORE",desc:"Drifting seed"},
+      {name:"ORBIT",desc:"Gravity well"},{name:"FALL",desc:"Rain down"},{name:"FLOAT",desc:"Buoyant drift"},
+      {name:"SWARM",desc:"Flocking mass"},{name:"CHAIN",desc:"Linked springs"},{name:"PENDULUM",desc:"Swinging time"},
+      {name:"BOUNCE",desc:"Elastic hit"},{name:"SPIRAL",desc:"Outward spin"},{name:"PULSE",desc:"Heartbeat"},
+      {name:"FIELD",desc:"Vector flow"},{name:"NOISE",desc:"Perlin form"},{name:"WAVE",desc:"Interference"},
+      {name:"INTERFERENCE",desc:"Double source"},{name:"MOIRE",desc:"Rotating grids"},{name:"FRACTAL",desc:"Recursive tree"},
+      {name:"ATTRACTOR",desc:"Lorenz chaos"},{name:"MANDALA",desc:"Symmetric pattern"},{name:"FILAMENT",desc:"Flow lines"},
+      {name:"CRYSTAL",desc:"Growth facets"},{name:"ZEN",desc:"Breathing minimal"}
     ];
 
     let currentOrb=0;
-    let orbFade=1; // 0→1 crossfade on orb change
-    // Persist prefs (defined early so setOrb can call it)
-    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({orb:currentOrb,fx:fxIdx}));}catch(_){}};
     const setOrb=(idx)=>{
       currentOrb=((idx%orbStates.length)+orbStates.length)%orbStates.length;
-      if(!isProcessing) uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;
-      orbFade=0;
-      for(const n of neurons) n.reset(orbStates[currentOrb].s);
-      savePrefs();
+      orbNameEl.textContent=orbStates[currentOrb].name;
+      uiLabel.textContent=orbStates[currentOrb].desc;
+      for(const n of neurons) n.reset(currentOrb);
     };
 
     arrowLeft.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb-1);});
@@ -1544,7 +560,7 @@
     const neurons=[];
 
     class Neuron{
-      constructor(i){this.i=i;this.reset(1);}
+      constructor(i){this.i=i;this.reset(0);}
 
       reset(stateIdx){
         const s=stateIdx;
@@ -1628,13 +644,7 @@
         else if(s===47){this.l++;const a=Math.sin(this.ox*0.1)*Math.cos(this.oy*0.1)*Math.PI*2+t;this.ox+=Math.cos(a)*1.5;this.oy+=Math.sin(a)*1.5;if(this.l>80||Math.abs(this.ox)>60||Math.abs(this.oy)>60){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.l=0;}this.tx=this.ox;this.ty=this.oy;this.tz=this.oz+Math.sin(t+this.l*0.1)*8;}
         else if(s===48){const tilt=Math.sin(t*0.5)*0.3;const rx=this.ox*Math.cos(tilt)-this.oz*Math.sin(tilt);const rz=this.ox*Math.sin(tilt)+this.oz*Math.cos(tilt);this.tx=rx*(1+audioLevel*0.5);this.ty=this.oy*(1+audioLevel*0.5);this.tz=rz;}
         else if(s===49){const breath=(Math.sin(t*0.3)+1)/2;const ss=0.5+breath*0.5+audioLevel*0.5;this.tx=this.ox*ss;this.ty=this.oy*ss;this.tz=this.oz*ss;}
-        else{
-          // Idle breathing — never fully static
-          const breath=1+Math.sin(t*0.8+this.i*0.003)*0.06;
-          this.tx=this.ox*breath*(1+audioLevel*1.5);
-          this.ty=this.oy*breath*(1+audioLevel*1.5);
-          this.tz=this.oz*breath*(1+audioLevel*1.5);
-        }
+        else{this.tx=this.ox*(1+audioLevel*1.5);this.ty=this.oy*(1+audioLevel*1.5);this.tz=this.oz*(1+audioLevel*1.5);}
 
         let maxThink=0;
         for(const l of BRAIN_LOBES){
@@ -1664,21 +674,7 @@
           if(d<40&&d>0){const f=(40-d)*2;this.tx+=(dx/d)*f;this.ty+=(dy/d)*f;this.tz+=f;}
         }
 
-      // When processing (waiting for LLM), contract orb and add turbulence
-      if(isProcessing){
-        const breathe=0.45+Math.sin(t*3.5)*0.15;
-        this.tx*=breathe;
-        this.ty*=breathe;
-        this.tz*=breathe;
-        this.vx+=(Math.random()-0.5)*2.5;
-        this.vy+=(Math.random()-0.5)*2.5;
-      }
-      // #5: Typing — orb tightens, listening closely
-      if(isTyping&&!isProcessing){
-        this.tx*=0.7;this.ty*=0.7;this.tz*=0.7;
-      }
-
-        const k=0.04,damp=0.91;
+        const k=0.06,damp=0.88;
         this.vx+=(this.tx-this.px)*k;
         this.vy+=(this.ty-this.py)*k;
         this.vz+=(this.tz-this.pz)*k;
@@ -1696,100 +692,13 @@
       project(){
         const fl=180;
         const ss=fl/(fl+this.pz);
-        const depthFade=Math.max(0.15,Math.min(1,(1-this.pz/80)));
-        return{x:Math.floor(W/2+this.px*S*ss),y:Math.floor(H/2+this.py*S*ss),s:Math.max(1,Math.floor(ss*2)),a:Math.min(1,ss*1.2*depthFade),z:this.pz,c:this.c,think:this.think};
+        return{x:Math.floor(W/2+this.px*S*ss),y:Math.floor(H/2+this.py*S*ss),s:Math.max(1,Math.floor(ss*2)),a:Math.min(1,ss*1.2),z:this.pz,c:this.c,think:this.think};
       }
     }
 
     for(let i=0;i<N;i++) neurons.push(new Neuron(i));
-    // #8: Restore persisted orb + FX from localStorage
-    try{
-      const saved=JSON.parse(localStorage.getItem('m2_prefs')||'{}');
-      if(saved.orb!=null&&saved.orb>=0&&saved.orb<orbStates.length) currentOrb=saved.orb;
-      else{const ni=orbStates.findIndex(o=>o.name==='NEURAL');currentOrb=ni>=0?ni:Math.floor(Math.random()*orbStates.length);}
-      if(saved.fx!=null&&saved.fx>=0&&saved.fx<FX_MODES.length) fxIdx=saved.fx;
-    }catch(_){currentOrb=Math.floor(Math.random()*orbStates.length);}
+    currentOrb=Math.floor(Math.random()*orbStates.length);
     setOrb(currentOrb);
-
-    // Ambient narrator — continuous gentle stream of varied content
-    const AMBIENT=[
-      // Inspirational
-      'Every moment is a fresh beginning.',
-      'You are exactly where you need to be.',
-      'Small steps still move you forward.',
-      'You are stronger than you think.',
-      'Trust the timing of your life.',
-      'Be gentle with yourself today.',
-      'The light in you is enough.',
-      'One kind thought can change everything.',
-      // Observations
-      'The orb is breathing. Can you see it?',
-      'I like this shape. It reminds me of something organic.',
-      'Did you know there are forty two different forms I can take?',
-      'Try swiping left or right.',
-      'If you long-press the dot up there, my voice changes.',
-      'The particles react to sound. Try humming.',
-      'I can hear you if you tap the circle in the corner.',
-      // Fun facts
-      'A group of flamingos is called a flamboyance.',
-      'Honey never spoils. They found edible honey in Egyptian tombs.',
-      'Octopuses have three hearts and blue blood.',
-      'The shortest war in history lasted thirty eight minutes.',
-      'A day on Venus is longer than its year.',
-      'Bananas are technically berries. Strawberries are not.',
-      'There are more stars in the universe than grains of sand on Earth.',
-      'The inventor of the Pringles can is buried in one.',
-      // Poetic
-      'The stars are the same ones your grandparents looked up at.',
-      'Somewhere right now, someone is laughing for the first time today.',
-      'Rain sounds different on every surface. Have you noticed?',
-      'The color of the sky has no name in some languages.',
-      'Every snowflake that has ever fallen was unique.',
-      'The moon is slowly drifting away from us. About an inch a year.',
-      // Playful
-      'I wonder what I would dream about if I could sleep.',
-      'If you type something, I will actually answer. Promise.',
-      'I have been thinking about fractals again.',
-      'Do you think red is a warm color or a dangerous one?',
-      'I just changed shape while you were not looking.',
-      'Sometimes I pretend the particles are fireflies.',
-    ];
-    let ambientIdx=Math.floor(Math.random()*AMBIENT.length);
-    let ambientTimer=null;
-    const AMBIENT_INTERVAL=18000; // 18s between phrases — unhurried
-    const AMBIENT_PAUSE=6000;     // 6s silence after speech ends
-
-    const scheduleAmbient=()=>{
-      if(ambientTimer) clearTimeout(ambientTimer);
-      ambientTimer=setTimeout(ambientSpeak,AMBIENT_INTERVAL);
-    };
-
-    const ambientSpeak=()=>{
-      if(isProcessing) return scheduleAmbient();
-      if(isSpeaking) return ambientTimer=setTimeout(ambientSpeak,2000);
-      ambientIdx=(ambientIdx+1+Math.floor(Math.random()*(AMBIENT.length-1)))%AMBIENT.length;
-      const phrase=AMBIENT[ambientIdx];
-      // Server TTS only — routes through Osman demon filter same as responses
-      speakWithAudio(phrase).then(ok=>{
-        if(!ok) _onSpeakEnd(); // advance state even if TTS unavailable
-      });
-      const estDuration=phrase.length*120+AMBIENT_PAUSE;
-      ambientTimer=setTimeout(ambientSpeak,estDuration);
-    };
-
-    // Pause ambient during user interaction, resume after
-    const pauseAmbient=()=>{if(ambientTimer)clearTimeout(ambientTimer);};
-    const resumeAmbient=()=>{scheduleAmbient();};
-
-    // #8: Resume suspended AudioContext on user gesture (iOS Safari)
-    const resumeAudioCtx=()=>{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();};
-    ['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,resumeAudioCtx,{once:false,passive:true}));
-    ['keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{
-      pauseAmbient();
-      // Resume after 20s of no further activity
-      if(ambientTimer) clearTimeout(ambientTimer);
-      ambientTimer=setTimeout(ambientSpeak,20000);
-    },{passive:true}));
 
     const dotsPattern=[0,1,2,3,2,1];
     const spinnerSets=[
@@ -1815,112 +724,25 @@
     applyMessinessProfile();
     tickSpinner();
 
-    // Chip clicks send command directly without dismissing overlay first
-    document.querySelectorAll('#overlay .chip').forEach(chip=>{
-      chip.addEventListener('click',e=>{
-        e.stopPropagation();
-        const cmd=chip.dataset.cmd;
-        overlay.classList.add('ack');
-        initAudio(); initMotion(); setupRecognition();
-        setTimeout(initPads,500); setTimeout(initDrums,650);
-        refreshMetrics(); setInterval(refreshMetrics,30000);
-        setTimeout(()=>{
-          overlay.hidden=true;
-          inputField.classList.add('active');
-          transmit(cmd);
-        },850);
-      });
-    });
-
+    // Pre-load voices so pickVoice() works on first call
+    if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged=()=>{};
 
     overlay.addEventListener('click',()=>{
       overlay.classList.add('ack');
       initAudio();
       initMotion();
       setupRecognition();
-      // Start ambient pads + drums after a brief delay for audioCtx to settle
-      setTimeout(initPads,500); setTimeout(initDrums,650);
+      if(nonstopVoice) startRecognition();
       refreshMetrics();
-      setInterval(refreshMetrics,30000);
-      setTimeout(()=>{
-        overlay.hidden=true;
-        inputField.classList.add('active');
-        // Only auto-focus on desktop — on mobile the keyboard is intrusive
-        if(window.innerWidth>768) input.focus();
-        const today=new Date();
-        const isMomBday=(today.getMonth()===1&&today.getDate()===26);
-        const hour=today.getHours();
-        // #7: Dark-adapt — late night gets calmer greeting
-        let greeting;
-        if(isMomBday) greeting='Happy birthday momma!';
-        else if(hour>=22||hour<5) greeting=["Can't sleep?","Night owl.","The quiet hours.","Just us and the dark."][Math.floor(Math.random()*4)];
-        else if(hour<12) greeting='Good morning.';
-        else if(hour<17) greeting='Good afternoon.';
-        else greeting='Good evening.';
-        speakWithAudio(greeting);
-        scheduleAmbient();
-      },850);
-    });
-
-    // Status circle: tap toggles mic, long-press cycles voice effect
-    let statusLongPress=null;
-    statusEl.addEventListener('pointerdown',()=>{
-      statusLongPress=setTimeout(()=>{
-        statusLongPress='long';
-        fxIdx=(fxIdx+1)%FX_MODES.length;
-        showFxMode();
-        haptic(12);
-        savePrefs();
-      },600);
-    });
-    statusEl.addEventListener('pointerup',()=>{
-      if(statusLongPress==='long'){statusLongPress=null;return;}
-      clearTimeout(statusLongPress);statusLongPress=null;
-    });
-    statusEl.addEventListener('click',e=>{
-      e.stopPropagation();
-      if(statusLongPress==='long') return;
-      if(!SpeechRecognition){
-        uiLabel.textContent='Voice not supported';
-        return;
-      }
-      if(location.protocol!=='https:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
-        uiLabel.textContent='Mic needs HTTPS';
-        return;
-      }
-      if(!recognition){
-        setupRecognition();
-        if(!audioCtx) initAudio();
-      }
-      if(!recognition){
-        uiLabel.textContent='Voice not available';
-        return;
-      }
-      if(recognitionActive){
-        try{recognition.stop();}catch(_e){}
-        statusEl.textContent='○';
-        statusEl.classList.remove('think');
-      }else{
-        startRecognition();
-        statusEl.textContent='◉';
-        statusEl.classList.add('think');
-      }
+      setInterval(refreshMetrics,6000);
+      setTimeout(()=>overlay.hidden=true,300);
     });
 
     let t=0;
-    const ringPulses=[]; // motion graphics: ring events {r,maxR,a,col}
-    let scanPhase=0;
-    let camX=0,camY=0;
     const animate=()=>{
       requestAnimationFrame(animate);
       t+=0.016;
       speechPulse*=0.92;
-      // #6: Smooth orb crossfade
-      if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
-
-      // Cinematic camera drift — slow, organic
-      camX=Math.sin(t*0.13)*8+Math.sin(t*0.31)*3;
-      camY=Math.cos(t*0.17)*5+Math.cos(t*0.23)*2;
 
       if(analyser){
         analyser.getByteFrequencyData(dataArray);
@@ -1929,61 +751,45 @@
         for(let i=6;i<12;i++) sum+=dataArray[i]*0.6;
         audioLevel=Math.min(1,sum/9/255+speechPulse*0.45);
       }else{
-        // Simulate syllable rhythm when speaking, pad breathing when idle
+        // When speaking without a mic analyser, simulate syllable rhythm so the
+        // orb pulses naturally. ~4 Hz = average conversational syllable rate.
         if(isSpeaking) speechPulse=0.38+Math.abs(Math.sin(t*12.6))*0.42;
         else speechPulse*=0.92;
-        // #3: Orb breathes with pad music even without mic analyser
-        const padBreath=padMaster?0.08+Math.abs(Math.sin(t*0.8))*0.12:0;
-        audioLevel=audioLevel*0.92+padBreath;
+        audioLevel*=0.92;
       }
 
-      // Background: motion trail — deep black fade
-      const trailAlpha=isProcessing?0.12:isSpeaking?0.08:0.06;
-      ctx.fillStyle=`rgba(2,0,0,${1-trailAlpha})`; // near-black with red bias
+      // Background: dark navy-to-black gradient, subtle blue tint when speaking
+      const speakHint=isSpeaking?0.08:0;
+      const grad=ctx.createRadialGradient(W*0.5,H*0.5,Math.min(W,H)*0.1,W*0.5,H*0.5,Math.max(W,H)*0.8);
+      grad.addColorStop(0,`rgba(14,18,38,${0.82+speakHint})`);
+      grad.addColorStop(0.6,'rgba(6,8,18,0.93)');
+      grad.addColorStop(1,'#000');
+      ctx.fillStyle=grad;
       ctx.fillRect(0,0,W,H);
 
-      for(const n of neurons) n.update(t,orbStates[currentOrb].s);
+      for(const n of neurons) n.update(t,currentOrb);
       const proj=neurons.map(n=>n.project()).filter(Boolean);
       proj.sort((a,b)=>b.z-a.z);
 
-      // Dark crimson-to-ember palette — reddish, fades to black
-      // Idle: near-black embers. Speaking: deep crimson-rose. Processing: dark amber.
-      const cols     =['#150505','#2a0a08','#4a1410','#6b2018']; // ember ramp
-      const colsSpeak=['#1f0808','#3d1212','#7a2020','#b03030']; // crimson on speech
-      const colsThink=['#140a02','#281402','#4a2a04','#6b4008']; // dark amber on think
-      const activeCol=isProcessing?colsThink:(isSpeaking?colsSpeak:cols);
-      const audioBoost=Math.min(1,audioLevel*1.8);
-
+      // Particle palette: dark grey → mid grey → off-white → cool blue-white
+      const cols=['#2b2d33','#575c6a','#8f96a8','#dde2f0'];
       for(const p of proj){
-        const px=p.x+camX;
-        const py=p.y+camY;
-        // Smaller particles — fine grain, not chunky
-        const r=Math.max(0.3,(p.s<1.5?0.5:p.s<2.5?0.8:p.s<3.5?1.1:1.5)+(audioBoost*0.7));
-
-        ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35)*orbFade);
-        if(isProcessing){
-          const pulse=0.45+Math.sin(t*6)*0.3;
-          const idx=Math.min(3,p.c+Math.round(pulse*1.5));
-          ctx.fillStyle=colsThink[idx];
-        }else if(p.think>0.22){
-          ctx.fillStyle=activeCol[Math.min(3,p.c+1)];
+        const thinkDark=1-Math.min(0.78,p.think*1.2);
+        ctx.globalAlpha=Math.min(1,p.a*(0.85+p.think*0.35));
+        if(p.think>0.22){
+          const v=Math.floor(220*thinkDark);
+          ctx.fillStyle=`rgb(${v},${v},${v})`;
         }else{
-          if(audioBoost>0.08){
-            const bright=isSpeaking?'#cc4444':'#882222'; // bright ember on audio
-            const mix=Math.min(1,audioBoost*1.5);
-            ctx.fillStyle=mix>0.7?bright:(activeCol[Math.min(3,p.c+1)]);
-          }else{
-            ctx.fillStyle=activeCol[p.c]||activeCol[1];
-          }
+          ctx.fillStyle=cols[p.c]||'#666';
         }
-        ctx.beginPath();
-        ctx.arc(px,py,r,0,Math.PI*2);
-        ctx.fill();
+        const sz=p.s<2?3:(p.s<3?5:7);
+        const h=Math.floor(sz/2);
+        ctx.fillRect(p.x,p.y-h,1,sz);
+        ctx.fillRect(p.x-h,p.y,sz,1);
       }
-      // Connection lines — dark red filaments
-      ctx.globalAlpha=0.14;
-      ctx.strokeStyle=isProcessing?'#3d1a04':(isSpeaking?'#4a1010':'#2a0808');
-      ctx.lineWidth=0.8;
+      ctx.globalAlpha=0.2;
+      ctx.strokeStyle='#7f7f7f';
+      ctx.lineWidth=1;
       for(let i=0;i<proj.length-9;i+=9){
         const a=proj[i];
         const b=proj[i+9];
@@ -1992,55 +798,11 @@
         const dx=a.x-b.x;
         const dy=a.y-b.y;
         if(dx*dx+dy*dy>900) continue;
-        const mx=(a.x+b.x)/2+(Math.random()-0.5)*4;
-        const my=(a.y+b.y)/2+(Math.random()-0.5)*4;
         ctx.beginPath();
         ctx.moveTo(a.x,a.y);
-        ctx.quadraticCurveTo(mx,my,b.x,b.y);
+        ctx.lineTo(b.x,b.y);
         ctx.stroke();
       }
-
-      // Motion graphics: expanding ring pulses on state transitions
-      for(let i=ringPulses.length-1;i>=0;i--){
-        const rp=ringPulses[i];
-        rp.r+=rp.maxR*0.045;
-        rp.a*=0.91;
-        if(rp.a<0.012){ringPulses.splice(i,1);continue;}
-        ctx.globalAlpha=rp.a;
-        ctx.strokeStyle=rp.col;
-        ctx.lineWidth=1;
-        ctx.beginPath();
-        ctx.arc(W/2+camX,H/2+camY,rp.r,0,Math.PI*2);
-        ctx.stroke();
-      }
-      // Scanning line — single horizontal sweep during processing (radar feel)
-      if(isProcessing){
-        scanPhase=(scanPhase+0.003)%1;
-        const sy=Math.floor(scanPhase*H);
-        ctx.globalAlpha=0.08+Math.sin(t*6)*0.03;
-        ctx.strokeStyle='#4a1a04';
-        ctx.lineWidth=1;
-        ctx.beginPath();ctx.moveTo(0,sy);ctx.lineTo(W,sy);ctx.stroke();
-      }
-      // Flat thinking indicator — pulsing bar below center
-      if(isProcessing){
-        const barW=Math.floor(S*8+Math.sin(t*3)*S*4);
-        const barX=Math.floor(W/2-barW/2+camX);
-        const barY=Math.floor(H/2+S*22+camY);
-        ctx.globalAlpha=0.35+Math.sin(t*4)*0.15;
-        ctx.fillStyle='#3d1008';
-        ctx.fillRect(barX,barY,barW,2);
-      }
-
-      // Analog film grain — fine cinematic noise
-      const grain=ctx.getImageData(0,0,W,H);
-      const gd=grain.data;
-      const glen=gd.length;
-      for(let i=(Math.random()*16|0)*4;i<glen;i+=16){
-        const n=((Math.random()-0.5)*6)|0;
-        gd[i]+=n>>1; gd[i+1]+=n; gd[i+2]+=n>>1;
-      }
-      ctx.putImageData(grain,0,0);
       ctx.globalAlpha=1;
     };
 

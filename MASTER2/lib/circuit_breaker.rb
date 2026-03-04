@@ -1,98 +1,154 @@
 # frozen_string_literal: true
 
-module CircuitBreaker
-  class OpenCircuitError < StandardError; end
-
-  class Breaker
-    DEFAULT_FAILURE_THRESHOLD = 5
-    DEFAULT_RESET_TIMEOUT = 60
-    HALF_OPEN_MAX_TRIALS = 1
-
-    STATE_CLOSED = :closed
-    STATE_OPEN = :open
-    STATE_HALF_OPEN = :half_open
-
-    def initialize(failure_threshold: DEFAULT_FAILURE_THRESHOLD, reset_timeout: DEFAULT_RESET_TIMEOUT)
-      @failure_threshold = failure_threshold
-      @reset_timeout = reset_timeout
-
-      @mutex = Mutex.new
-      @state = STATE_CLOSED
-      @failure_count = 0
-      @opened_at = nil
-      @half_open_trials = 0
+# Try to load Stoplight, fall back to simple implementation if not available
+begin
+  require "stoplight"
+rescue LoadError
+  # Simple mock for when Stoplight is not available
+  module Stoplight
+    class Light
+      def self.default_data_store
+        nil
+      end
     end
 
-    def call
-      @mutex.synchronize { reset_if_timeout! }
-      raise OpenCircuitError, "circuit is open" unless allow_request?
+    module Error
+      class RedLight < StandardError; end
+    end
+  end
 
+  def Stoplight(name, threshold: 3, cool_off_time: 300)
+    StoplightMock.new(name, threshold, cool_off_time)
+  end
+
+  class StoplightMock
+    attr_reader :name
+
+    @warned = false
+
+    class << self
+      attr_accessor :warned
+    end
+
+    def initialize(name, threshold = 3, cool_off_time = 300)
+      @name = name
+      @threshold = threshold
+      @cool_off_time = cool_off_time
+      unless self.class.warned
+        warn "Warning: Stoplight gem not available - circuit breaker disabled"
+        self.class.warned = true
+      end
+    end
+
+    def run
+      yield
+    end
+  end
+end
+
+module MASTER
+  # CircuitBreaker - Rate limiting and failure handling for LLM calls using Stoplight
+  # Prevents cascading failures and manages request throttling
+  module CircuitBreaker
+    module_function
+
+    # Custom exception for intentional circuit breaker state changes
+    class TestFailure < StandardError; end
+
+    FAILURES_BEFORE_TRIP = 3
+    CIRCUIT_RESET_SECONDS = 300
+    RATE_LIMIT_PER_MINUTE = 30
+    # Value used to test circuit state without side effects
+    PROBE_VALUE = :probe
+
+    # Pre-initialize all mutexes at load time to avoid race on first use
+    @lights_mutex = Mutex.new
+    @lights = {}
+    @rate_limit_mutex = Mutex.new
+    @rate_limit_state = { requests: [], window_start: Time.now }
+
+    class << self
+      attr_reader :rate_limit_mutex, :rate_limit_state
+    end
+
+    def rate_limit_state
+      @rate_limit_state
+    end
+
+    def check_rate_limit!
+      @rate_limit_mutex.synchronize do
+        now = Time.now
+        state = rate_limit_state
+
+        # Clean old requests (older than 1 minute)
+        state[:requests].reject! { |t| now - t > 60 }
+
+        if state[:requests].size >= RATE_LIMIT_PER_MINUTE
+          oldest = state[:requests].min
+          wait_time = 60 - (now - oldest)
+          if wait_time > 0
+            Logging.warn("Rate limit reached, waiting", seconds: wait_time.round)
+            sleep(wait_time)
+            state[:requests].clear
+          end
+        end
+
+        state[:requests] << now
+      end
+    end
+
+    # Build or retrieve cached Stoplight instance for a model.
+    # Supports Stoplight 4.x (chained), 5.x (keyword args), 6.x+ (keyword only).
+    def build_light(model)
+      @lights_mutex.synchronize { return @lights[model] if @lights[model] }
+      @lights_mutex.synchronize do
+        @lights[model] ||= begin
+          Stoplight("llm-#{model}", threshold: FAILURES_BEFORE_TRIP, cool_off_time: CIRCUIT_RESET_SECONDS)
+        rescue ArgumentError
+          Stoplight("llm-#{model}").with_threshold(FAILURES_BEFORE_TRIP).with_cool_off_time(CIRCUIT_RESET_SECONDS)
+        end
+      end
+    end
+
+    # Check if circuit is closed for a model
+    def circuit_closed?(model)
+      light = build_light(model)
       begin
-        result = yield
-      rescue StandardError
-        record_failure
-        raise
-      end
-
-      record_success
-      result
-    end
-
-    def state
-      @mutex.synchronize { @state }
-    end
-
-    private
-
-    def allow_request?
-      @mutex.synchronize do
-        return true if @state == STATE_CLOSED
-        return false if @state == STATE_OPEN
-        return false if @half_open_trials >= HALF_OPEN_MAX_TRIALS
-
-        @half_open_trials += 1
+        light.run { PROBE_VALUE }
         true
+      rescue Stoplight::Error::RedLight
+        false
       end
     end
 
-    def record_success
-      @mutex.synchronize do
-        close!
+    # Run a block with circuit breaker protection
+    def run(model, &)
+      check_rate_limit!
+      build_light(model).run(&)
+    end
+
+    # Record a failure to potentially trip the circuit
+    def open_circuit!(model)
+      light = build_light(model)
+      begin
+        light.run { raise TestFailure, "Intentional circuit breaker trip" }
+      rescue TestFailure, Stoplight::Error::RedLight
+        # Expected
       end
+    rescue StandardError => e
+      Logging.warn("Failed to open circuit", model: model, error: e.message)
     end
 
-    def record_failure
-      @mutex.synchronize do
-        @failure_count += 1
-        open! if @failure_count >= @failure_threshold
+    # Run a successful probe to clear failure counts
+    def close_circuit!(model)
+      light = build_light(model)
+      begin
+        light.run { PROBE_VALUE }
+      rescue Stoplight::Error::RedLight
+        # Circuit may still be open
       end
-    end
-
-    def open!
-      @state = STATE_OPEN
-      @opened_at = Time.now
-      @half_open_trials = 0
-    end
-
-    def half_open!
-      @state = STATE_HALF_OPEN
-      @failure_count = 0
-      @half_open_trials = 0
-    end
-
-    def close!
-      @state = STATE_CLOSED
-      @failure_count = 0
-      @opened_at = nil
-      @half_open_trials = 0
-    end
-
-    def reset_if_timeout!
-      return unless @state == STATE_OPEN
-      return unless @opened_at
-      return unless (Time.now - @opened_at) >= @reset_timeout
-
-      half_open!
+    rescue StandardError => e
+      Logging.warn("Failed to close circuit", model: model, error: e.message)
     end
   end
 end

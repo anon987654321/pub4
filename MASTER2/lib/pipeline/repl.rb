@@ -7,7 +7,7 @@ module MASTER
     HISTORY_FILE = ".master_history"
     MAX_HISTORY_LINES = 500
 
-    def repl(web_port: nil, web_token: nil)
+    def repl(web_port: nil)
       begin
         require "tty-reader"
       rescue LoadError
@@ -17,11 +17,10 @@ module MASTER
       reader = defined?(TTY::Reader) ? TTY::Reader.new(history_cycle: true) : nil
       load_input_history(reader)
       pipeline = new
-      Thread.current[:repl_pipeline] = pipeline
       session = Session.current
       last_interrupt = nil
 
-      web_port ? Boot.banner_with_web(web_port, web_token) : Boot.banner
+      web_port ? Boot.banner_with_web(web_port) : Boot.banner
 
       # Set initial model so prompt shows it immediately
       if LLM.configured?
@@ -36,10 +35,9 @@ module MASTER
       # Prescan
       Prescan.run(MASTER.root) if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
 
-      # Only warn about missing OpenRouter key if Replicate is also absent
-      unless ENV["OPENROUTER_API_KEY"] || LLM.configured_for_replicate?
-        UI.warn("models0: no LLM API key set")
-        UI.info("   #{UI.icon(:arrow)} export REPLICATE_API_KEY=r8_... or OPENROUTER_API_KEY=sk-or-v1-...")
+      unless ENV["OPENROUTER_API_KEY"]
+        UI.warn("models0: OPENROUTER_API_KEY not set")
+        UI.info("   #{UI.icon(:arrow)} export OPENROUTER_API_KEY=sk-or-v1-...")
       end
 
       # Initialize workflow
@@ -55,16 +53,6 @@ module MASTER
       puts "session0: #{name_or_id}"
 
       Autocomplete.setup_tty(reader) if reader && defined?(Autocomplete)
-
-      # First-run onboarding — no history file means brand new user
-      if !File.exist?(history_path) && session.message_count == 0
-        puts
-        puts "Welcome to MASTER. Type naturally or use commands."
-        puts "  scan .         — scan current directory for issues"
-        puts "  health         — check system status"
-        puts "  help beginner  — quick start guide"
-        puts
-      end
 
       loop do
         prompt_str = build_prompt(phase)
@@ -113,27 +101,6 @@ module MASTER
         # Track user input in session
         session.add_user(line.strip)
 
-        # % sigil: direct meta-op dispatch, bypasses LLM entirely
-        # % sigil: direct meta-op dispatch, bypasses LLM entirely
-        if line.strip.start_with?("%")
-          meta_input = line.strip[1..].strip
-          parts = meta_input.split(/\s+/, 2)
-          cmd_result = CommandRegistry.dispatch(parts[0], parts[1], pipeline: pipeline)
-          break if cmd_result == :exit
-          next if cmd_result
-          UI.warn("unknown meta-op: %#{parts[0]}  (try %help)")
-          next
-        end
-
-        # "command?" suffix → show help for that command
-        if line.strip.end_with?("?") && !line.strip.include?(" ")
-          cmd_name = line.strip.chomp("?")
-          if CommandRegistry::ALIAS_MAP.key?(cmd_name)
-            UI::Help.show(cmd_name)
-            next
-          end
-        end
-
         # Auto-name session from first user message
         if session.message_count == 1 && !session.metadata_value(:name)
           name = line.strip.split(/\s+/).first(5).join(" ")
@@ -146,19 +113,19 @@ module MASTER
           break if cmd_result == :exit
 
           if cmd_result.nil?
-            # Single-word typo: show suggestion but still fall through to LLM.
-            # Multi-word natural language always goes to LLM directly.
-            Commands.show_did_you_mean(line.strip) if line.strip.split.size == 1
+            # Unknown command — try did-you-mean before LLM fallthrough
+            shown = Commands.show_did_you_mean(line.strip)
+            next if shown
           elsif cmd_result.respond_to?(:ok?)
-            display_result(cmd_result, session) unless cmd_result.value.is_a?(Hash) && cmd_result.value[:handled]
+            display_result(cmd_result, session) unless cmd_result.value&.dig(:handled)
             next
           end
         end
 
-        # Gist #7: Elicitation checkpoint -- pause before complex/ambiguous tasks
+        # Gist #7: Elicitation checkpoint — pause before complex/ambiguous tasks
         pre_check = Stages::Intake.new.call({ text: line.strip })
         if pre_check.ok? && pre_check.value[:needs_elicitation]
-          print "This looks complex -- any constraints or preferences? (enter to skip) "
+          print "This looks complex — any constraints or preferences? (enter to skip) "
           clarification = $stdin.gets&.chomp
           line = "#{line.strip} [context: #{clarification}]" if clarification && !clarification.empty?
         end
@@ -181,7 +148,7 @@ module MASTER
 
     private
 
-    # Unified result display -- eliminates duplicated rendering
+    # Unified result display — eliminates duplicated rendering
     def display_result(result, session)
       if result.ok?
         output = result.value[:rendered] || result.value[:response]
@@ -189,16 +156,10 @@ module MASTER
         if output && !output.empty? && !streamed
           puts
           puts output
-        elsif streamed
-          # Streamed content may not end with newline -- ensure prompt starts clean
-          $stdout.print "\n"
-          $stdout.flush
         end
         if result.value[:cost]
           this_cost     = result.value[:cost].to_f
           running_total = session.total_cost + this_cost
-          model_name = result.value[:model] || "?"
-          $stderr.puts UI.dim("#{model_name} #{UI.currency_precise(this_cost)}")
           check_cost_limits(this_cost, running_total)
         end
         show_violations(result.value)
@@ -211,44 +172,27 @@ module MASTER
 
     def check_cost_limits(this_cost, session_total)
       @cost_limits ||= begin
-        thresholds = YAML.safe_load_file(Paths.data_file("quality_thresholds.yml"))
-        thresholds["cost_protection"] || {}
-      rescue StandardError
-        {}
+        f = File.join(MASTER.root, "data", "quality_thresholds.yml")
+        YAML.safe_load_file(f)["cost_protection"] rescue {}
       end
       max_request = @cost_limits["max_per_request"]&.to_f || 1.00
       max_session = @cost_limits["max_per_session"]&.to_f || 10.00
-      # Warn only at hard limits -- no noise below threshold
-      if this_cost >= max_request
-        $stderr.puts UI.dim("cost0: #{UI.currency_precise(this_cost)} > " \
-                            "max_per_request #{UI.currency(max_request)}")
-      end
-      if session_total >= max_session
-        $stderr.puts UI.dim("cost0: session #{UI.currency_precise(session_total)} > " \
-                            "max_per_session #{UI.currency(max_session)}")
-      end
+      # Warn only at hard limits — no noise below threshold
+      $stderr.puts UI.dim("cost0: #{UI.currency_precise(this_cost)} > max_per_request #{UI.currency(max_request)}") if this_cost >= max_request
+      $stderr.puts UI.dim("cost0: session #{UI.currency_precise(session_total)} > max_per_session #{UI.currency(max_session)}") if session_total >= max_session
     end
 
     def show_violations(value)
-      axiom_violations    = value[:axiom_violations]
-      zsh_violations      = value[:zsh_violations]
-      council_vetoes      = value[:council_vetoes]
-      security_veto       = value[:council_security_veto]
-      # Compact one-liners to stderr -- no noise when clean
-      if security_veto
-        veto_detail = council_vetoes&.any? ? " (#{council_vetoes.join(', ')})" : ""
-        $stderr.puts UI.dim("council0: security veto#{veto_detail}")
-      end
-      if axiom_violations&.any?
-        msg = "enforcer0: #{UI.pluralize(axiom_violations.size, 'violation')} -- #{axiom_violations.join(', ')}"
-        $stderr.puts UI.dim(msg)
-      end
-      if zsh_violations&.any?
-        $stderr.puts UI.dim("lint0: #{UI.pluralize(zsh_violations.size, 'violation')} -- " \
-                            "#{zsh_violations.map { |v| v[:tool] }.join(', ')}")
-      end
-      beauty_score = value[:beauty_score]
-      $stderr.puts UI.dim("✦ #{beauty_score}") if beauty_score&.> 0
+      av = value[:axiom_violations]
+      zv = value[:zsh_violations]
+      cv = value[:council_vetoes]
+      sv = value[:council_security_veto]
+      # Compact one-liners to stderr — no noise when clean
+      $stderr.puts UI.dim("council0: security veto#{cv&.any? ? " (#{cv.join(', ')})" : ""}") if sv
+      $stderr.puts UI.dim("enforcer0: #{UI.pluralize(av.size, 'violation')} — #{av.join(', ')}") if av&.any?
+      $stderr.puts UI.dim("lint0: #{UI.pluralize(zv.size, 'violation')} — #{zv.map { |v| v[:tool] }.join(', ')}") if zv&.any?
+      bs = value[:beauty_score]
+      $stderr.puts UI.dim("✦ #{bs}") if bs&.> 0
     end
 
     # Build prompt using Pipeline.prompt with fallback
@@ -260,7 +204,7 @@ module MASTER
       rescue StandardError
         "?"
       end
-      phase ? "master@#{model_name}$ " : "master@#{model_name}$ "
+      phase ? "master · #{model_name} · #{phase} ❯ " : "master · #{model_name} ❯ "
     end
 
     # Read single or multi-line input

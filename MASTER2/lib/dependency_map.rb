@@ -1,69 +1,73 @@
 # frozen_string_literal: true
 
-module DependencyMap
-  DEFAULT_SCOPES = %i[runtime development test].freeze
+module MASTER
+  # Scans lib/ for require_relative, class/module definitions, and
+  # MASTER:: references to build a dependency graph. Used to assess
+  # whether a file is safe to split without breaking dependents.
+  module DependencyMap
+    DEPENDENT_RISK_THRESHOLD = 5
 
-  class << self
-    def build(dependencies, scopes: DEFAULT_SCOPES)
-      scopes = Array(scopes).map(&:to_sym)
+    module_function
 
-      map = Hash.new { |h, k| h[k] = [] }
+    # Build the full dependency graph for all .rb files under root/lib
+    def build(root: MASTER.root)
+      lib_dir = File.join(root, "lib")
+      files = Dir.glob(File.join(lib_dir, "**", "*.rb"))
 
-      Array(dependencies).each do |dep|
-        next unless dep
-
-        name = dep_name(dep)
-        next if name.nil? || name.empty?
-
-        next unless include_dep?(dep, scopes)
-
-        Array(dep_children(dep)).each do |child|
-          child_name = dep_name(child)
-          next if child_name.nil? || child_name.empty?
-
-          map[name] << child_name
-        end
+      graph = {}
+      files.each do |file|
+        graph[file] = scan_file(file)
       end
-
-      map
+      graph
     end
 
-    private
+    # Determine if a file is safe to split based on how many other
+    # files depend on symbols it defines.
+    def safe_to_split?(file, graph: nil)
+      graph ||= build
+      entry = graph[file]
+      return { dependents: 0, risk: :low } unless entry
 
-    def include_dep?(dep, scopes)
-      dep_scope = dep_scope(dep)
-      dep_scope.nil? || scopes.include?(dep_scope)
+      defined_symbols = entry[:defines]
+      dependents = count_dependents(file, defined_symbols, graph)
+
+      risk = dependents > DEPENDENT_RISK_THRESHOLD ? :high : :low
+      { dependents: dependents, risk: risk }
     end
 
-    def dep_name(dep)
-      if dep.respond_to?(:name)
-        dep.name.to_s
-      elsif dep.is_a?(Hash)
-        (dep[:name] || dep["name"]).to_s
-      else
-        dep.to_s
-      end
+    # Parse a single file for its require_relative, definitions, and references
+    def scan_file(file)
+      return { requires: [], defines: [], references: [] } unless File.exist?(file)
+
+      content = File.read(file)
+      {
+        requires: extract_requires(content),
+        defines: extract_definitions(content),
+        references: extract_references(content),
+      }
     end
 
-    def dep_scope(dep)
-      if dep.respond_to?(:type)
-        dep.type&.to_sym
-      elsif dep.respond_to?(:scope)
-        dep.scope&.to_sym
-      elsif dep.is_a?(Hash)
-        (dep[:scope] || dep["scope"] || dep[:type] || dep["type"])&.to_sym
-      end
+    def extract_requires(content)
+      content.scan(/require_relative\s+["']([^"']+)["']/).flatten
     end
 
-    def dep_children(dep)
-      if dep.respond_to?(:dependencies)
-        dep.dependencies
-      elsif dep.respond_to?(:children)
-        dep.children
-      elsif dep.is_a?(Hash)
-        dep[:dependencies] || dep["dependencies"] || dep[:children] || dep["children"]
-      else
-        nil
+    def extract_definitions(content)
+      content.scan(/(?:class|module)\s+([\w:]+)/).flatten
+    end
+
+    def extract_references(content)
+      content.scan(/MASTER::\w+/).uniq
+    end
+
+    # Count how many files in the graph reference symbols defined by target
+    def count_dependents(target_file, defined_symbols, graph)
+      return 0 if defined_symbols.empty?
+
+      pattern = Regexp.union(defined_symbols)
+      graph.count do |file, entry|
+        next false if file == target_file
+
+        entry[:references].any? { |ref| ref.match?(pattern) }
       end
     end
   end

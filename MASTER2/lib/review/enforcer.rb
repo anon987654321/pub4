@@ -11,7 +11,7 @@ module MASTER
 
       LAYERS = %i[literal lexical conceptual semantic cognitive language_axiom].freeze
       SCOPES = %i[line unit file framework].freeze
-      SMELLS_FILE = File.join(MASTER.root, "data", "detectors.yml")
+      SMELLS_FILE = File.join(MASTER.root, "data", "smells.yml")
 
       # MASTER2 contribution rules and architecture
       ARCHITECTURE = {
@@ -191,10 +191,10 @@ module MASTER
             violations.concat(absolute)
           end
           violations
-        rescue StandardError => err
+        rescue StandardError => e
           @last_self_check = {
             timestamp: Time.now, files_checked: 0,
-            absolute_violations: [], passed: false, error: err.message
+            absolute_violations: [], passed: false, error: e.message
           }
           nil
         end
@@ -261,14 +261,9 @@ module MASTER
         # SECURITY NOTE: This uses eval() to execute code in a controlled binding.
         # for syntax-only validation, or execute in a subprocess with timeout.
         def simulate_with_input(code, input)
-          require "open3"
-          escaped_input = input.to_s.gsub("'", "'\\\\''")
-          escaped_code  = code.gsub("'", "'\\\\''")
-          out, _err, status = Open3.capture2e(
-            "ruby", "--disable=gems", "-e", "input=#{escaped_input.inspect}; #{code}",
-            stdin_data: "",
-          )
-          status.success? ? out : :error
+          binding_obj = binding
+          binding_obj.local_variable_set(:input, input)
+          eval(code, binding_obj)
         rescue StandardError
           :error
         end

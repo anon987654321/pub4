@@ -49,8 +49,8 @@ module MASTER
         Result.ok(violations: results, file: file_path, count: results.size)
       rescue LoadError
         Result.err("RuboCop gem not available.")
-      rescue StandardError => err
-        Result.err("RuboCop scan failed: #{err.message}")
+      rescue StandardError => e
+        Result.err("RuboCop scan failed: #{e.message}")
       end
     end
 

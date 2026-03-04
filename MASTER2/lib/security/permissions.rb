@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# Permissions -- Tiered privilege escalation for tool calls.
+# Permissions — Tiered privilege escalation for tool calls.
 # Implements gist item #4: Codex CLI sandbox permission levels.
 #
 # Tiers (set via MASTER_PERMISSION_TIER env var, default: :refactor):
-#   :readonly  -- read-only; no writes, no shell, no network
-#   :analyze   -- read + safe shell (ruby -c, git status); no writes, no network
-#   :refactor  -- read + workspace writes + safe shell; no network (DEFAULT)
-#   :full      -- all operations permitted (requires explicit opt-in)
+#   :readonly  — read-only; no writes, no shell, no network
+#   :analyze   — read + safe shell (ruby -c, git status); no writes, no network
+#   :refactor  — read + workspace writes + safe shell; no network (DEFAULT)
+#   :full      — all operations permitted (requires explicit opt-in)
 #
 # Usage:
 #   Permissions.check!(:file_write, path: "lib/foo.rb")   # raises on violation
@@ -39,7 +39,7 @@ module MASTER
           network:       false,
         },
         full: {
-          description: "Full: all operations (danger -- set MASTER_PERMISSION_TIER=full explicitly)",
+          description: "Full: all operations (danger — set MASTER_PERMISSION_TIER=full explicitly)",
           file_read:     true,
           file_write:    true,
           shell_command: true,

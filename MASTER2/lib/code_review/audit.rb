@@ -1,191 +1,172 @@
 # frozen_string_literal: true
 
-module CodeReview
-  class Audit
-    DEFAULT_MAX_FILE_LINES = 300
-    DEFAULT_MAX_METHOD_LINES = 20
-    MAX_SCAN_RESULTS = 10_000
+module MASTER
+  # Audit - Code smell detection and quality analysis
+  module Audit
+    extend self
 
-    RUBY_EXTENSIONS = [".rb", ".rake", ".gemspec"].freeze
-    SNAKE_CASE = /\A[a-z][a-z0-9_]*\z/.freeze
-    CAMEL_CASE = /\A[A-Z][A-Za-z0-9]*\z/.freeze
+    # Finding structure for audit results
+    Finding = Struct.new(
+      :file,
+      :line,
+      :severity,
+      :effort,
+      :category,
+      :message,
+      :suggestion,
+      keyword_init: true,
+    )
 
-    Offense = Struct.new(:file, :line, :message, keyword_init: true)
+    # Report class for collecting and analyzing findings
+    class Report
+      attr_reader :findings
 
-    def scan(root, max_file_lines: DEFAULT_MAX_FILE_LINES, max_method_lines: DEFAULT_MAX_METHOD_LINES)
-      root = root.to_s.strip
-      return [] if root.empty?
-
-      files = ruby_files_under(root)
-      return [] if files.empty?
-
-      offenses = files.flat_map do |file|
-        check_file(file, max_file_lines:, max_method_lines:)
+      def initialize
+        @findings = []
       end
 
-      offenses.first(MAX_SCAN_RESULTS)
-    rescue SystemCallError, ArgumentError
-      []
+      def add(finding)
+        @findings << finding
+      end
+
+      # Return findings sorted by priority (severity x effort score)
+      def prioritized
+        @findings.sort_by do |f|
+          severity_score = { critical: 4, high: 3, medium: 2, low: 1 }[f.severity] || 1
+          effort_score = { easy: 1, moderate: 2, hard: 3 }[f.effort] || 2
+
+          # Higher severity and lower effort = higher priority
+          -(severity_score * 10 / effort_score)
+        end
+      end
+
+      def summary
+        by_severity = @findings.group_by(&:severity)
+        by_category = @findings.group_by(&:category)
+
+        {
+          total: @findings.size,
+          by_severity: by_severity.transform_values(&:count),
+          by_category: by_category.transform_values(&:count),
+        }
+      end
     end
 
-    def check_file_length(path, max_lines: DEFAULT_MAX_FILE_LINES)
-      return [] unless File.file?(path)
+    # Scan files for code smells
+    def scan(files)
+      report = Report.new
+      files = [files] unless files.is_a?(Array)
 
-      content = read_file(path)
-      return [] if content.nil?
+      files.each do |file|
+        next unless File.exist?(file) && file.end_with?(".rb")
 
-      line_count = content.lines.count
-      return [] if line_count <= max_lines
+        begin
+          content = File.read(file)
+          lines = content.lines
 
-      [
-        Offense.new(
-          file: path,
-          line: 1,
-          message: "File too long (#{line_count} lines > #{max_lines})"
-        )
-      ]
-    end
+          # Check file length
+          check_file_length(file, lines, report)
 
-    def check_naming(path)
-      base = File.basename(path)
-      return [] unless File.file?(path)
-      return [] unless ruby_file?(base)
+          # Check method and variable names
+          check_naming(file, content, report)
+        rescue StandardError => e
+          report.add(Finding.new(
+                       file: file,
+                       line: 0,
+                       severity: :low,
+                       effort: :easy,
+                       category: :error,
+                       message: "Could not scan file: #{e.message}",
+                       suggestion: nil,
+                     ))
+        end
+      end
 
-      offenses = []
-      offenses.concat(check_file_basename(base, path))
-      offenses.concat(check_constant_naming(path))
-
-      offenses
+      Result.ok(report: report)
     end
 
     private
 
-    def check_file(path, max_file_lines:, max_method_lines:)
-      [
-        check_file_length(path, max_lines: max_file_lines),
-        check_naming(path),
-        check_method_lengths(path, max_lines: max_method_lines)
-      ].flatten
-    end
+    def check_file_length(file, lines, report)
+      thresholds = if defined?(MASTER::Smells)
+                     smells_thresholds = MASTER::Smells.thresholds
+                     {
+                       warn: smells_thresholds[:max_file_lines],
+                       error: smells_thresholds[:max_file_lines] * 2,
+                     }
+                   else
+                     { warn: 250, error: 500 }
+                   end
 
-    def ruby_files_under(root)
-      return [] unless File.directory?(root)
+      length = lines.size
 
-      Dir.glob(File.join(root, "**", "*")).select do |p|
-        File.file?(p) && ruby_file?(p)
-      end
-    rescue SystemCallError
-      []
-    end
-
-    def ruby_file?(path)
-      ext = File.extname(path)
-      RUBY_EXTENSIONS.include?(ext) || File.basename(path) == "Rakefile"
-    end
-
-    def read_file(path)
-      File.read(path, mode: "r:BOM|UTF-8")
-    rescue SystemCallError, ArgumentError
-      nil
-    end
-
-    def check_file_basename(base, path)
-      return [] if base == "Rakefile"
-
-      name = base.sub(/\.[^.]+\z/, "")
-      return [] if name.match?(SNAKE_CASE)
-
-      [
-        Offense.new(
-          file: path,
-          line: 1,
-          message: "File name should be snake_case: #{base}"
-        )
-      ]
-    end
-
-    def check_constant_naming(path)
-      content = read_file(path)
-      return [] if content.nil?
-
-      offenses = []
-      content.each_line.with_index(1) do |line, lineno|
-        const_name = extract_constant_name(line)
-        next if const_name.nil? || const_name.match?(CAMEL_CASE)
-
-        offenses << Offense.new(
-          file: path,
-          line: lineno,
-          message: "Constant should be CamelCase: #{const_name}"
-        )
-      end
-      offenses
-    end
-
-    def extract_constant_name(line)
-      match = line.match(/^\s*([A-Z][A-Za-z0-9_]*)\s*=\s*/)
-      match && match[1]
-    end
-
-    def check_method_lengths(path, max_lines:)
-      content = read_file(path)
-      return [] if content.nil?
-
-      methods = extract_ruby_methods(content)
-      methods.flat_map do |m|
-        next [] if m[:lines] <= max_lines
-
-        [
-          Offense.new(
-            file: path,
-            line: m[:start_line],
-            message: "Method '#{m[:name]}' is #{m[:lines]} lines (>#{max_lines})"
-          )
-        ]
+      if length > thresholds[:error]
+        report.add(Finding.new(
+                     file: file,
+                     line: 0,
+                     severity: :high,
+                     effort: :hard,
+                     category: :file_length,
+                     message: "File is too long (#{length} lines, threshold: #{thresholds[:error]})",
+                     suggestion: "Split into smaller, focused modules",
+                   ))
+      elsif length > thresholds[:warn]
+        report.add(Finding.new(
+                     file: file,
+                     line: 0,
+                     severity: :medium,
+                     effort: :moderate,
+                     category: :file_length,
+                     message: "File is getting long (#{length} lines, threshold: #{thresholds[:warn]})",
+                     suggestion: "Consider refactoring into smaller files",
+                   ))
       end
     end
 
-    def extract_ruby_methods(content)
-      methods = []
-      stack = []
-      lineno = 0
+    def check_naming(file, content, report)
+      # Generic verb patterns
+      generic_verbs = %w[handle process manage do execute perform run]
 
-      content.each_line do |line|
-        lineno += 1
-        if (name = parse_method_definition(line))
-          stack << { name:, start_line: lineno, depth: 0 }
-          next
-        end
+      # Check method names for generic verbs
+      content.scan(/^\s*def\s+([a-z_]+[a-z0-9_]*)/i).each do |match|
+        method_name = match[0]
 
-        next if stack.empty?
+        generic_verbs.each do |verb|
+          next unless method_name.start_with?(verb) && method_name.length < 15
 
-        stack[-1][:depth] += 1 if opens_block?(line)
-        stack[-1][:depth] -= 1 if closes_block?(line)
-
-        if ends_method?(line, stack[-1][:depth])
-          m = stack.pop
-          methods << { name: m[:name], start_line: m[:start_line], lines: lineno - m[:start_line] + 1 }
+          report.add(Finding.new(
+                       file: file,
+                       line: 0,
+                       severity: :low,
+                       effort: :easy,
+                       category: :naming,
+                       message: "Method '#{method_name}' uses generic verb '#{verb}'",
+                       suggestion: "Use more specific verb that describes what is being #{verb}d",
+                     ))
         end
       end
 
-      methods
-    end
+      # Vague noun patterns
+      vague_nouns = %w[data info item thing stuff object element]
 
-    def parse_method_definition(line)
-      match = line.match(/^\s*def\s+(self\.)?([a-zA-Z_][a-zA-Z0-9_!?=]*)/)
-      match && match[2]
-    end
+      # Check variable names for vague nouns
+      content.scan(/^\s*([a-z_]+[a-z0-9_]*)\s*=/).each do |match|
+        var_name = match[0]
 
-    def opens_block?(line)
-      line.match?(/\b(do|class|module|def|if|unless|case|while|until|for|begin)\b/) && !line.strip.start_with?("#")
-    end
+        vague_nouns.each do |noun|
+          next unless var_name.include?(noun) && var_name.length < 10
 
-    def closes_block?(line)
-      line.match?(/^\s*end\b/)
-    end
-
-    def ends_method?(line, depth)
-      line.match?(/^\s*end\b/) && depth <= 0
+          report.add(Finding.new(
+                       file: file,
+                       line: 0,
+                       severity: :low,
+                       effort: :easy,
+                       category: :naming,
+                       message: "Variable '#{var_name}' uses vague noun '#{noun}'",
+                       suggestion: "Use more descriptive name that indicates purpose",
+                     ))
+        end
+      end
     end
   end
 end

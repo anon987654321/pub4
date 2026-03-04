@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-# BeautyScorer -- detects aesthetic virtues and scores them positively.
+# BeautyScorer — detects aesthetic virtues and scores them positively.
 # Counterpart to the enforcer: where the enforcer counts violations,
 # BeautyScorer counts virtues. Both run on every review pass.
 #
 # Public interface:
-#   BeautyScorer.score(code, filename:) -> { score: Integer, virtues: Array }
-#   BeautyScorer.exemplar?(score)        -> Boolean
+#   BeautyScorer.score(code, filename:) → { score: Integer, virtues: Array }
+#   BeautyScorer.exemplar?(score)        → Boolean
 #   BeautyScorer.register_exemplar(name:, file:, lines:, score:, virtue:, why:)
 
 module MASTER
@@ -16,7 +16,7 @@ module MASTER
 
       EXEMPLAR_THRESHOLD = 6  # beauty score at which a method qualifies for exemplar registry
 
-      # Virtue detectors -- positive signal, not negative.
+      # Virtue detectors — positive signal, not negative.
       # Each returns points if the pattern is present.
       VIRTUES = [
         {
@@ -33,7 +33,7 @@ module MASTER
               lines <= 9 && no_rescue && shallow
             end
           },
-          label: "zen method -- single responsibility, minimal, no rescue",
+          label: "zen method — single responsibility, minimal, no rescue",
         },
         {
           id:      :no_comment_needed,
@@ -47,7 +47,7 @@ module MASTER
             total_lines   = code.lines.reject { |l| l.strip.empty? }.length
             comment_lines == 0 && total_lines > 3
           },
-          label: "no comments needed -- code is self-evident",
+          label: "no comments needed — code is self-evident",
         },
         {
           id:      :perfect_name,
@@ -73,7 +73,7 @@ module MASTER
             # Detect method chains: x.load.enforce.reflow style (3+ chained calls)
             code.match?(/\w+(?:\.\w+\(?\)?){3,}/)
           },
-          label: "composable method chain -- reads as natural sequence",
+          label: "composable method chain — reads as natural sequence",
         },
         {
           id:      :dense_expressive,
@@ -88,7 +88,7 @@ module MASTER
               lines <= 7 && ops >= 3
             end
           },
-          label: "dense and expressive -- many operations, few lines",
+          label: "dense and expressive — many operations, few lines",
         },
         {
           id:      :domain_language_pure,
@@ -110,7 +110,7 @@ module MASTER
             best = [judicial, build, flow].max
             best.to_f / methods.length >= 0.5
           },
-          label: "domain language pure -- names drawn from one semantic field",
+          label: "domain language pure — names drawn from one semantic field",
         },
       ].freeze
 
@@ -157,7 +157,7 @@ module MASTER
 
         File.write(path, YAML.dump(data))
       rescue StandardError
-        nil  # never raise -- beauty scoring is advisory
+        nil  # never raise — beauty scoring is advisory
       end
 
       # Inject top exemplars into LLM system message
@@ -174,7 +174,7 @@ module MASTER
         return "" if list.empty?
 
         lines = ["EXEMPLARS (reference these patterns as positive models):"]
-        list.each { |e| lines << "  * #{e['name']} in #{e['file']} -- #{e['why']}" }
+        list.each { |e| lines << "  · #{e['name']} in #{e['file']} — #{e['why']}" }
         lines.join("\n")
       rescue StandardError
         ""

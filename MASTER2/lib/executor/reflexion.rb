@@ -1,65 +1,122 @@
 # frozen_string_literal: true
 
-module Executor
-  class Reflexion
-    MAX_REACT_ITERATIONS = 3
-    MODEL_TEMPERATURE = 0.2
+module MASTER
+  class Executor
+    module Reflexion
+      def execute_reflexion(goal, tier:)
+        original_goal = goal.dup.freeze
+        max_attempts = 3
+        attempt = 0
 
-    def initialize(run_id:, actor:)
-      @run = ReflexionRun
-             .includes(:conversation, :agent, messages: :tool_calls)
-             .find(run_id)
-      @actor = actor
-    end
+        while attempt < max_attempts
+          attempt += 1
+          UI.dim("  attempt #{attempt}/#{max_attempts}")
 
-    def execute_reflexion
-      enforce_executable!
+          # Build augmented goal from original + all lessons so far
+          augmented_goal = if @reflections.any?
+                             lessons = @reflections.map { |r| r[:lessons] }.compact.reject(&:empty?)
+                             "#{original_goal}\n\nLESSONS FROM PREVIOUS ATTEMPTS:\n#{lessons.join("\n")}"
+                           else
+                             original_goal
+                           end
 
-      plan = build_reflexion_plan
-      return plan if plan.complete?
+          # Execute using ReAct
+          result = execute_react_inner(augmented_goal, tier: tier)
 
-      execute_react_inner(plan)
-    end
+          # Reflect on the result
+          reflection = reflect_on_result(original_goal, result, tier: :fast)
+          @reflections << reflection
 
-    private
+          if reflection[:success]
+            UI.dim("  ok")
+            return Result.ok(
+              answer: result.ok? ? result.value[:answer] : reflection[:improved_answer],
+              steps: @step,
+              pattern: :reflexion,
+              attempts: attempt,
+              reflections: @reflections,
+              history: @history,
+            )
+          end
 
-    def enforce_executable!
-      raise Reflexion::NotExecutableError, "run already completed" if @run.completed?
-      raise Reflexion::NotExecutableError, "conversation missing" if @run.conversation.nil?
-    end
+          UI.dim("  #{reflection[:critique][0..60]}")
 
-    def build_reflexion_plan
-      Planner.new(run: @run, actor: @actor).build
-    end
+          @history = [] # Reset for fresh attempt
+          @step = 0
+        end
 
-    def execute_react_inner(plan)
-      iterations = 0
-
-      while iterations < MAX_REACT_ITERATIONS && !plan.complete?
-        action = plan.next_action
-        break unless action
-
-        perform_plan_action(action)
-        plan = build_reflexion_plan
-        iterations += 1
+        Result.err("Failed after #{max_attempts} attempts with reflection")
       end
 
-      plan
-    end
+      def execute_react_inner(goal, tier:)
+        # Simplified ReAct without the outer Result wrapper
+        # Intentionally cap inner loop to respect overall step budget
+        start_time = MASTER::Utils.monotonic_now
 
-    def perform_plan_action(action)
-      case action.type
-      when :tool
-        ToolRunner.new(run: @run, action: action, actor: @actor).run
-      when :message
-        MessageRunner.new(
-          run: @run,
-          action: action,
-          actor: @actor,
-          temperature: MODEL_TEMPERATURE
-        ).run
-      else
-        raise ArgumentError, "unknown action type: #{action.type.inspect}"
+        [5, @max_steps - @step].min.times do
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
+          end
+
+          @step += 1
+          msgs = build_context_messages(goal)
+
+          result = LLM.ask(msgs.last[:content], messages: [msgs.first], tier: tier)
+          return Result.err("LLM error.") unless result.ok?
+
+          parsed = parse_response(result.value[:content].to_s)
+          record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
+
+          if parsed[:action] =~ COMPLETION_PATTERN
+            answer = parsed[:action].sub(COMPLETION_PATTERN, "")
+            return Result.ok(answer: answer, steps: @step)
+          end
+
+          observation = dispatch_action(parsed[:action])
+          @history.last[:observation] = observation
+        end
+
+        Result.err("No answer in 5 steps.")
+      end
+
+      def reflect_on_result(goal, result, tier:)
+        history_text = @history.map do |h|
+          "#{h[:thought]} -> #{h[:action]} -> #{h[:observation]&.[](0..200)}"
+        end.join("\n")
+
+        prompt = <<~REFLECT
+          Task: #{goal}
+
+          Execution trace:
+          #{history_text}
+
+          Result: #{result.ok? ? result.value[:answer] : result.error}
+
+          Reflect on this execution:
+          1. Did it successfully complete the task? (yes/no)
+          2. What went wrong or could be improved?
+          3. What lessons should be applied to the next attempt?
+          4. If the answer was incomplete, provide an improved answer.
+
+          Respond in this format:
+          SUCCESS: yes/no
+          CRITIQUE: (what went wrong)
+          LESSONS: (what to do differently)
+          IMPROVED_ANSWER: (better answer if needed)
+        REFLECT
+
+        llm_result = LLM.ask(prompt, tier: tier)
+        return { success: false, critique: "Reflection LLM call failed", lessons: "" } unless llm_result.ok?
+
+        content = llm_result.value[:content]
+        {
+          success: content.match?(/SUCCESS:\s*yes/i),
+          critique: content[/CRITIQUE:\s*(.+?)(?=LESSONS:|$)/mi, 1]&.strip || "",
+          lessons: content[/LESSONS:\s*(.+?)(?=IMPROVED_ANSWER:|$)/mi, 1]&.strip || "",
+          improved_answer: content[/IMPROVED_ANSWER:\s*(.+)/mi, 1]&.strip,
+        }
       end
     end
   end

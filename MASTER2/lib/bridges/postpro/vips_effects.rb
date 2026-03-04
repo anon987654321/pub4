@@ -1,198 +1,159 @@
 # frozen_string_literal: true
 
-require "vips"
-
-module Bridges
-  module Postpro
-    class VipsEffects
-      DEFAULT_QUALITY = 85
-      DEFAULT_BACKGROUND = [255, 255, 255].freeze
-
-      DEFAULT_WATERMARK_OPACITY = 0.35
-      DEFAULT_WATERMARK_GRAVITY = :southeast
-      WATERMARK_PADDING_PX = 16
-
-      SUPPORTED_OUTPUT_FORMATS = %w[jpg jpeg png webp tiff].freeze
-
-      def initialize(logger: nil)
-        @logger = logger
-      end
-
-      def render(
-        input_path:,
-        output_path:,
-        resize: nil,
-        watermark: nil,
-        format: nil,
-        quality: DEFAULT_QUALITY,
-        flatten: false,
-        background: DEFAULT_BACKGROUND
-      )
-        return false unless path_present?(input_path)
-        return false unless path_present?(output_path)
-
-        image = load_image(input_path)
-        return false unless image
-
-        image = apply_resize(image, resize) if resize
-        image = apply_watermark(image, watermark) if watermark
-        image = apply_flatten(image, flatten, background)
-
-        requested_format = format || File.extname(output_path.to_s).delete(".")
-        output_format = normalize_format(requested_format)
-
-        return false unless SUPPORTED_OUTPUT_FORMATS.include?(output_format)
-
-        save_image(
-          image: image,
-          output_path: output_path.to_s,
-          format: output_format,
-          quality: quality
-        )
-      end
-
+module MASTER
+  module Bridges
+    module PostproBridge
       private
 
-      def path_present?(path)
-        !blank?(path)
-      end
-
-      def blank?(value)
-        value.to_s.strip.empty?
-      end
-
-      def normalize_format(format)
-        format.to_s.downcase.strip
-      end
-
-      def load_image(input_path)
-        Vips::Image.new_from_file(input_path.to_s, access: :sequential)
-      rescue Vips::Error => e
-        log_error(e)
+      def load_image(path)
+        require "vips"
+        Vips::Image.new_from_file(path, access: :sequential)
+      rescue StandardError
         nil
       end
 
-      def save_image(image:, output_path:, format:, quality:)
-        case format
-        when "jpg", "jpeg"
-          image.write_to_file(output_path, Q: quality.to_i, strip: true)
-        when "png"
-          image.write_to_file(output_path, strip: true)
-        when "webp"
-          image.write_to_file(output_path, Q: quality.to_i, strip: true)
-        when "tiff"
-          image.write_to_file(output_path, Q: quality.to_i)
-        else
-          return false
+      def save_image(image, path)
+        image.write_to_file(path, Q: 95)
+        path
+      rescue StandardError
+        nil
+      end
+
+      def generate_output_path(input_path, preset)
+        dir = File.dirname(input_path)
+        ext = File.extname(input_path)
+        base = File.basename(input_path, ext)
+        timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+        File.join(dir, "#{base}_#{preset}_#{timestamp}#{ext}")
+      end
+
+      def apply_stock(image, stock_name)
+        stock = STOCKS[stock_name]
+        return image unless stock
+
+        gamma = stock[:gamma] || 0.65
+        image = image.gamma(gamma: 1.0 / gamma)
+
+        lift = stock[:lift] || 0.0
+        image = image.linear([1.0], [lift * 255]) if lift > 0
+
+        image
+      rescue StandardError
+        image
+      end
+
+      def apply_halation(image, intensity)
+        return image unless intensity > 0
+
+        luminance = image.colourspace("grey16")
+        bright_mask = luminance.more(220)
+
+        glow1 = bright_mask.gaussblur(15) * 0.5
+        glow2 = bright_mask.gaussblur(35) * 0.3
+        glow3 = bright_mask.gaussblur(70) * 0.2
+        glow = glow1 + glow2 + glow3
+
+        warm_glow = glow.bandjoin([glow * 0.35, glow * 0.15])
+        image.composite2(warm_glow * intensity * 255, "screen")
+      rescue StandardError
+        image
+      end
+
+      def apply_grain(image, intensity, stock_name = :kodak_portra)
+        return image unless intensity > 0
+
+        stock = STOCKS[stock_name] || STOCKS[:kodak_portra]
+        grain_size = stock[:grain] || 15
+
+        noise = Vips::Image.gaussnoise(image.width, image.height, sigma: grain_size * intensity * 10)
+        noise = noise.gaussblur(1.2)
+        noise_rgb = noise.bandjoin([noise, noise])
+        image.composite2(noise_rgb.cast("uchar"), "soft-light", opacity: intensity * 0.5)
+      rescue StandardError
+        image
+      end
+
+      def apply_teal_orange(image, intensity)
+        return image unless intensity > 0
+
+        r, g, b = image.bandsplit
+        r = r.linear([1 + (0.2 * intensity)], [5 * intensity])
+        b = b.linear([1 + (0.25 * intensity)], [0])
+        Vips::Image.bandjoin([r, g, b])
+      rescue StandardError
+        image
+      end
+
+      def apply_shadow_lift(image, amount)
+        return image unless amount > 0
+
+        luminance = image.colourspace("grey16").cast("float") / 255.0
+        shadow_mask = (1.0 - luminance).pow(2.0)
+        lift_amount = shadow_mask * amount * 255
+        lift_rgb = lift_amount.bandjoin([lift_amount, lift_amount])
+        image + lift_rgb
+      rescue StandardError
+        image
+      end
+
+      def apply_desaturate(image, amount)
+        return image unless amount > 0
+
+        gray = image.colourspace("grey16").colourspace("srgb")
+        (image * (1.0 - amount)) + (gray * amount)
+      rescue StandardError
+        image
+      end
+
+      def apply_tint(image, tint_color)
+        return image unless tint_color.is_a?(Array)
+
+        tint_layer = Vips::Image.black(image.width, image.height, bands: 3) + tint_color
+        (image * 0.95) + (tint_layer * 0.05)
+      rescue StandardError
+        image
+      end
+
+      def apply_lens(image, lens_name)
+        lens = LENSES[lens_name]
+        return image unless lens
+
+        image = apply_vignette_effect(image, lens[:vignette]) if lens[:vignette]&.positive?
+
+        if lens[:glow]&.positive?
+          glow = image.gaussblur(20) * lens[:glow]
+          image += glow
         end
 
-        true
-      rescue Vips::Error => e
-        log_error(e)
-        false
+        image
+      rescue StandardError
+        image
       end
 
-      def apply_resize(image, resize_options)
-        target_width = resize_options[:width]
-        target_height = resize_options[:height]
+      def apply_vignette_effect(image, intensity)
+        cx = image.width / 2.0
+        cy = image.height / 2.0
+        max_dist = Math.sqrt((cx * cx) + (cy * cy))
 
-        return image unless target_width || target_height
-
-        width = target_width&.to_i
-        height = target_height&.to_i
-
-        scale =
-          if width && height
-            [width.to_f / image.width, height.to_f / image.height].min
-          elsif width
-            width.to_f / image.width
-          elsif height
-            height.to_f / image.height
-          end
-
-        return image unless scale
-        return image unless scale < 1.0
-
-        image.resize(scale)
+        x = Vips::Image.xyz(image.width, image.height)
+        dist = ((x[0] - cx).pow(2) + (x[1] - cy).pow(2)).pow(0.5)
+        vignette = 1.0 - (dist / max_dist * intensity).min(1.0)
+        vignette_rgb = vignette.bandjoin([vignette, vignette])
+        image * vignette_rgb
+      rescue StandardError
+        image
       end
 
-      def apply_flatten(image, should_flatten, background)
-        return image unless should_flatten
-        return image unless image.has_alpha?
-
-        r, g, b = background.map(&:to_i)
-        image.flatten(background: [r, g, b])
-      end
-
-      def apply_watermark(image, watermark_options)
-        watermark_path = watermark_options[:path]
-        return image unless path_present?(watermark_path)
-
-        watermark_opacity = (watermark_options[:opacity] || DEFAULT_WATERMARK_OPACITY).to_f
-        gravity = (watermark_options[:gravity] || DEFAULT_WATERMARK_GRAVITY).to_sym
-        scale_factor = watermark_options[:scale]&.to_f
-
-        watermark = load_image(watermark_path)
-        return image unless watermark
-
-        watermark = watermark.colourspace("srgb") if watermark.interpretation != :srgb
-        watermark = watermark.bandjoin(255) unless watermark.has_alpha?
-
-        watermark =
-          if scale_factor && scale_factor.positive?
-            watermark.resize(scale_factor)
-          else
-            watermark
-          end
-
-        alpha = watermark.extract_band(watermark.bands - 1) * watermark_opacity
-        rgb = watermark.extract_band(0, n: 3)
-        watermark_rgba = rgb.bandjoin(alpha)
-
-        left, top = watermark_position_for(
-          gravity: gravity,
-          base_width: image.width,
-          base_height: image.height,
-          overlay_width: watermark_rgba.width,
-          overlay_height: watermark_rgba.height,
-          padding: WATERMARK_PADDING_PX
-        )
-
-        image.composite2(watermark_rgba, "over", x: left, y: top)
-      end
-
-      def watermark_position_for(gravity:, base_width:, base_height:, overlay_width:, overlay_height:, padding:)
-        max_left = [base_width - overlay_width - padding, padding].max
-        max_top = [base_height - overlay_height - padding, padding].max
-        mid_left = [(base_width - overlay_width) / 2, padding].max
-        mid_top = [(base_height - overlay_height) / 2, padding].max
-
-        case gravity
-        when :northwest
-          [padding, padding]
-        when :north
-          [mid_left, padding]
-        when :northeast
-          [max_left, padding]
-        when :west
-          [padding, mid_top]
-        when :center
-          [mid_left, mid_top]
-        when :east
-          [max_left, mid_top]
-        when :southwest
-          [padding, max_top]
-        when :south
-          [mid_left, max_top]
-        else # :southeast
-          [max_left, max_top]
+      def apply_effect(image, effect, intensity)
+        case effect
+        when :grain then apply_grain(image, intensity)
+        when :halation then apply_halation(image, intensity)
+        when :vignette then apply_vignette_effect(image, intensity)
+        when :teal_orange then apply_teal_orange(image, intensity)
+        when :shadow_lift then apply_shadow_lift(image, intensity)
+        when :desaturate then apply_desaturate(image, intensity)
+        else image
         end
-      end
-
-      def log_error(error)
-        return unless @logger
-
-        @logger.error(error.message)
       end
     end
   end

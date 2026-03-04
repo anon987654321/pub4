@@ -85,8 +85,8 @@ module MASTER
         begin
           result = block.call
           Result.ok(result: result)
-        rescue StandardError => err
-          Result.err("Execution failed: #{err.message}")
+        rescue StandardError => e
+          Result.err("Execution failed: #{e.message}")
         end
       end
 
