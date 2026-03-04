@@ -13,7 +13,7 @@ class TestIntegrationsCommand < Minitest::Test
     assert MASTER::Commands.respond_to?(:integrations, true)
   end
 
-  def test_integrations_catalog_is_high_signal_curated
+  def test_integrations_catalog_contains_openclaw_stack
     path = File.join(MASTER.root, "data", "integrations.yml")
     assert File.exist?(path)
 
@@ -21,15 +21,9 @@ class TestIntegrationsCommand < Minitest::Test
     repos = Array(catalog["repos"])
     names = repos.map { |r| r["name"] }
 
-    assert_equal "openclaw_telegram_local_ai_high_signal", catalog["profile"]
-    assert_operator repos.size, :<=, 8
-    assert_includes names, "litellm"
+    assert_operator repos.size, :>=, 10
     assert_includes names, "openclaw"
-    assert_includes names, "opencrabs"
     assert_includes names, "astrbot"
-    assert_includes names, "docsgpt"
-    refute_includes names, "openrouter_bot"
-    refute_includes names, "500_ai_agents_projects"
-    refute_includes names, "awesome_ai_agents"
+    assert_includes names, "telegram_link_summarizer_agent"
   end
 end

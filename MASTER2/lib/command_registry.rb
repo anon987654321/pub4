@@ -32,6 +32,8 @@ module MASTER
       bootstrap: { desc: "First-run setup", usage: "bootstrap", group: :system, aliases: [] },
       "history-dig": { desc: "Recover deleted historical file", usage: "history-dig [master.yml|master.json]",
                        group: :system, aliases: [] },
+      snapshot: { desc: "Create codebase snapshot markdown", usage: "snapshot [codebase]", group: :system,
+                  aliases: [] },
       codify: { desc: "Show/export codified design rules", usage: "codify [export-json]", group: :system, aliases: [] },
       "style-guides": { desc: "List/sync style guides", usage: "style-guides [sync]", group: :system,
                         aliases: %w[styleguides] },

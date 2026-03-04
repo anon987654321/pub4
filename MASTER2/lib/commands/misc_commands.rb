@@ -4,6 +4,7 @@ require "yaml"
 require "fileutils"
 require "open3"
 require "timeout"
+require "time"
 
 require_relative "misc_commands/selftest_full"
 require_relative "misc_commands/cinematic_persona"
@@ -238,6 +239,56 @@ module MASTER
         Result.ok(target: target, commit: commit, snapshot: dest)
       end
 
+      def snapshot(args = nil)
+        mode = args.to_s.strip.downcase
+        mode = "codebase" if mode.empty?
+        return Result.err("snapshot supports: codebase") unless mode == "codebase"
+
+        root = Dir.pwd
+        files = snapshot_text_files(root)
+        tree = ExecutionContext.dir_snapshot(root, max_depth: 4)
+        stamp = Time.now.utc.iso8601
+        out = File.join(Paths.var, "codebase_snapshot_#{Time.now.utc.strftime('%Y%m%d_%H%M%S')}.md")
+
+        lines = []
+        lines << "# Codebase Snapshot"
+        lines <<
+          "Generated: #{stamp} UTC"
+        lines << "Root: `#{root}`"
+        lines << "Files included: #{files.size}"
+        lines << ""
+        lines << "## Tree"
+        lines << "```text"
+        lines << tree
+        lines << "```"
+        lines << ""
+        lines << "## Files"
+
+        files.each do |rel|
+          full = File.join(root, rel)
+          content = File.read(full)
+          lang = snapshot_fence_language(rel)
+
+          lines << "### `#{rel}`"
+          lines << "```#{lang}"
+          lines << content
+          lines << "```"
+          lines << ""
+        rescue StandardError => e
+          lines << "### `#{rel}`"
+          lines << "```text"
+          lines << "[snapshot skipped: #{e.class}: #{e.message}]"
+          lines << "```"
+          lines << ""
+        end
+
+        File.write(out, lines.join("\n"))
+        puts "snapshot: wrote #{out}"
+        Result.ok(mode: mode, root: root, files: files.size, snapshot: out)
+      rescue StandardError => e
+        Result.err("snapshot failed: #{e.message}")
+      end
+
       def codify(args = nil)
         return Result.err("Design codex unavailable") unless defined?(Review::DesignCodex)
 
@@ -359,6 +410,45 @@ module MASTER
       end
 
       private
+
+      def snapshot_text_files(root)
+        exclude = %w[.git vendor node_modules tmp var].freeze
+
+        Dir.glob("**/*", File::FNM_DOTMATCH)
+          .reject { |path| path == "." || path == ".." }
+          .reject { |path| exclude.any? { |name| path == name || path.start_with?("#{name}/") } }
+          .select { |path| File.file?(File.join(root, path)) }
+          .reject { |path| File.size(File.join(root, path)) > 1_000_000 }
+          .select { |path| snapshot_text_file?(File.join(root, path)) }
+          .sort
+      end
+
+      def snapshot_text_file?(path)
+        sample = File.binread(path, 8192)
+        return false if sample.include?("\x00")
+
+        sample.encode("UTF-8", invalid: :replace, undef: :replace)
+        true
+      rescue StandardError
+        false
+      end
+
+      def snapshot_fence_language(path)
+        ext = File.extname(path).downcase
+        {
+          ".rb" => "ruby",
+          ".py" => "python",
+          ".js" => "javascript",
+          ".ts" => "typescript",
+          ".md" => "markdown",
+          ".yml" => "yaml",
+          ".yaml" => "yaml",
+          ".json" => "json",
+          ".sh" => "bash",
+          ".zsh" => "bash",
+          ".toml" => "toml",
+        }.fetch(ext, "text")
+      end
 
       def startup_checks
         bundle_ok = begin
