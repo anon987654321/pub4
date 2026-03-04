@@ -199,10 +199,11 @@ module MASTER
         dmesg_log("reason0", parent: "engine0", message: msg, level: LLM_ONLY)
       end
 
-      # Log model attempt (success or failure) — visible at default trace level
-      def model_event(model, status, details = nil)
+      # Log model attempt (success or failure)
+      # level: LLM_ONLY (default, visible) or ALL_EVENTS (hidden at default trace level)
+      def model_event(model, status, details = nil, level: LLM_ONLY)
         msg = "#{model} #{status}#{" #{details}" if details}"
-        dmesg_log("model0", parent: "llm0", message: msg, level: LLM_ONLY)
+        dmesg_log("model0", parent: "llm0", message: msg, level: level)
       end
 
       # Log memory operation
