@@ -1,0 +1,18 @@
+<% if notice %>
+  <div class="flash flash-notice" role="alert" data-controller="flash" data-flash-auto-dismiss-value="true">
+    <%= notice %>
+  </div>
+<% end %>
+
+<% if alert %>
+  <div class="flash flash-alert" role="alert" data-controller="flash" data-flash-auto-dismiss-value="true">
+    <%= alert %>
+  </div>
+<% end %>
+
+<% flash.each do |type, message| %>
+  <% next if type.to_s == "notice" || type.to_s == "alert" %>
+  <div class="flash flash-<%= type %>" role="alert" data-controller="flash" data-flash-auto-dismiss-value="true">
+    <%= message %>
+  </div>
+<% end %>

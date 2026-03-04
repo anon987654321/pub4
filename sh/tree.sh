@@ -1,15 +1,55 @@
 #!/usr/bin/env zsh
-# tree — full-path listing, dirs then files. No dotfiles. No external commands.
-# Usage: tree [dir]
 set -euo pipefail
-setopt extended_glob null_glob
+
+setopt nullglob extendedglob
+
+#
+# SIMPLE FULL-PATH LISTING FOR FILES AND FOLDERS
+
+#
+
+# Usage: tree <folder, leave empty to use current folder>
+
+#
+
+# Modern zsh approach: Uses glob qualifiers instead of external commands
+
+# - **/*(.N) = files only, N = nullglob (no error if empty)
+
+# - **/*(/) = directories only
+
+# - ${file#$dir/} = strip directory prefix (pure parameter expansion)
 
 print_tree() {
-  local dir="${${1:-.}%/}"
-  local -a dirs=( "$dir"/**/*(/on) )
-  local -a files=( "$dir"/**/*(.on) )
-  for d in $dirs;  { print -- "$d/" }
-  for f in $files; { print -- "$f"  }
+  local dir="${1:-.}"
+
+  # Remove trailing slash if present
+  dir="${dir%/}"
+
+  # Print directories first (with trailing slash)
+  for directory in "$dir"/**/*(/:t); do
+
+    # Skip dotfiles and dotfolders
+
+    [[ "${directory##*/}" == .* ]] && continue
+
+    # Reconstruct full path and print with trailing slash
+    local full_path="${dir}/${directory}"
+
+    [[ -d "$full_path" ]] && echo "${full_path}/"
+
+  done
+
+  # Print all files (no trailing slash)
+  for file in "$dir"/**/*(.N); do
+
+    # Skip dotfiles
+
+    [[ "${file##*/}" == .* ]] && continue
+
+    echo "$file"
+  done
+
 }
 
 print_tree "${1:-.}"

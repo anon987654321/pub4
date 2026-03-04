@@ -1,0 +1,14 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title><%= content_for?(:title) ? yield(:title) : @app_title || "Rails App" %></title>
+<%= csrf_meta_tags rescue nil %>
+<%= csp_meta_tag rescue nil %>
+
+<meta name="description" content="<%= content_for?(:description) ? yield(:description) : @app_description || 'Rails Application' %>">
+<meta name="theme-color" content="<%= @theme_color || '#1a1a1a' %>">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<%= stylesheet_link_tag "application", "data-turbo-track": "reload" rescue nil %>
+<%= javascript_importmap_tags rescue nil %>
