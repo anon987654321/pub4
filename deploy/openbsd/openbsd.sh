@@ -1072,17 +1072,28 @@ RENEWSCRIPT
 
   rm $crontab_tmp
 
-  # Pause for Rails upload
-  if [[ -t 0 ]]; then
+  # Generate and persist app ports so Stage 2 uses identical values
+  log INFO "Generating and persisting app ports..."
+  for app_entry in $ALL_APPS; do
+    typeset _app=${app_entry[(ws:*:)1]}
+    APP_PORTS[$_app]=$(generate_random_port)
+  done
+  {
+    print "BRGEN_PORT=${APP_PORTS[brgen]}"
+    print "AMBER_PORT=${APP_PORTS[amber]}"
+    print "BSDPORTS_PORT=${APP_PORTS[bsdports]}"
+  } > /etc/master_app_ports.conf
+  chmod 600 /etc/master_app_ports.conf
+  log INFO "App ports persisted to /etc/master_app_ports.conf"
 
+  # Pause for Rails upload (skipped in --auto mode)
+  if (( AUTO )); then
+    log INFO "Non-interactive (--auto): ensure Rails apps are uploaded to /home/<app>/<app>"
+  elif [[ -t 0 ]]; then
     log INFO "Upload Rails apps (brgen, amber, bsdports) to /home/<app>/<app> with Gemfile and database.yml. Press Enter to continue."
-
     read -r
-
   else
-
     log INFO "Non-interactive mode: Ensure Rails apps are uploaded to /home/<app>/<app>"
-
   fi
 
   print -r -- stage_1_complete > $STATE_FILE
@@ -1277,6 +1288,17 @@ EOF
 stage_2() {
   log INFO "Starting Stage 2: Services and Apps"
 
+  # Restore persisted ports from Stage 1
+  if [[ -f /etc/master_app_ports.conf ]]; then
+    source /etc/master_app_ports.conf
+    APP_PORTS[brgen]=${BRGEN_PORT:-$(generate_random_port)}
+    APP_PORTS[amber]=${AMBER_PORT:-$(generate_random_port)}
+    APP_PORTS[bsdports]=${BSDPORTS_PORT:-$(generate_random_port)}
+    log INFO "App ports loaded: brgen=${APP_PORTS[brgen]} amber=${APP_PORTS[amber]} bsdports=${APP_PORTS[bsdports]}"
+  else
+    log WARN "/etc/master_app_ports.conf not found — generating fresh ports"
+  fi
+
   check_dns_propagation
   # Check memory
   (( $(vmstat -s | awk '/free memory/{print $1}') < 512000 )) && {
@@ -1356,7 +1378,63 @@ EOF
 
   chmod 640 /etc/ssl/private/smtp.key /etc/ssl/smtp.crt
 
-  # PostgreSQL and Redis configuration removed per user request
+  # Install and configure PostgreSQL, PgBouncer, Redis
+  pkg_add postgresql-server pgbouncer redis 2>/dev/null || log WARN "Some packages may already be installed"
+
+  # Initialize PostgreSQL if needed
+  if [[ ! -d /var/postgresql/data ]]; then
+    su -l _postgresql -c "initdb -D /var/postgresql/data -E UTF8 --locale=C" || {
+      log ERROR "PostgreSQL initdb failed"; exit 1
+    }
+  fi
+  rcctl enable postgresql redis
+  rcctl start postgresql || log WARN "postgresql may already be running"
+  rcctl start redis || log WARN "redis may already be running"
+
+  # PgBouncer connection pooling config
+  cat > /etc/pgbouncer.ini << 'PGBOUNCER'
+[databases]
+brgen_production = host=127.0.0.1 port=5432 dbname=brgen_production
+amber_production = host=127.0.0.1 port=5432 dbname=amber_production
+bsdports_production = host=127.0.0.1 port=5432 dbname=bsdports_production
+
+[pgbouncer]
+listen_addr = 127.0.0.1
+listen_port = 6432
+pool_mode = transaction
+max_client_conn = 10000
+default_pool_size = 25
+server_idle_timeout = 600
+log_connections = 0
+PGBOUNCER
+  rcctl enable pgbouncer
+  rcctl start pgbouncer || log WARN "pgbouncer may already be running"
+
+  # Create PostgreSQL users and databases for each app (idempotent)
+  for app_entry in $ALL_APPS; do
+    typeset _app=${app_entry[(ws:*:)1]}
+    typeset _db_pass=$(openssl rand -hex 24)
+    typeset _env_file="/home/${_app}/.env"
+
+    su -l _postgresql -c "psql postgres" << SQL 2>/dev/null || true
+DO \$\$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${_app}') THEN
+    CREATE USER ${_app} WITH PASSWORD '${_db_pass}' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+  END IF;
+END \$\$;
+CREATE DATABASE ${_app}_production OWNER ${_app};
+SQL
+
+    # Write env file (mode 600, owned by app user)
+    [[ -f ${_env_file} ]] || {
+      print "DATABASE_URL=postgresql://${_app}:${_db_pass}@127.0.0.1:6432/${_app}_production" > ${_env_file}
+      print "RAILS_MASTER_KEY=$(openssl rand -hex 32)" >> ${_env_file}
+      chown ${_app}:${_app} ${_env_file} 2>/dev/null || true
+      chmod 600 ${_env_file}
+      log INFO "Created ${_env_file}"
+    }
+  done
+
   setup_services
   # Deploy Rails apps
   for app_entry in $ALL_APPS; do
@@ -1482,31 +1560,36 @@ EOF
 
 # Main execution
 main() {
+  # Parse flags: --auto skips interactive prompts; --resume runs Stage 2
+  typeset -g AUTO=0
+  typeset resume=0
 
-  typeset arg1=${1:-}
+  for arg in "$@"; do
+    case $arg in
+      --auto)   AUTO=1 ;;
+      --resume) resume=1 ;;
+      --help)
+        print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC, Rails apps, and Solid Stack.
+Usage: doas zsh openbsd.sh [--help | --resume] [--auto]
+  --auto    Skip interactive prompts (CI/non-interactive mode)
+  --resume  Run Stage 2 (after DNS propagation)"
+        exit 0 ;;
+    esac
+  done
 
   [[ -f $STATE_FILE && ! -r $STATE_FILE ]] && { log ERROR "$STATE_FILE not readable"; exit 1 }
 
-  if [[ $arg1 = --help ]]; then
-
-    print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC and minimal OpenSMTPD.
-Usage: doas zsh openbsd.sh [--help | --resume]"
-
-    exit 0
-
-  fi
-
-  if [[ $arg1 = --resume && -f $STATE_FILE && $(<$STATE_FILE) = stage_1_complete ]]; then
+  if (( resume )) && [[ -f $STATE_FILE && $(<$STATE_FILE) = stage_1_complete ]]; then
 
     stage_2
 
-  elif [[ -z $arg1 && ! -f $STATE_FILE ]]; then
+  elif ! (( resume )) && [[ ! -f $STATE_FILE ]]; then
 
     stage_1
 
   else
 
-    log ERROR "Invalid state. Use --help, --resume, or remove $STATE_FILE."
+    log ERROR "Invalid state. Use --help, --resume [--auto], or remove $STATE_FILE."
 
     exit 1
 

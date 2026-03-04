@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env zsh
 set -euo pipefail
 
 # Demo Rails 8 app generator - Simple CRUD with Hotwire

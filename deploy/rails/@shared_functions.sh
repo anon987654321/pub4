@@ -278,21 +278,20 @@ LAYOUT
 
 }
 
-# Setup Stimulus Reflex (if needed)
-setup_stimulus_reflex() {
+# Setup stimulus-components via importmap (replaces StimulusReflex)
+setup_stimulus_components() {
+  grep -q "stimulus-components" config/importmap.rb 2>/dev/null && return 0
+  cat >> config/importmap.rb << 'PINS'
 
-  grep -q "stimulus_reflex" Gemfile || cat >> Gemfile << 'GEMS'
-
-# Real-time with Stimulus Reflex
-gem "stimulus_reflex", "~> 3.5"
-
-gem "cable_ready", "~> 5.0"
-
-GEMS
-
-  bundle install
-  bin/rails stimulus_reflex:install
-
+# stimulus-components drop-in UI controllers
+pin "@stimulus-components/notification", to: "https://cdn.jsdelivr.net/npm/@stimulus-components/notification/dist/stimulus-notification.mjs"
+pin "@stimulus-components/dialog", to: "https://cdn.jsdelivr.net/npm/@stimulus-components/dialog/dist/stimulus-dialog.mjs"
+pin "@stimulus-components/clipboard", to: "https://cdn.jsdelivr.net/npm/@stimulus-components/clipboard/dist/stimulus-clipboard.mjs"
+pin "@stimulus-components/sortable", to: "https://cdn.jsdelivr.net/npm/@stimulus-components/sortable/dist/stimulus-sortable.mjs"
+pin "@stimulus-components/remote-rails", to: "https://cdn.jsdelivr.net/npm/@stimulus-components/remote-rails/dist/stimulus-remote-rails.mjs"
+pin "@stimulus-components/textarea-autogrow", to: "https://cdn.jsdelivr.net/npm/@stimulus-components/textarea-autogrow/dist/stimulus-textarea-autogrow.mjs"
+PINS
+  log "stimulus-components pinned to importmap"
 }
 
 # Add acts_as_votable with proper setup
@@ -434,60 +433,116 @@ install_gem() {
 setup_full_app() {
   typeset app_name="$1"
   typeset app_dir="${BASE_DIR:-/home/dev/rails}/${app_name}"
-  
+
   [[ -d "$app_dir" ]] || mkdir -p "$app_dir"
   cd "$app_dir"
-  
+
   if [[ ! -f "config/application.rb" ]]; then
     log "Creating Rails 8 application: $app_name"
-    rails new . --database=postgresql --skip-git --css=tailwind --javascript=esbuild
+    rails new . --database=postgresql --skip-git --css=tailwind --javascript=importmap
   fi
-  
-  # Add Solid Stack if not present
+
+  # Add production gem stack (idempotent)
   grep -q "solid_queue" Gemfile || cat >> Gemfile << 'SOLIDGEMS'
+
+# Rails 8 Solid Stack
 gem "solid_queue"
 gem "solid_cache"
 gem "solid_cable"
+
+# Async production server
+gem "falcon"
+gem "thruster"
+
+# HTTP middleware
+gem "rack-attack"
+
+# Database
+gem "pg"
+gem "pgvector"
+
+# Utilities
+gem "pagy"
+gem "image_processing"
 SOLIDGEMS
-  
+
+  # Remove legacy gems if present
+  sed -i '/gem ["\x27]devise["\x27]/d; /gem ["\x27]devise-guests["\x27]/d; /gem ["\x27]stimulus_reflex["\x27]/d; /gem ["\x27]cable_ready["\x27]/d' Gemfile 2>/dev/null || true
+
   bundle install
   bin/rails generate solid_queue:install 2>/dev/null || true
   bin/rails generate solid_cache:install 2>/dev/null || true
   bin/rails generate solid_cable:install 2>/dev/null || true
 }
 
-# Generate InfiniteScrollReflex for any model
-# Usage: generate_infinite_scroll_reflex "Post" "Post.all.order(created_at: :desc)"
+# Add Rails 8 rate limiting to ApplicationController
+setup_rate_limiting() {
+  typeset ctrl="app/controllers/application_controller.rb"
+  grep -q "rate_limit" "$ctrl" 2>/dev/null && return 0
+  sed -i 's/class ApplicationController < ActionController::Base/class ApplicationController < ActionController::Base\n  rate_limit to: 1000, within: 1.minute, by: -> { request.remote_ip }\n/' "$ctrl" 2>/dev/null || true
+  log "Rate limiting added to ApplicationController"
+}
+
+# Generate cursor-based infinite scroll controller (Turbo Frames + IntersectionObserver)
+# Usage: generate_infinite_scroll_controller_for "Post" "Post.all.order(created_at: :desc)"
 generate_infinite_scroll_reflex() {
   typeset model_name="$1"
-  typeset query="$2"
-  typeset reflex_name="${model_name:l}s"
-  typeset class_name="${(C)model_name}sInfiniteScrollReflex"
-  
-  mkdir -p app/reflexes
-  cat > "app/reflexes/${reflex_name}_infinite_scroll_reflex.rb" << RUBY
-class ${class_name} < InfiniteScrollReflex
-  def load_more
-    @pagy, @collection = pagy(${query}, page: page)
-    super
+  typeset query="${2:-${model_name}.all.order(created_at: :desc)}"
+  typeset model_lower="${model_name:l}"
+  typeset model_plural="${model_lower}s"
+
+  mkdir -p app/controllers
+  cat > "app/controllers/${model_plural}_controller.rb" << RUBY
+class ${(C)model_name}sController < ApplicationController
+  def index
+    @pagy, @${model_plural} = pagy(${query})
+  end
+
+  def more
+    cursor = params[:cursor].to_i
+    @pagy, @${model_plural} = pagy(${query}.where("id < ?", cursor))
+    render partial: "shared/infinite_items",
+           locals: { items: @${model_plural}, pagy: @pagy, resource: :${model_plural} }
   end
 end
 RUBY
+
+  mkdir -p app/views/shared
+  cat > app/views/shared/_infinite_items.html.erb << 'ERB'
+<% items.each do |item| %>
+  <%= render item %>
+<% end %>
+<% if pagy.next %>
+  <div data-controller="infinite-scroll"
+       data-infinite-scroll-url-value="<%= url_for(action: :more, cursor: items.last.id) %>">
+    <span data-infinite-scroll-target="sentinel"></span>
+  </div>
+<% end %>
+ERB
 }
 
-# Generate base InfiniteScrollReflex (parent class)
+# Generate base InfiniteScroll concern (Turbo Frames, no StimulusReflex)
 generate_base_infinite_scroll_reflex() {
-  mkdir -p app/reflexes
-  cat > app/reflexes/infinite_scroll_reflex.rb << 'RUBY'
-class InfiniteScrollReflex < ApplicationReflex
-  def load_more
-    morph "#items", render(partial: "shared/items", locals: { items: @collection, pagy: @pagy })
+  mkdir -p app/controllers/concerns
+  cat > app/controllers/concerns/infinite_scrollable.rb << 'RUBY'
+module InfiniteScrollable
+  extend ActiveSupport::Concern
+
+  included do
+    def more
+      cursor = params[:cursor].to_i
+      scope = infinite_scroll_scope
+      scope = scope.where("id < ?", cursor) if cursor.positive?
+      @pagy, @items = pagy(scope)
+      render partial: "shared/infinite_items",
+             locals: { items: @items, pagy: @pagy, resource: controller_name.to_sym }
+    end
   end
 
   private
 
-  def page
-    element.dataset[:page].to_i
+  def infinite_scroll_scope
+    raise NotImplementedError, "#{self.class}#infinite_scroll_scope must be defined"
   end
 end
 RUBY
@@ -523,75 +578,91 @@ export default class extends Controller {
 JS
 }
 
-# Generate VoteReflex for votable models
+# Generate VotesController with Turbo Stream responses (replaces VoteReflex)
 generate_vote_reflex() {
-  mkdir -p app/reflexes
-  cat > app/reflexes/vote_reflex.rb << 'RUBY'
-class VoteReflex < ApplicationReflex
+  mkdir -p app/controllers
+  cat > app/controllers/votes_controller.rb << 'RUBY'
+class VotesController < ApplicationController
+  ALLOWED_TYPES = %w[Post Comment].freeze
+
+  before_action :set_votable
+
   def upvote
-    votable = find_votable
-    votable.upvote_by(current_user || guest_user)
-    update_vote_display(votable)
+    @votable.upvote_by(current_user)
+    respond_with_turbo_stream
   end
 
   def downvote
-    votable = find_votable
-    votable.downvote_by(current_user || guest_user)
-    update_vote_display(votable)
+    @votable.downvote_by(current_user)
+    respond_with_turbo_stream
   end
 
-  def unvote
-    votable = find_votable
-    votable.unvote_by(current_user || guest_user)
-    update_vote_display(votable)
+  def destroy
+    @votable.unvote_by(current_user)
+    respond_with_turbo_stream
   end
 
   private
 
-  ALLOWED_VOTABLE_TYPES = %w[Post Comment].freeze
+  def set_votable
+    type = params[:votable_type]
+    raise ActionController::BadRequest, "Invalid votable type" unless ALLOWED_TYPES.include?(type)
 
-  def find_votable
-    type = element.dataset["votable_type"]
-    raise ArgumentError, "Invalid votable type" unless ALLOWED_VOTABLE_TYPES.include?(type)
-    type.constantize.find(element.dataset["votable_id"])
+    @votable = type.constantize.find(params[:votable_id])
   end
 
-  def update_vote_display(votable)
-    cable_ready
-      .morph(selector: "#vote-#{votable.class.name.downcase}-#{votable.id}", 
-             html: render(partial: "shared/vote", locals: { votable: votable }))
-      .broadcast
-  end
-
-  def guest_user
-    User.find_or_create_by(email: "guest@example.com") { |u| u.password = SecureRandom.hex(16) }
+  def respond_with_turbo_stream
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          "vote-#{@votable.class.name.downcase}-#{@votable.id}",
+          partial: "shared/vote",
+          locals: { votable: @votable }
+        )
+      end
+      format.json { render json: { score: @votable.cached_votes_score }, status: :ok }
+    end
   end
 end
 RUBY
 }
 
-# Generate ChatReflex for real-time messaging
+# Generate MessagesController with Action Cable broadcast (replaces ChatReflex)
 generate_chat_reflex() {
-  mkdir -p app/reflexes
-  cat > app/reflexes/chat_reflex.rb << 'RUBY'
-class ChatReflex < ApplicationReflex
-  def send_message
-    message = Message.create!(
-      content: element.dataset["content"],
-      user: current_user || guest_user,
-      receiver_id: element.dataset["receiver_id"],
-      anonymous: element.dataset["anonymous"] == "true"
-    )
-    
-    cable_ready
-      .append(selector: "#messages", html: render(partial: "messages/message", locals: { message: message }))
-      .broadcast_to([current_user, message.receiver].sort_by(&:id))
+  mkdir -p app/controllers
+  cat > app/controllers/messages_controller.rb << 'RUBY'
+class MessagesController < ApplicationController
+  before_action :authenticate_user!
+
+  def create
+    @message = Message.new(message_params)
+    @message.user = current_user
+
+    if @message.save
+      broadcast_message(@message)
+      head :ok
+    else
+      render partial: "messages/form", locals: { message: @message },
+             status: :unprocessable_entity
+    end
   end
 
   private
 
-  def guest_user
-    User.find_or_create_by(email: "guest@example.com") { |u| u.password = SecureRandom.hex(16) }
+  def message_params
+    params.require(:message).permit(:content, :receiver_id, :anonymous)
+  end
+
+  def broadcast_message(message)
+    participants = [current_user, message.receiver].compact.sort_by(&:id)
+    participants.each do |user|
+      Turbo::StreamsChannel.broadcast_append_to(
+        "messages_#{user.id}",
+        target: "messages",
+        partial: "messages/message",
+        locals: { message: message }
+      )
+    end
   end
 end
 RUBY
@@ -656,15 +727,37 @@ export default class extends Controller {
   async performSearch() {
     const query = this.inputTarget.value.trim()
     if (query.length < 2) { this.resultsTarget.innerHTML = ""; return }
-    
+
     const response = await fetch(`${this.urlValue}?q=${encodeURIComponent(query)}`, {
       headers: { "Accept": "text/vnd.turbo-stream.html" }
     })
-    
+
     if (response.ok) {
       this.resultsTarget.innerHTML = await response.text()
     }
   }
 }
 JS
+}
+
+# Commit all changes with a message (idempotent — no-ops if nothing to commit)
+commit() {
+  typeset msg="$1"
+  git add -A && git commit -m "$msg" --quiet 2>/dev/null || true
+}
+
+# Generate all standard Stimulus controllers in one call
+generate_all_stimulus_controllers() {
+  generate_infinite_scroll_controller
+  generate_search_controller
+  generate_voting_stimulus
+}
+
+# Alias for generate_application_scss (backwards-compat)
+generate_default_css() { generate_application_scss "$@"; }
+
+# Run Rails migrations; exit non-zero on failure
+migrate_db() {
+  log "Running migrations..."
+  bin/rails db:create db:migrate 2>&1 | tail -5 || { log "ERROR: db:migrate failed" >&2; return 1; }
 }

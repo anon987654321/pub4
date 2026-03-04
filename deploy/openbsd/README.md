@@ -10,9 +10,12 @@ This script automates the complete setup of an OpenBSD 7.8 server for hosting Ra
 - **Firewall**: PF with brute-force protection and rate limiting
 - **Email**: OpenSMTPD for outbound mail with TLS (local relay only)
 - **Rails Apps**: Falcon web server with per-app isolation
+- **Database**: PostgreSQL 16 + PgBouncer (10k client connections, transaction pool)
+- **Cache/Jobs/WS**: Solid Cache + Solid Queue + Solid Cable
+- **Sessions/Pub-Sub**: Redis 7 (Action Cable)
 - **Data Protection**: Automatic backups before destructive operations with transaction logging
 
-**Note:** Database services (PostgreSQL, Redis) removed per user request. Use SQLite or external database.
+**Database:** PostgreSQL 16 (primary) + PgBouncer (connection pooling) + Redis 7 (Action Cable).
 ## Features
 ### Security Hardening
 - PF firewall with SSH rate-limiting and brute-force blocking
@@ -121,7 +124,10 @@ doas zsh openbsd.sh --resume
 
 - **SSH**: TCP 22 (rate-limited: 5 conn/3sec, max 15)
 
-- **Rails apps**: localhost:10000-60000 (random assignment)
+- **Rails apps**: localhost:10000-60000 (random, persisted in `/etc/master_app_ports.conf`)
+- **PostgreSQL**: TCP 5432 (localhost only)
+- **PgBouncer**: TCP 6432 (connection pooler)
+- **Redis**: TCP 6379 (Action Cable)
 
 ### File Locations
 ```
@@ -252,22 +258,22 @@ Each app must be uploaded to `/home/<app>/<app>` with:
 
 ```
 
-**database.yml example (SQLite):**
+**database.yml example (PostgreSQL via PgBouncer):**
 ```yaml
 
 production:
 
-  adapter: sqlite3
+  adapter: postgresql
 
-  database: db/production.sqlite3
+  encoding: unicode
 
   pool: 5
 
-  timeout: 5000
+  url: <%= ENV['DATABASE_URL'] %>  # set in /home/<app>/.env
 
 ```
 
-**Or use external database service:**
+**Generated automatically by openbsd.sh (Stage 2):**
 ```yaml
 
 production:

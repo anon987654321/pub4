@@ -77,8 +77,11 @@ module MASTER
     def speak(text, engine: nil, voice: nil, style: :normal, play: true)
       return Result.err("Empty text.") if text.nil? || text.strip.empty?
 
-      engine ||= best_engine
-      return Result.err("No TTS engine available.") unless engine
+      engine ||= Utils.best_engine
+      unless engine
+        hint = "install piper/edge-tts or set REPLICATE_API_TOKEN"
+        return Result.err("No TTS engine available. #{hint}")
+      end
 
       case engine
       when :piper then speak_piper(text, voice: voice, preset: style, play: play)

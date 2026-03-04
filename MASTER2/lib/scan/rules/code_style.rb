@@ -21,7 +21,7 @@ module MASTER
             severity: :major,
           }.freeze,
           dirty_flag_missing: {
-            pattern:  /\.pop\(|\.shift\(|\.delete|\.clear(?!\s*#.*dirty)/,
+            pattern:  /\.pop\(\s*\)|\.shift\(|\.delete(?!_)|\.clear(?!\s*#.*dirty)/,
             message:  "Mutation without @dirty = true - changes won't persist",
             severity: :major,
           }.freeze,

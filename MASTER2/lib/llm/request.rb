@@ -15,7 +15,7 @@ module MASTER
           begin
             result = if replicate_model?(model)
                        execute_replicate_llm_request(prompt: prompt, messages: messages, model: model,
-                                                     reasoning: reasoning)
+                                                     reasoning: reasoning, json_schema: json_schema)
                      else
                        execute_ruby_llm_request(
                          prompt: prompt,
@@ -41,8 +41,8 @@ module MASTER
           retry_count += 1
           break if retry_count >= max_retries
 
-          # Exponential backoff: 1s, 2s, 4s
-          sleep_time = 2**(retry_count - 1)
+          # Exponential backoff: 1s, 2s, 4s (capped at 8s)
+          sleep_time = [2**(retry_count - 1), 8].min
           Logging.warn("LLM retry #{retry_count}/#{max_retries}", delay: sleep_time, error: last_error)
           sleep(sleep_time)
         end
@@ -244,7 +244,7 @@ module MASTER
       end
 
       # Execute text-generation via Replicate::LLM (bypass ruby_llm / OpenRouter)
-      def execute_replicate_llm_request(prompt:, messages:, model:, reasoning:)
+      def execute_replicate_llm_request(prompt:, messages:, model:, reasoning:, json_schema: nil)
         require_relative "../replicate/llm"
         require_relative "../replicate/client"
 
@@ -261,6 +261,14 @@ module MASTER
                       end
 
         system_prompt = sys_msg&.dig(:content)
+
+        # JSON schema enforcement: inject schema as system instruction since Replicate
+        # predictions API has no native structured-output support.
+        if json_schema
+          schema_data = json_schema[:schema] || json_schema
+          schema_instruction = "Respond ONLY with valid JSON exactly matching this schema (no markdown, no explanation):\n#{schema_data.to_json}"
+          system_prompt = [system_prompt, schema_instruction].compact.join("\n\n")
+        end
 
         # Reasoning budget hint → increase max_tokens for reasoning models
         max_tokens = reasoning ? 8_192 : Replicate::LLM::DEFAULT_MAX_TOKENS
