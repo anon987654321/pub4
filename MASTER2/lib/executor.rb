@@ -6,8 +6,6 @@ require "yaml"
 require "rbconfig"
 require "fileutils"
 require "uri"
-require_relative "executor/strategy"
-require_relative "executor/prompts"
 require_relative "executor/plan"
 require_relative "executor/convention_extractor"
 require_relative "executor/react"
@@ -35,7 +33,7 @@ module MASTER
     COMPLETION_PATTERN = /^(ANSWER|DONE|COMPLETE):\s*/i
 
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
-    SYSTEM_PROMPT_FILE = Paths.data_file("system_prompt.yml")
+    SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
 
     # Protected paths that cannot be written to
     PROTECTED_WRITE_PATHS = %w[
@@ -70,7 +68,7 @@ module MASTER
 
     # Build formatted tool list for prompts (ONE_SOURCE)
     def self.tool_list_text
-      TOOLS.map { |tool_name, tool_def| "  #{tool_name}: #{tool_def[:desc]}" }.join("\n")
+      TOOLS.map { |k, v| "  #{k}: #{v[:desc]}" }.join("\n")
     end
 
     def initialize(max_steps: MAX_STEPS)
@@ -78,8 +76,6 @@ module MASTER
       @pattern = :react
     end
 
-    include Strategy
-    include Prompts
     include ExecutionContext
     include ToolDispatch
     include React
@@ -112,7 +108,7 @@ module MASTER
 
       # Final fallback to direct if all else fails
       unless result.ok?
-        Logging.dmesg_log("executor", message: "all patterns failed, falling back to direct")
+        UI.warn("All patterns failed, attempting direct response")
         result = direct_ask("Given this context, provide the best answer you can:\n\n#{goal}", tier: :fast)
       end
 
@@ -142,16 +138,13 @@ module MASTER
     def select_pattern(goal)
       g = goal.to_s.strip.downcase
 
-      # Direct: greetings, chitchat, simple one-word queries -- no LLM cost
+      # Direct: greetings, chitchat, simple one-word queries — no LLM cost
       if g.match?(/\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i)
         return :direct
       end
-      if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|analyse|build|create|update|debug|write|read|find|show|list)\b/)
+      if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|build|create|update|debug|write|read|find)\b/)
         return :direct
       end
-
-      # React: file/code operations -- needs tools
-      return :react if g.match?(/\b(analyze|analyse|scan|review|read|show|list|find|explore|audit|check|inspect)\b/)
 
       # Reflexion: correctness-critical keywords
       return :reflexion if g.match?(/\b(fix|debug|repair|refactor|correct|safe|security|validate|test)\b/)
@@ -164,7 +157,33 @@ module MASTER
         return :rewoo
       end
 
-      # Fallthrough: default to react for unknown intent (no LLM cost)
+      # Sanitize for LLM call — prevent prompt injection
+      sanitized_goal = goal.to_s.gsub(/[\r\n]+/, " ").strip.slice(0, 500)
+
+      prompt = <<~CLASSIFY
+        You are a task router. Given a user's goal, pick the best execution pattern.
+
+        PATTERNS:
+        - react: General exploration, unknown tasks, tool use with observation loops
+        - pre_act: Multi-step plans with clear sequential phases (build X then Y then Z)
+        - rewoo: Pure reasoning, research, comparison — minimal tool use, cost-efficient
+        - reflexion: Tasks requiring correctness — fixing, debugging, refactoring, safety-critical work
+
+        SPECIAL:
+        - direct: Simple questions, chitchat, greetings, no tools needed
+
+        USER GOAL: "#{sanitized_goal}"
+
+        Respond with ONLY one word: #{(PATTERNS + [:direct]).join(', ')}
+      CLASSIFY
+
+      result = LLM.ask(prompt, tier: :cheap)
+
+      if result.ok?
+        chosen = result.value[:content]&.strip&.downcase&.to_sym
+        return chosen if chosen && (PATTERNS.include?(chosen) || chosen == :direct)
+      end
+
       :react
     rescue StandardError
       :react

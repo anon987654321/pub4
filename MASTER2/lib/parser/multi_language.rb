@@ -4,7 +4,7 @@ module MASTER
   module Parser
     # Multi-language parser for shell scripts with embedded languages.
     # Handles .sh/.zsh/.bash scripts containing Ruby/Python heredocs.
-    # Ported from MASTER v4 lib/parser/multi_language.rb -- live dependency of evolve.rb.
+    # Ported from MASTER v4 lib/parser/multi_language.rb — live dependency of evolve.rb.
     class MultiLanguage
       HEREDOC_PATTERNS = {
         ruby:   /<<-?(\w*RUBY\w*)\s*\n(.*?)\n\s*\1/m,

@@ -8,63 +8,48 @@ module MASTER
     # Handlers - Route handler methods for web server
     module Handlers
       def handle_poll(queue)
-        text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
-        body = {
-          text: text, tier: LLM.tier,
-          budget: "unlimited", version: VERSION
-        }.to_json
+        raw = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
+        body =
+          if raw
+            begin
+              JSON.parse(raw)  # already JSON from handle_chat
+              raw
+            rescue JSON::ParserError
+              { text: raw, tier: LLM.tier, budget: "unlimited", version: VERSION }.to_json
+            end
+          else
+            { text: nil, tier: LLM.tier, budget: "unlimited", version: VERSION }.to_json
+          end
         [200, { CT_HEADER => JSON_TYPE }, [body]]
       end
 
-      def handle_sse(queue)
-        body = Enumerator.new do |y|
-          y << "retry: 1000\n\n"
-          loop do
-            text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
-            if text
-              data = { text: text, tier: LLM.tier }.to_json
-              y << "data: #{data}\n\n"
-            else
-              y << ": keep-alive\n\n"
-            end
-            sleep 0.3
-          end
-        end
-        [200, {
-          CT_HEADER          => "text/event-stream",
-          "Cache-Control"    => "no-cache",
-          "X-Accel-Buffering" => "no",
-        }, body]
-      end
-
-      def handle_chat(env, pipeline, queue)
+      def handle_chat(env, pipeline, queue, sessions = {}, lock = Mutex.new)
         body = env["rack.input"].read
         data = begin
           JSON.parse(body, symbolize_names: true)
         rescue StandardError
           {}
         end
-        message = data[:message].to_s.strip
+        message    = data[:message].to_s.strip
+        session_id = data[:session_id].to_s.strip
+        session_id = SecureRandom.hex(16) if session_id.empty?
 
-        if message.empty?
-          [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no message"}']]
-        else
-          image = data[:image]  # { data: base64, mime: "image/...", name: "file.jpg" }
-          input = { text: message }
-          if image && image[:data] && !image[:data].empty?
-            input[:image_data] = image[:data]
-            input[:image_mime] = image[:mime].to_s
-            input[:image_name] = image[:name].to_s
-          end
-          Thread.new do
-            result = pipeline.call(input)
-            output = result.ok? ? result.value[:rendered] : "Error: #{result.error}"
-            queue.push(output)
-          rescue StandardError => err
-            queue.push("Error: #{err.message}")
-          end
-          [200, { CT_HEADER => JSON_TYPE }, ['{"status":"processing"}']]
+        return [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no message"}']] if message.empty?
+
+        web_session = lock.synchronize { sessions[session_id] ||= { pipeline: pipeline, session: Session.new } }
+        session     = web_session[:session]
+        pipeline    = web_session[:pipeline]
+
+        Thread.new do
+          session.add_user(message)
+          output = dispatch_message(message, pipeline)
+          session.add_assistant(output) if output && !output.empty?
+          queue.push({ text: output, session_id: session_id, tier: LLM.tier }.to_json)
+        rescue StandardError => e
+          queue.push({ text: "Error: #{e.message}", session_id: session_id }.to_json)
         end
+
+        [200, { CT_HEADER => JSON_TYPE }, [{ status: "processing", session_id: session_id }.to_json]]
       end
 
       def handle_metrics
@@ -128,6 +113,23 @@ module MASTER
       end
 
       private
+
+      def dispatch_message(message, pipeline)
+        if defined?(Commands)
+          cmd = Commands.dispatch(message, pipeline: pipeline)
+          if cmd == :exit
+            "Goodbye."
+          elsif cmd.respond_to?(:ok?)
+            cmd.ok? ? (cmd.value[:rendered] || cmd.value[:response] || "") : "! #{cmd.failure}"
+          else
+            result = pipeline.call({ text: message })
+            result.ok? ? (result.value[:rendered] || result.value[:response] || "") : "! #{result.failure}"
+          end
+        else
+          result = pipeline.call({ text: message })
+          result.ok? ? (result.value[:rendered] || result.value[:response] || "") : "! #{result.failure}"
+        end
+      end
 
       def git_dirty_count
         root = defined?(MASTER) && MASTER.respond_to?(:root) ? MASTER.root : Dir.pwd

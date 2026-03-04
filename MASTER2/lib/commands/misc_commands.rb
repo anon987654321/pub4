@@ -4,6 +4,7 @@ require "yaml"
 require "fileutils"
 require "open3"
 require "timeout"
+require "time"
 
 require_relative "misc_commands/selftest_full"
 require_relative "misc_commands/cinematic_persona"
@@ -12,62 +13,6 @@ module MASTER
   module Commands
     # Miscellaneous commands
     module MiscCommands
-      TEXT_EXTENSIONS = %w[rb py js ts css svg zsh sh bash md yml yaml json toml gemspec txt erb conf ini env].freeze
-      TEXT_BASENAMES  = %w[Gemfile Rakefile Makefile Dockerfile].freeze
-      SKIP_DIRS       = %w[.git vendor tmp var node_modules .bundle coverage log dist].freeze
-
-      def run_snapshot(args)
-        ts  = Time.now.utc.strftime("%Y%m%dT%H%M%SZ")
-        out = args&.strip&.then { |a| a.empty? ? nil : a } || Paths.var_file("snapshot-#{ts}.md")
-        max = 400
-        puts "  generating snapshot..."
-
-        n_files = n_lines = n_trunc = 0
-        buf = StringIO.new
-        buf.puts "# Project Snapshot - #{Time.now.utc.strftime('%Y-%m-%dT%H:%M:%SZ')}"
-        buf.puts
-        buf.puts "## Tree"
-        buf.puts "```"
-        buf.puts ascii_tree(Dir.pwd)
-        buf.puts "```"
-        buf.puts
-
-        Dir.glob("**/*", base: Dir.pwd).sort.each do |rel|
-          next if File.directory?(File.join(Dir.pwd, rel))
-          next if rel == out
-          parts = rel.split("/")
-          next if parts.any? { |p| SKIP_DIRS.include?(p) }
-          ext  = File.extname(rel).delete_prefix(".")
-          base = File.basename(rel)
-          next unless TEXT_EXTENSIONS.include?(ext) || TEXT_BASENAMES.include?(base)
-
-          lines = File.readlines(File.join(Dir.pwd, rel), encoding: "utf-8:utf-8", chomp: true)
-          n = lines.size
-          # Skip bulky data YAMLs — loaded at runtime, not useful in snapshots
-          next if rel.start_with?("data/") && ext == "yml" && n > 300
-          buf.puts "## `#{rel}`"
-          buf.puts "```#{ext}"
-          if n > max
-            buf.puts lines.first(max).join("\n")
-            buf.puts "... #{n - max} lines truncated (#{n} total)"
-            n_trunc += 1
-          else
-            buf.puts lines.join("\n")
-          end
-          buf.puts "```"
-          buf.puts
-          n_files += 1
-          n_lines  += n
-        rescue Errno::ENOENT, Encoding::UndefinedConversionError
-          next
-        end
-
-        est = n_lines * 6 / 5
-        buf.puts "files: #{n_files} / lines: #{n_lines} / truncated: #{n_trunc} / est. tokens: ~#{est}"
-        File.write(out, buf.string)
-        puts "  saved: #{out}  (#{n_files} files, #{n_lines} lines, ~#{est} tokens)"
-      end
-
       def speak(text)
         return puts "  Usage: speak <text>" unless text
 
@@ -152,9 +97,9 @@ module MASTER
           if result.ok?
             captures = result.value[:captures]
             puts "#{captures.size} session captures:"
-            captures.last(10).each do |capture|
-              puts UI.dim(capture[:timestamp])
-              capture[:answers].each do |category, answer|
+            captures.last(10).each do |c|
+              puts UI.dim(c[:timestamp])
+              c[:answers].each do |category, answer|
                 puts "  #{UI.bold(category)}: #{answer}"
               end
             end
@@ -195,15 +140,18 @@ module MASTER
         checks << { name: "Models available", ok: !model.nil? }
 
         # Check style guide catalog
-        guides_ok = File.exist?(Paths.data_file("style_guides.yml"))
+        guides_ok = File.exist?(File.join(MASTER.root, "data", "style_guides.yml"))
         checks << { name: "Style guides catalog", ok: guides_ok }
 
-        checks.each do |check|
-          status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{check[:name]}"
+        integrations_ok = File.exist?(File.join(MASTER.root, "data", "integrations.yml"))
+        checks << { name: "Integrations catalog", ok: integrations_ok }
+
+        checks.each do |c|
+          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{c[:name]}"
         end
 
-        all_ok = checks.all? { |check| check[:ok] }
+        all_ok = checks.all? { |c| c[:ok] }
         puts all_ok ? "health: ok" : "health: some checks failed"
       end
 
@@ -211,9 +159,9 @@ module MASTER
         UI.header("Bootstrap")
         checks = startup_checks
 
-        checks.each do |check|
-          status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{check[:name]}#{" (#{check[:detail]})" if check[:detail]}"
+        checks.each do |c|
+          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{c[:name]}#{" (#{c[:detail]})" if c[:detail]}"
         end
 
         # Platform checks
@@ -247,10 +195,10 @@ module MASTER
         UI.header("Doctor")
 
         checks = startup_checks
-        checks.each do |check|
-          status = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{status} #{check[:name]}#{" (#{check[:detail]})" if check[:detail]}"
-          puts UI.dim("    fix: #{check[:fix]}") if verbose && !check[:ok] && check[:fix]
+        checks.each do |c|
+          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{c[:name]}#{" (#{c[:detail]})" if c[:detail]}"
+          puts UI.dim("    fix: #{c[:fix]}") if verbose && !c[:ok] && c[:fix]
         end
 
         plugin_check = plugin_manifest_check
@@ -261,7 +209,7 @@ module MASTER
         tidy = repo_cleanliness
         puts "#{UI.pastel.cyan('*')} Repo dirtiness #{tidy[:dirty_count]} files (#{tidy[:state]})"
 
-        all_ok = (checks + [plugin_check]).all? { |check| check[:ok] }
+        all_ok = (checks + [plugin_check]).all? { |c| c[:ok] }
         puts all_ok ? "doctor: ok" : "doctor: attention required"
         Result.ok(ok: all_ok, checks: checks, plugins: plugin_check, cleanliness: tidy)
       end
@@ -291,6 +239,56 @@ module MASTER
         Result.ok(target: target, commit: commit, snapshot: dest)
       end
 
+      def snapshot(args = nil)
+        mode = args.to_s.strip.downcase
+        mode = "codebase" if mode.empty?
+        return Result.err("snapshot supports: codebase") unless mode == "codebase"
+
+        root = Dir.pwd
+        files = snapshot_text_files(root)
+        tree = ExecutionContext.dir_snapshot(root, max_depth: 4)
+        stamp = Time.now.utc.iso8601
+        out = File.join(Paths.var, "codebase_snapshot_#{Time.now.utc.strftime('%Y%m%d_%H%M%S')}.md")
+
+        lines = []
+        lines << "# Codebase Snapshot"
+        lines <<
+          "Generated: #{stamp} UTC"
+        lines << "Root: `#{root}`"
+        lines << "Files included: #{files.size}"
+        lines << ""
+        lines << "## Tree"
+        lines << "```text"
+        lines << tree
+        lines << "```"
+        lines << ""
+        lines << "## Files"
+
+        files.each do |rel|
+          full = File.join(root, rel)
+          content = File.read(full)
+          lang = snapshot_fence_language(rel)
+
+          lines << "### `#{rel}`"
+          lines << "```#{lang}"
+          lines << content
+          lines << "```"
+          lines << ""
+        rescue StandardError => e
+          lines << "### `#{rel}`"
+          lines << "```text"
+          lines << "[snapshot skipped: #{e.class}: #{e.message}]"
+          lines << "```"
+          lines << ""
+        end
+
+        File.write(out, lines.join("\n"))
+        puts "snapshot: wrote #{out}"
+        Result.ok(mode: mode, root: root, files: files.size, snapshot: out)
+      rescue StandardError => e
+        Result.err("snapshot failed: #{e.message}")
+      end
+
       def codify(args = nil)
         return Result.err("Design codex unavailable") unless defined?(Review::DesignCodex)
 
@@ -298,7 +296,7 @@ module MASTER
         mode = args.to_s.strip
 
         if ["json", "export-json"].include?(mode)
-          out = File.join(Paths.var, "design.json")
+          out = File.join(Paths.var, "design_codex.json")
           File.write(out, Review::DesignCodex.to_json)
           puts "codify: exported #{out}"
           return Result.ok(path: out, summary: summary)
@@ -314,8 +312,59 @@ module MASTER
         Result.ok(summary)
       end
 
+
+      def integrations(args = nil)
+        catalog_path = File.join(MASTER.root, "data", "integrations.yml")
+        return Result.err("integration catalog missing: #{catalog_path}") unless File.exist?(catalog_path)
+
+        catalog = YAML.safe_load_file(catalog_path, symbolize_names: true) || {}
+        entries = Array(catalog[:repos])
+
+        if args.to_s.include?("sync")
+          dest = File.join(Paths.var, "integrations")
+          FileUtils.mkdir_p(dest)
+          synced = 0
+
+          entries.each do |entry|
+            repo = entry[:repo].to_s
+            next unless repo.start_with?("https://github.com/")
+
+            name = repo.split("/").last
+            path = File.join(dest, name)
+            if Dir.exist?(path)
+              system("git", "-C", path, "pull", "--ff-only", out: File::NULL, err: File::NULL)
+            else
+              system("git", "clone", "--depth", "1", repo, path, out: File::NULL, err: File::NULL)
+            end
+            synced += 1
+          end
+
+          puts "integrations: synced #{synced} repos -> #{dest}"
+          return Result.ok(synced: synced, dest: dest)
+        end
+
+        puts "Integration Catalog:"
+        puts "  profile: #{catalog[:profile]}" if catalog[:profile]
+        puts "  updated_at: #{catalog[:updated_at]}" if catalog[:updated_at]
+        puts
+
+        entries.each_with_index do |entry, idx|
+          puts "#{idx + 1}. #{entry[:name]}"
+          puts "   repo: #{entry[:repo]}"
+          puts "   fit: #{entry[:fit]}" if entry[:fit]
+          puts "   category: #{entry[:category]}" if entry[:category]
+          puts "   stars: #{entry[:stars]}" if entry[:stars]
+          puts
+        end
+
+        puts "Run: integrations sync  (clone/update all integration repos to var/integrations)"
+        Result.ok(total: entries.size)
+      rescue StandardError => e
+        Result.err("integrations failed: #{e.message}")
+      end
+
       def style_guides(args = nil)
-        catalog_path = Paths.data_file("style_guides.yml")
+        catalog_path = File.join(MASTER.root, "data", "style_guides.yml")
         return Result.err("style guide catalog missing: #{catalog_path}") unless File.exist?(catalog_path)
 
         catalog = YAML.safe_load_file(catalog_path, symbolize_names: true) || {}
@@ -356,25 +405,49 @@ module MASTER
         end
 
         Result.ok(total: entries.size)
-      rescue StandardError => err
-        Result.err("style-guides failed: #{err.message}")
+      rescue StandardError => e
+        Result.err("style-guides failed: #{e.message}")
       end
 
       private
 
-      def ascii_tree(root, prefix = "", path = root, buf = [])
-        entries = Dir.entries(path).reject { |e| e.start_with?(".") || SKIP_DIRS.include?(e) }.sort
-        entries.each_with_index do |entry, idx|
-          last    = idx == entries.size - 1
-          pointer = last ? "`-- " : "|-- "
-          buf << "#{prefix}#{pointer}#{entry}"
-          child = File.join(path, entry)
-          if File.directory?(child)
-            extension = last ? "    " : "|   "
-            ascii_tree(root, prefix + extension, child, buf)
-          end
-        end
-        buf.join("\n")
+      def snapshot_text_files(root)
+        exclude = %w[.git vendor node_modules tmp var].freeze
+
+        Dir.glob("**/*", File::FNM_DOTMATCH)
+          .reject { |path| path == "." || path == ".." }
+          .reject { |path| exclude.any? { |name| path == name || path.start_with?("#{name}/") } }
+          .select { |path| File.file?(File.join(root, path)) }
+          .reject { |path| File.size(File.join(root, path)) > 1_000_000 }
+          .select { |path| snapshot_text_file?(File.join(root, path)) }
+          .sort
+      end
+
+      def snapshot_text_file?(path)
+        sample = File.binread(path, 8192)
+        return false if sample.include?("\x00")
+
+        sample.encode("UTF-8", invalid: :replace, undef: :replace)
+        true
+      rescue StandardError
+        false
+      end
+
+      def snapshot_fence_language(path)
+        ext = File.extname(path).downcase
+        {
+          ".rb" => "ruby",
+          ".py" => "python",
+          ".js" => "javascript",
+          ".ts" => "typescript",
+          ".md" => "markdown",
+          ".yml" => "yaml",
+          ".yaml" => "yaml",
+          ".json" => "json",
+          ".sh" => "bash",
+          ".zsh" => "bash",
+          ".toml" => "toml",
+        }.fetch(ext, "text")
       end
 
       def startup_checks
@@ -389,7 +462,7 @@ module MASTER
         [
           {
             name: "Constitution parses",
-            ok: File.exist?(Paths.data_file("constitution.yml")),
+            ok: File.exist?(File.join(MASTER.root, "data", "constitution.yml")),
             fix: "Ensure data/constitution.yml exists",
           },
           {
@@ -420,8 +493,8 @@ module MASTER
         return { ok: true, detail: "all bridge plugins resolved" } if missing.empty?
 
         { ok: false, detail: "missing: #{missing.join(', ')}", fix: "reinstall dependencies or restore bridge files" }
-      rescue StandardError => err
-        { ok: false, detail: err.message, fix: "check bridge plugin wiring" }
+      rescue StandardError => e
+        { ok: false, detail: e.message, fix: "check bridge plugin wiring" }
       end
 
       def repo_cleanliness
@@ -476,10 +549,11 @@ module MASTER
         server = Server.new(port: port)
         server.start
         token = Server::AUTH_TOKEN
-        puts "  web: http://localhost:#{server.port}/?token=#{token}"
+        puts "  web: http://localhost:#{server.port}"
+        puts "  token: #{token}"
       end
 
-      # Project memory - persistent goal/context across sessions and models
+      # Project memory — persistent goal/context across sessions and models
       def project_goal(args)
         return show_project_context unless args&.strip&.length&.> 0
 
@@ -503,89 +577,13 @@ module MASTER
       def show_project_context
         ctx = defined?(ProjectMemory) ? ProjectMemory.load(root: Dir.pwd) : {}
         if ctx.empty?
-          puts UI.dim("no project context - set one with: goal <text>")
+          puts UI.dim("no project context — set one with: goal <text>")
         else
           puts UI.dim("goal: #{ctx['goal']}") if ctx["goal"]
           puts UI.dim("stack: #{ctx['stack']}") if ctx["stack"]
           puts UI.dim("constraints: #{ctx['constraints']}") if ctx["constraints"]
-          Array(ctx["decisions"]).each { |decision| puts UI.dim("  * #{decision}") }
+          Array(ctx["decisions"]).each { |d| puts UI.dim("  · #{d}") }
         end
-      end
-
-      def run_webtest(_args)
-        require "net/http"
-        require "json"
-
-        server = defined?(MASTER::Server) ? ObjectSpace.each_object(MASTER::Server).first : nil
-        unless server&.running?
-          puts UI.warn("webtest: web server not running")
-          return
-        end
-
-        base = "http://localhost:#{server.port}"
-        token = MASTER::Server::AUTH_TOKEN
-        results = []
-
-        # 1. GET /health -- no auth required
-        results << web_probe("GET", "#{base}/health") do |body|
-          data = JSON.parse(body)
-          data["status"] == "ok" ? "ok" : "bad status: #{data['status']}"
-        end
-
-        # 2. GET / -- verify chat UI with orb + canvas + TTS
-        results << web_probe("GET", base) do |body|
-          missing = %w[canvas orb-name NEURAL\ CORE].reject { |el| body.include?(el) }
-          missing.empty? ? "ok" : "missing: #{missing.join(', ')}"
-        end
-
-        # 3. POST /chat -- returns {"status":"processing"} async; poll /poll for result
-        results << web_probe("POST", "#{base}/chat",
-                             body: { message: "ping", session_id: "webtest" }.to_json,
-                             token: token,
-                             content_type: "application/json") do |body|
-          data = JSON.parse(body)
-          data["status"] == "processing" ? "ok" : "unexpected: #{body[0, 40]}"
-        rescue JSON::ParserError
-          "non-json response"
-        end
-
-        # 4. GET /poll -- should return queued output from chat
-        sleep 2 # give pipeline time to respond
-        results << web_probe("GET", "#{base}/poll", token: token) do |body|
-          JSON.parse(body).key?("text") ? "ok" : "missing text key"
-        rescue JSON::ParserError
-          "non-json"
-        end
-
-        pass = results.count { |r| r[:status] == :ok }
-        fail_count = results.size - pass
-        results.each { |r| puts "  #{r[:status] == :ok ? UI.pastel.green('ok') : UI.pastel.red('!!')} #{r[:label]}" }
-        puts fail_count.zero? ? UI.success("webtest: #{pass}/#{results.size} passed") : UI.warn("webtest: #{fail_count} failed")
-      end
-
-      private
-
-      def web_probe(method, url, body: nil, token: nil, content_type: nil, &check)
-        uri = URI(url)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.open_timeout = 5
-        http.read_timeout = 10
-
-        req = (method == "POST" ? Net::HTTP::Post : Net::HTTP::Get).new(uri)
-        req["Authorization"] = "Bearer #{token}" if token
-        req["Content-Type"] = content_type if content_type
-        req.body = body if body
-
-        resp = http.request(req)
-        label = "#{method} #{uri.path.empty? ? '/' : uri.path} -> #{resp.code}"
-        if resp.code.start_with?("2")
-          result = check ? check.call(resp.body) : "ok"
-          { status: result == "ok" ? :ok : :fail, label: "#{label} (#{result})" }
-        else
-          { status: :fail, label: "#{label}" }
-        end
-      rescue StandardError => err
-        { status: :fail, label: "#{method} #{url} -> #{err.message}" }
       end
     end
   end

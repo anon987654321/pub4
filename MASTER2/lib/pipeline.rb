@@ -8,7 +8,7 @@ require_relative "pressure_pass"
 module MASTER
   # Pipeline - Uses Executor with hybrid patterns
   class Pipeline
-    DEFAULT_STAGES = %i[intake compress guard route council ask strunk lint render].freeze
+    DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
     ALLOWED_STAGES = %w[Intake Compress Guard Route Council Ask Lint Render Execute].freeze
     MAX_INPUT_LENGTH = 100_000 # ~25k tokens
 
@@ -50,55 +50,21 @@ module MASTER
       text = input.is_a?(Hash) ? input[:text] : input.to_s
 
       Logging.with_request_id do
-        detect_context_shift(text)
-        raw = if input.is_a?(Hash) && input[:image_data]
-                call_with_image(text, input[:image_data], input[:image_mime], input[:image_name])
-              else
-                case @mode
-                when :executor then call_executor(text)
-                when :stages   then call_stages(input)
-                when :direct   then call_direct(text)
-                else call_executor(text)
-                end
+        raw = case @mode
+              when :executor then call_executor(text)
+              when :stages   then call_stages(input)
+              when :direct   then call_direct(text)
+              else call_executor(text)  # degrade to executor rather than raise
               end
 
-        track_task(text)
         normalize_result(raw, text)
       end
-    rescue StandardError => err
-      Logging.dmesg_log("pipeline", message: "unhandled: #{err.message}")
-      Result.err(err.message)
+    rescue StandardError => e
+      Logging.dmesg_log("pipeline", message: "unhandled: #{e.message}")
+      Result.err(e.message)
     end
 
     private
-
-    # Signals that clearly start a new independent task — wipe active_task
-    # so the LLM gets no inherited context from the previous topic.
-    CONTEXT_SHIFT_PATTERNS = [
-      /\b(now|next|separately|forget|ignore|done with|moving on|new task|reset|start fresh)\b/i,
-      /^(ok|okay|right|fine|good|cool|thanks)[,.]?\s+(now|so|let'?s|can you)/i,
-      /^(run|test|try|check|show|do)\s+(?:the\s+)?snapshot\b/i,
-    ].freeze
-
-    def detect_context_shift(text)
-      session = Session.current
-      return unless session.active_task
-      return unless CONTEXT_SHIFT_PATTERNS.any? { |p| text.match?(p) }
-
-      session.set_task(nil)
-      Logging.dmesg_log("session", message: "context shift detected -- task cleared") if defined?(Logging)
-    end
-
-    def track_task(text)
-      session = Session.current
-      return if session.active_task # already have one
-      return if text.strip.length < 8
-
-      # Use first 60 chars of input as the working task label
-      session.set_task(text.strip.slice(0, 60))
-    rescue StandardError
-      nil
-    end
 
     def call_executor(text)
       # Guard must run even in executor mode to prevent dangerous ops
@@ -114,9 +80,8 @@ module MASTER
         lint_result = Stages::Lint.new.call({ text: text, response: response_text })
         if lint_result.ok?
           lv = lint_result.value
-          lv_violations = lv[:axiom_violations]
           Logging.dmesg_log("pipeline",
-                            message: "executor_lint violations=#{lv_violations&.size || 0}") if lv_violations&.any?
+                            message: "executor_lint violations=#{lv[:axiom_violations]&.size || 0}") if lv[:axiom_violations]&.any?
 
           # Security veto: check if any executor council_review step vetoed on security grounds
           steps = exec_result.value[:steps]
@@ -136,20 +101,6 @@ module MASTER
       end
 
       exec_result
-    end
-
-    def call_with_image(text, image_data, image_mime, image_name)
-      require "base64"
-      require "stringio"
-      raw_bytes = Base64.strict_decode64(image_data)
-      io = StringIO.new(raw_bytes)
-      io.instance_variable_set(:@path, image_name.to_s)
-      def io.path; @path; end
-      attachment = RubyLLM::Attachment.new(io, filename: image_name.to_s)
-      LLM.ask_with_files(text, files: [attachment])
-    rescue StandardError => err
-      Logging.dmesg_log("pipeline", message: "image call failed: #{err.message}")
-      LLM.ask(text, stream: true)
     end
 
     def call_stages(input)
@@ -179,30 +130,27 @@ module MASTER
     def normalize_result(result, input_text = nil)
       return result if result.err?
 
-      payload = result.value
-      return result unless payload.is_a?(Hash)
+      v = result.value
+      return result unless v.is_a?(Hash)
 
       # Normalize known keys
       normalized = {
-        response: payload[:response] || payload[:answer] || payload[:content],
-        rendered: payload[:rendered],
-        model: payload[:model],
-        cost: payload[:cost],
-        tokens_in: payload[:tokens_in],
-        tokens_out: payload[:tokens_out],
-        pattern: payload[:pattern],
-        steps: payload[:steps],
-        history: payload[:history],
+        response: v[:response] || v[:answer] || v[:content],
+        rendered: v[:rendered],
+        model: v[:model],
+        cost: v[:cost],
+        tokens_in: v[:tokens_in],
+        tokens_out: v[:tokens_out],
+        pattern: v[:pattern],
+        steps: v[:steps],
+        history: v[:history],
       }.compact
 
       # Apply typography rendering if we have a response but no rendered version
       if normalized[:response] && !normalized[:rendered]
-        cleaned = Stages::Strunk.new.call({ response: normalized[:response] })
-        normalized[:response] = cleaned.ok? ? cleaned.value[:response] : normalized[:response]
         normalized[:rendered] = strip_tool_blocks(normalized[:response])
       elsif normalized[:rendered]
-        cleaned = Stages::Strunk.new.call({ response: normalized[:rendered] })
-        normalized[:rendered] = strip_tool_blocks(cleaned.ok? ? cleaned.value[:response] : normalized[:rendered])
+        normalized[:rendered] = strip_tool_blocks(normalized[:rendered])
       end
 
       # Pressure-pass: delegate to extracted PressurePass module
@@ -214,8 +162,8 @@ module MASTER
       end
 
       # Preserve any custom keys from the original value
-      payload.each do |key, val_item|
-        normalized[key] = val_item unless normalized.key?(key)
+      v.each do |key, val|
+        normalized[key] = val unless normalized.key?(key)
       end
 
       Result.ok(normalized)
@@ -248,16 +196,18 @@ module MASTER
       include PipelineRepl
 
       def prompt(phase: nil)
-        p     = MASTER::UI.pastel
+        p = MASTER::UI.pastel
+        parts = [p.bold.white("master")]
+        git = git_info
+        parts << git if git
         model = LLM.prompt_model_name.to_s.strip
-        model = model.empty? ? "?" : model
-        badge = PlatformCheck.compute_badge
-        hw    = badge ? p.bright_black("*#{badge}") : ""
-        cost  = Session.current.total_cost
-        cost_str = cost && cost > 0 ? p.bright_black(" [$#{format('%.2f', cost)}]") : ""
-        "#{p.bold.white('master')}#{p.bright_black('@')}#{p.cyan(model)}#{hw}#{cost_str}#{p.bold.white('$')} "
+        parts << p.blue(model) unless model.empty?
+        parts << p.bright_black(phase) if phase
+        cost = Session.current.total_cost
+        parts << p.bright_black("$#{format('%.2f', cost)}") if cost && cost > 0
+        "#{parts.join(p.bright_black(' · '))} #{p.bold.white('❯')} "
       rescue StandardError
-        "master$ "
+        "master ❯ "
       end
 
       def git_info
@@ -273,7 +223,7 @@ module MASTER
         end
         dirty = !status.empty? && $CHILD_STATUS.exitstatus == 0
 
-        dirty ? p.yellow("#{branch}!!") : p.white(branch)
+        dirty ? p.yellow("#{branch}✗") : p.white(branch)
       rescue Timeout::Error, StandardError
         nil
       end
@@ -309,8 +259,8 @@ module MASTER
           warn JSON.generate({ error: result.failure })
           exit 1
         end
-      rescue JSON::ParserError => err
-        warn JSON.generate({ error: "Invalid JSON: #{err.message}" })
+      rescue JSON::ParserError => e
+        warn JSON.generate({ error: "Invalid JSON: #{e.message}" })
         exit 1
       end
     end

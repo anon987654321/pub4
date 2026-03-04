@@ -3,13 +3,6 @@
 # Try to load Stoplight, fall back to simple implementation if not available
 begin
   require "stoplight"
-  # Silence Stoplight's default stderr notifier -- circuit state is managed internally
-  # Stoplight 4.x+ uses top-level module; older uses Stoplight::Light
-  if Stoplight.respond_to?(:default_notifiers=)
-    Stoplight.default_notifiers = []
-  elsif defined?(Stoplight::Light) && Stoplight::Light.respond_to?(:default_notifiers=)
-    Stoplight::Light.default_notifiers = []
-  end
 rescue LoadError
   # Simple mock for when Stoplight is not available
   module Stoplight
@@ -142,8 +135,8 @@ module MASTER
       rescue TestFailure, Stoplight::Error::RedLight
         # Expected
       end
-    rescue StandardError => err
-      Logging.warn("Failed to open circuit", model: model, error: err.message)
+    rescue StandardError => e
+      Logging.warn("Failed to open circuit", model: model, error: e.message)
     end
 
     # Run a successful probe to clear failure counts
@@ -154,8 +147,8 @@ module MASTER
       rescue Stoplight::Error::RedLight
         # Circuit may still be open
       end
-    rescue StandardError => err
-      Logging.warn("Failed to close circuit", model: model, error: err.message)
+    rescue StandardError => e
+      Logging.warn("Failed to close circuit", model: model, error: e.message)
     end
   end
 end

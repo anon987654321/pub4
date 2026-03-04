@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# ConventionExtractor -- Samples the project's actual Ruby style and injects it
+# ConventionExtractor — Samples the project's actual Ruby style and injects it
 # into the system prompt so the LLM mimics existing conventions instead of
 # inventing its own. Implements gist item #9 (Gemini CLI / Warp 2.0 pattern).
 #
@@ -9,9 +9,7 @@
 
 module MASTER
   module ConventionExtractor
-    SAMPLE_COUNT      = 3    # files to sample; small to keep system prompt lean
-    SAMPLE_CHAR_LIMIT = 1500 # chars read per sampled file
-    RESULT_CHAR_LIMIT = 800  # chars read from result.rb
+    SAMPLE_COUNT = 3  # files to sample; small to keep system prompt lean
 
     module_function
 
@@ -21,11 +19,11 @@ module MASTER
                     .reject { |f| f.include?("test") || f.include?("vendor") }
       return "" if rb_files.empty?
 
-      samples = rb_files.sample(sample_count).map { |f| File.read(f)[0..SAMPLE_CHAR_LIMIT] rescue "" }
-      all_content = File.read(File.join(root, "lib", "result.rb"))[0..RESULT_CHAR_LIMIT] rescue ""
+      samples = rb_files.sample(sample_count).map { |f| File.read(f)[0..1500] rescue "" }
+      all_content = File.read(File.join(root, "lib", "result.rb"))[0..800] rescue ""
       all_content += "\n" + samples.join("\n")
 
-      lines = ["PROJECT CONVENTIONS (mimic exactly -- do not invent new patterns):"]
+      lines = ["PROJECT CONVENTIONS (mimic exactly — do not invent new patterns):"]
       lines << "- Frozen string literals: #{frozen_string_style(all_content)}"
       lines << "- Module pattern: #{module_pattern(all_content)}"
       lines << "- Indent: #{indent_style(all_content)}"
@@ -54,7 +52,7 @@ module MASTER
         elsif modfunc_count > extend_count
           "module_function"
         else
-          "mixed -- prefer extend self per rubocop config"
+          "mixed — prefer extend self per rubocop config"
         end
       end
 
@@ -68,7 +66,7 @@ module MASTER
         result_count = content.scan(/Result\.ok|Result\.err/).size
         raise_count  = content.scan(/raise\s+\w/).size
         if result_count > raise_count
-          "Result monad (Result.ok / Result.err) -- prefer over exceptions"
+          "Result monad (Result.ok / Result.err) — prefer over exceptions"
         else
           "raise/rescue exceptions"
         end

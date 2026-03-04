@@ -68,8 +68,8 @@ module MASTER
         status&.success? ? Result.ok(output) : Result.err(output || "Command failed")
       rescue Timeout::Error
         Result.err("Command timed out after #{timeout}s")
-      rescue StandardError => err
-        Result.err(err.message)
+      rescue StandardError => e
+        Result.err(e.message)
       end
 
       def which(cmd)

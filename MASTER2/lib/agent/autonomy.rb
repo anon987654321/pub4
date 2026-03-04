@@ -10,7 +10,7 @@ module MASTER
   module AgentAutonomy
     extend self
 
-    LEARNING_FILE = ::MASTER::Paths.data_file("agent_learning.yml")
+    LEARNING_FILE = File.join(MASTER.root, "data", "agent_learning.yml")
 
     # Goal decomposition - break complex goals into subtasks via LLM
     def decompose_goal(goal)
@@ -277,9 +277,8 @@ module MASTER
     # Returns one of: :ask_always, :preview_changes, :apply_safe, :apply_all
     def autonomy_level
       @graduation ||= begin
-        YAML.safe_load_file(Paths.data_file("quality_thresholds.yml"))["graduation"] || {}
-      rescue StandardError
-        {}
+        f = File.join(MASTER.root, "data", "quality_thresholds.yml")
+        YAML.safe_load_file(f)["graduation"] rescue {}
       end
       successful = DB.total_successful_tasks rescue 0
       reverts_7d = DB.recent_reverts(days: 7) rescue 0

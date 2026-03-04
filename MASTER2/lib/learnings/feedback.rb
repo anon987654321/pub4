@@ -6,8 +6,6 @@ module MASTER
     extend self
 
     DB_FILE = "tmp/learning_feedback.jsonl"
-    MIN_KNOWN_FIX_APPLICATIONS  = 3   # minimum pattern applications before trusting it
-    MIN_KNOWN_FIX_SUCCESS_RATE  = 0.7 # success rate required to consider a pattern reliable
 
     # Record a finding + fix pattern with success/fail
     def record(finding, fix, success:)
@@ -27,8 +25,8 @@ module MASTER
       end
 
       Result.ok
-    rescue StandardError => err
-      Result.err("Failed to record learning: #{err.message}")
+    rescue StandardError => e
+      Result.err("Failed to record learning: #{e.message}")
     end
 
     # Check if we have a known successful fix for this finding
@@ -44,7 +42,7 @@ module MASTER
       total = category_patterns.size
 
       # Need at least 3 applications and >70% success rate
-      total >= MIN_KNOWN_FIX_APPLICATIONS && (successes.to_f / total) > MIN_KNOWN_FIX_SUCCESS_RATE
+      total >= 3 && (successes.to_f / total) > 0.7
     end
 
     # Apply a known fix without LLM

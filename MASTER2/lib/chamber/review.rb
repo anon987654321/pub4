@@ -57,7 +57,7 @@ module MASTER
 
         votes    = []
         vetoed_by = []
-        thread   = [] # shared deliberation -- each model reads prior voices before speaking
+        thread   = [] # shared deliberation — each model reads prior voices before speaking
 
         personas.each do |persona|
           break if over_budget?
@@ -110,13 +110,13 @@ module MASTER
         result = @llm.ask(prompt, tier: :strong)
         return proposal unless result.ok?
 
-        llm_response = result.value
-        @cost += llm_response[:cost] || 0
+        data = result.value
+        @cost += data[:cost] || 0
         @rounds += 1
 
-        llm_response[:content]
-      rescue StandardError => err
-        DB.log_error(context: "chamber_synthesize", error: err.message)
+        data[:content]
+      rescue StandardError => e
+        DB.log_error(context: "chamber_synthesize", error: e.message)
         proposal
       end
 
@@ -134,7 +134,7 @@ module MASTER
         thread_section = if thread.any?
           prior = thread.map { |t| "#{t[:name]} (#{t[:model] || 'unknown'}): #{t[:feedback]}" }.join("\n")
           <<~THREAD
-            DELIBERATION SO FAR -- read this before forming your view:
+            DELIBERATION SO FAR — read this before forming your view:
             #{prior}
 
           THREAD
@@ -161,10 +161,10 @@ module MASTER
         result   = @llm.ask(prompt, **ask_opts)
         return { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 } unless result.ok?
 
-        llm_response = result.value
-        @cost  += llm_response[:cost] || 0
+        data    = result.value
+        @cost  += data[:cost] || 0
 
-        content = llm_response[:content].to_s.strip
+        content = data[:content].to_s.strip
         verdict = content.upcase.split.first  # APPROVE / REJECT / PRAISE
         praise  = verdict == "PRAISE"
         approve = verdict == "APPROVE" || praise
@@ -190,8 +190,8 @@ module MASTER
           weight:  persona[:weight] || 0.1,
           reason:  content.lines.last&.strip,
         }
-      rescue StandardError => err
-        DB.log_error(context: "chamber_vote", error: err.message, persona: persona[:name])
+      rescue StandardError => e
+        DB.log_error(context: "chamber_vote", error: e.message, persona: persona[:name])
         { name: persona[:name], approve: true, weight: persona[:weight] || 0.1 }
       end
     end

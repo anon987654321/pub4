@@ -39,8 +39,8 @@ module MASTER
       return {} unless File.exist?(yml_path)
 
       YAML.safe_load_file(yml_path, symbolize_names: true) || {}
-    rescue StandardError => err
-      Logging.error("Failed to load #{name}.yml: #{err.message}")
+    rescue StandardError => e
+      Logging.error("Failed to load #{name}.yml: #{e.message}")
       {}
     end
 

@@ -32,6 +32,17 @@ command_exists "psql"
 
 install_gem "faker"
 
+# Setup Rails 8 authentication
+[[ -f "app/models/session.rb" ]] || { bin/rails generate authentication; bin/rails db:migrate; }
+
+# Patch ApplicationController with Pagy::Backend (idempotent)
+grep -q "Pagy::Backend" app/controllers/application_controller.rb 2>/dev/null || \
+  sed -i 's/class ApplicationController < ActionController::Base/class ApplicationController < ActionController::Base\n  include Pagy::Backend/' \
+  app/controllers/application_controller.rb
+grep -q "Pagy::Frontend" app/helpers/application_helper.rb 2>/dev/null || \
+  sed -i 's/module ApplicationHelper/module ApplicationHelper\n  include Pagy::Frontend/' \
+  app/helpers/application_helper.rb
+
 bin/rails generate scaffold Profile user:references bio:text location:string lat:decimal lng:decimal gender:string age:integer photos:attachments interests:text
 
 bin/rails generate scaffold Match initiator:references{polymorphic} receiver:references{polymorphic} status:string

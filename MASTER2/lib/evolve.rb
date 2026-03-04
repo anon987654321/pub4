@@ -13,7 +13,6 @@ module MASTER
     MAX_ITERATIONS = (_c || 10).freeze
     CONVERGENCE_THRESHOLD = 0.02
     PER_FILE_BUDGET = 0.25
-    MAX_FILE_SIZE = 10_000 # bytes; files larger than this are skipped
 
     def initialize(llm: LLM, chamber: nil, staged: false, validation_command: nil, language: :ruby)
       @llm = llm
@@ -30,14 +29,15 @@ module MASTER
       Logging.dmesg_log("evolve", message: "ENTER evolve.run")
       @iteration = 0
       @checkpoint = create_safety_checkpoint unless dry_run
-      files = find_files(path).reject { |f| File.size(f) > MAX_FILE_SIZE }
+      files = find_files(path)
 
-      return { iterations: 0, cost: 0, files_processed: 0, improvements: 0, history: [] } if files.empty?
+      files.each do |file|
+        break if over_budget?
 
-      # Batch all files into a single LLM call -- one request, structured JSON output
-      batch_result = batch_improve(files, dry_run: dry_run)
-      @history = batch_result
-      @iteration = files.size
+        @iteration += 1
+        result = improve_file(file, dry_run: dry_run)
+        @history << result
+      end
 
       {
         iterations: @iteration,
@@ -51,48 +51,7 @@ module MASTER
 
     private
 
-    def batch_improve(files, dry_run:)
-      # Build a single prompt listing all files with their contents
-      file_sections = files.map do |f|
-        code = File.read(f)
-        "### #{File.basename(f)}\n```ruby\n#{code}\n```"
-      end.join("\n\n")
-
-      prompt = <<~PROMPT
-        Review the following Ruby source files for constitutional violations and style improvements.
-        Return a JSON array. Each element: {"file":"basename","improved":true/false,"reason":"...","fixed_code":"...or null if no change"}.
-        Apply Strunk & White, ONE_JOB, SIMPLEST_WORKS, FAIL_VISIBLY axioms only.
-        Return ONLY the JSON array, no prose.
-
-        #{file_sections}
-      PROMPT
-
-      result = LLM.ask(prompt, tier: :strong, stream: false)
-      return files.map { |f| { file: f, improved: false, reason: "LLM failed" } } unless result.ok?
-
-      raw = result.value[:content].to_s.strip
-                  .gsub(/\A```(?:json)?\s*/i, "").gsub(/\s*```\z/, "")
-      suggestions = JSON.parse(raw)
-      @cost += result.value[:cost].to_f
-
-      suggestions.map do |s|
-        file = files.find { |f| File.basename(f) == s["file"] }
-        next { file: s["file"], improved: false, reason: "file not found" } unless file
-
-        if s["improved"] && s["fixed_code"] && !dry_run
-          clean = TextHygiene.normalize(s["fixed_code"], filename: file)
-          File.write(file, clean)
-        end
-
-        { file: file, improved: s["improved"] == true, reason: s["reason"], dry_run: dry_run }
-      end.compact
-    rescue JSON::ParserError => e
-      files.map { |f| { file: f, improved: false, reason: "parse error: #{e.message}" } }
-    rescue StandardError => e
-      files.map { |f| { file: f, improved: false, reason: e.message } }
-    end
-
-    # per-file improve kept for shell scripts (embedded Ruby path)
+    # Only evolve lib/ files -- bin/, test/, and sbin/ are excluded for safety
     def find_lib_ruby_files(path)
       Dir.glob(File.join(path, "lib", "**", "*.rb")).sort_by { |f| -File.size(f) }
     end
@@ -113,7 +72,7 @@ module MASTER
 
     def improve_file(file, dry_run:)
       code = File.read(file)
-      return { file: file, skipped: true, reason: "too large" } if code.size > MAX_FILE_SIZE
+      return { file: file, skipped: true, reason: "too large" } if code.size > 10_000
 
       # Handle shell scripts with embedded Ruby
       return improve_shell_file(file, code, dry_run: dry_run) if @language == :shell || shell_file?(file)
@@ -143,8 +102,8 @@ module MASTER
       else
         { file: file, improved: false, reason: result.err? ? result.error : "no changes" }
       end
-    rescue StandardError => err
-      { file: file, error: err.message }
+    rescue StandardError => e
+      { file: file, error: e.message }
     end
 
     def shell_file?(file)
@@ -196,8 +155,8 @@ module MASTER
       else
         { file: file, improved: false, reason: "no improvements suggested" }
       end
-    rescue StandardError => err
-      { file: file, error: err.message }
+    rescue StandardError => e
+      { file: file, error: e.message }
     end
 
     def create_safety_checkpoint

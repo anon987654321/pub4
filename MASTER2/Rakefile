@@ -5,7 +5,6 @@ Rake::TestTask.new(:test) { |t| t.pattern = "test/test_*.rb" }
 # Fast offline tests -- no API key, no network, no hanging
 Rake::TestTask.new("test:fast") do |t|
   t.pattern = "test/test_*.rb"
-  t.ruby_opts = ["-e", "ENV['MASTER_SKIP_SLOW']='1'"]
 end
 
 desc "Run tests with coverage report"
@@ -14,7 +13,7 @@ task :coverage do
   Rake::Task[:test].invoke
 end
 
-desc "Probe each Replicate model ID and remove any that return 404/error"
+desc "Probe each Replicate model ID and remove any that return 404/error (dry-run unless WRITE=1)"
 task :verify_models do
   require "yaml"
   require "net/http"
@@ -22,19 +21,20 @@ task :verify_models do
 
   models_path = File.expand_path("data/models.yml", __dir__)
   models = YAML.safe_load_file(models_path)
-  token = ENV["REPLICATE_API_TOKEN"]
+  token = ENV["REPLICATE_API_TOKEN"] || ENV["REPLICATE_API_KEY"]
 
   unless token
-    puts "REPLICATE_API_TOKEN not set -- skipping Replicate probes"
+    puts "REPLICATE_API_TOKEN / REPLICATE_API_KEY not set -- skipping Replicate probes"
     next
   end
 
-  kept = []
+  write   = ENV["WRITE"] == "1"
+  kept    = []
   removed = []
 
   models.each do |m|
     if m["api"] == "replicate"
-      id = m["id"]
+      id  = m["id"]
       uri = URI("https://api.replicate.com/v1/models/#{id.split(':').first}")
       req = Net::HTTP::Get.new(uri)
       req["Authorization"] = "Bearer #{token}"
@@ -52,8 +52,12 @@ task :verify_models do
   end
 
   if removed.any?
-    File.write(models_path, YAML.dump(kept))
-    puts "\nRemoved #{removed.size} invalid model(s). models.yml updated."
+    if write
+      File.write(models_path, YAML.dump(kept))
+      puts "\nRemoved #{removed.size} invalid model(s). models.yml updated (WRITE=1)."
+    else
+      puts "\nFound #{removed.size} invalid model(s). Dry-run: set WRITE=1 to update models.yml."
+    end
   else
     puts "\nAll Replicate models verified ok."
   end

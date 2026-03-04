@@ -2,9 +2,9 @@
 
 module MASTER
   class AgentFirewall
-    # BehaviorMonitor -- track session baselines and flag anomalies
+    # BehaviorMonitor — track session baselines and flag anomalies
     # Fills the "behavioral monitoring" gap identified in gistfile14 §4
-    # (847 Test Cases paper: combined defenses cut attacks 73% -> 8.7%)
+    # (847 Test Cases paper: combined defenses cut attacks 73% → 8.7%)
     module BehaviorMonitor
       module_function
 

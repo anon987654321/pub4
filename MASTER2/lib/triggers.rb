@@ -20,8 +20,8 @@ module MASTER
         Logging.dmesg_log("triggers", message: "ENTER fire #{event} (#{matching.size} rules)")
         matching.each do |rule|
           rule[:action].call(context)
-        rescue StandardError => err
-          Logging.dmesg_log("triggers", message: "#{event} handler error: #{err.message}")
+        rescue StandardError => e
+          Logging.dmesg_log("triggers", message: "#{event} handler error: #{e.message}")
         end
       end
 

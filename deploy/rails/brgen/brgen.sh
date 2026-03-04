@@ -60,10 +60,6 @@ gem "stimulus_reflex", "~> 3.5"
 gem "cable_ready", "~> 5.0"
 
 # Multi-tenancy
-gem "devise"
-
-gem "devise-guests"
-
 gem "acts_as_tenant"
 
 # Features
@@ -174,6 +170,23 @@ RUBY
 bin/rails db:migrate
 # === MODEL CONCERNS ===
 echo "Creating model concerns"
+cat > app/models/concerns/votable.rb << 'RUBY'
+module Votable
+  extend ActiveSupport::Concern
+  included do
+    acts_as_votable
+    after_save :update_karma_cache
+  end
+  def karma_score
+    cached_weighted_score
+  end
+  private
+  def update_karma_cache
+    update_column(:karma, cached_weighted_score) if has_attribute?(:karma)
+  end
+end
+RUBY
+
 mkdir -p app/models/concerns
 cat > app/models/concerns/commentable.rb << 'RUBY'
 module Commentable
@@ -238,21 +251,12 @@ class Post < ApplicationRecord
   validates :content, presence: true
   validates :title, presence: true, length: { maximum: 300 }
 
+  HOT_DECAY_EXPONENT = 1.5
+
   scope :hot, -> {
-    # Reddit-style hot ranking: vote_sum / (hours_old + 2) ^ $HOT_DECAY_EXPONENT
-
-    # +2 prevents division by zero, $HOT_DECAY_EXPONENT (1.5) balances freshness vs popularity
-
-    left_joins(:votes)
-
-      .group(:id)
-
-      .select('posts.*, SUM(COALESCE(votes.value, 0)) as vote_sum,
-
-               EXTRACT(EPOCH FROM (NOW() - posts.created_at)) / 3600 as hours_old')
-
-      .order(Arel.sql("vote_sum / POWER(hours_old + 2, $HOT_DECAY_EXPONENT) DESC"))
-
+    # Reddit-style hot ranking: cached_weighted_score / (hours_old + 2) ^ HOT_DECAY_EXPONENT
+    # acts_as_votable cached_weighted_score avoids N+1 joins
+    order(Arel.sql("(cached_weighted_score::float / POWER(EXTRACT(EPOCH FROM (NOW() - created_at))/3600 + 2, #{HOT_DECAY_EXPONENT})) DESC NULLS LAST"))
   }
 
   scope :top, -> { left_joins(:votes).group(:id).order("SUM(COALESCE(votes.value, 0)) DESC") }
@@ -281,7 +285,7 @@ class Comment < ApplicationRecord
 
   has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
 
-  validates :content, presence: true, length: { minimum: 1, maximum: $MAX_COMMENT_LENGTH }
+  validates :content, presence: true, length: { minimum: 1, maximum: 10000 }
   def root?
     parent_id.nil?
 
@@ -332,6 +336,14 @@ RUBY
 
 # === CONTROLLERS ===
 echo "Generating controllers with authorization"
+# Patch ApplicationController with Pagy::Backend (idempotent)
+grep -q "Pagy::Backend" app/controllers/application_controller.rb 2>/dev/null || \
+  sed -i 's/class ApplicationController < ActionController::Base/class ApplicationController < ActionController::Base\n  include Pagy::Backend/' \
+  app/controllers/application_controller.rb
+# Patch ApplicationHelper with Pagy::Frontend (idempotent)
+grep -q "Pagy::Frontend" app/helpers/application_helper.rb 2>/dev/null || \
+  sed -i 's/module ApplicationHelper/module ApplicationHelper\n  include Pagy::Frontend/' \
+  app/helpers/application_helper.rb
 cat > app/controllers/posts_controller.rb << 'RUBY'
 class PostsController < ApplicationController
 
@@ -342,7 +354,7 @@ class PostsController < ApplicationController
   before_action :authorize_user!, only: [:edit, :update, :destroy]
 
   def index
-    @posts = Post.all.includes(:user, :community).hot.page(params[:page])
+    @pagy, @posts = pagy(Post.all.includes(:user, :community).hot)
 
   end
 
@@ -525,7 +537,7 @@ class CommunitiesController < ApplicationController
   def show
     @community = Community.find_by!(slug: params[:id])
 
-    @posts = @community.posts.includes(:user).hot.page(params[:page])
+    @pagy, @posts = pagy(@community.posts.includes(:user).hot)
 
   end
 
@@ -550,7 +562,7 @@ class VotesController < ApplicationController
   def destroy
     votable = find_votable
 
-    votable.downvote_by(current_user)
+    votable.unvote_by(current_user)
 
     render json: { score: votable.karma }
 
@@ -801,7 +813,7 @@ puts "Creating users..."
 
     username: Faker::Internet.username,
 
-    karma: rand(0..$MAX_KARMA_SEED)
+    karma: rand(0..1000)
 
   )
 
@@ -878,7 +890,7 @@ YAML
 
 # === DEPLOYMENT ===
 echo "Creating OpenBSD rc.d service"
-cat > /tmp/brgen_rc.sh << 'RCSH'
+cat > /etc/rc.d/brgen << RCSH
 #!/bin/ksh
 
 daemon_user="brgen"
@@ -887,18 +899,19 @@ daemon_execdir="/home/brgen/app"
 
 daemon="/home/brgen/app/bin/rails"
 
-daemon_flags="server -b 0.0.0.0 -p $PORT -e production"
+daemon_flags="server -b 0.0.0.0 -p ${PORT} -e production"
 
 daemon_timeout="60"
 
 . /etc/rc.d/rc.subr
-pexp="ruby.*bin/rails server.*-p $PORT"
+pexp="ruby.*bin/rails server.*-p ${PORT}"
 rc_bg=YES
 
 rc_reload=NO
 
-rc_cmd $1
+rc_cmd \$1
 RCSH
+chmod 0555 /etc/rc.d/brgen
 
 echo "==> BRGEN setup complete!"
 echo "Next steps:"

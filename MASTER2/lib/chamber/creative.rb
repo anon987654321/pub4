@@ -38,7 +38,7 @@ module MASTER
 
       # Round 1: Each model proposes ideas
       proposals = []
-      participants.times do |participant_idx|
+      participants.times do |i|
         break if over_budget?
 
         result = ask_llm(
@@ -47,7 +47,7 @@ module MASTER
         next unless result.ok?
 
         proposal = {
-          model: participant_idx,
+          model: i,
           ideas: result.value[:content],
           critique: nil,
         }
@@ -58,16 +58,16 @@ module MASTER
       return Result.ok({ ideas: [], cost: @cost }) if proposals.empty?
 
       # Round 2: Each model critiques others and defends their own
-      proposals.each_with_index do |prop, prop_idx|
+      proposals.each_with_index do |prop, i|
         break if over_budget?
 
-        others = proposals.reject.with_index { |_, j| j == prop_idx }.map { |pr| pr[:ideas][0...MAX_IDEA_PREVIEW] }.join("\n\n")
+        others = proposals.reject.with_index { |_, j| j == i }.map { |p| p[:ideas][0...MAX_IDEA_PREVIEW] }.join("\n\n")
         critique_prompt = "You proposed these ideas:\n#{prop[:ideas][0...MAX_PROPOSAL_PREVIEW]}\n\nOthers proposed:\n#{others}\n\nCritique the other ideas and explain why yours are better. Be constructive but persuasive."
 
         result = ask_llm(critique_prompt, tier: :fast)
         if result.ok?
           prop[:critique] = result.value[:content]
-          @results << { type: :critique, model: prop_idx, content: prop[:critique] }
+          @results << { type: :critique, model: i, content: prop[:critique] }
         end
       end
 
@@ -109,14 +109,14 @@ module MASTER
 
       # Step 2: Extract individual scenes and generate images
       storyboard = []
-      scene_text.split(/Scene \d+/).drop(1).take(scenes).each_with_index do |scene_desc, scene_idx|
+      scene_text.split(/Scene \d+/).drop(1).take(scenes).each_with_index do |scene_desc, i|
         break if over_budget?
 
         prompt = "Cinematic scene: #{scene_desc[0...MAX_DETAIL_PREVIEW]}"
         img_result = Replicate.generate(prompt: prompt, model: :flux)
         if img_result.ok?
-          storyboard << { scene: scene_idx + 1, description: scene_desc.strip, **img_result.value }
-          @results << { type: :scene, scene: scene_idx + 1, **img_result.value }
+          storyboard << { scene: i + 1, description: scene_desc.strip, **img_result.value }
+          @results << { type: :scene, scene: i + 1, **img_result.value }
         end
       end
 
@@ -152,7 +152,7 @@ module MASTER
       current = initial_prompt
       history = [{ version: 0, prompt: current }]
 
-      iterations.times do |iter_idx|
+      iterations.times do |i|
         break if over_budget?
 
         # Get enhancement suggestions
@@ -170,8 +170,8 @@ module MASTER
         next unless enhance_result.ok?
 
         current = enhance_result.value[:content]
-        history << { version: iter_idx + 1, prompt: current, suggestions: suggestions }
-        @results << { type: :enhancement, version: iter_idx + 1, suggestions: suggestions }
+        history << { version: i + 1, prompt: current, suggestions: suggestions }
+        @results << { type: :enhancement, version: i + 1, suggestions: suggestions }
       end
 
       Result.ok({ final_prompt: current, history: history, cost: @cost })
@@ -235,8 +235,8 @@ module MASTER
     def arbiter_synthesize(topic, proposals)
       return nil if over_budget?
 
-      ideas_summary = proposals.map.with_index do |prop, idx|
-        "Model #{idx + 1} Ideas:\n#{prop[:ideas][0...MAX_IDEA_PREVIEW]}\n\nCritique:\n#{prop[:critique]&.[](0...MAX_LETTER_PREVIEW) || 'None'}"
+      ideas_summary = proposals.map.with_index do |p, i|
+        "Model #{i + 1} Ideas:\n#{p[:ideas][0...MAX_IDEA_PREVIEW]}\n\nCritique:\n#{p[:critique]&.[](0...MAX_LETTER_PREVIEW) || 'None'}"
       end.join("\n\n---\n\n")
 
       prompt = "Topic: #{topic}\n\nMultiple models brainstormed ideas and critiqued each other:\n\n#{ideas_summary}\n\nAs an impartial arbiter, synthesize the BEST 3 ideas from all proposals. Explain why each is strong. Be objective and decisive."

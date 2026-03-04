@@ -42,8 +42,8 @@ module MASTER
 
       # Get list of available engines
       def available_engines
-        ENGINES.select do |eng|
-          case eng
+        ENGINES.select do |e|
+          case e
           when :piper then piper_installed?
           when :edge then edge_installed?
           when :replicate then ENV.fetch("REPLICATE_API_TOKEN", nil)

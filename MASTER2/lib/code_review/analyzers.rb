@@ -6,7 +6,7 @@ module MASTER
   # Canonical code analysis algorithms extracted from duplicate implementations
   # Used by Engine, Layers, Scopes, Smells, and Violations modules
   module Analyzers
-    # Nesting depth analysis -- delegates to PrismAnalyzer for AST-accurate results;
+    # Nesting depth analysis — delegates to PrismAnalyzer for AST-accurate results;
     # falls back to line-counting heuristic when source has parse errors.
     module NestingAnalyzer
       def self.depth(code)
@@ -29,7 +29,7 @@ module MASTER
       end
     end
 
-    # Method length analysis -- delegates to PrismAnalyzer for AST-accurate results;
+    # Method length analysis — delegates to PrismAnalyzer for AST-accurate results;
     # falls back to nesting-aware line-counting when source has parse errors.
     # Returns array of {name:, start_line:, length:} hashes (param_count added by Prism path).
     module MethodLengthAnalyzer

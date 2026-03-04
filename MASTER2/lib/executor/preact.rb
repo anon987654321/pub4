@@ -16,7 +16,11 @@ module MASTER
         # Phase 2: Execute plan step by step
         results = []
         @plan.each_with_index do |planned_step, idx|
-          return err if (err = timeout_error_for(start_time))
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
+          end
 
           @step = idx + 1
           UI.dim("  #{@step}/#{@plan.size}: #{planned_step[0..60]}")
@@ -24,7 +28,13 @@ module MASTER
           # Execute the planned action
           observation = dispatch_action(planned_step)
 
-          return err if (err = injection_error_for(observation, source: "step #{@step}"))
+          # Injection defense: halt on detected injection (gist item #3)
+          if defined?(Security::Sanitizer) && !Security::Sanitizer.safe?(observation)
+            return Result.err(
+              "Injection attempt detected in tool response at step #{@step}. Aborting.",
+              category: :validation,
+            )
+          end
 
           results << { step: @step, action: planned_step, observation: observation }
           record_history(results.last)
@@ -45,7 +55,24 @@ module MASTER
       def generate_plan(goal, tier:)
         tool_list = Executor.tool_list_text
 
-        prompt = Prompts.get(:preact, :generate_plan, goal: goal, tool_list: tool_list)
+        prompt = <<~PLAN
+          Create a step-by-step plan to accomplish this task:
+
+          TASK: #{goal}
+
+          TOOLS AVAILABLE:
+          #{tool_list}
+
+          Respond with a numbered list of tool invocations, one per line.
+          Each step should be a complete tool command.
+
+          Example:
+          1. file_read "config.yml"
+          2. analyze_code "src/main.rb"
+          3. fix_code "src/main.rb"
+
+          PLAN:
+        PLAN
 
         result = LLM.ask(prompt, tier: tier)
         return result unless result.ok?
@@ -60,7 +87,15 @@ module MASTER
       def replan(goal, completed, tier:)
         history_text = completed.map { |r| "#{r[:action]} -> #{r[:observation][0..100]}" }.join("\n")
 
-        prompt = Prompts.get(:preact, :replan, goal: goal, history: history_text)
+        prompt = <<~REPLAN
+          Original task: #{goal}
+
+          Completed steps:
+          #{history_text}
+
+          The last step had an unexpected result. What additional steps are needed?
+          Respond with numbered tool commands only:
+        REPLAN
 
         result = LLM.ask(prompt, tier: :fast)
         return result unless result.ok?
@@ -70,9 +105,18 @@ module MASTER
       end
 
       def synthesize_answer(goal, results, tier:)
-        history_text = results.map { |r| "Step #{r[:step]}: #{r[:action]}\nResult: #{r[:observation][0..300]}" }.join("\n\n")
+        history_text = results.map do |r|
+          "Step #{r[:step]}: #{r[:action]}\nResult: #{r[:observation][0..300]}"
+        end.join("\n\n")
 
-        prompt = Prompts.get(:preact, :synthesize, goal: goal, history: history_text)
+        prompt = <<~SYNTH
+          Task: #{goal}
+
+          Execution results:
+          #{history_text}
+
+          Provide a concise final answer based on these results:
+        SYNTH
 
         result = LLM.ask(prompt, tier: :fast)
         return result unless result.ok?

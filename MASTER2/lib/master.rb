@@ -11,12 +11,12 @@ module MASTER
   # Safe require helper for optional dependencies
   def self.safe_require(path, label: nil, silent: false)
     require_relative path
-  rescue LoadError, StandardError => err
+  rescue LoadError, StandardError => e
     return if silent
 
     name = label || File.basename(path)
-    warn "MASTER: #{name} unavailable (#{err.message})"
-    Logging.warn("#{name} unavailable", error: err.message) if defined?(Logging)
+    warn "MASTER: #{name} unavailable (#{e.message})"
+    Logging.warn("#{name} unavailable", error: e.message) if defined?(Logging)
   end
 end
 
@@ -50,7 +50,7 @@ require_relative "rubocop_detector"
 
 # Multi-language parsing (now in MASTER2); NLU and conversation are optional stubs
 MASTER.safe_require("parser/multi_language")
-# nlu and conversation are MASTER v4 stubs -- silently absent, not an error
+# nlu and conversation are MASTER v4 stubs — silently absent, not an error
 %w[../../lib/nlu ../../lib/conversation].each do |dep|
   MASTER.safe_require(dep, silent: true)
 end
@@ -112,7 +112,6 @@ end
 require_relative "agent"
 
 # Meta/Self-improvement
-require_relative "scan"
 require_relative "review"
 require_relative "learnings"
 require_relative "file_processor"
@@ -151,16 +150,14 @@ require_relative "boot/modes"
   MASTER.safe_require(mod)
 end
 
-Scan = MASTER::Scan if defined?(MASTER::Scan)
-
 # Boot-time self-check
 if ENV["MASTER_SELF_CHECK"] == "true" && defined?(MASTER::Enforcement)
   Thread.new do
     sleep (ENV["MASTER_SELF_CHECK_DELAY"] || "1").to_i
     begin
       MASTER::Enforcement.self_check!
-    rescue StandardError => err
-      warn "MASTER: self_check! failed (#{err.message})"
+    rescue StandardError => e
+      warn "MASTER: self_check! failed (#{e.message})"
     end
   end
 end

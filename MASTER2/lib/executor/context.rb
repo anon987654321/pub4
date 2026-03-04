@@ -3,7 +3,7 @@
 module MASTER
   # ExecutionContext - extracted from Executor::Context for module-level access
   module ExecutionContext
-    SIMPLE_SECTIONS = %w[personality capabilities architecture environment shell_patterns behavior].freeze
+    SIMPLE_SECTIONS = %w[capabilities architecture environment shell_patterns behavior].freeze
     LABELED_SECTIONS = {
       "task_workflow" => "TASK WORKFLOW",
       "safety" => "SAFETY",
@@ -15,10 +15,10 @@ module MASTER
       @system_prompt_config ||= if File.exist?(MASTER::Executor::SYSTEM_PROMPT_FILE)
                                   begin
                                     YAML.safe_load_file(MASTER::Executor::SYSTEM_PROMPT_FILE)
-                                  rescue StandardError => err
+                                  rescue StandardError => e
                                     if defined?(MASTER::Logging)
                                       MASTER::Logging.warn("executor.context",
-                                                           "Failed to load system prompt: #{err.message}")
+                                                           "Failed to load system prompt: #{e.message}")
                                     end
                                     {}
                                   end
@@ -28,7 +28,7 @@ module MASTER
     end
 
     # Build comprehensive system message with all YAML sections + persona
-    # depth: :shallow (default) | :own | :deep | :full -- controls source injection
+    # depth: :shallow (default) | :own | :deep | :full — controls source injection
     def self.build_system_message(include_commands: true, depth: :shallow)
       config = system_prompt_config
 
@@ -36,9 +36,7 @@ module MASTER
       identity = if config["identity"]
                    begin
                      format(config["identity"], version: MASTER::VERSION, platform: RUBY_PLATFORM, ruby_version: RUBY_VERSION,
-                                                working_dir: Dir.pwd, hypervisor: PlatformCheck.hypervisor,
-                                                provider: PlatformCheck.provider,
-                                                openbsd_version: PlatformCheck.openbsd_version || RUBY_PLATFORM)
+                                                working_dir: Dir.pwd)
                    rescue KeyError, ArgumentError
                      config["identity"]
                    end
@@ -78,42 +76,22 @@ module MASTER
       master_md = File.join(Dir.pwd, "MASTER.md")
       sections << "PROJECT CONTEXT (from MASTER.md):\n#{File.read(master_md)[0..2000]}" if File.exist?(master_md)
 
-      # Persistent project memory -- goal, stack, recent decisions across all sessions/models
+      # Persistent project memory — goal, stack, recent decisions across all sessions/models
       if defined?(ProjectMemory)
         mem = ProjectMemory.inject(root: Dir.pwd)
         sections << mem unless mem.empty?
       end
 
       # Gist #9: Inject detected project conventions so LLM mimics existing style
-      conventions = begin
-        ConventionExtractor.extract(root: MASTER.root)
-      rescue StandardError
-        ""
-      end
+      conventions = ConventionExtractor.extract(root: MASTER.root) rescue ""
       sections << conventions unless conventions.empty?
-
-      # Inject top-5 highest-priority axioms so every LLM call has them on the hot path
-      if defined?(MASTER::Review::Constitution)
-        begin
-          top_axioms = MASTER::Review::Constitution.axioms
-                         .select { |a| a["name"] && a["description"] }
-                         .sort_by { |a| -(a["priority"] || 5) }
-                         .first(5)
-          unless top_axioms.empty?
-            axiom_lines = top_axioms.map { |a| "#{a['name']}: #{a['description']}" }.join("\n")
-            sections << "ACTIVE AXIOMS (highest priority):\n#{axiom_lines}"
-          end
-        rescue StandardError
-          nil
-        end
-      end
 
       # Zsh native patterns: forbid legacy forks in shell code
       sections << ZshPatternInjector.prompt_section
 
-      # Strunk & White -- every LLM system message
+      # Strunk & White — every LLM system message
       sections << <<~SW
-        PROSE STYLE -- ELEMENTS OF STYLE (Strunk & White):
+        PROSE STYLE — ELEMENTS OF STYLE (Strunk & White):
         Omit needless words. Every identifier, comment, error message, and string earns its place or is cut.
         Name things by what they ARE: axiom_list not data; violation_count not value; model_name not info.
         Use the active voice: "Enforcer rejected X" not "X was rejected". Methods are active verbs: enforce, scan, reflow.
@@ -122,13 +100,13 @@ module MASTER
         Read-aloud test: mentally read your output. If it flows as natural English, it is well-structured.
       SW
 
-      # Exemplars -- positive models from the registry
+      # Exemplars — positive models from the registry
       if defined?(BeautyScorer)
         ex = BeautyScorer.exemplars_prompt(max: 3)
         sections << ex unless ex.empty?
       end
 
-      # Grounded source injection -- depth :own/:deep/:full loads real source files
+      # Grounded source injection — depth :own/:deep/:full loads real source files
       if depth != :shallow && defined?(GroundedContext)
         grounded = GroundedContext.build(depth: depth, root: MASTER.root)
         sections << grounded unless grounded.empty?
@@ -137,7 +115,7 @@ module MASTER
       sections.join("\n\n")
     end
 
-    # Build task context (tools + format + history) -- template loaded from data/prompts/react.yml
+    # Build task context (tools + format + history)
     def build_task_context(goal)
       history_text = @history.map do |h|
         obs = h[:observation]&.[](0..400)
@@ -146,15 +124,27 @@ module MASTER
         "Step #{h[:step]}:\nThought: #{h[:thought]}\nAction: #{h[:action]}#{"\nObservation: #{obs_line}" if obs_line}"
       end.join("\n\n")
 
-      tool_list   = Executor.tool_list_text
+      # Build tool list and format from TOOLS hash
+      tool_list = Executor.tool_list_text
       tool_format = Executor::TOOLS.map { |_k, v| "- #{v[:usage]}" }.join("\n")
-      history_section = history_text.empty? ? "" : "PREVIOUS STEPS:\n#{history_text}\n"
 
-      Executor::Prompts.get(:react, :task_context,
-        goal: goal,
-        tool_list: tool_list,
-        tool_format: tool_format,
-        history_section: history_section)
+      <<~TASK
+        TASK: #{goal}
+
+        TOOLS AVAILABLE (for autonomous execution):
+        #{tool_list}
+
+        TOOL FORMAT:
+        #{tool_format}
+
+        When complete, respond: ANSWER: your final answer
+
+        #{"PREVIOUS STEPS:\n#{history_text}\n" unless history_text.empty?}
+
+        Respond with:
+        Thought: (brief reasoning)
+        Action: (tool invocation or ANSWER: final answer)
+      TASK
     end
 
     # Build context as messages array with system/user separation

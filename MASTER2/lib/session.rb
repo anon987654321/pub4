@@ -21,11 +21,9 @@ module MASTER
   class Session
     attr_reader :id, :created_at, :history, :metadata
 
-    AUTOSAVE_INTERVAL   = 30 # seconds
-    SESSION_MUTEX       = Mutex.new
+    AUTOSAVE_INTERVAL = 30 # seconds
+    SESSION_MUTEX = Mutex.new
     SUPPORTED_LANGUAGES = %i[english norwegian].freeze
-    SIGINT_EXIT_CODE    = 130
-    SIGTERM_EXIT_CODE   = 143
 
     # SUPPORTED_PERSONAS - delegate to Personas module
     SUPPORTED_PERSONAS = Personas.supported_list.freeze
@@ -91,46 +89,9 @@ module MASTER
 
     def context_for_llm(max_messages: 20)
       compressed = Memory.compress(@history)
-      msgs = compressed.last(max_messages).map do |h|
+      compressed.last(max_messages).map do |h|
         { role: h[:role].to_s, content: h[:content] }
       end
-      if (task = @metadata[:active_task])
-        msgs.unshift({ role: "system", content: "Current task: #{task}" })
-      end
-      if (pending = @metadata[:pending_tasks])&.any?
-        msgs.unshift({ role: "system", content: "Pending (complete these): #{pending.join(' | ')}" })
-      end
-      msgs
-    end
-
-    def add_pending_task(desc)
-      @metadata[:pending_tasks] ||= []
-      @metadata[:pending_tasks] << desc.to_s.strip unless @metadata[:pending_tasks].include?(desc.to_s.strip)
-      @dirty = true
-    end
-
-    def complete_pending_task(desc)
-      @metadata[:pending_tasks]&.delete(desc.to_s.strip)
-      @dirty = true
-    end
-
-    def pending_tasks
-      @metadata[:pending_tasks] || []
-    end
-
-    # Set the active task label — injected into every LLM context window.
-    # Call with nil to clear (signals topic shift to the LLM).
-    def set_task(label)
-      if label.nil?
-        @metadata.delete(:active_task)
-      else
-        @metadata[:active_task] = label.to_s.strip
-      end
-      @dirty = true
-    end
-
-    def active_task
-      @metadata[:active_task]
     end
 
     def write_metadata(key, value)
@@ -224,13 +185,13 @@ module MASTER
       # Install signal handlers for crash recovery
       # @return [void]
       def install_crash_handlers
-        # at_exit runs on normal exit/INT/TERM -- save session before process ends
+        # at_exit runs on normal exit/INT/TERM — save session before process ends
         at_exit { save_on_crash }
 
         %w[INT TERM].each do |signal|
           Signal.trap(signal) do
             # exit (not exit!) triggers at_exit handlers so session is saved
-            exit_code = signal == "INT" ? SIGINT_EXIT_CODE : SIGTERM_EXIT_CODE
+            exit_code = signal == "INT" ? 130 : 143
             exit(exit_code)
           end
         end
@@ -247,8 +208,8 @@ module MASTER
         @current.instance_variable_set(:@metadata,
                                        @current.metadata.merge(crashed: true, crash_time: Time.now.utc.iso8601))
         @current.save
-      rescue StandardError => err
-        warn "session: crash save failed: #{err.message}"
+      rescue StandardError => e
+        warn "session: crash save failed: #{e.message}"
       end
     end
 

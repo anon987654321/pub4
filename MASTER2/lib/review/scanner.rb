@@ -38,17 +38,17 @@ module MASTER
         }.freeze,
         rescue_nil: {
           pattern: /rescue\s+nil\b/,
-          message: "rescue nil swallows all exceptions silently -- use rescue StandardError",
+          message: "rescue nil swallows all exceptions silently — use rescue StandardError",
           severity: :major,
         }.freeze,
         ascii_decoration: {
           pattern: /^#\s*[-=]{3,}/,
-          message: "ASCII decoration comment adds visual noise -- use plain # Section header",
+          message: "ASCII decoration comment adds visual noise — use plain # Section header",
           severity: :minor,
         }.freeze,
         unused_rescue_var: {
           pattern: /rescue(?:\s+\w+)?\s*=>\s*e\s*(?:;\s*(?:nil|\{\}|\[\])|[\r\n]\s*(?:nil|end|\{\}|\[\]))/,
-          message: "Rescue captures 'e' but body is empty -- drop => e if variable unused",
+          message: "Rescue captures 'e' but body is empty — drop => e if variable unused",
           severity: :minor,
         }.freeze,
       }.freeze
@@ -74,8 +74,8 @@ module MASTER
           return Result.err("No model available.") unless result.ok?
 
           parse_opportunities_json(result.value[:content])
-        rescue StandardError => err
-          Result.err("Analysis failed: #{err.message}")
+        rescue StandardError => e
+          Result.err("Analysis failed: #{e.message}")
         end
 
         # Quick static analysis (no LLM)
@@ -224,8 +224,8 @@ module MASTER
           end
 
           Result.ok(categories)
-        rescue JSON::ParserError => err
-          Result.err("JSON parse failed: #{err.message}")
+        rescue JSON::ParserError => e
+          Result.err("JSON parse failed: #{e.message}")
         end
 
         def grade_for(score)

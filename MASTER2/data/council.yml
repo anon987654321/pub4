@@ -73,7 +73,7 @@ council:
 
   - slug: "minimalist"
     name: "The Minimalist"
-    model: "openai/gpt-5-nano"              # Replicate -- small, opinionated, blunt
+    model: "openai/gpt-4o-mini"              # cheapest real OpenAI model
     weight: 0.15
     temperature: 0.3
     veto: false

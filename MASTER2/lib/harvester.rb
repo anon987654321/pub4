@@ -48,9 +48,9 @@ module MASTER
 
       @stats[:repos_scanned] += repos.size
       Result.ok(repos: repos)
-    rescue StandardError => err
+    rescue StandardError => e
       @stats[:errors] += 1
-      Result.err("Search failed: #{err.message}")
+      Result.err("Search failed: #{e.message}")
     end
 
     # Get repository info
@@ -59,7 +59,7 @@ module MASTER
       response = github_request(uri)
       return Result.err("Repository not found.") unless response
 
-      repo_metadata = {
+      info = {
         name: response["full_name"],
         description: response["description"],
         stars: response["stargazers_count"],
@@ -72,10 +72,10 @@ module MASTER
       }
 
       @stats[:repos_scanned] += 1
-      Result.ok(repo_metadata)
-    rescue StandardError => err
+      Result.ok(info)
+    rescue StandardError => e
       @stats[:errors] += 1
-      Result.err("Failed to get repo info: #{err.message}")
+      Result.err("Failed to get repo info: #{e.message}")
     end
 
     # Get trending repositories
@@ -101,8 +101,8 @@ module MASTER
             result = search_repos(source, limit: 5)
             @harvested_data += result.value[:repos] if result.ok?
           end
-        rescue StandardError => err
-          puts "  - Error: #{err.message}"
+        rescue StandardError => e
+          puts "  - Error: #{e.message}"
           @stats[:errors] += 1
         end
 
@@ -139,8 +139,8 @@ module MASTER
       puts "Saved to: #{output_path}"
 
       Result.ok(path: output_path)
-    rescue StandardError => err
-      Result.err("Failed to save: #{err.message}")
+    rescue StandardError => e
+      Result.err("Failed to save: #{e.message}")
     end
 
     # Analyze trends in harvested data
@@ -179,8 +179,8 @@ module MASTER
       body ? JSON.parse(body) : nil
     rescue JSON::ParserError
       nil
-    rescue StandardError => err
-      puts "  Request error: #{err.message}"
+    rescue StandardError => e
+      puts "  Request error: #{e.message}"
       nil
     end
 

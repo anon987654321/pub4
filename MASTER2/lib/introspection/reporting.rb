@@ -3,9 +3,6 @@
 module MASTER
   module Analysis
     class Introspection
-      COUNCIL_RATING_EXCELLENT   = 8  # council score ≥ this -> strong alignment
-      COUNCIL_RATING_ACCEPTABLE  = 6  # council score ≥ this -> fundamentals solid
-
       class << self
         def print_prose_summary(results)
           passed = results.values.count { |r| r[:passed] }
@@ -56,9 +53,9 @@ module MASTER
           # Council rating
           if council[:rating]
             rating = council[:rating]
-            if rating >= COUNCIL_RATING_EXCELLENT
+            if rating >= 8
               paragraphs << "The adversarial council rated the codebase #{rating}/10, indicating strong alignment with stated axioms."
-            elsif rating >= COUNCIL_RATING_ACCEPTABLE
+            elsif rating >= 6
               paragraphs << "The adversarial council rated the codebase #{rating}/10. Room for improvement exists but fundamentals are solid."
             else
               paragraphs << "The adversarial council rated the codebase #{rating}/10, suggesting significant gaps between stated principles and implementation."

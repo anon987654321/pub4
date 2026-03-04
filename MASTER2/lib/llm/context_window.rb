@@ -4,12 +4,11 @@ module MASTER
   # ContextWindow - Track and display token usage
   # Uses LLM.context_limits as single source of truth
   module ContextWindow
-    DEFAULT_LIMIT  = 32_000
-    CHARS_PER_TOKEN = 4 # rough approximation used for token estimation
+    DEFAULT_LIMIT = 32_000
 
     class << self
       def estimate_tokens(char_count)
-        (char_count.to_i / CHARS_PER_TOKEN.to_f).ceil
+        (char_count.to_i / 4.0).ceil
       end
 
       def limit_for(model)

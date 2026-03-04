@@ -69,14 +69,14 @@ module MASTER
 
           # Check method and variable names
           check_naming(file, content, report)
-        rescue StandardError => err
+        rescue StandardError => e
           report.add(Finding.new(
                        file: file,
                        line: 0,
                        severity: :low,
                        effort: :easy,
                        category: :error,
-                       message: "Could not scan file: #{err.message}",
+                       message: "Could not scan file: #{e.message}",
                        suggestion: nil,
                      ))
         end
@@ -84,9 +84,6 @@ module MASTER
 
       Result.ok(report: report)
     end
-
-    FILE_LENGTH_WARN  = 250
-    FILE_LENGTH_ERROR = 500
 
     private
 
@@ -98,7 +95,7 @@ module MASTER
                        error: smells_thresholds[:max_file_lines] * 2,
                      }
                    else
-                     { warn: FILE_LENGTH_WARN, error: FILE_LENGTH_ERROR }
+                     { warn: 250, error: 500 }
                    end
 
       length = lines.size

@@ -97,8 +97,8 @@ module MASTER
             sleep(backoff_needed > 0 ? backoff_needed : @interval)
           end
         end
-      rescue StandardError => err
-        Logging.dmesg_log("heartbeat", message: "loop error: #{err.message}")
+      rescue StandardError => e
+        Logging.dmesg_log("heartbeat", message: "loop error: #{e.message}")
         @running = false
       end
 
@@ -107,11 +107,11 @@ module MASTER
         result = check[:callable].call
         check[:failures] = 0 if result
         nil # Returns nil on success, backoff delay in seconds on failure
-      rescue StandardError => err
+      rescue StandardError => e
         check[:failures] += 1
         backoff = [30 * (2**check[:failures]), MAX_INTERVAL].min
         Logging.dmesg_log("heartbeat",
-                          message: "#{check[:name]} failed (#{check[:failures]}x), backoff #{backoff}s: #{err.message}")
+                          message: "#{check[:name]} failed (#{check[:failures]}x), backoff #{backoff}s: #{e.message}")
         check[:failures] > 2 ? backoff : nil # Return delay but don't sleep here
       end
 
@@ -157,8 +157,8 @@ module MASTER
           cycle[:learned] = learn(cycle)
           @last_cycle = cycle
           true
-        rescue StandardError => err
-          Triggers.fire(:on_error, stage: :autonomy_cycle, error: err.message) if defined?(Triggers)
+        rescue StandardError => e
+          Triggers.fire(:on_error, stage: :autonomy_cycle, error: e.message) if defined?(Triggers)
           false
         end
       end
@@ -167,9 +167,7 @@ module MASTER
         {
           scheduler_jobs: (defined?(Scheduler) ? Scheduler.list : []),
           llm_configured: (defined?(LLM) && LLM.respond_to?(:configured?) ? LLM.configured? : false),
-          budget_remaining: begin
-            defined?(LLM) && LLM.respond_to?(:budget_remaining) ? LLM.budget_remaining : Float::INFINITY
-          end,
+          budget_remaining: (defined?(LLM) && LLM.respond_to?(:budget_remaining) ? LLM.budget_remaining : Float::INFINITY),
           timestamp: Time.now.to_i,
         }
       end
@@ -212,9 +210,7 @@ module MASTER
           and pick the strongest one.
 
           CONTEXT:
-          - Jobs: #{Array(observed[:scheduler_jobs]).map { |j|
-            "#{j[:id]}:#{j[:command]}(fail=#{j[:failures]})"
-          }.join(', ')}
+          - Jobs: #{Array(observed[:scheduler_jobs]).map { |j| "#{j[:id]}:#{j[:command]}(fail=#{j[:failures]})" }.join(', ')}
           - LLM configured: #{observed[:llm_configured]}
           - Budget remaining: #{observed[:budget_remaining]}
 
@@ -342,10 +338,7 @@ module MASTER
         return [] unless defined?(AgentAutonomy)
 
         last = cycle[:iterations].last || {}
-        obs_count   = cycle[:observed][:scheduler_jobs].size
-        iter_count  = cycle[:iterations].size
-        final_score = last[:score] || 0.0
-        summary = "obs=#{obs_count} iter=#{iter_count} score=#{final_score}"
+        summary = "obs=#{cycle[:observed][:scheduler_jobs].size} iter=#{cycle[:iterations].size} score=#{last[:score] || 0.0}"
         AgentAutonomy.record_skill("heartbeat_autonomy_cycle", description: summary, examples: [summary])
         [{ skill: "heartbeat_autonomy_cycle", summary: summary }]
       rescue StandardError

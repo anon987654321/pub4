@@ -112,8 +112,14 @@ module MASTER
             recommendation: recommendation(all_issues),
           }
         end
+      end
 
+      class << self
         private
+
+        # ===================================================================
+        # PRIVATE HELPERS - Section 5 (Adversarial Questioning)
+        # ===================================================================
 
         FAST_CHECKS = {
           /assumption.*wrong/i => {
@@ -239,7 +245,7 @@ module MASTER
         end
 
         def load_questions
-          path = Paths.data_file("questions.yml")
+          path = File.join(MASTER.root, "data", "questions.yml")
           YAML.safe_load_file(path, permitted_classes: [Symbol])
         rescue Errno::ENOENT
           {}

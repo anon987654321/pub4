@@ -2,7 +2,7 @@
 
 module MASTER
   module Security
-    # InjectionGuard -- scan tool outputs for prompt injection before feeding back to LLM
+    # InjectionGuard — scan tool outputs for prompt injection before feeding back to LLM
     # Based on Claude in Chrome's "CRITICAL INJECTION DEFENSE" pattern (gistfile1 #5)
     module InjectionGuard
       PATTERNS = [

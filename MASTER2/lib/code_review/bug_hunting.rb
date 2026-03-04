@@ -59,49 +59,49 @@ module MASTER
       def format(report)
         lines = ["BUG HUNT: #{report[:file_path]}", ""]
 
-        if (lexical_findings = report[:findings][:lexical])
-          lines << "1. LEXICAL (#{lexical_findings[:count]} identifiers)"
-          lexical_findings[:issues].each { |i| lines << "   - #{i}" }
-          lines << "   + clean" if lexical_findings[:issues].empty?
+        if (lex = report[:findings][:lexical])
+          lines << "1. LEXICAL (#{lex[:count]} identifiers)"
+          lex[:issues].each { |i| lines << "   - #{i}" }
+          lines << "   + clean" if lex[:issues].empty?
         end
 
-        if (execution_findings = report[:findings][:execution])
+        if (exec = report[:findings][:execution])
           lines << "2. EXECUTION"
-          execution_findings[:perspectives].each { |p| lines << "   #{p[:name]}: #{p[:status]}" }
+          exec[:perspectives].each { |p| lines << "   #{p[:name]}: #{p[:status]}" }
         end
 
-        if (assumption_findings = report[:findings][:assumptions])
+        if (assume = report[:findings][:assumptions])
           lines << "3. ASSUMPTIONS"
-          assumption_findings[:found].each { |a| lines << "   ! #{a[:category]}: #{a[:desc]}" }
-          lines << "   + none risky" if assumption_findings[:found].empty?
+          assume[:found].each { |a| lines << "   ! #{a[:category]}: #{a[:desc]}" }
+          lines << "   + none risky" if assume[:found].empty?
         end
 
-        if (dataflow_findings = report[:findings][:dataflow])
-          lines << "4. DATA FLOW (#{dataflow_findings[:count]} traces)"
-          dataflow_findings[:traces].first(5).each { |t| lines << "   #{t[:var]} <- #{t[:source][0..40]}" }
+        if (flow = report[:findings][:dataflow])
+          lines << "4. DATA FLOW (#{flow[:count]} traces)"
+          flow[:traces].first(5).each { |t| lines << "   #{t[:var]} <- #{t[:source][0..40]}" }
         end
 
-        if (state_findings = report[:findings][:state])
+        if (state = report[:findings][:state])
           lines << "5. STATE"
-          lines << "   edge: #{state_findings[:edges].join(', ')}" if state_findings[:edges].any?
+          lines << "   edge: #{state[:edges].join(', ')}" if state[:edges].any?
         end
 
-        if (pattern_findings = report[:findings][:patterns])
+        if (pats = report[:findings][:patterns])
           lines << "6. PATTERNS"
-          pattern_findings[:matches].each do |m|
+          pats[:matches].each do |m|
             lines << "   #{m[:confidence]} #{m[:name]}"
             lines << "      fix: #{m[:fix]}"
           end
-          lines << "   + no patterns matched" if pattern_findings[:matches].empty?
+          lines << "   + no patterns matched" if pats[:matches].empty?
         end
 
-        if (understanding_findings = report[:findings][:understanding])
-          status = understanding_findings[:complete] ? "+" : "-"
+        if (proof = report[:findings][:understanding])
+          status = proof[:complete] ? "+" : "-"
           lines << "7. UNDERSTANDING #{status}"
         end
 
-        if (verify_findings = report[:findings][:verification])
-          status = verify_findings[:passed] ? "+ COMPLETE" : "- INCOMPLETE"
+        if (verify = report[:findings][:verification])
+          status = verify[:passed] ? "+ COMPLETE" : "- INCOMPLETE"
           lines << "8. VERIFICATION #{status}"
         end
 

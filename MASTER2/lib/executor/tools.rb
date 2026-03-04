@@ -56,8 +56,8 @@ module MASTER
       else
         "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
       end
-    rescue StandardError => err
-      "Tool error: #{err.message}"
+    rescue StandardError => e
+      "Tool error: #{e.message}"
     end
 
     # Tool implementations
@@ -152,7 +152,7 @@ module MASTER
       if defined?(Review::Fixer)
         unless defined?(AgentAutonomy) && AgentAutonomy.may_apply_without_asking?
           return "Autonomy level '#{defined?(AgentAutonomy) ? AgentAutonomy.autonomy_level : :ask_always}': " \
-                 "review proposed fix before applying -- show diff first with review_code(#{path.inspect})"
+                 "review proposed fix before applying — show diff first with review_code(#{path.inspect})"
         end
         fixer = Review::Fixer.new(mode: :moderate)
         result = fixer.fix(path)
@@ -175,7 +175,7 @@ module MASTER
       banned_hit = ZshPatternInjector.banned_tool_in?(cmd)
       if banned_hit
         replacement = ZshPatternInjector.replacement_for(banned_hit)
-        return "BLOCKED: `#{banned_hit}` is forbidden -- use #{replacement} instead. Rewrite using zsh native patterns."
+        return "BLOCKED: `#{banned_hit}` is forbidden — use #{replacement} instead. Rewrite using zsh native patterns."
       end
 
       # Tier permission check (gist #4)
@@ -259,7 +259,7 @@ module MASTER
       end
     end
 
-    # Return files that require a given symbol -- answers "who depends on X?".
+    # Return files that require a given symbol — answers "who depends on X?".
     # More accurate than grep: uses DependencyMap's AST-based reference scan.
     def who_requires(symbol)
       require_relative "../dependency_map"
@@ -271,12 +271,12 @@ module MASTER
       lines = ["who_requires #{symbol}: #{matches.size} file(s)"]
       matches.each_key { |f| lines << "  #{f.sub("#{lib_root}/", "")}" }
       lines.join("\n")
-    rescue StandardError => err
-      "who_requires error: #{err.message}"
+    rescue StandardError => e
+      "who_requires error: #{e.message}"
     end
 
     # Gist #15: Self-verification after code modification (Gemini CLI + Codex CLI pattern).
-    # Runs: syntax check -> related test file -> quick axiom scan.
+    # Runs: syntax check → related test file → quick axiom scan.
     # Returns Result.ok or Result.err with first failure reason.
     def verify_change(path)
       return Result.ok unless path.to_s.end_with?(".rb")
@@ -285,7 +285,7 @@ module MASTER
       _, stderr, status = Open3.capture3(RbConfig.ruby, "-c", path.to_s)
       return Result.err("syntax: #{stderr.strip[0..120]}") unless status.success?
 
-      # 2. Related test file (lib/foo/bar.rb -> test/test_foo_bar.rb or test/foo/test_bar.rb)
+      # 2. Related test file (lib/foo/bar.rb → test/test_foo_bar.rb or test/foo/test_bar.rb)
       rel       = path.to_s.sub("#{MASTER.root}/lib/", "")
       test_path = File.join(MASTER.root, "test", "test_#{rel.gsub('/', '_')}")
       if File.exist?(test_path)
@@ -296,7 +296,7 @@ module MASTER
         return Result.err("tests failed: #{t_stderr.strip[0..160]}") unless t_status.success?
       end
 
-      # 3. Quick axiom scan (critical axioms only -- no LLM, just static patterns)
+      # 3. Quick axiom scan (critical axioms only — no LLM, just static patterns)
       if defined?(CodeReview)
         code   = File.read(path.to_s)
         result = CodeReview.analyze(code, filename: File.basename(path.to_s), profile: :quick)
@@ -305,8 +305,8 @@ module MASTER
       end
 
       Result.ok
-    rescue StandardError => err
-      Result.err("verify_change error: #{err.message}")
+    rescue StandardError => e
+      Result.err("verify_change error: #{e.message}")
     end
 
     def sanitize_tool_input(action_str)

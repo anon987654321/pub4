@@ -99,8 +99,8 @@ module MASTER
     end
 
     def show_history
-      @context[:history].each_with_index do |cmd, idx|
-        puts "  #{idx + 1}  #{cmd}"
+      @context[:history].each_with_index do |cmd, i|
+        puts "  #{i + 1}  #{cmd}"
       end
     end
 

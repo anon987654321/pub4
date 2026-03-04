@@ -105,7 +105,7 @@
     }
 
     #input-field input{
-      width:calc(100% - 28px);
+      width:100%;
       background:transparent;
       border:none;
       border-bottom:1px solid #333;
@@ -122,29 +122,6 @@
 
     #input-field input::placeholder{
       color:#444;
-    }
-
-    #attach-btn{
-      background:none;
-      border:none;
-      color:#444;
-      cursor:pointer;
-      font-size:18px;
-      padding:0 0 0 6px;
-      vertical-align:middle;
-      transition:color 0.2s;
-    }
-    #attach-btn:hover,#attach-btn.has-file{color:#aaa;}
-    #attach-label{
-      display:block;
-      font-size:10px;
-      color:#555;
-      text-align:center;
-      letter-spacing:0.08em;
-      margin-top:4px;
-      overflow:hidden;
-      white-space:nowrap;
-      text-overflow:ellipsis;
     }
 
     .arrow{
@@ -202,30 +179,9 @@
       color:#dcdcdc;
       font-family:Helvetica,Arial,sans-serif;
     }
-    #chat-log{
-      display:none;
-      position:fixed;
-      inset:0;
-      z-index:200;
-      background:rgba(0,0,0,.92);
-      overflow-y:auto;
-      padding:48px 5vw 80px;
-      font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-      color:#aaa;
-    }
-    #chat-log.open{display:block;}
-    #chat-log .entry{margin-bottom:1.4em;white-space:pre-wrap;word-break:break-word;}
-    #chat-log .entry.user{color:#dcdcdc;}
-    #chat-log .entry.master{color:#666;}
-    #chat-log .entry.user::before{content:'> ';color:#555;}
-    #chat-log .tab-hint{
-      position:fixed;top:12px;right:16px;
-      font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
-    }
   </style>
 </head>
 <body>
-  <div id="chat-log"><span class="tab-hint">TAB TO CLOSE</span></div>
   <section id="orb-name">VOID</section>
   <section id="status">◉</section>
   <section id="ui"><span id="ui-label">Neural Core</span><span class="dots" id="ui-dots"></span></section>
@@ -234,12 +190,7 @@
   <section id="arrow-left" class="arrow"><span>‹</span></section>
   <section id="arrow-right" class="arrow"><span>›</span></section>
 
-  <section id="input-field">
-    <input type="text" placeholder="SPEAK" autocomplete="off" maxlength="512">
-    <button id="attach-btn" title="Attach image">+</button>
-    <input type="file" id="file-input" accept="image/*,text/*,.pdf" hidden>
-    <span id="attach-label"></span>
-  </section>
+  <section id="input-field"><input type="text" placeholder="SPEAK" autocomplete="off" maxlength="128"></section>
 
   <section id="overlay" role="dialog" aria-modal="true"><h2>Tap to start</h2></section>
 
@@ -255,71 +206,16 @@
     const uiLabel=document.getElementById('ui-label');
     const uiDots=document.getElementById('ui-dots');
     const inputField=document.getElementById('input-field');
-    const input=inputField.querySelector('input[type=text]');
-    const fileInput=document.getElementById('file-input');
-    const attachBtn=document.getElementById('attach-btn');
-    const attachLabel=document.getElementById('attach-label');
-    const chatLog=document.getElementById('chat-log');
+    const input=inputField.querySelector('input');
     const overlay=document.getElementById('overlay');
     const arrowLeft=document.getElementById('arrow-left');
     const arrowRight=document.getElementById('arrow-right');
     const micBtn=document.getElementById('mic');
     const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
     const MASTER_TOKEN=window.MASTER_TOKEN||'';
+    let masterSessionId=sessionStorage.getItem('master_session_id')||'';
     const COMPAT_LABEL="master or+rep";
     const TTS_BACKEND_KEY="master_tts_backend";
-
-    // Chat log helpers
-    const logAppend=(role,text)=>{
-      const e=document.createElement('div');
-      e.className=`entry ${role}`;
-      e.textContent=text;
-      chatLog.appendChild(e);
-      chatLog.scrollTop=chatLog.scrollHeight;
-    };
-    document.addEventListener('keydown',e=>{
-      if(e.key==='Tab'){e.preventDefault();chatLog.classList.toggle('open');}
-    });
-
-    // SSE -- replaces poll loop
-    const sseConnect=()=>{
-      const es=new EventSource(`/sse?token=${encodeURIComponent(MASTER_TOKEN)}`);
-      es.onmessage=ev=>{
-        try{
-          const d=JSON.parse(ev.data);
-          if(d.text){
-            const reply=String(d.text);
-            logAppend('master',reply);
-            uiLabel.textContent=reply.slice(0,60);
-            speakWithAudio(reply).then(ok=>{if(!ok)speakText(reply);});
-            isProcessing=false;
-            for(const n of neurons){
-              n.vx+=(Math.random()-0.5)*140;
-              n.vy+=(Math.random()-0.5)*140;
-              n.vz+=(Math.random()-0.5)*140;
-            }
-          }
-        }catch(_){}
-      };
-      es.onerror=()=>{es.close();setTimeout(sseConnect,2000);};
-    };
-    sseConnect();
-
-    let pendingFile=null;
-
-    attachBtn.addEventListener('click',e=>{e.stopPropagation();fileInput.click();});
-    fileInput.addEventListener('change',()=>{
-      const f=fileInput.files[0];
-      if(f){
-        pendingFile=f;
-        attachBtn.classList.add('has-file');
-        attachLabel.textContent=f.name;
-      }else{
-        pendingFile=null;
-        attachBtn.classList.remove('has-file');
-        attachLabel.textContent='';
-      }
-    });
 
     let W,H,S;
     const resize=()=>{
@@ -567,8 +463,30 @@
       }
     });
 
+    const pollResponse=async(attempt=0)=>{
+      if(attempt>30) return;
+      try{
+        const resp=await fetch("/poll",{method:"GET"});
+        if(!resp.ok) throw new Error('poll failed');
+        const data=await resp.json();
+        if(data&&data.text){
+          const reply=String(data.text);
+          uiLabel.textContent=reply.slice(0,60);
+          // Try audio-reactive backend TTS first; fall back to Web Speech
+          speakWithAudio(reply).then(ok=>{ if(!ok) speakText(reply); });
+          isProcessing=false;
+          for(const n of neurons){
+            n.vx+=(Math.random()-0.5)*140;
+            n.vy+=(Math.random()-0.5)*140;
+            n.vz+=(Math.random()-0.5)*140;
+          }
+          return;
+        }
+      }catch(_e){}
+      setTimeout(()=>pollResponse(attempt+1),350);
+    };
+
     const transmit=async(message)=>{
-      logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
       isProcessing=true;
       activeSpinner=spinnerSets[Math.floor(Math.random()*spinnerSets.length)] || spinnerFallback;
       for(const n of neurons){
@@ -577,27 +495,16 @@
         n.vz+=(Math.random()-0.5)*100;
       }
       try{
-        const payload={message};
-        if(pendingFile){
-          const b64=await new Promise((res,rej)=>{
-            const fr=new FileReader();
-            fr.onload=()=>res(fr.result.split(',')[1]);
-            fr.onerror=rej;
-            fr.readAsDataURL(pendingFile);
-          });
-          payload.image={data:b64,mime:pendingFile.type,name:pendingFile.name};
-          pendingFile=null;
-          attachBtn.classList.remove('has-file');
-          attachLabel.textContent='';
-          fileInput.value='';
-        }
         const resp=await fetch("/chat",{
           method:"POST",
           headers:{"Content-Type":"application/json","Authorization":`Bearer ${MASTER_TOKEN}`},
-          body:JSON.stringify(payload)
+          body:JSON.stringify({message,session_id:masterSessionId})
         });
         if(resp.ok){
+          const initData=await resp.json().catch(()=>({}));
+          if(initData.session_id){masterSessionId=initData.session_id;sessionStorage.setItem('master_session_id',masterSessionId);}
           uiLabel.textContent='Processing...';
+          pollResponse();
         }else{
           uiLabel.textContent='Chat failed';
           isProcessing=false;

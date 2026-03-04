@@ -3,10 +3,10 @@
 module MASTER
   module Analysis
     class Introspection
-      CONFIDENCE_THRESHOLD = 0.6
-      MAX_RETRIES = 3
-
       class << self
+        CONFIDENCE_THRESHOLD = 0.6
+        MAX_RETRIES = 3
+
         # LLM evaluates its own work with confidence scoring
         # @param task [String] The task description
         # @param response [String] The response to critique

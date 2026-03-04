@@ -6,10 +6,6 @@ module MASTER
   module SessionReplay
     extend self
 
-    TERMINAL_CONTENT_PREVIEW = 500
-    SECONDS_PER_HOUR         = 3600
-    SECONDS_PER_MINUTE       = 60
-
     # Replay a session by ID
     def replay(session_id, format: :terminal)
       data = Memory.load_session(session_id)
@@ -113,7 +109,7 @@ module MASTER
         output << turn_info.join(" ")
 
         # Content (truncated for terminal display)
-        preview = content.length > TERMINAL_CONTENT_PREVIEW ? content[0, TERMINAL_CONTENT_PREVIEW] + "\n  #{UI.dim('... (truncated)')}" : content
+        preview = content.length > 500 ? content[0, 500] + "\n  #{UI.dim('... (truncated)')}" : content
         preview.each_line do |line|
           output << "  #{line.rstrip}"
         end
@@ -164,10 +160,10 @@ module MASTER
       return "unknown" if timestamps.size < 2
 
       seconds = (timestamps.last - timestamps.first).to_i
-      if seconds > SECONDS_PER_HOUR
-        "#{seconds / SECONDS_PER_HOUR}h #{(seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE}m"
-      elsif seconds > SECONDS_PER_MINUTE
-        "#{seconds / SECONDS_PER_MINUTE}m #{seconds % SECONDS_PER_MINUTE}s"
+      if seconds > 3600
+        "#{seconds / 3600}h #{(seconds % 3600) / 60}m"
+      elsif seconds > 60
+        "#{seconds / 60}m #{seconds % 60}s"
       else
         "#{seconds}s"
       end

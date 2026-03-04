@@ -94,8 +94,8 @@ module MASTER
           end
         end
         false
-      rescue StandardError => err
-        Logging.warn("Replicate: download failed for #{url}: #{err.message}") if defined?(MASTER::Logging)
+      rescue StandardError => e
+        Logging.warn("Replicate: download failed for #{url}: #{e.message}") if defined?(MASTER::Logging)
         false
       end
     end

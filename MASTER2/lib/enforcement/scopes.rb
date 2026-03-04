@@ -6,10 +6,6 @@ module MASTER
   module Enforcement
     # Three enforcement scopes: Lines, Units, Framework
     module Scopes
-      DEFAULT_LINE_LENGTH   = 120
-      DEFAULT_METHOD_LENGTH = 50
-      DEFAULT_PARAM_COUNT   = 5
-      DEFAULT_CLASS_METHODS = 15
       # Scope 1: Line-by-line analysis
       def check_lines(code, filename)
         violations = []
@@ -25,7 +21,7 @@ module MASTER
           end
 
           # Line length
-          if line.chomp.length > (thresholds["line_length"] || DEFAULT_LINE_LENGTH)
+          if line.chomp.length > (thresholds["line_length"] || 120)
             violations << { scope: :line, line: num, message: "Line too long (#{line.chomp.length} chars)",
                             file: filename }
           end
@@ -45,7 +41,7 @@ module MASTER
 
         # Method length
         methods_info = Analyzers::MethodLengthAnalyzer.scan(code)
-        limit = thresholds["method_length"] || DEFAULT_METHOD_LENGTH
+        limit = thresholds["method_length"] || 50
         methods_info.each do |method|
           if method[:length] > limit
             violations << { scope: :unit,
@@ -56,7 +52,7 @@ module MASTER
         # Method parameter count
         code.scan(/def\s+(\w+)\s*\((.*?)\)/m).each do |method, params|
           param_count = params.split(",").size
-          limit = thresholds["param_count"] || DEFAULT_PARAM_COUNT
+          limit = thresholds["param_count"] || 5
           if param_count > limit
             violations << { scope: :unit,
                             message: "Method '#{method}' has #{param_count} parameters (limit: #{limit})", file: filename }
@@ -76,7 +72,7 @@ module MASTER
         end
 
         class_methods = code.scan(/^\s*def\s+self\.(\w+)/).size
-        if class_methods > (thresholds["class_methods"] || DEFAULT_CLASS_METHODS)
+        if class_methods > (thresholds["class_methods"] || 15)
           violations << { scope: :unit, message: "Too many class methods (#{class_methods})", file: filename }
         end
 

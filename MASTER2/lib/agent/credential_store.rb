@@ -2,7 +2,7 @@
 
 module MASTER
   class AgentFirewall
-    # CredentialStore -- domain-pinned secrets
+    # CredentialStore — domain-pinned secrets
     # Inspired by OpenClaw PR #23110 credential firewall pattern (gistfile10)
     # A credential registered for api.openai.com CANNOT be used for any other domain.
     module CredentialStore

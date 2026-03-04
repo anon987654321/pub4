@@ -34,7 +34,7 @@ module MASTER
       idx_a = order.index(a)
       idx_b = order.index(b)
 
-      # Neither in precedence list -- no resolution possible
+      # Neither in precedence list — no resolution possible
       return Result.err("No precedence defined for #{a} vs #{b}") if idx_a.nil? && idx_b.nil?
 
       # Lower index = higher precedence
@@ -64,8 +64,8 @@ module MASTER
       path = File.join(MASTER.root, "data", "deferred_debt.jsonl")
       File.open(path, "a") { |f| f.puts(JSON.generate(entry)) }
       Result.ok(entry)
-    rescue IOError, SystemCallError => err
-      Result.err("Failed to write deferred debt: #{err.message}")
+    rescue IOError, SystemCallError => e
+      Result.err("Failed to write deferred debt: #{e.message}")
     end
 
     # Read all deferred debt entries
@@ -77,8 +77,8 @@ module MASTER
         JSON.parse(line.strip, symbolize_names: true) unless line.strip.empty?
       end
       Result.ok(entries)
-    rescue JSON::ParserError, IOError => err
-      Result.err("Failed to read deferred debt: #{err.message}")
+    rescue JSON::ParserError, IOError => e
+      Result.err("Failed to read deferred debt: #{e.message}")
     end
 
     def load_config

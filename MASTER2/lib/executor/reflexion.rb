@@ -3,15 +3,14 @@
 module MASTER
   class Executor
     module Reflexion
-      REFLEXION_MAX_ATTEMPTS  = 3
-      INNER_REACT_MAX_STEPS   = 5
       def execute_reflexion(goal, tier:)
         original_goal = goal.dup.freeze
+        max_attempts = 3
         attempt = 0
 
-        while attempt < REFLEXION_MAX_ATTEMPTS
+        while attempt < max_attempts
           attempt += 1
-          UI.dim("  attempt #{attempt}/#{REFLEXION_MAX_ATTEMPTS}")
+          UI.dim("  attempt #{attempt}/#{max_attempts}")
 
           # Build augmented goal from original + all lessons so far
           augmented_goal = if @reflections.any?
@@ -46,7 +45,7 @@ module MASTER
           @step = 0
         end
 
-        Result.err("Failed after #{REFLEXION_MAX_ATTEMPTS} attempts with reflection")
+        Result.err("Failed after #{max_attempts} attempts with reflection")
       end
 
       def execute_react_inner(goal, tier:)
@@ -54,8 +53,12 @@ module MASTER
         # Intentionally cap inner loop to respect overall step budget
         start_time = MASTER::Utils.monotonic_now
 
-        [INNER_REACT_MAX_STEPS, @max_steps - @step].min.times do
-          return err if (err = timeout_error_for(start_time))
+        [5, @max_steps - @step].min.times do
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
+          end
 
           @step += 1
           msgs = build_context_messages(goal)
@@ -75,15 +78,34 @@ module MASTER
           @history.last[:observation] = observation
         end
 
-        Result.err("No answer in #{INNER_REACT_MAX_STEPS} steps.")
+        Result.err("No answer in 5 steps.")
       end
 
       def reflect_on_result(goal, result, tier:)
         history_text = @history.map do |h|
           "#{h[:thought]} -> #{h[:action]} -> #{h[:observation]&.[](0..200)}"
         end.join("\n")
-        result_text  = result.ok? ? result.value[:answer] : result.error
-        prompt = Prompts.get(:reflexion, :reflect, goal: goal, history: history_text, result: result_text)
+
+        prompt = <<~REFLECT
+          Task: #{goal}
+
+          Execution trace:
+          #{history_text}
+
+          Result: #{result.ok? ? result.value[:answer] : result.error}
+
+          Reflect on this execution:
+          1. Did it successfully complete the task? (yes/no)
+          2. What went wrong or could be improved?
+          3. What lessons should be applied to the next attempt?
+          4. If the answer was incomplete, provide an improved answer.
+
+          Respond in this format:
+          SUCCESS: yes/no
+          CRITIQUE: (what went wrong)
+          LESSONS: (what to do differently)
+          IMPROVED_ANSWER: (better answer if needed)
+        REFLECT
 
         llm_result = LLM.ask(prompt, tier: tier)
         return { success: false, critique: "Reflection LLM call failed", lessons: "" } unless llm_result.ok?

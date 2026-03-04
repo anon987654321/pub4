@@ -2,7 +2,7 @@
 
 module MASTER
   module Boot
-    # Boot mode profiles -- load only what each entrypoint needs.
+    # Boot mode profiles — load only what each entrypoint needs.
     # Prevents MCP/tools-only boots from pulling in Falcon, Chamber, Speech, etc.
     #
     # Usage:
@@ -10,7 +10,7 @@ module MASTER
     #   Boot::Modes.load(:full)  # in bin/master (default)
     #   Boot::Modes.load(:tools) # in test helpers or lightweight scripts
     module Modes
-      # Files relative to lib/ directory. Order matters -- dependencies first.
+      # Files relative to lib/ directory. Order matters — dependencies first.
       PROFILES = {
         # Minimal: just enough to call ToolDispatch methods
         tools: %w[

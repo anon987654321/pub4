@@ -2,12 +2,10 @@
 
 module MASTER
   class Session
-    # PerStepReflection -- evaluate each tool call's contribution toward the goal
+    # PerStepReflection — evaluate each tool call's contribution toward the goal
     # Based on SAMULE: Multi-Level Reflection (EMNLP 2025, gistfile14 §2)
     # Adds per-step reflection layer; cross-task patterns logged to db_jsonl
     module PerStepReflection
-      MIN_OBSERVATION_LENGTH = 10
-      GOAL_PREFIX_LENGTH     = 80
       module_function
 
       # Reflect on a single ReAct step.
@@ -22,7 +20,7 @@ module MASTER
         # Quick heuristics for progress assessment (avoids extra LLM call for most cases)
         result = if obs.start_with?("BLOCKED:", "Tool error:", "Error:") || obs.include?("not found")
                    { useful: false, progress: :stalled, note: "Step #{step}: #{tool} produced error/block" }
-                 elsif obs.length < MIN_OBSERVATION_LENGTH
+                 elsif obs.length < 10
                    { useful: false, progress: :stalled, note: "Step #{step}: #{tool} returned empty/minimal output" }
                  else
                    { useful: true, progress: :advancing, note: "Step #{step}: #{tool} returned #{obs.length} chars" }
@@ -44,7 +42,7 @@ module MASTER
         stalled_steps = history.count { |h| h[:observation].to_s.start_with?("Error:", "BLOCKED:") }
 
         insight = {
-          goal_prefix: goal.to_s[0..GOAL_PREFIX_LENGTH],
+          goal_prefix: goal.to_s[0..80],
           tools_sequence: tools_used,
           total_steps: history.size,
           stalled_steps: stalled_steps,
@@ -53,7 +51,7 @@ module MASTER
         }
 
         Logging.dmesg_log("xtask0",
-                          message: "goal=#{goal.to_s[0..GOAL_PREFIX_LENGTH]} steps=#{history.size} stalled=#{stalled_steps} success=#{success}")
+                          message: "goal=#{goal.to_s[0..80]} steps=#{history.size} stalled=#{stalled_steps} success=#{success}")
         insight
       end
     end

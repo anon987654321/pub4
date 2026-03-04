@@ -371,6 +371,9 @@ principles:
     - progress_over_stability
     - push_up_a_big_tent
     - value_beautiful_code
+    - exalt_beautiful_code      # Flag exemplary patterns, not just violations
+    - adversarial_questioning   # Challenge every assumption; probe edges ruthlessly
+    - ultra_minimalistic_style  # Remove everything that does not earn its place
   nielsen_heuristics:
     - visibility_of_system_status
     - match_between_system_and_real_world
@@ -567,3 +570,21 @@ approval_taxonomy:
     - dependency_updates
   rationale: "Auto-proceed for safe, reversible, cosmetic changes. Ask for structural or risky changes."
   enforcement: "ABSOLUTE"
+
+sharp_edges:
+  description: "Known pitfalls and footguns that must be documented and guarded"
+  items:
+    - "Thread.current state leaks across Falcon fibers if not cleaned up"
+    - "File.write overwrites without backup — use file_edit for surgical changes"
+    - "rescue StandardError swallows Interrupt/SystemExit — use specific exceptions"
+    - "YAML.load (not safe_load) allows arbitrary object instantiation"
+    - "Shell.execute with user input — always sanitize through Guard first"
+    - "LLM hallucination of file paths — always verify with File.exist? before acting"
+    - "Bare require (not require_relative) can load wrong gem version"
+  enforcement: "DOCUMENT_AND_GUARD"
+
+hash_chain:
+  description: "Integrity chain for constitutional amendments"
+  purpose: "Every change to constitution.yml must reference its parent hash, creating an auditable chain"
+  algorithm: "SHA-256 of previous constitution content"
+  enforcement: "ADVISORY"

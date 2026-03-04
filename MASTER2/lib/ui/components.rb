@@ -13,11 +13,22 @@ module MASTER
         end
       end
 
-      def spinner(message = nil, style: :line)
-        MASTER::UI::SubtleSpinner.new(message)
+      def spinner(message = nil, style: :dots)
+        require "tty-spinner"
+        TTY::Spinner.new(
+          "  :spinner #{message}",
+          format:       style == :line ? :classic : :dots,
+          success_mark: MASTER::UI::ICONS[:success],
+          error_mark:   MASTER::UI::ICONS[:failure],
+        )
+      rescue LoadError
+        SubtleSpinner.new(message.to_s, style: style)
       end
 
       def multi_spinner
+        require "tty-spinner"
+        TTY::Spinner::Multi.new("[:spinner] Processing", format: :dots)
+      rescue LoadError
         Object.new.tap { |s| s.define_singleton_method(:register) { |*| spinner } }
       end
 
@@ -70,7 +81,7 @@ module MASTER
           p.instance_variable_set(:@total, total)
           p.define_singleton_method(:advance) do |n = 1|
             @current += n
-            print "\r  #{@current}/#{@total}"
+            print "\r  [#{@current}/#{@total}]"
           end
           p.define_singleton_method(:finish) { puts " done" }
         end

@@ -45,14 +45,14 @@ module MASTER
       end
     end
 
-    def spinner(message = "Processing...")
-      s = Spinner.new(message)
+    def spinner(message = "Processing…", style: :dots)
+      s = Spinner.new(message, style: style)
       s.auto_spin
       result = yield
       s.success("Done")
       result
-    rescue StandardError => err
-      s.error(err.message)
+    rescue StandardError => e
+      s.error(e.message)
       raise
     end
 
@@ -62,8 +62,8 @@ module MASTER
       bar.finish
     end
 
-    def thinking(message = "thinking...")
-      s = Spinner.new(message)
+    def thinking(message = "thinking…")
+      s = Spinner.new(message, style: :braille)
       s.auto_spin
       if block_given?
         result = yield

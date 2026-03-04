@@ -151,7 +151,7 @@ module MASTER
         puts
 
         # For now, provide a simple implementation
-        constitution_path = Paths.data_file("constitution.yml")
+        constitution_path = File.join(MASTER.root, "data", "constitution.yml")
 
         if File.exist?(constitution_path)
           puts "constitution: found"
@@ -208,20 +208,20 @@ module MASTER
                    {
                      files: { path => file_result },
                      total_issues: file_result[:issues].size,
-                     critical: file_result[:issues].count { |issue| issue[:severity] == :critical },
-                     major: file_result[:issues].count { |issue| issue[:severity] == :major },
+                     critical: file_result[:issues].count { |i| i[:severity] == :critical },
+                     major: file_result[:issues].count { |i| i[:severity] == :major },
                      average_score: file_result[:score].to_f,
                    }
                  else
                    Review::Scanner.analyze_directory(path)
                  end
 
-        result[:files].each do |file, file_scan|
-          next if file_scan[:issues].empty?
+        result[:files].each do |file, r|
+          next if r[:issues].empty?
 
           rel = file.sub("#{MASTER.root}/", "")
-          puts "  #{file_scan[:grade]} #{rel}"
-          file_scan[:issues].each { |issue| puts "    #{issue[:severity].to_s.upcase}: #{issue[:message]}" }
+          puts "  #{r[:grade]} #{rel}"
+          r[:issues].each { |issue| puts "    #{issue[:severity].to_s.upcase}: #{issue[:message]}" }
         end
 
         puts
@@ -236,12 +236,12 @@ module MASTER
           critical: result[:critical],
           major: result[:major],
           average_score: result[:average_score].round(2),
-          files: result[:files].transform_values do |file_result|
-            { issues: file_result[:issues].size, score: file_result[:score], grade: file_result[:grade] }
+          files: result[:files].transform_values do |r|
+            { issues: r[:issues].size, score: r[:score], grade: r[:grade] }
           end,
         }
         File.write(state_path, JSON.generate(state))
-        puts "  Scan state saved -> var/scan_state.json"
+        puts "  Scan state saved → var/scan_state.json"
 
         Result.ok(state)
       end
@@ -263,7 +263,7 @@ module MASTER
           return { type: :snippet, snippet: snippet, mode: mode }
         end
 
-        target = parts.find { |part| !part.start_with?("-") }
+        target = parts.find { |p| !p.start_with?("-") }
         return { error: usage } if target.nil? || target.empty?
 
         expanded = File.expand_path(target)
@@ -272,8 +272,8 @@ module MASTER
         else
           { type: :file, path: target, mode: mode }
         end
-      rescue ArgumentError => err
-        { error: "Invalid arguments: #{err.message}" }
+      rescue ArgumentError => e
+        { error: "Invalid arguments: #{e.message}" }
       end
 
       def autofix_directory(path, mode)
@@ -322,7 +322,7 @@ module MASTER
       def run_constitutional_validation(code, file)
         puts UI.bold("phase2: constitutional validation...")
         violations = Violations.analyze(code, path: file, llm: nil, conceptual: false)
-        critical_count = violations[:literal].count { |violation| violation[:severity] == :error }
+        critical_count = violations[:literal].count { |v| v[:severity] == :error }
 
         if critical_count > 0
           puts "#{critical_count} critical violations"
@@ -461,7 +461,7 @@ module MASTER
           }
         end
 
-        scored = candidates.uniq { |candidate| candidate[:code] }.map do |candidate|
+        scored = candidates.uniq { |c| c[:code] }.map do |candidate|
           metrics = score_candidate(path, candidate[:code])
           score = if defined?(DecisionEngine)
                     DecisionEngine.score(
@@ -474,7 +474,7 @@ module MASTER
                   end
           candidate.merge(score: score)
         end
-        best = scored.max_by { |candidate| candidate[:score] }
+        best = scored.max_by { |c| c[:score] }
         return Result.err("No viable fix candidate generated.") unless best
 
         Result.ok(
@@ -491,7 +491,7 @@ module MASTER
           .gsub(/[ \t]+$/, "")
           .gsub(/\bteh\b/i, "the")
           .gsub(/\brecieve\b/i, "receive")
-          .gsub(/^\t+/) { |tabs| "  " * tabs.length }
+          .gsub(/^\t+/) { |m| "  " * m.length }
       end
 
       def score_candidate(path, code)
@@ -552,7 +552,7 @@ module MASTER
         end
       end
 
-      # `deps [symbol]` -- show what files require a given module/symbol.
+      # `deps [symbol]` — show what files require a given module/symbol.
       # Uses DependencyMap which is more accurate than grepping require lines.
       def print_deps(args)
         require_relative "../dependency_map"
@@ -573,20 +573,20 @@ module MASTER
           symbol = args.strip
           graph  = DependencyMap.build
           lib_root = File.join(MASTER.root, "lib")
-          matches = graph.select { |_, info| info[:references].any? { |ref| ref.include?(symbol) } }
+          matches = graph.select { |_, info| info[:references].any? { |r| r.include?(symbol) } }
           if matches.empty?
             puts "deps: no references to #{symbol} found"
           else
             puts "deps: #{matches.size} file(s) reference #{symbol}"
-            matches.each_key { |filepath| puts "  #{filepath.sub("#{lib_root}/", "")}" }
+            matches.each_key { |f| puts "  #{f.sub("#{lib_root}/", "")}" }
           end
-          # Record if agent was greping for deps -- friction signal 8
+          # Record if agent was greping for deps — friction signal 8
           MASTER::Friction::FrictionRecorder.record(:dep_graph_blind, symbol: symbol) if args.include?("grep")
         end
         HANDLED
       end
 
-      # `introspect` -- session retrospective: friction events, remedies, config drift.
+      # `introspect` — session retrospective: friction events, remedies, config drift.
       def print_introspection(args)
         require_relative "../introspection/session_retrospective"
         use_llm = args.to_s.include?("--llm")
@@ -595,50 +595,25 @@ module MASTER
         HANDLED
       end
 
-      # `config-drift` -- find YAML keys in data/ with no Ruby reader.
+      # `config-drift` — find YAML keys in data/ with no Ruby reader.
       def print_config_drift
         require_relative "../introspection/session_retrospective"
         orphans = Friction::SessionRetrospective.audit_config_drift
         if orphans.empty?
-          puts "config-drift: clean -- all YAML keys have Ruby readers"
+          puts "config-drift: clean — all YAML keys have Ruby readers"
         else
           puts "config-drift: #{orphans.size} orphaned key(s):"
-          orphans.each { |orphan| puts "  #{orphan[:file]}: #{orphan[:key]}" }
+          orphans.each { |o| puts "  #{o[:file]}: #{o[:key]}" }
         end
         HANDLED
       end
 
-      # `architect` -- automated fresh-eyes architectural health assessment.
+      # `architect` — automated fresh-eyes architectural health assessment.
       def print_architect
         require_relative "../introspection/architect"
         report = Friction::Architect.run
         puts Friction::Architect.format_report(report)
         HANDLED
-      end
-
-      # `converge` -- iterate SelfRefactor until violations plateau (convergence).
-      # Runs on every invocation, not just selfrun, because quality is continuous.
-      def run_converge(args)
-        return Result.err("SelfRefactor not loaded") unless defined?(SelfRefactor)
-
-        max_iter = (args.first&.to_i&.positive? ? args.first.to_i : nil) || SelfRefactor::MAX_ITERATIONS
-        puts "converge0: starting (max #{max_iter} iterations, stops at plateau)"
-
-        # Baseline violation count before any fixes.
-        baseline = SelfRefactor.count_violations
-        puts "converge0: baseline #{baseline} violations"
-
-        result = SelfRefactor.run(max_iterations: max_iter)
-        return Result.err(result.error) unless result.ok?
-
-        summary = result.value
-        final   = SelfRefactor.count_violations
-        delta   = baseline - final
-
-        puts "converge0: done in #{summary[:iterations]} iterations * #{delta >= 0 ? "-#{delta}" : "+#{delta.abs}"} violations * #{summary[:improvements]} improvements * stopped: #{summary[:stop_reason]}"
-        puts "converge0: #{final} violations remaining" if final.positive?
-
-        Result.ok(summary)
       end
     end
   end

@@ -23,9 +23,8 @@ module MASTER
           tree_digest: Digest::SHA256.hexdigest(tree_lines.join("\n")),
           tree_nodes: tree_lines.size,
           sprawl: detect_sprawl(path),
-          git_status: git_status(path),
+          git_status: check_git_status(path),
           recent_commits: recent_commits(path),
-          violations: violation_summary(path),
         }
 
         warn_if_issues(results)
@@ -76,24 +75,15 @@ module MASTER
         large_files
       end
 
-      def git_status(path)
+      def check_git_status(path)
         return nil unless system("git", "-C", path, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
 
         status = `git -C #{Shellwords.escape(path)} status --porcelain`.strip
 
         if status.empty?
-          # Check for unpushed commits
-          unpushed = `git -C #{Shellwords.escape(path)} log @{u}..HEAD --oneline 2>/dev/null`.strip
-          if unpushed.empty?
-            UI.success("vcs0: clean")
-          else
-            count = unpushed.lines.size
-            UI.warn("vcs0: #{count} unpushed commit#{count == 1 ? "" : "s"}")
-          end
+          UI.success("vcs0: clean")
         else
-          files = status.lines.map { |l| l.strip.split(" ", 2).last }.first(3)
-          tail  = status.lines.size > 3 ? " +#{status.lines.size - 3} more" : ""
-          UI.warn("vcs0: #{status.lines.size} uncommitted -- #{files.join(", ")}#{tail}")
+          UI.warn("vcs0: #{status.lines.size} uncommitted files")
         end
 
         status
@@ -112,22 +102,7 @@ module MASTER
       end
 
       def warn_if_issues(results)
-        vs = results[:violations]
-        return unless vs && vs[:total].positive?
-
-        autofix_note = vs[:autofix_eligible].positive? ? " * #{vs[:autofix_eligible]} autofix-eligible -- run: converge" : ""
-        UI.warn("quality0: #{vs[:total]} violations across #{vs[:files]} files#{autofix_note}")
-      end
-
-      # Lightweight violation tally using literal pattern matching only (no LLM).
-      # Delegates to Scan.run when available; falls back to direct check otherwise.
-      # Returns { total:, autofix_eligible:, files:, by_file: { path => [violations] } }
-      def violation_summary(path)
-        return { total: 0, autofix_eligible: 0, files: 0, by_file: {} } unless defined?(Scan)
-
-        Scan.run(path, depth: :quick).tap { |r| r[:files] = r[:scanned] }
-      rescue StandardError
-        { total: 0, autofix_eligible: 0, files: 0, by_file: {} }
+        # Individual checks already printed. Nothing extra needed.
       end
 
       def openbsd_config_scan
@@ -143,7 +118,7 @@ module MASTER
           end
         end
       rescue StandardError
-        # non-critical -- /etc may not be readable
+        # non-critical — /etc may not be readable
       end
     end
   end

@@ -21,17 +21,14 @@ module MASTER
           return
         end
 
-        # Search our YAML model registry (not RubyLLM's which requires an id arg)
-        all = LLM.load_models_config || []
-        found = all.find { |m| m[:id].to_s.downcase.include?(query) }
+        found = LLM.models.find { |m| m.id.downcase.include?(query) || m.name&.downcase&.include?(query) }
 
         if found
-          LLM.force_model!(found[:id])
-          puts "\n  + model: #{found[:id]}\n"
+          LLM.force_model!(found.id)
+          puts "\n  + Switched to #{found.id} (forced)\n"
         else
-          # Accept exact IDs even if not in our YAML
-          LLM.force_model!(args.strip)
-          puts "\n  + model: #{args.strip} (unverified)\n"
+          puts "\n  - No model matching '#{args}' found."
+          puts "  Use 'models' to list available models.\n"
         end
       end
 

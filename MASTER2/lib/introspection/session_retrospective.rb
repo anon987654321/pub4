@@ -5,7 +5,7 @@ require_relative "friction_recorder"
 
 module MASTER
   module Friction
-    # SessionRetrospective -- end-of-session synthesis of friction events.
+    # SessionRetrospective — end-of-session synthesis of friction events.
     # Produces a structured report: what fired, why it matters, what to do.
     # Optionally enriches via LLM for deeper pattern analysis.
     #
@@ -42,12 +42,12 @@ module MASTER
 
       # Format the report as dmesg-style output for the REPL.
       def format(report)
-        return "retrospect: clean session -- no friction recorded" if report[:status] == :clean
+        return "retrospect: clean session — no friction recorded" if report[:status] == :clean
 
         lines = ["retrospect: #{report[:items].size} friction pattern(s) this session"]
         report[:items].each do |item|
           lines << "  #{item[:severity].upcase} [#{item[:count]}x] #{item[:description]}"
-          lines << "    -> #{item[:remedy]}"
+          lines << "    → #{item[:remedy]}"
         end
         lines << report[:llm_analysis] if report[:llm_analysis]
         lines.join("\n")

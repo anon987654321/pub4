@@ -28,8 +28,6 @@ module MASTER
         def log(severity, message, **context)
           return if LEVELS[severity].nil?
           return if LEVELS[severity] < LEVELS[@level]
-          # Suppress warn/info from terminal unless trace mode -- errors always shown
-          return if %i[debug info warn].include?(severity) && !ENV["MASTER_TRACE"]
 
           entry = build_entry(severity, message, context)
 

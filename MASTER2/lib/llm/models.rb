@@ -2,8 +2,6 @@
 
 module MASTER
   module LLM
-    DEFAULT_CONTEXT_WINDOW = 32_000
-
     class << self
       def models
         RubyLLM.models
@@ -19,9 +17,9 @@ module MASTER
           if File.exist?(models_file)
             begin
               YAML.safe_load_file(models_file, symbolize_names: true) || []
-            rescue StandardError => err
+            rescue StandardError => e
               if defined?(MASTER::Logging)
-                MASTER::Logging.warn("Failed to load models: #{err.message}", subsystem: "llm.models")
+                MASTER::Logging.warn("Failed to load models: #{e.message}", subsystem: "llm.models")
               end
               []
             end
@@ -42,13 +40,12 @@ module MASTER
           {
             id: m.id,
             tier: classify_tier(m).to_s,
-            context_window: m.context_window || DEFAULT_CONTEXT_WINDOW,
+            context_window: m.context_window || 32_000,
             input_cost: m.input_price_per_million || 0,
             output_cost: m.output_price_per_million || 0,
           }
         end.first(20) # Limit to top 20 to avoid huge lists
-      rescue StandardError => e
-        Logging.warn("Failed to load models from RubyLLM: #{e.message}", subsystem: "llm.models")
+      rescue StandardError
         []
       end
 
@@ -92,7 +89,7 @@ module MASTER
 
       def context_limits
         @context_limits ||= configured_models.each_with_object({}) do |m, hash|
-          hash[m[:id]] = m[:context_window] || DEFAULT_CONTEXT_WINDOW
+          hash[m[:id]] = m[:context_window] || 32_000
         end
       end
 
@@ -126,13 +123,7 @@ module MASTER
         end
       end
 
-      # Same-tier paid peers for graceful fallback (excludes primary and :free tier models).
-      def tier_peers(primary_id)
-        tier = classify_tier(primary_id)
-        (model_tiers[tier] || []).reject { |id| id == primary_id || classify_tier(id) == :free }
-      end
-
-      public :select_model, :tier_peers
+      public :select_model
     end
   end
 end

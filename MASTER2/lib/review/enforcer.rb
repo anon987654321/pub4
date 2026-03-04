@@ -11,7 +11,7 @@ module MASTER
 
       LAYERS = %i[literal lexical conceptual semantic cognitive language_axiom].freeze
       SCOPES = %i[line unit file framework].freeze
-      SMELLS_FILE = File.join(MASTER.root, "data", "detectors.yml")
+      SMELLS_FILE = File.join(MASTER.root, "data", "smells.yml")
 
       # MASTER2 contribution rules and architecture
       ARCHITECTURE = {
@@ -191,10 +191,10 @@ module MASTER
             violations.concat(absolute)
           end
           violations
-        rescue StandardError => err
+        rescue StandardError => e
           @last_self_check = {
             timestamp: Time.now, files_checked: 0,
-            absolute_violations: [], passed: false, error: err.message
+            absolute_violations: [], passed: false, error: e.message
           }
           nil
         end

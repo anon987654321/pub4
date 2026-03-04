@@ -11,14 +11,12 @@ module MASTER
 
     # Looks up enrichment data from MASTER1-ported principles.yml.
     module PrinciplesDb
-      PRINCIPLES_FILE = Paths.data_file("principles.yml")
+      PRINCIPLES_FILE = File.join(MASTER.root, "data", "principles.yml")
 
       # Returns { smell:, fix: } for the closest matching anti-pattern, or nil.
       def self.enrich(principle_name)
         @data ||= begin
-          YAML.safe_load_file(PRINCIPLES_FILE)["principles"]
-        rescue StandardError
-          {}
+          YAML.safe_load_file(PRINCIPLES_FILE)["principles"] rescue {}
         end
         slug = principle_name.to_s.downcase.gsub(/[^a-z0-9]/, "")
         entry = @data.values.find do |p|
@@ -41,84 +39,72 @@ module MASTER
         principle: "KISS",
         message: "Deep nesting detected (4+ levels)",
         severity: :warning,
-        autofix: false,
       },
       long_line: {
         pattern: /^.{120,}$/,
         principle: "KISS",
         message: "Line exceeds 120 characters",
         severity: :info,
-        autofix: false,
       },
       complex_conditional: {
         pattern: /if\s+.*&&.*&&|if\s+.*\|\|.*\|\|/,
         principle: "KISS",
         message: "Complex conditional with multiple operators",
         severity: :warning,
-        autofix: false,
       },
       magic_number: {
         pattern: /[^0-9a-z_]([2-9]\d{2,}|[1-9]\d{3,})[^0-9a-z_]/i,
         principle: "DRY",
         message: "Magic number detected (should be named constant)",
         severity: :info,
-        autofix: true,
       },
       commented_code: {
         pattern: /^\s*#\s*(def |class |module |if |unless |case |while )/,
         principle: "YAGNI",
         message: "Commented out code detected",
         severity: :warning,
-        autofix: true,
       },
       method_chain: {
         pattern: /\w+\.\w+\.\w+\.\w+/,
         principle: "Law of Demeter",
         message: "Long method chain (train wreck)",
         severity: :warning,
-        autofix: false,
       },
       bare_rescue: {
         pattern: /rescue\s*$/,
         principle: "Fail Fast",
         message: "Bare rescue swallows errors silently",
         severity: :warning,
-        autofix: true,
       },
       global_mutation: {
         pattern: %r{\$\w+\s*[+\-*/]?=},
         principle: "No Side Effects",
         message: "Global variable mutation",
         severity: :error,
-        autofix: false,
       },
       class_variable_mutation: {
         pattern: %r{@@\w+\s*[+\-*/]?=},
         principle: "No Side Effects",
         message: "Class variable mutation",
         severity: :warning,
-        autofix: false,
       },
       short_variable: {
         pattern: /\b([a-z])\s*=/,
         principle: "Meaningful Names",
         message: "Single letter variable name",
         severity: :info,
-        autofix: true,
       },
       many_parameters: {
         pattern: /def\s+\w+\s*\(([^)]*,){4,}[^)]*\)/,
         principle: "Few Arguments",
         message: "Method has too many parameters (>4)",
         severity: :warning,
-        autofix: false,
       },
       string_slice_magic: {
         pattern: /\[0\.\.\d{3,}\]/,
         principle: "DRY",
         message: "Magic number in string slice (use constant)",
         severity: :info,
-        autofix: true,
       },
     }.freeze
 
@@ -159,8 +145,8 @@ module MASTER
         }
 
         results[:literal] = detect_literal(code, path)
-        results[:literal].each do |violation|
-          key = violation[:severity]
+        results[:literal].each do |v|
+          key = v[:severity]
           results[:summary][key] = (results[:summary][key] || 0) + 1
           results[:summary][:total] += 1
         end
@@ -193,7 +179,6 @@ module MASTER
               principle: config[:principle],
               message: config[:message],
               severity: config[:severity],
-              autofix: config.fetch(:autofix, false),
               line: idx + 1,
               match: line.strip[0..50],
               smell: enrichment&.dig(:smell),
@@ -229,16 +214,16 @@ module MASTER
             If clean, say "No violations found."
           PROMPT
 
-          llm_result = llm.ask(prompt, tier: :cheap)
-          next unless llm_result.ok?
+          result = llm.ask(prompt, tier: :cheap)
+          next unless result.ok?
 
-          response = llm_result.value.to_s.downcase
+          response = result.value.to_s.downcase
           next if response.include?("no violations") || response.include?("code is clean")
 
           violations << {
             type: :conceptual,
             principle: principle.to_s.tr("_", " ").upcase,
-            analysis: llm_result.value[0..MAX_ANALYSIS_PREVIEW],
+            analysis: result.value[0..MAX_ANALYSIS_PREVIEW],
             severity: :warning,
           }
         end

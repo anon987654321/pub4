@@ -3,14 +3,14 @@
 require "prism"
 
 # PRISM VISITOR API NOTE:
-# Prism dispatches via visit_TYPE_node methods -- NOT a generic visit(node).
+# Prism dispatches via visit_TYPE_node methods — NOT a generic visit(node).
 # Examples: visit_def_node, visit_if_node, visit_while_node, visit_block_node
 # Define specific methods per node type, call super(node) to recurse.
-# Gotcha: a generic def visit(node) override silently does nothing -- depth stays 0.
+# Gotcha: a generic def visit(node) override silently does nothing — depth stays 0.
 # Self-test below catches this at load time: raises if known-nested code returns 0.
 
 module MASTER
-  # PrismAnalyzer -- accurate code analysis using Prism's AST.
+  # PrismAnalyzer — accurate code analysis using Prism's AST.
   # Replaces regex/line-counting heuristics in Analyzers with parse-accurate results.
   # Falls back gracefully if Prism fails (syntax errors in target file).
   module PrismAnalyzer
@@ -38,7 +38,7 @@ module MASTER
       visitor.max_depth
     end
 
-    # Returns parse errors as [{message:, line:}] -- useful for syntax checking.
+    # Returns parse errors as [{message:, line:}] — useful for syntax checking.
     def parse_errors(source)
       Prism.parse(source).errors.map { |e| { message: e.message, line: e.location.start_line } }
     end
@@ -111,10 +111,10 @@ module MASTER
 end
 
 # Self-test: verify visitor dispatch works at load time.
-# A generic visit(node) override silently returns 0 -- this catches that.
+# A generic visit(node) override silently returns 0 — this catches that.
 begin
   _depth = MASTER::PrismAnalyzer.nesting_depth("def f; if true; while x; end; end; end")
   raise "PrismAnalyzer nesting_depth self-test failed: got #{_depth}, expected >= 2" unless _depth >= 2
-rescue => err
-  raise "PrismAnalyzer load-time self-test failed: #{err.message}"
+rescue => e
+  raise "PrismAnalyzer load-time self-test failed: #{e.message}"
 end

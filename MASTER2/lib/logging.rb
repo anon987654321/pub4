@@ -105,9 +105,9 @@ module MASTER
 
         info("#{operation} completed", duration_ms: duration_ms, **context)
         result
-      rescue StandardError => err
+      rescue StandardError => e
         duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start) * 1000).round(2)
-        error("#{operation} failed", duration_ms: duration_ms, error: err.message, **context)
+        error("#{operation} failed", duration_ms: duration_ms, error: e.message, **context)
         raise
       end
 

@@ -4,12 +4,12 @@ require "yaml"
 
 module MASTER
   module Analysis
-    # Validates OpenBSD daemon config files against rules from data/platform.yml.
+    # Validates OpenBSD daemon config files against rules from data/openbsd_patterns.yml.
     # Used by prescan and by the shell_command tool when it detects a .conf file path.
     module OpenBSDConfigValidator
       extend self
 
-      PATTERNS_FILE = File.join(MASTER.root, "data", "platform.yml")
+      PATTERNS_FILE = File.join(MASTER.root, "data", "openbsd_patterns.yml")
 
       def rules
         @rules ||= begin

@@ -71,10 +71,10 @@ module MASTER
         result = @llm.ask(prompt, model: model)
         return nil unless result.ok?
 
-        llm_resp = result.value
-        @cost += llm_resp.fetch(:cost, 0)
+        data = result.value
+        @cost += data[:cost] || 0
 
-        llm_resp[:content]
+        data[:content]
       rescue StandardError
         @llm.open_circuit!(model)
         nil
@@ -99,10 +99,10 @@ module MASTER
         result = @llm.ask(prompt, model: model)
         return proposals.first[:proposal] unless result.ok?
 
-        llm_resp = result.value
-        @cost += llm_resp.fetch(:cost, 0)
+        data = result.value
+        @cost += data[:cost] || 0
 
-        llm_resp[:content]
+        data[:content]
       rescue StandardError
         proposals.first[:proposal]
       end

@@ -26,68 +26,50 @@ class TestExecutor < Minitest::Test
     assert_equal 12, tools.size
   end
 
-  # Pattern selection heuristics - now LLM-based
+  # Pattern selection heuristics - regex-based (no LLM cost)
   def test_select_pattern_react_for_simple
-    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "react") do
-      pattern = @executor.select_pattern("What is Ruby?")
-      assert_equal :react, pattern
-    end
+    pattern = @executor.select_pattern("show me the structure of this project")
+    assert_equal :react, pattern
   end
 
   def test_select_pattern_pre_act_for_multi_step
-    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "pre_act") do
-      pattern = @executor.select_pattern("First read the file, then analyze it, finally fix issues")
-      assert_equal :pre_act, pattern
-    end
+    pattern = @executor.select_pattern("First set up the environment, then deploy the server")
+    assert_equal :pre_act, pattern
   end
 
   def test_select_pattern_pre_act_for_build_task
-    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "pre_act") do
-      pattern = @executor.select_pattern("Build a CLI tool and add tests")
-      assert_equal :pre_act, pattern
-    end
+    pattern = @executor.select_pattern("Build the gem then publish it")
+    assert_equal :pre_act, pattern
   end
 
   def test_select_pattern_rewoo_for_reasoning
-    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "rewoo") do
-      pattern = @executor.select_pattern("Explain the difference between modules and classes")
-      assert_equal :rewoo, pattern
-    end
+    pattern = @executor.select_pattern("Explain the difference between modules and classes")
+    assert_equal :rewoo, pattern
   end
 
   def test_select_pattern_reflexion_for_fix
-    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "reflexion") do
-      pattern = @executor.select_pattern("Fix the bug in parser.rb")
-      assert_equal :reflexion, pattern
-    end
+    pattern = @executor.select_pattern("Fix the bug in parser.rb")
+    assert_equal :reflexion, pattern
   end
 
   def test_select_pattern_reflexion_for_careful
-    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "reflexion") do
-      pattern = @executor.select_pattern("Refactor carefully without breaking tests")
-      assert_equal :reflexion, pattern
-    end
+    pattern = @executor.select_pattern("Refactor carefully without breaking tests")
+    assert_equal :reflexion, pattern
   end
 
   def test_select_pattern_direct_for_simple_questions
-    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "direct") do
-      pattern = @executor.select_pattern("Hello!")
-      assert_equal :direct, pattern
-    end
+    pattern = @executor.select_pattern("Hello!")
+    assert_equal :direct, pattern
   end
 
   def test_select_pattern_fallback_on_llm_error
-    MASTER::LLM.stub :ask, MASTER::Result.err("API error") do
-      pattern = @executor.select_pattern("Some task")
-      assert_equal :react, pattern
-    end
+    pattern = @executor.select_pattern("investigate the codebase structure")
+    assert_equal :react, pattern
   end
 
   def test_select_pattern_fallback_on_invalid_response
-    MASTER::LLM.stub :ask, MASTER::Result.ok(content: "invalid_pattern") do
-      pattern = @executor.select_pattern("Some task")
-      assert_equal :react, pattern
-    end
+    pattern = @executor.select_pattern("investigate the codebase structure")
+    assert_equal :react, pattern
   end
 
   # Simple query detection - now based on @pattern
@@ -156,8 +138,16 @@ class TestExecutor < Minitest::Test
   end
 
   def test_execute_tool_shell_command
-    result = @executor.send(:shell_command, "echo hello")
-    assert_includes result.downcase, "hello"
+    # shell_command requires capability level 3 (execute); default is 1 (propose)
+    result = @executor.send(:shell_command, "ruby -e \"puts 'hello'\"")
+    assert_match(/BLOCKED.*capability/i, result)
+  end
+
+  def test_execute_tool_shell_command_with_capability
+    MASTER::Capabilities.with_level(3) do
+      result = @executor.send(:shell_command, "ruby -e \"puts 'hello'\"")
+      assert_includes result.downcase, "hello"
+    end
   end
 
   def test_execute_tool_unknown

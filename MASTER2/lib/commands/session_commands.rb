@@ -108,11 +108,11 @@ module MASTER
         else
           UI.header("Saved Sessions")
           sessions.each do |id|
-            session_data = Memory.load_session(id)
-            next unless session_data
+            data = Memory.load_session(id)
+            next unless data
 
-            msgs = session_data[:history]&.size || 0
-            name = session_data.dig(:metadata, :name)
+            msgs = data[:history]&.size || 0
+            name = data.dig(:metadata, :name)
             label = name ? "#{name} (#{UI.truncate_id(id)})" : UI.truncate_id(id)
             puts "  #{label} | #{msgs} messages"
           end

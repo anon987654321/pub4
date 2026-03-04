@@ -323,7 +323,7 @@ section "8 / 8  Full REPL session: boot → goal → refactor → PRAISE"
 
 trace "realistic session on OpenBSD showing all subsystems firing" do
   lines = [
-    ["banner",  "MASTER 2.0.0 (CONSTITUTIONAL) #1: Mon Feb 23 01:53:20 UTC 2026"],
+    ["banner",  "MASTER2 2.0.0 (CONSTITUTIONAL) #1: Mon Feb 23 01:53:20 UTC 2026"],
     ["banner",  "    dev@dev.openbsd.amsterdam:/home/dev/pub4/MASTER2"],
     ["banner",  "runtime0: x86_64-openbsd · ruby 3.4.6 · zsh dev%"],
     ["banner",  "corpus0: 80 axioms · 12 personas"],

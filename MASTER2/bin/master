@@ -178,7 +178,6 @@ when "help", "-h", "--help"
     Commands:
       refactor <file>             Refactor file with LLM guidance
       multi-refactor [path]       Refactor directory (add: --apply --strict --axioms --all-files)
-      converge [max_iter]         Iterate SelfRefactor until violations plateau (convergence)
       selfrun [--apply]           Full self-run across pub4 (add: --strict --axioms --all-files)
       fix [--all|<path>]          Fix violations in files or directory
       scan [directory]            Scan for code smells (default: .)
@@ -196,6 +195,7 @@ when "help", "-h", "--help"
       codify [export-json]        Show or export codified design+code rules
       opportunities [path]        Find improvement opportunities
       style-guides [sync]         List or sync style guide repos
+      integrations [sync]         List or sync curated integration repos
       axioms-stats                Display axiom violation statistics
       schedule <cmd>              Job scheduler (list|add|remove|enable|disable)
       heartbeat <cmd>             Heartbeat control (start|stop|status)
@@ -235,7 +235,7 @@ when "--web", "-w"
   web_port = args.first&.to_i
   web_port = nil if web_port == 0
   server = MASTER::Server.new(port: web_port)
-  MASTER::Boot.banner_with_web(server.port, MASTER::Server::AUTH_TOKEN)
+  MASTER::Boot.banner_with_web(server.port)
   server.start
   puts "Press Ctrl+C to stop"
   sleep
@@ -291,7 +291,7 @@ else
     trap("INT")  { puts; exit }
     trap("TERM") { exit }
 
-    MASTER::Pipeline.repl(web_port: server.port, web_token: MASTER::Server::AUTH_TOKEN)
+    MASTER::Pipeline.repl(web_port: server.port)
   else
     # Delegate all other commands to Commands.dispatch_one
     delegate_to_commands(command, args)

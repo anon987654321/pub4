@@ -5,8 +5,6 @@ module MASTER
     module HTML
       module_function
 
-      MAX_DIV_COUNT = 10 # above this triggers "div soup" warning
-
       RULES = [
         "Semantic HTML5 only",
         "No div soup - use semantic elements",
@@ -49,7 +47,7 @@ module MASTER
 
         # Check for div soup
         div_count = html.scan("<div").length
-        errors << "Too many divs (#{div_count}) - use semantic HTML" if div_count > MAX_DIV_COUNT
+        errors << "Too many divs (#{div_count}) - use semantic HTML" if div_count > 10
 
         # Check accessibility
         errors << "Images missing alt text" if html =~ /<img(?![^>]*alt=)/

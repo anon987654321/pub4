@@ -30,16 +30,16 @@ module MASTER
         prompt = build_classification_prompt(input, context)
 
         # Call LLM for classification
-        llm_result = call_llm(prompt)
+        result = call_llm(prompt)
 
-        if llm_result[:success]
-          parse_llm_response(llm_result[:response], input)
+        if result[:success]
+          parse_llm_response(result[:response], input)
         else
           # Fallback to pattern matching if LLM fails
           fallback_parse(input)
         end
-      rescue StandardError => err
-        error_result("NLU error: #{err.message}")
+      rescue StandardError => e
+        error_result("NLU error: #{e.message}")
       end
 
       # Parse with explicit JSON schema for structured output
@@ -57,15 +57,15 @@ module MASTER
           result = MASTER::LLM.ask_json(prompt, schema: schema, tier: :fast)
           
           if result.ok?
-            response_data = result.value[:content]
-            return normalize_intent(response_data) if response_data.is_a?(Hash)
+            data = result.value[:content]
+            return normalize_intent(data) if data.is_a?(Hash)
           end
         end
 
         # Fallback to regular parse
         parse(input, context: context)
-      rescue StandardError => err
-        error_result("NLU structured error: #{err.message}")
+      rescue StandardError => e
+        error_result("NLU structured error: #{e.message}")
       end
 
       # Extract file/directory entities from text
@@ -181,8 +181,8 @@ module MASTER
         else
           { success: false, error: result.error }
         end
-      rescue StandardError => err
-        { success: false, error: err.message }
+      rescue StandardError => e
+        { success: false, error: e.message }
       end
 
       # Parse LLM JSON response
@@ -197,7 +197,7 @@ module MASTER
 
         data = JSON.parse(json_text, symbolize_names: true)
         normalize_intent(data)
-      rescue JSON::ParserError => err
+      rescue JSON::ParserError => e
         # If JSON parsing fails, try to extract intent from text
         intent = extract_intent_from_text(response)
         {
@@ -205,7 +205,7 @@ module MASTER
           entities: { files: extract_files(input) },
           confidence: 0.5,
           method: :text_extraction,
-          error: "JSON parse failed: #{err.message}"
+          error: "JSON parse failed: #{e.message}"
         }
       end
 

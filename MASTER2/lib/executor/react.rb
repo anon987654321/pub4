@@ -10,10 +10,10 @@ module MASTER
         additionalProperties: false,
         required: %w[thought],
         properties: {
-          thought: { type: "string", description: Prompts.get(:react, :schema_thought) },
-          tool: { type: "string", description: Prompts.get(:react, :schema_tool) },
-          args: { type: "object", description: Prompts.get(:react, :schema_args) },
-          answer: { type: "string", description: Prompts.get(:react, :schema_answer) },
+          thought: { type: "string", description: "Brief reasoning about the next step" },
+          tool: { type: "string", description: "Tool to invoke (omit when answering)" },
+          args: { type: "object", description: "Named arguments for the tool" },
+          answer: { type: "string", description: "Final answer (set this to complete the task)" },
         },
       }.freeze
 
@@ -26,7 +26,11 @@ module MASTER
         understand_context(goal)
 
         while @step < @max_steps
-          return err if (err = timeout_error_for(start_time))
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
+          end
 
           @step += 1
 
@@ -50,6 +54,7 @@ module MASTER
           plan.add(parsed[:thought][0..80]) if plan.size < @step
           plan.start(@step - 1)
           UI.dim("  #{@step}: #{parsed[:thought][0..80]}")
+          Output.progress(plan.summary, source: "plan") if defined?(Output) && @step > 1
 
           # Completion: answer field is set
           if parsed[:answer]
@@ -65,7 +70,7 @@ module MASTER
 
           tool_name = parsed[:tool]
           unless tool_name
-            # No tool and no answer -- treat thought as final response
+            # No tool and no answer — treat thought as final response
             return Result.ok(
               answer: parsed[:thought],
               steps: @step,
@@ -88,14 +93,24 @@ module MASTER
                      when "council_review" then "Asking council..."
                      when "memory_search"  then "Searching memory: #{(parsed[:args][:query] || '').to_s[0..50]}"
                      end
-          UI.dim("  ... #{preamble}") if preamble
+          UI.dim("  … #{preamble}") if preamble
 
           # Dispatch typed tool call (args is already a Hash from JSON parse)
           raw_observation = dispatch_typed(tool_name, parsed[:args] || {})
 
           # Injection defense: halt loop on detected injection (gist item #3).
-          # Sanitize-and-continue is insufficient -- abort with error instead.
-          return err if (err = injection_error_for(raw_observation, source: tool_name))
+          # Sanitize-and-continue is insufficient — abort with error instead.
+          sanitizer = if defined?(Security::InjectionGuard)
+                        Security::InjectionGuard
+                      else
+                        (defined?(Security::Sanitizer) ? Security::Sanitizer : nil)
+                      end
+          if sanitizer && !sanitizer.safe?(raw_observation)
+            return Result.err(
+              "Injection attempt detected in tool response from '#{tool_name}'. Aborting.",
+              category: :validation,
+            )
+          end
 
           observation = raw_observation.to_s
           @history.last[:observation] = observation
@@ -108,7 +123,7 @@ module MASTER
 
       private
 
-      # Gist #8: Understand phase -- scan files mentioned in the goal before planning.
+      # Gist #8: Understand phase — scan files mentioned in the goal before planning.
       # Reads file content and adds it to history context so the first plan step
       # is grounded in actual code rather than hallucinated structure.
       def understand_context(goal)
@@ -123,7 +138,7 @@ module MASTER
             File.join(MASTER.root, token),
             File.join(MASTER.root, "lib", token),
           ]
-          found = paths.find { |candidate_path| File.exist?(candidate_path) }
+          found = paths.find { |p| File.exist?(p) }
           next unless found
 
           content = File.read(found)[0..800]
@@ -144,22 +159,21 @@ module MASTER
       # Parse the JSON step response into a normalised hash.
       # Handles both Hash (already parsed by ask_json) and String fallback.
       def parse_step(payload)
-        step_data = case payload
+        data = case payload
                when Hash   then payload
                when String then begin
                  JSON.parse(payload, symbolize_names: true)
-               rescue StandardError => e
-                 Logging.warn("JSON parse failed in react step: #{e.message}", subsystem: "executor.react")
+               rescue StandardError
                  {}
                end
                else {}
                end
 
-        thought = step_data[:thought].to_s.strip.then { |val| val.empty? ? "Continuing" : val }
-        tool    = step_data[:tool].to_s.strip
+        thought = data[:thought].to_s.strip.then { |t| t.empty? ? "Continuing" : t }
+        tool    = data[:tool].to_s.strip
         tool    = nil if tool.empty? || tool == "none"
-        args    = step_data[:args].is_a?(Hash) ? step_data[:args] : {}
-        answer  = step_data[:answer].to_s.strip
+        args    = data[:args].is_a?(Hash) ? data[:args] : {}
+        answer  = data[:answer].to_s.strip
         answer  = nil if answer.empty?
 
         # Legacy: if no tool/answer but action key present (transitional fallback)
@@ -190,8 +204,8 @@ module MASTER
         when "self_test"      then self_test
         else "Unknown tool: #{tool_name}. Available: #{TOOLS.keys.join(', ')}"
         end
-      rescue StandardError => err
-        "Tool error (#{tool_name}): #{err.message}"
+      rescue StandardError => e
+        "Tool error (#{tool_name}): #{e.message}"
       end
     end
   end

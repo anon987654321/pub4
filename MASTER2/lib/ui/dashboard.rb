@@ -22,11 +22,11 @@ module MASTER
     end
 
     def stats_box
-      stats = load_stats
+      s = fetch_stats
       puts "  #{UI.bold('status')}"
-      puts "    model    #{UI.dim('│')} #{stats[:model]}"
-      puts "    circuit  #{UI.dim('│')} #{stats[:circuits_ok]} ok  #{stats[:circuits_tripped]} tripped"
-      puts "    axioms   #{UI.dim('│')} #{stats[:axioms]}  personas #{stats[:council]}"
+      puts "    model    #{UI.dim('│')} #{s[:model]}"
+      puts "    circuit  #{UI.dim('│')} #{s[:circuits_ok]} ok  #{s[:circuits_tripped]} tripped"
+      puts "    axioms   #{UI.dim('│')} #{s[:axioms]}  personas #{s[:council]}"
       puts
     end
 
@@ -57,7 +57,7 @@ module MASTER
       puts
     end
 
-    def load_stats
+    def fetch_stats
       {
         model:            LLM.respond_to?(:prompt_model_name) ? LLM.prompt_model_name.split("/").last : "─",
         circuits_ok:      LLM.respond_to?(:models) ? LLM.models.count { |m| LLM.circuit_closed?(m.id) } : 0,

@@ -52,11 +52,11 @@ module MASTER
         result = @llm.ask(full_prompt, tier: :strong)
 
         if result.ok?
-          llm_resp = result.value
-          content = llm_resp[:content].to_s
+          data = result.value
+          content = data[:content].to_s
           parsed = content.scan(/^[-*]\s*(.+)/).flatten
           parsed = [content] if parsed.empty?
-          Result.ok(ideas: parsed, cost: llm_resp.fetch(:cost, 0))
+          Result.ok(ideas: parsed, cost: data[:cost] || 0)
         else
           Result.err("Brainstorm failed: #{result.error}")
         end
@@ -74,8 +74,8 @@ module MASTER
         result = @llm.ask(critique_prompt, tier: :fast)
 
         if result.ok?
-          llm_resp = result.value
-          Result.ok(critique: llm_resp[:content], cost: llm_resp.fetch(:cost, 0))
+          data = result.value
+          Result.ok(critique: data[:content], cost: data[:cost] || 0)
         else
           Result.err("Critique failed: #{result.error}")
         end
@@ -101,8 +101,8 @@ module MASTER
         result = @llm.ask(prompt, tier: :strong)
 
         if result.ok?
-          llm_resp = result.value
-          Result.ok(synthesis: llm_resp[:content], cost: llm_resp.fetch(:cost, 0))
+          data = result.value
+          Result.ok(synthesis: data[:content], cost: data[:cost] || 0)
         else
           Result.err("Synthesis failed: #{result.error}")
         end

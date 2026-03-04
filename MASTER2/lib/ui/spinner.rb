@@ -2,33 +2,33 @@
 
 module MASTER
   module UI
-    # Pure ASCII spinner -- no gems, single line, dynamic speed + animated color.
-    # Color shifts from cool->warm->hot as elapsed time grows (ANSI 256-color).
-    # Speed ramps up from 120ms -> 30ms over the first 15s.
+    # Canonical spinner — one implementation, three style variants.
+    # style: :dots (default) | :line | :braille
+    # Replaces SubtleSpinner, Progress::Spinner, and the Components inline stub.
+    SPIN_FRAMES = {
+      dots:    %w[⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏].freeze,
+      line:    %w[— \\ | /].freeze,
+      braille: %w[⣾ ⣽ ⣻ ⢿ ⡿ ⣟ ⣯ ⣷].freeze,
+    }.freeze
 
-    def self.spinner(message = nil, style: :line)
-      SubtleSpinner.new(message)
+    def self.spinner(message = nil, style: :dots)
+      require "tty-spinner"
+      TTY::Spinner.new(
+        "  :spinner #{message}",
+        format:       style == :line ? :classic : :dots,
+        success_mark: MASTER::UI::ICONS[:success],
+        error_mark:   MASTER::UI::ICONS[:failure],
+      )
+    rescue LoadError
+      SubtleSpinner.new(message, style: style)
     end
 
     class SubtleSpinner
-      FRAMES = %w[| / - \\].freeze
-      RESET  = "\e[0m".freeze
+      CLEAR_WIDTH = 80
 
-      # 256-color palette bands: cool (cyan/teal) -> warm (green/yellow) -> hot (orange/red)
-      PALETTE = [
-        "\e[38;5;51m",   # bright cyan       0-2s
-        "\e[38;5;45m",   # cyan-blue         0-2s
-        "\e[38;5;82m",   # bright green      3-5s
-        "\e[38;5;118m",  # lime              3-5s
-        "\e[38;5;154m",  # yellow-green      6-9s
-        "\e[38;5;226m",  # bright yellow     6-9s
-        "\e[38;5;214m",  # orange           10-14s
-        "\e[38;5;208m",  # deep orange      10-14s
-        "\e[38;5;196m",  # bright red       15s+
-        "\e[38;5;197m",  # red-pink         15s+
-      ].freeze
-
-      def initialize(message = nil, style: :line)
+      def initialize(message, style: :dots)
+        @message = message.to_s
+        @frames  = SPIN_FRAMES[style] || SPIN_FRAMES[:dots]
         @running = false
         @thread  = nil
         @start   = nil
@@ -40,53 +40,40 @@ module MASTER
         @thread  = Thread.new do
           i = 0
           while @running
-            elapsed = Time.now - @start
-
-            interval = case elapsed
-                       when (0...3)  then 0.12
-                       when (3...8)  then 0.08
-                       when (8...15) then 0.05
-                       else               0.03
-                       end
-
-            # Two palette entries per time band; cycle between them with frame index
-            band  = case elapsed
-                    when (0...3)  then 0
-                    when (3...6)  then 2
-                    when (6...10) then 4
-                    when (10...15) then 6
-                    else               8
-                    end
-            color = PALETTE[band + (i % 2)]
-
-            $stderr.print "\r  #{color}#{FRAMES[i % 4]}#{RESET}"
-            $stderr.flush
+            elapsed  = (Time.now - @start).round
+            time_str = elapsed > 5 ? " (#{elapsed}s)" : ""
+            print "\r  #{@frames[i % @frames.size]} #{@message}#{time_str}  "
+            $stdout.flush
             i += 1
-            sleep interval
+            sleep 0.1
           end
         end
       end
 
       def success(msg = nil)
         stop
-        # dmesg style: silent success -- just clear the spinner line
+        suffix = msg ? " — #{msg}" : ""
+        puts MASTER::UI.pastel.white("  #{MASTER::UI::ICONS[:success]} #{@message}#{suffix}")
+        puts
       end
 
       def error(msg = nil)
         stop
-        msg_str = msg && !msg.empty? ? " #{msg}" : ""
-        $stderr.puts "!#{msg_str}"
+        suffix = msg ? " — #{msg}" : ""
+        puts MASTER::UI.pastel.red("  #{MASTER::UI::ICONS[:failure]} #{@message}#{suffix}")
+        puts
       end
 
-      def update(msg) = nil  # no-op: spinner is frameless
+      def update(msg)
+        @message = msg.to_s
+      end
 
       def stop
         @running = false
         @thread&.join(0.2)
-        $stderr.print "\r     \r"
-        $stderr.flush
+        print "\r#{' ' * CLEAR_WIDTH}\r"
+        $stdout.flush
       end
     end
   end
 end
-

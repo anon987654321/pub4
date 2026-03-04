@@ -99,18 +99,11 @@ module MASTER
 
       success_rate = calculate_success_rate(pattern)
 
-      promote_min = QUALITY_TIERS[:promote][:min]
-      keep_min    = QUALITY_TIERS[:keep][:min]
-      demote_min  = QUALITY_TIERS[:demote][:min]
-
-      if success_rate >= promote_min
-        :promote
-      elsif success_rate >= keep_min
-        :keep
-      elsif success_rate >= demote_min
-        :demote
-      else
-        :retire
+      case success_rate
+      when 0.90..1.0 then :promote
+      when 0.50...0.90 then :keep
+      when 0.20...0.50 then :demote
+      else :retire
       end
     end
 
@@ -180,8 +173,8 @@ module MASTER
       end
 
       Result.ok(pruned: pruned, kept: kept_patterns.size)
-    rescue StandardError => err
-      Result.err("Failed to prune: #{err.message}")
+    rescue StandardError => e
+      Result.err("Failed to prune: #{e.message}")
     end
 
     def seed_from_session
@@ -241,9 +234,9 @@ module MASTER
       min_length = [original_lines.length, fixed_lines.length].min
       diff_line = nil
 
-      min_length.times do |idx|
-        if original_lines[idx] != fixed_lines[idx]
-          diff_line = [original_lines[idx], fixed_lines[idx]]
+      min_length.times do |i|
+        if original_lines[i] != fixed_lines[i]
+          diff_line = [original_lines[i], fixed_lines[i]]
           break
         end
       end

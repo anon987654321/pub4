@@ -14,8 +14,8 @@ module MASTER
           Executor => %i[call],
           Result => %i[ok err ok? err?],
         }
-      rescue NameError => err
-        warn "Smoke test skipped: #{err.message}"
+      rescue NameError => e
+        warn "Smoke test skipped: #{e.message}"
         {}
       end
 
@@ -37,10 +37,8 @@ module MASTER
         lines = [
           c("MASTER #{VERSION} (CONSTITUTIONAL) #1: #{timestamp}"),
           c("    #{user}@#{host}:#{MASTER.root}"),
-          c("runtime0: #{RUBY_PLATFORM} * ruby #{RUBY_VERSION} * #{shell} #{user}#{prompt_hint}"),
-          c("host0: #{PlatformCheck.hypervisor} * #{PlatformCheck.provider}"),
-          c("hw0: #{PlatformCheck.cpu_cores}c * #{PlatformCheck.total_mem_mb || '?'}M RAM * #{PlatformCheck.free_mem_mb || '?'}M free"),
-          c("corpus0: #{UI.pluralize(DB.axioms.size, 'axiom')} * #{UI.pluralize(defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0, 'persona')}"),
+          c("runtime0: #{RUBY_PLATFORM} · ruby #{RUBY_VERSION} · #{shell} #{user}#{prompt_hint}"),
+          c("corpus0: #{UI.pluralize(DB.axioms.size, 'axiom')} · #{UI.pluralize(defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0, 'persona')}"),
           c("models0: #{tier_models}"),
           c("routing0: #{if LLM.configured_for_replicate?
                            "Replicate primary#{LLM.configured_for_openrouter? ? ', OpenRouter fallback' : ''}"
@@ -48,7 +46,7 @@ module MASTER
                            'OpenRouter'
                          end}"),
           c("security0: #{defined?(Pledge) && Pledge.available? ? 'pledge armed' : 'pledge unavailable'}"),
-          c("engine0: #{Executor::PATTERNS.join(' * ')}"),
+          c("engine0: #{Executor::PATTERNS.join(' · ')}"),
           c("smoke0: #{smoke_result}"),
         ]
 
@@ -61,10 +59,9 @@ module MASTER
         puts
       end
 
-      def banner_with_web(port, token = nil)
+      def banner_with_web(port)
         banner do |lines|
-          url = token ? "http://localhost:#{port}/?token=#{token}" : "http://localhost:#{port}"
-          lines << c("web0: #{url}")
+          lines << c("web0: http://localhost:#{port}")
         end
       end
 
@@ -82,9 +79,9 @@ module MASTER
         optional_checks = OPTIONAL_MODULES.select do |name, method|
           mod = begin
             MASTER.const_get(name)
-          rescue NameError => err
+          rescue NameError => e
             if defined?(MASTER::Logging)
-              MASTER::Logging.warn("Failed to resolve constant: #{name} -- #{err.message}", subsystem: "boot")
+              MASTER::Logging.warn("Failed to resolve constant: #{name} — #{e.message}", subsystem: "boot")
             end
             nil
           end
@@ -99,8 +96,8 @@ module MASTER
         else
           "ok"
         end
-      rescue StandardError => err
-        "FAIL #{err.message[0..30]}"
+      rescue StandardError => e
+        "FAIL #{e.message[0..30]}"
       end
 
       private
@@ -114,9 +111,9 @@ module MASTER
         %i[strong fast free].filter_map do |t|
           m = tiers[t]&.first
           m && LLM.extract_model_name(m)
-        end.join(" * ")
+        end.join(" · ")
       rescue StandardError
-        LLM.all_models.map { |m| LLM.extract_model_name(m) }.uniq.first(3).join(" * ")
+        LLM.all_models.map { |m| LLM.extract_model_name(m) }.uniq.first(3).join(" · ")
       end
     end
   end

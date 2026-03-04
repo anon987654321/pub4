@@ -81,8 +81,8 @@ module MASTER
           model_id: model_id,
           input: { text: text },
         )
-      rescue ArgumentError => err
-        Result.err("Invalid voice model: #{err.message}")
+      rescue ArgumentError => e
+        Result.err("Invalid voice model: #{e.message}")
       end
 
       def generate_visual(prompt)

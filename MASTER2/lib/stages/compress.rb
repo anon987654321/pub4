@@ -16,10 +16,10 @@ module MASTER
         def load_patterns
           return { fillers: [], phrases: [] } unless File.exist?(COMPRESSION_FILE)
 
-          yaml_data = YAML.safe_load_file(COMPRESSION_FILE)
+          data = YAML.safe_load_file(COMPRESSION_FILE)
           {
-            fillers: (yaml_data["fillers"] || []).map { |w| /\b#{Regexp.escape(w)}\b/i },
-            phrases: (yaml_data["phrases"] || []).map { |p| /#{Regexp.escape(p)}/i },
+            fillers: (data["fillers"] || []).map { |w| /\b#{Regexp.escape(w)}\b/i },
+            phrases: (data["phrases"] || []).map { |p| /#{Regexp.escape(p)}/i },
           }
         end
       end

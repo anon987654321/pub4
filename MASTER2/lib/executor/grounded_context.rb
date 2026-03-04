@@ -1,25 +1,24 @@
 # frozen_string_literal: true
 
 module MASTER
-  # GroundedContext -- injects MASTER2's own source + gem READMEs into the LLM
+  # GroundedContext — injects MASTER2's own source + gem READMEs into the LLM
   # system message so the model reasons from real code, not hallucinated APIs.
   #
   # Depth levels:
-  #   :shallow   -- current default: system_prompt.yml + dir tree only
-  #   :own        -- MASTER2 lib/ key files + data/ YAMLs + LLM.md  (selfrun default)
-  #   :deep       -- :own + gem READMEs from Gemfile dependencies
-  #   :full       -- :deep + complete gem source (expensive; 1M+ ctx models only)
+  #   :shallow   — current default: system_prompt.yml + dir tree only
+  #   :own        — MASTER2 lib/ key files + data/ YAMLs + LLM.md  (selfrun default)
+  #   :deep       — :own + gem READMEs from Gemfile dependencies
+  #   :full       — :deep + complete gem source (expensive; 1M+ ctx models only)
   #
   # Token budget is enforced: files are prioritised then truncated to fit.
   # Encoding: ~4 chars per token (conservative estimate).
   module GroundedContext
-    CHARS_PER_TOKEN  = 4
-    GEMS_BUNDLE_PATH = "var/bundle/ruby"
+    CHARS_PER_TOKEN = 4
     BUDGETS = {
       shallow: 0,
       own:     60_000 * CHARS_PER_TOKEN,  # ~60k tokens
       deep:    120_000 * CHARS_PER_TOKEN, # ~120k tokens
-      full:    400_000 * CHARS_PER_TOKEN, # ~400k tokens -- kimi/gemini only
+      full:    400_000 * CHARS_PER_TOKEN, # ~400k tokens — kimi/gemini only
     }.freeze
 
     # Files loaded first (highest signal for self-analysis)
@@ -27,12 +26,12 @@ module MASTER
       LLM.md
       data/constitution.yml
       data/axioms.yml
-      data/detectors.yml
-      data/design.yml
+      data/language_axioms.yml
+      data/design_codex.yml
       data/models.yml
       data/council.yml
       data/system_prompt.yml
-      data/detectors.yml
+      data/smells.yml
       lib/result.rb
       lib/llm.rb
       lib/pipeline.rb
@@ -58,7 +57,7 @@ module MASTER
       sections = []
       used = 0
 
-      # Own source files -- priority list first, then remaining lib/
+      # Own source files — priority list first, then remaining lib/
       own_files = priority_files(root) + remaining_lib_files(root)
       own_files.uniq.each do |rel|
         break if used >= budget
@@ -105,8 +104,8 @@ module MASTER
       header = "GROUNDED SOURCE CONTEXT (#{tokens_used}k tokens, depth: #{depth}):\n" \
                "The following is the actual MASTER2 source. Reason from this, not memory.\n"
       header + sections.join("\n\n")
-    rescue StandardError => err
-      Logging.warn("grounded_context: #{err.message}") if defined?(Logging)
+    rescue StandardError => e
+      Logging.warn("grounded_context: #{e.message}") if defined?(Logging)
       ""
     end
 
@@ -125,31 +124,31 @@ module MASTER
     end
 
     def gem_readmes(root)
-      gems_dir = File.join(root, GEMS_BUNDLE_PATH)
-      readmes = {}
-      return readmes unless Dir.exist?(gems_dir)
+      gems_dir = File.join(root, "var", "bundle", "ruby")
+      result = {}
+      return result unless Dir.exist?(gems_dir)
 
       Dir.glob("#{gems_dir}/**/gems/*/README*").each do |path|
         name = path.split("/gems/").last.split("/").first
-        readmes[name] ||= File.read(path)[0, 4000]
+        result[name] ||= File.read(path)[0, 4000]
       rescue StandardError
         next
       end
-      readmes
+      result
     end
 
     def gem_sources(root)
-      gems_dir = File.join(root, GEMS_BUNDLE_PATH)
-      sources = {}
-      return sources unless Dir.exist?(gems_dir)
+      gems_dir = File.join(root, "var", "bundle", "ruby")
+      result = {}
+      return result unless Dir.exist?(gems_dir)
 
       Dir.glob("#{gems_dir}/**/gems/*/lib/**/*.rb").each do |path|
         rel = path.sub("#{root}/", "")
-        sources[rel] = File.read(path)
+        result[rel] = File.read(path)
       rescue StandardError
         next
       end
-      sources
+      result
     end
 
     def safe_read(path, budget)

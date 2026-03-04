@@ -23,7 +23,11 @@
     .ui .label{margin-right:6px}.ui .dots{display:inline-block;width:3ch;text-align:left}.ui-inverted{color:#dcdcdc!important}
     .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.86);color:#9aa;cursor:pointer;user-select:none;z-index:var(--z-modal);text-align:center;padding:16px;opacity:1;transition:opacity var(--transition-fast) ease}
     .overlay.ack{opacity:0}.overlay[hidden]{display:none}
-    .overlay h2{margin:0 0 20px 0;font-size:32px;font-weight:300;color:#dcdcdc;transition:transform var(--transition-fast) ease}.overlay h2.clicked{transform:scale(1.06)}
+    .overlay h1{margin:0 0 8px 0;font-size:clamp(2rem,10vw,4.5rem);font-weight:300;color:#dcdcdc;letter-spacing:-.01em;transition:transform var(--transition-fast) ease}.overlay h1.clicked{transform:scale(1.04)}
+    .overlay .tagline{color:#778;font-size:clamp(.8rem,2.5vw,.95rem);margin:0 0 1.8rem;max-width:30em;line-height:1.5}
+    .overlay .chips{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin-bottom:1.5rem}
+    .overlay .chip{padding:.25rem .7rem;border:1px solid #2a3a3a;font:9px/1.4 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.08em;color:#556;pointer-events:none}
+    .overlay .hint{color:#3a4a4a;font-size:.7rem;letter-spacing:.04em}
     .swipe-hint{position:fixed;bottom:calc(50px + var(--safe-bottom));left:50%;transform:translateX(-50%);color:#9aa;font-size:16px;opacity:0;transition:opacity var(--transition-normal) ease;z-index:var(--z-ui)}
     .swipe-hint.show{opacity:1}
     :focus-visible{outline:2px solid #dcdcdc;outline-offset:2px}*,*::before,*::after{box-sizing:border-box}
@@ -48,7 +52,21 @@
     </div>
   </h1>
   <canvas id="canvas" aria-label="Audio-reactive warp tunnel visualizer" tabindex="0"></canvas>
-  <div id="overlay" class="overlay" role="dialog" aria-labelledby="start-title" aria-modal="true" tabindex="0"><div><h2 id="start-title">Tap to start</h2></div></div>
+  <div id="overlay" class="overlay" role="dialog" aria-labelledby="start-title" aria-modal="true" tabindex="0">
+    <div>
+      <h1 id="start-title">Radio Bergen</h1>
+      <p class="tagline">Warp tunnel audio player. J Dilla · Flying Lotus · Madlib · local artists.</p>
+      <div class="chips">
+        <span class="chip">▶ tap to play</span>
+        <span class="chip">N / ← next</span>
+        <span class="chip">M mute</span>
+        <span class="chip">↑↓ speed</span>
+        <span class="chip">F fullscreen</span>
+        <span class="chip">X psychedelic</span>
+      </div>
+      <p class="hint">tap anywhere to begin · swipe left/right to skip tracks · tilt for parallax</p>
+    </div>
+  </div>
   <div class="ui" id="ui" role="status" aria-live="polite" aria-atomic="true"><span class="label" id="uiLabel">Streaming</span><span class="dots" id="uiDots" aria-hidden="true"></span></div>
   <div class="swipe-hint" id="swipeHint">← Swipe for tracks →</div>
   <div id="yt-player-a" aria-hidden="true" class="yt-hidden"></div>

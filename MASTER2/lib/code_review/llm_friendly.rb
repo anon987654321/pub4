@@ -4,9 +4,6 @@ module MASTER
   # LLMFriendly - Guidelines for writing code that LLMs can easily understand
   # Learned from analyzing what causes confusion during AI-assisted development
   module LLMFriendly
-    MAX_FILE_LINES = 600
-    MIN_AVG_METHOD_NAME_LENGTH = 8
-
     GUIDELINES = {
       # Structure
       single_entry_point: "One master.rb that requires everything in order",
@@ -58,8 +55,8 @@ module MASTER
       # Uses guard clauses
       points += 1 if code.match?(/return .* (if|unless) /)
 
-      # Under MAX_FILE_LINES lines
-      points += 1 if code.lines.size <= MAX_FILE_LINES
+      # Under 600 lines
+      points += 1 if code.lines.size <= 600
 
       # Has examples in comments
       points += 1 if code.match?(/#.*example:|#.*usage:/i)
@@ -75,7 +72,7 @@ module MASTER
       # Descriptive method names (at least 8 chars average)
       methods = code.scan(/def (\w+)/).flatten
       avg_len = methods.empty? ? 10 : methods.sum(&:length).to_f / methods.size
-      points += 1 if avg_len >= MIN_AVG_METHOD_NAME_LENGTH
+      points += 1 if avg_len >= 8
 
       { score: points, max: max, percent: (points.to_f / max * 100).round }
     end
@@ -90,7 +87,7 @@ module MASTER
 
       suggestions << "Change bare 'rescue' to 'rescue StandardError'" if code.match?(/rescue\s*$/)
 
-      suggestions << "File is #{code.lines.size} lines - consider splitting" if code.lines.size > MAX_FILE_LINES
+      suggestions << "File is #{code.lines.size} lines - consider splitting" if code.lines.size > 600
 
       suggestions
     end

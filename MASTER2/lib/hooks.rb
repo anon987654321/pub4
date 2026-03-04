@@ -141,8 +141,8 @@ module MASTER
         else
           true # Unknown action, assume success
         end
-      rescue StandardError => err
-        log("hooks0: #{action} error: #{err.message}")
+      rescue StandardError => e
+        log("hooks0: #{action} error: #{e.message}")
         false
       end
 
@@ -184,8 +184,8 @@ module MASTER
       def execute_handler(handler, data)
         handler.call(data)
         Result.ok({ executed: true })
-      rescue StandardError => err
-        Result.err("Handler failed: #{err.message}")
+      rescue StandardError => e
+        Result.err("Handler failed: #{e.message}")
       end
     end
   end

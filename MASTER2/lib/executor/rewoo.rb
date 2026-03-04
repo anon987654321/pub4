@@ -26,7 +26,26 @@ module MASTER
       private
 
       def build_rewoo_prompt(goal, tool_list)
-        Prompts.get(:rewoo, :plan, goal: goal, tool_list: tool_list)
+        <<~REWOO
+          Task: #{goal}
+
+          Tools: #{tool_list}
+
+          Create a complete plan using #E{n} as placeholders for tool results.
+          Each step can reference previous results.
+
+          Format:
+          Plan: (your reasoning)
+          #E1 = tool_name "args"
+          #E2 = tool_name "args using #E1 if needed"
+          ...
+
+          Example:
+          Plan: Read the file, analyze it, then fix issues
+          #E1 = file_read "src/app.rb"
+          #E2 = analyze_code "src/app.rb"
+          #E3 = fix_code "src/app.rb"
+        REWOO
       end
 
       def parse_rewoo_plan(content)
@@ -38,7 +57,11 @@ module MASTER
       def execute_rewoo_steps(actions, start_time)
         evidence = {}
         actions.each do |num, action_str|
-          return err if (err = timeout_error_for(start_time))
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
+          end
 
           @step = num.to_i
           resolved = action_str.gsub(/#E(\d+)/) { evidence[::Regexp.last_match(1).to_i] || "" }
@@ -46,7 +69,13 @@ module MASTER
           UI.dim("  #E#{num}: #{resolved[0..60]}")
           observation = dispatch_action(resolved.strip)
 
-          return err if (err = injection_error_for(observation, source: "#E#{num}"))
+          # Injection defense: halt on detected injection (gist item #3)
+          if defined?(Security::Sanitizer) && !Security::Sanitizer.safe?(observation)
+            return Result.err(
+              "Injection attempt detected in tool response at #E#{num}. Aborting.",
+              category: :validation,
+            )
+          end
 
           evidence[num.to_i] = observation
           record_history({ step: @step, action: resolved, observation: observation })
@@ -56,8 +85,17 @@ module MASTER
       end
 
       def synthesize_rewoo(goal, plan_text, evidence)
-        evidence_text = evidence.map { |k, v| "#E#{k} = #{v[0..400]}" }.join("\n\n")
-        synth_prompt = Prompts.get(:rewoo, :synthesize, goal: goal, plan: plan_text.to_s, evidence: evidence_text)
+        synth_prompt = <<~SYNTH
+          Task: #{goal}
+          Plan: #{plan_text}
+
+          Evidence:
+          #{evidence.map { |k, v| "#E#{k} = #{v[0..400]}" }.join("\n\n")}
+
+          Summarize what was done and the result. Be terse.
+          Do NOT repeat file contents or tool calls. Only show the key outcome.
+          Final answer:
+        SYNTH
 
         final = LLM.ask(synth_prompt, tier: :fast)
         return final unless final.ok?

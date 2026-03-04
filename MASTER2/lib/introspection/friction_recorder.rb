@@ -4,7 +4,7 @@ require "yaml"
 
 module MASTER
   module Friction
-    # FrictionRecorder -- lightweight session-scoped event log.
+    # FrictionRecorder — lightweight session-scoped event log.
     # Call FrictionRecorder.record(:pattern_id, context) from any subsystem
     # when a known friction signal fires. SessionRetrospective reads this at
     # session end to synthesise the retrospective.

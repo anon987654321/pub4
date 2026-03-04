@@ -39,8 +39,8 @@ module MASTER
 
         [tts, fx, play].each(&:close)
         Result.ok(text: text, effect: effect)
-      rescue StandardError => err
-        Result.err("Stream failed: #{err.message}")
+      rescue StandardError => e
+        Result.err("Stream failed: #{e.message}")
       end
 
       # Demon mode (maximum darkness effect)

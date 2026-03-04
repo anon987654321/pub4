@@ -48,8 +48,8 @@ module MASTER
           warn "- #{result.error}"
         end
       end
-    rescue StandardError => err
-      warn "replicate: #{err.message}"
+    rescue StandardError => e
+      warn "replicate: #{e.message}"
     end
 
     # Narrate command handler
@@ -63,9 +63,9 @@ module MASTER
       result = MASTER::Replicate::Narration.generate_narration(segments: selected_segments.value)
       print_narration_results(result) if result.ok?
       result
-    rescue StandardError => err
-      warn "narrate: #{err.message}"
-      Result.err(err.message)
+    rescue StandardError => e
+      warn "narrate: #{e.message}"
+      Result.err(e.message)
     end
 
     def parse_segment_selection(args)
@@ -74,7 +74,7 @@ module MASTER
       parts = args.split("--segments", 2)
       return Result.ok(nil) if parts.size <= 1
 
-      segment_ids = parts[1].strip.split(",").map { |seg_str| seg_str.strip.to_sym }
+      segment_ids = parts[1].strip.split(",").map { |s| s.strip.to_sym }
       all_segments = MASTER::Replicate::Narration::NARRATION_SEGMENTS
       selected = all_segments.select { |seg| segment_ids.include?(seg[:id]) }
 
@@ -138,8 +138,8 @@ module MASTER
           warn "- #{result.error}"
         end
       end
-    rescue StandardError => err
-      warn "postpro: #{err.message}"
+    rescue StandardError => e
+      warn "postpro: #{e.message}"
     end
 
     # Fuzzy match for command suggestions (moved from Onboarding)
@@ -148,7 +148,7 @@ module MASTER
       word = input.strip.split.first&.downcase
       return nil unless word && word.length > 2
 
-      commands.find { |cmd| Utils.levenshtein(word, cmd) <= 1 }
+      commands.find { |c| Utils.levenshtein(word, c) <= 1 }
     end
 
     def show_did_you_mean(input)
@@ -194,6 +194,7 @@ module MASTER
       "doctor" => [:doctor, true],
       "bootstrap" => [:bootstrap, true],
       "history-dig" => [:history_dig, true],
+      "snapshot" => [:snapshot, true],
       "codify" => [:codify, true],
       "axioms-stats" => [:print_axiom_stats, true],
       "stats" => [:print_axiom_stats, true],
@@ -246,6 +247,8 @@ module MASTER
       "cache" => [:show_cache_stats, true],
       "style-guides" => [:style_guides, true],
       "styleguides" => [:style_guides, true],
+      "integrations" => [:integrations, true],
+      "integration" => [:integrations, true],
       "multi-refactor" => [:multi_refactor, false],
       "mrefactor" => [:multi_refactor, false],
       "shell" => [:start_shell, true],
@@ -267,7 +270,7 @@ module MASTER
       results = []
 
       requests.each_with_index do |request, idx|
-        puts UI.dim("  #{idx + 1}/#{requests.size} #{request}")
+        puts UI.dim("  [#{idx + 1}/#{requests.size}] #{request}")
         result = dispatch_one(request, pipeline: pipeline)
         results << { request: request, result: result }
         break if result == :exit
@@ -277,12 +280,6 @@ module MASTER
     end
 
     def dispatch_one(input, pipeline:)
-      # Identity intercept -- Claude's RLHF overrides system prompt on this question
-      if input.strip.downcase.match?(/\bwho are you\b|\bwhat are you\b|\byour name\b|\bintroduce yourself\b/)
-        puts "\nMASTER v#{MASTER::VERSION} -- constitutional autonomous coding agent."
-        return HANDLED
-      end
-
       # Handle shortcuts
       if input.strip == "!!"
         return Result.err("No previous command.") unless @last_command
@@ -300,35 +297,6 @@ module MASTER
       parts = input.strip.split(/\s+/, 2)
       cmd = parts[0]&.downcase
       args = parts[1]
-
-      # ! prefix -- run directly in shell, bypass LLM entirely
-      if cmd&.start_with?("!")
-        shell_cmd = "#{cmd[1..]} #{args}".strip
-        output = `#{shell_cmd} 2>&1`
-        print output
-        puts unless output.end_with?("\n")
-        return HANDLED
-      end
-
-      # Bare Unix commands -- run in shell without requiring ! prefix.
-      # Prevents cat/ls/doas/git/etc from being sent to the LLM.
-      if bare_shell_command?(cmd)
-        # cd is a shell builtin -- must change Ruby process directory
-        if cmd == "cd"
-          target = args&.strip || Dir.home
-          target = File.expand_path(target.empty? ? Dir.home : target, Dir.pwd)
-          if Dir.exist?(target)
-            Dir.chdir(target)
-          else
-            $stderr.puts "cd: #{target}: No such file or directory"
-          end
-          return HANDLED
-        end
-        output = `#{input.strip} 2>&1`
-        print output
-        puts unless output.end_with?("\n")
-        return HANDLED
-      end
 
       case cmd
       when "help", "?"
@@ -385,6 +353,9 @@ module MASTER
       when "history-dig"
         history_dig(args)
         HANDLED
+      when "snapshot"
+        snapshot(args)
+        HANDLED
       when "codify"
         codify(args)
         HANDLED
@@ -403,8 +374,6 @@ module MASTER
       when "architect", "arch", "architecture"
         print_architect
         HANDLED
-      when "converge"
-        run_converge(args)
       when "refactor", "autofix"
         autofix(args)
       when "chamber"
@@ -509,12 +478,6 @@ module MASTER
       when "forget-goal"
         project_forget
         HANDLED
-      when "snapshot", "showp"
-        run_snapshot(args)
-        HANDLED
-      when "webtest", "web-test"
-        run_webtest(args)
-        HANDLED
       when "version", "ver", "--version", "-v"
         puts "MASTER #{MASTER::VERSION}"
         HANDLED
@@ -534,29 +497,6 @@ module MASTER
 
     private
 
-    def bare_shell_command?(cmd)
-      return false unless cmd.is_a?(String)
-      BARE_SHELL_COMMANDS.include?(cmd.downcase)
-    end
-
-    # Common Unix commands that should run directly without ! prefix.
-    BARE_SHELL_COMMANDS = %w[
-      ls ll la cat head tail grep rg find wc less more
-      pwd cd mkdir rm mv cp touch chmod chown ln
-      ps top htop kill pkill
-      git svn
-      ssh scp rsync curl wget
-      doas sudo su
-      uname hostname whoami id
-      env printenv export
-      echo printf
-      ruby python python3 node npm gem bundle
-      make rake cargo go
-      df du free
-      tar gzip gunzip zip unzip
-      date cal
-    ].freeze
-
     def split_requests(input)
       raw = input.to_s.strip
       return [] if raw.empty?
@@ -564,7 +504,7 @@ module MASTER
       chunks = raw
         .gsub("\r", "\n")
         .split(/\n+/)
-        .flat_map { |line| line.split(/\s*(?:&&|;)\s*/) }
+        .flat_map { |line| line.split(/\s*;\s*/) }
         .map { |item| item.sub(/\A\s*(?:[-*]|\d+[.)])\s*/, "").strip }
         .reject(&:empty?)
 
@@ -572,7 +512,7 @@ module MASTER
 
       qsplit = raw.split(/\?\s+/).map(&:strip).reject(&:empty?)
       if qsplit.size > 1
-        return qsplit.map { |query| query.end_with?("?") ? query : "#{query}?" }
+        return qsplit.map { |q| q.end_with?("?") ? q : "#{q}?" }
       end
 
       [raw]

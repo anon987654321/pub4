@@ -100,8 +100,8 @@ module MASTER
       puts
 
       Result.ok(summary)
-    rescue StandardError => err
-      Result.err("MultiRefactor failed: #{err.message}")
+    rescue StandardError => e
+      Result.err("MultiRefactor failed: #{e.message}")
     end
 
     private
@@ -261,8 +261,8 @@ module MASTER
         reason = result.err? ? result.error : "no changes suggested"
         { file: file, improved: false, reason: reason }
       end
-    rescue StandardError => err
-      { file: file, error: err.message }
+    rescue StandardError => e
+      { file: file, error: e.message }
     end
 
     def over_budget?
@@ -344,8 +344,8 @@ module MASTER
         cost: total_cost,
         rounds: passes,
       )
-    rescue StandardError => err
-      Result.err("strict rewrite error: #{err.message}")
+    rescue StandardError => e
+      Result.err("strict rewrite error: #{e.message}")
     end
 
     def extract_code_content(text)
