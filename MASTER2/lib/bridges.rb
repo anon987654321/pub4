@@ -1,21 +1,31 @@
 # frozen_string_literal: true
 
-module Bridges
-  BRIDGES = {
-    # Add bridge mappings here, e.g.:
-    # "github" => Bridges::GitHub,
-    # "slack"  => Bridges::Slack
-  }.freeze
+require_relative "bridges/postpro"
+require_relative "bridges/repligen"
 
-  def self.bridges
-    BRIDGES
+module MASTER
+  # Bridges - Post-processing and AI generation pipeline interfaces
+  # Consolidates PostproBridge and RepligenBridge
+  module Bridges
+    PLUGINS = {
+      replicate: :ReplicateBridge,
+      repligen: :RepligenBridge,
+      postpro: :PostproBridge,
+    }.freeze
+
+    module_function
+
+    def validate_plugins
+      PLUGINS.filter_map do |name, const_name|
+        next if MASTER.const_defined?(const_name, false)
+
+        name.to_s
+      end
+    end
   end
 
-  def self.fetch(key)
-    BRIDGES.fetch(key)
-  end
-
-  def self.[](key)
-    BRIDGES[key]
-  end
+  # Backward compatibility aliases
+  PostproBridge = Bridges::PostproBridge
+  ReplicateBridge = Bridges::ReplicateBridge
+  RepligenBridge = Bridges::RepligenBridge
 end

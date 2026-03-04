@@ -53,8 +53,8 @@ module MASTER
 
       def load_axioms
         Review::Constitution.axioms || []
-      rescue StandardError => err
-        MASTER::Logging.warn("Failed to load axioms: #{err.message}", subsystem: "review.axiom_stats") if defined?(MASTER::Logging)
+      rescue StandardError => e
+        MASTER::Logging.warn("Failed to load axioms: #{e.message}", subsystem: "review.axiom_stats") if defined?(MASTER::Logging)
         []
       end
 

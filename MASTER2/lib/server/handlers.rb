@@ -8,95 +8,62 @@ module MASTER
     # Handlers - Route handler methods for web server
     module Handlers
       def handle_poll(queue)
-        text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
-        body = {
-          text: text, tier: LLM.tier,
-          budget: "unlimited", version: VERSION
-        }.to_json
+        raw = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
+        body =
+          if raw
+            begin
+              JSON.parse(raw)  # already JSON from handle_chat
+              raw
+            rescue JSON::ParserError
+              { text: raw, tier: LLM.tier, budget: "unlimited", version: VERSION }.to_json
+            end
+          else
+            { text: nil, tier: LLM.tier, budget: "unlimited", version: VERSION }.to_json
+          end
         [200, { CT_HEADER => JSON_TYPE }, [body]]
       end
 
-      def handle_sse(queue)
-        body = Enumerator.new do |y|
-          y << "retry: 1000\n\n"
-          loop do
-            text = begin; queue.pop(true) unless queue.empty?; rescue ThreadError; nil; end
-            if text
-              data = { text: text, tier: LLM.tier }.to_json
-              y << "data: #{data}\n\n"
-            else
-              y << ": keep-alive\n\n"
-            end
-            sleep 0.3
-          end
-        rescue Errno::EPIPE, IOError
-          # Client disconnected — normal for SSE
-        end
-        [200, {
-          CT_HEADER          => "text/event-stream",
-          "Cache-Control"    => "no-cache",
-          "X-Accel-Buffering" => "no",
-        }, body]
-      end
-
-      def handle_chat(env, pipeline, queue)
+      def handle_chat(env, pipeline, queue, sessions = {}, lock = Mutex.new)
         body = env["rack.input"].read
         data = begin
           JSON.parse(body, symbolize_names: true)
         rescue StandardError
           {}
         end
-        message = data[:message].to_s.strip
+        message    = data[:message].to_s.strip
+        session_id = data[:session_id].to_s.strip
+        session_id = SecureRandom.hex(16) if session_id.empty?
 
-        if message.empty?
-          [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no message"}']]
-        else
-          image = data[:image]  # { data: base64, mime: "image/...", name: "file.jpg" }
-          input = { text: message }
-          if image && image[:data] && !image[:data].empty?
-            input[:image_data] = image[:data]
-            input[:image_mime] = image[:mime].to_s
-            input[:image_name] = image[:name].to_s
-          end
+        return [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no message"}']] if message.empty?
 
-          # Record user turn for conversation continuity
-          session = Session.current
-          session.add_user(message) if session.respond_to?(:add_user)
+        web_session = lock.synchronize { sessions[session_id] ||= { pipeline: pipeline, session: Session.new } }
+        session     = web_session[:session]
+        pipeline    = web_session[:pipeline]
 
-          Thread.new do
-            result = pipeline.call(input)
-            output = result.ok? ? result.value[:rendered] : "Error: #{result.error}"
-            # Record assistant turn
-            session.add_assistant(output, model: result.value&.dig(:model), cost: result.value&.dig(:cost)) if session.respond_to?(:add_assistant)
-            queue.push(output)
-          rescue StandardError => err
-            queue.push("Error: #{err.message}")
-          end
-          [200, { CT_HEADER => JSON_TYPE }, ['{"status":"processing"}']]
+        Thread.new do
+          session.add_user(message)
+          output = dispatch_message(message, pipeline)
+          session.add_assistant(output) if output && !output.empty?
+          queue.push({ text: output, session_id: session_id, tier: LLM.tier }.to_json)
+        rescue StandardError => e
+          queue.push({ text: "Error: #{e.message}", session_id: session_id }.to_json)
         end
+
+        [200, { CT_HEADER => JSON_TYPE }, [{ status: "processing", session_id: session_id }.to_json]]
       end
 
       def handle_metrics
-        dirty_count  = git_dirty_count
-        jobs_count   = defined?(Scheduler) ? Scheduler.list.count { |j| j[:enabled] } : 0
-        last_scan    = defined?(Scan) && Scan.respond_to?(:last_result) ? Scan.last_result : nil
-        violations   = last_scan ? (last_scan[:total_violations] || 0) : 0
-        autonomy_lvl = defined?(Capabilities) ? Capabilities.name : "unknown"
-        model_name   = defined?(LLM) && LLM.respond_to?(:current_model) ? LLM.current_model.to_s : "unknown"
+        dirty_count = git_dirty_count
         metrics = {
           version: VERSION, tier: LLM.tier,
           budget_remaining: "unlimited",
           models: LLM.models.count,
-          model: model_name,
-          llm_provider: "replicate+openrouter",
+          llm_provider: "openrouter",
           media_provider: "replicate",
           tts: defined?(Audio) ? Audio.engine_status : "unavailable",
           self: defined?(SelfAwareness) ? SelfAwareness.summary : "unavailable",
           repo_dirty_count: dirty_count,
-          repo_state: dirty_count.zero? ? "clean" : "dirty",
-          violations: violations,
-          scheduled_jobs: jobs_count,
-          autonomy: autonomy_lvl,
+          repo_state: dirty_count.zero? ? "clean" : "dirty"
         }.to_json
         [200, { CT_HEADER => JSON_TYPE }, [metrics]]
       end
@@ -116,9 +83,9 @@ module MASTER
         end
 
         result = Speech.speak(text, play: false)
-        if result.respond_to?(:ok?) && result.ok? && result.value[:audio]
-          ct = result.value[:content_type] || "audio/mpeg"
-          [200, { CT_HEADER => ct }, [result.value[:audio]]]
+        if result.respond_to?(:ok?) && result.ok?
+          audio_data = result.value[:audio] || result.value[:data]
+          [200, { CT_HEADER => "audio/mpeg" }, [audio_data]]
         else
           error = result.respond_to?(:error) ? result.error : "TTS failed"
           [500, { CT_HEADER => JSON_TYPE }, [{ error: error }.to_json]]
@@ -146,6 +113,23 @@ module MASTER
       end
 
       private
+
+      def dispatch_message(message, pipeline)
+        if defined?(Commands)
+          cmd = Commands.dispatch(message, pipeline: pipeline)
+          if cmd == :exit
+            "Goodbye."
+          elsif cmd.respond_to?(:ok?)
+            cmd.ok? ? (cmd.value[:rendered] || cmd.value[:response] || "") : "! #{cmd.failure}"
+          else
+            result = pipeline.call({ text: message })
+            result.ok? ? (result.value[:rendered] || result.value[:response] || "") : "! #{result.failure}"
+          end
+        else
+          result = pipeline.call({ text: message })
+          result.ok? ? (result.value[:rendered] || result.value[:response] || "") : "! #{result.failure}"
+        end
+      end
 
       def git_dirty_count
         root = defined?(MASTER) && MASTER.respond_to?(:root) ? MASTER.root : Dir.pwd

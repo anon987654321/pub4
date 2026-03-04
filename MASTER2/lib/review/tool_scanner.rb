@@ -2,7 +2,7 @@
 
 module MASTER
   module Review
-    # ToolScanner -- scan tool source for threats at registration time
+    # ToolScanner — scan tool source for threats at registration time
     # Pattern: MASTER3 Constitutional Tool Scanning (gistfile10 §5)
     module ToolScanner
       module_function

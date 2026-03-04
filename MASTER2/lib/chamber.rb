@@ -10,13 +10,9 @@ module MASTER
   # Council - Multi-model deliberation with council personas
   # Implements multi-round debate: Independent -> Synthesis -> Convergence
   class Council
-    CHAMBER_COMPONENTS = {
-      review: "chamber/review",
-      deliberation: "chamber/deliberation",
-      ideation: "chamber/ideation",
-    }.freeze
-
-    CHAMBER_COMPONENTS.each_value { |component_file| require_relative component_file }
+    include Review
+    include Deliberation
+    include Ideation
 
     MAX_ROUNDS = 25
     MAX_COST = 0.50
@@ -43,8 +39,7 @@ module MASTER
     end
 
     def arbiter_model
-      tiers = LLM.load_models_config.group_by { |m| m[:tier]&.to_sym }
-      tiers[:strong]&.first&.dig(:id) || "anthropic/claude-sonnet-4.6"
+      LLM.model_tiers[:strong]&.first || "anthropic/claude-sonnet-4.6"
     end
 
     # Convenience method for single council review
@@ -65,5 +60,5 @@ module MASTER
     end
   end
 
-  Chamber = Council
+  Chamber = Council # deprecated: use Council
 end

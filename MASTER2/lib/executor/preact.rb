@@ -1,1 +1,134 @@
-# Please paste the current contents of lib/executor/preact.rb so I can apply the requested fixes and return only the corrected Ruby code.
+# frozen_string_literal: true
+
+module MASTER
+  class Executor
+    module PreAct
+      def execute_pre_act(goal, tier:)
+        start_time = MASTER::Utils.monotonic_now
+
+        UI.dim("  planning...")
+        plan_result = generate_plan(goal, tier: tier)
+        return plan_result unless plan_result.ok?
+
+        @plan = plan_result.value[:steps]
+        UI.dim("  #{@plan.size} steps")
+
+        # Phase 2: Execute plan step by step
+        results = []
+        @plan.each_with_index do |planned_step, idx|
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
+          end
+
+          @step = idx + 1
+          UI.dim("  #{@step}/#{@plan.size}: #{planned_step[0..60]}")
+
+          # Execute the planned action
+          observation = dispatch_action(planned_step)
+
+          # Injection defense: halt on detected injection (gist item #3)
+          if defined?(Security::Sanitizer) && !Security::Sanitizer.safe?(observation)
+            return Result.err(
+              "Injection attempt detected in tool response at step #{@step}. Aborting.",
+              category: :validation,
+            )
+          end
+
+          results << { step: @step, action: planned_step, observation: observation }
+          record_history(results.last)
+
+          UI.dim("  = #{observation[0..80]}")
+
+          next unless observation.match?(/\bError\b|\bERROR\b|: error:|^error:/i) || observation.include?("not found")
+
+          UI.dim("  replanning...")
+          replan_result = replan(goal, results, tier: tier)
+          @plan = @plan[0..idx] + replan_result.value[:steps] if replan_result.ok? && replan_result.value[:steps].any?
+        end
+
+        # Phase 3: Synthesize final answer
+        synthesize_answer(goal, results, tier: tier)
+      end
+
+      def generate_plan(goal, tier:)
+        tool_list = Executor.tool_list_text
+
+        prompt = <<~PLAN
+          Create a step-by-step plan to accomplish this task:
+
+          TASK: #{goal}
+
+          TOOLS AVAILABLE:
+          #{tool_list}
+
+          Respond with a numbered list of tool invocations, one per line.
+          Each step should be a complete tool command.
+
+          Example:
+          1. file_read "config.yml"
+          2. analyze_code "src/main.rb"
+          3. fix_code "src/main.rb"
+
+          PLAN:
+        PLAN
+
+        result = LLM.ask(prompt, tier: tier)
+        return result unless result.ok?
+
+        # Parse numbered steps
+        steps = result.value[:content].scan(/^\d+\.\s*(.+)$/m).flatten
+        steps = steps.map(&:strip).reject(&:empty?)
+
+        Result.ok(steps: steps)
+      end
+
+      def replan(goal, completed, tier:)
+        history_text = completed.map { |r| "#{r[:action]} -> #{r[:observation][0..100]}" }.join("\n")
+
+        prompt = <<~REPLAN
+          Original task: #{goal}
+
+          Completed steps:
+          #{history_text}
+
+          The last step had an unexpected result. What additional steps are needed?
+          Respond with numbered tool commands only:
+        REPLAN
+
+        result = LLM.ask(prompt, tier: :fast)
+        return result unless result.ok?
+
+        steps = result.value[:content].scan(/^\d+\.\s*(.+)$/m).flatten
+        Result.ok(steps: steps.map(&:strip))
+      end
+
+      def synthesize_answer(goal, results, tier:)
+        history_text = results.map do |r|
+          "Step #{r[:step]}: #{r[:action]}\nResult: #{r[:observation][0..300]}"
+        end.join("\n\n")
+
+        prompt = <<~SYNTH
+          Task: #{goal}
+
+          Execution results:
+          #{history_text}
+
+          Provide a concise final answer based on these results:
+        SYNTH
+
+        result = LLM.ask(prompt, tier: :fast)
+        return result unless result.ok?
+
+        Result.ok(
+          answer: result.value[:content],
+          steps: @step,
+          pattern: :pre_act,
+          plan: @plan,
+          history: @history,
+        )
+      end
+    end
+  end
+end

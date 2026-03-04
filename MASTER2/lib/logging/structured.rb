@@ -2,122 +2,73 @@
 
 require "json"
 require "time"
-require "securerandom"
 
-module Logging
-  module Structured
-    TIMESTAMP_FORMAT = :iso8601
-    DEFAULT_LEVEL = "INFO"
-    RESERVED_KEYS = %w[
-      timestamp
-      level
-      message
-      event
-      context
-      request_id
-      pid
-      tid
-      logger
-    ].freeze
+module MASTER
+  module Logging
+    # Structured - JSON and human-readable structured logging
+    module Structured
+      LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 }.freeze
 
-    class Logger
-      def initialize(io: $stdout, logger_name: nil, level: DEFAULT_LEVEL)
-        @io = io
-        @logger_name = logger_name
-        @level = level
-      end
+      @level = :info
+      @format = :human
+      @output = $stderr
 
-      attr_accessor :level
+      class << self
+        attr_accessor :format, :output
+        attr_reader :level
 
-      def info(message = nil, **fields, &block)
-        log("INFO", message, **fields, &block)
-      end
-
-      def warn(message = nil, **fields, &block)
-        log("WARN", message, **fields, &block)
-      end
-
-      def error(message = nil, **fields, &block)
-        log("ERROR", message, **fields, &block)
-      end
-
-      def debug(message = nil, **fields, &block)
-        log("DEBUG", message, **fields, &block)
-      end
-
-      def log(level, message = nil, **fields)
-        msg = message || (block_given? ? yield : nil)
-        event = build_event(level, msg, fields)
-        write_event(event)
-        event
-      end
-
-      private
-
-      def build_event(level, message, fields)
-        now = Time.now.utc
-        timestamp = format_timestamp(now)
-
-        base = {
-          "timestamp" => timestamp,
-          "level" => level,
-          "message" => message,
-          "pid" => Process.pid,
-          "tid" => Thread.current.object_id
-        }
-
-        base["logger"] = @logger_name if @logger_name
-        base.merge!(extract_context(fields))
-        base.merge!(sanitize_fields(fields))
-        base
-      end
-
-      def format_timestamp(time)
-        case TIMESTAMP_FORMAT
-        when :iso8601
-          time.iso8601(6)
-        else
-          time.to_s
-        end
-      end
-
-      def extract_context(fields)
-        ctx = fields.delete(:context) || fields.delete("context")
-        return {} unless ctx
-
-        { "context" => normalize_context(ctx) }
-      end
-
-      def normalize_context(ctx)
-        return ctx if ctx.is_a?(Hash)
-
-        { "value" => ctx }
-      end
-
-      def sanitize_fields(fields)
-        out = {}
-
-        fields.each do |k, v|
-          key = k.to_s
-          out[key] = v unless RESERVED_KEYS.include?(key)
+        def level=(val)
+          @level = val.to_sym
         end
 
-        out
+        # Write a structured log entry
+        # @param severity [Symbol] Log level (:debug, :info, :warn, :error, :fatal)
+        # @param message [String] Log message
+        # @param context [Hash] Additional key-value context
+        def log(severity, message, **context)
+          return if LEVELS[severity].nil?
+          return if LEVELS[severity] < LEVELS[@level]
+
+          entry = build_entry(severity, message, context)
+
+          case @format
+          when :json
+            @output.puts(JSON.generate(entry))
+          else
+            @output.puts(format_human(entry))
+          end
+        end
+
+        private
+
+        def build_entry(severity, message, context)
+          {
+            timestamp: Time.now.utc.iso8601(3),
+            level: severity.to_s.upcase,
+            message: message,
+            request_id: Thread.current[:master_request_id],
+            **context.compact,
+          }.compact
+        end
+
+        def format_human(entry)
+          prefix = case entry[:level]
+                   when "DEBUG" then "\e[37m"    # gray
+                   when "INFO"  then "\e[36m"    # cyan
+                   when "WARN"  then "\e[33m"    # yellow
+                   when "ERROR" then "\e[31m"    # red
+                   when "FATAL" then "\e[31;1m" # bold red
+                   else ""
+                   end
+          reset = "\e[0m"
+
+          ctx = entry.except(:timestamp, :level, :message, :request_id)
+          ctx_str = ctx.any? ? " #{ctx.map { |k, v| "#{k}=#{v}" }.join(' ')}" : ""
+          rid_str = entry[:request_id] ? "[#{entry[:request_id][0..7]}] " : ""
+
+          "#{prefix}#{entry[:level][0]}#{reset} #{rid_str}#{entry[:message]}#{ctx_str}"
+        end
       end
-
-      def write_event(event)
-        json = JSON.generate(event)
-        @io.write(json)
-        @io.write("\n")
-      end
-    end
-
-    def self.build(io: $stdout, logger_name: nil, level: DEFAULT_LEVEL)
-      Logger.new(io: io, logger_name: logger_name, level: level)
-    end
-
-    def self.request_id
-      SecureRandom.uuid
     end
   end
 end

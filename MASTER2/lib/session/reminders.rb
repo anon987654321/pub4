@@ -2,14 +2,13 @@
 
 module MASTER
   class Session
-    # Reminders -- re-inject constitutional constraints mid-conversation
+    # Reminders — re-inject constitutional constraints mid-conversation
     # Prevents axiom drift in long sessions.
     # Pattern: Anthropic's Claude Sonnet 4.5 reminder mechanism (gistfile10 §3)
     module Reminders
       module_function
 
-      REMINDER_INTERVAL  = 8 # inject a reminder every N messages
-      MAX_REMINDER_AXIOMS = 5
+      REMINDER_INTERVAL = 8 # inject a reminder every N messages
       CRITICAL_AXIOMS = %w[
         FAIL_VISIBLY
         ONE_SOURCE
@@ -28,7 +27,7 @@ module MASTER
       def build_reminder(context = {})
         violations = context[:recent_violations] || []
         active_axioms = if violations.any?
-                          violations.map { |v| v[:axiom] }.uniq.first(MAX_REMINDER_AXIOMS)
+                          violations.map { |v| v[:axiom] }.uniq.first(5)
                         else
                           CRITICAL_AXIOMS
                         end
@@ -37,7 +36,7 @@ module MASTER
         budget_note = context[:budget_remaining] ? "Session budget remaining: #{context[:budget_remaining]}" : nil
 
         lines = [
-          "[SYSTEM REMINDER -- message #{context[:count]}]",
+          "[SYSTEM REMINDER — message #{context[:count]}]",
           "Active constitutional constraints:",
           axiom_text,
           "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK",

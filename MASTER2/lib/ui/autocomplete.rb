@@ -12,29 +12,18 @@ module MASTER
       # Command completion
       completions += COMMANDS.select { |c| c.start_with?(partial) } if partial.match?(/^\w*$/)
 
-      # % meta-op completion
-      if partial.start_with?("%")
-        word = partial[1..]
-        completions += COMMANDS.select { |c| c.start_with?(word) }.map { |c| "%#{c}" }
-      end
-
       # File path completion
       if partial.include?("/") || partial.include?("\\") || partial.end_with?(".rb")
         completions += complete_path(partial)
       end
 
-      # Context-aware completions after known commands
+      # After known commands, suggest relevant completions
       if context
         case context
-        when "refactor", "chamber", "scan", "fix", "learn", "evolve", "opportunities"
-          completions += complete_path(partial)
-        when "model", "use"
-          completions += complete_models(partial)
-        when "session"
-          completions += %w[new save load info replay export diff ls].select { |s| s.start_with?(partial) }
-        when "help"
-          completions += COMMANDS.select { |c| c.start_with?(partial) }
-          completions += %w[tips beginner].select { |c| c.start_with?(partial) }
+        when "refactor", "chamber"
+          completions += complete_path(partial).select { |p| p.end_with?(".rb") }
+        when "speak", "say"
+          # No completion for freeform text
         end
       end
 
@@ -56,15 +45,6 @@ module MASTER
       []
     end
 
-    def complete_models(partial)
-      return [] unless defined?(MASTER::LLM)
-
-      models = MASTER::LLM.respond_to?(:available_model_names) ? MASTER::LLM.available_model_names : []
-      models.select { |m| m.start_with?(partial) }
-    rescue StandardError
-      []
-    end
-
     def setup_readline
       return unless defined?(Readline)
 
@@ -80,10 +60,8 @@ module MASTER
       reader.on(:keypress) do |event|
         if event.key.name == :tab
           line_text = event.line.respond_to?(:text) ? event.line.text : event.line.to_s
-          words = line_text.split
-          word = words.last || ""
-          ctx = words.size > 1 ? words.first : nil
-          matches = complete(word, context: ctx)
+          word = line_text.split.last || ""
+          matches = complete(word)
           if matches.size == 1
             replacement = line_text.sub(/#{Regexp.escape(word)}$/, matches.first)
             event.line.replace(replacement) if event.line.respond_to?(:replace)

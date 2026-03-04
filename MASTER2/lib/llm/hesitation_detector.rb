@@ -1,80 +1,58 @@
 # frozen_string_literal: true
 
-module Llm
-  class HesitationDetector
-    DEFAULT_MIN_HESITATION_COUNT = 2
-    DEFAULT_MIN_HESITATION_RATIO = 0.02
-    DEFAULT_MIN_TEXT_LENGTH = 30
+module MASTER
+  module LLM
+    # HesitationDetector — predict whether council debate will help
+    # Based on iMAD (AAAI 2026, arXiv:2511.11306): saves ~92% council compute
+    # by only escalating to multi-agent debate when primary agent shows uncertainty.
+    module HesitationDetector
+      module_function
 
-    HESITATION_TOKENS = %w[
-      um
-      uh
-      erm
-      er
-      hmm
-      hmmm
-      ah
-      eh
-      like
-      basically
-      literally
-      actually
-      so
-      well
-    ].freeze
+      # Linguistic uncertainty markers (calibrated from iMAD paper)
+      UNCERTAINTY_PATTERNS = [
+        /\b(?:I'm|I am)\s+not\s+(?:sure|certain|confident)/i,
+        /\b(?:might|may|could|possibly|perhaps|probably)\b/i,
+        /\bnot\s+(?:entirely|completely|fully)\s+(?:sure|clear|certain)/i,
+        /\b(?:unclear|ambiguous|uncertain|unsure)\b/i,
+        /\b(?:it depends|hard to say|difficult to determine)\b/i,
+        /\b(?:on the one hand|on the other hand|alternatively)\b/i,
+        /\b(?:I think|I believe|in my opinion|it seems)\b/i,
+        /\?\s*$/, # ends with a question
+      ].freeze
 
-    HESITATION_REGEX = /
-      (?<![a-z])
-      (?:#{HESITATION_TOKENS.map { |t| Regexp.escape(t) }.join('|')})
-      (?![a-z])
-    /ix.freeze
+      # Confidence threshold: below this, escalate to council
+      CONFIDENCE_THRESHOLD = 0.7
 
-    attr_reader :min_hesitation_count, :min_hesitation_ratio, :min_text_length
+      # Estimate confidence score of LLM response (0.0–1.0).
+      # Lower score = more uncertainty = more likely to need council.
+      # @param response [String] LLM primary response
+      # @return [Float] confidence score 0.0–1.0
+      def confidence_score(response)
+        return 0.0 unless response.is_a?(String) && !response.empty?
 
-    def initialize(
-      min_hesitation_count: DEFAULT_MIN_HESITATION_COUNT,
-      min_hesitation_ratio: DEFAULT_MIN_HESITATION_RATIO,
-      min_text_length: DEFAULT_MIN_TEXT_LENGTH
-    )
-      @min_hesitation_count = min_hesitation_count
-      @min_hesitation_ratio = min_hesitation_ratio
-      @min_text_length = min_text_length
-    end
+        matches = UNCERTAINTY_PATTERNS.count { |p| p.match?(response) }
+        # Each uncertainty marker reduces confidence by 0.12 (capped)
+        [1.0 - (matches * 0.12), 0.1].max
+      end
 
-    def detect(text)
-      normalized = normalize_text(text)
-      return result(false, 0, 0, 0.0) if normalized.length < min_text_length
+      # Should the council be invoked for this response?
+      # @param response [String] primary LLM response
+      # @return [Boolean]
+      def hesitant?(response)
+        confidence_score(response) < CONFIDENCE_THRESHOLD
+      end
 
-      tokens = normalized.scan(/[[:alpha:]]+/)
-      token_count = tokens.length
-      return result(false, 0, 0, 0.0) if token_count.zero?
+      # Log the hesitation decision for AutoTool-style learning.
+      def evaluate(response, context: nil)
+        score = confidence_score(response)
+        escalate = score < CONFIDENCE_THRESHOLD
 
-      hesitation_count = normalized.scan(HESITATION_REGEX).length
-      ratio = hesitation_count.to_f / token_count
+        Logging.dmesg_log("hesit0",
+                          message: "score=#{score.round(2)} escalate=#{escalate} context=#{context&.to_s&.slice(0,
+                                                                                                                60)}")
 
-      hesitant =
-        hesitation_count >= min_hesitation_count ||
-        ratio >= min_hesitation_ratio
-
-      result(hesitant, hesitation_count, token_count, ratio)
-    end
-
-    private
-
-    def normalize_text(text)
-      text.to_s
-          .downcase
-          .gsub(/\s+/, ' ')
-          .strip
-    end
-
-    def result(hesitant, hesitation_count, token_count, ratio)
-      {
-        hesitant: hesitant,
-        hesitation_count: hesitation_count,
-        token_count: token_count,
-        hesitation_ratio: ratio
-      }
+        { score: score, escalate: escalate }
+      end
     end
   end
 end

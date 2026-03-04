@@ -2,14 +2,13 @@
 
 require "json"
 require "fileutils"
-require "securerandom"
 
 module MASTER
   # Scheduler -- persistent job scheduling (cron-style)
   # Stolen from OpenClaw: agents schedule their own future work,
   # jobs persist across restarts, exponential backoff on failure
   module Scheduler
-    JOBS_FILE = Paths.data_file("scheduled_jobs.json")
+    JOBS_FILE = File.join(MASTER.root, "data", "scheduled_jobs.json")
     MAX_JOBS = 50
 
     Job = Struct.new(
@@ -21,19 +20,9 @@ module MASTER
     @jobs = []
     @mutex = Mutex.new
 
-    # Default jobs seeded on first boot (skipped if file already exists).
-    DEFAULT_JOBS = [
-      { id: "default_scan",    command: "scan .",      interval: 3600,  priority: 40, confidence: 1.0 },
-      { id: "default_selfrun", command: "selfrun",     interval: 7200,  priority: 60, confidence: 1.0 },
-      { id: "default_evolve",  command: "evolve lib/", interval: 21600, priority: 30, confidence: 0.8 },
-    ].freeze
-
     class << self
       def load
-        unless File.exist?(JOBS_FILE)
-          install_defaults
-          return
-        end
+        return unless File.exist?(JOBS_FILE)
 
         raw = JSON.parse(File.read(JOBS_FILE), symbolize_names: true)
         @jobs = (raw || []).map do |j|
@@ -54,29 +43,9 @@ module MASTER
           )
         end
         Logging.dmesg_log("scheduler", message: "loaded #{@jobs.size} jobs")
-      rescue StandardError => err
-        Logging.dmesg_log("scheduler", message: "load error: #{err.message}")
+      rescue StandardError => e
+        Logging.dmesg_log("scheduler", message: "load error: #{e.message}")
         @jobs = []
-      end
-
-      # Seed default jobs on a fresh install (no saved state).
-      # Staggers first runs so they don't all fire simultaneously at boot.
-      def install_defaults
-        stagger = 0
-        DEFAULT_JOBS.each do |d|
-          stagger += 300 # 5-minute stagger between first runs
-          job = Job.new(
-            id: d[:id], command: d[:command], interval: d[:interval],
-            next_at: Time.now + stagger, last_run: nil,
-            failures: 0, enabled: true,
-            priority: d[:priority], max_retries: 5,
-            retry_backoff: "exponential", confidence: d[:confidence],
-            last_status: nil, last_error: nil,
-          )
-          @mutex.synchronize { @jobs << job }
-        end
-        save
-        Logging.dmesg_log("scheduler", message: "installed #{DEFAULT_JOBS.size} default jobs")
       end
 
       def save
@@ -100,7 +69,7 @@ module MASTER
         return Result.err("Too many jobs (max #{MAX_JOBS}).") if @jobs.size >= MAX_JOBS
 
         job = Job.new(
-          id: id || "job_#{SecureRandom.hex(8)}",
+          id: id || "job_#{Time.now.to_i}_#{rand(1000)}",
           command: command,
           interval: interval == :once ? nil : interval,
           next_at: Time.now,
@@ -127,52 +96,35 @@ module MASTER
         Result.ok(removed: job_id)
       end
 
-      # Move a job's next_at forward so it runs within +delay+ seconds.
-      def schedule_soon(job_id, delay: 60)
-        @mutex.synchronize do
-          job = @jobs.find { |j| j.id == job_id }
-          return Result.err("Job not found: #{job_id}") unless job
-
-          target = Time.now + delay
-          job.next_at = target if job.next_at > target
-        end
-        save
-        Result.ok(job_id: job_id)
-      end
-
       def list
-        @mutex.synchronize do
-          @jobs.map do |j|
-            { id: j.id, command: j.command, interval: j.interval,
-              next_at: j.next_at, enabled: j.enabled, failures: j.failures,
-              priority: j.priority, max_retries: j.max_retries, confidence: j.confidence,
-              last_status: j.last_status, last_error: j.last_error }
-          end
+        @jobs.map do |j|
+          { id: j.id, command: j.command, interval: j.interval,
+            next_at: j.next_at, enabled: j.enabled, failures: j.failures,
+            priority: j.priority, max_retries: j.max_retries, confidence: j.confidence,
+            last_status: j.last_status, last_error: j.last_error }
         end
       end
 
       # Check and run due jobs -- called by Heartbeat
       def tick
         now = Time.now
-        due = @mutex.synchronize { @jobs.select { |j| j.enabled && j.next_at <= now } }
+        due = @jobs.select { |j| j.enabled && j.next_at <= now }
         due = rank_due_jobs(due)
         return if due.empty?
 
         due.each do |job|
-          run_succeeded = run_job(job)
-          @mutex.synchronize do
-            if run_succeeded
-              if job.interval
-                job.next_at = Time.now + job.interval
-              else
-                job.enabled = false # one-shot
-              end
-            elsif job.failures >= job.max_retries.to_i
-              job.enabled = false
-              Logging.dmesg_log("scheduler", message: "disabled #{job.id}: max retries reached")
+          ok = run_job(job)
+          if ok
+            if job.interval
+              job.next_at = Time.now + job.interval
+            else
+              job.enabled = false # one-shot
             end
-            job.last_run = Time.now
+          elsif job.failures >= job.max_retries.to_i
+            job.enabled = false
+            Logging.dmesg_log("scheduler", message: "disabled #{job.id}: max retries reached")
           end
+          job.last_run = Time.now
         end
         save
       end
@@ -208,13 +160,13 @@ module MASTER
         job.last_error = nil
         Logging.dmesg_log("scheduler", message: "EXIT run #{job.id} ok")
         true
-      rescue StandardError => err
+      rescue StandardError => e
         job.failures += 1
         job.last_status = "failed"
-        job.last_error = err.message
+        job.last_error = e.message
         backoff = backoff_seconds(job)
         Logging.dmesg_log("scheduler",
-                          message: "run #{job.id} failed (#{job.failures}x): #{err.message}; backoff=#{backoff}s")
+                          message: "run #{job.id} failed (#{job.failures}x): #{e.message}; backoff=#{backoff}s")
         job.next_at = Time.now + backoff
         false
       end

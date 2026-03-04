@@ -1,49 +1,102 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "active_support/core_ext/module/delegation"
+require "fileutils"
 
-module Paths
-  DEFAULT_ENV_KEYS = %w[RACK_ENV RAILS_ENV APP_ENV].freeze
-  DEFAULT_ENV = "development"
+module MASTER
+  module Paths
+    class << self
+      def root
+        MASTER.root
+      end
 
-  def self.load_data_file(file_path)
-    YAML.safe_load(File.read(file_path), aliases: true) || {}
-  rescue Errno::ENOENT, Psych::SyntaxError
-    {}
-  end
+      def lib
+        File.join(root, "lib")
+      end
 
-  class Config
-    attr_reader :root, :env
+      def data
+        File.join(root, "data")
+      end
 
-    def initialize(root:, env: nil)
-      @root = File.expand_path(root)
-      @env = env || DEFAULT_ENV_KEYS.filter_map { |k| ENV[k] }.first || DEFAULT_ENV
-      @data = nil
-    end
+      def var
+        @var ||= mkdir(File.join(root, "var"))
+      end
 
-    delegate :[], :fetch, to: :data
+      def tmp
+        @tmp ||= mkdir(File.join(var, "tmp"))
+      end
 
-    def data
-      @data ||= load_yaml
-    end
+      def config
+        @config ||= mkdir(File.join(var, "config"))
+      end
 
-    def path(*parts)
-      File.join(root, *parts)
-    end
+      def cache
+        @cache ||= mkdir(File.join(var, "cache"))
+      end
 
-    def config_path(name)
-      path("config", name)
-    end
+      def logs
+        @logs ||= mkdir(File.join(var, "logs"))
+      end
 
-    def data_path(name)
-      path("data", name)
-    end
+      def sessions
+        @sessions ||= mkdir(File.join(var, "sessions"))
+      end
 
-    private
+      def db
+        @db ||= mkdir(File.join(var, "db"))
+      end
 
-    def load_yaml
-      Paths.load_data_file(config_path("paths.yml")).fetch(env, {})
+      def dmesg_log
+        @dmesg_log ||= File.join(logs, "dmesg.log")
+      end
+
+      def semantic_cache
+        @semantic_cache ||= mkdir(File.join(cache, "semantic"))
+      end
+
+      def edge_tts_output
+        @edge_tts_output ||= mkdir(File.join(var, "edge_tts"))
+      end
+
+      def session_file(id)
+        safe_id = File.basename(id.to_s)
+        File.join(sessions, "#{safe_id}.json")
+      end
+
+      def var_file(name)
+        File.join(var, name)
+      end
+
+      def data_file(name)
+        File.join(data, name)
+      end
+
+      def data_path(name)
+        base = data
+        path = File.join(base, "#{name}.yml")
+        return path if File.exist?(path)
+
+        alt = File.join(base, name)
+        return alt if File.exist?(alt)
+
+        nil
+      end
+
+      def load_yaml(name)
+        path = data_path(name)
+        return nil unless path
+
+        YAML.safe_load_file(path, symbolize_names: true)
+      rescue StandardError => e
+        Logging.warn("paths: failed to load #{name}: #{e.message}") if defined?(Logging)
+        nil
+      end
+
+      private
+
+      def mkdir(path)
+        FileUtils.mkdir_p(path)
+        path
+      end
     end
   end
 end

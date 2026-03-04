@@ -125,7 +125,7 @@ module MASTER
 
       def load_project_context
         path = File.join(MASTER.root, "data", "session_template.yml")
-        YAML.safe_load_file(path)["project_context"] rescue StandardError; nil
+        YAML.safe_load_file(path)["project_context"] rescue nil
       end
 
       def load_questions
@@ -158,5 +158,5 @@ module MASTER
     end
   end
 
-  WorkflowEngine = Workflow::Orchestrator
+  WorkflowEngine = Workflow::Orchestrator # deprecated: use Workflow::Orchestrator
 end

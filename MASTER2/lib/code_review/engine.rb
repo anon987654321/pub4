@@ -1,175 +1,285 @@
 # frozen_string_literal: true
 
-module CodeReview
-  class Engine
-    SCAN_TYPES = %i[quick focused deep].freeze
+require "yaml"
+require_relative "analyzers"
 
-    DEFAULT_MAX_FILES = 200
-    LARGE_FILE_LINE_LIMIT = 800
-    DEFAULT_SCORE_THRESHOLD = 0.75
-    DEFAULT_TIMEOUT_SECONDS = 10
+module MASTER
+  # CodeQuality - Unified code quality scan facade
+  # Delegates to Smells, Violations, and BugHunting modules
+  # Provides scan, deep_scan, and quick_scan entry points
+  # Ported from MASTER v1, adapted for MASTER2's architecture
+  module CodeQuality
+    MAX_METHOD_LINES = 20
+    MAX_FILE_LINES = 600
 
-    def initialize(file_relation: nil, parser: nil)
-      @file_relation = file_relation
-      @parser = parser
-    end
+    # Scan profiles for tiered axiom checking
+    SCAN_PROFILES = {
+      quick: { min_priority: 9, description: "Critical axioms only (~5 axioms)" },
+      standard: { min_priority: 7, description: "Important axioms (~12 axioms)" },
+      full: { min_priority: 0, description: "All axioms (32 axioms)" },
+    }.freeze
 
-    def analyze_all(files:, scan: :quick, options: {})
-      scan = normalize_scan!(scan)
-      paths = limit_paths(Array(files), options.fetch(:max_files, DEFAULT_MAX_FILES))
-      records = load_records(paths)
+    class << self
+      # Unified entry point: runs Smells + Violations + BugHunting and merges results
+      def analyze_all(code, path: nil)
+        results = { smells: [], violations: [], bugs: [], summary: {} }
 
-      records.map { |record| scan_file(record, scan: scan, options: options) }
-    end
+        if defined?(Smells)
+          results[:smells] = begin
+            Smells.analyze(code, path)
+          rescue StandardError
+            []
+          end
+        end
 
-    def scan_file(file_or_record, scan:, options: {})
-      scan = normalize_scan!(scan)
-      record = resolve_record(file_or_record)
+        if defined?(Violations)
+          v = begin
+            Violations.analyze(code, path: path)
+          rescue StandardError
+            {}
+          end
+          results[:violations] = (v[:literal] || []) + (v[:conceptual] || [])
+        end
 
-      return build_result(record, scan, status: :skipped, reasons: [:missing]) unless record
+        if defined?(BugHunting)
+          report = begin
+            BugHunting.analyze(code, file_path: path || "inline")
+          rescue StandardError
+            {}
+          end
+          results[:bugs] = report.is_a?(Hash) ? report : []
+        end
 
-      content = record_content(record, options)
-      return build_result(record, scan, status: :skipped, reasons: [:empty]) if content.to_s.empty?
+        total = results[:smells].size + results[:violations].size
+        results[:summary] = { smells: results[:smells].size, violations: results[:violations].size, total: total }
+        Result.ok(results)
+      end
 
-      case scan
-      when :quick then quick_quality_scan(record, content, options)
-      when :focused then focused_scan(record, content, options)
-      when :deep then deep_quality_scan(record, content, options)
+      # Basic structural scan - long methods, god classes, deep nesting
+      # Now supports profile parameter for axiom filtering
+      def quality_scan(path, profile: :standard, silent: false)
+        Logging.dmesg_log("code_review", message: "ENTER code_review.scan")
+        return Result.err("Path not found") unless File.exist?(path)
+
+        axioms = load_axioms_for_profile(profile)
+        puts UI.dim("Scanning with #{profile} profile (#{axioms.size} axioms)...") if axioms && !silent
+
+        files = Analyzers::FileCollector.ruby_files(path)
+        issues = files.flat_map { |f| scan_file(f) }
+
+        Result.ok(issues)
+      end
+
+      alias scan quality_scan # deprecated: use quality_scan
+
+      # Deep scan - adds smell analysis and cyclic dependency detection
+      def deep_quality_scan(path)
+        return Result.err("Path not found") unless File.exist?(path)
+
+        issues = []
+        files = Analyzers::FileCollector.ruby_files(path)
+
+        files.each do |f|
+          content = begin
+            File.read(f)
+          rescue StandardError
+            next
+          end
+          issues += scan_file(f)
+
+          # Add smell analysis if module is available
+          next unless defined?(Smells)
+
+          smells = begin
+            Smells.detect(content, path: f)
+          rescue StandardError
+            []
+          end
+          issues += smells.map { |s| s.merge(file: f, type: :smell) }
+        end
+
+        # Check for cyclic dependencies if Smells module supports it
+        if File.directory?(path) && defined?(Smells) && Smells.respond_to?(:cyclic_deps?)
+          cycle = begin
+            Smells.cyclic_deps?(files)
+          rescue StandardError => e
+            Logging.warn("cyclic_deps check failed: #{e.message}", subsystem: "CodeReview")
+            nil
+          end
+          issues << { file: path, type: :cyclic_dependency, cycle: cycle[:cycle] } if cycle
+        end
+
+        Result.ok(issues.uniq { |i| [i[:file], i[:type] || i[:smell], i[:line]] })
+      end
+
+      alias deep_scan deep_quality_scan # deprecated: use deep_quality_scan
+
+      # Quick scan - fast summary stats without detailed analysis
+      def quick_quality_scan(path)
+        return Result.err("Path not found") unless File.exist?(path)
+
+        files = Analyzers::FileCollector.ruby_files(path)
+
+        stats = {
+          files: files.size,
+          total_lines: files.sum do |f|
+            File.read(f).lines.size
+          rescue StandardError
+            0
+          end,
+          long_files: files.count do |f|
+            begin
+              File.read(f).lines.size
+            rescue StandardError
+              0
+            end > MAX_FILE_LINES
+          end,
+          avg_file_size: 0,
+        }
+
+        stats[:avg_file_size] = (stats[:total_lines].to_f / files.size).round(1) if files.any?
+
+        # Add module counts if available
+        if defined?(MASTER::Axioms)
+          stats[:axioms] = begin
+            MASTER::Axioms.count
+          rescue StandardError
+            0
+          end
+        end
+
+        if defined?(Smells)
+          stats[:smell_patterns] = begin
+            Smells.all_patterns.size
+          rescue StandardError
+            0
+          end
+        end
+
+        Result.ok(stats)
+      end
+
+      alias quick_scan quick_quality_scan # deprecated: use quick_quality_scan
+
+      # Scan with specific focus areas
+      def focused_scan(path, focus: [:complexity, :duplication, :security])
+        return Result.err("Path not found") unless File.exist?(path)
+
+        issues = []
+        files = Analyzers::FileCollector.ruby_files(path)
+
+        files.each do |file|
+          content = begin
+            File.read(file)
+          rescue StandardError
+            next
+          end
+
+          issues += scan_file(file) if focus.include?(:complexity)
+
+          if focus.include?(:duplication) && defined?(Smells)
+            dups = begin
+              Smells.detect(content, path: file, types: [:duplication])
+            rescue StandardError
+              []
+            end
+            issues += dups.map { |d| d.merge(file: file, type: :duplication) }
+          end
+
+          next unless focus.include?(:security) && defined?(BugHunting)
+
+          bugs = begin
+            BugHunting.analyze(content, file_path: file)
+          rescue StandardError
+            []
+          end
+          issues += (bugs.is_a?(Hash) ? bugs[:findings]&.values&.flatten || [] : [bugs]).select do |b|
+            b.is_a?(Hash)
+          end.map { |b| b.merge(file: file, type: :security) }
+        end
+
+        Result.ok(issues)
+      end
+
+      # Get scan summary for display
+      def scan_summary(scan_result)
+        return {} unless scan_result.ok?
+
+        issues = scan_result.value
+        {
+          total_issues: issues.size,
+          by_type: issues.group_by { |i| i[:type] }.transform_values(&:size),
+          by_severity: issues.group_by { |i| i[:severity] || :medium }.transform_values(&:size),
+          files_affected: issues.map { |i| i[:file] }.uniq.size,
+        }
+      end
+
+      private
+
+      def load_axioms_for_profile(profile)
+        return nil unless SCAN_PROFILES.key?(profile)
+
+        config = SCAN_PROFILES[profile]
+        min_priority = config[:min_priority]
+
+        all_axioms = MASTER::Review::Constitution.axioms
+        return nil unless all_axioms
+
+        all_axioms.select { |a| (a["priority"] || a[:priority] || 5) >= min_priority }
+      rescue StandardError => e
+        UI.warn("Failed to load axioms: #{e.message}")
+        nil
+      end
+
+      # Scan individual file for basic structural issues
+      def scan_file(path)
+        content = File.read(path)
+        issues = []
+
+        # Long methods
+        methods = Analyzers::MethodLengthAnalyzer.scan(content)
+        methods.each do |method|
+          next unless method[:length] > MAX_METHOD_LINES
+
+          issues << {
+            file: path,
+            type: :long_method,
+            lines: method[:length],
+            severity: method[:length] > 50 ? :high : :medium,
+            message: "Method has #{method[:length]} lines (max: #{MAX_METHOD_LINES})",
+          }
+        end
+
+        # God class
+        lines = content.lines.size
+        if lines > MAX_FILE_LINES
+          issues << {
+            file: path,
+            type: :god_class,
+            lines: lines,
+            severity: lines > 500 ? :high : :medium,
+            message: "File has #{lines} lines (max: #{MAX_FILE_LINES})",
+          }
+        end
+
+        # Deep nesting (more than 3 levels)
+        max_nesting = Analyzers::NestingAnalyzer.depth(content)
+        if max_nesting > 3
+          issues << {
+            file: path,
+            type: :deep_nesting,
+            depth: max_nesting,
+            severity: max_nesting > 5 ? :high : :medium,
+            message: "Maximum nesting depth: #{max_nesting}",
+          }
+        end
+
+        issues
+      rescue StandardError => e
+        [{ file: path, type: :error, message: e.message, severity: :low }]
       end
     end
-
-    def quick_quality_scan(record, content, options = {})
-      timeout = options.fetch(:timeout_seconds, DEFAULT_TIMEOUT_SECONDS)
-
-      findings = with_timeout(timeout) { quick_checks(content) }
-      build_result(record, :quick, status: :ok, findings: findings)
-    rescue Timeout::Error
-      build_result(record, :quick, status: :timed_out, findings: [])
-    end
-
-    def focused_scan(record, content, options = {})
-      threshold = options.fetch(:score_threshold, DEFAULT_SCORE_THRESHOLD)
-      timeout = options.fetch(:timeout_seconds, DEFAULT_TIMEOUT_SECONDS)
-
-      findings = with_timeout(timeout) { focused_checks(content) }
-      score = score_findings(findings)
-
-      status = score >= threshold ? :ok : :needs_attention
-      build_result(record, :focused, status: status, findings: findings, score: score)
-    rescue Timeout::Error
-      build_result(record, :focused, status: :timed_out, findings: [], score: 0.0)
-    end
-
-    def deep_quality_scan(record, content, options = {})
-      timeout = options.fetch(:timeout_seconds, DEFAULT_TIMEOUT_SECONDS)
-      max_lines = options.fetch(:large_file_line_limit, LARGE_FILE_LINE_LIMIT)
-
-      return build_result(record, :deep, status: :skipped, reasons: [:too_large]) if too_large?(content, max_lines)
-
-      findings = with_timeout(timeout) { deep_checks(content) }
-      build_result(record, :deep, status: :ok, findings: findings)
-    rescue Timeout::Error
-      build_result(record, :deep, status: :timed_out, findings: [])
-    end
-
-    private
-
-    def normalize_scan!(scan)
-      sym = scan.to_sym
-      raise ArgumentError, "Unknown scan type: #{scan}" unless SCAN_TYPES.include?(sym)
-
-      sym
-    end
-
-    def limit_paths(paths, max_files)
-      paths.compact.map(&:to_s).reject(&:empty?).uniq.first(max_files)
-    end
-
-    def load_records(paths)
-      return [] if paths.empty?
-
-      return paths.map { |p| OpenStruct.new(path: p) } unless @file_relation
-
-      @file_relation.where(path: paths).includes(:violations)
-    end
-
-    def resolve_record(file_or_record)
-      return file_or_record if file_or_record.respond_to?(:path)
-
-      OpenStruct.new(path: file_or_record.to_s)
-    end
-
-    def record_content(record, options)
-      return options.fetch(:content, nil) if options.key?(:content)
-
-      read_file(record.path)
-    end
-
-    def read_file(path)
-      return nil if path.to_s.empty?
-
-      File.read(path)
-    rescue Errno::ENOENT, Errno::EACCES
-      nil
-    end
-
-    def with_timeout(seconds, &block)
-      return yield if seconds.to_i <= 0
-
-      Timeout.timeout(seconds.to_i, &block)
-    end
-
-    def too_large?(content, max_lines)
-      content.count("\n") + 1 > max_lines.to_i
-    end
-
-    def quick_checks(content)
-      findings = []
-      findings << { key: :trailing_whitespace } if content.match?(/[ \t]+$/)
-      findings << { key: :tabs } if content.include?("\t")
-      findings
-    end
-
-    def focused_checks(content)
-      findings = []
-      findings.concat(quick_checks(content))
-      findings << { key: :long_lines, count: long_line_count(content) } if long_line_count(content).positive?
-      findings
-    end
-
-    def deep_checks(content)
-      findings = focused_checks(content)
-      findings << { key: :possible_secrets } if content.match?(/(api[_-]?key|secret|token)\s*[:=]\s*["'][^"']+/i)
-      findings << { key: :complexity_hotspots, count: complexity_hotspots(content) } if complexity_hotspots(content).positive?
-      findings
-    end
-
-    def long_line_count(content, limit: 120)
-      content.each_line.count { |line| line.chomp.size > limit }
-    end
-
-    def complexity_hotspots(content)
-      keywords = %w[if elsif unless while until for case rescue ensure]
-      content.scan(/\b(#{keywords.join('|')})\b/).size
-    end
-
-    def score_findings(findings)
-      total = findings.size
-      return 1.0 if total.zero?
-
-      penalty = [total * 0.05, 1.0].min
-      (1.0 - penalty).round(2)
-    end
-
-    def build_result(record, scan, status:, findings: [], reasons: [], score: nil)
-      {
-        path: record&.path,
-        scan: scan,
-        status: status,
-        findings: Array(findings),
-        reasons: Array(reasons),
-        score: score
-      }.compact
-    end
   end
+
+  Engine = CodeQuality # deprecated: use CodeQuality
 end

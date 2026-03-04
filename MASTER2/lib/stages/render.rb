@@ -37,8 +37,10 @@ module MASTER
       end
 
       def beautify_prose(text)
-        # ASCII only -- no Unicode curly quotes or em-dashes (OpenBSD locale safety)
         text
+          .gsub(/"([^"]*?)"/) { "\u201C#{Regexp.last_match(1)}\u201D" }
+          .gsub(/\s--\s/, " \u2014 ")
+          .gsub("...", "\u2026")
       end
     end
   end

@@ -21,15 +21,15 @@ module MASTER
         result = LLM.ask(text, model: model, stream: true)
 
         if result.ok?
-          llm_response = result.value
-          tokens_in = llm_response.fetch(:tokens_in, 0)
-          tokens_out = llm_response.fetch(:tokens_out, 0)
-          cost = llm_response.fetch(:cost, 0)
+          data = result.value
+          tokens_in = data[:tokens_in] || 0
+          tokens_out = data[:tokens_out] || 0
+          cost = data[:cost] || 0
 
           puts UI.dim("models0: #{tokens_in}->#{tokens_out} tok, #{UI.currency_precise(cost)}")
 
           Result.ok(input.merge(
-                      response: llm_response[:content],
+                      response: data[:content],
                       tokens_in: tokens_in,
                       tokens_out: tokens_out,
                       cost: cost,

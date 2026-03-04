@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-# ReflowProcessor -- LLM-driven importance ordering pass.
+# ReflowProcessor — LLM-driven importance ordering pass.
 # Reorders a file's sections top-to-bottom by descending importance,
 # following the INVERTED_PYRAMID axiom and design_codex importance_flow rules.
 #
 # Public interface first:
-#   ReflowProcessor.call(path:)  -> Result with :content and :path
-#   ReflowProcessor.call(code:, filename:) -> Result with :content
+#   ReflowProcessor.call(path:)  → Result with :content and :path
+#   ReflowProcessor.call(code:, filename:) → Result with :content
 
 module MASTER
   module Review
@@ -21,20 +21,20 @@ module MASTER
         ".md"   => "Markdown",
       }.freeze
 
-      # Rules hoisted from design_codex importance_flow -- keeps prompt grounded.
+      # Rules hoisted from design_codex importance_flow — keeps prompt grounded.
       ORDERING_RULES = {
         "Ruby" => <<~RULES,
           1. `# frozen_string_literal: true` comment
           2. require / require_relative statements
           3. Module/class constants (SCREAMING_SNAKE_CASE)
-          4. Class-level DSL (attr_*, validates, belongs_to, has_many...)
-          5. Public class methods (.new, .call, .build...)
-          6. Public instance methods -- primary interface first
+          4. Class-level DSL (attr_*, validates, belongs_to, has_many…)
+          5. Public class methods (.new, .call, .build…)
+          6. Public instance methods — primary interface first
           7. protected methods
-          8. private methods -- most-called first, one-liners last
+          8. private methods — most-called first, one-liners last
           Within every method body:
-            guard clauses -> setup -> core logic -> result -> rescue -> cleanup
-          Arguments: required positional -> optional positional -> required keyword -> optional keyword -> &block
+            guard clauses → setup → core logic → result → rescue → cleanup
+          Arguments: required positional → optional positional → required keyword → optional keyword → &block
         RULES
         "YAML" => <<~RULES,
           1. Metadata (version, name, description)
@@ -52,7 +52,7 @@ module MASTER
           6. main "$@" call site
         RULES
         "Markdown" => <<~RULES,
-          1. # Title -- single line
+          1. # Title — single line
           2. One-sentence summary
           3. Key concept or TL;DR
           4. Usage / quickstart
@@ -103,7 +103,7 @@ module MASTER
           #{rules}
 
           Requirements:
-          - Preserve ALL logic exactly -- only reorder sections/blocks
+          - Preserve ALL logic exactly — only reorder sections/blocks
           - Do NOT change any expressions, method bodies, or data values
           - Do NOT add or remove any code
           - Output the complete reflowed file and nothing else

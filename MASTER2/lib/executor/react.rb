@@ -1,203 +1,212 @@
 # frozen_string_literal: true
 
-module Executor
-  class React
-    DEFAULT_MAX_STEPS = 8
-    MAX_INPUT_CHARS = 24_000
-    FIRST_LINE_CHARS = 400
-    SUMMARY_SLICE_CHARS = 800
-    ACTION_INPUT_PREVIEW_CHARS = 2_000
+module MASTER
+  class Executor
+    module React
+      # JSON schema for each step: thought + either tool call or final answer.
+      # Structured output replaces fragile regex parsing of free-form LLM text.
+      STEP_SCHEMA = {
+        type: "object",
+        additionalProperties: false,
+        required: %w[thought],
+        properties: {
+          thought: { type: "string", description: "Brief reasoning about the next step" },
+          tool: { type: "string", description: "Tool to invoke (omit when answering)" },
+          args: { type: "object", description: "Named arguments for the tool" },
+          answer: { type: "string", description: "Final answer (set this to complete the task)" },
+        },
+      }.freeze
 
-    UI_THINKING = "Thinking…"
-    UI_ACTING = "Acting…"
-    UI_DONE = "Done — returning result."
-    UI_ERROR_PREFIX = "Error — "
+      def execute_react(goal, tier:)
+        start_time = MASTER::Utils.monotonic_now
+        plan       = Plan.new
 
-    Step = Data.define(:thought, :action_name, :action_input, :final, :raw)
+        # Gist #8: Understand-before-act (Gemini CLI 4-phase model).
+        # Scan files mentioned in goal text before entering the planning loop.
+        understand_context(goal)
 
-    def initialize(llm:, tool_registry:, logger: nil)
-      @llm = llm
-      @tool_registry = tool_registry
-      @logger = logger
-    end
+        while @step < @max_steps
+          begin
+            check_timeout!(start_time)
+          rescue Result::Error => e
+            return Result.err(e.message)
+          end
 
-    def execute_react(observation:, args: {}, max_steps: DEFAULT_MAX_STEPS)
-      enforce_present!(observation, "observation")
-      enforce_present!(max_steps, "max_steps")
+          @step += 1
 
-      initial_context = build_context(observation:, args:)
-      return { final: "", steps: [], ui: UI_DONE } if initial_context.empty?
+          msgs = build_context_messages(goal)
 
-      transcript = +""
-      steps = []
-      remaining_steps = max_steps.to_i
+          # Structured call: LLM returns typed JSON instead of free-form text.
+          # Eliminates parsing failures from formatting variations (gist item #1).
+          result = LLM.ask_json(
+            msgs.last[:content],
+            schema: STEP_SCHEMA,
+            messages: [msgs.first],
+            tier: tier,
+          )
 
-      while remaining_steps.positive?
-        remaining_steps -= 1
+          return Result.err("LLM error at step #{@step}: #{result.error}") unless result.ok?
 
-        prompt = build_prompt(context: initial_context, transcript:)
-        model_output = safe_llm_call(prompt)
+          parsed = parse_step(result.value[:content])
+          record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
 
-        step = parse_step(model_output)
-        steps << step
+          # Update plan: add thought as a step and mark it in_progress
+          plan.add(parsed[:thought][0..80]) if plan.size < @step
+          plan.start(@step - 1)
+          UI.dim("  #{@step}: #{parsed[:thought][0..80]}")
+          Output.progress(plan.summary, source: "plan") if defined?(Output) && @step > 1
 
-        return build_final_result(step.final, steps) if step.final
+          # Completion: answer field is set
+          if parsed[:answer]
+            plan.complete(@step - 1)
+            return Result.ok(
+              answer: parsed[:answer],
+              steps: @step,
+              pattern: :react,
+              history: @history,
+              plan: plan.to_dmesg,
+            )
+          end
 
-        tool_name = step.action_name.to_s
-        tool_input = step.action_input.to_s
-        tool_output = run_tool(tool_name, tool_input)
+          tool_name = parsed[:tool]
+          unless tool_name
+            # No tool and no answer — treat thought as final response
+            return Result.ok(
+              answer: parsed[:thought],
+              steps: @step,
+              pattern: :react,
+              history: @history,
+            )
+          end
 
-        transcript << format_transcript(step, tool_output)
-      end
+          UI.dim("  > #{tool_name}(#{parsed[:args].to_json[0..60]})")
 
-      build_final_result("Stopped — maximum steps reached.", steps)
-    end
+          # Gist #12: Human-readable preamble before each tool call (Codex CLI "Responsiveness")
+          preamble = case tool_name.to_s
+                     when "file_read"      then "Reading #{parsed[:args][:path] || '...'}"
+                     when "file_write"     then "Writing #{parsed[:args][:path] || '...'}"
+                     when "analyze_code"   then "Analysing #{parsed[:args][:path] || 'code'}"
+                     when "fix_code"       then "Applying fixes to #{parsed[:args][:path] || '...'}"
+                     when "shell_command"  then "Running: #{(parsed[:args][:command] || '').to_s[0..60]}"
+                     when "web_search"     then "Searching: #{(parsed[:args][:query] || '').to_s[0..60]}"
+                     when "browse_page"    then "Browsing #{parsed[:args][:url] || '...'}"
+                     when "council_review" then "Asking council..."
+                     when "memory_search"  then "Searching memory: #{(parsed[:args][:query] || '').to_s[0..50]}"
+                     end
+          UI.dim("  … #{preamble}") if preamble
 
-    def understand_context(observation:, args: {})
-      enforce_present!(observation, "observation")
+          # Dispatch typed tool call (args is already a Hash from JSON parse)
+          raw_observation = dispatch_typed(tool_name, parsed[:args] || {})
 
-      observation_text = coerce_text(observation)
-      user_input = extract_user_input(args)
+          # Injection defense: halt loop on detected injection (gist item #3).
+          # Sanitize-and-continue is insufficient — abort with error instead.
+          sanitizer = if defined?(Security::InjectionGuard)
+                        Security::InjectionGuard
+                      else
+                        (defined?(Security::Sanitizer) ? Security::Sanitizer : nil)
+                      end
+          if sanitizer && !sanitizer.safe?(raw_observation)
+            return Result.err(
+              "Injection attempt detected in tool response from '#{tool_name}'. Aborting.",
+              category: :validation,
+            )
+          end
 
-      context_parts = []
-      context_parts << "Observation: #{truncate(observation_text, MAX_INPUT_CHARS)}" unless observation_text.empty?
-      context_parts << "Input: #{truncate(user_input, MAX_INPUT_CHARS)}" unless user_input.empty?
+          observation = raw_observation.to_s
+          @history.last[:observation] = observation
 
-      context_parts.join("\n")
-    end
-
-    def parse_step(model_output)
-      text = coerce_text(model_output)
-      return Step.new(thought: nil, action_name: nil, action_input: nil, final: "", raw: text) if text.empty?
-
-      thought = extract_labeled_value(text, "Thought")
-      final = extract_labeled_value(text, "Final")
-
-      action_name = extract_labeled_value(text, "Action")
-      action_input = extract_labeled_value(text, "Action Input")
-
-      Step.new(
-        thought: presence(thought),
-        action_name: presence(action_name),
-        action_input: presence(action_input),
-        final: presence(final),
-        raw: text
-      )
-    end
-
-    private
-
-    attr_reader :llm, :tool_registry, :logger
-
-    def build_context(observation:, args:)
-      understand_context(observation:, args:)
-    end
-
-    def build_prompt(context:, transcript:)
-      prompt_parts = []
-      prompt_parts << context
-      prompt_parts << "\n---\n"
-      prompt_parts << transcript unless transcript.empty?
-      prompt_parts << "\nRespond with labeled fields: Thought, Action, Action Input, Observation, Final.\n"
-      prompt_parts.join
-    end
-
-    def safe_llm_call(prompt)
-      llm.call(prompt)
-    rescue StandardError => e
-      log_error("#{UI_ERROR_PREFIX}#{e.class}: #{e.message}")
-      ""
-    end
-
-    def run_tool(tool_name, tool_input)
-      return "Observation: No action provided." if tool_name.empty?
-
-      tool = tool_registry.fetch(tool_name) do
-        return "Observation: Unknown action “#{tool_name}”."
-      end
-
-      call_tool(tool, tool_input)
-    end
-
-    def call_tool(tool, tool_input)
-      normalized_input = truncate(tool_input, ACTION_INPUT_PREVIEW_CHARS)
-
-      result =
-        begin
-          tool.call(normalized_input)
-        rescue StandardError => e
-          "#{UI_ERROR_PREFIX}#{e.class}: #{e.message}"
+          UI.dim("  = #{observation[0..100]}")
         end
 
-      "Observation: #{coerce_text(result)}"
-    end
+        Result.err("Max steps (#{@max_steps}) reached without completion")
+      end
 
-    def format_transcript(step, tool_observation)
-      thought_line = step.thought ? "Thought: #{step.thought}\n" : ""
-      action_line = step.action_name ? "Action: #{step.action_name}\n" : ""
-      input_line = step.action_input ? "Action Input: #{truncate(step.action_input, SUMMARY_SLICE_CHARS)}\n" : ""
-      "#{thought_line}#{action_line}#{input_line}#{tool_observation}\n"
-    end
+      private
 
-    def build_final_result(final_text, steps)
-      { final: coerce_text(final_text), steps:, ui: UI_DONE }
-    end
+      # Gist #8: Understand phase — scan files mentioned in the goal before planning.
+      # Reads file content and adds it to history context so the first plan step
+      # is grounded in actual code rather than hallucinated structure.
+      def understand_context(goal)
+        # Extract file-like tokens from goal text (e.g. lib/foo.rb, executor.rb)
+        candidates = goal.scan(/[\w\/.]+\.rb/).uniq.first(4)
+        return if candidates.empty?
 
-    def extract_user_input(args)
-      return "" unless args.is_a?(Hash)
+        files_scanned = []
+        candidates.each do |token|
+          paths = [
+            token,
+            File.join(MASTER.root, token),
+            File.join(MASTER.root, "lib", token),
+          ]
+          found = paths.find { |p| File.exist?(p) }
+          next unless found
 
-      args.fetch(:input, nil) ||
-        args.fetch("input", nil) ||
-        args.fetch(:query, nil) ||
-        args.fetch("query", nil) ||
-        first_hash_value(args)
-    end
+          content = File.read(found)[0..800]
+          record_history({
+            step: 0,
+            thought: "understand: read #{token}",
+            action: "file_read #{token}",
+            observation: content,
+          })
+          files_scanned << token
+        end
 
-    def first_hash_value(hash)
-      pair = hash.each_pair.first
-      pair ? coerce_text(pair.last) : ""
-    end
+        return if files_scanned.empty?
 
-    def extract_labeled_value(text, label)
-      pattern = /^#{Regexp.escape(label)}:\s*(.+?)\s*(?=^\w[\w\s]*:\s|$\z)/m
-      match = text.match(pattern)
-      match ? match[1].to_s.strip : ""
-    end
+        Output.progress("Scanned #{files_scanned.size} file(s): #{files_scanned.join(', ')}", source: "understand") if defined?(Output)
+      end
 
-    def coerce_text(value)
-      value.to_s
-    end
+      # Parse the JSON step response into a normalised hash.
+      # Handles both Hash (already parsed by ask_json) and String fallback.
+      def parse_step(payload)
+        data = case payload
+               when Hash   then payload
+               when String then begin
+                 JSON.parse(payload, symbolize_names: true)
+               rescue StandardError
+                 {}
+               end
+               else {}
+               end
 
-    def truncate(text, max_len)
-      s = coerce_text(text)
-      return "" if s.empty?
-      return s if s.length <= max_len
+        thought = data[:thought].to_s.strip.then { |t| t.empty? ? "Continuing" : t }
+        tool    = data[:tool].to_s.strip
+        tool    = nil if tool.empty? || tool == "none"
+        args    = data[:args].is_a?(Hash) ? data[:args] : {}
+        answer  = data[:answer].to_s.strip
+        answer  = nil if answer.empty?
 
-      "#{s[0, max_len]}…"
-    end
+        # Legacy: if no tool/answer but action key present (transitional fallback)
+        action = if tool
+                   "#{tool} #{args.to_json}"
+                 else
+                   (answer ? "ANSWER: #{answer}" : thought)
+                 end
 
-    def presence(value)
-      s = coerce_text(value).strip
-      s.empty? ? nil : s
-    end
+        { thought: thought, tool: tool, args: args, answer: answer, action: action }
+      end
 
-    def enforce_present!(value, name)
-      return unless value.nil?
-
-      raise ArgumentError, "#{name} must be provided"
-    end
-
-    def log_error(message)
-      return unless logger
-
-      logger.error(message)
-    end
-
-    # Optional ActiveRecord helper: prevents N+1 where supported.
-    def includes_if_supported(relation, *associations)
-      return relation unless relation.respond_to?(:includes)
-
-      relation.includes(*associations)
+      # Dispatch a tool by name with a Hash of typed arguments.
+      # Delegates to ToolDispatch which handles sanitization and safety checks.
+      def dispatch_typed(tool_name, args)
+        case tool_name.to_s
+        when "ask_llm"        then ask_llm(args[:prompt] || args.values.first.to_s)
+        when "web_search"     then web_search(args[:query] || args.values.first.to_s)
+        when "browse_page"    then browse_page(args[:url] || args.values.first.to_s)
+        when "file_read"      then file_read(args[:path] || args.values.first.to_s)
+        when "file_write"     then file_write(args[:path].to_s, args[:content].to_s)
+        when "analyze_code"   then analyze_code(args[:path] || args.values.first.to_s)
+        when "fix_code"       then fix_code(args[:path] || args.values.first.to_s)
+        when "shell_command"  then shell_command(args[:command] || args.values.first.to_s)
+        when "code_execution" then code_execution(args[:code] || args.values.first.to_s)
+        when "council_review" then council_review(args[:text] || args.values.first.to_s)
+        when "memory_search"  then memory_search(args[:query] || args.values.first.to_s)
+        when "self_test"      then self_test
+        else "Unknown tool: #{tool_name}. Available: #{TOOLS.keys.join(', ')}"
+        end
+      rescue StandardError => e
+        "Tool error (#{tool_name}): #{e.message}"
+      end
     end
   end
 end

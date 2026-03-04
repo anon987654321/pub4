@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-# Output -- Channel-aware message emitter (gist item #6: Codex CLI channels pattern).
+# Output — Channel-aware message emitter (gist item #6: Codex CLI channels pattern).
 #
 # Channels:
-#   :internal  -- developer debug, hidden unless MASTER_TRACE >= 3
-#   :progress  -- step-by-step progress, shown when MASTER_TRACE >= 1
-#   :user      -- final output shown to the user always
-#   :error     -- errors to stderr always
+#   :internal  — developer debug, hidden unless MASTER_TRACE >= 3
+#   :progress  — step-by-step progress, shown when MASTER_TRACE >= 1
+#   :user      — final output shown to the user always
+#   :error     — errors to stderr always
 #
 # Usage:
 #   Output.emit("Reading foo.rb", channel: :progress, source: "executor")

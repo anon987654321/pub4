@@ -31,8 +31,8 @@ module MASTER
         @backups[path] = backup_path
 
         Result.ok(staged_path: staged_path, backup: backup_path)
-      rescue StandardError => err
-        Result.err("Failed to stage file: #{err.message}")
+      rescue StandardError => e
+        Result.err("Failed to stage file: #{e.message}")
       end
     end
 
@@ -56,8 +56,8 @@ module MASTER
         else
           Result.err("Validation failed: #{stderr}")
         end
-      rescue StandardError => err
-        Result.err("Validation error: #{err.message}")
+      rescue StandardError => e
+        Result.err("Validation error: #{e.message}")
       end
     end
 
@@ -78,14 +78,14 @@ module MASTER
         File.rename(temp_path, original_path)
 
         Result.ok(promoted: original_path)
-      rescue StandardError => err
+      rescue StandardError => e
         # Clean up temp file if it exists
         begin
           File.unlink(temp_path) if temp_path && File.exist?(temp_path)
         rescue StandardError
           # Ignore cleanup errors
         end
-        Result.err("Failed to promote: #{err.message}")
+        Result.err("Failed to promote: #{e.message}")
       end
     end
 
@@ -97,8 +97,8 @@ module MASTER
       begin
         FileUtils.cp(backup_path, original_path)
         Result.ok(restored: original_path)
-      rescue StandardError => err
-        Result.err("Failed to rollback: #{err.message}")
+      rescue StandardError => e
+        Result.err("Failed to rollback: #{e.message}")
       end
     end
 
@@ -155,9 +155,9 @@ module MASTER
         end
 
         Result.ok(modified: path)
-      rescue StandardError => err
+      rescue StandardError => e
         rollback(path)
-        Result.err("Staged modification failed: #{err.message}")
+        Result.err("Staged modification failed: #{e.message}")
       ensure
         # Cleanup staging file
         FileUtils.rm_f(staged_path) if staged_path && File.exist?(staged_path)

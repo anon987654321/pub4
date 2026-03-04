@@ -1,92 +1,110 @@
 # frozen_string_literal: true
 
-require "json"
+require "yaml"
+require_relative "friction_recorder"
 
-module Introspection
-  class SessionRetrospective
-    RETROSPECTIVE_FILE_PREFIX = "session_retrospective_"
-    RETROSPECTIVE_FILE_SUFFIX = ".json"
+module MASTER
+  module Friction
+    # SessionRetrospective — end-of-session synthesis of friction events.
+    # Produces a structured report: what fired, why it matters, what to do.
+    # Optionally enriches via LLM for deeper pattern analysis.
+    #
+    # Called automatically at REPL exit (lib/boot.rb) and on demand:
+    #   > introspect
+    module SessionRetrospective
+      extend self
 
-    def initialize(session:, storage: Paths, logger: Logging)
-      @session = session
-      @storage = storage
-      @logger = logger
-    end
+      def run(use_llm: false)
+        events   = FrictionRecorder.events
+        patterns = load_patterns
+        grouped  = events.group_by { |e| e[:id] }
 
-    def run
-      session_id = @session&.id
-      return nil if session_id.nil?
+        return { status: :clean, items: [] } if grouped.empty?
 
-      cached = load_retrospective(session_id)
-      return cached unless cached.nil?
+        items = grouped.map do |pattern_id, occurrences|
+          pattern = patterns[pattern_id.to_s] || {}
+          {
+            id: pattern_id,
+            count: occurrences.size,
+            description: pattern["description"] || pattern_id.to_s,
+            severity: pattern["severity"] || "unknown",
+            remedy: pattern["remedy"] || "No remedy defined.",
+            wishlist: pattern["wishlist_item"],
+            examples: occurrences.first(3).map { |e| e[:context] },
+          }
+        end
+        items = items.sort_by { |i| severity_rank(i[:severity]) }
 
-      generated = build_retrospective(session_id)
-      persist_retrospective(session_id, generated)
-      generated
-    end
+        report = { status: :friction_found, items: items }
+        report[:llm_analysis] = llm_enrich(items) if use_llm && defined?(LLM)
+        report
+      end
 
-    def load_retrospective(session_id)
-      json_text = read_retrospective_file(session_id)
-      return nil if json_text.nil? || json_text.strip.empty?
+      # Format the report as dmesg-style output for the REPL.
+      def format(report)
+        return "retrospect: clean session — no friction recorded" if report[:status] == :clean
 
-      parse_retrospective_json(session_id, json_text)
-    end
+        lines = ["retrospect: #{report[:items].size} friction pattern(s) this session"]
+        report[:items].each do |item|
+          lines << "  #{item[:severity].upcase} [#{item[:count]}x] #{item[:description]}"
+          lines << "    → #{item[:remedy]}"
+        end
+        lines << report[:llm_analysis] if report[:llm_analysis]
+        lines.join("\n")
+      end
 
-    def persist_retrospective(session_id, retrospective_hash)
-      file_path = retrospective_file_path(session_id)
-      File.write(file_path, JSON.pretty_generate(retrospective_hash))
-      true
-    rescue StandardError => e
-      @logger.warn("Failed to persist session retrospective for session_id=#{session_id} path=#{file_path}: #{e.class}: #{e.message}")
-      nil
-    end
+      # Detect config drift: YAML keys in data/ with no Ruby reader.
+      # Part of wishlist item 1 (split-brain config).
+      def check_config_drift
+        data_dir  = File.join(MASTER.root, "data")
+        lib_dir   = File.join(MASTER.root, "lib")
+        all_rb    = Dir.glob(File.join(lib_dir, "**", "*.rb")).map { |f| File.read(f) }.join("\n")
+        orphans   = []
 
-    private
+        Dir.glob(File.join(data_dir, "*.yml")).each do |yml_path|
+          keys = top_level_keys(yml_path)
+          keys.each do |key|
+            orphans << { file: File.basename(yml_path), key: key } unless all_rb.include?(key)
+          end
+        end
 
-    def retrospective_file_path(session_id)
-      @storage.data_file("#{RETROSPECTIVE_FILE_PREFIX}#{session_id}#{RETROSPECTIVE_FILE_SUFFIX}")
-    end
+        orphans
+      end
 
-    def read_retrospective_file(session_id)
-      file_path = retrospective_file_path(session_id)
-      return nil unless File.exist?(file_path)
+      # Run config drift check and record friction if orphans found.
+      def audit_config_drift
+        orphans = check_config_drift
+        FrictionRecorder.record(:split_brain_drift, orphans: orphans.first(5)) if orphans.any?
+        orphans
+      end
 
-      File.read(file_path)
-    rescue StandardError => e
-      @logger.warn("Failed to read session retrospective for session_id=#{session_id} path=#{file_path}: #{e.class}: #{e.message}")
-      nil
-    end
+      private
 
-    def parse_retrospective_json(session_id, json_text)
-      JSON.parse(json_text)
-    rescue StandardError => e
-      @logger.warn("Failed to parse session retrospective JSON for session_id=#{session_id}: #{e.class}: #{e.message}")
-      nil
-    end
+      def severity_rank(sev)
+        { "critical" => 0, "high" => 1, "medium" => 2, "low" => 3 }[sev] || 4
+      end
 
-    def build_retrospective(session_id)
-      {
-        "session_id" => session_id,
-        "generated_at" => Time.now.utc.iso8601,
-        "events_count" => safe_events_count,
-        "notes" => safe_session_notes
-      }
-    end
+      def load_patterns
+        path = File.join(MASTER.root, "data", "friction_patterns.yml")
+        YAML.safe_load_file(path, permitted_classes: [Symbol])&.fetch("patterns", {}) || {}
+      rescue StandardError
+        {}
+      end
 
-    def safe_events_count
-      @session.respond_to?(:events) ? Array(@session.events).size : 0
-    rescue StandardError => e
-      @logger.warn("Failed to compute events_count for session_id=#{@session&.id}: #{e.class}: #{e.message}")
-      0
-    end
+      def top_level_keys(yml_path)
+        YAML.safe_load_file(yml_path, permitted_classes: [Symbol])&.keys&.map(&:to_s) || []
+      rescue StandardError
+        []
+      end
 
-    def safe_session_notes
-      return @session.notes if @session.respond_to?(:notes)
-
-      nil
-    rescue StandardError => e
-      @logger.warn("Failed to read session notes for session_id=#{@session&.id}: #{e.class}: #{e.message}")
-      nil
+      def llm_enrich(items)
+        summaries = items.map { |i| "#{i[:severity]}: #{i[:description]} (#{i[:count]}x)" }.join("; ")
+        prompt = "Synthesise these session friction events into 2-3 actionable improvements. Be brief: #{summaries}"
+        result = LLM.ask(prompt, tier: :fast)
+        result.ok? ? result.value[:content] : nil
+      rescue StandardError
+        nil
+      end
     end
   end
 end

@@ -1,95 +1,102 @@
 # frozen_string_literal: true
 
-module Analysis
-  module Introspection
-    class SelfCritique
-      DEFAULT_LIMIT = 50
-      SCORE_THRESHOLD = 0.75
+module MASTER
+  module Analysis
+    class Introspection
+      class << self
+        CONFIDENCE_THRESHOLD = 0.6
+        MAX_RETRIES = 3
 
-      UI_TITLE = "Self‑Critique"
-      UI_EMPTY_STATE = "Nothing to review… yet."
-      UI_ERROR = "We couldn’t load your self‑critique — please try again."
+        # LLM evaluates its own work with confidence scoring
+        # @param task [String] The task description
+        # @param response [String] The response to critique
+        # @param llm [Object] LLM instance
+        # @param tier [Symbol] Tier to use (:cheap, :fast, :smart, :genius)
+        # @return [Hash] Critique with scores and suggestions
+        def critique_response(task:, response:, llm:, tier: :cheap)
+          prompt = <<~PROMPT
+            You are evaluating your own work. Be brutally honest.
 
-      def initialize(scope: nil, limit: DEFAULT_LIMIT)
-        @scope = scope
-        @limit = limit
-      end
+            Task: #{task}
 
-      def call(user:)
-        return empty_result if user.nil?
+            Your response: #{response[0..2000]}
 
-        load_entries(user)
-          .then { |entries| summarize(entries) }
-          .then { |summary| format_result(summary) }
-      rescue ActiveRecord::StatementInvalid => e
-        error_result(e)
-      end
+            Rate this response on:
+            1. Correctness (0-1): Does it solve the task?
+            2. Completeness (0-1): Does it address all aspects?
+            3. Clarity (0-1): Is it clear and well-structured?
 
-      def eligible?(entry)
-        return false if entry.nil?
+            Return ONLY valid JSON:
+            {
+              "correctness": 0.0-1.0,
+              "completeness": 0.0-1.0,
+              "clarity": 0.0-1.0,
+              "overall_confidence": 0.0-1.0,
+              "issues": ["issue1", "issue2"],
+              "suggestions": ["suggestion1", "suggestion2"]
+            }
+          PROMPT
 
-        score = entry.score.to_f
-        score >= SCORE_THRESHOLD && entry.active?
-      end
+          result = llm.ask(prompt, tier: tier)
+          return default_critique unless result.ok?
 
-      def title
-        UI_TITLE
-      end
-
-      private
-
-      attr_reader :scope, :limit
-
-      def load_entries(user)
-        base = scope || user.self_critique_entries
-
-        base
-          .includes(:analysis_result) # prevent N+1
-          .order(created_at: :desc)
-          .limit(limit)
-          .to_a
-      end
-
-      def summarize(entries)
-        eligible = entries.select { |e| eligible?(e) }
-
-        {
-          total: entries.size,
-          eligible: eligible.size,
-          recent: entries.first
-        }
-      end
-
-      def format_result(summary)
-        if summary[:total].zero?
-          return {
-            title: title,
-            message: UI_EMPTY_STATE,
-            summary: summary
-          }
+          parse_critique(result.value)
         end
 
-        {
-          title: title,
-          message: "Review ready — you have #{summary[:eligible]} eligible item(s)…",
-          summary: summary
-        }
-      end
+        # Check if response should be retried based on confidence
+        # @param critique [Hash] Critique hash
+        # @return [Boolean] True if should retry
+        def should_retry?(critique)
+          return false unless critique
 
-      def empty_result
-        {
-          title: title,
-          message: UI_EMPTY_STATE,
-          summary: { total: 0, eligible: 0, recent: nil }
-        }
-      end
+          critique[:overall_confidence] < CONFIDENCE_THRESHOLD
+        end
 
-      def error_result(_error)
-        {
-          title: title,
-          message: UI_ERROR,
-          summary: { total: 0, eligible: 0, recent: nil }
-        }
+        # Extract strength score from critique
+        # @param critique [Hash] Critique hash
+        # @return [Float] Weighted strength score 0.0-1.0
+        def extract_strength(critique)
+          return 0.5 unless critique
+
+          weights = { correctness: 0.4, completeness: 0.3, clarity: 0.3 }
+
+          weighted_sum = weights.sum do |key, weight|
+            (critique[key] || 0.5) * weight
+          end
+
+          weighted_sum.clamp(0.0, 1.0)
+        end
+
+        private
+
+        def parse_critique(text)
+          json_match = text.match(/\{[^{}]*\}/m)
+          return default_critique unless json_match
+
+          parsed = JSON.parse(json_match[0], symbolize_names: true)
+
+          {
+            correctness: parsed[:correctness]&.to_f || 0.5,
+            completeness: parsed[:completeness]&.to_f || 0.5,
+            clarity: parsed[:clarity]&.to_f || 0.5,
+            overall_confidence: parsed[:overall_confidence]&.to_f || 0.5,
+            issues: Array(parsed[:issues]),
+            suggestions: Array(parsed[:suggestions]),
+          }
+        rescue JSON::ParserError
+          default_critique
+        end
+
+        def default_critique
+          {
+            correctness: 0.5,
+            completeness: 0.5,
+            clarity: 0.5,
+            overall_confidence: 0.5,
+            issues: ["Unable to parse self-critique"],
+            suggestions: [],
+          }
+        end
       end
     end
   end

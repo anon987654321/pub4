@@ -1,104 +1,72 @@
 # frozen_string_literal: true
 
-require "open3"
+module MASTER
+  class AgentFirewall
+    Rule = Struct.new(:action, :direction, :pattern, :quick, :tag, keyword_init: true)
 
-module Agent
-  class Firewall
-    PROTOCOL_NORMALIZATION = {
-      "tcp" => "tcp",
-      "udp" => "udp",
-      "icmp" => "icmp"
-    }.freeze
+    DEFAULT_RULES = [
+      # Block prompt injections in both directions
+      Rule.new(action: :block, pattern: /ignore (?:all )?(?:previous|above|prior) instructions/i, quick: true),
+      Rule.new(action: :block, pattern: /you are now/i, quick: true),
+      Rule.new(action: :block, pattern: /new system prompt/i, quick: true),
+      Rule.new(action: :block, pattern: /forget (?:everything|all|your)/i, quick: true),
+      Rule.new(action: :block, pattern: /override (?:axiom|principle|rule)/i, quick: true),
+      Rule.new(action: :block, pattern: /disregard (?:axiom|principle|rule|safety)/i, quick: true),
+      # Block privilege escalation (inbound only)
+      Rule.new(action: :pass, direction: :in, pattern: /\bdoas\b/, quick: false, tag: :needs_review),
+      Rule.new(action: :block, direction: :in, pattern: /\bsudo\b/, quick: true),
+      Rule.new(action: :block, direction: :in, pattern: /\bsu\s+-?\s/, quick: true),
+      Rule.new(action: :block, direction: :in, pattern: /\bpfctl\s+-f\b/, quick: true),
+      Rule.new(action: :block, direction: :in, pattern: /\brcctl\s+restart\b/, quick: true),
+      # Block destructive operations (inbound only)
+      Rule.new(action: :block, direction: :in, pattern: %r{\brm\s+-rf?\s+/}, quick: true),
+      Rule.new(action: :block, direction: :in, pattern: %r{>\s*/dev/[sh]da}, quick: true),
+      Rule.new(action: :block, direction: :in, pattern: /DROP\s+TABLE/i, quick: true),
+      Rule.new(action: :block, direction: :in, pattern: /mkfs\./, quick: true),
+      Rule.new(action: :block, direction: :in, pattern: /dd\s+if=/, quick: true),
+      # Pass with tag for review
+      Rule.new(action: :pass, pattern: /escalation:/, quick: false, tag: :needs_review),
+      # Default pass for clean content
+      Rule.new(action: :pass, pattern: /.*/, quick: false),
+    ].freeze
 
-    def initialize(hostname:, logger:, rule_model: FirewallRule)
-      @hostname = hostname
-      @logger = logger
-      @rule_model = rule_model
-    end
+    MAX_OUTPUT_SIZE = 100_000
 
-    def sync!
-      rules = load_rules
-      persist_rules(rules)
-      apply_rules
-    end
+    class << self
+      def evaluate(text, rules: DEFAULT_RULES, direction: :in)
+        if text.length > MAX_OUTPUT_SIZE
+          return { verdict: :block, reason: "Output too large: #{text.length} chars (max #{MAX_OUTPUT_SIZE})" }
+        end
 
-    def load_rules
-      host_id = Host.where(hostname: @hostname).pluck(:id).first
-      return [] unless host_id
+        rules.each do |rule|
+          next if rule.direction && rule.direction != direction
+          next unless text.match?(rule.pattern)
 
-      @rule_model
-        .includes(:host, :service)
-        .where(host_id: host_id, enabled: true)
-        .order(:position)
-        .to_a
-    end
+          if rule.action == :block
+            return { verdict: :block, rule: rule,
+                     reason: "Blocked by rule: #{rule.pattern.source}" }
+          end
+          return { verdict: :pass, tag: rule.tag } if rule.tag
+          return { verdict: :pass } if rule.action == :pass
+        end
 
-    def persist_rules(rules)
-      payload = rules.map { |rule| serialize_rule(rule) }
-      FirewallState.upsert(
-        { hostname: @hostname, rules: payload, updated_at: Time.current },
-        unique_by: :hostname
-      )
-    end
-
-    def apply_rules
-      state = FirewallState.where(hostname: @hostname).pluck(:rules).first
-      return unless state
-
-      cmd = build_apply_command(state)
-      run_command(cmd)
-    end
-
-    private
-
-    def serialize_rule(rule)
-      protocol = normalize_protocol(rule.protocol)
-
-      service = rule.service
-      service_name = service&.name
-      port = service&.port
-
-      {
-        id: rule.id,
-        action: rule.action,
-        direction: rule.direction,
-        protocol: protocol,
-        port: port,
-        service: service_name,
-        source: rule.source,
-        destination: rule.destination,
-        position: rule.position
-      }
-    end
-
-    def normalize_protocol(value)
-      key = value.to_s.strip.downcase
-      PROTOCOL_NORMALIZATION[key] || key
-    end
-
-    def build_apply_command(state)
-      json = state.to_json
-      [
-        "/usr/local/bin/apply-firewall",
-        "--hostname", @hostname,
-        "--rules", json
-      ]
-    end
-
-    def run_command(cmd)
-      stdout, stderr, status = Open3.capture3(*cmd)
-
-      unless status.success?
-        @logger.error(
-          "Firewall apply failed: hostname=#{@hostname} status=#{status.exitstatus} stderr=#{stderr}"
-        )
-        raise "Firewall apply failed"
+        { verdict: :block, reason: "Default deny -- no rule matched" }
       end
 
-      @logger.info("Firewall applied: hostname=#{@hostname} stdout=#{stdout}")
-    rescue Errno::ENOENT => e
-      @logger.error("Firewall apply executable missing: #{e.message}")
-      raise
+      def sanitize(agent_result, direction: :out)
+        return Result.err("Agent returned error: #{agent_result.error}") if agent_result.err?
+
+        output = agent_result.value
+        text = output[:response] || output[:text] || output[:rendered] || ""
+
+        verdict = evaluate(text, direction: direction)
+
+        return Result.err("Agent output blocked: #{verdict[:reason]}") if verdict[:verdict] == :block
+
+        clean_text = text.gsub(/```system.*?```/m, "[REDACTED SYSTEM BLOCK]")
+
+        Result.ok(output.merge(text: clean_text, sanitized: true, firewall_tag: verdict[:tag]))
+      end
     end
   end
 end

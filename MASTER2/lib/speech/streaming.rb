@@ -6,28 +6,29 @@ module MASTER
     module Streaming
       module_function
 
-      # Stream with real-time FFmpeg effects (requires edge-tts CLI + ffmpeg + ffplay)
-      def stream(text, effect: :demon, voice: :osman, rate: "-35%", pitch: "-150Hz")
-        cmd = Utils.find_edge_tts
-        return Result.err("edge-tts not found. Install: pipx install edge-tts") unless cmd
+      # Stream with real-time FFmpeg effects (requires edge-tts + ffmpeg)
+      def stream(text, effect: :dark, voice: :guy, rate: "-25%", pitch: "-25Hz")
+        python = Utils.find_python
+        return Result.err("Python not found.") unless python
+        return Result.err("edge-tts not installed.") unless Utils.edge_installed?
 
-        voice_id  = EDGE_VOICES[voice.to_sym] || EDGE_VOICES[:osman]
+        voice_id = EDGE_VOICES[voice.to_sym] || EDGE_VOICES[:guy]
         fx_filter = STREAM_EFFECTS[effect.to_sym] || STREAM_EFFECTS[:dark]
 
         ffmpeg = ENV["FFMPEG_PATH"] || "ffmpeg"
         ffplay = ENV["FFPLAY_PATH"] || "ffplay"
 
-        tts_cmd = [cmd,
+        tts_cmd = [python, "-m", "edge_tts",
+                   "--text", text,
                    "--voice", voice_id,
                    "--rate=#{rate}",
                    "--pitch=#{pitch}",
-                   "--text", text,
                    "--write-media", "-"]
 
-        null = File::NULL
+        null = RUBY_PLATFORM =~ /mingw|mswin|cygwin/ ? File::NULL : File::NULL
 
-        tts  = IO.popen(tts_cmd, "rb", err: null)
-        fx   = IO.popen([ffmpeg, "-i", "pipe:0", "-af", fx_filter, "-f", "wav", "pipe:1"], "r+b", err: null)
+        tts = IO.popen(tts_cmd, "rb", err: null)
+        fx = IO.popen([ffmpeg, "-i", "pipe:0", "-af", fx_filter, "-f", "wav", "pipe:1"], "r+b", err: null)
         play = IO.popen([ffplay, "-nodisp", "-autoexit", "-i", "pipe:0"], "wb", err: null)
 
         Thread.new do
@@ -38,16 +39,16 @@ module MASTER
 
         [tts, fx, play].each(&:close)
         Result.ok(text: text, effect: effect)
-      rescue StandardError => err
-        Result.err("Stream failed: #{err.message}")
+      rescue StandardError => e
+        Result.err("Stream failed: #{e.message}")
       end
 
-      # Demon mode (maximum darkness)
+      # Demon mode (maximum darkness effect)
       def demon(text)
-        stream(text, effect: :demon, voice: :osman, rate: "-40%", pitch: "-200Hz")
+        stream(text, effect: :demon, rate: "-35%", pitch: "-35Hz")
       end
 
-      # Continuous chatter mode
+      # Continuous chatter mode (for Windows background talking)
       def chatter(topic: :master, effect: :calm, delay: 2.0)
         topics = {
           master: [

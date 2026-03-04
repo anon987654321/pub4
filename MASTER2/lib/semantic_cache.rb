@@ -28,9 +28,9 @@ module MASTER
         end
 
         Result.err("cache miss.")
-      rescue StandardError => err
-        Logging.warn("SemanticCache lookup failed: #{err.message}") if defined?(Logging)
-        Result.err("cache error: #{err.message}")
+      rescue StandardError => e
+        Logging.warn("SemanticCache lookup failed: #{e.message}") if defined?(Logging)
+        Result.err("cache error: #{e.message}")
       end
 
       # Store a response in cache
@@ -64,9 +64,9 @@ module MASTER
 
         evict_if_needed
         Result.ok(key)
-      rescue StandardError => err
-        Logging.warn("SemanticCache store failed: #{err.message}") if defined?(Logging)
-        Result.err(err.message)
+      rescue StandardError => e
+        Logging.warn("SemanticCache store failed: #{e.message}") if defined?(Logging)
+        Result.err(e.message)
       end
 
       # Cache stats

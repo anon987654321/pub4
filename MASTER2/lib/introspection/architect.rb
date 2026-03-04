@@ -1,153 +1,193 @@
 # frozen_string_literal: true
 
-module Introspection
-  class Architect
-    REPORT_WIDTH = 110
-    DEFAULT_LIMIT = 100
-    SEVERITY_ORDER = %w[error warning info].freeze
-    HEADER_DASH_MIN = 12
+# Architect — Automated fresh-eyes architectural health assessment.
+# Produces the same "step back and look at the whole codebase" analysis
+# that was previously done manually, now runnable anytime via `> architect`.
+#
+# Checks:
+#   1. File counts and LOC per top-level lib/ namespace
+#   2. Namespace duplication (two dirs doing similar things)
+#   3. Thin files (< 20 LOC of actual code — likely should be merged)
+#   4. Data file inventory: orphaned, tiny, or comment-only
+#   5. Accretion index: ratio of lib files to data concepts (signal for over-engineering)
+#   6. Critical path estimation: which files are on the hot path (most required-by others)
 
-    def initialize(scope: PolicyViolation.all)
-      @scope = scope
-    end
+module MASTER
+  module Friction
+    module Architect
+      THIN_FILE_THRESHOLD = 20   # lines of non-blank, non-comment code
+      ACCRETION_WARNING   = 10.0 # lib_files / data_concepts ratio above this is suspicious
 
-    def report(project_id:, limit: DEFAULT_LIMIT)
-      violations = fetch_violations(project_id: project_id, limit: limit)
-      format_report(violations)
-    end
+      def self.run
+        root      = MASTER.root
+        lib_root  = File.join(root, "lib")
+        data_root = File.join(root, "data")
 
-    def format_report(violations)
-      return empty_report if violations.empty?
-
-      [
-        build_header(violations),
-        build_body(violations),
-        build_footer(violations)
-      ].compact.join("\n")
-    end
-
-    private
-
-    attr_reader :scope
-
-    def fetch_violations(project_id:, limit:)
-      return [] if project_id.nil?
-
-      scope.where(project_id: project_id)
-           .includes(:rule, :source_file, :project)
-           .order(created_at: :desc)
-           .limit(limit)
-           .to_a
-    rescue ActiveRecord::StatementInvalid => e
-      raise e.class, "Unable to load policy violations: #{e.message}", e.backtrace
-    end
-
-    def empty_report
-      "No violations found."
-    end
-
-    def build_header(violations)
-      project_name = violations.first.project&.name || "Unknown Project"
-      violation_count = violations.size
-      "Architecture Report for #{project_name} (#{violation_count} violations)\n"
-    end
-
-    def build_body(violations)
-      grouped_by_severity = violations.group_by { |violation| violation.rule.severity.to_s }
-
-      SEVERITY_ORDER.filter_map do |severity|
-        severity_violations = grouped_by_severity[severity]
-        next if severity_violations.nil? || severity_violations.empty?
-
-        format_severity_section(severity, severity_violations)
-      end.join("\n\n") + "\n"
-    end
-
-    def format_severity_section(severity, severity_violations)
-      lines = []
-      lines << "#{severity.upcase} (#{severity_violations.size})"
-      lines << "-" * [severity.length + 8, HEADER_DASH_MIN].max
-
-      severity_violations.each do |violation|
-        lines.concat(format_violation_lines(violation))
+        {
+          lib:          analyze_lib(lib_root),
+          data:         analyze_data(data_root),
+          duplication:  find_namespace_duplication(lib_root),
+          thin_files:   find_thin_files(lib_root),
+          critical_path: estimate_critical_path(lib_root),
+          accretion:    accretion_index(lib_root, data_root),
+        }
       end
 
-      lines.join("\n")
-    end
+      def self.format_report(report)
+        lines = ["", "─" * 60, "  ARCHITECT: Fresh-Eyes Assessment", "─" * 60, ""]
 
-    def format_violation_lines(violation)
-      rule = violation.rule
-      source_file = violation.source_file
+        # 1. Lib overview
+        lib = report[:lib]
+        lines << "LIB  #{lib[:total_files]} files  #{lib[:total_loc]} LOC  " \
+                 "#{lib[:namespaces].size} top-level namespaces"
+        lines << ""
+        lines << "  Top namespaces by file count:"
+        lib[:namespaces].sort_by { |_, v| -v[:files] }.first(10).each do |ns, data|
+          lines << "    %-22s  %3d files  %5d LOC" % [ns, data[:files], data[:loc]]
+        end
+        lines << ""
 
-      axiom_list = rule.respond_to?(:axioms) ? Array(rule.axioms) : []
-      violation_count = violation.respond_to?(:occurrences) ? violation.occurrences.to_i : 1
-      cost_ratio = compute_cost_ratio(violation)
+        # 2. Data overview
+        data = report[:data]
+        lines << "DATA  #{data[:total_files]} files  #{data[:total_loc]} LOC"
+        dead = data[:dead_files]
+        if dead.any?
+          lines << "  Dead/comment-only data files (safe to delete):"
+          dead.each { |f| lines << "    #{File.basename(f)}" }
+        end
+        lines << ""
 
-      [
-        wrap_line(
-          "#{rule.code}: #{rule.title} (count=#{violation_count}, cost_ratio=#{cost_ratio})"
-        ),
-        wrap_line(file_location_line(violation, source_file)),
-        wrap_line("Message: #{violation.message}"),
-        axiom_list.empty? ? nil : wrap_line("Axioms: #{axiom_list.join(', ')}"),
-        suggestion_line(violation),
-        ""
-      ].compact
-    end
+        # 3. Namespace duplication
+        dups = report[:duplication]
+        if dups.any?
+          lines << "DUPLICATION  #{dups.size} suspicious namespace pair(s):"
+          dups.each { |d| lines << "    #{d}" }
+        else
+          lines << "DUPLICATION  none detected"
+        end
+        lines << ""
 
-    def file_location_line(violation, source_file)
-      path = source_file&.path || violation.file_path || "unknown"
-      line = violation.line_number || "?"
-      "File: #{path}:#{line}"
-    end
+        # 4. Thin files
+        thin = report[:thin_files]
+        if thin.any?
+          lines << "THIN FILES  #{thin.size} file(s) with < #{THIN_FILE_THRESHOLD} code lines:"
+          thin.first(10).each { |f| lines << "    #{f[:path].sub(MASTER.root + '/', '')}  (#{f[:loc]} LOC)" }
+          lines << "    ... #{thin.size - 10} more" if thin.size > 10
+        else
+          lines << "THIN FILES  none"
+        end
+        lines << ""
 
-    def suggestion_line(violation)
-      return nil unless violation.respond_to?(:suggestion)
+        # 5. Accretion index
+        acc = report[:accretion]
+        flag = acc[:index] > ACCRETION_WARNING ? "  ⚠ HIGH" : ""
+        lines << "ACCRETION  #{acc[:lib_files]} lib files / #{acc[:data_concepts]} data concepts" \
+                 " = #{format('%.1f', acc[:index])}x#{flag}"
+        lines << ""
 
-      suggestion = violation.suggestion
-      return nil if suggestion.nil? || suggestion.to_s.strip.empty?
+        # 6. Critical path
+        lines << "CRITICAL PATH  (most required-by: likely core files)"
+        report[:critical_path].first(8).each do |f|
+          lines << "    %-40s  required by %d" % [f[:name], f[:required_by]]
+        end
+        lines << ""
+        lines << "─" * 60
+        lines.join("\n")
+      end
 
-      wrap_line("Suggestion: #{suggestion}")
-    end
+      class << self
+        private
 
-    def compute_cost_ratio(violation)
-      return "n/a" unless violation.respond_to?(:cost) && violation.respond_to?(:budget)
+        def analyze_lib(lib_root)
+          all_rb = Dir.glob("#{lib_root}/**/*.rb")
+          namespaces = {}
 
-      budget = violation.budget.to_f
-      return "n/a" unless budget.positive?
+          all_rb.each do |f|
+            rel      = f.sub("#{lib_root}/", "")
+            ns       = rel.split("/").first.sub(/\.rb$/, "")
+            loc      = code_lines(f)
+            namespaces[ns] ||= { files: 0, loc: 0 }
+            namespaces[ns][:files] += 1
+            namespaces[ns][:loc]   += loc
+          end
 
-      (violation.cost.to_f / budget).round(3)
-    end
+          { total_files: all_rb.size, total_loc: namespaces.values.sum { |v| v[:loc] }, namespaces: namespaces }
+        end
 
-    def wrap_line(text, width: REPORT_WIDTH)
-      return "" if text.nil?
+        def analyze_data(data_root)
+          all_yml = Dir.glob("#{data_root}/*.{yml,yaml,json}")
+          dead    = all_yml.select { |f| dead_data_file?(f) }
+          total_loc = all_yml.sum { |f| File.readlines(f).count }
+          { total_files: all_yml.size, total_loc: total_loc, dead_files: dead }
+        end
 
-      string = text.to_s
-      return string if string.length <= width
+        # A data file is "dead" if it has ≤ 3 lines and they're all comments or blank
+        def dead_data_file?(path)
+          lines = File.readlines(path).map(&:strip).reject(&:empty?)
+          lines.size <= 3 && lines.all? { |l| l.start_with?("#") }
+        end
 
-      string.scan(/.{1,#{width}}/).join("\n")
-    end
+        def find_namespace_duplication(lib_root)
+          dirs = Dir.glob("#{lib_root}/*/").map { |d| File.basename(d) }
+          suspicious = []
 
-    def build_footer(violations)
-      total_violations = violations.size
-      grouped_by_rule = violations.group_by(&:rule_id)
+          # Known overlap patterns to flag
+          overlap_groups = [
+            %w[review code_review enforcement],
+            %w[introspection analysis],
+            %w[chamber agent],
+            %w[session workflow],
+            %w[logging logging],
+          ]
 
-      most_frequent_rule = most_frequent_rule_summary(violations, grouped_by_rule)
+          overlap_groups.each do |group|
+            present = group.uniq & dirs
+            suspicious << present.join(" ↔ ") if present.size >= 2
+          end
 
-      footer_parts = []
-      footer_parts << "Total: #{total_violations}"
-      footer_parts << "Distinct rules: #{grouped_by_rule.size}"
-      footer_parts << most_frequent_rule
-      footer_parts.join(" | ")
-    end
+          suspicious.uniq
+        end
 
-    def most_frequent_rule_summary(violations, grouped_by_rule)
-      rule_id, rule_violations = grouped_by_rule.max_by { |_id, list| list.size }
-      return "Most frequent: n/a (0)" if rule_id.nil?
+        def find_thin_files(lib_root)
+          Dir.glob("#{lib_root}/**/*.rb").filter_map do |f|
+            loc = code_lines(f)
+            { path: f, loc: loc } if loc < THIN_FILE_THRESHOLD && loc > 0
+          end.sort_by { |f| f[:loc] }
+        end
 
-      rule = violations.find { |v| v.rule_id == rule_id }&.rule
-      title = rule ? "#{rule.code} #{rule.title}" : "n/a"
-      "Most frequent: #{title} (#{rule_violations.size})"
+        def estimate_critical_path(lib_root)
+          # Count how many other files require each file
+          all_rb  = Dir.glob("#{lib_root}/**/*.rb")
+          counts  = Hash.new(0)
+
+          all_rb.each do |file|
+            File.readlines(file).each do |line|
+              next unless line =~ /require_relative\s+['"](.*)['"]/
+              target = Regexp.last_match(1)
+              counts[target] += 1
+            end
+          end
+
+          counts.map { |name, n| { name: name, required_by: n } }
+                .sort_by { |f| -f[:required_by] }
+        end
+
+        def accretion_index(lib_root, data_root)
+          lib_files     = Dir.glob("#{lib_root}/**/*.rb").size
+          data_concepts = Dir.glob("#{data_root}/*.{yml,yaml,json}").size
+          index = data_concepts.positive? ? lib_files.to_f / data_concepts : lib_files.to_f
+          { lib_files: lib_files, data_concepts: data_concepts, index: index }
+        end
+
+        def code_lines(path)
+          File.readlines(path).count do |l|
+            stripped = l.strip
+            stripped.length > 0 && !stripped.start_with?("#")
+          end
+        rescue Errno::ENOENT
+          0
+        end
+      end
     end
   end
 end

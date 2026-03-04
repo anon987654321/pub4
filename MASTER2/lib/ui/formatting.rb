@@ -30,13 +30,13 @@ module MASTER
     end
 
     def status(prefix, message, success: true)
-      status_icon = success ? icon(:success) : icon(:failure)
-      "#{prefix}: #{message} #{status_icon}"
+      i = success ? icon(:success) : icon(:failure)
+      "#{prefix}: #{message} #{i}"
     end
 
     def progress_line(current, total, message = nil)
       msg = message ? " #{message}" : ""
-      "  #{current}/#{total}#{msg}"
+      "  [#{current}/#{total}]#{msg}"
     end
 
     def color_enabled?
@@ -67,12 +67,12 @@ module MASTER
         .gsub(/(\d+ms)$/) { pastel.bright_black(::Regexp.last_match(1)) }
     end
 
-    # "1 axiom" / "3 axioms" -- never "1 axioms"
+    # "1 axiom" / "3 axioms" — never "1 axioms"
     def pluralize(n, word)
       "#{n} #{n == 1 ? word : "#{word}s"}"
     end
 
-    # "12.3%" -- single decimal, consistent everywhere
+    # "12.3%" — single decimal, consistent everywhere
     def format_percent(n)
       format("%.1f%%", n.to_f)
     end

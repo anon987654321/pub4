@@ -5,93 +5,40 @@ require "fileutils"
 require "open3"
 require "timeout"
 
-require_relative "misc_commands/self_run"
+require_relative "misc_commands/selftest_full"
 require_relative "misc_commands/cinematic_persona"
 
 module MASTER
   module Commands
-    # Miscellaneous commands — flat, direct, no indirection layers.
+    # Miscellaneous commands
     module MiscCommands
-      TEXT_EXTENSIONS = %w[rb py js ts css svg zsh sh bash md yml yaml json toml gemspec txt erb conf ini env].freeze
-      TEXT_BASENAMES  = %w[Gemfile Rakefile Makefile Dockerfile].freeze
-      SKIP_DIRS       = Paths::SKIP_DIRS
-
-      # fix [path] — unified scan+fix+commit pipeline; defaults to project root
-      def fix_code(args)
-        path = args&.strip
-        path = nil if path.nil? || path.empty? || path.start_with?("--")
-        self_run(path || MASTER.root)
-      end
-
-      def git_commit_fixes(root, fixed, cmd)
-        return unless system("git", "-C", root, "rev-parse", "--git-dir",
-                              out: File::NULL, err: File::NULL)
-
-        porcelain, = Open3.capture2("git", "-C", root, "status", "--porcelain")
-        return if porcelain.strip.empty?
-
-        system("git", "-C", root, "add", "-A")
-        msg = "#{cmd}: #{fixed} fixes [#{Time.now.utc.iso8601}]"
-        system("git", "-C", root, "commit", "-m", msg) ? puts("#{cmd}: committed") : puts("#{cmd}: git commit failed")
-      end
-
-      def run_snapshot(args)
-        ts  = Time.now.utc.strftime("%Y%m%dT%H%M%SZ")
-        out = args&.strip&.then { |a| a.empty? ? nil : a } || Paths.var_file("snapshot-#{ts}.md")
-        max = 400
-        puts "  generating snapshot..."
-
-        n_files = n_lines = n_trunc = 0
-        buf = StringIO.new
-        buf.puts "# Project Snapshot - #{Time.now.utc.strftime('%Y-%m-%dT%H:%M:%SZ')}"
-        buf.puts
-        buf.puts "## Tree"
-        buf.puts "```"
-        buf.puts ascii_tree(Dir.pwd)
-        buf.puts "```"
-        buf.puts
-
-        Dir.glob("**/*", base: Dir.pwd).sort.each do |rel|
-          next if File.directory?(File.join(Dir.pwd, rel))
-          next if rel == out
-          parts = rel.split("/")
-          next if parts.any? { |p| SKIP_DIRS.include?(p) }
-          ext  = File.extname(rel).delete_prefix(".")
-          base = File.basename(rel)
-          next unless TEXT_EXTENSIONS.include?(ext) || TEXT_BASENAMES.include?(base)
-
-          lines = File.readlines(File.join(Dir.pwd, rel), encoding: "utf-8:utf-8", chomp: true)
-          n = lines.size
-          next if rel.start_with?("data/") && ext == "yml" && n > 300
-
-          buf.puts "## `#{rel}`"
-          buf.puts "```#{ext}"
-          if n > max
-            buf.puts lines.first(max).join("\n")
-            buf.puts "... #{n - max} lines truncated (#{n} total)"
-            n_trunc += 1
-          else
-            buf.puts lines.join("\n")
-          end
-          buf.puts "```"
-          buf.puts
-          n_files += 1
-          n_lines  += n
-        rescue Errno::ENOENT, Encoding::UndefinedConversionError
-          next
-        end
-
-        est = n_lines * 6 / 5
-        buf.puts "files: #{n_files} / lines: #{n_lines} / truncated: #{n_trunc} / est. tokens: ~#{est}"
-        File.write(out, buf.string)
-        puts "  saved: #{out}  (#{n_files} files, #{n_lines} lines, ~#{est} tokens)"
-      end
-
       def speak(text)
         return puts "  Usage: speak <text>" unless text
 
         result = Speech.speak(text)
         puts "  TTS Error: #{result.error}" if result.err?
+      end
+
+      def fix_code(args)
+        path = args&.strip
+        path = "." if path.nil? || path.empty?
+
+        fixer = AutoFixer.new(mode: :moderate)
+        if File.directory?(path)
+          result = fixer.fix_directory(path)
+          if result.ok?
+            puts "  Fixed #{result.value[:files_fixed]} files, #{result.value[:issues_fixed]} issues"
+          else
+            puts "  Error: #{result.error}"
+          end
+        else
+          result = fixer.fix(path)
+          if result.ok?
+            puts "  Fixed: #{path}"
+          else
+            puts "  Error: #{result.error}"
+          end
+        end
       end
 
       def browse_url(args)
@@ -100,7 +47,12 @@ module MASTER
         url = args.strip
         if defined?(Web)
           result = Web.browse(url)
-          result.ok? ? puts("\n  Content (first 1000 chars):\n#{result.value[:content][0..1000]}\n") : puts("  Error: #{result.error}")
+          if result.ok?
+            content = result.value[:content]
+            puts "\n  Content (first 1000 chars):\n#{content[0..1000]}\n"
+          else
+            puts "  Error: #{result.error}"
+          end
         else
           puts "  Web module not available"
         end
@@ -111,117 +63,176 @@ module MASTER
         return Result.err("Usage: ideate <topic>.") unless topic && !topic.empty?
 
         UI.header("Ideating on: #{topic}")
-        prompt = "Brainstorm 5 creative ideas for: #{topic}\n\nFormat:\n1. Idea name -- brief description\n..."
+        prompt = <<~PROMPT
+          Brainstorm 5 creative ideas for: #{topic}
+
+          Format:
+          1. Idea name -- brief description
+          ...
+        PROMPT
+
         result = LLM.ask(prompt, tier: :fast)
         return result unless result.ok?
 
         puts result.value[:content]
         puts
+
         Result.ok(result.value[:content])
       end
 
       def session_capture
-        defined?(SessionCapture) ? SessionCapture.capture : puts("  SessionCapture not available")
+        # Capture insights from current session
+        if defined?(SessionCapture)
+          SessionCapture.capture
+        else
+          puts "  SessionCapture not available"
+        end
       end
 
       def review_captures
-        return puts "  SessionCapture not available" unless defined?(SessionCapture)
-
-        result = SessionCapture.review
-        return puts "  #{result.error}" unless result.ok?
-
-        captures = result.value[:captures]
-        puts "#{captures.size} session captures:"
-        captures.last(10).each do |capture|
-          puts UI.dim(capture[:timestamp])
-          capture[:answers].each { |cat, ans| puts "  #{UI.bold(cat)}: #{ans}" }
+        # Review all session captures
+        if defined?(SessionCapture)
+          result = SessionCapture.review
+          if result.ok?
+            captures = result.value[:captures]
+            puts "#{captures.size} session captures:"
+            captures.last(10).each do |c|
+              puts UI.dim(c[:timestamp])
+              c[:answers].each do |category, answer|
+                puts "  #{UI.bold(category)}: #{answer}"
+              end
+            end
+          else
+            puts "  #{result.error}"
+          end
+        else
+          puts "  SessionCapture not available"
         end
       end
 
-      def print_health(args = nil)
-        tokens = args.to_s.split
-        deep  = tokens.delete("--deep") || tokens.delete("--verbose")
-        return run_bootstrap if tokens.delete("--setup")
+      def print_health
+        UI.header("Health Check")
+        checks = []
 
-        UI.header(deep ? "Health (deep)" : "Health Check")
-        checks = health_checks
+        # Check API key
+        api_key = ENV.fetch("OPENROUTER_API_KEY", nil)
+        checks << { name: "API Key", ok: !api_key.nil? && !api_key.empty? }
 
-        checks.each do |check|
-          icon = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{icon} #{check[:name]}#{" (#{check[:detail]})" if check[:detail]}"
-          puts UI.dim("    fix: #{check[:fix]}") if deep && !check[:ok] && check[:fix]
+        # Check var directory writable
+        var_ok = begin
+          File.writable?(Paths.var)
+        rescue StandardError
+          false
         end
+        checks << { name: "Var writable", ok: var_ok }
 
-        if deep
-          pc = plugin_manifest_check
-          puts "#{pc[:ok] ? UI.pastel.green('+') : UI.pastel.red('-')} Plugins#{" (#{pc[:detail]})" if pc[:detail]}"
-          tidy = repo_cleanliness
-          puts "#{UI.pastel.cyan('*')} Repo dirtiness #{tidy[:dirty_count]} files (#{tidy[:state]})"
+        # Check DB initialized
+        db_ok = begin
+          DB.axioms.any?
+        rescue StandardError
+          false
+        end
+        checks << { name: "DB seeded", ok: db_ok }
+
+        # Check models available
+        model = LLM.select_model
+        checks << { name: "Models available", ok: !model.nil? }
+
+        # Check style guide catalog
+        guides_ok = File.exist?(File.join(MASTER.root, "data", "style_guides.yml"))
+        checks << { name: "Style guides catalog", ok: guides_ok }
+
+        checks.each do |c|
+          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{c[:name]}"
         end
 
         all_ok = checks.all? { |c| c[:ok] }
-        puts all_ok ? "health: ok" : "health: attention required"
-        Result.ok(ok: all_ok, checks: checks)
+        puts all_ok ? "health: ok" : "health: some checks failed"
       end
 
-      def doctor(args = nil)    = print_health(args)
-      def bootstrap(args = nil) = print_health(args)
+      def bootstrap(_args = nil)
+        UI.header("Bootstrap")
+        checks = startup_checks
+
+        checks.each do |c|
+          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{c[:name]}#{" (#{c[:detail]})" if c[:detail]}"
+        end
+
+        # Platform checks
+        if defined?(PlatformCheck)
+          issues = PlatformCheck.diagnose
+          if issues.empty?
+            summary = PlatformCheck.summary
+            puts "#{UI.pastel.green('+')} platform: #{summary}" if summary
+          else
+            puts "#{UI.pastel.red('-')} platform: #{issues.size} issue(s) found"
+            PlatformCheck.print_diagnostics
+          end
+        end
+
+        missing_gems = begin
+          AutoInstall.missing_gems
+        rescue StandardError
+          []
+        end
+        if missing_gems.any?
+          puts UI.dim("Installing #{missing_gems.size} missing gems into local bundle path...")
+          ok = system("bundle", "install")
+          return Result.err("bundle install failed") unless ok
+        end
+
+        Result.ok(checks: checks, installed: missing_gems.size)
+      end
+
+      def doctor(args = nil)
+        verbose = args.to_s.include?("--verbose")
+        UI.header("Doctor")
+
+        checks = startup_checks
+        checks.each do |c|
+          status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+          puts "#{status} #{c[:name]}#{" (#{c[:detail]})" if c[:detail]}"
+          puts UI.dim("    fix: #{c[:fix]}") if verbose && !c[:ok] && c[:fix]
+        end
+
+        plugin_check = plugin_manifest_check
+        plugin_icon = plugin_check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
+        puts "#{plugin_icon} Plugins#{" (#{plugin_check[:detail]})" if plugin_check[:detail]}"
+        puts UI.dim("    fix: #{plugin_check[:fix]}") if verbose && !plugin_check[:ok] && plugin_check[:fix]
+
+        tidy = repo_cleanliness
+        puts "#{UI.pastel.cyan('*')} Repo dirtiness #{tidy[:dirty_count]} files (#{tidy[:state]})"
+
+        all_ok = (checks + [plugin_check]).all? { |c| c[:ok] }
+        puts all_ok ? "doctor: ok" : "doctor: attention required"
+        Result.ok(ok: all_ok, checks: checks, plugins: plugin_check, cleanliness: tidy)
+      end
 
       def history_dig(args = nil)
         target = args.to_s.strip
         target = "master.yml" if target.empty?
-        return Result.err("history-dig target must be master.yml or master.json") unless %w[master.yml master.json].include?(target)
+        return Result.err("history-dig target must be master.yml or master.json") unless %w[master.yml
+                                                                                            master.json].include?(target)
 
-        paths = historical_paths_for(target)
-        return Result.err(history_dig_missing_message(target)) if paths.empty?
+        commits_out, status = Open3.capture2("git", "rev-list", "--all", "--", target)
+        return Result.err("git history unavailable for #{target}") unless status.success?
 
-        commit = nil
-        found_path = nil
-
-        paths.each do |path|
-          commits_out, status = Open3.capture2("git", "rev-list", "--all", "--", path)
-          next unless status.success?
-
-          sha = commits_out.lines.map(&:strip).find do |candidate|
-            _out, ok = Open3.capture2("git", "cat-file", "-e", "#{candidate}:#{path}")
-            ok.success?
-          end
-          next if sha.nil?
-
-          commit = sha
-          found_path = path
-          break
+        commit = commits_out.lines.map(&:strip).find do |sha|
+          _out, ok = Open3.capture2("git", "cat-file", "-e", "#{sha}:#{target}")
+          ok.success?
         end
+        return Result.err("No historical blob found for #{target}") if commit.nil?
 
-        return Result.err(history_dig_missing_message(target)) if commit.nil? || found_path.nil?
-
-        content, show_status = Open3.capture2("git", "show", "#{commit}:#{found_path}")
+        content, show_status = Open3.capture2("git", "show", "#{commit}:#{target}")
         return Result.err("Failed to extract #{target} from #{commit}") unless show_status.success?
 
         dest = File.join(Paths.var, "#{target}.history.snapshot")
         File.write(dest, content)
         puts "history-dig: #{target} -> #{dest}"
         puts "history-dig: source commit #{commit}"
-        puts "history-dig: source path #{found_path}" unless found_path == target
-        Result.ok(target: target, commit: commit, source_path: found_path, snapshot: dest)
-      end
-
-      def historical_paths_for(target)
-        out, status = Open3.capture2("git", "log", "--all", "--name-only", "--pretty=format:", "--", target, "*/#{target}")
-        return [target] unless status.success?
-
-        candidates = out.lines.map(&:strip).reject(&:empty?).select { |line| line.end_with?(target) }
-        ordered = [target] + candidates
-        ordered.uniq
-      end
-
-      def history_dig_missing_message(target)
-        shallow_out, shallow_status = Open3.capture2("git", "rev-parse", "--is-shallow-repository")
-        return "No historical blob found for #{target}" unless shallow_status.success?
-
-        return "No historical blob found for #{target}" unless shallow_out.strip == "true"
-
-        "No historical blob found for #{target}; repository is shallow, fetch full history and retry"
+        Result.ok(target: target, commit: commit, snapshot: dest)
       end
 
       def codify(args = nil)
@@ -231,7 +242,7 @@ module MASTER
         mode = args.to_s.strip
 
         if ["json", "export-json"].include?(mode)
-          out = File.join(Paths.var, "design.json")
+          out = File.join(Paths.var, "design_codex.json")
           File.write(out, Review::DesignCodex.to_json)
           puts "codify: exported #{out}"
           return Result.ok(path: out, summary: summary)
@@ -248,7 +259,7 @@ module MASTER
       end
 
       def style_guides(args = nil)
-        catalog_path = Paths.data_file("style_guides.yml")
+        catalog_path = File.join(MASTER.root, "data", "style_guides.yml")
         return Result.err("style guide catalog missing: #{catalog_path}") unless File.exist?(catalog_path)
 
         catalog = YAML.safe_load_file(catalog_path, symbolize_names: true) || {}
@@ -258,6 +269,7 @@ module MASTER
           dest = File.join(Paths.var, "style_guides")
           FileUtils.mkdir_p(dest)
           synced = 0
+
           entries.each do |entry|
             repo = entry[:repo].to_s
             next unless repo.start_with?("https://github.com/")
@@ -271,6 +283,7 @@ module MASTER
             end
             synced += 1
           end
+
           puts "style-guides: synced #{synced} repos -> #{dest}"
           return Result.ok(synced: synced, dest: dest)
         end
@@ -278,70 +291,89 @@ module MASTER
         puts "Style Guides:"
         (catalog[:guides] || {}).each do |lang, list|
           puts "  #{lang}:"
-          Array(list).each { |e| puts "    - #{e[:name]}: #{e[:repo]}" }
+          Array(list).each { |entry| puts "    - #{entry[:name]}: #{entry[:repo]}" }
         end
+
         puts "\nAwesome Lists:"
-        Array(catalog[:awesome_lists]).each { |e| puts "  - #{e[:name]}: #{e[:repo]}" }
+        Array(catalog[:awesome_lists]).each do |entry|
+          puts "  - #{entry[:name]}: #{entry[:repo]}"
+        end
+
         Result.ok(total: entries.size)
-      rescue StandardError => err
-        Result.err("style-guides failed: #{err.message}")
+      rescue StandardError => e
+        Result.err("style-guides failed: #{e.message}")
       end
 
-      def start_web_server(args)
-        port = args.to_s.strip.match?(/\A\d+\z/) ? args.strip.to_i : nil
-        server = Server.new(port: port)
-        server.start
-        host = ENV.fetch("MASTER_HOST", "brgen.no")
-        puts "  web: http://#{host}:#{server.port}/?token=#{Server::AUTH_TOKEN}"
-      end
+      private
 
-      def creative_chamber(args)
-        prompt = args.to_s.strip
-        return Result.err("Usage: creative <prompt>") if prompt.empty?
-
-        if defined?(Chamber)
-          result = Chamber.deliberate(prompt)
-          puts result.respond_to?(:ok?) && result.ok? ? (result.value[:summary] || result.value[:response]) : result.respond_to?(:error) ? result.error : result.to_s
-        else
-          result = LLM.ask("Creative exploration: #{prompt}", tier: :strong)
-          puts result.ok? ? result.value[:content] : "Error: #{result.error}"
+      def startup_checks
+        bundle_ok = begin
+          gemfile_lock = File.join(MASTER.root, "Gemfile.lock")
+          gemfile = File.join(MASTER.root, "Gemfile")
+          File.exist?(gemfile) && (!File.exist?(gemfile_lock) || File.read(gemfile_lock).include?("BUNDLED WITH"))
+        rescue StandardError
+          false
         end
-        Result.ok
+
+        [
+          {
+            name: "Constitution parses",
+            ok: File.exist?(File.join(MASTER.root, "data", "constitution.yml")),
+            fix: "Ensure data/constitution.yml exists",
+          },
+          {
+            name: "Bundler metadata",
+            ok: bundle_ok,
+            fix: "Run: bin/master bootstrap",
+          },
+          {
+            name: "Writable var/",
+            ok: File.writable?(Paths.var),
+            fix: "Ensure #{Paths.var} is writable",
+          },
+          {
+            name: "OpenRouter key",
+            ok: ENV.fetch("OPENROUTER_API_KEY", "").strip != "",
+            fix: "Set OPENROUTER_API_KEY for LLM features",
+          },
+        ]
       end
 
-      def harvest_data(args)
-        target = args.to_s.strip
-        return Result.err("Usage: harvest <url|topic>") if target.empty?
-
-        if target.match?(%r{\Ahttps?://}) && defined?(Web)
-          result = Web.browse(target)
-          result.ok? ? puts(result.value[:content].to_s[0, 2000]) : puts("Error: #{result.error}")
-        else
-          result = LLM.ask("Research and summarize: #{target}", tier: :fast)
-          puts result.ok? ? result.value[:content] : "Error: #{result.error}"
+      def plugin_manifest_check
+        unless defined?(Bridges)
+          return { ok: false, detail: "bridges unavailable",
+                   fix: "require bridges before doctor" }
         end
-        Result.ok
+
+        missing = (Bridges.respond_to?(:validate_plugins) ? Bridges.validate_plugins : [])
+        return { ok: true, detail: "all bridge plugins resolved" } if missing.empty?
+
+        { ok: false, detail: "missing: #{missing.join(', ')}", fix: "reinstall dependencies or restore bridge files" }
+      rescue StandardError => e
+        { ok: false, detail: e.message, fix: "check bridge plugin wiring" }
       end
 
-      def manage_queue(args)
-        cmd = args.to_s.strip.split.first
-        case cmd
-        when "list", nil, ""
-          if defined?(Scheduler)
-            jobs = Scheduler.list_jobs
-            jobs.empty? ? puts("queue: empty") : jobs.each { |j| puts "  #{j[:id]} #{j[:status]} #{j[:description]}" }
-          else
-            puts "Scheduler not available"
-          end
-        when "clear"
-          Scheduler.clear! if defined?(Scheduler)
-          puts "queue: cleared"
-        else
-          puts "Usage: queue [list|clear]"
-        end
-        Result.ok
+      def repo_cleanliness
+        root = MASTER.root
+        out, status = Open3.capture2("git", "-C", root, "status", "--porcelain")
+        return { dirty_count: 0, state: "unknown" } unless status.success?
+
+        count = out.lines.size
+        {
+          dirty_count: count,
+          state: if count == 0
+                   "clean"
+                 elsif count <= 8
+                   "tidy"
+                 else
+                   "messy"
+                 end,
+        }
+      rescue StandardError
+        { dirty_count: 0, state: "unknown" }
       end
 
+      # Semantic cache management
       def show_cache_stats(args)
         return puts "  SemanticCache not available" unless defined?(SemanticCache)
 
@@ -358,14 +390,26 @@ module MASTER
         end
       end
 
+      # Multi-file refactoring
       def multi_refactor(args)
         return puts "  MultiRefactor not available" unless defined?(MultiRefactor)
 
-        path    = args&.split&.first || MASTER.root
-        dry_run = args&.include?("--dry-run")
-        MultiRefactor.new(dry_run: dry_run).run(path: path)
+        path = args&.split&.first || MASTER.root
+        dry_run = !args&.include?("-a") && !args&.include?("--apply")
+        mr = MultiRefactor.new(dry_run: dry_run)
+        mr.run(path: path)
       end
 
+      def start_web_server(args)
+        port = args.to_s.strip.match?(/\A\d+\z/) ? args.strip.to_i : nil
+        server = Server.new(port: port)
+        server.start
+        token = Server::AUTH_TOKEN
+        puts "  web: http://localhost:#{server.port}"
+        puts "  token: #{token}"
+      end
+
+      # Project memory — persistent goal/context across sessions and models
       def project_goal(args)
         return show_project_context unless args&.strip&.length&.> 0
 
@@ -389,198 +433,13 @@ module MASTER
       def show_project_context
         ctx = defined?(ProjectMemory) ? ProjectMemory.load(root: Dir.pwd) : {}
         if ctx.empty?
-          puts UI.dim("no project context - set one with: goal <text>")
+          puts UI.dim("no project context — set one with: goal <text>")
         else
           puts UI.dim("goal: #{ctx['goal']}") if ctx["goal"]
           puts UI.dim("stack: #{ctx['stack']}") if ctx["stack"]
           puts UI.dim("constraints: #{ctx['constraints']}") if ctx["constraints"]
-          Array(ctx["decisions"]).each { |d| puts UI.dim("  * #{d}") }
+          Array(ctx["decisions"]).each { |d| puts UI.dim("  · #{d}") }
         end
-      end
-
-      CONTEXT_DEPTHS = %w[shallow own deep full].freeze
-
-      def manage_context(args)
-        parts = args.to_s.strip.split(" ", 2)
-        sub   = parts[0].to_s.downcase
-        val   = parts[1].to_s.strip
-
-        case sub
-        when "", "show"
-          depth   = ExecutionContext.current_depth
-          hist    = Session.current.metadata_value(:context_history_max) || 12
-          pinned  = Session.current.metadata_value(:context_pin)
-          approx  = ExecutionContext.build_system_message(depth: depth).length / 4
-
-          puts UI.dim("depth:   #{depth}  (shallow|own|deep|full)")
-          puts UI.dim("history: #{hist} messages")
-          puts UI.dim("tokens:  ~#{approx} in system message")
-          puts UI.dim("pin:     #{pinned || 'none'}")
-          puts
-          puts UI.dim("  context depth shallow     -- code-free, conversational")
-          puts UI.dim("  context depth full        -- inject full source files")
-          puts UI.dim("  context history 6         -- limit to 6 prior exchanges")
-          puts UI.dim("  context pin <note>        -- append note to every prompt")
-          puts UI.dim("  context unpin             -- remove pinned note")
-
-        when "depth"
-          unless CONTEXT_DEPTHS.include?(val)
-            puts UI.dim("depth must be: #{CONTEXT_DEPTHS.join(' | ')}")
-            return
-          end
-          ExecutionContext.current_depth = val.to_sym
-          puts UI.dim("context depth: #{val}")
-
-        when "history"
-          n = val.to_i
-          if n < 1 || n > 100
-            puts UI.dim("history must be 1..100")
-            return
-          end
-          Session.current.set_metadata(:context_history_max, n)
-          puts UI.dim("context history: #{n} messages")
-
-        when "pin"
-          return puts UI.dim("usage: context pin <note>") if val.empty?
-
-          Session.current.set_metadata(:context_pin, val)
-          puts UI.dim("pinned: #{val}")
-
-        when "unpin"
-          Session.current.set_metadata(:context_pin, nil)
-          puts UI.dim("pin cleared")
-
-        else
-          puts UI.dim("context [show|depth|history|pin|unpin]")
-        end
-      end
-
-      def run_webtest(_args)
-        require "net/http"
-
-        server = defined?(MASTER::Server) ? ObjectSpace.each_object(MASTER::Server).first : nil
-        unless server&.running?
-          puts UI.warn("webtest: web server not running")
-          return
-        end
-
-        base  = "http://localhost:#{server.port}"
-        token = MASTER::Server::AUTH_TOKEN
-        results = []
-
-        results << web_probe("GET", "#{base}/health") { |b| JSON.parse(b)["status"] == "ok" ? "ok" : "bad status" }
-        results << web_probe("GET", base) { |b| %w[canvas orb-name].all? { |el| b.include?(el) } ? "ok" : "missing elements" }
-        results << web_probe("POST", "#{base}/chat",
-                             body: { message: "ping", session_id: "webtest" }.to_json,
-                             token: token, content_type: "application/json") { |b| JSON.parse(b)["status"] == "processing" ? "ok" : "unexpected" rescue "non-json" }
-        sleep 2
-        results << web_probe("GET", "#{base}/poll", token: token) { |b| JSON.parse(b).key?("text") ? "ok" : "missing text key" rescue "non-json" }
-
-        pass = results.count { |r| r[:status] == :ok }
-        results.each { |r| puts "  #{r[:status] == :ok ? UI.pastel.green('ok') : UI.pastel.red('!!')} #{r[:label]}" }
-        puts pass == results.size ? UI.success("webtest: #{pass}/#{results.size} passed") : UI.warn("webtest: #{results.size - pass} failed")
-      end
-
-      private
-
-      def ascii_tree(root, prefix = "", path = root, buf = [])
-        entries = Dir.entries(path).reject { |e| e.start_with?(".") || SKIP_DIRS.include?(e) }.sort
-        entries.each_with_index do |entry, idx|
-          last    = idx == entries.size - 1
-          pointer = last ? "`-- " : "|-- "
-          buf << "#{prefix}#{pointer}#{entry}"
-          child = File.join(path, entry)
-          ascii_tree(root, prefix + (last ? "    " : "|   "), child, buf) if File.directory?(child)
-        end
-        buf.join("\n")
-      end
-
-      def health_checks
-        bundle_ok = File.exist?(File.join(MASTER.root, "Gemfile")) &&
-                    (!File.exist?(File.join(MASTER.root, "Gemfile.lock")) ||
-                     File.read(File.join(MASTER.root, "Gemfile.lock")).include?("BUNDLED WITH"))
-        [
-          { name: "Constitution parses", ok: File.exist?(Paths.data_file("constitution.yml")), fix: "Ensure data/constitution.yml exists" },
-          { name: "Bundler metadata",    ok: bundle_ok,                                         fix: "Run: bin/master bootstrap" },
-          { name: "Writable var/",       ok: File.writable?(Paths.var),                         fix: "Ensure #{Paths.var} is writable" },
-          { name: "OpenRouter key",      ok: ENV.fetch("OPENROUTER_API_KEY", "").strip != "",    fix: "Set OPENROUTER_API_KEY for LLM features" },
-        ]
-      rescue StandardError
-        []
-      end
-
-      def run_bootstrap
-        UI.header("Bootstrap")
-        checks = health_checks
-        checks.each do |check|
-          icon = check[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
-          puts "#{icon} #{check[:name]}#{" (#{check[:detail]})" if check[:detail]}"
-        end
-
-        if defined?(PlatformCheck)
-          issues = PlatformCheck.diagnose
-          if issues.empty?
-            puts "#{UI.pastel.green('+')} platform: #{PlatformCheck.summary}"
-          else
-            puts "#{UI.pastel.red('-')} platform: #{issues.size} issue(s)"
-            PlatformCheck.print_diagnostics
-          end
-        end
-
-        missing_gems = AutoInstall.missing_gems rescue []
-        if missing_gems.any?
-          puts UI.dim("Installing #{missing_gems.size} missing gems...")
-          return Result.err("bundle install failed") unless system("bundle", "install")
-        end
-
-        Result.ok(checks: checks, installed: missing_gems.size)
-      end
-
-      def plugin_manifest_check
-        unless defined?(Bridges)
-          return { ok: false, detail: "bridges unavailable", fix: "require bridges before doctor" }
-        end
-
-        missing = Bridges.respond_to?(:validate_plugins) ? Bridges.validate_plugins : []
-        return { ok: true, detail: "all bridge plugins resolved" } if missing.empty?
-
-        { ok: false, detail: "missing: #{missing.join(', ')}", fix: "reinstall dependencies or restore bridge files" }
-      rescue StandardError => err
-        { ok: false, detail: err.message, fix: "check bridge plugin wiring" }
-      end
-
-      def repo_cleanliness
-        root = MASTER.root
-        out, status = Open3.capture2("git", "-C", root, "status", "--porcelain")
-        return { dirty_count: 0, state: "unknown" } unless status.success?
-
-        count = out.lines.size
-        { dirty_count: count, state: count == 0 ? "clean" : count <= 8 ? "tidy" : "messy" }
-      rescue StandardError
-        { dirty_count: 0, state: "unknown" }
-      end
-
-      def web_probe(method, url, body: nil, token: nil, content_type: nil, &check)
-        uri  = URI(url)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.open_timeout = 5
-        http.read_timeout = 10
-
-        req = (method == "POST" ? Net::HTTP::Post : Net::HTTP::Get).new(uri)
-        req["Authorization"] = "Bearer #{token}" if token
-        req["Content-Type"]  = content_type if content_type
-        req.body = body if body
-
-        resp  = http.request(req)
-        label = "#{method} #{uri.path.empty? ? '/' : uri.path} -> #{resp.code}"
-        if resp.code.start_with?("2")
-          result = check ? check.call(resp.body) : "ok"
-          { status: result == "ok" ? :ok : :fail, label: "#{label} (#{result})" }
-        else
-          { status: :fail, label: label }
-        end
-      rescue StandardError => err
-        { status: :fail, label: "#{method} #{url} -> #{err.message}" }
       end
     end
   end

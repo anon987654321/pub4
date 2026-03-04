@@ -1,51 +1,120 @@
 # frozen_string_literal: true
 
-module Boot
-  APP_NAMESPACE = Rails.application.class.module_parent_name
-  DEFAULT_BANNER_WIDTH = 72
+module MASTER
+  module Boot
+    OPTIONAL_MODULES = {
+      "Council" => :council_review,
+      "CodeReview" => :analyze,
+    }.freeze
 
-  SmokeTestResult = Struct.new(:ok, :messages, keyword_init: true)
+    class << self
+      def smoke_test_methods
+        {
+          LLM => %i[ask tier=],
+          Executor => %i[call],
+          Result => %i[ok err ok? err?],
+        }
+      rescue NameError => e
+        warn "Smoke test skipped: #{e.message}"
+        {}
+      end
 
-  module_function
+      def banner
+        start_time = MASTER::Utils.monotonic_now
+        timestamp = Time.now.utc.strftime("%a %b %e %H:%M:%S UTC %Y")
+        user = ENV["USER"] || ENV["USERNAME"] || "user"
+        shell = ENV["SHELL"] ? File.basename(ENV["SHELL"]) : "unknown-shell"
+        prompt_hint = shell == "zsh" ? "%" : "$"
+        host = begin
+          require "timeout"
+          Timeout.timeout(2) { `hostname`.strip }
+        rescue Timeout::Error, StandardError
+          "unknown"
+        end
 
-  def application_namespace
-    APP_NAMESPACE
-  end
+        smoke_result = smoke_test
 
-  def banner(width: DEFAULT_BANNER_WIDTH)
-    title = "#{application_namespace} Boot"
-    line = "-" * width
-    [line, title.center(width), line].join("\n")
-  end
+        lines = [
+          c("MASTER #{VERSION} (CONSTITUTIONAL) #1: #{timestamp}"),
+          c("    #{user}@#{host}:#{MASTER.root}"),
+          c("runtime0: #{RUBY_PLATFORM} · ruby #{RUBY_VERSION} · #{shell} #{user}#{prompt_hint}"),
+          c("corpus0: #{UI.pluralize(DB.axioms.size, 'axiom')} · #{UI.pluralize(defined?(DB) && DB.respond_to?(:council) ? DB.council.size : 0, 'persona')}"),
+          c("models0: #{tier_models}"),
+          c("routing0: #{if LLM.configured_for_replicate?
+                           "Replicate primary#{LLM.configured_for_openrouter? ? ', OpenRouter fallback' : ''}"
+                         else
+                           'OpenRouter'
+                         end}"),
+          c("security0: #{defined?(Pledge) && Pledge.available? ? 'pledge armed' : 'pledge unavailable'}"),
+          c("engine0: #{Executor::PATTERNS.join(' · ')}"),
+          c("smoke0: #{smoke_result}"),
+        ]
 
-  def banner_with_web(web_url:, width: DEFAULT_BANNER_WIDTH)
-    [banner(width: width), "Web: #{web_url}"].join("\n")
-  end
+        yield(lines) if block_given?
 
-  def smoke_test
-    messages = check_database + check_cache
-    ok = messages.none? { |msg| msg[:level] == :error }
-    SmokeTestResult.new(ok: ok, messages: messages)
-  end
+        elapsed = ((MASTER::Utils.monotonic_now - start_time) * 1000).round
+        lines << c("boot0: #{elapsed}ms")
 
-  # Use when rendering a dashboard/list to avoid N+1 queries.
-  def preload_for_dashboard(scope)
-    scope.includes(:account, :profile)
-  end
+        puts lines.join("\n")
+        puts
+      end
 
-  def check_database
-    ActiveRecord::Base.connection_pool.with_connection(&:active?)
-    [{ level: :info, code: :database, message: "database ok" }]
-  rescue ActiveRecord::NoDatabaseError, ActiveRecord::ConnectionNotEstablished => e
-    [{ level: :error, code: :database, message: e.message }]
-  end
+      def banner_with_web(port)
+        banner do |lines|
+          lines << c("web0: http://localhost:#{port}")
+        end
+      end
 
-  def check_cache
-    Rails.cache.write("boot_smoke_test", "1", expires_in: 1.second)
-    return [{ level: :error, code: :cache, message: "cache read/write failed" }] unless Rails.cache.read("boot_smoke_test") == "1"
+      def smoke_test
+        missing = []
 
-    [{ level: :info, code: :cache, message: "cache ok" }]
-  rescue StandardError => e
-    [{ level: :error, code: :cache, message: e.message }]
+        smoke_test_methods.each do |mod, methods|
+          methods.each do |method|
+            unless mod.respond_to?(method) || (mod.is_a?(Class) && mod.method_defined?(method))
+              missing << "#{mod}##{method}"
+            end
+          end
+        end
+
+        optional_checks = OPTIONAL_MODULES.select do |name, method|
+          mod = begin
+            MASTER.const_get(name)
+          rescue NameError => e
+            if defined?(MASTER::Logging)
+              MASTER::Logging.warn("Failed to resolve constant: #{name} — #{e.message}", subsystem: "boot")
+            end
+            nil
+          end
+          mod && !mod.respond_to?(method) && !mod.method_defined?(method)
+        end.keys
+
+        if missing.any?
+          UI.warn("Missing methods: #{missing.join(', ')}")
+          "FAIL #{missing.size}"
+        elsif optional_checks.any?
+          "WARN #{optional_checks.join(',')}"
+        else
+          "ok"
+        end
+      rescue StandardError => e
+        "FAIL #{e.message[0..30]}"
+      end
+
+      private
+
+      def c(text)
+        UI.colorize(text)
+      end
+
+      def tier_models
+        tiers = LLM.model_tiers
+        %i[strong fast free].filter_map do |t|
+          m = tiers[t]&.first
+          m && LLM.extract_model_name(m)
+        end.join(" · ")
+      rescue StandardError
+        LLM.all_models.map { |m| LLM.extract_model_name(m) }.uniq.first(3).join(" · ")
+      end
+    end
   end
 end

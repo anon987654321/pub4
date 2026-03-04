@@ -1,160 +1,72 @@
 # frozen_string_literal: true
 
-module CommandRegistry
-  SELF_APPLY_MASTER = "MASTER2"
+module MASTER
+  # CommandRegistry - single source of truth for command metadata.
+  module CommandRegistry
+    module_function
 
-  USAGE_PREFIXES = {
-    indent_2: '",   usage: "',
-    indent_6: '",          usage: "',
-    indent_16: '",                usage: "',
-    indent_20: '",                    usage: "',
-    indent_21: '",                     usage: "',
-    indent_22: '",                      usage: "',
-    indent_23: '",                       usage: "',
-    indent_25: '",                        usage: "',
-    indent_19: '",                   usage: "',
-    indent_15: '",               usage: "'
-  }.freeze
+    COMMANDS = {
+      ask: { desc: "Ask the LLM a question", usage: "ask <question>", group: :query, aliases: [] },
+      refactor: { desc: "Refactor a file with 6-phase analysis", usage: "refactor <file>", group: :query,
+                  aliases: %w[autofix] },
+      chamber: { desc: "Multi-model deliberation", usage: "chamber <file>", group: :query, aliases: [] },
+      evolve: { desc: "Self-improvement cycle", usage: "evolve [path]", group: :query, aliases: [] },
+      opportunities: { desc: "Find improvements", usage: "opportunities [path]", group: :query, aliases: %w[opps] },
+      hunt: { desc: "8-phase bug analysis", usage: "hunt <file>", group: :analysis, aliases: [] },
+      critique: { desc: "Constitutional validation", usage: "critique <file>", group: :analysis, aliases: [] },
+      learn: { desc: "Show matching learned patterns", usage: "learn <file>", group: :analysis, aliases: [] },
+      conflict: { desc: "Detect principle conflicts", usage: "conflict", group: :analysis, aliases: [] },
+      scan: { desc: "Scan for code smells", usage: "scan [path]", group: :analysis, aliases: [] },
+      session: { desc: "Session management", usage: "session [new|save|load]", group: :session, aliases: [] },
+      sessions: { desc: "List saved sessions", usage: "sessions", group: :session, aliases: [] },
+      forget: { desc: "Undo last exchange", usage: "forget", group: :session, aliases: %w[undo] },
+      summary: { desc: "Conversation summary", usage: "summary", group: :session, aliases: [] },
+      capture: { desc: "Capture session insights", usage: "capture", group: :session, aliases: %w[session-capture] },
+      "review-captures": { desc: "Review captured insights", usage: "review-captures", group: :session, aliases: [] },
+      status: { desc: "System status", usage: "status", group: :system, aliases: [] },
+      budget: { desc: "Budget remaining", usage: "budget", group: :system, aliases: [] },
+      context: { desc: "Context window usage", usage: "context", group: :system, aliases: [] },
+      history: { desc: "Cost history", usage: "history", group: :system, aliases: [] },
+      health: { desc: "Health check", usage: "health", group: :system, aliases: [] },
+      doctor: { desc: "Deep diagnostics", usage: "doctor [--verbose]", group: :system, aliases: [] },
+      bootstrap: { desc: "First-run setup", usage: "bootstrap", group: :system, aliases: [] },
+      "history-dig": { desc: "Recover deleted historical file", usage: "history-dig [master.yml|master.json]",
+                       group: :system, aliases: [] },
+      codify: { desc: "Show/export codified design rules", usage: "codify [export-json]", group: :system, aliases: [] },
+      "style-guides": { desc: "List/sync style guides", usage: "style-guides [sync]", group: :system,
+                        aliases: %w[styleguides] },
+      help: { desc: "Show this help", usage: "help [command]", group: :util, aliases: %w[?] },
+      speak: { desc: "Text-to-speech", usage: "speak <text>", group: :util, aliases: %w[say] },
+      shell: { desc: "Interactive shell", usage: "shell", group: :util, aliases: [] },
+      clear: { desc: "Clear screen", usage: "clear", group: :util, aliases: [] },
+      exit: { desc: "Exit MASTER", usage: "exit", group: :util, aliases: %w[quit] },
+      model: { desc: "Select LLM model", usage: "model <name>", group: :system, aliases: %w[use] },
+      models: { desc: "List models", usage: "models", group: :system, aliases: [] },
+      pattern: { desc: "Select executor pattern", usage: "pattern <name>", group: :system, aliases: %w[mode] },
+      patterns: { desc: "List executor patterns", usage: "patterns", group: :system, aliases: %w[modes] },
+      persona: { desc: "Manage active persona", usage: "persona <name|off>", group: :system, aliases: [] },
+      personas: { desc: "List personas", usage: "personas", group: :system, aliases: [] },
+      workflow: { desc: "Workflow control", usage: "workflow <cmd>", group: :system, aliases: [] },
+      queue: { desc: "Queue operations", usage: "queue <cmd>", group: :system, aliases: [] },
+      harvest: { desc: "Data harvesting", usage: "harvest <target>", group: :system, aliases: [] },
+      replicate: { desc: "Generate media via Replicate", usage: "replicate <prompt>", group: :util,
+                   aliases: %w[repligen generate-image generate-video] },
+      narrate: { desc: "Generate narrated video demo", usage: "narrate [--segments 1,3,5]", group: :util,
+                 aliases: %w[narration] },
+      postpro: { desc: "Post-processing operations", usage: "postpro <operation> <path|url>", group: :util,
+                 aliases: %w[enhance upscale] },
+    }.freeze
 
-  DESC_HASH_PREFIX = '":   { desc: "'
-  MULTILINE_BREAK = "\",\n      \""
-
-  module_function
-
-  def to_tool_classes(commands:, current_user: nil)
-    command_rows = normalize_command_rows(commands)
-    tool_names = command_rows.map { |row| row[:tool_name] }.compact.uniq
-    tool_records = preload_tools(tool_names, current_user)
-
-    command_rows.map do |row|
-      tool = tool_records[row[:tool_name]]
-      build_tool_class(row, tool)
-    end.compact
-  end
-
-  def normalize_command_rows(commands)
-    case commands
-    when ActiveRecord::Relation
-      normalize_relation(commands)
-    when Array
-      commands.map { |c| normalize_object_or_hash(c) }.compact
-    else
-      []
-    end
-  end
-  private_class_method :normalize_command_rows
-
-  def normalize_relation(relation)
-    rel = relation
-          .includes(:tool)
-          .references(:tool)
-
-    if rel.column_names.include?("tool_name")
-      rel.pluck(:name, :description, :usage, :tool_name).map do |name, description, usage, tool_name|
-        { name:, description:, usage:, tool_name: }
-      end
-    else
-      rel.joins(:tool).pluck(:name, :description, :usage, "tools.name").map do |name, description, usage, tool_name|
-        { name:, description:, usage:, tool_name: }
-      end
-    end
-  end
-  private_class_method :normalize_relation
-
-  def normalize_object_or_hash(obj)
-    return normalize_hash(obj) if obj.is_a?(Hash)
-
-    {
-      name: obj.respond_to?(:name) ? obj.name : nil,
-      description: obj.respond_to?(:description) ? obj.description : nil,
-      usage: obj.respond_to?(:usage) ? obj.usage : nil,
-      tool_name: tool_name_for(obj)
-    }.compact
-  end
-  private_class_method :normalize_object_or_hash
-
-  def normalize_hash(hash)
-    {
-      name: hash.fetch(:name, nil),
-      description: hash.fetch(:description, nil),
-      usage: hash.fetch(:usage, nil),
-      tool_name: hash.fetch(:tool_name, nil)
-    }.compact
-  end
-  private_class_method :normalize_hash
-
-  def tool_name_for(obj)
-    return obj.tool_name if obj.respond_to?(:tool_name)
-
-    if obj.respond_to?(:tool) && obj.tool
-      obj.tool.respond_to?(:name) ? obj.tool.name : nil
-    end
-  end
-  private_class_method :tool_name_for
-
-  def preload_tools(tool_names, current_user)
-    return {} if tool_names.empty?
-
-    scope = Tool.where(name: tool_names).includes(:owner)
-
-    if current_user
-      scope = scope.where(owner_id: current_user.id) if scope.column_names.include?("owner_id")
+    def help_commands
+      COMMANDS.transform_values { |v| { desc: v[:desc], usage: v[:usage], group: v[:group] } }
     end
 
-    scope.index_by(&:name)
-  end
-  private_class_method :preload_tools
-
-  def build_tool_class(row, tool)
-    name = row.fetch(:name, nil)
-    return nil if name.nil? || name.to_s.strip.empty?
-
-    description = row.fetch(:description, "")
-    usage = row.fetch(:usage, "")
-
-    ToolClass.new(
-      name:,
-      description:,
-      usage:,
-      tool:,
-      self_apply_master: SELF_APPLY_MASTER
-    )
-  end
-  private_class_method :build_tool_class
-
-  # Explicit class; avoids banned metaprogramming (define_method)
-  class ToolClass
-    attr_reader :name, :description, :usage, :tool, :self_apply_master
-
-    def initialize(name:, description:, usage:, tool:, self_apply_master:)
-      @name = name
-      @description = description
-      @usage = usage
-      @tool = tool
-      @self_apply_master = self_apply_master
+    def primary_commands
+      COMMANDS.keys.map(&:to_s)
     end
 
-    def to_h
-      {
-        name:,
-        description:,
-        usage:,
-        tool_name: tool&.name,
-        self_apply_master:
-      }
-    end
-
-    def usage_line(indent_key: :indent_6)
-      prefix = USAGE_PREFIXES.fetch(indent_key, USAGE_PREFIXES.fetch(:indent_6))
-      "#{name}#{prefix}#{usage}\""
-    end
-
-    def desc_hash_line
-      "#{name}#{DESC_HASH_PREFIX}#{description}\" }"
-    end
-
-    def multiline_break
-      MULTILINE_BREAK
+    def autocomplete_commands
+      (primary_commands + COMMANDS.values.flat_map { |v| v[:aliases] || [] }).uniq
     end
   end
 end

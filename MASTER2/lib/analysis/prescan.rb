@@ -1,81 +1,125 @@
 # frozen_string_literal: true
 
-require "open3"
+require "shellwords"
+require "digest"
 
-module Analysis
-  class Prescan
-    SEPARATOR = "\",\n        \""
-    LS_FILES_CMD = %w[git ls-files].freeze
+module MASTER
+  module Analysis
+    # Prescan - Mandatory situational awareness before touching code
+    # Ported from MASTER v1 cli.rb prescan ritual
+    module Prescan
+      extend self
 
-    def initialize(repo_path:, repo_model: Repository, file_model: RepoFile, runner: Open3)
-      @repo_path = repo_path
-      @repo_model = repo_model
-      @file_model = file_model
-      @runner = runner
+      TREE_EXCLUDES = %w[. .. .git vendor tmp node_modules var].freeze
+
+      def run(path = MASTER.root, tree_depth: 4, cache: false)
+        path = File.expand_path(path)
+        @cache ||= {}
+        return @cache[path] if cache && @cache.key?(path)
+
+        tree_lines = project_tree(path, max_depth: tree_depth)
+        results = {
+          tree: tree_lines,
+          tree_digest: Digest::SHA256.hexdigest(tree_lines.join("\n")),
+          tree_nodes: tree_lines.size,
+          sprawl: detect_sprawl(path),
+          git_status: check_git_status(path),
+          recent_commits: recent_commits(path),
+        }
+
+        warn_if_issues(results)
+        openbsd_config_scan if RUBY_PLATFORM.include?("openbsd") || ENV["MASTER_OPENBSD_SCAN"] == "true"
+        @cache[path] = results if cache
+        results
+      end
+
+      private
+
+      def project_tree(path, max_depth: 4)
+        file_tree(path, max_depth: max_depth, exclude: TREE_EXCLUDES)
+      end
+
+      # Ruby-native tree walker
+      def file_tree(root, indent: "", max_depth: 3, depth: 0, exclude: [])
+        return [] if max_depth && depth >= max_depth
+
+        entries = Dir.children(root).sort.reject { |e| exclude.include?(e) }
+        lines = []
+
+        entries.each_with_index do |entry, i|
+          path = File.join(root, entry)
+          last = i == entries.size - 1
+          connector = last ? "└── " : "├── "
+          lines << "#{indent}#{connector}#{entry}"
+
+          next unless File.directory?(path)
+
+          extension = last ? "    " : "│   "
+          lines.concat(file_tree(path, indent: "#{indent}#{extension}", max_depth: max_depth, depth: depth + 1,
+                                       exclude: exclude))
+        end
+
+        lines
+      end
+
+      def detect_sprawl(path)
+        large_files = []
+
+        Dir.glob(File.join(path, "**", "*.rb")).each do |file|
+          lines = File.readlines(file).size
+          large_files << { file: file, lines: lines } if lines > 500
+        end
+
+        UI.warn("health0: sprawl #{large_files.size} files >500 lines") if large_files.any?
+
+        large_files
+      end
+
+      def check_git_status(path)
+        return nil unless system("git", "-C", path, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
+
+        status = `git -C #{Shellwords.escape(path)} status --porcelain`.strip
+
+        if status.empty?
+          UI.success("vcs0: clean")
+        else
+          UI.warn("vcs0: #{status.lines.size} uncommitted files")
+        end
+
+        status
+      end
+
+      def recent_commits(path, limit: 5)
+        return [] unless system("git", "-C", path, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
+
+        output = `git -C #{Shellwords.escape(path)} log --oneline --decorate -#{limit} 2>/dev/null`
+        commits = output.lines.map(&:strip).reject(&:empty?)
+        if (ENV["MASTER_VERBOSE"] || ENV.fetch("MASTER_DEBUG", nil)) && !commits.empty?
+          puts UI.dim("\nRecent commits:")
+          commits.each { |line| puts line }
+        end
+        commits
+      end
+
+      def warn_if_issues(results)
+        # Individual checks already printed. Nothing extra needed.
+      end
+
+      def openbsd_config_scan
+        return unless defined?(MASTER::Analysis::OpenBSDConfigValidator)
+
+        p = UI.pastel
+        issues = OpenBSDConfigValidator.scan_dir("/etc")
+        issues.each do |file, file_issues|
+          fname = p.bold(File.basename(file.to_s))
+          file_issues.each do |issue|
+            UI.warn("pf0: #{fname}: #{issue[:message]}") if issue[:severity] == :warn
+            UI.warn("pf0: #{fname}: #{issue[:message]} (man #{issue[:man]})") if issue[:severity] == :error
+          end
+        end
+      rescue StandardError
+        # non-critical — /etc may not be readable
+      end
     end
-
-    def call
-      normalized_path = normalize_repo_path(@repo_path)
-      return [] if normalized_path.nil?
-
-      repo = load_repo(normalized_path)
-      return [] unless repo
-
-      paths = file_list(normalized_path)
-      return [] if paths.empty?
-
-      upsert_files(repo, paths)
-    end
-
-    def normalize_repo_path(path)
-      value = path.to_s.strip
-      return nil if value.empty?
-
-      value
-    end
-
-    def load_repo(path)
-      @repo_model.includes(:project).find_by(path:)
-    end
-
-    def file_list(path)
-      stdout = run_cmd(LS_FILES_CMD, chdir: path)
-      parse_stdout_lines(stdout)
-    end
-
-    def parse_stdout_lines(stdout)
-      stdout.to_s.lines.map { |l| l.to_s.strip }.reject(&:empty?)
-    end
-
-    def upsert_files(repo, paths)
-      existing = existing_paths(repo, paths)
-      missing = paths - existing
-      return existing if missing.empty?
-
-      rows = missing.map { |p| { repository_id: repo.id, path: p } }
-      @file_model.insert_all(rows) # rubocop:disable Rails/SkipsModelValidations
-      existing + missing
-    end
-
-    def existing_paths(repo, paths)
-      @file_model.where(repository_id: repo.id, path: paths).pluck(:path)
-    end
-
-    def run_cmd(cmd, chdir:)
-      stdout, _stderr, status = @runner.capture3(*cmd, chdir: chdir)
-      return stdout if status.success?
-
-      ""
-    rescue SystemCallError
-      ""
-    end
-
-    private :normalize_repo_path,
-            :load_repo,
-            :file_list,
-            :parse_stdout_lines,
-            :upsert_files,
-            :existing_paths,
-            :run_cmd
   end
 end
