@@ -174,7 +174,6 @@ module MASTER
           if result.ok?
             process_llm_response(result, candidate_model, prompt, stream)
             if candidate_model != primary
-              $stderr.puts UI.dim("models0: #{extract_model_name(candidate_model)}")
               Logging.model_event(extract_model_name(candidate_model), "ok fallback") if defined?(Logging)
             else
               Logging.model_event(extract_model_name(candidate_model), "ok") if defined?(Logging)
@@ -182,7 +181,9 @@ module MASTER
             return result
           else
             handle_llm_failure(result, candidate_model)
-            Logging.model_event(extract_model_name(candidate_model), "fail", result.error.to_s[0..40]) if defined?(Logging)
+            # Demote fail events to ALL_EVENTS — hidden at default trace level, visible with MASTER_TRACE=2
+            Logging.model_event(extract_model_name(candidate_model), "fail", result.error.to_s[0..40],
+                                level: Logging::ALL_EVENTS) if defined?(Logging)
             last_error = result.error
           end
         end
