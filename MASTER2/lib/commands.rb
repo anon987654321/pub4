@@ -194,6 +194,7 @@ module MASTER
       "doctor" => [:doctor, true],
       "bootstrap" => [:bootstrap, true],
       "history-dig" => [:history_dig, true],
+      "snapshot" => [:snapshot, true],
       "codify" => [:codify, true],
       "axioms-stats" => [:print_axiom_stats, true],
       "stats" => [:print_axiom_stats, true],
@@ -349,6 +350,9 @@ module MASTER
         HANDLED
       when "history-dig"
         history_dig(args)
+        HANDLED
+      when "snapshot"
+        snapshot(args)
         HANDLED
       when "codify"
         codify(args)
