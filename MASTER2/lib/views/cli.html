@@ -289,12 +289,12 @@
 </head>
 <body>
   <section id="orb-name">VOID</section>
-  <section id="status">O<div id="model-badge"></div></section>
+  <section id="status">◉<div id="model-badge"></div></section>
   <section id="ui"><span id="ui-label">Neural Core</span><span class="dots" id="ui-dots"></span></section>
   <button id="mic" hidden aria-label="microphone"></button>
 
-  <section id="arrow-left" class="arrow"><span>&lt;</span></section>
-  <section id="arrow-right" class="arrow"><span>&gt;</span></section>
+  <section id="arrow-left" class="arrow"><span>‹</span></section>
+  <section id="arrow-right" class="arrow"><span>›</span></section>
 
   <section id="input-field"><input type="text" placeholder="SPEAK" autocomplete="off" maxlength="1024"></section>
 
@@ -433,7 +433,7 @@
         dataArray=new Uint8Array(analyser.frequencyBinCount);
         statusEl.classList.add('think');
       }catch(_e){
-        statusEl.textContent='o';
+        statusEl.textContent='○';
       }
     };
 
@@ -461,7 +461,7 @@
       if(!('speechSynthesis' in window)||!text) return;
       const u=new SpeechSynthesisUtterance(String(text).slice(0,500));
       u.rate=0.88;   // calm, unhurried
-      u.pitch=0.95;  // slightly lower - warm, grounded
+      u.pitch=0.95;  // slightly lower — warm, grounded
       u.volume=0.92;
       const v=pickVoice(); if(v) u.voice=v;
       u.onstart=()=>{
@@ -949,9 +949,9 @@
 
     const dotsPattern=[0,1,2,3,2,1];
     const spinnerSets=[
-      ["|","/","-","\\"],
-      [".","..","...","....","...",".."],
-      ["[   ]","[=  ]","[== ]","[===]","[ ==]","[  =]"]
+      ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"],
+      ["⠁","⠂","⠄","⡀","⢀","⠠","⠐","⠈"],
+      ["▏","▎","▍","▌","▋","▊","▉","█","▉","▊","▋","▌","▍","▎"]
     ];
     const spinnerFallback=["|","/","-","\\"];
     let activeSpinner=spinnerSets[0];
