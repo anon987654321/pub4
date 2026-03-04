@@ -785,3 +785,57 @@
       description: "0-10 score per axiom: how well the codebase embodies the axiom (not just avoids violating it)"
   auto_fixable: false
   llm_strategies: [identify_exemplar, score_beauty, praise_virtue, store_exemplar]
+
+- id: AI_CONTRACT_FIRST
+  category: ai_engineering
+  protection: ADJUSTABLE
+  priority: 8
+  title: AI Contract First
+  statement: >
+    Treat every model call as an external dependency with an explicit contract.
+    Define inputs, required context, output schema, and failure behavior before
+    integrating into product flow. Demo-grade prompting without a contract is
+    not production-ready engineering.
+  source: AI Engineering by Chip Huyen
+  auto_fixable: false
+  llm_strategies: [add_output_schema, add_guardrails, define_fallback]
+
+- id: EVALS_OVER_VIBES
+  category: ai_engineering
+  protection: ADJUSTABLE
+  priority: 9
+  title: Evals Over Vibes
+  statement: >
+    Judge AI behavior with repeatable evaluations, not intuition.
+    Every capability claim is backed by task-level checks, quality thresholds,
+    and regression tracking. If it cannot be measured, it cannot be trusted.
+  source: Designing Machine Learning Systems by Chip Huyen
+  auto_fixable: false
+  llm_strategies: [add_eval_set, add_regression_check, define_quality_threshold]
+
+- id: PROMPT_AS_CODE
+  category: ai_engineering
+  protection: ADJUSTABLE
+  priority: 7
+  title: Prompt as Code
+  statement: >
+    Prompts, system instructions, and tool policies are first-class artifacts.
+    Version them, review them, test them, and tie them to behavior changes.
+    Prompt edits without traceability are unreviewed production code.
+  source: The LLM Engineer's Handbook
+  auto_fixable: false
+  llm_strategies: [extract_prompt_template, version_prompt, add_prompt_tests]
+
+- id: RUBY_LEAST_MAGIC
+  category: ruby
+  protection: ADJUSTABLE
+  priority: 7
+  title: Ruby Least Magic
+  statement: >
+    Prefer clear Ruby idioms over clever metaprogramming.
+    Use explicit methods before method_missing, composition before inheritance,
+    and names that read like domain language. Dynamic power is used sparingly
+    and only when readability and testability remain obvious.
+  source: Effective Ruby; Practical Object-Oriented Design in Ruby
+  auto_fixable: false
+  llm_strategies: [replace_method_missing, extract_object, rename_to_domain_term]
