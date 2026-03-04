@@ -19,12 +19,14 @@ module MASTER
     CONFIGURE_MUTEX = Mutex.new
     @ruby_llm_configured = false
 
-    FREE_FALLBACKS = %w[
-      deepseek/deepseek-r1-0528:free
-      deepseek/deepseek-chat:free
-      google/gemini-2.0-flash-thinking-exp:free
-      meta-llama/llama-3.1-8b-instruct:free
-    ].freeze
+    # Derived at runtime from models.yml tier:free + api:openrouter entries.
+    # Replaces the old hardcoded stale list.
+    def self.free_fallbacks
+      configured_models
+        .select { |m| m[:tier]&.to_s == "free" && m.dig(:api)&.to_s == "openrouter" }
+        .map { |m| m[:id] }
+        .freeze
+    end
 
     class << self
       attr_accessor :current_model, :persona_prompt
@@ -158,7 +160,7 @@ module MASTER
         models_to_try = if fallbacks
                           [primary] + fallbacks
                         elsif configured_for_openrouter?
-                          [primary] + FREE_FALLBACKS.reject { |m| m == primary }
+                          [primary] + free_fallbacks.reject { |m| m == primary }
                         else
                           [primary]
                         end
