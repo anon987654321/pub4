@@ -157,8 +157,10 @@ module MASTER
 
         models_to_try = if fallbacks
                           [primary] + fallbacks
-                        else
+                        elsif configured_for_openrouter?
                           [primary] + FREE_FALLBACKS.reject { |m| m == primary }
+                        else
+                          [primary]
                         end
         last_error = nil
 
@@ -169,10 +171,16 @@ module MASTER
 
           if result.ok?
             process_llm_response(result, candidate_model, prompt, stream)
-            $stderr.puts UI.dim("models0: #{extract_model_name(candidate_model)}") if candidate_model != primary
+            if candidate_model != primary
+              $stderr.puts UI.dim("models0: #{extract_model_name(candidate_model)}")
+              Logging.model_event(extract_model_name(candidate_model), "ok fallback") if defined?(Logging)
+            else
+              Logging.model_event(extract_model_name(candidate_model), "ok") if defined?(Logging)
+            end
             return result
           else
             handle_llm_failure(result, candidate_model)
+            Logging.model_event(extract_model_name(candidate_model), "fail", result.error.to_s[0..40]) if defined?(Logging)
             last_error = result.error
           end
         end
@@ -185,6 +193,8 @@ module MASTER
 
       private
 
+      LLM_WATCHDOG_SECS = (ENV["MASTER_LLM_TIMEOUT"] || 120).to_i
+
       def try_model(current_model, prompt, messages, reasoning, json_schema, provider, stream)
         spinner = nil
         unless stream || Thread.current[:llm_quiet]
@@ -192,11 +202,21 @@ module MASTER
           spinner.auto_spin
         end
 
-        result = execute_with_retry(
-          prompt: prompt, messages: messages, model: current_model,
-          reasoning: reasoning, json_schema: json_schema,
-          provider: provider, stream: stream
-        )
+        result     = nil
+        timed_out  = false
+        worker     = Thread.new do
+          result = execute_with_retry(
+            prompt: prompt, messages: messages, model: current_model,
+            reasoning: reasoning, json_schema: json_schema,
+            provider: provider, stream: stream
+          )
+        end
+
+        unless worker.join(LLM_WATCHDOG_SECS)
+          worker.kill
+          timed_out = true
+          result = Result.err("LLM timeout after #{LLM_WATCHDOG_SECS}s", category: :infrastructure)
+        end
 
         result.ok? ? spinner&.success : spinner&.error
         result

@@ -61,7 +61,9 @@ module MASTER
 
       def banner_with_web(port)
         banner do |lines|
-          lines << c("web0: http://localhost:#{port}")
+          token = defined?(Server) ? Server::AUTH_TOKEN : nil
+          url   = token ? "http://localhost:#{port}/?token=#{token}" : "http://localhost:#{port}"
+          lines << c("web0: #{url}")
         end
       end
 

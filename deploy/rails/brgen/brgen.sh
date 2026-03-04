@@ -897,9 +897,9 @@ daemon_user="brgen"
 
 daemon_execdir="/home/brgen/app"
 
-daemon="/home/brgen/app/bin/rails"
+daemon="/usr/local/bin/falcon"
 
-daemon_flags="server -b 0.0.0.0 -p ${PORT} -e production"
+daemon_flags="serve --bind tcp://0.0.0.0:${PORT} -e production"
 
 daemon_timeout="60"
 

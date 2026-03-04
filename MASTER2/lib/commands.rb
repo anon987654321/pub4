@@ -447,7 +447,8 @@ module MASTER
         replicate_command(cmd, args)
         HANDLED
       when "narrate", "narration"
-        narrate_command(args)
+        result = narrate_command(args)
+        puts "  Error: #{result.error}" if result.respond_to?(:err?) && result.err?
         HANDLED
       when "postpro", "enhance", "upscale"
         postpro_command(cmd, args)

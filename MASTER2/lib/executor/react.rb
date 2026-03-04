@@ -59,6 +59,7 @@ module MASTER
           # Completion: answer field is set
           if parsed[:answer]
             plan.complete(@step - 1)
+            Logging.reason(@step, parsed[:thought], outcome: :answer) if defined?(Logging)
             return Result.ok(
               answer: parsed[:answer],
               steps: @step,
@@ -71,6 +72,7 @@ module MASTER
           tool_name = parsed[:tool]
           unless tool_name
             # No tool and no answer — treat thought as final response
+            Logging.reason(@step, parsed[:thought], outcome: :answer) if defined?(Logging)
             return Result.ok(
               answer: parsed[:thought],
               steps: @step,
@@ -78,6 +80,8 @@ module MASTER
               history: @history,
             )
           end
+
+          Logging.reason(@step, parsed[:thought], outcome: :tool, tool: tool_name) if defined?(Logging)
 
           UI.dim("  > #{tool_name}(#{parsed[:args].to_json[0..60]})")
 
@@ -96,7 +100,10 @@ module MASTER
           UI.dim("  … #{preamble}") if preamble
 
           # Dispatch typed tool call (args is already a Hash from JSON parse)
+          tool_start = MASTER::Utils.monotonic_now
           raw_observation = dispatch_typed(tool_name, parsed[:args] || {})
+          tool_ms = ((MASTER::Utils.monotonic_now - tool_start) * 1000).round
+          Logging.tool(tool_name, parsed[:args].to_json[0..60], approved: true) if defined?(Logging)
 
           # Injection defense: halt loop on detected injection (gist item #3).
           # Sanitize-and-continue is insufficient — abort with error instead.
@@ -114,6 +121,9 @@ module MASTER
 
           observation = raw_observation.to_s
           @history.last[:observation] = observation
+          Logging.dmesg_log("obs0", parent: "engine0",
+                                    message: "#{tool_name} → #{observation[0..80]}",
+                                    level: Logging::ALL_EVENTS) if defined?(Logging)
 
           UI.dim("  = #{observation[0..100]}")
         end

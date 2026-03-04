@@ -24,9 +24,11 @@ module MASTER
       end
 
       def handle_chat(env, pipeline, queue, sessions = {}, lock = Mutex.new)
-        body = env["rack.input"].read
+        raw  = env["rack.input"].read(Server::MAX_BODY_BYTES + 1)
+        return [413, { CT_HEADER => JSON_TYPE }, ['{"error":"payload too large"}']] if raw.bytesize > Server::MAX_BODY_BYTES
+
         data = begin
-          JSON.parse(body, symbolize_names: true)
+          JSON.parse(raw, symbolize_names: true)
         rescue StandardError
           {}
         end

@@ -122,11 +122,11 @@ end
 
 # Fetch ports for each platform
 
-go_fetch("OpenBSD", "ftp.usa.openbsd.org", "/pub/OpenBSD/snapshots", "ports.tar.gz")
+go_fetch("OpenBSD", "ftp.usa.openbsd.org", "/pub/OpenBSD/7.8", "ports.tar.gz")
 
-go_fetch("FreeBSD", "ftp.nl.freebsd.org", "/pub/FreeBSD/ports/ports", "ports.tar.gz")
+go_fetch("FreeBSD", "ftp.nl.freebsd.org", "/pub/FreeBSD/ports", "ports.tar.gz")
 
-go_fetch("NetBSD", "ftp.netbsd.org", "/pub/pkgsrc/stable", "pkgsrc.tar.gz")
+go_fetch("NetBSD", "ftp.netbsd.org", "/pub/pkgsrc", "pkgsrc-2024Q4.tar.gz")
 
 EOF
 
@@ -676,7 +676,7 @@ main {
 
     line-height: 29px;
 
-    border-top: 1px solid var (--extra-light-grey);
+    border-top: 1px solid var(--extra-light-grey);
 
     a {
 

@@ -9,6 +9,26 @@ norwegian:
     - "Avoid anglicisms when Norwegian words exist"
     - "Match user's formality level"
 
+encoding:
+  description: "Character encoding constraints for source files and output"
+  rules:
+    - id: ascii_only_source
+      rule: "Ruby source files must use US-ASCII characters only"
+      bad: "puts 'héllo wörld'  # non-ASCII in source"
+      good: "puts 'hello world'"
+      reason: "Non-ASCII chars in source cause encoding errors on some OpenBSD locales and break grep/sed pipelines."
+    - id: ascii_only_output
+      rule: "CLI output must use US-ASCII only — no Unicode box-drawing, emoji, or curly quotes"
+      bad: "puts '✓ done'  # U+2713"
+      good: "puts 'ok'"
+      reason: "Terminal emulators on OpenBSD and mosh sessions may garble non-ASCII. Stick to printable ASCII."
+    - id: ascii_only_keys
+      rule: "Hash keys, symbol names, method names, variable names: ASCII only"
+      reason: "Ruby allows Unicode identifiers but they break shell tooling, dmesg parsing, and log grepping."
+    - id: ascii_string_literals
+      rule: "String literals used in dmesg/logging must be ASCII-clean"
+      reason: "Log parsers, syslog, and dmesg expect 7-bit clean data."
+
 ruby_footguns:
   description: "Ruby-specific pitfalls that cause hard-to-debug failures"
   rules:

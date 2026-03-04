@@ -43,15 +43,20 @@ module MASTER
         { error: e.message }
       end
 
+      MAX_POLL_ATTEMPTS = (ENV["MASTER_MAX_POLLS"] || 150).to_i  # ~5min at 2s interval
+
       # Wait for prediction to complete (polling loop)
       def wait_for_completion(id, timeout: REPLICATE_TIMEOUT)
-        poll_url = "#{API_URL}/#{id}"
+        poll_url   = "#{API_URL}/#{id}"
         start_time = Time.now
+        attempts   = 0
 
         loop do
-          return { error: "Timeout waiting for generation" } if Time.now - start_time > timeout
+          return { error: "Timeout waiting for generation (#{timeout}s)" } if Time.now - start_time > timeout
+          return { error: "Max poll attempts (#{MAX_POLL_ATTEMPTS}) exceeded" } if attempts >= MAX_POLL_ATTEMPTS
 
           data = http_get(poll_url)
+          attempts += 1
 
           case data&.dig(:status)
           when "succeeded"

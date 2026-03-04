@@ -13,7 +13,13 @@ module MASTER
           return [501, { CT_HEADER => TEXT_TYPE }, ["WebSocket not available"]]
         end
 
-        query      = Rack::Utils.parse_query(env["QUERY_STRING"] || "")
+        # Token check — auth middleware already ran, but double-check for WS upgrades
+        query = Rack::Utils.parse_query(env["QUERY_STRING"] || "")
+        ws_token = env["HTTP_AUTHORIZATION"]&.delete_prefix("Bearer ") || query["token"]
+        unless ws_token == Server::AUTH_TOKEN
+          return [401, { CT_HEADER => TEXT_TYPE }, ["Unauthorized"]]
+        end
+
         session_id = query["session_id"] || SecureRandom.hex(16)
         web_session = lock.synchronize { sessions[session_id] ||= { pipeline: pipeline, session: Session.new } }
         session     = web_session[:session]

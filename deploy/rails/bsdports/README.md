@@ -5,7 +5,7 @@ BSDPorts is a comprehensive package search and management platform that provides
 ### Core Functionality
 
 - **Multi-Platform Search**: Search across OpenBSD, FreeBSD, and NetBSD package repositories
-- **Real-time Results**: Instant search with infinite scroll powered by StimulusReflex
+- **Real-time Results**: Instant search with infinite scroll powered by Turbo Frames + IntersectionObserver
 
 - **Package Details**: Comprehensive package information including dependencies, descriptions, and metadata
 
@@ -20,7 +20,7 @@ BSDPorts is a comprehensive package search and management platform that provides
 - **Cross-Platform**: Compare packages across different BSD variants
 ### Technical Features
 
-- **Live Search**: Real-time search with StimulusReflex morphing (30ms target)
+- **Live Search**: Real-time search with Turbo Streams (30ms target)
 - **Infinite Scroll**: Seamless browsing of large package collections
 - **Mobile Responsive**: Optimized for mobile and desktop usage
 - **Accessibility**: WCAG 2.2 AAA compliant interface
@@ -42,15 +42,15 @@ BSDPorts is a comprehensive package search and management platform that provides
 
 ## Architecture
 
-### Framework Compliance (v37.3.2)
-- **Rails 8.0**: Latest Rails with Solid Queue and Solid Cache
-- **StimulusReflex 3.5**: Real-time reactive components for live search
-- **Hotwire**: Turbo Streams and Stimulus controllers for enhanced UX
-- **Falcon Server**: High-performance server for OpenBSD deployment
-
-- **PostgreSQL**: Primary database with full-text search capabilities
-
-- **Redis**: Caching layer and background job processing
+### Stack
+- **Rails 8.0**: Solid Queue, Solid Cache, Solid Cable
+- **Hotwire**: Turbo Streams + Stimulus controllers (no StimulusReflex)
+- **Falcon Server**: Async, high-performance server for OpenBSD
+- **PostgreSQL 16**: Primary database with full-text search
+- **Redis 7**: Action Cable pub/sub
+- **PgBouncer**: Connection pooling (transaction mode)
+- **Authentication**: Rails 8 built-in (`bin/rails generate authentication`)
+- **FTP sources**: OpenBSD 7.8, FreeBSD ports, NetBSD pkgsrc-2024Q4
 ### Performance Optimizations
 - **Elasticsearch Integration**: Full-text search with faceted filtering
 - **Caching Strategy**: Multi-layer caching for package metadata

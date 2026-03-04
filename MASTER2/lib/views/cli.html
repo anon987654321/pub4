@@ -179,18 +179,131 @@
       color:#dcdcdc;
       font-family:Helvetica,Arial,sans-serif;
     }
+
+    /* output log - conversation history */
+    #log{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      top:calc(48px + var(--safe-top));
+      width:min(680px,90vw);
+      max-height:38vh;
+      overflow-y:auto;
+      z-index:90;
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      padding:0 2px 8px;
+      scrollbar-width:none;
+    }
+    #log::-webkit-scrollbar{display:none;}
+
+    .log-line{
+      font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+      color:#6a7a8a;
+      white-space:pre-wrap;
+      word-break:break-word;
+      padding:1px 0;
+      opacity:0;
+      animation:logfade 0.25s ease forwards;
+    }
+    .log-line.user{color:#c8d4e0;font-weight:600;}
+    .log-line.assistant{color:#9abbc4;pointer-events:auto;}
+    .log-line.dmesg{color:#3a4a5a;font-size:9px;letter-spacing:0.06em;}
+    .log-line.err{color:#c06050;}
+
+    @keyframes logfade{
+      from{opacity:0;transform:translateY(3px);}
+      to{opacity:1;transform:none;}
+    }
+
+    .copy-btn{
+      display:inline-block;
+      margin-left:4px;
+      cursor:pointer;
+      opacity:0;
+      font-size:9px;
+      vertical-align:middle;
+      transition:opacity 0.15s;
+      pointer-events:auto;
+      user-select:none;
+    }
+    .log-line.assistant:hover .copy-btn{opacity:0.5;}
+    .copy-btn:hover{opacity:0.9!important;}
+    .copy-btn.ok{color:#6af;}
+
+    /* music control */
+    #music-ctrl{
+      position:fixed;
+      bottom:calc(12px + var(--safe-bottom));
+      left:calc(12px + var(--safe-left));
+      z-index:95;
+      background:none;
+      border:none;
+      color:#333;
+      font-size:16px;
+      cursor:pointer;
+      padding:4px;
+      line-height:1;
+      transition:color 0.2s;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    #music-ctrl:hover{color:#666;}
+    #music-ctrl.playing{color:#6af;}
+
+    /* dilla hidden iframe */
+    #dilla-frame{
+      position:fixed;
+      width:0;height:0;
+      opacity:0;border:none;
+      pointer-events:none;
+    }
+
+    /* model badge in status */
+    #model-badge{
+      font-size:9px;
+      color:#445;
+      letter-spacing:0.06em;
+      margin-top:2px;
+      text-transform:uppercase;
+      font-variant-numeric:tabular-nums;
+    }
+
+    /* tabular nums on ui metrics */
+    #ui{font-variant-numeric:tabular-nums;}
+
+    /* Ctrl+K hint */
+    #clear-hint{
+      position:fixed;
+      bottom:calc(30px + var(--safe-bottom));
+      right:calc(10px + var(--safe-right));
+      font:8px/1 ui-monospace,monospace;
+      color:#2a3a4a;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      pointer-events:none;
+      user-select:none;
+    }
   </style>
 </head>
 <body>
   <section id="orb-name">VOID</section>
-  <section id="status">◉</section>
+  <section id="status">O<div id="model-badge"></div></section>
   <section id="ui"><span id="ui-label">Neural Core</span><span class="dots" id="ui-dots"></span></section>
   <button id="mic" hidden aria-label="microphone"></button>
 
-  <section id="arrow-left" class="arrow"><span>‹</span></section>
-  <section id="arrow-right" class="arrow"><span>›</span></section>
+  <section id="arrow-left" class="arrow"><span>&lt;</span></section>
+  <section id="arrow-right" class="arrow"><span>&gt;</span></section>
 
-  <section id="input-field"><input type="text" placeholder="SPEAK" autocomplete="off" maxlength="128"></section>
+  <section id="input-field"><input type="text" placeholder="SPEAK" autocomplete="off" maxlength="1024"></section>
+
+  <div id="log" aria-live="polite" aria-label="Conversation"></div>
+
+  <button id="music-ctrl" title="Background music (click to toggle)">~</button>
+  <iframe id="dilla-frame" src="/dilla" title="RG-69 beat machine" loading="lazy"></iframe>
+
+  <div id="clear-hint">^K clear</div>
 
   <section id="overlay" role="dialog" aria-modal="true"><h2>Tap to start</h2></section>
 
@@ -203,19 +316,80 @@
     const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true});
     const orbNameEl=document.getElementById('orb-name');
     const statusEl=document.getElementById('status');
+    const modelBadge=document.getElementById('model-badge');
     const uiLabel=document.getElementById('ui-label');
     const uiDots=document.getElementById('ui-dots');
     const inputField=document.getElementById('input-field');
     const input=inputField.querySelector('input');
+    const logEl=document.getElementById('log');
     const overlay=document.getElementById('overlay');
     const arrowLeft=document.getElementById('arrow-left');
     const arrowRight=document.getElementById('arrow-right');
     const micBtn=document.getElementById('mic');
+    const musicCtrl=document.getElementById('music-ctrl');
+    const dillaFrame=document.getElementById('dilla-frame');
     const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
     const MASTER_TOKEN=window.MASTER_TOKEN||'';
     let masterSessionId=sessionStorage.getItem('master_session_id')||'';
     const COMPAT_LABEL="master or+rep";
     const TTS_BACKEND_KEY="master_tts_backend";
+
+    // -- Output log ----------------------------------------------------------
+    const MAX_LOG_LINES=120;
+    const addLog=(type,text)=>{
+      const lines=logEl.querySelectorAll('.log-line');
+      if(lines.length>=MAX_LOG_LINES) lines[0].remove();
+      const d=document.createElement('div');
+      d.className='log-line '+type;
+      if(type==='assistant'){
+        d.textContent=text;
+        const btn=document.createElement('span');
+        btn.className='copy-btn';
+        btn.textContent='[c]';
+        btn.title='Copy';
+        btn.addEventListener('click',()=>{
+          navigator.clipboard.writeText(text).then(()=>{
+            btn.classList.add('ok');
+            btn.textContent='ok';
+            setTimeout(()=>{btn.classList.remove('ok');btn.textContent='[c]';},1200);
+          }).catch(()=>{});
+        });
+        d.appendChild(btn);
+      }else{
+        d.textContent=text;
+      }
+      logEl.appendChild(d);
+      logEl.scrollTop=logEl.scrollHeight;
+    };
+
+    // -- Command history ------------------------------------------------------
+    const HIST_KEY='master_cmd_history';
+    const HIST_MAX=100;
+    let cmdHistory=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');
+    let histIdx=-1;
+    let histDraft='';
+    const pushHistory=(cmd)=>{
+      if(!cmd||cmdHistory[cmdHistory.length-1]===cmd) return;
+      cmdHistory.push(cmd);
+      if(cmdHistory.length>HIST_MAX) cmdHistory.shift();
+      localStorage.setItem(HIST_KEY,JSON.stringify(cmdHistory));
+      histIdx=-1;
+    };
+
+    // -- RG-69 background music -----------------------------------------------
+    let musicPlaying=false;
+    const toggleMusic=()=>{
+      musicPlaying=!musicPlaying;
+      musicCtrl.classList.toggle('playing',musicPlaying);
+      dillaFrame.contentWindow?.postMessage({type:musicPlaying?'play':'stop'},'*');
+    };
+    musicCtrl.addEventListener('click',e=>{e.stopPropagation();toggleMusic();});
+
+    // -- Model badge ----------------------------------------------------------
+    const setModelBadge=(model)=>{
+      if(!model) return;
+      modelBadge.textContent=model.split('/').pop().split(':')[0];
+    };
 
     let W,H,S;
     const resize=()=>{
@@ -259,7 +433,7 @@
         dataArray=new Uint8Array(analyser.frequencyBinCount);
         statusEl.classList.add('think');
       }catch(_e){
-        statusEl.textContent='○';
+        statusEl.textContent='o';
       }
     };
 
@@ -287,7 +461,7 @@
       if(!('speechSynthesis' in window)||!text) return;
       const u=new SpeechSynthesisUtterance(String(text).slice(0,500));
       u.rate=0.88;   // calm, unhurried
-      u.pitch=0.95;  // slightly lower — warm, grounded
+      u.pitch=0.95;  // slightly lower - warm, grounded
       u.volume=0.92;
       const v=pickVoice(); if(v) u.voice=v;
       u.onstart=()=>{
@@ -375,7 +549,9 @@
         }
         finalText=finalText.trim();
         if(finalText){
-          uiLabel.textContent=finalText.slice(0,60);
+          pushHistory(finalText);
+          uiLabel.textContent=finalText.slice(0,72);
+          addLog('user','> '+finalText);
           transmit(finalText);
         }
       };
@@ -405,6 +581,7 @@
         const data=await resp.json();
         repoDirtyCount=Number(data.repo_dirty_count||0);
         applyMessinessProfile();
+        if(data.model) setModelBadge(data.model);
       }catch(_e){}
     };
 
@@ -454,25 +631,51 @@
     input.addEventListener('keydown',e=>{
       if(e.key==='Enter'&&input.value.trim()){
         const msg=input.value.trim();
+        pushHistory(msg);
+        histIdx=-1;
         input.value='';
-        inputField.classList.remove('active');
-        input.blur();
+        // Keep input active so user can type next command while waiting
         statusEl.classList.remove('speak');
         statusEl.classList.add('think');
+        addLog('user','> '+msg);
         transmit(msg);
+      }else if(e.key==='ArrowUp'&&inputField.classList.contains('active')){
+        e.preventDefault();
+        if(cmdHistory.length===0) return;
+        if(histIdx===-1){histDraft=input.value;histIdx=cmdHistory.length-1;}
+        else if(histIdx>0) histIdx--;
+        input.value=cmdHistory[histIdx]||'';
+      }else if(e.key==='ArrowDown'&&inputField.classList.contains('active')){
+        e.preventDefault();
+        if(histIdx===-1) return;
+        if(histIdx<cmdHistory.length-1){histIdx++;input.value=cmdHistory[histIdx]||'';}
+        else{histIdx=-1;input.value=histDraft;}
       }
     });
 
     const pollResponse=async(attempt=0)=>{
-      if(attempt>30) return;
+      // Exponential backoff: 350ms for first 20, then 1s, then 2s - max ~5min
+      const delay=attempt<20?350:attempt<40?1000:2000;
+      const maxAttempts=200;
+      if(pollCancelled) return;
+      if(attempt>maxAttempts){
+        addLog('err','[poll timeout]');
+        isProcessing=false;
+        return;
+      }
       try{
-        const resp=await fetch("/poll",{method:"GET"});
-        if(!resp.ok) throw new Error('poll failed');
+        const resp=await fetch("/poll",{
+          method:"GET",
+          headers:MASTER_TOKEN?{"Authorization":`Bearer ${MASTER_TOKEN}`}:{}
+        });
+        if(!resp.ok) throw new Error('poll '+resp.status);
         const data=await resp.json();
         if(data&&data.text){
           const reply=String(data.text);
-          uiLabel.textContent=reply.slice(0,60);
-          // Try audio-reactive backend TTS first; fall back to Web Speech
+          uiLabel.textContent=reply.slice(0,72);
+          addLog('assistant',reply);
+          if(data.model) setModelBadge(data.model);
+          // Audio-reactive backend TTS first; fall back to Web Speech
           speakWithAudio(reply).then(ok=>{ if(!ok) speakText(reply); });
           isProcessing=false;
           for(const n of neurons){
@@ -483,11 +686,21 @@
           return;
         }
       }catch(_e){}
-      setTimeout(()=>pollResponse(attempt+1),350);
+      setTimeout(()=>pollResponse(attempt+1),delay);
+    };
+
+    let pollCancelled=false;
+    const cancelPoll=()=>{
+      if(!isProcessing) return;
+      pollCancelled=true;
+      isProcessing=false;
+      addLog('dmesg','[cancelled]');
+      uiLabel.textContent=orbStates[currentOrb].desc;
     };
 
     const transmit=async(message)=>{
       isProcessing=true;
+      pollCancelled=false;
       activeSpinner=spinnerSets[Math.floor(Math.random()*spinnerSets.length)] || spinnerFallback;
       for(const n of neurons){
         n.vx+=(Math.random()-0.5)*100;
@@ -502,7 +715,11 @@
         });
         if(resp.ok){
           const initData=await resp.json().catch(()=>({}));
-          if(initData.session_id){masterSessionId=initData.session_id;sessionStorage.setItem('master_session_id',masterSessionId);}
+          if(initData.session_id){
+            masterSessionId=initData.session_id;
+            sessionStorage.setItem('master_session_id',masterSessionId);
+            history.replaceState(null,'',location.pathname+location.search+'#'+masterSessionId);
+          }
           uiLabel.textContent='Processing...';
           pollResponse();
         }else{
@@ -519,6 +736,15 @@
       inputField.classList.add('active');
       input.focus();
     });
+
+    // Always allow typing; Escape cancels pending poll or hides input
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape'){
+        if(isProcessing){ cancelPoll(); }
+        else{ inputField.classList.remove('active'); input.blur(); input.value=''; }
+        e.preventDefault();
+      }
+    },true);
 
     const orbStates=[
       {name:"VOID",desc:"Empty potential"},{name:"SPHERE",desc:"Perfect form"},{name:"CUBE",desc:"Solid geometry"},
@@ -552,8 +778,29 @@
     arrowRight.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb+1);});
 
     window.addEventListener('keydown',e=>{
-      if(e.key==='ArrowLeft')setOrb(currentOrb-1);
-      if(e.key==='ArrowRight')setOrb(currentOrb+1);
+      if(!inputField.classList.contains('active')){
+        if(e.key==='ArrowLeft')setOrb(currentOrb-1);
+        if(e.key==='ArrowRight')setOrb(currentOrb+1);
+      }
+      // Ctrl+K - clear log and session
+      if((e.ctrlKey||e.metaKey)&&e.key==='k'){
+        e.preventDefault();
+        while(logEl.firstChild) logEl.removeChild(logEl.firstChild);
+        uiLabel.textContent=orbStates[currentOrb].desc;
+        masterSessionId='';
+        sessionStorage.removeItem('master_session_id');
+        history.replaceState(null,'',location.pathname+location.search);
+        for(const n of neurons) n.reset(currentOrb);
+      }
+    });
+
+    // Restore session from URL hash
+    const hashSession=location.hash.slice(1);
+    if(hashSession) masterSessionId=hashSession;
+
+    // dilla iframe ready - connect postMessage
+    dillaFrame.addEventListener('load',()=>{
+      if(musicPlaying) dillaFrame.contentWindow?.postMessage({type:'play'},'*');
     });
 
     const N=2000;
@@ -702,9 +949,9 @@
 
     const dotsPattern=[0,1,2,3,2,1];
     const spinnerSets=[
-      ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"],
-      ["⠁","⠂","⠄","⡀","⢀","⠠","⠐","⠈"],
-      ["▏","▎","▍","▌","▋","▊","▉","█","▉","▊","▋","▌","▍","▎"]
+      ["|","/","-","\\"],
+      [".","..","...","....","...",".."],
+      ["[   ]","[=  ]","[== ]","[===]","[ ==]","[  =]"]
     ];
     const spinnerFallback=["|","/","-","\\"];
     let activeSpinner=spinnerSets[0];
@@ -771,7 +1018,7 @@
       const proj=neurons.map(n=>n.project()).filter(Boolean);
       proj.sort((a,b)=>b.z-a.z);
 
-      // Particle palette: dark grey → mid grey → off-white → cool blue-white
+      // Particle palette: dark grey -> mid grey -> off-white -> cool blue-white
       const cols=['#2b2d33','#575c6a','#8f96a8','#dde2f0'];
       for(const p of proj){
         const thinkDark=1-Math.min(0.78,p.think*1.2);

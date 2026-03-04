@@ -169,22 +169,40 @@ module MASTER
         dmesg_log("fallback0", parent: "autonomy0", message: "#{from} -> #{to}", level: LLM_ONLY)
       end
 
-      # Log tool execution
+      # Log tool execution — visible at default trace level
       def tool(name, action, approved: nil)
         approval = if approved.nil?
                      ""
                    else
                      (approved ? ", auto" : ", manual")
                    end
-        dmesg_log("tool0", parent: "engine0", message: "#{name} #{action}#{approval}", level: ALL_EVENTS)
+        dmesg_log("tool0", parent: "engine0", message: "#{name} #{action}#{approval}", level: LLM_ONLY)
         debug("Tool", name: name, action: action, approved: approved) if structured_enabled?
       end
 
-      # Log file operation
+      # Log file operation — visible at default trace level
       def file(action, path, details = nil)
         dmesg_log("file0", parent: "engine0",
-                           message: "#{action} #{File.basename(path)}#{" (#{details})" if details}", level: ALL_EVENTS)
+                           message: "#{action} #{path}#{" (#{details})" if details}", level: LLM_ONLY)
         debug("File", action: action, path: path, details: details) if structured_enabled?
+      end
+
+      # Log reasoning step — visible at default trace level
+      # step: integer step index, thought: reasoning text, outcome: :answer/:tool/:continue
+      def reason(step, thought, outcome: :continue, tool: nil, answer: nil)
+        outcome_label = case outcome
+                        when :answer then "→ answer"
+                        when :tool   then "→ #{tool}"
+                        else "→ step #{step + 1}"
+                        end
+        msg = "#{step}: #{thought.to_s[0..80]} #{outcome_label}"
+        dmesg_log("reason0", parent: "engine0", message: msg, level: LLM_ONLY)
+      end
+
+      # Log model attempt (success or failure) — visible at default trace level
+      def model_event(model, status, details = nil)
+        msg = "#{model} #{status}#{" #{details}" if details}"
+        dmesg_log("model0", parent: "llm0", message: msg, level: LLM_ONLY)
       end
 
       # Log memory operation
