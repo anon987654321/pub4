@@ -246,6 +246,8 @@ module MASTER
       "cache" => [:show_cache_stats, true],
       "style-guides" => [:style_guides, true],
       "styleguides" => [:style_guides, true],
+      "integrations" => [:integrations, true],
+      "integration" => [:integrations, true],
       "multi-refactor" => [:multi_refactor, false],
       "mrefactor" => [:multi_refactor, false],
       "shell" => [:start_shell, true],

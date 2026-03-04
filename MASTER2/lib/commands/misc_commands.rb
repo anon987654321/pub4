@@ -142,6 +142,9 @@ module MASTER
         guides_ok = File.exist?(File.join(MASTER.root, "data", "style_guides.yml"))
         checks << { name: "Style guides catalog", ok: guides_ok }
 
+        integrations_ok = File.exist?(File.join(MASTER.root, "data", "integrations.yml"))
+        checks << { name: "Integrations catalog", ok: integrations_ok }
+
         checks.each do |c|
           status = c[:ok] ? UI.pastel.green("+") : UI.pastel.red("-")
           puts "#{status} #{c[:name]}"
@@ -256,6 +259,57 @@ module MASTER
         puts "code sections: #{summary[:code_rules]}"
         puts "run: codify export-json  (to emit machine JSON)"
         Result.ok(summary)
+      end
+
+
+      def integrations(args = nil)
+        catalog_path = File.join(MASTER.root, "data", "integrations.yml")
+        return Result.err("integration catalog missing: #{catalog_path}") unless File.exist?(catalog_path)
+
+        catalog = YAML.safe_load_file(catalog_path, symbolize_names: true) || {}
+        entries = Array(catalog[:repos])
+
+        if args.to_s.include?("sync")
+          dest = File.join(Paths.var, "integrations")
+          FileUtils.mkdir_p(dest)
+          synced = 0
+
+          entries.each do |entry|
+            repo = entry[:repo].to_s
+            next unless repo.start_with?("https://github.com/")
+
+            name = repo.split("/").last
+            path = File.join(dest, name)
+            if Dir.exist?(path)
+              system("git", "-C", path, "pull", "--ff-only", out: File::NULL, err: File::NULL)
+            else
+              system("git", "clone", "--depth", "1", repo, path, out: File::NULL, err: File::NULL)
+            end
+            synced += 1
+          end
+
+          puts "integrations: synced #{synced} repos -> #{dest}"
+          return Result.ok(synced: synced, dest: dest)
+        end
+
+        puts "Integration Catalog:"
+        puts "  profile: #{catalog[:profile]}" if catalog[:profile]
+        puts "  updated_at: #{catalog[:updated_at]}" if catalog[:updated_at]
+        puts
+
+        entries.each_with_index do |entry, idx|
+          puts "#{idx + 1}. #{entry[:name]}"
+          puts "   repo: #{entry[:repo]}"
+          puts "   fit: #{entry[:fit]}" if entry[:fit]
+          puts "   category: #{entry[:category]}" if entry[:category]
+          puts "   stars: #{entry[:stars]}" if entry[:stars]
+          puts
+        end
+
+        puts "Run: integrations sync  (clone/update all integration repos to var/integrations)"
+        Result.ok(total: entries.size)
+      rescue StandardError => e
+        Result.err("integrations failed: #{e.message}")
       end
 
       def style_guides(args = nil)

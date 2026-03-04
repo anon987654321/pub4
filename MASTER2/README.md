@@ -90,6 +90,7 @@ model <name>          switch model
 models                list available models
 health                system health check
 status                constitutional alignment
+integrations [sync]  OpenClaw/Telegram/local-AI repo pack
 help                  full command list
 ```
 
@@ -105,6 +106,16 @@ gpt-5.2 (Replicate)
 ```
 
 Credit exhaustion opens paid circuits only — free models always reachable.
+
+## Provider topology
+
+MASTER2 does **not** require three independent multi-LLM gateways in parallel:
+
+- **Replicate**: primary for multimodal generation and many hosted model endpoints.
+- **OpenRouter**: broad model access and free-model fallback lane.
+- **LiteLLM (optional integration)**: router/control-plane layer that can sit in front of providers; it is not itself a model provider.
+
+Recommended default: keep Replicate + OpenRouter active, add LiteLLM only when you want centralized retry/fallback policy across multiple backends.
 
 ## Web UI
 
