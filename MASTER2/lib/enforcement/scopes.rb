@@ -2,10 +2,9 @@
 
 module MASTER
   module Enforcement
-    class Scopes
-    REQUIRED_FRAMEWORK_KEYS = %w[name version].freeze
+    module Scopes
+      REQUIRED_FRAMEWORK_KEYS = %w[name version].freeze
 
-    class << self
       def check_lines(subject, violations = [])
         each_scope(subject, :lines) { |value, path| validate_lines(value, path, violations) }
         violations
@@ -103,6 +102,5 @@ module MASTER
         end
       end
     end
-  end
   end
 end
