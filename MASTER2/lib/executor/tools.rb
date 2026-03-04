@@ -8,56 +8,42 @@ module MASTER
   module ToolDispatch
     extend self
 
+    TOOL_ACTION_MATCHERS = [
+      [/^ask_llm\s+["']?(.+?)["']?\s*$/i, ->(m) { [:ask_llm, [m[1]]] }],
+      [/^web_search\s+["']?([^"']+)["']?/i, ->(m) { [:web_search, [m[1]]] }],
+      [%r{^browse_page\s+["']?(https?://[^\s"']+)["']?}i, ->(m) { [:browse_page, [m[1]]] }],
+      [/^file_read\s+["']?([^"'\n]+)["']?/i, ->(m) { [:file_read, [m[1].strip]] }],
+      [/^file_write\s+["']?([^"'\n]+)["']?\s+["']?(.+)["']?/mi, ->(m) { [:file_write, [m[1].strip, m[2]]] }],
+      [/^analyze_code\s+["']?([^"'\n]+)["']?/i, ->(m) { [:analyze_code, [m[1].strip]] }],
+      [/^fix_code\s+["']?([^"'\n]+)["']?/i, ->(m) { [:fix_code, [m[1].strip]] }],
+      [/^shell_command\s+["']?([^"'\n]+)["']?/i, ->(m) { [:shell_command, [m[1]]] }],
+      [/^code_execution.*```(\w*)?\n(.+?)```/mi, ->(m) { [:code_execution, [m[2]]] }],
+      [/^council_review\s+["']?(.+?)["']?\s*$/i, ->(m) { [:council_review, [m[1]]] }],
+      [/^memory_search\s+["']?([^"']+)["']?/i, ->(m) { [:memory_search, [m[1]]] }],
+      [/^self_test/i, ->(_m) { [:self_test, []] }],
+      [/^who_requires\s+["']?([^"'\n]+)["']?/i, ->(m) { [:who_requires, [m[1].strip]] }],
+    ].freeze
+
     def dispatch_action(action_str)
       # Sanitize input before processing
       action_str = sanitize_tool_input(action_str)
       return action_str if action_str.start_with?("BLOCKED:")
 
-      case action_str
-      when /^ask_llm\s+["']?(.+?)["']?\s*$/i
-        ask_llm(::Regexp.last_match(1))
+      method_name, args = parse_tool_action(action_str)
+      return "Unknown tool. Available: #{TOOLS.keys.join(', ')}" unless method_name
 
-      when /^web_search\s+["']?([^"']+)["']?/i
-        web_search(::Regexp.last_match(1))
-
-      when %r{^browse_page\s+["']?(https?://[^\s"']+)["']?}i
-        browse_page(::Regexp.last_match(1))
-
-      when /^file_read\s+["']?([^"'\n]+)["']?/i
-        file_read(::Regexp.last_match(1).strip)
-
-      when /^file_write\s+["']?([^"'\n]+)["']?\s+["']?(.+)["']?/mi
-        file_write(::Regexp.last_match(1).strip, ::Regexp.last_match(2))
-
-      when /^analyze_code\s+["']?([^"'\n]+)["']?/i
-        analyze_code(::Regexp.last_match(1).strip)
-
-      when /^fix_code\s+["']?([^"'\n]+)["']?/i
-        fix_code(::Regexp.last_match(1).strip)
-
-      when /^shell_command\s+["']?([^"'\n]+)["']?/i
-        shell_command(::Regexp.last_match(1))
-
-      when /^code_execution.*```(\w*)?\n(.+?)```/mi
-        code_execution(::Regexp.last_match(2))
-
-      when /^council_review\s+["']?(.+?)["']?\s*$/i
-        council_review(::Regexp.last_match(1))
-
-      when /^memory_search\s+["']?([^"']+)["']?/i
-        memory_search(::Regexp.last_match(1))
-
-      when /^self_test/i
-        self_test
-
-      when /^who_requires\s+["']?([^"'\n]+)["']?/i
-        who_requires(::Regexp.last_match(1).strip)
-
-      else
-        "Unknown tool. Available: #{TOOLS.keys.join(', ')}"
-      end
+      public_send(method_name, *args)
     rescue StandardError => e
       "Tool error: #{e.message}"
+    end
+
+    def parse_tool_action(action_str)
+      TOOL_ACTION_MATCHERS.each do |pattern, extractor|
+        match = pattern.match(action_str)
+        return extractor.call(match) if match
+      end
+
+      [nil, []]
     end
 
     # Tool implementations
