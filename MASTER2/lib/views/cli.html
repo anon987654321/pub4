@@ -460,9 +460,13 @@
     const speakText=text=>{
       if(!('speechSynthesis' in window)||!text) return;
       const u=new SpeechSynthesisUtterance(String(text).slice(0,500));
-      u.rate=0.88;   // calm, unhurried
-      u.pitch=0.95;  // slightly lower — warm, grounded
-      u.volume=0.92;
+      const raw=String(text);
+      const clauseCount=Math.max(1,(raw.match(/[,:;—-]/g)||[]).length);
+      const sentenceCount=Math.max(1,(raw.match(/[.!?]/g)||[]).length);
+      // slower + deeper baseline, with light creative modulation by punctuation density
+      u.rate=Math.max(0.66,0.82-(clauseCount*0.008));
+      u.pitch=Math.max(0.56,0.76-(sentenceCount*0.01));
+      u.volume=0.9;
       const v=pickVoice(); if(v) u.voice=v;
       u.onstart=()=>{
         isSpeaking=true;
