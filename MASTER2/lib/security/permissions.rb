@@ -49,7 +49,9 @@ module MASTER
 
       # Safe shell commands allowed in :analyze and :refactor tiers
       SAFE_SHELL_PREFIXES = %w[
-        ruby\ -c ruby\ -e bundle\ exec git\ status git\ log git\ diff
+        ruby\ -c ruby\ -e bundle\ exec
+        zsh git\ status git\ log git\ diff git\ show git\ branch git\ checkout git\ switch git\ restore git\ add git\ commit git\ fetch git\ pull git\ push git\ clone
+        gh\ auth gh\ repo gh\ pr gh\ issue gh\ workflow
         cat\ lib head\ lib grep find\ . ls wc\ -l rubocop
       ].freeze
 

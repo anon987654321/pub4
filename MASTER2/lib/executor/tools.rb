@@ -55,11 +55,24 @@ module MASTER
 
     def web_search(query)
       if defined?(Web)
-        result = Web.browse("https://duckduckgo.com/html/?q=#{URI.encode_www_form_component(query)}")
+        search_query = prioritize_research_domains(query)
+        result = Web.browse("https://duckduckgo.com/html/?q=#{URI.encode_www_form_component(search_query)}")
         result.ok? ? result.value[:content] : "Search failed: #{result.error}"
       else
         "Web module not available"
       end
+    end
+
+    def prioritize_research_domains(query)
+      normalized = query.to_s.strip
+      return normalized if normalized.empty?
+
+      already_scoped = normalized.match?(/\bsite:\s*(github\.com|ar5iv\.org)\b/i) ||
+                       normalized.match?(/\bgithub\b/i) ||
+                       normalized.match?(/\bar5iv\b/i)
+      return normalized if already_scoped
+
+      "#{normalized} (site:github.com OR site:ar5iv.org)"
     end
 
     def browse_page(url)
