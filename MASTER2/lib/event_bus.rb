@@ -3,46 +3,81 @@
 require "set"
 
 class EventBus
+  Subscriber = Struct.new(:owner, :handler)
+
+  class << self
+    def subscribe(event, listener = nil, subscriber: nil, &block)
+      instance.subscribe(event, listener, subscriber: subscriber, &block)
+    end
+
+    def unsubscribe(subscriber)
+      instance.unsubscribe(subscriber)
+    end
+
+    def publish(event, payload = nil)
+      instance.publish(event, payload)
+    end
+
+    def clear!
+      instance.clear!
+    end
+
+    def registered
+      instance.registered
+    end
+
+    private
+
+    def instance
+      @instance ||= new
+    end
+  end
+
   def initialize
     @subscribers = Hash.new { |h, k| h[k] = Set.new }
     @mutex = Mutex.new
   end
 
-  def subscribe(event, listener = nil, &block)
+  def subscribe(event, listener = nil, subscriber: nil, &block)
     callable = listener || block
     raise ArgumentError, "listener or block required" unless callable
 
     @mutex.synchronize do
-      @subscribers[event.to_sym].add(callable)
+      @subscribers[event.to_sym].add(Subscriber.new(subscriber, callable))
     end
 
     callable
   end
 
-  def unsubscribe(event, listener)
-    return unless listener
+  def unsubscribe(subscriber)
+    return unless subscriber
 
     @mutex.synchronize do
-      @subscribers[event.to_sym].delete(listener)
-      @subscribers.delete(event.to_sym) if @subscribers[event.to_sym].empty?
+      @subscribers.each_value { |listeners| listeners.delete_if { |entry| entry.owner == subscriber } }
+      @subscribers.delete_if { |_event, listeners| listeners.empty? }
     end
 
-    listener
+    subscriber
   end
 
   def publish(event, payload = nil)
-    listeners = listeners_for(event)
-    return if listeners.empty?
-
-    listeners.each do |listener|
+    listeners_for(event).each do |entry|
       begin
-        listener.call(payload)
-      rescue StandardError => e
-        handle_error(e, event, listener, payload)
+        entry.handler.call(payload)
+      rescue StandardError
+        # swallow handler errors to avoid disrupting callers
       end
     end
 
     nil
+  end
+
+  def clear!
+    @mutex.synchronize { @subscribers.clear }
+  end
+
+  def registered
+    @mutex.synchronize { @subscribers.keys }
   end
 
   private
@@ -51,9 +86,5 @@ class EventBus
     @mutex.synchronize do
       @subscribers[event.to_sym].to_a
     end
-  end
-
-  def handle_error(error, event, listener, payload)
-    raise error
   end
 end
