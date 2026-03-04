@@ -1,0 +1,28 @@
+<header class="site-header">
+  <div class="container">
+    <nav class="nav-main" role="navigation" aria-label="Main navigation">
+      <div class="nav-brand">
+        <%= link_to root_path, class: "logo-link" do %>
+          <span class="logo"><%= @app_name || "App" %></span>
+          <% if defined?(ActsAsTenant) && ActsAsTenant.current_tenant %>
+            <span class="tenant"><%= ActsAsTenant.current_tenant.name %></span>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="nav-links">
+        <%= yield :nav_links if content_for?(:nav_links) %>
+        
+        <% if defined?(user_signed_in?) && user_signed_in? %>
+          <span class="nav-user"><%= current_user.email %></span>
+          <%= button_to "Sign Out", destroy_user_session_path, method: :delete, class: "nav-link" %>
+        <% elsif defined?(current_user) && current_user %>
+          <span class="nav-user"><%= current_user.email %></span>
+          <%= link_to "Sign Out", destroy_session_path, method: :delete, class: "nav-link" %>
+        <% else %>
+          <%= link_to "Sign In", new_session_path, class: "nav-link" if defined?(new_session_path) %>
+        <% end %>
+      </div>
+    </nav>
+  </div>
+</header>

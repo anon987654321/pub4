@@ -1,0 +1,14 @@
+<footer class="site-footer">
+  <div class="container">
+    <% if content_for?(:footer_content) %>
+      <%= yield :footer_content %>
+    <% else %>
+      <p class="footer-text">
+        &copy; <%= Time.current.year rescue Time.now.year %> <%= @app_name || "App" %>.
+        <%= link_to "Privacy", "#", class: "footer-link" %> &middot;
+        <%= link_to "Terms", "#", class: "footer-link" %> &middot;
+        <%= link_to "About", "#", class: "footer-link" %>
+      </p>
+    <% end %>
+  </div>
+</footer>
