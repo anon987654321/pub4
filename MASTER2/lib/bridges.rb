@@ -25,7 +25,15 @@ module MASTER
   end
 
   # Backward compatibility aliases
-  PostproBridge = Bridges::PostproBridge
-  ReplicateBridge = Bridges::ReplicateBridge
-  RepligenBridge = Bridges::RepligenBridge
+  PostproBridge = Bridges::PostproBridge if Bridges.const_defined?(:PostproBridge, false)
+  ReplicateBridge = if Bridges.const_defined?(:ReplicateBridge, false)
+                      Bridges::ReplicateBridge
+                    elsif Bridges.const_defined?(:RepligenBridge, false)
+                      Bridges::RepligenBridge
+                    end
+  RepligenBridge = if Bridges.const_defined?(:RepligenBridge, false)
+                     Bridges::RepligenBridge
+                   elsif Bridges.const_defined?(:ReplicateBridge, false)
+                     Bridges::ReplicateBridge
+                   end
 end
