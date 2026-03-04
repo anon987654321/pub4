@@ -28,7 +28,7 @@ module MASTER
 
     class << self
       attr_accessor :current_model, :persona_prompt
-      attr_reader :forced_model
+      attr_reader :forced_model, :forced_tier
 
       # Tier setter for compatibility
       def tier=(value)
