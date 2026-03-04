@@ -33,6 +33,7 @@ module MASTER
       radio: "highpass=f=300,lowpass=f=3000,acompressor=threshold=0.1:ratio=8",
       underwater: "asetrate=44100*0.6,atempo=1.6,lowpass=f=800,chorus=0.5:0.9:50:0.4:0.25:2",
       ghost: "asetrate=44100*0.75,atempo=1.33,areverse,aecho=0.8:0.88:60:0.4,areverse",
+      velvet: "asetrate=44100*0.84,atempo=1.19,bass=g=9,acompressor=threshold=0.085:ratio=9,chorus=0.45:0.9:32:0.25:0.2:1.6",
     }.freeze
 
     # Voice styles (rate/pitch adjustments for Edge)
@@ -46,6 +47,8 @@ module MASTER
       calm: { rate: "-10%", pitch: "-20Hz" }.freeze,
       whisper: { rate: "-15%", pitch: "-30Hz" }.freeze,
       urgent: { rate: "+30%", pitch: "+20Hz" }.freeze,
+      deep: { rate: "-30%", pitch: "-140Hz" }.freeze,
+      cinematic: { rate: "-22%", pitch: "-95Hz" }.freeze,
     }.freeze
 
     # Piper voice presets (length_scale/noise_scale)
@@ -69,6 +72,7 @@ module MASTER
       davis: "en-US-DavisNeural",
       sonia: "en-GB-SoniaNeural",
       ryan: "en-GB-RyanNeural",
+      osman: "ms-MY-OsmanNeural",
       finn: "nb-NO-FinnNeural",
       pernille: "nb-NO-PernilleNeural",
     }.freeze

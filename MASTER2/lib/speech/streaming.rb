@@ -7,7 +7,7 @@ module MASTER
       module_function
 
       # Stream with real-time FFmpeg effects (requires edge-tts + ffmpeg)
-      def stream(text, effect: :dark, voice: :guy, rate: "-25%", pitch: "-25Hz")
+      def stream(text, effect: :velvet, voice: :osman, rate: "-32%", pitch: "-120Hz")
         python = Utils.find_python
         return Result.err("Python not found.") unless python
         return Result.err("edge-tts not installed.") unless Utils.edge_installed?
@@ -46,6 +46,11 @@ module MASTER
       # Demon mode (maximum darkness effect)
       def demon(text)
         stream(text, effect: :demon, rate: "-35%", pitch: "-35Hz")
+      end
+
+      # Deep conversational mode (slow, low, creatively modulated)
+      def deep(text)
+        stream(text, effect: :velvet, voice: :osman, rate: "-34%", pitch: "-130Hz")
       end
 
       # Continuous chatter mode (for Windows background talking)
