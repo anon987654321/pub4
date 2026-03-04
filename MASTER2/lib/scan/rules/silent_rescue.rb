@@ -1,41 +1,101 @@
 # frozen_string_literal: true
 
-module MASTER
-  module Scan
-    module Rules
-      # SilentRescue -- flags rescue blocks that swallow exceptions without logging.
-      # A rescue that returns only nil/next/{}/[] with no Logging.* call is a silent swallow.
-      module SilentRescue
-        include Scan::Rule
+class Scan::Rules::SilentRescue
+  MESSAGE = "Silent rescue detected".freeze
 
-        # Matches rescue blocks whose bodies contain no Logging call and
-        # only return a neutral value (nil, {}, [], next, empty string).
-        SILENT_BODY = /rescue(?:\s+\w[\w:]*(?:\s*=>\s*\w+)?)?\s*\n\s*(?:nil|next|\{\}|\[\]|""|'')\s*\n/m
+  RESCUE_BLOCK_START = /^\s*rescue\b/.freeze
+  RESCUE_MODIFIER = /\brescue\b/.freeze
+  COMMENT_ONLY = /\A\s*(#.*)?\z/.freeze
+  END_LIKE = /\A\s*(end|ensure|else|rescue)\b/.freeze
 
-        def self.check(code, path: nil)
-          findings = []
-          # Line-by-line: flag any `rescue` line not followed by Logging within 3 lines
-          lines = code.lines
-          lines.each_with_index do |line, idx|
-            next unless line.match?(/^\s*rescue\b/)
+  def check(file, *_args)
+    source = extract_source(file)
+    return [] if source.nil? || source.empty?
 
-            window = lines[idx + 1, 3].join
-            next if window.match?(/Logging\.|raise\b|warn\b|log\b/)
-            next if window.match?(/\S/) && !window.match?(/\A\s*(?:nil|next|\{\}|\[\]|""|''|\})\s*\z/m)
+    lines = source.lines
+    findings = []
+    findings.concat(find_silent_rescue_blocks(lines, file))
+    findings.concat(find_modifier_rescues(lines, file))
+    findings
+  end
 
-            findings << {
-              rule:      :silent_rescue,
-              name:      :silent_rescue,
-              message:   "rescue with no Logging call -- exception swallowed silently",
-              line:      idx + 1,
-              severity:  :minor,
-              autofix:   false,
-              principle: nil,
-            }
-          end
-          findings
-        end
-      end
+  private
+
+  def extract_source(file)
+    return file if file.is_a?(String)
+    return file.source if file.respond_to?(:source)
+    return file.content if file.respond_to?(:content)
+    return file.read if file.respond_to?(:read)
+
+    nil
+  end
+
+  def find_silent_rescue_blocks(lines, file)
+    findings = []
+
+    lines.each_with_index do |line, idx|
+      next unless line.match?(RESCUE_BLOCK_START)
+      next unless silent_rescue_line?(line)
+      next unless rescue_body_empty?(lines, idx)
+
+      findings << build_finding(file, idx + 1)
     end
+
+    findings
+  end
+
+  def silent_rescue_line?(line)
+    code = strip_inline_comment(line).strip
+    return false unless code.start_with?("rescue")
+
+    after = code.sub(/\Arescue\b/, "").strip
+    after.empty? || after.match?(COMMENT_ONLY)
+  end
+
+  def rescue_body_empty?(lines, rescue_idx)
+    i = rescue_idx + 1
+    i += 1 while i < lines.length && blank_or_comment?(lines[i])
+    i >= lines.length || lines[i].match?(END_LIKE)
+  end
+
+  def find_modifier_rescues(lines, file)
+    findings = []
+
+    lines.each_with_index do |line, idx|
+      next unless line.match?(RESCUE_MODIFIER)
+      next if line.lstrip.start_with?("rescue")
+      next unless modifier_rescue_silent?(line)
+
+      findings << build_finding(file, idx + 1)
+    end
+
+    findings
+  end
+
+  def modifier_rescue_silent?(line)
+    stripped = strip_inline_comment(line)
+    parts = stripped.split(/\brescue\b/, 2)
+    return false if parts.length < 2
+
+    rhs = parts.last.to_s.strip
+    rhs.empty? || rhs == "nil"
+  end
+
+  def strip_inline_comment(line)
+    line.sub(/\s+#.*\z/, "")
+  end
+
+  def blank_or_comment?(line)
+    line.strip.empty? || line.lstrip.start_with?("#")
+  end
+
+  def build_finding(file, line_no)
+    path = if file.respond_to?(:path)
+             file.path
+           elsif file.respond_to?(:filename)
+             file.filename
+           end
+
+    { rule: self.class.name, message: MESSAGE, path: path, line: line_no }
   end
 end
