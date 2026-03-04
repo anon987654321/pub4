@@ -1,647 +1,229 @@
 # frozen_string_literal: true
 
-require "shellwords"
+require "time"
 
-module MASTER
-  module Commands
-    # Code analysis and refactoring commands
-    module CodeCommands
-      REFACTOR_USAGE = "Usage: autofix <file> [-p|--preview|-r|--raw|-a|--apply]"
+module Commands
+  class CodeCommands
+    TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+    DEFAULT_CANDIDATE_LIMIT = 10
+    MAX_PATCH_BYTES = 150_000
+    UI_QUOTE_LEFT = "“"
+    UI_QUOTE_RIGHT = "”"
+    UI_EM_DASH = "—"
+    UI_ELLIPSIS = "…"
 
-      def autofix(args)
-        target = parse_refactor_target(args)
-        return Result.err(target[:error]) if target[:error]
+    def scan_code(args:, current_user:, now: Time.now.utc)
+      arg_string = args.to_s.strip
+      return failure(message: "Missing scan target#{UI_ELLIPSIS}") if arg_string.empty?
 
-        mode = target[:mode]
+      target = parse_refactor_target(arg_string: arg_string)
+      return failure(message: "Unknown scan target #{UI_QUOTE_LEFT}#{arg_string}#{UI_QUOTE_RIGHT}") unless target
 
-        case target[:type]
-        when :snippet
-          return autofix_snippet(target[:snippet], mode)
-        when :directory
-          return autofix_directory(target[:path], mode)
-        end
-
-        file = target[:path]
-
-        path = File.expand_path(file)
-        return Result.err("File not found: #{file}") unless File.exist?(path)
-
-        original_code = File.read(path)
-
-        bugs_found, _, pattern_matches = run_bug_hunting(original_code, file)
-        critical_count = run_constitutional_validation(original_code, file)
-        learned_issues = run_learnings_check(original_code)
-        smells = run_smell_detection(original_code, file)
-
-        total_issues = bugs_found + critical_count + learned_issues.size + smells.size
-
-        if total_issues == 0
-          puts "\nFile is clean! No refactoring needed."
-          return Result.ok({ message: "No issues found" })
-        end
-
-        print_refactor_summary(bugs_found, critical_count, learned_issues, smells, total_issues)
-        mode = :apply if mode == :preview
-        puts "\nAuto mode: applying fixes for all detected violations."
-
-        result = generate_and_apply_fixes(path, original_code, mode)
-        record_refactor_learnings(file, original_code, result, bugs_found, pattern_matches)
-        result
-      end
-      alias refactor autofix
-
-      def chamber(file)
-        ExecutionContext.current_depth = :own
-        return Result.err("Usage: chamber <file>") if file.nil? || file.strip.empty?
-
-        # Council deliberation first, then autofix if approved
-        review = MASTER::Council.council_review(file, model: LLM.current_model)
-        if review[:vetoed_by]&.any?
-          puts UI.dim("council: vetoed by #{review[:vetoed_by].join(', ')}")
-          return Result.err("Chamber vetoed: #{review[:verdict]}")
-        end
-        puts UI.dim("council: #{review[:verdict]&.slice(0, 120)}")
-        autofix(file)
-      ensure
-        ExecutionContext.current_depth = :shallow
+      scan = nil
+      begin
+        scan = CodeScanService.call(target: target, requested_by: current_user, requested_at: now)
+      rescue StandardError => e
+        Logging.warn("scan_code failed#{UI_EM_DASH}target=#{arg_string} error=#{e.class}: #{e.message}")
+        return failure(message: "Scan failed#{UI_ELLIPSIS}")
       end
 
-      def evolve(args)
-        path, use_model = parse_evolve_args(args)
-        LLM.use_model(use_model) if use_model && LLM.respond_to?(:use_model)
+      success(
+        message: "Scan queued#{UI_EM_DASH}#{target.label} at #{now.strftime(TIMESTAMP_FORMAT)}",
+        payload: { scan_id: scan.id, target: target.label }
+      )
+    end
 
-        unless LLM.configured?
-          puts UI.warn("evolve: no LLM configured -- set OPENROUTER_API_KEY or REPLICATE_API_TOKEN")
-          return Result.err("no LLM configured")
-        end
+    def opportunities(args:, current_user:)
+      arg_string = args.to_s.strip
+      return failure(message: "Missing target#{UI_ELLIPSIS}") if arg_string.empty?
 
-        ExecutionContext.current_depth = :own
-        evolver = Evolve.new
-        result = evolver.run(path: path, dry_run: true)
+      target = parse_refactor_target(arg_string: arg_string)
+      return failure(message: "Unknown target #{UI_QUOTE_LEFT}#{arg_string}#{UI_QUOTE_RIGHT}") unless target
 
-        if result.is_a?(Hash) && result[:error]&.match?(/Insufficient credits|all models failed/i)
-          puts UI.warn("evolve: #{result[:error]}")
-          puts UI.dim("  Add credits: https://openrouter.ai/settings/credits")
-          return Result.err(result[:error])
-        end
-
-        UI.header("Evolution Analysis (dry run)")
-        puts [
-          "  Files processed: #{result[:files_processed]}",
-          "  Improvements found: #{result[:improvements]}",
-          "  Cost: #{UI.currency_precise(result[:cost])}",
-        ].join("\n")
-        puts
-
-        Result.ok(result)
+      findings = nil
+      begin
+        findings = OpportunityFinder.call(target: target, requested_by: current_user)
+      rescue StandardError => e
+        Logging.warn("opportunities failed#{UI_EM_DASH}target=#{arg_string} error=#{e.class}: #{e.message}")
+        return failure(message: "Couldn’t load opportunities#{UI_ELLIPSIS}")
       end
 
-      def opportunities(path)
-        path ||= MASTER.root
-        Prescan.run(path) if File.directory?(path) && defined?(Prescan)
-        UI.header("Analyzing for opportunities")
-        puts "  Path: #{path}"
-        puts "  This may take a moment...\n\n"
+      success(
+        message: "Found #{findings.size} opportunities#{UI_ELLIPSIS}",
+        payload: { target: target.label, opportunities: findings }
+      )
+    end
 
-        result = CodeReview.opportunities(path)
-        if result.err?
-          puts "  Error: #{result.error}"
-          return result
-        end
+    def autofix(args:, current_user:, candidate_limit: DEFAULT_CANDIDATE_LIMIT)
+      arg_string = args.to_s.strip
+      return failure(message: "Missing target#{UI_ELLIPSIS}") if arg_string.empty?
 
-        categories = result.value
-        %i[architectural micro micro_refinement ui_ux typography].each do |cat|
-          items = categories[cat] || []
-          next if items.empty?
+      target = parse_refactor_target(arg_string: arg_string)
+      return failure(message: "Unknown target #{UI_QUOTE_LEFT}#{arg_string}#{UI_QUOTE_RIGHT}") unless target
 
-          puts "  #{cat.to_s.gsub('_', ' ').upcase} (#{items.size})"
-          items.first(5).each { |item| puts "    * #{item[:description] || item}" }
-          puts
-        end
-
-        result
+      begin
+        candidates = FixCandidateGenerator.call(target: target, requested_by: current_user).first(candidate_limit)
+      rescue StandardError => e
+        Logging.warn("autofix candidate generation failed#{UI_EM_DASH}target=#{arg_string} error=#{e.class}: #{e.message}")
+        return failure(message: "Couldn’t generate fixes#{UI_ELLIPSIS}")
       end
 
-      def print_axiom_stats
-        summary = Review::AxiomStats.summary
-        puts
-        puts summary
-        puts
+      best_fix = best_candidate_fix(
+        candidates: candidates,
+        target: target,
+        requested_by: current_user
+      )
+      return failure(message: "No safe fix found#{UI_ELLIPSIS}") unless best_fix
+
+      applied = nil
+      begin
+        applied = FixApplier.call(fix: best_fix, requested_by: current_user)
+      rescue StandardError => e
+        Logging.warn("autofix apply failed#{UI_EM_DASH}target=#{target.label} error=#{e.class}: #{e.message}")
+        return failure(message: "Fix failed to apply#{UI_ELLIPSIS}")
       end
 
-      def print_language_axioms(_args)
-        axioms = DB.axioms
-        if axioms.empty?
-          puts "\n  No language axioms found.\n"
-          return
-        end
+      success(
+        message: "Applied fix#{UI_EM_DASH}#{applied.summary}",
+        payload: { target: target.label, fix_id: applied.id }
+      )
+    end
 
-        UI.header("Language Axioms")
-        axioms.each do |axiom|
-          name = axiom[:name] || axiom["name"] || "unnamed"
-          desc = axiom[:description] || axiom["description"] || ""
-          puts "  #{name.ljust(20)} #{desc[0, 50]}"
+    def evolve(args:, current_user:, iterations: 3)
+      arg_string = args.to_s.strip
+      return failure(message: "Missing target#{UI_ELLIPSIS}") if arg_string.empty?
+      return failure(message: "Iterations must be > 0") unless iterations.to_i.positive?
+
+      target = parse_refactor_target(arg_string: arg_string)
+      return failure(message: "Unknown target #{UI_QUOTE_LEFT}#{arg_string}#{UI_QUOTE_RIGHT}") unless target
+
+      results = []
+      iterations.to_i.times do |i|
+        run = nil
+        begin
+          run = EvolutionRunner.call(target: target, requested_by: current_user, iteration: i + 1)
+        rescue StandardError => e
+          Logging.warn("evolve failed#{UI_EM_DASH}target=#{target.label} iteration=#{i + 1} error=#{e.class}: #{e.message}")
+          return failure(message: "Evolution failed on iteration #{i + 1}#{UI_ELLIPSIS}", payload: { results: results })
         end
-        puts
+        results << run
       end
 
-      # Manual deep-dive bug analysis
-      # Legacy aliases — delegate to unified scan_code
-      def hunt_bugs(args)    = scan_code("#{args} --hunt")
-      def critique_code(args) = scan_code("#{args} --critique")
-      def detect_conflicts    = scan_code("--critique")
+      success(
+        message: "Evolution complete#{UI_EM_DASH}#{results.size} iterations",
+        payload: { target: target.label, results: results }
+      )
+    end
 
-      # Show what learnings would apply to this code
-      def show_learnings(args)
-        return puts "Usage: learn <file>" unless args
+    def print_deps(args:, current_user:)
+      arg_string = args.to_s.strip
+      return failure(message: "Missing target#{UI_ELLIPSIS}") if arg_string.empty?
 
-        file = args.strip
-        path = File.expand_path(file)
-        return puts "File not found: #{file}" unless File.exist?(path)
+      target = parse_refactor_target(arg_string: arg_string)
+      return failure(message: "Unknown target #{UI_QUOTE_LEFT}#{arg_string}#{UI_QUOTE_RIGHT}") unless target
 
-        code = File.read(path)
-        issues = Learnings.apply_to(code)
-
-        if issues.empty?
-          puts "No learned patterns match this code"
-        else
-          puts "Matched Patterns:"
-          issues.each do |issue|
-            puts "\n#{issue[:severity].to_s.upcase}: #{issue[:description]}"
-            puts "Learning ID: #{issue[:learning_id]}"
-          end
-        end
+      deps = nil
+      begin
+        deps = DependencyGraphService.call(target: target, requested_by: current_user)
+      rescue StandardError => e
+        Logging.warn("print_deps failed#{UI_EM_DASH}target=#{target.label} error=#{e.class}: #{e.message}")
+        return failure(message: "Couldn’t compute dependencies#{UI_ELLIPSIS}")
       end
 
-      def scan_code(args)
-        tokens = args.to_s.split
-        depth  = if tokens.delete("--hunt")     then :hunt
-                 elsif tokens.delete("--critique") then :critique
-                 else :standard
-                 end
-        raw_path = tokens.reject { |t| t.start_with?("--") }.first
-        path = raw_path.nil? || raw_path.empty? ? MASTER.root : File.expand_path(raw_path)
+      success(
+        message: "Dependencies ready#{UI_ELLIPSIS}",
+        payload: { target: target.label, dependency_graph: deps }
+      )
+    end
 
-        unless File.exist?(path)
-          puts "Path not found: #{path}"
-          return Result.err("Path not found: #{path}")
-        end
+    def run_converge(args:, current_user:)
+      arg_string = args.to_s.strip
+      return failure(message: "Missing target#{UI_ELLIPSIS}") if arg_string.empty?
 
-        state_path = Paths.var_file("scan_state.json")
+      target = parse_refactor_target(arg_string: arg_string)
+      return failure(message: "Unknown target #{UI_QUOTE_LEFT}#{arg_string}#{UI_QUOTE_RIGHT}") unless target
 
-        if depth == :standard && raw_path.nil? && File.exist?(state_path)
-          cached = JSON.parse(File.read(state_path), symbolize_names: true)
-          age = ((Time.now - Time.parse(cached[:scanned_at])) / 60).round
-          puts "Last scan: #{cached[:scanned_at]} (#{age}m ago)"
-          puts "  Issues: #{cached[:total_issues]}  autofix: #{cached[:autofix_eligible]}  files: #{cached[:files]}"
-          puts "  Pass 'scan .' to re-scan"
-          return Result.ok(cached)
-        end
-
-        UI.header("Scanning (#{depth}): #{path}")
-        result = Scan.run(path, depth: depth)
-        display_scan_result(result, path)
-
-        state = {
-          scanned_at:        Time.now.utc.iso8601,
-          path:              path,
-          total_issues:      result[:total],
-          autofix_eligible:  result[:autofix_eligible],
-          files:             result[:files],
-        }
-        File.write(state_path, JSON.generate(state))
-        puts "  Scan state saved -> var/scan_state.json"
-
-        Result.ok(state)
+      job = nil
+      begin
+        job = ConvergeRunner.call(target: target, requested_by: current_user)
+      rescue StandardError => e
+        Logging.warn("run_converge failed#{UI_EM_DASH}target=#{target.label} error=#{e.class}: #{e.message}")
+        return failure(message: "Converge failed#{UI_ELLIPSIS}")
       end
 
-      private
+      success(
+        message: "Converge started#{UI_EM_DASH}job #{job.id}",
+        payload: { target: target.label, job_id: job.id }
+      )
+    end
 
-      # Shared Scan.run result renderer — used by hunt, critique, scan
-      def display_scan_result(result, path)
-        rel_base = "#{MASTER.root}/"
-        by_file  = result[:by_file] || {}
-        total    = result[:total].to_i
+    private
 
-        if total == 0
-          puts UI.dim("scan: clean (#{result[:files]} files)")
-          return
-        end
+    def parse_refactor_target(arg_string:)
+      parts = arg_string.split(/\s+/)
+      kind = parts.fetch(0, nil)
+      identifier = parts.fetch(1, nil)
+      return nil if kind.nil? || identifier.nil?
 
-        by_file.each do |file, findings|
-          rel = file.sub(rel_base, "")
-          findings.each { |f| puts "  #{f[:severity].to_s.upcase}  #{rel}:#{f[:line]}  #{f[:message]}" }
-        end
-        puts
-        puts "  #{result[:files]} files  #{total} findings  #{result[:autofix_eligible]} autofix-eligible"
-      end
-
-      def parse_evolve_args(args)
-        return [MASTER.root, nil] if args.nil? || args.to_s.strip.empty?
-
-        parts = args.to_s.strip.split(/\s+/)
-        model_idx = parts.index("using")
-        model = model_idx ? parts[(model_idx + 1)..].join(" ").strip : nil
-        path_parts = model_idx ? parts[0...model_idx] : parts
-        path = path_parts.empty? ? MASTER.root : File.expand_path(path_parts.join(" "))
-        [path, model&.empty? ? nil : model]
-      end
-
-      def parse_refactor_target(args)
-        usage = "#{REFACTOR_USAGE.sub('<file>', '<file|dir>')} or autofix --snippet \"<ruby code>\""
-        return { error: usage } if args.nil? || args.to_s.strip.empty?
-
-        parts = Shellwords.split(args.to_s)
-        mode = extract_mode(parts)
-        snippet_idx = parts.index("--snippet")
-
-        if snippet_idx
-          snippet = parts[(snippet_idx + 1)..]&.join(" ").to_s.strip
-          return { error: "Snippet cannot be empty." } if snippet.empty?
-
-          return { type: :snippet, snippet: snippet, mode: mode }
-        end
-
-        target = parts.find { |part| !part.start_with?("-") }
-        return { error: usage } if target.nil? || target.empty?
-
-        # Treat bare glob wildcards as cwd
-        target = Dir.pwd if target == "*" || target == "."
-
-        expanded = File.expand_path(target)
-        if File.directory?(expanded)
-          { type: :directory, path: expanded, mode: mode }
-        else
-          { type: :file, path: target, mode: mode }
-        end
-      rescue ArgumentError => err
-        { error: "Invalid arguments: #{err.message}" }
-      end
-
-      def autofix_directory(path, mode)
-        Prescan.run(path) if defined?(Prescan)
-        mr = MultiRefactor.new(
-          dry_run: mode != :apply,
-          force_rewrite: true,
-          align_axioms: true,
-          include_all_files: true,
-        )
-        mr.run(path: path)
-      end
-
-      def autofix_snippet(snippet, mode)
-        filename = "snippet.rb"
-        result = best_candidate_fix(filename, snippet)
-        return result unless result.ok?
-
-        candidate = render_output(lint_output(result.value[:final].to_s))
-        case mode
-        when :raw
-          puts candidate
-        else
-          puts DiffView.unified_diff(snippet, candidate, filename: filename)
-        end
-
-        Result.ok(final: candidate, source: :snippet)
-      end
-
-      def run_bug_hunting(code, file)
-        puts UI.bold("phase1: bug hunting...")
-        hunt_result = BugHunting.analyze(code, file_path: file)
-        pattern_matches = hunt_result.dig(:findings, :patterns, :matches) || []
-        verification_bugs = hunt_result.dig(:findings, :verification, :bugs_found) || 0
-        bugs_found = pattern_matches.size + verification_bugs
-
-        if bugs_found > 0
-          puts "bugs: #{bugs_found} found"
-          puts BugHunting.format(hunt_result)
-        else
-          puts "bugs: clean"
-        end
-        [bugs_found, hunt_result, pattern_matches]
-      end
-
-      def run_constitutional_validation(code, file)
-        puts UI.bold("phase2: constitutional validation...")
-        violations = Violations.analyze(code, path: file, llm: nil, conceptual: false)
-        critical_count = violations[:literal].count { |violation| violation[:severity] == :error }
-
-        if critical_count > 0
-          puts "#{critical_count} critical violations"
-          puts Violations.report(violations)
-        else
-          puts "violations: clean"
-        end
-        critical_count
-      end
-
-      def run_learnings_check(code)
-        puts UI.bold("phase3: checking learnings...")
-        learned_issues = Learnings.apply_to(code)
-
-        if learned_issues.any?
-          puts "Found #{learned_issues.size} known patterns:"
-          learned_issues.each { |issue| puts "  * #{issue[:description]} (#{issue[:severity]})" }
-        else
-          puts "patterns: clean"
-        end
-        learned_issues
-      end
-
-      def run_smell_detection(code, file)
-        puts UI.bold("phase4: smell detection...")
-        smells = Smells.analyze(code, file)
-
-        if smells.any?
-          puts "Found #{smells.size} code smells"
-          smells.first(5).each { |smell| puts "  * #{smell[:smell]}: #{smell[:message]}" }
-        else
-          puts "smells: clean"
-        end
-        smells
-      end
-
-      def print_refactor_summary(bugs_found, critical_count, learned_issues, smells, total_issues)
-        puts [
-          UI.bold("summary:"),
-          "  Bugs: #{bugs_found}",
-          "  Critical Violations: #{critical_count}",
-          "  Known Patterns: #{learned_issues.size}",
-          "  Code Smells: #{smells.size}",
-          "  TOTAL: #{total_issues} issues",
-        ].join("\n")
-      end
-
-      def generate_and_apply_fixes(path, original_code, mode)
-        puts UI.bold("phase5: generating fixes...")
-        result = if obvious_issue?(path, original_code)
-                   best_candidate_fix(path, original_code)
-                 else
-                   chamber = Council.new
-                   chamber.deliberate(original_code, filename: File.basename(path))
-                 end
-
-        return result unless result.ok? && result.value[:final]
-
-        proposed_code = result.value[:final]
-        council_info = result.value[:council]
-        linted = lint_output(proposed_code)
-        rendered = render_output(linted)
-
-        case mode
-        when :raw   then display_raw_output(result, rendered, council_info)
-        when :apply then apply_refactor_auto(path, original_code, rendered, result, council_info)
-        else             display_preview(path, original_code, rendered, result, council_info)
-        end
-        result
-      end
-
-      def apply_refactor_auto(path, original, proposed, result, council_info)
-        diff = DiffView.unified_diff(original, proposed, filename: File.basename(path))
-        puts "\n  Proposals: #{result.value[:proposals]&.size || 1}"
-        puts "  Cost: #{UI.currency_precise(result.value[:cost] || 0.0)}"
-        if (summary = format_council_summary(council_info))
-          puts summary
-        end
-        puts "\n#{diff}"
-
-        Undo.track_edit(path, original)
-        clean = TextHygiene.normalize(proposed, filename: path)
-        File.write(path, clean)
-        enforce_ruby_style!(path)
-        puts "  refactor: applied to #{path}"
-        puts "  (Use 'undo' command to revert)"
-      end
-
-      def enforce_ruby_style!(path)
-        return unless File.extname(path) == ".rb"
-        return unless defined?(RubocopDetector) && RubocopDetector.installed?
-
-        system("rubocop", "-A", path, out: File::NULL, err: File::NULL)
-      rescue StandardError
+      case kind.downcase
+      when "file"
+        RefactorTarget.file(path: identifier)
+      when "class"
+        RefactorTarget.klass(name: identifier)
+      when "package"
+        RefactorTarget.package(name: identifier)
+      else
         nil
       end
+    rescue StandardError => e
+      Logging.warn("parse_refactor_target failed#{UI_EM_DASH}arg=#{arg_string.inspect} error=#{e.class}: #{e.message}")
+      nil
+    end
 
-      def obvious_issue?(path, code)
-        ext = File.extname(path)
-        return true if code.match?(/[ \t]+$/) || code.include?("\r\n")
-        return true if code.match?(/\bteh\b/i) || code.match?(/\brecieve\b/i)
-        return true if code.match?(/^\s*\t+/)
-        return true if code.match?(/^\s*(binding\.pry|debugger|byebug)/)
-        return true if ext == ".rb" && !MASTER::Utils.valid_ruby?(code)
+    def best_candidate_fix(candidates:, target:, requested_by:)
+      return nil if candidates.nil? || candidates.empty?
 
-        false
-      end
-
-      def best_candidate_fix(path, original_code)
-        puts "obvious-fix: generating multiple candidates and selecting best..."
-        candidates = []
-
-        candidates << { source: :heuristic, code: heuristic_fix(original_code) }
-
-        if defined?(MASTER::Review::Fixer)
-          tmp = "#{path}.obvious_tmp"
-          begin
-            File.write(tmp, original_code)
-            fixer = MASTER::Review::Fixer.new(mode: :aggressive)
-            fixer.fix(tmp)
-            candidates << { source: :review_fixer, code: File.read(tmp) } if File.exist?(tmp)
-          ensure
-            FileUtils.rm_f(tmp)
-          end
-        end
-
-        chamber = Council.new
-        llm_result = chamber.deliberate(original_code, filename: File.basename(path))
-        if llm_result.ok? && llm_result.value[:final].to_s.strip != ""
-          candidates << {
-            source: :council,
-            code: llm_result.value[:final],
-            council: llm_result.value[:council],
-            proposals: llm_result.value[:proposals],
-            cost: llm_result.value[:cost],
-          }
-        end
-
-        scored = candidates.uniq { |candidate| candidate[:code] }.map do |candidate|
-          metrics = score_candidate(path, candidate[:code])
-          score = if defined?(DecisionEngine)
-                    DecisionEngine.score(
-                      impact: metrics[:impact],
-                      confidence: metrics[:confidence],
-                      cost: metrics[:cost],
-                    )
-                  else
-                    metrics[:fallback_score]
-                  end
-          candidate.merge(score: score)
-        end
-        best = scored.max_by { |candidate| candidate[:score] }
-        return Result.err("No viable fix candidate generated.") unless best
-
-        Result.ok(
-          final: best[:code],
-          council: best[:council],
-          proposals: best[:proposals] || [],
-          cost: best[:cost] || 0.0,
+      scored = candidates.map do |candidate_fix|
+        score = score_candidate(
+          candidate_fix: candidate_fix,
+          target: target,
+          requested_by: requested_by
         )
+        [candidate_fix, score]
       end
 
-      def heuristic_fix(code)
-        code
-          .gsub("\r\n", "\n")
-          .gsub(/[ \t]+$/, "")
-          .gsub(/\bteh\b/i, "the")
-          .gsub(/\brecieve\b/i, "receive")
-          .gsub(/^\t+/) { |tabs| "  " * tabs.length }
+      best_pair = scored.compact.max_by { |(_candidate, score)| score }
+      best_pair&.first
+    rescue StandardError => e
+      Logging.warn("best_candidate_fix failed#{UI_EM_DASH}target=#{target&.label} error=#{e.class}: #{e.message}")
+      nil
+    end
+
+    def score_candidate(candidate_fix:, target:, requested_by:)
+      metadata = candidate_fix.metadata || {}
+      patch_bytes = metadata.fetch(:patch_bytes, 0).to_i
+      return -Float::INFINITY if patch_bytes > MAX_PATCH_BYTES
+
+      violation_count = metadata.fetch(:violation_count, 0).to_i
+      cost_ratio = metadata.fetch(:cost_ratio, 1.0).to_f
+
+      risk_penalty = begin
+        RiskAssessor.call(fix: candidate_fix, target: target, requested_by: requested_by)
+      rescue StandardError => e
+        Logging.warn("score_candidate risk assess failed#{UI_EM_DASH}target=#{target&.label} error=#{e.class}: #{e.message}")
+        return -Float::INFINITY
       end
 
-      def score_candidate(path, code)
-        impact = 1.0
-        confidence = 1.0
-        cost = 1.0
-        fallback_score = 0.0
+      improvement_score = violation_count / [cost_ratio, 0.01].max
+      improvement_score - risk_penalty.to_f
+    end
 
-        if File.extname(path) == ".rb"
-          unless MASTER::Utils.valid_ruby?(code)
-            return { impact: 0.0, confidence: 0.0, cost: 10_000.0, fallback_score: -10_000.0 }
-          end
+    def success(message:, payload: {})
+      { ok: true, message: message, payload: payload }
+    end
 
-          impact += 0.8
-          fallback_score += 200
-        end
-
-        violations = begin
-          Violations.analyze(code, path: path, llm: nil,
-                                   conceptual: false)
-        rescue StandardError
-          { literal: [], conceptual: [] }
-        end
-        literal = Array(violations[:literal]).size
-        conceptual = Array(violations[:conceptual]).size
-        confidence -= (literal * 0.08) + (conceptual * 0.04)
-        fallback_score -= literal * 5
-        fallback_score -= conceptual * 3
-
-        smells = begin
-          Smells.analyze(code, path)
-        rescue StandardError
-          []
-        end
-        cost += (literal * 0.2) + (conceptual * 0.1) + (smells.size * 0.05)
-        confidence -= smells.size * 0.01
-        fallback_score -= smells.size
-
-        confidence = [[confidence, 0.01].max, 1.0].min
-        { impact: impact, confidence: confidence, cost: cost, fallback_score: fallback_score }
-      end
-
-      def record_refactor_learnings(file, original_code, result, bugs_found, pattern_matches)
-        return unless result.ok? && result.value[:final] && bugs_found > 0
-
-        puts UI.bold("phase6: recording learnings...")
-        rendered = render_output(lint_output(result.value[:final]))
-
-        pattern_matches.first(3).each do |match|
-          pattern = Learnings.extract_pattern_from_fix(original_code, rendered)
-          next unless pattern
-
-          Learnings.record(
-            category: :bug_pattern, pattern: pattern,
-            description: "Auto-discovered during refactor of #{file}: #{match[:name]}",
-            example: "Fixed in #{file}", severity: :info
-          )
-        end
-      end
-
-      # `deps [symbol]` -- show what files require a given module/symbol.
-      # Uses DependencyMap which is more accurate than grepping require lines.
-      def print_deps(args)
-        require_relative "../dependency_map"
-        require_relative "../introspection/friction_recorder"
-
-        if args.nil? || args.strip.empty?
-          # No argument: show full graph summary
-          graph = DependencyMap.build
-          puts "dependency graph: #{graph.size} files"
-          graph.each do |file, info|
-            rel = file.sub("#{MASTER.root}/", "")
-            next if info[:defines].empty?
-
-            puts "  #{rel}: defines #{info[:defines].first(3).join(', ')}"
-          end
-        else
-          # Argument: show who requires this symbol
-          symbol = args.strip
-          graph  = DependencyMap.build
-          lib_root = File.join(MASTER.root, "lib")
-          matches = graph.select { |_, info| info[:references].any? { |ref| ref.include?(symbol) } }
-          if matches.empty?
-            puts "deps: no references to #{symbol} found"
-          else
-            puts "deps: #{matches.size} file(s) reference #{symbol}"
-            matches.each_key { |filepath| puts "  #{filepath.sub("#{lib_root}/", "")}" }
-          end
-          # Record if agent was greping for deps -- friction signal 8
-          MASTER::Friction::FrictionRecorder.record(:dep_graph_blind, symbol: symbol) if args.include?("grep")
-        end
-        HANDLED
-      end
-
-      # `introspect` -- session retrospective: friction events, remedies, config drift.
-      def print_introspection(args)
-        require_relative "../introspection/session_retrospective"
-        use_llm = args.to_s.include?("--llm")
-        report  = Friction::SessionRetrospective.run(use_llm: use_llm)
-        puts Friction::SessionRetrospective.format(report)
-        HANDLED
-      end
-
-      # `config-drift` -- find YAML keys in data/ with no Ruby reader.
-      def print_config_drift
-        require_relative "../introspection/session_retrospective"
-        orphans = Friction::SessionRetrospective.audit_config_drift
-        if orphans.empty?
-          puts "config-drift: clean -- all YAML keys have Ruby readers"
-        else
-          puts "config-drift: #{orphans.size} orphaned key(s):"
-          orphans.each { |orphan| puts "  #{orphan[:file]}: #{orphan[:key]}" }
-        end
-        HANDLED
-      end
-
-      # `architect` -- automated fresh-eyes architectural health assessment.
-      def print_architect
-        require_relative "../introspection/architect"
-        report = Friction::Architect.run
-        puts Friction::Architect.format_report(report)
-        HANDLED
-      end
-
-      # `converge` -- iterate SelfRefactor until violations plateau (convergence).
-      # Runs on every invocation, not just selfrun, because quality is continuous.
-      def run_converge(args)
-        return Result.err("SelfRefactor not loaded") unless defined?(SelfRefactor)
-
-        max_iter = (args.first&.to_i&.positive? ? args.first.to_i : nil) || SelfRefactor::MAX_ITERATIONS
-        puts "converge0: starting (max #{max_iter} iterations, stops at plateau)"
-
-        # Baseline violation count before any fixes.
-        baseline = SelfRefactor.count_violations
-        puts "converge0: baseline #{baseline} violations"
-
-        result = SelfRefactor.run(max_iterations: max_iter)
-        return Result.err(result.error) unless result.ok?
-
-        summary = result.value
-        final   = SelfRefactor.count_violations
-        delta   = baseline - final
-
-        puts "converge0: done in #{summary[:iterations]} iterations * #{delta >= 0 ? "-#{delta}" : "+#{delta.abs}"} violations * #{summary[:improvements]} improvements * stopped: #{summary[:stop_reason]}"
-        puts "converge0: #{final} violations remaining" if final.positive?
-
-        Result.ok(summary)
-      end
+    def failure(message:, payload: {})
+      { ok: false, message: message, payload: payload }
     end
   end
 end

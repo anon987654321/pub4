@@ -1,141 +1,101 @@
 # frozen_string_literal: true
 
-require "digest"
+module Executor
+  class ToolResult
+    ANSI_ESCAPE_SEQUENCE = /\e\[[0-9;]*[A-Za-z]/.freeze
 
-module MASTER
-  class Executor
-    # ToolResult — the single schema every tool call produces.
-    #
-    # The LLM never sees raw tool output.  It only sees #to_prompt,
-    # a compact, fact-based summary.  The raw string is stored for
-    # audit/reproducibility but never injected into the model context.
-    #
-    # Contract (Liskov): every tool adapter must produce a ToolResult.
-    # If a tool returns a plain String, ToolResult.normalize wraps it.
-    class ToolResult
-      attr_reader :tool, :raw, :facts, :exit_code, :files_touched,
-                  :stderr_summary, :content_hash
+    MAX_STORED_BYTES = 32_768
+    PREVIEW_BYTES = 512
+    SLICE_START = 0
 
-      def initialize(tool:, raw:, facts: [], exit_code: nil,
-                     files_touched: [], stderr_summary: nil)
-        @tool          = tool.to_s
-        @raw           = raw.to_s
-        @facts         = Array(facts).map(&:to_s).reject(&:empty?)
-        @exit_code     = exit_code
-        @files_touched = Array(files_touched).map(&:to_s).reject(&:empty?).uniq
-        @stderr_summary = stderr_summary
-        @content_hash  = Digest::SHA256.hexdigest(@raw)[0, 12]
-      end
+    TRUNCATION_SEPARATOR = "\n...[truncated]...\n"
+    NULL_BYTE = "\u0000"
+    REPLACEMENT_CHAR = "�"
+    DEFAULT_ENCODING = Encoding::UTF_8
 
-      def blocked?
-        @raw.start_with?("BLOCKED:")
-      end
+    Payload = Struct.new(
+      :stdout,
+      :stderr,
+      :exit_code,
+      :duration_ms,
+      :captured_at,
+      keyword_init: true
+    )
 
-      def error?
-        @raw.start_with?("Error:") || @raw.start_with?("Tool error:")
-      end
+    def self.for_run(run_id)
+      return [] unless defined?(::ToolCall)
 
-      # What the LLM receives: structured facts, never raw output.
-      def to_prompt
-        lines = ["[tool=#{tool} hash=#{content_hash}]"]
-        lines << "exit=#{exit_code}"                          if exit_code
-        lines << "blocked: #{raw[8..200]}"                   if blocked?
-        lines << "error: #{raw[0..200]}"                     if error? && !blocked?
-        lines << "files: #{files_touched.join(', ')}"        if files_touched.any?
-        lines << "stderr: #{stderr_summary[0..120]}"         if stderr_summary
-        if facts.any?
-          lines += facts.map { |f| "  #{f}" }
-        elsif !blocked? && !error?
-          # Fallback: bounded raw excerpt so the LLM is never context-free
-          lines << raw[0..400]
-          lines << "... (#{raw.length} chars, truncated)" if raw.length > 400
-        end
-        lines.join("\n")
-      end
+      ::ToolCall
+        .includes(:tool, :tool_result, :run)
+        .where(run_id: run_id)
+        .order(:id)
+        .map(&:tool_result)
+        .compact
+    end
 
-      # --- Normalizers --------------------------------------------------
+    def self.persist(tool_call_id:, payload:)
+      return unless defined?(::ToolCall)
 
-      def self.normalize(tool_name, raw)
-        raw_str = raw.to_s
-        case tool_name.to_s
-        when "shell_command", "code_execution" then normalize_shell(tool_name, raw_str)
-        when "file_read"                        then normalize_file_read(tool_name, raw_str)
-        when "file_write"                       then normalize_file_write(tool_name, raw_str)
-        when "web_search", "browse_page"        then normalize_web(tool_name, raw_str)
-        when "analyze_code", "fix_code"         then normalize_analysis(tool_name, raw_str)
-        else                                         normalize_generic(tool_name, raw_str)
-        end
-      end
+      tool_call = ::ToolCall.includes(:tool_result).find(tool_call_id)
+      normalized = normalize_payload(payload)
 
-      def self.normalize_shell(tool_name, raw)
-        facts         = []
-        exit_code     = nil
-        stderr_summary = nil
-        files_touched = []
-
-        if raw.start_with?("BLOCKED:", "Error:", "Tool error:")
-          facts << raw[0..200]
-        else
-          # Exit code hint embedded in some outputs
-          if (m = raw.match(/\bexit(?:_code)?[=:\s]+(\d+)/i))
-            exit_code = m[1].to_i
-          end
-          # Files mentioned by common tools (rubocop, git, rake, minitest)
-          raw.scan(/(?:modified|created|deleted|written|updated|Offenses in)[:\s]+([^\s\n,]+\.(?:rb|yml|sh|js|ts|erb|md))/i) do |m|
-            files_touched << m[0]
-          end
-          # Surface summary lines (N runs, N errors, etc.)
-          raw.scan(/\d+\s+(?:files?|errors?|warnings?|offenses?|tests?|runs?|assertions?)[^\n]*/i) do |m|
-            facts << m.strip[0..120]
-          end
-          facts << "ok" if facts.empty? && !raw.strip.empty?
-        end
-
-        new(tool: tool_name, raw: raw, facts: facts, exit_code: exit_code,
-            files_touched: files_touched, stderr_summary: stderr_summary)
-      end
-
-      def self.normalize_file_read(tool_name, raw)
-        facts = if raw.start_with?("File not found")
-                  [raw]
-                elsif (m = raw.match(/(\d+) chars total/))
-                  ["file read (#{m[1]} chars, truncated at #{Executor::MAX_FILE_CONTENT})"]
-                else
-                  ["file read (#{raw.length} chars)"]
-                end
-        new(tool: tool_name, raw: raw, facts: facts)
-      end
-
-      def self.normalize_file_write(tool_name, raw)
-        facts         = []
-        files_touched = []
-        if (m = raw.match(/Written (\d+) bytes to (\S+)/))
-          facts         << "wrote #{m[1]} bytes"
-          files_touched << m[2]
-        else
-          facts << raw[0..200]
-        end
-        new(tool: tool_name, raw: raw, facts: facts, files_touched: files_touched)
-      end
-
-      def self.normalize_web(tool_name, raw)
-        facts = if raw.match?(/\A(?:Search|Browse) failed/)
-                  [raw[0..200]]
-                else
-                  summary = raw[0..300].split(/[.\n]/).first(3).join(". ").strip
-                  [summary, "(#{raw.length} chars total)"].reject(&:empty?)
-                end
-        new(tool: tool_name, raw: raw, facts: facts)
-      end
-
-      def self.normalize_analysis(tool_name, raw)
-        new(tool: tool_name, raw: raw, facts: [raw[0..300]])
-      end
-
-      def self.normalize_generic(tool_name, raw)
-        facts = raw.empty? ? [] : [raw[0..300]]
-        new(tool: tool_name, raw: raw, facts: facts)
+      if tool_call.respond_to?(:tool_result) && tool_call.tool_result
+        tool_call.tool_result.update!(normalized)
+        tool_call.tool_result
+      elsif defined?(::ToolResultRecord)
+        ::ToolResultRecord.create!(normalized.merge(tool_call_id: tool_call.id))
+      else
+        tool_call.create_tool_result!(normalized)
       end
     end
+
+    def self.normalize_payload(payload)
+      payload_hash = payload.is_a?(Payload) ? payload.to_h : payload.to_h
+
+      stdout = normalize_shell(payload_hash[:stdout])
+      stderr = normalize_shell(payload_hash[:stderr])
+
+      {
+        stdout: stdout,
+        stderr: stderr,
+        exit_code: payload_hash[:exit_code],
+        duration_ms: payload_hash[:duration_ms],
+        captured_at: payload_hash[:captured_at]
+      }
+    end
+
+    def self.normalize_shell(text)
+      return "" if text.nil?
+
+      normalized = to_utf8(text.to_s)
+      normalized = normalized.delete(NULL_BYTE).gsub(ANSI_ESCAPE_SEQUENCE, "")
+      normalized = normalized.gsub("\r\n", "\n").gsub("\r", "\n")
+
+      return normalized unless normalized.bytesize > MAX_STORED_BYTES
+
+      truncated_prefix = normalized.byteslice(SLICE_START, PREVIEW_BYTES) || ""
+      truncated_suffix = normalized.byteslice(-PREVIEW_BYTES, PREVIEW_BYTES) || ""
+
+      [
+        truncated_prefix,
+        TRUNCATION_SEPARATOR,
+        truncated_suffix
+      ].join
+    end
+
+    def self.to_utf8(string)
+      return string if string.encoding == DEFAULT_ENCODING && string.valid_encoding?
+
+      string.encode(
+        DEFAULT_ENCODING,
+        invalid: :replace,
+        undef: :replace,
+        replace: REPLACEMENT_CHAR
+      )
+    rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
+      string.force_encoding(DEFAULT_ENCODING).scrub(REPLACEMENT_CHAR)
+    end
+
+    private_class_method :to_utf8
   end
 end

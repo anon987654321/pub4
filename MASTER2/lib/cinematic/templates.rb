@@ -1,86 +1,53 @@
 # frozen_string_literal: true
 
-module MASTER
-  module Cinematic
-    # Cinematic presets - film looks and color grades
-    def self.presets
-      @presets ||= {
-        "blade-runner" => {
-          description: "Cyberpunk aesthetic: neon, rain, cyan/orange split tones",
-          models: [Replicate::MODELS[:sdxl], Replicate::MODELS[:gfpgan]],
-          params: { guidance_scale: 12.0, strength: 0.6 },
-        },
-        "wes-anderson" => {
-          description: "Symmetrical, pastel palette, centered compositions",
-          models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 8.0, strength: 0.5 },
-        },
-        "noir" => {
-          description: "High contrast black and white, dramatic shadows",
-          models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 10.0, strength: 0.7 },
-        },
-        "golden-hour" => {
-          description: "Warm, soft, glowing light",
-          models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 9.0, strength: 0.5 },
-        },
-        "teal-orange" => {
-          description: "Hollywood blockbuster: teal shadows, orange highlights",
-          models: [Replicate::MODELS[:sdxl]],
-          params: { guidance_scale: 11.0, strength: 0.6 },
-        },
-      }.freeze
+module Cinematic
+  class Templates
+    SYMBOL_KEYS = %i[name description template].freeze
+
+    FIELD_SNIPPET = lambda do |name, description, type|
+      %("#{name}" => { description: "#{description}", type: "#{type}" })
     end
 
-    # Pipeline builder class
-    class Pipeline
-      # Generate random creative pipeline
-      def self.random(length: 5, category: :all)
-        pipeline = new
-        models = discover_models(category)
-
-        return Result.err("No models found.") if models.empty?
-
-        length.times do
-          model = models.sample
-          params = generate_creative_params
-          pipeline.chain(model, params)
-        end
-
-        Result.ok(pipeline)
-      end
-
-      def self.discover_models(category)
-        # Use Replicate.models_for to get model IDs from categories
-        case category
-        when :image
-          Replicate.models_for(:image).map { |m| m[:id] }
-        when :video
-          Replicate.models_for(:video).map { |m| m[:id] }
-        when :enhance
-          Replicate.models_for(:upscale).map { |m| m[:id] }
-        when :audio
-          Replicate.models_for(:audio).map { |m| m[:id] }
-        when :transcribe
-          Replicate.models_for(:transcribe).map { |m| m[:id] }
-        when :color
-          [Replicate::MODELS[:sdxl]]
-        else
-          # All models combined
-          [:image, :video, :upscale, :audio, :transcribe].flat_map do |cat|
-            Replicate.models_for(cat).map { |m| m[:id] }
-          end
-        end
-      end
-
-      def self.generate_creative_params
-        {
-          "seed" => rand(1..999_999),
-          "guidance_scale" => rand(5.0..15.0).round(1),
-          "num_inference_steps" => rand(20..50),
-        }
+    def self.presets(scope: Cinematic::Preset)
+      scope.includes(:items).order(:name).map do |preset|
+        symbolize_keys(
+          name: preset.name,
+          description: preset.description.to_s,
+          template: build_template_from_items(preset.items)
+        )
       end
     end
+
+    def self.discover_models(base: ActiveRecord::Base)
+      models = base.descendants
+      models = models.reject(&:abstract_class?)
+      models = models.reject { |m| m.name.blank? }
+      models.sort_by(&:name)
+    end
+
+    def self.schema_snippets
+      [
+        FIELD_SNIPPET.call("title", "Human readable title", "string"),
+        FIELD_SNIPPET.call("summary", "Short summary", "string"),
+        FIELD_SNIPPET.call("tags", "List of tags", "array")
+      ].join(",\n")
+    end
+
+    def self.build_template_from_items(items)
+      items.map { |item| template_line(item) }.compact.join("\n")
+    end
+    private_class_method :build_template_from_items
+
+    def self.template_line(item)
+      return if item.nil?
+
+      %(#{item.key}: #{item.value})
+    end
+    private_class_method :template_line
+
+    def self.symbolize_keys(hash)
+      SYMBOL_KEYS.each_with_object({}) { |k, out| out[k] = hash[k] }
+    end
+    private_class_method :symbolize_keys
   end
 end

@@ -1,117 +1,83 @@
 # frozen_string_literal: true
 
-require "yaml"
+require "json"
 
 module Analysis
-  OPENBSD_SCHEMA_FILE = "openbsd_config_schema.yml"
-  DEFAULT_MAX_ERRORS = 50
-
   class OpenbsdConfigValidator
-    def initialize(max_errors: DEFAULT_MAX_ERRORS)
-      @max_errors = max_errors
+    REQUIRED_CONFIG_KEYS = %w[hostname interfaces pf_rules].freeze
+
+    def initialize(scope:, logger: nil)
+      @scope = scope
+      @logger = logger
     end
 
-    def validate(config)
-      return errors(["config must be a Hash"]) unless config.is_a?(Hash)
+    def call
+      hosts = load_hosts
+      return [] if hosts.empty?
 
-      schema = load_schema
-      errs = []
-      errs.concat(validate_required(schema, config))
-      errs.concat(validate_keys(schema, config))
-      errs.concat(validate_values(schema, config))
-      limit(errs)
+      configs_by_host_id = load_configs_by_host_id(host_ids: hosts.map(&:id))
+
+      errors = []
+      errors.concat(missing_config_errors(hosts: hosts, configs_by_host_id: configs_by_host_id))
+      errors.concat(invalid_payload_errors(configs_by_host_id: configs_by_host_id))
+      errors.concat(duplicate_pf_rule_errors(configs_by_host_id: configs_by_host_id))
+      errors
     end
 
     private
 
-    def load_schema
-      path = Paths.data_file(OPENBSD_SCHEMA_FILE)
-      contents = read_file(path)
-      YAML.safe_load(contents, permitted_classes: [], permitted_symbols: [], aliases: false) || {}
-    rescue Psych::SyntaxError
-      {}
+    attr_reader :scope, :logger
+
+    def load_hosts
+      scope.includes(:openbsd_config).to_a
     end
 
-    def read_file(path)
-      File.read(path)
-    rescue Errno::ENOENT, Errno::EACCES
-      "{}"
+    def load_configs_by_host_id(host_ids:)
+      OpenbsdConfig.where(host_id: host_ids).pluck(:host_id, :payload).to_h
     end
 
-    def validate_required(schema, config)
-      required = Array(schema["required"])
-      missing = required.reject { |k| config.key?(k) }
-      missing.map { |k| "missing required key: #{k}" }
-    end
+    def missing_config_errors(hosts:, configs_by_host_id:)
+      missing = hosts.reject { |h| configs_by_host_id.key?(h.id) }
 
-    def validate_keys(schema, config)
-      allowed = schema["allowed_keys"]
-      return [] unless allowed.is_a?(Array) && !allowed.empty?
-
-      unknown = config.keys.map(&:to_s) - allowed.map(&:to_s)
-      unknown.map { |k| "unknown key: #{k}" }
-    end
-
-    def validate_values(schema, config)
-      rules = schema["rules"]
-      return [] unless rules.is_a?(Hash) && !rules.empty?
-
-      rules.each_with_object([]) do |(key, rule), errs|
-        next unless config.key?(key)
-
-        errs.concat(validate_value_rule(key, config[key], rule))
-        break if errs.size >= @max_errors
+      missing.map do |host|
+        { host_id: host.id, error: "missing_openbsd_config" }
       end
     end
 
-    def validate_value_rule(key, value, rule)
-      return [] unless rule.is_a?(Hash)
+    def invalid_payload_errors(configs_by_host_id:)
+      configs_by_host_id.each_with_object([]) do |(host_id, payload), errors|
+        next if payload.present?
 
-      errs = []
-      errs.concat(validate_type(key, value, rule["type"]))
-      errs.concat(validate_enum(key, value, rule["enum"]))
-      errs.concat(validate_range(key, value, rule["min"], rule["max"]))
-      errs
+        errors << { host_id: host_id, error: "empty_payload" }
+      end
     end
 
-    def validate_type(key, value, type_name)
-      return [] if type_name.nil?
+    def duplicate_pf_rule_errors(configs_by_host_id:)
+      configs_by_host_id.each_with_object([]) do |(host_id, payload), errors|
+        next if payload.blank?
 
-      ok = case type_name
-           when "String" then value.is_a?(String)
-           when "Integer" then value.is_a?(Integer)
-           when "Boolean" then value == true || value == false
-           when "Array" then value.is_a?(Array)
-           when "Hash" then value.is_a?(Hash)
-           else
-             true
-           end
+        parsed = parse_payload(payload)
+        next if parsed.nil?
 
-      ok ? [] : ["#{key} has invalid type (expected #{type_name})"]
+        missing_keys = REQUIRED_CONFIG_KEYS - parsed.keys
+        unless missing_keys.empty?
+          errors << { host_id: host_id, error: "missing_required_keys", details: missing_keys.sort }
+          next
+        end
+
+        rules = Array(parsed["pf_rules"]).map(&:to_s)
+        dups = rules.group_by(&:itself).select { |_k, v| v.size > 1 }.keys
+        next if dups.empty?
+
+        errors << { host_id: host_id, error: "duplicate_pf_rules", details: dups.sort }
+      end
     end
 
-    def validate_enum(key, value, allowed)
-      return [] unless allowed.is_a?(Array) && !allowed.empty?
-      allowed.include?(value) ? [] : ["#{key} must be one of #{allowed.inspect}"]
-    end
-
-    def validate_range(key, value, min, max)
-      return [] unless value.is_a?(Numeric)
-      return [] if min.nil? && max.nil?
-
-      too_low = !min.nil? && value < min
-      too_high = !max.nil? && value > max
-      return [] unless too_low || too_high
-
-      ["#{key} must be between #{min.inspect} and #{max.inspect}"]
-    end
-
-    def limit(errs)
-      errs.take(@max_errors)
-    end
-
-    def errors(list)
-      limit(Array(list))
+    def parse_payload(payload)
+      JSON.parse(payload)
+    rescue JSON::ParserError => e
+      logger&.warn("OpenbsdConfigValidator: invalid JSON payload: #{e.message}")
+      nil
     end
   end
 end

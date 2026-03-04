@@ -1,97 +1,59 @@
 # frozen_string_literal: true
 
-module MASTER
-  # Tracks per-iteration convergence metrics during self-refactoring.
-  # Detects diminishing returns and oscillation so the loop halts
-  # instead of churning forever.
-  module ConvergenceTracker
-    module_function
+module ConvergenceTracker
+  DEFAULT_TOLERANCE = 1e-6
+  DEFAULT_WINDOW = 5
 
-    STALL_WINDOW        = 2    # consecutive iterations with no progress to declare stall
-    OSCILLATION_WINDOW  = 3    # iterations to inspect for sign-alternating deltas
-    MIN_AUTOFIX_RATE    = 0.1  # autofix success rate below which the loop halts
+  LINE_JOIN = " \\\n        "
 
-    def reset!
-      @history = []
-    end
+  INVALID_OPTIONS_MESSAGE = [
+    "Invalid options for ConvergenceTracker::Tracker. ",
+    "Expected :tolerance (Numeric > 0) and :window (Integer > 0)."
+  ].join
 
-    def history
-      @history ||= []
-    end
+  class Tracker
+    attr_reader :tolerance, :window, :values
 
-    # Record one iteration's metrics
-    def record_iteration(violations:, fixed:, deferred:)
-      prev = history.last
-      prev_count = prev ? prev[:violations] : violations + fixed
-      delta = prev_count - violations
-      rate = (violations + fixed).zero? ? 0.0 : (fixed.to_f / (violations + fixed))
-
-      entry = {
-        iteration: history.size + 1,
-        violations: violations,
-        violation_delta: delta,
-        fixed: fixed,
-        deferred: deferred,
-        autofix_success_rate: rate.round(3),
-      }
-      history << entry
-      entry
-    end
-
-    # Should the convergence loop stop?
-    def should_halt?
-      # Halt if no progress for 2 consecutive iterations
-      return false if history.size < STALL_WINDOW
-
-      # Halt if no progress for 2 consecutive iterations
-      last_two = history.last(STALL_WINDOW)
-      stalled  = last_two.all? { |h| h[:violation_delta] == 0 }
-      if stalled
-        record_friction(:wasted_iteration, iterations: history.size, last: last_two.last)
-        return true
+    def initialize(tolerance: DEFAULT_TOLERANCE, window: DEFAULT_WINDOW)
+      unless tolerance.is_a?(Numeric) && tolerance.positive? && window.is_a?(Integer) && window.positive?
+        raise ArgumentError, INVALID_OPTIONS_MESSAGE
       end
 
-      # Halt if autofix success rate dropped below 10%
-      latest = history.last
-      return true if latest[:autofix_success_rate] < MIN_AUTOFIX_RATE
-
-      # Halt if only deferred debt remains (nothing left to fix)
-      return true if latest[:violations].zero?
-
-      false
+      @tolerance = tolerance
+      @window = window
+      @values = []
     end
 
-    # dmesg-style summary of current state
-    def summary
-      return "converge0: no iterations recorded" if history.empty?
+    def record(value)
+      numeric_value =
+        begin
+          Float(value)
+        rescue ArgumentError, TypeError
+          raise ArgumentError, ["Value must be numeric.", "Got: #{value.inspect}"].join(LINE_JOIN)
+        end
 
-      h = history.last
-      prev_violations = history.size > 1 ? history[-2][:violations] : "?"
-      oscillating = detect_oscillation
-
-      "converge0: iter=#{h[:iteration]} " \
-        "violations=#{prev_violations}->#{h[:violations]} " \
-        "fixed=#{h[:fixed]} " \
-        "deferred=#{h[:deferred]} " \
-        "oscillating=#{oscillating}"
+      @values << numeric_value
+      @values.shift while @values.length > window
+      numeric_value
     end
 
-    # Detect if violations are bouncing up and down
-    def detect_oscillation
-      return 0 if history.size < OSCILLATION_WINDOW
+    def converged?
+      return false if @values.length < window
 
-      deltas = history.last(OSCILLATION_WINDOW).map { |h| h[:violation_delta] }
-      signs = deltas.map { |d| d <=> 0 }
-      # Oscillation: positive, negative, positive (or vice versa)
-      signs[0] != 0 && signs[0] == -signs[1] && signs[1] == -signs[2] ? 1 : 0
+      min_value = @values.min
+      max_value = @values.max
+      (max_value - min_value).abs <= tolerance
     end
 
-    def record_friction(pattern_id, context = {})
-      return unless defined?(MASTER::Friction::FrictionRecorder)
+    def delta
+      return nil if @values.length < 2
 
-      MASTER::Friction::FrictionRecorder.record(pattern_id, context)
-    rescue StandardError
-      # never let friction recording break the main loop
+      (@values[-1] - @values[-2]).abs
+    end
+
+    def reset
+      @values.clear
+      self
     end
   end
 end

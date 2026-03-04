@@ -2,73 +2,41 @@
 
 module Bridges
   class Postpro
-    DEFAULT_BATCH_SIZE = 500
-    DEFAULT_PRESET = :standard
+    DEFAULT_TIMEOUT_SECONDS = 5
+    MAX_RETRIES = 3
 
-    def initialize(relation:, preset: nil, options: {})
-      @relation = relation
-      @preset = (preset || DEFAULT_PRESET).to_sym
-      @options = options
+    def initialize(client:, timeout: DEFAULT_TIMEOUT_SECONDS, retries: MAX_RETRIES)
+      @client = client
+      @timeout = timeout
+      @retries = retries
     end
 
-    def call
-      scope = build_scope
-      apply_preset(scope, preset: @preset, options: @options)
-    end
+    def process(payload, enabled: true)
+      return nil unless enabled
+      return nil if payload.nil? || payload.to_s.strip.empty?
 
-    def apply_preset(scope, preset:, options:)
-      opts = preset_options(preset, options)
-
-      ensure_replicate! if opts.fetch(:use_replicate, false)
-
-      if opts.fetch(:use_replicate, false)
-        run_replicate(scope, opts)
-      else
-        scope.in_batches(of: opts.fetch(:batch_size, DEFAULT_BATCH_SIZE)) do |batch|
-          batch.update_all(opts.fetch(:updates, {}))
-        end
+      with_retries do
+        @client.post(
+          "/postpro",
+          payload: payload,
+          timeout: @timeout
+        )
       end
-
-      scope
     end
 
     private
 
-    def build_scope
-      includes_assocs = Array(@options.fetch(:includes, []))
-      rel = includes_assocs.empty? ? @relation : @relation.includes(*includes_assocs)
+    def with_retries
+      attempts = 0
 
-      rel = rel.where(@options.fetch(:where, {}))
-      rel = rel.references(*Array(@options.fetch(:references, []))) if @options.key?(:references)
-      rel
-    end
+      begin
+        yield
+      rescue StandardError => e
+        attempts += 1
+        raise if attempts > @retries
 
-    def run_replicate(scope, opts)
-      ensure_replicate!
-      Replicate.apply(scope, updates: opts.fetch(:updates, {}), batch_size: opts.fetch(:batch_size, DEFAULT_BATCH_SIZE))
-    rescue Replicate::Error => e
-      raise e
-    end
-
-    def ensure_replicate!
-      raise NameError, "Replicate is not available" unless defined?(Replicate)
-    end
-
-    def quote_columns(columns)
-      Array(columns).map { |c| %("#{c}") }.join(", ")
-    end
-
-    def preset_options(preset, options)
-      base = case preset
-             when :standard
-               { updates: {}, use_replicate: false, batch_size: DEFAULT_BATCH_SIZE }
-             when :replicate
-               { updates: {}, use_replicate: true, batch_size: DEFAULT_BATCH_SIZE }
-             else
-               raise ArgumentError, "Unknown preset: #{preset.inspect}"
-             end
-
-      base.merge(options)
+        raise e
+      end
     end
   end
 end

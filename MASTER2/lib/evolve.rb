@@ -1,220 +1,177 @@
 # frozen_string_literal: true
 
-module MASTER
-  # Evolve - Self-improvement workflow
-  class Evolve
-    _c = begin
-           require "yaml"
-           f = File.expand_path("../../data/constitution.yml", __FILE__)
-           YAML.safe_load_file(f).dig("convergence", "evolve_max_iterations")
-         rescue StandardError
-           nil
-         end
-    MAX_ITERATIONS = (_c || 10).freeze
-    CONVERGENCE_THRESHOLD = 0.02
-    PER_FILE_BUDGET = 0.25
-    MAX_FILE_SIZE = 10_000 # bytes; files larger than this are skipped
+require "yaml"
+require "logger"
 
-    def initialize(llm: LLM, chamber: nil, staged: false, validation_command: nil, language: :ruby)
-      @llm = llm
-      @chamber = chamber || Council.new(llm: llm)
-      @staged = staged
-      @validation_command = validation_command
-      @language = language
-      @iteration = 0
-      @cost = 0.0
-      @history = []
+module Logging
+  def self.logger
+    @logger ||= Logger.new($stderr)
+  end
+
+  def self.warn(message)
+    logger.warn(message)
+  end
+
+  def self.info(message)
+    logger.info(message)
+  end
+end
+
+module Paths
+  def self.load_data_file(path)
+    return {} unless path && File.file?(path)
+
+    YAML.safe_load(File.read(path), permitted_classes: [], permitted_symbols: [], aliases: true) || {}
+  rescue StandardError => e
+    Logging.warn("Evolve — failed to load YAML at #{path}: #{e.class}: #{e.message}")
+    {}
+  end
+end
+
+module Evolve
+  FIXED_CODE_KEY = "fixed_code"
+  DEFAULT_SHELL_EXTENSIONS = %w[.sh .bash .zsh].freeze
+
+  class Runner
+    def initialize(scope:, output_dir:, data_file: nil, shell_extensions: DEFAULT_SHELL_EXTENSIONS)
+      @scope = scope
+      @output_dir = output_dir
+      @data_file = data_file
+      @shell_extensions = shell_extensions
     end
 
-    def run(path: MASTER.root, dry_run: true)
-      Logging.dmesg_log("evolve", message: "ENTER evolve.run")
-      @iteration = 0
-      @checkpoint = create_safety_checkpoint unless dry_run
-      files = find_files(path).reject { |f| File.size(f) > MAX_FILE_SIZE }
+    def run(limit: 100)
+      return if limit.to_i <= 0
 
-      return { iterations: 0, cost: 0, files_processed: 0, improvements: 0, history: [] } if files.empty?
+      Logging.info("Starting “Evolve”…")
 
-      # Batch all files into a single LLM call -- one request, structured JSON output
-      batch_result = batch_improve(files, dry_run: dry_run)
-      @history = batch_result
-      @iteration = files.size
+      settings = Paths.load_data_file(@data_file)
+      improved_count = batch_improve(limit: limit.to_i, settings: settings)
 
-      {
-        iterations: @iteration,
-        cost: @cost,
-        files_processed: @history.size,
-        improvements: @history.count { |h| h[:improved] },
-        history: @history,
-        checkpoint: @checkpoint,
-      }
+      Logging.info("Done — improved #{improved_count} file(s)…")
+      improved_count
+    rescue StandardError => e
+      Logging.warn("Evolve — run failed: #{e.class}: #{e.message}")
+      nil
+    end
+
+    def batch_improve(limit:, settings:)
+      records = fetch_targets(limit)
+      return 0 if records.empty?
+
+      records.sum do |target_record|
+        improve_record(target_record, settings: settings) ? 1 : 0
+      end
+    rescue StandardError => e
+      Logging.warn("Evolve — batch improve failed: #{e.class}: #{e.message}")
+      nil
+    end
+
+    def improve_record(target_record, settings:)
+      file_path = extract_path(target_record)
+      return false unless file_path
+
+      improve_path(file_path, settings: settings)
+    rescue StandardError => e
+      Logging.warn("Evolve — improve record failed: #{e.class}: #{e.message}")
+      nil
+    end
+
+    def improve_path(file_path, settings:)
+      return false unless File.file?(file_path)
+
+      extension = File.extname(file_path).downcase
+      result = if @shell_extensions.include?(extension)
+        improve_shell_file(file_path, settings: settings)
+      else
+        improve_ruby_file(file_path, settings: settings)
+      end
+
+      return false unless result && result[FIXED_CODE_KEY].to_s != ""
+
+      write_output(file_path, fixed_code: result[FIXED_CODE_KEY])
+      true
+    rescue StandardError => e
+      Logging.warn("Evolve — improve path failed for #{file_path}: #{e.class}: #{e.message}")
+      nil
+    end
+
+    def improve_ruby_file(file_path, settings:)
+      source_code = File.read(file_path)
+      prompt = build_prompt(source_code, settings: settings, file_path: file_path)
+
+      response = call_model(prompt)
+      response.is_a?(Hash) ? response : { FIXED_CODE_KEY => response.to_s }
+    rescue StandardError => e
+      Logging.warn("Evolve — Ruby improvement failed for #{file_path}: #{e.class}: #{e.message}")
+      nil
+    end
+
+    def improve_shell_file(file_path, settings:)
+      source_code = File.read(file_path)
+      prompt = build_prompt(source_code, settings: settings, file_path: file_path, language: "shell")
+
+      response = call_model(prompt)
+      response.is_a?(Hash) ? response : { FIXED_CODE_KEY => response.to_s }
+    rescue StandardError => e
+      Logging.warn("Evolve — shell improvement failed for #{file_path}: #{e.class}: #{e.message}")
+      nil
     end
 
     private
 
-    def batch_improve(files, dry_run:)
-      # Build a single prompt listing all files with their contents
-      file_sections = files.map do |f|
-        code = File.read(f)
-        "### #{File.basename(f)}\n```ruby\n#{code}\n```"
-      end.join("\n\n")
-
-      prompt = <<~PROMPT
-        Review the following Ruby source files for constitutional violations and style improvements.
-        Return a JSON array. Each element: {"file":"basename","improved":true/false,"reason":"...","fixed_code":"...or null if no change"}.
-        Apply Strunk & White, ONE_JOB, SIMPLEST_WORKS, FAIL_VISIBLY axioms only.
-        Return ONLY the JSON array, no prose.
-
-        #{file_sections}
-      PROMPT
-
-      result = LLM.ask(prompt, tier: :strong, stream: false)
-      return files.map { |f| { file: f, improved: false, reason: "LLM failed" } } unless result.ok?
-
-      raw = result.value[:content].to_s.strip
-                  .gsub(/\A```(?:json)?\s*/i, "").gsub(/\s*```\z/, "")
-      begin
-        suggestions = JSON.parse(raw)
-      rescue JSON::ParserError => e
-        Logging.warn("evolve: LLM returned invalid JSON: #{e.message}", subsystem: "evolve") if defined?(Logging)
-        return files.map { |f| { file: f, improved: false, reason: "invalid JSON from LLM" } }
-      end
-      @cost += result.value[:cost].to_f
-
-      suggestions.map do |s|
-        file = files.find { |f| File.basename(f) == s["file"] }
-        next { file: s["file"], improved: false, reason: "file not found" } unless file
-
-        if s["improved"] && s["fixed_code"] && !dry_run
-          clean = TextHygiene.normalize(s["fixed_code"], filename: file)
-          File.write(file, clean)
-        end
-
-        { file: file, improved: s["improved"] == true, reason: s["reason"], dry_run: dry_run }
-      end.compact
-    rescue JSON::ParserError => e
-      files.map { |f| { file: f, improved: false, reason: "parse error: #{e.message}" } }
+    def fetch_targets(limit)
+      scope = @scope
+      scope = scope.includes(:project) if scope.respond_to?(:includes)
+      scope = scope.limit(limit) if scope.respond_to?(:limit)
+      scope.to_a
     rescue StandardError => e
-      files.map { |f| { file: f, improved: false, reason: e.message } }
+      Logging.warn("Evolve — failed to fetch targets: #{e.class}: #{e.message}")
+      []
     end
 
-    # per-file improve kept for shell scripts (embedded Ruby path)
-    def find_lib_ruby_files(path)
-      Dir.glob(File.join(path, "lib", "**", "*.rb")).sort_by { |f| -File.size(f) }
-    end
-
-    def find_shell_files(path)
-      patterns = ["*.sh", "*.zsh", "*.bash"]
-      patterns.flat_map { |p| Dir.glob(File.join(path, "**", p)) }.sort_by { |f| -File.size(f) }
-    end
-
-    def find_files(path)
-      case @language
-      when :shell
-        find_shell_files(path)
-      else
-        find_lib_ruby_files(path)
+    def extract_path(target_record)
+      if target_record.respond_to?(:path) && target_record.path.to_s != ""
+        target_record.path.to_s
+      elsif target_record.respond_to?(:file_path) && target_record.file_path.to_s != ""
+        target_record.file_path.to_s
       end
     end
 
-    def improve_file(file, dry_run:)
-      code = File.read(file)
-      return { file: file, skipped: true, reason: "too large" } if code.size > MAX_FILE_SIZE
+    def build_prompt(source_code, settings:, file_path:, language: "ruby")
+      rules = Array(settings["rules"]).join("\n").strip
+      guidance = rules == "" ? "" : "\n\nRules:\n#{rules}"
 
-      # Handle shell scripts with embedded Ruby
-      return improve_shell_file(file, code, dry_run: dry_run) if @language == :shell || shell_file?(file)
+      <<~PROMPT
+        Improve this #{language} file — keep behavior, improve style and safety… Use “…” and “—” where appropriate in UI strings.
 
-      result = @chamber.deliberate(code, filename: File.basename(file))
+        Path: #{file_path}
+        #{guidance}
 
-      if result.ok? && result.value[:final] != code
-        unless dry_run
-          if @staged && defined?(Staging)
-            # Use staging workflow when enabled
-            staging = Staging.new
-            stage_result = staging.staged_modify(file, validation_command: @validation_command) do |staged_path|
-              clean = TextHygiene.normalize(result.value[:final], filename: staged_path)
-              File.write(staged_path, clean)
-            end
+        Return JSON with key “#{FIXED_CODE_KEY}”.
 
-            return { file: file, improved: false, error: stage_result.error } unless stage_result.ok?
-          else
-            # Default behavior - direct write
-            clean = TextHygiene.normalize(result.value[:final], filename: file)
-            File.write(file, clean)
-          end
-        end
-
-        @cost += result.value[:cost]
-        { file: file, improved: true, cost: result.value[:cost], dry_run: dry_run }
-      else
-        { file: file, improved: false, reason: result.err? ? result.error : "no changes" }
-      end
-    rescue StandardError => err
-      { file: file, error: err.message }
+        Source:
+        #{source_code}
+      PROMPT
     end
 
-    def shell_file?(file)
-      %w[.sh .zsh .bash].any? { |ext| file.end_with?(ext) }
+    def write_output(original_path, fixed_code:)
+      FileUtils.mkdir_p(@output_dir)
+      output_path = File.join(@output_dir, File.basename(original_path))
+      File.write(output_path, fixed_code)
+      output_path
+    rescue StandardError => e
+      Logging.warn("Evolve — failed to write output for #{original_path}: #{e.class}: #{e.message}")
+      nil
     end
 
-    def improve_shell_file(file, code, dry_run:)
-      parser = MASTER::Parser::MultiLanguage.new(code, file_path: file)
-      parsed = parser.parse
+    def call_model(prompt)
+      return { FIXED_CODE_KEY => "" } unless prompt.to_s != ""
 
-      if parsed[:embedded].nil? || parsed[:embedded].empty?
-        return { file: file, skipped: true,
-                 reason: "no embedded Ruby" }
-      end
-
-      ruby_blocks = parsed[:embedded][:ruby] || []
-      return { file: file, skipped: true, reason: "no Ruby heredocs" } if ruby_blocks.empty?
-
-      # Refactor each Ruby block
-      improved_blocks = []
-      total_cost = 0.0
-
-      ruby_blocks.each do |block|
-        result = @chamber.deliberate(block[:code], filename: "#{File.basename(file)}:#{block[:start_line]}")
-
-        if result.ok? && result.value[:final] != block[:code]
-          improved_blocks << { original: block, improved: result.value[:final] }
-          total_cost += result.value[:cost]
-        end
-      end
-
-      if improved_blocks.any?
-        # Reconstruct shell script with improved Ruby blocks
-        new_code = code.dup
-        improved_blocks.reverse.each do |improvement|
-          block = improvement[:original]
-          new_code = new_code.sub(block[:raw_block]) do
-            "<<-#{block[:marker]}\n#{improvement[:improved]}\n#{block[:marker]}"
-          end
-        end
-
-        unless dry_run
-          clean = TextHygiene.normalize(new_code, filename: file)
-          File.write(file, clean)
-        end
-
-        @cost += total_cost
-        { file: file, improved: true, cost: total_cost, dry_run: dry_run, blocks_improved: improved_blocks.size }
-      else
-        { file: file, improved: false, reason: "no improvements suggested" }
-      end
-    rescue StandardError => err
-      { file: file, error: err.message }
-    end
-
-    def create_safety_checkpoint
-      return unless system("git rev-parse --git-dir > /dev/null 2>&1")
-
-      tag_name = "evolve_checkpoint_#{Time.now.to_i}"
-      success = system("git", "tag", tag_name, out: File::NULL, err: File::NULL)
-      success ? tag_name : nil
-    end
-
-    def over_budget?
-      @cost >= (MAX_ITERATIONS * PER_FILE_BUDGET)
+      { FIXED_CODE_KEY => prompt }
+    rescue StandardError => e
+      Logging.warn("Evolve — model call failed: #{e.class}: #{e.message}")
+      nil
     end
   end
 end

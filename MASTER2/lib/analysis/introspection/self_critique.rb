@@ -1,98 +1,95 @@
 # frozen_string_literal: true
 
-require "json"
-
 module Analysis
   module Introspection
     class SelfCritique
-      DEFAULT_MAX_FINDINGS = 5
-      RESPONSE_SNIPPET_LENGTH = 200
-      SLICE_START_INDEX = 0
-      CODE_FENCE = "```"
-      JSON_OBJECT_START = "{"
-      JSON_OBJECT_END = "}"
+      DEFAULT_LIMIT = 50
+      SCORE_THRESHOLD = 0.75
 
-      def initialize(model_client:, max_findings: DEFAULT_MAX_FINDINGS)
-        @model_client = model_client
-        @max_findings = max_findings
+      UI_TITLE = "Self‑Critique"
+      UI_EMPTY_STATE = "Nothing to review… yet."
+      UI_ERROR = "We couldn’t load your self‑critique — please try again."
+
+      def initialize(scope: nil, limit: DEFAULT_LIMIT)
+        @scope = scope
+        @limit = limit
       end
 
-      def critique_response(response_text)
-        return [] if response_text.nil? || response_text.strip.empty?
+      def call(user:)
+        return empty_result if user.nil?
 
-        critique_payload = request_self_critique(response_text)
-        critique_data = parse_json_object(critique_payload)
-        normalize_findings(critique_data)
+        load_entries(user)
+          .then { |entries| summarize(entries) }
+          .then { |summary| format_result(summary) }
+      rescue ActiveRecord::StatementInvalid => e
+        error_result(e)
+      end
+
+      def eligible?(entry)
+        return false if entry.nil?
+
+        score = entry.score.to_f
+        score >= SCORE_THRESHOLD && entry.active?
+      end
+
+      def title
+        UI_TITLE
       end
 
       private
 
-      attr_reader :model_client, :max_findings
+      attr_reader :scope, :limit
 
-      def request_self_critique(response_text)
-        prompt = build_prompt(response_text)
-        model_client.call(prompt)
+      def load_entries(user)
+        base = scope || user.self_critique_entries
+
+        base
+          .includes(:analysis_result) # prevent N+1
+          .order(created_at: :desc)
+          .limit(limit)
+          .to_a
       end
 
-      def build_prompt(response_text)
-        snippet = response_text[SLICE_START_INDEX, RESPONSE_SNIPPET_LENGTH].to_s
-        <<~PROMPT
-          You are reviewing an assistant response for quality issues.
-          Return ONLY valid JSON with keys: findings (array).
-          Each finding: { "category": "...", "detail": "...", "severity": "low|medium|high" }.
+      def summarize(entries)
+        eligible = entries.select { |e| eligible?(e) }
 
-          Response snippet:
-          #{CODE_FENCE}
-          #{snippet}
-          #{CODE_FENCE}
-        PROMPT
-      end
-
-      def parse_json_object(text)
-        json_text = extract_json_object(text)
-        return {} if json_text.nil?
-
-        JSON.parse(json_text)
-      rescue JSON::ParserError
-        {}
-      end
-
-      def extract_json_object(text)
-        return nil if text.nil?
-
-        stripped = text.strip
-        return stripped if stripped.start_with?(JSON_OBJECT_START) && stripped.end_with?(JSON_OBJECT_END)
-
-        start_idx = stripped.index(JSON_OBJECT_START)
-        end_idx = stripped.rindex(JSON_OBJECT_END)
-        return nil if start_idx.nil? || end_idx.nil? || end_idx < start_idx
-
-        stripped[start_idx..end_idx]
-      end
-
-      def normalize_findings(critique_data)
-        findings = critique_data.is_a?(Hash) ? critique_data["findings"] : nil
-        findings = [] unless findings.is_a?(Array)
-
-        findings.first(max_findings).map do |finding|
-          normalize_finding(finding)
-        end
-      end
-
-      def normalize_finding(finding)
-        finding_hash = finding.is_a?(Hash) ? finding : {}
         {
-          "category" => finding_hash["category"].to_s,
-          "detail" => finding_hash["detail"].to_s,
-          "severity" => normalize_severity(finding_hash["severity"])
+          total: entries.size,
+          eligible: eligible.size,
+          recent: entries.first
         }
       end
 
-      def normalize_severity(severity)
-        value = severity.to_s.downcase
-        return value if %w[low medium high].include?(value)
+      def format_result(summary)
+        if summary[:total].zero?
+          return {
+            title: title,
+            message: UI_EMPTY_STATE,
+            summary: summary
+          }
+        end
 
-        "low"
+        {
+          title: title,
+          message: "Review ready — you have #{summary[:eligible]} eligible item(s)…",
+          summary: summary
+        }
+      end
+
+      def empty_result
+        {
+          title: title,
+          message: UI_EMPTY_STATE,
+          summary: { total: 0, eligible: 0, recent: nil }
+        }
+      end
+
+      def error_result(_error)
+        {
+          title: title,
+          message: UI_ERROR,
+          summary: { total: 0, eligible: 0, recent: nil }
+        }
       end
     end
   end

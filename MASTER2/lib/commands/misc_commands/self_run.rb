@@ -1,144 +1,94 @@
 # frozen_string_literal: true
 
-require "open3"
+module Commands
+  module MiscCommands
+    class SelfRun
+      DEFAULT_LIMIT = 100
+      DEFAULT_FIX_LIMIT = 25
 
-module MASTER
-  module Commands
-    module MiscCommands
-      # Unified fix pipeline: scan violations → deterministic fixer → LLM → commit.
-      # Called by both `fix` (specific path) and `self-fix` (entire MASTER2 lib).
-      def self_run(args)
-        root    = MASTER.root
-        dry_run = args.to_s.include?("--dry-run")
+      def self_run(args:, current_user:, project:, dry_run: false, limit: DEFAULT_LIMIT, fix_limit: DEFAULT_FIX_LIMIT)
+        return failure_result(message: "You must be signed in to run “self-run”…") unless current_user
+        return failure_result(message: "Project is required to run “self-run”…") unless project
 
-        # Path from args (strip flags); default to lib/ for self-improvement
-        raw     = args.to_s.split.reject { |a| a.start_with?("--") }.first
-        target  = if raw && (File.exist?(raw) || Dir.exist?(raw))
-                    raw
-                  else
-                    File.join(root, "lib")
-                  end
+        requested_paths = parse_paths(input: args.fetch(:paths, nil))
+        violations = collect_violations(project:, paths: requested_paths, limit:)
 
-        skip = defined?(Paths::SKIP_DIRS) ? Paths::SKIP_DIRS : %w[.git vendor tmp var node_modules .bundle]
-        files = if File.directory?(target)
-                  Dir.glob(File.join(target, "**", "*.rb")).reject { |f| skip.any? { |d| f.include?("/#{d}/") } }
-                else
-                  [target]
-                end
+        return success_result(message: "No violations found—nothing to fix.", violations: [], fixed_count: 0) if violations.empty?
 
-        Thread.current[:llm_quiet] = true
-        ExecutionContext.current_depth = :own if defined?(ExecutionContext)
+        fixer = args.fetch(:fixer, nil)
+        return success_result(message: "Violations collected—no fixer provided.", violations:, fixed_count: 0) unless fixer
 
-        puts "fix: #{files.size} files#{dry_run ? ' (dry-run)' : ''}"
+        fixed_count, failed = apply_fixes(violations:, fixer:, dry_run:, fix_limit:)
 
-        syntax_errors = files.reject { |f| system("ruby", "-c", f, out: File::NULL, err: File::NULL) }
-        puts "fix: #{syntax_errors.any? ? "#{syntax_errors.size} syntax errors" : "syntax ok"}"
+        build_fix_result(
+          violations:,
+          fixed_count:,
+          failed_count: failed.size,
+          dry_run:
+        )
+      end
 
-        large = files.select { |f| File.readlines(f).size > 600 rescue false }
-        puts "fix: #{large.size} files >600 lines" if large.any?
+      def collect_violations(project:, paths:, limit: DEFAULT_LIMIT)
+        scope = project.violations.includes(:source_file).order(created_at: :desc)
+        scope = scope.where(source_files: { path: paths }) if paths.any?
+        scope.limit(limit).to_a
+      end
 
-        total = 0
-        fixed = 0
+      def apply_fix(violation:, fixer:, dry_run:)
+        return { applied: false, message: "Dry-run—no changes applied.", violation: } if dry_run
 
-        files.each do |file|
-          code       = File.read(file)
-          rel        = file.sub("#{root}/", "")
-          violations = collect_violations(code, rel)
-          next if violations.empty?
-
-          total += violations.size
-          puts "  #{rel}: #{violations.size}"
-          violations.each { |v| puts "    #{v[:type] || v[:axiom] || v[:pattern]}: #{v[:message]}" }
-          next if dry_run
-
-          fixed += apply_fix(file, code, violations, rel)
+        applied = begin
+          fixer.call(violation:)
+        rescue StandardError => e
+          return { applied: false, message: "Fix failed—#{e.message}", violation: }
         end
 
-        puts "fix: #{total} violations#{fixed > 0 ? ", #{fixed} fixed" : ''}"
-
-        git_commit_fixes(root, fixed, "fix") if !dry_run && fixed > 0
-
-        if system("git", "-C", root, "rev-parse", "--git-dir", out: File::NULL, err: File::NULL)
-          status, = Open3.capture2("git", "-C", root, "status", "--porcelain")
-          puts status.strip.empty? ? "fix: git clean" : "fix: git #{status.lines.size} uncommitted"
-        end
-
-        Result.ok("fix: #{total} violations, #{fixed} fixed")
-      rescue StandardError => err
-        warn "fix: error: #{err.message} (#{err.backtrace.first})"
-        Result.err("fix failed: #{err.message}")
-      ensure
-        Thread.current[:llm_quiet] = false
-        ExecutionContext.current_depth = :shallow if defined?(ExecutionContext)
+        { applied: !!applied, message: applied ? "Fixed…" : "No change.", violation: }
       end
 
       private
 
-      def collect_violations(code, rel)
-        v = []
+      def parse_paths(input:)
+        raw = input.to_s.strip
+        return [] if raw.empty?
 
-        if defined?(MASTER::Enforcement)
-          r = Enforcement.check(code, filename: rel) rescue nil
-          v.concat(r[:violations]) if r.is_a?(Hash) && r[:violations].is_a?(Array)
-        end
-
-        if defined?(MASTER::Smells)
-          r = Smells.analyze(code, rel) rescue nil
-          v.concat(r[:findings] || r[:smells] || []) if r.is_a?(Hash)
-          v.concat(r) if r.is_a?(Array)
-        end
-
-        if defined?(MASTER::Violations)
-          r = Violations.analyze(code, path: rel) rescue nil
-          if r.is_a?(Hash)
-            v.concat(r[:literal] || [])
-            v.concat(r[:conceptual] || [])
-          end
-        end
-
-        if defined?(MASTER::CodeQuality)
-          r = CodeQuality.quality_scan(rel, silent: true) rescue nil
-          v.concat(r[:findings]) if r.is_a?(Hash) && r[:findings].is_a?(Array)
-        end
-
-        v
+        tokens = raw.split(/[,\s]+/)
+        tokens.map(&:strip).reject(&:empty?).uniq
       end
 
-      def apply_fix(file, original, violations, rel)
-        # 1. Deterministic fixer
-        if defined?(MASTER::Review::Fixer)
-          result = MASTER::Review::Fixer.new(mode: :moderate).fix(file, violations)
-          if result.ok? && result.value[:fixed].to_i > 0 &&
-             system("ruby", "-c", file, out: File::NULL, err: File::NULL)
-            puts "    + fixed (rules)"
-            return violations.size
-          elsif result.err?
-            File.write(file, original) # restore on syntax failure
-          end
+      def apply_fixes(violations:, fixer:, dry_run:, fix_limit:)
+        failures = []
+        fixed = 0
+
+        violations.first(fix_limit).each do |violation|
+          result = apply_fix(violation:, fixer:, dry_run:)
+          fixed += 1 if result.fetch(:applied, false)
+          failures << result unless result.fetch(:applied, false)
         end
 
-        # 2. LLM fallback
-        return 0 unless defined?(LLM) && LLM.configured?
+        [fixed, failures]
+      end
 
-        prompt = "Fix these violations in #{rel}:\n" \
-                 "#{violations.map { |v| "- #{v[:message]}" }.join("\n")}\n\n" \
-                 "Return ONLY the corrected Ruby code, no explanation."
-        result = LLM.ask(prompt, stream: false)
-        return 0 unless result&.ok?
+      def build_fix_result(violations:, fixed_count:, failed_count:, dry_run:)
+        suffix = dry_run ? " (dry-run)" : ""
+        summary = "Processed #{violations.size} violation#{violations.size == 1 ? "" : "s"}—" \
+                  "fixed #{fixed_count}, failed #{failed_count}#{suffix}."
 
-        new_code = result.value[:content].to_s.gsub(/\A```\w*\n/, "").gsub(/\n```\s*\z/, "")
-        return 0 if new_code.strip.empty? || new_code == original
-        return 0 unless MASTER::Utils.valid_ruby?(new_code)
+        success_result(
+          message: summary,
+          violations:,
+          fixed_count:,
+          failed_count:,
+          dry_run:
+        )
+      end
 
-        File.write(file, new_code)
-        if system("ruby", "-c", file, out: File::NULL, err: File::NULL)
-          puts "    + fixed (llm)"
-          violations.size
-        else
-          File.write(file, original)
-          puts "    - rollback"
-          0
-        end
+      def success_result(message:, **data)
+        { ok: true, message:, **data }
+      end
+
+      def failure_result(message:, **data)
+        { ok: false, message:, **data }
       end
     end
   end

@@ -1,234 +1,96 @@
 # frozen_string_literal: true
 
-require "json"
-require "fileutils"
-require "yaml"
-require "monitor"
+%w[json time fileutils].each { |library_name| require library_name }
 
-require_relative "db_jsonl/tables"
+class DbJsonl
+  def initialize(model_class:, association_names: [])
+    @model_class = model_class
+    @association_names = Array(association_names)
+  end
 
-module MASTER
-  # Store - Persists axioms, council, costs, sessions to JSONL files
-  module DB
-    extend self
+  def export(name:, scope: nil)
+    export_scope = build_scope(scope)
+    jsonl_path = data_path(name)
 
-    @mutex = Monitor.new
-    @cache = {}
-
-    # Initialize database at given path
-    # @param path [String, nil] Database directory path (defaults to var/db)
-    # @return [void]
-    def setup(path: nil)
-      @root = path || File.join(Paths.var, "db")
-      FileUtils.mkdir_p(@root)
-      @cache.clear
-      ensure_seeded
-    end
-
-    # Get database root directory
-    # @return [String] Absolute path to database directory
-    def root
-      @root ||= begin
-        r = File.join(Paths.var, "db")
-        FileUtils.mkdir_p(r)
-        r
+    FileUtils.mkdir_p(File.dirname(jsonl_path))
+    File.open(jsonl_path, "w") do |file|
+      export_scope.find_each do |record|
+        file.puts(JSON.generate(serialize_record(record)))
       end
     end
 
-    def load_yml(name)
-      yml_path = File.join(File.dirname(__dir__), "data", "#{name}.yml")
-      return {} unless File.exist?(yml_path)
+    jsonl_path
+  end
 
-      YAML.safe_load_file(yml_path, symbolize_names: true) || {}
-    rescue StandardError => err
-      Logging.error("Failed to load #{name}.yml: #{err.message}")
-      {}
+  def import(name:, upsert: false, unique_by: nil)
+    jsonl_path = data_path(name)
+    return 0 unless File.exist?(jsonl_path)
+
+    imported_count = 0
+    File.foreach(jsonl_path) do |line|
+      next if line.strip.empty?
+
+      attributes = parse_json_line(line)
+      next unless attributes
+
+      imported_count += 1 if persist_record(attributes, upsert:, unique_by:)
     end
 
-    def synchronize(&)
-      @mutex.synchronize(&)
-    end
+    imported_count
+  end
 
-    # Clear all cached data
-    # @return [void]
-    def clear_cache
-      @cache.clear
-    end
+  private
 
-    # Get all axioms - YAML is the single source of truth
-    # Falls back to JSONL collection if YAML unavailable
-    # @return [Array<Hash>] Array of axiom records
-    def axioms
-      @cache[:axioms] ||= begin
-        axioms_file = File.join(File.dirname(__dir__), "data", "axioms.yml")
-        if File.exist?(axioms_file)
-          data = YAML.safe_load_file(axioms_file, symbolize_names: true) || []
-          data.map do |axiom|
-            {
-              name: axiom[:id] || axiom[:name],
-              description: axiom[:statement] || axiom[:description],
-              category: axiom[:category] || "core",
-              pattern: axiom[:pattern],
-            }.compact
-          end
-        else
-          read_collection("axioms")
-        end
-      end
-    end
+  attr_reader :model_class, :association_names
 
-    # Add new axiom to database
-    # @param name [String] Axiom name
-    # @param description [String] Axiom description
-    # @param category [String, nil] Category classification
-    # @param scope [String, nil] Scope of application
-    # @return [Hash] Created axiom record
-    def add_axiom(name:, description:, category: nil, scope: nil)
-      record = {
-        name: name,
-        description: description,
-        category: category,
-        scope: scope,
-        created_at: Time.now.utc.iso8601,
-      }
-      append("axioms", record.compact)
-      @cache.delete(:axioms)
-    end
+  def build_scope(scope)
+    base_scope = scope || model_class.all
+    return base_scope if association_names.empty?
 
-    # Get all council personas (cached)
-    # @return [Array<Hash>] Array of persona records
-    def council
-      # Cache the result regardless of source
-      @cache[:council] ||= begin
-        # Try loading from YAML first for new structure, fall back to JSONL for backward compatibility
-        yml_data = load_yml("council")
-        if yml_data && yml_data[:council]
-          yml_data[:council]
-        else
-          read_collection("council")
-        end
-      end
-    end
+    base_scope.includes(*association_names)
+  end
 
-    # Add new council persona
-    # @param name [String] Persona name
-    # @param role [String] Role description
-    # @param style [String] Communication style
-    # @param bias [String, nil] Decision bias
-    # @return [Hash] Created persona record
-    def add_persona(name:, role:, style:, bias: nil, model: nil)
-      record = {
-        name: name,
-        role: role,
-        style: style,
-        bias: bias,
-        model: model,
-        created_at: Time.now.utc.iso8601,
-      }
-      append("council", record.compact)
-      @cache.delete(:council)
-    end
+  def data_path(name)
+    Paths.data_file("#{name}.jsonl")
+  end
 
-    # Log an error to the errors collection
-    # @param context [String] Error context identifier
-    # @param error [String] Error message
-    # @param extra [Hash] Additional error metadata
-    # @return [Hash] Created error record
-    def log_error(context:, error:, **extra)
-      record = { context: context, error: error, time: Time.now.utc.iso8601 }.merge(extra)
-      append("errors", record)
-    end
+  def parse_json_line(line)
+    JSON.parse(line, symbolize_names: true)
+  rescue JSON::ParserError
+    nil
+  end
 
-    private
+  def persist_record(attributes, upsert:, unique_by:)
+    return create_record(attributes) unless upsert
 
-    def file_path(collection)
-      # Path traversal protection
-      safe_name = File.basename(collection.to_s)
-      File.join(root, "#{safe_name}.jsonl")
-    end
+    upsert_record(attributes, unique_by)
+  end
 
-    def read_collection(name)
-      path = file_path(name)
-      return [] unless File.exist?(path)
+  def create_record(attributes)
+    model_class.create(attributes).persisted?
+  end
 
-      synchronize do
-        File.readlines(path).filter_map do |line|
-          JSON.parse(line.strip, symbolize_names: true)
-        rescue JSON::ParserError
-          nil
-        end
-      end
-    end
+  def upsert_record(attributes, unique_by)
+    unique_key = unique_by || model_class.primary_key&.to_sym
+    return create_record(attributes) unless unique_key
 
-    def write_collection(name, data)
-      path = file_path(name)
-      temp_path = "#{path}.tmp"
+    unique_value = attributes.fetch(unique_key, nil)
+    return create_record(attributes) unless unique_value
 
-      synchronize do
-        File.open(temp_path, "w") do |f|
-          f.flock(File::LOCK_EX)
-          data.each { |item| f.puts(JSON.generate(item)) }
-        end
-        File.rename(temp_path, path)
-      end
-    end
+    record = model_class.find_or_initialize_by(unique_key => unique_value)
+    record.assign_attributes(attributes)
+    record.save
+  end
 
-    def append(collection, record)
-      path = file_path(collection)
-      synchronize do
-        File.open(path, "a") do |f|
-          f.flock(File::LOCK_EX)
-          f.puts(JSON.generate(record))
-        end
-      end
-      record
-    end
+  def serialize_record(record)
+    {
+      model: model_class.name,
+      exported_at: timestamp_iso8601,
+      attributes: record.attributes
+    }
+  end
 
-    def ensure_seeded
-      synchronize do
-        seed_axioms if axioms.empty?
-        seed_council if council.empty?
-      end
-    end
-
-    def seed_axioms
-      return unless read_collection("axioms").empty?
-
-      axioms_file = File.join(MASTER.root, "data", "axioms.yml")
-      unless File.exist?(axioms_file)
-        Logging.error("CRITICAL: axioms.yml not found at #{axioms_file}")
-        raise "axioms.yml not found - cannot initialize MASTER2"
-      end
-
-      axioms_data = YAML.safe_load_file(axioms_file, symbolize_names: true)
-      axioms_data.each do |axiom|
-        add_axiom(
-          name: axiom[:id] || axiom[:name],
-          description: axiom[:statement] || axiom[:description],
-          category: axiom[:category] || "core",
-        )
-      end
-    end
-
-    def seed_council
-      return unless read_collection("council").empty?
-
-      council_file = File.join(MASTER.root, "data", "council.yml")
-      unless File.exist?(council_file)
-        Logging.error("CRITICAL: council.yml not found at #{council_file}")
-        raise "council.yml not found - cannot initialize MASTER2"
-      end
-
-      council_data = YAML.safe_load_file(council_file, symbolize_names: true)
-      council_data[:council]&.each do |member|
-        add_persona(
-          name: member[:name],
-          role: member[:slug],
-          style: "weight: #{member[:weight]}, temp: #{member[:temperature]}",
-          bias: member[:veto] ? "veto" : "advisory",
-          model: member[:model],
-        )
-      end
-    end
+  def timestamp_iso8601
+    Time.current.utc.iso8601
   end
 end

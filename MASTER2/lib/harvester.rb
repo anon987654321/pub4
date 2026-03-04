@@ -1,199 +1,127 @@
 # frozen_string_literal: true
 
-require "yaml"
-require "json"
-require "fileutils"
-require "uri"
-require "async"
-require "async/http/internet"
+%w[json net/http uri openssl].each { |lib| require lib }
 
-module MASTER
-  # Harvester - Ecosystem intelligence gathering
-  # Gathers information from open source ecosystems (GitHub, etc.)
-  # Ported from MASTER v1, adapted for MASTER2's Result monad
-  class Harvester
-    GITHUB_API = "https://api.github.com"
-    RATE_LIMIT_DELAY = 1.0 # seconds between requests
+module Harvester
+  GITHUB_API_BASE = "https://api.github.com"
+  DEFAULT_PER_PAGE = 50
+  MAX_PER_PAGE = 100
+  ACCEPT_HEADER = "application/vnd.github+json"
+  USER_AGENT = "Harvester"
+  OPEN_TIMEOUT = 5
+  READ_TIMEOUT = 20
 
-    attr_reader :harvested_data, :stats
-
-    def initialize(github_token: nil)
-      @github_token = github_token || ENV.fetch("GITHUB_TOKEN", nil)
-      @harvested_data = []
-      @stats = {
-        repos_scanned: 0,
-        items_found: 0,
-        errors: 0,
-        started_at: Time.now,
-      }
+  class Client
+    def initialize(access_token: ENV["GITHUB_TOKEN"], http_adapter: Net::HTTP)
+      @access_token = access_token.to_s.strip
+      @http_adapter = http_adapter
     end
 
-    # Search GitHub for repositories
-    def search_repos(query, limit: 10)
-      uri = URI("#{GITHUB_API}/search/repositories")
-      uri.query = URI.encode_www_form(q: query, per_page: limit, sort: "stars")
+    def harvest(query:, limit: 200, per_page: DEFAULT_PER_PAGE)
+      return { repositories: [], errors: ["query is required"] } if query.to_s.strip.empty?
 
-      response = github_request(uri)
-      return Result.err("Search failed.") unless response
+      page_size = [[per_page.to_i, 1].max, MAX_PER_PAGE].min
+      target_count = [limit.to_i, 0].max
 
-      repos = response["items"]&.map do |item|
-        {
-          name: item["full_name"],
-          description: item["description"],
-          stars: item["stargazers_count"],
-          language: item["language"],
-          url: item["html_url"],
-        }
-      end || []
+      repositories = []
+      errors = []
+      page = 1
 
-      @stats[:repos_scanned] += repos.size
-      Result.ok(repos: repos)
-    rescue StandardError => err
-      @stats[:errors] += 1
-      Result.err("Search failed: #{err.message}")
-    end
+      while repositories.size < target_count
+        page_result = search_repos(query: query, per_page: page_size, page: page)
+        errors.concat(Array(page_result[:errors]))
+        repositories.concat(Array(page_result[:repositories]))
+        break if page_result[:incomplete] || Array(page_result[:repositories]).empty?
 
-    # Get repository info
-    def repo_info(owner, repo)
-      uri = URI("#{GITHUB_API}/repos/#{owner}/#{repo}")
-      response = github_request(uri)
-      return Result.err("Repository not found.") unless response
-
-      repo_metadata = {
-        name: response["full_name"],
-        description: response["description"],
-        stars: response["stargazers_count"],
-        forks: response["forks_count"],
-        language: response["language"],
-        topics: response["topics"] || [],
-        created_at: response["created_at"],
-        updated_at: response["updated_at"],
-        url: response["html_url"],
-      }
-
-      @stats[:repos_scanned] += 1
-      Result.ok(repo_metadata)
-    rescue StandardError => err
-      @stats[:errors] += 1
-      Result.err("Failed to get repo info: #{err.message}")
-    end
-
-    # Get trending repositories
-    def trending(language: nil, since: "daily")
-      # Use Web module's GitHub helper if available
-      return Web::GitHub.trending(language: language, since: since) if defined?(Web::GitHub)
-
-      Result.err("Web::GitHub module not available.")
-    end
-
-    # Harvest data from multiple sources
-    def harvest(sources: [])
-      puts "Starting ecosystem harvest..."
-
-      sources.each do |source|
-        begin
-          if source.is_a?(Hash) && source[:owner] && source[:repo]
-            puts "  Scanning #{source[:owner]}/#{source[:repo]}..."
-            result = repo_info(source[:owner], source[:repo])
-            @harvested_data << result.value if result.ok?
-          elsif source.is_a?(String)
-            puts "  Searching: #{source}..."
-            result = search_repos(source, limit: 5)
-            @harvested_data += result.value[:repos] if result.ok?
-          end
-        rescue StandardError => err
-          puts "  - Error: #{err.message}"
-          @stats[:errors] += 1
-        end
-
-        sleep RATE_LIMIT_DELAY
+        page += 1
       end
 
-      @stats[:completed_at] = Time.now
-      @stats[:duration] = (@stats[:completed_at] - @stats[:started_at]).round(2)
-      @stats[:items_found] = @harvested_data.size
-
-      puts "\n+ Harvest complete:"
-      puts "  Items: #{@stats[:items_found]}"
-      puts "  Duration: #{@stats[:duration]}s"
-      puts "  Errors: #{@stats[:errors]}"
-
-      Result.ok(data: @harvested_data, stats: @stats)
+      repositories = repositories.first(target_count) if target_count.positive?
+      { repositories: repositories, errors: errors.uniq }
     end
 
-    # Save harvested data to YAML
-    def save(output_path: nil)
-      output_path ||= File.join(Paths.data, "harvested_#{Time.now.strftime('%Y-%m-%d')}.yml")
+    def search_repos(query:, per_page: DEFAULT_PER_PAGE, page: 1)
+      return { repositories: [], errors: ["query is required"], incomplete: true } if query.to_s.strip.empty?
 
-      FileUtils.mkdir_p(File.dirname(output_path))
+      params = { q: query, per_page: per_page, page: page }
+      payload = github_request("/search/repositories", params: params)
 
-      data = {
-        metadata: {
-          harvested_at: Time.now.iso8601,
-          stats: @stats,
-        },
-        data: @harvested_data,
-      }
+      return payload if payload[:errors].any?
 
-      File.write(output_path, YAML.dump(data))
-      puts "Saved to: #{output_path}"
-
-      Result.ok(path: output_path)
-    rescue StandardError => err
-      Result.err("Failed to save: #{err.message}")
+      items = Array(payload[:data]["items"])
+      { repositories: items, errors: [], incomplete: payload[:data]["incomplete_results"] == true }
     end
 
-    # Analyze trends in harvested data
-    def analyze_trends
-      return {} if @harvested_data.empty?
+    def repo_info(full_name)
+      slug = full_name.to_s.strip
+      return { repository: nil, errors: ["full_name is required"] } if slug.empty?
 
-      {
-        languages: language_distribution,
-        avg_stars: average_stars,
-        total_items: @harvested_data.size,
-      }
+      payload = github_request("/repos/#{URI.encode_www_form_component(slug)}")
+      return payload if payload[:errors].any?
+
+      { repository: payload[:data], errors: [] }
+    end
+
+    def preload_owners(repositories_relation)
+      return repositories_relation unless repositories_relation.respond_to?(:includes)
+
+      repositories_relation.includes(:owner)
     end
 
     private
 
-    def github_request(uri)
-      headers = [
-        ["Accept",     "application/vnd.github.v3+json"],
-        ["User-Agent", "MASTER2-Harvester"],
-      ]
-      headers << ["Authorization", "token #{@github_token}"] if @github_token
+    def github_request(path, params: {})
+      uri = build_uri(path, params)
+      request = Net::HTTP::Get.new(uri)
+      apply_headers(request)
 
-      body = nil
-      Async do |task|
-        task.with_timeout(40) do
-          internet = Async::HTTP::Internet.new
-          begin
-            response = internet.get(uri.to_s, headers)
-            body = response.read if response.status.to_s.start_with?("2")
-          ensure
-            internet.close
-          end
-        end
+      response = perform_http_request(uri, request)
+      return { data: nil, errors: ["network error: #{response.message}"] } if response.is_a?(StandardError)
+
+      parse_github_response(response)
+    end
+
+    def build_uri(path, params)
+      uri = URI.join(GITHUB_API_BASE, path)
+      query = URI.encode_www_form(params.to_h)
+      uri.query = query unless query.empty?
+      uri
+    end
+
+    def apply_headers(request)
+      request["Accept"] = ACCEPT_HEADER
+      request["User-Agent"] = USER_AGENT
+      request["Authorization"] = "Bearer #{@access_token}" unless @access_token.empty?
+    end
+
+    def perform_http_request(uri, request)
+      http = @http_adapter.new(uri.host, uri.port)
+      http.use_ssl = (uri.scheme == "https")
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      http.open_timeout = OPEN_TIMEOUT
+      http.read_timeout = READ_TIMEOUT
+
+      http.request(request)
+    rescue Timeout::Error, Errno::ECONNRESET, Errno::ECONNREFUSED, SocketError => e
+      e
+    end
+
+    def parse_github_response(response)
+      status_code = response.code.to_i
+      body = response.body.to_s
+
+      json = begin
+        body.empty? ? {} : JSON.parse(body)
+      rescue JSON::ParserError
+        {}
       end
 
-      body ? JSON.parse(body) : nil
-    rescue JSON::ParserError
-      nil
-    rescue StandardError => err
-      puts "  Request error: #{err.message}"
-      nil
-    end
+      if (200..299).cover?(status_code)
+        return { data: json, errors: [] }
+      end
 
-    def language_distribution
-      langs = @harvested_data.map { |d| d[:language] }.compact
-      langs.group_by(&:itself).transform_values(&:size).sort_by { |_, v| -v }.to_h
-    end
-
-    def average_stars
-      stars = @harvested_data.map { |d| d[:stars] }.compact
-      return 0 if stars.empty?
-
-      (stars.sum.to_f / stars.size).round(1)
+      message = json.is_a?(Hash) ? (json["message"] || "HTTP #{status_code}") : "HTTP #{status_code}"
+      { data: nil, errors: [message] }
     end
   end
 end

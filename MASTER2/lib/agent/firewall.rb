@@ -1,166 +1,104 @@
 # frozen_string_literal: true
 
+require "open3"
+
 module Agent
   class Firewall
-    ALLOWED_PROTOCOLS = %w[tcp udp icmp].freeze
-    DEFAULT_ACTION = "deny"
+    PROTOCOL_NORMALIZATION = {
+      "tcp" => "tcp",
+      "udp" => "udp",
+      "icmp" => "icmp"
+    }.freeze
 
-    def initialize(options = {})
-      @logger = options.fetch(:logger, nil)
-      @dry_run = options.fetch(:dry_run, false)
-      @default_action = options.fetch(:default_action, DEFAULT_ACTION)
+    def initialize(hostname:, logger:, rule_model: FirewallRule)
+      @hostname = hostname
+      @logger = logger
+      @rule_model = rule_model
     end
 
-    def apply(server_id:, rules_params:)
-      rules = sanitize(rules_params)
-      persist_rules(server_id, rules)
-      configure_system_firewall(server_id) unless @dry_run
-      true
+    def sync!
+      rules = load_rules
+      persist_rules(rules)
+      apply_rules
     end
 
-    def sanitize(rules_params)
-      rules = normalize_rules(rules_params)
-      rules = rules.map { |r| normalize_rule_keys(r) }
-      rules = rules.map { |r| normalize_protocol(r) }
-      rules = rules.map { |r| normalize_ports(r) }
-      rules = rules.map { |r| normalize_action(r) }
-      rules.select { |r| valid_rule?(r) }
+    def load_rules
+      host_id = Host.where(hostname: @hostname).pluck(:id).first
+      return [] unless host_id
+
+      @rule_model
+        .includes(:host, :service)
+        .where(host_id: host_id, enabled: true)
+        .order(:position)
+        .to_a
+    end
+
+    def persist_rules(rules)
+      payload = rules.map { |rule| serialize_rule(rule) }
+      FirewallState.upsert(
+        { hostname: @hostname, rules: payload, updated_at: Time.current },
+        unique_by: :hostname
+      )
+    end
+
+    def apply_rules
+      state = FirewallState.where(hostname: @hostname).pluck(:rules).first
+      return unless state
+
+      cmd = build_apply_command(state)
+      run_command(cmd)
     end
 
     private
 
-    def normalize_rules(rules_params)
-      return [] if rules_params.nil?
-      return rules_params if rules_params.is_a?(Array)
+    def serialize_rule(rule)
+      protocol = normalize_protocol(rule.protocol)
 
-      [rules_params]
-    end
+      service = rule.service
+      service_name = service&.name
+      port = service&.port
 
-    def normalize_rule_keys(rule)
-      rule = rule.to_h
       {
-        protocol: rule.fetch(:protocol, rule.fetch("protocol", nil)),
-        port: rule.fetch(:port, rule.fetch("port", nil)),
-        port_range: rule.fetch(:port_range, rule.fetch("port_range", nil)),
-        source: rule.fetch(:source, rule.fetch("source", nil)),
-        action: rule.fetch(:action, rule.fetch("action", nil)),
-        comment: rule.fetch(:comment, rule.fetch("comment", nil))
+        id: rule.id,
+        action: rule.action,
+        direction: rule.direction,
+        protocol: protocol,
+        port: port,
+        service: service_name,
+        source: rule.source,
+        destination: rule.destination,
+        position: rule.position
       }
     end
 
-    def normalize_protocol(rule)
-      proto = rule.fetch(:protocol, nil)
-      rule.merge(protocol: proto.to_s.downcase)
+    def normalize_protocol(value)
+      key = value.to_s.strip.downcase
+      PROTOCOL_NORMALIZATION[key] || key
     end
 
-    def normalize_ports(rule)
-      port = rule.fetch(:port, nil)
-      range = rule.fetch(:port_range, nil)
-
-      rule = rule.merge(port: normalize_int(port))
-      rule.merge(port_range: normalize_range(range))
-    end
-
-    def normalize_action(rule)
-      action = rule.fetch(:action, nil)
-      action = @default_action if action.nil?
-      rule.merge(action: action.to_s.downcase)
-    end
-
-    def normalize_int(value)
-      return nil if value.nil?
-      return value if value.is_a?(Integer)
-
-      Integer(value)
-    rescue ArgumentError, TypeError
-      nil
-    end
-
-    def normalize_range(value)
-      return nil if value.nil?
-      return value if value.is_a?(Range)
-
-      parts = value.to_s.split("-", 2).map { |p| normalize_int(p) }
-      return nil unless parts.length == 2 && parts.all?
-
-      (parts[0]..parts[1])
-    end
-
-    def valid_rule?(rule)
-      proto = rule.fetch(:protocol, nil)
-      return false if proto.nil?
-      return false unless ALLOWED_PROTOCOLS.include?(proto)
-
-      action = rule.fetch(:action, nil)
-      return false if action.nil?
-
-      port = rule.fetch(:port, nil)
-      range = rule.fetch(:port_range, nil)
-      return true if proto == "icmp"
-      return false if port.nil? && range.nil?
-
-      true
-    end
-
-    def persist_rules(server_id, rules)
-      server = ::Server.find(server_id)
-
-      existing = server.firewall_rules.includes(:server, :network_interface).to_a
-      existing_by_sig = existing.index_by { |r| rule_signature(r.attributes.symbolize_keys) }
-      desired_by_sig = rules.index_by { |r| rule_signature(r) }
-
-      to_delete = existing_by_sig.keys - desired_by_sig.keys
-      to_create = desired_by_sig.keys - existing_by_sig.keys
-
-      server.firewall_rules.where(id: existing_by_sig.values_at(*to_delete).compact.map(&:id)).delete_all if to_delete.any?
-
-      to_create.each do |sig|
-        attrs = desired_by_sig.fetch(sig)
-        server.firewall_rules.create!(
-          protocol: attrs.fetch(:protocol),
-          port: attrs.fetch(:port, nil),
-          port_range: attrs.fetch(:port_range, nil),
-          source: attrs.fetch(:source, nil),
-          action: attrs.fetch(:action),
-          comment: attrs.fetch(:comment, nil)
-        )
-      end
-
-      true
-    end
-
-    def rule_signature(rule)
+    def build_apply_command(state)
+      json = state.to_json
       [
-        rule.fetch(:protocol, nil),
-        rule.fetch(:port, nil),
-        normalize_range(rule.fetch(:port_range, nil))&.begin,
-        normalize_range(rule.fetch(:port_range, nil))&.end,
-        rule.fetch(:source, nil),
-        rule.fetch(:action, nil)
-      ].join("|")
+        "/usr/local/bin/apply-firewall",
+        "--hostname", @hostname,
+        "--rules", json
+      ]
     end
 
-    def configure_system_firewall(server_id)
-      server = ::Server.includes(:firewall_rules).find(server_id)
-      rules = server.firewall_rules.to_a
+    def run_command(cmd)
+      stdout, stderr, status = Open3.capture3(*cmd)
 
-      apply_rules_to_system(server, rules)
-    end
-
-    def apply_rules_to_system(server, rules)
-      return if rules.empty?
-
-      rules.each do |rule|
-        apply_rule(server, rule)
+      unless status.success?
+        @logger.error(
+          "Firewall apply failed: hostname=#{@hostname} status=#{status.exitstatus} stderr=#{stderr}"
+        )
+        raise "Firewall apply failed"
       end
-    end
 
-    def apply_rule(_server, rule)
-      protocol = rule.protocol.to_s.downcase
-      return unless ALLOWED_PROTOCOLS.include?(protocol)
-
-      # Intentionally left as integration point for system firewall commands.
-      @logger&.info("Applying firewall rule: #{rule.id}")
+      @logger.info("Firewall applied: hostname=#{@hostname} stdout=#{stdout}")
+    rescue Errno::ENOENT => e
+      @logger.error("Firewall apply executable missing: #{e.message}")
+      raise
     end
   end
 end

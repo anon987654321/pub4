@@ -1,88 +1,125 @@
 # frozen_string_literal: true
 
-# ConventionExtractor -- Samples the project's actual Ruby style and injects it
-# into the system prompt so the LLM mimics existing conventions instead of
-# inventing its own. Implements gist item #9 (Gemini CLI / Warp 2.0 pattern).
-#
-# Detects: module naming style, indent width, extend-self vs module_function,
-# frozen_string_literal presence, Result monad usage.
+require 'json'
 
-module MASTER
-  module ConventionExtractor
-    SAMPLE_COUNT      = 3    # files to sample; small to keep system prompt lean
-    SAMPLE_CHAR_LIMIT = 1500 # chars read per sampled file
-    RESULT_CHAR_LIMIT = 800  # chars read from result.rb
+module Executor
+  class ConventionExtractor
+    DEFAULT_INDENT = '  '
+    OUTPUT_MARGIN = '      '
+    LINES_PUSH_PREFIX = "#{OUTPUT_MARGIN}lines << ".freeze
 
-    module_function
+    ASSOCIATIONS_TO_PRELOAD = %i[project author rules].freeze
 
-    # Returns a compact prose summary of detected conventions, ~8 lines.
-    def extract(root: MASTER.root, sample_count: SAMPLE_COUNT)
-      rb_files = Dir.glob(File.join(root, "lib", "**", "*.rb"))
-                    .reject { |f| f.include?("test") || f.include?("vendor") }
-      return "" if rb_files.empty?
+    MAX_NAME_LENGTH = 80
+    DEFAULT_VERSION = 1
 
-      samples = rb_files.sample(sample_count).map { |f| File.read(f)[0..SAMPLE_CHAR_LIMIT] rescue "" }
-      all_content = File.read(File.join(root, "lib", "result.rb"))[0..RESULT_CHAR_LIMIT] rescue ""
-      all_content += "\n" + samples.join("\n")
-
-      lines = ["PROJECT CONVENTIONS (mimic exactly -- do not invent new patterns):"]
-      lines << "- Frozen string literals: #{frozen_string_style(all_content)}"
-      lines << "- Module pattern: #{module_pattern(all_content)}"
-      lines << "- Indent: #{indent_style(all_content)}"
-      lines << "- Error handling: #{error_handling_style(all_content)}"
-      lines << "- Return values: #{return_style(all_content)}"
-      lines << "- Naming: #{naming_style(rb_files)}"
-      lines.join("\n")
-    rescue StandardError
-      ""
+    def initialize(scope: nil, indent: DEFAULT_INDENT)
+      @scope = scope
+      @indent = indent
     end
 
-    class << self
-      private
+    def call
+      conventions = load_conventions
+      return '' if conventions.empty?
 
-      def frozen_string_style(content)
-        ratio = content.scan(/# frozen_string_literal: true/).size.to_f /
-                [content.scan(/^# frozen/).size + 1, 1].max
-        ratio >= 0.8 ? "always present on line 1" : "sometimes present"
-      end
+      lines = []
+      build_header(lines)
+      build_conventions(lines, conventions)
+      build_footer(lines)
+      lines.join("\n")
+    end
 
-      def module_pattern(content)
-        extend_count  = content.scan(/extend self/).size
-        modfunc_count = content.scan(/module_function/).size
-        if extend_count > modfunc_count
-          "extend self (NOT module_function)"
-        elsif modfunc_count > extend_count
-          "module_function"
-        else
-          "mixed -- prefer extend self per rubocop config"
-        end
-      end
+    private
 
-      def indent_style(content)
-        two   = content.scan(/^  \w/).size
-        four  = content.scan(/^    \w/).size
-        two >= four ? "2 spaces" : "4 spaces"
-      end
+    attr_reader :scope, :indent
 
-      def error_handling_style(content)
-        result_count = content.scan(/Result\.ok|Result\.err/).size
-        raise_count  = content.scan(/raise\s+\w/).size
-        if result_count > raise_count
-          "Result monad (Result.ok / Result.err) -- prefer over exceptions"
-        else
-          "raise/rescue exceptions"
-        end
-      end
+    def load_conventions
+      relation = scope || Convention.all
+      relation.includes(*ASSOCIATIONS_TO_PRELOAD).order(:id).to_a
+    end
 
-      def return_style(content)
-        content.include?("Result.ok") ? "wrap returns in Result.ok(value) / Result.err(message)" : "plain return values"
-      end
+    def build_header(lines)
+      lines << '# frozen_string_literal: true'
+      lines << ''
+      lines << 'module ConventionRegistry'
+      lines << "#{indent}def self.load"
+      lines << "#{indent}#{indent}lines = []"
+    end
 
-      def naming_style(rb_files)
-        snake = rb_files.count { |f| File.basename(f, ".rb") =~ /^[a-z][a-z0-9_]*$/ }
-        camel = rb_files.count { |f| File.basename(f, ".rb") =~ /^[A-Z]/ }
-        snake >= camel ? "snake_case files, CamelCase classes/modules" : "CamelCase files"
+    def build_footer(lines)
+      lines << "#{indent}#{indent}lines"
+      lines << "#{indent}end"
+      lines << 'end'
+    end
+
+    def build_conventions(lines, conventions)
+      conventions.each do |convention|
+        build_convention(lines, convention)
       end
+    end
+
+    def build_convention(lines, convention)
+      name = safe_name(convention.name)
+      return if name.nil?
+
+      push_line(lines, %(# Convention: #{name}))
+      push_line(lines, %(lines << "#{escape(name)}"))
+
+      project_name = convention.project&.name
+      push_line(lines, %(lines << "project: #{escape(project_name)}")) if project_name
+
+      author_name = convention.author&.name
+      push_line(lines, %(lines << "author: #{escape(author_name)}")) if author_name
+
+      version = convention.respond_to?(:version) ? convention.version : nil
+      version ||= DEFAULT_VERSION
+      push_line(lines, %(lines << "version: #{version}"))
+
+      rules = convention.respond_to?(:rules) ? Array(convention.rules) : []
+      build_rules(lines, rules)
+
+      push_line(lines, %(lines << "")) # separator
+    end
+
+    def build_rules(lines, rules)
+      return if rules.empty?
+
+      push_line(lines, %(lines << "rules:"))
+      rules.each do |rule|
+        push_rule(lines, rule)
+      end
+    end
+
+    def push_rule(lines, rule)
+      text = rule.respond_to?(:text) ? rule.text : rule.to_s
+      return if text.nil? || text.strip.empty?
+
+      push_line(lines, %(lines << "- #{escape(text)}"))
+    end
+
+    def safe_name(name)
+      return nil if name.nil?
+
+      str = name.to_s.strip
+      return nil if str.empty?
+
+      str.length > MAX_NAME_LENGTH ? str[0, MAX_NAME_LENGTH] : str
+    end
+
+    def escape(value)
+      value.to_s.gsub('\\', '\\\\').gsub('"', '\"')
+    end
+
+    def push_line(lines, content)
+      lines << "#{LINES_PUSH_PREFIX}#{content}"
+    end
+
+    def parse_json(json)
+      return {} if json.nil? || json.to_s.strip.empty?
+
+      JSON.parse(json)
+    rescue JSON::ParserError
+      {}
     end
   end
 end

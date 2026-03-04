@@ -1,74 +1,46 @@
 # frozen_string_literal: true
 
-module MASTER
-  # LearningQuality - Assess and filter learning data quality
-  module LearningQuality
-    extend self
-
-    MIN_CONFIDENCE = 0.6
-    MINIMUM_APPLICATIONS = 3
-
-    # Confidence scoring weights
-    WEIGHT_CATEGORY = 0.3
-    WEIGHT_SUCCESS = 0.3
-    WEIGHT_TIMESTAMP = 0.2
-    WEIGHT_FIX_HASH = 0.2
-
-    TIERS = {
-      promote: { threshold: 0.85, action: "Promote to core patterns" },
-      keep: { threshold: 0.60, action: "Keep in active set" },
-      demote: { threshold: 0.30, action: "Demote to experimental" },
-      retire: { threshold: 0.0, action: "Retire pattern" },
+module Learnings
+  class Quality
+    DEFAULT_MIN_SCORE = 0.8
+    DEFAULT_WEIGHTS = {
+      accuracy: 1.0,
+      completeness: 1.0,
+      clarity: 1.0
     }.freeze
 
-    def assess(learning)
-      confidence = calculate_confidence(learning)
-      {
-        confidence: confidence,
-        quality: confidence >= MIN_CONFIDENCE ? :acceptable : :low,
-        usable: confidence >= MIN_CONFIDENCE,
-      }
+    def initialize(options = {})
+      @min_score = options.fetch(:min_score, DEFAULT_MIN_SCORE).to_f
+      @strict = options.fetch(:strict, false)
+      @weights = normalize_weights(options.fetch(:weights, DEFAULT_WEIGHTS))
     end
 
-    def evaluate(pattern)
-      applications = pattern[:applications] || pattern[:applied_count] || 0
-      return :unrated if applications < MINIMUM_APPLICATIONS
+    def score(metrics)
+      return 0.0 if metrics.nil?
 
-      success_rate = calculate_success_rate(pattern)
+      total_weight = @weights.values.sum
+      return 0.0 if total_weight.zero?
 
-      case success_rate
-      when 0.85..Float::INFINITY then :promote
-      when 0.60...0.85 then :keep
-      when 0.30...0.60 then :demote
-      else :retire
+      weighted_sum = @weights.sum do |key, weight|
+        metrics.fetch(key, 0).to_f * weight
       end
+
+      weighted_sum / total_weight
     end
 
-    def tier(pattern)
-      evaluate(pattern)
+    def pass?(metrics)
+      score(metrics) >= @min_score
     end
 
-    def calculate_success_rate(pattern)
-      successes = (pattern[:successes] || pattern[:success_count] || 0).to_f
-      failures = (pattern[:failures] || pattern[:failure_count] || 0).to_f
-      total = successes + failures
-
-      return 0.0 if total.zero?
-
-      successes / total
+    def evaluate(metrics)
+      s = score(metrics)
+      { score: s, pass: s >= @min_score, strict: @strict }
     end
 
     private
 
-    def calculate_confidence(learning)
-      return 0.0 unless learning.is_a?(Hash)
-
-      score = 0.0
-      score += WEIGHT_CATEGORY if learning[:category]
-      score += WEIGHT_SUCCESS if learning[:success]
-      score += WEIGHT_TIMESTAMP if learning[:timestamp]
-      score += WEIGHT_FIX_HASH if learning[:fix_hash]
-      score
+    def normalize_weights(weights)
+      weights.to_h.transform_values(&:to_f).freeze
     end
   end
 end
