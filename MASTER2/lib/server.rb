@@ -18,7 +18,7 @@ module MASTER
     CT_HEADER  = "content-type"
     AUTH_TOKEN = ENV["MASTER_TOKEN"] || SecureRandom.hex(16)
     VIEWS_DIR  = File.join(File.dirname(__FILE__), "views")
-    RG69_PATH  = File.expand_path("../../dilla.html", File.dirname(__FILE__))
+    DILLA_PATH = File.expand_path("../../dilla.html", File.dirname(__FILE__))
 
     # Security headers appended to every response
     SECURITY_HEADERS = {
@@ -199,10 +199,10 @@ module MASTER
     end
 
     def serve_dilla
-      if File.exist?(RG69_PATH)
-        [200, { CT_HEADER => HTML_TYPE }, [File.read(RG69_PATH)]]
+      if File.exist?(DILLA_PATH)
+        [200, { CT_HEADER => HTML_TYPE }, [File.read(DILLA_PATH)]]
       else
-        [404, { CT_HEADER => TEXT_TYPE }, ["dilla.html not found at #{RG69_PATH}"]]
+        [404, { CT_HEADER => TEXT_TYPE }, ["dilla.html not found at #{DILLA_PATH}"]]
       end
     end
 
