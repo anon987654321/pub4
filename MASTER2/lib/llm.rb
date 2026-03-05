@@ -239,7 +239,7 @@ module MASTER
         CircuitBreaker.close_circuit!(current_model)
 
         # Publish LLM response event for interested subscribers
-        if defined?(EventBus)
+        if defined?(EventBus) && EventBus.respond_to?(:publish)
           EventBus.publish(:llm_response,
                            model: current_model,
                            tokens_in: tokens_in,
