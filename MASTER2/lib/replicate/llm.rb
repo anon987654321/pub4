@@ -36,13 +36,18 @@ module MASTER
 
         return Result.err("Empty response from #{model_id.split('/').last}") if content.strip.empty?
 
+        # Replicate predictions API doesn't expose token counts — estimate from char count.
+        # Rough heuristic: 1 token ≈ 4 chars (works for English; conservative for code).
+        estimated_in  = (prompt.length / 4.0).ceil
+        estimated_out = (content.length / 4.0).ceil
+
         Result.ok(
           content: content,
           model: model_id,
           provider: :replicate,
-          tokens_in: 0, # Replicate predictions API doesn't surface token counts
-          tokens_out: 0,
-          cost: nil,
+          tokens_in: estimated_in,
+          tokens_out: estimated_out,
+          cost: nil, # Replicate billing is per-second of compute, not per-token
           finish_reason: "stop",
         )
       rescue StandardError => e
