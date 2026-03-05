@@ -97,7 +97,7 @@ module MASTER
 
         Result.ok({ path: path })
       rescue StandardError => e
-        warn "cinematic: #{e.message}"
+        UI.warn("cinematic: #{e.message}")
         Result.err("Failed to save preset: #{e.message}")
       end
 
@@ -117,7 +117,7 @@ module MASTER
 
         Result.ok(pipeline)
       rescue StandardError => e
-        warn "cinematic: #{e.message}"
+        UI.warn("cinematic: #{e.message}")
         Result.err("Failed to load preset: #{e.message}")
       end
 
@@ -163,7 +163,7 @@ module MASTER
         path = File.join(intermediate_dir, filename)
         Replicate.download_file(output, path)
       rescue StandardError => e
-        warn "Cinematic: save_intermediate failed: #{e.message}"
+        UI.warn("cinematic: save_intermediate failed: #{e.message}")
       end
 
       def generate_embedding(_text)
@@ -190,11 +190,11 @@ module MASTER
 
     # Discover new styles via random exploration
     def discover_style(input, samples: 10)
-      puts "Discovering new cinematic styles..."
+      UI.progress("Discovering new cinematic styles...")
 
       results = []
       samples.times do |i|
-        puts "  Sample #{i + 1}/#{samples}"
+        UI.progress("Sample #{i + 1}/#{samples}")
 
         # Random pipeline 3-6 stages long
         pipeline_result = Pipeline.random(length: rand(3..6), category: :image)

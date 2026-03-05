@@ -95,8 +95,8 @@ module MASTER
         output = `git -C #{Shellwords.escape(path)} log --oneline --decorate -#{limit} 2>/dev/null`
         commits = output.lines.map(&:strip).reject(&:empty?)
         if (ENV["MASTER_VERBOSE"] || ENV.fetch("MASTER_DEBUG", nil)) && !commits.empty?
-          puts UI.dim("\nRecent commits:")
-          commits.each { |line| puts line }
+          warn UI.dim("\nRecent commits:")
+          commits.each { |line| warn line }
         end
         commits
       end

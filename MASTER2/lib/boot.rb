@@ -55,8 +55,8 @@ module MASTER
         elapsed = ((MASTER::Utils.monotonic_now - start_time) * 1000).round
         lines << c("boot0: #{elapsed}ms")
 
-        puts lines.join("\n")
-        puts
+        UI.user(lines.join("\n"))
+        UI.user("")
       end
 
       def banner_with_web(port)

@@ -3,6 +3,18 @@
 module MASTER
   class Executor
     module Reflexion
+      REFLECT_SCHEMA = {
+        type: "object",
+        additionalProperties: false,
+        required: %w[success critique lessons],
+        properties: {
+          success:         { type: "boolean", description: "Did the attempt fully complete the task?" },
+          critique:        { type: "string",  description: "What went wrong or could be improved" },
+          lessons:         { type: "string",  description: "Concrete changes for the next attempt" },
+          improved_answer: { type: "string",  description: "Better answer if the original was incomplete" },
+        },
+      }.freeze
+
       def execute_reflexion(goal, tier:)
         original_goal = goal.dup.freeze
         max_attempts = 3
@@ -49,8 +61,8 @@ module MASTER
       end
 
       def execute_react_inner(goal, tier:)
-        # Simplified ReAct without the outer Result wrapper
-        # Intentionally cap inner loop to respect overall step budget
+        # Simplified ReAct without the outer Result wrapper.
+        # Uses ask_json + STEP_SCHEMA (same as execute_react) to avoid regex parsing.
         start_time = MASTER::Utils.monotonic_now
 
         [5, @max_steps - @step].min.times do
@@ -63,18 +75,15 @@ module MASTER
           @step += 1
           msgs = build_context_messages(goal)
 
-          result = LLM.ask(msgs.last[:content], messages: [msgs.first], tier: tier)
-          return Result.err("LLM error.") unless result.ok?
+          result = LLM.ask_json(msgs.last[:content], schema: STEP_SCHEMA, messages: [msgs.first], tier: tier)
+          return Result.err("LLM error at step #{@step}: #{result.error}") unless result.ok?
 
-          parsed = parse_response(result.value[:content].to_s)
+          parsed = parse_step(result.value[:content])
           record_history({ step: @step, thought: parsed[:thought], action: parsed[:action] })
 
-          if parsed[:action] =~ COMPLETION_PATTERN
-            answer = parsed[:action].sub(COMPLETION_PATTERN, "")
-            return Result.ok(answer: answer, steps: @step)
-          end
+          return Result.ok(answer: parsed[:answer], steps: @step) if parsed[:answer]
 
-          observation = dispatch_action(parsed[:action])
+          observation = dispatch_action(parsed[:tool] || parsed[:action])
           @history.last[:observation] = observation
         end
 
@@ -94,28 +103,19 @@ module MASTER
 
           Result: #{result.ok? ? result.value[:answer] : result.error}
 
-          Reflect on this execution:
-          1. Did it successfully complete the task? (yes/no)
-          2. What went wrong or could be improved?
-          3. What lessons should be applied to the next attempt?
-          4. If the answer was incomplete, provide an improved answer.
-
-          Respond in this format:
-          SUCCESS: yes/no
-          CRITIQUE: (what went wrong)
-          LESSONS: (what to do differently)
-          IMPROVED_ANSWER: (better answer if needed)
+          Reflect: did this fully complete the task? What went wrong? What should change next attempt?
+          If the answer was incomplete, provide an improved_answer.
         REFLECT
 
-        llm_result = LLM.ask(prompt, tier: tier)
+        llm_result = LLM.ask_json(prompt, schema: REFLECT_SCHEMA, tier: tier)
         return { success: false, critique: "Reflection LLM call failed", lessons: "" } unless llm_result.ok?
 
-        content = llm_result.value[:content]
+        r = llm_result.value[:content]
         {
-          success: content.match?(/SUCCESS:\s*yes/i),
-          critique: content[/CRITIQUE:\s*(.+?)(?=LESSONS:|$)/mi, 1]&.strip || "",
-          lessons: content[/LESSONS:\s*(.+?)(?=IMPROVED_ANSWER:|$)/mi, 1]&.strip || "",
-          improved_answer: content[/IMPROVED_ANSWER:\s*(.+)/mi, 1]&.strip,
+          success:         r[:success] || r["success"] || false,
+          critique:        r[:critique] || r["critique"] || "",
+          lessons:         r[:lessons]  || r["lessons"]  || "",
+          improved_answer: r[:improved_answer] || r["improved_answer"],
         }
       end
     end

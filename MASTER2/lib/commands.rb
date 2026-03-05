@@ -43,13 +43,13 @@ module MASTER
 
         result = ReplicateBridge.generate_video(prompt: args)
         if result.ok?
-          puts "+ video: #{result.value[:urls]&.first || result.value}"
+          UI.user("+ video: #{result.value[:urls]&.first || result.value}")
         else
-          warn "- #{result.error}"
+          UI.warn(result.error)
         end
       end
     rescue StandardError => e
-      warn "replicate: #{e.message}"
+      UI.warn("replicate: #{e.message}")
     end
 
     # Narrate command handler
@@ -64,7 +64,7 @@ module MASTER
       print_narration_results(result) if result.ok?
       result
     rescue StandardError => e
-      warn "narrate: #{e.message}"
+      UI.warn("narrate: #{e.message}")
       Result.err(e.message)
     end
 
@@ -133,13 +133,13 @@ module MASTER
                    PostproBridge.enhance(image_url: args, operation: :upscale)
                  end
         if result.ok?
-          puts "+ #{result.value[:urls]&.first || result.value}"
+          UI.user("+ #{result.value[:urls]&.first || result.value}")
         else
-          warn "- #{result.error}"
+          UI.warn(result.error)
         end
       end
     rescue StandardError => e
-      warn "postpro: #{e.message}"
+      UI.warn("postpro: #{e.message}")
     end
 
     # Fuzzy match for command suggestions (moved from Onboarding)

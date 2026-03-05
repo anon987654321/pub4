@@ -42,7 +42,7 @@ module MASTER
         missing = missing_gems
         return if missing.empty?
 
-        puts "Installing #{missing.size} gems..." if verbose
+        warn "master: installing #{missing.size} gems..." if verbose
         missing.each do |gem|
           next unless gem.match?(/\A[a-z0-9_-]+\z/)
 
@@ -57,7 +57,7 @@ module MASTER
         return unless name.to_s.match?(/\A[a-z0-9_-]+\z/)
 
         @installed ||= {}
-        warn "Installing #{name}..."
+        warn "master: installing #{name}..."
         @installed[name] = system("gem", "install", name, "--no-document")
         require name
       end
@@ -82,7 +82,7 @@ module MASTER
         missing = missing_packages
         return if missing.empty?
 
-        puts "Installing #{missing.size} packages..." if verbose
+        warn "master: installing #{missing.size} packages..." if verbose
         valid_packages = missing.grep(/\A[a-z0-9_-]+\z/)
         system("doas", "pkg_add", *valid_packages) unless valid_packages.empty?
       end
