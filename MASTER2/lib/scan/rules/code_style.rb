@@ -34,9 +34,12 @@ module MASTER
 
         def self.check(code, path: nil)
           findings = []
+          # dirty_flag_missing only applies to files that already use @dirty tracking
+          file_uses_dirty = code.match?(/^\s*@dirty\s*=/)
 
           code.each_line.with_index(1) do |line_text, line_num|
             CHECKS.each do |check_name, check_def|
+              next if check_name == :dirty_flag_missing && !file_uses_dirty
               next unless line_text.match?(check_def[:pattern])
 
               findings << {

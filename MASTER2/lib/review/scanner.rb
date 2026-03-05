@@ -38,7 +38,7 @@ module MASTER
         }.freeze,
         rescue_nil: {
           pattern: /rescue\s+nil\b/,
-          message: "rescue nil swallows all exceptions silently — use rescue StandardError",
+          message: "Implicit nil rescue swallows all exceptions silently — use rescue StandardError",
           severity: :major,
         }.freeze,
         ascii_decoration: {
@@ -81,8 +81,10 @@ module MASTER
         # Quick static analysis (no LLM)
         def analyze(code, filename: nil)
           issues = []
+          file_uses_dirty = code.match?(/^\s*@dirty\s*=/)
 
           CHECKS.each do |name, check|
+            next if name == :dirty_flag_missing && !file_uses_dirty
             next unless code.match?(check[:pattern])
 
             issues << {
