@@ -16,7 +16,7 @@ module MASTER
           }.freeze,
           rescue_nil: {
             pattern:  /rescue\s+nil\b/,
-            message:  "rescue nil swallows all exceptions silently -- use rescue StandardError",
+            message:  "Implicit nil rescue swallows all exceptions silently -- use rescue StandardError",
             severity: :major,
           }.freeze,
           unused_rescue_var: {
