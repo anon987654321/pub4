@@ -115,6 +115,6 @@ end
 begin
   _depth = MASTER::PrismAnalyzer.nesting_depth("def f; if true; while x; end; end; end")
   raise "PrismAnalyzer nesting_depth self-test failed: got #{_depth}, expected >= 2" unless _depth >= 2
-rescue => e
+rescue StandardError => e
   raise "PrismAnalyzer load-time self-test failed: #{e.message}"
 end

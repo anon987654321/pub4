@@ -6,7 +6,11 @@ class TestPipelineCoverage < Minitest::Test
   def setup
     setup_db
     stub_llm_ask(content: "Pipeline test response")
-    MASTER::Session.start_new rescue nil
+    begin
+      MASTER::Session.start_new
+    rescue StandardError
+      nil
+    end
   end
 
   def teardown
