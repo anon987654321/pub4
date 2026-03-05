@@ -35,7 +35,7 @@ rescue LoadError
       @threshold = threshold
       @cool_off_time = cool_off_time
       unless self.class.warned
-        warn "Warning: Stoplight gem not available - circuit breaker disabled"
+        UI.warn("Stoplight gem not available — circuit breaker disabled")
         self.class.warned = true
       end
     end

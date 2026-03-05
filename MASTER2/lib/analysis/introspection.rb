@@ -48,7 +48,7 @@ module MASTER
             prompt = "You inspected #{label}. Facts: #{facts}. " \
                      "In 5 lines or fewer: what should be improved? Be concrete."
             result = LLM.ask(prompt, stream: true)
-            puts result.value[:content] if result&.ok?
+            UI.user(result.value[:content]) if result&.ok?
           end
 
           Result.ok("introspect complete: #{map[:ruby_files].count} files, #{errors.count} errors")
