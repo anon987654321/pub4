@@ -13,9 +13,7 @@
 require "fileutils"
 require "optparse"
 
-# ============================================================================
 # CONFIGURATION
-# ============================================================================
 
 # Cross-platform SoX detection (Cygwin/OpenBSD/Linux friendly)
 def find_sox
@@ -40,9 +38,7 @@ end
 
 SOX = find_sox
 
-# ============================================================================
 # OPTIONS PARSING
-# ============================================================================
 
 options = {
   output: "industrial/berghain_135bpm.wav",
@@ -75,9 +71,7 @@ OUTPUT_FILE = options[:output]
 TEMPO = options[:rate]
 BARS = options[:bars]
 
-# ============================================================================
 # UTILITIES
-# ============================================================================
 
 def sox(cmd)
   full_cmd = "#{SOX} #{cmd}"
@@ -102,9 +96,7 @@ def cleanup(*files)
   end
 end
 
-# ============================================================================
 # DRUM SYNTHESIS - INDUSTRIAL STYLE
-# ============================================================================
 
 def make_industrial_kick
   # Heavy, distorted 909-style kick with sub bass
@@ -140,9 +132,7 @@ def make_industrial_tom
   "_tom.wav"
 end
 
-# ============================================================================
 # PATTERN GENERATION - BERGHAIN STYLE
-# ============================================================================
 
 def generate_industrial_techno(tempo, bars)
   beat_sec = 60.0 / tempo
@@ -252,9 +242,7 @@ def generate_industrial_techno(tempo, bars)
   puts "  Duration: #{total_sec.round(2)}s (#{bars} bars at #{tempo} BPM)"
 end
 
-# ============================================================================
 # MAIN
-# ============================================================================
 
 if __FILE__ == $PROGRAM_NAME
   puts "\n" + ("=" * 70)

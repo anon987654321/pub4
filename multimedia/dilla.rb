@@ -12,9 +12,7 @@
 require "json"
 require "fileutils"
 
-# ============================================================================
 # CONFIGURATION
-# ============================================================================
 
 BASE_DIR = "G:/pub/multimedia/dilla"
 SOX = "#{BASE_DIR}/effects/sox/sox.exe"
@@ -127,9 +125,7 @@ PROGRESSIONS = {
   }
 }
 
-# ============================================================================
 # CORE AUDIO ENGINE
-# ============================================================================
 
 def sox(*args)
   cmd = "\"#{SOX}\" #{args.join(' ')}"
@@ -137,7 +133,7 @@ def sox(*args)
 end
 
 def cleanup(*files)
-  files.each { |f| File.delete(f) rescue nil if File.exist?(f) }
+  files.each { |f| File.delete(f) rescue StandardError if File.exist?(f) }
 end
 
 # FM Synthesis: 3-layer (sawtooth + square + sine)
@@ -160,9 +156,7 @@ def apply_fx(input, output, preset_name)
   sox("#{input} #{output} #{preset}")
 end
 
-# ============================================================================
 # GENERATION
-# ============================================================================
 
 def generate_chords(quick_mode: false)
   puts "\n🎹 Generating J Dilla Chord Progressions..."
@@ -191,9 +185,7 @@ def generate_chords(quick_mode: false)
   puts "\n✓ Generated #{progs.size} progressions"
 end
 
-# ============================================================================
 # PLAYBACK
-# ============================================================================
 
 def play_chords_continuous
   chord_files = Dir["#{CHORDS_DIR}/*.wav"].sort
@@ -223,9 +215,7 @@ def play_single_progression(key)
   sox("#{file} -t waveaudio -d")
 end
 
-# ============================================================================
 # INTERACTIVE MENU
-# ============================================================================
 
 def show_menu
   puts "\n" + "=" * 60
@@ -279,9 +269,7 @@ def interactive_mode
   end
 end
 
-# ============================================================================
 # CLI
-# ============================================================================
 
 if __FILE__ == $PROGRAM_NAME
   case ARGV[0]
