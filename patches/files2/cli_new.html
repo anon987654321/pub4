@@ -601,156 +601,32 @@
   resize();
 
   class Neuron {
-    constructor(i) { this.i=i; this.vx=0; this.vy=0; this.vz=0; this.c=0; this.think=0; this.lx=0; this.ly=1; this.lz=1.05+i*0.01; this.reset(0); }
+    constructor(i) { this.i = i; this.reset(0); }
     reset(s) {
-      const n=this.i,N=W,τ=Math.PI*2;
-      const φ=Math.acos(1-2*(n+.5)/N),θ=Math.PI*(1+Math.sqrt(5))*n;
-      const cφ=Math.cos(φ),sφ=Math.sin(φ),cθ=Math.cos(θ),sθ=Math.sin(θ);
-      const u=(n/N)*τ,v=((n*7)%N/N)*τ,h=(n/N)*60-30,r=(n/N)*48;
-      switch(s){
-        case 0:  [this.ox,this.oy,this.oz]=[cθ*sφ*50,cφ*50,sθ*sφ*50]; break; // sphere
-        case 1:  [this.ox,this.oy,this.oz]=[Math.cos(u*4)*r*.8,h,Math.sin(u*4)*r*.8]; break; // helix
-        case 2:  {const f=Math.floor(n/(N/6)),uu=(n%(N/6))/(N/6)*2-1,vv=((n*3)%(N/6))/(N/6)*2-1,fs=[[1,uu,vv],[-1,uu,vv],[uu,1,vv],[uu,-1,vv],[uu,vv,1],[uu,vv,-1]];[this.ox,this.oy,this.oz]=fs[f%6].map(x=>x*40);} break; // cube
-        case 3:  {const R=35,rr=15;[this.ox,this.oy,this.oz]=[(R+rr*Math.cos(v))*Math.cos(u),rr*Math.sin(v),(R+rr*Math.cos(v))*Math.sin(u)];} break; // torus
-        case 4:  [this.ox,this.oy,this.oz]=[Math.cos(u)*r*.8,h,Math.sin(u)*r*.8]; break; // cone
-        case 5:  [this.ox,this.oy,this.oz]=[Math.cos(u)*35,h,Math.sin(u)*35]; break; // cylinder
-        case 6:  [this.ox,this.oy,this.oz]=[Math.cos(u*3)*r*.8,h,Math.sin(u*3)*r*.8]; break; // spiral
-        case 7:  [this.ox,this.oy,this.oz]=[Math.cos(u)*40,Math.sin(u)*40,0]; break; // ring
-        case 8:  [this.ox,this.oy,this.oz]=[Math.cos(u)*Math.sqrt(n/N)*40,Math.sin(u)*Math.sqrt(n/N)*40,0]; break; // disk
-        case 9:  {const vv=((n*3)%N/N)*.4-.2;[this.ox,this.oy,this.oz]=[(1+vv*Math.cos(u/2))*Math.cos(u)*40,(1+vv*Math.cos(u/2))*Math.sin(u)*40,vv*Math.sin(u/2)*40];} break; // mobius
-        case 10: {const k=Math.floor(n/(N/3)),a=(n%(N/3))/(N/3)*τ,rr=k*15+8;[this.ox,this.oy,this.oz]=[Math.cos(a)*rr,k*6-6,Math.sin(a)*rr];} break; // vortex
-        case 11: {const vv2=((n*5)%N/N)*τ;[this.ox,this.oy,this.oz]=[Math.cos(u)*(Math.cos(u/2)*(2+Math.cos(vv2))+Math.sin(u/2)*Math.sin(vv2)*Math.cos(vv2))*10,h*.8,Math.sin(u)*(Math.cos(u/2)*(2+Math.cos(vv2))+Math.sin(u/2)*Math.sin(vv2)*Math.cos(vv2))*10];} break; // klein
-        case 12: {const vv3=v;this.ox=Math.cos(u)*Math.cos(vv3)*28;this.oy=Math.sin(u)*Math.cos(vv3)*28;this.oz=Math.cos(2*u)*Math.sin(vv3)*28;} break; // enneper
-        case 13: {const vv4=v;this.ox=(1+.5*Math.cos(u))*Math.cos(vv4)*32;this.oy=(1+.5*Math.cos(u))*Math.sin(vv4)*32;this.oz=.5*Math.sin(u)*32;} break; // roman
-        case 14: {const a=u*3,rr=Math.exp(a*.12)*4;[this.ox,this.oy,this.oz]=[Math.cos(a)*Math.min(rr,45),h,Math.sin(a)*Math.min(rr,45)];} break; // log-spiral
-        case 15: {const gx=(n%20)/20*80-40,gz=Math.floor(n/20)/Math.ceil(N/20)*80-40;[this.ox,this.oy,this.oz]=[gx,0,gz];} break; // plane
-        case 16: {const gx=((n%10)-4.5)*8,gz=(Math.floor(n/10)%(Math.ceil(N/10))-Math.ceil(N/20))*8;[this.ox,this.oy,this.oz]=[gx,0,gz];} break; // grid
-        case 17: {const k=4,rr=Math.cos(k*u)*35;[this.ox,this.oy,this.oz]=[Math.cos(u)*rr,Math.sin(u)*rr,h*.25];} break; // rose
-        case 18: {const ring=Math.floor(n/(N/4)),a2=u,rr=ring*11+10;[this.ox,this.oy,this.oz]=[Math.cos(a2)*rr,ring*8-12,Math.sin(a2)*rr];} break; // orbits
-        case 19: {const verts=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1],[.577,.577,.577],[.577,.577,-.577],[.577,-.577,.577],[-.577,.577,.577],[-.577,-.577,.577],[-.577,.577,-.577]];const vv5=verts[n%verts.length];[this.ox,this.oy,this.oz]=vv5.map(x=>x*42+(Math.floor(n/verts.length)*5-5)*(Math.random()-.5));} break; // poly
-        case 20: {const d=Math.min(Math.floor(Math.log2(n+1)),5),bn=n-(2**d-1);[this.ox,this.oy,this.oz]=[(bn/(Math.max(1,2**d))*60-30),d*12-28,(Math.sin(bn*1.3)*8)];} break; // tree
-        case 21: {const layer=Math.floor(n/(N/5)),pos=n%(N/5);[this.ox,this.oy,this.oz]=[(pos/(N/5)*60-30),layer*14-28,(layer%2)*6-3];} break; // neural-net
-        case 22: [this.ox,this.oy,this.oz]=[cθ*sφ*(20+Math.random()*30),cφ*(20+Math.random()*30),sθ*sφ*(20+Math.random()*30)]; break; // fireworks
-        case 23: {const k=5,rr=(.5+.5*Math.cos(k*u))*38;[this.ox,this.oy,this.oz]=[Math.cos(u)*rr,Math.sin(u)*rr,h*.15];} break; // petals
-        case 24: {const x=(n/N)*τ-Math.PI;[this.ox,this.oy,this.oz]=[x*12,Math.sin(x)*Math.exp(-x*x*.4)*22,h*.2];} break; // leaf
-        case 25: {const arm=Math.floor(n/(N/3)),an=u+arm*τ/3+r*.08;[this.ox,this.oy,this.oz]=[Math.cos(an)*r*.9,h*.12,Math.sin(an)*r*.9];} break; // galaxy
-        case 26: {const gx2=(n%20)/20*70-35;[this.ox,this.oy,this.oz]=[gx2,(Math.random()-.4)*80,((n*3)%20)/20*30-15];} break; // rain
-        case 27: {const ring2=Math.floor(n/(N/6)),a3=u;[this.ox,this.oy,this.oz]=[Math.cos(a3)*(ring2*7+6),0,Math.sin(a3)*(ring2*7+6)];} break; // concentric
-        case 28: {const gx3=(n%20)/20*80-40,gz3=Math.floor(n/20)/Math.ceil(N/20)*80-40;[this.ox,this.oy,this.oz]=[gx3,Math.sin(gx3*.14)*12,gz3];} break; // curtain
-        case 29: this.ox=Math.random()*60-30; this.oy=Math.random()*60-30; this.oz=Math.random()*60-30; break; // brownian
-        case 30: {const ring3=Math.floor(n/(N/2)),a4=u,rr3=ring3*20+12;[this.ox,this.oy,this.oz]=[Math.cos(a4)*rr3,Math.sin(a4)*7,Math.sin(a4)*rr3];} break; // orbit-ring
-        case 31: {const gx4=(n%20)/20*60-30;[this.ox,this.oy,this.oz]=[gx4,(n/N)*80-40,((n*7)%20)/20*20-10];} break; // waterfall
-        case 32: {const l=32+Math.sin(n/N*Math.PI)*10;[this.ox,this.oy,this.oz]=[Math.sin(u)*l,-Math.cos(u)*l*.8,h*.2];} break; // pendulum
-        case 33: this.ox=Math.random()*60-30; this.oy=Math.random()*40-20; this.oz=Math.random()*60-30; break; // swarm
-        case 34: {const sn=Math.sin(u*3+n*.02)*20;[this.ox,this.oy,this.oz]=[(n/N)*60-30,sn,h*.3];} break; // snake
-        case 35: {const k2=Math.floor(n/(N/5)),a5=u,lk=22+k2*6;[this.ox,this.oy,this.oz]=[Math.sin(a5)*lk+k2*9-18,-Math.cos(a5)*lk*.7,k2*4-8];} break; // pendula
-        case 36: this.ox=Math.random()*60-30; this.oy=Math.random()*60-30; this.oz=Math.random()*60-30; break; // bounce
-        case 37: {const a6=u*3,rr4=Math.exp(a6*.1)*3;[this.ox,this.oy,this.oz]=[Math.cos(a6)*Math.min(rr4,45),Math.sin(a6)*Math.min(rr4,45),h*.18];} break; // spiral-grow
-        case 38: [this.ox,this.oy,this.oz]=[cθ*sφ*45,cφ*45,sθ*sφ*45]; break; // heartbeat (sphere base)
-        case 39: {const gx5=((n%15)-7)*6,gz5=(Math.floor(n/15)-Math.ceil(N/30))*6;[this.ox,this.oy,this.oz]=[gx5,0,gz5];} break; // interference
-        case 40: [this.ox,this.oy,this.oz]=[Math.cos(u)*42,Math.sin(u)*42,0]; break; // rotation
-        case 41: {const gx6=(n%20)/20*80-40,gz6=Math.floor(n/20)/Math.ceil(N/20)*80-40;[this.ox,this.oy,this.oz]=[gx6,0,gz6];} break; // noise-plane
-        case 42: {const gx7=(n%16)/16*80-40,gz7=Math.floor(n/16)/Math.ceil(N/16)*80-40;[this.ox,this.oy,this.oz]=[gx7,0,gz7];} break; // ripple
-        case 43: {const a7=u*5,rr5=Math.sqrt(n/N)*42;[this.ox,this.oy,this.oz]=[Math.cos(a7)*rr5,Math.sin(a7)*rr5,h*.28];} break; // fractal
-        case 44: {this.lx=-5+n*.03; this.ly=0; this.lz=15+n*.05; [this.ox,this.oy,this.oz]=[this.lx*1.2,(this.lz-25)*1.4,this.ly*1.2];} break; // lorenz
-        case 45: [this.ox,this.oy,this.oz]=[(Math.random()-.5)*6,(Math.random()-.5)*6,(Math.random()-.5)*6]; break; // singularity
-        case 46: {const k3=Math.floor(n/(N/4)),a8=u,rr6=k3*10+8;[this.ox,this.oy,this.oz]=[Math.cos(a8+k3*Math.PI/3)*rr6,Math.sin(a8+k3*Math.PI/3)*rr6,h*.18];} break; // spiro-rings
-        case 47: {const lv=Math.min(Math.floor(Math.log2(n+1)),5),bn2=n-(2**lv-1);[this.ox,this.oy,this.oz]=[(bn2/(Math.max(1,2**lv))*60-30)+lv*1.5,lv*10-28,Math.random()*5-2.5];} break; // lightning
-        case 48: {const a9=u,rr7=(n/N)*44;[this.ox,this.oy,this.oz]=[Math.cos(a9)*rr7,h*.08,Math.sin(a9)*rr7];} break; // galactic
-        case 49: [this.ox,this.oy,this.oz]=[cθ*sφ*55,cφ*55,sθ*sφ*55]; break; // sphere2
-        default: [this.ox,this.oy,this.oz]=[cθ*sφ*50,cφ*50,sθ*sφ*50];
-      }
+      // 50 geometric configurations — each is a valid orb state
+      const n = this.i, N = W;
+      if (s === 0)  { const φ=Math.acos(1-2*(n+.5)/N),θ=Math.PI*(1+Math.sqrt(5))*n; this.ox=Math.cos(θ)*Math.sin(φ)*50; this.oy=Math.cos(φ)*50; this.oz=Math.sin(θ)*Math.sin(φ)*50; }
+      else if(s===1){ const t=(n/N)*Math.PI*8,r=(n/N)*40; this.ox=Math.cos(t)*r; this.oy=(n/N)*60-30; this.oz=Math.sin(t)*r; }
+      else if(s===2){ const f=Math.floor(n/(N/6)),u=(n%(N/6))/(N/6)*2-1,v=Math.random()*2-1,fs=[[1,u,v],[-1,u,v],[u,1,v],[u,-1,v],[u,v,1],[u,v,-1]]; [this.ox,this.oy,this.oz]=fs[f].map(x=>x*40); }
+      else if(s===3){ const u=(n/N)*Math.PI*2,v=((n*7)%N/N)*Math.PI*2,R=35,r=15; this.ox=(R+r*Math.cos(v))*Math.cos(u); this.oy=r*Math.sin(v); this.oz=(R+r*Math.cos(v))*Math.sin(u); }
+      else if(s===4){ const h=(n/N)*60-30,r=(1-n/N)*30,a=(n*137.5)%360; this.ox=Math.cos(a)*r; this.oy=h; this.oz=Math.sin(a)*r; }
+      else if(s===5){ const h=(n/N)*60-30,a=(n*137.5)%360; this.ox=Math.cos(a)*30; this.oy=h; this.oz=Math.sin(a)*30; }
+      else if(s===6){ const t=(n/N)*Math.PI*6,r=(n/N)*40; this.ox=Math.cos(t)*r; this.oy=(n/N)*60-30; this.oz=Math.sin(t)*r; }
+      else if(s===7){ const a=(n/N)*Math.PI*2; this.ox=Math.cos(a)*40; this.oy=Math.sin(a)*40; this.oz=0; }
+      else if(s===8){ const a=(n/N)*Math.PI*2,r=Math.sqrt(n/N)*40; this.ox=Math.cos(a)*r; this.oy=Math.sin(a)*r; this.oz=0; }
+      else if(s===9){ const u=(n/N)*Math.PI*2,v=((n*3)%N/N)*.4-.2; this.ox=(1+v*Math.cos(u/2))*Math.cos(u)*40; this.oy=(1+v*Math.cos(u/2))*Math.sin(u)*40; this.oz=v*Math.sin(u/2)*40; }
+      else { const φ=Math.acos(1-2*(n+.5)/N),θ=Math.PI*(1+Math.sqrt(5))*n*((s%5)+1); this.ox=Math.cos(θ)*Math.sin(φ)*(30+s%3*8); this.oy=Math.cos(φ)*(30+s%3*8); this.oz=Math.sin(θ)*Math.sin(φ)*(30+s%3*8); }
       this.px=this.ox; this.py=this.oy; this.pz=this.oz;
       this.vx=0; this.vy=0; this.vz=0; this.c=0; this.think=0;
     }
     update(t) {
-      const st=ORB_STATES[currentOrb];
-      const spd=agentState==='thinking'?1.8:agentState==='speaking'?1.2:0.7;
-      const al=audioLevel, dt=0.016*spd;
-      let tx=this.ox,ty=this.oy,tz=this.oz,direct=false;
-      if (st==='lorenz') {
-        // Lorenz strange attractor σ=10 ρ=28 β=8/3
-        const s=dt*.35,dx=10*(this.ly-this.lx)*s,dy=(this.lx*(28-this.lz)-this.ly)*s,dz=(this.lx*this.ly-2.667*this.lz)*s;
-        this.lx+=dx; this.ly+=dy; this.lz+=dz;
-        tx=this.lx*1.2; ty=(this.lz-25)*1.4; tz=this.ly*1.2;
-      } else if (st==='heartbeat') {
-        // Rhythmic pulse — sphere contracts on beat then rebounds
-        const beat=0.78+0.32*Math.pow(Math.max(0,Math.sin(t*2.2+this.i*.002)),3);
-        tx=this.ox*beat; ty=this.oy*beat; tz=this.oz*beat;
-      } else if (st==='swarm') {
-        // Flocking — cohesion toward moving centroid + turbulence
-        const cx=Math.cos(t*.4)*18,cy=Math.sin(t*.3)*10,cz=Math.sin(t*.5)*18;
-        const ddx=cx-this.px,ddy=cy-this.py,ddz=cz-this.pz,dist=Math.sqrt(ddx*ddx+ddy*ddy+ddz*ddz)+.01;
-        this.vx+=(ddx/dist)*.5-this.vx*.06+(Math.random()-.5)*.4;
-        this.vy+=(ddy/dist)*.5-this.vy*.06+(Math.random()-.5)*.3;
-        this.vz+=(ddz/dist)*.5-this.vz*.06+(Math.random()-.5)*.4;
-        this.px+=this.vx*dt*7; this.py+=this.vy*dt*7; this.pz+=this.vz*dt*7;
-        direct=true;
-      } else if (st==='pendulum'||st==='pendula') {
-        // Simple harmonic pendulum — each particle its own frequency for pendula
-        const freq=st==='pendula'?1.1+this.i*.004:1.2, amp=28+al*14;
-        tx=Math.sin(t*freq+this.i*.06)*amp; ty=-36+Math.cos(t*freq+this.i*.06)*18; tz=this.oz;
-      } else if (st==='interference') {
-        // Moire — two overlapping radial wave sources
-        const d1=Math.sqrt(this.ox*this.ox+this.oz*this.oz);
-        const d2=Math.sqrt((this.ox-18)*(this.ox-18)+this.oz*this.oz);
-        ty=(Math.sin(d1*.26-t*2)+Math.sin(d2*.26-t*1.7))*10; tx=this.ox; tz=this.oz;
-      } else if (st==='ripple') {
-        // Expanding circular ripple from centre
-        const dd=Math.sqrt(this.ox*this.ox+this.oz*this.oz);
-        ty=Math.sin(dd*.3-t*3)*9*(1-dd/70); tx=this.ox; tz=this.oz;
-      } else if (st==='brownian') {
-        // Brownian random walk with soft return force
-        this.vx+=(Math.random()-.5)*1.4-this.px*.025; this.vy+=(Math.random()-.5)*1.4-this.py*.025; this.vz+=(Math.random()-.5)*1.4-this.pz*.025;
-        this.px+=this.vx*dt*5; this.py+=this.vy*dt*5; this.pz+=this.vz*dt*5;
-        this.vx*=.9; this.vy*=.9; this.vz*=.9; direct=true;
-      } else if (st==='singularity') {
-        // Singularity — oscillating collapse/explosion
-        const dd=Math.sqrt(this.px*this.px+this.py*this.py+this.pz*this.pz)+.01;
-        const pull=Math.sin(t*.8+this.i*.05), force=pull>0?-pull*2:(1+pull)*3;
-        this.vx+=(-this.px/dd)*force*dt*2; this.vy+=(-this.py/dd)*force*dt*2; this.vz+=(-this.pz/dd)*force*dt*2;
-        this.px+=this.vx; this.py+=this.vy; this.pz+=this.vz;
-        this.vx*=.94; this.vy*=.94; this.vz*=.94; direct=true;
-      } else if (st==='bounce') {
-        // Gravity + elastic floor
-        this.vy-=.15*dt*38; this.px+=this.vx; this.py+=this.vy; this.pz+=this.vz;
-        if(this.py<-30){this.py=-30;this.vy=Math.abs(this.vy)*.68;}
-        this.vx*=.99; this.vz*=.99; direct=true;
-      } else if (st==='galaxy'||st==='galactic') {
-        // Differential disk rotation
-        const rr=Math.sqrt(this.ox*this.ox+this.oz*this.oz)+.1;
-        const om=.4/Math.sqrt(rr)*spd, aa=Math.atan2(this.oz,this.ox)+om*dt*18;
-        tx=Math.cos(aa)*rr; ty=this.oy; tz=Math.sin(aa)*rr;
-      } else if (st==='waterfall'||st==='rain') {
-        // Particles fall and reset at top
-        this.py-=.7*spd; if(this.py<-40) this.py=40;
-        this.px+=(this.ox-this.px)*.1+(Math.random()-.5)*.4;
-        this.pz+=(this.oz-this.pz)*.1; direct=true;
-      } else if (st==='rotation') {
-        // Ring spinning around Y axis
-        const aa=Math.atan2(this.ox,this.oz)+dt*spd*2;
-        const rr=Math.sqrt(this.ox*this.ox+this.oz*this.oz);
-        tx=Math.sin(aa)*rr; ty=this.oy; tz=Math.cos(aa)*rr;
-      } else if (st==='noise-plane') {
-        ty=Math.sin(this.ox*.1+t*1.5)*Math.cos(this.oz*.12+t)*13; tx=this.ox; tz=this.oz;
-      } else if (st==='lightning') {
-        const flicker=Math.random()<.025?(Math.random()-.5)*10:0;
-        tx=this.ox+flicker; ty=this.oy+Math.abs(flicker)*.3; tz=this.oz+flicker*.4;
-      } else if (st==='fractal') {
-        const aa=t*.3+this.i*.01,sc=1+Math.sin(t*.5)*.28;
-        tx=this.ox*sc*Math.cos(aa*.1)-this.oz*sc*Math.sin(aa*.1);
-        ty=this.oy+Math.sin(t+this.i*.05)*5;
-        tz=this.ox*sc*Math.sin(aa*.1)+this.oz*sc*Math.cos(aa*.1);
-      } else {
-        // Default: wave toward origin geometry + audio reactivity
-        const wave=Math.sin(t*spd+this.i*.003)*al*8;
-        tx=this.ox+wave*(this.i%3-1); ty=this.oy+wave*.5;
-      }
-      if(!direct){
-        this.px+=(tx-this.px)*.06; this.py+=(ty-this.py)*.06; this.pz+=(tz-this.pz)*.06;
-      }
-      if(agentState==='thinking'&&Math.random()<.002) this.think=1;
-      if(this.think>0) this.think=Math.max(0,this.think-.03);
+      const speed = agentState === 'thinking' ? 1.8 : agentState === 'speaking' ? 1.2 : 0.7;
+      const wave = Math.sin(t * speed + this.i * 0.003) * audioLevel * 8;
+      this.px += ((this.ox + wave * (this.i % 3 - 1)) - this.px) * 0.06;
+      this.py += ((this.oy + wave * 0.5) - this.py) * 0.06;
+      this.pz += (this.oz - this.pz) * 0.06;
+      if (agentState === 'thinking' && Math.random() < 0.002) this.think = 1;
+      if (this.think > 0) this.think = Math.max(0, this.think - 0.03);
     }
     project(W, H) {
       const tilt = 0.3;

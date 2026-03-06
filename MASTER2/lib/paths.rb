@@ -83,11 +83,20 @@ module MASTER
 
       def load_yaml(name)
         path = data_path(name)
-        return nil unless path
+        unless path
+          Logging.warn("paths: data file not found: #{name}.yml", subsystem: "paths") if defined?(Logging)
+          return nil
+        end
 
         YAML.safe_load_file(path, symbolize_names: true)
+      rescue Errno::ENOENT
+        Logging.warn("paths: file disappeared: #{path}", subsystem: "paths") if defined?(Logging)
+        nil
+      rescue Psych::SyntaxError => e
+        Logging.error("paths: YAML syntax error in #{name}.yml: #{e.message}", subsystem: "paths") if defined?(Logging)
+        nil
       rescue StandardError => e
-        Logging.warn("paths: failed to load #{name}: #{e.message}") if defined?(Logging)
+        Logging.error("paths: failed to load #{name}.yml: #{e.message}", subsystem: "paths") if defined?(Logging)
         nil
       end
 

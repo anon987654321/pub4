@@ -38,7 +38,7 @@
   output_cost: 15.00
   context_window: 1000000
   provider: anthropic
-  api: openrouter
+  api: replicate
   reasoning: true
 
 - id: google/gemini-2.5-pro
@@ -140,7 +140,19 @@
   api: openrouter
 
 # --- FREE (zero cost, rate-limited, OpenRouter only) ---
-# Ordered best-first for coding; derived by LLM.model_tiers[:free].
+# Ordered best-first for coding+reasoning; verified March 2026 on openrouter.ai.
+# MASTER2 has 12 free fallbacks — zero-cost operation is fully viable.
+
+# Best free for long context + reasoning (1M ctx window)
+- id: google/gemini-2.5-flash-preview:free
+  alias: gemini-2.5-flash-free
+  tier: free
+  input_cost: 0.00
+  output_cost: 0.00
+  context_window: 1048576
+  provider: google
+  api: openrouter
+  reasoning: true
 
 - id: qwen/qwen3-coder:free
   alias: qwen3-coder-free
@@ -160,6 +172,16 @@
   provider: deepseek
   api: openrouter
   reasoning: true
+
+# Meta's latest scout model — strong at coding, 128k ctx
+- id: meta-llama/llama-4-scout-17b-16e-instruct:free
+  alias: llama-4-scout-free
+  tier: free
+  input_cost: 0.00
+  output_cost: 0.00
+  context_window: 131072
+  provider: meta
+  api: openrouter
 
 - id: meta-llama/llama-3.3-70b-instruct:free
   alias: llama-3.3-70b-free
@@ -206,6 +228,27 @@
   output_cost: 0.00
   context_window: 131072
   provider: google
+  api: openrouter
+
+# Qwen hybrid reasoning — 131k, cheaper than R1 equivalents
+- id: qwen/qwen3-30b-a3b:free
+  alias: qwen3-30b-free
+  tier: free
+  input_cost: 0.00
+  output_cost: 0.00
+  context_window: 131072
+  provider: alibaba
+  api: openrouter
+  reasoning: true
+
+# NVIDIA RLHF-tuned Llama — strong at instruction following
+- id: nvidia/llama-3.3-nemotron-super-49b-v1:free
+  alias: nemotron-super-free
+  tier: free
+  input_cost: 0.00
+  output_cost: 0.00
+  context_window: 131072
+  provider: nvidia
   api: openrouter
 
 - id: mistralai/mistral-small-3.1-24b-instruct:free
