@@ -12,7 +12,7 @@ AllCops:
 
 # --- Metrics: relax for genuine complexity, catch truly bloated code ---
 Metrics/MethodLength:
-  Max: 30
+  Max: 25
   CountAsOne: [array, hash, heredoc]
 
 Metrics/ClassLength:

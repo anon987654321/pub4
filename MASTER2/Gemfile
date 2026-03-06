@@ -3,21 +3,14 @@ source "https://rubygems.org"
 # OpenBSD uses LibreSSL/libtls -- do not add openssl gem, it conflicts.
 # Ruby's built-in openssl extension links against LibreSSL on OpenBSD natively.
 
-# TTY toolkit - restored full integration from MASTER v1
+# TTY toolkit — only what's actually used (ANTI_SPRAWL: 8 unused gems removed)
 gem "tty-reader", "~> 0.9"
 gem "tty-spinner"
 gem "tty-table"
-gem "tty-box"
-gem "tty-markdown"
 gem "tty-prompt"
 gem "tty-progressbar"
 gem "tty-cursor"
-gem "tty-tree"       # Tree display
-gem "tty-pie"        # Pie charts for stats
-gem "tty-pager"      # Pagination
-gem "tty-link"       # Clickable links
-gem "tty-font"       # ASCII art fonts
-gem "tty-editor"     # External editor integration
+gem "tty-tree"       # Tree display — used by UI::Output.show_tree + UI::Components
 gem "tty-command"    # Safe command execution
 gem "tty-screen"     # Terminal dimensions
 gem "tty-platform"   # Platform detection

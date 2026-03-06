@@ -34,6 +34,7 @@ require_relative "text_hygiene"
 require_relative "command_registry"
 require_relative "auto_install"
 require_relative "boot"
+require_relative "boot/modes"   # adjacent to boot — VISUAL_HIERARCHY fix
 
 # Core
 require_relative "result"
@@ -48,12 +49,8 @@ require_relative "session"
 require_relative "pledge"
 require_relative "rubocop_detector"
 
-# Multi-language parsing (now in MASTER2); NLU and conversation are optional stubs
 MASTER.safe_require("parser/multi_language")
-# nlu and conversation are MASTER v4 stubs — silently absent, not an error
-%w[../../lib/nlu ../../lib/conversation].each do |dep|
-  MASTER.safe_require(dep, silent: true)
-end
+%w[nlu conversation].each { |dep| MASTER.safe_require(dep, silent: true) }
 
 # Safe Autonomy Architecture
 require_relative "staging"
@@ -68,6 +65,7 @@ require_relative "commands"
 
 # Pipeline stages
 require_relative "stages"
+require_relative "lane"          # Lane Queue: serial execution guard
 
 # Executor
 require_relative "executor"
@@ -75,7 +73,6 @@ require_relative "executor"
 # Pipeline
 require_relative "pipeline"
 require_relative "hooks"
-require_relative "questions"
 require_relative "workflow"
 
 # Proactive autonomy (stolen from OpenClaw)
@@ -124,14 +121,12 @@ require_relative "html_generator"
 # Quality gates
 require_relative "quality_gates"
 
-# Self-refactoring infrastructure
+# Self-governance
 require_relative "axiom_resolver"
 require_relative "dependency_map"
 require_relative "convergence_tracker"
 require_relative "pressure_pass"
 require_relative "self_refactor"
-require_relative "nlu"
-require_relative "conversation"
 require_relative "security/injection_guard"
 require_relative "agent/credential_store"
 require_relative "session/reminders"
@@ -143,12 +138,8 @@ require_relative "session/per_step_reflection"
 require_relative "mcp_server"
 require_relative "introspection/friction_recorder"
 require_relative "introspection/session_retrospective"
-require_relative "boot/modes"
 
-# Web UI
-%w[server].each do |mod|
-  MASTER.safe_require(mod)
-end
+MASTER.safe_require("server")
 
 # Boot-time self-check
 if ENV["MASTER_SELF_CHECK"] == "true" && defined?(MASTER::Enforcement)
@@ -162,10 +153,11 @@ if ENV["MASTER_SELF_CHECK"] == "true" && defined?(MASTER::Enforcement)
   end
 end
 
-# Boot-time proactive autonomy setup
-if ENV["MASTER_HEARTBEAT"] == "true"
+# Proactive autonomy — ON by default (OpenClaw: acts without prompting)
+# Disable explicitly: MASTER_HEARTBEAT=false
+if ENV.fetch("MASTER_HEARTBEAT", "true") != "false"
   MASTER::Triggers.install_defaults
   MASTER::Scheduler.load
   MASTER::Heartbeat.register("scheduler") { MASTER::Scheduler.tick }
-  MASTER::Heartbeat.start(interval: (ENV["MASTER_HEARTBEAT_INTERVAL"] || "60").to_i)
+  MASTER::Heartbeat.start(interval: (ENV["MASTER_HEARTBEAT_INTERVAL"] || "300").to_i)
 end

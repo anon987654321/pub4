@@ -52,7 +52,12 @@ module MASTER
       Logging.with_request_id do
         raw = case @mode
               when :executor then call_executor(text)
-              when :stages   then call_stages(input)
+              when :stages
+                # DEPRECATED: :stages mode will be removed in wave 3.
+                # Use :executor mode (the default). This path is no longer tested.
+                Logging.warn("pipeline: :stages mode is deprecated; switch to :executor",
+                             subsystem: "Pipeline") if defined?(Logging)
+                call_stages(input)
               when :direct   then call_direct(text)
               else call_executor(text)  # degrade to executor rather than raise
               end

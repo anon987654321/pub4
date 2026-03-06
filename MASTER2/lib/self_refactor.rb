@@ -1,92 +1,29 @@
 # frozen_string_literal: true
 
-require "fileutils"
-require "json"
-
 module MASTER
-  # SelfRefactor — applies MASTER2's own refactor pipeline to its own source.
-  # Delegates to Evolve (LLM + Staging) for fixes and Workflow::Convergence
-  # for stopping criteria. Identical path to what runs on user code.
+  # SelfRefactor — thin wrapper over MultiRefactor for self-application.
+  # ONE_SOURCE: MultiRefactor owns the batch-refactor engine. This wrapper
+  # exists only to provide the conventional entry point expected by bin/master.
   module SelfRefactor
-    _c = begin
-           require "yaml"
-           f = File.expand_path("../../data/constitution.yml", __FILE__)
-           YAML.safe_load_file(f).dig("convergence", "max_iterations")
-         rescue StandardError
-           nil
-         end
-    MAX_ITERATIONS = (_c || 20).freeze
-    RESUME_FILE = File.join(MASTER.root, "var", "self_refactor_resume.json").freeze
+    extend self
 
-    module_function
+    DEFAULT_PATH = File.join(MASTER.root, "lib").freeze
 
-    # Iterate Evolve over MASTER2's own lib/ until Convergence says stop.
-    # Resumes from RESUME_FILE if interrupted (FINISH_FIRST).
-    def run(max_iterations: MAX_ITERATIONS)
-      evolve  = Evolve.new(staged: true, llm: LLM)
-      history = []
-      summary, start_iter = resume_state || [{ iterations: 0, improvements: 0, errors: [], stop_reason: nil }, 0]
-
-      max_iterations.times do |i|
-        next if i < start_iter
-
-        summary[:iterations] = i + 1
-        save_resume_state(summary, i + 1)
-
-        pass = evolve.run(path: MASTER.root, dry_run: false)
-        summary[:improvements] += pass[:improvements].to_i
-        summary[:errors].concat(pass[:history].filter_map { |h| h[:error] })
-
-        violations = count_violations
-        status = Workflow::Convergence.track(history, { violations: violations, score: pass[:improvements].to_i })
-        Logging.dmesg_log("self_refactor", message: "iter #{i + 1}: #{violations} violations, #{pass[:improvements]} improved") if defined?(Logging)
-
-        if status[:should_stop]
-          summary[:stop_reason] = status[:reason]
-          break
-        end
-      end
-
-      summary[:stop_reason] ||= :max_iterations
-      clear_resume_state
-      Result.ok(summary)
-    rescue StandardError => e
-      Result.err("SelfRefactor crashed: #{e.message}")
+    # Apply MASTER2's refactor pipeline to its own source.
+    # All logic (staging, convergence, resume) lives in MultiRefactor.
+    def run(path: nil, dry_run: true, budget_cap: 2.0,
+            force_rewrite: false, align_axioms: true,
+            include_all_files: false, grounded_depth: :own)
+      MultiRefactor.new(
+        dry_run: dry_run, budget_cap: budget_cap,
+        force_rewrite: force_rewrite, align_axioms: align_axioms,
+        include_all_files: include_all_files, grounded_depth: grounded_depth,
+      ).run(path: path || DEFAULT_PATH)
     end
 
-    # Count total violations across all lib/ files using the real enforcer.
-    def count_violations
-      files = Dir.glob(File.join(MASTER.root, "lib", "**", "*.rb"))
-      files.sum do |f|
-        code = File.read(f)
-        defined?(Review::Enforcer) ? Review::Enforcer.check(code, filename: f)[:violations].size : 0
-      rescue StandardError
-        0
-      end
-    end
-
-    def resume_state
-      return nil unless File.exist?(RESUME_FILE)
-
-      data = JSON.parse(File.read(RESUME_FILE), symbolize_names: true)
-      start_iter = data.delete(:_resume_iter) || 0
-      Logging.dmesg_log("self_refactor0", message: "resuming from iteration #{start_iter}") if defined?(Logging)
-      [data, start_iter]
-    rescue StandardError
-      nil
-    end
-
-    def save_resume_state(summary, iter)
-      FileUtils.mkdir_p(File.dirname(RESUME_FILE))
-      File.write(RESUME_FILE, JSON.generate(summary.merge(_resume_iter: iter)))
-    rescue StandardError
-      nil
-    end
-
-    def clear_resume_state
-      File.delete(RESUME_FILE) if File.exist?(RESUME_FILE)
-    rescue StandardError
-      nil
+    # Convenience: full strict self-apply
+    def apply_to_self(dry_run: true)
+      run(dry_run: dry_run, align_axioms: true, force_rewrite: true)
     end
   end
 end

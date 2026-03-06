@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "json"
+require "yaml"
 require "fileutils"
 
 module MASTER
@@ -8,7 +8,7 @@ module MASTER
   # Stolen from OpenClaw: agents schedule their own future work,
   # jobs persist across restarts, exponential backoff on failure
   module Scheduler
-    JOBS_FILE = File.join(MASTER.root, "data", "scheduled_jobs.json")
+    JOBS_FILE = File.join(MASTER.root, "data", "scheduled_jobs.yml")
     MAX_JOBS = 50
 
     Job = Struct.new(
@@ -24,8 +24,9 @@ module MASTER
       def load
         return unless File.exist?(JOBS_FILE)
 
-        raw = JSON.parse(File.read(JOBS_FILE), symbolize_names: true)
-        @jobs = (raw || []).map do |j|
+        raw = YAML.safe_load_file(JOBS_FILE, symbolize_names: true)
+        entries = raw.is_a?(Hash) ? Array(raw[:jobs]) : Array(raw)
+        @jobs = entries.map do |j|
           Job.new(
             id: j[:id],
             command: j[:command],
@@ -59,7 +60,7 @@ module MASTER
               last_status: j.last_status, last_error: j.last_error }
           end
           FileUtils.mkdir_p(File.dirname(JOBS_FILE))
-          File.write(JOBS_FILE, JSON.pretty_generate(data))
+          File.write(JOBS_FILE, YAML.dump({ "jobs" => data.map { |j| j.transform_keys(&:to_s) } }))
         end
       end
 

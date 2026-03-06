@@ -102,7 +102,7 @@ module MASTER
     end
 
     def kill_port_users(port)
-      pids = `lsof -ti:#{port} 2>/dev/null`.strip.split("\n").map(&:to_i).reject(&:zero?)
+      pids = openbsd_port_pids(port)
       pids.each do |pid|
         Process.kill("TERM", pid)
       rescue StandardError
@@ -111,6 +111,18 @@ module MASTER
       sleep 0.3 unless pids.empty?
     rescue StandardError
       # best-effort
+    end
+
+    # OpenBSD-native port occupant detection.
+    # Falls back to lsof for Linux/macOS development environments.
+    def openbsd_port_pids(port)
+      if File.exist?("/usr/bin/fstat")
+        # OpenBSD: fstat lists open files; awk extracts PIDs listening on our port
+        `fstat 2>/dev/null | awk '$NF == "#{port.to_i}" {print $3}'`
+          .strip.split("\n").map(&:to_i).reject(&:zero?)
+      else
+        `lsof -ti:#{port} 2>/dev/null`.strip.split("\n").map(&:to_i).reject(&:zero?)
+      end
     end
 
     def port_open?(port)

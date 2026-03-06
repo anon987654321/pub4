@@ -74,6 +74,33 @@ module MASTER
         replicate_api_key && !replicate_api_key.empty?
       end
 
+      # Returns true when the model's api field in models.yml is "replicate".
+      def replicate_model?(model_id)
+        m = configured_models_by_id[model_id]
+        m && m[:api].to_s == "replicate"
+      end
+
+      # Text-generation via Replicate, using Client.complete which:
+      #   - builds model-family-aware input (anthropic vs deepseek vs default schema)
+      #   - creates prediction via /v1/models/{owner}/{name}/predictions
+      #   - polls until done and returns a normalised Result
+      # This keeps llm.rb thin: all HTTP/polling logic stays in replicate/client.rb.
+      def execute_replicate_llm_request(prompt:, messages:, model:, reasoning: nil)
+        require_relative "replicate/client"
+
+        unless Replicate.available?
+          return Result.err("REPLICATE_API_TOKEN not set", category: :infrastructure)
+        end
+
+        sys = messages&.find { |m| m[:role] == "system" }
+        system_prompt = sys&.dig(:content)
+
+        opts = {}
+        opts[:reasoning_effort] = reasoning[:effort].to_s if reasoning.is_a?(Hash) && reasoning[:effort]
+
+        Replicate::Client.complete(model, prompt, system_prompt: system_prompt, **opts)
+      end
+
       # Configure ruby_llm with thread safety (only needed for OpenRouter models)
       def configure_ruby_llm
         CONFIGURE_MUTEX.synchronize do

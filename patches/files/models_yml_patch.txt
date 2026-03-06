@@ -1,0 +1,32 @@
+# PATCH: in data/models.yml, change the claude-sonnet-4.6 entry from:
+#
+#   - id: anthropic/claude-sonnet-4.6
+#     alias: claude-sonnet-4.6
+#     tier: strong
+#     api: openrouter          <-- WRONG: no credits = total failure
+#     reasoning: true
+#
+# to:
+#
+#   - id: anthropic/claude-sonnet-4.6
+#     alias: claude-sonnet-4.6
+#     tier: strong
+#     api: replicate           <-- CORRECT: uses REPLICATE_API_KEY
+#     reasoning: true
+#
+# ALSO: verify the Replicate model slug at:
+#   https://replicate.com/anthropic
+# The slug may be "anthropic/claude-sonnet-4-6" (hyphen) rather than a dot.
+# Update the `id` field to match exactly what Replicate's API returns.
+#
+# The corrected block is:
+
+- id: anthropic/claude-sonnet-4.6
+  alias: claude-sonnet-4.6
+  tier: strong
+  input_cost: 3.00
+  output_cost: 15.00
+  context_window: 1000000
+  provider: anthropic
+  api: replicate
+  reasoning: true

@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
 module MASTER
+  # CommandRegistry - single source of truth for all commands, aliases, and handlers.
+  # Aliases are embedded in each command's :aliases array. No separate legacy table.
   module CommandRegistry
-    # Returned by every handler lambda to signal the dispatch loop: done, don't
-    # fall through to the pipeline. ONE_SOURCE: defined once here.
-    HANDLED = :handled
-
     module_function
 
     COMMANDS = {
@@ -249,8 +247,16 @@ module MASTER
       COMMANDS[canonical] if canonical
     end
 
-    def all_aliases     = ALIAS_MAP
-    def primary_commands = COMMANDS.keys
-    def groups           = COMMANDS.group_by { |_, v| v[:group] }.transform_values { |cmds| cmds.map(&:first) }
+    def all_aliases
+      ALIAS_MAP
+    end
+
+    def primary_commands
+      COMMANDS.keys
+    end
+
+    def groups
+      COMMANDS.group_by { |_, v| v[:group] }.transform_values { |cmds| cmds.map(&:first) }
+    end
   end
 end

@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 require "timeout"
 require "time"
+require_relative "../review/fixer"
 
 require_relative "misc_commands/selftest_full"
 require_relative "misc_commands/cinematic_persona"
@@ -24,21 +25,23 @@ module MASTER
         path = args&.strip
         path = "." if path.nil? || path.empty?
 
-        fixer = AutoFixer.new(mode: :moderate)
+        fixer = MASTER::Review::Fixer.new(mode: :moderate)
         if File.directory?(path)
           result = fixer.fix_directory(path)
           if result.ok?
-            puts "  Fixed #{result.value[:files_fixed]} files, #{result.value[:issues_fixed]} issues"
+            puts result.value
           else
-            puts "  Error: #{result.error}"
+            puts UI.error("fix: #{result.error}")
           end
-        else
+        elsif File.exist?(path)
           result = fixer.fix(path)
           if result.ok?
-            puts "  Fixed: #{path}"
+            puts result.value
           else
-            puts "  Error: #{result.error}"
+            puts UI.error("fix: #{result.error}")
           end
+        else
+          puts UI.error("fix: path not found: #{path}")
         end
       end
 
