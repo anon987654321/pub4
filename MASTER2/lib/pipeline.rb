@@ -47,7 +47,7 @@ module MASTER
 
     def call(input)
       Logging.dmesg_log("pipeline", message: "ENTER pipeline.call")
-      text = input.is_a?(Hash) ? input[:text] : input.to_s
+      text = input.is_a?(Hash) ? (input[:text] || input["text"]).to_s : input.to_s
 
       Logging.with_request_id do
         raw = case @mode

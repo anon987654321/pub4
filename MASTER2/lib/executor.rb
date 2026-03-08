@@ -222,8 +222,13 @@ module MASTER
       @pattern == :direct
     end
 
+    CHITCHAT_SYSTEM = "You are MASTER2, a constitutional AI coding assistant. "               "Answer conversationally and helpfully.".freeze
+
     def direct_ask(goal, tier: nil)
-      system_msg = ExecutionContext.build_system_message(include_commands: false)
+      # For simple greetings/chitchat, skip the heavy system context to avoid model confusion
+      chitchat = goal.to_s.strip.length < 120 &&
+                 !goal.to_s.match?(/\b(fix|refactor|scan|analyze|file|code|write|read|find|build|debug)\b/i)
+      system_msg = chitchat ? CHITCHAT_SYSTEM : ExecutionContext.build_system_message(include_commands: false)
 
       result = LLM.ask(goal, messages: [
                          { role: "system", content: system_msg },
