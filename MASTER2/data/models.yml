@@ -5,8 +5,8 @@
 # api: openrouter -> ruby_llm/OpenRouter (OPENROUTER_API_KEY)
 #      replicate  -> Replicate predictions API (REPLICATE_API_TOKEN/KEY)
 # Model IDs verified against openrouter.ai/models March 2026.
-# NOTE: Anthropic/Google/OpenAI/xAI models route via OpenRouter only.
-#       Replicate hosts open-source models (Meta, Qwen, DeepSeek).
+# NOTE: Replicate hosts open-source models (DeepSeek, Meta, Qwen) — default strong model.
+#       OpenRouter routes Anthropic/Google/OpenAI/xAI.
 
 # --- PREMIUM ---
 
@@ -31,15 +31,14 @@
 
 # --- STRONG (default + council arbiter) ---
 
-- id: anthropic/claude-sonnet-4.6
-  alias: claude-sonnet-4.6
+- id: deepseek-ai/deepseek-v3.1
+  alias: deepseek-v3.1
   tier: strong
-  input_cost: 3.00
-  output_cost: 15.00
-  context_window: 1000000
-  provider: anthropic
+  input_cost: 0.00
+  output_cost: 0.00
+  context_window: 128000
+  provider: deepseek
   api: replicate
-  reasoning: true
 
 - id: google/gemini-2.5-pro
   alias: gemini-2.5-pro

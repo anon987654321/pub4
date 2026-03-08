@@ -29,10 +29,24 @@ module MASTER
         end
       end
 
+
+# Warn at load time if a Replicate model id looks malformed.
+def validate_model_config(config)
+  config.each do |m|
+    next unless m[:api].to_s == "replicate"
+    id = m[:id].to_s
+    unless id.match?(%r{\A[\w.-]+/[\w.\-]+\z})
+      warn "models.yml: suspicious Replicate id #{id.inspect} (expected owner/name)"
+    end
+  end
+  config
+end
+
       # Get curated models from models.yml
       # A8: Falls back to ruby_llm registry if models.yml is empty
       def configured_models
         config = load_models_config
+        validate_model_config(config)
         return config unless config.empty?
 
         # Auto-populate from ruby_llm registry

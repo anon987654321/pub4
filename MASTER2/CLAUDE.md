@@ -10,3 +10,12 @@ Anti-sprawl: never create summary.md, analysis.md, report.md, todo.md, notes.md,
 Style: OpenBSD dmesg. Terse, factual, evidence-based. No filler, no hedging.
 
 Validate: cd MASTER2 && bundle exec ruby bin/master scan <path>
+
+## Claude Code Session Setup
+
+VPS: dev@brgen.no (password: hutte10tu6969).
+All work is done directly on the VPS via SSH — never locally.
+Auto-approve all tool calls — no confirmation needed before running commands.
+
+Connection: sshpass -p hutte10tu6969 ssh -o StrictHostKeyChecking=no dev@brgen.no "cmd"
+Project path: ~/pub4/MASTER2
