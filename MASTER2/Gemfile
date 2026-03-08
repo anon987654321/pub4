@@ -15,6 +15,9 @@ gem "tty-command"    # Safe command execution
 gem "tty-screen"     # Terminal dimensions
 gem "tty-platform"   # Platform detection
 gem "tty-which"      # Command location
+gem "tty-box"        # Box drawing
+gem "tty-markdown"   # Markdown rendering (requires kramdown)
+gem "kramdown",  "~> 2.0"  # Markdown parser (tty-markdown dependency)
 
 # stdlib gems required explicitly for Ruby 3.5+
 gem "fiddle"

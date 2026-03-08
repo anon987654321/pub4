@@ -20,14 +20,12 @@ module MASTER
     CONVERGENCE_THRESHOLD = 0.05
 
     MODELS = {
-      sonnet: "anthropic/claude-sonnet-4.6",
-      grok: "x-ai/grok-code-fast-1",
-      deepseek: "deepseek/deepseek-chat",
-      kimi: "moonshotai/kimi-k2.5",
-      glm: "z-ai/glm-5",
+      deepseek: "deepseek-ai/deepseek-v3.1",
+      gpt: "openai/gpt-5.2",
+      gemini: "google/gemini-3-flash",
     }.freeze
 
-    ARBITER = :sonnet
+    ARBITER = :deepseek
 
     attr_reader :cost, :rounds, :proposals
 

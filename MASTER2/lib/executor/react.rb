@@ -10,10 +10,10 @@ module MASTER
         additionalProperties: false,
         required: %w[thought],
         properties: {
-          thought: { type: "string", description: Prompts.get(:react, :schema_thought) },
-          tool:    { type: "string", description: Prompts.get(:react, :schema_tool) },
-          args:    { type: "object", description: Prompts.get(:react, :schema_args) },
-          answer:  { type: "string", description: Prompts.get(:react, :schema_answer) },
+          thought: { type: "string", description: "Your step-by-step reasoning for this action" },
+          tool:    { type: "string", description: "The tool to invoke (omit if providing final answer)" },
+          args:    { type: "object", description: "Arguments to pass to the tool" },
+          answer:  { type: "string", description: "The final answer to return to the user (omit if using a tool)" },
         },
       }.freeze
 

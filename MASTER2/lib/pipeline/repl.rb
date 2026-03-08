@@ -25,7 +25,7 @@ module MASTER
       # Set initial model so prompt shows it immediately
       if LLM.configured?
         initial_model = begin
-          LLM.select_model
+          LLM.select_model(:strong)
         rescue StandardError
           nil
         end
@@ -35,10 +35,6 @@ module MASTER
       # Prescan
       Prescan.run(MASTER.root) if (ENV["MASTER_PRESCAN"] != "false") && defined?(Prescan)
 
-      unless ENV["OPENROUTER_API_KEY"]
-        UI.warn("models0: OPENROUTER_API_KEY not set")
-        UI.info("   #{UI.icon(:arrow)} export OPENROUTER_API_KEY=sk-or-v1-...")
-      end
 
       # Initialize workflow
       phase = nil

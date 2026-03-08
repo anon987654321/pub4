@@ -1,26 +1,54 @@
-# Scheduled jobs loaded by MASTER::Scheduler
-# ONE_SOURCE: replaces data/scheduled_jobs.json (lone JSON among all YAML files)
+---
 jobs:
-  - name: daily_health_check
-    cron: "0 9 * * *"
-    enabled: true
-    command: health
-    description: Morning health scan
-
-  - name: weekly_axiom_audit
-    cron: "0 10 * * 1"
-    enabled: true
-    command: "scan ."
-    description: Full constitutional scan every Monday
-
-  - name: session_compaction
-    cron: "0 2 * * *"
-    enabled: true
-    command: session_compact
-    description: Compress session log into MEMORY.md summary
-
-  - name: style_sync
-    cron: "0 11 * * 0"
-    enabled: false
-    command: "style-guides sync"
-    description: Sync upstream style guides (manual when needed)
+- id:
+  command: health
+  interval:
+  next_at: 0
+  last_run: 1772917480
+  failures: 0
+  enabled: false
+  priority: 50
+  max_retries: 5
+  retry_backoff: exponential
+  confidence: 1.0
+  last_status: ok
+  last_error:
+- id:
+  command: scan .
+  interval:
+  next_at: 0
+  last_run: 1772917480
+  failures: 0
+  enabled: false
+  priority: 50
+  max_retries: 5
+  retry_backoff: exponential
+  confidence: 1.0
+  last_status: ok
+  last_error:
+- id:
+  command: session_compact
+  interval:
+  next_at: 0
+  last_run: 1772917484
+  failures: 0
+  enabled: false
+  priority: 50
+  max_retries: 5
+  retry_backoff: exponential
+  confidence: 1.0
+  last_status: ok
+  last_error:
+- id:
+  command: style-guides sync
+  interval:
+  next_at: 0
+  last_run:
+  failures: 0
+  enabled: false
+  priority: 50
+  max_retries: 5
+  retry_backoff: exponential
+  confidence: 1.0
+  last_status:
+  last_error:

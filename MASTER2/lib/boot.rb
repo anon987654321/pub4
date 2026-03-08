@@ -10,8 +10,8 @@ module MASTER
     class << self
       def smoke_test_methods
         {
-          LLM => %i[ask tier=],
-          Executor => %i[call],
+          LLM => %i[ask configured? configured_for_replicate?],
+          Executor => %i[call run_step_loop],
           Result => %i[ok err ok? err?],
         }
       rescue NameError => e

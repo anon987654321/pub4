@@ -6,8 +6,8 @@ require_relative "circuit_breaker"
 require "ruby_llm"
 
 module MASTER
-  # LLM - OpenRouter API with fallbacks, reasoning, structured outputs
-  # Policy: text/reasoning via OpenRouter; media generation/transcription via Replicate
+  # LLM - Multi-provider: Replicate (strong/primary) + OpenRouter (fallback/free)
+  # Policy: strong-tier LLM via Replicate; OpenRouter for fallback and free tier
   # Features: model fallbacks, reasoning tokens, structured outputs
   module LLM
     TIER_ORDER = %i[premium strong fast cheap free].freeze
@@ -80,26 +80,6 @@ module MASTER
         m && m[:api].to_s == "replicate"
       end
 
-      # Text-generation via Replicate, using Client.complete which:
-      #   - builds model-family-aware input (anthropic vs deepseek vs default schema)
-      #   - creates prediction via /v1/models/{owner}/{name}/predictions
-      #   - polls until done and returns a normalised Result
-      # This keeps llm.rb thin: all HTTP/polling logic stays in replicate/client.rb.
-      def execute_replicate_llm_request(prompt:, messages:, model:, reasoning: nil)
-        require_relative "replicate/client"
-
-        unless Replicate.available?
-          return Result.err("REPLICATE_API_TOKEN not set", category: :infrastructure)
-        end
-
-        sys = messages&.find { |m| m[:role] == "system" }
-        system_prompt = sys&.dig(:content)
-
-        opts = {}
-        opts[:reasoning_effort] = reasoning[:effort].to_s if reasoning.is_a?(Hash) && reasoning[:effort]
-
-        Replicate::Client.complete(model, prompt, system_prompt: system_prompt, **opts)
-      end
 
       # Configure ruby_llm with thread safety (only needed for OpenRouter models)
       def configure_ruby_llm
@@ -179,7 +159,7 @@ module MASTER
           tier = @forced_tier || tier
         end
 
-        primary = model || select_model(tier)
+        primary = model || select_model(tier || :strong)
         return Result.err("No model available.", category: :infrastructure) unless primary
 
         @current_model = primary
@@ -354,7 +334,7 @@ module MASTER
       end
 
       # Structured output helper - guarantees valid JSON matching schema
-      def ask_json(prompt, schema:, tier: :fast, **)
+      def ask_json(prompt, schema:, tier: :strong, **)
         ask(prompt, tier: tier, json_schema: schema, **)
       end
 
