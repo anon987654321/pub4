@@ -79,26 +79,13 @@ module MASTER
         end
         text = data[:text].to_s.strip
 
-        return [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no text provided"}']] if text.empty?
-        unless defined?(Speech) && Speech.respond_to?(:speak)
-          return [501, { CT_HEADER => JSON_TYPE }, ['{"error":"TTS not available"}']]
-        end
-
-        result = Speech.speak(text, play: false)
-        if result.respond_to?(:ok?) && result.ok?
-          audio_data = result.value[:audio] || result.value[:data]
-          [200, { CT_HEADER => "audio/mpeg" }, [audio_data]]
-        else
-          error = result.respond_to?(:error) ? result.error : "TTS failed"
-          [500, { CT_HEADER => JSON_TYPE }, [{ error: error }.to_json]]
-        end
+        tts_audio_response(text)
       end
 
       def handle_tts_stream(env)
-        text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"]
-        return [400, {}, ["Missing text"]] unless text
+        text = Rack::Utils.parse_query(env["QUERY_STRING"])["text"].to_s.strip
 
-        [501, { CT_HEADER => TEXT_TYPE }, ["TTS streaming not implemented"]]
+        tts_audio_response(text)
       end
 
       def serve_static_file(path)
@@ -130,6 +117,24 @@ module MASTER
         else
           result = pipeline.call({ text: message })
           result.ok? ? (result.value[:rendered] || result.value[:response] || "") : "! #{result.failure}"
+        end
+      end
+
+      def tts_audio_response(text)
+        return [400, { CT_HEADER => JSON_TYPE }, ['{"error":"no text provided"}']] if text.empty?
+        unless defined?(Speech) && Speech.respond_to?(:speak)
+          return [501, { CT_HEADER => JSON_TYPE }, ['{"error":"TTS not available"}']]
+        end
+
+        result = Speech.speak(text, play: false)
+        if result.respond_to?(:ok?) && result.ok?
+          audio_data = result.value[:audio] || result.value[:data]
+          return [500, { CT_HEADER => JSON_TYPE }, ['{"error":"TTS returned empty audio"}']] unless audio_data
+
+          [200, { CT_HEADER => "audio/mpeg" }, [audio_data]]
+        else
+          error = result.respond_to?(:error) ? result.error : "TTS failed"
+          [500, { CT_HEADER => JSON_TYPE }, [{ error: error }.to_json]]
         end
       end
 
