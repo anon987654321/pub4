@@ -1,34 +1,79 @@
-zsh
+```zsh
 #!/usr/bin/env zsh
 # Modernize all .sh files to pure zsh patterns per master.yml v17.0.0
 
-emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob
 
 typeset -a files errors
-files=("${(f)$(find . -name '*.sh' -type f ! -name 'modernize_zsh.sh' -print0 | xargs -0)}")
+files=(**/*.sh(.ND))
 
 for file in $files; do
+  [[ $file == */modernize_zsh.sh ]] && continue
+
   printf "Processing: %s\n" "$file"
 
+  # Check if file exists and is readable
   if [[ ! -f "$file" || ! -r "$file" ]]; then
     errors+=("$file: File not found or unreadable")
     continue
   fi
 
-  cp "$file" "${file}.bak" || { errors+=("$file: Backup failed"); continue; }
+  # Handle symlinks by resolving to actual file
+  if [[ -L "$file" ]]; then
+    local resolved_file=$(readlink -f "$file" 2>/dev/null || realpath "$file" 2>/dev/null)
+    if [[ -n "$resolved_file" && -f "$resolved_file" ]]; then
+      file="$resolved_file"
+    else
+      errors+=("$file: Symlink target not found or inaccessible")
+      continue
+    fi
+  fi
 
-  # Replace local → typeset
-  sed -i 's/local /typeset /g' "$file" || {; }
+  # Create backup with verification
+  if ! cp "$file" "${file}.bak"; then
+    errors+=("$file: Backup failed")
+    continue
+  fi
 
-  # Replace ${var,,} → ${var:l} (bash lowercase to zsh)
-  sed -i 's/\${\([^}]*\),,}/\${\1:l}/g' "$file" || { errors+=("$file: sed lowercase failed"); continue; }
+  # Platform-specific sed in-place option
+  local sed_in_place
+  case $(uname) in
+    Darwin) sed_in_place=(-i '') ;;
+    *) sed_in_place=(-i) ;;
+  esac
 
-  # Replace ${var^^} → ${var:u} (bash uppercase to zsh)
-  sed -i 's/\${\([^}]*\)\^\^}/\${\1 uppercase failed"); continue; }
+  # Test sed commands first with dry run
+  local sed_errors=()
+  for pattern in \
+    's/local /typeset /g' \
+    's/\${\([^}]*\),,}/\${\1:l}/g' \
+    's/\${\([^}]*\)\^\^}/\${\1:u}/g' \
+    's/\${\([^}]*\)\^}/\${(C)\1}/g'
+  do
+    if ! sed -n "${pattern}p" "$file" | head -1 >/dev/null 2>&1; then
+      sed_errors+=("Pattern '${pattern}' failed dry run")
+    fi
+  done
 
-  # Replace ${var^} → ${(C)var} (bash capitalize to zsh)
-  sed -${(C)\1}/g' "$file" || { errors+=("$file: sed capitalize failed"); continue; }
+  if (( ${#sed_errors} > 0 )); then
+    errors+=("$file: Sed validation failed: ${sed_errors[*]}")
+    continue
+  fi
+
+  # Apply transformations
+  for pattern in \
+    's/local /typeset /g' \
+    's/\${\([^}]*\),,}/\${\1:l}/g' \
+    's/\${\([^}]*\)\^\^}/\${\1:u}/g' \
+    's/\${\([^}]*\)\^}/\${(C)\1}/g'
+  do
+    if ! sed "${sed_in_place[@]}" "${pattern}" "$file"; then
+      errors+=("$file: Sed failed for pattern '${pattern}'")
+      # Restore from backup on failure
+      cp "${file}.bak" "$file"
+      continue 2
+    fi
+  done
 
   printf "  ✓ Modernized\n"
 done

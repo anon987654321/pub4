@@ -21,9 +21,23 @@ if ! jq -e '.apps | length > 0' "$MASTER_JSON" >/dev/null; then
     exit 1
 fi
 
+# Check for duplicate app names
+duplicate_apps=$(jq -r '.apps[].app' "$MASTER_JSON" | sort | uniq -d)
+if [[ -n "$duplicate_apps" ]]; then
+    echo "❌ Error: Duplicate app names found:"
+    echo "$duplicate_apps"
+    exit 1
+fi
+
 # Parse ports from master.json using jq
 declare -A PORTS
 while IFS=$'\t' read -r app port; do
+    # Skip entries with missing app or port
+    if [[ -z "$app" || -z "$port" ]]; then
+        echo "❌ Error: Missing app name or port in JSON entry"
+        exit 1
+    fi
+
     # Validate port is numeric and in valid range
     if [[ ! "$port" =~ ^[0-9]+$ ]] || ((port < 1 || port > 65535)); then
         echo "❌ Error: Invalid port '$port' for app '$app'"
@@ -59,6 +73,7 @@ declare -A INSTALLER_NAMES=(
 
 # Track missing installers
 missing_installers=()
+errors_found=0
 
 # Check each installer
 for app in "${!PORTS[@]}"; do
@@ -69,26 +84,35 @@ for app in "${!PORTS[@]}"; do
     if [[ ! -f "$installer" ]]; then
         echo "⚠️  ${app}: installer not found (tried ${installer_name}.sh)"
         missing_installers+=("${installer_name}.sh")
+        errors_found=1
         continue
     fi
 
-    # Use more robust port matching that handles variables and different contexts
-    if grep -q -E "(^|[^0-9])${port}([^0-9]|$)" "$installer"; then
-        echo "✓  ${app}: port ${port} found in installer"
+    # Use more robust port matching that handles comments and variables
+    if ! grep -q "[^0-9]${port}[^0-9]\|^${port}[^0-9]\|[^0-9]${port}$\|^${port}$" "$installer"; then
+        echo "❌ ${app}: Port $port not found in installer ${installer_name}.sh"
+        errors_found=1
     else
-        echo "✗  ${app}: port ${port} NOT found in installer"
+        echo "✅ ${app}: Port $port found in installer"
     fi
 done
 
-# Report missing installers summary
+echo ""
+
+# Summary
 if [[ ${#missing_installers[@]} -gt 0 ]]; then
-    echo ""
-    echo "❌ Missing installers:"
+    echo "Missing installers:"
     for installer in "${missing_installers[@]}"; do
         echo "  - $installer"
     done
+    echo ""
 fi
 
-echo ""
-echo "=== Check complete ==="
+if [[ $errors_found -eq 0 ]]; then
+    echo "✅ All checks passed!"
+    exit 0
+else
+    echo "❌ Some checks failed!"
+    exit 1
+fi
 ```
