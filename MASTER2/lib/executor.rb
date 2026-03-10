@@ -102,10 +102,10 @@ module MASTER
 
       # Fallback to simpler patterns if primary fails (use retriable? for smart fallback)
       if result.err? && result.retriable? && @pattern != :react
-        UI.warn("Pattern #{@pattern} failed, falling back to :react")
+        UI.warn("Pattern #{@pattern} failed, falling back to :react (fast tier)")
         @step = 0
         @history = []
-        result = execute_pattern(:react, goal, tier: tier || :strong)
+        result = execute_pattern(:react, goal, tier: :fast)
       end
 
       # Final fallback to direct if all else fails

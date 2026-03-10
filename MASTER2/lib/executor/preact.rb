@@ -45,7 +45,11 @@ module MASTER
 
           UI.dim("  replanning...")
           replan_result = replan(goal, results, tier: tier)
-          @plan = @plan[0..idx] + replan_result.value[:steps] if replan_result.ok? && replan_result.value[:steps].any?
+          if replan_result.ok? && replan_result.value[:steps].any?
+            new_steps = replan_result.value[:steps] || []
+            combined = @plan[0..idx] + new_steps
+            @plan = combined.first(@max_steps)
+          end
         end
 
         # Phase 3: Synthesize final answer

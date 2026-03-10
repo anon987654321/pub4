@@ -130,6 +130,11 @@ module MASTER
 
       FileUtils.mkdir_p(File.dirname(expanded))
       File.write(expanded, content)
+      # Verify Ruby syntax after write
+      if expanded.end_with?(".rb")
+        syntax_ok = Utils.valid_ruby?(content) rescue true
+        return "WARNING: file written but Ruby syntax check failed - review before running" unless syntax_ok
+      end
       verification = verify_change(expanded)
       verification.ok? ? "Written #{content.length} bytes to #{path}" : "Written #{content.length} bytes to #{path} [verify: #{verification.error}]"
     end

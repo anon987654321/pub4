@@ -34,6 +34,7 @@ module MASTER
 
           # Execute using ReAct
           result = execute_react_inner(augmented_goal, tier: tier)
+          @history = prior_history + @history
 
           # Reflect on the result
           reflection = reflect_on_result(original_goal, result, tier: :fast)
@@ -53,6 +54,7 @@ module MASTER
 
           UI.dim("  #{reflection[:critique][0..60]}")
 
+          prior_history = @history.dup
           @history = [] # Reset for fresh attempt
           @step = 0
         end
