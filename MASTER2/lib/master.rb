@@ -143,6 +143,7 @@ require_relative "violation_hooks"
 require_relative "learned_smells"
 require_relative "conflict_resolver"
 require_relative "phase_gates"
+require_relative "cross_file_analyzer"
 
 MASTER.safe_require("server")
 
