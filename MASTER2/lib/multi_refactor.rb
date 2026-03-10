@@ -6,6 +6,8 @@ module MASTER
   # Handles: Ruby files, Shell scripts (with embedded Ruby), HTML files
   class MultiRefactor
     MAX_FILES = 100
+    CONVERGENCE_WINDOW = 3
+    CONVERGENCE_THRESHOLD = 0.1  # minimum 10% improvement required
     MAX_FILES_ALL = 2000
     MAX_STRICT_PASSES = 4
     MAX_SYSTEMATIC_ROUNDS = 3
@@ -267,6 +269,15 @@ module MASTER
 
     def over_budget?
       @cost >= @budget_cap
+    end
+
+    def converged?(violation_history)
+      return false if violation_history.size < CONVERGENCE_WINDOW
+      window = violation_history.last(CONVERGENCE_WINDOW)
+      first, last_val = window.first.to_f, window.last.to_f
+      return false if first.zero?
+      improvement = (first - last_val) / first
+      improvement < CONVERGENCE_THRESHOLD
     end
 
     def strict_rewrite(content, filename:, ext:)
