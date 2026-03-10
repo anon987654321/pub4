@@ -1,299 +1,53 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Force UTF-8 encoding
-Encoding.default_external = Encoding::UTF_8
-Encoding.default_internal = Encoding::UTF_8
-$stdout.set_encoding(Encoding::UTF_8)
-$stderr.set_encoding(Encoding::UTF_8)
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
-# CLI flags
-if ARGV.delete("--verbose")
-  ENV["MASTER_TRACE"] = "3"
-elsif ARGV.delete("--quiet") || ARGV.delete("-q")
-  ENV["MASTER_TRACE"] = "0"
-end
-
-require_relative "../lib/single_instance"
-require "digest"
-require "tmpdir"
-require "fileutils"
-
-def enforce_single_master!(command)
-  return if %w[help -h --help version -v --version].include?(command)
-
-  root_hash = Digest::SHA256.hexdigest(File.expand_path("..", __dir__))[0, 12]
-  lock_path = ENV["MASTER_LOCK_PATH"] || File.join(Dir.tmpdir, "master2-#{root_hash}.lock")
-  MASTER::SingleInstance.acquire(lock_path: lock_path)
-rescue MASTER::SingleInstance::AlreadyRunningError => e
-  warn e.message
-  warn "Set MASTER_ALLOW_MULTI=1 to bypass this guard intentionally."
-  exit 1
-end
-
-command = ARGV[0]
-args = ARGV[1..] || []
-enforce_single_master!(command)
-
-# Clean up leftover lock files from crashed prior runs
-def cleanup_stale_locks!
-  Dir[File.join(Dir.tmpdir, "master2-*.lock")].each do |lock|
-    next unless File.exist?(lock)
-
-    pid = begin
-      raw = File.read(lock)
-      (m = raw.match(/pid=(\d+)/)) ? m[1].to_i : nil
-    rescue StandardError
-      nil
-    end
-
-    stale = if pid.nil? || pid <= 0
-              true
-            else
-              begin
-                Process.kill(0, pid)
-                false
-              rescue Errno::ESRCH
-                true
-              rescue Errno::EPERM
-                false
-              end
-            end
-
-    FileUtils.rm_f(lock) if stale
-  end
-rescue StandardError
-  nil
-end
-
-cleanup_stale_locks!
-
-# Gem loading — use system gems directly, no bundler isolation.
-# On OpenBSD, gems live in /usr/local/lib/ruby/gems; on Linux, /var/lib/gems.
-# AutoInstall handles any genuinely missing gems via `gem install`.
-require_relative "../lib/auto_install"
-MASTER::AutoInstall.setup
-require "json"
+require "readline"
 require_relative "../lib/master"
+require_relative "../lib/master/cli/commands"
+require_relative "../lib/master/cli/help"
+require_relative "../lib/master/cli/status"
+require_relative "../lib/master/cli/models"
+require_relative "../lib/master/cli/tools"
 
-begin
-  MASTER::DB.setup
-rescue StandardError => e
-  warn "DB setup failed: #{e.message} — running without persistence"
-end
-MASTER::Session.install_crash_handlers
+SYSTEM_PROMPT = <<~PROMPT
+You are MASTER2, a software agent running in a CLI.
+Rules:
+- Never roleplay
+- Never produce creative writing
+- Only perform system and engineering tasks
+- Respond concisely
+PROMPT
 
-# Helper: Execute full self-run across pub4 repo
-def run_selfrun(args)
-  puts "MASTER2 Self-Run: Analyzing entire pub4 repository..."
-  pub4_root = File.expand_path("../..", __dir__)
-  strict       = args.include?("--strict")
-  align_axioms = strict || args.include?("--axioms")
-  include_all  = args.include?("--all-files")
-  apply        = args.include?("--apply")
-  depth        = args.include?("--deep") ? :deep : :own  # default :own for selfrun
+puts "MASTER2"
 
-  # Ground the LLM in MASTER2's actual source before any analysis
-  if defined?(MASTER::GroundedContext) && defined?(MASTER::ExecutionContext)
-    puts "  grounding LLM in own source (depth: #{depth})…"
-    MASTER::ExecutionContext.instance_variable_set(
-      :@grounded_depth, depth
-    )
+loop do
+  input = Readline.readline("master> ", true)
+
+  break if input.nil?
+  break if input == "exit"
+
+  if input == "status"
+    puts MASTER.status
+    next
   end
 
-  run_phase1(pub4_root, apply, strict, align_axioms, include_all, depth)
-  run_phase2(pub4_root, apply, strict, align_axioms, include_all, depth)
-  run_phase3(pub4_root, apply, strict, align_axioms, include_all, depth)
-  run_phase4
-  exit 0
-end
-
-def run_phase1(root, apply, strict, align_axioms, include_all, depth = :own)
-  puts "\n=== Phase 1: Self-Refactoring MASTER2 ==="
-  mr = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict,
-                                 align_axioms: align_axioms, include_all_files: include_all,
-                                 grounded_depth: depth)
-  phase1_path = include_all ? File.join(root, "MASTER2") : File.join(root, "MASTER2", "lib")
-  result = mr.run(path: phase1_path)
-  puts "! Phase 1 failed: #{result.error}" if result.respond_to?(:err?) && result.err?
-end
-
-def run_phase2(root, apply, strict, align_axioms, include_all, depth = :own)
-  puts "\n=== Phase 2: Deploy Scripts ==="
-  mr2 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 1.0, force_rewrite: strict,
-                                  align_axioms: align_axioms, include_all_files: include_all,
-                                  grounded_depth: depth)
-  mr2.run(path: File.join(root, "deploy"))
-end
-
-def run_phase3(root, apply, strict, align_axioms, include_all, depth = :own)
-  puts "\n=== Phase 3: Business Plans ==="
-  mr3 = MASTER::MultiRefactor.new(dry_run: !apply, budget_cap: 0.5, force_rewrite: strict,
-                                  align_axioms: align_axioms, include_all_files: include_all,
-                                  grounded_depth: depth)
-  mr3.run(path: File.join(root, "bp"))
-end
-
-def run_phase4
-  puts "\n=== Phase 4: Self-Test ==="
-  MASTER::Introspection.run if defined?(MASTER::Introspection)
-end
-
-# Helper: Delegate command to Commands.dispatch_one
-def delegate_to_commands(command, args)
-  input = [command, *args].join(" ")
-  pipeline = MASTER::Pipeline.new
-  result = MASTER::Commands.dispatch_one(input, pipeline: pipeline)
-
-  case result
-  when nil
-    puts "Unknown command: #{command}"
-    puts "Run 'master help' for usage information"
-    exit 1
-  when :exit
-    exit 0
-  when MASTER::Commands::HANDLED
-    exit 0
-  else
-    exit(result.respond_to?(:ok?) && result.ok? ? 0 : 1)
-  end
-end
-
-case command
-when "version", "-v", "--version"
-  puts "MASTER2 v#{MASTER::VERSION}"
-  exit 0
-
-when "help", "-h", "--help"
-  puts <<~HELP
-    MASTER2 - Constitutional AI Code Quality System
-
-    OpenBSD + zsh quick start:
-      dev% bin/master
-      dev% bin/master help
-
-    Usage:
-      master [command] [arguments]
-
-    Commands:
-      refactor <file>             Refactor file with LLM guidance
-      multi-refactor [path]       Refactor directory (add: --apply --strict --axioms --all-files)
-      selfrun [--apply]           Full self-run across pub4 (add: --strict --axioms --all-files)
-      fix [--all|<path>]          Fix violations in files or directory
-      scan [directory]            Scan for code smells (default: .)
-      chamber <file>              Chamber review with multi-model deliberation
-      ideate <topic>              Generate 15+ alternatives for a topic
-      evolve [args]               Evolve entire codebase
-      browse <url>                Browse and extract web content
-      speak <text>                Text-to-speech output
-      session <cmd>               Session management (replay|ls|diff|export)
-      cache [stats|clear]         Semantic cache management
-      health                      System health check
-      doctor [--verbose]          Deep diagnostics and fix hints
-      bootstrap                   First-run setup and dependency bootstrap
-      history-dig [file]          Recover deleted historical file (master.yml/master.json)
-      codify [export-json]        Show or export codified design+code rules
-      opportunities [path]        Find improvement opportunities
-      style-guides [sync]         List or sync style guide repos
-      integrations [sync]         List or sync curated integration repos
-      axioms-stats                Display axiom violation statistics
-      schedule <cmd>              Job scheduler (list|add|remove|enable|disable)
-      heartbeat <cmd>             Heartbeat control (start|stop|status)
-      policy [set <profile>]      Policy profile management
-      version                     Show version
-      help                        Show this help
-
-    Legacy Options:
-      -w, --web                   Start web-only mode (no REPL)
-      -p, --pipe                  Pipe mode for automation
-      -t, --tts [TOPIC]           TTS test mode
-      -d, --daemon                Daemon mode for agentd
-
-    Examples:
-      dev% bin/master refactor deploy/openbsd/openbsd.sh
-      dev% bin/master fix --all
-      dev% bin/master scan deploy/rails/
-      dev% bin/master chamber lib/master.rb
-      dev% bin/master ideate "authentication system"
-      dev% bin/master session save milestone-1
-
-    Environment Variables:
-      OPENROUTER_API_KEY          Required for LLM operations
-      MASTER_VOICE                Enable voice mode (true/false)
-      MASTER_DEBUG                Debug logging (true/false)
-
-    Documentation:
-      https://github.com/anon987654321/pub4/tree/main/MASTER2
-
-    No command starts REPL mode with integrated web server.
-    One command is enough: run `bin/master` and follow prompts.
-  HELP
-  exit 0
-
-when "--web", "-w"
-  # Web-only mode (no REPL)
-  web_port = args.first&.to_i
-  web_port = nil if web_port == 0
-  server = MASTER::Server.new(port: web_port)
-  MASTER::Boot.banner_with_web(server.port)
-  server.start
-  puts "Press Ctrl+C to stop"
-  sleep
-
-when "--pipe", "-p"
-  # Pipe mode for automation
-  input = begin
-    JSON.parse($stdin.read)
-  rescue StandardError
-    { "text" => $stdin.read }
-  end
-  result = MASTER::Pipeline.new.call(input)
-  puts JSON.generate(result.ok? ? result.value : { error: result.error })
-
-when "--tts", "-t"
-  # TTS test mode - continuous talking (Windows/Cygwin)
-  topic = ARGV[1]&.to_sym || :master
-  puts "Starting continuous TTS (#{topic})... Ctrl+C to stop"
-  MASTER::Speech.chatter(topic: topic)
-
-when "--daemon", "-d"
-  # Daemon mode for agentd
-  require_relative "../sbin/agentd" if File.exist?(File.join(__dir__, "../sbin/agentd"))
-
-when "selfrun", "self-run"
-  # Full self-run: analyze and refactor the entire pub4 repo
-  run_selfrun(args)
-
-when "narrate", "narration"
-  if MASTER::Commands.respond_to?(:narrate_command)
-    result = MASTER::Commands.narrate_command(args.join(" "))
-    exit(result.respond_to?(:ok?) && result.ok? ? 0 : 1)
-  else
-    warn "narrate: Replicate not loaded (set REPLICATE_API_TOKEN)"
-    exit 1
+  if input == "doctor"
+    MASTER.doctor
+    next
   end
 
-else
-  if command.nil?
-    # No command = interactive REPL mode (default)
-    server = MASTER::Server.new
-    Thread.new { server.start }
+  if input.start_with?("analyze ")
+    type = input.split[1].to_sym
+    code = STDIN.read
+    puts MASTER.agent.analyze(type, code)
+    next
+  end
 
-    at_exit do
-      server.stop
-      if defined?(MASTER::Friction::FrictionRecorder) &&
-         MASTER::Friction::FrictionRecorder.events.any?
-        report = MASTER::Friction::SessionRetrospective.run
-        puts "\n" + MASTER::Friction::SessionRetrospective.format(report)
-      end
-    end
-
-    trap("INT")  { puts; exit }
-    trap("TERM") { exit }
-
-    MASTER::Pipeline.repl(web_port: server.port)
-  else
-    # Delegate all other commands to Commands.dispatch_one
-    delegate_to_commands(command, args)
+  begin
+    MASTER::CLI.run(input)
+  rescue => e
+    MASTER::UI.error(e.message)
   end
 end

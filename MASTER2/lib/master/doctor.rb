@@ -1,0 +1,2 @@
+module MASTER
+end
