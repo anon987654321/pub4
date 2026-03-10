@@ -203,18 +203,18 @@ module MASTER
       include PipelineRepl
 
       def prompt(phase: nil)
-        p = MASTER::UI.pastel
-        parts = [p.bold.white("master")]
-        git = git_info
-        parts << git if git
+        p     = MASTER::UI.pastel
         model = LLM.prompt_model_name.to_s.strip
-        parts << p.blue(model) unless model.empty?
-        parts << p.bright_black(phase) if phase
-        cost = Session.current.total_cost
-        parts << p.bright_black("$#{format('%.2f', cost)}") if cost && cost > 0
-        "#{parts.join(p.bright_black(' · '))} #{p.bold.white('❯')} "
+        model = model.empty? ? "?" : model
+        badge = (PlatformCheck.compute_badge rescue nil)
+        hw    = badge ? p.bright_black("*#{badge}") : ""
+        cost  = Session.current.total_cost
+        cost_str = cost && cost > 0 ? p.bright_black("*#{format("%.0fc", cost * 100)}") : ""
+        name  = Session.current.metadata_value(:name)
+        ctx   = name ? p.bright_black("[#{name}]") : ""
+        "#{p.bold.white("master")}#{p.bright_black("@")}#{p.cyan(model)}#{hw}#{cost_str}#{ctx}#{p.bold.white("$")} "
       rescue StandardError
-        "master ❯ "
+        "master$ "
       end
 
       def git_info
