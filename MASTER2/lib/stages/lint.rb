@@ -35,6 +35,7 @@ module MASTER
         # Detect forbidden shell tools in generated shell code blocks
         zsh_violations = ZshPatternInjector.scan_violations(text)
 
+        violations = ConflictResolver.resolve(violations) if defined?(ConflictResolver)
         violations.each { |v| ViolationHooks.on_violation_found(v, file: input[:file]) } if defined?(ViolationHooks)
 
         Result.ok(input.merge(
