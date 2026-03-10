@@ -14,6 +14,9 @@ elsif ARGV.delete("--quiet") || ARGV.delete("-q")
   ENV["MASTER_TRACE"] = "0"
 end
 
+require_relative "../lib/env_loader"
+MASTER::EnvLoader.ensure!
+
 require_relative "../lib/single_instance"
 require "digest"
 require "tmpdir"

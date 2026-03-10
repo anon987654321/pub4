@@ -8,6 +8,11 @@ module MASTER
   module LearnedSmells
     DATA_PATH = File.join(__dir__, "..", "data", "learned_smells.json").freeze
 
+    BUILTIN_SMELLS = [
+      "File.read without encoding",
+      "File.readlines without encoding",
+    ].freeze
+
     module_function
 
     def all

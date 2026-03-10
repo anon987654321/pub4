@@ -10,7 +10,7 @@ require_relative "replicate/narration"
 module MASTER
   # Replicate - Image generation via Replicate API
   module Replicate
-    TOKEN_NOT_SET = "REPLICATE_API_TOKEN not set."
+    TOKEN_NOT_SET = "REPLICATE_API_TOKEN (or REPLICATE_API_KEY) not set."
 
     API_URL = "https://api.replicate.com/v1/predictions"
 
