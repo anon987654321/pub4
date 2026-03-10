@@ -1,19 +1,20 @@
-<!DOCTYPE html>
-<html lang="<%= I18n.locale rescue 'en' %>" dir="ltr">
+```html
+<html lang="<%= I18n.locale || 'en' %>" dir="ltr">
 <head>
   <%= render "shared/meta" %>
   <%= yield :head %>
 </head>
-<body data-controller="<%= controller_name rescue 'application' %>" class="<%= body_classes rescue "#{controller_name} #{action_name}" %>">
+<body data-controller="<%= controller_name %>" class="<%= body_classes.presence || "#{controller_name} #{action_name}" %>">
   <%= render "shared/skip_links" %>
   <%= render "shared/nav" %>
-  
+
   <main id="main-content" class="site-main">
     <%= render "shared/flash" %>
     <%= yield %>
   </main>
-  
+
   <%= render "shared/footer" %>
   <%= yield :scripts %>
 </body>
 </html>
+```

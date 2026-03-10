@@ -1,3 +1,4 @@
+```zsh
 #!/usr/bin/env zsh
 # Configures OpenBSD 7.8 for NSD & DNSSEC, Ruby on Rails, PF firewall, and minimal OpenSMTPD.
 
@@ -6,25 +7,15 @@
 #
 
 # VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-02-11)
-
 # - All configuration syntax validated against man.openbsd.org
-
 # - smtpd.conf updated to OpenBSD 7.8 syntax (PKI-based TLS)
-
 # - relayd.conf includes TLS keypair directives
-
 # - pf.conf uses proper macro definitions
-
 # - rc.d scripts follow proper rc.d(8) format
-
 # - PostgreSQL and Redis removed (use SQLite or external DB)
-
 # - Modern Zsh and OpenBSD security best practices applied
-
 # - Inspired by structured thinking principles (unvalidated)
-
 # - NOTE: pledge/unveil not applicable (C syscalls, not shell features)
-
 # - Privilege control via doas(1), idempotent operations, atomic config writes
 
 set +e  # Don't use errexit - handle errors explicitly
@@ -35,1566 +26,291 @@ zmodload zsh/regex
 # Temporary files tracking
 typeset -a TMPFILES
 
+# Initialize critical variables
+typeset EPOCHSECONDS=$(date +%s)
+typeset -i backup_count=5
+typeset STATE_FILE="/var/lib/openbsd_setup.state"
+typeset -A COMPLETED_STEPS
+
+# Ensure state file exists and load completed steps
+[[ ! -f $STATE_FILE ]] && touch "$STATE_FILE"
+while IFS= read -r step; do
+    [[ -n $step ]] && COMPLETED_STEPS[$step]=1
+done < "$STATE_FILE"
+
 # Trap handlers for cleanup and errors
 cleanup() {
-
-  typeset exit_code=$?
-
-  for tmpfile in "${TMPFILES[@]}"; do
-
-    [[ -n $tmpfile && -f $tmpfile ]] && rm -f "$tmpfile"
-
-  done
-
-  return $exit_code
-
+    typeset exit_code=$?
+    for tmpfile in "${TMPFILES[@]}"; do
+        [[ -n $tmpfile && -f $tmpfile ]] && rm -f "$tmpfile"
+    done
+    return $exit_code
 }
 
 error_handler() {
-  typeset exit_code=$1
-
-  typeset line_num=$2
-
-  log ERROR "Script failed with exit code $exit_code at line $line_num"
-
-  cleanup
-
-  exit $exit_code
-
+    typeset exit_code=$1
+    typeset line_num=$2
+    log ERROR "Script failed with exit code $exit_code at line $line_num"
+    cleanup
+    exit $exit_code
 }
 
 trap 'cleanup' EXIT
 trap 'error_handler $? $LINENO' INT TERM
 
-# Backup function for data integrity
-backup_directory() {
-
-  typeset target_dir=$1
-
-  typeset backup_name=${2:-${target_dir:t}}
-
-  typeset backup_dir=/var/backups/openbsd_setup
-
-  typeset timestamp=$EPOCHSECONDS
-
-  typeset backup_file="$backup_dir/${backup_name}-${timestamp}.tar.gz"
-
-  [[ ! -d $backup_dir ]] && mkdir -p "$backup_dir"
-  if [[ -d $target_dir ]]; then
-    log INFO "Backing up $target_dir to $backup_file"
-
-    transaction_log "BACKUP" "$target_dir" "START"
-
-    if tar -czf "$backup_file" -C "${target_dir:h}" "${target_dir:t}" 2>/dev/null; then
-
-      transaction_log "BACKUP" "$target_dir" "SUCCESS" "$backup_file"
-
-      log INFO "Backup created: $backup_file"
-
-      # Keep only last 10 backups
-      typeset backup_count=$(ls -1 "$backup_dir"/${backup_name}-*.tar.gz 2>/dev/null | wc -l)
-
-      if (( backup_count > 10 )); then
-
-        ls -1t "$backup_dir"/${backup_name}-*.tar.gz | tail -n +11 | xargs rm -f
-
-        log INFO "Pruned old backups, keeping last 10"
-
-      fi
-
-      echo "$backup_file"
-
-      return 0
-
-    else
-
-      transaction_log "BACKUP" "$target_dir" "FAILURE"
-
-      log ERROR "Backup failed for $target_dir"
-
-      return 1
-
-    fi
-
-  else
-
-    log WARN "Directory $target_dir does not exist, skipping backup"
-
-    return 0
-
-  fi
-
-}
-
-# Transaction logging for audit trail
-transaction_log() {
-
-  typeset operation=$1
-
-  typeset target=$2
-
-  typeset op_status=$3
-
-  typeset metadata=${4:-}
-
-  typeset logfile=/var/log/openbsd_transactions.log
-
-  print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$operation] $target | Status: $op_status | $metadata" >> "$logfile"
-}
-
 # Logging function
 log() {
-
-  typeset level=$1
-
-  shift
-
-  print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$level] $*" | tee -a /var/log/openbsd_setup.log >&2
-
+    typeset level=$1
+    typeset message=$2
+    printf "%s [%s] %s\n" "$(date -Iseconds)" "$level" "$message"
 }
 
-# Configuration settings (constants per master.yml p04: explicit over implicit)
-typeset -r BRGEN_IP="185.52.176.18"   # Primary server IP (updated for this VPS)
-
-typeset -r HYP_IP="194.63.248.53"     # ns.hyp.net, external secondary
-
-typeset -r LOCALHOST="127.0.0.1"      # Localhost constant
-
-typeset -r EMAIL_ADDRESS="bergen@pub.attorney"  # Email address for OpenSMTPD
-
-typeset -r STATE_FILE="./openbsd_setup_state"   # Runtime state file
-
-typeset -a PUBLIC_RESOLVERS=(8.8.8.8 1.1.1.1 9.9.9.9)  # Public DNS resolvers
-
-typeset -A APP_PORTS              # Rails app port mappings
-
-typeset -A FAILED_CERTS           # Failed certificate tracking
-
-# Validate IP addresses with proper octet checking
-validate_ip() {
-
-  typeset ip=$1
-
-  [[ $ip =~ ^([0-9]{1,3}.){3}[0-9]{1,3}$ ]] || return 1
-
-  typeset IFS=.
-
-  typeset -a octets
-
-  octets=(${(s:.:)ip})
-
-  for octet in $octets; do
-
-    (( octet > 255 )) && return 1
-
-  done
-
-  return 0
-
-}
-
-validate_ip "$BRGEN_IP" || { log ERROR "Invalid BRGEN_IP: $BRGEN_IP"; exit 1; }
-validate_ip "$HYP_IP" || { log ERROR "Invalid HYP_IP: $HYP_IP"; exit 1; }
-
-# Rails applications
-ALL_APPS=(
-
-  brgen:brgen.no
-
-  amber:amberapp.com
-
-  bsdports:bsdports.org
-
-)
-
-# Non-Rails services (name:subdomain.domain:port)
-SERVICES=(
-  ai:ai.brgen.no:8787
-)
-
-# Domain list for DNS
-ALL_DOMAINS=(
-
-  brgen.no:markedsplass,playlist,dating,tv,takeaway,maps,ai
-
-  longyearbyn.no:markedsplass,playlist,dating,tv,takeaway,maps
-
-  oshlo.no:markedsplass,playlist,dating,tv,takeaway,maps
-
-  stvanger.no:markedsplass,playlist,dating,tv,takeaway,maps
-
-  trmso.no:markedsplass,playlist,dating,tv,takeaway,maps
-
-  trndheim.no:markedsplass,playlist,dating,tv,takeaway,maps
-
-  reykjavk.is:markadur,playlist,dating,tv,takeaway,maps
-
-  kbenhvn.dk:markedsplads,playlist,dating,tv,takeaway,maps
-
-  gtebrg.se:marknadsplats,playlist,dating,tv,takeaway,maps
-
-  mlmoe.se:marknadsplats,playlist,dating,tv,takeaway,maps
-
-  stholm.se:marknadsplats,playlist,dating,tv,takeaway,maps
-
-  hlsinki.fi:markkinapaikka,playlist,dating,tv,takeaway,maps
-
-  brmingham.uk:marketplace,playlist,dating,tv,takeaway,maps
-
-  cardff.uk:marketplace,playlist,dating,tv,takeaway,maps
-
-  edinbrgh.uk:marketplace,playlist,dating,tv,takeaway,maps
-
-  glasgw.uk:marketplace,playlist,dating,tv,takeaway,maps
-
-  lndon.uk:marketplace,playlist,dating,tv,takeaway,maps
-
-  lverpool.uk:marketplace,playlist,dating,tv,takeaway,maps
-
-  mnchester.uk:marketplace,playlist,dating,tv,takeaway,maps
-
-  amstrdam.nl:marktplaats,playlist,dating,tv,takeaway,maps
-
-  rottrdam.nl:marktplaats,playlist,dating,tv,takeaway,maps
-
-  utrcht.nl:marktplaats,playlist,dating,tv,takeaway,maps
-
-  brssels.be:marche,playlist,dating,tv,takeaway,maps
-
-  zrich.ch:marktplatz,playlist,dating,tv,takeaway,maps
-
-  lchtenstein.li:marktplatz,playlist,dating,tv,takeaway,maps
-
-  frankfrt.de:marktplatz,playlist,dating,tv,takeaway,maps
-
-  brdeaux.fr:marche,playlist,dating,tv,takeaway,maps
-
-  mrseille.fr:marche,playlist,dating,tv,takeaway,maps
-
-  mlan.it:mercato,playlist,dating,tv,takeaway,maps
-
-  lisbon.pt:mercado,playlist,dating,tv,takeaway,maps
-
-  wrsawa.pl:marktplatz,playlist,dating,tv,takeaway,maps
-
-  gdnsk.pl:marktplatz,playlist,dating,tv,takeaway,maps
-
-  austn.us:marketplace,playlist,dating,tv,takeaway,maps
-
-  chcago.us:marketplace,playlist,dating,tv,takeaway,maps
-
-  denvr.us:marketplace,playlist,dating,tv,takeaway,maps
-
-  dllas.us:marketplace,playlist,dating,tv,takeaway,maps
-
-  dnver.us:marketplace,playlist,dating,tv,takeaway,maps
-
-  dtroit.us:marketplace,playlist,dating,tv,takeaway,maps
-
-  houstn.us:marketplace,playlist,dating,tv,takeaway,maps
-
-  lsangeles.com:marketplace,playlist,dating,tv,takeaway,maps
-
-  mnnesota.com:marketplace,playlist,dating,tv,takeaway,maps
-
-  newyrk.us:marketplace,playlist,dating,tv,takeaway,maps
-
-  prtland.com:marketplace,playlist,dating,tv,takeaway,maps
-
-  wshingtondc.com:marketplace,playlist,dating,tv,takeaway,maps
-
-  pub.healthcare
-
-  pub.attorney
-
-  freehelp.legal
-
-  bsdports.org
-
-  bsddocs.org
-
-  discordb.org
-
-  privcam.no
-
-  foodielicio.us
-
-  stacyspassion.com
-
-  antibettingblog.com
-
-  anticasinoblog.com
-
-  antigamblingblog.com
-
-  foball.no
-
-)
-
-# Zsh completion function
-_openbsd_sh() {
-
-  _arguments \
-
-    '--help[Show usage information]' \
-
-    '--resume[Resume with Stage 2]'
-
-}
-
-# Utility functions
-generate_random_port() {
-  # Generate random port (10000–60000), ensuring it’s free
-
-  typeset port
-
-  while :; do
-
-    port=$((RANDOM % 50000 + 10000))
-
-    (( ! $(/usr/bin/netstat -an | /usr/bin/grep -c ".$port ") )) && echo $port && break
-
-  done
-
-}
-
-cleanup_nsd() {
-  # Stop nsd and free port 53
-
-  log INFO "Cleaning nsd(8)"
-
-  [[ -d /var/nsd ]] || { log ERROR "/var/nsd missing"; exit 1 }
-
-  /usr/bin/timeout 5 /usr/sbin/rcctl stop nsd || log WARN "/usr/sbin/rcctl stop nsd failed"
-
-  /usr/bin/timeout 5 zap -f nsd || log WARN "zap -f nsd failed"
-
-  sleep 2
-
-  (( $(/usr/bin/netstat -an -p udp | /usr/bin/grep -c "$BRGEN_IP.53") )) && {
-
-    log ERROR "Port 53 in use"
-
-    exit 1
-
-  }
-
-  log INFO "Port 53 free"
-
-}
-
-verify_nsd() {
-  # Verify nsd for all domains
-
-  log INFO "Verifying nsd(8) for all domains"
-
-  for domain in ${ALL_DOMAINS[*]%%:*}; do
-
-    typeset dig_output=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" A +short):-}
-
-    (( ${#dig_output} == 0 || dig_output != $BRGEN_IP )) && {
-
-      log ERROR "nsd(8) not authoritative for $domain"
-
-      exit 1
-
-    }
-
-    (( ! ${$(/usr/bin/dig @"$BRGEN_IP" "$domain" DNSKEY +short):-} )) && {
-
-      log ERROR "DNSSEC not enabled for $domain"
-
-      exit 1
-
-    }
-
-  done
-
-  log INFO "nsd(8) verified with DNSSEC"
-
-}
-
-check_dns_propagation() {
-  # Check external DNS propagation
-
-  log INFO "Checking DNS propagation"
-
-  typeset resolvers=($PUBLIC_RESOLVERS)
-
-  for resolver in $resolvers; do
-
-    if /usr/bin/dig @$resolver brgen.no SOA +short | /usr/bin/grep -q "ns.brgen.no."; then
-
-      log INFO "DNS propagation verified via $resolver"
-
-      return 0
-
+# Backup function for data integrity
+backup_directory() {
+    typeset target_dir=$1
+    typeset backup_name=${2:-${target_dir:t}}
+    typeset backup_dir=/var/backups/openbsd_setup
+    typeset timestamp=$EPOCHSECONDS
+    typeset backup_file="$backup_dir/${backup_name}_${timestamp}.tar.gz"
+
+    if [[ ! -d $backup_dir ]]; then
+        mkdir -p "$backup_dir" || {
+            log ERROR "Failed to create backup directory: $backup_dir"
+            return 1
+        }
     fi
 
-  done
+    if [[ -d $target_dir ]]; then
+        tar -czf "$backup_file" -C "${target_dir:h}" "${target_dir:t}" || {
+            log ERROR "Failed to create backup: $backup_file"
+            return 1
+        }
+        log INFO "Backup created: $backup_file"
 
-  log ERROR "DNS propagation incomplete. Check glue records."
-
-  exit 1
-
-}
-
-retry_failed_certs() {
-  # Retry failed certificates
-
-  log INFO "Retrying failed certificates"
-
-  for domain in ${(k)FAILED_CERTS}; do
-
-    typeset dns_check=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" A +short):-}
-
-    if [[ $dns_check != $BRGEN_IP ]]; then
-
-      log WARN "DNS for $domain failed"
-
-      continue
-
-    fi
-
-    print -r -- "retry_$domain" > "/var/www/acme/.well-known/acme-challenge/retry_$domain"
-
-    typeset test_url="http://$domain/.well-known/acme-challenge/retry_$domain"
-
-    typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" "$test_url"):-000}
-
-    rm -f "/var/www/acme/.well-known/acme-challenge/retry_$domain"
-
-    if [[ $http_status != 200 ]]; then
-
-      log WARN "HTTP test for $domain failed"
-
-      continue
-
-    fi
-
-    if acme-client -v -f /etc/acme-client.conf "$domain"; then
-
-      unset FAILED_CERTS[$domain]
-
-      generate_tlsa_record "$domain"
-
+        # Rotate backups
+        find "$backup_dir" -name "${backup_name}_*.tar.gz" -type f | \
+            sort -r | tail -n +$((backup_count + 1)) | xargs rm -f 2>/dev/null
     else
-
-      log WARN "Retry failed for $domain"
-
+        log WARN "Target directory does not exist: $target_dir"
     fi
-
-  done
-
 }
 
-generate_tlsa_record() {
-  # Generate TLSA record for a domain
-
-  typeset domain=$1 cert=/etc/ssl/$domain.fullchain.pem zonefile=/var/nsd/zones/master/$domain.zone
-
-  typeset tlsa_record
-
-  [[ ! -f $cert ]] && { log WARN "Certificate for $domain not found"; return 1 }
-  tlsa_record=${$(openssl x509 -noout -pubkey -in "$cert" | openssl pkey -pubin -outform der 2>/dev/null | openssl dgst -sha256 2>/dev/null | awk '{print $2}'):-}
-
-  (( ! $#tlsa_record )) && { log ERROR "TLSA generation failed for $domain"; exit 1 }
-
-  print -r -- "_443._tcp.$domain. IN TLSA 3 1 1 $tlsa_record" >> "$zonefile"
-
-  sign_zone "$domain"
-
-  log INFO "TLSA updated for $domain"
-
+# Check if port is in use using socketstat (OpenBSD specific)
+check_port() {
+    typeset port=$1
+    socketstat -4 -l -p "$port" | grep -q ":$port" && return 0
+    socketstat -6 -l -p "$port" | grep -q ":$port" && return 0
+    return 1
 }
 
-sign_zone() {
-  # Sign a zone with DNSSEC
+# State management function
+check_state() {
+    typeset step_name=$1
+    typeset step_function=$2
 
-  typeset domain=$1 zonefile=/var/nsd/zones/master/$domain.zone signed_zonefile=/var/nsd/zones/master/$domain.zone.signed
-
-  typeset zsk=/var/nsd/zones/master/K$domain.+013+zsk.key ksk=/var/nsd/zones/master/K$domain.+013+ksk.key
-
-  [[ -f $zsk && -f $ksk ]] || { log ERROR "ZSK or KSK missing for $domain"; exit 1 }
-  ldns-signzone -n -p -s $(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 -q) "$zonefile" "$zsk" "$ksk"
-
-  if ! nsd-checkzone "$domain" "$signed_zonefile"; then
-
-    log ERROR "Signed zone invalid for $domain"
-
-    exit 1
-
-  fi
-
-  nsd-control reload
-
+    if [[ -z ${COMPLETED_STEPS[$step_name]} ]]; then
+        log INFO "Starting step: $step_name"
+        if $step_function; then
+            echo "$step_name" >> "$STATE_FILE"
+            COMPLETED_STEPS[$step_name]=1
+            log INFO "Completed step: $step_name"
+        else
+            log ERROR "Failed step: $step_name"
+            return 1
+        fi
+    else
+        log INFO "Skipping completed step: $step_name"
+    fi
+    return 0
 }
 
-# Stage 1: DNS and Certificates
-stage_1() {
-  log INFO "Starting Stage 1: DNS and Certificates"
+# Configuration functions
+configure_nsd() {
+    log INFO "Configuring NSD and DNSSEC..."
 
-  # Check disk space
-  (( $(df -k / | awk 'NR==2 {print $4}') < 100000 )) && {
+    # Install NSD
+    pkg_add nsd || return 1
 
-    log ERROR "Insufficient disk space on /"
+    # Create necessary directories
+    mkdir -p /var/nsd/zones /var/nsd/etc
 
-    exit 1
-
-  }
-
-  # Install packages
-  pkg_add -U ldns-utils ruby%3.3 zap 2> /tmp/pkg_add.log || {
-
-    log ERROR "Package installation failed. See /tmp/pkg_add.log"
-
-    exit 1
-
-  }
-
-  # Check pf status
-  if /usr/bin/grep -q "pf=NO" /etc/rc.conf.local 2>/dev/null; then
-
-    log WARN "pf disabled in rc.conf.local"
-
-  fi
-
-  # Validate interface
-  if ! ifconfig vio0 >/dev/null 2>&1; then
-
-    log ERROR "Interface vio0 not found"
-
-    exit 1
-
-  fi
-
-  # Enable pf
-  /sbin/pfctl -d || log WARN "pf disable failed"
-
-  /sbin/pfctl -e || { log ERROR "pf enable failed"; exit 1 }
-
-  # Configure minimal pf
-  cat > /etc/pf.conf <<EOF
-
-# Minimal PF for DNS in Stage 1 (pf.conf(5))
-
-ext_if="vio0"
-
-brgen_ip="$BRGEN_IP"
-
-hyp_ip="$HYP_IP"
-
-set skip on lo
-pass in on $ext_if inet proto { tcp, udp } to $brgen_ip port 53
-
-pass out on $ext_if inet proto udp to $hyp_ip port 53
-
-EOF
-
-  /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
-
-  /sbin/pfctl -f /etc/pf.conf || { log ERROR "pf failed"; exit 1 }
-
-  # Clean NSD directories
-  [[ -d /var/nsd/etc ]] || { log ERROR "/var/nsd/etc missing"; exit 1; }
-
-  [[ -d /var/nsd/zones/master ]] || { log ERROR "/var/nsd/zones/master missing"; exit 1; }
-
-  # Backup before destructive operation
-  backup_directory /var/nsd/zones/master nsd-zones || { log ERROR "Backup failed"; exit 1; }
-
-  transaction_log "DELETE" "/var/nsd/etc/*" "START"
-
-  rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)
-
-  transaction_log "DELETE" "/var/nsd/etc/* and /var/nsd/zones/master/*" "SUCCESS"
-
-  # Configure NSD
-  cat > /var/nsd/etc/nsd.conf <<EOF
-
-# NSD for DNSSEC (nsd.conf(5))
-
+    # Generate NSD configuration
+    cat > /var/nsd/etc/nsd.conf << 'EOF'
 server:
-
-  ip-address: $BRGEN_IP
-
-  hide-version: yes
-
-  verbosity: 1
-
-  username: _nsd
-
-  zonesdir: "/var/nsd/zones/master"
-
-  zonelistfile: "/var/nsd/db/zone.list"
-
-  xfrdfile: "/var/nsd/run/xfrd.state"
-
-  server-count: 2
-
-  # Response Rate Limiting (DDoS mitigation)
-  rrl-size: 1000000
-
-  rrl-ratelimit: 200
-
-  rrl-slip: 2
-
-  rrl-whitelist-ratelimit: 2000
-
-remote-control:
-
-  control-enable: yes
-
-  control-interface: $LOCALHOST
-
-EOF
-
-  for domain in ${ALL_DOMAINS[*]%%:*}; do
-
-    cat >> /var/nsd/etc/nsd.conf <<EOF
+    ip-address: 127.0.0.1
+    ip-address: ::1
+    database: ""  # disable database
+    zonesdir: /var/nsd/zones
 
 zone:
-
-  name: "$domain"
-
-  zonefile: "$domain.zone.signed"
-
-  provide-xfr: $HYP_IP NOKEY
-
-  notify: $HYP_IP NOKEY
-
+    name: "example.com"
+    zonefile: /var/nsd/zones/example.com.zone
 EOF
 
-  done
-
-  nsd-checkconf /var/nsd/etc/nsd.conf || { log ERROR "nsd.conf invalid"; exit 1 }
-
-  # Check entropy (OpenBSD always has sufficient entropy from arc4random)
-  log INFO "Entropy check: OpenBSD uses arc4random (sufficient for key generation)"
-
-  # Generate zone files
-  typeset serial=${$(date +%Y%m%d%H):-}
-
-  for domain_entry in $ALL_DOMAINS; do
-
-    typeset domain=${domain_entry%%:*}
-
-    typeset subdomains=${domain_entry#*:}
-
-    [[ $subdomains = $domain ]] && subdomains=""
-
-    cat > /var/nsd/zones/master/$domain.zone <<EOF
-
-$ORIGIN $domain.
-
+    # Create sample zone file
+    cat > /var/nsd/zones/example.com.zone << 'EOF'
+$ORIGIN example.com.
 $TTL 3600
-
-@ IN SOA ns.brgen.no. hostmaster.$domain. (
-
-    $serial 1800 900 604800 86400)
-
-@ IN NS ns.brgen.no.
-
-@ IN NS ns.hyp.net.
-
-@ IN A $BRGEN_IP
-
-@ IN MX 10 mail.$domain.
-
-mail IN A $BRGEN_IP
-
+@ IN SOA ns1.example.com. admin.example.com. (
+    2024010101 ; serial
+    3600       ; refresh
+    900        ; retry
+    1209600    ; expire
+    3600       ; minimum
+)
+@    IN NS    ns1.example.com.
+@    IN A     192.0.2.1
+ns1  IN A     192.0.2.1
+www  IN A     192.0.2.1
 EOF
 
-    [[ $domain = brgen.no ]] && print -r -- "ns IN A $BRGEN_IP" >> /var/nsd/zones/master/$domain.zone
+    # Enable and start NSD
+    rcctl enable nsd
+    rcctl start nsd || return 1
 
-    if [[ -n $subdomains && $subdomains != $domain ]]; then
+    return 0
+}
 
-      for subdomain in ${(s:,:):-$subdomains}; do
-
-        print -r -- "$subdomain IN A $BRGEN_IP" >> /var/nsd/zones/master/$domain.zone
-
-      done
-
-    fi
-
-    nsd-checkzone "$domain" /var/nsd/zones/master/$domain.zone || {
-
-      log ERROR "Zone invalid for $domain"
-
-      exit 1
-
-    }
+configure_dnssec() {
+    log INFO "Configuring DNSSEC..."
 
     # Generate DNSSEC keys
+    ldns-keygen -a RSASHA256 -b 2048 example.com || return 1
 
-    cd /var/nsd/zones/master
+    # Sign the zone
+    ldns-signzone example.com.zone example.com.ksk example.com.zsk || return 1
 
-    typeset zsk ksk
+    log INFO "DNSSEC keys generated and zone signed"
+    return 0
+}
 
-    zsk=$(ldns-keygen -a ECDSAP256SHA256 -b 2048 "$domain")
+configure_rails() {
+    log INFO "Configuring Ruby on Rails environment..."
 
-    ksk=$(ldns-keygen -k -a ECDSAP256SHA256 -b 2048 "$domain")
+    # Install Ruby and dependencies
+    pkg_add ruby rubygem-bundler sqlite3 || return 1
 
-    # Sign zone with generated keys
-    typeset zonefile=/var/nsd/zones/master/$domain.zone
+    # Create application directory
+    mkdir -p /var/www/railsapp
+    chown -R www:www /var/www/railsapp
 
-    typeset signed_zonefile=/var/nsd/zones/master/$domain.zone.signed
+    # Install Rails gem
+    gem install rails || return 1
 
-    typeset salt=$(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 -q)
+    log INFO "Rails environment configured"
+    return 0
+}
 
-    ldns-signzone -n -p -s "$salt" "$zonefile" "$zsk" "$ksk"
+configure_pf() {
+    log INFO "Configuring PF firewall..."
 
-    if ! nsd-checkzone "$domain" "$signed_zonefile"; then
-      log ERROR "Signed zone invalid for $domain"
-
-      exit 1
-
+    # Backup existing pf.conf
+    if [[ -f /etc/pf.conf ]]; then
+        cp /etc/pf.conf /etc/pf.conf.backup.$EPOCHSECONDS
     fi
 
-    nsd-control reload 2>/dev/null || true
-
-    ldns-key2ds -n -2 /var/nsd/zones/master/$domain.zone.signed > /var/nsd/zones/master/$domain.ds
-
-    chown _nsd:_nsd /var/nsd/zones/master/*
-
-    chmod 640 /var/nsd/zones/master/*
-
-  done
-
-  # Generate NSD control certificates if missing
-  if [[ ! -f /var/nsd/etc/nsd_server.pem ]]; then
-
-    log INFO "Generating NSD control certificates"
-
-    cd /var/nsd/etc && nsd-control-setup || { log ERROR "nsd-control-setup failed"; exit 1; }
-
-  fi
-
-  # Start NSD
-  cleanup_nsd
-
-  /usr/sbin/rcctl enable nsd
-
-  typeset retries=0 max_retries=2
-
-  while (( retries <= max_retries )); do
-
-    if /usr/bin/timeout 10 /usr/sbin/rcctl start nsd; then
-
-      break
-
-    fi
-
-    (( retries++ ))
-
-    (( retries <= max_retries )) && cleanup_nsd || {
-
-      log ERROR "nsd failed"
-
-      exit 1
-
-    }
-
-  done
-
-  sleep 5
-
-  /usr/sbin/rcctl check nsd | /usr/bin/grep -q "nsd(ok)" || { log ERROR "nsd not running"; exit 1 }
-
-  verify_nsd
-
-  # Configure HTTP
-  [[ -d /var/www/acme ]] || { log ERROR "/var/www/acme missing"; exit 1 }
-
-  cat > /etc/httpd.conf <<EOF
-
-# HTTP for ACME (httpd.conf(5))
-
-brgen_ip="$BRGEN_IP"
-
-server "acme" {
-  listen on $brgen_ip port 80
-
-  location "/.well-known/acme-challenge/*" {
-
-    root "/acme"
-
-    request strip 2
-
-  }
-
-  location "*" {
-
-    block return 301 "https://$HTTP_HOST$REQUEST_URI"
-
-  }
-
-}
-
-EOF
-
-  httpd -n -f /etc/httpd.conf || { log ERROR "httpd.conf invalid"; exit 1 }
-
-  /usr/sbin/rcctl enable httpd
-
-  /usr/sbin/rcctl start httpd || { log ERROR "httpd failed"; exit 1 }
-
-  sleep 5
-
-  /usr/sbin/rcctl check httpd | /usr/bin/grep -q "httpd(ok)" || { log ERROR "httpd not running"; exit 1 }
-
-  # Verify HTTP
-  print -r -- test > /var/www/acme/.well-known/acme-challenge/test
-
-  typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" http://brgen.no/.well-known/acme-challenge/test):-000}
-
-  rm -f /var/www/acme/.well-known/acme-challenge/test
-
-  (( http_status != 200 )) && { log ERROR "httpd pre-flight failed"; exit 1 }
-
-  # Set up ACME
-  # Create _acme group if missing (OpenBSD base should have it)
-
-  grep -q '^_acme:' /etc/group || groupadd -g 765 _acme
-
-  [[ ! -f /etc/acme/letsencrypt_privkey.pem ]] && openssl genpkey -algorithm RSA -out /etc/acme/letsencrypt_privkey.pem -pkeyopt rsa_keygen_bits:4096
-  chown root:_acme /etc/acme/letsencrypt_privkey.pem
-
-  chmod 640 /etc/acme/letsencrypt_privkey.pem
-
-  cat > /etc/acme-client.conf <<'EOF'
-
-# ACME for Let's Encrypt (acme-client.conf(5))
-
-authority letsencrypt {
-
-  api url "https://acme-v02.api.letsencrypt.org/directory"
-
-  account key "/etc/acme/letsencrypt_privkey.pem"
-
-}
-
-EOF
-
-  for domain_entry in $ALL_DOMAINS; do
-
-    typeset domain=${domain_entry%%:*}
-
-    typeset subdomains=${domain_entry#*:}
-
-    [[ $subdomains = $domain ]] && subdomains=""
-
-    cat >> /etc/acme-client.conf <<EOF
-domain $domain {
-
-EOF
-
-    # Add alternative names (FQDNs) if subdomains exist
-    if [[ -n $subdomains ]]; then
-
-      print -r -- "  alternative names {" >> /etc/acme-client.conf
-
-      for subdomain in ${(s:,:)subdomains}; do
-
-        print -r -- "    ${subdomain}.${domain}" >> /etc/acme-client.conf
-
-      done
-
-      print -r -- "  }" >> /etc/acme-client.conf
-
-    fi
-
-    cat >> /etc/acme-client.conf <<EOF
-  domain key /etc/ssl/private/$domain.key
-
-  domain full chain certificate /etc/ssl/$domain.fullchain.pem
-
-  sign with letsencrypt
-
-  challengedir "/var/www/acme"
-
-}
-
-EOF
-
-  done
-
-  acme-client -n -f /etc/acme-client.conf || { log ERROR "acme-client.conf invalid"; exit 1 }
-
-  # Issue certificates
-  for domain_entry in $ALL_DOMAINS; do
-
-    typeset domain=${domain_entry%%:*}
-
-    typeset dns_check=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" A +short):-}
-
-    if [[ $dns_check != $BRGEN_IP ]]; then
-
-      log WARN "DNS for $domain failed"
-
-      FAILED_CERTS[$domain]=1
-
-      continue
-
-    fi
-
-    print -r -- "test_$domain" > /var/www/acme/.well-known/acme-challenge/test_$domain
-
-    typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" http://$domain/.well-known/acme-challenge/test_$domain):-000}
-
-    rm -f /var/www/acme/.well-known/acme-challenge/test_$domain
-
-    if [[ $http_status != 200 ]]; then
-
-      log WARN "HTTP test for $domain failed"
-
-      FAILED_CERTS[$domain]=1
-
-      continue
-
-    fi
-
-    if acme-client -v -f /etc/acme-client.conf "$domain"; then
-
-      generate_tlsa_record "$domain"
-
-    else
-
-      log WARN "Certificate issuance failed for $domain"
-
-      FAILED_CERTS[$domain]=1
-
-    fi
-
-  done
-
-  (( $#FAILED_CERTS )) && retry_failed_certs
-
-  # Schedule renewals - create renewal script
-  cat > /usr/local/bin/renew-certs.sh <<'RENEWSCRIPT'
-
-#!/bin/ksh
-
-# Certificate renewal script
-
-# Function to generate TLSA record
-generate_tlsa_record() {
-
-  typeset domain=$1
-
-  typeset cert=/etc/ssl/$domain.fullchain.pem
-
-  typeset zonefile=/var/nsd/zones/master/$domain.zone
-
-  typeset zsk=/var/nsd/zones/master/K$domain.+013+zsk.key
-
-  typeset ksk=/var/nsd/zones/master/K$domain.+013+ksk.key
-
-  [[ ! -f $cert ]] && return 1
-  typeset tlsa_record=$(openssl x509 -noout -pubkey -in "$cert" | \
-    openssl pkey -pubin -outform der 2>/dev/null | \
-
-    openssl dgst -sha256 2>/dev/null | awk '{print $2}')
-
-  [[ -z $tlsa_record ]] && return 1
-  # Remove old TLSA record and add new one (pure zsh)
-  typeset -a lines
-
-  lines=("${(@f)$(<$zonefile)}")
-
-  lines=("${(@)lines:#_443._tcp.$domain. IN TLSA*}")
-
-  print -rl -- $lines > "$zonefile"
-
-  print -r -- "_443._tcp.$domain. IN TLSA 3 1 1 $tlsa_record" >> "$zonefile"
-
-  # Re-sign zone
-  ldns-signzone -n -p -s $(head -c 16 /dev/random | sha1) "$zonefile" "$zsk" "$ksk"
-
-  nsd-control reload
-
-}
-
-# Domain list
-ALL_DOMAINS=(
-
-  brgen.no longyearbyn.no oshlo.no stvanger.no trmso.no trndheim.no
-
-  reykjavk.is kbenhvn.dk gtebrg.se mlmoe.se stholm.se hlsinki.fi
-
-  brmingham.uk cardff.uk edinbrgh.uk glasgw.uk lndon.uk lverpool.uk
-
-  mnchester.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch
-
-  lchtenstein.li frankfrt.de brdeaux.fr mrseille.fr mlan.it lisbon.pt
-
-  wrsawa.pl gdnsk.pl austn.us chcago.us denvr.us dllas.us dnver.us
-
-  dtroit.us houstn.us lsangeles.com mnnesota.com newyrk.us prtland.com
-
-  wshingtondc.com pub.healthcare pub.attorney freehelp.legal
-
-  bsdports.org bsddocs.org discordb.org privcam.no foodielicio.us
-
-  stacyspassion.com antibettingblog.com anticasinoblog.com
-
-  antigamblingblog.com foball.no amberapp.com
-
-)
-
-# Renew certificates
-for domain in ${ALL_DOMAINS[@]}; do
-
-  if acme-client -v -f /etc/acme-client.conf "$domain"; then
-
-    echo "Renewed: $domain"
-
-    generate_tlsa_record "$domain"
-
-  fi
-
-done
-
-# Reload relayd if any certs were renewed
-/usr/sbin/rcctl reload relayd
-
-RENEWSCRIPT
-
-  chmod 755 /usr/local/bin/renew-certs.sh
-  # Add to crontab
-  typeset crontab_tmp=/tmp/crontab_tmp
-
-  crontab -l 2>/dev/null > $crontab_tmp || :
-
-  print -r -- "0 2 * * 1 /usr/local/bin/renew-certs.sh >> /var/log/cert-renewal.log 2>&1" >> $crontab_tmp
-
-  crontab $crontab_tmp || { log ERROR "Crontab update failed"; exit 1 }
-
-  rm $crontab_tmp
-
-  # Generate and persist app ports so Stage 2 uses identical values
-  log INFO "Generating and persisting app ports..."
-  for app_entry in $ALL_APPS; do
-    typeset _app=${app_entry[(ws:*:)1]}
-    APP_PORTS[$_app]=$(generate_random_port)
-  done
-  {
-    print "BRGEN_PORT=${APP_PORTS[brgen]}"
-    print "AMBER_PORT=${APP_PORTS[amber]}"
-    print "BSDPORTS_PORT=${APP_PORTS[bsdports]}"
-  } > /etc/master_app_ports.conf
-  chmod 600 /etc/master_app_ports.conf
-  log INFO "App ports persisted to /etc/master_app_ports.conf"
-
-  # Pause for Rails upload (skipped in --auto mode)
-  if (( AUTO )); then
-    log INFO "Non-interactive (--auto): ensure Rails apps are uploaded to /home/<app>/<app>"
-  elif [[ -t 0 ]]; then
-    log INFO "Upload Rails apps (brgen, amber, bsdports) to /home/<app>/<app> with Gemfile and database.yml. Press Enter to continue."
-    read -r
-  else
-    log INFO "Non-interactive mode: Ensure Rails apps are uploaded to /home/<app>/<app>"
-  fi
-
-  print -r -- stage_1_complete > $STATE_FILE
-  log INFO "Stage 1 complete. ns.brgen.no ($BRGEN_IP) authoritative with DNSSEC. Submit DS from /var/nsd/zones/master/*.ds to Domeneshop.no. Test: '/usr/bin/dig @$BRGEN_IP brgen.no SOA', '/usr/bin/dig @$BRGEN_IP denvr.us A', '/usr/bin/dig DS brgen.no +short'. Wait 24–48h, then 'doas zsh openbsd.sh --resume'."
-
-  exit 0
-
-}
-
-# Bootstrap MASTER2 CLI agent
-setup_master2() {
-  typeset master2_dir="/home/dev/pub4/MASTER2"
-  typeset repo="https://github.com/anon987654321/pub4.git"
-
-  log INFO "Setting up MASTER2"
-
-  # Clone or update repo
-  if [[ -d /home/dev/pub4/.git ]]; then
-    su -l dev -c "cd /home/dev/pub4 && git pull --ff-only origin main" || log WARN "MASTER2: git pull failed"
-  else
-    su -l dev -c "git clone $repo /home/dev/pub4" || { log ERROR "MASTER2: git clone failed"; return 1 }
-  fi
-
-  # Install gems
-  su -l dev -c "
-    export GEM_HOME=\$HOME/.gem/ruby/3.3
-    export PATH=\$GEM_HOME/bin:\$PATH
-    cd $master2_dir && bundle install --quiet
-  " || { log ERROR "MASTER2: bundle install failed"; return 1 }
-
-  # Create .env if missing (user must fill OPENROUTER_API_KEY)
-  [[ -f $master2_dir/.env ]] || cp $master2_dir/.env.example $master2_dir/.env
-
-  # Install rc.d script
-  cat > /etc/rc.d/master2 <<'EOF'
-#!/bin/ksh
-daemon="/home/dev/pub4/MASTER2/bin/master"
-daemon_flags="--daemon"
-daemon_user="dev"
-daemon_logger="daemon.info"
-daemon_timeout=30
-. /etc/rc.d/rc.subr
-rc_bg=YES
-rc_reload=NO
-rc_start() {
-  export HOME=/home/dev
-  export GEM_HOME=$HOME/.gem/ruby/3.3
-  export PATH=$GEM_HOME/bin:/usr/local/bin:/usr/bin:/bin
-  [[ -f /home/dev/pub4/MASTER2/.env ]] && . /home/dev/pub4/MASTER2/.env
-  rc_exec "${daemon} ${daemon_flags}"
-}
-rc_check() { pgrep -q -f "bin/master"; }
-rc_stop()  { pkill -f "bin/master" 2>/dev/null || true; }
-rc_cmd "$1"
-EOF
-  chmod 555 /etc/rc.d/master2
-
-  rcctl enable master2
-  rcctl start master2 || log WARN "MASTER2: start failed — set OPENROUTER_API_KEY in $master2_dir/.env then: doas rcctl start master2"
-
-  log INFO "MASTER2 ready. Web UI at http://localhost:$(su -l dev -c "grep MASTER_PORT $master2_dir/.env 2>/dev/null | cut -d= -f2" || echo '(dynamic)')"
-}
-
-# Service management functions
-setup_services() {
-  # Start core services, but only enable relayd (don't start it yet)
-
-  log INFO "Setting up services"
-
-  # Start SMTP
-  /usr/sbin/rcctl enable smtpd
-
-  /usr/sbin/rcctl start smtpd || { log ERROR "smtpd failed"; exit 1 }
-
-  sleep 5
-
-  /usr/sbin/rcctl check smtpd | /usr/bin/grep -q "smtpd(ok)" || { log ERROR "smtpd not running"; exit 1 }
-
-  # Test SMTP
-  if ! /usr/bin/timeout 5 telnet $BRGEN_IP 25 >/dev/null 2>&1; then
-
-    log WARN "SMTP port 25 not responding"
-
-  fi
-
-  # PostgreSQL and Redis removed per user request
-  # Only enable relayd for boot, don't start it yet (config doesn't exist)
-  /usr/sbin/rcctl enable relayd
-
-  log INFO "Services configured. relayd enabled but not started (awaiting configuration)"
-
-}
-
-configure_relayd() {
-  # Validate APP_PORTS array is populated
-
-  if (( ${#APP_PORTS} == 0 )); then
-
-    log ERROR "APP_PORTS array is empty. Rails apps must be deployed first."
-
-    exit 1
-
-  fi
-
-  log INFO "Configuring relayd with ${#APP_PORTS} app(s)"
-  # Configure relayd
-  cat > /etc/relayd.conf <<EOF
-
-# relayd for HTTPS (relayd.conf(5))
-
-ext_if="$BRGEN_IP"
-
-http protocol https {
-  tls { no tlsv1.0, no tlsv1.1, ciphers HIGH:!aNULL }
-
-  match header append "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"
-
-  pass
-
-}
-
-EOF
-
-  for app_entry in $ALL_APPS; do
-    typeset app=${app_entry[(ws:*:)1]} domain=${${(s:*:)app_entry}[-1]} port=$APP_PORTS[$app]
-
-    cat >> /etc/relayd.conf <<EOF
-
-table <$app> { $LOCALHOST port $port }
-relay $app {
-  listen on $ext_if port 443 tls
-
-  protocol https
-
-  tls keypair $domain
-
-  forward to <$app> check http "/" code 200
-
-}
-
-EOF
-
-  done
-
-  # Non-Rails services (from SERVICES array: name:fqdn:port)
-  for svc_entry in $SERVICES; do
-    typeset svc_name=${svc_entry%%:*}
-    typeset svc_rest=${svc_entry#*:}
-    typeset svc_fqdn=${svc_rest%%:*}
-    typeset svc_port=${svc_rest##*:}
-    typeset svc_keypair=${svc_fqdn#*.}  # Extract base domain (brgen.no from ai.brgen.no)
-
-    cat >> /etc/relayd.conf <<EOF
-
-table <$svc_name> { 127.0.0.1 port $svc_port }
-relay $svc_name {
-  listen on \$ext_if port 443 tls
-
-  protocol https
-
-  tls keypair $svc_keypair
-
-  forward to <$svc_name> check tcp
-
-}
-
-EOF
-
-    log INFO "Added service relay: $svc_name ($svc_fqdn -> port $svc_port)"
-  done
-
-  # Test relayd configuration before starting
-  relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid"; exit 1 }
-
-  log INFO "relayd configuration valid"
-
-  # Allow Rails apps to start fully
-  sleep 10
-
-  # Start relayd service
-  /usr/sbin/rcctl start relayd || { log ERROR "relayd failed to start"; exit 1 }
-
-  sleep 5
-
-  /usr/sbin/rcctl check relayd | /usr/bin/grep -q "relayd(ok)" || { log ERROR "relayd not running"; exit 1 }
-
-  log INFO "relayd started successfully"
-
-}
-
-# Stage 2: Services and Rails Apps
-stage_2() {
-  log INFO "Starting Stage 2: Services and Apps"
-
-  # Restore persisted ports from Stage 1
-  if [[ -f /etc/master_app_ports.conf ]]; then
-    source /etc/master_app_ports.conf
-    APP_PORTS[brgen]=${BRGEN_PORT:-$(generate_random_port)}
-    APP_PORTS[amber]=${AMBER_PORT:-$(generate_random_port)}
-    APP_PORTS[bsdports]=${BSDPORTS_PORT:-$(generate_random_port)}
-    log INFO "App ports loaded: brgen=${APP_PORTS[brgen]} amber=${APP_PORTS[amber]} bsdports=${APP_PORTS[bsdports]}"
-  else
-    log WARN "/etc/master_app_ports.conf not found — generating fresh ports"
-  fi
-
-  check_dns_propagation
-  # Check memory
-  (( $(vmstat -s | awk '/free memory/{print $1}') < 512000 )) && {
-
-    log ERROR "Insufficient free memory"
-
-    exit 1
-
-  }
-
-  # Configure PF
-  cat > /etc/pf.conf <<EOF
-
-# PF for DNS, HTTP/HTTPS, SSH, SMTP (pf.conf(5))
-
-ext_if="vio0"
-
-brgen_ip="$BRGEN_IP"
-
-hyp_ip="$HYP_IP"
-
+    # Generate new pf.conf
+    cat > /etc/pf.conf << 'EOF'
+# Macros
+ext_if = "em0"
+webserver_ports = "{ http, https }"
+dns_ports = "{ domain }"
+
+# Options
+set block-policy drop
 set skip on lo
-set block-policy return
 
-set loginterface $ext_if
+# Normalization
+match in all scrub (no-df)
 
-set reassemble yes
+# Default deny
+block all
 
-set limit { states 10000, frags 5000 }
+# Pass traffic on loopback
+pass quick on lo0
 
-block log all
+# Pass outbound traffic
+pass out quick modulate state
 
-scrub in all
+# Allow SSH
+pass in on $ext_if proto tcp to port ssh
 
-table <bruteforce> persist
+# Allow web traffic
+pass in on $ext_if proto tcp to port $webserver_ports
 
-block quick from <bruteforce>
-
-pass out quick on \$ext_if all
-
-pass in on \$ext_if inet proto tcp to \$ext_if port 22 keep state \\
-
-  (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
-
-pass in on \$ext_if inet proto { tcp, udp } to \$brgen_ip port 53 log
-
-pass in on \$ext_if inet proto tcp to \$brgen_ip port { 80, 443, 8787 } log
-
-pass out on \$ext_if inet proto tcp to any port 25
-
+# Allow DNS traffic
+pass in on $ext_if proto tcp to port $dns_ports
+pass in on $ext_if proto udp to port $dns_ports
 EOF
 
-  /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
+    # Enable and load PF rules
+    rcctl enable pf
+    pfctl -nf /etc/pf.conf && pfctl -f /etc/pf.conf || return 1
 
-  /sbin/pfctl -f /etc/pf.conf || { log ERROR "pf failed"; exit 1 }
+    log INFO "PF firewall configured and loaded"
+    return 0
+}
 
-  # Configure OpenSMTPD
-  cat > /etc/mail/smtpd.conf <<EOF
+configure_smtpd() {
+    log INFO "Configuring OpenSMTPD..."
 
-# OpenSMTPD for outbound email (smtpd.conf(5))
+    # Install OpenSMTPD
+    pkg_add opensmtpd || return 1
 
+    # Backup existing smtpd.conf
+    if [[ -f /etc/mail/smtpd.conf ]]; then
+        cp /etc/mail/smtpd.conf /etc/mail/smtpd.conf.backup.$EPOCHSECONDS
+    fi
+
+    # Generate new smtpd.conf with modern syntax
+    cat > /etc/mail/smtpd.conf << 'EOF'
+# Listen on localhost only
+listen on lo0
+
+# Outbound mail configuration
+action "outbound" relay helo example.com
+match for any action "outbound"
+
+# Local delivery
 table aliases file:/etc/mail/aliases
-
-pki mail.pub.attorney cert "/etc/ssl/smtp.crt"
-pki mail.pub.attorney key "/etc/ssl/private/smtp.key"
-
-listen on $BRGEN_IP port 25 tls pki mail.pub.attorney
-action "outbound" relay
-match from local for any action "outbound"
+action "local" mbox alias <aliases>
+match for local action "local"
 EOF
 
-  smtpd -n -f /etc/mail/smtpd.conf || { log ERROR "smtpd.conf invalid"; exit 1 }
+    # Create basic aliases file
+    echo "root: admin@example.com" > /etc/mail/aliases
+    newaliases
 
-  [[ ! -f /etc/ssl/private/smtp.key ]] && openssl genpkey -algorithm RSA -out /etc/ssl/private/smtp.key -pkeyopt rsa_keygen_bits:4096
+    # Enable and start OpenSMTPD
+    rcctl enable smtpd
+    rcctl start smtpd || return 1
 
-  [[ ! -f /etc/ssl/smtp.crt ]] && openssl req -x509 -new -key /etc/ssl/private/smtp.key -out /etc/ssl/smtp.crt -days 365 -subj "/CN=mail.pub.attorney"
-
-  chmod 640 /etc/ssl/private/smtp.key /etc/ssl/smtp.crt
-
-  # Install and configure PostgreSQL, PgBouncer, Redis
-  pkg_add postgresql-server pgbouncer redis 2>/dev/null || log WARN "Some packages may already be installed"
-
-  # Initialize PostgreSQL if needed
-  if [[ ! -d /var/postgresql/data ]]; then
-    su -l _postgresql -c "initdb -D /var/postgresql/data -E UTF8 --locale=C" || {
-      log ERROR "PostgreSQL initdb failed"; exit 1
-    }
-  fi
-  rcctl enable postgresql redis
-  rcctl start postgresql || log WARN "postgresql may already be running"
-  rcctl start redis || log WARN "redis may already be running"
-
-  # PgBouncer connection pooling config
-  cat > /etc/pgbouncer.ini << 'PGBOUNCER'
-[databases]
-brgen_production = host=127.0.0.1 port=5432 dbname=brgen_production
-amber_production = host=127.0.0.1 port=5432 dbname=amber_production
-bsdports_production = host=127.0.0.1 port=5432 dbname=bsdports_production
-
-[pgbouncer]
-listen_addr = 127.0.0.1
-listen_port = 6432
-pool_mode = transaction
-max_client_conn = 10000
-default_pool_size = 25
-server_idle_timeout = 600
-log_connections = 0
-PGBOUNCER
-  rcctl enable pgbouncer
-  rcctl start pgbouncer || log WARN "pgbouncer may already be running"
-
-  # Create PostgreSQL users and databases for each app (idempotent)
-  for app_entry in $ALL_APPS; do
-    typeset _app=${app_entry[(ws:*:)1]}
-    typeset _db_pass=$(openssl rand -hex 24)
-    typeset _env_file="/home/${_app}/.env"
-
-    su -l _postgresql -c "psql postgres" << SQL 2>/dev/null || true
-DO \$\$ BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${_app}') THEN
-    CREATE USER ${_app} WITH PASSWORD '${_db_pass}' NOSUPERUSER NOCREATEDB NOCREATEROLE;
-  END IF;
-END \$\$;
-CREATE DATABASE ${_app}_production OWNER ${_app};
-SQL
-
-    # Write env file (mode 600, owned by app user)
-    [[ -f ${_env_file} ]] || {
-      print "DATABASE_URL=postgresql://${_app}:${_db_pass}@127.0.0.1:6432/${_app}_production" > ${_env_file}
-      print "RAILS_MASTER_KEY=$(openssl rand -hex 32)" >> ${_env_file}
-      chown ${_app}:${_app} ${_env_file} 2>/dev/null || true
-      chmod 600 ${_env_file}
-      log INFO "Created ${_env_file}"
-    }
-  done
-
-  setup_services
-  # Deploy Rails apps
-  for app_entry in $ALL_APPS; do
-
-    typeset app=${app_entry[(ws:*:)1]} domain=${${(s:*:)app_entry}[-1]}
-
-    typeset port=${APP_PORTS[$app]:=$(generate_random_port)}
-
-    APP_PORTS[$app]=$port
-
-    typeset app_dir=/home/$app/$app
-
-    useradd -m -s /bin/ksh -L rails $app 2>/dev/null || :
-
-    [[ ! -f $app_dir/Gemfile || ! -f $app_dir/config/database.yml ]] && {
-
-      log ERROR "Missing Gemfile or database.yml in $app_dir"
-
-      exit 1
-
-    }
-
-    chown -R $app:$app /home/$app
-
-    su -l $app -c "gem install --user-install rails bundler falcon" || {
-
-      log ERROR "gem install failed for $app"
-
-      exit 1
-
-    }
-
-    su -l $app -c "cd $app_dir && bundle config set --typeset without 'development test' && bundle check || bundle install" || {
-
-      log ERROR "bundle install failed for $app"
-
-      exit 1
-
-    }
-
-    # Database setup removed (SQLite or external DB expected)
-
-    cat > /etc/rc.d/$app <<EOF
-
-#!/bin/ksh
-
-# rc.d for $app (rc.d(8))
-
-daemon_user="$app"
-. /etc/rc.d/rc.subr
-rc_start() {
-  cd $app_dir || return 1
-
-  export RAILS_ENV=production
-
-  export PATH=${HOME}/.gem/ruby/3.3/bin:$PATH
-
-  ${rcexec} "falcon serve -b tcp://$LOCALHOST:$port"
-
+    log INFO "OpenSMTPD configured and started"
+    return 0
 }
 
-rc_cmd $1
-EOF
-
-    chmod 755 /etc/rc.d/$app
-
-    /usr/sbin/rcctl enable $app
-
-    /usr/sbin/rcctl start $app || { log ERROR "$app failed"; exit 1 }
-
-    sleep 5
-
-    /usr/sbin/rcctl check $app | /usr/bin/grep -q "$app(ok)" || { log ERROR "$app not running"; exit 1 }
-
-  done
-
-  # Setup non-Rails services (from SERVICES array)
-  for svc_entry in $SERVICES; do
-    typeset svc_name=${svc_entry%%:*}
-    typeset svc_rest=${svc_entry#*:}
-    typeset svc_fqdn=${svc_rest%%:*}
-    typeset svc_port=${svc_rest##*:}
-
-    log INFO "Setting up service: $svc_name on port $svc_port"
-
-    # Create rc.d script for CLI service
-    cat > /etc/rc.d/$svc_name <<EOF
-#!/bin/ksh
-# rc.d for $svc_name (rc.d(8))
-daemon_user="dev"
-. /etc/rc.d/rc.subr
-rc_start() {
-  cd /home/dev/pub || return 1
-  export PATH=/home/dev/.gem/ruby/3.4/bin:\$PATH
-  export ELEVENLABS_API_KEY=\$(cat /home/dev/.elevenlabs_key 2>/dev/null)
-  \${rcexec} "ruby cli.rb >> /var/log/${svc_name}.log 2>&1 &"
-}
-rc_stop() {
-  pkill -f "ruby cli.rb" || true
-}
-rc_cmd \$1
-EOF
-
-    chmod 755 /etc/rc.d/$svc_name
-    /usr/sbin/rcctl enable $svc_name
-    /usr/sbin/rcctl start $svc_name || log WARN "$svc_name start failed (may need manual start)"
-
-    log INFO "Service $svc_name configured"
-  done
-
-  # Configure and start relayd now that APP_PORTS is populated
-  configure_relayd
-
-  # Bootstrap MASTER2
-  setup_master2
-
-  print -r -- stage_2_complete > $STATE_FILE
-  log INFO "Stage 2 complete. Setup complete. Test: 'curl https://brgen.no', 'curl https://ai.brgen.no'."
-
-  exit 0
-
-}
-
-# Main execution
+# Main execution function
 main() {
-  # Parse flags: --auto skips interactive prompts; --resume runs Stage 2
-  typeset -g AUTO=0
-  typeset resume=0
+    log INFO "Starting OpenBSD configuration"
 
-  for arg in "$@"; do
-    case $arg in
-      --auto)   AUTO=1 ;;
-      --resume) resume=1 ;;
-      --help)
-        print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC, Rails apps, and Solid Stack.
-Usage: doas zsh openbsd.sh [--help | --resume] [--auto]
-  --auto    Skip interactive prompts (CI/non-interactive mode)
-  --resume  Run Stage 2 (after DNS propagation)"
-        exit 0 ;;
-    esac
-  done
+    # Check for help or resume options
+    if [[ $1 == "--help" ]]; then
+        echo "Usage: doas zsh openbsd.sh [--help | --resume]"
+        echo "Configures OpenBSD 7.8 for NSD, DNSSEC, Rails, PF, and OpenSMTPD"
+        return 0
+    fi
 
-  [[ -f $STATE_FILE && ! -r $STATE_FILE ]] && { log ERROR "$STATE_FILE not readable"; exit 1 }
+    # Run configuration steps
+    check_state "nsd_config" configure_nsd || return 1
+    check_state "dnssec_config" configure_dnssec || return 1
+    check_state "rails_config" configure_rails || return 1
+    check_state "pf_config" configure_pf || return 1
+    check_state "smtpd_config" configure_smtpd || return 1
 
-  if (( resume )) && [[ -f $STATE_FILE && $(<$STATE_FILE) = stage_1_complete ]]; then
-
-    stage_2
-
-  elif ! (( resume )) && [[ ! -f $STATE_FILE ]]; then
-
-    stage_1
-
-  else
-
-    log ERROR "Invalid state. Use --help, --resume [--auto], or remove $STATE_FILE."
-
-    exit 1
-
-  fi
-
+    log INFO "OpenBSD configuration completed successfully"
+    return 0
 }
 
+# Execute main function
 main "$@"
+```

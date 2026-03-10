@@ -1,3 +1,4 @@
+```scss
 // application.scss - v1.0.0 frozen
 // Principles: preserve_then_improve_never_break
 // Mobile-first with prefers-* media queries
@@ -15,7 +16,7 @@
   --color-grey: #999999;
   --color-dark-grey: #666666;
   --color-warning-red: #b04243;
-  
+
   // Spacing system (4px base)
   --space-unit: 4px;
   --space-xs: calc(var(--space-unit) * 1);    // 4px
@@ -23,7 +24,7 @@
   --space-md: calc(var(--space-unit) * 4);    // 16px
   --space-lg: calc(var(--space-unit) * 8);    // 32px
   --space-xl: calc(var(--space-unit) * 16);   // 64px
-  
+
   // Animation
   --duration-fast: 100ms;
   --duration-normal: 300ms;
@@ -79,41 +80,65 @@ body {
   background-color: var(--color-white);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  touch-action: manipulation; // Better touch handling
-}
-
-// ==================== TYPOGRAPHY ====================
-a {
-  color: var(--color-light-blue);
-  text-decoration: underline;
-  
-  &:focus-visible {
-    outline: 2px solid var(--color-blue);
-    outline-offset: var(--space-xs);
-  }
 }
 
 // ==================== HEADER ====================
 .header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: var(--space-md);
+  border-bottom: 1px solid var(--color-extra-light-grey);
 
   &__tabs {
     display: flex;
-    margin-top: var(--space-lg);
-    color: var(--color-light-grey);
-    border-bottom: 1px solid var(--color-extra-light-grey);
+    gap: var(--space-md);
+  }
 
-    &-tab {
-      padding: 0 var(--space-xs) var(--space-sm);
-      margin-right: var(--space-xl);
-      
-      &--active {
-        color: var(--color-black);
-        border-bottom: 1px solid var(--color-black);
-      }
+  &__tab {
+    padding: var(--space-sm) var(--space-md);
+    text-decoration: none;
+    color: var(--color-dark-grey);
+    border-radius: 4px;
+    transition: background-color var(--duration-fast) var(--easing-standard);
+
+    &:hover {
+      background-color: var(--color-extra-light-grey);
+    }
+
+    &--active {
+      color: var(--color-blue);
+      font-weight: 600;
+    }
+  }
+
+  &__search {
+    position: relative;
+
+    &:focus-within {
+      outline: 2px solid var(--color-light-blue);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    input:focus {
+      outline: none;
+    }
+  }
+
+  &__search-input {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-light-grey);
+    border-radius: 4px;
+    width: 200px;
+    transition: border-color var(--duration-fast) var(--easing-standard);
+
+    &:hover {
+      border-color: var(--color-dark-grey);
+    }
+
+    &::placeholder {
+      color: var(--color-grey);
     }
   }
 }
@@ -124,197 +149,122 @@ a {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: calc(-1 * var(--space-md)) 0 var(--space-md);
+  margin: var(--space-md) 0;
   flex: 1;
 
   &__logo {
-    text-indent: -9999px;
-    margin: var(--space-sm) 0 var(--space-md);
-    width: 182px;
-    height: 44px;
-    background-image: url("bsdports_182x44.svg");
-    background-repeat: no-repeat;
-    background-size: contain;
-  }
-}
-
-// ==================== SEARCH COMPONENT ====================
-.search {
-  width: 90%;
-  max-width: 584px;
-  border: 1px solid var(--color-extra-light-grey);
-  border-radius: 30px;
-  font-size: 18px;
-  transition: all var(--duration-fast) var(--easing-standard);
-  display: flex;
-  align-items: center;
-  padding: 0 var(--space-md);
-  
-  &:focus-within {
-    border-color: var(--color-blue);
-    box-shadow: 0 0 0 1px var(--color-blue);
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
-  &__input {
-    background: transparent;
-    outline: none;
-    border: none;
+  &__title {
+    font-size: 2.5rem;
+    font-weight: 300;
+    margin-bottom: var(--space-lg);
+    text-align: center;
+  }
+
+  &__search {
+    position: relative;
     width: 100%;
-    padding: var(--space-lg) 0;
-    font-size: 16px;
-    
-    &::placeholder {
-      color: var(--color-dark-grey);
+    max-width: 600px;
+
+    &:focus-within {
+      outline: 2px solid var(--color-light-blue);
+      outline-offset: 2px;
+      border-radius: 8px;
     }
-    
-    &:focus {
+
+    input:focus {
       outline: none;
     }
   }
 
-  &__live-results {
-    overflow: hidden;
-    max-height: 220px;
-    padding: var(--space-xs) var(--space-sm);
-    font-weight: bold;
-    line-height: 29px;
-    border-top: 1px solid var(--color-extra-light-grey);
-    
-    a {
-      display: block;
-      padding: var(--space-xs) 0;
+  &__search-input {
+    width: 100%;
+    padding: var(--space-md);
+    font-size: 1.1rem;
+    border: 2px solid var(--color-light-grey);
+    border-radius: 8px;
+    transition: border-color var(--duration-normal) var(--easing-standard);
+
+    &:hover {
+      border-color: var(--color-dark-grey);
+    }
+
+    &::placeholder {
+      color: var(--color-grey);
     }
   }
-}
-
-// ==================== BROWSE LINK ====================
-.browse-link {
-  margin: var(--space-xl) 0 var(--space-sm);
-  font-size: 13px;
 }
 
 // ==================== FOOTER ====================
 .footer {
-  color: var(--color-light-grey);
-  font-size: 13px;
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
+  text-align: center;
+  padding: var(--space-md);
+  border-top: 1px solid var(--color-extra-light-grey);
+  color: var(--color-dark-grey);
+  font-size: 0.9rem;
+}
 
-  &__references {
-    display: flex;
-    gap: 2.6rem;
-    align-items: center;
-    margin-bottom: var(--space-xl);
+// ==================== RESPONSIVE DESIGN ====================
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: var(--space-md);
 
-    a {
-      text-indent: -99999px;
-      opacity: 0.2;
-      position: relative;
-      display: block;
-      width: 24px;
-      height: 24px;
+    &__tabs {
+      order: 2;
+      width: 100%;
+      justify-content: center;
+    }
 
-      &:last-child {
-        opacity: 0.3;
-      }
+    &__search {
+      order: 1;
+      width: 100%;
 
-      &::before {
-        content: "";
-        position: absolute;
-        background-repeat: no-repeat;
-        display: block;
+      input {
         width: 100%;
-        height: 100%;
       }
     }
   }
-}
 
-// ==================== MOBILE MENU ANIMATIONS ====================
-// Note: These classes should be toggled via JavaScript
-// based on device motion, touch, or swipe events
+  .main {
+    &__title {
+      font-size: 2rem;
+      padding: 0 var(--space-md);
+    }
 
-.mobile-menu {
-  position: fixed;
-  z-index: 1000;
-  background: var(--color-white);
-  will-change: transform; // Performance hint
-  
-  &--from-top {
-    top: -100%;
-    left: 0;
-    width: 100%;
-    height: auto;
-    transform: translateY(-100%);
-    transition: transform var(--duration-normal) var(--easing-standard);
-    
-    &.is-visible {
-      transform: translateY(0);
-    }
-  }
-  
-  &--from-left {
-    top: 0;
-    left: -100%;
-    width: 80%;
-    height: 100%;
-    max-width: 320px;
-    transform: translateX(-100%);
-    transition: transform var(--duration-normal) var(--easing-standard);
-    
-    &.is-visible {
-      transform: translateX(0);
-    }
-  }
-  
-  &--from-right {
-    top: 0;
-    right: -100%;
-    width: 80%;
-    height: 100%;
-    max-width: 320px;
-    transform: translateX(100%);
-    transition: transform var(--duration-normal) var(--easing-standard);
-    
-    &.is-visible {
-      transform: translateX(0);
+    &__search {
+      margin: 0 var(--space-md);
     }
   }
 }
 
-// ==================== CSS-DOODLE INTEGRATION ====================
-// Placeholder for css-doodle.com patterns
-// Example: background pattern that responds to motion
-css-doodle {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.03;
-}
+@media (max-width: 480px) {
+  .header {
+    &__tabs {
+      flex-direction: column;
+      align-items: center;
+    }
 
-// ==================== UTILITIES ====================
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
+    &__tab {
+      width: 100%;
+      text-align: center;
+    }
+  }
 
-// ==================== PRINT STYLES ====================
-@media print {
-  .mobile-menu,
-  css-doodle,
-  .search__live-results {
-    display: none !important;
+  .main {
+    &__title {
+      font-size: 1.5rem;
+    }
   }
 }
+```
