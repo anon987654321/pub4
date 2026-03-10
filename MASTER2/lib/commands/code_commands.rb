@@ -161,11 +161,19 @@ module MASTER
         end
       end
 
-      # Show what learnings would apply to this code
+      # Learn a smell pattern or show learnings for a file
       def show_learnings(args)
-        return puts "Usage: learn <file>" unless args
+        return puts "Usage: learn <smell|file>" unless args
 
-        file = args.strip
+        # If arg is not a file path, treat it as a smell to persist
+        stripped = args.strip
+        if !File.exist?(File.expand_path(stripped)) && defined?(LearnedSmells)
+          LearnedSmells.add(stripped)
+          puts "learned: #{stripped}"
+          return
+        end
+
+        file = stripped
         path = File.expand_path(file)
         return puts "File not found: #{file}" unless File.exist?(path)
 
