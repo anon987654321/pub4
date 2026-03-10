@@ -88,7 +88,11 @@ module MASTER
           oldest = state[:requests].min
           wait_time = 60 - (now - oldest)
           if wait_time > 0
+            last_warn = state[:last_warn] || Time.at(0)
+            if now - last_warn > 30
             Logging.warn("Rate limit reached, retry after #{wait_time.round}s", subsystem: "CircuitBreaker")
+              state[:last_warn] = now
+            end
             raise RateLimitError, "Rate limited: retry after #{wait_time.round}s"
           end
         end
