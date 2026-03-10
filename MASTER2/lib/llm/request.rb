@@ -61,10 +61,8 @@ module MASTER
           return false
         end
 
-        # Not retryable: insufficient credits — fall back silently if Replicate is configured
+        # Not retryable: insufficient credits — fall back silently to Replicate/DeepSeek
         if error_str.match?(/requires more credits|can only afford|insufficient credits/i)
-          replicate_ok = ENV["REPLICATE_API_TOKEN"].to_s.length > 8
-          Logging.warn("OpenRouter credits exhausted; add credits or set REPLICATE_API_TOKEN for Sonnet 4.6", subsystem: "llm.budget") unless replicate_ok
           return false
         end
 

@@ -17,6 +17,7 @@ module MASTER
     class << self
       # Check cache for a similar prompt
       def lookup(prompt, tier: nil)
+        prompt = prompt.to_s.encode("UTF-8", invalid: :replace, undef: :replace)
         # Step 1: Exact match by SHA256 hash
         exact = exact_lookup(prompt)
         return Result.ok(exact) if exact
@@ -109,7 +110,7 @@ module MASTER
         path = entry_path(key)
         return nil unless File.exist?(path)
 
-        entry = JSON.parse(File.read(path), symbolize_names: true)
+        entry = JSON.parse(File.read(path, encoding: "utf-8"), symbolize_names: true)
         return nil if entry[:version] != CACHE_VERSION
         return nil if expired?(entry)
 
@@ -141,7 +142,7 @@ module MASTER
         path = entry_path(source_key)
         return nil unless File.exist?(path)
 
-        entry = JSON.parse(File.read(path), symbolize_names: true)
+        entry = JSON.parse(File.read(path, encoding: "utf-8"), symbolize_names: true)
         return nil if expired?(entry)
 
         Dmesg.dmesg_log("cache0", message: "semantic hit: #{source_key} (dist=#{best[:distance]})") if defined?(Dmesg)
@@ -177,7 +178,7 @@ module MASTER
 
         # Evict entries with lowest hit count, then oldest last_hit
         entries_with_data = entries.map do |path|
-          entry = JSON.parse(File.read(path), symbolize_names: true)
+          entry = JSON.parse(File.read(path, encoding: "utf-8"), symbolize_names: true)
           {
             path: path,
             hit_count: entry[:hit_count] || 0,
