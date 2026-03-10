@@ -141,6 +141,8 @@ require_relative "introspection/session_retrospective"
 require_relative "openbsd_validator"
 require_relative "violation_hooks"
 require_relative "learned_smells"
+require_relative "conflict_resolver"
+require_relative "phase_gates"
 
 MASTER.safe_require("server")
 
