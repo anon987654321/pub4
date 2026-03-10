@@ -181,3 +181,15 @@ bias_inventory: |
   - Recency bias: latest framework/pattern isn't always appropriate
   - Confirmation bias: finding evidence for what you already believe
   Mitigation: AdversarialPass.challenge() forces multi-solution generation
+
+preserve:
+  boot_message:
+    rule: "5-line OpenBSD dmesg style boot output is intentional — never collapse"
+  diagnostic_output:
+    rule: "Structured multi-line diagnostic output is correct — do not compress to abbreviations"
+  help_text:
+    rule: "Help must be scannable and complete — minimum: command name, description, one example"
+  interpretation:
+    - "Streamline means remove redundancy, not information"
+    - "Polish means refine wording, not delete output"
+    - "Minimize applies to tokens in prompts, not diagnostic output"
