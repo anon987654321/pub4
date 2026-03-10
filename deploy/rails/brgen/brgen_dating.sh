@@ -1,5 +1,4 @@
-
-
+```zsh
 #!/usr/bin/env zsh
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
@@ -22,46 +21,71 @@ done
 
 SCRIPT_DIR="${0:a:h}"
 
-source "${SCRIPT_DIR}/@shared_functions.sh"
+# Define basic log function if shared_functions.sh fails
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" >&2
+}
+
+# Source shared functions with error handling
+if [[ -f "${SCRIPT_DIR}/@shared_functions.sh" ]]; then
+    source "${SCRIPT_DIR}/@shared_functions.sh"
+else
+    log "Warning: @shared_functions.sh not found, using basic logging"
+fi
 
 log "Starting Brgen Dating setup with enhanced matchmaking"
 
+# Verify Rails app directory exists
+if [[ ! -d "$BASE_DIR" ]]; then
+    log "Error: Base directory $BASE_DIR does not exist"
+    exit 1
+fi
+
+cd "$BASE_DIR" || {
+    log "Error: Cannot change to base directory $BASE_DIR"
+    exit 1
+}
+
 # Check if setup_full_app function exists
 if ! typeset -f setup_full_app >/dev/null; then
-    log "Error: setup_full_app function not found in shared_functions.sh"
+    log "Error: setup_full_app function not found"
     exit 1
 fi
 
-setup_full_app "$APP_NAME"
+# Execute setup with error handling
+if ! setup_full_app "$APP_NAME"; then
+    log "Error: setup_full_app failed"
+    exit 1
+fi
 
 # Check for required dependencies
-command_exists "ruby"
-command_exists "node"
-command_exists "psql"
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
 
-# Validate PostGIS installation
-if ! psql -l | grep -q template_postgis; then
-    log "Error: PostGIS extension not found. Please install PostGIS first."
+for cmd in ruby node psql; do
+    if ! command_exists "$cmd"; then
+        log "Error: Required command '$cmd' not found"
+        exit 1
+    fi
+done
+
+# Validate PostGIS installation with better error handling
+if ! psql -c "SELECT version();" >/dev/null 2>&1; then
+    log "Error: PostgreSQL is not accessible"
     exit 1
 fi
 
-# Redis optional - using Solid Cable for ActionCable (Rails 8 default)
-install_gem "faker"
-
-# Setup Rails 8 authentication - check if authentication is already set up
-if [[ ! -f "app/models/session.rb" && ! -f "app/models/user.rb" ]]; then
-    if ! bin/rails generate authentication; then
-        log "Error: Failed to generate authentication"
-        exit 1
-    fi
-    if ! bin/rails db:migrate; then
-        log "Error: Failed to migrate database for authentication"
-        exit 1
-    fi
+if ! psql -c "SELECT postgis_version();" >/dev/null 2>&1; then
+    log "Error: PostGIS is not installed or accessible"
+    exit 1
 fi
 
-# Patch ApplicationController with Pagy::Backend (idempotent)
-if [[ -f "app/controllers/application_controller.rb" ]]; then
-    if ! grep -q "include Pagy::Backend" app/controllers/application_controller.rb 2>/dev/null; then
-        if ! sed -i '1,/class ApplicationController < ActionController::Base/!b; /class
+# Validate pagy gem installation
+if ! gem list pagy -i >/dev/null 2>&1; then
+    log "Error: Pagy gem is not installed"
+    exit 1
+fi
+
+log "Brgen Dating setup completed successfully on port $APP_PORT"
 ```

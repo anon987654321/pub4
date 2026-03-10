@@ -1,66 +1,21 @@
-```scss
-// application.scss - v1.0.0 frozen
-// Principles: preserve_then_improve_never_break
-// Mobile-first with prefers-* media queries
-// Zero external dependencies
-
-// ==================== THEME TOKENS ====================
+```css
+// ==================== VARIABLES ====================
 :root {
-  // Light theme (default)
-  --color-white: #ffffff;
-  --color-black: #000000;
-  --color-blue: #000084;
-  --color-light-blue: #5623ee;
+  // Colors
+  --color-black: #000;
+  --color-white: #fff;
   --color-extra-light-grey: #f0f0f0;
-  --color-light-grey: #ababab;
-  --color-grey: #999999;
-  --color-dark-grey: #666666;
-  --color-warning-red: #b04243;
 
-  // Spacing system (4px base)
-  --space-unit: 4px;
-  --space-xs: calc(var(--space-unit) * 1);    // 4px
-  --space-sm: calc(var(--space-unit) * 2);    // 8px
-  --space-md: calc(var(--space-unit) * 4);    // 16px
-  --space-lg: calc(var(--space-unit) * 8);    // 32px
-  --space-xl: calc(var(--space-unit) * 16);   // 64px
+  // Spacing
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
 
-  // Animation
-  --duration-fast: 100ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
-  --easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
-// Dark theme
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-white: #000000;
-    --color-black: #ffffff;
-    --color-blue: #5623ee;
-    --color-light-blue: #000084;
-    --color-extra-light-grey: #666666;
-    --color-light-grey: #999999;
-    --color-grey: #ababab;
-    --color-dark-grey: #f0f0f0;
-  }
-}
-
-// Reduced motion preference
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --duration-fast: 1ms;
-    --duration-normal: 1ms;
-    --duration-slow: 1ms;
-  }
-}
-
-// High contrast preference
-@media (prefers-contrast: high) {
-  :root {
-    --color-light-blue: #0000ff;
-    --color-blue: #0000ff;
-  }
+  // Typography
+  --font-size-base: 14px;
+  --line-height-base: 1.5;
 }
 
 // ==================== RESET & BASE ====================
@@ -74,12 +29,11 @@ html,
 body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
   color: var(--color-black);
   background-color: var(--color-white);
   display: flex;
-  flex-direction: column;
 }
 
 // ==================== HEADER ====================
@@ -96,122 +50,17 @@ body {
   }
 
   &__tab {
-    padding: var(--space-sm) var(--space-md);
-    text-decoration: none;
-    color: var(--color-dark-grey);
-    border-radius: 4px;
-    transition: background-color var(--duration-fast) var(--easing-standard);
+    padding: var(--space-xs) var(--space-md);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-size: inherit;
+    font-family: inherit;
 
     &:hover {
       background-color: var(--color-extra-light-grey);
     }
-
-    &--active {
-      color: var(--color-blue);
-      font-weight: 600;
-    }
   }
-
-  &__search {
-    position: relative;
-
-    &:focus-within {
-      outline: 2px solid var(--color-light-blue);
-      outline-offset: 2px;
-      border-radius: 4px;
-    }
-
-    input:focus {
-      outline: none;
-    }
-  }
-
-  &__search-input {
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--color-light-grey);
-    border-radius: 4px;
-    width: 200px;
-    transition: border-color var(--duration-fast) var(--easing-standard);
-
-    &:hover {
-      border-color: var(--color-dark-grey);
-    }
-
-    &::placeholder {
-      color: var(--color-grey);
-    }
-  }
-}
-
-// ==================== MAIN CONTENT ====================
-.main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin: var(--space-md) 0;
-  flex: 1;
-
-  &__logo {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  &__title {
-    font-size: 2.5rem;
-    font-weight: 300;
-    margin-bottom: var(--space-lg);
-    text-align: center;
-  }
-
-  &__search {
-    position: relative;
-    width: 100%;
-    max-width: 600px;
-
-    &:focus-within {
-      outline: 2px solid var(--color-light-blue);
-      outline-offset: 2px;
-      border-radius: 8px;
-    }
-
-    input:focus {
-      outline: none;
-    }
-  }
-
-  &__search-input {
-    width: 100%;
-    padding: var(--space-md);
-    font-size: 1.1rem;
-    border: 2px solid var(--color-light-grey);
-    border-radius: 8px;
-    transition: border-color var(--duration-normal) var(--easing-standard);
-
-    &:hover {
-      border-color: var(--color-dark-grey);
-    }
-
-    &::placeholder {
-      color: var(--color-grey);
-    }
-  }
-}
-
-// ==================== FOOTER ====================
-.footer {
-  text-align: center;
-  padding: var(--space-md);
-  border-top: 1px solid var(--color-extra-light-grey);
-  color: var(--color-dark-grey);
-  font-size: 0.9rem;
 }
 
 // ==================== RESPONSIVE DESIGN ====================
@@ -219,51 +68,25 @@ body {
   .header {
     flex-direction: column;
     gap: var(--space-md);
+    padding: var(--space-sm);
 
     &__tabs {
-      order: 2;
-      width: 100%;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
       justify-content: center;
-    }
-
-    &__search {
-      order: 1;
-      width: 100%;
-
-      input {
-        width: 100%;
-      }
-    }
-  }
-
-  .main {
-    &__title {
-      font-size: 2rem;
-      padding: 0 var(--space-md);
-    }
-
-    &__search {
-      margin: 0 var(--space-md);
     }
   }
 }
 
 @media (max-width: 480px) {
-  .header {
-    &__tabs {
-      flex-direction: column;
-      align-items: center;
-    }
-
-    &__tab {
-      width: 100%;
-      text-align: center;
-    }
+  :root {
+    --font-size-base: 12px;
   }
 
-  .main {
-    &__title {
-      font-size: 1.5rem;
+  .header {
+    &__tab {
+      padding: var(--space-xs) var(--space-sm);
+      font-size: 0.9em;
     }
   }
 }

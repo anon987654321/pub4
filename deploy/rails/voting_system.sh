@@ -6,116 +6,131 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# Usage: add_voting_to_app app_name
-
 log() {
   echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
+check_rails_command() {
+  if ! command -v bin/rails >/dev/null 2>&1; then
+    log "Error: bin/rails command not found"
+    return 1
+  fi
+  return 0
+}
+
 add_voting_system() {
-  typeset app_name="${1:-${PWD##*/}}"
+  local app_name="${1:-${PWD##*/}}"
   log "Adding voting system to $app_name"
 
-  install_voting_gems
-  generate_voting_models
-  create_voting_controllers
-  create_voting_helpers
-  add_voting_routes
-  create_voting_stimulus
+  install_voting_gems || return 1
+  check_rails_command || return 1
+
+  if generate_voting_models; then
+    create_voting_controllers || return 1
+    create_voting_helpers || return 1
+    create_voting_routes || return 1
+    create_voting_stimulus || return 1
+  else
+    log "Failed to generate voting models"
+    return 1
+  fi
 
   log "Voting system added to $app_name"
 }
 
 install_voting_gems() {
-  if ! grep -q "acts_as_votable" Gemfile; then
-    cat >> Gemfile << 'EOF'
+  local gemfile_content
+  gemfile_content=$(<Gemfile)
 
-# Voting and Reviews
-gem 'acts_as_votable', '~> 0.12.1'
-gem 'public_activity', '~> 2.0.0'
-EOF
-    bundle install
+  if ! grep -q "^[[:space:]]*gem[[:space:]]*['\"]acts_as_votable['\"]" Gemfile && \
+     ! grep -q "^[[:space:]]*gem[[:space:]]*['\"]public_activity['\"]" Gemfile; then
+    {
+      echo ""
+      echo "# Voting and Reviews"
+      echo "gem 'acts_as_votable', '~> 1.0.0'"
+      echo "gem 'public_activity', '~> 2.0.0'"
+    } >> Gemfile
+    bundle install || { log "Gem installation failed"; return 1; }
+  else
+    log "Skipping gem installation - dependencies already present"
   fi
 }
 
 generate_voting_models() {
-  bin/rails generate model Review \
-    user:references \
-    rating:integer \
-    title:string \
-    body:text \
-    helpful_count:integer:default=0 \
-    verified_purchase:boolean:default=false
+  check_rails_command || return 1
 
-  bin/rails generate migration AddVotableToPosts
+  if ! [ -f "app/models/review.rb" ]; then
+    if bin/rails generate model Review user:references \
+        rating:integer title:string body:text \
+        helpful_count:integer:default=0 verified_purchase:boolean:default=false; then
+      log "Generated Review model"
+    else
+      log "Failed to generate Review model"
+      return 1
+    fi
+  else
+    log "Review model already exists, skipping creation"
+  fi
 
-  bin/rails generate migration AddKarmaToUsers karma:integer:default=0
+  if ! find db/migrate -name "*add_votable_to_posts*" -o -name "*add_votes_to_posts*" | grep -q .; then
+    bin/rails generate migration AddVotesToPosts votable_type:string votable_id:integer voter_type:string voter_id:integer vote_flag:boolean vote_scope:string vote_weight:integer || return 1
+  fi
+
+  if ! find db/migrate -name "*add_karma_to_users*" | grep -q .; then
+    bin/rails generate migration AddKarmaToUsers karma:integer:default=0 || return 1
+  fi
+
+  log "Generated voting migrations"
 }
 
 create_voting_controllers() {
-  write_votes_controller
-  write_reviews_controller
-}
+  check_rails_command || return 1
 
-write_votes_controller() {
-  cat > app/controllers/votes_controller.rb << 'EOF'
+  # Votes Controller
+  if ! [ -f "app/controllers/votes_controller.rb" ]; then
+    cat > app/controllers/votes_controller.rb << 'EOF'
 class VotesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_votable
 
   def upvote
-    if @votable.upvote_by(current_user)
-      update_karma(@votable.user, 1) if @votable.respond_to?(:user)
-      respond_to_vote('upvoted')
-    else
-      respond_to_vote('already voted', :unprocessable_entity)
-    end
+    @votable.upvote_by current_user
+    update_karma(1)
+    render json: { votes: @votable.get_upvotes.size }
   end
 
   def downvote
-    if @votable.downvote_by(current_user)
-      update_karma(@votable.user, -1) if @votable.respond_to?(:user)
-      respond_to_vote('downvoted')
-    else
-      respond_to_vote('already voted', :unprocessable_entity)
-    end
-  end
-
-  def unvote
-    if @votable.unvote_by(current_user)
-      respond_to_vote('vote removed')
-    else
-      respond_to_vote('already voted', :unprocessable_entity)
-    end
+    @votable.downvote_by current_user
+    update_karma(-1)
+    render json: { votes: @votable.get_upvotes.size }
   end
 
   private
 
   def set_votable
-    @votable = params[:votable_type].constantize.find(params[:votable_id])
-  rescue
-    respond_to_vote('resource not found', :not_found)
+    resource = params[:votable_type].classify.constantize
+    @votable = resource.find(params[:votable_id])
   end
 
-  def respond_to_vote(message, status = :ok)
-    render json: { message: message }, status: status
-  end
-
-  def update_karma(user, delta)
-    user.update(karma: user.karma + delta)
+  def update_karma(change)
+    if @votable.respond_to?(:user) && @votable.user != current_user
+      @votable.user.update_column(:karma, @votable.user.karma + change)
+    end
   end
 end
 EOF
-}
+    log "Created votes controller"
+  fi
 
-write_reviews_controller() {
-  cat > app/controllers/reviews_controller.rb << 'EOF'
+  # Reviews Controller
+  if ! [ -f "app/controllers/reviews_controller.rb" ]; then
+    cat > app/controllers/reviews_controller.rb << 'EOF'
 class ReviewsController < ApplicationController
-  before_action :authenticate_user!
-  before_action :set_review, only: [:show, :edit, :update, :destroy]
+  before_action :authenticate_user!, except: [:index, :show]
+  before_action :set_review, only: [:show, :edit, :update, :destroy, :mark_helpful]
 
   def index
-    @reviews = Review.includes(:user).order(created_at: :desc).page(params[:page]).per(10)
+    @reviews = Review.includes(:user).order(created_at: :desc)
   end
 
   def show
@@ -125,13 +140,8 @@ class ReviewsController < ApplicationController
     @review = Review.new
   end
 
-  def edit
-  end
-
   def create
-    @review = Review.new(review_params)
-    @review.user = current_user
-
+    @review = current_user.reviews.build(review_params)
     if @review.save
       redirect_to @review, notice: 'Review was successfully created.'
     else
@@ -139,17 +149,12 @@ class ReviewsController < ApplicationController
     end
   end
 
-  def update
-    if @review.update(review_params)
-      redirect_to @review, notice: 'Review was successfully updated.'
+  def mark_helpful
+    if @review.mark_helpful_by(current_user)
+      render json: { helpful_count: @review.helpful_count }
     else
-      render :edit
+      render json: { error: 'Unable to mark as helpful' }, status: :unprocessable_entity
     end
-  end
-
-  def destroy
-    @review.destroy
-    redirect_to reviews_url, notice: 'Review was successfully destroyed.'
   end
 
   private
@@ -159,87 +164,114 @@ class ReviewsController < ApplicationController
   end
 
   def review_params
-    params.require(:review).permit(:user_id, :rating, :title, :body, :helpful_count, :verified_purchase)
+    params.require(:review).permit(:rating, :title, :body, :reviewable_type, :reviewable_id)
   end
 end
 EOF
+    log "Created reviews controller"
+  fi
 }
 
 create_voting_helpers() {
-  cat > app/helpers/votes_helper.rb << 'EOF'
-module VotesHelper
-  def current_user_voted?(votable)
-    votable.votes.where(user_id: current_user.id).exists?
+  if ! [ -f "app/helpers/voting_helper.rb" ]; then
+    cat > app/helpers/voting_helper.rb << 'EOF'
+module VotingHelper
+  def vote_button(resource, vote_type)
+    button_to send("#{vote_type}_path",
+                  votable_type: resource.class.name,
+                  votable_id: resource.id),
+              method: :post,
+              class: "vote-btn #{vote_type}",
+              remote: true do
+      content_tag(:span, resource.get_upvotes.size)
+    end
   end
 
-  def vote_button(votable)
-    if current_user_voted?(votable)
-      button_tag "Unvote", type: 'button', class: 'btn btn-danger', data: { toggle: 'modal', target: '#unvoteModal' }
-    else
-      button_tag "Upvote", type: 'button', class: 'btn btn-primary', data: { toggle: 'modal', target: '#voteModal' }
-    end
+  def star_rating(rating)
+    full_stars = rating.floor
+    half_star = (rating - full_stars) >= 0.5
+    empty_stars = 5 - full_stars - (half_star ? 1 : 0)
+
+    safe_join([
+      full_stars.times.map { content_tag(:span, '★', class: 'star full') },
+      (half_star ? content_tag(:span, '½', class: 'star half') : ''),
+      empty_stars.times.map { content_tag(:span, '☆', class: 'star empty') }
+    ].flatten)
   end
 end
 EOF
+    log "Created voting helper"
+  fi
 }
 
-add_voting_routes {
-  cat >> config/routes.rb << 'EOF'
-resources :reviews, only: [:index, :show, :new, :create, :edit, :update, :destroy]
+create_voting_routes() {
+  if ! grep -q "resources :reviews" config/routes.rb; then
+    cat >> config/routes.rb << 'EOF'
+
+  # Voting routes
+  resources :reviews do
+    member do
+      post :mark_helpful
+    end
+  end
+
+  resources :votes, only: [] do
+    collection do
+      post ':votable_type/:votable_id/upvote', action: :upvote, as: :upvote
+      post ':votable_type/:votable_id/downvote', action: :downvote, as: :downvote
+    end
+  end
 EOF
+    log "Added voting routes"
+  fi
 }
 
 create_voting_stimulus() {
-  mkdir -p app/javascript/controllers
-  cat > app/javascript/controllers/vote_controller.js.erb << 'EOF'
+  if ! [ -f "app/javascript/controllers/voting_controller.js" ]; then
+    mkdir -p app/javascript/controllers
+    cat > app/javascript/controllers/voting_controller.js << 'EOF'
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static values = {
-    votableId: String,
-    votableType: String
-  }
+  static targets = ["count"]
 
-  upvote() {
-    fetch(`/votes/${this.votableType}/${this.votableId}/upvote`, {
+  vote(event) {
+    event.preventDefault()
+
+    fetch(event.target.closest('form').action, {
       method: 'POST',
-      headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.message) {
-        alert(data.message)
+      headers: {
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+        'Accept': 'application/json'
       }
     })
-  }
-
-  downvote() {
-    fetch(`/votes/${this.votableType}/${this.votableId}/downvote`, {
-      method: 'POST',
-      headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
-    })
     .then(response => response.json())
     .then(data => {
-      if (data.message) {
-        alert(data.message)
+      this.countTarget.textContent = data.votes
+    })
+    .catch(error => console.error('Error:', error))
+  }
+
+  markHelpful(event) {
+    event.preventDefault()
+
+    fetch(this.data.get('url'), {
+      method: 'POST',
+      headers: {
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+        'Accept': 'application/json'
       }
     })
-  }
-
-  unvote() {
-    fetch(`/votes/${this.votableType}/${this.votableId}/unvote`, {
-      method: 'DELETE',
-      headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
-    })
     .then(response => response.json())
     .then(data => {
-      if (data.message) {
-        alert(data.message)
+      if (data.helpful_count !== undefined) {
+        event.target.textContent = `Helpful (${data.helpful_count})`
       }
     })
   }
 }
 EOF
+    log "Created Stimulus controller"
+  fi
 }
-EOF
 ```

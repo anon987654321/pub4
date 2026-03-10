@@ -1,26 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title><%= content_for?(:title) ? yield(:title) : 'My App' %></title>
-<%= csrf_meta_tags %>
-
-<meta name="description" content="<%= content_for?(:description) ? yield(:description) : 'My App Description' %>">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="<%= @status_bar_style || 'black-translucent' %>">
-
-<%# Open Graph Tags %>
-<meta property="og:type" content="website">
-<meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : 'My App' %>">
+```erb
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:image" content="<%= content_for?(:og_image) ? yield(:og_image) : image_url('default_og_image.png') %>">
+<meta property="og:url" content="<%= ERB::Util.url_encode(request.original_url) %>">
 <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : 'My App Description' %>">
-<meta property="og:url" content="<%= request.base_url %>">
-
-<%= favicon_link_tag 'favicon.ico' %>
-<%= favicon_link_tag 'apple-touch-icon.png', rel: 'apple-touch-icon', type: 'image/png' %>
-
-<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-</head>
-<body>
-<%= yield %>
-</body>
-</html>
+<meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : 'My App' %>">
+```

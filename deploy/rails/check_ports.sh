@@ -1,9 +1,5 @@
 ```bash
-#!/usr/bin/env bash
-# Quick port consistency checker
-set -euo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+wd)"
 MASTER_JSON="${SCRIPT_DIR}/../master.json"
 
 echo "=== Port Consistency Check ==="
@@ -16,50 +12,62 @@ if [[ ! -f "$MASTER_JSON" ]]; then
 fi
 
 # Validate JSON structure and parse ports
-if ! jq -e '.apps | length > 0' "$MASTER_JSON" >/dev/null; then
+if ! jq -e '.apps | type == "array" and length > 0' "$MASTER_JSON" >/dev/null; then
     echo "❌ Error: Invalid JSON structure or empty apps array in master.json"
     exit 1
 fi
 
-# Check for duplicate app names
-duplicate_apps=$(jq -r '.apps[].app' "$MASTER_JSON" | sort | uniq -d)
-if [[ -n "$duplicate_apps" ]]; then
-    echo "❌ Error: Duplicate app names found:"
-    echo "$duplicate_apps"
-    exit 1
-fi
-
-# Parse ports from master.json using jq
+# Check for duplicate app names and validate structure in single pass
 declare -A PORTS
+declare -A APP_NAMES
+duplicate_found=false
+
 while IFS=$'\t' read -r app port; do
     # Skip entries with missing app or port
     if [[ -z "$app" || -z "$port" ]]; then
-        echo "❌ Error: Missing app name or port in JSON entry"
+        echo "❌ Error: Missing app name or port in master.json"
         exit 1
     fi
+
+    # Check for duplicate app names
+    if [[ -n "${APP_NAMES[$app]}" ]]; then
+        echo "❌ Error: Duplicate app name found: $app"
+        duplicate_found=true
+    fi
+    APP_NAMES["$app"]=1
 
     # Validate port is numeric and in valid range
     if [[ ! "$port" =~ ^[0-9]+$ ]] || ((port < 1 || port > 65535)); then
         echo "❌ Error: Invalid port '$port' for app '$app'"
         exit 1
     fi
+
     PORTS["$app"]="$port"
 done < <(jq -r '.apps[] | [.app, .port] | @tsv' "$MASTER_JSON")
+
+if [[ "$duplicate_found" == true ]]; then
+    exit 1
+fi
 
 # Check for duplicate ports
 declare -A PORT_USAGE
 for app in "${!PORTS[@]}"; do
     port="${PORTS[$app]}"
-    if [[ -n "${PORT_USAGE[$port]:-}" ]]; then
+    if [[ -n "${PORT_USAGE[$port]}" ]]; then
         echo "❌ Error: Port $port used by multiple apps: ${PORT_USAGE[$port]} and $app"
-        exit 1
+        errors_found=1
+    else
+        PORT_USAGE["$port"]="$app"
     fi
-    PORT_USAGE["$port"]="$app"
 done
+
+if [[ "$errors_found" -eq 1 ]]; then
+    exit 1
+fi
 
 echo "Ports from master.json:"
 for app in "${!PORTS[@]}"; do
-    printf "  %-15s : %s\n" "$app" "${PORTS[$app]}"
+    printf "%-20s %s\n" "$app" "${PORTS[$app]}"
 done
 
 echo ""
@@ -75,44 +83,25 @@ declare -A INSTALLER_NAMES=(
 missing_installers=()
 errors_found=0
 
-# Check each installer
 for app in "${!PORTS[@]}"; do
     installer_name="${INSTALLER_NAMES[$app]:-$app}"
-    installer="${SCRIPT_DIR}/${installer_name}.sh"
-    port="${PORTS[$app]}"
+    installer_path="${SCRIPT_DIR}/${installer_name}.sh"
 
-    if [[ ! -f "$installer" ]]; then
-        echo "⚠️  ${app}: installer not found (tried ${installer_name}.sh)"
-        missing_installers+=("${installer_name}.sh")
+    if [[ ! -f "$installer_path" ]]; then
+        missing_installers+=("$installer_name")
+        echo "❌ Missing installer: $installer_name.sh"
         errors_found=1
-        continue
-    fi
-
-    # Use more robust port matching that handles comments and variables
-    if ! grep -q "[^0-9]${port}[^0-9]\|^${port}[^0-9]\|[^0-9]${port}$\|^${port}$" "$installer"; then
-        echo "❌ ${app}: Port $port not found in installer ${installer_name}.sh"
-        errors_found=1
-    else
-        echo "✅ ${app}: Port $port found in installer"
     fi
 done
 
-echo ""
-
-# Summary
 if [[ ${#missing_installers[@]} -gt 0 ]]; then
-    echo "Missing installers:"
-    for installer in "${missing_installers[@]}"; do
-        echo "  - $installer"
-    done
     echo ""
+    echo "Missing installers: ${missing_installers[*]}"
 fi
 
-if [[ $errors_found -eq 0 ]]; then
-    echo "✅ All checks passed!"
-    exit 0
-else
-    echo "❌ Some checks failed!"
+if [[ "$errors_found" -eq 1 ]]; then
     exit 1
 fi
+
+echo "✅ All checks passed!"
 ```

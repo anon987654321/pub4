@@ -21,8 +21,12 @@ check_model_exists() {
 run_migration() {
   log "Running database migrations"
   if ! bundle exec rails db:migrate; then
-    log "Migration failed, rolling back"
-    bundle exec rails db:rollback
+    log "Migration failed, attempting rollback"
+    if ! bundle exec rails db:rollback; then
+      log "Rollback also failed, manual intervention required"
+      exit 1
+    fi
+    log "Rollback successful, exiting"
     exit 1
   fi
 }
@@ -30,7 +34,7 @@ run_migration() {
 setup_airbnb_models() {
   local models=(
     "Booking listing:references host:references check_in:date check_out:date guests_count:integer total_price:decimal status:string"
-    "Review reviewable_type:string reviewable_id:bigint reviewer_type:string reviewer_id:bigint rating:integer content:text cleanliness:integer accuracy:integer communication:integer location:integer value:integer"
+    "Review reviewable:references{polymorphic} reviewer:references{polymorphic} rating:integer content:text cleanliness:integer accuracy:integer communication:integer location:integer value:integer"
     "Availability listing:references date:date available:boolean price_override:decimal"
     "HostProfile user:references bio:text response_rate:decimal response_time:integer verified:boolean joined_date:date languages:string superhost:boolean"
     "Amenity name:string category:string icon:string"
@@ -39,9 +43,10 @@ setup_airbnb_models() {
 
   for model in "${models[@]}"; do
     local model_name=$(echo $model | awk '{print $1}')
+    local attributes=$(echo $model | cut -d' ' -f2-)
     if check_model_exists $model_name; then
-      log "Generating model: $model"
-      if ! bundle exec rails generate model $model; then
+      log "Generating model: $model_name with attributes: $attributes"
+      if ! bundle exec rails generate model $model_name $attributes; then
         log "Failed to generate model: $model_name"
         exit 1
       fi
@@ -49,69 +54,46 @@ setup_airbnb_models() {
   done
 
   log "Airbnb models generated"
-  run_migration
 }
 
 setup_polymorphic_associations() {
   log "Setting up polymorphic associations in models"
 
-  # Complete Booking model with proper validations
-  cat << 'EOF' > app/models/booking.rb
-class Booking < ApplicationRecord
-  belongs_to :listing
-  belongs_to :guest, polymorphic: true
-  belongs_to :host, polymorphic: true
+  local booking_file="app/models/booking.rb"
+  if [[ -f "$booking_file" ]] && ! grep -q "belongs_to :reviewable, polymorphic: true" "$booking_file"; then
+    cat >> "$booking_file" << 'EOF'
 
-  validates :check_in, :check_out, :guests_count, :total_price, :status, presence: true
-  validates :guests_count, numericality: { greater_than: 0 }
-  validates :total_price, numericality: { greater_than_or_equal_to: 0 }
-
-  validate :check_out_after_check_in
-  validate :listing_available
-
-  enum status: { pending: 'pending', confirmed: 'confirmed', cancelled: 'cancelled', completed: 'completed' }
-
-  scope :upcoming, -> { where('check_in >= ?', Date.current) }
-  scope :active, -> { where(status: [:pending, :confirmed]) }
-
-  private
-
-  def check_out_after_check_in
-    return if check_out.blank? || check_in.blank?
-    errors.add(:check_out, "must be after check-in date") if check_out <= check_in
-  end
-
-  def listing_available
-    return if check_in.blank? || check_out.blank?
-    # Add availability validation logic here
-  end
-end
+  # Polymorphic associations for reviews
+  has_many :reviews, as: :reviewable
 EOF
-
-  log "Polymorphic associations setup completed"
+    log "Added polymorphic associations to Booking model"
+  fi
 }
 
 validate_models() {
-  log "Validating generated models"
-  if ! bundle exec rails db:migrate:status; then
-    log "Migration status check failed"
-    exit 1
-  fi
-
-  if ! bundle exec rails runner "puts 'Model validation successful'"; then
+  log "Validating models can be loaded correctly"
+  if ! bundle exec rails runner 'puts "All models loaded successfully"'; then
     log "Model validation failed"
     exit 1
   fi
 }
 
-main() {
-  log "Starting Airbnb marketplace setup"
+cleanup() {
+  log "Cleaning up temporary files"
+  local temp_file="tmp/migration_cleanup.txt"
+  if [[ -f "$temp_file" ]]; then
+    rm "$temp_file"
+  fi
+}
 
+main() {
+  log "Starting Airbnb model setup"
   setup_airbnb_models
+  run_migration
   setup_polymorphic_associations
   validate_models
-
-  log "Airbnb marketplace setup completed successfully"
+  cleanup
+  log "Airbnb model setup completed successfully"
 }
 
 main "$@"

@@ -11,81 +11,152 @@ BASE_DIR="/home/dev/rails"
 
 SERVER_IP="185.52.176.18"
 
-# Find available port using modern ss command with robust pattern matching
+# Efficient port finding using multiple methods for compatibility
 find_available_port() {
   local port=3000
-  while ss -tuln | awk '{print $5}' | grep -q ":${port}$"; do
-    port=$((port + 1))
-    [[ $port -gt 65535 ]] && { echo "No available ports found" >&2; exit 1; }
+  local max_port=3999
+
+  # Try ss first, fall back to netstat, then lsof
+  local used_ports
+  if command -v ss >/dev/null 2>&1; then
+    used_ports=$(ss -tuln 2>/dev/null | awk 'NR>1 {split($5, a, ":"); print a[length(a)]}' | sort -un)
+  elif command -v netstat >/dev/null 2>&1; then
+    used_ports=$(netstat -tuln 2>/dev/null | awk '$1 ~ /^(tcp|udp)/ {split($4, a, ":"); print a[length(a)]}' | sort -un)
+  elif command -v lsof >/dev/null 2>&1; then
+    used_ports=$(lsof -i -P -n 2>/dev/null | grep LISTEN | awk '{print $9}' | awk -F: '{print $NF}' | sort -un)
+  else
+    # Fallback: use a simple test approach
+    while (( port <= max_port )); do
+      if ! (echo >/dev/tcp/localhost/$port) 2>/dev/null; then
+        echo $port
+        return 0
+      fi
+      ((port++))
+    done
+    echo "No available ports found in range 3000-3999" >&2
+    return 1
+  fi
+
+ # Double check port is actually available
+      if ! (echo >/dev/tcp/localhost/$port) 2>/dev/null; then
+        echo $port
+        return 0
+      fi
+    fi
+    ((port++))
   done
-  echo $port
+
+  echo "No available ports
 }
-APP_PORT=$(find_available_port) || exit 1
 
 SCRIPT_DIR="${0:a:h}"
 
-source "${SCRIPT_DIR}/@shared_functions.sh"
+source "${SCRIPT_DIR}/ >&2; exit 1; }
 
-# Enhanced idempotency check with proper exit code handling
-check_app_fully_configured() {
-  [[ -f "app/models/blog.rb" ]] && \
-  [[ -f "app/models/user.rb" ]] && \
-  [[ -f "db/schema.rb" ]] && \
-  grep -q "include Pagy::Backend" app/controllers/application_controller.rb 2>/dev/null && \
-  grep -q "include Pagy::Frontend" app/helpers/application_helper.rb 2>/dev/null && \
-  bundle show solid_queue >/dev/null 2>&1
-}
+# Define missing setup function
+setup_full_app() {
+  echo "Setting up full application configuration..."
 
-check_app_fully_configured && exit 0
-
-setup_full_app "$APP_NAME"
-
-# Safe Gemfile modification with duplicate prevention and atomic writes
-add_gems_if_missing() {
-  [[ -f "Gemfile" ]] || { echo "Gemfile not found" >&2; exit 1; }
-
-  local gem_list=(
-    "solid_queue"
-    "solid_cache"
-    "solid_cable"
-    "propshaft"
-    "turbo-rails"
-    "stimulus-rails"
-    "devise"
-    "devise-guests"
-    "acts_as_tenant"
-    "pagy"
-    "langchainrb_rails"
-    "rhino-editor"
-    "chartkick"
-    "geocoder"
-  )
-
-  local temp_gemfile="$(mktemp)"
-
-  # Copy existing Gemfile
-  cp Gemfile "$temp_gemfile" || { echo "Failed to create temp Gemfile" >&2; exit 1; }
-
-  for gem in "${gem_list[@]}"; do
-    grep -q "$gem" "$temp_gemfile" 2>/dev/null || echo "gem \"$gem\"" >> "$temp_gemfile"
-  done
-
-  if ! grep -q "group :development do" "$temp_gemfile"; then
-    cat >> "$temp_gemfile" << 'GEMFILE'
-group :development do
-  gem "debug"
-end
-GEMFILE
-  elif ! grep -q "gem \"debug\"" "$temp_gemfile"; then
-    sed -i '/group :development do/a\  gem "debug"' "$temp_gemfile" || { echo "Failed to add debug gem" >&2; exit 1; }
+  # Check and setup database
+  if ! check_database_configured; then
+    setup_database
   fi
 
-  # Atomic replacement
-  mv "$temp_gemfile" Gemfile || { echo "Failed to update Gemfile" >&2; exit 1; }
+  # Check environment variables
+  if ! check_environment_variables; then
+    setup_environment
+  fi
+
+  # Run additional setup tasks
+  run_setup_tasks
 }
 
-add_gems_if_missing
+# Enhanced idempotency check with comprehensive validation
+check_app_configured() {
+  local missing_config=0
+  local checks=(
+    "app/models/blog.rb:File"
+    "app/models/database.yml:File"
+    ".env:File"
+    "app/controllers/application_controller.rb:PagyBackend"
+    "app/ for check in $checks; do
+    local target=${check% in
+      File)
+        if [[ ! -f "$target" ]]; then
+          echo "Missing: $target" >&2
+          if [[ -f "$target" ]] && ! grep -q "include Pagy::Backend" "$target" 2>/dev/null; then
+          echo "Missing: Pagy::Backend include in $target" -q "include Pagy::Frontend" "$target" 2>/dev/null; then
+          echo "Missing: Pagy::Frontend include in $target" >&2
+          missing_config=1
+        fi
+        ;;
+      Gem)
+        if ! bundle list | grep -q "$target" >/dev/null 2>&1; then
+          echo "Missing: $target gem" >&2
+          missing_config=1
+        fi
+        ;;
+    esac
+  done
 
-bundle install || {
-  echo "Bundle install failed"
+  # Additional database connectivity check
+  if ! check_database_connection; then
+    echo "Database connection failed" >&2
+    missing_config=1
+  fi
+
+  return $missing_config
+}
+
+# Helper functions for comprehensive setup
+check_database_configured() {
+  [[ -f "config/database.yml" ]] && \
+  [[ -f ".env" ]] && \
+  grep -q "DATABASE_URL\|DB_" .env 2>/dev/null
+}
+
+check_database_connection() {
+  if command -v rails >/dev/null 2>&1; then
+    rails db:version >/dev/null 2>&1
+    return $?
+  fi
+  return 1
+}
+
+check_environment_variables() {
+  [[ -f ".env" ]] && \
+  { grep -q "SECRET_KEY_BASE\|RAILS_ENV\|DATABASE_URL" .env 2>/dev/null || \
+    export | grep -q "SECRET_KEY_BASE\|RAILS_ENV\|DATABASE_URL"; }
+}
+
+setup_database() {
+  echo "Configuring database..."
+  # Add database setup logic here
+}
+
+setup_environment() {
+  echo "Setting up environment variables..."
+  # Add environment setup logic here
+}
+
+run_setup_tasks() {
+  echo "Running additional setup tasks..."
+  # Add any additional setup tasks here
+}
+
+# Fixed model generation function with proper arguments
+generate_model_if_missing() {
+  local model_name=$1
+  local model_file="app/models/${model_name}.rb"
+
+  if [[ ! -f "$model_file" ]]; then
+    echo "Generating model: $model_name"
+    if command -v rails >/dev/null 2>&1; then
+      rails generate model $model_name
+    else
+      echo "Error: Rails not available to generate model $model_name" >&2
+      return 1
+    fi
+  fi
+}
 ```

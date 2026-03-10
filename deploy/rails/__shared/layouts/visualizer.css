@@ -5,6 +5,8 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --zoom: 1;
+  --transition-duration: 120ms;
+  --focus-outline: 2px solid #dcdcdc;
 }
 
 html, body {
@@ -14,20 +16,26 @@ html, body {
   color: #dcdcdc;
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 canvas {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   display: block;
-  background: #000;
   touch-action: none;
   image-rendering: pixelated;
-  transition: filter 140ms ease, transform 120ms ease;
   transform-origin: center;
   transform: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  canvas {
+    transition: filter 140ms ease, transform var(--transition-duration) ease;
+  }
 }
 
 canvas.canvas-inverted {
@@ -39,8 +47,10 @@ canvas.canvas-inverted {
   50% { transform: scale(1.02); }
 }
 
-canvas.start-ack {
-  animation: start-ack 240ms ease-out;
+@media (prefers-reduced-motion: no-preference) {
+  canvas.start-ack {
+    animation: start-ack 240ms ease-out;
+  }
 }
 
 h1.city-carousel {
@@ -51,18 +61,21 @@ h1.city-carousel {
   font-size: 1.2rem;
   font-weight: 500;
   opacity: 0.7;
-  transition: opacity 120ms ease;
+  transition: opacity var(--transition-duration) ease;
 }
 
 .ui {
   position: fixed;
-  inset: 0;
+  top: var(--safe-top);
+  right: var(--safe-right);
+  bottom: var(--safe-bottom);
+  left: var(--safe-left);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: calc(10px + var(--safe-top)) calc(10px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(10px + var(--safe-left));
+  padding: 10px;
   opacity: 0.7;
-  transition: opacity 120ms ease;
+  transition: opacity var(--transition-duration) ease;
   pointer-events: none;
 }
 
@@ -93,56 +106,26 @@ h1.city-carousel {
   padding: 8px;
   cursor: pointer;
   opacity: 0.7;
-  transition: opacity 120ms ease;
+  transition: opacity var(--transition-duration) ease;
+  min-height: 44px;
+  min-width: 44px;
 }
 
-.ui-btn:focus-visible {
-  outline: 2px solid #dcdcdc;
-  outline-offset: 2px;
+.ui-btn:focus {
+  outline: var(--focus-outline);
 }
 
-.ui-btn:hover {
-  opacity: 1;
+.ui-btn:focus:not(:focus-visible) {
+  outline: none;
 }
 
-.overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  background: rgba(0, 0, 0, 0.86);
-  opacity: 0;
-  transition: opacity 180ms ease;
-  pointer-events: none;
-}
-
-.overlay.overlay-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.swipe-hint {
-  position: fixed;
-  bottom: calc(20px + var(--safe-bottom));
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.9rem;
-  opacity: 0.7;
-  animation: swipe-hint-pulse 2s ease-in-out infinite;
-}
-
-@keyframes swipe-hint-pulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 0.4; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  canvas, .ui, .ui-btn, .overlay, .swipe-hint {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
+@media (prefers-contrast: high) {
+  .ui-btn, h1.city-carousel, .ui {
+    opacity: 1;
   }
+}
+
+.ui-btn:hover, .ui:hover, h1.city-carousel:hover {
+  opacity: 1;
 }
 ```
