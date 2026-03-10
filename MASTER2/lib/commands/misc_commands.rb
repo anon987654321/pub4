@@ -587,6 +587,25 @@ module MASTER
           puts UI.dim("constraints: #{ctx['constraints']}") if ctx["constraints"]
           Array(ctx["decisions"]).each { |d| puts UI.dim("  · #{d}") }
         end
+
+
+      def openbsd_check(args = nil)
+        return puts "  OpenBSDValidator not available" unless defined?(OpenBSDValidator)
+
+        dir = args&.strip
+        dir = "/etc" if dir.nil? || dir.empty?
+        violations = OpenBSDValidator.validate_dir(dir)
+
+        if violations.empty?
+          puts "openbsd-check: ok (#{dir})"
+        else
+          violations.each do |v|
+            sev = v[:severity] == :high ? UI.pastel.red("HIGH") : UI.pastel.yellow("WARN")
+            puts "  [#{sev}] #{File.basename(v[:file])}: #{v[:message]}"
+          end
+          puts "openbsd-check: #{violations.size} violation(s) in #{dir}"
+        end
+      end
       end
     end
   end

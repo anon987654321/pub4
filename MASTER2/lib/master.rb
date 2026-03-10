@@ -137,7 +137,7 @@ require_relative "agent/behavior_monitor"
 require_relative "session/per_step_reflection"
 require_relative "mcp_server"
 require_relative "introspection/friction_recorder"
-require_relative "introspection/session_retrospective"
+require_relative "introspection/session_retrospective"nrequire_relative "openbsd_validator"
 
 MASTER.safe_require("server")
 
