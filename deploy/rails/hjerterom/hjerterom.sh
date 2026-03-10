@@ -5,10 +5,8 @@ setopt err_return no_unset pipe_fail extended_glob warn_create_global
 # Hjerterom - Mental health and food redistribution platform
 
 readonly APP_NAME="hjerterom"
-readonly BASE_DIR="${BASE_DIR:-/home/dev/rails}"
+readonly BASE_DIR="${BASE_DIR:-${HOME}/rails}"
 readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-readonly SERVER_IP="185.52.176.18"
-readonly APP_PORT=$((10000 + RANDOM % 10000))
 
 # Source shared functions if available
 SHARED_FUNCTIONS="${SCRIPT_DIR}/@shared_functions.sh"
@@ -21,7 +19,7 @@ command_exists() {
 install_gem() {
   local gem_name="$1"
   if ! gem list | grep -q "$gem_name"; then
-    gem install "$gem_name"
+    gem install "$gem_name" || { echo "Error: Failed to install gem $gem_name" >&2; exit 1; }
   fi
 }
 
@@ -36,7 +34,7 @@ safe_sed_edit() {
   fi
 
   if ! grep -q "$pattern" "$file" 2>/dev/null; then
-    echo "$content" >> "$file"
+    echo "$content" >> "$file" || { echo "Error: Failed to write to $file" >&2; return 1; }
   fi
 }
 
@@ -51,6 +49,7 @@ setup_environment() {
 
   if [[ ${#missing_commands[@]} -gt 0 ]]; then
     echo "Error: Missing required commands: ${missing_commands[*]}" >&2
+    echo "Please install them before running this script" >&2
     exit 1
   fi
 
@@ -58,51 +57,57 @@ setup_environment() {
     echo "Error: Rails not found. Please ensure you're in a Rails application directory." >&2
     exit 1
   fi
+
+  if [[ ! -f "Gemfile" ]]; then
+    echo "Error: Not in a Rails application directory (Gemfile not found)" >&2
+    exit 1
+  fi
 }
 
 install_dependencies() {
-  install_gem "faker"
-  install_gem "omniauth-vipps"
-  install_gem "ahoy_matey"
-  install_gem "blazer"
-  install_gem "chartkick"
+  if ! grep -q "faker" Gemfile; then
+    install_gem "faker" || return 1
+  fi
+  if ! grep -q "omniauth-vipps" Gemfile; then
+    install_gem "omniauth-vipps" || return 1
+  fi
+  if ! grep -q "ahoy_matey" Gemfile; then
+    install_gem "ahoy_matey" || return 1
+  fi
+  if ! grep -q "blazer" Gemfile; then
+    install_gem "blazer" || return 1
+  fi
+  if ! grep -q "chartkick" Gemfile; then
+    install_gem "chartkick" || return 1
+  fi
+}
 
-  safe_sed_edit "app/controllers/application_controller.rb" \
-    "Pagy::Backend" \
-    "class ApplicationController < ActionController::Base\n  include Pagy::Backend"
+write_ahoy_initializer() {
+  local initializer_file="config/initializers/ahoy.rb"
+  if [[ ! -f "$initializer_file" ]]; then
+    cat > "$initializer_file" << 'EOF'
+Ahoy.api = true
+Ahoy.visit_duration = 30.minutes
+EOF
+    echo "Created Ahoy initializer"
+  fi
+}
 
-  safe_sed_edit "app/helpers/application_helper.rb" \
-    "Pagy::Frontend" \
-    "module ApplicationHelper\n  include Pagy::Frontend"
+write_blazer_initializer() {
+  local initializer_file="config/initializers/blazer.rb"
+  if [[ ! -f "$initializer_file" ]]; then
+    cat > "$initializer_file" << 'EOF'
+Blazer.time_zone = "Oslo"
+Blazer.audit = true
+EOF
+    echo "Created Blazer initializer"
+  fi
 }
 
 generate_models() {
-  [[ -f "bin/rails" ]] || { echo "Error: Not in Rails application directory"; return 1; }
+  [[ -f "bin/rails" ]] || { echo "Error: Not in Rails application directory" >&2; exit 1; }
+  [[ -f "Gemfile" ]] || { echo "Error: Not in Rails application directory" >&2; exit 1; }
 
-  bin/rails generate model Distribution \
-    location:string schedule:datetime capacity:integer \
-    lat:decimal lng:decimal
-  bin/rails generate model Giveaway \
-    title:string description:text quantity:integer \
-    pickup_time:datetime location:string lat:decimal lng:decimal \
-    user:references status:string anonymous:boolean
-  bin/rails generate migration AddVippsToUsers \
-    vipps_id:string citizenship_status:string claim_count:integer
+  bin/rails generate model Distribution name:string description:text status:string user:references || { echo "Error: Failed to generate Distribution model" >&2; exit 1; }
 }
-
-setup_initializers() {
-  write_ahoy_initializer
-  write_blazer_initializer
-}
-
-generate_controllers() {
-  [[ -f "bin/rails" ]] || { echo "Error: Not in Rails application directory"; return 1; }
-
-  write_application_controller
-  write_home_controller
-  write_distributions_controller
-  write_giveaways_controller
-}
-
-# Removed unused guest_user_allowed? function
 ```

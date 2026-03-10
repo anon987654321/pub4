@@ -1,15 +1,15 @@
 ```html
 <!DOCTYPE html>
-<html lang="<%= I18n.locale || I18n.default_locale || 'en' %>" dir="<%= rtl_locale?(I18n.locale) ? 'rtl' : 'ltr' %>">
+<html lang="<%= (I18n.locale || I18n.default_locale || 'en').to_s %>" dir="<%= defined?(rtl_locale?) && rtl_locale?(I18n.locale) ? 'rtl' : 'ltr' %>">
 <head>
-  <%= render "shared/meta" %>
+  <%= render "shared/meta", title: content_for?(:title) ? yield(:title) : "Default Site Title" %>
   <%= yield :head %>
 </head>
-<body data-controller="<%= controller_name %>" class="<%= body_class %>">
+<body data-controller="<%= controller_name %>" class="<%= defined?(body_class) ? body_class : '' %>">
   <%= render "shared/skip_links" %>
   <%= render "shared/nav" %>
 
-  <main id="main-content" class="site-main">
+  <main id="main-content" class="site-main" role="main">
     <%= render "shared/flash" %>
     <%= yield %>
   </main>

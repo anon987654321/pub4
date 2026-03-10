@@ -1,7 +1,7 @@
 ```zsh
 #!/usr/bin/env zsh
 emulate -L zsh
-setopt err_return no_unset pipe_fail extended_glob warn_create_global
+setopt err_return no_unset pipe_fail extended_glob warn_create_global typeset_silent
 
 # BRGEN v3.0.0 - Rails 8 Complete Social Network
 # Per master.yml v207
@@ -31,17 +31,25 @@ check_dependencies() {
   for dep in $deps; do
     command -v "$dep" >/dev/null 2>&1 || die "$dep is required but not installed"
   done
+
+  # Check PostgreSQL is running
+  psql -l >/dev/null 2>&1 || die "PostgreSQL is not running or accessible"
 }
 
 # === VALIDATION ===
 validate_environment() {
-  [[ -d "$APP_DIR" ]] || die "$APP_DIR missing. Run: $SUDO_CMD zsh openbsd.sh --pre-point"
+  [[ -d "$APP_DIR" ]] || die "$APP_DIR missing. Run: ${SUDO_CMD:-doas} zsh openbsd.sh --pre-point"
 
   cd "$APP_DIR" || die "Failed to cd to $APP_DIR: $?"
   echo "Working in: $APP_DIR"
 
   # Check for Rails app structure
   [[ -f "Gemfile" && -f "config/application.rb" && -d "app" ]] || die "Not a valid Rails application directory"
+
+  # Check Rails version compatibility
+  local rails_version=$(grep "^[[:space:]]*gem[[:space:]]*['\"]rails['\"]" Gemfile | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+  [[ -n "$rails_version" ]] || die "Could not determine Rails version from Gemfile"
+  [[ "$rails_version" =~ ^8\. ]] || die "This script requires Rails 8.x, found $rails_version"
 }
 
 # === GEMFILE MANAGEMENT ===
@@ -50,34 +58,19 @@ append_gems_safely() {
     ""
     "# Rails 8 Solid Stack"
     "gem \"solid_queue\""
-    "gem \"solid_cache\""
-    "gem \"solid_cable\""
-    ""
-    "# Authentication"
-    "gem \"devise\""
   )
 
-  # Check if gems are already present
-  for gem in solid_queue solid_cache solid_cable devise; do
-    if grep -q "gem \"$gem\"" Gemfile; then
-      echo "Gem '$gem' already present in Gemfile, skipping addition"
-      return 0
+  # Check if gems are already present to avoid duplicates
+  for gem_line in "${gem_content[@]}"; do
+    if [[ -n "$gem_line" && ! "$gem_line" =~ ^# ]]; then
+      local gem_name=$(echo "$gem_line" | grep -oE 'gem ["'"'"']([^"'"'"']+)' | cut -d\" -f2 | cut -d\' -f2)
+      if [[ -n "$gem_name" ]] && grep -q "gem [\"']${gem_name}[\"']" Gemfile; then
+        echo "Gem '$gem_name' already exists in Gemfile, skipping"
+        continue
+      fi
     fi
+    echo "$gem_line" >> Gemfile
   done
-
-  # Append to Gemfile with proper formatting
-  printf '%s\n' "${gem_content[@]}" >> Gemfile || die "Failed to append to Gemfile"
-
-  # Install gems after modification
-  echo "Installing new gems..."
-  bundle install || die "Failed to run bundle install"
-}
-
-# === DATABASE SETUP ===
-setup_database() {
-  echo "Setting up database..."
-  bundle exec rails db:create || die "Failed to create database"
-  bundle exec rails db:migrate || die "Failed to run migrations"
 }
 
 # === MAIN EXECUTION ===
@@ -85,11 +78,8 @@ main() {
   check_dependencies
   validate_environment
   append_gems_safely
-  setup_database
-
-  echo "BRGEN setup completed successfully!"
-  echo "Application will run on port: $PORT"
 }
 
-main "$@"
+# Run only if executed directly
+[[ "${(%):-%N}" == "$0" ]] && main "$@"
 ```

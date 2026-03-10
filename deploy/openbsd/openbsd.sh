@@ -1,4 +1,5 @@
-```zsh
+
+
 #!/bin/ksh
 # Configures OpenBSD 7.8 for NSD & DNSSEC, Ruby on Rails, PF firewall, and minimal OpenSMTPD.
 
@@ -16,18 +17,20 @@
 # - NOTE: pledge/unveil not applicable (C syscalls, not shell features)
 # - Privilege control via doas(1), idempotent operations, atomic config writes
 
-set +e  # Don't use errexit - handle errors explicitly
-
-# Temporary files tracking
-TMPFILES=""
+set -e  # Exit on any error
+set -u  # Treat unset variables as errors
 
 # Initialize critical variables
 EPOCHSECONDS=$(date +%s)
 backup_count=5
 STATE_FILE="/var/lib/openbsd_setup.state"
 COMPLETED_STEPS=""
+SCRIPT_NAME=$(basename "$0")
+TMPFILES=""
 
-# Ensure state file exists and load completed steps
+# Ensure state file directory exists and load completed steps
+state_dir=$(dirname "$STATE_FILE")
+[ ! -d "$state_dir" ] && mkdir -p "$state_dir"
 [ ! -f "$STATE_FILE" ] && touch "$STATE_FILE"
 while IFS= read -r step; do
     [ -n "$step" ] && COMPLETED_STEPS="${COMPLETED_STEPS}${step} "
@@ -50,83 +53,91 @@ error_handler() {
 }
 
 trap 'cleanup' EXIT
-trap 'error_handler $? $LINENO' INT TERM ERR
+trap 'error_handler $? $LINENO' INT TERM
 
 # Logging function
 log() {
     level=$1
     message=$2
-    printf "%s [%s] %s\n" "$(date +"%Y-%m-%dT%H:%M:%S")" "$level" "$message" | sed 's/%/%%/g'
+    printf "%s [%s] %s: %s\n" "$(date +"%Y-%m-%dT%H:%M:%S")" "$level" "$SCRIPT_NAME" "$message"
 }
 
-# Backup function for data integrity
-backup_directory() {
-    dir=$1
-    [ ! -d "$dir" ] && return 0
+# Atomic file write with backup and validation
+atomic_write() {
+    target_file=$1
+    content=$2
+    mode=${3:-644}
 
-    backup_dir="${dir}.backup.$(date +%Y%m%d-%H%M%S)"
-    if ! mkdir -p "$backup_dir"; then
-        log ERROR "Failed to create backup directory: $backup_dir"
-        return 1
-    fi
-
-    if ! cp -Rp "$dir"/* "$backup_dir"/; then
-        log ERROR "Failed to backup directory: $dir"
-        rm -rf "$backup_dir"
-        return 1
-    fi
-
-    log INFO "Backup created: $backup_dir"
-    return 0
-}
-
-check_root() {
-    if [ "$(id -u)" -ne 0 ]; then
-        log ERROR "This script must be run as root"
-        exit 1
-    fi
-}
-
-check_port() {
-    port=$1
-    if command -v ss >/dev/null 2>&1; then
-        ss -lnt | grep -q ":$port "
+    tmp_file=$(mktemp "/tmp/${SCRIPT_NAME}.XXXXXX")
+    printf "%s" "$content" > "$tmp_file"
+    chmod "$mode" "$tmp_file"
+    if [ -s "$tmp_file" ]; then
+        mv -f "$tmp_file" "$target_file"
     else
-        netstat -na | grep -q ":$port .*LISTEN"
+        rm -f "$tmp_file"
     fi
 }
 
-init_script() {
-    check_root
-    log INFO "Script initialization complete"
+# Package management functions
+install_packages() {
+    local repo_url="https://cdn.openbsd.org/pub/OpenBSD/$(uname -r)/packages/$(uname -m)/"
+    local pkg_list="$1"
+
+    # Update package repository
+    pkg_add -u -y
+
+    # Install packages
+    for pkg in $pkg_list; do
+        pkg_add "$pkg"
+    done
 }
 
-mark_step_completed() {
-    step=$1
-    echo "$step" >> "$STATE_FILE"
+# Step tracking
+step_completed() {
+    local step="$1"
     COMPLETED_STEPS="${COMPLETED_STEPS}${step} "
+    echo "$COMPLETED_STEPS" > "$STATE_FILE"
 }
 
-is_step_completed() {
-    step=$1
-    case " $COMPLETED_STEPS " in
-        *" $step "*) return 0 ;;
-        *) return 1 ;;
-    esac
+# Backup management
+backup_directory() {
+    local dir="$1"
+    local backup_dir="/var/backups/openbsd_setup"
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+
+    [ ! -d "$backup_dir" ] && mkdir -p "$backup_dir"
+    tar -czf "$backup_dir/${timestamp}.tar.gz" -C "$dir" .
 }
 
+# Main script logic
 main() {
-    init_script
+    local action="$1"
 
-    # Configuration steps will be implemented here
-    if ! is_step_completed "initial_setup"; then
-        log INFO "Starting initial setup"
-        # Add actual configuration steps
-        mark_step_completed "initial_setup"
-    fi
+    case "$action" in
+        --help)
+            log INFO "Usage: doas ksh openbsd.sh [--help | --resume]"
+            exit 0
+            ;;
+        --resume)
+            # Resume script execution
+            ;;
+        *)
+            log ERROR "Invalid argument: $action"
+            exit 1
+            ;;
+    esac
 
-    log INFO "Script execution completed"
+    # Implement actual package installation logic here
+    install_packages "nsd-4.3.0p0 ruby-3.2.2p0 rails-7.0.4.1"
+
+    # Implement PostgreSQL/Redis removal logic here
+    # pkg_delete postgresql redis
+
+    # Implement NSD/DNSSEC configuration
+    step_completed "nsd_installed"
 }
 
+# Entry point
 main "$@"
-```
+cleanup
+exit 0

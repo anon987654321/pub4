@@ -1,16 +1,14 @@
 ```zsh
 #!/usr/bin/env zsh
-emulate -L_create_global
+emulate -L zsh
 
-# Brgen Marketplace setup: Multi-vendor marketplace with Solid7.8, unprivileged user
-
+# Brgen Marketplace setup: Multi-vendor marketplace with Solidus, unprivileged user
 # Framework v37.3.2 compliant with enhanced e-commerce functionality
 
 APP_NAME="brgen_marketplace"
-BASE_DIR="/home/dev/rails"
-SERVER_IP="185.52.176.18"
+BASE_DIR="${HOME}/rails"
 APP_PORT=$(( 10000 + (RANDOM % 10000) ))
-SCRIPT_DIR="${0:a:h}"
+SECRET_KEY_BASE=$(ruby -e "require 'securerandom'; puts SecureRandom.hex(64)")
 
 # Define helper functions
 command_exists() {
@@ -21,88 +19,128 @@ log() {
   echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
+error_exit() {
+  log "ERROR: $1"
+  exit 1
+}
+
 install_gem() {
   local gem_name="$1"
-  if ! bundle show "$gem_name" >/dev/null 2>&1; then
-    bundle add "$gem_name" --without production
+  if ! bundle list | grep -q "$gem_name"; then
+    bundle add "$gem_name" --without production || error_exit "Failed to add gem: $gem_name"
+  fi
+}
+
+check_port_available() {
+  local port="$1"
+  if command_exists lsof; then
+    if lsof -i :"$port" >/dev/null 2>&1; then
+      return 1
+    fi
+  elif command_exists netstat; then
+    if netstat -tuln 2>/dev/null | grep -q ":${port} "; then
+      return 1
+    fi
+  elif command_exists ss; then
+    if ss -tuln 2>/dev/null | grep -q ":${port} "; then
+      return 1
+    fi
+  else
+    # If no port checking tool is available, try to bind to the port
+    if zmodload zsh/net/tcp 2>/dev/null; then
+      ztcp -l $port 2>/dev/null
+      local result=$?
+      ztcp -c $REPLY 2>/dev/null
+      return $result
+    else
+      # Last resort: try with Ruby
+      ruby -e "require 'socket'; Socket.tcp_server_sockets('localhost', $port)" 2>/dev/null
+      local result=$?
+      [[ $result -eq 0 ]] && return 1
+      return 0
+    fi
+  fi
+  return 0
+}
+
+setup_database() {
+  log "Setting up PostgreSQL database"
+  if ! psql -lqt | cut -d \| -f 1 | tr -d ' ' | grep -q "^${APP_NAME}_development$"; then
+    createdb "${APP_NAME}_development" || error_exit "Failed to create development database"
+    log "Created development database: ${APP_NAME}_development"
+  else
+    log "Development database already exists: ${APP_NAME}_development"
+  fi
+
+  if ! psql -lqt | cut -d \| -f 1 | tr -d ' ' | grep -q "^${APP_NAME}_test$"; then
+    createdb "${APP_NAME}_test" || error_exit "Failed to create test database"
+    log "Created test database: ${APP_NAME}_test"
+  else
+    log "Test database already exists: ${APP_NAME}_test"
   fi
 }
 
 setup_full_app() {
-  local app_name="$1"
-  local base_dir="$2"
-  local server_ip="$3"
-  local app_port="$4"
+  cd "${BASE_DIR}/${APP_NAME}" || error_exit "Failed to enter app directory"
 
-  log "Setting up application $app_name in $base_dir"
-  mkdir -p "$base_dir"
-  cd "$base_dir" || exit 1
+  # Find available port
+  while ! check_port_available $APP_PORT; do
+    APP_PORT=$((APP_PORT + 1))
+  done
 
-  if [[ ! -d "$app_name" ]]; then
-    rails new "$app_name" --database=postgresql --skip-bundle
-  fi
+  log "Using port: $APP_PORT"
 
-  cd "$app_name" || exit 1
+  # Install Solidus with all components
+  bundle add solidus solidus_backend solidus_frontend solidus_api solidus_auth_devise --without production || error_exit "Failed to add Solidus gems"
+
+  # Run Solidus install generator
+  bundle exec rails generate solidus:install || error_exit "Failed to run Solidus installer"
+
+  # Run migrations
+  bundle exec rails db:migrate || error_exit "Failed to run migrations"
+
+  # Generate database.yml with dynamic configuration
+  cat > config/database.yml <<EOF
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+  username: $(whoami)
+  password:
+  host: localhost
+
+development:
+  <<: *default
+  database: ${APP_NAME}_development
+
+test:
+  <<: *default
+  database: ${APP_NAME}_test
+
+production:
+  <<: *default
+  database: ${APP_NAME}_production
+EOF
+
+  log "Database configuration updated"
 }
 
 # Main execution
-log "Starting Brgen Marketplace setup with Solidus e-commerce platform"
+mkdir -p "${BASE_DIR}" || error_exit "Failed to create base directory"
+cd "${BASE_DIR}" || error_exit "Failed to enter base directory"
 
-setup_full_app "$APP_NAME" "$BASE_DIR" "$SERVER_IP" "$APP_PORT"
+if [[ ! -d "${APP_NAME}" ]]; then
+  log "Creating new Rails app: ${APP_NAME}"
+  rails new "${APP_NAME}" -d postgresql || error_exit "Failed to create Rails app"
+else
+  log "App directory already exists: ${APP_NAME}"
+fi
 
-# Check required commands
-for cmd in ruby node psql bundle; do
-  if ! command_exists "$cmd"; then
-    log "Error: $cmd is not installed"
-    exit 1
-  fi
-done
+setup_database
+setup_full_app
 
-# Install required gems
-log "Installing Solidus e-commerce platform"
-install_gem "faker"
-install_gem "solidus"
-install_gem "solidus_auth_devise"
-install_gem "solidus_searchkick"
-install_gem "solidus_reviews"
-install_gem "solidus_stripe"
-install_gem "pagy"
-
-# Run bundle install once
-bundle install --without production || {
-  log "Error: Bundle install failed"
-  exit 1
-}
-
-# Generate and run installations
-bundle exec rails generate solidus:install --api --auto-accept || exit 1
-bundle exec rails generate solidus_searchkick:install || exit 1
-bundle exec rails generate solidus_reviews:install || exit 1
-bundle exec rails generate pagy:install || exit 1
-
-bundle exec rails db:create || exit 1
-bundle exec rails db:migrate || exit 1
-
-# Add custom marketplace models
-bundle exec rails generate model Vendor name:string description:text || exit 1
-bundle exec rails db:migrate || exit 1
-bundle exec rails db:seed || exit 1
-
-# Solidus configuration
-log "Configuring Solidus"
-bundle exec rails solidus:install:config || exit 1
-bundle exec rails solidus:install:routes || exit 1
-bundle exec rails solidus:install:assets || exit 1
-
-# Mapbox integration
-log "Integrating Mapbox"
-bundle exec rails generate solidus_mapbox:install || exit 1
-bundle exec rails db:migrate || exit 1
-
-# Anonymous user feature
-log "Implementing anonymous user feature"
-
-# Cleanup
-rm -rf tmp/cache
-log "Setup completed successfully for $APP_NAME on port $APP_PORT"
+log "Brgen Marketplace setup complete!"
+log "App directory: ${BASE_DIR}/${APP_NAME}"
+log "Development server will run on port: ${APP_PORT}"
+log "Run: cd ${BASE_DIR}/${APP_NAME} && bundle exec rails server -p ${APP_PORT}"
 ```

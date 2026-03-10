@@ -1,5 +1,8 @@
-```bash
-# Tiptap (Medium-style) + stimulus-lightbox integration
+
+
+```bash#!/usr/bin/env bash
+
+# Tiptaprich text editor integration script
 
 # Logging function
 log() {
@@ -13,7 +16,7 @@ error_exit() {
 }
 
 add_rich_editor() {
-    typeset app_name="${1:-current_app}"
+    local app_name="${1:-current_app}"
 
     log "Adding Tiptap rich text editor to $app_name"
 
@@ -54,144 +57,90 @@ install_tiptap_packages() {
 
     mv package.json.tmp package.json
     rm -f package.json.backup
+
+    # Install packages
+    if command -v yarn >/dev/null 2>&1; then
+        yarn install || error_exit "yarn install failed"
+    elif command -v npm >/dev/null 2>&1; then
+        npm install || error_exit "npm install failed"
+    else
+        error_exit "No package manager (yarn or npm) found"
+    fi
 }
 
 create_tiptap_controller() {
     local controller_dir="app/javascript/controllers"
-    local controller_file="$controller_dir/rich_editor_controller.js"
-
-    if [[ ! -d "$controller_dir" ]]; then
-        if ! mkdir -p "$controller_dir"; then
-            error_exit "Failed to create controller directory: $controller_dir"
-        fi
-    fi
-
-    cat > "$controller_file" << 'EOF'
-import { Controller } from "@hotwired/stimulus"
-import { Editor } from '@tiptap/core'
-import StarterKit from '@tiptap/starter-kit'
-import Link from '@tiptap/extension-link'
-import Placeholder from '@tiptap/extension-placeholder'
-import Underline from '@tiptap/extension-underline'
-import Image from '@tiptap/extension-image'
+    local controller_file="tiptap_controller.js"
+    local controller_content="import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-    static targets = ["editor"]
-
     connect() {
-        this.editor = new Editor({
-            element: this.editorTarget,
+        const editor = new Tiptap.Editor({
             extensions: [
-                StarterKit,
-                Link.configure({
-                    openOnClick: false,
-                }),
-                Placeholder.configure({
-                    placeholder: 'Write something...',
-                }),
-                Underline,
-                Image
+                new StarterKit(),
+                new Image(),
+                new Placeholder(),
+                new Link(),
             ],
-            content: this.element.innerHTML,
-            onUpdate: ({ editor }) => {
-                this.element.innerHTML = editor.getHTML()
-            }
+            onUpdate: () => {
+                this.element.value = editor.getHTML()
+            },
+        })
+
+        this.element.addEventListener('input', () => {
+            editor.updateHTML(this.element.value)
         })
     }
+}"
 
-    disconnect() {
-        if (this.editor) {
-            this.editor.destroy()
-        }
-    }
-}
-EOF
+    # Create controller directory if missing
+    mkdir -p "$controller_dir" || error_exit "Failed to create controller directory"
 
-    if [[ ! -f "$controller_file" ]]; then
-        error_exit "Failed to create controller file: $controller_file"
+    # Check if file exists and warn before overwriting
+    if [[ -f "$controller_dir/$controller_file" ]]; then
+        log "Warning: Overwriting existing controller file: $controller_dir/$controller_file"
     fi
+
+    # Write controller file
+    printf '%s' "$controller_content" > "$controller_dir/$controller_file" || error_exit "Failed to write controller file"
 }
 
 create_editor_styles() {
-    local styles_dir="app/assets/stylesheets"
-    local styles_file="$styles_dir/rich_editor.scss"
+    local styles_dir="app/javascript/styles"
+    local styles_file="tiptap.css"
+    local styles_content=".tiptap-editor {
+        min-height: 300px;
+        border: 1px solid #ccc;
+        padding: 10px;
+    }"
 
-    if [[ ! -d "$styles_dir" ]]; then
-        if ! mkdir -p "$styles_dir"; then
-            error_exit "Failed to create styles directory: $styles_dir"
-        fi
+    mkdir -p "$styles_dir" || error_exit "Failed to create styles directory"
+
+    if [[ -f "$styles_dir/$styles_file" ]]; then
+        log "Warning: Overwriting existing styles file: $styles_dir/$styles_file"
     fi
 
-    cat > "$styles_file" << 'EOF'
-.rich-editor {
-    min-height: 200px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 16px;
-
-    .ProseMirror {
-        outline: none;
-        min-height: 150px;
-
-        p.is-editor-empty:first-child::before {
-            content: attr(data-placeholder);
-            float: left;
-            color: #adb5bd;
-            pointer-events: none;
-            height: 0;
-        }
-
-        a {
-            color: #007bff;
-            text-decoration: underline;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-    }
-
-    .ProseMirror-focused {
-        border-color: #007bff;
-        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-    }
-}
-EOF
-
-    if [[ ! -f "$styles_file" ]]; then
-        error_exit "Failed to create styles file: $styles_file"
-    fi
+    printf '%s' "$styles_content" > "$styles_dir/$styles_file" || error_exit "Failed to write styles file"
 }
 
 setup_lightbox_integration() {
-    local controller_dir="app/javascript/controllers"
-    local lightbox_file="$controller_dir/lightbox_controller.js"
+    local lightbox_dir="app/javascript/controllers"
+    local lightbox_file="lightbox_controller.js"
+    local lightbox_content="import { Controller } from '@hotwired/stimulus'
 
-    if [[ ! -d "$controller_dir" ]]; then
-        if ! mkdir -p "$controller_dir"; then
-            error_exit "Failed to create controller directory: $controller_dir"
-        fi
-    fi
-
-    cat > "$lightbox_file" << 'EOF'
-import { Controller } from "@hotwired/stimulus"
-import Lightbox from 'stimulus-lightbox'
-
-export default class extends Lightbox {
+export default class extends Controller {
     connect() {
-        super.connect()
-        console.log('Lightbox controller connected')
+        const lightbox = new Stimulus.Lightbox()
+        lightbox.connect()
     }
+}"
 
-    disconnect() {
-        super.disconnect()
-    }
-}
-EOF
+    mkdir -p "$lightbox_dir" || error_exit "Failed to create lightbox directory"
 
-    if [[ ! -f "$lightbox_file" ]]; then
-        error_exit "Failed to create lightbox controller file: $lightbox_file"
+    if [[ -f "$lightbox_dir/$lightbox_file" ]]; then
+        log "Warning: Overwriting existing lightbox controller: $lightbox_dir/$lightbox_file"
     fi
+
+    printf '%s' "$lightbox_content" > "$lightbox_dir/$lightbox_file" || error_exit "Failed to write lightbox controller"
 }
 ```

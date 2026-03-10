@@ -1,25 +1,31 @@
-```erb
+```html
 <a href="#main-content" class="skip-nav">Skip to main content</a>
 <header class="site-header">
   <div class="container">
-    <nav class="nav-main" aria-label="Main navigation">
+    <nav class="nav-main" aria-label="Main navigation" role="navigation">
       <div class="nav-brand">
         <%= link_to root_path, class: "logo-link" do %>
           <span class="logo"><%= @app_name || "App" %></span>
         <% end %>
-        <% if ActsAsTenant.current_tenant %>
-          <span class="tenant" aria-label="Current tenant"><%= ActsAsTenant.current_tenant.name %></span>
+        <% if ActsAsTenant.current_tenant && ActsAsTenant.current_tenant.name.present? %>
+          <span class="tenant" aria-label="<%= ActsAsTenant.current_tenant.name %>"><%= ActsAsTenant.current_tenant.name %></span>
         <% end %>
       </div>
 
-      <div class="nav-links">
+      <ul class="nav-links">
         <% if user_signed_in? %>
-          <span class="nav-user" aria-label="Logged in as"><%= current_user.email %></span>
-          <%= link_to t("navigation.sign_out"), destroy_user_session_path, method: :delete, class: "nav-link" %>
+          <li>
+            <span class="nav-user" aria-label="<%= current_user.email %>"><%= current_user.email %></span>
+          </li>
+          <li>
+            <%= link_to t("navigation.sign_out"), destroy_user_session_path, method: :delete, class: "nav-link" %>
+          </li>
         <% else %>
-          <%= link_to t("navigation.sign_in"), new_user_session_path, class: "nav-link" %>
+          <li>
+            <%= link_to t("navigation.sign_in"), new_user_session_path, class: "nav-link" %>
+          </li>
         <% end %>
-      </div>
+      </ul>
     </nav>
   </div>
 </header>

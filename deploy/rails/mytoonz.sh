@@ -8,6 +8,13 @@ set -euo pipefail
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_NAME="mytoonz"
 
+cleanup() {
+    log "Cleaning up..."
+    # Add any cleanup operations here
+}
+
+trap cleanup EXIT INT TERM
+
 if [[ -f "${BASE_DIR}/__shared.sh" ]]; then
     source "${BASE_DIR}/__shared.sh"
 else
@@ -16,117 +23,57 @@ else
 fi
 
 log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" >&2
 }
 
-check_dependencies() {
-    log "Checking dependencies..."
-    command -v node >/dev/null 2>&1 || { echo "Error: Node.js is required but not installed." >&2; exit 1; }
-    command -v npm >/dev/null 2>&1 || command -v yarn >/dev/null 2>&1 || { echo "Error: npm or yarn is required but not installed." >&2; exit 1; }
-    command -v redis-cli >/dev/null 2>&1 || { echo "Warning: Redis is not installed. Some features may not work properly." >&2; }
-}
-
-validate_environment() {
-    log "Validating environment variables..."
-    if [[ -z "${REPLICATE_API_TOKEN:-}" ]]; then
-        echo "Error: REPLICATE_API_TOKEN environment variable is required" >&2
-        exit 1
+log_error() {
+    echo "[$(date +'v yarn >/dev/null 2>&1 || { log_error "npm or yarn is required but not installed."; exit 1; }
+    command -v redis-cli >/dev/null 2>&1 || { log "Warning: Redis CLI is not installed. Some features may not work properly.""
+        log "Warning: REDIS_URL not set, using default: $REDIS_URL"
     fi
-    if [[ -z "${REDIS_URL:-}" ]]; then
-        export REDIS_URL="redis://localhost:6379/0"
-        echo "Warning: REDIS_URL not set, using default: $REDIS_URL" >&2
+    if ! [[ "${REDIS_URL}" =~ ^redis:// ]]; then
+        log_error "Invalid REDIS_URL format. Must start with redis://"
+        exit 1
     fi
 }
 
 setup_frontend() {
     log "Setting up frontend..."
-    cd "$BASE_DIR/$APP_NAME"
+    cd "$BASE_DIR/$APP_NAME" || { log_error "Failed to change directory to $BASE_DIR/$APP_NAME"; exit 1; }
 
-    # Install JavaScript dependencies
-    if [[ -f "package.json" ]]; then
+ then
         if command -v yarn >/dev/null 2>&1; then
-            yarn install
+            yarn install || { log_error "yarn install failed"; exit 1; }
         else
-            npm install
+            npm install || { log_error "npm install failed"; exit 1; }
         fi
-    fi
-
-    # Build frontend assets
-    if [[ -f "bin/rails" ]]; then
-        bin/rails assets:precompile
     else
-        echo "Warning: Rails not found, skipping asset compilation" >&2
-    fi
-}
-
-setup_database() {
-    log "Setting up database..."
-    cd "$BASE_DIR/$APP_NAME"
-
-    if [[ -f "bin/rails" ]]; then
-        bin/rails db:create
-: Rails not found, skipping database setup" >&2
-    fi
-}
-
-_DIR/$APP_NAME"
-
-    # Create Sidekiq initializer
-   config|
-  config.redis = { url: ENV['REDIS_URL'] || 'redis://localhost:6379/0' }
-end
-
-Sidekiq.configure_client do |config|
-  config.redis = { url: ENV['REDIS_URL'] || 'redis://localhost:6379/0' }
-end
-RUBY
-
-    # Create Replicate initializer
-    cat > config/initializers/replicate.rb << 'RUBY'
-REPLICATE_MODELS = {
-  comic: "black-forest-labs/flux-1.1-pro",
-  manga: "andreasjansson/flux-schnell",
-  western: "lucataco/flux-dev"
-}.freeze
-
-Replicate.configure do |config|
-  config.auth_token = EN cd "$BASE_DIR/$APP_NAME"
-
-    # Backup existing routes file
-    if [[ -f "config/routes.rb" ]]; then
-        cp config/routes.rb config/routes.rb.backup
+        log "Warning: package.json not found, skipping npm/yarn install"
     fi
 
-    # Add routes to config/routes.rb
-    cat > config/routes.rb << 'RUBY'
-Rails.application.routes.draw do
-  resources :com  resources :stories, only: [:create]
-
-  require 'sidekiq/web'
-  mount Sidekiq::Web => '/side
-}
-
-validate_input() {
-    local input="$1"
-    if [[ -z "$input" ]]; then
-        echo "Error: Input cannot be empty" >&2
-        return 1
+    # Precompile assets with error handling
+    if\"" package.json; then
+        log "Precompiling assets
+            yarn build || { log_error "Asset precompilation failed"; exit 1; }
+        else
+            npm run build || { log        log "Running database migrations..."
+        if command -v bundle >/dev/null 2>&1 && [[ -f "Gemfile" ]]; then
+            bundle exec rake db:migrate || { log_error "Database migration failed"; exit 1; }
+        else
+            log "Warning: Bundle or Gemfile not found, skipping database migrations"
+        fi
+    else
+        log "Warning: Database schema not found, skipping migrations"
     fi
-    # Basic sanitization
-    if [[ "$input" =~ [\'\"\\\|\&\;] ]]; then
-
-    fi
-    return 0
 }
 
 main() {
-    log "environment
-
-    setup_full_app "$APP_NAME"
-    setup_my_initializers
-    setup_routes
-
-    log "✓ MyToonz setup-server"
+    log "Starting MyToonz setup..."
+    check_dependencies
+    validate_environment
+    setup_frontend
+    setup_database
+    log "Setup completed successfully!"
 }
 
 main "$@"

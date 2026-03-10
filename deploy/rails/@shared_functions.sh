@@ -6,150 +6,84 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# Generate base application.scss with CSS variables
-# Usage: generate_application_scss <theme_color> <dark_mode>
+# Generate [text_color] [border_color] [spacing]
 generate_application_scss() {
   local theme_color="${1:-#0066ff}"
-  local dark_mode="${2:-true}"
+  local dark_mode="${2:-dark}"
+  local bg_color="${3:-#ffffff}"
+  local surface_color="${4:-#f8f9fa}"
+  local text_color="${5:-#1a1a1a}"
+  local border_color="${6:-#dadce0}"
+  local spacing="${7:-1rem}"
   local -r target="app/assets/stylesheets/application.scss"
 
-  # Validate color format (accepts both uppercase and lowercase hex)
-  [[ $theme_color =~ ^#[0-9A-Fa-f]{6}$ ]] || {
-    print -u2 "Error: Invalid color format. Use hex format (#RRGGBB or #rrggbb)"
+  # Validate color format (accepts hex, rgb, rgba, hsl, hsla)
+  local color_regex='^(#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})|rgb\(\s*(\d{1,3}\s*,\s*){2}\d{1,3}\s*\)|rgba\(\s*(\d{1,3}\s*,\s*){3}(0|1|0?\.\d+)\s*\)|hsl\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*\)|hsla\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*,\s*(0|1|0?\.\d+)\s*\))$'
+  [[ $theme_color =~ $color_regex ]] || {
+    print -u2 "Error: Invalid color format '$theme_color'. Use hex (#RRGGBB, #RGB), rgb(), rgba(), hsl(), or hsla()"
     return 1
   }
 
   # Validate dark_mode parameter
-  [[ $dark_mode == "true" || $dark_mode == "false" ]] || {
-    print -u2 "Error: dark_mode must be 'true' or 'false'"
+  [[ $dark_mode == "dark" || $dark_mode == "light" || $dark_mode == "auto" || $dark_mode == "system" ]] || {
+    print -u2 "Error: dark_mode must be 'dark', 'light', 'auto', or 'system', got '$dark_mode'"
     return 1
   }
 
-  # Create target directory with error handling
-  if ! mkdir -p "${target:h}"; then
-    print -u2 "Error: Failed to create directory ${target:h}"
+  # Sanitize and validate target path
+  target_dir="${target:h}"
+  [[ $target_dir == /* ]] || target_dir="${PWD}/${target_dir}"
+  target_dir="${target_dir:A}"
+
+  # Check if target directory exists and is writable
+  if [[ ! -d $target_dir ]]; then
+    if ! mkdir -p "$target_dir"; then
+      print -u2 "Error: Failed to create directory $target_dir"
+      return 1
+    fi
+  elif [[ ! -w $target_dir ]]; then
+    print -u2 "Error: Directory $target_dir is not writable"
     return 1
   fi
 
-  # Generate CSS content
-  local css_content="/* Generated per master.yml v206 */
-:root {
-  --primary: ${theme_color};
-  --bg: #ffffff;
-  --surface: #f8f9fa;
-  --text: #1a1a1a;
-  --border: #dadce0;
-  --spacing: 1rem;
-}"
+  # Check if target file already exists
+  if [[ -f $target ]]; then
+    print -u2 "Error: Target file $target already exists. Refusing to overwrite."
+    return 1
+  fi
 
-  if [[ $dark_mode == "true" ]]; then
-    css_content+="
+  # Generate CSS content using printf for safety
+  local css_content
+  css_content=$(printf '/* Generated per master.yml v206 */
+:root {
+  --primary: %s;
+  --bg: %s;
+  --surface: %s;
+  --text: %s;
+  --border: %s;
+  --spacing: %s;
+}
+' "$theme_color" "$bg_color" "$surface_color" "$text_color" "$border_color" "$spacing")
+
+  if [[ $dark_mode == "dark" || $dark_mode == "auto" || $dark_mode == "system" ]]; then
+    css_content+=$(printf '
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1a1a1a;
-    --surface: #2a2a2a;
-    --text: #ffffff;
-    --border: #3a3a3a;
+    --bg: %s;
+    --surface: %s;
+    --text: %s;
+    --border: %s;
   }
-}"
-  fi
-
-  # Write to file with error handling
-  if ! print -r -- "$css_content" > "$target"; then
-    print -u2 "Error: Failed to write to $target"
-    return 1
-  fi
-
-  return 0
 }
-
-# Generate secure controller with authentication + authorization
-# Usage: generate_secure_controller <model_name>
-generate_secure_controller() {
-  local name=$1
-  [[ -z $name ]] && { print -u2 "Error: Model name required"; return 1 }
-
-  # Validate model name format (allows mixed case and underscores)
-  [[ $name =~ ^[A-Za-z][A-Za-z0-9_]*$ ]] || {
-    print -u2 "Error: Invalid model name format. Must start with letter and contain only letters, numbers, and underscores"
-    return 1
-  }
-
-  local model=${name:l}
-  local model_class=${(C)name}
-  local -r target="app/controllers/${model}_controller.rb"
-
-  # Create target directory with error handling
-  if ! mkdir -p "${target:h}"; then
-    print -u2 "Error: Failed to create directory ${target:h}"
-    return 1
+' "#1a1a1a" "#2d2d2d" "#ffffff" "#404040")
   fi
 
-  # Generate controller content
-  local controller_content="class ${model_class}Controller < ApplicationController
-  before_action :authenticate_user!, except: [:index, :show]
-  before_action :set_${model}, only: [:show, :edit, :update, :destroy]
-  before_action :authorize_user!, only: [:edit, :update, :destroy]
-
-  def index
-    @pagy, @${model}s = pagy(${model_class}.all)
-  end
-
-  def show
-  end
-
-  def new
-    @${model} = ${model_class}.new
-  end
-
-  def create
-    @${model} = current_user.${model}s.build(${model}_params)
-
-    if @${model}.save
-      redirect_to @${model}, notice: '${model_class} was successfully created.'
-    else
-      render :new
-    end
-  end
-
-  def edit
-  end
-
-  def update
-    if @${model}.update(${model}_params)
-      redirect_to @${model}, notice: '${model_class} was successfully updated.'
-    else
-      render :edit
-    end
-  end
-
-  def destroy
-    @${model}.destroy
-    redirect_to ${model}s_url, notice: '${model_class} was successfully destroyed.'
-  end
-
-  private
-
-  def set_${model}
-    @${model} = ${model_class}.find(params[:id])
-  end
-
-  def ${model}_params
-    params.require(:${model}).permit(:title, :content) # Update with actual attributes
-  end
-
-  def authorize_user!
-    return if current_user.admin? || @${model}.user == current_user
-    redirect_to root_path, alert: 'Not authorized to perform this action.'
-  end
-end"
-
-  # Write to file with error handling
-  if ! print -r -- "$controller_content" > "$target"; then
+  # Write content to file
+  if ! printf '%s\n' "$css_content" > "$target"; then
     print -u2 "Error: Failed to write to $target"
     return 1
   fi
 
-  return 0
+  print "Successfully generated $target"
 }
 ```
