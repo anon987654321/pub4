@@ -86,6 +86,12 @@ module MASTER
       conventions = ConventionExtractor.extract(root: MASTER.root) rescue ""
       sections << conventions unless conventions.empty?
 
+      # Inject learned project-specific smells if any
+      if defined?(LearnedSmells)
+        frag = LearnedSmells.to_prompt_fragment
+        sections << frag unless frag.empty?
+      end
+
       # Zsh native patterns: forbid legacy forks in shell code
       sections << ZshPatternInjector.prompt_section
 
