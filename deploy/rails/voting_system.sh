@@ -31,8 +31,8 @@ install_voting_gems() {
     cat >> Gemfile << 'EOF'
 
 # Voting and Reviews
-gem 'acts_as_votable'
-gem 'public_activity'
+gem 'acts_as_votable', '~> 0.12.1'
+gem 'public_activity', '~> 2.0.0'
 EOF
     bundle install
   fi
@@ -44,8 +44,8 @@ generate_voting_models() {
     rating:integer \
     title:string \
     body:text \
-    helpful_count:integer \
-    verified_purchase:boolean
+    helpful_count:integer:default=0 \
+    verified_purchase:boolean:default=false
 
   bin/rails generate migration AddVotableToPosts
 
@@ -85,7 +85,7 @@ class VotesController < ApplicationController
     if @votable.unvote_by(current_user)
       respond_to_vote('vote removed')
     else
-      respond_to_vote('vote not found', :unprocessable_entity)
+      respond_to_vote('already voted', :unprocessable_entity)
     end
   end
 
@@ -93,19 +93,16 @@ class VotesController < ApplicationController
 
   def set_votable
     @votable = params[:votable_type].constantize.find(params[:votable_id])
-  rescue NameError
-    render json: { error: 'Invalid votable type' }, status: :unprocessable_entity
-  end
-
-  def update_karma(user, amount)
-    user.update(karma: user.karma + amount)
+  rescue
+    respond_to_vote('resource not found', :not_found)
   end
 
   def respond_to_vote(message, status = :ok)
-    respond_to do |format|
-      format.json { render json: { message: message }, status: status }
-      format.html { redirect_back fallback_location: root_path, notice: message }
-    end
+    render json: { message: message }, status: status
+  end
+
+  def update_karma(user, delta)
+    user.update(karma: user.karma + delta)
   end
 end
 EOF
@@ -115,11 +112,25 @@ write_reviews_controller() {
   cat > app/controllers/reviews_controller.rb << 'EOF'
 class ReviewsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_review, only: [:show, :edit, :update, :destroy, :mark_helpful]
+  before_action :set_review, only: [:show, :edit, :update, :destroy]
+
+  def index
+    @reviews = Review.includes(:user).order(created_at: :desc).page(params[:page]).per(10)
+  end
+
+  def show
+  end
+
+  def new
+    @review = Review.new
+  end
+
+  def edit
+  end
 
   def create
-    @review = current_user.reviews.new(review_params)
-    @review.verified_purchase = current_user.purchased?(@review.product) if @review.respond_to?(:product)
+    @review = Review.new(review_params)
+    @review.user = current_user
 
     if @review.save
       redirect_to @review, notice: 'Review was successfully created.'
@@ -128,13 +139,17 @@ class ReviewsController < ApplicationController
     end
   end
 
-  def mark_helpful
-    if current_user.voted_for?(@review)
-      redirect_to @review, alert: 'You have already voted for this review.'
+  def update
+    if @review.update(review_params)
+      redirect_to @review, notice: 'Review was successfully updated.'
     else
-      @review.upvote_by(current_user)
-      redirect_to @review, notice: 'Marked as helpful.'
+      render :edit
     end
+  end
+
+  def destroy
+    @review.destroy
+    redirect_to reviews_url, notice: 'Review was successfully destroyed.'
   end
 
   private
@@ -144,7 +159,7 @@ class ReviewsController < ApplicationController
   end
 
   def review_params
-    params.require(:review).permit(:rating, :title, :body, :product_id)
+    params.require(:review).permit(:user_id, :rating, :title, :body, :helpful_count, :verified_purchase)
   end
 end
 EOF
@@ -153,82 +168,78 @@ EOF
 create_voting_helpers() {
   cat > app/helpers/votes_helper.rb << 'EOF'
 module VotesHelper
-  def vote_button(votable, type: :upvote)
-    return unless user_signed_in?
+  def current_user_voted?(votable)
+    votable.votes.where(user_id: current_user.id).exists?
+  end
 
-    button_to send("#{type}_vote_path",
-                  votable_type: votable.class.name,
-                  votable_id: votable.id),
-              method: :post,
-              class: "vote-btn #{type}",
-              data: { turbo: false } do
-      content_tag(:span, "#{type.to_s.titleize}")
+  def vote_button(votable)
+    if current_user_voted?(votable)
+      button_tag "Unvote", type: 'button', class: 'btn btn-danger', data: { toggle: 'modal', target: '#unvoteModal' }
+    else
+      button_tag "Upvote", type: 'button', class: 'btn btn-primary', data: { toggle: 'modal', target: '#voteModal' }
     end
   end
 end
 EOF
 }
 
-add_voting_routes() {
+add_voting_routes {
   cat >> config/routes.rb << 'EOF'
-
-  resources :votes, only: [] do
-    post :upvote, on: :collection
-    post :downvote, on: :collection
-    delete :unvote, on: :collection
-  end
-
-  resources :reviews do
-    member do
-      post :mark_helpful
-    end
-  end
+resources :reviews, only: [:index, :show, :new, :create, :edit, :update, :destroy]
 EOF
 }
 
 create_voting_stimulus() {
-  cat > app/javascript/controllers/voting_controller.js << 'EOF'
+  mkdir -p app/javascript/controllers
+  cat > app/javascript/controllers/vote_controller.js.erb << 'EOF'
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["count"]
-
-  connect() {
-    this.csrfToken = document.querySelector("[name='csrf-token']").content
+  static values = {
+    votableId: String,
+    votableType: String
   }
 
-  async vote(event) {
-    event.preventDefault()
-
-    const form = event.target
-    const url = form.action
-    const method = form.method
-
-    try {
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': this.csrfToken
-        },
-        body: JSON.stringify({})
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        this.updateCount(data.count)
+  upvote() {
+    fetch(`/votes/${this.votableType}/${this.votableId}/upvote`, {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        alert(data.message)
       }
-    } catch (error) {
-      console.error('Vote error:', error)
-    }
+    })
   }
 
-  updateCount(count) {
-    if (this.hasCountTarget) {
-      this.countTarget.textContent = count
-    }
+  downvote() {
+    fetch(`/votes/${this.votableType}/${this.votableId}/downvote`, {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        alert(data.message)
+      }
+    })
+  }
+
+  unvote() {
+    fetch(`/votes/${this.votableType}/${this.votableId}/unvote`, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        alert(data.message)
+      }
+    })
   }
 }
 EOF
 }
+EOF
 ```

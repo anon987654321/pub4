@@ -1,16 +1,20 @@
 ```erb
-<% app_name = @app_name || "App" %>
-
 <footer class="site-footer" role="contentinfo" aria-label="Site footer">
-  <div class="container">
-    <div class="footer-content">
-      <p class="footer-text" role="text">
-        &copy; <%= Time.now.year %> <%= app_name %>.
-        <%= link_to "Privacy", privacy_path, class: "footer-link" %> &middot;
-        <%= link_to "Terms", terms_path, class: "footer-link" %> &middot;
-        <%= link_to "About", about_path, class: "footer-link" %>
-      </p>
-    </div>
+  <div class="footer-content">
+    <p class="footer-text">
+      <small>
+        <%= raw t('footer.copyright', year: Time.current.year, app_name: Rails.application.class.module_parent_name) %>
+        <% links = [
+          { name: t('footer.privacy'), path: privacy_path },
+          { name: t('footer.terms'), path: terms_path },
+          { name: t('footer.about'), path: about_path }
+        ] %>
+        <% links.each_with_index do |link, index| %>
+          <%= link_to link[:name], link[:path], class: "footer-link", aria: { label: link[:name] } %>
+          <%= "·" if index < links.size - 1 %>
+        <% end %>
+      </small>
+    </p>
   </div>
 </footer>
 ```

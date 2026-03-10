@@ -1,7 +1,17 @@
-```
+```erb
+<% flash_types_mapping = { notice: 'success', alert: 'danger', error: 'danger' } %>
+
 <% flash.each do |type, message| %>
-  <div class="flash flash-<%= type %>" role="alert" data-controller="flash" data-auto-dismiss="true">
-    <%= message %>
+  <%
+    type_class = flash_types_mapping.fetch(type.to_sym, type.to_s)
+  %>
+  <div class="flash flash-<%= type_class %>" role="alert" aria-live="polite" data-controller="flash" data-flash-auto-dismiss-value="true">
+    <div class="flash-content">
+      <%= sanitize(message) %>
+    </div>
+    <button type="button" class="flash-dismiss" data-action="flash#dismiss" aria-label="Dismiss message">
+      &times;
+    </button>
   </div>
 <% end %>
 ```

@@ -1,10 +1,11 @@
 ```html
-<html lang="<%= I18n.locale || 'en' %>" dir="ltr">
+<!DOCTYPE html>
+<html lang="<%= I18n.locale || I18n.default_locale || 'en' %>" dir="<%= rtl_locale?(I18n.locale) ? 'rtl' : 'ltr' %>">
 <head>
   <%= render "shared/meta" %>
   <%= yield :head %>
 </head>
-<body data-controller="<%= controller_name %>" class="<%= body_classes.presence || "#{controller_name} #{action_name}" %>">
+<body data-controller="<%= controller_name %>" class="<%= body_class %>">
   <%= render "shared/skip_links" %>
   <%= render "shared/nav" %>
 

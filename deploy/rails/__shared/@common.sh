@@ -18,8 +18,12 @@ log() {
 }
 
 command_exists() {
-    command -v "$1" >/dev/null 2>&1 || {
-        log "ERROR: $1 is required but not installed"
+    command -v "$1" >/dev/null 2>&1
+}
+
+validate_port() {
+    [[ "$1" =~ ^[0-9]+$ && "$1" -ge 1024 && "$1" -le 65535 ]] || {
+        log "ERROR: Invalid port number: $1"
         exit 1
     }
 }
@@ -29,18 +33,7 @@ command_exists() {
 get_app_port() {
     local app_name="$1"
     local master_json="${SCRIPT_DIR}/../master.json"
-
-    # Default ports (fallback if master.json not found or parsing fails)
-    typeset -A default_ports
-    default_ports=(
-        [brgen]=10001
-        [pubattorney]=10002
-        [bsdports]=10003
-        [hjerterom]=10004
-        [privcam]=10005
-        [amber]=10006
-        [blognet]=10007
-    )
+    local port
 
     # Validate app_name
     if [[ -z "$app_name" ]]; then
@@ -48,32 +41,25 @@ get_app_port() {
         exit 1
     fi
 
-    # Try to parse from master.json using jq if available
+    # Try to parse from master.json using jq
     if [[ -f "$master_json" ]]; then
         if command_exists jq; then
-            local port=$(jq -e --arg app "$app_name" '.[$app].port' "$master_json" 2>/dev/null || echo "")
-            if [[ -n "$port" && "$port" != "null" && "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 ]]; then
+            port=$(jq -e --arg app "$app_name" '.[$app].port' "$master_json" 2>/dev/null || echo "")
+            if [[ -n "$port" && "$port" != "null" ]]; then
+                validate_port "$port"
                 echo "$port"
                 return 0
+            else
+                log "ERROR: Port not found for application '$app_name' in master.json"
+                exit 1
             fi
         else
-            # Fallback to grep/sed if jq not available
-            local port=$(grep -E "\"${app_name}\".*\"port\"" "$master_json" | \
-                         sed -E 's/.*"port":[[:space:]]*([0-9]+).*/\1/')
-            if [[ -n "$port" && "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 ]]; then
-                echo "$port"
-                return 0
-            fi
+            log "ERROR: jq is required to parse master.json but not installed"
+            exit 1
         fi
+    else
+        log "ERROR: master.json not found at $master_json"
+        exit 1
     fi
-
-    # Fallback to default ports
-    if [[ -n "${default_ports[$app_name]}" ]]; then
-        echo "${default_ports[$app_name]}"
-        return 0
-    fi
-
-    log "ERROR: Could not determine port for application '$app_name'"
-    exit 1
 }
 ```

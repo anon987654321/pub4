@@ -1,3 +1,5 @@
+
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -20,7 +22,7 @@ main() {
     fi
 
     # Check port availability
-    if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
+    if lsof -i :$PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
         echo "Error: Port $PORT is already in use" >&2
         exit 1
     fi
@@ -81,84 +83,534 @@ EOF
 EOF
     fi
 
-    # Generate Post scaffold with Hotwire
-    rails generate scaffold Post title:string content:text
-
-    # Install Stimulus
-    bin/rails stimulus:install
-
-    # Generate modal controller
-    cat > app/javascript/controllers/modal_controller.js <<EOF
-import { Controller } from "@hotwired/stimulus"
-
-export default class extends Controller {
-  static targets = ["modal"]
-
-  connect() {
-    document.addEventListener("turbo:before-render", this.beforeRender.bind(this))
-  }
-
-  disconnect() {
-    document.removeEventListener("turbo:before-render", this.beforeRender.bind(this))
-  }
-
-  beforeRender(event) {
-    if (this.modalTarget) {
-      this.modalTarget.showModal()
-    }
-  }
-
-  show() {
-    this.modalTarget.showModal()
-  }
-
-  hide() {
-    this.modalTarget.close()
-  }
-}
-EOF
-
-    # Update posts index view with modal
-    cat > app/views/posts/index.html.erb <<EOF
-<div data    <div id="post_modal_content"></div>
-    <button data-action="modal#hide">Close</button>
-  </dialog>
-
-  <h1>Posts</h1>
-
-  <div id="posts">
-    <%= render @posts %>
-  </div>
-
-  <%= link_to "New post", new_post_path,
-              data: { turbo_frame: "post_modal_content" },
-              class: "rounded-lg-block font-medium cursor-pointer" %>
-</div>
-EOF
-
-    # Update.html.erb <<EOF
-<div id="<%= dom_id post %>"my-5">
-    <strong class="block font-medium mb-1 <p class="my-5">
-    <strong class="block font  </p>
-
-  <div class="flex space-x-2">
- %>
-    <%= link_to "Edit", edit_post_path(post),
-                class: "rounded-lg py-2 px-4 bg-gray-100 inline-block font-medium" %>
-    <%= button_to "Delete", post, method: :delete,
-                  class: "rounded-lg py-2 px-4 bg-red-100 text-red-700 inline-block font-medium cursor-pointer",
-                  form: { data: { turbo_confirm: "Are you sure?" } } %>
-  </div>
-</div>
-EOF
-
-    # Run migrations
+    # Generate Pos
+    bin/rails generate controller Posts index show new edit
+    bin/rails generate model Post title:string body:text
     bin/rails db:migrate
-
-    echo "App generated successfully!"
-    echo "Run: cd $APP_NAME && bin/dev"
-    echo "Visit: http://localhost:$PORT"
-}
-
-main "$@"
-```
+    bin/rails generate controller Sessions new create destroy
+    bin/rails generate model User name:string email:string password_digest:string
+    bin/rails db:migrate
+    bin/rails generate controller Pages home
+    bin/rails generate controller StaticPages home
+    bin/rails generate controller Admin::Dashboard index
+    bin/rails generate controller Admin::Users index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Sessions new create destroy
+    bin/rails generate controller Admin::Users index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Dashboard index
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin/rails generate controller Admin::Posts index show new edit
+    bin
