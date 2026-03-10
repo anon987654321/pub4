@@ -252,7 +252,7 @@ module MASTER
     def all_aliases     = ALIAS_MAP
     def primary_commands = COMMANDS.keys
     def groups           = COMMANDS.group_by { |_, v| v[:group] }.transform_values { |cmds| cmds.map(&:first) }
-    def help_commands    = groups
+    def help_commands    = COMMANDS
     def autocomplete_commands = primary_commands.map(&:to_s)
   end
 end
