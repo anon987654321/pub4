@@ -59,7 +59,16 @@ module MASTER
       puts "  Grounded depth: #{@grounded_depth}"
       puts
 
+      if defined?(CrossFileAnalyzer)
+        cross_findings = CrossFileAnalyzer.analyze(ordered)
+        if cross_findings.any?
+          puts UI.dim("cross-file: #{cross_findings.size} finding(s)")
+          cross_findings.each { |f| puts UI.warn("  [#{f[:smell]}] #{f[:message]}") }
+        end
+      end
+
       bar = UI.progress(ordered.size * rounds)
+      violation_counts = []
 
       rounds.times do |round_idx|
         round_num = round_idx + 1
@@ -74,6 +83,12 @@ module MASTER
           result[:round] = round_num
           @results << result
           round_improvements += 1 if result[:improved]
+        end
+
+        violation_counts << round_improvements
+        if converged?(violation_counts)
+          puts UI.dim("Converged: improvement below #{(CONVERGENCE_THRESHOLD * 100).round}% over last #{CONVERGENCE_WINDOW} iterations -- stopping")
+          break
         end
 
         break if over_budget?
