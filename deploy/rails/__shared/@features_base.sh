@@ -1,106 +1,106 @@
 #!/bin/bash
 
-# Base generator functions
+# Configuration
+RAILS_ROOT="${RAILS_ROOT:-$(pwd)}"
+ROUTES_FILE="${ROUTES_FILE:-config/routes.rb}"
 
+# Validation functions
+validate_rails_name() {
+    local name="$1"
+    if [[ ! "$name" =~ ^[A-Z][A-Za-z0-9]*$ ]]; then
+        echo "Error: '$name' must be PascalCase and start with uppercase letter" >&2
+        return 1
+    fi
+    return 0
+}
+
+validate_file_exists() {
+    local file="$1"
+    if [[ ! -f "$file" ]]; then
+        echo "Error: File '$file' does not exist" >&2
+        return 1
+    fi
+    return 0
+}
+
+# Base generator functions
 generate_models() {
-    local models=($@)
+    local models=("$@")
     for model in "${models[@]}"; do
-        echo "Generating model: $model"
-        # Rails model generation logic here
+        if validate_rails_name "$model"; then
+            rails generate model "$model"
+        fi
     done
 }
 
 generate_model_file() {
-    local model_name=$1
-    echo "Generating model file for: $model_name"
-    # Rails model file generation logic here
+    local model_name="$1"
+    if validate_rails_name "$model_name"; then
+        rails generate model "$model_name"
+    fi
 }
 
 generate_controller_file() {
-    local controller_name=$1
-    echo "Generating controller file for: $controller_name"
-    # Rails controller file generation logic here
+    local controller_name="$1"
+    if validate_rails_name "$controller_name"; then
+        echo "Generating controller file for: $controller_name"
+        rails generate controller "$controller_name"
+    fi
 }
 
 generate_stimulus_ts() {
-    local controller_name=$1
+    local controller_name="$1"
+    if ! validate_rails_name "$controller_name"; then
+        return 1
+    fi
+
+    if [[ ! "$controller_name" =~ Controller$ ]]; then
+        echo "Error: '$controller_name' must end with 'Controller'" >&2
+        return 1
+    fi
+
+    local snake_case_name=$(echo "$controller_name" | sed 's/Controller$//' | sed 's/\([a-z0-9]\)\([A-Z]\)/\1_\2/g' | tr '[:upper:]' '[:lower:]')
+    local target_dir="app/javascript/controllers"
+
+    if [[ ! -d "$target_dir" ]]; then
+        mkdir -p "$target_dir" || {
+            echo "Error: Failed to create directory '$target_dir'" >&2
+            return 1
+        }
+    fi
+
     echo "Generating Stimulus TypeScript file for: $controller_name"
-    # Stimulus TypeScript file generation logic here
+    cat > "$target_dir/${snake_case_name}_controller.ts" << EOF
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  connect() {}
+}
+EOF
 }
 
-generate_view_component() {
-    local component_name=$1
-    echo "Generating ViewComponent: $component_name"
-    # ViewComponent generation logic here
-}
+# Usage
+if [[ $# -eq 0 ]]; then
+    echo "Usage: $0 <command> [arguments...]" >&2
+    echo "Available commands: generate-models, generate-controller, generate-stimulus-ts" >&2
+    exit 1
+fi
 
-add_routes() {
-    local routes_file="config/routes.rb"
-    echo "Adding routes: $@ to $routes_file"
-    # Route addition logic here
-}
-
-setup_airbnb() {
-    # Models
-    generate_models Booking Review Availability HostProfile
-
-    # TypeScript Stimulus calendar controller
-    generate_stimulus_ts calendar_controller
-
-    # BookingsController
-    generate_controller_file BookingsController
-
-    # ViewComponent
-    generate_view_component BookingCalendarComponent
-
-    # Routes
-    add_routes "resources :bookings do
-        member do
-            get 'calendar'
-        end
-    end"
-}
-
-setup_messenger() {
-    # Models
-    generate_models Conversation Message MessageReceipt
-
-    # TypeScript Stimulus message-composer controller
-    generate_stimulus_ts message_composer_controller
-
-    # Typing indicators
-    # Logic for typing indicators via fetch API
-
-    # Auto-resize textarea
-    # Logic for auto-resizing textarea
-
-    # Routes
-    add_routes "resources :messages do
-        collection do
-            post 'typing'
-        end
-    end"
-}
-
-setup_momondo() {
-    # Models
-    generate_models FlightSearch HotelSearch PriceAlert
-
-    # TypeScript Stimulus travel-tabs controller
-    generate_stimulus_ts travel_tabs_controller
-
-    # Tab switching
-    # Logic for tab switching with active/inactive classes
-
-    # Routes
-    add_routes "resources :searches"
-}
-
-# Main function to run setups
-main() {
-    setup_airbnb
-    setup_messenger
-    setup_momondo
-}
-
-main
+case "$1" in
+    generate-models)
+        shift
+        generate_models "$@"
+        ;;
+    generate-controller)
+        shift
+        generate_controller_file "$1"
+        ;;
+    generate-stimulus-ts)
+        shift
+        generate_stimulus_ts "$1"
+        ;;
+    *)
+        echo "Unknown command: $1" >&2
+        exit 1
+        ;;
+esac

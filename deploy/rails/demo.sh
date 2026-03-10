@@ -1,22 +1,44 @@
-#!/usr/bin/env zsh
+```bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # Demo Rails 8 app generator - Simple CRUD with Hotwire
 # Port: 10008
 # Domain: demo.local (or configure as needed)
 
-APP_NAME="demo"
-PORT=10008
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly APP_NAME="demo"
+readonly PORT=10008
 
-rails new $APP_NAME \
-  --database=postgresql \
-  --css=tailwind \
-  --javascript=importmap
+main() {
+    local app_dir="${SCRIPT_DIR}/${APP_NAME}"
 
-cd $APP_NAME
+    # Check if app directory already exists
+    if [[ -d "$app_dir" ]]; then
+        echo "Error: Directory $app_dir already exists" >&2
+        exit 1
+    fi
 
-# Configure database
-cat > config/database.yml <<EOF
+    # Check port availability
+    if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo "Error: Port $PORT is already in use" >&2
+        exit 1
+    fi
+
+    rails new "$APP_NAME" \
+        --database=postgresql \
+        --css=tailwind \
+        --javascript=importmap
+
+    cd "$APP_NAME"
+
+    # Backup existing database.yml if present
+    if [[ -f config/database.yml ]]; then
+        cp -f config/database.yml config/database.yml.backup
+    fi
+
+    # Configure database
+    cat > config/database.yml <<EOF
 default: &default
   adapter: postgresql
   encoding: unicode
@@ -37,93 +59,106 @@ production:
   password: <%= ENV["${APP_NAME^^}_DATABASE_PASSWORD"] %>
 EOF
 
-# Add Solid Queue, Cache, Cable
-bundle add solid_queue solid_cache solid_cable
+    # Create databases
+    bin/rails db:create
 
-# Configure for production
-cat >> config/application.rb <<EOF
+    # Add Solid Queue, Cache, Cable
+    bundle add solid_queue solid_cache solid_cable
+
+    # Backup existing application.rb if present
+    if [[ -f config/application.rb ]]; then
+        cp -f config/application.rb config/application.rb.backup
+    fi
+
+    # Configure for production
+    if ! grep -q "config.active_job.queue_adapter" config/application.rb; then
+        cat >> config/application.rb <<EOF
 
     # Solid* stack
     config.active_job.queue_adapter = :solid_queue
     config.cache_store = :solid_cache_store
     config.action_cable.adapter = :solid_cable
 EOF
+    fi
 
-# Generate Post scaffold with Hotwire
-rails generate scaffold Post title:string body:text
+    # Generate Post scaffold with Hotwire
+    rails generate scaffold Post title:string content:text
 
-# Add Turbo Frame to posts index
-cat > app/views/posts/index.html.erb <<'EOF'
-<div class="w-full">
-  <%= turbo_frame_tag "posts" do %>
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="font-bold text-4xl">Posts</h1>
-      <%= link_to "New post", new_post_path, class: "rounded-lg py-3 px-5 bg-blue-600 text-white", data: { turbo_frame: "modal" } %>
-    </div>
+    # Install Stimulus
+    bin/rails stimulus:install
 
-    <div id="posts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <%= render @posts %>
-    </div>
-  <% end %>
+    # Generate modal controller
+    cat > app/javascript/controllers/modal_controller.js <<EOF
+import { Controller } from "@hotwired/stimulus"
 
-  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <%= turbo_frame_tag "modal" %>
+export default class extends Controller {
+  static targets = ["modal"]
+
+  connect() {
+    document.addEventListener("turbo:before-render", this.beforeRender.bind(this))
+  }
+
+  disconnect() {
+    document.removeEventListener("turbo:before-render", this.beforeRender.bind(this))
+  }
+
+  beforeRender(event) {
+    if (this.modalTarget) {
+      this.modalTarget.showModal()
+    }
+  }
+
+  show() {
+    this.modalTarget.showModal()
+  }
+
+  hide() {
+    this.modalTarget.close()
+  }
+}
+EOF
+
+    # Update posts index view with modal
+    cat > app/views/posts/index.html.erb <<EOF
+<div data    <div id="post_modal_content"></div>
+    <button data-action="modal#hide">Close</button>
+  </dialog>
+
+  <h1>Posts</h1>
+
+  <div id="posts">
+    <%= render @posts %>
+  </div>
+
+  <%= link_to "New post", new_post_path,
+              data: { turbo_frame: "post_modal_content" },
+              class: "rounded-lg-block font-medium cursor-pointer" %>
+</div>
+EOF
+
+    # Update.html.erb <<EOF
+<div id="<%= dom_id post %>"my-5">
+    <strong class="block font-medium mb-1 <p class="my-5">
+    <strong class="block font  </p>
+
+  <div class="flex space-x-2">
+ %>
+    <%= link_to "Edit", edit_post_path(post),
+                class: "rounded-lg py-2 px-4 bg-gray-100 inline-block font-medium" %>
+    <%= button_to "Delete", post, method: :delete,
+                  class: "rounded-lg py-2 px-4 bg-red-100 text-red-700 inline-block font-medium cursor-pointer",
+                  form: { data: { turbo_confirm: "Are you sure?" } } %>
   </div>
 </div>
 EOF
 
-# Update post partial for Turbo
-cat > app/views/posts/_post.html.erb <<'EOF'
-<%= turbo_frame_tag dom_id(post), class: "border rounded-lg p-4 shadow hover:shadow-lg transition" do %>
-  <h2 class="font-bold text-xl mb-2"><%= post.title %></h2>
-  <p class="text-gray-700 mb-4"><%= post.body&.truncate(100) %></p>
-  
-  <div class="flex gap-2">
-    <%= link_to "Show", post, class: "text-blue-600 hover:underline" %>
-    <%= link_to "Edit", edit_post_path(post), class: "text-green-600 hover:underline" %>
-    <%= button_to "Delete", post, method: :delete, class: "text-red-600 hover:underline" %>
-  </div>
-<% end %>
-EOF
+    # Run migrations
+    bin/rails db:migrate
 
-# Setup database
-rails db:create db:migrate
+    echo "App generated successfully!"
+    echo "Run: cd $APP_NAME && bin/dev"
+    echo "Visit: http://localhost:$PORT"
+}
 
-# Create systemd/rcctl service file
-cat > ${APP_NAME}.service <<EOF
-#!/bin/sh
-# OpenBSD rc.d service for $APP_NAME
-
-daemon="puma"
-daemon_flags="-C config/puma.rb -p $PORT"
-
-. /etc/rc.d/rc.subr
-
-rc_cmd $1
-EOF
-
-# Configure Puma for production
-cat > config/puma.rb <<EOF
-threads_count = ENV.fetch("RAILS_MAX_THREADS", 5)
-threads threads_count, threads_count
-
-port ENV.fetch("PORT", $PORT)
-environment ENV.fetch("RAILS_ENV", "development")
-
-pidfile ENV.fetch("PIDFILE", "tmp/pids/server.pid")
-
-plugin :tmp_restart
-EOF
-
-echo ""
-echo "✓ Demo app created"
-echo ""
-echo "Run locally:"
-echo "  cd $APP_NAME"
-echo "  rails server -p $PORT"
-echo ""
-echo "Deploy to VPS:"
-echo "  Copy to /var/www/$APP_NAME"
-echo "  Configure PostgreSQL"
-echo "  Add to httpd.conf reverse proxy"
-echo "  Enable service: rcctl enable ${APP_NAME}"
+main "$@"
+```

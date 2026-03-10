@@ -30,6 +30,14 @@
   api: openrouter
 
 # --- STRONG (default + council arbiter) ---
+- id: anthropic/claude-sonnet-4-6
+  alias: claude-sonnet-4.6
+  tier: strong
+  input_cost: 3.00
+  output_cost: 15.00
+  context_window: 200000
+  provider: anthropic
+  api: replicate
 
 - id: deepseek-ai/deepseek-v3.1
   alias: deepseek-v3.1

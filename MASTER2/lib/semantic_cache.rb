@@ -39,7 +39,7 @@ module MASTER
         entry = {
           version: CACHE_VERSION,
           key: key,
-          prompt_hash: Digest::SHA256.hexdigest(prompt.strip.downcase),
+          prompt_hash: Digest::SHA256.hexdigest(prompt.to_s.encode("UTF-8", invalid: :replace, undef: :replace).strip.downcase),
           prompt_preview: prompt[0, 200],
           tier: tier&.to_s,
           response: response_data,
@@ -97,7 +97,7 @@ module MASTER
       end
 
       def cache_key(prompt)
-        Digest::SHA256.hexdigest(prompt.strip.downcase)[0, 16]
+        Digest::SHA256.hexdigest(prompt.to_s.encode("UTF-8", invalid: :replace, undef: :replace).strip.downcase)[0, 16]
       end
 
       def entry_path(key)
@@ -114,7 +114,7 @@ module MASTER
         return nil if expired?(entry)
 
         # Verify exact hash match
-        return nil unless entry[:prompt_hash] == Digest::SHA256.hexdigest(prompt.strip.downcase)
+        return nil unless entry[:prompt_hash] == Digest::SHA256.hexdigest(prompt.to_s.encode("UTF-8", invalid: :replace, undef: :replace).strip.downcase)
 
         # Update hit count
         entry[:hit_count] += 1

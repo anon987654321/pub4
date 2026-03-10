@@ -22,7 +22,7 @@ module MASTER
     def load_files(paths)
       paths.filter_map do |p|
         next unless File.file?(p) && p.end_with?(".rb")
-        { path: p, lines: File.readlines(p, chomp: true) }
+        { path: p, lines: File.readlines(p, chomp: true, encoding: "utf-8:utf-8") }
       rescue StandardError
         nil
       end

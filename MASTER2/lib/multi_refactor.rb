@@ -78,7 +78,7 @@ module MASTER
         ordered.each do |file|
           break if over_budget?
 
-          bar.advance
+          bar&.advance
           result = refactor_file(file)
           result[:round] = round_num
           @results << result
@@ -160,7 +160,7 @@ module MASTER
       files.each do |file|
         @graph[file] = []
         content = begin
-          File.read(file)
+          File.read(file, encoding: "utf-8:utf-8")
         rescue StandardError
           next
         end
@@ -238,7 +238,7 @@ module MASTER
     end
 
     def refactor_file(file)
-      content = File.read(file)
+      content = File.read(file, encoding: "utf-8:utf-8")
       ext = File.extname(file)
       basename = File.basename(file)
 
