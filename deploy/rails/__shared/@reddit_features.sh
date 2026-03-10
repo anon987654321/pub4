@@ -11,13 +11,28 @@ log() {
 
 generate_comment_model() {
     log "Generating Comment model..."
-    bin/rails generate model Comment content:text user:references commentable:references{polymorphic} parent_id:integer cached_score:integer:default:0 cached_upvotes:integer:default:0 cached_downvotes:integer:default:0 cached_depth:integer:default:0
 
-    # Add foreign key constraint for parent_id
-    cat <<'EOF' > db/migrate/$(date +%Y%m%d%H%M%S)_add_foreign_key_to_comments_parent.rb
-class AddForeignKeyToCommentsParent < ActiveRecord::Migration[7.0]
+    # Single migration with all constraints
+    local migration_timestamp=$(date +%Y%m%d%H%M%S)
+    cat <<EOF > db/migrate/${migration_timestamp}_create_comments.rb
+class CreateComments < ActiveRecord::Migration[7.0]
   def change
-    add_foreign_key :comments, :comments, column: :parent_id
+    create_table :comments do |t|
+      t.text :content
+      t.references :user, null: false, foreign_key: true
+      t.references :commentable, polymorphic: true, null: false
+      t.references :parent, foreign_key: { to_table: :comments }
+      t.integer :cached_score, default: 0
+      t.integer :cached_upvotes, default: 0
+      t.integer :cached_downvotes, default: 0
+      t.integer :cached_depth, default: 0
+
+      t.timestamps
+    end
+
+    add_index :comments, [:commentable_type, :commentable_id]
+    add_index :comments, :parent_id
+    add_index :comments, :cached_score
   end
 end
 EOF
@@ -25,28 +40,46 @@ EOF
 
 generate_vote_model() {
     log "Generating Vote model..."
-    bin/rails generate model Vote value:integer user:references votable:references{polymorphic}
 
-    # Add unique index to prevent duplicate votes
-    cat <<'EOF' > db/migrate/$(date +%Y%m%d%H%M%S)_add_unique_index_to_votes.rb
-class AddUniqueIndexToVotes < ActiveRecord::Migration[7.0]
+    local migration_timestamp=$(date +%Y%m%d%H%M%S)
+    cat <<EOF > db/migrate/${migration_timestamp}_create_votes.rb
+class CreateVotes < ActiveRecord::Migration[7.0]
   def change
+    create_table :votes do |t|
+      t.integer :value, null: false
+      t.references :user, null: false, foreign_key: true
+      t.references :votable, polymorphic: true, null: false
+
+      t.timestamps
+    end
+
     add_index :votes, [:user_id, :votable_type, :votable_id], unique: true
+    add_index :votes, [:votable_type, :votable_id]
+    add_check_constraint :votes, "value IN (1, -1)", name: "vote_value_check"
   end
 end
 EOF
 }
 
 setup_reddit_models() {
-    generate_comment_model
-    generate_vote_model
+    # Check if migrations already exist
+    if [[ -n $(find db/migrate -name "*create_comments*" 2>/dev/null) ]]; then
+        log "Comments migration already exists, skipping..."
+    else
+        generate_comment_model
+    fi
+
+    if [[ -n $(find db/migrate -name "*create_votes*" 2>/dev/null) ]]; then
+        log "Votes migration already exists, skipping..."
+    else
+        generate_vote_model
+    fi
 
     # Add karma column to users with index
-    log "Generating karma migration..."
-    bin/rails generate migration AddKarmaToUsers karma:integer:default:0
-
-    # Fix the karma migration file
-    cat <<'EOF' > db/migrate/$(ls db/migrate | grep add_karma_to_users | sort | tail -1)
+    if [[ -z $(find db/migrate -name "*add_karma_to_users*" 2>/dev/null) ]]; then
+        log "Generating karma migration..."
+        local karma_timestamp=$(date +%Y%m%d%H%M%S)
+        cat <<EOF > db/migrate/${karma_timestamp}_add_karma_to_users.rb
 class AddKarmaToUsers < ActiveRecord::Migration[7.0]
   def change
     add_column :users, :karma, :integer, default: 0
@@ -54,8 +87,13 @@ class AddKarmaToUsers < ActiveRecord::Migration[7.0]
   end
 end
 EOF
+    else
+        log "Karma migration already exists, skipping..."
+    fi
 
-    # Create the Comment model with proper validations and caching
+    # Create models with proper validations
+    mkdir -p app/models
+
     cat <<'EOF' > app/models/comment.rb
 class Comment < ApplicationRecord
   belongs_to :user
@@ -64,39 +102,19 @@ class Comment < ApplicationRecord
   has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
   has_many :votes, as: :votable, dependent: :destroy
 
-  validates :content, presence: true, length: { maximum: 10000 }
+  validates :content, presence: true
+  validates :user_id, presence: true
+  validates :commentable_type, presence: true
+  validates :commentable_id, presence: true
 
-  # Prevent circular references in parent-child relationships
   validate :no_circular_reference
+  validate :parent_belongs_to_same_commentable
 
-  # Vote validation - ensure value is only -1 or 1
-  validates :value, inclusion: { in: [-1, 1] }, if: -> { value.present? }
+  after_create :update_cached_depth
+  after_save :update_commentable_comments_count, if: :saved_change_to_parent_id?
 
-  # Karma calculation with caching and atomic updates to prevent race conditions
-  def score
-    read_attribute(:cached_score) || calculate_score
-  end
-
-  def upvotes
-    read_attribute(:cached_upvotes) || votes.where(value: 1).count
-  end
-
-  def downvotes
-    read_attribute(:cached_downvotes) || votes.where(value: -1).count
-  end
-
-  # Threading helpers with cached depth
-  def root?
-    parent_id.nil?
-  end
-
-  def depth
-    read_attribute(:cached_depth) || calculate_depth
-  end
-
-  private
-
-  def calculate_score
+  # Efficient scoring with database-level aggregation
+  def recalc_score!
     new_score = votes.sum(:value)
     new_upvotes = votes.where(value: 1).count
     new_downvotes = votes.where(value: -1).count
@@ -106,40 +124,49 @@ class Comment < ApplicationRecord
       cached_upvotes: new_upvotes,
       cached_downvotes: new_downvotes
     )
-    new_score
+  end
+
+  def update_cached_depth
+    depth = calculate_depth
+    update_columns(cached_depth: depth) if cached_depth != depth
   end
 
   def calculate_depth
-    return 0 if parent_id.nil?
-
-    # Use SQL query to avoid N+1 and potential infinite loops
-    depth_value = Comment.where(id: parent_id).pluck(:cached_depth).first.to_i + 1
-    update_columns(cached_depth: depth_value)
-    depth_value
+    return 0 unless parent
+    parent.cached_depth + 1
   end
 
   def no_circular_reference
-    if parent_id.present?
-      current = parent
-      while current.present?
-        if current.parent_id == id
-          errors.add(:parent_id, "cannot create circular reference")
-          break
-        end
-        current = current.parent
-      end
-    end
+    return unless parent_id && parent_id == id
+    errors.add(:parent_id, "cannot reference itself")
+  end
+
+  def parent_belongs_to_same_commentable
+    return unless parent && commentable
+    return if parent.commentable == commentable
+    errors.add(:parent_id, "must belong to the same commentable")
+  end
+
+  def update_commentable_comments_count
+    return unless commentable.respond_to?(:update_comments_count)
+    commentable.update_comments_count
+  end
+
+  def vote_by_user(user)
+    votes.find_by(user: user)
   end
 end
 EOF
 
-    # Create the Vote model with uniqueness validation
     cat <<'EOF' > app/models/vote.rb
 class Vote < ApplicationRecord
   belongs_to :user
   belongs_to :votable, polymorphic: true
 
-  validates :value, inclusion: { in: [-1, 1] }
+  validates :user_id, presence: true
+  validates :votable_type, presence: true
+  validates :votable_id, presence: true
+  validates :value, inclusion: { in: [1, -1] }
   validates :user_id, uniqueness: { scope: [:votable_type, :votable_id] }
 
   after_save :update_votable_score
@@ -148,37 +175,52 @@ class Vote < ApplicationRecord
   private
 
   def update_votable_score
-    votable.calculate_score if votable.respond_to?(:calculate_score)
+    votable.recalc_score! if votable.respond_to?(:recalc_score!)
+
+    # Update user karma if voting on a comment
+    if votable_type == "Comment"
+      user.update_karma!
+    end
   end
 end
 EOF
 
-    # Update User model to include karma
-    cat <<'EOF' >> app/models/user.rb
-class User < ApplicationRecord
-  has_many :comments, dependent: :destroy
-  has_many :votes, dependent: :destroy
+    # Add karma methods to User model
+    if [[ -f app/models/user.rb ]]; then
+        cat <<'EOF' >> app/models/user.rb
 
-  def update_karma
-    update_column(:karma, comments.sum(:cached_score) + votes.sum(:value))
+# Karma methods for User model
+def update_karma!
+  new_karma = comments.sum(:cached_score)
+  update_columns(karma: new_karma) if karma != new_karma
+end
+
+def voted_on?(votable)
+  votes.exists?(votable: votable)
+end
+
+def vote_for(votable, value)
+  transaction do
+    existing_vote = votes.find_by(votable: votable)
+
+    if existing_vote
+      if existing_vote.value == value
+        existing_vote.destroy!
+      else
+        existing_vote.update!(value: value)
+      end
+    else
+      votes.create!(votable: votable, value: value)
+    end
   end
 end
 EOF
-
-    log "Running migrations..."
-    bin/rails db:migrate
-
-    log "Reddit-style models setup complete!"
+    fi
 }
 
-main() {
-    log "Starting Reddit-style features setup..."
-    setup_reddit_models
-    log "Setup completed successfully!"
-}
-
-# Run the main function if script is executed directly
+# Main execution
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main
+    setup_reddit_models
+    log "Reddit-style social features setup complete!"
 fi
 ```

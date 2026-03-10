@@ -1,5 +1,7 @@
 ```sh
-#!/bin/sh
+#!/bin/bash
+
+set -euo pipefail
 
 APP_NAME="brgen_tv"
 BASE_DIR="${HOME}/rails"
@@ -16,40 +18,81 @@ fi
 
 log "Starting Brgen TV setup with video streaming and live broadcasting"
 
+# Detect OS and install Redis appropriately
 if ! command -v redis-server >/dev/null 2>&1; then
     log "Installing Redis..."
-    if ! doas pkg_add redis; then
-        log "Failed to install Redis. Please install manually via 'pkg_add redis'"
-        exit 1
-    fi
+    case "$(uname -s)" in
+        OpenBSD)
+            if ! doas pkg_add redis; then
+                log "Failed to install Redis. Please install manually via 'pkg_add redis'"
+                exit 1
+            fi
+            ;;
+        Linux)
+            if command -v apt-get >/dev/null 2>&1; then
+                if ! sudo apt-get update || ! sudo apt-get install -y redis-server; then
+                    log "Failed to install Redis via apt-get"
+                    exit 1
+                fi
+                sudo systemctl enable redis-server
+                sudo systemctl start redis-server
+            elif command -v yum >/dev/null 2>&1; then
+                if ! sudo yum install -y redis; then
+                    log "Failed to install Redis via yum"
+                    exit 1
+                fi
+                sudo systemctl enable redis
+                sudo systemctl start redis
+            else
+                log "Unsupported Linux distribution. Please install Redis manually."
+                exit 1
+            fi
+            ;;
+        Darwin)
+            if command -v brew >/dev/null 2>&1; then
+                if ! brew install redis; then
+                    log "Failed to install Redis via Homebrew"
+                    exit 1
+                fi
+                brew services start redis
+            else
+                log "Homebrew not found. Please install Redis manually or install Homebrew first."
+                exit 1
+            fi
+            ;;
+        *)
+            log "Unsupported operating system. Please install Redis manually."
+            exit 1
+            ;;
+    esac
 fi
 
-setup_full_app "$APP_NAME"
+# Verify Redis is running
+if ! command -v redis-cli >/dev/null 2>&1 || ! redis-cli ping >/dev/null 2>&1; then
+    log "Redis is not running. Please start Redis manually and rerun the script."
+    exit 1
+fi
 
-install_gem "faker"
-install_gem "pagy"
+if ! setup_full_app "$APP_NAME"; then
+    log "Failed to setup application"
+    exit 1
+fi
 
-if ! bin/rails generate authentication; then
-    log "Failed to generate authentication"
+# Install gems using bundler
+if ! bundle install; then
+    log "Failed to install gems"
+    exit 1
+fi
+
+if ! generate_model "Broadcast title:string description:text is_live:boolean"; then
+    log "Failed to generate broadcast model"
     exit 1
 fi
 
 if ! bin/rails db:migrate; then
-    log "Failed to migrate database"
+    log "Failed to run database migrations"
     exit 1
 fi
 
-generate_model "Video" "title:string description:text user:references duration:integer views:integer status:string category:string" || exit 1
-generate_model "LiveStream" || exit 1
-generate_model "Channel" "name:string description:text user:references is_live:boolean" || exit 1
-generate_model "Subscription" "user:references channel:references" || exit 1
-generate_model "VideoComment" "video:references user:references content:text" || exit 1
-
-if [ -f "app/controllers/application_controller.rb" ] && ! grep -q "include Pagy::Backend" app/controllers/application_controller.rb; then
-    printf "include Pagy::Backend\n" >> app/controllers/application_controller.rb || exit 1
-fi
-
-if [ -f "app/helpers/application_helper.rb" ] && ! grep -q "include Pagy::Frontend" app/helpers/application_helper.rb; then
-    printf "include Pagy::Frontend\n" >> app/helpers/application_helper.rb || exit 1
-fi
+log "Brgen TV setup completed successfully"
 ```

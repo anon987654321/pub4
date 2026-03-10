@@ -50,7 +50,10 @@ install_voting_gems() {
       echo "gem 'acts_as_votable', '~> 1.0.0'"
       echo "gem 'public_activity', '~> 2.0.0'"
     } >> Gemfile
-    bundle install || { log "Gem installation failed"; return 1; }
+    if ! bundle install; then
+      log "Gem installation failed"
+      return 1
+    fi
   else
     log "Skipping gem installation - dependencies already present"
   fi
@@ -72,62 +75,48 @@ generate_voting_models() {
     log "Review model already exists, skipping creation"
   fi
 
-  if ! find db/migrate -name "*add_votable_to_posts*" -o -name "*add_votes_to_posts*" | grep -q .; then
-    bin/rails generate migration AddVotesToPosts votable_type:string votable_id:integer voter_type:string voter_id:integer vote_flag:boolean vote_scope:string vote_weight:integer || return 1
+  if ! find db/migrate -name "*add_votable_to_posts*" -o -name "*add_votes_to*" | grep -q .; then
+    if bin/rails generate migration AddVotableToPosts votable:references{polymorphic}; then
+      log "Generated votable migration"
+    else
+      log "Failed to generate votable migration"
+      return 1
+    fi
+  else
+    log "Votable migration already exists, skipping creation"
   fi
 
   if ! find db/migrate -name "*add_karma_to_users*" | grep -q .; then
-    bin/rails generate migration AddKarmaToUsers karma:integer:default=0 || return 1
+    if bin/rails generate migration AddKarmaToUsers karma:integer:default=0; then
+      log "Generated karma migration"
+    else
+      log "Failed to generate karma migration"
+      return 1
+    fi
+  else
+    log "Karma migration already exists, skipping creation"
   fi
 
-  log "Generated voting migrations"
+  if bin/rails db:migrate; then
+    log "Database migrations completed"
+  else
+    log "Database migrations failed"
+    return 1
+  fi
 }
 
 create_voting_controllers() {
-  check_rails_command || return 1
+  local controller_path="app/controllers/reviews_controller.rb"
 
-  # Votes Controller
-  if ! [ -f "app/controllers/votes_controller.rb" ]; then
-    cat > app/controllers/votes_controller.rb << 'EOF'
-class VotesController < ApplicationController
-  before_action :authenticate_user!
-  before_action :set_votable
-
-  def upvote
-    @votable.upvote_by current_user
-    update_karma(1)
-    render json: { votes: @votable.get_upvotes.size }
-  end
-
-  def downvote
-    @votable.downvote_by current_user
-    update_karma(-1)
-    render json: { votes: @votable.get_upvotes.size }
-  end
-
-  private
-
-  def set_votable
-    resource = params[:votable_type].classify.constantize
-    @votable = resource.find(params[:votable_id])
-  end
-
-  def update_karma(change)
-    if @votable.respond_to?(:user) && @votable.user != current_user
-      @votable.user.update_column(:karma, @votable.user.karma + change)
-    end
-  end
-end
-EOF
-    log "Created votes controller"
+  if [ -f "$controller_path" ]; then
+    log "Reviews controller already exists, skipping creation"
+    return 0
   fi
 
-  # Reviews Controller
-  if ! [ -f "app/controllers/reviews_controller.rb" ]; then
-    cat > app/controllers/reviews_controller.rb << 'EOF'
+  cat > "$controller_path" << "EOF"
 class ReviewsController < ApplicationController
-  before_action :authenticate_user!, except: [:index, :show]
   before_action :set_review, only: [:show, :edit, :update, :destroy, :mark_helpful]
+  before_action :authenticate_user!, except: [:index, :show]
 
   def index
     @reviews = Review.includes(:user).order(created_at: :desc)
@@ -149,12 +138,36 @@ class ReviewsController < ApplicationController
     end
   end
 
-  def mark_helpful
-    if @review.mark_helpful_by(current_user)
-      render json: { helpful_count: @review.helpful_count }
+  def edit
+  end
+
+  def update
+    if @review.update(review_params)
+      redirect_to @review, notice: 'Review was successfully updated.'
     else
-      render json: { error: 'Unable to mark as helpful' }, status: :unprocessable_entity
+      render :edit
     end
+  end
+
+  def destroy
+    @review.destroy
+    redirect_to reviews_url, notice: 'Review was successfully destroyed.'
+  end
+
+  def mark_helpful
+    helpful = current_user.voted_for?(@review) ? false : true
+
+    if helpful
+      current_user.vote_for(@review)
+      @review.increment!(:helpful_count)
+      flash[:notice] = 'Marked as helpful'
+    else
+      current_user.unvote_for(@review)
+      @review.decrement!(:helpful_count)
+      flash[:notice] = 'Removed helpful mark'
+    end
+
+    redirect_to @review
   end
 
   private
@@ -164,114 +177,125 @@ class ReviewsController < ApplicationController
   end
 
   def review_params
-    params.require(:review).permit(:rating, :title, :body, :reviewable_type, :reviewable_id)
+    params.require(:review).permit(:rating, :title, :body, :verified_purchase)
   end
 end
 EOF
-    log "Created reviews controller"
-  fi
+
+  log "Created Reviews controller"
 }
 
 create_voting_helpers() {
-  if ! [ -f "app/helpers/voting_helper.rb" ]; then
-    cat > app/helpers/voting_helper.rb << 'EOF'
-module VotingHelper
-  def vote_button(resource, vote_type)
-    button_to send("#{vote_type}_path",
-                  votable_type: resource.class.name,
-                  votable_id: resource.id),
-              method: :post,
-              class: "vote-btn #{vote_type}",
-              remote: true do
-      content_tag(:span, resource.get_upvotes.size)
-    end
-  end
+  local helper_path="app/helpers/reviews_helper.rb"
 
-  def star_rating(rating)
+  if [ -f "$helper_path" ]; then
+    log "Reviews helper already exists, skipping creation"
+    return 0
+  fi
+
+  cat > "$helper_path" << "EOF"
+module ReviewsHelper
+  def star_rating(rating, max = 5)
     full_stars = rating.floor
     half_star = (rating - full_stars) >= 0.5
-    empty_stars = 5 - full_stars - (half_star ? 1 : 0)
+    empty_stars = max - full_stars - (half_star ? 1 : 0)
 
-    safe_join([
-      full_stars.times.map { content_tag(:span, '★', class: 'star full') },
-      (half_star ? content_tag(:span, '½', class: 'star half') : ''),
-      empty_stars.times.map { content_tag(:span, '☆', class: 'star empty') }
-    ].flatten)
+    html = ''.span, '★', class: 'star full') }
+    html += content_tag(:span, '½', class: 'star half    html
+  end
+
+  def helpful_percentage(review    total_votes = review.votes_for.size
+    (review.helpful_count.to_f / total_votes * 100).round
+  end
+
+  def verified_purchase_badge(review)
+    return unless review.verified_purchase?
+    content_tag(:span, '✓ Verified Purchase', class: 'verified-badge')
   end
 end
 EOF
-    log "Created voting helper"
-  fi
+
+  log "Created Reviews helper"
 }
 
 create_voting_routes() {
+  local routes_content
+  routes_content=$(<config/routes.rb)
+
   if ! grep -q "resources :reviews" config/routes.rb; then
-    cat >> config/routes.rb << 'EOF'
-
-  # Voting routes
-  resources :reviews do
-    member do
-      post :mark_helpful
-    end
-  end
-
-  resources :votes, only: [] do
-    collection do
-      post ':votable_type/:votable_id/upvote', action: :upvote, as: :upvote
-      post ':votable_type/:votable_id/downvote', action: :downvote, as: :downvote
-    end
-  end
-EOF
+    sed -i '' '/Rails\.application\.routes\.draw do/a\
+  resources :reviews do\
+    member do\
+      post :mark_helpful\
+    end\
+  end\
+' config/routes.rb
     log "Added voting routes"
+  else
+    log "Voting routes already exist, skipping creation"
   fi
 }
 
 create_voting_stimulus() {
-  if ! [ -f "app/javascript/controllers/voting_controller.js" ]; then
-    mkdir -p app/javascript/controllers
-    cat > app/javascript/controllers/voting_controller.js << 'EOF'
+  local stimulus_path="app/javascript/controllers/reviews_controller.js"
+  local controllers_dir="app/javascript/controllers"
+
+  if [ ! -d "$controllers_dir" ]; then
+    mkdir -p "$controllers_dir"
+  fi
+
+  if [ -f "$stimulus_path" ]; then
+    log "Reviews Stimulus controller already exists, skipping creation"
+    return 0
+  fi
+
+  cat > "$stimulus_path" << "EOF"
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["count"]
+  static targets = ["helpfulButton", "helpfulCount"]
 
-  vote(event) {
-    event.preventDefault()
-
-    fetch(event.target.closest('form').action, {
-      method: 'POST',
-      headers: {
-        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
-        'Accept': 'application/json'
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      this.countTarget.textContent = data.votes
-    })
-    .catch(error => console.error('Error:', error))
+  connect() {
+    console.log("Reviews controller connected")
   }
 
   markHelpful(event) {
     event.preventDefault()
 
-    fetch(this.data.get('url'), {
-      method: 'POST',
+    const url = this.data.get("url")
+    const csrfToken = document.querySelector("[name='csrf-token']").content
+
+    fetch(url, {
+      method: "POST",
       headers: {
-        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
-        'Accept': 'application/json'
-      }
+        "X-CSRF-Token": csrfToken,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      credentials: "same-origin"
     })
     .then(response => response.json())
     .then(data => {
-      if (data.helpful_count !== undefined) {
-        event.target.textContent = `Helpful (${data.helpful_count})`
+      if (data.success) {
+        this.helpfulCountTarget.textContent = data.helpful_count
+        this.updateButtonState(data.helpful)
       }
     })
+    .catch(error => console.error("Error:", error))
+  }
+
+  updateButtonState(helpful) {
+    if (helpful) {
+      this.helpfulButtonTarget.classList.add("active")
+      this.helpfulButtonTarget.textContent = "✓ Helpful"
+    } else {
+      this.helpfulButtonTarget.classList.remove("active")
+      this.helpfulButtonTarget.textContent = "Mark Helpful"
+    }
   }
 }
 EOF
-    log "Created Stimulus controller"
-  fi
+
+  log "Created Reviews Stimulus controller"
 }
 ```

@@ -1,9 +1,7 @@
 ```ruby
 class Retweet < ApplicationRecord
   belongs_to :user
-  belongs_to :retweetable, polymorphic: true
-
-  validates :user_id, uniqueness: { scope: [:retweetable_type, :retweetable_id] }
+_id] }
   validates :retweetable_id, presence: true
   validates :retweetable_type, presence: true
   validate :cannot_retweet_own_content
@@ -30,7 +28,7 @@ class Retweet < ApplicationRecord
   end
 
   def cleanup_notifications
-    Notification.where(notifiable: self).delete_all
+    Notification.where(notifiable: self, action: 'retweet').delete_all
   end
 end
 

@@ -1,20 +1,18 @@
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+ORIGINAL_IFS=$IFS
 IFS=$'\n\t'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="baibl"
-BASE_DIR="/home/dev/wd"
-APP_PORT=$((10000 + RANDOM % 10000))
+BASE_DIR="${BASE_DIR:-/home/dev/wd}"
+APP_PORT=$((10000 + (RANDOM % 10000 + 1)))
 MAX_ATTEMPTS=10
 
 log() {
-    printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >&2
-}
-
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
+    local message="$1"
+    printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$message" >&2 || true
 }
 
 # Source shared functions safely
@@ -31,7 +29,7 @@ install_gem() {
         return 1
     fi
 
-    if ! command_exists gem; then
+    if ! command -v gem >/dev/null 2>&1; then
         log "Error: gem command not found"
         return 1
     fi
@@ -49,7 +47,7 @@ install_gem() {
 }
 
 check_postgresql() {
-    if ! command_exists psql; then
+    if ! command -v psql >/dev/null 2>&1; then
         log "Error: psql command not found"
         return 1
     fi
@@ -81,45 +79,7 @@ setup_full_app() {
         rail_ver=${rail_ver#* }
         log "Rails version $rail_ver detected"
     else
-        log "Error: Unable to determine Rails version - ensure Rails is properly installed"
-        exit 1
-    fi
+        log "Error: Unable to determine Rails version - en"
 
-    # Check PostgreSQL availability
-    if ! check_postgresql; then
-        log "Error: PostgreSQL is not available"
-        exit 1
-    fi
-
-    # Database setup with proper error handling
-    local dbs=("${app_name}_development" "${app_name}_test")
-    for db in "${dbs[@]}"; do
-        if psql -lqt | grep -q "^${db}\s"; then
-            log "Database $db already exists"
-        else
-            log "Creating database: $db"
-            if ! createdb "$db"; then
-                log "Error: Failed to create database $db"
-                exit 1
-            fi
-            log "Successfully created database: $db"
-        fi
-    done
-
-    # Install dependencies
-    log "Installing bundle dependencies"
-    if ! bundle install; then
-        log "Error: Bundle install failed"
-        exit 1
-    fi
-
-    # Run migrations
-    log "Running database migrations"
-    if ! bin/rails db:migrate; then
-        log "Error: Database migration failed"
-        exit 1
-    fi
-
-    log "Application $app_name setup completed successfully"
-}
+IFS=$ORIGINAL_IFS
 ```

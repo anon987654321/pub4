@@ -1,5 +1,6 @@
 ```bash
-wd)"
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MASTER_JSON="${SCRIPT_DIR}/../master.json"
 
 echo "=== Port Consistency Check ==="
@@ -7,7 +8,7 @@ echo ""
 
 # Validate master.json exists
 if [[ ! -f "$MASTER_JSON" ]]; then
-    echo "❌ Error: master.json not found at $MASTER_JSON"
+    echo "❌ Error: master.json not found"
     exit 1
 fi
 
@@ -21,6 +22,7 @@ fi
 declare -A PORTS
 declare -A APP_NAMES
 duplicate_found=false
+errors_found=0
 
 while IFS=$'\t' read -r app port; do
     # Skip entries with missing app or port
@@ -36,25 +38,20 @@ while IFS=$'\t' read -r app port; do
     fi
     APP_NAMES["$app"]=1
 
-    # Validate port is numeric and in valid range
-    if [[ ! "$port" =~ ^[0-9]+$ ]] || ((port < 1 || port > 65535)); then
-        echo "❌ Error: Invalid port '$port' for app '$app'"
-        exit 1
-    fi
+    # Validate port is numeric and in valid range (no leading zeros)
+    if [[ ! "$port" =~ ^[1-9][0-9]*$ ]] || ((port < 1 || port > 65535)); then
+        echo "❌ Error: Invalid port '$port' for app '$ then
+    exit 1
+fi
 
-    PORTS["$app"]="$port"
-done < <(jq -r '.apps[] | [.app, .port] | @tsv' "$MASTER_JSON")
-
-if [[ "$duplicate_found" == true ]]; then
+if [[ "$errors_found" -eq 1 ]]; then
     exit 1
 fi
 
 # Check for duplicate ports
 declare -A PORT_USAGE
 for app in "${!PORTS[@]}"; do
-    port="${PORTS[$app]}"
-    if [[ -n "${PORT_USAGE[$port]}" ]]; then
-        echo "❌ Error: Port $port used by multiple apps: ${PORT_USAGE[$port]} and $app"
+    port="${PORTS[$app]} apps: ${PORT_USAGE[$port]} and $app"
         errors_found=1
     else
         PORT_USAGE["$port"]="$app"
@@ -66,42 +63,12 @@ if [[ "$errors_found" -eq 1 ]]; then
 fi
 
 echo "Ports from master.json:"
-for app in "${!PORTS[@]}"; do
-    printf "%-20s %s\n" "$app" "${PORTS[$app]}"
-done
-
-echo ""
+for app in "${!PORTS[@ ""
 echo "Checking installers..."
 echo ""
 
 # Map app names to installer names (handle special cases)
 declare -A INSTALLER_NAMES=(
-    ["pubattorney"]="pub_attorney"
+    ["pubattorney"]="pub_att"
 )
-
-# Track missing installers
-missing_installers=()
-errors_found=0
-
-for app in "${!PORTS[@]}"; do
-    installer_name="${INSTALLER_NAMES[$app]:-$app}"
-    installer_path="${SCRIPT_DIR}/${installer_name}.sh"
-
-    if [[ ! -f "$installer_path" ]]; then
-        missing_installers+=("$installer_name")
-        echo "❌ Missing installer: $installer_name.sh"
-        errors_found=1
-    fi
-done
-
-if [[ ${#missing_installers[@]} -gt 0 ]]; then
-    echo ""
-    echo "Missing installers: ${missing_installers[*]}"
-fi
-
-if [[ "$errors_found" -eq 1 ]]; then
-    exit 1
-fi
-
-echo "✅ All checks passed!"
 ```

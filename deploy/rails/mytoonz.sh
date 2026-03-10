@@ -27,53 +27,85 @@ log() {
 }
 
 log_error() {
-    echo "[$(date +'v yarn >/dev/null 2>&1 || { log_error "npm or yarn is required but not installed."; exit 1; }
-    command -v redis-cli >/dev/null 2>&1 || { log "Warning: Redis CLI is not installed. Some features may not work properly.""
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1" >&2
+}
+
+check_dependencies() {
+    log "Checking dependencies..."
+    command -v node >/dev/null 2>&1 || { log_error "Node.js is required but not installed."; exit 1; }
+    command -v npm >/dev/null 2>&1 || command -v yarn >/dev/null 2>&1 || { log_error "npm or yarn is required but not installed."; exit 1; }
+    command -v redis-cli >/dev/null 2>&1 || { log "Warning: Redis CLI is not installed. Some features may not work properly."; }
+    command -v git >/dev/null 2>&1 || { log "Warning: git is not installed. Some features may not work properly."; }
+    command -v curl >/dev/null 2>&1 || { log "Warning: curl is not installed. Some features may not work properly."; }
+    command -v bundle >/dev/null 2>&1 || { log "Warning: bundler is not installed. Some features may not work properly."; }
+}
+
+validate_environment() {
+    log "Validating environment variables..."
+    if [[ -z "${REDIS_URL:-}" ]]; then
+        REDIS_URL="redis://localhost:6379"
         log "Warning: REDIS_URL not set, using default: $REDIS_URL"
     fi
-    if ! [[ "${REDIS_URL}" =~ ^redis:// ]]; then
-        log_error "Invalid REDIS_URL format. Must start with redis://"
+    if ! [[ "${REDIS_URL}" =~ ^redis://[^\s/]+ ]]; then
+        log_error "Invalid REDIS_URL format. Must start with redis:// followed by hostname"
+        exit 1
+    fi
+
+    if [[ -z "${REPLICATE_API_TOKEN:-}" ]]; then
+        log_error "REPLICATE_API_TOKEN is required but not set"
         exit 1
     fi
 }
 
+change_to_app_dir() {
+    cd "$BASE_DIR/$APP_NAME" || { log_error "Failed to change directory to $BASE_DIR/$APP_NAME"; exit 1; }
+}
+
 setup_frontend() {
     log "Setting up frontend..."
-    cd "$BASE_DIR/$APP_NAME" || { log_error "Failed to change directory to $BASE_DIR/$APP_NAME"; exit 1; }
+    change_to_app_dir
 
- then
+    if [[ -f "package.json" ]]; then
         if command -v yarn >/dev/null 2>&1; then
             yarn install || { log_error "yarn install failed"; exit 1; }
         else
             npm install || { log_error "npm install failed"; exit 1; }
         fi
+
+        if grep -q "\"build\"" "package.json"; then
+            if command -v yarn >/dev/null 2>&1; then
+                yarn build || { log_error "yarn build failed"; exit 1; }
+            else
+                npm run build || { log_error "npm run build failed"; exit 1; }
+            fi
+        else
+            log "Warning: No build script found in package.json, skipping build"
+        fi
     else
         log "Warning: package.json not found, skipping npm/yarn install"
     fi
+}
 
-    # Precompile assets with error handling
-    if\"" package.json; then
-        log "Precompiling assets
-            yarn build || { log_error "Asset precompilation failed"; exit 1; }
-        else
-            npm run build || { log        log "Running database migrations..."
-        if command -v bundle >/dev/null 2>&1 && [[ -f "Gemfile" ]]; then
-            bundle exec rake db:migrate || { log_error "Database migration failed"; exit 1; }
-        else
-            log "Warning: Bundle or Gemfile not found, skipping database migrations"
-        fi
+setup_backend() {
+    log "Setting up backend..."
+    change_to_app_dir
+
+    if [[ -f "Gemfile" ]]; then
+        bundle install || { log_error "bundle install failed"; exit 1; }
     else
-        log "Warning: Database schema not found, skipping migrations"
+        log "Warning: Gemfile not found, skipping bundle install"
     fi
 }
 
 main() {
     log "Starting MyToonz setup..."
+
     check_dependencies
     validate_environment
     setup_frontend
-    setup_database
-    log "Setup completed successfully!"
+    setup_backend
+
+    log "MyToonz setup completed successfully!"
 }
 
 main "$@"
