@@ -125,15 +125,26 @@ end
         end
       end
 
+      def model_available?(model_id)
+        cfg = configured_models_by_id[model_id]
+        api = cfg && cfg[:api].to_s
+
+        return true if defined?(RubyLLM::FALLBACK_MODE) && RubyLLM::FALLBACK_MODE && api != "replicate"
+        return false if api == "replicate" && !configured_for_replicate?
+        return false if api == "openrouter" && !configured_for_openrouter? && !(defined?(RubyLLM::FALLBACK_MODE) && RubyLLM::FALLBACK_MODE)
+
+        true
+      end
+
       def select_model(tier = nil)
         if tier
           # Use pre-computed model_tiers hash for O(1) tier lookup
-          candidates = model_tiers[tier] || []
-          candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.find do |m|
+          candidates = (model_tiers[tier] || []).select { |m| model_available?(m) }
+          candidates.find { |m| CircuitBreaker.circuit_closed?(m) } || all_models.select { |m| model_available?(m) }.find do |m|
             CircuitBreaker.circuit_closed?(m)
           end
         else
-          all_models.find { |m| CircuitBreaker.circuit_closed?(m) }
+          all_models.select { |m| model_available?(m) }.find { |m| CircuitBreaker.circuit_closed?(m) }
         end
       end
 

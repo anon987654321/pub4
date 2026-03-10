@@ -88,6 +88,8 @@ module MASTER
       end
 
       def setup(verbose: false)
+        return if ENV.fetch("MASTER_AUTO_INSTALL", "false") != "true"
+
         install_packages(verbose: verbose)
         install_gems(verbose: verbose)
       end

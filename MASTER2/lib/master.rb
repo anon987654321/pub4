@@ -109,35 +109,35 @@ end
 require_relative "agent"
 
 # Meta/Self-improvement
-require_relative "review"
-require_relative "learnings"
-require_relative "file_processor"
-require_relative "reflow"
-require_relative "multi_refactor"
+MASTER.safe_require("review")
+MASTER.safe_require("learnings")
+MASTER.safe_require("file_processor")
+MASTER.safe_require("reflow")
+MASTER.safe_require("multi_refactor")
 
 # Generators
 require_relative "html_generator"
 
 # Quality gates
-require_relative "quality_gates"
+MASTER.safe_require("quality_gates")
 
 # Self-governance
-require_relative "axiom_resolver"
-require_relative "dependency_map"
-require_relative "convergence_tracker"
-require_relative "pressure_pass"
-require_relative "self_refactor"
-require_relative "security/injection_guard"
-require_relative "agent/credential_store"
-require_relative "session/reminders"
-require_relative "executor/tool_protocol"
-require_relative "review/tool_scanner"
-require_relative "llm/hesitation_detector"
-require_relative "agent/behavior_monitor"
-require_relative "session/per_step_reflection"
-require_relative "mcp_server"
-require_relative "introspection/friction_recorder"
-require_relative "introspection/session_retrospective"
+MASTER.safe_require("axiom_resolver")
+MASTER.safe_require("dependency_map")
+MASTER.safe_require("convergence_tracker")
+MASTER.safe_require("pressure_pass")
+MASTER.safe_require("self_refactor")
+MASTER.safe_require("security/injection_guard")
+MASTER.safe_require("agent/credential_store")
+MASTER.safe_require("session/reminders")
+MASTER.safe_require("executor/tool_protocol")
+MASTER.safe_require("review/tool_scanner")
+MASTER.safe_require("llm/hesitation_detector")
+MASTER.safe_require("agent/behavior_monitor")
+MASTER.safe_require("session/per_step_reflection")
+MASTER.safe_require("mcp_server")
+MASTER.safe_require("introspection/friction_recorder")
+MASTER.safe_require("introspection/session_retrospective")
 
 MASTER.safe_require("server")
 

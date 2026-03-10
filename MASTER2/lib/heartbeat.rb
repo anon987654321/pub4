@@ -70,7 +70,14 @@ module MASTER
       private
 
       def run_loop
-        if (require "rufus-scheduler" rescue false)
+        scheduler_available = begin
+          require "rufus-scheduler"
+          true
+        rescue LoadError, StandardError
+          false
+        end
+
+        if scheduler_available
           @rufus = Rufus::Scheduler.new
           @rufus.every("#{@interval}s") do
             next unless @running

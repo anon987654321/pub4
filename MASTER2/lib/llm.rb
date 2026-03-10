@@ -3,7 +3,11 @@
 require "json"
 require "yaml"
 require_relative "circuit_breaker"
-require "ruby_llm"
+begin
+  require "ruby_llm"
+rescue LoadError
+  require_relative "ruby_llm_fallback"
+end
 
 module MASTER
   # LLM - Multi-provider: Replicate (strong/primary) + OpenRouter (fallback/free)
@@ -63,6 +67,8 @@ module MASTER
 
       # Configured if either OpenRouter or Replicate API key is present
       def configured?
+        return true if defined?(RubyLLM::FALLBACK_MODE) && RubyLLM::FALLBACK_MODE
+
         (api_key && !api_key.empty?) || (replicate_api_key && !replicate_api_key.empty?)
       end
 

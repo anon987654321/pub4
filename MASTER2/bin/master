@@ -7,6 +7,8 @@ Encoding.default_internal = Encoding::UTF_8
 $stdout.set_encoding(Encoding::UTF_8)
 $stderr.set_encoding(Encoding::UTF_8)
 
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
 # CLI flags
 if ARGV.delete("--verbose")
   ENV["MASTER_TRACE"] = "3"
@@ -276,11 +278,19 @@ when "narrate", "narration"
 else
   if command.nil?
     # No command = interactive REPL mode (default)
-    server = MASTER::Server.new
-    Thread.new { server.start }
+    server = nil
+    web_port = nil
+
+    if defined?(MASTER::Server)
+      server = MASTER::Server.new
+      Thread.new { server.start }
+      web_port = server.port
+    else
+      warn "MASTER: web server unavailable; starting REPL without web mode"
+    end
 
     at_exit do
-      server.stop
+      server&.stop
       if defined?(MASTER::Friction::FrictionRecorder) &&
          MASTER::Friction::FrictionRecorder.events.any?
         report = MASTER::Friction::SessionRetrospective.run
@@ -291,7 +301,7 @@ else
     trap("INT")  { puts; exit }
     trap("TERM") { exit }
 
-    MASTER::Pipeline.repl(web_port: server.port)
+    MASTER::Pipeline.repl(web_port: web_port)
   else
     # Delegate all other commands to Commands.dispatch_one
     delegate_to_commands(command, args)
