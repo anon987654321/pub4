@@ -3,6 +3,8 @@
 module MASTER
   class Executor
     module Reflexion
+      STEP_SCHEMA = React::STEP_SCHEMA
+
       REFLECT_SCHEMA = {
         type: "object",
         additionalProperties: false,
