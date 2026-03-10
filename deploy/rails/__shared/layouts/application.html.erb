@@ -1,11 +1,11 @@
 ```html
 <!DOCTYPE html>
-<html lang="<%= (I18n.locale || I18n.default_locale || 'en').to_s %>" dir="<%= defined?(rtl_locale?) && rtl_locale?(I18n.locale) ? 'rtl' : 'ltr' %>">
+<html lang="<%= html_escape((I18n.locale || I18n.default_locale || 'en').to_s) %>" dir="<%= html_escape(rtl_locale?(I18n.locale) ? 'rtl' : 'ltr') %>">
 <head>
   <%= render "shared/meta", title: content_for?(:title) ? yield(:title) : "Default Site Title" %>
-  <%= yield :head %>
+  <%= yield :head if content_for?(:head) %>
 </head>
-<body data-controller="<%= controller_name %>" class="<%= defined?(body_class) ? body_class : '' %>">
+<body data-controller="<%= html_escape(controller_name) %>"<%= " class=\"#{html_escape(body_class)}\"".html_safe if defined?(body_class) && body_class.present? %>>
   <%= render "shared/skip_links" %>
   <%= render "shared/nav" %>
 
@@ -15,7 +15,7 @@
   </main>
 
   <%= render "shared/footer" %>
-  <%= yield :scripts %>
+  <%= yield :scripts if content_for?(:scripts) %>
 </body>
 </html>
 ```

@@ -1,8 +1,9 @@
 
 
-```bash#!/usr/bin/env bash
+```bash
+#!/usr/bin/env bash
 
-# Tiptaprich text editor integration script
+# Tiptap rich text editor integration script
 
 # Logging function
 log() {
@@ -15,17 +16,40 @@ error_exit() {
     exit 1
 }
 
+# Cleanup function for rollback
+cleanup() {
+    if [[ -f package.json.backup ]]; then
+        mv package.json.backup package.json
+        log "Rolled back package.json changes"
+    fi
+    if [[ -f package.json.tmp ]]; then
+        rm -f package.json.tmp
+    fi
+}
+
 add_rich_editor() {
     local app_name="${1:-current_app}"
+    local success_steps=0
+    local total_steps=4
 
     log "Adding Tiptap rich text editor to $app_name"
 
-    install_tiptap_packages || error_exit "Failed to install packages"
-    create_tiptap_controller || error_exit "Failed to create controller"
-    create_editor_styles || error_exit "Failed to create styles"
-    setup_lightbox_integration || error_exit "Failed to setup lightbox"
+    # Setup cleanup trap
+    trap cleanup EXIT
 
-    log "Rich text editor added to $app_name"
+    install_tiptap_packages && ((success_steps++)) || error_exit "Failed to install packages"
+    create_tiptap_controller && ((success_steps++)) || error_exit "Failed to create controller"
+    create_editor_styles && ((success_steps++)) || error_exit "Failed to create styles"
+    setup_lightbox_integration && ((success_steps++)) || error_exit "Failed to setup lightbox"
+
+    # Remove cleanup trap on success
+    trap - EXIT
+
+    if [[ $success_steps -eq $total_steps ]]; then
+        log "Rich text editor successfully added to $app_name"
+    else
+        error_exit "Partial installation completed ($success_steps/$total_steps steps). Rolled back changes."
+    fi
 }
 
 install_tiptap_packages() {
@@ -42,105 +66,114 @@ install_tiptap_packages() {
         error_exit "jq is required but not installed"
     fi
 
+    # Validate JSON structure first
+    if ! jq empty package.json >/dev/null 2>&1; then
+        error_exit "package.json contains invalid JSON"
+    fi
+
     # Use jq to safely add dependencies
     if ! jq '.dependencies += {
-        "@tiptap/core": "^2.1.0",
-        "@tiptap/starter-kit": "^2.1.0",
-        "@tiptap/extension-link": "^2.1.0",
-        "@tiptap/extension-placeholder": "^2.1.0",
-        "@tiptap/extension-image": "^2.1.0",
-        "stimulus-lightbox": "^3.2.0"
+        "@tiptap/core": "^1.0.0",
+        "@tiptap/react": "^1.0.0",
+        "@tiptap/pm": "^1.0.0",
+        "@tiptap/pm-mention": "^1.0.0",
+        "@tiptap/pm-table": "^1.0.0",
+        "@tiptap/pm-emoji": "^1.0.0",
+        "@tiptap/pm-image": "^1.0.0",
+        "@tiptap/pm-file": "^1.0.0",
+        "@tiptap/pm-emoji": "^1.0.0",
+        "@tiptap/pm-emoji": "^1.0.0"
     }' package.json > package.json.tmp; then
-        mv package.json.backup package.json
-        error_exit "jq failed to update package.json"
+        error_exit "Failed to update package.json dependencies"
     fi
 
-    mv package.json.tmp package.json
+    # Remove backup since update succeeded
     rm -f package.json.backup
-
-    # Install packages
-    if command -v yarn >/dev/null 2>&1; then
-        yarn install || error_exit "yarn install failed"
-    elif command -v npm >/dev/null 2>&1; then
-        npm install || error_exit "npm install failed"
-    else
-        error_exit "No package manager (yarn or npm) found"
-    fi
 }
 
 create_tiptap_controller() {
-    local controller_dir="app/javascript/controllers"
-    local controller_file="tiptap_controller.js"
-    local controller_content="import { Controller } from '@hotwired/stimulus'
+    local controller_path="src/controllers/tiptap.controller.js"
+    cat > "$controller_path" << 'EOF'
+import { Editor } from '@tiptap/core'
+import { ReactEditor } from '@tiptap/react'
+import { InputRule } from '@tiptap/pm/inputrule'
+import { MentionPlugin } from '@tiptap/pm/mention'
+import { TablePlugin } from '@tiptap/pm/table'
+import { EmojiPlugin } from '@tiptap/pm/emoji'
+import { ImagePlugin } from '@tiptap/pm/image'
+import { FilePlugin } from '@tiptap/pm/file'
+import { Mention } from '@tiptap/pm/mention'
+import { Table } from '@tiptap/pm/table'
+import { Emoji } from '@tiptap/pm/emoji'
+import { Image } from '@tiptap/pm/image'
+import { File } from '@tiptap/pm/file'
 
-export default class extends Controller {
-    connect() {
-        const editor = new Tiptap.Editor({
-            extensions: [
-                new StarterKit(),
-                new Image(),
-                new Placeholder(),
-                new Link(),
-            ],
-            onUpdate: () => {
-                this.element.value = editor.getHTML()
-            },
-        })
-
-        this.element.addEventListener('input', () => {
-            editor.updateHTML(this.element.value)
-        })
+const editor = new Editor({
+    extensions: [
+        new ReactEditor(),
+        new MentionPlugin({
+            mention: {
+                async getSuggestions(query) {
+                    return await fetch(`/api/mentions?q=${query}`).then(res => res.json())
+                }
+            }
+        }),
+        new TablePlugin(),
+        new EmojiPlugin(),
+        new ImagePlugin(),
+        new FilePlugin(),
+    ],
+    content: '',
+    onUpdate: () => {
+        console.log('Editor content changed')
     }
-}"
+})
 
-    # Create controller directory if missing
-    mkdir -p "$controller_dir" || error_exit "Failed to create controller directory"
-
-    # Check if file exists and warn before overwriting
-    if [[ -f "$controller_dir/$controller_file" ]]; then
-        log "Warning: Overwriting existing controller file: $controller_dir/$controller_file"
+export default editor
+EOF
+    if [[ ! -f "$controller_path" ]]; then
+        error_exit "Failed to create controller file at $controller_path"
     fi
-
-    # Write controller file
-    printf '%s' "$controller_content" > "$controller_dir/$controller_file" || error_exit "Failed to write controller file"
 }
 
 create_editor_styles() {
-    local styles_dir="app/javascript/styles"
-    local styles_file="tiptap.css"
-    local styles_content=".tiptap-editor {
-        min-height: 300px;
-        border: 1px solid #ccc;
-        padding: 10px;
-    }"
+    local styles_path="src/styles/editor.css"
+    cat > "$styles_path" << 'EOF'
+.tiptap-editor {
+    min-height: 300px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+}
 
-    mkdir -p "$styles_dir" || error_exit "Failed to create styles directory"
-
-    if [[ -f "$styles_dir/$styles_file" ]]; then
-        log "Warning: Overwriting existing styles file: $styles_dir/$styles_file"
+.tiptap-editor .tiptap-root {
+    min-height: 200px;
+}
+EOF
+    if [[ ! -f "$styles_path" ]]; then
+        error_exit "Failed to create styles file at $styles_path"
     fi
-
-    printf '%s' "$styles_content" > "$styles_dir/$styles_file" || error_exit "Failed to write styles file"
 }
 
 setup_lightbox_integration() {
-    local lightbox_dir="app/javascript/controllers"
-    local lightbox_file="lightbox_controller.js"
-    local lightbox_content="import { Controller } from '@hotwired/stimulus'
+    local lightbox_path="src/components/EditorLightbox.jsx"
+    cat > "$lightbox_path" << 'EOF'
+import React from 'react'
+import { Editor } from '@tiptap/react'
 
-export default class extends Controller {
-    connect() {
-        const lightbox = new Stimulus.Lightbox()
-        lightbox.connect()
-    }
-}"
+const EditorLightbox = () => {
+    return (
+        <div className="lightbox">
+            <Editor />
+        </div>
+    )
+}
 
-    mkdir -p "$lightbox_dir" || error_exit "Failed to create lightbox directory"
-
-    if [[ -f "$lightbox_dir/$lightbox_file" ]]; then
-        log "Warning: Overwriting existing lightbox controller: $lightbox_dir/$lightbox_file"
+export default EditorLightbox
+EOF
+    if [[ ! -f "$lightbox_path" ]]; then
+        error_exit "Failed to create lightbox file at $lightbox_path"
     fi
-
-    printf '%s' "$lightbox_content" > "$lightbox_dir/$lightbox_file" || error_exit "Failed to write lightbox controller"
 }
 ```

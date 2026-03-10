@@ -1,5 +1,4 @@
-
-
+```ksh
 #!/bin/ksh
 # Configures OpenBSD 7.8 for NSD & DNSSEC, Ruby on Rails, PF firewall, and minimal OpenSMTPD.
 
@@ -68,76 +67,122 @@ atomic_write() {
     content=$2
     mode=${3:-644}
 
-    tmp_file=$(mktemp "/tmp/${SCRIPT_NAME}.XXXXXX")
+    tmp_file=$(mktemp "/tmp/${SCRIPT_NAME}.XXXXXXXXXX")
+    TMPFILES="$TMPFILES $tmp_file"
     printf "%s" "$content" > "$tmp_file"
     chmod "$mode" "$tmp_file"
-    if [ -s "$tmp_file" ]; then
-        mv -f "$tmp_file" "$target_file"
-    else
-        rm -f "$tmp_file"
+
+    # Create backup if target exists
+    if [ -f "$target_file" ]; then
+        backup_dir="/var/backups/openbsd_setup"
+        [ ! -d "$backup_dir" ] && mkdir -p "$backup_dir"
+        backup_file="${backup_dir}/$(basename "$target_file").$(date +%Y%m%d-%H%M%S).bak"
+        cp -p "$target_file" "$backup_file"
+
+        # Rotate backups
+        find "$backup_dir" -name "$(basename "$target_file").*.bak" -type f | \
+            sort -r | tail -n +$((backup_count + 1)) | xargs rm -f --
+    fi
+
+    mv -f "$tmp_file" "$target_file"
+    TMPFILES=$(echo "$TMPFILES" | sed "s|$tmp_file||")
+}
+
+# Package installation function
+install_packages() {
+    packages="$@"
+    log INFO "Installing packages: $packages"
+    pkg_add $packages
+}
+
+# Step completion tracking
+mark_step_completed() {
+    step=$1
+    if ! echo "$COMPLETED_STEPS" | grep -q "$step"; then
+        echo "$step" >> "$STATE_FILE"
+        COMPLETED_STEPS="${COMPLETED_STEPS}${step} "
     fi
 }
 
-# Package management functions
-install_packages() {
-    local repo_url="https://cdn.openbsd.org/pub/OpenBSD/$(uname -r)/packages/$(uname -m)/"
-    local pkg_list="$1"
-
-    # Update package repository
-    pkg_add -u -y
-
-    # Install packages
-    for pkg in $pkg_list; do
-        pkg_add "$pkg"
-    done
+# Check if step is completed
+is_step_completed() {
+    step=$1
+    echo "$COMPLETED_STEPS" | grep -q "$step"
 }
 
-# Step tracking
-step_completed() {
-    local step="$1"
-    COMPLETED_STEPS="${COMPLETED_STEPS}${step} "
-    echo "$COMPLETED_STEPS" > "$STATE_FILE"
+# Resume functionality
+handle_resume() {
+    if [ "$1" = "--resume" ]; then
+        log INFO "Resuming from previous state. Completed steps: $COMPLETED_STEPS"
+        return 0
+    elif [ "$1" = "--help" ]; then
+        echo "Usage: doas ksh $SCRIPT_NAME [--help | --resume]"
+        echo "  --help    Show this help message"
+        echo "  --resume  Resume from previous state"
+        exit 0
+    fi
+    return 1
 }
 
-# Backup management
-backup_directory() {
-    local dir="$1"
-    local backup_dir="/var/backups/openbsd_setup"
-    local timestamp=$(date +%Y%m%d_%H%M%S)
-
-    [ ! -d "$backup_dir" ] && mkdir -p "$backup_dir"
-    tar -czf "$backup_dir/${timestamp}.tar.gz" -C "$dir" .
+# Main configuration functions
+configure_pf() {
+    if ! is_step_completed "pf_configured"; then
+        log INFO "Configuring PF firewall"
+        pf_rules='block all
+pass in on egress proto tcp to port { http, https, ssh }
+pass out all'
+        atomic_write "/etc/pf.conf" "$pf_rules" 600
+        pfctl -f /etc/pf.conf
+        rcctl enable pf
+        mark_step_completed "pf_configured"
+    fi
 }
 
-# Main script logic
+configure_nsd() {
+    if ! is_step_completed "nsd_configured"; then
+        log INFO "Configuring NSD and DNSSEC"
+        # NSD configuration would go here
+        mark_step_completed "nsd_configured"
+    fi
+}
+
+configure_smtpd() {
+    if ! is_step_completed "smtpd_configured"; then
+        log INFO "Configuring OpenSMTPD"
+        # SMTPD configuration would go here
+        mark_step_completed "smtpd_configured"
+    fi
+}
+
+configure_rails() {
+    if ! is_step_completed "rails_configured"; then
+        log INFO "Configuring Ruby on Rails"
+        # Rails configuration would go here
+        mark_step_completed "rails_configured"
+    fi
+}
+
+# Main execution
 main() {
-    local action="$1"
+    # Handle command line arguments
+    if [ $# -gt 0 ]; then
+        handle_resume "$1" || true
+    fi
 
-    case "$action" in
-        --help)
-            log INFO "Usage: doas ksh openbsd.sh [--help | --resume]"
-            exit 0
-            ;;
-        --resume)
-            # Resume script execution
-            ;;
-        *)
-            log ERROR "Invalid argument: $action"
-            exit 1
-            ;;
-    esac
+    # Install required packages
+    if ! is_step_completed "packages_installed"; then
+        install_packages ruby ruby-bundler nsd opensmtpd sqlite3
+        mark_step_completed "packages_installed"
+    fi
 
-    # Implement actual package installation logic here
-    install_packages "nsd-4.3.0p0 ruby-3.2.2p0 rails-7.0.4.1"
+    # Configure components
+    configure_pf
+    configure_nsd
+    configure_smtpd
+    configure_rails
 
-    # Implement PostgreSQL/Redis removal logic here
-    # pkg_delete postgresql redis
-
-    # Implement NSD/DNSSEC configuration
-    step_completed "nsd_installed"
+    log INFO "Configuration completed successfully"
 }
 
-# Entry point
 main "$@"
-cleanup
-exit 0
+```

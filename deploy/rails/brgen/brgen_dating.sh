@@ -63,7 +63,7 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-for cmd in ruby node psql; do
+for cmd in ruby node psql bundle npm rails; do
     if ! command_exists "$cmd"; then
         log "Error: Required command '$cmd' not found"
         exit 1
@@ -81,9 +81,19 @@ if ! psql -c "SELECT postgis_version();" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Validate pagy gem installation
-if ! gem list pagy -i >/dev/null 2>&1; then
-    log "Error: Pagy gem is not installed"
+# Validate Rails environment
+if [[ -z "$RAILS_ENV" ]]; then
+    export RAILS_ENV="production"
+    log "Warning: RAILS_ENV not set, defaulting to production"
+fi
+
+# Validate port assignment
+APP_PORT=$((10000 + RANDOM % 10000))
+log "Assigned port: $APP_PORT"
+
+# Additional setup validation
+if [[ ! -d "${BASE_DIR}/${APP_NAME}" ]]; then
+    log "Error: App directory ${BASE_DIR}/${APP_NAME} does not exist after setup"
     exit 1
 fi
 

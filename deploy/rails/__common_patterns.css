@@ -79,11 +79,16 @@ body {
 }
 
 @media (max-width: 480px) {
-  :root {
-    --font-size-base: 12px;
+  html,
+  body {
+    font-size: 12px;
   }
 
   .header {
+    &__tabs {
+      gap: var(--space-xs);
+    }
+
     &__tab {
       padding: var(--space-xs) var(--space-sm);
       font-size: 0.9em;

@@ -57,43 +57,63 @@ setup_airbnb_models() {
 }
 
 setup_polymorphic_associations() {
-  log "Setting up polymorphic associations in models"
+  log "Setting up polymorphic associations for Review model"
 
-  local booking_file="app/models/booking.rb"
-  if [[ -f "$booking_file" ]] && ! grep -q "belongs_to :reviewable, polymorphic: true" "$booking_file"; then
-    cat >> "$booking_file" << 'EOF'
-
-  # Polymorphic associations for reviews
-  has_many :reviews, as: :reviewable
-EOF
-    log "Added polymorphic associations to Booking model"
-  fi
-}
-
-validate_models() {
-  log "Validating models can be loaded correctly"
-  if ! bundle exec rails runner 'puts "All models loaded successfully"'; then
-    log "Model validation failed"
+  local review_model="app/models/review.rb"
+  if [[ ! -f "$review_model" ]]; then
+    log "Review model not found, cannot set up polymorphic associations"
     exit 1
   fi
+
+  if ! grep -q "belongs_to :reviewable, polymorphic: true" "$review_model"; then
+    cat >> "$review_model" << 'EOF'
+
+  belongs_to :reviewable, polymorphic: true
+  belongs_to :reviewer, polymorphic: true
+EOF
+    log "Added polymorphic associations to Review model"
+  else
+    log "Polymorphic associations already present in Review model"
+  fi
 }
 
-cleanup() {
-  log "Cleaning up temporary files"
-  local temp_file="tmp/migration_cleanup.txt"
-  if [[ -f "$temp_file" ]]; then
-    rm "$temp_file"
+add_validations() {
+  log "Adding validations to models"
+
+  # Add validations to Booking model
+  local booking_model="app/models/booking.rb"
+  if [[ -f "$, :total_price, :status, presence: true" "$booking_model";check_in, :check_out, :guests_count, :total_price, :status, presence: true
+  validates :guests_count, numericality: { only_integer: true, greater_than: 0 }
+  validates :total_price, numericality: { greater_than_or_equal_to_in
+
+  private
+
+  def check_out_after_check_in
+    validations to Booking model"
+    fi
+  fi
+
+  # Add validations to Review model
+  local review_model="app/models/review.rb"
+  if [[ -f "$review_model" ]]; then
+    if ! grep -q "validates :rating, numericality: { in: 1..5 }" "$review_model"; then
+      cat >> "$review_model" << 'EOF'
+
+  validates :rating, numericality: { in: 1..5 }
+  validates :content, length: { maximum: 1000 }
+EOF
+      log "Added validations to Review model"
+    fi
   fi
 }
 
 main() {
-  log "Starting Airbnb model setup"
-  setup_airbnb_models
-  run_migration
-  setup_polymorphic_associations
-  validate_models
-  cleanup
-  log "Airbnb model setup completed successfully"
+  log "Starting Airbnb marketplace features setup"
+
+  setup_airbnb_models || exit 1
+  run_migration || exit  add_validations || exit 1
+
+  log "Airbnb marketplace features setup completed successfully"
 }
 
 main "$@"

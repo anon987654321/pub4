@@ -6,7 +6,8 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# Generate [text_color] [border_color] [spacing]
+# Generate SCSS variables for Rails application
+# Arguments: theme_color [dark_mode] [bg_color] [surface_color] [text_color] [border_color] [spacing]
 generate_application_scss() {
   local theme_color="${1:-#0066ff}"
   local dark_mode="${2:-dark}"
@@ -17,25 +18,27 @@ generate_application_scss() {
   local spacing="${7:-1rem}"
   local -r target="app/assets/stylesheets/application.scss"
 
-  # Validate color format (accepts hex, rgb, rgba, hsl, hsla)
-  local color_regex='^(#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})|rgb\(\s*(\d{1,3}\s*,\s*){2}\d{1,3}\s*\)|rgba\(\s*(\d{1,3}\s*,\s*){3}(0|1|0?\.\d+)\s*\)|hsl\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*\)|hsla\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*,\s*(0|1|0?\.\d+)\s*\))$'
+  # Enhanced color validation with proper hex length checking
+  local color_regex='^(#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})|rgb\(\s*(\d{1,3}\s*,\s*){2}\d{1,3}\s*\)|rgba\(\s*(\d{1,3}\s*,\s*){3}(0|1|0?\.\d+)\s*\)|hsl\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*\)|hsla\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*,\s*(0|1|0?\.\d+)\s*\))$'
   [[ $theme_color =~ $color_regex ]] || {
-    print -u2 "Error: Invalid color format '$theme_color'. Use hex (#RRGGBB, #RGB), rgb(), rgba(), hsl(), or hsla()"
+    print -u2 "Error: Invalid color format '$theme_color'. Use hex (#RRGGBB, #RGB, #RRGGBBAA), rgb(), rgba(), hsl(), or hsla()"
     return 1
   }
 
-  # Validate dark_mode parameter
-  [[ $dark_mode == "dark" || $dark_mode == "light" || $dark_mode == "auto" || $dark_mode == "system" ]] || {
-    print -u2 "Error: dark_mode must be 'dark', 'light', 'auto', or 'system', got '$dark_mode'"
+  # Validate dark_mode parameter with only relevant options
+  [[ $dark_mode == "dark" || $dark_mode == "light" ]] || {
+    print -u2 "Error: dark_mode must be 'dark' or 'light', got '$dark_mode'"
     return 1
   }
 
-  # Sanitize and validate target path
-  target_dir="${target:h}"
-  [[ $target_dir == /* ]] || target_dir="${PWD}/${target_dir}"
-  target_dir="${target_dir:A}"
+  # Use realpath for robust path handling
+  local target_dir
+  if ! target_dir=$(realpath -m "${target:h}"); then
+    print -u2 "Error: Failed to resolve target directory path"
+    return 1
+  fi
 
-  # Check if target directory exists and is writable
+  # Create directory if it doesn't exist
   if [[ ! -d $target_dir ]]; then
     if ! mkdir -p "$target_dir"; then
       print -u2 "Error: Failed to create directory $target_dir"
@@ -48,42 +51,41 @@ generate_application_scss() {
 
   # Check if target file already exists
   if [[ -f $target ]]; then
-    print -u2 "Error: Target file $target already exists. Refusing to overwrite."
+    print -u2 "Error: Target file $target already exists"
     return 1
   fi
 
-  # Generate CSS content using printf for safety
-  local css_content
-  css_content=$(printf '/* Generated per master.yml v206 */
-:root {
-  --primary: %s;
-  --bg: %s;
-  --surface: %s;
-  --text: %s;
-  --border: %s;
-  --spacing: %s;
-}
-' "$theme_color" "$bg_color" "$surface_color" "$text_color" "$border_color" "$spacing")
+  # Generate SCSS content with conditional dark mode
+  local scss_content="// Application SCSS variables
+// Generated automatically - do not edit manually
 
-  if [[ $dark_mode == "dark" || $dark_mode == "auto" || $dark_mode == "system" ]]; then
-    css_content+=$(printf '
+// Theme colors
+\$theme-color: $theme_color;
+\$background-color: $bg_color;
+\$surface-color: $surface_color;
+\$text-color: $text_color;
+\$border-color: $border_color;
+\$spacing: $spacing;"
+
+  # Only add dark mode media query if dark mode is enabled
+  if [[ $dark_mode == "dark" ]]; then
+    scss_content+="
+
+// Dark mode overrides
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: %s;
-    --surface: %s;
-    --text: %s;
-    --border: %s;
-  }
-}
-' "#1a1a1a" "#2d2d2d" "#ffffff" "#404040")
+  \$background-color: #1a1a1a;
+  \$surface-color: #2d2d2d;
+  \$text-color: #ffffff;
+  \$border-color: #404040;
+}"
   fi
 
-  # Write content to file
-  if ! printf '%s\n' "$css_content" > "$target"; then
+  # Write to file with error handling
+  if ! printf '%s\n' "$scss_content" > "$target"; then
     print -u2 "Error: Failed to write to $target"
     return 1
   fi
 
-  print "Successfully generated $target"
+  print "Successfully generated SCSS variables at $target"
 }
 ```

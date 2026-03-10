@@ -5,10 +5,10 @@
     <nav class="nav-main" aria-label="Main navigation" role="navigation">
       <div class="nav-brand">
         <%= link_to root_path, class: "logo-link" do %>
-          <span class="logo"><%= @app_name || "App" %></span>
+          <span class="logo"><%= @app_name.presence || "App" %></span>
         <% end %>
         <% if ActsAsTenant.current_tenant && ActsAsTenant.current_tenant.name.present? %>
-          <span class="tenant" aria-label="<%= ActsAsTenant.current_tenant.name %>"><%= ActsAsTenant.current_tenant.name %></span>
+          <span class="tenant"><%= ActsAsTenant.current_tenant.name %></span>
         <% end %>
       </div>
 

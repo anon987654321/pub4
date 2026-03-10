@@ -9,8 +9,6 @@ APP_NAME="blognet"
 
 BASE_DIR="/home/dev/rails"
 
-SERVER_IP="185.52.176.18"
-
 # Efficient port finding using multiple methods for compatibility
 find_available_port() {
   local port=3000
@@ -37,7 +35,10 @@ find_available_port() {
     return 1
   fi
 
- # Double check port is actually available
+  # Find first available port in range
+  while (( port <= max_port )); do
+    if ! echo "$used_ports" | grep -q "^$port$"; then
+      # Double check port is actually available
       if ! (echo >/dev/tcp/localhost/$port) 2>/dev/null; then
         echo $port
         return 0
@@ -46,12 +47,11 @@ find_available_port() {
     ((port++))
   done
 
-  echo "No available ports
+  echo "No available ports found in range 3000-3999" >&2
+  return 1
 }
 
 SCRIPT_DIR="${0:a:h}"
-
-source "${SCRIPT_DIR}/ >&2; exit 1; }
 
 # Define missing setup function
 setup_full_app() {
@@ -76,67 +76,73 @@ check_app_configured() {
   local missing_config=0
   local checks=(
     "app/models/blog.rb:File"
-    "app/models/database.yml:File"
+    "app/controllers/blogs_controller.rb:File"
+    "config/database.yml:File"
     ".env:File"
-    "app/controllers/application_controller.rb:PagyBackend"
-    "app/ for check in $checks; do
-    local target=${check% in
+  )
+
+  for check in $checks; do
+    local file=${check%%:*}
+    local type=${check#*:}
+
+    case $type in
       File)
-        if [[ ! -f "$target" ]]; then
-          echo "Missing: $target" >&2
-          if [[ -f "$target" ]] && ! grep -q "include Pagy::Backend" "$target" 2>/dev/null; then
-          echo "Missing: Pagy::Backend include in $target" -q "include Pagy::Frontend" "$target" 2>/dev/null; then
-          echo "Missing: Pagy::Frontend include in $target" >&2
+        if [[ ! -f $file ]]; then
+          echo "Missing required file: $file" >&2
           missing_config=1
         fi
         ;;
-      Gem)
-        if ! bundle list | grep -q "$target" >/dev/null 2>&1; then
-          echo "Missing: $target gem" >&2
+      Directory)
+        if [[ ! -d $file ]]; then
+          echo "Missing required directory: $file" >&2
           missing_config=1
         fi
         ;;
     esac
   done
 
-  # Additional database connectivity check
-  if ! check_database_connection; then
-    echo "Database connection failed" >&2
-    missing_config=1
-  fi
-
   return $missing_config
 }
 
-# Helper functions for comprehensive setup
-check_database_configured() {
-  [[ -f "config/database.yml" ]] && \
-  [[ -f ".env" ]] && \
-  grep -q "DATABASE_URL\|DB_" .env 2>/dev/null
-}
-
+# Database connection check using rails runner
 check_database_connection() {
-  if command -v rails >/dev/null 2>&1; then
-    rails db:version >/dev/null 2>&1
-    return $?
+  if ! rails runner "ActiveRecord::Base.connection; puts 'Database connection successful'" 2>/dev/null; then
+    echo "Database connection failed" >&2
+    return 1
   fi
-  return 1
+  return 0
 }
 
+# Environment variable check using simple validation
 check_environment_variables() {
-  [[ -f ".env" ]] && \
-  { grep -q "SECRET_KEY_BASE\|RAILS_ENV\|DATABASE_URL" .env 2>/dev/null || \
-    export | grep -q "SECRET_KEY_BASE\|RAILS_ENV\|DATABASE_URL"; }
+  local required_vars=(
+    "DATABASE_URL"
+    "REDIS_URL"
+    "SECRET_KEY_BASE"
+  )
+
+  for var in $required_vars; do
+    if [[ -z ${(P)var} ]]; then
+      echo "Missing environment variable: $var" >&2
+      return 1
+    fi
+  done
+  return 0
 }
 
+# Placeholder functions for setup tasks
 setup_database() {
-  echo "Configuring database..."
-  # Add database setup logic here
+  echo "Setting up database..."
+  rails db:create db:migrate
 }
 
 setup_environment() {
   echo "Setting up environment variables..."
-  # Add environment setup logic here
+  # Generate secret key base if not set
+  if [[ -z $SECRET_KEY_BASE ]]; then
+    export SECRET_KEY_BASE=$(rails secret)
+    echo "Generated SECRET_KEY_BASE"
+  fi
 }
 
 run_setup_tasks() {
@@ -144,19 +150,12 @@ run_setup_tasks() {
   # Add any additional setup tasks here
 }
 
-# Fixed model generation function with proper arguments
+# Generate model if missing
 generate_model_if_missing() {
-  local model_name=$1
-  local model_file="app/models/${model_name}.rb"
-
-  if [[ ! -f "$model_file" ]]; then
-    echo "Generating model: $model_name"
-    if command -v rails >/dev/null 2>&1; then
-      rails generate model $model_name
-    else
-      echo "Error: Rails not available to generate model $model_name" >&2
-      return 1
-    fi
+  local model_file="app/models/$1.rb"
+  if [[ ! -f $model_file ]]; then
+    echo "Generating model $1..."
+    rails generate model $1
   fi
 }
 ```
