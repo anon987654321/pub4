@@ -467,7 +467,10 @@ module MASTER
         manage_heartbeat(args)
       when "policy"
         manage_policy(args)
-      when "openbsd-check"n        openbsd_check(args)n        HANDLEDn      when "shell"
+      when "openbsd-check"
+        openbsd_check(args)
+        HANDLED
+      when "shell"
         InteractiveShell.new.run
         HANDLED
       when "goal"

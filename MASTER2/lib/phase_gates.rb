@@ -33,7 +33,7 @@ module MASTER
       when :zero_test_failures then context[:test_failures].to_i.zero?
       when :no_vague_words
         text = context[:problem_statement].to_s
-        \!text.match?(/\b(somehow|something|maybe|kind of|sort of|whatever)\b/i)
+        !text.match?(/\b(somehow|something|maybe|kind of|sort of|whatever)\b/i)
       when :success_measurable
         context[:success_criteria].to_s.length > 10
       else true  # unknown gates pass by default
