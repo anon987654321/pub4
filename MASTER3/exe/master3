@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
+require "master3"
+
+if $stdin.tty?
+  cli = Master3.boot(root: Dir.pwd, argv: ARGV)
+  message = ARGV.join(" ").strip
+  cli.run(message.empty? ? nil : message)
+else
+  cli = Master3.boot(root: Dir.pwd)
+  cli.pipe($stdin.read)
+end

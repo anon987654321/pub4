@@ -1,0 +1,20 @@
+openbsd:
+  service_manager: rcctl
+  package_manager: pkg_add
+  privilege: doas
+  http_server: httpd
+  firewall: pf
+  audio: aucat
+
+linux:
+  service_manager: systemctl
+  package_manager: apt
+  privilege: sudo
+  http_server: nginx
+  audio: mpv
+
+macos:
+  service_manager: launchctl
+  package_manager: brew
+  privilege: sudo
+  audio: afplay
