@@ -11,6 +11,7 @@ module MASTER
     DEFAULT_STAGES = %i[intake compress guard route council ask lint render].freeze
     ALLOWED_STAGES = %w[Intake Compress Guard Route Council Ask Lint Render Execute].freeze
     MAX_INPUT_LENGTH = 100_000 # ~25k tokens
+    ALIASED_KEYS = %i[answer content].freeze
 
     @current_pattern = :auto
     @current_pattern_mutex = Mutex.new
@@ -161,14 +162,15 @@ module MASTER
       # Pressure-pass: delegate to extracted PressurePass module
       pressure = PressurePass.review(user_input: input_text, candidate: normalized[:rendered] || normalized[:response])
       if pressure
+        Logging.dmesg_log("pipeline", message: "pressure_pass overriding response (rationale: #{pressure[:rationale].to_s[0, 80]})")
         normalized[:pressure_pass] = pressure
         normalized[:response] = pressure[:selected_answer] if pressure[:selected_answer]
         normalized[:rendered] = pressure[:selected_answer] if pressure[:selected_answer]
       end
 
-      # Preserve any custom keys from the original value
+      # Preserve any custom keys from the original value (excluding aliased keys)
       v.each do |key, val|
-        normalized[key] = val unless normalized.key?(key)
+        normalized[key] = val unless normalized.key?(key) || ALIASED_KEYS.include?(key)
       end
 
       Result.ok(normalized)

@@ -14,7 +14,7 @@ module MASTER
       # NOTE: CRuby-specific (RubyVM::InstructionSequence). Will raise on JRuby/TruffleRuby.
       RubyVM::InstructionSequence.compile(code)
       true
-    rescue SyntaxError
+    rescue SyntaxError, NameError
       false
     end
 

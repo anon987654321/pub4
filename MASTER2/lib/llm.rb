@@ -196,6 +196,8 @@ module MASTER
         end
 
         Result.err("all models exhausted: #{last_error}", category: :infrastructure)
+      rescue CircuitBreaker::RateLimitError => e
+        Result.err(e.message, category: :rate_limit)
       rescue StandardError => e
         CircuitBreaker.open_circuit!(primary) if primary
         Result.err(Logging.format_error(e), category: :infrastructure)

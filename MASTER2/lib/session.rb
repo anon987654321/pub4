@@ -88,10 +88,8 @@ module MASTER
     end
 
     def context_for_llm(max_messages: 20)
-      compressed = Memory.compress(@history)
-      compressed.last(max_messages).map do |h|
-        { role: h[:role].to_s, content: h[:content] }
-      end
+      msgs = defined?(Memory) ? Memory.compress(@history) : @history
+      msgs.last(max_messages).map { |h| { role: h[:role].to_s, content: h[:content] } }
     end
 
     def write_metadata(key, value)

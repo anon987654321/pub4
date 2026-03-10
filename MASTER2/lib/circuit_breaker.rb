@@ -54,6 +54,7 @@ module MASTER
 
     # Custom exception for intentional circuit breaker state changes
     class TestFailure < StandardError; end
+    RateLimitError = Class.new(StandardError)
 
     FAILURES_BEFORE_TRIP = 3
     CIRCUIT_RESET_SECONDS = 300
@@ -87,9 +88,8 @@ module MASTER
           oldest = state[:requests].min
           wait_time = 60 - (now - oldest)
           if wait_time > 0
-            Logging.warn("Rate limit reached, waiting", seconds: wait_time.round)
-            sleep(wait_time)
-            state[:requests].clear
+            Logging.warn("Rate limit reached, retry after #{wait_time.round}s", subsystem: "CircuitBreaker")
+            raise RateLimitError, "Rate limited: retry after #{wait_time.round}s"
           end
         end
 
