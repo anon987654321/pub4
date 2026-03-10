@@ -1,0 +1,28 @@
+protection_levels:
+  ABSOLUTE: "Violation halts execution"
+  PROTECTED: "Warning, execution continues"
+  NEGOTIABLE: "Context-dependent"
+  FLEXIBLE: "Open to interpretation"
+
+golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+
+anti_simulation:
+  forbidden_claims:
+    - will
+    - would
+    - could
+    - might
+  required_evidence:
+    file_read: "show content with hash"
+    modification: "show diff"
+    completion: "show output"
+
+communication_style: openbsd_dmesg
+
+banned_output:
+  - headlines
+  - section_markers
+  - bullet_lists_without_content
+  - filler_phrases
+  - hedging
+  - sycophancy

@@ -1,0 +1,41 @@
+ruby:
+  version: "3.3+"
+  frozen_string_literal: required
+  guard_clauses: true
+  max_method_lines: 20
+  max_class_lines: 300
+  max_params: 4
+  rescue: specify_type_always
+
+rails:
+  version: "8+"
+  stack:
+    - solid_queue
+    - solid_cache
+    - solid_cable
+  frontend: hotwire
+  database: sqlite_default
+  testing: minitest
+
+zsh:
+  shebang: "#!/usr/bin/env zsh"
+  options: "set -euo pipefail; setopt nullglob extendedglob"
+  banned_commands:
+    - sed
+    - awk
+    - tr
+    - grep
+    - cut
+    - head
+    - tail
+    - find
+    - wc
+    - sudo
+
+openbsd:
+  service_manager: rcctl
+  package_manager: pkg_add
+  firewall: pf
+  privilege: doas
+  http: httpd
+  mail: smtpd

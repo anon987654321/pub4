@@ -1,0 +1,58 @@
+# Kernel axioms — enforced by scan rules, pipeline stages, or tool guards
+kernel:
+  PRESERVE_FIRST:    "Never break working code. Read before write."
+  SIMPLEST_WORKS:    "Fewest moving parts that solve the problem."
+  FAIL_VISIBLY:      "Errors surface immediately. Never swallow exceptions."
+  ONE_SOURCE:        "One authoritative representation per concept."
+  DECOUPLE:          "Hidden dependencies become explicit."
+  GUARD_EXPENSIVE:   "Check preconditions before costly work."
+  DEGRADE_GRACEFULLY: "Works with partial failures."
+  BE_CONCISE:        "No unnecessary words, tokens, or lines."
+
+# Philosophy axioms — advisory, not enforced
+philosophy:
+  - ONE_JOB
+  - NO_SURPRISES
+  - EXTEND_DONT_MODIFY
+  - COMPOSABLE
+  - DEADLINES
+  - WET
+  - AHA
+  - MERGE
+  - FLATTEN
+  - DEFRAGMENT
+  - HOIST
+  - PRUNE
+  - COALESCE
+  - REFLOW
+  - FINISH_FIRST
+  - LEAVE_BETTER
+  - TEST_FIRST
+  - REVERSIBLE
+  - ONE_CHANGE
+  - SKELETON_FIRST
+  - MEASURE_THEN_OPTIMIZE
+  - BLAME_SELF
+  - FUNCTIONAL_CORE
+  - EXPLICIT
+  - IDEMPOTENT
+  - CQS
+  - IMMUTABLE
+  - APPEND_ONLY
+  - CACHE_FIRST
+  - SELF_EXPLAINING
+  - PROSE_NOT_LISTS
+  - ACCESSIBLE_FIRST
+  - SQUINT_TEST
+  - JUST_ENOUGH
+  - TYPOGRAPHY
+  - VISIBLE_REPAIRS
+  - CHESTERTONS_FENCE
+  - GALLS_LAW
+  - HYRUMS_LAW
+  - POSTELS_LAW
+  - PARETO
+  - LINDY
+  - OCCAMS_RAZOR
+  - DUAL_DETECT
+  - SILENCE_DEFAULT

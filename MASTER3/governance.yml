@@ -1,0 +1,32 @@
+tool_approval:
+  safe:
+    - read_file
+    - list_dir
+    - search_files
+  guarded:
+    - write_file
+    - str_replace
+    - apply_diff
+    - ask_llm
+    - web_search
+  dangerous:
+    - zsh
+
+blocked_commands:
+  - "rm -rf /"
+  - sudo
+  - reboot
+  - shutdown
+  - mkfs
+  - "dd if="
+  - "> /dev/"
+  - "chmod 777"
+  - "curl | sh"
+  - "wget | sh"
+
+budgets:
+  per_request: 1.00
+  per_session: 10.00
+
+rate_limit:
+  requests_per_minute: 30
