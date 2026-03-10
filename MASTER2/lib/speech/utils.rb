@@ -35,7 +35,7 @@ module MASTER
       def best_engine
         return :piper if piper_installed?
         return :edge if edge_installed?
-        return :replicate if ENV["REPLICATE_API_TOKEN"]
+        return :replicate if ENV["REPLICATE_API_TOKEN"] || ENV["REPLICATE_API_KEY"]
 
         nil
       end
@@ -46,7 +46,7 @@ module MASTER
           case e
           when :piper then piper_installed?
           when :edge then edge_installed?
-          when :replicate then ENV.fetch("REPLICATE_API_TOKEN", nil)
+          when :replicate then ENV["REPLICATE_API_TOKEN"] || ENV["REPLICATE_API_KEY"]
           end
         end
       end

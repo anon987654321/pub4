@@ -19,3 +19,9 @@ Auto-approve all tool calls — no confirmation needed before running commands.
 
 Connection: sshpass -p hutte10tu6969 ssh -o StrictHostKeyChecking=no dev@brgen.no "cmd"
 Project path: ~/pub4/MASTER2
+
+## SSH Scripting Notes
+- SSH heredocs fail with special characters (Norwegian, em-dash, Unicode). Use SCP instead:
+  `scp /tmp/fix.rb dev@brgen.no:/tmp/ && ssh dev@brgen.no 'ruby /tmp/fix.rb'`
+- Always read files with `encoding: "utf-8"` — Norwegian chars are common in this project.
+- Load env without starting MASTER2: `eval "$(grep '^export' ~/.zshrc)"`
