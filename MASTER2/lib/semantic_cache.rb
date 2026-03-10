@@ -182,10 +182,10 @@ module MASTER
           {
             path: path,
             hit_count: entry[:hit_count] || 0,
-            last_hit: entry[:last_hit] ? Time.parse(entry[:last_hit]) : File.mtime(path),
+            last_hit: entry[:last_hit] ? Time.parse(entry[:last_hit]) : (File.exist?(path) ? File.mtime(path) : Time.at(0)),
           }
         rescue StandardError
-          { path: path, hit_count: 0, last_hit: File.mtime(path) }
+          { path: path, hit_count: 0, last_hit: Time.at(0) }
         end
 
         sorted = entries_with_data.sort_by { |e| [e[:hit_count], e[:last_hit]] }
