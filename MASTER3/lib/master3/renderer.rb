@@ -18,7 +18,7 @@ module Master3
       lines << ""
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
-      lines << "#{@p.bold.green("master3")}@#{@p.cyan(short_model(model))} ready"
+      lines << "#{@p.bold.red("master3")}@#{@p.red(short_model(model))} #{@p.dim("ready")}"
       lines << ""
       lines.join("\n")
     end
@@ -26,15 +26,15 @@ module Master3
     alias banner splash
 
     def prompt_line(model, phase, last_ok: true)
-      dollar = last_ok ? @p.green("$") : @p.red("$")
-      "#{@p.bold.green("master3")}@#{@p.cyan(short_model(model))}#{dollar} "
+      dollar = last_ok ? @p.bright_red("$") : @p.red("$")
+      "#{@p.bold.red("master3")}@#{@p.red(short_model(model))}#{dollar} "
     end
 
     def render(content, mode: :plain)
       case mode
       when :error   then "#{@p.red(CROSS)} #{@p.red(content)}"
-      when :success then "#{@p.green(TICK)} #{@p.green(content)}"
-      when :warning then "#{@p.yellow("!")} #{@p.yellow(content)}"
+      when :success then "#{@p.bright_red(TICK)} #{@p.bright_red(content)}"
+      when :warning then "#{@p.red("!")} #{@p.red(content)}"
       when :dim     then @p.dim(content.to_s)
       when :dmesg   then format_dmesg(content)
       else               content.to_s
@@ -45,7 +45,6 @@ module Master3
       render(message, mode: :error)
     end
 
-    # Format internal log lines like OpenBSD dmesg
     def format_dmesg(line)
       @p.dim("[#{elapsed_ms}] #{line}")
     end
