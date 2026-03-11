@@ -55,4 +55,9 @@ class TestIntrospection < Minitest::Test
     result = MASTER::Analysis::Introspection.tree_string(@root)
     assert_match(/\.rb/, result)
   end
+
+  def test_tree_string_uses_ascii_connectors
+    result = MASTER::Analysis::Introspection.tree_string(@root)
+    assert_match(/`-- |\|-- /, result)
+  end
 end

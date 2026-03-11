@@ -80,23 +80,9 @@ module MASTER
 
         # Generate tree string representation of directory
         # @param dir [String] Directory to scan
-        # @param prefix [String] Prefix for indentation
         # @return [String] Tree representation
-        def tree_string(dir = MASTER.root, prefix = "")
-          result = []
-          entries = Dir.entries(dir).sort.reject { |e| e.start_with?(".") || IGNORED.include?(e) }
-
-          entries.each_with_index do |entry, _idx|
-            path = File.join(dir, entry)
-            is_dir = File.directory?(path)
-
-            # Only append slash for directories
-            result << "#{prefix}#{entry}#{'/' if is_dir}"
-
-            result << tree_string(path, "#{prefix}  ") if is_dir
-          end
-
-          result.join("\n")
+        def tree_string(dir = MASTER.root)
+          MASTER::Utils.render_tree(dir, max_depth: 4, exclude: IGNORED, max_entries_per_dir: 20).join("\n")
         end
 
         require_relative "../introspection/self_map"

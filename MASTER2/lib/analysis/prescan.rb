@@ -10,7 +10,6 @@ module MASTER
     module Prescan
       extend self
 
-      TREE_EXCLUDES = %w[. .. .git vendor tmp node_modules var].freeze
 
       def run(path = MASTER.root, tree_depth: 4, cache: false)
         path = File.expand_path(path)
@@ -36,30 +35,7 @@ module MASTER
       private
 
       def project_tree(path, max_depth: 4)
-        file_tree(path, max_depth: max_depth, exclude: TREE_EXCLUDES)
-      end
-
-      # Ruby-native tree walker
-      def file_tree(root, indent: "", max_depth: 3, depth: 0, exclude: [])
-        return [] if max_depth && depth >= max_depth
-
-        entries = Dir.children(root).sort.reject { |e| exclude.include?(e) }
-        lines = []
-
-        entries.each_with_index do |entry, i|
-          path = File.join(root, entry)
-          last = i == entries.size - 1
-          connector = last ? "└── " : "├── "
-          lines << "#{indent}#{connector}#{entry}"
-
-          next unless File.directory?(path)
-
-          extension = last ? "    " : "│   "
-          lines.concat(file_tree(path, indent: "#{indent}#{extension}", max_depth: max_depth, depth: depth + 1,
-                                       exclude: exclude))
-        end
-
-        lines
+        MASTER::Utils.render_tree(path, max_depth: max_depth, max_entries_per_dir: 20)
       end
 
       def detect_sprawl(path)
