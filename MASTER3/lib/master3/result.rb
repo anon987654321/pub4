@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 module Master3
-  class UnwrapError < RuntimeError; end
-
   class Result
     def self.ok(value)    = Ok.new(value)
     def self.err(msg, category: :unknown) = Err.new(msg, category)

@@ -5,7 +5,7 @@ require "tty-prompt"
 
 module Master3
   class CLI
-    COMMANDS = %w[clear save tokens undo diff tree model mode task autotest dmesg cost config help exit].freeze
+    COMMANDS = %w[clear save tokens undo diff tree model mode task autotest dmesg cost config tts help exit].freeze
 
     attr_reader :container
 
@@ -22,6 +22,7 @@ module Master3
       @running   = false
       @ctrl_c_ts = 0
       @last_ok   = true
+      @tts_on    = Speech.available? && @config["tts"] != false
     end
 
     def run(initial_message = nil)
@@ -65,7 +66,13 @@ module Master3
       when "tokens" then puts @renderer.render("session tokens: #{@session.token_count rescue "n/a"}", mode: :dim)
       when "save"   then @session.save!; puts @renderer.render("saved", mode: :success)
       when "dmesg"  then puts @logging.dmesg(50).split("\n").map { |l| @renderer.format_dmesg(l) }.join("\n")
-      else               puts @renderer.render("unknown command: /#{cmd}", mode: :warning)
+      when "tts"
+        case args.first
+        when "on"  then @tts_on = Speech.available?; puts @renderer.render("tts: #{@tts_on ? "on" : "unavailable"}", mode: :dim)
+        when "off" then @tts_on = false;             puts @renderer.render("tts: off", mode: :dim)
+        else            puts @renderer.render("tts: #{@tts_on ? "on" : "off"} — /tts on|off", mode: :dim)
+        end
+      else          puts @renderer.render("unknown command: /#{cmd}", mode: :warning)
       end
       true
     end
@@ -78,15 +85,37 @@ module Master3
       case result
       in Master3::Result::Ok => ok
         @last_ok = true
-        val = ok.value
-        if val.is_a?(Hash) && val[:rendered]
-          puts val[:rendered]
-        else
-          puts @renderer.render(val.inspect, mode: :dim)
-        end
+        val  = ok.value
+        text = val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
+        puts text
+        speak_async(text) if @tts_on
       in Master3::Result::Err => err
         @last_ok = false
         puts @renderer.render(err.message, mode: :error)
+      end
+    end
+
+    def speak_async(text)
+      Thread.new do
+        plain = text.gsub(/\e\[[0-9;]*m/, "").strip   # strip ANSI
+        plain = plain.gsub(/```.*?```/m, "")           # strip code blocks
+        plain = plain[0..400]                          # cap length
+        next if plain.empty?
+
+        path = Speech.synthesize(plain)
+        next unless path
+
+        # OpenBSD: aucat; Linux fallback: mpv or aplay
+        player = %w[mpv aucat aplay].find { |p| system("command -v #{p} > /dev/null 2>&1") }
+        case player
+        when "mpv"   then system("mpv", "--no-video", "--really-quiet", path, out: File::NULL, err: File::NULL)
+        when "aucat" then system("aucat", "-i", path, out: File::NULL, err: File::NULL)
+        when "aplay" then system("aplay", "-q", path, out: File::NULL, err: File::NULL)
+        end
+      rescue => e
+        @logging&.warn("tts: #{e.message}")
+      ensure
+        File.unlink(path) rescue nil if path
       end
     end
 

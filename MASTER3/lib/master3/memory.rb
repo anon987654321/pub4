@@ -13,7 +13,7 @@ module Master3
     end
 
     def remember(key, value)
-      @store[key.to_s] = { value: value.to_s, ts: Time.now.to_i }
+      @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
       persist
     end
 
