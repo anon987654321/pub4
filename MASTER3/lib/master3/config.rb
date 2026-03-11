@@ -5,7 +5,7 @@ require "yaml"
 module Master3
   class Config
     DEFAULTS = {
-      "model"       => "meta-llama/llama-3.3-70b-instruct:free",
+      "model"       => "deepseek/deepseek-chat-v3-0324:free",
       "budget_max"  => 10.0,
       "req_max"     => 1.0,
       "trace"       => 0,

@@ -19,12 +19,15 @@ module Master3
       @reader    = TTY::Reader.new(track_history: true)
       @running   = false
       @ctrl_c_ts = 0
+      @last_ok   = true
     end
 
     def run(initial_message = nil)
       setup_signals
       @session.load! if @session.exists?
       run_prescan if @config.prescan?
+
+      puts @renderer.splash(@agent.model)
 
       process(initial_message) if initial_message
 
@@ -40,12 +43,28 @@ module Master3
 
     def repl_loop
       while @running
-        print @renderer.prompt_line(@agent.model, @session.phase)
+        print @renderer.prompt_line(@agent.model, @session.phase, last_ok: @last_ok)
         line = @reader.read_line("", echo: true).chomp rescue nil
         break if line.nil?
-        process(line)
+        next if line.strip.empty?
+        handle_command(line) || process(line)
       end
       @session.save!
+    end
+
+    def handle_command(line)
+      return false unless line.start_with?("/")
+      cmd, *args = line[1..].split
+      case cmd
+      when "help"   then puts help_text
+      when "clear"  then print "\e[2J\e[H"; puts @renderer.splash(@agent.model)
+      when "exit"   then @session.save!; @running = false
+      when "model"  then puts @renderer.render(@agent.model.to_s, mode: :dim)
+      when "tokens" then puts @renderer.render("session tokens: #{@session.token_count rescue "n/a"}", mode: :dim)
+      when "save"   then @session.save!; puts @renderer.render("saved", mode: :success)
+      else               puts @renderer.render("unknown command: /#{cmd}", mode: :warning)
+      end
+      true
     end
 
     def process(input)
@@ -55,6 +74,7 @@ module Master3
 
       case result
       in Master3::Result::Ok => ok
+        @last_ok = true
         val = ok.value
         if val.is_a?(Hash) && val[:rendered]
           puts val[:rendered]
@@ -62,6 +82,7 @@ module Master3
           puts @renderer.render(val.inspect, mode: :dim)
         end
       in Master3::Result::Err => err
+        @last_ok = false
         puts @renderer.render(err.message, mode: :error)
       end
     end
@@ -79,19 +100,16 @@ module Master3
           exit(0)
         else
           @ctrl_c_ts = now
-          puts "\n(^C again to quit)"
+          puts "\n#{@renderer.render("^C again to quit", mode: :warning)}"
         end
       }
     end
 
-    def history_path
-      dir = File.join(Dir.pwd, ".master3")
-      Dir.mkdir(dir) unless Dir.exist?(dir)
-      File.join(dir, "history")
-    end
-
     def help_text
-      COMMANDS.map { |c| "  /#{c}" }.join("\n")
+      p = Pastel.new
+      header = p.bold.cyan(" commands ")
+      cmds   = COMMANDS.map { |c| "  #{p.cyan("/")}#{p.white(c)}" }.join("\n")
+      "\n#{header}\n#{cmds}\n"
     end
   end
 end
