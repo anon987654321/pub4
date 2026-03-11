@@ -1349,7 +1349,7 @@ EOF
 
     chown -R $app:$app /home/$app
 
-    su -l $app -c "gem install --user-install rails bundler puma" || {
+    su -l $app -c "gem install --user-install rails bundler falcon" || {
 
       log ERROR "gem install failed for $app"
 
@@ -1382,7 +1382,7 @@ rc_start() {
 
   export PATH=${HOME}/.gem/ruby/3.3/bin:$PATH
 
-  ${rcexec} "bundle exec rails server -b 127.0.0.1 -p $port -e production"
+  ${rcexec} "falcon serve -b tcp://127.0.0.1:$port"
 
 }
 
@@ -1449,8 +1449,8 @@ EOF
     cat > /etc/rc.d/rails_master3 <<RCEOF
 #!/bin/ksh
 daemon_execdir="/home/dev/pub4/MASTER3/web"
-daemon="/usr/local/bin/bundle"
-daemon_flags="exec rails server -p 3000 -e production -d"
+daemon="/usr/local/bin/falcon"
+daemon_flags="serve -b tcp://127.0.0.1:3000"
 daemon_user="dev"
 . /etc/rc.d/rc.subr
 rc_cmd \$1
