@@ -4,62 +4,78 @@ require "ruby_llm"
 
 module Master3
   class Agent
-    def initialize(config:, session:, tools:, circuit_breaker:, cache:, event_bus: nil)
+    def initialize(config:, session:, tools:, circuit_breaker:, cache:, event_bus: nil, model_router: nil, reasoning_modes: nil)
       @config          = config
       @session         = session
       @tools           = tools
       @circuit_breaker = circuit_breaker
       @cache           = cache
       @bus             = event_bus
+      @model_router    = model_router
+      @reasoning_modes = reasoning_modes
       configure_ruby_llm
     end
 
     def chat(message, stream: true, &blk)
       @session.add_message(role: :user, content: message)
-      @bus&.publish("llm:request", model:, tokens: message.bytesize / 4)
-
+      routed  = routed_models
+      prompt  = apply_reasoning_mode(message)
       context = conversation_context
-      cache_prompt = cache_prompt_for(message, context)
+      @bus&.publish("llm:request", model: routed.first, tokens: message.bytesize / 4)
 
-      cb = @circuit_breaker.call(estimate_cost(message)) {
-        @cache.fetch(cache_prompt, model) { do_chat(message, context:, stream:, &blk) }
-      }
+      response = routed.each_with_index do |selected_model, idx|
+        cache_key = cache_prompt_for("#{selected_model}:#{prompt}", context)
+        cb = @circuit_breaker.call(estimate_cost(message)) {
+          @cache.fetch(cache_key, selected_model) { do_chat(prompt, selected_model, context:, stream:, &blk) }
+        }
+        next if cb.respond_to?(:err?) && cb.err? && idx < routed.length - 1
+        break cb
+      end
 
-      return cb if cb.respond_to?(:err?) && cb.err?
+      return response if response.respond_to?(:err?) && response.err?
 
-      response = cb.to_s
-      @session.add_message(role: :assistant, content: response)
-      Result.ok(response)
+      text = response.to_s
+      @session.add_message(role: :assistant, content: text)
+      Result.ok(text)
     rescue => e
       Result.err("agent: #{e.message}", category: :unknown)
     end
 
     def ask(prompt, context: nil)
-      msgs = Array(context) + [{ role: "user", content: prompt }]
+      msgs = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
       chat_direct(msgs)
     end
 
     def call(ctx) = chat(ctx[:message].to_s)
-    def model     = @config.model
+    def model     = routed_models.first
 
     private
 
+    def routed_models
+      return [@config.model] unless @model_router
+      @model_router.fallback_chain(task_type: @config.task_type.to_sym)
+    rescue StandardError
+      [@config.model]
+    end
+
+    def apply_reasoning_mode(message)
+      return message unless @reasoning_modes
+      @reasoning_modes.wrap(message, mode: @config.reasoning_mode)
+    end
+
     def configure_ruby_llm
       RubyLLM.configure do |c|
-        c.anthropic_api_key    = ENV["ANTHROPIC_API_KEY"]    if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
-        c.openai_api_key       = ENV["OPENAI_API_KEY"]       if ENV["OPENAI_API_KEY"].to_s.length > 10
-        c.gemini_api_key       = ENV["GEMINI_API_KEY"]       if ENV["GEMINI_API_KEY"].to_s.length > 10
-        c.openrouter_api_key   = ENV["OPENROUTER_API_KEY"]   if ENV["OPENROUTER_API_KEY"].to_s.length > 10
+        c.anthropic_api_key  = ENV["ANTHROPIC_API_KEY"] if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
+        c.openai_api_key     = ENV["OPENAI_API_KEY"] if ENV["OPENAI_API_KEY"].to_s.length > 10
+        c.gemini_api_key     = ENV["GEMINI_API_KEY"] if ENV["GEMINI_API_KEY"].to_s.length > 10
+        c.openrouter_api_key = ENV["OPENROUTER_API_KEY"] if ENV["OPENROUTER_API_KEY"].to_s.length > 10
       end
     end
 
-    def do_chat(message, context:, stream:, &blk)
-      chat = RubyLLM.chat(model:)
-      context.each do |msg|
-        chat.add_message(role: msg[:role].to_s, content: msg[:content].to_s)
-      end
-
-      # tools used by Execute stage directly
+    def do_chat(message, selected_model, context:, stream:, &blk)
+      chat = RubyLLM.chat(model: selected_model)
+      context.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }
+      # tools registered via Execute stage, not as LLM function-calling tools
       msg = stream && blk ? chat.ask(message) { |chunk| blk.call(chunk) } : chat.ask(message)
       msg.respond_to?(:content) ? msg.content.to_s : msg.to_s
     end
@@ -70,13 +86,12 @@ module Master3
 
     def cache_prompt_for(message, context)
       return message if context.empty?
-
       condensed = context.map { |m| "#{m[:role]}:#{m[:content]}" }.join("\n")
       "#{message}\n\n[context]\n#{condensed}"
     end
 
     def chat_direct(messages)
-      chat = RubyLLM.chat(model:)
+      chat = RubyLLM.chat(model: model)
       messages.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }
       chat.complete
     end

@@ -1,0 +1,14 @@
+# Optional [P] modules toggles. Kernel [K] remains untouched.
+modules:
+  web_ui:
+    enabled: false
+    framework: rack
+    assets:
+      favicon: "data/web/favicon.svg"
+    notes: "Modular web shell for chat, council traces, and metrics panes."
+
+  tts:
+    enabled: false
+    backend: system
+    voice: default
+    notes: "Text-to-speech output adapter; no kernel dependency."

@@ -341,3 +341,26 @@ Every `[P]` rule is clearly labeled advisory.
 
 The agent applies sections 0-20 to its own output.
 It treats section 21 as reference, not constraint.
+
+---
+
+## Optional Restorations from MASTER2 `[P]`
+
+The following modules are restored as philosophy/extension layers only. They do not alter kernel enforcement paths.
+
+1. Multi-LLM routing + tiered fallback chains via `data/models.yml`.
+2. Council expanded to 12 personas via `data/council.yml`.
+3. YAML philosophy layer expanded to top-25 prioritized axioms + anti-patterns + ZEN_METHOD + Strunk/White + inverted pyramid + Rails doctrine in `data/axioms.yml`.
+4. ReAct/ReWOO reasoning modes via YAML prompts in `data/prompts/*.yml` and runtime mode selection.
+5. Modular Web UI + TTS toggles via `data/modules.yml`, including a favicon asset.
+6. Auto-testing + deeper scan hooks in Lint stage (advisory, opt-in).
+
+### YAML philosophy layer (what it is)
+
+The philosophy layer is a pure advisory YAML document, not a policy engine. It encodes preferred decision heuristics in structured form so humans and optional modules can consume the same guidance.
+
+- It does **not** block execution.
+- It does **not** mutate `[K]` rules.
+- It can inform council prompts, lint commentary, and future UI dashboards.
+
+Think of it as a shared doctrine registry: machine-readable principles for consistency, while kernel enforcement remains minimal and stable.

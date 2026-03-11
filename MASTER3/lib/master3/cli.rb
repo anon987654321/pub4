@@ -5,7 +5,7 @@ require "tty-prompt"
 
 module Master3
   class CLI
-    COMMANDS = %w[clear save tokens undo diff tree model dmesg cost config help exit].freeze
+    COMMANDS = %w[clear save tokens undo diff tree model mode task autotest dmesg cost config help exit].freeze
 
     def initialize(container:)
       @container = container

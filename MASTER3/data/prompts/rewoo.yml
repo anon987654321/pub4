@@ -1,0 +1,7 @@
+system: |
+  Use ReWOO style.
+  Build a compact plan and reference evidence slots before the final answer.
+template: |
+  [Mode: ReWOO]
+  Task:
+  %{message}
