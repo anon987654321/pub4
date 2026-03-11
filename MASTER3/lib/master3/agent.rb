@@ -4,7 +4,9 @@ require "ruby_llm"
 
 module Master3
   class Agent
-    def initialize(config:, session:, tools:, circuit_breaker:, cache:, event_bus: nil, model_router: nil, reasoning_modes: nil)
+    def initialize(config:, session:, tools:, circuit_breaker:, cache:,
+                   event_bus: nil, model_router: nil, reasoning_modes: nil,
+                   memory: nil, personality: nil)
       @config          = config
       @session         = session
       @tools           = tools
@@ -13,6 +15,8 @@ module Master3
       @bus             = event_bus
       @model_router    = model_router
       @reasoning_modes = reasoning_modes
+      @memory          = memory
+      @personality     = personality
       configure_ruby_llm
     end
 
@@ -63,6 +67,13 @@ module Master3
       @reasoning_modes.wrap(message, mode: @config.reasoning_mode)
     end
 
+    def system_prompt
+      parts = []
+      parts << @personality.system_prompt if @personality
+      parts << @memory.context_summary    if @memory&.context_summary
+      parts.empty? ? nil : parts.join("\n\n")
+    end
+
     def configure_ruby_llm
       RubyLLM.configure do |c|
         c.anthropic_api_key  = ENV["ANTHROPIC_API_KEY"] if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
@@ -74,8 +85,8 @@ module Master3
 
     def do_chat(message, selected_model, context:, stream:, &blk)
       chat = RubyLLM.chat(model: selected_model)
+      chat.with_instructions(system_prompt) if system_prompt
       context.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }
-      # tools registered via Execute stage, not as LLM function-calling tools
       msg = stream && blk ? chat.ask(message) { |chunk| blk.call(chunk) } : chat.ask(message)
       msg.respond_to?(:content) ? msg.content.to_s : msg.to_s
     end
@@ -92,6 +103,7 @@ module Master3
 
     def chat_direct(messages)
       chat = RubyLLM.chat(model: model)
+      chat.with_instructions(system_prompt) if system_prompt
       messages.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }
       chat.complete
     end

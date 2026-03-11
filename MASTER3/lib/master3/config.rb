@@ -5,7 +5,7 @@ require "yaml"
 module Master3
   class Config
     DEFAULTS = {
-      "model"       => "google/gemma-3-4b-it:free",
+      "model"       => "nvidia/nemotron-nano-12b-v2-vl:free",
       "budget_max"  => 10.0,
       "req_max"     => 1.0,
       "trace"       => 0,

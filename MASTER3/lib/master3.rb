@@ -28,10 +28,15 @@ module Master3
     renderer = Renderer.new(config:)
     metrics  = Metrics.new(root:, event_bus: bus)
 
+    memory      = Memory.new(root:)
+    personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT)
+
     tools    = build_tools(root:, undo:, governor:, bus:)
     router   = Routing::ModelRouter.new(config:)
     modes    = Reasoning::Modes.new
-    agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus, model_router: router, reasoning_modes: modes)
+    agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus,
+                         model_router: router, reasoning_modes: modes,
+                         memory:, personality:)
 
     guard        = Security::InjectionGuard.new
     scanner      = Scan::Scanner.new(event_bus: bus)
@@ -57,7 +62,8 @@ module Master3
 
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
-      scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:
+      scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
+      memory:, personality:
     }
   end
 
