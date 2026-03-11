@@ -62,6 +62,7 @@ module Master3
       when "model"  then puts @renderer.render(@agent.model.to_s, mode: :dim)
       when "tokens" then puts @renderer.render("session tokens: #{@session.token_count rescue "n/a"}", mode: :dim)
       when "save"   then @session.save!; puts @renderer.render("saved", mode: :success)
+      when "dmesg"  then puts @logging.dmesg(50).split("\n").map { |l| @renderer.format_dmesg(l) }.join("\n")
       else               puts @renderer.render("unknown command: /#{cmd}", mode: :warning)
       end
       true
