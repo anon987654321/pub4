@@ -12,7 +12,10 @@ module Master3
       "prescan"     => true,
       "auto"        => false,
       "cache_ttl"   => 3600,
-      "history_max" => 500
+      "history_max" => 500,
+      "reasoning_mode" => "direct",
+      "task_type" => "exploration",
+      "auto_testing" => false
     }.freeze
 
     attr_reader :data
@@ -37,6 +40,9 @@ module Master3
     def trace      = (ENV["MASTER_TRACE"] || self["trace"]).to_i
     def prescan?   = self["prescan"] != false
     def auto?      = self["auto"] == true
+    def reasoning_mode = self["reasoning_mode"].to_s
+    def task_type = self["task_type"].to_s
+    def auto_testing? = self["auto_testing"] == true
 
     def save!
       dir = File.dirname(@path)

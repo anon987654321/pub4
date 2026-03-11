@@ -1,0 +1,49 @@
+# Optional [P] model routing profile restored from MASTER2 concepts.
+# Kernel remains unchanged; router is advisory and can be disabled in config.
+
+routing:
+  enabled: true
+  strategy: weighted
+
+weights:
+  quality: 0.45
+  speed: 0.30
+  cost: 0.25
+
+fallback_policy:
+  retries_per_tier: 1
+  on:
+    - timeout
+    - network_error
+    - refusal
+
+models:
+  fast:
+    - id: google/gemini-2.5-flash
+      score: { quality: 0.79, speed: 0.95, cost: 0.92 }
+    - id: qwen/qwen3-coder
+      score: { quality: 0.77, speed: 0.88, cost: 0.96 }
+
+  cheap:
+    - id: meta-llama/llama-3.3-70b-instruct:free
+      score: { quality: 0.73, speed: 0.82, cost: 1.00 }
+    - id: google/gemma-3-27b-it:free
+      score: { quality: 0.70, speed: 0.79, cost: 1.00 }
+
+  strong:
+    - id: anthropic/claude-sonnet-4-6
+      score: { quality: 0.96, speed: 0.78, cost: 0.52 }
+    - id: openai/gpt-5.2
+      score: { quality: 0.94, speed: 0.75, cost: 0.45 }
+
+  local:
+    - id: llama3.1:8b-instruct-q4_K_M
+      score: { quality: 0.58, speed: 0.70, cost: 1.00 }
+
+routes:
+  code_generation: strong
+  architecture: strong
+  review: fast
+  summarization: fast
+  exploration: cheap
+  fallback_default: cheap

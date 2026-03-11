@@ -1,58 +1,124 @@
 # Kernel axioms — enforced by scan rules, pipeline stages, or tool guards
 kernel:
-  PRESERVE_FIRST:    "Never break working code. Read before write."
-  SIMPLEST_WORKS:    "Fewest moving parts that solve the problem."
-  FAIL_VISIBLY:      "Errors surface immediately. Never swallow exceptions."
-  ONE_SOURCE:        "One authoritative representation per concept."
-  DECOUPLE:          "Hidden dependencies become explicit."
-  GUARD_EXPENSIVE:   "Check preconditions before costly work."
+  PRESERVE_FIRST: "Never break working code. Read before write."
+  SIMPLEST_WORKS: "Fewest moving parts that solve the problem."
+  FAIL_VISIBLY: "Errors surface immediately. Never swallow exceptions."
+  ONE_SOURCE: "One authoritative representation per concept."
+  DECOUPLE: "Hidden dependencies become explicit."
+  GUARD_EXPENSIVE: "Check preconditions before costly work."
   DEGRADE_GRACEFULLY: "Works with partial failures."
-  BE_CONCISE:        "No unnecessary words, tokens, or lines."
+  BE_CONCISE: "No unnecessary words, tokens, or lines."
 
-# Philosophy axioms — advisory, not enforced
+# Philosophy layer [P] — advisory only, never blocking.
+# Restored from MASTER2 and trimmed to top 25 prioritized axioms.
 philosophy:
-  - ONE_JOB
-  - NO_SURPRISES
-  - EXTEND_DONT_MODIFY
-  - COMPOSABLE
-  - DEADLINES
-  - WET
-  - AHA
-  - MERGE
-  - FLATTEN
-  - DEFRAGMENT
-  - HOIST
-  - PRUNE
-  - COALESCE
-  - REFLOW
-  - FINISH_FIRST
-  - LEAVE_BETTER
-  - TEST_FIRST
-  - REVERSIBLE
-  - ONE_CHANGE
-  - SKELETON_FIRST
-  - MEASURE_THEN_OPTIMIZE
-  - BLAME_SELF
-  - FUNCTIONAL_CORE
-  - EXPLICIT
-  - IDEMPOTENT
-  - CQS
-  - IMMUTABLE
-  - APPEND_ONLY
-  - CACHE_FIRST
-  - SELF_EXPLAINING
-  - PROSE_NOT_LISTS
-  - ACCESSIBLE_FIRST
-  - SQUINT_TEST
-  - JUST_ENOUGH
-  - TYPOGRAPHY
-  - VISIBLE_REPAIRS
-  - CHESTERTONS_FENCE
-  - GALLS_LAW
-  - HYRUMS_LAW
-  - POSTELS_LAW
-  - PARETO
-  - LINDY
-  - OCCAMS_RAZOR
-  - DUAL_DETECT
-  - SILENCE_DEFAULT
+  prioritized_top_25:
+    - id: ONE_JOB
+      priority: 1
+      statement: "Each module should have one clear reason to change."
+    - id: NO_SURPRISES
+      priority: 2
+      statement: "Prefer predictable behavior over clever behavior."
+    - id: EXTEND_DONT_MODIFY
+      priority: 3
+      statement: "Add capability via composition before rewriting stable parts."
+    - id: COMPOSABLE
+      priority: 4
+      statement: "Build small pieces that combine cleanly."
+    - id: LEAVE_BETTER
+      priority: 5
+      statement: "Leave touched code cleaner than found."
+    - id: TEST_FIRST
+      priority: 6
+      statement: "Design for testability before implementation complexity."
+    - id: REVERSIBLE
+      priority: 7
+      statement: "Prefer steps that are easy to rollback."
+    - id: ONE_CHANGE
+      priority: 8
+      statement: "Keep each patch focused on one coherent intent."
+    - id: EXPLICIT
+      priority: 9
+      statement: "Prefer explicit contracts over implicit coupling."
+    - id: IDEMPOTENT
+      priority: 10
+      statement: "Operations should be safe to repeat."
+    - id: CQS
+      priority: 11
+      statement: "Separate queries from state mutations."
+    - id: IMMUTABLE
+      priority: 12
+      statement: "Default to immutable data flow where practical."
+    - id: APPEND_ONLY
+      priority: 13
+      statement: "Favor append-only logs for auditability."
+    - id: CACHE_FIRST
+      priority: 14
+      statement: "Cache high-cost deterministic work with bounded TTL."
+    - id: SELF_EXPLAINING
+      priority: 15
+      statement: "Names and structure should reduce need for comments."
+    - id: ACCESSIBLE_FIRST
+      priority: 16
+      statement: "Design outputs for broad readability and accessibility."
+    - id: SQUINT_TEST
+      priority: 17
+      statement: "The structure should make sense at a glance."
+    - id: JUST_ENOUGH
+      priority: 18
+      statement: "Avoid overbuilding before proof of need."
+    - id: CHESTERTONS_FENCE
+      priority: 19
+      statement: "Understand why something exists before removing it."
+    - id: GALLS_LAW
+      priority: 20
+      statement: "Complex systems should evolve from simple working systems."
+    - id: OCCAMS_RAZOR
+      priority: 21
+      statement: "Prefer simpler hypotheses and designs first."
+    - id: PARETO
+      priority: 22
+      statement: "Ship the 20% that delivers 80% value first."
+    - id: FINISH_FIRST
+      priority: 23
+      statement: "Close the loop before opening new threads."
+    - id: MEASURE_THEN_OPTIMIZE
+      priority: 24
+      statement: "Benchmark before optimization work."
+    - id: BLAME_SELF
+      priority: 25
+      statement: "Assume your change introduced the bug until disproven."
+
+  anti_patterns:
+    - god_class
+    - shotgun_surgery
+    - speculative_abstraction
+    - hidden_global_state
+    - duplicate_logic
+    - n_plus_one_queries
+    - silent_rescue
+    - temporal_coupling
+
+  zen_method:
+    observe: "Read current behavior before changing anything."
+    simplify: "Reduce moving parts before adding new components."
+    isolate: "Change one axis at a time with clear boundaries."
+    verify: "Run checks and gather objective evidence."
+    reflect: "Capture learning and improve defaults."
+
+  strunk_white:
+    - "Omit needless words."
+    - "Use definite, specific, concrete language."
+    - "Put statements in positive form."
+    - "Use active voice by default."
+
+  inverted_pyramid:
+    - "Lead with the outcome."
+    - "Then provide key evidence."
+    - "Then provide implementation detail."
+
+  rails_doctrine:
+    - "Convention over configuration"
+    - "Optimize for programmer happiness"
+    - "The menu is omakase"
+    - "Value integrated systems"
