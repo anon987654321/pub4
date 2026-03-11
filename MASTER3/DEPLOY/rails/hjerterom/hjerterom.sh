@@ -2,155 +2,92 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# Hjerterom - Mental health and food redistribution platform
+# Hjerterom — mental health journaling (TCPServer, port 10004)
 
-readonly APP_NAME="hjerterom"
-readonly BASE_DIR="${BASE_DIR:-${HOME}/rails}"
-readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+typeset -r APP_NAME="hjerterom"
+typeset -r APP_PORT=10004
+typeset -r APP_DIR="/home/${APP_NAME}/app"
 
-# Source shared functions if available
-SHARED_FUNCTIONS="${SCRIPT_DIR}/@shared_functions.sh"
-[[ -f "$SHARED_FUNCTIONS" ]] && source "$SHARED_FUNCTIONS"
+echo "==> [${APP_NAME}] writing falcon.rb on :${APP_PORT}"
 
-command_exists() {
-  command -v "$1" >/dev/null 2>&1
-}
+mkdir -p "${APP_DIR}/config"
 
-validate_file_path() {
-  [[ -n "$1" ]] || { echo "Error: File path is empty" >&2; return 1; }
-  [[ -e "$1" ]] || { echo "Error: File does not exist: $1" >&2; return 1; }
-  [[ -w "$1" ]] || { echo "Error: File not writable: $1" >&2; return 1; }
-  return 0
-}
-
-validate_pattern() {
-  [[ -n "$1" ]] || { echo "Error: Pattern is empty" >&2; return 1; }
-  return 0
-}
-
-install_gem() {
-  local gem_name="$1"
-  local gem_version="${2:-}"
-  [[ -n "$gem_name" ]] || { echo "Error: Gem name is required" >&2; return 1; }
-
-  if ! command_exists "gem"; then
-    echo "Error: gem command not found. Please install Ruby and gem first." >&2
-    return 1
-  fi
-
-  local gem_spec="$gem_name"
-  [[ -n "$gem_version" ]] && gem_spec="$gem_name:$gem_version"
-
-  if gem list "$gem_name" --installed >/dev/null 2>&1; then
-    echo "Gem $gem_name is already installed"
-    return 0
-  fi
-
-  echo "Installing gem: $gem_spec"
-  if ! gem install "$gem_name" ${gem_version:+-v "$gem_version"}; then
-    echo "Error: Failed to install gem $gem_spec. Check gem output above for details." >&2
-    return 1
-  fi
-}
-
-install_dependencies() {
-  local dependencies=("${@:-blazer}")
-
-  for gem in "${dependencies[@]}"; do
-    install_gem "$gem" || return 1
-  done
-}
-
-safe_sed_edit() {
-  local file="$1"
-  local pattern="$2"
-  local content="$3"
-
-  validate_file_path "$file" || return 1
-  validate_pattern "$pattern" || return 1
-  [[ -n "$content" ]] || { echo "Error: Content is empty" >&2; return 1; }
-
-  if ! grep -q -F -- "$pattern" "$file" 2>/dev/null; then
-    echo "$content" >> "$file" || { echo "Error: Failed to write to $file" >&2; return 1; }
-  else
-    echo "Pattern already exists in $file, skipping addition"
-  fi
-}
-
-setup_environment() {
-  local missing_commands=()
-
-  for cmd in ruby node psql gem; do
-    if ! command_exists "$cmd"; then
-      missing_commands+=("$cmd")
-    fi
-  done
-
-  if [[ ${#missing_commands[@]} -gt 0 ]]; then
-    echo "Error: Missing required commands: ${missing_commands[*]}" >&2
-    echo "Please install them before running this script:" >&2
-    for cmd in "${missing_commands[@]}"; do
-      case "$cmd" in
-        ruby) echo "  - Ruby: https://www.ruby-lang.org/en/documentation/installation/" ;;
-        node) echo "  - Node.js: https://nodejs.org/en/download/" ;;
-        psql) echo "  - PostgreSQL: https://www.postgresql.org/download/" ;;
-        gem) echo "  - RubyGems (usually included with Ruby)" ;;
-      esac
-    done
-    return 1
-  fi
-}
-
-# --- Fixed-port socket server + rc.d setup (appended) ---
-APP_NAME="hjerterom"
-APP_PORT=10004
-APP_DIR="/home/${APP_NAME}/app"
-
-# Write falcon.rb (pure Ruby stdlib socket server, no gem deps)
-cat > /tmp/falcon_${APP_NAME}.rb << 'FALCONEOF'
+cat > "${APP_DIR}/config/falcon.rb" << 'FALCONEOF'
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 require "socket"
 
-BODY = "<!DOCTYPE html><html><head><meta charset=utf-8><title>hjerterom</title>" \
-       "<style>body{font:16px/1.6 system-ui,sans-serif;max-width:700px;margin:60px auto;padding:20px}</style>" \
-       "</head><body><h1>hjerterom</h1></body></html>"
-RESP = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: #{BODY.bytesize}\r\nConnection: close\r\n\r\n#{BODY}"
+HTML = <<~HTML
+  <!DOCTYPE html>
+  <html lang="no">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>hjerterom</title>
+    <style>
+      :root {
+        --bg: #fdf8f2; --surface: #fffdf9; --surface-alt: #f5ede0;
+        --primary: #c17f4a; --primary-dark: #8b5e34; --warm: #e8c4a0;
+        --text: #2c1f0f; --text-dim: #7a6454; --border: #e6d5c3; --radius: 14px;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Georgia, Palatino, serif; background: var(--bg); color: var(--text); line-height: 1.8; }
+      header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+      .logo { font-size: 1.5rem; font-weight: 600; color: var(--primary-dark); }
+      nav a { margin-left: 1.5rem; color: var(--text-dim); font-size: .9rem; text-decoration: none; }
+      nav a:hover { color: var(--primary); }
+      main { max-width: 760px; margin: 0 auto; padding: 3rem 1.5rem; }
+      h1 { font-size: 1.9rem; color: var(--primary-dark); margin-bottom: 1rem; }
+      .intro { color: var(--text-dim); font-size: 1.05rem; margin-bottom: 2rem; font-style: italic; }
+      .prompt-card { background: linear-gradient(135deg, var(--surface-alt), var(--warm)); border-radius: var(--radius); padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; border: 1px solid var(--border); }
+      .prompt-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--primary); font-family: system-ui, sans-serif; margin-bottom: .5rem; }
+      .prompt-card p { font-size: 1.05rem; font-style: italic; }
+      .cta { display: inline-block; padding: .65rem 1.5rem; background: var(--primary); color: #fff; border-radius: 999px; font-size: .9rem; text-decoration: none; font-family: system-ui, sans-serif; margin-top: 1.5rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="logo">hjerterom</span>
+      <nav><a href="/journal">dagbok</a><a href="/prompts">refleksjon</a><a href="/login">logg inn</a></nav>
+    </header>
+    <main>
+      <h1>et rom for tankene dine</h1>
+      <p class="intro">Mental helse journaling — trygt, privat og uten dømmekraft.</p>
+      <div class="prompt-card">
+        <div class="prompt-label">dagens refleksjon</div>
+        <p>Hva er tre ting du er takknemlig for i dag?</p>
+      </div>
+      <a class="cta" href="/signup">start din dagbok</a>
+    </main>
+  </body>
+  </html>
+HTML
 
+RESP = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: #{HTML.bytesize}\r\nConnection: close\r\n\r\n#{HTML}"
 trap("TERM") { exit }
 trap("INT")  { exit }
-
-TCPServer.new("0.0.0.0", 10004).tap { |s|
+TCPServer.new("0.0.0.0", 10004).tap do |s|
   $stdout.puts "hjerterom on 10004"; $stdout.flush
   loop { c = s.accept; c.recv(4096) rescue nil; c.print(RESP) rescue nil; c.close rescue nil }
-}
+end
 FALCONEOF
 
-doas -u root mkdir -p /home/${APP_NAME}/app/config
-doas -u root tee /home/${APP_NAME}/app/config/falcon.rb < /tmp/falcon_${APP_NAME}.rb > /dev/null
-doas -u root chown -R ${APP_NAME}:${APP_NAME} /home/${APP_NAME}/app/config/falcon.rb 2>/dev/null || true
+chown -R ${APP_NAME}:${APP_NAME} "${APP_DIR}"
 
-# Write rc.d service script
-cat > /tmp/rc_${APP_NAME} << 'RCDEOF'
+cat > "/etc/rc.d/${APP_NAME}" << 'RCDEOF'
 #!/bin/ksh
-
 daemon="/usr/local/bin/ruby34"
 daemon_flags="/home/hjerterom/app/config/falcon.rb"
 daemon_user="hjerterom"
 daemon_timeout=30
-
 . /etc/rc.d/rc.subr
-
 pexp="ruby34 /home/hjerterom/app/config/falcon.rb"
 rc_bg=YES
 rc_reload=NO
-
 rc_cmd $1
 RCDEOF
 
-doas -u root tee /etc/rc.d/${APP_NAME}_rails < /tmp/rc_${APP_NAME} > /dev/null
-doas -u root chmod 755 /etc/rc.d/${APP_NAME}_rails
-
-# Enable and start service
-doas -u root rcctl enable ${APP_NAME}_rails
-doas -u root rcctl start ${APP_NAME}_rails
+chmod 755 "/etc/rc.d/${APP_NAME}"
+rcctl enable ${APP_NAME}
+rcctl restart ${APP_NAME} || rcctl start ${APP_NAME}
+echo "==> [${APP_NAME}] done"

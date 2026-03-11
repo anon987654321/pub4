@@ -8,11 +8,11 @@ setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 APP_NAME="amber"
 
-BASE_DIR="/home/dev/rails"
+BASE_DIR="/home/amber"
 
-SERVER_IP="185.52.176.18"
+# SERVER_IP managed by openbsd.sh
 
-APP_PORT=10001
+APP_PORT=10006
 
 SCRIPT_DIR="${0:a:h}"
 
@@ -30,23 +30,23 @@ command_exists "ruby"
 
 command_exists "node"
 
-command_exists "psql"
+# SQLite3 - no psql needed
 
 install_gem "pagy"
 
 install_gem "faker"
 
-# Rails 8 auth + devise-guests for anonymous wardrobe access
+# Rails 8 built-in auth (no Devise)
 
-install_gem "devise"
+# install_gem "devise"  # removed
 
-install_gem "devise-guests"
+# install_gem "devise-guests"  # removed
 
-bin/rails generate devise:install
+# bin/rails generate devise:install  # removed
 
-bin/rails generate devise User
+# bin/rails generate devise User  # removed
 
-bin/rails generate devise_guests:install
+# bin/rails generate devise_guests:install  # removed
 
 # Generate application layout with PWA support
 
@@ -3042,3 +3042,53 @@ OUTFITS_FORM_EOF
 log "Outfits views completed"
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# Write application stylesheet
+mkdir -p app/assets/stylesheets
+cat > app/assets/stylesheets/application.css << 'APPCSS'
+/* AMBER - Fashion & Wardrobe */
+:root {
+  --primary:      #d946ef;
+  --primary-dark: #a21caf;
+  --secondary:    #a855f7;
+  --accent:       #ec4899;
+  --bg:           #fdf4ff;
+  --surface:      #ffffff;
+  --surface-alt:  #fae8ff;
+  --text:         #1a0a24;
+  --text-dim:     #6b7280;
+  --border:       #e9d5ff;
+  --radius:       12px;
+  --shadow:       0 2px 12px rgba(217,70,239,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.7; min-height: 100vh; }
+a { color: var(--primary); text-decoration: none; }
+a:hover { color: var(--primary-dark); text-decoration: underline; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow); }
+.logo { font-size: 1.6rem; font-weight: 700; color: var(--primary); letter-spacing: -0.02em; }
+nav a { margin-left: 1.5rem; color: var(--text-dim); font-size: 0.9rem; }
+main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
+h1 { font-size: 2rem; color: var(--primary-dark); margin-bottom: 1rem; }
+h2 { font-size: 1.4rem; margin-bottom: 0.75rem; }
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+.item-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); transition: transform 0.2s; }
+.item-card:hover { transform: translateY(-4px); }
+.item-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; background: var(--surface-alt); }
+.item-info { padding: 0.85rem 1rem; }
+.item-info h3 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+.price { color: var(--primary); font-weight: 700; }
+.brand { color: var(--text-dim); font-size: 0.8rem; }
+.tag { display: inline-block; background: var(--surface-alt); color: var(--primary-dark); border-radius: 999px; padding: 0.2rem 0.75rem; font-size: 0.8rem; margin: 0.2rem; }
+.btn { display: inline-block; padding: 0.6rem 1.4rem; border-radius: 999px; font-size: 0.9rem; cursor: pointer; border: none; transition: all 0.2s; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); color: #fff; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: 0.9rem; color: var(--text-dim); margin-bottom: 0.3rem; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 0.95rem; }
+.flash-notice { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; }
+.flash-alert { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; }
+@media (max-width: 640px) { header { padding: 0.75rem 1rem; } .item-grid { grid-template-columns: repeat(2, 1fr); } }
+APPCSS
+
+log "Amber stylesheet written"
