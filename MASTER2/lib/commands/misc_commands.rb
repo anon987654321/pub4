@@ -551,9 +551,8 @@ module MASTER
         port = args.to_s.strip.match?(/\A\d+\z/) ? args.strip.to_i : nil
         server = Server.new(port: port)
         server.start
-        token = Server::AUTH_TOKEN
-        puts "  web: http://localhost:#{server.port}"
-        puts "  token: #{token}"
+        url = Boot.web_url(server.port)
+        puts "  web: #{url}"
       end
 
       # Project memory — persistent goal/context across sessions and models
