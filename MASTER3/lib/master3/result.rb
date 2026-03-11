@@ -23,7 +23,7 @@ module Master3
       def flat_map(&blk) = blk.call(@value)
       def and_then(label = nil, &blk)
         result = blk.call(@value)
-        result.is_a?(Result) ? result : Result.ok(result)
+        result.respond_to?(:ok?) ? result : Result.ok(result)
       rescue => e
         Result.err("#{label || "stage"}: #{e.message}", category: :unknown)
       end
@@ -58,6 +58,7 @@ module Master3
       def permanent? = PERMANENT.include?(@category)
 
       def deconstruct_keys(_keys) = { message: @message, category: @category }
+      def to_s = @message
       def inspect = "Err(#{@category}: #{@message})"
     end
   end
