@@ -141,8 +141,18 @@ module Master3
         else "council: #{council_stage.instance_variable_get(:@enabled) ? "on" : "off"}"
         end
       },
+      "autoloop" => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        cycles = arg.match?(/^\d+$/) ? arg.to_i : 8
+        loop_obj = AutoLoop.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
+        output = []
+        result = loop_obj.run(max_cycles: cycles) { |cycle, violations|
+          output << "cycle #{cycle}: #{violations.size} violation(s)"
+        }
+        (output + [result.ok? ? result.value! : result.message]).join("\n")
+      },
       "help"    => ->(ctx) {
-        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council help exit]
+        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop help exit]
         cmds.map { "/#{_1}" }.join("  ")
       }
     }
