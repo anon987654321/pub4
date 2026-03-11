@@ -5,7 +5,7 @@ require "yaml"
 module Master3
   class Config
     DEFAULTS = {
-      "model"       => "deepseek/deepseek-chat-v3-0324:free",
+      "model"       => "google/gemma-3-4b-it:free",
       "budget_max"  => 10.0,
       "req_max"     => 1.0,
       "trace"       => 0,

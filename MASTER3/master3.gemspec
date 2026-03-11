@@ -8,7 +8,6 @@ Gem::Specification.new do |s|
   s.files   = Dir["lib/**/*.rb", "exe/*", "data/**/*", "*.yml"]
   s.executables = ["master3"]
   s.require_paths = ["lib"]
-  s.ruby_version = ">= 3.3.0"
 
   s.add_dependency "ruby_llm",       "~> 1.3"
   s.add_dependency "tty-prompt",     "~> 0.23"
