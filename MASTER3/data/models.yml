@@ -25,6 +25,8 @@ models:
       score: { quality: 0.77, speed: 0.88, cost: 0.96 }
 
   cheap:
+    - id: deepseek/deepseek-chat-v3-0324:free
+      score: { quality: 0.82, speed: 0.85, cost: 1.00 }
     - id: meta-llama/llama-3.3-70b-instruct:free
       score: { quality: 0.73, speed: 0.82, cost: 1.00 }
     - id: google/gemma-3-27b-it:free

@@ -5,39 +5,38 @@ require "pastel"
 
 module Master3
   class Renderer
-    CHEVRON = "\u276F".freeze
+    SEP   = "❯".freeze
+    TICK  = "✔".freeze
+    CROSS = "✘".freeze
 
     def initialize(config:)
       @config = config
       @p      = Pastel.new
     end
 
+    def splash(model)
+      "\n  #{@p.bold.green("master3")} #{@p.dim(SEP)} #{@p.cyan(model.to_s.split("/").last)}\n"
+    end
+
+    alias banner splash
+
+    def prompt_line(model, phase, last_ok: true)
+      status = last_ok ? @p.green(SEP) : @p.red(SEP)
+      "#{@p.blue(phase.to_s)} #{status} "
+    end
+
     def render(content, mode: :plain)
       case mode
-      when :plain   then content.to_s
-      when :error   then format_error(content)
-      when :success then @p.green(content.to_s)
-      when :warning then @p.yellow(content.to_s)
+      when :error   then "#{@p.red(CROSS)} #{@p.red(content)}"
+      when :success then "#{@p.green(TICK)} #{@p.green(content)}"
+      when :warning then "#{@p.yellow("!")} #{@p.yellow(content)}"
       when :dim     then @p.dim(content.to_s)
-      when :dmesg   then @p.dim(content.to_s)
       else               content.to_s
       end
     end
 
     def format_error(message)
-      lines = message.to_s.split("\n")
-      first = @p.red("\!\!  #{lines.first}")
-      rest  = lines.drop(1).map { |l| @p.dim("    #{l}") }
-      ([first] + rest).join("\n")
-    end
-
-    def prompt_line(model, phase, last_ok: true)
-      chevron = last_ok ? @p.magenta(CHEVRON) : @p.red(CHEVRON)
-      "#{@p.cyan(phase.to_s)} #{chevron} #{@p.dim(model.to_s.split("/").last)} "
-    end
-
-    def banner(model)
-      @p.dim("master3 at session0: #{model.to_s.split("/").last}")
+      render(message, mode: :error)
     end
   end
 end
