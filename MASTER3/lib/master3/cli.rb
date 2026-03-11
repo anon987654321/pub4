@@ -50,9 +50,30 @@ module Master3
         line = @reader.read_line("", echo: true).chomp rescue nil
         break if line.nil?
         next if line.strip.empty?
-        handle_command(line) || process(line)
+        handle_command(line) || handle_implicit(line) || process(line)
       end
       @session.save!
+    end
+
+    # Implicit commands — natural language triggers without leading /
+    IMPLICIT_PATTERNS = [
+      [/\b(save|lagre)\b.*\bsession\b/i,   -> { handle_command("/save") }],
+      [/\b(exit|quit|bye|avslutt)\b/i,     -> { handle_command("/exit") }],
+      [/\btts\s+on\b/i,                    -> { handle_command("/tts on") }],
+      [/\btts\s+off\b/i,                   -> { handle_command("/tts off") }],
+      [/\b(clear|tøm)\s+(screen|skjerm)\b/i, -> { handle_command("/clear") }],
+      [/\bshow\s+(tokens|usage)\b/i,       -> { handle_command("/tokens") }],
+      [/\bswitch\s+model\s+to\s+(\S+)/i,  ->(m) { handle_command("/model #{m[1]}") }],
+    ].freeze
+
+    def handle_implicit(line)
+      IMPLICIT_PATTERNS.each do |pattern, action|
+        if (m = line.match(pattern))
+          action.arity == 0 ? action.call : action.call(m)
+          return true
+        end
+      end
+      false
     end
 
     def handle_command(line)
