@@ -1,0 +1,14 @@
+*.bak
+*.bak2
+*.orig
+.master3/
+vendor/bundle/
+web/vendor/bundle/
+web/tmp/
+web/log/
+web/public/assets/
+web/public/packs/
+web/.env*
+*.mp3
+*.wav
+/tmp/
