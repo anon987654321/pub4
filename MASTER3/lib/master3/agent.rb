@@ -18,8 +18,11 @@ module Master3
       @session.add_message(role: :user, content: message)
       @bus&.publish("llm:request", model:, tokens: message.bytesize / 4)
 
+      context = conversation_context
+      cache_prompt = cache_prompt_for(message, context)
+
       cb = @circuit_breaker.call(estimate_cost(message)) {
-        @cache.fetch(message, model) { do_chat(message, stream:, &blk) }
+        @cache.fetch(cache_prompt, model) { do_chat(message, context:, stream:, &blk) }
       }
 
       return cb if cb.respond_to?(:err?) && cb.err?
@@ -50,11 +53,26 @@ module Master3
       end
     end
 
-    def do_chat(message, stream:, &blk)
+    def do_chat(message, context:, stream:, &blk)
       chat = RubyLLM.chat(model:)
+      context.each do |msg|
+        chat.add_message(role: msg[:role].to_s, content: msg[:content].to_s)
+      end
+
       # tools used by Execute stage directly
       msg = stream && blk ? chat.ask(message) { |chunk| blk.call(chunk) } : chat.ask(message)
       msg.respond_to?(:content) ? msg.content.to_s : msg.to_s
+    end
+
+    def conversation_context(max_messages: 16)
+      @session.messages.last(max_messages + 1)[0...-1] || []
+    end
+
+    def cache_prompt_for(message, context)
+      return message if context.empty?
+
+      condensed = context.map { |m| "#{m[:role]}:#{m[:content]}" }.join("\n")
+      "#{message}\n\n[context]\n#{condensed}"
     end
 
     def chat_direct(messages)
