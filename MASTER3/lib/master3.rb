@@ -40,6 +40,7 @@ module Master3
 
     guard        = Security::InjectionGuard.new
     scanner      = Scan::Scanner.new(event_bus: bus)
+    swarm        = Swarm::Coordinator.new(agent:, event_bus: bus)
     personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
     deliberation = Council::Deliberation.new(personas:, agent:, event_bus: bus)
     council_stage = Stages::Council.new(deliberation:)
@@ -63,7 +64,7 @@ module Master3
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
       scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
-      memory:, personality:
+      memory:, personality:, swarm:
     }
   end
 
@@ -141,6 +142,16 @@ module Master3
         else "council: #{council_stage.instance_variable_get(:@enabled) ? "on" : "off"}"
         end
       },
+      "swarm" => ->(ctx) {
+        args = ctx[:args].to_s.strip.split(" ", 2)
+        role, task = args[0]&.to_sym, args[1].to_s
+        if role.nil? || task.empty?
+          "usage: /swarm <role> <task>  roles: #{swarm.worker_roles.join(", ")}"
+        else
+          r = swarm.dispatch(role, task: task, context_slice: {})
+          r.ok? ? r.value!.inspect : r.message
+        end
+      },
       "autoloop" => ->(ctx) {
         arg = ctx[:args].to_s.strip
         cycles = arg.match?(/^\d+$/) ? arg.to_i : 8
@@ -152,7 +163,7 @@ module Master3
         (output + [result.ok? ? result.value! : result.message]).join("\n")
       },
       "help"    => ->(ctx) {
-        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop help exit]
+        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm help exit]
         cmds.map { "/#{_1}" }.join("  ")
       }
     }

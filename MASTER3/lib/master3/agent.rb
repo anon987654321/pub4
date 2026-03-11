@@ -50,6 +50,17 @@ module Master3
       chat_direct(msgs)
     end
 
+    # One-shot chat with a custom system prompt. No session, no circuit breaker.
+    # Used by Swarm::Worker subclasses — minimal context, need-to-know only.
+    def chat_raw(prompt, system: nil)
+      c = RubyLLM.chat(model: model)
+      c.with_instructions(system) if system
+      msg = c.ask(prompt.to_s)
+      msg.respond_to?(:content) ? msg.content.to_s : msg.to_s
+    rescue => e
+      raise "chat_raw: #{e.message}"
+    end
+
     def call(ctx) = chat(ctx[:message].to_s)
     def model     = routed_models.first
 

@@ -7,6 +7,8 @@ module Master3
   class CLI
     COMMANDS = %w[clear save tokens undo diff tree model mode task autotest dmesg cost config help exit].freeze
 
+    attr_reader :container
+
     def initialize(container:)
       @container = container
       @session   = container[:session]
