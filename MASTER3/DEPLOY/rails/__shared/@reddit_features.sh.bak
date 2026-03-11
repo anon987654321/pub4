@@ -1,0 +1,85 @@
+
+
+#!/usr/bin/envzsh
+set -euo pipefail
+
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
+generate_comment_model() {
+    log "Generating Comment model..."
+    local migration_timestamp=$(date +%Y%m%d%H%M%S)
+    cat <<EOF > db/migrate/${migration_timestamp}_create_comments.rb
+class CreateComments < ActiveRecord::Migration[7.0]
+  def change
+    create_table :comments do |t|
+      t.text :content
+      t.references :user, null: false, foreign_key: true
+      t.references :commentable, polymorphic: true, null: false
+      t.references :parent, foreign_key: { to_table: :comments }
+      t.integer :cached_score, default: 0
+      t.integer :cached_upvotes, default: 0
+      t.integer :cached_downvotes, default: 0
+      t.integer :cached_depth, default: 0
+
+      t.timestamps
+    end
+
+    add_index :comments, [:commentable_type, :commentable_id]
+    add_index :comments, :parent_id
+    add_index :comments, :cached_score
+  end
+end
+EOF
+}
+
+generate_vote_model() {
+    log "Generating Vote model..."
+    local migration_timestamp=$(date +%Y%m%d%H%M%S)
+    cat <<EOF > db/migrate/${migration_timestamp}_create_votes.rb
+class CreateVotes < ActiveRecord::Migration[7.0]
+  def change
+    create_table :votes do |t|
+      t.integer :value, null: false
+      t.references :user, null: false, foreign_key: true
+      t.references :votable, polymorphic: true, null: false
+
+      t.timestamps
+    end
+
+    add_index :votes, :user_id
+    add_index :votes, [:votable_type, :votable_id]
+    add_check_constraint "votes_value_check", "value IN (1, -1)"
+  end
+end
+EOF
+}
+
+generate_karma_model() {
+    log "Generating Karma model..."
+    local migration_timestamp=$(date +%Y%m%d%H%M%S)
+    cat <<EOF > db/migrate/${migration_timestamp}_create_karma.rb
+class CreateKarma < ActiveRecord::Migration[7.0]
+  def change
+    create_table :karmas do |t|
+      t.references :user, null: false, foreign_key: true
+      t.integer :score, default: 0
+
+      t.timestamps
+    end
+
+    add_index :karmas, :user_id
+  end
+end
+EOF
+}
+
+setup_reddit_models() {
+    generate_comment_model
+    generate_vote_model
+    generate_karma_model
+}
+
+setup_reddit_models
+EOF

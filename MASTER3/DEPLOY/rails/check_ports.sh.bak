@@ -1,0 +1,85 @@
+bash
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MASTER_JSON="${SCRIPT_DIR}/../master.json"
+
+echo "=== Port Consistency Check == not found"
+    exit 1
+fi
+
+# Validate JSON structure
+if ! jq -e '.apps | type == "array" and length > 0' "$MASTER_JSON" >/dev/null; then
+    echo "❌ Error: Invalid JSON structure or empty apps array in master.json"
+    exit 1
+fi
+
+# Extract apps data
+if ! APPS_DATA=$(jq -c '.apps[] | {name, port}' "$MASTER_JSON"); then
+    echo "❌ Error: Failed to parse apps data from master.json"
+    exit 1
+fi
+
+declare -A PORTS
+declare -A APP_NAMES
+declare -A PORT_USAGE
+errors_found=0
+
+# Process each app
+while IFS= read -r app_data; do
+    name=$(echo "$app_data" | jq -r '.name')
+    port=$(echo "$app_data" | jq -r '.port')
+
+    # Skip entries with missing app or port
+    if [[ -z "$name" || "$name" == "null" ]]; then
+        echo "❌ Error: Missing app name in master.json"
+        errors_found=1
+        continue
+    fi
+
+    if [[ -z "$port" || "$port" == "null" ]]; then
+        echo "❌ Error: Missing port for app '$name'"
+        errors_found=1
+        continue
+    fi
+
+    # Check for duplicate app names
+    if [[ -n "${APP_NAMES[$name]}" ]]; then
+        echo "❌ Error: Duplicate app name found: $name"
+        errors_found=1
+    fi
+    APP_NAMES["$name"]=1
+
+    # Validate port is numeric and in valid range (no leading zeros)
+    if [[ ! "$port" =~ ^[0-9]+$ ]] || ((port < 1 || port > 65535)); then
+        echo "❌ Error: Invalid port '$port' for app '$name'"
+        errors_found=1
+        continue
+    fi
+
+    # Check for leading zeros in port numbers
+    if [[ "$port" =~ ^0[0-9]+$ ]]; then
+        echo "❌ Error: Port '$port' for app '$name' has leading zeros"
+        errors_found=1
+        continue
+    fi
+
+    PORTS["$name"]="$port"
+
+    # Track port usage for duplicate detection
+    if [[ -n "${PORT_USAGE[$port]}" ]]; then
+        echo "❌ Error: Duplicate port $port found for apps: ${PORT_USAGE[$port]} and $app"
+        errors_found=1
+    else
+        PORT_USAGE["$port"]="$name"
+    fi
+done <<< "$APPS_DATA"
+
+if [[ $errors_found -eq 0 ]]; then
+    echo "✅ All port checks passed successfully!"
+    exit 0
+else
+    echo ""
+    echo "❌ Port consistency check failed with $errors_found error(s)"
+    exit 1
+fi
+```

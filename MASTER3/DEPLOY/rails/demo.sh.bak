@@ -1,0 +1,130 @@
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Demo Rails 8 app generator - Simple CRUD with Hotwire
+# Port: 10008
+# Domain: demo.local (or configure as needed)
+
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly APP_NAME="demo"
+readonly PORT=10008
+readonly SERVER_PID_FILE="${SCRIPT_DIR}/${APP_NAME}/tmp/pids/server.pid"
+
+main() {
+    local app_dir="${SCRIPT_DIR}/${APP_NAME}"
+
+    # Check if app directory already exists
+    if [[ -d "$app_dir" ]]; then
+        echo "Error: App directory '$app_dir' already exists" >&2
+        exit 1
+    fi
+
+    # Check port availability
+    if lsof -i :$PORT -sTCP:LISTEN >/dev/null 2>&1; then
+        echo "Error: Port $PORT is already in use" >&2
+        exit 1
+    fi
+
+    # Create new Rails app
+    if ! rails new "$APP_NAME" \
+        --database=postgresql \
+        --css=tailwind \
+        --javascript=importmap; then
+        echo "Error: Failed to create Rails app" >&2
+        exit 1
+    fi
+
+    cd "$APP_NAME" || { echo "Error: Failed to enter app directory" >&2; exit 1; }
+
+    # Backup existing database.yml if present
+    if [[ -f config/database.yml ]] && [[ ! -f config/database.yml.backup ]]; then
+        cp config/database.yml config/database.yml.backup
+    fi
+
+    # Configure database
+    cat > config/database.yml <<EOF
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+
+development:
+  <<: *default
+  database: ${APP_NAME}_development
+
+test:
+  <<: *default
+  database: ${APP_NAME}_test
+
+production:
+  <<: *default
+  database: ${APP_NAME}_production
+  username: ${APP_NAME}
+  password: <%= ENV["${APP_NAME^^}_DATABASE_PASSWORD"] || "please_set_password" %>
+EOF
+
+    # Create databases
+    if ! bin/rails db:create; then
+        echo "Error: Failed to create databases" >&2
+        exit 1
+    fi
+
+    # Add Solid Queue, Cache, Cable with error handling
+    if ! bundle add solid_queue solid_cache solid_cable; then
+        echo "Error: Failed to add Solid* gems" >&2
+        exit 1
+    fi
+
+    # Configure Solid* gems in application.rb
+    local application_rb="config/application.rb"
+    if [[ -f "$application_rb" ]]; then
+        # Check if configuration already exists
+        if ! grep -q "config.solid_queue" "$application_rb"; then
+            cat >> "$application_rb" <<'EOF'
+
+# Configure Solid Queue
+config.solid_queue.connects_to = { database: { writing: :solid_queue } }
+
+# Configure Solid Cache
+config.solid_cache.connects_to = { database: { writing: :solid_cache } }
+
+# Configure Solid Cable
+config.solid_cable.connects_to = { database: { writing: :solid_cable } }
+EOF
+        fi
+    fi
+
+    # Generate resource
+    if ! bin/rails generate scaffold Post title:string body:text; then
+        echo "Error: Failed to generate scaffold" >&2
+        exit 1
+    fi
+
+    # Run migrations
+    if ! bin/rails db:migrate; then
+        echo "Error: Failed to run migrations" >&2
+        exit 1
+    fi
+
+    # Add Hotwire meta tag to application layout
+    local layout_file="app/views/layouts/application.html.erb"
+    if [[ -f "$layout_file" ]]; then
+        if ! grep -q "csrf-tags" "$layout_file"; then
+            sed -i.bak '/<%= csrf_meta_tags %>/a\    <%= turbo_meta_tags %>' "$layout_file"
+        fi
+    fi
+
+    # Start server in background and capture PID
+    bin/rails server -p $PORT -d
+    local SERVER_PID=$!
+    echo "$SERVER_PID" > "$SERVER_PID_FILE"
+
+    echo "Demo app created successfully!"
+    echo "Server running on port $PORT with PID $SERVER_PID"
+    echo "PID saved to: $SERVER_PID_FILE"
+    echo "Use 'kill $SERVER_PID' to stop the server"
+}
+
+main "$@"
+```

@@ -1,0 +1,132 @@
+**Final Improved Code:**
+
+```zsh
+#!/usr/bin/env zsh
+set -euo pipefail
+
+# Airbnb marketplace features: Bookings, Reviews, Host Profiles, Calendar, Pricing
+# Shared across marketplace apps (brgen listings, hjerterom)
+
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+check_model_exists() {
+  local model_name=$1
+  if [[ -f "app/models/${model_name:l}.rb" ]]; then
+    log "Model ${model_name} already exists, skipping generation"
+    return 1
+  fi
+  return 0
+}
+
+run_migration() {
+  log "Running database migrations"
+  if ! bundle exec rails db:migrate; then
+    log "Migration failed, attempting rollback"
+    if ! bundle exec rails db:rollback; then
+      log "Rollback also failed, manual intervention required"
+      log "Error details: Last migration file may need manual review"
+      exit 1
+    fi
+    log "Rollback successful, exiting"
+    exit 1
+  fi
+}
+
+setup_airbnb_models() {
+  local models=(
+    "Booking listing:references guest:references check_in:date check_out:date guests_count:integer total_price:decimal status:string"
+    "Review reviewable:references{polymorphic} reviewer:references{polymorphic} rating:integer content:text cleanliness:integer accuracy:integer communication:integer location:integer value:integer"
+    "Availability listing:references date:date available:boolean price_override:decimal"
+    "HostProfile user:references bio:text response_rate:decimal response_time:integer verified:boolean joined_date:date languages:string superhost:boolean"
+    "Amenity name:string category:string icon:string"
+    "ListingAmenity listing:references amenity:references"
+  )
+
+  for model in "${models[@]}"; do
+    local model_name=$(echo $model | awk '{print $1}')
+    local attributes=$(echo $model | cut -d' ' -f2-)
+    if check_model_exists $model_name; then
+      log "Generating model: $model_name with attributes: $attributes"
+      if ! bundle exec rails generate model $model_name $attributes; then
+        log "Failed to generate model: $model_name"
+        exit 1
+      fi
+    fi
+  done
+
+  log "Airbnb models generated"
+}
+
+add_validations() {
+  log "Adding model validations"
+
+  # Booking validations
+  cat >> app/models/booking.rb << 'EOF'
+  validates :check_in, :check_out, :guests_count, :total_price, presence: true
+  validates :guests_count, numericality: { greater_than: 0 }
+  validates :total_price, numericality: { greater_than_or_equal_to: 0 }
+  validate :check_out_after_check_in
+
+  private
+
+  def check_out_after_check_in
+    return if check_out.blank? || check_in.blank?
+    if check_out <= check_in
+      errors.add(:check_out, "must be after check-in date")
+    end
+  end
+EOF
+
+  # Review validations
+  cat >> app/models/review.rb << 'EOF'
+  validates :rating, presence: true, numericality: {
+    only_integer: true,
+    greater_than_or_equal_to: 1,
+    less_than_or_equal_to: 5
+  }
+  validates :content, length: { maximum: 1000 }
+  validates :cleanliness, :accuracy, :communication, :location, :value,
+            numericality: { only_integer: true, in: 1..5 }, allow_nil: true
+EOF
+
+  log "Validations added successfully"
+}
+
+setup_polymorphic_associations() {
+  log "Setting up polymorphic associations"
+
+  # Add polymorphic associations to Review model
+  if ! grep -q "belongs_to :reviewable, polymorphic: true" app/models/review.rb; then
+    cat >> app/models/review.rb << 'EOF'
+  belongs_to :reviewable, polymorphic: true
+  belongs_to :reviewer, polymorphic: true
+EOF
+  fi
+
+  # Add has_many reviews to Listing and Guest models
+  for model in "Listing" "Guest"; do
+    if [[ -f "app/models/${model:l}.rb" ]] && ! grep -q "has_many :reviews" app/models/${model:l}.rb; then
+      cat >> app/models/${model:l}.rb << EOF
+  has_many :reviews, as: :reviewable
+EOF
+    fi
+  done
+
+  log "Polymorphic associations setup completed"
+}
+
+main() {
+  log "Starting Airbnb feature setup"
+
+  setup_airbnb_models
+  add_validations
+  setup_polymorphic_associations
+  run_migration
+
+  log "Airbnb feature setup completed successfully"
+}
+
+main "$@"
+```

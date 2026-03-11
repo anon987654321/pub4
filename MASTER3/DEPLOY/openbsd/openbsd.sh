@@ -1304,6 +1304,28 @@ EOF
 
   # PostgreSQL and Redis configuration removed per user request
   setup_services
+
+  # Generate Rails app code via feature scripts
+  if ! is_step_completed "rails_apps_generated"; then
+    log INFO "Generating Rails apps from feature scripts"
+    typeset deploy_dir="/home/dev/pub4/MASTER3/DEPLOY/rails"
+
+    # brgen
+    if [[ -f "${deploy_dir}/brgen/brgen.sh" ]]; then
+      log INFO "Running brgen setup"
+      doas -u brgen zsh "${deploy_dir}/brgen/brgen.sh" || log WARN "brgen.sh exited non-zero"
+    fi
+
+    # amber
+    if [[ -f "${deploy_dir}/amber/amber.sh" ]]; then
+      log INFO "Running amber setup"
+      doas -u amber zsh "${deploy_dir}/amber/amber.sh" || log WARN "amber.sh exited non-zero"
+    fi
+
+    mark_step_completed "rails_apps_generated"
+    log INFO "Rails app generation done"
+  fi
+
   # Deploy Rails apps
   for app_entry in $ALL_APPS; do
 
@@ -1327,7 +1349,7 @@ EOF
 
     chown -R $app:$app /home/$app
 
-    su -l $app -c "gem install --user-install rails bundler falcon" || {
+    su -l $app -c "gem install --user-install rails bundler puma" || {
 
       log ERROR "gem install failed for $app"
 
@@ -1360,7 +1382,7 @@ rc_start() {
 
   export PATH=${HOME}/.gem/ruby/3.3/bin:$PATH
 
-  ${rcexec} "falcon serve -b tcp://$LOCALHOST:$port"
+  ${rcexec} "bundle exec rails server -b 127.0.0.1 -p $port -e production"
 
 }
 
