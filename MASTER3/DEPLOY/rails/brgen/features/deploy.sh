@@ -13,12 +13,12 @@ cat > /tmp/brgen << 'RCSH'
 
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
-daemon="/usr/local/bin/falcon"
-daemon_flags="serve -b tcp://127.0.0.1:11006"
+daemon="/home/brgen/app/bin/rails"
+daemon_flags="server -b 0.0.0.0 -p 11006 -e production"
 daemon_timeout="60"
 
 . /etc/rc.d/rc.subr
-pexp="falcon serve.*11006"
+pexp="ruby.*bin/rails server.*-p 11006"
 rc_bg=YES
 rc_reload=NO
 rc_cmd $1

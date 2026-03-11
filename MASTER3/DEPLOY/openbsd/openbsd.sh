@@ -1382,7 +1382,7 @@ rc_start() {
 
   export PATH=${HOME}/.gem/ruby/3.3/bin:$PATH
 
-  ${rcexec} "falcon serve -b tcp://127.0.0.1:$port"
+  ${rcexec} "bin/rails server -b 0.0.0.0 -p $port -e production"
 
 }
 
@@ -1449,8 +1449,8 @@ EOF
     cat > /etc/rc.d/rails_master3 <<RCEOF
 #!/bin/ksh
 daemon_execdir="/home/dev/pub4/MASTER3/web"
-daemon="/usr/local/bin/falcon"
-daemon_flags="serve -b tcp://127.0.0.1:3000"
+daemon="/home/dev/pub4/MASTER3/web/bin/rails"
+daemon_flags="server -b 0.0.0.0 -p 3000 -e production"
 daemon_user="dev"
 . /etc/rc.d/rc.subr
 rc_cmd \$1
