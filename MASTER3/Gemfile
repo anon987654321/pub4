@@ -21,3 +21,8 @@ gem "diffy", "~> 3.4"
 gem "zeitwerk", "~> 2.7"
 gem "sinatra", "~> 4.0"
 gem "sinatra-contrib", "~> 4.0"
+
+group :test do
+  gem "minitest", "~> 5.25"
+  gem "rack-test", "~> 2.1"
+end

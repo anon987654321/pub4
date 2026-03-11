@@ -68,19 +68,15 @@ class ChatController < ApplicationController
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
-    tmp_mp3 = "/tmp/tts_#{SecureRandom.hex(8)}.mp3"
-    system("edge-tts",
-      "--voice", "ms-MY-OsmanNeural",
-      "--rate",  "-35%",
-      "--pitch", "-150Hz",
-      "--text",  text,
-      "--write-media", tmp_mp3)
-
-    if File.exist?(tmp_mp3) && File.size(tmp_mp3) > 0
-      send_file tmp_mp3, type: "audio/mpeg", disposition: "inline"
+    bytes = Master3::Speech.synthesize_bytes(text)
+    if bytes && bytes.bytesize > 0
+      send_data bytes, type: "audio/mpeg", disposition: "inline"
     else
       head :service_unavailable
     end
+  rescue => e
+    logger.error "TTS failed: #{e.message}"
+    head :service_unavailable
   ensure
     File.unlink(tmp_mp3) rescue nil
   end
