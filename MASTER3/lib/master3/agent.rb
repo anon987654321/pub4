@@ -73,6 +73,13 @@ module Master3
     end
 
     def do_chat(message, selected_model, context:, stream:, &blk)
+      if selected_model.start_with?("ferrum:webchat:")
+        alias_name = selected_model.split(":", 3).last
+        ferrum_result = Bridges::FerrumWebChat.new.ask(model_alias: alias_name, prompt: message)
+        return ferrum_result if ferrum_result.respond_to?(:err?) && ferrum_result.err?
+        return ferrum_result.value! if ferrum_result.respond_to?(:value!)
+      end
+
       chat = RubyLLM.chat(model: selected_model)
       context.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }
       # tools registered via Execute stage, not as LLM function-calling tools

@@ -1,0 +1,19 @@
+continuity:
+  enabled: true
+  updated_at: "2026-03-11"
+
+  openrouter:
+    free_latest:
+      - deepseek/deepseek-r1-0528:free
+      - qwen/qwen3-coder:free
+      - openai/gpt-oss-120b:free
+
+  replicate:
+    free_latest:
+      - meta/llama-3.3-70b-instruct
+      - mistralai/mistral-small-3.1-24b-instruct
+
+  ferrum_web_chat:
+    free_latest:
+      - ferrum:webchat:openrouter/free
+      - ferrum:webchat:replicate/free
