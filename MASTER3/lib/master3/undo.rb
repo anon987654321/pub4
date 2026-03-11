@@ -12,6 +12,9 @@ module Master3
       content = File.exist?(path) ? File.read(path) : nil
       @session.snapshot(path, content)
       @stack << { path:, content: }
+      Result.ok(path)
+    rescue => e
+      Result.err("undo snapshot: #{e.message}", category: :unknown)
     end
 
     def undo!

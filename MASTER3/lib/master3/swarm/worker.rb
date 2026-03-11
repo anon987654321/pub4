@@ -24,6 +24,8 @@ module Master3
 
         @bus&.publish(:swarm_worker_done, role: @role, ok: @result.ok?)
         @result
+      rescue => e
+        Result.err("worker #{@role}: #{e.message}", category: :unknown)
       end
 
       private
@@ -40,7 +42,7 @@ module Master3
 
       def ctx_summary(ctx)
         return "" if ctx.empty?
-        ctx.map { |k, v| "#{k}: #{v}" }.join("\n")
+        ctx.map { |k, v| "#{k.to_s}: #{v.to_s}" }.join("\n")
       end
     end
   end

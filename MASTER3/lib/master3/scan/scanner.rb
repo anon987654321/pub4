@@ -39,7 +39,7 @@ module Master3
       private
 
       def load_rules
-        Rule.registry.map(&:new)
+        @rules ||= Rule.registry.map(&:new)
       end
 
       def active_rules(depth)

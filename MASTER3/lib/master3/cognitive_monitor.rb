@@ -4,6 +4,8 @@ module Master3
   # Tracks cognitive load of agent sessions using 7±2 working memory model.
   # Ported from pub/ai3/lib/cognitive_orchestrator.rb, adapted for MASTER3.
   class CognitiveMonitor
+    # LOAD_MAX and STACK_MAX are derived from Miller's Law (1956): humans hold
+    # 7±2 chunks in working memory. LOAD_MAX=7 is the mean; STACK_MAX=9 is the upper bound.
     LOAD_MAX    = 7
     STACK_MAX   = 9
     SWITCH_MAX  = 3
@@ -65,6 +67,7 @@ module Master3
     def update_flow(context_switches: @switches, error_rate: 0.0)
       distraction = [context_switches * 0.2 + error_rate, 1.0].min
       @flow_state = FLOW_STATES.find { |_, range| range.cover?(distraction) }&.first || :overloaded
+      self
     end
 
     private

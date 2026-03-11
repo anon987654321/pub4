@@ -48,16 +48,22 @@ module Master3
     def read_entry(path)
       return nil unless File.exist?(path)
       entry = JSON.parse(File.read(path), symbolize_names: true)
-      return nil if Time.now.to_i - entry[:ts] > @ttl
+      if Time.now.to_i - entry[:ts] > @ttl
+        @lru.delete(path)
+        File.delete(path)
+        return nil
+      end
       promote_lru(path)
       entry[:value]
     rescue JSON::ParserError
+      $stderr.puts "semantic_cache: corrupt entry at #{path}, deleting"
       File.delete(path)
+      @lru.delete(path)
       nil
     end
 
     def write_entry(path, value, key)
-      evict_lru if @lru.size >= MAX_ENTRIES
+      evict_lru while @lru.size >= MAX_ENTRIES
       File.write(path, JSON.generate({ ts: Time.now.to_i, value: }))
       @lru.push(path)
     end

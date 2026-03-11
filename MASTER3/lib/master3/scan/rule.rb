@@ -6,10 +6,16 @@ module Master3
       attr_reader :id, :description, :severity, :axiom_tags, :auto_fix
 
       def self.inherited(subclass)
-        (@registry ||= []) << subclass
+        @registry_mutex ||= Mutex.new
+        @registry_mutex.synchronize do
+          (@registry ||= []) << subclass
+        end
       end
 
-      def self.registry = @registry || []
+      def self.registry
+        @registry_mutex ||= Mutex.new
+        @registry_mutex.synchronize { @registry || [] }
+      end
 
       def initialize
         @id         = self.class.name&.split("::")&.last&.downcase || "unknown"

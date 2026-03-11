@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "fileutils"
 
 module Master3
   # Persistent cross-session memory store.
@@ -16,8 +17,11 @@ module Master3
       persist
     end
 
+    # Keys are always stored and retrieved as strings.
+    # Symbol fallback removed: YAML safe_load with symbolize_names: false guarantees
+    # string keys, so a symbol lookup would never match and could mask missing entries.
     def recall(key)
-      @store.dig(key.to_s, :value) || @store.dig(key.to_s, "value")
+      @store.dig(key.to_s, "value")
     end
 
     def forget(key)
@@ -25,12 +29,12 @@ module Master3
       persist
     end
 
-    def all = @store.transform_values { |v| v.is_a?(Hash) ? (v[:value] || v["value"]) : v }
+    def all = @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v }
 
     # Returns a compact string suitable for injection into system prompts.
     def context_summary
       return nil if @store.empty?
-      lines = @store.map { |k, v| "- #{k}: #{v.is_a?(Hash) ? (v[:value] || v["value"]) : v}" }
+      lines = @store.map { |k, v| "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
       "Memory:\n#{lines.join("\n")}"
     end
 
@@ -44,6 +48,7 @@ module Master3
     end
 
     def persist
+      FileUtils.mkdir_p(File.dirname(@path))
       File.write(@path, @store.to_yaml)
     end
   end

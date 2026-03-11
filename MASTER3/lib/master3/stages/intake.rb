@@ -3,6 +3,10 @@
 module Master3
   module Stages
     class Intake
+      # Group [2] (args) is used; group [1] (command name) is used.
+      # The trailing `(?:.*)` captures the rest of the line but the group is non-capturing
+      # because we access args via m[2] (the second capturing group: `(.*)`).
+      # Note: COMMAND_RE keeps two capturing groups — m[1]=command, m[2]=args.
       COMMAND_RE = /\A\s*\/([\w-]+)\s*(.*)/m
 
       def call(ctx)

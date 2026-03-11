@@ -44,7 +44,7 @@ module Master3
 
     # System prompt fragment injected before every LLM call.
     def system_prompt
-      "You are MASTER3. #{@desc} No preambles. No hedges. Respond in plain prose."
+      @system_prompt ||= "You are MASTER3. #{@desc} No preambles. No hedges. Respond in plain prose."
     end
   end
 end

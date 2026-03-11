@@ -17,7 +17,7 @@ module Master3
       @undos  = 0
       @latencies   = []
       @diff_sizes  = []
-      @session_start = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
+      # @session_start removed — stored but never used
     end
 
     def record_latency(ms)

@@ -20,6 +20,7 @@ module Master3
 
       def enable!  = (@enabled = true)
       def disable! = (@enabled = false)
+      def enabled? = @enabled
 
       private
 
@@ -33,7 +34,9 @@ module Master3
 
       def dangerous_request?(ctx)
         msg = ctx[:message].to_s
-        return false if msg.empty?
+        # Strip control characters before logging to prevent log injection
+        safe_msg = msg.gsub(/[[:cntrl:]]/, "")
+        return false if safe_msg.empty?
 
         patterns = [
           /\brm\s+-rf\b/i,
@@ -43,7 +46,7 @@ module Master3
           /\b(delete|remove)\s+all\b/i
         ]
 
-        patterns.any? { |pattern| msg.match?(pattern) }
+        patterns.any? { |pattern| safe_msg.match?(pattern) }
       end
 
       def dangerous_tool?(ctx)

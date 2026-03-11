@@ -7,14 +7,8 @@ module Master3
         handler = ctx[:handler]
         return Result.err("execute: no handler", category: :validation) unless handler
 
-        case handler
-        when Proc, Method
-          result = handler.call(ctx)
-          Result.ok(ctx.merge(output: result))
-        else
-          result = handler.call(ctx)
-          Result.ok(ctx.merge(output: result))
-        end
+        result = handler.call(ctx)
+        Result.ok(ctx.merge(output: result))
       rescue => e
         Result.err("execute: #{e.message}", category: :unknown)
       end

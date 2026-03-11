@@ -15,12 +15,12 @@ module Master3
       def initialize(agent:, event_bus: nil)
         @agent = agent
         @bus   = event_bus
-        @workers = WORKER_CLASSES.transform_values { |klass| klass.new(agent:, event_bus:) }
+        @workers = {}
       end
 
       # Run a single worker with a curated context slice
       def dispatch(role, task:, context_slice: {})
-        worker = @workers[role.to_sym] or return Result.err("unknown role: #{role}")
+        worker = worker_for(role) or return Result.err("unknown role: #{role}")
         @bus&.publish(:swarm_dispatch, role:, task: task[0..60])
         worker.call(task:, context_slice:)
       end
@@ -56,6 +56,17 @@ module Master3
       end
 
       def worker_roles = WORKER_CLASSES.keys
+
+      private
+
+      def worker_for(role)
+        sym = role.to_sym
+        @workers.fetch(sym) do
+          klass = WORKER_CLASSES[sym]
+          return nil unless klass
+          @workers[sym] = klass.new(agent: @agent, event_bus: @bus)
+        end
+      end
     end
   end
 end

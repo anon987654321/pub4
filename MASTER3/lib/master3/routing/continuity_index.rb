@@ -6,7 +6,9 @@ module Master3
   module Routing
     class ContinuityIndex
       def initialize(root: Master3::ROOT)
-        @root = root
+        @root       = root
+        @data_cache = nil
+        @data_mtime = nil
       end
 
       def fallback_models
@@ -34,12 +36,19 @@ module Master3
       end
 
       def data
-        @data ||= begin
-          path = File.join(@root, "data", "continuity_models.yml")
-          YAML.safe_load_file(path) || {}
-        rescue StandardError
-          {}
+        path = File.join(@root, "data", "continuity_models.yml")
+        current_mtime = File.exist?(path) ? File.mtime(path) : nil
+
+        if @data_cache.nil? || current_mtime != @data_mtime
+          @data_cache = begin
+            YAML.safe_load_file(path) || {}
+          rescue StandardError
+            {}
+          end
+          @data_mtime = current_mtime
         end
+
+        @data_cache
       end
     end
   end

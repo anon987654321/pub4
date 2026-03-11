@@ -26,6 +26,7 @@ module Master3
       @state         = :closed
       @session_total = 0.0
       @req_times     = []
+      @mutex         = Mutex.new
     end
 
     def call(cost_estimate, &blk)

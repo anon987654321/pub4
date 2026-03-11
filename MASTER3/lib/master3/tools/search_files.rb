@@ -24,6 +24,8 @@ module Master3
         results = []
 
         paths.each do |path|
+          next if binary_file?(path)
+
           lines = File.readlines(path)
           lines.each_with_index do |line, idx|
             next unless line.match?(re)
@@ -39,6 +41,13 @@ module Master3
         Result.ok(results.empty? ? "(no matches)" : results.join("\n---\n"))
       rescue => e
         Result.err("search_files: #{e.message}", category: :unknown)
+      end
+
+      private
+
+      def binary_file?(path)
+        sample = File.read(path, 512) rescue ""
+        sample.include?("\x00")
       end
     end
   end

@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+require "open3"
+
 module Master3
   # AutoLoop — MASTER3 iterates on its own codebase until clean.
   # Cycle: Scan → Council review → LLM patch → Syntax check → Commit
   # Runs until no violations remain or max_cycles hit.
   class AutoLoop
-    MAX_CYCLES = 12
+    MAX_CYCLES       = 12
+    CODE_PREVIEW_MAX = 4000
     COMMIT_MSG = "autoloop: fix scan violations [cycle %d]"
 
     def initialize(agent:, scanner:, council:, root:, event_bus: nil)
@@ -53,7 +56,7 @@ module Master3
       return nil unless File.exist?(File.join(@root, file))
 
       src = File.read(File.join(@root, file))
-      prompt = "Fix this Ruby violation in #{file}.\nRule: #{rule}\nIssue: #{message}\n\nFile:\n```ruby\n#{src[0, 4000]}\n```\n\nReturn ONLY the corrected Ruby file content, no explanation."
+      prompt = "Fix this Ruby violation in #{file}.\nRule: #{rule}\nIssue: #{message}\n\nFile:\n```ruby\n#{src[0, CODE_PREVIEW_MAX]}\n```\n\nReturn ONLY the corrected Ruby file content, no explanation."
 
       response = @agent.ask(prompt)
       extract_code(response.to_s)
@@ -90,7 +93,8 @@ module Master3
 
     def git_dirty?
       Dir.chdir(@root) do
-        !`git status --porcelain lib/ 2>/dev/null`.strip.empty?
+        stdout, _stderr, _status = Open3.capture3("git status --porcelain lib/")
+        !stdout.strip.empty?
       end
     end
   end

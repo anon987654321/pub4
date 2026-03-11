@@ -40,9 +40,13 @@ module Master3
 
       def weighted_score(score)
         w = @rules.fetch("weights", {})
-        (score.fetch("quality", 0.0) * w.fetch("quality", 0.0)) +
-          (score.fetch("speed", 0.0) * w.fetch("speed", 0.0)) +
-          (score.fetch("cost", 0.0) * w.fetch("cost", 0.0))
+        quality_w = w.fetch("quality", 0.0).to_f
+        speed_w   = w.fetch("speed",   0.0).to_f
+        cost_w    = w.fetch("cost",    0.0).to_f
+
+        (score.fetch("quality", 0.0).to_f * quality_w) +
+          (score.fetch("speed", 0.0).to_f * speed_w) +
+          (score.fetch("cost",  0.0).to_f * cost_w)
       end
 
       def load_rules

@@ -31,7 +31,14 @@ module Master3
         return perm if perm.err?
 
         @undo.snapshot(full)
-        File.write(full, content.sub(old_string, new_string))
+
+        tmp = "#{full}.tmp.#{Process.pid}"
+        begin
+          File.write(tmp, content.sub(old_string, new_string))
+          File.rename(tmp, full)
+        ensure
+          File.delete(tmp) if File.exist?(tmp) rescue nil
+        end
 
         @bus&.publish("tool:after", tool: NAME, path:)
         Result.ok(full)

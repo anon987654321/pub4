@@ -17,7 +17,8 @@ module Master3
         selected = SUPPORTED.include?(mode.to_s) ? mode.to_s : "direct"
         prompt = load_prompt(selected)
         format(prompt.fetch("template", "%{message}"), message: message.to_s)
-      rescue StandardError
+      rescue StandardError => e
+        $stderr.puts "reasoning/modes: wrap failed (mode=#{mode}): #{e.message}"
         message.to_s
       end
 
