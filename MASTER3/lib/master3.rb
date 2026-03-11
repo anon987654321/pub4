@@ -12,7 +12,8 @@ module Master3
   )
   loader.setup
 
-  def self.boot(root: Dir.pwd, argv: [])
+  # Build the full container without starting the CLI
+  def self.build(root: Dir.pwd)
     config   = Config.new(root)
     config["model"] ||= default_model
 
@@ -32,11 +33,10 @@ module Master3
     modes    = Reasoning::Modes.new
     agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus, model_router: router, reasoning_modes: modes)
 
-    guard      = Security::InjectionGuard.new
-    scanner    = Scan::Scanner.new(event_bus: bus)
-    personas   = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
+    guard        = Security::InjectionGuard.new
+    scanner      = Scan::Scanner.new(event_bus: bus)
+    personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
     deliberation = Council::Deliberation.new(personas:, agent:, event_bus: bus)
-
     council_stage = Stages::Council.new(deliberation:)
 
     stages = [
@@ -53,13 +53,18 @@ module Master3
       Stages::Render.new(renderer:)
     ]
 
-    pipeline  = Pipeline.new(stages)
-    container = {
+    pipeline = Pipeline.new(stages)
+
+    {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
       scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:
     }
+  end
 
-    puts renderer.banner(agent.model)
+  # Boot the CLI (wraps build)
+  def self.boot(root: Dir.pwd, argv: [])
+    container = build(root:)
+    container[:renderer].tap { |r| puts r.banner(container[:agent].model) }
     CLI.new(container:)
   end
 
@@ -118,16 +123,9 @@ module Master3
       "autotest" => ->(ctx) {
         arg = ctx[:args].to_s.strip
         case arg
-        when "on"
-          config["auto_testing"] = true
-          config.save!
-          "autotest: on"
-        when "off"
-          config["auto_testing"] = false
-          config.save!
-          "autotest: off"
-        else
-          "autotest: #{config.auto_testing? ? "on" : "off"}"
+        when "on"  then config["auto_testing"] = true;  config.save!; "autotest: on"
+        when "off" then config["auto_testing"] = false; config.save!; "autotest: off"
+        else "autotest: #{config.auto_testing? ? "on" : "off"}"
         end
       },
       "council" => ->(ctx) {
