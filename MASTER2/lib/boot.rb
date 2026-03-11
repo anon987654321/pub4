@@ -61,10 +61,14 @@ module MASTER
 
       def banner_with_web(port)
         banner do |lines|
-          token = defined?(Server) ? Server::AUTH_TOKEN : nil
-          url   = token ? "http://localhost:#{port}/?token=#{token}" : "http://localhost:#{port}"
-          lines << c("web0: #{url}")
+          lines << c("web0: #{web_url(port)}")
         end
+      end
+
+      def web_url(port, token: nil)
+        auth_token = token.nil? && defined?(Server) ? Server::AUTH_TOKEN : token
+        base = "http://localhost:#{port}"
+        auth_token.to_s.empty? ? base : "#{base}/?token=#{auth_token}"
       end
 
       def smoke_test
