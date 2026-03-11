@@ -36,37 +36,17 @@ install_gem "pagy"
 
 install_gem "faker"
 
-# AI / vector search gems
-install_gem "langchainrb"
-install_gem "ruby-openai"
-install_gem "neighbor"
+# Rails 8 auth + devise-guests for anonymous wardrobe access
 
-# Rails 8 built-in authentication (replaces Devise)
-setup_authentication
+install_gem "devise"
 
-# Patch ApplicationController with Pagy::Backend (idempotent)
-grep -q "Pagy::Backend" app/controllers/application_controller.rb 2>/dev/null || \
-  sed -i 's/class ApplicationController < ActionController::Base/class ApplicationController < ActionController::Base\n  include Pagy::Backend/' \
-  app/controllers/application_controller.rb
-grep -q "Pagy::Frontend" app/helpers/application_helper.rb 2>/dev/null || \
-  sed -i 's/module ApplicationHelper/module ApplicationHelper\n  include Pagy::Frontend/' \
-  app/helpers/application_helper.rb
+install_gem "devise-guests"
 
-# Rate limiting (Rails 8 built-in)
-setup_rate_limiting
+bin/rails generate devise:install
 
-# pgvector support
-bin/rails generate migration EnablePgvector 2>/dev/null || true
-cat > db/migrate/*_enable_pgvector.rb << 'RUBY' 2>/dev/null || true
-class EnablePgvector < ActiveRecord::Migration[8.0]
-  def change
-    enable_extension "vector"
-  end
-end
-RUBY
+bin/rails generate devise User
 
-bin/rails generate migration CreateOrganizationTips content:text category:string season:string 2>/dev/null || true
-migrate_db
+bin/rails generate devise_guests:install
 
 # Generate application layout with PWA support
 
@@ -3060,49 +3040,5 @@ cat > app/views/outfits/_form.html.erb << 'OUTFITS_FORM_EOF'
 OUTFITS_FORM_EOF
 
 log "Outfits views completed"
-
-# === DEPLOYMENT ===
-log "Creating OpenBSD rc.d service"
-cat > /etc/rc.d/amber << RCSH
-#!/bin/ksh
-
-daemon_user="amber"
-
-daemon_execdir="/home/amber/app"
-
-daemon="/usr/local/bin/falcon"
-
-daemon_flags="serve --bind tcp://0.0.0.0:${APP_PORT} -e production"
-
-daemon_timeout="60"
-
-rc_bg=YES
-
-. /etc/rc.d/rc.subr
-
-rc_start() {
-  cd \${daemon_execdir} || return 1
-  [[ -f .env ]] && . ./.env
-  export RAILS_ENV=production
-  \${rcexec} "\${daemon} \${daemon_flags}"
-}
-
-rc_cmd \$1
-RCSH
-
-chmod 755 /etc/rc.d/amber
-log "rc.d service created at /etc/rc.d/amber"
-
-# .env.example for documentation
-cat > .env.example << 'ENV'
-# Required environment variables for amber
-OPENAI_API_KEY=sk-...           # OpenAI API key for LangChain
-RAILS_MASTER_KEY=...            # Rails credentials master key
-DATABASE_URL=postgresql://amber:password@127.0.0.1:6432/amber_production
-RAILS_ENV=production
-PORT=10001
-ENV
-log "Created .env.example"
-
-log "Amber setup complete"
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
 Co-Authored-By: Claude <noreply@anthropic.com>"
