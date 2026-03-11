@@ -7,7 +7,8 @@ module Master3
     def initialize(ring_buffer:, event_bus:, trace_level: 0)
       @buffer      = ring_buffer
       @bus         = event_bus
-      @trace_level = trace_level
+      # trace_level accepted for API compatibility but not consulted internally;
+      # tracing is controlled via Config#trace and ENV["MASTER_TRACE"].
 
       wire_events
     end

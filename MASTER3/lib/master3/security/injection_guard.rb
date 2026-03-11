@@ -19,8 +19,10 @@ module Master3
         Result.err("injection detected: #{hits.size} pattern(s) matched", category: :validation)
       end
 
+      # Returns self so callers can chain; mutates nothing (returns cleaned string via Result).
       def clean!(content)
-        PATTERNS.reduce(content) { |c, p| c.gsub(p, "[REDACTED]") }
+        cleaned = PATTERNS.reduce(content) { |c, p| c.gsub(p, "[REDACTED]") }
+        Result.ok(cleaned)
       end
     end
   end

@@ -7,11 +7,12 @@ require "json"
 module Master3
   module Tools
     class WebSearch
-      TIER        = :guarded
-      NAME        = "web_search"
-      DESCRIPTION = "Search DuckDuckGo instant answers API."
-      ENDPOINT    = "https://api.duckduckgo.com/"
-      TIMEOUT     = 10
+      TIER         = :guarded
+      NAME         = "web_search"
+      DESCRIPTION  = "Search DuckDuckGo instant answers API."
+      ENDPOINT     = "https://api.duckduckgo.com/"
+      TIMEOUT      = 10
+      QUERY_MAX    = 300
 
       def initialize(governor:, event_bus: nil)
         @governor = governor
@@ -19,6 +20,11 @@ module Master3
       end
 
       def call(query:)
+        if query.length > QUERY_MAX
+          $stderr.puts "web_search: query truncated from #{query.length} to #{QUERY_MAX} chars"
+          query = query[0, QUERY_MAX]
+        end
+
         perm = @governor.permit?(NAME, TIER, query)
         return perm if perm.err?
 

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module Master3
+  class UnwrapError < RuntimeError; end
+
   class Result
     def self.ok(value)    = Ok.new(value)
     def self.err(msg, category: :unknown) = Err.new(msg, category)
@@ -46,7 +48,7 @@ module Master3
 
       def ok?    = false
       def err?   = true
-      def value! = raise(RuntimeError, "Err#value! called: #{@message}")
+      def value! = raise(Master3::UnwrapError, "Err#value! called: #{@message}")
       def unwrap = value!
       def value_or(default) = default
 

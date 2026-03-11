@@ -4,6 +4,9 @@ require "ruby_llm"
 
 module Master3
   class Agent
+    DEFAULT_CONTEXT_SIZE = 16
+    COST_PER_TOKEN       = 0.000_015
+
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
                    event_bus: nil, model_router: nil, reasoning_modes: nil,
                    memory: nil, personality: nil)
@@ -27,7 +30,7 @@ module Master3
       context = conversation_context
       @bus&.publish("llm:request", model: routed.first, tokens: message.bytesize / 4)
 
-      response = routed.each_with_index do |selected_model, idx|
+      last_response = routed.each_with_index do |selected_model, idx|
         cache_key = cache_prompt_for("#{selected_model}:#{prompt}", context)
         cb = @circuit_breaker.call(estimate_cost(message)) {
           @cache.fetch(cache_key, selected_model) { do_chat(prompt, selected_model, context:, stream:, &blk) }
@@ -36,9 +39,9 @@ module Master3
         break cb
       end
 
-      return response if response.respond_to?(:err?) && response.err?
+      return last_response if last_response.respond_to?(:err?) && last_response.err?
 
-      text = response.to_s
+      text = last_response.to_s
       @session.add_message(role: :assistant, content: text)
       Result.ok(text)
     rescue => e
@@ -108,8 +111,10 @@ module Master3
       msg.respond_to?(:content) ? msg.content.to_s : msg.to_s
     end
 
-    def conversation_context(max_messages: 16)
-      @session.messages.last(max_messages + 1)[0...-1] || []
+    def conversation_context(max_messages: DEFAULT_CONTEXT_SIZE)
+      msgs = @session.messages
+      return [] unless msgs.respond_to?(:each)
+      msgs.last(max_messages + 1)[0...-1] || []
     end
 
     def cache_prompt_for(message, context)
@@ -125,6 +130,6 @@ module Master3
       chat.complete
     end
 
-    def estimate_cost(prompt) = (prompt.bytesize / 4) * 0.000_015
+    def estimate_cost(prompt) = (prompt.bytesize / 4) * COST_PER_TOKEN
   end
 end

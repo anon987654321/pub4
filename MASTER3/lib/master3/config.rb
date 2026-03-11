@@ -47,7 +47,11 @@ module Master3
     def save!
       dir = File.dirname(@path)
       Dir.mkdir(dir) unless Dir.exist?(dir)
-      File.write(@path, @data.to_yaml)
+      tmp = "#{@path}.tmp.#{Process.pid}"
+      File.write(tmp, @data.to_yaml)
+      File.rename(tmp, @path)
+    ensure
+      File.delete(tmp) if defined?(tmp) && tmp && File.exist?(tmp) rescue nil
     end
 
     private
@@ -59,6 +63,9 @@ module Master3
         base.merge!(loaded)
       end
       base
+    rescue Psych::Exception => e
+      $stderr.puts "config: failed to parse #{@path}: #{e.message}"
+      DEFAULTS.dup
     end
   end
 end

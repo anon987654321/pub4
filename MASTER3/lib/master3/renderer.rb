@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 require "pastel"
+require "open3"
 
 module Master3
   class Renderer
@@ -56,7 +57,8 @@ module Master3
     end
 
     def dmesg_lines
-      raw = `dmesg 2>/dev/null`.lines.first(18).map(&:chomp)
+      stdout, _stderr, _status = Open3.capture3("dmesg")
+      raw = stdout.lines.first(18).map(&:chomp)
       raw.empty? ? ["dmesg unavailable"] : raw
     rescue
       ["dmesg unavailable"]

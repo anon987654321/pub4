@@ -20,10 +20,10 @@ module Master3
       private
 
       def run_cmd(cmd)
-        ok = system("bash", "-lc", "command -v #{cmd.split[2] || cmd.split.first} >/dev/null 2>&1")
+        ok = system("/bin/sh", "-c", "command -v #{cmd.split[2] || cmd.split.first} >/dev/null 2>&1")
         return { status: :skipped, reason: "missing dependency", command: cmd } unless ok
 
-        output = `bash -lc '#{cmd} 2>&1'`
+        output = IO.popen(["/bin/sh", "-c", "#{cmd} 2>&1"], &:read)
         { status: $CHILD_STATUS.success? ? :pass : :fail, command: cmd, output: output.lines.first(20).join }
       rescue StandardError => e
         { status: :fail, command: cmd, output: e.message }

@@ -10,8 +10,9 @@ module Master3
 
     def initialize(log: nil)
       super()
-      @subscribers = Hash.new { |h, k| h[k] = [] }
-      @log         = log
+      @subscribers    = Hash.new { |h, k| h[k] = [] }
+      @log            = log
+      @pattern_cache  = {}
     end
 
     def subscribe(pattern, &handler)
@@ -40,7 +41,9 @@ module Master3
     end
 
     def glob_match?(pattern, event)
-      re = Regexp.new("\\A" + Regexp.escape(pattern).gsub("\\*", "[^:]*").gsub("\\*\\*", ".*") + "\\z")
+      re = @pattern_cache[pattern] ||= Regexp.new(
+        "\\A" + Regexp.escape(pattern).gsub("\\*\\*", ".*").gsub("\\*", "[^:]*") + "\\z"
+      )
       re.match?(event)
     end
   end

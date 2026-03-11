@@ -3,6 +3,11 @@
 module Master3
   module Bridges
     class FerrumWebChat
+      # TODO: Interactive login flow is not implemented.
+      # The browser is navigated to the provider URL but there is no mechanism to
+      # authenticate, handle cookies, or wait for a logged-in session. This bridge
+      # will always return an error until a session-management strategy is added.
+
       def ask(model_alias:, prompt:)
         ferrum = load_ferrum
         return ferrum if ferrum.respond_to?(:err?) && ferrum.err?
@@ -29,6 +34,8 @@ module Master3
       private
 
       def load_ferrum
+        # Use defined? to avoid double-requiring and the side-effects of re-running require
+        return Ferrum if defined?(Ferrum)
         require "ferrum"
         Ferrum
       rescue LoadError

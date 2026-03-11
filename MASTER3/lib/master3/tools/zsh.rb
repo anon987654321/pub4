@@ -26,7 +26,8 @@ module Master3
 
         @bus&.publish("tool:before", tool: NAME, command:)
 
-        wrapped = "#!/usr/bin/env zsh\nset -euo pipefail\nsetopt nullglob extendedglob\nexport ZDOTDIR=/tmp\nexport LC_ALL=C.UTF-8\ncd #{Shellwords.escape(@root)}\n#{command}\n"
+        zdotdir = File.writable?("/tmp") ? "/tmp" : Dir.home
+        wrapped = "#!/usr/bin/env zsh\nset -euo pipefail\nsetopt nullglob extendedglob\nexport ZDOTDIR=#{Shellwords.escape(zdotdir)}\nexport LC_ALL=C.UTF-8\ncd #{Shellwords.escape(@root)}\n#{command}\n"
 
         out, err = @cmd.run!("zsh", input: wrapped)
         @bus&.publish("tool:after", tool: NAME, exit_code: out.exit_status)
