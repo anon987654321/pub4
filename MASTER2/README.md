@@ -22,7 +22,7 @@ MASTER2 keeps and builds: Amber (marketplace), Baibl (encyclopedia),
 Blognet (publishing), BSDPorts (package tracker), Brgen (city platform),
 Hjerterom (dating), Privcam (streaming) — Rails 8 PWAs on OpenBSD.
 
-Every intent flows through a pipeline that earns the right to touch code:
+Execution flow is frictionless and touches every part of MASTER2 through a pipeline that earns the right to touch code:
 
 ```
 intake → guard → route → execute → lint → render
