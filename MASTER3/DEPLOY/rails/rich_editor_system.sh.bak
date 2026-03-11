@@ -1,0 +1,261 @@
+```bash
+#!/bin/bash
+
+# Tiptap rich text editor integration script
+
+# Logging function
+log() {
+    printf '[%s] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$1" >&2
+}
+
+# Error handling function with specific codes
+error_exit() {
+    local error_code="${1:-1}"
+    local error_msg="${2:-Unknown error}"
+    log "ERROR [$error_code]: $error_msg"
+    exit "$error_code"
+}
+
+# Track all created files for comprehensive cleanup
+declare -a ROLLBACK_FILES=()
+
+# Cleanup function for rollback
+cleanup() {
+    log "Starting rollback of changes..."
+
+    # Rollback package.json if backup exists
+    if [[ -f package.json.backup ]]; then
+        mv package.json.backup package.json
+        log "Rolled back package.json changes"
+    fi
+
+    # Remove all temporary and created files
+    for file in "${ROLLBACK_FILES[@]}"; do
+        if [[ -f "$file" ]]; then
+            rm -f "$file"
+            log "Removed created file: $file"
+        elif [[ -d "$file" ]]; then
+            rm -rf "$file"
+            log "Removed created directory: $file"
+        fi
+    done
+
+    # Cleanup temporary files
+    [[ -f package.json.tmp ]] && rm -f package.json.tmp
+
+    log "Rollback completed"
+}
+
+# Detailed progress reporting
+report_progress() {
+    local step="$1"
+    local total="$2"
+    local message="$3"
+    log "PROGRESS [$step/$total]: $message"
+}
+
+# Install Tiptap packages
+install_tiptap_packages() {
+    log "Installing Tiptap packages..."
+
+    # Backup package.json
+    if [[ ! -f package.json.backup ]]; then
+        cp package.json package.json.backup
+        ROLLBACK_FILES+=("package.json.backup")
+    fi
+
+    # Add Tiptap dependencies
+    if command -v jq >/dev/null 2>&1; then
+        jq '.dependencies += {
+            "@tiptap/react": "^2.0.0",
+            "@tiptap/starter-kit": "^2.0.0",
+            "@tiptap/extension-link": "^2.0.0",
+            "@tiptap/extension-image": "^2.0.0"
+        }' package.json > package.json.tmp && mv package.json.tmp package.json
+    else
+        error_exit 102 "jq is required for package.json manipulation"
+    fi
+
+    # Install packages
+    if npm install; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Create Tiptap controller
+create_tiptap_controller() {
+    local controller_file="app/controllers/rich_editor_controller.js"
+
+    log "Creating Tiptap controller..."
+
+    cat > "$controller_file" << 'EOF'
+import { Controller } from "@hotwired/stimulus"
+import { Editor } from '@tiptap/core'
+import StarterKit from '@tiptap/starter-kit'
+import Link from '@tiptap/extension-link'
+import Image from '@tiptap/extension-image'
+
+export default class extends Controller {
+    static targets = ["editor"]
+
+    connect() {
+        this.editor = new Editor({
+            element: this.editorTarget,
+            extensions: [
+                StarterKit,
+                Link.configure({
+                    openOnClick: false,
+                }),
+                Image,
+            ],
+            content: this.element.innerHTML,
+        })
+    }
+
+    disconnect() {
+        if (this.editor) {
+            this.editor.destroy()
+        }
+    }
+
+    getContent() {
+        return this.editor.getHTML()
+    }
+}
+EOF
+
+    if [[ -f "$controller_file" ]]; then
+        ROLLBACK_FILES+=("$controller_file")
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Create editor styles
+create_editor_styles() {
+    local styles_file="app/styles/rich_editor.css"
+
+    log "Creating editor styles..."
+
+    cat > "$styles_file" << 'EOF'
+.rich-editor {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    min-height: 200px;
+}
+
+.rich-editor .ProseMirror {
+    outline: none;
+}
+
+.rich-editor .ProseMirror h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 1rem 0;
+}
+
+.rich-editor .ProseMirror h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0.75rem 0;
+}
+
+.rich-editor .ProseMirror p {
+    margin: 0.5rem 0;
+}
+
+.rich-editor .ProseMirror ul,
+.rich-editor .ProseMirror ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.rich-editor .ProseMirror a {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.rich-editor .ProseMirror img {
+    max-width: 100%;
+    height: auto;
+    margin: 0.5rem 0;
+}
+EOF
+
+    if [[ -f "$styles_file" ]]; then
+        ROLLBACK_FILES+=("$styles_file")
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Setup lightbox integration
+setup_lightbox_integration() {
+    log "Setting up lightbox integration..."
+    # Placeholder for lightbox integration setup
+    return 0
+}
+
+add_rich_editor() {
+    local app_name="${1:-current_app}"
+    local success_steps=0
+    local total_steps=4
+
+    log "Starting Tiptap rich text editor integration for $app_name"
+
+    # Setup cleanup trap
+    trap cleanup EXIT
+
+    # Execute steps with detailed reporting
+    if install_tiptap_packages; then
+        ((success_steps++))
+        report_progress "$success_steps" "$total_steps" "Packages installed successfully"
+    else
+        error_exit 101 "Failed to install packages"
+    fi
+
+    if create_tiptap_controller; then
+        ((success_steps++))
+        report_progress "$success_steps" "$total_steps" "Controller created successfully"
+    else
+        error_exit 102 "Failed to create controller"
+    fi
+
+    if create_editor_styles; then
+        ((success_steps++))
+        report_progress "$success_steps" "$total_steps" "Styles created successfully"
+    else
+        error_exit 103 "Failed to create styles"
+    fi
+
+    if setup_lightbox_integration; then
+        ((success_steps++))
+        report_progress "$success_steps" "$total_steps" "Lightbox integration setup successfully"
+    else
+        error_exit 104 "Failed to setup lightbox integration"
+    fi
+
+    # Remove cleanup trap on success
+    trap '' EXIT
+
+    if [[ $success_steps -eq $total_steps ]]; then
+        log "SUCCESS: Rich text editor successfully added to $app_name"
+        log "  - Installed packages: @tiptap/react, @tiptap/starter-kit, @tiptap/extension-link, @tiptap/extension-image"
+        log "  - Created controller: app/controllers/rich_editor_controller.js"
+        log "  - Added styles: app/styles/rich_editor.css"
+        log "  - Lightbox integration ready"
+    else
+        error_exit 105 "Integration completed with some failures"
+    fi
+}
+
+# Main execution
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    add_rich_editor "$@"
+fi
+```

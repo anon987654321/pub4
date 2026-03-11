@@ -1,0 +1,97 @@
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+log() {
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" >&2
+}
+
+check_command() {
+  if ! command -v "$1" &> /dev/null; then
+    log "Error: $1 command not found"
+    exit 1
+  fi
+}
+
+check_rails_environment() {
+  if [[ -z "${RAILS_ENV:-}" ]]; then
+    log "Warning: RAILS_ENV not set, defaulting to development"
+    export RAILS_ENV=development
+  fi
+
+  local valid_envs=("development" "test" "production")
+  if [[ ! " ${valid_envs[*]} " =~ " ${RAILS_ENV} " ]]; then
+    log "Error: Invalid RAILS_ENV '${RAILS_ENV}'. Must be one of: ${valid_envs[*]}"
+    exit 1
+  fi
+
+  if [[ ! -f "bin/rails" ]]; then
+    log "Error: Not in a Rails application directory"
+    exit 1
+  fi
+}
+
+model_exists() {
+  local model_name="$1"
+  bin/rails runner "puts defined?(${model_name})" 2>/dev/null | grep -q "constant"
+}
+
+run_migration() {
+  log "Running database migrations..."
+  if bin/rails db:migrate; then
+    log "Database migrations completed successfully"
+  else
+    log "Error: Database migration failed"
+    exit 1
+  fi
+}
+
+setup_messenger_models() {
+  log "Setting up Messenger models: Conversation, Message, ConversationParticipant"
+
+  check_command "rails"
+  check_rails_environment
+
+  local models=(
+    "Conversation conversation_type:string name:string disappearing_messages:boolean user:references last_read_at:datetime notifications_enabled:boolean"
+    "Message conversation:references user:references content:text message_type:string encrypted:boolean expires_at:datetime read_at:datetime"
+    "ConversationParticipant conversation:references user:references last_read_at:datetime"
+  )
+
+  local migrations_created=0
+  local models_to_generate=()
+
+  for model_spec in "${models[@]}"; do
+    local model_name="${model_spec%% *}"
+    if model_exists "$model_name"; then
+      log "Skipping ${model_name} model: already exists"
+    else
+      log "Generating ${model_name} model..."
+      models_to_generate+=("$model_spec")
+      ((migrations_created++))
+    fi
+  done
+
+  if [[ ${#models_to_generate[@]} -eq 0 ]]; then
+    log "All models already exist. No migrations needed."
+    return 0
+  fi
+
+  for model_spec in "${models_to_generate[@]}"; do
+    local model_name="${model_spec%% *}"
+    if ! bin/rails generate model $model_spec; then
+      log "Error: Failed to generate ${model_name} model"
+      if [[ $migrations_created -gt 0 ]]; then
+        log "Rolling back ${migrations_created} migration(s)..."
+        bin/rails db:rollback STEP=$migrations_created
+      fi
+      exit 1
+    fi
+    log "${model_name} model generated successfully"
+  done
+
+  run_migration
+}
+
+setup_messenger_models
+```
