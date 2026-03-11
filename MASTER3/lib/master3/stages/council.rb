@@ -11,8 +11,8 @@ module Master3
       def call(ctx)
         return Result.ok(ctx) unless should_run?(ctx)
 
-        output = extract_output(ctx)
-        result = @deliberation.review(output, context: ctx[:message])
+        payload = extract_payload(ctx)
+        result = @deliberation.review(payload, context: ctx[:message])
         return result if result.err?
 
         Result.ok(ctx.merge(council_feedback: result.value!))
@@ -25,9 +25,25 @@ module Master3
 
       def should_run?(ctx)
         return true if @enabled
+        return true if dangerous_request?(ctx)
         return true if dangerous_tool?(ctx)
         return true if multi_file_diff?(ctx)
         false
+      end
+
+      def dangerous_request?(ctx)
+        msg = ctx[:message].to_s
+        return false if msg.empty?
+
+        patterns = [
+          /\brm\s+-rf\b/i,
+          /\bsudo\b/i,
+          /\b(drop|truncate)\s+table\b/i,
+          /\bchmod\s+777\b/i,
+          /\b(delete|remove)\s+all\b/i
+        ]
+
+        patterns.any? { |pattern| msg.match?(pattern) }
       end
 
       def dangerous_tool?(ctx)
@@ -39,14 +55,18 @@ module Master3
         output.scan(/^(?:---|\+\+\+)\s+[ab]\/(.+)$/).uniq.size >= 2
       end
 
-      def extract_output(ctx)
+      def extract_payload(ctx)
         out = ctx[:output]
         case out
         when Result::Ok  then out.value!.to_s
         when Result::Err then ""
-        else out.to_s
+        else
+          text = out.to_s
+          text.empty? ? ctx[:message].to_s : text
         end
       end
+
+      alias extract_output extract_payload
     end
   end
 end
