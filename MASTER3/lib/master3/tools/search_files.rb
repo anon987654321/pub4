@@ -14,7 +14,12 @@ module Master3
       end
 
       def call(pattern:, glob: "**/*", context_lines: 2)
-        re      = Regexp.new(pattern) rescue return Result.err("invalid pattern: #{pattern}", category: :validation)
+        begin
+          re = Regexp.new(pattern)
+        rescue RegexpError
+          return Result.err("invalid pattern: #{pattern}", category: :validation)
+        end
+
         paths   = Dir.glob(File.join(@root, glob)).select { |p| File.file?(p) }
         results = []
 

@@ -5,7 +5,7 @@ require "yaml"
 module Master3
   class Config
     DEFAULTS = {
-      "model"       => "claude-opus-4-6",
+      "model"       => "meta-llama/llama-3.3-70b-instruct:free",
       "budget_max"  => 10.0,
       "req_max"     => 1.0,
       "trace"       => 0,

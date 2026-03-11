@@ -7,9 +7,14 @@ module Master3
     include MonitorMixin
 
     FAILURE_THRESHOLD = 3
-    COOLDOWN_S        = 300
+    COOLDOWN_S        = 30
     RATE_WINDOW_S     = 60
     RATE_MAX          = 30
+
+    class CircuitError < StandardError
+      attr_reader :category
+      def initialize(msg, category) = (super(msg); @category = category)
+    end
 
     def initialize(budget_max:, req_max:, event_bus: nil)
       super()
@@ -24,74 +29,56 @@ module Master3
     end
 
     def call(cost_estimate, &blk)
-      check_rate!
-      check_budget!(cost_estimate)
-      check_circuit!
+      check_rate
+      check_budget(cost_estimate)
+      check_circuit
       result = blk.call
-      on_success(result)
+      on_success
       result
-    rescue Result::Err => e
-      on_failure(e)
-      e
+    rescue CircuitError => e
+      on_failure
+      Result.err(e.message, category: e.category)
+    rescue => e
+      on_failure
+      Result.err("circuit: #{e.message}", category: :unknown)
     end
 
-    def record_cost(amount)
-      synchronize { @session_total += amount }
-    end
-
-    def session_total = synchronize { @session_total }
+    def record_cost(amount)  = synchronize { @session_total += amount }
+    def session_total        = synchronize { @session_total }
 
     private
 
-    def check_rate!
+    def check_rate
       synchronize do
-        now  = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @req_times.reject! { |t| now - t > RATE_WINDOW_S }
-        if @req_times.size >= RATE_MAX
-          raise Result::Err.new("rate limit: #{RATE_MAX} req/min exceeded", :infrastructure)
-        end
+        raise CircuitError.new("rate limit: #{RATE_MAX} req/min exceeded", :infrastructure) if @req_times.size >= RATE_MAX
         @req_times << now
       end
     end
 
-    def check_budget!(estimate)
+    def check_budget(estimate)
       return if @budget_max <= 0
       synchronize do
-        if @session_total + estimate > @budget_max
-          raise Result::Err.new("budget: $#{@session_total + estimate} would exceed $#{@budget_max}", :budget)
-        end
+        raise CircuitError.new("budget: $#{(@session_total + estimate).round(4)} would exceed $#{@budget_max}", :budget) if @session_total + estimate > @budget_max
       end
     end
 
-    def check_circuit!
+    def check_circuit
       synchronize do
-        case @state
-        when :open
+        return if @state == :closed
+        if @state == :open
           elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @opened_at
           if elapsed >= COOLDOWN_S
             @state = :half_open
           else
-            raise Result::Err.new("circuit open: retry in #{(COOLDOWN_S - elapsed).ceil}s", :infrastructure)
+            raise CircuitError.new("circuit open: retry in #{(COOLDOWN_S - elapsed).ceil}s", :infrastructure)
           end
         end
       end
     end
 
-    def on_success(result)
-      synchronize do
-        @failures = 0
-        @state    = :closed if @state == :half_open
-      end
-    end
-
-    def on_failure(err)
-      synchronize do
-        @failures += 1
-        if @failures >= FAILURE_THRESHOLD
-          @state     = :open
-          @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        end
-      end
-    end
+    def on_success = synchronize { @failures = 0 ; @state = :closed if @state == :half_open }
+    def on_failure = synchronize { @failures += 1 ; @state = :open ; @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) if @failures >= FAILURE_THRESHOLD }
   end
 end

@@ -16,63 +16,53 @@ module Master3
 
     def chat(message, stream: true, &blk)
       @session.add_message(role: :user, content: message)
-      @bus&.publish("llm:request", model: @config.model, tokens: message.bytesize / 4)
+      @bus&.publish("llm:request", model:, tokens: message.bytesize / 4)
 
-      response = @circuit_breaker.call(estimate_cost(message)) {
-        @cache.fetch(message, @config.model) {
-          do_chat(message, stream:, &blk)
-        }
+      cb = @circuit_breaker.call(estimate_cost(message)) {
+        @cache.fetch(message, model) { do_chat(message, stream:, &blk) }
       }
 
-      @session.add_message(role: :assistant, content: response.to_s)
+      return cb if cb.respond_to?(:err?) && cb.err?
+
+      response = cb.to_s
+      @session.add_message(role: :assistant, content: response)
       Result.ok(response)
-    rescue Result::Err => e
-      Result.err(e.message, category: e.category)
     rescue => e
       Result.err("agent: #{e.message}", category: :unknown)
     end
 
     def ask(prompt, context: nil)
-      msgs = context ? context + [{ role: "user", content: prompt }] : [{ role: "user", content: prompt }]
+      msgs = Array(context) + [{ role: "user", content: prompt }]
       chat_direct(msgs)
     end
 
-    def call(ctx)
-      message = ctx[:message].to_s
-      chat(message)
-    end
-
-    def model = @config.model
+    def call(ctx) = chat(ctx[:message].to_s)
+    def model     = @config.model
 
     private
 
     def configure_ruby_llm
       RubyLLM.configure do |c|
-        c.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
-        c.openai_api_key    = ENV["OPENAI_API_KEY"]
-        c.gemini_api_key    = ENV["GEMINI_API_KEY"]
+        c.anthropic_api_key    = ENV["ANTHROPIC_API_KEY"]    if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
+        c.openai_api_key       = ENV["OPENAI_API_KEY"]       if ENV["OPENAI_API_KEY"].to_s.length > 10
+        c.gemini_api_key       = ENV["GEMINI_API_KEY"]       if ENV["GEMINI_API_KEY"].to_s.length > 10
+        c.openrouter_api_key   = ENV["OPENROUTER_API_KEY"]   if ENV["OPENROUTER_API_KEY"].to_s.length > 10
       end
     end
 
     def do_chat(message, stream:, &blk)
-      chat = RubyLLM.chat(model: @config.model)
-      @tools.each { |t| chat.with_tool(t) }
-
-      if stream && blk
-        chat.ask(message) { |chunk| blk.call(chunk) }
-      else
-        chat.ask(message)
-      end
+      chat = RubyLLM.chat(model:)
+      # tools used by Execute stage directly
+      msg = stream && blk ? chat.ask(message) { |chunk| blk.call(chunk) } : chat.ask(message)
+      msg.respond_to?(:content) ? msg.content.to_s : msg.to_s
     end
 
     def chat_direct(messages)
-      chat = RubyLLM.chat(model: @config.model)
-      messages.each { |m| chat.add_message(role: m[:role], content: m[:content]) }
+      chat = RubyLLM.chat(model:)
+      messages.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }
       chat.complete
     end
 
-    def estimate_cost(message)
-      (message.bytesize / 4) * 0.000_015
-    end
+    def estimate_cost(prompt) = (prompt.bytesize / 4) * 0.000_015
   end
 end

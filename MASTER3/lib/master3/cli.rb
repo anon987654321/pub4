@@ -16,7 +16,7 @@ module Master3
       @undo      = container[:undo]
       @config    = container[:config]
       @pipeline  = container[:pipeline]
-      @reader    = TTY::Reader.new(history_file: history_path)
+      @reader    = TTY::Reader.new(track_history: true)
       @running   = false
       @ctrl_c_ts = 0
     end
