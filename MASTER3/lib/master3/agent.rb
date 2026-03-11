@@ -95,6 +95,12 @@ module Master3
     end
 
     def do_chat(message, selected_model, context:, stream:, &blk)
+      if selected_model.start_with?("ferrum:webchat:")
+        alias_name = selected_model.split(":", 3).last
+        r = Bridges::FerrumWebChat.new.ask(model_alias: alias_name, prompt: message)
+        return r.respond_to?(:value!) ? r.value! : r.to_s
+      end
+
       chat = RubyLLM.chat(model: selected_model)
       chat.with_instructions(system_prompt) if system_prompt
       context.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }

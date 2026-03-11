@@ -5,10 +5,11 @@ require "yaml"
 module Master3
   module Routing
     class ModelRouter
-      def initialize(config:, root: Master3::ROOT)
+      def initialize(config:, root: Master3::ROOT, continuity_index: nil)
         @config = config
         @root = root
         @rules = load_rules
+        @continuity_index = continuity_index || ContinuityIndex.new(root: @root)
       end
 
       def primary(task_type: :exploration)
@@ -27,7 +28,8 @@ module Master3
 
         preferred = primary(task_type:)
         all = @rules.fetch("models", {}).values.flatten.map { |m| m["id"] }.compact
-        ([preferred] + all + [@config.model]).uniq
+        continuity = @continuity_index.fallback_models
+        ([preferred] + all + continuity + [@config.model]).uniq
       end
 
       private
