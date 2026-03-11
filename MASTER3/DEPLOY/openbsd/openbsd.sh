@@ -1,4 +1,3 @@
-```ksh
 #!/bin/ksh
 # Configures OpenBSD 7.8 for NSD & DNSSEC, Ruby on Rails, PF firewall, and minimal OpenSMTPD.
 
@@ -164,6 +163,11 @@ configure_rails() {
 
 # Main execution
 main() {
+    if is_step_completed "setup_completed"; then
+        log INFO "Setup already completed. Nothing to do."
+        return 0
+    fi
+
     # Handle command line arguments
     if [ $# -gt 0 ]; then
         handle_resume "$1" || true
@@ -181,8 +185,8 @@ main() {
     configure_smtpd
     configure_rails
 
+    mark_step_completed "setup_completed"
     log INFO "Configuration completed successfully"
 }
 
 main "$@"
-```
