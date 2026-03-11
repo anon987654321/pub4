@@ -38,6 +38,9 @@ module Master3
     rescue CircuitError => e
       on_failure
       Result.err(e.message, category: e.category)
+    rescue RubyLLM::RateLimitError => e
+      # Rate limits don't indicate upstream failure — don't trip the circuit
+      Result.err("rate_limit: #{e.message}", category: :infrastructure)
     rescue => e
       on_failure
       Result.err("circuit: #{e.message}", category: :unknown)
