@@ -1,0 +1,106 @@
+```zsh
+#!/usr/bin/env zsh
+
+# Brgen Marketplace setup: Multi-vendor marketplace with Solidus, unprivileged user
+# Framework v37.3.2 compliant with enhanced e-commerce functionality
+
+APP_NAME="brgen_marketplace"
+BASE_DIR="${HOME}/rails"
+APP_PORT=$(( 10000 + (RANDOM % 10000) ))
+SECRET_KEY_BASE=$(ruby -e "require 'securerandom'; puts SecureRandom.hex(64)")
+PORT_FILE="${BASE_DIR}/${APP_NAME}/.app_port"
+
+# Define helper functions
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+log() {
+  printf "[%s] %s\n" "$(date +'%Y-%m-%d %H:%M:%S')" "$1"
+}
+
+error_exit() {
+  log "ERROR: $1 at ${funcstack[2]:-main}:${BASH_LINENO[0]:-0}"
+  exit 1
+}
+
+install_gem() {
+  local gem_name="$1"
+  local gem_version="${2:-}"
+  local gem_spec="${gem_name}${gem_version:+ (${gem_version})}"
+
+  if bundle list | grep -q "\b${gem_name}\b"; then
+    log "Gem already installed: $gem_spec"
+    return 0
+  fi
+
+  log "Installing gem: $gem_spec"
+
+  if [[ -n "$gem_version" ]]; then
+    if ! bundle add "$gem_name" --version "$gem_version" --without production; then
+      error_exit "Failed to install gem: $gem_spec"
+    fi
+  else
+    if ! bundle add "$gem_name" --without production; then
+      error_exit "Failed to install gem: $gem_spec"
+    fi
+  fi
+
+  log "Successfully installed gem: $gem_spec"
+}
+
+check_port_available() {
+  local port="$1"
+  local max_attempts=50
+  local attempts=0
+
+  while [[ $attempts -lt $max_attempts ]]; do
+    # Try multiple methods to check port availability
+    if command_exists lsof; then
+      if ! lsof -i :"$port" >/dev/null 2>&1; then
+        return 0
+      fi
+    elif command_exists ss; then
+      if ! ss -tuln 2>/dev/null | grep -q ":${port} "; then
+        return 0
+      fi
+    elif command_exists netstat; then
+      if ! netstat -tuln 2>/dev/null | grep -q ":${port} "; then
+        return 0
+      fi
+    else
+      # Direct socket binding check as fallback
+      if zmodload zsh/net/tcp 2>/dev/null && ztcp -l $port 2>/dev/null; then
+        ztcp -c $REPLY 2>/dev/null
+        return 0
+      fi
+    fi
+
+    ((attempts++))
+
+    if [[ $attempts -eq $max_attempts ]]; then
+      log "WARNING: Port $port appears to be in use, trying alternative port"
+      return 1
+    fi
+
+    # Try next port
+    port=$((port + 1))
+  done
+
+  return 1
+}
+
+# Ensure we get an available port
+while ! check_port_available "$APP_PORT"; do
+  APP_PORT=$((APP_PORT + 1))
+done
+
+setup_database_user() {
+  if ! psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${APP_NAME}'" | grep -q 1; then
+    createuser -d "${APP_NAME}" || error_exit "Failed to create database user ${APP_NAME}"
+    log "Created database user: ${APP_NAME}"
+  else
+    log "Database user already exists: ${APP_NAME}"
+  fi
+}
+```
