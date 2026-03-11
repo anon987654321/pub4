@@ -10,6 +10,29 @@ module MASTER
   module PressurePass
     module_function
 
+    CRIT_SESSION_PANEL = [
+      {
+        role: "adversarial architect",
+        ask: "Where does the structure collapse under scale, constraints, or maintenance debt?",
+      },
+      {
+        role: "adversarial web designer",
+        ask: "Where does interaction clarity fail for real users, especially under stress?",
+      },
+      {
+        role: "adversarial electronic musician",
+        ask: "Where does rhythm, variation, and emotional pacing become repetitive or dead?",
+      },
+      {
+        role: "adversarial indie filmmaker",
+        ask: "Where does the narrative lose coherence, tension, or visual intent?",
+      },
+      {
+        role: "adversarial slam poet",
+        ask: "Where does language lose impact, authenticity, or memorable cadence?",
+      },
+    ].freeze
+
     def enabled?
       val = ENV.fetch("MASTER_PRESSURE_PASS", "false").to_s.strip.downcase
       !%w[0 false off no].include?(val)
@@ -32,6 +55,8 @@ module MASTER
     end
 
     def prompt(user_input, candidate_text)
+      panel = CRIT_SESSION_PANEL.map { |p| "- #{p[:role]}: #{p[:ask]}" }.join("\n")
+
       <<~PROMPT
         You are an adversarial reviewer. Treat this as hostile scrutiny.
         The goal is stronger truthfulness and utility, not aggression for its own sake.
@@ -42,13 +67,18 @@ module MASTER
         Candidate answer:
         #{candidate_text.to_s[0, 6000]}
 
+        Crit session framework (run all lenses):
+        #{panel}
+
         Perform serial pressure testing:
         1) Strongest counterargument against the candidate answer.
         2) Concrete failure modes or risks.
         3) Produce at least 2 improved alternative answers.
-        4) Choose the best one and explain why.
+        4) Cherry-pick the strongest parts across alternatives into one final answer.
+        5) Explain why the cherry-picked final answer wins.
 
         Constraints:
+        - Ask adversarial questions before proposing alternatives.
         - Keep alternatives concise and actionable.
         - No markdown fences.
         - selected_answer must be the final answer to return to the user.
