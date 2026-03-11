@@ -1,0 +1,5 @@
+system: |
+  Use direct mode.
+  Answer concisely and execute without explicit reasoning scaffolding.
+template: |
+  %{message}

@@ -28,7 +28,9 @@ module Master3
     metrics  = Metrics.new(root:, event_bus: bus)
 
     tools    = build_tools(root:, undo:, governor:, bus:)
-    agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus)
+    router   = Routing::ModelRouter.new(config:)
+    modes    = Reasoning::Modes.new
+    agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus, model_router: router, reasoning_modes: modes)
 
     guard      = Security::InjectionGuard.new
     scanner    = Scan::Scanner.new(event_bus: bus)
@@ -46,7 +48,7 @@ module Master3
       Stages::Guard.new(governor:, injection_guard: guard),
       Stages::Execute.new,
       council_stage,
-      Stages::Lint.new(scanner:),
+      Stages::Lint.new(scanner:, config:),
       Stages::Strunk.new,
       Stages::Render.new(renderer:)
     ]
@@ -93,6 +95,41 @@ module Master3
       "cost"    => ->(ctx) { "$#{"%.4f" % session.cost}" },
       "config"  => ->(ctx) { config.data.inspect },
       "model"   => ->(ctx) { "model: #{agent.model}" },
+      "mode"    => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        if Reasoning::Modes::SUPPORTED.include?(arg)
+          config["reasoning_mode"] = arg
+          config.save!
+          "mode: #{arg}"
+        else
+          "mode: #{config.reasoning_mode} (supported: #{Reasoning::Modes::SUPPORTED.join(", ")})"
+        end
+      },
+      "task"    => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        if arg.empty?
+          "task_type: #{config.task_type}"
+        else
+          config["task_type"] = arg
+          config.save!
+          "task_type: #{arg}"
+        end
+      },
+      "autotest" => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        case arg
+        when "on"
+          config["auto_testing"] = true
+          config.save!
+          "autotest: on"
+        when "off"
+          config["auto_testing"] = false
+          config.save!
+          "autotest: off"
+        else
+          "autotest: #{config.auto_testing? ? "on" : "off"}"
+        end
+      },
       "council" => ->(ctx) {
         case ctx[:args].to_s.strip
         when "on"  then council_stage.enable!  ; "council: enabled"
@@ -101,7 +138,7 @@ module Master3
         end
       },
       "help"    => ->(ctx) {
-        cmds = %w[clear save tokens undo dmesg cost config model council help exit]
+        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council help exit]
         cmds.map { "/#{_1}" }.join("  ")
       }
     }
