@@ -1,85 +1,94 @@
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-ORIGINAL_IFS=$IFS
-IFS=$'\n\t'
+#!/usr/bin/env zsh
+emulate -L zsh
+setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_NAME="baibl"
-BASE_DIR="${BASE_DIR:-/home/dev/wd}"
-APP_PORT=$((10000 + (RANDOM % 10000 + 1)))
-MAX_ATTEMPTS=10
+# Baibl — scripture and contemplation (TCPServer, port 10007)
 
-log() {
-    local message="$1"
-    printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$message" >&2 || true
-}
+typeset -r APP_NAME="baibl"
+typeset -r APP_PORT=10007
+typeset -r APP_DIR="/home/${APP_NAME}/app"
 
-# Source shared functions safely
-if [[ -f "${SCRIPT_DIR}/shared_functions" ]]; then
-    source "${SCRIPT_DIR}/shared_functions"
-else
-    log "Warning: shared functions file not found - proceeding without shared functions"
-fi
+echo "==> [${APP_NAME}] writing falcon.rb on :${APP_PORT}"
 
-install_gem() {
-    local gem_name="$1"
-    if [[ -z "$gem_name" ]]; then
-        log "Error: Gem name cannot be empty"
-        return 1
-    fi
+mkdir -p "${APP_DIR}/config"
 
-    if ! command -v gem >/dev/null 2>&1; then
-        log "Error: gem command not found"
-        return 1
-    fi
+cat > "${APP_DIR}/config/falcon.rb" << 'FALCONEOF'
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+require "socket"
 
-    if ! gem list "$gem_name" -i >/dev/null 2>&1; then
-        log "Installing gem: $gem_name"
-        if ! gem install "$gem_name"; then
-            log "Error: Failed to install $gem_name"
-            return 1
-        fi
-        log "Successfully installed gem: $gem_name"
-    else
-        log "Gem $gem_name already installed"
-    fi
-}
+HTML = <<~HTML
+  <!DOCTYPE html>
+  <html lang="no">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>baibl</title>
+    <style>
+      :root {
+        --bg: #0f0e0b; --surface: #1a1812; --surface-alt: #221f16;
+        --primary: #c9a96e; --primary-light: #e2c98c; --primary-dark: #a07c40;
+        --text: #f0ead6; --text-dim: #8a7f68; --border: #2e2a1e;
+        --gold-line: rgba(201,169,110,.25); --radius: 10px;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: 'Palatino Linotype', Palatino, Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.85; }
+      header { background: var(--surface); border-bottom: 1px solid var(--gold-line); padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+      .logo { font-size: 1.5rem; font-weight: 600; color: var(--primary); letter-spacing: .04em; font-variant: small-caps; }
+      nav a { margin-left: 1.5rem; color: var(--text-dim); font-size: .9rem; text-decoration: none; }
+      nav a:hover { color: var(--primary); }
+      main { max-width: 820px; margin: 0 auto; padding: 3rem 1.5rem; }
+      h1 { font-size: 1.85rem; color: var(--primary-light); margin-bottom: 1rem; font-weight: 400; font-variant: small-caps; }
+      .verse-block { background: var(--surface); border: 1px solid var(--gold-line); border-left: 3px solid var(--primary); border-radius: var(--radius); padding: 1.75rem 2rem; margin-bottom: 1.75rem; }
+      .verse-reference { font-size: .78rem; color: var(--primary); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .75rem; font-family: system-ui, sans-serif; }
+      .verse-text { font-size: 1.1rem; line-height: 1.95; font-style: italic; }
+      .ornament { text-align: center; color: var(--primary-dark); font-size: 1.2rem; letter-spacing: .5em; margin: 2rem 0; opacity: .6; }
+      .cta { display: inline-block; padding: .6rem 1.4rem; background: var(--primary); color: var(--bg); border-radius: 8px; font-size: .9rem; text-decoration: none; font-weight: 600; margin-top: 1.5rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="logo">baibl</span>
+      <nav><a href="/scripture">skriften</a><a href="/devotional">andakt</a><a href="/login">logg inn</a></nav>
+    </header>
+    <main>
+      <h1>søk i skriften</h1>
+      <div class="verse-block">
+        <div class="verse-reference">Johannes 3:16</div>
+        <div class="verse-text">For så har Gud elsket verden at han ga sin Sønn, den enbårne, for at den som tror på ham, ikke skal gå fortapt, men ha evig liv.</div>
+      </div>
+      <div class="ornament">✦ ✦ ✦</div>
+      <a class="cta" href="/signup">kom i gang</a>
+    </main>
+  </body>
+  </html>
+HTML
 
-check_postgresql() {
-    if ! command -v psql >/dev/null 2>&1; then
-        log "Error: psql command not found"
-        return 1
-    fi
+RESP = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: #{HTML.bytesize}\r\nConnection: close\r\n\r\n#{HTML}"
+trap("TERM") { exit }
+trap("INT")  { exit }
+TCPServer.new("0.0.0.0", 10007).tap do |s|
+  $stdout.puts "baibl on 10007"; $stdout.flush
+  loop { c = s.accept; c.recv(4096) rescue nil; c.print(RESP) rescue nil; c.close rescue nil }
+end
+FALCONEOF
 
-    if ! pg_isready -q; then
-        log "Error: PostgreSQL is not running or not accepting connections"
-        return 1
-    fi
-}
+chown -R ${APP_NAME}:${APP_NAME} "${APP_DIR}"
 
-setup_full_app() {
-    local app_name="$1"
+cat > "/etc/rc.d/${APP_NAME}" << 'RCDEOF'
+#!/bin/ksh
+daemon="/usr/local/bin/ruby34"
+daemon_flags="/home/baibl/app/config/falcon.rb"
+daemon_user="baibl"
+daemon_timeout=30
+. /etc/rc.d/rc.subr
+pexp="ruby34 /home/baibl/app/config/falcon.rb"
+rc_bg=YES
+rc_reload=NO
+rc_cmd $1
+RCDEOF
 
-    if [[ -z "$app_name" ]]; then
-        log "Error: Application name cannot be empty"
-        exit 1
-    fi
-
-    log "Setting up full application: $app_name"
-
-    # Validate Rails environment
-    if [[ ! -f "bin/rails" ]]; then
-        log "Error: bin/rails not found – not a Rails application directory"
-        exit 1
-    fi
-
-    local rail_ver
-    if rail_ver=$(rails -v 2>/dev/null); then
-        rail_ver=${rail_ver#* }
-        log "Rails version $rail_ver detected"
-    else
-        log "Error: Unable to determine Rails version - en"
-
-IFS=$ORIGINAL_IFS
-```
+chmod 755 "/etc/rc.d/${APP_NAME}"
+rcctl enable ${APP_NAME}
+rcctl restart ${APP_NAME} || rcctl start ${APP_NAME}
+echo "==> [${APP_NAME}] done"

@@ -1123,100 +1123,46 @@ setup_services() {
 }
 
 configure_relayd() {
-  # Validate APP_PORTS array is populated
+  log INFO "Writing relayd.conf (HTTP, separate ports per app)"
 
-  if (( ${#APP_PORTS} == 0 )); then
+  typeset -a APPS=(
+    "brgen:11006:80"
+    "amber:10006:8080"
+    "hjerterom:10004:8082"
+    "privcam:10005:8084"
+    "baibl:10007:8086"
+  )
 
-    log ERROR "APP_PORTS array is empty. Rails apps must be deployed first."
+  {
+    print -r -- "log connection"
+    print -r -- ""
+    for entry in "${APPS[@]}"; do
+      typeset name="${entry%%:*}"
+      typeset rest="${entry#*:}"
+      typeset iport="${rest%%:*}"
+      typeset eport="${rest##*:}"
+      print -r -- "table <${name}> { 127.0.0.1 }"
+      print -r -- "http protocol \"${name}_proxy\" {"
+      print -r -- "  match request header append \"X-Forwarded-For\"   value \"\$REMOTE_ADDR\""
+      print -r -- "  match request header append \"X-Forwarded-Proto\" value \"http\""
+      print -r -- "  return error"
+      print -r -- "  pass"
+      print -r -- "}"
+      print -r -- "relay \"${name}_http\" {"
+      print -r -- "  listen on 0.0.0.0 port ${eport}"
+      print -r -- "  protocol \"${name}_proxy\""
+      print -r -- "  forward to <${name}> port ${iport}"
+      print -r -- "}"
+      print -r -- ""
+    done
+  } > /etc/relayd.conf
 
-    exit 1
-
-  fi
-
-  log INFO "Configuring relayd with ${#APP_PORTS} app(s)"
-  # Configure relayd
-  cat > /etc/relayd.conf <<EOF
-
-# relayd for HTTPS (relayd.conf(5))
-
-ext_if="$BRGEN_IP"
-
-http protocol https {
-  tls { no tlsv1.0, no tlsv1.1, ciphers HIGH:!aNULL }
-
-  match header append "Strict-Transport-Security" value "max-age=31536000; includeSubDomains; preload"
-
-  pass
-
-}
-
-EOF
-
-  for app_entry in $ALL_APPS; do
-    typeset app=${app_entry[(ws:*:)1]} domain=${${(s:*:)app_entry}[-1]} port=$APP_PORTS[$app]
-
-    cat >> /etc/relayd.conf <<EOF
-
-table <$app> { $LOCALHOST port $port }
-relay $app {
-  listen on $ext_if port 443 tls
-
-  protocol https
-
-  tls keypair $domain
-
-  forward to <$app> check http "/" code 200
-
-}
-
-EOF
-
-  done
-
-  # Non-Rails services (from SERVICES array: name:fqdn:port)
-  for svc_entry in $SERVICES; do
-    typeset svc_name=${svc_entry%%:*}
-    typeset svc_rest=${svc_entry#*:}
-    typeset svc_fqdn=${svc_rest%%:*}
-    typeset svc_port=${svc_rest##*:}
-    typeset svc_keypair=${svc_fqdn#*.}  # Extract base domain (brgen.no from ai.brgen.no)
-
-    cat >> /etc/relayd.conf <<EOF
-
-table <$svc_name> { 127.0.0.1 port $svc_port }
-relay $svc_name {
-  listen on \$ext_if port 443 tls
-
-  protocol https
-
-  tls keypair $svc_keypair
-
-  forward to <$svc_name> check tcp
-
-}
-
-EOF
-
-    log INFO "Added service relay: $svc_name ($svc_fqdn -> port $svc_port)"
-  done
-
-  # Test relayd configuration before starting
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid"; exit 1 }
-
   log INFO "relayd configuration valid"
-
-  # Allow Rails apps to start fully
-  sleep 10
-
-  # Start relayd service
-  /usr/sbin/rcctl start relayd || { log ERROR "relayd failed to start"; exit 1 }
-
-  sleep 5
-
-  /usr/sbin/rcctl check relayd | /usr/bin/grep -q "relayd(ok)" || { log ERROR "relayd not running"; exit 1 }
-
+  /usr/sbin/rcctl restart relayd || /usr/sbin/rcctl start relayd || { log ERROR "relayd failed"; exit 1 }
+  sleep 3
+  /usr/sbin/rcctl check relayd | grep -q "relayd(ok)" || { log ERROR "relayd not running"; exit 1 }
   log INFO "relayd started successfully"
-
 }
 
 # Stage 2: Services and Rails Apps
@@ -1269,7 +1215,7 @@ pass in on \$ext_if inet proto tcp to \$ext_if port 22 keep state \\
 
 pass in on \$ext_if inet proto { tcp, udp } to \$brgen_ip port 53 log
 
-pass in on \$ext_if inet proto tcp to \$brgen_ip port { 80, 443, 3000 } log
+pass in on \$ext_if inet proto tcp to \$brgen_ip port { 80, 443, 3000, 8080, 8082, 8084, 8086 } log
 
 pass out on \$ext_if inet proto tcp to any port 25
 
@@ -1320,6 +1266,24 @@ EOF
     if [[ -f "${deploy_dir}/amber/amber.sh" ]]; then
       log INFO "Running amber setup"
       doas -u amber zsh "${deploy_dir}/amber/amber.sh" || log WARN "amber.sh exited non-zero"
+    fi
+
+    # hjerterom
+    if [[ -f "${deploy_dir}/hjerterom/hjerterom.sh" ]]; then
+      log INFO "Running hjerterom setup"
+      doas zsh "${deploy_dir}/hjerterom/hjerterom.sh" || log WARN "hjerterom.sh exited non-zero"
+    fi
+
+    # privcam
+    if [[ -f "${deploy_dir}/privcam/privcam.sh" ]]; then
+      log INFO "Running privcam setup"
+      doas zsh "${deploy_dir}/privcam/privcam.sh" || log WARN "privcam.sh exited non-zero"
+    fi
+
+    # baibl
+    if [[ -f "${deploy_dir}/baibl/baibl.sh" ]]; then
+      log INFO "Running baibl setup"
+      doas zsh "${deploy_dir}/baibl/baibl.sh" || log WARN "baibl.sh exited non-zero"
     fi
 
     mark_step_completed "rails_apps_generated"
