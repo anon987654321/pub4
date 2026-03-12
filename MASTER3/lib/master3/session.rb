@@ -78,7 +78,7 @@ module Master3
     def rotate_costs!
       lines = File.readlines(@costs_path) rescue []
       # Keep the most recent half of the lines
-      keep  = lines.last(lines.size / 2)
+      keep  = lines.last([lines.size / 2, 1].max)
       File.write(@costs_path, keep.join)
     end
   end

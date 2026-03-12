@@ -5,7 +5,7 @@ require "tty-prompt"
 
 module Master3
   class CLI
-    COMMANDS = %w[clear save tokens undo diff tree model mode task autotest dmesg cost config tts help exit].freeze
+    COMMANDS = %w[clear save tokens undo model mode task autotest council autoloop swarm dmesg cost config tts help exit].freeze
 
     attr_reader :container
 
@@ -84,7 +84,7 @@ module Master3
       when "clear"  then print "\e[2J\e[H"; puts @renderer.splash(@agent.model)
       when "exit"   then @session.save!; @running = false
       when "model"  then puts @renderer.render(@agent.model.to_s, mode: :dim)
-      when "tokens" then puts @renderer.render("session tokens: #{@session.token_count rescue "n/a"}", mode: :dim)
+      when "tokens" then puts @renderer.render("session tokens: #{@session.token_est rescue "n/a"}", mode: :dim)
       when "save"   then @session.save!; puts @renderer.render("saved", mode: :success)
       when "dmesg"  then puts @logging.dmesg(50).split("\n").map { |l| @renderer.format_dmesg(l) }.join("\n")
       when "tts"
