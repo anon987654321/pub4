@@ -16,7 +16,7 @@ daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_timeout="60"
 . /etc/rc.d/rc.subr
-pexp="falcon serve.*11006"
+pexp="ruby.*brgen.*falcon"
 rc_bg=YES
 rc_reload=NO
 rc_cmd $1
