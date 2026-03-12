@@ -3,135 +3,116 @@ emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
 typeset -r APP_DIR="/home/brgen/app"
-typeset -r MAX_COMMENT_LENGTH=10000
-typeset -r MAX_KARMA_SEED=1000
-typeset -r HOT_DECAY_EXPONENT=1.5
-
 echo "==> [models] Core models + concerns"
 cd "$APP_DIR"
 
-echo "Generating models"
-typeset -a models
-models=(
-  "Community name:string description:text subdomain:string:uniq slug:string:uniq"
-  "Post title:string content:text user:references community:references karma:integer:default[0] anonymous:boolean:default[false]"
-  "Comment content:text user:references commentable:references{polymorphic}:index parent_id:integer"
-  "Reaction kind:string user:references post:references"
-  "Stream content_type:string url:string user:references post:references duration:integer"
-)
-
-for model_spec in $models; do
-  bin/rails generate model ${=model_spec}
-done
-
-bin/rails generate migration AddFieldsToUsers username:string karma:integer:default=0 location:point
-
-cat >> app/models/user.rb << 'RUBY'
-
-# Voting
-acts_as_voter
-
-# Associations
-has_many :posts, dependent: :destroy
-has_many :comments, dependent: :destroy
-has_many :communities
-
-# Validations
-validates :username, presence: true, uniqueness: true
-
-def update_karma_from_votes
-  total_karma = posts.sum { |p| p.cached_votes_score } +
-                comments.sum { |c| c.cached_votes_score }
-  update_column(:karma, total_karma)
+# Current
+cat > app/models/current.rb << 'RUBY'
+class Current < ActiveSupport::CurrentAttributes
+  attribute :session
+  attribute :user
 end
-
 RUBY
 
-bin/rails db:migrate
-
-echo "Creating model concerns"
+# Votable concern
 mkdir -p app/models/concerns
-cat > app/models/concerns/commentable.rb << 'RUBY'
-module Commentable
+cat > app/models/concerns/votable.rb << 'RUBY'
+module Votable
   extend ActiveSupport::Concern
 
   included do
-    has_many :comments, as: :commentable, dependent: :destroy
+    has_many :votes, as: :votable, dependent: :destroy
   end
 
-  def comment_count
-    comments.count
-  end
+  def score         = votes.sum(:value)
+  def upvotes       = votes.where(value: 1).count
+  def downvotes     = votes.where(value: -1).count
+  def voted_by?(u)  = u && votes.find_by(user: u)&.value
+  def upvoted_by?(u)   = voted_by?(u) == 1
+  def downvoted_by?(u) = voted_by?(u) == -1
 end
 RUBY
 
-cat > app/models/community.rb << 'RUBY'
-class Community < ApplicationRecord
-  has_many :posts, dependent: :destroy
-  has_many :users
+# Vote
+cat > app/models/vote.rb << 'RUBY'
+class Vote < ApplicationRecord
+  belongs_to :user
+  belongs_to :votable, polymorphic: true
 
-  validates :name, :subdomain, :slug, presence: true
-  validates :subdomain, :slug, uniqueness: true
+  validates :value, inclusion: { in: [-1, 1] }
+  validates :user_id, uniqueness: { scope: [:votable_type, :votable_id] }
 
-  before_validation :generate_slug
+  after_save    :update_author_karma
+  after_destroy :update_author_karma
 
   private
 
-  def generate_slug
-    self.slug ||= name.parameterize if name.present?
+  def update_author_karma
+    votable.user.update_karma! if votable.respond_to?(:user)
   end
 end
 RUBY
 
+# Post
 cat > app/models/post.rb << 'RUBY'
 class Post < ApplicationRecord
   include Votable
-  include Commentable
-
-  acts_as_votable
-  acts_as_tenant :community
 
   belongs_to :user
-  belongs_to :community
+  belongs_to :community, optional: true
 
-  has_many :reactions, dependent: :destroy
-  has_many :streams, dependent: :destroy
-  has_many_attached :photos
+  has_many :comments, as: :commentable, dependent: :destroy
+  has_many :votes, as: :votable, dependent: :destroy
+  has_many :taggings, dependent: :destroy
+  has_many :hashtags, through: :taggings
+  has_many :mentions, dependent: :destroy
 
-  validates :content, presence: true
-  validates :title, presence: true, length: { maximum: 300 }
+  validates :title,   presence: true, length: { maximum: 300 }
+  validates :content, length: { maximum: 40_000 }
 
-  scope :hot, -> {
-    left_joins(:votes)
-      .group(:id)
-      .select('posts.*, SUM(COALESCE(votes.value, 0)) as vote_sum,
-               EXTRACT(EPOCH FROM (NOW() - posts.created_at)) / 3600 as hours_old')
-      .order(Arel.sql("vote_sum / POWER(hours_old + 2, 1.5) DESC"))
-  }
+  VOTE_SQL = Arel.sql("SUM(COALESCE(votes.value,0)) DESC, posts.created_at DESC")
+  TOP_SQL  = Arel.sql("SUM(COALESCE(votes.value,0)) DESC")
 
-  scope :top,       -> { left_joins(:votes).group(:id).order("SUM(COALESCE(votes.value, 0)) DESC") }
-  scope :new_first, -> { order(created_at: :desc) }
+  scope :hot,   -> { left_joins(:votes).group(:id).order(VOTE_SQL) }
+  scope :fresh, -> { order(created_at: :desc) }
+  scope :top,   -> { left_joins(:votes).group(:id).order(TOP_SQL) }
 
-  def update_karma
-    update_column(:karma, get_upvotes.size - get_downvotes.size)
-  end
+  def comment_count = comments.count
+  def author_name   = user&.username.presence || "anon"
 end
 RUBY
 
+# Community
+cat > app/models/community.rb << 'RUBY'
+class Community < ApplicationRecord
+  belongs_to :user, optional: true
+
+  has_many :posts, dependent: :destroy
+
+  validates :name,        presence: true, uniqueness: true, length: { maximum: 100 }
+  validates :description, length: { maximum: 500 }
+
+  POPULAR_SQL = Arel.sql("COUNT(posts.id) DESC")
+  scope :popular, -> { left_joins(:posts).group(:id).order(POPULAR_SQL) }
+end
+RUBY
+
+# Comment
 cat > app/models/comment.rb << 'RUBY'
 class Comment < ApplicationRecord
   include Votable
 
-  acts_as_votable
   belongs_to :user
   belongs_to :commentable, polymorphic: true
   belongs_to :parent, class_name: "Comment", optional: true
 
   has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
+  has_many :votes, as: :votable, dependent: :destroy
 
   validates :content, presence: true, length: { minimum: 1, maximum: 10000 }
 
-  scope :best,      -> { left_joins(:votes).group(:id).order("SUM(COALESCE(votes.value, 0)) DESC") }
+  scope :best,      -> { left_joins(:votes).group(:id).order(Arel.sql("SUM(COALESCE(votes.value,0)) DESC")) }
+  scope :top,       -> { best }
   scope :new_first, -> { order(created_at: :desc) }
 
   def root?  = parent_id.nil?
