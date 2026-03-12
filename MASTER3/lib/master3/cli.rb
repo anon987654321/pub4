@@ -5,7 +5,6 @@ require "tty-prompt"
 
 module Master3
   class CLI
-    COMMANDS = %w[clear save tokens undo model mode task autotest council autoloop swarm sweep dmesg cost config tts help exit].freeze
 
     attr_reader :container
 
@@ -50,30 +49,9 @@ module Master3
         line = @reader.read_line("", echo: true).chomp rescue nil
         break if line.nil?
         next if line.strip.empty?
-        handle_command(line) || handle_implicit(line) || process(line)
+        handle_command(line) || process(line)
       end
       @session.save!
-    end
-
-    # Implicit commands — natural language triggers without leading /
-    IMPLICIT_PATTERNS = [
-      [/\b(save|lagre)\b.*\bsession\b/i,   -> { handle_command("/save") }],
-      [/\b(exit|quit|bye|avslutt)\b/i,     -> { handle_command("/exit") }],
-      [/\btts\s+on\b/i,                    -> { handle_command("/tts on") }],
-      [/\btts\s+off\b/i,                   -> { handle_command("/tts off") }],
-      [/\b(clear|tøm)\s+(screen|skjerm)\b/i, -> { handle_command("/clear") }],
-      [/\bshow\s+(tokens|usage)\b/i,       -> { handle_command("/tokens") }],
-      [/\bswitch\s+model\s+to\s+(\S+)/i,  ->(m) { handle_command("/model #{m[1]}") }],
-    ].freeze
-
-    def handle_implicit(line)
-      IMPLICIT_PATTERNS.each do |pattern, action|
-        if (m = line.match(pattern))
-          action.arity == 0 ? action.call : action.call(m)
-          return true
-        end
-      end
-      false
     end
 
     def handle_command(line)
@@ -93,7 +71,7 @@ module Master3
         when "off" then @tts_on = false;             puts @renderer.render("tts: off", mode: :dim)
         else            puts @renderer.render("tts: #{@tts_on ? "on" : "off"} — /tts on|off", mode: :dim)
         end
-      else          return false  # unknown to handle_command — let pipeline Route stage dispatch it
+      else          return false  # falls through to pipeline — Infer stage handles natural language
       end
       true
     end
@@ -158,11 +136,24 @@ module Master3
       }
     end
 
-    def help_text
-      p = Pastel.new
-      header = p.bold.cyan(" commands ")
-      cmds   = COMMANDS.map { |c| "  #{p.cyan("/")}#{p.white(c)}" }.join("\n")
-      "\n#{header}\n#{cmds}\n"
-    end
+def help_text
+  p = Pastel.new
+  lines = [
+    "",
+    p.bold.cyan(" what I can do "),
+    "",
+    "  #{p.cyan("refactor")} #{p.white("lib/")}              — sweep and rewrite every file (all axioms + prose rules)",
+    "  #{p.cyan("fix all violations")}            — autoloop until scan is clean",
+    "  #{p.cyan("use multiple perspectives")}     — council deliberation on the next response",
+    "  #{p.cyan("how many tokens have I used")}  — show context size and estimated cost",
+    "  #{p.cyan("undo that")}                     — revert the last file change",
+    "  #{p.cyan("save")} / #{p.cyan("clear")} / #{p.cyan("exit")}         — session management",
+    "",
+    "  #{p.dim("or just talk — intent is inferred automatically.")}",
+    "  #{p.dim("explicit: /sweep /autoloop /council /tokens /undo /save /clear /exit")}",
+    "",
+  ]
+  lines.join("\n")
+end
   end
 end
