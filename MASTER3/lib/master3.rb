@@ -163,8 +163,18 @@ module Master3
         }
         (output + [result.ok? ? result.value! : result.message]).join("\n")
       },
+      "sweep" => ->(ctx) {
+        arg     = ctx[:args].to_s.strip
+        target  = arg.empty? ? root : File.expand_path(arg, root)
+        sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
+        log     = []
+        result  = sweeper.run(target) { |cycle, file, delta|
+          log << "  cycle #{cycle}  #{file}  +#{delta}"
+        }
+        ([result.ok? ? result.value! : result.message] + log).join("\n")
+      },
       "help"    => ->(ctx) {
-        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm help exit]
+        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep help exit]
         cmds.map { "/#{_1}" }.join("  ")
       }
     }
