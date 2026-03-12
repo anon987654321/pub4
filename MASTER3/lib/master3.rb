@@ -47,6 +47,7 @@ module Master3
 
     stages = [
       Stages::Intake.new,
+      Stages::Infer.new,
       Stages::Route.new(
         commands: build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:),
         agent:
