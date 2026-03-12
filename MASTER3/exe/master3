@@ -10,6 +10,13 @@ $stderr.set_encoding("UTF-8")
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master3"
 
+# Ensure web UI is running alongside the CLI
+if $stdin.tty?
+  unless system("rcctl check master3web > /dev/null 2>&1")
+    system("doas rcctl start master3web > /dev/null 2>&1")
+  end
+end
+
 cli = nil
 
 trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved"; exit 0 }

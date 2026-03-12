@@ -20,6 +20,7 @@ module Master3
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
       lines << "#{@p.bold.red("master3")}@#{@p.red(short_model(model))} #{@p.dim("ready")}"
+      lines << @p.dim("web  http://brgen.no:3000")
       lines << ""
       lines.join("\n")
     end
@@ -35,7 +36,7 @@ module Master3
       case mode
       when :error   then "#{@p.red(CROSS)} #{@p.red(content)}"
       when :success then "#{@p.bright_red(TICK)} #{@p.bright_red(content)}"
-      when :warning then "#{@p.red("!")} #{@p.red(content)}"
+      when :warning then "#{@p.red("\!")} #{@p.red(content)}"
       when :dim     then @p.dim(content.to_s)
       when :dmesg   then format_dmesg(content)
       else               content.to_s
