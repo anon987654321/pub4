@@ -77,8 +77,6 @@ class ChatController < ApplicationController
   rescue => e
     logger.error "TTS failed: #{e.message}"
     head :service_unavailable
-  ensure
-    File.unlink(tmp_mp3) rescue nil
   end
 
   private

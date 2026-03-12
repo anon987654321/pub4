@@ -48,7 +48,7 @@ module Master3
     stages = [
       Stages::Intake.new,
       Stages::Route.new(
-        commands: build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:),
+        commands: build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:),
         agent:
       ),
       Stages::Guard.new(governor:, injection_guard: guard),
@@ -93,11 +93,12 @@ module Master3
       Tools::ListDir.new(root:, event_bus: bus),
       Tools::SearchFiles.new(root:, event_bus: bus),
       Tools::WebSearch.new(governor:, event_bus: bus),
-      Tools::Zsh.new(root:, governor:, event_bus: bus)
+      Tools::Zsh.new(root:, governor:, event_bus: bus),
+      Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
     ]
   end
 
-  def self.build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:)
+  def self.build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:)
     {
       "clear"   => ->(ctx) { session.clear!  ; "context cleared" },
       "save"    => ->(ctx) { session.save!   ; "session saved" },
