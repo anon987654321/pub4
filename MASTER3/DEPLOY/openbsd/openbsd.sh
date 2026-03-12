@@ -1131,6 +1131,7 @@ configure_relayd() {
     "hjerterom:10004:8082"
     "privcam:10005:8084"
     "baibl:10007:8086"
+    "master3:3000:8088"
   )
 
   {
@@ -1409,18 +1410,22 @@ EOF
     cd "$m3dir/web"
     bundle config set --local path vendor/bundle
     bundle install --quiet
-    rcctl enable rails_master3
-    cat > /etc/rc.d/rails_master3 <<RCEOF
+    rcctl enable master3web
+        cat > /etc/rc.d/master3web <<RCEOF
 #!/bin/ksh
-daemon_execdir="/home/dev/pub4/MASTER3/web"
-daemon="/home/dev/pub4/MASTER3/web/bin/rails"
-daemon_flags="server -b 0.0.0.0 -p 3000 -e production"
+daemon="/usr/local/bin/bundle"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 falcon serve --bind http://0.0.0.0:3000"
 daemon_user="dev"
+daemon_execdir="/home/dev/pub4/MASTER3/web"
+daemon_timeout="90"
 . /etc/rc.d/rc.subr
+pexp="ruby.*MASTER3/web.*falcon"
+rc_bg=YES
+rc_reload=NO
 rc_cmd \$1
 RCEOF
-    chmod 755 /etc/rc.d/rails_master3
-    rcctl start rails_master3
+    chmod 555 /etc/rc.d/master3web
+    rcctl start master3web
     mark_step_completed "master3_deployed"
     log INFO "MASTER3 web UI running on :3000"
   fi
