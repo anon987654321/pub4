@@ -5,7 +5,7 @@ require "tty-prompt"
 
 module Master3
   class CLI
-    COMMANDS = %w[clear save tokens undo model mode task autotest council autoloop swarm dmesg cost config tts help exit].freeze
+    COMMANDS = %w[clear save tokens undo model mode task autotest council autoloop swarm sweep dmesg cost config tts help exit].freeze
 
     attr_reader :container
 
@@ -93,7 +93,7 @@ module Master3
         when "off" then @tts_on = false;             puts @renderer.render("tts: off", mode: :dim)
         else            puts @renderer.render("tts: #{@tts_on ? "on" : "off"} — /tts on|off", mode: :dim)
         end
-      else          puts @renderer.render("unknown command: /#{cmd}", mode: :warning)
+      else          return false  # unknown to handle_command — let pipeline Route stage dispatch it
       end
       true
     end
