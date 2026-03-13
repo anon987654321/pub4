@@ -153,8 +153,8 @@ module MASTER
         Result.ok({ count: results.length, total: images.length, output_dir: output_dir, files: results })
       end
 
-      # TODO: index_models method removed - used non-existent api_request method
-      # Re-implement with proper HTTP requests if needed in the future
+      # The historical index_models implementation was removed because it relied
+      # on a non-existent api_request helper.
     end
   end
 end
