@@ -34,6 +34,23 @@ module MASTER
     COMPLETION_PATTERN = /^(ANSWER|DONE|COMPLETE):\s*/i
 
     PATTERNS = %i[react pre_act rewoo reflexion].freeze
+    PATTERN_DISPATCH = {
+      react: :execute_react,
+      pre_act: :execute_pre_act,
+      rewoo: :execute_rewoo,
+      reflexion: :execute_reflexion,
+    }.freeze
+
+    DIRECT_PATTERNS = [
+      /\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i,
+    ].freeze
+    EXECUTION_KEYWORDS = /\b(fix|refactor|scan|analyze|build|create|update|debug|write|read|find)\b/.freeze
+    CHITCHAT_EXCLUSIONS = /\b(fix|refactor|scan|analyze|file|code|write|read|find|build|debug)\b/i.freeze
+    REFLEXION_KEYWORDS = /\b(fix|debug|repair|refactor|correct|safe|security|validate|test)\b/.freeze
+    PREACT_KEYWORDS = /\b(then|step \d|phase \d|first.*then|build.*deploy|create.*and then)\b/.freeze
+    REWOO_KEYWORDS = /\b(compare|explain|summarize|research|what is|how does|why is|difference between)\b/.freeze
+    REWOO_EXCLUSIONS = /\b(file|code|write|fix)\b/.freeze
+    MAX_ROUTER_GOAL_LENGTH = 500
     SYSTEM_PROMPT_FILE = File.join(__dir__, "..", "data", "system_prompt.yml")
 
     # Protected paths that cannot be written to
@@ -118,13 +135,8 @@ module MASTER
     end
 
     def execute_pattern(pattern, goal, tier:)
-      case pattern
-      when :react     then execute_react(goal, tier: tier)
-      when :pre_act   then execute_pre_act(goal, tier: tier)
-      when :rewoo     then execute_rewoo(goal, tier: tier)
-      when :reflexion then execute_reflexion(goal, tier: tier)
-      else execute_react(goal, tier: tier)
-      end
+      dispatcher = PATTERN_DISPATCH.fetch(pattern, :execute_react)
+      send(dispatcher, goal, tier: tier)
     end
 
     def check_timeout!(start_time)
@@ -141,26 +153,26 @@ module MASTER
       g = goal.to_s.strip.downcase
 
       # Direct: greetings, chitchat, simple one-word queries — no LLM cost
-      if g.match?(/\A(hi|hello|hey|thanks|thank you|bye|quit|exit|help|version|clear|what is master|what are you)\b.{0,60}\z/i)
+      if DIRECT_PATTERNS.any? { |pattern| g.match?(pattern) }
         return :direct
       end
-      if g.length < 20 && !g.match?(/\b(fix|refactor|scan|analyze|build|create|update|debug|write|read|find)\b/)
+      if g.length < 20 && !g.match?(EXECUTION_KEYWORDS)
         return :direct
       end
 
       # Reflexion: correctness-critical keywords
-      return :reflexion if g.match?(/\b(fix|debug|repair|refactor|correct|safe|security|validate|test)\b/)
+      return :reflexion if g.match?(REFLEXION_KEYWORDS)
 
       # PreAct: clear multi-step plans
-      return :pre_act if g.match?(/\b(then|step \d|phase \d|first.*then|build.*deploy|create.*and then)\b/)
+      return :pre_act if g.match?(PREACT_KEYWORDS)
 
       # ReWOO: pure research/comparison (no tools needed)
-      if g.match?(/\b(compare|explain|summarize|research|what is|how does|why is|difference between)\b/) && !g.match?(/\b(file|code|write|fix)\b/)
+      if g.match?(REWOO_KEYWORDS) && !g.match?(REWOO_EXCLUSIONS)
         return :rewoo
       end
 
       # Sanitize for LLM call — prevent prompt injection
-      sanitized_goal = goal.to_s.gsub(/[\r\n]+/, " ").strip.slice(0, 500)
+      sanitized_goal = sanitize_goal_for_router(goal)
 
       prompt = <<~CLASSIFY
         You are a task router. Given a user's goal, pick the best execution pattern.
@@ -222,12 +234,15 @@ module MASTER
       @pattern == :direct
     end
 
+    def sanitize_goal_for_router(goal)
+      goal.to_s.gsub(/[\r\n]+/, " ").strip.slice(0, MAX_ROUTER_GOAL_LENGTH)
+    end
+
     CHITCHAT_SYSTEM = "You are MASTER2, a constitutional AI coding assistant. "               "Answer conversationally and helpfully.".freeze
 
     def direct_ask(goal, tier: nil)
       # For simple greetings/chitchat, skip the heavy system context to avoid model confusion
-      chitchat = goal.to_s.strip.length < 120 &&
-                 !goal.to_s.match?(/\b(fix|refactor|scan|analyze|file|code|write|read|find|build|debug)\b/i)
+      chitchat = goal.to_s.strip.length < 120 && !goal.to_s.match?(CHITCHAT_EXCLUSIONS)
       system_msg = chitchat ? CHITCHAT_SYSTEM : ExecutionContext.build_system_message(include_commands: false)
 
       result = LLM.ask(goal, messages: [
