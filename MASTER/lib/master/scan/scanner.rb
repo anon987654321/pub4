@@ -36,7 +36,18 @@ module Master
         Result.ok(results)
       end
 
-      private
+def add_rule(rule)
+  @rules << rule
+  self
+end
+
+def set_agent(agent)
+  @rules.each { |r| r.set_agent(agent) if r.respond_to?(:set_agent) }
+  self
+end
+
+private
+
 
       def load_rules
         @rules ||= Rule.registry.map(&:new)

@@ -38,9 +38,11 @@ module Master
                          model_router: router, reasoning_modes: modes,
                          memory:, personality:)
     tools << Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
+    scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
 
     guard        = Security::InjectionGuard.new
     scanner      = Scan::Scanner.new(event_bus: bus)
+    scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
     swarm        = Swarm::Coordinator.new(agent:, event_bus: bus)
     personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
     deliberation = Council::Deliberation.new(personas:, agent:, event_bus: bus)
@@ -96,7 +98,8 @@ module Master
       Tools::ListDir.new(root:, event_bus: bus),
       Tools::SearchFiles.new(root:, event_bus: bus),
       Tools::WebSearch.new(governor:, event_bus: bus),
-      Tools::Zsh.new(root:, governor:, event_bus: bus)
+      Tools::Zsh.new(root:, governor:, event_bus: bus),
+      Tools::Replace.new(root:, governor:, event_bus: bus)
     ]
   end
 
