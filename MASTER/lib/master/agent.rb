@@ -97,6 +97,11 @@ module Master
       end
     end
 
+    # Nemotron 3 Nano/Super use `enable_thinking` chat template kwarg.
+    # Older Llama-Nemotron variants use system prompt strings instead.
+    NEMOTRON3_RE       = /nemotron-3/i.freeze
+    LLAMA_NEMOTRON_RE  = /llama.*nemotron|nemotron.*llama/i.freeze
+
     def do_chat(message, selected_model, context:, stream:, &blk)
       if selected_model.start_with?("ferrum:webchat:")
         alias_name = selected_model.split(":", 3).last
@@ -105,10 +110,32 @@ module Master
       end
 
       chat = RubyLLM.chat(model: selected_model)
-      chat.with_instructions(system_prompt) if system_prompt
+      chat.with_instructions(nemotron_system_prompt(selected_model)) if system_prompt
       context.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }
       msg = stream && blk ? chat.ask(message) { |chunk| blk.call(chunk) } : chat.ask(message)
-      msg.respond_to?(:content) ? msg.content.to_s : msg.to_s
+      extract_response(msg, selected_model)
+    end
+
+    def extract_response(msg, selected_model)
+      return msg.to_s unless msg.respond_to?(:content)
+
+      # Nemotron 3: thinking content arrives in reasoning_content, visible only at :deep mode.
+      if NEMOTRON3_RE.match?(selected_model) && msg.respond_to?(:reasoning_content)
+        thinking = msg.reasoning_content.to_s.strip
+        content  = msg.content.to_s
+        return thinking.empty? ? content : "#{content}\n\n<think>\n#{thinking}\n</think>"
+      end
+
+      msg.content.to_s
+    end
+
+    def nemotron_system_prompt(selected_model)
+      base = system_prompt
+      return base unless LLAMA_NEMOTRON_RE.match?(selected_model)
+
+      thinking_on = @config["reasoning_mode"] != "none"
+      directive   = thinking_on ? "detailed thinking on" : "detailed thinking off"
+      [directive, base].compact.join("\n\n")
     end
 
     def conversation_context(max_messages: DEFAULT_CONTEXT_SIZE)
