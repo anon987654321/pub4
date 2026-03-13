@@ -7,8 +7,9 @@ module Master
 
   loader = Zeitwerk::Loader.for_gem
   loader.inflector.inflect(
-    "cli"          => "CLI",
-    "mcp_server"   => "MCPServer"
+    "autoloop"   => "AutoLoop",
+    "cli"        => "CLI",
+    "mcp_server" => "MCPServer"
   )
   loader.setup
 
