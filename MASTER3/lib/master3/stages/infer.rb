@@ -6,65 +6,82 @@ module Master3
     #
     # Sits between Intake and Route. When intent is :llm, checks whether the
     # message is a natural-language command invocation and promotes it to
-    # :command intent. Users never need to learn slash syntax.
-    #
-    # Pattern order matters: more specific patterns first.
+    # :command intent. Covers English and Norwegian. Users never need slash syntax.
     class Infer
       PATTERNS = [
-        # sweep — full codebase refactor
-        [ /\b(?:sweep|refactor|clean\s*up|rewrite|polish|tidy\s*up|improve|overhaul)
+        # sweep / refactor — English
+        [ /\b(?:sweep|refactor|clean\s*up|rewrite|polish|tidy\s*up|overhaul|
+               improve\s+(?:all|every)|go\s+through\s+(?:all|every)|
+               full\s+pass\s+(?:over|on))
            (?:\s+(?:all|every(?:thing)?|the))?
-           (?:\s+([\w\/.]+))?/ix,
-          "sweep" ],
+           (?:\s+([\w\/.]+))?/ix,                                      "sweep" ],
 
-        # autoloop — violation fix cycle
-        [ /\b(?:autoloop|fix\s+all\s+violations?|keep\s+fix|loop\s+until|
-             iterate\s+until|run\s+until\s+clean|keep\s+going\s+until|
-             run\s+(?:it\s+)?(?:again\s+)?until\s+(?:done|clean|fixed))
-           (?:\s+(\d+))?/ix,
-          "autoloop" ],
+        # sweep — Norwegian
+        [ /\b(?:rydd\s+opp|refaktorer|forbedre?|gjennomg[åa]|omskriv)
+           (?:\s+([\w\/.]+))?/ix,                                      "sweep" ],
 
-        # council — multi-persona deliberation
+        # autoloop — English
+        [ /\b(?:autoloop|fix\s+all\s+violations?|keep\s+(?:fix|loop)|
+               loop\s+until|iterate\s+until|run\s+until\s+clean|
+               keep\s+going\s+until|(?:run|go)\s+(?:it\s+)?(?:again\s+)?
+               until\s+(?:done|clean|fixed|perfect))
+           (?:\s+(\d+))?/ix,                                           "autoloop" ],
+
+        # autoloop — Norwegian
+        [ /\b(?:fiks?\s+alle?\s+(?:feil|brudd)|fortsett\s+(?:til|inntil)|
+               kj[øo]r\s+(?:til\s+)?(?:det\s+er\s+)?(?:rent|bra|ferdig))
+           (?:\s+(\d+))?/ix,                                           "autoloop" ],
+
+        # council — English
         [ /\b(?:council|deliberat|multiple\s+perspect|second\s+opinion|
-             peer\s+review|debate\s+this|get\s+(?:another|a\s+second)\s+view|
-             multi(?:ple)?\s+(?:view|agent|model))\b/ix,
-          "council" ],
+               peer\s+review|debate\s+this|get\s+(?:another|a\s+second)\s+view|
+               multi(?:ple)?\s+(?:view|agent|model|perspect))\b/ix,   "council" ],
 
-        # tokens — context size
+        # council — Norwegian
+        [ /\b(?:r[åa]dsl[åa]g|bruk\s+(?:flere|multiple)\s+(?:perspektiv|
+               synsvinkler?)|diskuter\s+(?:dette|det))\b/ix,           "council" ],
+
+        # explain / self-describe
+        [ /\b(?:explain\s+(?:your(?:self)?|your\s+architecture|how\s+you\s+work)|
+               describe\s+(?:your(?:self)?|your\s+architecture)|
+               what\s+are\s+you|how\s+(?:are\s+you\s+built|do\s+you\s+work)|
+               show\s+(?:your\s+)?architecture|self[\s-]?map)\b/ix,   "explain" ],
+
+        # persona
+        [ /\b(?:(?:switch|change|set)\s+persona\s+(?:to\s+)?(\w+)|
+               persona\s+(\w+)|use\s+(\w+)\s+persona)\b/ix,           "persona" ],
+
+        # tokens
         [ /\b(?:token\s*count|how\s+many\s+tokens?|context\s+size|
-             token\s+usage|how\s+much\s+context)\b/ix,
-          "tokens" ],
+               token\s+usage|how\s+much\s+context|
+               hvor\s+mange\s+token|token\s*antall)\b/ix,              "tokens" ],
 
-        # cost — spending
-        [ /\b(?:how\s+much\s+(?:has\s+this\s+cost|is\s+this|did\s+this)|
-             (?:current\s+)?(?:spend|cost|budget)|what(?:'s|\s+is)\s+the\s+cost)\b/ix,
-          "cost" ],
+        # cost
+        [ /\b(?:how\s+much\s+(?:has\s+this\s+cost|did\s+this\s+cost)|
+               (?:current\s+)?(?:spend|cost|budget)|what(?:'s|\s+is)\s+the\s+cost|
+               hva\s+koster?\s+(?:dette|det)|kostnader?)\b/ix,         "cost" ],
 
         # undo
         [ /\b(?:undo\s+that|revert\s+(?:that|last|it)|go\s+back|
-             take\s+that\s+back|undo\s+(?:last|the\s+last))\b/ix,
-          "undo" ],
+               take\s+that\s+back|angre\s+det|g[åa]\s+tilbake)\b/ix,  "undo" ],
 
-        # clear — reset context
+        # clear
         [ /\b(?:clear\s+(?:context|chat|history|session|screen)|
-             start\s+(?:over|fresh|again)|reset\s+(?:context|session)|
-             fresh\s+start|wipe\s+(?:context|history))\b/ix,
-          "clear" ],
+               start\s+(?:over|fresh|again)|reset\s+(?:context|session)|
+               fresh\s+start|t[øo]m\s+(?:kontekst|historikk)|
+               begynn\s+p[åa]\s+nytt)\b/ix,                            "clear" ],
 
         # save
-        [ /\b(?:save\s+(?:session|this|my\s+work|progress)|
-             checkpoint\s+(?:this|session|now))\b/ix,
-          "save" ],
+        [ /\b(?:save\s+(?:session|this|my\s+work|progress)|checkpoint\s+now|
+               lagre\s+(?:session|sesjonen?|arbeid))\b/ix,             "save" ],
 
         # model info
         [ /\b(?:which\s+model|current\s+model|what\s+model\s+are\s+you|
-             what\s+(?:llm|ai|model)\s+(?:are\s+you\s+using|is\s+this))\b/ix,
-          "model" ],
+               what\s+(?:llm|ai|model)\s+(?:are\s+you\s+using|is\s+this))\b/ix, "model" ],
 
-        # dmesg — logs
-        [ /\b(?:show\s+(?:logs?|events?|history)|system\s+log|dmesg|
-             what\s+(?:happened|has\s+happened)|event\s+log|recent\s+activity)\b/ix,
-          "dmesg" ],
+        # dmesg
+        [ /\b(?:show\s+(?:logs?|events?)|system\s+log|dmesg|
+               what\s+(?:happened|has\s+happened)|recent\s+activity)\b/ix, "dmesg" ],
       ].freeze
 
       def call(ctx)
@@ -87,21 +104,16 @@ module Master3
       def extract_args(cmd, match, msg)
         case cmd
         when "sweep"
-          # Capture explicit path: "clean up lib/" or "refactor DEPLOY/rails"
           path = match[1]&.strip
           path = nil if path&.match?(/\A(?:all|everything|the|code|codebase)\z/i)
           path.to_s
         when "autoloop"
-          # Capture cycle count: "loop until clean 8 times"
-          n = match[1] || msg[/\b(\d+)\s*(?:time|cycle|iteration|loop)/i, 1]
+          n = match[1] || msg[/\b(\d+)\s*(?:time|cycle|iteration|gang|syklus)/i, 1]
           n.to_s
         when "council"
-          # "enable/disable council" or "council on/off"
-          if msg.match?(/\b(?:off|disable|stop|turn\s+off)\b/i)
-            "off"
-          else
-            "on"
-          end
+          msg.match?(/\b(?:off|disable|stop|av|skru\s+av)\b/i) ? "off" : "on"
+        when "persona"
+          (match[1] || match[2] || match[3]).to_s.strip
         else
           ""
         end

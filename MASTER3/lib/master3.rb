@@ -37,13 +37,14 @@ module Master3
     agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus,
                          model_router: router, reasoning_modes: modes,
                          memory:, personality:)
+    tools << Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
 
     guard        = Security::InjectionGuard.new
     scanner      = Scan::Scanner.new(event_bus: bus)
     swarm        = Swarm::Coordinator.new(agent:, event_bus: bus)
     personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
     deliberation = Council::Deliberation.new(personas:, agent:, event_bus: bus)
-    council_stage = Stages::Council.new(deliberation:)
+    council_stage = Stages::Council.new(deliberation:, config:)
 
     stages = [
       Stages::Intake.new,
@@ -57,6 +58,7 @@ module Master3
       council_stage,
       Stages::Lint.new(scanner:, config:),
       Stages::Strunk.new,
+      Stages::Memo.new(memory:),
       Stages::Render.new(renderer:)
     ]
 
@@ -65,7 +67,7 @@ module Master3
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
       scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
-      memory:, personality:, swarm:
+      memory:, personality:, swarm:, root:
     }
   end
 
@@ -94,8 +96,7 @@ module Master3
       Tools::ListDir.new(root:, event_bus: bus),
       Tools::SearchFiles.new(root:, event_bus: bus),
       Tools::WebSearch.new(governor:, event_bus: bus),
-      Tools::Zsh.new(root:, governor:, event_bus: bus),
-      Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
+      Tools::Zsh.new(root:, governor:, event_bus: bus)
     ]
   end
 
@@ -164,7 +165,27 @@ module Master3
         }
         (output + [result.ok? ? result.value! : result.message]).join("\n")
       },
-      "sweep" => ->(ctx) {
+"explain" => ->(ctx) {
+  map  = Introspection::SelfMap.new(root:)
+  info = map.describe
+  cov  = map.axiom_coverage
+  cov_lines = cov.map { |ax, n| "  #{ax}: #{n}" }.join("\n")
+  stages = "Intake→Infer→Route→Guard→Execute→Council→Lint→Strunk→Memo→Render"
+  "MASTER — #{info[:files]} files, #{info[:lines]} lines\npipeline: #{stages}\n\naxiom coverage:\n#{cov_lines}"
+},
+"persona" => ->(ctx) {
+  arg   = ctx[:args].to_s.strip.to_sym
+  names = Personality::PERSONAS.keys
+  if names.include?(arg)
+    config["persona"] = arg.to_s
+    config.save!
+    "persona: #{arg}"
+  else
+    "persona: #{config["persona"] || "dark_malay"} — available: #{names.join(", ")}"
+  end
+},
+"sweep" => ->(ctx) {
+
         arg     = ctx[:args].to_s.strip
         target  = arg.empty? ? root : File.expand_path(arg, root)
         sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)

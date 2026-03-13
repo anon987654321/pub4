@@ -17,6 +17,8 @@ module Master3
       @undo      = container[:undo]
       @config    = container[:config]
       @pipeline  = container[:pipeline]
+      @scanner   = container[:scanner]
+      @root      = container[:root] || Dir.pwd
       @reader    = TTY::Reader.new(track_history: true)
       @running   = false
       @ctrl_c_ts = 0
@@ -30,6 +32,7 @@ module Master3
       run_prescan if @config.prescan?
 
       puts @renderer.splash(@agent.model)
+      report_violations
 
       process(initial_message) if initial_message
 
@@ -123,7 +126,23 @@ module Master3
       # prescan deferred
     end
 
-    def setup_signals
+def report_violations
+  return unless @scanner
+
+  result = @scanner.scan_dir(@root, depth: :quick)
+  return unless result.respond_to?(:value!)
+
+  count = result.value!.sum { |_, r| r.respond_to?(:value!) ? r.value!.size : 0 }
+  return if count.zero?
+
+  puts @renderer.render(
+    "#{count} violation(s) in lib/ — say 'fix all violations' to clean up",
+    mode: :dim
+  )
+end
+
+def setup_signals
+
       trap("INT") {
         now = Time.now.to_f
         if now - @ctrl_c_ts < 1.0
@@ -150,7 +169,7 @@ def help_text
     "  #{p.cyan("save")} / #{p.cyan("clear")} / #{p.cyan("exit")}         — session management",
     "",
     "  #{p.dim("or just talk — intent is inferred automatically.")}",
-    "  #{p.dim("explicit: /sweep /autoloop /council /tokens /undo /save /clear /exit")}",
+    "  #{p.dim("explicit: /explain /persona /sweep /autoloop /council /tokens /undo /save /clear /exit")}",
     "",
   ]
   lines.join("\n")
