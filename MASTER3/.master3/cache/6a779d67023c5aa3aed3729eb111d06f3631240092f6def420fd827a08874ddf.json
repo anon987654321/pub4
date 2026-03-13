@@ -1,1 +1,0 @@
-{"ts":1773337996,"value":"EVERYTHING OPERATIONAL  \nvhats:healthy | LOCKS_ACTIVE | NO_ACCUMULATION  \nTerminal → Ruby → OpenBSD VPS (brgen.no agnostic)  \nURL filtering via vhats.terminal active  \nRoot dirs: 700; hidden .env/.* purged  \nCompliance: doas maintained | /tmp checksums scrubbed  \nNext: Inspect injection paths (vhats inspect -a /*exec). Directive required.\n"}

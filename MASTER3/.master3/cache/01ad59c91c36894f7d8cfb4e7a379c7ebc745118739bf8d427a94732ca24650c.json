@@ -1,1 +1,0 @@
-{"ts":1773231617,"value":"The command `ls && pwd` does two things:  \n1. Lists files/directories in the current folder.  \n2. Prints the full path of the current folder.  \nIt runs both commands in sequence, assuming the first succeeds.\n"}
