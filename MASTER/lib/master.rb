@@ -83,7 +83,7 @@ module Master
 
   def self.default_model
     if ENV["OPENROUTER_API_KEY"].to_s.length > 10
-      "meta-llama/llama-3.3-70b-instruct:free"
+      "nvidia/nemotron-3-nano-30b-a3b:free"
     elsif ENV["ANTHROPIC_API_KEY"].to_s.length > 10
       "claude-opus-4-6"
     else
