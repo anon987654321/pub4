@@ -12,3 +12,5 @@ web/.env*
 *.mp3
 *.wav
 /tmp/
+.master3/cache/
+.master3/memory.yml
