@@ -38,11 +38,11 @@ module Master
                          model_router: router, reasoning_modes: modes,
                          memory:, personality:)
     tools << Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
-    scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
 
     guard        = Security::InjectionGuard.new
     scanner      = Scan::Scanner.new(event_bus: bus)
     scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
+    scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
     swarm        = Swarm::Coordinator.new(agent:, event_bus: bus)
     personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
     deliberation = Council::Deliberation.new(personas:, agent:, event_bus: bus)
@@ -198,8 +198,26 @@ module Master
         }
         ([result.ok? ? result.value! : result.message] + log).join("\n")
       },
+      "memory"  => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        if arg.start_with?("forget ")
+          key = arg.sub("forget ", "").strip
+          memory.forget(key)
+          "forgot: #{key}"
+        elsif arg.start_with?("remember ")
+          parts = arg.sub("remember ", "").split("=", 2)
+          key, val = parts[0].strip, parts[1]&.strip
+          val ? (memory.remember(key, val); "remembered: #{key}") : "usage: /memory remember key=value"
+        elsif arg.empty?
+          entries = memory.all
+          entries.empty? ? "(no memories)" : entries.map { |k, v| "#{k}: #{v}" }.join("\n")
+        else
+          val = memory.recall(arg)
+          val ? "#{arg}: #{val}" : "(not found: #{arg})"
+        end
+      },
       "help"    => ->(ctx) {
-        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep help exit]
+        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory help exit]
         cmds.map { "/#{_1}" }.join("  ")
       }
     }
