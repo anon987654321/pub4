@@ -56,5 +56,6 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  config.hosts = ["brgen.no", /\Alocalhost\z/, /\A127\.\d+\.\d+\.\d+\z/]
+  # Host validation handled by relayd; disable Rails-level host authorization.
+  config.host_authorization = { exclude: ->(request) { true } }
 end
