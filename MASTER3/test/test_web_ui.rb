@@ -17,7 +17,7 @@ end
 
 class FakePipeline
   attr_writer :result
-  def call(_ctx) = @result || Master3::Result.ok(rendered: "hello from pipeline")
+  def call(_ctx) = @result || Master::Result.ok(rendered: "hello from pipeline")
 end
 
 class FakeSession
@@ -50,43 +50,43 @@ class TestWebUI < Minitest::Test
   # ── Result monad ──────────────────────────────────────────────────────────
 
   def test_result_ok_wraps_value
-    r = Master3::Result.ok("hello")
+    r = Master::Result.ok("hello")
     assert r.ok?
     assert_equal "hello", r.value!
   end
 
   def test_result_err_wraps_message
-    r = Master3::Result.err("boom")
+    r = Master::Result.err("boom")
     assert r.err?
     assert_equal "boom", r.message
   end
 
   def test_result_err_value_bang_raises_unwrap_error
-    r = Master3::Result.err("boom")
-    assert_raises(Master3::UnwrapError) { r.value! }
+    r = Master::Result.err("boom")
+    assert_raises(Master::UnwrapError) { r.value! }
   end
 
   def test_result_ok_chaining
-    r = Master3::Result.ok(5).and_then { |v| Master3::Result.ok(v * 2) }
+    r = Master::Result.ok(5).and_then { |v| Master::Result.ok(v * 2) }
     assert_equal 10, r.value!
   end
 
   def test_result_err_short_circuits
-    r = Master3::Result.err("x").and_then { raise "should not reach" }
+    r = Master::Result.err("x").and_then { raise "should not reach" }
     assert r.err?
   end
 
   # ── Pipeline ─────────────────────────────────────────────────────────────
 
   def test_pipeline_returns_result
-    result = @container.pipeline.call(Master3::Result.ok(user_message: "hi"))
+    result = @container.pipeline.call(Master::Result.ok(user_message: "hi"))
     assert result.ok?
     assert_includes result.value![:rendered], "hello"
   end
 
   def test_pipeline_err_propagates
-    @container.pipeline.result = Master3::Result.err("model down")
-    result = @container.pipeline.call(Master3::Result.ok(user_message: "hi"))
+    @container.pipeline.result = Master::Result.err("model down")
+    result = @container.pipeline.call(Master::Result.ok(user_message: "hi"))
     assert result.err?
     assert_equal "model down", result.message
   end
@@ -101,25 +101,25 @@ class TestWebUI < Minitest::Test
   # ── Cognitive monitor ─────────────────────────────────────────────────────
 
   def test_cognitive_monitor_starts_clean
-    m = Master3::CognitiveMonitor.new
+    m = Master::CognitiveMonitor.new
     assert_equal 0.0, m.load
     assert_equal :optimal, m.flow_state
   end
 
   def test_cognitive_monitor_push_increases_load
-    m = Master3::CognitiveMonitor.new
+    m = Master::CognitiveMonitor.new
     m.push("concept_a", weight: 2.0)
     assert_in_delta 2.0, m.load, 0.01
   end
 
   def test_cognitive_monitor_overload_after_threshold
-    m = Master3::CognitiveMonitor.new
+    m = Master::CognitiveMonitor.new
     m.push("heavy", weight: 8.0)
     assert m.overloaded?
   end
 
   def test_cognitive_monitor_reset
-    m = Master3::CognitiveMonitor.new
+    m = Master::CognitiveMonitor.new
     5.times { |i| m.push("c#{i}", weight: 1.5) }
     m.reset!(keep_recent: 2)
     assert m.load <= 3.0
@@ -127,12 +127,12 @@ class TestWebUI < Minitest::Test
   end
 
   def test_cognitive_monitor_update_flow_returns_self
-    m = Master3::CognitiveMonitor.new
+    m = Master::CognitiveMonitor.new
     assert_same m, m.update_flow(context_switches: 1)
   end
 
   def test_cognitive_monitor_state_hash
-    m = Master3::CognitiveMonitor.new
+    m = Master::CognitiveMonitor.new
     s = m.state
     assert s.key?(:load)
     assert s.key?(:flow_state)
@@ -144,15 +144,15 @@ class TestWebUI < Minitest::Test
 
   def test_swarm_coordinator_worker_roles
     # Just check the list is non-empty without booting real agents
-    assert_includes Master3::Swarm::Coordinator::WORKER_CLASSES.keys, :analyst
-    assert_includes Master3::Swarm::Coordinator::WORKER_CLASSES.keys, :coder
-    assert_includes Master3::Swarm::Coordinator::WORKER_CLASSES.keys, :reviewer
-    assert_includes Master3::Swarm::Coordinator::WORKER_CLASSES.keys, :researcher
+    assert_includes Master::Swarm::Coordinator::WORKER_CLASSES.keys, :analyst
+    assert_includes Master::Swarm::Coordinator::WORKER_CLASSES.keys, :coder
+    assert_includes Master::Swarm::Coordinator::WORKER_CLASSES.keys, :reviewer
+    assert_includes Master::Swarm::Coordinator::WORKER_CLASSES.keys, :researcher
   end
 
   def test_swarm_coordinator_unknown_role
     mock_agent = Minitest::Mock.new
-    coord = Master3::Swarm::Coordinator.new(agent: mock_agent)
+    coord = Master::Swarm::Coordinator.new(agent: mock_agent)
     result = coord.dispatch(:nonexistent, task: "foo")
     assert result.err?
     assert_includes result.message, "unknown role"
@@ -162,7 +162,7 @@ class TestWebUI < Minitest::Test
 
   def test_memory_remember_and_recall
     Dir.mktmpdir do |dir|
-      m = Master3::Memory.new(root: dir)
+      m = Master::Memory.new(root: dir)
       m.remember(:user_name, "Osman")
       assert_equal "Osman", m.recall(:user_name)
     end
@@ -170,14 +170,14 @@ class TestWebUI < Minitest::Test
 
   def test_memory_context_summary_nil_when_empty
     Dir.mktmpdir do |dir|
-      m = Master3::Memory.new(root: dir)
+      m = Master::Memory.new(root: dir)
       assert_nil m.context_summary
     end
   end
 
   def test_memory_context_summary_lists_keys
     Dir.mktmpdir do |dir|
-      m = Master3::Memory.new(root: dir)
+      m = Master::Memory.new(root: dir)
       m.remember(:language, "Ruby")
       summary = m.context_summary
       assert_includes summary, "language"
@@ -188,22 +188,22 @@ class TestWebUI < Minitest::Test
   # ── Personality ──────────────────────────────────────────────────────────
 
   def test_personality_default_is_dark_malay
-    assert_equal :dark_malay, Master3::Personality::DEFAULT
+    assert_equal :dark_malay, Master::Personality::DEFAULT
   end
 
   def test_personality_system_prompt_non_empty
-    p = Master3::Personality.new(:dark_malay)
+    p = Master::Personality.new(:dark_malay)
     assert p.system_prompt.length > 10
   end
 
   def test_personality_system_prompt_memoized
-    p = Master3::Personality.new(:dark_malay)
+    p = Master::Personality.new(:dark_malay)
     assert_same p.system_prompt, p.system_prompt
   end
 
   # ── UnwrapError ──────────────────────────────────────────────────────────
 
   def test_unwrap_error_is_runtime_error_subclass
-    assert Master3::UnwrapError < RuntimeError
+    assert Master::UnwrapError < RuntimeError
   end
 end

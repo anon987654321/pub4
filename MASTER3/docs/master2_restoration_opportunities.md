@@ -1,12 +1,12 @@
-# MASTER2 restoration opportunities for MASTER3
+# MASTER2 restoration opportunities for MASTER
 
-This inventory compares `MASTER2/` to `MASTER3/` and lists artifacts that exist in MASTER2 but are absent in MASTER3. These absences are potential restoration opportunities if MASTER3 intends feature parity with MASTER2.
+This inventory compares `MASTER2/` to `MASTER/` and lists artifacts that exist in MASTER2 but are absent in MASTER. These absences are potential restoration opportunities if MASTER intends feature parity with MASTER2.
 
 ## Snapshot
 
 - MASTER2 files scanned: **388**
-- MASTER3 files scanned: **107**
-- Missing in MASTER3 (restoration opportunities): **382**
+- MASTER files scanned: **107**
+- Missing in MASTER (restoration opportunities): **382**
 
 ## Opportunities by area
 

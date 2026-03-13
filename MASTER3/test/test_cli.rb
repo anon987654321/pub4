@@ -25,7 +25,7 @@ class TestCLI < Minitest::Test
       pipeline: @pipeline
     }
 
-    @cli = Master3::CLI.new(container: @container)
+    @cli = Master::CLI.new(container: @container)
   end
 
   # ── container accessor ────────────────────────────────────────────────────
@@ -88,7 +88,7 @@ class TestCLI < Minitest::Test
 
   def test_process_ok_result
     text = "the answer is 42"
-    result = Master3::Result.ok(rendered: text)
+    result = Master::Result.ok(rendered: text)
     @pipeline.expect(:call, result, [->(r) { r.respond_to?(:ok?) }])
     out, _err = capture_io { @cli.send(:process, "what is 6*7") }
     assert_includes out, text
@@ -96,7 +96,7 @@ class TestCLI < Minitest::Test
   end
 
   def test_process_err_result
-    result = Master3::Result.err("model unavailable")
+    result = Master::Result.err("model unavailable")
     @pipeline.expect(:call, result, [->(r) { r.respond_to?(:ok?) }])
     @renderer.expect(:render, "[ERR]", ["model unavailable"], mode: :error)
     capture_io { @cli.send(:process, "fail me") }
@@ -106,7 +106,7 @@ class TestCLI < Minitest::Test
   # ── pipe ──────────────────────────────────────────────────────────────────
 
   def test_pipe_calls_process
-    result = Master3::Result.ok(rendered: "pong")
+    result = Master::Result.ok(rendered: "pong")
     @pipeline.expect(:call, result, [->(r) { r.respond_to?(:ok?) }])
     out, _err = capture_io { @cli.pipe("ping") }
     assert_includes out, "pong"

@@ -1131,7 +1131,7 @@ configure_relayd() {
     "hjerterom:10004:8082"
     "privcam:10005:8084"
     "baibl:10007:8086"
-    "master3:3000:8088"
+    "master:3000:8088"
   )
 
   {
@@ -1255,7 +1255,7 @@ EOF
   # Generate Rails app code via feature scripts
   if ! is_step_completed "rails_apps_generated"; then
     log INFO "Generating Rails apps from feature scripts"
-    typeset deploy_dir="/home/dev/pub4/MASTER3/DEPLOY/rails"
+    typeset deploy_dir="/home/dev/pub4/MASTER/DEPLOY/rails"
 
     # brgen
     if [[ -f "${deploy_dir}/brgen/brgen.sh" ]]; then
@@ -1402,32 +1402,32 @@ EOF
 
   # Configure and start relayd now that APP_PORTS is populated
 
-  # Deploy MASTER3 web UI (ai.brgen.no -> port 3000)
-  if ! is_step_completed "master3_deployed"; then
-    log INFO "Deploying MASTER3 web UI"
-    typeset m3dir="/home/dev/pub4/MASTER3"
-    [[ -d $m3dir ]] || { log ERROR "MASTER3 not found at $m3dir"; exit 1 }
+  # Deploy MASTER web UI (ai.brgen.no -> port 3000)
+  if ! is_step_completed "master_deployed"; then
+    log INFO "Deploying MASTER web UI"
+    typeset m3dir="/home/dev/pub4/MASTER"
+    [[ -d $m3dir ]] || { log ERROR "MASTER not found at $m3dir"; exit 1 }
     cd "$m3dir/web"
     bundle config set --local path vendor/bundle
     bundle install --quiet
-    rcctl enable master3web
-        cat > /etc/rc.d/master3web <<RCEOF
+    rcctl enable masterweb
+        cat > /etc/rc.d/masterweb <<RCEOF
 #!/bin/ksh
 daemon="/usr/local/bin/bundle"
 daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 falcon serve --bind http://0.0.0.0:3000"
 daemon_user="dev"
-daemon_execdir="/home/dev/pub4/MASTER3/web"
+daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_timeout="90"
 . /etc/rc.d/rc.subr
-pexp="ruby.*MASTER3/web.*falcon"
+pexp="ruby.*MASTER/web.*falcon"
 rc_bg=YES
 rc_reload=NO
 rc_cmd \$1
 RCEOF
-    chmod 555 /etc/rc.d/master3web
-    rcctl start master3web
-    mark_step_completed "master3_deployed"
-    log INFO "MASTER3 web UI running on :3000"
+    chmod 555 /etc/rc.d/masterweb
+    rcctl start masterweb
+    mark_step_completed "master_deployed"
+    log INFO "MASTER web UI running on :3000"
   fi
   configure_relayd
 
