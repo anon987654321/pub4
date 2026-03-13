@@ -48,6 +48,21 @@ class TestExecutorPatterns < Minitest::Test
     assert result.respond_to?(:ok?), "Auto pattern should return a Result"
   end
 
+  def test_select_pattern_uses_heuristics_without_llm
+    executor = MASTER::Executor.new
+
+    assert_equal :direct, executor.select_pattern("hello")
+    assert_equal :reflexion, executor.select_pattern("please debug failing test")
+    assert_equal :pre_act, executor.select_pattern("first build parser then deploy")
+    assert_equal :rewoo, executor.select_pattern("compare ruby and python for scripting")
+  end
+
+  def test_execute_pattern_falls_back_to_react_dispatch
+    executor = MASTER::Executor.new
+    result = executor.execute_pattern(:unknown, "any goal", tier: :fast)
+    assert result.respond_to?(:ok?), "Unknown pattern should dispatch to react"
+  end
+
   def test_executor_handles_llm_failure
     stub_llm_ask_failure(error: "All models down")
     executor = MASTER::Executor.new(max_steps: 2)
