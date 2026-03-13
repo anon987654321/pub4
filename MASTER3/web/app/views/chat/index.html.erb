@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#020000">
-  <title>master3</title>
+  <title>master</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
 
@@ -198,7 +198,7 @@
 <div id="terminal">
 
   <div id="statusbar">
-    <span class="left">master3</span>
+    <span class="left">master</span>
     <div class="right">
       <span><span id="s-model" class="val"></span></span>
       <span>tokens:<span id="s-tokens" class="val">0</span></span>
@@ -211,7 +211,7 @@
   <div id="thinking"></div>
 
   <div id="input-row">
-    <span id="input-prompt">master3@<span id="prompt-model"><%= @model %></span>$</span>
+    <span id="input-prompt">master@<span id="prompt-model"><%= @model %></span>$</span>
     <input id="input" type="text" placeholder="type a message..." autocomplete="off" autocorrect="off" spellcheck="false">
     <button id="send-btn" onclick="sendMessage()">↵</button>
   </div>
@@ -239,7 +239,7 @@
       j.lines.forEach(l => appendDmesg(l));
     } catch(e) {}
     appendSep('');
-    appendSep(`master3@${model} ready — web ui on port 3000`);
+    appendSep(`master@${model} ready — web ui on port 3000`);
     appendSep('');
     input.focus();
   };
@@ -281,7 +281,7 @@
   const appendUser = text => {
     const d = document.createElement('div');
     d.className = 'line line-user';
-    d.innerHTML = `<span class="prompt">master3@${esc(model)}$</span><span class="content">${esc(text)}</span>`;
+    d.innerHTML = `<span class="prompt">master@${esc(model)}$</span><span class="content">${esc(text)}</span>`;
     out.appendChild(d);
     scrollBottom();
     return d;

@@ -1,7 +1,7 @@
 *.bak
 *.bak2
 *.orig
-.master3/
+.master/
 vendor/bundle/
 web/vendor/bundle/
 web/tmp/

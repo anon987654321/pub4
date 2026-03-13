@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    master3 (3.0.0)
+    master (3.0.0)
       diffy (~> 3.4)
       pastel (~> 0.8)
       rouge (~> 4.4)
@@ -420,7 +420,7 @@ PLATFORMS
 DEPENDENCIES
   debug
   falcon
-  master3!
+  master!
   propshaft
   rails (~> 8.1.2)
   sqlite3 (>= 2.1)
@@ -483,7 +483,7 @@ CHECKSUMS
   mail (2.9.0) sha256=6fa6673ecd71c60c2d996260f9ee3dd387d4673b8169b502134659ece6d34941
   mapping (1.1.3) sha256=2274931d20ecd46eaafdd1e00c58cc7472133b213bcac335cc7733d3c75f4da2
   marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
-  master3 (3.0.0)
+  master (3.0.0)
   metrics (0.15.0) sha256=61ded5bac95118e995b1bc9ed4a5f19bc9814928a312a85b200abbdac9039072
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   mini_portile2 (2.8.9) sha256=0cd7c7f824e010c072e33f68bc02d85a00aeb6fce05bb4819c03dfd3c140c289

@@ -4,7 +4,7 @@ Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
 
 $LOAD_PATH.unshift File.expand_path("../../../../lib", __FILE__)
-require "master3"
+require "master"
 
 class ChatController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:message, :tts]
@@ -42,12 +42,12 @@ class ChatController < ApplicationController
 
     sse = response.stream
     begin
-      result = container[:pipeline].call(Master3::Result.ok(user_message: input))
+      result = container[:pipeline].call(Master::Result.ok(user_message: input))
       text = case result
-             when Master3::Result::Ok
+             when Master::Result::Ok
                val = result.value
                val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
-             when Master3::Result::Err
+             when Master::Result::Err
                "ERROR: #{result.message}"
              end
 
@@ -68,7 +68,7 @@ class ChatController < ApplicationController
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
-    bytes = Master3::Speech.synthesize_bytes(text)
+    bytes = Master::Speech.synthesize_bytes(text)
     if bytes && bytes.bytesize > 0
       send_data bytes, type: "audio/mpeg", disposition: "inline"
     else
@@ -83,7 +83,7 @@ class ChatController < ApplicationController
 
   def container
     @@mutex.synchronize do
-      @@container ||= Master3.build(root: Rails.root.join("..").to_s)
+      @@container ||= Master.build(root: Rails.root.join("..").to_s)
     end
   end
 end

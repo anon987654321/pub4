@@ -1,8 +1,8 @@
 # frozen_string_literal: true
-# Run on VPS via: cd ~/pub4/MASTER3 && ruby refactor_deploy.rb
+# Run on VPS via: cd ~/pub4/MASTER && ruby refactor_deploy.rb
 
 $LOAD_PATH.unshift(File.join(__dir__, "lib"))
-require "master3"
+require "master"
 require "net/http"
 require "json"
 
@@ -50,8 +50,8 @@ sh_files.each do |path|
   rel     = path.delete_prefix(DEPLOY_ROOT + "/")
   content = File.read(path)
 
-  # Quick scan using MASTER3 scanner (ruby files only, sh not in rules - just use it for any findings)
-  scanner = Master3::Scan::Scanner.new
+  # Quick scan using MASTER scanner (ruby files only, sh not in rules - just use it for any findings)
+  scanner = Master::Scan::Scanner.new
   scan_result = scanner.scan(path, depth: :quick)
   scan_findings = scan_result.ok? ? scan_result.value! : []
 
