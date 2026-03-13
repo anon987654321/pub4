@@ -51,6 +51,16 @@ module Master
         [ /\b(?:(?:switch|change|set)\s+persona\s+(?:to\s+)?(\w+)|
                persona\s+(\w+)|use\s+(\w+)\s+persona)\b/ix,           "persona" ],
 
+        # memory recall — English
+        [ /\b(?:what\s+do\s+you\s+remember(?:\s+about\s+([\w\s]+))?|
+               show\s+(?:my\s+)?memor(?:y|ies)|list\s+memor(?:y|ies)|
+               recall(?:\s+([\w]+))?|what(?:'s|\s+is)\s+in\s+(?:your\s+)?memory|
+               remember\s+([\w]+=.+)|forget\s+([\w_]+))\b/ix,         "memory" ],
+
+        # memory recall — Norwegian
+        [ /\b(?:hva\s+husker\s+du(?:\s+om\s+([\w\s]+))?|
+               vis\s+(?:min\s+)?hukommelse|husk\s+([\w_]+=.+))\b/ix,  "memory" ],
+
         # tokens
         [ /\b(?:token\s*count|how\s+many\s+tokens?|context\s+size|
                token\s+usage|how\s+much\s+context|
@@ -112,6 +122,8 @@ module Master
           n.to_s
         when "council"
           msg.match?(/\b(?:off|disable|stop|av|skru\s+av)\b/i) ? "off" : "on"
+        when "memory"
+          match.captures.compact.first.to_s.strip
         when "persona"
           (match[1] || match[2] || match[3]).to_s.strip
         else
