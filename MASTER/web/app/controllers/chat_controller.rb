@@ -15,6 +15,7 @@ class ChatController < ApplicationController
 
   def index
     @model = container[:agent].model.to_s.split("/").last
+    render layout: false
   end
 
   def dmesg
