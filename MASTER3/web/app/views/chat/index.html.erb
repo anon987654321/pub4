@@ -304,7 +304,19 @@
     scrollBottom();
   };
 
-  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// renderMd — escape first, then apply safe markdown patterns progressively
+const renderMd = raw => {
+  let t = esc(raw);
+  t = t.replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+  t = t.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+  t = t.replace(/\n/g, '<br>');
+  return t;
+};
+
   const scrollBottom = () => { out.scrollTop = out.scrollHeight; };
 
   // ── Send ───────────────────────────────────────────────────────────────
@@ -354,12 +366,12 @@
             break;
           }
           txt += chunk;
-          aiSpan.textContent = txt;
+          aiSpan.innerHTML = renderMd(txt);
           scrollBottom();
         }
       }
       aiSpan.classList.remove('streaming');
-      if (!txt) aiSpan.textContent = '(no response)';
+      if (!txt) aiSpan.innerHTML = '<em>(no response)</em>';
 
     } catch(e) {
       thinking.classList.remove('active');
