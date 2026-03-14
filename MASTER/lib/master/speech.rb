@@ -19,14 +19,15 @@ module Master
     }.freeze
 
     STYLES = {
-      deep:   { rate: "-35%", pitch: "-150Hz" },
-      heavy:  { rate: "-30%", pitch: "-120Hz" },
-      normal: { rate: "+0%",  pitch: "+0Hz"   },
-      slow:   { rate: "-20%", pitch: "-60Hz"  }
+      deep:    { rate: "-35%", pitch: "-150Hz" },
+      heavy:   { rate: "-30%", pitch: "-120Hz" },
+      normal:  { rate: "+0%",  pitch: "+0Hz"   },
+      slow:    { rate: "-20%", pitch: "-60Hz"  },
+      natural: { rate: "+8%",  pitch: "+20Hz"  }
     }.freeze
 
     DEFAULT_VOICE = :osman
-    DEFAULT_STYLE = :normal
+    DEFAULT_STYLE = :natural
 
     module_function
 
