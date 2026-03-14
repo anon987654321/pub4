@@ -7,7 +7,7 @@ module Master
   # TTS via edge-tts (Microsoft Neural voices) with espeak fallback.
   # Default persona: dark_malay / ms-MY-OsmanNeural / deep style.
   module Speech
-    EDGE_TTS = "/home/dev/.local/bin/edge-tts"
+    EDGE_TTS = %w[/home/dev/.local/bin/edge-tts /usr/local/bin/edge-tts].find { |p| File.executable?(p) }
     ESPEAK   = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
 
     VOICES = {
@@ -26,19 +26,19 @@ module Master
     }.freeze
 
     DEFAULT_VOICE = :osman
-    DEFAULT_STYLE = :deep
+    DEFAULT_STYLE = :normal
 
     module_function
 
     def available?
-      File.executable?(EDGE_TTS) || !ESPEAK.nil?
+      !EDGE_TTS.nil? || !ESPEAK.nil?
     end
 
     # Returns path to generated audio file, or nil on failure.
     def synthesize(text, voice: DEFAULT_VOICE, style: DEFAULT_STYLE)
       return nil if text.to_s.strip.empty?
 
-      if File.executable?(EDGE_TTS)
+      if EDGE_TTS
         synthesize_edge(text, voice: voice, style: style)
       elsif ESPEAK
         synthesize_espeak(text)

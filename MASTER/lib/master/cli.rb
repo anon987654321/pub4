@@ -126,10 +126,11 @@ module Master
         next unless path
 
         # OpenBSD: aucat; Linux fallback: mpv or aplay
-        player = %w[mpv aucat aplay].find { |p| system("command -v #{p} > /dev/null 2>&1") }
+        player = %w[mpv aucat ffplay aplay].find { |p| system("command -v #{p} > /dev/null 2>&1") }
         case player
         when "mpv"   then system("mpv", "--no-video", "--really-quiet", path, out: File::NULL, err: File::NULL)
         when "aucat" then system("aucat", "-i", path, out: File::NULL, err: File::NULL)
+        when "ffplay" then system("ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", path, out: File::NULL, err: File::NULL)
         when "aplay" then system("aplay", "-q", path, out: File::NULL, err: File::NULL)
         end
       rescue => e
