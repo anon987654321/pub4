@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="color-scheme" content="dark"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <title>MASTER &middot; <%= @model %></title>
   <meta name="theme-color" content="#000000"/>
   <style>
@@ -23,6 +24,9 @@
       font:16px/1.5 Helvetica,Arial,sans-serif;
       overflow:hidden;
       touch-action:none;
+      will-change:contents;
+      transform:translateZ(0);
+      contain:strict;
     }
 
     canvas{
@@ -1558,7 +1562,8 @@ const renderMd = raw => {
       if(e.key==='ArrowRight')setOrb(currentOrb+1);
     });
 
-    const N=(()=>{const c=navigator.hardwareConcurrency||2;const m=navigator.deviceMemory||2;if(c<=4||m<=2)return 500;if(c<=6||m<=4)return 900;return 1600;})();
+    const N=(()=>{const c=navigator.hardwareConcurrency||2;const m=navigator.deviceMemory||2;const lowEnd=c<=4&&m<=2;const midLow=c<=4||m<=2;if(lowEnd)return 200;if(midLow)return 400;if(c<=6)return 800;return 1400;})();
+    const LOW_END=N<=400;
     const neurons=[];
 
     class Neuron{
@@ -1930,7 +1935,8 @@ const renderMd = raw => {
     let scanPhase=0;
     let camX=0,camY=0;
     let _lf=0;
-    const _fb=(navigator.hardwareConcurrency||2)<=4?34:16;
+    const _bkts=new Map();
+    const _fb=LOW_END?40:16;
     const animate=(now=0)=>{
       requestAnimationFrame(animate);
       if(now-_lf<_fb)return;
@@ -1977,7 +1983,7 @@ const renderMd = raw => {
       const audioBoost=Math.min(1,audioLevel*1.8);
 
       // Batch arc draws by color+alpha bucket (~12 fill() calls vs N)
-      const _bkts=new Map();
+      _bkts.clear();
       const _pls=isProcessing?0.45+Math.sin(t*6)*0.3:0;
       for(const p of proj){
         const px=p.x+camX,py=p.y+camY;
@@ -1988,7 +1994,7 @@ const renderMd = raw => {
         else if(audioBoost>0.08){const mix=Math.min(1,audioBoost*1.5);col=mix>0.7?(isSpeaking?'#cc4444':'#882222'):(activeCol[Math.min(3,p.c+1)]);}
         else{col=activeCol[p.c]||activeCol[1];}
         const aQ=Math.round(Math.min(1,p.a*(0.85+p.think*0.35)*orbFade)*4)/4;
-        const key=col+'|'+aQ+'|'+r.toFixed(1);
+        const key=col+'|'+aQ+'|'+(r*10|0);
         let b=_bkts.get(key);
         if(!b){b={col,aQ,r,pts:[]};_bkts.set(key,b);}
         b.pts.push(px,py);
