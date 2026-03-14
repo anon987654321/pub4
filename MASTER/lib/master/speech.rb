@@ -4,10 +4,11 @@ require "securerandom"
 require "fileutils"
 
 module Master
-  # TTS via edge-tts (Microsoft Neural voices).
+  # TTS via edge-tts (Microsoft Neural voices) with espeak fallback.
   # Default persona: dark_malay / ms-MY-OsmanNeural / deep style.
   module Speech
     EDGE_TTS = "/home/dev/.local/bin/edge-tts"
+    ESPEAK   = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
 
     VOICES = {
       osman:   "ms-MY-OsmanNeural",
@@ -30,15 +31,35 @@ module Master
     module_function
 
     def available?
-      File.executable?(EDGE_TTS)
+      File.executable?(EDGE_TTS) || !ESPEAK.nil?
     end
 
-    # Returns path to generated mp3, or nil on failure.
+    # Returns path to generated audio file, or nil on failure.
     def synthesize(text, voice: DEFAULT_VOICE, style: DEFAULT_STYLE)
-      return nil unless available?
       return nil if text.to_s.strip.empty?
 
-      tmp = "/tmp/m3_tts_#{SecureRandom.hex(8)}.mp3"
+      if File.executable?(EDGE_TTS)
+        synthesize_edge(text, voice: voice, style: style)
+      elsif ESPEAK
+        synthesize_espeak(text)
+      end
+    end
+
+    # Returns raw mp3/wav bytes, or nil.
+    def synthesize_bytes(text, **opts)
+      path = synthesize(text, **opts)
+      return nil unless path
+      bytes = File.binread(path)
+      File.unlink(path) rescue nil
+      bytes
+    end
+
+    private
+
+    module_function
+
+    def synthesize_edge(text, voice:, style:)
+      tmp = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
       v   = VOICES.fetch(voice.to_sym, VOICES[DEFAULT_VOICE])
       s   = STYLES.fetch(style.to_sym,  STYLES[DEFAULT_STYLE])
 
@@ -55,13 +76,14 @@ module Master
       (ok && File.exist?(tmp) && File.size(tmp) > 0) ? tmp : nil
     end
 
-    # Returns raw mp3 bytes, or nil.
-    def synthesize_bytes(text, **opts)
-      path = synthesize(text, **opts)
-      return nil unless path
-      bytes = File.binread(path)
-      File.unlink(path) rescue nil
-      bytes
+    def synthesize_espeak(text)
+      tmp = "/tmp/m_tts_#{SecureRandom.hex(8)}.wav"
+      ok  = system(
+        ESPEAK, "-s", "140", "-p", "30", "-a", "150",
+        "-w", tmp, text.to_s,
+        out: File::NULL, err: File::NULL
+      )
+      (ok && File.exist?(tmp) && File.size(tmp) > 0) ? tmp : nil
     end
   end
 end

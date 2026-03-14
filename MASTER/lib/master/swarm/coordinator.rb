@@ -12,6 +12,8 @@ module Master
         researcher: Workers::Researcher
       }.freeze
 
+      WORKER_TIMEOUT = 30  # seconds per worker
+
       def initialize(agent:, event_bus: nil)
         @agent = agent
         @bus   = event_bus
@@ -45,19 +47,44 @@ module Master
         })
       end
 
-      # Fan-out: run multiple workers in parallel threads, collect results
-      def fan_out(tasks)
-        # tasks: [{role:, task:, context_slice:}, ...]
+      # Fan-out: run multiple workers in parallel threads with per-worker timeout.
+      # Returns {results: {role => Result}, synthesis: String}.
+      def fan_out(tasks, timeout: WORKER_TIMEOUT)
         threads = tasks.map do |t|
-          Thread.new { [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))] }
+          Thread.new do
+            [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+          end
         end
-        results = threads.map(&:value).to_h
-        Result.ok(results)
+
+        results = threads.map do |th|
+          if th.join(timeout)
+            th.value
+          else
+            th.kill rescue nil
+            [:timeout, Result.err("worker timed out after #{timeout}s", category: :unknown)]
+          end
+        end.to_h
+
+        synthesis = synthesize(results)
+        @bus&.publish(:swarm_fan_out_done, roles: results.keys, synthesis: synthesis[0..200])
+        Result.ok({ results: results, synthesis: synthesis })
       end
 
       def worker_roles = WORKER_CLASSES.keys
 
       private
+
+      # Combine successful worker results into a coherent summary string.
+      def synthesize(results)
+        lines = results.filter_map do |role, r|
+          next if role == :timeout
+          next unless r.respond_to?(:ok?) && r.ok?
+          val = r.value!
+          text = val.is_a?(Hash) ? val.inspect : val.to_s
+          "### #{role}\n#{text.strip}"
+        end
+        lines.empty? ? "(no results)" : lines.join("\n\n")
+      end
 
       def worker_for(role)
         sym = role.to_sym
