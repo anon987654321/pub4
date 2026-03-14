@@ -1132,7 +1132,7 @@ const renderMd = raw => {
 
     // Web Audio effect chain — cycle with long-press on status circle
     const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone'];
-    let fxIdx=1+Math.floor(Math.random()*(FX_MODES.length-1)); // random effect on by default
+    let fxIdx=LOW_END?0:1+Math.floor(Math.random()*(FX_MODES.length-1)); // off on low-end
     let fxTaps=0;let fxTapTimer=0;
 
     // #4: Flash FX mode name when it changes
@@ -1142,6 +1142,7 @@ const renderMd = raw => {
     };
 
     const buildFxChain=(src)=>{
+      if(LOW_END){src.connect(audioCtx.destination);return;}
       const mode=FX_MODES[fxIdx];
       const out=audioCtx.destination;
       const an=analyser||audioCtx.createGain(); // guard: null when mic denied
@@ -1292,7 +1293,27 @@ const renderMd = raw => {
     };
 
     // Route backend TTS audio through Web Audio analyser + effects chain
+    // Browser SpeechSynthesis — instant, zero server round-trip, works offline.
+    // Used on LOW_END; also available as fallback on all devices.
+    const speakBrowser=(text)=>{
+      if(!('speechSynthesis' in window)) return false;
+      window.speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g,'').substring(0,500));
+      u.rate=1.08; u.pitch=1.05; u.volume=1.0;
+      const voices=window.speechSynthesis.getVoices();
+      const pick=voices.find(v=>v.lang.startsWith('en-')&&v.localService)
+        ||voices.find(v=>v.lang.startsWith('en-'))
+        ||voices[0];
+      if(pick) u.voice=pick;
+      u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');};
+      u.onend=_onSpeakEnd; u.onerror=_onSpeakEnd;
+      window.speechSynthesis.speak(u);
+      return true;
+    };
+
     const speakWithAudio=async(text)=>{
+      if(LOW_END) return speakBrowser(text);
+
       if(!audioCtx) return false;
       if(audioCtx.state==='suspended') await audioCtx.resume();
       try{
