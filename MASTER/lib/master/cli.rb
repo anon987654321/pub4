@@ -2,6 +2,7 @@
 
 require "tty-reader"
 require "tty-prompt"
+require "fileutils"
 
 module Master
   class CLI
@@ -72,9 +73,9 @@ module Master
         case args.first
         when "on"  then @tts_on = Speech.available?; puts @renderer.render("tts: #{@tts_on ? "on" : "unavailable"}", mode: :dim)
         when "off" then @tts_on = false;             puts @renderer.render("tts: off", mode: :dim)
-        else            puts @renderer.render("tts: #{@tts_on ? "on" : "off"} — /tts on|off", mode: :dim)
+        else            puts @renderer.render("tts: #{@tts_on ? "on" : "off"} -- /tts on|off", mode: :dim)
         end
-      else          return false  # falls through to pipeline — Infer stage handles natural language
+      else          return false  # falls through to pipeline -- Infer stage handles natural language
       end
       true
     end
@@ -82,7 +83,6 @@ module Master
     def process(input)
       return if input.strip.empty?
 
-      # Stream tokens to stdout as they arrive; accumulate for TTS and final render.
       accumulated = +""
       streamed    = false
 
@@ -101,7 +101,7 @@ module Master
       in Master::Result::Ok => ok
         @last_ok = true
         if streamed
-          puts  # trailing newline after streamed content
+          puts
           speak_async(accumulated) if @tts_on
         else
           val  = ok.value
@@ -117,32 +117,83 @@ module Master
 
     def speak_async(text)
       Thread.new do
-        plain = text.gsub(/\e\[[0-9;]*m/, "").strip   # strip ANSI
-        plain = plain.gsub(/```.*?```/m, "")           # strip code blocks
-        plain = plain[0..400]                          # cap length
+        plain = text.gsub(/\e\[[0-9;]*m/, "").strip
+        plain = plain.gsub(/```.*?```/m, "")
+        plain = plain[0..400]
         next if plain.empty?
 
-        path = Speech.synthesize(plain)
-        next unless path
+        mp3 = Speech.synthesize(plain)
+        next unless mp3
 
-        # OpenBSD: aucat; Linux fallback: mpv or aplay
-        player = %w[mpv aucat ffplay aplay].find { |p| system("command -v #{p} > /dev/null 2>&1") }
-        case player
-        when "mpv"   then system("mpv", "--no-video", "--really-quiet", path, out: File::NULL, err: File::NULL)
-        when "aucat" then system("aucat", "-i", path, out: File::NULL, err: File::NULL)
-        when "ffplay" then system("ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", path, out: File::NULL, err: File::NULL)
-        when "aplay" then system("aplay", "-q", path, out: File::NULL, err: File::NULL)
-        end
+        played = try_paplay(mp3) || try_direct(mp3)
+        @logging&.warn("tts: no audio output found") unless played
       rescue => e
         @logging&.warn("tts: #{e.message}")
       ensure
-        File.unlink(path) rescue nil if path
+        File.unlink(mp3) rescue nil if defined?(mp3) && mp3
+      end
+    end
+
+    PULSE_SOCKET = "/tmp/pulse/native"
+    PULSE_DAEMON = "/data/data/com.termux/files/usr/bin/pulseaudio"
+
+    # PulseAudio path: works on Termux/proot (Android) and Linux desktops.
+    # Converts mp3 to wav, auto-starts a pulse daemon if the socket is missing.
+    def try_paplay(mp3)
+      paplay = %w[
+        /data/data/com.termux/files/usr/bin/paplay
+        /usr/bin/paplay
+        /usr/local/bin/paplay
+      ].find { |p| File.executable?(p) }
+      return false unless paplay
+
+      ffmpeg = %w[/usr/bin/ffmpeg /usr/local/bin/ffmpeg].find { |p| File.executable?(p) }
+      return false unless ffmpeg
+
+      socket = ensure_pulse_socket
+      return false unless socket
+
+      wav = mp3.sub(/\.mp3$/, ".wav")
+      ok  = system(ffmpeg, "-y", "-i", mp3, wav, "-loglevel", "quiet",
+                   out: File::NULL, err: File::NULL)
+      return false unless ok && File.exist?(wav)
+
+      ENV["PULSE_SERVER"] = "unix:#{socket}"
+      result = system(paplay, wav, out: File::NULL, err: File::NULL)
+      File.unlink(wav) rescue nil
+      result
+    end
+
+    def ensure_pulse_socket
+      return PULSE_SOCKET if File.exist?(PULSE_SOCKET)
+      return nil unless File.executable?(PULSE_DAEMON)
+
+      FileUtils.mkdir_p(File.dirname(PULSE_SOCKET))
+      system(
+        PULSE_DAEMON,
+        "--load=module-alsa-sink device=default",
+        "--load=module-native-protocol-unix auth-anonymous=1 socket=#{PULSE_SOCKET}",
+        "--daemonize", "--exit-idle-time=60",
+        out: File::NULL, err: File::NULL
+      )
+      sleep 0.6
+      File.exist?(PULSE_SOCKET) ? PULSE_SOCKET : nil
+    end
+
+    # Direct players: OpenBSD aucat, mpv, ffplay, aplay
+    def try_direct(mp3)
+      player = %w[aucat mpv ffplay aplay].find { |p| system("command -v #{p} > /dev/null 2>&1") }
+      case player
+      when "aucat"  then system("aucat",  "-i", mp3, out: File::NULL, err: File::NULL)
+      when "mpv"    then system("mpv",    "--no-video", "--really-quiet", mp3, out: File::NULL, err: File::NULL)
+      when "ffplay" then system("ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", mp3, out: File::NULL, err: File::NULL)
+      when "aplay"  then system("aplay",  "-q", mp3, out: File::NULL, err: File::NULL)
+      else; false
       end
     end
 
     def run_prescan
       return if ENV["MASTER_PRESCAN"] == "false"
-      # prescan deferred
     end
 
     def report_violations
@@ -155,7 +206,7 @@ module Master
       return if count.zero?
 
       puts @renderer.render(
-        "#{count} violation(s) in lib/ — say 'fix all violations' to clean up",
+        "#{count} violation(s) in lib/ -- say 'fix all violations' to clean up",
         mode: :dim
       )
     end
@@ -179,14 +230,14 @@ module Master
         "",
         p.bold.cyan(" what I can do "),
         "",
-        "  #{p.cyan("refactor")} #{p.white("lib/")}              — sweep and rewrite every file (all axioms + prose rules)",
-        "  #{p.cyan("fix all violations")}            — autoloop until scan is clean",
-        "  #{p.cyan("use multiple perspectives")}     — council deliberation on the next response",
-        "  #{p.cyan("how many tokens have I used")}  — show context size and estimated cost",
-        "  #{p.cyan("undo that")}                     — revert the last file change",
-        "  #{p.cyan("save")} / #{p.cyan("clear")} / #{p.cyan("exit")}         — session management",
+        "  #{p.cyan("refactor")} #{p.white("lib/")}              -- sweep and rewrite every file",
+        "  #{p.cyan("fix all violations")}            -- autoloop until scan is clean",
+        "  #{p.cyan("use multiple perspectives")}     -- council deliberation on the next response",
+        "  #{p.cyan("how many tokens have I used")}  -- show context size and estimated cost",
+        "  #{p.cyan("undo that")}                     -- revert the last file change",
+        "  #{p.cyan("save")} / #{p.cyan("clear")} / #{p.cyan("exit")}         -- session management",
         "",
-        "  #{p.dim("or just talk — intent is inferred automatically.")}",
+        "  #{p.dim("or just talk -- intent is inferred automatically.")}",
         "  #{p.dim("explicit: /explain /persona /sweep /autoloop /council /tokens /undo /save /clear /exit")}",
         "",
       ]
