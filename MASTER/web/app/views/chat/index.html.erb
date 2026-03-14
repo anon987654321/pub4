@@ -28,6 +28,43 @@
       transform:translateZ(0);
       contain:strict;
     }
+    /* Low-end CSS orb — GPU compositor only, zero JS render cost */
+    #orb-css{
+      position:fixed;
+      left:50%;top:50%;
+      width:min(58vw,58vh);height:min(58vw,58vh);
+      border-radius:50%;
+      transform:translate(-50%,-50%) translateZ(0);
+      background:radial-gradient(circle at 38% 35%,#6b2018,#1a0505 55%,#020000);
+      box-shadow:0 0 60px 8px rgba(80,10,10,0.35),inset 0 0 40px rgba(0,0,0,0.7);
+      animation:orb-idle 4s ease-in-out infinite;
+      will-change:transform,opacity;
+      pointer-events:none;
+    }
+    @keyframes orb-idle{
+      0%,100%{transform:translate(-50%,-50%) scale(1) translateZ(0);opacity:.65;}
+      50%     {transform:translate(-50%,-50%) scale(1.06) translateZ(0);opacity:.85;}
+    }
+    #orb-css.speaking{
+      background:radial-gradient(circle at 38% 35%,#b03030,#3d1010 55%,#020000);
+      box-shadow:0 0 90px 20px rgba(160,20,20,0.55),inset 0 0 35px rgba(0,0,0,0.4);
+      animation:orb-speak .55s ease-in-out infinite;
+    }
+    @keyframes orb-speak{
+      0%,100%{transform:translate(-50%,-50%) scale(1) translateZ(0);}
+      30%     {transform:translate(-50%,-50%) scale(1.1) translateZ(0);}
+      70%     {transform:translate(-50%,-50%) scale(.96) translateZ(0);}
+    }
+    #orb-css.processing{
+      background:radial-gradient(circle at 38% 35%,#6b4008,#1e0e02 55%,#020000);
+      box-shadow:0 0 70px 12px rgba(90,55,5,0.45),inset 0 0 40px rgba(0,0,0,0.6);
+      animation:orb-think 1.3s ease-in-out infinite;
+    }
+    @keyframes orb-think{
+      0%,100%{transform:translate(-50%,-50%) scale(1) translateZ(0);opacity:.6;}
+      50%     {transform:translate(-50%,-50%) scale(1.05) translateZ(0);opacity:1;}
+    }
+
 
     canvas{
       position:fixed;
@@ -1564,6 +1601,20 @@ const renderMd = raw => {
 
     const N=(()=>{const c=navigator.hardwareConcurrency||2;const m=navigator.deviceMemory||2;const lowEnd=c<=4&&m<=2;const midLow=c<=4||m<=2;if(lowEnd)return 200;if(midLow)return 400;if(c<=6)return 800;return 1400;})();
     const LOW_END=N<=400;
+    // Low-end: replace canvas with CSS orb, skip all canvas rendering
+    let _cssOrb=null;
+    if(LOW_END){
+      canvas.style.display='none';
+      _cssOrb=document.createElement('div');
+      _cssOrb.id='orb-css';
+      document.body.insertBefore(_cssOrb,canvas);
+      // Lightweight state poll — updates CSS classes, no canvas work
+      setInterval(()=>{
+        _cssOrb.classList.toggle('speaking',isSpeaking);
+        _cssOrb.classList.toggle('processing',isProcessing&&!isSpeaking);
+      },150);
+    }
+
     const neurons=[];
 
     class Neuron{
@@ -1940,6 +1991,7 @@ const renderMd = raw => {
     const animate=(now=0)=>{
       requestAnimationFrame(animate);
       if(now-_lf<_fb)return;
+      if(LOW_END)return; // CSS orb handles rendering
       const _dt=Math.min((now-_lf)/1000,0.05);
       _lf=now;
       t+=_dt;
@@ -1968,7 +2020,7 @@ const renderMd = raw => {
 
       // Background: motion trail — deep black fade
       const trailAlpha=isProcessing?0.12:isSpeaking?0.08:0.06;
-      ctx.fillStyle=`rgba(2,0,0,${1-trailAlpha})`; // near-black with red bias
+      ctx.fillStyle=`rgba(4,0,0,${1-trailAlpha-0.04})`; // near-black with red bias
       ctx.fillRect(0,0,W,H);
 
       for(const n of neurons) n.update(t,orbStates[currentOrb].s);
@@ -1976,9 +2028,9 @@ const renderMd = raw => {
 
       // Dark crimson-to-ember palette — reddish, fades to black
       // Idle: near-black embers. Speaking: deep crimson-rose. Processing: dark amber.
-      const cols     =['#150505','#2a0a08','#4a1410','#6b2018']; // ember ramp
-      const colsSpeak=['#1f0808','#3d1212','#7a2020','#b03030']; // crimson on speech
-      const colsThink=['#140a02','#281402','#4a2a04','#6b4008']; // dark amber on think
+      const cols     =['#2a0a08','#4a1410','#7a2018','#a03020']; // ember ramp (brighter)
+      const colsSpeak=['#3d1010','#6a1a1a','#aa2828','#dd4040']; // crimson on speech (brighter)
+      const colsThink=['#281402','#4a2a04','#7a4808','#a06010']; // dark amber on think (brighter)
       const activeCol=isProcessing?colsThink:(isSpeaking?colsSpeak:cols);
       const audioBoost=Math.min(1,audioLevel*1.8);
 
