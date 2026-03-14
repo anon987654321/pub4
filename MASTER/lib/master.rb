@@ -83,7 +83,7 @@ module Master
 
   def self.default_model
     if ENV["OPENROUTER_API_KEY"].to_s.length > 10
-      "anthropic/claude-sonnet-4.6"
+      "nvidia/nemotron-nano-12b-v2-vl:free"
     elsif ENV["ANTHROPIC_API_KEY"].to_s.length > 10
       "claude-sonnet-4-6"
     else
