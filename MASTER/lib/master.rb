@@ -9,7 +9,10 @@ module Master
   loader.inflector.inflect(
     "autoloop"   => "AutoLoop",
     "cli"        => "CLI",
-    "mcp_server" => "MCPServer"
+    "mcp_server" => "MCPServer",
+    "git_context" => "GitContext",
+    "ast_edit"    => "AstEdit",
+    "llm"         => "LLM"
   )
   loader.setup
 
@@ -100,7 +103,9 @@ module Master
       Tools::SearchFiles.new(root:, event_bus: bus),
       Tools::WebSearch.new(governor:, event_bus: bus),
       Tools::Zsh.new(root:, governor:, event_bus: bus),
-      Tools::Replace.new(root:, governor:, event_bus: bus)
+      Tools::Replace.new(root:, governor:, event_bus: bus),
+      Tools::GitContext.new(root:, event_bus: bus),
+      Tools::AstEdit.new(root:, undo:, event_bus: bus)
     ]
   end
 

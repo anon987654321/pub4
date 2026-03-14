@@ -82,15 +82,33 @@ module Master
     def process(input)
       return if input.strip.empty?
 
-      result = @pipeline.call(Result.ok(user_message: input))
+      # Stream tokens to stdout as they arrive; accumulate for TTS and final render.
+      accumulated = +""
+      streamed    = false
+
+      on_chunk = ->(chunk) {
+        text = chunk.respond_to?(:content) ? chunk.content.to_s : chunk.to_s
+        next if text.empty?
+        print text
+        $stdout.flush
+        accumulated << text
+        streamed = true
+      }
+
+      result = @pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
 
       case result
       in Master::Result::Ok => ok
         @last_ok = true
-        val  = ok.value
-        text = val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
-        puts text
-        speak_async(text) if @tts_on
+        if streamed
+          puts  # trailing newline after streamed content
+          speak_async(accumulated) if @tts_on
+        else
+          val  = ok.value
+          text = val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
+          puts text
+          speak_async(text) if @tts_on
+        end
       in Master::Result::Err => err
         @last_ok = false
         puts @renderer.render(err.message, mode: :error)
@@ -126,23 +144,22 @@ module Master
       # prescan deferred
     end
 
-def report_violations
-  return unless @scanner
+    def report_violations
+      return unless @scanner
 
-  result = @scanner.scan_dir(@root, depth: :quick)
-  return unless result.respond_to?(:value!)
+      result = @scanner.scan_dir(@root, depth: :quick)
+      return unless result.respond_to?(:value!)
 
-  count = result.value!.sum { |_, r| r.respond_to?(:value!) ? r.value!.size : 0 }
-  return if count.zero?
+      count = result.value!.sum { |_, r| r.respond_to?(:value!) ? r.value!.size : 0 }
+      return if count.zero?
 
-  puts @renderer.render(
-    "#{count} violation(s) in lib/ — say 'fix all violations' to clean up",
-    mode: :dim
-  )
-end
+      puts @renderer.render(
+        "#{count} violation(s) in lib/ — say 'fix all violations' to clean up",
+        mode: :dim
+      )
+    end
 
-def setup_signals
-
+    def setup_signals
       trap("INT") {
         now = Time.now.to_f
         if now - @ctrl_c_ts < 1.0
@@ -155,24 +172,24 @@ def setup_signals
       }
     end
 
-def help_text
-  p = Pastel.new
-  lines = [
-    "",
-    p.bold.cyan(" what I can do "),
-    "",
-    "  #{p.cyan("refactor")} #{p.white("lib/")}              — sweep and rewrite every file (all axioms + prose rules)",
-    "  #{p.cyan("fix all violations")}            — autoloop until scan is clean",
-    "  #{p.cyan("use multiple perspectives")}     — council deliberation on the next response",
-    "  #{p.cyan("how many tokens have I used")}  — show context size and estimated cost",
-    "  #{p.cyan("undo that")}                     — revert the last file change",
-    "  #{p.cyan("save")} / #{p.cyan("clear")} / #{p.cyan("exit")}         — session management",
-    "",
-    "  #{p.dim("or just talk — intent is inferred automatically.")}",
-    "  #{p.dim("explicit: /explain /persona /sweep /autoloop /council /tokens /undo /save /clear /exit")}",
-    "",
-  ]
-  lines.join("\n")
-end
+    def help_text
+      p = Pastel.new
+      lines = [
+        "",
+        p.bold.cyan(" what I can do "),
+        "",
+        "  #{p.cyan("refactor")} #{p.white("lib/")}              — sweep and rewrite every file (all axioms + prose rules)",
+        "  #{p.cyan("fix all violations")}            — autoloop until scan is clean",
+        "  #{p.cyan("use multiple perspectives")}     — council deliberation on the next response",
+        "  #{p.cyan("how many tokens have I used")}  — show context size and estimated cost",
+        "  #{p.cyan("undo that")}                     — revert the last file change",
+        "  #{p.cyan("save")} / #{p.cyan("clear")} / #{p.cyan("exit")}         — session management",
+        "",
+        "  #{p.dim("or just talk — intent is inferred automatically.")}",
+        "  #{p.dim("explicit: /explain /persona /sweep /autoloop /council /tokens /undo /save /clear /exit")}",
+        "",
+      ]
+      lines.join("\n")
+    end
   end
 end

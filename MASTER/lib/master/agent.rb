@@ -64,8 +64,16 @@ module Master
       raise "chat_raw: #{e.message}"
     end
 
-    def call(ctx) = chat(ctx[:message].to_s)
-    def model     = routed_models.first
+    def call(ctx)
+      on_chunk = ctx[:on_chunk]
+      if on_chunk
+        chat(ctx[:message].to_s, stream: true, &on_chunk)
+      else
+        chat(ctx[:message].to_s)
+      end
+    end
+
+    def model = routed_models.first
 
     private
 
@@ -112,6 +120,10 @@ module Master
       chat = RubyLLM.chat(model: selected_model)
       chat.with_instructions(nemotron_system_prompt(selected_model)) if system_prompt
       context.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }
+
+      tools = llm_tools(selected_model)
+      chat.with_tools(*tools) unless tools.empty?
+
       msg = stream && blk ? chat.ask(message) { |chunk| blk.call(chunk) } : chat.ask(message)
       extract_response(msg, selected_model)
     end
@@ -158,5 +170,37 @@ module Master
     end
 
     def estimate_cost(prompt) = (prompt.bytesize / 4) * COST_PER_TOKEN
+
+    # Map underlying tools to RubyLLM::Tool wrappers for function calling.
+    # Only enabled for models known to support the tools API.
+    TOOL_CAPABLE_RE = /claude|gpt-4|gemini|mistral/i.freeze
+
+    def llm_tools(selected_model = model)
+      return [] unless TOOL_CAPABLE_RE.match?(selected_model)
+      @llm_tools ||= build_llm_tools
+    end
+
+    LLM_TOOL_MAP = {
+      Tools::ReadFile    => Tools::LLM::ReadFile,
+      Tools::WriteFile   => Tools::LLM::WriteFile,
+      Tools::StrReplace  => Tools::LLM::StrReplace,
+      Tools::ListDir     => Tools::LLM::ListDir,
+      Tools::SearchFiles => Tools::LLM::SearchFiles,
+      Tools::Zsh         => Tools::LLM::Zsh,
+      Tools::WebSearch   => Tools::LLM::WebSearch,
+      Tools::AskLlm      => Tools::LLM::AskLlm,
+      Tools::GitContext  => Tools::LLM::GitContext,
+      Tools::AstEdit     => Tools::LLM::AstEdit,
+    }.freeze
+
+    def build_llm_tools
+      @tools.filter_map do |t|
+        wrapper = LLM_TOOL_MAP[t.class]
+        wrapper&.new(t)
+      end
+    rescue => e
+      @bus&.publish("agent:llm_tools_error", error: e.message)
+      []
+    end
   end
 end

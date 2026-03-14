@@ -4,7 +4,7 @@ require "yaml"
 require "fileutils"
 
 module Master
-  # Persistent cross-session memory store.
+  # Persistent cross-session memory store with TF-IDF semantic search.
   # Stored at .master/memory.yml — survives restarts.
   class Memory
     def initialize(root: Dir.pwd)
@@ -18,8 +18,6 @@ module Master
     end
 
     # Keys are always stored and retrieved as strings.
-    # Symbol fallback removed: YAML safe_load with symbolize_names: false guarantees
-    # string keys, so a symbol lookup would never match and could mask missing entries.
     def recall(key)
       @store.dig(key.to_s, "value")
     end
@@ -38,6 +36,25 @@ module Master
       "Memory:\n#{lines.join("\n")}"
     end
 
+    # TF-IDF ranked search across all memory entries.
+    # Returns array of {key:, value:, score:} hashes, highest score first.
+    def semantic_recall(query, top_n: 3)
+      return [] if @store.empty?
+
+      query_terms = tokenize(query)
+      return [] if query_terms.empty?
+
+      scored = @store.filter_map do |key, data|
+        value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
+        doc   = "#{key} #{value}"
+        score = tfidf_score(query_terms, tokenize(doc))
+        next if score.zero?
+        { key: key, value: value, score: score }
+      end
+
+      scored.sort_by { |e| -e[:score] }.first(top_n)
+    end
+
     private
 
     def load_store
@@ -50,6 +67,17 @@ module Master
     def persist
       FileUtils.mkdir_p(File.dirname(@path))
       File.write(@path, @store.to_yaml)
+    end
+
+    def tokenize(text)
+      text.downcase.scan(/\b[a-z]{2,}\b/)
+    end
+
+    # Log-weighted term frequency similarity — no external gem required.
+    def tfidf_score(query_terms, doc_terms)
+      return 0.0 if doc_terms.empty?
+      freq = doc_terms.tally
+      query_terms.sum { |t| Math.log(1.0 + freq.fetch(t, 0).to_f) }
     end
   end
 end

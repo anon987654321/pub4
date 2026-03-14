@@ -4,6 +4,8 @@
 routing:
   enabled: true
   strategy: weighted
+  escalation_enabled: true
+  escalation_tier: strong
 
 weights:
   quality: 0.45
