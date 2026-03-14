@@ -1,5 +1,5 @@
-# Optional [P] model routing profile restored from MASTER2 concepts.
-# Kernel remains unchanged; router is advisory and can be disabled in config.
+# Optional [P] model routing profile.
+# Kernel unchanged; router advisory, can be disabled with routing.enabled: false.
 
 routing:
   enabled: true
@@ -27,16 +27,14 @@ models:
   cheap:
     - id: nvidia/nemotron-nano-12b-v2-vl:free
       score: { quality: 0.82, speed: 0.85, cost: 1.00 }
-    - id: nvidia/nemotron-nano-12b-v2-vl:free
-      score: { quality: 0.73, speed: 0.82, cost: 1.00 }
     - id: google/gemma-3-4b-it:free
       score: { quality: 0.70, speed: 0.79, cost: 1.00 }
 
   strong:
-    - id: anthropic/claude-sonnet-4-6
+    - id: anthropic/claude-sonnet-4.6
       score: { quality: 0.96, speed: 0.78, cost: 0.52 }
-    - id: openai/gpt-5.2
-      score: { quality: 0.94, speed: 0.75, cost: 0.45 }
+    - id: openai/gpt-4o
+      score: { quality: 0.88, speed: 0.80, cost: 0.48 }
 
   local:
     - id: llama3.1:8b-instruct-q4_K_M
@@ -45,7 +43,7 @@ models:
 routes:
   code_generation: strong
   architecture: strong
-  review: fast
+  review: strong
   summarization: fast
   exploration: cheap
   fallback_default: cheap
