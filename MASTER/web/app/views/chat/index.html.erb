@@ -226,6 +226,10 @@
 
     @keyframes overlay-pulse{0%,100%{opacity:.4;}50%{opacity:.8;}}
 
+    @media (prefers-reduced-motion: reduce){
+      #status,#ui,#input-field,#attach-btn,.arrow,#overlay,.chip,.hint{transition:none !important;animation:none !important;}
+    }
+
     #chat-log{
       display:none;
       position:fixed;
@@ -301,6 +305,12 @@
     const MASTER_TOKEN='x';
     const COMPAT_LABEL="master or+rep";
     const TTS_BACKEND_KEY="master_tts_backend";
+    const cpuCores=navigator.hardwareConcurrency||4;
+    const deviceMemoryGb=navigator.deviceMemory||4;
+    const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowPowerMode=reduceMotion||cpuCores<=4||deviceMemoryGb<=2||window.innerWidth<420;
+    const targetFps=lowPowerMode?30:60;
+    const frameStepMs=1000/targetFps;
 
     // Chat log helpers with localStorage persistence
     const CHAT_KEY='m2_chat';
@@ -395,7 +405,7 @@ const renderMd = raw => {
       S=Math.min(W,H)/100;
       canvas.width=W;
       canvas.height=H;
-      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingEnabled=!lowPowerMode;
     };
     window.addEventListener('resize',resize);
     window.addEventListener('orientationchange',()=>setTimeout(resize,100));
@@ -1375,7 +1385,7 @@ const renderMd = raw => {
       touching=true;
     };
 
-    window.addEventListener('mousemove',handleTouch);
+    if(!lowPowerMode) window.addEventListener('mousemove',handleTouch);
     window.addEventListener('touchmove',handleTouch,{passive:true});
     window.addEventListener('touchstart',handleTouch,{passive:true});
     window.addEventListener('touchend',()=>{touching=false;});
@@ -1558,7 +1568,7 @@ const renderMd = raw => {
       if(e.key==='ArrowRight')setOrb(currentOrb+1);
     });
 
-    const N=2000;
+    const N=lowPowerMode?900:2000;
     const neurons=[];
 
     class Neuron{
@@ -1929,16 +1939,26 @@ const renderMd = raw => {
     const ringPulses=[]; // motion graphics: ring events {r,maxR,a,col}
     let scanPhase=0;
     let camX=0,camY=0;
-    const animate=()=>{
+    let lastFrameTime=0;
+    const proj=[];
+    const animate=(now=0)=>{
       requestAnimationFrame(animate);
-      t+=0.016;
+      if(now-lastFrameTime<frameStepMs) return;
+      const dt=Math.min(0.05,(now-lastFrameTime)/1000||0.016);
+      lastFrameTime=now;
+      t+=dt;
       speechPulse*=0.92;
       // #6: Smooth orb crossfade
       if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
 
       // Cinematic camera drift — slow, organic
-      camX=Math.sin(t*0.13)*8+Math.sin(t*0.31)*3;
-      camY=Math.cos(t*0.17)*5+Math.cos(t*0.23)*2;
+      if(lowPowerMode){
+        camX=Math.sin(t*0.1)*3;
+        camY=Math.cos(t*0.12)*2;
+      }else{
+        camX=Math.sin(t*0.13)*8+Math.sin(t*0.31)*3;
+        camY=Math.cos(t*0.17)*5+Math.cos(t*0.23)*2;
+      }
 
       if(analyser){
         analyser.getByteFrequencyData(dataArray);
@@ -1961,7 +1981,11 @@ const renderMd = raw => {
       ctx.fillRect(0,0,W,H);
 
       for(const n of neurons) n.update(t,orbStates[currentOrb].s);
-      const proj=neurons.map(n=>n.project()).filter(Boolean);
+      proj.length=0;
+      for(const n of neurons){
+        const p=n.project();
+        if(p) proj.push(p);
+      }
       proj.sort((a,b)=>b.z-a.z);
 
       // Dark crimson-to-ember palette — reddish, fades to black
@@ -2002,16 +2026,18 @@ const renderMd = raw => {
       ctx.globalAlpha=0.14;
       ctx.strokeStyle=isProcessing?'#3d1a04':(isSpeaking?'#4a1010':'#2a0808');
       ctx.lineWidth=0.8;
-      for(let i=0;i<proj.length-9;i+=9){
+      const linkStep=lowPowerMode?18:9;
+      const lineJitter=lowPowerMode?1.5:4;
+      for(let i=0;i<proj.length-linkStep;i+=linkStep){
         const a=proj[i];
-        const b=proj[i+9];
+        const b=proj[i+linkStep];
         if(!a||!b) continue;
         if(a.think<0.2&&b.think<0.2) continue;
         const dx=a.x-b.x;
         const dy=a.y-b.y;
         if(dx*dx+dy*dy>900) continue;
-        const mx=(a.x+b.x)/2+(Math.random()-0.5)*4;
-        const my=(a.y+b.y)/2+(Math.random()-0.5)*4;
+        const mx=(a.x+b.x)/2+(Math.random()-0.5)*lineJitter;
+        const my=(a.y+b.y)/2+(Math.random()-0.5)*lineJitter;
         ctx.beginPath();
         ctx.moveTo(a.x,a.y);
         ctx.quadraticCurveTo(mx,my,b.x,b.y);
