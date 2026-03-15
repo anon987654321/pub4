@@ -1,98 +1,162 @@
 #!/usr/bin/env zsh
 emulate -L zsh
-setopt err_return no_unset pipe_fail extended_glob warn_create_global
+setopt err_return no_unset pipe_fail
 
-# Privcam — private webcam streaming (TCPServer, port 10005)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="${RAILS_APP_DIR:-/home/dev/rails}"
+APP_NAME="privcam"
+RAILS_VERSION="7.1.3"
+BASE_DIR="${RAILS_BASE_DIR:-/home/dev/rails}"
 
-typeset -r APP_NAME="privcam"
-typeset -r APP_PORT=10005
-typeset -r APP_DIR="/home/${APP_NAME}/app"
+SERVER_IP="185.52.176.18"
+APP_PORT="3000"
 
-echo "==> [${APP_NAME}] writing falcon.rb on :${APP_PORT}"
+# Define log function
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" >&2
+}
 
-mkdir -p "${APP_DIR}/config"
+# Check if shared functions file exists
+SHARED_SCRIPT="${SCRIPT_DIR}/@shared_functions.sh"
+if [[ ! -f "${SHARED_SCRIPT}" ]]; then
+    log "Shared functions script not found: ${SHARED_SCRIPT}"
+    exit 1
+fi
+source "${SHARED_SCRIPT}"
 
-cat > "${APP_DIR}/config/falcon.rb" << 'FALCONEOF'
+command_exists "rails" || { log "Rails not found"; exit 1; }
+command_exists "node" || { log "Node.js not found"; exit 1; }
+command_exists "psql" || { log "PostgreSQL not found"; exit 1; }
+
+# Check database connectivity with better error handling
+if ! psql -h localhost -U postgres -l > /dev/null 2>&1; then
+    log "Cannot connect to PostgreSQL. Please check database configuration."
+    log "Ensure PostgreSQL is running and credentials are correct."
+    exit 1
+fi
+
+# Install required gems using bundle to ensure version locking
+log "Installing required gems..."
+if command_exists "bundle"; then
+    # Add gems to Gemfile if not already present with proper version checking
+    for gem_spec in "faker:2.23.0" "pagy:8.0.2" "stimulus_reflex:3.5.0"; do
+        gem_name="${gem_spec%:*}"
+        gem_version="${gem_spec#*:}"
+        if ! grep -q "gem ['\"]${gem_name}['\"][^>]*['\"]${gem_version}['\"]" Gemfile 2>/dev/null &&
+           ! grep -q "gem ['\"]${gem_name}['\"]" Gemfile 2>/dev/null; then
+            echo "gem '${gem_name}', '${gem_version}'" >> Gemfile
+            log "Added ${gem_name} ${gem_version} to Gemfile"
+        fi
+    done
+    bundle install || { log "Failed to install gems via bundle"; exit 1; }
+else
+    log "Bundler not found, falling back to gem install"
+    for gem_spec in "faker:2.23.0" "pagy:8.0.2" "stimulus_reflex:3.5.0"; do
+        gem_name="${gem_spec%:*}"
+        gem_version="${gem_spec#*:}"
+        if ! gem list -i "${gem_name}" -v "${gem_version}" > /dev/null 2>&1; then
+            gem install "${gem_name}" -v "${gem_version}" || { log "Failed to install ${gem_name}"; exit 1; }
+        fi
+    done
+fi
+
+# Patch ApplicationController with Pagy::Backend (idempotent)
+if [[ -f "app/controllers/application_controller.rb" ]]; then
+    if ! grep -q "include Pagy::Backend" "app/controllers/application_controller.rb"; then
+        # Create backup and patch safely
+        cp "app/controllers/application_controller.rb" "app/controllers/application_controller.rb.bak"
+        sed -i '/class ApplicationController < ActionController::Base/a \  include Pagy::Backend' "app/controllers/application_controller.rb"
+        if grep -q "include Pagy::Backend" "app/controllers/application_controller.rb"; then
+            log "Successfully patched ApplicationController with Pagy::Backend"
+            rm "app/controllers/application_controller.rb.bak"
+        else
+            log "Failed to patch ApplicationController, restoring backup"
+            mv "app/controllers/application_controller.rb.bak" "app/controllers/application_controller.rb"
+            exit 1
+        fi
+    else
+        log "ApplicationController already includes Pagy::Backend"
+    fi
+else
+    log "ApplicationController not found, skipping Pagy patch"
+    exit 1
+fi
+
+# Improved Active Storage check with exception handling
+if ! rails runner 'begin; puts ActiveRecord::Base.connection.table_exists?("active_storage_blobs"); rescue => e; puts "ERROR: #{e.message}"; exit 1; end' 2>/dev/null | grep -q "true"; then
+    log "Active Storage not set up or database error occurred"
+    exit 1
+fi
+
+# Enhanced scaffold generation with better error checking
+log "Generating Post scaffold..."
+if ! rails generate scaffold Post title:string content:text; then
+    log "Failed to generate Post scaffold"
+    exit 1
+fi
+
+# Improved seed check with proper error handling
+if ! rails runner 'exit(Post.any? ? 0 : 1)' 2>/dev/null; then
+    log "No posts found in database, running seeds..."
+    if ! rails db:seed; then
+        log "Failed to seed database"
+        exit 1
+    fi
+fi
+
+# Add proper exit codes for all error conditions
+exit 0
+
+# --- Fixed-port socket server + rc.d setup (appended) ---
+APP_NAME="privcam"
+APP_PORT=10005
+APP_DIR="/home/${APP_NAME}/app"
+
+# Write falcon.rb (pure Ruby stdlib socket server, no gem deps)
+cat > /tmp/falcon_${APP_NAME}.rb << 'FALCONEOF'
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 require "socket"
 
-HTML = <<~HTML
-  <!DOCTYPE html>
-  <html lang="no">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>privcam</title>
-    <style>
-      :root {
-        --bg: #0d0d0d; --surface: #1a1a1a; --surface-alt: #222;
-        --primary: #e11d48; --primary-dark: #be123c; --accent: #fb7185; --live: #22c55e;
-        --text: #f3f4f6; --text-dim: #6b7280; --border: #2d2d2d; --radius: 10px;
-      }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
-      header { background: #000; border-bottom: 1px solid var(--border); padding: .85rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-      .logo { font-size: 1.3rem; font-weight: 800; color: var(--primary); letter-spacing: -.03em; }
-      nav a { margin-left: 1.25rem; color: var(--text-dim); font-size: .85rem; text-decoration: none; }
-      nav a:hover { color: var(--text); }
-      main { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1rem; }
-      h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 1rem; }
-      .camera-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-      .camera-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; transition: border-color .2s; }
-      .camera-card:hover { border-color: var(--primary); }
-      .camera-thumb { width: 100%; aspect-ratio: 16/9; background: #000; display: flex; align-items: center; justify-content: center; position: relative; }
-      .live-badge { position: absolute; top: .5rem; left: .5rem; background: var(--live); color: #fff; font-size: .65rem; font-weight: 700; padding: .15rem .5rem; border-radius: 4px; }
-      .camera-info { padding: .75rem 1rem; }
-      .camera-info .name { font-weight: 600; font-size: .9rem; }
-      .camera-info .meta { color: var(--text-dim); font-size: .8rem; margin-top: .25rem; }
-      .cta { display: inline-block; padding: .55rem 1.25rem; background: var(--primary); color: #fff; border-radius: 6px; font-size: .875rem; text-decoration: none; margin-top: 1.5rem; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <span class="logo">privcam</span>
-      <nav><a href="/browse">browse</a><a href="/stream">go live</a><a href="/login">logg inn</a></nav>
-    </header>
-    <main>
-      <h1>private streaming</h1>
-      <div class="camera-grid">
-        <div class="camera-card">
-          <div class="camera-thumb"><span class="live-badge">LIVE</span></div>
-          <div class="camera-info"><div class="name">Room 1</div><div class="meta">0 viewers</div></div>
-        </div>
-      </div>
-      <a class="cta" href="/signup">start streaming</a>
-    </main>
-  </body>
-  </html>
-HTML
+BODY = "<!DOCTYPE html><html><head><meta charset=utf-8><title>privcam</title>" \
+       "<style>body{font:16px/1.6 system-ui,sans-serif;max-width:700px;margin:60px auto;padding:20px}</style>" \
+       "</head><body><h1>privcam</h1></body></html>"
+RESP = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: #{BODY.bytesize}\r\nConnection: close\r\n\r\n#{BODY}"
 
-RESP = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: #{HTML.bytesize}\r\nConnection: close\r\n\r\n#{HTML}"
 trap("TERM") { exit }
 trap("INT")  { exit }
-TCPServer.new("0.0.0.0", 10005).tap do |s|
+
+TCPServer.new("0.0.0.0", 10005).tap { |s|
   $stdout.puts "privcam on 10005"; $stdout.flush
   loop { c = s.accept; c.recv(4096) rescue nil; c.print(RESP) rescue nil; c.close rescue nil }
-end
+}
 FALCONEOF
 
-chown -R ${APP_NAME}:${APP_NAME} "${APP_DIR}"
+doas -u root mkdir -p /home/${APP_NAME}/app/config
+doas -u root tee /home/${APP_NAME}/app/config/falcon.rb < /tmp/falcon_${APP_NAME}.rb > /dev/null
+doas -u root chown -R ${APP_NAME}:${APP_NAME} /home/${APP_NAME}/app/config/falcon.rb 2>/dev/null || true
 
-cat > "/etc/rc.d/${APP_NAME}" << 'RCDEOF'
+# Write rc.d service script
+cat > /tmp/rc_${APP_NAME} << 'RCDEOF'
 #!/bin/ksh
+
 daemon="/usr/local/bin/ruby34"
 daemon_flags="/home/privcam/app/config/falcon.rb"
 daemon_user="privcam"
 daemon_timeout=30
+
 . /etc/rc.d/rc.subr
+
 pexp="ruby34 /home/privcam/app/config/falcon.rb"
 rc_bg=YES
 rc_reload=NO
+
 rc_cmd $1
 RCDEOF
 
-chmod 755 "/etc/rc.d/${APP_NAME}"
-rcctl enable ${APP_NAME}
-rcctl restart ${APP_NAME} || rcctl start ${APP_NAME}
-echo "==> [${APP_NAME}] done"
+doas -u root tee /etc/rc.d/${APP_NAME}_rails < /tmp/rc_${APP_NAME} > /dev/null
+doas -u root chmod 755 /etc/rc.d/${APP_NAME}_rails
+
+# Enable and start service
+doas -u root rcctl enable ${APP_NAME}_rails
+doas -u root rcctl start ${APP_NAME}_rails
