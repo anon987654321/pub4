@@ -4,7 +4,7 @@ module Master
   module Scan
     module Rules
       class GodClassRule < Rule
-        THRESHOLD = 300
+        THRESHOLD = 200
 
         def initialize
           super

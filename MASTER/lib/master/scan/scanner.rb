@@ -5,14 +5,15 @@ module Master
     class Scanner
       DEPTH_RULES = {
         quick:    %w[frozen_string bare_rescue],
-        standard: %w[frozen_string bare_rescue long_method],
+        standard: %w[frozen_string bare_rescue explicit immutable cqs self_explaining
+                     long_method god_class duplicate_code strunk srp pola],
         hunt:     :all,
         critique: :all,
         deep:     :all
       }.freeze
 
       def initialize(rules: nil, event_bus: nil)
-        @rules = rules || load_rules
+        @rules = rules || []
         @bus   = event_bus
       end
 
@@ -25,7 +26,7 @@ module Master
 
         @bus&.publish("scan:complete", path:, depth:, count: findings.size)
         Result.ok(findings)
-      rescue => e
+      rescue StandardError => e
         @bus&.publish("scan:error", path:, error: e.message)
         Result.err("scan failed: #{e.message}", category: :unknown)
       end
@@ -36,22 +37,17 @@ module Master
         Result.ok(results)
       end
 
-def add_rule(rule)
-  @rules << rule
-  self
-end
-
-def set_agent(agent)
-  @rules.each { |r| r.set_agent(agent) if r.respond_to?(:set_agent) }
-  self
-end
-
-private
-
-
-      def load_rules
-        @rules ||= Rule.registry.map(&:new)
+      def add_rule(rule)
+        @rules << rule
+        self
       end
+
+      def set_agent(agent)
+        @rules.each { |r| r.set_agent(agent) if r.respond_to?(:set_agent) }
+        self
+      end
+
+      private
 
       def active_rules(depth)
         allowed = DEPTH_RULES[depth]

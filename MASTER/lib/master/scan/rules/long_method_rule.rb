@@ -4,7 +4,7 @@ module Master
   module Scan
     module Rules
       class LongMethodRule < Rule
-        THRESHOLD = 20
+        THRESHOLD = 15
 
         def initialize
           super
@@ -34,7 +34,7 @@ module Master
                 if length > THRESHOLD
                   findings << finding(
                     line: method_start,
-                    message: "method #{method_name} is #{length} lines (threshold: #{THRESHOLD})"
+                    message: "method #{method_name} is #{length} lines (threshold: #{THRESHOLD}) — extract responsibilities"
                   )
                 end
                 method_start = nil

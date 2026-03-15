@@ -55,6 +55,8 @@ module Master
     scanner.add_rule(Scan::Rules::GodClassRule.new)
     scanner.add_rule(Scan::Rules::DuplicateCodeRule.new)
     scanner.add_rule(Scan::Rules::StrunkRule.new)
+    scanner.add_rule(Scan::Rules::SrpRule.new)
+    scanner.add_rule(Scan::Rules::PolaRule.new)
     scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
     scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
     swarm        = Swarm::Coordinator.new(agent:, event_bus: bus)
