@@ -119,7 +119,9 @@ module Master
       Tools::Zsh.new(root:, governor:, event_bus: bus),
       Tools::Replace.new(root:, governor:, event_bus: bus),
       Tools::GitContext.new(root:, event_bus: bus),
-      Tools::AstEdit.new(root:, undo:, event_bus: bus)
+      Tools::AstEdit.new(root:, undo:, event_bus: bus),
+      Tools::Tree.new(root:, event_bus: bus),
+      Tools::Clean.new(root:, governor:, event_bus: bus)
     ]
   end
 
