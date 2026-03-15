@@ -12,7 +12,6 @@ Key concepts:
 """
 
 import os
-import json
 import yaml
 import logging
 from datetime import datetime, timedelta
@@ -20,7 +19,6 @@ from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
-from collections import defaultdict
 import re
 
 from openai import OpenAI
@@ -326,7 +324,7 @@ class PolicyViolation(Exception):
 
 def get_human_approval(action: Action) -> bool:
     """Get human approval for an action (interactive prompt)"""
-    print(f"\n⏸️  APPROVAL REQUIRED")
+    print("\n⏸️  APPROVAL REQUIRED")
     print(f"   Action: {action.name}")
     print(f"   Args: {action.kwargs}")
     response = input("   Approve? [y/N]: ").strip().lower()

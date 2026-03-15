@@ -1,6 +1,8 @@
 """Research Planner using Gemini Interactions API - demonstrates stateful conversations, model mixing, and background execution."""
 
-import streamlit as st, time, re
+import streamlit as st
+import time
+import re
 from google import genai
 
 def get_text(outputs): return "\n".join(o.text for o in (outputs or []) if hasattr(o, 'text') and o.text) or ""
@@ -57,7 +59,7 @@ if st.session_state.plan_text:
     if st.button("🚀 Start Deep Research", type="primary", disabled=not selected):
         with st.spinner("Researching (2-5 min)..."):
             try:
-                i = client.interactions.create(agent="deep-research-pro-preview-12-2025", input=f"Research these tasks thoroughly with sources:\n\n" + "\n\n".join(selected), previous_interaction_id=st.session_state.plan_id, background=True, store=True)
+                i = client.interactions.create(agent="deep-research-pro-preview-12-2025", input="Research these tasks thoroughly with sources:\n\n" + "\n\n".join(selected), previous_interaction_id=st.session_state.plan_id, background=True, store=True)
                 i = wait_for_completion(client, i.id)
                 st.session_state.research_id, st.session_state.research_text = i.id, get_text(i.outputs) or f"Status: {i.status}"
                 st.rerun()
