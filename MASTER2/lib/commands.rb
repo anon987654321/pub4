@@ -527,6 +527,13 @@ module MASTER
       lowered = text.downcase
       return text if lowered.empty?
 
+      # Compound maintenance request: deep trace + ReAct loop + global autofix.
+      if lowered.match?(/\bdeep\s+execution\s+trace\b/) &&
+         lowered.match?(/\breact\s+loop\b/) &&
+         lowered.match?(/\bautofix\s+all\b/)
+        return "selfrun --apply\npattern react\nfix --all"
+      end
+
       # Natural-language self-refactor requests
       if lowered.match?(/\b(self[\s-]?run|run .* through itself|refactor .* every|rewrite .* every|all files|entire repo|codebase)\b/)
         if lowered.match?(/\b(strict|axiom|every|all|entire|iterative|loop|diminishing)\b/)
