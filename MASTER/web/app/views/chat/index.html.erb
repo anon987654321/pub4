@@ -1531,9 +1531,22 @@ const renderMd = raw => {
           return;
         }
         uiLabel.textContent='Thinking\u2026';
+        // Streaming placeholder — text appears word-by-word as it arrives
+        const _msgEl=document.createElement('div');
+        _msgEl.className='entry master';
+        chatLog.appendChild(_msgEl);
         const reader=resp.body.getReader();
         const dec=new TextDecoder();
-        let buf='';let fullText='';
+        let buf='';let fullText='';let _spkBuf='';
+        // Progressive TTS: speak each sentence as it completes
+        const _speakFlush=(force)=>{
+          let m;
+          while((m=_spkBuf.match(/^([\s\S]+?[.!?\u2026](?:\s|$))([\s\S]*)$/))){
+            const s=m[1].trim();_spkBuf=m[2];
+            if(s.length>3) speakBrowser(s);
+          }
+          if(force&&_spkBuf.trim().length>3){speakBrowser(_spkBuf.trim());_spkBuf='';}
+        };
         while(true){
           const{value,done}=await reader.read();
           if(done)break;
@@ -1544,17 +1557,27 @@ const renderMd = raw => {
             const chunk=line.slice(6);
             if(chunk==='[DONE]')break;
             fullText+=chunk;
+            _spkBuf+=chunk;
+            _msgEl.textContent=fullText;
+            chatLog.scrollTop=chatLog.scrollHeight;
+            _speakFlush(false);
           }
         }
+        _speakFlush(true);
+        // Final: render markdown, persist
         const reply=fullText.trim();
-        logAppend('master',reply);
+        _msgEl.innerHTML=renderMd(reply);
+        chatLog.scrollTop=chatLog.scrollHeight;
+        try{
+          const stored=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
+          stored.push({r:'master',t:reply});
+          if(stored.length>MAX_STORED) stored.splice(0,stored.length-MAX_STORED);
+          localStorage.setItem(CHAT_KEY,JSON.stringify(stored));
+        }catch(_){}
         uiLabel.textContent=reply.slice(0,40);
         const uiEl=document.getElementById('ui');
         uiEl.classList.add('highlight');
         setTimeout(()=>uiEl.classList.remove('highlight'),2000);
-        pauseAmbient();
-        if('speechSynthesis' in window)window.speechSynthesis.cancel();
-        speakWithAudio(reply).then(()=>scheduleAmbient());
         isProcessing=false;
         statusEl.classList.remove('processing');
         spawnRing(Math.min(W,H)*0.44,'#7a2020');

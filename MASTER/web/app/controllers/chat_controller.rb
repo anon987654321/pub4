@@ -52,10 +52,8 @@ class ChatController < ApplicationController
                "ERROR: #{result.message}"
              end
 
-      text.to_s.split(" ").each do |word|
-        sse.write("data: #{word} \n\n")
-        sleep 0.03
-      end
+      # Send full text in one SSE event — no artificial word delay
+      sse.write("data: #{text.to_s.gsub("\n", " ")}\n\n")
       sse.write("data: [DONE]\n\n")
     rescue => e
       sse.write("data: ERROR: #{e.message}\n\n")
