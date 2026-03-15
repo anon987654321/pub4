@@ -100,12 +100,14 @@ module Master
   end
 
   def self.default_model
-    if ENV["OPENROUTER_API_KEY"].to_s.length > 10
-      "nvidia/nemotron-nano-12b-v2-vl:free"
-    elsif ENV["ANTHROPIC_API_KEY"].to_s.length > 10
+    if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
       "claude-sonnet-4-6"
-    else
+    elsif ENV["OPENROUTER_API_KEY"].to_s.length > 10
+      "anthropic/claude-sonnet-4-5"
+    elsif ENV["OPENAI_API_KEY"].to_s.length > 10
       "gpt-4o"
+    else
+      raise "No tool-capable LLM API key found. Set ANTHROPIC_API_KEY or OPENROUTER_API_KEY."
     end
   end
 
