@@ -52,6 +52,7 @@ module Master
           ids  = []
           ids += data.dig("kernel")&.keys || []
           ids += (data.dig("philosophy", "prioritized_top_25") || []).map { |a| a["id"] }
+          ids += (data.dig("ux", "nielsen_heuristics") || []).map { |a| a["id"] }
           ids.map(&:to_s).uniq
         rescue StandardError
           []

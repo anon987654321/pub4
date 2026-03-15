@@ -122,3 +122,49 @@ philosophy:
     - "Optimize for programmer happiness"
     - "The menu is omakase"
     - "Value integrated systems"
+
+# Nielsen Norman Group — 10 Usability Heuristics
+# Source: nngroup.com/articles/ten-usability-heuristics/
+# Applied to CLI/API/output design as much as UI.
+ux:
+  nielsen_heuristics:
+    - id: SYSTEM_STATUS
+      priority: 1
+      statement: "Always keep the user informed about what is happening through timely feedback."
+      code_mapping: "Progress indicators, streaming output, non-silent background operations."
+    - id: REAL_WORLD_MATCH
+      priority: 2
+      statement: "Speak the user's language. Match concepts to their mental model, not the system's internals."
+      code_mapping: "Error messages in plain language; command names matching intent, not implementation."
+    - id: USER_CONTROL
+      priority: 3
+      statement: "Support undo and emergency exits. Users make mistakes."
+      code_mapping: "Every write operation must be reversible. Undo stack. Dry-run modes."
+    - id: CONSISTENCY
+      priority: 4
+      statement: "Follow conventions. Same word means same thing everywhere."
+      code_mapping: "Uniform return types, consistent error shapes, one naming convention throughout."
+    - id: ERROR_PREVENTION
+      priority: 5
+      statement: "Design to prevent problems before they occur. Confirm destructive actions."
+      code_mapping: "Guard clauses, validation at boundaries, governor checks before writes."
+    - id: RECOGNITION_NOT_RECALL
+      priority: 6
+      statement: "Minimize memory load. Make options visible. Don't require users to remember context."
+      code_mapping: "Self-documenting APIs, --help text, named keyword arguments over positional."
+    - id: FLEXIBILITY
+      priority: 7
+      statement: "Serve both novices and experts. Accelerators for power users."
+      code_mapping: "Short commands with sensible defaults; full flags for expert control."
+    - id: AESTHETIC_MINIMALISM
+      priority: 8
+      statement: "Don't show irrelevant or rarely needed information. Every element must earn its place."
+      code_mapping: "Quiet by default, verbose on request. No noise in logs or output."
+    - id: ERROR_RECOVERY
+      priority: 9
+      statement: "Error messages must name the problem and suggest a fix in plain language."
+      code_mapping: "Result.err messages include what failed and what to do next."
+    - id: HELP_AND_DOCS
+      priority: 10
+      statement: "When help is needed it must be easy to find, concrete, and task-focused."
+      code_mapping: "/help command, inline examples, not abstract reference docs."

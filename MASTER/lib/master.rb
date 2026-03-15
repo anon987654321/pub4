@@ -59,6 +59,7 @@ module Master
     scanner.add_rule(Scan::Rules::PolaRule.new)
     scanner.add_rule(Scan::Rules::RubocopRule.new(root:))
     scanner.add_rule(Scan::Rules::ReekRule.new(root:))
+    scanner.add_rule(Scan::Rules::NielsenRule.new)
     scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
     scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
     swarm        = Swarm::Coordinator.new(agent:, event_bus: bus)
