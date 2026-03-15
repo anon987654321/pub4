@@ -421,6 +421,9 @@
     let recognition=null;
     let recognitionActive=false;
     let isSpeaking=false;
+    let activeSpeechSource=null;
+    let speechStartedAt=0;
+    let bargeInFrames=0;
     const nonstopVoice=true;
     let isProcessing=false;
     let padModulate=null;
@@ -1087,6 +1090,8 @@
     };
 
     const _onSpeakEnd=()=>{
+      activeSpeechSource=null;
+      bargeInFrames=0;
       isSpeaking=false;
       spawnRing(Math.min(W,H)*0.12,'#2a0a08');
       statusEl.classList.remove('speak');
@@ -1094,6 +1099,14 @@
       unduckPads();
       if(padModulate) padModulate('idle');
       if(nonstopVoice) startRecognition();
+    };
+
+    const interruptSpeechForUser=()=>{
+      if(!activeSpeechSource) return;
+      try{activeSpeechSource.onended=null;}catch(_e){}
+      try{activeSpeechSource.stop();}catch(_e){}
+      _onSpeakEnd();
+      uiLabel.textContent='Go ahead…';
     };
 
     // Split text into sentences for more natural pacing
@@ -1282,6 +1295,9 @@
         if('speechSynthesis' in window) window.speechSynthesis.cancel();
         const src=audioCtx.createBufferSource();
         src.buffer=decoded;
+        activeSpeechSource=src;
+        speechStartedAt=performance.now();
+        bargeInFrames=0;
         buildFxChain(src);
         isSpeaking=true; speechPulse=0.6;
         duckPads();
@@ -1927,7 +1943,13 @@
         let sum=0;
         for(let i=0;i<6;i++) sum+=dataArray[i];
         for(let i=6;i<12;i++) sum+=dataArray[i]*0.6;
-        audioLevel=Math.min(1,sum/9/255+speechPulse*0.45);
+        const micLevel=Math.min(1,sum/9/255);
+        audioLevel=Math.min(1,micLevel+speechPulse*0.45);
+        if(isSpeaking&&activeSpeechSource&&(performance.now()-speechStartedAt)>500){
+          if(micLevel>0.22) bargeInFrames+=1;
+          else bargeInFrames=Math.max(0,bargeInFrames-1);
+          if(bargeInFrames>=4) interruptSpeechForUser();
+        }
       }else{
         // Simulate syllable rhythm when speaking, pad breathing when idle
         if(isSpeaking) speechPulse=0.38+Math.abs(Math.sin(t*12.6))*0.42;

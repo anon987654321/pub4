@@ -32,4 +32,12 @@ class TestWebUiTemplate < Minitest::Test
     assert_includes html, "SpeechRecognition"
     assert_includes html, "webkitSpeechRecognition"
   end
+
+  def test_voice_barge_in_guard_present
+    html = File.read(TEMPLATE)
+    assert_includes html, "let activeSpeechSource=null;"
+    assert_includes html, "const interruptSpeechForUser=()=>"
+    assert_includes html, "if(bargeInFrames>=4) interruptSpeechForUser();"
+  end
+
 end
