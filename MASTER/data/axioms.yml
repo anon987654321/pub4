@@ -168,3 +168,43 @@ ux:
       priority: 10
       statement: "When help is needed it must be easy to find, concrete, and task-focused."
       code_mapping: "/help command, inline examples, not abstract reference docs."
+
+# Clean Code — Robert C. Martin
+# Principles beyond SOLID that shape method/class design at the micro level.
+clean_code:
+  - id: ONE_ABSTRACTION_LEVEL
+    statement: "Each function should operate at a single level of abstraction. No mixing high-level policy with low-level detail."
+  - id: NEWSPAPER_METAPHOR
+    statement: "Code reads top-to-bottom. Important declarations first, implementation detail below."
+  - id: STEPDOWN_RULE
+    statement: "Each function calls only functions one abstraction level below it."
+  - id: BOUNDARY_ISOLATION
+    statement: "Third-party code is wrapped at the edge. It never leaks into the domain."
+  - id: CLEAN_TESTS
+    statement: "Tests are first-class code: one concept per test, no production logic in tests."
+  - id: NO_MAGIC
+    statement: "No unexplained constants, flags, or mode switches. Everything is named."
+
+# Refactoring — Martin Fowler
+# Named code smells that each map to a specific extraction or restructuring.
+refactoring_smells:
+  - id: PRIMITIVE_OBSESSION
+    statement: "Replace repeated raw primitives (strings, ints as IDs) with value objects."
+  - id: MESSAGE_CHAIN
+    statement: "a.b.c.d breaks Law of Demeter — talk to immediate collaborators only."
+  - id: MIDDLE_MAN
+    statement: "A class delegating most methods to another should be eliminated or renamed."
+  - id: LAZY_CLASS
+    statement: "A class too small to justify its existence should be inlined."
+  - id: TEMP_FIELD
+    statement: "Instance variables set only in some execution paths are confusing — extract object."
+  - id: DIVERGENT_CHANGE
+    statement: "A class changed for multiple unrelated reasons violates SRP — split it."
+  - id: SHOTGUN_SURGERY
+    statement: "One conceptual change requiring edits across many files signals missing abstraction."
+  - id: INAPPROPRIATE_INTIMACY
+    statement: "Classes should not access each other's private data — enforce boundaries."
+  - id: ALTERNATIVE_CLASSES
+    statement: "Two classes doing the same thing under different names must be unified."
+  - id: SPECULATIVE_GENERALITY
+    statement: "Code written for hypothetical future needs that is never used — remove it."
