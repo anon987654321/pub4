@@ -61,7 +61,7 @@ module Master
       stdout, _stderr, _status = Open3.capture3("dmesg")
       raw = stdout.lines.first(18).map(&:chomp)
       raw.empty? ? ["dmesg unavailable"] : raw
-    rescue
+    rescue StandardError
       ["dmesg unavailable"]
     end
 

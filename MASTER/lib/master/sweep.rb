@@ -152,7 +152,7 @@ module Master
 
       response = @agent.ask(build_prompt(src, rel, lang))
       extract(response.to_s, lang)
-    rescue
+    rescue StandardError
       nil
     end
 
@@ -199,7 +199,7 @@ module Master
 
       r = @scanner.scan(path, depth: :deep)
       r.respond_to?(:value!) ? r.value!.size : 0
-    rescue
+    rescue StandardError
       0
     end
 
@@ -212,7 +212,7 @@ module Master
         r = @scanner.scan(f.path, depth: :deep)
         r.respond_to?(:value!) ? r.value!.size : 0
       end
-    rescue
+    rescue StandardError
       0
     end
 

@@ -60,7 +60,7 @@ module Master
     def load_store
       return {} unless File.exist?(@path)
       YAML.safe_load_file(@path, symbolize_names: false) || {}
-    rescue
+    rescue StandardError
       {}
     end
 
