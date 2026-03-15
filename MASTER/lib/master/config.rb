@@ -14,7 +14,7 @@ module Master
       "cache_ttl"   => 3600,
       "history_max" => 500,
       "reasoning_mode" => "direct",
-      "task_type" => "exploration",
+      "task_type" => "code_generation",
       "auto_testing" => false
     }.freeze
 

@@ -7,6 +7,27 @@ module Master
     DEFAULT_CONTEXT_SIZE = 16
     COST_PER_TOKEN       = 0.000_015
 
+    # Hard whitelist — only models confirmed to support function calling.
+    # MASTER depends on tools; a model that cannot call tools is useless here.
+    TOOL_CAPABLE_MODELS = %w[
+      claude
+      gpt-4
+      gpt-4o
+      gemini
+      mistral
+      mixtral
+      llama-3.1
+      llama-3.3
+      qwen
+      command-r
+      meta/meta-llama
+      anthropic/claude
+      openai/gpt-4
+      google/gemini
+    ].freeze
+
+    REPLICATE_BASE_URL = "https://api.replicate.com/v1".freeze
+
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
                    event_bus: nil, model_router: nil, reasoning_modes: nil,
                    memory: nil, personality: nil)
@@ -31,6 +52,7 @@ module Master
       @bus&.publish("llm:request", model: routed.first, tokens: message.bytesize / 4)
 
       last_response = routed.each_with_index do |selected_model, idx|
+        assert_tool_capable!(selected_model)
         cache_key = cache_prompt_for("#{selected_model}:#{prompt}", context)
         cb = @circuit_breaker.call(estimate_cost(message)) {
           @cache.fetch(cache_key, selected_model) { do_chat(prompt, selected_model, context:, stream:, &blk) }
@@ -44,7 +66,7 @@ module Master
       text = last_response.to_s
       @session.add_message(role: :assistant, content: text)
       Result.ok(text)
-    rescue => e
+    rescue StandardError => e
       Result.err("agent: #{e.message}", category: :unknown)
     end
 
@@ -54,13 +76,12 @@ module Master
     end
 
     # One-shot chat with a custom system prompt. No session, no circuit breaker.
-    # Used by Swarm::Worker subclasses — minimal context, need-to-know only.
     def chat_raw(prompt, system: nil)
       c = RubyLLM.chat(model: model)
       c.with_instructions(system) if system
       msg = c.ask(prompt.to_s)
       msg.respond_to?(:content) ? msg.content.to_s : msg.to_s
-    rescue => e
+    rescue StandardError => e
       raise "chat_raw: #{e.message}"
     end
 
@@ -84,6 +105,17 @@ module Master
       [@config.model]
     end
 
+    def assert_tool_capable!(selected_model)
+      return if tool_capable?(selected_model)
+      raise "Model '#{selected_model}' does not support function calling. " \
+            "MASTER requires tool-capable models. " \
+            "Configure ANTHROPIC_API_KEY, OPENAI_API_KEY, or use OpenRouter/Replicate with a capable model."
+    end
+
+    def tool_capable?(model_id)
+      TOOL_CAPABLE_MODELS.any? { |pattern| model_id.to_s.downcase.include?(pattern.downcase) }
+    end
+
     def apply_reasoning_mode(message)
       return message unless @reasoning_modes
       @reasoning_modes.wrap(message, mode: @config.reasoning_mode)
@@ -98,17 +130,21 @@ module Master
 
     def configure_ruby_llm
       RubyLLM.configure do |c|
-        c.anthropic_api_key  = ENV["ANTHROPIC_API_KEY"] if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
-        c.openai_api_key     = ENV["OPENAI_API_KEY"] if ENV["OPENAI_API_KEY"].to_s.length > 10
-        c.gemini_api_key     = ENV["GEMINI_API_KEY"] if ENV["GEMINI_API_KEY"].to_s.length > 10
+        c.anthropic_api_key  = ENV["ANTHROPIC_API_KEY"]  if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
+        c.openai_api_key     = ENV["OPENAI_API_KEY"]     if ENV["OPENAI_API_KEY"].to_s.length > 10
+        c.gemini_api_key     = ENV["GEMINI_API_KEY"]     if ENV["GEMINI_API_KEY"].to_s.length > 10
         c.openrouter_api_key = ENV["OPENROUTER_API_KEY"] if ENV["OPENROUTER_API_KEY"].to_s.length > 10
+
+        # Replicate OpenAI-compatible endpoint
+        if ENV["REPLICATE_API_KEY"].to_s.length > 10
+          c.openai_api_key  ||= ENV["REPLICATE_API_KEY"]
+          c.openai_api_base   = REPLICATE_BASE_URL
+        end
       end
     end
 
-    # Nemotron 3 Nano/Super use `enable_thinking` chat template kwarg.
-    # Older Llama-Nemotron variants use system prompt strings instead.
-    NEMOTRON3_RE       = /nemotron-3/i.freeze
-    LLAMA_NEMOTRON_RE  = /llama.*nemotron|nemotron.*llama/i.freeze
+    NEMOTRON3_RE      = /nemotron-3/i.freeze
+    LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
 
     def do_chat(message, selected_model, context:, stream:, &blk)
       if selected_model.start_with?("ferrum:webchat:")
@@ -131,7 +167,6 @@ module Master
     def extract_response(msg, selected_model)
       return msg.to_s unless msg.respond_to?(:content)
 
-      # Nemotron 3: thinking content arrives in reasoning_content, visible only at :deep mode.
       if NEMOTRON3_RE.match?(selected_model) && msg.respond_to?(:reasoning_content)
         thinking = msg.reasoning_content.to_s.strip
         content  = msg.content.to_s
@@ -171,15 +206,6 @@ module Master
 
     def estimate_cost(prompt) = (prompt.bytesize / 4) * COST_PER_TOKEN
 
-    # Map underlying tools to RubyLLM::Tool wrappers for function calling.
-    # Only enabled for models known to support the tools API.
-    TOOL_CAPABLE_RE = /claude|gpt-4|gemini|mistral/i.freeze
-
-    def llm_tools(selected_model = model)
-      return [] unless TOOL_CAPABLE_RE.match?(selected_model)
-      @llm_tools ||= build_llm_tools
-    end
-
     LLM_TOOL_MAP = {
       Tools::ReadFile    => Tools::LLM::ReadFile,
       Tools::WriteFile   => Tools::LLM::WriteFile,
@@ -193,12 +219,17 @@ module Master
       Tools::AstEdit     => Tools::LLM::AstEdit,
     }.freeze
 
+    def llm_tools(selected_model = model)
+      return [] unless tool_capable?(selected_model)
+      @llm_tools ||= build_llm_tools
+    end
+
     def build_llm_tools
       @tools.filter_map do |t|
         wrapper = LLM_TOOL_MAP[t.class]
         wrapper&.new(t)
       end
-    rescue => e
+    rescue StandardError => e
       @bus&.publish("agent:llm_tools_error", error: e.message)
       []
     end

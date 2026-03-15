@@ -1,5 +1,5 @@
-# Optional [P] model routing profile.
-# Kernel unchanged; router advisory, can be disabled with routing.enabled: false.
+# Model routing profile — tool-capable models only.
+# MASTER requires function calling. Non-tool models are banned.
 
 routing:
   enabled: true
@@ -8,8 +8,8 @@ routing:
   escalation_tier: strong
 
 weights:
-  quality: 0.45
-  speed: 0.30
+  quality: 0.50
+  speed: 0.25
   cost: 0.25
 
 fallback_policy:
@@ -20,32 +20,40 @@ fallback_policy:
     - refusal
 
 models:
-  fast:
-    - id: google/gemini-2.5-flash
-      score: { quality: 0.79, speed: 0.95, cost: 0.92 }
-    - id: qwen/qwen3-coder
-      score: { quality: 0.77, speed: 0.88, cost: 0.96 }
+  # Default — Claude Sonnet via OpenRouter. Tool-capable, excellent at code.
+  default:
+    - id: anthropic/claude-sonnet-4-5
+      score: { quality: 0.97, speed: 0.80, cost: 0.50 }
 
-  cheap:
-    - id: nvidia/nemotron-nano-12b-v2-vl:free
-      score: { quality: 0.82, speed: 0.85, cost: 1.00 }
-    - id: google/gemma-3-4b-it:free
-      score: { quality: 0.70, speed: 0.79, cost: 1.00 }
-
+  # Strong — for architecture, review, complex generation
   strong:
-    - id: anthropic/claude-sonnet-4.6
-      score: { quality: 0.96, speed: 0.78, cost: 0.52 }
+    - id: anthropic/claude-sonnet-4-5
+      score: { quality: 0.97, speed: 0.80, cost: 0.50 }
     - id: openai/gpt-4o
-      score: { quality: 0.88, speed: 0.80, cost: 0.48 }
+      score: { quality: 0.90, speed: 0.82, cost: 0.45 }
+    - id: google/gemini-2.5-pro
+      score: { quality: 0.93, speed: 0.75, cost: 0.40 }
 
-  local:
-    - id: llama3.1:8b-instruct-q4_K_M
-      score: { quality: 0.58, speed: 0.70, cost: 1.00 }
+  # Fast — for summarization, short tasks; still tool-capable
+  fast:
+    - id: anthropic/claude-haiku-4-5
+      score: { quality: 0.82, speed: 0.95, cost: 0.80 }
+    - id: google/gemini-2.5-flash
+      score: { quality: 0.79, speed: 0.95, cost: 0.85 }
+    - id: openai/gpt-4o-mini
+      score: { quality: 0.78, speed: 0.93, cost: 0.82 }
+
+  # Free fallback — DeepSeek-R1 supports tools, available free on OpenRouter
+  free:
+    - id: deepseek/deepseek-r1:free
+      score: { quality: 0.85, speed: 0.70, cost: 1.00 }
+    - id: deepseek/deepseek-chat:free
+      score: { quality: 0.80, speed: 0.75, cost: 1.00 }
 
 routes:
-  code_generation: strong
-  architecture: strong
-  review: strong
-  summarization: fast
-  exploration: cheap
-  fallback_default: cheap
+  code_generation:  strong
+  architecture:     strong
+  review:           strong
+  summarization:    fast
+  exploration:      fast
+  fallback_default: default
