@@ -6,8 +6,8 @@ require "open3"
 
 module Master
   class Renderer
-    TICK  = "✔".freeze
-    CROSS = "✘".freeze
+    TICK  = "\u2714".freeze
+    CROSS = "\u2718".freeze
 
     def initialize(config:)
       @config = config
@@ -27,16 +27,20 @@ module Master
 
     alias banner splash
 
-    def prompt_line(model, phase, last_ok: true)
+    def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil)
+      branch = git_branch
+      tok    = tokens && tokens > 0 ? @p.dim("#{tokens}t ") : ""
+      vbadge = violations > 0 ? @p.red("[#{violations}v] ") : ""
+      branch_str = branch ? "#{@p.dim("(")}#{@p.red(branch)}#{@p.dim(")")} " : ""
       dollar = last_ok ? @p.bright_red("$") : @p.red("$")
-      "#{@p.bold.red("master")}@#{@p.red(short_model(model))}#{dollar} "
+      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{tok}#{vbadge}#{dollar} "
     end
 
     def render(content, mode: :plain)
       case mode
       when :error   then "#{@p.red(CROSS)} #{@p.red(content)}"
       when :success then "#{@p.bright_red(TICK)} #{@p.bright_red(content)}"
-      when :warning then "#{@p.red("\!")} #{@p.red(content)}"
+      when :warning then @p.red("! #{content}")
       when :dim     then @p.dim(content.to_s)
       when :dmesg   then format_dmesg(content)
       else               content.to_s
@@ -55,6 +59,13 @@ module Master
 
     def short_model(model)
       model.to_s.split("/").last
+    end
+
+    def git_branch
+      out, _, status = Open3.capture3("git", "rev-parse", "--abbrev-ref", "HEAD")
+      status.success? ? out.strip : nil
+    rescue StandardError
+      nil
     end
 
     def dmesg_lines

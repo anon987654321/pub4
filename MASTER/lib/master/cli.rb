@@ -10,30 +10,31 @@ module Master
     attr_reader :container
 
     def initialize(container:)
-      @container = container
-      @session   = container[:session]
-      @agent     = container[:agent]
-      @renderer  = container[:renderer]
-      @logging   = container[:logging]
-      @undo      = container[:undo]
-      @config    = container[:config]
-      @pipeline  = container[:pipeline]
-      @scanner   = container[:scanner]
-      @root      = container[:root] || Dir.pwd
-      @reader    = TTY::Reader.new(track_history: true)
-      @running   = false
-      @ctrl_c_ts = 0
-      @last_ok   = true
-      @tts_on    = Speech.available? && @config["tts"] != false
+      @container   = container
+      @session     = container[:session]
+      @agent       = container[:agent]
+      @renderer    = container[:renderer]
+      @logging     = container[:logging]
+      @undo        = container[:undo]
+      @config      = container[:config]
+      @pipeline    = container[:pipeline]
+      @scanner     = container[:scanner]
+      @root        = container[:root] || Dir.pwd
+      @reader      = TTY::Reader.new(track_history: true)
+      @running     = false
+      @ctrl_c_ts   = 0
+      @last_ok     = true
+      @tts_on      = Speech.available? && @config["tts"] != false
+      @violations  = 0
+      @scan_thread = nil
     end
 
     def run(initial_message = nil)
       setup_signals
       @session.load! if @session.exists?
-      run_prescan if @config.prescan?
+      start_background_scan
 
       puts @renderer.splash(@agent.model)
-      report_violations
 
       process(initial_message) if initial_message
 
@@ -49,12 +50,17 @@ module Master
 
     def repl_loop
       while @running
-        print @renderer.prompt_line(@agent.model, @session.phase, last_ok: @last_ok)
+        tokens = @session.respond_to?(:token_est) ? @session.token_est : nil
+        print @renderer.prompt_line(
+          @agent.model, @session.phase,
+          last_ok: @last_ok, violations: @violations, tokens: tokens
+        )
         line = @reader.read_line("", echo: true).chomp rescue nil
         break if line.nil?
         next if line.strip.empty?
         handle_command(line) || process(line)
       end
+      @scan_thread&.kill
       @session.save!
     end
 
@@ -69,15 +75,69 @@ module Master
       when "tokens" then puts @renderer.render("session tokens: #{@session.token_est rescue "n/a"}", mode: :dim)
       when "save"   then @session.save!; puts @renderer.render("saved", mode: :success)
       when "dmesg"  then puts @logging.dmesg(50).split("\n").map { |l| @renderer.format_dmesg(l) }.join("\n")
+      when "scan"   then run_scan_command(args)
       when "tts"
         case args.first
         when "on"  then @tts_on = Speech.available?; puts @renderer.render("tts: #{@tts_on ? "on" : "unavailable"}", mode: :dim)
         when "off" then @tts_on = false;             puts @renderer.render("tts: off", mode: :dim)
         else            puts @renderer.render("tts: #{@tts_on ? "on" : "off"} -- /tts on|off", mode: :dim)
         end
-      else          return false  # falls through to pipeline -- Infer stage handles natural language
+      else          return false
       end
       true
+    end
+
+    def run_scan_command(args)
+      depth  = args.include?("deep") ? :deep : :standard
+      target = File.join(@root, "lib")
+      puts @renderer.render("scanning #{target} (#{depth})...", mode: :dim)
+
+      result = @scanner.scan_dir(target, depth:)
+      unless result.respond_to?(:ok?) && result.ok?
+        puts @renderer.render("scan failed", mode: :error)
+        return
+      end
+
+      by_rule = Hash.new { |h, k| h[k] = [] }
+      result.value!.each do |_file, r|
+        next unless r.respond_to?(:ok?) && r.ok?
+        r.value!.each { |v| by_rule[v[:rule].to_s] << v }
+      end
+
+      total = by_rule.values.sum(&:size)
+      @violations = total
+
+      if total.zero?
+        puts @renderer.render("clean -- no violations", mode: :success)
+        return
+      end
+
+      by_rule.sort_by { |_, vs| -vs.size }.each do |rule, vs|
+        puts @renderer.render("[#{rule}] #{vs.size}", mode: :dim)
+        vs.first(3).each { |v| puts "  L#{v[:line]}: #{v[:message][0, 90]}" }
+        puts "  ... +#{vs.size - 3} more" if vs.size > 3
+      end
+      puts @renderer.render("#{total} total violations", mode: :warning)
+    end
+
+    def start_background_scan
+      @scan_thread = Thread.new do
+        result = @scanner.scan_dir(File.join(@root, "lib"), depth: :standard)
+        next unless result.respond_to?(:ok?) && result.ok?
+
+        count = result.value!.sum { |_, r| r.respond_to?(:ok?) && r.ok? ? r.value!.size : 0 }
+        @violations = count
+
+        if count > 0
+          puts "\n#{@renderer.render("boot scan: #{count} violation(s) -- /scan for details", mode: :dim)}"
+          print @renderer.prompt_line(
+            @agent.model, @session.phase,
+            last_ok: @last_ok, violations: @violations
+          )
+        end
+      rescue StandardError => e
+        @logging&.warn("prescan: #{e.message}")
+      end
     end
 
     def process(input)
@@ -127,7 +187,7 @@ module Master
 
         played = try_paplay(mp3) || try_direct(mp3)
         @logging&.warn("tts: no audio output found") unless played
-      rescue => e
+      rescue StandardError => e
         @logging&.warn("tts: #{e.message}")
       ensure
         File.unlink(mp3) rescue nil if defined?(mp3) && mp3
@@ -137,8 +197,6 @@ module Master
     PULSE_SOCKET = "/tmp/pulse/native"
     PULSE_DAEMON = "/data/data/com.termux/files/usr/bin/pulseaudio"
 
-    # PulseAudio path: works on Termux/proot (Android) and Linux desktops.
-    # Converts mp3 to wav, auto-starts a pulse daemon if the socket is missing.
     def try_paplay(mp3)
       paplay = %w[
         /data/data/com.termux/files/usr/bin/paplay
@@ -180,7 +238,6 @@ module Master
       File.exist?(PULSE_SOCKET) ? PULSE_SOCKET : nil
     end
 
-    # Direct players: OpenBSD aucat, mpv, ffplay, aplay
     def try_direct(mp3)
       player = %w[aucat mpv ffplay aplay].find { |p| system("command -v #{p} > /dev/null 2>&1") }
       case player
@@ -192,29 +249,11 @@ module Master
       end
     end
 
-    def run_prescan
-      return if ENV["MASTER_PRESCAN"] == "false"
-    end
-
-    def report_violations
-      return unless @scanner
-
-      result = @scanner.scan_dir(@root, depth: :quick)
-      return unless result.respond_to?(:value!)
-
-      count = result.value!.sum { |_, r| r.respond_to?(:value!) ? r.value!.size : 0 }
-      return if count.zero?
-
-      puts @renderer.render(
-        "#{count} violation(s) in lib/ -- say 'fix all violations' to clean up",
-        mode: :dim
-      )
-    end
-
     def setup_signals
       trap("INT") {
         now = Time.now.to_f
         if now - @ctrl_c_ts < 1.0
+          @scan_thread&.kill
           @session.save!
           exit(0)
         else
@@ -238,7 +277,7 @@ module Master
         "  #{p.cyan("save")} / #{p.cyan("clear")} / #{p.cyan("exit")}         -- session management",
         "",
         "  #{p.dim("or just talk -- intent is inferred automatically.")}",
-        "  #{p.dim("explicit: /explain /persona /sweep /autoloop /council /tokens /undo /save /clear /exit")}",
+        "  #{p.dim("explicit: /scan /scan deep /explain /persona /sweep /autoloop /council /tts /tokens /undo /save /clear /exit")}",
         "",
       ]
       lines.join("\n")
