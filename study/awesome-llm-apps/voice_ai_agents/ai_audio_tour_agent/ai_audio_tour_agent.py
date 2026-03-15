@@ -2,14 +2,13 @@ import streamlit as st
 import asyncio
 from manager import TourManager
 from agents import set_default_openai_key
-import json
 
 def tts(text):
     from pathlib import Path
     from openai import OpenAI
 
     client = OpenAI()
-    speech_file_path = Path(__file__).parent / f"speech_tour.mp3"
+    speech_file_path = Path(__file__).parent / "speech_tour.mp3"
         
     response = client.audio.speech.create(
         model="gpt-4o-mini-tts",

@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-import asyncio
-import time
-import json
-from collections.abc import Sequence
 
 from rich.console import Console
 
-from agents import Runner, RunResult, custom_span, gen_trace_id, trace
+from agents import Runner, gen_trace_id, trace
 
 from agent import History, historical_agent
 from agent import Culinary,culinary_agent

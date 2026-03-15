@@ -54,7 +54,7 @@ class Tree:
                 if node.ControlTypeName in INTERACTIVE_CONTROL_TYPE_NAMES:
                     if is_element_visible(node) and is_element_enabled(node) and not is_element_image(node):
                         return True
-            except Exception as ex:
+            except Exception:
                 return False
             return False
         
@@ -71,7 +71,7 @@ class Tree:
         def is_element_enabled(node:Control):
             try:
                 return node.IsEnabled
-            except Exception as ex:
+            except Exception:
                 return False
         
         def is_element_image(node:Control):
@@ -85,7 +85,7 @@ class Tree:
                 if node.ControlTypeName in INFORMATIVE_CONTROL_TYPE_NAMES:
                     if is_element_visible(node) and is_element_enabled(node) and not is_element_image(node):
                         return True
-            except Exception as ex:
+            except Exception:
                 return False
             return False
         
@@ -93,7 +93,7 @@ class Tree:
             try:
                 scroll_pattern=node.GetScrollPattern()
                 return scroll_pattern.VerticallyScrollable or scroll_pattern.HorizontallyScrollable
-            except Exception as ex:
+            except Exception:
                 return False
             
         def tree_traversal(node: Control):

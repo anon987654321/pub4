@@ -1,5 +1,4 @@
 from typing import List, Dict, Optional
-from pathlib import Path
 import os
 from firecrawl import FirecrawlApp
 from qdrant_client import QdrantClient

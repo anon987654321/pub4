@@ -1,6 +1,5 @@
 from firecrawl import FirecrawlApp
 import streamlit as st
-import os
 import json
 from agno.agent import Agent
 from agno.run.agent import RunOutput

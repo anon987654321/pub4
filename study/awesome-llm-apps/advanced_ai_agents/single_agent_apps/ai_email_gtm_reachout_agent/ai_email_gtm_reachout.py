@@ -3,14 +3,13 @@ import os
 import streamlit as st
 from datetime import datetime
 from textwrap import dedent
-from typing import Dict, Iterator, List, Optional, Literal
+from typing import Dict, List, Optional, Literal
 
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.db.sqlite import SqliteDb
 from agno.tools.exa import ExaTools
 from agno.utils.log import logger
-from agno.utils.pprint import pprint_run_response
 from agno.workflow import Workflow
 from pydantic import BaseModel, Field
 
@@ -920,7 +919,7 @@ def main():
                                         )
                                     
                                     # Copy button
-                                    if st.button(f"📋 Copy Email", key=f"copy_{result['company_name']}_{results_count}", type="primary"):
+                                    if st.button("📋 Copy Email", key=f"copy_{result['company_name']}_{results_count}", type="primary"):
                                         st.success("📋 Email copied to clipboard!")
                                 
                                 with tab2:
@@ -972,7 +971,7 @@ def main():
                                         )
                                         
                                         # Copy contacts button
-                                        if st.button(f"📋 Copy Contacts", key=f"copy_contacts_{result['company_name']}_{results_count}"):
+                                        if st.button("📋 Copy Contacts", key=f"copy_contacts_{result['company_name']}_{results_count}"):
                                             st.success("📋 Contacts copied!")
                                     else:
                                         st.warning("No contact information found for this company.")
