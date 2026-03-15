@@ -1,61 +1,68 @@
-```zsh
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Shared functions for Rails applications
+# Common helpers for DEPLOY/rails installers.
+# This file is intended to be sourced by app installer scripts.
+
 SCRIPT_DIR="${0:a:h}"
 
-# Logging function
 log() {
-    printf "[%s] %s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "$1"
+  print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
 }
 
-# Source all feature files with error handling
-for feature_file in "${SCRIPT_DIR}"/@*_features.sh "${SCRIPT_DIR}"/@stimulus_controllers/*.sh; do
-    if [[ -f "$feature_file" ]]; then
-        if ! source "$feature_file" 2>&1 | while read -r line; do
-            log "ERROR: Failed to source $feature_file: $line"
-        done; then
-            log "WARNING: Failed to source $feature_file, continuing..."
-        fi
-    fi
-done
+warn() {
+  print -u2 -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] WARN: $*"
+}
 
-# Get application port from master.json
-# Usage: get_app_port "brgen" -> 10001
+err() {
+  print -u2 -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $*"
+}
+
+source_optional_feature_modules() {
+  local feature_file
+  local -a patterns=(
+    "${SCRIPT_DIR}/@*_features.sh"
+    "${SCRIPT_DIR}/@stimulus_controllers/*.sh"
+  )
+
+  setopt local_options null_glob
+  for feature_file in ${~^patterns}; do
+    if ! source "$feature_file"; then
+      warn "Failed to source feature module: $feature_file"
+    else
+      log "Loaded feature module: $feature_file"
+    fi
+  done
+}
+
+# Usage: get_app_port "brgen"
 get_app_port() {
-    local app_name="$1"
-    local master_json="${MASTER_JSON}"
+  local app_name="$1"
+  local master_json="${MASTER_JSON:-${SCRIPT_DIR}/../master.json}"
+  local port
 
-    if [[ -z "$master_json" ]]; then
-        master_json="${SCRIPT_DIR}/../master.json"
-    fi
+  [[ -n "$app_name" ]] || {
+    err "Application name is required"
+    return 1
+  }
 
-    if [[ -z "$app_name" ]]; then
-        log "ERROR: Application name is required"
-        return 1
-    fi
+  [[ -f "$master_json" ]] || {
+    err "master.json not found at $master_json"
+    return 1
+  }
 
-    if [[ ! -f "$master_json" ]]; then
-        log "ERROR: master.json not found at $master_json"
-        return 1
-    fi
+  command -v jq >/dev/null 2>&1 || {
+    err "jq is required to parse master.json"
+    return 1
+  }
 
-    if ! command -v jq >/dev/null 2>&1; then
-        log "ERROR: jq is required to parse master.json but not installed"
-        return 1
-    fi
+  port="$(jq -r --arg app_name "$app_name" '.apps[] | select(.name == $app_name) | .port // empty' "$master_json")"
+  [[ -n "$port" ]] || {
+    err "No port configured for app '$app_name' in $master_json"
+    return 1
+  }
 
-    local port
-    if ! port=$(jq -e --arg app_name "$app_name" '.apps[] | select(.name == $app_name) | .port' "$master_json" 2>/dev/null); then
-        if jq -e --arg app_name "$app_name" '.apps[] | select(.name == $app_name)' "$master_json" >/dev/null 2>&1; then
-            log "ERROR: Application '$app_name' found in master.json but no port defined"
-        else
-            log "ERROR: Application '$app_name' not found in master.json"
-        fi
-        return 1
-    fi
-
-    echo "$port"
+  print -r -- "$port"
 }
-```
+
+source_optional_feature_modules

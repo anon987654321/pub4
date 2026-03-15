@@ -1,66 +1,39 @@
-```bash
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 
 log() {
-  echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" >&2
-}
-
-check_command() {
-  if ! command -v "$1" &> /dev/null; then
-    log "Error: $1 command not found"
-    exit 1
-  fi
+  print -u2 -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
 }
 
 check_rails_environment() {
   if [[ -z "${RAILS_ENV:-}" ]]; then
-    log "Warning: RAILS_ENV not set, defaulting to development"
     export RAILS_ENV=development
+    log "RAILS_ENV not set. Defaulting to development"
   fi
 
-  if [[ ! -f "bin/rails" ]]; then
-    log "Error: Not in a Rails application directory"
-    exit 1
-  fi
-}
-
-run_migration() {
-  log "Running database migrations..."
-  if bin/rails db:migrate; then
-    log "Database migrations completed successfully"
-  else
-    log "Error: Database migration failed"
-    exit 1
-  fi
+  [[ -x "bin/rails" ]] || {
+    log "Error: bin/rails not found. Run this inside a Rails application"
+    return 1
+  }
 }
 
 setup_messenger_models() {
-  log "Setting up Messenger models: Conversation, Message, ConversationParticipant"
+  check_rails_environment || return 1
 
-  check_command "rails"
-  check_rails_environment
-
-  # Generate all required models
-  local models=(
+  local -a models=(
     "Conversation conversation_type:string name:string disappearing_messages:boolean user:references last_read_at:datetime notifications_enabled:boolean"
     "Message conversation:references user:references content:text message_type:string encrypted:boolean expires_at:datetime read_at:datetime"
     "ConversationParticipant conversation:references user:references last_read_at:datetime"
   )
 
+  local model_spec model_name
   for model_spec in "${models[@]}"; do
-    log "Generating ${model_spec%% *} model..."
-    if ! bin/rails generate model $model_spec; then
-      log "Error: Failed to generate ${model_spec%% *} model"
-      log "Rolling back previous migrations..."
-      bin/rails db:rollback STEP=3
-      exit 1
-    fi
-    log "${model_spec%% *} model generated successfully"
+    model_name="${model_spec%% *}"
+    log "Generating model ${model_name}..."
+    bin/rails generate model ${=model_spec}
   done
 
-  run_migration
+  log "Running migrations..."
+  bin/rails db:migrate
+  log "Messenger models configured successfully"
 }
-
-setup_messenger_models
-```
