@@ -139,3 +139,7 @@ Also: Linux · macOS
 - Strunk & White: omit needless words
 - Graceful degradation: never raise to the user
 - Self-referential: MASTER2 runs its own rules on itself
+
+## 10/10 roadmap
+
+For a concrete plan to push MASTER2 toward an architectural 10/10, see `docs/masterpiece_roadmap.md`.
