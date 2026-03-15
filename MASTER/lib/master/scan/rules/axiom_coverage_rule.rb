@@ -53,7 +53,7 @@ module Master
           ids += data.dig("kernel")&.keys || []
           ids += (data.dig("philosophy", "prioritized_top_25") || []).map { |a| a["id"] }
           ids.map(&:to_s).uniq
-        rescue
+        rescue StandardError
           []
         end
 
@@ -64,7 +64,7 @@ module Master
           Dir.glob(File.join(rules_dir, "*.rb")).flat_map { |f|
             File.read(f).scan(/:([A-Z_]{3,})/).flatten
           }.uniq
-        rescue
+        rescue StandardError
           []
         end
       end

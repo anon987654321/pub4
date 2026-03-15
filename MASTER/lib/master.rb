@@ -45,6 +45,16 @@ module Master
 
     guard        = Security::InjectionGuard.new
     scanner      = Scan::Scanner.new(event_bus: bus)
+    scanner.add_rule(Scan::Rules::FrozenStringRule.new)
+    scanner.add_rule(Scan::Rules::BareRescueRule.new)
+    scanner.add_rule(Scan::Rules::ExplicitRule.new)
+    scanner.add_rule(Scan::Rules::ImmutableRule.new)
+    scanner.add_rule(Scan::Rules::CqsRule.new)
+    scanner.add_rule(Scan::Rules::SelfExplainingRule.new)
+    scanner.add_rule(Scan::Rules::LongMethodRule.new)
+    scanner.add_rule(Scan::Rules::GodClassRule.new)
+    scanner.add_rule(Scan::Rules::DuplicateCodeRule.new)
+    scanner.add_rule(Scan::Rules::StrunkRule.new)
     scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
     scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
     swarm        = Swarm::Coordinator.new(agent:, event_bus: bus)
