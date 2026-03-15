@@ -1,0 +1,59 @@
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: disable
+  SuggestExtensions: false
+  DisabledByDefault: true
+
+# Only enable cops that map to our axioms — layout/style handled by our own rules
+Metrics/MethodLength:
+  Enabled: true
+  Max: 15
+  CountAsOne: [heredoc, array, hash]
+
+Metrics/ClassLength:
+  Enabled: true
+  Max: 200
+
+Metrics/AbcSize:
+  Enabled: true
+  Max: 20
+
+Metrics/CyclomaticComplexity:
+  Enabled: true
+  Max: 7
+
+Metrics/PerceivedComplexity:
+  Enabled: true
+  Max: 8
+
+Metrics/ParameterLists:
+  Enabled: true
+  Max: 5
+
+Lint/RescueException:
+  Enabled: true
+
+Lint/SuppressedException:
+  Enabled: true
+
+Lint/DuplicateMethods:
+  Enabled: true
+
+Style/GuardClause:
+  Enabled: true
+
+Style/ReturnNil:
+  Enabled: true
+
+Style/MethodCalledOnDoEndBlock:
+  Enabled: true
+
+Naming/MethodParameterName:
+  Enabled: true
+  MinNameLength: 3
+  AllowNamesEndingInNumbers: false
+  AllowedNames: [io, id, to, by, ok, on]
+
+Layout/LineLength:
+  Enabled: true
+  Max: 120

@@ -6,7 +6,8 @@ module Master
       DEPTH_RULES = {
         quick:    %w[frozen_string bare_rescue],
         standard: %w[frozen_string bare_rescue explicit immutable cqs self_explaining
-                     long_method god_class duplicate_code strunk srp pola],
+                     long_method god_class duplicate_code strunk srp pola
+                     rubocop reek],
         hunt:     :all,
         critique: :all,
         deep:     :all

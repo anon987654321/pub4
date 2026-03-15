@@ -1,64 +1,34 @@
 #!/usr/bin/env zsh
 set -euo pipefail
-
 setopt nullglob extendedglob
 
-# Checks and fixes Ruby code files for errors.
+# Lints Ruby/ERB files using bundler-scoped rubocop + reek.
+# Run from any directory; resolves MASTER bundle automatically.
+# Usage: ./lint.sh [path]
 
-# Usage: ./lint.sh
+MASTER_ROOT="${HOME}/pub4/MASTER"
+TARGET="${1:-.}"
 
-# Pure zsh: **/*.{rb,erb} glob instead of find
-
-check_tool() {
-
-  if ! command -v "$1" >/dev/null 2>&1; then
-
-    print "Error: $1 not found. Install it."
-
-    exit 1
-
-  fi
-
+bundle_exec() {
+  (cd "$MASTER_ROOT" && bundle exec "$@")
 }
 
 lint_ruby() {
-
   local file="$1"
+  print "→ $file"
 
-  print "Linting: $file"
-
-  if ! reek "$file" >/dev/null 2>&1; then
-
-    print "Reek flagged: $file"
-
+  if ! bundle_exec reek --no-color "$file" 2>/dev/null; then
+    print "  reek: smells found"
   fi
 
-  if ! rubocop --autocorrect "$file" >/dev/null 2>&1; then
-
-    print "Rubocop failed: $file"
-
+  if ! bundle_exec rubocop --autocorrect --config "${MASTER_ROOT}/.rubocop.yml" --no-color "$file" 2>/dev/null; then
+    print "  rubocop: offenses remain after autocorrect"
   fi
-
-  print "Done: $file"
-
 }
 
-check_tool "rubocop"
-
-check_tool "reek"
-
-# Use zsh glob pattern instead of find
-
-for file in **/*.{rb,erb}(.N); do
-
-  # Skip vendor and .gem directories
-
-  if [[ "$file" == */.gem/* || "$file" == */vendor/* ]]; then
-
-    continue
-
-  fi
-
+for file in ${TARGET}/**/*.{rb,erb}(.N); do
+  [[ "$file" == */.gem/* || "$file" == */vendor/* ]] && continue
   lint_ruby "$file"
-
 done
+
+print "lint done"
