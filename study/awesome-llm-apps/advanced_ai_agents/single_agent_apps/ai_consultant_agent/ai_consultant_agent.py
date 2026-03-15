@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List
 from dataclasses import dataclass
 import base64
 import requests
@@ -7,7 +7,6 @@ import os
 
 # Google ADK imports
 from google.adk.agents import LlmAgent
-from google.adk.tools import google_search
 from google.adk.sessions import InMemorySessionService
 from google.adk.runners import Runner
 
