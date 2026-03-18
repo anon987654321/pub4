@@ -19,12 +19,11 @@ module Master
     def initialize(root:, event_bus: nil)
       @root       = root
       @bus        = event_bus
-      @symbols    = {}   # fqn -> Symbol
-      @references = []   # [Reference]
+      @symbols    = {}
+      @references = []
       @built_at   = nil
     end
 
-    # Build (or rebuild) the index by scanning all .rb files under root.
     def build(path: nil)
       target = path ? File.expand_path(path, @root) : @root
       files  = Dir.glob(File.join(target, "**", "*.rb")).reject { |f| f.include?("/vendor/") }
@@ -41,10 +40,8 @@ module Master
       self
     end
 
-    # Rebuild a single file (called on write events).
     def reindex(file)
       full = File.expand_path(file, @root)
-      # Remove old entries for this file
       @symbols.delete_if  { |_, s| s.file == full }
       @references.reject! { |r| r.from_file == full }
       index_file(full) if File.exist?(full)
@@ -52,13 +49,11 @@ module Master
       nil
     end
 
-    # All symbols defined in a given file (relative or absolute path).
     def symbols_in(file)
       full = File.expand_path(file, @root)
       @symbols.values.select { |s| s.file == full }
     end
 
-    # Find a symbol by name (exact or suffix match). Returns array.
     def find(name)
       exact = @symbols[name]
       return [exact] if exact
@@ -67,12 +62,10 @@ module Master
       @symbols.values.select { |s| s.fqn.end_with?(suffix) || s.fqn.include?(suffix) }
     end
 
-    # All references TO a symbol (cross-file call sites / usages).
     def references_to(fqn)
-      @references.select { |r| r.to_fqn == fqn || r.to_fqn.end_with?("##{fqn}") || r.to_fqn == fqn }
+      @references.select { |r| r.to_fqn == fqn || r.to_fqn.end_with?("##{fqn}") }
     end
 
-    # Impact analysis: what symbols reference this one?
     def impact(fqn)
       refs  = references_to(fqn)
       files = refs.map(&:from_file).uniq.map { |f| f.sub("#{@root}/", "") }
@@ -80,23 +73,26 @@ module Master
       { fqn:, reference_count: refs.size, files:, callers: }
     end
 
-    # Compact summary for agent context injection.
-    def summary(limit: 60)
-      classes = @symbols.values.select { |s| s.type == :class }.first(20)
-        .map { |s| "  #{s.fqn}#{s.parent && s.parent != "Object" ? " < #{s.parent}" : ""} (#{s.file.sub("#{@root}/", "")}:#{s.line})" }
+    # Classes-only summary injected into agent system prompt.
+    # All lib classes/modules sorted — LLM knows the full structure without tool calls.
+    def summary(limit: nil)
+      classes = @symbols.values
+        .select { |s| %i[class module].include?(s.type) }
+        .reject { |s| s.file.include?("/DEPLOY/") || s.file.match?(/fix_|patch_/) }
+        .reject { |s| %w[Entry Message Symbol CircuitError].any? { |n| s.fqn.end_with?("::#{n}") } }
+        .sort_by(&:fqn)
+        .map do |s|
+          parent = (s.parent && s.parent != "Object") ? " < #{s.parent}" : ""
+          "  #{s.fqn}#{parent} (#{s.file.sub("#{@root}/", "")}:#{s.line})"
+        end
 
-      methods = @symbols.values.select { |s| s.type == :method }.first(limit)
-        .map { |s| "  #{s.fqn} (#{s.file.sub("#{@root}/", "")}:#{s.line})" }
-
-      lines = ["# Codebase: #{@symbols.size} symbols across #{symbol_files.size} files (built #{@built_at&.strftime("%H:%M:%S") || "never"})"]
-      lines << "## Classes/Modules" unless classes.empty?
+      lib_count = @symbols.values.count { |s| s.file.include?("/lib/") }
+      lines  = ["# Codebase: #{lib_count} lib symbols (indexed #{@built_at&.strftime("%H:%M") || "never"})"]
+      lines << "## Classes & Modules (#{classes.size})"
       lines += classes
-      lines << "## Methods (sample)" unless methods.empty?
-      lines += methods
       lines.join("\n")
     end
 
-    # For agent tool calls: return structured JSON-friendly hash.
     def query(name)
       hits = find(name)
       return { error: "not found: #{name}" } if hits.empty?
@@ -114,8 +110,8 @@ module Master
       end
     end
 
-    def size     = @symbols.size
-    def built?   = !@built_at.nil?
+    def size    = @symbols.size
+    def built?  = !@built_at.nil?
 
     private
 
@@ -134,10 +130,9 @@ module Master
       visitor.symbols.each    { |s| @symbols[s.fqn] = s }
       @references.concat(visitor.references)
     rescue StandardError
-      nil  # skip unparseable files silently
+      nil
     end
 
-    # Prism visitor that walks the AST and extracts symbols + references.
     class SymbolVisitor < Prism::Visitor
       attr_reader :symbols, :references
 
@@ -146,10 +141,9 @@ module Master
         @root       = root
         @symbols    = []
         @references = []
-        @scope      = []   # stack of current class/module names
+        @scope      = []
       end
 
-      # Class definition: class Foo < Bar
       def visit_class_node(node)
         name   = const_name(node.constant_path)
         parent = node.superclass ? const_name(node.superclass) : "Object"
@@ -164,7 +158,6 @@ module Master
         @scope.pop
       end
 
-      # Module definition: module Foo
       def visit_module_node(node)
         name = const_name(node.constant_path)
         fqn  = qualified(name)
@@ -178,7 +171,6 @@ module Master
         @scope.pop
       end
 
-      # Method definition: def foo
       def visit_def_node(node)
         method_name = node.name.to_s
         owner       = @scope.last || "(top)"
@@ -191,10 +183,8 @@ module Master
         super
       end
 
-      # Method call: foo.bar(...) or bar(...)
       def visit_call_node(node)
         method_name = node.name.to_s
-        # Skip operators and common noise
         unless method_name.match?(/\A[_a-z][a-z0-9_]*[!?]?\z/i) && method_name.length > 1
           return super
         end
@@ -211,24 +201,6 @@ module Master
         super
       end
 
-      # include / extend at class level
-      def visit_call_node_include(node)
-        return super unless %w[include extend prepend].include?(node.name.to_s)
-        node.arguments&.arguments&.each do |arg|
-          mod_name = const_name_safe(arg)
-          next unless mod_name
-
-          owner = @scope.last ? qualified(@scope.last) : "(top)"
-          @references << Reference.new(
-            from_file: @file,
-            from_line: node.location.start_line,
-            to_fqn:    mod_name,
-            ref_type:  :include
-          )
-        end
-        super
-      end
-
       private
 
       def qualified(name)
@@ -239,9 +211,9 @@ module Master
       def const_name(node)
         return "" unless node
         case node
-        when Prism::ConstantReadNode         then node.name.to_s
-        when Prism::ConstantPathNode         then "#{const_name(node.parent)}::#{node.name}"
-        when Prism::ConstantPathTargetNode   then "#{const_name(node.parent)}::#{node.name}"
+        when Prism::ConstantReadNode       then node.name.to_s
+        when Prism::ConstantPathNode       then "#{const_name(node.parent)}::#{node.name}"
+        when Prism::ConstantPathTargetNode then "#{const_name(node.parent)}::#{node.name}"
         else node.respond_to?(:name) ? node.name.to_s : ""
         end
       end

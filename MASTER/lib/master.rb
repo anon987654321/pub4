@@ -39,7 +39,7 @@ module Master
     diff_stager  = config["staging_enabled"] ? DiffStager.new(root:, event_bus: bus) : nil
     mcp          = McpCoordinator.new(root:, event_bus: bus)
     mcp.connect_all
-    Thread.new { code_index.build rescue nil } # async digital twin
+    code_index.build # sync on boot (fast: Prism parses ~100 files in <1s)
     bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] rescue nil }
 
     memory      = Memory.new(root:)
@@ -51,7 +51,7 @@ module Master
     modes    = Reasoning::Modes.new
     agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus,
                          model_router: router, reasoning_modes: modes,
-                         memory:, personality:)
+                         memory:, personality:, code_index:)
     tools << Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
 
     guard        = Security::InjectionGuard.new
