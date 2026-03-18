@@ -23,8 +23,8 @@ fallback_policy:
 models:
   # Default — DeepSeek-R1 (reasoning + code, best on Replicate for coding tasks)
   default:
-    - id: deepseek-ai/deepseek-r1
-      score: { quality: 0.93, speed: 0.72, cost: 0.80 }
+    - id: deepseek-ai/deepseek-v3
+      score: { quality: 0.87, speed: 0.80, cost: 0.90 }
 
   # Strong — best reasoning/architecture work
   strong:
@@ -47,7 +47,7 @@ models:
       score: { quality: 0.80, speed: 0.85, cost: 0.90 }
 
 routes:
-  code_generation:  strong
+  code_generation:  default
   architecture:     strong
   review:           strong
   summarization:    fast
