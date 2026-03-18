@@ -7,11 +7,12 @@ module Master
       NAME        = "str_replace"
       DESCRIPTION = "Replace unique string in a file. Fails if pattern matches 0 or 2+ times."
 
-      def initialize(root:, undo:, governor:, event_bus: nil)
-        @root     = File.realpath(root)
-        @undo     = undo
-        @governor = governor
-        @bus      = event_bus
+      def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil)
+        @root        = File.realpath(root)
+        @undo        = undo
+        @governor    = governor
+        @bus         = event_bus
+        @diff_stager = diff_stager
       end
 
       def call(path:, old_string:, new_string:)
@@ -30,11 +31,17 @@ module Master
         perm = @governor.permit?(NAME, TIER, path)
         return perm if perm.err?
 
+        new_content = content.sub(old_string, new_string)
+
+        if @diff_stager
+          return @diff_stager.stage(path: full, new_content:, tool: NAME)
+        end
+
         @undo.snapshot(full)
 
         tmp = "#{full}.tmp.#{Process.pid}"
         begin
-          File.write(tmp, content.sub(old_string, new_string))
+          File.write(tmp, new_content)
           File.rename(tmp, full)
         ensure
           File.delete(tmp) if File.exist?(tmp) rescue nil
