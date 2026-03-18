@@ -17,12 +17,16 @@ module Master
       meta/meta-llama anthropic/claude openai/gpt google/gemini
     ].freeze
 
+    MAX_TOOL_TURNS    = 5
+    TOOL_CALL_RE      = /(?:<use_tool>\s*(.*?)\s*<\/use_tool>|^ACTION:\s*(\{.*?\})\s*$|^TOOL:\s*(\{.*?\})\s*$)/m.freeze
+
     NEMOTRON3_RE      = /nemotron-3/i.freeze
     LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
 
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
                    event_bus: nil, model_router: nil, reasoning_modes: nil,
-                   memory: nil, personality: nil)
+                   memory: nil, personality: nil, code_index: nil)
+      @code_index      = code_index
       @config          = config
       @session         = session
       @tools           = tools
@@ -130,6 +134,7 @@ module Master
     def system_prompt
       parts = []
       parts << @personality.system_prompt if @personality
+      parts << @code_index.summary        if @code_index&.built?
       parts << @memory.context_summary    if @memory&.context_summary
       parts.empty? ? nil : parts.join("\n\n")
     end
@@ -240,5 +245,76 @@ module Master
       @bus&.publish("agent:llm_tools_error", error: e.message)
       []
     end
+
+def react_loop(message, model, context:, &blk)
+  require "json"
+  msgs   = context + [{ role: "user", content: message }]
+  sys    = react_system_prompt
+  bridge = Bridges::Replicate.new
+
+  MAX_TOOL_TURNS.times do
+    msg  = bridge.chat(model: model, messages: msgs, system: sys)
+    text = msg.content.to_s
+
+    match = TOOL_CALL_RE.match(text)
+    unless match
+      blk&.call(text)
+      return text
+    end
+
+    visible = text.sub(match[0], "").strip
+    blk&.call(visible) unless visible.empty?
+
+    call_data = JSON.parse(match[1].strip, symbolize_names: true)
+    tool_name = call_data.delete(:tool).to_s
+    tool_result = dispatch_tool(tool_name, call_data)
+
+    msgs << { role: "assistant", content: text }
+    msgs << { role: "user", content: "<tool_result tool=\"#{tool_name}\">\n#{tool_result}\n</tool_result>" }
+  end
+
+  final = bridge.chat(model: model, messages: msgs, system: sys).content.to_s
+  blk&.call(final)
+  final
+rescue StandardError => e
+  "react error: #{e.message}"
+end
+
+def react_system_prompt
+  base  = system_prompt.to_s
+  descs = tools_description
+  return base if descs.empty?
+
+  block = "## Available Tools\n" \
+          "Output a tool call as a single line, then stop:\n" \
+          "<use_tool>{\"tool\":\"name\",\"arg\":\"val\"}</use_tool>\n" \
+          "A <tool_result> will be injected. Call one tool per turn.\n\n" +
+          descs
+
+  base.empty? ? block : "#{base}\n\n#{block}"
+end
+
+def tools_description
+  @tools.filter_map do |t|
+    next unless t.class.const_defined?(:NAME)
+    "- #{t.class::NAME}: #{t.class.const_defined?(:DESCRIPTION) ? t.class::DESCRIPTION : ""}"
+  end.join("\n")
+rescue StandardError
+  ""
+end
+
+def dispatch_tool(name, args)
+  tool = @tools.find { |t| t.class.const_defined?(:NAME) && t.class::NAME == name }
+  unless tool
+    avail = @tools.filter_map { |t| t.class::NAME rescue nil }.join(", ")
+    return "error: unknown tool '#{name}'. Available: #{avail}"
+  end
+  result = tool.call(**args.transform_keys(&:to_sym))
+  @bus&.publish("tool:used", tool: name)
+  result.respond_to?(:ok?) ? (result.ok? ? result.value!.to_s : "error: #{result.message}") : result.to_s
+rescue StandardError => e
+  "tool error: #{e.message}"
+end
+
   end
 end
