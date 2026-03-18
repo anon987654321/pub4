@@ -201,6 +201,10 @@ module Master
     end
 
     def chat_direct(messages)
+      if replicate_model?(model)
+        msg = Bridges::Replicate.new.chat(model: model, messages: messages, system: system_prompt)
+        return msg.content.to_s
+      end
       chat = RubyLLM.chat(model: model)
       chat.with_instructions(system_prompt) if system_prompt
       messages.each { |m| chat.add_message(role: m[:role].to_s, content: m[:content].to_s) }
