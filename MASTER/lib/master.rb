@@ -9,7 +9,9 @@ module Master
   loader.inflector.inflect(
     "autoloop"   => "AutoLoop",
     "cli"        => "CLI",
-    "mcp_server" => "MCPServer",
+    "mcp_server"      => "MCPServer",
+    "mcp_coordinator" => "McpCoordinator",
+    "diff_stager"     => "DiffStager",
     "git_context" => "GitContext",
     "ast_edit"    => "AstEdit",
     "llm"         => "LLM"
@@ -32,10 +34,15 @@ module Master
     renderer = Renderer.new(config:)
     metrics  = Metrics.new(root:, event_bus: bus)
 
+    diff_stager  = config["staging_enabled"] ? DiffStager.new(root:, event_bus: bus) : nil
+    mcp          = McpCoordinator.new(root:, event_bus: bus)
+    mcp.connect_all
+
     memory      = Memory.new(root:)
     personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT)
 
-    tools    = build_tools(root:, undo:, governor:, bus:)
+    tools    = build_tools(root:, undo:, governor:, bus:, diff_stager:)
+    tools   += mcp.tools
     router   = Routing::ModelRouter.new(config:)
     modes    = Reasoning::Modes.new
     agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus,
@@ -88,7 +95,8 @@ module Master
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
       scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
-      memory:, personality:, swarm:, root:
+      memory:, personality:, swarm:, root:,
+      diff_stager:, mcp:
     }
   end
 
@@ -113,11 +121,11 @@ module Master
     end
   end
 
-  def self.build_tools(root:, undo:, governor:, bus:)
+  def self.build_tools(root:, undo:, governor:, bus:, diff_stager: nil)
     [
       Tools::ReadFile.new(root:, undo:, event_bus: bus),
-      Tools::WriteFile.new(root:, undo:, governor:, event_bus: bus),
-      Tools::StrReplace.new(root:, undo:, governor:, event_bus: bus),
+      Tools::WriteFile.new(root:, undo:, governor:, event_bus: bus, diff_stager:),
+      Tools::StrReplace.new(root:, undo:, governor:, event_bus: bus, diff_stager:),
       Tools::ListDir.new(root:, event_bus: bus),
       Tools::SearchFiles.new(root:, event_bus: bus),
       Tools::WebSearch.new(governor:, event_bus: bus),

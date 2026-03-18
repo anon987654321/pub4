@@ -27,6 +27,7 @@ module Master
       @tts_on      = Speech.available? && @config["tts"] != false
       @violations  = 0
       @scan_thread = nil
+      @diff_stager = container[:diff_stager]
     end
 
     def run(initial_message = nil)
@@ -75,7 +76,16 @@ module Master
       when "tokens" then puts @renderer.render("session tokens: #{@session.token_est rescue "n/a"}", mode: :dim)
       when "save"   then @session.save!; puts @renderer.render("saved", mode: :success)
       when "dmesg"  then puts @logging.dmesg(50).split("\n").map { |l| @renderer.format_dmesg(l) }.join("\n")
-      when "scan"   then run_scan_command(args)
+      when "scan"    then run_scan_command(args)
+      when "stage"   then run_stage_command
+      when "apply"   then run_apply_command(args)
+      when "discard" then run_discard_command(args)
+      when "staging"
+        case args.first
+        when "on"  then @config["staging_enabled"] = true;  @config.save!; puts @renderer.render("staging: on",  mode: :dim)
+        when "off" then @config["staging_enabled"] = false; @config.save!; puts @renderer.render("staging: off", mode: :dim)
+        else             puts @renderer.render("staging: #{@config["staging_enabled"] ? "on" : "off"} -- /staging on|off", mode: :dim)
+        end
       when "tts"
         case args.first
         when "on"  then @tts_on = Speech.available?; puts @renderer.render("tts: #{@tts_on ? "on" : "unavailable"}", mode: :dim)
@@ -248,6 +258,50 @@ module Master
       else; false
       end
     end
+
+
+def run_stage_command
+  p = Pastel.new
+  unless @diff_stager
+    puts @renderer.render("staging not enabled -- /staging on to enable", mode: :dim)
+    return
+  end
+  if @diff_stager.empty?
+    puts p.dim("  no staged changes")
+  else
+    puts p.bold.cyan(" staged changes (#{@diff_stager.size}) ")
+    puts @diff_stager.summary(p)
+    puts p.dim("  /apply [n|all]   /discard [n|all]")
+  end
+end
+
+def run_apply_command(args)
+  unless @diff_stager
+    puts @renderer.render("staging not enabled", mode: :dim)
+    return
+  end
+  id    = (args.first.nil? || args.first == "all") ? :all : args.first.to_i
+  paths = @diff_stager.apply(id:)
+  if paths.empty?
+    puts @renderer.render("nothing to apply", mode: :dim)
+  else
+    paths.each { |ap| puts @renderer.render("applied: #{ap.sub(@root + "/", "")}", mode: :success) }
+  end
+end
+
+def run_discard_command(args)
+  unless @diff_stager
+    puts @renderer.render("staging not enabled", mode: :dim)
+    return
+  end
+  id    = (args.first.nil? || args.first == "all") ? :all : args.first.to_i
+  paths = @diff_stager.discard(id:)
+  if paths.empty?
+    puts @renderer.render("nothing to discard", mode: :dim)
+  else
+    paths.each { |dp| puts @renderer.render("discarded: #{dp.sub(@root + "/", "")}", mode: :warning) }
+  end
+end
 
     def setup_signals
       trap("INT") {

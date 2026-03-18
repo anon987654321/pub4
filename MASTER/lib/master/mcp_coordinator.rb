@@ -1,0 +1,99 @@
+# frozen_string_literal: true
+
+require "ruby_llm/mcp"
+
+module Master
+  # McpCoordinator — manages MCP server connections and exposes
+  # their tools to the agent alongside MASTER's native tools.
+  # Servers are defined in data/mcp_servers.yml.
+  class McpCoordinator
+    CONFIG_PATH = "data/mcp_servers.yml".freeze
+
+    def initialize(root:, event_bus: nil)
+      @root    = root
+      @bus     = event_bus
+      @clients = {}
+    end
+
+    # Connect to all configured MCP servers. Non-fatal on failure.
+    def connect_all
+      servers = load_servers
+      servers.each do |name, cfg|
+        connect(name, cfg)
+      end
+      @bus&.publish("mcp:connected", count: @clients.size)
+    rescue StandardError => e
+      @bus&.publish("mcp:error", error: e.message)
+    end
+
+    # Return all tools from all connected MCP servers as RubyLLM::Tool wrappers.
+    def tools
+      @clients.flat_map do |name, client|
+        client.tools.filter_map do |tool|
+          McpToolWrapper.new(name:, client:, tool:)
+        rescue StandardError
+          nil
+        end
+      end
+    rescue StandardError
+      []
+    end
+
+    def connected? = @clients.any?
+    def server_names = @clients.keys
+
+    private
+
+    def connect(name, cfg)
+      transport = cfg["transport"] || "stdio"
+      client    = case transport
+                  when "stdio"
+                    ::RubyLLM::MCP::Client.new(
+                      name:,
+                      transport: :stdio,
+                      command:   cfg["command"],
+                      args:      cfg["args"] || []
+                    )
+                  when "sse"
+                    ::RubyLLM::MCP::Client.new(
+                      name:,
+                      transport: :sse,
+                      url:       cfg["url"]
+                    )
+                  end
+      client.connect
+      @clients[name] = client
+      @bus&.publish("mcp:server_connected", name:, transport:)
+    rescue StandardError => e
+      @bus&.publish("mcp:server_failed", name:, error: e.message)
+    end
+
+    def load_servers
+      path = File.join(@root, CONFIG_PATH)
+      return {} unless File.exist?(path)
+      require "yaml"
+      YAML.safe_load_file(path) || {}
+    rescue StandardError
+      {}
+    end
+  end
+
+  # Wraps an MCP tool as a RubyLLM::Tool for the agent's tool list.
+  class McpToolWrapper < ::RubyLLM::Tool
+    def initialize(name:, client:, tool:)
+      @mcp_name   = name
+      @mcp_client = client
+      @mcp_tool   = tool
+    end
+
+    def name        = "#{@mcp_name}__#{@mcp_tool.name}"
+    def description = "[MCP:#{@mcp_name}] #{@mcp_tool.description}"
+
+    def execute(**params)
+      result = @mcp_client.call_tool(@mcp_tool.name, params)
+      result.respond_to?(:content) ? result.content : result.to_s
+    rescue StandardError => e
+      "MCP tool error: #{e.message}"
+    end
+  end
+end
