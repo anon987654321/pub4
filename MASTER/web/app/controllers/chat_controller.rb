@@ -43,17 +43,28 @@ class ChatController < ApplicationController
 
     sse = response.stream
     begin
-      result = container[:pipeline].call(Master::Result.ok(user_message: input))
-      text = case result
-             when Master::Result::Ok
-               val = result.value
-               val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
-             when Master::Result::Err
-               "ERROR: #{result.message}"
-             end
+      streamed = false
+      on_chunk = ->(token) {
+        streamed = true
+        sse.write("data: #{token.to_s.gsub("\n", " ")}\n\n")
+      }
 
-      # Send full text in one SSE event — no artificial word delay
-      sse.write("data: #{text.to_s.gsub("\n", " ")}\n\n")
+      result = container[:pipeline].call(
+        Master::Result.ok(user_message: input, on_chunk: on_chunk)
+      )
+
+      # Commands / cache hits didn't stream — send full text as one event
+      unless streamed
+        text = case result
+               when Master::Result::Ok
+                 val = result.value
+                 val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
+               when Master::Result::Err
+                 "ERROR: #{result.message}"
+               end
+        sse.write("data: #{text.to_s.gsub("\n", " ")}\n\n") unless text.to_s.strip.empty?
+      end
+
       sse.write("data: [DONE]\n\n")
     rescue => e
       sse.write("data: ERROR: #{e.message}\n\n")

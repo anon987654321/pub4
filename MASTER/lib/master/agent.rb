@@ -156,11 +156,13 @@ module Master
       end
 
       if replicate_model?(selected_model)
-        msgs = context + [{ role: "user", content: message }]
-        msg  = Bridges::Replicate.new.chat(
-          model: selected_model, messages: msgs, system: system_prompt
+        msgs      = context + [{ role: "user", content: message }]
+        do_stream = stream && blk ? true : false
+        msg       = Bridges::Replicate.new.chat(
+          model: selected_model, messages: msgs, system: system_prompt,
+          stream: do_stream, &(do_stream ? blk : nil)
         )
-        blk&.call(msg.content.to_s)
+        blk&.call(msg.content.to_s) unless do_stream
         return msg.content.to_s
       end
 

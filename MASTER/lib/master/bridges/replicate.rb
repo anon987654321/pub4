@@ -33,21 +33,23 @@ module Master
       end
 
       # Returns a duck-typed Message. Raises on API error.
-      def chat(model:, messages:, system: nil, max_tokens: 4096, temperature: 0.6)
-        prompt = format_prompt(messages, system:)
-        input  = build_input(model, prompt, max_tokens:, temperature:)
+       def chat(model:, messages:, system: nil, max_tokens: 4096, temperature: 0.6, stream: false, &blk)
+       prompt = format_prompt(messages, system:)
+       input  = build_input(model, prompt, max_tokens:, temperature:)
 
-        pred    = create_prediction(model:, input:)
-        pred_id = pred["id"] or raise "no prediction id: #{pred.inspect}"
+       return chat_stream(model:, input:, &blk) if stream && blk
 
-        result  = poll_until_done(pred_id)
-        output  = result["output"]
-        text    = output.is_a?(Array) ? output.join : output.to_s
+       pred    = create_prediction(model:, input:)
+       pred_id = pred["id"] or raise "no prediction id: #{pred.inspect}"
 
-        Message.new(text)
-      rescue StandardError => e
-        raise "Replicate(#{model}): #{e.message}"
-      end
+       result  = poll_until_done(pred_id)
+       output  = result["output"]
+       text    = output.is_a?(Array) ? output.join : output.to_s
+
+       Message.new(text)
+       rescue StandardError => e
+       raise "Replicate(#{model}): #{e.message}"
+       end
 
       private
 
@@ -72,6 +74,42 @@ module Master
           top_p: 1.0,
         }
       end
+
+       def chat_stream(model:, input:, &blk)
+       owner, name = model.split("/", 2)
+       uri  = URI("#{BASE_URL}/models/#{owner}/#{name}/predictions")
+       req  = Net::HTTP::Post.new(uri)
+       req["Authorization"] = "Bearer #{@api_key}"
+       req["Content-Type"]  = "application/json"
+       req.body = JSON.generate({ input:, stream: true })
+       pred = JSON.parse(http(uri).request(req).body)
+       stream_url = pred.dig("urls", "stream") or raise "no stream URL: #{pred.inspect}"
+
+       full_text = +""
+       suri = URI(stream_url)
+       Net::HTTP.start(suri.host, suri.port, use_ssl: true, read_timeout: MAX_WAIT) do |h|
+       sreq = Net::HTTP::Get.new(suri)
+       sreq["Authorization"] = "Bearer #{@api_key}"
+       sreq["Accept"]        = "text/event-stream"
+       h.request(sreq) do |resp|
+       buf = +""
+       resp.read_body do |chunk|
+       buf << chunk
+       while (idx = buf.index("\n"))
+       line = buf.slice!(0..idx).chomp
+       next unless line.start_with?("data: ")
+       token = line[6..]
+       next if token == "[DONE]" || token.empty?
+       blk.call(token)
+       full_text << token
+       end
+       end
+       end
+       end
+       Message.new(full_text)
+       rescue StandardError => e
+       raise "Replicate stream(#{model}): #{e.message}"
+       end
 
       def create_prediction(model:, input:)
         owner, name = model.split("/", 2)
