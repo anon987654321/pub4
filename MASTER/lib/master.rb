@@ -12,6 +12,7 @@ module Master
     "mcp_server"      => "MCPServer",
     "mcp_coordinator" => "McpCoordinator",
     "diff_stager"     => "DiffStager",
+    "code_index"      => "CodeIndex",
     "git_context" => "GitContext",
     "ast_edit"    => "AstEdit",
     "llm"         => "LLM"
@@ -34,14 +35,17 @@ module Master
     renderer = Renderer.new(config:)
     metrics  = Metrics.new(root:, event_bus: bus)
 
+    code_index   = CodeIndex.new(root:, event_bus: bus)
     diff_stager  = config["staging_enabled"] ? DiffStager.new(root:, event_bus: bus) : nil
     mcp          = McpCoordinator.new(root:, event_bus: bus)
     mcp.connect_all
+    Thread.new { code_index.build rescue nil } # async digital twin
+    bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] rescue nil }
 
     memory      = Memory.new(root:)
     personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT)
 
-    tools    = build_tools(root:, undo:, governor:, bus:, diff_stager:)
+    tools    = build_tools(root:, undo:, governor:, bus:, diff_stager:, code_index:)
     tools   += mcp.tools
     router   = Routing::ModelRouter.new(config:)
     modes    = Reasoning::Modes.new
@@ -96,7 +100,7 @@ module Master
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
       scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
       memory:, personality:, swarm:, root:,
-      diff_stager:, mcp:
+      diff_stager:, mcp:, code_index:
     }
   end
 
@@ -121,7 +125,7 @@ module Master
     end
   end
 
-  def self.build_tools(root:, undo:, governor:, bus:, diff_stager: nil)
+  def self.build_tools(root:, undo:, governor:, bus:, diff_stager: nil, code_index: nil)
     [
       Tools::ReadFile.new(root:, undo:, event_bus: bus),
       Tools::WriteFile.new(root:, undo:, governor:, event_bus: bus, diff_stager:),
@@ -134,6 +138,7 @@ module Master
       Tools::GitContext.new(root:, event_bus: bus),
       Tools::AstEdit.new(root:, undo:, event_bus: bus),
       Tools::Tree.new(root:, event_bus: bus),
+      Tools::SymbolLookup.new(code_index:, event_bus: bus),
       Tools::Clean.new(root:, governor:, event_bus: bus)
     ]
   end
