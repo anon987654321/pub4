@@ -100,14 +100,16 @@ module Master
   end
 
   def self.default_model
-    if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
+    if ENV["REPLICATE_API_KEY"].to_s.length > 10
+      "deepseek-ai/deepseek-r1"
+    elsif ENV["ANTHROPIC_API_KEY"].to_s.length > 10
       "claude-sonnet-4-6"
     elsif ENV["OPENROUTER_API_KEY"].to_s.length > 10
       "anthropic/claude-sonnet-4-5"
     elsif ENV["OPENAI_API_KEY"].to_s.length > 10
       "gpt-4o"
     else
-      raise "No tool-capable LLM API key found. Set ANTHROPIC_API_KEY or OPENROUTER_API_KEY."
+      raise "No LLM API key found. Set REPLICATE_API_KEY, ANTHROPIC_API_KEY, or OPENROUTER_API_KEY."
     end
   end
 

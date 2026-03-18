@@ -1,11 +1,12 @@
-# Model routing profile — tool-capable models only.
-# MASTER requires function calling. Non-tool models are banned.
+# Model routing profile — Replicate-native + tool-capable models.
+# All models routed through Bridges::Replicate when REPLICATE_API_KEY is set.
 
 routing:
   enabled: true
   strategy: weighted
   escalation_enabled: true
   escalation_tier: strong
+  provider: replicate
 
 weights:
   quality: 0.50
@@ -20,35 +21,30 @@ fallback_policy:
     - refusal
 
 models:
-  # Default — Claude Sonnet via OpenRouter. Tool-capable, excellent at code.
+  # Default — DeepSeek-R1 (reasoning + code, best on Replicate for coding tasks)
   default:
-    - id: anthropic/claude-sonnet-4-5
-      score: { quality: 0.97, speed: 0.80, cost: 0.50 }
+    - id: deepseek-ai/deepseek-r1
+      score: { quality: 0.93, speed: 0.72, cost: 0.80 }
 
-  # Strong — for architecture, review, complex generation
+  # Strong — best reasoning/architecture work
   strong:
-    - id: anthropic/claude-sonnet-4-5
-      score: { quality: 0.97, speed: 0.80, cost: 0.50 }
+    - id: deepseek-ai/deepseek-r1
+      score: { quality: 0.93, speed: 0.72, cost: 0.80 }
     - id: openai/gpt-4o
-      score: { quality: 0.90, speed: 0.82, cost: 0.45 }
-    - id: google/gemini-2.5-pro
-      score: { quality: 0.93, speed: 0.75, cost: 0.40 }
+      score: { quality: 0.90, speed: 0.80, cost: 0.55 }
+    - id: meta/meta-llama-3.1-405b-instruct
+      score: { quality: 0.88, speed: 0.65, cost: 0.60 }
 
-  # Fast — for summarization, short tasks; still tool-capable
+  # Fast — lower cost, still capable
   fast:
-    - id: anthropic/claude-haiku-4-5
-      score: { quality: 0.82, speed: 0.95, cost: 0.80 }
-    - id: google/gemini-2.5-flash
-      score: { quality: 0.79, speed: 0.95, cost: 0.85 }
-    - id: openai/gpt-4o-mini
-      score: { quality: 0.78, speed: 0.93, cost: 0.82 }
-
-  # Free fallback — DeepSeek-R1 supports tools, available free on OpenRouter
-  free:
-    - id: deepseek/deepseek-r1:free
-      score: { quality: 0.85, speed: 0.70, cost: 1.00 }
-    - id: deepseek/deepseek-chat:free
-      score: { quality: 0.80, speed: 0.75, cost: 1.00 }
+    - id: deepseek-ai/deepseek-v3
+      score: { quality: 0.87, speed: 0.80, cost: 0.90 }
+    - id: openai/o4-mini
+      score: { quality: 0.82, speed: 0.88, cost: 0.85 }
+    - id: mistralai/mistral-large-2
+      score: { quality: 0.84, speed: 0.82, cost: 0.82 }
+    - id: meta/meta-llama-3-70b-instruct
+      score: { quality: 0.80, speed: 0.85, cost: 0.90 }
 
 routes:
   code_generation:  strong

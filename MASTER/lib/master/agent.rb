@@ -7,26 +7,18 @@ module Master
     DEFAULT_CONTEXT_SIZE = 16
     COST_PER_TOKEN       = 0.000_015
 
-    # Hard whitelist — only models confirmed to support function calling.
-    # MASTER depends on tools; a model that cannot call tools is useless here.
+    # Replicate native API — these owner prefixes route through Bridges::Replicate.
+    REPLICATE_OWNERS = %w[deepseek-ai openai mistralai xai meta].freeze
+
+    # Tool-capable model whitelist — non-matching models raise at call time.
     TOOL_CAPABLE_MODELS = %w[
-      claude
-      gpt-4
-      gpt-4o
-      gemini
-      mistral
-      mixtral
-      llama-3.1
-      llama-3.3
-      qwen
-      command-r
-      meta/meta-llama
-      anthropic/claude
-      openai/gpt-4
-      google/gemini
+      claude gpt-4 gpt-4o gemini mistral mixtral
+      llama-3.1 llama-3.3 qwen command-r deepseek
+      meta/meta-llama anthropic/claude openai/gpt google/gemini
     ].freeze
 
-    REPLICATE_BASE_URL = "https://api.replicate.com/v1".freeze
+    NEMOTRON3_RE      = /nemotron-3/i.freeze
+    LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
 
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
                    event_bus: nil, model_router: nil, reasoning_modes: nil,
@@ -76,7 +68,16 @@ module Master
     end
 
     # One-shot chat with a custom system prompt. No session, no circuit breaker.
+    # Routes through Replicate bridge when model owner is in REPLICATE_OWNERS.
     def chat_raw(prompt, system: nil)
+      if replicate_model?(model)
+        msg = Bridges::Replicate.new.chat(
+          model:    model,
+          messages: [{ role: "user", content: prompt.to_s }],
+          system:   system
+        )
+        return msg.content.to_s
+      end
       c = RubyLLM.chat(model: model)
       c.with_instructions(system) if system
       msg = c.ask(prompt.to_s)
@@ -105,15 +106,20 @@ module Master
       [@config.model]
     end
 
+    def replicate_model?(model_id)
+      return false unless ENV["REPLICATE_API_KEY"].to_s.length > 10
+      REPLICATE_OWNERS.include?(model_id.to_s.split("/").first)
+    end
+
     def assert_tool_capable!(selected_model)
+      return if replicate_model?(selected_model)  # Replicate models bypass RubyLLM tools
       return if tool_capable?(selected_model)
       raise "Model '#{selected_model}' does not support function calling. " \
-            "MASTER requires tool-capable models. " \
-            "Configure ANTHROPIC_API_KEY, OPENAI_API_KEY, or use OpenRouter/Replicate with a capable model."
+            "Set REPLICATE_API_KEY, ANTHROPIC_API_KEY, or OPENROUTER_API_KEY."
     end
 
     def tool_capable?(model_id)
-      TOOL_CAPABLE_MODELS.any? { |pattern| model_id.to_s.downcase.include?(pattern.downcase) }
+      TOOL_CAPABLE_MODELS.any? { |p| model_id.to_s.downcase.include?(p.downcase) }
     end
 
     def apply_reasoning_mode(message)
@@ -134,23 +140,23 @@ module Master
         c.openai_api_key     = ENV["OPENAI_API_KEY"]     if ENV["OPENAI_API_KEY"].to_s.length > 10
         c.gemini_api_key     = ENV["GEMINI_API_KEY"]     if ENV["GEMINI_API_KEY"].to_s.length > 10
         c.openrouter_api_key = ENV["OPENROUTER_API_KEY"] if ENV["OPENROUTER_API_KEY"].to_s.length > 10
-
-        # Replicate OpenAI-compatible endpoint
-        if ENV["REPLICATE_API_KEY"].to_s.length > 10
-          c.openai_api_key  ||= ENV["REPLICATE_API_KEY"]
-          c.openai_api_base   = REPLICATE_BASE_URL
-        end
       end
     end
-
-    NEMOTRON3_RE      = /nemotron-3/i.freeze
-    LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
 
     def do_chat(message, selected_model, context:, stream:, &blk)
       if selected_model.start_with?("ferrum:webchat:")
         alias_name = selected_model.split(":", 3).last
         r = Bridges::FerrumWebChat.new.ask(model_alias: alias_name, prompt: message)
         return r.respond_to?(:value!) ? r.value! : r.to_s
+      end
+
+      if replicate_model?(selected_model)
+        msgs = context + [{ role: "user", content: message }]
+        msg  = Bridges::Replicate.new.chat(
+          model: selected_model, messages: msgs, system: system_prompt
+        )
+        blk&.call(msg.content.to_s)
+        return msg.content.to_s
       end
 
       chat = RubyLLM.chat(model: selected_model)
@@ -166,20 +172,17 @@ module Master
 
     def extract_response(msg, selected_model)
       return msg.to_s unless msg.respond_to?(:content)
-
       if NEMOTRON3_RE.match?(selected_model) && msg.respond_to?(:reasoning_content)
         thinking = msg.reasoning_content.to_s.strip
         content  = msg.content.to_s
         return thinking.empty? ? content : "#{content}\n\n<think>\n#{thinking}\n</think>"
       end
-
       msg.content.to_s
     end
 
     def nemotron_system_prompt(selected_model)
       base = system_prompt
       return base unless LLAMA_NEMOTRON_RE.match?(selected_model)
-
       thinking_on = @config["reasoning_mode"] != "none"
       directive   = thinking_on ? "detailed thinking on" : "detailed thinking off"
       [directive, base].compact.join("\n\n")
