@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "ruby_llm/mcp"
+require "ruby_llm/mcp" if $LOAD_PATH.any? { |p| File.exist?(File.join(p, "ruby_llm/mcp.rb")) }
 
 module Master
   # McpCoordinator — manages MCP server connections and exposes
@@ -79,6 +79,7 @@ module Master
   end
 
   # Wraps an MCP tool as a RubyLLM::Tool for the agent's tool list.
+  if defined?(::RubyLLM::Tool)
   class McpToolWrapper < ::RubyLLM::Tool
     def initialize(name:, client:, tool:)
       @mcp_name   = name
@@ -97,3 +98,4 @@ module Master
     end
   end
 end
+  end # if defined?(::RubyLLM::Tool)
