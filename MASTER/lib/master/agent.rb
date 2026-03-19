@@ -173,7 +173,7 @@ module Master
       tools = llm_tools(selected_model)
       chat.with_tools(*tools) unless tools.empty?
 
-      msg = stream && blk ? chat.ask(message) { |chunk| blk.call(chunk) } : chat.ask(message)
+      msg = stream && blk ? chat.ask(message) { |chunk| blk.call(chunk.content.to_s) if chunk.content } : chat.ask(message)
       extract_response(msg, selected_model)
     end
 
