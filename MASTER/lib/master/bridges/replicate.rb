@@ -92,20 +92,21 @@ module Master
        sreq["Authorization"] = "Bearer #{@api_key}"
        sreq["Accept"]        = "text/event-stream"
        h.request(sreq) do |resp|
-       buf = +""
-       resp.read_body do |chunk|
-       buf << chunk
-       while (idx = buf.index("\n"))
-       line = buf.slice!(0..idx).chomp
-       next unless line.start_with?("data: ")
-       token = line[6..]
-       next if token == "[DONE]" || token.empty?
-       blk.call(token)
-       full_text << token
-       end
-       end
-       end
-       end
+          buf = +""
+          resp.read_body do |chunk|
+          buf << chunk
+          while (idx = buf.index("\n\n"))
+          event     = buf.slice!(0..idx + 1)
+          evt_lines = event.lines.map(&:chomp)
+          evt_type  = evt_lines.find { |l| l.start_with?("event:") }&.then { |l| l[7..].strip }
+          data      = evt_lines.find { |l| l.start_with?("data:") }&.then { |l| l[5..].strip }
+          next unless evt_type == "output" && data && !data.empty?
+          blk.call(data)
+          full_text << data
+          end
+          end
+          end
+        end
        Message.new(full_text)
        rescue StandardError => e
        raise "Replicate stream(#{model}): #{e.message}"
