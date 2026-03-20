@@ -6,14 +6,14 @@ module Master
   # AutoLoop — iterate on scan violations until clean or max_cycles reached.
   #
   # Cycle: scan lib+test at standard depth → collect violations by severity →
-  # build full codebase context → LLM fix (with rate-limit retry) → syntax
-  # check → write → commit. Stops when clean or max_cycles reached.
+  # LLM fix (full file, no truncation) → size guard → syntax check → write → commit.
+  # Stops when clean or max_cycles reached.
   class AutoLoop
     MAX_CYCLES       = 12
-    BATCH_SIZE       = 5
-    CODE_PREVIEW_MAX = 4_000
+    BATCH_SIZE       = 3
     RATE_LIMIT_SLEEP = 15   # seconds to sleep on 429 before retrying
     MAX_FIX_RETRIES  = 3
+    MIN_SIZE_RATIO   = 0.80 # reject fix if output < 80% of original file size
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
@@ -27,8 +27,6 @@ module Master
     end
 
     def run(max_cycles: MAX_CYCLES)
-      map = build_codebase_map
-
       max_cycles.times do |i|
         cycle = i + 1
         @bus&.publish("autoloop:cycle", cycle:)
@@ -46,7 +44,7 @@ module Master
 
         violations.first(BATCH_SIZE).each_with_index do |v, idx|
           sleep 15 unless idx.zero?  # pace to 4 req/min for free-tier stability
-          fix = request_fix(v, map)
+          fix = request_fix(v)
           apply_fix(v[:file], fix) if fix
         end
 
@@ -69,40 +67,19 @@ module Master
       }.sort_by { |f| -SEVERITY_RANK.fetch(f[:severity], 0) }
     end
 
-    # Full file list injected into every fix prompt — model reads structure before patching.
-    def build_codebase_map
-      files = Dir.glob(File.join(@root, "lib", "**", "*.rb"))
-                 .reject { |f| f.include?("/vendor/") }
-                 .map    { |f| f.delete_prefix("#{@root}/") }
-                 .sort
-      "## Codebase (#{files.size} Ruby files)\n" +
-        files.map { |f| "  #{f}" }.join("\n")
-    end
-
-    # Request a fix from the LLM. Retries up to MAX_FIX_RETRIES on rate limit (429).
-    def request_fix(violation, map)
+    # Request a fix from the LLM. Sends FULL file — never truncates.
+    # Retries up to MAX_FIX_RETRIES on rate limit (429).
+    def request_fix(violation)
       path = File.join(@root, violation[:file])
       return nil unless File.exist?(path)
 
-      src = File.read(path, encoding: "UTF-8")[0, CODE_PREVIEW_MAX]
+      src = File.read(path, encoding: "UTF-8")
 
-      prompt = <<~PROMPT
-        Study the full codebase map before making any change.
-
-        #{map}
-
-        Fix this Ruby violation in #{violation[:file]}.
-        Rule: #{violation[:rule]}
-        Issue: #{violation[:message]} (line #{violation[:line]})
-
-        Do not break any interface used by other files in the codebase map.
-        Return ONLY the corrected Ruby file content, no explanation.
-
-        File:
-        ```ruby
-        #{src}
-        ```
-      PROMPT
+      prompt = "Fix this Ruby violation in #{violation[:file]}.\n" \
+               "Rule: #{violation[:rule]}\n" \
+               "Issue: #{violation[:message]} (line #{violation[:line]})\n\n" \
+               "Return ONLY the corrected Ruby file content, no explanation.\n\n" \
+               "```ruby\n#{src}\n```"
 
       MAX_FIX_RETRIES.times do |attempt|
         sleep 15 if attempt > 0  # respect free-tier rate limit between retries
@@ -131,9 +108,20 @@ module Master
       nil
     end
 
+    # Safety guards: size check + syntax check before writing.
+    # Rejects any fix that removes more than 20% of the original content
+    # (prevents LLM from truncating files due to context window limits).
     def apply_fix(rel_path, content)
       path = File.join(@root, rel_path)
       return unless File.exist?(path)
+
+      original_size = File.size(path)
+      if content.bytesize < (original_size * MIN_SIZE_RATIO).to_i
+        @bus&.publish("autoloop:fix_rejected", file: rel_path,
+                      reason: "too short (#{content.bytesize} vs #{original_size})")
+        return
+      end
+
       return unless syntax_ok?(content)
 
       File.write(path, content, encoding: "UTF-8")
