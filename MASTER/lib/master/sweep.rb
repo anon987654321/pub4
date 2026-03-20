@@ -2,6 +2,7 @@
 
 require "open3"
 require "tempfile"
+require "yaml"
 
 module Master
   # Sweep — iterative full-codebase refactor to convergence.
@@ -33,44 +34,7 @@ module Master
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
 
-    AXIOMS = <<~TEXT.freeze
-      AXIOMS (non-negotiable):
-      A1. `# frozen_string_literal: true` on every Ruby file, first line.
-      A2. No bare `rescue` — always name the exception class.
-      A3. Methods under 15 lines. Extract if longer.
-      A4. One responsibility per class. Split if two found.
-      A5. `respond_to?(:ok?)` not `is_a?` for duck-typing Result values.
-      A6. Never silently swallow a Result::Err — propagate or log it.
-      A7. No magic literals — extract to named constants: `NAME = value.freeze`.
-      A8. Inject dependencies; never instantiate collaborators inside a method.
-      A9. Guard clauses first: fail fast at the top, happy path at the bottom.
-      A10. CQS: queries don't mutate; commands don't return meaningful values.
-    TEXT
-
-    STRUCTURAL_TECHNIQUES = <<~TEXT.freeze
-      STRUCTURAL TECHNIQUES:
-      S1. GUARD CLAUSE — replace nested if/else with early returns.
-      S2. EXTRACT — a cohesive block of 5+ lines with one job → named private method.
-      S3. INLINE — a one-liner method used exactly once → fold it into the call site.
-      S4. HOIST — move loop-invariant computation above the loop.
-      S5. MERGE — two methods with ≥80% identical bodies → one with a parameter.
-      S6. DECOUPLE — inject collaborators; remove hidden `new` calls inside methods.
-      S7. DEFRAG — gather all code for one concept into one location.
-      S8. REFLOW — happy path first, error/edge cases after.
-      S9. TELL DON'T ASK — send commands; don't query state to decide for them.
-      S10. SPLIT — if a class has two responsibilities, extract the second.
-    TEXT
-
-    PROSE_TECHNIQUES = <<~TEXT.freeze
-      PROSE TECHNIQUES (Strunk & White):
-      P1. OMIT NEEDLESS WORDS — every word must earn its place.
-      P2. ACTIVE VOICE — "returns the token" not "the token is returned by".
-      P3. DELETE OBVIOUS COMMENTS — `# increment counter` above `count += 1` is noise.
-      P4. STRIP HEDGES — remove: simply, just, basically, obviously, easily,
-          feel free to, keep in mind, please note, I think, I believe.
-      P5. STRIP PREAMBLES — remove: Great question, Certainly, Of course, I'd be happy.
-      P6. DIRECT ASSERTION — state facts; never qualify or apologize.
-    TEXT
+    PROMPTS_PATH = File.join(Master::ROOT, "data", "sweep_prompts.yml").freeze
 
     def initialize(agent:, scanner:, council:, root:, event_bus: nil)
       @agent   = agent
@@ -79,10 +43,12 @@ module Master
       @root    = root
       @bus     = event_bus
       @map     = nil  # lazy; built once per sweep run
+      @prompts = nil  # lazy; loaded once per sweep run
     end
 
     def run(target = @root, max_cycles: MAX_CYCLES, types: GLOBS.keys)
       @map            = build_codebase_map
+      @prompts        = load_prompts
       violation_history = []
       converge_streak   = 0
 
@@ -127,6 +93,10 @@ module Master
 
     private
 
+    def load_prompts
+      YAML.safe_load_file(PROMPTS_PATH)
+    end
+
     # Build a compact file map. Injected into every rewrite prompt so the model
     # has full structural context before touching any individual file.
     def build_codebase_map
@@ -161,9 +131,9 @@ module Master
 
         #{@map}
 
-        #{AXIOMS}
-        #{STRUCTURAL_TECHNIQUES}
-        #{PROSE_TECHNIQUES}
+        #{@prompts["axioms"]}
+        #{@prompts["structural_techniques"]}
+        #{@prompts["prose_techniques"]}
 
         Improve every dimension of #{rel} in a single pass.
         Return ONLY the improved file content — no explanation, no markdown fences

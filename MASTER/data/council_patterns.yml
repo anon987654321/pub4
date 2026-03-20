@@ -1,0 +1,12 @@
+# Patterns that auto-trigger Council deliberation.
+# Strings loaded as Regexp at runtime — edit without code changes.
+dangerous:
+  - '\brm\s+-rf\b'
+  - '\bsudo\b'
+  - '\b(?:drop|truncate)\s+table\b'
+  - '\bchmod\s+777\b'
+  - '\b(?:delete|remove)\s+all\b'
+  - '\beval\s+\('
+  - '\bexec\s+\('
+  - '\bsystem\s+\('
+  - '\bopen\s*\(\s*[''"][|]'

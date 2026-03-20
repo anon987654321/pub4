@@ -1,0 +1,25 @@
+# Scan depth configuration — which rule IDs run at each depth level.
+# Add rules here without touching scanner.rb.
+quick:
+  - frozen_string
+  - bare_rescue
+standard:
+  - frozen_string
+  - bare_rescue
+  - explicit
+  - immutable
+  - cqs
+  - self_explaining
+  - long_method
+  - god_class
+  - duplicate_code
+  - prune
+  - srp
+  - pola
+  - nielsen
+hunt:
+  - all
+critique:
+  - all
+deep:
+  - all
