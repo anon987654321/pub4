@@ -1,0 +1,16 @@
+# Exemplar Registry -- methods and modules so well-crafted they serve as
+# positive examples in future LLM prompts.
+# Added automatically by council PRAISE votes and BeautyScorer.
+# Format: name, file, lines, beauty_score, virtue, why
+
+exemplars: []
+
+# Example entry (added by BeautyScorer or council PRAISE):
+#
+# exemplars:
+#   - name: "Result.ok"
+#     file: "lib/result.rb"
+#     lines: 3
+#     beauty_score: 7
+#     virtue: zen_method
+#     why: "Single responsibility, perfect name, self-evident -- no comment needed"
