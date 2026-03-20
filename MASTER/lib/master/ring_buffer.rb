@@ -25,11 +25,14 @@ module Master
 
     alias << push
 
-    def each(&)
+    def each
+      return enum_for(__method__) unless block_given?
       @size.times { |i| yield @buf[(@start + i) % @capacity] }
     end
 
-    def to_a = each.to_a
+    def to_a
+      @size.times.map { |i| @buf[(@start + i) % @capacity] }
+    end
     def size  = @size
     def full? = @size == @capacity
     def empty? = @size.zero?
