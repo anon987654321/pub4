@@ -7,16 +7,16 @@ module Master
   # Sweep — iterative full-codebase refactor to convergence.
   #
   # Each cycle walks every matching file and sends it through a comprehensive
-  # rewrite prompt covering all axioms, structural techniques, and Prune & White
-  # prose rules. Violation counts gate whether a rewrite is applied. Cycles
-  # continue until violations converge (diminishing returns) or max_cycles hit.
+  # rewrite prompt. The model receives the full codebase map before touching
+  # any individual file — structural context precedes every change.
+  # Cycles continue until violations converge or max_cycles hit.
   #
   # Self-application: sweeping lib/ causes MASTER to rewrite its own source —
-  # including prune.rb and this file — a true fixed-point process.
+  # a true fixed-point process.
   class Sweep
     MAX_CYCLES         = 16
-    CONVERGE_THRESHOLD = 0.05  # stop when cycle-over-cycle improvement < 5%
-    CONVERGE_WINDOW    = 2     # consecutive below-threshold cycles confirm convergence
+    CONVERGE_THRESHOLD = 0.05
+    CONVERGE_WINDOW    = 2
 
     GLOBS = {
       rb:  "**/*.rb",
@@ -33,29 +33,70 @@ module Master
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
 
+    AXIOMS = <<~TEXT.freeze
+      AXIOMS (non-negotiable):
+      A1. `# frozen_string_literal: true` on every Ruby file, first line.
+      A2. No bare `rescue` — always name the exception class.
+      A3. Methods under 15 lines. Extract if longer.
+      A4. One responsibility per class. Split if two found.
+      A5. `respond_to?(:ok?)` not `is_a?` for duck-typing Result values.
+      A6. Never silently swallow a Result::Err — propagate or log it.
+      A7. No magic literals — extract to named constants: `NAME = value.freeze`.
+      A8. Inject dependencies; never instantiate collaborators inside a method.
+      A9. Guard clauses first: fail fast at the top, happy path at the bottom.
+      A10. CQS: queries don't mutate; commands don't return meaningful values.
+    TEXT
+
+    STRUCTURAL_TECHNIQUES = <<~TEXT.freeze
+      STRUCTURAL TECHNIQUES:
+      S1. GUARD CLAUSE — replace nested if/else with early returns.
+      S2. EXTRACT — a cohesive block of 5+ lines with one job → named private method.
+      S3. INLINE — a one-liner method used exactly once → fold it into the call site.
+      S4. HOIST — move loop-invariant computation above the loop.
+      S5. MERGE — two methods with ≥80% identical bodies → one with a parameter.
+      S6. DECOUPLE — inject collaborators; remove hidden `new` calls inside methods.
+      S7. DEFRAG — gather all code for one concept into one location.
+      S8. REFLOW — happy path first, error/edge cases after.
+      S9. TELL DON'T ASK — send commands; don't query state to decide for them.
+      S10. SPLIT — if a class has two responsibilities, extract the second.
+    TEXT
+
+    PROSE_TECHNIQUES = <<~TEXT.freeze
+      PROSE TECHNIQUES (Strunk & White):
+      P1. OMIT NEEDLESS WORDS — every word must earn its place.
+      P2. ACTIVE VOICE — "returns the token" not "the token is returned by".
+      P3. DELETE OBVIOUS COMMENTS — `# increment counter` above `count += 1` is noise.
+      P4. STRIP HEDGES — remove: simply, just, basically, obviously, easily,
+          feel free to, keep in mind, please note, I think, I believe.
+      P5. STRIP PREAMBLES — remove: Great question, Certainly, Of course, I'd be happy.
+      P6. DIRECT ASSERTION — state facts; never qualify or apologize.
+    TEXT
+
     def initialize(agent:, scanner:, council:, root:, event_bus: nil)
       @agent   = agent
       @scanner = scanner
       @council = council
       @root    = root
       @bus     = event_bus
+      @map     = nil  # lazy; built once per sweep run
     end
 
     def run(target = @root, max_cycles: MAX_CYCLES, types: GLOBS.keys)
+      @map            = build_codebase_map
       violation_history = []
       converge_streak   = 0
 
       max_cycles.times do |i|
-        cycle      = i + 1
-        changed    = 0
+        cycle   = i + 1
+        changed = 0
         cycle_viol = 0
 
         @bus&.publish("sweep:cycle", cycle:, target:)
 
         collect_files(target, types).each do |path|
-          rel        = path.delete_prefix("#{@root}/")
-          before     = violations_in(path)
-          new_src    = rewrite(path, rel)
+          rel    = path.delete_prefix("#{@root}/")
+          before = violations_in(path)
+          new_src = rewrite(path, rel)
 
           next unless new_src
           next if new_src.strip == File.read(path, encoding: "UTF-8").strip
@@ -72,7 +113,7 @@ module Master
         end
 
         violation_history << cycle_viol
-        commit(cycle) if changed > 0 && git_dirty?
+        commit("sweep: full-codebase refactor [cycle #{cycle}]") if changed > 0 && git_dirty?
 
         converge_streak = converged?(violation_history) ? converge_streak + 1 : 0
         break if converge_streak >= CONVERGE_WINDOW
@@ -80,65 +121,22 @@ module Master
 
       final = violation_history.last.to_i
       Result.ok("sweep: #{violation_history.size} cycle(s), #{final} violation(s) remaining")
-    rescue => e
+    rescue StandardError => e
       Result.err("sweep: #{e.message}", category: :unknown)
     end
 
     private
 
-    AXIOMS = <<~TEXT.freeze
-      AXIOMS (non-negotiable):
-      A1. `# frozen_string_literal: true` on every Ruby file, first line.
-      A2. No bare `rescue` — always name the exception class.
-      A3. Methods under 15 lines. Extract if longer.
-      A4. One responsibility per class. Split if two found.
-      A5. `Arel.sql()` around every raw SQL string in order()/where().
-      A6. `respond_to?(:ok?)` not `is_a?` for duck-typing Result values.
-      A7. Never silently swallow a Result::Err — propagate or log it.
-      A8. No `rescue nil` chains — explicit, named error handling at boundaries.
-      A9. No magic literals — extract to named constants: `NAME = value.freeze`.
-      A10. Inject dependencies; never instantiate collaborators inside a method.
-    TEXT
-
-    STRUCTURAL_TECHNIQUES = <<~TEXT.freeze
-      STRUCTURAL TECHNIQUES — reshape the code using whichever apply:
-      S1. FLATTEN / GUARD CLAUSE — replace nested if/else with early returns.
-          `return unless valid?` before the main logic, not wrapping it.
-      S2. EXTRACT — a cohesive block of 5+ lines with one job → named private method.
-      S3. INLINE — a one-liner method used exactly once → fold it into the call site.
-      S4. HOIST — move loop-invariant computation above the loop. Extract constants.
-      S5. MERGE — two methods with ≥80% identical bodies → one method with a parameter.
-      S6. DECOUPLE — inject collaborators; remove hidden `new` calls inside methods.
-      S7. DEFRAG — gather all code for one concept into one location. No scattered logic.
-      S8. REFLOW — happy path first, error/edge cases after. Fail fast at the top.
-      S9. TELL DON'T ASK — send commands to objects; don't query state to decide for them.
-      S10. EXPAND — if logic is too dense to follow, break it into named intermediate steps.
-      S11. CONTRACT — if logic is bloated with indirection, collapse trivial wrappers.
-      S12. SPLIT — if a class has two responsibilities, extract the second into its own class.
-      S13. PARALLELIZE — replace sequential independent map operations with parallel where safe.
-    TEXT
-
-    PROSE_TECHNIQUES = <<~TEXT.freeze
-      PROSE TECHNIQUES — Prune & White for all comments and strings:
-      P1. OMIT NEEDLESS WORDS — every word must earn its place.
-      P2. ACTIVE VOICE — "returns the token" not "the token is returned by".
-      P3. DELETE OBVIOUS COMMENTS — `# increment counter` above `count += 1` is noise.
-      P4. REPHRASE VAGUE — "handle stuff" → "validate CSRF, reject with 403 on mismatch".
-      P5. STRIP HEDGES — remove: simply, just, basically, obviously, easily,
-          feel free to, keep in mind, please note, I think, I believe, It's worth noting.
-      P6. STRIP PREAMBLES — remove: Great question, Certainly, Of course, I'd be happy to.
-      P7. DIRECT ASSERTION — state facts; never qualify or apologize.
-      P8. ECONOMY IN NAMING — `user_authentication_validation_helper` → `auth_check`
-          only if the shorter name retains the full meaning.
-    TEXT
-
-    DIMENSION_ASSESSMENT = <<~TEXT.freeze
-      DIMENSION ASSESSMENT — evaluate and act on each:
-      - EXPAND this file? Logic too dense; needs intermediate named steps.
-      - CONTRACT this file? Bloated with indirection; collapse it.
-      - SPLIT this file? Two responsibilities found; extract the second.
-      - MERGE with another? Trivially thin; belongs inside its only caller.
-    TEXT
+    # Build a compact file map. Injected into every rewrite prompt so the model
+    # has full structural context before touching any individual file.
+    def build_codebase_map
+      files = Dir.glob(File.join(@root, "lib", "**", "*.rb"))
+                 .reject { |f| f.include?("/vendor/") }
+                 .map    { |f| f.delete_prefix("#{@root}/") }
+                 .sort
+      "## Codebase (#{files.size} Ruby files)\n" +
+        files.map { |f| "  #{f}" }.join("\n")
+    end
 
     def collect_files(dir, types)
       types.flat_map { |t| Dir.glob(File.join(dir, GLOBS[t].to_s)) }.uniq.sort
@@ -158,12 +156,16 @@ module Master
 
     def build_prompt(src, rel, lang)
       <<~PROMPT
-        Improve every dimension of #{rel} (#{lang}) in a single pass.
+        You are refactoring #{rel} (#{lang}). Study the full codebase map below
+        before making any change — do not modify an interface without tracing its callers.
+
+        #{@map}
 
         #{AXIOMS}
         #{STRUCTURAL_TECHNIQUES}
         #{PROSE_TECHNIQUES}
-        #{DIMENSION_ASSESSMENT}
+
+        Improve every dimension of #{rel} in a single pass.
         Return ONLY the improved file content — no explanation, no markdown fences
         unless the file is already markdown. If no improvement is possible, return
         exactly: UNCHANGED
@@ -177,7 +179,7 @@ module Master
       return nil if text.strip == "UNCHANGED"
 
       fence_re = /```(?:#{Regexp.escape(lang)}|ruby|sh|bash|yaml|erb)?\n(.*?)```/m
-      return text.match(fence_re)[1]       if text.match?(fence_re)
+      return text.match(fence_re)[1]         if text.match?(fence_re)
       return text.match(/```\n(.*?)```/m)[1] if text.match?(/```\n(.*?)```/m)
 
       text.strip.empty? ? nil : text
@@ -196,8 +198,7 @@ module Master
 
     def violations_in(path)
       return 0 unless path.end_with?(".rb") && File.exist?(path)
-
-      r = @scanner.scan(path, depth: :deep)
+      r = @scanner.scan(path, depth: :standard)
       r.respond_to?(:value!) ? r.value!.size : 0
     rescue StandardError
       0
@@ -209,7 +210,7 @@ module Master
       Tempfile.open(["vcheck", ".rb"]) do |f|
         f.write(content)
         f.flush
-        r = @scanner.scan(f.path, depth: :deep)
+        r = @scanner.scan(f.path, depth: :standard)
         r.respond_to?(:value!) ? r.value!.size : 0
       end
     rescue StandardError
@@ -226,10 +227,10 @@ module Master
       delta < CONVERGE_THRESHOLD
     end
 
-    def commit(cycle)
+    def commit(msg)
       Dir.chdir(@root) do
         system("git add -A 2>/dev/null")
-        system("git commit -m 'sweep: full-codebase refactor [cycle #{cycle}]' 2>/dev/null")
+        system("git commit -m '#{msg}' 2>/dev/null")
       end
     end
 
