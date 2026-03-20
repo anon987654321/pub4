@@ -73,6 +73,7 @@ module Master
     scanner.add_rule(Scan::Rules::NielsenRule.new)
     scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
     scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
+    scanner.add_rule(Scan::Rules::AdversarialRule.new(agent:))
     swarm        = Swarm::Coordinator.new(agent:, event_bus: bus)
     personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
     deliberation = Council::Deliberation.new(personas:, agent:, event_bus: bus)
