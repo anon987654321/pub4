@@ -43,7 +43,7 @@ module Master
     bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] rescue nil }
 
     memory      = Memory.new(root:)
-    personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT)
+    personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT, root:)
 
     tools    = build_tools(root:, undo:, governor:, bus:, diff_stager:, code_index:)
     tools   += mcp.tools
@@ -153,7 +153,6 @@ module Master
       "dmesg"   => ->(ctx) { logging.dmesg },
       "cost"    => ->(ctx) { "$#{"%.4f" % session.cost}" },
       "config"  => ->(ctx) { config.data.inspect },
-      "model"   => ->(ctx) { "model: #{agent.model}" },
       "mode"    => ->(ctx) {
         arg = ctx[:args].to_s.strip
         if Reasoning::Modes::SUPPORTED.include?(arg)
@@ -249,6 +248,10 @@ module Master
           parts = arg.sub("remember ", "").split("=", 2)
           key, val = parts[0].strip, parts[1]&.strip
           val ? (memory.remember(key, val); "remembered: #{key}") : "usage: /memory remember key=value"
+        elsif arg.start_with?("search ")
+          query = arg.sub("search ", "").strip
+          hits  = memory.respond_to?(:semantic_recall) ? memory.semantic_recall(query) : memory.all.select { |k, v| k.to_s.include?(query) || v.to_s.include?(query) }
+          hits.empty? ? "(no matches: #{query})" : hits.map { |k, v| "#{k}: #{v}" }.join("\n")
         elsif arg.empty?
           entries = memory.all
           entries.empty? ? "(no memories)" : entries.map { |k, v| "#{k}: #{v}" }.join("\n")
@@ -284,8 +287,84 @@ module Master
         File.write(out, lines.join("\n"))
         "snapshot: #{files.size} files written to #{out}"
       },
+"cache" => ->(ctx) {
+  arg = ctx[:args].to_s.strip
+  if arg == "clear"
+    cache.invalidate_all!
+    "cache cleared"
+  elsif arg == "stats"
+    s = cache.stats
+    "cache: #{s[:entries]} entries, #{s[:size_kb]} KB"
+  else
+    s = cache.stats
+    "cache: #{s[:entries]} entries, #{s[:size_kb]} KB  (use /cache clear to purge)"
+  end
+},
+"diff" => ->(ctx) {
+  arg  = ctx[:args].to_s.strip
+  base = arg.empty? ? "HEAD" : arg
+  out  = `git -C #{root.shellescape} diff #{base} --stat 2>&1`.strip
+  out.empty? ? "(no changes since #{base})" : out
+},
+"model" => ->(ctx) {
+  arg = ctx[:args].to_s.strip
+  if arg == "list"
+    yml_path = File.join(root, "data", "models.yml")
+    if File.exist?(yml_path)
+      require "yaml"
+      data = YAML.safe_load_file(yml_path)
+      tiers = data["models"] || {}
+      lines = tiers.flat_map { |tier, ms| ms.to_a.map { |m| "  [#{tier}] #{m["id"]}" } }
+      (["available models:"] + lines).join("\n")
+    else
+      "model: #{agent.model}"
+    end
+  elsif arg.empty?
+    "model: #{agent.model}"
+  else
+    "model command: list  or no args for current model"
+  end
+},
+"commit" => ->(ctx) {
+  diff = `git -C #{root.shellescape} diff --cached --stat 2>&1`.strip
+  diff = `git -C #{root.shellescape} diff --stat 2>&1`.strip if diff.empty?
+  return "nothing to commit" if diff.empty?
+  prompt = "Write a concise git commit message (1 line, imperative mood) for these changes:\n#{diff}"
+  msg    = agent.chat_raw(prompt)
+  msg    = msg.strip.lines.first.to_s.strip.gsub(/"/, "'")
+  out    = `git -C #{root.shellescape} add -u 2>&1 && git -C #{root.shellescape} commit -m "#{msg}" 2>&1`.strip
+  out
+},
+"knowledge" => ->(ctx) {
+  arg = ctx[:args].to_s.strip
+  if arg.start_with?("add ")
+    url = arg.sub("add ", "").strip
+    require "open-uri"
+    require "shellwords"
+    return "usage: /knowledge add <url>" if url.empty?
+    slug    = url.gsub(/[^a-z0-9._-]/i, "_").downcase[0, 60]
+    kdir    = File.join(root, "knowledge", "web")
+    FileUtils.mkdir_p(kdir)
+    dest    = File.join(kdir, "#{slug}.txt")
+    content = URI.open(url, read_timeout: 15, &:read).encode("UTF-8", invalid: :replace, undef: :replace)
+    File.write(dest, content, encoding: "UTF-8")
+    "saved #{content.bytesize} bytes to knowledge/web/#{slug}.txt"
+  else
+    "usage: /knowledge add <url>"
+  end
+},
+"why" => ->(ctx) {
+  rule = ctx[:args].to_s.strip
+  if rule.empty?
+    "usage: /why <rule_name>  -- explains a scan rule. e.g. /why ExplicitRule"
+  else
+    prompt = "Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
+             "give a before/after Ruby example, and state why it matters."
+    agent.chat_raw(prompt)
+  end
+},
       "help"    => ->(ctx) {
-        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory help exit]
+        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory cache diff commit knowledge why snapshot explain persona help exit]
         cmds.map { "/#{_1}" }.join("  ")
       }
     }

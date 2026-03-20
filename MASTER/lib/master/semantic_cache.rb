@@ -39,6 +39,21 @@ module Master
       @lock.synchronize { File.delete(path) if File.exist?(path) }
     end
 
+    def invalidate_all!
+      @lock.synchronize do
+        Dir.glob(File.join(@root, "*.json")).each { |f| File.delete(f) rescue nil }
+        @lru.clear
+      end
+    end
+
+    def stats
+      @lock.synchronize do
+        files = Dir.glob(File.join(@root, "*.json"))
+        bytes = files.sum { |f| File.size(f) rescue 0 }
+        { entries: files.size, size_kb: (bytes / 1024.0).round(1) }
+      end
+    end
+
     private
 
     def cache_key(prompt, model)
