@@ -6,11 +6,12 @@ require "open3"
 
 module Master
   DEFAULT_WEB_PORT = 3001
-  DMESG_LINE_COUNT = 18
 
   class Renderer
     TICK  = "\u2714".freeze
     CROSS = "\u2718".freeze
+    DMESG_LINE_COUNT = 18
+    MILLISECONDS_PER_SECOND = 1000
 
     def initialize(config:)
       @config = config
@@ -82,9 +83,9 @@ module Master
     end
 
     def elapsed_ms
-      @start_ms ||= (Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i
-      now = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i
-      format("%d.%03d", (now - @start_ms) / 1000, (now - @start_ms) % 1000)
+      @start_ms ||= (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MILLISECONDS_PER_SECOND).to_i
+      now = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MILLISECONDS_PER_SECOND).to_i
+      format("%d.%03d", (now - @start_ms) / MILLISECONDS_PER_SECOND, (now - @start_ms) % MILLISECONDS_PER_SECOND)
     end
   end
 end
