@@ -257,6 +257,33 @@ module Master
           val ? "#{arg}: #{val}" : "(not found: #{arg})"
         end
       },
+      "snapshot" => ->(ctx) {
+        stamp  = Time.now.strftime("%Y%m%d_%H%M%S")
+        out    = File.expand_path("~/master_snapshot_#{stamp}.md")
+        lang_map = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
+                     ".js" => "javascript", ".json" => "json", ".sh" => "bash",
+                     ".zsh" => "bash", ".md" => "markdown", ".html" => "html",
+                     ".erb" => "erb", ".css" => "css" }
+        dirs   = %w[exe lib/master web/app web/config data].map { |d| File.join(root, d) }
+        files  = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
+                   .select { |f| File.file?(f) && File.size(f) < 200_000 }
+                   .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
+                   .reject { |f| File.binread(f, 512).include?("\x00") rescue true }
+                   .sort
+
+        lines  = ["# MASTER Codebase Snapshot", "Generated: #{Time.now.utc.iso8601}", ""]
+        files.each do |f|
+          rel  = f.sub("#{root}/", "")
+          lang = lang_map.fetch(File.extname(f).downcase, "text")
+          src  = File.read(f, encoding: "UTF-8", invalid: :replace)
+          lines << "## #{rel}" << "```#{lang}" << src.rstrip << "```" << ""
+        rescue StandardError => e
+          lines << "## #{rel}" << "[skipped: #{e.message}]" << ""
+        end
+
+        File.write(out, lines.join("\n"))
+        "snapshot: #{files.size} files written to #{out}"
+      },
       "help"    => ->(ctx) {
         cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory help exit]
         cmds.map { "/#{_1}" }.join("  ")
