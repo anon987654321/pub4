@@ -30,27 +30,34 @@ module Master
     end
 
     def call(cost_estimate, &blk)
-      check_rate
-      check_budget(cost_estimate)
-      check_circuit
-      result = blk.call
-      on_success
-      result
+      preflight_checks(cost_estimate)
+      execute_with_tracking(blk)
     rescue CircuitError => e
       on_failure
       Result.err(e.message, category: e.category)
-    rescue RubyLLM::RateLimitError => e
-      # Rate limits don't indicate upstream failure — don't trip the circuit
-      Result.err("rate_limit: #{e.message}", category: :infrastructure)
-    rescue => e
-      on_failure
-      Result.err("circuit: #{e.message}", category: :unknown)
     end
 
     def record_cost(amount)  = synchronize { @session_total += amount }
     def session_total        = synchronize { @session_total }
 
     private
+
+    def preflight_checks(cost_estimate)
+      check_rate
+      check_budget(cost_estimate)
+      check_circuit
+    end
+
+    def execute_with_tracking(blk)
+      result = blk.call
+      on_success
+      result
+    rescue RubyLLM::RateLimitError => e
+      Result.err("rate_limit: #{e.message}", category: :infrastructure)
+    rescue => e
+      on_failure
+      Result.err("circuit: #{e.message}", category: :unknown)
+    end
 
     def check_rate
       synchronize do
