@@ -139,8 +139,13 @@ module Master
     end
 
     def syntax_ok?(content)
-      IO.popen(["ruby", "-c", "--disable=all", "-e", content], err: [:child, :out]) { |io| io.read }
-      $?.success?
+      require "tempfile"
+      Tempfile.open(["al_chk", ".rb"]) do |f|
+        f.binmode
+        f.write(content.encode("UTF-8", invalid: :replace, undef: :replace))
+        f.flush
+        system("ruby", "-c", f.path, out: File::NULL, err: File::NULL)
+      end
     rescue StandardError
       false
     end
