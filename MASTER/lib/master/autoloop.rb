@@ -32,7 +32,7 @@ module Master
         cycle = i + 1
         @bus&.publish("autoloop:cycle", cycle:)
 
-        scan_result = @scanner.scan_dir(@root, depth: :standard)
+        scan_result = @scanner.scan_dir(File.join(@root, "lib"), depth: :standard)
         return scan_result if scan_result.respond_to?(:err?) && scan_result.err?
 
         violations = extract_violations(scan_result.value!)
