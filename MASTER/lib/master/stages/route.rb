@@ -2,6 +2,9 @@
 
 module Master
   module Stages
+    # Route — attach the correct handler to the context.
+    # :command → looks up registered command object.
+    # :llm     → uses the agent.
     class Route
       def initialize(commands:, agent:)
         @commands = commands
@@ -10,15 +13,19 @@ module Master
 
       def call(ctx)
         case ctx[:intent]
-        when :command
-          cmd = @commands[ctx[:command]]
-          return Result.err("unknown command: /#{ctx[:command]}", category: :validation) unless cmd
-          Result.ok(ctx.merge(handler: cmd))
-        when :llm
-          Result.ok(ctx.merge(handler: @agent))
-        else
-          Result.err("route: unknown intent #{ctx[:intent]}", category: :validation)
+        when :command then route_command(ctx)
+        when :llm     then Result.ok(ctx.merge(handler: @agent))
+        else               Result.err("route: unknown intent #{ctx[:intent].inspect}", category: :validation)
         end
+      end
+
+      private
+
+      def route_command(ctx)
+        cmd = @commands[ctx[:command]]
+        return Result.err("unknown command: /#{ctx[:command]}", category: :validation) unless cmd
+
+        Result.ok(ctx.merge(handler: cmd))
       end
     end
   end

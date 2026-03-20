@@ -2,13 +2,13 @@
 
 module Master
   module Stages
+    # Execute — call the handler resolved by Route and store its output.
     class Execute
       def call(ctx)
         handler = ctx[:handler]
         return Result.err("execute: no handler", category: :validation) unless handler
 
-        result = handler.call(ctx)
-        Result.ok(ctx.merge(output: result))
+        Result.ok(ctx.merge(output: handler.call(ctx)))
       rescue => e
         Result.err("execute: #{e.message}", category: :unknown)
       end

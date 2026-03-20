@@ -4,9 +4,8 @@ module Master
   module Stages
     # Memo — extract and persist memory from assistant responses.
     #
-    # Fires after Prune, before Render. Scans output for explicit memory
-    # requests, decisions, and preferences. Writes to persistent Memory store.
-    # Non-fatal: errors pass through without breaking the pipeline.
+    # Runs after Prune, before Render. Scans output for memory requests,
+    # decisions, and preferences. Non-fatal: errors pass through.
     class Memo
       REMEMBER_RE = /\bremember\s+(?:that\s+)?(.{10,200}?)(?:[.!]|$)/im.freeze
       DECISION_RE = /\bwe(?:'ve|\s+have)?\s+decided\s+(?:to\s+)?(.{10,150}?)(?:[.!]|$)/im.freeze
