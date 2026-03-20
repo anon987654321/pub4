@@ -20,7 +20,9 @@ module Master
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
       lines << "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{@p.dim("ready")}"
-      lines << @p.dim("web  http://brgen.no:3000")
+      host = (@config["web_host"] || "brgen.no").sub("0.0.0.0", "brgen.no")
+      port = @config["web_port"] || 3001
+      lines << @p.dim("web  http://#{host}:#{port}")
       lines << ""
       lines.join("\n")
     end
