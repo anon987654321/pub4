@@ -236,28 +236,6 @@
       text-transform:uppercase;
     }
 
-    #overlay .chips{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      justify-content:center;
-      max-width:520px;
-    }
-
-    #overlay .chip{
-      font:11px/1 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-      color:#444;
-      border:1px solid #222;
-      border-radius:3px;
-      padding:6px 10px;
-      cursor:pointer;
-      transition:color 0.2s,border-color 0.2s;
-      text-transform:lowercase;
-      letter-spacing:.05em;
-    }
-
-    #overlay .chip:hover{color:#888;border-color:#444;}
-
     #overlay .hint{
       font-size:10px;
       color:#222;
@@ -307,15 +285,6 @@
 
   <section id="overlay" role="dialog" aria-modal="true">
     <h1>MASTER</h1>
-    <div class="chips">
-      <span class="chip" data-cmd="scan .">scan</span>
-      <span class="chip" data-cmd="fix">fix</span>
-      <span class="chip" data-cmd="sweep">sweep</span>
-      <span class="chip" data-cmd="autoloop">autoloop</span>
-      <span class="chip" data-cmd="council on">council</span>
-      <span class="chip" data-cmd="explain">explain</span>
-      <span class="chip" data-cmd="memory">memory</span>
-    </div>
     <p class="hint">tap to begin</p>
   </section>
 
@@ -1543,7 +1512,7 @@ const renderMd = raw => {
           let m;
           while((m=_spkBuf.match(/^([\s\S]+?[.!?\u2026](?:\s|$))([\s\S]*)$/))){
             const s=m[1].trim();_spkBuf=m[2];
-            if(s.length>3) speakBrowser(s);
+            if(s.length>3) speakWithAudio(s);
           }
           if(force&&_spkBuf.trim().length>3){speakBrowser(_spkBuf.trim());_spkBuf='';}
         };
@@ -1554,7 +1523,8 @@ const renderMd = raw => {
           const lines=buf.split('\n');buf=lines.pop();
           for(const line of lines){
             if(!line.startsWith('data: '))continue;
-            const chunk=line.slice(6);
+            const chunk=line.slice(6).replace(/\\n/g,"\n");
+");
             if(chunk==='[DONE]')break;
             fullText+=chunk;
             _spkBuf+=chunk;

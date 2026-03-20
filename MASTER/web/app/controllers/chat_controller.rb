@@ -5,6 +5,7 @@ Encoding.default_internal = Encoding::UTF_8
 
 $LOAD_PATH.unshift File.expand_path("../../../../lib", __FILE__)
 require "master"
+require "shellwords"
 
 class ChatController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:message, :tts]
@@ -25,11 +26,14 @@ class ChatController < ApplicationController
 
   def metrics
     c = container
+    repo_root = Rails.root.join("..").to_s
+    dirty = `git -C #{Shellwords.escape(repo_root)} status --porcelain 2>/dev/null`.lines.count
     render json: {
-      model:  c[:agent].model.to_s.split("/").last,
-      tokens: c[:session].respond_to?(:token_est) ? c[:session].token_est : 0,
-      cost:   "$%.4f" % (c[:session].respond_to?(:cost) ? c[:session].cost : 0.0),
-      uptime: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - @@start_ms)
+      model:            c[:agent].model.to_s.split("/").last,
+      tokens:           c[:session].respond_to?(:token_est) ? c[:session].token_est : 0,
+      cost:             "$%.4f" % (c[:session].respond_to?(:cost) ? c[:session].cost : 0.0),
+      uptime:           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - @@start_ms),
+      repo_dirty_count: dirty
     }
   end
 
@@ -46,14 +50,17 @@ class ChatController < ApplicationController
       streamed = false
       on_chunk = ->(token) {
         streamed = true
-        sse.write("data: #{token.to_s.gsub("\n", " ")}\n\n")
+        encoded = token.to_s.gsub("\\", "\\\\").gsub("\n", "\\n")
+        sse.write("data: #{encoded}\n\n")
       }
 
-      result = container[:pipeline].call(
-        Master::Result.ok(user_message: input, on_chunk: on_chunk)
-      )
+      ctx = { user_message: input, on_chunk: on_chunk }
+      if (img = params[:image]).present?
+        ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
+      end
 
-      # Commands / cache hits didn't stream — send full text as one event
+      result = container[:pipeline].call(Master::Result.ok(**ctx))
+
       unless streamed
         text = case result
                when Master::Result::Ok
@@ -62,7 +69,10 @@ class ChatController < ApplicationController
                when Master::Result::Err
                  "ERROR: #{result.message}"
                end
-        sse.write("data: #{text.to_s.gsub("\n", " ")}\n\n") unless text.to_s.strip.empty?
+        unless text.to_s.strip.empty?
+          encoded = text.to_s.gsub("\\", "\\\\").gsub("\n", "\\n")
+          sse.write("data: #{encoded}\n\n")
+        end
       end
 
       sse.write("data: [DONE]\n\n")
