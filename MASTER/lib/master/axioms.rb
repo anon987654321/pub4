@@ -3,35 +3,49 @@
 require 'yaml'
 
 module Master
+  # Loads kernel rules and philosophy from data/axioms.yml.
+  # Also loads data/workflow.yml — operational norms for editing, scanning, and fixing.
+  # Single source of truth: personality, scan, and LLM prompts all draw from here.
   class Axioms
-    def self.data_file_path(filename)
-      File.join(File.expand_path('../../..', __dir__), 'data', filename)
-    end
-
-    DATA_PATH     = self.data_file_path('axioms.yml').freeze
-    WORKFLOW_PATH = self.data_file_path('workflow.yml').freeze
+    DATA_PATH     = File.join(File.expand_path('../../..', __dir__), 'data', 'axioms.yml').freeze
+    WORKFLOW_PATH = File.join(File.expand_path('../../..', __dir__), 'data', 'workflow.yml').freeze
 
     def initialize(root: nil)
-      axioms_path   = build_data_path('axioms.yml', root)
-      workflow_path = build_data_path('workflow.yml', root)
-      begin
-        @data = load_yaml_safe(axioms_path)
-        @workflow = load_yaml_safe(workflow_path)
-      rescue StandardError
-        @data = {}
-        @workflow = {}
-      end
+      axioms_path   = root ? File.join(root, 'data', 'axioms.yml')   : DATA_PATH
+      workflow_path = root ? File.join(root, 'data', 'workflow.yml') : WORKFLOW_PATH
+      @data         = File.exist?(axioms_path)   ? YAML.safe_load_file(axioms_path)   : {}
+      @workflow     = File.exist?(workflow_path) ? YAML.safe_load_file(workflow_path) : {}
+    rescue StandardError
+      @data     = {}
+      @workflow = {}
     end
 
     def kernel   = @data.fetch('kernel', {})
-    def workflow = @workflow
+    def workflow  = @workflow
 
+    # Philosophy items sorted ascending by priority number (1 = highest priority).
     def philosophy(limit: nil)
       items = (@data.dig('philosophy', 'prioritized_top_25') || [])
               .sort_by { |a| a['priority'].to_i }
       limit ? items.first(limit) : items
     end
 
+    def kernel_block
+      return nil if kernel.empty?
+
+      pairs = kernel.map { |id, stmt| "  #{id}: #{stmt}" }.join("\n")
+      "## Kernel Axioms (enforced)\n#{pairs}"
+    end
+
+    def philosophy_block(limit: 5)
+      items = philosophy(limit:)
+      return nil if items.empty?
+
+      top = items.map { |a| "  #{a['id']}: #{a['statement']}" }.join("\n")
+      "## Core Philosophy (top #{items.size})\n#{top}"
+    end
+
+    # Workflow rule lookup — e.g. axioms.workflow_rule("file_reading")
     def workflow_rule(key)
       @workflow.dig(key.to_s) || {}
     end
@@ -42,48 +56,5 @@ module Master
     end
 
     def empty? = @data.empty?
-
-    def kernel_block
-      block_for(:kernel)
-    end
-
-    def philosophy_block(limit: 5)
-      block_for(:philosophy, limit: limit)
-    end
-
-    private
-
-    def build_data_path(filename, root)
-      root ? File.join(root, 'data', filename) : self.class.data_file_path(filename)
-    end
-
-    def load_yaml_safe(path)
-      File.exist?(path) ? YAML.safe_load_file(path) : {}
-    end
-
-    def block_for(type, limit: nil)
-      config = block_config(type, limit)
-      return nil unless config
-      header, collection, formatter = config
-      build_block(header, collection, &formatter)
-    end
-
-    def block_config(type, limit)
-      case type
-      when :kernel
-        [ "## Kernel Axioms (enforced)", kernel, ->(id, stmt) { "  #{id}: #{stmt}" } ]
-      when :philosophy
-        collection = philosophy(limit: limit)
-        [ "## Core Philosophy (top #{collection.size})", collection, ->(a) { "  #{a['id']}: #{a['statement']}" } ]
-      else
-        nil
-      end
-    end
-
-    def build_block(header, collection)
-      return nil if collection.empty?
-      body = collection.map { |*args| yield(*args) }.join("\n")
-      "#{header}\n#{body}"
-    end
   end
 end
