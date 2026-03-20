@@ -218,6 +218,7 @@
       cursor:pointer;
       user-select:none;
       z-index:1000;
+      touch-action:manipulation;
       text-align:center;
       padding:32px;
       opacity:1;
@@ -1921,34 +1922,35 @@ const renderMd = raw => {
     });
 
 
-    overlay.addEventListener('click',()=>{
-      overlay.classList.add('ack');
-      initAudio();
-      initMotion();
-      setupRecognition();
-      // Start ambient pads + drums after a brief delay for audioCtx to settle
-      setTimeout(initPads,500); setTimeout(initDrums,650);
-      refreshMetrics();
-      setInterval(refreshMetrics,30000);
-      setTimeout(()=>{
-        overlay.hidden=true;
-        inputField.classList.add('active');
-        // Only auto-focus on desktop — on mobile the keyboard is intrusive
-        if(window.innerWidth>768) input.focus();
-        const today=new Date();
-        const isMomBday=(today.getMonth()===1&&today.getDate()===26);
-        const hour=today.getHours();
-        // #7: Dark-adapt — late night gets calmer greeting
-        let greeting;
-        if(isMomBday) greeting='Happy birthday momma!';
-        else if(hour>=22||hour<5) greeting=["Can't sleep?","Night owl.","The quiet hours.","Just us and the dark."][Math.floor(Math.random()*4)];
-        else if(hour<12) greeting='Good morning.';
-        else if(hour<17) greeting='Good afternoon.';
-        else greeting='Good evening.';
-        speakWithAudio(greeting);
-        scheduleAmbient();
-      },850);
-    });
+    const _activateOverlay=(()=>{
+      let _fired=false;
+      return ()=>{
+        if(_fired) return; _fired=true;
+        overlay.classList.add('ack');
+        initAudio();initMotion();setupRecognition();
+        setTimeout(initPads,500);setTimeout(initDrums,650);
+        refreshMetrics();setInterval(refreshMetrics,30000);
+        setTimeout(()=>{
+          overlay.hidden=true;
+          inputField.classList.add('active');
+          if(window.innerWidth>768) input.focus();
+          const today=new Date();
+          const isMomBday=(today.getMonth()===1&&today.getDate()===26);
+          const hour=today.getHours();
+          let greeting;
+          if(isMomBday) greeting='Happy birthday momma!';
+          else if(hour>=22||hour<5) greeting=["Can't sleep?","Night owl.","The quiet hours.","Just us and the dark."][Math.floor(Math.random()*4)];
+          else if(hour<12) greeting='Good morning.';
+          else if(hour<17) greeting='Good afternoon.';
+          else greeting='Good evening.';
+          speakWithAudio(greeting);
+          scheduleAmbient();
+        },850);
+      };
+    })();
+    overlay.addEventListener('click',_activateOverlay);
+    overlay.addEventListener('touchend',e=>{e.preventDefault();_activateOverlay();},{passive:false});
+    // REPLACED overlay.addEventListener('click',()=>{
 
     // Status circle: tap toggles mic, long-press cycles voice effect
     let statusLongPress=null;
