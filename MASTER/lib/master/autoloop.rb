@@ -5,14 +5,15 @@ require "open3"
 module Master
   # AutoLoop — iterate on scan violations until clean or max_cycles reached.
   #
-  # Cycle: scan all Ruby files → collect violations sorted by severity →
-  # build full codebase context → LLM patch → syntax check → write → commit.
-  # Stops when no violations remain or max_cycles is reached.
-  # For full prose and structural sweep, use Sweep.
+  # Cycle: scan lib+test at standard depth → collect violations by severity →
+  # build full codebase context → LLM fix (with rate-limit retry) → syntax
+  # check → write → commit. Stops when clean or max_cycles reached.
   class AutoLoop
     MAX_CYCLES       = 12
-    BATCH_SIZE       = 5   # violations fixed per cycle
+    BATCH_SIZE       = 5
     CODE_PREVIEW_MAX = 4_000
+    RATE_LIMIT_SLEEP = 10   # seconds to sleep on 429 before retrying
+    MAX_FIX_RETRIES  = 3
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
@@ -33,14 +34,12 @@ module Master
         @bus&.publish("autoloop:cycle", cycle:)
 
         scan_paths  = %w[lib test].map { |d| File.join(@root, d) }
-      all_results = scan_paths.flat_map { |dir|
-        res = @scanner.scan_dir(dir, depth: :standard)
-        res.respond_to?(:ok?) && res.ok? ? res.value! : []
-      }
-      scan_result = Master::Result.ok(all_results)
-        return scan_result if scan_result.respond_to?(:err?) && scan_result.err?
+        all_results = scan_paths.flat_map { |dir|
+          res = @scanner.scan_dir(dir, depth: :standard)
+          res.respond_to?(:ok?) && res.ok? ? res.value! : []
+        }
 
-        violations = extract_violations(scan_result.value!)
+        violations = extract_violations(all_results)
         return Result.ok("clean after #{cycle} cycle(s)") if violations.empty?
 
         yield cycle, violations if block_given?
@@ -60,7 +59,6 @@ module Master
 
     private
 
-    # All matching findings sorted highest severity first.
     def extract_violations(dir_results)
       dir_results.flat_map { |path, r|
         next [] unless r.respond_to?(:ok?) && r.ok?
@@ -70,8 +68,7 @@ module Master
       }.sort_by { |f| -SEVERITY_RANK.fetch(f[:severity], 0) }
     end
 
-    # Compact file map — injected into every fix prompt so the model has full
-    # structural context before patching any individual file.
+    # Full file list injected into every fix prompt — model reads structure before patching.
     def build_codebase_map
       files = Dir.glob(File.join(@root, "lib", "**", "*.rb"))
                  .reject { |f| f.include?("/vendor/") }
@@ -81,6 +78,7 @@ module Master
         files.map { |f| "  #{f}" }.join("\n")
     end
 
+    # Request a fix from the LLM. Retries up to MAX_FIX_RETRIES on rate limit (429).
     def request_fix(violation, map)
       path = File.join(@root, violation[:file])
       return nil unless File.exist?(path)
@@ -105,7 +103,23 @@ module Master
         ```
       PROMPT
 
-      extract_code(@agent.ask(prompt).to_s)
+      MAX_FIX_RETRIES.times do |attempt|
+        begin
+          return extract_code(@agent.ask(prompt).to_s)
+        rescue StandardError => e
+          msg = e.message.to_s
+          if (msg.include?("429") || msg.include?("throttled") || msg.include?("rate limit")) &&
+             attempt < MAX_FIX_RETRIES - 1
+            sleep_sec = RATE_LIMIT_SLEEP * (attempt + 1)
+            @bus&.publish("autoloop:rate_limit", sleep: sleep_sec, attempt: attempt + 1)
+            sleep sleep_sec
+          else
+            @bus&.publish("autoloop:fix_error", file: violation[:file], error: msg[0, 120])
+            return nil
+          end
+        end
+      end
+      nil
     end
 
     def extract_code(text)
@@ -118,8 +132,6 @@ module Master
     def apply_fix(rel_path, content)
       path = File.join(@root, rel_path)
       return unless File.exist?(path)
-
-      # Syntax check before writing.
       return unless syntax_ok?(content)
 
       File.write(path, content, encoding: "UTF-8")
