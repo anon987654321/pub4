@@ -4,10 +4,14 @@ require "json"
 
 module Master
   class Metrics
+    DECISION_LATENCY_MS_THRESHOLD = 5_000
+    DIFF_SIZE_LINES_THRESHOLD = 200
+    ROLLBACK_RATE_THRESHOLD = 0.15
+
     THRESHOLDS = {
-      decision_latency_ms: 5_000,
-      diff_size_lines:     200,
-      rollback_rate:       0.15
+      decision_latency_ms: DECISION_LATENCY_MS_THRESHOLD,
+      diff_size_lines: DIFF_SIZE_LINES_THRESHOLD,
+      rollback_rate: ROLLBACK_RATE_THRESHOLD
     }.freeze
 
     def initialize(root:, event_bus: nil)
@@ -17,7 +21,6 @@ module Master
       @undos  = 0
       @latencies   = []
       @diff_sizes  = []
-      # @session_start removed — stored but never used
     end
 
     def record_latency(ms)

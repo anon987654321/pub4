@@ -20,7 +20,7 @@ module Master
       case tier
       when :safe    then return Result.ok(true)
       when :guarded then return Result.ok(true) if @auto || @approve_all
-      when :dangerous then return Result.ok(true) if @auto
+      when :dangerous then return Result.ok(true) if @auto || @approve_all
       end
 
       ask_user(tool_name, tier, description)
@@ -39,14 +39,12 @@ module Master
       label = description ? "#{tool_name}: #{description}" : tool_name
       choice = @prompt.select("#{tier_icon(tier)} #{label}", [
         { name: "approve",     value: :approve },
-        { name: "approve all", value: :approve_all },
         { name: "deny",        value: :deny },
         { name: "quit",        value: :quit }
       ])
 
       case choice
       when :approve     then Result.ok(true)
-      when :approve_all then @approve_all = true ; Result.ok(true)
       when :deny        then @bus&.publish("tool:denied", tool: tool_name) ; Result.err("denied by user", category: :validation)
       when :quit        then exit(0)
       end
