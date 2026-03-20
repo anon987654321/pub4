@@ -4,42 +4,11 @@ require "yaml"
 require "fileutils"
 
 module Master
+  # Persistent cross-session memory store with TF-IDF semantic search.
+  # Stored at .master/memory.yml — survives restarts.
   class Memory
     def initialize(root: Dir.pwd)
-      @persistence = MemoryPersistence.new(root)
-      @search = MemorySearch.new(@persistence.store)
-    end
-
-    def remember(key, value)
-      @persistence.remember(key, value)
-    end
-
-    def recall(key)
-      @persistence.recall(key)
-    end
-
-    def forget(key)
-      @persistence.forget(key)
-    end
-
-    def all
-      @persistence.all
-    end
-
-    def context_summary
-      @persistence.context_summary
-    end
-
-    def semantic_recall(query, top_n: 3)
-      @search.semantic_recall(query, top_n: top_n)
-    end
-  end
-
-  class MemoryPersistence
-    attr_reader :store
-
-    def initialize(root: Dir.pwd)
-      @path = File.join(root, ".master", "memory.yml")
+      @path  = File.join(root, ".master", "memory.yml")
       @store = load_store
     end
 
@@ -48,6 +17,7 @@ module Master
       persist
     end
 
+    # Keys are always stored and retrieved as strings.
     def recall(key)
       @store.dig(key.to_s, "value")
     end
@@ -57,36 +27,17 @@ module Master
       persist
     end
 
-    def all
-      @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v }
-    end
+    def all = @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v }
 
+    # Returns a compact string suitable for injection into system prompts.
     def context_summary
       return nil if @store.empty?
       lines = @store.map { |k, v| "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
       "Memory:\n#{lines.join("\n")}"
     end
 
-    private
-
-    def load_store
-      return {} unless File.exist?(@path)
-      YAML.safe_load_file(@path, symbolize_names: false) || {}
-    rescue StandardError
-      {}
-    end
-
-    def persist
-      FileUtils.mkdir_p(File.dirname(@path))
-      File.write(@path, @store.to_yaml)
-    end
-  end
-
-  class MemorySearch
-    def initialize(store)
-      @store = store
-    end
-
+    # TF-IDF ranked search across all memory entries.
+    # Returns array of {key:, value:, score:} hashes, highest score first.
     def semantic_recall(query, top_n: 3)
       return [] if @store.empty?
 
@@ -106,10 +57,23 @@ module Master
 
     private
 
+    def load_store
+      return {} unless File.exist?(@path)
+      YAML.safe_load_file(@path, symbolize_names: false) || {}
+    rescue StandardError
+      {}
+    end
+
+    def persist
+      FileUtils.mkdir_p(File.dirname(@path))
+      File.write(@path, @store.to_yaml)
+    end
+
     def tokenize(text)
       text.downcase.scan(/\b[a-z]{2,}\b/)
     end
 
+    # Log-weighted term frequency similarity — no external gem required.
     def tfidf_score(query_terms, doc_terms)
       return 0.0 if doc_terms.empty?
       freq = doc_terms.tally
