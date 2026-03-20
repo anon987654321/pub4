@@ -25,7 +25,7 @@ module Master
       private
 
       def load_prompt(mode)
-        path = File.join(@root, "data", "prompts", "#{mode}.yml")
+        path = File.join(@root, "data", "prompts", "mode_#{mode}.yml")
         YAML.safe_load_file(path) || {}
       end
     end
