@@ -2,11 +2,11 @@
 
 module Master
   module Stages
+    # Intake — parse raw user message into intent + structured fields.
+    # Slash syntax: /command args → intent :command.
+    # Plain text → intent :llm.
     class Intake
-      # Group [2] (args) is used; group [1] (command name) is used.
-      # The trailing `(?:.*)` captures the rest of the line but the group is non-capturing
-      # because we access args via m[2] (the second capturing group: `(.*)`).
-      # Note: COMMAND_RE keeps two capturing groups — m[1]=command, m[2]=args.
+      # m[1] = command name, m[2] = args string.
       COMMAND_RE = /\A\s*\/([\w-]+)\s*(.*)/m
 
       def call(ctx)

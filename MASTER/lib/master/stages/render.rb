@@ -2,6 +2,7 @@
 
 module Master
   module Stages
+    # Render — format the final output for display.
     class Render
       def initialize(renderer:)
         @renderer = renderer

@@ -2,13 +2,16 @@
 
 module Master
   module Stages
+    # Council — multi-perspective review of dangerous or significant output.
+    # Fires automatically on dangerous requests, dangerous tools, or multi-file diffs.
+    # Can also be enabled globally via config or `enable!`.
     class Council
       DANGEROUS_PATTERNS = [
         /\brm\s+-rf\b/i,
         /\bsudo\b/i,
         /\b(?:drop|truncate)\s+table\b/i,
         /\bchmod\s+777\b/i,
-        /\b(?:delete|remove)\s+all\b/i
+        /\b(?:delete|remove)\s+all\b/i,
       ].freeze
 
       def initialize(deliberation:, config: nil, enabled: false)
@@ -52,8 +55,12 @@ module Master
         !msg.empty? && DANGEROUS_PATTERNS.any? { |p| msg.match?(p) }
       end
 
-      def dangerous_tool?(ctx)   = ctx[:last_tool_tier] == :dangerous
-      def multi_file_diff?(ctx)  = extract_payload(ctx).scan(/^(?:---|\+\+\+)\s+[ab]\/(.+)$/).uniq.size >= 2
+      def dangerous_tool?(ctx) = ctx[:last_tool_tier] == :dangerous
+
+      def multi_file_diff?(ctx)
+        # Council fires when output touches two or more distinct files.
+        extract_payload(ctx).scan(/^(?:---|\+\+\+)\s+[ab]\/(.+)$/).uniq.size >= 2
+      end
 
       def extract_payload(ctx)
         out = ctx[:output]
