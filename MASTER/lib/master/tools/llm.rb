@@ -147,6 +147,20 @@ module Master
           r.ok? ? r.value! : "Error: #{r.message}"
         end
       end
+
+      class SearchKnowledge < RubyLLM::Tool
+        description "Search the local knowledge base: ruby_llm docs, OpenBSD man pages, system prompts, gem docs. Topics: ruby_llm, openbsd, system_prompts, gems, awesome."
+        param :query, desc: "Search pattern (regex-capable)", required: true
+        param :topic, desc: "Limit to topic folder: ruby_llm, openbsd, system_prompts, gems, awesome", required: false
+
+        def initialize(tool) = @tool = tool
+
+        def execute(query:, topic: nil)
+          r = @tool.call(query: query.to_s, topic: topic&.to_s)
+          r.ok? ? r.value! : "Error: #{r.message}"
+        end
+      end
+
     end
   end
 end

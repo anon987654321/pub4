@@ -1,0 +1,81 @@
+UNVEIL(2)		      System Calls Manual		     UNVEIL(2)
+
+NAME
+     unveil - unveil parts of a restricted filesystem view
+
+SYNOPSIS
+     #include <unistd.h>
+
+     int
+     unveil(const char *path, const char *permissions);
+
+DESCRIPTION
+     The first call to unveil() that specifies a path removes visibility of
+     the entire filesystem from all other filesystem-related system calls
+     (such as open(2), chmod(2) and rename(2)), except for the specified path
+     and permissions.
+
+     The unveil() system call remains capable of traversing to any path in the
+     filesystem, so additional calls can set permissions at other points in
+     the filesystem hierarchy.
+
+     After establishing a collection of path and permissions rules, future
+     calls to unveil() can be disabled by passing two NULL arguments.
+     Alternatively, pledge(2) may be used to remove the "unveil" promise.
+
+     The permissions argument points to a string consisting of zero or more of
+     the following characters:
+
+	   r	 Make path available for read operations, corresponding to the
+		 pledge(2) promise "rpath".
+	   w	 Make path available for write operations, corresponding to
+		 the pledge(2) promise "wpath".
+	   x	 Make path available for execute operations, corresponding to
+		 the pledge(2) promise "exec".
+	   c	 Allow path to be created and removed, corresponding to the
+		 pledge(2) promise "cpath".
+
+     A path that is a directory will enable all filesystem access underneath
+     path using permissions if and only if no more specific matching unveil()
+     exists at a lower level.  Directories are remembered at the time of a
+     call to unveil().	This means that a directory that is removed and
+     recreated after a call to unveil() will appear to not exist.
+
+     Non-directory paths are remembered by name within their containing
+     directory, and so may be created, removed, or re-created after a call to
+     unveil() and still appear to exist.
+
+     Attempts to access paths not allowed by unveil() will result in an error
+     of EACCES when the permissions argument does not match the attempted
+     operation.	 ENOENT is returned for paths for which no unveil()
+     permissions qualify.  After a process has terminated, lastcomm(1) will
+     mark it with the `U' flag if file access was prevented by unveil().
+
+     unveil() use can be tricky because programs misbehave badly when their
+     files unexpectedly disappear.  In many cases it is easier to unveil the
+     directories in which an application makes use of files.
+
+RETURN VALUES
+     Upon successful completion, the value 0 is returned; otherwise the
+     value -1 is returned and the global variable errno is set to indicate the
+     error.
+
+ERRORS
+     [E2BIG]		The addition of path would exceed the per-process
+			limit for unveiled paths.
+
+     [EFAULT]		path or permissions points outside the process's
+			allocated address space.
+
+     [ENOENT]		A directory in path did not exist.
+
+     [EINVAL]		An invalid value of permissions was used.
+
+     [EPERM]		An attempt to increase permissions was made, or the
+			path was not accessible, or unveil() was called after
+			locking.
+
+HISTORY
+     The unveil() system call first appeared in OpenBSD 6.4.
+
+OpenBSD 7.8		       September 6, 2021		     UNVEIL(2)

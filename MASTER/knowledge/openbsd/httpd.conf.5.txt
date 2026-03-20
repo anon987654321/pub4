@@ -1,0 +1,614 @@
+HTTPD.CONF(5)		      File Formats Manual		 HTTPD.CONF(5)
+
+NAME
+     httpd.conf - HTTP daemon configuration file
+
+DESCRIPTION
+     httpd.conf is the configuration file for the HTTP daemon, httpd(8).
+
+     httpd.conf is divided into the following main sections:
+
+     Macros
+	   Definitions of variables that can be used later, simplifying the
+	   configuration file.
+
+     Global configuration
+	   Global settings for httpd(8).
+
+     Servers
+	   Listening HTTP web servers.
+
+     Types
+	   Media types and extensions.
+
+     Within the sections, a host address can be specified by IPv4 address,
+     IPv6 address, interface name, interface group, or DNS hostname.  If the
+     address is an interface name, httpd(8) will look up the first IPv4
+     address and any other IPv4 and IPv6 addresses of the specified network
+     interface.	 If `*' is given as an address, httpd(8) will listen on all
+     IPv4 and IPv6 addresses.  0.0.0.0 means to listen on all IPv4 addresses
+     and :: all IPv6 addresses.	 A port can be specified by number or name.
+     The port name to number mappings are found in the file /etc/services; see
+     services(5) for details.
+
+     The current line can be extended over multiple lines using a backslash
+     (`\').  Comments can be put anywhere in the file using a hash mark (`#'),
+     and extend to the end of the current line.	 Care should be taken when
+     commenting out multi-line text: the comment is effective until the end of
+     the entire block.
+
+     Argument names not beginning with a letter, digit, or underscore must be
+     quoted.
+
+     Additional configuration files can be included with the include keyword,
+     for example:
+
+	   include "/etc/httpd.conf.local"
+
+   Macros
+     A macro is defined with a command of the form name=value.	The macro name
+     can contain letters, digits, and underscores and cannot be a reserved
+     word (for example, directory, log, or root).  Within unquoted arguments,
+     the string $name is later expanded to value.
+
+     For example:
+
+	   ext_ip="10.0.0.1"
+	   server "example.com" {
+		   listen on $ext_ip port 80
+	   }
+
+   Global configuration
+     Here are the settings that can be set globally:
+
+     chroot directory
+	     Set the chroot(2) directory.  If not specified, it defaults to
+	     /var/www, the home directory of the www user.
+
+     default type type/subtype
+	     Set the default media type that is used if the media type for a
+	     specified extension is not found in the configured types or for
+	     files without a file extension; see the Types section below.  If
+	     not specified, the default type is set to
+	     application/octet-stream.
+
+     errdocs directory
+	     Let httpd(8) return custom error documents instead of the built-
+	     in ones.
+
+	     directory is relative to the chroot.
+
+	     Custom error documents are standalone ".html" files provided in
+	     one of the following ways:
+		   o   As HTML files named after the 3-digit HTTP response
+		       code they are used for, e.g., 404.html.
+		   o   As a generic template file named err.html which is used
+		       for response codes no dedicated file is provided for.
+
+	     In case the latter does not exist and there is no dedicated file
+	     available for a certain response code, the built-in error
+	     document will be used as fallback.
+
+	     A custom error document may contain the following macros that
+	     will be expanded at runtime:
+
+		   $HTTP_ERROR	   The error message text.
+		   $RESPONSE_CODE  The 3-digit HTTP response code sent to the
+				   client.
+		   $SERVER_SOFTWARE
+				   The server software name of httpd(8).
+
+     logdir directory
+	     Specifies the full path of the directory in which log files will
+	     be written.  If not specified, it defaults to /logs within the
+	     chroot(2) directory.
+
+     prefork number
+	     Run the specified number of server processes.  This increases the
+	     performance and prevents delays when connecting to a server.
+	     httpd(8) runs 3 server processes by default.
+
+   Servers
+     The configured web servers.
+
+     Each server section starts with a declaration of the server name.	If a
+     request does not match any server name, it is handled by the first
+     defined server section that matches the listening port.
+
+     server name {...}
+	     Match the server name using shell globbing rules, see glob(7).
+	     This can be an explicit name, www.example.com, or a name
+	     including wildcards, *.example.com.
+
+     server match name {...}
+	     Match the server name using pattern matching, see patterns(7).
+
+     Followed by a block of options enclosed in curly braces:
+
+     alias name
+	     Specify an additional alias name for this server.
+
+     alias match name
+	     Like the alias option, but match the name using pattern matching
+	     instead of shell globbing rules, see patterns(7).
+
+     [no] authenticate [realm] with htpasswd
+	     Authenticate a remote user for realm by checking the credentials
+	     against the user authentication file htpasswd.  The file name is
+	     relative to the chroot and must be readable by the www user.  Use
+	     the no authenticate directive to disable authentication in a
+	     location.
+
+     block drop
+	     Drop the connection without sending an error page.
+
+     block [return code [uri]]
+	     Close the connection and send an error page.  If the optional
+	     return code is not specified, httpd(8) denies access with a `403
+	     Forbidden' response.  The optional uri argument can be used with
+	     return codes in the 3xx range to send an HTTP Location header for
+	     redirection to a specified URI.
+
+	     It is possible to rewrite the request to redirect it to a
+	     different external location.  The uri may contain predefined
+	     macros that will be expanded at runtime:
+
+		   $DOCUMENT_URI  The request path.
+		   $QUERY_STRING  The query string of the request.
+		   $QUERY_STRING_ENC
+				  The URL-encoded query string of the request.
+		   $REMOTE_ADDR	  The IP address of the connected client.
+		   $REMOTE_PORT	  The TCP source port of the connected client.
+		   $REMOTE_USER	  The remote user for HTTP authentication.
+		   $REQUEST_SCHEME
+				  The request scheme (http or https).
+		   $REQUEST_URI	  The request path and optional query string.
+		   $SERVER_ADDR	  The configured IP address of the server.
+		   $SERVER_PORT	  The configured TCP port of the server.
+		   $SERVER_NAME	  The name of the server.
+		   $HTTP_HOST	  The host from the HTTP Host header.
+		   %n		  The capture index n of a string that was
+				  captured by the enclosing location match
+				  option.
+
+     connection option
+	     Set the specified options and limits for HTTP connections.
+	     Multiple options may be specified within curly braces.  Valid
+	     options are:
+
+	     max request body number
+		     Set the maximum body size in bytes that the client can
+		     send to the server.  The default value is 1048576 bytes
+		     (1M).
+
+	     max requests number
+		     Set the maximum number of requests per persistent HTTP
+		     connection.  Persistent connections are negotiated using
+		     the Keep-Alive header in HTTP/1.0 and enabled by default
+		     in HTTP/1.1.  The default maximum number of requests per
+		     connection is 100.
+
+	     request timeout seconds
+		     Specify the inactivity timeout for HTTP operations
+		     between client and server, for example the maximum time
+		     to wait for a request from the client.  The default
+		     timeout is 60 seconds (1 minute).	The maximum is
+		     2147483647 seconds (68 years).
+
+	     timeout seconds
+		     Specify the inactivity timeout in seconds for accepted
+		     sessions, for example the maximum time to wait for I/O
+		     from the FastCGI backend.	The default timeout is 600
+		     seconds (10 minutes).  The maximum is 2147483647 seconds
+		     (68 years).
+
+     default type type/subtype
+	     Set the default media type for the specified location,
+	     overwriting the global setting.
+
+     directory option
+	     Set the specified options when serving or accessing directories.
+	     Multiple options may be specified within curly braces.  Valid
+	     options are:
+
+	     [no] auto index
+		     If no index file is found, automatically generate a
+		     directory listing.	 This is disabled by default.
+
+	     index string
+		     Set the directory index file.  If not specified, it
+		     defaults to index.html.
+
+	     no index
+		     Disable the directory index.  httpd(8) will neither
+		     display nor generate a directory index.
+
+     [no] errdocs directory
+	     Overrides or, if the no keyword is given, disables globally
+	     defined custom error documents for the current server.
+
+     [no] fastcgi [option]
+	     Enable FastCGI instead of serving files.  Multiple options may be
+	     specified within curly braces.  Valid options are:
+
+	     socket [tcp] socket [port]
+		     httpd passes HTTP requests to a FastCGI handler listening
+		     on the socket socket.  The socket can either be a UNIX
+		     domain socket or a TCP socket.  If the FastCGI handler is
+		     listening on a UNIX domain socket, socket is a local path
+		     name within the chroot(2) root directory of httpd(8) and
+		     defaults to /run/slowcgi.sock.  Alternatively if the
+		     FastCGI handler is listening on a TCP socket, socket is a
+		     hostname or an IP address.	 If the port is not specified,
+		     it defaults to port 9000.
+
+	     strip number
+		     Strip number path components from the beginning of
+		     DOCUMENT_ROOT and SCRIPT_FILENAME before sending them to
+		     the FastCGI server.  This allows FastCGI server chroot to
+		     be a directory under httpd chroot.
+
+	     param variable value
+		     Sets a variable that will be sent to the FastCGI server.
+		     Each statement defines one variable.
+
+	     The FastCGI handler will be given the following variables by
+	     default:
+
+		   DOCUMENT_ROOT      The document root in which the script is
+				      located as configured by the root option
+				      for the server or location that matches
+				      the request.
+		   GATEWAY_INTERFACE  The revision of the CGI specification
+				      used.
+		   HTTP_*	      Additional HTTP headers the connected
+				      client sent in the request, if any.
+		   HTTPS	      A variable that is set to "on" when the
+				      server has been configured to use TLS.
+				      This variable is omitted otherwise.
+		   REQUEST_URI	      The path and optional query string as
+				      requested by the connected client.
+		   DOCUMENT_URI	      The canonicalized request path, possibly
+				      with a slash or directory index file
+				      name appended.  This is the same as
+				      PATH_INFO appended to SCRIPT_NAME.
+		   SCRIPT_NAME	      The virtual URI path to the script.
+		   PATH_INFO	      The optional path appended after the
+				      script name in the request path.	This
+				      variable is an empty string if no path
+				      is appended after the script name.
+		   SCRIPT_FILENAME    The absolute, physical path to the
+				      script within the chroot(2) directory.
+		   QUERY_STRING	      The optional query string of the
+				      request.	This variable is an empty
+				      string if there is no query string in
+				      the request.
+		   REMOTE_ADDR	      The IP address of the connected client.
+		   REMOTE_PORT	      The TCP source port of the connected
+				      client.
+		   REMOTE_USER	      The remote user when using HTTP
+				      authentication.
+		   REQUEST_METHOD     The HTTP method the connected client
+				      used when making the request.
+		   SERVER_ADDR	      The configured IP address of the server.
+		   SERVER_NAME	      The name of the server.
+		   SERVER_PORT	      The configured TCP server port of the
+				      server.
+		   SERVER_PROTOCOL    The revision of the HTTP specification
+				      used.
+		   SERVER_SOFTWARE    The server software name of httpd(8).
+		   TLS_PEER_VERIFY    A variable that is set to a comma
+				      separated list of TLS client
+				      verification features in use (omitted
+				      when TLS client verification is not in
+				      use).
+
+     gzip-static
+	     Enable static gzip compression to save bandwidth.
+
+	     If gzip encoding is accepted and if the requested file exists
+	     with an additional .gz suffix, use the compressed file instead
+	     and deliver it with content encoding gzip.
+
+     hsts [option]
+	     Enable HTTP Strict Transport Security.  Valid options are:
+
+	     max-age seconds
+		     Set the maximum time in seconds a receiving user agent
+		     should regard this host as an HSTS host.  The default is
+		     one year.
+
+	     preload
+		     Confirm and authenticate that the site is permitted to be
+		     included in a browser's preload list.
+
+	     subdomains
+		     Signal to the receiving user agent that this host and all
+		     sub domains of the host's domain should be considered
+		     HSTS hosts.
+
+     listen on address [tls] port number
+	     Set the listen address and port.  This statement can be specified
+	     multiple times.
+
+     location [[not] found] path {...}
+	     Specify server configuration rules for a specific location.  The
+	     path argument will be matched against the request path with shell
+	     globbing rules.  Optionally, it is also possible to match for
+	     found (i.e. accessible) or not found request paths only.  In case
+	     of multiple location statements in the same context, the first
+	     matching location statement will be put into effect, while all
+	     later ones will be ignored.  Therefore it is advisable to match
+	     for more specific paths first and for generic ones later on.  A
+	     location section may include most of the server configuration
+	     rules except alias, connection, errdocs, hsts, listen on,
+	     location, tcp and tls.
+
+     location [[not] found] match path {...}
+	     Like the location option, but match the path using pattern
+	     matching instead of shell globbing rules, see patterns(7).	 The
+	     pattern may contain captures that can be used in an enclosed
+	     block return or request rewrite option.
+
+     [no] log [option]
+	     Set the specified logging options.	 Logging is enabled by default
+	     using the standard access and error log files, but can be changed
+	     per server or location.  Use the no log directive to disable
+	     logging of any requests.  Multiple options may be specified
+	     within curly braces.  Valid options are:
+
+	     access name
+		     Set the name of the access log file relative to the log
+		     directory.	 If not specified, it defaults to access.log.
+
+	     error name
+		     Set the name of the error log file relative to the log
+		     directory.	 If not specified, it defaults to error.log.
+
+	     style style
+		     Set the logging style.  The style can be common,
+		     combined, forwarded or connection.	 The styles common and
+		     combined write a log entry after each request similar to
+		     the standard Apache and nginx access log formats.	The
+		     style forwarded extends the style combined by appending
+		     two fields containing the values of the headers
+		     X-Forwarded-For and X-Forwarded-Port.  The style
+		     connection writes a summarized log entry after each
+		     connection, that can have multiple requests, similar to
+		     the format that is used by relayd(8).  If not specified,
+		     the default is common.
+
+	     [no] syslog
+		     Enable or disable logging to syslog(3) instead of the log
+		     files.
+
+     pass    Disable any previous block in a location.
+
+     request option
+	     Configure the options for the request path.  Multiple options may
+	     be specified within curly braces.	Valid options are:
+
+	     [no] rewrite path
+		     Enable or disable rewriting of the request.  Unlike the
+		     redirection with block return, this will change the
+		     request path internally before httpd makes a final
+		     decision about the matching location.  The path argument
+		     may contain predefined macros that will be expanded at
+		     runtime.  See the block return option for the list of
+		     supported macros.
+
+	     strip number
+		     Strip number path components from the beginning of the
+		     request path before looking up the stripped-down path at
+		     the document root.
+
+     root directory
+	     Configure the document root of the server.	 The directory is a
+	     pathname within the chroot(2) root directory of httpd.  If not
+	     specified, it defaults to /htdocs.
+
+     tcp option
+	     Enable or disable the specified TCP/IP options; see tcp(4) and
+	     ip(4) for more information about the options.  Multiple options
+	     may be specified within curly braces.  Valid options are:
+
+	     backlog number
+		     Set the maximum length the queue of pending connections
+		     may grow to.  The backlog option is 10 by default and is
+		     limited by the kern.somaxconn sysctl(8) variable.
+
+	     ip minttl number
+		     This option for the underlying IP connection may be used
+		     to discard packets with a TTL lower than the specified
+		     value.  This can be used to implement the Generalized TTL
+		     Security Mechanism (GTSM) according to RFC 5082.
+
+	     ip ttl number
+		     Change the default time-to-live value in the IP headers.
+
+	     [no] nodelay
+		     Enable the TCP NODELAY option for this connection.	 This
+		     is recommended to avoid delays in the data stream.
+
+	     [no] sack
+		     Use selective acknowledgements for this connection.
+
+	     socket buffer number
+		     Set the socket-level buffer size for input and output for
+		     this connection.  This will affect the TCP window size.
+
+     tls option
+	     Set the TLS configuration for the server.	These options are only
+	     used if TLS has been enabled via the listen directive.  Multiple
+	     options may be specified within curly braces.  Valid options are:
+
+	     certificate file
+		     Specify the certificate to use for this server.  The file
+		     should contain a PEM encoded certificate.	The default is
+		     /etc/ssl/server.crt.
+
+	     ciphers string
+		     Specify the TLS cipher string.  If not specified, the
+		     default value "HIGH:!aNULL" will be used (strong crypto
+		     cipher suites without anonymous DH).  See the CIPHERS
+		     section of openssl(1) for information about TLS cipher
+		     suites and preference lists.
+
+	     client ca cafile [crl crlfile] [optional]
+		     Require (or, if optional is specified, request but do not
+		     require) TLS client certificates whose authenticity can
+		     be verified against the CA certificate(s) in cafile in
+		     order to proceed beyond the TLS handshake.	 With crl
+		     specified, additionally require that no certificate in
+		     the client chain be listed as revoked in the CRL(s) in
+		     crlfile.  CA certificates and CRLs should be PEM encoded.
+
+	     dhe params
+		     Specify the DHE parameters to use for DHE cipher suites.
+		     Valid parameter values are none, legacy and auto.	For
+		     legacy a fixed key length of 1024 bits is used, whereas
+		     for auto the key length is determined automatically.  The
+		     default is none, which disables DHE cipher suites.
+
+	     ecdhe curves
+		     Specify a comma separated list of elliptic curves to use
+		     for ECDHE cipher suites, in order of preference.  The
+		     special value of "default" will use the default curves;
+		     see tls_config_set_ecdhecurves(3) for further details.
+
+	     key file
+		     Specify the private key to use for this server.  The file
+		     should contain a PEM encoded private key and reside
+		     outside of the chroot(2) root directory of httpd.	The
+		     default is /etc/ssl/private/server.key.
+
+	     ocsp file
+		     Specify an OCSP response to be stapled during TLS
+		     handshakes with this server.  The file should contain a
+		     DER-format OCSP response retrieved from an OCSP server
+		     for the certificate in use, and can be created using
+		     ocspcheck(8).  The path to file is not relative to the
+		     chroot.  If the OCSP response in file is empty, OCSP
+		     stapling will not be used.	 The default is to not use
+		     OCSP stapling.
+
+	     protocols string
+		     Specify the TLS protocols to enable for this server.
+		     Refer to the tls_config_parse_protocols(3) function for
+		     valid protocol string values.  By default, TLSv1.3 and
+		     TLSv1.2 will be used.
+
+	     ticket lifetime seconds
+		     Enable TLS session tickets with a seconds session
+		     lifetime.	It is possible to set seconds to default to
+		     use the httpd default timeout of 2 hours.
+
+   Types
+     Configure the supported media types.  httpd(8) will set the Content-Type
+     of the response header based on the file extension listed in the types
+     section.  If not specified, httpd(8) will use built-in media types for
+     text/css, text/html, text/plain, image/gif, image/png, image/jpeg,
+     image/svg+xml, and application/javascript.
+
+     The types section must include one or more lines of the following syntax,
+     enclosed in curly braces:
+
+     type/subtype name [name ...]
+	     Set the media type and subtype to the specified extension name.
+	     One or more names can be specified per line.  Each line may end
+	     with an optional semicolon.  Later lines overwrite earlier lines.
+
+     include file
+	     Include types definitions from an external file, for example
+	     /usr/share/misc/mime.types.
+
+FILES
+     /etc/examples/httpd.conf  Example configuration file.
+
+EXAMPLES
+     Example configuration files for httpd.conf and acme-client(1) are
+     provided in /etc/examples/httpd.conf and /etc/examples/acme-client.conf.
+
+     The following example will start one server that is pre-forked two times
+     and is listening on all local IP addresses.  It additionally defines some
+     media types overriding the defaults.
+
+	   prefork 2
+
+	   server "example.com" {
+		   listen on * port 80
+	   }
+
+	   types {
+		   text/css		   css
+		   text/html		   html htm
+		   text/plain		   txt
+		   image/gif		   gif
+		   image/jpeg		   jpeg jpg
+		   image/png		   png
+		   application/javascript  js
+		   application/xml	   xml
+	   }
+
+     The server can also be configured to only listen on the primary IP
+     address of the network interface that is a member of the "egress" group.
+
+	   server "example.com" {
+		   listen on egress port 80
+	   }
+
+     Multiple servers can be configured to support hosting of different
+     domains.  If the same address is repeated multiple times in the listen on
+     statement, the server will be matched based on the requested host name.
+
+	   server "www.example.com" {
+		   alias "example.com"
+		   listen on * port 80
+		   listen on * tls port 443
+		   root "/htdocs/www.example.com"
+	   }
+
+	   server "www.a.example.com" {
+		   listen on 203.0.113.1 port 80
+		   root "/htdocs/www.a.example.com"
+	   }
+
+	   server "www.b.example.com" {
+		   listen on 203.0.113.1 port 80
+		   root "/htdocs/www.b.example.com"
+	   }
+
+	   server "intranet.example.com" {
+		   listen on 10.0.0.1 port 80
+		   root "/htdocs/intranet.example.com"
+	   }
+
+     Simple redirections can be configured with the block directive:
+
+	   server "example.com" {
+		   listen on 10.0.0.1 port 80
+		   listen on 10.0.0.1 tls port 443
+		   block return 301 "$REQUEST_SCHEME://www.example.com$REQUEST_URI"
+	   }
+
+	   server "www.example.com" {
+		   listen on 10.0.0.1 port 80
+		   listen on 10.0.0.1 tls port 443
+	   }
+
+     The request can also be rewritten with the request rewrite directive:
+
+	   server "example.com" {
+		   listen on * port 80
+		   location match "/old/(.*)" {
+			   request rewrite "/new/%1"
+		   }
+	   }
+
+SEE ALSO
+     htpasswd(1), glob(7), patterns(7), httpd(8), ocspcheck(8), slowcgi(8)
+
+AUTHORS
+     The httpd(8) program was written by Reyk Floeter <reyk@openbsd.org>.
+
+OpenBSD 7.8			 July 8, 2025			 HTTPD.CONF(5)

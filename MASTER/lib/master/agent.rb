@@ -230,7 +230,8 @@ module Master
       Tools::WebSearch   => Tools::LLM::WebSearch,
       Tools::AskLlm      => Tools::LLM::AskLlm,
       Tools::GitContext  => Tools::LLM::GitContext,
-      Tools::AstEdit     => Tools::LLM::AstEdit,
+      Tools::AstEdit          => Tools::LLM::AstEdit,
+      Tools::SearchKnowledge  => Tools::LLM::SearchKnowledge,
     }.freeze
 
     def llm_tools(selected_model = model)

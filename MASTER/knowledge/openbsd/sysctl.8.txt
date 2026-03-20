@@ -1,0 +1,116 @@
+SYSCTL(8)		    System Manager's Manual		     SYSCTL(8)
+
+NAME
+     sysctl - get or set kernel state
+
+SYNOPSIS
+     sysctl [-Aanq] [-f file] [name[=value] ...]
+
+DESCRIPTION
+     The sysctl utility retrieves kernel state and allows processes with
+     appropriate privilege to set kernel state.	 The state to be retrieved or
+     set is described using a "Management Information Base" (MIB) style name,
+     using a dotted set of components.
+
+     When retrieving a variable, a subset of the MIB name may be specified to
+     retrieve a list of variables in that subset.  For example, to list all
+     the machdep variables:
+
+	   $ sysctl machdep
+
+     The options are as follows:
+
+     -A	  List all the known MIB names including tables.  Those with string or
+	  integer values will be printed as with the -a flag; for the table
+	  values, the name of the utility to retrieve them is given.
+
+     -a	  List all the currently available string or integer values.  This is
+	  the default, if no parameters are given to sysctl.
+
+     -f file
+	  Process name[=value] arguments from file in sysctl.conf(5) format.
+
+     -n	  Suppress printing of the field name, only output the field value.
+	  Useful for setting shell variables.  For example, to set the psize
+	  shell variable to the pagesize of the hardware:
+
+		# set psize=`sysctl -n hw.pagesize`
+
+     -q	  Suppress all output when setting a variable.	This option overrides
+	  the behaviour of -n.
+
+     name[=value]
+	  Retrieve the specified variable name, or attempt to set it to value.
+	  Multiple name[=value] arguments may be given.	 If given, -f file is
+	  processed first.
+
+     The information available from sysctl consists of integers, strings, and
+     tables.  For a detailed description of the variables, see sysctl(2).
+     Tables can only be retrieved by special purpose programs such as ps(1),
+     systat(1), and netstat(1).
+
+     sysctl can extract information about the filesystems that have been
+     compiled into the running system.	This information can be obtained by
+     using the command:
+
+	   $ sysctl vfs.mounts
+
+     By default, only filesystems that are actively being used are listed.
+     Use of the -A flag lists all the filesystems compiled into the running
+     kernel.
+
+FILES
+     /etc/sysctl.conf	 sysctl variables to set at system startup
+
+EXAMPLES
+     To retrieve the maximum number of processes allowed in the system:
+
+	   $ sysctl kern.maxproc
+
+     To set the maximum number of processes allowed in the system to 1000:
+
+	   # sysctl kern.maxproc=1000
+
+     To retrieve information about the system clock rate:
+
+	   $ sysctl kern.clockrate
+
+     To retrieve information about the load average history:
+
+	   $ sysctl vm.loadavg
+
+     To set the list of reserved TCP ports that should not be allocated by the
+     kernel dynamically:
+
+	   # sysctl net.inet.tcp.baddynamic=749,750,751,760,761,871
+	   # sysctl net.inet.udp.baddynamic=749,750,751,760,761,871,1024-2048
+
+     This can be used to keep daemons from stealing a specific port that
+     another program needs to function.	 List elements may be separated by
+     commas and/or whitespace; a hyphen may be used to specify a range of
+     ports.
+
+     It is also possible to add or remove ports from the current list:
+
+	   # sysctl net.inet.tcp.baddynamic=+748,+6000-6999
+	   # sysctl net.inet.tcp.baddynamic=-871
+
+     To set the amount of shared memory available in the system and the
+     maximum number of shared memory segments:
+
+	   # sysctl kern.shminfo.shmmax=33554432
+	   # sysctl kern.shminfo.shmseg=32
+
+     To place core dumps from issetugid(2) programs (in this example bgpd(8))
+     into a safe place for debugging purposes:
+
+	   # mkdir -m 700 /var/crash/bgpd
+	   # sysctl kern.nosuidcoredump=3
+
+SEE ALSO
+     sysctl(2), options(4), sysctl.conf(5)
+
+HISTORY
+     sysctl first appeared in 4.4BSD.
+
+OpenBSD 7.8			April 29, 2025			     SYSCTL(8)
