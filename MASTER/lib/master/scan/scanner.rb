@@ -6,8 +6,7 @@ module Master
       DEPTH_RULES = {
         quick:    %w[frozen_string bare_rescue],
         standard: %w[frozen_string bare_rescue explicit immutable cqs self_explaining
-                     long_method god_class duplicate_code prune srp pola
-                     rubocop reek nielsen],
+                     long_method god_class duplicate_code prune srp pola nielsen],
         hunt:     :all,
         critique: :all,
         deep:     :all
@@ -21,7 +20,7 @@ module Master
       def scan(path, depth: :standard)
         return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
 
-        code = File.read(path)
+        code = File.read(path, encoding: "UTF-8")
         active = active_rules(depth)
         findings = active.flat_map { |rule| rule.check(code, path:) }
 
