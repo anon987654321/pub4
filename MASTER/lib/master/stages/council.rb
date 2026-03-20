@@ -7,20 +7,14 @@ module Master
     # Council — 6-persona deliberation on dangerous or multi-file changes.
     # PRAISE votes are appended to data/exemplars.yml for future reference.
     class Council
-      EXEMPLARS_PATH = File.join(Master::ROOT, "data", "exemplars.yml").freeze
-
-      DANGEROUS_PATTERNS = [
-        /\brm\s+-rf\b/i,
-        /\bsudo\b/i,
-        /\b(?:drop|truncate)\s+table\b/i,
-        /\bchmod\s+777\b/i,
-        /\b(?:delete|remove)\s+all\b/i
-      ].freeze
+      EXEMPLARS_PATH  = File.join(Master::ROOT, "data", "exemplars.yml").freeze
+      PATTERNS_PATH   = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
 
       def initialize(deliberation:, config: nil, enabled: false)
-        @deliberation = deliberation
-        @config       = config
-        @enabled      = @config&.[]("council") == true || enabled
+        @deliberation      = deliberation
+        @config            = config
+        @enabled           = @config&.[]("council") == true || enabled
+        @dangerous_patterns = load_patterns
       end
 
       def call(ctx)
@@ -52,13 +46,18 @@ module Master
 
       private
 
+      def load_patterns
+        data = YAML.safe_load_file(PATTERNS_PATH)
+        (data["dangerous"] || []).map { |str| Regexp.new(str, Regexp::IGNORECASE) }
+      end
+
       def should_run?(ctx)
         @enabled || dangerous_request?(ctx) || dangerous_tool?(ctx) || multi_file_diff?(ctx)
       end
 
       def dangerous_request?(ctx)
         msg = ctx[:message].to_s.gsub(/[[:cntrl:]]/, "")
-        !msg.empty? && DANGEROUS_PATTERNS.any? { |p| msg.match?(p) }
+        !msg.empty? && @dangerous_patterns.any? { |p| msg.match?(p) }
       end
 
       def dangerous_tool?(ctx)  = ctx[:last_tool_tier] == :dangerous

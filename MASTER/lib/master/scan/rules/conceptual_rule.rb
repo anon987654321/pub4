@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Master
   module Scan
     module Rules
@@ -13,27 +15,16 @@ module Master
       # Meta-note: this rule itself must satisfy JUST_ENOUGH (one LLM call,
       # not one per axiom) and GUARD_EXPENSIVE (depth gate).
       class ConceptualRule < Rule
-        PHILOSOPHY_AXIOMS = {
-          "NO_SURPRISES"       => "Methods behave exactly as their names suggest. No hidden side effects.",
-          "COMPOSABLE"         => "Small pieces that combine cleanly. No tight coupling.",
-          "REVERSIBLE"         => "Operations are easy to rollback. Prefer non-destructive paths.",
-          "ONE_CHANGE"         => "Each method/class has one focused intent. No shotgun surgery.",
-          "IDEMPOTENT"         => "Repeated calls produce the same result. No accidental double-execution.",
-          "CQS"                => "Queries don't mutate. Commands don't return meaningful values.",
-          "JUST_ENOUGH"        => "No speculative features, premature abstractions, or over-engineering.",
-          "CHESTERTONS_FENCE"  => "Nothing removed without understanding why it exists.",
-          "GALLS_LAW"          => "Complexity evolved from a working simple system, not designed upfront.",
-          "GUARD_EXPENSIVE"    => "Preconditions checked before costly operations (I/O, LLM, network).",
-          "DEGRADE_GRACEFULLY" => "Partial failures handled. Fallbacks exist. No hard crashes on external deps.",
-        }.freeze
+        AXIOMS_PATH = File.join(Master::ROOT, "data", "axioms.yml").freeze
 
         def initialize(agent: nil)
           super()
-          @agent    = agent
-          @id       = "conceptual"
+          @agent       = agent
+          @id          = "conceptual"
           @description = "LLM-based philosophy axiom review (runs at :deep depth only)"
           @severity    = :warning
-          @axiom_tags  = PHILOSOPHY_AXIOMS.keys.map(&:to_sym)
+          @axioms      = load_philosophy_axioms
+          @axiom_tags  = @axioms.keys.map(&:to_sym)
         end
 
         def set_agent(agent)
@@ -54,8 +45,14 @@ module Master
 
         private
 
+        def load_philosophy_axioms
+          data = YAML.safe_load_file(AXIOMS_PATH)
+          entries = data.dig("philosophy", "prioritized_top_25") || []
+          entries.each_with_object({}) { |e, h| h[e["id"]] = e["statement"] }
+        end
+
         def build_prompt(code, path)
-          axiom_list = PHILOSOPHY_AXIOMS.map { |id, stmt| "#{id}: #{stmt}" }.join("\n")
+          axiom_list = @axioms.map { |id, stmt| "#{id}: #{stmt}" }.join("\n")
           <<~PROMPT
             Review #{File.basename(path)} against these axioms. List ONLY clear violations.
             Format each as: AXIOM_ID:LINE:description (one per line)
@@ -74,7 +71,7 @@ module Master
 
           response.lines.filter_map do |line|
             m = line.strip.match(/\A([A-Z_]+):(\d+):(.+)\z/)
-            next unless m && PHILOSOPHY_AXIOMS.key?(m[1])
+            next unless m && @axioms.key?(m[1])
             finding(line: m[2].to_i, message: "#{m[1]}: #{m[3].strip}")
           end
         end

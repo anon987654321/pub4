@@ -1,16 +1,11 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Master
   module Scan
     class Scanner
-      DEPTH_RULES = {
-        quick:    %w[frozen_string bare_rescue],
-        standard: %w[frozen_string bare_rescue explicit immutable cqs self_explaining
-                     long_method god_class duplicate_code prune srp pola nielsen],
-        hunt:     :all,
-        critique: :all,
-        deep:     :all
-      }.freeze
+      DEPTHS_PATH = File.join(Master::ROOT, "data", "scan_depths.yml").freeze
 
       def initialize(rules: nil, event_bus: nil)
         @rules = rules || []
@@ -49,10 +44,14 @@ module Master
 
       private
 
+      def depth_rules
+        @depth_rules ||= YAML.safe_load_file(DEPTHS_PATH)
+      end
+
       def active_rules(depth)
-        allowed = DEPTH_RULES[depth]
-        return @rules if allowed == :all
-        @rules.select { |r| allowed.include?(r.id) }
+        allowed = depth_rules[depth.to_s]
+        return @rules if allowed == ["all"] || allowed == :all
+        @rules.select { |r| allowed&.include?(r.id) }
       end
     end
   end
