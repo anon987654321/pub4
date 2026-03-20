@@ -16,6 +16,10 @@ module Master
     MIN_SIZE_RATIO   = 0.80 # reject fix if output < 80% of original file size
     MAX_FILE_BYTES   = 4_000 # skip files too large to rewrite safely (LLM token limit)
 
+    # Rules that cannot be safely auto-fixed by rewriting a single file.
+    # duplicate_code requires cross-file refactoring; conceptual/adversarial are LLM-only.
+    SKIP_RULES = %w[duplicate_code conceptual adversarial axiom_coverage].freeze
+
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
 
@@ -64,6 +68,7 @@ module Master
         next [] unless r.respond_to?(:ok?) && r.ok?
         r.value!
           .select { |f| (SEVERITY_RANK[f[:severity]] || 0) >= MIN_SEVERITY }
+          .reject { |f| SKIP_RULES.include?(f[:rule].to_s) }
           .map    { |f| f.merge(file: path.delete_prefix("#{@root}/")) }
       }.select { |f|
         full = File.join(@root, f[:file])
