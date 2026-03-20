@@ -32,7 +32,12 @@ module Master
         cycle = i + 1
         @bus&.publish("autoloop:cycle", cycle:)
 
-        scan_result = @scanner.scan_dir(File.join(@root, "lib"), depth: :deep)
+        scan_paths  = %w[lib test].map { |d| File.join(@root, d) }
+      all_results = scan_paths.flat_map { |dir|
+        res = @scanner.scan_dir(dir, depth: :deep)
+        res.respond_to?(:ok?) && res.ok? ? res.value! : []
+      }
+      scan_result = Master::Result.ok(all_results)
         return scan_result if scan_result.respond_to?(:err?) && scan_result.err?
 
         violations = extract_violations(scan_result.value!)
