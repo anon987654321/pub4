@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  # Fixed-capacity circular buffer. Overwrites oldest entry when full.
   class RingBuffer
     include Enumerable
 
@@ -27,15 +28,18 @@ module Master
 
     def each
       return enum_for(__method__) unless block_given?
+
       @size.times { |i| yield @buf[(@start + i) % @capacity] }
     end
 
-    def to_a
-      @size.times.map { |i| @buf[(@start + i) % @capacity] }
+    def to_a    = @size.times.map { |i| @buf[(@start + i) % @capacity] }
+    def size    = @size
+    def full?   = @size == @capacity
+    def empty?  = @size.zero?
+
+    def clear
+      @start = @size = 0
+      self
     end
-    def size  = @size
-    def full? = @size == @capacity
-    def empty? = @size.zero?
-    def clear  = (@start = @size = 0) && self
   end
 end
