@@ -47,6 +47,22 @@ module Master
         })
       end
 
+      def dispatch_parallel(tasks)
+        # tasks: array of { role:, task:, context_slice: }
+        results = {}
+        mutex = Mutex.new
+        threads = tasks.map do |t|
+          Thread.new do
+            r = dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))
+            mutex.synchronize { results[t[:role]] = r }
+          end
+        end
+        threads.each { |th| th.join(WORKER_TIMEOUT) }
+        Result.ok(results)
+      rescue => e
+        Result.err("swarm_parallel: #{e.message}", category: :unknown)
+      end
+
       # Fan-out: run multiple workers in parallel threads with per-worker timeout.
       # Returns {results: {role => Result}, synthesis: String}.
       def fan_out(tasks, timeout: WORKER_TIMEOUT)
