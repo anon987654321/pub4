@@ -1,5 +1,6 @@
 # Model routing profile — OpenRouter primary, Replicate optional.
-# Free tier: nvidia nemotron (120B) primary, stepfun flash + llama fallbacks.
+# Free tier: stepfun/step-3.5-flash primary (has content), nemotron fallbacks.
+# nemotron-super-120b excluded from default: reasoning-only (null content field).
 # Replicate: disabled (insufficient credit as of 2026-03-20)
 
 routing:
@@ -23,14 +24,12 @@ fallback_policy:
 
 models:
   default:
-    - id: nvidia/nemotron-3-super-120b-a12b:free
-      score: { quality: 0.85, speed: 0.75, cost: 1.0 }
     - id: stepfun/step-3.5-flash:free
-      score: { quality: 0.78, speed: 0.90, cost: 1.0 }
+      score: { quality: 0.82, speed: 0.95, cost: 1.0 }
     - id: nvidia/nemotron-3-nano-30b-a3b:free
-      score: { quality: 0.72, speed: 0.92, cost: 1.0 }
+      score: { quality: 0.72, speed: 0.94, cost: 1.0 }
     - id: meta-llama/llama-3.3-70b-instruct:free
-      score: { quality: 0.82, speed: 0.85, cost: 1.0 }
+      score: { quality: 0.70, speed: 0.60, cost: 1.0 }
 
   strong:
     - id: anthropic/claude-sonnet-4-5
@@ -38,15 +37,15 @@ models:
     - id: openai/gpt-4o
       score: { quality: 0.93, speed: 0.80, cost: 0.55 }
     - id: nvidia/nemotron-3-super-120b-a12b:free
-      score: { quality: 0.85, speed: 0.75, cost: 1.0 }
+      score: { quality: 0.90, speed: 0.75, cost: 1.0 }
 
   cheap:
     - id: nvidia/nemotron-3-nano-30b-a3b:free
-      score: { quality: 0.72, speed: 0.92, cost: 1.0 }
+      score: { quality: 0.72, speed: 0.94, cost: 1.0 }
     - id: stepfun/step-3.5-flash:free
-      score: { quality: 0.78, speed: 0.90, cost: 1.0 }
+      score: { quality: 0.82, speed: 0.95, cost: 1.0 }
     - id: meta-llama/llama-3.3-70b-instruct:free
-      score: { quality: 0.82, speed: 0.85, cost: 1.0 }
+      score: { quality: 0.70, speed: 0.60, cost: 1.0 }
 
 routes:
   code_generation:    default
