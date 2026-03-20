@@ -5,7 +5,7 @@ require "shellwords"
 
 module Master
   module Tools
-    class Zsh
+    class Shell
       TIER        = :dangerous
       NAME        = "zsh"
       DESCRIPTION = "Execute a zsh command in the project root."

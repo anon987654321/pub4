@@ -4,7 +4,7 @@ module Master
   module Stages
     # Memo — extract and persist memory from assistant responses.
     #
-    # Fires after Strunk, before Render. Scans output for explicit memory
+    # Fires after Prune, before Render. Scans output for explicit memory
     # requests, decisions, and preferences. Writes to persistent Memory store.
     # Non-fatal: errors pass through without breaking the pipeline.
     class Memo
@@ -19,7 +19,7 @@ module Master
 
       def call(ctx)
         text = extract_text(ctx)
-        extract_memories(text) if text && !text.empty?
+        scan_for_memories(text) if text && !text.empty?
         Result.ok(ctx)
       rescue => e
         @bus&.publish("memo:error", message: e.message)
@@ -37,7 +37,7 @@ module Master
         end
       end
 
-      def extract_memories(text)
+      def scan_for_memories(text)
         text.scan(REMEMBER_RE).each_with_index do |(fact), i|
           @memory.remember("note_#{Time.now.to_i}_#{i}", fact.strip)
         end

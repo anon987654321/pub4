@@ -19,7 +19,7 @@ module Master
         @continuity_index = continuity_index || ContinuityIndex.new(root: @root)
       end
 
-      def primary(task_type: :exploration)
+      def preferred(task_type: :exploration)
         return @config.model unless enabled?
 
         tier = @rules.dig("routes", task_type.to_s) || @rules.dig("routes", "fallback_default") || "cheap"
@@ -33,7 +33,7 @@ module Master
       def fallback_chain(task_type: :exploration)
         return [@config.model] unless enabled?
 
-        preferred = primary(task_type:)
+        preferred = preferred(task_type:)
         all = @rules.fetch("models", {}).values.flatten.map { |m| m["id"] }.compact
         continuity = @continuity_index.fallback_models
         ([preferred] + all + continuity + [@config.model]).uniq
@@ -49,11 +49,11 @@ module Master
       end
 
       # Return the best model from the escalation tier (default: "strong").
-      def escalated_model(task_type: :exploration)
+      def stronger_model(task_type: :exploration)
         tier = @rules.dig("routing", "escalation_tier") || "strong"
         candidates = @rules.dig("models", tier).to_a
-        return primary(task_type:) if candidates.empty?
-        candidates.max_by { |m| weighted_score(m["score"] || {}) }&.dig("id") || primary(task_type:)
+        return preferred(task_type:) if candidates.empty?
+        candidates.max_by { |m| weighted_score(m["score"] || {}) }&.dig("id") || preferred(task_type:)
       end
 
 
@@ -62,7 +62,7 @@ module Master
       # current model is not already in the strong tier; otherwise returns nil.
       def escalate_if_low_confidence(response, current_model:, task_type: :exploration)
         return nil unless escalate?(response)
-        strong_model = escalated_model(task_type: task_type)
+        strong_model = stronger_model(task_type: task_type)
         # Already on the strong tier -- no further escalation needed.
         return nil if current_model == strong_model
         strong_model

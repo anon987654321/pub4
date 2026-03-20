@@ -3,9 +3,9 @@
 module Master
   module Scan
     module Rules
-      # StrunkRule — flags hedge words and preamble phrases in Ruby comments.
+      # PruneRule — flags hedge words and preamble phrases in Ruby comments.
       # Violations drive Sweep convergence: prose quality has a measurable score.
-      class StrunkRule < Rule
+      class PruneRule < Rule
         HEDGES = /\b(simply|just|basically|essentially|obviously|clearly|
                       easily|needless(?:ly)?|straightforward(?:ly)?)\b/ix.freeze
 
@@ -26,7 +26,7 @@ module Master
 
         def initialize
           super
-          @id          = "strunk"
+          @id          = "prune"
           @description = "Hedge words and preamble phrases in comments reduce clarity"
           @severity    = :warning
           @axiom_tags  = [:STRUNK_WHITE]

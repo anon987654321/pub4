@@ -2,7 +2,7 @@
 
 module Master
   module Stages
-    class Strunk
+    class Prune
       PREAMBLES = [
         /\AI.?d be happy to help[,.]?\s*/i,
         /\AGreat question.?\s*/i,

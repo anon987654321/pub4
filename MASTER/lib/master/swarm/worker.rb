@@ -19,7 +19,7 @@ module Master
         prompt = build_prompt(task, context_slice)
         @bus&.publish(:swarm_worker_start, role: @role, task: task[0..60])
 
-        raw = @agent.chat_raw(prompt, system: worker_system_prompt)
+        raw = @agent.ask_once(prompt, system: worker_system_prompt)
         @result = parse_result(raw)
 
         @bus&.publish(:swarm_worker_done, role: @role, ok: @result.ok?)

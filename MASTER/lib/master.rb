@@ -65,7 +65,7 @@ module Master
     scanner.add_rule(Scan::Rules::LongMethodRule.new)
     scanner.add_rule(Scan::Rules::GodClassRule.new)
     scanner.add_rule(Scan::Rules::DuplicateCodeRule.new)
-    scanner.add_rule(Scan::Rules::StrunkRule.new)
+    scanner.add_rule(Scan::Rules::PruneRule.new)
     scanner.add_rule(Scan::Rules::SrpRule.new)
     scanner.add_rule(Scan::Rules::PolaRule.new)
     scanner.add_rule(Scan::Rules::RubocopRule.new(root:))
@@ -89,7 +89,7 @@ module Master
       Stages::Execute.new,
       council_stage,
       Stages::Lint.new(scanner:, config:),
-      Stages::Strunk.new,
+      Stages::Prune.new,
       Stages::Memo.new(memory:, event_bus: bus),
       Stages::Render.new(renderer:)
     ]
@@ -133,8 +133,8 @@ module Master
       Tools::ListDir.new(root:, event_bus: bus),
       Tools::SearchFiles.new(root:, event_bus: bus),
       Tools::WebSearch.new(governor:, event_bus: bus),
-      Tools::Zsh.new(root:, governor:, event_bus: bus),
-      Tools::Replace.new(root:, governor:, event_bus: bus),
+      Tools::Shell.new(root:, governor:, event_bus: bus),
+      Tools::BatchReplace.new(root:, governor:, event_bus: bus),
       Tools::GitContext.new(root:, event_bus: bus),
       Tools::AstEdit.new(root:, undo:, event_bus: bus),
       Tools::Tree.new(root:, event_bus: bus),
@@ -213,7 +213,7 @@ module Master
   info = map.describe
   cov  = map.axiom_coverage
   cov_lines = cov.map { |ax, n| "  #{ax}: #{n}" }.join("\n")
-  stages = "Intake→Infer→Route→Guard→Execute→Council→Lint→Strunk→Memo→Render"
+  stages = "Intake→Infer→Route→Guard→Execute→Council→Lint→Prune→Memo→Render"
   "MASTER — #{info[:files]} files, #{info[:lines]} lines\npipeline: #{stages}\n\naxiom coverage:\n#{cov_lines}"
 },
 "persona" => ->(ctx) {
@@ -330,7 +330,7 @@ module Master
   diff = `git -C #{root.shellescape} diff --stat 2>&1`.strip if diff.empty?
   return "nothing to commit" if diff.empty?
   prompt = "Write a concise git commit message (1 line, imperative mood) for these changes:\n#{diff}"
-  msg    = agent.chat_raw(prompt)
+  msg    = agent.ask_once(prompt)
   msg    = msg.strip.lines.first.to_s.strip.gsub(/"/, "'")
   out    = `git -C #{root.shellescape} add -u 2>&1 && git -C #{root.shellescape} commit -m "#{msg}" 2>&1`.strip
   out
@@ -360,7 +360,7 @@ module Master
   else
     prompt = "Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
              "give a before/after Ruby example, and state why it matters."
-    agent.chat_raw(prompt)
+    agent.ask_once(prompt)
   end
 },
       "help"    => ->(ctx) {

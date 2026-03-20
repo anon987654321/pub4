@@ -7,12 +7,12 @@ module Master
   # Sweep — iterative full-codebase refactor to convergence.
   #
   # Each cycle walks every matching file and sends it through a comprehensive
-  # rewrite prompt covering all axioms, structural techniques, and Strunk & White
+  # rewrite prompt covering all axioms, structural techniques, and Prune & White
   # prose rules. Violation counts gate whether a rewrite is applied. Cycles
   # continue until violations converge (diminishing returns) or max_cycles hit.
   #
   # Self-application: sweeping lib/ causes MASTER to rewrite its own source —
-  # including strunk.rb and this file — a true fixed-point process.
+  # including prune.rb and this file — a true fixed-point process.
   class Sweep
     MAX_CYCLES         = 16
     CONVERGE_THRESHOLD = 0.05  # stop when cycle-over-cycle improvement < 5%
@@ -119,7 +119,7 @@ module Master
     TEXT
 
     PROSE_TECHNIQUES = <<~TEXT.freeze
-      PROSE TECHNIQUES — Strunk & White for all comments and strings:
+      PROSE TECHNIQUES — Prune & White for all comments and strings:
       P1. OMIT NEEDLESS WORDS — every word must earn its place.
       P2. ACTIVE VOICE — "returns the token" not "the token is returned by".
       P3. DELETE OBVIOUS COMMENTS — `# increment counter` above `count += 1` is noise.

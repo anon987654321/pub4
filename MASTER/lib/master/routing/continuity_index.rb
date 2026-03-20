@@ -36,7 +36,7 @@ module Master
       end
 
       def data
-        path = File.join(@root, "data", "continuity_models.yml")
+        path = File.join(@root, "data", "fallback_models.yml")
         current_mtime = File.exist?(path) ? File.mtime(path) : nil
 
         if @data_cache.nil? || current_mtime != @data_mtime
