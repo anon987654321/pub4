@@ -59,6 +59,28 @@ module Master
 
       return last_response if last_response.respond_to?(:err?) && last_response.err?
 
+# Confidence-based escalation: retry once with a stronger model if the
+# response contains low-confidence markers and we have a model router.
+if @model_router && !@_escalated
+  escalation_model = @model_router.escalate_if_low_confidence(
+    last_response.to_s,
+    current_model: routed_models.first,
+    task_type: @config.task_type.to_sym
+  )
+  if escalation_model
+    @_escalated = true
+    @bus&.publish("llm:escalation", from: routed_models.first, to: escalation_model)
+    esc_cache_key = cache_prompt_for("#{escalation_model}:#{prompt}", context)
+    escalated_result = @circuit_breaker.call(estimate_cost(message)) {
+      @cache.fetch(esc_cache_key, escalation_model) {
+        do_chat(prompt, escalation_model, context: context, stream: stream, &blk)
+      }
+    }
+    last_response = escalated_result unless escalated_result.respond_to?(:err?) && escalated_result.err?
+  end
+  @_escalated = false
+end
+
       text = last_response.to_s
       @session.add_message(role: :assistant, content: text)
       Result.ok(text)

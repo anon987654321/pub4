@@ -56,6 +56,18 @@ module Master
         candidates.max_by { |m| weighted_score(m["score"] || {}) }&.dig("id") || primary(task_type:)
       end
 
+
+      # Checks response text for low-confidence markers.
+      # Returns the strong-tier model ID if escalation is warranted and the
+      # current model is not already in the strong tier; otherwise returns nil.
+      def escalate_if_low_confidence(response, current_model:, task_type: :exploration)
+        return nil unless escalate?(response)
+        strong_model = escalated_model(task_type: task_type)
+        # Already on the strong tier -- no further escalation needed.
+        return nil if current_model == strong_model
+        strong_model
+      end
+
       private
 
       def enabled?
