@@ -8,7 +8,7 @@ module Master
     COST_PER_TOKEN       = 0.000_015
 
     # Replicate native API — these owner prefixes route through Bridges::Replicate.
-    REPLICATE_OWNERS = %w[deepseek-ai openai mistralai xai meta].freeze
+    REPLICATE_OWNERS = %w[deepseek-ai mistralai xai meta-replicate].freeze
 
     # Tool-capable model whitelist — non-matching models raise at call time.
     TOOL_CAPABLE_MODELS = %w[
