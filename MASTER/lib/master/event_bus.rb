@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "monitor"
+require 'monitor'
 
 module Master
   class EventBus
@@ -10,11 +10,12 @@ module Master
 
     def initialize(log: nil)
       super()
-      @subscribers    = Hash.new { |h, k| h[k] = [] }
-      @log            = log
-      @pattern_cache  = {}
+      @subscribers   = Hash.new { |h, k| h[k] = [] }
+      @log           = log
+      @pattern_cache = {}
     end
 
+    # Returns a lambda that unsubscribes this handler when called.
     def subscribe(pattern, &handler)
       synchronize { @subscribers[pattern] << handler }
       -> { synchronize { @subscribers[pattern].delete(handler) } }
@@ -40,9 +41,10 @@ module Master
       }.compact
     end
 
+    # Compiles glob pattern to regex once; ** crosses segments, * does not.
     def glob_match?(pattern, event)
       re = @pattern_cache[pattern] ||= Regexp.new(
-        "\\A" + Regexp.escape(pattern).gsub("\\*\\*", ".*").gsub("\\*", "[^:]*") + "\\z"
+        "\\A" + Regexp.escape(pattern).gsub('\\*\\*', '.*').gsub('\\*', '[^:]*') + "\\z"
       )
       re.match?(event)
     end

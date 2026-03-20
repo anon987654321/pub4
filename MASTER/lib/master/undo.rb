@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  # Single-file undo: snapshots file content before a write, restores on demand.
   class Undo
     def initialize(session:, event_bus: nil)
       @session = session
@@ -19,21 +20,23 @@ module Master
 
     def undo!
       entry = @stack.pop
-      return Result.err("nothing to undo", category: :validation) unless entry
+      return Result.err('nothing to undo', category: :validation) unless entry
 
-      path    = entry[:path]
-      content = entry[:content]
+      restore(entry[:path], entry[:content])
+      @bus&.publish('undo:applied', path: entry[:path])
+      Result.ok(entry[:path])
+    end
 
+    def depth = @stack.size
+
+    private
+
+    def restore(path, content)
       if content.nil?
         File.delete(path) if File.exist?(path)
       else
         File.write(path, content)
       end
-
-      @bus&.publish("undo:applied", path:)
-      Result.ok(path)
     end
-
-    def depth = @stack.size
   end
 end
