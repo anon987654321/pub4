@@ -6,6 +6,8 @@ module Master
   class Config
     DEFAULTS = {
       'model'          => 'meta-llama/llama-3.3-70b-instruct:free',
+      'web_host'       => '0.0.0.0',
+      'web_port'       => 3001,
       'budget_max'     => 10.0,
       'req_max'        => 1.0,
       'trace'          => 0,
