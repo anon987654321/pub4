@@ -1,8 +1,11 @@
-# Scan depth configuration — which rule IDs run at each depth level.
-# Add rules here without touching scanner.rb.
+# Scan depth configuration — all depths run their listed rules.
+# edit here; scanner.rb reads this at runtime.
+# "all" means every registered rule runs.
+
 quick:
   - frozen_string
   - bare_rescue
+
 standard:
   - frozen_string
   - bare_rescue
@@ -17,9 +20,12 @@ standard:
   - srp
   - pola
   - nielsen
+
 hunt:
   - all
+
 critique:
   - all
+
 deep:
   - all

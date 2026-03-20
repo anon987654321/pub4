@@ -15,24 +15,40 @@ axioms: |
   A10. CQS: queries don't mutate; commands don't return meaningful values.
 
 structural_techniques: |
-  STRUCTURAL TECHNIQUES:
-  S1. GUARD CLAUSE — replace nested if/else with early returns.
-  S2. EXTRACT — a cohesive block of 5+ lines with one job → named private method.
-  S3. INLINE — a one-liner method used exactly once → fold it into the call site.
-  S4. HOIST — move loop-invariant computation above the loop.
-  S5. MERGE — two methods with ≥80% identical bodies → one with a parameter.
-  S6. DECOUPLE — inject collaborators; remove hidden `new` calls inside methods.
-  S7. DEFRAG — gather all code for one concept into one location.
-  S8. REFLOW — happy path first, error/edge cases after.
-  S9. TELL DON'T ASK — send commands; don't query state to decide for them.
-  S10. SPLIT — if a class has two responsibilities, extract the second.
+  STRUCTURAL TECHNIQUES — apply whichever are warranted:
+  DEFRAG    — scatter logic is two responsibilities. Gather code for one concept into one place.
+  DECOUPLE  — remove hidden `new` calls inside methods; inject all collaborators.
+  FLATTEN   — replace nested if/else with early returns at the top.
+  MERGE     — two methods with ≥80% identical bodies → one method with a parameter.
+  HOIST     — move loop-invariant computation above the loop; extract loop-independent constants.
+  REFLOW    — happy path first; error/edge cases after. Fail fast at the top, succeed at the bottom.
+  EXTRACT   — a cohesive block of 5+ lines with one job → named private method.
+  INLINE    — a one-liner method used exactly once → fold it into the call site.
+  SPLIT     — if a class has two responsibilities, extract the second into its own class.
+  REGROUP   — gather public interface at the top; private helpers at the bottom.
+  TELL      — send commands to objects; don't query state to decide for them (Tell Don't Ask).
 
 prose_techniques: |
   PROSE TECHNIQUES (Strunk & White):
-  P1. OMIT NEEDLESS WORDS — every word must earn its place.
-  P2. ACTIVE VOICE — "returns the token" not "the token is returned by".
-  P3. DELETE OBVIOUS COMMENTS — `# increment counter` above `count += 1` is noise.
-  P4. STRIP HEDGES — remove: simply, just, basically, obviously, easily,
-      feel free to, keep in mind, please note, I think, I believe.
-  P5. STRIP PREAMBLES — remove: Great question, Certainly, Of course, I'd be happy.
-  P6. DIRECT ASSERTION — state facts; never qualify or apologize.
+  RECOMMENT   — active voice only: "returns the token" not "the token is returned by".
+  OMIT        — every word must earn its place. Delete obvious comments (`# increment counter` is noise).
+  DEHEDGE     — strip: simply, just, basically, obviously, easily, feel free to, keep in mind.
+  DEPREAMBLE  — strip: Great question, Certainly, Of course, I'd be happy to.
+  ASSERT      — state facts; never qualify or apologize.
+  NAME        — method names say exactly what they do. No clever abbreviations.
+
+cosmetic_techniques: |
+  COSMETIC / TYPOGRAPHIC:
+  ALIGN       — hash rockets and keyword args at the same column within a block (visual rhythm).
+  SPACE       — one blank line between methods; no trailing whitespace; no double blank lines.
+  FENCE       — heredocs: use HEREDOC not EOF, strip_heredoc for alignment, no trailing blank lines.
+  CONSTANT    — constants before methods, grouped by concern.
+  PRIVATE     — `private` keyword on its own line; private methods sorted by call order.
+  FROZEN      — `# frozen_string_literal: true` exactly on line 1 with one blank line after.
+
+dimension_assessment: |
+  DIMENSION ASSESSMENT — evaluate and act on each:
+  EXPAND    — logic too dense; break into named intermediate steps.
+  CONTRACT  — bloated with indirection; collapse trivial wrappers.
+  SPLIT     — two responsibilities found; extract the second.
+  MERGE     — trivially thin; belongs inside its only caller.
