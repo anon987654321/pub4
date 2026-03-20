@@ -14,7 +14,7 @@ module Master
     RATE_LIMIT_SLEEP = 15   # seconds to sleep on 429 before retrying
     MAX_FIX_RETRIES  = 3
     MIN_SIZE_RATIO   = 0.80 # reject fix if output < 80% of original file size
-    MAX_FILE_BYTES   = 8_000 # skip files too large to rewrite safely (LLM token limit)
+    MAX_FILE_BYTES   = 4_000 # skip files too large to rewrite safely (LLM token limit)
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
