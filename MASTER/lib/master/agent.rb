@@ -290,7 +290,8 @@ def react_loop(message, model, context:, &blk)
     visible = text.sub(match[0], "").strip
     blk&.call(visible) unless visible.empty?
 
-    call_data = JSON.parse(match[1].strip, symbolize_names: true)
+    json_str  = (match[1] || match[2] || match[3]).to_s.strip
+    call_data = JSON.parse(json_str, symbolize_names: true)
     tool_name = call_data.delete(:tool).to_s
     tool_result = dispatch_tool(tool_name, call_data)
 

@@ -153,18 +153,25 @@ module Master
     def process(input)
       return if input.strip.empty?
 
-      accumulated = +""
-      streamed    = false
+      accumulated     = +""
+      streamed        = false
+      thinking_shown  = true   # set false after first token clears it
 
       on_chunk = ->(chunk) {
         text = chunk.respond_to?(:content) ? chunk.content.to_s : chunk.to_s
         next if text.empty?
+        if thinking_shown
+          print "\r\e[K"     # clear "thinking..." line
+          thinking_shown = false
+        end
         print text
         $stdout.flush
         accumulated << text
         streamed = true
       }
 
+      print @renderer.render("thinking...", mode: :dim) rescue print "thinking..."
+      $stdout.flush
       result = @pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
 
       case result
@@ -174,6 +181,7 @@ module Master
           puts
           speak_async(accumulated) if @tts_on
         else
+          print "\r\e[K"  # clear "thinking..."
           val  = ok.value
           text = val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
           puts text
