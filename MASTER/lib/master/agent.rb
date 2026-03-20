@@ -13,7 +13,7 @@ module Master
     # Tool-capable model whitelist — non-matching models raise at call time.
     TOOL_CAPABLE_MODELS = %w[
       claude gpt-4 gpt-4o gemini mistral mixtral
-      llama-3.1 llama-3.3 qwen command-r deepseek
+      llama-3.1 llama-3.3 qwen command-r deepseek stepfun nvidia nemotron
       meta/meta-llama anthropic/claude openai/gpt google/gemini
     ].freeze
 
