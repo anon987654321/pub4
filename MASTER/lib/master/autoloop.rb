@@ -44,7 +44,8 @@ module Master
 
         yield cycle, violations if block_given?
 
-        violations.first(BATCH_SIZE).each do |v|
+        violations.first(BATCH_SIZE).each_with_index do |v, idx|
+          sleep 8 unless idx.zero?  # pace to 8 req/min free-tier limit
           fix = request_fix(v, map)
           apply_fix(v[:file], fix) if fix
         end
@@ -104,11 +105,12 @@ module Master
       PROMPT
 
       MAX_FIX_RETRIES.times do |attempt|
+        sleep 8 if attempt > 0  # respect 8 req/min free tier between retries
         begin
           return extract_code(@agent.ask(prompt).to_s)
         rescue StandardError => e
           msg = e.message.to_s
-          if (msg.include?("429") || msg.include?("throttled") || msg.include?("rate limit")) &&
+          if (msg.match?(/429|throttl|rate.?limit|high demand|provider.?error/i)) &&
              attempt < MAX_FIX_RETRIES - 1
             sleep_sec = RATE_LIMIT_SLEEP * (attempt + 1)
             @bus&.publish("autoloop:rate_limit", sleep: sleep_sec, attempt: attempt + 1)
