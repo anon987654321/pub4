@@ -14,7 +14,7 @@ require "master"
 # Kills any leftover process on the web port before starting fresh.
 # Both CLI and web UI read port/host from the same config.
 def boot_web_ui(config)
-  port = config["web_port"] || 3001
+  port = config["web_port"] || 10002
   host = config["web_host"] || "0.0.0.0"
 
   if Master::Platform.openbsd?

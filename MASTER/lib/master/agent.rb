@@ -148,6 +148,7 @@ module Master
 
     def assert_tool_capable!(selected_model)
       return if replicate_model?(selected_model)
+      return if selected_model.to_s.start_with?("ferrum:webchat:")
       return if tool_capable?(selected_model)
       raise "Model '#{selected_model}' does not support function calling. " \
             "Set REPLICATE_API_KEY, ANTHROPIC_API_KEY, or OPENROUTER_API_KEY."
