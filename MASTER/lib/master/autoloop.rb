@@ -12,7 +12,7 @@ module Master
     MAX_CYCLES       = 12
     BATCH_SIZE       = 5
     CODE_PREVIEW_MAX = 4_000
-    RATE_LIMIT_SLEEP = 10   # seconds to sleep on 429 before retrying
+    RATE_LIMIT_SLEEP = 15   # seconds to sleep on 429 before retrying
     MAX_FIX_RETRIES  = 3
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
@@ -45,7 +45,7 @@ module Master
         yield cycle, violations if block_given?
 
         violations.first(BATCH_SIZE).each_with_index do |v, idx|
-          sleep 8 unless idx.zero?  # pace to 8 req/min free-tier limit
+          sleep 15 unless idx.zero?  # pace to 4 req/min for free-tier stability
           fix = request_fix(v, map)
           apply_fix(v[:file], fix) if fix
         end
@@ -105,12 +105,12 @@ module Master
       PROMPT
 
       MAX_FIX_RETRIES.times do |attempt|
-        sleep 8 if attempt > 0  # respect 8 req/min free tier between retries
+        sleep 15 if attempt > 0  # respect free-tier rate limit between retries
         begin
           return extract_code(@agent.ask(prompt).to_s)
         rescue StandardError => e
           msg = e.message.to_s
-          if (msg.match?(/429|throttl|rate.?limit|high demand|provider.?error/i)) &&
+          if (msg.match?(/429|throttl|rate.?limit|high demand|provider.?error|overload|capacity|503/i)) &&
              attempt < MAX_FIX_RETRIES - 1
             sleep_sec = RATE_LIMIT_SLEEP * (attempt + 1)
             @bus&.publish("autoloop:rate_limit", sleep: sleep_sec, attempt: attempt + 1)
