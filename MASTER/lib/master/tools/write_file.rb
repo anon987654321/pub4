@@ -25,9 +25,7 @@ module Master
         perm = @governor.permit?(NAME, TIER, path)
         return perm if perm.err?
 
-        if @diff_stager
-          return @diff_stager.stage(path: full, new_content: content, tool: NAME)
-        end
+        return @diff_stager.stage(path: full, new_content: content, tool: NAME) if @diff_stager
 
         @undo.snapshot(full)
         FileUtils.mkdir_p(File.dirname(full))
@@ -36,9 +34,10 @@ module Master
         File.write(tmp, content)
         File.rename(tmp, full)
 
+        # Publishes tool:after — the event bus subscriber reindexes CodeIndex.
         @bus&.publish("tool:after", tool: NAME, path:)
         Result.ok(full)
-      rescue => e
+      rescue StandardError => e
         File.delete(tmp) if tmp && File.exist?(tmp)
         Result.err("write_file: #{e.message}", category: :unknown)
       end

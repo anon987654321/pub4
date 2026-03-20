@@ -1,17 +1,20 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Master
   module Stages
-    # Council — multi-perspective review of dangerous or significant output.
-    # Fires automatically on dangerous requests, dangerous tools, or multi-file diffs.
-    # Can also be enabled globally via config or `enable!`.
+    # Council — 6-persona deliberation on dangerous or multi-file changes.
+    # PRAISE votes are appended to data/exemplars.yml for future reference.
     class Council
+      EXEMPLARS_PATH = File.join(Master::ROOT, "data", "exemplars.yml").freeze
+
       DANGEROUS_PATTERNS = [
         /\brm\s+-rf\b/i,
         /\bsudo\b/i,
         /\b(?:drop|truncate)\s+table\b/i,
         /\bchmod\s+777\b/i,
-        /\b(?:delete|remove)\s+all\b/i,
+        /\b(?:delete|remove)\s+all\b/i
       ].freeze
 
       def initialize(deliberation:, config: nil, enabled: false)
@@ -27,7 +30,10 @@ module Master
         result  = @deliberation.review(payload, context: ctx[:message])
         return result if result.err?
 
-        Result.ok(ctx.merge(council_feedback: result.value!))
+        feedback = result.value!
+        log_praise(ctx[:message], feedback) if praise?(feedback)
+
+        Result.ok(ctx.merge(council_feedback: feedback))
       end
 
       def enable!
@@ -55,12 +61,8 @@ module Master
         !msg.empty? && DANGEROUS_PATTERNS.any? { |p| msg.match?(p) }
       end
 
-      def dangerous_tool?(ctx) = ctx[:last_tool_tier] == :dangerous
-
-      def multi_file_diff?(ctx)
-        # Council fires when output touches two or more distinct files.
-        extract_payload(ctx).scan(/^(?:---|\+\+\+)\s+[ab]\/(.+)$/).uniq.size >= 2
-      end
+      def dangerous_tool?(ctx)  = ctx[:last_tool_tier] == :dangerous
+      def multi_file_diff?(ctx) = extract_payload(ctx).scan(/^(?:---|\+\+\+)\s+[ab]\/(.+)$/).uniq.size >= 2
 
       def extract_payload(ctx)
         out = ctx[:output]
@@ -71,6 +73,25 @@ module Master
           text = out.to_s
           text.empty? ? ctx[:message].to_s : text
         end
+      end
+
+      # Detect unanimous or majority PRAISE in council feedback text.
+      def praise?(feedback)
+        text = feedback.to_s.downcase
+        text.scan(/\bpraise\b/).size >= 3
+      end
+
+      # Append a PRAISE entry to data/exemplars.yml.
+      def log_praise(message, feedback)
+        entry = {
+          "timestamp" => Time.now.iso8601,
+          "message"   => message.to_s[0, 120],
+          "feedback"  => feedback.to_s[0, 240]
+        }
+        existing = File.exist?(EXEMPLARS_PATH) ? (YAML.safe_load_file(EXEMPLARS_PATH) || []) : []
+        File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))
+      rescue StandardError
+        nil
       end
     end
   end

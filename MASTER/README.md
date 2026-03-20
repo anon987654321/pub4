@@ -3,7 +3,7 @@
 Constitutional AI coding agent. Ruby. OpenBSD-first. ~6K LOC.
 
 ```
-Intake → Infer → Route → Guard → Execute → Council → Lint → Strunk → Memo → Render
+Intake → Infer → Route → Guard → Execute → Council → Lint → Prune → Memo → Render
 ```
 
 ---
@@ -22,33 +22,57 @@ An `Err` at any stage short-circuits the rest. No exceptions escape.
 
 ```
 lib/master/
-  agent.rb           LLM interface — multi-model routing, Nemotron 3 thinking mode
+  agent.rb           LLM interface — multi-model routing, ReAct agentic loop
   pipeline.rb        10-stage result chain
   stages/
-    intake.rb        parse user message
+    intake.rb        normalize input, strip injection attempts
     infer.rb         NLP → command (English + Norwegian)
     route.rb         dispatch to command handlers or agent
     guard.rb         injection detection, tool-tier enforcement
-    execute.rb       run tool calls
+    execute.rb       run tool calls via Governor
     council.rb       6-persona deliberation on dangerous changes
     lint.rb          axiom coverage scan
-    strunk.rb        strip hedges and preambles from LLM output
+    prune.rb         strip hedges and preambles from LLM output
     memo.rb          extract and persist memory from responses
     render.rb        format final output
-  tools/             read_file, write_file, str_replace, list_dir, search_files,
-                     web_search, zsh, replace, ask_llm
-  scan/              10 scan rules — EXPLICIT, IMMUTABLE, CQS, bare_rescue, etc.
+  tools/             read_file, write_file, str_replace, ast_edit, batch_replace,
+                     list_dir, search_files, search_knowledge, web_search,
+                     shell, git_context, symbol_lookup, tree, apply_diff, ask_llm, clean
+  scan/              10 scan rules — EXPLICIT, IMMUTABLE, CQS, SELF_EXPLAINING,
+                     STRUNK_WHITE, long_method, bare_rescue, god_class, pola, srp
   routing/           model router with fallback chains
-  reasoning/         thinking mode wrappers (none / light / deep)
+  scan/rules/        rubocop_rule, reek_rule, conceptual_rule, axiom_coverage_rule
   council/           6 council personas loaded from data/council.yml
-  security/          injection guard — 9 regex patterns
-  swarm/             multi-worker parallel dispatch
+  security/          injection guard — 9 regex patterns, permissions
+  swarm/             multi-worker parallel dispatch (analyst/coder/researcher/reviewer)
   memory.rb          key-value store, persisted to .master/memory.yml
-  personality.rb     switchable voice persona
-  semantic_cache.rb  prompt deduplication with TTL
+  personality.rb     switchable voice persona, injects axioms into system prompt
+  axioms.rb          loads data/axioms.yml — kernel rules + top-25 philosophy
+  semantic_cache.rb  prompt deduplication with SHA256 LRU + TTL
   circuit_breaker.rb rate + budget + fault gating on LLM calls
-  auto_loop.rb       self-repair cycle (scan → fix → repeat)
-  sweep.rb           full-codebase refactor pass
+  autoloop.rb        self-repair cycle (scan → fix → commit → repeat)
+  sweep.rb           full-codebase refactor pass to convergence
+  code_index.rb      live structural model — Prism AST, symbol graph
+  diff_stager.rb     staged diff context for agent prompts
+  cognitive_monitor.rb  working-memory token budget tracker
+
+data/
+  axioms.yml         kernel axioms (enforced) + top-25 philosophy (advisory)
+  constitution.yml   golden rule, protection levels, anti-simulation
+  council.yml        6 council personas with voting weights
+  strunk.yml         preamble/hedge/ending patterns for Prune stage
+  principles.yml     KISS, DRY, YAGNI, SRP with anti-patterns
+  quality_thresholds.yml  method/class/file size limits
+  exemplars.yml      council PRAISE vote registry
+  fallback_models.yml     model fallback chains per task type
+  features.yml       toggleable feature flags
+  language_rules.yml + language_axioms.yml + zsh_patterns.yml
+
+knowledge/
+  style_guides/      ruby.adoc (141KB), rails.adoc (53KB)
+  axioms/, constitution/, language_axioms/  — searchable YAML knowledge
+  ruby_llm/          34 source files from ruby_llm gem
+  system_prompts/    130+ CL4R1T4S system prompts
 
 web/                 Rails 8 web UI — Falcon async server
 exe/master           CLI entry point
@@ -84,7 +108,7 @@ Runs at `http://ai.brgen.no:3000`.
 | Execute | Tool calls via Governor (safe / guarded / dangerous tiers) |
 | Council | 6-persona review on dangerous or multi-file changes |
 | Lint | Axiom coverage scan (quick / standard / hunt / deep) |
-| Strunk | Strip preambles, hedges, filler from LLM output |
+| Prune | Strip preambles, hedges, filler from LLM output |
 | Memo | Extract remember/decision/preference patterns, persist to memory |
 | Render | Format and emit final response |
 
@@ -93,35 +117,37 @@ Runs at `http://ai.brgen.no:3000`.
 ## Commands
 
 ```
-/scan [path]     run axiom scan
-/fix             propose repairs for scan violations
-/sweep [path]    full-codebase refactor loop
-/autoloop [n]    self-repair cycle, n iterations (default 8)
-/council on|off  toggle council deliberation
-/explain         show pipeline stages and axiom coverage
-/memory          list / recall / remember / forget
-/mode none|light|deep   reasoning depth
-/task [type]     set task type for model routing
-/swarm <role> <task>    dispatch to worker
-/persona [name]  switch voice persona
-/undo            revert last file change
-/dmesg           show ring buffer log
-/cost            show session cost
-/tokens          estimate context size
+/scan [path]          run axiom scan
+/fix                  propose repairs for scan violations
+/sweep [path]         full-codebase refactor loop to convergence
+/autoloop [n]         self-repair cycle, n iterations (default 8)
+/council on|off       toggle council deliberation
+/explain              show pipeline stages and axiom coverage
+/memory               list / recall / remember / forget / search
+/mode none|light|deep reasoning depth
+/task [type]          set task type for model routing
+/swarm <role> <task>  dispatch to worker
+/persona [name]       switch voice persona
+/cache clear|stats    manage semantic cache
+/diff [path]          show staged diff with context
+/model list           show available models and current
+/commit [msg]         LLM-generated or manual git commit
+/why <rule>           explain an axiom or scan rule
+/knowledge add <url>  fetch and index a URL into knowledge base
+/undo                 revert last file change
+/dmesg                show ring buffer log
+/cost                 show session cost
+/tokens               estimate context size
 ```
 
 ---
 
 ## Models
 
-Default priority order:
+Default: `meta-llama/llama-3.3-70b-instruct:free` (OpenRouter free tier, ~8 req/min).
 
-1. `nvidia/nemotron-3-nano-30b-a3b:free` — OpenRouter free tier
-2. `claude-opus-4-6` — Anthropic (if `ANTHROPIC_API_KEY` set)
-3. `gpt-4o` — OpenAI (if `OPENAI_API_KEY` set)
-
-Nemotron 3 thinking mode: `reasoning_content` extracted and appended as
-`<think>` block at `:deep` reasoning depth.
+Routing via `data/fallback_models.yml` per task type (code / review / chat / sweep).
+Escalates to stronger model automatically on circuit-breaker or low-confidence signals.
 
 ---
 
@@ -135,9 +161,9 @@ Kernel rules (`[K]`) are enforced by code at runtime:
 - **ONE_SOURCE** — duplicate_code scan
 - **GUARD_EXPENSIVE** — CircuitBreaker before every LLM call
 - **DEGRADE_GRACEFULLY** — tool timeout wrappers
-- **BE_CONCISE** — Strunk stage on every response
+- **BE_CONCISE** — Prune stage on every response
 
-Philosophy rules (`[P]`) are advisory and do not block. See `master.md`.
+Philosophy rules (`[P]`) are advisory and do not block. See `data/axioms.yml`.
 
 ---
 
@@ -161,7 +187,7 @@ RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 \
   bundle exec falcon serve --bind http://127.0.0.1:10002
 ```
 
-OpenBSD rc.d service: `rcctl start master`
+OpenBSD rc.d service: `rcctl start masterweb`
 
 ---
 
@@ -170,7 +196,7 @@ OpenBSD rc.d service: `rcctl start master`
 - Reverse proxy: relayd on port 3000 → Falcon on 127.0.0.1:10002
 - TLS: terminated at relayd layer (`config.force_ssl = false`)
 - DNS: `ai.brgen.no` → 185.52.176.18, DNSSEC signed
-- Process supervisor: `rcctl` via `/etc/rc.d/master`
+- Process supervisor: `rcctl` via `/etc/rc.d/masterweb`
 
 ---
 
