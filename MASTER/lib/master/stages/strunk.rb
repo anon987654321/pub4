@@ -38,6 +38,7 @@ module Master
         output = ctx[:output]
         return Result.ok(ctx) unless output.is_a?(String)
         return Result.ok(ctx) if output.empty?
+        return Result.ok(ctx) if output.include?("```")  # never mangle code blocks
 
         cleaned = output
         PREAMBLES.each { |p| cleaned = cleaned.sub(p, "")  }

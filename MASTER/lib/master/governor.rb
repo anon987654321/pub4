@@ -9,7 +9,7 @@ module Master
     def initialize(config:, event_bus: nil)
       @config  = config
       @bus     = event_bus
-      @prompt  = TTY::Prompt.new
+      @prompt  = $stdout.isatty ? TTY::Prompt.new : nil
       @auto    = config.auto?
       @approve_all = false
     end
@@ -32,6 +32,7 @@ module Master
     private
 
     def ask_user(tool_name, tier, description)
+      return Result.err("non-TTY: cannot prompt for approval", category: :validation) unless @prompt
       label = description ? "#{tool_name}: #{description}" : tool_name
       choice = @prompt.select("#{tier_icon(tier)} #{label}", [
         { name: "approve",     value: :approve },

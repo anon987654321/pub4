@@ -12,8 +12,9 @@ module Master
       DECISION_RE = /\bwe(?:'ve|\s+have)?\s+decided\s+(?:to\s+)?(.{10,150}?)(?:[.!]|$)/im.freeze
       PREFER_RE   = /\bI\s+prefer\s+(.{5,100}?)(?:[.!]|$)/im.freeze
 
-      def initialize(memory:)
+      def initialize(memory:, event_bus: nil)
         @memory = memory
+        @bus    = event_bus
       end
 
       def call(ctx)
@@ -21,7 +22,7 @@ module Master
         extract_memories(text) if text && !text.empty?
         Result.ok(ctx)
       rescue => e
-        $stderr.puts "memo: #{e.message}"
+        @bus&.publish("memo:error", message: e.message)
         Result.ok(ctx)
       end
 
