@@ -9,12 +9,6 @@ module Master
     MAX_DIFF_SIZE_LINES = 200
     ROLLBACK_RATE_THRESHOLD = 0.15
 
-    THRESHOLDS = {
-      decision_latency_ms: DECISION_LATENCY_MS_THRESHOLD,
-      diff_size_lines: MAX_DIFF_SIZE_LINES,
-      rollback_rate: ROLLBACK_RATE_THRESHOLD
-    }.freeze
-
     def initialize(root:, event_bus: nil)
       @path   = File.join(root, ".master", "metrics.jsonl")
       @bus    = event_bus
@@ -57,8 +51,16 @@ module Master
     private
 
     def check_threshold(metric, value)
-      return unless value > THRESHOLDS[metric]
-      msg = "#{METRICS_PREFIX}: #{metric} #{value} exceeds #{THRESHOLDS[metric]} — governance overhead detected"
+      threshold =
+        case metric
+        when :decision_latency_ms then DECISION_LATENCY_MS_THRESHOLD
+        when :diff_size_lines then MAX_DIFF_SIZE_LINES
+        when :rollback_rate then ROLLBACK_RATE_THRESHOLD
+        else
+          return
+        end
+      return unless value > threshold
+      msg = "#{METRICS_PREFIX}: #{metric} #{value} exceeds #{threshold} — governance overhead detected"
       @bus&.publish("metrics:threshold_exceeded", metric:, value:)
       warn msg
     end
