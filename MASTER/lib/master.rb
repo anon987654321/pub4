@@ -195,19 +195,9 @@ module Master
         if role.nil? || task.empty?
           "usage: /swarm <role> <task>  roles: #{swarm.worker_roles.join(", ")}"
         else
-          r = swarm.dispatch(role, task: task, context_slice: {})
-          r.ok? ? r.value!.inspect : r.message
+          dispatch_result = swarm.dispatch(role, task: task, context_slice: {})
+          dispatch_result.ok? ? dispatch_result.value!.inspect : dispatch_result.message
         end
-      },
-      "autoloop" => ->(ctx) {
-        arg = ctx[:args].to_s.strip
-        cycles = arg.match?(/^\d+$/) ? arg.to_i : 8
-        loop_obj = AutoLoop.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
-        output = []
-        result = loop_obj.run(max_cycles: cycles) { |cycle, violations|
-          output << "cycle #{cycle}: #{violations.size} violation(s)"
-        }
-        (output + [result.ok? ? result.value! : result.message]).join("\n")
       },
 "explain" => ->(ctx) {
   map  = Introspection::SelfMap.new(root:)
