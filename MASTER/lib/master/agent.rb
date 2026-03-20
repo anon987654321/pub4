@@ -259,7 +259,7 @@ module Master
         chat_session = RubyLLM.chat(model: selected)
         chat_session.with_instructions(system_prompt) if system_prompt
         messages.each { |msg| chat_session.add_message(role: msg[:role].to_s, content: msg[:content].to_s) }
-        return chat_session.complete.to_s
+        return extract_response(chat_session.complete, selected)
       rescue StandardError => e
         last_err = e
         next
