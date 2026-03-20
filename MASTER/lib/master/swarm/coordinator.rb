@@ -13,6 +13,7 @@ module Master
       }.freeze
 
       WORKER_TIMEOUT = 30  # seconds per worker
+      SYNTHESIS_TRUNCATE_LIMIT = 200
 
       def initialize(agent:, event_bus: nil)
         @agent = agent
@@ -76,13 +77,17 @@ module Master
           if th.join(timeout)
             th.value
           else
-            th.kill rescue nil
+            begin
+              th.kill
+            rescue ThreadError => e
+              @bus&.publish(:swarm_thread_kill_error, thread: th.object_id, error: e.message)
+            end
             [:timeout, Result.err("worker timed out after #{timeout}s", category: :unknown)]
           end
         end.to_h
 
         synthesis = synthesize(results)
-        @bus&.publish(:swarm_fan_out_done, roles: results.keys, synthesis: synthesis[0..200])
+        @bus&.publish(:swarm_fan_out_done, roles: results.keys, synthesis: synthesis[0..SYNTHESIS_TRUNCATE_LIMIT])
         Result.ok({ results: results, synthesis: synthesis })
       end
 

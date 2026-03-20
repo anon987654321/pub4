@@ -7,8 +7,10 @@ require "monitor"
 module Master
   class SemanticCache
     MAX_ENTRIES = 1000
+    DEFAULT_TTL = 3600
+    BYTES_PER_KB = 1024.0
 
-    def initialize(root:, ttl: 3600, event_bus: nil)
+    def initialize(root:, ttl: DEFAULT_TTL, event_bus: nil)
       @root    = File.join(root, ".master", "cache")
       @ttl     = ttl
       @bus     = event_bus
@@ -36,12 +38,22 @@ module Master
 
     def invalidate!(prompt, model)
       path = cache_path(cache_key(prompt, model))
-      @lock.synchronize { File.delete(path) if File.exist?(path) }
+      @lock.synchronize do
+        # Intentional deletion of cached entry
+        File.delete(path) if File.exist?(path)
+      end
     end
 
     def invalidate_all!
       @lock.synchronize do
-        Dir.glob(File.join(@root, "*.json")).each { |f| File.delete(f) rescue nil }
+        Dir.glob(File.join(@root, "*.json")).each do |f|
+          begin
+            # Intentional deletion of all cache files
+            File.delete(f)
+          rescue Errno::ENOENT
+            # Ignore if file already removed
+          end
+        end
         @lru.clear
       end
     end
@@ -49,8 +61,12 @@ module Master
     def stats
       @lock.synchronize do
         files = Dir.glob(File.join(@root, "*.json"))
-        bytes = files.sum { |f| File.size(f) rescue 0 }
-        { entries: files.size, size_kb: (bytes / 1024.0).round(1) }
+        bytes = files.sum do |f|
+          File.size(f)
+        rescue Errno::ENOENT
+          0
+        end
+        { entries: files.size, size_kb: (bytes / BYTES_PER_KB).round(1) }
       end
     end
 
@@ -69,13 +85,19 @@ module Master
       entry = JSON.parse(File.read(path), symbolize_names: true)
       if Time.now.to_i - entry[:ts] > @ttl
         @lru.delete(path)
+        # Intentional deletion of expired cache file
         File.delete(path)
         return nil
       end
       promote_lru(path)
       entry[:value]
     rescue JSON::ParserError
-      File.delete(path) rescue nil
+      begin
+        # Intentional deletion of corrupt cache file
+        File.delete(path)
+      rescue Errno::ENOENT
+        # Ignore if already removed
+      end
       @lru.delete(path)
       nil
     end
@@ -93,7 +115,9 @@ module Master
 
     def evict_lru
       oldest = @lru.shift
-      File.delete(oldest) if oldest && File.exist?(oldest)
+      return unless oldest && File.exist?(oldest)
+      # Intentional deletion of oldest cache file (LRU eviction)
+      File.delete(oldest)
     end
   end
 end

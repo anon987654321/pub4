@@ -64,12 +64,13 @@ module Master
           return [] if response.strip.upcase.start_with?("CLEAN")
 
           response.lines.filter_map do |line|
-            m = line.strip.match(/\AISSUE:(\d+):(.+)\z/)
-            next unless m
-            finding(line: m[1].to_i, message: "adversarial: #{m[2].strip}")
+            match = line.strip.match(/\AISSUE:(\d+):(.+)\z/)
+            next unless match
+            finding(line: match[1].to_i, message: "adversarial: #{match[2].strip}")
           end
         end
       end
     end
   end
 end
+

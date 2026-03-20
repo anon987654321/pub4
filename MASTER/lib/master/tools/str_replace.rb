@@ -25,7 +25,7 @@ module Master
         content = File.read(full)
         count   = content.scan(Regexp.quote(old_string)).size
 
-        return Result.err("str_replace: pattern not found in #{path}", category: :validation) if count == 0
+        return Result.err("str_replace: pattern not found in #{path}", category: :validation) if count.zero?
         return Result.err("str_replace: pattern matches #{count} times in #{path} (must be unique)", category: :validation) if count > 1
 
         perm = @governor.permit?(NAME, TIER, path)
@@ -43,8 +43,13 @@ module Master
         begin
           File.write(tmp, new_content)
           File.rename(tmp, full)
-        ensure
-          File.delete(tmp) if File.exist?(tmp) rescue nil
+        rescue => e
+          begin
+            File.delete(tmp) if File.exist?(tmp)
+          rescue => cleanup_error
+            warn "str_replace: failed to cleanup temporary file #{tmp}: #{cleanup_error.message}"
+          end
+          raise
         end
 
         @bus&.publish("tool:after", tool: NAME, path:)

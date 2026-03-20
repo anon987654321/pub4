@@ -24,11 +24,11 @@ module Master
 
           code.each_line.with_index(1).flat_map { |line, num|
             next [] if line.strip.start_with?("#")
-            f = []
-            f << finding(line: num, message: "unfrozen constant — append .freeze") if line.match?(UNFROZEN_CONST)
-            f << finding(line: num, message: "class variable mutation (@@) — use instance state or inject") if line.match?(CLASS_VAR_WRITE)
-            f << finding(line: num, message: "global variable mutation ($) — eliminate shared global state") if line.match?(GLOBAL_WRITE)
-            f
+            line_findings = []
+            line_findings << finding(line: num, message: "unfrozen constant — append .freeze") if line.match?(UNFROZEN_CONST)
+            line_findings << finding(line: num, message: "class variable mutation (@@) — use instance state or inject") if line.match?(CLASS_VAR_WRITE)
+            line_findings << finding(line: num, message: "global variable mutation ($) — eliminate shared global state") if line.match?(GLOBAL_WRITE)
+            line_findings
           }
         end
       end
