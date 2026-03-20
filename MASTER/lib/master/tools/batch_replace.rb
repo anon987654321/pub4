@@ -5,7 +5,7 @@ module Master
     # Replace — batch find-and-replace across files in a directory.
     # Wraps pub4/sh/replace.sh with structured input/output.
     # TIER :guarded — modifies files, requires approval unless auto mode.
-    class Replace
+    class BatchReplace
       TIER        = :guarded
       NAME        = "replace"
       DESCRIPTION = "Find and replace text across all files in a directory."

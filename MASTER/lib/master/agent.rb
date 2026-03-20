@@ -49,9 +49,9 @@ module Master
 
       last_response = routed.each_with_index do |selected_model, idx|
         assert_tool_capable!(selected_model)
-        cache_key = cache_prompt_for("#{selected_model}:#{prompt}", context)
+        cache_key = cache_key_for("#{selected_model}:#{prompt}", context)
         cb = @circuit_breaker.call(estimate_cost(message)) {
-          @cache.fetch(cache_key, selected_model) { do_chat(prompt, selected_model, context:, stream:, &blk) }
+          @cache.fetch(cache_key, selected_model) { chat_with(prompt, selected_model, context:, stream:, &blk) }
         }
         next if cb.respond_to?(:err?) && cb.err? && idx < routed.length - 1
         break cb
@@ -61,24 +61,24 @@ module Master
 
 # Confidence-based escalation: retry once with a stronger model if the
 # response contains low-confidence markers and we have a model router.
-if @model_router && !@_escalated
+if @model_router && !@escalation_done
   escalation_model = @model_router.escalate_if_low_confidence(
     last_response.to_s,
     current_model: routed_models.first,
     task_type: @config.task_type.to_sym
   )
   if escalation_model
-    @_escalated = true
+    @escalation_done = true
     @bus&.publish("llm:escalation", from: routed_models.first, to: escalation_model)
-    esc_cache_key = cache_prompt_for("#{escalation_model}:#{prompt}", context)
+    esc_cache_key = cache_key_for("#{escalation_model}:#{prompt}", context)
     escalated_result = @circuit_breaker.call(estimate_cost(message)) {
       @cache.fetch(esc_cache_key, escalation_model) {
-        do_chat(prompt, escalation_model, context: context, stream: stream, &blk)
+        chat_with(prompt, escalation_model, context: context, stream: stream, &blk)
       }
     }
     last_response = escalated_result unless escalated_result.respond_to?(:err?) && escalated_result.err?
   end
-  @_escalated = false
+  @escalation_done = false
 end
 
       text = last_response.to_s
@@ -95,7 +95,7 @@ end
 
     # One-shot chat with a custom system prompt. No session, no circuit breaker.
     # Routes through Replicate bridge when model owner is in REPLICATE_OWNERS.
-    def chat_raw(prompt, system: nil)
+    def ask_once(prompt, system: nil)
       if replicate_model?(model)
         msg = Bridges::Replicate.new.chat(
           model:    model,
@@ -170,7 +170,7 @@ end
       end
     end
 
-    def do_chat(message, selected_model, context:, stream:, &blk)
+    def chat_with(message, selected_model, context:, stream:, &blk)
       if selected_model.start_with?("ferrum:webchat:")
         alias_name = selected_model.split(":", 3).last
         r = Bridges::FerrumWebChat.new.ask(model_alias: alias_name, prompt: message)
@@ -223,7 +223,7 @@ end
       msgs.last(max_messages + 1)[0...-1] || []
     end
 
-    def cache_prompt_for(message, context)
+    def cache_key_for(message, context)
       return message if context.empty?
       condensed = context.map { |m| "#{m[:role]}:#{m[:content]}" }.join("\n")
       "#{message}\n\n[context]\n#{condensed}"
@@ -248,7 +248,7 @@ end
       Tools::StrReplace  => Tools::LLM::StrReplace,
       Tools::ListDir     => Tools::LLM::ListDir,
       Tools::SearchFiles => Tools::LLM::SearchFiles,
-      Tools::Zsh         => Tools::LLM::Zsh,
+      Tools::Shell      => Tools::LLM::Shell,
       Tools::WebSearch   => Tools::LLM::WebSearch,
       Tools::AskLlm      => Tools::LLM::AskLlm,
       Tools::GitContext  => Tools::LLM::GitContext,

@@ -77,7 +77,7 @@ module Master
         end
       end
 
-      class Zsh < RubyLLM::Tool
+      class Shell < RubyLLM::Tool
         description "Run a shell command in the project root. Blocked patterns are enforced."
         param :command, desc: "Shell command to execute", required: true
 

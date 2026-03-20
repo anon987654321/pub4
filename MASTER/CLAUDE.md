@@ -19,7 +19,7 @@ Target: OpenBSD 7.8, Ruby 3.4, zsh. No python, bash, awk, sed, sudo. Use doas, r
 - All work on VPS via SSH: `sshpass -p 'h00te10tu' ssh -o StrictHostKeyChecking=no dev@brgen.no 'cmd'`
 - Non-interactive SSH must NOT source .zshrc (auto-starts MASTER, steals stdin)
 - Load env without MASTER: `eval "$(grep '^export' ~/.zshrc)"`
-- Use Ruby or Python for file edits, never sed (different on OpenBSD vs GNU)
+- Use Ruby for file edits, never sed or Python (different on OpenBSD vs GNU)
 - SSH heredocs fail with special chars — write to /tmp, scp, then execute
 
 ## Shell Style (zsh-native, no external forks)

@@ -22,7 +22,7 @@ module Master
       @root        = container[:root] || Dir.pwd
       @reader      = TTY::Reader.new(track_history: true)
       @running     = false
-      @ctrl_c_ts   = 0
+      @interrupt_at   = 0
       @last_ok     = true
       @tts_on      = Speech.available? && @config["tts"] != false
       @violations  = 0
@@ -33,7 +33,7 @@ module Master
     def run(initial_message = nil)
       setup_signals
       @session.load! if @session.exists?
-      start_background_scan
+      scan_in_background
 
       puts @renderer.splash(@agent.model)
 
@@ -44,7 +44,7 @@ module Master
     end
 
     def pipe(input)
-      process(input.strip)
+      run_input(input.strip)
     end
 
     private
@@ -59,7 +59,7 @@ module Master
         line = @reader.read_line("", echo: true).chomp rescue nil
         break if line.nil?
         next if line.strip.empty?
-        handle_command(line) || process(line)
+        handle_command(line) || run_input(line)
       end
       @scan_thread&.kill
       @session.save!
@@ -130,7 +130,7 @@ module Master
       puts @renderer.render("#{total} total violations", mode: :warning)
     end
 
-    def start_background_scan
+    def scan_in_background
       @scan_thread = Thread.new do
         result = @scanner.scan_dir(File.join(@root, "lib"), depth: :standard)
         next unless result.respond_to?(:ok?) && result.ok?
@@ -150,7 +150,7 @@ module Master
       end
     end
 
-    def process(input)
+    def run_input(input)
       return if input.strip.empty?
 
       accumulated     = +""
@@ -316,12 +316,12 @@ end
     def setup_signals
       trap("INT") {
         now = Time.now.to_f
-        if now - @ctrl_c_ts < 1.0
+        if now - @interrupt_at < 1.0
           @scan_thread&.kill
           @session.save!
           exit(0)
         else
-          @ctrl_c_ts = now
+          @interrupt_at = now
           puts "\n#{@renderer.render("^C again to quit", mode: :warning)}"
         end
       }
