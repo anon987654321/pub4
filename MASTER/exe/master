@@ -53,6 +53,7 @@ if $stdin.tty?
   message = ARGV.join(" ").strip
   cli.run(message.empty? ? nil : message)
 else
-  cli = Master.boot(root: Dir.pwd)
+  container = Master.build(root: Dir.pwd)
+  cli       = Master::CLI.new(container:)
   cli.pipe($stdin.read)
 end

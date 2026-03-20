@@ -23,6 +23,17 @@ Target: OpenBSD 7.8, Ruby 3.4, zsh. No python, bash, awk, sed, sudo. Use doas, r
 - SSH heredocs fail with special chars — write to /tmp, scp, then execute
 - SSH inline ruby -e: escape `!` as `\!` or use `grep -v '!'`
 
+
+## File Reading Convention
+
+**Read complete files — never grep, head, tail, or partial-read to understand code.**
+- `cat file.rb` to read a file, not `grep "pattern" file.rb | head -20`
+- A partial view causes partial understanding, which causes partial (wrong) changes
+- Only use grep/search tools when genuinely searching across many files for a keyword
+- Once you know the file, read it whole — context and neighbours matter
+- Apply this in MASTER itself: when suggesting code changes, always instruct the LLM
+  to read every related file completely before proposing any edit
+
 ## Before Any Code Change
 
 **Read every file that could be affected before editing any file.**
