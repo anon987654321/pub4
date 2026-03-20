@@ -16,6 +16,7 @@ module Master
       # not one per axiom) and GUARD_EXPENSIVE (depth gate).
       class ConceptualRule < Rule
         AXIOMS_PATH = File.join(Master::ROOT, "data", "axioms.yml").freeze
+        CODE_SNIPPET_LIMIT = 2000
 
         def initialize(agent: nil)
           super()
@@ -61,8 +62,8 @@ module Master
             Axioms:
             #{axiom_list}
 
-            Code (first 2000 chars):
-            #{code[0, 2000]}
+            Code (first #{CODE_SNIPPET_LIMIT} chars):
+            #{code[0, CODE_SNIPPET_LIMIT]}
           PROMPT
         end
 
@@ -70,9 +71,9 @@ module Master
           return [] if response.strip.upcase == "CLEAN"
 
           response.lines.filter_map do |line|
-            m = line.strip.match(/\A([A-Z_]+):(\d+):(.+)\z/)
-            next unless m && @axioms.key?(m[1])
-            finding(line: m[2].to_i, message: "#{m[1]}: #{m[3].strip}")
+            match_data = line.strip.match(/\A([A-Z_]+):(\d+):(.+)\z/)
+            next unless match_data && @axioms.key?(match_data[1])
+            finding(line: match_data[2].to_i, message: "#{match_data[1]}: #{match_data[3].strip}")
           end
         end
       end

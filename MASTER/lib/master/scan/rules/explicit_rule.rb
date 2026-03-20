@@ -4,7 +4,7 @@ module Master
   module Scan
     module Rules
       # ExplicitRule — detects implicit/opaque patterns that violate EXPLICIT.
-      # Flags: rescue nil chains, implicit return of nil, magic number literals,
+      # Flags: bare rescue, implicit return of nil, magic number literals,
       # single-letter variable names outside loops, and undefined method patterns.
       class ExplicitRule < Rule
         RESCUE_NIL   = /rescue\s+nil\b/.freeze
@@ -25,7 +25,7 @@ module Master
 
           findings = []
           code.each_line.with_index(1) do |line, num|
-            findings << finding(line: num, message: "rescue nil hides errors — name the exception or propagate") if line.match?(RESCUE_NIL)
+            findings << finding(line: num, message: "bare rescue hides errors — name the exception class or propagate") if line.match?(RESCUE_NIL)
             findings << finding(line: num, message: "magic number — extract to a named constant")                if line.match?(MAGIC_NUM) && !line.strip.start_with?("#")
             findings << finding(line: num, message: "single-letter variable obscures intent — use a descriptive name") if line.match?(OPAQUE_VAR) && !in_loop_context?(code, num)
           end

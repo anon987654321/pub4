@@ -24,11 +24,11 @@ module Master
 
           code.each_line.with_index(1).flat_map { |line, num|
             next [] if line.strip.start_with?("#")
-            f = []
-            f << finding(line: num, message: "noise method name — rename to reveal intent") if line.match?(NOISE_NAMES)
-            f << finding(line: num, message: "abbreviated method name — use the full descriptive word") if line.match?(ABBREV_METHOD)
-            f << finding(line: num, message: "abbreviated variable — prefer descriptive identifier") if line.match?(ABBREV_VAR)
-            f
+            findings = []
+            findings << finding(line: num, message: "noise method name — rename to reveal intent") if line.match?(NOISE_NAMES)
+            findings << finding(line: num, message: "abbreviated method name — use the full descriptive word") if line.match?(ABBREV_METHOD)
+            findings << finding(line: num, message: "abbreviated variable — prefer descriptive identifier") if line.match?(ABBREV_VAR)
+            findings
           }
         end
       end

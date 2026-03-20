@@ -51,7 +51,11 @@ module Master
       path = synthesize(text, **opts)
       return nil unless path
       bytes = File.binread(path)
-      File.unlink(path) rescue nil
+      begin
+        File.unlink(path)
+      rescue => e
+        nil
+      end
       bytes
     end
 
@@ -61,14 +65,14 @@ module Master
 
     def synthesize_edge(text, voice:, style:)
       tmp = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
-      v   = VOICES.fetch(voice.to_sym, VOICES[DEFAULT_VOICE])
-      s   = STYLES.fetch(style.to_sym,  STYLES[DEFAULT_STYLE])
+      voice_name = VOICES.fetch(voice.to_sym, VOICES[DEFAULT_VOICE])
+      style_config = STYLES.fetch(style.to_sym, STYLES[DEFAULT_STYLE])
 
       ok = system(
         EDGE_TTS,
-        "--voice", v,
-        "--rate=#{s[:rate]}",
-        "--pitch=#{s[:pitch]}",
+        "--voice", voice_name,
+        "--rate=#{style_config[:rate]}",
+        "--pitch=#{style_config[:pitch]}",
         "--text", text.to_s,
         "--write-media", tmp,
         out: File::NULL, err: File::NULL

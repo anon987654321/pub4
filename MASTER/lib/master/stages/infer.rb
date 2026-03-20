@@ -112,8 +112,7 @@ module Master
           path = nil if path&.match?(/\A(?:all|everything|the|code|codebase)\z/i)
           path.to_s
         when "autoloop"
-          n = match[1] || msg[/\b(\d+)\s*(?:time|cycle|iteration|gang|syklus)/i, 1]
-          n.to_s
+          (match[1] || msg[/\b(\d+)\s*(?:time|cycle|iteration|gang|syklus)/i, 1]).to_s
         when "council"
           msg.match?(/\b(?:off|disable|stop|av|skru\s+av)\b/i) ? "off" : "on"
         when "memory"

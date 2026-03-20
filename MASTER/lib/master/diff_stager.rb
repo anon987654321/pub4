@@ -45,8 +45,8 @@ module Master
       )
       @pending << entry
       persist_entry(entry)
-      @bus&.publish("stage:queued", id: entry.id, path: path, stats: entry.diff_stats)
-      Result.ok({ staged: true, id: entry.id, path: path, stats: entry.diff_stats })
+      @bus&.publish("stage:queued", id: entry.id, path: entry.path, stats: entry.diff_stats)
+      Result.ok({ staged: true, id: entry.id, path: entry.path, stats: entry.diff_stats })
     end
 
     def pending = @pending.dup
@@ -127,8 +127,10 @@ module Master
     end
 
     def remove_persisted(entry)
-      f = File.join(stage_dir, "#{entry.id}.json")
-      File.delete(f) if File.exist?(f)
+      persist_file = File.join(stage_dir, "#{entry.id}.json")
+      # Safe to delete: this persisted staging file is being removed after the entry
+      # has been either applied (written to the actual file) or discarded (abandoned).
+      File.delete(persist_file) if File.exist?(persist_file)
     rescue StandardError
       nil
     end

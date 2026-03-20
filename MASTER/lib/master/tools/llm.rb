@@ -10,6 +10,8 @@ module Master
     module LLM
 
       class ReadFile < RubyLLM::Tool
+        DEFAULT_LIMIT = 2000
+
         description "Read a file with line numbers. Path is relative to project root."
         param :path,   desc: "File path relative to project root", required: true
         param :offset, desc: "First line to read (0-indexed)", type: "integer", required: false
@@ -17,9 +19,9 @@ module Master
 
         def initialize(tool) = @tool = tool
 
-        def execute(path:, offset: 0, limit: 2000)
-          r = @tool.call(path: path.to_s, offset: offset.to_i, limit: limit.to_i)
-          r.ok? ? r.value! : "Error: #{r.message}"
+        def execute(path:, offset: 0, limit: DEFAULT_LIMIT)
+          result = @tool.call(path: path.to_s, offset: offset.to_i, limit: limit.to_i)
+          result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
 
@@ -31,8 +33,8 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(path:, content:)
-          r = @tool.call(path: path.to_s, content: content.to_s)
-          r.ok? ? "Written: #{r.value!}" : "Error: #{r.message}"
+          result = @tool.call(path: path.to_s, content: content.to_s)
+          result.ok? ? "Written: #{result.value!}" : "Error: #{result.message}"
         end
       end
 
@@ -45,8 +47,8 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(path:, old_string:, new_string:)
-          r = @tool.call(path: path.to_s, old_string: old_string.to_s, new_string: new_string.to_s)
-          r.ok? ? "Replaced in: #{r.value!}" : "Error: #{r.message}"
+          result = @tool.call(path: path.to_s, old_string: old_string.to_s, new_string: new_string.to_s)
+          result.ok? ? "Replaced in: #{result.value!}" : "Error: #{result.message}"
         end
       end
 
@@ -58,8 +60,8 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(path: ".", depth: 3)
-          r = @tool.call(path: path.to_s, depth: depth.to_i)
-          r.ok? ? r.value! : "Error: #{r.message}"
+          result = @tool.call(path: path.to_s, depth: depth.to_i)
+          result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
 
@@ -72,8 +74,8 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(pattern:, path: ".", context: 2)
-          r = @tool.call(pattern: pattern.to_s, path: path.to_s, context: context.to_i)
-          r.ok? ? r.value! : "Error: #{r.message}"
+          result = @tool.call(pattern: pattern.to_s, path: path.to_s, context: context.to_i)
+          result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
 
@@ -84,20 +86,22 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(command:)
-          r = @tool.call(command: command.to_s)
-          r.ok? ? r.value! : "Error: #{r.message}"
+          result = @tool.call(command: command.to_s)
+          result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
 
       class WebSearch < RubyLLM::Tool
+        MAX_QUERY_LENGTH = 300
+
         description "Search the web using DuckDuckGo. Returns titles and snippets."
-        param :query, desc: "Search query (max 300 chars)", required: true
+        param :query, desc: "Search query (max #{MAX_QUERY_LENGTH} chars)", required: true
 
         def initialize(tool) = @tool = tool
 
         def execute(query:)
-          r = @tool.call(query: query.to_s)
-          r.ok? ? r.value! : "Error: #{r.message}"
+          result = @tool.call(query: query.to_s)
+          result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
 
@@ -109,8 +113,8 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(prompt:, context: nil)
-          r = @tool.call(prompt: prompt.to_s, context: context&.to_s)
-          r.ok? ? r.value! : "Error: #{r.message}"
+          result = @tool.call(prompt: prompt.to_s, context: context&.to_s)
+          result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
 
@@ -123,8 +127,8 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(operation:, path: nil, limit: 20)
-          r = @tool.call(operation: operation.to_s, path: path&.to_s, limit: limit.to_i)
-          r.ok? ? r.value! : "Error: #{r.message}"
+          result = @tool.call(operation: operation.to_s, path: path&.to_s, limit: limit.to_i)
+          result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
 
@@ -141,10 +145,10 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(operation:, path:, name: nil, from: nil, to: nil, after: nil, code: nil)
-          r = @tool.call(operation: operation.to_s, path: path.to_s,
+          result = @tool.call(operation: operation.to_s, path: path.to_s,
                          name: name&.to_s, from: from&.to_s, to: to&.to_s,
                          after: after&.to_s, code: code&.to_s)
-          r.ok? ? r.value! : "Error: #{r.message}"
+          result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
 
@@ -156,8 +160,8 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(query:, topic: nil)
-          r = @tool.call(query: query.to_s, topic: topic&.to_s)
-          r.ok? ? r.value! : "Error: #{r.message}"
+          result = @tool.call(query: query.to_s, topic: topic&.to_s)
+          result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
 
