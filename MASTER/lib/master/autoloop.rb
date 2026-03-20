@@ -65,6 +65,9 @@ module Master
         r.value!
           .select { |f| (SEVERITY_RANK[f[:severity]] || 0) >= MIN_SEVERITY }
           .map    { |f| f.merge(file: path.delete_prefix("#{@root}/")) }
+      }.select { |f|
+        full = File.join(@root, f[:file])
+        File.exist?(full) && File.size(full) <= MAX_FILE_BYTES
       }.sort_by { |f| -SEVERITY_RANK.fetch(f[:severity], 0) }
     end
 
