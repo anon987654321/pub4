@@ -8,6 +8,7 @@ module Master
   class Renderer
     TICK  = "\u2714".freeze
     CROSS = "\u2718".freeze
+    DMESG_LINE_COUNT = 18
 
     def initialize(config:)
       @config = config
@@ -72,7 +73,7 @@ module Master
 
     def dmesg_lines
       stdout, _stderr, _status = Open3.capture3("dmesg")
-      raw = stdout.lines.first(18).map(&:chomp)
+      raw = stdout.lines.first(DMESG_LINE_COUNT).map(&:chomp)
       raw.empty? ? ["dmesg unavailable"] : raw
     rescue StandardError
       ["dmesg unavailable"]

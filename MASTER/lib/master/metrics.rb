@@ -4,6 +4,7 @@ require "json"
 
 module Master
   class Metrics
+    METRICS_PREFIX = "metrics0".freeze
     DECISION_LATENCY_MS_THRESHOLD = 5_000
     DIFF_SIZE_LINES_THRESHOLD = 200
     ROLLBACK_RATE_THRESHOLD = 0.15
@@ -57,7 +58,7 @@ module Master
 
     def check_threshold(metric, value)
       return unless value > THRESHOLDS[metric]
-      msg = "metrics0: #{metric} #{value} exceeds #{THRESHOLDS[metric]} — governance overhead detected"
+      msg = "#{METRICS_PREFIX}: #{metric} #{value} exceeds #{THRESHOLDS[metric]} — governance overhead detected"
       @bus&.publish("metrics:threshold_exceeded", metric:, value:)
       warn msg
     end

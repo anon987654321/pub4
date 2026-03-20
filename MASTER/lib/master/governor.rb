@@ -14,7 +14,7 @@ module Master
       @approve_all = false
     end
 
-    def permit?(tool_name, tier, description = nil)
+    def check_permit(tool_name, tier, description = nil)
       @bus&.publish("tool:before", tool: tool_name, tier:)
 
       case tier
