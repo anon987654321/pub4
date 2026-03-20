@@ -4,18 +4,24 @@ require 'yaml'
 
 module Master
   # Loads kernel rules and philosophy from data/axioms.yml.
+  # Also loads data/workflow.yml — operational norms for editing, scanning, and fixing.
   # Single source of truth: personality, scan, and LLM prompts all draw from here.
   class Axioms
-    DATA_PATH = File.join(File.expand_path('../../..', __dir__), 'data', 'axioms.yml').freeze
+    DATA_PATH     = File.join(File.expand_path('../../..', __dir__), 'data', 'axioms.yml').freeze
+    WORKFLOW_PATH = File.join(File.expand_path('../../..', __dir__), 'data', 'workflow.yml').freeze
 
     def initialize(root: nil)
-      path  = root ? File.join(root, 'data', 'axioms.yml') : DATA_PATH
-      @data = File.exist?(path) ? YAML.safe_load_file(path) : {}
+      axioms_path   = root ? File.join(root, 'data', 'axioms.yml')   : DATA_PATH
+      workflow_path = root ? File.join(root, 'data', 'workflow.yml') : WORKFLOW_PATH
+      @data         = File.exist?(axioms_path)   ? YAML.safe_load_file(axioms_path)   : {}
+      @workflow     = File.exist?(workflow_path) ? YAML.safe_load_file(workflow_path) : {}
     rescue StandardError
-      @data = {}
+      @data     = {}
+      @workflow = {}
     end
 
-    def kernel = @data.fetch('kernel', {})
+    def kernel   = @data.fetch('kernel', {})
+    def workflow  = @workflow
 
     # Philosophy items sorted ascending by priority number (1 = highest priority).
     def philosophy(limit: nil)
@@ -37,6 +43,11 @@ module Master
 
       top = items.map { |a| "  #{a['id']}: #{a['statement']}" }.join("\n")
       "## Core Philosophy (top #{items.size})\n#{top}"
+    end
+
+    # Workflow rule lookup — e.g. axioms.workflow_rule("file_reading")
+    def workflow_rule(key)
+      @workflow.dig(key.to_s) || {}
     end
 
     def lookup(id)

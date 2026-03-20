@@ -34,7 +34,7 @@ module Master
 
         scan_paths  = %w[lib test].map { |d| File.join(@root, d) }
       all_results = scan_paths.flat_map { |dir|
-        res = @scanner.scan_dir(dir, depth: :deep)
+        res = @scanner.scan_dir(dir, depth: :standard)
         res.respond_to?(:ok?) && res.ok? ? res.value! : []
       }
       scan_result = Master::Result.ok(all_results)

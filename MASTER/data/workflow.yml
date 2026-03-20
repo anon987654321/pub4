@@ -1,0 +1,127 @@
+# MASTER workflow rules — operational principles codified from CLAUDE.md.
+# Governs how MASTER and its LLM agents read, edit, scan, and fix code.
+
+file_reading:
+  rule: READ_FULL_FILES
+  statement: "Read complete files. Never grep, head, tail, or partial-read to understand code."
+  rationale: "Partial view causes partial understanding which causes partial (wrong) changes."
+  allowed_exceptions:
+    - "grep/search across many unknown files to locate a keyword"
+  forbidden:
+    - "grep pattern file to understand code structure"
+    - "head -N file to check structure"
+    - "tail -N file to check endings"
+
+before_edit:
+  rule: READ_BEFORE_WRITE
+  statement: "Read every file that could be affected before editing any file."
+  steps:
+    - "Map the codebase: find all .rb files in lib/"
+    - "Trace callers before changing any public method signature"
+    - "Check Zeitwerk inflectors before renaming classes or files"
+    - "Run ruby -c FILE after every write"
+    - "Run ruby -e require_relative after every commit"
+
+code_principles:
+  no_hardcoding:
+    rule: NO_HARDCODED_CONSTANTS
+    statement: "Prose, patterns, and config belong in data/*.yml, not Ruby strings."
+  single_source:
+    rule: ONE_SOURCE_OF_TRUTH
+    statement: "If it is in a data file, the code reads from there. No duplicates."
+  no_magic_numbers:
+    rule: NAMED_CONSTANTS
+    statement: "Extract literals to named constants with .freeze"
+  no_bare_rescue:
+    rule: SPECIFIC_RESCUE
+    statement: "Always rescue SpecificError => e. Propagate or log via event bus."
+  guard_first:
+    rule: GUARD_CLAUSES_FIRST
+    statement: "Return Result.ok(ctx) unless condition before main logic."
+  one_responsibility:
+    rule: SINGLE_RESPONSIBILITY
+    statement: "Split if you can name two reasons to change it."
+  cqs:
+    rule: COMMAND_QUERY_SEPARATION
+    statement: "Queries return data and do not mutate. Commands mutate and do not return values."
+  inject_deps:
+    rule: DEPENDENCY_INJECTION
+    statement: "Never instantiate collaborators inside a method."
+  result_monad:
+    rule: RESULT_MONAD
+    statement: "Use respond_to?(:ok?) not is_a?(Result) for duck-typing."
+
+scan_rules:
+  standard_depth:
+    - frozen_string
+    - bare_rescue
+    - explicit
+    - immutable
+    - cqs
+    - self_explaining
+    - long_method
+    - god_class
+    - duplicate_code
+    - prune
+    - srp
+    - pola
+    - nielsen
+  deep_only:
+    - conceptual
+    - adversarial
+  hunt_only:
+    - rubocop
+    - reek
+  notes:
+    nielsen: "puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are."
+    prune: "Loads patterns from data/strunk.yml — single source of truth."
+    conceptual: "Loads philosophy from data/axioms.yml — single source of truth."
+    deep_caution: "deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes."
+
+autoloop:
+  scan_depth: standard
+  fix_depth: llm
+  batch_size: 5
+  max_cycles: 12
+  targets:
+    - lib/
+    - test/
+  excludes:
+    - DEPLOY/
+    - vendor/
+    - fix_
+    - patch_
+
+sweep:
+  scan_depth: deep
+  converge_threshold: 0.05
+  converge_window: 2
+  max_cycles: 16
+  codebase_map: true
+
+zeitwerk:
+  inflections:
+    autoloop: AutoLoop
+    cli: CLI
+    mcp_server: MCPServer
+    mcp_coordinator: McpCoordinator
+    diff_stager: DiffStager
+    code_index: CodeIndex
+    git_context: GitContext
+    ast_edit: AstEdit
+    llm: LLM
+
+anti_sprawl:
+  forbidden_files:
+    - summary.md
+    - analysis.md
+    - report.md
+    - todo.md
+    - notes.md
+    - changelog.md
+  rule: "Edit existing files. Single source of truth."
+
+validation:
+  after_write: "ruby -c lib/master/FILE.rb"
+  after_commit: "ruby -e \"require_relative 'lib/master'; puts 'ok'\""
+  scan_file: "bundle exec ruby exe/master scan lib/master/FILE.rb"
