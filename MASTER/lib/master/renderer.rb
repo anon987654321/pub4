@@ -5,11 +5,12 @@ require "pastel"
 require "open3"
 
 module Master
+  DEFAULT_WEB_PORT = 3001
+  DMESG_LINE_COUNT = 18
+
   class Renderer
     TICK  = "\u2714".freeze
     CROSS = "\u2718".freeze
-    DMESG_LINE_COUNT = 18
-    DEFAULT_WEB_PORT = 3001
 
     def initialize(config:)
       @config = config
