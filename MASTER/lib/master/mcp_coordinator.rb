@@ -39,8 +39,13 @@ module Master
       []
     end
 
-    def connected? = @clients.any?
-    def server_names = @clients.keys
+    def connected?
+      @clients.any?
+    end
+
+    def server_names
+      @clients.keys
+    end
 
     private
 
@@ -80,22 +85,27 @@ module Master
 
   # Wraps an MCP tool as a RubyLLM::Tool for the agent's tool list.
   if defined?(::RubyLLM::Tool)
-  class McpToolWrapper < ::RubyLLM::Tool
-    def initialize(name:, client:, tool:)
-      @mcp_name   = name
-      @mcp_client = client
-      @mcp_tool   = tool
-    end
+    class McpToolWrapper < ::RubyLLM::Tool
+      def initialize(name:, client:, tool:)
+        @mcp_name   = name
+        @mcp_client = client
+        @mcp_tool   = tool
+      end
 
-    def name        = "#{@mcp_name}__#{@mcp_tool.name}"
-    def description = "[MCP:#{@mcp_name}] #{@mcp_tool.description}"
+      def name
+        "#{@mcp_name}__#{@mcp_tool.name}"
+      end
 
-    def execute(**params)
-      result = @mcp_client.call_tool(@mcp_tool.name, params)
-      result.respond_to?(:content) ? result.content : result.to_s
-    rescue StandardError => e
-      "MCP tool error: #{e.message}"
+      def description
+        "[MCP:#{@mcp_name}] #{@mcp_tool.description}"
+      end
+
+      def execute(**params)
+        result = @mcp_client.call_tool(@mcp_tool.name, params)
+        result.respond_to?(:content) ? result.content : result.to_s
+      rescue StandardError => e
+        "MCP tool error: #{e.message}"
+      end
     end
   end
 end
-  end # if defined?(::RubyLLM::Tool)

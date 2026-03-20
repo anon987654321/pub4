@@ -24,15 +24,18 @@ module Master
       end
 
       ask_user(tool_name, tier, description)
+    rescue => e
+      Result.err(e.message, category: :validation)
     end
 
-    def approve_all!    = (@approve_all = true)
-    def reset_approve!  = (@approve_all = false)
+    def approve_all!    = @approve_all = true
+    def reset_approve!  = @approve_all = false
 
     private
 
     def ask_user(tool_name, tier, description)
       return Result.err("non-TTY: cannot prompt for approval", category: :validation) unless @prompt
+      
       label = description ? "#{tool_name}: #{description}" : tool_name
       choice = @prompt.select("#{tier_icon(tier)} #{label}", [
         { name: "approve",     value: :approve },
@@ -43,7 +46,7 @@ module Master
 
       case choice
       when :approve     then Result.ok(true)
-      when :approve_all then approve_all! ; Result.ok(true)
+      when :approve_all then @approve_all = true ; Result.ok(true)
       when :deny        then @bus&.publish("tool:denied", tool: tool_name) ; Result.err("denied by user", category: :validation)
       when :quit        then exit(0)
       end
