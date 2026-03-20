@@ -1,0 +1,108 @@
+RC.CONF(8)		    System Manager's Manual		    RC.CONF(8)
+
+NAME
+     rc.conf, rc.conf.local - system daemon configuration database
+
+DESCRIPTION
+     The file rc.conf contains a series of variable assignments that are used
+     to configure the system daemons.  These variables are read by rc(8) early
+     on in the boot sequence and every time an rc.d(8) script is executed.
+
+     It is advisable to leave rc.conf untouched, and instead create and edit a
+     new rc.conf.local file or use the rcctl(8) utility.  Since only the last
+     assignment to any variable takes effect, variables set in this file
+     override variables previously set in rc.conf.
+
+     rc.conf is made up of variable assignments (variable=value) with comments
+     designated by a hash mark (`#').
+
+     Base system daemon configuration variables are used to enable and disable
+     daemon programs that are installed by default, and to set their command
+     line options.
+
+     All of these variables follow the format "daemon_flags" where daemon is
+     the name of one of the rc.d(8) daemon control scripts.  The list of base
+     system daemons, including the information whether they are enabled by
+     default, can be displayed with this command:
+
+	   grep _flags /etc/rc.conf
+
+     If one of these variables is set to NO, the respective daemon is
+     disabled.	If set to the empty string, the daemon is run with the default
+     command line arguments defined in its rc.d(8) daemon script, or without
+     command line arguments if no such default exists.	If set to any other
+     value, including a string containing only a single blank character, the
+     daemon is run with those command line arguments.
+
+     Package daemon configuration variables are used to enable and disable
+     daemon programs installed from packages(7), and to set their command line
+     options.
+
+     The special pkg_scripts variable lists rc.d(8) daemon control scripts to
+     be started in the specified order.	 For each daemon listed, its default
+     command line options can optionally be overridden using the variable
+     daemon_flags as described above.
+
+     Base system service configuration variables control features available by
+     default that are not implemented as daemons.  They can be set to either
+     YES or NO.	 When set to YES, they have the following effects:
+
+     accounting	   rc calls: accton(8) /var/account/acct
+
+     check_quotas  rc calls: quotacheck(8) -a; quotaon(8) -a
+
+     ipsec	   rc calls: ipsecctl(8) -f /etc/ipsec.conf
+
+     library_aslr  rc reorders some libraries for improved protection against
+		   ROP.
+
+     multicast	   See multicast(4).
+
+     pf		   rc calls: pfctl(8) -ef /etc/pf.conf
+
+     spamd_black   The script /etc/rc.d/spamd uses -b in front of any other
+		   configured command line arguments when running spamd(8) and
+		   spamd-setup(8).
+
+     Auxiliary configuration variables mostly determine the locations of
+     specific configuration files.  The boot scripts use them as follows:
+
+     amd_master	 The amd(8) master map file.  The script /etc/rc.d/amd appends
+		 its content to the command line when starting the auto
+		 mounter daemon.
+
+     shlib_dirs	 Extra shared library search path entries.  rc calls:
+		 ldconfig(8) /usr/X11R6/lib /usr/local/lib ${shlib_dirs}
+
+     savecore_flags
+		 rc calls: savecore(8) ${savecore_flags} /var/crash
+
+EXAMPLES
+     Do not start the dhcpd(8) daemon when booting the system:
+
+	   dhcpd_flags=NO
+
+     To run the dhcpd daemon, add the following line to rc.conf.local:
+
+	   dhcpd_flags=
+
+     To start it with some options:
+
+	   dhcpd_flags=-A abandoned
+
+     Run /etc/rc.d/messagebus then /etc/rc.d/cupsd with the start argument at
+     boot time, and in reverse order with the stop argument at shutdown:
+
+	   pkg_scripts=messagebus cupsd
+
+     The default location of the amd(8) master map file is:
+
+	   amd_master=/etc/amd/master	   # AMD 'master' map
+
+SEE ALSO
+     init(8), intro(8), rc(8), rc.d(8), rcctl(8)
+
+HISTORY
+     The rc.conf file first appeared in OpenBSD 2.2.
+
+OpenBSD 7.8		      September 25, 2022		    RC.CONF(8)

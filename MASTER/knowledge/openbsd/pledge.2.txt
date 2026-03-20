@@ -1,0 +1,283 @@
+PLEDGE(2)		      System Calls Manual		     PLEDGE(2)
+
+NAME
+     pledge - restrict system operations
+
+SYNOPSIS
+     #include <unistd.h>
+
+     int
+     pledge(const char *promises, const char *execpromises);
+
+DESCRIPTION
+     The pledge() system call forces the current process into a restricted-
+     service operating mode.  A few subsets are available, roughly described
+     as computation, memory management, read-write operations on file
+     descriptors, opening of files, networking (and notably separate, DNS
+     resolution).  In general, these modes were selected by studying the
+     operation of many programs using libc and other such interfaces, and
+     setting promises or execpromises.
+
+     Use of pledge() in an application will require at least some study and
+     understanding of the interfaces called.  Subsequent calls to pledge() can
+     reduce the abilities further, but abilities can never be regained.
+
+     A process which attempts a restricted operation is killed with an
+     uncatchable SIGABRT, delivering a core file if possible.  A process
+     currently running with pledge has state `p' in ps(1) output; a process
+     that was terminated due to a pledge violation is accounted by lastcomm(1)
+     with the `P' flag.
+
+     A promises value of "" restricts the process to the _exit(2) system call.
+     This can be used for pure computation operating on memory shared with
+     another process.
+
+     Passing NULL to promises or execpromises specifies to not change the
+     current value.
+
+     Some system calls, when allowed, have restrictions applied to them:
+
+	   access(2):
+	   May check for existence of /etc/localtime.
+
+	   adjtime(2):
+	   Read-only, for ntpd(8).
+
+	   chmod(2), fchmod(2), fchmodat(2), chown(2), lchown(2), fchown(2),
+	   fchownat(2), mkfifo(2), and mknod(2):
+	   Setuid/setgid/sticky bits are ignored.  The user or group cannot be
+	   changed on a file.
+
+	   ioctl(2):
+	   Only the FIONREAD, FIONBIO, FIOCLEX, and FIONCLEX operations are
+	   allowed by default.	Various ioctl requests are allowed against
+	   specific file descriptors based upon the requests audio, bpf,
+	   disklabel, drm, inet, pf, route, wroute, tape, tty, video, and vmm.
+
+	   mmap(2) and mprotect(2):
+	   PROT_EXEC isn't allowed.
+
+	   open(2):
+	   May open /etc/localtime and any files below /usr/share/zoneinfo.
+
+	   profil(2):
+	   Can only disable profiling.
+
+	   pledge():
+	   Can only reduce permissions for promises and execpromises.
+
+	   sysctl(2):
+	   A small set of read-only operations are allowed, sufficient to
+	   support: getdomainname(3), gethostname(3), getifaddrs(3), uname(3),
+	   and system sensor readings.
+
+     The promises argument is specified as a string, with space separated
+     keywords:
+
+	   stdio      The following system calls are permitted.	 sendto(2) is
+		      only permitted if its destination socket address is
+		      NULL.  As a result, all the expected functionalities of
+		      libc stdio work.
+
+		      clock_getres(2), clock_gettime(2), close(2),
+		      closefrom(2), dup(2), dup2(2), dup3(2), fchdir(2),
+		      fcntl(2), fstat(2), fsync(2), ftruncate(2),
+		      getdtablecount(2), getegid(2), getentropy(2),
+		      geteuid(2), getgid(2), getgroups(2), getitimer(2),
+		      getlogin(2), getpgid(2), getpgrp(2), getpid(2),
+		      getppid(2), getresgid(2), getresuid(2), getrlimit(2),
+		      getrtable(2), getsid(2), getthrid(2), gettimeofday(2),
+		      getuid(2), issetugid(2), kevent(2), kqueue(2),
+		      kqueue1(2), lseek(2), madvise(2), minherit(2), mmap(2),
+		      mprotect(2), mquery(2), munmap(2), nanosleep(2),
+		      pipe(2), pipe2(2), poll(2), pread(2), preadv(2),
+		      profil(2), pwrite(2), pwritev(2), read(2), readv(2),
+		      recvfrom(2), recvmsg(2), select(2), sendmsg(2),
+		      sendsyslog(2), sendto(2), setitimer(2), shutdown(2),
+		      sigaction(2), sigprocmask(2), sigreturn(2),
+		      socketpair(2), umask(2), wait4(2), waitid(2), write(2),
+		      writev(2)
+
+	   rpath      A number of system calls are allowed which allow path
+		      traversal, reading struct stat, and opening files for
+		      read.
+
+	   wpath      Similar to rpath, but files can be opened for write.
+
+	   cpath      Similar to wpath, but files can also be created.
+
+	   dpath      Similar to cpath, but special files can be created
+		      using:
+
+		      mkfifo(2), mknod(2)
+
+	   tmppath    A number of system calls are allowed to do operations in
+		      the /tmp directory, including create, read, or write.
+
+	   inet	      The following system calls are allowed to operate in the
+		      AF_INET and AF_INET6 domains (though setsockopt(2) has
+		      been substantially reduced in functionality):
+
+		      socket(2), listen(2), bind(2), connect(2), accept4(2),
+		      accept(2), getpeername(2), getsockname(2),
+		      setsockopt(2), getsockopt(2)
+
+	   mcast      In combination with inet give back functionality to
+		      setsockopt(2) for operating on multicast sockets.
+
+	   fattr      The following system calls are allowed to make explicit
+		      changes to fields in struct stat relating to a file:
+
+		      utimes(2), futimes(2), utimensat(2), futimens(2),
+		      chmod(2), fchmod(2), fchmodat(2), chflags(2),
+		      chflagsat(2), chown(2), fchownat(2), lchown(2),
+		      fchown(2), utimes(2)
+
+	   chown      The chown(2) family is allowed to change the user or
+		      group on a file.
+
+	   flock      File locking via fcntl(2), flock(2), lockf(3), and
+		      open(2) is allowed.  No distinction is made between
+		      shared and exclusive locks.  This promise is required
+		      for unlock as well as lock.
+
+	   unix	      The following system calls are allowed to operate in the
+		      AF_UNIX domain:
+
+		      socket(2), listen(2), bind(2), connect(2), accept4(2),
+		      accept(2), getpeername(2), getsockname(2),
+		      setsockopt(2), getsockopt(2)
+
+	   dns	      Some low-level behaviours required by the DNS resolver
+		      res_init(3) are permitted, such as opening
+		      resolv.conf(5) and a few networking system calls:
+		      socket(2), connect(2), sendto(2), recvfrom(2).  To
+		      distinguish the dns promise from inet, the libc DNS code
+		      opens sockets with the SOCK_DNS flag which OpenBSD
+		      requires to communicate with AF_INET and AF_INET6 at
+		      port 53.
+
+	   getpw      This allows read-only opening of files in /etc for the
+		      getpwnam(3), getgrnam(3), getgrouplist(3), and
+		      initgroups(3) family of functions, including lookups via
+		      the yp(8) protocol for YP and LDAP databases.
+
+	   sendfd     Allows sending of file descriptors using sendmsg(2).
+		      File descriptors referring to directories may not be
+		      passed.
+
+	   recvfd     Allows receiving of file descriptors using recvmsg(2).
+		      File descriptors referring to directories may not be
+		      passed.
+
+	   tape	      Allow MTIOCGET and MTIOCTOP operations against tape
+		      drives.
+
+	   tty	      In addition to allowing read-write operations on
+		      /dev/tty, this opens up a variety of ioctl(2) requests
+		      used by tty devices.  If tty is accompanied with rpath,
+		      revoke(2) is permitted.  Otherwise only the following
+		      ioctl(2) requests are permitted:
+
+		      TIOCSPGRP, TIOCGETA, TIOCGPGRP, TIOCGWINSZ, TIOCSWINSZ,
+		      TIOCSBRK, TIOCCDTR, TIOCSETA, TIOCSETAW, TIOCSETAF,
+		      TIOCUCNTL
+
+	   proc	      Allows the following process relationship operations:
+
+		      fork(2), vfork(2), kill(2), getpriority(2),
+		      setpriority(2), setrlimit(2), setpgid(2), setsid(2)
+
+	   exec	      Allows a process to call execve(2).  Coupled with the
+		      proc promise, this allows a process to fork and execute
+		      another program.	If execpromises has been previously
+		      set the new program begins with those promises, unless
+		      setuid/setgid bits are set in which case execution is
+		      blocked with EACCES.  Otherwise the new program starts
+		      running without pledge active, and hopefully makes a new
+		      pledge soon.
+
+	   prot_exec  Allows the use of PROT_EXEC with mmap(2) and
+		      mprotect(2).
+
+	   settime    Allows the setting of system time, via the
+		      settimeofday(2), adjtime(2), and adjfreq(2) system
+		      calls.
+
+	   ps	      Allows enough sysctl(2) interfaces to allow inspection
+		      of processes operating on the system using programs like
+		      ps(1).
+
+	   vminfo     Allows enough sysctl(2) interfaces to allow inspection
+		      of the system's virtual memory by programs like top(1)
+		      and vmstat(8).
+
+	   id	      Allows the following system calls which can change the
+		      rights of a process:
+
+		      setuid(2), seteuid(2), setreuid(2), setresuid(2),
+		      setgid(2), setegid(2), setregid(2), setresgid(2),
+		      setgroups(2), setlogin(2), setrlimit(2), getpriority(2),
+		      setpriority(2), setrtable(2)
+
+	   pf	      Allows a subset of ioctl(2) operations on the pf(4)
+		      device:
+
+		      DIOCADDRULE, DIOCGETSTATUS, DIOCNATLOOK, DIOCRADDTABLES,
+		      DIOCRCLRADDRS, DIOCRCLRTABLES, DIOCRCLRTSTATS,
+		      DIOCRGETTSTATS, DIOCRSETADDRS, DIOCXBEGIN, DIOCXCOMMIT
+
+	   route      Allow inspection of the routing table.
+
+	   wroute     Allow changes to the routing table.
+
+	   audio      Allows a subset of ioctl(2) operations on audio(4)
+		      devices (see sio_open(3) for more information):
+
+		      AUDIO_GETPOS, AUDIO_GETPAR, AUDIO_SETPAR, AUDIO_START,
+		      AUDIO_STOP, AUDIO_MIXER_DEVINFO, AUDIO_MIXER_READ,
+		      AUDIO_MIXER_WRITE
+
+	   video      Allows a subset of ioctl(2) operations on video(4)
+		      devices:
+
+		      VIDIOC_DQBUF, VIDIOC_ENUM_FMT,
+		      VIDIOC_ENUM_FRAMEINTERVALS, VIDIOC_ENUM_FRAMESIZES,
+		      VIDIOC_G_CTRL, VIDIOC_G_PARM, VIDIOC_QBUF,
+		      VIDIOC_QUERYBUF, VIDIOC_QUERYCAP, VIDIOC_QUERYCTRL,
+		      VIDIOC_S_CTRL, VIDIOC_S_FMT, VIDIOC_S_PARM,
+		      VIDIOC_STREAMOFF, VIDIOC_STREAMON, VIDIOC_TRY_FMT,
+		      VIDIOC_REQBUFS
+
+	   bpf	      Allow BIOCGSTATS operation for statistics collection
+		      from a bpf(4) device.
+
+	   unveil     Allow unveil(2) to be called.
+
+	   error      Rather than killing the process upon violation, indicate
+		      error with ENOSYS.
+
+		      Also when pledge() is called with higher promises or
+		      execpromises, those changes will be ignored and return
+		      success.	This is useful when a parent enforces
+		      execpromises but an execve'd child has a different idea.
+
+RETURN VALUES
+     Upon successful completion, the value 0 is returned; otherwise the
+     value -1 is returned and the global variable errno is set to indicate the
+     error.
+
+ERRORS
+     pledge() will fail if:
+
+     [EFAULT]		promises or execpromises points outside the process's
+			allocated address space.
+
+     [EINVAL]		promises is malformed or contains invalid keywords.
+
+     [EPERM]		This process is attempting to increase permissions.
+
+HISTORY
+     The pledge() system call first appeared in OpenBSD 5.9.
+
+OpenBSD 7.8			 July 2, 2025			     PLEDGE(2)

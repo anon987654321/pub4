@@ -1,0 +1,107 @@
+RC.D(8)			    System Manager's Manual		       RC.D(8)
+
+NAME
+     rc.d - daemon control scripts
+
+SYNOPSIS
+     /etc/rc.d/daemon [-d | -q] [-f] action
+
+DESCRIPTION
+     The /etc/rc.d directory contains ksh(1) scripts to start, stop, and
+     reconfigure daemon programs ("services").
+
+     Services installed from packages(7) may be started at boot time in the
+     order specified by the pkg_scripts variable from rc.conf(8); the order
+     will be reversed during shutdown.	Services comprising OpenBSD base are
+     started by rc(8).
+
+     The options are as follows:
+
+     -d	     Setting this option will print the function names as they are
+	     called and prevent the rc.subr(8) framework from redirecting
+	     stdout and stderr to /dev/null.  This is used to allow debugging
+	     of failed actions.
+
+     -f	     This option only affects the start action.	 It will forcibly
+	     start the daemon whatever value daemon_flags is set to.  If
+	     daemon_flags is set to "NO", execution will continue with the
+	     script's own defaults unless other flags are specified.
+
+     -q	     Quiet mode.  Only display the script name and the result of the
+	     action on error.
+
+     Each such script responds to the following actions:
+
+	   start       Start the service, if not already running.
+	   stop	       Stop the service.
+	   reload      Tell the daemon to reload its configuration.
+	   restart     Perform a stop, then a start.
+	   check       Return 0 if the daemon is running or 1 if it is not.
+	   configtest  Check that the daemon configuration is valid.
+
+ENVIRONMENT
+     Daemon control scripts use a fixed number of ksh(1) variables when
+     starting a daemon.	 The following can be overridden by site-specific
+     values provided in rc.conf.local(8):
+
+	   daemon_execdir  Run daemon from the specified directory.
+
+	   daemon_flags	   Additional arguments to call the daemon with.
+			   These will be appended to any mandatory arguments
+			   already contained in the daemon variable defined in
+			   the control script.	If daemon_flags is set to
+			   "NO", it will prevent the daemon from starting even
+			   when listed in pkg_scripts.
+
+	   daemon_logger   Redirect standard output and error to logger(1)
+			   using the configured priority (e.g. "daemon.info").
+
+	   daemon_rtable   Routing table to run the daemon under, using
+			   route(8).
+
+	   daemon_timeout  Maximum time in seconds to wait for the start, stop
+			   and reload actions to return.  This is only
+			   guaranteed with the default rc_start, rc_stop and
+			   rc_reload functions.
+
+	   daemon_user	   User to run the daemon as, using su(1).
+
+     To obtain the actual variable names, replace daemon with the name of the
+     script.  For example, postgres is managed through /etc/rc.d/postgresql:
+
+	   daemon_flags=-D /var/postgresql/data -w -l /var/postgresql/logfile
+
+     To override this and increase the debug log level (keeping the existing
+     flags), define the following in rc.conf.local(8):
+
+	   postgresql_flags=-D /var/postgresql/data -w -l
+	   /var/postgresql/logfile -d 5
+
+     Each script may define its own defaults, as explained in rc.subr(8).
+
+     daemon_class is a special read-only variable.  It is set to "daemon"
+     unless there is a login class configured in login.conf(5) with the same
+     name as the rc.d script itself, in which case it will be set to that
+     login class.  This allows setting many initial process properties, for
+     example environment variables, scheduling priority, and process limits
+     such as maximum memory use and number of files.
+
+FILES
+     /etc/rc.d/
+	     Directory containing daemon control scripts.
+
+     /etc/rc.d/rc.subr
+	     Functions and variables used by rc.d scripts.
+
+     /var/run/rc.d/
+	     Directory containing files recording the variables of currently
+	     running daemons.  Some are informational and some are for
+	     matching daemons using pgrep(1) and pkill(1).
+
+SEE ALSO
+     ksh(1), rc(8), rc.conf(8), rc.subr(8), rcctl(8)
+
+HISTORY
+     The /etc/rc.d directory first appeared in OpenBSD 4.9.
+
+OpenBSD 7.8			August 15, 2025			       RC.D(8)

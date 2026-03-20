@@ -139,7 +139,8 @@ module Master
       Tools::AstEdit.new(root:, undo:, event_bus: bus),
       Tools::Tree.new(root:, event_bus: bus),
       Tools::SymbolLookup.new(code_index:, event_bus: bus),
-      Tools::Clean.new(root:, governor:, event_bus: bus)
+      Tools::Clean.new(root:, governor:, event_bus: bus),
+      Tools::SearchKnowledge.new(root:, event_bus: bus)
     ]
   end
 
