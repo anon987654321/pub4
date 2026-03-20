@@ -13,8 +13,8 @@ module Master
         # H4: Inconsistent boolean naming — mix of is_/has_/can_ with plain predicates
         # H6: Positional args over 3 — harms recognition (caller can't tell what each is)
         POSITIONAL_HEAVY = /def\s+\w+\((?:[^,)]+,){3,}[^*&]/.freeze
-        # H8: Aesthetic minimalism — debug/puts left in production paths
-        DEBUG_OUTPUT     = /^\s+(?:puts|p|pp)\s+(?!.*#\s*rubocop)/.freeze
+        # H8: Aesthetic minimalism — debug inspect calls (p/pp/pry) left in production
+        DEBUG_OUTPUT     = /^\s+(?:p|pp|binding\.pry|debugger)\s+(?!.*#\s*rubocop)/.freeze
         # H3: User control — destructive methods without bang or guard comment
         SILENT_DELETE    = /\b(?:FileUtils\.rm|File\.delete|Dir\.rmdir)\s*\((?!.*#.*safe)/.freeze
         # H2: Real world match — internal jargon in user-facing strings
