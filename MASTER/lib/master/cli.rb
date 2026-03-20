@@ -52,7 +52,10 @@ module Master
     end
 
     def pipe(input)
-      run_input(input.strip)
+      s = input.strip
+      return if s.empty?
+      cmd, *args = s.split
+      dispatch_command(cmd, args) || run_input(s)
     end
 
     def run_input(input)
