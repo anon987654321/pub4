@@ -27,7 +27,7 @@ module Master
     end
 
     def [](key)         = @data[key.to_s]
-    def []=(key, value) = (@data[key.to_s] = value)
+    def []=(key, value); @data[key.to_s] = value; end
 
     def model          = self['model']
     def budget_max     = self['budget_max'].to_f
