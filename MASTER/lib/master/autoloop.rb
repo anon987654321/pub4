@@ -14,6 +14,7 @@ module Master
     RATE_LIMIT_SLEEP = 15   # seconds to sleep on 429 before retrying
     MAX_FIX_RETRIES  = 3
     MIN_SIZE_RATIO   = 0.80 # reject fix if output < 80% of original file size
+    MAX_FILE_BYTES   = 8_000 # skip files too large to rewrite safely (LLM token limit)
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
@@ -68,10 +69,18 @@ module Master
     end
 
     # Request a fix from the LLM. Sends FULL file — never truncates.
+    # Skips files > MAX_FILE_BYTES (LLM output would be truncated, risking corruption).
     # Retries up to MAX_FIX_RETRIES on rate limit (429).
     def request_fix(violation)
       path = File.join(@root, violation[:file])
       return nil unless File.exist?(path)
+
+      file_size = File.size(path)
+      if file_size > MAX_FILE_BYTES
+        @bus&.publish("autoloop:fix_skipped", file: violation[:file],
+                      reason: "file too large (#{file_size} bytes)")
+        return nil
+      end
 
       src = File.read(path, encoding: "UTF-8")
 
@@ -109,8 +118,7 @@ module Master
     end
 
     # Safety guards: size check + syntax check before writing.
-    # Rejects any fix that removes more than 20% of the original content
-    # (prevents LLM from truncating files due to context window limits).
+    # Rejects any fix that removes more than 20% of the original content.
     def apply_fix(rel_path, content)
       path = File.join(@root, rel_path)
       return unless File.exist?(path)
