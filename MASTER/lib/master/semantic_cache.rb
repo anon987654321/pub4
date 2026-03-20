@@ -2,6 +2,7 @@
 
 require "digest"
 require "json"
+require "monitor"
 
 module Master
   class SemanticCache
@@ -12,6 +13,7 @@ module Master
       @ttl     = ttl
       @bus     = event_bus
       @lru     = []
+      @lock    = Monitor.new
       Dir.mkdir(@root) unless Dir.exist?(@root)
     end
 
@@ -19,20 +21,22 @@ module Master
       key  = cache_key(prompt, model)
       path = cache_path(key)
 
-      if (hit = read_entry(path))
-        @bus&.publish("cache:hit", key:)
-        return hit
+      @lock.synchronize do
+        if (hit = read_entry(path))
+          @bus&.publish("cache:hit", key:)
+          return hit
+        end
       end
 
       @bus&.publish("cache:miss", key:)
       result = blk.call
-      write_entry(path, result, key)
+      @lock.synchronize { write_entry(path, result, key) }
       result
     end
 
     def invalidate!(prompt, model)
       path = cache_path(cache_key(prompt, model))
-      File.delete(path) if File.exist?(path)
+      @lock.synchronize { File.delete(path) if File.exist?(path) }
     end
 
     private
@@ -56,8 +60,7 @@ module Master
       promote_lru(path)
       entry[:value]
     rescue JSON::ParserError
-      $stderr.puts "semantic_cache: corrupt entry at #{path}, deleting"
-      File.delete(path)
+      File.delete(path) rescue nil
       @lru.delete(path)
       nil
     end
