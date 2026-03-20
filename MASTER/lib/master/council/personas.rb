@@ -16,7 +16,7 @@ module Master
         Persona.new(name: "Mentor",     role: "Code review",      bias: "Clarity",   prompt: "Is this code readable? Do names reveal intent?").freeze
       ].freeze
 
-      def self.personas(data_path = nil)
+      def self.load(data_path = nil)
         return DEFAULTS unless data_path && File.exist?(data_path)
         YAML.safe_load_file(data_path, symbolize_names: true).map { |p| Persona.new(**p) }
       rescue StandardError
