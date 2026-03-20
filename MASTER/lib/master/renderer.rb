@@ -5,7 +5,7 @@ require "pastel"
 require "open3"
 
 module Master
-  DEFAULT_WEB_PORT = 3001
+  DEFAULT_WEB_PORT = 10002
 
   class Renderer
     TICK  = "\u2714".freeze
@@ -26,7 +26,8 @@ module Master
       lines << "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{@p.dim("ready")}"
       host = (@config["web_host"] || "brgen.no").sub("0.0.0.0", "brgen.no")
       port = @config["web_port"] || DEFAULT_WEB_PORT
-      lines << @p.dim("web  http://#{host}:#{port}")
+      url = [80, 443].include?(port.to_i) ? "http://#{host}" : "http://#{host}:#{port}"
+      lines << @p.dim("web  #{url}")
       lines << ""
       lines.join("\n")
     end

@@ -90,6 +90,6 @@ module Master
     end
 
     def on_success = synchronize { @failures = 0 ; @state = :closed if @state == :half_open }
-    def on_failure = synchronize { @failures += 1 ; @state = :open ; @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) if @failures >= FAILURE_THRESHOLD }
+    def on_failure = synchronize { @failures += 1 ; if @failures >= FAILURE_THRESHOLD ; @state = :open ; @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) ; end }
   end
 end
