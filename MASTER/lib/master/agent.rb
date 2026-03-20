@@ -250,14 +250,21 @@ module Master
     end
 
     def chat_direct(messages)
-      if replicate_model?(model)
-        reply = Bridges::Replicate.new.chat(model: model, messages: messages, system: system_prompt)
-        return reply.content.to_s
+      last_err = nil
+      routed_models.each do |selected|
+        if replicate_model?(selected)
+          reply = Bridges::Replicate.new.chat(model: selected, messages: messages, system: system_prompt)
+          return reply.content.to_s
+        end
+        chat_session = RubyLLM.chat(model: selected)
+        chat_session.with_instructions(system_prompt) if system_prompt
+        messages.each { |msg| chat_session.add_message(role: msg[:role].to_s, content: msg[:content].to_s) }
+        return chat_session.complete.to_s
+      rescue StandardError => e
+        last_err = e
+        next
       end
-      chat_session = RubyLLM.chat(model: model)
-      chat_session.with_instructions(system_prompt) if system_prompt
-      messages.each { |msg| chat_session.add_message(role: msg[:role].to_s, content: msg[:content].to_s) }
-      chat_session.complete
+      raise last_err || RuntimeError.new("chat_direct: all models failed")
     end
 
     def estimate_cost(prompt) = (prompt.bytesize / 4) * COST_PER_TOKEN
