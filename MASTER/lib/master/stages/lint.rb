@@ -12,8 +12,10 @@ module Master
         return Result.ok(ctx) unless @config.auto_testing?
 
         report = Quality::AutoTesting.new.run
-        # Propagate Result::Err if AutoTesting returns one
-        return report if report.respond_to?(:err?) && report.err?
+        # Propagate failure; wrap bare error strings in Result::Err
+        if report.respond_to?(:err?) && report.err?
+          return report.respond_to?(:message) ? Result.err(report.message, category: :unknown) : Result.err("lint failed", category: :unknown)
+        end
 
         Result.ok(ctx.merge(lint_report: report))
       rescue => e

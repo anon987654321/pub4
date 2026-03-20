@@ -90,7 +90,7 @@ module Master
       council_stage,
       Stages::Lint.new(scanner:, config:),
       Stages::Strunk.new,
-      Stages::Memo.new(memory:),
+      Stages::Memo.new(memory:, event_bus: bus),
       Stages::Render.new(renderer:)
     ]
 
