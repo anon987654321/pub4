@@ -18,7 +18,7 @@ module Master
 
     # Rules that cannot be safely auto-fixed by rewriting a single file.
     # duplicate_code requires cross-file refactoring; conceptual/adversarial are LLM-only.
-    SKIP_RULES = %w[duplicate_code conceptual adversarial axiom_coverage immutable self_explaining long_method].freeze
+    SKIP_RULES = %w[duplicate_code conceptual adversarial axiom_coverage immutable self_explaining long_method pola srp cqs].freeze
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
