@@ -1,12 +1,13 @@
-# Model routing profile — Replicate-native + tool-capable models.
-# All models routed through Bridges::Replicate when REPLICATE_API_KEY is set.
+# Model routing profile — OpenRouter primary, Replicate optional.
+# OpenRouter free tier: meta-llama/llama-3.3-70b-instruct:free (8 req/min)
+# Replicate: disabled (insufficient credit as of 2026-03-20)
 
 routing:
   enabled: true
   strategy: weighted
   escalation_enabled: true
   escalation_tier: strong
-  provider: replicate
+  provider: openrouter
 
 weights:
   quality: 0.50
@@ -21,35 +22,29 @@ fallback_policy:
     - refusal
 
 models:
-  # Default — DeepSeek-R1 (reasoning + code, best on Replicate for coding tasks)
   default:
-    - id: deepseek-ai/deepseek-v3
-      score: { quality: 0.87, speed: 0.80, cost: 0.90 }
+    - id: meta-llama/llama-3.3-70b-instruct:free
+      score: { quality: 0.82, speed: 0.85, cost: 1.0 }
 
-  # Strong — best reasoning/architecture work
   strong:
-    - id: deepseek-ai/deepseek-r1
-      score: { quality: 0.93, speed: 0.72, cost: 0.80 }
+    - id: anthropic/claude-sonnet-4-5
+      score: { quality: 0.95, speed: 0.75, cost: 0.60 }
     - id: openai/gpt-4o
-      score: { quality: 0.90, speed: 0.80, cost: 0.55 }
-    - id: meta/meta-llama-3.1-405b-instruct
-      score: { quality: 0.88, speed: 0.65, cost: 0.60 }
+      score: { quality: 0.93, speed: 0.80, cost: 0.55 }
+    - id: meta-llama/llama-3.3-70b-instruct:free
+      score: { quality: 0.82, speed: 0.85, cost: 1.0 }
 
-  # Fast — lower cost, still capable
-  fast:
-    - id: deepseek-ai/deepseek-v3
-      score: { quality: 0.87, speed: 0.80, cost: 0.90 }
-    - id: openai/o4-mini
-      score: { quality: 0.82, speed: 0.88, cost: 0.85 }
-    - id: mistralai/mistral-large-2
-      score: { quality: 0.84, speed: 0.82, cost: 0.82 }
-    - id: meta/meta-llama-3-70b-instruct
-      score: { quality: 0.80, speed: 0.85, cost: 0.90 }
+  cheap:
+    - id: meta-llama/llama-3.3-70b-instruct:free
+      score: { quality: 0.82, speed: 0.85, cost: 1.0 }
+    - id: google/gemini-flash-1.5-8b
+      score: { quality: 0.75, speed: 0.90, cost: 0.95 }
 
 routes:
-  code_generation:  default
-  architecture:     strong
-  review:           strong
-  summarization:    fast
-  exploration:      fast
-  fallback_default: default
+  code_generation:    default
+  refactoring:        default
+  architecture:       strong
+  review:             default
+  explanation:        cheap
+  exploration:        cheap
+  fallback_default:   cheap
