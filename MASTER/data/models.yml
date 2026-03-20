@@ -1,5 +1,5 @@
 # Model routing profile — OpenRouter primary, Replicate optional.
-# OpenRouter free tier: meta-llama/llama-3.3-70b-instruct:free (8 req/min)
+# Free tier: nvidia nemotron (120B) primary, stepfun flash + llama fallbacks.
 # Replicate: disabled (insufficient credit as of 2026-03-20)
 
 routing:
@@ -23,6 +23,12 @@ fallback_policy:
 
 models:
   default:
+    - id: nvidia/nemotron-3-super-120b-a12b:free
+      score: { quality: 0.85, speed: 0.75, cost: 1.0 }
+    - id: stepfun/step-3.5-flash:free
+      score: { quality: 0.78, speed: 0.90, cost: 1.0 }
+    - id: nvidia/nemotron-3-nano-30b-a3b:free
+      score: { quality: 0.72, speed: 0.92, cost: 1.0 }
     - id: meta-llama/llama-3.3-70b-instruct:free
       score: { quality: 0.82, speed: 0.85, cost: 1.0 }
 
@@ -31,14 +37,16 @@ models:
       score: { quality: 0.95, speed: 0.75, cost: 0.60 }
     - id: openai/gpt-4o
       score: { quality: 0.93, speed: 0.80, cost: 0.55 }
-    - id: meta-llama/llama-3.3-70b-instruct:free
-      score: { quality: 0.82, speed: 0.85, cost: 1.0 }
+    - id: nvidia/nemotron-3-super-120b-a12b:free
+      score: { quality: 0.85, speed: 0.75, cost: 1.0 }
 
   cheap:
+    - id: nvidia/nemotron-3-nano-30b-a3b:free
+      score: { quality: 0.72, speed: 0.92, cost: 1.0 }
+    - id: stepfun/step-3.5-flash:free
+      score: { quality: 0.78, speed: 0.90, cost: 1.0 }
     - id: meta-llama/llama-3.3-70b-instruct:free
       score: { quality: 0.82, speed: 0.85, cost: 1.0 }
-    - id: google/gemini-flash-1.5-8b
-      score: { quality: 0.75, speed: 0.90, cost: 0.95 }
 
 routes:
   code_generation:    default
