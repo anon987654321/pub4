@@ -146,7 +146,7 @@ module Master
           )
         end
       rescue StandardError => e
-        @logging&.warn("prescan: #{e.message}")
+        @bus&.publish("cli:warn", message: )
       end
     end
 
@@ -196,9 +196,9 @@ module Master
         next unless mp3
 
         played = try_paplay(mp3) || try_direct(mp3)
-        @logging&.warn("tts: no audio output found") unless played
+        @bus&.publish("tts:warn", message: "no audio output found") unless played
       rescue StandardError => e
-        @logging&.warn("tts: #{e.message}")
+        @bus&.publish("tts:error", message: e.message)
       ensure
         File.unlink(mp3) rescue nil if defined?(mp3) && mp3
       end
