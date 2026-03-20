@@ -6,12 +6,12 @@ module Master
   class Metrics
     METRICS_PREFIX = "metrics0".freeze
     DECISION_LATENCY_MS_THRESHOLD = 5_000
-    DIFF_SIZE_LINES_THRESHOLD = 200
+    MAX_DIFF_SIZE_LINES = 200
     ROLLBACK_RATE_THRESHOLD = 0.15
 
     THRESHOLDS = {
       decision_latency_ms: DECISION_LATENCY_MS_THRESHOLD,
-      diff_size_lines: DIFF_SIZE_LINES_THRESHOLD,
+      diff_size_lines: MAX_DIFF_SIZE_LINES,
       rollback_rate: ROLLBACK_RATE_THRESHOLD
     }.freeze
 

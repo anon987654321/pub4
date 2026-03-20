@@ -9,6 +9,7 @@ module Master
     TICK  = "\u2714".freeze
     CROSS = "\u2718".freeze
     DMESG_LINE_COUNT = 18
+    DEFAULT_WEB_PORT = 3001
 
     def initialize(config:)
       @config = config
@@ -22,7 +23,7 @@ module Master
       lines << ""
       lines << "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{@p.dim("ready")}"
       host = (@config["web_host"] || "brgen.no").sub("0.0.0.0", "brgen.no")
-      port = @config["web_port"] || 3001
+      port = @config["web_port"] || DEFAULT_WEB_PORT
       lines << @p.dim("web  http://#{host}:#{port}")
       lines << ""
       lines.join("\n")
