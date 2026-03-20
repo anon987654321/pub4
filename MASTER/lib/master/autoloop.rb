@@ -63,7 +63,7 @@ module Master
     # All matching findings sorted highest severity first.
     def extract_violations(dir_results)
       dir_results.flat_map { |path, r|
-        next [] unless r.respond_to?(:value!)
+        next [] unless r.respond_to?(:ok?) && r.ok?
         r.value!
           .select { |f| (SEVERITY_RANK[f[:severity]] || 0) >= MIN_SEVERITY }
           .map    { |f| f.merge(file: path.delete_prefix("#{@root}/")) }
