@@ -6,8 +6,8 @@ module Master
   module Scan
     module Rules
       # PruneRule — flags hedge words and preamble phrases in Ruby comments.
-      # Patterns loaded from data/strunk.yml — the same source Prune uses at runtime.
-      # Violations signal prose debt; Sweep uses them to gate convergence.
+      # Patterns loaded from data/strunk.yml — the same source the Prune stage uses at runtime.
+      # Single source of truth: no hardcoded patterns here.
       class PruneRule < Rule
         DATA_PATH = File.join(Master::ROOT, "data", "strunk.yml").freeze
 
@@ -28,7 +28,7 @@ module Master
           code.each_line.with_index(1).flat_map { |line, num|
             next [] unless line.include?("#")
             findings = []
-            findings << finding(line: num, message: "hedge in comment: #{line.strip}") if hedge_re&.match?(line)
+            findings << finding(line: num, message: "hedge in comment: #{line.strip}")    if hedge_re&.match?(line)
             findings << finding(line: num, message: "preamble in comment: #{line.strip}") if preamble_re&.match?(line)
             findings
           }
@@ -37,23 +37,34 @@ module Master
         private
 
         def rules
-          @rules ||= File.exist?(DATA_PATH) ? YAML.safe_load_file(DATA_PATH) : {}
+          @rules ||= (File.exist?(DATA_PATH) ? YAML.safe_load_file(DATA_PATH) : nil) || {}
         rescue StandardError
           @rules = {}
         end
 
-        # Regex from hedge pattern strings in strunk.yml.
+        # Build regex from hedge entries in strunk.yml: [{pattern:, replace:}, ...].
         def build_hedge_re
-          words = rules.fetch("hedges", []).map { |h| Regexp.escape(h["pattern"].to_s.gsub(/\\b/, "")) }
+          words = rules.fetch("hedges", []).filter_map { |h|
+            next unless h.is_a?(Hash)
+            pat = h["pattern"].to_s.strip
+            pat.empty? ? nil : Regexp.escape(pat)
+          }
           return nil if words.empty?
-          /\b(#{words.join("|")})\b/i
+          /(#{words.join("|")})/i
+        rescue StandardError
+          nil
         end
 
-        # Regex from preamble strings in strunk.yml.
+        # Build regex from preamble strings in strunk.yml.
         def build_preamble_re
-          phrases = rules.fetch("preambles", []).map { |p| Regexp.escape(p) }
+          phrases = rules.fetch("preambles", []).filter_map { |p|
+            next unless p.is_a?(String)
+            p.strip.empty? ? nil : Regexp.escape(p.strip)
+          }
           return nil if phrases.empty?
           /\#.*(?:#{phrases.join("|")})/i
+        rescue StandardError
+          nil
         end
       end
     end
