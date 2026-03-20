@@ -85,6 +85,9 @@ module Master
         [ /\b(?:which\s+model|current\s+model|what\s+model\s+are\s+you|
                what\s+(?:llm|ai|model)\s+(?:are\s+you\s+using|is\s+this))\b/ix,  "model" ],
 
+        # scan
+        [ /\b(?:scan|lint|check\s+(?:code|violations?)|run\s+scan)\b/ix, "scan" ],
+
         # dmesg
         [ /\b(?:show\s+(?:logs?|events?)|system\s+log|dmesg|
                what\s+(?:happened|has\s+happened)|recent\s+activity)\b/ix,        "dmesg" ],

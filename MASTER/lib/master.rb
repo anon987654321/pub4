@@ -354,6 +354,26 @@ module Master
     agent.ask_once(prompt)
   end
 },
+"scan" => ->(ctx) {
+  depth  = ctx[:args].to_s.include?("deep") ? :deep : :standard
+  target = File.join(root, "lib")
+  result = scanner.scan_dir(target, depth:)
+  unless result.respond_to?(:ok?) && result.ok?
+    next "scan failed"
+  end
+  by_rule = Hash.new { |h, k| h[k] = [] }
+  result.value!.each do |_f, fr|
+    next unless fr.respond_to?(:ok?) && fr.ok?
+    fr.value!.each { |v| by_rule[v[:rule].to_s] << v }
+  end
+  total = by_rule.values.sum(&:size)
+  next "clean -- no violations" if total.zero?
+  lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
+    ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, 90]}" }
+  end
+  lines << "#{total} total violations"
+  lines.join("\n")
+},
       "help"    => ->(ctx) {
         cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory cache diff commit knowledge why snapshot explain persona help exit]
         cmds.map { "/#{_1}" }.join("  ")
