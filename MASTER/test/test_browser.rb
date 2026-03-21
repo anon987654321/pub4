@@ -1,71 +1,78 @@
 # frozen_string_literal: true
 
 # Browser integration test using Ferrum + local Chromium.
-# Requires: /usr/local/bin/chrome, web server on port 10002.
 # Run: bundle exec ruby test/test_browser.rb
+#
+# NOTE: Browser must be created BEFORE minitest/autorun is loaded,
+# otherwise Minitest's signal handlers break Ferrum's pipe reading.
+#
+# Requires ~250MB free RAM. On low-memory servers, tests are auto-skipped.
 
-require_relative "test_helper"
 require "ferrum"
-
-WEB_URL = "http://localhost:10002".freeze
+require "json"
+require "socket"
 
 CHROME_PATH = %w[/usr/local/bin/chrome /usr/local/bin/chromium].find { |p| File.executable?(p) }
+WEB_URL     = "http://localhost:10002".freeze
 
-def server_up?
-  require "socket"
-  TCPSocket.new("127.0.0.1", 10002).close
-  true
-rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT
-  false
+FREE_MEM_MB = begin
+  line = `vmstat`.lines.last.to_s
+  line.split[4].to_i / 1024  # fre column is in KB on OpenBSD
+rescue
+  999
 end
 
-SKIP_BROWSER = CHROME_PATH.nil? || !server_up?
+SKIP_REASON = if CHROME_PATH.nil?
+  "Chromium not found"
+elsif begin; TCPSocket.new("127.0.0.1", 10002).close; false; rescue; true; end
+  "Web server not running on port 10002"
+elsif FREE_MEM_MB < 250
+  "Insufficient free memory (#{FREE_MEM_MB}MB < 250MB required for Chrome)"
+end
+
+# Start Chrome now, before minitest/autorun installs signal handlers.
+FERRUM_BROWSER = if SKIP_REASON.nil?
+  Ferrum::Browser.new(
+    browser_path: CHROME_PATH,
+    process_timeout: 30,
+    timeout: 20,
+    browser_options: {
+      "headless"       => "new",
+      "no-sandbox"     => nil,
+      "single-process" => nil,
+      "disable-gpu"    => nil
+    }
+  )
+end
+
+require "minitest/autorun"
 
 class TestBrowserUI < Minitest::Test
-  # Shared browser + page — Chrome starts once for the full suite.
-  @@browser = nil
-  @@page    = nil
-
-  def self.browser
-    @@browser ||= Ferrum::Browser.new(
-      browser_path: CHROME_PATH,
-      process_timeout: 25,
-      timeout: 20,
-      browser_options: { "headless" => "new", "no-sandbox" => nil }
-    )
-  end
-
-  def self.page
-    @@page ||= browser.create_page
-  end
-
-  Minitest.after_run do
-    @@browser&.quit
-    @@browser = nil
-    @@page    = nil
-  end
-
-  # Bypass the 10s test_helper Timeout — browser tests are slow by nature.
-  def run(*args)
-    skip "Chromium or web server not available" if SKIP_BROWSER
-    run_without_timeout(*args)
+  def skip_if_unavailable
+    skip SKIP_REASON if SKIP_REASON
   end
 
   def fresh_page
-    pg = TestBrowserUI.page
+    pg = FERRUM_BROWSER.create_page
     pg.go_to(WEB_URL)
     pg.network.wait_for_idle
     pg
   end
 
-  def test_page_loads_with_overlay
+  def teardown
+    FERRUM_BROWSER&.pages&.each(&:close) rescue nil
+  end
+
+  def test_01_page_loads_with_overlay
+    skip_if_unavailable
     pg = fresh_page
     assert pg.at_css("#overlay"), "overlay element missing"
     assert !pg.evaluate("document.getElementById('overlay').hidden"),
            "overlay should be visible on load"
   end
 
-  def test_overlay_dismisses_on_click
+  def test_02_overlay_dismisses_on_click
+    skip_if_unavailable
     pg = fresh_page
     pg.at_css("#overlay").click
     sleep 1.5
@@ -73,7 +80,8 @@ class TestBrowserUI < Minitest::Test
            "overlay should be hidden after click"
   end
 
-  def test_input_active_after_overlay_dismissed
+  def test_03_input_active_after_overlay_dismissed
+    skip_if_unavailable
     pg = fresh_page
     pg.at_css("#overlay").click
     sleep 1.5
@@ -81,7 +89,8 @@ class TestBrowserUI < Minitest::Test
            "input-field should have 'active' class"
   end
 
-  def test_chat_receives_response
+  def test_04_chat_receives_response
+    skip_if_unavailable
     pg = fresh_page
     pg.at_css("#overlay").click
     sleep 1.2
@@ -99,8 +108,9 @@ class TestBrowserUI < Minitest::Test
     refute_empty response, "chat-log should contain a response to 'ping'"
   end
 
-  def test_metrics_endpoint_json
-    pg = TestBrowserUI.page
+  def test_05_metrics_endpoint_json
+    skip_if_unavailable
+    pg = FERRUM_BROWSER.create_page
     pg.go_to("#{WEB_URL}/chat/metrics")
     pg.network.wait_for_idle
     data = JSON.parse(pg.evaluate("document.body.textContent"))
@@ -108,5 +118,9 @@ class TestBrowserUI < Minitest::Test
     assert data.key?("token_est"), "metrics should include 'token_est'"
   rescue JSON::ParserError => e
     flunk "metrics returned invalid JSON: #{e.message}"
+  ensure
+    pg&.close rescue nil
   end
 end
+
+Minitest.after_run { FERRUM_BROWSER&.quit }
