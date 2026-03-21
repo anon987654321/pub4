@@ -7,6 +7,7 @@ module Master
     DEFAULTS = {
       'model'          => 'meta-llama/llama-3.3-70b-instruct:free',
       'web_host'       => '0.0.0.0',
+      'web_public_url' => 'http://ai.brgen.no:3000',
       'web_port'       => 10002,
       'budget_max'     => 10.0,
       'req_max'        => 1.0,

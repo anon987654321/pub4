@@ -20,7 +20,7 @@ module Master
            (?:\s+([\w\/.]+))?/ix,                                      "sweep"    ],
 
         # autoloop
-        [ /\b(?:autoloop|fix\s+all\s+violations?|keep\s+(?:fix|loop)|
+        [ /\b(?:autoloop|autofix|fix\s+all\s+violations?|keep\s+(?:fix|loop)|
                loop\s+until|iterate\s+until|run\s+until\s+clean|
                keep\s+going\s+until|(?:run|go)\s+(?:it\s+)?(?:again\s+)?
                until\s+(?:done|clean|fixed|perfect))

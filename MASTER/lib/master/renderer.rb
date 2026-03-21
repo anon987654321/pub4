@@ -24,10 +24,8 @@ module Master
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
       lines << "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{@p.dim("ready")}"
-      host = (@config["web_host"] || "brgen.no").sub("0.0.0.0", "brgen.no")
-      port = @config["web_port"] || DEFAULT_WEB_PORT
-      url = [80, 443].include?(port.to_i) ? "http://#{host}" : "http://#{host}:#{port}"
-      lines << @p.dim("web  #{url}")
+      public_url = @config["web_public_url"] || "http://ai.brgen.no:3000"
+      lines << @p.dim("web  #{public_url}")
       lines << ""
       lines.join("\n")
     end
