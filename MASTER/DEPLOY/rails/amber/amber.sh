@@ -20,11 +20,11 @@ source "${SCRIPT_DIR}/@shared_functions.sh"
 
 # Idempotency: skip if already generated
 
-check_app_exists "$APP_NAME" "app/models/wardrobe_item.rb" && exit 0
+check_app_exists "${BASE_DIR}/app/app/models/wardrobe_item.rb" && exit 0
 
 log "Starting Amber setup - AI Fashion Wardrobe Assistant"
 
-setup_full_app "$APP_NAME"
+setup_full_app "${BASE_DIR}/app"
 
 command_exists "ruby"
 
@@ -150,11 +150,13 @@ seasons = ["Spring", "Summer", "Fall", "Winter", "All Season"]
 
 colors = ["Black", "White", "Red", "Blue", "Green", "Yellow", "Pink", "Purple"]
 
+user = User.find_or_create_by(email_address: "demo@amber.example") { |u| u.password = "password123" }
+
 puts "Seeding Amber wardrobe..."
 
 10.times do
 
-  Item.create!(
+  Item.create(
 
     title: Faker::Commerce.product_name,
 
@@ -174,7 +176,9 @@ puts "Seeding Amber wardrobe..."
 
     purchase_date: Faker::Date.backward(days: 365),
 
-    spark_joy: [true, false].sample
+    spark_joy: [true, false].sample,
+
+    user: user
 
   )
 
@@ -186,7 +190,7 @@ SEEDS_EOF
 
 bin/rails generate model Item title:string category:string color:string size:string material:string brand:string price:decimal times_worn:integer purchase_date:date spark_joy:boolean user:references
 
-bin/rails generate model Outfit name:string description:text category:string season:string occasion:string likes_count:integer:default[0] user:references
+bin/rails generate model Outfit name:string description:text category:string season:string occasion:string likes_count:integer user:references
 
 bin/rails generate model OutfitItem outfit:references item:references position:integer
 
@@ -453,6 +457,7 @@ end
 EOF
 
 # Home view
+mkdir -p app/views/home app/views/shared app/views/items app/views/outfits app/views/kondo
 cat <<'EOF' > app/views/home/index.html.erb
 
 <%= render "shared/header" %>
@@ -743,7 +748,6 @@ log "Verifying Amber app structure"
 
 [[ -d "app/assets/stylesheets" ]] && log "✓ Stylesheets directory exists"
 
-commit "Amber setup complete: AI Fashion Wardrobe Organizer"
 
 log "Amber setup complete. Run 'doas rcctl start amber' to start on OpenBSD."
 
@@ -1110,6 +1114,7 @@ ROUTESEOF
 # Seed organization tips with embeddings
 
 log "Seeding Marie Kondo organization tips"
+mkdir -p db/seeds
 
 cat > db/seeds/kondo_tips.rb << 'SEEDSEOF'
 
@@ -2689,36 +2694,6 @@ log "  - Complete Amber theme stylesheet"
 
 log "  - amber.brgen.no ready to deploy"
 
-migrate_db
-
-commit "Add Marie Kondo AI wardrobe assistant with LangChain
-
-- LangChain integration for semantic wardrobe understanding
-
-- AI-powered spark joy analysis for each item
-
-- Vector embeddings for organization tips (RAG)
-
-- Outfit suggestions using GPT-4
-
-- Decluttering recommendations in Marie Kondo's voice
-
-- Personalized organization advice
-
-Tech stack:
-
-- langchainrb + langchainrb_rails
-
-- OpenAI embeddings (1536 dimensions)
-
-- pgvector for similarity search
-
-- Turbo Streams for real-time updates
-
-Helps girls organize wardrobes with joy and mindfulness.
-
-# === OUTFITS VIEWS ===
-log "Creating Outfits views"
 mkdir -p app/views/outfits
 
 cat > app/views/outfits/index.html.erb << 'OUTFITS_INDEX_EOF'
@@ -3040,9 +3015,6 @@ cat > app/views/outfits/_form.html.erb << 'OUTFITS_FORM_EOF'
 OUTFITS_FORM_EOF
 
 log "Outfits views completed"
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-Co-Authored-By: Claude <noreply@anthropic.com>"
-
 # Write application stylesheet
 mkdir -p app/assets/stylesheets
 cat > app/assets/stylesheets/application.css << 'APPCSS'
