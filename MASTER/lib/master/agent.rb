@@ -47,6 +47,12 @@ module Master
       context          = conversation_context
       @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / 4)
 
+      begin
+        @circuit_breaker.check_rate!
+      rescue CircuitBreaker::CircuitError => rate_err
+        return Result.err(rate_err.message, category: rate_err.category)
+      end
+
       last_response = attempt_chat_with_fallbacks(candidate_models, prompt, context, stream, &blk)
 
       return last_response if last_response.respond_to?(:err?) && last_response.err?

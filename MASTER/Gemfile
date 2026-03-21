@@ -25,6 +25,7 @@ gem "sinatra-contrib", "~> 4.0"
 group :test do
   gem "minitest", "~> 5.25"
   gem "rack-test", "~> 2.1"
+  gem "ferrum", "~> 0.15"
 end
 gem "ruby_llm-mcp"
 gem "rubocop", "~> 1.60", require: false

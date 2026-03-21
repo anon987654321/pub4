@@ -6,10 +6,10 @@ module Master
   class CircuitBreaker
     include MonitorMixin
 
-    FAILURE_THRESHOLD = 3
+    FAILURE_THRESHOLD = 8
     COOLDOWN_S        = 30
     RATE_WINDOW_S     = 60
-    RATE_MAX          = 30
+    RATE_MAX          = 60
 
     class CircuitError < StandardError
       attr_reader :category
@@ -29,11 +29,23 @@ module Master
       @mutex         = Mutex.new
     end
 
+    # Per-message rate check — call once per user request, not per model fallback.
+    def check_rate!
+      synchronize do
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        @req_times.reject! { |t| now - t > RATE_WINDOW_S }
+        raise CircuitError.new("rate limit: #{RATE_MAX} req/min exceeded", :infrastructure) if @req_times.size >= RATE_MAX
+        @req_times << now
+      end
+    end
+
+    # Per-model-attempt: check budget + circuit state, then execute.
     def call(cost_estimate, &blk)
-      preflight_checks(cost_estimate)
+      check_budget(cost_estimate)
+      check_circuit
       execute_with_tracking(blk)
     rescue CircuitError => e
-      on_failure
+      # Budget/circuit-open errors are not backend failures — don't penalize.
       Result.err(e.message, category: e.category)
     end
 
@@ -42,30 +54,16 @@ module Master
 
     private
 
-    def preflight_checks(cost_estimate)
-      check_rate
-      check_budget(cost_estimate)
-      check_circuit
-    end
-
     def execute_with_tracking(blk)
       result = blk.call
       on_success
       result
     rescue RubyLLM::RateLimitError => e
+      # API rate limit is infrastructure noise — don't open the circuit.
       Result.err("rate_limit: #{e.message}", category: :infrastructure)
-    rescue => e
+    rescue StandardError => e
       on_failure
       Result.err("circuit: #{e.message}", category: :unknown)
-    end
-
-    def check_rate
-      synchronize do
-        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        @req_times.reject! { |t| now - t > RATE_WINDOW_S }
-        raise CircuitError.new("rate limit: #{RATE_MAX} req/min exceeded", :infrastructure) if @req_times.size >= RATE_MAX
-        @req_times << now
-      end
     end
 
     def check_budget(estimate)
