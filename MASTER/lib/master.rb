@@ -7,7 +7,8 @@ module Master
 
   loader = Zeitwerk::Loader.for_gem
   loader.inflector.inflect(
-    "autoloop"   => "AutoLoop",
+    "autoloop"         => "AutoLoop",
+    "standing_orders"   => "StandingOrders",
     "cli"        => "CLI",
     "mcp_server"      => "MCPServer",
     "mcp_coordinator" => "McpCoordinator",
@@ -83,7 +84,7 @@ module Master
       Stages::Intake.new,
       Stages::Infer.new,
       Stages::Route.new(
-        commands: build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:),
+        commands: build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:),
         agent:
       ),
       Stages::Guard.new(governor:, injection_guard: guard),
@@ -99,11 +100,35 @@ module Master
 
     pipeline = Pipeline.new(stages)
 
+    standing = StandingOrders.new(pipeline:, event_bus: bus)
+
+# Wire orders command now that standing exists (avoids circular dep with build_commands)
+route_stage = stages.find { |s| s.is_a?(Stages::Route) }
+route_stage&.instance_variable_get(:@commands)&.store("orders", ->(ctx) {
+  arg = ctx[:args].to_s.strip
+  case arg
+  when "list", ""
+    standing.list
+  when /\Aenable (.+)\z/
+    standing.enable($1.strip)
+  when /\Adisable (.+)\z/
+    standing.disable($1.strip)
+  when /\Aadd name=(\S+) cmd=(.+)\z/
+    standing.upsert(name: $1, command: $2.strip)
+  when "run"
+    results = standing.run_due!
+    results.empty? ? "no orders due" : results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
+  else
+    "usage: /orders  /orders enable <name>  /orders disable <name>  /orders run"
+  end
+})
+
+
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
       scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
       memory:, personality:, swarm:, root:,
-      diff_stager:, mcp:, code_index:
+      diff_stager:, mcp:, code_index:, standing:
     }
   end
 
@@ -147,7 +172,7 @@ module Master
     ]
   end
 
-  def self.build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:)
+  def self.build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:)
     {
       "clear"   => ->(ctx) { session.clear!  ; "context cleared" },
       "save"    => ->(ctx) { session.save!   ; "session saved" },
@@ -339,7 +364,10 @@ module Master
   elsif arg.empty?
     "model: #{agent.model}"
   else
-    "model command: list  or no args for current model"
+    agent.instance_variable_set(:@model, arg)
+    config["model"] = arg
+    config.save!
+    "model: #{arg}"
   end
 },
 "commit" => ->(ctx) {
@@ -401,7 +429,7 @@ module Master
   lines.join("\n")
 },
       "help"    => ->(ctx) {
-        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory cache diff commit knowledge why snapshot explain persona help exit]
+        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory dreams orders cache diff commit knowledge why snapshot explain persona help exit]
         cmds.map { "/#{_1}" }.join("  ")
       }
     }

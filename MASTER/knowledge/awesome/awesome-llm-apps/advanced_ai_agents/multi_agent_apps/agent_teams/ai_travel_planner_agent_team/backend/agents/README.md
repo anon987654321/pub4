@@ -1,108 +1,47 @@
-# TripCraft AI - Agent Architecture
+# TripCraft AI – Agent Architecture
 
-TripCraft AI uses a sophisticated multi-agent system powered by Agno to create personalized travel experiences. This document explains the different agents and their roles in the system.
+TripCraft AI orchestrates a multi‑agent system with Agno to deliver personalized travel plans.
 
-## Team Structure
+## Team
 
-The system is orchestrated by the "TripCraft AI Team", which coordinates multiple specialized agents to create comprehensive travel plans. The team operates in a coordinated mode, ensuring all aspects of travel planning are handled efficiently.
+The TripCraft AI team coordinates six specialized agents.
 
-### Core Team Members
+### Agents
 
-1. **Destination Explorer**
-   - Primary role: Researches and recommends tourist attractions and experiences
-   - Tools: ExaTools for deep web research
-   - Focus areas:
-     - Famous landmarks and monuments
-     - Popular tourist spots
-     - Museums and cultural sites
-     - Shopping areas
-     - Family-friendly activities
-   - Provides structured information about attractions including opening hours, fees, and visit duration
+| Role               | Responsibility |
+|--------------------|----------------|
+| Destination Explorer | Researches attractions – landmarks, museums, shopping, family activities; provides hours, fees, duration. |
+| Hotel Search Agent   | Finds lodging matching location, budget, amenities, room type. |
+| Dining Agent         | Recommends restaurants – cuisine, price, diet, ambience, location. |
+| Budget Agent         | Breaks down costs, allocates budget, suggests savings, handles currency and emergency funds. |
+| Flight Search Agent  | Plans flights – routes, airlines, schedules, connections, airport transfers. |
+| Itinerary Specialist | Builds hour‑by‑hour schedules, optimizes timing, buffers travel time, adapts to weather. |
 
-2. **Hotel Search Agent**
-   - Primary role: Accommodation research and recommendations
-   - Focuses on finding the perfect stay based on:
-     - Location preferences
-     - Budget constraints
-     - Required amenities
-     - Room types
-     - Property features
+### Coordination
 
-3. **Dining Agent**
-   - Primary role: Restaurant and culinary experience recommendations
-   - Considers:
-     - Cuisine types
-     - Price ranges
-     - Dietary restrictions
-     - Ambiance and atmosphere
-     - Location and accessibility
-     - Special dining experiences
+The team processes user preferences, delegates tasks, merges outputs, and synchronizes logistics while preserving budget constraints.
 
-4. **Budget Agent**
-   - Primary role: Financial planning and cost optimization
-   - Responsibilities:
-     - Trip cost breakdown
-     - Budget allocation
-     - Cost-saving recommendations
-     - Currency considerations
-     - Emergency fund planning
+## Tools
 
-5. **Flight Search Agent**
-   - Primary role: Air travel planning and optimization
-   - Handles:
-     - Flight route research
-     - Airline comparisons
-     - Schedule optimization
-     - Connection planning
-     - Airport transfer coordination
+- **ReasoningTools** – decision making and optimization.  
+- **ExaTools** – deep web research.  
+- **FirecrawlTools** – real‑time data.
 
-6. **Itinerary Specialist**
-   - Primary role: Creates detailed day-by-day travel schedules
-   - Expertise:
-     - Hour-by-hour activity planning
-     - Optimized timing for attractions
-     - Transportation scheduling
-     - Realistic travel times
-     - Buffer time management
-     - Weather-adaptive scheduling
-     - Traveler-specific pacing
+## Output
 
-## Team Coordination
+- Executive summary.  - Travel logistics.  
+- Day‑by‑day itinerary.  
+- Accommodation details.  
+- Curated activities.  
+- Budget breakdown.
 
-The team works together through a sophisticated coordination system that:
-1. Analyzes user preferences and requirements
-2. Delegates tasks to specialized agents
-3. Combines individual agent outputs into a cohesive travel plan
-4. Ensures all aspects of the trip are properly synchronized
-5. Maintains budget alignment across all decisions
-
-## Tools and Technologies
-
-The agents utilize various tools including:
-- **ReasoningTools**: For logical decision-making and plan optimization
-- **ExaTools**: For deep web research and information gathering
-- **FirecrawlTools**: For real-time data and current information
-
-## Output Format
-
-The team produces detailed travel itineraries that include:
-- Executive summary of the trip
-- Comprehensive travel logistics
-- Day-by-day itineraries
-- Detailed accommodation information
-- Curated experiences and activities
-- Complete budget breakdown
-
-## Best Practices
-
-The agent system follows these key principles:
-1. Thorough analysis of user preferences
-2. Detailed research using multiple data sources
-3. Practical and implementable recommendations
-4. Backup options and contingency plans
-5. Clear communication and structured output
-6. Budget consciousness across all decisions
+## Principles1. Analyze user preferences.  
+2. Conduct thorough research.  
+3. Provide practical recommendations.  
+4. Offer contingency options.  
+5. Communicate clearly.  
+6. Maintain budget awareness.
 
 ## Integration
 
-This agent architecture is designed to work seamlessly with the TripCraft AI backend, providing a robust foundation for creating personalized travel experiences that feel both magical and practical.
+The architecture integrates with the TripCraft AI backend to produce cohesive travel experiences.

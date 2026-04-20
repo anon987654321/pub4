@@ -127,6 +127,8 @@ module Master
           match.captures.compact.first&.strip.to_s
         when "persona"
           (match[1] || match[2] || match[3]).to_s.strip
+        when "orders"
+          msg.match?(/\blist|show\b/i) ? "list" : ""
         when "scan"
           match[1]&.strip.to_s
         else

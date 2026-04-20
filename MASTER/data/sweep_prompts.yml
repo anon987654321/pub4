@@ -1,54 +1,28 @@
-# Prompt building blocks for the Sweep stage.
-# All prose here is data — edit without touching sweep.rb.
+# swee​p stage promptbuilding blocks
 
-axioms: |
-  AXIOMS (non-negotiable):
-  A1. `# frozen_string_literal: true` on every Ruby file, first line.
-  A2. No bare `rescue` — always name the exception class.
-  A3. Methods under 15 lines. Extract if longer.
-  A4. One responsibility per class. Split if two found.
-  A5. `respond_to?(:ok?)` not `is_a?` for duck-typing Result values.
-  A6. Never silently swallow a Result::Err — propagate or log it.
-  A7. No magic literals — extract to named constants: `NAME = value.freeze`.
-  A8. Inject dependencies; never instantiate collaborators inside a method.
-  A9. Guard clauses first: fail fast at the top, happy path at the bottom.
-  A10. CQS: queries don't mutate; commands don't return meaningful values.
+structural_techniques:
+  - DEFRAG
+  - DECOUPLE
+  - FLATTEN
+  - MERGE
+  - HOIST
+  - REFLOW
+  - EXTRACT
+  - INLINE
+  - SPLIT  - REGROUP
+  - TELLprose_techniques:
+  - RECOMMENT
+  - OMIT
+  - DEHEDGE
+  - DEPREAMBLE
+  - ASSERT
+  - NAME
 
-structural_techniques: |
-  STRUCTURAL TECHNIQUES — apply whichever are warranted:
-  DEFRAG    — scatter logic is two responsibilities. Gather code for one concept into one place.
-  DECOUPLE  — remove hidden `new` calls inside methods; inject all collaborators.
-  FLATTEN   — replace nested if/else with early returns at the top.
-  MERGE     — two methods with ≥80% identical bodies → one method with a parameter.
-  HOIST     — move loop-invariant computation above the loop; extract loop-independent constants.
-  REFLOW    — happy path first; error/edge cases after. Fail fast at the top, succeed at the bottom.
-  EXTRACT   — a cohesive block of 5+ lines with one job → named private method.
-  INLINE    — a one-liner method used exactly once → fold it into the call site.
-  SPLIT     — if a class has two responsibilities, extract the second into its own class.
-  REGROUP   — gather public interface at the top; private helpers at the bottom.
-  TELL      — send commands to objects; don't query state to decide for them (Tell Don't Ask).
-
-prose_techniques: |
-  PROSE TECHNIQUES (Strunk & White):
-  RECOMMENT   — active voice only: "returns the token" not "the token is returned by".
-  OMIT        — every word must earn its place. Delete obvious comments (`# increment counter` is noise).
-  DEHEDGE     — strip: simply, just, basically, obviously, easily, feel free to, keep in mind.
-  DEPREAMBLE  — strip: Great question, Certainly, Of course, I'd be happy to.
-  ASSERT      — state facts; never qualify or apologize.
-  NAME        — method names say exactly what they do. No clever abbreviations.
-
-cosmetic_techniques: |
-  COSMETIC / TYPOGRAPHIC:
-  ALIGN       — hash rockets and keyword args at the same column within a block (visual rhythm).
-  SPACE       — one blank line between methods; no trailing whitespace; no double blank lines.
-  FENCE       — heredocs: use HEREDOC not EOF, strip_heredoc for alignment, no trailing blank lines.
-  CONSTANT    — constants before methods, grouped by concern.
-  PRIVATE     — `private` keyword on its own line; private methods sorted by call order.
-  FROZEN      — `# frozen_string_literal: true` exactly on line 1 with one blank line after.
-
-dimension_assessment: |
-  DIMENSION ASSESSMENT — evaluate and act on each:
-  EXPAND    — logic too dense; break into named intermediate steps.
-  CONTRACT  — bloated with indirection; collapse trivial wrappers.
-  SPLIT     — two responsibilities found; extract the second.
-  MERGE     — trivially thin; belongs inside its only caller.
+cosmetic_techniques:
+  - ALIGN  - SPACE
+  - FENCE  - CONSTANT
+  - PRIVATEdimension_assessment:
+  - EXPAND
+  - CONTRACT
+  - SPLIT
+  - MERGE

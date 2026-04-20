@@ -1,45 +1,23 @@
-# 📊 AI Data Visualization Agent
+# AI DataVisualization Agent
 
-### 🎓 FREE Step-by-Step Tutorial 
-**👉 [Click here to follow our complete step-by-step tutorial](https://www.theunwindai.com/p/build-an-ai-data-visualization-agent) and learn how to build this from scratch with detailed code walkthroughs, explanations, and best practices.**
+## Tutorial
+[Build an AI data visualization agent](https://www.theunwindai.com/p/build-an-ai-data-visualization-agent) with a complete step‑by‑step guide, code walkthroughs, and best practices.
 
-A Streamlit application that acts as your personal data visualization expert, powered by LLMs. Simply upload your dataset and ask questions in natural language - the AI agent will analyze your data, generate appropriate visualizations, and provide insights through a combination of charts, statistics, and explanations.
+A Streamlit app that visualizes uploaded datasets on request. Users upload a dataset, ask a question, and receive a chart, statistics, and explanation.
 
 ## Features
-#### Natural Language Data Analysis
-- Ask questions about your data in plain English
-- Get instant visualizations and statistical analysis
-- Receive explanations of findings and insights
-- Interactive follow-up questioning
+- Analyze data with natural language questions.
+- Generate appropriate visualizations automatically.
+- Provide explanations of findings.
+- Support multi‑model inference with DeepSeek V3, Llama 3.1 405B, Qwen 2.5 7B, and Llama 3.3 70B.
 
-#### Intelligent Visualization Selection
-- Automatic choice of appropriate chart types
-- Dynamic visualization generation
-- Statistical visualization support
-- Custom plot formatting and styling
+## Requirements
+- Together AI API key: https://api.together.ai/signin
+- E2B API key: https://e2b.dev/docs/legacy/getting-started/api-key
 
-#### Multi-Model AI Support
-- Meta-Llama 3.1 405B for complex analysis
-- DeepSeek V3 for detailed insights
-- Qwen 2.5 7B for quick analysis
-- Meta-Llama 3.3 70B for advanced queries
-
-## How to Run
-
-Follow the steps below to set up and run the application:
-- Before anything else, Please get a free Together AI API Key here: https://api.together.ai/signin
-- Get a free E2B API Key here: https://e2b.dev/ ; https://e2b.dev/docs/legacy/getting-started/api-key
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
-   cd ai_agent_tutorials/ai_data_visualisation_agent
-   ```
-2. **Install the dependencies**
-    ```bash
-    pip install -r requirements.txt
-    ```
-3. **Run the Streamlit app**
-    ```bash
-    streamlit run ai_data_visualisation_agent.py
-    ```
+## Setup
+```bashgit clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
+cd ai_agent_tutorials/ai_data_visualisation_agent
+pip install -r requirements.txt
+streamlit run ai_data_visualisation_agent.py
+```

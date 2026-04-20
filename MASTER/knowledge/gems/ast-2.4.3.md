@@ -1,12 +1,7 @@
-{AST} is a library for manipulating abstract syntax trees.
+{AST} isa library for manipulating abstract syntax trees.
 
-It embraces immutability; each AST node is inherently frozen at
-creation, and updating a child node requires recreating that node
-and its every parent, recursively.
+The library enforces immutability: each AST node freezes upon creation, and updating a child node requires recreating that node and all ancestors recursively.
 
-This is a design choice. It does create some pressure on
-garbage collector, but completely eliminates all concurrency
-and aliasing problems.
+This design eliminates concurrency and aliasing issues, at the cost of additional garbage‑collector pressure.
 
-See also {AST::Node}, {AST::Processor::Mixin} and {AST::Sexp} for
-additional recommendations and design patterns.
+See also {AST::Node}, {AST::Processor::Mixin}, and {AST::Sexp} for related recommendations and patterns.

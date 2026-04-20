@@ -16,7 +16,8 @@ module Master
       TIMEOUT       = 10
 
       def initialize(governor:, event_bus: nil)
-        @governor = governor        @bus      = event_bus
+        @governor = governor
+        @bus      = event_bus
       end
 
       def call(query:)

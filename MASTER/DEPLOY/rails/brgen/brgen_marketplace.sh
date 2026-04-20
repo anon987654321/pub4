@@ -1,200 +1,130 @@
 ```zsh
 #!/usr/bin/env zsh
-emulate -L zsh
-
-# Brgen Marketplace setup: Multi-vendor marketplace with Solidus, unprivileged user
-# Framework v37.3.2 compliant with enhanced e-commerce functionality
-
-APP_NAME="brgen_marketplace"
+set -euo pipefail# Constants
 BASE_DIR="${HOME}/rails"
-APP_PORT=$(( 10000 + (RANDOM % 10000) ))
-SECRET_KEY_BASE=$(ruby -e "require 'securerandom'; puts SecureRandom.hex(64)")
-PORT_FILE="${BASE_DIR}/${APP_NAME}/.app_port"
+APP_NAME="brgen_marketplace"
+BASE_PORT=10000
+PORT_RANGE=10000
+MAX_ATTEMPTS=20
+MIN_ATTEMPTS=10
+DB_SCHEME="postgresql"
+GEM_VERSIONS=(
+  solidus:"~> 4.0"
+  solidus_auth_devise:"~> 2.0"
+  solidus_multi_vendor:"~> 1.0"
+)
 
-# Define helper functions
-command_exists() {
-  command -v "$1" >/dev/null 2>&1
-}
+# Logging
+log() { printf '[%s] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*"; }
+error_exit() { log "ERROR: $1"; exit 1; }
 
-log() {
-  echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
-}
+# Utility helpers
+command_exists() { command -v "$1" >/dev/null 2>&1; }
 
-error_exit() {
-  log "ERROR: $1"
-  exit 1
-}
-
-install_gem() {
-  local gem_name="$1"
-  local gem_version="${2:-}"
-  local gem_spec="${gem_name}${gem_version:+ (${gem_version})}"
-
-  if ! bundle list | grep -q "$gem_name"; then
-    if [[ -n "$gem_version" ]]; then
-      bundle add "$gem_name" --version "$gem_version" --without production || error_exit "Failed to add gem: $gem_spec"
-    else
-      bundle add "$gem_name" --without production || error_exit "Failed to add gem: $gem_spec"
-    fi
-    log "Added gem: $gem_spec"
-  else
-    log "Gem already installed: $gem_spec"
-  fi
-}
-
-check_port_available() {
-  local port="$1"
-
-  # Try multiple methods to check port availability
+is_port_in_use() {
+  local port=$1
   if command_exists lsof; then
-    if lsof -i :"$port" >/dev/null 2>&1; then
-      return 1
-    fi
+    lsof -i :"$port" >/dev/null 2>&1 && return 0
   elif command_exists ss; then
-    if ss -tuln 2>/dev/null | grep -q ":${port} "; then
-      return 1
-    fi
+    ss -tuln | grep -q ":$port " && return 0
   elif command_exists netstat; then
-    if netstat -tuln 2>/dev/null | grep -q ":${port} "; then
-      return 1
-    fi
+    netstat -tuln | grep -q ":$port " && return 0
+  elif zmodload zsh/net/tcp >/dev/null 2>&1; then
+    ztcp -l "$port" >/dev/null 2>&1 && { ztcp -c $REPLY >/dev/null 2>&1; return 0; }
   else
-    # Direct socket binding check as fallback
-    if zmodload zsh/net/tcp 2>/dev/null; then
-      ztcp -l $port 2>/dev/null
-      local result=$?
-      [[ $result -eq 0 ]] && ztcp -c $REPLY 2>/dev/null
-      return $result
+    if ruby -e "require 'socket'; server=TCPServer.new('localhost',$port); server.close; exit 0" 2>/dev/null; then
+      return 0
     else
-      # Ruby socket check as last resort
-      if ruby -e "require 'socket';
-                  begin;
-                    server = TCPServer.new('localhost', $port);
-                    server.close;
-                    exit 0;
-                  rescue Errno::EADDRINUSE;
-                    exit 1;
-                  end" 2>/dev/null; then
-        return 0
-      else
-        return 1
-      fi
+      return 1
     fi
   fi
-  return 0
-}
+  return 1}
 
+# Port management
 get_or_create_port() {
+  local port_file="${BASE_DIR}/${APP_NAME}/.app_port"
   mkdir -p "${BASE_DIR}/${APP_NAME}"
 
-  if [[ -f "$PORT_FILE" ]]; then
-    local saved_port=$(cat "$PORT_FILE")
-    if check_port_available "$saved_port"; then
-      APP_PORT="$saved_port"
-      log "Using saved port: $APP_PORT"
-      return 0
-    else
-      log "Saved port $saved_port is in use, generating new port"
+  (( port_exists = 0 ))
+  if [[ -f "$port_file" ]]; then
+    local saved=$(cat "$port_file")
+    if is_port_in_use "$saved"; then
+      APP_PORT=$saved && log "Using saved port $APP_PORT" && return 0
     fi
   fi
 
-  # Find an available port
-  local max_attempts=10
-  local attempts=0
+  local attempts=0  while (( attempts < MAX_ATTEMPTS )); do
+    APP_PORT=$((BASE_PORT + RANDOM % PORT_RANGE))
+    is_port_in_use "$APP_PORT" && continue
+    echo "$APP_PORT" > "$port_file"
+    log "Allocated port $APP_PORT"
+    return 0
+  done  error_exit "Unable to obtain an available port after $MAX_ATTEMPTS attempts"
+}
 
-  while [[ $attempts -lt $max_attempts ]]; do
-    if check_port_available "$APP_PORT"; then
-      echo "$APP_PORT" > "$PORT_FILE"
-      log "Using port: $APP_PORT"
-      return 0
-    fi
-    APP_PORT=$(( 10000 + (RANDOM % 10000) ))
-    attempts=$((attempts + 1))
+# Dependency installation
+install_gem() {
+  local gem=$1 version=${2:-}
+  if bundle list | grep -q "$gem"; then
+    log "Gem $gem already present"
+    return
+  fi
+  if [[ -n $version ]]; then
+    bundle add "$gem" --version "$version" --without production
+  else
+    bundle add "$gem" --without production
+  fi
+  log "Installed gem $gem"
+}
+
+add_gems() {
+  for pkg in "${(@)GEM_VERSIONS[@]}"; do
+    IFS=':' read -r name ver <<<"$pkg"
+    install_gem "$name" "$ver"
   done
-
-  error_exit "Could not find an available port after $max_attempts attempts"
 }
 
+# Database setup
 setup_database_user() {
-  log "Setting up PostgreSQL user"
-  local db_user="${APP_NAME}_user"
-  local db_password=$(ruby -e "require 'securerandom'; puts SecureRandom.hex(16)")
-
-  # Check if user exists
-  if ! psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$db_user'" | grep -q 1; then
-    if psql -c "CREATE USER $db_user WITH PASSWORD '$db_password' CREATEDB;" 2>/dev/null; then
-      log "Created database user: $db_user"
-    else
-      log "Warning: Could not create database user $db_user (may need sudo privileges)"
-      db_user="${USER}"  # Fall back to current user
-    fi
+  local user="${APP_NAME}_user"
+  local password=$(ruby -e 'require "securerandom"; puts SecureRandom.hex(16)')
+  if ! psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$user'" >/dev/null 2>&1; then
+    psql -c "CREATE USER $user WITH PASSWORD '$password' CREATEDB;" || \
+      log "Warning: could not create user $user (fallback to $USER)"
+    DB_USER="${DB_USER:-${USER}}"
+    DB_PASSWORD="$password"
   else
-    log "Database user already exists: $db_user"
+    DB_USER="$user"
+    DB_PASSWORD="$password"
   fi
-
-  # Store user info for database.yml
-  export DB_USER="$db_user"
-  export DB_PASSWORD="$db_password"
 }
 
-setup_database() {
-  log "Setting up PostgreSQL databases"
-
-  # Set up user first
+setup_databases() {
   setup_database_user
-
-  local db_user="${DB_USER:-${USER}}"
-
-  # Create development database
-  if ! psql -lqt | cut -d \| -f 1 | tr -d ' ' | grep -q "^${APP_NAME}_development$"; then
-    if createdb "${APP_NAME}_development" -O "$db_user" 2>/dev/null; then
-      log "Created development database: ${APP_NAME}_development"
+  local db_user=${DB_USER:-${USER}}
+  for db in "${APP_NAME}_development" "${APP_NAME}_test"; do
+    if ! psql -lqt | cut -d\| -f1 | tr -d ' ' | grep -q "^$db$"; then
+      createdb "$db" -O "$db_user" >/dev/null 2>&1 || createdb "$db"
+      log "Database $db ready"
     else
-      # Fallback without owner specification
-      if createdb "${APP_NAME}_development" 2>/dev/null; then
-        log "Created development database (without owner): ${APP_NAME}_development"
-      else
-        error_exit "Failed to create development database: ${APP_NAME}_development"
-      fi
+      log "Database $db exists"
     fi
-  else
-    log "Development database already exists: ${APP_NAME}_development"
-  fi
-
-  # Create test database
-  if ! psql -lqt | cut -d \| -f 1 | tr -d ' ' | grep -q "^${APP_NAME}_test$"; then
-    if createdb "${APP_NAME}_test" -O "$db_user" 2>/dev/null; then
-      log "Created test database: ${APP_NAME}_test"
-    else
-      # Fallback without owner specification
-      if createdb "${APP_NAME}_test" 2>/dev/null; then
-        log "Created test database (without owner): ${APP_NAME}_test"
-      else
-        error_exit "Failed to create test database: ${APP_NAME}_test"
-      fi
-    fi
-  else
-    log "Test database already exists: ${APP_NAME}_test"
-  fi
+  done
 }
 
 generate_database_yml() {
-  log "Generating database configuration"
-  local db_user="${DB_USER:-${USER}}"
-  local db_password="${DB_PASSWORD:-}"
-
-  cat > config/database.yml << EOF
+  local db_user=${DB_USER:-${USER}}
+  local db_pass=${DB_PASSWORD:-}
+  cat > config/database.yml <<EOF
 default: &default
-  adapter: postgresql
+  adapter: $DB_SCHEME
   encoding: unicode
   pool: 5
-  username: $db_user
-  password: $db_password
+  username: $db_user  password: $db_pass
   host: localhost
 
 development:
-  <<: *default
-  database: ${APP_NAME}_development
+  <<: *default  database: ${APP_NAME}_development
 
 test:
   <<: *default
@@ -207,67 +137,39 @@ EOF
   log "Generated config/database.yml"
 }
 
-# Main execution
-main() {
-  log "Starting Brgen Marketplace setup"
-
-  # Get or create persistent port
-  get_or_create_port
-
-  # Create application directory
-  mkdir -p "$BASE_DIR"
-  cd "$BASE_DIR" || error_exit "Cannot access base directory: $BASE_DIR"
-
-  # Create new Rails application
+# Rails application bootstrapping
+bootstrap_app() {
+  cd "$BASE_DIR" || error_exit "Cannot cd $BASE_DIR"
   if [[ ! -d "$APP_NAME" ]]; then
-    log "Creating new Rails application: $APP_NAME"
-    rails new "$APP_NAME" -d postgresql || error_exit "Failed to create Rails application"
+    log "Creating Rails app $APP_NAME"
+    rails new "$APP_NAME" -d "$DB_SCHEME" || error_exit "Rails new failed"
   fi
+  cd "$APP_NAME" || error_exit "Cannot cd $APP_NAME"
 
-  cd "$APP_NAME" || error_exit "Cannot enter application directory: $APP_NAME"
-
-  # Set up databases before generating configuration
-  setup_database
-
-  # Generate database configuration
+  setup_databases
   generate_database_yml
 
-  # Add Solidus gems with version constraints for compatibility
-  log "Adding Solidus gems"
-  install_gem "solidus" "~> 4.0"
-  install_gem "solidus_auth_devise" "~> 2.0"
-  install_gem "solidus_multi_vendor" "~> 1.0"
+  add_gems
+  bundle install --without production || error_exit "Bundle install failed"
+  bundle exec rails generate solidus:install || error_exit "Solidus install failed"
+  bundle exec rails db:migrate || error_exit "Migrations failed"
+  bundle exec rails db:seed || error_exit "Seeding failed"
 
-  # Install gems
-  log "Installing gems"
-  bundle install --without production || error_exit "Failed to install gems"
-
-  # Run Solidus installer
-  log "Running Solidus installer"
-  bundle exec rails generate solidus:install || error_exit "Failed to run Solidus installer"
-
-  # Run migrations
-  log "Running database migrations"
-  bundle exec rails db:migrate || error_exit "Failed to run migrations"
-
-  # Generate sample data
-  log "Generating sample data"
-  bundle exec rails db:seed || error_exit "Failed to seed database"
-
-  # Create a simple startup script
-  cat > start_app.sh << EOF
+  cat > start_app.sh <<'EOS'
 #!/usr/bin/env zsh
-cd "\$(dirname "\$0")"
+cd "$(dirname "$0")"
 bundle exec rails server -p $APP_PORT -b 0.0.0.0
-EOF
+EOS
   chmod +x start_app.sh
-
-  log "Setup completed successfully!"
-  log "Application will run on port: $APP_PORT"
-  log "Start the application with: ./start_app.sh"
-  log "Or manually with: bundle exec rails server -p $APP_PORT -b 0.0.0.0"
+  log "Setup complete. Run ./start_app.sh to start."
 }
 
-# Run main function
+# Entry point
+main() {
+  log "Brgen Marketplace setup beginning"
+  get_or_create_port
+  bootstrap_app
+  log "All done."
+}
 main "$@"
 ```

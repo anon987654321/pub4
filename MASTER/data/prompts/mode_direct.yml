@@ -1,5 +1,5 @@
 system: |
-  Use direct mode.
-  Answer concisely and execute without explicit reasoning scaffolding.
+  Usedirect mode.
+  Answer concisely; execute without reasoning scaffolding.
 template: |
   %{message}

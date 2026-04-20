@@ -1,56 +1,40 @@
-# Built-in Tools Agent
+# Built‑in Tools Agent
 
-Demonstrates using OpenAI Agents SDK built-in tools like WebSearchTool and CodeInterpreterTool.
+Demonstrates OpenAI Agents SDK built‑in tools: WebSearchTool and CodeInterpreterTool.
 
-## 🎯 What This Demonstrates
+## 🎯 Demonstrates
+- **WebSearchTool** – performs real‑time web searches.
+- **CodeInterpreterTool** – executes Python code and calculates values.
+- **Built‑in Tool Integration** – uses pre‑configured SDK tools.
+- **Tool Combination** – runs multiple tools within a single agent.
 
-- **WebSearchTool**: Real-time web search capabilities
-- **CodeInterpreterTool**: Code execution and mathematical computation
-- **Built-in Tool Integration**: Using pre-configured SDK tools
-- **Tool Combination**: Leveraging multiple tools in one agent
+## 🚀 Quick Start1. Install the SDK: `pip install openai-agents`.
+2. Copy env file and add your API key: `cp ../env.example .env && edit .env`.
+3. Run the agent:
 
-## 🚀 Quick Start
+```python
+from agents import Runner
+from agent import root_agent
 
-1. **Install OpenAI Agents SDK**:
-   ```bash
-   pip install openai-agents
-   ```
-
-2. **Set up environment**:
-   ```bash
-   cp ../env.example .env
-   # Edit .env and add your OpenAI API key
-   ```
-
-3. **Run the agent**:
-   ```python
-   from agents import Runner
-   from agent import root_agent
-   
-   result = Runner.run_sync(root_agent, "What's the latest news about AI and calculate 15% of 200?")
-   print(result.final_output)
-   ```
+result = Runner.run_sync(root_agent, "What's the latest news about AI and calculate 15% of 200?")
+print(result.final_output)
+```
 
 ## 💡 Key Concepts
-
-- **WebSearchTool()**: Search the web for current information
-- **CodeInterpreterTool()**: Execute Python code and calculations
-- **Tool Instantiation**: Creating tool instances with default configurations
-- **Multi-tool Agents**: Combining different tool types
+- **WebSearchTool()** – searches the web for current information.
+- **CodeInterpreterTool()** – runs Python code and performs calculations.
+- **Tool Instantiation** – creates tool instances with default settings.
+- **Multi-tool Agents** – combines different tool types in one workflow.
 
 ## 🧪 Available Tools
-
 ### WebSearchTool
-- Search for current information on the internet
-- Useful for factual questions requiring recent data
-- Automatically formats search results for agent use
+- Retrieves up‑to‑date web results.
+- Ideal for factual questions requiring recent data.
 
 ### CodeInterpreterTool
-- Execute Python code in a secure environment
-- Perfect for mathematical calculations
-- Can handle data analysis and complex computations
+- Executes Python code in a secure sandbox.
+- Handles mathematical calculations and data analysis.
 
 ## 🔗 Next Steps
-
-- [Function Tools](../3_1_function_tools/README.md) - Custom function tools
-- [Agents as Tools](../3_3_agents_as_tools/README.md) - Advanced orchestration patterns
+- [Function Tools](../3_1_function_tools/README.md) – custom function tools.
+- [Agents as Tools](../3_3_agents_as_tools/README.md) – advanced orchestration patterns.

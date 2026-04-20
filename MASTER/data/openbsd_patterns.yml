@@ -1,13 +1,13 @@
-# OpenBSD system knowledge — agents generate OpenBSD-native commands
+# OpenBSD system knowledge— agents generate OpenBSD-native commands
 
-service_management:
+service_commands:
   enable: "rcctl enable ${service}"
   start: "rcctl start ${service}"
   restart: "rcctl restart ${service}"
   check: "rcctl check ${service}"
   disable: "rcctl disable ${service}"
 
-config_paths:
+configuration_paths:
   pf: "/etc/pf.conf"
   httpd: "/etc/httpd.conf"
   relayd: "/etc/relayd.conf"
@@ -17,14 +17,14 @@ config_paths:
   ntp: "/etc/ntpd.conf"
   cron: "/var/cron/tabs/${user}"
 
-package_management:
+package_operations:
   install: "pkg_add ${package}"
   remove: "pkg_delete ${package}"
   search: "pkg_info -Q ${query}"
   update: "pkg_add -u"
   firmware: "fw_update"
 
-forbidden:
+prohibited_commands:
   - command: "systemctl"
     replacement: "rcctl"
   - command: "apt"

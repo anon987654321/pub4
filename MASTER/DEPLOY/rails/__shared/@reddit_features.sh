@@ -1,100 +1,85 @@
-```zsh
 #!/usr/bin/env zsh
 set -euo pipefail
 
-# Reddit-style social features: Comments, Votes, Karma
-# Shared across brgen, amber, and other social apps
+log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"; }
 
-log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+timestamp() { date +%Y%m%d%H%M%S; }
+
+migrations_dir=db/migrate
+models_dir=app/models
+
+migration_exists() { [[ -e $1 ]]; }
+
+write_migration() {
+  local file=$1; shift
+  cat <<'EOF' > "$file"
+$@
+EOF
 }
 
-generate_comment_model() {
-    log "Generating Comment model..."
-
-    # Single migration with all constraints
-    local migration_timestamp=$(date +%Y%m%d%H%M%S)
-    cat <<EOF > db/migrate/${migration_timestamp}_create_comments.rb
+generate_comment_migration() {
+  local ts=$(timestamp)
+  local file="$migrations_dir/${ts}_create_comments.rb"
+  write_migration "$file" "
 class CreateComments < ActiveRecord::Migration[7.0]
-  def change
-    create_table :comments do |t|
+  def change    create_table :comments do |t|
       t.text :content
       t.references :user, null: false, foreign_key: true
       t.references :commentable, polymorphic: true, null: false
       t.references :parent, foreign_key: { to_table: :comments }
       t.integer :cached_score, default: 0
-      t.integer :cached_upvotes, default: 0
-      t.integer :cached_downvotes, default: 0
+      t.integer :cached_upvotes, default: 0      t.integer :cached_downvotes, default: 0
       t.integer :cached_depth, default: 0
-
       t.timestamps
     end
-
     add_index :comments, [:commentable_type, :commentable_id]
-    add_index :comments, :parent_id
-    add_index :comments, :cached_score
-  end
+    add_index :comments, :parent_id    add_index :comments, :cached_score  end
 end
-EOF
+"
+  log "Generating Comment migration..."
+  log "Created $file"
 }
 
-generate_vote_model() {
-    log "Generating Vote model..."
-
-    local migration_timestamp=$(date +%Y%m%d%H%M%S)
-    cat <<EOF > db/migrate/${migration_timestamp}_create_votes.rb
+generate_vote_migration() {
+  local ts=$(timestamp)
+  local file="$migrations_dir/${ts}_create_votes.rb"
+  write_migration "$file" "
 class CreateVotes < ActiveRecord::Migration[7.0]
   def change
     create_table :votes do |t|
       t.integer :value, null: false
       t.references :user, null: false, foreign_key: true
       t.references :votable, polymorphic: true, null: false
-
       t.timestamps
     end
-
     add_index :votes, [:user_id, :votable_type, :votable_id], unique: true
     add_index :votes, [:votable_type, :votable_id]
-    add_check_constraint :votes, "value IN (1, -1)", name: "vote_value_check"
+    add_check_constraint :votes, 'value IN (1, -1)', name: 'vote_value_check'
   end
 end
-EOF
+"
+  log "Generating Vote migration..."
+  log "Created $file"
 }
 
-setup_reddit_models() {
-    # Check if migrations already exist
-    if [[ -n $(find db/migrate -name "*create_comments*" 2>/dev/null) ]]; then
-        log "Comments migration already exists, skipping..."
-    else
-        generate_comment_model
-    fi
-
-    if [[ -n $(find db/migrate -name "*create_votes*" 2>/dev/null) ]]; then
-        log "Votes migration already exists, skipping..."
-    else
-        generate_vote_model
-    fi
-
-    # Add karma column to users with index
-    if [[ -z $(find db/migrate -name "*add_karma_to_users*" 2>/dev/null) ]]; then
-        log "Generating karma migration..."
-        local karma_timestamp=$(date +%Y%m%d%H%M%S)
-        cat <<EOF > db/migrate/${karma_timestamp}_add_karma_to_users.rb
+generate_karma_migration() {
+  local ts=$(timestamp)
+  local file="$migrations_dir/${ts}_add_karma_to_users.rb"
+  write_migration "$file" "
 class AddKarmaToUsers < ActiveRecord::Migration[7.0]
   def change
     add_column :users, :karma, :integer, default: 0
     add_index :users, :karma
   end
 end
-EOF
-    else
-        log "Karma migration already exists, skipping..."
-    fi
+"
+  log "Generating Karma migration..."
+  log "Created $file"
+}
 
-    # Create models with proper validations
-    mkdir -p app/models
-
-    cat <<'EOF' > app/models/comment.rb
+write_comment_model() {
+  mkdir -p "$models_dir"
+  cat <<'EOF' > "$models_dir/comment.rb"
 class Comment < ApplicationRecord
   belongs_to :user
   belongs_to :commentable, polymorphic: true
@@ -113,16 +98,11 @@ class Comment < ApplicationRecord
   after_create :update_cached_depth
   after_save :update_commentable_comments_count, if: :saved_change_to_parent_id?
 
-  # Efficient scoring with database-level aggregation
   def recalc_score!
-    new_score = votes.sum(:value)
-    new_upvotes = votes.where(value: 1).count
-    new_downvotes = votes.where(value: -1).count
-
     update_columns(
-      cached_score: new_score,
-      cached_upvotes: new_upvotes,
-      cached_downvotes: new_downvotes
+      cached_score: votes.sum(:value),
+      cached_upvotes: votes.where(value: 1).count,
+      cached_downvotes: votes.where(value: -1).count
     )
   end
 
@@ -132,24 +112,19 @@ class Comment < ApplicationRecord
   end
 
   def calculate_depth
-    return 0 unless parent
-    parent.cached_depth + 1
+    parent&.cached_depth.to_i + 1
   end
 
   def no_circular_reference
-    return unless parent_id && parent_id == id
-    errors.add(:parent_id, "cannot reference itself")
+    errors.add(:parent_id, "cannot reference itself") if parent_id == id
   end
 
   def parent_belongs_to_same_commentable
-    return unless parent && commentable
-    return if parent.commentable == commentable
-    errors.add(:parent_id, "must belong to the same commentable")
+    errors.add(:parent_id, "must belong to the same commentable") unless parent&.commentable == commentable
   end
 
   def update_commentable_comments_count
-    return unless commentable.respond_to?(:update_comments_count)
-    commentable.update_comments_count
+    commentable&.update_comments_count if commentable.respond_to?(:update_comments_count)
   end
 
   def vote_by_user(user)
@@ -157,8 +132,10 @@ class Comment < ApplicationRecord
   end
 end
 EOF
+}
 
-    cat <<'EOF' > app/models/vote.rb
+write_vote_model() {
+  cat <<'EOF' > "$models_dir/vote.rb"
 class Vote < ApplicationRecord
   belongs_to :user
   belongs_to :votable, polymorphic: true
@@ -176,20 +153,17 @@ class Vote < ApplicationRecord
 
   def update_votable_score
     votable.recalc_score! if votable.respond_to?(:recalc_score!)
-
-    # Update user karma if voting on a comment
-    if votable_type == "Comment"
-      user.update_karma!
-    end
+    user.update_karma! if votable_type == "Comment"
   end
 end
 EOF
+}
 
-    # Add karma methods to User model
-    if [[ -f app/models/user.rb ]]; then
-        cat <<'EOF' >> app/models/user.rb
+ensure_user_model() {
+  [[ -f "$models_dir/user.rb" ]] || return
+  cat <<'EOF' >> "$models_dir/user.rb"
 
-# Karma methods for User model
+# Karma methods
 def update_karma!
   new_karma = comments.sum(:cached_score)
   update_columns(karma: new_karma) if karma != new_karma
@@ -201,26 +175,30 @@ end
 
 def vote_for(votable, value)
   transaction do
-    existing_vote = votes.find_by(votable: votable)
-
-    if existing_vote
-      if existing_vote.value == value
-        existing_vote.destroy!
-      else
-        existing_vote.update!(value: value)
-      end
+    existing = votes.find_by(votable: votable)
+    if existing
+      existing.destroy! if existing.value == value
+      existing.update!(value: value) unless existing.value == value
     else
       votes.create!(votable: votable, value: value)
     end
   end
 end
 EOF
-    fi
 }
 
-# Main execution
+setup_reddit_models() {
+  [[ -e "$migrations_dir/create_comments.rb" ]] || generate_comment_migration
+  [[ -e "$migrations_dir/create_votes.rb" ]] || generate_vote_migration
+  [[ -e "$migrations_dir/add_karma_to_users.rb" ]] || generate_karma_migration
+
+  write_comment_model
+  write_vote_model
+  ensure_user_model
+
+  log "Reddit-style social features setup complete"
+}
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    setup_reddit_models
-    log "Reddit-style social features setup complete!"
+  setup_reddit_models
 fi
-```

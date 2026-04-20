@@ -1,36 +1,19 @@
-# Baibl - Bible Study Platform
-**Version:** 8.0.0
-**Stack:** Rails 8 + Solid Stack + Falcon
+# Baibl - Bible Study PlatformVersion 8.0.0
 
-**Port:** TBD
+Port: TBD
 
-**Domain:** TBD
+Domain: TBD
 
 ## Overview
-Baibl is a comprehensive Bible study platform with multiple translations, commentary, and community features.
+Bible study platform with multiple translations, commentary, and community tools.
+
 ## Features
-- Multiple Bible translations
-- Side-by-side comparison
-
+- Multiple translations and side‑by‑side comparison
 - Commentary and study notes
-
-- Verse search and cross-references
-
+- Verse search and cross‑references
 - Reading plans
-
-- Community discussions
-
-- Personal notes and highlights
-
-- Audio Bible
-
-## Quick Start
+- Community discussions- Personal notes and highlights
+- Audio Bible## Quick Start
 ```zsh
 cd /home/dev/rails
-
-./baibl/baibl.sh
-
-```
-
----
-**Deepen Your Faith**
+./baibl.sh```

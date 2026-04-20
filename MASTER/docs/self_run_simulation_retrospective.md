@@ -1,76 +1,31 @@
-# MASTER full self-run simulation and retrospective
+# MASTER Self‑Run Simulation and Retrospective
 
 ## Objective
-
-Simulate a full self-run and then reflect on how MASTER could have done better.
+Simulate a full self‑run and reflect on improvements.
 
 ## Simulation command
-
-```bash
-MASTER2/bin/master selfrun --deep
-```
+```bashMASTER2/bin/master selfrun --deep```
 
 ## Observed result
+The run failed at boot before any pipeline phase started.
 
-The run failed during boot before any self-run phases executed.
+Key signals:
+1. Dependency install sent `gem install` and received repeated `403 "Forbidden"` responses.
+2. Runtime raised `LoadError: cannot load such file -- ruby_llm` from `MASTER2/lib/llm.rb`.
+3. Because boot failed, the pipeline (`run_phase1..run_phase4`) never started.
 
-Key failure signals:
+## Improvements
+1. **Preflight check** – Before self‑run, verify gems, API credentials, and network health. Exit with a concise diagnosis on failure.
+2. **Fail once** – Classify dependency‑install errors (auth, network, missing package) and stop after the first deterministic 403/401. Emit a short summary instead of repeated traces.
+3. **Offline mode** – Add `--offline` or `--no-llm` to run syntax checks, linting, rule scans, and diff‑risk reporting without network calls.
+4. **Readiness table** – Print ordered readiness (gems, keys, providers, permissions) at startup to expose broken components instantly.
+5. **Regression tests** – Add tests for forbidden gem sources, missing `ruby_llm`, graceful fallback messages, and pipeline guards.
 
-1. Dependency auto-install attempted `gem install` and received repeated `403 "Forbidden"` responses.
-2. Runtime then aborted with `LoadError: cannot load such file -- ruby_llm` from `MASTER2/lib/llm.rb`.
-3. Because boot failed in dependency loading, the self-run pipeline (`run_phase1..run_phase4`) never started.
+## Backlog
+1. Implement `MASTER::Preflight.check!` and invoke it from `bin/master` before `run_selfrun`.
+2. Add error classification in `MASTER::AutoInstall` with short remediation text.
+3. Add `--offline` path with local scanners only.
+4. Add targeted startup resilience tests.
 
-## What MASTER could have done better
-
-### 1) Add explicit preflight before full self-run
-
-Before entering self-run, MASTER should run a hard preflight that verifies:
-
-- Required gems are already available.
-- Required API credentials are present and valid.
-- Network access to gem/provider endpoints is healthy.
-
-If preflight fails, exit with one compact diagnosis block and remediation steps.
-
-### 2) Fail once, not repeatedly
-
-The current flow retried gem install failures and emitted large repeated stacks. A circuit breaker for dependency installation should:
-
-- stop after first deterministic auth/permission error (403/401),
-- summarize root cause,
-- avoid noisy duplicate logs.
-
-### 3) Provide degraded offline self-run mode
-
-A `--offline`/`--no-llm` mode should still run:
-
-- syntax checks,
-- static linting,
-- local rule/axiom scans,
-- diff-risk reporting.
-
-That would keep self-run useful when network/provider access is blocked.
-
-### 4) Improve startup diagnostics
-
-Boot should print an ordered readiness table (gems, keys, providers, file permissions) before any heavy init. This helps operators see what is broken in seconds.
-
-### 5) Add regression tests for startup resilience
-
-Add tests for:
-
-- forbidden gem source responses,
-- missing `ruby_llm` dependency,
-- graceful fallback messages,
-- self-run never entering phase execution when boot is unhealthy.
-
-## Proposed minimal improvements backlog
-
-1. Implement `MASTER::Preflight.check!` and call it from `bin/master` before `run_selfrun`.
-2. Add install-error classification in `MASTER::AutoInstall` (`auth`, `network`, `missing package`) with short summaries.
-3. Add `selfrun --offline` path with local scanners only.
-4. Add targeted tests around failure classification and self-run guardrails.
-
-## Retrospective summary
-
-The simulation did its job by exposing boot fragility. The biggest improvement is to shift failure earlier and make it intentional: preflight-fast, fail-clean, and degrade usefully when LLM dependencies are unavailable.
+## Summary
+The simulation exposed boot fragility. The primary gain is earlier, intentional failure: fast preflight, clean exit, and useful offline execution when LLM dependencies are unavailable.

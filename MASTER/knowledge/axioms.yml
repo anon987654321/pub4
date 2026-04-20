@@ -1,7 +1,7 @@
-# Kernel axioms — enforced by scan rules, pipeline stages, or tool guards
+# Kernel axioms — enforced byscan rules, pipeline stages, or tool guards
 kernel:
-  PRESERVE_FIRST: "Never break working code. Read before write."
-  SIMPLEST_WORKS: "Fewest moving parts that solve the problem."
+  PRESERVE_FIRST: "Never break working code. Read before writing."
+  SIMPLEST_WORKS: "Fewest moving parts solve the problem."
   FAIL_VISIBLY: "Errors surface immediately. Never swallow exceptions."
   ONE_SOURCE: "One authoritative representation per concept."
   DECOUPLE: "Hidden dependencies become explicit."
@@ -13,14 +13,11 @@ kernel:
 # Restored from MASTER2 and trimmed to top 25 prioritized axioms.
 philosophy:
   prioritized_top_25:
-    - id: ONE_JOB
-      priority: 1
-      statement: "Each module should have one clear reason to change."
-    - id: NO_SURPRISES
-      priority: 2
+    - id: ONE_JOB      priority: 1
+      statement: "Each module has one clear reason to change."
+    - id: NO_SURPRISES      priority: 2
       statement: "Prefer predictable behavior over clever behavior."
-    - id: EXTEND_DONT_MODIFY
-      priority: 3
+    - id: EXTEND_DONT_MODIFY      priority: 3
       statement: "Add capability via composition before rewriting stable parts."
     - id: COMPOSABLE
       priority: 4
@@ -33,51 +30,45 @@ philosophy:
       statement: "Design for testability before implementation complexity."
     - id: REVERSIBLE
       priority: 7
-      statement: "Prefer steps that are easy to rollback."
+      statement: "Prefer steps easy to rollback."
     - id: ONE_CHANGE
       priority: 8
       statement: "Keep each patch focused on one coherent intent."
     - id: EXPLICIT
       priority: 9
       statement: "Prefer explicit contracts over implicit coupling."
-    - id: IDEMPOTENT
-      priority: 10
-      statement: "Operations should be safe to repeat."
+    - id: IDEMPOTENT      priority: 10
+      statement: "Operations are safe to repeat."
     - id: CQS
       priority: 11
       statement: "Separate queries from state mutations."
     - id: IMMUTABLE
       priority: 12
       statement: "Default to immutable data flow where practical."
-    - id: APPEND_ONLY
-      priority: 13
+    - id: APPEND_ONLY      priority: 13
       statement: "Favor append-only logs for auditability."
     - id: CACHE_FIRST
       priority: 14
-      statement: "Cache high-cost deterministic work with bounded TTL."
+      statement: "Cache high‑cost deterministic work with bounded TTL."
     - id: SELF_EXPLAINING
-      priority: 15
-      statement: "Names and structure should reduce need for comments."
+      priority: 15      statement: "Names and structure reduce need for comments."
     - id: ACCESSIBLE_FIRST
       priority: 16
-      statement: "Design outputs for broad readability and accessibility."
+      statement: "Design outputs for broad readability."
     - id: SQUINT_TEST
       priority: 17
-      statement: "The structure should make sense at a glance."
+      statement: "Structure should be clear at a glance."
     - id: JUST_ENOUGH
       priority: 18
-      statement: "Avoid overbuilding before proof of need."
-    - id: CHESTERTONS_FENCE
-      priority: 19
+      statement: "Avoid building before proof of need."
+    - id: CHESTERTONS_FENCE      priority: 19
       statement: "Understand why something exists before removing it."
     - id: GALLS_LAW
       priority: 20
-      statement: "Complex systems should evolve from simple working systems."
+      statement: "Complex systems evolve from simple working systems."
     - id: OCCAMS_RAZOR
-      priority: 21
-      statement: "Prefer simpler hypotheses and designs first."
-    - id: PARETO
-      priority: 22
+      priority: 21      statement: "Prefer simpler hypotheses and designs first."
+    - id: PARETO      priority: 22
       statement: "Ship the 20% that delivers 80% value first."
     - id: FINISH_FIRST
       priority: 23
@@ -92,8 +83,7 @@ philosophy:
   anti_patterns:
     - god_class
     - shotgun_surgery
-    - speculative_abstraction
-    - hidden_global_state
+    - speculative_abstraction    - hidden_global_state
     - duplicate_logic
     - n_plus_one_queries
     - silent_rescue
@@ -130,60 +120,48 @@ ux:
   nielsen_heuristics:
     - id: SYSTEM_STATUS
       priority: 1
-      statement: "Always keep the user informed about what is happening through timely feedback."
-      code_mapping: "Progress indicators, streaming output, non-silent background operations."
+      statement: "Keep users informed of progress through timely feedback."
     - id: REAL_WORLD_MATCH
       priority: 2
-      statement: "Speak the user's language. Match concepts to their mental model, not the system's internals."
-      code_mapping: "Error messages in plain language; command names matching intent, not implementation."
+      statement: "Speak the user's language; match mental models, not internals."
     - id: USER_CONTROL
       priority: 3
-      statement: "Support undo and emergency exits. Users make mistakes."
-      code_mapping: "Every write operation must be reversible. Undo stack. Dry-run modes."
+      statement: "Support undo and emergency exits; users make mistakes."
     - id: CONSISTENCY
       priority: 4
-      statement: "Follow conventions. Same word means same thing everywhere."
-      code_mapping: "Uniform return types, consistent error shapes, one naming convention throughout."
+      statement: "Follow conventions; same word means same thing everywhere."
     - id: ERROR_PREVENTION
       priority: 5
-      statement: "Design to prevent problems before they occur. Confirm destructive actions."
-      code_mapping: "Guard clauses, validation at boundaries, governor checks before writes."
+      statement: "Prevent problems; confirm destructive actions."
     - id: RECOGNITION_NOT_RECALL
       priority: 6
-      statement: "Minimize memory load. Make options visible. Don't require users to remember context."
-      code_mapping: "Self-documenting APIs, --help text, named keyword arguments over positional."
+      statement: "Minimize memory load; make options visible."
     - id: FLEXIBILITY
       priority: 7
-      statement: "Serve both novices and experts. Accelerators for power users."
-      code_mapping: "Short commands with sensible defaults; full flags for expert control."
+      statement: "Serve novices and experts; provide accelerators for power users."
     - id: AESTHETIC_MINIMALISM
       priority: 8
-      statement: "Don't show irrelevant or rarely needed information. Every element must earn its place."
-      code_mapping: "Quiet by default, verbose on request. No noise in logs or output."
+      statement: "Show only relevant information; every element must earn its place."
     - id: ERROR_RECOVERY
       priority: 9
-      statement: "Error messages must name the problem and suggest a fix in plain language."
-      code_mapping: "Result.err messages include what failed and what to do next."
+      statement: "Error messages name the problem and suggest a fix in plain language."
     - id: HELP_AND_DOCS
-      priority: 10
-      statement: "When help is needed it must be easy to find, concrete, and task-focused."
-      code_mapping: "/help command, inline examples, not abstract reference docs."
+      priority: 10      statement: "When help is needed it must be easy to find, concrete, and task‑focused."
 
 # Clean Code — Robert C. Martin
 # Principles beyond SOLID that shape method/class design at the micro level.
 clean_code:
   - id: ONE_ABSTRACTION_LEVEL
-    statement: "Each function should operate at a single level of abstraction. No mixing high-level policy with low-level detail."
+    statement: "Each function operates at a single level of abstraction; no mixing high‑level policy with low‑level detail."
   - id: NEWSPAPER_METAPHOR
-    statement: "Code reads top-to-bottom. Important declarations first, implementation detail below."
+    statement: "Code reads top‑to‑bottom; important declarations first, implementation detail below."
   - id: STEPDOWN_RULE
     statement: "Each function calls only functions one abstraction level below it."
   - id: BOUNDARY_ISOLATION
-    statement: "Third-party code is wrapped at the edge. It never leaks into the domain."
+    statement: "Third‑party code is wrapped at the edge; it never leaks into the domain."
   - id: CLEAN_TESTS
-    statement: "Tests are first-class code: one concept per test, no production logic in tests."
-  - id: NO_MAGIC
-    statement: "No unexplained constants, flags, or mode switches. Everything is named."
+    statement: "Tests are first‑class code; one concept per test, no production logic in tests."
+  - id: NO_MAGIC    statement: "Eliminate unexplained constants, flags, or mode switches; everything is named."
 
 # Refactoring — Martin Fowler
 # Named code smells that each map to a specific extraction or restructuring.
@@ -191,13 +169,13 @@ refactoring_smells:
   - id: PRIMITIVE_OBSESSION
     statement: "Replace repeated raw primitives (strings, ints as IDs) with value objects."
   - id: MESSAGE_CHAIN
-    statement: "a.b.c.d breaks Law of Demeter — talk to immediate collaborators only."
+    statement: "a.b.c.d breaks Law of Demeter — talk only to immediate collaborators."
   - id: MIDDLE_MAN
     statement: "A class delegating most methods to another should be eliminated or renamed."
   - id: LAZY_CLASS
     statement: "A class too small to justify its existence should be inlined."
   - id: TEMP_FIELD
-    statement: "Instance variables set only in some execution paths are confusing — extract object."
+    statement: "Instance variables set only in some paths are confusing — extract object."
   - id: DIVERGENT_CHANGE
     statement: "A class changed for multiple unrelated reasons violates SRP — split it."
   - id: SHOTGUN_SURGERY
@@ -207,4 +185,4 @@ refactoring_smells:
   - id: ALTERNATIVE_CLASSES
     statement: "Two classes doing the same thing under different names must be unified."
   - id: SPECULATIVE_GENERALITY
-    statement: "Code written for hypothetical future needs that is never used — remove it."
+    statement: "Remove code written for hypothetical needs that is never used."

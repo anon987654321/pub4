@@ -1,22 +1,16 @@
-<!--- this file is synced from dry-rb/template-gem project -->
-[gem]: https://rubygems.org/gems/dry-logic
-[actions]: https://github.com/dry-rb/dry-logic/actions
+# dry-logic
 
-# dry-logic [![Gem Version](https://badge.fury.io/rb/dry-logic.svg)][gem] [![CI Status](https://github.com/dry-rb/dry-logic/workflows/CI/badge.svg)][actions]
+[![Gem Version](https://badge.fury.io/rb/dry-logic.svg)](https://rubygems.org/gems/dry-logic)
+[![CI Status](https://github.com/dry-rb/dry-logic/actions/workflows/CI/badge.svg)](https://github.com/dry-rb/dry-logic/actions)
 
-## Links
+## Docs
 
-* [User documentation](https://dry-rb.org/gems/dry-logic)
-* [API documentation](http://rubydoc.info/gems/dry-logic)
-* [Forum](https://discourse.dry-rb.org)
+* User: https://dry-rb.org/gems/dry-logic
+* API: http://rubydoc.info/gems/dry-logic
+* Forum: https://discourse.dry-rb.org
 
-## Supported Ruby versions
+## Ruby
 
-This library officially supports the following Ruby versions:
+Supports MRI >= 3.1 and JRuby >= 9.4 (CI tests MRI only).
 
-* MRI `>= 3.1`
-* jruby `>= 9.4` (not tested on CI)
-
-## License
-
-See `LICENSE` file.
+## LicenseSee LICENSE.

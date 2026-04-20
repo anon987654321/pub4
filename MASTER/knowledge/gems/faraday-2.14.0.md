@@ -1,67 +1,29 @@
-# [![Faraday](./docs/_media/home-logo.svg)][website]
+# Faraday
 
-[![Gem Version](https://badge.fury.io/rb/faraday.svg)](https://rubygems.org/gems/faraday)
-[![GitHub Actions CI](https://github.com/lostisland/faraday/workflows/CI/badge.svg)](https://github.com/lostisland/faraday/actions?query=workflow%3ACI)
+[![Gem Version](https://badge.fury.io/rb/faraday.svg)](https://rubygems.org/gems/faraday)  
+[![GitHub Actions CI](https://github.com/lostisland/faraday/actions/workflows/CI/badge.svg)](https://github.com/lostisland/faraday/actions?query=workflow%3ACI)  
 [![GitHub Discussions](https://img.shields.io/github/discussions/lostisland/faraday?logo=github)](https://github.com/lostisland/faraday/discussions)
 
-Faraday is an HTTP client library abstraction layer that provides a common interface over many
-adapters (such as Net::HTTP) and embraces the concept of Rack middleware when processing the request/response cycle.
-Take a look at [Awesome Faraday][awesome] for a list of available adapters and middleware.
+Faraday is an HTTP client library that provides a unified interface for multiple adapters (e.g., Net::HTTP) and uses Rack middleware to process request/response cycles.
 
 ## Why use Faraday?
 
-Faraday gives you the power of Rack middleware for manipulating HTTP requests and responses,
-making it easier to build sophisticated API clients or web service libraries that abstract away
-the details of how HTTP requests are made.
-
-Faraday comes with a lot of features out of the box, such as:
-* Support for multiple adapters (Net::HTTP, Typhoeus, Patron, Excon, HTTPClient, and more)
-* Persistent connections (keep-alive)
-* Parallel requests
-* Automatic response parsing (JSON, XML, YAML)
-* Customization of the request/response cycle with middleware
-* Support for streaming responses
-* Support for uploading files
-* And much more!
-
-## Getting Started
-
-The best starting point is the [Faraday Website][website], with its introduction and explanation.
-
-Need more details? See the [Faraday API Documentation][apidoc] to see how it works internally, or take a look at [Advanced techniques for calling HTTP APIs in Ruby](https://mattbrictson.com/blog/advanced-http-techniques-in-ruby) blog post from [@mattbrictson](https://github.com/mattbrictson) 🚀
+- Supports multiple adapters (Net::HTTP, Typhoeus, Patron, Excon, HTTPClient, etc.)  
+- Enables Rack middleware for request/response manipulation  
+- Offers persistent connections (keep‑alive)  
+- Provides parallel request execution  
+- Parses responses automatically (JSON, XML, YAML)  
+- Streams responses and supports file uploads  
+- Facilitates building sophisticated API clients
 
 ## Supported Ruby versions
 
-This library aims to support and is [tested against][actions] the currently officially supported Ruby
-implementations. This means that, even without a major release, we could add or drop support for Ruby versions,
-following their [EOL](https://endoflife.date/ruby).
-Currently that means we support Ruby 3.0+
+The library supports and tests against officially supported Ruby implementations. Currently, Ruby 3.0+ is supported. If a feature fails on a supported version, it is a bug. The library may function on other versions but will not receive official support.
 
-If something doesn't work on one of these Ruby versions, it's a bug.
+## Contributing
 
-This library may inadvertently work (or seem to work) on other Ruby
-implementations and versions, however support will only be provided for the versions listed
-above.
-
-If you would like this library to support another Ruby version, you may
-volunteer to be a maintainer. Being a maintainer entails making sure all tests
-run and pass on that implementation. When something breaks on your
-implementation, you will be responsible for providing patches in a timely
-fashion. If critical issues for a particular implementation exist at the time
-of a major release, support for that Ruby version may be dropped.
-
-## Contribute
-
-Do you want to contribute to Faraday?
-Open the issues page and check for the `help wanted` label!
-But before you start coding, please read our [Contributing Guide][contributing]
+To contribute, view issues marked `help wanted`. Before coding, read the [Contributing Guide][contributing].
 
 ## Copyright
 
-&copy; 2009 - 2023, the Faraday Team. Website and branding design by [Elena Lo Piccolo](https://elelopic.design).
-
-[awesome]: https://github.com/lostisland/awesome-faraday/#adapters
-[website]: https://lostisland.github.io/faraday
-[contributing]: https://github.com/lostisland/faraday/blob/main/.github/CONTRIBUTING.md
-[apidoc]: https://www.rubydoc.info/github/lostisland/faraday
-[actions]: https://github.com/lostisland/faraday/actions
+© 2009‑2023, the Faraday Team. Website and branding design by [Elena Lo Piccolo](https://elelopic.design).

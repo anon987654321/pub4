@@ -1,24 +1,9 @@
-# Action Cable – Integrated WebSockets for \Rails
+# Action Cable – Integrated WebSockets for Rails
 
-Action Cable seamlessly integrates WebSockets with the rest of your \Rails application.
-It allows for real-time features to be written in Ruby in the same style
-and form as the rest of your \Rails application, while still being performant
-and scalable. It's a full-stack offering that provides both a client-side
-JavaScript framework and a server-side Ruby framework. You have access to your full
-domain model written with Active Record or your ORM of choice.
+Action Cable integrates WebSockets with Rails applications. It enables real-time features written in Ruby using the same style as the rest of Rails, delivering performance and scalability. The offering includes a JavaScript client framework and a Ruby server framework, granting access to your domain model (Active Record or another ORM).
 
-You can read more about Action Cable in the [Action Cable Overview](https://guides.rubyonrails.org/action_cable_overview.html) guide.
+Read the [Action Cable Overview](https://guides.rubyonrails.org/action_cable_overview.html) for more information.
 
-## Support
-
-API documentation is at:
-
-* https://api.rubyonrails.org
-
-Bug reports for the Ruby on \Rails project can be filed here:
-
-* https://github.com/rails/rails/issues
-
-Feature requests should be discussed on the rubyonrails-core forum here:
-
-* https://discuss.rubyonrails.org/c/rubyonrails-core
+API documentation: https://api.rubyonrails.org  
+Bug reports: https://github.com/rails/rails/issues  
+Feature requests: https://discuss.rubyonrails.org/c/rubyonrails-core

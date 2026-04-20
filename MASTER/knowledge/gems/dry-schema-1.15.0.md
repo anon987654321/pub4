@@ -1,9 +1,12 @@
-<!--- This file is synced from hanakai-rb/repo-sync -->
+<!-- This fileis synced from hanakai-rb/repo-sync -->
 
 [rubygem]: https://rubygems.org/gems/dry-schema
 [actions]: https://github.com/dry-rb/dry-schema/actions
 
-# dry-schema [![Gem Version](https://badge.fury.io/rb/dry-schema.svg)][rubygem] [![CI Status](https://github.com/dry-rb/dry-schema/workflows/CI/badge.svg)][actions]
+# dry-schema
+
+[![Gem Version](https://badge.fury.io/rb/dry-schema.svg)][rubygem]
+[![CI Status](https://github.com/dry-rb/dry-schema/actions/workflows/CI/badge.svg)][actions]
 
 ## Links
 
@@ -14,4 +17,3 @@
 ## License
 
 See `LICENSE` file.
-
