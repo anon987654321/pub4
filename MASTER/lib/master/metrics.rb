@@ -5,8 +5,8 @@ require "json"
 module Master
   class Metrics
     METRICS_PREFIX = "metrics0".freeze
-    DECISION_LATENCY_MS_THRESHOLD = 5_000
-    MAX_DIFF_SIZE_LINES = 200
+    MAX_DIFF_SIZE_LIMIT = 200
+    MAX_DIFF_SIZE_LINES = MAX_DIFF_SIZE_LIMIT
     ROLLBACK_RATE_THRESHOLD = 0.15
 
     def initialize(root:, event_bus: nil)
