@@ -5,16 +5,19 @@ require "json"
 
 module Master
   module Tools
-    class WebSearch      TIER         = :guarded
-      NAME         = "web_search"
-      DESCRIPTION  = "Search DuckDuckGo instant answers API."
-      ENDPOINT     = "https://api.duckduckgo.com/"
-      TIMEOUT      = 10
-      MAX_QUERY_CHARS = 300
-      MAX_TOPICS   = 5
+    class WebSearch      TIER          = :guarded
+      NAME          = "web_search"
+      DESCRIPTION   = "Search DuckDuckGo instant answers API."
+      ENDPOINT      = "https://api.duckduckgo.com/"
+      TIMEOUT       = 10
+
+      # Named constant for query character limit to avoid magic numbers      QUERY_CHAR_LIMIT = 300
+      MAX_QUERY_CHARS  = QUERY_CHAR_LIMIT
+      MAX_TOPICS       = 5
 
       def initialize(governor:, event_bus: nil)
-        @governor = governor        @bus      = event_bus
+        @governor = governor
+        @bus      = event_bus
       end
 
       def call(query:)
