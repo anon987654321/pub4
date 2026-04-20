@@ -17,7 +17,8 @@ WEB_URL     = "http://localhost:10002".freeze
 
 FREE_MEM_MB = begin
   line = `vmstat`.lines.last.to_s
-  line.split[4].to_i / 1024  # fre column is in KB on OpenBSD
+  fre = line.split[4].to_s
+  fre.end_with?("M") ? fre.to_i : fre.to_i / 1024  # OpenBSD vmstat: MB suffix or raw KB
 rescue
   999
 end
@@ -115,7 +116,7 @@ class TestBrowserUI < Minitest::Test
     pg.network.wait_for_idle
     data = JSON.parse(pg.evaluate("document.body.textContent"))
     assert data.key?("model"),     "metrics should include 'model'"
-    assert data.key?("token_est"), "metrics should include 'token_est'"
+    assert data.key?("tokens"), "metrics should include 'tokens'"
   rescue JSON::ParserError => e
     flunk "metrics returned invalid JSON: #{e.message}"
   ensure
