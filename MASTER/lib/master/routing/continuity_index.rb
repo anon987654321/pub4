@@ -14,7 +14,7 @@ module Master
       def fallback_models
         return [] unless enabled?
 
-        [openrouter_latest, replicate_latest, ferrum_latest].flatten.compact.uniq
+        [openrouter_latest, ferrum_latest].flatten.compact.uniq
       end
 
       private
@@ -27,9 +27,6 @@ module Master
         data.dig("continuity", "openrouter", "free_latest").to_a
       end
 
-      def replicate_latest
-        data.dig("continuity", "replicate", "free_latest").to_a
-      end
 
       def ferrum_latest
         data.dig("continuity", "ferrum_web_chat", "free_latest").to_a
