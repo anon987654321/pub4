@@ -57,7 +57,11 @@ module Master
         [ /\b(?:hva\s+husker\s+du(?:\s+om\s+([\w\s]+))?|
                vis\s+(?:min\s+)?hukommelse|husk\s+([\w_]+=.+))\b/ix,  "memory"   ],
 
-        # tokens
+# dreams / memory consolidation
+[ /\b(?:dreams?|consolidate?\s+memor(?:y|ies)|memory\s+consolidat|
+       dream\s+mode|promote\s+memor(?:y|ies))\b/ix,           "dreams"   ],
+
+# tokens
         [ /\b(?:token\s*count|how\s+many\s+tokens?|context\s+size|
                token\s+usage|how\s+much\s+context|
                hvor\s+mange\s+token|token\s*antall)\b/ix,              "tokens"   ],
@@ -85,8 +89,7 @@ module Master
         [ /\b(?:which\s+model|current\s+model|what\s+model\s+are\s+you|
                what\s+(?:llm|ai|model)\s+(?:are\s+you\s+using|is\s+this))\b/ix,  "model" ],
 
-        # scan
-        [ /\b(?:scan|lint|check\s+(?:code|violations?)|run\s+scan)\b/ix, "scan" ],
+        [ /\b(?:scan|lint|check\s+(?:code|violations?)|run\s+scan)(?:\s+(deep))?\b/ix, "scan" ],
 
         # dmesg
         [ /\b(?:show\s+(?:logs?|events?)|system\s+log|dmesg|
@@ -120,8 +123,12 @@ module Master
           msg.match?(/\b(?:off|disable|stop|av|skru\s+av)\b/i) ? "off" : "on"
         when "memory"
           match.captures.compact.first.to_s.strip
+        when "dreams"
+          match.captures.compact.first&.strip.to_s
         when "persona"
           (match[1] || match[2] || match[3]).to_s.strip
+        when "scan"
+          match[1]&.strip.to_s
         else
           ""
         end

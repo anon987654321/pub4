@@ -55,7 +55,51 @@ module Master
       scored.sort_by { |e| -e[:score] }.first(top_n)
     end
 
-    private
+# Three-phase memory consolidation inspired by OpenClaw dreaming.
+# Light: score. Deep: archive stale. REM: LLM summary if agent given.
+def consolidate!(agent: nil)
+  return "nothing to consolidate" if @store.empty?
+
+  now      = Time.now.to_i
+  entries  = @store.reject { |k, _| k.to_s.start_with?("archive/") }
+  archived = 0
+
+  scored = entries.map do |key, data|
+    ts    = data.is_a?(Hash) ? data["ts"].to_i : 0
+    value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
+    age_d = (now - ts) / 86_400.0
+    { key: key, value: value, score: 1.0 / (1.0 + age_d / 30.0) }
+  end
+
+  scored.each do |entry|
+    next if entry[:key] == "_consolidated_summary"
+    next unless entry[:score] < 0.33
+
+    @store["archive/#{entry[:key]}"] = @store.delete(entry[:key])
+    archived += 1
+  end
+
+  if agent
+    active_text = @store
+      .reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
+      .map    { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
+      .join("\n")
+
+    unless active_text.strip.empty?
+      summary = agent.ask_once(
+        "Summarize in 2 concise sentences, preserving all key facts:\n#{active_text}"
+      )
+      remember("_consolidated_summary", summary.strip)
+    end
+  end
+
+  persist
+  "dreaming: #{entries.size} entries checked, #{archived} archived"
+rescue StandardError => e
+  "consolidation error: #{e.message}"
+end
+
+private
 
     def load_store
       return {} unless File.exist?(@path)

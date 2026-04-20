@@ -95,6 +95,8 @@ module Master
       Stages::Render.new(renderer:)
     ]
 
+    ContextWindow.new(session:, agent:, model_context: 200_000).check_and_compact!
+
     pipeline = Pipeline.new(stages)
 
     {
@@ -118,7 +120,7 @@ module Master
     elsif ENV["ANTHROPIC_API_KEY"].to_s.length > 10
       "claude-sonnet-4-6"
     elsif ENV["OPENROUTER_API_KEY"].to_s.length > 10
-      "anthropic/claude-sonnet-4-5"
+      "anthropic/claude-sonnet-4-6"
     elsif ENV["OPENAI_API_KEY"].to_s.length > 10
       "gpt-4o"
     else
@@ -218,7 +220,17 @@ module Master
     "persona: #{config["persona"] || "dark_malay"} — available: #{names.join(", ")}"
   end
 },
-"sweep" => ->(ctx) {
+"autoloop" => ->(ctx) {
+      max    = ctx[:args].to_s.strip.to_i
+      max    = AutoLoop::MAX_CYCLES if max <= 0
+      looper = AutoLoop.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
+      log    = []
+      result = looper.run(max_cycles: max) { |cycle, violations|
+        log << "  cycle #{cycle}: #{violations.size} violation(s)"
+      }
+      ([result.ok? ? result.value! : result.message] + log).join("\n")
+    },
+    "sweep" => ->(ctx) {
 
         arg     = ctx[:args].to_s.strip
         target  = arg.empty? ? root : File.expand_path(arg, root)
@@ -251,7 +263,21 @@ module Master
           val ? "#{arg}: #{val}" : "(not found: #{arg})"
         end
       },
-      "snapshot" => ->(ctx) {
+      "dreams" => ->(ctx) {
+      arg = ctx[:args].to_s.strip
+      if arg == "consolidate"
+        memory.respond_to?(:consolidate!) ? memory.consolidate!(agent:) : "dreaming not available"
+      else
+        entries = memory.all
+        archived = entries.count { |k, _| k.to_s.start_with?("archive/") }
+        active   = entries.count { |k, _| !k.to_s.start_with?("archive/") }
+        summary  = memory.recall("_consolidated_summary")
+        lines    = ["active: #{active} memories, archived: #{archived}"]
+        lines   << "last consolidation: #{summary}" if summary
+        lines.join("\n")
+      end
+    },
+    "snapshot" => ->(ctx) {
         stamp  = Time.now.strftime("%Y%m%d_%H%M%S")
         out    = File.expand_path("~/master_snapshot_#{stamp}.md")
         lang_map = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
