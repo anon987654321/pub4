@@ -52,6 +52,7 @@ module Master
       end
 
       def should_run?(ctx)
+        return false if ctx[:intent] == :command
         @enabled || dangerous_request?(ctx) || dangerous_tool?(ctx) || multi_file_diff?(ctx)
       end
 

@@ -1,9 +1,6 @@
-```xml
-<Option>
-    <Evaluate>{evaluate}</Evaluate>
-    <Memory>{memory}</Memory>
-    <Thought>{thought}</Thought>
-    <Final-Answer>{final_answer}</Final-Answer>
-    <Route>Answer</Route>
-</Option>
-```
+**Option**
+-**Evaluate**: `{evaluate}`
+- **Memory**: `{memory}`
+- **Thought**: `{thought}`
+- **Final Answer**: `{final_answer}`
+- **Route**: Answer

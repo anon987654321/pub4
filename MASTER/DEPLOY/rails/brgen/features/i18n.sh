@@ -2,12 +2,19 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-typeset -r APP_DIR="/home/brgen/app"
+APP_DIR="/home/brgen/app"
+LOCALE_DIR="${APP_DIR}/config/locales"
+MSG_START="==> [i18n] Norwegian (nb) + English (en) locales"
 
-echo "==> [i18n] Norwegian (nb) + English (en) locales"
-cd "$APP_DIR"
+# Fail fast if locale directory missing or not writable
+[[ -d "$LOCALE_DIR" ]] || { echo "Error: $LOCALE_DIR not found" >&2; exit 1; }
+[[ -w "$LOCALE_DIR" ]] || { echo "Error: $LOCALE_DIR not writable" >&2; exit 1; }
 
-cat > config/locales/nb.yml << 'YAML'
+echo "$MSG_START"
+
+generate_locale() {
+  local lang=$1
+  case $lang in    nb) YAML='
 nb:
   brgen:
     app_name: "BRGEN"
@@ -29,9 +36,8 @@ nb:
     comment_created: "Kommentar ble lagt til."
     comment_deleted: "Kommentar ble slettet."
     unauthorized: "Ingen tilgang."
-YAML
-
-cat > config/locales/en.yml << 'YAML'
+' ;;
+    en) YAML='
 en:
   brgen:
     app_name: "BRGEN"
@@ -53,6 +59,13 @@ en:
     comment_created: "Comment added."
     comment_deleted: "Comment deleted."
     unauthorized: "Not authorized."
-YAML
+' ;;
+    *) return 1 ;;
+  esac
 
+  printf "%s\n" "$YAML" >"$LOCALE_DIR/${lang}.yml"
+}
+
+generate_locale nb
+generate_locale en
 echo "==> [i18n] done"

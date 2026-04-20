@@ -1,23 +1,20 @@
-# Language-specific beauty axioms for MASTER2's refactoring engine
-# Detection rules + design philosophy across all supported languages
-
-ruby:
+# Language‑specific beautyaxioms for MASTER2's refactoring engine# Detection rules + design philosophy across supported languagesruby:
   - id: prefer_each_with_object
-    name: "Prefer each_with_object over inject for hash building"
-    detect: '\.(inject|reduce)\(\s*\{\s*\}\s*\)'
-    suggest: "Use .each_with_object({}) instead — eliminates mutable-return footgun"
+    name: "Prefer each_with_object over inject/build for hashes"
+    detect: '\.(inject|reduce)\s*\(\s*\{\s*\}\s*\)'
+    suggest: "Use .each_with_object({})"
     severity: warning
     autofix: false
 
   - id: guard_clause_over_nested
-    name: "Favor guard clauses over nested conditionals"
+    name: "Prefer guard clauses over nested conditionals"
     detect: '^\s*def \w+.*\n\s*if .+\n(?:.*\n)*?\s*else\n(?:.*\n)*?\s*end\s*$'
     suggest: "Flatten to: return ... unless condition"
     severity: info
     autofix: false
 
   - id: safe_navigation_chain
-    name: "Use &. safe navigation consistently"
+    name: "Use safe navigation consistently"
     detect: '(\w+)\s*&&\s*\1\.\w+'
     suggest: "Rewrite to x&.foo&.bar"
     severity: warning
@@ -30,8 +27,7 @@ ruby:
     severity: warning
     autofix: true
 
-  - id: module_function_over_extend_self
-    name: "Prefer module_function where appropriate"
+  - id: module_function_over_extend_self    name: "Prefer module_function where appropriate"
     detect: 'extend self\n.*class << self'
     suggest: "Consider module_function for cleaner intent"
     severity: info
@@ -52,16 +48,16 @@ ruby:
     autofix: true
 
   - id: include_comparable
-    name: "Use Comparable instead of manual comparison methods"
+    name: "Include Comparable instead of manual comparison methods"
     detect: 'def <\(|def >\(|def <=>\('
-    suggest: "include Comparable and define <=> only"
+    suggest: "Include Comparable and define <=> only"
     severity: info
     autofix: false
 
   - id: rescue_on_def
-    name: "Move begin/rescue wrapping entire method to def line"
+    name: "Wrap method body in def line rescue"
     detect: '^\s*def \w+.*\n\s*begin\n(?:.*\n)*?\s*rescue'
-    suggest: "Put rescue directly on the def block"
+    suggest: "Place rescue directly on the def block"
     severity: info
     autofix: false
 
@@ -80,14 +76,14 @@ ruby:
     autofix: true
 
   - id: transform_keys_values
-    name: "Use transform_keys/transform_values over manual hash iteration"
+    name: "Prefer transform_keys/transform_values over manual hash iteration"
     detect: '\.each_with_object\(\{\}\)\s*\{\s*\|\(k,\s*v\),\s*h\|'
-    suggest: "Use .transform_values { |v| ... } (Ruby 2.5+)"
+    suggest: "Use .transform_values { |v| ... } (Ruby ≥2.5)"
     severity: info
     autofix: false
 
   - id: use_then_pipeline
-    name: "Use .then for single-line pipeline transforms"
+    name: "Use .then for single‑line pipeline transforms"
     detect: '(\w+)\s*=\s*\w+\(.*\)\n\s*\w+\(\1\)'
     suggest: "Chain with .then { |r| next_step(r) }"
     severity: info
@@ -96,22 +92,21 @@ ruby:
   - id: hash_fetch_over_bracket_or
     name: "Prefer Hash#fetch over [] with ||"
     detect: '\w+\[:\w+\]\s*\|\|'
-    suggest: "Use hash.fetch(:key, default) for nil-vs-false safety"
-    severity: info
-    autofix: false
+    suggest: "Use hash.fetch(:key, default) for nil‑vs‑false safety"
+    severity: info    autofix: false
 
   - id: private_section_placement
     name: "Enforce single private section at bottom"
     detect: 'private\s+:\w+'
-    suggest: "Use a single 'private' keyword with methods below it"
+    suggest: "Use a single 'private' keyword followed by methods"
     severity: info
     autofix: false
 
 rails:
   - id: detect_n_plus_one
-    name: "Detect N+1 queries by static pattern"
+    name: "Detect N+1 queries via static pattern"
     detect: '\.(each|map|collect)\s*(do|\{).*\.\w+\.\w+'
-    suggest: "Add .includes(:association) to prevent N+1"
+    suggest: "Add .includes(:association) to avoid N+1"
     severity: warning
     autofix: false
 
@@ -141,9 +136,7 @@ rails:
     detect: '\.update_attribute\('
     suggest: "update_attribute skips validations — use update!"
     severity: error
-    autofix: true
-
-  - id: callback_extraction
+    autofix: true  - id: callback_extraction
     name: "Extract long callbacks to service objects"
     detect: '(after_create|before_save|after_save)\s+:\w+(?=.*\n(?:.*\n){5,})'
     suggest: "Extract callback logic >5 lines to a service object"
@@ -151,14 +144,14 @@ rails:
     autofix: false
 
   - id: frozen_string_literal_auto
-    name: "Auto-add frozen_string_literal magic comment"
+    name: "Auto‑add frozen_string_literal magic comment"
     detect: '\A(?!# frozen_string_literal)'
     suggest: "Add # frozen_string_literal: true as first line"
     severity: warning
     autofix: true
 
   - id: pluck_over_map
-    name: "Prefer pluck over map for single-column selects"
+    name: "Prefer pluck over map for single‑column selects"
     detect: '\.\w+\.map\(&:\w+\)'
     suggest: "Use .pluck(:column) to avoid AR object instantiation"
     severity: info
@@ -169,22 +162,15 @@ rails:
     detect: 'def (\w+)\n\s*\w+\.\1\n\s*end'
     suggest: "Use delegate :method, to: :association"
     severity: info
-    autofix: false
-
-  - id: strong_params_exhaustive
-    name: "Enforce strong parameters exhaustiveness"
+    autofix: false  - id: strong_params_exhaustive    name: "Enforce strong parameters exhaustiveness"
     detect: '\.permit\('
-    suggest: "Cross-reference .permit() list with schema.rb columns"
+    suggest: "Cross‑reference .permit() list with schema.rb columns"
     severity: info
-    autofix: false
-
-zsh:
-  - id: quote_variables
-    name: "Always quote $variables"
-    detect: '(?<!["\x27\\])\$\w+(?!["\x27])'
+    autofix: falsezsh:
+  - id: quote_variables    name: "Quote all $variables"
+    detect: '(?<!["'"'"'])\$\w+(?!["'"'"'])'
     suggest: 'Use "$VAR" to prevent word splitting and glob expansion'
-    severity: error
-    autofix: true
+    severity: error    autofix: true
 
   - id: double_bracket_test
     name: "Use [[ ]] over [ ] for conditionals"
@@ -201,13 +187,11 @@ zsh:
     autofix: true
 
   - id: local_in_functions
-    name: "Use local for function variables"
+    name: "Declare local variables inside functions"
     detect: '^\w+\(\)\s*\{[^}]*\n\s+\w+='
     suggest: "Declare with 'local' to prevent global leaks"
     severity: warning
-    autofix: false
-
-  - id: parameter_expansion_default
+    autofix: false  - id: parameter_expansion_default
     name: "Prefer ${var:-default} over if/then"
     detect: 'if \[ -z "\$\w+" \]; then\s+\w+=\w+'
     suggest: 'Use ${var:-default} for concise defaults'
@@ -215,7 +199,7 @@ zsh:
     autofix: false
 
   - id: strict_mode
-    name: "Use set -euo pipefail at script top"
+    name: "Add set -euo pipefail after shebang"
     detect: '^#!/.*(?:ba|z)sh\n(?!set -)'
     suggest: "Add 'set -euo pipefail' after shebang"
     severity: error
@@ -225,11 +209,10 @@ zsh:
     name: "Replace cat file | command with command < file"
     detect: 'cat\s+\S+\s*\|'
     suggest: "Use command < file (Useless Use of Cat)"
-    severity: info
-    autofix: true
+    severity: info    autofix: true
 
   - id: heredoc_for_multiline
-    name: "Use heredocs for multi-line strings"
+    name: "Use heredoc for multi‑line strings"
     detect: 'echo\s+".*"\n\s*echo\s+".*"\n\s*echo\s+"'
     suggest: "Use heredoc: cat <<'EOF'"
     severity: info
@@ -238,7 +221,7 @@ zsh:
 html_erb:
   - id: semantic_elements
     name: "Enforce semantic HTML5 elements"
-    detect: '<div\s+class="(header|footer|nav|main|sidebar|article|section)"'
+    detect: '<div\s+class="(header|footer|nav|main|sidebar|article|section|aside)"'
     suggest: "Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>"
     severity: warning
     autofix: true
@@ -246,23 +229,19 @@ html_erb:
   - id: img_alt_required
     name: "Require alt on every <img>"
     detect: '<img\s+(?![^>]*alt=)'
-    suggest: "Add alt= attribute (use alt=\"\" for decorative images)"
+    suggest: "Add alt= (use alt=\"\" for decorative images)"
     severity: error
     autofix: false
 
-  - id: button_over_anchor
-    name: "Prefer <button> over <a href=\"#\">"
-    detect: '<a\s+href=["'']#["'']'
+  - id: button_over_anchor    name: "Prefer <button> over <a href=\"#\">"
+    detect: '<a\s+href=["\']#["\']'
     suggest: "Use <button> for actions — accessible by default"
     severity: warning
-    autofix: false
-
-  - id: time_element
-    name: "Use <time datetime=\"\"> for dates"
+    autofix: false  - id: time_element
+    name: "Wrap dates in <time datetime=\"ISO8601\">"
     detect: '\d{4}-\d{2}-\d{2}(?!.*<time)'
-    suggest: "Wrap dates in <time datetime=\"ISO8601\">"
-    severity: info
-    autofix: false
+    suggest: "Use <time datetime=\"ISO8601\">date</time>"
+    severity: info    autofix: false
 
   - id: html_lang
     name: "Enforce lang attribute on <html>"
@@ -279,30 +258,26 @@ html_erb:
     autofix: false
 
   - id: erb_partials
-    name: "Use ERB partials for repeated blocks"
+    name: "Extract repeated ≥3‑line blocks to _partial.html.erb"
     detect: null
-    suggest: "Extract repeated ≥3-line blocks to _partial.html.erb"
+    suggest: "Use ERB partials for repeated blocks"
     severity: info
-    autofix: false
-
-  - id: content_tag_helpers
-    name: "Prefer content_tag/tag helpers over raw HTML in helpers"
-    detect: '["'']<\w+[^"'']*>["'']'
+    autofix: false  - id: html_tag_helpers
+    name: "Prefer tag/content_tag helpers over raw HTML in helpers"
+    detect: '["\']<\w+[^"\']*>["\']'
     suggest: "Use Rails tag() or content_tag() helpers"
     severity: info
-    autofix: false
-
-  - id: aria_on_interactive
-    name: "Enforce ARIA on non-semantic interactive elements"
+    autofix: false  - id: aria_on_interactive
+    name: "Enforce ARIA on non‑semantic interactive elements"
     detect: '<(div|span)\s+[^>]*onclick'
     suggest: "Add role= and tabindex= for accessibility"
     severity: warning
     autofix: false
 
   - id: lazy_loading_images
-    name: "Use loading=\"lazy\" on below-fold images"
+    name: "Add loading=\"lazy\" to below‑fold images"
     detect: '<img\s+(?![^>]*loading=)'
-    suggest: "Add loading=\"lazy\" for below-fold images"
+    suggest: "Add loading=\"lazy\" for below‑fold images"
     severity: info
     autofix: true
 
@@ -336,15 +311,14 @@ css_scss:
     autofix: false
 
   - id: mobile_first
-    name: "Enforce mobile-first media queries"
+    name: "Enforce mobile‑first media queries"
     detect: '@media\s*\(\s*max-width'
-    suggest: "Use min-width (mobile-first, progressive enhancement)"
+    suggest: "Use min-width (mobile‑first, progressive enhancement)"
     severity: warning
     autofix: false
 
-  - id: use_forward_over_import
-    name: "Replace @import with @use/@forward in SCSS"
-    detect: '@import\s+["\x27]'
+  - id: use_forward_over_import    name: "Replace @import with @use/@forward in SCSS"
+    detect: '@import\s+["\']'
     suggest: "@import is deprecated — use @use/@forward"
     severity: warning
     autofix: false
@@ -357,7 +331,7 @@ css_scss:
     autofix: false
 
   - id: is_where_selectors
-    name: "Use :is()/:where() for selector grouping"
+    name: "Use :is()/:where() for grouped selectors"
     detect: '(\.[a-z]+\s+\.\w+),\s*(\.[a-z]+\s+\.\w+),\s*(\.[a-z]+\s+\.\w+)'
     suggest: "Use :is(.a, .b, .c) .target for grouped selectors"
     severity: info
@@ -389,8 +363,7 @@ javascript:
     name: "Use optional chaining ?. over && chains"
     detect: '(\w+)\s*&&\s*\1\.\w+'
     suggest: "Rewrite to obj?.foo?.bar"
-    severity: warning
-    autofix: true
+    severity: warning    autofix: true
 
   - id: nullish_coalescing
     name: "Use ?? over || for defaults"
@@ -408,7 +381,7 @@ javascript:
 
   - id: template_literals
     name: "Use template literals over concatenation"
-    detect: '["'']\s*\+\s*\w+\s*\+\s*["'']'
+    detect: '["\']\s*\+\s*\w+\s*\+\s*["\']'
     suggest: "Use `Hello ${name}!` template literals"
     severity: warning
     autofix: true
@@ -418,9 +391,7 @@ javascript:
     detect: 'new\s+XMLHttpRequest'
     suggest: "Use the Fetch API with async/await"
     severity: warning
-    autofix: false
-
-  - id: array_from_over_slice
+    autofix: false  - id: array_from_over_slice
     name: "Use Array.from() or spread over slice.call"
     detect: 'Array\.prototype\.slice\.call'
     suggest: "Use Array.from(arrayLike) or [...arrayLike]"
@@ -435,7 +406,7 @@ javascript:
     autofix: false
 
   - id: destructuring
-    name: "Use destructuring for multi-property access"
+    name: "Use destructuring for multi‑property access"
     detect: 'const\s+\w+\s*=\s*\w+\.\w+;\s*\nconst\s+\w+\s*=\s*\w+\.\w+;'
     suggest: "Use const { a, b } = obj;"
     severity: info
@@ -452,7 +423,7 @@ universal:
   - id: meaningful_names
     name: "Name things for the reader"
     detect: '\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\b\s*='
-    suggest: "Use domain-specific names over generic placeholders"
+    suggest: "Use domain‑specific names over generic placeholders"
     severity: info
     autofix: false
 
@@ -463,22 +434,20 @@ universal:
     severity: info
     autofix: false
 
-  - id: fail_loudly
-    name: "Fail loudly with context"
+  - id: fail_loudly    name: "Fail loudly with context"
     detect: 'rescue\s*$|catch\s*\(\s*\)|except\s*:|catch\s*{}'
-    suggest: "Catch specific errors, log context, re-raise or return Result"
+    suggest: "Catch specific errors, log context, re‑raise or return Result"
     severity: warning
     autofix: false
 
   - id: vertical_proximity
-    name: "Related code should be adjacent"
+    name: "Keep related code adjacent"
     detect: null
-    suggest: "Called functions should be near their callers within the same file"
-    severity: info
-    autofix: false
+    suggest: "Place called functions near their callers within the same file"
+    severity: info    autofix: false
 
   - id: consistent_file_structure
-    name: "Consistent file structure order"
+    name: "Enforce consistent file structure order"
     detect: null
     suggest: "Order: magic comments → requires → module → constants → public → private → end"
     severity: info
@@ -492,67 +461,61 @@ universal:
     autofix: false
 
   - id: immutability_by_default
-    name: "Immutability by default"
+    name: "Prefer immutability by default"
     detect: null
-    suggest: "Prefer frozen/const/immutable forms — mutate only when necessary"
+    suggest: "Use frozen/const/immutable forms — mutate only when necessary"
     severity: info
     autofix: false
 
   - id: consistent_quoting
-    name: "Consistent string quoting within a file"
+    name: "Normalize string quoting within a file"
     detect: null
-    suggest: "Normalize to project convention (single or double quotes)"
+    suggest: "Adopt project convention (single or double quotes)"
     severity: info
-    autofix: false
-
-  - id: typographic_excellence
-    name: "Typographic excellence in user-facing text"
-    detect: '["'']\.\.\.["'']|["'']--["'']'
-    suggest: 'Use … (ellipsis), — (em dash), "" (curly quotes) in UI strings'
+    autofix: false  - id: typographic_excellence
+    name: "Use typographic excellence in UI strings"
+    detect: '["\']\.\.\.["\']|["\']--["\']'
+    suggest: 'Use … (ellipsis), — (em dash), "" (curly quotes) in UI text'
     severity: info
     autofix: true
 
   - id: progressive_disclosure
-    name: "Progressive disclosure in APIs and UIs"
+    name: "Apply progressive disclosure in APIs and UIs"
     detect: null
-    suggest: "Group >5 options into sub-commands or collapsible sections"
-    severity: info
-    autofix: false
+    suggest: "Group >5 options into sub‑commands or collapsible sections"
+    severity: info    autofix: false
 
   - id: dead_code_elimination
     name: "Eliminate dead/unreachable code"
     detect: '(return|exit|raise|throw)\s+.*\n\s*\w+'
     suggest: "Remove unreachable code after return/exit/raise/throw"
     severity: warning
-    autofix: true
-
-  - id: consistent_error_strategy
-    name: "Consistent error handling strategy per module"
+    autofix: true  - id: consistent_error_strategy
+    name: "Adopt consistent error handling per module"
     detect: null
-    suggest: "Don't mix Result objects, exceptions, and nil-returns in one module"
+    suggest: "Don't mix Result objects, exceptions, and nil‑returns in one module"
     severity: info
     autofix: false
 
   - id: trailing_commas
-    name: "Trailing commas in multi-line collections"
+    name: "Add trailing commas in multi‑line collections"
     detect: null
-    suggest: "Add trailing commas so adding elements produces one-line diffs"
+    suggest: "Add trailing commas to produce one‑line diffs when adding elements"
     severity: info
     autofix: true
 
   - id: whitespace_as_punctuation
-    name: "Whitespace as punctuation"
-    detect: '\n{4,}'
-    suggest: "One blank line between sections, never >2 consecutive blank lines"
+    name: "Use whitespace as punctuation"
+    detect: '\n{4,}"
+    suggest: "One blank line between sections; never >2 consecutive blank lines"
     severity: info
     autofix: true
 
   - id: small_files
-    name: "Files under 300 lines"
+    name: "Split files >300 lines at module boundaries"
     detect: null
-    suggest: "Split files >300 lines at module boundaries"
-    severity: warning
-    autofix: false
+    suggest: "Files under 300 lines are preferred"
+    severity: warning    autofix: false
 
 # ============================================================================
 # RUBY BEAUTY — Design philosophy (restored from master.yml v71.3.0)
@@ -561,21 +524,21 @@ universal:
 ruby_beauty:
   frozen_string_literals:
     rule: "# frozen_string_literal: true at top of every Ruby file"
-    rationale: "Performance gain, prevents accidental mutation"
+    rationale: "Performance gain; prevents accidental mutation"
   keyword_arguments:
     rule: "Use keyword args for methods with 2+ params"
     example: "def create(name:, email:, role: 'user')"
-    rationale: "Self-documenting, order-independent, default values"
+    rationale: "Self‑documenting; order‑independent; default values"
   safe_navigation:
     operator: "&."
     example: "user&.profile&.avatar_url"
-    rationale: "Prevents NoMethodError on nil, cleaner than &&"
+    rationale: "Prevents NoMethodError; cleaner than &&"
   string_interpolation:
     rule: 'Use "#{}" over concatenation'
-    rationale: "More readable, handles types automatically"
+    rationale: "More readable; handles types automatically"
   blocks_parens_braces:
-    rule: "Use {} for one-line, do/end for multi-line"
-    rationale: "Readability convention, visual distinction"
+    rule: "Use {} for one‑line, do/end for multi‑line"
+    rationale: "Readability convention; visual distinction"
   tell_dont_ask:
     rule: "Tell objects what to do, don't ask for data then act"
     antipattern: "if user.admin? then user.grant_access end"
@@ -584,7 +547,7 @@ ruby_beauty:
     rule: "Methods under 10 lines ideal, max 20"
     technique: "Extract till you drop"
   stepdown_rule:
-    rule: "Code reads like newspaper — most important first"
+    rule: "Code reads like a newspaper — most important first"
     structure: "Public methods → Private helpers → Implementation details"
   boy_scout_rule:
     rule: "Leave code better than you found it"
@@ -597,23 +560,23 @@ ruby_beauty:
 rails_doctrine:
   convention_over_configuration:
     rule: "Sensible defaults reduce decisions"
-    application: "Follow Rails conventions, don't fight the framework"
+    application: "Follow Rails conventions; don't fight the framework"
     benefit: "Shared mental model across Rails developers"
   programmer_happiness:
     rule: "Optimize for developer joy, not just performance"
-    application: "Beautiful APIs, minimal configuration, helpful errors"
+    application: "Beautiful APIs; minimal configuration; helpful errors"
   sharp_knives:
-    rule: "Trust developers with power tools, no guard rails"
+    rule: "Trust developers with power tools; no guard rails"
     responsibility: "With great power comes careful testing"
   integrated_systems:
     rule: "Solve whole problem, not assembled parts (Omakase)"
     application: "Use Rails stack: Hotwire, Turbo, Stimulus, Solid Queue"
     avoid: "Frankenstack of incompatible tools"
   monolith_first:
-    rule: "Start monolith, extract services when team >15"
+    rule: "Start monolith; extract services when team >15"
     rationale: "Microservices = distributed monolith for small teams"
   progress_over_stability:
-    rule: "Ship features, break things, iterate quickly"
+    rule: "Ship features; break things; iterate quickly"
     balance: "In production: stability over progress"
   beautiful_code:
     rule: "Code should be elegant, not just functional"
@@ -629,19 +592,19 @@ html_css_principles:
     elements: [header, nav, main, article, section, aside, footer]
     avoid: "div soup, span abuse"
   no_divitis:
-    rule: "Maximum 2 wrapper divs"
-    solution: "Use semantic elements, flexbox, grid"
+    rule: "Limit wrapper divs to two"
+    solution: "Prefer semantic elements, flexbox, grid"
   css_composition:
-    rule: "Prefer semantic component-level SCSS with BEM naming"
-    avoid: "Tailwind-style atomic CSS"
+    rule: "Prefer semantic component‑level SCSS with BEM naming"
+    avoid: "Tailwind‑style atomic CSS"
   modern_layout:
     techniques: [flexbox, grid, container_queries]
-    avoid: [floats, absolute_positioning_for_layout, tables_for_layout]
+    avoid: [floats, absolute positioning for layout, tables for layout]
   accessibility:
     requirements: [semantic_html, aria_labels, keyboard_navigation, color_contrast_4_5]
-    test: "Tab through page, use screen reader"
+    test: "Tab through page; use screen reader"
   mobile_first:
-    rule: "Base styles mobile, @media min-width for desktop"
+    rule: "Base styles mobile; @media min-width for desktop"
     pattern: "min-width media queries, not max-width"
 
 # ============================================================================
@@ -649,30 +612,29 @@ html_css_principles:
 # ============================================================================
 
 large_html_documents:
-  rationale: "Business plans, presentations, visualizations often require inline CSS/JS"
+  rationale: "Business plans, presentations, visualizations often need inline CSS/JS"
   document_types:
     business_plan:
       characteristics: [verbose, commented, external_libraries, print_friendly]
       formatting: preserve_readability
     production_app:
       characteristics: [minified, compressed, performance_critical]
-      formatting: minimal_whitespace
-  inline_css:
+      formatting: minimal_whitespace  inline_css:
     organization: "CSS variables → Resets → Layout → Components → Utilities"
     css_variables: "Define all colors/spacing/fonts in :root"
     modern_only: "Flexbox, grid, container queries — no floats or positioning hacks"
-    mobile_first: "Base styles mobile, min-width media queries for desktop"
-    performance: "will-change only on animating elements, CSS containment for sections"
+    mobile_first: "Base styles mobile; min-width media queries for desktop"
+    performance: "will-change only on animating elements; CSS containment for sections"
   inline_js:
     production: "Minified, compressed vars, no whitespace"
     development: "Readable, commented, structured: Config → Utils → Classes → Init → Events"
     es6: "const/let, arrow functions, destructuring, template literals"
     dom_safety: "Check element existence before manipulation"
-    memory: "Track timers in Set, clear on beforeunload"
-    event_delegation: "Add listeners to container, check event.target"
+    memory: "Track timers in Set; clear on beforeunload"
+    event_delegation: "Add listeners to container; check event.target"
   formatting_strategy:
-    production: "Minify JS/CSS, inline everything, optimize for size"
-    business_plan: "Readable formatting, comments, educational"
+    production: "Minify JS/CSS; inline everything; optimize for size"
+    business_plan: "Readable formatting; comments; educational"
     default: "Extract to separate files"
 
 # ============================================================================
@@ -686,4 +648,4 @@ norwegian:
     - "Avoid anglicisms"
     - "Active voice preferred"
     - "Plain language over academic"
-  style: "Omit needless words, be direct"
+  style: "Omit needless words; be direct"

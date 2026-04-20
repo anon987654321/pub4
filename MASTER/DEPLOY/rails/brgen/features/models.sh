@@ -2,59 +2,68 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-typeset -r APP_DIR="/home/brgen/app"
+APP_DIR="/home/brgen/app"
+MODEL_DIR="${APP_DIR}/app/models"
+CONCERN_DIR="${MODEL_DIR}/concerns"
+
+typeset -r APP_DIR MODEL_DIR CONCERN_DIR
+
 echo "==> [models] Core models + concerns"
-cd "$APP_DIR"
+
+mkdir -p "${CONCERN_DIR}"
+
+write_file() {
+  local path=$1; shift
+  cat > "${path}" "$@"
+}
+
+write_model() {
+  local rel_path=$1; shift
+  write_file "${MODEL_DIR}/${rel_path}.rb" "$@"
+}
 
 # Current
-cat > app/models/current.rb << 'RUBY'
+write_model "current" <<'RUBY'
 class Current < ActiveSupport::CurrentAttributes
   attribute :session
   attribute :user
-end
-RUBY
+endRUBY
 
 # Votable concern
-mkdir -p app/models/concerns
-cat > app/models/concerns/votable.rb << 'RUBY'
+write_model "concerns/votable" <<'RUBY'
 module Votable
   extend ActiveSupport::Concern
 
   included do
     has_many :votes, as: :votable, dependent: :destroy
-  end
-
-  def score         = votes.sum(:value)
-  def upvotes       = votes.where(value: 1).count
-  def downvotes     = votes.where(value: -1).count
-  def voted_by?(u)  = u && votes.find_by(user: u)&.value
-  def upvoted_by?(u)   = voted_by?(u) == 1
+  end  def score = votes.sum(:value)
+  def upvotes = votes.where(value: 1).count
+  def downvotes = votes.where(value: -1).count
+  def voted_by?(u) = u && votes.find_by(user: u)&.value
+  def upvoted_by?(u) = voted_by?(u) == 1
   def downvoted_by?(u) = voted_by?(u) == -1
 end
 RUBY
 
 # Vote
-cat > app/models/vote.rb << 'RUBY'
+write_model "vote" <<'RUBY'
 class Vote < ApplicationRecord
   belongs_to :user
-  belongs_to :votable, polymorphic: true
-
-  validates :value, inclusion: { in: [-1, 1] }
+  belongs_to :votable, polymorphic: true  validates :value, inclusion: { in: [-1, 1] }
   validates :user_id, uniqueness: { scope: [:votable_type, :votable_id] }
 
-  after_save    :update_author_karma
+  after_save :update_author_karma
   after_destroy :update_author_karma
 
   private
 
-  def update_author_karma
-    votable.user.update_karma! if votable.respond_to?(:user)
+  def update_author_karma    votable.user.update_karma! if votable.respond_to?(:user)
   end
 end
 RUBY
 
 # Post
-cat > app/models/post.rb << 'RUBY'
+write_model "post" <<'RUBY'
 class Post < ApplicationRecord
   include Votable
 
@@ -67,7 +76,7 @@ class Post < ApplicationRecord
   has_many :hashtags, through: :taggings
   has_many :mentions, dependent: :destroy
 
-  validates :title,   presence: true, length: { maximum: 300 }
+  validates :title, presence: true, length: { maximum: 300 }
   validates :content, length: { maximum: 40_000 }
 
   VOTE_SQL = Arel.sql("SUM(COALESCE(votes.value,0)) DESC, posts.created_at DESC")
@@ -83,13 +92,13 @@ end
 RUBY
 
 # Community
-cat > app/models/community.rb << 'RUBY'
+write_model "community" <<'RUBY'
 class Community < ApplicationRecord
   belongs_to :user, optional: true
 
   has_many :posts, dependent: :destroy
 
-  validates :name,        presence: true, uniqueness: true, length: { maximum: 100 }
+  validates :name, presence: true, uniqueness: true, length: { maximum: 100 }
   validates :description, length: { maximum: 500 }
 
   POPULAR_SQL = Arel.sql("COUNT(posts.id) DESC")
@@ -98,7 +107,7 @@ end
 RUBY
 
 # Comment
-cat > app/models/comment.rb << 'RUBY'
+write_model "comment" <<'RUBY'
 class Comment < ApplicationRecord
   include Votable
 
@@ -117,7 +126,6 @@ class Comment < ApplicationRecord
 
   def root?  = parent_id.nil?
   def depth  = parent ? parent.depth + 1 : 0
-end
-RUBY
+endRUBY
 
 echo "==> [models] done"

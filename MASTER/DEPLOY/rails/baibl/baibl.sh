@@ -2,17 +2,25 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-# Baibl — scripture and contemplation (TCPServer, port 10007)
+# Baibl – scripture server (TCPServer, port 10007)
 
-typeset -r APP_NAME="baibl"
-typeset -r APP_PORT=10007
-typeset -r APP_DIR="/home/${APP_NAME}/app"
+APP_NAME='baibl'
+APP_PORT=10007
+APP_DIR="/home/${APP_NAME}/app"
+CONFIG_DIR="${APP_DIR}/config"
+FALCON_RB="${CONFIG_DIR}/falcon.rb"
+RC_SCRIPT="/etc/rc.d/${APP_NAME}"
 
-echo "==> [${APP_NAME}] writing falcon.rb on :${APP_PORT}"
+# exit if required commands missing
+command -v ruby >/dev/null || { echo "ruby not found" >&2; exit 1; }
+command -v rcctl >/dev/null || { echo "rcctl not found" >&2; exit 1; }
 
-mkdir -p "${APP_DIR}/config"
+echo "==> [$APP_NAME] generating ${FALCON_RB} on :${APP_PORT}"
 
-cat > "${APP_DIR}/config/falcon.rb" << 'FALCONEOF'
+mkdir -p "${CONFIG_DIR}"
+chown "${APP_NAME}:${APP_NAME}" "${CONFIG_DIR}"
+
+cat > "${FALCON_RB}" <<'EOF'
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 require "socket"
@@ -62,33 +70,30 @@ HTML = <<~HTML
     </main>
   </body>
   </html>
-HTML
-
-RESP = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: #{HTML.bytesize}\r\nConnection: close\r\n\r\n#{HTML}"
-trap("TERM") { exit }
-trap("INT")  { exit }
-TCPServer.new("0.0.0.0", 10007).tap do |s|
-  $stdout.puts "baibl on 10007"; $stdout.flush
+HTMLRESP="HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: ${#HTML}\r\nConnection: close\r\n\r\n${HTML}"
+trap "TERM" { exit }
+trap "INT"  { exit }
+TCPServer.new("0.0.0.0", ${APP_PORT}).tap do |s|
+  $stdout.puts "baibl on ${APP_PORT}"; $stdout.flush
   loop { c = s.accept; c.recv(4096) rescue nil; c.print(RESP) rescue nil; c.close rescue nil }
 end
-FALCONEOF
+EOF
 
-chown -R ${APP_NAME}:${APP_NAME} "${APP_DIR}"
+chown -R "${APP_NAME}:${APP_NAME}" "${APP_DIR}"
+chmod 644 "${FALCON_RB}"
 
-cat > "/etc/rc.d/${APP_NAME}" << 'RCDEOF'
-#!/bin/ksh
-daemon="/usr/local/bin/ruby34"
+cat > "${RC_SCRIPT}" <<'RC'
+#!/bin/kshdaemon="/usr/local/bin/ruby34"
 daemon_flags="/home/baibl/app/config/falcon.rb"
 daemon_user="baibl"
 daemon_timeout=30
-. /etc/rc.d/rc.subr
-pexp="ruby34 /home/baibl/app/config/falcon.rb"
+. /etc/rc.d/rc.subrpexp="ruby34 /home/baibl/app/config/falcon.rb"
 rc_bg=YES
 rc_reload=NO
 rc_cmd $1
-RCDEOF
+RC
 
-chmod 755 "/etc/rc.d/${APP_NAME}"
-rcctl enable ${APP_NAME}
-rcctl restart ${APP_NAME} || rcctl start ${APP_NAME}
-echo "==> [${APP_NAME}] done"
+chmod 755 "${RC_SCRIPT}"
+rcctl enable "${APP_NAME}"
+rcctl restart "${APP_NAME}" || rcctl start "${APP_NAME}"
+echo "==> [$APP_NAME] ready"

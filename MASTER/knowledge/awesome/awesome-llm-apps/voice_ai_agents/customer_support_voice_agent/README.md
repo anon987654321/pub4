@@ -1,71 +1,27 @@
-# 🎙️ Customer Support Voice Agent
+#Customer Support Voice Agent
 
-### 🎓 FREE Step-by-Step Tutorial 
-**👉 [Click here to follow our complete step-by-step tutorial](https://www.theunwindai.com/p/build-a-customer-support-voice-agent) and learn how to build this from scratch with detailed code walkthroughs, explanations, and best practices.**
-
-An OpenAI SDK powered customer support agent application that delivers voice-powered responses to questions about your knowledge base using OpenAI's GPT-4o and TTS capabilities. The system crawls through documentation websites with Firecrawl, processes the content into a searchable knowledge base with Qdrant, and provides both text and voice responses to user queries.
+A voice‑enabled support assistant that answers questions about your documentation using OpenAI GPT‑4o and TTS. It crawls documentation sites with Firecrawl, indexes the content in Qdrant, and returns both text and spoken responses.
 
 ## Features
+- **Knowledge base** – crawls sites, stores embeddings in Qdrant, enables semantic search with FastEmbed.  
+- **Agent team** – Documentation Processor generates answers; TTS Agent speaks them; Voice Customization offers alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer, verse.  
+- **UI** – Streamlit sidebar configures API keys, selects voice, starts ingestion, and displays results with an audio player and progress indicator.
 
-- Knowledge Base Creation
+## Run
+```bashgit clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
+cd ai_agent_tutorials/ai_voice_agent_openaisdk
+pip install -r requirements.txt
+streamlit run ai_voice_agent_docs.py
+```
 
-  - Crawls documentation websites using Firecrawl
-  - Stores and indexes content using Qdrant vector database
-  - Generates embeddings for semantic search capabilities using FastEmbed
-- **AI Agent Team**
-  - **Documentation Processor**: Analyzes documentation content and generates clear, concise responses to user queries
-  - **TTS Agent**: Converts text responses into natural-sounding speech with appropriate pacing and emphasis
-  - **Voice Customization**: Supports multiple OpenAI TTS voices:
-    - alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer, verse
+## Setup
+1. **API keys** – OpenAI, Qdrant Cloud, Firecrawl.  2. **Configuration** – Enter keys in the sidebar.  
+3. **Ingest** – Provide a documentation URL, choose a voice, click *Initialize System*.  
+4. **Query** – Ask questions; receive text and voice output.
 
-- **Interactive Interface**
-  - Clean Streamlit UI with sidebar configuration
-  - Real-time documentation search and response generation
-  - Built-in audio player with download capability
-  - Progress indicators for system initialization and query processing
+## Details
+- **Ingestion** – Crawls up to five pages, preserves structure and metadata.  
+- **Search** – FastEmbed creates embeddings; Qdrant retrieves relevant passages.  
+- **Speech** – OpenAI TTS produces natural‑sounding audio with configurable pacing.  
 
-## How to Run
-
-1. **Setup Environment**
-   ```bash
-   # Clone the repository
-   git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
-   cd awesome-llm-apps/ai_agent_tutorials/ai_voice_agent_openaisdk
-   
-   # Install dependencies
-   pip install -r requirements.txt
-   ```
-
-2. **Configure API Keys**
-   - Get OpenAI API key from [OpenAI Platform](https://platform.openai.com)
-   - Get Qdrant API key and URL from [Qdrant Cloud](https://cloud.qdrant.io)
-   - Get Firecrawl API key for documentation crawling
-
-3. **Run the Application**
-   ```bash
-   streamlit run ai_voice_agent_docs.py
-   ```
-
-4. **Use the Interface**
-   - Enter API credentials in the sidebar
-   - Input the documentation URL you want to learn about
-   - Select your preferred voice from the dropdown
-   - Click "Initialize System" to process the documentation
-   - Ask questions and receive both text and voice responses
-
-## Features in Detail
-
-- **Knowledge Base Creation**
-  - Builds a searchable knowledge base from your documentation
-  - Preserves document structure and metadata
-  - Supports multiple page crawling (limited to 5 pages per default configuration)
-
-- **Vector Search**
-  - Uses FastEmbed for generating embeddings
-  - Semantic search capabilities for finding relevant content
-  - Efficient document retrieval using Qdrant
-
-- **Voice Generation**
-  - High-quality text-to-speech using OpenAI's TTS models
-  - Multiple voice options for customization
-  - Natural speech patterns with proper pacing and emphasis
+The system is ready for production use; extend it with additional voices or integration points as needed.

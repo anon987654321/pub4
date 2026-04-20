@@ -1,31 +1,27 @@
-# Scan depth configuration — all depths run their listed rules.
-# edit here; scanner.rb reads this at runtime.
-# "all" means every registered rule runs.
-
 quick:
-  - frozen_string
-  - bare_rescue
+- frozen_string
+- bare_rescue
 
 standard:
-  - frozen_string
-  - bare_rescue
-  - explicit
-  - immutable
-  - cqs
-  - self_explaining
-  - long_method
-  - god_class
-  - duplicate_code
-  - prune
-  - srp
-  - pola
-  - nielsen
+- frozen_string
+- bare_rescue
+- explicit
+- immutable
+- cqs
+- self_explaining
+- long_method
+- god_class
+- duplicate_code
+- prune
+- srp
+- pola
+- nielsen
 
 hunt:
-  - all
+- all
 
 critique:
-  - all
+- all
 
 deep:
-  - all
+- all

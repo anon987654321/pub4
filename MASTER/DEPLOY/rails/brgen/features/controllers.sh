@@ -2,25 +2,21 @@
 emulate -L zsh
 setopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-typeset -r APP_DIR="/home/brgen/app"
-echo "==> [controllers] All app controllers"
-cd "$APP_DIR"
-
+APP_DIR="/home/brgen/app"
+printf '==> [controllers] All app controllers\n' >&2
+cd "$APP_DIR" || exit 1
 mkdir -p app/controllers/concerns
 
-cat > app/controllers/concerns/authentication.rb << 'RUBY'
+cat > app/controllers/concerns/authentication.rb <<'RUBY'
 module Authentication
   extend ActiveSupport::Concern
 
   included do
     before_action :resume_session
     helper_method :authenticated?, :current_user
-  end
-
-  class_methods do
+  end  class_methods do
     def allow_unauthenticated_access(**options)
-      skip_before_action :resume_session, **options rescue nil
-    end
+      skip_before_action :resume_session, **options rescue nil    end
   end
 
   private
@@ -31,12 +27,9 @@ module Authentication
 
   def current_user
     Current.user
-  end
-
-  def resume_session
+  end  def resume_session
     Current.session = find_session_by_cookie
-    if Current.session
-      Current.user = Current.session.user
+    if Current.session      Current.user = Current.session.user
     else
       Current.user = find_or_create_guest_user
     end
@@ -53,9 +46,7 @@ module Authentication
     else
       create_guest_user
     end
-  end
-
-  def create_guest_user
+  end  def create_guest_user
     guest = User.create!(
       email_address: "guest_#{SecureRandom.hex(8)}@guest.local",
       password: SecureRandom.hex(16),
@@ -75,31 +66,25 @@ module Authentication
 end
 RUBY
 
-cat > app/controllers/home_controller.rb << 'RUBY'
+cat > app/controllers/home_controller.rb <<'RUBY'
 class HomeController < ApplicationController
   def index
-    @posts = if authenticated?
-               Current.user.timeline_posts.hot.includes(:user, :community, :votes).limit(50)
-             else
-               Post.hot.includes(:user, :community, :votes).limit(50)
-             end
+    @posts = authenticated? ? Current.user.timeline_posts.hot.includes(:user, :community, :votes).limit(50) : Post.hot.includes(:user, :community, :votes).limit(50)
     @communities = Community.popular.limit(10)
   end
-end
-RUBY
+endRUBY
 
-cat > app/controllers/posts_controller.rb << 'RUBY'
+cat > app/controllers/posts_controller.rb <<'RUBY'
 class PostsController < ApplicationController
   before_action :require_real_user, only: [:new, :create, :edit, :update, :destroy]
-  before_action :set_post,          only: [:show, :edit, :update, :destroy]
-  before_action :set_community,     only: [:new, :create]
+  before_action :set_post, only: [:show, :edit, :update, :destroy]
+  before_action :set_community, only: [:new, :create]
 
-  def index
-    @posts = Post.hot.includes(:user, :community, :votes)
+  def index    @posts = Post.hot.includes(:user, :community, :votes)
   end
 
   def show
-    @comments    = @post.comments.where(parent_id: nil).best.includes(:user, :votes, replies: [:user, :votes])
+    @comments = @post.comments.where(parent_id: nil).best.includes(:user, :votes, replies: [:user, :votes])
     @new_comment = Comment.new
   end
 
@@ -108,13 +93,11 @@ class PostsController < ApplicationController
   end
 
   def create
-    @post           = Post.new(post_params)
-    @post.user      = Current.user
-    @post.community = @community if @community
-    if @post.save
+    @post = Post.new(post_params)
+    @post.user = Current.user
+    @post.community = @community if @community    if @post.save
       redirect_to @post, notice: "Posted."
-    else
-      render :new, status: :unprocessable_entity
+    else      render :new, status: :unprocessable_entity
     end
   end
 
@@ -130,8 +113,7 @@ class PostsController < ApplicationController
 
   def destroy
     @post.destroy
-    redirect_to posts_path
-  end
+    redirect_to posts_path  end
 
   private
 
@@ -139,8 +121,7 @@ class PostsController < ApplicationController
     @post = Post.find(params[:id])
   end
 
-  def set_community
-    @community = Community.find_by(id: params[:community_id])
+  def set_community    @community = Community.find_by(id: params[:community_id])
   end
 
   def post_params
@@ -149,14 +130,12 @@ class PostsController < ApplicationController
 end
 RUBY
 
-cat > app/controllers/comments_controller.rb << 'RUBY'
-class CommentsController < ApplicationController
-  before_action :require_real_user
+cat > app/controllers/comments_controller.rb <<'RUBY'
+class CommentsController < ApplicationController  before_action :require_real_user
   before_action :set_commentable
 
-  def create
-    @comment           = @commentable.comments.build(comment_params)
-    @comment.user      = Current.user
+  def create    @comment = @commentable.comments.build(comment_params)
+    @comment.user = Current.user
     @comment.parent_id = params[:parent_id] if params[:parent_id]
 
     if @comment.save
@@ -167,17 +146,16 @@ class CommentsController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream { render turbo_stream: turbo_stream.replace("comment_form", partial: "comments/form", locals: { comment: @comment, commentable: @commentable }) }
-        format.html         { redirect_back fallback_location: root_path, alert: @comment.errors.full_messages.to_sentence }
+        format.html { redirect_back fallback_location: root_path, alert: @comment.errors.full_messages.to_sentence }
       end
-    end
-  end
+    end  end
 
   def destroy
     @comment = Comment.find(params[:id])
     @comment.destroy if @comment.user == Current.user
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.remove(dom_id(@comment)) }
-      format.html         { redirect_back fallback_location: root_path }
+      format.html { redirect_back fallback_location: root_path }
     end
   end
 
@@ -197,10 +175,10 @@ class CommentsController < ApplicationController
 end
 RUBY
 
-cat > app/controllers/communities_controller.rb << 'RUBY'
+cat > app/controllers/communities_controller.rb <<'RUBY'
 class CommunitiesController < ApplicationController
   before_action :require_real_user, only: [:new, :create]
-  before_action :set_community,     only: [:show]
+  before_action :set_community, only: [:show]
 
   def index
     @communities = Community.popular.includes(:user)
@@ -215,10 +193,9 @@ class CommunitiesController < ApplicationController
   end
 
   def create
-    @community      = Community.new(community_params)
+    @community = Community.new(community_params)
     @community.user = Current.user
-    if @community.save
-      redirect_to @community, notice: "Community created."
+    if @community.save      redirect_to @community, notice: "Community created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -226,28 +203,29 @@ class CommunitiesController < ApplicationController
 
   private
 
-  def set_community    = @community = Community.find(params[:id])
-  def community_params = params.require(:community).permit(:name, :description)
-end
-RUBY
+  def set_community
+    @community = Community.find(params[:id])
+  end
 
-cat > app/controllers/votes_controller.rb << 'RUBY'
+  def community_params
+    params.require(:community).permit(:name, :description)
+  end
+endRUBY
+
+cat > app/controllers/votes_controller.rb <<'RUBY'
 class VotesController < ApplicationController
   before_action :require_authentication
 
   ALLOWED = %w[Post Comment].freeze
 
   def create
-    votable = find_votable
-    vote    = votable.votes.find_or_initialize_by(user: Current.user)
+    votable = find_votable    vote = votable.votes.find_or_initialize_by(user: Current.user)
 
     if vote.persisted? && vote.value == params[:vote][:value].to_i
       vote.destroy
     else
       vote.update!(value: params[:vote][:value])
-    end
-
-    respond_to do |format|
+    end    respond_to do |format|
       format.turbo_stream
       format.html { redirect_back fallback_location: root_path }
     end
@@ -263,9 +241,8 @@ class VotesController < ApplicationController
 end
 RUBY
 
-cat > app/controllers/follows_controller.rb << 'RUBY'
-class FollowsController < ApplicationController
-  before_action :require_real_user
+cat > app/controllers/follows_controller.rb <<'RUBY'
+class FollowsController < ApplicationController  before_action :require_real_user
 
   def create
     user = User.find(params[:user_id])
@@ -281,38 +258,35 @@ class FollowsController < ApplicationController
 end
 RUBY
 
-cat > app/controllers/conversations_controller.rb << 'RUBY'
+cat > app/controllers/conversations_controller.rb <<'RUBY'
 class ConversationsController < ApplicationController
   before_action :require_real_user
 
   def index
-    @conversations = Conversation.for_user(Current.user)
-                                 .includes(:participants, :messages)
-                                 .order("messages.created_at DESC")
+    @conversations = Conversation.for_user(Current.user).includes(:participants, :messages).order("messages.created_at DESC")
   end
 
   def show
     @conversation = Conversation.for_user(Current.user).find(params[:id])
     @conversation.mark_read_for!(Current.user)
     @messages = @conversation.messages.recent.limit(50).reverse
-    @message  = Message.new
-  end
+    @message = Message.new  end
 
   def create
-    other         = User.find(params[:user_id])
+    other = User.find(params[:user_id])
     @conversation = Conversation.find_or_create_direct(Current.user, other)
     redirect_to @conversation
   end
 end
 RUBY
 
-cat > app/controllers/messages_controller.rb << 'RUBY'
+cat > app/controllers/messages_controller.rb <<'RUBY'
 class MessagesController < ApplicationController
   before_action :require_real_user
   before_action :set_conversation
 
   def create
-    @message        = @conversation.messages.build(message_params)
+    @message = @conversation.messages.build(message_params)
     @message.sender = Current.user
 
     if @message.save
@@ -337,4 +311,4 @@ class MessagesController < ApplicationController
 end
 RUBY
 
-echo "==> [controllers] done"
+printf '==> [controllers] done\n' >&2

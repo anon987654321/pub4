@@ -1,38 +1,39 @@
 #!/usr/bin/env zsh
-emulate -L zsh
-setopt err_return no_unset pipe_fail extended_glob warn_create_global
+emulate -L zshsetopt err_return no_unset pipe_fail extended_glob warn_create_global
 
-typeset -r APP_DIR="/home/brgen/app"
-echo "==> [routes] Wiring all routes"
-cd "$APP_DIR"
+APP_DIR="/home/brgen/app"
+ROUTES_FILE="$APP_DIR/config/routes.rb"
 
-cat > config/routes.rb << 'RUBY'
+# Fail fast if the app directory is missing
+if [[ ! -d "$APP_DIR" ]]; then
+  print "Error: $APP_DIR does not exist" >&2
+  exit 1
+fi
+
+print "==> [routes] Wiring all routes"
+
+# Write routes.rb using a heredoc with literal delimiter
+cat > "$ROUTES_FILE" <<'RUBY'
 Rails.application.routes.draw do
-  resource  :session
+  resource :session
   resources :passwords, param: :token
 
-  resources :communities do
-    resources :posts, shallow: true do
-      resources :comments, shallow: true do
-        resources :comments, shallow: true, as: :replies
+  resources :communities do    resources :posts, shallow: true do      resources :comments, shallow: true do        resources :comments, shallow: true, as: :replies
       end
-      resource  :vote, only: [:create], controller: "votes"
+      resource :vote, only: [:create], controller: "votes"
     end
-  end
-
-  resources :posts do
+  end  resources :posts do
     resources :comments, shallow: true
-    resource  :vote, only: [:create], controller: "votes"
+    resource :vote, only: [:create], controller: "votes"
   end
 
-  resources :comments do
-    resource  :vote, only: [:create], controller: "votes"
+  resources :comments do    resource :vote, only: [:create], controller: "votes"
     resources :comments, only: [:create], as: :replies
   end
 
   resources :users, only: [:show] do
     member do
-      post   :follow,   to: "follows#create"
+      post :follow, to: "follows#create"
       delete :unfollow, to: "follows#destroy"
     end
     resources :conversations, only: [:create]
@@ -42,10 +43,10 @@ Rails.application.routes.draw do
     resources :messages, only: [:create]
   end
 
-  get  "playlist", to: "playlist#index"
+  get "playlist", to: "playlist#index"
   root "home#index"
-  get  "up" => "rails/health#show", as: :rails_health_check
+  get "up" => "rails/health#show", as: :rails_health_check
 end
 RUBY
 
-echo "==> [routes] done"
+print "==> [routes] done"

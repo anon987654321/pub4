@@ -1,27 +1,26 @@
 # MCP server definitions for MASTER.
 # Each entry: transport (stdio or sse), command/args or url.
-# Uncomment and configure as needed.
 
-# Filesystem MCP — exposes read/write/search over a directory
-# filesystem:
-#   transport: stdio
-#   command: npx
-#   args: [-y, "@modelcontextprotocol/server-filesystem", "/home/dev/pub4"]
+# Filesystem MCP – exposes read/write/search over a directory
+filesystem:
+  transport: stdio
+  command: npx
+  args: [-y, "@modelcontextprotocol/server-filesystem", "/home/dev/pub4"]
 
-# Git MCP — exposes git operations as tools
-# git:
-#   transport: stdio
-#   command: npx
-#   args: [-y, "@modelcontextprotocol/server-git", "--repository", "/home/dev/pub4/MASTER"]
+# Git MCP – exposes git operations as tools
+git:
+  transport: stdio
+  command: npx
+  args: [-y, "@modelcontextprotocol/server-git", "--repository", "/home/dev/pub4/MASTER"]
 
-# Brave Search MCP — web search
-# brave_search:
-#   transport: stdio
-#   command: npx
-#   args: [-y, "@modelcontextprotocol/server-brave-search"]
+# Brave Search MCP – web search
+brave_search:
+  transport: stdio
+  command: npx
+  args: [-y, "@modelcontextprotocol/server-brave-search"]
 
-# Sequential Thinking MCP — structured reasoning tool
-# sequential_thinking:
-#   transport: stdio
-#   command: npx
-#   args: [-y, "@modelcontextprotocol/server-sequential-thinking"]
+# Sequential Thinking MCP – structured reasoning tool
+sequential_thinking:
+  transport: stdio
+  command: npx
+  args: [-y, "@modelcontextprotocol/server-sequential-thinking"]

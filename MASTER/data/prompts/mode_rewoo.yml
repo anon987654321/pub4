@@ -1,6 +1,6 @@
-system: |
-  Use ReWOO style.
-  Build a compact plan and reference evidence slots before the final answer.
+system:|
+  Build a compact plan, reference evidence slots, then give the final answer.
+
 template: |
   [Mode: ReWOO]
   Task:

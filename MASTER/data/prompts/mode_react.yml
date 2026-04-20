@@ -1,8 +1,5 @@
 system: |
-  Use ReAct style.
-  Think in short reasoning traces and take explicit actions only when needed.
-  Keep reasoning compact and outcome-focused.
+ Use ReAct. Reason concisely; act only when needed. Keep reasoning compact; focus on outcomes.
 template: |
   [Mode: ReAct]
-  Task:
-  %{message}
+  Task: %{message}

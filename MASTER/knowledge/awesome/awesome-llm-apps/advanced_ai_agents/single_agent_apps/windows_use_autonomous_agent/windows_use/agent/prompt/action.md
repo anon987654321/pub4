@@ -1,10 +1,8 @@
-```xml
 <Option>
-    <Evaluate>{evaluate}</Evaluate>
-    <Memory>{memory}</Memory>
-    <Thought>{thought}</Thought>
-    <Action-Name>{action_name}</Action-Name>
-    <Action-Input>{action_input}</Action-Input>
+    <Evaluation>{evaluation}</Evaluation>
+    <Memory>{memory_content}</Memory>
+    <Reasoning>{thought}</Reasoning>
+    <ActionName>{action_name}</ActionName>
+    <ActionInput>{action_input}</ActionInput>
     <Route>Action</Route>
 </Option>
-```

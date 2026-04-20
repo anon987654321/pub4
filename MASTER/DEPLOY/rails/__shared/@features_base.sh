@@ -1,99 +1,85 @@
-```bash
 #!/bin/bash
+# frozen_string_literal: true
 
 # Configuration
-RAILS_ROOT="${RAILS_ROOT:-$(pwd)}"
-ROUTES_FILE="${ROUTES_FILE:-config/routes.rb}"
-STIMULUS_DIR="${STIMULUS_DIR:-app/javascript/controllers}"
+readonly RAILS_ROOT="${RAILS_ROOT:-$(pwd)}"
+readonly ROUTES_FILE="${ROUTES_FILE:-config/routes.rb}"
+readonly STIMULUS_DIR="${STIMULUS_DIR:-app/javascript/controllers}"
+readonly GEMFILE="Gemfile"
 
-# Exit on error and unset variables
-set -euo pipefail
+# Regex patterns
+readonly VALID_CLASS='^[A-Z][a-zA-Z]*$'
+readonly VALID_CONTROLLER='^[A-Z][a-zA-Z]*Controller$'
 
-# Validation functions
-validate_rails_name() {
-    local name="$1"
-    if [[ ! "$name" =~ ^[A-Z][a-zA-Z]*$ ]]; then
-        echo "Error: '$name' must be PascalCase and contain only letters" >&2
-        return 1
-    fi
-    return 0
+# Error handling
+die() {
+    echo "$*" >&2
+    exit 1
 }
 
+# Guard: ensure rails app root
+validate_rails_app() {
+    [[ -f "$GEMFILE" ]] || die "Missing $GEMFILE"
+    grep -q "rails" "$GEMFILE" || die "Not a Rails application"
+}
+
+# Guard: validate resource name (PascalCase)
+validate_resource_name() {
+    local name="$1"
+    [[ "$name" =~ $VALID_CLASS ]] || die "Invalid resource name: $name"
+}
+
+# Guard: validate controller name (PascalCase ending with Controller)
 validate_controller_name() {
     local name="$1"
-    if [[ ! "$name" =~ ^[A-Z][a-zA-Z]*Controller$ ]]; then
-        echo "Error: '$name' must be PascalCase and end with 'Controller'" >&2
-        return 1
-    fi
-    return 0
+    [[ "$name" =~ $VALID_CONTROLLER ]] || die "Invalid controller name: $name"
 }
 
-validate_file_exists() {
-    local file="$1"
-    if [[ ! -f "$file" ]]; then
-        echo "Error: File '$file' does not exist" >&2
-        return 1
-    fi
-    return 0
-}
-
-# Convert PascalCase to snake_case using bash built-ins
+# Convert PascalCase to snake_case
 to_snake_case() {
     local name="$1"
     echo "$name" | sed -E 's/([a-z])([A-Z])/\1_\2/g' | tr '[:upper:]' '[:lower:]'
 }
 
-# Base generator functions
+# Generate model
 generate_model() {
     local model_name="$1"
-    validate_rails_name "$model_name" || return 1
+    validate_resource_name "$model_name"
 
     echo "Generating model: $model_name"
-    if rails generate model "$model_name"; then
-        echo "✓ Successfully generated model: $model_name"
-        return 0
-    else
-        echo "Error: Failed to generate model '$model_name'" >&2
-        return 1
-    fi
+    rails generate model "$model_name" || die "Failed to generate model $model_name"
+    echo "✓ Model $model_name created"
 }
 
+# Generate controller
 generate_controller() {
     local controller_name="$1"
-    validate_controller_name "$controller_name" || return 1
+    validate_controller_name "$controller_name"
 
     local base_name="${controller_name%Controller}"
     echo "Generating controller: $base_name"
-    if rails generate controller "$base_name"; then
-        echo "✓ Successfully generated controller: $base_name"
-        return 0
-    else
-        echo "Error: Failed to generate controller '$base_name'" >&2
-        return 1
-    fi
+    rails generate controller "$base_name" || die "Failed to generate controller $base_name"
+    echo "✓ Controller $base_name created"
 }
 
+# Generate Stimulus controller
 generate_stimulus_ts() {
     local controller_name="$1"
-    validate_controller_name "$controller_name" || return 1
+    validate_controller_name "$controller_name"
 
     local base_name="${controller_name%Controller}"
     local stimulus_name=$(to_snake_case "$base_name")
     local stimulus_file="${STIMULUS_DIR}/${stimulus_name}_controller.ts"
 
-    if [[ -f "$stimulus_file" ]]; then
-        read -p "Stimulus controller '$stimulus_file' already exists. Overwrite? (y/N) " -n 1 -r
+    [[ -f "$stimulus_file" ]] && {
+        printf "Stimulus file %s exists. Overwrite? (y/N) " "$stimulus_file"
+        read -r -n 1 reply
         echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            echo "Skipping Stimulus controller generation"
-            return 0
-        fi
-    fi
+        [[ "$reply" =~ ^[Yy]$ ]] || { echo "Skipping Stimulus generation"; return 0; }
+    }
 
-    echo "Generating Stimulus controller: $stimulus_file"
     mkdir -p "$STIMULUS_DIR"
-
-    cat > "$stimulus_file" << EOF
+    cat > "$stimulus_file" <<'EOF'
 import { Controller } from "@hotwired/stimulus"
 
 export default class ${controller_name} extends Controller {
@@ -102,64 +88,27 @@ export default class ${controller_name} extends Controller {
     }
 }
 EOF
-
-    if [[ -f "$stimulus_file" ]]; then
-        echo "✓ Successfully generated Stimulus controller: $stimulus_file"
-        return 0
-    else
-        echo "Error: Failed to generate Stimulus controller '$stimulus_file'" >&2
-        return 1
-    fi
+    echo "✓ Stimulus controller created: $stimulus_file"
 }
 
-# Main execution function
+# Main execution
 main() {
-    local resource_name="$1"
-    if [[ -z "$resource_name" ]]; then
-        echo "Usage: $0 <ResourceName>" >&2
-        exit 1
-    fi
+    local resource_name="${1:-}"
+    [[ -z "$resource_name" ]] && die "Usage: $0 <ResourceName>"
 
-    echo "Starting resource generation for: $resource_name"
-    echo "----------------------------------------"
+    validate_rails_app
 
-    # Validate we're in a Rails application
-    if [[ ! -f "Gemfile" ]] || ! grep -q "rails" "Gemfile"; then
-        echo "Error: This doesn't appear to be a Rails application directory" >&2
-        exit 1
-    fi
+    generate_model "$resource_name"
+    generate_controller "${resource_name}Controller"
+    generate_stimulus_ts "${resource_name}Controller"
 
-    # Generate components with individual error handling
-    local success=true
-
-    if ! generate_model "$resource_name"; then
-        success=false
-    fi
-
-    if ! generate_controller "${resource_name}Controller"; then
-        success=false
-    fi
-
-    if ! generate_stimulus_ts "${resource_name}Controller"; then
-        success=false
-    fi
-
-    echo "----------------------------------------"
-    if [[ "$success" == true ]]; then
-        echo "✓ Resource generation completed successfully"
-        echo "Next steps:"
-        echo "  - Run migrations: rails db:migrate"
-        echo "  - Add routes to config/routes.rb"
-        echo "  - Implement controller actions and views"
-    else
-        echo "⚠ Resource generation completed with errors"
-        echo "Please review the output above and complete any missing steps manually"
-        exit 1
-    fi
+    printf "\n✓ Resource generation completed successfully\n"
+    printf "Next steps:\n"
+    printf "  - Run migrations: rails db:migrate\n"
+    printf "  - Add routes to %s\n" "$ROUTES_FILE"
+    printf "  - Implement controller actions and views\n"
 }
 
-# Only run main if script is executed directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
-```

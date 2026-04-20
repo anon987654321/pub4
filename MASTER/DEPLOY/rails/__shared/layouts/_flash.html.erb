@@ -1,11 +1,13 @@
-```html
-<div class="flash flash-<%= flash_type %>" role="alert" aria-live="polite" data-controller="flash">
-  <div class="flash__content" data-flash-target="content">
-    <%= sanitize(flash_message, tags: %w[p b i u strong em a br], attributes: %w[href target]) %>
+<%#flash partial – renders a flash message with dismissal button %>
+<% if flash_message.present? %>
+  <div class="flash flash-<%= flash_type %>" role="alert" aria-live="polite" data-controller="flash">
+    <div class="flash__content" data-flash-target="content">
+      <% sanitize_opts = { tags: %w[p b i u strong em a br], attributes: %w[href target] }.freeze %>
+      <%= sanitize(flash_message, **sanitize_opts) %>
+    </div>
+    <button type="button" class="flash-dismiss" aria-label="Dismiss alert">
+      <span aria-hidden="true">&times;</span>
+      <span class="visually-hidden">Dismiss this message</span>
+    </button>
   </div>
-  <button type="button" class="flash-dismiss" data-action="click->flash#dismiss" aria-label="Dismiss alert">
-    <span aria-hidden="true">&times;</span>
-    <span class="visually-hidden">Dismiss this message</span>
-  </button>
-</div>
-```
+<% end %>

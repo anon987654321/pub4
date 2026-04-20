@@ -1,9 +1,7 @@
-```erb
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta property="og:type" content="website">
-<meta property="og:image" content="<%= content_for?(:og_image) ? yield(:og_image) : image_url('default_og_image.png') %>">
+<meta property="og:image" content="<%= yield(:og_image) || image_url('default_og_image.png') %>">
 <meta property="og:url" content="<%= URI.encode_www_form_component(request.original_url) %>">
-<meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : 'My App Description' %>">
-<meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : 'My App' %>">
-```
+<meta property="og:description" content="<%= yield(:description) || 'My App Description' %>">
+<meta property="og:title" content="<%= yield(:title) || 'My App' %>">
