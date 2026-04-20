@@ -8,12 +8,7 @@ continuity:
       - qwen/qwen3-coder:free
       - openai/gpt-oss-120b:free
 
-  replicate:
-    free_latest:
-      - meta/llama-3.3-70b-instruct
-      - mistralai/mistral-small-3.1-24b-instruct
 
   ferrum_web_chat:
     free_latest:
       - ferrum:webchat:openrouter/free
-      - ferrum:webchat:replicate/free

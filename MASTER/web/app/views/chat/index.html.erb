@@ -1461,6 +1461,39 @@ const renderMd = raw => {
       }
     });
 
+// TTS: audio queue for sentence-by-sentence playback
+const audioQueue=[];
+let audioPlaying=false;
+const drainAudioQueue=()=>{
+  if(audioPlaying||audioQueue.length===0)return;
+  const{src,blob}=audioQueue.shift();
+  const url=URL.createObjectURL(blob);
+  const a=new Audio(url);
+  audioPlaying=true;
+  isSpeaking=true;
+  a.onended=()=>{URL.revokeObjectURL(url);audioPlaying=false;isSpeaking=audioQueue.length>0;drainAudioQueue();};
+  a.onerror=()=>{URL.revokeObjectURL(url);audioPlaying=false;isSpeaking=audioQueue.length>0;drainAudioQueue();};
+  a.play().catch(()=>{audioPlaying=false;isSpeaking=false;});
+};
+// Fetch TTS from server and queue
+const speakWithAudio=async(text)=>{
+  try{
+    const fd=new FormData();fd.append('text',text);
+    const r=await fetch('/chat/tts',{method:'POST',body:fd});
+    if(!r.ok)return;
+    const blob=await r.blob();
+    audioQueue.push({src:text,blob});
+    drainAudioQueue();
+  }catch(_){}
+};
+// Browser speech synthesis fallback
+const speakBrowser=(text)=>{
+  if(!window.speechSynthesis||!text.trim())return;
+  const u=new SpeechSynthesisUtterance(text);
+  u.rate=0.9;u.pitch=0.8;
+  window.speechSynthesis.speak(u);
+};
+
     const transmit=async(message)=>{
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
       isProcessing=true;
