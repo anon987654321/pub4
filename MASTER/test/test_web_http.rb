@@ -14,7 +14,7 @@ WEB_PORT = 10002
 SKIP_HTTP = begin
   TCPSocket.new("127.0.0.1", WEB_PORT).close
   nil
-rescue
+rescue Errno::ECONNREFUSED
   "Web server not running on port #{WEB_PORT}"
 end
 
@@ -56,7 +56,7 @@ class TestWebHTTP < Minitest::Test
     assert data.key?("model"),  "metrics should include 'model'"
     assert data.key?("tokens"), "metrics should include 'tokens'"
     assert data.key?("uptime"), "metrics should include 'uptime'"
-  rescue JSON::ParserError => e
+  rescue StandardError => e
     flunk "metrics returned invalid JSON: #{e.message}"
   end
 

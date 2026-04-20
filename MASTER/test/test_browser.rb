@@ -19,8 +19,7 @@ FREE_MEM_MB = begin
   line = `vmstat`.lines.last.to_s
   fre = line.split[4].to_s
   fre.end_with?("M") ? fre.to_i : fre.to_i / 1024  # OpenBSD vmstat: MB suffix or raw KB
-rescue
-  999
+rescue  999
 end
 
 SKIP_REASON = if CHROME_PATH.nil?
@@ -75,8 +74,7 @@ class TestBrowserUI < Minitest::Test
   def test_02_overlay_dismisses_on_click
     skip_if_unavailable
     pg = fresh_page
-    pg.at_css("#overlay").click
-    sleep 1.5
+    pg.at_css("#overlay").click    sleep 1.5
     assert pg.evaluate("document.getElementById('overlay').hidden"),
            "overlay should be hidden after click"
   end
@@ -84,15 +82,13 @@ class TestBrowserUI < Minitest::Test
   def test_03_input_active_after_overlay_dismissed
     skip_if_unavailable
     pg = fresh_page
-    pg.at_css("#overlay").click
-    sleep 1.5
+    pg.at_css("#overlay").click    sleep 1.5
     assert pg.evaluate("document.getElementById('input-field').classList.contains('active')"),
            "input-field should have 'active' class"
   end
 
   def test_04_chat_receives_response
-    skip_if_unavailable
-    pg = fresh_page
+    skip_if_unavailable    pg = fresh_page
     pg.at_css("#overlay").click
     sleep 1.2
     pg.at_css("#input-field input[type=text]").focus
@@ -104,8 +100,7 @@ class TestBrowserUI < Minitest::Test
       response = pg.evaluate("document.getElementById('chat-log').textContent").strip
       break unless response.empty?
       break if Time.now > deadline
-      sleep 1
-    end
+      sleep 1    end
     refute_empty response, "chat-log should contain a response to 'ping'"
   end
 
@@ -117,7 +112,7 @@ class TestBrowserUI < Minitest::Test
     data = JSON.parse(pg.evaluate("document.body.textContent"))
     assert data.key?("model"),     "metrics should include 'model'"
     assert data.key?("tokens"), "metrics should include 'tokens'"
-  rescue JSON::ParserError => e
+  rescue StandardError => e
     flunk "metrics returned invalid JSON: #{e.message}"
   ensure
     pg&.close rescue nil
