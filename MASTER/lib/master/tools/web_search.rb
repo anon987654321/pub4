@@ -1,19 +1,17 @@
-# frozen_string_literal: true
-require "net/http"
+# frozen_string_literal: truerequire "net/http"
 require "uri"
 require "json"
 
 module Master
-  module Tools
-    class WebSearch      TIER          = :guarded
+  module Tools    class WebSearch
+      QUERY_CHAR_LIMIT = 300
+      MAX_QUERY_CHARS  = QUERY_CHAR_LIMIT
+      MAX_TOPICS       = 5
+
       NAME          = "web_search"
       DESCRIPTION   = "Search DuckDuckGo instant answers API."
       ENDPOINT      = "https://api.duckduckgo.com/"
       TIMEOUT       = 10
-
-      # Named constant for query character limit to avoid magic numbers      QUERY_CHAR_LIMIT = 300
-      MAX_QUERY_CHARS  = QUERY_CHAR_LIMIT
-      MAX_TOPICS       = 5
 
       def initialize(governor:, event_bus: nil)
         @governor = governor
