@@ -1,12 +1,14 @@
-# frozen_string_literal: truerequire "net/http"
+# frozen_string_literal: true
+require "net/http"
 require "uri"
 require "json"
 
 module Master
-  module Tools    class WebSearch
+  module Tools
+    class WebSearch
       QUERY_CHAR_LIMIT = 300
       MAX_QUERY_CHARS  = QUERY_CHAR_LIMIT
-      MAX_TOPICS       = 5
+      MAX_SEARCH_RESULTS = 5
 
       NAME          = "web_search"
       DESCRIPTION   = "Search DuckDuckGo instant answers API."
@@ -14,8 +16,7 @@ module Master
       TIMEOUT       = 10
 
       def initialize(governor:, event_bus: nil)
-        @governor = governor
-        @bus      = event_bus
+        @governor = governor        @bus      = event_bus
       end
 
       def call(query:)
@@ -49,7 +50,7 @@ module Master
       def extract_results(data)
         parts = []
         parts << data["Abstract"] unless data["Abstract"].to_s.empty?
-        (data["RelatedTopics"] || []).first(MAX_TOPICS).each { |t| parts << t["Text"] if t["Text"] }
+        (data["RelatedTopics"] || []).first(MAX_SEARCH_RESULTS).each { |t| parts << t["Text"] if t["Text"] }
         parts.empty? ? "(no results)" : parts.join("\n\n")
       end
     end
