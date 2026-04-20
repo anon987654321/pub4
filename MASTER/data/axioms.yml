@@ -1,13 +1,13 @@
-# Kernel axioms — enforced by scan rules, pipeline stages, or tool guards
+# Kernel axioms— enforced by scan rules, pipeline stages, or tool guards
 kernel:
-  PRESERVE_FIRST: "Never break working code. Read before write."
-  SIMPLEST_WORKS: "Fewest moving parts that solve the problem."
-  FAIL_VISIBLY: "Errors surface immediately. Never swallow exceptions."
+  PRESERVE_FIRST: "Never break working code; read before write."
+  SIMPLEST_WORKS: "Use fewest moving parts that solve the problem."
+  FAIL_VISIBLY: "Surface errors immediately; never swallow exceptions."
   ONE_SOURCE: "One authoritative representation per concept."
-  DECOUPLE: "Hidden dependencies become explicit."
+  DECOUPLE: "Make hidden dependencies explicit."
   GUARD_EXPENSIVE: "Check preconditions before costly work."
-  DEGRADE_GRACEFULLY: "Works with partial failures."
-  BE_CONCISE: "No unnecessary words, tokens, or lines."
+  DEGRADE_GRACEFULLY: "Operate under partial failures."
+  BE_CONCISE: "Avoid unnecessary words, tokens, or lines."
 
 # Philosophy layer [P] — advisory only, never blocking.
 # Restored from MASTER2 and trimmed to top 25 prioritized axioms.
@@ -15,7 +15,7 @@ philosophy:
   prioritized_top_25:
     - id: ONE_JOB
       priority: 1
-      statement: "Each module should have one clear reason to change."
+      statement: "Each module has one clear reason to change."
     - id: NO_SURPRISES
       priority: 2
       statement: "Prefer predictable behavior over clever behavior."
@@ -33,7 +33,7 @@ philosophy:
       statement: "Design for testability before implementation complexity."
     - id: REVERSIBLE
       priority: 7
-      statement: "Prefer steps that are easy to rollback."
+      statement: "Prefer steps that are easy to roll back."
     - id: ONE_CHANGE
       priority: 8
       statement: "Keep each patch focused on one coherent intent."
@@ -51,10 +51,10 @@ philosophy:
       statement: "Default to immutable data flow where practical."
     - id: APPEND_ONLY
       priority: 13
-      statement: "Favor append-only logs for auditability."
+      statement: "Favor append‑only logs for auditability."
     - id: CACHE_FIRST
       priority: 14
-      statement: "Cache high-cost deterministic work with bounded TTL."
+      statement: "Cache high‑cost deterministic work with bounded TTL."
     - id: SELF_EXPLAINING
       priority: 15
       statement: "Names and structure should reduce need for comments."
@@ -63,7 +63,7 @@ philosophy:
       statement: "Design outputs for broad readability and accessibility."
     - id: SQUINT_TEST
       priority: 17
-      statement: "The structure should make sense at a glance."
+      statement: "Structure should be evident at a glance."
     - id: JUST_ENOUGH
       priority: 18
       statement: "Avoid overbuilding before proof of need."
@@ -72,7 +72,7 @@ philosophy:
       statement: "Understand why something exists before removing it."
     - id: GALLS_LAW
       priority: 20
-      statement: "Complex systems should evolve from simple working systems."
+      statement: "Complex systems evolve from simple working systems."
     - id: OCCAMS_RAZOR
       priority: 21
       statement: "Prefer simpler hypotheses and designs first."
@@ -114,8 +114,8 @@ philosophy:
 
   inverted_pyramid:
     - "Lead with the outcome."
-    - "Then provide key evidence."
-    - "Then provide implementation detail."
+    - "Provide key evidence next."
+    - "Add implementation detail last."
 
   rails_doctrine:
     - "Convention over configuration"
@@ -130,81 +130,69 @@ ux:
   nielsen_heuristics:
     - id: SYSTEM_STATUS
       priority: 1
-      statement: "Always keep the user informed about what is happening through timely feedback."
-      code_mapping: "Progress indicators, streaming output, non-silent background operations."
+      statement: "Keep users informed of progress with timely feedback."
     - id: REAL_WORLD_MATCH
       priority: 2
-      statement: "Speak the user's language. Match concepts to their mental model, not the system's internals."
-      code_mapping: "Error messages in plain language; command names matching intent, not implementation."
+      statement: "Speak the user's language; match their mental model."
     - id: USER_CONTROL
       priority: 3
-      statement: "Support undo and emergency exits. Users make mistakes."
-      code_mapping: "Every write operation must be reversible. Undo stack. Dry-run modes."
+      statement: "Support undo and emergency exits; users make mistakes."
     - id: CONSISTENCY
       priority: 4
-      statement: "Follow conventions. Same word means same thing everywhere."
-      code_mapping: "Uniform return types, consistent error shapes, one naming convention throughout."
+      statement: "Follow conventions; same term means same thing everywhere."
     - id: ERROR_PREVENTION
       priority: 5
-      statement: "Design to prevent problems before they occur. Confirm destructive actions."
-      code_mapping: "Guard clauses, validation at boundaries, governor checks before writes."
+      statement: "Design to prevent problems; confirm destructive actions."
     - id: RECOGNITION_NOT_RECALL
       priority: 6
-      statement: "Minimize memory load. Make options visible. Don't require users to remember context."
-      code_mapping: "Self-documenting APIs, --help text, named keyword arguments over positional."
+      statement: "Minimize memory load; make options visible."
     - id: FLEXIBILITY
       priority: 7
-      statement: "Serve both novices and experts. Accelerators for power users."
-      code_mapping: "Short commands with sensible defaults; full flags for expert control."
+      statement: "Serve novices and experts; provide accelerators."
     - id: AESTHETIC_MINIMALISM
       priority: 8
-      statement: "Don't show irrelevant or rarely needed information. Every element must earn its place."
-      code_mapping: "Quiet by default, verbose on request. No noise in logs or output."
+      statement: "Show only relevant information; each element must earn its place."
     - id: ERROR_RECOVERY
       priority: 9
-      statement: "Error messages must name the problem and suggest a fix in plain language."
-      code_mapping: "Result.err messages include what failed and what to do next."
+      statement: "Error messages must name the problem and suggest a fix."
     - id: HELP_AND_DOCS
       priority: 10
-      statement: "When help is needed it must be easy to find, concrete, and task-focused."
-      code_mapping: "/help command, inline examples, not abstract reference docs."
+      statement: "Make help easy to find, concrete, and task‑focused."
 
 # Clean Code — Robert C. Martin
 # Principles beyond SOLID that shape method/class design at the micro level.
 clean_code:
   - id: ONE_ABSTRACTION_LEVEL
-    statement: "Each function should operate at a single level of abstraction. No mixing high-level policy with low-level detail."
-  - id: NEWSPAPER_METAPHOR
-    statement: "Code reads top-to-bottom. Important declarations first, implementation detail below."
+    statement: "Each function operates at one abstraction level; no mixing high‑level policy with low‑level detail."
   - id: STEPDOWN_RULE
-    statement: "Each function calls only functions one abstraction level below it."
+    statement: "Functions call only functions one level below them."
   - id: BOUNDARY_ISOLATION
-    statement: "Third-party code is wrapped at the edge. It never leaks into the domain."
+    statement: "Wrap third‑party code at the edge; keep it from leaking."
   - id: CLEAN_TESTS
-    statement: "Tests are first-class code: one concept per test, no production logic in tests."
+    statement: "Treat tests as first‑class code; isolate them from production logic."
   - id: NO_MAGIC
-    statement: "No unexplained constants, flags, or mode switches. Everything is named."
+    statement: "Eliminate unexplained constants, flags, or mode switches."
 
 # Refactoring — Martin Fowler
-# Named code smells that each map to a specific extraction or restructuring.
+# Named code smells that map to specific extractions or restructurings.
 refactoring_smells:
   - id: PRIMITIVE_OBSESSION
-    statement: "Replace repeated raw primitives (strings, ints as IDs) with value objects."
+    statement: "Replace repeated primitives with value objects."
   - id: MESSAGE_CHAIN
-    statement: "a.b.c.d breaks Law of Demeter — talk to immediate collaborators only."
+    statement: "Avoid a.b.c.d chains; talk only to immediate collaborators."
   - id: MIDDLE_MAN
-    statement: "A class delegating most methods to another should be eliminated or renamed."
+    statement: "Eliminate classes that delegate most methods to another."
   - id: LAZY_CLASS
-    statement: "A class too small to justify its existence should be inlined."
+    statement: "Remove classes too small to justify their existence."
   - id: TEMP_FIELD
-    statement: "Instance variables set only in some execution paths are confusing — extract object."
+    statement: "Extract instance variables set in some paths into a new object."
   - id: DIVERGENT_CHANGE
-    statement: "A class changed for multiple unrelated reasons violates SRP — split it."
+    statement: "Split classes changed for unrelated reasons."
   - id: SHOTGUN_SURGERY
-    statement: "One conceptual change requiring edits across many files signals missing abstraction."
+    statement: "One conceptual change spanning many files signals missing abstraction."
   - id: INAPPROPRIATE_INTIMACY
-    statement: "Classes should not access each other's private data — enforce boundaries."
+    statement: "Do not access another class's private data; enforce boundaries."
   - id: ALTERNATIVE_CLASSES
-    statement: "Two classes doing the same thing under different names must be unified."
+    statement: "Unify classes that perform the same function under different names."
   - id: SPECULATIVE_GENERALITY
-    statement: "Code written for hypothetical future needs that is never used — remove it."
+    statement: "Remove code written for hypothetical needs that is never used."
