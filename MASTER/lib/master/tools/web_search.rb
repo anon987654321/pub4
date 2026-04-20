@@ -1,15 +1,17 @@
-# frozen_string_literal: truerequire "net/http"
+# frozen_string_literal: true
+require "net/http"
 require "uri"
 require "json"
 
 module Master
-  module Tools    class WebSearch
+  module Tools
+    class WebSearch
       TIER         = :guarded
       NAME         = "web_search"
       DESCRIPTION  = "Search DuckDuckGo instant answers API."
       ENDPOINT     = "https://api.duckduckgo.com/"
       TIMEOUT      = 10
-      MAX_QUERY_LENGTH = 300
+      MAX_QUERY_CHARS = 300
 
       def initialize(governor:, event_bus: nil)
         @governor = governor
@@ -17,9 +19,9 @@ module Master
       end
 
       def call(query:)
-        if query.length > MAX_QUERY_LENGTH
-          $stderr.puts "web_search: query truncated from #{query.length} to #{MAX_QUERY_LENGTH} chars"
-          query = query[0, MAX_QUERY_LENGTH]
+        if query.length > MAX_QUERY_CHARS
+          $stderr.puts "web_search: query truncated from #{query.length} to #{MAX_QUERY_CHARS} chars"
+          query = query[0, MAX_QUERY_CHARS]
         end
 
         perm = @governor.permit?(NAME, TIER, query)
