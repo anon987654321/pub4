@@ -5,17 +5,16 @@ require "json"
 
 module Master
   module Tools
-    class WebSearch
-      TIER         = :guarded
+    class WebSearch      TIER         = :guarded
       NAME         = "web_search"
       DESCRIPTION  = "Search DuckDuckGo instant answers API."
       ENDPOINT     = "https://api.duckduckgo.com/"
       TIMEOUT      = 10
       MAX_QUERY_CHARS = 300
+      MAX_TOPICS   = 5
 
       def initialize(governor:, event_bus: nil)
-        @governor = governor
-        @bus      = event_bus
+        @governor = governor        @bus      = event_bus
       end
 
       def call(query:)
@@ -49,7 +48,7 @@ module Master
       def extract_results(data)
         parts = []
         parts << data["Abstract"] unless data["Abstract"].to_s.empty?
-        (data["RelatedTopics"] || []).first(5).each { |t| parts << t["Text"] if t["Text"] }
+        (data["RelatedTopics"] || []).first(MAX_TOPICS).each { |t| parts << t["Text"] if t["Text"] }
         parts.empty? ? "(no results)" : parts.join("\n\n")
       end
     end
