@@ -416,6 +416,14 @@ const renderMd = raw => {
 
     let audioCtx,analyser,dataArray;
     let audioLevel=0;
+    // Pre-load voices immediately so they are available synchronously on first gesture.
+    let _cachedVoices=[];
+    if('speechSynthesis' in window){
+      _cachedVoices=window.speechSynthesis.getVoices();
+      window.speechSynthesis.addEventListener('voiceschanged',()=>{
+        _cachedVoices=window.speechSynthesis.getVoices();
+      });
+    }
     let speechPulse=0;
     let recognition=null;
     let recognitionActive=false;
@@ -1274,16 +1282,13 @@ const renderMd = raw => {
       u.rate=1.08; u.pitch=1.05; u.volume=1.0;
       u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');};
       u.onend=_onSpeakEnd; u.onerror=_onSpeakEnd;
-      const doSpeak=()=>{
-        const voices=window.speechSynthesis.getVoices();
-        const pick=voices.find(v=>v.lang.startsWith('en-')&&v.localService)
-          ||voices.find(v=>v.lang.startsWith('en-'))
-          ||voices[0];
-        if(pick) u.voice=pick;
-        window.speechSynthesis.speak(u);
-      };
-      if(window.speechSynthesis.getVoices().length>0){ doSpeak(); }
-      else{ window.speechSynthesis.addEventListener('voiceschanged',doSpeak,{once:true}); }
+      // Always speak synchronously — must stay inside gesture call stack on mobile.
+      // _cachedVoices is populated eagerly at page load and kept fresh via voiceschanged.
+      const pick=_cachedVoices.find(v=>v.lang.startsWith('en-')&&v.localService)
+        ||_cachedVoices.find(v=>v.lang.startsWith('en-'))
+        ||_cachedVoices[0];
+      if(pick) u.voice=pick;
+      window.speechSynthesis.speak(u);
       return true;
     };
 
