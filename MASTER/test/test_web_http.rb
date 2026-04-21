@@ -53,9 +53,10 @@ class TestWebHTTP < Minitest::Test
     res = get("/chat/metrics")
     assert_equal "200", res.code, "metrics endpoint should return 200"
     data = JSON.parse(res.body)
-    assert data.key?("model"),  "metrics should include 'model'"
-    assert data.key?("tokens"), "metrics should include 'tokens'"
-    assert data.key?("uptime"), "metrics should include 'uptime'"
+    assert data.key?("model"),         "metrics should include 'model'"
+    assert data.key?("tokens"),        "metrics should include 'tokens'"
+    assert data.key?("uptime"),        "metrics should include 'uptime'"
+    assert data.key?("open_breakers"), "metrics should include 'open_breakers'"
   rescue StandardError => e
     flunk "metrics returned invalid JSON: #{e.message}"
   end
