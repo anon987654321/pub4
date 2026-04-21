@@ -1,7 +1,6 @@
-# Model routing profile — OpenRouter primary, Replicate optional.
+# Model routing profile — OpenRouter primary, Gemini direct fallback.
 # Free tier: meta-llama/llama-3.3-70b-instruct primary, qwen/qwen3-coder fallback.
-# stepfun/step-3.5-flash removed: endpoint not found on OpenRouter.
-# Replicate: disabled (insufficient credit as of 2026-03-20)
+# Gemini 2.5 Flash: direct Google API (free tier, 1500 req/day) — final fallback.
 
 routing:
   enabled: true
@@ -38,6 +37,10 @@ model_defs:
     id: deepseek/deepseek-r1-0528:free
     <<: *model_defaults
     score: { quality: 0.73, speed: 0.55, cost: 1.0 }
+  gemini_flash: &gemini_flash
+    id: gemini-2.5-flash
+    <<: *model_defaults
+    score: { quality: 0.85, speed: 0.90, cost: 0.95 }
   claude_sonnet: &claude_sonnet
     id: anthropic/claude-sonnet-4-6
     <<: *model_defaults
@@ -60,14 +63,17 @@ models:
     - *llama_70b
     - *qwen_coder
     - *deepseek_r1
+    - *gemini_flash
   strong:
     - *claude_sonnet
     - *gpt_4o
     - *nemotron_super
+    - *gemini_flash
   cheap:
     - *llama_70b
     - *qwen_coder
     - *gpt_oss
+    - *gemini_flash
 
 routes:
   code_generation: default

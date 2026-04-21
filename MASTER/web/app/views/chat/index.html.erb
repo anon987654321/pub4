@@ -294,12 +294,6 @@
 
   <script>
     "use strict";
-    window.onerror=(msg,src,line)=>{
-      document.body.style.cssText='background:#300;color:#fff;font:14px monospace;padding:20px;white-space:pre-wrap;';
-      document.body.textContent='JS ERROR line '+line+': '+msg;
-      return true;
-    };
-
     const canvas=document.getElementById('canvas');
     const ctx=canvas.getContext('2d',{alpha:false});
     const statusEl=document.getElementById('status');
@@ -1965,7 +1959,6 @@ document.body.addEventListener('click',(e)=>{
       let _fired=false;
       return ()=>{
         if(_fired) return; _fired=true;
-        overlay.style.background='#300'; // debug: red flash confirms tap registered
         overlay.classList.add('ack');
         // Unlock speech synthesis NOW — must be called synchronously from gesture handler.
         // Mobile browsers (iOS/Android) block speechSynthesis from setTimeout callbacks.
