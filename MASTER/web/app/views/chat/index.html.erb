@@ -1109,8 +1109,8 @@ const renderMd = raw => {
       return parts&&parts.length?parts.map(s=>s.trim()).filter(Boolean):[raw];
     };
 
-    const N=(()=>{const c=navigator.hardwareConcurrency||2;const m=navigator.deviceMemory||2;const lowEnd=c<=4&&m<=2;const midLow=c<=4||m<=2;if(lowEnd)return 200;if(midLow)return 400;if(c<=6)return 800;return 1400;})();
-    const LOW_END=N<=400;
+    const N=(()=>{const c=navigator.hardwareConcurrency||2;const m=navigator.deviceMemory||2;const lowEnd=c<=2&&m<=1;const midLow=c<=4&&m<=2;if(lowEnd)return 200;if(midLow)return 400;if(c<=4)return 600;if(c<=6)return 900;return 1400;})();
+    const LOW_END=N<200; // only truly degenerate devices skip canvas
 
     // Web Audio effect chain — cycle with long-press on status circle
     const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone'];
