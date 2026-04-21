@@ -7,6 +7,22 @@
 # otherwise Minitest's signal handlers break Ferrum's pipe reading.
 #
 # Requires ~300MB free RAM. On low-memory servers, tests are auto-skipped.
+#
+# WHY CHROME TESTS SKIP ON OPENBSD
+# =================================
+# Chrome/Chromium exits with SIGSEGV (139) immediately on OpenBSD due to the
+# W^X (Write XOR Execute) memory protection policy enforced by the kernel.
+# Chrome's V8 engine — even with --jitless -- and its process model require
+# mmap(PROT_WRITE|PROT_EXEC) pages that OpenBSD forbids at the OS level.
+# No combination of flags (--no-sandbox, --single-process, --jitless,
+# --disable-gpu) resolves this; a dedicated OpenBSD-patched Chromium port
+# would be required.
+#
+# To run browser tests against the live server from a non-OpenBSD machine:
+#   WEB_URL=https://ai.brgen.no:4430 bundle exec ruby test/test_browser.rb
+#
+# HTTP smoke tests (test_web_http.rb) cover: page load, overlay presence,
+# JS syntax, metrics JSON, and SSE stream — and run fine on OpenBSD.
 
 require "ferrum"
 require "json"
@@ -14,7 +30,7 @@ require "net/http"
 require "socket"
 
 CHROME_PATH = %w[/usr/local/bin/chrome /usr/local/bin/chromium].find { |p| File.executable?(p) }
-WEB_URL     = "http://localhost:10002".freeze
+WEB_URL     = (ENV["WEB_URL"] || "http://localhost:10002").freeze
 
 FREE_MEM_MB = begin
   # Use free + inactive pages — inactive pages are reclaimable by new processes.
