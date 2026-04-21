@@ -10,7 +10,7 @@ routing:
   escalation_tier: strong
   provider: openrouter
 
-weights:
+weights: &weights
   quality: 0.50
   speed: 0.25
   cost: 0.25
@@ -22,36 +22,58 @@ fallback_policy:
     - network_error
     - refusal
 
+defaults: &model_defaults
+  score: { quality: 0.0, speed: 0.0, cost: 0.0 }
+
+model_defs:
+  llama_70b: &llama_70b
+    id: meta-llama/llama-3.3-70b-instruct:free
+    <<: *model_defaults
+    score: { quality: 0.78, speed: 0.70, cost: 1.0 }
+  qwen_coder: &qwen_coder
+    id: qwen/qwen3-coder:free
+    <<: *model_defaults
+    score: { quality: 0.75, speed: 0.65, cost: 1.0 }
+  deepseek_r1: &deepseek_r1
+    id: deepseek/deepseek-r1-0528:free
+    <<: *model_defaults
+    score: { quality: 0.73, speed: 0.55, cost: 1.0 }
+  claude_sonnet: &claude_sonnet
+    id: anthropic/claude-sonnet-4-6
+    <<: *model_defaults
+    score: { quality: 0.95, speed: 0.75, cost: 0.60 }
+  gpt_4o: &gpt_4o
+    id: openai/gpt-4o
+    <<: *model_defaults
+    score: { quality: 0.93, speed: 0.80, cost: 0.55 }
+  nemotron_super: &nemotron_super
+    id: nvidia/nemotron-3-super-120b-a12b:free
+    <<: *model_defaults
+    score: { quality: 0.90, speed: 0.75, cost: 1.0 }
+  gpt_oss: &gpt_oss
+    id: openai/gpt-oss-120b:free
+    <<: *model_defaults
+    score: { quality: 0.72, speed: 0.60, cost: 1.0 }
+
 models:
   default:
-    - id: meta-llama/llama-3.3-70b-instruct:free
-      score: { quality: 0.78, speed: 0.70, cost: 1.0 }
-    - id: qwen/qwen3-coder:free
-      score: { quality: 0.75, speed: 0.65, cost: 1.0 }
-    - id: deepseek/deepseek-r1-0528:free
-      score: { quality: 0.73, speed: 0.55, cost: 1.0 }
-
+    - *llama_70b
+    - *qwen_coder
+    - *deepseek_r1
   strong:
-    - id: anthropic/claude-sonnet-4-6
-      score: { quality: 0.95, speed: 0.75, cost: 0.60 }
-    - id: openai/gpt-4o
-      score: { quality: 0.93, speed: 0.80, cost: 0.55 }
-    - id: nvidia/nemotron-3-super-120b-a12b:free
-      score: { quality: 0.90, speed: 0.75, cost: 1.0 }
-
+    - *claude_sonnet
+    - *gpt_4o
+    - *nemotron_super
   cheap:
-    - id: meta-llama/llama-3.3-70b-instruct:free
-      score: { quality: 0.78, speed: 0.70, cost: 1.0 }
-    - id: qwen/qwen3-coder:free
-      score: { quality: 0.75, speed: 0.65, cost: 1.0 }
-    - id: openai/gpt-oss-120b:free
-      score: { quality: 0.72, speed: 0.60, cost: 1.0 }
+    - *llama_70b
+    - *qwen_coder
+    - *gpt_oss
 
 routes:
-  code_generation:    default
-  refactoring:        default
-  architecture:       strong
-  review:             default
-  explanation:        cheap
-  exploration:        cheap
-  fallback_default:   cheap
+  code_generation: default
+  refactoring: default
+  architecture: strong
+  review: default
+  explanation: cheap
+  exploration: cheap
+  fallback_default: cheap

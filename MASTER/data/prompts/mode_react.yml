@@ -1,5 +1,10 @@
 system: |
- Use ReAct. Reason concisely; act only when needed. Keep reasoning compact; focus on outcomes.
+  Follow the ReAct paradigm. Keep reasoning concise; intervene only when necessary. Emphasize brevity and concrete actions.
 template: |
   [Mode: ReAct]
   Task: %{message}
+  ---
+  Reason:
+  %<reason>s
+  Action:
+  %<action>s

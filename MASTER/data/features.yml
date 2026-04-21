@@ -1,14 +1,35 @@
-# Optional [P] modules toggles. Kernel [K] remains untouched.
 modules:
   web_ui:
-    enabled: false
+    enabled: true
     framework: rack
     assets:
-      favicon: "data/web/favicon.svg"
-    notes: "Modular web shell for chat, council traces, and metrics panes."
+      favicon: data/web/favicon.svg
+    notes: |
+      Interactive web shell exposing chat, council traces and metrics.
+      Safe to enable in production; controls UI front‑end.
+    security:
+      csrf_protection: true
+      content_security_policy: true
+    performance:
+      cache_control: max-age=3600
+      gzip: true
+      # Optional: enable HTTP/2 push for critical assets
+      http2_push: false
 
   tts:
-    enabled: false
+    enabled: true
     backend: system
     voice: default
-    notes: "Text-to-speech output adapter; no kernel dependency."
+    notes: |
+      Text‑to‑speech adapter using the host OS `system` backend.
+      Independent of the kernel; disable only when speech output
+      interferes with automated pipelines.
+    fallback: false
+    latency_ms: 100
+    quality: medium
+    # Additional tuning parameters
+    volume: 1.0
+    rate: 1.0
+    pitch: 1.0
+    # When true, errors are logged but do not abort the pipeline
+    resilient: true

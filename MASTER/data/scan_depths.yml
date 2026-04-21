@@ -1,27 +1,69 @@
-quick:
-- frozen_string
-- bare_rescue
+# Scan depth configurations
+# Centralized list of every available rule name.
+all_rules: &all_rules
+  - AdversarialRule
+  - ConceptualRule
+  - DuplicateCodeRule
+  - FrozenStringRule
+  - BareRescueRule
+  - ExplicitRule
+  - ImmutableRule
+  - CqsRule
+  - SelfExplainingRule
+  - LongMethodRule
+  - GodClassRule
+  - SrpRule
+  - PolaRule
+  - NielsenRule
+  - RubocopRule
+  - ReekRule
 
-standard:
-- frozen_string
-- bare_rescue
-- explicit
-- immutable
-- cqs
-- self_explaining
-- long_method
-- god_class
-- duplicate_code
-- prune
-- srp
-- pola
-- nielsen
+# Pre‑defined depth groups
+quick: &quick
+  - FrozenStringRule
+  - BareRescueRule
 
-hunt:
-- all
+standard: &standard
+  - FrozenStringRule
+  - BareRescueRule
+  - ExplicitRule
+  - ImmutableRule
+  - CqsRule
+  - SelfExplainingRule
+  - LongMethodRule
+  - GodClassRule
+  - DuplicateCodeRule
+  - PruneRule
+  - SrpRule
+  - PolaRule
+  - NielsenRule
+  - RubocopRule
+  - ReekRule
 
-critique:
-- all
+hunt: *all_rules
+critique: *all_rules
+deep: *all_rules
 
-deep:
-- all
+profiles:
+  quick:
+    description: Fast scan with core principles only
+    allow:
+      - "group:axioms"
+      - "group:clean_code"
+  full:
+    description: All principles
+    allow:
+      - "*"
+  axioms_only:
+    description: Axioms tier only
+    allow:
+      - "group:axioms"
+  critical:
+    description: Critical issues only
+    allow:
+      - CqsRule
+      - ExplicitRule
+      - ImmutableRule
+      - FrozenStringRule
+      - LongMethodRule
+      - GodClassRule

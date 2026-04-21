@@ -1,32 +1,30 @@
 file_lines:
-  warn: 500
-  error: 600
-  self_test_max: 600
+  warn: 200
+  error: 300
+  self_test_max: 300
 method_lines:
-  warn: 15
-  error: 25
+  warn: 7
+  error: 10
 max_self_test_issues: 0
 max_self_test_violations: 0
 
-# Detailed limits (merged from quality_limits.yml)
 file:
-  max_bytes: 20480
-  max_lines: 600
-  max_line_length: 120
+  max_bytes: 8192
+  max_lines: 250
+  max_line_length: 80
 method:
-  max_lines: 20
-  max_params: 4
-  max_nesting: 4
-  max_complexity: 10
+  max_lines: 8
+  max_params: 3
+  max_nesting: 2
+  max_complexity: 4
 class:
-  max_methods: 15
-  max_instance_vars: 7
-  max_dependencies: 5
-  max_lines: 600
+  max_methods: 6
+  max_instance_vars: 3
+  max_dependencies: 2
+  max_lines: 200
 coverage:
   minimum: 95
 
-# Graduation path -- levels of autonomy earned
 graduation:
   apprentice:
     requires: []
@@ -41,55 +39,53 @@ graduation:
     requires: [200_successful_tasks, zero_reverts_90d, positive_user_feedback]
     autonomy: apply_all
 
-# Profile system -- from pub2 master.json v225.0.0
-# Different quality gate profiles for different project types
 profiles:
   minimal:
     description: "Bare minimum checks for prototypes and experiments"
-    file_lines_max: 500
-    method_lines_max: 30
-    cyclomatic_max: 15
+    file_lines_max: 250
+    method_lines_max: 12
+    cyclomatic_max: 8
     test_coverage_min: 0
     enable_gates: [syntax, security]
   standard:
     description: "Default profile for most projects"
-    file_lines_max: 600
-    method_lines_max: 20
-    cyclomatic_max: 10
-    test_coverage_min: 80
+    file_lines_max: 300
+    method_lines_max: 8
+    cyclomatic_max: 6
+    test_coverage_min: 85
     enable_gates: [syntax, security, complexity, style]
   complete:
     description: "Full enforcement for production code"
-    file_lines_max: 600
-    method_lines_max: 15
-    cyclomatic_max: 8
+    file_lines_max: 250
+    method_lines_max: 6
+    cyclomatic_max: 4
     test_coverage_min: 95
     enable_gates: [syntax, security, complexity, style, duplication, performance]
   startup:
     description: "Fast iteration with core quality gates"
-    file_lines_max: 400
-    method_lines_max: 25
-    cyclomatic_max: 12
+    file_lines_max: 200
+    method_lines_max: 10
+    cyclomatic_max: 7
     test_coverage_min: 70
     enable_gates: [syntax, security, critical_bugs]
   enterprise:
     description: "Maximum rigor for enterprise codebases"
-    file_lines_max: 250
-    method_lines_max: 12
-    cyclomatic_max: 6
+    file_lines_max: 180
+    method_lines_max: 5
+    cyclomatic_max: 3
     test_coverage_min: 98
     enable_gates: [syntax, security, complexity, style, duplication, performance, documentation]
   research:
     description: "Flexible for research code with core safety"
-    file_lines_max: 600
-    method_lines_max: 40
-    cyclomatic_max: 20
+    file_lines_max: 300
+    method_lines_max: 15
+    cyclomatic_max: 10
     test_coverage_min: 50
     enable_gates: [syntax, security]
   default_profile: "standard"
 
 cost_protection:
-  max_per_session: 10.00
-  max_per_request: 1.00
-  warn_at: 0.50
+  max_per_session: 5.00
+  max_per_request: 0.50
+  warn_at: 0.25
   enforcement: "warn at warn_at, block at max_per_request"

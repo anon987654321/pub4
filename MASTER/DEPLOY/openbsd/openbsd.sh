@@ -209,7 +209,7 @@ ALL_APPS=(
 
 # Non-Rails services (name:subdomain.domain:port)
 SERVICES=(
-  ai:ai.brgen.no:3000
+  ai:ai.brgen.no:4430
 )
 
 # Domain list for DNS
@@ -1123,36 +1123,72 @@ setup_services() {
 }
 
 configure_relayd() {
-  log INFO "Writing relayd.conf (HTTP, separate ports per app)"
+  log INFO "Writing relayd.conf (HTTP + HTTPS, separate ports per app)"
 
+  # name:internal_port:external_http_port
   typeset -a APPS=(
     "brgen:11006:80"
     "amber:10006:8080"
     "hjerterom:10004:8082"
     "privcam:10005:8084"
     "baibl:10007:8086"
-    "master:3000:8088"
   )
 
   {
     print -r -- "log connection"
     print -r -- ""
+
+    # Tables
+    print -r -- "table <master> { 127.0.0.1 }"
+    for entry in "${APPS[@]}"; do
+      typeset name="${entry%%:*}"
+      print -r -- "table <${name}> { 127.0.0.1 }"
+    done
+    print -r -- ""
+
+    # HTTP protocol (plain)
+    print -r -- "http protocol \"http_proxy\" {"
+    print -r -- "  match request header append \"X-Forwarded-For\"   value \"\$REMOTE_ADDR\""
+    print -r -- "  match request header append \"X-Forwarded-Proto\" value \"http\""
+    print -r -- "  return error"
+    print -r -- "  pass"
+    print -r -- "}"
+    print -r -- ""
+
+    # HTTPS protocol for ai.brgen.no (TLS termination via relayd keypair)
+    print -r -- "http protocol \"master_https_proxy\" {"
+    print -r -- "  tls keypair \"ai.brgen.no\""
+    print -r -- "  match request header append \"X-Forwarded-For\"   value \"\$REMOTE_ADDR\""
+    print -r -- "  match request header append \"X-Forwarded-Proto\" value \"https\""
+    print -r -- "  return error"
+    print -r -- "  pass"
+    print -r -- "}"
+    print -r -- ""
+
+    # master: HTTP on 3000, HTTPS on 4430
+    print -r -- "relay \"master_http\" {"
+    print -r -- "  listen on 0.0.0.0 port 3000"
+    print -r -- "  protocol \"http_proxy\""
+    print -r -- "  forward to <master> port 10002 check tcp"
+    print -r -- "}"
+    print -r -- ""
+    print -r -- "relay \"master_https\" {"
+    print -r -- "  listen on 0.0.0.0 port 4430 tls"
+    print -r -- "  protocol \"master_https_proxy\""
+    print -r -- "  forward to <master> port 10002 check tcp"
+    print -r -- "}"
+    print -r -- ""
+
+    # Other apps (HTTP only)
     for entry in "${APPS[@]}"; do
       typeset name="${entry%%:*}"
       typeset rest="${entry#*:}"
       typeset iport="${rest%%:*}"
       typeset eport="${rest##*:}"
-      print -r -- "table <${name}> { 127.0.0.1 }"
-      print -r -- "http protocol \"${name}_proxy\" {"
-      print -r -- "  match request header append \"X-Forwarded-For\"   value \"\$REMOTE_ADDR\""
-      print -r -- "  match request header append \"X-Forwarded-Proto\" value \"http\""
-      print -r -- "  return error"
-      print -r -- "  pass"
-      print -r -- "}"
       print -r -- "relay \"${name}_http\" {"
       print -r -- "  listen on 0.0.0.0 port ${eport}"
-      print -r -- "  protocol \"${name}_proxy\""
-      print -r -- "  forward to <${name}> port ${iport}"
+      print -r -- "  protocol \"http_proxy\""
+      print -r -- "  forward to <${name}> port ${iport} check tcp"
       print -r -- "}"
       print -r -- ""
     done

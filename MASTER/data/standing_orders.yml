@@ -1,15 +1,1 @@
----
-- name: nightly_dreams
-  description: Consolidate memories during low-activity periods
-  trigger: scheduled
-  interval_s: 86400
-  command: dreams consolidate
-  enabled: true
-  last_run_at: 1776721965
-- name: weekly_scan
-  description: Weekly codebase axiom scan for regressions
-  trigger: scheduled
-  interval_s: 604800
-  command: scan
-  enabled: false
-  last_run_at: 0
+UNCHANGE
