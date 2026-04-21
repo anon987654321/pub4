@@ -9,6 +9,7 @@ module Master
   loader.inflector.inflect(
     "autoloop"         => "AutoLoop",
     "standing_orders"   => "StandingOrders",
+    "soul"              => "Soul",
     "cli"        => "CLI",
     "mcp_server"      => "MCPServer",
     "mcp_coordinator" => "McpCoordinator",
@@ -44,6 +45,7 @@ module Master
     bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] rescue nil }
 
     memory      = Memory.new(root:)
+    soul_doc   = Soul.new(root:, agent: nil) # agent wired after agent is built
     personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT, root:)
 
     tools    = build_tools(root:, undo:, governor:, bus:, diff_stager:, code_index:)
@@ -53,6 +55,7 @@ module Master
     agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus,
                          model_router: router, reasoning_modes: modes,
                          memory:, personality:, code_index:)
+    soul_doc.instance_variable_set(:@agent, agent)
     tools << Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
 
     guard        = Security::InjectionGuard.new
@@ -123,12 +126,35 @@ route_stage&.instance_variable_get(:@commands)&.store("orders", ->(ctx) {
   end
 })
 
+# Wire soul command (soul_doc instantiated above)
+route_stage&.instance_variable_get(:@commands)&.store("soul", ->(ctx) {
+  arg = ctx[:args].to_s.strip
+  case arg
+  when "", "show"
+    soul_doc.summary
+  when "version", "changelog"
+    soul_doc.changelog
+  when "diff"
+    soul_doc.diff
+  when "approve"
+    soul_doc.approve
+  when "reject"
+    soul_doc.reject
+  when "rollback"
+    soul_doc.rollback
+  when /\Apropose (.+)\z/
+    soul_doc.propose($1.strip)
+  else
+    "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
+  end
+})
+
 
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
       scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
       memory:, personality:, swarm:, root:,
-      diff_stager:, mcp:, code_index:, standing:
+      diff_stager:, mcp:, code_index:, standing:, soul: soul_doc,
     }
   end
 
@@ -429,7 +455,7 @@ route_stage&.instance_variable_get(:@commands)&.store("orders", ->(ctx) {
   lines.join("\n")
 },
       "help"    => ->(ctx) {
-        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory dreams orders cache diff commit knowledge why snapshot explain persona help exit]
+        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory dreams orders soul cache diff commit knowledge why snapshot explain persona help exit]
         cmds.map { "/#{_1}" }.join("  ")
       }
     }
