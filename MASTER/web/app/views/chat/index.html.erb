@@ -1272,14 +1272,18 @@ const renderMd = raw => {
       window.speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g,'').substring(0,500));
       u.rate=1.08; u.pitch=1.05; u.volume=1.0;
-      const voices=window.speechSynthesis.getVoices();
-      const pick=voices.find(v=>v.lang.startsWith('en-')&&v.localService)
-        ||voices.find(v=>v.lang.startsWith('en-'))
-        ||voices[0];
-      if(pick) u.voice=pick;
       u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');};
       u.onend=_onSpeakEnd; u.onerror=_onSpeakEnd;
-      window.speechSynthesis.speak(u);
+      const doSpeak=()=>{
+        const voices=window.speechSynthesis.getVoices();
+        const pick=voices.find(v=>v.lang.startsWith('en-')&&v.localService)
+          ||voices.find(v=>v.lang.startsWith('en-'))
+          ||voices[0];
+        if(pick) u.voice=pick;
+        window.speechSynthesis.speak(u);
+      };
+      if(window.speechSynthesis.getVoices().length>0){ doSpeak(); }
+      else{ window.speechSynthesis.addEventListener('voiceschanged',doSpeak,{once:true}); }
       return true;
     };
 
@@ -1951,6 +1955,18 @@ document.body.addEventListener('click',(e)=>{
       return ()=>{
         if(_fired) return; _fired=true;
         overlay.classList.add('ack');
+        // Unlock speech synthesis NOW — must be called synchronously from gesture handler.
+        // Mobile browsers (iOS/Android) block speechSynthesis from setTimeout callbacks.
+        const today=new Date();
+        const isMomBday=(today.getMonth()===1&&today.getDate()===26);
+        const hour=today.getHours();
+        let greeting;
+        if(isMomBday) greeting='Happy birthday momma!';
+        else if(hour>=22||hour<5) greeting=["Can't sleep?","Night owl.","The quiet hours.","Just us and the dark."][Math.floor(Math.random()*4)];
+        else if(hour<12) greeting='Good morning.';
+        else if(hour<17) greeting='Good afternoon.';
+        else greeting='Good evening.';
+        try{speakBrowser(greeting);}catch(_){}
         try{initAudio();}catch(_){}
         try{initMotion();}catch(_){}
         try{setupRecognition();}catch(_){}
@@ -1962,16 +1978,8 @@ document.body.addEventListener('click',(e)=>{
           setTimeout(()=>{_overlayJustDismissed=false;},600);
           inputField.classList.add('active');
           if(window.innerWidth>768) input.focus();
-          const today=new Date();
-          const isMomBday=(today.getMonth()===1&&today.getDate()===26);
-          const hour=today.getHours();
-          let greeting;
-          if(isMomBday) greeting='Happy birthday momma!';
-          else if(hour>=22||hour<5) greeting=["Can't sleep?","Night owl.","The quiet hours.","Just us and the dark."][Math.floor(Math.random()*4)];
-          else if(hour<12) greeting='Good morning.';
-          else if(hour<17) greeting='Good afternoon.';
-          else greeting='Good evening.';
-          try{speakWithAudio(greeting);}catch(_){}
+          // Upgrade to server TTS if AudioContext is ready; speakBrowser already spoke.
+          if(audioCtx&&audioCtx.state==='running') try{speakWithAudio(greeting);}catch(_){}
           try{scheduleAmbient();}catch(_){}
         },850);
       };
