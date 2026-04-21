@@ -74,6 +74,7 @@
       display:block;
       background:#020000;
       touch-action:none;
+      cursor:pointer;
     }
 
     #status{
@@ -300,6 +301,7 @@
     const uiLabel=document.getElementById('ui-label');
     const uiDots=document.getElementById('ui-dots');
     const inputField=document.getElementById('input-field');
+    let _overlayJustDismissed=false;
     const input=inputField.querySelector('input[type=text]');
     const fileInput=document.getElementById('file-input');
     const attachBtn=document.getElementById('attach-btn');
@@ -1596,15 +1598,30 @@ const speakBrowser=(text)=>{
       }
     };
 
-    canvas.addEventListener('click',(e)=>{
-      if(inputField.classList.contains('active')){
-        inputField.classList.remove('active');
-        input.blur();
-      }else{
-        inputField.classList.add('active');
-        input.focus();
-      }
-    });
+// Unified tap handler — works for mouse (click) and touch (touchend)
+// Guards: overlay grace period, touch-move distance (skip swipes/orbits)
+let _tapStartX=0,_tapStartY=0;
+const _toggleInput=()=>{
+  if(_overlayJustDismissed) return;
+  if(inputField.classList.contains('active')){
+    inputField.classList.remove('active');
+    input.blur();
+  }else{
+    inputField.classList.add('active');
+    try{ input.focus(); }catch(_){}
+  }
+};
+canvas.addEventListener('touchstart',(e)=>{
+  _tapStartX=e.touches[0].clientX;
+  _tapStartY=e.touches[0].clientY;
+},{passive:true});
+canvas.addEventListener('touchend',(e)=>{
+  const dx=e.changedTouches[0].clientX-_tapStartX;
+  const dy=e.changedTouches[0].clientY-_tapStartY;
+  if(Math.sqrt(dx*dx+dy*dy)<12) _toggleInput();
+},{passive:true});
+canvas.addEventListener('click',_toggleInput);
+
 
     const orbStates=[
       {name:"SPHERE",desc:"Perfect form",s:1},{name:"CUBE",desc:"Solid geometry",s:2},
@@ -1964,6 +1981,8 @@ const speakBrowser=(text)=>{
         refreshMetrics();setInterval(refreshMetrics,30000);
         setTimeout(()=>{
           overlay.hidden=true;
+          _overlayJustDismissed=true;
+          setTimeout(()=>{_overlayJustDismissed=false;},600);
           inputField.classList.add('active');
           if(window.innerWidth>768) input.focus();
           const today=new Date();
