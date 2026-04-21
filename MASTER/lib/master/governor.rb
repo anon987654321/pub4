@@ -28,6 +28,8 @@ module Master
       Result.err(e.message, category: :validation)
     end
 
+    alias permit? check_permit
+
     def approve_all!    = @approve_all = true
     def reset_approve!  = @approve_all = false
 
