@@ -1286,7 +1286,7 @@ const renderMd = raw => {
     const speakWithAudio=async(text)=>{
       if(LOW_END) return speakBrowser(text);
 
-      if(!audioCtx) return false;
+      if(!audioCtx) return speakBrowser(text);
       if(audioCtx.state==='suspended') await audioCtx.resume();
       try{
         const resp=await fetch("/chat/tts",{
@@ -1294,9 +1294,9 @@ const renderMd = raw => {
           headers:{"Content-Type":"application/json","X-CSRF-Token":csrfToken()},
           body:JSON.stringify({text})
         });
-        if(!resp.ok) return false;
+        if(!resp.ok) return speakBrowser(text);
         const buf=await resp.arrayBuffer();
-        if(!buf.byteLength) return false;
+        if(!buf.byteLength) return speakBrowser(text);
         const decoded=await audioCtx.decodeAudioData(buf);
         // Cancel local TTS — server audio is higher quality
         if('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -1312,7 +1312,7 @@ const renderMd = raw => {
         src.onended=_onSpeakEnd;
         src.start();
         return true;
-      }catch(_e){ return false; }
+      }catch(_e){ return speakBrowser(text); }
     };
 
     const startRecognition=()=>{
