@@ -38,7 +38,7 @@ module Master
 
         if @data_cache.nil? || current_mtime != @data_mtime
           @data_cache = begin
-            YAML.safe_load_file(path) || {}
+            YAML.safe_load_file(path, aliases: true) || {}
           rescue StandardError
             {}
           end

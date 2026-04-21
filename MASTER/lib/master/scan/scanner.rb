@@ -70,7 +70,7 @@ module Master
       private
 
       def depth_rules
-        @depth_rules ||= YAML.safe_load_file(DEPTHS_PATH)
+        @depth_rules ||= YAML.safe_load_file(DEPTHS_PATH, aliases: true)
       rescue StandardError
         @depth_rules = {}
       end
