@@ -1971,20 +1971,21 @@ document.body.addEventListener('click',(e)=>{
         else if(hour<12) greeting='Good morning.';
         else if(hour<17) greeting='Good afternoon.';
         else greeting='Good evening.';
+        // Speak synchronously from gesture — must NOT create AudioContext before speech starts
+        // (iOS AudioContext creation steals audio focus and silently cancels speechSynthesis).
         try{speakBrowser(greeting);}catch(_){}
-        try{initAudio();}catch(_){}
         try{initMotion();}catch(_){}
         try{setupRecognition();}catch(_){}
         try{setTimeout(initPads,500);setTimeout(initDrums,650);}catch(_){}
         try{refreshMetrics();setInterval(refreshMetrics,30000);}catch(_){}
+        // Delay AudioContext init until after speech has had time to start.
+        setTimeout(()=>{ try{initAudio();}catch(_){} },2000);
         setTimeout(()=>{
           overlay.hidden=true;
           _overlayJustDismissed=true;
           setTimeout(()=>{_overlayJustDismissed=false;},600);
           inputField.classList.add('active');
           if(window.innerWidth>768) input.focus();
-          // Upgrade to server TTS if AudioContext is ready; speakBrowser already spoke.
-          if(audioCtx&&audioCtx.state==='running') try{speakWithAudio(greeting);}catch(_){}
           try{scheduleAmbient();}catch(_){}
         },850);
       };
