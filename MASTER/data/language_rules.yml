@@ -113,4 +113,3 @@ openbsd:
     kern.random.tls_entropy: 1
     vm.swappiness: 0
     net.inet.tcp.msl: 15000
-```
