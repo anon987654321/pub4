@@ -3,8 +3,8 @@
 
 file_reading:
   rule: READ_FULL_FILES
-  statement: "Read complete files. Never grep, head, tail, or partial-read to understand code."
-  rationale: "Partial view causes partial understanding which causes partial (wrong) changes."
+  statement: "Read complete files. Never grep, head, tail, or partial‑read to understand code."
+  rationale: "Partial view yields partial (wrong) changes."
   allowed_exceptions:
     - "grep/search across many unknown files to locate a keyword"
   forbidden:
@@ -49,7 +49,7 @@ code_principles:
     statement: "Never instantiate collaborators inside a method."
   result_monad:
     rule: RESULT_MONAD
-    statement: "Use respond_to?(:ok?) not is_a?(Result) for duck-typing."
+    statement: "Use respond_to?(:ok?) not is_a?(Result) for duck‑typing."
 
 scan_rules:
   standard_depth:
@@ -76,7 +76,7 @@ scan_rules:
     nielsen: "puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are."
     prune: "Loads patterns from data/strunk.yml — single source of truth."
     conceptual: "Loads philosophy from data/axioms.yml — single source of truth."
-    deep_caution: "deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes."
+    deep_caution: "deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes."
 
 autoloop:
   scan_depth: standard
@@ -125,3 +125,55 @@ validation:
   after_write: "ruby -c lib/master/FILE.rb"
   after_commit: "ruby -e \"require_relative 'lib/master'; puts 'ok'\""
   scan_file: "bundle exec ruby exe/master scan lib/master/FILE.rb"
+
+phases:
+  discover:
+    id: 1
+    goal: "Understand actual need"
+    output: "Problem statement with success criteria"
+    gates:
+      - no_vague_words
+      - audience_identified
+      - success_measurable
+  analyze:
+    id: 2
+    goal: "Break into components"
+    output: "Component diagram with dependencies"
+    gates:
+      - components_distinct
+      - dependencies_acyclic
+  ideate:
+    id: 3
+    goal: "Generate 15+ alternatives"
+    output: "List of approaches with trade‑offs"
+    gates:
+      - count_gte_15
+      - trade_offs_documented
+  design:
+    id: 4
+    goal: "Specific architecture"
+    output: "Interface definitions and error handling"
+    gates:
+      - interfaces_explicit
+      - errors_documented
+  implement:
+    id: 5
+    goal: "Execute with zero violations"
+    output: "Working code at 100/100 score"
+    gates:
+      - tests_pass
+      - zero_violations
+  validate:
+    id: 6
+    goal: "Prove with evidence"
+    output: "Test results, benchmarks"
+    gates:
+      - zero_test_failures
+      - edge_cases_covered
+  deliver:
+    id: 7
+    goal: "Ship with monitoring"
+    output: "Deployed code with dashboards"
+    gates:
+      - deployed
+      - monitoring_configured

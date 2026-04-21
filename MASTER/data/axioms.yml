@@ -10,7 +10,6 @@ kernel:
   BE_CONCISE: "Avoid unnecessary words, tokens, or lines."
 
 # Philosophy layer [P] — advisory only, never blocking.
-# Restored from MASTER2 and trimmed to top 25 prioritized axioms.
 philosophy:
   prioritized_top_25:
     - id: ONE_JOB
@@ -78,7 +77,7 @@ philosophy:
       statement: "Prefer simpler hypotheses and designs first."
     - id: PARETO
       priority: 22
-      statement: "Ship the 20% that delivers 80% value first."
+      statement: "Ship the 20 % that delivers 80 % value first."
     - id: FINISH_FIRST
       priority: 23
       statement: "Close the loop before opening new threads."
@@ -88,7 +87,6 @@ philosophy:
     - id: BLAME_SELF
       priority: 25
       statement: "Assume your change introduced the bug until disproven."
-
   anti_patterns:
     - god_class
     - shotgun_surgery
@@ -98,25 +96,21 @@ philosophy:
     - n_plus_one_queries
     - silent_rescue
     - temporal_coupling
-
   zen_method:
     observe: "Read current behavior before changing anything."
     simplify: "Reduce moving parts before adding new components."
     isolate: "Change one axis at a time with clear boundaries."
     verify: "Run checks and gather objective evidence."
     reflect: "Capture learning and improve defaults."
-
   strunk_white:
     - "Omit needless words."
     - "Use definite, specific, concrete language."
     - "Put statements in positive form."
     - "Use active voice by default."
-
   inverted_pyramid:
     - "Lead with the outcome."
     - "Provide key evidence next."
     - "Add implementation detail last."
-
   rails_doctrine:
     - "Convention over configuration"
     - "Optimize for programmer happiness"
@@ -124,8 +118,6 @@ philosophy:
     - "Value integrated systems"
 
 # Nielsen Norman Group — 10 Usability Heuristics
-# Source: nngroup.com/articles/ten-usability-heuristics/
-# Applied to CLI/API/output design as much as UI.
 ux:
   nielsen_heuristics:
     - id: SYSTEM_STATUS
@@ -160,7 +152,6 @@ ux:
       statement: "Make help easy to find, concrete, and task‑focused."
 
 # Clean Code — Robert C. Martin
-# Principles beyond SOLID that shape method/class design at the micro level.
 clean_code:
   - id: ONE_ABSTRACTION_LEVEL
     statement: "Each function operates at one abstraction level; no mixing high‑level policy with low‑level detail."
@@ -174,7 +165,6 @@ clean_code:
     statement: "Eliminate unexplained constants, flags, or mode switches."
 
 # Refactoring — Martin Fowler
-# Named code smells that map to specific extractions or restructurings.
 refactoring_smells:
   - id: PRIMITIVE_OBSESSION
     statement: "Replace repeated primitives with value objects."

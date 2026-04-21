@@ -1,28 +1,28 @@
-# swee​p stage promptbuilding blocks
+# Sweep stage prompt building blocks
 
 structural_techniques:
-  - DEFRAG
+  - ASSERT
   - DECOUPLE
-  - FLATTEN
-  - MERGE
-  - HOIST
-  - REFLOW
-  - EXTRACT
-  - INLINE
-  - SPLIT  - REGROUP
-  - TELLprose_techniques:
-  - RECOMMENT
-  - OMIT
+  - DEFRAG
   - DEHEDGE
   - DEPREAMBLE
-  - ASSERT
+  - EXTRACT
+  - FLATTEN
+  - HOIST
+  - INLINE
+  - MERGE
   - NAME
+  - RECOMMENT
+  - REFLOW
+  - REGROUP
+  - SPLIT
+  - TELLPROSE_TECHNIQUES
 
 cosmetic_techniques:
-  - ALIGN  - SPACE
-  - FENCE  - CONSTANT
-  - PRIVATEdimension_assessment:
-  - EXPAND
+  - ALIGN_SPACE
   - CONTRACT
-  - SPLIT
+  - EXPAND
+  - FENCE_CONSTANT
+  - PRIVATE_DIMENSION_ASSESSMENT
   - MERGE
+  - SPLIT

@@ -1463,38 +1463,6 @@ const renderMd = raw => {
       }
     });
 
-// TTS: audio queue for sentence-by-sentence playback
-const audioQueue=[];
-let audioPlaying=false;
-const drainAudioQueue=()=>{
-  if(audioPlaying||audioQueue.length===0)return;
-  const{src,blob}=audioQueue.shift();
-  const url=URL.createObjectURL(blob);
-  const a=new Audio(url);
-  audioPlaying=true;
-  isSpeaking=true;
-  a.onended=()=>{URL.revokeObjectURL(url);audioPlaying=false;isSpeaking=audioQueue.length>0;drainAudioQueue();};
-  a.onerror=()=>{URL.revokeObjectURL(url);audioPlaying=false;isSpeaking=audioQueue.length>0;drainAudioQueue();};
-  a.play().catch(()=>{audioPlaying=false;isSpeaking=false;});
-};
-// Fetch TTS from server and queue
-const speakWithAudio=async(text)=>{
-  try{
-    const fd=new FormData();fd.append('text',text);
-    const r=await fetch('/chat/tts',{method:'POST',body:fd});
-    if(!r.ok)return;
-    const blob=await r.blob();
-    audioQueue.push({src:text,blob});
-    drainAudioQueue();
-  }catch(_){}
-};
-// Browser speech synthesis fallback
-const speakBrowser=(text)=>{
-  if(!window.speechSynthesis||!text.trim())return;
-  const u=new SpeechSynthesisUtterance(text);
-  u.rate=0.9;u.pitch=0.8;
-  window.speechSynthesis.speak(u);
-};
 
     const transmit=async(message)=>{
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
@@ -1598,9 +1566,8 @@ const speakBrowser=(text)=>{
       }
     };
 
-// Unified tap handler — works for mouse (click) and touch (touchend)
-// Guards: overlay grace period, touch-move distance (skip swipes/orbits)
-let _tapStartX=0,_tapStartY=0;
+// Tap anywhere on body (not on UI chrome) → toggle input field
+// Works on LOW_END too (canvas is display:none there, replaced by CSS orb)
 const _toggleInput=()=>{
   if(_overlayJustDismissed) return;
   if(inputField.classList.contains('active')){
@@ -1611,16 +1578,21 @@ const _toggleInput=()=>{
     try{ input.focus(); }catch(_){}
   }
 };
-canvas.addEventListener('touchstart',(e)=>{
-  _tapStartX=e.touches[0].clientX;
-  _tapStartY=e.touches[0].clientY;
+const _isUiTarget=(el)=>{
+  if(!el) return false;
+  const id=el.id||'';
+  if(['status','input-field','chat-log','arrow-left','arrow-right'].includes(id)) return true;
+  if(el.closest&&(el.closest('#input-field')||el.closest('#status')||el.closest('#chat-log')||el.closest('.arrow'))) return true;
+  return false;
+};
+document.body.addEventListener('touchend',(e)=>{
+  if(_isUiTarget(e.target)) return;
+  _toggleInput();
 },{passive:true});
-canvas.addEventListener('touchend',(e)=>{
-  const dx=e.changedTouches[0].clientX-_tapStartX;
-  const dy=e.changedTouches[0].clientY-_tapStartY;
-  if(Math.sqrt(dx*dx+dy*dy)<12) _toggleInput();
-},{passive:true});
-canvas.addEventListener('click',_toggleInput);
+document.body.addEventListener('click',(e)=>{
+  if(_isUiTarget(e.target)) return;
+  _toggleInput();
+});
 
 
     const orbStates=[
@@ -1640,7 +1612,8 @@ canvas.addEventListener('click',_toggleInput);
       {name:"FIELD",desc:"Vector flow",s:39},{name:"NOISE",desc:"Perlin form",s:40},{name:"WAVE",desc:"Interference",s:41},
       {name:"INTERFERENCE",desc:"Double source",s:42},{name:"MOIRE",desc:"Rotating grids",s:43},{name:"FRACTAL",desc:"Recursive tree",s:44},
       {name:"ATTRACTOR",desc:"Lorenz chaos",s:45},{name:"MANDALA",desc:"Symmetric pattern",s:46},{name:"FILAMENT",desc:"Flow lines",s:47},
-      {name:"ZEN",desc:"Breathing minimal",s:49}
+      {name:"ZEN",desc:"Breathing minimal",s:49},
+      {name:"FACE",desc:"Human form",s:50}
     ];
 
     let currentOrb=0;
@@ -1735,6 +1708,7 @@ canvas.addEventListener('click',_toggleInput);
         else if(s===46){const ring=Math.floor(this.i/128);const a=(this.i%128)/128*Math.PI*2;const r=ring*8;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=0;}
         else if(s===47){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.oz=(Math.random()-0.5)*50;this.l=0;}
         else if(s===48){const n=20;const f=this.i%n;const a=(f/n)*Math.PI*2;const r=25+Math.floor(this.i/n)*6;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=Math.floor(this.i/n)*3;}
+        else if(s===50){const n=this.i,j=()=>(Math.random()-0.5)*1.8;if(n<200){const a=(n/200)*Math.PI*2,fw=44*(1-Math.max(0,Math.cos(a+Math.PI))*0.4);this.ox=Math.sin(a)*fw+j();this.oy=Math.cos(a)*62+j();this.oz=j();}else if(n<260){const t=(n-200)/60;this.ox=-27+t*18+j();this.oy=28-t*(1-t)*8+j();this.oz=j();}else if(n<320){const t=(n-260)/60;this.ox=9+t*18+j();this.oy=28-t*(1-t)*8+j();this.oz=j();}else if(n<400){const a=(n-320)/80*Math.PI*2;this.ox=-18+Math.cos(a)*9+j();this.oy=17+Math.sin(a)*5+j();this.oz=j();}else if(n<480){const a=(n-400)/80*Math.PI*2;this.ox=18+Math.cos(a)*9+j();this.oy=17+Math.sin(a)*5+j();this.oz=j();}else if(n<520){const a=(n-480)/40*Math.PI*2;this.ox=-18+Math.cos(a)*3+j()*0.5;this.oy=17+Math.sin(a)*3+j()*0.5;this.oz=j();}else if(n<560){const a=(n-520)/40*Math.PI*2;this.ox=18+Math.cos(a)*3+j()*0.5;this.oy=17+Math.sin(a)*3+j()*0.5;this.oz=j();}else if(n<610){const t=(n-560)/50;this.ox=j()*2;this.oy=12-t*22+j();this.oz=j();}else if(n<680){const side=(n%2)*2-1,tt=((n-610)%35)/35,a=tt*Math.PI;this.ox=side*7+Math.cos(a)*5+j();this.oy=-10-Math.sin(a)*4+j();this.oz=j();}else if(n<760){const t=(n-680)/80,bow=Math.sin(t*Math.PI)*3;this.ox=-15+t*30+j();this.oy=-27+bow+j();this.oz=j();}else if(n<840){const t=(n-760)/80;this.ox=-13+t*26+j();this.oy=-32-Math.sin(t*Math.PI)*5+j();this.oz=j();}else if(n<900){const a=(n-840)/60*Math.PI;this.ox=Math.sin(a)*12+j();this.oy=-53+Math.sin(a)*4+j();this.oz=j();}else if(n<960){const t=(n-900)/60;this.ox=-40+j()*2;this.oy=-8+t*25+j()*5;this.oz=j();}else if(n<1020){const t=(n-960)/60;this.ox=40+j()*2;this.oy=-8+t*25+j()*5;this.oz=j();}else if(n<1100){const t=(n-1020)/80,a=(t-0.5)*Math.PI*1.1;this.ox=Math.sin(a)*42+j()*3;this.oy=50+Math.cos(a)*10+j()*2;this.oz=j();}else{const ff=n*0.618033,fx=((ff*53)%80)-40,fy=((ff*31)%100)-55,inside=(fx*fx/1600+fy*fy/3025)<0.85;this.ox=(inside?fx*0.7:(Math.random()-0.5)*50)+j()*3;this.oy=(inside?fy*0.75:(Math.random()-0.5)*60)+j()*3;this.oz=j();}}
         else{const phi=Math.acos(1-2*(this.i+0.5)/N);const theta=Math.PI*(1+Math.sqrt(5))*this.i;this.ox=Math.cos(theta)*Math.sin(phi)*30;this.oy=Math.cos(phi)*30;this.oz=Math.sin(theta)*Math.sin(phi)*30;}
 
         this.px=this.ox;this.py=this.oy;this.pz=this.oz;this.vx=0;this.vy=0;this.vz=0;this.c=0;
@@ -1766,6 +1740,7 @@ canvas.addEventListener('click',_toggleInput);
         else if(s===47){this.l++;const a=Math.sin(this.ox*0.1)*Math.cos(this.oy*0.1)*Math.PI*2+t;this.ox+=Math.cos(a)*1.5;this.oy+=Math.sin(a)*1.5;if(this.l>80||Math.abs(this.ox)>60||Math.abs(this.oy)>60){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.l=0;}this.tx=this.ox;this.ty=this.oy;this.tz=this.oz+Math.sin(t+this.l*0.1)*8;}
         else if(s===48){const tilt=Math.sin(t*0.5)*0.3;const rx=this.ox*Math.cos(tilt)-this.oz*Math.sin(tilt);const rz=this.ox*Math.sin(tilt)+this.oz*Math.cos(tilt);this.tx=rx*(1+audioLevel*0.5);this.ty=this.oy*(1+audioLevel*0.5);this.tz=rz;}
         else if(s===49){const breath=(Math.sin(t*0.3)+1)/2;const ss=0.5+breath*0.5+audioLevel*0.5;this.tx=this.ox*ss;this.ty=this.oy*ss;this.tz=this.oz*ss;}
+        else if(s===50){const b=Math.sin(t*0.5)*1.5*(0.5+audioLevel);this.tx=this.ox+b*0.3*(this.ox/50);this.ty=this.oy+b*0.5*(this.oy/60);this.tz=this.oz+Math.sin(t*1.2+this.i*0.005)*1.5*(1+audioLevel);}
         else{
           // Idle breathing — never fully static
           const breath=1+Math.sin(t*0.8+this.i*0.003)*0.06;
