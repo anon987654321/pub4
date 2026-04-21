@@ -87,7 +87,7 @@ module Master
 
       def load_rules
         path = File.join(@root, "data", "models.yml")
-        YAML.safe_load_file(path) || {}
+        YAML.safe_load_file(path, aliases: true) || {}
       rescue StandardError
         {}
       end

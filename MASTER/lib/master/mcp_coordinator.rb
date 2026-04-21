@@ -77,7 +77,7 @@ module Master
       path = File.join(@root, CONFIG_PATH)
       return {} unless File.exist?(path)
       require "yaml"
-      YAML.safe_load_file(path) || {}
+      YAML.safe_load_file(path, aliases: true) || {}
     rescue StandardError
       {}
     end
