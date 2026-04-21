@@ -17,7 +17,8 @@ module Master
     "code_index"      => "CodeIndex",
     "git_context" => "GitContext",
     "ast_edit"    => "AstEdit",
-    "llm"         => "LLM"
+    "llm"         => "LLM",
+    "circuit_breaker_registry" => "CircuitBreakerRegistry"
   )
   loader.setup
 
@@ -31,7 +32,7 @@ module Master
     logging  = Logging.new(ring_buffer: ring, event_bus: bus, trace_level: config.trace)
     session  = Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
     undo     = Undo.new(session:, event_bus: bus)
-    breaker  = CircuitBreaker.new(budget_max: config.budget_max, req_max: config.req_max, event_bus: bus)
+    breaker  = CircuitBreakerRegistry.new(budget_max: config.budget_max, req_max: config.req_max, event_bus: bus)
     cache    = SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
     governor = Governor.new(config:, event_bus: bus)
     renderer = Renderer.new(config:)
@@ -92,8 +93,7 @@ module Master
       ),
       Stages::Guard.new(governor:, injection_guard: guard),
       Stages::Execute.new,
-      council_stage,
-      Stages::Lint.new(scanner:, config:),
+      Pipeline::ParallelGroup.new(council_stage, Stages::Lint.new(scanner:, config:)),
       Stages::Prune.new,
       Stages::Memo.new(memory:, event_bus: bus),
       Stages::Render.new(renderer:)
@@ -121,8 +121,10 @@ route_stage&.instance_variable_get(:@commands)&.store("orders", ->(ctx) {
   when "run"
     results = standing.run_due!
     results.empty? ? "no orders due" : results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
+  when /\Areset (.+)\z/
+    standing.reset($1.strip)
   else
-    "usage: /orders  /orders enable <name>  /orders disable <name>  /orders run"
+    "usage: /orders  /orders enable <name>  /orders disable <name>  /orders reset <name>  /orders run"
   end
 })
 

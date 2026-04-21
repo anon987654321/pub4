@@ -108,7 +108,7 @@ module Master
       candidate_models.each_with_index do |selected_model, index|
         assert_tool_capable!(selected_model)
         cache_key = cache_key_for("#{selected_model}:#{prompt}", context)
-        response  = @circuit_breaker.call(estimate_cost(prompt)) {
+        response  = breaker_for(selected_model).call(estimate_cost(prompt)) {
           @cache.fetch(cache_key, selected_model) { chat_with(prompt, selected_model, context:, stream:, &blk) }
         }
         last_response = response
@@ -131,7 +131,7 @@ module Master
       @escalation_done = true
       @bus&.publish("llm:escalation", from: routed_models.first, to: escalation_model)
       esc_cache_key    = cache_key_for("#{escalation_model}:#{prompt}", context)
-      escalated_result = @circuit_breaker.call(estimate_cost(original_message)) {
+      escalated_result = breaker_for(escalation_model).call(estimate_cost(original_message)) {
         @cache.fetch(esc_cache_key, escalation_model) {
           chat_with(prompt, escalation_model, context: context, stream: stream, &blk)
         }
@@ -145,6 +145,11 @@ module Master
       @model_router.fallback_chain(task_type: @config.task_type.to_sym)
     rescue StandardError
       [@config.model]
+    end
+
+    # Use per-model breaker when registry available, global breaker otherwise.
+    def breaker_for(model_id)
+      @circuit_breaker.respond_to?(:for) ? @circuit_breaker.for(model_id) : @circuit_breaker
     end
 
     def replicate_model?(model_id)
