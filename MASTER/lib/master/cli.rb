@@ -216,11 +216,25 @@ module Master
       by_rule
     end
 
+    SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.freeze
+
     def render_violations_by_rule(by_rule)
-      by_rule.sort_by { |_, violations| -violations.size }.each do |rule, violations|
-        puts @renderer.render("[#{rule}] #{violations.size}", mode: :dim)
-        violations.first(3).each { |violation| puts "  L#{violation[:line]}: #{violation[:message][0, 90]}" }
-        puts "  ... +#{violations.size - 3} more" if violations.size > 3
+      ordered = by_rule.sort_by do |_, vs|
+        sev_rank = { critical: 0, error: 1, warning: 2, style: 3 }
+        [sev_rank.fetch(vs.first&.dig(:severity) || :warning, 2), -vs.size]
+      end
+      ordered.each do |rule, violations|
+        sev  = violations.first&.dig(:severity) || :warning
+        icon = SEVERITY_ICON.fetch(sev, "\!")
+        puts @renderer.render("[#{icon}][#{rule}] #{violations.size}", mode: :dim)
+        violations.first(3).each do |v|
+          puts "  L#{v[:line]}: #{v[:message].to_s[0, 88]}"
+          if v[:fix] && !v[:fix].empty?
+            hint = v[:fix].to_s.lines.first.to_s.strip[0, 80]
+            puts "    fix: #{hint}" unless hint.empty?
+          end
+        end
+        puts "  ... +\#{violations.size - 3} more" if violations.size > 3
       end
     end
 

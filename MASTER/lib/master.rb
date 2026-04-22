@@ -82,7 +82,7 @@ module Master
       Stages::Intake.new,
       Stages::Infer.new,
       Stages::Route.new(
-        commands: build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:),
+        commands: build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, metrics:),
         agent:
       ),
       Stages::Guard.new(governor:, injection_guard: guard),
@@ -198,7 +198,7 @@ route_stage&.instance_variable_get(:@commands)&.store("soul", ->(ctx) {
     ]
   end
 
-  def self.build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:)
+  def self.build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, metrics: nil)
     {
       "clear"   => ->(ctx) { session.clear!  ; "context cleared" },
       "save"    => ->(ctx) { session.save!   ; "session saved" },
@@ -382,8 +382,13 @@ route_stage&.instance_variable_get(:@commands)&.store("soul", ->(ctx) {
       require "yaml"
       data = YAML.safe_load_file(yml_path)
       tiers = data["models"] || {}
-      lines = tiers.flat_map { |tier, ms| ms.to_a.map { |m| "  [#{tier}] #{m["id"]}" } }
-      (["available models:"] + lines).join("\n")
+      model_lines = tiers.flat_map { |tier, ms| ms.to_a.map { |m| "  [#{tier}] #{m["id"]}" } }
+      quality_lines = metrics&.model_quality&.map do |mod, s|
+        "  #{mod}: #{s[:calls]} calls, fail_rate=#{s[:fail_rate]}"
+      end || []
+      sections = ["available models:"] + model_lines
+      sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
+      sections.join("\n")
     else
       "model: #{agent.model}"
     end

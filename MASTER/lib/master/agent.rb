@@ -40,6 +40,7 @@ module Master
 
     def chat(message, stream: true, &blk)
       @context_window&.check_and_compact!
+      @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
       @session.add_message(role: :user, content: message)
       candidate_models = routed_models
       prompt           = apply_reasoning_mode(message)
@@ -112,6 +113,9 @@ module Master
         }
         last_response = response
         next if response.respond_to?(:err?) && response.err? && index < candidate_models.length - 1
+        if response.respond_to?(:ok?) && response.ok?
+          @bus&.publish("llm:response", model: selected_model, success: true, tokens_approx: response.to_s.bytesize / 4)
+        end
         break response
       end
       last_response
