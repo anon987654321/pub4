@@ -1,5 +1,8 @@
-  class Firm < ActiveRecord::Base
-    has_many   :clients
-    has_one    :account
-    belongs_to :conglomerate
-  end  
+# after_create :setup_default_account
+#
+# private
+#
+# def setup_default_account
+#   create_account!
+# end
+# 

@@ -1,1 +1,1 @@
-gem 'event_stream_parser'
+gem 'event_stream_parser', '~> 1.0'

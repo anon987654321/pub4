@@ -1,1 +1,1 @@
-doas zsh openbsd.sh
+doas -s        # Open an interactive root shell

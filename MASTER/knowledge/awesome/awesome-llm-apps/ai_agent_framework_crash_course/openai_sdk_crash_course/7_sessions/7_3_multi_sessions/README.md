@@ -1,2 +1,1 @@
-   pip install openai-agents
-   
+pip install openai-agents

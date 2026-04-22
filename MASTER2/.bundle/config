@@ -1,4 +1,0 @@
----
-BUNDLE_PATH: "/home/dev/.local/share/gem"
-BUNDLE_BIN: "/home/dev/.local/share/gem/bin"
-BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries --with-xml2-include=/usr/include/libxml2 --with-xml2-lib=/usr/lib/arm-linux-gnueabihf --with-xslt-include=/usr/include --with-xslt-lib=/usr/lib/arm-linux-gnueabihf"

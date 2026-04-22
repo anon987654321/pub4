@@ -1,1 +1,11 @@
-User → ToolCall → BeforeCallback → Execution → AfterCallback → Result
+User
+   ↓
+ToolCall
+   ↓
+BeforeCallback
+   ↓
+Execution
+   ↓
+AfterCallback
+   ↓
+Result

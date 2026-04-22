@@ -1,5 +1,11 @@
-Business Topic → SequentialAgent → 4 Sub‑agents (sequential)
-               ↓
-       Market Research (Search Agent) → SWOT → Strategy → Implementation
-               ↓
-       Business Implementation Plan
+Business Topic
+│
+▼
+SequentialAgent
+│   ├─ 1️⃣ Market Research (SearchAgent)
+│   ├─ 2️⃣ SWOT Analysis
+│   ├─ 3️⃣ Strategy Formulation
+│   └─ 4️⃣ Implementation Planning
+│
+▼
+Business Implementation Plan

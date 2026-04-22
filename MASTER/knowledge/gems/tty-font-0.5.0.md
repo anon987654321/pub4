@@ -1,1 +1,1 @@
-gem 'tty-font'
+gem 'tty-font', '~> 0.5.0'

@@ -1,10 +1,2 @@
-1_builtin_tools/
-├── README.md                    # This guide
-├── search_agent/               # Search implementation
-│   ├── __init__.py            # Package initializer
-│   └── agent.py               # Search agent
-├── code_exec_agent/           # Code execution implementation
-│   ├── __init__.py            # Package initializer
-│   └── agent.py               # Execution agent
-├── requirements.txt           # Dependency list
-└── .env.example               # Example configuration file
+git clone https://github.com/your/repo.git
+cd knowledge/awesome/awesome-llm-apps/ai_agent_framework_crash_course/google_adk_crash_course/4_tool_using_agent/4_1_builtin_tools

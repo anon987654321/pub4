@@ -1,2 +1,1 @@
-require "redis"
-redis = Redis.new
+gem install redis -v 5.4.1

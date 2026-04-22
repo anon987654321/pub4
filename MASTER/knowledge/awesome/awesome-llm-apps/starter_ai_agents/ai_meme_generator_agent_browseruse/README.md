@@ -1,3 +1,7 @@
-git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
-cd ai_agent_tutorials/ai_meme_generator_browseruse
-pip install -r requirements.txtpython -m playwright install --with-deps
+awesome-llm-apps/
+└─ ai_agent_tutorials/
+   └─ ai_meme_generator_browseruse/
+      ├─ README.md          # ← this file
+      ├─ requirements.txt   # Python dependencies for the optional Flask UI
+      ├─ main.rb            # Entry point – Master agent definition
+      └─ …                  # Supporting scripts, HTML templates and assets

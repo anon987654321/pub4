@@ -1,5 +1,7 @@
-require 'json'
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-JSON.generate(object)      # create a JSON stringJSON.parse(string)         # parse a JSON string
-JSON.pretty_generate(obj)  # human‑readable output
-JSON.fast_generate(obj)    # generate without security checks
+# Print the version of the bundled JSON library.
+require "json"
+
+puts JSON::VERSION

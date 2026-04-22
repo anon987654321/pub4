@@ -1,2 +1,1 @@
-2. Install dependencies:  
-   
+bundle install

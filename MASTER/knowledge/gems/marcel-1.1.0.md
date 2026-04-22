@@ -1,23 +1,9 @@
-# Magic bytes onlyMarcel::MimeType.for Pathname.new("example.gif")
-# => "image/gif"
+require "marcel"
 
-File.open "example.gif" do |file|
-  Marcel::MimeType.for file
-end
-# => "image/gif"
+# Pathname of the target file.
+path = Pathname.new("example.gif")
 
-# Magic bytes with filename fallback
-Marcel::MimeType.for Pathname.new("unrecognisable-data"), name: "example.pdf"
-# => "application/pdf"
+# Detect MIME type from magic bytes.
+mime_type = Marcel::MimeType.for(path)
 
-# Extension only
-Marcel::MimeType.for extension: ".pdf"
-# => "application/pdf"
-
-# All three factors
-Marcel::MimeType.for Pathname.new("unrecognisable-data"), name: "example", declared_type: "image/png"
-# => "image/png"
-
-# Fallback
-Marcel::MimeType.for StringIO.new(File.read "unrecognisable-data")
-# => "application/octet-stream"
+puts mime_type # => "image/gif"

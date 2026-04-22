@@ -1,7 +1,2 @@
-pip install openai-agents
-cp ../env.example .env   # add your OpenAI API key
-python - <<'PY'
-import asyncio
-from agent import main
-asyncio.run(main())
-PY
+# Upgrade to the latest version of the OpenAI Agents Python SDK
+pip install --upgrade openai-agents

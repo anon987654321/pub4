@@ -1,1 +1,1 @@
-assert { 3.times.to_a.include?(3) }
+gem install power_assert

@@ -1,3 +1,2 @@
-# Ask a question
-chat = RubyLLM.chat
-chat.ask "What's the best way to learn Ruby?"
+# ruby example.rb
+# 

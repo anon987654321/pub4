@@ -1,2 +1,1 @@
-bundle install
-bundle exec rake compile
+gem install prism -v 1.9.0

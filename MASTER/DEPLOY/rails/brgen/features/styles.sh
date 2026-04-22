@@ -1,12 +1,18 @@
-#!/usr/bin/env zsh
-emulate -L zsh
-setopt err_return no_unset pipe_fail extended_glob warn_create_global
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
 
-typeset -r APP_DIR="/home/brgen/app"
+readonly APP_DIR="/home/brgen/app"
+readonly STYLE_PATH="$APP_DIR/app/assets/stylesheets/application.css"
+
 echo "==> [styles] Dark Reddit theme CSS"
-cd "$APP_DIR"
 
-cat > app/assets/stylesheets/application.css << 'CSS'
+# Ensure the target directory exists
+mkdir -p "$(dirname "$STYLE_PATH")"
+
+# Write the stylesheet atomically
+temp_file="$(mktemp "$STYLE_PATH.XXXXXX")"
+cat >"$temp_file" <<'CSS'
 /* BRGEN — Minimalist Dark Theme */
 
 :root {
@@ -32,9 +38,6 @@ body {
   line-height: 1.6;
   font-size: 14px;
 }
-
-a { color: var(--primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
 
 /* ── Nav ── */
 nav {
@@ -63,7 +66,9 @@ nav {
 }
 .nav-links a:hover { color: var(--text); text-decoration: none; }
 
-/* ── Layout ── */
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
 .page {
   max-width: 1200px;
   margin: 0 auto;
@@ -72,7 +77,6 @@ nav {
   grid-template-columns: 1fr 300px;
   gap: calc(var(--sp) * 2);
 }
-
 .main-col { min-width: 0; }
 .side-col  {}
 
@@ -89,7 +93,7 @@ nav {
   border-radius: var(--radius);
   margin-bottom: calc(var(--sp) * 1.5);
   display: flex;
-  transition: border-color 0.15s;
+  transition: border-color .15s;
 }
 .post-card:hover { border-color: #555; }
 
@@ -114,7 +118,7 @@ nav {
   line-height: 1;
   padding: 2px 4px;
   border-radius: 3px;
-  transition: color 0.1s;
+  transition: color .1s;
 }
 .vote-btn:hover { color: var(--upvote); }
 .vote-btn.down:hover { color: var(--downvote); }
@@ -122,7 +126,7 @@ nav {
 .vote-btn.active-down { color: var(--downvote); }
 
 .vote-score {
-  font-size: 0.75rem;
+  font-size: .75rem;
   font-weight: 700;
   color: var(--text-dim);
 }
@@ -133,10 +137,11 @@ nav {
   min-width: 0;
 }
 
+/* ── Post meta ── */
 .post-meta {
-  font-size: 0.75rem;
+  font-size: .75rem;
   color: var(--text-dim);
-  margin-bottom: calc(var(--sp) * 0.75);
+  margin-bottom: calc(var(--sp) * .75);
 }
 .post-meta a { color: var(--text-dim); }
 .post-meta .community { color: var(--primary); font-weight: 600; }
@@ -146,7 +151,7 @@ nav {
   font-weight: 500;
   color: var(--text);
   line-height: 1.4;
-  margin-bottom: calc(var(--sp) * 0.75);
+  margin-bottom: calc(var(--sp) * .75);
 }
 .post-title a { color: var(--text); }
 .post-title a:hover { color: var(--primary); text-decoration: none; }
@@ -154,7 +159,7 @@ nav {
 .post-actions {
   display: flex;
   gap: calc(var(--sp) * 1.5);
-  font-size: 0.75rem;
+  font-size: .75rem;
   color: var(--text-dim);
 }
 .post-actions a {
@@ -171,7 +176,6 @@ nav {
   padding: calc(var(--sp) * 2);
   margin-bottom: calc(var(--sp) * 2);
 }
-
 .post-content {
   color: var(--text);
   line-height: 1.7;
@@ -189,7 +193,6 @@ nav {
   padding: calc(var(--sp) * 1.5);
   margin-bottom: calc(var(--sp) * 1.5);
 }
-
 .comment {
   margin-bottom: var(--sp);
   padding: calc(var(--sp) * 1.25) calc(var(--sp) * 1.5);
@@ -198,15 +201,17 @@ nav {
   border-radius: var(--radius);
   border-left: 2px solid var(--border);
 }
-.comment .comment { background: var(--surface2); margin-top: var(--sp); border-left-color: #444; }
-
+.comment .comment {
+  background: var(--surface2);
+  margin-top: var(--sp);
+  border-left-color: #444;
+}
 .comment-meta {
-  font-size: 0.75rem;
+  font-size: .75rem;
   color: var(--text-dim);
-  margin-bottom: calc(var(--sp) * 0.5);
+  margin-bottom: calc(var(--sp) * .5);
 }
 .comment-meta .author { color: var(--text); font-weight: 600; }
-
 .comment-body { line-height: 1.6; }
 
 /* ── Forms ── */
@@ -217,32 +222,37 @@ nav {
   padding: calc(var(--sp) * 2.5);
   max-width: 600px;
 }
-
 .field { margin-bottom: calc(var(--sp) * 1.5); }
 
 label {
   display: block;
-  font-size: 0.8rem;
+  font-size: .8rem;
   color: var(--text-dim);
-  margin-bottom: calc(var(--sp) * 0.5);
+  margin-bottom: calc(var(--sp) * .5);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: .04em;
 }
 
-input[type=text], input[type=email], input[type=password], textarea, select {
+input[type=text],
+input[type=email],
+input[type=password],
+textarea,
+select {
   width: 100%;
   padding: calc(var(--sp) * 1.25) calc(var(--sp) * 1.5);
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: .9rem;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color .15s;
 }
-input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+input:focus,
+textarea:focus,
+select:focus { border-color: var(--primary); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
 .btn {
@@ -252,12 +262,12 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   color: #0a0a0a;
   border: none;
   border-radius: var(--radius);
-  font-size: 0.875rem;
+  font-size: .875rem;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity .15s;
 }
-.btn:hover { opacity: 0.88; text-decoration: none; color: #0a0a0a; }
+.btn:hover { opacity: .88; text-decoration: none; color: #0a0a0a; }
 .btn-ghost {
   background: transparent;
   border: 1px solid var(--border);
@@ -274,15 +284,18 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   margin-bottom: calc(var(--sp) * 1.5);
 }
 .sidebar-card h3 {
-  font-size: 0.75rem;
+  font-size: .75rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: .06em;
   color: var(--text-dim);
   margin-bottom: var(--sp);
 }
 .sidebar-card ul { list-style: none; }
-.sidebar-card li { padding: calc(var(--sp) * 0.5) 0; border-bottom: 1px solid var(--border); }
+.sidebar-card li {
+  padding: calc(var(--sp) * .5) 0;
+  border-bottom: 1px solid var(--border);
+}
 .sidebar-card li:last-child { border-bottom: none; }
 
 /* ── Page header ── */
@@ -301,38 +314,43 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   margin-bottom: calc(var(--sp) * 1.5);
 }
 .sort-tab {
-  padding: calc(var(--sp) * 0.75) calc(var(--sp) * 1.5);
+  padding: calc(var(--sp) * .75) calc(var(--sp) * 1.5);
   border-radius: 99px;
-  font-size: 0.8rem;
+  font-size: .8rem;
   font-weight: 700;
   color: var(--text-dim);
   background: var(--surface);
   border: 1px solid var(--border);
 }
-.sort-tab:hover, .sort-tab.active { background: var(--surface2); color: var(--text); text-decoration: none; }
+.sort-tab:hover,
+.sort-tab.active { background: var(--surface2); color: var(--text); text-decoration: none; }
 
 /* ── Flashes ── */
-.flash-notice {
-  background: #0a2a1a;
-  color: #6ee7a0;
-  border: 1px solid #1a5a3a;
+.flash-notice,
+.flash-alert {
   border-radius: var(--radius);
   padding: var(--sp) calc(var(--sp) * 2);
   margin-bottom: calc(var(--sp) * 1.5);
   grid-column: 1 / -1;
+}
+.flash-notice {
+  background: #0a2a1a;
+  color: #6ee7a0;
+  border: 1px solid #1a5a3a;
 }
 .flash-alert {
   background: #2a0a0a;
   color: #f87171;
   border: 1px solid #5a1a1a;
-  border-radius: var(--radius);
-  padding: var(--sp) calc(var(--sp) * 2);
-  margin-bottom: calc(var(--sp) * 1.5);
-  grid-column: 1 / -1;
 }
 
 /* ── Empty state ── */
-.empty { color: var(--text-dim); padding: calc(var(--sp) * 4) 0; text-align: center; }
+.empty {
+  color: var(--text-dim);
+  padding: calc(var(--sp) * 4) 0;
+  text-align: center;
+}
 CSS
+mv -f "$temp_file" "$STYLE_PATH"
 
 echo "==> [styles] done"

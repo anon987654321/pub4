@@ -1,29 +1,30 @@
-#!/usr/bin/env zsh
-emulate -L zsh
-setopt err_return no_unset pipe_fail extended_glob warn_create_global
+#!/usr/bin/env sh
+set -eu
+export LC_ALL=C
 
 # Baibl – scripture server (TCPServer, port 10007)
 
-APP_NAME='baibl'
+APP_NAME=baibl
 APP_PORT=10007
 APP_DIR="/home/${APP_NAME}/app"
 CONFIG_DIR="${APP_DIR}/config"
 FALCON_RB="${CONFIG_DIR}/falcon.rb"
 RC_SCRIPT="/etc/rc.d/${APP_NAME}"
 
-# exit if required commands missing
-command -v ruby >/dev/null || { echo "ruby not found" >&2; exit 1; }
-command -v rcctl >/dev/null || { echo "rcctl not found" >&2; exit 1; }
+# Ensure required commands exist
+for cmd in ruby rcctl; do
+  command -v "$cmd" >/dev/null || { printf '%s not found\n' "$cmd" >&2; exit 1; }
+done
 
-echo "==> [$APP_NAME] generating ${FALCON_RB} on :${APP_PORT}"
+printf '==> [%s] generating %s on :%s\n' "$APP_NAME" "$FALCON_RB" "$APP_PORT"
 
-mkdir -p "${CONFIG_DIR}"
-chown "${APP_NAME}:${APP_NAME}" "${CONFIG_DIR}"
+mkdir -p "$CONFIG_DIR"
+chown "$APP_NAME:$APP_NAME" "$CONFIG_DIR"
 
-cat > "${FALCON_RB}" <<'EOF'
+cat >"$FALCON_RB" <<'EOF'
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-require "socket"
+require 'socket'
 
 HTML = <<~HTML
   <!DOCTYPE html>
@@ -39,19 +40,32 @@ HTML = <<~HTML
         --text: #f0ead6; --text-dim: #8a7f68; --border: #2e2a1e;
         --gold-line: rgba(201,169,110,.25); --radius: 10px;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Palatino Linotype', Palatino, Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.85; }
-      header { background: var(--surface); border-bottom: 1px solid var(--gold-line); padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-      .logo { font-size: 1.5rem; font-weight: 600; color: var(--primary); letter-spacing: .04em; font-variant: small-caps; }
-      nav a { margin-left: 1.5rem; color: var(--text-dim); font-size: .9rem; text-decoration: none; }
-      nav a:hover { color: var(--primary); }
-      main { max-width: 820px; margin: 0 auto; padding: 3rem 1.5rem; }
-      h1 { font-size: 1.85rem; color: var(--primary-light); margin-bottom: 1rem; font-weight: 400; font-variant: small-caps; }
-      .verse-block { background: var(--surface); border: 1px solid var(--gold-line); border-left: 3px solid var(--primary); border-radius: var(--radius); padding: 1.75rem 2rem; margin-bottom: 1.75rem; }
-      .verse-reference { font-size: .78rem; color: var(--primary); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .75rem; font-family: system-ui, sans-serif; }
-      .verse-text { font-size: 1.1rem; line-height: 1.95; font-style: italic; }
-      .ornament { text-align: center; color: var(--primary-dark); font-size: 1.2rem; letter-spacing: .5em; margin: 2rem 0; opacity: .6; }
-      .cta { display: inline-block; padding: .6rem 1.4rem; background: var(--primary); color: var(--bg); border-radius: 8px; font-size: .9rem; text-decoration: none; font-weight: 600; margin-top: 1.5rem; }
+      * { box-sizing:border-box; margin:0; padding:0; }
+      body { font-family:'Palatino Linotype', Palatino, Georgia, serif;
+             background:var(--bg); color:var(--text); line-height:1.85; }
+      header { background:var(--surface); border-bottom:1px solid var(--gold-line);
+               padding:1.25rem 2rem; display:flex; align-items:center;
+               justify-content:space-between; }
+      .logo { font-size:1.5rem; font-weight:600; color:var(--primary);
+              letter-spacing:.04em; font-variant:small-caps; }
+      nav a { margin-left:1.5rem; color:var(--text-dim); font-size:.9rem;
+              text-decoration:none; }
+      nav a:hover { color:var(--primary); }
+      main { max-width:820px; margin:0 auto; padding:3rem 1.5rem; }
+      h1 { font-size:1.85rem; color:var(--primary-light); margin-bottom:1rem;
+           font-weight:400; font-variant:small-caps; }
+      .verse-block { background:var(--surface); border:1px solid var(--gold-line);
+                     border-left:3px solid var(--primary); border-radius:var(--radius);
+                     padding:1.75rem 2rem; margin-bottom:1.75rem; }
+      .verse-reference { font-size:.78rem; color:var(--primary); letter-spacing:.08em;
+                         text-transform:uppercase; margin-bottom:.75rem;
+                         font-family:system-ui, sans-serif; }
+      .verse-text { font-size:1.1rem; line-height:1.95; font-style:italic; }
+      .ornament { text-align:center; color:var(--primary-dark); font-size:1.2rem;
+                  letter-spacing:.5em; margin:2rem 0; opacity:.6; }
+      .cta { display:inline-block; padding:.6rem 1.4rem; background:var(--primary);
+             color:var(--bg); border-radius:8px; font-size:.9rem; text-decoration:none;
+             font-weight:600; margin-top:1.5rem; }
     </style>
   </head>
   <body>
@@ -70,30 +84,59 @@ HTML = <<~HTML
     </main>
   </body>
   </html>
-HTMLRESP="HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: ${#HTML}\r\nConnection: close\r\n\r\n${HTML}"
-trap "TERM" { exit }
-trap "INT"  { exit }
-TCPServer.new("0.0.0.0", ${APP_PORT}).tap do |s|
-  $stdout.puts "baibl on ${APP_PORT}"; $stdout.flush
-  loop { c = s.accept; c.recv(4096) rescue nil; c.print(RESP) rescue nil; c.close rescue nil }
+HTML
+
+RESP = <<~RESP
+  HTTP/1.0 200 OK\r
+  Content-Type: text/html; charset=utf-8\r
+  Content-Length: #{HTML.bytesize}\r
+  Connection: close\r
+  \r
+  #{HTML}
+RESP
+
+trap 'exit' TERM INT
+
+TCPServer.new('0.0.0.0', ${APP_PORT}) do |server|
+  $stdout.puts "baibl on ${APP_PORT}"
+  $stdout.flush
+  loop do
+    client = server.accept
+    client.recv(4096) rescue nil
+    client.print(RESP) rescue nil
+    client.close rescue nil
+  end
 end
 EOF
 
-chown -R "${APP_NAME}:${APP_NAME}" "${APP_DIR}"
-chmod 644 "${FALCON_RB}"
+chmod 755 "$FALCON_RB"
+chown -R "$APP_NAME:$APP_NAME" "$APP_DIR"
 
-cat > "${RC_SCRIPT}" <<'RC'
-#!/bin/kshdaemon="/usr/local/bin/ruby34"
-daemon_flags="/home/baibl/app/config/falcon.rb"
-daemon_user="baibl"
-daemon_timeout=30
-. /etc/rc.d/rc.subrpexp="ruby34 /home/baibl/app/config/falcon.rb"
-rc_bg=YES
-rc_reload=NO
-rc_cmd $1
+cat >"$RC_SCRIPT" <<'RC'
+#!/bin/sh
+# PROVIDE: baibl
+# REQUIRE: DAEMON
+# DESCRIPTION: Baibl scripture server
+
+. /etc/rc.subr
+
+name=baibl
+rcvar=baibl_enable
+
+command="${HOME}/baibl/app/config/falcon.rb"
+command_args=""
+
+pidfile="/var/run/${name}.pid"
+procname="${name}"
+user="${name}"
+group="${name}"
+start_precmd="cd ${HOME}/${name}/app"
+
+load_rc_config $name
+run_rc_command "$1"
 RC
 
-chmod 755 "${RC_SCRIPT}"
-rcctl enable "${APP_NAME}"
-rcctl restart "${APP_NAME}" || rcctl start "${APP_NAME}"
-echo "==> [$APP_NAME] ready"
+chmod 755 "$RC_SCRIPT"
+rcctl enable "$APP_NAME"
+rcctl restart "$APP_NAME" || rcctl start "$APP_NAME"
+printf '==> [%s] ready\n' "$APP_NAME"

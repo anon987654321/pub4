@@ -1,3 +1,1 @@
-
-Create a type manually:
-
+gem 'mime-types', '~> 3.7'

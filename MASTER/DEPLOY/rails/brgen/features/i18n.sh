@@ -1,20 +1,39 @@
-#!/usr/bin/env zsh
-emulate -L zsh
-setopt err_return no_unset pipe_fail extended_glob warn_create_global
+#!/usr/bin/env sh
+set -euo pipefail
 
-APP_DIR="/home/brgen/app"
-LOCALE_DIR="${APP_DIR}/config/locales"
-MSG_START="==> [i18n] Norwegian (nb) + English (en) locales"
+# Immutable constants
+readonly APP_DIR="/home/brgen/app"
+readonly LOCALE_DIR="${APP_DIR}/config/locales"
+readonly MSG_START="==> [i18n] Norwegian (nb) + English (en) locales"
+readonly DONE_MSG="==> [i18n] done"
 
-# Fail fast if locale directory missing or not writable
-[[ -d "$LOCALE_DIR" ]] || { echo "Error: $LOCALE_DIR not found" >&2; exit 1; }
-[[ -w "$LOCALE_DIR" ]] || { echo "Error: $LOCALE_DIR not writable" >&2; exit 1; }
+# Preconditions
+[ -d "${LOCALE_DIR}" ] || {
+  printf 'Error: %s not found\n' "${LOCALE_DIR}" >&2
+  exit 1
+}
+[ -w "${LOCALE_DIR}" ] || {
+  printf 'Error: %s not writable\n' "${LOCALE_DIR}" >&2
+  exit 1
+}
 
-echo "$MSG_START"
+printf '%s\n' "${MSG_START}"
+
+# Write a file atomically, cleaning up on error
+write_locale() {
+  dest=$1
+  tmp=$(mktemp -p "${LOCALE_DIR}" ".tmp.$(basename "${dest}").XXXXXX") || exit 1
+  trap 'rm -f "${tmp}"' EXIT INT TERM
+  cat >"${tmp}"
+  chmod 0644 "${tmp}"
+  mv -f "${tmp}" "${dest}"
+  trap - EXIT INT TERM
+}
 
 generate_locale() {
-  local lang=$1
-  case $lang in    nb) YAML='
+  case $1 in
+    nb)
+      write_locale "${LOCALE_DIR}/nb.yml" <<'EOF'
 nb:
   brgen:
     app_name: "BRGEN"
@@ -36,8 +55,10 @@ nb:
     comment_created: "Kommentar ble lagt til."
     comment_deleted: "Kommentar ble slettet."
     unauthorized: "Ingen tilgang."
-' ;;
-    en) YAML='
+EOF
+      ;;
+    en)
+      write_locale "${LOCALE_DIR}/en.yml" <<'EOF'
 en:
   brgen:
     app_name: "BRGEN"
@@ -59,13 +80,15 @@ en:
     comment_created: "Comment added."
     comment_deleted: "Comment deleted."
     unauthorized: "Not authorized."
-' ;;
-    *) return 1 ;;
+EOF
+      ;;
+    *)
+      return 1
+      ;;
   esac
-
-  printf "%s\n" "$YAML" >"$LOCALE_DIR/${lang}.yml"
 }
 
 generate_locale nb
 generate_locale en
-echo "==> [i18n] done"
+
+printf '%s\n' "${DONE_MSG}"

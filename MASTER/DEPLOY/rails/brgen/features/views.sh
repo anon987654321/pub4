@@ -1,14 +1,14 @@
-#!/usr/bin/env zsh
-emulate -L zsh
-setopt err_return no_unset pipe_fail extended_glob warn_create_global
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
 
-typeset -r APP_DIR="/home/brgen/app"
+readonly APP_DIR="/home/brgen/app"
 echo "==> [views] Writing all templates"
 cd "$APP_DIR"
 
-mkdir -p app/views/home app/views/posts app/views/comments app/views/communities
+mkdir -p app/views/{home,posts,comments,communities,layouts}
 
-ruby - << 'RUBY'
+ruby - <<'RUBY'
 views = {}
 
 views["app/views/layouts/application.html.erb"] = <<~'ERB'
@@ -398,7 +398,7 @@ ERB
 
 views.each do |path, content|
   FileUtils.mkdir_p(File.dirname(path))
-  File.write(path, content.gsub(/^  /, ""))
+  File.write(path, content)
   puts "  wrote #{path}"
 end
 RUBY

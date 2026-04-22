@@ -1,1 +1,1 @@
-gem 'mini_mime'
+gem 'mini_mime', '~> 1.1.5'

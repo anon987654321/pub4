@@ -1,7 +1,5 @@
+# Bundler (recommended)
+bundle add tty-spinner
 
-Install with `bundle` or `gem install tty-spinner`.
-
-## Usage
-
-Create a spinner:
-
+# Or install globally
+gem install tty-spinner

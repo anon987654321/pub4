@@ -1,2 +1,1 @@
-   pnpm install
-   
+pnpm install

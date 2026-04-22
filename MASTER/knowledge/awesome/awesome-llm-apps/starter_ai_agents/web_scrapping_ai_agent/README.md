@@ -1,3 +1,10 @@
-pip install -r requirements.txt
-streamlit run ai_scrapper.py        # external models
-streamlit run local_ai_scrapper.py  # local models
+# Clone the starter collection
+git clone https://github.com/awesome-llm-apps/starter_ai_agents.git
+cd starter_ai_agents/web_scrapping_ai_agent
+
+# Install dependencies (OpenBSD‑friendly)
+bundle config set --local without 'development test'
+bundle install
+
+# Run the agent (default model: deepseek‑v3 on OpenRouter)
+bundle exec ruby web_scrapping_ai_agent.rb

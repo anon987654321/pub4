@@ -1,1 +1,2 @@
-pip install -r advanced_ai_agents/multi_agent_apps/ai_email_gtm_outreach_agent/requirements.txt
+# System Ruby and Bundler (no rbenv/chruby)
+pkg_add ruby bundler

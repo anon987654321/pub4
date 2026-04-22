@@ -1,1 +1,1 @@
-gem "tty-which"
+gem install tty-which

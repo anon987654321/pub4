@@ -1,7 +1,15 @@
-with_array([]) do
-  push 1
-  push 2
-  pop
-  push 3
+require "docile"
+
+result = Docile.with_array([]) do |arr|
+  # Add elements
+  arr << 1
+  arr << 2
+
+  # Remove the last element (2)
+  arr.pop
+
+  # Add another element
+  arr << 3
 end
-#=> [1, 3]
+
+p result #=> [1, 3]

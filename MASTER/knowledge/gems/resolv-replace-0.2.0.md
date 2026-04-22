@@ -1,1 +1,1 @@
-gem 'resolv-replace'
+gem 'resolv-replace', '~> 0.2.0'

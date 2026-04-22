@@ -1,16 +1,24 @@
+# frozen_string_literal: true
 
-### Database Schema
-| Table      | Columns                     |
-|------------|-----------------------------|
-| **sessions** | `session_id`, `user_id`, `app_name`, `created_at` |
-| **state**    | `session_id`, `state_data`, `updated_at` |
-| **events**   | `event_id`, `session_id`, `event_type`, `content`, `timestamp` |
+# config/initializers/persistent_conversation.rb
+#
+# Boot the Master framework with an ActiveRecord‑backed memory store.
+# The built‑in ActiveRecord adapter writes conversation state to the
+# tables created by `rails generate master:install`.  This gives agents
+# true persistence across process restarts and across multiple workers.
+#
+# Customize the adapter or model per deployment by adjusting the
+# configuration block below.
 
-### Session Lifecycle
-1. **Create** – Initialize a session in the database.  
-2. **Use** – Interact with the session.  
-3. **Close** – End the session, persisting state.
+require "master"
 
-## Implementation Steps
-1. **Initialize Service**  
-   
+Master.configure do |c|
+  # Store all conversation turns in the `master_memories` table.
+  # Other adapters (e.g. :redis, :file) are available; see
+  # lib/master/memory.rb for the complete list.
+  c.memory_adapter = :active_record
+
+  # Global default LLM; individual agents may override this with
+  # `c.model = "provider/model"` in their own configuration.
+  c.default_model = "deepseek-ai/deepseek-v3"
+end

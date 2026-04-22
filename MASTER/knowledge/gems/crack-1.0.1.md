@@ -1,3 +1,8 @@
-gem 'crack' # Gemfile
-require 'crack'        # loads JSON and XML parsers
-require 'crack/json'   # loads only the JSON parserrequire 'crack/xml'    # loads only the XML parser
+# Load both parsers (default)
+require "crack"
+
+# Load only the JSON parser (faster start‑up if XML isn’t needed)
+require "crack/json"
+
+# Load only the XML parser (useful when you only work with XML)
+require "crack/xml"

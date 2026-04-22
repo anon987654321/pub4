@@ -1,17 +1,15 @@
-# AI News and Podcast Agents
+# 1️⃣ Clone the repo
+git clone https://github.com/yourorg/awesome-llm-apps.git
+cd awesome-llm-apps/advanced_ai_agents/multi_agent_apps/ai_news_and_podcast_agents/web
 
-## Development
-npm start runs http://localhost:3000 with hot reload. Lint errors appear in the console.
+# 2️⃣ Install Ruby gems (quiet mode)
+bundle install --quiet
 
-## Testing
-npm test runs Jest in watch mode.
+# 3️⃣ Export runtime configuration
+export MASTER_MODEL=deepseek-ai/deepseek-v3      # default LLM
+export PORT=3000                                # web UI port
+# export LOG_LEVEL=debug                        # optional, for verboser logs
+# export MASTER_ENDPOINT=http://127.0.0.1:10002 # if Falcon runs elsewhere
 
-## Build
-npm run build outputs a minified production build to build/. Deploy from that directory.
-
-## Deploy
-npm run eject copies all configuration files permanently. Do not eject unless you intend to maintain the configuration yourself.
-
-## Learn More
-React: https://reactjs.org/  
-Create React App: https://facebook.github.io/create-react-app/docs/getting-started
+# 4️⃣ Launch the Rails server
+bundle exec rails server -b ${HOST:-0.0.0.0} -p $PORT

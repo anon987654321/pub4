@@ -1,1 +1,1 @@
-gem install rubocop
+gem install rubocop -v 1.84.2
