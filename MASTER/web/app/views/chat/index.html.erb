@@ -65,7 +65,6 @@
       50%     {transform:translate(-50%,-50%) scale(1.05) translateZ(0);opacity:1;}
     }
 
-
     canvas{
       position:fixed;
       inset:0;
@@ -345,14 +344,12 @@
     document.addEventListener('keydown',e=>{
       if(e.key==='Tab'){e.preventDefault();chatLog.classList.toggle('open');}
     });
-    // #7: Mobile chat toggle — double-tap canvas area
     let lastCanvasTap=0;
     canvas.addEventListener('touchend',()=>{
       const now=Date.now();
       if(now-lastCanvasTap<350) chatLog.classList.toggle('open');
       lastCanvasTap=now;
     },{passive:true});
-    // #4: Pull-down to reveal chat — swipe down from top 80px
     let pullStartY=0,pullStartX=0,pullActive=false;
     window.addEventListener('touchstart',e=>{
       const touch=e.touches[0];
@@ -1117,7 +1114,6 @@ const renderMd = raw => {
     let fxIdx=LOW_END?0:1+Math.floor(Math.random()*(FX_MODES.length-1)); // off on low-end
     let fxTaps=0;let fxTapTimer=0;
 
-    // #4: Flash FX mode name when it changes
     const showFxMode=()=>{
       uiLabel.textContent='♪ '+FX_MODES[fxIdx];
       setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
@@ -1355,7 +1351,6 @@ const renderMd = raw => {
         }
         finalText=finalText.trim();
         if(!finalText) return;
-        // #6: Wake word — "hey master" activates without sending
         if(/^hey\s+master$/i.test(finalText)){
           haptic(25);
           uiLabel.textContent='Listening…';
@@ -1425,7 +1420,6 @@ const renderMd = raw => {
     window.addEventListener('touchstart',handleTouch,{passive:true});
     window.addEventListener('touchend',()=>{touching=false;});
 
-    // #1: Haptic feedback helper
     const haptic=(ms=10)=>{try{navigator.vibrate(ms);}catch(_){}};
 
     // Motion graphics: spawn expanding ring from center on state change
@@ -1441,7 +1435,6 @@ const renderMd = raw => {
       if(Math.abs(dx)>60){setOrb(currentOrb+(dx<0?1:-1));haptic(15);}
     },{passive:true});
 
-    // #5: Typing indicator — orb contracts when user is typing
     let isTyping=false;
     input.addEventListener('input',()=>{isTyping=input.value.length>0;});
 
@@ -1473,7 +1466,6 @@ const renderMd = raw => {
         transmit(msg);
       }
     });
-
 
     const transmit=async(message)=>{
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
@@ -1604,7 +1596,6 @@ document.body.addEventListener('click',(e)=>{
   if(_isUiTarget(e.target)) return;
   _toggleInput();
 });
-
 
     const orbStates=[
       {name:"SPHERE",desc:"Perfect form",s:1},{name:"CUBE",desc:"Solid geometry",s:2},
@@ -1795,7 +1786,6 @@ document.body.addEventListener('click',(e)=>{
         this.vx+=(Math.random()-0.5)*2.5;
         this.vy+=(Math.random()-0.5)*2.5;
       }
-      // #5: Typing — orb tightens, listening closely
       if(isTyping&&!isProcessing){
         this.tx*=0.7;this.ty*=0.7;this.tz*=0.7;
       }
@@ -1824,7 +1814,6 @@ document.body.addEventListener('click',(e)=>{
     }
 
     for(let i=0;i<N;i++) neurons.push(new Neuron(i));
-    // #8: Restore persisted orb + FX from localStorage
     try{
       const saved=JSON.parse(localStorage.getItem('m2_prefs')||'{}');
       if(saved.orb!=null&&saved.orb>=0&&saved.orb<orbStates.length) currentOrb=saved.orb;
@@ -1903,7 +1892,6 @@ document.body.addEventListener('click',(e)=>{
     const pauseAmbient=()=>{if(ambientTimer)clearTimeout(ambientTimer);};
     const resumeAmbient=()=>{scheduleAmbient();};
 
-    // #8: Resume suspended AudioContext on user gesture (iOS Safari)
     const resumeAudioCtx=()=>{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();};
     ['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,resumeAudioCtx,{once:false,passive:true}));
     ['keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{
@@ -1936,24 +1924,6 @@ document.body.addEventListener('click',(e)=>{
     };
     applyMessinessProfile();
     tickSpinner();
-
-    // Chip clicks send command directly without dismissing overlay first
-    document.querySelectorAll('#overlay .chip').forEach(chip=>{
-      chip.addEventListener('click',e=>{
-        e.stopPropagation();
-        const cmd=chip.dataset.cmd;
-        overlay.classList.add('ack');
-        initAudio(); initMotion(); setupRecognition();
-        setTimeout(initPads,500); setTimeout(initDrums,650);
-        refreshMetrics(); setInterval(refreshMetrics,30000);
-        setTimeout(()=>{
-          overlay.hidden=true;
-          inputField.classList.add('active');
-          transmit(cmd);
-        },850);
-      });
-    });
-
 
     const _activateOverlay=(()=>{
       let _fired=false;
@@ -1992,7 +1962,6 @@ document.body.addEventListener('click',(e)=>{
     })();
     overlay.addEventListener('click',_activateOverlay);
     overlay.addEventListener('touchend',e=>{e.preventDefault();_activateOverlay();},{passive:false});
-    // REPLACED overlay.addEventListener('click',()=>{
 
     // Status circle: tap toggles mic, long-press cycles voice effect
     let statusLongPress=null;
@@ -2054,7 +2023,6 @@ document.body.addEventListener('click',(e)=>{
       _lf=now;
       t+=_dt;
       speechPulse*=0.92;
-      // #6: Smooth orb crossfade
       if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
 
       // Cinematic camera drift — slow, organic
@@ -2071,7 +2039,6 @@ document.body.addEventListener('click',(e)=>{
         // Simulate syllable rhythm when speaking, pad breathing when idle
         if(isSpeaking) speechPulse=0.38+Math.abs(Math.sin(t*12.6))*0.42;
         else speechPulse*=0.92;
-        // #3: Orb breathes with pad music even without mic analyser
         const padBreath=padMaster?0.08+Math.abs(Math.sin(t*0.8))*0.12:0;
         audioLevel=audioLevel*0.92+padBreath;
       }
