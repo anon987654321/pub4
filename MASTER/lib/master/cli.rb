@@ -32,6 +32,7 @@ module Master
       @scanner     = container[:scanner]
       @root        = container[:root] || Dir.pwd
       @diff_stager = container[:diff_stager]
+      @bus        = container[:bus]
       @reader      = TTY::Reader.new(track_history: true)
       @running     = false
       @interrupt_at   = 0
