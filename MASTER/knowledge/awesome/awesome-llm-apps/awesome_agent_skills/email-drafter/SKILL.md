@@ -1,14 +1,20 @@
-Subject: Meeting Request: [Topic] – [Date/Time]
+Subject: Meeting Request – [Topic] ([Date & Time])
 
-Hi [Name],I’d like to discuss [topic] to achieve [objective].
+Hi **[Recipient Name]**,
 
-Propose [duration] on [date options].
+I’d like to discuss **[Topic]** to achieve **[Objective]**.
 
-Cover:
-- [Point 1]
-- [Point 2]
+**Proposed duration:** [Duration]  
+**Suggested dates/times:** [Date Option 1] | [Date Option 2] | [Date Option 3]
 
-Confirm availability.
+### Agenda
+- [Agenda Item 1]
+- [Agenda Item 2]
+- *(optional additional items)*
 
-Best regards,
-[Name]
+Please confirm your availability or suggest alternatives.
+
+Best regards,  
+[Your Name]  
+[Your Title] – [Your Company]  
+[Phone] | [Email] | [Website]

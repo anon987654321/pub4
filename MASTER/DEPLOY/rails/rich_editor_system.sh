@@ -1,15 +1,15 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env sh
 set -euo pipefail
 
 log() {
-  print -u2 -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
+  printf '%s [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$(basename "${0##*/}")" "$*" >&2
 }
 
 require_file() {
-  [[ -f "$1" ]] || {
+  if [ ! -f "$1" ]; then
     log "Error: required file not found: $1"
     return 1
-  }
+  fi
 }
 
 install_tiptap_packages() {
@@ -26,8 +26,14 @@ install_tiptap_packages() {
 }
 
 create_tiptap_controller() {
-  mkdir -p app/javascript/controllers
-  cat > app/javascript/controllers/rich_text_controller.js <<'JS'
+  target="app/javascript/controllers/rich_text_controller.js"
+  if [ -e "$target" ]; then
+    log "Skipping controller creation; $target already exists"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$target")"
+  cat >"$target" <<'EOF'
 import { Controller } from "@hotwired/stimulus"
 import { Editor } from "@tiptap/core"
 import StarterKit from "@tiptap/starter-kit"
@@ -48,15 +54,21 @@ export default class extends Controller {
   }
 
   disconnect() {
-    if (this.editor) this.editor.destroy()
+    this.editor && this.editor.destroy()
   }
 }
-JS
+EOF
 }
 
 create_editor_styles() {
-  mkdir -p app/assets/stylesheets
-  cat > app/assets/stylesheets/rich_editor.css <<'CSS'
+  target="app/assets/stylesheets/rich_editor.css"
+  if [ -e "$target" ]; then
+    log "Skipping stylesheet creation; $target already exists"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$target")"
+  cat >"$target" <<'EOF'
 .rich-editor {
   border: 1px solid #d1d5db;
   border-radius: 12px;
@@ -69,20 +81,19 @@ create_editor_styles() {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
-CSS
+EOF
 }
 
 add_rich_editor() {
-  local app_name="${1:-current_app}"
+  app_name="${1:-$(basename "$(pwd)")}"
   log "Installing Tiptap rich editor into ${app_name}"
-
   install_tiptap_packages
   create_tiptap_controller
   create_editor_styles
-
   log "Rich editor scaffolding completed for ${app_name}"
 }
 
-if [[ "${(%):-%N}" == "$0" ]]; then
-  add_rich_editor "${1:-current_app}"
-fi
+# Execute only when run directly, not when sourced
+case "$0" in
+  *sh) add_rich_editor "${1:-}" ;;
+esac

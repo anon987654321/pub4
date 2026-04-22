@@ -1,4 +1,8 @@
-git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
-cd advanced_ai_agents/multi_agent_apps/agent_teams/ai_competitor_intelligence_agent_team
-pip install -r requirements.txt
-streamlit run ai_competitor_analyser.py
+awesome-llm-apps/
+└─ advanced_ai_agents/
+   └─ multi_agent_apps/
+      └─ agent_teams/
+         └─ ai_competitor_intelligence_agent_team/
+            ├─ README.md          ← this file
+            ├─ requirements.txt   ← Python deps
+            └─ ...                ← source code (Ruby) under lib/master/

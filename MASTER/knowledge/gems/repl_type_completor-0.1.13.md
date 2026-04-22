@@ -1,1 +1,1 @@
-bundle add repl_type_completor
+gem "repl_type_completor", "~> 0.1.13"

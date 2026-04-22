@@ -1,41 +1,88 @@
 #!/usr/bin/env bash
-# Exit on error, undefined variable, or pipe failure
+# Robust Docker build & push for the travel‑planner backend.
+# Fails fast on errors, missing commands, or pipeline breaks.
 set -euo pipefail
 IFS=$'\n\t'
 
-# Constants
-IMAGE_NAME="decipher-backend"
-REGISTRY="mtwn105"
+#--- Configuration -----------------------------------------------------------
+readonly IMAGE_NAME="${IMAGE_NAME:-decipher-backend}"
+readonly REGISTRY="${REGISTRY:-mtwn105}"
+readonly FULL_NAME="${REGISTRY}/${IMAGE_NAME}"
+SKIP_PUSH=${SKIP_PUSH:-0}
+DRY_RUN=${DRY_RUN:-0}
 
-# Determine version; fail visibly if git unavailable
-VERSION=$(git describe --tags --always --dirty --fallback=0)
+usage() {
+  cat <<EOF
+Usage: ${0##*/} [options]
 
-# Build the Docker image and return its tag
+Options:
+  -h,--help        Show this help message.
+  --skip-push      Do not push the image (overrides SKIP_PUSH env).
+  --dry-run        Echo commands without executing them.
+EOF
+  exit 0
+}
+
+#--- Argument parsing ---------------------------------------------------------
+while (( $# )); do
+  case "$1" in
+    -h|--help) usage ;;
+    --skip-push) SKIP_PUSH=1 ;;
+    --dry-run) DRY_RUN=1 ;;
+    *) echo "Unknown option: $1" >&2; usage ;;
+  esac
+  shift
+done
+
+run() {
+  if (( DRY_RUN )); then
+    printf '[dry-run] %s\n' "$*"
+  else
+    "$@"
+  fi
+}
+
+#--- Prerequisite checks ------------------------------------------------------
+for cmd in git docker; do
+  command -v "$cmd" >/dev/null || { printf 'Error: %s not installed\n' "$cmd" >&2; exit 127; }
+done
+
+#--- Version derivation -------------------------------------------------------
+VERSION=$(git describe --tags --always --dirty --fallback="$(git rev-parse --short HEAD 2>/dev/null || echo 0)")
+
+#--- Build --------------------------------------------------------------------
 build_image() {
-  local tag="${IMAGE_NAME}:${VERSION}"
-  printf 'Building Docker image: %s\n' "$tag"
-  docker build -t "$tag" .
-  printf '%s\n' "$tag"
+  local local_tag="${IMAGE_NAME}:${VERSION}"
+  local remote_tag="${FULL_NAME}:${VERSION}"
+  printf 'Building Docker image %s (local) and %s (remote)\n' "$local_tag" "$remote_tag"
+  run docker build -t "$local_tag" .
+  run docker tag "$local_tag" "$remote_tag"
+  printf '%s\n' "$remote_tag"
 }
 
-# Tag and push the image
+#--- Push ---------------------------------------------------------------------
 push_image() {
-  local tag=$1
-  printf 'Tagging and pushing: %s/%s:%s and %s/%s:%s\n' \
-    "$REGISTRY" "$IMAGE_NAME" "latest" "$REGISTRY" "$IMAGE_NAME" "$VERSION"
-  docker tag "$tag" "${REGISTRY}/${IMAGE_NAME}:latest"
-  docker tag "$tag" "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
-  docker push "${REGISTRY}/${IMAGE_NAME}:latest"
-  docker push "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+  local remote_tag=$1
+  local latest_tag="${FULL_NAME}:latest"
+  printf 'Tagging %s as %s and %s\n' "$remote_tag" "$latest_tag" "$remote_tag"
+  run docker tag "$remote_tag" "$latest_tag"
+
+  printf 'Pushing %s\n' "$latest_tag"
+  run docker push "$latest_tag"
+  printf 'Pushing %s\n' "$remote_tag"
+  run docker push "$remote_tag"
 }
 
-# Main orchestration
+#--- Entrypoint ---------------------------------------------------------------
 main() {
-  local image_tag
-  image_tag=$(build_image)
-  push_image "$image_tag"
-  printf 'Successfully built and pushed version %s\n' "$VERSION"
+  local built_tag
+  built_tag=$(build_image)
+  if (( SKIP_PUSH )); then
+    printf 'Skipping push as requested (built tag: %s)\n' "$built_tag"
+  else
+    push_image "$built_tag"
+  fi
+  printf 'Successfully built%s version %s\n' "$(( SKIP_PUSH ))" "$VERSION"
 }
 
-# Execute
 main "$@"

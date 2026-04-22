@@ -1,114 +1,138 @@
-#!/bin/bash
-# frozen_string_literal: true
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
 
-# Configuration
+#--- Configuration -----------------------------------------------------------
 readonly RAILS_ROOT="${RAILS_ROOT:-$(pwd)}"
+readonly GEMFILE="${RAILS_ROOT}/Gemfile"
 readonly ROUTES_FILE="${ROUTES_FILE:-config/routes.rb}"
 readonly STIMULUS_DIR="${STIMULUS_DIR:-app/javascript/controllers}"
-readonly GEMFILE="Gemfile"
+readonly DRY_RUN="${DRY_RUN:-false}"
 
-# Regex patterns
-readonly VALID_CLASS='^[A-Z][a-zA-Z]*$'
-readonly VALID_CONTROLLER='^[A-Z][a-zA-Z]*Controller$'
+#--- Validation regex --------------------------------------------------------
+readonly VALID_CLASS='^[A-Z][A-Za-z0-9]*$'
+readonly VALID_CONTROLLER='^[A-Z][A-Za-z0-9]*Controller$'
 
-# Error handling
+#--- Helpers -----------------------------------------------------------------
 die() {
-    echo "$*" >&2
+    printf '%s\n' "$*" >&2
     exit 1
 }
 
-# Guard: ensure rails app root
+cmd_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+usage() {
+    cat <<-EOF
+Usage: ${0##*/} [--dry-run] <ResourceName>
+
+Generates a Rails model, controller and a Stimulus TypeScript controller.
+  --dry-run    Show what would be done without making changes.
+EOF
+    exit 1
+}
+
 validate_rails_app() {
-    [[ -f "$GEMFILE" ]] || die "Missing $GEMFILE"
-    grep -q "rails" "$GEMFILE" || die "Not a Rails application"
+    [[ -f "$GEMFILE" ]] || die "Missing $GEMFILE – not a Rails project"
+    grep -q "rails" "$GEMFILE" || die "Gemfile does not contain Rails"
+    cmd_exists rails || die "rails executable not found"
 }
 
-# Guard: validate resource name (PascalCase)
-validate_resource_name() {
-    local name="$1"
-    [[ "$name" =~ $VALID_CLASS ]] || die "Invalid resource name: $name"
+validate_name() {
+    local name=$1 pattern=$2 err=$3
+    [[ $name =~ $pattern ]] || die "$err: $name"
 }
 
-# Guard: validate controller name (PascalCase ending with Controller)
-validate_controller_name() {
-    local name="$1"
-    [[ "$name" =~ $VALID_CONTROLLER ]] || die "Invalid controller name: $name"
-}
-
-# Convert PascalCase to snake_case
 to_snake_case() {
-    local name="$1"
-    echo "$name" | sed -E 's/([a-z])([A-Z])/\1_\2/g' | tr '[:upper:]' '[:lower:]'
+    printf '%s' "$1" |
+        sed -E 's/([a-z0-9])([A-Z])/\1_\2/g' |
+        tr '[:upper:]' '[:lower:]'
 }
 
-# Generate model
+run_cmd() {
+    local cmd=$1
+    if $DRY_RUN; then
+        printf '[dry‑run] %s\n' "$cmd"
+    else
+        eval "$cmd"
+    fi
+}
+
 generate_model() {
-    local model_name="$1"
-    validate_resource_name "$model_name"
-
-    echo "Generating model: $model_name"
-    rails generate model "$model_name" || die "Failed to generate model $model_name"
-    echo "✓ Model $model_name created"
+    local model=$1
+    validate_name "$model" "$VALID_CLASS" "Invalid model name"
+    printf 'Generating model %s…\n' "$model"
+    run_cmd "rails generate model $model"
+    printf '✓ Model %s created\n' "$model"
 }
 
-# Generate controller
 generate_controller() {
-    local controller_name="$1"
-    validate_controller_name "$controller_name"
-
-    local base_name="${controller_name%Controller}"
-    echo "Generating controller: $base_name"
-    rails generate controller "$base_name" || die "Failed to generate controller $base_name"
-    echo "✓ Controller $base_name created"
+    local controller=$1
+    validate_name "$controller" "$VALID_CONTROLLER" "Invalid controller name"
+    local base=${controller%Controller}
+    printf 'Generating controller %s…\n' "$base"
+    run_cmd "rails generate controller $base"
+    printf '✓ Controller %s created\n' "$base"
 }
 
-# Generate Stimulus controller
 generate_stimulus_ts() {
-    local controller_name="$1"
-    validate_controller_name "$controller_name"
+    local controller=$1
+    validate_name "$controller" "$VALID_CONTROLLER" "Invalid controller name"
+    local base=${controller%Controller}
+    local snake
+    snake=$(to_snake_case "$base")
+    local file="${STIMULUS_DIR}/${snake}_controller.ts"
 
-    local base_name="${controller_name%Controller}"
-    local stimulus_name=$(to_snake_case "$base_name")
-    local stimulus_file="${STIMULUS_DIR}/${stimulus_name}_controller.ts"
+    if [[ -e $file ]]; then
+        read -r -p "Stimulus file $file exists. Overwrite? (y/N) " reply
+        [[ $reply =~ ^[Yy]$ ]] || { printf 'Skipping Stimulus generation\n'; return; }
+    fi
 
-    [[ -f "$stimulus_file" ]] && {
-        printf "Stimulus file %s exists. Overwrite? (y/N) " "$stimulus_file"
-        read -r -n 1 reply
-        echo
-        [[ "$reply" =~ ^[Yy]$ ]] || { echo "Skipping Stimulus generation"; return 0; }
-    }
+    $DRY_RUN && { printf '[dry‑run] mkdir -p %s\n' "$STIMULUS_DIR"; printf '[dry‑run] create %s\n' "$file"; return; }
 
     mkdir -p "$STIMULUS_DIR"
-    cat > "$stimulus_file" <<'EOF'
+    cat >"$file" <<'EOF'
 import { Controller } from "@hotwired/stimulus"
 
-export default class ${controller_name} extends Controller {
-    connect() {
-        // Initialize controller logic here
-    }
+export default class {{CLASS}} extends Controller {
+  connect() {
+    // Initialize controller logic here
+  }
 }
 EOF
-    echo "✓ Stimulus controller created: $stimulus_file"
+    # Replace placeholder with actual class name
+    sed -i '' "s/{{CLASS}}/${controller}/g" "$file"
+    printf '✓ Stimulus controller created: %s\n' "$file"
 }
 
-# Main execution
+#--- Main --------------------------------------------------------------------
 main() {
-    local resource_name="${1:-}"
-    [[ -z "$resource_name" ]] && die "Usage: $0 <ResourceName>"
+    local dry= false
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run) DRY_RUN=true; shift ;;
+            -h|--help) usage ;;
+            *) break ;;
+        esac
+    done
 
+    local resource=${1:-}
+    [[ -n $resource ]] || die "Usage: $0 <ResourceName>"
     validate_rails_app
 
-    generate_model "$resource_name"
-    generate_controller "${resource_name}Controller"
-    generate_stimulus_ts "${resource_name}Controller"
+    generate_model "$resource"
+    generate_controller "${resource}Controller"
+    generate_stimulus_ts "${resource}Controller"
 
-    printf "\n✓ Resource generation completed successfully\n"
-    printf "Next steps:\n"
-    printf "  - Run migrations: rails db:migrate\n"
-    printf "  - Add routes to %s\n" "$ROUTES_FILE"
-    printf "  - Implement controller actions and views\n"
+    printf '\n✓ Resource generation completed successfully\n'
+    printf 'Next steps:\n'
+    printf '  • Run migrations: rails db:migrate\n'
+    printf '  • Add routes to %s\n' "$ROUTES_FILE"
+    printf '  • Implement controller actions and views\n'
 }
 
+#--- Entrypoint --------------------------------------------------------------
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi

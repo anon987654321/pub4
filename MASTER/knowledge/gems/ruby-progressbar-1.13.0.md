@@ -1,1 +1,1 @@
-progressbar = ProgressBar.create
+gem install ruby-progressbar

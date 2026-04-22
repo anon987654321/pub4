@@ -1,2 +1,2 @@
-3. Create a `.env` file with required environment variables:  
-   
+git clone https://github.com/yourorg/hjerterom.git
+cd hjerterom

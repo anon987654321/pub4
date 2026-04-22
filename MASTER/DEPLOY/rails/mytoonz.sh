@@ -1,112 +1,98 @@
-```zsh
-#!/usr/bin/env zsh
+#!/usr/bin/env sh
 set -euo pipefail
 
-# MyToonz: AI-Powered Personalized Comic Strip Generator
-# Generates authentic comic strips from user's daily stories using Replicate AI
+# MyToonz – AI‑powered personalized comic strip generator
+# Deploys the Rails + Node frontend, validates environment and dependencies.
 
-BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
-APP_NAME="mytoonz"
+readonly BASE_DIR=$(cd "$(dirname "$0")" && pwd)
+readonly APP_NAME=mytoonz
+readonly APP_DIR=$BASE_DIR/$APP_NAME
 
-cleanup() {
-    log "Cleaning up..."
-    # Add any cleanup operations here
+log() {
+    printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >&2
+}
+log_error() {
+    printf '[%s] ERROR: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >&2
 }
 
-trap cleanup EXIT INT TERM
-
-if [[ -f "${BASE_DIR}/__shared.sh" ]]; then
-    source "${BASE_DIR}/__shared.sh"
+# source shared helpers if present
+if [ -f "$BASE_DIR/__shared.sh" ]; then
+    . "$BASE_DIR/__shared.sh"
 else
-    echo "Error: __shared.sh not found in ${BASE_DIR}" >&2
+    log_error "__shared.sh missing in $BASE_DIR"
     exit 1
 fi
 
-log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" >&2
-}
-
-log_error() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1" >&2
-}
+command_exists() { command -v "$1" >/dev/null 2>&1; }
 
 check_dependencies() {
-    log "Checking dependencies..."
-    command -v node >/dev/null 2>&1 || { log_error "Node.js is required but not installed."; exit 1; }
-    command -v npm >/dev/null 2>&1 || command -v yarn >/dev/null 2>&1 || { log_error "npm or yarn is required but not installed."; exit 1; }
-    command -v redis-cli >/dev/null 2>&1 || { log "Warning: Redis CLI is not installed. Some features may not work properly."; }
-    command -v git >/dev/null 2>&1 || { log "Warning: git is not installed. Some features may not work properly."; }
-    command -v curl >/dev/null 2>&1 || { log "Warning: curl is not installed. Some features may not work properly."; }
-    command -v bundle >/dev/null 2>&1 || { log "Warning: bundler is not installed. Some features may not work properly."; }
+    log "Checking required commands…"
+    for cmd in node npm yarn redis-cli git curl bundle; do
+        if ! command_exists "$cmd"; then
+            case $cmd in
+                node)   log_error "Node.js not installed"; exit 1 ;;
+                npm|yarn) log_error "npm or yarn not installed"; exit 1 ;;
+                *)      log "Warning: $cmd missing – related features disabled" ;;
+            esac
+        fi
+    done
 }
 
 validate_environment() {
-    log "Validating environment variables..."
-    if [[ -z "${REDIS_URL:-}" ]]; then
-        REDIS_URL="redis://localhost:6379"
-        log "Warning: REDIS_URL not set, using default: $REDIS_URL"
-    fi
-    if ! [[ "${REDIS_URL}" =~ ^redis://[^\s/]+ ]]; then
-        log_error "Invalid REDIS_URL format. Must start with redis:// followed by hostname"
-        exit 1
-    fi
-
-    if [[ -z "${REPLICATE_API_TOKEN:-}" ]]; then
-        log_error "REPLICATE_API_TOKEN is required but not set"
-        exit 1
-    fi
+    log "Validating environment…"
+    : "${REDIS_URL:=redis://localhost:6379}"
+    case $REDIS_URL in
+        redis://*) ;; # ok
+        *) log_error "REDIS_URL must start with redis://"; exit 1 ;;
+    esac
+    : "${REPLICATE_API_TOKEN:?REPLICATE_API_TOKEN required}"
 }
 
-change_to_app_dir() {
-    cd "$BASE_DIR/$APP_NAME" || { log_error "Failed to change directory to $BASE_DIR/$APP_NAME"; exit 1; }
+run_pkg_manager() {
+    if command_exists yarn; then
+        yarn "$@"
+    else
+        npm "$@"
+    fi
 }
 
 setup_frontend() {
-    log "Setting up frontend..."
-    change_to_app_dir
+    log "Setting up frontend…"
+    cd "$APP_DIR" || { log_error "Cannot cd $APP_DIR"; exit 1; }
 
-    if [[ -f "package.json" ]]; then
-        if command -v yarn >/dev/null 2>&1; then
-            yarn install || { log_error "yarn install failed"; exit 1; }
+    if [ -f package.json ]; then
+        run_pkg_manager install || { log_error "Package install failed"; exit 1; }
+        if grep -q '"build"' package.json; then
+            run_pkg_manager run build || { log_error "Build failed"; exit 1; }
         else
-            npm install || { log_error "npm install failed"; exit 1; }
-        fi
-
-        if grep -q "\"build\"" "package.json"; then
-            if command -v yarn >/dev/null 2>&1; then
-                yarn build || { log_error "yarn build failed"; exit 1; }
-            else
-                npm run build || { log_error "npm run build failed"; exit 1; }
-            fi
-        else
-            log "Warning: No build script found in package.json, skipping build"
+            log "No build script – skipping"
         fi
     else
-        log "Warning: package.json not found, skipping npm/yarn install"
+        log "No package.json – skipping frontend"
     fi
 }
 
 setup_backend() {
-    log "Setting up backend..."
-    change_to_app_dir
+    log "Setting up backend…"
+    cd "$APP_DIR" || { log_error "Cannot cd $APP_DIR"; exit 1; }
 
-    if [[ -f "Gemfile" ]]; then
+    if [ -f Gemfile ]; then
         bundle install || { log_error "bundle install failed"; exit 1; }
     else
-        log "Warning: Gemfile not found, skipping bundle install"
+        log "No Gemfile – skipping backend"
     fi
 }
 
-main() {
-    log "Starting MyToonz setup..."
+cleanup() { log "Cleanup complete"; }
+trap cleanup EXIT INT TERM
 
+main() {
+    log "Starting MyToonz deployment"
     check_dependencies
     validate_environment
     setup_frontend
     setup_backend
-
-    log "MyToonz setup completed successfully!"
+    log "MyToonz setup finished"
 }
 
 main "$@"
-```

@@ -1,2 +1,2 @@
+# Install the library that provides the agent infrastructure
 pip install openai-agents
-cp ../env.example .env# Add OpenAI API key to .env

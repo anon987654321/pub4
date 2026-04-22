@@ -1,3 +1,15 @@
-   git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
-   cd awesome-llm-apps/advanced_ai_agents/multi_agent_apps/ai_home_renovation_agent
-   
++-------------------+     +-------------------+     +-------------------+
+|   Researcher      | --> |    Analyst        | --> |    Coder          |
++-------------------+     +-------------------+     +-------------------+
+        |                       |                       |
+        v                       v                       v
++---------------------------------------------------------------+
+|                         Master Pipeline                       |
+|  Intake → Infer → Route → Guard → Execute → Council → Lint →   |
+|  Memo → Render                                               |
++---------------------------------------------------------------+
+        |
+        v
++-------------------+     +-------------------+     +-------------------+
+|   Reviewer        | <-- |    Lint          | <-- |   Tools (LLM, FS) |
++-------------------+     +-------------------+     +-------------------+

@@ -1,5 +1,9 @@
+# Clone the repository
+git clone https://github.com/your-org/awesome-llm-apps.git
+cd awesome-llm-apps/advanced_ai_agents/multi_agent_apps/ai_domain_deep_research_agent
 
-## Configuration
-Add Together AI and Composio API keys to `.env` or the sidebar.
+# Install Ruby dependencies
+bundle install
 
-## Run
+# Run the agent (default DeepSeek model)
+bin/master run --pipeline research

@@ -1,64 +1,74 @@
-#!/usr/bin/env zsh
-emulate -L zsh
-setopt err_return no_unset pipe_failed extended_glob warn_create_global typeset_silent
+#!/usr/bin/env sh
+set -eu
+set -o pipefail
+IFS=$'\n\t'
 
-APP_NAME='brgen_takeaway'
-BASE_DIR='/home/dev/rails'
-SCRIPT_DIR="${0:A:h}"
-
-log() { print -u2 "[$(date +%Y-%m-%dT%H:%M:%S%z)] $*"; }
+log() {
+    printf '[%s] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2
+}
 
 install_gem() {
     log "Installing gem: $*"
-    gem install "$@" || { log "Error: Failed to install gem(s): $*"; return 1; }
+    # Suppress documentation, fail fast on error
+    if ! gem install --no-document "$@"; then
+        log "Error: Failed to install gem(s): $*"
+        exit 1
+    fi
 }
 
-check_port_available() {
-    local port=$1 available=0
-    case $found_port_cmd in
-        sockstat)
-            if sockstat -l -4 -p "$port" | grep -q ":$port\$"; then
-                available=1
-            fi
-            ;;
-        netstat)
-            if netstat -an -f inet | grep -q ":$port "; then                available=1
-            fi
-            ;;
-        ss)
-            if ss -ln -4 "sport = :$port" | grep -q ":$port\$"; then                available=1
-            fi
-            ;;
-    esac
-    return $available
-}
-
-find_available_port() {
-    local base_port=${FIND_PORT_BASE:-3000}
-    local max_port=${FIND_PORT_MAX:-4000}
-    local port=$base_port
-
-    while ((port <= max_port)); do
-        if ! check_port_available "$port"; then
-            print -r -- "$port"
+# Detect an available port‑checking utility.
+detect_port_checker() {
+    for cmd in sockstat netstat ss lsof; do
+        if command -v "$cmd" >/dev/null 2>&1; then
+            printf '%s' "$cmd"
             return 0
         fi
-        ((port++))
     done
     return 1
 }
+PORT_CHECKER=$(detect_port_checker) || {
+    log "Error: No port‑checking tool found (sockstat, netstat, ss, lsof)"
+    exit 1
+}
 
-# locate a port checker
-found_port_cmd=
-for cmd in sockstat netstat ss; do
-    if command -v "$cmd" >/dev/null 2>&1; then
-        found_port_cmd=$cmd        break
-    fi
-done
-[[ -z $found_port_cmd ]] && { log "Error: No port checking tool found (sockstat, netstat, or ss)"; exit 1; }
+check_port_available() {
+    port=$1
+    case $PORT_CHECKER in
+        sockstat) sockstat -l -4 -p "$port" | grep -qE ":$port\$" && return 1 ;;
+        netstat) netstat -an -f inet | grep -qE ":$port[[:space:]]" && return 1 ;;
+        ss) ss -ln -4 "sport = :$port" | grep -qE ":$port\$" && return 1 ;;
+        lsof) lsof -iTCP:"$port" -sTCP:LISTEN -t >/dev/null && return 1 ;;
+        *) return 0 ;;
+    esac
+    return 0
+}
 
-# ensure shared functions exist
-[[ -f "${SCRIPT_DIR}/@shared_functions.sh" ]] || { log "Error: Shared functions file not found at ${SCRIPT_DIR}/@shared_functions.sh"; exit 1; }
-source "${SCRIPT_DIR}/@shared_functions.sh" || { log "Error: Failed to source shared functions"; exit 1; }
+find_available_port() {
+    base=${FIND_PORT_BASE:-3000}
+    max=${FIND_PORT_MAX:-4000}
+    port=$base
+    while [ "$port" -le "$max" ]; do
+        if check_port_available "$port"; then
+            printf '%s\n' "$port"
+            return 0
+        fi
+        port=$((port + 1))
+    done
+    log "Error: No free port found in range $base‑$max"
+    return 1
+}
 
-# placeholder for further logic...
+# Resolve script directory safely (handles symlinks)
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd -P)
+
+# Load shared helpers
+SHARED_FILE="${SCRIPT_DIR}/@shared_functions.sh"
+if [ ! -f "$SHARED_FILE" ]; then
+    log "Error: Shared functions not found at $SHARED_FILE"
+    exit 1
+fi
+. "$SHARED_FILE"
+
+# Future deployment logic goes here
+
+exit 0

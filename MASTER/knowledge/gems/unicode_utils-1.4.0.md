@@ -1,4 +1,9 @@
 require "unicode_utils/upcase"
 
-UnicodeUtils.upcase("weiß")   # => "WEISS"
-UnicodeUtils.upcase("i", :tr) # => "İ"
+# Basic usage – German sharp‑s becomes "SS"
+UnicodeUtils.upcase("weiß")
+#=> "WEISS"
+
+# Turkish dotted I (requires the :tr locale)
+UnicodeUtils.upcase("i", :tr)
+#=> "İ"

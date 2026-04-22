@@ -1,39 +1,61 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env sh
 set -euo pipefail
 
 log() {
-  print -u2 -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
+  printf '[%s] %s\n' "$(date +'%Y-%m-%d %H:%M:%S')" "$*" >&2
+}
+
+error() {
+  log "ERROR: $*"
+  exit 1
 }
 
 check_rails_environment() {
-  if [[ -z "${RAILS_ENV:-}" ]]; then
-    export RAILS_ENV=development
-    log "RAILS_ENV not set. Defaulting to development"
-  fi
+  : "${RAILS_ENV:=development}"
+  [ -n "${RAILS_ENV}" ] || error "RAILS_ENV is empty after defaulting"
+  [ -x "bin/rails" ] || error "bin/rails not found – run inside a Rails application"
+  command -v bin/rails >/dev/null || error "bin/rails is not executable"
+}
 
-  [[ -x "bin/rails" ]] || {
-    log "Error: bin/rails not found. Run this inside a Rails application"
-    return 1
-  }
+model_exists() {
+  # Returns 0 if a model file with the given name exists in app/models
+  local name=$1
+  [ -f "app/models/${name}.rb" ] || [ -f "app/models/${name.underscore}.rb" ]
+}
+
+generate_model() {
+  local name=$1
+  shift
+  log "Generating model ${name}..."
+  bin/rails generate model "${name}" "$@" --no-test-framework
 }
 
 setup_messenger_models() {
-  check_rails_environment || return 1
+  check_rails_environment
 
-  local -a models=(
-    "Conversation conversation_type:string name:string disappearing_messages:boolean user:references last_read_at:datetime notifications_enabled:boolean"
-    "Message conversation:references user:references content:text message_type:string encrypted:boolean expires_at:datetime read_at:datetime"
-    "ConversationParticipant conversation:references user:references last_read_at:datetime"
-  )
+  models="
+Conversation conversation_type:string name:string disappearing_messages:boolean user:references last_read_at:datetime notifications_enabled:boolean
+Message conversation:references user:references content:text message_type:string encrypted:boolean expires_at:datetime read_at:datetime
+ConversationParticipant conversation:references user:references last_read_at:datetime
+"
 
-  local model_spec model_name
-  for model_spec in "${models[@]}"; do
-    model_name="${model_spec%% *}"
-    log "Generating model ${model_name}..."
-    bin/rails generate model ${=model_spec}
-  done
+  while IFS= read -r line; do
+    [ -z "${line%[[:space:]]*}" ] && continue
+    set -- $line
+    model_name=$1
+    shift
+    if model_exists "${model_name}"; then
+      log "Model ${model_name} already exists – skipping generation"
+      continue
+    fi
+    generate_model "${model_name}" "$@"
+  done <<EOF
+$models
+EOF
 
   log "Running migrations..."
   bin/rails db:migrate
   log "Messenger models configured successfully"
 }
+
+setup_messenger_models

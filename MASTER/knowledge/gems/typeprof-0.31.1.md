@@ -1,1 +1,1 @@
-$ gem install typeprof
+gem install typeprof

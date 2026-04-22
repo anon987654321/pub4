@@ -1,8 +1,3 @@
-pip install openai-agentscp ../env.example .env   # add OpenAI API key
-python - <<'PY'
-import asyncio
-from agent import basic_memory_operations, conversation_corrections
-
-asyncio.run(basic_memory_operations())
-asyncio.run(conversation_corrections())
-PY
+# Install the OpenAI agents client
+pkg_add ruby # ensure Ruby is present on OpenBSD
+gem install openai-agents

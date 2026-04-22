@@ -1,33 +1,47 @@
-#!/usr/bin/env zsh
-emulate -L zshsetopt err_return no_unset pipe_fail extended_glob warn_create_global
+#!/usr/bin/env sh
+set -euo pipefail
 
-APP_DIR="/home/brgen/app"
-ROUTES_FILE="$APP_DIR/config/routes.rb"
+readonly APP_DIR="/home/brgen/app"
+readonly ROUTES_FILE="${APP_DIR}/config/routes.rb"
+# Create temporary file in the same directory to guarantee atomic rename
+readonly TMP_FILE="$(mktemp -p "${APP_DIR}" routes.rb.tmp.XXXXXX)"
 
-# Fail fast if the app directory is missing
-if [[ ! -d "$APP_DIR" ]]; then
-  print "Error: $APP_DIR does not exist" >&2
+# Ensure temporary file is removed on any exit
+trap 'rm -f "$TMP_FILE"' EXIT
+
+# Verify application directory exists and is writable
+if [ ! -d "$APP_DIR" ]; then
+  printf 'Error: %s does not exist\n' "$APP_DIR" >&2
+  exit 1
+fi
+if [ ! -w "$APP_DIR" ]; then
+  printf 'Error: %s is not writable\n' "$APP_DIR" >&2
   exit 1
 fi
 
-print "==> [routes] Wiring all routes"
+printf '==> [routes] Wiring all routes\n'
 
-# Write routes.rb using a heredoc with literal delimiter
-cat > "$ROUTES_FILE" <<'RUBY'
+cat >"$TMP_FILE" <<'RUBY'
 Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
 
-  resources :communities do    resources :posts, shallow: true do      resources :comments, shallow: true do        resources :comments, shallow: true, as: :replies
+  resources :communities do
+    resources :posts, shallow: true do
+      resources :comments, shallow: true do
+        resources :comments, shallow: true, as: :replies
       end
       resource :vote, only: [:create], controller: "votes"
     end
-  end  resources :posts do
+  end
+
+  resources :posts do
     resources :comments, shallow: true
     resource :vote, only: [:create], controller: "votes"
   end
 
-  resources :comments do    resource :vote, only: [:create], controller: "votes"
+  resources :comments do
+    resource :vote, only: [:create], controller: "votes"
     resources :comments, only: [:create], as: :replies
   end
 
@@ -49,4 +63,7 @@ Rails.application.routes.draw do
 end
 RUBY
 
-print "==> [routes] done"
+# Atomically replace the routes file
+mv -f "$TMP_FILE" "$ROUTES_FILE"
+
+printf '==> [routes] done\n'

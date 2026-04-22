@@ -1,6 +1,9 @@
+# `result` – array of ActiveRecord objects from a previous pipeline stage.
+if result.empty?
+  logger.warn "User not found; skipping review step"
+  return Master::Result::Err.new("User not found")
+end
 
-## High Priority 🟠1. **No Error Handling** (Line 3‑4)
-   - **Problem:** Assumes result always has data
-   - **Impact:** IndexError if user doesn't exist
-   - **Fix:** Check result before accessing
-   
+user = result.first
+puts "Reviewing #{user.name}"
+# Continue with linting, static analysis, etc.

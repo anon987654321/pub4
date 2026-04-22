@@ -1,4 +1,4 @@
-```html
+<%# frozen_string_literal: true %>
 <a href="#main-content" class="skip-nav">Skip to main content</a>
 <header class="site-header">
   <div class="container">
@@ -7,8 +7,8 @@
         <%= link_to root_path, class: "logo-link" do %>
           <span class="logo"><%= @app_name.presence || "App" %></span>
         <% end %>
-        <% if ActsAsTenant.current_tenant&.name %>
-          <span class="tenant"><%= ActsAsTenant.current_tenant.name %></span>
+        <% if (tenant = ActsAsTenant.current_tenant&.name).present? %>
+          <span class="tenant"><%= tenant %></span>
         <% end %>
       </div>
 
@@ -18,7 +18,10 @@
             <span class="nav-user" aria-label="<%= current_user.email %>"><%= current_user.email %></span>
           </li>
           <li>
-            <%= link_to t("navigation.sign_out"), destroy_user_session_path, method: :delete, class: "nav-link" %>
+            <%= link_to t("navigation.sign_out"), destroy_user_session_path,
+                        method: :delete,
+                        class: "nav-link",
+                        data: { turbo_method: :delete } %>
           </li>
         <% else %>
           <li>
@@ -29,4 +32,3 @@
     </nav>
   </div>
 </header>
-```

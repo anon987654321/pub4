@@ -1,2 +1,1 @@
-bundle add english
-bundle install
+gem 'english', '~> 0.8.1'

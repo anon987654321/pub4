@@ -1,18 +1,18 @@
-```zsh
-#!/usr/bin/env zsh
+#!/usr/bin/env sh
 set -euo pipefail
 
-# Airbnb marketplace features: Bookings, Reviews, Host Profiles, Calendar, Pricing
-# Shared across marketplace apps (brgen listings, hjerterom)
-
 log() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+  printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
+}
+
+model_path() {
+  printf 'app/models/%s.rb' "${1%:*}"
 }
 
 check_model_exists() {
-  local model_name=$1
-  if [[ -f "app/models/${model_name:l}.rb" ]]; then
-    log "Model ${model_name} already exists, skipping generation"
+  model_name=$1
+  if [ -f "$(model_path "$model_name")" ]; then
+    log "Model $model_name already exists, skipping generation"
     return 1
   fi
   return 0
@@ -24,53 +24,55 @@ run_migration() {
     log "Migration failed, attempting rollback"
     if ! bundle exec rails db:rollback; then
       log "Rollback also failed, manual intervention required"
-      exit 1
+      return 1
     fi
-    log "Rollback successful, exiting"
-    exit 1
+    log "Rollback successful"
+    return 1
   fi
 }
 
 setup_airbnb_models() {
-  local models=(
-    "Booking listing:references host:references check_in:date check_out:date guests_count:integer total_price:decimal status:string"
-    "Review reviewable:references{polymorphic} reviewer:references{polymorphic} rating:integer content:text cleanliness:integer accuracy:integer communication:integer location:integer value:integer"
-    "Availability listing:references date:date available:boolean price_override:decimal"
-    "HostProfile user:references bio:text response_rate:decimal response_time:integer verified:boolean joined_date:date languages:string superhost:boolean"
-    "Amenity name:string category:string icon:string"
-    "ListingAmenity listing:references amenity:references"
+  # Define models as an array: "ModelName:attributes"
+  models=(
+    "Booking:listing:references host:references check_in:date check_out:date guests_count:integer total_price:decimal status:string"
+    "Review:reviewable:references{polymorphic} reviewer:references{polymorphic} rating:integer content:text cleanliness:integer accuracy:integer communication:integer location:integer value:integer"
+    "Availability:listing:references date:date available:boolean price_override:decimal"
+    "HostProfile:user:references bio:text response_rate:decimal response_time:integer verified:boolean joined_date:date languages:string superhost:boolean"
+    "Amenity:name:string category:string icon:string"
+    "ListingAmenity:listing:references amenity:references"
   )
 
-  for model in "${models[@]}"; do
-    local model_name=$(echo $model | awk '{print $1}')
-    local attributes=$(echo $model | cut -d' ' -f2-)
-    if check_model_exists $model_name; then
-      log "Generating model: $model_name with attributes: $attributes"
-      if ! bundle exec rails generate model $model_name $attributes; then
-        log "Failed to generate model: $model_name"
-        exit 1
+  for entry in "${models[@]}"; do
+    model_name=${entry%%:*}
+    attributes=${entry#*:}
+    if [ -z "$model_name" ]; then
+      continue
+    fi
+    if check_model_exists "$model_name"; then
+      log "Generating model $model_name with attributes: $attributes"
+      if ! bundle exec rails generate model "$model_name" $attributes; then
+        log "Failed to generate model $model_name"
+        return 1
       fi
     fi
   done
-
   log "Airbnb models generated"
 }
 
 setup_polymorphic_associations() {
   log "Setting up polymorphic associations for Review model"
+  review_file=$(model_path Review)
 
-  local review_model="app/models/review.rb"
-  if [[ ! -f "$review_model" ]]; then
+  if [ ! -f "$review_file" ]; then
     log "Review model not found, cannot set up polymorphic associations"
-    exit 1
+    return 1
   fi
 
-  if ! grep -q "belongs_to :reviewable, polymorphic: true" "$review_model"; then
-    cat >> "$review_model" << 'EOF'
+  snippet='  belongs_to :reviewable, polymorphic: true
+  belongs_to :reviewer, polymorphic: true'
 
-  belongs_to :reviewable, polymorphic: true
-  belongs_to :reviewer, polymorphic: true
-EOF
+  if ! grep -q "belongs_to :reviewable, polymorphic: true" "$review_file"; then
+    printf '\n%s\n' "$snippet" >> "$review_file"
     log "Added polymorphic associations to Review model"
   else
     log "Polymorphic associations already present in Review model"
@@ -80,24 +82,31 @@ EOF
 add_validations() {
   log "Adding validations to models"
 
-  # Add validations to Booking model
-  local booking_model="app/models/booking.rb"
-  if [[ -f "$, :total_price, :status, presence: true" "$booking_model";check_in, :check_out, :guests_count, :total_price, :status, presence: true
+  booking_file=$(model_path Booking)
+  if [ -f "$booking_file" ]; then
+    if ! grep -q "validates :check_in, :check_out, :guests_count, :total_price, :status, presence: true" "$booking_file"; then
+      cat >> "$booking_file" <<'EOF'
+
+  validates :check_in, :check_out, :guests_count, :total_price, :status, presence: true
   validates :guests_count, numericality: { only_integer: true, greater_than: 0 }
-  validates :total_price, numericality: { greater_than_or_equal_to_in
+  validates :total_price, numericality: { greater_than_or_equal_to: 0 }
+  validate :check_out_after_check_in
 
   private
 
   def check_out_after_check_in
-    validations to Booking model"
+    return if check_in.blank? || check_out.blank?
+    errors.add(:check_out, "must be after check-in") if check_out <= check_in
+  end
+EOF
+      log "Added validations to Booking model"
     fi
   fi
 
-  # Add validations to Review model
-  local review_model="app/models/review.rb"
-  if [[ -f "$review_model" ]]; then
-    if ! grep -q "validates :rating, numericality: { in: 1..5 }" "$review_model"; then
-      cat >> "$review_model" << 'EOF'
+  review_file=$(model_path Review)
+  if [ -f "$review_file" ]; then
+    if ! grep -q "validates :rating, numericality: { in: 1..5 }" "$review_file"; then
+      cat >> "$review_file" <<'EOF'
 
   validates :rating, numericality: { in: 1..5 }
   validates :content, length: { maximum: 1000 }
@@ -110,11 +119,12 @@ EOF
 main() {
   log "Starting Airbnb marketplace features setup"
 
-  setup_airbnb_models || exit 1
-  run_migration || exit  add_validations || exit 1
+  setup_airbnb_models &&
+    setup_polymorphic_associations &&
+    run_migration &&
+    add_validations
 
   log "Airbnb marketplace features setup completed successfully"
 }
 
 main "$@"
-```

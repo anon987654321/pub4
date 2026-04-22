@@ -1,22 +1,41 @@
-#!/usr/bin/env zsh
-emulate -L zsh
-setopt err_return no_unset pipe_fail extended_glob warn_create_global
+#!/usr/bin/env sh
+set -eu
+set -o pipefail
 
-typeset -r APP_DIR="/home/brgen/app"
-typeset -r PORT=11006
+APP_DIR="/home/brgen/app"
+PORT=11006
 
-echo "==> [setup] Rails 8 app creation + gems"
+printf '==> [setup] Rails 8 app creation + gems\n'
 
-[[ -d "$APP_DIR" ]] || { echo "ERROR: $APP_DIR missing. Run: doas zsh openbsd.sh --pre-point"; exit 1 }
-cd "$APP_DIR"
-
-if [[ ! -f "config/application.rb" ]]; then
-  echo "Creating Rails 8 application"
-  rails new . --database=postgresql --skip-git --css=tailwind --javascript=esbuild
+# Ensure prerequisite directory exists
+if [ ! -d "$APP_DIR" ]; then
+  printf 'ERROR: %s missing. Run: doas sh openbsd.sh --pre-point\n' "$APP_DIR" >&2
+  exit 1
 fi
 
-echo "Appending gems to Gemfile"
-grep -q "solid_queue" Gemfile || cat >> Gemfile << 'GEMFILE'
+cd "$APP_DIR"
+
+# Verify Rails is available
+if ! command -v rails >/dev/null 2>&1; then
+  printf 'ERROR: rails executable not found in PATH\n' >&2
+  exit 1
+fi
+
+# Initialise Rails app if missing
+if [ ! -f "config/application.rb" ]; then
+  printf 'Creating Rails 8 application\n'
+  rails new . \
+    --database=postgresql \
+    --skip-git \
+    --css=tailwind \
+    --javascript=esbuild
+fi
+
+printf 'Appending gems to Gemfile\n'
+
+# Append required gems once
+if ! grep -q "solid_queue" Gemfile; then
+  cat >> Gemfile <<'EOF'
 
 # Rails 8 Solid Stack
 gem "solid_queue"
@@ -29,11 +48,11 @@ gem "bcrypt", "~> 3.1"
 # Voting
 gem "acts_as_votable"
 
-# Real-time
+# Real‑time
 gem "stimulus_reflex", "~> 3.5"
 gem "cable_ready", "~> 5.0"
 
-# Multi-tenancy
+# Multi‑tenancy
 gem "devise"
 gem "devise-guests"
 gem "acts_as_tenant"
@@ -51,8 +70,12 @@ group :development, :test do
   gem "rubocop-rails-omakase"
   gem "faker"
 end
+EOF
+fi
 
-GEMFILE
+# Install missing gems quietly
+if ! bundle check >/dev/null 2>&1; then
+  bundle install --quiet
+fi
 
-bundle install
-echo "==> [setup] done"
+printf '==> [setup] done\n'

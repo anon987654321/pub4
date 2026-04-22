@@ -1,1 +1,1 @@
-gem "tty-progressbar"
+gem "tty-progressbar", "~> 0.18"

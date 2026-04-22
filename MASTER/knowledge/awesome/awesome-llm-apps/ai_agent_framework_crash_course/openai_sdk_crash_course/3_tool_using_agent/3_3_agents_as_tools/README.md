@@ -1,3 +1,5 @@
+# Install the Python OpenAI‑Agents library
 pip install openai-agents
-cp ../env.example .env
-# add your OpenAI API key to .env
+
+# Install Ruby dependencies for the surrounding framework
+bundle install

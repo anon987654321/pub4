@@ -1,1 +1,1 @@
-gem install nokogiri
+gem install nokogiri -v 1.19.1

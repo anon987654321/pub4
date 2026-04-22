@@ -1,3 +1,1 @@
-
-Run:
-
+gem install reek

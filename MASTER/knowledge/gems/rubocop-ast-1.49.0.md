@@ -1,1 +1,1 @@
-gem install rubocop-ast
+gem install rubocop-ast -v 1.49.0

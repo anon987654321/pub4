@@ -1,2 +1,18 @@
-git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
-cd advanced_ai_agents/multi_agent_apps/product_launch_intelligence_agent
++------------+   +------------+   +------------+
+| Intake     | → | Infer      | → | Route      |
++------------+   +------------+   +------------+
+       │                │                │
+       ▼                ▼                ▼
++------------+   +------------+   +------------+
+| Guard      |   | Council    |   | Execute    |
++------------+   +------------+   +------------+
+       │                │                │
+       ▼                ▼                ▼
++------------+   +------------+   +------------+
+| Lint       |   | Render     |   | Memo       |
++------------+   +------------+   +------------+
+       │                │                │
+       ▼                ▼                ▼
++-------------------------------------------+
+| Final Output (report, assets, timeline)  |
++-------------------------------------------+

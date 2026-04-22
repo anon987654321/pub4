@@ -1,3 +1,1 @@
-
-## Environment
-Create a `.env` with required keys:
+pkg_add chromium

@@ -1,12 +1,17 @@
-require "cgi"
 cgi = CGI.new
 
-# Access a single parameter
-value = cgi["field_name"]          # => "123"
-cgi["flowerpot"]                   # => ""
+# Fetch a single parameter (returns "" if missing)
+value   = cgi["field_name"]   # => "123"
+missing = cgi["flowerpot"]    # => ""
 
-# List, test, and manipulate parameters
-fields = cgi.keys                     # => ["field_name"]
-cgi.has_key?("field_name")          # => true
-cgi.include?("field_name")          # => true
-cgi.include?("flowerpot")           # => false
+# Inspect the whole set
+fields   = cgi.keys                     # => ["field_name"]
+present? = cgi.has_key?("field_name")   # => true
+present? = cgi.include?("field_name")   # => true
+absent?  = cgi.include?("flowerpot")    # => false
+
+# Debug dump (hash of arrays)
+debug = cgi.params # => {"field_name"=>["123"]}
+
+# Escape output before embedding in HTML to prevent XSS
+escaped = CGI.escapeHTML(value)  # => "123" (HTML‑escaped)

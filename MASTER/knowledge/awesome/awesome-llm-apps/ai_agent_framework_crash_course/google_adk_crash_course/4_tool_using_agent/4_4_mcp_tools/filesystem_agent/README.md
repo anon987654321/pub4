@@ -1,3 +1,2 @@
-cd ai_agent_framework_crash_course/google_adk_tutorials/
-adk web
-# Select filesystem_mcp_agent
+# Run the master with the filesystem pipeline
+bundle exec ruby lib/master.rb --pipeline filesystem

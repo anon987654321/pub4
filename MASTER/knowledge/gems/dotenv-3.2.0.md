@@ -1,1 +1,1 @@
-gem 'dotenv', groups: [:development, :test]
+gem 'dotenv', '~> 3.2.0', groups: [:development, :test]

@@ -1,6 +1,18 @@
+result = Master::Tools::WriteFile.call(
+  path: "app/services/hello_service.rb",
+  content: <<~RUBY
+    # frozen_string_literal: true
 
-## Examples
-- **Filesystem**: File operations via Standard I/O.
-- **Firecrawl**: Web scraping and crawling.
+    class HelloService
+      def call(name)
+        "Hello, #{name}!"
+      end
+    end
+  RUBY
+)
 
-## Prerequisites
+if result.is_a?(Master::Result::Ok)
+  puts "File written successfully."
+else
+  warn "Failed to write file: #{result.error}"
+end

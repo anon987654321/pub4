@@ -1,4 +1,4 @@
-export FIRECRAWL_API_KEY=...
-export FIRECRAWL_RETRY_MAX_ATTEMPTS=5
-pip install -r requirements.txt
-adk web   # select firecrawl_mcp_agent
+# .env
+FIRECRAWL_API_KEY=sk_live_XXXXXXXXXXXXXXXX
+FIRECRAWL_RETRY_MAX_ATTEMPTS=5
+FIRECRAWL_TIMEOUT_SECONDS=30

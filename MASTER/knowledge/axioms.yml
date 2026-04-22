@@ -1,23 +1,25 @@
-# Kernel axioms — enforced byscan rules, pipeline stages, or tool guards
+# Kernel axioms — enforced by scan rules, pipeline stages, or tool guards
 kernel:
   PRESERVE_FIRST: "Never break working code. Read before writing."
-  SIMPLEST_WORKS: "Fewest moving parts solve the problem."
-  FAIL_VISIBLY: "Errors surface immediately. Never swallow exceptions."
-  ONE_SOURCE: "One authoritative representation per concept."
-  DECOUPLE: "Hidden dependencies become explicit."
+  SIMPLEST_WORKS: "Prefer the fewest moving parts that solve the problem."
+  FAIL_VISIBLY: "Surface errors immediately; never swallow exceptions."
+  ONE_SOURCE: "Maintain a single authoritative representation per concept."
+  DECOUPLE: "Make hidden dependencies explicit."
   GUARD_EXPENSIVE: "Check preconditions before costly work."
-  DEGRADE_GRACEFULLY: "Works with partial failures."
-  BE_CONCISE: "No unnecessary words, tokens, or lines."
+  DEGRADE_GRACEFULLY: "Operate under partial failures."
+  BE_CONCISE: "Avoid unnecessary words, tokens, or lines."
 
-# Philosophy layer [P] — advisory only, never blocking.
-# Restored from MASTER2 and trimmed to top 25 prioritized axioms.
+# Philosophy layer — advisory only, never blocking.
 philosophy:
   prioritized_top_25:
-    - id: ONE_JOB      priority: 1
+    - id: ONE_JOB
+      priority: 1
       statement: "Each module has one clear reason to change."
-    - id: NO_SURPRISES      priority: 2
-      statement: "Prefer predictable behavior over clever behavior."
-    - id: EXTEND_DONT_MODIFY      priority: 3
+    - id: NO_SURPRISES
+      priority: 2
+      statement: "Prefer predictable behavior over clever tricks."
+    - id: EXTEND_DONT_MODIFY
+      priority: 3
       statement: "Add capability via composition before rewriting stable parts."
     - id: COMPOSABLE
       priority: 4
@@ -27,17 +29,18 @@ philosophy:
       statement: "Leave touched code cleaner than found."
     - id: TEST_FIRST
       priority: 6
-      statement: "Design for testability before implementation complexity."
+      statement: "Design for testability before adding complexity."
     - id: REVERSIBLE
       priority: 7
-      statement: "Prefer steps easy to rollback."
+      statement: "Prefer steps easy to roll back."
     - id: ONE_CHANGE
       priority: 8
       statement: "Keep each patch focused on one coherent intent."
     - id: EXPLICIT
       priority: 9
       statement: "Prefer explicit contracts over implicit coupling."
-    - id: IDEMPOTENT      priority: 10
+    - id: IDEMPOTENT
+      priority: 10
       statement: "Operations are safe to repeat."
     - id: CQS
       priority: 11
@@ -45,13 +48,15 @@ philosophy:
     - id: IMMUTABLE
       priority: 12
       statement: "Default to immutable data flow where practical."
-    - id: APPEND_ONLY      priority: 13
-      statement: "Favor append-only logs for auditability."
+    - id: APPEND_ONLY
+      priority: 13
+      statement: "Favor append‑only logs for auditability."
     - id: CACHE_FIRST
       priority: 14
       statement: "Cache high‑cost deterministic work with bounded TTL."
     - id: SELF_EXPLAINING
-      priority: 15      statement: "Names and structure reduce need for comments."
+      priority: 15
+      statement: "Names and structure reduce the need for comments."
     - id: ACCESSIBLE_FIRST
       priority: 16
       statement: "Design outputs for broad readability."
@@ -61,15 +66,18 @@ philosophy:
     - id: JUST_ENOUGH
       priority: 18
       statement: "Avoid building before proof of need."
-    - id: CHESTERTONS_FENCE      priority: 19
+    - id: CHESTERTONS_FENCE
+      priority: 19
       statement: "Understand why something exists before removing it."
     - id: GALLS_LAW
       priority: 20
       statement: "Complex systems evolve from simple working systems."
     - id: OCCAMS_RAZOR
-      priority: 21      statement: "Prefer simpler hypotheses and designs first."
-    - id: PARETO      priority: 22
-      statement: "Ship the 20% that delivers 80% value first."
+      priority: 21
+      statement: "Prefer simpler hypotheses and designs first."
+    - id: PARETO
+      priority: 22
+      statement: "Ship the 20 % that delivers 80 % value first."
     - id: FINISH_FIRST
       priority: 23
       statement: "Close the loop before opening new threads."
@@ -78,12 +86,13 @@ philosophy:
       statement: "Benchmark before optimization work."
     - id: BLAME_SELF
       priority: 25
-      statement: "Assume your change introduced the bug until disproven."
+      statement: "Assume your change introduced the bug until disproved."
 
   anti_patterns:
     - god_class
     - shotgun_surgery
-    - speculative_abstraction    - hidden_global_state
+    - speculative_abstraction
+    - hidden_global_state
     - duplicate_logic
     - n_plus_one_queries
     - silent_rescue
@@ -114,8 +123,6 @@ philosophy:
     - "Value integrated systems"
 
 # Nielsen Norman Group — 10 Usability Heuristics
-# Source: nngroup.com/articles/ten-usability-heuristics/
-# Applied to CLI/API/output design as much as UI.
 ux:
   nielsen_heuristics:
     - id: SYSTEM_STATUS
@@ -146,10 +153,10 @@ ux:
       priority: 9
       statement: "Error messages name the problem and suggest a fix in plain language."
     - id: HELP_AND_DOCS
-      priority: 10      statement: "When help is needed it must be easy to find, concrete, and task‑focused."
+      priority: 10
+      statement: "When help is needed it must be easy to find, concrete, and task‑focused."
 
 # Clean Code — Robert C. Martin
-# Principles beyond SOLID that shape method/class design at the micro level.
 clean_code:
   - id: ONE_ABSTRACTION_LEVEL
     statement: "Each function operates at a single level of abstraction; no mixing high‑level policy with low‑level detail."
@@ -161,10 +168,10 @@ clean_code:
     statement: "Third‑party code is wrapped at the edge; it never leaks into the domain."
   - id: CLEAN_TESTS
     statement: "Tests are first‑class code; one concept per test, no production logic in tests."
-  - id: NO_MAGIC    statement: "Eliminate unexplained constants, flags, or mode switches; everything is named."
+  - id: NO_MAGIC
+    statement: "Eliminate unexplained constants, flags, or mode switches; everything is named."
 
 # Refactoring — Martin Fowler
-# Named code smells that each map to a specific extraction or restructuring.
 refactoring_smells:
   - id: PRIMITIVE_OBSESSION
     statement: "Replace repeated raw primitives (strings, ints as IDs) with value objects."

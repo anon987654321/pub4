@@ -1,4 +1,13 @@
-git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
-cd advanced_ai_agents/multi_agent_apps/agent_teams/ai_game_design_agent_team
-pip install -r requirements.txt
-# set OpenAI API key in sidebarstreamlit run game_design_agent_team.py
+ai_game_design_agent_team/
+├─ README.md                # ← you are here
+├─ requirements.txt         # Python dependencies for the optional demo UI
+├─ run.sh                   # Starts the Master server and the UI
+└─ src/
+   ├─ agent_definitions.rb  # Ruby classes that implement each persona
+   ├─ pipeline.rb           # Master pipeline configuration for this team
+   ├─ tools/                # Custom tool implementations
+   │   ├─ asset_generator.rb
+   │   └─ level_balancer.rb
+   └─ scripts/              # Evaluation & testing helpers
+       ├─ evaluate.rb
+       └─ test_playthrough.rb

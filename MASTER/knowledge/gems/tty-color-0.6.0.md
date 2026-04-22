@@ -1,1 +1,1 @@
-gem "tty-color"
+gem install tty-color

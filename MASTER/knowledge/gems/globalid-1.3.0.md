@@ -1,1 +1,3 @@
-gid://YourApp/Some::Model/id
+
+## Creating a GlobalID
+
