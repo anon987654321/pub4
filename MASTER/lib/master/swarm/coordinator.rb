@@ -48,12 +48,6 @@ module Master
         })
       end
 
-        end
-        threads.each { |th| th.join(WORKER_TIMEOUT) }
-        Result.ok(results)
-      rescue => e
-        Result.err("swarm_parallel: #{e.message}", category: :unknown)
-      end
 
       # Fan-out: run multiple workers in parallel threads with per-worker timeout.
       # Returns {results: {role => Result}, synthesis: String}.
