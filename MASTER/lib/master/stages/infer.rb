@@ -57,11 +57,10 @@ module Master
         [ /\b(?:hva\s+husker\s+du(?:\s+om\s+([\w\s]+))?|
                vis\s+(?:min\s+)?hukommelse|husk\s+([\w_]+=.+))\b/ix,  "memory"   ],
 
-# dreams / memory consolidation
-[ /\b(?:dreams?|consolidate?\s+memor(?:y|ies)|memory\s+consolidat|
-       dream\s+mode|promote\s+memor(?:y|ies))\b/ix,           "dreams"   ],
+        # dreams / memory consolidation
+        [ /\b(?:dreams?|consolidate?\s+memor(?:y|ies)|memory\s+consolidat|
+               dream\s+mode|promote\s+memor(?:y|ies))\b/ix,           "dreams"   ],
 
-# tokens
         [ /\b(?:token\s*count|how\s+many\s+tokens?|context\s+size|
                token\s+usage|how\s+much\s+context|
                hvor\s+mange\s+token|token\s*antall)\b/ix,              "tokens"   ],
