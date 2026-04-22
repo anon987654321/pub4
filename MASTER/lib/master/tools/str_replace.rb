@@ -40,21 +40,13 @@ module Master
         @undo.snapshot(full)
 
         tmp = "#{full}.tmp.#{Process.pid}"
-        begin
-          File.write(tmp, new_content)
-          File.rename(tmp, full)
-        rescue => e
-          begin
-            File.delete(tmp) if File.exist?(tmp)
-          rescue => cleanup_error
-            warn "str_replace: failed to cleanup temporary file #{tmp}: #{cleanup_error.message}"
-          end
-          raise
-        end
+        File.write(tmp, new_content)
+        File.rename(tmp, full)
 
         @bus&.publish("tool:after", tool: NAME, path:)
         Result.ok(full)
       rescue => e
+        File.delete(tmp) if tmp && File.exist?(tmp)
         Result.err("str_replace: #{e.message}", category: :unknown)
       end
 

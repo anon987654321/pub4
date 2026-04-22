@@ -2,9 +2,6 @@
 
 module Master
   module Tools
-    # Replace — batch find-and-replace across files in a directory.
-    # Wraps pub4/sh/replace.sh with structured input/output.
-    # TIER :guarded — modifies files, requires approval unless auto mode.
     class BatchReplace
       TIER        = :guarded
       NAME        = "replace"
@@ -14,7 +11,6 @@ module Master
         @root     = root
         @governor = governor
         @bus      = event_bus
-        @script   = File.expand_path("../../../../../../sh/replace.sh", __dir__)
       end
 
       def call(old_str:, new_str:, dir: nil, rename_files: false)
@@ -26,18 +22,27 @@ module Master
 
         @bus&.publish("tool:before", tool: NAME, old: old_str, new: new_str)
 
-        flags  = rename_files ? ["-f"] : []
-        args   = flags + [old_str, new_str, target]
-        out, err, status = Open3.capture3("zsh", @script, *args)
+        changed = 0
+        Dir.glob("#{target}/**/*").each do |path|
+          next unless File.file?(path)
+          content = File.read(path, encoding: "UTF-8") rescue next
+          next unless content.include?(old_str)
+          File.write(path, content.gsub(old_str, new_str))
+          changed += 1
+        end
+
+        if rename_files
+          Dir.glob("#{target}/**/*")
+             .select { |p| File.file?(p) && File.basename(p).include?(old_str) }
+             .each do |path|
+               new_path = File.join(File.dirname(path), File.basename(path).gsub(old_str, new_str))
+               File.rename(path, new_path)
+               changed += 1
+             end
+        end
 
         @bus&.publish("tool:after", tool: NAME)
-
-        if status.success?
-          changed = out.lines.count { |l| l.start_with?("Updated:", "Renamed:") }
-          Result.ok("replaced #{changed} file(s)\n#{out.strip}")
-        else
-          Result.err("replace: #{err.strip.empty? ? out.strip : err.strip}", category: :unknown)
-        end
+        Result.ok("replaced in #{changed} file(s)")
       rescue => e
         Result.err("replace: #{e.message}", category: :unknown)
       end

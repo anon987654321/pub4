@@ -6,14 +6,14 @@ require "json"
 module Master
   module Tools
     class WebSearch
-      QUERY_CHAR_LIMIT = 300
-      MAX_QUERY_CHARS  = QUERY_CHAR_LIMIT
+      TIER               = :guarded
+      MAX_QUERY_CHARS    = 300
       MAX_SEARCH_RESULTS = 5
 
-      NAME          = "web_search"
-      DESCRIPTION   = "Search DuckDuckGo instant answers API."
-      ENDPOINT      = "https://api.duckduckgo.com/"
-      TIMEOUT       = 10
+      NAME        = "web_search"
+      DESCRIPTION = "Search DuckDuckGo instant answers API."
+      ENDPOINT    = "https://api.duckduckgo.com/"
+      TIMEOUT     = 10
 
       def initialize(governor:, event_bus: nil)
         @governor = governor
@@ -22,7 +22,7 @@ module Master
 
       def call(query:)
         if query.length > MAX_QUERY_CHARS
-          $stderr.puts "web_search: query truncated from #{query.length} to #{MAX_QUERY_CHARS} chars"
+          @bus&.publish("tool:warning", tool: NAME, message: "query truncated to #{MAX_QUERY_CHARS} chars")
           query = query[0, MAX_QUERY_CHARS]
         end
 
