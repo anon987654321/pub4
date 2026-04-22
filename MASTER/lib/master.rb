@@ -7,18 +7,10 @@ module Master
 
   loader = Zeitwerk::Loader.for_gem
   loader.inflector.inflect(
-    "autoloop"         => "AutoLoop",
-    "standing_orders"   => "StandingOrders",
-    "soul"              => "Soul",
+    "autoloop"   => "AutoLoop",
     "cli"        => "CLI",
-    "mcp_server"      => "MCPServer",
-    "mcp_coordinator" => "McpCoordinator",
-    "diff_stager"     => "DiffStager",
-    "code_index"      => "CodeIndex",
-    "git_context" => "GitContext",
-    "ast_edit"    => "AstEdit",
-    "llm"         => "LLM",
-    "circuit_breaker_registry" => "CircuitBreakerRegistry"
+    "mcp_server" => "MCPServer",
+    "llm"        => "LLM",
   )
   loader.setup
 
@@ -168,17 +160,20 @@ route_stage&.instance_variable_get(:@commands)&.store("soul", ->(ctx) {
   end
 
   def self.default_model
-    if ENV["REPLICATE_API_KEY"].to_s.length > 10
-      "deepseek-ai/deepseek-r1"
-    elsif ENV["ANTHROPIC_API_KEY"].to_s.length > 10
+    if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
       "claude-sonnet-4-6"
     elsif ENV["OPENROUTER_API_KEY"].to_s.length > 10
       "anthropic/claude-sonnet-4-6"
     elsif ENV["OPENAI_API_KEY"].to_s.length > 10
       "gpt-4o"
+    elsif ENV["GEMINI_API_KEY"].to_s.length > 10
+      "gemini-2.5-flash"
+    elsif ENV["REPLICATE_API_KEY"].to_s.length > 10
+      "deepseek-ai/deepseek-r1"
     else
-      raise "No LLM API key found. Set REPLICATE_API_KEY, ANTHROPIC_API_KEY, or OPENROUTER_API_KEY."
+      raise "No LLM API key found. Set ANTHROPIC_API_KEY, OPENROUTER_API_KEY, or GEMINI_API_KEY."
     end
+  end
   end
 
   def self.build_tools(root:, undo:, governor:, bus:, diff_stager: nil, code_index: nil)
