@@ -137,6 +137,20 @@ module Master
       "#{voice}\n\n#{values}"
     end
 
+
+# Auto-propose a soul amendment when scan violations cluster on one rule.
+# Called by AutoLoop when the same rule fails across 3+ consecutive cycles.
+def propose_from_violations(rule_id, sample_violations, agent: @agent)
+  return "no agent available" unless agent
+
+  examples = sample_violations.first(3).map { |v| "  L#{v[:line]}: #{v[:message]}" }.join("\n")
+  rationale = "Recurring scan rule '#{rule_id}' flagged #{sample_violations.size} " \
+              "violations across multiple files and cycles:\n#{examples}\n" \
+              "Propose whether the codebase axioms or soul principles should acknowledge this pattern " \
+              "or whether the rule needs refinement."
+  propose(rationale, agent:)
+end
+
     private
 
     def load_soul

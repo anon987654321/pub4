@@ -4,9 +4,11 @@ module Master
   class Pipeline
     attr_reader :last_timings
 
-    def initialize(stages)
+    def initialize(stages, bus: nil, trace: false)
       @stages = stages
       @last_timings = {}
+      @bus   = bus
+      @trace = trace
     end
 
     # Run stages in sequence. Each stage's elapsed time is accumulated in
@@ -21,6 +23,7 @@ module Master
           timings[stage_label(stage)] = ms
           if res.respond_to?(:ok?) && res.ok?
           @last_timings = timings.dup
+          @bus&.publish("pipeline:stage", stage: stage_label(stage), ms:) if @trace
           Result.ok(res.value!.merge(_timings: timings.dup))
         else
           res

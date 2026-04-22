@@ -23,12 +23,14 @@ module Master
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
 
-    def initialize(agent:, scanner:, council:, root:, event_bus: nil)
-      @agent   = agent
-      @scanner = scanner
-      @council = council
-      @root    = root
-      @bus     = event_bus
+    def initialize(agent:, scanner:, council:, root:, event_bus: nil, soul: nil)
+      @agent          = agent
+      @scanner        = scanner
+      @council        = council
+      @root           = root
+      @bus            = event_bus
+      @soul           = soul
+      @rule_recurrence = Hash.new(0)  # rule_id => consecutive_cycle_count
     end
 
     def run(max_cycles: MAX_CYCLES)
@@ -53,7 +55,8 @@ module Master
           apply_fix(v[:file], fix) if fix
         end
 
-        commit(cycle) if git_dirty?
+commit(cycle) if git_dirty?
+track_recurrence(violations)
       end
 
       Result.ok("max cycles (#{MAX_CYCLES}) reached")
@@ -163,7 +166,22 @@ module Master
       end
     end
 
-    def git_dirty?
+def track_recurrence(violations)
+  return unless @soul
+  tally = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
+  tally.each do |rule_id, count|
+    @rule_recurrence[rule_id] += 1
+    next unless @rule_recurrence[rule_id] >= 3
+    @rule_recurrence.delete(rule_id)
+    sample = violations.select { |v| v[:rule].to_s == rule_id }.first(5)
+    result = @soul.propose_from_violations(rule_id, sample, agent: @agent)
+    @bus&.publish("autoloop:soul_proposal", rule: rule_id, result: result.to_s[0, 80])
+  end
+  # Reset rules that disappeared
+  (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
+end
+
+def git_dirty?
       out, = Open3.capture3("git -C #{@root} status --porcelain lib/")
       !out.strip.empty?
     end

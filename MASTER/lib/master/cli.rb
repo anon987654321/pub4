@@ -39,7 +39,8 @@ module Master
       @last_ok     = true
       @tts_on      = Speech.available? && @config["tts"] != false
       @violations  = 0
-      @scan_thread = nil
+      @scan_thread     = nil
+      @seen_violations = {}
     end
 
     def run(initial_message = nil)
@@ -203,7 +204,7 @@ module Master
         return
       end
 
-      render_violations_by_rule(by_rule)
+      render_violations_by_rule(filter_seen_violations(by_rule))
       puts @renderer.render("#{total} total violations", mode: :warning)
     end
 
@@ -216,7 +217,18 @@ module Master
       by_rule
     end
 
-    SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.freeze
+def filter_seen_violations(by_rule)
+  by_rule.transform_values do |vs|
+    vs.reject do |v|
+      key = "#{v[:rule]}:#{v[:line]}:#{v[:message].to_s[0, 60]}"
+      already = @seen_violations.key?(key)
+      @seen_violations[key] = true
+      already
+    end
+  end.reject { |_, vs| vs.empty? }
+end
+
+SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.freeze
 
     def render_violations_by_rule(by_rule)
       ordered = by_rule.sort_by do |_, vs|

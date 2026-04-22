@@ -8,6 +8,13 @@ module Master
     # known patterns (English and Norwegian) and sets intent :command.
     # Users never need slash syntax.
     class Infer
+# Heuristic task-type detection — used by ModelRouter for tiered model selection.
+TASK_TYPE_PATTERNS = {
+  coding:   /\b(?:def |class |module |require |\.rb\b|fix\s+(?:the\s+)?(?:bug|error|issue)|refactor|implement|write\s+(?:a\s+)?(?:method|class|function|test)|add\s+(?:a\s+)?(?:method|feature)|```(?:ruby|python|js|javascript|bash))/i,
+  research: /\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|explain\s+(?:how|what|why)|tell\s+me\s+about)\b/i,
+  qa:       /\?(?:\s*$|\s+[A-Z])/m,
+}.freeze
+
       PATTERNS = [
         # sweep / refactor
         [ /\b(?:sweep|refactor|clean\s*up|rewrite|polish|tidy\s*up|overhaul|
@@ -105,10 +112,16 @@ module Master
           return Result.ok(ctx.merge(intent: :command, command: cmd, args: extract_args(cmd, m, msg)))
         end
 
-        Result.ok(ctx)
-      end
+  Result.ok(ctx.merge(task_type: infer_task_type(msg)))
+end
 
-      private
+private
+
+def infer_task_type(msg)
+  TASK_TYPE_PATTERNS.each { |type, pat| return type if msg.match?(pat) }
+  :general
+end
+
 
       def extract_args(cmd, match, msg)
         case cmd
