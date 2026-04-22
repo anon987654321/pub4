@@ -1106,7 +1106,7 @@ const renderMd = raw => {
       return parts&&parts.length?parts.map(s=>s.trim()).filter(Boolean):[raw];
     };
 
-    const N=(()=>{const c=navigator.hardwareConcurrency||2;const m=navigator.deviceMemory||2;const lowEnd=c<=2&&m<=1;const midLow=c<=4&&m<=2;if(lowEnd)return 200;if(midLow)return 400;if(c<=4)return 600;if(c<=6)return 900;return 1400;})();
+    const N=2000;
     const LOW_END=N<200; // only truly degenerate devices skip canvas
 
     // Web Audio effect chain — cycle with long-press on status circle
@@ -2025,16 +2025,9 @@ document.body.addEventListener('click',(e)=>{
     const ringPulses=[]; // motion graphics: ring events {r,maxR,a,col}
     let scanPhase=0;
     let camX=0,camY=0;
-    let _lf=0;
-    const _bkts=new Map();
-    const _fb=LOW_END?40:16;
-    const animate=(now=0)=>{
+    const animate=()=>{
       requestAnimationFrame(animate);
-      if(now-_lf<_fb)return;
-      if(LOW_END)return; // CSS orb handles rendering
-      const _dt=Math.min((now-_lf)/1000,0.05);
-      _lf=now;
-      t+=_dt;
+      t+=0.016;
       speechPulse*=0.92;
       if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
 
