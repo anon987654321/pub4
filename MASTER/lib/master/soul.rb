@@ -28,6 +28,9 @@ module Master
       @soul  = load_soul
     end
 
+    # Wire the agent after construction (avoids circular dependency in build).
+    def wire_agent(agent) = @agent = agent
+
     def summary
       version = extract_version
       persona = extract_field("Persona")

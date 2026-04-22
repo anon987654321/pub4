@@ -50,7 +50,7 @@ module Master
     agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus,
                          model_router: router, reasoning_modes: modes,
                          memory:, personality:, code_index:)
-    soul_doc.instance_variable_set(:@agent, agent)
+    soul_doc.wire_agent(agent)
     tools << Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
 
     guard        = Security::InjectionGuard.new
@@ -94,16 +94,16 @@ module Master
     ]
 
     ctx_window = ContextWindow.new(session:, agent:, model_context: 200_000)
-        ctx_window.check_and_compact!
-        agent.instance_variable_set(:@context_window, ctx_window)
+    ctx_window.check_and_compact!
+    agent.instance_variable_set(:@context_window, ctx_window)
 
     pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true)
 
     standing = StandingOrders.new(pipeline:, event_bus: bus)
 
-# Wire orders command now that standing exists (avoids circular dep with build_commands)
-route_stage = stages.find { |s| s.is_a?(Stages::Route) }
-route_stage&.instance_variable_get(:@commands)&.store("orders", ->(ctx) {
+    # Wire orders + soul commands after standing/soul are built (avoids circular dep).
+    route_stage = stages.find { |s| s.is_a?(Stages::Route) }
+    route_stage&.add_command("orders", ->(ctx) {
   arg = ctx[:args].to_s.strip
   case arg
   when "list", ""
@@ -120,12 +120,11 @@ route_stage&.instance_variable_get(:@commands)&.store("orders", ->(ctx) {
   when /\Areset (.+)\z/
     standing.reset($1.strip)
   else
-    "usage: /orders  /orders enable <name>  /orders disable <name>  /orders reset <name>  /orders run"
-  end
-})
+      "usage: /orders  /orders enable <name>  /orders disable <name>  /orders reset <name>  /orders run"
+    end
+    })
 
-# Wire soul command (soul_doc instantiated above)
-route_stage&.instance_variable_get(:@commands)&.store("soul", ->(ctx) {
+    route_stage&.add_command("soul", ->(ctx) {
   arg = ctx[:args].to_s.strip
   case arg
   when "", "show"
@@ -143,10 +142,9 @@ route_stage&.instance_variable_get(:@commands)&.store("soul", ->(ctx) {
   when /\Apropose (.+)\z/
     soul_doc.propose($1.strip)
   else
-    "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
-  end
-})
-
+      "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
+    end
+    })
 
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
