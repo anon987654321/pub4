@@ -22,7 +22,7 @@ module Master
 
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
                    event_bus: nil, model_router: nil, reasoning_modes: nil,
-                   memory: nil, personality: nil, code_index: nil)
+                   memory: nil, personality: nil, code_index: nil, context_window: nil)
       @code_index      = code_index
       @config          = config
       @session         = session
@@ -34,10 +34,12 @@ module Master
       @reasoning_modes = reasoning_modes
       @memory          = memory
       @personality     = personality
+      @context_window  = context_window
       configure_ruby_llm
     end
 
     def chat(message, stream: true, &blk)
+      @context_window&.check_and_compact!
       @session.add_message(role: :user, content: message)
       candidate_models = routed_models
       prompt           = apply_reasoning_mode(message)

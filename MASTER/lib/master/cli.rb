@@ -125,6 +125,7 @@ module Master
       when "discard" then run_discard_command(args)
       when "staging" then toggle_staging(args)
       when "tts"     then toggle_tts(args)
+      when "profile" then puts format_profile
       else           return false
       end
       true
@@ -139,6 +140,14 @@ module Master
       @session.token_est
     rescue StandardError
       "n/a"
+    end
+
+    def format_profile
+      t = @pipeline.last_timings
+      return @renderer.render("(no profile -- run a query first)", mode: :dim) if t.nil? || t.empty?
+      total = t.values.sum
+      lines = t.map { |stage, ms| "  %-22s %dms" % [stage, ms] }
+      (["last request:"] + lines + ["  " + "-" * 26, "  %-22s %dms" % ["total", total]]).join("\n")
     end
 
     def format_dmesg_lines
@@ -217,7 +226,18 @@ module Master
 
     def scan_in_background
       @scan_thread = Thread.new do
-        result = @scanner.scan_dir(File.join(@root, "lib"), depth: :standard)
+        lib_dir = File.join(@root, "lib")
+        changed = begin
+          out = `git -C \"#{@root}" diff --name-only HEAD 2>/dev/null`.strip
+          out.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }.select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
+        rescue StandardError
+          []
+        end
+        result = if changed.any?
+          Result.ok(changed.map { |p| [p, @scanner.scan(p, depth: :standard)] })
+        else
+          @scanner.scan_dir(lib_dir, depth: :standard)
+        end
         next unless result.respond_to?(:ok?) && result.ok?
 
         count = result.value!.sum do |_file, file_result|
@@ -399,6 +419,14 @@ module Master
     end
 
     def setup_signals
+      trap("USR1") do
+        begin
+          Zeitwerk::Loader.for_gem.reload
+          puts "\n#{@renderer.render('reloaded', mode: :success)}"
+        rescue => reload_err
+          puts "\n#{@renderer.render("reload failed: #{reload_err.message}", mode: :error)}"
+        end
+      end
       trap("INT") {
         now = Time.now.to_f
         if now - @interrupt_at < 1.0
