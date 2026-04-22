@@ -17,9 +17,6 @@ module Master
       meta/meta-llama anthropic/claude openai/gpt google/gemini
     ].freeze
 
-    MAX_TOOL_TURNS    = 5
-    TOOL_CALL_RE      = /(?:<use_tool>\s*(.*?)\s*<\/use_tool>|^ACTION:\s*(\{.*?\})\s*$|^TOOL:\s*(\{.*?\})\s*$)/m.freeze
-
     NEMOTRON3_RE      = /nemotron-3/i.freeze
     LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
 
@@ -308,78 +305,6 @@ module Master
     rescue StandardError => tools_error
       @bus&.publish("agent:llm_tools_error", error: tools_error.message)
       []
-    end
-
-    def react_loop(message, selected_model, context:, &blk)
-      require "json"
-      messages = context + [{ role: "user", content: message }]
-      sys      = react_system_prompt
-      bridge   = Bridges::Replicate.new
-
-      MAX_TOOL_TURNS.times do
-        reply = bridge.chat(model: selected_model, messages: messages, system: sys)
-        text  = reply.content.to_s
-
-        match = TOOL_CALL_RE.match(text)
-        unless match
-          blk&.call(text)
-          return text
-        end
-
-        visible_text = text.sub(match[0], "").strip
-        blk&.call(visible_text) unless visible_text.empty?
-
-        json_str    = (match[1] || match[2] || match[3]).to_s.strip
-        call_data   = JSON.parse(json_str, symbolize_names: true)
-        tool_name   = call_data.delete(:tool).to_s
-        tool_output = dispatch_tool(tool_name, call_data)
-
-        messages << { role: "assistant", content: text }
-        messages << { role: "user", content: "<tool_result tool=\"#{tool_name}\">\n#{tool_output}\n</tool_result>" }
-      end
-
-      final_reply = bridge.chat(model: selected_model, messages: messages, system: sys).content.to_s
-      blk&.call(final_reply)
-      final_reply
-    rescue StandardError => react_error
-      "react error: #{react_error.message}"
-    end
-
-    def react_system_prompt
-      base  = system_prompt.to_s
-      descs = tools_description
-      return base if descs.empty?
-
-      tool_block = "## Available Tools\n" \
-                   "Output a tool call as a single line, then stop:\n" \
-                   "<use_tool>{\"tool\":\"name\",\"arg\":\"val\"}</use_tool>\n" \
-                   "A <tool_result> will be injected. Call one tool per turn.\n\n" +
-                   descs
-
-      base.empty? ? tool_block : "#{base}\n\n#{tool_block}"
-    end
-
-    def tools_description
-      @tools.filter_map do |tool|
-        next unless tool.class.const_defined?(:NAME)
-        description = tool.class.const_defined?(:DESCRIPTION) ? tool.class::DESCRIPTION : ""
-        "- #{tool.class::NAME}: #{description}"
-      end.join("\n")
-    rescue StandardError
-      ""
-    end
-
-    def dispatch_tool(tool_name, args)
-      tool = @tools.find { |candidate| candidate.class.const_defined?(:NAME) && candidate.class::NAME == tool_name }
-      unless tool
-        available = @tools.filter_map { |candidate| candidate.class::NAME rescue nil }.join(", ")
-        return "error: unknown tool '#{tool_name}'. Available: #{available}"
-      end
-      tool_result = tool.call(**args.transform_keys(&:to_sym))
-      @bus&.publish("tool:used", tool: tool_name)
-      tool_result.respond_to?(:ok?) ? (tool_result.ok? ? tool_result.value!.to_s : "error: #{tool_result.message}") : tool_result.to_s
-    rescue StandardError => dispatch_error
-      "tool error: #{dispatch_error.message}"
     end
 
   end
