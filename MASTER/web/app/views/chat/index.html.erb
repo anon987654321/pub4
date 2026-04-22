@@ -1282,10 +1282,15 @@ const renderMd = raw => {
       u.onend=_onSpeakEnd; u.onerror=_onSpeakEnd;
       // Always speak synchronously — must stay inside gesture call stack on mobile.
       // _cachedVoices is populated eagerly at page load and kept fresh via voiceschanged.
-      const pick=_cachedVoices.find(v=>v.lang.startsWith('en-')&&v.localService)
+      const saved=localStorage.getItem('pref_voice');
+      const pick=( saved && _cachedVoices.find(v=>v.name===saved) )
+        ||_cachedVoices.find(v=>v.lang.startsWith('en-')&&v.localService)
         ||_cachedVoices.find(v=>v.lang.startsWith('en-'))
         ||_cachedVoices[0];
-      if(pick) u.voice=pick;
+      if(pick){
+        u.voice=pick;
+        if(!saved||saved!==pick.name) localStorage.setItem('pref_voice',pick.name);
+      }
       window.speechSynthesis.speak(u);
       return true;
     };

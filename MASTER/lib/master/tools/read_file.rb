@@ -9,12 +9,20 @@ module Master
       DESCRIPTION = "Read a file with line numbers. Guarded to project root."
 
       def initialize(root:, undo:, event_bus: nil)
-        @root = File.realpath(root)
-        @undo = undo
-        @bus  = event_bus
+        @root  = File.realpath(root)
+        @undo  = undo
+        @bus   = event_bus
+        @cache = {}
+      end
+
+      # Clear per-turn cache — called by Agent at the start of each chat turn.
+      def reset!
+        @cache.clear
       end
 
       def call(path:, offset: 0, limit: MAX_LINES)
+        key = [path, offset, limit]
+        return @cache[key] if @cache.key?(key)
         resolved = resolve(path)
         return resolved if resolved.err?
 
@@ -29,7 +37,9 @@ module Master
         numbered = slice.each_with_index.map { |l, i| "#{offset + i + 1}\t#{l}" }.join
         suffix   = total > offset + limit ? "\n[...truncated, #{total} total lines]" : ""
 
-        Result.ok(numbered + suffix)
+        result = Result.ok(numbered + suffix)
+        @cache[key] = result
+        result
       end
 
       private
