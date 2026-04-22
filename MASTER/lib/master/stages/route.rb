@@ -11,7 +11,10 @@ module Master
         @agent    = agent
       end
 
-      def call(ctx)
+      # Register a command handler after construction (used by build for circular deps).
+def add_command(name, handler) = @commands[name.to_s] = handler
+
+def call(ctx)
         case ctx[:intent]
         when :command then route_command(ctx)
         when :llm     then Result.ok(ctx.merge(handler: @agent))

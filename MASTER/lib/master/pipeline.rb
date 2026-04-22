@@ -22,12 +22,12 @@ module Master
           ms  = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
           timings[stage_label(stage)] = ms
           if res.respond_to?(:ok?) && res.ok?
-          @last_timings = timings.dup
-          @bus&.publish("pipeline:stage", stage: stage_label(stage), ms:) if @trace
-          Result.ok(res.value!.merge(_timings: timings.dup))
-        else
-          res
-        end
+            @last_timings = timings.dup
+            @bus&.publish("pipeline:stage", stage: stage_label(stage), ms:) if @trace
+            Result.ok(res.value!.merge(_timings: timings.dup))
+          else
+            res
+          end
         end
       end
     end
