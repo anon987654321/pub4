@@ -5,6 +5,7 @@ module Master
     module Workers
       # Reads code, produces structured analysis. Knows nothing about other workers.
       class Analyst < Worker
+        PREFERRED_MODEL = "google/gemini-2.0-flash-lite:free"
         private
 
         def role_description

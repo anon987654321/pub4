@@ -12,10 +12,13 @@ module Master
       @store = load_store
     end
 
-    def remember(key, value)
-      @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
-      persist
-    end
+TTL_DAYS = 90
+
+def remember(key, value)
+  prune_stale! if @store.size > 40
+  @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
+  persist
+end
 
     # Keys are always stored and retrieved as strings.
     def recall(key)
@@ -29,12 +32,19 @@ module Master
 
     def all = @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v }
 
-    # Returns a compact string suitable for injection into system prompts.
-    def context_summary
-      return nil if @store.empty?
-      lines = @store.map { |k, v| "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
-      "Memory:\n#{lines.join("\n")}"
-    end
+# Returns top-5 most recent active entries for system prompt injection.
+def context_summary
+  active = @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
+  return nil if active.empty?
+  recent = active.sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) }.first(5)
+  lines  = recent.map { |k, v| "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
+  archived_n = @store.count { |k, _| k.to_s.start_with?("archive/") }
+  summary    = recall("_consolidated_summary")
+  header = summary ? "Memory (#{summary.to_s[0, 80]}):" : "Memory:"
+  header += " [+#{archived_n} archived]" if archived_n > 0
+  "#{header}\n#{lines.join("\n")}"
+end
+
 
     # TF-IDF ranked search across all memory entries.
     # Returns array of {key:, value:, score:} hashes, highest score first.
@@ -101,7 +111,17 @@ end
 
 private
 
-    def load_store
+def prune_stale!
+  cutoff = Time.now.to_i - TTL_DAYS * 86_400
+  @store.each do |k, v|
+    next if k.to_s.start_with?("archive/") || k == "_consolidated_summary"
+    ts = v.is_a?(Hash) ? v["ts"].to_i : 0
+    next unless ts > 0 && ts < cutoff
+    @store["archive/#{k}"] = @store.delete(k)
+  end
+end
+
+def load_store
       return {} unless File.exist?(@path)
       YAML.safe_load_file(@path, symbolize_names: false) || {}
     rescue StandardError

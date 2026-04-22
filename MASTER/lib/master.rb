@@ -97,7 +97,7 @@ module Master
         ctx_window.check_and_compact!
         agent.instance_variable_set(:@context_window, ctx_window)
 
-    pipeline = Pipeline.new(stages)
+    pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true)
 
     standing = StandingOrders.new(pipeline:, event_bus: bus)
 

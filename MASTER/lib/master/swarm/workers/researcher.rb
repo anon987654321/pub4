@@ -5,6 +5,7 @@ module Master
     module Workers
       # Synthesizes research from external sources. No codebase context.
       class Researcher < Worker
+        PREFERRED_MODEL = "google/gemini-2.0-flash-lite:free"
         private
 
         def role_description

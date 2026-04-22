@@ -1533,9 +1533,17 @@ const renderMd = raw => {
           if(done)break;
           buf+=dec.decode(value,{stream:true});
           const lines=buf.split('\n');buf=lines.pop();
+          let _evtType='message';
           for(const line of lines){
+            if(line.startsWith('event: ')){_evtType=line.slice(7).trim();continue;}
+            if(line===''){_evtType='message';continue;}
             if(!line.startsWith('data: '))continue;
-            const chunk=line.slice(6).replace(/\\n/g,"\n");
+            const raw=line.slice(6);
+            if(_evtType==='tool'){
+              try{const d=JSON.parse(raw);statusEl.textContent=(d.tool||'?')+(d.path?' '+d.path.replace(/.*\//,'')+'…':'…');}catch(_){}
+              _evtType='message';continue;
+            }
+            const chunk=raw.replace(/\\n/g,"\n");
             if(chunk==='[DONE]')break;
             fullText+=chunk;
             _spkBuf+=chunk;

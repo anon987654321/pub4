@@ -50,7 +50,16 @@ class ChatController < ApplicationController
 
     sse = response.stream
     begin
-      streamed = false
+      streamed  = false
+      tool_sub  = container[:bus].subscribe("tool:before") do |ev|
+        begin
+          payload = { tool: ev[:tool].to_s, path: ev[:path].to_s }.to_json
+          sse.write("event: tool\ndata: #{payload}\n\n")
+        rescue StandardError
+          nil
+        end
+      end
+
       on_chunk = ->(token) {
         streamed = true
         encoded = token.to_s.gsub("\\", "\\\\").gsub("\n", "\\n")
@@ -83,6 +92,11 @@ class ChatController < ApplicationController
       sse.write("data: ERROR: #{e.message}\n\n")
       sse.write("data: [DONE]\n\n")
     ensure
+      begin
+        tool_sub.call if defined?(tool_sub) && tool_sub
+      rescue StandardError
+        nil
+      end
       sse.close
     end
   end

@@ -90,12 +90,20 @@ module Master
       raise "chat_raw: #{ask_error.message}"
     end
 
+    # One-shot with explicit model override (used by swarm workers with PREFERRED_MODEL).
+    def ask_once_with_model(prompt, model:, system: nil)
+      old_model = @config["model"]
+      @config["model"] = model
+      ask_once(prompt, system:)
+    ensure
+      @config["model"] = old_model
+    end
+
     def call(ctx)
-      on_chunk = ctx[:on_chunk]
-      if on_chunk
-        chat(ctx[:message].to_s, stream: true, &on_chunk)
-      else
-        chat(ctx[:message].to_s)
+      on_chunk  = ctx[:on_chunk]
+      task_type = ctx[:task_type]&.to_s
+      with_task_type(task_type) do
+        on_chunk ? chat(ctx[:message].to_s, stream: true, &on_chunk) : chat(ctx[:message].to_s)
       end
     end
 
@@ -141,6 +149,15 @@ module Master
       }
       @escalation_done = false
       escalated_result.respond_to?(:err?) && escalated_result.err? ? last_response : escalated_result
+    end
+
+    def with_task_type(type)
+      return yield unless type && !type.empty?
+      old = @config["task_type"]
+      @config["task_type"] = type
+      yield
+    ensure
+      @config["task_type"] = old
     end
 
     def routed_models

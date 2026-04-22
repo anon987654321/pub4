@@ -6,49 +6,74 @@ module Master
   class Governor
     TIERS = { safe: 0, guarded: 1, dangerous: 2 }.freeze
 
+    # Sliding-window rate limits per tier (calls per minute).
+    TIER_RATE_LIMITS = { guarded: 10, dangerous: 3 }.freeze
+
     def initialize(config:, event_bus: nil)
-      @config  = config
-      @bus     = event_bus
-      @prompt  = $stdout.isatty ? TTY::Prompt.new : nil
-      @auto    = config.auto?
-      @approve_all = false
+      @config        = config
+      @bus           = event_bus
+      @prompt        = $stdout.isatty ? TTY::Prompt.new : nil
+      @auto          = config.auto?
+      @approve_all   = false
+      @rate_windows  = Hash.new { |h, k| h[k] = [] }
+      @rate_mutex    = Mutex.new
     end
 
     def check_permit(tool_name, tier, description = nil)
       @bus&.publish("tool:before", tool: tool_name, tier:)
 
+      if (rate_err = check_rate_limit!(tier))
+        @bus&.publish("tool:rate_limited", tool: tool_name, tier:)
+        return rate_err
+      end
+
       case tier
-      when :safe    then return Result.ok(true)
-      when :guarded then return Result.ok(true) if @auto || @approve_all
+      when :safe      then return Result.ok(true)
+      when :guarded   then return Result.ok(true) if @auto || @approve_all
       when :dangerous then return Result.ok(true) if @auto || @approve_all
       end
 
       ask_user(tool_name, tier, description)
-    rescue => e
+    rescue StandardError => e
       Result.err(e.message, category: :validation)
     end
 
     alias permit? check_permit
 
-    def approve_all!    = @approve_all = true
-    def reset_approve!  = @approve_all = false
+    def approve_all!   = @approve_all = true
+    def reset_approve! = @approve_all = false
 
     private
 
+    def check_rate_limit!(tier)
+      limit = TIER_RATE_LIMITS[tier]
+      return nil unless limit
+      now = Time.now.to_f
+      @rate_mutex.synchronize do
+        calls = @rate_windows[tier]
+        calls.reject! { |t| now - t > 60.0 }
+        if calls.size >= limit
+          return Result.err("rate limit: #{tier} tier (#{limit}/min)", category: :rate_limit)
+        end
+        calls << now
+      end
+      nil
+    end
+
     def ask_user(tool_name, tier, description)
       return Result.err("non-TTY: cannot prompt for approval", category: :validation) unless @prompt
-      
-      label = description ? "#{tool_name}: #{description}" : tool_name
+
+      label  = description ? "#{tool_name}: #{description}" : tool_name
       choice = @prompt.select("#{tier_icon(tier)} #{label}", [
-        { name: "approve",     value: :approve },
-        { name: "deny",        value: :deny },
-        { name: "quit",        value: :quit }
+        { name: "approve", value: :approve },
+        { name: "deny",    value: :deny },
+        { name: "quit",    value: :quit }
       ])
 
       case choice
-      when :approve     then Result.ok(true)
-      when :deny        then @bus&.publish("tool:denied", tool: tool_name) ; Result.err("denied by user", category: :validation)
-      when :quit        then exit(0)
+      when :approve then Result.ok(true)
+      when :deny    then @bus&.publish("tool:denied", tool: tool_name); Result.err("denied by user", category: :validation)
+      when :quit    then exit(0)
       end
     end
 
