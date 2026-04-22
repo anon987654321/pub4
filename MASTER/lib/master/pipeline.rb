@@ -2,8 +2,11 @@
 
 module Master
   class Pipeline
+    attr_reader :last_timings
+
     def initialize(stages)
       @stages = stages
+      @last_timings = {}
     end
 
     # Run stages in sequence. Each stage's elapsed time is accumulated in
@@ -16,7 +19,12 @@ module Master
           res = stage.call(ctx)
           ms  = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
           timings[stage_label(stage)] = ms
-          res.respond_to?(:ok?) && res.ok? ? Result.ok(res.value!.merge(_timings: timings.dup)) : res
+          if res.respond_to?(:ok?) && res.ok?
+          @last_timings = timings.dup
+          Result.ok(res.value!.merge(_timings: timings.dup))
+        else
+          res
+        end
         end
       end
     end

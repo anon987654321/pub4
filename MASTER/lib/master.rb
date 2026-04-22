@@ -12,6 +12,7 @@ module Master
     "mcp_server" => "MCPServer",
     "llm"        => "LLM",
   )
+  loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.setup
 
   # Build the full container without starting the CLI
@@ -29,6 +30,7 @@ module Master
     governor = Governor.new(config:, event_bus: bus)
     renderer = Renderer.new(config:)
     metrics  = Metrics.new(root:, event_bus: bus)
+    AuditLog.new(root:, event_bus: bus)
 
     code_index   = CodeIndex.new(root:, event_bus: bus)
     diff_stager  = config["staging_enabled"] ? DiffStager.new(root:, event_bus: bus) : nil
@@ -91,7 +93,9 @@ module Master
       Stages::Render.new(renderer:)
     ]
 
-    ContextWindow.new(session:, agent:, model_context: 200_000).check_and_compact!
+    ctx_window = ContextWindow.new(session:, agent:, model_context: 200_000)
+        ctx_window.check_and_compact!
+        agent.instance_variable_set(:@context_window, ctx_window)
 
     pipeline = Pipeline.new(stages)
 
@@ -173,7 +177,6 @@ route_stage&.instance_variable_get(:@commands)&.store("soul", ->(ctx) {
     else
       raise "No LLM API key found. Set ANTHROPIC_API_KEY, OPENROUTER_API_KEY, or GEMINI_API_KEY."
     end
-  end
   end
 
   def self.build_tools(root:, undo:, governor:, bus:, diff_stager: nil, code_index: nil)
