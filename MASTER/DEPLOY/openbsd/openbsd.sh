@@ -1252,7 +1252,7 @@ pass in on \$ext_if inet proto tcp to \$ext_if port 22 keep state \\
 
 pass in on \$ext_if inet proto { tcp, udp } to \$brgen_ip port 53 log
 
-pass in on \$ext_if inet proto tcp to \$brgen_ip port { 80, 443, 3000, 8080, 8082, 8084, 8086 } log
+pass in on \$ext_if inet proto tcp to \$brgen_ip port { 22, 25, 80, 443, 3000, 4430, 8080, 8082, 8084, 8086 } log
 
 pass out on \$ext_if inet proto tcp to any port 25
 
@@ -1450,7 +1450,7 @@ EOF
         cat > /etc/rc.d/masterweb <<RCEOF
 #!/bin/ksh
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 falcon serve --bind http://0.0.0.0:3000"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 falcon serve --bind http://127.0.0.1:10002"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_timeout="90"
