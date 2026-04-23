@@ -2174,6 +2174,8 @@ document.body.addEventListener('click',(e)=>{
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.5,a:0.7,col:'#cc1010'});
         }else if(t==='sweep:cycle'||t==='autoloop:cycle'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.15,a:0.2,col:'#3d1a04'});
+        }else if(t==='speak:text'){
+          speakWithAudio((ev.data||{}).text||'');
         }else if(t==='scan:complete'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.25,a:0.35,col:'#1a3a1a'});
         }
