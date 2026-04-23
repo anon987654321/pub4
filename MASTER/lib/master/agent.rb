@@ -130,8 +130,14 @@ module Master
     end
 
     def model = routed_models.first
-    def model=(val) = @config["model"] = val
-    def wire_context_window(ctx_window) = @context_window = ctx_window
+
+    def model=(val)
+      @config["model"] = val
+    end
+
+    def wire_context_window(ctx_window)
+      @context_window = ctx_window
+    end
 
     private
 
