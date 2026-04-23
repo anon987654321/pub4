@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "ruby_llm"
+require "digest"
 
 module Master
   class Agent
@@ -10,12 +11,23 @@ module Master
     # Replicate native API — these owner prefixes route through Bridges::Replicate.
     REPLICATE_OWNERS = %w[deepseek-ai mistralai xai meta-replicate].freeze
 
-    # Tool-capable model whitelist — non-matching models raise at call time.
-    TOOL_CAPABLE_MODELS = %w[
-      claude gpt-4 gpt-4o gemini mistral mixtral
-      llama-3.1 llama-3.3 qwen command-r deepseek stepfun nvidia nemotron
-      meta/meta-llama anthropic/claude openai/gpt google/gemini
-    ].freeze
+    # Tool-capable model whitelist — anchored regex, not substring match.
+    # See note at tool_capable? for why the previous `include?` check was unsafe.
+    TOOL_CAPABLE_RE = %r{
+      \A(?:
+        (?:claude|gpt-4|gpt-4o|gemini|mistral|mixtral)
+        | (?:llama-3\.[13])
+        | (?:qwen|command-r|deepseek|stepfun|nvidia|nemotron)
+        | (?:meta/meta-llama.+)
+        | (?:anthropic/claude.+)
+        | (?:openai/gpt.+)
+        | (?:google/gemini.+)
+      )(?:[:@/\-.].+)?\z
+    }ix.freeze
+
+    MAX_TOOL_TURNS     = 5
+    MIN_API_KEY_LENGTH = 20
+    TOOL_CALL_RE       = /(?:<use_tool>\s*(.*?)\s*<\/use_tool>|^ACTION:\s*(\{.*?\})\s*$|^TOOL:\s*(\{.*?\})\s*$)/m.freeze
 
     NEMOTRON3_RE      = /nemotron-3/i.freeze
     LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
@@ -35,7 +47,8 @@ module Master
       @memory          = memory
       @personality     = personality
       @context_window  = context_window
-      configure_ruby_llm
+      # RubyLLM is configured once at module boot (see Master.configure_providers!).
+      # Per-agent init was globally mutating shared state across agents.
     end
 
     def chat(message, stream: true, &blk)
@@ -64,6 +77,15 @@ module Master
       Result.ok(text)
     rescue StandardError => chat_error
       Result.err("agent: #{chat_error.message}", category: :unknown)
+    end
+
+    # Result-returning companion to #ask. Prefer this for pipeline stages.
+    # See #ask for the legacy string/raise API retained for AutoLoop/Sweep/scan-rule callers.
+    def ask_result(prompt, context: nil)
+      text = ask(prompt, context: context)
+      Result.ok(text)
+    rescue StandardError => ask_err
+      Result.err("ask: #{ask_err.message}", category: :unknown)
     end
 
     def ask(prompt, context: nil)
@@ -113,16 +135,25 @@ module Master
 
     private
 
+    # Skip models that cannot call tools instead of raising. A single
+    # non-tool-capable candidate used to abort the whole fallback chain.
     def attempt_chat_with_fallbacks(candidate_models, prompt, context, stream, &blk)
+      capable = candidate_models.select { |m| replicate_model?(m) || ferrum_model?(m) || tool_capable?(m) }
+      if capable.empty?
+        return Result.err(
+          "no tool-capable model available. Set REPLICATE_API_KEY, ANTHROPIC_API_KEY, or OPENROUTER_API_KEY.",
+          category: :validation
+        )
+      end
+
       last_response = nil
-      candidate_models.each_with_index do |selected_model, index|
-        assert_tool_capable!(selected_model)
+      capable.each_with_index do |selected_model, index|
         cache_key = cache_key_for("#{selected_model}:#{prompt}", context)
         response  = breaker_for(selected_model).call(estimate_cost(prompt)) {
           @cache.fetch(cache_key, selected_model) { chat_with(prompt, selected_model, context:, stream:, &blk) }
         }
         last_response = response
-        next if response.respond_to?(:err?) && response.err? && index < candidate_models.length - 1
+        next if response.respond_to?(:err?) && response.err? && index < capable.length - 1
         if response.respond_to?(:ok?) && response.ok?
           @bus&.publish("llm:response", model: selected_model, success: true, tokens_approx: response.to_s.bytesize / 4)
         end
@@ -131,8 +162,11 @@ module Master
       last_response
     end
 
+    # Escalate once per chat call. The flag is thread-local, not instance-wide,
+    # so shared Agent instances (swarm coordinator) don't race.
     def maybe_escalate(last_response, prompt, context, original_message, stream, &blk)
-      return last_response unless @model_router && !@escalation_done
+      return last_response unless @model_router
+      return last_response if Thread.current[:master_escalation_done]
 
       escalation_model = @model_router.escalate_if_low_confidence(
         last_response.to_s,
@@ -141,7 +175,7 @@ module Master
       )
       return last_response unless escalation_model
 
-      @escalation_done = true
+      Thread.current[:master_escalation_done] = true
       @bus&.publish("llm:escalation", from: routed_models.first, to: escalation_model)
       esc_cache_key    = cache_key_for("#{escalation_model}:#{prompt}", context)
       escalated_result = breaker_for(escalation_model).call(estimate_cost(original_message)) {
@@ -149,8 +183,9 @@ module Master
           chat_with(prompt, escalation_model, context: context, stream: stream, &blk)
         }
       }
-      @escalation_done = false
       escalated_result.respond_to?(:err?) && escalated_result.err? ? last_response : escalated_result
+    ensure
+      Thread.current[:master_escalation_done] = nil
     end
 
     def with_task_type(type)
@@ -175,20 +210,16 @@ module Master
     end
 
     def replicate_model?(model_id)
-      return false unless ENV["REPLICATE_API_KEY"].to_s.length > 10
+      return false unless ENV["REPLICATE_API_KEY"].to_s.length >= MIN_API_KEY_LENGTH
       REPLICATE_OWNERS.include?(model_id.to_s.split("/").first)
     end
 
-    def assert_tool_capable!(selected_model)
-      return if replicate_model?(selected_model)
-      return if selected_model.to_s.start_with?("ferrum:webchat:")
-      return if tool_capable?(selected_model)
-      raise "Model '#{selected_model}' does not support function calling. " \
-            "Set REPLICATE_API_KEY, ANTHROPIC_API_KEY, or OPENROUTER_API_KEY."
-    end
+    def ferrum_model?(model_id) = model_id.to_s.start_with?("ferrum:webchat:")
 
+    # Anchored match against a real pattern. `"gpt-4-whatever"` no longer matches
+    # `"claude"` just because both strings contain common substrings.
     def tool_capable?(model_id)
-      TOOL_CAPABLE_MODELS.any? { |pattern| model_id.to_s.downcase.include?(pattern.downcase) }
+      TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
     end
 
     def apply_reasoning_mode(message)
@@ -204,17 +235,8 @@ module Master
       parts.empty? ? nil : parts.join("\n\n")
     end
 
-    def configure_ruby_llm
-      RubyLLM.configure do |config|
-        config.anthropic_api_key  = ENV["ANTHROPIC_API_KEY"]  if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
-        config.openai_api_key     = ENV["OPENAI_API_KEY"]     if ENV["OPENAI_API_KEY"].to_s.length > 10
-        config.gemini_api_key     = ENV["GEMINI_API_KEY"]     if ENV["GEMINI_API_KEY"].to_s.length > 10
-        config.openrouter_api_key = ENV["OPENROUTER_API_KEY"] if ENV["OPENROUTER_API_KEY"].to_s.length > 10
-      end
-    end
-
     def chat_with(message, selected_model, context:, stream:, &blk)
-      return chat_via_ferrum(selected_model, message) if selected_model.start_with?("ferrum:webchat:")
+      return chat_via_ferrum(selected_model, message) if ferrum_model?(selected_model)
       return chat_via_replicate(selected_model, message, context, stream, &blk) if replicate_model?(selected_model)
 
       chat_via_ruby_llm(selected_model, message, context, stream, &blk)
@@ -277,10 +299,17 @@ module Master
       messages.last(max_messages + 1)[0...-1] || []
     end
 
+    # Hash-based cache key. Previously concatenated the full conversation
+    # context into the key, producing multi-KB keys that almost never hit
+    # across turns. SHA256 of (prompt + rolling 4-message window) is stable
+    # for retries, narrow enough to actually collide on repeats, bounded size.
+    # Ref: arxiv:2601.23088 on semantic-cache collision tradeoffs; we use
+    # exact-hash over a bounded window to avoid fuzzy-hash vulnerabilities.
+    CACHE_WINDOW = 4
     def cache_key_for(message, context)
-      return message if context.empty?
-      condensed = context.map { |msg| "#{msg[:role]}:#{msg[:content]}" }.join("\n")
-      "#{message}\n\n[context]\n#{condensed}"
+      return Digest::SHA256.hexdigest(message) if context.empty?
+      window = context.last(CACHE_WINDOW).map { |msg| "#{msg[:role]}:#{msg[:content]}" }.join("\n")
+      Digest::SHA256.hexdigest("#{message}\n#{window}")
     end
 
     def chat_direct(messages)

@@ -9,36 +9,27 @@ module Master
     # Replicate is not OpenAI-compatible; it uses a polling-based predictions
     # API at /v1/models/{owner}/{name}/predictions. Tool calling is simulated
     # via prompt injection since Replicate models expose no unified tools schema.
+    #
+    # All supported models currently use flat prompt input; the MODEL_SCHEMAS
+    # :chat enum value was dead code and has been removed. Add per-model
+    # input shaping back when/if a model actually requires it.
     class Replicate
-      BASE_URL      = "https://api.replicate.com/v1".freeze
+      BASE_URL      = "https://api.replicate.com/v1"
       POLL_INTERVAL = 0.8
       MAX_WAIT      = 180
 
-      # Map Replicate model → best input schema variant
-      # :chat uses messages array in prompt, :instruct uses flat prompt
-      MODEL_SCHEMAS = {
-        "deepseek-ai/deepseek-r1"            => :instruct,
-        "deepseek-ai/deepseek-v3"            => :instruct,
-        "openai/gpt-4o"                      => :instruct,
-        "openai/o4-mini"                     => :instruct,
-        "mistralai/mistral-large-2"          => :instruct,
-        "xai/grok-2"                         => :instruct,
-        "meta/meta-llama-3.1-405b-instruct"  => :instruct,
-        "meta/meta-llama-3-70b-instruct"     => :instruct,
-      }.freeze
-
-      DEFAULT_MAX_TOKENS = 4096
+      DEFAULT_MAX_TOKENS  = 4096
       DEFAULT_TEMPERATURE = 0.6
 
       def initialize(api_key: ENV["REPLICATE_API_KEY"])
         @api_key = api_key.to_s
-        raise "REPLICATE_API_KEY not configured" if @api_key.length < 10
+        raise "REPLICATE_API_KEY not configured" if @api_key.length < 20
       end
 
       # Returns a duck-typed Message. Raises on API error.
       def chat(model:, messages:, system: nil, max_tokens: DEFAULT_MAX_TOKENS, temperature: DEFAULT_TEMPERATURE, stream: false, &blk)
         prompt = format_prompt(messages, system:)
-        input  = build_input(model:, prompt:, max_tokens:, temperature:)
+        input  = build_input(prompt:, max_tokens:, temperature:)
 
         return chat_stream(model:, input:, &blk) if stream && blk
 
@@ -69,13 +60,8 @@ module Master
         parts.join
       end
 
-      def build_input(model:, prompt:, max_tokens:, temperature:)
-        {
-          prompt:,
-          max_tokens:,
-          temperature:,
-          top_p: 1.0,
-        }
+      def build_input(prompt:, max_tokens:, temperature:)
+        { prompt:, max_tokens:, temperature:, top_p: 1.0 }
       end
 
       def chat_stream(model:, input:, &blk)

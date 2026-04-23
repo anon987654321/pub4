@@ -2,10 +2,14 @@
 
 module Master
   module Stages
-    # Memo — extract and persist memory from assistant responses.
+    # Memo — extract and persist memory from the USER's input only.
     #
-    # Runs after Prune, before Render. Scans output for memory requests,
-    # decisions, and preferences. Non-fatal: errors pass through.
+    # Previously this scanned the assistant's output for "remember that X",
+    # which caused LLM meta-restatements ("I'll remember that you prefer dark
+    # themes") to be stored as facts the user never asserted — a classic
+    # self-reinforcing hallucination loop.
+    #
+    # Now only :user_message is scanned. Assistant output is ignored on purpose.
     class Memo
       REMEMBER_RE = /\bremember\s+(?:that\s+)?(.{10,200}?)(?:[.!]|$)/im.freeze
       DECISION_RE = /\bwe(?:'ve|\s+have)?\s+decided\s+(?:to\s+)?(.{10,150}?)(?:[.!]|$)/im.freeze
@@ -17,7 +21,7 @@ module Master
       end
 
       def call(ctx)
-        text = extract_text(ctx)
+        text = user_text(ctx)
         scan_for_memories(text) if text && !text.empty?
         Result.ok(ctx)
       rescue => e
@@ -27,13 +31,11 @@ module Master
 
       private
 
-      def extract_text(ctx)
-        out = ctx[:output]
-        case out
-        when Result::Ok  then out.value!.to_s
-        when Result::Err then nil
-        else                  out.to_s
-        end
+      # Only trust the user's words. Assistant output is a potential
+      # hallucination source and must never seed memory without explicit
+      # user confirmation via the /memory remember command.
+      def user_text(ctx)
+        ctx[:user_message].to_s
       end
 
       def scan_for_memories(text)

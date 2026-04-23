@@ -4,5 +4,6 @@ Rails.application.routes.draw do
   post "chat/tts",      to: "chat#tts"
   get  "chat/metrics",  to: "chat#metrics"
   get  "chat/dmesg",    to: "chat#dmesg"
+  get  "events/stream", to: "events#stream"
   get  "up" => "rails/health#show", as: :rails_health_check
 end

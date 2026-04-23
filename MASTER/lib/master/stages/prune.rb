@@ -5,20 +5,36 @@ require "yaml"
 module Master
   module Stages
     # Prune — strip AI throat-clearing from LLM responses.
-    # Rules loaded from data/strunk.yml. Skips output containing code blocks.
+    # Rules loaded from data/strunk.yml.
+    #
+    # Fence-aware: previously bailed entirely on any response containing a
+    # triple-backtick. Now splits into prose/code segments, prunes prose,
+    # leaves code blocks untouched.
     class Prune
       DATA_PATH = File.join(Master::ROOT, "data", "strunk.yml").freeze
+      FENCE_RE  = /(```.*?```)/m.freeze
 
       def call(ctx)
         output = ctx[:output]
         return Result.ok(ctx) unless output.is_a?(String) && !output.empty?
-        return Result.ok(ctx) if output.include?("```")
 
-        cleaned = strip_rules(output)
+        cleaned = prune_mixed(output)
         Result.ok(ctx.merge(output: cleaned.strip))
       end
 
       private
+
+      # Split on fenced code blocks, prune only the prose segments.
+      def prune_mixed(text)
+        segments = text.split(FENCE_RE)
+        segments.map { |seg|
+          if seg.start_with?("```")
+            seg
+          else
+            strip_rules(seg)
+          end
+        }.join
+      end
 
       def strip_rules(text)
         cleaned = text

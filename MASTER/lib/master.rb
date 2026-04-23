@@ -5,6 +5,18 @@ require "zeitwerk"
 module Master
   ROOT = File.expand_path("..", __dir__).freeze
 
+  # Providers whose API keys, if present with reasonable length, Master will
+  # configure at boot. Single source of truth — agents no longer re-configure
+  # the global RubyLLM state on each instantiation.
+  MIN_API_KEY_LENGTH = 20
+
+  API_KEY_PROVIDERS = {
+    anthropic_api_key:  "ANTHROPIC_API_KEY",
+    openai_api_key:     "OPENAI_API_KEY",
+    gemini_api_key:     "GEMINI_API_KEY",
+    openrouter_api_key: "OPENROUTER_API_KEY"
+  }.freeze
+
   loader = Zeitwerk::Loader.for_gem
   loader.inflector.inflect(
     "autoloop"   => "AutoLoop",
@@ -15,8 +27,27 @@ module Master
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.setup
 
+  # Configure RubyLLM once at boot. Previously Agent#initialize mutated the
+  # shared RubyLLM config on every construction, so multiple agents racing
+  # through the swarm could clobber each other's credentials.
+  def self.configure_providers!
+    require "ruby_llm"
+    RubyLLM.configure do |cfg|
+      API_KEY_PROVIDERS.each do |attr, env_var|
+        val = ENV[env_var].to_s
+        cfg.public_send("#{attr}=", val) if val.length >= MIN_API_KEY_LENGTH
+      end
+    end
+  end
+
+  def self.api_key_present?(env_var)
+    ENV[env_var].to_s.length >= MIN_API_KEY_LENGTH
+  end
+
   # Build the full container without starting the CLI
   def self.build(root: Dir.pwd)
+    configure_providers!
+
     config   = Config.new(root)
     config["model"] ||= default_model
 
@@ -40,6 +71,7 @@ module Master
     bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] rescue nil }
 
     memory      = Memory.new(root:)
+    experience  = State::Experience.new(root:)
     soul_doc    = Soul.new(root:, agent: nil) # agent wired after agent is built
     personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT, root:)
 
@@ -97,7 +129,7 @@ module Master
     ctx_window.check_and_compact!
     agent.wire_context_window(ctx_window)
 
-    pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true)
+    pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
 
     standing = StandingOrders.new(pipeline:, event_bus: bus)
 
@@ -149,7 +181,7 @@ module Master
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
       scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
-      memory:, personality:, swarm:, root:,
+      memory:, experience:, personality:, swarm:, root:,
       diff_stager:, mcp:, code_index:, standing:, soul: soul_doc,
     }
   end
@@ -162,19 +194,12 @@ module Master
   end
 
   def self.default_model
-    if ENV["ANTHROPIC_API_KEY"].to_s.length > 10
-      "claude-sonnet-4-6"
-    elsif ENV["OPENROUTER_API_KEY"].to_s.length > 10
-      "anthropic/claude-sonnet-4-6"
-    elsif ENV["OPENAI_API_KEY"].to_s.length > 10
-      "gpt-4o"
-    elsif ENV["GEMINI_API_KEY"].to_s.length > 10
-      "gemini-2.5-flash"
-    elsif ENV["REPLICATE_API_KEY"].to_s.length > 10
-      "deepseek-ai/deepseek-r1"
-    else
-      raise "No LLM API key found. Set ANTHROPIC_API_KEY, OPENROUTER_API_KEY, or GEMINI_API_KEY."
-    end
+    return "deepseek-ai/deepseek-r1"     if api_key_present?("REPLICATE_API_KEY")
+    return "claude-sonnet-4-6"           if api_key_present?("ANTHROPIC_API_KEY")
+    return "anthropic/claude-sonnet-4-6" if api_key_present?("OPENROUTER_API_KEY")
+    return "gpt-4o"                      if api_key_present?("OPENAI_API_KEY")
+    return "gemini-2.5-flash"            if api_key_present?("GEMINI_API_KEY")
+    raise "No LLM API key found. Set ANTHROPIC_API_KEY, OPENROUTER_API_KEY, or GEMINI_API_KEY."
   end
 
   def self.build_tools(root:, undo:, governor:, bus:, diff_stager: nil, code_index: nil)
