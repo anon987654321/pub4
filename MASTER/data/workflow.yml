@@ -177,3 +177,13 @@ phases:
     gates:
       - deployed
       - monitoring_configured
+session_startup:
+  mandatory_reads:
+    - data/axioms.yml
+    - data/constitution.yml
+    - data/language_rules.yml
+    - data/workflow.yml
+    - data/standing_orders.yml
+  check_standing_orders: "Verify FSM state before any mutation -- UNCHANGE blocks refactoring"
+  scan_before_analysis: "Use /scan deep via MASTER, not external agents, for code analysis"
+  ssh_edit_pattern: "Write to /tmp, run ruby /tmp/patch.rb -- never ruby -i with heredoc"
