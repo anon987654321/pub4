@@ -21,7 +21,8 @@ module Master
     BATCH_SIZE       = 3
     RATE_LIMIT_SLEEP = 15     # ONE_SOURCE: no more hardcoded `sleep 15`
     MAX_FIX_RETRIES  = 3
-    MIN_SIZE_RATIO   = 0.80   # Reject fix if output < 80% of original file size
+    MIN_SIZE_RATIO       = 0.80   # Reject fix if output < 80% of original file size
+    CONFIDENCE_THRESHOLD = 0.60   # Below this, escalate to a reflective retry
     MAX_FILE_BYTES   = 16_000 # Raised from 4_000 so core files (agent.rb, cli.rb) are fixable
 
     # Rules that cannot be safely auto-fixed by rewriting a single file.
@@ -61,11 +62,23 @@ module Master
 
         yield cycle, violations if block_given?
 
-        violations.first(BATCH_SIZE).each_with_index do |v, idx|
-          sleep RATE_LIMIT_SLEEP unless idx.zero? # Pace for free-tier stability
-          fix = request_fix(v)
-          apply_fix(v[:file], fix) if fix
+        # Deduplicate by file — one fix per unique file to avoid write-race.
+        by_file = violations.first(BATCH_SIZE * 2).uniq { |v| v[:file] }.first(BATCH_SIZE)
+
+        mutex   = Mutex.new
+        fixes   = {}
+        stagger = RATE_LIMIT_SLEEP.to_f / BATCH_SIZE  # 5 s apart — stays within free-tier quota
+
+        threads = by_file.each_with_index.map do |v, idx|
+          sleep(stagger * idx) if idx.positive?
+          Thread.new do
+            fix = request_fix(v)
+            mutex.synchronize { fixes[v[:file]] = [v, fix] } if fix
+          end
         end
+        threads.each(&:join)
+
+        fixes.each_value { |v, fix| apply_fix(v[:file], fix) }
 
         if @git.dirty?("lib/")
           @git.add_lib_files
@@ -117,7 +130,13 @@ module Master
         begin
           # On retries, inject the last error as a reflection prefix.
           prompt = attempt.zero? ? base_prompt : reflected_prompt(base_prompt, last_error, attempt)
-          return extract_code(@agent.ask(prompt).to_s)
+          fix    = extract_code(@agent.ask(prompt).to_s)
+          if fix && confidence_score(fix, src) < CONFIDENCE_THRESHOLD && attempt < MAX_FIX_RETRIES - 1
+            @bus&.publish("autoloop:escalate", file: violation[:file], attempt: attempt + 1)
+            last_error = 'low confidence'
+            next
+          end
+          return fix
         rescue StandardError => e
           last_error = e.message.to_s
           if TRANSIENT_RE.match?(last_error) && attempt < MAX_FIX_RETRIES - 1
@@ -171,6 +190,20 @@ module Master
 
       File.write(path, content, encoding: "UTF-8")
       @bus&.publish("autoloop:fix_applied", file: rel_path)
+    end
+
+    # Returns 0.0-1.0. Signals how structurally complete the LLM output is.
+    # Low score triggers escalation retry with a reflective prompt (Task #15).
+    def confidence_score(code, original_src)
+      return 0.0 if code.nil? || code.strip.empty?
+
+      score = 0.0
+      score += 0.25 if code.include?("# frozen_string_literal: true")
+      score += 0.25 if code.match?(/\A.*?(?:module |class )[A-Z]/m)
+      ratio  = code.bytesize.to_f / [original_src.bytesize, 1].max
+      score += 0.25 if ratio >= MIN_SIZE_RATIO && ratio <= 2.0
+      score += 0.25 if syntax_ok?(code)
+      score
     end
 
     def syntax_ok?(content)
