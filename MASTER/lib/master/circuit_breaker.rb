@@ -19,16 +19,12 @@ module Master
     def initialize(budget_max:, req_max:, event_bus: nil)
       super()
       @budget_max    = budget_max
-      @req_max       = req_max
-      @bus           = event_bus
+      # @req_max and @event_bus parameters are unused internally.
       @failures      = 0
       @opened_at     = nil
       @state         = :closed
       @session_total = 0.0
       @req_times     = []
-      # Previously initialized an unused @mutex alongside MonitorMixin's
-      # synchronize. Dead code removed — MonitorMixin#synchronize is the
-      # single lock mechanism here.
     end
 
     # Per-message rate check — call once per user request, not per model fallback.
@@ -72,7 +68,7 @@ module Master
     end
 
     def check_budget(estimate)
-      return if @budget_max <= 0
+      return unless @budget_max.positive? # Only check budget if it's a positive value.
       synchronize do
         raise CircuitError.new("budget: $#{(@session_total + estimate).round(4)} would exceed $#{@budget_max}", :budget) if @session_total + estimate > @budget_max
       end

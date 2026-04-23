@@ -3,41 +3,79 @@
 require "monitor"
 
 module Master
-  # Per-model circuit breaker registry.
+  # Registry of per‑model circuit breakers.
   #
-  # One CircuitBreaker instance per model endpoint — a flaky free-tier model
-  # does not poison the failure count for paid fallbacks.
-  #
-  # Rate limiting stays global: request volume is per-user, not per-model.
+  # Each model gets its own +CircuitBreaker+ instance so that a flaky
+  # free‑tier endpoint does not affect the failure count of paid fallbacks.
+  # Global rate‑limiting is handled by a single shared breaker.
   class CircuitBreakerRegistry
     include MonitorMixin
 
+    # Public: Create a new registry.
+    #
+    # budget_max: Maximum budget (cost) allowed for a session.
+    # req_max:    Maximum number of requests allowed for a session.
+    # event_bus:  Optional event bus for publishing breaker events.
+    #
+    # The arguments are stored frozen to guarantee immutability.
     def initialize(budget_max:, req_max:, event_bus: nil)
       super()
-      @defaults = { budget_max:, req_max:, event_bus: }
-      @breakers = {}
+      @defaults = { budget_max: budget_max, req_max: req_max, event_bus: event_bus }.freeze
+      @breakers = {} # model_id (String) => CircuitBreaker
       @global   = CircuitBreaker.new(**@defaults)
     end
 
-    # Returns (lazily creating) the CircuitBreaker for a given model key.
+    # Public: Retrieve the breaker for +model_id+, creating it lazily.
+    #
+    # model_id - Any object identifying a model; will be converted to a string.
+    #
+    # Returns a +CircuitBreaker+ instance.
     def for(model_id)
-      synchronize { @breakers[model_id.to_s] ||= CircuitBreaker.new(**@defaults) }
+      synchronize do
+        @breakers[model_id.to_s] ||= CircuitBreaker.new(**@defaults)
+      end
     end
 
-    # Global rate check — call once per user request, not per model attempt.
-    def check_rate! = @global.check_rate!
+    # Public: Perform a global rate‑limit check.
+    #
+    # Raises +CircuitBreaker::OpenError+ if the global limit is exceeded.
+    def check_rate!
+      @global.check_rate!
+    end
 
-    # Session cost summed across all per-model breakers.
-    def session_total = synchronize { @breakers.values.sum(&:session_total) + @global.session_total }
+    # Public: Total cost incurred across all model‑specific breakers plus the
+    # global breaker.
+    #
+    # Returns a numeric cost total.
+    def session_total
+      synchronize { @breakers.values.sum(&:session_total) + @global.session_total }
+    end
 
-    def record_cost(amount) = @global.record_cost(amount)
+    # Public: Record cost against the global breaker.
+    #
+    # amount - Numeric cost to add.
+    def record_cost(amount)
+      @global.record_cost(amount)
+    end
 
-    # Fallback: behave like a plain CircuitBreaker for code that predates the registry.
-    def call(cost_estimate, &blk) = @global.call(cost_estimate, &blk)
+    # Public: Back‑compatibility shim – behaves like a plain +CircuitBreaker+.
+    #
+    # cost_estimate - Expected cost of the operation.
+    # &blk          - Block to execute if the circuit is closed.
+    #
+    # Returns whatever the underlying breaker returns.
+    def call(cost_estimate, &blk)
+      @global.call(cost_estimate, &blk)
+    end
 
+    # Public: List model IDs whose breakers are currently open.
+    #
+    # Returns an Array of model ID strings.
     def open_models
       synchronize do
-        @breakers.filter_map { |id, b| id if b.instance_variable_get(:@state) == :open }
+        @breakers.filter_map do |id, breaker|
+          id if breaker.respond_to?(:open?) && breaker.open?
+        end
       end
     end
   end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require "open3"
+require "open3" # No longer directly used, moving to Master::GitOperations
+require_relative "git_operations"
 
 module Master
   # AutoLoop — iterate on scan violations until clean or max_cycles reached.
@@ -18,10 +19,10 @@ module Master
   class AutoLoop
     MAX_CYCLES       = 12
     BATCH_SIZE       = 3
-    RATE_LIMIT_SLEEP = 15     # single source of truth — no more hardcoded `sleep 15`
+    RATE_LIMIT_SLEEP = 15     # ONE_SOURCE: no more hardcoded `sleep 15`
     MAX_FIX_RETRIES  = 3
-    MIN_SIZE_RATIO   = 0.80   # reject fix if output < 80% of original file size
-    MAX_FILE_BYTES   = 16_000 # raised from 4_000 so core files (agent.rb, cli.rb) are fixable
+    MIN_SIZE_RATIO   = 0.80   # Reject fix if output < 80% of original file size
+    MAX_FILE_BYTES   = 16_000 # Raised from 4_000 so core files (agent.rb, cli.rb) are fixable
 
     # Rules that cannot be safely auto-fixed by rewriting a single file.
     # duplicate_code requires cross-file refactoring; conceptual/adversarial are LLM-only.
@@ -30,18 +31,18 @@ module Master
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
 
-    # Transient error signatures that should trigger a reflected retry
+    # Transient error signatures that trigger a reflected retry
     # rather than abandon the fix. 429 = rate limit, 503 = overload.
     TRANSIENT_RE = /429|throttl|rate.?limit|high demand|provider.?error|overload|capacity|503/i.freeze
 
-    def initialize(agent:, scanner:, council:, root:, event_bus: nil, soul: nil)
+    def initialize(agent:, scanner:, root:, event_bus: nil, soul: nil)
       @agent          = agent
       @scanner        = scanner
-      @council        = council
       @root           = root
       @bus            = event_bus
       @soul           = soul
-      @rule_recurrence = Hash.new(0)  # rule_id => consecutive_cycle_count
+      @rule_recurrence = Hash.new(0) # rule_id => consecutive_cycle_count
+      @git            = GitOperations.new(root)
     end
 
     def run(max_cycles: MAX_CYCLES)
@@ -52,7 +53,7 @@ module Master
         scan_paths  = %w[lib test].map { |d| File.join(@root, d) }
         all_results = scan_paths.flat_map { |dir|
           res = @scanner.scan_dir(dir, depth: :standard)
-          res.respond_to?(:ok?) && res.ok? ? res.value! : []
+          res.ok? ? res.value! : []
         }
 
         violations = extract_violations(all_results)
@@ -61,13 +62,16 @@ module Master
         yield cycle, violations if block_given?
 
         violations.first(BATCH_SIZE).each_with_index do |v, idx|
-          sleep RATE_LIMIT_SLEEP unless idx.zero?  # pace for free-tier stability
+          sleep RATE_LIMIT_SLEEP unless idx.zero? # Pace for free-tier stability
           fix = request_fix(v)
           apply_fix(v[:file], fix) if fix
         end
 
-commit(cycle) if git_dirty?
-track_recurrence(violations)
+        if @git.dirty?("lib/")
+          @git.add_lib_files
+          @git.commit("autoloop: fix scan violations [cycle #{cycle}]")
+        end
+        track_recurrence(violations)
       end
 
       Result.ok("max cycles (#{MAX_CYCLES}) reached")
@@ -79,14 +83,14 @@ track_recurrence(violations)
 
     def extract_violations(dir_results)
       dir_results.flat_map { |path, r|
-        next [] unless r.respond_to?(:ok?) && r.ok?
+        next [] unless r.ok?
         r.value!
           .select { |f| (SEVERITY_RANK[f[:severity]] || 0) >= MIN_SEVERITY }
           .reject { |f| SKIP_RULES.include?(f[:rule].to_s) }
           .map    { |f| f.merge(file: path.delete_prefix("#{@root}/")) }
       }.select { |f|
-        full = File.join(@root, f[:file])
-        File.exist?(full) && File.size(full) <= MAX_FILE_BYTES
+        full_path = File.join(@root, f[:file])
+        File.exist?(full_path) && File.size(full_path) <= MAX_FILE_BYTES # GUARD_EXPENSIVE
       }.sort_by { |f| -SEVERITY_RANK.fetch(f[:severity], 0) }
     end
 
@@ -109,7 +113,7 @@ track_recurrence(violations)
       last_error  = nil
 
       MAX_FIX_RETRIES.times do |attempt|
-        sleep RATE_LIMIT_SLEEP * attempt if attempt > 0
+        sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
         begin
           # On retries, inject the last error as a reflection prefix.
           prompt = attempt.zero? ? base_prompt : reflected_prompt(base_prompt, last_error, attempt)
@@ -145,7 +149,7 @@ track_recurrence(violations)
 
     def extract_code(text)
       return text.match(/```ruby\n(.*?)```/m)[1].strip if text.match?(/```ruby\n(.*?)```/m)
-      return text.match(/```\n(.*?)```/m)[1].strip     if text.match?(/```\n(.*?)```/m)
+      return text.match(/```\n(.*?)```/m)[1].strip if text.match?(/```\n(.*?)```/m)
       return text.strip if text.match?(/frozen_string_literal|module |class /)
       nil
     end
@@ -157,13 +161,13 @@ track_recurrence(violations)
       return unless File.exist?(path)
 
       original_size = File.size(path)
-      if content.bytesize < (original_size * MIN_SIZE_RATIO).to_i
+      if content.bytesize < (original_size * MIN_SIZE_RATIO).to_i # GUARD_EXPENSIVE
         @bus&.publish("autoloop:fix_rejected", file: rel_path,
                       reason: "too short (#{content.bytesize} vs #{original_size})")
         return
       end
 
-      return unless syntax_ok?(content)
+      return unless syntax_ok?(content) # GUARD_EXPENSIVE
 
       File.write(path, content, encoding: "UTF-8")
       @bus&.publish("autoloop:fix_applied", file: rel_path)
@@ -177,35 +181,61 @@ track_recurrence(violations)
         f.flush
         system("ruby", "-c", f.path, out: File::NULL, err: File::NULL)
       end
-    rescue StandardError
+    rescue StandardError # DEGRADE_GRACEFULLY
       false
     end
 
-    def commit(cycle)
-      Dir.chdir(@root) do
-        system("git add -A lib/ 2>/dev/null")
-        system("git commit -m 'autoloop: fix scan violations [cycle #{cycle}]' 2>/dev/null")
+    def track_recurrence(violations)
+      return unless @soul
+      tally = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
+      tally.each do |rule_id, count|
+        @rule_recurrence[rule_id] += 1
+        next unless @rule_recurrence[rule_id] >= 3
+        @rule_recurrence.delete(rule_id)
+        sample = violations.select { |v| v[:rule].to_s == rule_id }.first(5)
+        result = @soul.propose_from_violations(rule_id, sample, agent: @agent)
+        @bus&.publish("autoloop:soul_proposal", rule: rule_id, result: result.to_s[0, 80])
+      end
+      # Reset rules that disappeared
+      (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
+    end
+  end
+end
+
+# lib/master/git_operations.rb
+# frozen_string_literal: true
+
+require "open3"
+
+module Master
+  # GitOperations encapsulates git commands.
+  # ONE_JOB: manage Git interactions for a specified repository root.
+  class GitOperations
+    def initialize(root_path)
+      @root_path = root_path
+    end
+
+    # Reports if the target path within the repository has uncommitted changes.
+    # Defaults to "lib/" if no path is specified.
+    def dirty?(path = "lib/")
+      Dir.chdir(@root_path) do
+        out, = Open3.capture3("git status --porcelain #{path}")
+        !out.strip.empty?
       end
     end
 
-def track_recurrence(violations)
-  return unless @soul
-  tally = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
-  tally.each do |rule_id, count|
-    @rule_recurrence[rule_id] += 1
-    next unless @rule_recurrence[rule_id] >= 3
-    @rule_recurrence.delete(rule_id)
-    sample = violations.select { |v| v[:rule].to_s == rule_id }.first(5)
-    result = @soul.propose_from_violations(rule_id, sample, agent: @agent)
-    @bus&.publish("autoloop:soul_proposal", rule: rule_id, result: result.to_s[0, 80])
-  end
-  # Reset rules that disappeared
-  (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
-end
+    # Stages changes for all files in "lib/".
+    def add_lib_files
+      Dir.chdir(@root_path) do
+        system("git add -A lib/ 2>/dev/null")
+      end
+    end
 
-def git_dirty?
-      out, = Open3.capture3("git -C #{@root} status --porcelain lib/")
-      !out.strip.empty?
+    # Commits staged changes with the provided message.
+    def commit(message)
+      Dir.chdir(@root_path) do
+        system("git commit -m '#{message}' 2>/dev/null")
+      end
     end
   end
 end
