@@ -14,7 +14,7 @@ claude --dangerously-skip-permissions
 
 | | |
 |---|---|
-| **Dev machine** | OpenBSD VPS · `dev@brgen.no` · `185.52.176.18` |
+| **Dev machine** | OpenBSD VPS · `dev@brgen.no` · `185.52.176.18` (wheel, passwordless doas) |
 | **Password** | `h00te10tu` (changes each session) |
 | **SSH** | `sshpass -p 'h00te10tu' ssh -o StrictHostKeyChecking=no dev@185.52.176.18 'cmd'` |
 | **Shell** | zsh — ControlMaster does NOT persist across Bash tool calls, use sshpass every time |
@@ -40,7 +40,7 @@ Subdomains not yet deployed publicly: `brgen.no` Rails app, other vhosts.
 
 ## Repository: pub4
 
-- **Git remote**: `https://github.com/anon987654321/pub4.git`
+- **Git remote**: `https://github.com/anon987654321/pub4.git` — same repo as `dev@brgen.no:~/pub4`
 - **Git root**: `~/pub4/`
 - **Push**: `gh auth git-credential` on VPS (HTTPS, not SSH)
 - **Latest pushed commit**: `d39ed302`
