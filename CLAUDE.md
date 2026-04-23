@@ -60,6 +60,8 @@ pub4/
 ---
 
 ## MASTER — Architecture
+> `master.yml` (the old 1770-line YAML config) was deleted in Feb 2026. MASTER (the Ruby codebase) replaced it — the agent IS the config.
+
 
 MASTER is a constitutional AI coding agent that **replaces Claude Code CLI**.
 
