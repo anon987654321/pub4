@@ -24,6 +24,10 @@ module Master
       @orders   = load_orders
     end
 
+    def wire_pipeline(pipeline)
+      @pipeline = pipeline
+    end
+
     # Returns orders eligible to run: enabled, scheduled, interval elapsed,
     # not running, not stuck in error.
     def due
