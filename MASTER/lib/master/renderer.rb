@@ -10,7 +10,7 @@ module Master
   class Renderer
     TICK  = "\u2714".freeze
     CROSS = "\u2718".freeze
-    DMESG_LINE_COUNT = 18
+    DMESG_LINE_COUNT = 5
     MILLISECONDS_PER_SECOND = 1000
 
     def initialize(config:)

@@ -19,9 +19,9 @@ def boot_web_ui(config)
 
   if Master::Platform.openbsd?
     # Kill stale falcon/ruby processes on the port before rcctl start.
-    system("fstat -n 2>/dev/null | grep ':#{port} ' | awk '{print $3}' | xargs -r kill -TERM 2>/dev/null")
+    system("doas pkill -TERM -f 'falcon.*#{port}' 2>/dev/null || true")
     sleep 0.5
-    system("doas rcctl restart masterweb > /dev/null 2>&1")
+    system("doas rcctl restart master > /dev/null 2>&1")
   else
     # Non-OpenBSD: kill anything on the port, then spawn Falcon directly.
     require "open3"
