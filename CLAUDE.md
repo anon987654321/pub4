@@ -82,6 +82,30 @@ Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prun
 - **Rollback**: `git reset --hard HEAD` on `axiom_violation`/`validation` error
 - **Result monad**: `Ok/Err` — check with `respond_to?(:ok?)`, not `is_a?(Result)`
 
+
+### data/ — Living Spec (replaced master.yml)
+
+`master.yml` was a 1770-line monolithic YAML config. MASTER replaced it with modular `data/*.yml` files that the Ruby pipeline reads and enforces at runtime:
+
+| File | Purpose |
+|---|---|
+| `axioms.yml` | Kernel axioms (PRESERVE_FIRST, SIMPLEST_WORKS, FAIL_VISIBLY, etc.) + top-25 philosophy principles |
+| `constitution.yml` | Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK; protection levels; anti-simulation rules; communication style: openbsd_dmesg |
+| `principles.yml` | KISS, DRY, YAGNI, SoC, SRP, SOLID — each with anti-patterns and auto-fix flag |
+| `language_rules.yml` | Ruby 3.3+ rules, Rails 8+ stack, OpenBSD config, zsh banned commands (sed/awk/grep/find/etc.) |
+| `standing_orders.yml` | Current FSM state (UNCHANGE / REFACTOR / etc.) |
+| `workflow.yml` | READ_FULL_FILES, READ_BEFORE_WRITE, scan depths, autoloop/sweep config, Zeitwerk inflections, anti-sprawl |
+| `language_axioms.yml` | Communication principles |
+| `scan_depths.yml` | standard / deep / hunt rule sets |
+| `fallback_models.yml` | Model fallback chain |
+| `models.yml` | Model capability table |
+| `council.yml` / `council_patterns.yml` | Council trigger patterns |
+| `infer_patterns.yml` | Natural language → command routing |
+| `strunk.yml` | Strunk & White prose rules for Prune stage |
+| `prompts/` | LLM prompt templates |
+
+The Ruby pipeline reads these at boot via `Master.build` and enforces them through scan rules, pipeline stages, and tool guards.
+
 ### Key modules
 
 | File | Purpose |
