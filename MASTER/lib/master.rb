@@ -5,9 +5,6 @@ require "zeitwerk"
 module Master
   ROOT = File.expand_path("..", __dir__).freeze
 
-  # Providers whose API keys, if present with reasonable length, Master will
-  # configure at boot. Single source of truth — agents no longer re-configure
-  # the global RubyLLM state on each instantiation.
   MIN_API_KEY_LENGTH = 20
 
   API_KEY_PROVIDERS = {
@@ -21,15 +18,11 @@ module Master
   loader.inflector.inflect(
     "autoloop"   => "AutoLoop",
     "cli"        => "CLI",
-    "mcp_server" => "MCPServer",
     "llm"        => "LLM",
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.setup
 
-  # Configure RubyLLM once at boot. Previously Agent#initialize mutated the
-  # shared RubyLLM config on every construction, so multiple agents racing
-  # through the swarm could clobber each other's credentials.
   def self.configure_providers!
     require "ruby_llm"
     RubyLLM.configure do |cfg|
@@ -44,7 +37,6 @@ module Master
     ENV[env_var].to_s.length >= MIN_API_KEY_LENGTH
   end
 
-  # Build the full container without starting the CLI
   def self.build(root: Dir.pwd)
     configure_providers!
 
@@ -67,12 +59,11 @@ module Master
     diff_stager  = config["staging_enabled"] ? DiffStager.new(root:, event_bus: bus) : nil
     mcp          = McpCoordinator.new(root:, event_bus: bus)
     mcp.connect_all
-    code_index.build # sync on boot (fast: Prism parses ~100 files in <1s)
-    bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] rescue nil }
+    code_index.build
+    bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
 
     memory      = Memory.new(root:)
     experience  = State::Experience.new(root:)
-    soul_doc    = Soul.new(root:, agent: nil) # agent wired after agent is built
     personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT, root:)
 
     tools    = build_tools(root:, undo:, governor:, bus:, diff_stager:, code_index:)
@@ -82,41 +73,30 @@ module Master
     agent    = Agent.new(config:, session:, tools:, circuit_breaker: breaker, cache:, event_bus: bus,
                          model_router: router, reasoning_modes: modes,
                          memory:, personality:, code_index:)
-    soul_doc.wire_agent(agent)
+    soul_doc = Soul.new(root:, agent:)
     tools << Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
 
+    ctx_window = ContextWindow.new(session:, agent:, model_context: 200_000)
+    ctx_window.check_and_compact!
+    agent.wire_context_window(ctx_window)
+
     guard        = Security::InjectionGuard.new
-    scanner      = Scan::Scanner.new(event_bus: bus)
-    scanner.add_rule(Scan::Rules::FrozenStringRule.new)
-    scanner.add_rule(Scan::Rules::BareRescueRule.new)
-    scanner.add_rule(Scan::Rules::ExplicitRule.new)
-    scanner.add_rule(Scan::Rules::ImmutableRule.new)
-    scanner.add_rule(Scan::Rules::CqsRule.new)
-    scanner.add_rule(Scan::Rules::SelfExplainingRule.new)
-    scanner.add_rule(Scan::Rules::LongMethodRule.new)
-    scanner.add_rule(Scan::Rules::GodClassRule.new)
-    scanner.add_rule(Scan::Rules::DuplicateCodeRule.new)
-    scanner.add_rule(Scan::Rules::PruneRule.new)
-    scanner.add_rule(Scan::Rules::SrpRule.new)
-    scanner.add_rule(Scan::Rules::PolaRule.new)
-    scanner.add_rule(Scan::Rules::RubocopRule.new(root:))
-    scanner.add_rule(Scan::Rules::ReekRule.new(root:))
-    scanner.add_rule(Scan::Rules::NielsenRule.new)
-    scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
-    scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
-    scanner.add_rule(Scan::Rules::AdversarialRule.new(agent:))
+    scanner      = build_scanner(root:, agent:, bus:)
     swarm        = Swarm::Coordinator.new(agent:, event_bus: bus)
     personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
     deliberation = Council::Deliberation.new(personas:, agent:, event_bus: bus)
     council_stage = Stages::Council.new(deliberation:, config:)
 
+    standing = StandingOrders.new(pipeline: nil, event_bus: bus)
+    commands = build_commands(session:, undo:, logging:, config:, agent:,
+                             council_stage:, swarm:, scanner:, deliberation:,
+                             bus:, root:, memory:, cache:, metrics:,
+                             standing:, soul: soul_doc)
+
     stages = [
       Stages::Intake.new,
       Stages::Infer.new,
-      Stages::Route.new(
-        commands: build_commands(session:, undo:, logging:, config:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, cache:, metrics:),
-        agent:
-      ),
+      Stages::Route.new(commands:, agent:),
       Stages::Guard.new(governor:, injection_guard: guard),
       Stages::Execute.new,
       Pipeline::ParallelGroup.new(council_stage, Stages::Lint.new(scanner:, config:)),
@@ -125,58 +105,8 @@ module Master
       Stages::Render.new(renderer:)
     ]
 
-    ctx_window = ContextWindow.new(session:, agent:, model_context: 200_000)
-    ctx_window.check_and_compact!
-    agent.wire_context_window(ctx_window)
-
     pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
-
-    standing = StandingOrders.new(pipeline:, event_bus: bus)
-
-    # Wire orders + soul commands after standing/soul are built (avoids circular dep).
-    route_stage = stages.find { |s| s.is_a?(Stages::Route) }
-    route_stage&.add_command("orders", ->(ctx) {
-      arg = ctx[:args].to_s.strip
-      case arg
-      when "list", ""
-        standing.list
-      when /\Aenable (.+)\z/
-        standing.enable($1.strip)
-      when /\Adisable (.+)\z/
-        standing.disable($1.strip)
-      when /\Aadd name=(\S+) cmd=(.+)\z/
-        standing.upsert(name: $1, command: $2.strip)
-      when "run"
-        results = standing.run_due!
-        results.empty? ? "no orders due" : results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
-      when /\Areset (.+)\z/
-        standing.reset($1.strip)
-      else
-        "usage: /orders  /orders enable <name>  /orders disable <name>  /orders reset <name>  /orders run"
-      end
-    })
-
-    route_stage&.add_command("soul", ->(ctx) {
-      arg = ctx[:args].to_s.strip
-      case arg
-      when "", "show"
-        soul_doc.summary
-      when "version", "changelog"
-        soul_doc.changelog
-      when "diff"
-        soul_doc.diff
-      when "approve"
-        soul_doc.approve
-      when "reject"
-        soul_doc.reject
-      when "rollback"
-        soul_doc.rollback
-      when /\Apropose (.+)\z/
-        soul_doc.propose($1.strip)
-      else
-        "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
-      end
-    })
+    standing.wire_pipeline(pipeline)
 
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
@@ -186,7 +116,6 @@ module Master
     }
   end
 
-  # Boot the CLI (wraps build)
   def self.boot(root: Dir.pwd, argv: [])
     container = build(root:)
     container[:renderer].tap { |r| puts r.banner(container[:agent].model) }
@@ -194,12 +123,12 @@ module Master
   end
 
   def self.default_model
-    return "deepseek-ai/deepseek-r1"     if api_key_present?("REPLICATE_API_KEY")
-    return "claude-sonnet-4-6"           if api_key_present?("ANTHROPIC_API_KEY")
-    return "anthropic/claude-sonnet-4-6" if api_key_present?("OPENROUTER_API_KEY")
-    return "gpt-4o"                      if api_key_present?("OPENAI_API_KEY")
-    return "gemini-2.5-flash"            if api_key_present?("GEMINI_API_KEY")
-    raise "No LLM API key found. Set ANTHROPIC_API_KEY, OPENROUTER_API_KEY, or GEMINI_API_KEY."
+    return "deepseek-ai/deepseek-v3" if api_key_present?("OPENROUTER_API_KEY")
+    return "deepseek-ai/deepseek-r1" if api_key_present?("REPLICATE_API_KEY")
+    return "claude-sonnet-4-6"       if api_key_present?("ANTHROPIC_API_KEY")
+    return "gpt-4o"                  if api_key_present?("OPENAI_API_KEY")
+    return "gemini-2.5-flash"        if api_key_present?("GEMINI_API_KEY")
+    raise "No LLM API key found. Set OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY."
   end
 
   def self.build_tools(root:, undo:, governor:, bus:, diff_stager: nil, code_index: nil)
@@ -221,12 +150,36 @@ module Master
     ]
   end
 
-  def self.build_commands(session:, undo:, logging:, config:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, cache:, metrics: nil)
+  def self.build_scanner(root:, agent:, bus:)
+    scanner = Scan::Scanner.new(event_bus: bus)
+    scanner.add_rule(Scan::Rules::FrozenStringRule.new)
+    scanner.add_rule(Scan::Rules::BareRescueRule.new)
+    scanner.add_rule(Scan::Rules::ExplicitRule.new)
+    scanner.add_rule(Scan::Rules::ImmutableRule.new)
+    scanner.add_rule(Scan::Rules::CqsRule.new)
+    scanner.add_rule(Scan::Rules::SelfExplainingRule.new)
+    scanner.add_rule(Scan::Rules::LongMethodRule.new)
+    scanner.add_rule(Scan::Rules::GodClassRule.new)
+    scanner.add_rule(Scan::Rules::DuplicateCodeRule.new)
+    scanner.add_rule(Scan::Rules::PruneRule.new)
+    scanner.add_rule(Scan::Rules::SrpRule.new)
+    scanner.add_rule(Scan::Rules::PolaRule.new)
+    scanner.add_rule(Scan::Rules::RubocopRule.new(root:))
+    scanner.add_rule(Scan::Rules::ReekRule.new(root:))
+    scanner.add_rule(Scan::Rules::NielsenRule.new)
+    scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
+    scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
+    scanner.add_rule(Scan::Rules::AdversarialRule.new(agent:))
+    scanner
+  end
+
+  def self.build_commands(session:, undo:, logging:, config:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, cache:, metrics: nil, standing:, soul:)
     build_session_commands(session:, undo:, logging:, config:)
       .merge(build_mode_commands(config:))
       .merge(build_agent_commands(agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, config:, metrics:))
       .merge(build_memory_commands(memory:, agent:))
       .merge(build_utility_commands(agent:, root:, cache:))
+      .merge(build_master_commands(standing:, soul:))
       .merge(
         "help" => ->(ctx) {
           cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory dreams orders soul cache diff commit knowledge why snapshot explain persona help exit]
@@ -376,12 +329,12 @@ module Master
         depth  = ctx[:args].to_s.include?("deep") ? :deep : :standard
         target = File.join(root, "lib")
         result = scanner.scan_dir(target, depth:)
-        unless result.respond_to?(:ok?) && result.ok?
+        unless result.ok?
           next "scan failed"
         end
         by_rule = Hash.new { |h, k| h[k] = [] }
         result.value!.each do |_f, fr|
-          next unless fr.respond_to?(:ok?) && fr.ok?
+          next unless fr.ok?
           fr.value!.each { |v| by_rule[v[:rule].to_s] << v }
         end
         total = by_rule.values.sum(&:size)
@@ -431,6 +384,52 @@ module Master
           lines    = ["active: #{active} memories, archived: #{archived}"]
           lines   << "last consolidation: #{summary}" if summary
           lines.join("\n")
+        end
+      },
+    }
+  end
+
+  def self.build_master_commands(standing:, soul:)
+    {
+      "orders" => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        case arg
+        when "list", ""
+          standing.list
+        when /\Aenable (.+)\z/
+          standing.enable($1.strip)
+        when /\Adisable (.+)\z/
+          standing.disable($1.strip)
+        when /\Aadd name=(\S+) cmd=(.+)\z/
+          standing.upsert(name: $1, command: $2.strip)
+        when "run"
+          results = standing.run_due!
+          results.empty? ? "no orders due" : results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
+        when /\Areset (.+)\z/
+          standing.reset($1.strip)
+        else
+          "usage: /orders  /orders enable <name>  /orders disable <name>  /orders reset <name>  /orders run"
+        end
+      },
+      "soul" => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        case arg
+        when "", "show"
+          soul.summary
+        when "version", "changelog"
+          soul.changelog
+        when "diff"
+          soul.diff
+        when "approve"
+          soul.approve
+        when "reject"
+          soul.reject
+        when "rollback"
+          soul.rollback
+        when /\Apropose (.+)\z/
+          soul.propose($1.strip)
+        else
+          "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
         end
       },
     }

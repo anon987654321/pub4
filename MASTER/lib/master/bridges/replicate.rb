@@ -6,39 +6,31 @@ require "json"
 module Master
   module Bridges
     # Replicate — native predictions API client.
-    # Replicate is not OpenAI-compatible; it uses a polling-based predictions
-    # API at /v1/models/{owner}/{name}/predictions. Tool calling is simulated
-    # via prompt injection since Replicate models expose no unified tools schema.
-    #
-    # All supported models currently use flat prompt input; the MODEL_SCHEMAS
-    # :chat enum value was dead code and has been removed. Add per-model
-    # input shaping back when/if a model actually requires it.
     class Replicate
       BASE_URL      = "https://api.replicate.com/v1"
       POLL_INTERVAL = 0.8
       MAX_WAIT      = 180
 
-      DEFAULT_MAX_TOKENS  = 4096
+      DEFAULT_MAX_TOKENS  = 4_096
       DEFAULT_TEMPERATURE = 0.6
 
       def initialize(api_key: ENV["REPLICATE_API_KEY"])
-        @api_key = api_key.to_s
+        @api_key = (api_key || "").to_s
         raise "REPLICATE_API_KEY not configured" if @api_key.length < 20
       end
 
-      # Returns a duck-typed Message. Raises on API error.
-      def chat(model:, messages:, system: nil, max_tokens: DEFAULT_MAX_TOKENS, temperature: DEFAULT_TEMPERATURE, stream: false, &blk)
+      # Returns a duck‑typed Message. Raises on API error.
+      def chat(model:, messages:, system: nil, max_tokens: DEFAULT_MAX_TOKENS,
+               temperature: DEFAULT_TEMPERATURE, stream: false, &blk)
         prompt = format_prompt(messages, system:)
         input  = build_input(prompt:, max_tokens:, temperature:)
 
         return chat_stream(model:, input:, &blk) if stream && blk
 
-        pred    = create_prediction(model:, input:)
-        pred_id = pred["id"] or raise "no prediction id: #{pred.inspect}"
-
-        result  = poll_until_done(pred_id)
-        output  = result["output"]
-        text    = output.is_a?(Array) ? output.join : output.to_s
+        pred     = create_prediction(model:, input:)
+        pred_id  = pred["id"] or raise "no prediction id: #{pred.inspect}"
+        result   = poll_until_done(pred_id)
+        text     = (result["output"].is_a?(Array) ? result["output"].join : result["output"]).to_s
 
         Message.new(text)
       rescue StandardError => e
@@ -65,46 +57,43 @@ module Master
       end
 
       def chat_stream(model:, input:, &blk)
-        owner, name = model.split("/", 2)
-        uri  = URI("#{BASE_URL}/models/#{owner}/#{name}/predictions")
-        req  = Net::HTTP::Post.new(uri)
-        req["Authorization"] = "Bearer #{@api_key}"
-        req["Content-Type"]  = "application/json"
-        req.body = JSON.generate({ input:, stream: true })
-        pred = JSON.parse(http(uri).request(req).body)
+        uri = model_uri(model)
+        pred = post(uri, { input:, stream: true })
         stream_url = pred.dig("urls", "stream") or raise "no stream URL: #{pred.inspect}"
 
         full_text = +""
-        suri = URI(stream_url)
-        Net::HTTP.start(suri.host, suri.port, use_ssl: true, read_timeout: MAX_WAIT) do |http_client|
-          sreq = Net::HTTP::Get.new(suri)
-          sreq["Authorization"] = "Bearer #{@api_key}"
-          sreq["Accept"]        = "text/event-stream"
-          http_client.request(sreq) do |resp|
-            buf = +""
+        s_uri = URI(stream_url)
+
+        Net::HTTP.start(s_uri.host, s_uri.port, use_ssl: true, read_timeout: MAX_WAIT) do |http_client|
+          request = Net::HTTP::Get.new(s_uri)
+          auth_headers.each { |k, v| request[k] = v }
+          request["Accept"] = "text/event-stream"
+
+          http_client.request(request) do |resp|
+            buffer = +""
             resp.read_body do |chunk|
-              buf << chunk
-              while (idx = buf.index("\n\n"))
-                event     = buf.slice!(0..idx + 1)
-                evt_lines = event.lines.map(&:chomp)
-                evt_type  = evt_lines.find { |l| l.start_with?("event:") }&.then { |l| l[7..].strip }
-                data      = evt_lines.find { |l| l.start_with?("data:") }&.then { |l| l[5..].strip }
-                next unless evt_type == "output" && data && !data.empty?
+              buffer << chunk
+              while (idx = buffer.index("\n\n"))
+                event = buffer.slice!(0..idx + 1)
+                lines = event.lines.map(&:chomp)
+                type  = lines.find { |l| l.start_with?("event:") }&.then { |l| l[7..].strip }
+                data  = lines.find { |l| l.start_with?("data:") }&.then { |l| l[5..].strip }
+                next unless type == "output" && data && !data.empty?
+
                 blk.call(data)
                 full_text << data
               end
             end
           end
         end
+
         Message.new(full_text)
       rescue StandardError => e
         raise "Replicate stream(#{model}): #{e.message}"
       end
 
       def create_prediction(model:, input:)
-        owner, name = model.split("/", 2)
-        uri = URI("#{BASE_URL}/models/#{owner}/#{name}/predictions")
-        post(uri, { input: })
+        post(model_uri(model), { input: })
       end
 
       def poll_until_done(pred_id)
@@ -114,40 +103,57 @@ module Master
         loop do
           result = get(uri)
           case result["status"]
-          when "succeeded"          then return result
-          when "failed", "canceled" then raise "prediction #{result["status"]}: #{result["error"]}"
+          when "succeeded"
+            return result
+          when "failed", "canceled"
+            raise "prediction #{result["status"]}: #{result["error"]}"
           end
-          raise "Timeout after #{MAX_WAIT}s. Consider increasing MAX_WAIT or checking network connectivity." if Time.now > deadline
+          raise "Timeout after #{MAX_WAIT}s." if Time.now > deadline
+
           sleep POLL_INTERVAL
         end
       end
 
       def post(uri, body)
-        req = Net::HTTP::Post.new(uri)
-        req["Authorization"] = "Bearer #{@api_key}"
-        req["Content-Type"]  = "application/json"
-        req.body = JSON.generate(body)
-        JSON.parse(http(uri).request(req).body)
+        request = Net::HTTP::Post.new(uri)
+        auth_headers.each { |k, v| request[k] = v }
+        request["Content-Type"] = "application/json"
+        request.body = JSON.generate(body)
+        JSON.parse(http(uri).request(request).body)
       end
 
       def get(uri)
-        req = Net::HTTP::Get.new(uri)
-        req["Authorization"] = "Bearer #{@api_key}"
-        JSON.parse(http(uri).request(req).body)
+        request = Net::HTTP::Get.new(uri)
+        auth_headers.each { |k, v| request[k] = v }
+        JSON.parse(http(uri).request(request).body)
       end
 
       def http(uri)
-        http_client = Net::HTTP.new(uri.host, uri.port)
-        http_client.use_ssl = true
-        http_client.read_timeout = 35
-        http_client
+        Net::HTTP.new(uri.host, uri.port).tap do |client|
+          client.use_ssl = true
+          client.read_timeout = 35
+        end
       end
 
-      # Duck-types as RubyLLM::Message so agent.rb extract_response works.
+      def auth_headers
+        { "Authorization" => "Bearer #{@api_key}" }
+      end
+
+      def model_uri(model)
+        owner, name = model.split("/", 2)
+        URI("#{BASE_URL}/models/#{owner}/#{name}/predictions")
+      end
+
+      # Duck‑types as RubyLLM::Message so Agent extract_response works.
       class Message
         attr_reader :content
-        def initialize(content) = @content = content.to_s
+
+        def initialize(content)
+          @content = content.to_s
+        end
+
         def to_s = @content
+
         def respond_to_missing?(name, *) = name == :content || super
       end
     end

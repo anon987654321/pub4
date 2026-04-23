@@ -6,7 +6,6 @@ require "fileutils"
 
 module Master
   class CLI
-
     PULSE_SOCKET = "/tmp/pulse/native".freeze
     PULSE_DAEMON = "/data/data/com.termux/files/usr/bin/pulseaudio".freeze
 
@@ -17,6 +16,13 @@ module Master
     ].freeze
 
     FFMPEG_CANDIDATES = %w[/usr/bin/ffmpeg /usr/local/bin/ffmpeg].freeze
+
+    SEVERITY_ICON = {
+      error: "!!",
+      warning: "!",
+      style: ".",
+      critical: "!!"
+    }.freeze
 
     attr_reader :container
 
@@ -32,20 +38,20 @@ module Master
       @scanner     = container[:scanner]
       @root        = container[:root] || Dir.pwd
       @diff_stager = container[:diff_stager]
-      @bus        = container[:bus]
+      @bus         = container[:bus]
       @reader      = TTY::Reader.new(track_history: true)
       @running     = false
-      @interrupt_at   = 0
+      @interrupt_at = 0
       @last_ok     = true
       @tts_on      = Speech.available? && @config["tts"] != false
       @violations  = 0
-      @scan_thread     = nil
+      @scan_thread = nil
       @seen_violations = {}
     end
 
     def run(initial_message = nil)
       setup_signals
-      @session.load! if @session.exists?
+      @session.load! if @session.respond_to?(:exists?) && @session.exists?
       scan_in_background
       puts @renderer.splash(@agent.model)
       process(initial_message) if initial_message
@@ -56,6 +62,7 @@ module Master
     def pipe(input)
       s = input.strip
       return if s.empty?
+
       cmd, *args = s.split
       dispatch_command(cmd, args) || run_input(s)
     end
@@ -63,8 +70,8 @@ module Master
     def run_input(input)
       return if input.strip.empty?
 
-      accumulated    = +""
-      streamed       = false
+      accumulated = +""
+      streamed = false
       thinking_shown = true
 
       on_chunk = build_chunk_handler(accumulated) do |text|
@@ -79,7 +86,6 @@ module Master
 
       print_thinking_indicator
       result = @pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
-
       handle_pipeline_result(result, accumulated, streamed)
     end
 
@@ -89,8 +95,11 @@ module Master
       while @running
         tokens = @session.respond_to?(:token_est) ? @session.token_est : nil
         print @renderer.prompt_line(
-          @agent.model, @session.phase,
-          last_ok: @last_ok, violations: @violations, tokens: tokens
+          @agent.model,
+          @session.phase,
+          last_ok: @last_ok,
+          violations: @violations,
+          tokens: tokens
         )
         line = begin
           @reader.read_line("", echo: true).chomp
@@ -102,11 +111,12 @@ module Master
         handle_command(line) || run_input(line)
       end
       @scan_thread&.kill
-      @session.save!
+      @session.save! if @session.respond_to?(:save!)
     end
 
     def handle_command(line)
       return false unless line.start_with?("/")
+
       cmd, *args = line[1..].split
       dispatch_command(cmd, args)
     end
@@ -115,10 +125,10 @@ module Master
       case cmd
       when "help"    then puts help_text
       when "clear"   then clear_screen
-      when "exit"    then @session.save!; @running = false
+      when "exit"    then exit_cli
       when "model"   then puts @renderer.render(@agent.model.to_s, mode: :dim)
       when "tokens"  then puts @renderer.render("session tokens: #{safe_token_est}", mode: :dim)
-      when "save"    then @session.save!; puts @renderer.render("saved", mode: :success)
+      when "save"    then save_session
       when "dmesg"   then puts format_dmesg_lines
       when "scan"    then run_scan_command(args)
       when "stage"   then run_stage_command
@@ -127,9 +137,13 @@ module Master
       when "staging" then toggle_staging(args)
       when "tts"     then toggle_tts(args)
       when "profile" then puts format_profile
-      else           return false
+      else false
       end
-      true
+    end
+
+    def exit_cli
+      @session.save! if @session.respond_to?(:save!)
+      @running = false
     end
 
     def clear_screen
@@ -143,16 +157,22 @@ module Master
       "n/a"
     end
 
+    def save_session
+      @session.save! if @session.respond_to?(:save!)
+      puts @renderer.render("saved", mode: :success)
+    end
+
     def format_profile
-      t = @pipeline.last_timings
-      return @renderer.render("(no profile -- run a query first)", mode: :dim) if t.nil? || t.empty?
-      total = t.values.sum
-      lines = t.map { |stage, ms| "  %-22s %dms" % [stage, ms] }
+      timings = @pipeline.last_timings
+      return @renderer.render("(no profile -- run a query first)", mode: :dim) if timings.nil? || timings.empty?
+
+      total = timings.values.sum
+      lines = timings.map { |stage, ms| "  %-22s %dms" % [stage, ms] }
       (["last request:"] + lines + ["  " + "-" * 26, "  %-22s %dms" % ["total", total]]).join("\n")
     end
 
     def format_dmesg_lines
-      @logging.dmesg(50).split("\n").map { |log_line| @renderer.format_dmesg(log_line) }.join("\n")
+      @logging.dmesg(50).split("\n").map { |l| @renderer.format_dmesg(l) }.join("\n")
     end
 
     def toggle_staging(args)
@@ -185,18 +205,18 @@ module Master
     end
 
     def run_scan_command(args)
-      depth  = args.include?("deep") ? :deep : :standard
+      depth = args.include?("deep") ? :deep : :standard
       target = File.join(@root, "lib")
       puts @renderer.render("scanning #{target} (#{depth})...", mode: :dim)
 
-      result = @scanner.scan_dir(target, depth:)
+      result = @scanner.scan_dir(target, depth: depth)
       unless result.respond_to?(:ok?) && result.ok?
         puts @renderer.render("scan failed", mode: :error)
         return
       end
 
       by_rule = group_violations_by_rule(result.value!)
-      total   = by_rule.values.sum(&:size)
+      total = by_rule.values.sum(&:size)
       @violations = total
 
       if total.zero?
@@ -209,26 +229,25 @@ module Master
     end
 
     def group_violations_by_rule(scan_results)
-      by_rule = Hash.new { |hash, key| hash[key] = [] }
+      by_rule = Hash.new { |h, k| h[k] = [] }
       scan_results.each do |_file, file_result|
         next unless file_result.respond_to?(:ok?) && file_result.ok?
-        file_result.value!.each { |violation| by_rule[violation[:rule].to_s] << violation }
+
+        file_result.value!.each { |v| by_rule[v[:rule].to_s] << v }
       end
       by_rule
     end
 
-def filter_seen_violations(by_rule)
-  by_rule.transform_values do |vs|
-    vs.reject do |v|
-      key = "#{v[:rule]}:#{v[:line]}:#{v[:message].to_s[0, 60]}"
-      already = @seen_violations.key?(key)
-      @seen_violations[key] = true
-      already
+    def filter_seen_violations(by_rule)
+      by_rule.transform_values do |vs|
+        vs.reject do |v|
+          key = "#{v[:rule]}:#{v[:line]}:#{v[:message].to_s[0, 60]}"
+          seen = @seen_violations.key?(key)
+          @seen_violations[key] = true
+          seen
+        end
+      end.reject { |_, vs| vs.empty? }
     end
-  end.reject { |_, vs| vs.empty? }
-end
-
-SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.freeze
 
     def render_violations_by_rule(by_rule)
       ordered = by_rule.sort_by do |_, vs|
@@ -236,17 +255,17 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
         [sev_rank.fetch(vs.first&.dig(:severity) || :warning, 2), -vs.size]
       end
       ordered.each do |rule, violations|
-        sev  = violations.first&.dig(:severity) || :warning
-        icon = SEVERITY_ICON.fetch(sev, "\!")
+        sev = violations.first&.dig(:severity) || :warning
+        icon = SEVERITY_ICON.fetch(sev, "!")
         puts @renderer.render("[#{icon}][#{rule}] #{violations.size}", mode: :dim)
         violations.first(3).each do |v|
           puts "  L#{v[:line]}: #{v[:message].to_s[0, 88]}"
-          if v[:fix] && !v[:fix].empty?
+          if v[:fix]&.any?
             hint = v[:fix].to_s.lines.first.to_s.strip[0, 80]
             puts "    fix: #{hint}" unless hint.empty?
           end
         end
-        puts "  ... +\#{violations.size - 3} more" if violations.size > 3
+        puts "  ... +#{violations.size - 3} more" if violations.size > 3
       end
     end
 
@@ -254,16 +273,19 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
       @scan_thread = Thread.new do
         lib_dir = File.join(@root, "lib")
         changed = begin
-          out = `git -C \"#{@root}" diff --name-only HEAD 2>/dev/null`.strip
-          out.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }.select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
+          out = `git -C "#{@root}" diff --name-only HEAD 2>/dev/null`.strip
+          out.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }
+                 .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
         rescue StandardError
           []
         end
+
         result = if changed.any?
-          Result.ok(changed.map { |p| [p, @scanner.scan(p, depth: :standard)] })
-        else
-          @scanner.scan_dir(lib_dir, depth: :standard)
-        end
+                   Result.ok(changed.map { |p| [p, @scanner.scan(p, depth: :standard)] })
+                 else
+                   @scanner.scan_dir(lib_dir, depth: :standard)
+                 end
+
         next unless result.respond_to?(:ok?) && result.ok?
 
         count = result.value!.sum do |_file, file_result|
@@ -271,29 +293,33 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
         end
         @violations = count
 
-        next unless count > 0
+        next if count.zero?
 
         puts "\n#{@renderer.render("boot scan: #{count} violation(s) -- /scan for details", mode: :dim)}"
         print @renderer.prompt_line(
-          @agent.model, @session.phase,
-          last_ok: @last_ok, violations: @violations
+          @agent.model,
+          @session.phase,
+          last_ok: @last_ok,
+          violations: @violations
         )
-      rescue StandardError => scan_error
-        @bus&.publish("cli:warn", message: scan_error.message)
+      rescue StandardError => e
+        @bus&.publish("cli:warn", message: e.message)
       end
     end
 
-    def build_chunk_handler(accumulated_buffer)
+    def build_chunk_handler(buffer)
       lambda do |chunk|
         text = chunk.respond_to?(:content) ? chunk.content.to_s : chunk.to_s
         next if text.empty?
+
         yield text
-        accumulated_buffer << text
+        buffer << text
       end
     end
 
     def print_thinking_indicator
       return unless $stdout.isatty
+
       print @renderer.render("thinking...", mode: :dim)
       $stdout.flush
     rescue StandardError
@@ -318,7 +344,7 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
       else
         print "\r\e[K" if $stdout.isatty
         value = ok.value
-        text  = value.is_a?(Hash) && value[:rendered] ? value[:rendered] : value.to_s
+        text = value.is_a?(Hash) && value[:rendered] ? value[:rendered] : value.to_s
         puts text
         speak_async(text) if @tts_on
       end
@@ -334,10 +360,10 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
 
         played = try_paplay(audio_path) || try_direct(audio_path)
         @bus&.publish("tts:warn", message: "no audio output found") unless played
-      rescue StandardError => tts_error
-        @bus&.publish("tts:error", message: tts_error.message)
+      rescue StandardError => e
+        @bus&.publish("tts:error", message: e.message)
       ensure
-        File.unlink(audio_path) rescue StandardError if defined?(audio_path) && audio_path
+        File.unlink(audio_path) rescue nil if defined?(audio_path) && audio_path
       end
     end
 
@@ -348,10 +374,10 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
     end
 
     def try_paplay(audio_path)
-      paplay = PAPLAY_CANDIDATES.find { |candidate| File.executable?(candidate) }
+      paplay = PAPLAY_CANDIDATES.find { |c| File.executable?(c) }
       return false unless paplay
 
-      ffmpeg = FFMPEG_CANDIDATES.find { |candidate| File.executable?(candidate) }
+      ffmpeg = FFMPEG_CANDIDATES.find { |c| File.executable?(c) }
       return false unless ffmpeg
 
       socket = ensure_pulse_socket
@@ -370,7 +396,7 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
 
       ENV["PULSE_SERVER"] = "unix:#{socket}"
       played = system(paplay, wav_path, out: File::NULL, err: File::NULL)
-      File.unlink(wav_path) rescue StandardError
+      File.unlink(wav_path) rescue nil
       played
     end
 
@@ -383,21 +409,28 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
         PULSE_DAEMON,
         "--load=module-alsa-sink device=default",
         "--load=module-native-protocol-unix auth-anonymous=1 socket=#{PULSE_SOCKET}",
-        "--daemonize", "--exit-idle-time=60",
-        out: File::NULL, err: File::NULL
+        "--daemonize",
+        "--exit-idle-time=60",
+        out: File::NULL,
+        err: File::NULL
       )
       sleep 0.6
       File.exist?(PULSE_SOCKET) ? PULSE_SOCKET : nil
     end
 
     def try_direct(audio_path)
-      player = %w[aucat mpv ffplay aplay].find { |candidate| system("command -v #{candidate} > /dev/null 2>&1") }
+      player = %w[aucat mpv ffplay aplay].find { |c| system("command -v #{c} > /dev/null 2>&1") }
       case player
-      when "aucat"  then system("aucat",  "-i", audio_path, out: File::NULL, err: File::NULL)
-      when "mpv"    then system("mpv",    "--no-video", "--really-quiet", audio_path, out: File::NULL, err: File::NULL)
-      when "ffplay" then system("ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", audio_path, out: File::NULL, err: File::NULL)
-      when "aplay"  then system("aplay",  "-q", audio_path, out: File::NULL, err: File::NULL)
-      else false
+      when "aucat"
+        system("aucat", "-i", audio_path, out: File::NULL, err: File::NULL)
+      when "mpv"
+        system("mpv", "--no-video", "--really-quiet", audio_path, out: File::NULL, err: File::NULL)
+      when "ffplay"
+        system("ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", audio_path, out: File::NULL, err: File::NULL)
+      when "aplay"
+        system("aplay", "-q", audio_path, out: File::NULL, err: File::NULL)
+      else
+        false
       end
     end
 
@@ -421,12 +454,12 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
         puts @renderer.render("staging not enabled", mode: :dim)
         return
       end
-      id    = (args.first.nil? || args.first == "all") ? :all : args.first.to_i
-      paths = @diff_stager.apply(id:)
+      id = (args.first.nil? || args.first == "all") ? :all : args.first.to_i
+      paths = @diff_stager.apply(id: id)
       if paths.empty?
         puts @renderer.render("nothing to apply", mode: :dim)
       else
-        paths.each { |applied_path| puts @renderer.render("applied: #{applied_path.sub(@root + "/", "")}", mode: :success) }
+        paths.each { |p| puts @renderer.render("applied: #{p.sub(@root + "/", "")}", mode: :success) }
       end
     end
 
@@ -435,12 +468,12 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
         puts @renderer.render("staging not enabled", mode: :dim)
         return
       end
-      id    = (args.first.nil? || args.first == "all") ? :all : args.first.to_i
-      paths = @diff_stager.discard(id:)
+      id = (args.first.nil? || args.first == "all") ? :all : args.first.to_i
+      paths = @diff_stager.discard(id: id)
       if paths.empty?
         puts @renderer.render("nothing to discard", mode: :dim)
       else
-        paths.each { |discarded_path| puts @renderer.render("discarded: #{discarded_path.sub(@root + "/", "")}", mode: :warning) }
+        paths.each { |p| puts @renderer.render("discarded: #{p.sub(@root + "/", "")}", mode: :warning) }
       end
     end
 
@@ -449,41 +482,40 @@ SEVERITY_ICON = { error: "\!\!", warning: "\!", style: ".", critical: "\!\!" }.f
         begin
           Zeitwerk::Loader.for_gem.reload
           puts "\n#{@renderer.render('reloaded', mode: :success)}"
-        rescue => reload_err
-          puts "\n#{@renderer.render("reload failed: #{reload_err.message}", mode: :error)}"
+        rescue StandardError => e
+          puts "\n#{@renderer.render("reload failed: #{e.message}", mode: :error)}"
         end
       end
-      trap("INT") {
+      trap("INT") do
         now = Time.now.to_f
         if now - @interrupt_at < 1.0
           @scan_thread&.kill
-          @session.save!
+          @session.save! if @session.respond_to?(:save!)
           exit(0)
         else
           @interrupt_at = now
-          puts "\n#{@renderer.render("^C again to quit", mode: :warning)}"
+          puts "\n#{@renderer.render('^C again to quit', mode: :warning)}"
         end
-      }
+      end
     end
 
     def help_text
       pastel = Pastel.new
-      lines = [
+      [
         "",
         pastel.bold.cyan(" what I can do "),
         "",
-        "  #{pastel.cyan("refactor")} #{pastel.white("lib/")}              -- sweep and rewrite every file",
-        "  #{pastel.cyan("fix all violations")}            -- autoloop until scan is clean",
-        "  #{pastel.cyan("use multiple perspectives")}     -- council deliberation on the next response",
-        "  #{pastel.cyan("how many tokens have I used")}  -- show context size and estimated cost",
-        "  #{pastel.cyan("undo that")}                     -- revert the last file change",
-        "  #{pastel.cyan("save")} / #{pastel.cyan("clear")} / #{pastel.cyan("exit")}         -- session management",
+        "  #{pastel.cyan('refactor')} #{pastel.white('lib/')}              -- sweep and rewrite every file",
+        "  #{pastel.cyan('fix all violations')}            -- autoloop until scan is clean",
+        "  #{pastel.cyan('use multiple perspectives')}     -- council deliberation on the next response",
+        "  #{pastel.cyan('how many tokens have I used')}  -- show context size and estimated cost",
+        "  #{pastel.cyan('undo that')}                     -- revert the last file change",
+        "  #{pastel.cyan('save')} / #{pastel.cyan('clear')} / #{pastel.cyan('exit')}         -- session management",
         "",
-        "  #{pastel.dim("or just talk -- intent is inferred automatically.")}",
-        "  #{pastel.dim("explicit: /scan /scan deep /explain /persona /sweep /autoloop /council /tts /tokens /undo /save /clear /exit")}",
-        "",
-      ]
-      lines.join("\n")
+        "  #{pastel.dim('or just talk -- intent is inferred automatically.')}",
+        "  #{pastel.dim('explicit: /scan /scan deep /explain /persona /sweep /autoloop /council /tts /tokens /undo /save /clear /exit')}",
+        ""
+      ].join("\n")
     end
   end
 end

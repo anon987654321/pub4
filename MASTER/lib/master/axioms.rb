@@ -3,32 +3,44 @@
 require 'yaml'
 
 module Master
-  # Loads kernel rules and philosophy from data/axioms.yml.
-  # Also loads data/workflow.yml — operational norms for editing, scanning, and fixing.
-  # Single source of truth: personality, scan, and LLM prompts all draw from here.
+  # Central source for kernel axioms, philosophy, and workflow rules.
+  # All data is loaded once (optionally from a custom root) and frozen
+  # to guarantee immutability and fast repeated access.
   class Axioms
     DATA_PATH     = File.join(File.expand_path('../../..', __dir__), 'data', 'axioms.yml').freeze
     WORKFLOW_PATH = File.join(File.expand_path('../../..', __dir__), 'data', 'workflow.yml').freeze
 
     def initialize(root: nil)
-      axioms_path   = root ? File.join(root, 'data', 'axioms.yml')   : DATA_PATH
-      workflow_path = root ? File.join(root, 'data', 'workflow.yml') : WORKFLOW_PATH
-      @data         = File.exist?(axioms_path)   ? YAML.safe_load_file(axioms_path)   : {}
-      @workflow     = File.exist?(workflow_path) ? YAML.safe_load_file(workflow_path) : {}
-    rescue StandardError
-      @data     = {}
-      @workflow = {}
+      @axioms_path   = root ? File.join(root, 'data', 'axioms.yml')   : DATA_PATH
+      @workflow_path = root ? File.join(root, 'data', 'workflow.yml') : WORKFLOW_PATH
+      @data          = load_yaml(@axioms_path)   || {}
+      @workflow      = load_yaml(@workflow_path) || {}
     end
 
-    def kernel   = @data.fetch('kernel', {})
-    def workflow  = @workflow
+    # Public API ---------------------------------------------------------
 
-    # Philosophy items sorted ascending by priority number (1 = highest priority).
+    def kernel
+      @kernel ||= (@data['kernel'] || {}).freeze
+    end
+
+    def workflow
+      @workflow.freeze
+    end
+
+    # Returns philosophy items sorted by ascending priority.
+    # If +limit+ is provided, only that many items are returned.
     def philosophy(limit: nil)
-      items = (@data.dig('philosophy', 'prioritized_top_25') || [])
-              .sort_by { |a| a['priority'].to_i }
-      limit ? items.first(limit) : items
+      @philosophy ||= begin
+        items = (@data.dig('philosophy', 'prioritized_top_25') || [])
+        items
+          .map { |h| h.transform_keys(&:to_s) }
+          .sort_by { |h| h['priority'].to_i }
+          .freeze
+      end
+      limit ? @philosophy.first(limit) : @philosophy
     end
+
+    # Formatted blocks for display (e.g. in prompts) --------------------
 
     def kernel_block
       return nil if kernel.empty?
@@ -38,23 +50,41 @@ module Master
     end
 
     def philosophy_block(limit: 5)
-      items = philosophy(limit:)
+      items = philosophy(limit: limit)
       return nil if items.empty?
 
       top = items.map { |a| "  #{a['id']}: #{a['statement']}" }.join("\n")
       "## Core Philosophy (top #{items.size})\n#{top}"
     end
 
-    # Workflow rule lookup — e.g. axioms.workflow_rule("file_reading")
+    # Workflow rule lookup ------------------------------------------------
+
     def workflow_rule(key)
       @workflow.dig(key.to_s) || {}
     end
 
+    # General lookup -------------------------------------------------------
+
     def lookup(id)
-      kernel[id.to_s] ||
-        philosophy.find { |a| a['id'] == id.to_s }&.dig('statement')
+      id_str = id.to_s
+      kernel[id_str] ||
+        philosophy.find { |a| a['id'] == id_str }&.dig('statement')
     end
 
-    def empty? = @data.empty?
+    def empty?
+      @data.empty?
+    end
+
+    # ---------------------------------------------------------------------
+
+    private
+
+    def load_yaml(path)
+      return nil unless File.exist?(path)
+
+      YAML.safe_load_file(path, permitted_classes: [], permitted_symbols: [], aliases: true)
+    rescue StandardError
+      nil
+    end
   end
 end
