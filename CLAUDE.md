@@ -10,6 +10,31 @@ claude --dangerously-skip-permissions
 
 ---
 
+## Session Startup (mandatory)
+
+Before any coding work:
+1. `cat ~/pub4/MASTER/data/axioms.yml` -- kernel axioms and philosophy
+2. `cat ~/pub4/MASTER/data/constitution.yml` -- golden rule, communication style, banned output
+3. `cat ~/pub4/MASTER/data/language_rules.yml` -- Ruby/zsh/OpenBSD rules, banned commands
+4. `cat ~/pub4/MASTER/data/workflow.yml` -- READ_BEFORE_WRITE, scan depths, anti-sprawl
+5. `cat ~/pub4/MASTER/data/standing_orders.yml` -- current FSM state (UNCHANGE / REFACTOR / etc.)
+
+**Communication style: openbsd_dmesg** -- structured multi-line output, no headlines, no bullet lists without content, no hedging, no sycophancy.
+
+**Banned in zsh scripts and SSH commands:** sed, awk, tr, grep, cut, head, tail, find, wc, sudo, perl, ruby (in zsh), dd, xargs
+Use: zsh builtins, parameter expansion, `doas` for privilege, Ruby scripts for complex logic.
+
+**Use MASTER's own scan before external analysis:**
+`eval "$(grep '^export' ~/.zshrc)" && cd ~/pub4/MASTER && echo "/scan deep lib/" | bundle exec ruby exe/master`
+Do not use external agents to find code issues when MASTER can scan itself.
+
+**SSH file editing pattern (safe):**
+Write script to /tmp: `doas tee /tmp/patch.rb <<'EOF' ... EOF`
+Run it: `ruby /tmp/patch.rb`
+Never use `ruby -i` with heredoc -- will empty file on script error.
+
+---
+
 ## Environment
 
 | | |
