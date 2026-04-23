@@ -894,6 +894,8 @@ EOF
 
       print -r -- "  alternative names {" >> /etc/acme-client.conf
 
+      print -r -- "    ${domain}" >> /etc/acme-client.conf
+
       for subdomain in ${(s:,:)subdomains}; do
 
         print -r -- "    ${subdomain}.${domain}" >> /etc/acme-client.conf
