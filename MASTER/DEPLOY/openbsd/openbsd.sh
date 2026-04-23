@@ -535,9 +535,17 @@ stage_1() {
   log INFO "Starting Stage 1: DNS and Certificates"
 
   # Check disk space
-  (( $(df -k / | awk 'NR==2 {print $4}') < 100000 )) && {
+  (( $(df -k / | awk 'NR==2 {print $4}') < 10000 )) && {
 
     log ERROR "Insufficient disk space on /"
+
+    exit 1
+
+  }
+
+  (( $(df -k /var | awk 'NR==2 {print $4}') < 512000 )) && {
+
+    log ERROR "Insufficient disk space on /var"
 
     exit 1
 
