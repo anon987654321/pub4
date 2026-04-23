@@ -113,7 +113,7 @@ module Master
     def execute_order(order)
       return Result.err("no pipeline") unless @pipeline
       @pipeline.call(Result.ok(user_message: order["command"].to_s))
-    rescue => e
+    rescue StandardError => e
       Result.err(e.message)
     end
 
@@ -133,7 +133,7 @@ module Master
       else
         BUILTIN_ORDERS.map { |o| o.transform_keys(&:to_s).merge("last_run_at" => 0, "state" => "pending") }
       end
-    rescue
+    rescue Psych::Exception, Errno::ENOENT
       []
     end
 

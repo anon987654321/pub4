@@ -7,7 +7,7 @@ module Master
   class Session
     TOKENS_PER_CHAR  = 4
     SESSION_NAME_MAX = 40
-    COSTS_MAX_BYTES  = 100 * 1024  # 100KB
+    COSTS_MAX_BYTES  = 102_400     # 100 KB
 
     attr_reader :name, :messages, :cost, :phase, :snapshots
 
@@ -76,7 +76,9 @@ module Master
     end
 
     def rotate_costs!
-      lines = File.readlines(@costs_path) rescue []
+      return unless File.exist?(@costs_path)
+
+      lines = File.readlines(@costs_path)
       # Keep the most recent half of the lines
       keep  = lines.last([lines.size / 2, 1].max)
       File.write(@costs_path, keep.join)

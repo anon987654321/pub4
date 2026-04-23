@@ -5,11 +5,13 @@ require 'fileutils'
 
 module Master
   class Config
+    DEFAULT_WEB_PORT = 10_002
+
     DEFAULTS = {
       'model'          => 'meta-llama/llama-3.3-70b-instruct:free',
       'web_host'       => '0.0.0.0',
       'web_public_url' => 'http://ai.brgen.no:3000',
-      'web_port'       => 10_002,
+      'web_port'       => DEFAULT_WEB_PORT,
       'budget_max'     => 10.0,
       'req_max'        => 1.0,
       'trace'          => 0,

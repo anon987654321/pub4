@@ -46,7 +46,7 @@ module Master
     # stage order. Errors in individual stages are non-fatal — they are
     # attached as `ctx[:_parallel_errors]` and execution continues.
     class ParallelGroup
-      TIMEOUT_S = 30
+      PARALLEL_TIMEOUT_S = 30
 
       def initialize(*stages)
         @stages = stages
@@ -57,7 +57,7 @@ module Master
         threads    = @stages.map { |s| Thread.new { s.call(frozen_ctx) } }
 
         results = threads.each_with_index.map do |t, i|
-          if t.join(TIMEOUT_S)
+          if t.join(PARALLEL_TIMEOUT_S)
             t.value
           else
             t.kill rescue nil
@@ -70,7 +70,7 @@ module Master
         merged  = merged.merge(_parallel_errors: errors) unless errors.empty?
 
         Result.ok(merged)
-      rescue => e
+      rescue StandardError => e
         Result.ok(ctx.merge(_parallel_errors: [e.message]))
       end
     end

@@ -24,7 +24,7 @@ module Master
         text = user_text(ctx)
         scan_for_memories(text) if text && !text.empty?
         Result.ok(ctx)
-      rescue => e
+      rescue StandardError => e
         @bus&.publish("memo:error", message: e.message)
         Result.ok(ctx)
       end
