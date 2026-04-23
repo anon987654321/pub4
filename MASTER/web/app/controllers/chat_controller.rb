@@ -3,7 +3,7 @@
 require "shellwords"
 
 class ChatController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:message, :tts]
+  skip_before_action :verify_authenticity_token, only: [:message, :tts, :speak]
 
   def index
     @model = container[:agent].model.to_s.split("/").last
@@ -89,6 +89,13 @@ class ChatController < ApplicationController
       end
       sse.close
     end
+  end
+
+  def speak
+    text = params[:text].to_s.strip
+    return head(:bad_request) if text.empty?
+    container[:bus].publish("speak:text", { text: text })
+    head :ok
   end
 
   def tts
