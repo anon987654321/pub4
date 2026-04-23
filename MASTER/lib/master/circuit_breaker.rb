@@ -26,7 +26,9 @@ module Master
       @state         = :closed
       @session_total = 0.0
       @req_times     = []
-      @mutex         = Mutex.new
+      # Previously initialized an unused @mutex alongside MonitorMixin's
+      # synchronize. Dead code removed — MonitorMixin#synchronize is the
+      # single lock mechanism here.
     end
 
     # Per-message rate check — call once per user request, not per model fallback.
@@ -51,6 +53,9 @@ module Master
 
     def record_cost(amount)  = synchronize { @session_total += amount }
     def session_total        = synchronize { @session_total }
+
+    # Exposed for tests and /config command.
+    def state = synchronize { @state }
 
     private
 

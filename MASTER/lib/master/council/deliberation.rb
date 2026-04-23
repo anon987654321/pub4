@@ -12,11 +12,13 @@ module Master
       def review(code, context: nil)
         feedback = @personas.map { |persona|
           response = @agent.ask(build_prompt(persona, code, context))
-          { persona: persona.name, role: persona.role, feedback: response }
+          { persona: persona.name, role: persona.role, veto_role: veto_role?(persona), feedback: response }
         }
 
-        vetoes = feedback.select { |f| f[:persona] == "Security" && veto?(f[:feedback]) }
-        return Result.err("council: Security veto\n#{vetoes.first[:feedback]}", category: :validation) if vetoes.any?
+        # Check veto on any persona flagged with veto_role, not on name.
+        # Multiple security-tier personas can now all hold veto power.
+        vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
+        return Result.err("council: veto from #{vetoes.first[:persona]}\n#{vetoes.first[:feedback]}", category: :validation) if vetoes.any?
 
         Result.ok(feedback)
       rescue => e
@@ -25,12 +27,17 @@ module Master
 
       private
 
-      def build_prompt(persona, code, context)
-        ctx = context ? "\nContext: #{context}\n" : ""
-        "You are #{persona.name} (#{persona.role}, bias: #{persona.bias}).#{ctx}\n#{persona.prompt}\n\nCode:\n#{code}\n\nProvide terse, actionable feedback. Flag VETO: at the start if this must not ship."
+      def veto_role?(persona)
+        persona.respond_to?(:veto?) ? persona.veto? : persona.respond_to?(:veto_role) && persona.veto_role
       end
 
-      def veto?(feedback)
+      def build_prompt(persona, code, context)
+        ctx = context ? "\nContext: #{context}\n" : ""
+        veto_hint = veto_role?(persona) ? " You may prefix VETO: if this must not ship." : ""
+        "You are #{persona.name} (#{persona.role}, bias: #{persona.bias}).#{ctx}\n#{persona.prompt}\n\nCode:\n#{code}\n\nProvide terse, actionable feedback.#{veto_hint}"
+      end
+
+      def veto_text?(feedback)
         feedback.to_s.strip.start_with?("VETO:")
       end
     end

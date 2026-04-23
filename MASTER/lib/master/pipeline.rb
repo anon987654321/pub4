@@ -1,14 +1,23 @@
 # frozen_string_literal: true
 
 module Master
+  # Pipeline — Result-monadic stage chain.
+  #
+  # Adds lightweight rollback: if a stage raises a dangerous error category
+  # AND a git-backed workspace exists, reset the working tree before
+  # returning the error. Safe for non-git contexts (Sweep, tests) via the
+  # dirty? check.
   class Pipeline
+    ROLLBACK_CATEGORIES = %i[validation axiom_violation].freeze
+
     attr_reader :last_timings
 
-    def initialize(stages, bus: nil, trace: false)
+    def initialize(stages, bus: nil, trace: false, root: nil, event_bus: nil)
       @stages = stages
       @last_timings = {}
-      @bus   = bus
+      @bus   = bus || event_bus
       @trace = trace
+      @root  = root
     end
 
     # Run stages in sequence. Each stage's elapsed time is accumulated in
@@ -29,7 +38,7 @@ module Master
             res
           end
         end
-      end
+      end.tap { |final| maybe_rollback(final) }
     end
 
     # Group of stages that run concurrently and merge their ctx contributions.
@@ -67,6 +76,25 @@ module Master
     end
 
     private
+
+    def maybe_rollback(result)
+      return unless result.respond_to?(:err?) && result.err?
+      return unless ROLLBACK_CATEGORIES.include?(result.category)
+      return unless @root && git_workspace?
+      return unless dirty?
+
+      @bus&.publish("pipeline:rollback", category: result.category, message: result.message[0, 120])
+      system("git -C #{@root} reset --hard HEAD", out: File::NULL, err: File::NULL)
+    end
+
+    def git_workspace?
+      @root && Dir.exist?(File.join(@root, ".git"))
+    end
+
+    def dirty?
+      out = `git -C #{@root} status --porcelain 2>/dev/null`
+      !out.to_s.strip.empty?
+    end
 
     def stage_label(stage)
       stage.class.name.split("::").last

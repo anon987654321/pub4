@@ -8,13 +8,20 @@ module Master
   # Cycle: scan lib+test at standard depth → collect violations by severity →
   # LLM fix (full file, no truncation) → size guard → syntax check → write → commit.
   # Stops when clean or max_cycles reached.
+  #
+  # Retry strategy is Reflexion-style (MANTRA/RefAgent):
+  # on rate-limit or transient failure, the failing prompt plus error summary
+  # are fed back in a second attempt. Raw retries alone hit ~45% test-pass
+  # in RefAgent; self-reflection lifts it to ~90%.
+  #
+  # Ref: arxiv:2503.14340 (MANTRA), arxiv:2511.03153 (RefAgent).
   class AutoLoop
     MAX_CYCLES       = 12
     BATCH_SIZE       = 3
-    RATE_LIMIT_SLEEP = 15   # seconds to sleep on 429 before retrying
+    RATE_LIMIT_SLEEP = 15     # single source of truth — no more hardcoded `sleep 15`
     MAX_FIX_RETRIES  = 3
-    MIN_SIZE_RATIO   = 0.80 # reject fix if output < 80% of original file size
-    MAX_FILE_BYTES   = 4_000 # skip files too large to rewrite safely (LLM token limit)
+    MIN_SIZE_RATIO   = 0.80   # reject fix if output < 80% of original file size
+    MAX_FILE_BYTES   = 16_000 # raised from 4_000 so core files (agent.rb, cli.rb) are fixable
 
     # Rules that cannot be safely auto-fixed by rewriting a single file.
     # duplicate_code requires cross-file refactoring; conceptual/adversarial are LLM-only.
@@ -22,6 +29,10 @@ module Master
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
+
+    # Transient error signatures that should trigger a reflected retry
+    # rather than abandon the fix. 429 = rate limit, 503 = overload.
+    TRANSIENT_RE = /429|throttl|rate.?limit|high demand|provider.?error|overload|capacity|503/i.freeze
 
     def initialize(agent:, scanner:, council:, root:, event_bus: nil, soul: nil)
       @agent          = agent
@@ -50,7 +61,7 @@ module Master
         yield cycle, violations if block_given?
 
         violations.first(BATCH_SIZE).each_with_index do |v, idx|
-          sleep 15 unless idx.zero?  # pace to 4 req/min for free-tier stability
+          sleep RATE_LIMIT_SLEEP unless idx.zero?  # pace for free-tier stability
           fix = request_fix(v)
           apply_fix(v[:file], fix) if fix
         end
@@ -81,7 +92,7 @@ track_recurrence(violations)
 
     # Request a fix from the LLM. Sends FULL file — never truncates.
     # Skips files > MAX_FILE_BYTES (LLM output would be truncated, risking corruption).
-    # Retries up to MAX_FIX_RETRIES on rate limit (429).
+    # Retries up to MAX_FIX_RETRIES with a reflection step on transient errors.
     def request_fix(violation)
       path = File.join(@root, violation[:file])
       return nil unless File.exist?(path)
@@ -93,32 +104,43 @@ track_recurrence(violations)
         return nil
       end
 
-      src = File.read(path, encoding: "UTF-8")
-
-      prompt = "Fix this Ruby violation in #{violation[:file]}.\n" \
-               "Rule: #{violation[:rule]}\n" \
-               "Issue: #{violation[:message]} (line #{violation[:line]})\n\n" \
-               "Return ONLY the corrected Ruby file content, no explanation.\n\n" \
-               "```ruby\n#{src}\n```"
+      src         = File.read(path, encoding: "UTF-8")
+      base_prompt = build_fix_prompt(violation, src)
+      last_error  = nil
 
       MAX_FIX_RETRIES.times do |attempt|
-        sleep 15 if attempt > 0  # respect free-tier rate limit between retries
+        sleep RATE_LIMIT_SLEEP * attempt if attempt > 0
         begin
+          # On retries, inject the last error as a reflection prefix.
+          prompt = attempt.zero? ? base_prompt : reflected_prompt(base_prompt, last_error, attempt)
           return extract_code(@agent.ask(prompt).to_s)
         rescue StandardError => e
-          msg = e.message.to_s
-          if (msg.match?(/429|throttl|rate.?limit|high demand|provider.?error|overload|capacity|503/i)) &&
-             attempt < MAX_FIX_RETRIES - 1
-            sleep_sec = RATE_LIMIT_SLEEP * (attempt + 1)
-            @bus&.publish("autoloop:rate_limit", sleep: sleep_sec, attempt: attempt + 1)
-            sleep sleep_sec
+          last_error = e.message.to_s
+          if TRANSIENT_RE.match?(last_error) && attempt < MAX_FIX_RETRIES - 1
+            @bus&.publish("autoloop:rate_limit", sleep: RATE_LIMIT_SLEEP * (attempt + 1), attempt: attempt + 1)
           else
-            @bus&.publish("autoloop:fix_error", file: violation[:file], error: msg[0, 120])
+            @bus&.publish("autoloop:fix_error", file: violation[:file], error: last_error[0, 120])
             return nil
           end
         end
       end
       nil
+    end
+
+    def build_fix_prompt(violation, src)
+      "Fix this Ruby violation in #{violation[:file]}.\n" \
+        "Rule: #{violation[:rule]}\n" \
+        "Issue: #{violation[:message]} (line #{violation[:line]})\n\n" \
+        "Return ONLY the corrected Ruby file content, no explanation.\n\n" \
+        "```ruby\n#{src}\n```"
+    end
+
+    # Reflexion-style prefix: tell the model the prior attempt failed and why.
+    # Directly inspired by arxiv:2503.14340 (MANTRA Repair Agent).
+    def reflected_prompt(base, last_error, attempt)
+      "Prior attempt (#{attempt}) failed with: #{last_error[0, 200]}\n" \
+        "Reflect briefly on what went wrong, then retry.\n\n" \
+        "#{base}"
     end
 
     def extract_code(text)
