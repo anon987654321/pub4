@@ -1,19 +1,9 @@
 # frozen_string_literal: true
 
-Encoding.default_external = Encoding::UTF_8
-Encoding.default_internal = Encoding::UTF_8
-
-$LOAD_PATH.unshift File.expand_path("../../../../lib", __FILE__)
-require "master"
 require "shellwords"
 
 class ChatController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:message, :tts]
-
-  @@container        = nil
-  @@mutex            = Mutex.new
-  @@start_ms         = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i
-  @@scheduler_thread = nil
 
   def index
     @model = container[:agent].model.to_s.split("/").last
@@ -34,7 +24,7 @@ class ChatController < ApplicationController
       model:            c[:agent].model.to_s.split("/").last,
       tokens:           c[:session].respond_to?(:token_est) ? c[:session].token_est : 0,
       cost:             "$%.4f" % (c[:session].respond_to?(:cost) ? c[:session].cost : 0.0),
-      uptime:           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - @@start_ms),
+      uptime:           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
       repo_dirty_count: dirty,
       open_breakers:    open_models
     }
@@ -114,33 +104,5 @@ class ChatController < ApplicationController
   rescue => e
     logger.error "TTS failed: #{e.message}"
     head :service_unavailable
-  end
-
-  private
-
-  def container
-    @@mutex.synchronize do
-      @@container ||= Master.build(root: Rails.root.join("..").to_s).tap { |c| start_scheduler(c) }
-    end
-  end
-
-  def start_scheduler(c)
-    return if @@scheduler_thread&.alive?
-    @@scheduler_thread = Thread.new do
-      sleep 300 # wait 5 min after boot before first check
-      loop do
-        begin
-          due = c[:standing].due
-          if due.any?
-            results = c[:standing].run_due!
-            results.each { |r| c[:bus].publish("scheduler:ran", name: r[:name]) rescue nil }
-          end
-        rescue StandardError
-          # swallow — never crash the scheduler
-        end
-        sleep 900 # check every 15 min
-      end
-    end
-    @@scheduler_thread.abort_on_exception = false
   end
 end

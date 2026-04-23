@@ -20,7 +20,7 @@
 #   scan:complete         → stabilization flash
 #   autoloop:cycle        → rotation increment
 #   sweep:cycle           → slow rotation
-#   pipeline:rollback     → red glitch (from new Pipeline rollback)
+#   pipeline:rollback     → red glitch (from Pipeline rollback)
 class EventsController < ApplicationController
   include ActionController::Live
 
@@ -28,11 +28,11 @@ class EventsController < ApplicationController
   MAX_STREAM_S    = 600   # hard cap — 10 minute stream ceiling
 
   def stream
-    response.headers["Content-Type"]  = "text/event-stream"
-    response.headers["Cache-Control"] = "no-cache"
+    response.headers["Content-Type"]      = "text/event-stream"
+    response.headers["Cache-Control"]     = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"  # nginx passthrough
 
-    bus      = Master::Container[:bus]
+    bus      = container[:bus]
     received = Queue.new
     sub      = bus.subscribe("*") { |type, payload|
       received << { t: Time.now.to_f, type: type, data: payload }
