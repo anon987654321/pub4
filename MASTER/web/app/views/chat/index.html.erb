@@ -2154,6 +2154,32 @@ document.body.addEventListener('click',(e)=>{
     };
 
     animate();
+
+    // ── EventBus → orb reactions ──────────────────────────────────────────
+    (function(){
+      const es=new EventSource('/events/stream');
+      es.onmessage=function(e){
+        var ev;
+        try{ ev=JSON.parse(e.data); }catch(_){ return; }
+        var t=ev.type||'';
+        if(t==='llm:request'){
+          speechPulse=Math.max(speechPulse,0.55);
+          ringPulses.push({r:2,maxR:Math.min(W,H)*0.3,a:0.45,col:'#6a1a1a'});
+        }else if(t==='llm:escalation'){
+          setOrb((currentOrb+1)%orbStates.length);
+        }else if(t==='tool:used'||t==='tool:before'){
+          ringPulses.push({r:1,maxR:Math.min(W,H)*0.2,a:0.3,col:'#2a1a04'});
+        }else if(t==='pipeline:rollback'){
+          speechPulse=0.9;
+          ringPulses.push({r:2,maxR:Math.min(W,H)*0.5,a:0.7,col:'#cc1010'});
+        }else if(t==='sweep:cycle'||t==='autoloop:cycle'){
+          ringPulses.push({r:1,maxR:Math.min(W,H)*0.15,a:0.2,col:'#3d1a04'});
+        }else if(t==='scan:complete'){
+          ringPulses.push({r:1,maxR:Math.min(W,H)*0.25,a:0.35,col:'#1a3a1a'});
+        }
+      };
+      es.onerror=function(){ try{ es.close(); }catch(_){} };
+    })();
   </script>
 </body>
 </html>
