@@ -12,8 +12,6 @@ vendor/bundle
 
 # Runtime and temp files
 .session_recovery
-tmp/
-temp/
 
 # OS files
 .DS_Store
