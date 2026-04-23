@@ -17,6 +17,10 @@ module Master
 
     FFMPEG_CANDIDATES = %w[/usr/bin/ffmpeg /usr/local/bin/ffmpeg].freeze
 
+    DMESG_LINES = 50
+
+    TOGGLE_VALUES = %w[on off].freeze
+
     SEVERITY_ICON = {
       error: "!!",
       warning: "!",
@@ -41,7 +45,7 @@ module Master
       @bus         = container[:bus]
       @reader      = TTY::Reader.new(track_history: true)
       @running     = false
-      @interrupt_at = 0
+      @interrupt_at = Time.now
       @last_ok     = true
       @tts_on      = Speech.available? && @config["tts"] != false
       @violations  = 0
@@ -172,7 +176,7 @@ module Master
     end
 
     def format_dmesg_lines
-      @logging.dmesg(50).split("\n").map { |l| @renderer.format_dmesg(l) }.join("\n")
+      @logging.dmesg(DMESG_LINES).split("\n").map { |l| @renderer.format_dmesg(l) }.join("\n")
     end
 
     def toggle_staging(args)
@@ -487,13 +491,12 @@ module Master
         end
       end
       trap("INT") do
-        now = Time.now.to_f
-        if now - @interrupt_at < 1.0
+        if Time.now - @interrupt_at < 1
           @scan_thread&.kill
           @session.save! if @session.respond_to?(:save!)
           exit(0)
         else
-          @interrupt_at = now
+          @interrupt_at = Time.now
           puts "\n#{@renderer.render('^C again to quit', mode: :warning)}"
         end
       end

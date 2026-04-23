@@ -76,7 +76,7 @@ module Master
       @session.add_message(role: :assistant, content: text)
       Result.ok(text)
     rescue StandardError => chat_error
-      Result.err("agent: #{chat_error.message}", category: :unknown)
+      Result.err("agent: #{chat_error.message}", category: :handler_exception)
     end
 
     # Result-returning companion to #ask. Prefer this for pipeline stages.
@@ -85,7 +85,7 @@ module Master
       text = ask(prompt, context: context)
       Result.ok(text)
     rescue StandardError => ask_err
-      Result.err("ask: #{ask_err.message}", category: :unknown)
+      Result.err("ask: #{ask_err.message}", category: :handler_exception)
     end
 
     def ask(prompt, context: nil)
@@ -154,14 +154,15 @@ module Master
       return last_response unless @model_router
       return last_response if escalation_attempted
 
+      current = routed_models.first
       escalation_model = @model_router.escalate_if_low_confidence(
         last_response.to_s,
-        current_model: routed_models.first,
+        current_model: current,
         task_type: @config.task_type.to_sym
       )
       return last_response unless escalation_model
 
-      @bus&.publish("llm:escalation", from: routed_models.first, to: escalation_model)
+      @bus&.publish("llm:escalation", from: current, to: escalation_model)
       # Recursively call chat with the escalated model and mark escalation as attempted.
       escalated_result = chat(
         original_message,

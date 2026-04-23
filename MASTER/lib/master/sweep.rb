@@ -150,7 +150,8 @@ module Master
 
       response = @agent.ask(build_prompt(src, rel, lang))
       extract(response.to_s, lang)
-    rescue StandardError
+    rescue StandardError => e
+      @bus&.publish("sweep:rewrite_error", file: path, error: e.message)
       nil
     end
 

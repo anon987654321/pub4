@@ -9,8 +9,8 @@ module Master
         return Result.err("execute: no handler", category: :validation) unless handler
 
         Result.ok(ctx.merge(output: handler.call(ctx)))
-      rescue => e
-        Result.err("execute: #{e.message}", category: :unknown)
+      rescue StandardError => e
+        Result.err("execute: #{e.message}", category: :handler_exception)
       end
     end
   end

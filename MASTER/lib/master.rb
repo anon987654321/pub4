@@ -7,6 +7,16 @@ module Master
 
   MIN_API_KEY_LENGTH = 20
 
+
+CTX_WINDOW_SIZE = 200_000
+
+VIOLATION_TRUNCATE = 90
+
+FILE_LANGUAGE_MAP = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
+                       ".js" => "javascript", ".json" => "json", ".sh" => "bash",
+                       ".zsh" => "bash", ".md" => "markdown", ".html" => "html",
+                       ".erb" => "erb", ".css" => "css" }.freeze
+
   API_KEY_PROVIDERS = {
     anthropic_api_key:  "ANTHROPIC_API_KEY",
     openai_api_key:     "OPENAI_API_KEY",
@@ -76,7 +86,7 @@ module Master
     soul_doc = Soul.new(root:, agent:)
     tools << Tools::AskLlm.new(agent:, governor:, circuit_breaker: breaker, cache:, event_bus: bus)
 
-    ctx_window = ContextWindow.new(session:, agent:, model_context: 200_000)
+    ctx_window = ContextWindow.new(session:, agent:, model_context: CTX_WINDOW_SIZE)
     ctx_window.check_and_compact!
     agent.wire_context_window(ctx_window)
 
@@ -340,7 +350,7 @@ module Master
         total = by_rule.values.sum(&:size)
         next "clean -- no violations" if total.zero?
         lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
-          ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, 90]}" }
+          ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, VIOLATION_TRUNCATE]}" }
         end
         lines << "#{total} total violations"
         lines.join("\n")
@@ -440,20 +450,16 @@ module Master
       "snapshot" => ->(ctx) {
         stamp    = Time.now.strftime("%Y%m%d_%H%M%S")
         out      = File.expand_path("~/master_snapshot_#{stamp}.md")
-        lang_map = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
-                     ".js" => "javascript", ".json" => "json", ".sh" => "bash",
-                     ".zsh" => "bash", ".md" => "markdown", ".html" => "html",
-                     ".erb" => "erb", ".css" => "css" }
         dirs  = %w[exe lib/master web/app web/config data].map { |d| File.join(root, d) }
         files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
-                    .select { |f| File.file?(f) && File.size(f) < 200_000 }
+                    .select { |f| File.file?(f) && File.size(f) < CTX_WINDOW_SIZE }
                     .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
                     .reject { |f| File.binread(f, 512).include?("\x00") rescue true }
                     .sort
         lines = ["# MASTER Codebase Snapshot", "Generated: #{Time.now.utc.iso8601}", ""]
         files.each do |f|
           rel  = f.sub("#{root}/", "")
-          lang = lang_map.fetch(File.extname(f).downcase, "text")
+          lang = FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
           src  = File.read(f, encoding: "UTF-8", invalid: :replace)
           lines << "## #{rel}" << "```#{lang}" << src.rstrip << "```" << ""
         rescue StandardError => e
