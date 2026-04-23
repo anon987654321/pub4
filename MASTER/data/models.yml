@@ -38,7 +38,7 @@ model_defs:
     <<: *model_defaults
     score: { quality: 0.73, speed: 0.55, cost: 1.0 }
   gemini_flash: &gemini_flash
-    id: gemini-2.5-flash
+    id: gemini-2.0-flash
     <<: *model_defaults
     score: { quality: 0.85, speed: 0.90, cost: 0.95 }
   claude_sonnet: &claude_sonnet
@@ -53,6 +53,10 @@ model_defs:
     id: nvidia/nemotron-3-super-120b-a12b:free
     <<: *model_defaults
     score: { quality: 0.90, speed: 0.75, cost: 1.0 }
+qwen3_next: &qwen3_next
+  id: qwen/qwen3-next-80b-a3b-instruct:free
+  <<: *model_defaults
+  score: { quality: 0.80, speed: 0.70, cost: 1.0 }
   gpt_oss: &gpt_oss
     id: openai/gpt-oss-120b:free
     <<: *model_defaults
@@ -60,9 +64,9 @@ model_defs:
 
 models:
   default:
-    - *llama_70b
+    - *nemotron_super
     - *qwen_coder
-    - *deepseek_r1
+    - *gpt_oss
     - *gemini_flash
   strong:
     - *claude_sonnet

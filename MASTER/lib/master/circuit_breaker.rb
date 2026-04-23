@@ -64,7 +64,7 @@ module Master
       Result.err("rate_limit: #{e.message}", category: :infrastructure)
     rescue StandardError => e
       on_failure
-      Result.err("circuit: #{e.message}", category: :unknown)
+      Result.err(e.message, category: :provider_error)
     end
 
     def check_budget(estimate)
