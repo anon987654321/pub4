@@ -40,7 +40,7 @@ module Master
     bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] rescue nil }
 
     memory      = Memory.new(root:)
-    soul_doc   = Soul.new(root:, agent: nil) # agent wired after agent is built
+    soul_doc    = Soul.new(root:, agent: nil) # agent wired after agent is built
     personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT, root:)
 
     tools    = build_tools(root:, undo:, governor:, bus:, diff_stager:, code_index:)
@@ -82,7 +82,7 @@ module Master
       Stages::Intake.new,
       Stages::Infer.new,
       Stages::Route.new(
-        commands: build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, metrics:),
+        commands: build_commands(session:, undo:, logging:, config:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, cache:, metrics:),
         agent:
       ),
       Stages::Guard.new(governor:, injection_guard: guard),
@@ -95,7 +95,7 @@ module Master
 
     ctx_window = ContextWindow.new(session:, agent:, model_context: 200_000)
     ctx_window.check_and_compact!
-    agent.instance_variable_set(:@context_window, ctx_window)
+    agent.wire_context_window(ctx_window)
 
     pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true)
 
@@ -104,46 +104,46 @@ module Master
     # Wire orders + soul commands after standing/soul are built (avoids circular dep).
     route_stage = stages.find { |s| s.is_a?(Stages::Route) }
     route_stage&.add_command("orders", ->(ctx) {
-  arg = ctx[:args].to_s.strip
-  case arg
-  when "list", ""
-    standing.list
-  when /\Aenable (.+)\z/
-    standing.enable($1.strip)
-  when /\Adisable (.+)\z/
-    standing.disable($1.strip)
-  when /\Aadd name=(\S+) cmd=(.+)\z/
-    standing.upsert(name: $1, command: $2.strip)
-  when "run"
-    results = standing.run_due!
-    results.empty? ? "no orders due" : results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
-  when /\Areset (.+)\z/
-    standing.reset($1.strip)
-  else
-      "usage: /orders  /orders enable <name>  /orders disable <name>  /orders reset <name>  /orders run"
-    end
+      arg = ctx[:args].to_s.strip
+      case arg
+      when "list", ""
+        standing.list
+      when /\Aenable (.+)\z/
+        standing.enable($1.strip)
+      when /\Adisable (.+)\z/
+        standing.disable($1.strip)
+      when /\Aadd name=(\S+) cmd=(.+)\z/
+        standing.upsert(name: $1, command: $2.strip)
+      when "run"
+        results = standing.run_due!
+        results.empty? ? "no orders due" : results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
+      when /\Areset (.+)\z/
+        standing.reset($1.strip)
+      else
+        "usage: /orders  /orders enable <name>  /orders disable <name>  /orders reset <name>  /orders run"
+      end
     })
 
     route_stage&.add_command("soul", ->(ctx) {
-  arg = ctx[:args].to_s.strip
-  case arg
-  when "", "show"
-    soul_doc.summary
-  when "version", "changelog"
-    soul_doc.changelog
-  when "diff"
-    soul_doc.diff
-  when "approve"
-    soul_doc.approve
-  when "reject"
-    soul_doc.reject
-  when "rollback"
-    soul_doc.rollback
-  when /\Apropose (.+)\z/
-    soul_doc.propose($1.strip)
-  else
-      "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
-    end
+      arg = ctx[:args].to_s.strip
+      case arg
+      when "", "show"
+        soul_doc.summary
+      when "version", "changelog"
+        soul_doc.changelog
+      when "diff"
+        soul_doc.diff
+      when "approve"
+        soul_doc.approve
+      when "reject"
+        soul_doc.reject
+      when "rollback"
+        soul_doc.rollback
+      when /\Apropose (.+)\z/
+        soul_doc.propose($1.strip)
+      else
+        "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
+      end
     })
 
     {
@@ -196,16 +196,35 @@ module Master
     ]
   end
 
-  def self.build_commands(session:, undo:, logging:, config:, renderer:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, metrics: nil)
+  def self.build_commands(session:, undo:, logging:, config:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, cache:, metrics: nil)
+    build_session_commands(session:, undo:, logging:, config:)
+      .merge(build_mode_commands(config:))
+      .merge(build_agent_commands(agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, config:, metrics:))
+      .merge(build_memory_commands(memory:, agent:))
+      .merge(build_utility_commands(agent:, root:, cache:))
+      .merge(
+        "help" => ->(ctx) {
+          cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory dreams orders soul cache diff commit knowledge why snapshot explain persona help exit]
+          cmds.map { "/#{_1}" }.join("  ")
+        }
+      )
+  end
+
+  def self.build_session_commands(session:, undo:, logging:, config:)
     {
-      "clear"   => ->(ctx) { session.clear!  ; "context cleared" },
-      "save"    => ->(ctx) { session.save!   ; "session saved" },
-      "tokens"  => ->(ctx) { "~#{session.token_est} tokens" },
-      "undo"    => ->(ctx) { r = undo.undo! ; r.ok? ? "reverted: #{r.value!}" : r.message },
-      "dmesg"   => ->(ctx) { logging.dmesg },
-      "cost"    => ->(ctx) { "$#{"%.4f" % session.cost}" },
-      "config"  => ->(ctx) { config.data.inspect },
-      "mode"    => ->(ctx) {
+      "clear"  => ->(ctx) { session.clear!; "context cleared" },
+      "save"   => ->(ctx) { session.save!; "session saved" },
+      "tokens" => ->(ctx) { "~#{session.token_est} tokens" },
+      "undo"   => ->(ctx) { r = undo.undo!; r.ok? ? "reverted: #{r.value!}" : r.message },
+      "dmesg"  => ->(ctx) { logging.dmesg },
+      "cost"   => ->(ctx) { "$#{"%.4f" % session.cost}" },
+      "config" => ->(ctx) { config.data.inspect },
+    }
+  end
+
+  def self.build_mode_commands(config:)
+    {
+      "mode" => ->(ctx) {
         arg = ctx[:args].to_s.strip
         if Reasoning::Modes::SUPPORTED.include?(arg)
           config["reasoning_mode"] = arg
@@ -215,7 +234,7 @@ module Master
           "mode: #{config.reasoning_mode} (supported: #{Reasoning::Modes::SUPPORTED.join(", ")})"
         end
       },
-      "task"    => ->(ctx) {
+      "task" => ->(ctx) {
         arg = ctx[:args].to_s.strip
         if arg.empty?
           "task_type: #{config.task_type}"
@@ -233,11 +252,27 @@ module Master
         else "autotest: #{config.auto_testing? ? "on" : "off"}"
         end
       },
+      "persona" => ->(ctx) {
+        arg   = ctx[:args].to_s.strip.to_sym
+        names = Personality::PERSONAS.keys
+        if names.include?(arg)
+          config["persona"] = arg.to_s
+          config.save!
+          "persona: #{arg}"
+        else
+          "persona: #{config["persona"] || "dark_malay"} — available: #{names.join(", ")}"
+        end
+      },
+    }
+  end
+
+  def self.build_agent_commands(agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, config:, metrics:)
+    {
       "council" => ->(ctx) {
         case ctx[:args].to_s.strip
-        when "on"  then council_stage.enable!  ; "council: enabled"
-        when "off" then council_stage.disable! ; "council: disabled"
-        else "council: #{council_stage.instance_variable_get(:@enabled) ? "on" : "off"}"
+        when "on"  then council_stage.enable!;  "council: enabled"
+        when "off" then council_stage.disable!; "council: disabled"
+        else "council: #{council_stage.enabled? ? "on" : "off"}"
         end
       },
       "swarm" => ->(ctx) {
@@ -246,41 +281,29 @@ module Master
         if role.nil? || task.empty?
           "usage: /swarm <role> <task>  roles: #{swarm.worker_roles.join(", ")}"
         else
-          dispatch_result = swarm.dispatch(role, task: task, context_slice: {})
-          dispatch_result.ok? ? dispatch_result.value!.inspect : dispatch_result.message
+          result = swarm.dispatch(role, task: task, context_slice: {})
+          result.ok? ? result.value!.inspect : result.message
         end
       },
-"explain" => ->(ctx) {
-  map  = Introspection::SelfMap.new(root:)
-  info = map.describe
-  cov  = map.axiom_coverage
-  cov_lines = cov.map { |ax, n| "  #{ax}: #{n}" }.join("\n")
-  stages = "Intake→Infer→Route→Guard→Execute→Council→Lint→Prune→Memo→Render"
-  "MASTER — #{info[:files]} files, #{info[:lines]} lines\npipeline: #{stages}\n\naxiom coverage:\n#{cov_lines}"
-},
-"persona" => ->(ctx) {
-  arg   = ctx[:args].to_s.strip.to_sym
-  names = Personality::PERSONAS.keys
-  if names.include?(arg)
-    config["persona"] = arg.to_s
-    config.save!
-    "persona: #{arg}"
-  else
-    "persona: #{config["persona"] || "dark_malay"} — available: #{names.join(", ")}"
-  end
-},
-"autoloop" => ->(ctx) {
-      max    = ctx[:args].to_s.strip.to_i
-      max    = AutoLoop::MAX_CYCLES if max <= 0
-      looper = AutoLoop.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
-      log    = []
-      result = looper.run(max_cycles: max) { |cycle, violations|
-        log << "  cycle #{cycle}: #{violations.size} violation(s)"
-      }
-      ([result.ok? ? result.value! : result.message] + log).join("\n")
-    },
-    "sweep" => ->(ctx) {
-
+      "explain" => ->(ctx) {
+        map       = Introspection::SelfMap.new(root:)
+        info      = map.describe
+        cov       = map.axiom_coverage
+        cov_lines = cov.map { |ax, n| "  #{ax}: #{n}" }.join("\n")
+        stages    = "Intake→Infer→Route→Guard→Execute→Council→Lint→Prune→Memo→Render"
+        "MASTER — #{info[:files]} files, #{info[:lines]} lines\npipeline: #{stages}\n\naxiom coverage:\n#{cov_lines}"
+      },
+      "autoloop" => ->(ctx) {
+        max    = ctx[:args].to_s.strip.to_i
+        max    = AutoLoop::MAX_CYCLES if max <= 0
+        looper = AutoLoop.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
+        log    = []
+        result = looper.run(max_cycles: max) { |cycle, violations|
+          log << "  cycle #{cycle}: #{violations.size} violation(s)"
+        }
+        ([result.ok? ? result.value! : result.message] + log).join("\n")
+      },
+      "sweep" => ->(ctx) {
         arg     = ctx[:args].to_s.strip
         target  = arg.empty? ? root : File.expand_path(arg, root)
         sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
@@ -290,7 +313,66 @@ module Master
         }
         ([result.ok? ? result.value! : result.message] + log).join("\n")
       },
-      "memory"  => ->(ctx) {
+      "model" => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        if arg == "list"
+          yml_path = File.join(root, "data", "models.yml")
+          if File.exist?(yml_path)
+            require "yaml"
+            data          = YAML.safe_load_file(yml_path)
+            tiers         = data["models"] || {}
+            model_lines   = tiers.flat_map { |tier, ms| ms.to_a.map { |m| "  [#{tier}] #{m["id"]}" } }
+            quality_lines = metrics&.model_quality&.map { |mod, s| "  #{mod}: #{s[:calls]} calls, fail_rate=#{s[:fail_rate]}" } || []
+            sections      = ["available models:"] + model_lines
+            sections     += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
+            sections.join("\n")
+          else
+            "model: #{agent.model}"
+          end
+        elsif arg.empty?
+          "model: #{agent.model}"
+        else
+          agent.model = arg
+          config.save!
+          "model: #{arg}"
+        end
+      },
+      "why" => ->(ctx) {
+        rule = ctx[:args].to_s.strip
+        if rule.empty?
+          "usage: /why <rule_name>  -- explains a scan rule. e.g. /why ExplicitRule"
+        else
+          prompt = "Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
+                   "give a before/after Ruby example, and state why it matters."
+          agent.ask_once(prompt)
+        end
+      },
+      "scan" => ->(ctx) {
+        depth  = ctx[:args].to_s.include?("deep") ? :deep : :standard
+        target = File.join(root, "lib")
+        result = scanner.scan_dir(target, depth:)
+        unless result.respond_to?(:ok?) && result.ok?
+          next "scan failed"
+        end
+        by_rule = Hash.new { |h, k| h[k] = [] }
+        result.value!.each do |_f, fr|
+          next unless fr.respond_to?(:ok?) && fr.ok?
+          fr.value!.each { |v| by_rule[v[:rule].to_s] << v }
+        end
+        total = by_rule.values.sum(&:size)
+        next "clean -- no violations" if total.zero?
+        lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
+          ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, 90]}" }
+        end
+        lines << "#{total} total violations"
+        lines.join("\n")
+      },
+    }
+  end
+
+  def self.build_memory_commands(memory:, agent:)
+    {
+      "memory" => ->(ctx) {
         arg = ctx[:args].to_s.strip
         if arg.start_with?("forget ")
           key = arg.sub("forget ", "").strip
@@ -313,34 +395,38 @@ module Master
         end
       },
       "dreams" => ->(ctx) {
-      arg = ctx[:args].to_s.strip
-      if arg == "consolidate"
-        memory.respond_to?(:consolidate!) ? memory.consolidate!(agent:) : "dreaming not available"
-      else
-        entries = memory.all
-        archived = entries.count { |k, _| k.to_s.start_with?("archive/") }
-        active   = entries.count { |k, _| !k.to_s.start_with?("archive/") }
-        summary  = memory.recall("_consolidated_summary")
-        lines    = ["active: #{active} memories, archived: #{archived}"]
-        lines   << "last consolidation: #{summary}" if summary
-        lines.join("\n")
-      end
-    },
-    "snapshot" => ->(ctx) {
-        stamp  = Time.now.strftime("%Y%m%d_%H%M%S")
-        out    = File.expand_path("~/master_snapshot_#{stamp}.md")
+        arg = ctx[:args].to_s.strip
+        if arg == "consolidate"
+          memory.respond_to?(:consolidate!) ? memory.consolidate!(agent:) : "dreaming not available"
+        else
+          entries  = memory.all
+          archived = entries.count { |k, _| k.to_s.start_with?("archive/") }
+          active   = entries.count { |k, _| !k.to_s.start_with?("archive/") }
+          summary  = memory.recall("_consolidated_summary")
+          lines    = ["active: #{active} memories, archived: #{archived}"]
+          lines   << "last consolidation: #{summary}" if summary
+          lines.join("\n")
+        end
+      },
+    }
+  end
+
+  def self.build_utility_commands(agent:, root:, cache:)
+    {
+      "snapshot" => ->(ctx) {
+        stamp    = Time.now.strftime("%Y%m%d_%H%M%S")
+        out      = File.expand_path("~/master_snapshot_#{stamp}.md")
         lang_map = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
                      ".js" => "javascript", ".json" => "json", ".sh" => "bash",
                      ".zsh" => "bash", ".md" => "markdown", ".html" => "html",
                      ".erb" => "erb", ".css" => "css" }
-        dirs   = %w[exe lib/master web/app web/config data].map { |d| File.join(root, d) }
-        files  = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
-                   .select { |f| File.file?(f) && File.size(f) < 200_000 }
-                   .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
-                   .reject { |f| File.binread(f, 512).include?("\x00") rescue true }
-                   .sort
-
-        lines  = ["# MASTER Codebase Snapshot", "Generated: #{Time.now.utc.iso8601}", ""]
+        dirs  = %w[exe lib/master web/app web/config data].map { |d| File.join(root, d) }
+        files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
+                    .select { |f| File.file?(f) && File.size(f) < 200_000 }
+                    .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
+                    .reject { |f| File.binread(f, 512).include?("\x00") rescue true }
+                    .sort
+        lines = ["# MASTER Codebase Snapshot", "Generated: #{Time.now.utc.iso8601}", ""]
         files.each do |f|
           rel  = f.sub("#{root}/", "")
           lang = lang_map.fetch(File.extname(f).downcase, "text")
@@ -349,118 +435,55 @@ module Master
         rescue StandardError => e
           lines << "## #{rel}" << "[skipped: #{e.message}]" << ""
         end
-
         File.write(out, lines.join("\n"))
         "snapshot: #{files.size} files written to #{out}"
       },
-"cache" => ->(ctx) {
-  arg = ctx[:args].to_s.strip
-  if arg == "clear"
-    cache.invalidate_all!
-    "cache cleared"
-  elsif arg == "stats"
-    s = cache.stats
-    "cache: #{s[:entries]} entries, #{s[:size_kb]} KB"
-  else
-    s = cache.stats
-    "cache: #{s[:entries]} entries, #{s[:size_kb]} KB  (use /cache clear to purge)"
-  end
-},
-"diff" => ->(ctx) {
-  arg  = ctx[:args].to_s.strip
-  base = arg.empty? ? "HEAD" : arg
-  out  = `git -C #{root.shellescape} diff #{base} --stat 2>&1`.strip
-  out.empty? ? "(no changes since #{base})" : out
-},
-"model" => ->(ctx) {
-  arg = ctx[:args].to_s.strip
-  if arg == "list"
-    yml_path = File.join(root, "data", "models.yml")
-    if File.exist?(yml_path)
-      require "yaml"
-      data = YAML.safe_load_file(yml_path)
-      tiers = data["models"] || {}
-      model_lines = tiers.flat_map { |tier, ms| ms.to_a.map { |m| "  [#{tier}] #{m["id"]}" } }
-      quality_lines = metrics&.model_quality&.map do |mod, s|
-        "  #{mod}: #{s[:calls]} calls, fail_rate=#{s[:fail_rate]}"
-      end || []
-      sections = ["available models:"] + model_lines
-      sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
-      sections.join("\n")
-    else
-      "model: #{agent.model}"
-    end
-  elsif arg.empty?
-    "model: #{agent.model}"
-  else
-    agent.instance_variable_set(:@model, arg)
-    config["model"] = arg
-    config.save!
-    "model: #{arg}"
-  end
-},
-"commit" => ->(ctx) {
-  diff = `git -C #{root.shellescape} diff --cached --stat 2>&1`.strip
-  diff = `git -C #{root.shellescape} diff --stat 2>&1`.strip if diff.empty?
-  return "nothing to commit" if diff.empty?
-  prompt = "Write a concise git commit message (1 line, imperative mood) for these changes:\n#{diff}"
-  msg    = agent.ask_once(prompt)
-  msg    = msg.strip.lines.first.to_s.strip.gsub(/"/, "'")
-  out    = `git -C #{root.shellescape} add -u 2>&1 && git -C #{root.shellescape} commit -m "#{msg}" 2>&1`.strip
-  out
-},
-"knowledge" => ->(ctx) {
-  arg = ctx[:args].to_s.strip
-  if arg.start_with?("add ")
-    url = arg.sub("add ", "").strip
-    require "open-uri"
-    require "shellwords"
-    return "usage: /knowledge add <url>" if url.empty?
-    slug    = url.gsub(/[^a-z0-9._-]/i, "_").downcase[0, 60]
-    kdir    = File.join(root, "knowledge", "web")
-    FileUtils.mkdir_p(kdir)
-    dest    = File.join(kdir, "#{slug}.txt")
-    content = URI.open(url, read_timeout: 15, &:read).encode("UTF-8", invalid: :replace, undef: :replace)
-    File.write(dest, content, encoding: "UTF-8")
-    "saved #{content.bytesize} bytes to knowledge/web/#{slug}.txt"
-  else
-    "usage: /knowledge add <url>"
-  end
-},
-"why" => ->(ctx) {
-  rule = ctx[:args].to_s.strip
-  if rule.empty?
-    "usage: /why <rule_name>  -- explains a scan rule. e.g. /why ExplicitRule"
-  else
-    prompt = "Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
-             "give a before/after Ruby example, and state why it matters."
-    agent.ask_once(prompt)
-  end
-},
-"scan" => ->(ctx) {
-  depth  = ctx[:args].to_s.include?("deep") ? :deep : :standard
-  target = File.join(root, "lib")
-  result = scanner.scan_dir(target, depth:)
-  unless result.respond_to?(:ok?) && result.ok?
-    next "scan failed"
-  end
-  by_rule = Hash.new { |h, k| h[k] = [] }
-  result.value!.each do |_f, fr|
-    next unless fr.respond_to?(:ok?) && fr.ok?
-    fr.value!.each { |v| by_rule[v[:rule].to_s] << v }
-  end
-  total = by_rule.values.sum(&:size)
-  next "clean -- no violations" if total.zero?
-  lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
-    ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, 90]}" }
-  end
-  lines << "#{total} total violations"
-  lines.join("\n")
-},
-      "help"    => ->(ctx) {
-        cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory dreams orders soul cache diff commit knowledge why snapshot explain persona help exit]
-        cmds.map { "/#{_1}" }.join("  ")
-      }
+      "cache" => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        if arg == "clear"
+          cache.invalidate_all!
+          "cache cleared"
+        elsif arg == "stats"
+          s = cache.stats
+          "cache: #{s[:entries]} entries, #{s[:size_kb]} KB"
+        else
+          s = cache.stats
+          "cache: #{s[:entries]} entries, #{s[:size_kb]} KB  (use /cache clear to purge)"
+        end
+      },
+      "diff" => ->(ctx) {
+        arg  = ctx[:args].to_s.strip
+        base = arg.empty? ? "HEAD" : arg
+        out  = `git -C #{root.shellescape} diff #{base} --stat 2>&1`.strip
+        out.empty? ? "(no changes since #{base})" : out
+      },
+      "commit" => ->(ctx) {
+        diff = `git -C #{root.shellescape} diff --cached --stat 2>&1`.strip
+        diff = `git -C #{root.shellescape} diff --stat 2>&1`.strip if diff.empty?
+        return "nothing to commit" if diff.empty?
+        prompt = "Write a concise git commit message (1 line, imperative mood) for these changes:\n#{diff}"
+        msg    = agent.ask_once(prompt)
+        msg    = msg.strip.lines.first.to_s.strip.gsub(/"/, "'")
+        `git -C #{root.shellescape} add -u 2>&1 && git -C #{root.shellescape} commit -m "#{msg}" 2>&1`.strip
+      },
+      "knowledge" => ->(ctx) {
+        arg = ctx[:args].to_s.strip
+        if arg.start_with?("add ")
+          url = arg.sub("add ", "").strip
+          require "open-uri"
+          require "shellwords"
+          return "usage: /knowledge add <url>" if url.empty?
+          slug    = url.gsub(/[^a-z0-9._-]/i, "_").downcase[0, 60]
+          kdir    = File.join(root, "knowledge", "web")
+          FileUtils.mkdir_p(kdir)
+          dest    = File.join(kdir, "#{slug}.txt")
+          content = URI.open(url, read_timeout: 15, &:read).encode("UTF-8", invalid: :replace, undef: :replace)
+          File.write(dest, content, encoding: "UTF-8")
+          "saved #{content.bytesize} bytes to knowledge/web/#{slug}.txt"
+        else
+          "usage: /knowledge add <url>"
+        end
+      },
     }
   end
 end
