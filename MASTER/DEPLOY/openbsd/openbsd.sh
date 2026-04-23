@@ -65,6 +65,21 @@ error_handler() {
 
 trap 'cleanup' EXIT
 trap 'error_handler $? $LINENO' INT TERM
+# ERR trap: log unexpected exits
+trap 'log ERROR "Script exited unexpectedly at line $LINENO with status $?"' ERR
+
+# Convenience wrappers matching task spec
+log_info()  { log INFO "$@" }
+log_error() { log ERROR "$@" }
+
+# Step completion tracking
+is_step_completed() {
+  [[ -f "${STATE_FILE}.steps" ]] && [[ $(<"${STATE_FILE}.steps") == *"$1"* ]]
+}
+mark_step_completed() {
+  print -r -- "$1" >> "${STATE_FILE}.steps"
+}
+
 
 # Backup function for data integrity
 backup_directory() {
@@ -92,11 +107,11 @@ backup_directory() {
       log INFO "Backup created: $backup_file"
 
       # Keep only last 10 backups
-      typeset backup_count=$(ls -1 "$backup_dir"/${backup_name}-*.tar.gz 2>/dev/null | wc -l)
+      typeset -a _bfiles; _bfiles=("$backup_dir"/${backup_name}-*.tar.gz(N)); typeset backup_count=${#_bfiles}
 
       if (( backup_count > 10 )); then
 
-        ls -1t "$backup_dir"/${backup_name}-*.tar.gz | tail -n +11 | xargs rm -f
+        typeset -a _sorted_bfiles; _sorted_bfiles=("$backup_dir"/${backup_name}-*.tar.gz(NOm)); for _f in "${_sorted_bfiles[@]:10}"; do rm -f "$_f"; done
 
         log INFO "Pruned old backups, keeping last 10"
 
@@ -352,7 +367,7 @@ generate_random_port() {
 
     port=$((RANDOM % 50000 + 10000))
 
-    (( ! $(/usr/bin/netstat -an | /usr/bin/grep -c ".$port ") )) && echo $port && break
+    typeset _netstat_out; _netstat_out=$(/usr/bin/netstat -an); [[ $_netstat_out != *".$port "* ]] && echo $port && break
 
   done
 
@@ -371,7 +386,7 @@ cleanup_nsd() {
 
   sleep 2
 
-  (( $(/usr/bin/netstat -an -p udp | /usr/bin/grep -c "$BRGEN_IP.53") )) && {
+  typeset _udp_out; _udp_out=$(/usr/bin/netstat -an -p udp); [[ $_udp_out == *"$BRGEN_IP.53"* ]] && {
 
     log ERROR "Port 53 in use"
 
@@ -423,7 +438,7 @@ check_dns_propagation() {
 
   for resolver in $resolvers; do
 
-    if /usr/bin/dig @$resolver brgen.no SOA +short | /usr/bin/grep -q "ns.brgen.no."; then
+    typeset _soa_out; _soa_out=$(/usr/bin/dig @$resolver brgen.no SOA +short); if [[ $_soa_out == *"ns.brgen.no."* ]]; then
 
       log INFO "DNS propagation verified via $resolver"
 
@@ -496,7 +511,7 @@ generate_tlsa_record() {
   typeset tlsa_record
 
   [[ ! -f $cert ]] && { log WARN "Certificate for $domain not found"; return 1 }
-  tlsa_record=${$(openssl x509 -noout -pubkey -in "$cert" | openssl pkey -pubin -outform der 2>/dev/null | openssl dgst -sha256 2>/dev/null | awk '{print $2}'):-}
+  typeset _tlsa_raw; _tlsa_raw=$(openssl x509 -noout -pubkey -in "$cert" | openssl pkey -pubin -outform der 2>/dev/null | openssl dgst -sha256 2>/dev/null); tlsa_record=${${(z)_tlsa_raw}[2]:-}
 
   (( ! $#tlsa_record )) && { log ERROR "TLSA generation failed for $domain"; exit 1 }
 
@@ -535,7 +550,7 @@ stage_1() {
   log INFO "Starting Stage 1: DNS and Certificates"
 
   # Check disk space
-  (( $(df -k / | awk 'NR==2 {print $4}') < 10000 )) && {
+  typeset -a _df_root; _df_root=("${(@f)$(df -k /)}"); typeset _root_avail=${${(z)_df_root[2]}[4]}; (( _root_avail < 10000 )) && {
 
     log ERROR "Insufficient disk space on /"
 
@@ -543,7 +558,7 @@ stage_1() {
 
   }
 
-  (( $(df -k /var | awk 'NR==2 {print $4}') < 512000 )) && {
+  typeset -a _df_var; _df_var=("${(@f)$(df -k /var)}"); typeset _var_avail=${${(z)_df_var[2]}[4]}; (( _var_avail < 512000 )) && {
 
     log ERROR "Insufficient disk space on /var"
 
@@ -561,7 +576,7 @@ stage_1() {
   }
 
   # Check pf status
-  if /usr/bin/grep -q "pf=NO" /etc/rc.conf.local 2>/dev/null; then
+  if [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]]; then
 
     log WARN "pf disabled in rc.conf.local"
 
@@ -807,7 +822,7 @@ EOF
 
   sleep 5
 
-  /usr/sbin/rcctl check nsd | /usr/bin/grep -q "nsd(ok)" || { log ERROR "nsd not running"; exit 1 }
+  typeset _nsd_check; _nsd_check=$(/usr/sbin/rcctl check nsd); [[ $_nsd_check == *"nsd(ok)"* ]] || { log ERROR "nsd not running"; exit 1 }
 
   verify_nsd
 
@@ -849,7 +864,7 @@ EOF
 
   sleep 5
 
-  /usr/sbin/rcctl check httpd | /usr/bin/grep -q "httpd(ok)" || { log ERROR "httpd not running"; exit 1 }
+  typeset _httpd_check; _httpd_check=$(/usr/sbin/rcctl check httpd); [[ $_httpd_check == *"httpd(ok)"* ]] || { log ERROR "httpd not running"; exit 1 }
 
   # Verify HTTP
   print -r -- test > /var/www/acme/.well-known/acme-challenge/test
@@ -863,7 +878,7 @@ EOF
   # Set up ACME
   # Create _acme group if missing (OpenBSD base should have it)
 
-  grep -q '^_acme:' /etc/group || groupadd -g 765 _acme
+  [[ $(<"/etc/group") == *$'\n_acme:'* || $(<"/etc/group") == _acme:* ]] || groupadd -g 765 _acme
 
   [[ ! -f /etc/acme/letsencrypt_privkey.pem ]] && openssl genpkey -algorithm RSA -out /etc/acme/letsencrypt_privkey.pem -pkeyopt rsa_keygen_bits:4096
   chown root:_acme /etc/acme/letsencrypt_privkey.pem
@@ -1004,7 +1019,7 @@ generate_tlsa_record() {
   typeset tlsa_record=$(openssl x509 -noout -pubkey -in "$cert" | \
     openssl pkey -pubin -outform der 2>/dev/null | \
 
-    openssl dgst -sha256 2>/dev/null | awk '{print $2}')
+    openssl dgst -sha256 2>/dev/null); tlsa_record=${tlsa_record##* }
 
   [[ -z $tlsa_record ]] && return 1
   # Remove old TLSA record and add new one (pure zsh)
@@ -1019,7 +1034,7 @@ generate_tlsa_record() {
   print -r -- "_443._tcp.$domain. IN TLSA 3 1 1 $tlsa_record" >> "$zonefile"
 
   # Re-sign zone
-  ldns-signzone -n -p -s $(head -c 16 /dev/random | sha1) "$zonefile" "$zsk" "$ksk"
+  ldns-signzone -n -p -s $(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 -q) "$zonefile" "$zsk" "$ksk"
 
   nsd-control reload
 
@@ -1115,7 +1130,7 @@ setup_services() {
 
   sleep 5
 
-  /usr/sbin/rcctl check smtpd | /usr/bin/grep -q "smtpd(ok)" || { log ERROR "smtpd not running"; exit 1 }
+  typeset _smtpd_check; _smtpd_check=$(/usr/sbin/rcctl check smtpd); [[ $_smtpd_check == *"smtpd(ok)"* ]] || { log ERROR "smtpd not running"; exit 1 }
 
   # Test SMTP
   if ! /usr/bin/timeout 5 telnet $BRGEN_IP 25 >/dev/null 2>&1; then
@@ -1208,7 +1223,7 @@ configure_relayd() {
   log INFO "relayd configuration valid"
   /usr/sbin/rcctl restart relayd || /usr/sbin/rcctl start relayd || { log ERROR "relayd failed"; exit 1 }
   sleep 3
-  /usr/sbin/rcctl check relayd | grep -q "relayd(ok)" || { log ERROR "relayd not running"; exit 1 }
+  typeset _relayd_check; _relayd_check=$(/usr/sbin/rcctl check relayd); [[ $_relayd_check == *"relayd(ok)"* ]] || { log ERROR "relayd not running"; exit 1 }
   log INFO "relayd started successfully"
 }
 
@@ -1218,7 +1233,7 @@ stage_2() {
 
   check_dns_propagation
   # Check memory
-  (( $(vmstat -s | awk '/free memory/{print $1}') < 512000 )) && {
+  typeset _mem_line; _mem_line=$(vmstat -s | while IFS= read -r _l; do [[ $_l == *"free memory"* ]] && print -r -- "$_l" && break; done); typeset _mem_free=${${(z)_mem_line}[1]}; (( _mem_free < 512000 )) && {
 
     log ERROR "Insufficient free memory"
 
@@ -1408,7 +1423,7 @@ EOF
 
     sleep 5
 
-    /usr/sbin/rcctl check $app | /usr/bin/grep -q "$app(ok)" || { log ERROR "$app not running"; exit 1 }
+    typeset _app_check; _app_check=$(/usr/sbin/rcctl check $app); [[ $_app_check == *"${app}(ok)"* ]] || { log ERROR "$app not running"; exit 1 }
 
   done
 
