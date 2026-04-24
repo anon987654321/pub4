@@ -129,7 +129,6 @@ FILE_LANGUAGE_MAP = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
 
   def self.boot(root: Dir.pwd, argv: [])
     container = build(root:)
-    container[:renderer].tap { |r| puts r.banner(container[:agent].model) }
     CLI.new(container:)
   end
 

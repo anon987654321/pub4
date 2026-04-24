@@ -187,7 +187,7 @@ TOOL_CAPABLE_RE = build_tool_capable_re
       if ferrum_model?(selected_model)
         alias_name = selected_model.split(":", 3).last
         response   = Bridges::FerrumWebChat.new.ask(model_alias: alias_name, prompt: messages.last[:content])
-        return Result.ok(response.respond_to?(:value!) ? response.value! : response.to_s)
+        return response if response.respond_to?(:err?) && response.err?; return Result.ok(response.respond_to?(:ok?) && response.ok? ? response.value! : response.to_s)
       elsif replicate_model?(selected_model)
         reply = Bridges::Replicate.new.chat(
           model: selected_model, messages: messages, system: current_system_prompt,
