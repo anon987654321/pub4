@@ -57,7 +57,7 @@ FILE_LANGUAGE_MAP = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
     bus      = EventBus.new(log: ring)
     logging  = Logging.new(ring_buffer: ring, event_bus: bus, trace_level: config.trace)
     session  = Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
-    undo     = Undo.new(session:, event_bus: bus)
+    undo     = Undo.new(session:, event_bus: bus, root: root)
     breaker  = CircuitBreakerRegistry.new(budget_max: config.budget_max, req_max: config.req_max, event_bus: bus)
     cache    = SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
     governor = Governor.new(config:, event_bus: bus)
