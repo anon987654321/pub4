@@ -33,10 +33,6 @@ model_defs:
     id: qwen/qwen3-coder:free
     <<: *model_defaults
     score: { quality: 0.75, speed: 0.65, cost: 1.0 }
-  deepseek_r1: &deepseek_r1
-    id: deepseek/deepseek-r1-0528:free
-    <<: *model_defaults
-    score: { quality: 0.73, speed: 0.55, cost: 1.0 }
   gemini_flash: &gemini_flash
     id: gemini-2.0-flash
     <<: *model_defaults
@@ -61,14 +57,24 @@ qwen3_next: &qwen3_next
     id: openai/gpt-oss-120b:free
     <<: *model_defaults
     score: { quality: 0.72, speed: 0.60, cost: 1.0 }
+minimax_m25: &minimax_m25
+  id: minimax/minimax-m2.5:free
+  <<: *model_defaults
+  score: { quality: 0.82, speed: 0.65, cost: 1.0 }
+hermes_405b: &hermes_405b
+  id: nousresearch/hermes-3-llama-3.1-405b:free
+  <<: *model_defaults
+  score: { quality: 0.85, speed: 0.50, cost: 1.0 }
 
 models:
   default:
     - *nemotron_super
     - *qwen_coder
+    - *minimax_m25
     - *gpt_oss
     - *gemini_flash
   strong:
+    - *hermes_405b
     - *claude_sonnet
     - *gpt_4o
     - *nemotron_super
@@ -117,7 +123,8 @@ continuity:
 
 openrouter:
   free_latest:
-    - deepseek/deepseek-r1-0528:free
+    - nvidia/nemotron-3-super-120b-a12b:free
     - qwen/qwen3-coder:free
     - openai/gpt-oss-120b:free
+    - minimax/minimax-m2.5:free
 
