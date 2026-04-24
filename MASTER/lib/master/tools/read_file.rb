@@ -3,6 +3,7 @@
 module Master
   module Tools
     class ReadFile
+        include PathGuard
       TIER        = :safe
       MAX_LINES   = 2000
       NAME        = "read_file"
@@ -44,11 +45,6 @@ module Master
 
       private
 
-      def resolve(path)
-        full = File.expand_path(path, @root)
-        return Result.err("path escapes project root: #{path}", category: :validation) unless full.start_with?(@root)
-        Result.ok(full)
-      end
     end
   end
 end

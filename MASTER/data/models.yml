@@ -87,3 +87,40 @@ routes:
   explanation: cheap
   exploration: cheap
   fallback_default: cheap
+
+# Model name prefixes that support tool use (anchored match).
+# Agent.tool_capable? checks model IDs against these prefixes.
+tool_capable_prefixes:
+  - claude
+  - gpt-4
+  - gpt-4o
+  - gemini
+  - mistral
+  - mixtral
+  - llama-3.1
+  - llama-3.3
+  - qwen
+  - command-r
+  - deepseek
+  - stepfun
+  - nvidia
+  - nemotron
+  - meta/meta-llama
+  - anthropic/claude
+  - openai/gpt
+  - google/gemini
+
+# Merged from fallback_models.yml
+continuity:
+  enabled: true
+  updated_at: "2026-03-11T00:00:00Z"
+
+openrouter:
+  free_latest:
+    - deepseek/deepseek-r1-0528:free
+    - qwen/qwen3-coder:free
+    - openai/gpt-oss-120b:free
+
+ferrum_web_chat:
+  free_latest:
+    - ferrum:webchat:openrouter/free

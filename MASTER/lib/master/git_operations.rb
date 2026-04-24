@@ -2,9 +2,7 @@
 
 require "open3"
 
-# frozen_string_literal: true
 
-require "open3"
 
 module Master
   # GitOperations encapsulates git commands.

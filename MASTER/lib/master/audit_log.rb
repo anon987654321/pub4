@@ -5,9 +5,9 @@ require "fileutils"
 module Master
   # Append-only audit trail of every tool invocation.
   # Subscribes to tool:before events on the shared EventBus.
-  # Written to data/audit.log — one line per call, machine-readable.
+  # Written to .master/audit.log — one line per call, machine-readable.
   class AuditLog
-    LOG_PATH = "data/audit.log"
+    LOG_PATH = ".master/audit.log"
     MAX_VAL  = 120
 
     def initialize(root:, event_bus:)

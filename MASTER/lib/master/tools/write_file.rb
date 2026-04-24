@@ -5,6 +5,7 @@ require "fileutils"
 module Master
   module Tools
     class WriteFile
+        include PathGuard
       TIER        = :guarded
       NAME        = "write_file"
       DESCRIPTION = "Atomically write content to a file, with undo snapshot."
@@ -44,11 +45,6 @@ module Master
 
       private
 
-      def resolve(path)
-        full = File.expand_path(path, @root)
-        return Result.err("path escapes project root: #{path}", category: :validation) unless full.start_with?(@root)
-        Result.ok(full)
-      end
     end
   end
 end
