@@ -13,6 +13,8 @@ module Master
     end
 
 TTL_DAYS = 90
+MAX_INJECT_TOKENS = 2000
+MAX_INJECT_ENTRIES = 5
 
 def remember(key, value)
   prune_stale! if @store.size > 40
@@ -36,8 +38,17 @@ end
 def context_summary
   active = @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
   return nil if active.empty?
-  recent = active.sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) }.first(5)
-  lines  = recent.map { |k, v| "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
+  recent = active.sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) }.first(MAX_INJECT_ENTRIES)
+  lines     = []
+  token_sum = 0
+  recent.each do |k, v|
+    text = "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}"
+    est  = text.bytesize / 4
+    break if token_sum + est > MAX_INJECT_TOKENS
+    lines << text
+    token_sum += est
+  end
+  return nil if lines.empty?
   archived_n = @store.count { |k, _| k.to_s.start_with?("archive/") }
   summary    = recall("_consolidated_summary")
   header = summary ? "Memory (#{summary.to_s[0, 80]}):" : "Memory:"
