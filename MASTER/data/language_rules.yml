@@ -1,3 +1,5 @@
+# Language rules — per-language coding standards enforced by scan rules.
+
 ruby:
   version: "3.3+"
   frozen_string_literal: required

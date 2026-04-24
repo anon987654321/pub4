@@ -2,6 +2,7 @@
 
 module Master
   module Tools
+    # StrReplace — surgical string replacement in files with undo support.
     class StrReplace
         include PathGuard
       TIER        = :guarded

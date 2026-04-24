@@ -2,6 +2,7 @@
 
 module Master
   module Tools
+    # ListDir — list directory contents with filtering and depth control.
     class ListDir
       TIER        = :safe
       NAME        = "list_dir"

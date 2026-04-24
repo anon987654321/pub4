@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'yaml'
-require 'fileutils'
+require "yaml"
+require "fileutils"
 
 module Master
   class Config

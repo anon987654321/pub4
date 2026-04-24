@@ -1,3 +1,5 @@
+# Constitution — protection levels and golden rules for MASTER's pipeline.
+
 protection_levels:
   ABSOLUTE: "Abort pipeline"
   PROTECTED: "Emit warning, continue"

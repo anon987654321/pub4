@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 
+# Rewrite master.rb: consistent 2-space indent, double quotes, extract build submethods
+
+path = "/home/dev/pub4/MASTER/lib/master.rb"
+
+content = <<~'RUBY'
+# frozen_string_literal: true
+
 require "zeitwerk"
 
 module Master
@@ -631,3 +638,7 @@ module Master
     }
   end
 end
+RUBY
+
+File.write(path, content)
+puts "rewrote: #{path}"

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'yaml'
+require "yaml"
 
 module Master
   # Central source for kernel axioms, philosophy, and workflow rules.

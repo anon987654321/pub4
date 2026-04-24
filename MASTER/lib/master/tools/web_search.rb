@@ -5,6 +5,7 @@ require "json"
 
 module Master
   module Tools
+    # WebSearch — query external search APIs with governor rate limiting.
     class WebSearch
       TIER               = :guarded
       MAX_QUERY_CHARS    = 300

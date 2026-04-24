@@ -6,6 +6,7 @@ require "shellwords"
 
 module Master
   module Tools
+    # Shell — execute shell commands with timeout and governor approval.
     class Shell
       TIER        = :dangerous
       NAME        = "zsh"

@@ -2,6 +2,7 @@
 
 module Master
   module Tools
+    # SearchFiles — regex search across project files with context lines.
     class SearchFiles
       TIER        = :safe
       NAME        = "search_files"

@@ -1,3 +1,5 @@
+# Exemplars — canonical code examples for LLM context injection.
+
 exemplars:
   - name: "Master::Axioms::ENUM"
     file: "lib/master/axioms.rb"

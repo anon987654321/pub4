@@ -2,6 +2,7 @@
 
 module Master
   module Tools
+    # BatchReplace — apply multiple search-and-replace operations in one pass.
     class BatchReplace
       TIER        = :guarded
       NAME        = "replace"

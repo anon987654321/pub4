@@ -2,6 +2,7 @@
 
 module Master
   module Tools
+    # AskLlm — delegate sub-questions to the LLM agent mid-pipeline.
     class AskLlm
       TIER        = :guarded
       NAME        = "ask_llm"
