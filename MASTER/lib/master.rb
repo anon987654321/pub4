@@ -35,6 +35,7 @@ FILE_LANGUAGE_MAP = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
 
   def self.configure_providers!
     require "ruby_llm"
+require_relative "master/ruby_llm_patch"
     RubyLLM.configure do |cfg|
       API_KEY_PROVIDERS.each do |attr, env_var|
         val = ENV[env_var].to_s
@@ -133,8 +134,8 @@ FILE_LANGUAGE_MAP = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
   end
 
   def self.default_model
-    return "deepseek-ai/deepseek-v3" if api_key_present?("OPENROUTER_API_KEY")
-    return "deepseek-ai/deepseek-r1" if api_key_present?("REPLICATE_API_KEY")
+    return "nvidia/nemotron-3-super-120b-a12b:free" if api_key_present?("OPENROUTER_API_KEY")
+    return "nvidia/nemotron-3-super-120b-a12b:free" if api_key_present?("REPLICATE_API_KEY")
     return "claude-sonnet-4-6"       if api_key_present?("ANTHROPIC_API_KEY")
     return "gpt-4o"                  if api_key_present?("OPENAI_API_KEY")
     return "gemini-2.5-flash"        if api_key_present?("GEMINI_API_KEY")
