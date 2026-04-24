@@ -16,7 +16,7 @@ module Master
 # Anchored regex built from tool_capable_prefixes list.
 def self.build_tool_capable_re
   yml_path = File.join(Master::ROOT, "data", "models.yml")
-  prefixes = YAML.safe_load_file(yml_path).fetch("tool_capable_prefixes", [])
+  prefixes = YAML.safe_load_file(yml_path, aliases: true).fetch("tool_capable_prefixes", [])
   escaped = prefixes.map { |p| Regexp.escape(p) }
   Regexp.new("\\A(?:#{escaped.join("|")})(?:[:\\/@\\-.].+)?\\z", Regexp::IGNORECASE).freeze
 end
