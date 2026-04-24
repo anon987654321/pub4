@@ -1,33 +1,58 @@
 # frozen_string_literal: true
 
+require "json"
+require "fileutils"
+
 module Master
-  # Single-file undo: snapshots file content before a write, restores on demand.
+  # Persistent undo: snapshots file content before writes, restores on demand.
+  # Journal survives restarts via .master/undo_journal.jsonl.
   class Undo
-    def initialize(session:, event_bus: nil)
+    MAX_JOURNAL = 50
+
+    def initialize(session:, event_bus: nil, root: Dir.pwd)
       @session = session
       @bus     = event_bus
-      @stack   = []
+      @root    = root
+      @journal = File.join(root, ".master", "undo_journal.jsonl")
+      @stack   = load_journal
     end
 
     def snapshot(path)
       content = File.exist?(path) ? File.read(path) : nil
       @session.snapshot(path, content)
-      @stack << { path:, content: }
+      @stack << { "path" => path, "content" => content, "ts" => Time.now.to_i }
+      @stack.shift while @stack.size > MAX_JOURNAL
+      persist_journal
       Result.ok(path)
     rescue => e
       Result.err("undo snapshot: #{e.message}", category: :unknown)
     end
 
-    def undo!
-      entry = @stack.pop
-      return Result.err('nothing to undo', category: :validation) unless entry
+    def undo!(steps: 1)
+      return Result.err("nothing to undo", category: :validation) if @stack.empty?
 
-      restore(entry[:path], entry[:content])
-      @bus&.publish('undo:applied', path: entry[:path])
-      Result.ok(entry[:path])
+      steps = [steps, @stack.size].min
+      paths = []
+
+      steps.times do
+        entry = @stack.pop
+        restore(entry["path"], entry["content"])
+        paths << entry["path"]
+        @bus&.publish("undo:applied", path: paths.last)
+      end
+
+      persist_journal
+      Result.ok(paths.size == 1 ? paths.first : paths)
     end
 
     def depth = @stack.size
+
+    def history(limit: 10)
+      @stack.last(limit).reverse.map.with_index(1) do |entry, i|
+        time = entry["ts"] ? Time.at(entry["ts"]).strftime("%H:%M:%S") : "?"
+        "#{i}. #{entry["path"]} (#{time})"
+      end
+    end
 
     private
 
@@ -36,6 +61,24 @@ module Master
         File.delete(path) if File.exist?(path)
       else
         File.write(path, content)
+      end
+    end
+
+    def load_journal
+      return [] unless File.exist?(@journal)
+      File.readlines(@journal).filter_map do |line|
+        JSON.parse(line.strip)
+      rescue JSON::ParserError
+        nil
+      end
+    rescue StandardError
+      []
+    end
+
+    def persist_journal
+      FileUtils.mkdir_p(File.dirname(@journal))
+      File.open(@journal, "w") do |f|
+        @stack.each { |entry| f.puts(JSON.generate(entry)) }
       end
     end
   end

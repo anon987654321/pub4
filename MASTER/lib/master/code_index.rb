@@ -22,27 +22,52 @@ module Master
       @bus = event_bus
       @symbols = {}
       @references = []
+      @mtimes = {}
       @built_at = nil
     end
 
-    # Build the entire index. Optional +path+ restricts to a subtree.
-    def build(path: nil)
-      target = path ? File.expand_path(path, @root) : @root
-      files = Dir.glob(File.join(target, "**", "*.rb"))
-                  .reject { |f| f.include?("/vendor/") }
+# Build the entire index. Optional +path+ restricts to a subtree.
+# First call: full build. Subsequent calls: incremental (mtime-based).
+def build(path: nil)
+  target = path ? File.expand_path(path, @root) : @root
+  files = Dir.glob(File.join(target, "**", "*.rb"))
+              .reject { |f| f.include?("/vendor/") }
 
-      @symbols.clear
-      @references.clear
-
-      files.each { |f| index_file(f) }
-
-      @built_at = Time.now
-      @bus&.publish("code_index:built", files: files.size, symbols: @symbols.size)
-      self
-    rescue StandardError => e
-      @bus&.publish("code_index:error", error: e.message)
-      self
+  if @built_at.nil?
+    @symbols.clear
+    @references.clear
+    @mtimes.clear
+    files.each do |f|
+      index_file(f)
+      @mtimes[f] = File.mtime(f) rescue nil
     end
+  else
+    changed = 0
+
+    (@mtimes.keys - files).each do |gone|
+      @symbols.delete_if { |_, s| s.file == gone }
+      @references.reject! { |r| r.from_file == gone }
+      @mtimes.delete(gone)
+    end
+
+    files.each do |f|
+      mt = File.mtime(f) rescue nil
+      next if @mtimes[f] == mt
+      reindex(f)
+      @mtimes[f] = mt
+      changed += 1
+    end
+
+    @bus&.publish("code_index:incremental", changed: changed, total: files.size) if changed > 0
+  end
+
+  @built_at = Time.now
+  @bus&.publish("code_index:built", files: files.size, symbols: @symbols.size)
+  self
+rescue StandardError => e
+  @bus&.publish("code_index:error", error: e.message)
+  self
+end
 
     # Re‑index a single file, removing stale data first.
     def reindex(file)
