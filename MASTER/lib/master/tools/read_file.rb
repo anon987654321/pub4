@@ -2,6 +2,7 @@
 
 module Master
   module Tools
+    # ReadFile — read file contents with line-range support and undo tracking.
     class ReadFile
         include PathGuard
       TIER        = :safe

@@ -4,25 +4,24 @@ require "yaml"
 require "fileutils"
 
 module Master
-  # Persistent cross-session memory store with TF-IDF semantic search.
-  # Stored at .master/memory.yml — survives restarts.
+  # Memory — persistent cross-session store with TF-IDF semantic search.
+  # Stored at .master/memory.yml. Survives restarts.
   class Memory
+    TTL_DAYS          = 90
+    MAX_INJECT_TOKENS  = 2000
+    MAX_INJECT_ENTRIES = 5
+
     def initialize(root: Dir.pwd)
       @path  = File.join(root, ".master", "memory.yml")
       @store = load_store
     end
 
-TTL_DAYS = 90
-MAX_INJECT_TOKENS = 2000
-MAX_INJECT_ENTRIES = 5
+    def remember(key, value)
+      prune_stale! if @store.size > 40
+      @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
+      persist
+    end
 
-def remember(key, value)
-  prune_stale! if @store.size > 40
-  @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
-  persist
-end
-
-    # Keys are always stored and retrieved as strings.
     def recall(key)
       @store.dig(key.to_s, "value")
     end
@@ -34,31 +33,32 @@ end
 
     def all = @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v }
 
-# Returns top-5 most recent active entries for system prompt injection.
-def context_summary
-  active = @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
-  return nil if active.empty?
-  recent = active.sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) }.first(MAX_INJECT_ENTRIES)
-  lines     = []
-  token_sum = 0
-  recent.each do |k, v|
-    text = "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}"
-    est  = text.bytesize / 4
-    break if token_sum + est > MAX_INJECT_TOKENS
-    lines << text
-    token_sum += est
-  end
-  return nil if lines.empty?
-  archived_n = @store.count { |k, _| k.to_s.start_with?("archive/") }
-  summary    = recall("_consolidated_summary")
-  header = summary ? "Memory (#{summary.to_s[0, 80]}):" : "Memory:"
-  header += " [+#{archived_n} archived]" if archived_n > 0
-  "#{header}\n#{lines.join("\n")}"
-end
+    # Token-limited injection for system prompt. Caps at MAX_INJECT_TOKENS.
+    def context_summary
+      active = @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
+      return nil if active.empty?
 
+      recent    = active.sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) }.first(MAX_INJECT_ENTRIES)
+      lines     = []
+      token_sum = 0
 
-    # TF-IDF ranked search across all memory entries.
-    # Returns array of {key:, value:, score:} hashes, highest score first.
+      recent.each do |k, v|
+        text = "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}"
+        est  = text.bytesize / 4
+        break if token_sum + est > MAX_INJECT_TOKENS
+        lines << text
+        token_sum += est
+      end
+      return nil if lines.empty?
+
+      archived_n = @store.count { |k, _| k.to_s.start_with?("archive/") }
+      summary    = recall("_consolidated_summary")
+      header     = summary ? "Memory (#{summary.to_s[0, 80]}):" : "Memory:"
+      header    += " [+#{archived_n} archived]" if archived_n > 0
+      "#{header}\n#{lines.join("\n")}"
+    end
+
+    # TF-IDF ranked search. Returns [{key:, value:, score:}], highest first.
     def semantic_recall(query, top_n: 3)
       return [] if @store.empty?
 
@@ -76,63 +76,61 @@ end
       scored.sort_by { |e| -e[:score] }.first(top_n)
     end
 
-# Three-phase memory consolidation inspired by OpenClaw dreaming.
-# Light: score. Deep: archive stale. REM: LLM summary if agent given.
-def consolidate!(agent: nil)
-  return "nothing to consolidate" if @store.empty?
+    # Three-phase consolidation: light (score), deep (archive), REM (LLM summary).
+    def consolidate!(agent: nil)
+      return "nothing to consolidate" if @store.empty?
 
-  now      = Time.now.to_i
-  entries  = @store.reject { |k, _| k.to_s.start_with?("archive/") }
-  archived = 0
+      now      = Time.now.to_i
+      entries  = @store.reject { |k, _| k.to_s.start_with?("archive/") }
+      archived = 0
 
-  scored = entries.map do |key, data|
-    ts    = data.is_a?(Hash) ? data["ts"].to_i : 0
-    value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
-    age_d = (now - ts) / 86_400.0
-    { key: key, value: value, score: 1.0 / (1.0 + age_d / 30.0) }
-  end
+      scored = entries.map do |key, data|
+        ts    = data.is_a?(Hash) ? data["ts"].to_i : 0
+        value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
+        age_d = (now - ts) / 86_400.0
+        { key: key, value: value, score: 1.0 / (1.0 + age_d / 30.0) }
+      end
 
-  scored.each do |entry|
-    next if entry[:key] == "_consolidated_summary"
-    next unless entry[:score] < 0.33
+      scored.each do |entry|
+        next if entry[:key] == "_consolidated_summary"
+        next unless entry[:score] < 0.33
+        @store["archive/#{entry[:key]}"] = @store.delete(entry[:key])
+        archived += 1
+      end
 
-    @store["archive/#{entry[:key]}"] = @store.delete(entry[:key])
-    archived += 1
-  end
+      if agent
+        active_text = @store
+          .reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
+          .map    { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
+          .join("\n")
 
-  if agent
-    active_text = @store
-      .reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
-      .map    { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
-      .join("\n")
+        unless active_text.strip.empty?
+          summary = agent.ask_once(
+            "Summarize in 2 concise sentences, preserving all key facts:\n#{active_text}"
+          )
+          remember("_consolidated_summary", summary.strip)
+        end
+      end
 
-    unless active_text.strip.empty?
-      summary = agent.ask_once(
-        "Summarize in 2 concise sentences, preserving all key facts:\n#{active_text}"
-      )
-      remember("_consolidated_summary", summary.strip)
+      persist
+      "dreaming: #{entries.size} entries checked, #{archived} archived"
+    rescue StandardError => e
+      "consolidation error: #{e.message}"
     end
-  end
 
-  persist
-  "dreaming: #{entries.size} entries checked, #{archived} archived"
-rescue StandardError => e
-  "consolidation error: #{e.message}"
-end
+    private
 
-private
+    def prune_stale!
+      cutoff = Time.now.to_i - TTL_DAYS * 86_400
+      @store.each do |k, v|
+        next if k.to_s.start_with?("archive/") || k == "_consolidated_summary"
+        ts = v.is_a?(Hash) ? v["ts"].to_i : 0
+        next unless ts > 0 && ts < cutoff
+        @store["archive/#{k}"] = @store.delete(k)
+      end
+    end
 
-def prune_stale!
-  cutoff = Time.now.to_i - TTL_DAYS * 86_400
-  @store.each do |k, v|
-    next if k.to_s.start_with?("archive/") || k == "_consolidated_summary"
-    ts = v.is_a?(Hash) ? v["ts"].to_i : 0
-    next unless ts > 0 && ts < cutoff
-    @store["archive/#{k}"] = @store.delete(k)
-  end
-end
-
-def load_store
+    def load_store
       return {} unless File.exist?(@path)
       YAML.safe_load_file(@path, symbolize_names: false) || {}
     rescue StandardError
@@ -148,7 +146,6 @@ def load_store
       text.downcase.scan(/\b[a-z]{2,}\b/)
     end
 
-    # Log-weighted term frequency similarity — no external gem required.
     def tfidf_score(query_terms, doc_terms)
       return 0.0 if doc_terms.empty?
       freq = doc_terms.tally

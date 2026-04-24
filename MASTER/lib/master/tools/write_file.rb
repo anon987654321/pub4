@@ -4,6 +4,7 @@ require "fileutils"
 
 module Master
   module Tools
+    # WriteFile — create or overwrite files with TextHygiene normalization.
     class WriteFile
         include PathGuard
       TIER        = :guarded

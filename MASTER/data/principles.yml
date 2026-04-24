@@ -1,3 +1,5 @@
+# Principles — KISS, DRY, YAGNI, SoC, SRP, SOLID and beyond.
+
 principles:
   01-kiss:
     name: KISS (Keep It Simple, Stupid)

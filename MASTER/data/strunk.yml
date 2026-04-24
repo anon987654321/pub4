@@ -1,3 +1,5 @@
+# Strunk — prose pruning rules for the Prune stage (preambles, hedges, endings).
+
 preambles:
   - "In summary,"
   - "Consequently,"

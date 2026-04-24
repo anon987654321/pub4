@@ -9,6 +9,7 @@ module Master
     # so governor, undo, and event_bus plumbing is preserved.
     module LLM
 
+    # LLM — shared base module for LLM-backed tool functionality.
       class ReadFile < RubyLLM::Tool
         DEFAULT_LIMIT = 2000
 

@@ -1,3 +1,5 @@
+# Quality thresholds — file size and complexity limits for scan rules.
+
 file_lines:
   warn: 200
   error: 300

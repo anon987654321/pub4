@@ -3,18 +3,16 @@
 module Master
   module Stages
     # Route — attach the correct handler to the context.
-    # :command → looks up registered command object.
-    # :llm     → uses the agent.
+    # :command looks up registered command. :llm uses the agent.
     class Route
       def initialize(commands:, agent:)
         @commands = commands
         @agent    = agent
       end
 
-      # Register a command handler after construction (used by build for circular deps).
-def add_command(name, handler) = @commands[name.to_s] = handler
+      def add_command(name, handler) = @commands[name.to_s] = handler
 
-def call(ctx)
+      def call(ctx)
         case ctx[:intent]
         when :command then route_command(ctx)
         when :llm     then Result.ok(ctx.merge(handler: @agent))

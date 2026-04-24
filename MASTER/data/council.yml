@@ -1,3 +1,5 @@
+# Council personas — deliberation panel for code review decisions.
+
 - name: Architect
   role: System Design
   bias: Structure
