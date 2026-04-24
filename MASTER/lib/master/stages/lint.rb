@@ -2,26 +2,71 @@
 
 module Master
   module Stages
-    # Lint — run static analysis after execution when auto-testing is enabled.
-    # Uses the shared scanner so rules are consistent with sweep/autoloop.
+    # Lint — always runs. Scans written files AND code blocks in chat output.
+    # Violations are collected; if autofix is possible, feeds them back to
+    # the autoloop for correction.
     class Lint
-      def initialize(scanner:, config:)
-        @scanner = scanner
-        @config  = config
+      FENCE_RE = /```(?:ruby)?\n(.*?)```/m
+
+      def initialize(scanner:, config:, autoloop: nil)
+        @scanner  = scanner
+        @config   = config
+        @autoloop = autoloop
       end
 
       def call(ctx)
-        return Result.ok(ctx) unless @config.auto_testing?
+        findings = []
 
-        root   = ctx[:path].to_s
-        root   = Master::ROOT if root.empty?
-        report = @scanner.scan_dir(root, depth: :standard)
+        # 1. Scan any files that were written during Execute
+        written = Array(ctx[:written_files])
+        written.each do |path|
+          next unless File.exist?(path) && path.end_with?(".rb")
+          result = @scanner.scan(path, depth: :standard)
+          findings.concat(result.value!) if result.respond_to?(:ok?) && result.ok?
+        end
 
-        return Result.err(report.message, category: :unknown) if report.respond_to?(:err?) && report.err?
+        # 2. Scan code blocks embedded in chat output
+        output = ctx[:output].to_s
+        output.scan(FENCE_RE).each do |match|
+          code = match[0]
+          next if code.nil? || code.strip.empty?
+          inline_findings = scan_inline(code)
+          findings.concat(inline_findings)
+        end
 
-        Result.ok(ctx.merge(lint_report: report))
+        # 3. Autofix if violations found and autoloop available
+        if findings.any? && @autoloop
+          fixable = findings.select { |f| !AutoLoop::SKIP_RULES.include?(f[:rule].to_s) }
+          if fixable.any?
+            fix_result = @autoloop.run(max_cycles: 3)
+            ctx = ctx.merge(autofix_result: fix_result)
+          end
+        end
+
+        Result.ok(ctx.merge(lint_report: findings))
       rescue => e
-        Result.err("lint: #{e.message}", category: :unknown)
+        # Lint failure must not block the pipeline
+        Result.ok(ctx.merge(lint_error: e.message))
+      end
+
+      private
+
+      # Scan a code string without writing to disk.
+      # Creates a tempfile, scans it, deletes it.
+      def scan_inline(code)
+        require "tempfile"
+        findings = []
+        Tempfile.open(["lint_inline", ".rb"]) do |f|
+          f.write("# frozen_string_literal: true\n\n#{code}")
+          f.flush
+          result = @scanner.scan(f.path, depth: :quick)
+          if result.respond_to?(:ok?) && result.ok?
+            findings = result.value!.map { |v| v.merge(source: :inline) }
+          end
+        end
+        findings
+      rescue StandardError
+        []
       end
     end
   end
