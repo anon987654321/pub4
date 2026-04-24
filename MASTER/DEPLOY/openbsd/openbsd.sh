@@ -1406,7 +1406,7 @@ rc_start() {
 
   export RAILS_ENV=production
 
-  export PATH=${HOME}/.gem/ruby/3.3/bin:$PATH
+  export PATH=${HOME}/.gem/ruby/3.4/bin:$PATH
 
   ${rcexec} "bin/rails server -b 0.0.0.0 -p $port -e production"
 
@@ -1436,23 +1436,8 @@ EOF
 
     log INFO "Setting up service: $svc_name on port $svc_port"
 
-    # Create rc.d script for CLI service
-    cat > /etc/rc.d/$svc_name <<EOF
-#!/bin/ksh
-# rc.d for $svc_name (rc.d(8))
-daemon_user="dev"
-. /etc/rc.d/rc.subr
-rc_start() {
-  cd /home/dev/pub || return 1
-  export PATH=/home/dev/.gem/ruby/3.4/bin:\$PATH
-  export ELEVENLABS_API_KEY=\$(cat /home/dev/.elevenlabs_key 2>/dev/null)
-  \${rcexec} "ruby cli.rb >> /var/log/${svc_name}.log 2>&1 &"
-}
-rc_stop() {
-  pkill -f "ruby cli.rb" || true
-}
-rc_cmd \$1
-EOF
+    # MASTER is deployed above; skip CLI-based rc.d for ai service
+log INFO "Service $svc_name handled by master rc.d"
 
     chmod 755 /etc/rc.d/$svc_name
     /usr/sbin/rcctl enable $svc_name
@@ -1463,7 +1448,7 @@ EOF
 
   # Configure and start relayd now that APP_PORTS is populated
 
-  # Deploy MASTER web UI (ai.brgen.no -> port 3000)
+  # Deploy MASTER web UI (ai.brgen.no -> port 3000 via relayd -> 10002)
   if ! is_step_completed "master_deployed"; then
     log INFO "Deploying MASTER web UI"
     typeset m3dir="/home/dev/pub4/MASTER"
@@ -1471,24 +1456,79 @@ EOF
     cd "$m3dir/web"
     bundle config set --local path vendor/bundle
     bundle install --quiet
-    rcctl enable masterweb
-        cat > /etc/rc.d/masterweb <<RCEOF
+
+    # Read API keys from dev's .zshrc for the rc.d service
+    typeset env_line=""
+    while IFS= read -r _line; do
+      [[ $_line == export\ *_API_KEY=* ]] && {
+        typeset _k=${_line#export }
+        env_line="$env_line ${_k%%=*}=${${_k#*=}//[\"
+  configure_relayd
+
+  print -r -- stage_2_complete > $STATE_FILE
+  log INFO "Stage 2 complete. Setup complete. Test: 'curl http://ai.brgen.no:3000/chat/metrics', 'rcctl check master'."
+
+  exit 0
+
+}
+
+# Main execution
+main() {
+
+  typeset arg1=${1:-}
+
+  [[ -f $STATE_FILE && ! -r $STATE_FILE ]] && { log ERROR "$STATE_FILE not readable"; exit 1 }
+
+  if [[ $arg1 = --help ]]; then
+
+    print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC and minimal OpenSMTPD.
+Usage: doas zsh openbsd.sh [--help | --resume]"
+
+    exit 0
+
+  fi
+
+  if [[ $arg1 = --resume && -f $STATE_FILE && $(<$STATE_FILE) = stage_1_complete ]]; then
+
+    stage_2
+
+  elif [[ -z $arg1 && ! -f $STATE_FILE ]]; then
+
+    stage_1
+
+  else
+
+    log ERROR "Invalid state. Use --help, --resume, or remove $STATE_FILE."
+
+    exit 1
+
+  fi
+
+}
+
+main "$@"
+]}"
+      }
+    done < /home/dev/.zshrc
+
+    cat > /etc/rc.d/master <<RCEOF
 #!/bin/ksh
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 falcon serve --bind http://127.0.0.1:10002"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1${env_line} falcon serve --bind http://127.0.0.1:10002"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_timeout="90"
 . /etc/rc.d/rc.subr
-pexp="ruby.*MASTER/web.*falcon"
+pexp="ruby34.*falcon.*10002"
 rc_bg=YES
 rc_reload=NO
 rc_cmd \$1
 RCEOF
-    chmod 555 /etc/rc.d/masterweb
-    rcctl start masterweb
+    chmod 555 /etc/rc.d/master
+    rcctl enable master
+    rcctl start master
     mark_step_completed "master_deployed"
-    log INFO "MASTER web UI running on :3000"
+    log INFO "MASTER web UI running on :10002 (relayd :3000 -> :10002)"
   fi
   configure_relayd
 
