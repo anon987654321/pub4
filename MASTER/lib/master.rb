@@ -120,7 +120,7 @@ FILE_LANGUAGE_MAP = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
     {
       config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
       scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
-      memory:, experience:, personality:, swarm:, root:,
+      memory:, personality:, swarm:, root:,
       diff_stager:, mcp:, code_index:, standing:, soul: soul_doc,
     }
   end
