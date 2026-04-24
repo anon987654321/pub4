@@ -30,6 +30,7 @@ module Master
     "llm"      => "LLM"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
+  loader.ignore(File.join(__dir__, "master", "ruby_llm_patch.rb"))
   loader.setup
 
   def self.configure_providers!
