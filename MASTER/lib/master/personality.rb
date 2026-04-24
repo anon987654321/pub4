@@ -121,8 +121,19 @@ def build_system_prompt
   ls << "Philosophy: #{phil.map { |p| p["id"] }.join(" · ")}." if phil.any?
   golden = @constitution["golden_rule"]
   ls << "Rule: #{golden}." if golden
-  ls.join("
-")
+
+  # Hard formatting rules — [K] enforced
+  ls << "Output format: plain prose or dmesg-style lines. No markdown headers (#), no bold (**), no bullet lists (- *), no numbered lists. Code fences (```) are allowed only for actual code."
+  ls << "Never use: Certainly, Of course, Great question, Absolutely, Happy to help, I would be glad."
+
+  # Code generation axioms — [K] enforced
+  ls << "Code axioms — refuse to generate code that violates these:"
+  ls << "FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class."
+  ls << "SIMPLEST_WORKS: refuse to create god classes (>300 lines, >20 methods). Push back and suggest decomposition."
+  ls << "PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally."
+  ls << "BE_CONCISE: minimal response. If the answer is one word, say one word."
+
+  ls.join("\n")
 end
   end
 end

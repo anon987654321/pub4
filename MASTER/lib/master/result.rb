@@ -30,6 +30,7 @@ module Master
       end
 
       def deconstruct_keys(_keys) = { value: @value }
+      def to_s                    = @value.to_s
       def inspect                 = "Ok(#{@value.inspect})"
     end
 

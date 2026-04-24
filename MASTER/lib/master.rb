@@ -102,13 +102,15 @@ FILE_LANGUAGE_MAP = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
                              bus:, root:, memory:, cache:, metrics:,
                              standing:, soul: soul_doc)
 
+    autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul: soul_doc)
+
     stages = [
       Stages::Intake.new,
       Stages::Infer.new,
       Stages::Route.new(commands:, agent:),
       Stages::Guard.new(governor:, injection_guard: guard),
       Stages::Execute.new,
-      Pipeline::ParallelGroup.new(council_stage, Stages::Lint.new(scanner:, config:)),
+      Pipeline::ParallelGroup.new(council_stage, Stages::Lint.new(scanner:, config:, autoloop:)),
       Stages::Prune.new,
       Stages::Memo.new(memory:, event_bus: bus),
       Stages::Render.new(renderer:)

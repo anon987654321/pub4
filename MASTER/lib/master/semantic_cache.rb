@@ -103,6 +103,8 @@ module Master
     end
 
     def write_entry(path, value, key)
+      # Unwrap Result objects for JSON serialization
+      value = value.value! if value.respond_to?(:ok?) && value.ok?
       evict_lru while @lru.size >= MAX_ENTRIES
       File.write(path, JSON.generate({ ts: Time.now.to_i, value: }))
       @lru.push(path)
