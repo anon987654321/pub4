@@ -105,6 +105,9 @@ require_relative "master/ruby_llm_patch"
     skills.discover!
 
     heartbeat = Heartbeat.new(root:, agent:, scanner:, memory:, event_bus: bus)
+
+    triggers = Triggers.new(event_bus: bus, scanner:, agent:)
+    triggers.install_defaults!
   heartbeat = Heartbeat.new(root:, agent:, scanner:, memory:, event_bus: bus)
 
   commands = build_commands(session:, undo:, logging:, config:, agent:,
