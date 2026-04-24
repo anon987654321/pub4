@@ -98,40 +98,78 @@ require_relative "master/ruby_llm_patch"
     council_stage = Stages::Council.new(deliberation:, config:)
 
     standing = StandingOrders.new(pipeline: nil, event_bus: bus)
-    commands = build_commands(session:, undo:, logging:, config:, agent:,
-                             council_stage:, swarm:, scanner:, deliberation:,
-                             bus:, root:, memory:, cache:, metrics:,
-                             standing:, soul: soul_doc)
 
     autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul: soul_doc)
 
-    stages = [
-      Stages::Intake.new,
-      Stages::Infer.new,
-      Stages::Route.new(commands:, agent:),
-      Stages::Guard.new(governor:, injection_guard: guard),
-      Stages::Execute.new,
-      Pipeline::ParallelGroup.new(council_stage, Stages::Lint.new(scanner:, config:, autoloop:)),
-      Stages::Prune.new,
-      Stages::Memo.new(memory:, event_bus: bus),
-      Stages::Render.new(renderer:)
-    ]
+    skills = Skills.new(root:, event_bus: bus)
+    skills.discover!
 
-    pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
-    standing.wire_pipeline(pipeline)
+    heartbeat = Heartbeat.new(root:, agent:, scanner:, memory:, event_bus: bus)
+  heartbeat = Heartbeat.new(root:, agent:, scanner:, memory:, event_bus: bus)
 
-    {
-      config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
-      scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
-      memory:, personality:, swarm:, root:,
-      diff_stager:, mcp:, code_index:, standing:, soul: soul_doc,
-    }
+  commands = build_commands(session:, undo:, logging:, config:, agent:,
+                           council_stage:, swarm:, scanner:, deliberation:,
+                           bus:, root:, memory:, cache:, metrics:,
+                           standing:, soul: soul_doc,
+                           heartbeat:, skills:, gateway: nil)
+
+  stages = [
+    Stages::Intake.new,
+    Stages::Infer.new,
+    Stages::Route.new(commands:, agent:),
+    Stages::Guard.new(governor:, injection_guard: guard),
+    Stages::Execute.new,
+    Pipeline::ParallelGroup.new(council_stage, Stages::Lint.new(scanner:, config:, autoloop:)),
+    Stages::Prune.new,
+    Stages::Memo.new(memory:, event_bus: bus),
+    Stages::Render.new(renderer:)
+  ]
+
+  pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
+  standing.wire_pipeline(pipeline)
+
+  gateway = Gateway.new(pipeline:, session:, event_bus: bus)
+    commands["gateway"] = ->(ctx) { gateway.channels }
+
+  {
+    config:, session:, agent:, renderer:, logging:, undo:, pipeline:,
+    scanner:, bus:, breaker:, cache:, governor:, metrics:, council_stage:,
+    memory:, personality:, swarm:, root:,
+    diff_stager:, mcp:, code_index:, standing:, soul: soul_doc,
+    heartbeat:, skills:, gateway:,
+  }
+end
+
+def self.boot(root: Dir.pwd, argv: [])
+  container = build(root:)
+  generate_boot_snapshot(container)
+  container[:heartbeat]&.start!
+  CLI.new(container:)
+end
+
+def self.generate_boot_snapshot(container)
+  root  = container[:root]
+  out   = File.join(root, ".master", "snapshot.md")
+  dirs  = %w[exe lib/master data].map { |d| File.join(root, d) }
+  files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
+              .select { |f| File.file?(f) && File.size(f) < 50_000 }
+              .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
+              .sort
+  header = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]
+  body = files.flat_map do |f|
+    rel  = f.sub("#{root}/", "")
+    lang = FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
+    content = File.read(f, encoding: "UTF-8", invalid: :replace)
+    ["## #{rel}", "```#{lang}", content.rstrip, "```", ""]
+  rescue StandardError
+    []
   end
-
-  def self.boot(root: Dir.pwd, argv: [])
-    container = build(root:)
-    CLI.new(container:)
-  end
+  FileUtils.mkdir_p(File.dirname(out))
+  File.write(out, (header + body).join("\n"))
+  container[:bus]&.publish("boot:snapshot", files: files.size)
+rescue StandardError => e
+  container[:bus]&.publish("boot:snapshot_error", error: e.message)
+end
 
   def self.default_model
     return "nvidia/nemotron-3-super-120b-a12b:free" if api_key_present?("OPENROUTER_API_KEY")
@@ -184,16 +222,17 @@ require_relative "master/ruby_llm_patch"
     scanner
   end
 
-  def self.build_commands(session:, undo:, logging:, config:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, cache:, metrics: nil, standing:, soul:)
+  def self.build_commands(session:, undo:, logging:, config:, agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, memory:, cache:, metrics: nil, standing:, soul:, heartbeat: nil, skills: nil, gateway: nil)
     build_session_commands(session:, undo:, logging:, config:)
       .merge(build_mode_commands(config:))
       .merge(build_agent_commands(agent:, council_stage:, swarm:, scanner:, deliberation:, bus:, root:, config:, metrics:))
       .merge(build_memory_commands(memory:, agent:))
+      .merge(build_new_commands(heartbeat:, skills:, gateway:))
       .merge(build_utility_commands(agent:, root:, cache:))
       .merge(build_master_commands(standing:, soul:))
       .merge(
         "help" => ->(ctx) {
-          cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory dreams orders soul cache diff commit knowledge why snapshot explain persona help exit]
+          cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory dreams orders soul cache diff commit knowledge why snapshot explain persona heartbeat skills gateway scan help exit]
           cmds.map { "/#{_1}" }.join("  ")
         }
       )
@@ -445,6 +484,33 @@ require_relative "master/ruby_llm_patch"
       },
     }
   end
+
+
+def self.build_new_commands(heartbeat:, skills:, gateway:)
+  {
+    "heartbeat" => ->(ctx) {
+      arg = ctx[:args].to_s.strip
+      case arg
+      when "run"   then heartbeat ? heartbeat.run_due!.map { |r| "#{r[:name]}: #{r[:result]}" }.join("\n") : "no heartbeat"
+      when "start" then heartbeat&.start!; "heartbeat started"
+      when "stop"  then heartbeat&.stop!; "heartbeat stopped"
+      else              heartbeat&.list || "no heartbeat"
+      end
+    },
+    "skills" => ->(ctx) {
+      arg = ctx[:args].to_s.strip
+      if arg.empty?
+        skills&.list || "(no skills)"
+      else
+        s = skills&.find(arg)
+        s ? "#{s[:name]}: #{s[:description]}" : "(not found: #{arg})"
+      end
+    },
+    "gateway" => ->(ctx) {
+      gateway&.channels || "(no gateway)"
+    },
+  }
+end
 
   def self.build_utility_commands(agent:, root:, cache:)
     {

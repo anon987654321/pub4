@@ -16,7 +16,7 @@ class ApplicationController < ActionController::Base
 
   def container
     @@mutex.synchronize do
-      @@container ||= Master.build(root: Rails.root.join("..").to_s).tap { |c| start_scheduler(c) }
+      @@container ||= Master.build(root: Rails.root.join("..").to_s).tap { |c| start_scheduler(c); Master.generate_boot_snapshot(c) rescue nil; c[:heartbeat]&.start! }
     end
   end
 
