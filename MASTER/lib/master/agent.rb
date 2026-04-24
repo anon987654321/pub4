@@ -2,6 +2,7 @@
 
 require "ruby_llm"
 require "digest"
+require "yaml"
 
 module Master
   class Agent
@@ -11,19 +12,16 @@ module Master
     # Replicate native API — these owner prefixes route through Bridges::Replicate.
     REPLICATE_OWNERS = %w[deepseek-ai mistralai xai meta-replicate].freeze
 
-    # Tool-capable model whitelist — anchored regex, not substring match.
-    # See note at tool_capable? for why the previous `include?` check was unsafe.
-    TOOL_CAPABLE_RE = %r{
-      \A(?:
-        (?:claude|gpt-4|gpt-4o|gemini|mistral|mixtral)
-        | (?:llama-3\.[13])
-        | (?:qwen|command-r|deepseek|stepfun|nvidia|nemotron)
-        | (?:meta/meta-llama.+)
-        | (?:anthropic/claude.+)
-        | (?:openai/gpt.+)
-        | (?:google/gemini.+)
-      )(?:[:@/\-.].+)?\z
-    }ix.freeze
+# Tool-capable model whitelist -- loaded from data/models.yml.
+# Anchored regex built from tool_capable_prefixes list.
+def self.build_tool_capable_re
+  yml_path = File.join(Master::ROOT, "data", "models.yml")
+  prefixes = YAML.safe_load_file(yml_path).fetch("tool_capable_prefixes", [])
+  escaped = prefixes.map { |p| Regexp.escape(p) }
+  Regexp.new("\\A(?:#{escaped.join("|")})(?:[:\\/@\\-.].+)?\\z", Regexp::IGNORECASE).freeze
+end
+
+TOOL_CAPABLE_RE = build_tool_capable_re
 
     MAX_TOOL_TURNS     = 5
     MIN_API_KEY_LENGTH = 20

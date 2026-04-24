@@ -1,3 +1,13 @@
+# frozen_string_literal: true
+
+# Patch A: Rewrite master.md to match actual code
+# Patch B: Rewrite CLAUDE.md with real project instructions  
+# Patch C: Delete snapshot.md
+
+BASE = "/home/dev/pub4/MASTER"
+
+# --- A: master.md ---
+master_md = <<~'MD'
 # MASTER
 
 Constitutional governance for an autonomous coding agent. Ruby. OpenBSD. zsh. Ultraminimalist.
@@ -352,3 +362,79 @@ Confidence-based escalation: uncertainty phrases in output trigger promotion
 to strong tier. Escalation happens at most once per chat call.
 
 Tool capability checked via `TOOL_CAPABLE_RE` regex whitelist in agent.rb.
+MD
+
+File.write("#{BASE}/master.md", master_md)
+puts "master.md: rewritten (#{master_md.lines.count} lines)"
+
+# --- B: CLAUDE.md ---
+claude_md = <<~'MD'
+# MASTER — Claude Code Project Instructions
+
+## Build & Run
+
+```sh
+cd /home/dev/pub4/MASTER
+bundle install
+bundle exec ruby exe/master          # CLI REPL (TTY mode)
+echo "hello" | bundle exec ruby exe/master  # pipe mode
+```
+
+## Web UI
+
+```sh
+cd web && bundle exec falcon serve -b http://127.0.0.1:10002
+# Or via rc.d:
+doas rcctl restart master
+```
+
+## Test
+
+```sh
+bundle exec ruby -Ilib:test test/test_web_http.rb   # HTTP smoke tests (5 tests)
+bundle exec ruby -Ilib:test test/test_browser.rb     # Browser tests (needs Chrome + 250MB free RAM)
+```
+
+## Lint
+
+```sh
+bundle exec rubocop lib/
+bundle exec reek lib/
+```
+
+## Architecture
+
+- 10-stage pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
+- Result monad: `Result.ok(value)` / `Result.err(msg, category:)` — all stages return Result
+- Entry point: `exe/master` → `Master.boot` (lib/master.rb)
+- Config: `.master/config.yml`, data files in `data/*.yml`
+- Web UI: Rails 8 app in `web/`, Falcon on port 10002
+
+## Key Conventions
+
+- `frozen_string_literal: true` on every .rb file
+- No bare rescue — always specify exception class
+- Methods <= 20 lines, classes <= 300 lines
+- Result monad everywhere — check with `respond_to?(:ok?)`, not `is_a?`
+- OpenBSD: `doas` not `sudo`, `rcctl` not `systemctl`, `pkg_add` not `apt`
+- Zeitwerk autoloading — inflectors: `"cli" => "CLI"`, `"mcp_server" => "MCPServer"`
+
+## SSH Access
+
+```sh
+sshpass -p 'PASSWORD' ssh -o StrictHostKeyChecking=no dev@brgen.no
+```
+MD
+
+File.write("#{BASE}/CLAUDE.md", claude_md)
+puts "CLAUDE.md: rewritten (#{claude_md.lines.count} lines)"
+
+# --- C: Delete snapshot.md ---
+snap = "#{BASE}/snapshot.md"
+if File.exist?(snap)
+  size = File.size(snap)
+  File.delete(snap)
+  puts "snapshot.md: deleted (#{size} bytes freed)"
+else
+  puts "snapshot.md: already gone"
+end

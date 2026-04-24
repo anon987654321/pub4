@@ -73,7 +73,6 @@ FILE_LANGUAGE_MAP = { ".rb" => "ruby", ".yml" => "yaml", ".yaml" => "yaml",
     bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
 
     memory      = Memory.new(root:)
-    experience  = State::Experience.new(root:)
     personality = Personality.new(config["persona"]&.to_sym || Personality::DEFAULT, root:)
 
     tools    = build_tools(root:, undo:, governor:, bus:, diff_stager:, code_index:)

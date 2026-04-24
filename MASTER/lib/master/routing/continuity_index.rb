@@ -24,16 +24,16 @@ module Master
       end
 
       def openrouter_latest
-        data.dig("continuity", "openrouter", "free_latest").to_a
+        data.dig("openrouter", "free_latest").to_a
       end
 
 
       def ferrum_latest
-        data.dig("continuity", "ferrum_web_chat", "free_latest").to_a
+        data.dig("ferrum_web_chat", "free_latest").to_a
       end
 
       def data
-        path = File.join(@root, "data", "fallback_models.yml")
+        path = File.join(@root, "data", "models.yml")
         current_mtime = File.exist?(path) ? File.mtime(path) : nil
 
         if @data_cache.nil? || current_mtime != @data_mtime
