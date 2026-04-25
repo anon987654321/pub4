@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ms">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -1274,13 +1274,16 @@ const renderMd = raw => {
       if(!('speechSynthesis' in window)) return false;
       window.speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g,'').substring(0,500));
-      u.rate=1.08; u.pitch=1.05; u.volume=1.0;
+      u.lang='ms-MY'; u.rate=1.0; u.pitch=1.0; u.volume=1.0;
       u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');};
       u.onend=_onSpeakEnd; u.onerror=_onSpeakEnd;
       // Always speak synchronously — must stay inside gesture call stack on mobile.
       // _cachedVoices is populated eagerly at page load and kept fresh via voiceschanged.
       const saved=localStorage.getItem('pref_voice');
       const pick=( saved && _cachedVoices.find(v=>v.name===saved) )
+        ||_cachedVoices.find(v=>/osman/i.test(v.name))
+        ||_cachedVoices.find(v=>v.lang==='ms-MY'&&v.localService)
+        ||_cachedVoices.find(v=>v.lang.startsWith('ms'))
         ||_cachedVoices.find(v=>v.lang.startsWith('en-')&&v.localService)
         ||_cachedVoices.find(v=>v.lang.startsWith('en-'))
         ||_cachedVoices[0];
@@ -1334,7 +1337,7 @@ const renderMd = raw => {
       recognition=new SpeechRecognition();
       recognition.continuous=true;
       recognition.interimResults=true;
-      recognition.lang='en-US';
+      recognition.lang='ms-MY';
       recognition.onstart=()=>{ recognitionActive=true; statusEl.classList.add('think'); };
       recognition.onend=()=>{
         recognitionActive=false;
