@@ -396,7 +396,7 @@ module Master
           yml_path = File.join(root, "data", "models.yml")
           if File.exist?(yml_path)
             require "yaml"
-            data          = YAML.safe_load_file(yml_path)
+            data          = YAML.safe_load_file(yml_path, aliases: true)
             tiers         = data["models"] || {}
             model_lines   = tiers.flat_map { |tier, ms| ms.to_a.map { |m| "  [#{tier}] #{m["id"]}" } }
             quality_lines = metrics&.model_quality&.map { |mod, s| "  #{mod}: #{s[:calls]} calls, fail_rate=#{s[:fail_rate]}" } || []
