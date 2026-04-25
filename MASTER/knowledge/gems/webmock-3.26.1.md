@@ -1,5 +1,1 @@
-gem install webmock
-# or in a Gemfile
-group :test do
-  gem "webmock"
-end
+circuit open: retry in 30s

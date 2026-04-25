@@ -1,1 +1,1 @@
-gem install debug -v 1.11.1
+circuit open: retry in 30s

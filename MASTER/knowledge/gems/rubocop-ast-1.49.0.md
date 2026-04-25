@@ -1,1 +1,1 @@
-gem install rubocop-ast -v 1.49.0
+circuit open: retry in 30s

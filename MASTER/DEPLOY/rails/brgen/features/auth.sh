@@ -15,7 +15,12 @@ replace_db_config() {
 }
 
 #--- Main --------------------------------------------------------------------
-printf '==> [auth] acts_as_votable solid_stack devise\n'
+printf '==> [auth] acts_as_votable solid_stack rails_auth\n'
+
+if [ ! -d "$APP_DIR" ]; then
+	printf 'Error: APP_DIR does not exist: %s\n' "$APP_DIR" >&2
+	exit 1
+fi
 
 cd "$APP_DIR"
 
@@ -36,9 +41,11 @@ fi
 # Update DB config atomically, preserving mode
 if [ -f "$DB_CONFIG" ]; then
 	tmp="$(mktemp -p "$(dirname "$DB_CONFIG")" tmp.XXXXXX)"
+	trap 'rm -f "$tmp"' EXIT
 	replace_db_config < "$DB_CONFIG" > "$tmp"
 	chmod --reference="$DB_CONFIG" "$tmp"
 	mv -f "$tmp" "$DB_CONFIG"
+	trap - EXIT
 fi
 
 printf '==> [auth] done\n'

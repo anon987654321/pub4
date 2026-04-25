@@ -1,1 +1,1 @@
-gem install rack -v 3.2.5
+circuit open: retry in 30s

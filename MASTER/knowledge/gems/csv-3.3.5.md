@@ -1,2 +1,1 @@
-# Gemfile
-gem "csv", "~> 3.3.5"
+circuit open: retry in 30s

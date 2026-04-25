@@ -1,1 +1,1 @@
-gem 'io-console', '~> 0.8.2'
+circuit open: retry in 30s

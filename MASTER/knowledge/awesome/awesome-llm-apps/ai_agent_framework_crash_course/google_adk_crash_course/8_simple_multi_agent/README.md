@@ -1,2 +1,1 @@
-# Install required gems
-bundle install
+circuit open: retry in 30s

@@ -1,1 +1,1 @@
-gem install erubi -v 1.13.1
+circuit open: retry in 30s

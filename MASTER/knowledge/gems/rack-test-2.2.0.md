@@ -1,1 +1,1 @@
-gem install rack-test -v 2.2.0
+circuit open: retry in 30s

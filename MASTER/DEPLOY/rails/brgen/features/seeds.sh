@@ -2,19 +2,25 @@
 set -euo pipefail
 shopt -s nullglob
 
-# Absolute path to the Rails application
 readonly APP_DIR="/home/brgen/app"
 
-# Verify the application directory exists
 if [[ ! -d "${APP_DIR}" ]]; then
-  echo "Error: APP_DIR '${APP_DIR}' does not exist" >&2
+  printf 'Error: APP_DIR %s does not exist\\n' "${APP_DIR}" >&2
   exit 1
 fi
 cd "${APP_DIR}"
 
-# Create a temporary seed file; ensure it is removed on exit or interrupt
-SEED_FILE="$(mktemp db/seeds_tmp.XXXXXX.rb)"
+if [[ ! -d "db" ]]; then
+  mkdir -p db
+fi
+
+SEED_FILE="$(mktemp -t seeds_tmp.XXXXXX.rb)"
 trap 'rm -f "${SEED_FILE}"' EXIT TERM INT
+
+if [[ ! -x "bin/rails" ]]; then
+  printf 'Error: bin/rails not found or not executable\\n' >&2
+  exit 1
+fi
 
 cat > "${SEED_FILE}" <<'RUBY'
 return unless Rails.env.development?
@@ -63,7 +69,7 @@ end
 puts "Seed complete."
 RUBY
 
-# Execute the temporary seed file within the Rails environment using the binstub
+echo "Running seed script..."
 bin/rails runner "${SEED_FILE}"
 
 echo "==> [seeds] done"

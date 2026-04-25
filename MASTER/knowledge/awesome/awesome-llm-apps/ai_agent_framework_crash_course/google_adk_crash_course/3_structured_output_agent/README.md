@@ -1,2 +1,1 @@
-# Install all Ruby dependencies defined in the Gemfile
-bundle install
+circuit open: retry in 30s

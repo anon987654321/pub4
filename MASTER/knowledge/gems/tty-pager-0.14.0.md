@@ -1,1 +1,1 @@
-gem install tty-pager
+circuit open: retry in 30s

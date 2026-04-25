@@ -1,1 +1,1 @@
-gem install dry-schema -v 1.15.0
+circuit open: retry in 30s

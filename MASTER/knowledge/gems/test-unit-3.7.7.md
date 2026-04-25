@@ -1,1 +1,1 @@
-sudo gem install test-unit
+circuit open: retry in 30s

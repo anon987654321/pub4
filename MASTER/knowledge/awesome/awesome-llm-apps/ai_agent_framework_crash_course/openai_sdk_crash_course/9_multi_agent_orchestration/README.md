@@ -1,11 +1,1 @@
-          ┌─────────────────────┐
-          │      ┌───────┐      │
-          │      │ Input │      │
-          │      └───────┘      │
-          └─▲─────▲─────▲───────┘
-            │     │     │
-   Research │ Writing │ Analysis … (custom)
-            │     │     │
-   ───────►│─────►│─────►│──────►  Parallel execution
-            │     │     │
-            └─────► Result synthesis ◄─────┘
+circuit open: retry in 30s

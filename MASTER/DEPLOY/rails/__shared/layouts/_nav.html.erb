@@ -7,7 +7,7 @@
         <%= link_to root_path, class: "logo-link" do %>
           <span class="logo"><%= @app_name.presence || "App" %></span>
         <% end %>
-        <% if (tenant = ActsAsTenant.current_tenant&.name).present? %>
+        <% if tenant = ActsAsTenant.current_tenant&.name %>
           <span class="tenant"><%= tenant %></span>
         <% end %>
       </div>

@@ -1,1 +1,1 @@
-gem install reek
+circuit open: retry in 30s

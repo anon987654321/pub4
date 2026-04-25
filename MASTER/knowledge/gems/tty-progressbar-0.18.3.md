@@ -1,1 +1,1 @@
-gem "tty-progressbar", "~> 0.18"
+circuit open: retry in 30s

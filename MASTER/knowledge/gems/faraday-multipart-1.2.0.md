@@ -1,2 +1,1 @@
-# Gemfile
-gem 'faraday-multipart', '~> 1.2.0'
+circuit open: retry in 30s

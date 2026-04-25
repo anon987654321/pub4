@@ -1,10 +1,1 @@
-system: |
-  Follow the ReAct paradigm. Keep reasoning concise; intervene only when necessary. Emphasize brevity and concrete actions.
-template: |
-  [Mode: ReAct]
-  Task: %{message}
-  ---
-  Reason:
-  %<reason>s
-  Action:
-  %<action>s
+"\xE2" on US-ASCII

@@ -1,1 +1,1 @@
-gem "dry-core", "~> 1.2"
+circuit open: retry in 30s

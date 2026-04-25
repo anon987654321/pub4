@@ -1,1 +1,1 @@
-gem install typogruby
+circuit open: retry in 30s

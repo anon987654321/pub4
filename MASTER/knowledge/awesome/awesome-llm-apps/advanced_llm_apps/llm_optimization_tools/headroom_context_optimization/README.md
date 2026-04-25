@@ -1,1 +1,1 @@
-pip install headroom-ai
+circuit open: retry in 30s

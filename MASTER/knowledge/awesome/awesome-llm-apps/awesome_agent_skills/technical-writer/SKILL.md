@@ -1,1 +1,1 @@
-bundle add awesome_agent_skills‑technical‑writer
+circuit open: retry in 30s

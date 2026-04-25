@@ -1,2 +1,3 @@
-git clone https://github.com/yourorg/baibl.git
-cd baibl
+git clone <repository-url>
+cd master
+bundle install

@@ -1,1 +1,1 @@
-gem install fugit
+circuit open: retry in 30s

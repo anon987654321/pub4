@@ -1,20 +1,18 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
 # -----------------------------------------------------------------------------
 # Brgen TV deployment script – OpenBSD‑first, POSIX‑compatible
 # -----------------------------------------------------------------------------
 
 APP_NAME="brgen_tv"
-BASE_DIR="${HOME}/rails"
-SERVER_IP="185.52.176.18"
-APP_PORT=$((10000 + RANDOM % 10000))
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR=$(cd "$SCRIPT_DIR" && pwd)
 
 # -----------------------------------------------------------------------------
 # Load shared utilities
 # -----------------------------------------------------------------------------
-if [[ -f "${SCRIPT_DIR}/shared_functions.sh" ]]; then
+if [ -f "${SCRIPT_DIR}/shared_functions.sh" ]; then
     # shellcheck source=/dev/null
     . "${SCRIPT_DIR}/shared_functions.sh"
 else
@@ -28,7 +26,7 @@ log "Starting Brgen TV setup with video streaming and live broadcasting"
 # Install a package, idempotent and OpenBSD‑first
 # -----------------------------------------------------------------------------
 install_pkg() {
-    local pkg=$1
+    pkg=$1
     case "$(uname -s)" in
         OpenBSD) doas pkg_add -I "${pkg}" ;;
         Linux)
@@ -51,32 +49,36 @@ install_pkg() {
 # -----------------------------------------------------------------------------
 # Ensure Redis is present and running
 # -----------------------------------------------------------------------------
-if ! command -v redis-server >/dev/null 2>&1; then
-    log "Redis not found – installing"
-    install_pkg redis || {
-        log "Redis installation failed – install manually"
-        exit 1
-    }
-fi
+ensure_redis() {
+    if ! command -v redis-server >/dev/null 2>&1; then
+        log "Redis not found – installing"
+        install_pkg redis || {
+            log "Redis installation failed – install manually"
+            return 1
+        }
+    fi
 
-if ! pgrep -x redis-server >/dev/null 2>&1; then
-    case "$(uname -s)" in
-        OpenBSD) doas rcctl start redis ;;
-        Linux)   sudo systemctl enable --now redis-server || sudo systemctl enable --now redis ;;
-        Darwin)  brew services start redis ;;
-        *)       log "Cannot auto‑start Redis on this OS"; exit 1 ;;
-    esac
-fi
+    if ! pgrep -x redis-server >/dev/null 2>&1; then
+        case "$(uname -s)" in
+            OpenBSD) doas rcctl start redis ;;
+            Linux)   sudo systemctl enable --now redis-server || sudo systemctl enable --now redis ;;
+            Darwin)  brew services start redis ;;
+            *)       log "Cannot auto‑start Redis on this OS"; return 1 ;;
+        esac
+    fi
 
-if ! redis-cli ping >/dev/null 2>&1; then
-    log "Redis not responding – start it manually and rerun"
-    exit 1
-fi
+    if ! redis-cli ping >/dev/null 2>&1; then
+        log "Redis not responding – start it manually and rerun"
+        return 1
+    fi
+}
+
+ensure_redis || exit 1
 
 # -----------------------------------------------------------------------------
 # Application scaffolding
 # -----------------------------------------------------------------------------
-setup_full_app "$APP_NAME" || {
+setup_full_app "${APP_NAME}" || {
     log "Application setup failed"
     exit 1
 }

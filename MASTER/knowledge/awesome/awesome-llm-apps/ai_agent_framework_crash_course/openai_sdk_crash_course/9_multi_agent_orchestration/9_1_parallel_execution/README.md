@@ -1,2 +1,1 @@
-# Upgrade to the latest version of the OpenAI Agents Python SDK
-pip install --upgrade openai-agents
+circuit open: retry in 30s

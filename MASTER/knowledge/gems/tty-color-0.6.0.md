@@ -1,1 +1,1 @@
-gem install tty-color
+circuit open: retry in 30s

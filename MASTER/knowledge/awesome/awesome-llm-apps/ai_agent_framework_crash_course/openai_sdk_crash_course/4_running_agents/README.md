@@ -1,1 +1,1 @@
-Intake → Infer → Route → Guard → Execute → Council → Lint → Memo → Render
+circuit open: retry in 30s

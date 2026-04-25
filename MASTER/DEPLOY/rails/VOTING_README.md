@@ -1,1 +1,1 @@
-rails/__shared/voting_system.sh
+Provider returned error

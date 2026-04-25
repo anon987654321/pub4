@@ -1,1 +1,3 @@
-doas -s        # Open an interactive root shell
+   git clone https://github.com/yourorg/master.git
+   cd master
+   

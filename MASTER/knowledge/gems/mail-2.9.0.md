@@ -1,1 +1,1 @@
-gem install mail -v 2.9.0
+circuit open: retry in 30s

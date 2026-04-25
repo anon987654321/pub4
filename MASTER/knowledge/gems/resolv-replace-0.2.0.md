@@ -1,1 +1,1 @@
-gem 'resolv-replace', '~> 0.2.0'
+circuit open: retry in 30s

@@ -1,1 +1,1 @@
-$ gem install websocket-extensions
+circuit open: retry in 30s

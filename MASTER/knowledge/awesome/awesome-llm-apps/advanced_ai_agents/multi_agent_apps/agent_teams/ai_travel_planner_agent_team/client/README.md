@@ -1,1 +1,1 @@
-pnpm install
+circuit open: retry in 30s

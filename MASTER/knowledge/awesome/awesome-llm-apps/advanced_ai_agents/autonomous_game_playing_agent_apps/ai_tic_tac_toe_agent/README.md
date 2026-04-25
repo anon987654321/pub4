@@ -1,1 +1,1 @@
-pkg_add chromium
+circuit open: retry in 30s

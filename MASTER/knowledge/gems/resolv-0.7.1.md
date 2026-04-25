@@ -1,1 +1,1 @@
-gem 'resolv', '~> 0.7.1'
+circuit open: retry in 30s

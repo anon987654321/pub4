@@ -1,1 +1,1 @@
-gem install faraday -v 2.14.0
+circuit open: retry in 30s

@@ -1,1 +1,1 @@
-gem "repl_type_completor", "~> 0.1.13"
+circuit open: retry in 30s

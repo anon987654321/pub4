@@ -1,52 +1,37 @@
 #!/usr/bin/env sh
-set -eu
-set -o pipefail
+set -euo pipefail
 
-#--- Configuration -----------------------------------------------------------
-APP_DIR="/home/brgen/app"
-PORT=11006
-RC_NAME="brgen"
-RC_FILE="/etc/rc.d/${RC_NAME}"
-TMP_RC="$(mktemp -t "${RC_NAME}.rc.XXXXXX")"
+# Deploy script for brgen Rails application
+# Follows OpenBSD-first principles and Master project axioms
 
-#--- Helpers -----------------------------------------------------------------
-err() {
-  printf 'error: %s\n' "$*" >&2
-  exit 1
-}
+APP_DIR="/var/www/brgen"
+REPO_URL="git@github.com:brgen/brgen.git"
+BRANCH="main"
+SERVICE_NAME="master"
 
-cleanup() {
-  rm -f "${TMP_RC}"
-}
-trap cleanup EXIT INT TERM
+# Ensure we're running as root (adjust if needed)
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root" >&2
+    exit 1
+fi
 
-#--- Preconditions -----------------------------------------------------------
-[ -d "${APP_DIR}" ] || err "application directory ${APP_DIR} does not exist"
-command -v doas >/dev/null 2>&1 || err "'doas' not found – required for privileged actions"
+# Change to application directory
+cd "$APP_DIR"
 
-#--- Build rc.d script --------------------------------------------------------
-cat > "${TMP_RC}" <<'EOF'
-#!/bin/ksh
-daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 falcon serve --bind http://0.0.0.0:${PORT}"
-daemon_user="brgen"
-daemon_execdir="${APP_DIR}"
-daemon_timeout="60"
-. /etc/rc.d/rc.subr
-pexp="ruby.*brgen.*falcon"
-rc_bg=YES
-rc_reload=NO
-rc_cmd "$1"
-EOF
+# Fetch latest code
+git fetch origin "$BRANCH"
+git reset --hard "origin/$BRANCH"
 
-#--- Install rc.d script ------------------------------------------------------
-doas install -m 555 "${TMP_RC}" "${RC_FILE}"
-doas rcctl enable "${RC_NAME}"
+# Install dependencies
+bundle install --deployment --without development test
 
-#--- Run database migrations --------------------------------------------------
-doas -u brgen sh -c "cd '${APP_DIR}' && RAILS_ENV=production bundle exec rails db:migrate"
+# Database migration
+bundle exec rails db:migrate RAILS_ENV=production
 
-#--- Start service ------------------------------------------------------------
-doas rcctl start "${RC_NAME}"
+# Precompile assets
+bundle exec rails assets:precompile RAILS_ENV=production
 
-printf '==> %s serving on port %s\n' "${RC_NAME}" "${PORT}"
+# Restart service
+rcctl restart "$SERVICE_NAME"
+
+echo "Deployment completed successfully"

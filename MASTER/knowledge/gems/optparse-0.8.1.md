@@ -1,1 +1,1 @@
-gem install optparse -v 0.8.1
+circuit open: retry in 30s

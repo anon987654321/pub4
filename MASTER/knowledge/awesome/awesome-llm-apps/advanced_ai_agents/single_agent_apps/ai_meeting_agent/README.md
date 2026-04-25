@@ -1,1 +1,1 @@
-doas pkg_add ruby ruby-bundler ruby-ffi git chromium
+circuit open: retry in 30s

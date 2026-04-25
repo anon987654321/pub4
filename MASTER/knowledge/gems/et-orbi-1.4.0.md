@@ -1,2 +1,1 @@
-
-Helper methods:
+circuit open: retry in 30s

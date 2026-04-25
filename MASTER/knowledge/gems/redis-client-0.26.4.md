@@ -1,2 +1,1 @@
-# Gemfile
-gem "redis-client", "~> 0.26.4"
+circuit open: retry in 30s

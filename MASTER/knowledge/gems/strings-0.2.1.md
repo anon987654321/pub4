@@ -1,1 +1,1 @@
-gem 'strings', '~> 0.2.1'
+circuit open: retry in 30s

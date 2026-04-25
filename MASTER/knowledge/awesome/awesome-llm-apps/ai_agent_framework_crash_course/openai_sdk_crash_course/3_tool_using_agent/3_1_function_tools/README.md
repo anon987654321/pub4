@@ -1,2 +1,1 @@
-# Install the library that provides the agent infrastructure
-pip install openai-agents
+circuit open: retry in 30s

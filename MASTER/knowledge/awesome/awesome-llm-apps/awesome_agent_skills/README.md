@@ -1,2 +1,1 @@
-# Install the Master framework (includes all built‑in tools)
-gem install master
+circuit open: retry in 30s

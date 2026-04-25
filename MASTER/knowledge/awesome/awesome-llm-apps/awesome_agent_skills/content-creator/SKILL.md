@@ -1,1 +1,1 @@
-master run content-creator "<prompt>"
+circuit open: retry in 30s

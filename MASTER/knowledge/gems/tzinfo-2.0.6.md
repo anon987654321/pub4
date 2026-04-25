@@ -1,1 +1,1 @@
-gem install tzinfo
+circuit open: retry in 30s
