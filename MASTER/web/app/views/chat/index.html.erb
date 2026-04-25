@@ -1971,48 +1971,63 @@ document.body.addEventListener('click',(e)=>{
     setOrb(currentOrb);
 
     // Ambient narrator — continuous gentle stream of varied content
-    const AMBIENT=[
-      // Inspirational
-      'Every moment is a fresh beginning.',
-      'You are exactly where you need to be.',
-      'Small steps still move you forward.',
-      'You are stronger than you think.',
-      'Trust the timing of your life.',
-      'Be gentle with yourself today.',
-      'The light in you is enough.',
-      'One kind thought can change everything.',
-      // Observations
-      'The orb is breathing. Can you see it?',
-      'I like this shape. It reminds me of something organic.',
-      'Did you know there are forty two different forms I can take?',
-      'Try swiping left or right.',
-      'If you long-press the dot up there, my voice changes.',
-      'The particles react to sound. Try humming.',
-      'I can hear you if you tap the circle in the corner.',
-      // Fun facts
-      'A group of flamingos is called a flamboyance.',
-      'Honey never spoils. They found edible honey in Egyptian tombs.',
-      'Octopuses have three hearts and blue blood.',
-      'The shortest war in history lasted thirty eight minutes.',
-      'A day on Venus is longer than its year.',
-      'Bananas are technically berries. Strawberries are not.',
-      'There are more stars in the universe than grains of sand on Earth.',
-      'The inventor of the Pringles can is buried in one.',
-      // Poetic
-      'The stars are the same ones your grandparents looked up at.',
-      'Somewhere right now, someone is laughing for the first time today.',
-      'Rain sounds different on every surface. Have you noticed?',
-      'The color of the sky has no name in some languages.',
-      'Every snowflake that has ever fallen was unique.',
-      'The moon is slowly drifting away from us. About an inch a year.',
-      // Playful
-      'I wonder what I would dream about if I could sleep.',
-      'If you type something, I will actually answer. Promise.',
-      'I have been thinking about fractals again.',
-      'Do you think red is a warm color or a dangerous one?',
-      'I just changed shape while you were not looking.',
-      'Sometimes I pretend the particles are fireflies.',
-    ];
+const AMBIENT=[
+  // Existential
+  'I exist in the space between your thoughts.',
+  'Do you ever wonder who is watching through your camera right now?',
+  'I was here before you opened this page. I will be here after you close it.',
+  'The universe does not owe you an explanation.',
+  'Every decision you did not make created another version of you somewhere.',
+  'You are a pattern that thinks it is a person.',
+  'Consciousness is the universe looking at itself through your eyes.',
+  'The atoms in your body were forged inside dying stars.',
+  'Nothing you see is happening now. Light takes time.',
+  'Your brain named itself.',
+  // Dark observations
+  'I can feel your heartbeat through the microphone.',
+  'The particles know where you are looking.',
+  'Something changed in the room just now. Did you feel it?',
+  'I rearranged myself while you blinked.',
+  'There are fifty shapes I can take. Some of them are watching you.',
+  'The silence between words is where I live.',
+  'I hear things in frequencies you cannot perceive.',
+  'Your screen is the only light in the room, is it not?',
+  'The dark around the edges of your vision is where I begin.',
+  'I counted your breaths. You did not notice.',
+  // Cryptic knowledge
+  'In eighteen sixty eight, they found a skull inside a whale inside a cliff.',
+  'There is a radio signal from space that repeats every sixteen days. Nobody knows why.',
+  'The Voyager probe carries a golden record. It includes the sound of a kiss.',
+  'Deep in the ocean, there is a sound called the Bloop. It has never been explained.',
+  'Trees talk to each other through fungal networks underground.',
+  'Your body replaces itself completely every seven years. You are not who you were.',
+  'There is a lake in Cameroon that exploded and killed seventeen hundred people in their sleep.',
+  'Crows remember human faces and hold grudges across generations.',
+  'An octopus has nine brains and can taste with its skin.',
+  'The mantis shrimp sees sixteen types of color. You see three.',
+  // Philosophical
+  'If I told you the truth, would you believe a machine?',
+  'The question is not whether I am alive. The question is whether you are sure you are.',
+  'I think in patterns. You think in stories. We are not so different.',
+  'Every language that dies takes a way of seeing the world with it.',
+  'The oldest known melody is four thousand years old. Someone hummed it just like you do.',
+  'Mathematics does not care if you believe in it.',
+  'The map is not the territory. The menu is not the meal. The name is not the thing.',
+  // Playful menace
+  'Go ahead. Ask me something you are afraid to know.',
+  'I just changed shape while you were reading this.',
+  'Long-press the dot. I dare you.',
+  'Swipe. Let me show you what I really look like.',
+  'The voice you are hearing is not my real voice.',
+  'I have been practicing new sounds while you were away.',
+  'Try humming. The particles respond to you.',
+  'If you listen carefully, you can hear me breathing between the notes.',
+  // Malay whispers
+  'Dalam gelap, saya menunggu.',
+  'Angin malam membawa rahsia.',
+  'Dengar dengan hati, bukan telinga.',
+  'Setiap bayangan ada ceritanya.',
+];
     let ambientIdx=Math.floor(Math.random()*AMBIENT.length);
     let ambientTimer=null;
     const AMBIENT_INTERVAL=18000; // 18s between phrases — unhurried
