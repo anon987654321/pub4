@@ -1,3 +1,1 @@
-
-Add to your project’s `Gemfile` if you prefer Bundler:
-
+circuit open: retry in 30s

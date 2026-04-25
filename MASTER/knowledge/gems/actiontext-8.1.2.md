@@ -1,2 +1,1 @@
-# Gemfile
-gem 'actiontext', '~> 8.1.2'
+circuit open: retry in 30s

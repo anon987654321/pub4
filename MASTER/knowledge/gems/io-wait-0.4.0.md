@@ -1,1 +1,1 @@
-gem install io-wait -v 0.4.0
+circuit open: retry in 30s

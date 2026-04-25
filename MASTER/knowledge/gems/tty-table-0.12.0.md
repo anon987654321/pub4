@@ -1,1 +1,1 @@
-gem install tty-table
+circuit open: retry in 30s

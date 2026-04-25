@@ -1,1 +1,1 @@
-gem install tty-markdown
+circuit open: retry in 30s

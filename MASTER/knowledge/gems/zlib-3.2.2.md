@@ -1,1 +1,1 @@
-gem "zlib"
+circuit open: retry in 30s

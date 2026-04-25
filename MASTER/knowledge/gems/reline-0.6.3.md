@@ -1,1 +1,1 @@
-gem install reline -v 0.6.3
+circuit open: retry in 30s

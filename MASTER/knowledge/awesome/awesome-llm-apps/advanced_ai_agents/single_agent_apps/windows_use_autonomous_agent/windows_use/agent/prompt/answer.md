@@ -1,6 +1,1 @@
-**Option**  
-- **Evaluate**: `{evaluate}`  
-- **Memory**: `{memory}`  
-- **Thought**: `{thought}`  
-- **Final Answer**: `{final_answer}`  
-- **Route**: `Answer`
+circuit open: retry in 30s

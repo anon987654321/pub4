@@ -1,5 +1,1 @@
-# Bundler (recommended)
-bundle add tty-spinner
-
-# Or install globally
-gem install tty-spinner
+circuit open: retry in 30s

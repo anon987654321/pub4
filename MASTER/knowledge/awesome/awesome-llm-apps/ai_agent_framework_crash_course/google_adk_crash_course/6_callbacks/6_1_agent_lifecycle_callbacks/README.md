@@ -1,1 +1,1 @@
-pip install -r requirements.txt
+circuit open: retry in 30s

@@ -1,1 +1,1 @@
-gem install ruby-progressbar
+circuit open: retry in 30s

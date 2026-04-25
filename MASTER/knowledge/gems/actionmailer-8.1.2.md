@@ -1,2 +1,1 @@
-# Notifier.welcome('alice@example.com').deliver_now
-# 
+circuit open: retry in 30s

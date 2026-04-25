@@ -1,1 +1,1 @@
-gem 'logger', '~> 1.7.0'
+circuit open: retry in 30s

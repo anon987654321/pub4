@@ -1,1 +1,1 @@
-gem install tty-link -v '~> 0.2.0'
+circuit open: retry in 30s

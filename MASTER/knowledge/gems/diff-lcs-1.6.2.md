@@ -1,1 +1,1 @@
-gem install diff-lcs -v 1.6.2
+circuit open: retry in 30s

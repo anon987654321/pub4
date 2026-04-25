@@ -57,7 +57,7 @@ rails:
 
 zsh:
   shebang: "#!/usr/bin/env zsh"
-  options: "set -euo pipefail; setopt nullglob extendedglob"
+  options: "setopt errexit nounset pipefail noclobber noglob noexec nullglob extendedglob"
   banned_commands:
     - sed
     - awk

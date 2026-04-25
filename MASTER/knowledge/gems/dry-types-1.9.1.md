@@ -1,1 +1,1 @@
-gem install dry-types -v 1.9.1
+circuit open: retry in 30s

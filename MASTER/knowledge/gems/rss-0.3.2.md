@@ -1,1 +1,1 @@
-gem install rss -v 0.3.2
+circuit open: retry in 30s

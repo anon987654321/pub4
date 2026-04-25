@@ -1,2 +1,1 @@
-# System Ruby and Bundler (no rbenv/chruby)
-pkg_add ruby bundler
+circuit open: retry in 30s

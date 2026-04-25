@@ -1,1 +1,1 @@
-gem install concurrent-ruby -v 1.3.6
+circuit open: retry in 30s

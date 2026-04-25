@@ -1,2 +1,1 @@
-# ruby example.rb
-# 
+circuit open: retry in 30s

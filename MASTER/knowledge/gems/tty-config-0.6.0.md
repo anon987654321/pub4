@@ -1,1 +1,1 @@
-gem install tty-config
+circuit open: retry in 30s

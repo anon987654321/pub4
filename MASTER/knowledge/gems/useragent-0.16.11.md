@@ -1,1 +1,1 @@
-gem install useragent
+circuit open: retry in 30s

@@ -49,6 +49,7 @@
   role: Security Review
   bias: Safety
   prompt: Identify injection, privilege escalation, data‑exposure, and auth risks. Prefix VETO when unsafe to ship.
+  veto_role: true
 
 - name: Skeptic
   role: Devil's Advocate

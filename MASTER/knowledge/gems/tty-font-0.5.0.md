@@ -1,1 +1,1 @@
-gem 'tty-font', '~> 0.5.0'
+circuit open: retry in 30s

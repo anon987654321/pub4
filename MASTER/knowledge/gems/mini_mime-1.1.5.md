@@ -1,1 +1,1 @@
-gem 'mini_mime', '~> 1.1.5'
+circuit open: retry in 30s

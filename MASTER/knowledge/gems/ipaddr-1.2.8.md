@@ -1,1 +1,1 @@
-gem install ipaddr -v 1.2.8
+circuit open: retry in 30s

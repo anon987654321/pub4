@@ -1,1 +1,1 @@
-gem install power_assert
+circuit open: retry in 30s

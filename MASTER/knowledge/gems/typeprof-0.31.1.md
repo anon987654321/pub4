@@ -1,1 +1,1 @@
-gem install typeprof
+circuit open: retry in 30s

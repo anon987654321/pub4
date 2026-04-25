@@ -1,1 +1,1 @@
-uv pip install windows-use
+circuit open: retry in 30s

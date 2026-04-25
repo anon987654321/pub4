@@ -1,1 +1,1 @@
-gem 'event_stream_parser', '~> 1.0'
+circuit open: retry in 30s

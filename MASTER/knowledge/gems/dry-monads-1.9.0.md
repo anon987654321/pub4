@@ -1,1 +1,1 @@
-gem install dry-monads -v 1.9.0
+circuit open: retry in 30s

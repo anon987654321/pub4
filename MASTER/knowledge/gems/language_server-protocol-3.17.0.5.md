@@ -1,1 +1,1 @@
-gem "language_server-protocol", "~> 3.17.0.5"
+circuit open: retry in 30s

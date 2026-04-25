@@ -1,1 +1,1 @@
-gem install pastel
+circuit open: retry in 30s

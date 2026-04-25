@@ -1,1 +1,1 @@
-gem "stringio", "~> 3.2.0"
+circuit open: retry in 30s

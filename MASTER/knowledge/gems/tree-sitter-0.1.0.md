@@ -1,1 +1,1 @@
-gem 'tree-sitter', '~> 0.1.0'
+circuit open: retry in 30s

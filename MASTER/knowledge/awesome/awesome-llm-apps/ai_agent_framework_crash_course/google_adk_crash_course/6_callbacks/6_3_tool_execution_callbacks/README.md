@@ -1,11 +1,1 @@
-User
-   ↓
-ToolCall
-   ↓
-BeforeCallback
-   ↓
-Execution
-   ↓
-AfterCallback
-   ↓
-Result
+circuit open: retry in 30s

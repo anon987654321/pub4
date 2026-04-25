@@ -1,2 +1,1 @@
-# Gemfile
-gem 'faraday-retry', '~> 2.4.0'
+circuit open: retry in 30s

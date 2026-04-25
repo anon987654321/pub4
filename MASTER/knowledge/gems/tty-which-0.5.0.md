@@ -1,1 +1,1 @@
-gem install tty-which
+circuit open: retry in 30s

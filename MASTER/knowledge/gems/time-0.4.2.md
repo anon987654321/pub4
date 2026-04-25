@@ -1,2 +1,1 @@
-# Gemfile
-gem 'time', '~> 0.4.2'
+circuit open: retry in 30s

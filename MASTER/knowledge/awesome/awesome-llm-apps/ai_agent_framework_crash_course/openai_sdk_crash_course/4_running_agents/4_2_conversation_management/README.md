@@ -1,2 +1,1 @@
-# Install the gem globally or add it to your Gemfile
-gem install openai-agents
+circuit open: retry in 30s

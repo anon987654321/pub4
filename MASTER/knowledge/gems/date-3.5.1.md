@@ -1,1 +1,1 @@
-gem install date -v 3.5.1
+circuit open: retry in 30s

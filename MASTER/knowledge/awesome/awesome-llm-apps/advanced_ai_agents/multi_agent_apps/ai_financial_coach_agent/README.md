@@ -1,4 +1,1 @@
-Date,Category,Amount
-2024-01-01,Housing,1200.00
-2024-01-02,Food,150.50
-2024-01-03,Transportation,45.00
+circuit open: retry in 30s

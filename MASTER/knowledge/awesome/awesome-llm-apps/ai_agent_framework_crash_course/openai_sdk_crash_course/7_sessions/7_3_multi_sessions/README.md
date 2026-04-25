@@ -1,1 +1,1 @@
-pip install openai-agents
+circuit open: retry in 30s

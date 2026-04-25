@@ -1,1 +1,1 @@
-gem install diffy
+circuit open: retry in 30s

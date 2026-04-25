@@ -1,3 +1,1 @@
-
-Generic interface:
-
+circuit open: retry in 30s

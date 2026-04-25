@@ -1,1 +1,1 @@
-gem install set -v 1.1.2
+circuit open: retry in 30s

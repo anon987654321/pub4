@@ -1,1 +1,1 @@
-gem 'simplecov', require: false, group: :test
+circuit open: retry in 30s

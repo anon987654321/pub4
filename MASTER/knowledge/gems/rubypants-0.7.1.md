@@ -1,1 +1,1 @@
-gem install rubypants
+circuit open: retry in 30s

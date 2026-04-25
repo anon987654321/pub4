@@ -1,1 +1,1 @@
-ollama pull deepseek-ai/deepseek-v3
+circuit open: retry in 30s

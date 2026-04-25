@@ -1,1 +1,1 @@
-gem install bundler -v 4.0.6
+circuit open: retry in 30s

@@ -1,1 +1,1 @@
-cd /path/to/chat_with_youtube_videos
+circuit open: retry in 30s

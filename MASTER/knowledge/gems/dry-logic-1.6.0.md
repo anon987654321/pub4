@@ -1,1 +1,1 @@
-gem install dry-logic
+circuit open: retry in 30s

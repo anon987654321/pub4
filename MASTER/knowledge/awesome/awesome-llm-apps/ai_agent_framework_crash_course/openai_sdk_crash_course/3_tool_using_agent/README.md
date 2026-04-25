@@ -1,1 +1,1 @@
-INPUT  →  AGENT (reasoning + tool selection)  →  OUTPUT
+circuit open: retry in 30s

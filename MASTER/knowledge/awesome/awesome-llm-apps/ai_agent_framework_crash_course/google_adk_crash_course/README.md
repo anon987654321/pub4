@@ -1,1 +1,1 @@
-python3 -m venv .venv
+circuit open: retry in 30s

@@ -1,2 +1,1 @@
-# Gemfile
-gem 'pstore'
+circuit open: retry in 30s

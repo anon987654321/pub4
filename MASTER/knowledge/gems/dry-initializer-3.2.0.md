@@ -1,1 +1,1 @@
-gem 'dry-initializer', '~> 3.2'
+circuit open: retry in 30s

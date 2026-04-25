@@ -1,2 +1,1 @@
-# Full‑Stack Developer Skill – Project Structure
-
+circuit open: retry in 30s

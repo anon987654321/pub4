@@ -1,1 +1,1 @@
-1.time {}
+circuit open: retry in 30s

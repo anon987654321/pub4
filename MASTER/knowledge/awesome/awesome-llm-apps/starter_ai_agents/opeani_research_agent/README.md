@@ -1,2 +1,1 @@
-bundle config set --local without 'development test'
-bundle install --jobs=$(nproc) --retry=3
+circuit open: retry in 30s

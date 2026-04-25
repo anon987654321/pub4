@@ -1,1 +1,1 @@
-doas pkg_add ruby py311-pip py311-streamlit
+circuit open: retry in 30s

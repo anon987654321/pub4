@@ -1,1 +1,1 @@
-gem install rubocop -v 1.84.2
+circuit open: retry in 30s

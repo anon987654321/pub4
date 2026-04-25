@@ -1,2 +1,1 @@
-echo '<%= $VERBOSE %>' | erb
-#=> false
+circuit open: retry in 30s
