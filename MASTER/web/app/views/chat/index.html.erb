@@ -1124,8 +1124,8 @@ const renderMd = raw => {
       if(mode==='off'){src.connect(an);src.connect(out);return;}
       // Dark: pitch down, heavy bass
       if(mode==='dark'){
-        src.playbackRate.value=0.85;
-        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=200;bass.gain.value=10;
+        src.playbackRate.value=0.78;
+        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=180;bass.gain.value=14;
         src.connect(bass);bass.connect(an);bass.connect(out);return;
       }
       // Demon: ring mod growl + crypt reverb + sub bass crush — nobody fucks with Osman
@@ -1274,7 +1274,7 @@ const renderMd = raw => {
       if(!('speechSynthesis' in window)) return false;
       window.speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g,'').substring(0,500));
-      u.lang='ms-MY'; u.rate=1.0; u.pitch=1.0; u.volume=1.0;
+      u.lang='ms-MY'; u.rate=0.88; u.pitch=0.75; u.volume=1.0;
       u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');};
       u.onend=_onSpeakEnd; u.onerror=_onSpeakEnd;
       // Always speak synchronously — must stay inside gesture call stack on mobile.
