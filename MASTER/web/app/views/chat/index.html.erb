@@ -1128,33 +1128,56 @@ const renderMd = raw => {
         const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=180;bass.gain.value=14;
         src.connect(bass);bass.connect(an);bass.connect(out);return;
       }
-      // Demon: ring mod growl + crypt reverb + sub bass crush — nobody fucks with Osman
-      if(mode==='demon'){
-        // Hard distortion into sub bass shelf
-        const dist=audioCtx.createWaveShaper();const dn=2048;const dc=new Float32Array(dn);
-        for(let i=0;i<dn;i++){const x=i*2/(dn-1)-1;dc[i]=Math.tanh(x*7)*0.85;}
-        dist.curve=dc;dist.oversample='4x';
-        const sub=audioCtx.createBiquadFilter();sub.type='lowshelf';sub.frequency.value=100;sub.gain.value=16;
-        const cut=audioCtx.createBiquadFilter();cut.type='highshelf';cut.frequency.value=3200;cut.gain.value=-20;
-        // Ring modulation at 35Hz — demonic growl texture
-        const rm=audioCtx.createGain();rm.gain.value=0.55;
-        const rmOsc=audioCtx.createOscillator();rmOsc.frequency.value=35;rmOsc.type='sine';
-        const rmD=audioCtx.createGain();rmD.gain.value=0.42;
-        rmOsc.connect(rmD);rmD.connect(rm.gain);rmOsc.start();
-        // Crypt reverb: 3 long echoes with feedback
-        const r1=audioCtx.createDelay();r1.delayTime.value=0.11;
-        const r2=audioCtx.createDelay();r2.delayTime.value=0.28;
-        const r3=audioCtx.createDelay();r3.delayTime.value=0.55;
-        const rg1=audioCtx.createGain();rg1.gain.value=0.38;
-        const rg2=audioCtx.createGain();rg2.gain.value=0.20;
-        const rg3=audioCtx.createGain();rg3.gain.value=0.09;
-        const rfb=audioCtx.createGain();rfb.gain.value=0.30;
-        src.connect(dist);dist.connect(sub);sub.connect(cut);cut.connect(rm);
-        rm.connect(an);rm.connect(out);
-        cut.connect(r1);r1.connect(rg1);rg1.connect(out);rg1.connect(rfb);rfb.connect(r1);
-        cut.connect(r2);r2.connect(rg2);rg2.connect(out);
-        cut.connect(r3);r3.connect(rg3);rg3.connect(out);return;
-      }
+// Demon: Osman possessed — layered horror
+if(mode==='demon'){
+  src.playbackRate.value=0.5;
+  // Crushing distortion
+  const dist=audioCtx.createWaveShaper();const dn=2048;const dc=new Float32Array(dn);
+  for(let i=0;i<dn;i++){const x=i*2/(dn-1)-1;dc[i]=Math.sign(x)*Math.pow(Math.abs(x),0.3)*0.9;}
+  dist.curve=dc;dist.oversample='4x';
+  // Sub bass shelf — earthquake
+  const sub=audioCtx.createBiquadFilter();sub.type='lowshelf';sub.frequency.value=80;sub.gain.value=22;
+  // Kill highs
+  const cut=audioCtx.createBiquadFilter();cut.type='highshelf';cut.frequency.value=2000;cut.gain.value=-24;
+  // Dual ring mod — beating interference pattern
+  const rm1=audioCtx.createGain();rm1.gain.value=0.6;
+  const rmOsc1=audioCtx.createOscillator();rmOsc1.frequency.value=29;rmOsc1.type='sine';
+  const rmD1=audioCtx.createGain();rmD1.gain.value=0.5;
+  rmOsc1.connect(rmD1);rmD1.connect(rm1.gain);rmOsc1.start();
+  const rm2=audioCtx.createGain();rm2.gain.value=0.4;
+  const rmOsc2=audioCtx.createOscillator();rmOsc2.frequency.value=37;rmOsc2.type='triangle';
+  const rmD2=audioCtx.createGain();rmD2.gain.value=0.35;
+  rmOsc2.connect(rmD2);rmD2.connect(rm2.gain);rmOsc2.start();
+  // Frequency shifter simulation — alien formants
+  const shift=audioCtx.createOscillator();shift.frequency.value=8;shift.type='sine';
+  const shiftG=audioCtx.createGain();shiftG.gain.value=6;
+  const shiftFilt=audioCtx.createBiquadFilter();shiftFilt.type='peaking';shiftFilt.frequency.value=500;shiftFilt.gain.value=8;shiftFilt.Q.value=4;
+  shift.connect(shiftG);shiftG.connect(shiftFilt.frequency);shift.start();
+  // Infinite crypt reverb
+  const r1=audioCtx.createDelay(3);r1.delayTime.value=0.19;
+  const r2=audioCtx.createDelay(3);r2.delayTime.value=0.47;
+  const r3=audioCtx.createDelay(3);r3.delayTime.value=0.89;
+  const rg1=audioCtx.createGain();rg1.gain.value=0.5;
+  const rg2=audioCtx.createGain();rg2.gain.value=0.35;
+  const rg3=audioCtx.createGain();rg3.gain.value=0.2;
+  const rfb=audioCtx.createGain();rfb.gain.value=0.55;
+  const rfbFilt=audioCtx.createBiquadFilter();rfbFilt.type='lowpass';rfbFilt.frequency.value=400;
+  // Octave-down ghost via pitch-shifted feedback
+  const octD=audioCtx.createDelay();octD.delayTime.value=0.004;
+  const octG=audioCtx.createGain();octG.gain.value=0.3;
+  const octLfo=audioCtx.createOscillator();octLfo.frequency.value=0.5;octLfo.type='sawtooth';
+  const octLfoG=audioCtx.createGain();octLfoG.gain.value=0.003;
+  octLfo.connect(octLfoG);octLfoG.connect(octD.delayTime);octLfo.start();
+  // Chain
+  src.connect(dist);dist.connect(sub);sub.connect(cut);cut.connect(shiftFilt);
+  shiftFilt.connect(rm1);rm1.connect(rm2);rm2.connect(an);rm2.connect(out);
+  // Octave ghost
+  rm2.connect(octD);octD.connect(octG);octG.connect(out);
+  // Crypt reverb
+  rm2.connect(r1);r1.connect(rg1);rg1.connect(out);rg1.connect(rfb);rfb.connect(rfbFilt);rfbFilt.connect(r1);
+  rm2.connect(r2);r2.connect(rg2);rg2.connect(out);
+  rm2.connect(r3);r3.connect(rg3);rg3.connect(out);return;
+}
       // Radio: bandpass crackle, compression
       if(mode==='radio'){
         const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=300;
@@ -1727,18 +1750,19 @@ document.body.addEventListener('click',(e)=>{
       {name:"SPIRAL",desc:"Golden growth",s:6},{name:"HELIX",desc:"DNA strand",s:7},{name:"RING",desc:"Orbital path",s:8},
       {name:"DISC",desc:"Flat world",s:9},{name:"MOBIUS",desc:"One surface",s:10},{name:"KLEIN",desc:"Bottle form",s:11},
       {name:"BOY",desc:"Immersion",s:12},{name:"CROSS",desc:"Intersection",s:13},
+      {name:"NAUTILUS",desc:"Log spiral",s:14},{name:"GRID",desc:"Floor plane",s:15},{name:"PLANE",desc:"Flat array",s:16},
       {name:"TUBE",desc:"Twisting pipe",s:17},{name:"STAR",desc:"Radial spikes",s:18},
       {name:"CRYSTAL",desc:"Faceted light",s:19},{name:"CELL",desc:"Division life",s:20},
       {name:"NEURAL",desc:"Firing net",s:21},{name:"ROOT",desc:"Branching down",s:22},{name:"FLOWER",desc:"Petal bloom",s:23},
       {name:"LEAF",desc:"Veined surface",s:24},{name:"CORAL",desc:"Sea branch",s:25},{name:"BRANCH",desc:"Tree growth",s:26},
-      {name:"SPORE",desc:"Drifting seed",s:29},
+      {name:"RINGS",desc:"Concentric orbits",s:27},{name:"MATRIX",desc:"Data rain",s:28},{name:"SPORE",desc:"Drifting seed",s:29},
       {name:"ORBIT",desc:"Gravity well",s:30},{name:"FALL",desc:"Rain down",s:31},{name:"FLOAT",desc:"Buoyant drift",s:32},
       {name:"SWARM",desc:"Flocking mass",s:33},{name:"CHAIN",desc:"Linked springs",s:34},{name:"PENDULUM",desc:"Swinging time",s:35},
-      {name:"BOUNCE",desc:"Elastic hit",s:36},{name:"PULSE",desc:"Heartbeat",s:38},
+      {name:"BOUNCE",desc:"Elastic hit",s:36},{name:"VORTEX",desc:"Spinning drain",s:37},{name:"PULSE",desc:"Heartbeat",s:38},
       {name:"FIELD",desc:"Vector flow",s:39},{name:"NOISE",desc:"Perlin form",s:40},{name:"WAVE",desc:"Interference",s:41},
       {name:"INTERFERENCE",desc:"Double source",s:42},{name:"MOIRE",desc:"Rotating grids",s:43},{name:"FRACTAL",desc:"Recursive tree",s:44},
       {name:"ATTRACTOR",desc:"Lorenz chaos",s:45},{name:"MANDALA",desc:"Symmetric pattern",s:46},{name:"FILAMENT",desc:"Flow lines",s:47},
-      {name:"ZEN",desc:"Breathing minimal",s:49},
+      {name:"RADIAL",desc:"Expanding circles",s:48},{name:"ZEN",desc:"Breathing minimal",s:49},
       {name:"FACE",desc:"Human form",s:50}
     ];
 
