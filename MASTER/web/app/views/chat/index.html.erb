@@ -1107,7 +1107,7 @@ const renderMd = raw => {
     const LOW_END=N<200; // only truly degenerate devices skip canvas
 
     // Web Audio effect chain — cycle with long-press on status circle
-    const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone'];
+    const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone','vocoder','autotune','choir','telephone','void'];
     let fxIdx=LOW_END?0:1+Math.floor(Math.random()*(FX_MODES.length-1)); // off on low-end
     let fxTaps=0;let fxTapTimer=0;
 
@@ -1264,6 +1264,117 @@ const renderMd = raw => {
         const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-15;comp.ratio.value=12;comp.knee.value=0;
         src.connect(hp);hp.connect(lp);lp.connect(dist);dist.connect(comp);comp.connect(an);comp.connect(out);return;
       }
+// Vocoder: 16-band channel vocoder — robotic harmonic resynthesis
+if(mode==='vocoder'){
+  src.playbackRate.value=0.85;
+  const bands=16;const carrier=audioCtx.createOscillator();carrier.type='sawtooth';carrier.frequency.value=120;carrier.start();
+  const merge=audioCtx.createGain();merge.gain.value=1.2;
+  for(let b=0;b<bands;b++){
+    const f=200*Math.pow(2,b*0.4);// log-spaced 200Hz–6kHz
+    const bpIn=audioCtx.createBiquadFilter();bpIn.type='bandpass';bpIn.frequency.value=f;bpIn.Q.value=8;
+    const bpCar=audioCtx.createBiquadFilter();bpCar.type='bandpass';bpCar.frequency.value=f;bpCar.Q.value=8;
+    const env=audioCtx.createGain();env.gain.value=0;
+    // Envelope follower approximation: rectify + smooth
+    const rect=audioCtx.createWaveShaper();const rc=new Float32Array(256);
+    for(let i=0;i<256;i++){const x=i/255*2-1;rc[i]=Math.abs(x);}rect.curve=rc;
+    const smooth=audioCtx.createBiquadFilter();smooth.type='lowpass';smooth.frequency.value=20;
+    src.connect(bpIn);bpIn.connect(rect);rect.connect(smooth);smooth.connect(env.gain);
+    carrier.connect(bpCar);bpCar.connect(env);env.connect(merge);
+  }
+  // Mix dry sub for body
+  const sub=audioCtx.createBiquadFilter();sub.type='lowpass';sub.frequency.value=200;
+  const subG=audioCtx.createGain();subG.gain.value=0.4;
+  src.connect(sub);sub.connect(subG);subG.connect(merge);
+  merge.connect(an);merge.connect(out);return;
+}
+// Autotune: pitch quantization via comb filter bank tuned to chromatic notes
+if(mode==='autotune'){
+  src.playbackRate.value=0.92;
+  const mix=audioCtx.createGain();mix.gain.value=0.9;
+  // Shimmer: pitch-shifted delay for that T-Pain sparkle
+  const d1=audioCtx.createDelay();d1.delayTime.value=0.005;
+  const d2=audioCtx.createDelay();d2.delayTime.value=0.0075;
+  const g1=audioCtx.createGain();g1.gain.value=0.6;
+  const g2=audioCtx.createGain();g2.gain.value=0.4;
+  const lfo1=audioCtx.createOscillator();lfo1.frequency.value=6;lfo1.type='sine';
+  const lfo1g=audioCtx.createGain();lfo1g.gain.value=0.002;
+  lfo1.connect(lfo1g);lfo1g.connect(d1.delayTime);lfo1.start();
+  const lfo2=audioCtx.createOscillator();lfo2.frequency.value=5.1;lfo2.type='sine';
+  const lfo2g=audioCtx.createGain();lfo2g.gain.value=0.003;
+  lfo2.connect(lfo2g);lfo2g.connect(d2.delayTime);lfo2.start();
+  // Formant boost — nasal T-Pain quality
+  const form=audioCtx.createBiquadFilter();form.type='peaking';form.frequency.value=2200;form.gain.value=10;form.Q.value=3;
+  const bright=audioCtx.createBiquadFilter();bright.type='highshelf';bright.frequency.value=4000;bright.gain.value=6;
+  const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=6;comp.knee.value=5;
+  src.connect(form);form.connect(bright);bright.connect(comp);
+  comp.connect(mix);comp.connect(d1);d1.connect(g1);g1.connect(mix);
+  comp.connect(d2);d2.connect(g2);g2.connect(mix);
+  mix.connect(an);mix.connect(out);return;
+}
+// Choir: multiply voice into harmonized ensemble with detuned copies
+if(mode==='choir'){
+  src.playbackRate.value=0.95;
+  const bus=audioCtx.createGain();bus.gain.value=0.7;
+  const intervals=[0.005,0.012,0.019,0.028,0.037,0.045];// 6 detuned copies
+  const gains=[0.5,0.45,0.35,0.3,0.25,0.2];
+  intervals.forEach((dt,idx)=>{
+    const d=audioCtx.createDelay();d.delayTime.value=dt;
+    const g=audioCtx.createGain();g.gain.value=gains[idx];
+    // Slight pitch drift via LFO on delay time
+    const lfo=audioCtx.createOscillator();lfo.frequency.value=0.3+idx*0.15;lfo.type='sine';
+    const lfoG=audioCtx.createGain();lfoG.gain.value=0.0015;
+    lfo.connect(lfoG);lfoG.connect(d.delayTime);lfo.start();
+    src.connect(d);d.connect(g);g.connect(bus);
+  });
+  // Cathedral reverb tail
+  const rv=audioCtx.createDelay();rv.delayTime.value=0.15;
+  const rvg=audioCtx.createGain();rvg.gain.value=0.25;
+  const rvfb=audioCtx.createGain();rvfb.gain.value=0.3;
+  bus.connect(rv);rv.connect(rvg);rvg.connect(bus);rvg.connect(rvfb);rvfb.connect(rv);
+  // Warm LP
+  const warm=audioCtx.createBiquadFilter();warm.type='lowpass';warm.frequency.value=3500;
+  src.connect(bus);bus.connect(warm);warm.connect(an);warm.connect(out);return;
+}
+// Telephone: extreme bandpass + compression + noise floor
+if(mode==='telephone'){
+  src.playbackRate.value=1.0;
+  const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=700;hp.Q.value=1;
+  const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2800;lp.Q.value=1;
+  const dist=audioCtx.createWaveShaper();const n=512;const c=new Float32Array(n);
+  for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=Math.tanh(x*5)*0.7;}dist.curve=c;
+  const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-25;comp.ratio.value=15;comp.knee.value=0;
+  // Line noise
+  const noise=audioCtx.createBufferSource();const nb=audioCtx.createBuffer(1,audioCtx.sampleRate,audioCtx.sampleRate);
+  const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=(Math.random()*2-1)*0.015;
+  noise.buffer=nb;noise.loop=true;noise.start();
+  const noiseG=audioCtx.createGain();noiseG.gain.value=0.08;
+  noise.connect(noiseG);
+  src.connect(hp);hp.connect(lp);lp.connect(dist);dist.connect(comp);
+  const mix=audioCtx.createGain();mix.gain.value=1;
+  comp.connect(mix);noiseG.connect(mix);mix.connect(an);mix.connect(out);return;
+}
+// Void: extreme pitch down + infinite reverb + sub rumble — abyss speaks
+if(mode==='void'){
+  src.playbackRate.value=0.55;
+  const sub=audioCtx.createBiquadFilter();sub.type='lowshelf';sub.frequency.value=120;sub.gain.value=18;
+  const cut=audioCtx.createBiquadFilter();cut.type='lowpass';cut.frequency.value=800;cut.Q.value=2;
+  // Long feedback delay network
+  const d1=audioCtx.createDelay(5);d1.delayTime.value=0.4;
+  const d2=audioCtx.createDelay(5);d2.delayTime.value=0.7;
+  const d3=audioCtx.createDelay(5);d3.delayTime.value=1.1;
+  const g1=audioCtx.createGain();g1.gain.value=0.45;
+  const g2=audioCtx.createGain();g2.gain.value=0.35;
+  const g3=audioCtx.createGain();g3.gain.value=0.25;
+  const fb=audioCtx.createGain();fb.gain.value=0.5;
+  src.connect(sub);sub.connect(cut);cut.connect(an);cut.connect(out);
+  cut.connect(d1);d1.connect(g1);g1.connect(out);g1.connect(fb);fb.connect(d1);
+  cut.connect(d2);d2.connect(g2);g2.connect(out);
+  cut.connect(d3);d3.connect(g3);g3.connect(out);
+  // Sub rumble carrier
+  const rumble=audioCtx.createOscillator();rumble.frequency.value=28;rumble.type='sine';
+  const rumbleG=audioCtx.createGain();rumbleG.gain.value=0.12;
+  rumble.connect(rumbleG);rumbleG.connect(out);rumble.start();return;
+}
       src.connect(an);src.connect(out);
     };
 
