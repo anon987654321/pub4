@@ -1,12 +1,12 @@
 # MCP server definitions for MASTER.
 # Transport options: stdio | sse
-# All stdio servers share a common command pattern.
-# Anchors remove duplication and simplify future updates.
+# Disabled by default on resource-constrained VPS.
+# Enable individual servers with enabled: true when needed.
 
 defaults: &defaults
   transport: stdio
   command: npx
-  enabled: true
+  enabled: false
 
 servers:
   filesystem:

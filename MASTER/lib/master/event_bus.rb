@@ -8,10 +8,9 @@ module Master
 
     BOOT_TIME = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
 
-    def initialize(log: nil)
+    def initialize
       super()
       @subscribers   = Hash.new { |h, k| h[k] = [] }
-      @log           = log
       @pattern_cache = {}
     end
 
@@ -24,7 +23,6 @@ module Master
     def publish(event, payload = {})
       ts      = elapsed_ms
       payload = payload.merge(event:, ts:)
-      @log&.push("[#{ts}ms] #{event}: #{payload.except(:event, :ts).inspect}")
       synchronize { matching_handlers(event) }.each { |h| h.call(payload) }
       self
     end

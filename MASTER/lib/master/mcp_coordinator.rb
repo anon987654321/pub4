@@ -50,25 +50,25 @@ module Master
     private
 
     def connect(name, cfg)
-      transport = cfg["transport"] || "stdio"
-      client    = case transport
-                  when "stdio"
-                    ::RubyLLM::MCP::Client.new(
-                      name:,
-                      transport: :stdio,
-                      command:   cfg["command"],
-                      args:      cfg["args"] || []
-                    )
-                  when "sse"
-                    ::RubyLLM::MCP::Client.new(
-                      name:,
-                      transport: :sse,
-                      url:       cfg["url"]
-                    )
-                  end
-      client.connect
+      return unless cfg.is_a?(Hash) && cfg["enabled"] != false
+      transport = (cfg["transport"] || "stdio").to_sym
+      mcp_config = case transport
+                   when :stdio
+                     { command: cfg["command"], args: cfg["args"] || [] }
+                   when :sse
+                     { url: cfg["url"] }
+                   else
+                     return
+                   end
+      client = ::RubyLLM::MCP::Client.new(
+        name: name,
+        transport_type: transport,
+        config: mcp_config,
+        start: false
+      )
+      client.start
       @clients[name] = client
-      @bus&.publish("mcp:server_connected", name:, transport:)
+      @bus&.publish("mcp:server_connected", name:, transport: transport.to_s)
     rescue StandardError => e
       @bus&.publish("mcp:server_failed", name:, error: e.message)
     end
@@ -77,7 +77,8 @@ module Master
       path = File.join(@root, CONFIG_PATH)
       return {} unless File.exist?(path)
       require "yaml"
-      YAML.safe_load_file(path, aliases: true) || {}
+      data = YAML.safe_load_file(path, aliases: true) || {}
+      data.fetch("servers", {})
     rescue StandardError
       {}
     end
