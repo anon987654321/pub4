@@ -1,1 +1,3 @@
-circuit open: retry in 20s
+# Standing orders — persistent scheduled commands (initially empty).
+
+[]

@@ -1,1 +1,69 @@
-circuit open: retry in 20s
+# Scan depth configurations
+# Centralized list of every available rule name.
+all_rules: &all_rules
+  - AdversarialRule
+  - ConceptualRule
+  - DuplicateCodeRule
+  - FrozenStringRule
+  - BareRescueRule
+  - ExplicitRule
+  - ImmutableRule
+  - CqsRule
+  - SelfExplainingRule
+  - LongMethodRule
+  - GodClassRule
+  - SrpRule
+  - PolaRule
+  - NielsenRule
+  - RubocopRule
+  - ReekRule
+
+# Pre‑defined depth groups
+quick: &quick
+  - FrozenStringRule
+  - BareRescueRule
+
+standard: &standard
+  - FrozenStringRule
+  - BareRescueRule
+  - ExplicitRule
+  - ImmutableRule
+  - CqsRule
+  - SelfExplainingRule
+  - LongMethodRule
+  - GodClassRule
+  - DuplicateCodeRule
+  - PruneRule
+  - SrpRule
+  - PolaRule
+  - NielsenRule
+  - RubocopRule
+  - ReekRule
+
+hunt: *all_rules
+critique: *all_rules
+deep: *all_rules
+
+profiles:
+  quick:
+    description: Fast scan with core principles only
+    allow:
+      - "group:axioms"
+      - "group:clean_code"
+  full:
+    description: All principles
+    allow:
+      - "*"
+  axioms_only:
+    description: Axioms tier only
+    allow:
+      - "group:axioms"
+  critical:
+    description: Critical issues only
+    allow:
+      - CqsRule
+      - ExplicitRule
+      - ImmutableRule
+      - FrozenStringRule
+      - LongMethodRule
+      - GodClassRule

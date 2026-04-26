@@ -1,1 +1,49 @@
-circuit open: retry in 20s
+# Constitution — protection levels and golden rules for MASTER's pipeline.
+
+protection_levels:
+  ABSOLUTE: "Abort pipeline"
+  PROTECTED: "Emit warning, continue"
+  NEGOTIABLE: "Allow if explicitly permitted"
+  FLEXIBLE: "Negotiate at runtime"
+
+golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+
+anti_simulation:
+  forbidden_claims:
+    - will
+    - would
+    - could
+    - might
+  required_evidence:
+    file_read: "show file content with SHA‑256"
+    modification: "show unified diff"
+    completion: "show command output"
+
+communication_style: openbsd_dmesg
+
+banned_output:
+  - headlines
+  - section_markers
+  - bullet_lists_without_content
+  - filler_phrases
+  - hedging
+  - sycophancy
+
+preserve:
+  boot_message:
+    format: "5‑line OpenBSD dmesg"
+    reason: "Diagnostic trace"
+    never: "single cryptic line"
+  diagnostic_output:
+    rule: "Structured multi‑line output"
+    never: "compressed abbreviations"
+  help_text:
+    rule: "Scannable, complete"
+    minimum_info:
+      - "Command name and syntax"
+      - "Brief description"
+      - "At least one usage example"
+  polish_rules:
+    - "'Streamline' removes redundancy, never essential information"
+    - "'Polish' refines wording without deleting output"
+    - "'Minimize' applies to prompt tokens, not to diagnostic output"

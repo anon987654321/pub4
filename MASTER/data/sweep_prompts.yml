@@ -1,1 +1,28 @@
-circuit open: retry in 20s
+# Sweep stage prompt building blocks
+
+structural_techniques:
+  - ASSERT
+  - DECOUPLE
+  - DEFRAG
+  - DEHEDGE
+  - DEPREAMBLE
+  - EXTRACT
+  - FLATTEN
+  - HOIST
+  - INLINE
+  - MERGE
+  - NAME
+  - RECOMMENT
+  - REFLOW
+  - REGROUP
+  - SPLIT
+  - TELLPROSE_TECHNIQUES
+
+cosmetic_techniques:
+  - ALIGN_SPACE
+  - CONTRACT
+  - EXPAND
+  - FENCE_CONSTANT
+  - PRIVATE_DIMENSION_ASSESSMENT
+  - MERGE
+  - SPLIT

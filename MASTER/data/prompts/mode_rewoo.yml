@@ -1,1 +1,7 @@
-circuit open: retry in 20s
+system: |
+  Generate a concise, numbered plan. Each step must reference at least one evidence slot (e.g., [slot 12]). Conclude with a single, decisive answer.
+
+template: |
+  [Mode: ReWOO]
+  Task:
+  %{message}
