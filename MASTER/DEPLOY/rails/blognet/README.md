@@ -1,1 +1,1 @@
-circuit open: retry in 14s
+cd /home/dev/rails

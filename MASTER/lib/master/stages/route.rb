@@ -23,9 +23,8 @@ module Master
       private
 
       def route_command(ctx)
-        key = ctx[:command].to_s
-        cmd = @commands[key]
-        return Result.err("unknown command: /#{ctx[:command].inspect}", category: :validation) unless cmd
+        cmd = @commands[ctx[:command]]
+        return Result.err("unknown command: /#{ctx[:command]}", category: :validation) unless cmd
 
         Result.ok(ctx.merge(handler: cmd))
       end

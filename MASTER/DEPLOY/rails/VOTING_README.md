@@ -1,1 +1,1 @@
-circuit open: retry in 14s
+rails/__shared/voting_system.sh
