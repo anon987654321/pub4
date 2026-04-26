@@ -49,7 +49,7 @@ TOOL_CAPABLE_RE = build_tool_capable_re
       # Per-agent init was globally mutating shared state across agents.
     end
 
-    def chat(message, stream: true, escalation_attempted: false, &blk)
+    def chat(message, stream: true, escalation_depth: 0, &blk)
       @context_window&.check_and_compact!
       @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
       @session.add_message(role: :user, content: message)
@@ -68,7 +68,7 @@ TOOL_CAPABLE_RE = build_tool_capable_re
 
       return last_response if last_response.respond_to?(:err?) && last_response.err?
 
-      last_response = maybe_escalate(last_response, prompt, context, message, stream, escalation_attempted, &blk)
+      last_response = maybe_escalate(last_response, prompt, context, message, stream, escalation_depth, &blk)
 
       text = last_response.to_s
       @session.add_message(role: :assistant, content: text)
@@ -148,9 +148,10 @@ TOOL_CAPABLE_RE = build_tool_capable_re
     end
 
     # Escalates once per chat call.
-    def maybe_escalate(last_response, prompt, context, original_message, stream, escalation_attempted, &blk)
+    # Escalates up to 2 times per chat call (depth counter replaces boolean).
+    def maybe_escalate(last_response, prompt, context, original_message, stream, escalation_depth, &blk)
       return last_response unless @model_router
-      return last_response if escalation_attempted
+      return last_response if escalation_depth >= 2
 
       current = routed_models.first
       escalation_model = @model_router.escalate_if_low_confidence(
@@ -165,7 +166,7 @@ TOOL_CAPABLE_RE = build_tool_capable_re
       escalated_result = chat(
         original_message,
         stream: stream,
-        escalation_attempted: true,
+        escalation_depth: escalation_depth + 1,
         &blk
       )
       escalated_result.respond_to?(:err?) && escalated_result.err? ? last_response : escalated_result

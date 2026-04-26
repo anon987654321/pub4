@@ -10,7 +10,9 @@ module Master
         i'm\ not\ sure i\ don't\ know cannot\ determine unclear uncertain
         might\ be possibly probably\ not limited\ information i\ cannot i\ am\ unable
         i\ lack\ the not\ enough\ information i\ would\ need\ more
-      ].freeze
+].freeze
+
+ESCALATION_CHAIN = %w[cheap default strong].freeze
 
       def initialize(config:, root: Master::ROOT, continuity_index: nil)
         @config = config
@@ -68,9 +70,32 @@ module Master
         strong_model
       end
 
-      private
+# Determine which tier a model belongs to.
+def tier_for_model(model_id)
+  @rules.fetch("models", {}).each do |tier, models|
+    return tier if models.is_a?(Array) && models.any? { |m| m["id"] == model_id }
+  end
+  "cheap"
+end
 
-      def enabled?
+# Return the next tier in the escalation chain, or nil if already at top.
+def next_escalation_tier(current_tier)
+  idx = ESCALATION_CHAIN.index(current_tier.to_s)
+  return nil unless idx
+  ESCALATION_CHAIN[idx + 1]
+end
+
+# Per-task confidence threshold from routes config.
+# Falls back to 0.3 (the existing default).
+def confidence_threshold(task_type: :exploration)
+  route = @rules.dig("routes", task_type.to_s)
+  return 0.3 unless route.is_a?(Hash)
+  route.fetch("confidence_threshold", 0.3).to_f
+end
+
+private
+
+def enabled?
         @rules.dig("routing", "enabled") != false
       end
 
