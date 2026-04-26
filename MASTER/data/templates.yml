@@ -1,1 +1,116 @@
-circuit open: retry in 20s
+# Generation templates — canonical starting points for code generation tasks.
+
+html:
+  rules:
+    - Semantic HTML5
+    - No div soup
+    - Minimal attributes
+    - Accessible landmarks
+    - Responsive meta viewport
+    - Prefer native form controls
+    - Defer non‑essential scripts
+    - Inline critical CSS
+  template: |
+    <!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>%{title}</title>
+      <link rel="stylesheet" href="style.css">
+      <script defer src="app.js"></script>
+    </head>
+    <body>
+      <header><h1>%{title}</h1></header>
+      <main>%{content}</main>
+      <footer><p>&copy; %{year}</p></footer>
+    </body>
+    </html>
+
+css:
+  rules:
+    - CSS custom properties
+    - System font stack
+    - Mobile‑first breakpoints
+    - Dark mode via prefers‑color‑scheme
+    - Prefer logical properties
+    - Avoid !important
+    - Use clamp() for fluid typography
+    - Scope to :root for theming
+    - Reduce render‑blocking selectors
+  template: |
+    :root {
+      --bg: #fff;
+      --fg: #111;
+      --accent: #06f;
+      --mono: ui-monospace, monospace;
+      --sans: system-ui, sans-serif;
+      --spacing: clamp(1rem, 2vw, 2rem);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111;
+        --fg: #eee;
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    body {
+      font: 1rem/1.5 var(--sans);
+      background: var(--bg);
+      color: var(--fg);
+      max-width: 60ch;
+      margin: auto;
+      padding: var(--spacing);
+    }
+    a { color: var(--accent); text-decoration: underline; }
+
+ruby:
+  rules:
+    - frozen_string_literal: true
+    - Guard clauses over nested conditionals
+    - Modules over classes when no state
+    - Public methods only in modules
+    - Explicit return values
+    - Typed keyword arguments where possible
+    - Separate IO from business logic
+    - Document public API with YARD
+  template: |
+    # frozen_string_literal: true
+    module %{module_name}
+      module_function
+
+      # @param args [Hash] keyword arguments
+      # @return [Hash, nil] processed data or nil when no input
+      def call(**args)
+        return nil if args.empty?
+
+        process(**args)
+      end
+
+      # @param data [Hash] business data
+      # @return [Hash] transformed data
+      def process(**data)
+        data
+      end
+    end
+
+sh:
+  rules:
+    - "#!/bin/sh for portability"
+    - "set -eu for strict error handling"
+    - Quote all variables
+    - Meaningful exit codes
+    - Use functions for readability
+    - Redirect errors to stderr
+    - Prefer command substitution over backticks
+    - Guard against missing arguments
+  template: |
+    #!/bin/sh
+    set -eu
+
+    main() {
+      %{body}
+    }
+
+    main "$@"
+    exit 0

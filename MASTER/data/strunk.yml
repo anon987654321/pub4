@@ -1,1 +1,26 @@
-circuit open: retry in 20s
+# Strunk — prose pruning rules for the Prune stage (preambles, hedges, endings).
+
+preambles:
+  - "In summary,"
+  - "Consequently,"
+  - "Therefore,"
+  - "Notably,"
+  - "Importantly,"
+hedges:
+  - "might"
+  - "could"
+  - "perhaps"
+  - "seems"
+  - "appears"
+endings:
+  - "as a result."
+  - "for this reason."
+  - "thus."
+  - "in effect."
+  - "accordingly."
+code_preambles:
+  - "# TODO: clarify intent"
+  - "# FIXME: review edge cases"
+  - "# NOTE: performance considerations"
+  - "# HACK: temporary workaround"
+  - "# REVIEW: assess after refactor"
