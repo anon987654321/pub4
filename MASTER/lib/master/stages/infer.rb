@@ -48,12 +48,7 @@ module Master
           regexes = (spec["patterns"] || []).map { |src| Regexp.new(src, Regexp::IGNORECASE | Regexp::EXTENDED) }
           out[name.to_s] = { regexes: regexes, capture: spec["capture"].to_s }
         end
-      rescue StandardError => e
-        if defined?(Master::Logging) && Master::Logging.logger
-          Master::Logging.logger.error { "Failed to load infer patterns: #{e.message}" }
-        else
-          STDERR.puts "Failed to load infer patterns: #{e.message}"
-        end
+      rescue StandardError
         {}
       end
 

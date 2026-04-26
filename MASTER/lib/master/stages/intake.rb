@@ -6,7 +6,7 @@ module Master
     # Slash syntax: /command args → intent :command.
     # Plain text → intent :llm.
     class Intake
-      # Matches /command args -> [command, args]
+      # m[1] = command name, m[2] = args string (may be empty)
       COMMAND_RE = /\A\s*\/([\w-]+)\s*(.*)/m.freeze
 
       def call(ctx)

@@ -30,7 +30,7 @@ module Master
 
         @bus&.publish("tool:after", tool: NAME)
         Result.ok(result.to_s)
-      rescue StandardError => e
+      rescue => e
         Result.err("ask_llm: #{e.message}", category: :unknown)
       end
 

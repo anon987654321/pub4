@@ -1,1 +1,1 @@
-circuit open: retry in 14s
+doas -s        # Open an interactive root shell

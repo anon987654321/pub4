@@ -2,19 +2,17 @@
 
 require "json"
 require "fileutils"
-require "pathname"
 
 module Master
   class Session
     TOKENS_PER_CHAR  = 4
     SESSION_NAME_MAX = 40
     COSTS_MAX_BYTES  = 102_400     # 100 KB
-    SESSION_DIR      = ".master"
 
     attr_reader :name, :messages, :cost, :phase, :snapshots
 
     def initialize(root: Dir.pwd, budget_max: 10.0, req_max: 1.0)
-      @root       = Pathname.new(root)
+      @root       = root
       @budget_max = budget_max
       @req_max    = req_max
       @messages   = []
@@ -22,9 +20,9 @@ module Master
       @cost       = 0.0
       @phase      = :discover
       @name       = nil
-      @path       = @root.join(SESSION_DIR, "session.json")
-      @costs_path = @root.join(SESSION_DIR, "costs.jsonl")
-      ensure_session_dir
+      @path       = File.join(root, ".master", "session.json")
+      @costs_path = File.join(root, ".master", "costs.jsonl")
+      Dir.mkdir(File.join(root, ".master")) unless Dir.exist?(File.join(root, ".master"))
     end
 
     def add_message(role:, content:)
@@ -52,7 +50,7 @@ module Master
     end
 
     def save!
-      FileUtils.mkdir_p(@path.dirname)
+      FileUtils.mkdir_p(File.dirname(@path))
       data = { name: @name, phase: @phase, messages: @messages, cost: @cost, ts: Time.now.to_i }
       File.write(@path, JSON.generate(data))
     end
@@ -68,12 +66,7 @@ module Master
     end
 
     def exists?    = File.exist?(@path)
-    def clear!
-      @messages = []
-      @cost     = 0.0
-      @name     = nil
-      self
-    end
+    def clear!     = (@messages = [] ; @cost = 0.0 ; @name = nil ; self)
     def token_est  = @messages.sum { |m| m[:content].to_s.bytesize / TOKENS_PER_CHAR }
 
     private
@@ -86,12 +79,9 @@ module Master
       return unless File.exist?(@costs_path)
 
       lines = File.readlines(@costs_path)
+      # Keep the most recent half of the lines
       keep  = lines.last([lines.size / 2, 1].max)
       File.write(@costs_path, keep.join)
-    end
-
-    def ensure_session_dir
-      FileUtils.mkdir_p(@root.join(SESSION_DIR)) unless Dir.exist?(@root.join(SESSION_DIR))
     end
   end
 end

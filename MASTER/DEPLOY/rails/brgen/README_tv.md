@@ -1,1 +1,2 @@
-circuit open: retry in 14s
+git clone https://github.com/brgen/rails.git
+cd rails

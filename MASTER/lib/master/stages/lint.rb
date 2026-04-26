@@ -22,7 +22,7 @@ module Master
         written.each do |path|
           next unless File.exist?(path) && path.end_with?(".rb")
           result = @scanner.scan(path, depth: :standard)
-          findings.concat(result.value) if result.ok?
+          findings.concat(result.value!) if result.respond_to?(:ok?) && result.ok?
         end
 
         # 2. Scan code blocks embedded in chat output
@@ -36,7 +36,7 @@ module Master
 
         # 3. Autofix if violations found and autoloop available
         if findings.any? && @autoloop
-          fixable = findings.reject { |f| AutoLoop::SKIP_RULES.include?(f[:rule].to_s) }
+          fixable = findings.select { |f| !AutoLoop::SKIP_RULES.include?(f[:rule].to_s) }
           if fixable.any?
             fix_result = @autoloop.run(max_cycles: 3)
             ctx = ctx.merge(autofix_result: fix_result)
@@ -60,7 +60,9 @@ module Master
           f.write("# frozen_string_literal: true\n\n#{code}")
           f.flush
           result = @scanner.scan(f.path, depth: :quick)
-          findings = result.value.map { |v| v.merge(source: :inline) } if result.ok?
+          if result.respond_to?(:ok?) && result.ok?
+            findings = result.value!.map { |v| v.merge(source: :inline) }
+          end
         end
         findings
       rescue StandardError
