@@ -39,10 +39,19 @@ module Master
 
     SYNTAX_CHECKERS = {
       ".rb" => ->(p) { system("ruby -c #{p} > /dev/null 2>&1") },
-      ".sh" => ->(p) { system("bash -n #{p}  > /dev/null 2>&1") }
+      ".sh"  => ->(p) { system("bash -n #{p}  > /dev/null 2>&1") },
+      ".yml" => ->(p) { begin; YAML.safe_load_file(p); true; rescue => _e; false; end },
+      ".erb" => ->(p) { begin; ERB.new(File.read(p)).result(binding); true; rescue SyntaxError; false; rescue => _e; true; end }
     }.freeze
 
     SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
+
+    ERROR_PATTERNS = /
+      \b(?:error|exception|traceback|failed|cannot|unable\sto|
+      undefined\smethod|no\smethod|syntax\serror|
+      internal\sserver|rate\slimit|quota\sexceeded|
+      apologize|as\san\sai|i\scannot|i\sam\sunable)\b
+    /ix.freeze
 
     PROMPTS_PATH = File.join(Master::ROOT, "data", "sweep_prompts.yml").freeze
 
@@ -178,6 +187,11 @@ module Master
 
     def extract(text, lang)
       return nil if text.strip == "UNCHANGED"
+
+      # Reject short responses that look like error messages
+      if text.bytesize < 500 && ERROR_PATTERNS.match?(text)
+        return nil
+      end
 
       fence_re = /```(?:#{Regexp.escape(lang)}|ruby|sh|bash|yaml|erb)?\n(.*?)```/m
       return text.match(fence_re)[1]         if text.match?(fence_re)
