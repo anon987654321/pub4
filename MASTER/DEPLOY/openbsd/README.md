@@ -1,3 +1,1 @@
-   git clone https://github.com/yourorg/master.git
-   cd master
-   
+circuit open: retry in 14s

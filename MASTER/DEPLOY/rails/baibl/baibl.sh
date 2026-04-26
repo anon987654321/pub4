@@ -1,1 +1,1 @@
-unknown keywords: :path, :context
+circuit open: retry in 14s

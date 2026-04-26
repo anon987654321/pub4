@@ -1,3 +1,1 @@
-git clone <repository-url>
-cd master
-bundle install
+circuit open: retry in 14s

@@ -1,3 +1,1 @@
-git clone https://github.com/yourorg/master.git
-cd master
-bundle install
+circuit open: retry in 13s

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require_relative "../../logging"
 
 module Master
   module Stages
@@ -21,9 +22,10 @@ module Master
 
       def call(ctx)
         raw = ctx[:output]
-        output = if raw.respond_to?(:ok?) && raw.ok?
+        output = case raw
+                 when ->(r) { r.respond_to?(:ok?) && r.ok? }
                    raw.value!.to_s
-                 elsif raw.is_a?(String)
+                 when String
                    raw
                  else
                    return Result.ok(ctx)
@@ -39,15 +41,22 @@ module Master
 
       def prune_mixed(text)
         segments = text.split(FENCE_RE)
-        segments.map { |seg|
-          seg.start_with?("```") ? seg : strip_all(seg)
-        }.join
+        segments.map { |seg| seg.start_with?("```") ? seg : strip_all(seg) }.join
       end
 
       def strip_all(text)
-        cleaned = text
-        cleaned = cleaned.sub(SYCOPHANCY_RE, "")
+        text = remove_sycophancy(text)
+        text = remove_preambles_endings_hedges(text)
+        text = remove_markdown_formatting(text)
+        collapse_blank_lines(text)
+      end
 
+      def remove_sycophancy(text)
+        text.sub(SYCOPHANCY_RE, "")
+      end
+
+      def remove_preambles_endings_hedges(text)
+        cleaned = text
         rules.fetch("preambles", []).each { |p| cleaned = cleaned.sub(/\A\s*#{Regexp.escape(p)}\s*/i, "") }
         rules.fetch("endings",   []).each { |e| cleaned = cleaned.sub(/\s*#{Regexp.escape(e)}\s*\z/i, "") }
         rules.fetch("hedges",    []).each do |h|
@@ -57,7 +66,11 @@ module Master
             cleaned = cleaned.gsub(/\b#{Regexp.escape(h)}\b\s*/i, "")
           end
         end
+        cleaned
+      end
 
+      def remove_markdown_formatting(text)
+        cleaned = text
         cleaned = cleaned.gsub(HEADER_RE, "")
         cleaned = cleaned.gsub(BOLD_RE, '\1')
         cleaned = cleaned.gsub(ITALIC_RE, '\1')
@@ -65,14 +78,24 @@ module Master
         cleaned = cleaned.gsub(HR_RE, "")
         cleaned = cleaned.gsub(BULLET_RE, "")
         cleaned = cleaned.gsub(NUMBERED_RE, "")
-        cleaned = cleaned.gsub(/\n{3,}/, "\n\n")
         cleaned
       end
 
+      def collapse_blank_lines(text)
+        text.gsub(/\n{3,}/, "\n\n")
+      end
+
       def rules
-        @rules ||= File.exist?(DATA_PATH) ? YAML.safe_load_file(DATA_PATH) : {}
-      rescue StandardError
-        @rules = {}
+        @rules ||= begin
+          if File.exist?(DATA_PATH)
+            YAML.safe_load_file(DATA_PATH)
+          else
+            {}
+          end
+        rescue StandardError => e
+          Master::Logging.logger.error("Failed to load prune rules from #{DATA_PATH}: #{e.message}")
+          {}
+        end
       end
     end
   end

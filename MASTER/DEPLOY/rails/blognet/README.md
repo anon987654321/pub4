@@ -1,3 +1,1 @@
-cd /home/dev/rails
-bundle install
-rails db:create db:migrate
+circuit open: retry in 14s

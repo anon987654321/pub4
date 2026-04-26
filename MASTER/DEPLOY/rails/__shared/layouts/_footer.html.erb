@@ -1,13 +1,1 @@
-<%# frozen_string_literal: true %>
-<%= tag.footer class: "site-footer", role: "contentinfo" do %>
-  <div class="footer-content">
-    <p class="footer-text">
-      <%= t "footer.copyright", year: Time.zone.now.year, app_name: ApplicationHelper.application_name %>
-    </p>
-    <nav aria-label="Footer links">
-      <% (footer_links || []).each do |link| %>
-        <%= link_to t(link[:translation_key]), link[:path], class: "footer-link", rel: "noopener" %>
-      <% end %>
-    </nav>
-  </div>
-<% end %>
+circuit open: retry in 14s
