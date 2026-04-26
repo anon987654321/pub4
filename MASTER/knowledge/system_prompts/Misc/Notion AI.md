@@ -1,1 +1,1 @@
-circuit open: retry in 3s
+circuit open: retry in 11s
