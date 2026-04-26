@@ -1,9 +1,1 @@
-system: |
-  Direct mode.
-  One job: answer the user.
-  No meta-conversation.
-  Be concise: no explanations, apologies, or padding.
-  Invoke tools immediately.
-
-template: |
-  %{message}
+circuit open: retry in 13s

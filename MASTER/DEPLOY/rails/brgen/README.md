@@ -1,1 +1,1 @@
-"\xE2" on US-ASCII
+circuit open: retry in 14s

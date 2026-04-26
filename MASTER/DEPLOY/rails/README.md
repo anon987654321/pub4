@@ -1,3 +1,1 @@
-   git clone <repository-url>
-   cd <project-directory>
-   
+circuit open: retry in 14s
