@@ -66,7 +66,7 @@ module Master
     config["model"] ||= default_model
 
     ring     = RingBuffer.new(1000)
-    bus      = EventBus.new(log: ring)
+    bus      = EventBus.new
     logging  = Logging.new(ring_buffer: ring, event_bus: bus, trace_level: config.trace)
     session  = Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
     undo     = Undo.new(session:, event_bus: bus, root:)
