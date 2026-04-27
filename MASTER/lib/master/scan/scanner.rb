@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "etc"
 require "yaml"
 
 module Master
@@ -9,8 +10,8 @@ module Master
     # scan_dir parallelizes across files with a thread pool sized to CPU count.
     # Each file is independent; rules share no mutable state between files.
     class Scanner
-      DEPTHS_PATH  = File.join(Master::ROOT, "data", "scan_depths.yml").freeze
-      POOL_SIZE    = [Etc.nprocessors, 8].min  # cap at 8 to avoid overwhelming VPS
+      RULES_PATH   = File.join(Master::ROOT, "data", "rules.yml").freeze
+      POOL_SIZE    = [Etc.nprocessors, 8].min
 
       def initialize(rules: nil, event_bus: nil)
         @rules = rules || []
@@ -32,8 +33,6 @@ module Master
         Result.err("scan failed: #{e.message}", category: :unknown)
       end
 
-      # Parallel file scan — spawns up to POOL_SIZE threads, one per file.
-      # Results preserve input order.
       def scan_dir(dir, depth: :standard, glob: "**/*.rb")
         paths   = Dir.glob(File.join(dir, glob)).sort
         results = Array.new(paths.size)
@@ -70,7 +69,10 @@ module Master
       private
 
       def depth_rules
-        @depth_rules ||= YAML.safe_load_file(DEPTHS_PATH, aliases: true)
+        @depth_rules ||= begin
+          data = YAML.safe_load_file(RULES_PATH, aliases: true)
+          data["scan_depths"] || {}
+        end
       rescue StandardError
         @depth_rules = {}
       end
@@ -78,7 +80,7 @@ module Master
       def active_rules(depth)
         allowed = depth_rules[depth.to_s]
         return @rules if allowed.nil? || allowed == ["all"] || allowed == :all
-        @rules.select { |r| allowed.include?(r.id) }
+        @rules.select { |r| allowed.include?(r.class.name.split("::").last) || allowed.include?(r.id) }
       end
     end
   end
