@@ -54,7 +54,8 @@ module Master
 
         Proposed change rationale: #{rationale}
 
-        Draft ONLY the minimal changes needed. Preserve the anti-simulation rule, golden rule, and voice character unchanged.
+        Draft ONLY the minimal changes needed. Preserve the anti-simulation rule,
+          golden rule, and voice character unchanged.
         Output the full updated SOUL.md. No preamble.
       PROMPT
 
