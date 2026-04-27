@@ -46,7 +46,8 @@ module Master
           data = Master.load_yaml(path)
           all_rules = (data["rules"] || {}).values.flatten
           all_rules.map { |r| r["id"] }.compact.uniq
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 
@@ -57,7 +58,8 @@ module Master
           Dir.glob(File.join(rules_dir, "*.rb")).flat_map { |f|
             extract_axiom_tags(File.read(f))
           }.uniq
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 
@@ -68,7 +70,8 @@ module Master
           collector = TagCollector.new
           collector.visit(result.value)
           collector.tags
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 

@@ -2,6 +2,7 @@
 
 require "prism"
 require "set"
+require "monitor"
 
 module Master
   # CodeIndex — live structural model of the Ruby codebase.
@@ -24,6 +25,8 @@ module Master
       @references = []
       @mtimes = {}
       @built_at = nil
+      @lock = Monitor.new
+      @build_thread = nil
     end
 
 # Build the entire index. Optional +path+ restricts to a subtree.
@@ -69,22 +72,37 @@ rescue StandardError => e
   self
 end
 
+  def build_async
+    @build_thread = Thread.new { build }
+    self
+  end
+
+  def ready?
+    @built_at != nil
+  end
+
+  def wait_for_build
+    @build_thread&.join
+  end
+
     # Re‑index a single file, removing stale data first.
     def reindex(file)
       full = File.expand_path(file, @root)
       @symbols.delete_if { |_, s| s.file == full }
       @references.reject! { |r| r.from_file == full }
       index_file(full) if File.file?(full)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("code_index:reindex_error", path: file, error: e.message)
     end
 
     def symbols_in(file)
+      wait_for_build unless ready?
       full = File.expand_path(file, @root)
       @symbols.values.select { |s| s.file == full }
     end
 
     def find(name)
+      wait_for_build unless ready?
       exact = @symbols[name]
       return [exact] if exact
 
@@ -93,10 +111,12 @@ end
     end
 
     def references_to(fqn)
+      wait_for_build unless ready?
       @references.select { |r| r.to_fqn == fqn || r.to_fqn.end_with?("##{fqn}") }
     end
 
     def impact(fqn)
+      wait_for_build unless ready?
       refs = references_to(fqn)
       files = refs.map(&:from_file).uniq.map { |f| f.sub("#{@root}/", "") }
       callers = refs.map { |r| "#{r.from_file.sub("#{@root}/", "")}:#{r.from_line}" }.uniq
@@ -105,6 +125,7 @@ end
 
     # Classes‑only summary injected into the agent system prompt.
     def summary(limit: nil)
+      wait_for_build unless ready?
       classes = @symbols.values
                          .select { |s| %i[class module].include?(s.type) }
                          .reject { |s| s.file.include?("/DEPLOY/") || s.file.match?(/fix_|patch_/) }
@@ -122,6 +143,7 @@ end
     end
 
     def query(name)
+      wait_for_build unless ready?
       hits = find(name)
       return { error: "not found: #{name}" } if hits.empty?
 
@@ -153,8 +175,8 @@ end
 
       visitor.symbols.each { |s| @symbols[s.fqn] = s }
       @references.concat(visitor.references)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("code_index:parse_error", path: file, error: e.message)
     end
 
     # Visitor that extracts symbols and call‑site references.

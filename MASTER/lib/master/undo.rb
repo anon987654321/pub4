@@ -71,7 +71,8 @@ module Master
       rescue JSON::ParserError
         nil
       end
-    rescue StandardError
+    rescue StandardError => e
+      @bus&.publish("undo:read_error", error: e.message) if defined?(@bus)
       []
     end
 

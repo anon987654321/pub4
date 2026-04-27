@@ -53,7 +53,8 @@ module Master
           return [] unless status.exitstatus&.<= 1  # 0=clean 1=offenses 2=error
 
           parse_offenses(out)
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 
@@ -86,7 +87,8 @@ module Master
               )
             end
           end
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
       end

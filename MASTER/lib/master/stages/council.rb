@@ -90,8 +90,8 @@ module Master
         }
         existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
         File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))
-      rescue StandardError
-        nil
+      rescue StandardError => e
+        @bus&.publish("council:exemplar_error", error: e.message)
       end
     end
   end

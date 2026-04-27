@@ -65,7 +65,8 @@ module Master
           end
         end
         findings
-      rescue StandardError
+      rescue StandardError => e
+        @bus&.publish("lint:scan_error", error: e.message)
         []
       end
     end
