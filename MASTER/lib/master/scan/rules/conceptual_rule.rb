@@ -5,26 +5,22 @@ require "yaml"
 module Master
   module Scan
     module Rules
-      # ConceptualRule — LLM-based axiom violation detection.
+      # ConceptualRule — LLM-based rule violation detection.
       #
-      # Checks all philosophy axioms that resist lexical detection:
-      # NO_SURPRISES, COMPOSABLE, REVERSIBLE, IDEMPOTENT, JUST_ENOUGH, etc.
+      # Checks rules that resist lexical detection via detect_conceptual prompts.
       # Runs only at :deep depth. Makes one LLM call per file and parses
       # structured findings. Skips if no agent is set.
-      #
-      # Meta-note: this rule itself must satisfy JUST_ENOUGH (one LLM call,
-      # not one per axiom) and GUARD_EXPENSIVE (depth gate).
       class ConceptualRule < Rule
-        AXIOMS_PATH = File.join(Master::ROOT, "data", "axioms.yml").freeze
+        RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
         CODE_SNIPPET_LIMIT = 2000
 
         def initialize(agent: nil)
           super()
           @agent       = agent
           @id          = "conceptual"
-          @description = "LLM-based philosophy axiom review (runs at :deep depth only)"
+          @description = "LLM-based rule review (runs at :deep depth only)"
           @severity    = :warning
-          @axioms      = load_philosophy_axioms
+          @axioms      = load_conceptual_rules
           @axiom_tags  = @axioms.keys.map(&:to_sym)
         end
 
@@ -46,20 +42,22 @@ module Master
 
         private
 
-        def load_philosophy_axioms
-          data = YAML.safe_load_file(AXIOMS_PATH)
-          entries = data.dig("philosophy", "prioritized_top_25") || []
-          entries.each_with_object({}) { |e, h| h[e["id"]] = e["statement"] }
+        def load_conceptual_rules
+          data = YAML.safe_load_file(RULES_PATH, aliases: true)
+          all_rules = (data["rules"] || {}).values.flatten
+          all_rules
+            .select { |r| r["detect_conceptual"] }
+            .each_with_object({}) { |r, h| h[r["id"]] = r["detect_conceptual"] }
         end
 
         def build_prompt(code, path)
           axiom_list = @axioms.map { |id, stmt| "#{id}: #{stmt}" }.join("\n")
           <<~PROMPT
-            Review #{File.basename(path)} against these axioms. List ONLY clear violations.
-            Format each as: AXIOM_ID:LINE:description (one per line)
+            Review #{File.basename(path)} against these rules. List ONLY clear violations.
+            Format each as: RULE_ID:LINE:description (one per line)
             If clean, respond with exactly: CLEAN
 
-            Axioms:
+            Rules:
             #{axiom_list}
 
             Code (first #{CODE_SNIPPET_LIMIT} chars):
