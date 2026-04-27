@@ -35,10 +35,10 @@ module Master
     def due
       now = Time.now.to_i
       @orders.select do |o|
-        o["enabled"] &&
-          o["trigger"] == "scheduled" &&
+        order["enabled"] &&
+          order["trigger"] == "scheduled" &&
           %w[pending done].include?(state_of(o)) &&
-          (now - o["last_run_at"].to_i) >= o["interval_s"].to_i
+          (now - order["last_run_at"].to_i) >= order["interval_s"].to_i
       end
     end
 
@@ -68,7 +68,7 @@ module Master
 
     def upsert(name:, description: "", trigger: "scheduled",
                interval_s: 86_400, command:, enabled: true)
-      existing = @orders.find { |o| o["name"] == name.to_s }
+      existing = @orders.find { |o| order["name"] == name.to_s }
       if existing
         existing.merge!(
           "description" => description, "trigger" => trigger.to_s,
@@ -89,9 +89,9 @@ module Master
     def disable(name) = toggle(name, false)
 
     def reset(name)
-      o = @orders.find { |x| x["name"] == name.to_s }
+      order = @orders.find { |x| x["name"] == name.to_s }
       return "no order named '#{name}'" unless o
-      o["state"] = "pending"
+      order["state"] = "pending"
       o.delete("last_error")
       persist
       "'#{name}' reset → pending"
@@ -101,9 +101,9 @@ module Master
       return "no standing orders defined" if @orders.empty?
       @orders.map do |o|
         st   = state_of(o)
-        flag = o["enabled"] ? "on" : "off"
-        last = o["last_run_at"].to_i > 0 ? Time.at(o["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
-        err  = o["last_error"] ? "  !! #{o["last_error"][0, 60]}" : ""
+        flag = order["enabled"] ? "on" : "off"
+        last = order["last_run_at"].to_i > 0 ? Time.at(order["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
+        err  = order["last_error"] ? "  !! #{order["last_error"][0, 60]}" : ""
         "#{o['name']} [#{flag}|#{st}] — #{o['description']} (last: #{last})#{err}"
       end.join("\n")
     end
@@ -120,9 +120,9 @@ module Master
     end
 
     def toggle(name, state)
-      o = @orders.find { |x| x["name"] == name.to_s }
+      order = @orders.find { |x| x["name"] == name.to_s }
       return "no order named '#{name}'" unless o
-      o["enabled"] = state
+      order["enabled"] = state
       persist
       "#{name} #{state ? 'enabled' : 'disabled'}"
     end

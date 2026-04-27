@@ -45,10 +45,10 @@ module Master
 
     # Called via llm:response EventBus subscription or directly.
     def record_llm_response(model:, success:, tokens_approx: 0, escalated: false)
-      s = @model_stats[model.to_s]
-      s[:calls]       += 1
-      s[:failures]    += 1 unless success
-      s[:escalations] += 1 if escalated
+      stats = @model_stats[model.to_s]
+      stats[:calls]       += 1
+      stats[:failures]    += 1 unless success
+      stats[:escalations] += 1 if escalated
       append(llm_response: { model: model.to_s, success:, tokens_approx:, escalated: })
     end
 
@@ -65,7 +65,7 @@ module Master
     # Returns per-model quality stats, sorted by failure rate desc.
     def model_quality
       @model_stats.transform_values do |s|
-        fail_rate = s[:calls] > 0 ? (s[:failures].to_f / s[:calls]).round(3) : 0.0
+        fail_rate = stats[:calls] > 0 ? (stats[:failures].to_f / stats[:calls]).round(3) : 0.0
         s.merge(fail_rate:)
       end.sort_by { |_, v| -v[:fail_rate] }.to_h
     end
