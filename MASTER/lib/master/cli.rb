@@ -53,7 +53,7 @@ module Master
 
     def run(initial_message = nil)
       setup_signals
-      @session.load! if @session.respond_to?(:exists?) && @session.exists?
+      @session.load! if @session.exists?
       scan_in_background
       puts @renderer.splash(@agent.model)
       process(initial_message) if initial_message
@@ -94,7 +94,7 @@ module Master
 
     def repl_loop
       while @running
-        tokens = @session.respond_to?(:token_est) ? @session.token_est : nil
+        tokens = @session.token_est
         print @renderer.prompt_line(
           @agent.model,
           @session.phase,
@@ -117,11 +117,11 @@ module Master
         end
       end
       @scan_thread&.kill
-      @session.save! if @session.respond_to?(:save!)
+      @session.save!
     end
 
     def exit_cli
-      @session.save! if @session.respond_to?(:save!)
+      @session.save!
       @running = false
     end
 
@@ -302,7 +302,7 @@ module Master
       trap("INT") do
         if Time.now - @interrupt_at < 1
           @scan_thread&.kill
-          @session.save! if @session.respond_to?(:save!)
+          @session.save!
           exit(0)
         else
           @interrupt_at = Time.now
