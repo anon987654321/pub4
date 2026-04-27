@@ -8,8 +8,12 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <title>MASTER &middot; <%= @model %></title>
   <meta name="theme-color" content="#000000"/>
-  <style>
-    :root{
+<style>
+  @layer base, components, utilities;
+
+  @layer base{
+  :root{
+
       --safe-top:env(safe-area-inset-top,0px);
       --safe-right:env(safe-area-inset-right,0px);
       --safe-bottom:env(safe-area-inset-bottom,0px);
@@ -23,9 +27,13 @@
       color:#dcdcdc;
       font:16px/1.5 Helvetica,Arial,sans-serif;
       overflow:hidden;
-      touch-action:none;
-    }
-    /* Low-end CSS orb — GPU compositor only, zero JS render cost */
+  touch-action:none;
+}
+}/* end @layer base */
+
+@layer components{
+/* Low-end CSS orb
+ — GPU compositor only, zero JS render cost */
     #orb-css{
       position:fixed;
       left:50%;top:50%;
@@ -263,6 +271,7 @@
       position:fixed;top:12px;right:16px;
       font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
     }
+    }/* end @layer components */
   </style>
   <%= csrf_meta_tags %>
 </head>
