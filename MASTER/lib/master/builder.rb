@@ -166,7 +166,7 @@ module Master
         Scan::Rules::DuplicateCodeRule, Scan::Rules::PruneRule,
         Scan::Rules::SrpRule, Scan::Rules::PolaRule,
         Scan::Rules::NielsenRule, Scan::Rules::AxiomCoverageRule
-      ].each { |klass| scanner.add_rule(klass.respond_to?(:new) && klass.instance_method(:initialize).parameters.any? { |_, n| n == :root } ? klass.new(root:) : klass.new) }
+      ].each { |klass| scanner.add_rule(klass.new) }
       scanner.add_rule(Scan::Rules::RubocopRule.new(root:))
       scanner.add_rule(Scan::Rules::ReekRule.new(root:))
       scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))

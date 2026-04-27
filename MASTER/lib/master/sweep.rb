@@ -213,7 +213,7 @@ module Master
     def violations_in(path)
       return 0 unless path.end_with?(".rb") && File.exist?(path)
       r = @scanner.scan(path, depth: :deep)
-      r.respond_to?(:value!) ? r.value!.size : 0
+      r.ok? ? r.value!.size : 0
     rescue StandardError
       0
     end
@@ -225,7 +225,7 @@ module Master
         f.write(content)
         f.flush
         r = @scanner.scan(f.path, depth: :deep)
-        r.respond_to?(:value!) ? r.value!.size : 0
+        r.ok? ? r.value!.size : 0
       end
     rescue StandardError
       0
