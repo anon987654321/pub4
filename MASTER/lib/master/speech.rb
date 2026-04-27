@@ -59,6 +59,22 @@ module Master
       bytes
     end
 
+
+PULSE_SOCKET = "/tmp/pulse/native".freeze
+PULSE_DAEMON = "/data/data/com.termux/files/usr/bin/pulseaudio".freeze
+PAPLAY_CANDIDATES = %w[
+  /data/data/com.termux/files/usr/bin/paplay
+  /usr/bin/paplay
+  /usr/local/bin/paplay
+].freeze
+FFMPEG_CANDIDATES = %w[/usr/bin/ffmpeg /usr/local/bin/ffmpeg].freeze
+DIRECT_PLAYERS = %w[aucat mpv ffplay aplay].freeze
+
+def play(audio_path)
+  return false unless audio_path && File.exist?(audio_path)
+  play_via_pulse(audio_path) || play_direct(audio_path)
+end
+
     private
 
     module_function

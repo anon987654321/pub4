@@ -6,17 +6,6 @@ require "fileutils"
 
 module Master
   class CLI
-    PULSE_SOCKET = "/tmp/pulse/native".freeze
-    PULSE_DAEMON = "/data/data/com.termux/files/usr/bin/pulseaudio".freeze
-
-    PAPLAY_CANDIDATES = %w[
-      /data/data/com.termux/files/usr/bin/paplay
-      /usr/bin/paplay
-      /usr/local/bin/paplay
-    ].freeze
-
-    FFMPEG_CANDIDATES = %w[/usr/bin/ffmpeg /usr/local/bin/ffmpeg].freeze
-
     DMESG_LINES = 50
 
     SEVERITY_ICON = {
@@ -62,10 +51,10 @@ module Master
     end
 
     def pipe(input)
-      s = input.strip
-      return if s.empty?
+      stripped = input.strip
+      return if stripped.empty?
 
-      run_input(s)
+      run_input(stripped)
     end
 
     def run_input(input)
@@ -214,7 +203,7 @@ module Master
         audio_path = Speech.synthesize(plain)
         next unless audio_path
 
-        played = try_paplay(audio_path) || try_direct(audio_path)
+        played = Speech.play(audio_path)
         @bus&.publish("tts:warn", message: "no audio output found") unless played
       rescue StandardError => e
         @bus&.publish("tts:error", message: e.message)
@@ -227,67 +216,6 @@ module Master
       plain = text.gsub(/\e\[[0-9;]*m/, "").strip
       plain = plain.gsub(/```.*?```/m, "")
       plain[0..400]
-    end
-
-    def try_paplay(audio_path)
-      paplay = PAPLAY_CANDIDATES.find { |c| File.executable?(c) }
-      return false unless paplay
-
-      ffmpeg = FFMPEG_CANDIDATES.find { |c| File.executable?(c) }
-      return false unless ffmpeg
-
-      socket = ensure_pulse_socket
-      return false unless socket
-
-      convert_and_play_via_pulse(audio_path, paplay, ffmpeg, socket)
-    end
-
-    def convert_and_play_via_pulse(audio_path, paplay, ffmpeg, socket)
-      wav_path = audio_path.sub(/\.mp3$/, ".wav")
-      converted = system(
-        ffmpeg, "-y", "-i", audio_path, wav_path, "-loglevel", "quiet",
-        out: File::NULL, err: File::NULL
-      )
-      return false unless converted && File.exist?(wav_path)
-
-      ENV["PULSE_SERVER"] = "unix:#{socket}"
-      played = system(paplay, wav_path, out: File::NULL, err: File::NULL)
-      File.unlink(wav_path) rescue nil
-      played
-    end
-
-    def ensure_pulse_socket
-      return PULSE_SOCKET if File.exist?(PULSE_SOCKET)
-      return nil unless File.executable?(PULSE_DAEMON)
-
-      FileUtils.mkdir_p(File.dirname(PULSE_SOCKET))
-      system(
-        PULSE_DAEMON,
-        "--load=module-alsa-sink device=default",
-        "--load=module-native-protocol-unix auth-anonymous=1 socket=#{PULSE_SOCKET}",
-        "--daemonize",
-        "--exit-idle-time=60",
-        out: File::NULL,
-        err: File::NULL
-      )
-      sleep 0.6
-      File.exist?(PULSE_SOCKET) ? PULSE_SOCKET : nil
-    end
-
-    def try_direct(audio_path)
-      player = %w[aucat mpv ffplay aplay].find { |c| system("command -v #{c} > /dev/null 2>&1") }
-      case player
-      when "aucat"
-        system("aucat", "-i", audio_path, out: File::NULL, err: File::NULL)
-      when "mpv"
-        system("mpv", "--no-video", "--really-quiet", audio_path, out: File::NULL, err: File::NULL)
-      when "ffplay"
-        system("ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", audio_path, out: File::NULL, err: File::NULL)
-      when "aplay"
-        system("aplay", "-q", audio_path, out: File::NULL, err: File::NULL)
-      else
-        false
-      end
     end
 
     def setup_signals
