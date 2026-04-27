@@ -1,9 +1,7 @@
-# MASTER Snapshot
-Generated: 2026-04-27T21:04:58Z
-Files: 125
+# Project Snapshot - 2026-04-27T23:58:16Z
 
-## data/council.yml
-~~~yaml
+## `data/council.yml`
+```yml
 # Council personas — deliberation panel for code review decisions.
 
 - name: Architect
@@ -65,10 +63,10 @@ Files: 125
   role: UX Advocate
   bias: Usability
   prompt: Assess clarity, friction, error recovery, and overall user outcomes.
-~~~
+```
 
-## data/council_patterns.yml
-~~~yaml
+## `data/council_patterns.yml`
+```yml
 # Patterns that auto‑trigger Council deliberation.
 # Loaded as Regexp at runtime – keep them plain strings.
 # Each entry is a Ruby‑style regex pattern; the leading \b and trailing \b
@@ -183,10 +181,10 @@ dangerous:
   - '\bset\s+-(e|u|o\s+pipefail)\b'                  # exit on error, undefined var, pipefail
   - '\bshopt\s+-(s\s+(nullglob|dotglob|extglob))\b'  # globbing options
   - '\b(bash)\s+-o\s+(errexit|pipefail|noclobber|noglob)\b' # bash errexit etc.
-~~~
+```
 
-## data/exemplars.yml
-~~~yaml
+## `data/exemplars.yml`
+```yml
 # Exemplars — canonical code examples for LLM context injection.
 
 exemplars:
@@ -328,10 +326,10 @@ exemplars:
     beauty_score: 7
     virtue: delegation
     why: "Coordinates LLM code generation, isolates side‑effects, clear contract"
-~~~
+```
 
-## data/heartbeat.yml
-~~~yaml
+## `data/heartbeat.yml`
+```yml
 # Heartbeat — autonomous scheduled jobs.
 # Each entry runs at interval_seconds. Actions: prune_memory, check_models, self_test, prune_undo, snapshot.
 
@@ -354,10 +352,10 @@ exemplars:
   action: snapshot
   interval_seconds: 14400
   description: Regenerate .master/snapshot.md with current codebase state.
-~~~
+```
 
-## data/infer_patterns.yml
-~~~yaml
+## `data/infer_patterns.yml`
+```yml
 # Intent-inference patterns for Stages::Infer.
 # Extracted from Ruby source per NO_HARDCODED_CONSTANTS / ONE_SOURCE axioms.
 # Every new natural-language command goes here — no code change required.
@@ -456,10 +454,10 @@ commands:
     patterns:
       - '\b(?:standing\s+orders?|show\s+orders?|list\s+orders?)\b'
     capture: orders_subcmd
-~~~
+```
 
-## data/mcp_servers.yml
-~~~yaml
+## `data/mcp_servers.yml`
+```yml
 # MCP server definitions for MASTER.
 # Transport options: stdio | sse
 # Disabled by default on resource-constrained VPS.
@@ -501,10 +499,10 @@ servers:
       - -y
       - "@modelcontextprotocol/server-sequential-thinking"
     description: Structured reasoning assistant
-~~~
+```
 
-## data/models.yml
-~~~yaml
+## `data/models.yml`
+```yml
 # Model routing profile — OpenRouter primary, Gemini direct fallback.
 # Free tier: meta-llama/llama-3.3-70b-instruct primary, qwen/qwen3-coder fallback.
 # Gemini 2.5 Flash: direct Google API (free tier, 1500 req/day) — final fallback.
@@ -634,10 +632,11 @@ openrouter:
     - qwen/qwen3-coder:free
     - openai/gpt-oss-120b:free
     - minimax/minimax-m2.5:free
-~~~
 
-## data/openbsd_patterns.yml
-~~~yaml
+```
+
+## `data/openbsd_patterns.yml`
+```yml
 # OpenBSD system knowledge – agents generate OpenBSD‑native commands
 # Deterministic, flat schema, no tags.
 
@@ -796,10 +795,10 @@ daemon_configs:
     required_patterns:
       - "server:"
     warnings: []
-~~~
+```
 
-## data/platform.yml
-~~~yaml
+## `data/platform.yml`
+```yml
 # Platform — OS-specific tool mappings (audio, firewall, etc.).
 
 openbsd:
@@ -840,10 +839,10 @@ windows:
   shell: powershell
 
 # End of platform definitions
-~~~
+```
 
-## data/prompts/mode_direct.yml
-~~~yaml
+## `data/prompts/mode_direct.yml`
+```yml
 system: |
   Direct mode only.
   No meta‑conversation.
@@ -853,10 +852,10 @@ system: |
 
 template: |
   %{message}
-~~~
+```
 
-## data/prompts/mode_react.yml
-~~~yaml
+## `data/prompts/mode_react.yml`
+```yml
 system: |
   Follow the ReAct paradigm. Keep reasoning concise; intervene only when necessary. Emphasize brevity and concrete actions.
 template: |
@@ -867,10 +866,10 @@ template: |
   %<reason>s
   Action:
   %<action>s
-~~~
+```
 
-## data/prompts/mode_rewoo.yml
-~~~yaml
+## `data/prompts/mode_rewoo.yml`
+```yml
 system: |
   Generate a concise, numbered plan. Each step must reference at least one evidence slot (e.g., [slot 12]). Conclude with a single, decisive answer.
 
@@ -878,10 +877,10 @@ template: |
   [Mode: ReWOO]
   Task:
   %{message}
-~~~
+```
 
-## data/standing_orders.yml
-~~~yaml
+## `data/standing_orders.yml`
+```yml
 ---
 - name: nightly_dreams
   description: Consolidate memories during low-activity periods
@@ -899,10 +898,10 @@ template: |
   enabled: false
   state: pending
   last_run_at: 0
-~~~
+```
 
-## data/sweep_prompts.yml
-~~~yaml
+## `data/sweep_prompts.yml`
+```yml
 # Sweep stage prompt building blocks
 
 structural_techniques:
@@ -931,10 +930,10 @@ cosmetic_techniques:
   - PRIVATE_DIMENSION_ASSESSMENT
   - MERGE
   - SPLIT
-~~~
+```
 
-## data/templates.yml
-~~~yaml
+## `data/templates.yml`
+```yml
 # Generation templates — canonical starting points for code generation tasks.
 
 html:
@@ -1051,18 +1050,10 @@ sh:
 
     main "$@"
     exit 0
-~~~
+```
 
-## data/web/favicon.svg
-~~~text
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="12" fill="#0f172a"/>
-  <path d="M16 44V20h8l8 12 8-12h8v24h-8V32l-8 10-8-10v12h-8z" fill="#38bdf8"/>
-</svg>
-~~~
-
-## data/workflow.yml
-~~~yaml
+## `data/workflow.yml`
+```yml
 # MASTER workflow rules — operational principles codified from CLAUDE.md.
 # Governs how MASTER and its LLM agents read, edit, scan, and fix code.
 
@@ -1252,10 +1243,10 @@ session_startup:
   check_standing_orders: "Verify FSM state before any mutation -- UNCHANGE blocks refactoring"
   scan_before_analysis: "Use /scan deep via MASTER, not external agents, for code analysis"
   ssh_edit_pattern: "Write to /tmp, run ruby /tmp/patch.rb -- never ruby -i with heredoc"
-~~~
+```
 
-## data/zsh_patterns.yml
-~~~yaml
+## `data/zsh_patterns.yml`
+```yml
 # Zsh-native patterns — replace external forks with pure Zsh
 # Source: pub2/ZSH_NATIVE_PATTERNS.md
 
@@ -1335,74 +1326,10 @@ token_economics:
     code: "cleaned=${var//$'\\r'/}; lower=${(L)cleaned}; fourth=${${(s:,:)lower}[4]}"
     cost: "One grammar, one evaluation model, no process boundaries"
   benefit: "Model reasons locally instead of globally across pipeline"
-~~~
+```
 
-## exe/master
-~~~text
-#!/usr/bin/env ruby
-# encoding: utf-8
-# frozen_string_literal: true
-
-Encoding.default_external = Encoding::UTF_8
-Encoding.default_internal = Encoding::UTF_8
-$stdout.set_encoding("UTF-8")
-$stderr.set_encoding("UTF-8")
-
-$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
-require "master"
-
-# Boot the web UI alongside the CLI.
-# Kills any leftover process on the web port before starting fresh.
-# Both CLI and web UI read port/host from the same config.
-def boot_web_ui(config)
-  port = config["web_port"] || 10002
-  host = config["web_host"] || "0.0.0.0"
-
-  if Master::Platform.openbsd?
-    # Kill stale falcon/ruby processes on the port before rcctl start.
-    system("doas pkill -TERM -f 'falcon.*#{port}' 2>/dev/null || true")
-    sleep 0.5
-    system("doas rcctl restart master > /dev/null 2>&1")
-  else
-    # Non-OpenBSD: kill anything on the port, then spawn Falcon directly.
-    require "open3"
-    Open3.capture3("lsof -ti:#{port} 2>/dev/null | xargs -r kill -TERM 2>/dev/null")
-    sleep 0.5
-    web_dir = File.expand_path("../web", __dir__)
-    if Dir.exist?(web_dir)
-      spawn(
-        { "RAILS_ENV" => "production", "SECRET_KEY_BASE_DUMMY" => "1" },
-        "bundle", "exec", "falcon", "serve", "--bind", "http://#{host}:#{port}",
-        chdir: web_dir,
-        out: File::NULL, err: File::NULL
-      )
-    end
-  end
-rescue StandardError => e
-  $stderr.puts "web_ui: #{e.message}"
-end
-
-cli = nil
-
-trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved"; exit 0 }
-trap("TERM") { cli&.container&.dig(:session)&.save! rescue nil; exit 0 }
-
-if $stdin.tty?
-  cli = Master.boot(root: Dir.pwd, argv: ARGV)
-  boot_web_ui(cli.container[:config])
-
-  message = ARGV.join(" ").strip
-  cli.run(message.empty? ? nil : message)
-else
-  container = Master.build(root: Dir.pwd)
-  cli       = Master::CLI.new(container:)
-  $stdout.sync = true
-  $stdin.each_line { |line| cli.pipe(line) }
-end
-~~~
-
-## lib/master/agent.rb
-~~~ruby
+## `lib/master/agent.rb`
+```rb
 # frozen_string_literal: true
 
 require "ruby_llm"
@@ -1558,10 +1485,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/agent/llm_dispatch.rb
-~~~ruby
+## `lib/master/agent/llm_dispatch.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -1687,7 +1614,8 @@ module Master
       def routed_models
         return [@config.model] unless @model_router
         @model_router.fallback_chain(task_type: @config.task_type.to_sym)
-      rescue StandardError
+      rescue StandardError => e
+        @bus&.publish("llm:route_error", error: e.message) if defined?(@bus)
         [@config.model]
       end
 
@@ -1756,10 +1684,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/audit_log.rb
-~~~ruby
+## `lib/master/audit_log.rb`
+```rb
 # frozen_string_literal: true
 
 require "fileutils"
@@ -1789,10 +1717,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/autoloop.rb
-~~~ruby
+## `lib/master/autoloop.rb`
+```rb
 # frozen_string_literal: true
 
 require "open3" # No longer directly used, moving to Master::GitOperations
@@ -2029,10 +1957,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/axioms.rb
-~~~ruby
+## `lib/master/axioms.rb`
+```rb
 # frozen_string_literal: true
 
 
@@ -2175,10 +2103,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/bridges/ferrum_web_chat.rb
-~~~ruby
+## `lib/master/bridges/ferrum_web_chat.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -2221,10 +2149,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/bridges/replicate.rb
-~~~ruby
+## `lib/master/bridges/replicate.rb`
+```rb
 # frozen_string_literal: true
 
 require "net/http"
@@ -2386,10 +2314,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/builder.rb
-~~~ruby
+## `lib/master/builder.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -2432,7 +2360,7 @@ module Master
       diff_stager = config["staging_enabled"] ? DiffStager.new(root:, event_bus: bus) : nil
       mcp = McpCoordinator.new(root:, event_bus: bus)
       mcp.connect_all
-      code_index.build
+      code_index.build_async
       bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
 
       memory = Memory.new(root:)
@@ -2591,10 +2519,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/circuit_breaker.rb
-~~~ruby
+## `lib/master/circuit_breaker.rb`
+```rb
 # frozen_string_literal: true
 
 require "monitor"
@@ -2689,10 +2617,10 @@ module Master
     def on_failure = synchronize { @failures += 1 ; if @failures >= FAILURE_THRESHOLD ; @state = :open ; @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) ; end }
   end
 end
-~~~
+```
 
-## lib/master/circuit_breaker_registry.rb
-~~~ruby
+## `lib/master/circuit_breaker_registry.rb`
+```rb
 # frozen_string_literal: true
 
 require "monitor"
@@ -2775,10 +2703,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/cli.rb
-~~~ruby
+## `lib/master/cli.rb`
+```rb
 # frozen_string_literal: true
 
 require "tty-reader"
@@ -3021,14 +2949,15 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/code_index.rb
-~~~ruby
+## `lib/master/code_index.rb`
+```rb
 # frozen_string_literal: true
 
 require "prism"
 require "set"
+require "monitor"
 
 module Master
   # CodeIndex — live structural model of the Ruby codebase.
@@ -3051,6 +2980,8 @@ module Master
       @references = []
       @mtimes = {}
       @built_at = nil
+      @lock = Monitor.new
+      @build_thread = nil
     end
 
 # Build the entire index. Optional +path+ restricts to a subtree.
@@ -3096,22 +3027,37 @@ rescue StandardError => e
   self
 end
 
+  def build_async
+    @build_thread = Thread.new { build }
+    self
+  end
+
+  def ready?
+    @built_at != nil
+  end
+
+  def wait_for_build
+    @build_thread&.join
+  end
+
     # Re‑index a single file, removing stale data first.
     def reindex(file)
       full = File.expand_path(file, @root)
       @symbols.delete_if { |_, s| s.file == full }
       @references.reject! { |r| r.from_file == full }
       index_file(full) if File.file?(full)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("code_index:reindex_error", path: file, error: e.message)
     end
 
     def symbols_in(file)
+      wait_for_build unless ready?
       full = File.expand_path(file, @root)
       @symbols.values.select { |s| s.file == full }
     end
 
     def find(name)
+      wait_for_build unless ready?
       exact = @symbols[name]
       return [exact] if exact
 
@@ -3120,10 +3066,12 @@ end
     end
 
     def references_to(fqn)
+      wait_for_build unless ready?
       @references.select { |r| r.to_fqn == fqn || r.to_fqn.end_with?("##{fqn}") }
     end
 
     def impact(fqn)
+      wait_for_build unless ready?
       refs = references_to(fqn)
       files = refs.map(&:from_file).uniq.map { |f| f.sub("#{@root}/", "") }
       callers = refs.map { |r| "#{r.from_file.sub("#{@root}/", "")}:#{r.from_line}" }.uniq
@@ -3132,6 +3080,7 @@ end
 
     # Classes‑only summary injected into the agent system prompt.
     def summary(limit: nil)
+      wait_for_build unless ready?
       classes = @symbols.values
                          .select { |s| %i[class module].include?(s.type) }
                          .reject { |s| s.file.include?("/DEPLOY/") || s.file.match?(/fix_|patch_/) }
@@ -3149,6 +3098,7 @@ end
     end
 
     def query(name)
+      wait_for_build unless ready?
       hits = find(name)
       return { error: "not found: #{name}" } if hits.empty?
 
@@ -3172,7 +3122,7 @@ end
 
     def index_file(file)
       src = File.read(file, encoding: "UTF-8")
-      result = Prism.parse(src)
+      result = Prism.parse(src, freeze: true)
       return unless result.success?
 
       visitor = SymbolVisitor.new(file:, root: @root)
@@ -3180,8 +3130,8 @@ end
 
       visitor.symbols.each { |s| @symbols[s.fqn] = s }
       @references.concat(visitor.references)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("code_index:parse_error", path: file, error: e.message)
     end
 
     # Visitor that extracts symbols and call‑site references.
@@ -3278,10 +3228,10 @@ end
     end
   end
 end
-~~~
+```
 
-## lib/master/command_registry.rb
-~~~ruby
+## `lib/master/command_registry.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -3666,10 +3616,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/config.rb
-~~~ruby
+## `lib/master/config.rb`
+```rb
 # frozen_string_literal: true
 
 require "yaml"
@@ -3775,10 +3725,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/context_window.rb
-~~~ruby
+## `lib/master/context_window.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -3829,10 +3779,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/council/deliberation.rb
-~~~ruby
+## `lib/master/council/deliberation.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -3909,10 +3859,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/council/personas.rb
-~~~ruby
+## `lib/master/council/personas.rb`
+```rb
 # frozen_string_literal: true
 
 
@@ -3963,10 +3913,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/decision_engine.rb
-~~~ruby
+## `lib/master/decision_engine.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -4006,10 +3956,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/diff_stager.rb
-~~~ruby
+## `lib/master/diff_stager.rb`
+```rb
 # frozen_string_literal: true
 
 require "diffy"
@@ -4134,8 +4084,8 @@ module Master
           stats: entry.diff_stats
         })
       )
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("diff_stager:persist_error", error: e.message)
     end
 
     def remove_persisted(entry)
@@ -4143,15 +4093,15 @@ module Master
       # Safe to delete: this persisted staging file is being removed after the entry
       # has been either applied (written to the actual file) or discarded (abandoned).
       File.delete(persist_file) if File.exist?(persist_file)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("diff_stager:cleanup_error", error: e.message)
     end
   end
 end
-~~~
+```
 
-## lib/master/event_bus.rb
-~~~ruby
+## `lib/master/event_bus.rb`
+```rb
 # frozen_string_literal: true
 
 require "monitor"
@@ -4202,10 +4152,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/gateway.rb
-~~~ruby
+## `lib/master/gateway.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -4260,15 +4210,16 @@ module Master
     def extract_text(result)
       val = result.value!
       val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
-    rescue StandardError
+    rescue StandardError => e
+      @bus&.publish("gateway:extract_error", error: e.message)
       result.to_s
     end
   end
 end
-~~~
+```
 
-## lib/master/git_operations.rb
-~~~ruby
+## `lib/master/git_operations.rb`
+```rb
 # frozen_string_literal: true
 
 require "open3"
@@ -4307,10 +4258,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/governor.rb
-~~~ruby
+## `lib/master/governor.rb`
+```rb
 # frozen_string_literal: true
 
 require "tty-prompt"
@@ -4401,10 +4352,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/heartbeat.rb
-~~~ruby
+## `lib/master/heartbeat.rb`
+```rb
 # frozen_string_literal: true
 
 require "yaml"
@@ -4581,10 +4532,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/introspection/self_map.rb
-~~~ruby
+## `lib/master/introspection/self_map.rb`
+```rb
 # frozen_string_literal: true
 
 
@@ -4622,10 +4573,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/logging.rb
-~~~ruby
+## `lib/master/logging.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -4660,10 +4611,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/mcp_coordinator.rb
-~~~ruby
+## `lib/master/mcp_coordinator.rb`
+```rb
 # frozen_string_literal: true
 
 require "ruby_llm/mcp" if $LOAD_PATH.any? { |p| File.exist?(File.join(p, "ruby_llm/mcp.rb")) }
@@ -4776,10 +4727,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/memory.rb
-~~~ruby
+## `lib/master/memory.rb`
+```rb
 # frozen_string_literal: true
 
 require "yaml"
@@ -4937,10 +4888,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/metrics.rb
-~~~ruby
+## `lib/master/metrics.rb`
+```rb
 # frozen_string_literal: true
 
 require "json"
@@ -5023,8 +4974,8 @@ module Master
           tokens_approx: ev[:tokens_approx].to_i,
           escalated:    ev[:escalated] == true
         )
-      rescue StandardError
-        nil
+      rescue StandardError => e
+        @bus&.publish("metrics:record_error", error: e.message)
       end
     end
 
@@ -5049,15 +5000,15 @@ module Master
     def append(entry)
       entry[:ts] = Time.now.to_i
       File.open(@path, "a") { |f| f.puts(JSON.generate(entry)) }
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("metrics:append_error", error: e.message)
     end
   end
 end
-~~~
+```
 
-## lib/master/personality.rb
-~~~ruby
+## `lib/master/personality.rb`
+```rb
 # frozen_string_literal: true
 
 require "yaml"
@@ -5194,10 +5145,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/pipeline.rb
-~~~ruby
+## `lib/master/pipeline.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -5301,10 +5252,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/platform.rb
-~~~ruby
+## `lib/master/platform.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -5321,10 +5272,10 @@ module Master
     def audio_player       = openbsd? ? "aucat" : (macos? ? "afplay" : "mpv")
   end
 end
-~~~
+```
 
-## lib/master/pledge.rb
-~~~ruby
+## `lib/master/pledge.rb`
+```rb
 # frozen_string_literal: true
 
 require "fiddle/import"
@@ -5366,10 +5317,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/reasoning/modes.rb
-~~~ruby
+## `lib/master/reasoning/modes.rb`
+```rb
 # frozen_string_literal: true
 
 
@@ -5402,10 +5353,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/renderer.rb
-~~~ruby
+## `lib/master/renderer.rb`
+```rb
 # frozen_string_literal: true
 # encoding: utf-8
 
@@ -5496,10 +5447,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/result.rb
-~~~ruby
+## `lib/master/result.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -5567,10 +5518,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/ring_buffer.rb
-~~~ruby
+## `lib/master/ring_buffer.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -5616,10 +5567,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/routing/continuity_index.rb
-~~~ruby
+## `lib/master/routing/continuity_index.rb`
+```rb
 # frozen_string_literal: true
 
 
@@ -5671,24 +5622,25 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/routing/model_router.rb
-~~~ruby
+## `lib/master/routing/model_router.rb`
+```rb
 # frozen_string_literal: true
-
 
 module Master
   module Routing
     class ModelRouter
-      # Phrases that indicate the model is uncertain — trigger escalation.
-      UNCERTAINTY_PHRASES = %w[
-        i'm\ not\ sure i\ don't\ know cannot\ determine unclear uncertain
-        might\ be possibly probably\ not limited\ information i\ cannot i\ am\ unable
-        i\ lack\ the not\ enough\ information i\ would\ need\ more
-].freeze
+      UNCERTAINTY_PHRASES = [
+        "i'm not sure", "i don't know", "cannot determine",
+        "unclear", "uncertain", "might be", "possibly",
+        "probably not", "limited information", "i cannot",
+        "i am unable", "i lack the", "not enough information",
+        "i would need more"
+      ].freeze
 
-ESCALATION_CHAIN = %w[cheap default strong].freeze
+      ESCALATION_CHAIN = %w[cheap default strong].freeze
+      DEFAULT_THRESHOLD = 0.3
 
       def initialize(config:, root: Master::ROOT, continuity_index: nil)
         @config = config
@@ -5711,67 +5663,61 @@ ESCALATION_CHAIN = %w[cheap default strong].freeze
       def fallback_chain(task_type: :exploration)
         return [@config.model] unless enabled?
 
-        preferred = preferred(task_type:)
+        pref = preferred(task_type:)
         all = @rules.fetch("models", {}).values.flatten.map { |m| m["id"] }.compact
         continuity = @continuity_index.fallback_models
-        ([preferred] + all + continuity + [@config.model]).uniq
+        ([pref] + all + continuity + [@config.model]).uniq
       end
 
-      # Returns true if the response text suggests insufficient confidence.
-      # Used by Execute stage to decide whether to retry with a stronger model.
-      def escalate?(response, threshold: 0.3)
+      def escalate?(response, threshold: DEFAULT_THRESHOLD)
         return false unless @rules.dig("routing", "escalation_enabled")
+
         text = response.to_s.downcase
         hits = UNCERTAINTY_PHRASES.count { |p| text.include?(p) }
         hits.to_f / UNCERTAINTY_PHRASES.size >= threshold
       end
 
-      # Return the best model from the escalation tier (default: "strong").
       def stronger_model(task_type: :exploration)
         tier = @rules.dig("routing", "escalation_tier") || "strong"
         candidates = @rules.dig("models", tier).to_a
         return preferred(task_type:) if candidates.empty?
+
         candidates.max_by { |m| weighted_score(m["score"] || {}) }&.dig("id") || preferred(task_type:)
       end
 
-
-      # Checks response text for low-confidence markers.
-      # Returns the strong-tier model ID if escalation is warranted and the
-      # current model is not already in the strong tier; otherwise returns nil.
       def escalate_if_low_confidence(response, current_model:, task_type: :exploration)
         return nil unless escalate?(response)
-        strong_model = stronger_model(task_type: task_type)
-        # Already on the strong tier -- no further escalation needed.
+
+        strong_model = stronger_model(task_type:)
         return nil if current_model == strong_model
+
         strong_model
       end
 
-# Determine which tier a model belongs to.
-def tier_for_model(model_id)
-  @rules.fetch("models", {}).each do |tier, models|
-    return tier if models.is_a?(Array) && models.any? { |m| m["id"] == model_id }
-  end
-  "cheap"
-end
+      def tier_for_model(model_id)
+        @rules.fetch("models", {}).each do |tier, models|
+          return tier if models.is_a?(Array) && models.any? { |m| m["id"] == model_id }
+        end
+        "cheap"
+      end
 
-# Return the next tier in the escalation chain, or nil if already at top.
-def next_escalation_tier(current_tier)
-  idx = ESCALATION_CHAIN.index(current_tier.to_s)
-  return nil unless idx
-  ESCALATION_CHAIN[idx + 1]
-end
+      def next_escalation_tier(current_tier)
+        idx = ESCALATION_CHAIN.index(current_tier.to_s)
+        return nil unless idx
 
-# Per-task confidence threshold from routes config.
-# Falls back to 0.3 (the existing default).
-def confidence_threshold(task_type: :exploration)
-  route = @rules.dig("routes", task_type.to_s)
-  return 0.3 unless route.is_a?(Hash)
-  route.fetch("confidence_threshold", 0.3).to_f
-end
+        ESCALATION_CHAIN[idx + 1]
+      end
 
-private
+      def confidence_threshold(task_type: :exploration)
+        route = @rules.dig("routes", task_type.to_s)
+        return DEFAULT_THRESHOLD unless route.is_a?(Hash)
 
-def enabled?
+        route.fetch("confidence_threshold", DEFAULT_THRESHOLD).to_f
+      end
+
+      private
+
+      def enabled?
         @rules.dig("routing", "enabled") != false
       end
 
@@ -5795,10 +5741,10 @@ def enabled?
     end
   end
 end
-~~~
+```
 
-## lib/master/ruby_llm_patch.rb
-~~~ruby
+## `lib/master/ruby_llm_patch.rb`
+```rb
 # frozen_string_literal: true
 
 # Monkey-patch RubyLLM for OpenBSD/OpenRouter compatibility:
@@ -5844,10 +5790,10 @@ module RubyLLM
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rule.rb
-~~~ruby
+## `lib/master/scan/rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -5893,10 +5839,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/adversarial_rule.rb
-~~~ruby
+## `lib/master/scan/rules/adversarial_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -5972,10 +5918,11 @@ module Master
     end
   end
 end
-~~~
 
-## lib/master/scan/rules/axiom_coverage_rule.rb
-~~~ruby
+```
+
+## `lib/master/scan/rules/axiom_coverage_rule.rb`
+```rb
 # frozen_string_literal: true
 
 require "prism"
@@ -6024,7 +5971,8 @@ module Master
           data = Master.load_yaml(path)
           all_rules = (data["rules"] || {}).values.flatten
           all_rules.map { |r| r["id"] }.compact.uniq
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 
@@ -6035,7 +5983,8 @@ module Master
           Dir.glob(File.join(rules_dir, "*.rb")).flat_map { |f|
             extract_axiom_tags(File.read(f))
           }.uniq
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 
@@ -6046,7 +5995,8 @@ module Master
           collector = TagCollector.new
           collector.visit(result.value)
           collector.tags
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 
@@ -6082,10 +6032,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/bare_rescue_rule.rb
-~~~ruby
+## `lib/master/scan/rules/bare_rescue_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6108,10 +6058,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/conceptual_rule.rb
-~~~ruby
+## `lib/master/scan/rules/conceptual_rule.rb`
+```rb
 # frozen_string_literal: true
 
 
@@ -6191,10 +6141,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/cqs_rule.rb
-~~~ruby
+## `lib/master/scan/rules/cqs_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6257,10 +6207,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/duplicate_code_rule.rb
-~~~ruby
+## `lib/master/scan/rules/duplicate_code_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6308,10 +6258,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/explicit_rule.rb
-~~~ruby
+## `lib/master/scan/rules/explicit_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6360,10 +6310,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/frozen_string_rule.rb
-~~~ruby
+## `lib/master/scan/rules/frozen_string_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6389,10 +6339,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/god_class_rule.rb
-~~~ruby
+## `lib/master/scan/rules/god_class_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6424,10 +6374,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/immutable_rule.rb
-~~~ruby
+## `lib/master/scan/rules/immutable_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6465,10 +6415,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/long_method_rule.rb
-~~~ruby
+## `lib/master/scan/rules/long_method_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6519,10 +6469,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/nielsen_rule.rb
-~~~ruby
+## `lib/master/scan/rules/nielsen_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6573,10 +6523,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/pola_rule.rb
-~~~ruby
+## `lib/master/scan/rules/pola_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6639,10 +6589,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/prune_rule.rb
-~~~ruby
+## `lib/master/scan/rules/prune_rule.rb`
+```rb
 # frozen_string_literal: true
 
 
@@ -6717,10 +6667,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/reek_rule.rb
-~~~ruby
+## `lib/master/scan/rules/reek_rule.rb`
+```rb
 # frozen_string_literal: true
 
 require "open3"
@@ -6775,7 +6725,8 @@ module Master
           )
 
           parse_smells(out)
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 
@@ -6801,17 +6752,18 @@ module Master
               message: "[#{meta[:axiom]}] #{smell["smell_type"]}: #{smell["message"]}"
             )
           end
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
       end
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/rubocop_rule.rb
-~~~ruby
+## `lib/master/scan/rules/rubocop_rule.rb`
+```rb
 # frozen_string_literal: true
 
 require "open3"
@@ -6867,7 +6819,8 @@ module Master
           return [] unless status.exitstatus&.<= 1  # 0=clean 1=offenses 2=error
 
           parse_offenses(out)
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 
@@ -6900,17 +6853,18 @@ module Master
               )
             end
           end
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
       end
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/self_explaining_rule.rb
-~~~ruby
+## `lib/master/scan/rules/self_explaining_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6948,10 +6902,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/rules/srp_rule.rb
-~~~ruby
+## `lib/master/scan/rules/srp_rule.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -6997,10 +6951,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/scan/scanner.rb
-~~~ruby
+## `lib/master/scan/scanner.rb`
+```rb
 # frozen_string_literal: true
 
 require "etc"
@@ -7087,10 +7041,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/security/injection_guard.rb
-~~~ruby
+## `lib/master/security/injection_guard.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -7126,10 +7080,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/security/permissions.rb
-~~~ruby
+## `lib/master/security/permissions.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -7170,10 +7124,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/semantic_cache.rb
-~~~ruby
+## `lib/master/semantic_cache.rb`
+```rb
 # frozen_string_literal: true
 
 require "digest"
@@ -7299,10 +7253,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/session.rb
-~~~ruby
+## `lib/master/session.rb`
+```rb
 # frozen_string_literal: true
 
 require "json"
@@ -7390,10 +7344,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/skills.rb
-~~~ruby
+## `lib/master/skills.rb`
+```rb
 # frozen_string_literal: true
 
 require "yaml"
@@ -7493,10 +7447,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/soul.rb
-~~~ruby
+## `lib/master/soul.rb`
+```rb
 # frozen_string_literal: true
 
 require "yaml"
@@ -7686,10 +7640,10 @@ end
     end
   end
 end
-~~~
+```
 
-## lib/master/speech.rb
-~~~ruby
+## `lib/master/speech.rb`
+```rb
 # frozen_string_literal: true
 
 require "securerandom"
@@ -7800,10 +7754,10 @@ end
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/council.rb
-~~~ruby
+## `lib/master/stages/council.rb`
+```rb
 # frozen_string_literal: true
 
 require "yaml"
@@ -7896,16 +7850,16 @@ module Master
         }
         existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
         File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))
-      rescue StandardError
-        nil
+      rescue StandardError => e
+        @bus&.publish("council:exemplar_error", error: e.message)
       end
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/execute.rb
-~~~ruby
+## `lib/master/stages/execute.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -7923,10 +7877,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/guard.rb
-~~~ruby
+## `lib/master/stages/guard.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -7951,10 +7905,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/infer.rb
-~~~ruby
+## `lib/master/stages/infer.rb`
+```rb
 # frozen_string_literal: true
 
 
@@ -8041,10 +7995,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/intake.rb
-~~~ruby
+## `lib/master/stages/intake.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8073,10 +8027,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/lint.rb
-~~~ruby
+## `lib/master/stages/lint.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8144,16 +8098,17 @@ module Master
           end
         end
         findings
-      rescue StandardError
+      rescue StandardError => e
+        @bus&.publish("lint:scan_error", error: e.message)
         []
       end
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/memo.rb
-~~~ruby
+## `lib/master/stages/memo.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8209,10 +8164,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/prune.rb
-~~~ruby
+## `lib/master/stages/prune.rb`
+```rb
 # frozen_string_literal: true
 
 
@@ -8294,10 +8249,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/render.rb
-~~~ruby
+## `lib/master/stages/render.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8321,10 +8276,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/stages/route.rb
-~~~ruby
+## `lib/master/stages/route.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8358,10 +8313,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/standing_orders.rb
-~~~ruby
+## `lib/master/standing_orders.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8510,18 +8465,16 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/swarm/coordinator.rb
-~~~ruby
+## `lib/master/swarm/coordinator.rb`
+```rb
 # frozen_string_literal: true
 
 require "timeout"
 
 module Master
   module Swarm
-    # Orchestrates specialized workers on a need-to-know basis.
-    # The coordinator sees everything; workers see only their context slice.
     class Coordinator
       WORKER_CLASSES = {
         analyst:    Workers::Analyst,
@@ -8530,7 +8483,8 @@ module Master
         researcher: Workers::Researcher
       }.freeze
 
-      WORKER_TIMEOUT = 30  # seconds per worker.freeze
+      WORKER_TIMEOUT = 30
+      SHARED_DEADLINE = 60
       SYNTHESIS_TRUNCATE_LIMIT = 200
 
       def initialize(agent:, event_bus: nil)
@@ -8539,15 +8493,12 @@ module Master
         @workers = {}
       end
 
-      # Run a single worker with a curated context slice
       def dispatch(role, task:, context_slice: {})
         worker = worker_for(role) or return Result.err("unknown role: #{role}")
         @bus&.publish(:swarm_dispatch, role:, task: task[0..60])
         worker.call(task:, context_slice:)
       end
 
-      # Run analysis → review pipeline (most common pattern)
-      # Worker 1 (analyst) sees only the file. Worker 2 (reviewer) sees only the code.
       def analyse_and_review(file_path:, code:)
         analysis = dispatch(:analyst,
                             task: "identify all issues",
@@ -8566,9 +8517,6 @@ module Master
         })
       end
 
-
-      # Fan-out: run multiple workers in parallel threads with per-worker timeout.
-      # Returns {results: {role => Result}, synthesis: String}.
       def fan_out(tasks, timeout: WORKER_TIMEOUT)
         threads = tasks.map do |t|
           Thread.new do
@@ -8580,52 +8528,49 @@ module Master
           if th.join(timeout)
             th.value
           else
-            begin
-              th.kill
-            rescue ThreadError => e
-              @bus&.publish(:swarm_thread_kill_error, thread: th.object_id, error: e.message)
-            end
-            [:timeout, Result.err("worker timed out after #{timeout}s", category: :unknown)]
+            th.kill rescue nil
+            [:timeout, Result.err("worker timed out after #{timeout}s")]
           end
         end.to_h
 
         synthesis = synthesize(results)
-        @bus&.publish(:swarm_fan_out_done, roles: results.keys, synthesis: synthesis[0..SYNTHESIS_TRUNCATE_LIMIT])
+        @bus&.publish(:swarm_fan_out_done, roles: results.keys,
+                      synthesis: synthesis[0..SYNTHESIS_TRUNCATE_LIMIT])
         Result.ok({ results: results, synthesis: synthesis })
       end
 
-# Convenience: parallel dispatch with a shared wall-clock deadline.
-# role_tasks: [{role:, task:, context_slice: {}}]
-# deadline: total seconds for all workers (not per-worker).
-def dispatch_parallel(role_tasks, deadline: WORKER_TIMEOUT * 2)
-  finish_by = Process.clock_gettime(Process::CLOCK_MONOTONIC) + deadline
+      def dispatch_parallel(role_tasks, deadline: SHARED_DEADLINE)
+        finish_by = Process.clock_gettime(Process::CLOCK_MONOTONIC) + deadline
 
-  threads = role_tasks.map do |t|
-    Thread.new do
-      remaining = [finish_by - Process.clock_gettime(Process::CLOCK_MONOTONIC), 1].max
-      Timeout.timeout(remaining) do
-        [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+        threads = role_tasks.map do |t|
+          Thread.new do
+            remaining = [finish_by - Process.clock_gettime(Process::CLOCK_MONOTONIC), 1].max
+            Timeout.timeout(remaining) do
+              [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+            end
+          rescue Timeout::Error
+            [t[:role], Result.err("worker exceeded shared deadline")]
+          end
+        end
+
+        results = threads.map do |th|
+          th.join(deadline)&.value || [nil, Result.err("join timeout")]
+        end.to_h
+
+        synthesis = synthesize(results)
+        @bus&.publish(:swarm_dispatch_parallel_done, roles: results.keys)
+        Result.ok({ results: results, synthesis: synthesis })
       end
-    rescue Timeout::Error
-      [t[:role], Result.err("worker exceeded shared deadline", category: :unknown)]
-    end
-  end
 
-  results = threads.map { |th| th.join(deadline)&.value || [nil, Result.err("join timeout")] }.to_h
-  synthesis = synthesize(results)
-  @bus&.publish(:swarm_dispatch_parallel_done, roles: results.keys)
-  Result.ok({ results: results, synthesis: synthesis })
-end
-
-def worker_roles = WORKER_CLASSES.keys
+      def worker_roles = WORKER_CLASSES.keys
 
       private
 
-      # Combine successful worker results into a coherent summary string.
       def synthesize(results)
         lines = results.filter_map do |role, r|
           next if role == :timeout
           next unless r.respond_to?(:ok?) && r.ok?
+
           val = r.value!
           text = val.is_a?(Hash) ? val.inspect : val.to_s
           "### #{role}\n#{text.strip}"
@@ -8638,16 +8583,17 @@ def worker_roles = WORKER_CLASSES.keys
         @workers.fetch(sym) do
           klass = WORKER_CLASSES[sym]
           return nil unless klass
+
           @workers[sym] = klass.new(agent: @agent, event_bus: @bus)
         end
       end
     end
   end
 end
-~~~
+```
 
-## lib/master/swarm/worker.rb
-~~~ruby
+## `lib/master/swarm/worker.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8715,10 +8661,10 @@ end
     end
   end
 end
-~~~
+```
 
-## lib/master/swarm/workers/analyst.rb
-~~~ruby
+## `lib/master/swarm/workers/analyst.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8753,10 +8699,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/swarm/workers/coder.rb
-~~~ruby
+## `lib/master/swarm/workers/coder.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8782,10 +8728,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/swarm/workers/researcher.rb
-~~~ruby
+## `lib/master/swarm/workers/researcher.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8812,10 +8758,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/swarm/workers/reviewer.rb
-~~~ruby
+## `lib/master/swarm/workers/reviewer.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -8855,10 +8801,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/sweep.rb
-~~~ruby
+## `lib/master/sweep.rb`
+```rb
 # frozen_string_literal: true
 
 require "open3"
@@ -9151,10 +9097,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/text_hygiene.rb
-~~~ruby
+## `lib/master/text_hygiene.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -9192,10 +9138,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/ask_llm.rb
-~~~ruby
+## `lib/master/tools/ask_llm.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -9240,10 +9186,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/ast_edit.rb
-~~~ruby
+## `lib/master/tools/ast_edit.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -9379,10 +9325,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/batch_replace.rb
-~~~ruby
+## `lib/master/tools/batch_replace.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -9435,10 +9381,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/clean.rb
-~~~ruby
+## `lib/master/tools/clean.rb`
+```rb
 # frozen_string_literal: true
 
 require "open3"
@@ -9475,10 +9421,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/git_context.rb
-~~~ruby
+## `lib/master/tools/git_context.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -9556,10 +9502,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/list_dir.rb
-~~~ruby
+## `lib/master/tools/list_dir.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -9612,10 +9558,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/llm.rb
-~~~ruby
+## `lib/master/tools/llm.rb`
+```rb
 # frozen_string_literal: true
 
 require "ruby_llm"
@@ -9788,10 +9734,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/path_guard.rb
-~~~ruby
+## `lib/master/tools/path_guard.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -9805,10 +9751,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/read_file.rb
-~~~ruby
+## `lib/master/tools/read_file.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -9860,10 +9806,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/search_files.rb
-~~~ruby
+## `lib/master/tools/search_files.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -9919,10 +9865,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/search_knowledge.rb
-~~~ruby
+## `lib/master/tools/search_knowledge.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -10001,10 +9947,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/shell.rb
-~~~ruby
+## `lib/master/tools/shell.rb`
+```rb
 # frozen_string_literal: true
 
 require "tty-command"
@@ -10061,10 +10007,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/str_replace.rb
-~~~ruby
+## `lib/master/tools/str_replace.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -10124,10 +10070,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/symbol_lookup.rb
-~~~ruby
+## `lib/master/tools/symbol_lookup.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -10173,10 +10119,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/tree.rb
-~~~ruby
+## `lib/master/tools/tree.rb`
+```rb
 # frozen_string_literal: true
 
 require "open3"
@@ -10209,10 +10155,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/web_search.rb
-~~~ruby
+## `lib/master/tools/web_search.rb`
+```rb
 # frozen_string_literal: true
 require "net/http"
 require "uri"
@@ -10275,10 +10221,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/tools/write_file.rb
-~~~ruby
+## `lib/master/tools/write_file.rb`
+```rb
 # frozen_string_literal: true
 
 require "fileutils"
@@ -10330,10 +10276,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/triggers.rb
-~~~ruby
+## `lib/master/triggers.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
@@ -10395,10 +10341,10 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/undo.rb
-~~~ruby
+## `lib/master/undo.rb`
+```rb
 # frozen_string_literal: true
 
 require "json"
@@ -10472,7 +10418,8 @@ module Master
       rescue JSON::ParserError
         nil
       end
-    rescue StandardError
+    rescue StandardError => e
+      @bus&.publish("undo:read_error", error: e.message) if defined?(@bus)
       []
     end
 
@@ -10484,14 +10431,363 @@ module Master
     end
   end
 end
-~~~
+```
 
-## lib/master/unwrap_error.rb
-~~~ruby
+## `lib/master/unwrap_error.rb`
+```rb
 # frozen_string_literal: true
 
 module Master
   # Raised when #value! is called on an Err result.
   class UnwrapError < RuntimeError; end
 end
-~~~
+```
+
+## `web/app/assets/stylesheets/application.css`
+```css
+/*
+ * This is a manifest file that'll be compiled into application.css.
+ *
+ * With Propshaft, assets are served efficiently without preprocessing steps. You can still include
+ * application-wide styles in this file, but keep in mind that CSS precedence will follow the standard
+ * cascading order, meaning styles declared later in the document or manifest will override earlier ones,
+ * depending on specificity.
+ *
+ * Consider organizing styles into separate files for maintainability.
+ */
+```
+
+## `web/app/controllers/application_controller.rb`
+```rb
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift File.expand_path("../../../../lib", __FILE__)
+require "master"
+
+class ApplicationController < ActionController::Base
+  # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
+  allow_browser versions: :modern
+
+  @@container        = nil
+  @@mutex            = Mutex.new
+  @@start_ms         = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i
+  @@scheduler_thread = nil
+
+  private
+
+  def container
+    @@mutex.synchronize do
+      @@container ||= Master.build(root: Rails.root.join("..").to_s).tap { |c| start_scheduler(c); Master.generate_boot_snapshot(c) rescue nil; c[:heartbeat]&.start! }
+    end
+  end
+
+  def start_scheduler(c)
+    return if @@scheduler_thread&.alive?
+    @@scheduler_thread = Thread.new do
+      sleep 300 # wait 5 min after boot before first check
+      loop do
+        begin
+          due = c[:standing].due
+          if due.any?
+            results = c[:standing].run_due!
+            results.each { |r| c[:bus].publish("scheduler:ran", name: r[:name]) rescue nil }
+          end
+        rescue StandardError
+          # swallow — never crash the scheduler
+        end
+        sleep 900 # check every 15 min
+      end
+    end
+    @@scheduler_thread.abort_on_exception = false
+  end
+
+  def start_ms
+    @@start_ms
+  end
+end
+```
+
+## `web/app/controllers/chat_controller.rb`
+```rb
+# frozen_string_literal: true
+
+require "shellwords"
+
+class ChatController < ApplicationController
+  skip_before_action :verify_authenticity_token, only: [:message, :tts, :speak]
+
+  def index
+    @model = container[:agent].model.to_s.split("/").last
+    render layout: false
+  end
+
+  def dmesg
+    lines = `dmesg 2>/dev/null`.lines.first(20).map(&:chomp)
+    render json: { lines: lines }
+  end
+
+  def metrics
+    c = container
+    repo_root = Rails.root.join("..").to_s
+    dirty = `git -C #{Shellwords.escape(repo_root)} status --porcelain 2>/dev/null`.lines.count
+    open_models = c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : []
+    render json: {
+      model:            c[:agent].model.to_s.split("/").last,
+      tokens:           c[:session].respond_to?(:token_est) ? c[:session].token_est : 0,
+      cost:             "$%.4f" % (c[:session].respond_to?(:cost) ? c[:session].cost : 0.0),
+      uptime:           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
+      repo_dirty_count: dirty,
+      open_breakers:    open_models
+    }
+  end
+
+  def message
+    input = params[:message].to_s.strip
+    return head(:bad_request) if input.empty?
+
+    response.headers["Content-Type"]      = "text/event-stream"
+    response.headers["Cache-Control"]     = "no-cache"
+    response.headers["X-Accel-Buffering"] = "no"
+
+    sse = response.stream
+    begin
+      streamed  = false
+      tool_sub  = container[:bus].subscribe("tool:before") do |ev|
+        begin
+          payload = { tool: ev[:tool].to_s, path: ev[:path].to_s }.to_json
+          sse.write("event: tool\ndata: #{payload}\n\n")
+        rescue StandardError
+          nil
+        end
+      end
+
+      on_chunk = ->(token) {
+        streamed = true
+        encoded = token.to_s.gsub("\\", "\\\\").gsub("\n", "\\n")
+        sse.write("data: #{encoded}\n\n")
+      }
+
+      ctx = { user_message: input, on_chunk: on_chunk }
+      if (img = params[:image]).present?
+        ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
+      end
+
+      result = container[:pipeline].call(Master::Result.ok(**ctx))
+
+      unless streamed
+        text = case result
+               when Master::Result::Ok
+                 val = result.value
+                 val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
+               when Master::Result::Err
+                 "ERROR: #{result.message}"
+               end
+        unless text.to_s.strip.empty?
+          encoded = text.to_s.gsub("\\", "\\\\").gsub("\n", "\\n")
+          sse.write("data: #{encoded}\n\n")
+        end
+      end
+
+      sse.write("data: [DONE]\n\n")
+    rescue => e
+      sse.write("data: ERROR: #{e.message}\n\n")
+      sse.write("data: [DONE]\n\n")
+    ensure
+      begin
+        tool_sub.call if defined?(tool_sub) && tool_sub
+      rescue StandardError
+        nil
+      end
+      sse.close
+    end
+  end
+
+  def speak
+    text = params[:text].to_s.strip
+    return head(:bad_request) if text.empty?
+    container[:bus].publish("speak:text", { text: text })
+    head :ok
+  end
+
+  def tts
+    text = params[:text].to_s.strip
+    return head(:bad_request) if text.empty?
+
+    bytes = Master::Speech.synthesize_bytes(text)
+    if bytes && bytes.bytesize > 0
+      send_data bytes, type: "audio/mpeg", disposition: "inline"
+    else
+      head :service_unavailable
+    end
+  rescue => e
+    logger.error "TTS failed: #{e.message}"
+    head :service_unavailable
+  end
+end
+```
+
+## `web/app/controllers/events_controller.rb`
+```rb
+# frozen_string_literal: true
+
+# EventsController — SSE stream of EventBus events to the orb visualizer.
+#
+# The orb already exists (web/app/views/chat/index.html.erb). What it lacked
+# was a real signal. This controller subscribes to the container's EventBus,
+# serializes each event as Server-Sent Event, and streams them.
+#
+# Wire into routes:
+#   get "/events/stream" => "events#stream"
+#
+# Consume from the orb JS:
+#   const es = new EventSource("/events/stream");
+#   es.onmessage = e => handleEvent(JSON.parse(e.data));
+#
+# Event types the orb can react to (emitted by existing pipeline stages):
+#   llm:request           → burst pulse
+#   llm:escalation        → color shift
+#   tool:used             → ripple
+#   scan:complete         → stabilization flash
+#   autoloop:cycle        → rotation increment
+#   sweep:cycle           → slow rotation
+#   pipeline:rollback     → red glitch (from Pipeline rollback)
+class EventsController < ApplicationController
+  include ActionController::Live
+
+  POLL_INTERVAL_S = 0.1
+  MAX_STREAM_S    = 600   # hard cap — 10 minute stream ceiling
+
+  def stream
+    response.headers["Content-Type"]      = "text/event-stream"
+    response.headers["Cache-Control"]     = "no-cache"
+    response.headers["X-Accel-Buffering"] = "no"  # nginx passthrough
+
+    bus      = container[:bus]
+    received = Queue.new
+    sub      = bus.subscribe("*") { |type, payload|
+      received << { t: Time.now.to_f, type: type, data: payload }
+    }
+    deadline = Time.now + MAX_STREAM_S
+
+    loop do
+      break if Time.now > deadline
+      if received.empty?
+        response.stream.write(": keepalive\n\n")  # SSE comment, prevents proxy timeout
+        sleep POLL_INTERVAL_S
+      else
+        event = received.pop(true) rescue nil
+        next unless event
+        response.stream.write("data: #{event.to_json}\n\n")
+      end
+    end
+  rescue IOError, ActionController::Live::ClientDisconnected
+    # Client went away — normal. Stop streaming.
+  ensure
+    bus&.unsubscribe(sub) if sub && bus.respond_to?(:unsubscribe)
+    response.stream.close rescue nil
+  end
+end
+```
+
+## `web/app/helpers/application_helper.rb`
+```rb
+module ApplicationHelper
+end
+```
+
+## `web/app/models/application_record.rb`
+```rb
+class ApplicationRecord < ActiveRecord::Base
+  primary_abstract_class
+end
+```
+
+## `web/app/views/layouts/application.html.erb`
+```erb
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Web" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Web">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app %>
+  </head>
+
+  <body>
+    <%= yield %>
+  </body>
+</html>
+```
+
+## `web/app/views/pwa/manifest.json.erb`
+```erb
+{
+  "name": "Web",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "scope": "/",
+  "description": "Web.",
+  "theme_color": "red",
+  "background_color": "red"
+}
+```
+
+## `web/app/views/pwa/service-worker.js`
+```js
+// Add a service worker for processing Web Push notifications:
+//
+// self.addEventListener("push", async (event) => {
+//   const { title, options } = await event.data.json()
+//   event.waitUntil(self.registration.showNotification(title, options))
+// })
+//
+// self.addEventListener("notificationclick", function(event) {
+//   event.notification.close()
+//   event.waitUntil(
+//     clients.matchAll({ type: "window" }).then((clientList) => {
+//       for (let i = 0; i < clientList.length; i++) {
+//         let client = clientList[i]
+//         let clientPath = (new URL(client.url)).pathname
+//
+//         if (clientPath == event.notification.data.path && "focus" in client) {
+//           return client.focus()
+//         }
+//       }
+//
+//       if (clients.openWindow) {
+//         return clients.openWindow(event.notification.data.path)
+//       }
+//     })
+//   )
+// })
+```
+
+files: 132 / lines: 10262 / truncated: 0 / est. tokens: ~12314
