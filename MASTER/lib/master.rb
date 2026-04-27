@@ -281,8 +281,8 @@ module Master
       .merge(build_master_commands(standing:, soul:))
       .merge(
         "help" => ->(ctx) {
-          cmds = %w[clear save tokens undo dmesg cost config model mode task autotest council autoloop swarm sweep memory dreams orders soul cache diff commit knowledge why snapshot explain persona heartbeat skills gateway scan help exit]
-          cmds.map { "/#{_1}" }.join("  ")
+          "just talk. intent is inferred automatically.\n" \
+          "exit with /exit or ctrl-C twice."
         }
       )
   end
