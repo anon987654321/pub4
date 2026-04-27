@@ -40,7 +40,7 @@ module Master
       diff_stager = config["staging_enabled"] ? DiffStager.new(root:, event_bus: bus) : nil
       mcp = McpCoordinator.new(root:, event_bus: bus)
       mcp.connect_all
-      code_index.build
+      code_index.build_async
       bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
 
       memory = Memory.new(root:)
