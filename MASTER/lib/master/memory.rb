@@ -7,7 +7,9 @@ module Master
   # Memory — persistent cross-session store with TF-IDF semantic search.
   # Stored at .master/memory.yml. Survives restarts.
   class Memory
-    TTL_DAYS          = 90
+    TTL_DAYS = 90
+    CONSOLIDATE_THRESHOLD = 40
+    SECONDS_PER_DAY = 86_400
     MAX_INJECT_TOKENS  = 2000
     MAX_INJECT_ENTRIES = 5
 
@@ -88,7 +90,7 @@ module Master
         ts    = data.is_a?(Hash) ? data["ts"].to_i : 0
         value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
         age_d = (now - ts) / 86_400.0
-        { key: key, value: value, score: 1.0 / (1.0 + age_d / 30.0) }
+        { key: key, value: value, score: 1.0 / (1.0 + age_d / TTL_DAYS.to_f) }
       end
 
       scored.each do |entry|

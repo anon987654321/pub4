@@ -80,6 +80,7 @@ module Master
     }.freeze
 
     DEFAULT = :dark_malay
+    AXIOM_DISPLAY_LIMIT = 10
 
     attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
 
@@ -112,7 +113,7 @@ module Master
       ls << "Evidence only: show diff or file content, never assert. Active voice."
       kernel = @axioms.kernel
       ls << "Kernel: #{kernel.map { |k, v| "#{k}=#{v}" }.join(" | ")}." if kernel.any?
-      phil = @axioms.philosophy(limit: 10)
+      phil = @axioms.philosophy(limit: AXIOM_DISPLAY_LIMIT)
       ls << "Philosophy: #{phil.map { |p| p["id"] }.join(" · ")}." if phil.any?
       golden = constitution["golden_rule"]
       ls << "Rule: #{golden}." if golden
