@@ -1,17 +1,18 @@
 # frozen_string_literal: true
 
-
 module Master
   module Routing
     class ModelRouter
-      # Phrases that indicate the model is uncertain — trigger escalation.
-      UNCERTAINTY_PHRASES = %w[
-        i'm\ not\ sure i\ don't\ know cannot\ determine unclear uncertain
-        might\ be possibly probably\ not limited\ information i\ cannot i\ am\ unable
-        i\ lack\ the not\ enough\ information i\ would\ need\ more
-].freeze
+      UNCERTAINTY_PHRASES = [
+        "i'm not sure", "i don't know", "cannot determine",
+        "unclear", "uncertain", "might be", "possibly",
+        "probably not", "limited information", "i cannot",
+        "i am unable", "i lack the", "not enough information",
+        "i would need more"
+      ].freeze
 
-ESCALATION_CHAIN = %w[cheap default strong].freeze
+      ESCALATION_CHAIN = %w[cheap default strong].freeze
+      DEFAULT_THRESHOLD = 0.3
 
       def initialize(config:, root: Master::ROOT, continuity_index: nil)
         @config = config
@@ -34,67 +35,61 @@ ESCALATION_CHAIN = %w[cheap default strong].freeze
       def fallback_chain(task_type: :exploration)
         return [@config.model] unless enabled?
 
-        preferred = preferred(task_type:)
+        pref = preferred(task_type:)
         all = @rules.fetch("models", {}).values.flatten.map { |m| m["id"] }.compact
         continuity = @continuity_index.fallback_models
-        ([preferred] + all + continuity + [@config.model]).uniq
+        ([pref] + all + continuity + [@config.model]).uniq
       end
 
-      # Returns true if the response text suggests insufficient confidence.
-      # Used by Execute stage to decide whether to retry with a stronger model.
-      def escalate?(response, threshold: 0.3)
+      def escalate?(response, threshold: DEFAULT_THRESHOLD)
         return false unless @rules.dig("routing", "escalation_enabled")
+
         text = response.to_s.downcase
         hits = UNCERTAINTY_PHRASES.count { |p| text.include?(p) }
         hits.to_f / UNCERTAINTY_PHRASES.size >= threshold
       end
 
-      # Return the best model from the escalation tier (default: "strong").
       def stronger_model(task_type: :exploration)
         tier = @rules.dig("routing", "escalation_tier") || "strong"
         candidates = @rules.dig("models", tier).to_a
         return preferred(task_type:) if candidates.empty?
+
         candidates.max_by { |m| weighted_score(m["score"] || {}) }&.dig("id") || preferred(task_type:)
       end
 
-
-      # Checks response text for low-confidence markers.
-      # Returns the strong-tier model ID if escalation is warranted and the
-      # current model is not already in the strong tier; otherwise returns nil.
       def escalate_if_low_confidence(response, current_model:, task_type: :exploration)
         return nil unless escalate?(response)
-        strong_model = stronger_model(task_type: task_type)
-        # Already on the strong tier -- no further escalation needed.
+
+        strong_model = stronger_model(task_type:)
         return nil if current_model == strong_model
+
         strong_model
       end
 
-# Determine which tier a model belongs to.
-def tier_for_model(model_id)
-  @rules.fetch("models", {}).each do |tier, models|
-    return tier if models.is_a?(Array) && models.any? { |m| m["id"] == model_id }
-  end
-  "cheap"
-end
+      def tier_for_model(model_id)
+        @rules.fetch("models", {}).each do |tier, models|
+          return tier if models.is_a?(Array) && models.any? { |m| m["id"] == model_id }
+        end
+        "cheap"
+      end
 
-# Return the next tier in the escalation chain, or nil if already at top.
-def next_escalation_tier(current_tier)
-  idx = ESCALATION_CHAIN.index(current_tier.to_s)
-  return nil unless idx
-  ESCALATION_CHAIN[idx + 1]
-end
+      def next_escalation_tier(current_tier)
+        idx = ESCALATION_CHAIN.index(current_tier.to_s)
+        return nil unless idx
 
-# Per-task confidence threshold from routes config.
-# Falls back to 0.3 (the existing default).
-def confidence_threshold(task_type: :exploration)
-  route = @rules.dig("routes", task_type.to_s)
-  return 0.3 unless route.is_a?(Hash)
-  route.fetch("confidence_threshold", 0.3).to_f
-end
+        ESCALATION_CHAIN[idx + 1]
+      end
 
-private
+      def confidence_threshold(task_type: :exploration)
+        route = @rules.dig("routes", task_type.to_s)
+        return DEFAULT_THRESHOLD unless route.is_a?(Hash)
 
-def enabled?
+        route.fetch("confidence_threshold", DEFAULT_THRESHOLD).to_f
+      end
+
+      private
+
+      def enabled?
         @rules.dig("routing", "enabled") != false
       end
 
