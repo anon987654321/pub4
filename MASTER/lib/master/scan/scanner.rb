@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "etc"
-require "yaml"
 
 module Master
   module Scan
@@ -70,7 +69,7 @@ module Master
 
       def depth_rules
         @depth_rules ||= begin
-          data = YAML.safe_load_file(RULES_PATH, aliases: true)
+          data = Master.load_yaml(RULES_PATH)
           data["scan_depths"] || {}
         end
       rescue StandardError

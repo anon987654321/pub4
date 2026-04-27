@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   module Stages
@@ -71,7 +70,7 @@ module Master
 
       def rules
         @rules ||= begin
-          data = File.exist?(RULES_PATH) ? YAML.safe_load_file(RULES_PATH, aliases: true) : {}
+          data = File.exist?(RULES_PATH) ? Master.load_yaml(RULES_PATH) : {}
           data.dig("voice", "strunk") || {}
         end
       rescue StandardError

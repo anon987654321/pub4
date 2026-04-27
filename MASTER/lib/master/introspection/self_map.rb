@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   module Introspection
@@ -26,7 +25,7 @@ module Master
         rules_path = File.join(@root, "data", "rules.yml")
         return {} unless File.exist?(rules_path)
 
-        data = YAML.safe_load_file(rules_path, aliases: true)
+        data = Master.load_yaml(rules_path)
         all_rules = (data["rules"] || {}).values.flatten
         source = Dir.glob(File.join(@root, "lib/**/*.rb")).map { |f| File.read(f) }.join
         all_rules

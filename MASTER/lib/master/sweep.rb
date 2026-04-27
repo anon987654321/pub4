@@ -2,7 +2,6 @@
 
 require "open3"
 require "tempfile"
-require "yaml"
 require "set"
 
 module Master
@@ -40,7 +39,7 @@ module Master
     SYNTAX_CHECKERS = {
       ".rb" => ->(p) { system("ruby -c #{p} > /dev/null 2>&1") },
       ".sh"  => ->(p) { system("bash -n #{p}  > /dev/null 2>&1") },
-      ".yml" => ->(p) { begin; YAML.safe_load_file(p); true; rescue => _e; false; end },
+      ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue => _e; false; end },
       ".erb" => ->(p) { begin; ERB.new(File.read(p)).result(binding); true; rescue SyntaxError; false; rescue => _e; true; end }
     }.freeze
 
@@ -133,7 +132,7 @@ module Master
     private
 
     def load_prompts
-      YAML.safe_load_file(PROMPTS_PATH)
+      Master.load_yaml(PROMPTS_PATH)
     end
 
     # Build a compact file map. Injected into every rewrite prompt so the model

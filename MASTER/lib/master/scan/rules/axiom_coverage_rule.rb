@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 require "prism"
 
 module Master
@@ -44,7 +43,7 @@ module Master
           path = File.join(@root, "data", "rules.yml")
           return [] unless File.exist?(path)
 
-          data = YAML.safe_load_file(path, aliases: true)
+          data = Master.load_yaml(path)
           all_rules = (data["rules"] || {}).values.flatten
           all_rules.map { |r| r["id"] }.compact.uniq
         rescue StandardError

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   module Scan
@@ -43,7 +42,7 @@ module Master
         private
 
         def load_conceptual_rules
-          data = YAML.safe_load_file(RULES_PATH, aliases: true)
+          data = Master.load_yaml(RULES_PATH)
           all_rules = (data["rules"] || {}).values.flatten
           all_rules
             .select { |r| r["detect_conceptual"] }

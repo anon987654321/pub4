@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   module Council
@@ -27,7 +26,7 @@ module Master
         return DEFAULTS if data_path.nil? || !File.exist?(data_path)
 
         @cache[data_path] ||= begin
-          raw = YAML.safe_load_file(data_path, symbolize_names: true)
+          raw = Master.load_yaml(data_path, symbolize_names: true)
           raise "Invalid persona data" unless raw.is_a?(Array)
 
           raw.map do |attrs|

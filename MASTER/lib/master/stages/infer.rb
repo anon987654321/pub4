@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   module Stages
@@ -42,7 +41,7 @@ module Master
       # Returns { "sweep" => { regexes: [Regexp, ...], capture: "path" }, ... }
       def load_patterns
         return {} unless File.exist?(PATTERNS_PATH)
-        data = YAML.safe_load_file(PATTERNS_PATH) || {}
+        data = Master.load_yaml(PATTERNS_PATH) || {}
         commands = data["commands"] || {}
         commands.each_with_object({}) do |(name, spec), out|
           regexes = (spec["patterns"] || []).map { |src| Regexp.new(src, Regexp::IGNORECASE | Regexp::EXTENDED) }

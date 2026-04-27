@@ -129,7 +129,7 @@ module Master
 
     def load_orders
       if File.exist?(STORE_PATH)
-        orders = YAML.safe_load_file(STORE_PATH) || []
+        orders = Master.load_yaml(STORE_PATH) || []
         orders.each { |o| o["state"] ||= "done" }  # migrate legacy
         orders
       else

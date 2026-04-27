@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   module Routing
@@ -112,7 +111,7 @@ def enabled?
 
       def load_rules
         path = File.join(@root, "data", "models.yml")
-        YAML.safe_load_file(path, aliases: true) || {}
+        Master.load_yaml(path) || {}
       rescue StandardError
         {}
       end

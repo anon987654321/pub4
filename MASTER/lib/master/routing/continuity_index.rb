@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   module Routing
@@ -38,7 +37,7 @@ module Master
 
         if @data_cache.nil? || current_mtime != @data_mtime
           @data_cache = begin
-            YAML.safe_load_file(path, aliases: true) || {}
+            Master.load_yaml(path) || {}
           rescue StandardError
             {}
           end

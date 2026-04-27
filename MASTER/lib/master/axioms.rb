@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   # Central source for rules, axioms, voice, and workflow.
@@ -135,7 +134,7 @@ module Master
     def load_yaml(path)
       return nil unless File.exist?(path)
 
-      YAML.safe_load_file(path, permitted_classes: [], permitted_symbols: [], aliases: true)
+      Master.load_yaml(path, permitted_classes: [], permitted_symbols: [], aliases: true)
     rescue StandardError
       nil
     end
