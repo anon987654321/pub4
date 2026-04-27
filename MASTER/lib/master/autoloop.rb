@@ -19,11 +19,11 @@ module Master
   class AutoLoop
     MAX_CYCLES       = 12
     BATCH_SIZE       = 3
-    RATE_LIMIT_SLEEP = 15     # ONE_SOURCE: no more hardcoded `sleep 15`
+    RATE_LIMIT_SLEEP = 15     # ONE_SOURCE: no more hardcoded `sleep 15`.freeze
     MAX_FIX_RETRIES  = 3
-    MIN_SIZE_RATIO       = 0.80   # Reject fix if output < 80% of original file size
-    CONFIDENCE_THRESHOLD = 0.60   # Below this, escalate to a reflective retry
-    MAX_FILE_BYTES   = 16_000 # Raised from 4_000 so core files (agent.rb, cli.rb) are fixable
+    MIN_SIZE_RATIO       = 0.80   # Reject fix if output < 80% of original file size.freeze
+    CONFIDENCE_THRESHOLD = 0.60   # Below this, escalate to a reflective retry.freeze
+    MAX_FILE_BYTES   = 16_000 # Raised from 4_000 so core files (agent.rb, cli.rb) are fixable.freeze
 
     # Rules that cannot be safely auto-fixed by rewriting a single file.
     # duplicate_code requires cross-file refactoring; conceptual/adversarial are LLM-only.

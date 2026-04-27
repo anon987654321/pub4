@@ -5,8 +5,8 @@ module Master
     # AskLlm — delegate sub-questions to the LLM agent mid-pipeline.
     class AskLlm
       TIER        = :guarded
-      NAME        = "ask_llm"
-      DESCRIPTION = "Ask the LLM a sub-question and return the answer as a string."
+      NAME        = "ask_llm".freeze
+      DESCRIPTION = "Ask the LLM a sub-question and return the answer as a string.".freeze
 
       def initialize(agent:, governor:, circuit_breaker:, cache:, event_bus: nil)
         @agent          = agent

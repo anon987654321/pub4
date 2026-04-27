@@ -7,7 +7,7 @@ module Master
   # Subscribes to tool:before events on the shared EventBus.
   # Written to .master/audit.log — one line per call, machine-readable.
   class AuditLog
-    LOG_PATH = ".master/audit.log"
+    LOG_PATH = ".master/audit.log".freeze
     MAX_VAL  = 120
 
     def initialize(root:, event_bus:)

@@ -7,7 +7,7 @@ module Master
   class Session
     TOKENS_PER_CHAR  = 4
     SESSION_NAME_MAX = 40
-    COSTS_MAX_BYTES  = 102_400     # 100 KB
+    COSTS_MAX_BYTES  = 102_400     # 100 KB.freeze
 
     attr_reader :name, :messages, :cost, :phase, :snapshots
 

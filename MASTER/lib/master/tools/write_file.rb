@@ -8,8 +8,8 @@ module Master
     class WriteFile
         include PathGuard
       TIER        = :guarded
-      NAME        = "write_file"
-      DESCRIPTION = "Atomically write content to a file, with undo snapshot."
+      NAME        = "write_file".freeze
+      DESCRIPTION = "Atomically write content to a file, with undo snapshot.".freeze
 
       def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil)
         @root        = File.realpath(root)

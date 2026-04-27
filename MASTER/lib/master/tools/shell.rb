@@ -9,8 +9,8 @@ module Master
     # Shell — execute shell commands with timeout and governor approval.
     class Shell
       TIER        = :dangerous
-      NAME        = "zsh"
-      DESCRIPTION = "Execute a zsh command in the project root."
+      NAME        = "zsh".freeze
+      DESCRIPTION = "Execute a zsh command in the project root.".freeze
       TIMEOUT     = 30
       BLOCKLIST   = Security::Permissions::BLOCKLIST
 

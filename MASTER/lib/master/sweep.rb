@@ -26,8 +26,8 @@ module Master
     MAX_CYCLES         = 16
     CONVERGE_THRESHOLD = 0.05
     CONVERGE_WINDOW    = 2
-    RENAME_WINDOW      = 3      # oscillation detected if A→B→A within 3 cycles
-    TRAJECTORY_GAMMA   = 0.9    # γ for discounted improvement signal
+    RENAME_WINDOW      = 3      # oscillation detected if A→B→A within 3 cycles.freeze
+    TRAJECTORY_GAMMA   = 0.9    # γ for discounted improvement signal.freeze
 
     GLOBS = {
       rb:  "**/*.rb",

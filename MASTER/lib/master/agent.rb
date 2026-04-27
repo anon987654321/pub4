@@ -21,7 +21,7 @@ def self.build_tool_capable_re
   Regexp.new("\\A(?:#{escaped.join("|")})(?:[:\\/@\\-.].+)?\\z", Regexp::IGNORECASE).freeze
 end
 
-TOOL_CAPABLE_RE = build_tool_capable_re
+TOOL_CAPABLE_RE = build_tool_capable_re.freeze
 
     MAX_TOOL_TURNS     = 5
     MIN_API_KEY_LENGTH = 20

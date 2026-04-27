@@ -14,7 +14,7 @@ module Master
         researcher: Workers::Researcher
       }.freeze
 
-      WORKER_TIMEOUT = 30  # seconds per worker
+      WORKER_TIMEOUT = 30  # seconds per worker.freeze
       SYNTHESIS_TRUNCATE_LIMIT = 200
 
       def initialize(agent:, event_bus: nil)

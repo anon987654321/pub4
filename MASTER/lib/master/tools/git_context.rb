@@ -6,8 +6,8 @@ module Master
     # All commands are read-only (TIER :safe). No writes.
     class GitContext
       TIER        = :safe
-      NAME        = "git_context"
-      DESCRIPTION = "Query git log, blame, diff, and status for the project."
+      NAME        = "git_context".freeze
+      DESCRIPTION = "Query git log, blame, diff, and status for the project.".freeze
 
       def initialize(root:, event_bus: nil)
         @root = File.realpath(root)
