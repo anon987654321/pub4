@@ -5,7 +5,7 @@ module Master
     # Search the local knowledge base: cloned docs, man pages, system prompts, gem READMEs.
     class SearchKnowledge
       TIER        = :safe
-      NAME        = "search_knowledge"
+      NAME        = "search_knowledge".freeze
       DESCRIPTION = "Search local knowledge base (ruby_llm docs, OpenBSD man pages, system prompts, gem docs). " \
                     "Use for: how does X work in ruby_llm? what does man pf.conf say? example system prompts?"
       MAX_RESULTS = 30

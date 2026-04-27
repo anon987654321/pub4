@@ -5,7 +5,7 @@ module Master
   # Ported from MASTER2. Scores candidates by (impact * confidence) / cost.
   # Used by Heartbeat for job ranking and ModelRouter for model selection.
   module DecisionEngine
-    EPSILON = 1e-6
+    EPSILON = 1e-6.freeze
 
     module_function
 

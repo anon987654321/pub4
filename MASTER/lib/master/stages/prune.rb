@@ -10,7 +10,7 @@ module Master
       RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
       FENCE_RE  = /(```.*?```)/m.freeze
 
-      HEADER_RE     = %r{^\#{1,6}\s+}
+      HEADER_RE     = %r{^\#{1,6}\s+}.freeze
       BOLD_RE       = /\*\*(.+?)\*\*/
       ITALIC_RE     = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/
       BULLET_RE     = /^\s*[-*+]\s+/

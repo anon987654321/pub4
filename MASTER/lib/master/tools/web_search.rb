@@ -11,9 +11,9 @@ module Master
       MAX_QUERY_CHARS    = 300
       MAX_SEARCH_RESULTS = 5
 
-      NAME        = "web_search"
-      DESCRIPTION = "Search DuckDuckGo instant answers API."
-      ENDPOINT    = "https://api.duckduckgo.com/"
+      NAME        = "web_search".freeze
+      DESCRIPTION = "Search DuckDuckGo instant answers API.".freeze
+      ENDPOINT    = "https://api.duckduckgo.com/".freeze
       TIMEOUT     = 10
 
       def initialize(governor:, event_bus: nil)

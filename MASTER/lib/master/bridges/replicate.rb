@@ -7,7 +7,7 @@ module Master
   module Bridges
     # Replicate — native predictions API client.
     class Replicate
-      BASE_URL      = "https://api.replicate.com/v1"
+      BASE_URL      = "https://api.replicate.com/v1".freeze
       POLL_INTERVAL = 0.8
       MAX_WAIT      = 180
 

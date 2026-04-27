@@ -5,11 +5,10 @@ module Master
     # SymbolLookup — lets the LLM query the live codebase symbol graph.
     # Returns definition location, callers, and impact analysis for any symbol.
     class SymbolLookup
-      NAME        = "symbol_lookup"
+      NAME        = "symbol_lookup".freeze
       DESCRIPTION = "Look up a Ruby class, module, or method in the codebase. " \
                     "Returns file, line, and all cross-file references (callers/usages). " \
-                    "Use before refactoring to understand impact."
-
+                    "Use before refactoring to understand impact.".freeze
       def initialize(code_index:, event_bus: nil)
         @index = code_index
         @bus   = event_bus

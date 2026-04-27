@@ -10,7 +10,7 @@ module Master
   #
   # Skills discovered at boot are registered as tools in the agent.
   class Skills
-    SKILLS_DIR = "skills"
+    SKILLS_DIR = "skills".freeze
 
     attr_reader :loaded
 

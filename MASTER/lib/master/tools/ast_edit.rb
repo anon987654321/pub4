@@ -7,8 +7,8 @@ module Master
     # Uses Ripper::SexpBuilder for structure-awareness without external gem dependencies.
     class AstEdit
       TIER        = :guarded
-      NAME        = "ast_edit"
-      DESCRIPTION = "AST-aware code editing: find, rename, or restructure Ruby methods safely."
+      NAME        = "ast_edit".freeze
+      DESCRIPTION = "AST-aware code editing: find, rename, or restructure Ruby methods safely.".freeze
 
       def initialize(root:, undo:, event_bus: nil)
         @root = File.realpath(root)

@@ -5,8 +5,8 @@ module Master
     # ListDir — list directory contents with filtering and depth control.
     class ListDir
       TIER        = :safe
-      NAME        = "list_dir"
-      DESCRIPTION = "List directory contents, depth-limited."
+      NAME        = "list_dir".freeze
+      DESCRIPTION = "List directory contents, depth-limited.".freeze
       MAX_DEPTH   = 5
 
       def initialize(root:, event_bus: nil)

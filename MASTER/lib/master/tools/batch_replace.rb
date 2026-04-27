@@ -5,8 +5,8 @@ module Master
     # BatchReplace — apply multiple search-and-replace operations in one pass.
     class BatchReplace
       TIER        = :guarded
-      NAME        = "replace"
-      DESCRIPTION = "Find and replace text across all files in a directory."
+      NAME        = "replace".freeze
+      DESCRIPTION = "Find and replace text across all files in a directory.".freeze
 
       def initialize(root:, governor:, event_bus: nil)
         @root     = root

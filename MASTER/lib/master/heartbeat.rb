@@ -8,7 +8,7 @@ module Master
   # Each job has an interval_seconds and a last_run timestamp persisted in .master/heartbeat_state.yml.
   class Heartbeat
     DATA_PATH  = File.join(Master::ROOT, "data", "heartbeat.yml").freeze
-    STATE_PATH = ".master/heartbeat_state.yml"
+    STATE_PATH = ".master/heartbeat_state.yml".freeze
 
     def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil)
       @root    = root
