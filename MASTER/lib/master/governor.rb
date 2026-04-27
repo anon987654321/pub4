@@ -73,7 +73,8 @@ module Master
 
       case choice
       when :approve then Result.ok(true)
-      when :deny    then @bus&.publish("tool:denied", tool: tool_name); Result.err("denied by user", category: :validation)
+      when :deny    then @bus&.publish("tool:denied",
+        tool: tool_name); Result.err("denied by user", category: :validation)
       when :quit    then exit(0)
       end
     end

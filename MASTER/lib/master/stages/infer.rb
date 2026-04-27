@@ -29,7 +29,8 @@ module Master
         @patterns.each do |cmd, entry|
           entry[:regexes].each do |pattern|
             next unless (m = msg.match(pattern))
-            return Result.ok(ctx.merge(intent: :command, command: cmd, args: extract_args(cmd, entry[:capture], m, msg)))
+            return Result.ok(ctx.merge(intent: :command, command: cmd, args: extract_args(cmd,
+              entry[:capture], m, msg)))
           end
         end
 

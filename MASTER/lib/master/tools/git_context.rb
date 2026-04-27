@@ -42,7 +42,8 @@ module Master
       def git_blame(path)
         return Result.err("git_context blame: path required", category: :validation) unless path
         safe = safe_path(path)
-        return Result.err("git_context blame: file not found: #{path}", category: :validation) unless File.exist?(File.join(@root, safe))
+        return Result.err("git_context blame: file not found: #{path}",
+          category: :validation) unless File.exist?(File.join(@root, safe))
         out = IO.popen(["git", "blame", "--no-color", "-l", safe], err: File::NULL) { |io| io.read }
         Result.ok(out.strip.empty? ? "(no blame data)" : out.strip)
       end

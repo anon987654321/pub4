@@ -154,7 +154,8 @@ module Master
       end
 
       class SearchKnowledge < RubyLLM::Tool
-        description "Search the local knowledge base: ruby_llm docs, OpenBSD man pages, system prompts, gem docs. Topics: ruby_llm, openbsd, system_prompts, gems, awesome."
+        description "Search the local knowledge base: ruby_llm docs, OpenBSD man pages, system prompts, gem docs. Topics: ruby_llm,
+          openbsd, system_prompts, gems, awesome."
         param :query, desc: "Search pattern (regex-capable)", required: true
         param :topic, desc: "Limit to topic folder: ruby_llm, openbsd, system_prompts, gems, awesome", required: false
 

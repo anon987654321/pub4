@@ -119,7 +119,8 @@ module Master
       ls << "Rule: #{golden}." if golden
 
       # Hard formatting rules — [K] enforced
-      ls << "Output format: plain prose or dmesg-style lines. No markdown headers (#), no bold (**), no bullet lists (- *), no numbered lists. Code fences (```) are allowed only for actual code."
+      ls << "Output format: plain prose or dmesg-style lines. No markdown headers (#), no bold (**),
+        no bullet lists (- *), no numbered lists. Code fences (```) are allowed only for actual code."
       ls << "Never use: Certainly, Of course, Great question, Absolutely, Happy to help, I would be glad."
 
       # Code generation axioms — [K] enforced

@@ -34,7 +34,8 @@ module Master
           code.each_line.with_index(1) do |line, num|
             findings << finding(line: num, message: "boolean positional default — use keyword arg (def method(flag: false)) to name intent at call site") if line.match?(BOOL_POSITIONAL)
             findings << finding(line: num, message: "double negation (unless !x) — use positive form (if x)") if line.match?(DOUBLE_NEG)
-            findings << finding(line: num, message: "negative attribute name — name what it IS, not what it ISN'T") if line.match?(NEG_BOOL_ATTR)
+            findings << finding(line: num,
+              message: "negative attribute name — name what it IS, not what it ISN'T") if line.match?(NEG_BOOL_ATTR)
 
             if line.match?(/^\s+def\s+\w+\?/)
               in_predicate = true
@@ -46,7 +47,8 @@ module Master
               if depth <= 0
                 in_predicate = false
               elsif line.match?(/(@\w+\s*=(?!=)|\.save[!\s]|\.update[!\s]|File\.write)/)
-                findings << finding(line: pred_line, message: "predicate method (?) mutates state — predicates must only query, never mutate (POLA)")
+                findings << finding(line: pred_line,
+                  message: "predicate method (?) mutates state — predicates must only query, never mutate (POLA)")
                 in_predicate = false
               end
             end
