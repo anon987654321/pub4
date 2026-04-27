@@ -1,17 +1,7 @@
-# rules.yml — unified rule hierarchy for MASTER
-#
-# Structure: codebase > file > unit > line
-# Each rule: id, name, severity (error/warning/info), autofix,
-#            detect (lexical regex and/or conceptual LLM prompt),
-#            fix (suggestion), languages (list or "all")
-#
-# Replaces: axioms.yml, constitution.yml, principles.yml,
-#           language_axioms.yml, language_rules.yml, strunk.yml,
-#           scan_depths.yml, quality_thresholds.yml
+# rules.yml — universal structural rules
+# scope: codebase > file > unit > line
+# applies to: code, prose, law, business, science, design
 
-# ===================================================================
-# GOLDEN RULE — everything flows from this
-# ===================================================================
 golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
 
 protection:
@@ -20,9 +10,6 @@ protection:
   NEGOTIABLE: "Allow if explicitly permitted"
   FLEXIBLE: "Negotiate at runtime"
 
-# ===================================================================
-# VOICE — how MASTER communicates
-# ===================================================================
 voice:
   style: openbsd_dmesg
   anti_simulation:
@@ -48,9 +35,6 @@ voice:
     - "Provide key evidence next."
     - "Add implementation detail last."
 
-# ===================================================================
-# ZEN METHOD — the workflow loop
-# ===================================================================
 zen:
   observe: "Read current behavior before changing anything."
   simplify: "Reduce moving parts before adding new components."
@@ -58,9 +42,6 @@ zen:
   verify: "Run checks and gather objective evidence."
   reflect: "Capture learning and improve defaults."
 
-# ===================================================================
-# THRESHOLDS — numeric limits for scan rules
-# ===================================================================
 thresholds:
   file:
     max_lines: 300
@@ -85,9 +66,6 @@ thresholds:
     max_per_request: 0.50
     warn_at: 0.25
 
-# ===================================================================
-# SCAN DEPTHS — which rules run at each depth
-# ===================================================================
 scan_depths:
   quick: &quick
     - FrozenStringRule
@@ -128,9 +106,6 @@ scan_depths:
   hunt: *deep
   critique: *deep
 
-# ===================================================================
-# LANGUAGES — per-language config (versions, settings, banned)
-# ===================================================================
 languages:
   ruby:
     version: "3.3+"
@@ -164,17 +139,9 @@ languages:
     dialect: "bokmål"
     rules: ["Short sentences", "Avoid anglicisms", "Active voice", "Plain language"]
 
-# ===================================================================
-# RULES — the tree: codebase > file > unit > line
-# ===================================================================
 rules:
 
-  # =================================================================
-  # CODEBASE scope — architecture, consistency, project-wide
-  # =================================================================
   codebase:
-
-    # -- kernel (enforced, pipeline abort) --
 
     - id: PRESERVE_FIRST
       name: "Never break working code"
@@ -207,8 +174,6 @@ rules:
       autofix: false
       detect_conceptual: "Does this code crash on partial failure instead of degrading?"
       fix: "Circuit breakers, timeouts, fallbacks."
-
-    # -- architecture --
 
     - id: GALLS_LAW
       name: "Complex systems evolve from simple working systems"
@@ -282,8 +247,6 @@ rules:
       detect_conceptual: "Is the first draft being accepted without exploring alternatives?"
       fix: "Generate a swarm and curate when stakes are high."
 
-    # -- anti-patterns (codebase-wide) --
-
     - id: NO_GOD_CLASS
       name: "No god classes"
       tier: core
@@ -308,12 +271,143 @@ rules:
       detect_conceptual: "Are there global variables or class-level mutable state shared across modules?"
       fix: "Inject configuration. Use dependency injection."
 
-  # =================================================================
-  # FILE scope — per-file structure, naming, headers
-  # =================================================================
-  file:
+    - id: SINGLE_SOURCE_OF_TRUTH
+      name: "One place defines each fact"
+      tier: kernel
+      severity: error
+      autofix: false
+      detect_conceptual: "Is the same fact, rule, or definition stated in more than one place? In a legal system, is the same right defined in multiple statutes? In a genome, is the same regulatory element duplicated with divergent mutations?"
+      fix: "One canonical source. Everything else references it. Never copy when you can point."
 
-    # -- kernel --
+    - id: TRACER_BULLETS
+      name: "End-to-end skeleton first, flesh out second"
+      tier: architecture
+      severity: info
+      autofix: false
+      detect_conceptual: "Is this building infrastructure without an end-to-end path? Is this business plan elaborating budgets before proving the revenue model? Is this research paper expanding methodology before demonstrating the finding?"
+      fix: "Wire the simplest end-to-end path first. Prove it works. Then add depth."
+
+    - id: ORTHOGONALITY
+      name: "Changes in one dimension must not ripple into others"
+      tier: architecture
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does changing one aspect force changes in unrelated aspects? Does reformatting break content? Does modifying one gene's expression alter another pathway?"
+      fix: "Decouple dimensions. Database changes should not require UI changes. Style should not affect structure."
+
+    - id: TRANSFORMATIONS
+      name: "Think in pipelines: input transforms to output"
+      tier: architecture
+      severity: info
+      autofix: false
+      detect_conceptual: "Is this modeling the problem as mutable state instead of flowing transformations? Does this document bury its flow in scattered cross-references?"
+      fix: "Express work as a chain of transformations. Each stage takes input, produces output, holds no state."
+
+    - id: DEEP_MODULES
+      name: "Powerful functionality behind simple interfaces"
+      tier: architecture
+      severity: warning
+      autofix: false
+      detect_conceptual: "Is this module shallow — complex interface, trivial implementation? Does this form ask 40 questions for a simple task? Does this clause require five cross-references?"
+      fix: "Simple interface, rich implementation. A deep module does much with little ceremony."
+
+    - id: INFORMATION_HIDING
+      name: "Each module encapsulates one design decision"
+      tier: architecture
+      severity: warning
+      autofix: false
+      detect_conceptual: "Is implementation detail leaking across boundaries? Would changing an internal decision force changes elsewhere?"
+      fix: "Encapsulate each decision in one module. If it changes, only that module changes."
+
+    - id: DIFFERENT_LAYER_DIFFERENT_ABSTRACTION
+      name: "Each layer speaks a different language than its neighbors"
+      tier: architecture
+      severity: warning
+      autofix: false
+      detect_conceptual: "Do adjacent layers use the same abstraction? Are there pass-through methods that add no value? Does this management layer just relay without transforming?"
+      fix: "Each layer must transform, not relay. If a layer adds no abstraction, remove it."
+
+    - id: STRUCTURAL_HONESTY
+      name: "The shape of the artifact must reflect the shape of the problem"
+      tier: architecture
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does the structure match the domain? Does the module hierarchy match the conceptual hierarchy? Does the floor plan match the workflow?"
+      fix: "Align structure with reality. Natural domain boundaries become system boundaries."
+
+    - id: GRACEFUL_BOUNDARIES
+      name: "Where systems meet, expect translation and loss"
+      tier: architecture
+      severity: info
+      autofix: false
+      detect_conceptual: "Does this boundary assume perfect fidelity? Does this integration assume the other side never changes?"
+      fix: "Every boundary is a translation layer. Validate at every boundary. Degrade gracefully when translation fails."
+
+    - id: PULL_COMPLEXITY_DOWN
+      name: "Simple interface matters more than simple implementation"
+      tier: architecture
+      severity: info
+      autofix: false
+      detect_conceptual: "Is complexity pushed up to the caller instead of absorbed by the implementation?"
+      fix: "Absorb complexity into the implementation. The caller should not need to know how it works."
+
+    - id: ETC
+      name: "Easier To Change — the meta-value behind every principle"
+      tier: philosophy
+      severity: info
+      autofix: false
+      detect_conceptual: "Does this design decision make the system harder to change? Does this contract make renegotiation unnecessarily difficult?"
+      fix: "Choose the option that keeps more options open. Decoupled, parameterized, replaceable."
+
+    - id: BROKEN_WINDOWS
+      name: "Zero tolerance for visible decay"
+      tier: philosophy
+      severity: warning
+      autofix: false
+      detect_conceptual: "Is there visible rot being left unfixed — dead code, broken links, stale references? In a brief, citations to overruled cases?"
+      fix: "Fix it now. One broken window invites more."
+
+    - id: ENTROPY_RESISTANCE
+      name: "Systems decay toward disorder unless actively maintained"
+      tier: philosophy
+      severity: warning
+      autofix: false
+      detect_conceptual: "Is there creeping disorder — naming inconsistencies, abandoned conventions, accumulating exceptions? In a legal code, contradictory amendments?"
+      fix: "Actively resist entropy. Regular cleanup. Remove what no longer serves."
+
+    - id: DONT_OUTRUN_HEADLIGHTS
+      name: "Only plan as far as you can see"
+      tier: philosophy
+      severity: info
+      autofix: false
+      detect_conceptual: "Is this making detailed plans for unpredictable scenarios? Projecting five years out? Designing for hypothetical scale?"
+      fix: "Small deliberate steps. Reassess after each. Feedback from each step illuminates the next."
+
+    - id: REVERSIBILITY
+      name: "Prefer decisions that are easy to undo"
+      tier: philosophy
+      severity: info
+      autofix: false
+      detect_conceptual: "Is this decision hard to reverse? Does it lock in a vendor? Waive future rights? Have no rollback pathway?"
+      fix: "Soft-delete over hard-delete. Option agreements over binding. Feature flags over big-bang."
+
+    - id: DESIGN_IT_TWICE
+      name: "Consider at least two approaches before committing"
+      tier: philosophy
+      severity: info
+      autofix: false
+      detect_conceptual: "Was this designed once without considering alternatives?"
+      fix: "Sketch two designs. Compare tradeoffs. Five minutes saves five days."
+
+    - id: PROPERTY_BASED_TESTING
+      name: "Test properties and invariants, not just examples"
+      tier: verification
+      severity: info
+      autofix: false
+      detect_conceptual: "Are tests only checking specific examples instead of universal properties? Is QA only sampling instead of testing invariants?"
+      fix: "Define properties that must always hold. Generate many inputs. Verify the property survives all."
+
+  file:
 
     - id: GUARD_EXPENSIVE
       name: "Check preconditions before costly work"
@@ -322,8 +416,6 @@ rules:
       autofix: false
       detect_conceptual: "Does this file perform expensive operations (API calls, disk IO) without checking preconditions?"
       fix: "Guard clause before costly work. Estimate cost. Confirm if destructive."
-
-    # -- structure --
 
     - id: SMALL_FILES
       name: "Files under 300 lines"
@@ -415,8 +507,6 @@ rules:
       fix: "Restructure selectors to avoid specificity bankruptcy."
       languages: [css]
 
-    # -- squint test --
-
     - id: SQUINT_TEST
       name: "Structure evident at a glance"
       tier: aesthetic
@@ -434,12 +524,24 @@ rules:
       detect_lexical: "\\n{4,}"
       fix: "One blank line between sections, never more than two."
 
-  # =================================================================
-  # UNIT scope — class, module, method
-  # =================================================================
-  unit:
+    - id: NO_MULTIPLE_LANGUAGES
+      name: "One medium per artifact"
+      tier: clean_code
+      severity: warning
+      autofix: false
+      detect_lexical: "<%|<script|<style|SQL|HEREDOC"
+      detect_conceptual: "Does this file embed multiple languages or notations? Does this document mix incompatible frameworks?"
+      fix: "One language per layer. Separate into distinct files or clearly demarcated sections."
 
-    # -- kernel --
+    - id: ARTIFICIAL_COUPLING
+      name: "Things that do not depend on each other must not be grouped together"
+      tier: clean_code
+      severity: warning
+      autofix: false
+      detect_conceptual: "Are unrelated concepts coupled by proximity or shared container? In a filing, are unrelated claims bundled into one count?"
+      fix: "Separate into independent units. Each removable without affecting others."
+
+  unit:
 
     - id: SIMPLEST_WORKS
       name: "Fewest moving parts that solve the problem"
@@ -465,8 +567,6 @@ rules:
       autofix: true
       detect_conceptual: "Does this unit contain unnecessary verbosity?"
       fix: "Omit needless words. Omit needless code."
-
-    # -- SOLID --
 
     - id: SRP
       name: "Single Responsibility"
@@ -507,8 +607,6 @@ rules:
       autofix: false
       detect_conceptual: "Does this class directly instantiate its dependencies?"
       fix: "Inject dependencies through constructor."
-
-    # -- design --
 
     - id: ONE_JOB
       name: "Each module has one clear reason to change"
@@ -610,8 +708,6 @@ rules:
       detect_conceptual: "Are there unexplained numeric literals or boolean flags?"
       fix: "Extract to named constants."
 
-    # -- reliability --
-
     - id: FAIL_FAST
       name: "Report errors at detection point"
       tier: reliability
@@ -644,8 +740,6 @@ rules:
       detect_conceptual: "Does one failure crash everything?"
       fix: "Circuit breakers, timeouts, fallback to stale data."
 
-    # -- functional --
-
     - id: NO_SIDE_EFFECTS
       name: "Functions should not change state they do not own"
       tier: functional
@@ -671,8 +765,6 @@ rules:
       autofix: true
       detect_conceptual: "Does this function depend on hidden state?"
       fix: "Pass all dependencies as parameters."
-
-    # -- refactoring smells --
 
     - id: PRIMITIVE_OBSESSION
       name: "Replace repeated primitives with value objects"
@@ -730,8 +822,6 @@ rules:
       detect_conceptual: "Does this code access internals of another class?"
       fix: "Use public interface. Enforce boundaries."
 
-    # -- UX (Nielsen) --
-
     - id: SYSTEM_STATUS
       name: "Keep users informed of progress"
       tier: ux
@@ -772,8 +862,6 @@ rules:
       detect_conceptual: "Are the same concepts named differently in different places?"
       fix: "Follow conventions. One name per concept."
 
-    # -- LLM-specific --
-
     - id: COST_TRANSPARENCY
       name: "Show LLM costs in real-time"
       tier: llm
@@ -798,12 +886,104 @@ rules:
       detect_conceptual: "Does this execute an expensive or destructive operation without confirmation?"
       fix: "Cost estimate before execution. Require opt-in for danger."
 
-  # =================================================================
-  # LINE scope — per-line patterns, naming, style
-  # =================================================================
-  line:
+    - id: NO_FLAG_ARGUMENTS
+      name: "A flag that selects behavior means two things hiding as one"
+      tier: clean_code
+      severity: warning
+      autofix: false
+      detect_lexical: "def \\w+\\([^)]*\\btrue\\b|def \\w+\\([^)]*\\bfalse\\b"
+      detect_conceptual: "Does a boolean cause this unit to do two different things? In a contract, does one condition branch into contradictory obligations?"
+      fix: "Split into two distinct units. Each does one thing."
 
-    # -- kernel --
+    - id: NO_OUTPUT_ARGUMENTS
+      name: "Return results, never secretly modify what was passed in"
+      tier: clean_code
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does this modify its arguments instead of returning a result? Does this clause silently alter a definition from a prior section?"
+      fix: "Return the result. Leave inputs untouched."
+
+    - id: NO_SELECTOR_ARGUMENTS
+      name: "Arguments that switch behavior indicate hidden multiplicity"
+      tier: clean_code
+      severity: warning
+      autofix: false
+      detect_conceptual: "Is an argument used as a switch to select between behaviors? Does a field mean different things in different contexts?"
+      fix: "Separate functions, separate types, separate document sections."
+
+    - id: DESIGN_BY_CONTRACT
+      name: "State what you expect, what you promise, what must remain true"
+      tier: reliability
+      severity: info
+      autofix: false
+      detect_conceptual: "Are preconditions, postconditions, and invariants left implicit? Does this API lack documentation of valid inputs and guaranteed outputs?"
+      fix: "Make contracts explicit. Preconditions, postconditions, invariants."
+
+    - id: CRASH_EARLY
+      name: "A dead process does less damage than a corrupted one"
+      tier: reliability
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does this limp along in a broken state instead of stopping cleanly? Does this continue after contraindication signals?"
+      fix: "Stop when invariants break. A clean crash is recoverable. Corruption is not."
+
+    - id: DEFINE_ERRORS_OUT
+      name: "Design so error conditions cannot arise"
+      tier: design
+      severity: info
+      autofix: false
+      detect_conceptual: "Is this handling errors that could be eliminated by redesigning the interface? Does this validation reject input that better design would prevent?"
+      fix: "Redesign so the error cannot occur."
+
+    - id: SURFACE_AREA
+      name: "Minimize the boundary between inside and outside"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_conceptual: "Is the public interface larger than necessary? Does this contract have more exceptions than rules?"
+      fix: "Fewer public methods. Fewer clauses. Fewer points of contact mean fewer points of failure."
+
+    - id: PROGRESSIVE_DISCLOSURE
+      name: "Reveal complexity only as needed"
+      tier: ux
+      severity: info
+      autofix: false
+      detect_conceptual: "Does this present all complexity at once? Does this front-load definitions before stating obligations?"
+      fix: "Lead with the simple case. Reveal depth on demand."
+
+    - id: FEEDBACK_LOOPS
+      name: "Every action must produce observable feedback"
+      tier: ux
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does this perform work without reporting progress? Does this protocol lack checkpoints?"
+      fix: "Close the loop. Every action produces feedback. Every milestone gets measured."
+
+    - id: DATA_CLASS
+      name: "Data without behavior is a missed abstraction"
+      tier: refactoring
+      severity: info
+      autofix: false
+      detect_conceptual: "Does this hold data but contain no behavior? Is logic scattered across other modules? Is this a spreadsheet of raw numbers with formulas elsewhere?"
+      fix: "Push behavior into the data. Methods belong with the data they operate on."
+
+    - id: PARALLEL_INHERITANCE
+      name: "Two hierarchies that must change in lockstep"
+      tier: refactoring
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does adding a type in one hierarchy require adding one in another? Does a new product line require changes in both catalog and billing?"
+      fix: "Merge the hierarchies or use composition."
+
+    - id: REFUSED_BEQUEST
+      name: "Inheriting what you do not use"
+      tier: refactoring
+      severity: info
+      autofix: false
+      detect_conceptual: "Does this variant ignore most of what it inherits? Does this addendum negate most of the base agreement?"
+      fix: "Use composition instead of inheritance."
+
+  line:
 
     - id: EXPLICIT
       name: "Explicit contracts over implicit coupling"
@@ -820,8 +1000,6 @@ rules:
       autofix: true
       detect_conceptual: "Does this name clearly reveal intent?"
       fix: "Rename to reveal intent."
-
-    # -- ruby --
 
     - id: GUARD_CLAUSE
       name: "Favor guard clauses over nested conditionals"
@@ -922,8 +1100,6 @@ rules:
       fix: "Rescue StandardError or a specific class."
       languages: [ruby]
 
-    # -- rails --
-
     - id: N_PLUS_ONE
       name: "Detect N+1 queries"
       tier: performance
@@ -959,8 +1135,6 @@ rules:
       detect_lexical: "\\.\\w+\\.map\\(&:\\w+\\)"
       fix: "Use .pluck(:column) to avoid AR object instantiation."
       languages: [rails]
-
-    # -- javascript --
 
     - id: CONST_BY_DEFAULT
       name: "Use const unless reassigned"
@@ -1016,8 +1190,6 @@ rules:
       fix: "for...in iterates prototype properties. Use for...of."
       languages: [javascript]
 
-    # -- zsh --
-
     - id: QUOTE_VARIABLES
       name: "Always quote $variables"
       tier: safety
@@ -1044,8 +1216,6 @@ rules:
       detect_lexical: "`[^`]+`"
       fix: "Use $(command) — nestable and readable."
       languages: [zsh]
-
-    # -- html --
 
     - id: IMG_ALT
       name: "Require alt on every <img>"
@@ -1092,8 +1262,6 @@ rules:
       fix: "Extract to CSS class."
       languages: [html]
 
-    # -- css --
-
     - id: LOGICAL_PROPERTIES
       name: "Prefer logical properties for RTL support"
       tier: design
@@ -1111,8 +1279,6 @@ rules:
       detect_lexical: "@media.*\\{[^}]*font-size:"
       fix: "Use font-size: clamp(1rem, 2.5vw, 1.5rem)."
       languages: [css]
-
-    # -- universal (all languages) --
 
     - id: MEANINGFUL_NAMES
       name: "Names reveal intent"
@@ -1170,8 +1336,6 @@ rules:
       detect_lexical: "[-=]{3,}|[╭╮╰╯│─]"
       fix: "No ASCII separators. No box drawing. Whitespace is the layout tool."
 
-    # -- performance --
-
     - id: PRECOMPUTE_MATH
       name: "Precompute expensive math"
       tier: performance
@@ -1196,8 +1360,6 @@ rules:
       detect_conceptual: "Does this run at full quality until it crashes instead of scaling down?"
       fix: "EWMA frame timing. Dynamic resolution scaling. Emergency brake."
 
-    # -- analog warmth --
-
     - id: ANALOG_WARMTH
       name: "Perfect is sterile"
       tier: aesthetic
@@ -1205,3 +1367,35 @@ rules:
       autofix: true
       detect_conceptual: "Is generated imagery clinically perfect with zero texture?"
       fix: "Film grain. Vintage lens softness. Subtle color cast."
+
+    - id: DOMAIN_LANGUAGE
+      name: "Speak in the vocabulary of the problem, not the implementation"
+      tier: clarity
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does this code use generic programming terms (manager, handler, processor, data) instead of domain terms (patient, invoice, genome, verdict)? Does this legal document use lay terms where precise legal terms exist? Does this medical report use colloquial language instead of standard nomenclature?"
+      fix: "Use the ubiquitous language of the domain. Every domain has precise terms — use them."
+
+    - id: LOAD_BEARING_NAMES
+      name: "Names carry structural weight — choose them to bear it"
+      tier: clarity
+      severity: warning
+      autofix: false
+      detect_conceptual: "Are names vague, generic, or misleading? Does 'data' mean input, output, or both? Does 'process' mean validate, transform, or persist? Does 'miscellaneous' appear as a category? In law, are terms used loosely that have precise legal meaning? In medicine, is a diagnosis vague where a specific code exists?"
+      fix: "Names are load-bearing walls. They define how people think about the system. Choose names that carry the full weight of their meaning."
+
+    - id: ERROR_CONTEXT
+      name: "Every error must carry enough context to locate and understand its origin"
+      tier: reliability
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does this error message lack context about where and why it occurred? Does this rejection letter fail to state which requirement was not met? Does this lab result omit which sample or protocol produced the anomaly?"
+      fix: "Wrap low-level errors with domain context. State what was attempted, what failed, and what to do next."
+
+    - id: COMMENTS_AS_DEODORANT
+      name: "Explanations that mask bad structure instead of fixing it"
+      tier: clean_code
+      severity: warning
+      autofix: false
+      detect_conceptual: "Is this comment explaining what bad code does instead of rewriting the code to be self-evident? In prose, is a footnote compensating for an unclear sentence? In a contract, is a definition section papering over ambiguous clauses?"
+      fix: "Rewrite the artifact so explanation is unnecessary. If it needs a comment, it needs a rewrite."
