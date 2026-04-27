@@ -5,9 +5,9 @@ require "yaml"
 module Master
   module Stages
     # Prune — strip sycophancy and markdown formatting from LLM responses.
-    # Rules loaded from data/strunk.yml. Fence-aware: prunes prose, leaves code blocks.
+    # Rules loaded from data/rules.yml (voice.strunk). Fence-aware: prunes prose, leaves code blocks.
     class Prune
-      DATA_PATH = File.join(Master::ROOT, "data", "strunk.yml").freeze
+      RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
       FENCE_RE  = /(```.*?```)/m.freeze
 
       HEADER_RE     = %r{^\#{1,6}\s+}
@@ -70,7 +70,10 @@ module Master
       end
 
       def rules
-        @rules ||= File.exist?(DATA_PATH) ? YAML.safe_load_file(DATA_PATH) : {}
+        @rules ||= begin
+          data = File.exist?(RULES_PATH) ? YAML.safe_load_file(RULES_PATH, aliases: true) : {}
+          data.dig("voice", "strunk") || {}
+        end
       rescue StandardError
         @rules = {}
       end
