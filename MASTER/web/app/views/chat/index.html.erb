@@ -437,7 +437,7 @@ const renderMd = raw => {
     const initAudio=async()=>{
       try{
         audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-        const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+        const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
         const source=audioCtx.createMediaStreamSource(stream);
         analyser=audioCtx.createAnalyser();
         analyser.fftSize=32;
@@ -1409,8 +1409,8 @@ if(mode==='void'){
       window.speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g,'').substring(0,500));
       u.lang='ms-MY'; u.rate=0.92; u.pitch=0.85; u.volume=1.0;
-      u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');};
-      u.onend=_onSpeakEnd; u.onerror=_onSpeakEnd;
+      u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');duckPads();if(padModulate)padModulate('speak');if(recognition&&recognitionActive)try{recognition.stop();}catch(_e){}};
+      u.onend=()=>{unduckPads();_onSpeakEnd();}; u.onerror=()=>{unduckPads();_onSpeakEnd();};
       // Always speak synchronously — must stay inside gesture call stack on mobile.
       // _cachedVoices is populated eagerly at page load and kept fresh via voiceschanged.
       const saved=localStorage.getItem('pref_voice');
@@ -1472,10 +1472,11 @@ if(mode==='void'){
       recognition.continuous=true;
       recognition.interimResults=true;
       recognition.lang='ms-MY';
+      recognition.maxAlternatives=3;
       recognition.onstart=()=>{ recognitionActive=true; statusEl.classList.add('think'); };
       recognition.onend=()=>{
         recognitionActive=false;
-        if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,160);
+        if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,500);
       };
       recognition.onerror=(ev)=>{
         if(ev.error==='not-allowed') uiLabel.textContent='Microphone blocked';
@@ -1483,13 +1484,21 @@ if(mode==='void'){
         else if(ev.error==='network') uiLabel.textContent='No network';
         else uiLabel.textContent='Mic: '+ev.error;
       };
-      recognition.onresult=(ev)=>{
+recognition.onresult=(ev)=>{
+  // Auto-detect language: if mostly ASCII, switch to en-US
+  const _detectLang=(txt)=>{
+    const ascii=txt.replace(/[^a-zA-Z]/g,'').length;
+    const total=txt.replace(/\s/g,'').length||1;
+    return ascii/total>0.8?'en-US':'ms-MY';
+  };
         let finalText='';
         for(let i=ev.resultIndex;i<ev.results.length;i++){
           if(ev.results[i].isFinal) finalText+=ev.results[i][0].transcript+" ";
         }
         finalText=finalText.trim();
         if(!finalText) return;
+        const detectedLang=_detectLang(finalText);
+        if(recognition.lang!==detectedLang){recognition.lang=detectedLang;}
         if(/^hey\s+master$/i.test(finalText)){
           haptic(25);
           uiLabel.textContent='Listening…';
@@ -2171,6 +2180,7 @@ const AMBIENT=[
       }
     });
 
+    const _bkts=new Map();
     let t=0;
     const ringPulses=[]; // motion graphics: ring events {r,maxR,a,col}
     let scanPhase=0;
