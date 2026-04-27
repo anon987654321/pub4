@@ -52,7 +52,8 @@ module Master
           )
 
           parse_smells(out)
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
 
@@ -78,7 +79,8 @@ module Master
               message: "[#{meta[:axiom]}] #{smell["smell_type"]}: #{smell["message"]}"
             )
           end
-        rescue StandardError
+        rescue StandardError => e
+          # degrade gracefully — external tool unavailable
           []
         end
       end

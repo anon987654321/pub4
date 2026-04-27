@@ -80,8 +80,8 @@ module Master
           tokens_approx: ev[:tokens_approx].to_i,
           escalated:    ev[:escalated] == true
         )
-      rescue StandardError
-        nil
+      rescue StandardError => e
+        @bus&.publish("metrics:record_error", error: e.message)
       end
     end
 
@@ -106,8 +106,8 @@ module Master
     def append(entry)
       entry[:ts] = Time.now.to_i
       File.open(@path, "a") { |f| f.puts(JSON.generate(entry)) }
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("metrics:append_error", error: e.message)
     end
   end
 end

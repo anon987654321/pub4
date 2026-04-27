@@ -52,7 +52,8 @@ module Master
     def extract_text(result)
       val = result.value!
       val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
-    rescue StandardError
+    rescue StandardError => e
+      @bus&.publish("gateway:extract_error", error: e.message)
       result.to_s
     end
   end

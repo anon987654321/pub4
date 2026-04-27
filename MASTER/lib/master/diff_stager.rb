@@ -122,8 +122,8 @@ module Master
           stats: entry.diff_stats
         })
       )
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("diff_stager:persist_error", error: e.message)
     end
 
     def remove_persisted(entry)
@@ -131,8 +131,8 @@ module Master
       # Safe to delete: this persisted staging file is being removed after the entry
       # has been either applied (written to the actual file) or discarded (abandoned).
       File.delete(persist_file) if File.exist?(persist_file)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("diff_stager:cleanup_error", error: e.message)
     end
   end
 end

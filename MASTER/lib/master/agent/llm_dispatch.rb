@@ -123,7 +123,8 @@ module Master
       def routed_models
         return [@config.model] unless @model_router
         @model_router.fallback_chain(task_type: @config.task_type.to_sym)
-      rescue StandardError
+      rescue StandardError => e
+        @bus&.publish("llm:route_error", error: e.message) if defined?(@bus)
         [@config.model]
       end
 
