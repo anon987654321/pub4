@@ -167,7 +167,7 @@ end
 
     def index_file(file)
       src = File.read(file, encoding: "UTF-8")
-      result = Prism.parse(src)
+      result = Prism.parse(src, freeze: true)
       return unless result.success?
 
       visitor = SymbolVisitor.new(file:, root: @root)
