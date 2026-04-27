@@ -95,7 +95,7 @@ module Master
       models_path = File.join(@root, "data", "models.yml")
       return "no models.yml" unless File.exist?(models_path)
 
-      data    = YAML.safe_load_file(models_path, aliases: true)
+      data    = Master.load_yaml(models_path)
       tiers   = data["models"] || {}
       ids     = tiers.values.flatten.map { |m| m["id"] }.compact
       alive   = ids.select { |id| model_reachable?(id) }
@@ -158,7 +158,7 @@ module Master
       path = File.join(@root, "data", "heartbeat.yml")
       return default_jobs unless File.exist?(path)
 
-      YAML.safe_load_file(path) || default_jobs
+      Master.load_yaml(path) || default_jobs
     rescue StandardError
       default_jobs
     end
@@ -176,7 +176,7 @@ module Master
       path = File.join(@root, STATE_PATH)
       return {} unless File.exist?(path)
 
-      YAML.safe_load_file(path) || {}
+      Master.load_yaml(path) || {}
     rescue StandardError
       {}
     end

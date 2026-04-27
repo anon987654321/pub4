@@ -47,7 +47,7 @@ module Master
       private
 
       def load_patterns
-        data = YAML.safe_load_file(PATTERNS_PATH, aliases: true)
+        data = Master.load_yaml(PATTERNS_PATH)
         (data["dangerous"] || []).flatten.map { |str| Regexp.new(str, Regexp::IGNORECASE) }
       end
 
@@ -88,7 +88,7 @@ module Master
           "message"   => message.to_s[0, 120],
           "feedback"  => feedback.to_s[0, 240]
         }
-        existing = File.exist?(EXEMPLARS_PATH) ? (YAML.safe_load_file(EXEMPLARS_PATH) || []) : []
+        existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
         File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))
       rescue StandardError
         nil

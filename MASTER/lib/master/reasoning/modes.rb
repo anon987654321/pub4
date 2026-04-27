@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   module Reasoning
@@ -26,7 +25,7 @@ module Master
 
       def load_prompt(mode)
         path = File.join(@root, "data", "prompts", "mode_#{mode}.yml")
-        YAML.safe_load_file(path) || {}
+        Master.load_yaml(path) || {}
       end
     end
   end

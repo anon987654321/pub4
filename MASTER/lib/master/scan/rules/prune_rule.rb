@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "yaml"
 
 module Master
   module Scan
@@ -37,7 +36,7 @@ module Master
 
         def rules
           @rules ||= begin
-            data = File.exist?(DATA_PATH) ? YAML.safe_load_file(DATA_PATH, aliases: true) : {}
+            data = File.exist?(DATA_PATH) ? Master.load_yaml(DATA_PATH) : {}
             data.dig("voice", "strunk") || {}
           end
         rescue StandardError

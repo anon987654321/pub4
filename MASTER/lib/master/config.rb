@@ -78,7 +78,7 @@ module Master
     def load_config
       return deep_dup(DEFAULTS) unless File.exist?(@path)
 
-      loaded = YAML.safe_load_file(@path) || {}
+      loaded = Master.load_yaml(@path) || {}
       deep_merge(DEFAULTS, stringify_keys(loaded))
     rescue Psych::Exception => e
       warn "config: failed to parse #{@path}: #{e.message}"
