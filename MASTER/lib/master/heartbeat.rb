@@ -3,14 +3,19 @@
 require "yaml"
 
 module Master
-  # Heartbeat — autonomous scheduled task runner.
-  # Reads heartbeat.yml for periodic jobs (sweep, model check, prune, self-test).
-  # Each job has an interval_seconds and a last_run timestamp persisted in .master/heartbeat_state.yml.
   class Heartbeat
     POLL_INTERVAL = 60
     JOURNAL_KEEP = 50
     DATA_PATH  = File.join(Master::ROOT, "data", "heartbeat.yml").freeze
     STATE_PATH = ".master/heartbeat_state.yml".freeze
+
+    JOB_HANDLERS = {
+      "prune_memory" => :prune_memory,
+      "check_models" => :check_model_availability,
+      "self_test"    => :run_self_test,
+      "prune_undo"   => :prune_undo_journal,
+      "snapshot"     => :run_snapshot
+    }.freeze
 
     def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil)
       @root    = root
@@ -73,32 +78,26 @@ module Master
     private
 
     def execute_job(job)
-      case job["action"]
-      when "prune_memory"
-        @memory&.consolidate!(agent: @agent) || "no memory"
-      when "check_models"
-        check_model_availability
-      when "self_test"
-        run_self_test
-      when "prune_undo"
-        prune_undo_journal
-      when "snapshot"
-        generate_snapshot
-      else
-        "unknown action: #{job["action"]}"
-      end
+      method_name = JOB_HANDLERS[job["action"]]
+      return "unknown action: #{job["action"]}" unless method_name
+
+      send(method_name)
     rescue StandardError => e
       "error: #{e.message}"
+    end
+
+    def prune_memory
+      @memory&.consolidate!(agent: @agent) || "no memory"
     end
 
     def check_model_availability
       models_path = File.join(@root, "data", "models.yml")
       return "no models.yml" unless File.exist?(models_path)
 
-      data    = Master.load_yaml(models_path)
-      tiers   = data["models"] || {}
-      ids     = tiers.values.flatten.map { |m| m["id"] }.compact
-      alive   = ids.select { |id| model_reachable?(id) }
+      data = Master.load_yaml(models_path)
+      tiers = data["models"] || {}
+      ids = tiers.values.flatten.map { |m| m["id"] }.compact
+      alive = ids.select { |id| model_reachable?(id) }
       "models: #{alive.size}/#{ids.size} reachable"
     end
 
@@ -116,7 +115,9 @@ module Master
       result = @scanner.scan_dir(target, depth: :standard)
       return "scan failed" unless result.respond_to?(:ok?) && result.ok?
 
-      count = result.value!.sum { |_, fr| fr.respond_to?(:ok?) && fr.ok? ? fr.value!.size : 0 }
+      count = result.value!.sum do |_, fr|
+        fr.respond_to?(:ok?) && fr.ok? ? fr.value!.size : 0
+      end
       @bus&.publish("heartbeat:self_test", violations: count)
       "self-test: #{count} violations"
     end
@@ -133,25 +134,10 @@ module Master
       "pruned undo: kept #{keep}/#{lines.size} entries"
     end
 
-    def generate_snapshot
-      stamp = Time.now.strftime("%Y%m%d_%H%M%S")
-      out   = File.join(@root, ".master", "snapshot.md")
-      dirs  = %w[exe lib/master data].map { |d| File.join(@root, d) }
-      files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
-                  .select { |f| File.file?(f) && File.size(f) < 50_000 }
-                  .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
-                  .sort
-      lines = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]
-      files.each do |f|
-        rel  = f.sub("#{@root}/", "")
-        lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
-        src  = File.read(f, encoding: "UTF-8", invalid: :replace)
-        lines << "## #{rel}" << "```#{lang}" << src.rstrip << "```" << ""
-      rescue StandardError
-        next
-      end
-      File.write(out, lines.join("\n"))
-      "snapshot: #{files.size} files -> #{out}"
+    def run_snapshot
+      container = { root: @root, bus: @bus }
+      Builder.boot_snapshot(container)
+      "snapshot: generated"
     end
 
     def load_jobs
@@ -165,10 +151,10 @@ module Master
 
     def default_jobs
       [
-        { "name" => "prune_memory",  "action" => "prune_memory",  "interval_seconds" => 3600 },
-        { "name" => "self_test",     "action" => "self_test",     "interval_seconds" => 7200 },
-        { "name" => "prune_undo",    "action" => "prune_undo",    "interval_seconds" => 86_400 },
-        { "name" => "snapshot",      "action" => "snapshot",      "interval_seconds" => 14_400 }
+        { "name" => "prune_memory", "action" => "prune_memory", "interval_seconds" => 3600 },
+        { "name" => "self_test", "action" => "self_test", "interval_seconds" => 7200 },
+        { "name" => "prune_undo", "action" => "prune_undo", "interval_seconds" => 86_400 },
+        { "name" => "snapshot", "action" => "snapshot", "interval_seconds" => 14_400 }
       ]
     end
 
