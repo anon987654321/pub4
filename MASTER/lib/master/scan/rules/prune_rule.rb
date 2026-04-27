@@ -6,10 +6,9 @@ module Master
   module Scan
     module Rules
       # PruneRule — flags hedge words and preamble phrases in Ruby comments.
-      # Patterns loaded from data/strunk.yml — the same source the Prune stage uses at runtime.
-      # Single source of truth: no hardcoded patterns here.
+      # Patterns loaded from data/rules.yml (voice.strunk section).
       class PruneRule < Rule
-        DATA_PATH = File.join(Master::ROOT, "data", "strunk.yml").freeze
+        DATA_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
 
         def initialize
           super
@@ -37,17 +36,22 @@ module Master
         private
 
         def rules
-          @rules ||= (File.exist?(DATA_PATH) ? YAML.safe_load_file(DATA_PATH) : nil) || {}
+          @rules ||= begin
+            data = File.exist?(DATA_PATH) ? YAML.safe_load_file(DATA_PATH, aliases: true) : {}
+            data.dig("voice", "strunk") || {}
+          end
         rescue StandardError
           @rules = {}
         end
 
-        # Build regex from hedge entries in strunk.yml: [{pattern:, replace:}, ...].
         def build_hedge_re
           words = rules.fetch("hedges", []).filter_map { |h|
-            next unless h.is_a?(Hash)
-            pat = h["pattern"].to_s.strip
-            pat.empty? ? nil : Regexp.escape(pat)
+            if h.is_a?(Hash)
+              pat = h["pattern"].to_s.strip
+              pat.empty? ? nil : Regexp.escape(pat)
+            elsif h.is_a?(String)
+              h.strip.empty? ? nil : Regexp.escape(h.strip)
+            end
           }
           return nil if words.empty?
           /(#{words.join("|")})/i
@@ -55,7 +59,6 @@ module Master
           nil
         end
 
-        # Build regex from preamble strings in strunk.yml.
         def build_preamble_re
           phrases = rules.fetch("preambles", []).filter_map { |p|
             next unless p.is_a?(String)

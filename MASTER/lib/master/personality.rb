@@ -81,9 +81,6 @@ module Master
 
     DEFAULT = :dark_malay
 
-    CONSTITUTION_PATH = File.join(Master::ROOT, "data", "constitution.yml").freeze
-    STRUNK_PATH       = File.join(Master::ROOT, "data", "strunk.yml").freeze
-
     attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
 
     def initialize(name = DEFAULT, root: nil)
@@ -95,45 +92,43 @@ module Master
       @style     = persona[:style]
       @desc      = persona[:description]
       @axioms    = Axioms.new(root:)
-      const_path = root ? File.join(root, "data", "constitution.yml") : CONSTITUTION_PATH
-      strunk_path = root ? File.join(root, "data", "strunk.yml") : STRUNK_PATH
-      @constitution = File.exist?(const_path)  ? YAML.safe_load_file(const_path)  : {}
-      @strunk       = File.exist?(strunk_path) ? YAML.safe_load_file(strunk_path) : {}
     end
 
-    # Injected before every LLM call. Pulls from axioms, constitution, and strunk.
+    # Injected before every LLM call. Pulls from rules.yml via Axioms.
     def system_prompt
       @system_prompt ||= build_system_prompt
     end
 
     private
 
-def build_system_prompt
-  ls = ["You are MASTER. #{@desc} OpenBSD-first. Constitutional AI."]
-  banned  = (@constitution.dig("banned_output") || [])
-  no_open = (@strunk.dig("preambles") || []).first(4)
-  no_end  = (@strunk.dig("endings")   || []).first(3)
-  ls << "Never: #{(banned + no_open + no_end).uniq.join(", ")}."
-  ls << "Evidence only: show diff or file content, never assert. Active voice."
-  kernel = @axioms.kernel
-  ls << "Kernel: #{kernel.map { |k, v| "#{k}=#{v}" }.join(" | ")}." if kernel.any?
-  phil = @axioms.philosophy(limit: 10)
-  ls << "Philosophy: #{phil.map { |p| p["id"] }.join(" · ")}." if phil.any?
-  golden = @constitution["golden_rule"]
-  ls << "Rule: #{golden}." if golden
+    def build_system_prompt
+      ls = ["You are MASTER. #{@desc} OpenBSD-first. Constitutional AI."]
+      constitution = @axioms.constitution
+      strunk = @axioms.strunk
+      banned  = (constitution["banned_output"] || [])
+      no_open = (strunk["preambles"] || []).first(4)
+      no_end  = (strunk["endings"]   || []).first(3)
+      ls << "Never: #{(banned + no_open + no_end).uniq.join(", ")}."
+      ls << "Evidence only: show diff or file content, never assert. Active voice."
+      kernel = @axioms.kernel
+      ls << "Kernel: #{kernel.map { |k, v| "#{k}=#{v}" }.join(" | ")}." if kernel.any?
+      phil = @axioms.philosophy(limit: 10)
+      ls << "Philosophy: #{phil.map { |p| p["id"] }.join(" · ")}." if phil.any?
+      golden = constitution["golden_rule"]
+      ls << "Rule: #{golden}." if golden
 
-  # Hard formatting rules — [K] enforced
-  ls << "Output format: plain prose or dmesg-style lines. No markdown headers (#), no bold (**), no bullet lists (- *), no numbered lists. Code fences (```) are allowed only for actual code."
-  ls << "Never use: Certainly, Of course, Great question, Absolutely, Happy to help, I would be glad."
+      # Hard formatting rules — [K] enforced
+      ls << "Output format: plain prose or dmesg-style lines. No markdown headers (#), no bold (**), no bullet lists (- *), no numbered lists. Code fences (```) are allowed only for actual code."
+      ls << "Never use: Certainly, Of course, Great question, Absolutely, Happy to help, I would be glad."
 
-  # Code generation axioms — [K] enforced
-  ls << "Code axioms — refuse to generate code that violates these:"
-  ls << "FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class."
-  ls << "SIMPLEST_WORKS: refuse to create god classes (>300 lines, >20 methods). Push back and suggest decomposition."
-  ls << "PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally."
-  ls << "BE_CONCISE: minimal response. If the answer is one word, say one word."
+      # Code generation axioms — [K] enforced
+      ls << "Code axioms — refuse to generate code that violates these:"
+      ls << "FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class."
+      ls << "SIMPLEST_WORKS: refuse to create god classes (>300 lines, >20 methods). Push back and suggest decomposition."
+      ls << "PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally."
+      ls << "BE_CONCISE: minimal response. If the answer is one word, say one word."
 
-  ls.join("\n")
-end
+      ls.join("\n")
+    end
   end
 end

@@ -23,14 +23,15 @@ module Master
       end
 
       def axiom_coverage
-        axioms_path = File.join(@root, "data", "axioms.yml")
-        return {} unless File.exist?(axioms_path)
+        rules_path = File.join(@root, "data", "rules.yml")
+        return {} unless File.exist?(rules_path)
 
-        axioms = YAML.safe_load_file(axioms_path)
+        data = YAML.safe_load_file(rules_path, aliases: true)
+        all_rules = (data["rules"] || {}).values.flatten
         source = Dir.glob(File.join(@root, "lib/**/*.rb")).map { |f| File.read(f) }.join
-        axioms.transform_values { |ids|
-          ids.count { |id| source.include?(id.to_s) }
-        }
+        all_rules
+          .group_by { |r| r["tier"] }
+          .transform_values { |rules| rules.count { |r| source.include?(r["id"].to_s) } }
       end
     end
   end
