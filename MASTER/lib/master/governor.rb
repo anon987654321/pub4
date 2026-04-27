@@ -4,6 +4,7 @@ require "tty-prompt"
 
 module Master
   class Governor
+    RATE_WINDOW = 60.0
     TIERS = { safe: 0, guarded: 1, dangerous: 2 }.freeze
 
     # Sliding-window rate limits per tier (calls per minute).

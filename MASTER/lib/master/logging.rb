@@ -2,6 +2,7 @@
 
 module Master
   class Logging
+    DEFAULT_DMESG_LINES = 50
     attr_reader :buffer
 
     def initialize(ring_buffer:, event_bus:, trace_level: 0)
@@ -13,7 +14,7 @@ module Master
       wire_events
     end
 
-    def dmesg(lines = 50)
+    def dmesg(lines = DEFAULT_DMESG_LINES)
       @buffer.to_a.last(lines).join("\n")
     end
 

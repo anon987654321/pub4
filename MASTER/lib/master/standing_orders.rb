@@ -8,6 +8,8 @@ module Master
   #   done:    completed; eligible again after interval
   #   error:   halted; requires /orders reset <name>
   class StandingOrders
+    DAILY_INTERVAL = 86_400
+    WEEKLY_INTERVAL = 604_800
     STORE_PATH   = File.join(Master::ROOT, "data", "standing_orders.yml")
     VALID_STATES = %w[pending running done error].freeze
 

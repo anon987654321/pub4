@@ -4,6 +4,7 @@ require "json"
 
 module Master
   class Metrics
+    SLOW_REQUEST_MS = 5000
     METRICS_PREFIX = "metrics0".freeze
     DIFF_SIZE_LIMIT_DEFAULT = 200
     MAX_DIFF_SIZE_LIMIT = DIFF_SIZE_LIMIT_DEFAULT.freeze

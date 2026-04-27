@@ -5,6 +5,8 @@ require "fileutils"
 
 module Master
   class Config
+    BUDGET_MAX_DEFAULT = 10.0
+    HISTORY_MAX = 500
     DEFAULT_WEB_PORT = 10_002
 
     DEFAULTS = {
@@ -12,7 +14,7 @@ module Master
       'web_host'       => '0.0.0.0',
       'web_public_url' => 'http://ai.brgen.no:3000',
       'web_port'       => DEFAULT_WEB_PORT,
-      'budget_max'     => 10.0,
+      'budget_max'     => BUDGET_MAX_DEFAULT,
       'req_max'        => 1.0,
       'trace'          => 0,
       'prescan'        => true,

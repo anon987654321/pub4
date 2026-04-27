@@ -7,6 +7,8 @@ module Master
   # Reads heartbeat.yml for periodic jobs (sweep, model check, prune, self-test).
   # Each job has an interval_seconds and a last_run timestamp persisted in .master/heartbeat_state.yml.
   class Heartbeat
+    POLL_INTERVAL = 60
+    JOURNAL_KEEP = 50
     DATA_PATH  = File.join(Master::ROOT, "data", "heartbeat.yml").freeze
     STATE_PATH = ".master/heartbeat_state.yml".freeze
 
@@ -27,7 +29,7 @@ module Master
       @thread = Thread.new do
         loop do
           run_due!
-          sleep 60
+          sleep POLL_INTERVAL
         end
       rescue StandardError => e
         @bus&.publish("heartbeat:error", message: e.message)
@@ -126,7 +128,7 @@ module Master
       lines = File.readlines(journal_path)
       return "journal empty" if lines.empty?
 
-      keep = [lines.size / 2, 50].max
+      keep = [lines.size / 2, JOURNAL_KEEP].max
       File.write(journal_path, lines.last(keep).join)
       "pruned undo: kept #{keep}/#{lines.size} entries"
     end
