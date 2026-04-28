@@ -57,7 +57,7 @@ module Master
     end
 
     def format_dmesg(line)
-      @p.dim("[#{elapsed_ms}] #{line}")
+      @p.dim(line.to_s)
     end
 
     private

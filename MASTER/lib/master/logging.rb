@@ -25,10 +25,15 @@ module Master
     end
 
     def format_entry(payload)
-      event = payload[:event]
-      ts    = payload[:ts]
+      event = payload[:event].to_s
       rest  = payload.except(:event, :ts)
-      "[#{ts}ms] #{event}#{rest.empty? ? "" : ": #{rest.inspect}"}"
+
+      parts = event.split(":")
+      component = parts[0]
+      action = parts[1] || "ready"
+
+      details = rest.map { |k, v| "#{k}=#{v}" }.join(", ")
+      details.empty? ? "#{component}: #{action}" : "#{component}: #{action}, #{details}"
     end
   end
 end
