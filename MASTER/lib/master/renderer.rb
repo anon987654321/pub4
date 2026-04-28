@@ -24,7 +24,7 @@ module Master
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
       lines << "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{@p.dim("ready")}"
-      public_url = @config["web_public_url"] || "http://ai.brgen.no:3000"
+      public_url = @config["web_public_url"] || "https://ai.brgen.no"
       lines << @p.dim("web  #{public_url}")
       lines << ""
       lines.join("\n")
