@@ -15,3 +15,12 @@
   enabled: false
   state: pending
   last_run_at: 0
+
+- name: data_integrity_check
+  description: Detect and recover from corrupted data/ YAML files (LLM error strings written as file content)
+  trigger: scheduled
+  interval_s: 3600
+  command: "/scan data/"
+  enabled: true
+  state: pending
+  last_run_at: 0
