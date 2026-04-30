@@ -8,21 +8,28 @@ module Master
     class Lint
       FENCE_RE = /```(?:ruby)?\n(.*?)```/m
 
-      def initialize(scanner:, config:, autoloop: nil)
+      def initialize(scanner:, config:, autoloop: nil, root: nil)
         @scanner  = scanner
         @config   = config
         @autoloop = autoloop
+        @root     = root
       end
 
       def call(ctx)
         findings = []
 
         # 1. Scan any files that were written during Execute
-        written = Array(ctx[:written_files])
-        written.each do |path|
-          next unless File.exist?(path) && path.end_with?(".rb")
-          result = @scanner.scan(path, depth: :standard)
-          findings.concat(result.value!) if result.respond_to?(:ok?) && result.ok?
+        paths = Array(ctx[:written_files]).filter_map { |p| File.exist?(p) ? p : nil }
+        paths = [File.join(@root, "lib")] if paths.empty? && defined?(@root) && @root
+        paths.each do |scan_path|
+          next unless File.exist?(scan_path)
+          if File.directory?(scan_path)
+            result = @scanner.scan_dir(scan_path, depth: :standard)
+            findings.concat(result.value!.flat_map { |_, r| r.respond_to?(:ok?) && r.ok? ? r.value! : [] }) if result.respond_to?(:ok?) && result.ok?
+          elsif scan_path.end_with?(".rb")
+            result = @scanner.scan(scan_path, depth: :standard)
+            findings.concat(result.value!) if result.respond_to?(:ok?) && result.ok?
+          end
         end
 
         # 2. Scan code blocks embedded in chat output
