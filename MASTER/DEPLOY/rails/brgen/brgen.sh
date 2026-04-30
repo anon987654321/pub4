@@ -1,362 +1,266 @@
-#!/usr/bin/env sh
-# -*- mode: sh; -*-
+#!/usr/bin/env zsh
+# brgen.sh — Brgen social network (Reddit-style, Rails 8)
+# Usage: zsh brgen.sh
 set -euo pipefail
 
-# BRGEN v3.0.0 – Rails 8 Complete Social Network
-VERSION=${VERSION:-3.0.0}
-APP_DIR=${APP_DIR:-/home/brgen/app}
-PORT=${PORT:-11006}
-MAX_COMMENT_LENGTH=${MAX_COMMENT_LENGTH:-10000}
-MAX_KARMA_SEED=${MAX_KARMA_SEED:-1000}
-HOT_DECAY_EXPONENT=${HOT_DECAY_EXPONENT:-1.5}
+APP_NAME=brgen
+APP_DIR=/home/${APP_NAME}/app
+APP_PORT=11006
+SCRIPT_DIR=${0:a:h}
 
-printf '==> BRGEN v%s – Rails 8 Complete Setup\n' "$VERSION"
+. "${SCRIPT_DIR:h}/@shared_functions.sh"
+. "${SCRIPT_DIR:h}/__shared/@reddit_features.sh"
 
-# ── Validation ───────────────────────────────────────────────────────────────
-if [ ! -d "$APP_DIR" ]; then
-  printf 'ERROR: %s missing. Run: doas sh openbsd.sh --pre-point\n' "$APP_DIR" >&2
-  exit 1
-fi
+need_cmd ruby34 bundle rails doas
 
-# Ensure Rails CLI is available
-if ! command -v rails >/dev/null 2>&1; then
-  printf 'ERROR: rails command not found in PATH\n' >&2
-  exit 1
-fi
+already_done "${APP_DIR}/app/models/community.rb" && exit 0
 
-cd "$APP_DIR"
-printf 'Working in: %s\n' "$APP_DIR"
+log "Brgen — Social Network"
 
-# ── Rails app creation ──────────────────────────────────────────────────────
-if [ ! -f config/application.rb ]; then
-  printf 'Creating Rails 8 application\n'
-  rails new . --database=postgresql --skip-git --css=tailwind --javascript=esbuild
-fi
+# ── Create app ─────────────────────────────────────────────────────────────
+create_rails_app "$APP_DIR"
 
-# ── Gemfile augmentation ───────────────────────────────────────────────────
-printf 'Appending gems to Gemfile\n'
-if ! grep -q 'solid_queue' Gemfile; then
-  cat >> Gemfile <<'EOF'
+# ── Gems ────────────────────────────────────────────────────────────────────
+add_gem pagy
+add_gem image_processing
+install_solid_stack
+install_security_tools
 
-# Rails 8 Solid Stack
-gem "solid_queue"
-gem "solid_cache"
-gem "solid_cable"
+# ── Auth ───────────────────────────────────────────────────────────────────
+install_auth
+install_active_storage
 
-# Authentication
-gem "bcrypt", "~> 3.1"
+# ── Core models ─────────────────────────────────────────────────────────────
+bin/rails generate migration AddUsernameAndKarmaToUsers \
+  username:string:uniq karma:integer \
+  --no-test-framework
 
-# Voting
-gem "acts_as_votable"
+bin/rails generate model Community \
+  name:string description:text slug:string:uniq \
+  subscribers_count:integer:default[0] \
+  user:references \
+  --no-test-framework
 
-# Real‑time
-gem "stimulus_reflex", "~> 3.5"
-gem "cable_ready", "~> 5.0"
+bin/rails generate model CommunityMembership \
+  community:references user:references role:string \
+  --no-test-framework
 
-# Multi‑tenancy
-gem "devise"
-gem "devise-guests"
-gem "acts_as_tenant"
-
-# Misc features
-gem "pagy"
-gem "image_processing"
-gem "geocoder"
-gem "langchainrb"
-gem "ruby-openai"
-gem "serviceworker-rails"
-
-group :development, :test do
-  gem "brakeman"
-  gem "rubocop-rails-omakase"
-  gem "faker"
-end
-
-EOF
-fi
-
-bundle install
-
-# ── Acts as votable ────────────────────────────────────────────────────────
-printf 'Installing acts_as_votable\n'
-bin/rails generate acts_as_votable:migration
-bin/rails db:migrate
-
-# ── Solid Stack installation ───────────────────────────────────────────────
-printf 'Installing Solid Stack\n'
-bin/rails generate solid_queue:install
-bin/rails generate solid_cache:install
-bin/rails generate solid_cable:install
-
-# ── Authentication scaffolding ───────────────────────────────────────────────
-printf 'Installing Rails 8 authentication\n'
-if [ ! -f app/models/session.rb ]; then
-  bin/rails generate authentication
-fi
-
-# ── Database configuration ─────────────────────────────────────────────────
-printf 'Configuring PostgreSQL\n'
-sed -i.bak \
-    -e 's/database: app_/database: brgen_/' \
-    -e 's/username: brgen/username: brgen_user/' \
-    config/database.yml && rm -f config/database.yml.bak
-
-# ── Core models ───────────────────────────────────────────────────────────────
-printf 'Generating core models\n'
-models=(
-  'Community name:string description:text subdomain:string:uniq slug:string:uniq'
-  'Post title:string content:text user:references community:references karma:integer:default[0] anonymous:boolean:default[false]'
-  'Comment content:text user:references commentable:references{polymorphic}:index parent_id:integer'
-  'Reaction kind:string user:references post:references'
-  'Stream content_type:string url:string user:references post:references duration:integer'
-)
-for spec in "${models[@]}"; do
-  bin/rails generate model $spec
-done
-
-bin/rails generate migration AddFieldsToUsers username:string karma:integer:default=0 location:point
-
-cat >> app/models/user.rb <<'RUBY'
-
-# Voting
-acts_as_voter
-
-# Associations
-has_many :posts, dependent: :destroy
-has_many :comments, dependent: :destroy
-has_many :communities
-
-# Validations
-validates :username, presence: true, uniqueness: true
-
-# Update karma from votes received
-def update_karma_from_votes
-  total = posts.sum { |p| p.cached_votes_score } +
-          comments.sum { |c| c.cached_votes_score }
-  update_column(:karma, total)
-end
-RUBY
+bin/rails generate model Post \
+  title:string content:text url:string \
+  community:references user:references \
+  score:integer:default[0] \
+  upvotes:integer:default[0] downvotes:integer:default[0] \
+  comments_count:integer:default[0] \
+  post_type:string \
+  --no-test-framework
 
 bin/rails db:migrate
 
-# ── Model concerns ────────────────────────────────────────────────────────────
-printf 'Creating model concerns\n'
-mkdir -p app/models/concerns
-cat > app/models/concerns/commentable.rb <<'RUBY'
-module Commentable
-  extend ActiveSupport::Concern
+# ── Reddit features ─────────────────────────────────────────────────────────
+setup_reddit_models
+write_reddit_model_logic
+write_vote_controller
 
-  included do
-    has_many :comments, as: :commentable, dependent: :destroy
-  end
+# ── Model overrides ─────────────────────────────────────────────────────────
+cat > app/models/user.rb << 'RUBY'
+class User < ApplicationRecord
+  has_secure_password
 
-  def comment_count
-    comments.size
-  end
-end
-RUBY
-
-# ── Model overrides ───────────────────────────────────────────────────────────
-cat > app/models/community.rb <<'RUBY'
-class Community < ApplicationRecord
+  has_many :sessions, dependent: :destroy
   has_many :posts, dependent: :destroy
-  has_many :users
+  has_many :comments, dependent: :destroy
+  has_many :votes, dependent: :destroy
+  has_many :community_memberships, dependent: :destroy
+  has_many :communities, through: :community_memberships
 
-  validates :name, :subdomain, :slug, presence: true
-  validates :subdomain, :slug, uniqueness: true
+  has_one_attached :avatar
 
-  before_validation :generate_slug
+  validates :email_address, presence: true, uniqueness: true
+  validates :username, presence: true, uniqueness: true,
+    format: { with: /\A[a-z0-9_]+\z/ }, length: { in: 3..30 }
+
+  normalizes :email_address, with: -> e { e.strip.downcase }
+  normalizes :username,      with: -> u { u.strip.downcase }
+
+  def recalculate_karma!
+    k = posts.sum(:score) + comments.sum(:score)
+    update_column(:karma, k)
+  end
+end
+RUBY
+
+cat > app/models/community.rb << 'RUBY'
+class Community < ApplicationRecord
+  belongs_to :user
+  has_many :community_memberships, dependent: :destroy
+  has_many :members, through: :community_memberships, source: :user
+  has_many :posts, dependent: :destroy
+  has_one_attached :banner
+  has_one_attached :icon
+
+  validates :name, :slug, presence: true
+  validates :slug, uniqueness: true, format: { with: /\A[a-z0-9_]+\z/ }, length: { in: 3..21 }
+
+  before_validation :generate_slug, on: :create
+
+  scope :popular, -> { order(subscribers_count: :desc) }
+  scope :recent,  -> { order(created_at: :desc) }
+
+  def to_param = slug
 
   private
 
   def generate_slug
-    self.slug ||= name.parameterize if name.present?
+    self.slug ||= name.to_s.downcase.gsub(/\W+/, "_").delete_prefix("_").delete_suffix("_")
   end
 end
 RUBY
 
-cat > app/models/post.rb <<'RUBY'
+cat > app/models/post.rb << 'RUBY'
 class Post < ApplicationRecord
   include Votable
   include Commentable
 
-  acts_as_votable
-  acts_as_tenant :community
-
-  belongs_to :user
   belongs_to :community
+  belongs_to :user
+  has_many_attached :images
 
-  has_many :reactions, dependent: :destroy
-  has_many :streams, dependent: :destroy
-  has_many_attached :photos
+  POST_TYPES = %w[text link image].freeze
 
   validates :title, presence: true, length: { maximum: 300 }
-  validates :content, presence: true
+  validates :post_type, inclusion: { in: POST_TYPES }
+  validates :content, presence: true, if: -> { post_type == "text" }
+  validates :url, presence: true, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]) }, if: -> { post_type == "link" }
+
+  default_value_for :post_type, "text"
 
   scope :hot, -> {
-    left_joins(:votes)
-      .group(:id)
-      .select(<<~SQL
-        posts.*,
-        SUM(COALESCE(votes.value, 0)) AS vote_sum,
-        EXTRACT(EPOCH FROM (NOW() - posts.created_at)) / 3600 AS hours_old
-      SQL
-      )
-      .order(Arel.sql("vote_sum / POWER(hours_old + 2, #{HOT_DECAY_EXPONENT}) DESC"))
+    order(Arel.sql("(upvotes - downvotes) / POWER(((julianday('now') - julianday(created_at)) * 24 + 2), 1.5) DESC"))
   }
-
-  scope :top, -> { left_joins(:votes).group(:id).order("SUM(COALESCE(votes.value,0)) DESC") }
-  scope :new_first, -> { order(created_at: :desc) }
-
-  def update_karma
-    update_column(:karma, get_upvotes.size - get_downvotes.size)
-  end
+  scope :top,      -> { order(score: :desc) }
+  scope :new_first,-> { order(created_at: :desc) }
+  scope :rising,   -> {
+    where("created_at > ?", 24.hours.ago).order(score: :desc)
+  }
 end
 RUBY
 
-cat > app/models/comment.rb <<'RUBY'
-class Comment < ApplicationRecord
-  include Votable
-
-  acts_as_votable
-  belongs_to :user
-  belongs_to :commentable, polymorphic: true
-  belongs_to :parent, class_name: 'Comment', optional: true
-  has_many :replies, class_name: 'Comment', foreign_key: :parent_id, dependent: :destroy
-
-  validates :content,
-            presence: true,
-            length: { minimum: 1, maximum: ${MAX_COMMENT_LENGTH} }
-
-  def root?
-    parent_id.nil?
-  end
-
-  def depth
-    parent ? parent.depth + 1 : 0
-  end
-
-  scope :best, -> { left_joins(:votes).group(:id).order("SUM(COALESCE(votes.value,0)) DESC") }
-  scope :new_first, -> { order(created_at: :desc) }
+# ── Controllers ─────────────────────────────────────────────────────────────
+cat > app/controllers/application_controller.rb << 'RUBY'
+class ApplicationController < ActionController::Base
+  include Pagy::Backend
+  allow_browser versions: :modern
 end
 RUBY
 
-# ── Routes ────────────────────────────────────────────────────────────────────
-printf 'Configuring routes\n'
-cat > config/routes.rb <<'RUBY'
-Rails.application.routes.draw do
-  devise_for :users
-
-  resources :communities, only: %i[index show] do
-    resources :posts, shallow: true
-  end
-
-  resources :posts do
-    resources :comments, only: %i[create destroy]
-
-    member do
-      post :upvote
-      post :downvote
-    end
-  end
-
-  resources :votes, only: %i[create destroy]
-
-  root "communities#index"
-end
-RUBY
-
-# ── Controllers (authz) ───────────────────────────────────────────────────────
-printf 'Generating controllers\n'
-cat > app/controllers/posts_controller.rb <<'RUBY'
-class PostsController < ApplicationController
-  before_action :authenticate_user!, except: %i[index show]
-  before_action :set_post, only: %i[show edit update destroy upvote downvote]
-  before_action :authorize_user!, only: %i[edit update destroy]
+cat > app/controllers/communities_controller.rb << 'RUBY'
+class CommunitiesController < ApplicationController
+  before_action :require_authentication, only: %i[new create subscribe unsubscribe]
+  before_action :set_community, only: %i[show subscribe unsubscribe]
 
   def index
-    @posts = Post.includes(:user, :community).hot.page(params[:page])
+    @pagy, @communities = pagy(Community.popular.includes(:user))
   end
 
   def show
-    @comments = @post.comments.best
+    @sort = params[:sort] || "hot"
+    @pagy, @posts = pagy(@community.posts.includes(:user).public_send(@sort.in?(%w[hot top new_first rising]) ? @sort : "hot"))
   end
 
   def new
-    @post = current_user.posts.build
+    @community = Current.user.communities.build
   end
 
   def create
-    @post = current_user.posts.build(post_params)
-    if @post.save
-      redirect_to @post, notice: t('brgen.post_created')
+    @community = Current.user.communities.build(community_params)
+    if @community.save
+      @community.community_memberships.create!(user: Current.user, role: "moderator")
+      redirect_to @community, notice: "Community created"
     else
       render :new, status: :unprocessable_entity
     end
   end
 
-  def edit; end
-
-  def update
-    if @post.update(post_params)
-      redirect_to @post, notice: t('brgen.post_updated')
-    else
-      render :edit, status: :unprocessable_entity
-    end
+  def subscribe
+    m = @community.community_memberships.find_or_create_by!(user: Current.user)
+    m.update!(role: "member")
+    @community.increment!(:subscribers_count)
+    redirect_to @community
   end
 
-  def destroy
-    @post.destroy
-    redirect_to posts_path, notice: t('brgen.post_deleted')
-  end
-
-  def upvote
-    @post.upvote_by(current_user)
-    respond_to_vote
-  end
-
-  def downvote
-    @post.downvote_by(current_user)
-    respond_to_vote
+  def unsubscribe
+    @community.community_memberships.find_by(user: Current.user)&.destroy!
+    @community.decrement!(:subscribers_count)
+    redirect_to @community
   end
 
   private
 
-  def set_post
-    @post = Post.find(params[:id])
+  def set_community = @community = Community.find_by!(slug: params[:id])
+  def community_params = params.require(:community).permit(:name, :description)
+end
+RUBY
+
+cat > app/controllers/posts_controller.rb << 'RUBY'
+class PostsController < ApplicationController
+  before_action :require_authentication, except: %i[index show]
+  before_action :set_community, only: %i[new create]
+  before_action :set_post,      only: %i[show edit update destroy]
+  before_action :authorize!,    only: %i[edit update destroy]
+
+  def index
+    @sort = params[:sort] || "hot"
+    @pagy, @posts = pagy(Post.includes(:user, :community).public_send(@sort.in?(%w[hot top new_first rising]) ? @sort : "hot"))
   end
 
-  def authorize_user!
-    redirect_to posts_path, alert: t('brgen.unauthorized') unless @post.user == current_user
+  def show
+    @comments = @post.comments.roots.top.includes(:user, replies: :user)
+    @comment  = Comment.new
   end
+
+  def new
+    @post = @community.posts.build
+  end
+
+  def create
+    @post = @community.posts.build(post_params.merge(user: Current.user))
+    @post.save ? redirect_to([@community, @post], notice: "Posted") : render(:new, status: :unprocessable_entity)
+  end
+
+  def edit; end
+
+  def update
+    @post.update(post_params) ? redirect_to(@post, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+  end
+
+  def destroy
+    @post.destroy
+    redirect_to @post.community, notice: "Deleted"
+  end
+
+  private
+
+  def set_community = @community = Community.find_by!(slug: params[:community_id])
+  def set_post      = @post = Post.find(params[:id])
+  def authorize!    = redirect_to(root_path, alert: "Unauthorized") unless @post.user == Current.user
 
   def post_params
-    params.require(:post).permit(:title, :content, :community_id, :anonymous)
-  end
-
-  def respond_to_vote
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @post }
-      format.json { render json: { score: @post.karma } }
-    end
+    params.require(:post).permit(:title, :content, :url, :post_type, images: [])
   end
 end
 RUBY
 
-cat > app/controllers/comments_controller.rb <<'RUBY'
+cat > app/controllers/comments_controller.rb << 'RUBY'
 class CommentsController < ApplicationController
-  before_action :authenticate_user!
-  before_action :set_commentable
-  before_action :set_comment, only: :destroy
-  before_action :authorize_user!, only: :destroy
+  before_action :require_authentication
 
   def create
-    @comment = @commentable.comments.build(comment_params.merge(user: current_user))
+    @post    = Post.find(params[:post_id])
+    @comment = @post.comments.build(comment_params.merge(user: Current.user))
     if @comment.save
       respond_to do |format|
         format.turbo_stream
-        format.html { redirect_to @commentable, notice: t('brgen.comment_created') }
+        format.html { redirect_to @post }
       end
     else
       render :new, status: :unprocessable_entity
@@ -364,26 +268,15 @@ class CommentsController < ApplicationController
   end
 
   def destroy
-    @comment.destroy
+    @comment = Comment.find(params[:id])
+    @comment.destroy! if @comment.user == Current.user
     respond_to do |format|
       format.turbo_stream
-      format.html { redirect_to @commentable, notice: t('brgen.comment_deleted') }
+      format.html { redirect_to @comment.commentable }
     end
   end
 
   private
-
-  def set_commentable
-    @commentable = Post.find(params[:post_id])
-  end
-
-  def set_comment
-    @comment = Comment.find(params[:id])
-  end
-
-  def authorize_user!
-    redirect_to @commentable, alert: t('brgen.unauthorized') unless @comment.user == current_user
-  end
 
   def comment_params
     params.require(:comment).permit(:content, :parent_id)
@@ -391,75 +284,57 @@ class CommentsController < ApplicationController
 end
 RUBY
 
-cat > app/controllers/communities_controller.rb <<'RUBY'
-class CommunitiesController < ApplicationController
-  def index
-    @communities = Community.order(:name)
+# ── Routes ─────────────────────────────────────────────────────────────────
+cat > config/routes.rb << 'RUBY'
+Rails.application.routes.draw do
+  resource  :session
+  resources :passwords, param: :token
+
+  root "communities#index"
+
+  resources :communities, path: "r" do
+    member do
+      post :subscribe
+      post :unsubscribe
+    end
+    resources :posts, shallow: true do
+      resources :comments, only: %i[create destroy]
+    end
   end
 
-  def show
-    @community = Community.find_by!(slug: params[:id])
-    @posts = @community.posts.includes(:user).hot.page(params[:page])
-  end
+  resources :votes, only: %i[create]
+  resources :users, only: %i[show]
+
+  get "up", to: "rails/health#show", as: :rails_health_check
 end
 RUBY
 
-cat > app/controllers/votes_controller.rb <<'RUBY'
-class VotesController < ApplicationController
-  before_action :authenticate_user!
+# ── Assets + Infrastructure ─────────────────────────────────────────────────
+write_base_css
+write_layout "Brgen"
+write_puma_config "$APP_PORT"
+configure_production
+install_rcd brgen "$APP_DIR" "$APP_PORT" brgen
+relayd_add_relay brgen.no "$APP_PORT"
 
-  ALLOWED_VOTABLE_TYPES = %w[Post Comment].freeze
+# ── Seed ───────────────────────────────────────────────────────────────────
+cat > db/seeds.rb << 'RUBY'
+admin = User.find_or_create_by!(email_address: "admin@brgen.no") do |u|
+  u.username = "admin"
+  u.password = u.password_confirmation = "password123"
+end
 
-  def create
-    find_votable.upvote_by(current_user)
-    render json: { score: find_votable.karma }
-  end
-
-  def destroy
-    find_votable.downvote_by(current_user)
-    render json: { score: find_votable.karma }
-  end
-
-  private
-
-  def find_votable
-    type = params[:votable_type]
-    raise ArgumentError, 'Invalid votable type' unless ALLOWED_VOTABLE_TYPES.include?(type)
-
-    type.constantize.find(params[:votable_id])
+["news", "tech", "bergen", "norge", "kultur"].each do |slug|
+  Community.find_or_create_by!(slug: slug) do |c|
+    c.name        = slug.capitalize
+    c.description = "#{slug.capitalize} community"
+    c.user        = admin
   end
 end
+
+puts "Seeded #{Community.count} communities"
 RUBY
 
-# ── OpenBSD rc.d service ─────────────────────────────────────────────────────
-printf 'Creating OpenBSD rc.d service\n'
-rc_file="/etc/rc.d/brgen"
-cat > "$rc_file" <<EOF
-#!/bin/ksh
-#
-# PROVIDE: brgen
-# REQUIRE: DAEMON
-# KEYWORD: shutdown
+bin/rails db:seed
 
-. /etc/rc.subr
-
-name="brgen"
-rcvar=brgen_enable
-
-command="/home/brgen/app/bin/rails"
-command_args="server -b 0.0.0.0 -p ${PORT} -e production"
-pidfile="/var/run/\${name}.pid"
-user="brgen"
-procname="\${command}"
-start_precmd="cd /home/brgen/app"
-
-load_rc_config \$name
-run_rc_command "\$1"
-EOF
-chmod 755 "$rc_file"
-
-printf '==> BRGEN setup complete!\n'
-printf 'Next steps:\n'
-printf '  1. Review config/database.yml\n'
-printf '  2. Test: bin/rails server -b 0.0.0.0 -p %s\n' "$PORT"
-printf '  3. Deploy: doas sh openbsd.sh --post-point\n'
+log_ok "Brgen setup complete — start: doas rcctl start brgen"
