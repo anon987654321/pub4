@@ -36,7 +36,7 @@ module Master
             end
 
             if in_query
-              depth += line.scan(/\bdo\b|\bbegin\b|\bif\b|\bcase\b|\bdef\b/).size
+              depth += line.scan(/^\s*(?:if|case|begin|do)\b|\bdo\s*(?:\|[^|]*\|)?\s*$|\bdef\s/).size
               depth -= line.scan(/\bend\b/).size
 
               if depth <= 0
