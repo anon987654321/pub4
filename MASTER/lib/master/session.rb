@@ -15,6 +15,7 @@ module Master
       @root       = root
       @budget_max = budget_max
       @req_max    = req_max
+      @mutex      = Mutex.new
       @messages   = []
       @snapshots  = {}
       @cost       = 0.0
@@ -27,14 +28,19 @@ module Master
 
     def add_message(role:, content:)
       msg = { role:, content:, ts: Time.now.to_i }
-      @messages << msg
-      @name ||= auto_name(content) if role == :user
+      @mutex.synchronize do
+        @messages << msg
+        @name ||= auto_name(content) if role == :user
+      end
       msg
     end
 
     def record_cost(amount, model:, tokens:)
-      @cost += amount
-      entry = { ts: Time.now.to_i, amount:, model:, tokens:, total: @cost }
+      entry = nil
+      @mutex.synchronize do
+        @cost += amount
+        entry = { ts: Time.now.to_i, amount:, model:, tokens:, total: @cost }
+      end
       rotate_costs! if File.exist?(@costs_path) && File.size(@costs_path) > COSTS_MAX_BYTES
       File.open(@costs_path, "a") { |f| f.puts(JSON.generate(entry)) }
       entry
@@ -57,7 +63,11 @@ module Master
 
     def load!
       return self unless File.exist?(@path)
-      data = JSON.parse(File.read(@path), symbolize_names: true)
+      begin
+        data = JSON.parse(File.read(@path), symbolize_names: true)
+      rescue JSON::ParserError, Errno::ENOENT
+        data = {}
+      end
       @name     = data[:name]
       @phase    = data[:phase]&.to_sym || :discover
       @messages = data[:messages] || []
