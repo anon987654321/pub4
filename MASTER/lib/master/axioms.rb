@@ -85,12 +85,12 @@ module Master
 
     def constitution
       @constitution ||= begin
-        c = {}
-        c["golden_rule"] = @data["golden_rule"]
-        c["protection"] = @data["protection"]
-        c["banned_output"] = voice["banned_output"]
-        c["anti_simulation"] = voice["anti_simulation"]
-        c["communication_style"] = voice["style"]
+        constitution_data = {}
+        constitution_data["golden_rule"] = @data["golden_rule"]
+        constitution_data["protection"] = @data["protection"]
+        constitution_data["banned_output"] = voice["banned_output"]
+        constitution_data["anti_simulation"] = voice["anti_simulation"]
+        constitution_data["communication_style"] = voice["style"]
         c.freeze
       end
     end
