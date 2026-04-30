@@ -1,142 +1,273 @@
-#!/usr/bin/env sh
-set -eu
-export LC_ALL=C
-
-# Baibl – scripture server (TCPServer, port 10007)
+#!/usr/bin/env zsh
+# baibl.sh — Baibl Scripture Rails 8 App
+# Usage: zsh baibl.sh
+set -euo pipefail
 
 APP_NAME=baibl
+APP_DIR=/home/${APP_NAME}/app
 APP_PORT=10007
-APP_DIR="/home/${APP_NAME}/app"
-CONFIG_DIR="${APP_DIR}/config"
-FALCON_RB="${CONFIG_DIR}/falcon.rb"
-RC_SCRIPT="/etc/rc.d/${APP_NAME}"
+SCRIPT_DIR=${0:a:h}
 
-# Ensure required commands exist
-for cmd in ruby rcctl; do
-  command -v "$cmd" >/dev/null || { printf '%s not found\n' "$cmd" >&2; exit 1; }
-done
+. "${SCRIPT_DIR:h}/@shared_functions.sh"
 
-printf '==> [%s] generating %s on :%s\n' "$APP_NAME" "$FALCON_RB" "$APP_PORT"
+need_cmd ruby34 bundle rails doas
 
-mkdir -p "$CONFIG_DIR"
-chown "$APP_NAME:$APP_NAME" "$CONFIG_DIR"
+already_done "${APP_DIR}/app/models/verse.rb" && exit 0
 
-cat >"$FALCON_RB" <<'EOF'
-#!/usr/bin/env ruby
-# frozen_string_literal: true
-require 'socket'
+log "Baibl — Scripture Reader and Study Platform"
 
-HTML = <<~HTML
-  <!DOCTYPE html>
-  <html lang="no">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>baibl</title>
-    <style>
-      :root {
-        --bg: #0f0e0b; --surface: #1a1812; --surface-alt: #221f16;
-        --primary: #c9a96e; --primary-light: #e2c98c; --primary-dark: #a07c40;
-        --text: #f0ead6; --text-dim: #8a7f68; --border: #2e2a1e;
-        --gold-line: rgba(201,169,110,.25); --radius: 10px;
-      }
-      * { box-sizing:border-box; margin:0; padding:0; }
-      body { font-family:'Palatino Linotype', Palatino, Georgia, serif;
-             background:var(--bg); color:var(--text); line-height:1.85; }
-      header { background:var(--surface); border-bottom:1px solid var(--gold-line);
-               padding:1.25rem 2rem; display:flex; align-items:center;
-               justify-content:space-between; }
-      .logo { font-size:1.5rem; font-weight:600; color:var(--primary);
-              letter-spacing:.04em; font-variant:small-caps; }
-      nav a { margin-left:1.5rem; color:var(--text-dim); font-size:.9rem;
-              text-decoration:none; }
-      nav a:hover { color:var(--primary); }
-      main { max-width:820px; margin:0 auto; padding:3rem 1.5rem; }
-      h1 { font-size:1.85rem; color:var(--primary-light); margin-bottom:1rem;
-           font-weight:400; font-variant:small-caps; }
-      .verse-block { background:var(--surface); border:1px solid var(--gold-line);
-                     border-left:3px solid var(--primary); border-radius:var(--radius);
-                     padding:1.75rem 2rem; margin-bottom:1.75rem; }
-      .verse-reference { font-size:.78rem; color:var(--primary); letter-spacing:.08em;
-                         text-transform:uppercase; margin-bottom:.75rem;
-                         font-family:system-ui, sans-serif; }
-      .verse-text { font-size:1.1rem; line-height:1.95; font-style:italic; }
-      .ornament { text-align:center; color:var(--primary-dark); font-size:1.2rem;
-                  letter-spacing:.5em; margin:2rem 0; opacity:.6; }
-      .cta { display:inline-block; padding:.6rem 1.4rem; background:var(--primary);
-             color:var(--bg); border-radius:8px; font-size:.9rem; text-decoration:none;
-             font-weight:600; margin-top:1.5rem; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <span class="logo">baibl</span>
-      <nav><a href="/scripture">skriften</a><a href="/devotional">andakt</a><a href="/login">logg inn</a></nav>
-    </header>
-    <main>
-      <h1>søk i skriften</h1>
-      <div class="verse-block">
-        <div class="verse-reference">Johannes 3:16</div>
-        <div class="verse-text">For så har Gud elsket verden at han ga sin Sønn, den enbårne, for at den som tror på ham, ikke skal gå fortapt, men ha evig liv.</div>
-      </div>
-      <div class="ornament">✦ ✦ ✦</div>
-      <a class="cta" href="/signup">kom i gang</a>
-    </main>
-  </body>
-  </html>
-HTML
+# ── Create app ─────────────────────────────────────────────────────────────
+create_rails_app "$APP_DIR"
 
-RESP = <<~RESP
-  HTTP/1.0 200 OK\r
-  Content-Type: text/html; charset=utf-8\r
-  Content-Length: #{HTML.bytesize}\r
-  Connection: close\r
-  \r
-  #{HTML}
-RESP
+# ── Gems ────────────────────────────────────────────────────────────────────
+add_gem pagy
+add_gem pg_search
+install_solid_stack
+install_security_tools
 
-trap 'exit' TERM INT
+# ── Auth ───────────────────────────────────────────────────────────────────
+install_auth
 
-TCPServer.new('0.0.0.0', ${APP_PORT}) do |server|
-  $stdout.puts "baibl on ${APP_PORT}"
-  $stdout.flush
-  loop do
-    client = server.accept
-    client.recv(4096) rescue nil
-    client.print(RESP) rescue nil
-    client.close rescue nil
+# ── Models ─────────────────────────────────────────────────────────────────
+bin/rails generate model Book \
+  name:string abbreviation:string testament:string \
+  chapter_count:integer order_index:integer \
+  --no-test-framework
+
+bin/rails generate model Chapter \
+  book:references number:integer \
+  --no-test-framework
+
+bin/rails generate model Verse \
+  chapter:references book:references \
+  number:integer content:text \
+  --no-test-framework
+
+bin/rails generate model Highlight \
+  verse:references user:references \
+  color:string note:text \
+  --no-test-framework
+
+bin/rails generate model Bookmark \
+  verse:references user:references \
+  note:text \
+  --no-test-framework
+
+bin/rails generate model ReadingPlan \
+  name:string description:text \
+  duration_days:integer user:references \
+  --no-test-framework
+
+bin/rails generate model ReadingPlanDay \
+  reading_plan:references day_number:integer \
+  book:references chapter_start:integer chapter_end:integer \
+  completed_at:datetime \
+  --no-test-framework
+
+bin/rails db:migrate
+
+# ── Model logic ─────────────────────────────────────────────────────────────
+cat > app/models/book.rb << 'RUBY'
+class Book < ApplicationRecord
+  has_many :chapters, dependent: :destroy
+  has_many :verses, dependent: :destroy
+
+  TESTAMENTS = %w[Old New].freeze
+
+  validates :name, :abbreviation, :testament, presence: true
+  validates :testament, inclusion: { in: TESTAMENTS }
+  validates :abbreviation, uniqueness: true
+
+  scope :old_testament, -> { where(testament: "Old").order(:order_index) }
+  scope :new_testament, -> { where(testament: "New").order(:order_index) }
+  scope :ordered,       -> { order(:order_index) }
+end
+RUBY
+
+cat > app/models/verse.rb << 'RUBY'
+class Verse < ApplicationRecord
+  include PgSearch::Model
+
+  belongs_to :chapter
+  belongs_to :book
+
+  has_many :highlights, dependent: :destroy
+  has_many :bookmarks, dependent: :destroy
+
+  validates :number, :content, presence: true
+  validates :number, uniqueness: { scope: :chapter_id }
+
+  pg_search_scope :full_text_search,
+    against: :content,
+    using: { tsearch: { prefix: true, dictionary: "english" } }
+
+  scope :in_chapter, ->(chapter) { where(chapter: chapter).order(:number) }
+
+  def reference
+    "#{book.name} #{chapter.number}:#{number}"
   end
 end
-EOF
+RUBY
 
-chmod 755 "$FALCON_RB"
-chown -R "$APP_NAME:$APP_NAME" "$APP_DIR"
+cat > app/models/highlight.rb << 'RUBY'
+class Highlight < ApplicationRecord
+  belongs_to :verse
+  belongs_to :user
 
-cat >"$RC_SCRIPT" <<'RC'
-#!/bin/sh
-# PROVIDE: baibl
-# REQUIRE: DAEMON
-# DESCRIPTION: Baibl scripture server
+  COLORS = %w[yellow green blue pink orange].freeze
 
-. /etc/rc.subr
+  validates :color, inclusion: { in: COLORS }
+  validates :verse_id, uniqueness: { scope: :user_id }
 
-name=baibl
-rcvar=baibl_enable
+  after_create_commit -> { broadcast_replace_to [user, "highlights"] }
+end
+RUBY
 
-command="${HOME}/baibl/app/config/falcon.rb"
-command_args=""
+cat > app/models/bookmark.rb << 'RUBY'
+class Bookmark < ApplicationRecord
+  belongs_to :verse
+  belongs_to :user
 
-pidfile="/var/run/${name}.pid"
-procname="${name}"
-user="${name}"
-group="${name}"
-start_precmd="cd ${HOME}/${name}/app"
+  validates :verse_id, uniqueness: { scope: :user_id }
 
-load_rc_config $name
-run_rc_command "$1"
-RC
+  after_create_commit -> { broadcast_append_to [user, "bookmarks"] }
+end
+RUBY
 
-chmod 755 "$RC_SCRIPT"
-rcctl enable "$APP_NAME"
-rcctl restart "$APP_NAME" || rcctl start "$APP_NAME"
-printf '==> [%s] ready\n' "$APP_NAME"
+# ── Controllers ─────────────────────────────────────────────────────────────
+cat > app/controllers/application_controller.rb << 'RUBY'
+class ApplicationController < ActionController::Base
+  include Pagy::Backend
+  allow_browser versions: :modern
+end
+RUBY
+
+cat > app/controllers/scriptures_controller.rb << 'RUBY'
+class ScripturesController < ApplicationController
+  def index
+    @books = Book.ordered
+    @daily_verse = Verse.order("RANDOM()").limit(1).first
+  end
+
+  def book
+    @book     = Book.find_by!(abbreviation: params[:abbreviation])
+    @chapters = @book.chapters.order(:number)
+  end
+
+  def chapter
+    @book    = Book.find_by!(abbreviation: params[:book_abbreviation])
+    @chapter = @book.chapters.find_by!(number: params[:number])
+    @verses  = @chapter.verses.order(:number).includes(:highlights, :bookmarks)
+  end
+
+  def search
+    @pagy, @verses = pagy(Verse.full_text_search(params[:q]).includes(:book, :chapter), items: 20)
+    render :search
+  end
+end
+RUBY
+
+cat > app/controllers/highlights_controller.rb << 'RUBY'
+class HighlightsController < ApplicationController
+  before_action :require_authentication
+
+  def create
+    verse = Verse.find(params[:verse_id])
+    @highlight = Current.user.highlights.find_or_initialize_by(verse: verse)
+    @highlight.update!(color: params[:color] || "yellow")
+    respond_to do |format|
+      format.turbo_stream
+      format.json { render json: { status: "ok" } }
+    end
+  end
+
+  def destroy
+    @highlight = Current.user.highlights.find(params[:id])
+    @highlight.destroy!
+    respond_to do |format|
+      format.turbo_stream
+      format.json { render json: { status: "ok" } }
+    end
+  end
+end
+RUBY
+
+cat > app/controllers/bookmarks_controller.rb << 'RUBY'
+class BookmarksController < ApplicationController
+  before_action :require_authentication
+
+  def index
+    @pagy, @bookmarks = pagy(Current.user.bookmarks.includes(verse: [:book, :chapter]))
+  end
+
+  def create
+    verse = Verse.find(params[:verse_id])
+    @bookmark = Current.user.bookmarks.find_or_create_by!(verse: verse)
+    respond_to do |format|
+      format.turbo_stream
+      format.json { render json: { status: "ok" } }
+    end
+  end
+
+  def destroy
+    @bookmark = Current.user.bookmarks.find(params[:id])
+    @bookmark.destroy!
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to bookmarks_path }
+    end
+  end
+end
+RUBY
+
+# ── Routes ─────────────────────────────────────────────────────────────────
+cat > config/routes.rb << 'RUBY'
+Rails.application.routes.draw do
+  resource  :session
+  resources :passwords, param: :token
+
+  root "scriptures#index"
+
+  get "scripture",                to: "scriptures#index",   as: :scripture_index
+  get "scripture/:abbreviation",  to: "scriptures#book",    as: :scripture_book
+  get "scripture/:book_abbreviation/:number", to: "scriptures#chapter", as: :scripture_chapter
+  get "search",                   to: "scriptures#search",  as: :scripture_search
+
+  resources :highlights, only: %i[create destroy]
+  resources :bookmarks
+
+  get "up", to: "rails/health#show", as: :rails_health_check
+end
+RUBY
+
+# ── Assets + Layout ─────────────────────────────────────────────────────────
+mkdir -p app/assets/stylesheets
+cat > app/assets/stylesheets/application.css << 'CSS'
+:root {
+  --bg: #0f0e0b; --surface: #1a1812; --text: #f0ead6;
+  --text-dim: #8a7f68; --primary: #c9a96e; --border: rgba(201,169,110,.25);
+  --radius: 10px; --space: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Palatino Linotype", Palatino, Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.85; }
+main { max-width: 820px; margin: 0 auto; padding: 2rem 1.5rem; }
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+.logo { font-size: 1.5rem; color: var(--primary); font-variant: small-caps; }
+.verse-block { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: var(--radius); padding: 1.75rem 2rem; margin-bottom: 1.5rem; }
+.verse-ref { font-size: .78rem; color: var(--primary); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .75rem; font-family: system-ui, sans-serif; }
+.verse-text { font-style: italic; font-size: 1.1rem; }
+.verse-text .verse-num { font-size: .75rem; color: var(--primary); vertical-align: super; margin-right: .2rem; }
+.flash-notice { background: #1a3a1a; color: #81c784; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
+.flash-alert  { background: #3a1a1a; color: #e57373; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
+CSS
+
+write_layout "Baibl"
+write_puma_config "$APP_PORT"
+configure_production
+
+# ── rc.d service ───────────────────────────────────────────────────────────
+install_rcd baibl "$APP_DIR" "$APP_PORT" baibl
+
+log_ok "Baibl setup complete — start: doas rcctl start baibl"
