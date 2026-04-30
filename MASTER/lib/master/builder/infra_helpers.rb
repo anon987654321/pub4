@@ -39,7 +39,9 @@ module Master
         []
       end
       FileUtils.mkdir_p(File.dirname(out))
-      File.write(out, (header + body).join("\n"))
+      content = (header + body).join("\n")
+      File.write(out, content)
+      File.write(File.join(root, "snapshot.md"), content)
       container[:bus]&.publish("boot:snapshot", files: files.size)
     rescue StandardError => e
       container[:bus]&.publish("boot:snapshot_error", error: e.message)
