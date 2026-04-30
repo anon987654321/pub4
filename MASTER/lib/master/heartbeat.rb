@@ -26,13 +26,16 @@ module Master
       @jobs    = load_jobs
       @state   = load_state
       @thread  = nil
+      @stop    = false
     end
 
     def start!
       return if @jobs.empty?
 
+      @stop   = false
       @thread = Thread.new do
         loop do
+          break if @stop
           run_due!
           sleep POLL_INTERVAL
         end
@@ -42,6 +45,7 @@ module Master
     end
 
     def stop!
+      @stop = true
       @thread&.kill
       @thread = nil
     end
