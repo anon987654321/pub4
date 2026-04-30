@@ -84,9 +84,11 @@ module Master
   end
 
   def self.boot(root: Dir.pwd, argv: [])
+    Pledge.stage1_boot!(root)
     container = Builder.build(root:)
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
+    Pledge.stage2_lock!
     CLI.new(container:)
   end
 end

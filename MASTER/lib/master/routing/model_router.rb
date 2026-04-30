@@ -95,13 +95,14 @@ module Master
 
       def weighted_score(score)
         weights = @rules.fetch("weights", {})
-        quality_w = weights.fetch("quality", 0.0).to_f
-        speed_w   = weights.fetch("speed",   0.0).to_f
-        cost_w    = weights.fetch("cost",    0.0).to_f
-
-        (score.fetch("quality", 0.0).to_f * quality_w) +
-          (score.fetch("speed", 0.0).to_f * speed_w) +
-          (score.fetch("cost",  0.0).to_f * cost_w)
+        qw = [weights.fetch("quality", 1.0).to_f, 0.01].max
+        sw = [weights.fetch("speed",   1.0).to_f, 0.01].max
+        cw = [weights.fetch("cost",    1.0).to_f, 0.01].max
+        DecisionEngine.score(
+          impact:     score.fetch("quality", 0.5).to_f * qw,
+          confidence: [score.fetch("speed", 1.0).to_f * sw, 0.01].max,
+          cost:       1.0 / [score.fetch("cost", 0.5).to_f * cw, 0.001].max
+        )
       end
 
       def load_rules

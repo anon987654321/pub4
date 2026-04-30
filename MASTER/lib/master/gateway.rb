@@ -1,21 +1,30 @@
 # frozen_string_literal: true
 
 module Master
-  # Gateway — multi-channel message router.
-  # Funnels messages from CLI, web, and future channels (IRC, Matrix)
-  # into a single pipeline call. Channel-agnostic: ctx[:channel] tags origin.
+  # Gateway -- multi-channel message router.
+  # Core of the system; CLI/Web/IRC/Matrix/API are adapters registered here.
+  # Each adapter implements render(text, metadata) for output delivery.
   class Gateway
     CHANNELS = %i[cli web irc matrix api].freeze
+
+    # Contract for channel adapters.
+    module Adapter
+      def render(text, metadata = {})
+        raise NotImplementedError, "#{self.class}#render not implemented"
+      end
+    end
 
     def initialize(pipeline:, session:, event_bus: nil)
       @pipeline = pipeline
       @session  = session
       @bus      = event_bus
-      @handlers = {}
+      @adapters = {}
     end
 
-    def register(channel, &handler)
-      @handlers[channel.to_sym] = handler
+    # Register an adapter (must respond to :render) or a bare Proc handler.
+    def register(channel, adapter_or_proc = nil, &block)
+      h = adapter_or_proc || block
+      @adapters[channel.to_sym] = h
     end
 
     def receive(channel:, message:, metadata: {})
@@ -24,17 +33,12 @@ module Master
 
       @bus&.publish("gateway:receive", channel: channel, size: message.bytesize)
 
-      ctx = {
-        user_message: message.to_s.strip,
-        channel:      channel,
-        metadata:     metadata
-      }
-
+      ctx = { user_message: message.to_s.strip, channel: channel, metadata: metadata }
       result = @pipeline.call(Result.ok(ctx))
 
-      if @handlers[channel]
+      if (adapter = @adapters[channel])
         text = result.respond_to?(:ok?) && result.ok? ? extract_text(result) : result.to_s
-        @handlers[channel].call(text, metadata)
+        adapter.respond_to?(:render) ? adapter.render(text, metadata) : adapter.call(text, metadata)
       end
 
       result
@@ -42,9 +46,10 @@ module Master
 
     def channels
       CHANNELS.map do |ch|
-        status = @handlers.key?(ch) ? "active" : "available"
+        status = @adapters.key?(ch) ? "active" : "available"
         "#{ch}: #{status}"
-      end.join("\n")
+      end.join("
+")
     end
 
     private

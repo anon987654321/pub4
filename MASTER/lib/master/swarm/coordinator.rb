@@ -5,6 +5,11 @@ require "timeout"
 module Master
   module Swarm
     class Coordinator
+      SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, keyword_init: true) do
+        def ok?      = verdict != :error
+        def approved? = verdict == :approved
+      end
+
       WORKER_CLASSES = {
         analyst:    Workers::Analyst,
         coder:      Workers::Coder,
@@ -62,10 +67,10 @@ module Master
           end
         end.to_h
 
-        synthesis = synthesize(results)
-        @bus&.publish(:swarm_fan_out_done, roles: results.keys,
-                      synthesis: synthesis[0..SYNTHESIS_TRUNCATE_LIMIT])
-        Result.ok({ results: results, synthesis: synthesis })
+        sr = build_swarm_result(results)
+        @bus&.publish(:swarm_fan_out_done, roles: results.keys, verdict: sr.verdict,
+                      synthesis: sr.reasoning[0..SYNTHESIS_TRUNCATE_LIMIT])
+        Result.ok(sr)
       end
 
       def dispatch_parallel(role_tasks, deadline: SHARED_DEADLINE)
@@ -86,25 +91,28 @@ module Master
           th.join(deadline)&.value || [nil, Result.err("join timeout")]
         end.to_h
 
-        synthesis = synthesize(results)
-        @bus&.publish(:swarm_dispatch_parallel_done, roles: results.keys)
-        Result.ok({ results: results, synthesis: synthesis })
+        sr = build_swarm_result(results)
+        @bus&.publish(:swarm_dispatch_parallel_done, roles: results.keys, verdict: sr.verdict)
+        Result.ok(sr)
       end
 
       def worker_roles = WORKER_CLASSES.keys
 
       private
 
-      def synthesize(results)
-        lines = results.filter_map do |role, r|
-          next if role == :timeout
-          next unless r.respond_to?(:ok?) && r.ok?
-
-          val = r.value!
-          text = val.is_a?(Hash) ? val.inspect : val.to_s
-          "### #{role}\n#{text.strip}"
-        end
-        lines.empty? ? "(no results)" : lines.join("\n\n")
+      def build_swarm_result(results)
+        successes = results.reject { |role, _| role == :timeout }
+                           .select { |_, r| r.respond_to?(:ok?) && r.ok? }
+        artifacts = successes.transform_values(&:value!)
+        confidence = results.empty? ? 0.0 : successes.size.to_f / results.size
+        lines = successes.map { |role, r| "### #{role}\n#{r.value!.to_s.strip}" }
+        reasoning = lines.empty? ? "(no results)" : lines.join("\n\n")
+        verdict = if confidence >= 0.8 then :approved
+                 elsif confidence >= 0.5 then :mixed
+                 elsif successes.empty? then :error
+                 else :rejected
+                 end
+        SwarmResult.new(verdict:, confidence:, reasoning:, artifacts:)
       end
 
       def worker_for(role)

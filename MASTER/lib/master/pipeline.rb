@@ -75,6 +75,13 @@ module Master
       end
     end
 
+
+# Wraps a stage -- skips it transparently when ctx[:pressure] is truthy.
+class SkipOnPressure
+  def initialize(stage) = @stage = stage
+  def call(ctx) = ctx[:pressure] ? Result.ok(ctx) : @stage.call(ctx)
+end
+
     private
 
     def maybe_rollback(result)

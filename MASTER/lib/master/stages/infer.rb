@@ -34,7 +34,8 @@ module Master
           end
         end
 
-        Result.ok(ctx.merge(task_type: infer_task_type(msg)))
+        pressure = msg.match?(PRESSURE_PATTERN)
+        Result.ok(ctx.merge(task_type: infer_task_type(msg), pressure: pressure || ctx[:pressure]))
       end
 
       private
