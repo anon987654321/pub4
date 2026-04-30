@@ -1,196 +1,345 @@
-#!/usr/bin/env sh
-set -eu
-set -o pipefail
+#!/usr/bin/env zsh
+# blognet.sh — Blognet multi-blog platform (Rails 8)
+# Usage: zsh blognet.sh
+set -euo pipefail
 
-# Blognet: Multi‑blog platform with AI content generation
-# Idempotent, self‑contained deployment script
+APP_NAME=blognet
+APP_DIR=/home/${APP_NAME}/app
+APP_PORT=10002
+SCRIPT_DIR=${0:a:h}
 
-# Configuration
-APP_NAME="blognet"
-BASE_DIR="/home/dev/rails"
-APP_ROOT="${BASE_DIR}/${APP_NAME}"
-RC_DIR="/etc/rc.d"
-RC_NAME="${APP_NAME}_rails"
-SERVICE_USER="${APP_NAME}"
-SERVICE_HOME="/home/${SERVICE_USER}/app"
-FALCON_RB="${SERVICE_HOME}/config/falcon.rb"
-DEFAULT_PORT=10002
-PORT_RANGE_START=3000
-PORT_RANGE_END=3999
+. "${SCRIPT_DIR:h}/@shared_functions.sh"
 
-# Helpers
-error() { printf '✖ %s\n' "$*" >&2; }
-info()  { printf 'ℹ %s\n' "$*"; }
+need_cmd ruby34 bundle rails doas
 
-# Find first free TCP port in a range
-find_available_port() {
-    for port in "$(seq "$PORT_RANGE_START" "$PORT_RANGE_END")"; do
-        if command -v ss >/dev/null && ss -ltn "sport = :$port" >/dev/null 2>&1; then
-            continue
-        fi
-        if command -v nc >/dev/null && nc -z -w1 127.0.0.1 "$port" >/dev/null 2>&1; then
-            continue
-        fi
-        printf '%s' "$port"
-        return 0
-    done
-    error "No free ports in ${PORT_RANGE_START}-${PORT_RANGE_END}"
-    return 1
-}
+already_done "${APP_DIR}/app/models/post.rb" && exit 0
 
-ensure_database_yaml() {
-    cfg="${APP_ROOT}/config/database.yml"
-    if [ ! -f "$cfg" ] || ! grep -q "database:.*${APP_NAME}" "$cfg"; then
-        cat >"$cfg" <<EOF
-default: &default
-  adapter: postgresql
-  encoding: unicode
-  pool: 5
-  timeout: 5000
+log "Blognet — Multi-Blog Platform"
 
-development:
-  <<: *default
-  database: ${APP_NAME}_development
+# ── Create app ─────────────────────────────────────────────────────────────
+create_rails_app "$APP_DIR"
 
-test:
-  <<: *default
-  database: ${APP_NAME}_test
+# ── Gems ────────────────────────────────────────────────────────────────────
+add_gem pagy
+add_gem image_processing
+add_gem friendly_id
+install_solid_stack
+install_security_tools
 
-production:
-  <<: *default
-  database: ${APP_NAME}_production
-EOF
-        info "Created $cfg"
-    else
-        info "$cfg already present"
-    fi
-}
+# ── Auth ───────────────────────────────────────────────────────────────────
+install_auth
+install_active_storage
+install_action_text
 
-ensure_env_file() {
-    env="${APP_ROOT}/.env"
-    if [ ! -f "$env" ]; then
-        secret=$(ruby -e "require 'securerandom'; puts SecureRandom.hex(64)")
-        cat >"$env" <<EOF
-SECRET_KEY_BASE=${secret}
-DATABASE_URL=postgresql://localhost/${APP_NAME}_development
-EOF
-        info "Created $env"
-    else
-        info "$env already present"
-    fi
-}
+# ── Models ─────────────────────────────────────────────────────────────────
+bin/rails generate model Blog \
+  name:string description:text slug:string:uniq \
+  user:references published:boolean:default[false] \
+  posts_count:integer:default[0] \
+  --no-test-framework
 
-check_db() {
-    db="${APP_NAME}_development"
-    if psql -lqt | cut -d'|' -f1 | grep -qw "$db"; then
-        return 0
-    else
-        error "Database $db missing"
-        return 1
-    fi
-}
+bin/rails generate model Post \
+  title:string slug:string:uniq \
+  blog:references user:references \
+  published:boolean:default[false] \
+  published_at:datetime \
+  views_count:integer:default[0] \
+  comments_count:integer:default[0] \
+  --no-test-framework
 
-generate_model() {
-    model=$1
-    if [ ! -f "${APP_ROOT}/app/models/${model}.rb" ]; then
-        (cd "$APP_ROOT" && bundle exec rails generate model "$model") ||
-            error "Failed to generate $model"
-        (cd "$APP_ROOT" && bundle exec rails db:migrate) ||
-            error "Failed to migrate after $model generation"
-    else
-        info "Model $model already exists"
-    fi
-}
+bin/rails generate model Category name:string slug:string:uniq description:text \
+  --no-test-framework
 
-write_falcon_rb() {
-    mkdir -p "$(dirname "$FALCON_RB")"
-    cat >"$FALCON_RB" <<'RUBY'
-#!/usr/bin/env ruby
-# frozen_string_literal: true
-require "socket"
+bin/rails generate model Categorization post:references category:references \
+  --no-test-framework
 
-BODY = <<~HTML
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8">
-    <title>blognet</title>
-    <style>
-      body{font:16px/1.6 system-ui,sans-serif;max-width:700px;margin:60px auto;padding:20px}
-    </style>
-  </head>
-  <body><h1>blognet</h1></body>
-  </html>
-HTML
+bin/rails generate model Comment \
+  post:references user:references \
+  parent_id:integer content:text \
+  approved:boolean:default[true] \
+  --no-test-framework
 
-RESP = <<~HDR
-  HTTP/1.0 200 OK
-  Content-Type: text/html; charset=utf-8
-  Content-Length: #{BODY.bytesize}
-  Connection: close
+bin/rails generate model Tag name:string:uniq posts_count:integer:default[0] \
+  --no-test-framework
 
-  #{BODY}
-HDR
+bin/rails generate model Tagging post:references tag:references \
+  --no-test-framework
 
-trap "exit" TERM INT
+bin/rails db:migrate
 
-TCPServer.new("0.0.0.0", %d).tap do |s|
-  puts "blognet on %d"
-  loop { s.accept.print(RESP) rescue nil }
+# ── Model logic ─────────────────────────────────────────────────────────────
+cat > app/models/blog.rb << 'RUBY'
+class Blog < ApplicationRecord
+  belongs_to :user
+  has_many :posts, dependent: :destroy
+  has_one_attached :banner
+
+  validates :name, :slug, presence: true
+  validates :slug, uniqueness: true, format: { with: /\A[a-z0-9-]+\z/ }
+
+  before_validation :generate_slug, on: :create
+
+  scope :published, -> { where(published: true) }
+  scope :recent,    -> { order(created_at: :desc) }
+
+  def to_param = slug
+
+  private
+
+  def generate_slug
+    self.slug ||= name.to_s.parameterize
+  end
 end
 RUBY
-    # Replace placeholder with actual port without external perl
-    port="${SERVICE_PORT}"
-    awk -v p="$port" '{gsub(/%d/,p)}1' "$FALCON_RB" >"$FALCON_RB.tmp" && mv "$FALCON_RB.tmp" "$FALCON_RB"
-    chmod 755 "$FALCON_RB"
-    chown -R "${SERVICE_USER}:${SERVICE_USER}" "$(dirname "$FALCON_RB")"
-    info "Wrote Falcon server to $FALCON_RB"
-}
 
-install_rc_service() {
-    rc_path="${RC_DIR}/${RC_NAME}"
-    tmp_rc="/tmp/${RC_NAME}"
-    cat >"$tmp_rc" <<RC
-#!/bin/ksh
-daemon="/usr/local/bin/ruby34"
-daemon_flags="${FALCON_RB}"
-daemon_user="${SERVICE_USER}"
-daemon_timeout=30
+cat > app/models/post.rb << 'RUBY'
+class Post < ApplicationRecord
+  belongs_to :blog
+  belongs_to :user
+  has_rich_text :body
+  has_many_attached :images
+  has_many :comments, dependent: :destroy
+  has_many :categorizations, dependent: :destroy
+  has_many :categories, through: :categorizations
+  has_many :taggings, dependent: :destroy
+  has_many :tags, through: :taggings
 
-. /etc/rc.d/rc.subr
+  validates :title, :slug, presence: true
+  validates :slug, uniqueness: true, format: { with: /\A[a-z0-9-]+\z/ }
 
-rc_cmd "\$1"
-RC
-    install -m 755 "$tmp_rc" "$rc_path"
-    rcctl enable "$RC_NAME"
-    rcctl start "$RC_NAME"
-    info "Installed rc.d service $RC_NAME"
-}
+  before_validation :generate_slug, on: :create
+  before_save :set_published_at
 
-ensure_user() {
-    if ! id -u "$SERVICE_USER" >/dev/null 2>&1; then
-        error "User $SERVICE_USER does not exist"
-        exit 1
-    fi
-}
+  scope :published, -> { where(published: true).order(published_at: :desc) }
+  scope :drafts,    -> { where(published: false) }
+  scope :recent,    -> { order(created_at: :desc) }
 
-# Main
-info "Starting blognet deployment"
+  def to_param = slug
 
-ensure_user
-ensure_database_yaml
-ensure_env_file
-check_db || exit 1
-generate_model "Post"
+  def reading_time
+    words = body.to_plain_text.split.size
+    [(words / 200.0).ceil, 1].max
+  end
 
-# Determine port: keep default if free, else pick first available in range
-if command -v ss >/dev/null && ss -ltn "sport = :${DEFAULT_PORT}" >/dev/null 2>&1; then
-    SERVICE_PORT=$(find_available_port) || exit 1
-else
-    SERVICE_PORT="${DEFAULT_PORT}"
-fi
+  private
 
-write_falcon_rb
-install_rc_service
+  def generate_slug
+    self.slug ||= title.to_s.parameterize
+  end
 
-info "Deployment complete"
+  def set_published_at
+    self.published_at = Time.current if published? && published_at.nil?
+  end
+end
+RUBY
+
+cat > app/models/comment.rb << 'RUBY'
+class Comment < ApplicationRecord
+  belongs_to :post
+  belongs_to :user
+  belongs_to :parent, class_name: "Comment", optional: true
+  has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
+
+  validates :content, presence: true, length: { maximum: 5000 }
+
+  scope :roots,    -> { where(parent_id: nil).order(created_at: :asc) }
+  scope :approved, -> { where(approved: true) }
+
+  after_create_commit :broadcast_comment
+
+  private
+
+  def broadcast_comment
+    broadcast_append_to [post, "comments"], partial: "comments/comment", locals: { comment: self }
+    post.increment!(:comments_count)
+  end
+end
+RUBY
+
+# ── Controllers ─────────────────────────────────────────────────────────────
+cat > app/controllers/application_controller.rb << 'RUBY'
+class ApplicationController < ActionController::Base
+  include Pagy::Backend
+  allow_browser versions: :modern
+end
+RUBY
+
+cat > app/controllers/blogs_controller.rb << 'RUBY'
+class BlogsController < ApplicationController
+  before_action :require_authentication, except: %i[index show]
+  before_action :set_blog, only: %i[show edit update destroy]
+  before_action :authorize!, only: %i[edit update destroy]
+
+  def index
+    @pagy, @blogs = pagy(Blog.published.includes(:user).recent)
+  end
+
+  def show
+    @pagy, @posts = pagy(@blog.posts.published.includes(:user, :tags))
+  end
+
+  def new
+    @blog = Current.user.blogs.build
+  end
+
+  def create
+    @blog = Current.user.blogs.build(blog_params)
+    @blog.save ? redirect_to(@blog, notice: "Blog created") : render(:new, status: :unprocessable_entity)
+  end
+
+  def edit; end
+
+  def update
+    @blog.update(blog_params) ? redirect_to(@blog, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+  end
+
+  def destroy
+    @blog.destroy
+    redirect_to blogs_path, notice: "Blog deleted"
+  end
+
+  private
+
+  def set_blog   = @blog = Blog.find_by!(slug: params[:id])
+  def authorize! = redirect_to(blogs_path, alert: "Unauthorized") unless @blog.user == Current.user
+  def blog_params = params.require(:blog).permit(:name, :description, :published, :banner)
+end
+RUBY
+
+cat > app/controllers/posts_controller.rb << 'RUBY'
+class PostsController < ApplicationController
+  before_action :require_authentication, except: %i[index show]
+  before_action :set_blog
+  before_action :set_post, only: %i[show edit update destroy]
+  before_action :authorize!, only: %i[edit update destroy]
+
+  def index
+    @pagy, @posts = pagy(@blog.posts.published.includes(:user, :tags))
+  end
+
+  def show
+    @post.increment!(:views_count)
+    @comments = @post.comments.approved.roots.includes(:user, :replies)
+    @comment  = Comment.new
+  end
+
+  def new
+    @post = @blog.posts.build
+  end
+
+  def create
+    @post = @blog.posts.build(post_params.merge(user: Current.user))
+    @post.save ? redirect_to([@blog, @post], notice: "Post created") : render(:new, status: :unprocessable_entity)
+  end
+
+  def edit; end
+
+  def update
+    @post.update(post_params) ? redirect_to([@blog, @post], notice: "Updated") : render(:edit, status: :unprocessable_entity)
+  end
+
+  def destroy
+    @post.destroy
+    redirect_to @blog, notice: "Post deleted"
+  end
+
+  private
+
+  def set_blog   = @blog = Blog.find_by!(slug: params[:blog_id])
+  def set_post   = @post = @blog.posts.find_by!(slug: params[:id])
+  def authorize! = redirect_to(@blog, alert: "Unauthorized") unless @post.user == Current.user
+
+  def post_params
+    params.require(:post).permit(:title, :body, :published, :slug, images: [])
+  end
+end
+RUBY
+
+cat > app/controllers/comments_controller.rb << 'RUBY'
+class CommentsController < ApplicationController
+  before_action :require_authentication
+  before_action :set_post
+
+  def create
+    @comment = @post.comments.build(comment_params.merge(user: Current.user))
+    if @comment.save
+      respond_to do |format|
+        format.turbo_stream
+        format.html { redirect_to [@post.blog, @post] }
+      end
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @comment = @post.comments.find(params[:id])
+    @comment.destroy! if @comment.user == Current.user
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to [@post.blog, @post] }
+    end
+  end
+
+  private
+
+  def set_post = @post = Post.find_by!(slug: params[:post_id])
+
+  def comment_params
+    params.require(:comment).permit(:content, :parent_id)
+  end
+end
+RUBY
+
+# ── Routes ─────────────────────────────────────────────────────────────────
+cat > config/routes.rb << 'RUBY'
+Rails.application.routes.draw do
+  resource  :session
+  resources :passwords, param: :token
+
+  resources :blogs, path: "b" do
+    resources :posts, path: "p" do
+      resources :comments, only: %i[create destroy]
+    end
+  end
+
+  root "blogs#index"
+  get "up", to: "rails/health#show", as: :rails_health_check
+end
+RUBY
+
+# ── Assets + Layout + Infrastructure ────────────────────────────────────────
+write_base_css
+write_layout "Blognet"
+write_puma_config "$APP_PORT"
+configure_production
+install_rcd blognet "$APP_DIR" "$APP_PORT" blognet
+
+# ── Seed ───────────────────────────────────────────────────────────────────
+cat > db/seeds.rb << 'RUBY'
+user = User.find_or_create_by!(email_address: "admin@blognet.example") do |u|
+  u.password = u.password_confirmation = "password123"
+end
+
+blog = Blog.find_or_create_by!(slug: "demo-blog") do |b|
+  b.name        = "Demo Blog"
+  b.description = "A demonstration blog"
+  b.user        = user
+  b.published   = true
+end
+
+5.times do |i|
+  Post.find_or_create_by!(slug: "post-#{i + 1}") do |p|
+    p.title     = "Post #{i + 1}: Getting Started with Rails 8"
+    p.body      = "Rails 8 ships with Solid Cache, Solid Queue, and Solid Cable out of the box. This post covers what changed."
+    p.blog      = blog
+    p.user      = user
+    p.published = true
+  end
+end
+puts "Seeded #{Post.count} posts"
+RUBY
+
+bin/rails db:seed
+
+log_ok "Blognet setup complete — start: doas rcctl start blognet"
