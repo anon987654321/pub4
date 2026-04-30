@@ -37,8 +37,7 @@ module Master
     end
 
     def record_undo
-      @undos += 1
-      rate = @writes > 0 ? @undos.to_f / @writes : 0.0
+      rate = @mutex.synchronize { @undos += 1; @writes > 0 ? @undos.to_f / @writes : 0.0 }
       check_threshold(:rollback_rate, rate)
       append(rollback_rate: rate.round(3))
     end

@@ -75,7 +75,8 @@ module Master
 
   def self.load_yaml(path)
     YAML.safe_load_file(path, aliases: true)
-  rescue StandardError
+  rescue Psych::Exception, Errno::ENOENT, Errno::EACCES => e
+    warn("load_yaml: " + e.message)
     {}
   end
 
