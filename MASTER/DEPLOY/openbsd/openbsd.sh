@@ -224,7 +224,6 @@ ALL_APPS=(
 
 # Non-Rails services (name:subdomain.domain:port)
 SERVICES=(
-  ai:ai.brgen.no:4430
 )
 
 # Domain list for DNS
@@ -1181,27 +1180,13 @@ configure_relayd() {
     print -r -- ""
 
     # HTTPS protocol for ai.brgen.no (TLS termination via relayd keypair)
-    print -r -- "http protocol \"master_https_proxy\" {"
-    print -r -- "  tls keypair \"ai.brgen.no\""
-    print -r -- "  match request header append \"X-Forwarded-For\"   value \"\$REMOTE_ADDR\""
-    print -r -- "  match request header append \"X-Forwarded-Proto\" value \"https\""
-    print -r -- "  return error"
-    print -r -- "  pass"
-    print -r -- "}"
-    print -r -- ""
-
-    # master: HTTP on 3000, HTTPS on 4430
+    # master: HAProxy 443 -> port 3000 -> Falcon 53187
     print -r -- "relay \"master_http\" {"
     print -r -- "  listen on 0.0.0.0 port 3000"
     print -r -- "  protocol \"http_proxy\""
     print -r -- "  forward to <master> port 53187 check http \"/health\" code 200"
     print -r -- "}"
     print -r -- ""
-    print -r -- "relay \"master_https\" {"
-    print -r -- "  listen on 0.0.0.0 port 4430 tls"
-    print -r -- "  protocol \"master_https_proxy\""
-    print -r -- "  forward to <master> port 53187 check http \"/health\" code 200"
-    print -r -- "}"
     print -r -- ""
 
     # Other apps (HTTP only)
@@ -1277,7 +1262,7 @@ pass in on \$ext_if inet proto tcp to \$ext_if port 22 keep state \\
 
 pass in on \$ext_if inet proto { tcp, udp } to \$brgen_ip port 53 log
 
-pass in on \$ext_if inet proto tcp to \$brgen_ip port { 22, 25, 80, 443, 3000, 4430, 8080, 8082, 8084, 8086 } log
+pass in on \$ext_if inet proto tcp to \$brgen_ip port { 22, 25, 80, 443, 3000, 8080, 8082, 8084, 8086 } log
 
 pass out on \$ext_if inet proto tcp to any port 25
 
