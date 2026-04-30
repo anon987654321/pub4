@@ -86,6 +86,7 @@ require_relative "chamber"
 # Tools
 require_relative "shell"
 require_relative "analysis"
+require_relative "auto_fixer"
 require_relative "problem_solver"
 require_relative "evolve"
 require_relative "queue"
