@@ -7,4 +7,5 @@ Rails.application.routes.draw do
   get  "chat/dmesg",    to: "chat#dmesg"
   get  "events/stream", to: "events#stream"
   get  "up" => "rails/health#show", as: :rails_health_check
+  get  "health" => "health#show"
 end
