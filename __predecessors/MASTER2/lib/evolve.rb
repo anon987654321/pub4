@@ -14,12 +14,13 @@ module MASTER
     CONVERGENCE_THRESHOLD = 0.02
     PER_FILE_BUDGET = 0.25
 
-    def initialize(llm: LLM, chamber: nil, staged: false, validation_command: nil, language: :ruby)
+    def initialize(llm: LLM, chamber: nil, staged: false, validation_command: nil, language: :ruby, max_retries: 1)
       @llm = llm
       @chamber = chamber || Council.new(llm: llm)
       @staged = staged
       @validation_command = validation_command
       @language = language
+      @max_retries = [max_retries.to_i, 0].max
       @iteration = 0
       @cost = 0.0
       @history = []
@@ -28,6 +29,8 @@ module MASTER
     def run(path: MASTER.root, dry_run: true)
       Logging.dmesg_log("evolve", message: "ENTER evolve.run")
       @iteration = 0
+      @cost = 0.0
+      @history = []
       @checkpoint = create_safety_checkpoint unless dry_run
       files = find_files(path)
 
@@ -35,7 +38,7 @@ module MASTER
         break if over_budget?
 
         @iteration += 1
-        result = improve_file(file, dry_run: dry_run)
+        result = improve_file_with_retry(file, dry_run: dry_run)
         @history << result
       end
 
@@ -44,6 +47,8 @@ module MASTER
         cost: @cost,
         files_processed: @history.size,
         improvements: @history.count { |h| h[:improved] },
+        errors: @history.count { |h| h[:error] },
+        skipped: @history.count { |h| h[:skipped] },
         history: @history,
         checkpoint: @checkpoint,
       }
@@ -73,6 +78,10 @@ module MASTER
     def improve_file(file, dry_run:)
       code = File.read(file)
       return { file: file, skipped: true, reason: "too large" } if code.size > 10_000
+
+      if @llm.respond_to?(:configured?) && !@llm.configured?
+        return { file: file, skipped: true, reason: "OPENROUTER_API_KEY not configured" }
+      end
 
       # Handle shell scripts with embedded Ruby
       return improve_shell_file(file, code, dry_run: dry_run) if @language == :shell || shell_file?(file)
@@ -104,6 +113,21 @@ module MASTER
       end
     rescue StandardError => e
       { file: file, error: e.message }
+    end
+
+    def improve_file_with_retry(file, dry_run:)
+      attempts = 0
+      last = nil
+
+      begin
+        attempts += 1
+        last = improve_file(file, dry_run: dry_run)
+        return last unless last[:error] && attempts <= @max_retries
+
+        Logging.warn("evolve retry", file: file, attempt: attempts, error: last[:error])
+      end while attempts <= @max_retries
+
+      (last || { file: file, error: "unknown error" }).merge(attempts: attempts)
     end
 
     def shell_file?(file)
