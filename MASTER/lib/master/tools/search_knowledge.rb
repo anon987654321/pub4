@@ -19,7 +19,7 @@ module Master
         return Result.err("knowledge base not found", category: :validation) unless Dir.exist?(@knowledge_root)
 
         search_dir = topic ? File.join(@knowledge_root, topic.to_s) : @knowledge_root
-        unless Dir.exist?(search_dir)
+        unless Dir.exist?(search_dir) && File.realpath(search_dir).start_with?(@knowledge_root)
           return Result.err("unknown topic: #{topic}. Available: #{available_topics.join(", ")}", category: :validation)
         end
 

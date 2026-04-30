@@ -15,6 +15,7 @@ module Master
     def initialize(root:, event_bus: nil)
       @path        = File.join(root, ".master", "metrics.jsonl")
       @bus         = event_bus
+      @mutex       = Mutex.new
       @writes      = 0
       @undos       = 0
       @latencies   = []
@@ -24,14 +25,13 @@ module Master
     end
 
     def record_latency(ms)
-      @latencies << ms
+      @mutex.synchronize { @latencies << ms }
       check_threshold(:decision_latency_ms, average(@latencies))
       append(decision_latency_ms: ms)
     end
 
     def record_diff(lines)
-      @diff_sizes << lines
-      @writes += 1
+      @mutex.synchronize { @diff_sizes << lines; @writes += 1 }
       check_threshold(:diff_size_lines, average(@diff_sizes))
       append(diff_size_lines: lines)
     end
@@ -45,10 +45,12 @@ module Master
 
     # Called via llm:response EventBus subscription or directly.
     def record_llm_response(model:, success:, tokens_approx: 0, escalated: false)
-      stats = @model_stats[model.to_s]
-      stats[:calls]       += 1
-      stats[:failures]    += 1 unless success
-      stats[:escalations] += 1 if escalated
+      @mutex.synchronize do
+        stats = @model_stats[model.to_s]
+        stats[:calls]       += 1
+        stats[:failures]    += 1 unless success
+        stats[:escalations] += 1 if escalated
+      end
       append(llm_response: { model: model.to_s, success:, tokens_approx:, escalated: })
     end
 
@@ -65,7 +67,7 @@ module Master
     # Returns per-model quality stats, sorted by failure rate desc.
     def model_quality
       @model_stats.transform_values do |s|
-        fail_rate = stats[:calls] > 0 ? (stats[:failures].to_f / stats[:calls]).round(3) : 0.0
+        fail_rate = s[:calls] > 0 ? (s[:failures].to_f / s[:calls]).round(3) : 0.0
         s.merge(fail_rate:)
       end.sort_by { |_, v| -v[:fail_rate] }.to_h
     end

@@ -41,7 +41,8 @@ module Master
 
     # Compiles glob pattern to regex once; ** crosses segments, * does not.
     def glob_match?(pattern, event)
-      re = @pattern_cache[pattern] ||= Regexp.new(
+      @pattern_cache.shift if @pattern_cache.size >= 512
+        re = @pattern_cache[pattern] ||= Regexp.new(
         "\\A" + Regexp.escape(pattern).gsub('\\*\\*', '.*').gsub('\\*', '[^:]*') + "\\z"
       )
       re.match?(event)

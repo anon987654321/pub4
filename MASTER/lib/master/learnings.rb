@@ -75,7 +75,9 @@ module Master
 
     def persist
       FileUtils.mkdir_p(File.dirname(@path))
-      File.write(@path, @entries.map { |e| JSON.generate(e) }.join("\n") + "\n")
+      tmp = ".tmp"
+      File.write(tmp, @entries.map { |e| JSON.generate(e) }.join("\n") + "\n")
+      File.rename(tmp, @path)
     end
 
     def prune_old!

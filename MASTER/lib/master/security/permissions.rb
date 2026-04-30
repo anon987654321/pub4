@@ -33,7 +33,7 @@ module Master
       end
 
       def self.blocked?(command)
-        BLOCKLIST.any? { |b| command.include?(b) }
+        BLOCKLIST.any? { |b| command.downcase.include?(b.downcase) }
       end
     end
   end

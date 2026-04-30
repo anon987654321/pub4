@@ -4,8 +4,10 @@ module Master
   # Fixed-capacity circular buffer. Overwrites oldest entry when full.
   class RingBuffer
     include Enumerable
+    include MonitorMixin
 
     def initialize(capacity)
+      super()
       @capacity = capacity
       @buf      = Array.new(capacity)
       @start    = 0
@@ -13,6 +15,7 @@ module Master
     end
 
     def push(item)
+      synchronize do
       idx = (@start + @size) % @capacity
       if @size < @capacity
         @buf[idx] = item
@@ -21,6 +24,7 @@ module Master
         @buf[@start] = item
         @start = (@start + 1) % @capacity
       end
+      end
       self
     end
 
@@ -28,8 +32,7 @@ module Master
 
     def each
       return enum_for(__method__) unless block_given?
-
-      @size.times { |i| yield @buf[(@start + i) % @capacity] }
+      synchronize { @size.times { |i| yield @buf[(@start + i) % @capacity] } }
     end
 
     def to_a    = @size.times.map { |i| @buf[(@start + i) % @capacity] }
