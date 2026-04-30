@@ -1,179 +1,329 @@
-#!/usr/bin/env sh
+#!/usr/bin/env zsh
+# brgen_marketplace.sh — Brgen Marketplace (Rails 8, SQLite, no Solidus)
+# Usage: zsh brgen_marketplace.sh
 set -euo pipefail
 
-#─────────────────────────────────────────────────────────────────────────────
-# Brgen Marketplace deployment helper
-#─────────────────────────────────────────────────────────────────────────────
+APP_NAME=brgen_marketplace
+APP_DIR=/home/${APP_NAME}/app
+APP_PORT=10009
+SCRIPT_DIR=${0:a:h}
 
-# Configuration
-BASE_DIR="${HOME}/rails"
-APP_NAME="brgen_marketplace"
-BASE_PORT=10000
-PORT_RANGE=10000
-MAX_ATTEMPTS=20
-DB_SCHEME="postgresql"
-GEM_VERSIONS='solidus:~>4.0 solidus_auth_devise:~>2.0 solidus_multi_vendor:~>1.0'
+. "${SCRIPT_DIR:h}/@shared_functions.sh"
 
-# Logging
-log()    { printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
-error()  { log "ERROR: $*"; exit 1; }
+need_cmd ruby34 bundle rails doas
 
-# Helpers
-command_exists() { command -v "$1" >/dev/null 2>&1; }
+already_done "${APP_DIR}/app/models/listing.rb" && exit 0
 
-port_in_use() {
-  p=$1
-  if command_exists lsof; then
-    lsof -i :"$p" >/dev/null 2>&1 && return 0
-  elif command_exists ss; then
-    ss -tuln | grep -qE ":$p[[:space:]]" && return 0
-  elif command_exists netstat; then
-    netstat -tuln | grep -qE ":$p[[:space:]]" && return 0
-  else
-    ruby -e "require 'socket'; TCPServer.new('127.0.0.1',$p).close" >/dev/null 2>&1 && return 1 || return 0
-  fi
-  return 1
-}
+log "Brgen Marketplace — Classifieds and Local Commerce"
 
-# Port allocation
-get_or_create_port() {
-  port_file="${BASE_DIR}/${APP_NAME}/.app_port"
-  mkdir -p "$(dirname "$port_file")"
+# ── Create app ─────────────────────────────────────────────────────────────
+create_rails_app "$APP_DIR"
 
-  if [ -f "$port_file" ]; then
-    saved=$(cat "$port_file")
-    if ! port_in_use "$saved"; then
-      APP_PORT=$saved
-      log "Reusing saved port $APP_PORT"
-      return
-    fi
-  fi
+# ── Gems ────────────────────────────────────────────────────────────────────
+add_gem pagy
+add_gem image_processing
+add_gem geocoder
+add_gem money-rails
+install_solid_stack
+install_security_tools
 
-  attempt=0
-  while [ $attempt -lt $MAX_ATTEMPTS ]; do
-    rand=$(( (RANDOM << 15) | RANDOM ))
-    APP_PORT=$(( BASE_PORT + (rand % PORT_RANGE) ))
-    if ! port_in_use "$APP_PORT"; then
-      printf '%s\n' "$APP_PORT" >"$port_file"
-      log "Allocated new port $APP_PORT"
-      return
-    fi
-    attempt=$((attempt + 1))
-  done
-  error "Failed to obtain a free port after $MAX_ATTEMPTS attempts"
-}
+# ── Auth ───────────────────────────────────────────────────────────────────
+install_auth
+install_active_storage
 
-# Gem management
-install_gem() {
-  gem=$1 version=$2
-  if bundle list | grep -q "$gem"; then
-    log "Gem $gem already installed"
-    return
-  fi
-  if [ -n "$version" ]; then
-    bundle add "$gem" --version "$version" --without production
-  else
-    bundle add "$gem" --without production
-  fi
-  log "Added gem $gem"
-}
+# ── Models ─────────────────────────────────────────────────────────────────
+bin/rails generate model Category \
+  name:string slug:string:uniq parent_id:integer \
+  description:text icon:string \
+  --no-test-framework
 
-add_gems() {
-  for pair in $GEM_VERSIONS; do
-    IFS=':' read -r name ver <<EOF
-$pair
-EOF
-    install_gem "$name" "$ver"
-  done
-}
+bin/rails generate model Listing \
+  user:references category:references \
+  title:string description:text \
+  price_cents:integer currency:string \
+  condition:string status:string \
+  latitude:float longitude:float city:string \
+  views_count:integer:default[0] \
+  favorites_count:integer:default[0] \
+  --no-test-framework
 
-# Database handling
-setup_database_user() {
-  user="${APP_NAME}_user"
-  if ! psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${user}'" | grep -q 1; then
-    pw=$(ruby -e 'require "securerandom"; puts SecureRandom.hex(16)')
-    if psql -c "CREATE USER ${user} WITH PASSWORD '${pw}' CREATEDB;" >/dev/null 2>&1; then
-      DB_USER=$user DB_PASSWORD=$pw
-    else
-      log "Warning: could not create ${user}, falling back to $USER"
-      DB_USER=$USER DB_PASSWORD=
-    fi
-  else
-    DB_USER=$user DB_PASSWORD=
-  fi
-  export DB_USER DB_PASSWORD
-}
+bin/rails generate model Favorite \
+  user:references listing:references \
+  --no-test-framework
 
-setup_databases() {
-  setup_database_user
-  owner="${DB_USER:-$USER}"
-  for db in "${APP_NAME}_development" "${APP_NAME}_test"; do
-    if ! psql -lqt | awk -F'|' '{gsub(/ /,"",$1);print $1}' | grep -qx "$db"; then
-      createdb "$db" -O "$owner" >/dev/null 2>&1 || createdb "$db" >/dev/null 2>&1
-      log "Created database $db"
-    else
-      log "Database $db already exists"
-    fi
-  done
-}
+bin/rails generate model Offer \
+  listing:references buyer:references{User} \
+  amount_cents:integer currency:string \
+  status:string message:text \
+  --no-test-framework
 
-generate_database_yml() {
-  cat >config/database.yml <<EOF
-default: &default
-  adapter: ${DB_SCHEME}
-  encoding: unicode
-  pool: 5
-  username: ${DB_USER}
-  password: ${DB_PASSWORD}
-  host: localhost
+bin/rails generate model Conversation \
+  listing:references buyer:references{User} seller:references{User} \
+  --no-test-framework
 
-development:
-  <<: *default
-  database: ${APP_NAME}_development
+bin/rails generate model Message \
+  conversation:references user:references \
+  content:text read_at:datetime \
+  --no-test-framework
 
-test:
-  <<: *default
-  database: ${APP_NAME}_test
+bin/rails generate model Review \
+  reviewer:references{User} reviewee:references{User} \
+  listing:references rating:integer content:text \
+  --no-test-framework
 
-production:
-  <<: *default
-  database: ${APP_NAME}_production
-EOF
-  log "Wrote config/database.yml"
-}
+bin/rails db:migrate
 
-# Rails bootstrapping
-bootstrap_app() {
-  cd "$BASE_DIR" || error "Cannot cd $BASE_DIR"
+# ── Model logic ─────────────────────────────────────────────────────────────
+cat > app/models/listing.rb << 'RUBY'
+class Listing < ApplicationRecord
+  belongs_to :user
+  belongs_to :category
+  has_many :favorites, dependent: :destroy
+  has_many :favorited_by, through: :favorites, source: :user
+  has_many :offers, dependent: :destroy
+  has_many :conversations, dependent: :destroy
+  has_many_attached :photos
 
-  if [ ! -d "$APP_NAME" ]; then
-    log "Creating Rails app $APP_NAME"
-    rails new "$APP_NAME" -d "$DB_SCHEME" || error "rails new failed"
-  fi
+  CONDITIONS = %w[new like_new good fair poor].freeze
+  STATUSES   = %w[active sold reserved removed].freeze
 
-  cd "$APP_NAME" || error "Cannot cd $APP_NAME"
+  monetize :price_cents, with_currency: :nok
 
-  setup_databases
-  generate_database_yml
+  validates :title, presence: true, length: { maximum: 100 }
+  validates :description, presence: true, length: { maximum: 5000 }
+  validates :price_cents, numericality: { greater_than_or_equal_to: 0 }
+  validates :condition, inclusion: { in: CONDITIONS }
+  validates :status, inclusion: { in: STATUSES }
 
-  add_gems
-  bundle install --without production || error "bundle install failed"
-  bundle exec rails generate solidus:install || error "solidus install failed"
-  bundle exec rails db:migrate || error "migrations failed"
-  bundle exec rails db:seed || error "seeding failed"
+  default_value_for :status,   "active"
+  default_value_for :currency, "NOK"
 
-  cat >start_app.sh <<'EOS'
-#!/usr/bin/env sh
-set -euo pipefail
-cd "$(dirname "$0")"
-exec bundle exec rails server -p "$APP_PORT" -b 0.0.0.0
-EOS
-  chmod +x start_app.sh
-  log "Setup complete – run ./start_app.sh"
-}
+  geocoded_by :city
+  after_validation :geocode, if: :city_changed?
 
-# Entry point
-log "Starting Brgen Marketplace deployment"
-get_or_create_port
-bootstrap_app
-log "All done."
+  scope :active,    -> { where(status: "active") }
+  scope :recent,    -> { order(created_at: :desc) }
+  scope :nearby,    ->(lat, lng, km = 50) {
+    where("((latitude - ?) * (latitude - ?) + (longitude - ?) * (longitude - ?)) < ?",
+      lat, lat, lng, lng, (km / 111.0)**2)
+  }
+
+  def to_param = id.to_s
+
+  def sold!
+    update!(status: "sold")
+  end
+
+  def reserve!
+    update!(status: "reserved")
+  end
+end
+RUBY
+
+cat > app/models/offer.rb << 'RUBY'
+class Offer < ApplicationRecord
+  belongs_to :listing
+  belongs_to :buyer, class_name: "User"
+
+  STATUSES = %w[pending accepted declined countered].freeze
+
+  monetize :amount_cents, with_currency: :nok
+
+  validates :amount_cents, numericality: { greater_than: 0 }
+  validates :status, inclusion: { in: STATUSES }
+
+  default_value_for :status, "pending"
+
+  def accept!
+    update!(status: "accepted")
+    listing.reserve!
+  end
+
+  def decline!
+    update!(status: "declined")
+  end
+end
+RUBY
+
+cat > app/models/review.rb << 'RUBY'
+class Review < ApplicationRecord
+  belongs_to :reviewer, class_name: "User"
+  belongs_to :reviewee, class_name: "User"
+  belongs_to :listing
+
+  validates :rating, inclusion: { in: 1..5 }
+  validates :content, presence: true, length: { maximum: 2000 }
+  validates :reviewer_id, uniqueness: { scope: :listing_id }
+end
+RUBY
+
+# ── Controllers ─────────────────────────────────────────────────────────────
+cat > app/controllers/application_controller.rb << 'RUBY'
+class ApplicationController < ActionController::Base
+  include Pagy::Backend
+  allow_browser versions: :modern
+end
+RUBY
+
+cat > app/controllers/listings_controller.rb << 'RUBY'
+class ListingsController < ApplicationController
+  before_action :require_authentication, except: %i[index show]
+  before_action :set_listing, only: %i[show edit update destroy favorite unfavorite]
+  before_action :authorize!, only: %i[edit update destroy]
+
+  def index
+    scope = Listing.active.includes(:user, :category)
+    scope = scope.where(category_id: params[:category_id]) if params[:category_id]
+    scope = scope.where("title LIKE ?", "%#{params[:q]}%") if params[:q].present?
+    @pagy, @listings = pagy(scope.recent)
+  end
+
+  def show
+    @listing.increment!(:views_count)
+    @similar = Listing.active.where(category: @listing.category).where.not(id: @listing).limit(4)
+    @offer   = Offer.new
+  end
+
+  def new
+    @listing = Current.user.listings.build
+  end
+
+  def create
+    @listing = Current.user.listings.build(listing_params)
+    @listing.save ? redirect_to(@listing, notice: "Listing created") : render(:new, status: :unprocessable_entity)
+  end
+
+  def edit; end
+
+  def update
+    @listing.update(listing_params) ? redirect_to(@listing, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+  end
+
+  def destroy
+    @listing.destroy
+    redirect_to listings_path, notice: "Listing removed"
+  end
+
+  def favorite
+    Current.user.favorites.find_or_create_by!(listing: @listing)
+    @listing.increment!(:favorites_count)
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @listing }
+    end
+  end
+
+  def unfavorite
+    Current.user.favorites.find_by(listing: @listing)&.destroy!
+    @listing.decrement!(:favorites_count)
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @listing }
+    end
+  end
+
+  private
+
+  def set_listing   = @listing = Listing.find(params[:id])
+  def authorize!    = redirect_to(listings_path, alert: "Unauthorized") unless @listing.user == Current.user
+
+  def listing_params
+    params.require(:listing).permit(
+      :title, :description, :price_cents, :category_id,
+      :condition, :city, photos: []
+    )
+  end
+end
+RUBY
+
+cat > app/controllers/offers_controller.rb << 'RUBY'
+class OffersController < ApplicationController
+  before_action :require_authentication
+  before_action :set_listing
+
+  def create
+    @offer = @listing.offers.build(offer_params.merge(buyer: Current.user))
+    @offer.save ? redirect_to(@listing, notice: "Offer sent") : render(:new, status: :unprocessable_entity)
+  end
+
+  def update
+    @offer = @listing.offers.find(params[:id])
+    authorize_seller!
+    case params[:action_type]
+    when "accept"  then @offer.accept!
+    when "decline" then @offer.decline!
+    end
+    redirect_to @listing
+  end
+
+  private
+
+  def set_listing  = @listing = Listing.find(params[:listing_id])
+  def authorize_seller! = redirect_to(@listing, alert: "Unauthorized") unless @listing.user == Current.user
+  def offer_params = params.require(:offer).permit(:amount_cents, :message)
+end
+RUBY
+
+# ── Routes ─────────────────────────────────────────────────────────────────
+cat > config/routes.rb << 'RUBY'
+Rails.application.routes.draw do
+  resource  :session
+  resources :passwords, param: :token
+
+  root "listings#index"
+
+  resources :listings do
+    member do
+      post :favorite
+      delete :unfavorite
+    end
+    resources :offers, only: %i[create update]
+  end
+
+  resources :categories, only: %i[index show]
+  resources :reviews, only: %i[create]
+
+  get "up", to: "rails/health#show", as: :rails_health_check
+end
+RUBY
+
+# ── Assets + Infrastructure ─────────────────────────────────────────────────
+write_base_css
+write_layout "Brgen Marketplace"
+write_puma_config "$APP_PORT"
+configure_production
+install_rcd brgen_marketplace "$APP_DIR" "$APP_PORT" brgen_marketplace
+
+# ── Seed ───────────────────────────────────────────────────────────────────
+cat > db/seeds.rb << 'RUBY'
+user = User.find_or_create_by!(email_address: "seller@brgen.no") do |u|
+  u.password = u.password_confirmation = "password123"
+end
+
+cats = [
+  { name: "Electronics",  slug: "electronics",  icon: "💻" },
+  { name: "Clothing",     slug: "clothing",      icon: "👕" },
+  { name: "Furniture",    slug: "furniture",     icon: "🪑" },
+  { name: "Vehicles",     slug: "vehicles",      icon: "🚗" },
+  { name: "Sports",       slug: "sports",        icon: "⚽" },
+]
+cats.each { |c| Category.find_or_create_by!(slug: c[:slug]) { |cat| cat.name = c[:name]; cat.icon = c[:icon] } }
+
+5.times do |i|
+  Listing.find_or_create_by!(title: "Item #{i + 1}") do |l|
+    l.user        = user
+    l.category    = Category.first
+    l.description = "Great condition item for sale"
+    l.price_cents = (rand * 5000 + 100).to_i * 100
+    l.currency    = "NOK"
+    l.condition   = "good"
+    l.city        = "Bergen"
+    l.status      = "active"
+  end
+end
+puts "Seeded #{Listing.count} listings"
+RUBY
+
+bin/rails db:seed
+
+log_ok "Brgen Marketplace setup complete — start: doas rcctl start brgen_marketplace"
