@@ -24,7 +24,7 @@ module Master
 
       bus = EventBus.new
       ring = RingBuffer.new(RING_SIZE)
-      logging = Logging.new(ring_buffer: ring, event_bus: bus, trace_level: config.trace)
+      logging = Logging.new(ring_buffer: ring, event_bus: bus)
       session = Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
       undo = Undo.new(session:, event_bus: bus, root:)
       breaker = CircuitBreakerRegistry.new(
