@@ -36,7 +36,7 @@ module Master
         Attempt output: #{result.to_s[0, 400]}
         What specifically went wrong? Name the constraint violated. What must change in the next attempt? One paragraph, no preamble.
       PROMPT
-      resp = agent.ask(prompt, model: fast_model)
+      resp = fast_model ? agent.ask_once_with_model(prompt, model: fast_model) : agent.ask(prompt)
       resp.respond_to?(:value!) ? resp.value! : resp.to_s
     rescue StandardError
       "previous attempt failed — try a different approach"

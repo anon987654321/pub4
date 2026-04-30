@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "open3"
+
 module Master
   # Pipeline — Result-monadic stage chain.
   #
@@ -91,7 +93,7 @@ end
       return unless dirty?
 
       @bus&.publish("pipeline:rollback", category: result.category, message: result.message[0, 120])
-      system("git -C #{@root} reset --hard HEAD", out: File::NULL, err: File::NULL)
+      system("git -C \#{@root} reset --hard HEAD > /dev/null 2>&1")
     end
 
     def git_workspace?
@@ -99,8 +101,8 @@ end
     end
 
     def dirty?
-      out = `git -C #{@root} status --porcelain 2>/dev/null`
-      !out.to_s.strip.empty?
+      out, _, st = Open3.capture3("git", "-C", @root, "status", "--porcelain")
+      st.success? && !out.strip.empty?
     end
 
     def stage_label(stage)
