@@ -1,145 +1,86 @@
-#!/usr/bin/env sh
-# -*- sh -*-
-
-# Strict mode: abort on error, undefined variable, or pipe failure
+#!/usr/bin/env zsh
+# amber.sh — Amber AI Fashion Wardrobe Assistant (Rails 8)
+# Usage: zsh amber.sh
 set -euo pipefail
 
-#=== Configuration ============================================================
-APP_NAME="amber"
-BASE_DIR="/home/amber"
+APP_NAME=amber
+APP_DIR=/home/${APP_NAME}/app
 APP_PORT=10006
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-. "${SCRIPT_DIR}/@shared_functions.sh"
+SCRIPT_DIR=${0:a:h}
 
-#=== Helpers ================================================================
-check_file() { [ -f "$1" ]; }
+. "${SCRIPT_DIR:h}/@shared_functions.sh"
 
-install_gem_if_missing() {
-  gem list -i "$1" >/dev/null 2>&1 || gem install "$1"
-}
+need_cmd ruby34 bundle rails doas
 
-ensure_cmd() {
-  command -v "$1" >/dev/null 2>&1 || {
-    log "ERROR: $1 required"
-    exit 1
-  }
-}
+already_done "${APP_DIR}/app/models/item.rb" && exit 0
 
-#=== Prerequisites ===========================================================
-ensure_cmd ruby
-ensure_cmd node
-ensure_cmd bundle
-install_gem_if_missing pagy
-install_gem_if_missing faker
+log "Amber — AI Fashion Wardrobe Assistant"
 
-#=== Idempotent exit =========================================================
-if check_file "${BASE_DIR}/app/models/item.rb"; then
-  log "Amber already set up – exiting"
-  exit 0
-fi
+# ── Create app ─────────────────────────────────────────────────────────────
+create_rails_app "$APP_DIR"
 
-log "Starting Amber setup – AI Fashion Wardrobe Assistant"
+# ── Gems ────────────────────────────────────────────────────────────────────
+add_gem pagy
+add_gem image_processing
+add_gem ruby-openai
+install_solid_stack
+install_security_tools
 
-#=== Layout ================================================================
-cat > app/views/layouts/application.html.erb <<'EOF'
-<!DOCTYPE html>
-<html lang="<%= I18n.locale %>">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title><%= content_for?(:title) ? yield(:title) + " - Amber" : "Amber - AI Fashion Assistant" %></title>
-  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : 'Organize your wardrobe with AI-powered style assistance' %>">
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
-  <%= pwa_meta_tags %>
-  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_importmap_tags %>
-  <%= register_service_worker %>
-  <%= yield :head %>
-</head>
-<body>
-  <%= yield %>
-</body>
-</html>
-EOF
+# ── Auth ───────────────────────────────────────────────────────────────────
+install_auth
 
-#=== Routes ================================================================
-cat > config/routes.rb <<'EOF'
-Rails.application.routes.draw do
-  devise_for :users
-  root "home#index"
+# ── Active Storage ─────────────────────────────────────────────────────────
+install_active_storage
 
-  resources :items do
-    member do
-      post :spark_joy
-      post :declutter
-      post :analyze_joy, to: "kondo_ai#analyze_item"
-    end
-  end
+# ── Models ─────────────────────────────────────────────────────────────────
+bin/rails generate model Item \
+  title:string category:string color:string size:string \
+  material:string brand:string price:decimal \
+  times_worn:integer purchase_date:date spark_joy:boolean \
+  user:references \
+  --no-test-framework
 
-  resources :outfits do
-    member { post :like }
-  end
+bin/rails generate model Outfit \
+  name:string description:text category:string \
+  season:string occasion:string likes_count:integer:default[0] \
+  user:references \
+  --no-test-framework
 
-  resources :profiles, only: [:show, :edit, :update]
-  resource  :session
-  resources :passwords, param: :token
+bin/rails generate model OutfitItem \
+  outfit:references item:references position:integer \
+  --no-test-framework
 
-  # Kondo AI
-  get  "kondo/tips",      to: "kondo_ai#organization_tips", as: :kondo_tips
-  get  "kondo/outfits",   to: "kondo_ai#suggest_outfits",    as: :kondo_outfits
-  get  "kondo/declutter", to: "kondo_ai#declutter_guide",   as: :kondo_declutter
+bin/rails db:migrate
 
-  get "up" => "rails/health#show", as: :rails_health_check
-end
-EOF
-
-#=== Seed data ==============================================================
-cat > db/seeds.rb <<'EOF'
-categories = %w[Tops Bottoms Dresses Shoes Accessories Outerwear]
-seasons    = %w[Spring Summer Fall Winter All\ Season]
-colors     = %w[Black White Red Blue Green Yellow Pink Purple]
-
-user = User.find_or_create_by(email_address: "demo@amber.example") { |u| u.password = "password123" }
-
-puts "Seeding Amber wardrobe..."
-10.times do
-  Item.create!(
-    title:         Faker::Commerce.product_name,
-    category:      categories.sample,
-    color:         colors.sample,
-    season:        seasons.sample,
-    material:      %w[Cotton Polyester Wool Silk Leather].sample,
-    brand:         Faker::Company.name,
-    price:         Faker::Commerce.price(range: 20..500),
-    times_worn:    rand(0..50),
-    purchase_date: Faker::Date.backward(days: 365),
-    spark_joy:    [true, false].sample,
-    user:          user
-  )
-end
-puts "Seeded #{Item.count} fashion items"
-EOF
-
-#=== Models ================================================================
-bundle exec bin/rails generate model Item title:string category:string color:string size:string material:string brand:string price:decimal times_worn:integer purchase_date:date spark_joy:boolean user:references
-bundle exec bin/rails generate model Outfit name:string description:text category:string season:string occasion:string likes_count:integer user:references
-bundle exec bin/rails generate model OutfitItem outfit:references item:references position:integer
-
-cat > app/models/item.rb <<'EOF'
+# ── Model files ─────────────────────────────────────────────────────────────
+cat > app/models/item.rb << 'RUBY'
 class Item < ApplicationRecord
   belongs_to :user
   has_many :outfit_items, dependent: :destroy
   has_many :outfits, through: :outfit_items
+  has_many_attached :photos
 
   validates :title, :category, presence: true
+  validates :times_worn, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
-  scope :spark_joy, -> { where(spark_joy: true) }
-  scope :by_category, ->(cat) { where(category: cat) }
+  scope :joy,        -> { where(spark_joy: true) }
+  scope :by_category, ->(c) { where(category: c) }
+  scope :recent,     -> { order(created_at: :desc) }
+  scope :worn_most,  -> { order(times_worn: :desc) }
+  scope :never_worn, -> { where("times_worn = 0 OR times_worn IS NULL") }
+
+  CATEGORIES = %w[Tops Bottoms Dresses Shoes Accessories Outerwear].freeze
+  SEASONS    = %w[Spring Summer Fall Winter All\ Season].freeze
+
+  def wear!
+    increment!(:times_worn)
+    touch
+  end
 end
-EOF
+RUBY
 
-cat > app/models/outfit.rb <<'EOF'
+cat > app/models/outfit.rb << 'RUBY'
 class Outfit < ApplicationRecord
   belongs_to :user
   has_many :outfit_items, dependent: :destroy
@@ -147,128 +88,130 @@ class Outfit < ApplicationRecord
 
   validates :name, presence: true
 
-  def increment_likes!
+  def like!
     increment!(:likes_count)
   end
 end
-EOF
+RUBY
 
-cat > app/models/outfit_item.rb <<'EOF'
+cat > app/models/outfit_item.rb << 'RUBY'
 class OutfitItem < ApplicationRecord
   belongs_to :outfit
   belongs_to :item
 
   validates :outfit, :item, presence: true
+  validates :item_id, uniqueness: { scope: :outfit_id }
+  acts_as_list scope: :outfit if respond_to?(:acts_as_list)
 end
-EOF
+RUBY
 
-#=== Controllers ============================================================
-cat > app/controllers/home_controller.rb <<'EOF'
+# ── Controllers ─────────────────────────────────────────────────────────────
+cat > app/controllers/application_controller.rb << 'RUBY'
+class ApplicationController < ActionController::Base
+  include Pagy::Backend
+  allow_browser versions: :modern
+end
+RUBY
+
+cat > app/controllers/home_controller.rb << 'RUBY'
 class HomeController < ApplicationController
   def index
-    if user_signed_in?
-      @items_count      = current_user.items.count
-      @spark_joy_count  = current_user.items.where(spark_joy: true).count
-      @recent_items     = current_user.items.order(created_at: :desc).limit(6)
-    end
+    return unless authenticated?
+    @items_count     = Current.user.items.count
+    @joy_count       = Current.user.items.joy.count
+    @never_worn      = Current.user.items.never_worn.count
+    @recent_items    = Current.user.items.recent.limit(6)
+    @recent_outfits  = Current.user.outfits.order(created_at: :desc).limit(3)
   end
 end
-EOF
+RUBY
 
-cat > app/controllers/items_controller.rb <<'EOF'
+cat > app/controllers/items_controller.rb << 'RUBY'
 class ItemsController < ApplicationController
-  before_action :authenticate_user!, except: %i[index show]
-  before_action :set_item, only: %i[show edit update destroy spark_joy declutter]
-  before_action :authorize_user!, only: %i[edit update destroy spark_joy declutter]
+  before_action :require_authentication, except: %i[index show]
+  before_action :set_item, only: %i[show edit update destroy spark_joy declutter wear]
+  before_action :authorize!, only: %i[edit update destroy spark_joy declutter wear]
 
   def index
-    @pagy, @items = pagy(current_user.items.order(created_at: :desc))
+    @pagy, @items = pagy(Current.user.items.recent)
   end
 
   def show; end
 
   def new
-    @item = current_user.items.build
+    @item = Current.user.items.build
   end
 
   def create
-    @item = current_user.items.build(item_params)
-    if @item.save
-      redirect_to items_path, notice: "Item added to wardrobe"
-    else
-      render :new, status: :unprocessable_entity
-    end
+    @item = Current.user.items.build(item_params)
+    @item.save ? redirect_to(@item, notice: "Item added") : render(:new, status: :unprocessable_entity)
   end
 
   def edit; end
 
   def update
-    if @item.update(item_params)
-      redirect_to @item, notice: "Item updated"
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    @item.update(item_params) ? redirect_to(@item, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+  end
+
+  def destroy
+    @item.destroy
+    redirect_to items_path, notice: "Removed from wardrobe"
   end
 
   def spark_joy
-    @item.update(spark_joy: true)
-    redirect_to items_path, notice: "✨ This item sparks joy!"
+    @item.update!(spark_joy: true)
+    redirect_to items_path, notice: "This item sparks joy!"
   end
 
   def declutter
-    @item.destroy
-    redirect_to items_path, notice: "Item removed from wardrobe"
+    @item.update!(spark_joy: false)
+    redirect_to items_path, notice: "Marked for declutter"
+  end
+
+  def wear
+    @item.wear!
+    redirect_to @item, notice: "Worn today — +1"
   end
 
   private
 
-  def set_item
-    @item = Item.find(params[:id])
-  end
-
-  def authorize_user!
-    redirect_to items_path, alert: "Unauthorized" unless @item.user == current_user
-  end
+  def set_item    = @item = Item.find(params[:id])
+  def authorize!  = redirect_to(items_path, alert: "Unauthorized") unless @item.user == Current.user
 
   def item_params
-    params.require(:item).permit(:title, :category, :color, :size, :material, :brand, :price, :times_worn, :purchase_date)
+    params.require(:item).permit(
+      :title, :category, :color, :size, :material,
+      :brand, :price, :times_worn, :purchase_date, photos: []
+    )
   end
 end
-EOF
+RUBY
 
-cat > app/controllers/outfits_controller.rb <<'EOF'
+cat > app/controllers/outfits_controller.rb << 'RUBY'
 class OutfitsController < ApplicationController
-  before_action :authenticate_user!, except: %i[index show]
+  before_action :require_authentication, except: %i[index show]
   before_action :set_outfit, only: %i[show edit update destroy like]
-  before_action :authorize_user!, only: %i[edit update destroy]
+  before_action :authorize!, only: %i[edit update destroy]
 
   def index
-    @pagy, @outfits = pagy(current_user.outfits.order(created_at: :desc))
+    @pagy, @outfits = pagy(Current.user.outfits.order(created_at: :desc))
   end
 
   def show; end
 
   def new
-    @outfit = current_user.outfits.build
+    @outfit = Current.user.outfits.build
   end
 
   def create
-    @outfit = current_user.outfits.build(outfit_params)
-    if @outfit.save
-      redirect_to @outfit, notice: "Outfit created"
-    else
-      render :new, status: :unprocessable_entity
-    end
+    @outfit = Current.user.outfits.build(outfit_params)
+    @outfit.save ? redirect_to(@outfit, notice: "Outfit created") : render(:new, status: :unprocessable_entity)
   end
 
   def edit; end
 
   def update
-    if @outfit.update(outfit_params)
-      redirect_to @outfit, notice: "Outfit updated"
-    else
-      render :edit, status: :unprocessable_entity
-    end
+    @outfit.update(outfit_params) ? redirect_to(@outfit, notice: "Updated") : render(:edit, status: :unprocessable_entity)
   end
 
   def destroy
@@ -277,147 +220,180 @@ class OutfitsController < ApplicationController
   end
 
   def like
-    @outfit.increment_likes!
-    redirect_to @outfit, notice: "Liked!"
+    @outfit.like!
+    redirect_to @outfit
   end
 
   private
 
-  def set_outfit
-    @outfit = Outfit.find(params[:id])
-  end
-
-  def authorize_user!
-    redirect_to outfits_path, alert: "Unauthorized" unless @outfit.user == current_user
-  end
+  def set_outfit   = @outfit = Outfit.find(params[:id])
+  def authorize!   = redirect_to(outfits_path, alert: "Unauthorized") unless @outfit.user == Current.user
 
   def outfit_params
     params.require(:outfit).permit(:name, :description, :category, :season, :occasion)
   end
 end
-EOF
+RUBY
 
-#=== Kondo AI Service =======================================================
-cat > app/services/marie_kondo_ai_service.rb <<'EOF'
+# ── AI Service ─────────────────────────────────────────────────────────────
+mkdir -p app/services
+cat > app/services/wardrobe_ai_service.rb << 'RUBY'
 # frozen_string_literal: true
 
-class MarieKondoAiService
+class WardrobeAiService
   def initialize(user)
-    @user = user
-    @llm  = Langchain::LLM::OpenAI.new(api_key: ENV["OPENAI_API_KEY"])
+    @user   = user
+    @client = OpenAI::Client.new(access_token: ENV.fetch("OPENAI_API_KEY"))
   end
 
-  def sparks_joy?(item)
+  def analyze_joy(item)
     prompt = <<~PROMPT
-      Analyze this clothing item and say YES if it sparks joy, otherwise NO.
+      Analyze this clothing item from a Marie Kondo perspective.
+      Reply with JSON: {"sparks_joy": true/false, "reason": "brief explanation", "suggestion": "action to take"}
+
       Item: #{item.title}
       Category: #{item.category}
       Color: #{item.color}
-      Material: #{item.material}
-      Times worn: #{item.times_worn}
-      Purchase date: #{item.purchase_date}
+      Times worn: #{item.times_worn || 0}
+      Age: #{item.purchase_date ? "#{((Date.today - item.purchase_date) / 365).to_i} years" : "unknown"}
     PROMPT
 
-    response = @llm.chat(messages: [{ role: "user", content: prompt }])
-    content  = response.dig("choices", 0, "message", "content").to_s
-    { sparks_joy: content.downcase.include?("yes"), reason: content }
+    response = @client.chat(
+      parameters: {
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" }
+      }
+    )
+    JSON.parse(response.dig("choices", 0, "message", "content"))
+  rescue => e
+    Rails.logger.error("WardrobeAI error: #{e.message}")
+    { "sparks_joy" => nil, "reason" => "Analysis unavailable", "suggestion" => "Trust your instincts" }
   end
 
-  def get_organization_tips(category: nil, season: nil)
-    query = build_query(category, season)
-    embeds = generate_embedding(query)
-
-    tips = OrganizationTip
-           .nearest_neighbors(:embedding, embeds, distance: "cosine")
-           .limit(5)
-
-    context = tips.map { |t| "\#{t.title}: \#{t.content}" }.join("\n")
-
+  def suggest_outfits(occasion: nil, season: nil)
+    items_summary = @user.items.joy.limit(20).map { |i| "#{i.title} (#{i.category}, #{i.color})" }.join(", ")
     prompt = <<~PROMPT
-      Provide 3‑5 actionable wardrobe organization tips.
-      User stats: \#{summary_stats}
-      Context: \#{context}
-      Question: \#{query}
+      Suggest 3 outfit combinations from these wardrobe items.
+      #{occasion ? "Occasion: #{occasion}" : ""}
+      #{season ? "Season: #{season}" : ""}
+      Items: #{items_summary}
+      Reply with JSON array: [{"name": "outfit name", "items": ["item1", ...], "description": "why it works"}]
     PROMPT
 
-    @llm.chat(messages: [{ role: "user", content: prompt }])
-        .dig("choices", 0, "message", "content")
+    response = @client.chat(
+      parameters: {
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" }
+      }
+    )
+    JSON.parse(response.dig("choices", 0, "message", "content"))["outfits"] || []
+  rescue => e
+    Rails.logger.error("WardrobeAI suggest error: #{e.message}")
+    []
   end
 
-  private
-
-  def generate_embedding(text)
-    Langchain::LLM::OpenAI.new(api_key: ENV["OPENAI_API_KEY"])
-      .embed(text: text).dig("embedding")
-  end
-
-  def build_query(category, season)
-    parts = ["How to organize"]
-    parts << category if category
-    parts << "for \#{season}" if season
-    parts.join(" ")
-  end
-
-  def summary_stats
-    {
-      total_items: @user.items.count,
-      spark_joy:   @user.items.where(spark_joy: true).count
-    }.inspect
+  def declutter_candidates
+    @user.items.never_worn.where("purchase_date < ?", 1.year.ago).order(price: :desc)
   end
 end
-EOF
+RUBY
 
-#=== Kondo AI Controller ====================================================
-cat > app/controllers/kondo_ai_controller.rb <<'EOF'
-class KondoAiController < ApplicationController
-  before_action :authenticate_user!
+cat > app/controllers/ai_controller.rb << 'RUBY'
+class AiController < ApplicationController
+  before_action :require_authentication
 
   def analyze_item
-    item = current_user.items.find(params[:id])
-    ai   = MarieKondoAiService.new(current_user)
-    res  = ai.sparks_joy?(item)
-
-    item.update(spark_joy: res[:sparks_joy], declutter_reason: res[:reason])
-
-    respond_to do |fmt|
-      fmt.turbo_stream
-      fmt.json { render json: res }
+    item = Current.user.items.find(params[:id])
+    result = WardrobeAiService.new(Current.user).analyze_joy(item)
+    item.update!(spark_joy: result["sparks_joy"]) if result["sparks_joy"].in?([true, false])
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("item_#{item.id}_analysis", partial: "ai/analysis", locals: { result: result, item: item }) }
+      format.json { render json: result }
     end
   end
 
-  def organization_tips
-    @tips = MarieKondoAiService.new(current_user)
-            .get_organization_tips(category: params[:category], season: params[:season])
-
-    respond_to { |fmt| fmt.html; fmt.turbo_stream }
-  end
-
   def suggest_outfits
-    @suggestions = MarieKondoAiService.new(current_user).suggest_outfits(
-      occasion: params[:occasion],
-      season:   params[:season],
-      weather:  params[:weather]
+    @suggestions = WardrobeAiService.new(Current.user).suggest_outfits(
+      occasion: params[:occasion], season: params[:season]
     )
-    respond_to { |fmt| fmt.html; fmt.turbo_stream }
+    respond_to { |f| f.html; f.turbo_stream }
   end
 
   def declutter_guide
-    @recommendations = MarieKondoAiService.new(current_user).declutter_recommendations
-    respond_to { |fmt| fmt.html; fmt.turbo_stream }
+    @candidates = WardrobeAiService.new(Current.user).declutter_candidates
+    respond_to { |f| f.html; f.turbo_stream }
   end
 end
-EOF
+RUBY
 
-#=== Database ==============================================================
-log "Running migrations and seeds"
-bundle exec bin/rails db:migrate
-bundle exec bin/rails db:seed
+# ── Routes ─────────────────────────────────────────────────────────────────
+cat > config/routes.rb << 'RUBY'
+Rails.application.routes.draw do
+  resource  :session
+  resources :passwords, param: :token
 
-#=== Verification ==========================================================
-log "Verifying Amber app structure"
-for f in config/routes.rb app/views/layouts/application.html.erb app/assets/stylesheets; do
-  [ -e "$f" ] && log "✓ $f present"
-done
+  resources :items do
+    member do
+      post :spark_joy
+      post :declutter
+      post :wear
+    end
+  end
 
-log "Amber setup complete. Start with: doas rcctl start amber"
-log "Version: v1.0.0 – 2025-12-19"
+  resources :outfits do
+    member { post :like }
+  end
+
+  scope :ai do
+    post "items/:id/analyze", to: "ai#analyze_item",  as: :ai_analyze_item
+    get  "outfits/suggest",   to: "ai#suggest_outfits", as: :ai_suggest_outfits
+    get  "declutter",         to: "ai#declutter_guide", as: :ai_declutter
+  end
+
+  root "home#index"
+  get "up", to: "rails/health#show", as: :rails_health_check
+end
+RUBY
+
+# ── Assets + Layout ─────────────────────────────────────────────────────────
+write_base_css
+write_layout "Amber"
+
+# ── Puma + production ───────────────────────────────────────────────────────
+write_puma_config "$APP_PORT"
+configure_production
+
+# ── rc.d service ───────────────────────────────────────────────────────────
+install_rcd amber "$APP_DIR" "$APP_PORT" amber
+
+# ── Seed ───────────────────────────────────────────────────────────────────
+cat > db/seeds.rb << 'RUBY'
+user = User.find_or_create_by!(email_address: "demo@amber.example") do |u|
+  u.password = u.password_confirmation = "password123"
+end
+
+categories = %w[Tops Bottoms Dresses Shoes Accessories Outerwear]
+colors     = %w[Black White Red Blue Green Yellow Pink Purple Grey Beige]
+
+20.times do
+  Item.create!(
+    title:         ["Classic T-Shirt","Slim Jeans","Wool Blazer","Leather Boots","Silk Blouse","Cargo Pants","Maxi Dress","Sneakers","Cashmere Sweater","Trench Coat"].sample,
+    category:      categories.sample,
+    color:         colors.sample,
+    material:      %w[Cotton Polyester Wool Silk Leather Linen Denim].sample,
+    brand:         ["Uniqlo","Zara","H&M","COS","Arket","Norse Projects"].sample,
+    price:         (rand * 400 + 20).round(2),
+    times_worn:    rand(0..30),
+    purchase_date: Date.today - rand(0..730),
+    spark_joy:     [true, true, false].sample,
+    user:          user
+  )
+end
+puts "Seeded #{Item.count} items for #{user.email_address}"
+RUBY
+
+bin/rails db:seed
+
+log_ok "Amber setup complete — start: doas rcctl start amber"
