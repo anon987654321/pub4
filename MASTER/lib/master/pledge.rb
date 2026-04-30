@@ -29,13 +29,33 @@ module Master
       def lock_unveil! = nil
     end
 
-    def apply!
-      pledge("stdio rpath wpath cpath proc exec inet")
-      unveil(".", "rwc")
+    # Stage 1: called before Builder.build -- widest promises, no lock
+    def stage1_boot!(root)
+      pledge("stdio rpath wpath cpath proc exec inet dns tty unveil")
+      unveil("/", "")
+      unveil(root, "rwc")
+      unveil(Dir.home, "rwc")
       unveil("/tmp", "rwc")
       unveil("/usr/bin", "rx")
       unveil("/usr/local/bin", "rx")
+      unveil("/usr/local/lib", "r")
+      unveil("/usr/local/share", "r")
+      [Dir.home + "/.local/share/gem", Dir.home + "/.gem"].each { |p| unveil(p, "r") if Dir.exist?(p) }
+      unveil("/dev/urandom", "r")
+    end
+
+    # Stage 2: called after CLI is fully initialized -- lock filesystem
+    def stage2_lock!
+      pledge("stdio rpath wpath cpath proc exec inet dns tty")
       lock_unveil!
     end
+
+    # Stage 3: scan-only sessions (no network, no exec)
+    def stage3_scan_only!
+      pledge("stdio rpath wpath cpath tty")
+      lock_unveil!
+    end
+
+    def openbsd? = RUBY_PLATFORM.include?("openbsd")
   end
 end

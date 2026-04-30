@@ -15,17 +15,16 @@ module Master
       def review(code, context: nil)
         return Result.err('council: no personas configured', category: :validation) if @personas.empty?
 
-        feedback = @personas.map do |persona|
-          response = @agent.ask(build_prompt(persona, code, context))
-          entry = {
-            persona:    persona.name,
-            role:       persona.role,
-            veto_role:  veto_role?(persona),
-            feedback:   response
-          }
-          @bus&.publish(:council_feedback, entry)
-          entry
+        threads = @personas.map do |persona|
+          Thread.new do
+            response = @agent.ask(build_prompt(persona, code, context))
+            entry = { persona: persona.name, role: persona.role,
+                      veto_role: veto_role?(persona), feedback: response }
+            @bus&.publish(:council_feedback, entry)
+            entry
+          end
         end
+        feedback = threads.map { |t| t.join(20) ? t.value : nil }.compact
 
         vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
         unless vetoes.empty?
