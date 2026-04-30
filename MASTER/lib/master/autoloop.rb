@@ -3,6 +3,8 @@
 require "open3" # No longer directly used, moving to Master::GitOperations
 require_relative "git_operations"
 
+require_relative "autoloop/fix_evaluator"
+
 module Master
   # AutoLoop — iterate on scan violations until clean or max_cycles reached.
   #
@@ -94,6 +96,7 @@ module Master
       Result.err("autoloop: #{e.message}", category: :unknown)
     end
 
+    include FixEvaluator
     private
 
     def extract_violations(dir_results)
@@ -150,89 +153,6 @@ module Master
         end
       end
       nil
-    end
-
-    def build_fix_prompt(violation, src)
-      "Fix this Ruby violation in #{violation[:file]}.\n" \
-        "Rule: #{violation[:rule]}\n" \
-        "Issue: #{violation[:message]} (line #{violation[:line]})\n\n" \
-        "Return ONLY the corrected Ruby file content, no explanation.\n\n" \
-        "```ruby\n#{src}\n```"
-    end
-
-    # Reflexion-style prefix: tell the model the prior attempt failed and why.
-    # Directly inspired by arxiv:2503.14340 (MANTRA Repair Agent).
-    def reflected_prompt(base, last_error, attempt)
-      "Prior attempt (#{attempt}) failed with: #{last_error[0, 200]}\n" \
-        "Reflect briefly on what went wrong, then retry.\n\n" \
-        "#{base}"
-    end
-
-    def extract_code(text)
-      return text.match(/```ruby\n(.*?)```/m)[1].strip if text.match?(/```ruby\n(.*?)```/m)
-      return text.match(/```\n(.*?)```/m)[1].strip if text.match?(/```\n(.*?)```/m)
-      return text.strip if text.match?(/frozen_string_literal|module |class /)
-      nil
-    end
-
-    # Safety guards: size check + syntax check before writing.
-    # Rejects any fix that removes more than 20% of the original content.
-    def apply_fix(rel_path, content)
-      path = File.join(@root, rel_path)
-      return unless File.exist?(path)
-
-      original_size = File.size(path)
-      if content.bytesize < (original_size * MIN_SIZE_RATIO).to_i # GUARD_EXPENSIVE
-        @bus&.publish("autoloop:fix_rejected", file: rel_path,
-                      reason: "too short (#{content.bytesize} vs #{original_size})")
-        return
-      end
-
-      return unless syntax_ok?(content) # GUARD_EXPENSIVE
-
-      File.write(path, content, encoding: "UTF-8")
-      @bus&.publish("autoloop:fix_applied", file: rel_path)
-    end
-
-    # Returns 0.0-1.0. Signals how structurally complete the LLM output is.
-    # Low score triggers escalation retry with a reflective prompt (Task #15).
-    def confidence_score(code, original_src)
-      return 0.0 if code.nil? || code.strip.empty?
-
-      score = 0.0
-      score += SCORE_INCREMENT if code.include?("# frozen_string_literal: true")
-      score += SCORE_INCREMENT if code.match?(/\A.*?(?:module |class )[A-Z]/m)
-      ratio  = code.bytesize.to_f / [original_src.bytesize, 1].max
-      score += SCORE_INCREMENT if ratio >= MIN_SIZE_RATIO && ratio <= MAX_SIZE_RATIO
-      score += SCORE_INCREMENT if syntax_ok?(code)
-      score
-    end
-
-    def syntax_ok?(content)
-      require "tempfile"
-      Tempfile.open(["al_chk", ".rb"]) do |f|
-        f.binmode
-        f.write(content.encode("UTF-8", invalid: :replace, undef: :replace))
-        f.flush
-        system("ruby", "-c", f.path, out: File::NULL, err: File::NULL)
-      end
-    rescue StandardError # DEGRADE_GRACEFULLY
-      false
-    end
-
-    def track_recurrence(violations)
-      return unless @soul
-      tally = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
-      tally.each do |rule_id, count|
-        @rule_recurrence[rule_id] += 1
-        next unless @rule_recurrence[rule_id] >= 3
-        @rule_recurrence.delete(rule_id)
-        sample = violations.select { |v| v[:rule].to_s == rule_id }.first(5)
-        result = @soul.propose_from_violations(rule_id, sample, agent: @agent)
-        @bus&.publish("autoloop:soul_proposal", rule: rule_id, result: result.to_s[0, 80])
-      end
-      # Reset rules that disappeared
-      (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
     end
   end
 end
