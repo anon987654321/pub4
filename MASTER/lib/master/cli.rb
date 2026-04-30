@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "cli/tts"
+require_relative "cli/signals"
+
 require "tty-reader"
 require "tty-prompt"
 require "fileutils"
@@ -109,10 +112,7 @@ module Master
       @session.save!
     end
 
-    def exit_cli
-      @session.save!
-      @running = false
-    end
+    def exit_cli = (@session.save!; @running = false)
 
     def scan_in_background
       @scan_thread = Thread.new do
@@ -192,50 +192,6 @@ module Master
         text = value.is_a?(Hash) && value[:rendered] ? value[:rendered] : value.to_s
         puts text
         speak_async(text) if @tts_on
-      end
-    end
-
-    def speak_async(text)
-      Thread.new do
-        plain = sanitize_for_speech(text)
-        next if plain.empty?
-
-        audio_path = Speech.synthesize(plain)
-        next unless audio_path
-
-        played = Speech.play(audio_path)
-        @bus&.publish("tts:warn", message: "no audio output found") unless played
-      rescue StandardError => e
-        @bus&.publish("tts:error", message: e.message)
-      ensure
-        File.unlink(audio_path) rescue nil if defined?(audio_path) && audio_path
-      end
-    end
-
-    def sanitize_for_speech(text)
-      plain = text.gsub(/\e\[[0-9;]*m/, "").strip
-      plain = plain.gsub(/```.*?```/m, "")
-      plain[0..400]
-    end
-
-    def setup_signals
-      trap("USR1") do
-        begin
-          Zeitwerk::Loader.for_gem.reload
-          puts "\n#{@renderer.render('reloaded', mode: :success)}"
-        rescue StandardError => e
-          puts "\n#{@renderer.render("reload failed: #{e.message}", mode: :error)}"
-        end
-      end
-      trap("INT") do
-        if Time.now - @interrupt_at < 1
-          @scan_thread&.kill
-          @session.save!
-          exit(0)
-        else
-          @interrupt_at = Time.now
-          puts "\n#{@renderer.render('^C again to quit', mode: :warning)}"
-        end
       end
     end
   end

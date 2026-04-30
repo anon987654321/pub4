@@ -21,6 +21,8 @@ module Master
     BATCH_SIZE       = 3
     RATE_LIMIT_SLEEP = 15     # ONE_SOURCE: no more hardcoded `sleep 15`.freeze
     MAX_FIX_RETRIES  = 3
+    SCORE_INCREMENT  = 0.25
+    MAX_SIZE_RATIO   = 2.0
     MIN_SIZE_RATIO       = 0.80   # Reject fix if output < 80% of original file size.freeze
     CONFIDENCE_THRESHOLD = 0.60   # Below this, escalate to a reflective retry.freeze
     MAX_FILE_BYTES   = 16_000 # Raised from 4_000 so core files (agent.rb, cli.rb) are fixable.freeze
@@ -198,11 +200,11 @@ module Master
       return 0.0 if code.nil? || code.strip.empty?
 
       score = 0.0
-      score += 0.25 if code.include?("# frozen_string_literal: true")
-      score += 0.25 if code.match?(/\A.*?(?:module |class )[A-Z]/m)
+      score += SCORE_INCREMENT if code.include?("# frozen_string_literal: true")
+      score += SCORE_INCREMENT if code.match?(/\A.*?(?:module |class )[A-Z]/m)
       ratio  = code.bytesize.to_f / [original_src.bytesize, 1].max
-      score += 0.25 if ratio >= MIN_SIZE_RATIO && ratio <= 2.0
-      score += 0.25 if syntax_ok?(code)
+      score += SCORE_INCREMENT if ratio >= MIN_SIZE_RATIO && ratio <= MAX_SIZE_RATIO
+      score += SCORE_INCREMENT if syntax_ok?(code)
       score
     end
 
