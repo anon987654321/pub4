@@ -33,7 +33,7 @@ raw = if preferred && @agent.respond_to?(:ask_once_with_model)
 else
   @agent.ask_once(prompt, system: worker_system_prompt)
 end
-        @result = parse_result(raw)
+        @result, @confidence = parse_result(raw)
 
         @bus&.publish(:swarm_worker_done, role: @role, ok: @result.ok?)
         @result
@@ -54,8 +54,8 @@ end
 def parse_result(raw)
   text = raw.to_s.strip
   hits = UNCERTAINTY_PHRASES.count { |p| text.downcase.include?(p) }
-  @confidence = [1.0 - (hits.to_f / [UNCERTAINTY_PHRASES.size, 1].max * 0.5), 0.0].max.round(2)
-  Result.ok({ text: text, confidence: @confidence })
+  conf = [1.0 - (hits.to_f / [UNCERTAINTY_PHRASES.size, 1].max * 0.5), 0.0].max.round(2)
+  [Result.ok({ text: text, confidence: conf }), conf]
 end
 
       def ctx_summary(ctx)
