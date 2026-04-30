@@ -134,7 +134,7 @@ module Master
 
     def load_store
       return {} unless File.exist?(@path)
-      Master.load_yaml(@path, symbolize_names: false) || {}
+      r = Master.load_yaml(@path, symbolize_names: false); r.is_a?(Hash) ? r : {}
     rescue StandardError
       {}
     end

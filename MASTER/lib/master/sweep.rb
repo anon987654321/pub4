@@ -49,7 +49,8 @@ module Master
       \b(?:error|exception|traceback|failed|cannot|unable\sto|
       undefined\smethod|no\smethod|syntax\serror|
       internal\sserver|rate\slimit|quota\sexceeded|
-      apologize|as\san\sai|i\scannot|i\sam\sunable)\b
+      apologize|as\san\sai|i\scannot|i\sam\sunable|
+circuit\sopen|retry\sin|llm_request)\b
     /ix.freeze
 
     PROMPTS_PATH = File.join(Master::ROOT, "data", "sweep_prompts.yml").freeze
@@ -147,7 +148,7 @@ module Master
     end
 
     def collect_files(dir, types)
-      types.flat_map { |t| Dir.glob(File.join(dir, GLOBS[t].to_s)) }.uniq.sort
+      types.flat_map { |t| Dir.glob(File.join(dir, GLOBS[t].to_s)) }.reject { |f| f.include?("/data/") }.uniq.sort
     end
 
     def rewrite(path, rel)

@@ -94,7 +94,9 @@ module Master
     def ask(prompt, context: nil)
       messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
       selected_model = routed_models.first
-      send_with_cache(selected_model, messages, stream: false).to_s
+      result = send_with_cache(selected_model, messages, stream: false)
+      raise result.message if result.respond_to?(:err?) && result.err?
+      result.to_s
     end
 
     def ask_once(prompt, system: nil)
