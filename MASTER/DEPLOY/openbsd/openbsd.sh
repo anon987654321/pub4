@@ -1194,13 +1194,13 @@ configure_relayd() {
     print -r -- "relay \"master_http\" {"
     print -r -- "  listen on 0.0.0.0 port 3000"
     print -r -- "  protocol \"http_proxy\""
-    print -r -- "  forward to <master> port 10002 check tcp"
+    print -r -- "  forward to <master> port 53187 check http \"/health\" code 200"
     print -r -- "}"
     print -r -- ""
     print -r -- "relay \"master_https\" {"
     print -r -- "  listen on 0.0.0.0 port 4430 tls"
     print -r -- "  protocol \"master_https_proxy\""
-    print -r -- "  forward to <master> port 10002 check tcp"
+    print -r -- "  forward to <master> port 53187 check http \"/health\" code 200"
     print -r -- "}"
     print -r -- ""
 
@@ -1448,7 +1448,7 @@ log INFO "Service $svc_name handled by master rc.d"
 
   # Configure and start relayd now that APP_PORTS is populated
 
-  # Deploy MASTER web UI (ai.brgen.no -> port 3000 via relayd -> 10002)
+  # Deploy MASTER web UI (ai.brgen.no -> port 3000 via relayd -> 53187)
   if ! is_step_completed "master_deployed"; then
     log INFO "Deploying MASTER web UI"
     typeset m3dir="/home/dev/pub4/MASTER"
@@ -1514,12 +1514,12 @@ main "$@"
     cat > /etc/rc.d/master <<RCEOF
 #!/bin/ksh
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1${env_line} falcon serve --bind http://127.0.0.1:10002"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1${env_line} falcon serve --bind http://127.0.0.1:53187"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_timeout="90"
 . /etc/rc.d/rc.subr
-pexp="ruby34.*falcon.*10002"
+pexp="ruby34.*falcon.*53187"
 rc_bg=YES
 rc_reload=NO
 rc_cmd \$1
@@ -1528,7 +1528,7 @@ RCEOF
     rcctl enable master
     rcctl start master
     mark_step_completed "master_deployed"
-    log INFO "MASTER web UI running on :10002 (relayd :3000 -> :10002)"
+    log INFO "MASTER web UI running on :53187 (relayd :3000 -> :53187)"
   fi
   configure_relayd
 
