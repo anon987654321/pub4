@@ -40,14 +40,15 @@ module Master
     # rather than abandon the fix. 429 = rate limit, 503 = overload.
     TRANSIENT_RE = /429|throttl|rate.?limit|high demand|provider.?error|overload|capacity|503/i.freeze
 
-    def initialize(agent:, scanner:, root:, event_bus: nil, soul: nil)
-      @agent          = agent
-      @scanner        = scanner
-      @root           = root
-      @bus            = event_bus
-      @soul           = soul
+    def initialize(agent:, scanner:, root:, event_bus: nil, soul: nil, learnings: nil)
+      @agent           = agent
+      @scanner         = scanner
+      @root            = root
+      @bus             = event_bus
+      @soul            = soul
+      @learnings       = learnings
       @rule_recurrence = Hash.new(0) # rule_id => consecutive_cycle_count
-      @git            = GitOperations.new(root)
+      @git             = GitOperations.new(root)
     end
 
     def run(max_cycles: MAX_CYCLES)
@@ -87,9 +88,8 @@ module Master
         if @git.dirty?("lib/")
           @git.add_lib_files
           @git.commit("autoloop: fix scan violations [cycle #{cycle}]")
-          learnings = Learnings.new(root: @root)
-          fixes.each_value do |v, _|
-            learnings.record(trigger: v[:rule].to_s, strategy: "autoloop_fix", outcome: "commit")
+          (@learnings || Learnings.new(root: @root)).tap do |l|
+            fixes.each_value { |v, _| l.record(trigger: v[:rule].to_s, strategy: "autoloop_fix", outcome: "commit") }
           end
         end
         track_recurrence(violations)
@@ -132,31 +132,24 @@ module Master
 
       src         = File.read(path, encoding: "UTF-8")
       base_prompt = build_fix_prompt(violation, src)
-      last_error  = nil
-
-      MAX_FIX_RETRIES.times do |attempt|
+      result = Reflexion.run(agent: @agent, task: base_prompt, max: MAX_FIX_RETRIES) do |prompt, attempt|
         sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
         begin
-          # On retries, inject the last error as a reflection prefix.
-          prompt = attempt.zero? ? base_prompt : reflected_prompt(base_prompt, last_error, attempt)
-          fix    = extract_code(@agent.ask(prompt).to_s)
-          if fix && confidence_score(fix, src) < CONFIDENCE_THRESHOLD && attempt < MAX_FIX_RETRIES - 1
-            @bus&.publish("autoloop:escalate", file: violation[:file], attempt: attempt + 1)
-            last_error = 'low confidence'
-            next
-          end
-          return fix
+          fix = extract_code(@agent.ask(prompt).to_s)
+          next nil if fix.nil?
+          next nil if confidence_score(fix, src) < CONFIDENCE_THRESHOLD
+          fix
         rescue StandardError => e
-          last_error = e.message.to_s
-          if TRANSIENT_RE.match?(last_error) && attempt < MAX_FIX_RETRIES - 1
+          err = e.message.to_s
+          if TRANSIENT_RE.match?(err) && attempt < MAX_FIX_RETRIES - 1
             @bus&.publish("autoloop:rate_limit", sleep: RATE_LIMIT_SLEEP * (attempt + 1), attempt: attempt + 1)
           else
-            @bus&.publish("autoloop:fix_error", file: violation[:file], error: last_error[0, 120])
-            return nil
+            @bus&.publish("autoloop:fix_error", file: violation[:file], error: err[0, 120])
           end
+          nil
         end
       end
-      nil
+      result.respond_to?(:ok?) && result.ok? ? result.value! : nil
     end
   end
 end

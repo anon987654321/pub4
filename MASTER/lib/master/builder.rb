@@ -93,7 +93,8 @@ module Master
       council_stage = Stages::Council.new(deliberation:, config:)
 
       standing = StandingOrders.new(pipeline: nil, event_bus: bus)
-      autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul: soul_doc)
+      learnings = Learnings.new(root:)
+      autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul: soul_doc, learnings:)
       skills = Skills.new(root:, event_bus: bus)
       skills.discover!
       heartbeat = Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus)
@@ -102,7 +103,7 @@ module Master
 
       {
         agent:, soul: soul_doc, scanner:, swarm:, deliberation:,
-        council_stage:, standing:, autoloop:,
+        council_stage:, standing:, autoloop:, learnings:,
         guard: Security::InjectionGuard.new,
         heartbeat:, skills:, triggers:
       }
@@ -121,7 +122,7 @@ module Master
         Stages::Execute.new,
         Pipeline::SkipOnPressure.new(Pipeline::ParallelGroup.new(
           ai[:council_stage],
-          Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop])
+          Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:)
         )),
         Pipeline::SkipOnPressure.new(Stages::Prune.new),
         Stages::Memo.new(memory: infra[:memory], event_bus: bus),
