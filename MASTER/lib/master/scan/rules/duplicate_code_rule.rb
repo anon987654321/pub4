@@ -35,7 +35,7 @@ module Master
             }
             findings << finding(
               line: (first_line || 0) + 1,
-              message: "duplicate block appears #{count} times — extract to shared method (ONE_SOURCE)"
+              message: "duplicate block #{count} times — extract to shared method (ONE_SOURCE)"
             )
           end
 
