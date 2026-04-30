@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "fiddle/import"
+require "fiddle"
 
 module Master
   module Pledge
@@ -13,7 +13,8 @@ module Master
       extern "int unveil(const char *, const char *)"
 
       def pledge(promises, execpromises = nil)
-        result = self.__pledge(promises, execpromises)
+        ep = execpromises ? Fiddle::Pointer[execpromises] : Fiddle::NULL
+        result = self.__pledge(promises, ep)
         raise SystemCallError.new("pledge failed", Fiddle.last_error) if result == -1
       end
 

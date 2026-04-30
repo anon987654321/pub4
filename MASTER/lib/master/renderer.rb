@@ -3,6 +3,7 @@
 
 require "pastel"
 require "open3"
+require "socket"
 
 module Master
   DEFAULT_WEB_PORT = 10002
@@ -19,13 +20,26 @@ module Master
     end
 
     def splash(model)
+      t     = Time.now
+      host  = Socket.gethostname rescue "openbsd"
+      ruby  = RUBY_VERSION
+      up    = uptime_str
+      url   = @config["web_public_url"] || "https://ai.brgen.no"
+      mod   = short_model(model)
+      rev   = git_rev
+
       lines = []
       lines << ""
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
-      lines << "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{@p.dim("ready")}"
-      public_url = @config["web_public_url"] || "https://ai.brgen.no"
-      lines << @p.dim("web  #{public_url}")
+      lines << @p.bold.red("MASTER") + @p.dim(" constitutional AI agent")
+      lines << @p.dim("hostname #{host}  ruby #{ruby}  #{t.strftime('%Y-%m-%d %H:%M:%S')}")
+      lines << @p.dim("model    #{mod}")
+      lines << @p.dim("web      #{url}")
+      lines << @p.dim("rev      #{rev}") if rev
+      lines << @p.dim("uptime   #{up}") if up
+      lines << ""
+      lines << @p.bold.red("master") + @p.dim("@#{host} ready -- type ") + @p.bright_red("help") + @p.dim(" for commands")
       lines << ""
       lines.join("\n")
     end
@@ -61,6 +75,20 @@ module Master
     end
 
     private
+
+    def uptime_str
+      out = `uptime 2>/dev/null`.strip
+      out.empty? ? nil : out.split(",").first.gsub(/.*up\s+/, "").strip
+    rescue StandardError
+      nil
+    end
+
+    def git_rev
+      out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--short", "HEAD")
+      st.success? ? out.strip : nil
+    rescue StandardError
+      nil
+    end
 
     def short_model(model)
       model.to_s.split("/").last
