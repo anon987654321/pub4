@@ -44,7 +44,7 @@ def build(path: nil)
     @mtimes.clear
     files.each do |f|
       index_file(f)
-      @mtimes[f] = File.mtime(f) rescue nil
+      @mtimes[f] = File.mtime(f) rescue Errno::ENOENT
     end
   else
     changed = 0
@@ -56,7 +56,7 @@ def build(path: nil)
     end
 
     files.each do |f|
-      mt = File.mtime(f) rescue nil
+      mt = File.mtime(f) rescue Errno::ENOENT
       next if @mtimes[f] == mt
       reindex(f)
       @mtimes[f] = mt
