@@ -8,7 +8,7 @@ module Master
     class AstEdit
       TIER        = :guarded
       NAME        = "ast_edit".freeze
-      DESCRIPTION = "AST-aware code editing: find, rename, or restructure Ruby methods safely.".freeze
+      DESCRIPTION = "AST-aware code editing: find, rename, or restructure Ruby methods safely."
 
       def initialize(root:, undo:, event_bus: nil)
         @root = File.realpath(root)

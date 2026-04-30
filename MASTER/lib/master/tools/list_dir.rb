@@ -6,7 +6,7 @@ module Master
     class ListDir
       TIER        = :safe
       NAME        = "list_dir".freeze
-      DESCRIPTION = "List directory contents, depth-limited.".freeze
+      DESCRIPTION = "List directory contents, depth-limited."
       MAX_DEPTH   = 5
 
       def initialize(root:, event_bus: nil)

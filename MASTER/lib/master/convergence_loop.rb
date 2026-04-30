@@ -90,7 +90,7 @@ module Master
     end
 
     def apply_surgical(violations)
-      files = violations.map { |v| v[:path] }.uniq.compact.first(5)
+      files = violations.map { |v| v[:path] }.compact.uniq.first(5)
       files.each do |path|
         next unless File.exist?(path)
         file_violations = violations.select { |v| v[:path] == path }

@@ -4,6 +4,7 @@ module Master
   class Result
     def self.ok(value)                      = Ok.new(value)
     def self.err(msg, category: :unknown)   = Err.new(msg, category)
+    def self.wrap(val)                      = val.respond_to?(:ok?) ? val : Ok.new(val)
 
     class Ok
       attr_reader :value

@@ -100,7 +100,7 @@ module Master
 
       data = Master.load_yaml(models_path)
       tiers = data["models"] || {}
-      ids = tiers.values.flatten.map { |m| m["id"] }.compact
+      ids = tiers.values.flat_map { |m| [m["id"]] }.compact
       alive = ids.select { |id| model_reachable?(id) }
       "models: #{alive.size}/#{ids.size} reachable"
     end

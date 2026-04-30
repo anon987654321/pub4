@@ -12,7 +12,7 @@ module Master
       MAX_SEARCH_RESULTS = 5
 
       NAME        = "web_search".freeze
-      DESCRIPTION = "Search DuckDuckGo instant answers API.".freeze
+      DESCRIPTION = "Search DuckDuckGo instant answers API."
       ENDPOINT    = "https://api.duckduckgo.com/".freeze
       TIMEOUT     = 10
 

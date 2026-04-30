@@ -10,7 +10,7 @@ module Master
     class Shell
       TIER        = :dangerous
       NAME        = "zsh".freeze
-      DESCRIPTION = "Execute a zsh command in the project root.".freeze
+      DESCRIPTION = "Execute a zsh command in the project root."
       TIMEOUT     = 30
       BLOCKLIST   = Security::Permissions::BLOCKLIST
 

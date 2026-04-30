@@ -36,7 +36,7 @@ module Master
         return [@config.model] unless enabled?
 
         pref = preferred(task_type:)
-        all = @rules.fetch("models", {}).values.flatten.map { |m| m["id"] }.compact
+        all = @rules.fetch("models", {}).values.flat_map { |m| [m["id"]] }.compact
         continuity = @continuity_index.fallback_models
         ([pref] + all + continuity + [@config.model]).uniq
       end

@@ -7,7 +7,7 @@ module Master
         include PathGuard
       TIER        = :guarded
       NAME        = "str_replace".freeze
-      DESCRIPTION = "Replace unique string in a file. Fails if pattern matches 0 or 2+ times.".freeze
+      DESCRIPTION = "Replace unique string in a file. Fails if pattern matches 0 or 2+ times."
 
       def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil)
         @root        = File.realpath(root)
