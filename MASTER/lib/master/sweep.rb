@@ -3,6 +3,9 @@
 require "open3"
 require "tempfile"
 require "set"
+require_relative "sweep/rewriter"
+require_relative "sweep/convergence"
+
 
 module Master
   # Sweep — iterative full-codebase refactor to convergence.
@@ -57,6 +60,9 @@ circuit\sopen|retry\sin|llm_request)\b
 
     # Regex for Ruby method/class/constant names — used by rename tracker.
     NAME_RE = /\b(?:def\s+(\w+)|class\s+([A-Z]\w*)|[A-Z][A-Z_]+)\b/.freeze
+
+    include Rewriter
+    include Convergence
 
     def initialize(agent:, scanner:, council:, root:, event_bus: nil)
       @agent   = agent
@@ -128,166 +134,6 @@ circuit\sopen|retry\sin|llm_request)\b
       Result.ok("sweep: #{violation_history.size} cycle(s), #{final} violation(s) remaining")
     rescue StandardError => e
       Result.err("sweep: #{e.message}", category: :unknown)
-    end
-
-    private
-
-    def load_prompts
-      Master.load_yaml(PROMPTS_PATH)
-    end
-
-    # Build a compact file map. Injected into every rewrite prompt so the model
-    # has full structural context before touching any individual file.
-    def build_codebase_map
-      files = Dir.glob(File.join(@root, "lib", "**", "*.rb"))
-                 .reject { |f| f.include?("/vendor/") }
-                 .map    { |f| f.delete_prefix("#{@root}/") }
-                 .sort
-      "## Codebase (#{files.size} Ruby files)\n" +
-        files.map { |f| "  #{f}" }.join("\n")
-    end
-
-    def collect_files(dir, types)
-      types.flat_map { |t| Dir.glob(File.join(dir, GLOBS[t].to_s)) }.reject { |f| f.include?("/data/") }.uniq.sort
-    end
-
-    def rewrite(path, rel)
-      src  = File.read(path, encoding: "UTF-8")
-      ext  = File.extname(path)
-      lang = { ".rb" => "ruby", ".sh" => "sh", ".yml" => "yaml",
-               ".md" => "markdown", ".erb" => "erb" }.fetch(ext, "text")
-
-      response = @agent.ask(build_prompt(src, rel, lang))
-      extract(response.to_s, lang)
-    rescue StandardError => e
-      @bus&.publish("sweep:rewrite_error", file: path, error: e.message)
-      nil
-    end
-
-    def build_prompt(src, rel, lang)
-      <<~PROMPT
-        You are refactoring #{rel} (#{lang}). Study the full codebase map below
-        before making any change — do not modify an interface without tracing its callers.
-
-        #{@map}
-
-        #{@prompts["axioms"]}
-        #{@prompts["structural_techniques"]}
-        #{@prompts["prose_techniques"]}
-
-        Improve every dimension of #{rel} in a single pass.
-        Return ONLY the improved file content — no explanation, no markdown fences
-        unless the file is already markdown. If no improvement is possible, return
-        exactly: UNCHANGED
-
-        File content:
-        #{src}
-      PROMPT
-    end
-
-    def extract(text, lang)
-      return nil if text.strip == "UNCHANGED"
-
-      # Reject short responses that look like error messages
-      if text.bytesize < 500 && ERROR_PATTERNS.match?(text)
-        return nil
-      end
-
-      fence_re = /```(?:#{Regexp.escape(lang)}|ruby|sh|bash|yaml|erb)?\n(.*?)```/m
-      return text.match(fence_re)[1]         if text.match?(fence_re)
-      return text.match(/```\n(.*?)```/m)[1] if text.match?(/```\n(.*?)```/m)
-
-      text.strip.empty? ? nil : text
-    end
-
-    def syntax_ok?(path, content)
-      checker = SYNTAX_CHECKERS[File.extname(path)]
-      return true unless checker
-
-      Tempfile.open(["sweep", File.extname(path)]) do |f|
-        f.write(content)
-        f.flush
-        checker.call(f.path)
-      end
-    end
-
-    def violations_in(path)
-      return 0 unless path.end_with?(".rb") && File.exist?(path)
-      scan_result = @scanner.scan(path, depth: :deep)
-      scan_result.ok? ? scan_result.value!.size : 0
-    rescue StandardError
-      0
-    end
-
-    def violations_in_text(content, ref_path)
-      return 0 unless ref_path.end_with?(".rb")
-
-      Tempfile.open(["vcheck", ".rb"]) do |f|
-        f.write(content)
-        f.flush
-        scan_result = @scanner.scan(f.path, depth: :deep)
-        scan_result.ok? ? scan_result.value!.size : 0
-      end
-    rescue StandardError
-      0
-    end
-
-    # Oscillation detector — rejects a proposed rewrite when it reintroduces
-    # a name that was removed in a recent cycle. A→B then B→A within
-    # RENAME_WINDOW is the signature documented in arxiv:2602.21833.
-    def rename_oscillation?(rel, old_src, new_src, cycle)
-      removed_now = extract_names(old_src) - extract_names(new_src)
-      added_now   = extract_names(new_src) - extract_names(old_src)
-
-      history = @rename_log[rel]
-      recent  = history.last(RENAME_WINDOW)
-
-      oscillates = recent.any? { |entry|
-        # Was something currently being ADDED previously REMOVED, and vice versa?
-        (entry[:removed] & added_now).any? && (entry[:added] & removed_now).any?
-      }
-
-      history << { cycle: cycle, removed: removed_now, added: added_now }
-      # Keep only the window we actually query.
-      @rename_log[rel] = history.last(RENAME_WINDOW * 2)
-
-      oscillates
-    end
-
-    def extract_names(source)
-      source.scan(NAME_RE).flatten.compact.uniq
-    end
-
-    def converged?(history)
-      return false if history.size < 2
-
-      prev, curr = history[-2], history[-1]
-      return true if curr.zero?
-
-      delta = (prev - curr).abs.to_f / [prev, 1].max
-      delta < CONVERGE_THRESHOLD
-    end
-
-    # γ-discounted improvement signal. If the weighted sum of improvements
-    # across recent cycles is near zero, we've stalled.
-    # V = Σ γ^t · (prev_t − curr_t)
-    def trajectory_stalled?(history)
-      return false if history.size < 3
-      deltas = history.each_cons(2).map { |a, b| a - b }
-      v = deltas.last(CONVERGE_WINDOW + 1).each_with_index.sum { |d, i| d * (TRAJECTORY_GAMMA ** i) }
-      v.abs < 1.0
-    end
-
-    def commit(msg)
-      Dir.chdir(@root) do
-        system("git add -A 2>/dev/null")
-        system("git commit -m '#{msg}' 2>/dev/null")
-      end
-    end
-
-    def git_dirty?
-      out, = Open3.capture3("git -C #{@root} status --porcelain")
-      !out.strip.empty?
     end
   end
 end
