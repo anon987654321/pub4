@@ -25,6 +25,7 @@ module Master
     def initialize(root:, event_bus: nil)
       @root    = root
       @bus     = event_bus
+      @mutex   = Mutex.new
       @pending = []
       @counter = 0
     end
@@ -34,6 +35,7 @@ module Master
       old_content = File.exist?(path) ? File.read(path) : ""
       return Result.ok("no change") if old_content == new_content
 
+      @mutex.synchronize do
       @counter += 1
       entry = Entry.new(
         id:          @counter,
@@ -44,6 +46,7 @@ module Master
         created_at:  Time.now
       )
       @pending << entry
+      end
       persist_entry(entry)
       @bus&.publish("stage:queued", id: entry.id, path: entry.path, stats: entry.diff_stats)
       Result.ok({ staged: true, id: entry.id, path: entry.path, stats: entry.diff_stats })
@@ -55,12 +58,12 @@ module Master
 
     # Apply one or all entries. Returns array of applied paths.
     def apply(id: :all)
-      targets = id == :all ? @pending.dup : @pending.select { |e| e.id == id }
+      targets = @mutex.synchronize { id == :all ? @pending.dup : @pending.select { |e| e.id == id } }
       applied = []
       targets.each do |entry|
         FileUtils.mkdir_p(File.dirname(entry.path))
         File.write(entry.path, entry.new_content)
-        @pending.delete(entry)
+        @mutex.synchronize { @pending.delete(entry) }
         remove_persisted(entry)
         @bus&.publish("stage:applied", id: entry.id, path: entry.path)
         applied << entry.path
@@ -70,9 +73,9 @@ module Master
 
     # Discard one or all without writing.
     def discard(id: :all)
-      targets = id == :all ? @pending.dup : @pending.select { |e| e.id == id }
+      targets = @mutex.synchronize { id == :all ? @pending.dup : @pending.select { |e| e.id == id } }
       targets.each do |entry|
-        @pending.delete(entry)
+        @mutex.synchronize { @pending.delete(entry) }
         remove_persisted(entry)
         @bus&.publish("stage:discarded", id: entry.id, path: entry.path)
       end
