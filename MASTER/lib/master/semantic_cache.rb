@@ -41,7 +41,7 @@ module Master
 
     def invalidate_all!
       @lock.synchronize do
-        Dir.glob(File.join(@root, "*.json")).each { |f| File.delete(f) rescue nil }
+        Dir.glob(File.join(@root, "*.json")).each { |f| File.delete(f) rescue Errno::ENOENT }
         @lru.clear
       end
     end
@@ -49,7 +49,7 @@ module Master
     def stats
       @lock.synchronize do
         files = Dir.glob(File.join(@root, "*.json"))
-        bytes = files.sum { |f| File.size(f) rescue 0 }
+        bytes = files.sum { |f| File.exist?(f) ? File.size(f) : 0 }
         { entries: files.size, size_kb: (bytes / BYTES_PER_KB).round(1) }
       end
     end
@@ -63,12 +63,12 @@ module Master
 
     def expire_entry!(path)
       @lru.delete(path)
-      File.delete(path) rescue nil
+      File.delete(path) rescue Errno::ENOENT
       nil
     end
 
     def drop_entry!(path)
-      File.delete(path) rescue nil
+      File.delete(path) rescue Errno::ENOENT
       @lru.delete(path)
       nil
     end
@@ -98,7 +98,7 @@ module Master
     def evict_lru
       oldest = @lru.shift
       return unless oldest && File.exist?(oldest)
-      File.delete(oldest)
+      File.delete(oldest) rescue Errno::ENOENT
     end
   end
 end
