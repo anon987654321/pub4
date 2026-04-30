@@ -271,6 +271,19 @@
       position:fixed;top:12px;right:16px;
       font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
     }
+    #sidebar{
+      position:fixed;top:0;right:0;
+      width:min(280px,85vw);height:100dvh;
+      background:#0a0202;border-left:1px solid #1a0606;
+      z-index:400;overflow-y:auto;padding:16px;box-sizing:border-box;
+      transform:translateX(100%);transition:transform 0.2s ease;
+      font-size:11px;color:#555;letter-spacing:.05em;
+    }
+    #sidebar.open{transform:translateX(0);}
+    #sidebar h3{color:#662222;font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin:12px 0 4px;}
+    #sidebar .row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0f0303;}
+    #sidebar .ok{color:#2a6a2a;}
+    #sidebar .err{color:#8a1a1a;}
     }/* end @layer components */
   </style>
   <%= csrf_meta_tags %>
@@ -278,6 +291,12 @@
 <body>
   <div id="chat-log"><span class="tab-hint">TAB TO CLOSE</span></div>
   <section id="status">◉</section>
+  <aside id="sidebar" aria-label="System status">
+    <h3>Circuit Breakers</h3><div id="sb-breakers"></div>
+    <h3>Session Budget</h3><div id="sb-budget"></div>
+    <h3>Phase</h3><div id="sb-phase"></div>
+    <h3>Standing Orders</h3><div id="sb-orders"></div>
+  </aside>
   <section id="ui"><span id="ui-label">MASTER</span><span class="dots" id="ui-dots"></span></section>
 
   <section id="arrow-left" class="arrow"><span>‹</span></section>
@@ -2324,12 +2343,35 @@ const AMBIENT=[
 
     animate();
 
+    // ── 
+    // -- Sidebar --
+    (function(){
+      var sb=document.getElementById("sidebar");
+      document.getElementById("status").addEventListener("click",function(){sb.classList.toggle("open");});
+      document.addEventListener("keydown",function(e){if(e.key==="Escape")sb.classList.remove("open");});
+      function row(k,v,c){return "<div class=\"row\"><span>"+k+"</span><span class=\""+(c||"")+"\">"+v+"</span></div>";}
+      function refresh(){
+        fetch("/chat/metrics").then(function(r){return r.json();}).then(function(d){
+          if(!d) return;
+          if(d.breakers) document.getElementById("sb-breakers").innerHTML=Object.entries(d.breakers).map(function(e){return row(e[0],e[1],e[1]==="open"?"err":"ok");}).join("");
+          if(d.session) document.getElementById("sb-budget").innerHTML=row("cost",d.session.cost_usd)+row("reqs",d.session.requests)+row("tokens",d.session.tokens);
+          if(d.phase) document.getElementById("sb-phase").innerHTML=row("phase",d.phase);
+          if(d.standing_orders) document.getElementById("sb-orders").innerHTML=d.standing_orders.map(function(o){return row(o.name,o.state);}).join("");
+        }).catch(function(){});
+      }
+      refresh(); setInterval(refresh,15000);
+      window._sbEvent=function(ev){
+        if(/circuit_breaker|standing_order/.test(ev.type||"")) refresh();
+        if(ev.type==="phase:changed") document.getElementById("sb-phase").innerHTML=row("phase",(ev.data||{}).phase);
+      };
+    })();
     // ── EventBus → orb reactions ──────────────────────────────────────────
     (function(){
       const es=new EventSource('/events/stream');
       es.onmessage=function(e){
         var ev;
         try{ ev=JSON.parse(e.data); }catch(_){ return; }
+        if(window._sbEvent) window._sbEvent(ev);
         var t=ev.type||'';
         if(t==='llm:request'){
           speechPulse=Math.max(speechPulse,0.55);

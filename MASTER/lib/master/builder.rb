@@ -50,10 +50,11 @@ module Master
         config["persona"]&.to_sym || Personality::DEFAULT, root:
       )
 
+      phase_gates = PhaseGates.new(root:, event_bus: bus)
       {
         config:, ring:, bus:, logging:, session:, undo:, breaker:, cache:,
         governor:, renderer:, metrics:, code_index:, diff_stager:, mcp:,
-        memory:, personality:
+        memory:, personality:, phase_gates:
       }
     end
 
@@ -118,11 +119,11 @@ module Master
         Stages::Route.new(commands:, agent: ai[:agent]),
         Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
         Stages::Execute.new,
-        Pipeline::ParallelGroup.new(
+        Pipeline::SkipOnPressure.new(Pipeline::ParallelGroup.new(
           ai[:council_stage],
           Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop])
-        ),
-        Stages::Prune.new,
+        )),
+        Pipeline::SkipOnPressure.new(Stages::Prune.new),
         Stages::Memo.new(memory: infra[:memory], event_bus: bus),
         Stages::Render.new(renderer: infra[:renderer])
       ]
