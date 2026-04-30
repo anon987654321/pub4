@@ -5,7 +5,7 @@ module Master
     module Rules
       class DuplicateCodeRule < Rule
         BLOCK_MIN  = 4
-        OCCUR_MIN  = 2
+        OCCUR_MIN  = 3
 
         def initialize
           super

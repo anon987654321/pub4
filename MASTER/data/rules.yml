@@ -35,6 +35,16 @@ voice:
     - "Provide key evidence next."
     - "Add implementation detail last."
 
+  preserve:
+    boot_message: "5-line dmesg style, never collapse to one line"
+    diagnostic_output: "structured multi-line output is intentional, never compress to abbreviations"
+    help_text: "include command name, description, and at least one example"
+    spinner_feedback: "show elapsed time and status, do not remove progress indicators"
+    refinement_scope:
+      streamline: "remove redundancy, not information"
+      polish: "refine wording, not delete output"
+      minimize: "applies to prompt tokens, not diagnostic output"
+
 zen:
   observe: "Read current behavior before changing anything."
   simplify: "Reduce moving parts before adding new components."

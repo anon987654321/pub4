@@ -83,6 +83,10 @@ module Master
       @strunk ||= (voice["strunk"] || {}).freeze
     end
 
+    def preserve
+      @preserve ||= (voice["preserve"] || {}).freeze
+    end
+
     def constitution
       @constitution ||= begin
         constitution_data = {}
@@ -91,7 +95,7 @@ module Master
         constitution_data["banned_output"] = voice["banned_output"]
         constitution_data["anti_simulation"] = voice["anti_simulation"]
         constitution_data["communication_style"] = voice["style"]
-        c.freeze
+        constitution_data.freeze
       end
     end
 
