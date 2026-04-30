@@ -31,6 +31,22 @@ module Master
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.ignore(File.join(__dir__, "master", "ruby_llm_patch.rb"))
+  # Ignore SRP extraction files that reopen their parent module rather than defining a new constant.
+  # Zeitwerk expects file base_name -> constant, but these files add methods to an existing module.
+  %w[
+    autoloop/fix_evaluator.rb
+    builder/infra_helpers.rb
+    cli/signals.rb
+    cli/tts.rb
+    command_registry/agent_commands.rb
+    command_registry/memory_commands.rb
+    command_registry/service_commands.rb
+    memory/search.rb
+    sweep/rewriter.rb
+    sweep/convergence.rb
+  ].each do |rel|
+    loader.ignore(File.join(__dir__, "master", rel))
+  end
   loader.setup
 
   def self.configure_providers!
