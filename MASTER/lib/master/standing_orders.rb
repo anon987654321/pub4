@@ -1,17 +1,11 @@
 # frozen_string_literal: true
 
 module Master
-  # Standing Orders — persistent authority programs that execute autonomously.
-  # FSM states: pending → running → done | error
-  #   pending: eligible to run when due
-  #   running: currently executing (re-entrant guard)
-  #   done:    completed; eligible again after interval
-  #   error:   halted; requires /orders reset <name>
   class StandingOrders
-    DAILY_INTERVAL = 86_400
+    DAILY_INTERVAL  = 86_400
     WEEKLY_INTERVAL = 604_800
-    STORE_PATH   = File.join(Master::ROOT, "data", "standing_orders.yml")
-    VALID_STATES = %w[pending running done error].freeze
+    STORE_PATH      = File.join(Master::ROOT, "data", "standing_orders.yml")
+    VALID_STATES    = %w[pending running done error].freeze
 
     BUILTIN_ORDERS = [
       { name: "nightly_dreams", description: "Consolidate memories during low-activity periods",
@@ -30,15 +24,13 @@ module Master
       @pipeline = pipeline
     end
 
-    # Returns orders eligible to run: enabled, scheduled, interval elapsed,
-    # not running, not stuck in error.
     def due
       now = Time.now.to_i
       @orders.select do |o|
-        order["enabled"] &&
-          order["trigger"] == "scheduled" &&
+        o["enabled"] &&
+          o["trigger"] == "scheduled" &&
           %w[pending done].include?(state_of(o)) &&
-          (now - order["last_run_at"].to_i) >= order["interval_s"].to_i
+          (now - o["last_run_at"].to_i) >= o["interval_s"].to_i
       end
     end
 
@@ -68,7 +60,7 @@ module Master
 
     def upsert(name:, description: "", trigger: "scheduled",
                interval_s: 86_400, command:, enabled: true)
-      existing = @orders.find { |o| order["name"] == name.to_s }
+      existing = @orders.find { |o| o["name"] == name.to_s }
       if existing
         existing.merge!(
           "description" => description, "trigger" => trigger.to_s,
@@ -90,21 +82,21 @@ module Master
 
     def reset(name)
       order = @orders.find { |x| x["name"] == name.to_s }
-      return "no order named '#{name}'" unless o
+      return "no order named '#{name}'" unless order
       order["state"] = "pending"
-      o.delete("last_error")
+      order.delete("last_error")
       persist
-      "'#{name}' reset → pending"
+      "'#{name}' reset -> pending"
     end
 
     def list
       return "no standing orders defined" if @orders.empty?
       @orders.map do |o|
         st   = state_of(o)
-        flag = order["enabled"] ? "on" : "off"
-        last = order["last_run_at"].to_i > 0 ? Time.at(order["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
-        err  = order["last_error"] ? "  !! #{order["last_error"][0, 60]}" : ""
-        "#{o['name']} [#{flag}|#{st}] — #{o['description']} (last: #{last})#{err}"
+        flag = o["enabled"] ? "on" : "off"
+        last = o["last_run_at"].to_i > 0 ? Time.at(o["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
+        err  = o["last_error"] ? "  !! #{o["last_error"][0, 60]}" : ""
+        "#{o['name']} [#{flag}|#{st}] - #{o['description']} (last: #{last})#{err}"
       end.join("\n")
     end
 
@@ -119,27 +111,36 @@ module Master
       Result.err(e.message)
     end
 
-    def toggle(name, state)
+    def toggle(name, enabled)
       order = @orders.find { |x| x["name"] == name.to_s }
-      return "no order named '#{name}'" unless o
-      order["enabled"] = state
+      return "no order named '#{name}'" unless order
+      order["enabled"] = enabled
       persist
-      "#{name} #{state ? 'enabled' : 'disabled'}"
+      "#{name} #{enabled ? 'enabled' : 'disabled'}"
     end
 
     def load_orders
       if File.exist?(STORE_PATH)
-        orders = Master.load_yaml(STORE_PATH) || []
-        orders.each { |o| o["state"] ||= "done" }  # migrate legacy
-        orders
+        orders = Master.load_yaml(STORE_PATH)
+        unless orders.is_a?(Array)
+          @bus&.publish("standing_orders:corrupt", path: STORE_PATH, got: orders.class.name)
+          return builtin_orders
+        end
+        orders.select { |o| o.is_a?(Hash) }.each { |o| o["state"] ||= "done" }
       else
-        BUILTIN_ORDERS.map { |o| o.transform_keys(&:to_s).merge("last_run_at" => 0, "state" => "pending") }
+        builtin_orders
       end
-    rescue Psych::Exception, Errno::ENOENT
-      []
+    rescue Psych::Exception, Errno::ENOENT, TypeError, NoMethodError => e
+      @bus&.publish("standing_orders:load_error", error: e.message)
+      builtin_orders
+    end
+
+    def builtin_orders
+      BUILTIN_ORDERS.map { |o| o.transform_keys(&:to_s).merge("last_run_at" => 0, "state" => "pending") }
     end
 
     def persist
+      return unless @orders.is_a?(Array)
       require "fileutils"
       FileUtils.mkdir_p(File.dirname(STORE_PATH))
       File.write(STORE_PATH, YAML.dump(@orders))
