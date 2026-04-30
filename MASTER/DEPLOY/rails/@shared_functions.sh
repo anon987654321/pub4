@@ -1,147 +1,148 @@
-#!/usr/bin/env sh
+#!/usr/bin/env zsh
 # @shared_functions.sh — shared helpers for DEPLOY/rails/* scripts
 # Source this file; do not execute directly.
-#
-# Conventions:
-#   APP_DIR  — full path to app (caller sets this, e.g. /home/brgen/app)
-#   APP_PORT — TCP port Falcon listens on
+# Requires: zsh, ruby34, bundle, rails, doas
+set -euo pipefail
 
-set -eu
-PATH="${PATH:-/usr/bin:/bin}"
-# Preserve exit status of pipelines
-set -o pipefail
+PATH="${PATH:-/usr/local/bin:/usr/bin:/bin}"
 
-# Detect privilege escalation command once
 if command -v doas >/dev/null 2>&1; then
-  _SUDO_CMD=doas
+  _PRIV=doas
 else
-  _SUDO_CMD=sudo
+  _PRIV=sudo
 fi
 
-# ── Configuration ────────────────────────────────────────────────────────
 : "${APP_PORT:=3000}"
 
-# ── Logging ────────────────────────────────────────────────────────────────
-log()      { printf '%b\n' "$(printf '\033[36m==>\033[0m %s' "$*")"; }
-log_ok()   { printf '%b\n' "$(printf '\033[32m✔\033[0m %s' "$*")"; }
-log_warn() { printf '%b\n' "$(printf '\033[33mWARN\033[0m %s' "$*")" >&2; }
-log_err()  { printf '%b\n' "$(printf '\033[31mERR\033[0m %s' "$*")" >&2; }
+log()      { print -P "%F{cyan}==>%f $*"; }
+log_ok()   { print -P "%F{green}ok%f $*"; }
+log_warn() { print -P "%F{yellow}WARN%f $*" >&2; }
+log_err()  { print -P "%F{red}ERR%f $*" >&2; }
 
-# ── Precondition checks ────────────────────────────────────────────────────
-command_exists() {
-  cmd=$1
-  if ! command -v "$cmd" >/dev/null 2>&1; then
-    log_err "Required command not found: $cmd"
-    exit 1
-  fi
-  log_ok "$cmd found"
+need_cmd() {
+  for cmd in "$@"; do
+    command -v "$cmd" >/dev/null 2>&1 || { log_err "Required: $cmd"; exit 1; }
+    log_ok "$cmd found"
+  done
 }
 
-check_app_exists() {
-  sentinel=$1
-  if [ -f "$sentinel" ]; then
-    log_warn "Already set up ($sentinel exists). Skipping."
-    return 0
-  fi
+already_done() {
+  local sentinel=$1
+  [[ -f $sentinel ]] && { log_warn "Already set up ($sentinel exists). Skipping."; return 0; }
   return 1
 }
 
-# ── App scaffolding ────────────────────────────────────────────────────────
-setup_full_app() {
-  app_dir=$1
-  mkdir -p "$(dirname "$app_dir")"
-
-  if [ ! -f "${app_dir}/config/application.rb" ]; then
+create_rails_app() {
+  local app_dir=$1
+  mkdir -p "${app_dir:h}"
+  if [[ ! -f "${app_dir}/config/application.rb" ]]; then
     log "Creating Rails 8 app at $app_dir"
-    rails new "$app_dir" --database=sqlite3 --skip-git \
-      --asset-pipeline=propshaft --javascript=importmap --skip-test
+    rails new "$app_dir" \
+      --database=sqlite3 \
+      --asset-pipeline=propshaft \
+      --javascript=importmap \
+      --skip-git \
+      --skip-test
   fi
-
   cd "$app_dir"
-
-  if ! grep -q '"falcon"' Gemfile 2>/dev/null; then
-    printf 'gem "falcon"\n' >> Gemfile
-    bundle install --quiet
-  fi
-
   log_ok "Working in: $app_dir"
 }
 
-# ── Gem helpers ──────────────────────────────────────────────────────────────
-install_gem() {
-  gem=$1
-  version=${2:-}
+add_gem() {
+  local gem=$1 ver=${2:-}
   if ! grep -q "\"${gem}\"" Gemfile 2>/dev/null; then
-    if [ -n "$version" ]; then
-      printf 'gem "%s", "%s"\n' "$gem" "$version" >> Gemfile
+    if [[ -n $ver ]]; then
+      print "gem \"${gem}\", \"${ver}\"" >> Gemfile
     else
-      printf 'gem "%s"\n' "$gem" >> Gemfile
+      print "gem \"${gem}\"" >> Gemfile
     fi
     bundle install --quiet
-    log_ok "gem ${gem} installed"
+    log_ok "gem ${gem} added"
   else
     log_ok "gem ${gem} already present"
   fi
 }
 
-# ── Database helpers ──────────────────────────────────────────────────────
+add_gem_group() {
+  local groups=$1; shift
+  local -a gems=("$@")
+  if ! grep -q "gem \"${gems[1]}\"" Gemfile 2>/dev/null; then
+    {
+      print "group :${groups//,/, :} do"
+      for g in "${gems[@]}"; do print "  gem \"$g\""; done
+      print "end"
+    } >> Gemfile
+    bundle install --quiet
+  fi
+}
+
+install_solid_stack() {
+  log "Installing Solid Cache / Queue / Cable"
+  add_gem solid_cache
+  add_gem solid_queue
+  add_gem solid_cable
+  bin/rails solid_cache:install 2>/dev/null || true
+  bin/rails solid_queue:install 2>/dev/null || true
+  bin/rails solid_cable:install 2>/dev/null || true
+  log_ok "Solid stack installed"
+}
+
+install_auth() {
+  if [[ ! -f app/models/session.rb ]]; then
+    log "Generating Rails 8 authentication"
+    bin/rails generate authentication
+    bin/rails db:migrate
+  else
+    log_ok "Authentication already generated"
+  fi
+}
+
+install_active_storage() {
+  if [[ -z $(print db/migrate/*create_active_storage*(N)) ]]; then
+    log "Installing Active Storage"
+    bin/rails active_storage:install
+    bin/rails db:migrate
+  else
+    log_ok "Active Storage already installed"
+  fi
+}
+
+install_action_text() {
+  if [[ -z $(print db/migrate/*create_action_text*(N)) ]]; then
+    log "Installing Action Text"
+    bin/rails action_text:install
+    bin/rails db:migrate
+  else
+    log_ok "Action Text already installed"
+  fi
+}
+
 db_setup() {
-  RAILS_ENV=production bin/rails db:create db:migrate 2>&1 |
-    grep -E "Created|migrated|error" || :
-  log_ok "database ready"
+  log "Setting up database"
+  RAILS_ENV=production bin/rails db:create db:migrate
+  log_ok "Database ready"
 }
 
-# ── relayd helpers ────────────────────────────────────────────────────────
-relayd_add_relay() {
-  host=$1
-  port=$2
-  table_name=${host%%.*}
-  conf=/etc/relayd.conf
-
-  if grep -q "table <${table_name}>" "$conf" 2>/dev/null; then
-    log_ok "relayd table <${table_name}> already present"
-    return 0
-  fi
-
-  $_SUDO_CMD tee -a "$conf" >/dev/null <<EOF
-table <${table_name}> { 127.0.0.1 }
-EOF
-
-  log_ok "relayd table <${table_name}> → :${port} added (reload relayd to apply)"
+db_migrate() {
+  RAILS_ENV=${RAILS_ENV:-production} bin/rails db:migrate
+  log_ok "Migrations complete"
 }
 
-# ── rc.d helpers ────────────────────────────────────────────────────────────
-install_rcd() {
-  svc=$1
-  app_dir=$2
-  port=$3
-  user=$4
-  rcd="/etc/rc.d/${svc}"
-
-  if [ -f "$rcd" ]; then
-    log_ok "rc.d/${svc} already exists"
-    return 0
-  fi
-
-  $_SUDO_CMD tee "$rcd" >/dev/null <<'EOF'
-#!/bin/ksh
-daemon_execdir="${APP_DIR}"
-daemon="${APP_DIR}/bin/rails"
-daemon_flags="server -b 0.0.0.0 -p ${APP_PORT} -e production"
-daemon_user="${USER}"
-. /etc/rc.d/rc.subr
-rc_cmd $1
-EOF
-
-  $_SUDO_CMD chmod 755 "$rcd"
-  $_SUDO_CMD rcctl enable "$svc"
-  log_ok "rc.d/${svc} installed"
+configure_production() {
+  local cfg=config/environments/production.rb
+  grep -q 'force_ssl' "$cfg" || print '  config.force_ssl = true' >> "$cfg"
+  grep -q 'solid_cache' "$cfg" || print '  config.cache_store = :solid_cache_store' >> "$cfg"
+  log_ok "Production config updated"
 }
 
-# ── Asset helpers ────────────────────────────────────────────────────────
-generate_default_css() {
+install_security_tools() {
+  add_gem_group "development,test" brakeman rubocop-rails-omakase
+  log_ok "Security tools added"
+}
+
+write_base_css() {
   mkdir -p app/assets/stylesheets
-  cat > app/assets/stylesheets/application.css <<'CSS'
+  cat > app/assets/stylesheets/application.css << 'CSS'
 :root {
   --bg: #0a0a0a; --surface: #1a1a1a; --text: #e8eaed;
   --text-dim: #9aa0a6; --primary: #8ab4f8; --accent: #ff4500;
@@ -151,18 +152,92 @@ generate_default_css() {
 body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
 main { max-width: 1200px; margin: 0 auto; padding: calc(var(--space)*2); }
 a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
 .card { background: var(--surface); border-radius: var(--radius); padding: calc(var(--space)*2); margin-bottom: calc(var(--space)*2); }
+.btn { display: inline-block; padding: .4rem 1rem; border-radius: var(--radius); border: none; cursor: pointer; font-size: .9rem; }
+.btn-primary { background: var(--primary); color: #000; }
+.btn-danger  { background: #c62828; color: #fff; }
+.flash-notice { background: #1a3a1a; color: #81c784; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
+.flash-alert  { background: #3a1a1a; color: #e57373; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
 @media (max-width: 768px) { main { padding: var(--space); } }
 CSS
-  log_ok "default CSS written"
+  log_ok "Base CSS written"
 }
 
-generate_all_stimulus_controllers() {
-  mkdir -p app/javascript/controllers
-  cat > app/javascript/controllers/index.js <<'JS'
-import { application } from "controllers/application"
-import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
-eagerLoadControllersFrom("controllers", application)
-JS
-  log_ok "Stimulus controllers index written"
+write_layout() {
+  local app_title=${1:-App}
+  mkdir -p app/views/layouts
+  cat > app/views/layouts/application.html.erb << LAYOUT
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%= content_for?(:title) ? yield(:title) + " – ${app_title}" : "${app_title}" %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body>
+<% if notice %><div class="flash-notice"><%= notice %></div><% end %>
+<% if alert  %><div class="flash-alert"><%= alert  %></div><% end %>
+<main><%= yield %></main>
+</body>
+</html>
+LAYOUT
+  log_ok "Layout written"
+}
+
+install_rcd() {
+  local svc=$1 app_dir=$2 port=$3 user=$4
+  local rcd="/etc/rc.d/${svc}"
+  [[ -f $rcd ]] && { log_ok "rc.d/${svc} already exists"; return 0; }
+  $_PRIV tee "$rcd" > /dev/null << EOS
+#!/bin/ksh
+daemon="${app_dir}/bin/puma"
+daemon_flags="-C ${app_dir}/config/puma.rb -e production"
+daemon_user="${user}"
+. /etc/rc.d/rc.subr
+rc_cmd \$1
+EOS
+  $_PRIV chmod 755 "$rcd"
+  $_PRIV rcctl enable "$svc"
+  log_ok "rc.d/${svc} installed"
+}
+
+relayd_add_relay() {
+  local host=$1 port=$2
+  local table="${host%%.*}"
+  local conf=/etc/relayd.conf
+  grep -q "table <${table}>" "$conf" 2>/dev/null && { log_ok "relayd <${table}> exists"; return 0; }
+  $_PRIV tee -a "$conf" > /dev/null << EOS
+
+table <${table}> { 127.0.0.1 }
+relay "${table}_http" {
+  listen on 0.0.0.0 port 80
+  forward to <${table}> port ${port} check tcp
+}
+EOS
+  log_ok "relayd table <${table}> -> :${port} added"
+}
+
+write_puma_config() {
+  local port=${1:-3000}
+  cat > config/puma.rb << PUMA
+max_threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }
+min_threads_count = ENV.fetch("RAILS_MIN_THREADS") { max_threads_count }
+threads min_threads_count, max_threads_count
+worker_timeout 3600 if ENV.fetch("RAILS_ENV", "development") == "development"
+port ENV.fetch("PORT") { ${port} }
+environment ENV.fetch("RAILS_ENV") { "development" }
+pidfile ENV.fetch("PIDFILE") { "tmp/pids/server.pid" }
+plugin :tmp_restart
+PUMA
+  log_ok "Puma config written"
+}
+
+install_thruster() {
+  add_gem thruster
+  log_ok "Thruster added"
 }
