@@ -43,7 +43,7 @@ module Master
       ".rb" => ->(p) { system("ruby -c #{p} > /dev/null 2>&1") },
       ".sh"  => ->(p) { system("bash -n #{p}  > /dev/null 2>&1") },
       ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue => _e; false; end },
-      ".erb" => ->(p) { begin; ERB.new(File.read(p)).result(binding); true; rescue SyntaxError; false; rescue => _e; true; end }
+      ".erb" => ->(p) { begin; RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src); true; rescue SyntaxError; false; rescue => _e; true; end }
     }.freeze
 
     SEVERITY_RANK = Master::SEVERITY_RANK

@@ -24,9 +24,13 @@ module Master
             entry
           end
         end
-        feedback = threads.map { |t| t.join(20) ? t.value : nil }.compact
+feedback = threads.map { |t| t.join(30) ? t.value : nil }.compact
+if feedback.empty?
+  @bus&.publish(:council_timeout, personas: @personas.map(&:name))
+  return Result.err("council: all personas timed out (#{@personas.size})", category: :timeout)
+end
 
-        vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
+vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
         unless vetoes.empty?
           veto = vetoes.first
           @bus&.publish(:council_veto, veto)

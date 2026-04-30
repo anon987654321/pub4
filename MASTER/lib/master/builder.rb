@@ -119,6 +119,7 @@ module Master
         Stages::Infer.new,
         Stages::Route.new(commands:, agent: ai[:agent]),
         Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
+        Stages::Deliberate.new(agent: ai[:agent], config: infra[:config]),
         Stages::Execute.new,
         Pipeline::SkipOnPressure.new(Pipeline::ParallelGroup.new(
           ai[:council_stage],

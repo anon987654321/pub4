@@ -20,8 +20,7 @@ module Master
 
         # 1. Scan any files that were written during Execute
         paths = Array(ctx[:written_files]).filter_map { |p| File.exist?(p) ? p : nil }
-        paths = [File.join(@root, "lib")] if paths.empty? && defined?(@root) && @root
-        paths.each do |scan_path|
+                paths.each do |scan_path|
           next unless File.exist?(scan_path)
           if File.directory?(scan_path)
             result = @scanner.scan_dir(scan_path, depth: :standard)

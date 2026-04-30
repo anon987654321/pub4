@@ -42,11 +42,11 @@ module Master
         text.scan(REMEMBER_RE).each_with_index do |(fact), i|
           @memory.remember("note_#{Time.now.to_i}_#{i}", fact.strip)
         end
-        text.scan(DECISION_RE).each do |(decision)|
-          @memory.remember("decision_latest", decision.strip)
+        text.scan(DECISION_RE).each_with_index do |(decision), i|
+          @memory.remember("decision_#{Time.now.to_i}_#{i}", decision.strip)
         end
-        text.scan(PREFER_RE).each do |(pref)|
-          key = "pref_#{pref.split.first(3).join("_").downcase.gsub(/\W/, "")}"
+        text.scan(PREFER_RE).each_with_index do |(pref), i|
+          key = "pref_#{Time.now.to_i}_#{i}_#{pref.split.first(3).join("_").downcase.gsub(/\W/, "")}"
           @memory.remember(key, pref.strip)
         end
       end
