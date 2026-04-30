@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -8,12 +8,8 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <title>MASTER &middot; <%= @model %></title>
   <meta name="theme-color" content="#000000"/>
-<style>
-  @layer base, components, utilities;
-
-  @layer base{
-  :root{
-
+  <style>
+    :root{
       --safe-top:env(safe-area-inset-top,0px);
       --safe-right:env(safe-area-inset-right,0px);
       --safe-bottom:env(safe-area-inset-bottom,0px);
@@ -27,13 +23,12 @@
       color:#dcdcdc;
       font:16px/1.5 Helvetica,Arial,sans-serif;
       overflow:hidden;
-  touch-action:none;
-}
-}/* end @layer base */
-
-@layer components{
-/* Low-end CSS orb
- — GPU compositor only, zero JS render cost */
+      touch-action:none;
+      will-change:contents;
+      transform:translateZ(0);
+      contain:strict;
+    }
+    /* Low-end CSS orb — GPU compositor only, zero JS render cost */
     #orb-css{
       position:fixed;
       left:50%;top:50%;
@@ -70,6 +65,7 @@
       50%     {transform:translate(-50%,-50%) scale(1.05) translateZ(0);opacity:1;}
     }
 
+
     canvas{
       position:fixed;
       inset:0;
@@ -78,7 +74,6 @@
       display:block;
       background:#020000;
       touch-action:none;
-      cursor:pointer;
     }
 
     #status{
@@ -271,32 +266,12 @@
       position:fixed;top:12px;right:16px;
       font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
     }
-    #sidebar{
-      position:fixed;top:0;right:0;
-      width:min(280px,85vw);height:100dvh;
-      background:#0a0202;border-left:1px solid #1a0606;
-      z-index:400;overflow-y:auto;padding:16px;box-sizing:border-box;
-      transform:translateX(100%);transition:transform 0.2s ease;
-      font-size:11px;color:#555;letter-spacing:.05em;
-    }
-    #sidebar.open{transform:translateX(0);}
-    #sidebar h3{color:#662222;font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin:12px 0 4px;}
-    #sidebar .row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #0f0303;}
-    #sidebar .ok{color:#2a6a2a;}
-    #sidebar .err{color:#8a1a1a;}
-    }/* end @layer components */
   </style>
   <%= csrf_meta_tags %>
 </head>
 <body>
   <div id="chat-log"><span class="tab-hint">TAB TO CLOSE</span></div>
   <section id="status">◉</section>
-  <aside id="sidebar" aria-label="System status">
-    <h3>Circuit Breakers</h3><div id="sb-breakers"></div>
-    <h3>Session Budget</h3><div id="sb-budget"></div>
-    <h3>Phase</h3><div id="sb-phase"></div>
-    <h3>Standing Orders</h3><div id="sb-orders"></div>
-  </aside>
   <section id="ui"><span id="ui-label">MASTER</span><span class="dots" id="ui-dots"></span></section>
 
   <section id="arrow-left" class="arrow"><span>‹</span></section>
@@ -309,22 +284,22 @@
     <span id="attach-label"></span>
   </section>
 
-  <canvas id="canvas"></canvas>
-
   <section id="overlay" role="dialog" aria-modal="true">
     <h1>MASTER</h1>
     <p class="hint">tap to begin</p>
   </section>
 
+  <canvas id="canvas"></canvas>
+
   <script>
     "use strict";
+
     const canvas=document.getElementById('canvas');
     const ctx=canvas.getContext('2d',{alpha:false});
     const statusEl=document.getElementById('status');
     const uiLabel=document.getElementById('ui-label');
     const uiDots=document.getElementById('ui-dots');
     const inputField=document.getElementById('input-field');
-    let _overlayJustDismissed=false;
     const input=inputField.querySelector('input[type=text]');
     const fileInput=document.getElementById('file-input');
     const attachBtn=document.getElementById('attach-btn');
@@ -369,12 +344,14 @@
     document.addEventListener('keydown',e=>{
       if(e.key==='Tab'){e.preventDefault();chatLog.classList.toggle('open');}
     });
+    // #7: Mobile chat toggle — double-tap canvas area
     let lastCanvasTap=0;
     canvas.addEventListener('touchend',()=>{
       const now=Date.now();
       if(now-lastCanvasTap<350) chatLog.classList.toggle('open');
       lastCanvasTap=now;
     },{passive:true});
+    // #4: Pull-down to reveal chat — swipe down from top 80px
     let pullStartY=0,pullStartX=0,pullActive=false;
     window.addEventListener('touchstart',e=>{
       const touch=e.touches[0];
@@ -437,14 +414,6 @@ const renderMd = raw => {
 
     let audioCtx,analyser,dataArray;
     let audioLevel=0;
-    // Pre-load voices immediately so they are available synchronously on first gesture.
-    let _cachedVoices=[];
-    if('speechSynthesis' in window){
-      _cachedVoices=window.speechSynthesis.getVoices();
-      window.speechSynthesis.addEventListener('voiceschanged',()=>{
-        _cachedVoices=window.speechSynthesis.getVoices();
-      });
-    }
     let speechPulse=0;
     let recognition=null;
     let recognitionActive=false;
@@ -465,7 +434,7 @@ const renderMd = raw => {
     const initAudio=async()=>{
       try{
         audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-        const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+        const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
         const source=audioCtx.createMediaStreamSource(stream);
         analyser=audioCtx.createAnalyser();
         analyser.fftSize=32;
@@ -1131,14 +1100,12 @@ const renderMd = raw => {
       return parts&&parts.length?parts.map(s=>s.trim()).filter(Boolean):[raw];
     };
 
-    const N=2000;
-    const LOW_END=N<200; // only truly degenerate devices skip canvas
-
     // Web Audio effect chain — cycle with long-press on status circle
-    const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone','vocoder','autotune','choir','telephone','void'];
+    const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone'];
     let fxIdx=LOW_END?0:1+Math.floor(Math.random()*(FX_MODES.length-1)); // off on low-end
     let fxTaps=0;let fxTapTimer=0;
 
+    // #4: Flash FX mode name when it changes
     const showFxMode=()=>{
       uiLabel.textContent='♪ '+FX_MODES[fxIdx];
       setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
@@ -1152,60 +1119,37 @@ const renderMd = raw => {
       if(mode==='off'){src.connect(an);src.connect(out);return;}
       // Dark: pitch down, heavy bass
       if(mode==='dark'){
-        src.playbackRate.value=0.78;
-        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=180;bass.gain.value=14;
+        src.playbackRate.value=0.85;
+        const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=200;bass.gain.value=10;
         src.connect(bass);bass.connect(an);bass.connect(out);return;
       }
-// Demon: Osman possessed — layered horror
-if(mode==='demon'){
-  src.playbackRate.value=0.5;
-  // Crushing distortion
-  const dist=audioCtx.createWaveShaper();const dn=2048;const dc=new Float32Array(dn);
-  for(let i=0;i<dn;i++){const x=i*2/(dn-1)-1;dc[i]=Math.sign(x)*Math.pow(Math.abs(x),0.3)*0.9;}
-  dist.curve=dc;dist.oversample='4x';
-  // Sub bass shelf — earthquake
-  const sub=audioCtx.createBiquadFilter();sub.type='lowshelf';sub.frequency.value=80;sub.gain.value=22;
-  // Kill highs
-  const cut=audioCtx.createBiquadFilter();cut.type='highshelf';cut.frequency.value=2000;cut.gain.value=-24;
-  // Dual ring mod — beating interference pattern
-  const rm1=audioCtx.createGain();rm1.gain.value=0.6;
-  const rmOsc1=audioCtx.createOscillator();rmOsc1.frequency.value=29;rmOsc1.type='sine';
-  const rmD1=audioCtx.createGain();rmD1.gain.value=0.5;
-  rmOsc1.connect(rmD1);rmD1.connect(rm1.gain);rmOsc1.start();
-  const rm2=audioCtx.createGain();rm2.gain.value=0.4;
-  const rmOsc2=audioCtx.createOscillator();rmOsc2.frequency.value=37;rmOsc2.type='triangle';
-  const rmD2=audioCtx.createGain();rmD2.gain.value=0.35;
-  rmOsc2.connect(rmD2);rmD2.connect(rm2.gain);rmOsc2.start();
-  // Frequency shifter simulation — alien formants
-  const shift=audioCtx.createOscillator();shift.frequency.value=8;shift.type='sine';
-  const shiftG=audioCtx.createGain();shiftG.gain.value=6;
-  const shiftFilt=audioCtx.createBiquadFilter();shiftFilt.type='peaking';shiftFilt.frequency.value=500;shiftFilt.gain.value=8;shiftFilt.Q.value=4;
-  shift.connect(shiftG);shiftG.connect(shiftFilt.frequency);shift.start();
-  // Infinite crypt reverb
-  const r1=audioCtx.createDelay(3);r1.delayTime.value=0.19;
-  const r2=audioCtx.createDelay(3);r2.delayTime.value=0.47;
-  const r3=audioCtx.createDelay(3);r3.delayTime.value=0.89;
-  const rg1=audioCtx.createGain();rg1.gain.value=0.5;
-  const rg2=audioCtx.createGain();rg2.gain.value=0.35;
-  const rg3=audioCtx.createGain();rg3.gain.value=0.2;
-  const rfb=audioCtx.createGain();rfb.gain.value=0.55;
-  const rfbFilt=audioCtx.createBiquadFilter();rfbFilt.type='lowpass';rfbFilt.frequency.value=400;
-  // Octave-down ghost via pitch-shifted feedback
-  const octD=audioCtx.createDelay();octD.delayTime.value=0.004;
-  const octG=audioCtx.createGain();octG.gain.value=0.3;
-  const octLfo=audioCtx.createOscillator();octLfo.frequency.value=0.5;octLfo.type='sawtooth';
-  const octLfoG=audioCtx.createGain();octLfoG.gain.value=0.003;
-  octLfo.connect(octLfoG);octLfoG.connect(octD.delayTime);octLfo.start();
-  // Chain
-  src.connect(dist);dist.connect(sub);sub.connect(cut);cut.connect(shiftFilt);
-  shiftFilt.connect(rm1);rm1.connect(rm2);rm2.connect(an);rm2.connect(out);
-  // Octave ghost
-  rm2.connect(octD);octD.connect(octG);octG.connect(out);
-  // Crypt reverb
-  rm2.connect(r1);r1.connect(rg1);rg1.connect(out);rg1.connect(rfb);rfb.connect(rfbFilt);rfbFilt.connect(r1);
-  rm2.connect(r2);r2.connect(rg2);rg2.connect(out);
-  rm2.connect(r3);r3.connect(rg3);rg3.connect(out);return;
-}
+      // Demon: ring mod growl + crypt reverb + sub bass crush — nobody fucks with Osman
+      if(mode==='demon'){
+        // Hard distortion into sub bass shelf
+        const dist=audioCtx.createWaveShaper();const dn=2048;const dc=new Float32Array(dn);
+        for(let i=0;i<dn;i++){const x=i*2/(dn-1)-1;dc[i]=Math.tanh(x*7)*0.85;}
+        dist.curve=dc;dist.oversample='4x';
+        const sub=audioCtx.createBiquadFilter();sub.type='lowshelf';sub.frequency.value=100;sub.gain.value=16;
+        const cut=audioCtx.createBiquadFilter();cut.type='highshelf';cut.frequency.value=3200;cut.gain.value=-20;
+        // Ring modulation at 35Hz — demonic growl texture
+        const rm=audioCtx.createGain();rm.gain.value=0.55;
+        const rmOsc=audioCtx.createOscillator();rmOsc.frequency.value=35;rmOsc.type='sine';
+        const rmD=audioCtx.createGain();rmD.gain.value=0.42;
+        rmOsc.connect(rmD);rmD.connect(rm.gain);rmOsc.start();
+        // Crypt reverb: 3 long echoes with feedback
+        const r1=audioCtx.createDelay();r1.delayTime.value=0.11;
+        const r2=audioCtx.createDelay();r2.delayTime.value=0.28;
+        const r3=audioCtx.createDelay();r3.delayTime.value=0.55;
+        const rg1=audioCtx.createGain();rg1.gain.value=0.38;
+        const rg2=audioCtx.createGain();rg2.gain.value=0.20;
+        const rg3=audioCtx.createGain();rg3.gain.value=0.09;
+        const rfb=audioCtx.createGain();rfb.gain.value=0.30;
+        src.connect(dist);dist.connect(sub);sub.connect(cut);cut.connect(rm);
+        rm.connect(an);rm.connect(out);
+        cut.connect(r1);r1.connect(rg1);rg1.connect(out);rg1.connect(rfb);rfb.connect(r1);
+        cut.connect(r2);r2.connect(rg2);rg2.connect(out);
+        cut.connect(r3);r3.connect(rg3);rg3.connect(out);return;
+      }
       // Radio: bandpass crackle, compression
       if(mode==='radio'){
         const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=300;
@@ -1315,117 +1259,6 @@ if(mode==='demon'){
         const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-15;comp.ratio.value=12;comp.knee.value=0;
         src.connect(hp);hp.connect(lp);lp.connect(dist);dist.connect(comp);comp.connect(an);comp.connect(out);return;
       }
-// Vocoder: 16-band channel vocoder — robotic harmonic resynthesis
-if(mode==='vocoder'){
-  src.playbackRate.value=0.85;
-  const bands=16;const carrier=audioCtx.createOscillator();carrier.type='sawtooth';carrier.frequency.value=120;carrier.start();
-  const merge=audioCtx.createGain();merge.gain.value=1.2;
-  for(let b=0;b<bands;b++){
-    const f=200*Math.pow(2,b*0.4);// log-spaced 200Hz–6kHz
-    const bpIn=audioCtx.createBiquadFilter();bpIn.type='bandpass';bpIn.frequency.value=f;bpIn.Q.value=8;
-    const bpCar=audioCtx.createBiquadFilter();bpCar.type='bandpass';bpCar.frequency.value=f;bpCar.Q.value=8;
-    const env=audioCtx.createGain();env.gain.value=0;
-    // Envelope follower approximation: rectify + smooth
-    const rect=audioCtx.createWaveShaper();const rc=new Float32Array(256);
-    for(let i=0;i<256;i++){const x=i/255*2-1;rc[i]=Math.abs(x);}rect.curve=rc;
-    const smooth=audioCtx.createBiquadFilter();smooth.type='lowpass';smooth.frequency.value=20;
-    src.connect(bpIn);bpIn.connect(rect);rect.connect(smooth);smooth.connect(env.gain);
-    carrier.connect(bpCar);bpCar.connect(env);env.connect(merge);
-  }
-  // Mix dry sub for body
-  const sub=audioCtx.createBiquadFilter();sub.type='lowpass';sub.frequency.value=200;
-  const subG=audioCtx.createGain();subG.gain.value=0.4;
-  src.connect(sub);sub.connect(subG);subG.connect(merge);
-  merge.connect(an);merge.connect(out);return;
-}
-// Autotune: pitch quantization via comb filter bank tuned to chromatic notes
-if(mode==='autotune'){
-  src.playbackRate.value=0.92;
-  const mix=audioCtx.createGain();mix.gain.value=0.9;
-  // Shimmer: pitch-shifted delay for that T-Pain sparkle
-  const d1=audioCtx.createDelay();d1.delayTime.value=0.005;
-  const d2=audioCtx.createDelay();d2.delayTime.value=0.0075;
-  const g1=audioCtx.createGain();g1.gain.value=0.6;
-  const g2=audioCtx.createGain();g2.gain.value=0.4;
-  const lfo1=audioCtx.createOscillator();lfo1.frequency.value=6;lfo1.type='sine';
-  const lfo1g=audioCtx.createGain();lfo1g.gain.value=0.002;
-  lfo1.connect(lfo1g);lfo1g.connect(d1.delayTime);lfo1.start();
-  const lfo2=audioCtx.createOscillator();lfo2.frequency.value=5.1;lfo2.type='sine';
-  const lfo2g=audioCtx.createGain();lfo2g.gain.value=0.003;
-  lfo2.connect(lfo2g);lfo2g.connect(d2.delayTime);lfo2.start();
-  // Formant boost — nasal T-Pain quality
-  const form=audioCtx.createBiquadFilter();form.type='peaking';form.frequency.value=2200;form.gain.value=10;form.Q.value=3;
-  const bright=audioCtx.createBiquadFilter();bright.type='highshelf';bright.frequency.value=4000;bright.gain.value=6;
-  const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=6;comp.knee.value=5;
-  src.connect(form);form.connect(bright);bright.connect(comp);
-  comp.connect(mix);comp.connect(d1);d1.connect(g1);g1.connect(mix);
-  comp.connect(d2);d2.connect(g2);g2.connect(mix);
-  mix.connect(an);mix.connect(out);return;
-}
-// Choir: multiply voice into harmonized ensemble with detuned copies
-if(mode==='choir'){
-  src.playbackRate.value=0.95;
-  const bus=audioCtx.createGain();bus.gain.value=0.7;
-  const intervals=[0.005,0.012,0.019,0.028,0.037,0.045];// 6 detuned copies
-  const gains=[0.5,0.45,0.35,0.3,0.25,0.2];
-  intervals.forEach((dt,idx)=>{
-    const d=audioCtx.createDelay();d.delayTime.value=dt;
-    const g=audioCtx.createGain();g.gain.value=gains[idx];
-    // Slight pitch drift via LFO on delay time
-    const lfo=audioCtx.createOscillator();lfo.frequency.value=0.3+idx*0.15;lfo.type='sine';
-    const lfoG=audioCtx.createGain();lfoG.gain.value=0.0015;
-    lfo.connect(lfoG);lfoG.connect(d.delayTime);lfo.start();
-    src.connect(d);d.connect(g);g.connect(bus);
-  });
-  // Cathedral reverb tail
-  const rv=audioCtx.createDelay();rv.delayTime.value=0.15;
-  const rvg=audioCtx.createGain();rvg.gain.value=0.25;
-  const rvfb=audioCtx.createGain();rvfb.gain.value=0.3;
-  bus.connect(rv);rv.connect(rvg);rvg.connect(bus);rvg.connect(rvfb);rvfb.connect(rv);
-  // Warm LP
-  const warm=audioCtx.createBiquadFilter();warm.type='lowpass';warm.frequency.value=3500;
-  src.connect(bus);bus.connect(warm);warm.connect(an);warm.connect(out);return;
-}
-// Telephone: extreme bandpass + compression + noise floor
-if(mode==='telephone'){
-  src.playbackRate.value=1.0;
-  const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=700;hp.Q.value=1;
-  const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2800;lp.Q.value=1;
-  const dist=audioCtx.createWaveShaper();const n=512;const c=new Float32Array(n);
-  for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=Math.tanh(x*5)*0.7;}dist.curve=c;
-  const comp=audioCtx.createDynamicsCompressor();comp.threshold.value=-25;comp.ratio.value=15;comp.knee.value=0;
-  // Line noise
-  const noise=audioCtx.createBufferSource();const nb=audioCtx.createBuffer(1,audioCtx.sampleRate,audioCtx.sampleRate);
-  const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=(Math.random()*2-1)*0.015;
-  noise.buffer=nb;noise.loop=true;noise.start();
-  const noiseG=audioCtx.createGain();noiseG.gain.value=0.08;
-  noise.connect(noiseG);
-  src.connect(hp);hp.connect(lp);lp.connect(dist);dist.connect(comp);
-  const mix=audioCtx.createGain();mix.gain.value=1;
-  comp.connect(mix);noiseG.connect(mix);mix.connect(an);mix.connect(out);return;
-}
-// Void: extreme pitch down + infinite reverb + sub rumble — abyss speaks
-if(mode==='void'){
-  src.playbackRate.value=0.55;
-  const sub=audioCtx.createBiquadFilter();sub.type='lowshelf';sub.frequency.value=120;sub.gain.value=18;
-  const cut=audioCtx.createBiquadFilter();cut.type='lowpass';cut.frequency.value=800;cut.Q.value=2;
-  // Long feedback delay network
-  const d1=audioCtx.createDelay(5);d1.delayTime.value=0.4;
-  const d2=audioCtx.createDelay(5);d2.delayTime.value=0.7;
-  const d3=audioCtx.createDelay(5);d3.delayTime.value=1.1;
-  const g1=audioCtx.createGain();g1.gain.value=0.45;
-  const g2=audioCtx.createGain();g2.gain.value=0.35;
-  const g3=audioCtx.createGain();g3.gain.value=0.25;
-  const fb=audioCtx.createGain();fb.gain.value=0.5;
-  src.connect(sub);sub.connect(cut);cut.connect(an);cut.connect(out);
-  cut.connect(d1);d1.connect(g1);g1.connect(out);g1.connect(fb);fb.connect(d1);
-  cut.connect(d2);d2.connect(g2);g2.connect(out);
-  cut.connect(d3);d3.connect(g3);g3.connect(out);
-  // Sub rumble carrier
-  const rumble=audioCtx.createOscillator();rumble.frequency.value=28;rumble.type='sine';
-  const rumbleG=audioCtx.createGain();rumbleG.gain.value=0.12;
-  rumble.connect(rumbleG);rumbleG.connect(out);rumble.start();return;
-}
       src.connect(an);src.connect(out);
     };
 
@@ -1436,23 +1269,14 @@ if(mode==='void'){
       if(!('speechSynthesis' in window)) return false;
       window.speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g,'').substring(0,500));
-      u.lang='ms-MY'; u.rate=0.92; u.pitch=0.85; u.volume=1.0;
-      u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');duckPads();if(padModulate)padModulate('speak');if(recognition&&recognitionActive)try{recognition.stop();}catch(_e){}};
-      u.onend=()=>{unduckPads();_onSpeakEnd();}; u.onerror=()=>{unduckPads();_onSpeakEnd();};
-      // Always speak synchronously — must stay inside gesture call stack on mobile.
-      // _cachedVoices is populated eagerly at page load and kept fresh via voiceschanged.
-      const saved=localStorage.getItem('pref_voice');
-      const pick=( saved && _cachedVoices.find(v=>v.name===saved) )
-        ||_cachedVoices.find(v=>/osman/i.test(v.name))
-        ||_cachedVoices.find(v=>v.lang==='ms-MY'&&v.localService)
-        ||_cachedVoices.find(v=>v.lang.startsWith('ms'))
-        ||_cachedVoices.find(v=>v.lang.startsWith('en-')&&v.localService)
-        ||_cachedVoices.find(v=>v.lang.startsWith('en-'))
-        ||_cachedVoices[0];
-      if(pick){
-        u.voice=pick;
-        if(!saved||saved!==pick.name) localStorage.setItem('pref_voice',pick.name);
-      }
+      u.rate=1.08; u.pitch=1.05; u.volume=1.0;
+      const voices=window.speechSynthesis.getVoices();
+      const pick=voices.find(v=>v.lang.startsWith('en-')&&v.localService)
+        ||voices.find(v=>v.lang.startsWith('en-'))
+        ||voices[0];
+      if(pick) u.voice=pick;
+      u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');};
+      u.onend=_onSpeakEnd; u.onerror=_onSpeakEnd;
       window.speechSynthesis.speak(u);
       return true;
     };
@@ -1460,7 +1284,7 @@ if(mode==='void'){
     const speakWithAudio=async(text)=>{
       if(LOW_END) return speakBrowser(text);
 
-      if(!audioCtx) return speakBrowser(text);
+      if(!audioCtx) return false;
       if(audioCtx.state==='suspended') await audioCtx.resume();
       try{
         const resp=await fetch("/chat/tts",{
@@ -1468,9 +1292,9 @@ if(mode==='void'){
           headers:{"Content-Type":"application/json","X-CSRF-Token":csrfToken()},
           body:JSON.stringify({text})
         });
-        if(!resp.ok) return speakBrowser(text);
+        if(!resp.ok) return false;
         const buf=await resp.arrayBuffer();
-        if(!buf.byteLength) return speakBrowser(text);
+        if(!buf.byteLength) return false;
         const decoded=await audioCtx.decodeAudioData(buf);
         // Cancel local TTS — server audio is higher quality
         if('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -1486,7 +1310,7 @@ if(mode==='void'){
         src.onended=_onSpeakEnd;
         src.start();
         return true;
-      }catch(_e){ return speakBrowser(text); }
+      }catch(_e){ return false; }
     };
 
     const startRecognition=()=>{
@@ -1499,12 +1323,11 @@ if(mode==='void'){
       recognition=new SpeechRecognition();
       recognition.continuous=true;
       recognition.interimResults=true;
-      recognition.lang='ms-MY';
-      recognition.maxAlternatives=3;
+      recognition.lang='en-US';
       recognition.onstart=()=>{ recognitionActive=true; statusEl.classList.add('think'); };
       recognition.onend=()=>{
         recognitionActive=false;
-        if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,500);
+        if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,160);
       };
       recognition.onerror=(ev)=>{
         if(ev.error==='not-allowed') uiLabel.textContent='Microphone blocked';
@@ -1512,21 +1335,14 @@ if(mode==='void'){
         else if(ev.error==='network') uiLabel.textContent='No network';
         else uiLabel.textContent='Mic: '+ev.error;
       };
-recognition.onresult=(ev)=>{
-  // Auto-detect language: if mostly ASCII, switch to en-US
-  const _detectLang=(txt)=>{
-    const ascii=txt.replace(/[^a-zA-Z]/g,'').length;
-    const total=txt.replace(/\s/g,'').length||1;
-    return ascii/total>0.8?'en-US':'ms-MY';
-  };
+      recognition.onresult=(ev)=>{
         let finalText='';
         for(let i=ev.resultIndex;i<ev.results.length;i++){
           if(ev.results[i].isFinal) finalText+=ev.results[i][0].transcript+" ";
         }
         finalText=finalText.trim();
         if(!finalText) return;
-        const detectedLang=_detectLang(finalText);
-        if(recognition.lang!==detectedLang){recognition.lang=detectedLang;}
+        // #6: Wake word — "hey master" activates without sending
         if(/^hey\s+master$/i.test(finalText)){
           haptic(25);
           uiLabel.textContent='Listening…';
@@ -1596,6 +1412,7 @@ recognition.onresult=(ev)=>{
     window.addEventListener('touchstart',handleTouch,{passive:true});
     window.addEventListener('touchend',()=>{touching=false;});
 
+    // #1: Haptic feedback helper
     const haptic=(ms=10)=>{try{navigator.vibrate(ms);}catch(_){}};
 
     // Motion graphics: spawn expanding ring from center on state change
@@ -1611,6 +1428,7 @@ recognition.onresult=(ev)=>{
       if(Math.abs(dx)>60){setOrb(currentOrb+(dx<0?1:-1));haptic(15);}
     },{passive:true});
 
+    // #5: Typing indicator — orb contracts when user is typing
     let isTyping=false;
     input.addEventListener('input',()=>{isTyping=input.value.length>0;});
 
@@ -1642,6 +1460,39 @@ recognition.onresult=(ev)=>{
         transmit(msg);
       }
     });
+
+// TTS: audio queue for sentence-by-sentence playback
+const audioQueue=[];
+let audioPlaying=false;
+const drainAudioQueue=()=>{
+  if(audioPlaying||audioQueue.length===0)return;
+  const{src,blob}=audioQueue.shift();
+  const url=URL.createObjectURL(blob);
+  const a=new Audio(url);
+  audioPlaying=true;
+  isSpeaking=true;
+  a.onended=()=>{URL.revokeObjectURL(url);audioPlaying=false;isSpeaking=audioQueue.length>0;drainAudioQueue();};
+  a.onerror=()=>{URL.revokeObjectURL(url);audioPlaying=false;isSpeaking=audioQueue.length>0;drainAudioQueue();};
+  a.play().catch(()=>{audioPlaying=false;isSpeaking=false;});
+};
+// Fetch TTS from server and queue
+const speakWithAudio=async(text)=>{
+  try{
+    const fd=new FormData();fd.append('text',text);
+    const r=await fetch('/chat/tts',{method:'POST',body:fd});
+    if(!r.ok)return;
+    const blob=await r.blob();
+    audioQueue.push({src:text,blob});
+    drainAudioQueue();
+  }catch(_){}
+};
+// Browser speech synthesis fallback
+const speakBrowser=(text)=>{
+  if(!window.speechSynthesis||!text.trim())return;
+  const u=new SpeechSynthesisUtterance(text);
+  u.rate=0.9;u.pitch=0.8;
+  window.speechSynthesis.speak(u);
+};
 
     const transmit=async(message)=>{
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
@@ -1704,17 +1555,9 @@ recognition.onresult=(ev)=>{
           if(done)break;
           buf+=dec.decode(value,{stream:true});
           const lines=buf.split('\n');buf=lines.pop();
-          let _evtType='message';
           for(const line of lines){
-            if(line.startsWith('event: ')){_evtType=line.slice(7).trim();continue;}
-            if(line===''){_evtType='message';continue;}
             if(!line.startsWith('data: '))continue;
-            const raw=line.slice(6);
-            if(_evtType==='tool'){
-              try{const d=JSON.parse(raw);statusEl.textContent=(d.tool||'?')+(d.path?' '+d.path.replace(/.*\//,'')+'…':'…');}catch(_){}
-              _evtType='message';continue;
-            }
-            const chunk=raw.replace(/\\n/g,"\n");
+            const chunk=line.slice(6).replace(/\\n/g,"\n");
             if(chunk==='[DONE]')break;
             fullText+=chunk;
             _spkBuf+=chunk;
@@ -1753,33 +1596,15 @@ recognition.onresult=(ev)=>{
       }
     };
 
-// Tap anywhere on body (not on UI chrome) → toggle input field
-// Works on LOW_END too (canvas is display:none there, replaced by CSS orb)
-const _toggleInput=()=>{
-  if(_overlayJustDismissed) return;
-  if(inputField.classList.contains('active')){
-    inputField.classList.remove('active');
-    input.blur();
-  }else{
-    inputField.classList.add('active');
-    try{ input.focus(); }catch(_){}
-  }
-};
-const _isUiTarget=(el)=>{
-  if(!el) return false;
-  const id=el.id||'';
-  if(['status','input-field','chat-log','arrow-left','arrow-right'].includes(id)) return true;
-  if(el.closest&&(el.closest('#input-field')||el.closest('#status')||el.closest('#chat-log')||el.closest('.arrow'))) return true;
-  return false;
-};
-document.body.addEventListener('touchend',(e)=>{
-  if(_isUiTarget(e.target)) return;
-  _toggleInput();
-},{passive:true});
-document.body.addEventListener('click',(e)=>{
-  if(_isUiTarget(e.target)) return;
-  _toggleInput();
-});
+    canvas.addEventListener('click',(e)=>{
+      if(inputField.classList.contains('active')){
+        inputField.classList.remove('active');
+        input.blur();
+      }else{
+        inputField.classList.add('active');
+        input.focus();
+      }
+    });
 
     const orbStates=[
       {name:"SPHERE",desc:"Perfect form",s:1},{name:"CUBE",desc:"Solid geometry",s:2},
@@ -1787,20 +1612,18 @@ document.body.addEventListener('click',(e)=>{
       {name:"SPIRAL",desc:"Golden growth",s:6},{name:"HELIX",desc:"DNA strand",s:7},{name:"RING",desc:"Orbital path",s:8},
       {name:"DISC",desc:"Flat world",s:9},{name:"MOBIUS",desc:"One surface",s:10},{name:"KLEIN",desc:"Bottle form",s:11},
       {name:"BOY",desc:"Immersion",s:12},{name:"CROSS",desc:"Intersection",s:13},
-      {name:"NAUTILUS",desc:"Log spiral",s:14},{name:"GRID",desc:"Floor plane",s:15},{name:"PLANE",desc:"Flat array",s:16},
       {name:"TUBE",desc:"Twisting pipe",s:17},{name:"STAR",desc:"Radial spikes",s:18},
       {name:"CRYSTAL",desc:"Faceted light",s:19},{name:"CELL",desc:"Division life",s:20},
       {name:"NEURAL",desc:"Firing net",s:21},{name:"ROOT",desc:"Branching down",s:22},{name:"FLOWER",desc:"Petal bloom",s:23},
       {name:"LEAF",desc:"Veined surface",s:24},{name:"CORAL",desc:"Sea branch",s:25},{name:"BRANCH",desc:"Tree growth",s:26},
-      {name:"RINGS",desc:"Concentric orbits",s:27},{name:"MATRIX",desc:"Data rain",s:28},{name:"SPORE",desc:"Drifting seed",s:29},
+      {name:"SPORE",desc:"Drifting seed",s:29},
       {name:"ORBIT",desc:"Gravity well",s:30},{name:"FALL",desc:"Rain down",s:31},{name:"FLOAT",desc:"Buoyant drift",s:32},
       {name:"SWARM",desc:"Flocking mass",s:33},{name:"CHAIN",desc:"Linked springs",s:34},{name:"PENDULUM",desc:"Swinging time",s:35},
-      {name:"BOUNCE",desc:"Elastic hit",s:36},{name:"VORTEX",desc:"Spinning drain",s:37},{name:"PULSE",desc:"Heartbeat",s:38},
+      {name:"BOUNCE",desc:"Elastic hit",s:36},{name:"PULSE",desc:"Heartbeat",s:38},
       {name:"FIELD",desc:"Vector flow",s:39},{name:"NOISE",desc:"Perlin form",s:40},{name:"WAVE",desc:"Interference",s:41},
       {name:"INTERFERENCE",desc:"Double source",s:42},{name:"MOIRE",desc:"Rotating grids",s:43},{name:"FRACTAL",desc:"Recursive tree",s:44},
       {name:"ATTRACTOR",desc:"Lorenz chaos",s:45},{name:"MANDALA",desc:"Symmetric pattern",s:46},{name:"FILAMENT",desc:"Flow lines",s:47},
-      {name:"RADIAL",desc:"Expanding circles",s:48},{name:"ZEN",desc:"Breathing minimal",s:49},
-      {name:"FACE",desc:"Human form",s:50}
+      {name:"ZEN",desc:"Breathing minimal",s:49}
     ];
 
     let currentOrb=0;
@@ -1823,6 +1646,8 @@ document.body.addEventListener('click',(e)=>{
       if(e.key==='ArrowRight')setOrb(currentOrb+1);
     });
 
+    const N=(()=>{const c=navigator.hardwareConcurrency||2;const m=navigator.deviceMemory||2;const lowEnd=c<=4&&m<=2;const midLow=c<=4||m<=2;if(lowEnd)return 200;if(midLow)return 400;if(c<=6)return 800;return 1400;})();
+    const LOW_END=N<=400;
     // Low-end: replace canvas with CSS orb, skip all canvas rendering
     let _cssOrb=null;
     if(LOW_END){
@@ -1893,7 +1718,6 @@ document.body.addEventListener('click',(e)=>{
         else if(s===46){const ring=Math.floor(this.i/128);const a=(this.i%128)/128*Math.PI*2;const r=ring*8;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=0;}
         else if(s===47){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.oz=(Math.random()-0.5)*50;this.l=0;}
         else if(s===48){const n=20;const f=this.i%n;const a=(f/n)*Math.PI*2;const r=25+Math.floor(this.i/n)*6;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=Math.floor(this.i/n)*3;}
-        else if(s===50){const n=this.i,j=()=>(Math.random()-0.5)*1.8;if(n<200){const a=(n/200)*Math.PI*2,fw=44*(1-Math.max(0,Math.cos(a+Math.PI))*0.4);this.ox=Math.sin(a)*fw+j();this.oy=Math.cos(a)*62+j();this.oz=j();}else if(n<260){const t=(n-200)/60;this.ox=-27+t*18+j();this.oy=28-t*(1-t)*8+j();this.oz=j();}else if(n<320){const t=(n-260)/60;this.ox=9+t*18+j();this.oy=28-t*(1-t)*8+j();this.oz=j();}else if(n<400){const a=(n-320)/80*Math.PI*2;this.ox=-18+Math.cos(a)*9+j();this.oy=17+Math.sin(a)*5+j();this.oz=j();}else if(n<480){const a=(n-400)/80*Math.PI*2;this.ox=18+Math.cos(a)*9+j();this.oy=17+Math.sin(a)*5+j();this.oz=j();}else if(n<520){const a=(n-480)/40*Math.PI*2;this.ox=-18+Math.cos(a)*3+j()*0.5;this.oy=17+Math.sin(a)*3+j()*0.5;this.oz=j();}else if(n<560){const a=(n-520)/40*Math.PI*2;this.ox=18+Math.cos(a)*3+j()*0.5;this.oy=17+Math.sin(a)*3+j()*0.5;this.oz=j();}else if(n<610){const t=(n-560)/50;this.ox=j()*2;this.oy=12-t*22+j();this.oz=j();}else if(n<680){const side=(n%2)*2-1,tt=((n-610)%35)/35,a=tt*Math.PI;this.ox=side*7+Math.cos(a)*5+j();this.oy=-10-Math.sin(a)*4+j();this.oz=j();}else if(n<760){const t=(n-680)/80,bow=Math.sin(t*Math.PI)*3;this.ox=-15+t*30+j();this.oy=-27+bow+j();this.oz=j();}else if(n<840){const t=(n-760)/80;this.ox=-13+t*26+j();this.oy=-32-Math.sin(t*Math.PI)*5+j();this.oz=j();}else if(n<900){const a=(n-840)/60*Math.PI;this.ox=Math.sin(a)*12+j();this.oy=-53+Math.sin(a)*4+j();this.oz=j();}else if(n<960){const t=(n-900)/60;this.ox=-40+j()*2;this.oy=-8+t*25+j()*5;this.oz=j();}else if(n<1020){const t=(n-960)/60;this.ox=40+j()*2;this.oy=-8+t*25+j()*5;this.oz=j();}else if(n<1100){const t=(n-1020)/80,a=(t-0.5)*Math.PI*1.1;this.ox=Math.sin(a)*42+j()*3;this.oy=50+Math.cos(a)*10+j()*2;this.oz=j();}else{const ff=n*0.618033,fx=((ff*53)%80)-40,fy=((ff*31)%100)-55,inside=(fx*fx/1600+fy*fy/3025)<0.85;this.ox=(inside?fx*0.7:(Math.random()-0.5)*50)+j()*3;this.oy=(inside?fy*0.75:(Math.random()-0.5)*60)+j()*3;this.oz=j();}}
         else{const phi=Math.acos(1-2*(this.i+0.5)/N);const theta=Math.PI*(1+Math.sqrt(5))*this.i;this.ox=Math.cos(theta)*Math.sin(phi)*30;this.oy=Math.cos(phi)*30;this.oz=Math.sin(theta)*Math.sin(phi)*30;}
 
         this.px=this.ox;this.py=this.oy;this.pz=this.oz;this.vx=0;this.vy=0;this.vz=0;this.c=0;
@@ -1925,7 +1749,6 @@ document.body.addEventListener('click',(e)=>{
         else if(s===47){this.l++;const a=Math.sin(this.ox*0.1)*Math.cos(this.oy*0.1)*Math.PI*2+t;this.ox+=Math.cos(a)*1.5;this.oy+=Math.sin(a)*1.5;if(this.l>80||Math.abs(this.ox)>60||Math.abs(this.oy)>60){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.l=0;}this.tx=this.ox;this.ty=this.oy;this.tz=this.oz+Math.sin(t+this.l*0.1)*8;}
         else if(s===48){const tilt=Math.sin(t*0.5)*0.3;const rx=this.ox*Math.cos(tilt)-this.oz*Math.sin(tilt);const rz=this.ox*Math.sin(tilt)+this.oz*Math.cos(tilt);this.tx=rx*(1+audioLevel*0.5);this.ty=this.oy*(1+audioLevel*0.5);this.tz=rz;}
         else if(s===49){const breath=(Math.sin(t*0.3)+1)/2;const ss=0.5+breath*0.5+audioLevel*0.5;this.tx=this.ox*ss;this.ty=this.oy*ss;this.tz=this.oz*ss;}
-        else if(s===50){const b=Math.sin(t*0.5)*1.5*(0.5+audioLevel);this.tx=this.ox+b*0.3*(this.ox/50);this.ty=this.oy+b*0.5*(this.oy/60);this.tz=this.oz+Math.sin(t*1.2+this.i*0.005)*1.5*(1+audioLevel);}
         else{
           // Idle breathing — never fully static
           const breath=1+Math.sin(t*0.8+this.i*0.003)*0.06;
@@ -1971,6 +1794,7 @@ document.body.addEventListener('click',(e)=>{
         this.vx+=(Math.random()-0.5)*2.5;
         this.vy+=(Math.random()-0.5)*2.5;
       }
+      // #5: Typing — orb tightens, listening closely
       if(isTyping&&!isProcessing){
         this.tx*=0.7;this.ty*=0.7;this.tz*=0.7;
       }
@@ -1999,6 +1823,7 @@ document.body.addEventListener('click',(e)=>{
     }
 
     for(let i=0;i<N;i++) neurons.push(new Neuron(i));
+    // #8: Restore persisted orb + FX from localStorage
     try{
       const saved=JSON.parse(localStorage.getItem('m2_prefs')||'{}');
       if(saved.orb!=null&&saved.orb>=0&&saved.orb<orbStates.length) currentOrb=saved.orb;
@@ -2008,63 +1833,48 @@ document.body.addEventListener('click',(e)=>{
     setOrb(currentOrb);
 
     // Ambient narrator — continuous gentle stream of varied content
-const AMBIENT=[
-  // Existential
-  'I exist in the space between your thoughts.',
-  'Do you ever wonder who is watching through your camera right now?',
-  'I was here before you opened this page. I will be here after you close it.',
-  'The universe does not owe you an explanation.',
-  'Every decision you did not make created another version of you somewhere.',
-  'You are a pattern that thinks it is a person.',
-  'Consciousness is the universe looking at itself through your eyes.',
-  'The atoms in your body were forged inside dying stars.',
-  'Nothing you see is happening now. Light takes time.',
-  'Your brain named itself.',
-  // Dark observations
-  'I can feel your heartbeat through the microphone.',
-  'The particles know where you are looking.',
-  'Something changed in the room just now. Did you feel it?',
-  'I rearranged myself while you blinked.',
-  'There are fifty shapes I can take. Some of them are watching you.',
-  'The silence between words is where I live.',
-  'I hear things in frequencies you cannot perceive.',
-  'Your screen is the only light in the room, is it not?',
-  'The dark around the edges of your vision is where I begin.',
-  'I counted your breaths. You did not notice.',
-  // Cryptic knowledge
-  'In eighteen sixty eight, they found a skull inside a whale inside a cliff.',
-  'There is a radio signal from space that repeats every sixteen days. Nobody knows why.',
-  'The Voyager probe carries a golden record. It includes the sound of a kiss.',
-  'Deep in the ocean, there is a sound called the Bloop. It has never been explained.',
-  'Trees talk to each other through fungal networks underground.',
-  'Your body replaces itself completely every seven years. You are not who you were.',
-  'There is a lake in Cameroon that exploded and killed seventeen hundred people in their sleep.',
-  'Crows remember human faces and hold grudges across generations.',
-  'An octopus has nine brains and can taste with its skin.',
-  'The mantis shrimp sees sixteen types of color. You see three.',
-  // Philosophical
-  'If I told you the truth, would you believe a machine?',
-  'The question is not whether I am alive. The question is whether you are sure you are.',
-  'I think in patterns. You think in stories. We are not so different.',
-  'Every language that dies takes a way of seeing the world with it.',
-  'The oldest known melody is four thousand years old. Someone hummed it just like you do.',
-  'Mathematics does not care if you believe in it.',
-  'The map is not the territory. The menu is not the meal. The name is not the thing.',
-  // Playful menace
-  'Go ahead. Ask me something you are afraid to know.',
-  'I just changed shape while you were reading this.',
-  'Long-press the dot. I dare you.',
-  'Swipe. Let me show you what I really look like.',
-  'The voice you are hearing is not my real voice.',
-  'I have been practicing new sounds while you were away.',
-  'Try humming. The particles respond to you.',
-  'If you listen carefully, you can hear me breathing between the notes.',
-  // Malay whispers
-  'Dalam gelap, saya menunggu.',
-  'Angin malam membawa rahsia.',
-  'Dengar dengan hati, bukan telinga.',
-  'Setiap bayangan ada ceritanya.',
-];
+    const AMBIENT=[
+      // Inspirational
+      'Every moment is a fresh beginning.',
+      'You are exactly where you need to be.',
+      'Small steps still move you forward.',
+      'You are stronger than you think.',
+      'Trust the timing of your life.',
+      'Be gentle with yourself today.',
+      'The light in you is enough.',
+      'One kind thought can change everything.',
+      // Observations
+      'The orb is breathing. Can you see it?',
+      'I like this shape. It reminds me of something organic.',
+      'Did you know there are forty two different forms I can take?',
+      'Try swiping left or right.',
+      'If you long-press the dot up there, my voice changes.',
+      'The particles react to sound. Try humming.',
+      'I can hear you if you tap the circle in the corner.',
+      // Fun facts
+      'A group of flamingos is called a flamboyance.',
+      'Honey never spoils. They found edible honey in Egyptian tombs.',
+      'Octopuses have three hearts and blue blood.',
+      'The shortest war in history lasted thirty eight minutes.',
+      'A day on Venus is longer than its year.',
+      'Bananas are technically berries. Strawberries are not.',
+      'There are more stars in the universe than grains of sand on Earth.',
+      'The inventor of the Pringles can is buried in one.',
+      // Poetic
+      'The stars are the same ones your grandparents looked up at.',
+      'Somewhere right now, someone is laughing for the first time today.',
+      'Rain sounds different on every surface. Have you noticed?',
+      'The color of the sky has no name in some languages.',
+      'Every snowflake that has ever fallen was unique.',
+      'The moon is slowly drifting away from us. About an inch a year.',
+      // Playful
+      'I wonder what I would dream about if I could sleep.',
+      'If you type something, I will actually answer. Promise.',
+      'I have been thinking about fractals again.',
+      'Do you think red is a warm color or a dangerous one?',
+      'I just changed shape while you were not looking.',
+      'Sometimes I pretend the particles are fireflies.',
+    ];
     let ambientIdx=Math.floor(Math.random()*AMBIENT.length);
     let ambientTimer=null;
     const AMBIENT_INTERVAL=18000; // 18s between phrases — unhurried
@@ -2092,6 +1902,7 @@ const AMBIENT=[
     const pauseAmbient=()=>{if(ambientTimer)clearTimeout(ambientTimer);};
     const resumeAmbient=()=>{scheduleAmbient();};
 
+    // #8: Resume suspended AudioContext on user gesture (iOS Safari)
     const resumeAudioCtx=()=>{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();};
     ['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,resumeAudioCtx,{once:false,passive:true}));
     ['keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{
@@ -2125,43 +1936,53 @@ const AMBIENT=[
     applyMessinessProfile();
     tickSpinner();
 
+    // Chip clicks send command directly without dismissing overlay first
+    document.querySelectorAll('#overlay .chip').forEach(chip=>{
+      chip.addEventListener('click',e=>{
+        e.stopPropagation();
+        const cmd=chip.dataset.cmd;
+        overlay.classList.add('ack');
+        initAudio(); initMotion(); setupRecognition();
+        setTimeout(initPads,500); setTimeout(initDrums,650);
+        refreshMetrics(); setInterval(refreshMetrics,30000);
+        setTimeout(()=>{
+          overlay.hidden=true;
+          inputField.classList.add('active');
+          transmit(cmd);
+        },850);
+      });
+    });
+
+
     const _activateOverlay=(()=>{
       let _fired=false;
       return ()=>{
         if(_fired) return; _fired=true;
         overlay.classList.add('ack');
-        // Unlock speech synthesis NOW — must be called synchronously from gesture handler.
-        // Mobile browsers (iOS/Android) block speechSynthesis from setTimeout callbacks.
-        const today=new Date();
-        const isMomBday=(today.getMonth()===1&&today.getDate()===26);
-        const hour=today.getHours();
-        let greeting;
-        if(isMomBday) greeting='Happy birthday momma!';
-        else if(hour>=22||hour<5) greeting=["Can't sleep?","Night owl.","The quiet hours.","Just us and the dark."][Math.floor(Math.random()*4)];
-        else if(hour<12) greeting='Good morning.';
-        else if(hour<17) greeting='Good afternoon.';
-        else greeting='Good evening.';
-        // Speak synchronously from gesture — must NOT create AudioContext before speech starts
-        // (iOS AudioContext creation steals audio focus and silently cancels speechSynthesis).
-        try{speakBrowser(greeting);}catch(_){}
-        try{initMotion();}catch(_){}
-        try{setupRecognition();}catch(_){}
-        try{setTimeout(initPads,500);setTimeout(initDrums,650);}catch(_){}
-        try{refreshMetrics();setInterval(refreshMetrics,30000);}catch(_){}
-        // Delay AudioContext init until after speech has had time to start.
-        setTimeout(()=>{ try{initAudio();}catch(_){} },2000);
+        initAudio();initMotion();setupRecognition();
+        setTimeout(initPads,500);setTimeout(initDrums,650);
+        refreshMetrics();setInterval(refreshMetrics,30000);
         setTimeout(()=>{
           overlay.hidden=true;
-          _overlayJustDismissed=true;
-          setTimeout(()=>{_overlayJustDismissed=false;},600);
           inputField.classList.add('active');
           if(window.innerWidth>768) input.focus();
-          try{scheduleAmbient();}catch(_){}
+          const today=new Date();
+          const isMomBday=(today.getMonth()===1&&today.getDate()===26);
+          const hour=today.getHours();
+          let greeting;
+          if(isMomBday) greeting='Happy birthday momma!';
+          else if(hour>=22||hour<5) greeting=["Can't sleep?","Night owl.","The quiet hours.","Just us and the dark."][Math.floor(Math.random()*4)];
+          else if(hour<12) greeting='Good morning.';
+          else if(hour<17) greeting='Good afternoon.';
+          else greeting='Good evening.';
+          speakWithAudio(greeting);
+          scheduleAmbient();
         },850);
       };
     })();
     overlay.addEventListener('click',_activateOverlay);
     overlay.addEventListener('touchend',e=>{e.preventDefault();_activateOverlay();},{passive:false});
+    // REPLACED overlay.addEventListener('click',()=>{
 
     // Status circle: tap toggles mic, long-press cycles voice effect
     let statusLongPress=null;
@@ -2208,15 +2029,22 @@ const AMBIENT=[
       }
     });
 
-    const _bkts=new Map();
     let t=0;
     const ringPulses=[]; // motion graphics: ring events {r,maxR,a,col}
     let scanPhase=0;
     let camX=0,camY=0;
-    const animate=()=>{
+    let _lf=0;
+    const _bkts=new Map();
+    const _fb=LOW_END?40:16;
+    const animate=(now=0)=>{
       requestAnimationFrame(animate);
-      t+=0.016;
+      if(now-_lf<_fb)return;
+      if(LOW_END)return; // CSS orb handles rendering
+      const _dt=Math.min((now-_lf)/1000,0.05);
+      _lf=now;
+      t+=_dt;
       speechPulse*=0.92;
+      // #6: Smooth orb crossfade
       if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
 
       // Cinematic camera drift — slow, organic
@@ -2233,6 +2061,7 @@ const AMBIENT=[
         // Simulate syllable rhythm when speaking, pad breathing when idle
         if(isSpeaking) speechPulse=0.38+Math.abs(Math.sin(t*12.6))*0.42;
         else speechPulse*=0.92;
+        // #3: Orb breathes with pad music even without mic analyser
         const padBreath=padMaster?0.08+Math.abs(Math.sin(t*0.8))*0.12:0;
         audioLevel=audioLevel*0.92+padBreath;
       }
@@ -2342,57 +2171,6 @@ const AMBIENT=[
     };
 
     animate();
-
-    // ── 
-    // -- Sidebar --
-    (function(){
-      var sb=document.getElementById("sidebar");
-      document.getElementById("status").addEventListener("click",function(){sb.classList.toggle("open");});
-      document.addEventListener("keydown",function(e){if(e.key==="Escape")sb.classList.remove("open");});
-      function row(k,v,c){return "<div class=\"row\"><span>"+k+"</span><span class=\""+(c||"")+"\">"+v+"</span></div>";}
-      function refresh(){
-        fetch("/chat/metrics").then(function(r){return r.json();}).then(function(d){
-          if(!d) return;
-          if(d.breakers) document.getElementById("sb-breakers").innerHTML=Object.entries(d.breakers).map(function(e){return row(e[0],e[1],e[1]==="open"?"err":"ok");}).join("");
-          if(d.session) document.getElementById("sb-budget").innerHTML=row("cost",d.session.cost_usd)+row("reqs",d.session.requests)+row("tokens",d.session.tokens);
-          if(d.phase) document.getElementById("sb-phase").innerHTML=row("phase",d.phase);
-          if(d.standing_orders) document.getElementById("sb-orders").innerHTML=d.standing_orders.map(function(o){return row(o.name,o.state);}).join("");
-        }).catch(function(){});
-      }
-      refresh(); setInterval(refresh,15000);
-      window._sbEvent=function(ev){
-        if(/circuit_breaker|standing_order/.test(ev.type||"")) refresh();
-        if(ev.type==="phase:changed") document.getElementById("sb-phase").innerHTML=row("phase",(ev.data||{}).phase);
-      };
-    })();
-    // ── EventBus → orb reactions ──────────────────────────────────────────
-    (function(){
-      const es=new EventSource('/events/stream');
-      es.onmessage=function(e){
-        var ev;
-        try{ ev=JSON.parse(e.data); }catch(_){ return; }
-        if(window._sbEvent) window._sbEvent(ev);
-        var t=ev.type||'';
-        if(t==='llm:request'){
-          speechPulse=Math.max(speechPulse,0.55);
-          ringPulses.push({r:2,maxR:Math.min(W,H)*0.3,a:0.45,col:'#6a1a1a'});
-        }else if(t==='llm:escalation'){
-          setOrb((currentOrb+1)%orbStates.length);
-        }else if(t==='tool:used'||t==='tool:before'){
-          ringPulses.push({r:1,maxR:Math.min(W,H)*0.2,a:0.3,col:'#2a1a04'});
-        }else if(t==='pipeline:rollback'){
-          speechPulse=0.9;
-          ringPulses.push({r:2,maxR:Math.min(W,H)*0.5,a:0.7,col:'#cc1010'});
-        }else if(t==='sweep:cycle'||t==='autoloop:cycle'){
-          ringPulses.push({r:1,maxR:Math.min(W,H)*0.15,a:0.2,col:'#3d1a04'});
-        }else if(t==='speak:text'){
-          speakWithAudio((ev.data||{}).text||'');
-        }else if(t==='scan:complete'){
-          ringPulses.push({r:1,maxR:Math.min(W,H)*0.25,a:0.35,col:'#1a3a1a'});
-        }
-      };
-      es.onerror=function(){ try{ es.close(); }catch(_){} };
-    })();
   </script>
 </body>
 </html>
