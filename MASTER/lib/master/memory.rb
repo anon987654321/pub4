@@ -3,6 +3,8 @@
 require "yaml"
 require "fileutils"
 
+require_relative "memory/search"
+
 module Master
   # Memory — persistent cross-session store with TF-IDF semantic search.
   # Stored at .master/memory.yml. Survives restarts.
@@ -10,8 +12,10 @@ module Master
     TTL_DAYS = 90
     CONSOLIDATE_THRESHOLD = 40
     SECONDS_PER_DAY = 86_400
-    MAX_INJECT_TOKENS  = 2000
+    MAX_INJECT_TOKENS = 2000
     MAX_INJECT_ENTRIES = 5
+
+    include Search
 
     def initialize(root: Dir.pwd)
       @path  = File.join(root, ".master", "memory.yml")
@@ -19,7 +23,7 @@ module Master
     end
 
     def remember(key, value)
-      prune_stale! if @store.size > 40
+      prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
       @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
       persist
     end
@@ -58,24 +62,6 @@ module Master
       header     = summary ? "Memory (#{summary.to_s[0, 80]}):" : "Memory:"
       header    += " [+#{archived_n} archived]" if archived_n > 0
       "#{header}\n#{lines.join("\n")}"
-    end
-
-    # TF-IDF ranked search. Returns [{key:, value:, score:}], highest first.
-    def semantic_recall(query, top_n: 3)
-      return [] if @store.empty?
-
-      query_terms = tokenize(query)
-      return [] if query_terms.empty?
-
-      scored = @store.filter_map do |key, data|
-        value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
-        doc   = "#{key} #{value}"
-        score = tfidf_score(query_terms, tokenize(doc))
-        next if score.zero?
-        { key: key, value: value, score: score }
-      end
-
-      scored.sort_by { |e| -e[:score] }.first(top_n)
     end
 
     # Three-phase consolidation: light (score), deep (archive), REM (LLM summary).
@@ -123,7 +109,7 @@ module Master
     private
 
     def prune_stale!
-      cutoff = Time.now.to_i - TTL_DAYS * 86_400
+      cutoff = Time.now.to_i - TTL_DAYS * SECONDS_PER_DAY
       @store.each do |k, v|
         next if k.to_s.start_with?("archive/") || k == "_consolidated_summary"
         ts = v.is_a?(Hash) ? v["ts"].to_i : 0
@@ -144,14 +130,5 @@ module Master
       File.write(@path, @store.to_yaml)
     end
 
-    def tokenize(text)
-      text.downcase.scan(/\b[a-z]{2,}\b/)
-    end
-
-    def tfidf_score(query_terms, doc_terms)
-      return 0.0 if doc_terms.empty?
-      freq = doc_terms.tally
-      query_terms.sum { |t| Math.log(1.0 + freq.fetch(t, 0).to_f) }
-    end
   end
 end
