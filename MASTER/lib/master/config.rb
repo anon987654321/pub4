@@ -29,14 +29,15 @@ module Master
     attr_reader :data
 
     def initialize(root = Dir.pwd)
-      @root = root
-      @path = File.join(root, '.master', 'config.yml')
-      @data = load_config
+      @root  = root
+      @path  = File.join(root, '.master', 'config.yml')
+      @mutex = Mutex.new
+      @data  = load_config
     end
 
     # Hash‑style access
     def [](key)         = @data[key.to_s]
-    def []=(key, value) ; @data[key.to_s] = value ; end
+    def []=(key, value) ; @mutex.synchronize { @data[key.to_s] = value } ; end
 
     # Typed helpers
     def model          = self['model']
@@ -67,7 +68,7 @@ module Master
 
     # Reload from disk, preserving unknown keys.
     def reload!
-      @data = load_config
+      @mutex.synchronize { @data = load_config }
     end
 
     # Export as plain hash (deep dup to avoid external mutation)

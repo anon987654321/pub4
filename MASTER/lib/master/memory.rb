@@ -19,12 +19,15 @@ module Master
 
     def initialize(root: Dir.pwd)
       @path  = File.join(root, ".master", "memory.yml")
+      @mutex = Mutex.new
       @store = load_store
     end
 
     def remember(key, value)
-      prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
-      @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
+      @mutex.synchronize do
+        prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
+        @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
+      end
       persist
     end
 
@@ -33,7 +36,7 @@ module Master
     end
 
     def forget(key)
-      @store.delete(key.to_s)
+      @mutex.synchronize { @store.delete(key.to_s) }
       persist
     end
 
