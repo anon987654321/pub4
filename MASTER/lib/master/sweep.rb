@@ -213,8 +213,8 @@ circuit\sopen|retry\sin|llm_request)\b
 
     def violations_in(path)
       return 0 unless path.end_with?(".rb") && File.exist?(path)
-      r = @scanner.scan(path, depth: :deep)
-      r.ok? ? r.value!.size : 0
+      scan_result = @scanner.scan(path, depth: :deep)
+      scan_result.ok? ? scan_result.value!.size : 0
     rescue StandardError
       0
     end
@@ -225,8 +225,8 @@ circuit\sopen|retry\sin|llm_request)\b
       Tempfile.open(["vcheck", ".rb"]) do |f|
         f.write(content)
         f.flush
-        r = @scanner.scan(f.path, depth: :deep)
-        r.ok? ? r.value!.size : 0
+        scan_result = @scanner.scan(f.path, depth: :deep)
+        scan_result.ok? ? scan_result.value!.size : 0
       end
     rescue StandardError
       0
