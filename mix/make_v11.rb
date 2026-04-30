@@ -11,7 +11,7 @@
 # - J Dilla: micro-timing feel via tremolo wobble on side channel
 
 BEAT   = "/sdcard/Download/Voicemails.mp3"
-VOCALS = "/root/pub4/mix/vocals_original_pitch.wav"  # original pitch, tempo-matched
+VOCALS = File.expand_path("~/pub4/mix/vocals_original_pitch.wav")  # original pitch, tempo-matched
 OUT    = "/root/pub4/mix/final_mix_v11.mp3"
 
 BPM        = 118.6

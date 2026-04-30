@@ -99,12 +99,25 @@ module Master
         },
         "scan" => ->(ctx) {
           depth = ctx[:args].to_s.include?("deep") ? :deep : :standard
-          target = File.join(root, "lib")
-          result = scanner.scan_dir(target, depth:)
+          raw_arg = ctx[:args].to_s.sub("deep", "").strip
+          target_arg = raw_arg.empty? ? nil : File.expand_path(raw_arg)
+          pairs = if target_arg && File.file?(target_arg)
+            fr = scanner.scan(target_arg, depth:)
+            [[target_arg, fr]]
+          elsif target_arg && File.directory?(target_arg)
+            r = scanner.scan_dir(target_arg, depth:, glob: "**/*")
+            next "scan failed" unless r.ok?
+            r.value!
+          else
+            r = scanner.scan_dir(File.join(root, "lib"), depth:)
+            next "scan failed" unless r.ok?
+            r.value!
+          end
+          result = Result.ok(pairs)
           next "scan failed" unless result.ok?
           by_rule = Hash.new { |h, k| h[k] = [] }
           result.value!.each do |_file, file_result|
-            next unless file_result.ok?
+            next unless file_result.respond_to?(:ok?) && file_result.ok?
             file_result.value!.each { |v| by_rule[v[:rule].to_s] << v }
           end
           total = by_rule.values.sum(&:size)
