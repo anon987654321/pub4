@@ -22,7 +22,6 @@ module Master
 
     TOOL_CAPABLE_RE = build_tool_capable_re.freeze
     MAX_TOOL_TURNS = 5
-    MIN_API_KEY_LENGTH = 20
     TOOL_CALL_RE = /(?:<use_tool>\s*(.*?)\s*<\/use_tool>|^ACTION:\s*(\{.*?\})\s*$|^TOOL:\s*(\{.*?\})\s*$)/m.freeze
     NEMOTRON3_RE = /nemotron-3/i.freeze
     LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze

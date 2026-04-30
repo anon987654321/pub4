@@ -46,7 +46,7 @@ module Master
       ".erb" => ->(p) { begin; ERB.new(File.read(p)).result(binding); true; rescue SyntaxError; false; rescue => _e; true; end }
     }.freeze
 
-    SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
+    SEVERITY_RANK = Master::SEVERITY_RANK
 
     ERROR_PATTERNS = /
       \b(?:error|exception|traceback|failed|cannot|unable\sto|

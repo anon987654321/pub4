@@ -141,7 +141,6 @@ module Master
 
     def persist
       return unless @orders.is_a?(Array)
-      require "fileutils"
       FileUtils.mkdir_p(File.dirname(STORE_PATH))
       File.write(STORE_PATH, YAML.dump(@orders))
     end

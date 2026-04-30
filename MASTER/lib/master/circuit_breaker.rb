@@ -19,7 +19,7 @@ module Master
     def initialize(budget_max:, req_max:, event_bus: nil)
       super()
       @budget_max    = budget_max
-      # @req_max and @event_bus parameters are unused internally.
+      @bus           = event_bus
       @failures      = 0
       @opened_at     = nil
       @state         = :closed
@@ -88,7 +88,24 @@ module Master
       end
     end
 
-    def on_success = synchronize { @failures = 0 ; @state = :closed if @state == :half_open }
-    def on_failure = synchronize { @failures += 1 ; if @failures >= FAILURE_THRESHOLD ; @state = :open ; @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC) ; end }
+    def on_success
+      synchronize do
+        @failures = 0
+        if @state == :half_open
+          @state = :closed
+          @bus&.publish("circuit:closed", breaker: object_id)
+        end
+      end
+    end
+
+    def on_failure
+      synchronize do
+        @failures += 1
+        return unless @failures >= FAILURE_THRESHOLD
+        @state     = :open
+        @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        @bus&.publish("circuit:open", failures: @failures)
+      end
+    end
   end
 end

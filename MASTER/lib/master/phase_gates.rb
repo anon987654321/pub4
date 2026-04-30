@@ -8,7 +8,7 @@ module Master
   PHASES = %w[discover analyze ideate design implement validate deliver idle].freeze
 
   class PhaseGates
-    STORE_PATH = "data/phase_state.yml"
+    PHASE_STATE_PATH = "data/phase_state.yml"
 
     GATES = {
       "discover"  => %w[problem_stated success_measurable],
@@ -78,7 +78,7 @@ module Master
     end
 
     def load_state
-      path = File.join(@root, STORE_PATH)
+      path = File.join(@root, PHASE_STATE_PATH)
       return { "phase" => "idle", "met_gates" => [] } unless File.exist?(path)
       data = Master.load_yaml(path)
       data.is_a?(Hash) ? data : { "phase" => "idle", "met_gates" => [] }
@@ -87,8 +87,7 @@ module Master
     end
 
     def persist
-      path = File.join(@root, STORE_PATH)
-      require "fileutils"
+      path = File.join(@root, PHASE_STATE_PATH)
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, YAML.dump(@state))
     end

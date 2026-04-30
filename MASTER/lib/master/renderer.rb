@@ -6,7 +6,7 @@ require "open3"
 require "socket"
 
 module Master
-  DEFAULT_WEB_PORT = 10002
+  DEFAULT_WEB_PORT = Config::DEFAULT_WEB_PORT
 
   class Renderer
     TICK  = "\u2714".freeze

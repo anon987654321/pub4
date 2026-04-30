@@ -69,7 +69,7 @@ module Master
         "BLOCKED: proposal would change ABSOLUTE sections: #{drift[:absolute_changed].join(", ")}. Add /override to force."
       else
         FileUtils.mkdir_p(File.dirname(PROPOSAL_PATH))
-        File.write(PROPOSAL_PATH, draft)
+        (tmp_w = "PROPOSAL_PATH.tmp"; File.write(tmp_w, draft); File.rename(tmp_w, PROPOSAL_PATH))
         risk = drift[:protected_changed].any? ? " [PROTECTED sections affected: #{drift[:protected_changed].join(", ")}]" : ""
         "proposal saved#{risk}. Review with `soul diff`, approve with `soul approve`, reject with `soul reject`."
       end
@@ -104,7 +104,7 @@ module Master
       entry   = "| #{new_version} | #{date} | Evolution Protocol change | Approved via `soul approve` |\n"
       updated = updated.sub(/\| 1\.0\.0 \|/, entry + "| 1.0.0 |")
 
-      File.write(SOUL_PATH, updated)
+      (tmp_w = "SOUL_PATH.tmp"; File.write(tmp_w, updated); File.rename(tmp_w, SOUL_PATH))
       File.unlink(PROPOSAL_PATH)
       @soul = updated
 
@@ -127,7 +127,7 @@ module Master
       return "no git history for SOUL.md" if out.size < 2
       prev_sha = out[1].split.first
       restored = `git -C #{@root} show #{prev_sha}:SOUL.md 2>&1`
-      File.write(SOUL_PATH, restored)
+      (tmp_w = "SOUL_PATH.tmp"; File.write(tmp_w, restored); File.rename(tmp_w, SOUL_PATH))
       @soul = restored
       "rolled back to #{prev_sha} — #{out[1].chomp}"
     rescue StandardError => e

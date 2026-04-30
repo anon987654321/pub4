@@ -75,7 +75,7 @@ module Master
 
     def persist
       FileUtils.mkdir_p(File.dirname(@path))
-      tmp = ".tmp"
+      tmp = "#{@path}.tmp"
       File.write(tmp, @entries.map { |e| JSON.generate(e) }.join("\n") + "\n")
       File.rename(tmp, @path)
     end

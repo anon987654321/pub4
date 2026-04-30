@@ -6,6 +6,7 @@ module Master
   ROOT = File.expand_path("..", __dir__).freeze
 
   MIN_API_KEY_LENGTH = 20
+  SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   CTX_WINDOW_SIZE = 200_000
   VIOLATION_TRUNCATE = 90
 
