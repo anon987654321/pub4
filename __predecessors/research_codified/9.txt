@@ -1,0 +1,306 @@
+Open in app
+Sidebar menu
+Search
+Write
+Notifications
+
+your-mommas-favorite
+UX Planet
+Hero Images are Dead. These Solutions are Replacing Them.
+Ross Dillon
+Ross Dillon
+
+Follow
+11 min read
+·
+Sep 20, 2025
+2.6K
+
+
+60
+
+
+
+
+
+A year ago, I was tasked with giving feedback on a new proposed hero for a widely visited website. I opened up Figma to see what the designers had cooked up for us to review. You can guess what it looked like.
+
+It looked like every other website I’ve seen throughout my entire life.
+
+Just like groups of young women and men wearing the same outfit or packaging designers just copying one another at this point, the design was standard and made no statement.
+
+Press enter or click to view image in full size
+Press enter or click to view image in full size
+Young women in a group rocking the same outfit concept as well as modern packaging design sharing one too many similiarities.
+It said simply: Hey, look, we’re a professional organization that has a cool photo.
+
+It was safe.
+
+In fact, it was so safe that it was missing an opportunity to convert customers.
+
+It pushed no boundaries, and for millions of companies, it is as far as they’ll ever explore.
+
+It is their homepage ‘solution.’ But is it really a solution?
+
+Press enter or click to view image in full size
+Press enter or click to view image in full size
+Press enter or click to view image in full size
+Atheltic Greens CPG & Joe’s Bar Venue Space & Fidelity Investments
+The thing is, the company I was working for had a dedicated photo team that provided beautiful, high-quality images with numerous contextual and action shots, perfect for web pages.
+
+So when what came to my desk was a classic full-page hero of an image with a gradient, I wasn’t exactly surprised. But it did frustrate me that we couldn’t come up with something bolder.
+
+I closed my laptop and thought about how I disliked what I just saw for a 2025 website revamp.
+
+I checked in later with my team and leadership to see how they reacted to the redesign.
+
+Leadership loved it.
+
+I, however, knew this wasn’t a good proposal and that it could be irrelevant in a couple of years. See, full-page heroes are terrible design most of the time, but our photography team and C-Suite would never agree with that. It's what they know a website should be. It is what they are used to.
+
+So, how do you veto a full-width hero within your organization? And what is the solution to keep beautiful imagery while keeping UX standards?
+
+Let us dive in.
+
+How do we fix the age-old hero image dilemma?
+
+I am not here to say there is a one-size-fits-all solution for every business model. And I’m definitely not here to just be that one contrarion. But I am on a mission to help kill the concept that every home page needs a generic full-width hero image.
+
+So, below I’ve compiled a list of what is replacing full-width heroes and why they work better.
+
+Half-page Heroes
+No Heroes at All
+Search-first
+Then, finally, we’ll look at where heroes may still belong in the ambiguous landscape companies currently live in.
+
+The Half-page Heroes
+Splitting the homepage with an image on one side and text on the other offers a balanced and engaging user experience that full-width hero images often lack.
+
+Unlike full-width heroes, which prioritize a single, often overwhelming visual, the half-page format delivers immediate clarity by pairing a compelling image with concise, actionable text.
+
+Desktop users spend 57% of their time “above the fold” according to a 2018 eye-tracking study (Nielsen Norman), although the number is likely to have declined since, based on a 2010 study that tracked above-the-fold time at 81%. Whichever way you look at it, hero layout matters hugely.
+
+Heatmapping research shows asymmetrical heroes (split text/image) guide eyes more predictably than uniform full-widths, reducing cognitive load and boosting CTA clicks. Not conversions per se, but click-through is a precursor.
+
+From a branding and conversion perspective, half-page heroes provide flexibility that full-width designs struggle to match. Additionally, half-page heroes adapt better across devices; full-width images often lose impact on smaller screens, cropping awkwardly or slowing load times (Google’s Core Web Vitals penalize sites with load times over 2.5 seconds).
+
+Examples:
+Republic Capital
+Press enter or click to view image in full size
+
+Republic Capital // Investing in a non-obvious future
+Republic Capital is driven by a multifaceted value proposition and invests in companies across deep tech, fintech, and…
+republiccapital.co
+
+Why we like it: There is a section above the fold signifying that users can scroll for more info. There is one prominent CTA, although it is unclear if it is the most important action. Republic Capital has a unique design from the video container form to the animated text and the video itself.
+
+What could be improved: A more obvious, middle-of-screen on-page CTA. Don’t love the logo over the video.
+
+Mobile: Text-first and turn the video into an optional button
+
+Opendoor
+Press enter or click to view image in full size
+
+Opendoor | Sell your home the minute you're ready.
+Opendoor is the new way to sell your home. Skip the hassle of listing, showings and months of stress, and close on your…
+www.opendoor.com
+
+Why we like it: Opendoor uses a custom image in a unique shape for a half-page image. This is paired with a search call to action, which we will talk about in a minute. It shows you can sell your house for a cash offer from multiple sources. Easy enough. Just type your address.
+
+What could be improved: It might be a little too simple. Users will be looking for a little more context, which is available within only the small navigation, and scrolling could be encouraged more as well. However, I really like how this is set up.
+
+Mobile: Text and search-first, move the image below the text.
+
+The Anti-Hero
+Using buttons and text instead of full-width hero images can significantly boost conversion rates by prioritizing clarity and user action over visual overload.
+
+Full-width hero images, while visually striking, often distract users with generic or ambiguous visuals that fail to communicate a clear value proposition, leading to lower engagement. In contrast, a focused design with prominent buttons and concise text directly addresses user intent, guiding them toward specific actions like signing up or purchasing.
+
+A 2024 A/B testing study by VWO found that landing pages with clear text and call-to-action buttons increased conversions by up to 20% compared to image-heavy designs, as they reduce decision fatigue and align with users’ natural scanning patterns.
+
+Additionally, just like the half-page hero, loading times. Buttons and text load faster than large images, improving site performance and meeting Google’s Core Web Vitals standards, which further enhances user trust and conversion likelihood.
+
+Examples:
+Hims
+Press enter or click to view image in full size
+
+https://www.hims.com/
+
+Why we like it: Clear header text with CTAs direct to what the user needs. There is personalization off the jump through accommodating every persona-type or user they are trying to sell to. No games here. These are the bold above the fold designs we are looking for.
+
+What could be improved: The actual CTAs going to a transition screen is wild to me, but without getting into the actual bones outside the landing page, this is beautifully done. No site search up front is another bold move, which we are unsure if we love or not.
+
+Mobile: Text-first, stack the buttons vertically.
+
+Appfolio
+Press enter or click to view image in full size
+
+Property Management Software & Real Estate Solutions
+Learn how our powerful property management software and investment management platform can make your real estate…
+www.appfolio.com
+
+Why we like it: Appfolio plops its mission statement while staying accessible and converting through demos. We love that they didn’t use their generic “Happy renters” to block the whole above the fold and instead decided to drop it below the main text and CTA. We do like the bold white buttons to convert.
+
+What could be improved: Why do we still need this generic image? It is real estate SaaS, not a family planning website. There is also an opportunity to create easier journeys for other personas, similar to Hims.
+
+Mobile: Keep text and CTA first.
+
+Just Search
+Google is the king of search for a reason, backed by its simplistic design. OpenAI and Grok took it right out of the playbook by going search first, and it makes sense. They are search engines and AI chatbots.
+
+So where else does it make sense? Booking a trip, a tour, or a large marketplace, where we aren’t exactly sure what the user needs until they specify a search, time, place, or service.
+
+Website users can be broadly categorized into three groups based on their intent: navigational, informational, and transactional. A search bar is an effective tool for all three, but it is particularly powerful for informational and transactional users, who often represent a high-intent segment of the audience.
+
+Navigational search describes a user who is looking for a specific, known page.
+Informational search involves a user seeking knowledge or solutions.
+Transactional search applies to users who are looking for a specific product or service with the clear intent to take an action.
+The “Search-First” Website Model: For websites with a high volume of content or a user base with high transactional or informational intent, a prominent search bar is a strategic necessity.
+
+If the user’s goal is efficient task completion, such as finding a product or piece of information, a search bar is a solid choice.
+
+Examples:
+Airbnb
+Press enter or click to view image in full size
+
+Airbnb | Vacation rentals, cabins, beach houses, & more
+Get an Airbnb for every kind of trip → 8 million vacation rentals → 2 million Guest Favorites → 220+ countries and…
+www.airbnb.com
+
+Why we like it: Search is perfect for travel and event websites. Because you know the date or place you need to be. It will determine your whole experience.
+
+What could be improved: Popular destinations could help convert unsure users, but we don’t know if it's the best use of space above the fold. Also, user-generated content upfront can pose risks, although Airbnb is big enough not to have to worry about content moderation.
+
+Mobile: Search-first with vertical listing stacks.
+
+Spot Hero
+Press enter or click to view image in full size
+
+SpotHero | Get Everywhere Easier | Reserve Parking and Save
+Find, book, and save on parking with convenient garages, lots, and valets near you. Find parking near work, home…
+spothero.com
+
+Why we like it: Spot hero, you’re looking for the best rate at a certain time at the place you're going, another perfect example of context and action, with an image of a woman using an app in a parking lot. Perfect. A full-width image of this would’ve just wasted time and space.
+
+What could be improved: Although there is a conversion event for the main call options, like monthly, they are trying to get more revenue, but it may not be ideal. Can we jump quickly to a map or the best rate? Not without some hurdles for users.
+
+Mobile: Search-first, remove the image.
+
+Publicis Sapient
+Press enter or click to view image in full size
+
+Publicis Sapient | Digital Business Transformation & Consulting
+Discover how Publicis Sapient transforms businesses with AI-powered solutions, blending technology, data and consulting…
+www.publicissapient.com
+
+Why we like it: Publicis is jumping on the AI wagon with ‘what business issues can we solve for you?’ With helpful prompts in case a customer may not know what they are looking for. Trusted clients this high up on the fold is also a solid move here.
+
+What could be improved: This site is still very ambiguous. Can a company solve every problem? What does Sapient AI mean or do? There are still a lot of questions to be asked, and maybe it can answer them, but AI prompting might be too early to be effective in converting business.
+
+Mobile: Search-first, stack suggestions vertically.
+
+The Rise of Ambiguity.
+Heroes have always helped companies try to answer the age-old question of:
+
+What the hell does this company even do?
+
+But most companies fail at even that insight.
+
+Palantir and Anduril, for example, use the same full-page video heroes. Are they bad-ass? Kind of.
+
+Press enter or click to view image in full size
+Press enter or click to view image in full size
+Palantir
+We build software that empowers organizations to effectively integrate their data, decisions, and operations.
+www.palantir.com
+
+Anduril Industries
+Anduril Industries, Inc. is an American defense technology company that specializes in advanced autonomous systems.
+www.anduril.com
+
+We’re even seeing it in academia and beyond.
+
+Press enter or click to view image in full size
+
+Home | University of Texas at Austin
+retweet icon bullhorn icon reply icon info icon flickr icon tumblr icon vimeo icon reddit icon podcast icon angle-down…
+www.utexas.edu
+
+Do their heroes answer: What do you do? Hell no.
+
+But when there is ambiguity and your customers are not small fish visiting your website for $20 sales, what do you do besides sell yourself through badassery and prestige? I don’t love these heroes, but I understand why they exist.
+
+When you can incorporate AI decision-making tools in any industry and require a major contract, why not flex on the haters while you are at it? It shows in some ways the status or reputation of a company in a cool way.
+
+Well-known institutions that already have a status that relies on student tuition, that can easily recruit with little effort? Similar situation.
+
+On the other end. When you are encouraging demos, booking meetings, or school applications, we could still use a main CTA.
+
+If the site’s purpose is to evoke a feeling, tell a brand story, or drive exploration, a hero image or video may still be effective. A hero image with a strong, action-oriented CTA may be more suitable for a landing page with a single, clear goal.
+
+We Can Do More (and Less) Above the Fold
+Are there still use cases for full-size heroes? Sure.
+
+Are full-size heroes timeless? In my opinion, no.
+
+So, how do we communicate that above the fold doesn’t just need to be a full-width hero solutions? We use UX and customer needs.
+
+Data. User Research. Business Solutions.
+
+Figure out: What conversion do we want? Where are we sending our customers? How does an image help or hurt what we are doing for the business and our trust and loyalty with them?
+
+My Two Cents: Test It Yourself, Because Generic Stats Suck
+Honestly, if you’re banking on some mythical study to dictate your hero, you’re playing roulette. Every audience is different — Gen Z might vibe with a bold split hero’s asymmetry, while boomers prefer the reassuring sweep of full-width.
+
+Run your own A/B, start with traffic splits on hero variants, and track micro-conversions (clicks, scrolls) before full-blown sales lifts. I’ve seen teams waste months chasing “best practices” only to get the real answer with testing.
+
+Bottom line: Split heroes, conversion-first, and search-first seem to edge out for engagement in these scraps, but prove it on your site.
+
+Now in the times of ambiguity, there is an even higher use case for using the above-the-fold content to drive conversion and/or business information to the consumer.
+
+We are X, we do Y, click (or search for) Z.
+
+Got a hero you’re tweaking? Spill the deets — I’d love to hear how it shakes out.
+
+Ross is an Experience Designer & Strategist for a major U.S. health system, with a Bachelor’s in UX Design, writing paywall-free articles.
+
+UX Design
+Design
+Web Design
+UX
+Business Strategy
+2.6K
+
+
+60
+
+
+
+
+UX Planet
+Published in UX Planet
+353K followers
+·
+Last published 3 days ago
+UX Planet is a one-stop resource for everything related to user experience.
+
+
+Follow
+Ross Dillon
+Written by Ross Dillon
+1.4K followers
+·
+135 following
+UX @ Rush | B.S. UX @ DePaul | Portfolio www.rossdillon.com | Find your UX path www.topuxprogram.com
+
+
+Follow
+
+Responses (60)
+your-mommas-favorite
+your-mommas-favorite
+﻿
+
+Cancel
+Respond
+See all responses

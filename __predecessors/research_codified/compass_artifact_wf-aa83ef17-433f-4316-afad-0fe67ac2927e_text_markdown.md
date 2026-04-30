@@ -1,0 +1,240 @@
+# Master List of Design and Engineering Principles
+
+- Firmitas
+- Utilitas
+- Venustas
+- Form follows function
+- Less is more
+- Less but better
+- Truth to materials
+- Structural honesty
+- Human scale
+- Proportion and scale
+- Symmetry and balance
+- Order and geometry
+- Harmony of parts
+- Rejection of ornament
+- Clean geometric lines
+- Open floor plan
+- Emphasis on volume
+- Pilotis
+- Free plan
+- Free facade
+- Ribbon windows
+- Roof garden
+- Building enhances site
+- Sense of shelter
+- Integration with nature
+- Simplicity
+- Minimal materials
+- Repose
+- Energy efficiency
+- Material efficiency
+- Passive solar design
+- Waste reduction
+- Net-zero design
+- Local material sourcing
+- Direct nature connection
+- Natural light
+- Natural ventilation
+- Natural materials
+- Place-based design
+- Prospect and refuge
+- Sense of place
+- Legibility
+- Connectivity
+- Walkability
+- Adaptive reuse
+- Flexibility and adaptability
+- Contextual response
+- Transparency
+- Layered complexity
+- Indoor-outdoor connection
+- Durability and longevity
+- Universal design
+- Single responsibility
+- Open-closed principle
+- Liskov substitution
+- Interface segregation
+- Dependency inversion
+- Boy Scout Rule
+- Don't repeat yourself
+- Keep it simple
+- You aren't gonna need it
+- Meaningful names
+- Small functions
+- Do one thing
+- Command query separation
+- Avoid side effects
+- One level of abstraction
+- Fail fast
+- Hide implementation details
+- Avoid mental mapping
+- Code for maintainer
+- Avoid premature optimization
+- Prefer polymorphism
+- Law of Demeter
+- Separation of concerns
+- Loose coupling
+- High cohesion
+- Encapsulate what changes
+- Composition over inheritance
+- Principle of least knowledge
+- Inversion of control
+- Tell don't ask
+- Robustness principle
+- Orthogonality
+- Information hiding
+- Optimize for deletion
+- Extract function
+- Inline function
+- Extract variable
+- Extract class
+- Move function
+- Rename variable
+- Encapsulate variable
+- Decompose conditional
+- Introduce parameter object
+- Replace magic numbers
+- Substitute algorithm
+- Avoid long methods
+- Avoid duplicate code
+- Avoid feature envy
+- Avoid primitive obsession
+- Test-driven development
+- Arrange act assert
+- Wabi-sabi
+- Ma
+- Kanso
+- Shibui
+- Fukinsei
+- Shizen
+- Yugen
+- Datsuzoku
+- Seijaku
+- Koko
+- Enso
+- Kaizen
+- Mono no aware
+- Iki
+- Mottainai
+- Ikigai
+- Kintsugi
+- Shoshin
+- Mushin
+- Miyabi
+- Shibumi
+- Wa
+- Jo-ha-kyu
+- Kire
+- Shu-ha-ri
+- Shakkei
+- Yohaku no bi
+- Yoin
+- Gaman
+- Omoiyari
+- Good design is innovative
+- Good design is useful
+- Good design is understandable
+- Good design is unobtrusive
+- Good design is honest
+- Good design is long-lasting
+- Good design is thorough
+- Environmentally friendly
+- Balance
+- Contrast
+- Emphasis
+- Hierarchy
+- Repetition
+- Rhythm
+- Pattern
+- White space
+- Movement
+- Variety
+- Unity
+- Alignment
+- Proximity
+- Visual weight
+- Grid systems
+- Typography hierarchy
+- Color theory
+- Scale
+- Framing
+- Texture
+- Line and shape
+- User-centered design
+- Consistency
+- Feedback
+- Affordance
+- User control
+- System status visibility
+- Recognition over recall
+- Error prevention
+- Aesthetic minimalism
+- Learnability
+- Accessibility
+- Information architecture
+- Progressive disclosure
+- Fitts's Law
+- Hick's Law
+- Reduce cognitive load
+- Mental models
+- Von Restorff effect
+- Peak-end rule
+- Tesler's Law
+- Pareto principle
+- Essential elements only
+- Negative space emphasis
+- Function over decoration
+- Limited color palette
+- Clean lines
+- Content-driven design
+- Grid-based layouts
+- Intentional typography
+- Remove non-essentials
+- Visual hierarchy clarity
+- Raw materials exposed
+- Monumental form
+- Functionality over aesthetics
+- Formal legibility
+- Clear structural exhibition
+- Monochromatic schemes
+- High-contrast elements
+- Content prioritized
+- Geometric patterns
+- Mathematical grids
+- Objective clarity
+- Sans-serif typography
+- Flush left alignment
+- Photography over illustration
+- Readability first
+- Universal visual language
+- Design invisibility
+- Rational objectivity
+- Unity of art craft
+- Gesamtkunstwerk
+- Geometric simplicity
+- Primary colors
+- Mass production design
+- Modular design
+- Functional typography
+- Experimental innovation
+- Material as metaphor
+- Bold graphic intentional
+- Motion provides meaning
+- Tactile surfaces
+- Shadows create hierarchy
+- Responsive animation
+- Edge-to-edge imagery
+- Large-scale typography
+- Consistent visual language
+- Cross-platform consistency
+- Color with purpose
+- Clarity
+- Deference
+- Depth
+- Direct manipulation
+- Aesthetic integrity
+- Focus on content
+- Platform consistency
+- Intuitive navigation

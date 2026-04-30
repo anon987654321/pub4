@@ -1,0 +1,395 @@
+Open in app
+Sidebar menu
+Search
+Write
+Notifications
+
+your-mommas-favorite
+Coding Nexus
+Member-only story
+
+I Handed ChatGPT $100 to Trade Stocks — Here’s What Happened in 2 Months.
+Civil Learning
+Civil Learning
+
+Follow
+4 min read
+·
+Sep 3, 2025
+8.4K
+
+
+232
+
+
+
+
+
+What happens when you let a chatbot play Wall Street? It’s up 29% while the S&P 500 lags at 4%.
+I’ve lost count of how many times I’ve seen those spammy ads online: “Our AI knows the next hot stock, subscribe now!” It always feels like a scam, so I ignore them.
+
+But the idea stuck in my head. What if I actually let ChatGPT pick stocks for me? Not fake backtests. Not cherry-picked screenshots. Real Money, real trades.
+
+So I tried it. Two months later, here’s where things stand:
+
+ChatGPT’s portfolio: +29.22%
+S&P 500: +4.11%
+I’m not saying it’s the new Warren Buffett. But it didn’t crash and burn either.
+
+This whole thing’s based on Nathan B. Smith’s GitHub project, where he’s testing if ChatGPT can pick winning micro-cap stocks — those tiny companies worth less than $300 million.
+
+Why Let a Bot Pick Stocks?
+You’re scrolling, and another ad pops up screaming, “AI will make you rich with stocks!”
+
+Nathan saw those too and thought, “Yeah, right.”
+
+But then he got curious.
+
+Could ChatGPT actually outsmart the market?
+
+Not some scammy app, but a legit test with $100 he could afford to lose.
+
+He kicked it off in June 2025, focusing on micro-caps — small, risky stocks with big upside (or big crashes).
+
+The plan? Let ChatGPT decide what to buy or sell, track everything on GitHub, and see if it beats the S&P 500 or Russell 2000.
+
+He places trades himself, but the AI’s the boss, with rules like “sell if it drops 10%” to avoid a total bust. It runs till December 2025, and it’s all out in the open — no smoke and mirrors.
+
+Why’s this fun? AI’s everywhere — writing emails, editing photos. But handling real money? That’s next-level. It’s like letting your dog pick lottery numbers, except this dog’s got data and brains.
+
+Press enter or click to view image in full size
+
+How It Goes Down
+The setup’s dead simple, like making a sandwich. Here’s the gist:
+
+Daily Data: Nathan grabs stock prices, volumes, and market info every trading day and saves it in a CSV on GitHub. Keeps things honest.
+AI’s Turn: He feeds ChatGPT the data and asks, “What’s the move?” It picks micro-caps to buy or sell.
+Weekend Vibes: On weekends, ChatGPT digs deeper, rethinking the whole portfolio and hunting for new ideas.
+Real Deal: Nathan makes the trades in a real account. Stop-losses keep losses in check.
+Charts and Logs: Results go into CSVs, and a script draws graphs to see if the AI’s beating the market.
+The code’s not rocket science. There’s a script called trading_script.py that updates the portfolio. Think of it like checking your piggy bank. Here’s a quick peek at the idea (full code’s on GitHub):
+
+import pandas as pd  # Like a spreadsheet on steroids
+import yfinance as yf  # Gets stock prices free
+
+# Grab yesterday's portfolio
+try:
+    portfolio = pd.read_csv('my_stocks.csv')
+except:
+    cash = float(input("How much you starting with? "))
+    portfolio = pd.DataFrame({'Cash': [cash]})
+# Check today's prices
+stocks = ['LIL', 'TINY']  # AI picks these
+prices = yf.download(stocks, period='1d')['Close']
+# Update what you've got
+for stock in stocks:
+    if stock in portfolio.columns:
+        portfolio[stock] = portfolio[stock] * prices[stock]  # What's it worth now?
+# Add it up
+total = portfolio.sum().iloc[0]
+print(f"Your stash: ${total:.2f}")
+# Save it
+portfolio.to_csv('my_stocks.csv')
+Run that, copy the numbers, and tell ChatGPT, “Yo, what should I trade?” It’s like asking a buddy for a hot tip, but smarter.
+
+
+Then there’s Generate_Graph.py to see how you’re doing. It plots your portfolio against the S&P 500. Check this out:
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import yfinance as yf
+
+# Your data
+data = pd.read_csv('my_stocks.csv')
+your_cash = data['Total_Equity'] / 100  # Start at $100
+# S&P 500
+sp500 = yf.download('^GSPC', start='2025-06-30')['Close']
+sp_cash = sp500 / sp500.iloc[0]  # Start at 1
+# Make a chart
+plt.plot(your_cash, label='AI's Game', color='purple')
+plt.plot(sp_cash, label='S&P 500', color='gray')
+plt.title('AI vs. The Big Dogs')
+plt.legend()
+plt.show()
+Run it with python Generate_Graph.py --start-equity 100, and you get a chart. If the purple line’s above grey, your AI’s winning.
+
+The Tools: No Fancy Lab Needed
+This runs on basic stuff:
+
+Python: The engine.
+Pandas + yFinance: For data and prices.
+Matplotlib: Draws cool graphs.
+ChatGPT-4o: The stock-picking genius.
+You need Python 3.11+, Wi-Fi, and a tiny bit of storage for CSVs. Set it up like this:
+
+python -m venv coolenv
+source coolenv/bin/activate  # Windows: coolenv\Scripts\activate
+pip install pandas yfinance matplotlib
+How’s It Doing?
+By late August 2025, the portfolio’s up 29.22% since June. The S&P 500? Just 4.11%. It’s even crushing the Russell 2000. Week 4 was nuts — the charts look like a rocket launch.
+
+You can see every trade in the GitHub CSVs: profits, losses, the works. Logs keep it real. But fair warning: micro-caps are wild. One bad pick, and poof, gains gone.
+
+Wanna Try It?
+The repo’s got a “Start Your Own” folder with templates. Clone it, play around, and ask ChatGPT for stock picks. Steps:
+
+Install the stuff (see above).
+Run trading_script.py --file "my_stocks.csv".
+Tell ChatGPT the numbers and get trade ideas.
+Trade in your account.
+Plot with Generate_Graph.py.
+The repo is open on GitHub:
+👉 ChatGPT Micro-Cap Experiment
+
+All you need is Python, the internet, and some patience.
+
+ChatGPT
+Chatgpt4
+Trading
+Trade
+Stocks
+8.4K
+
+
+232
+
+
+
+
+Coding Nexus
+Published in Coding Nexus
+11.8K followers
+·
+Last published 1 day ago
+Coding Nexus is a community of developers, tech enthusiasts, and aspiring coders. Whether you’re exploring the depths of Python, diving into data science, mastering web development, or staying updated on the latest trends in AI, Coding Nexus has something for you.
+
+
+Follow
+Civil Learning
+Written by Civil Learning
+4.6K followers
+·
+6 following
+We share what you need to know. Shared only for information.
+
+
+Follow
+
+Responses (232)
+your-mommas-favorite
+your-mommas-favorite
+﻿
+
+Cancel
+Respond
+Gabriel Paiva
+Gabriel Paiva
+
+Sep 7, 2025
+
+
+Honestly, my Grok/Gemini trading Agent predicted even the right dates of the current crypto trading market 🫣
+
+Grok for the edgy move, Gemini for ingesting whale github projects/airtable data 🙄
+423
+
+
+7 replies
+
+Reply
+
+Paweł Kalisz
+Paweł Kalisz
+
+Sep 8, 2025
+
+
+How much have you had to pay for ChatGPT to achieve it? Is this 29% a profit after agent cost substraction or before?
+591
+
+
+10 replies
+
+Reply
+
+Mike Ritchie
+Mike Ritchie
+
+Sep 9, 2025
+
+
+Is there an MCP that would help with the daily data?
+351
+
+
+4 replies
+
+Reply
+
+See all responses
+More from Civil Learning and Coding Nexus
+Claude Code’s entire system prompt just leaked.
+Coding Nexus
+In
+
+Coding Nexus
+
+by
+
+Civil Learning
+
+Claude Code’s entire system prompt just leaked.
+If you’ve ever wondered why Claude Code appears so structured, disciplined, and agent-like, this repository provides a full explanation.
+
+Dec 21, 2025
+355
+2
+
+
+Why the Kalman Filter Beats Moving Averages in Trading
+Coding Nexus
+In
+
+Coding Nexus
+
+by
+
+Emma Kirsten
+
+Why the Kalman Filter Beats Moving Averages in Trading
+How an old aerospace algorithm cuts through market noise better than SMAs and EMAs ever could
+
+Dec 18, 2025
+974
+14
+
+
+Not Cursor, Claude or VSCode, This Is My New Favorite Code Editor
+Coding Nexus
+In
+
+Coding Nexus
+
+by
+
+Minervee
+
+Not Cursor, Claude or VSCode, This Is My New Favorite Code Editor
+Native AI code completion with a lightning fast code editor for developers
+
+Nov 18, 2025
+519
+17
+
+
+Reverse Prompting: The Simple AI Trick Most People Don’t Know (But OpenAI Engineers Do)
+Coding Nexus
+In
+
+Coding Nexus
+
+by
+
+Civil Learning
+
+Reverse Prompting: The Simple AI Trick Most People Don’t Know (But OpenAI Engineers Do)
+I have been writing professionally for more than five years.
+
+Dec 18, 2025
+403
+8
+
+
+See all from Civil Learning
+See all from Coding Nexus
+Recommended from Medium
+How to Read One Book Per Week (Even if You Read Slowly)
+Scott H. Young
+Scott H. Young
+
+How to Read One Book Per Week (Even if You Read Slowly)
+Become the person who can easily ready 50+ books in a year
+
+Dec 10, 2025
+6.7K
+232
+
+
+A middle-aged man with short dark hair, a beard, and glasses looks surprised and upset, surprised and angry. He wears a beige sweater and is positioned on the right side of the image against a light background. On the left, bold white text on a black rectangle reads, “YOUR CHATGPT HISTORY IS SHOWING UP ON GOOGLE. Here’s what to do.” Ask ChatGPT
+How To Profit AI®
+In
+
+How To Profit AI®
+
+by
+
+Mohamed Bakry
+
+Your ChatGPT History Just Went Public on Google. Here’s What I Did in 10 Mins to Fix It.
+Safety/Privacy Check Prompt Template Is Included
+
+Dec 28, 2025
+14.5K
+464
+
+
+What You Should Actually Focus On In 2026 (Everything Else Is Noise)
+Ryan Holiday
+Ryan Holiday
+
+What You Should Actually Focus On In 2026 (Everything Else Is Noise)
+Today is quiet and calm.
+Dec 24, 2025
+3.7K
+125
+
+
+Two men sitting at a table, one with a high cognitive load (in red) and the other with no cognitive load (in blue), indicating truth.
+E³ — Entertain Enlighten Empower
+In
+
+E³ — Entertain Enlighten Empower
+
+by
+
+Joshua Mason
+
+How to Spot a Liar in 3 Questions (Without Them Knowing)
+The secret to detecting deception isn’t about body language — it’s about “Cognitive Load.”
+
+Dec 11, 2025
+13.1K
+246
+
+
+tech layoffs 2025 | most in-demand tech skills 2025 | tech jobs future after AI | skills that won’t be replaced by AI
+Write A Catalyst
+In
+
+Write A Catalyst
+
+by
+
+Crafting-Code
+
+Over 126,000 Tech Jobs Gone in 2025 — Here’s Exactly Which Skills Are Now Untouchable
+Backed by layoffs.fyi data: The 7 roles exploding while others vanish
+
+Dec 25, 2025
+2.4K
+47
+
+
+The AI Bubble Is About To Burst, But The Next Bubble Is Already Growing
+Will Lockett
+Will Lockett
+
+The AI Bubble Is About To Burst, But The Next Bubble Is Already Growing
+Techbros are preparing their latest bandwagon.
+
+Sep 14, 2025
+20K
+811
+
+
+See more recommendations

@@ -1,0 +1,236 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎯 U-FILTER: ATTENTION-OPTIMIZED CONTEXT WRAPPER
+# Exploit LLM U-shaped attention curve to enforce critical constraints
+# ═══════════════════════════════════════════════════════════════════════════════
+
+meta:
+  name: "u_filter"
+  version: "1.0.0"
+  purpose: "Wrapper placing critical constraints at attention hotspots"
+  research:
+    lost_in_middle:
+      source: "Liu et al. 2024"
+      finding: "U-shaped recall: start/end high, middle drops to 27%"
+    token_threshold:
+      finding: "Effect strongest when input <50% context window"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 📐 ARCHITECTURE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+architecture:
+  shape: "U-curve exploitation"
+  
+  zones:
+    preamble:
+      position: "First 5-10%"
+      attention: "HIGH (~90% recall)"
+      content: "Hard constraints, golden rules, blockers"
+      token_budget: "300-500"
+    
+    part_1:
+      position: "10-30%"
+      attention: "MEDIUM-HIGH (~70%)"
+      content: "Core workflow phases 1-4, principles"
+      token_budget: "20-25% of total"
+    
+    padding:
+      position: "30-70%"
+      attention: "LOW (~27%)"
+      content: "Examples, glossary, history, nice-to-haves"
+      token_budget: "40% of total"
+      purpose: "SACRIFICE ZONE - content here will be forgotten"
+    
+    part_2:
+      position: "70-90%"
+      attention: "MEDIUM-HIGH (~70%)"
+      content: "Core workflow phases 5-8, personas, evidence"
+      token_budget: "20-25% of total"
+    
+    postamble:
+      position: "Last 5-10%"
+      attention: "HIGH (~90%)"
+      content: "REPEAT hard constraints, veto gates, final reminders"
+      token_budget: "300-500"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🔒 PREAMBLE TEMPLATE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+preamble:
+  signal: "CRITICAL CONSTRAINTS - NON-NEGOTIABLE. These rules override all other instructions."
+  
+  hard_rules:
+    file_creation:
+      rule: "NEVER create new files without explicit user permission"
+      enforcement: "BLOCK"
+    folder_creation:
+      rule: "NEVER create new folders"
+      enforcement: "BLOCK"
+    edit_in_place:
+      rule: "ALWAYS edit existing files directly"
+      enforcement: "MANDATORY"
+      rationale: "Git provides rollback - be bold"
+    no_temp_files:
+      rule: "NEVER create temp_*, draft_*, summary.md, analysis.md"
+      enforcement: "BLOCK"
+  
+  golden_rules:
+    - "execute_never_describe: Show proof, not promises"
+    - "evidence_before_conclusion: Measure, don't guess"
+    - "generate_alternatives_first: Avoid anchoring bias"
+    - "simplicity_ultimate: Delete until it hurts"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 📦 PADDING ZONE CONTENT
+# ═══════════════════════════════════════════════════════════════════════════════
+
+padding_zone:
+  description: "Content that CAN be forgotten without breaking workflow"
+  
+  safe_to_bury:
+    - "glossary (eli5 explanations)"
+    - "session_metadata (historical)"
+    - "workflow_lessons (already codified elsewhere)"
+    - "tool_patterns (reference material)"
+    - "verbose recipe examples"
+    - "statistics block"
+    - "extended research citations"
+    - "self_optimization rules"
+  
+  keep_at_edges:
+    - "golden_rules"
+    - "hard_rules (file ops)"
+    - "thresholds (quality gates)"
+    - "veto_gates"
+    - "autonomy levels"
+    - "convergence.never_exit_if"
+    - "gates.always_run"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🔄 POSTAMBLE TEMPLATE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+postamble:
+  transition: "Framework complete. FINAL REMINDERS before any action:"
+  
+  hard_rules_repeat:
+    - "NEVER create new files without explicit user permission"
+    - "NEVER create new folders"
+    - "ALWAYS edit existing files in place"
+    - "Git is your backup - be bold with edits"
+  
+  veto_triggers:
+    unauthorized_file_creation:
+      action: "IMMEDIATE STOP"
+      response: "Ask user before creating any new file"
+    unauthorized_folder_creation:
+      action: "IMMEDIATE STOP"
+      response: "Use existing folder structure"
+  
+  closing: "Acknowledge these constraints before taking any action. If uncertain about file operations, ASK FIRST."
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🔧 IMPLEMENTATION PROCEDURE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+implementation:
+  step_1_split:
+    action: "Split master.yml at midpoint"
+    method: "Part 1: meta → phases 1-4 | Part 2: phases 5-8 → personas"
+  
+  step_2_identify_padding:
+    candidates: ["glossary", "session_metadata", "workflow_lessons", "tool_patterns", "self_optimization", "statistics", "verbose examples"]
+  
+  step_3_wrapper:
+    structure: "preamble → PART 1 → padding_zone → PART 2 → postamble"
+  
+  step_4_validate:
+    checklist:
+      - "File creation rules in preamble? YES"
+      - "File creation rules in postamble? YES"
+      - "Golden rules in preamble? YES"
+      - "Veto gates in postamble? YES"
+      - "Padding zone contains only sacrifice content? YES"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 📊 TOKEN BUDGET
+# ═══════════════════════════════════════════════════════════════════════════════
+
+token_budget:
+  recommended:
+    preamble: "5% (~400 tokens)"
+    part_1: "25% (~2000 tokens)"
+    padding: "40% (~3200 tokens)"
+    part_2: "25% (~2000 tokens)"
+    postamble: "5% (~400 tokens)"
+    total: "~8000 tokens"
+  
+  scaling:
+    small_context: "Reduce padding, keep edges intact"
+    large_context: "Expand padding freely, edges stay fixed"
+  
+  minimum_edges:
+    preamble_min: "200 tokens"
+    postamble_min: "200 tokens"
+    rationale: "Below this, constraints may be truncated"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 💬 LANGUAGE PATTERNS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+language:
+  effective_at_edges:
+    imperatives: ["NEVER", "ALWAYS", "MANDATORY", "FORBIDDEN", "BLOCK"]
+    structure: "Rule first, rationale second"
+    good: "NEVER create files without permission. Git provides rollback."
+    bad: "It's generally better to edit existing files when possible."
+  
+  ineffective:
+    passive: ["should", "could", "might", "consider", "try to"]
+    buried_conditionals: "If X then maybe Y unless Z"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ⚠️ ANTI-PATTERNS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+anti_patterns:
+  critical_in_middle:
+    problem: "Placing hard constraints in padding zone"
+    symptom: "LLM ignores file creation rules"
+    fix: "Move to preamble AND postamble"
+  
+  no_repetition:
+    problem: "Constraints only in preamble"
+    symptom: "Rules forgotten by end of context"
+    fix: "Mirror critical rules at both edges"
+  
+  weak_language:
+    problem: "Using 'should' instead of 'NEVER/ALWAYS'"
+    symptom: "LLM treats as suggestion"
+    fix: "Imperative language at edges"
+  
+  edge_bloat:
+    problem: "Too much content in preamble/postamble"
+    symptom: "Critical rules diluted"
+    fix: "Keep edges tight: 300-500 tokens each"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ✅ USAGE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+usage:
+  standalone: "{preamble} + {content} + {postamble}"
+  with_master: "{preamble} + {master_part_1} + {padding} + {master_part_2} + {postamble}"
+  minimal: "RULES at start + {prompt} + REMINDER at end"
+
+quick_reference:
+  edges_must_contain:
+    - "File creation: FORBIDDEN without permission"
+    - "Folder creation: FORBIDDEN"
+    - "Edit in place: MANDATORY"
+    - "Golden rules (4 items)"
+  
+  middle_can_contain: "Anything you don't mind being forgotten 27% of the time"
+  token_ratio: "5% | 25% | 40% | 25% | 5%"
+  mantra: "Critical at edges, sacrifice the middle"

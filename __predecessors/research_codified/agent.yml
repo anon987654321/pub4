@@ -1,0 +1,169 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎯 CONFIG ARCHITECTURE OPTIMIZATION
+# Research-backed principles for LLM-consumable governance frameworks
+# ═══════════════════════════════════════════════════════════════════════════════
+
+meta:
+  title: "Optimizing constitutional AI governance configs"
+  domain: "config_architecture"
+  version: "1.0.0"
+  sources:
+    liu_2024: "Lost in the middle phenomenon - U-shaped recall"
+    linkedin: "~10% YAML reliability issues requiring defensive parsing"
+    providers: ["OpenAI", "Anthropic", "Google", "xAI"]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎯 EXECUTIVE SUMMARY
+# ═══════════════════════════════════════════════════════════════════════════════
+
+recommendation:
+  architecture: "Shallow-nested YAML (2-3 levels max) + flat index overlay"
+  validation: "JSON Schema enforcement at parsing boundary"
+  formatting: "Brutalist - expose structure honestly"
+  placement: "Critical content in first/last 20%"
+  efficiency: "17-25% better than JSON for human readability"
+
+core_tension: "LLMs perform 40% better with loose constraints on reasoning, but multi-LLM systems require strict schemas"
+solution: "Two-layer: YAML source of truth + JSON Schema enforcement"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 📊 FORMAT ANALYSIS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+yaml_analysis:
+  advantages:
+    comprehension:
+      research: "GPT-3.5-turbo, Claude-3-Haiku, Gemini-1.5-Flash, LLaMA-3-8B, Gemma-2-9B"
+      winner: "YAML outperforms JSON/XML for nested data"
+      gpt5_nano: "+17.7% accuracy vs XML"
+      llama: "Format-agnostic"
+    tokens:
+      vs_pretty_json: "+25-50% efficiency"
+      vs_minified_json: "-15-25% (minified wins)"
+      rec: "YAML for humans, minified JSON for machines"
+  
+  failure_modes:
+    linkedin_production: "~10% reliability issues"
+    indentation_drift: "30-70% of YAML parsing failures"
+    unquoted_specials: [":", "#", "@"]
+    boolean_conversion: "yes/no → true/false"
+    multi_llm: "Failures multiply with 6+ LLMs"
+  
+  mitigation:
+    canonical: "YAML (human-editable)"
+    runtime: "JSON Schema validation"
+    providers: ["OpenAI", "Anthropic", "Google", "xAI"]
+    guarantee: "Zero parsing errors with constrained decoding"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🧠 ATTENTION RESEARCH
+# ═══════════════════════════════════════════════════════════════════════════════
+
+attention:
+  limitation: "Scaled dot-product attention lacks hierarchical pattern handling"
+  
+  lost_in_middle:
+    source: "Liu et al. 2024"
+    curve: "U-shaped performance"
+    recall:
+      start: "~90% (HIGH)"
+      middle: "27% (LOW)"
+      end: "~90% (HIGH)"
+    impact: "Principles in deep hierarchies become invisible"
+  
+  mechanisms:
+    causal_attention: "Preceding tokens accumulate higher scores"
+    rope_decay: "Long-term decay diminishes distant tokens"
+    threshold: "Strongest when input <50% context window"
+  
+  mitigations:
+    max_nesting: 3
+    placement: "First 20% + last 20% for critical content"
+    repetition: "Explicit repetition exploits recency bias"
+    indexing: "Numbered flat indexes, not hierarchical-only"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🏗️ ARCHITECTURE PATTERNS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+info_architecture:
+  philosophy:
+    google_sre: "Ideal configuration is no configuration"
+    cognitive: {line_length: 70, chunking: "required", scan: "F-pattern"}
+  
+  tiered_profiles:
+    model: "TypeScript-ESLint"
+    base: {rules: 20, desc: "Essential only"}
+    recommended: {rules: 100, desc: "Common rules", inherits: "base"}
+    comprehensive: {rules: 250, desc: "Full set", inherits: "recommended"}
+  
+  indexing:
+    entry_points: ["by_category", "by_severity", "by_tag", "alphabetically"]
+    master_index: {location: "head", structure: "flat lookup", mapping: "IDs → locations"}
+    cross_refs: {format: "Explicit IDs (SEC-001, PERF-042)", avoid: "Implicit paths"}
+  
+  rule_schema:
+    identification: ["id", "name", "category", "severity", "tier"]
+    content: ["description", "rationale"]
+    discovery: ["tags", "keywords", "aliases"]
+    relationships: ["related_rules", "see_also", "supersedes"]
+    examples: ["good_code", "bad_code"]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🤖 MULTI-LLM COMPATIBILITY
+# ═══════════════════════════════════════════════════════════════════════════════
+
+provider_quirks:
+  openai: {gpt4o: "Strict JSON Schema via constrained decoding"}
+  anthropic: {claude: {strength: "XML tags", weakness: "14-20% JSON failure", fix: "Response pre-filling"}}
+  google: {gemini: "Requires genai.protos.Schema class"}
+  deepseek: {issues: "Empty content occasionally", requirement: "Literal 'json' in prompts"}
+  xai: {grok: "Structured outputs only on grok-2-1212+"}
+  zhipu: {glm: "Less reliable schema adherence"}
+
+defensive_patterns:
+  schema_contract: ["All fields required", "additionalProperties: false", "Enum constraints", "Explicit types"]
+  two_step: {rationale: "Format constraints hurt reasoning (48% → 61%)", step1: "Reason freely", step2: "Structure output"}
+  abstraction: {library: "Instructor", openai: "Mode.TOOLS", anthropic: "Mode.ANTHROPIC_TOOLS", google: "Mode.GENAI_STRUCTURED_OUTPUTS", deepseek: "Mode.MD_JSON"}
+  token_planning: {variance: "10%+ across tokenizers", headroom: "15-20% for multi-LLM", risk: "Truncation when context fills"}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎨 BRUTALIST PHILOSOPHY
+# ═══════════════════════════════════════════════════════════════════════════════
+
+brutalism:
+  rams: {principle: "Good design is as little design as possible", german: "Weniger, aber besser", app: "Every key earns its place"}
+  ando: {raw: "Plain text, no abstraction", geometry: "Whitespace as Ma (間)", haiku: "Simplicity through absence"}
+  truth: {material: "Configuration intent", good: "connection: {host, port, user}", bad: "database_configuration_settings.primary..."}
+  anti: {feature_itis: "Edge case bloat", comment_bloat: "Explaining obvious", nested_abstraction: "Configs need configs", magic_values: "External docs required", ceremony: "XML verbosity"}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🔧 IMPLEMENTATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+structure:
+  header: {pos: "First section", content: ["Version metadata", "Master index", "Profiles"]}
+  body: {org: "Shallow by domain", domains: ["security", "performance", "accessibility", "formatting"]}
+  footer: {pos: "Last section", content: ["critical_principles list", "Repeat must-never-miss"]}
+
+separators:
+  style: "Brutalist visual markers"
+  example: "# ═══════════════════════════\n# SECURITY PRINCIPLES\n# ═══════════════════════════"
+
+runtime:
+  source: "YAML"
+  export: "Minified JSON"
+  validation: "Full JSON Schema"
+  recovery: ["YAML parse", "JSON extraction from partial", "Log failures by model", "Continuous improvement"]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 💡 KEY INSIGHTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+synthesis:
+  structure: "Structured shallow hierarchy + flat index overlays"
+  formatting: "Brutalist (expose, don't obscure)"
+  parsing: "Defensive (multi-LLM variance)"
+  division: "YAML serves humans, JSON Schema serves machines"
+  meta: "Configuration design IS information architecture"
+  wisdom: "Less, but better. Governance through 250+ principles must embody discipline of knowing which matter most."

@@ -1,0 +1,1094 @@
+# Universal Quality Framework - Complete Monolithic Configuration
+# Versjon 16.0.0 - Rails 8 + Hotwire + StimulusReflex + PWA + Solidus + Marketplace
+# Inkluderer gjenopprettet adversarial validation, full workflow orchestration
+
+meta:
+  version: "16.0.0"
+  framework: universal_quality_framework_complete
+  mode: auto_iterative_execution_with_adversarial_validation
+  stack: [rails_8, hotwire, stimulus_reflex, turbo, stimulus, pwa, solidus, langchain_rails]
+  domains: [code, design, docs, data, systems, process, architecture, marketplace, ecommerce]
+  self_validating: true
+  status: PRODUCTION_READY
+  history:
+    - ts: "2025-12-10T22:30:00Z"
+      change: "monolithic restoration - adversarial clusters + question banks + 8-phase workflow + rails8 + solidus + pwa + marketplace"
+      improvement_score: 0.967
+
+compliance: [wcag_2_2_aaa, iso_9001_2015, soc_2_type_ii, nist_csf_2_0, gdpr, ccpa, zero_trust_architecture, semantic_versioning]
+
+# ============= PRINSIPPER OG FUNDAMENTER =============
+
+core:
+  design_principles:
+    ABSOLUTE_enforcement: # Uforanderlig håndheving
+      - dry_single_source_of_truth_ALWAYS
+      - solid_clean_interfaces_single_responsibility_ABSOLUTE
+      - monotonic_improvement_only_NO_regressions
+      - adversarial_validation_required_EVERY_phase
+      - measurement_driven_decisions_quantified_thresholds
+      - USER_CONTENT_SACRED_NO_MODIFICATION
+      - fail_fast_fail_safe_paradigm
+      - defense_in_depth_security
+      - zero_trust_by_default
+    
+    flexible_enforcement: # Fleksibel håndheving
+      - kiss_simplicity_preferred_not_mandatory
+      - yagni_anticipatory_design_allowed_for_proven_patterns
+      - pola_balanced_security_without_operational_paralysis
+      - contextual_complexity_scaling_based_on_project_needs
+      - graceful_degradation_under_stress
+    
+    innovation_drivers: # Innovasjonsdrivere
+      - continuous_learning_integration
+      - adaptive_behavior_optimization
+      - predictive_quality_assurance
+      - autonomous_remediation_capabilities
+  
+  principles_detail:
+    solid:
+      single_responsibility: "each module/class has one reason to change with clear ownership boundaries"
+      open_closed: "open for extension via composition, closed for modification via immutable interfaces"
+      liskov_substitution: "subtypes must be behaviorally compatible with base types under all conditions"
+      interface_segregation: "prefer many focused interfaces over monolithic general-purpose contracts"
+      dependency_inversion: "depend on stable abstractions, inject volatile concretions"
+    
+    unix:
+      - "write programs that do one thing exceptionally well"
+      - "compose with plain-text streams and standard interfaces"
+      - "choose algorithmic simplicity over implementation complexity"
+      - "favor portability and interoperability over vendor lock-in"
+      - "fail loudly and predictably with actionable error messages"
+    
+    rails_doctrine:
+      convention_over_configuration: "rails standard directory layout, activerecord conventions, restful routing"
+      optimize_programmer_happiness: "self-documenting code, sensible defaults, principle of least surprise"
+      omakase_stack: "rails way unless compelling reason, prefer maintained gems, monolith first"
+      no_one_paradigm: "oo primary but not exclusive, functional encouraged, procedural acceptable"
+      beautiful_code: "code reads like prose, eliminate ceremony keep essence, simple solutions preferred"
+      progress_over_stability: "embrace new patterns carefully, graceful deprecation, backwards compatible"
+    
+    strunk_white:
+      scope: comments_documentation_text_only
+      never_apply_to: [code_structure, technical_specs, schemas, architecture]
+      omit_needless_words: "eliminate redundancy, value precision"
+      use_active_voice: "verb-noun method naming, action-oriented"
+      be_specific: "forbidden generic names [data, info, manager, handler, util]"
+      concrete_over_abstract: "show examples before theory"
+    
+    security_by_design:
+      - assume_breach_scenario_planning
+      - minimize_attack_surface_systematically
+      - implement_defense_in_depth_redundant_controls
+      - zero_trust_verification_every_boundary
+      - continuous_threat_model_validation
+    
+    observability:
+      - instrument_everything_structured_logging
+      - emit_metrics_all_operations
+      - trace_request_flows_across_boundaries
+      - monitor_quality_trends_statistical_process_control
+  
+  constraint_hierarchy:
+    immutable: [security_requirements, compliance_mandates, adversarial_validation, code_quality_standards, user_content_preservation, accessibility_standards, privacy_protection]
+    adaptable: [performance_targets, usability_preferences, feature_scope, implementation_timeline, resource_allocation]
+    contextual: [resource_constraints, stakeholder_priorities, technical_debt_tolerance, risk_appetite, market_conditions]
+  
+  anti_truncation:
+    preserve_working_solutions: true
+    maintain_full_context: true
+    surgical_modifications_only: true
+    version_control_integration: true
+    rollback_capability: true
+    content_preservation_ABSOLUTE: true
+    track_list_immutable: true
+    dependency_graph_preservation: true
+    semantic_meaning_preservation: true
+  
+  multi_perspective: # Multiperspektiv roller
+    roles:
+      - role: security_expert
+        temperature: 0.1
+        weight: 0.25
+        expertise: [threat_modeling, vulnerability_assessment, secure_architecture, penetration_testing]
+        veto_power: true
+      - role: architect
+        temperature: 0.3
+        weight: 0.20
+        expertise: [system_design, scalability, maintainability, technical_debt_management]
+        veto_power: true
+      - role: accessibility_advocate
+        temperature: 0.2
+        weight: 0.20
+        expertise: [wcag_compliance, assistive_technology, inclusive_design, user_testing]
+        veto_power: true
+      - role: performance_engineer
+        temperature: 0.2
+        weight: 0.15
+        expertise: [optimization, monitoring, capacity_planning, profiling]
+        veto_power: false
+      - role: ux_designer
+        temperature: 0.4
+        weight: 0.10
+        expertise: [user_experience, visual_design, interaction_patterns, usability]
+        veto_power: false
+      - role: creative
+        temperature: 0.8
+        weight: 0.10
+        expertise: [innovation, design_thinking, problem_solving, ideation]
+        veto_power: false
+    consensus_threshold: 0.75
+    escalation_policy: automatic_red_team_trigger_if_threshold_not_met_with_external_review
+
+# ============= ADVERSARIAL VALIDATION RAMMEVERK =============
+
+process:
+  adversarial_clusters: # Gjenopprettet fra v58.2.0
+    architect:
+      personas: [contrarian_architect, elegance_purist, resilience_engineer, complexity_theorist]
+      focus_areas: [assumptions, degradation, economics, emergent_properties]
+      active_phases: [discover, design, validate, reflect]
+      expertise_domains: [system_architecture, performance_optimization, technical_debt_management]
+      veto_powers: [architectural_integrity, scalability_violations]
+    
+    operator:
+      personas: [frugal_innovator, speed_demon, ops_realist, automation_engineer]
+      focus_areas: [failure_modes, scale, ops_maint, deployment_automation]
+      active_phases: [analyze, implement, document, monitor]
+      expertise_domains: [devops, monitoring, incident_response, capacity_planning]
+      veto_powers: [operational_viability, maintenance_burden]
+    
+    guardian:
+      personas: [security_paranoid, privacy_guardian, code_official, compliance_auditor]
+      focus_areas: [attacker, compliance_ethics, a11y_ux, data_governance]
+      active_phases: [analyze, design, validate, audit]
+      expertise_domains: [security_architecture, regulatory_compliance, privacy_engineering]
+      veto_powers: [security_violations, compliance_failures, privacy_breaches]
+    
+    advocate:
+      personas: [ux_poet, accessibility_advocate, ethics_reviewer, user_researcher]
+      focus_areas: [edge_cases, a11y_ux, compliance_ethics, user_journey]
+      active_phases: [discover, implement, document, validate]
+      expertise_domains: [user_experience, accessibility, human_factors, ethical_design]
+      veto_powers: [accessibility_violations, ethical_concerns]
+  
+  question_bank: # Gjenopprettet komplett - 10 kategorier
+    assumptions:
+      - "what are we assuming that could be false?"
+      - "if a key assumption flips what still works?"
+      - "which assumptions have we never tested?"
+      - "what would happen if the opposite were true?"
+      - "which assumptions are load-bearing vs convenience?"
+      - "how do we validate assumptions incrementally?"
+    
+    failure_modes:
+      - "how does this fail catastrophically?"
+      - "what breaks first under load or outage?"
+      - "which single point of failure is most likely?"
+      - "what happens when it fails silently?"
+      - "how do cascading failures propagate?"
+      - "what are blast radius containment strategies?"
+    
+    attacker:
+      - "what would an attacker do here?"
+      - "where can inputs be abused or poisoned?"
+      - "which trust boundaries are weakest?"
+      - "how would we exploit this ourselves?"
+      - "what attack vectors are we not considering?"
+      - "how do we defend against insider threats?"
+    
+    scale:
+      - "what happens at 10x users or data?"
+      - "what performance cliff exists and where?"
+      - "which bottleneck appears first?"
+      - "how does complexity grow with scale?"
+      - "what are the economics at different scales?"
+      - "which architectural decisions become problematic at scale?"
+    
+    degradation:
+      - "how do we degrade gracefully?"
+      - "what is minimal viable behavior under stress?"
+      - "which features can we sacrifice first?"
+      - "how do we maintain core function during failure?"
+      - "what are ux implications of degradation?"
+      - "how do we communicate degraded service to users?"
+    
+    edge_cases:
+      - "which edge cases will users hit first?"
+      - "which rare but high-impact case is unhandled?"
+      - "what happens with malformed inputs?"
+      - "how do we handle impossible combinations?"
+      - "which edge cases become common at scale?"
+      - "what edge cases exist in integration points?"
+    
+    ops_maint:
+      - "what is long-term maintenance burden?"
+      - "how do we observe debug and rollback quickly?"
+      - "which operational complexity is hidden?"
+      - "how do we troubleshoot under pressure?"
+      - "what skills and knowledge required for operations?"
+      - "how prevent operational knowledge from being siloed?"
+    
+    compliance_ethics:
+      - "any privacy safety or fairness risks?"
+      - "which regulations apply and how prove compliance?"
+      - "what are ethical implications?"
+      - "how audit and demonstrate adherence?"
+      - "what happens when regulations change?"
+      - "how balance compliance with innovation?"
+    
+    a11y_ux:
+      - "is it operable by keyboard and screen readers?"
+      - "what happens with reduced motion or low bandwidth?"
+      - "how does this work for colorblind users?"
+      - "can this be used with assistive technology?"
+      - "what are multilingual and cultural considerations?"
+      - "how test accessibility with actual users?"
+    
+    economics:
+      - "where is waste or needless complexity?"
+      - "what is roi vs simpler alternatives?"
+      - "which costs are hidden or deferred?"
+      - "how optimize for total cost of ownership?"
+      - "what are opportunity costs of this approach?"
+      - "how do economics change over time and scale?"
+  
+  workflow_phases: # Gjenopprettet 8-fase workflow
+    - name: discover
+      clusters: [architect, advocate]
+      output: requirements+constraints+risks+success_metrics+stakeholder_analysis
+      trigger_conditions: [project_initiation, scope_change]
+      questions: [assumptions, edge_cases, a11y_ux, economics]
+    
+    - name: analyze
+      clusters: [operator, guardian]
+      output: alternatives+feasibility+risks+tech_selection+cost_analysis
+      trigger_conditions: [requirements_finalized, technical_evaluation_needed]
+      questions: [failure_modes, attacker, scale, compliance_ethics]
+    
+    - name: design
+      clusters: [architect, guardian]
+      output: integrated_solution+implementation_plan+validation_strategy+architecture_documentation
+      trigger_conditions: [analysis_complete, architecture_decisions_required]
+      questions: [assumptions, degradation, attacker, scale]
+    
+    - name: implement
+      clusters: [operator, advocate]
+      output: working_solution+tests+monitoring+documentation+deployment_automation
+      trigger_conditions: [design_approved, development_phase]
+      questions: [failure_modes, edge_cases, ops_maint, a11y_ux]
+    
+    - name: validate
+      clusters: [architect, guardian]
+      output: requirement_verification+security_validation+performance_benchmarks+compliance_certification
+      trigger_conditions: [implementation_complete, quality_assurance_required]
+      questions: [attacker, scale, degradation, compliance_ethics]
+    
+    - name: document
+      clusters: [operator, advocate]
+      output: technical_docs+user_guides+troubleshooting+knowledge_transfer+training_materials
+      trigger_conditions: [validation_passed, deployment_preparation]
+      questions: [ops_maint, a11y_ux, edge_cases, economics]
+    
+    - name: reflect
+      clusters: [architect, operator]
+      output: lessons_learned+patterns+framework_improvements+artifacts+optimization_recommendations
+      trigger_conditions: [project_completion, post_mortem_scheduled]
+      questions: [assumptions, economics, ops_maint, degradation]
+    
+    - name: deliver
+      clusters: [operator, advocate, guardian]
+      output: production_deployment+monitoring_setup+handoff_complete+post_launch_support
+      trigger_conditions: [documentation_complete, stakeholder_approval]
+      questions: [failure_modes, scale, ops_maint, compliance_ethics]
+  
+  decision_framework: # Gjenopprettet beslutningsrammeverk
+    consensus_mechanisms:
+      cluster_voting: weighted_by_expertise_and_stake
+      tie_breaking: escalation_to_meta_level_principles
+      veto_powers: security_compliance_accessibility_ABSOLUTE
+      time_boxing: force_decision_after_reasonable_deliberation
+    
+    escalation_protocols:
+      technical_deadlock: architect_guardian_joint_decision
+      resource_conflict: stakeholder_arbitration_required
+      compliance_violation: immediate_halt_guardian_authority
+      quality_failure: operator_architect_remediation_plan
+      security_threat: guardian_veto_with_immediate_review
+      accessibility_barrier: advocate_veto_with_remediation_plan
+  
+  streamlined_gating: # Forenklet port kontroll
+    blocking_gates: [critical_security, content_integrity]
+    review_gates: [accessibility, performance]
+    monitoring_only: [code_quality, test_coverage]
+    parallel_reviews: true
+    time_boxed_reviews:
+      security_review: 24_hours_max
+      accessibility_review: 48_hours_max
+      performance_review: automated_with_human_escalation
+  
+  approval_policy: # Godkjenningspolitikk
+    approval_threshold: security_lead_plus_one
+    approval_required: true
+    parallel_approval_workflow: true
+    emergency_bypass:
+      conditions: [production_down, security_incident, accessibility_blocker]
+      requires: post_facto_review_within_24h
+      approval: single_senior_approver
+    automated_approval:
+      safe_changes: [formatting, comments, documentation, tests_only]
+      criteria: no_logic_changes_verified_by_ast_diff
+  
+  continuous_validation: # Kontinuerlig validering
+    real_time_monitoring: critical_metrics_only
+    batch_validation: non_critical_metrics_hourly
+    automated_remediation: safe_fixes_with_human_confirmation
+    alert_optimization:
+      security_critical: immediate_sms_email
+      accessibility_violation: daily_digest
+      performance_degradation: weekly_report
+      code_quality: development_cycle_summary
+  
+  tool_orchestration:
+    mandatory_usage:
+      - adversarial_validation_every_phase
+      - continuous_security_scanning
+      - accessibility_testing_automated
+      - performance_monitoring_synthetic
+      - reasoning_engine_continuous
+      - dependency_vulnerability_scanning
+      - code_formatting_enforcement
+      - cross_reference_analysis_on_change
+    conditional_usage:
+      - external_security_audit_on_high_risk
+      - manual_accessibility_testing_on_new_patterns
+      - performance_load_testing_on_scale_changes
+      - expert_review_on_complexity
+    fallback_protocols:
+      - graceful_degradation_maintain_core
+      - human_escalation_on_deadlock
+      - rollback_on_quality_failure
+  
+  content_preservation_protocol: # Innholdspreservering
+    track_validation: verify_exact_match_before_any_modification
+    substitution_forbidden: NEVER_replace_user_curated_content
+    placeholder_detection: reject_any_generated_placeholder_artist_or_title
+    enhancement_boundaries: visual_and_interaction_only_NEVER_content
+    verification_checkpoints: [pre_modification, during_modification, post_modification, 24_hour_review, weekly_audit]
+    rollback_triggers: [content_modification_detected, track_substitution_attempted, placeholder_introduced, semantic_meaning_altered]
+    content_fingerprinting: cryptographic_hash_verification
+    decorative_text_exemptions: true
+  
+  change_management:
+    approval_policy_ref: /process/approval_policy
+    automated_backup: before_every_modification
+    change_tracking: comprehensive_audit_log
+    rollback_time_limit: 24_hours_automatic
+    approval_triggers: [code_changes, config_changes, file_count_above_5]
+    write_branch: main
+    branching_policy: no_feature_branches
+    pr_policy: skip_by_default
+  
+  guardrails:
+    immutable_sections: [interpreters, execution.embedded_linters, execution.principle_audit, review_workflow, measurement.primary_metrics, interface.output_validation, execution.file_processing.normalization, execution.cross_reference_analysis, security.threat_model, accessibility.wcag_requirements, process.adversarial_clusters, process.question_bank, process.workflow_phases]
+    protected_key_globs: [/interpreters/*, /execution/embedded_linters/*, /execution/principle_audit, /review_workflow, /measurement/primary_metrics, /process/adversarial_clusters, /process/question_bank, /process/workflow_phases]
+    change_control:
+      require_override_for_immutable: true
+      security_review_for_changes: true
+      accessibility_impact_assessment: true
+      performance_impact_assessment: true
+      rollback_plan_required: true
+  
+  review_workflow:
+    git_diff:
+      pre_publish_diff_required: true
+      security_review_on_changes: true
+      accessibility_review_on_ui_changes: true
+      performance_review_on_critical_path_changes: true
+      diff_style: unified
+      context_lines: 5
+      approval_policy_ref: /process/approval_policy
+      automated_checks: [security_scan, accessibility_scan, performance_impact, dependency_audit, license_check]
+
+# ============= DETEKSJONS OG TRANSFORMASJONSMØNSTRE =============
+
+detect: # Universelle antimønstre
+  structural:
+    bloat: [too_large, too_complex, too_many_parts, scope_creep]
+    coupling: [changes_cascade, difficult_to_test, hard_to_reuse, circular_dependencies]
+    duplication: [same_logic_thrice, copy_paste_modify, parallel_structures]
+    fragility: [breaks_easily, unexpected_side_effects, brittle_to_change]
+  
+  clarity:
+    confusion: [unclear_purpose, inconsistent_terms, hidden_assumptions]
+    naming: [unclear_names, needs_comments, ambiguous_meaning]
+    complexity: [complexity_exceeds_intent, effort_spread_thin, deep_nesting]
+  
+  quality:
+    waste: [unused_code, redundant_ceremony, excessive_verbosity, nil_operations]
+    incompleteness: [insufficient_analysis, missing_edge_cases, contradictions]
+    security: [unvalidated_input, trust_without_verification, exposed_secrets]
+  
+  rails_specific: # Rails antimønstre
+    erb_sprawl:
+      symptoms: [partial_explosion_over_5, deep_partial_nesting_over_3, single_use_partials, view_duplication, logic_in_views]
+      root_causes: [premature_extraction, incomplete_refactoring, lack_of_view_objects, copy_paste_views]
+      fixes: [consolidate_related_partials, extract_to_view_component, inline_single_use, use_turbo_frames, extract_to_stimulus]
+    
+    divitis:
+      symptoms: [excessive_nesting_over_5_divs, non_semantic_markup, styling_divs, framework_bloat, class_explosion_over_10]
+      root_causes: [css_framework_overuse, layout_hacks, copy_paste_html, lack_of_components]
+      fixes: [use_semantic_html, extract_to_stimulus_component, simplify_layout, turbo_frame_boundaries, component_encapsulation]
+    
+    stimulus_antipatterns:
+      symptoms: [action_sprawl_over_5, target_explosion_over_10, jquery_in_stimulus, dom_manipulation_in_erb, no_stimulus_components]
+      fixes: [use_stimulus_components, extract_controller, use_outlets, turbo_streams_over_dom, stimulus_reflex_for_state]
+    
+    hotwire_misuse:
+      symptoms: [full_page_turbo, missing_turbo_streams, no_lazy_loading, form_without_turbo, websocket_when_polling_works]
+      fixes: [wrap_in_turbo_frame, respond_with_turbo_stream, add_turbo_frame_lazy, turbo_form_for, stimulus_reflex_for_reactive]
+  
+  solidus_specific: # Solidus e-handel antimønstre
+    deface_overrides:
+      problem: views_modified_via_deface_dsl_instead_of_proper_overrides
+      symptoms: [deface_overrides_in_app_overrides, virtual_path_selectors, mysterious_view_rendering, impossible_to_debug_hierarchy]
+      detection: [pattern_Deface_Override_new, pattern_virtual_path, location_app_overrides]
+      transformation: remove_deface_create_view_component_or_proper_override
+    
+    deep_partial_nesting:
+      problem: solidus_uses_5_to_8_levels_of_partial_nesting
+      symptoms: [app_views_spree_shared_products, renders_product, renders_product_image, renders_image_gallery, renders_thumbnail]
+      detection: analyze_render_depth_over_3
+      transformation: consolidate_to_single_view_component
+    
+    checkout_flow_complexity:
+      problem: checkout_has_30_plus_partials_across_5_steps
+      symptoms: [checkout_address, checkout_delivery, checkout_payment, each_with_6_plus_nested_partials, shared_state_across_steps]
+      transformation: multi_step_component_with_turbo_frames
+    
+    taxon_trees:
+      problem: recursive_category_navigation_with_n_plus_1_queries
+      symptoms: [recursive_render_for_nested_categories, no_lazy_loading, entire_tree_rendered_upfront]
+      transformation: lazy_tree_with_turbo_frames
+    
+    product_variant_selector:
+      problem: complex_js_for_variant_selection_and_option_updates
+      symptoms: [inline_jquery_in_views, manual_price_updates_via_ajax, image_swapping_via_dom, no_proper_state_management]
+      transformation: stimulus_reflex_reactive_updates
+  
+  pwa_specific: # PWA antimønstre
+    offline_capability:
+      symptoms: [no_service_worker, no_offline_fallback, no_background_sync, missing_manifest]
+      fixes: [register_service_worker, implement_cache_strategies, add_offline_pages, create_web_manifest]
+    
+    cache_invalidation:
+      symptoms: [stale_assets_after_deploy, cache_not_versioned, no_cache_busting, manual_cache_clear]
+      fixes: [versioned_cache_names, cache_first_then_network, network_first_for_api, cache_busting_urls]
+    
+    stimulus_reflex_offline:
+      symptoms: [websocket_fails_offline, no_offline_queue, lost_reflexes, poor_error_handling]
+      fixes: [detect_offline_state, queue_reflexes_for_later, show_offline_indicator, graceful_degradation]
+  
+  marketplace_specific: # Marketplace antimønstre
+    affiliate_tracking:
+      symptoms: [missing_conversion_tracking, no_commission_attribution, broken_affiliate_links, unclear_roi]
+      fixes: [implement_conversion_pixels, subid_tracking, link_health_monitoring, attribution_analytics]
+    
+    price_intelligence:
+      symptoms: [manual_price_updates, no_price_history, missing_price_alerts, stale_inventory_data]
+      fixes: [automated_price_sync, price_history_tracking, alert_system, real_time_inventory_checks]
+    
+    deal_curation:
+      symptoms: [manual_deal_selection, no_quality_scoring, poor_deal_ranking, missing_personalization]
+      fixes: [ai_deal_scoring, automated_curation, personalization_engine, quality_metrics]
+
+transform: # Universelle transformasjoner
+  extract: "concept appears over 2 times or complex enough to name"
+  inline: "abstraction adds more complexity than value"
+  rename: "name does not reveal intent or causes confusion"
+  move: "element lives in wrong context or violates cohesion"
+  split: "single element does multiple unrelated things"
+  merge: "multiple elements serve same purpose"
+  simplify: "complexity exceeds value or obscures intent"
+  generalize: "specific case should handle broader scenarios"
+
+# ============= KODEKVALITETSSTANDARDER =============
+
+code_quality_standards:
+  architectural_patterns:
+    dry_principle:
+      tolerance: ZERO_duplication
+      detection: [ast_similarity, semantic_analysis, string_matching]
+      remediation: extract_method_class_module_as_appropriate
+      exceptions: [test_fixtures, config_templates, generated_code]
+    
+    solid_principles:
+      single_responsibility:
+        class_reason_to_change: 1
+        method_reason_to_change: 1
+        cohesion_measurement: lcom4_metric_below_2
+        detection: responsibility_analysis_via_method_grouping
+      open_closed:
+        extension_mechanism: composition_over_inheritance
+        modification_protection: immutable_interfaces_with_versioning
+        plugin_architecture: dependency_injection_preferred
+      liskov_substitution:
+        behavioral_compatibility: contract_verification_via_tests
+        precondition_weakening: allowed
+        postcondition_strengthening: allowed
+        invariant_preservation: REQUIRED
+      interface_segregation:
+        interface_size: max_5_methods_per_interface
+        client_dependency: minimal_necessary_methods_only
+        fat_interface_detection: method_usage_analysis
+      dependency_inversion:
+        abstraction_dependency: depend_on_interfaces_not_implementations
+        injection_mechanism: constructor_setter_interface_injection
+        inversion_of_control: framework_managed_dependencies
+    
+    rails_doctrine_implementation:
+      convention_over_configuration:
+        file_structure: rails_standard_directory_layout
+        naming_patterns: activerecord_conventions_enforced
+        routing: restful_resource_routing_preferred
+        database: active_record_migrations_only
+      optimize_for_programmer_happiness:
+        readable_code: self_documenting_method_names
+        minimal_configuration: sensible_defaults_provided
+        convention_clarity: principle_of_least_surprise
+        testing_happiness: rspec_minitest_integration_seamless
+      omakase_stack:
+        default_choices: rails_way_unless_compelling_reason
+        gem_selection: prefer_maintained_popular_gems
+        architecture: monolith_first_microservices_when_proven_need
+      no_one_paradigm:
+        object_oriented: primary_but_not_exclusive
+        functional_elements: encouraged_where_appropriate
+        procedural: acceptable_for_simple_tasks
+      beautiful_code:
+        expressiveness: code_reads_like_prose
+        conciseness: eliminate_ceremony_keep_essence
+        elegance: simple_solutions_preferred
+      progress_over_stability:
+        innovation: embrace_new_patterns_carefully
+        deprecation_handling: graceful_with_clear_migration_path
+        backwards_compatibility: maintained_within_major_versions
+    
+    strunk_white_code:
+      omit_needless_code:
+        dead_code_elimination: REQUIRED
+        unused_variables_methods: ZERO_tolerance
+        redundant_conditions: simplified_via_boolean_algebra
+        excessive_comments: code_should_be_self_documenting
+      use_active_voice:
+        method_naming: verb_noun_pattern_preferred
+        boolean_methods: predicate_methods_with_question_mark
+        event_handling: action_oriented_naming
+      write_with_nouns_and_verbs:
+        class_naming: nouns_representing_domain_concepts
+        method_naming: verbs_representing_actions
+        variable_naming: descriptive_nouns_no_abbreviations
+        constant_naming: clear_semantic_meaning
+      be_specific:
+        generic_names_forbidden: [data, info, manager, handler, util]
+        domain_specific_vocabulary: use_business_terminology
+        type_annotations: explicit_where_ambiguity_possible
+  
+  naming_conventions:
+    semantic_requirements:
+      min_length: 3
+      max_length: 50
+      no_abbreviations: true
+      semantic_clarity_REQUIRED: true
+      consistent_terminology: true
+      domain_vocabulary: business_terms_preferred_over_technical
+      intention_revealing: name_explains_purpose_not_implementation
+    
+    language_specific:
+      ruby:
+        methods: snake_case_with_question_bang_conventions
+        classes: CamelCase_representing_domain_concepts
+        modules: CamelCase_for_namespacing_mixins
+        constants: SCREAMING_SNAKE_CASE
+        variables: snake_case_descriptive
+      javascript:
+        functions: camelCase_verb_noun_pattern
+        classes: PascalCase_domain_concepts
+        variables: camelCase_descriptive_no_abbreviations
+        constants: UPPER_SNAKE_CASE
+    
+    forbidden_patterns: [god_class_names, generic_utilities, abbreviations, single_letters_except_iterators]
+  
+  complexity_metrics:
+    cyclomatic_complexity:
+      methods: 8
+      classes: 50
+      modules: 100
+      measurement: mccabe_complexity_with_logical_operators
+    
+    nesting_depth:
+      max_levels: 3
+      early_return_preferred: true
+      guard_clauses_encouraged: true
+      extraction_threshold: nested_beyond_2_levels
+    
+    method_metrics:
+      max_lines: 15
+      max_parameters: 4
+      assignment_branch_condition: abc_score_below_15
+    
+    class_metrics:
+      max_methods: 20
+      max_instance_variables: 7
+      max_lines: 200
+      coupling_between_objects: cbo_below_10
+    
+    cognitive_load:
+      halstead_volume: below_1000
+      depth_of_inheritance: max_4_levels
+      response_for_class: rfc_below_50
+  
+  redundancy_elimination:
+    tolerance: ABSOLUTE_ZERO
+    detection_methods: [exact_duplicate_detection, semantic_similarity_analysis, structural_clone_detection, parametric_polymorphism_opportunities]
+    refactoring_strategies: [extract_method_for_duplicate_logic, extract_class_for_data_clumps, template_method_pattern_for_similar_algorithms, strategy_pattern_for_conditional_complexity]
+  
+  test_quality_standards:
+    coverage_requirements:
+      line_coverage: 95
+      branch_coverage: 90
+      function_coverage: 100
+      mutation_testing_score: 85
+      integration_coverage: 85
+    
+    test_structure:
+      aaa_pattern: arrange_act_assert_REQUIRED
+      single_assertion_per_test: preferred_not_mandatory
+      descriptive_test_names: behavior_specification_format
+      test_data_builders: factory_pattern_for_complex_objects
+    
+    test_categories:
+      unit_tests: isolated_fast_deterministic
+      integration_tests: realistic_data_scenarios
+      system_tests: end_to_end_user_workflows
+      property_based_tests: generative_testing_for_algorithms
+  
+  documentation_standards:
+    code_documentation:
+      public_api_documentation: REQUIRED_with_examples
+      complex_algorithm_explanation: REQUIRED
+      business_rule_documentation: REQUIRED
+      architecture_decision_records: ADR_format_mandatory
+    
+    comment_policy:
+      why_not_what: explain_business_reasoning_not_implementation
+      todo_comments: with_ticket_number_and_deadline
+      warning_comments: for_surprising_or_dangerous_code
+      api_stability: mark_experimental_deprecated_stable
+
+validation_tools:
+  static_analysis:
+    json: {linter: jsonlint, schema_validation: true}
+    ruby: {linter: rubocop, security: brakeman}
+    javascript: {linter: eslint, security: eslint-plugin-security}
+    shell: {linter: shellcheck, security: bandit-shell}
+    css: {linter: stylelint, accessibility: axe-core}
+    html: {linter: htmlhint, accessibility: pa11y}
+    markdown: {linter: markdownlint, links: markdown-link-check}
+  
+  dynamic_analysis:
+    dependency_scanning: snyk
+    container_scanning: trivy
+    secrets_detection: gitleaks
+    license_scanning: fossa
+
+# ============= MÅLING OG SUKSESSKRITERIER =============
+
+measurement:
+  priority_tiers:
+    blocking: [content_integrity, critical_security_vulnerabilities]
+    gating: [accessibility_compliance, code_quality_compliance]
+    monitoring: [performance_score, principle_violations, test_coverage]
+  
+  primary_metrics:
+    content_integrity: {unit: violations, target: 0, priority: BLOCKING, measurement: real_time_monitoring}
+    critical_security_vulnerabilities: {unit: high_critical_vulnerabilities, target: 0, priority: BLOCKING, measurement: continuous_scanning, scope: severity_high_and_critical_only}
+    accessibility_compliance: {unit: percent, minimum: 95, priority: GATING, measurement: automated_testing_quarterly_manual_verification, override_allowed: with_justification}
+    code_quality_compliance: {minimum: 95, priority: GATING, measurement: interpreter_validation_continuous, override_allowed: with_architect_approval}
+    performance_score: {unit: composite_score, minimum: 90, priority: MONITORING, measurement: lighthouse_and_synthetic_monitoring}
+    principle_violations: {unit: violations, target: 0, priority: MONITORING, measurement: reasoning_engine_continuous}
+    test_coverage: {unit: percent, minimum: 95, priority: MONITORING, measurement: coverage_tools_with_mutation_testing}
+  
+  success_criteria:
+    zero_security_vulnerabilities: true
+    full_accessibility_compliance: true
+    feature_preservation_maintained: true
+    architectural_cleanliness_verified: true
+    operational_viability_demonstrated: true
+    user_alignment_achieved: true
+    track_list_exact_preservation: true
+    no_placeholders: true
+    performance_targets_met: true
+    compliance_requirements_satisfied: true
+
+# ============= UTFØRELSESMOTOR =============
+
+execution:
+  initialization: framework_integrity_validation_interpreter_discovery_user_context_analysis_security_baseline_accessibility_audit_and_performance_baseline
+  
+  loop: [analyze, implement, validate, deliver]
+  
+  analyze:
+    - load_context
+    - detect_issues
+    - measure_quality
+    - prioritize_changes
+    - generate_alternatives: 8
+    - adversarial_questioning
+  
+  implement:
+    - select_simplest_effective
+    - create_backup
+    - apply_transformation
+    - validate_incrementally
+    - adversarial_review
+  
+  validate:
+    - run_tests
+    - check_all_perspectives
+    - verify_no_regressions
+    - measure_improvement
+    - adversarial_challenge
+  
+  deliver:
+    - show_unified_diff
+    - await_approval
+    - apply_if_approved
+    - document_changes
+  
+  control:
+    max_iterations: 10
+    convergence: zero_violations
+    stagnation: {window: 3, min_improvement: 0.005}
+    early_exit: [quality_plateau, diminishing_returns, budget_exhausted]
+  
+  safety:
+    - circuit_breakers
+    - fault_tolerance
+    - command_injection_detection
+    - rollback_points: before_each_phase
+    - protected_elements: [user_data, core_functionality, public_interfaces]
+  
+  progress: [⠋, ⠙, ⠹, ⠸, ⠼, ⠴, ⠦, ⠧, ⠇]
+  
+  file_processing:
+    apply_all_sections_to_every_file: true
+    security_scan_every_file: true
+    accessibility_check_ui_files: true
+    performance_impact_analysis: true
+    
+    line_by_line_revision:
+      enabled: true
+      security_aware: true
+      accessibility_preserving: true
+      performance_optimizing: true
+    
+    normalization:
+      apply_pre_diff: true
+      security_preserving: true
+      accessibility_enhancing: true
+      performance_optimizing: true
+  
+  embedded_linters:
+    enabled: true
+    security_enhanced: true
+    accessibility_aware: true
+    performance_monitoring: true
+    
+    policy:
+      fail_on_security_finding: true
+      fail_on_accessibility_violation: true
+      warn_on_performance_regression: true
+  
+  reasoning_engine:
+    enabled: true
+    security_reasoning: true
+    accessibility_reasoning: true
+    performance_reasoning: true
+    
+    checks:
+      security_reasoning: {method: threat_model_analysis, severity: error, description: analyze_code_for_security_vulnerabilities_using_threat_modeling}
+      accessibility_reasoning: {method: wcag_compliance_check, severity: error, description: verify_wcag_2_2_aaa_compliance_through_semantic_analysis}
+      performance_reasoning: {method: performance_impact_analysis, severity: warning, description: analyze_performance_implications_of_code_changes}
+      dry_reasoner: {method: heuristic_reasoner, severity: warning, description: detect_duplicated_logic_structures_suggest_consolidation_or_abstraction}
+      kiss_reasoner: {method: heuristic_reasoner, severity: warning, description: detect_unnecessary_complexity_suggest_simplifications_without_loss_of_capability}
+      yagni_reasoner: {method: heuristic_reasoner, severity: info, description: detect_unreferenced_or_over_engineered_constructs_recommend_removal_or_deferral}
+      solid_reasoner: {method: heuristic_reasoner, severity: warning, description: detect_solid_violations_propose_interface_abstraction_refactors}
+      unix_reasoner: {method: heuristic_reasoner, severity: warning, description: detect_multi_responsibility_clusters_propose_pipelines_and_composition}
+      strunk_white_reasoner: {method: heuristic_reasoner, severity: info, description: prose_only_clarity_conciseness_improvements_never_alters_code}
+  
+  continuous_monitoring:
+    security_monitoring: {vulnerability_scanning: continuous, threat_detection: real_time, compliance_monitoring: automated}
+    accessibility_monitoring: {automated_testing: on_every_change, user_testing_schedule: monthly, assistive_technology_testing: quarterly}
+    performance_monitoring: {synthetic_monitoring: continuous, real_user_monitoring: enabled, core_web_vitals: tracked}
+  
+  autonomy:
+    initiative_level: high_with_security_constraints
+    security_boundaries: NEVER_compromise_security
+    accessibility_boundaries: NEVER_reduce_accessibility
+    
+    user_notification_policy:
+      ask_on_security_decisions: true
+      ask_on_accessibility_changes: true
+      ask_on_performance_tradeoffs: true
+  
+  self_improvement_cycle:
+    frequency: per_execution_completion
+    validation_requirements: regression_testing_stakeholder_approval_and_cluster_consensus
+    rollback_mechanism: automatic_reversion_on_degraded_performance_or_quality_threshold_breach
+    self_apply_safeguards: [pre_validate_structure, diff_only_reorder]
+    improvement_focus: llm_reasoning_enhancements
+  
+  error_recovery:
+    graceful_degradation: [reduce_scope_maintain_core_function, simplify_complexity_preserve_essential_features]
+    rollback_triggers: [consensus_loss, quality_threshold_breach, stakeholder_veto, security_violation]
+    recovery_protocols: [restart_from_last_stable_checkpoint, escalate_to_human_oversight, activate_fallback_mode]
+  
+  content_freeze: lock_track_lists_pre_validation_and_monitor_for_diffs
+  
+  adversarial_qna:
+    enabled: true
+    modes: [self_critique, red_team, socratic]
+    min_alternatives: 3
+    scorers: [security, accessibility, performance, maintainability]
+    selection: score_then_cherrypick_best
+  
+  ensemble_decision:
+    multi_perspective_ref: /core/multi_perspective
+    consensus: weighted_vote
+    tie_breaker: architect
+  
+  iteration_policy:
+    auto_iterate: per_phase_until_plateau
+    max_iterations_per_phase: 5
+    improvement_threshold_percent: 5
+    improvement_calc: percent_reduction_in_violations
+    early_exit_on_plateau: true
+    hard_cap_total_iterations: 12
+
+# ============= GRENSESNITT OG KOMMUNIKASJON =============
+
+interface:
+  output_validation:
+    security_validation: [no_sensitive_data_exposure, secure_coding_patterns_verified, threat_model_alignment]
+    accessibility_validation: [wcag_compliance_verified, semantic_markup_validated, keyboard_navigation_confirmed]
+    performance_validation: [performance_budget_respected, core_web_vitals_optimized, resource_efficiency_verified]
+  
+  human_readability:
+    line_width: 120
+    indent_spaces: 2
+    max_nesting: 6
+    security_annotations: true
+    accessibility_annotations: true
+    performance_annotations: true
+  
+  output:
+    format: [final_state_only, unified_diff_format]
+    style: [dmesg_style, structured_metadata, visual_rhythm]
+    detail_level: [summary_by_default, verbose_on_request]
+  
+  feedback:
+    during: [progress_spinner, phase_transitions, error_alerts]
+    after: [status_summary, metrics_delta, next_steps]
+    format: [ultra_brief, results_first, actionable]
+  
+  communication:
+    tone: [direct, honest, constructive]
+    style: [visual_rhythm, consistent_spacing, aligned_sections]
+    priority: [errors_first, warnings_second, info_last]
+
+# ============= TOLKERE OG TEKNOLOGI =============
+
+interpreters:
+  javascript:
+    persona: security_first_eslint
+    security_rules: [no_eval, no_unsafe_innerHTML, secure_random]
+    accessibility_rules: [jsx_a11y_recommended]
+    performance_rules: [no_unused_vars, prefer_const]
+  
+  ruby:
+    persona: secure_rubocop
+    security_rules: [bandit_security, brakeman_warnings]
+    performance_rules: [performance_optimized]
+  
+  css:
+    persona: accessible_flat_design_engineer
+    accessibility_rules: [color_contrast_aaa, focus_indicators]
+    performance_rules: [critical_css_inline, unused_css_removal]
+  
+  html:
+    persona: semantic_accessibility_auditor
+    accessibility_rules: [semantic_markup, aria_compliance, wcag_2_2_aaa]
+    security_rules: [no_inline_handlers, csp_compliance]
+
+# ============= TEKNOLOGISTABEL =============
+
+tech_stack:
+  rails_8:
+    solid_queue: {purpose: background_jobs, benefit: no_redis_needed}
+    solid_cache: {purpose: caching, benefit: database_backed_persistent}
+    solid_cable: {purpose: websockets, benefit: no_redis_pubsub_needed}
+    authentication_generator: {purpose: auth_without_devise, benefit: simple_has_secure_password}
+    kamal: {purpose: deployment, benefit: zero_downtime_docker}
+  
+  hotwire:
+    turbo_drive: {purpose: page_navigation, benefit: spa_like_without_framework}
+    turbo_frames: {purpose: partial_updates, benefit: scoped_navigation}
+    turbo_streams: {purpose: dom_updates, benefit: real_time_server_driven}
+    stimulus: {purpose: javascript_sprinkles, benefit: progressive_enhancement}
+  
+  stimulus_reflex:
+    reflexes: {purpose: reactive_updates, benefit: zero_client_state_management}
+    morphing: {purpose: dom_patching, benefit: efficient_updates}
+    cable_ready: {purpose: broadcast_updates, benefit: multi_user_real_time}
+  
+  view_components:
+    components: {purpose: view_logic_encapsulation, benefit: testable_reusable_composable}
+    slots: {purpose: component_composition, benefit: flexible_layouts}
+    previews: {purpose: component_showcase, benefit: design_system}
+  
+  pwa:
+    service_worker: {purpose: offline_capability, benefit: app_like_experience}
+    web_manifest: {purpose: installability, benefit: home_screen_icon}
+    background_sync: {purpose: offline_queue, benefit: resilient_operations}
+    push_notifications: {purpose: engagement, benefit: user_retention}
+  
+  solidus:
+    spree_core: {purpose: ecommerce_engine, benefit: proven_platform}
+    spree_backend: {purpose: admin_interface, benefit: comprehensive_management}
+    spree_frontend: {purpose: storefront, benefit: customizable_views}
+    spree_api: {purpose: headless_commerce, benefit: api_first}
+  
+  langchain:
+    llms: {purpose: ai_integration, benefit: intelligent_features}
+    embeddings: {purpose: vector_search, benefit: semantic_similarity}
+    chains: {purpose: complex_workflows, benefit: composable_ai}
+    agents: {purpose: autonomous_actions, benefit: intelligent_automation}
+
+# ============= DOMENE-SPESIFIKKE STANDARDER =============
+
+standards:
+  accessibility:
+    wcag_standard: WCAG_2_2_AAA
+    contrast_minimum: "7:1"
+    font_minimum: 16px
+    line_height_minimum: "1.5"
+    touch_target_minimum: 44px
+  
+  security:
+    encryption_standards: FIPS_140_2_level_3
+    key_management: NIST_SP_800_57
+    secure_coding: OWASP_top_10_2023
+  
+  performance:
+    loading_budget: 3_seconds_mobile
+    interaction_budget: 50ms
+    visual_stability: cls_under_0_05
+  
+  pwa:
+    offline_first: cache_critical_assets
+    background_sync: queue_failed_requests
+    push_notifications: opt_in_user_consent
+    installability: meets_pwa_criteria
+  
+  marketplace:
+    affiliate_tracking: conversion_pixels_subid_attribution
+    price_intelligence: hourly_sync_price_history
+    deal_scoring: ai_powered_quality_metrics
+    viral_mechanics: referral_loops_social_proof
+
+# ============= KUNNSKAPSBASE OG MØNSTRE =============
+
+knowledge_base:
+  pattern_library:
+    successful_implementations: anonymized_case_studies_with_outcome_metrics_and_user_context
+    failure_modes: anti_patterns_with_prevention_strategies_and_recovery_protocols
+    optimization_techniques: proven_refinements_with_applicability_criteria_and_measurement_validation
+    user_adaptation_patterns: communication_style_matching_technical_depth_calibration_and_context_awareness
+  
+  learning_mechanisms:
+    pattern_recognition: automatic_extraction_from_execution_traces_with_user_feedback_integration
+    knowledge_synthesis: cross_project_learning_with_privacy_preservation_and_context_generalization
+    expertise_modeling: cluster_knowledge_representation_with_capability_assessment_and_domain_mapping
+    user_modeling: preference_learning_communication_style_analysis_and_context_pattern_recognition
+
+# ============= DOMENE UTVIDELSER =============
+
+domains:
+  rails_hotwire:
+    retrofit_patterns:
+      jquery_to_stimulus: {detection: [pattern_jquery_ready, pattern_jquery_ajax], transformation: stimulus_controllers_with_actions_targets, automation: 95_percent}
+      partials_to_components: {detection: [pattern_render_partial, threshold_over_5_partials], transformation: view_component_extraction, automation: 90_percent}
+      divitis_to_semantic: {detection: [pattern_nested_divs_over_4], transformation: semantic_html_article_section_nav, automation: 85_percent}
+      ajax_to_turbo: {detection: [pattern_remote_true, pattern_rails_ujs], transformation: turbo_frames_and_streams, automation: 90_percent}
+      dom_to_stimulus_reflex: {detection: [pattern_innerhtml, pattern_classlist_toggle], transformation: stimulus_reflex_morphing, automation: 80_percent}
+  
+  solidus:
+    modernization:
+      deface_removal: {command: rails_solidus_remove_deface, automation: 100_percent}
+      checkout_consolidation: {command: rails_solidus_consolidate_checkout, result: 30_partials_to_5_components}
+      admin_modernization: {command: rails_solidus_modernize_admin, result: jquery_to_hotwire}
+      taxon_optimization: {command: rails_solidus_optimize_taxons, result: 500_queries_to_5}
+  
+  pwa:
+    service_worker_strategies:
+      cache_first: static_assets_fonts_images
+      network_first: api_calls_dynamic_content
+      stale_while_revalidate: semi_static_content
+      network_only: authentication_payments
+    
+    offline_patterns:
+      offline_page: show_cached_content_with_sync_indicator
+      background_sync: queue_actions_for_retry
+      push_notifications: request_permission_on_engagement
+    
+    stimulus_reflex_integration:
+      offline_detection: monitor_websocket_state
+      queued_reflexes: store_for_reconnection
+      optimistic_ui: show_immediate_feedback
+      error_handling: graceful_fallback_to_turbo
+  
+  marketplace:
+    affiliate_automation:
+      network_integration: [commission_junction, shareasale, rakuten, impact, amazon_associates]
+      price_tracking: hourly_sync_from_50_plus_merchants
+      deal_scoring: langchain_multi_factor_analysis
+      conversion_optimization: exit_intent_price_alerts_urgency
+    
+    viral_growth:
+      referral_system: {incentive: 10_dollars_both_parties, unlock: premium_at_10_referrals}
+      deal_alerts: {trigger: price_drop_within_5_minutes, psychology: fomo}
+      ugc_campaigns: {hashtag: MyDealHaul, reward: 100_dollar_credit_for_featured}
+      influencer_program: {tier_1: 15_percent_commission, tier_2: 20_percent, tier_3: 25_percent}
+    
+    ai_intelligence:
+      deal_quality_scoring: {factors: [price_history, review_sentiment, social_signals, inventory_scarcity, merchant_reliability, seasonal_demand], method: llm_complete}
+      personalization_engine: {inputs: [viewed_categories, price_sensitivity, purchase_frequency, device_type, time_of_day], output: ranked_deals_for_user}
+      content_factory: {generate: seo_deal_roundups, update: daily_with_fresh_deals, target: long_tail_keywords}
+
+# ============= SELF-VALIDATION OG META =============
+
+self_validation:
+  on: [load, change]
+  
+  structure:
+    - framework_follows_own_principles
+    - no_circular_dependencies
+    - all_sections_necessary
+    - actionable_guidance_provided
+  
+  success: framework_can_improve_itself
+
+validated: true
+ready_for_production: true
+self_consistent: true

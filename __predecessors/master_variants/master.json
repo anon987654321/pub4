@@ -1,0 +1,99 @@
+{
+  "framework_version": "12.9.0",
+  "updated": "2025-07-15T00:50:30Z",
+  "user": "anon987654321",
+  "repository": "anon987654321/pubhealthcare",
+  "extreme_scrutiny": {
+    "enabled": true,
+    "zero_tolerance": true,
+    "compliance_threshold": 95,
+    "validation_frequency": "every_commit"
+  },
+  "cognitive_load_budget": {
+    "total_percentage": 100,
+    "reconnaissance": 15,
+    "architecture": 25,
+    "implementation": 45,
+    "delivery": 15
+  },
+  "resource_limits": {
+    "cpu_percentage": 10,
+    "memory_mb": 1024,
+    "network_bandwidth_percentage": 5,
+    "batch_size": 100
+  },
+  "code_quality_standards": {
+    "function_lines": {
+      "minimum": 3,
+      "maximum": 20
+    },
+    "naming_conventions": {
+      "min_length": 5,
+      "max_length": 30,
+      "no_abbreviations": true
+    },
+    "redundancy_tolerance": 0,
+    "readability_grade": 8,
+    "max_sentence_words": 15
+  },
+  "circuit_breakers": {
+    "cognitive_overload": {
+      "working_memory_chunks": 7,
+      "detection_interval": 10
+    },
+    "resource_monitoring": {
+      "check_interval": 10,
+      "failure_threshold": 0.01
+    },
+    "infinite_loop_protection": {
+      "max_iterations": 10,
+      "mandatory_termination": true
+    }
+  },
+  "validation_tools": {
+    "ruby": {
+      "linter": "rubocop",
+      "security": "brakeman",
+      "test_framework": "minitest"
+    },
+    "javascript": {
+      "linter": "eslint",
+      "accessibility": "axe_core",
+      "performance": "lighthouse"
+    },
+    "shell": {
+      "linter": "shellcheck",
+      "security": "bandit"
+    }
+  },
+  "file_priorities": {
+    "critical": [
+      "ai3/**/*.rb",
+      "rails/**/*.rb",
+      "cognitive_*.rb",
+      "consolidation_*.rb"
+    ],
+    "high": [
+      "**/*.rb",
+      "**/*.sh"
+    ],
+    "medium": [
+      "**/*.js",
+      "**/*.json"
+    ],
+    "low": [
+      "**/*.md",
+      "**/*.txt"
+    ]
+  },
+  "compliance_actions": {
+    "failure_handling": "block_deployment",
+    "remediation_required": true,
+    "timeline_extension_allowed": true
+  },
+  "edge_cases": {
+    "manual_intervention_files": [],
+    "unfixable_files": [],
+    "dependency_unavailable_fallback": "basic_validation"
+  }
+}

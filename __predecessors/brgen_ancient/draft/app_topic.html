@@ -1,0 +1,347 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>mobile/app_topic.html</title>
+    <link rel="stylesheet" type="text/css" href="../../vendor/assets/stylesheets/jquery_mobile_structure_1.4.5.custom.min.css">
+    <link rel="stylesheet" type="text/css" href="../shared/stylesheets/vendor/snap_2.0.0_rc1.min.css">
+    <link rel="stylesheet" type="text/css" href="../../app/assets/stylesheets/all.css">
+    <link rel="stylesheet" type="text/css" href="../../app/assets/stylesheets/mobile.css.erb">
+    <link rel="stylesheet" type="text/css" href="../../app/assets/stylesheets/form.css.erb">
+    <link rel="stylesheet" type="text/css" href="../../app/assets/stylesheets/form_mobile.css.erb">
+    <link rel="stylesheet" type="text/css" href="../../app/assets/stylesheets/jquery_mobile.css.erb">
+    <link rel="stylesheet" type="text/css" href="../../app/assets/stylesheets/selectize.css.erb">
+    <link rel="stylesheet" type="text/css" href="../../app/assets/stylesheets/selectize_mobile.css.erb">
+    <link rel="stylesheet" type="text/css" href="../shared/stylesheets/draft.css">
+
+    <!-- ------------------------------------------------- -->
+
+    <!-- https://github.com/h5bp/html5-boilerplate/blob/master/doc/extend.md#web-apps -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Android homescreen icon -->
+
+    <!-- https://developer.chrome.com/multidevice/android/installtohomescreen -->
+
+    <link rel="icon" sizes="196x196" href="../../app/assets/images/icon_android_196x196.png">
+
+    <!-- iOS homescreen icon -->
+
+    <link rel="apple-touch-icon-precomposed" href="../../app/assets/images/icon_ios_152x152.png">
+  </head>
+  <body class="hide_while_loading">
+    <div class="spinkit_parent_wrapper">
+      <div class="spinkit_wrapper">
+        <div class="spinkit_double_bounce">
+          <div class="bounce1"></div>
+          <div class="bounce2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------- -->
+
+    <div class="touch_indicator_template">
+      <svg width="70" height="70">
+        <circle id="outer" cx="35" cy="35" style="fill: none; stroke: #666;">
+          <animate attributeName="r" from="0" to="60" begin="0s" dur="0.7s" fill="freeze" />
+          <animate attributeName="stroke-width" from="12" to="0" begin="0s" dur="0.4s" fill="freeze" />
+          <animate attributeName="opacity" from="1" to="0" begin="0s" dur="0.4s" fill="freeze" />
+        </circle>
+      </svg>
+    </div>
+    <div class="touch_indicator">
+
+      <!-- Filled by JavaScript -->
+
+    </div>
+
+    <!-- ------------------------------------------------- -->
+
+    <div id="nprogress_hook" class="has_regular_feed" data-role="page">
+      <header data-role="header" data-position="fixed" data-tap-toggle="false" data-hide-during-focus="">
+
+        <!-- Wrapper to prevent jQuery Mobile from adding CSS to elements -->
+
+        <!-- TODO: Remove come v1.5: GH #7230 -->
+
+        <div class="jqm_prevent_class_injection">
+          <a class="back_trigger" data-rel="back">Back</a>
+
+          <!-- ------------------------------------------------- -->
+
+          <h2><a class="progress_trigger">Lorem ipsum dolor</a></a>
+
+          <!-- ------------------------------------------------- -->
+
+          <div class="progress_wrapper">
+
+            <!-- Filled by NProgress -->
+
+          </div>
+        </div>
+      </header>
+
+      <!-- ------------------------------------------------- -->
+
+      <div class="topic_show_path" data-role="content">
+        <div id="regular_feed" data-iscroll>
+          <div class="topic topic_path">
+            <h1 class="title">Consectetur adipisicing elit</h1>
+
+            <!-- ------------------------------------------------- -->
+
+            <div class="first_post">
+              <img class="avatar" src="../shared/images/avatar.png" />
+
+              <!-- ------------------------------------------------- -->
+
+              <div class="time_and_user">
+                <p>0 h ago</p>
+              </div>
+
+              <!-- ------------------------------------------------- -->
+
+              <div class="user_textarea">
+                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                <p><a href="http://youtube.com/watch?v=YxQWT05OYs0">http://youtube.com/watch?v=YxQWT05OYs0</a></p>
+              </div>
+
+              <!-- ------------------------------------------------- -->
+
+              <div class="post_options">
+                <a class="button trigger like_trigger active">
+                  <span class="trigger_description">Like</span>
+                  <span class="count">1</span>
+                </a>
+                <a class="button trigger more_trigger" href="#popup_more" data-rel="popup" data-transition="pop" data-position-to="window">
+                  <span class="trigger_description">More</span>
+                </a>
+
+                <!-- ------------------------------------------------- -->
+
+                <div id="popup_more" data-role="popup">
+                  <div class="panel">
+                    <a>Share</a>
+                    <a>Spam</a>
+                <!--<a>Edit</a>
+                    <a>Delete</a>-->
+                    <a data-rel="back">Cancel</a>
+                  </div>
+                </div>
+
+                <!-- ------------------------------------------------- -->
+
+                <div class="new_reply">
+                  <div id="compose">
+                    <form>
+                      <div class="text">
+                        <label for="reply1_body">Comment...</label>
+                        <input type="text" id="reply1_body">
+                      </div>
+
+                      <!-- ------------------------------------------------- -->
+
+                      <div class="triggers">
+                        <a class="add_photo_trigger" href="#photo_editor" data-rel="popup" data-transition="pop">Add photo</a>
+                        <input type="submit" value="Submit">
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ------------------------------------------------- -->
+
+              <div class="new_source">
+                <a href="http://google.com/">Google</a>
+              </div>
+            </div>
+
+            <!-- ------------------------------------------------- -->
+
+            <div class="replies">
+              <div class="reply">
+                <img class="avatar" src="../shared/images/avatar.png" />
+                <div class="time_and_user">
+                  <p>0 h ago</p>
+                </div>
+                <div class="user_textarea">
+                  <p>Excepteur sint occaecat cupidatat non proident.</p>
+                </div>
+                <div class="post_options">
+                  <a class="button trigger like_trigger">
+                    <span class="trigger_description">Like</span>
+                  </a>
+                  <a class="button trigger more_trigger" href="#popup_more" data-rel="popup" data-transition="pop" data-position-to="window">
+                    <span class="trigger_description">More</span>
+                  </a>
+                </div>
+                <div id="popup_more" data-role="popup">
+                  <div class="panel">
+                    <a>Share</a>
+                    <a>Spam</a>
+                <!--<a>Edit</a>
+                    <a>Delete</a>-->
+                    <a data-rel="back">Cancel</a>
+                  </div>
+                </div>
+                <div class="new_reply">
+                  <div id="compose">
+                    <form>
+                      <div class="text">
+                        <label for="reply1_body">Comment...</label>
+                        <input type="text" id="reply1_body">
+                      </div>
+                      <div class="triggers">
+                        <a class="add_photo_trigger" href="#photo_editor" data-rel="popup" data-transition="pop">Add photo</a>
+                        <input type="submit" value="Submit">
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div class="reply">
+                <img class="avatar" src="../shared/images/avatar.png" />
+                <div class="time_and_user">
+                  <p>0 h ago</p>
+                </div>
+                <div class="user_textarea">
+                  <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.</p>
+                </div>
+                <div class="post_options">
+                  <a class="button trigger like_trigger">
+                    <span class="trigger_description">Like</span>
+                  </a>
+                  <a class="button trigger more_trigger" href="#popup_more" data-rel="popup" data-transition="pop" data-position-to="window">
+                    <span class="trigger_description">More</span>
+                  </a>
+                </div>
+                <div id="popup_more" data-role="popup">
+                  <div class="panel">
+                    <a>Share</a>
+                    <a>Spam</a>
+                <!--<a>Edit</a>
+                    <a>Delete</a>-->
+                    <a data-rel="back">Cancel</a>
+                  </div>
+                </div>
+                <div class="new_reply">
+                  <div id="compose">
+                    <form>
+                      <div class="text">
+                        <label for="reply1_body">Comment...</label>
+                        <input type="text" id="reply1_body">
+                      </div>
+                      <div class="triggers">
+                        <a class="add_photo_trigger" href="#photo_editor" data-rel="popup" data-transition="pop">Add photo</a>
+                        <input type="submit" value="Submit">
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div class="reply">
+                <img class="avatar" src="../shared/images/avatar.png" />
+                <div class="time_and_user">
+                  <p>0 h ago</p>
+                </div>
+                <div class="user_textarea">
+                  <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                </div>
+                <div class="post_options">
+                  <a class="button trigger like_trigger">
+                    <span class="trigger_description">Like</span>
+                  </a>
+                  <a class="button trigger more_trigger" href="#popup_more" data-rel="popup" data-transition="pop" data-position-to="window">
+                    <span class="trigger_description">More</span>
+                  </a>
+                </div>
+                <div id="popup_more" data-role="popup">
+                  <div class="panel">
+                    <a>Share</a>
+                    <a>Spam</a>
+                <!--<a>Edit</a>
+                    <a>Delete</a>-->
+                    <a data-rel="back">Cancel</a>
+                  </div>
+                </div>
+                <div class="new_reply">
+                  <div id="compose">
+                    <form>
+                      <div class="text">
+                        <label for="reply1_body">Comment...</label>
+                        <input type="text" id="reply1_body">
+                      </div>
+                      <div class="triggers">
+                        <a class="add_photo_trigger" href="#photo_editor" data-rel="popup" data-transition="pop">Add photo</a>
+                        <input type="submit" value="Submit">
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------- -->
+
+    <script type="text/javascript" src="../shared/javascripts/vendor/jquery_2.1.3.min.js"></script>
+    <script type="text/javascript" src="../../vendor/assets/javascripts/jquery_mobile_1.4.5.custom.min.js"></script>
+
+    <!-- Core -->
+
+    <script type="text/javascript" src="../shared/javascripts/vendor/cssfx_0.9.7.min.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/vendor/enquire_2.1.1.min.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/vendor/jquery_nprogress_0.1.6.min.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/vendor/jquery_visible_f95a16d.min.js"></script>
+
+    <!-- Posts -->
+
+    <script type="text/javascript" src="../shared/javascripts/vendor/jquery_embedly_3.1.1.min.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/vendor/jquery_oembed_5a8c530.min.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/vendor/imagesloaded_3.1.8.min.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/vendor/packery_1.3.0.min.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/vendor/jquery_ellipsis_0.6.2.min.js"></script>
+
+    <!-- Forms -->
+
+    <script type="text/javascript" src="../shared/javascripts/vendor/jquery_typeahead_0.10.5.min.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/vendor/jquery_in-field_labels_76bb092.min.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/vendor/jquery_selectize_0.8.5.min.js"></script>
+    <script type="text/javascript" src="../../app/assets/javascripts/optgroup_packery.js"></script>
+
+    <!-- ------------------------------------------------- -->
+
+    <!-- Mobile -->
+
+      <!-- Core -->
+
+      <script type="text/javascript" src="../shared/javascripts/vendor/iscroll_probe_5.1.3.min.js"></script>
+      <script type="text/javascript" src="../shared/javascripts/vendor/snap_2.0.0_rc1.min.js"></script>
+
+      <!-- Photo editor -->
+
+      <script type="text/javascript" src="../shared/javascripts/vendor/jquery_caro_1.0.0.min.js"></script>
+
+    <!-- ------------------------------------------------- -->
+
+    <!-- Custom -->
+
+    <script type="text/javascript" src="../../app/assets/javascripts/all.js"></script>
+    <script type="text/javascript" src="../../app/assets/javascripts/mobile.js"></script>
+    <script type="text/javascript" src="../../app/assets/javascripts/scrolling.js"></script>
+    <script type="text/javascript" src="../../app/assets/javascripts/scrolling_mobile.js"></script>
+    <script type="text/javascript" src="../../app/assets/javascripts/feeds.js"></script>
+    <script type="text/javascript" src="../../app/assets/javascripts/affiliate_products.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/draft.js"></script>
+    <script type="text/javascript" src="../shared/javascripts/draft_mobile.js"></script>
+  </body>
+</html>
+
