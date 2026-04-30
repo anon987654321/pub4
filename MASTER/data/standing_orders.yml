@@ -23,4 +23,4 @@
   command: "/scan data/"
   enabled: true
   state: done
-  last_run_at: 1777530951
+  last_run_at: 1777560655
