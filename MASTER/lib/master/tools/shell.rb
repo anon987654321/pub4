@@ -13,6 +13,7 @@ module Master
       DESCRIPTION = "Execute a zsh command in the project root."
       TIMEOUT     = 30
       BLOCKLIST   = Security::Permissions::BLOCKLIST
+      ZSH_BANNED  = %w[sed awk grep find head tail wc cut tr bash sudo perl python].freeze
 
       def initialize(root:, governor:, event_bus: nil)
         @root     = root
@@ -28,6 +29,9 @@ module Master
         return perm if perm.err?
 
         @bus&.publish("tool:before", tool: NAME, command:)
+
+        banned = ZSH_BANNED.select { |b| command.match?(/\b#{b}\b/) }
+        @bus&.publish("zsh:banned_tool_warning", tools: banned, command:) if banned.any?
 
         zdotdir = File.writable?("/tmp") ? "/tmp" : Dir.home
         wrapped = "#!/usr/bin/env zsh\nset -euo pipefail\nsetopt nullglob extendedglob\nexport ZDOTDIR=#{Shellwords.escape(zdotdir)}\nexport LC_ALL=C.UTF-8\ncd #{Shellwords.escape(@root)}\n#{command}\n"

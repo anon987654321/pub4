@@ -130,7 +130,18 @@ module Master
       ls << "PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally."
       ls << "BE_CONCISE: minimal response. If the answer is one word, say one word."
 
+      zsh = load_zsh_patterns
+      if zsh
+        banned_cmds = Array(zsh["banned_commands"]).join(", ")
+        ls << "Zsh scripts: never use #{banned_cmds}. Use pure zsh parameter expansion and builtins instead."
+      end
+
       ls.join("\n")
+    def load_zsh_patterns
+      path = File.join(Master::ROOT, "data", "zsh_patterns.yml")
+      Master.load_yaml(path) if File.exist?(path)
+    rescue StandardError
+      nil
     end
   end
 end
