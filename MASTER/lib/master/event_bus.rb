@@ -6,7 +6,8 @@ module Master
   class EventBus
     include MonitorMixin
 
-    BOOT_TIME = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
+    BOOT_TIME         = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
+    PATTERN_CACHE_MAX = 512
 
     def initialize
       super()
@@ -39,7 +40,7 @@ module Master
     end
 
     def glob_match?(pattern, event)
-      @pattern_cache.shift if @pattern_cache.size >= 512
+      @pattern_cache.shift if @pattern_cache.size >= PATTERN_CACHE_MAX
       re = @pattern_cache[pattern] ||= Regexp.new(
         "\\A" + Regexp.escape(pattern).gsub("\\*\\*", ".*").gsub("\\*", "[^:]*") + "\\z"
       )

@@ -7,8 +7,8 @@ module Master
       # Flags method/variable names that are abbreviations, noise words, or too generic
       # to reveal purpose without reading the implementation.
       class SelfExplainingRule < Rule
-        NOISE_NAMES  = /\b(do_it|handle|process|run_it|execute_it|go|doit)\b/.freeze
-        ABBREV_METHOD = /^\s+def\s+(tmp|res|ret|val|obj|thingy|stuff|thing|data2?|info2?)\b/.freeze
+        NOISE_NAMES   = /^\s+def\s+(?:self\.)?(do_it|handle|process|run_it|execute_it|go|doit)\b/.freeze
+        ABBREV_METHOD = /^\s+def\s+(tmp|res|ret|val|obj|thingy|stuff|thing|data2|info2)\b/.freeze
         ABBREV_VAR    = /\b(tmp|res|ret|val|obj|arr|lst|hsh|idx|cnt|num|str)\s*=(?!=)/.freeze
 
         def initialize
@@ -24,6 +24,7 @@ module Master
 
           code.each_line.with_index(1).flat_map { |line, num|
             next [] if line.strip.start_with?("#")
+            next [] if line.match?(/^\s+[A-Z][A-Z0-9_]+ \s*=/)
             findings = []
             findings << finding(line: num, message: "noise method name — rename to reveal intent") if line.match?(NOISE_NAMES)
             findings << finding(line: num, message: "abbreviated method name — use the full descriptive word") if line.match?(ABBREV_METHOD)

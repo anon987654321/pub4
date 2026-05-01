@@ -4,12 +4,11 @@ require "fileutils"
 
 module Master
   module Tools
-    # WriteFile — atomically write files with undo snapshot.
     class WriteFile
       include PathGuard
       TIER        = :guarded
       NAME        = "write_file".freeze
-      DESCRIPTION = "Atomically write content to a file, with undo snapshot."
+      DESCRIPTION = "Atomically write content to a file, with undo snapshot.".freeze
 
       def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil)
         @root        = File.realpath(root)
@@ -32,14 +31,14 @@ module Master
         @undo.snapshot(full)
         FileUtils.mkdir_p(File.dirname(full))
 
-        tmp = "#{full}.tmp.#{Process.pid}"
-        File.write(tmp, content)
-        File.rename(tmp, full)
+        tmp_path = "#{full}.tmp.#{Process.pid}"
+        File.write(tmp_path, content)
+        File.rename(tmp_path, full)
 
         @bus&.publish("tool:after", tool: NAME, path:)
         Result.ok(full)
       rescue StandardError => e
-        File.delete(tmp) if tmp && File.exist?(tmp)
+        File.delete(tmp_path) if tmp_path && File.exist?(tmp_path)
         Result.err("write_file: #{e.message}", category: :unknown)
       end
 

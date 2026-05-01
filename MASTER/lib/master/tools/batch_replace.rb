@@ -6,7 +6,7 @@ module Master
     class BatchReplace
       TIER        = :guarded
       NAME        = "replace".freeze
-      DESCRIPTION = "Find and replace text across all files in a directory."
+      DESCRIPTION = "Find and replace text across all files in a directory.".freeze
 
       def initialize(root:, governor:, event_bus: nil)
         @root     = root

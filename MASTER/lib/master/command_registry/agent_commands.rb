@@ -105,13 +105,13 @@ module Master
             fr = scanner.scan(target_arg, depth:)
             [[target_arg, fr]]
           elsif target_arg && File.directory?(target_arg)
-            r = scanner.scan_dir(target_arg, depth:, glob: "**/*")
-            next "scan failed" unless r.ok?
-            r.value!
+            dir_result = scanner.scan_dir(target_arg, depth:, glob: "**/*")
+            next "scan failed" unless dir_result.ok?
+            dir_result.value!
           else
-            r = scanner.scan_dir(File.join(root, "lib"), depth:)
-            next "scan failed" unless r.ok?
-            r.value!
+            dir_result = scanner.scan_dir(File.join(root, "lib"), depth:)
+            next "scan failed" unless dir_result.ok?
+            dir_result.value!
           end
           result = Result.ok(pairs)
           next "scan failed" unless result.ok?

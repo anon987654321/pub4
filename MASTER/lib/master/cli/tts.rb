@@ -17,7 +17,7 @@ module Master
       rescue StandardError => e
         @bus&.publish("tts:error", message: e.message)
       ensure
-        File.unlink(audio_path) rescue nil if defined?(audio_path) && audio_path
+        begin; File.unlink(audio_path); rescue StandardError; nil; end if defined?(audio_path) && audio_path
       end
     end
 

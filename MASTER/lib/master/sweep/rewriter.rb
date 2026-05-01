@@ -59,7 +59,7 @@ module Master
 
       def extract(text, lang)
         return nil if text.strip == "UNCHANGED"
-        return nil if text.bytesize < 500 && ERROR_PATTERNS.match?(text)
+        return nil if text.bytesize < MIN_REWRITE_BYTES && ERROR_PATTERNS.match?(text)
         fence_re = /```(?:#{Regexp.escape(lang)}|ruby|sh|bash|yaml|erb)?\n(.*?)```/m
         return text.match(fence_re)[1]         if text.match?(fence_re)
         return text.match(/```\n(.*?)```/m)[1] if text.match?(/```\n(.*?)```/m)

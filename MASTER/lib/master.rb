@@ -32,8 +32,6 @@ module Master
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.ignore(File.join(__dir__, "master", "ruby_llm_patch.rb"))
-  # Ignore SRP extraction files that reopen their parent module rather than defining a new constant.
-  # Zeitwerk expects file base_name -> constant, but these files add methods to an existing module.
   %w[
     autoloop/fix_evaluator.rb
     builder/infra_helpers.rb
@@ -55,8 +53,8 @@ module Master
     require_relative "master/ruby_llm_patch"
     RubyLLM.configure do |cfg|
       API_KEY_PROVIDERS.each do |attr, env_var|
-        val = ENV[env_var].to_s
-        cfg.public_send("#{attr}=", val) if val.length >= MIN_API_KEY_LENGTH
+        api_key = ENV[env_var].to_s
+        cfg.public_send("#{attr}=", api_key) if api_key.length >= MIN_API_KEY_LENGTH
       end
     end
   end

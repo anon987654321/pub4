@@ -20,7 +20,7 @@ module Master
     end
 
     def splash(model)
-      t     = Time.now
+      now   = Time.now
       host  = Socket.gethostname rescue "openbsd"
       ruby  = RUBY_VERSION
       up    = uptime_str
@@ -33,7 +33,7 @@ module Master
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
       lines << @p.bold.red("MASTER") + @p.dim(" constitutional AI agent")
-      lines << @p.dim("hostname #{host}  ruby #{ruby}  #{t.strftime('%Y-%m-%d %H:%M:%S')}")
+      lines << @p.dim("hostname #{host}  ruby #{ruby}  #{now.strftime('%Y-%m-%d %H:%M:%S')}")
       lines << @p.dim("model    #{mod}")
       lines << @p.dim("web      #{url}")
       lines << @p.dim("rev      #{rev}") if rev

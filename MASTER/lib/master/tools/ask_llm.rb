@@ -6,7 +6,7 @@ module Master
     class AskLlm
       TIER        = :guarded
       NAME        = "ask_llm".freeze
-      DESCRIPTION = "Ask the LLM a sub-question and return the answer as a string."
+      DESCRIPTION = "Ask the LLM a sub-question and return the answer as a string.".freeze
 
       def initialize(agent:, governor:, circuit_breaker:, cache:, event_bus: nil)
         @agent          = agent

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module Master
-  # Fixed-capacity circular buffer. Overwrites oldest entry when full.
   class RingBuffer
     include Enumerable
     include MonitorMixin
@@ -16,9 +15,9 @@ module Master
 
     def push(item)
       synchronize do
-      idx = (@start + @size) % @capacity
+      write_pos = (@start + @size) % @capacity
       if @size < @capacity
-        @buf[idx] = item
+        @buf[write_pos] = item
         @size += 1
       else
         @buf[@start] = item

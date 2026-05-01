@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 module Master
-  # Critique-before-revision retry; lifts pass rate ~45%→90% (arxiv:2511.03153).
   module Reflexion
-    MAX_REFLECTIONS = 3
+    MAX_REFLECTIONS   = 3
+    TASK_TRUNCATE     = 400
+    HISTORY_TRUNCATE  = 200
 
     module_function
 
@@ -25,8 +26,8 @@ module Master
 
     def critique(agent:, task:, result:, fast_model: nil)
       prompt = <<~PROMPT
-        Task: #{task.to_s[0, 400]}
-        Attempt output: #{result.to_s[0, 400]}
+        Task: #{task.to_s[0, TASK_TRUNCATE]}
+        Attempt output: #{result.to_s[0, TASK_TRUNCATE]}
         What specifically went wrong? Name the constraint violated. What must change in the next attempt? One paragraph, no preamble.
       PROMPT
       resp = fast_model ? agent.ask_once_with_model(prompt, model: fast_model) : agent.ask(prompt)
@@ -41,7 +42,7 @@ module Master
 
         Previous attempt failed.
         Critique: #{critique}
-        Previous output: #{previous_result.to_s[0, 200]}
+        Previous output: #{previous_result.to_s[0, HISTORY_TRUNCATE]}
 
         Revise based on the critique. Return only the corrected result.
       PROMPT

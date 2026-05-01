@@ -15,8 +15,8 @@ module Master
           elsif arg.start_with?("remember ")
             parts = arg.sub("remember ", "").split("=", 2)
             key = parts[0].strip
-            val = parts[1]&.strip
-            val ? (memory.remember(key, val); "remembered: #{key}") : "usage: /memory remember key=value"
+            setting_value = parts[1]&.strip
+            setting_value ? (memory.remember(key, setting_value); "remembered: #{key}") : "usage: /memory remember key=value"
           elsif arg.start_with?("search ")
             query = arg.sub("search ", "").strip
             hits = if memory.respond_to?(:semantic_recall)
@@ -29,8 +29,8 @@ module Master
             entries = memory.all
             entries.empty? ? "(no memories)" : entries.map { |k, v| "#{k}: #{v}" }.join("\n")
           else
-            val = memory.recall(arg)
-            val ? "#{arg}: #{val}" : "(not found: #{arg})"
+            recalled = memory.recall(arg)
+            recalled ? "#{arg}: #{recalled}" : "(not found: #{arg})"
           end
         },
         "dreams" => ->(ctx) {

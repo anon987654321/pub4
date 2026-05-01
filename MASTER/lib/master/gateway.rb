@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 module Master
-  # Gateway -- multi-channel message router.
-  # Core of the system; CLI/Web/IRC/Matrix/API are adapters registered here.
-  # Each adapter implements render(text, metadata) for output delivery.
   class Gateway
     CHANNELS = %i[cli web irc matrix api].freeze
 
@@ -21,10 +18,9 @@ module Master
       @adapters = {}
     end
 
-    # Register an adapter (must respond to :render) or a bare Proc handler.
     def register(channel, adapter_or_proc = nil, &block)
-      h = adapter_or_proc || block
-      @adapters[channel.to_sym] = h
+      handler = adapter_or_proc || block
+      @adapters[channel.to_sym] = handler
     end
 
     def receive(channel:, message:, metadata: {})
@@ -55,8 +51,8 @@ module Master
     private
 
     def extract_text(result)
-      val = result.value!
-      val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
+      output = result.value!
+      output.is_a?(Hash) && output[:rendered] ? output[:rendered] : output.to_s
     rescue StandardError => e
       @bus&.publish("gateway:extract_error", error: e.message)
       result.to_s

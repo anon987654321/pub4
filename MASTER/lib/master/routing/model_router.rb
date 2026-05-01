@@ -74,10 +74,10 @@ module Master
       end
 
       def next_escalation_tier(current_tier)
-        idx = ESCALATION_CHAIN.index(current_tier.to_s)
-        return nil unless idx
+        tier_index = ESCALATION_CHAIN.index(current_tier.to_s)
+        return nil unless tier_index
 
-        ESCALATION_CHAIN[idx + 1]
+        ESCALATION_CHAIN[tier_index + 1]
       end
 
       def confidence_threshold(task_type: :exploration)

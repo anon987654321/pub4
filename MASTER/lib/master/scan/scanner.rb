@@ -4,7 +4,6 @@ require "etc"
 
 module Master
   module Scan
-    # Scanner — run scan rules against Ruby files; scan_dir uses a CPU-sized thread pool.
     class Scanner
       RULES_PATH   = File.join(Master::ROOT, "data", "rules.yml").freeze
       POOL_SIZE    = [Etc.nprocessors, 8].min
@@ -39,9 +38,9 @@ module Master
         POOL_SIZE.times do
           threads << Thread.new do
             loop do
-              i = semaphore.synchronize { idx = index; index += 1; idx }
-              break if i >= paths.size
-              results[i] = [paths[i], scan(paths[i], depth:)]
+              current_index = semaphore.synchronize { (index += 1) - 1 }
+              break if current_index >= paths.size
+              results[current_index] = [paths[current_index], scan(paths[current_index], depth:)]
             end
           end
         end

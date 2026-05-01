@@ -6,7 +6,7 @@ module Master
     class SearchFiles
       TIER        = :safe
       NAME        = "search_files".freeze
-      DESCRIPTION = "Search for a pattern in files under the project root."
+      DESCRIPTION = "Search for a pattern in files under the project root.".freeze
       MAX_RESULTS = 200
 
       def initialize(root:, event_bus: nil)

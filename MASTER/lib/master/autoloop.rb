@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
-require "open3" # No longer directly used, moving to Master::GitOperations
+require "open3"
 require_relative "git_operations"
 
 require_relative "autoloop/fix_evaluator"
 
 module Master
-  # Scan→fix loop; Reflexion-style retry (arxiv:2503.14340) lifts pass rate ~45%→90%.
   class AutoLoop
     MAX_CYCLES           = 12
     BATCH_SIZE           = 3
@@ -44,8 +43,8 @@ module Master
 
         scan_paths  = %w[lib test].map { |d| File.join(@root, d) }
         all_results = scan_paths.flat_map { |dir|
-          res = @scanner.scan_dir(dir, depth: :standard)
-          res.ok? ? res.value! : []
+          scan_result = @scanner.scan_dir(dir, depth: :standard)
+          scan_result.ok? ? scan_result.value! : []
         }
 
         violations = extract_violations(all_results)

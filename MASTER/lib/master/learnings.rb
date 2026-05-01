@@ -3,19 +3,8 @@
 require "json"
 
 module Master
-  # Learnings — append-only cross-session procedural memory.
-  # Episodic memory (conversation context) lives in Memory.
-  # Procedural memory (fix strategies that worked) lives here.
-  #
-  # Schema per entry:
-  #   trigger:    what situation prompted this (e.g. "NameError in Zeitwerk")
-  #   strategy:   what worked (e.g. "check loader.ignore list for reopen files")
-  #   outcome:    :fixed | :partial | :failed
-  #   confidence: 0.0-1.0 (rises with reuse_count)
-  #   reuse_count: times this entry was applied
-  #   timestamp:  unix epoch
   class Learnings
-    STORE_PATH = "data/learnings.jsonl"
+    STORE_PATH = "data/learnings.jsonl".freeze
     MAX_ENTRIES = 500
     CONFIDENCE_DECAY_DAYS = 30
 
@@ -67,7 +56,7 @@ module Master
     def load_entries
       return [] unless File.exist?(@path)
       File.readlines(@path, chomp: true)
-          .map { |l| JSON.parse(l) rescue nil }
+          .map { |l| begin; JSON.parse(l); rescue StandardError; nil; end }
           .compact
     rescue StandardError
       []
@@ -75,9 +64,9 @@ module Master
 
     def persist
       FileUtils.mkdir_p(File.dirname(@path))
-      tmp = "#{@path}.tmp"
-      File.write(tmp, @entries.map { |e| JSON.generate(e) }.join("\n") + "\n")
-      File.rename(tmp, @path)
+      tmp_path = "#{@path}.tmp"
+      File.write(tmp_path, @entries.map { |e| JSON.generate(e) }.join("\n") + "\n")
+      File.rename(tmp_path, @path)
     end
 
     def prune_old!

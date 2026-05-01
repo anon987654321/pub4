@@ -38,9 +38,9 @@ module Master
           { role: :analyst,  task: "identify all issues",          context_slice: { file: file_path, code: code } },
           { role: :reviewer, task: "security and correctness review", context_slice: { code: code } }
         ]).and_then do |sr|
-          a = sr.artifacts[:analyst]
-          r = sr.artifacts[:reviewer]
-          Result.ok({ analysis: a, review: r, approved: r.is_a?(Hash) && r["approved"] })
+          analysis = sr.artifacts[:analyst]
+          review   = sr.artifacts[:reviewer]
+          Result.ok({ analysis:, review:, approved: review.is_a?(Hash) && review["approved"] })
         end
       end
 
@@ -55,7 +55,7 @@ module Master
           if th.join(timeout)
             th.value
           else
-            th.kill rescue nil
+            begin; th.kill; rescue StandardError; nil; end
             [:timeout, Result.err("worker timed out after #{timeout}s")]
           end
         end.to_h

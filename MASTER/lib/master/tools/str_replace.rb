@@ -2,12 +2,11 @@
 
 module Master
   module Tools
-    # StrReplace — surgical string replacement in files with undo support.
     class StrReplace
       include PathGuard
       TIER        = :guarded
       NAME        = "str_replace".freeze
-      DESCRIPTION = "Replace unique string in a file. Fails if pattern matches 0 or 2+ times."
+      DESCRIPTION = "Replace unique string in a file. Fails if pattern matches 0 or 2+ times.".freeze
 
       def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil)
         @root        = File.realpath(root)
@@ -41,14 +40,14 @@ module Master
 
         @undo.snapshot(full)
 
-        tmp = "#{full}.tmp.#{Process.pid}"
-        File.write(tmp, new_content)
-        File.rename(tmp, full)
+        tmp_path = "#{full}.tmp.#{Process.pid}"
+        File.write(tmp_path, new_content)
+        File.rename(tmp_path, full)
 
         @bus&.publish("tool:after", tool: NAME, path:)
         Result.ok(full)
       rescue StandardError => e
-        File.delete(tmp) if tmp && File.exist?(tmp)
+        File.delete(tmp_path) if tmp_path && File.exist?(tmp_path)
         Result.err("str_replace: #{e.message}", category: :unknown)
       end
 

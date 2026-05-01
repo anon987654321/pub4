@@ -6,8 +6,11 @@ module Master
   module Stages
     # Runs 6-persona deliberation; appends PRAISE votes to exemplars.yml.
     class Council
-      EXEMPLARS_PATH  = File.join(Master::ROOT, "data", "exemplars.yml").freeze
-      PATTERNS_PATH   = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
+      EXEMPLARS_PATH   = File.join(Master::ROOT, "data", "exemplars.yml").freeze
+      PATTERNS_PATH    = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
+      PRAISE_MIN_COUNT = 3
+      MSG_TRUNCATE     = 120
+      FEEDBACK_TRUNCATE = 240
 
       def initialize(deliberation:, config: nil, enabled: false)
         @deliberation      = deliberation
@@ -76,14 +79,14 @@ module Master
 
       def praise?(feedback)
         text = feedback.to_s.downcase
-        text.scan(/\bpraise\b/).size >= 3
+        text.scan(/\bpraise\b/).size >= PRAISE_MIN_COUNT
       end
 
       def log_praise(message, feedback)
         entry = {
           "timestamp" => Time.now.iso8601,
-          "message"   => message.to_s[0, 120],
-          "feedback"  => feedback.to_s[0, 240]
+          "message"   => message.to_s[0, MSG_TRUNCATE],
+          "feedback"  => feedback.to_s[0, FEEDBACK_TRUNCATE]
         }
         existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
         File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))

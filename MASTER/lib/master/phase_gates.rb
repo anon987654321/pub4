@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
 module Master
-  # 7-stage planning FSM; gates block advancement until conditions are met.
   PHASES = %w[discover analyze ideate design implement validate deliver idle].freeze
 
   class PhaseGates
-    PHASE_STATE_PATH = "data/phase_state.yml"
+    PHASE_STATE_PATH = "data/phase_state.yml".freeze
 
     GATES = {
       "discover"  => %w[problem_stated success_measurable],
@@ -65,8 +64,8 @@ module Master
     private
 
     def next_phase
-      idx = PHASES.index(current) || 0
-      PHASES[[idx + 1, PHASES.size - 1].min]
+      phase_index = PHASES.index(current) || 0
+      PHASES[[phase_index + 1, PHASES.size - 1].min]
     end
 
     def unmet_gates(phase)

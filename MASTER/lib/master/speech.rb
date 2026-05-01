@@ -4,7 +4,6 @@ require "securerandom"
 require "fileutils"
 
 module Master
-  # TTS via edge-tts (Microsoft Neural voices) with espeak fallback.
   module Speech
     EDGE_TTS = %w[/home/dev/.local/bin/edge-tts /usr/local/bin/edge-tts].find { |p| File.executable?(p) }
     ESPEAK   = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
@@ -72,7 +71,7 @@ module Master
     module_function
 
     def synthesize_edge(text, voice:, style:)
-      tmp = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+      audio_path   = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
       voice_name   = VOICES.fetch(voice.to_sym, VOICES[DEFAULT_VOICE])
       style_config = STYLES.fetch(style.to_sym, STYLES[DEFAULT_STYLE])
 
@@ -82,21 +81,21 @@ module Master
         "--rate=#{style_config[:rate]}",
         "--pitch=#{style_config[:pitch]}",
         "--text", text.to_s,
-        "--write-media", tmp,
+        "--write-media", audio_path,
         out: File::NULL, err: File::NULL
       )
 
-      (ok && File.exist?(tmp) && File.size(tmp) > 0) ? tmp : nil
+      (ok && File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
     end
 
     def synthesize_espeak(text)
-      tmp = "/tmp/m_tts_#{SecureRandom.hex(8)}.wav"
-      ok  = system(
+      audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.wav"
+      ok         = system(
         ESPEAK, "-s", "140", "-p", "30", "-a", "150",
-        "-w", tmp, text.to_s,
+        "-w", audio_path, text.to_s,
         out: File::NULL, err: File::NULL
       )
-      (ok && File.exist?(tmp) && File.size(tmp) > 0) ? tmp : nil
+      (ok && File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
     end
   end
 end
