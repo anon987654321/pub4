@@ -26,7 +26,7 @@ module Master
       def and_then(label = nil, &blk)
         result = blk.call(@value)
         result.respond_to?(:ok?) ? result : Result.ok(result)
-      rescue => e
+      rescue StandardError => e
         Result.err("#{label || 'stage'}: #{e.message}", category: :unknown)
       end
 

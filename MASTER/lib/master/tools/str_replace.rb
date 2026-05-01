@@ -47,7 +47,7 @@ module Master
 
         @bus&.publish("tool:after", tool: NAME, path:)
         Result.ok(full)
-      rescue => e
+      rescue StandardError => e
         File.delete(tmp) if tmp && File.exist?(tmp)
         Result.err("str_replace: #{e.message}", category: :unknown)
       end

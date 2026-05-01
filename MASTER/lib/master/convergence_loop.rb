@@ -1,14 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  # ConvergenceLoop — unified scan→fix→converge loop.
-  # Replaces the separate AutoLoop (surgical patches) and Sweep (full rewrites).
-  # Strategy selects the fix approach; convergence logic is shared.
-  #
-  # Stopping criteria (arxiv:2602.21833):
-  #   1. violation delta < threshold for window consecutive cycles
-  #   2. max_cycles reached
-  #   3. oscillation detected (score goes up then down repeatedly)
+  # Unified scan→fix loop; stops on convergence, max_cycles, or oscillation (arxiv:2602.21833).
   class ConvergenceLoop
     MAX_CYCLES  = 16
     THRESHOLD   = 0.05

@@ -1,19 +1,12 @@
 # frozen_string_literal: true
 
 module Master
-  # Reflexion — structured retry with critique.
-  # Ref: arxiv:2511.03153 (RefAgent), arxiv:2503.14340 (MANTRA).
-  #
-  # Full loop: attempt → evaluate → critique (fast model) → revise → repeat.
-  # Distinct from raw retry (append error + retry) — critique step names the flaw
-  # before revision, which lifts pass rates from ~45% to ~90% per RefAgent.
+  # Critique-before-revision retry; lifts pass rate ~45%→90% (arxiv:2511.03153).
   module Reflexion
     MAX_REFLECTIONS = 3
 
     module_function
 
-    # Wrap a block with reflexion. Yields attempt number; block must return Result.
-    # On non-ok result, generates critique and passes it back for next attempt.
     def run(agent:, task:, fast_model: nil, max: MAX_REFLECTIONS)
       last_result = nil
       last_critique = nil

@@ -3,9 +3,7 @@
 require "fileutils"
 
 module Master
-  # Append-only audit trail of every tool invocation.
-  # Subscribes to tool:before events on the shared EventBus.
-  # Written to .master/audit.log — one line per call, machine-readable.
+  # Append-only tool invocation log; subscribes to tool:before on EventBus.
   class AuditLog
     LOG_PATH = ".master/audit.log".freeze
     MAX_VAL  = 120

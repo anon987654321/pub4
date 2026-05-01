@@ -27,7 +27,6 @@ module Master
       @req_times     = []
     end
 
-    # Per-message rate check — call once per user request, not per model fallback.
     def check_rate!
       synchronize do
         now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -37,7 +36,6 @@ module Master
       end
     end
 
-    # Per-model-attempt: check budget + circuit state, then execute.
     def call(cost_estimate, &blk)
       check_budget(cost_estimate)
       check_circuit
@@ -50,7 +48,6 @@ module Master
     def record_cost(amount)  = synchronize { @session_total += amount }
     def session_total        = synchronize { @session_total }
 
-    # Exposed for tests and /config command.
     def state = synchronize { @state }
 
     private

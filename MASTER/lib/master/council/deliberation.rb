@@ -13,7 +13,7 @@ module Master
       end
 
       def review(code, context: nil)
-        return Result.err('council: no personas configured', category: :validation) if @personas.empty?
+        return Result.err("council: no personas configured", category: :validation) if @personas.empty?
 
         threads = @personas.map do |persona|
           Thread.new do
@@ -24,13 +24,13 @@ module Master
             entry
           end
         end
-feedback = threads.map { |t| t.join(30) ? t.value : nil }.compact
-if feedback.empty?
-  @bus&.publish(:council_timeout, personas: @personas.map(&:name))
-  return Result.err("council: all personas timed out (#{@personas.size})", category: :timeout)
-end
+        feedback = threads.map { |t| t.join(30) ? t.value : nil }.compact
+        if feedback.empty?
+          @bus&.publish(:council_timeout, personas: @personas.map(&:name))
+          return Result.err("council: all personas timed out (#{@personas.size})", category: :timeout)
+        end
 
-vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
+        vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
         unless vetoes.empty?
           veto = vetoes.first
           @bus&.publish(:council_veto, veto)
@@ -45,8 +45,8 @@ vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
       private
 
       def validate_dependencies!
-        raise ArgumentError, 'personas must be an array' unless @personas.is_a?(Array)
-        raise ArgumentError, 'agent must respond to :ask' unless @agent.respond_to?(:ask)
+        raise ArgumentError, "personas must be an array" unless @personas.is_a?(Array)
+        raise ArgumentError, "agent must respond to :ask" unless @agent.respond_to?(:ask)
       end
 
       def veto_role?(persona)
@@ -58,8 +58,8 @@ vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
       end
 
       def build_prompt(persona, code, context)
-        ctx = context ? "\nContext: #{context}\n" : ''
-        veto_hint = veto_role?(persona) ? ' You may prefix VETO: if this must not ship.' : ''
+        ctx = context ? "\nContext: #{context}\n" : ""
+        veto_hint = veto_role?(persona) ? " You may prefix VETO: if this must not ship." : ""
         <<~PROMPT
           You are #{persona.name} (#{persona.role}, bias: #{persona.bias}).#{ctx}
           #{persona.prompt}
@@ -72,7 +72,7 @@ vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
       end
 
       def veto_text?(feedback)
-        feedback.to_s.strip.start_with?('VETO:')
+        feedback.to_s.strip.start_with?("VETO:")
       end
     end
   end

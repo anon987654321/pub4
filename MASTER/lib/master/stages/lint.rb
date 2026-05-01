@@ -50,7 +50,7 @@ module Master
         end
 
         Result.ok(ctx.merge(lint_report: findings))
-      rescue => e
+      rescue StandardError => e
         # Lint failure must not block the pipeline
         Result.ok(ctx.merge(lint_error: e.message))
       end

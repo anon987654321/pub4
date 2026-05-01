@@ -40,7 +40,7 @@ module Master
         end
 
         Result.ok(results.empty? ? "(no matches)" : results.join("\n---\n"))
-      rescue => e
+      rescue StandardError => e
         Result.err("search_files: #{e.message}", category: :unknown)
       end
 

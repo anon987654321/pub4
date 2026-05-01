@@ -44,7 +44,7 @@ module Master
 
         @bus&.publish("tool:after", tool: NAME)
         Result.ok("replaced in #{changed} file(s)")
-      rescue => e
+      rescue StandardError => e
         Result.err("replace: #{e.message}", category: :unknown)
       end
     end

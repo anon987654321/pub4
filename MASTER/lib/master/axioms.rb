@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
-
 module Master
-  # Central source for rules, axioms, voice, and workflow.
-  # Loads from data/rules.yml (unified hierarchy) and data/workflow.yml.
-  # All data is loaded once (optionally from a custom root) and frozen
-  # to guarantee immutability and fast repeated access.
+  # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
   class Axioms
     DATA_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "rules.yml").freeze
     WORKFLOW_PATH = File.join(File.expand_path("../../..", __dir__), "data", "workflow.yml").freeze
@@ -17,9 +13,6 @@ module Master
       @workflow      = load_yaml(@workflow_path) || {}
     end
 
-    # Public API ---------------------------------------------------------
-
-    # Kernel rules: {ID => name} hash for backward compatibility.
     def kernel
       @kernel ||= begin
         all_rules = (@data["rules"] || {}).values.flatten
@@ -34,7 +27,6 @@ module Master
       @workflow.freeze
     end
 
-    # All non-kernel rules as an array of hashes.
     def philosophy(limit: nil)
       @philosophy ||= begin
         all_rules = (@data["rules"] || {}).values.flatten
@@ -46,17 +38,13 @@ module Master
       limit ? @philosophy.first(limit) : @philosophy
     end
 
-    # All rules across all scopes, flat array.
     def all_rules
       @all_rules ||= (@data["rules"] || {}).values.flatten.freeze
     end
 
-    # Rules filtered by scope: codebase, file, unit, line.
     def rules_for_scope(scope)
       (@data.dig("rules", scope.to_s) || []).freeze
     end
-
-    # Formatted blocks for display (e.g. in prompts) --------------------
 
     def kernel_block
       return nil if kernel.empty?
@@ -73,8 +61,6 @@ module Master
       "## Rules (top #{items.size})\n#{top}"
     end
 
-    # Voice, strunk, constitution ----------------------------------------
-
     def voice
       @voice ||= (@data["voice"] || {}).freeze
     end
@@ -90,16 +76,14 @@ module Master
     def constitution
       @constitution ||= begin
         constitution_data = {}
-        constitution_data["golden_rule"] = @data["golden_rule"]
-        constitution_data["protection"] = @data["protection"]
-        constitution_data["banned_output"] = voice["banned_output"]
-        constitution_data["anti_simulation"] = voice["anti_simulation"]
+        constitution_data["golden_rule"]         = @data["golden_rule"]
+        constitution_data["protection"]          = @data["protection"]
+        constitution_data["banned_output"]       = voice["banned_output"]
+        constitution_data["anti_simulation"]     = voice["anti_simulation"]
         constitution_data["communication_style"] = voice["style"]
         constitution_data.freeze
       end
     end
-
-    # Thresholds, scan depths, language config ---------------------------
 
     def thresholds
       @thresholds ||= (@data["thresholds"] || {}).freeze
@@ -113,32 +97,25 @@ module Master
       @languages_config ||= (@data["languages"] || {}).freeze
     end
 
-    # Workflow rule lookup ------------------------------------------------
-
     def workflow_rule(key)
       @workflow.dig(key.to_s) || {}
     end
 
-    # General lookup -------------------------------------------------------
-
     def lookup(id)
       id_str = id.to_s
-      kernel[id_str] ||
-        philosophy.find { |a| a["id"] == id_str }&.dig("name")
+      kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")
     end
 
     def empty?
       @data.empty?
     end
 
-    # ---------------------------------------------------------------------
-
     private
 
     def load_yaml(path)
       return nil unless File.exist?(path)
 
-      Master.load_yaml(path, permitted_classes: [], permitted_symbols: [], aliases: true)
+      Master.load_yaml(path)
     rescue StandardError
       nil
     end

@@ -35,11 +35,9 @@ module Master
       @data  = load_config
     end
 
-    # Hash‑style access
     def [](key)         = @data[key.to_s]
     def []=(key, value) ; @mutex.synchronize { @data[key.to_s] = value } ; end
 
-    # Typed helpers
     def model          = self['model']
     def budget_max     = self['budget_max'].to_f
     def req_max        = self['req_max'].to_f
@@ -66,7 +64,6 @@ module Master
       File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
     end
 
-    # Reload from disk, preserving unknown keys.
     def reload!
       @mutex.synchronize { @data = load_config }
     end
@@ -79,14 +76,14 @@ module Master
     def load_config
       return deep_dup(DEFAULTS) unless File.exist?(@path)
 
-      raw = Master.load_yaml(@path); loaded = raw.is_a?(Hash) ? raw : {}
+      raw    = Master.load_yaml(@path)
+      loaded = raw.is_a?(Hash) ? raw : {}
       deep_merge(DEFAULTS, stringify_keys(loaded))
     rescue Psych::Exception => e
       warn "config: failed to parse #{@path}: #{e.message}"
       deep_dup(DEFAULTS)
     end
 
-    # Recursive merge where +b+ overrides +a+.
     def deep_merge(a, b)
       a.merge(b) do |_key, old_val, new_val|
         old_val.is_a?(Hash) && new_val.is_a?(Hash) ? deep_merge(old_val, new_val) : new_val

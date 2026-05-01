@@ -3,8 +3,6 @@
 require_relative "builder/infra_helpers"
 
 module Master
-  # Builder — assembles the dependency container.
-  # Three phases: infrastructure → AI stack → pipeline + gateway.
   module Builder
     RING_SIZE = 1000
     SNAPSHOT_MAX_BYTES = 50_000

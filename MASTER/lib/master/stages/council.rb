@@ -4,8 +4,7 @@ require "yaml"
 
 module Master
   module Stages
-    # Council — 6-persona deliberation on dangerous or multi-file changes.
-    # PRAISE votes are appended to data/exemplars.yml for future reference.
+    # Runs 6-persona deliberation; appends PRAISE votes to exemplars.yml.
     class Council
       EXEMPLARS_PATH  = File.join(Master::ROOT, "data", "exemplars.yml").freeze
       PATTERNS_PATH   = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
@@ -48,7 +47,7 @@ module Master
 
       def load_patterns
         data = Master.load_yaml(PATTERNS_PATH)
-        (data["dangerous"] || []).flat_map { |str| [Regexp.new(str, Regexp::IGNORECASE)] }
+        (data["dangerous"] || []).map { |str| Regexp.new(str, Regexp::IGNORECASE) }
       end
 
       def should_run?(ctx)
@@ -75,13 +74,11 @@ module Master
         end
       end
 
-      # Detect unanimous or majority PRAISE in council feedback text.
       def praise?(feedback)
         text = feedback.to_s.downcase
         text.scan(/\bpraise\b/).size >= 3
       end
 
-      # Append a PRAISE entry to data/exemplars.yml.
       def log_praise(message, feedback)
         entry = {
           "timestamp" => Time.now.iso8601,

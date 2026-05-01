@@ -31,7 +31,7 @@ module Master
         else
           Result.err("ast_edit: unknown operation: #{operation}", category: :validation)
         end
-      rescue => e
+      rescue StandardError => e
         Result.err("ast_edit: #{e.message}", category: :unknown)
       end
 

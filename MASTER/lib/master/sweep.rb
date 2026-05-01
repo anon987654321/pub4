@@ -6,30 +6,14 @@ require "set"
 require_relative "sweep/rewriter"
 require_relative "sweep/convergence"
 
-
 module Master
-  # Sweep — iterative full-codebase refactor to convergence.
-  #
-  # Each cycle walks every matching file and sends it through a comprehensive
-  # rewrite prompt. The model receives the full codebase map before touching
-  # any individual file — structural context precedes every change.
-  # Cycles continue until violations converge, rename oscillation is detected,
-  # or max_cycles hit.
-  #
-  # Stopping criteria, per arxiv:2602.21833 ("From Restructuring to
-  # Stabilization"):
-  #   1. violation delta < CONVERGE_THRESHOLD for CONVERGE_WINDOW cycles
-  #   2. rename oscillation detected (symbol A→B→A in the window)
-  #   3. trajectory value (γ-discounted) stops improving
-  #
-  # Self-application: sweeping lib/ causes MASTER to rewrite its own source —
-  # a true fixed-point process.
+  # Full-codebase refactor to convergence; stops on delta/oscillation/stall (arxiv:2602.21833).
   class Sweep
     MAX_CYCLES         = 16
     CONVERGE_THRESHOLD = 0.05
     CONVERGE_WINDOW    = 2
-    RENAME_WINDOW      = 3      # oscillation detected if A→B→A within 3 cycles.freeze
-    TRAJECTORY_GAMMA   = 0.9    # γ for discounted improvement signal.freeze
+    RENAME_WINDOW    = 3
+    TRAJECTORY_GAMMA = 0.9
 
     GLOBS = {
       rb:  "**/*.rb",
@@ -40,10 +24,10 @@ module Master
     }.freeze
 
     SYNTAX_CHECKERS = {
-      ".rb" => ->(p) { system("ruby -c #{p} > /dev/null 2>&1") },
-      ".sh"  => ->(p) { system("bash -n #{p}  > /dev/null 2>&1") },
-      ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue => _e; false; end },
-      ".erb" => ->(p) { begin; RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src); true; rescue SyntaxError; false; rescue => _e; true; end }
+      ".rb"  => ->(p) { _, _, st = Open3.capture3("ruby", "-c", p); st.success? },
+      ".sh"  => ->(p) { _, _, st = Open3.capture3("bash", "-n", p); st.success? },
+      ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue StandardError; false; end },
+      ".erb" => ->(p) { begin; RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src); true; rescue SyntaxError; false; rescue StandardError; true; end }
     }.freeze
 
     SEVERITY_RANK = Master::SEVERITY_RANK

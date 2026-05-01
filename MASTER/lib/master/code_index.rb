@@ -107,7 +107,6 @@ module Master
       { fqn:, reference_count: refs.size, files:, callers: }
     end
 
-    # Classes‑only summary injected into the agent system prompt.
     def summary(limit: nil)
       wait_for_build unless ready?
       classes = @symbols.values

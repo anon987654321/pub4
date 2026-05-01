@@ -53,7 +53,7 @@ module Master
           header = "# Knowledge search: '#{query}' (#{results.size} matches)\n\n"
           Result.ok(header + results.join("\n---\n"))
         end
-      rescue => e
+      rescue StandardError => e
         Result.err("search_knowledge: #{e.message}", category: :unknown)
       end
 

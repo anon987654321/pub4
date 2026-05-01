@@ -37,7 +37,7 @@ end
 
         @bus&.publish(:swarm_worker_done, role: @role, ok: @result.ok?)
         @result
-      rescue => e
+      rescue StandardError => e
         Result.err("worker #{@role}: #{e.message}", category: :unknown)
       end
 

@@ -53,7 +53,7 @@ module Master
       bytes = File.binread(path)
       begin
         File.unlink(path)
-      rescue => e
+      rescue StandardError => e
         nil
       end
       bytes

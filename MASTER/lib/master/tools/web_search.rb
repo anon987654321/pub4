@@ -45,7 +45,7 @@ module Master
         results = extract_results(data)
         @bus&.publish("tool:after", tool: NAME, query:)
         Result.ok(results)
-      rescue => e
+      rescue StandardError => e
         Result.err("web_search: #{e.message}", category: :infrastructure)
       end
 

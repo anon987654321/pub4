@@ -6,38 +6,24 @@ require_relative "git_operations"
 require_relative "autoloop/fix_evaluator"
 
 module Master
-  # AutoLoop — iterate on scan violations until clean or max_cycles reached.
-  #
-  # Cycle: scan lib+test at standard depth → collect violations by severity →
-  # LLM fix (full file, no truncation) → size guard → syntax check → write → commit.
-  # Stops when clean or max_cycles reached.
-  #
-  # Retry strategy is Reflexion-style (MANTRA/RefAgent):
-  # on rate-limit or transient failure, the failing prompt plus error summary
-  # are fed back in a second attempt. Raw retries alone hit ~45% test-pass
-  # in RefAgent; self-reflection lifts it to ~90%.
-  #
-  # Ref: arxiv:2503.14340 (MANTRA), arxiv:2511.03153 (RefAgent).
+  # Scan→fix loop; Reflexion-style retry (arxiv:2503.14340) lifts pass rate ~45%→90%.
   class AutoLoop
-    MAX_CYCLES       = 12
-    BATCH_SIZE       = 3
-    RATE_LIMIT_SLEEP = 15     # ONE_SOURCE: no more hardcoded `sleep 15`.freeze
-    MAX_FIX_RETRIES  = 3
-    SCORE_INCREMENT  = 0.25
-    MAX_SIZE_RATIO   = 2.0
-    MIN_SIZE_RATIO       = 0.80   # Reject fix if output < 80% of original file size.freeze
-    CONFIDENCE_THRESHOLD = 0.60   # Below this, escalate to a reflective retry.freeze
-    MAX_FILE_BYTES   = 16_000 # Raised from 4_000 so core files (agent.rb, cli.rb) are fixable.freeze
+    MAX_CYCLES           = 12
+    BATCH_SIZE           = 3
+    RATE_LIMIT_SLEEP     = 15
+    MAX_FIX_RETRIES      = 3
+    SCORE_INCREMENT      = 0.25
+    MAX_SIZE_RATIO       = 2.0
+    MIN_SIZE_RATIO       = 0.80
+    CONFIDENCE_THRESHOLD = 0.60
+    MAX_FILE_BYTES       = 16_000
 
-    # Rules that cannot be safely auto-fixed by rewriting a single file.
-    # duplicate_code requires cross-file refactoring; conceptual/adversarial are LLM-only.
+    # Cross-file or LLM-only rules; single-file rewrite can't fix these.
     SKIP_RULES = %w[duplicate_code conceptual adversarial axiom_coverage immutable self_explaining long_method pola srp cqs].freeze
 
     SEVERITY_RANK = Master::SEVERITY_RANK
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
 
-    # Transient error signatures that trigger a reflected retry
-    # rather than abandon the fix. 429 = rate limit, 503 = overload.
     TRANSIENT_RE = /429|throttl|rate.?limit|high demand|provider.?error|overload|capacity|503/i.freeze
 
     def initialize(agent:, scanner:, root:, event_bus: nil, soul: nil, learnings: nil)
@@ -116,9 +102,6 @@ module Master
       }.sort_by { |f| -SEVERITY_RANK.fetch(f[:severity], 0) }
     end
 
-    # Request a fix from the LLM. Sends FULL file — never truncates.
-    # Skips files > MAX_FILE_BYTES (LLM output would be truncated, risking corruption).
-    # Retries up to MAX_FIX_RETRIES with a reflection step on transient errors.
     def request_fix(violation)
       path = File.join(@root, violation[:file])
       return nil unless File.exist?(path)

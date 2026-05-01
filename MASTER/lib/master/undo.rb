@@ -24,7 +24,7 @@ module Master
       @stack.shift while @stack.size > MAX_JOURNAL
       persist_journal
       Result.ok(path)
-    rescue => e
+    rescue StandardError => e
       Result.err("undo snapshot: #{e.message}", category: :unknown)
     end
 
