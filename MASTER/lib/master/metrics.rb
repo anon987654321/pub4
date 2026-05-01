@@ -42,7 +42,6 @@ module Master
       append(rollback_rate: rate.round(3))
     end
 
-    # Called via llm:response EventBus subscription or directly.
     def record_llm_response(model:, success:, tokens_approx: 0, escalated: false)
       @mutex.synchronize do
         stats = @model_stats[model.to_s]
@@ -63,7 +62,6 @@ module Master
       }
     end
 
-    # Returns per-model quality stats, sorted by failure rate desc.
     def model_quality
       @model_stats.transform_values do |s|
         fail_rate = s[:calls] > 0 ? (s[:failures].to_f / s[:calls]).round(3) : 0.0

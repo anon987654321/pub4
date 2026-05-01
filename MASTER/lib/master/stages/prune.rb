@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 module Master
   module Stages
     # Prune — strip sycophancy and markdown formatting from LLM responses.

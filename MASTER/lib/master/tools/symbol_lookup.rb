@@ -2,8 +2,7 @@
 
 module Master
   module Tools
-    # SymbolLookup — lets the LLM query the live codebase symbol graph.
-    # Returns definition location, callers, and impact analysis for any symbol.
+    # SymbolLookup — query the live symbol graph; returns definition, callers, and impact.
     class SymbolLookup
       NAME        = "symbol_lookup".freeze
       DESCRIPTION = "Look up a Ruby class, module, or method in the codebase. " \

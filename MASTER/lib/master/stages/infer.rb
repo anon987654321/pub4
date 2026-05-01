@@ -1,13 +1,8 @@
 # frozen_string_literal: true
 
-
 module Master
   module Stages
-    # Infer — promote natural-language messages to :command intent.
-    #
-    # Runs after Intake. When intent is :llm, matches the message against
-    # patterns loaded from data/infer_patterns.yml (single source of truth —
-    # adding a new inferred command never requires a code change).
+    # Infer — promote natural-language messages to :command intent via data/infer_patterns.yml.
     class Infer
       # Heuristic task-type detection — used by ModelRouter for tiered model selection.
       PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
@@ -42,7 +37,6 @@ module Master
 
       private
 
-      # Returns { "sweep" => { regexes: [Regexp, ...], capture: "path" }, ... }
       def load_patterns
         return {} unless File.exist?(PATTERNS_PATH)
         data = Master.load_yaml(PATTERNS_PATH) || {}

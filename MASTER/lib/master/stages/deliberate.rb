@@ -2,11 +2,7 @@
 
 module Master
   module Stages
-    # Deliberate — adversarial pre-execution stage for coding tasks.
-    #
-    # Forces the agent to enumerate N distinct approaches before committing
-    # to one implementation. Prevents first-solution fixation. Disabled for
-    # commands, queries, and non-coding intents.
+    # Deliberate — enumerate N approaches before coding; prevents first-solution fixation.
     class Deliberate
       MIN_OPTIONS   = 4
       CODING_TYPES  = %i[coding].freeze

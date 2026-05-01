@@ -2,8 +2,7 @@
 
 module Master
   class Agent
-    # LlmDispatch — low-level LLM request routing, caching, escalation.
-    # Extracted from Agent to keep the public API class focused.
+    # LlmDispatch — LLM routing, caching, and escalation; extracted from Agent.
     module LlmDispatch
       private
 

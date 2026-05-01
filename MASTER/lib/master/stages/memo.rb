@@ -2,14 +2,7 @@
 
 module Master
   module Stages
-    # Memo — extract and persist memory from the USER's input only.
-    #
-    # Previously this scanned the assistant's output for "remember that X",
-    # which caused LLM meta-restatements ("I'll remember that you prefer dark
-    # themes") to be stored as facts the user never asserted — a classic
-    # self-reinforcing hallucination loop.
-    #
-    # Now only :user_message is scanned. Assistant output is ignored on purpose.
+    # Memo — extract memories from :user_message only; assistant output ignored to prevent hallucination loops.
     class Memo
       REMEMBER_RE = /\bremember\s+(?:that\s+)?(.{10,200}?)(?:[.!]|$)/im.freeze
       DECISION_RE = /\bwe(?:'ve|\s+have)?\s+decided\s+(?:to\s+)?(.{10,150}?)(?:[.!]|$)/im.freeze
@@ -31,9 +24,6 @@ module Master
 
       private
 
-      # Only trust the user's words. Assistant output is a potential
-      # hallucination source and must never seed memory without explicit
-      # user confirmation via the /memory remember command.
       def user_text(ctx)
         ctx[:user_message].to_s
       end

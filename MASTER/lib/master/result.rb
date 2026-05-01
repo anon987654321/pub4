@@ -27,7 +27,7 @@ module Master
         result = blk.call(@value)
         result.respond_to?(:ok?) ? result : Result.ok(result)
       rescue StandardError => e
-        Result.err("#{label || 'stage'}: #{e.message}", category: :unknown)
+        Result.err("#{label || "stage"}: #{e.message}", category: :unknown)
       end
 
       def deconstruct_keys(_keys) = { value: @value }

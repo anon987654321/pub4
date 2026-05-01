@@ -2,9 +2,7 @@
 
 module Master
   module Stages
-    # Lint — always runs. Scans written files AND code blocks in chat output.
-    # Violations are collected; if autofix is possible, feeds them back to
-    # the autoloop for correction.
+    # Lint — scan written files and chat code blocks; autofix via autoloop if available.
     class Lint
       FENCE_RE = /```(?:ruby)?\n(.*?)```/m
 
@@ -18,7 +16,6 @@ module Master
       def call(ctx)
         findings = []
 
-        # 1. Scan any files that were written during Execute
         paths = Array(ctx[:written_files]).filter_map { |p| File.exist?(p) ? p : nil }
                 paths.each do |scan_path|
           next unless File.exist?(scan_path)
@@ -31,7 +28,6 @@ module Master
           end
         end
 
-        # 2. Scan code blocks embedded in chat output
         output = ctx[:output].to_s
         output.scan(FENCE_RE).each do |match|
           code = match[0]
@@ -40,7 +36,6 @@ module Master
           findings.concat(inline_findings)
         end
 
-        # 3. Autofix if violations found and autoloop available
         if findings.any? && @autoloop
           fixable = findings.select { |f| !AutoLoop::SKIP_RULES.include?(f[:rule].to_s) }
           if fixable.any?
@@ -51,14 +46,11 @@ module Master
 
         Result.ok(ctx.merge(lint_report: findings))
       rescue StandardError => e
-        # Lint failure must not block the pipeline
         Result.ok(ctx.merge(lint_error: e.message))
       end
 
       private
 
-      # Scan a code string without writing to disk.
-      # Creates a tempfile, scans it, deletes it.
       def scan_inline(code)
         require "tempfile"
         findings = []

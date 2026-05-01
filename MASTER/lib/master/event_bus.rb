@@ -14,7 +14,6 @@ module Master
       @pattern_cache = {}
     end
 
-    # Returns a lambda that unsubscribes this handler when called.
     def subscribe(pattern, &handler)
       synchronize { @subscribers[pattern] << handler }
       -> { synchronize { @subscribers[pattern].delete(handler) } }
@@ -39,11 +38,10 @@ module Master
       }.compact
     end
 
-    # Compiles glob pattern to regex once; ** crosses segments, * does not.
     def glob_match?(pattern, event)
       @pattern_cache.shift if @pattern_cache.size >= 512
-        re = @pattern_cache[pattern] ||= Regexp.new(
-        "\\A" + Regexp.escape(pattern).gsub('\\*\\*', '.*').gsub('\\*', '[^:]*') + "\\z"
+      re = @pattern_cache[pattern] ||= Regexp.new(
+        "\\A" + Regexp.escape(pattern).gsub("\\*\\*", ".*").gsub("\\*", "[^:]*") + "\\z"
       )
       re.match?(event)
     end

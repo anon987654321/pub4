@@ -13,9 +13,6 @@ module Master
       @model_context = model_context
     end
 
-    # Returns Result.ok(:ok) when no action is needed,
-    # Result.ok(:compacted) when compaction succeeds,
-    # or Result.err on failure.
     def check_and_compact!
       return Result.ok(:ok) unless agent
       return Result.ok(:ok) unless safe_to_compact?

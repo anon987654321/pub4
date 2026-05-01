@@ -4,9 +4,9 @@ require "fileutils"
 
 module Master
   module Tools
-    # WriteFile — create or overwrite files with TextHygiene normalization.
+    # WriteFile — atomically write files with undo snapshot.
     class WriteFile
-        include PathGuard
+      include PathGuard
       TIER        = :guarded
       NAME        = "write_file".freeze
       DESCRIPTION = "Atomically write content to a file, with undo snapshot."
@@ -36,15 +36,12 @@ module Master
         File.write(tmp, content)
         File.rename(tmp, full)
 
-        # Publishes tool:after — the event bus subscriber reindexes CodeIndex.
         @bus&.publish("tool:after", tool: NAME, path:)
         Result.ok(full)
       rescue StandardError => e
         File.delete(tmp) if tmp && File.exist?(tmp)
         Result.err("write_file: #{e.message}", category: :unknown)
       end
-
-      private
 
     end
   end

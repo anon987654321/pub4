@@ -4,10 +4,7 @@ require "etc"
 
 module Master
   module Scan
-    # Scanner — runs configured scan rules against Ruby source files.
-    #
-    # scan_dir parallelizes across files with a thread pool sized to CPU count.
-    # Each file is independent; rules share no mutable state between files.
+    # Scanner — run scan rules against Ruby files; scan_dir uses a CPU-sized thread pool.
     class Scanner
       RULES_PATH   = File.join(Master::ROOT, "data", "rules.yml").freeze
       POOL_SIZE    = [Etc.nprocessors, 8].min

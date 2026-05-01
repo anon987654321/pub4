@@ -2,37 +2,24 @@
 
 require "open3"
 
-
-
 module Master
-  # GitOperations encapsulates git commands.
-  # ONE_JOB: manage Git interactions for a specified repository root.
+  # GitOperations — git wrappers scoped to a repository root.
   class GitOperations
     def initialize(root_path)
       @root_path = root_path
     end
 
-    # Reports if the target path within the repository has uncommitted changes.
-    # Defaults to "lib/" if no path is specified.
     def dirty?(path = "lib/")
-      Dir.chdir(@root_path) do
-        out, = Open3.capture3("git status --porcelain #{path}")
-        !out.strip.empty?
-      end
+      out, = Open3.capture2e("git", "-C", @root_path, "status", "--porcelain", path)
+      !out.strip.empty?
     end
 
-    # Stages changes for all files in "lib/".
     def add_lib_files
-      Dir.chdir(@root_path) do
-        system("git add -A lib/ 2>/dev/null")
-      end
+      Open3.capture2e("git", "-C", @root_path, "add", "-A", "lib/")
     end
 
-    # Commits staged changes with the provided message.
     def commit(message)
-      Dir.chdir(@root_path) do
-        system("git commit -m '#{message}' 2>/dev/null")
-      end
+      Open3.capture2e("git", "-C", @root_path, "commit", "-m", message.to_s)
     end
   end
 end
