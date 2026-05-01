@@ -25,7 +25,10 @@ module Master
 
       @lock.synchronize do
         hit = read_entry(path)
-        return(@bus&.publish("cache:hit", key:) || hit) if hit
+        if hit
+          @bus&.publish("cache:hit", key:)
+          return hit
+        end
       end
 
       @bus&.publish("cache:miss", key:)

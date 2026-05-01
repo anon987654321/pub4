@@ -3,6 +3,7 @@
 require_relative "cli/tts"
 require_relative "cli/signals"
 
+require "open3"
 require "tty-reader"
 require "tty-prompt"
 require "fileutils"
@@ -118,9 +119,9 @@ module Master
       @scan_thread = Thread.new do
         lib_dir = File.join(@root, "lib")
         changed = begin
-          out = `git -C "#{@root}" diff --name-only HEAD 2>/dev/null`.strip
-          out.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }
-                 .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
+          out, = Open3.capture2e("git", "-C", @root, "diff", "--name-only", "HEAD")
+          out.strip.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }
+                                           .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
         rescue StandardError
           []
         end

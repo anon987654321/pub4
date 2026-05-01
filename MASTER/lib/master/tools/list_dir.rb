@@ -2,7 +2,6 @@
 
 module Master
   module Tools
-    # ListDir — list directory contents with filtering and depth control.
     class ListDir
       TIER        = :safe
       NAME        = "list_dir".freeze
@@ -31,7 +30,7 @@ module Master
         entries = Dir.entries(dir).reject { |e| e.start_with?(".") }.sort
         entries.flat_map { |entry|
           full = File.join(dir, entry)
-          next if pattern && !File.fnmatch?(pattern, entry)
+          next [] if pattern && !File.fnmatch?(pattern, entry)
           prefix = "  " * indent
           if File.directory?(full)
             ["#{prefix}#{entry}/"] + list_tree(base, full, depth - 1, pattern, indent + 1)

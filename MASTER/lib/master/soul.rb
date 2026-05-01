@@ -4,16 +4,7 @@ require "yaml"
 require "fileutils"
 
 module Master
-  # Soul — loads and manages SOUL.md, the version-controlled identity document.
-  # Implements the Evolution Protocol: propose → consistency-test → approve → version-bump → commit.
-  #
-  # Commands:
-  #   soul                     — show current identity summary
-  #   soul version             — show changelog
-  #   soul propose <rationale> — draft a change proposal (requires LLM)
-  #   soul approve             — apply pending proposal, bump version, git-tag
-  #   soul reject              — discard pending proposal
-  #   soul rollback            — restore previous git version
+  # Manages SOUL.md identity document; Evolution Protocol: propose→test→approve→tag.
   class Soul
     SOUL_PATH     = File.join(Master::ROOT, "SOUL.md").freeze
     PROPOSAL_PATH = File.join(Master::ROOT, ".master", "soul_proposal.md").freeze
@@ -123,37 +114,37 @@ module Master
     end
 
     def rollback
-      out = `git -C #{@root} log --oneline SOUL.md 2>&1`.lines
+      require "open3"
+      log_out, = Open3.capture2e("git", "-C", @root, "log", "--oneline", "SOUL.md")
+      out = log_out.lines
       return "no git history for SOUL.md" if out.size < 2
       prev_sha = out[1].split.first
-      restored = `git -C #{@root} show #{prev_sha}:SOUL.md 2>&1`
-      (tmp_w = "SOUL_PATH.tmp"; File.write(tmp_w, restored); File.rename(tmp_w, SOUL_PATH))
+      restored, = Open3.capture2e("git", "-C", @root, "show", "#{prev_sha}:SOUL.md")
+      tmp_w = "#{SOUL_PATH}.tmp.#{Process.pid}"
+      File.write(tmp_w, restored)
+      File.rename(tmp_w, SOUL_PATH)
       @soul = restored
       "rolled back to #{prev_sha} — #{out[1].chomp}"
     rescue StandardError => e
       "rollback error: #{e.message}"
     end
 
-    # Return the system prompt extracted from SOUL.md for use in Personality.
     def system_prompt
       voice  = @soul[/## Voice\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
       values = @soul[/## Values\n+(.*?)(?=\n## |\z)/m, 1].to_s.strip
       "#{voice}\n\n#{values}"
     end
 
+    def propose_from_violations(rule_id, sample_violations, agent: @agent)
+      return "no agent available" unless agent
 
-# Auto-propose a soul amendment when scan violations cluster on one rule.
-# Called by AutoLoop when the same rule fails across 3+ consecutive cycles.
-def propose_from_violations(rule_id, sample_violations, agent: @agent)
-  return "no agent available" unless agent
-
-  examples = sample_violations.first(3).map { |v| "  L#{v[:line]}: #{v[:message]}" }.join("\n")
-  rationale = "Recurring scan rule '#{rule_id}' flagged #{sample_violations.size} " \
-              "violations across multiple files and cycles:\n#{examples}\n" \
-              "Propose whether the codebase axioms or soul principles should acknowledge this pattern " \
-              "or whether the rule needs refinement."
-  propose(rationale, agent:)
-end
+      examples  = sample_violations.first(3).map { |v| "  L#{v[:line]}: #{v[:message]}" }.join("\n")
+      rationale = "Recurring scan rule '#{rule_id}' flagged #{sample_violations.size} " \
+                  "violations across multiple files and cycles:\n#{examples}\n" \
+                  "Propose whether the codebase axioms or soul principles should acknowledge this pattern " \
+                  "or whether the rule needs refinement."
+      propose(rationale, agent:)
+    end
 
     private
 

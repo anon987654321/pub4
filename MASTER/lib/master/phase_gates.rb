@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  # PhaseGates — 7-stage project planning FSM.
-  # Governs session scope before implementation begins.
-  # Distinct from execution pipeline (Intake->Render) and Standing Orders (UNCHANGE/REFACTOR).
-  # Gates block phase advancement until conditions are met or user overrides.
+  # 7-stage planning FSM; gates block advancement until conditions are met.
   PHASES = %w[discover analyze ideate design implement validate deliver idle].freeze
 
   class PhaseGates
@@ -30,19 +27,20 @@ module Master
     def current = @state["phase"] || "idle"
 
     def advance!(to: nil)
+      prev   = current
       target = to&.to_s || next_phase
       return Result.err("unknown phase: #{target}") unless PHASES.include?(target)
 
-      unmet = unmet_gates(current)
+      unmet = unmet_gates(prev)
       if unmet.any?
-        return Result.err("phase #{current} gates unmet: #{unmet.join(",")} — override with /phase advance --force")
+        return Result.err("phase #{prev} gates unmet: #{unmet.join(",")} — override with /phase advance --force")
       end
 
       @state["phase"] = target
       @state["entered_at"] = Time.now.to_i
       persist
-      @bus&.publish("phase:advanced", from: current, to: target)
-      Result.ok("phase: #{current} -> #{target}")
+      @bus&.publish("phase:advanced", from: prev, to: target)
+      Result.ok("phase: #{prev} -> #{target}")
     end
 
     def force!(phase)

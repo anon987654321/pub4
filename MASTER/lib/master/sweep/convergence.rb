@@ -36,14 +36,12 @@ module Master
       end
 
       def commit(msg)
-        Dir.chdir(@root) do
-          system("git add -A 2>/dev/null")
-          system("git commit -m #{msg} 2>/dev/null")
-        end
+        Open3.capture2e("git", "-C", @root, "add", "-A")
+        Open3.capture2e("git", "-C", @root, "commit", "-m", msg.to_s)
       end
 
       def git_dirty?
-        out, = Open3.capture3("git -C #{@root} status --porcelain")
+        out, = Open3.capture2e("git", "-C", @root, "status", "--porcelain")
         !out.strip.empty?
       end
     end
