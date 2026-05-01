@@ -34,21 +34,14 @@ module Master
       end
 
       def analyse_and_review(file_path:, code:)
-        analysis = dispatch(:analyst,
-                            task: "identify all issues",
-                            context_slice: { file: file_path, code: code })
-        return analysis unless analysis.ok?
-
-        review = dispatch(:reviewer,
-                          task: "security and correctness review",
-                          context_slice: { code: code })
-        return review unless review.ok?
-
-        Result.ok({
-          analysis: analysis.value!,
-          review:   review.value!,
-          approved: review.value!["approved"]
-        })
+        fan_out([
+          { role: :analyst,  task: "identify all issues",          context_slice: { file: file_path, code: code } },
+          { role: :reviewer, task: "security and correctness review", context_slice: { code: code } }
+        ]).and_then do |sr|
+          a = sr.artifacts[:analyst]
+          r = sr.artifacts[:reviewer]
+          Result.ok({ analysis: a, review: r, approved: r.is_a?(Hash) && r["approved"] })
+        end
       end
 
       def fan_out(tasks, timeout: WORKER_TIMEOUT)
