@@ -47,7 +47,7 @@ module Master
 
       def load_patterns
         data = Master.load_yaml(PATTERNS_PATH)
-        (data["dangerous"] || []).map { |str| Regexp.new(str, Regexp::IGNORECASE) }
+        (data["dangerous"] || []).flatten.map { |str| Regexp.new(str, Regexp::IGNORECASE) }
       end
 
       def should_run?(ctx)
