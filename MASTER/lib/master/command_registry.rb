@@ -41,44 +41,45 @@ module Master
     end
 
     def mode_commands(config)
+      reasoning_commands(config).merge(persona_commands(config)).merge(flag_commands(config))
+    end
+
+    def reasoning_commands(config)
       {
         "mode" => ->(ctx) {
           arg = ctx[:args].to_s.strip
-          if Reasoning::Modes::SUPPORTED.include?(arg)
-            config["reasoning_mode"] = arg
-            config.save!
-            "mode: #{arg}"
-          else
+          Reasoning::Modes::SUPPORTED.include?(arg) ?
+            (config["reasoning_mode"] = arg; config.save!; "mode: #{arg}") :
             "mode: #{config.reasoning_mode} (supported: #{Reasoning::Modes::SUPPORTED.join(", ")})"
-          end
         },
         "task" => ->(ctx) {
           arg = ctx[:args].to_s.strip
-          if arg.empty?
-            "task_type: #{config.task_type}"
-          else
-            config["task_type"] = arg
-            config.save!
-            "task_type: #{arg}"
-          end
-        },
-        "autotest" => ->(ctx) {
-          arg = ctx[:args].to_s.strip
-          case arg
-          when "on"  then config["auto_testing"] = true; config.save!; "autotest: on"
-          when "off" then config["auto_testing"] = false; config.save!; "autotest: off"
-          else "autotest: #{config.auto_testing? ? "on" : "off"}"
-          end
-        },
+          arg.empty? ? "task_type: #{config.task_type}" : (config["task_type"] = arg; config.save!; "task_type: #{arg}")
+        }
+      }
+    end
+
+    def persona_commands(config)
+      {
         "persona" => ->(ctx) {
-          arg = ctx[:args].to_s.strip.to_sym
+          arg   = ctx[:args].to_s.strip.to_sym
           names = Personality::PERSONAS.keys
           if names.include?(arg)
-            config["persona"] = arg.to_s
-            config.save!
-            "persona: #{arg}"
+            config["persona"] = arg.to_s; config.save!; "persona: #{arg}"
           else
             "persona: #{config["persona"] || "dark_malay"} -- available: #{names.join(", ")}"
+          end
+        },
+      }
+    end
+
+    def flag_commands(config)
+      {
+        "autotest" => ->(ctx) {
+          case ctx[:args].to_s.strip
+          when "on"  then config["auto_testing"] = true;  config.save!; "autotest: on"
+          when "off" then config["auto_testing"] = false; config.save!; "autotest: off"
+          else "autotest: #{config.auto_testing? ? "on" : "off"}"
           end
         }
       }

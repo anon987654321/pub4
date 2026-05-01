@@ -8,71 +8,59 @@ module Master
 
     def control_commands(standing, soul)
       {
-        "orders" => ->(ctx) {
-          arg = ctx[:args].to_s.strip
-          case arg
-          when "list", ""
-            standing.list
-          when /\Aenable (.+)\z/
-            standing.enable($1.strip)
-          when /\Adisable (.+)\z/
-            standing.disable($1.strip)
-          when /\Aadd name=(\S+) cmd=(.+)\z/
-            standing.upsert(name: $1, command: $2.strip)
-          when "run"
-            results = standing.run_due!
-            if results.empty?
-              "no orders due"
-            else
-              results.map { |r|
-                "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}"
-              }.join("\n")
-            end
-          when /\Areset (.+)\z/
-            standing.reset($1.strip)
-          else
-            "usage: /orders  /orders enable|disable|reset <name>  /orders run"
-          end
-        },
-        "soul" => ->(ctx) {
-          arg = ctx[:args].to_s.strip
-          case arg
-          when "", "show" then soul.summary
-          when "version", "changelog" then soul.changelog
-          when "diff" then soul.diff
-          when "approve" then soul.approve
-          when "reject" then soul.reject
-          when "rollback" then soul.rollback
-          when /\Apropose (.+)\z/ then soul.propose($1.strip)
-          else "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
-          end
-        }
+        "orders" => ->(ctx) { handle_orders(standing, ctx[:args].to_s.strip) },
+        "soul"   => ->(ctx) { handle_soul(soul, ctx[:args].to_s.strip) }
       }
     end
 
     def service_commands(ai)
       heartbeat = ai[:heartbeat]
-      skills = ai[:skills]
+      skills    = ai[:skills]
       {
-        "heartbeat" => ->(ctx) {
-          arg = ctx[:args].to_s.strip
-          case arg
-          when "run"   then heartbeat ? heartbeat.run_due!.map { |r| "#{r[:name]}: #{r[:result]}" }.join("\n") : "no heartbeat"
-          when "start" then heartbeat&.start!; "heartbeat started"
-          when "stop"  then heartbeat&.stop!; "heartbeat stopped"
-          else heartbeat&.list || "no heartbeat"
-          end
-        },
-        "skills" => ->(ctx) {
-          arg = ctx[:args].to_s.strip
-          if arg.empty?
-            skills&.list || "(no skills)"
-          else
-            found = skills&.find(arg)
-            found ? "#{found[:name]}: #{found[:description]}" : "(not found: #{arg})"
-          end
+        "heartbeat" => ->(ctx) { handle_heartbeat(heartbeat, ctx[:args].to_s.strip) },
+        "skills"    => ->(ctx) {
+          arg   = ctx[:args].to_s.strip
+          found = skills&.find(arg)
+          arg.empty? ? (skills&.list || "(no skills)") : (found ? "#{found[:name]}: #{found[:description]}" : "(not found: #{arg})")
         }
       }
+    end
+
+    def handle_orders(standing, arg)
+      case arg
+      when "list", "" then standing.list
+      when /\Aenable (.+)\z/  then standing.enable($1.strip)
+      when /\Adisable (.+)\z/ then standing.disable($1.strip)
+      when /\Aadd name=(\S+) cmd=(.+)\z/ then standing.upsert(name: $1, command: $2.strip)
+      when "run"
+        results = standing.run_due!
+        results.empty? ? "no orders due" :
+          results.map { |r| "#{r[:name]}: #{r[:result].ok? ? "ok" : r[:result].message}" }.join("\n")
+      when /\Areset (.+)\z/ then standing.reset($1.strip)
+      else "usage: /orders  /orders enable|disable|reset <name>  /orders run"
+      end
+    end
+
+    def handle_soul(soul, arg)
+      case arg
+      when "", "show"          then soul.summary
+      when "version", "changelog" then soul.changelog
+      when "diff"              then soul.diff
+      when "approve"           then soul.approve
+      when "reject"            then soul.reject
+      when "rollback"          then soul.rollback
+      when /\Apropose (.+)\z/  then soul.propose($1.strip)
+      else "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
+      end
+    end
+
+    def handle_heartbeat(heartbeat, arg)
+      case arg
+      when "run"   then heartbeat ? heartbeat.run_due!.map { |r| "#{r[:name]}: #{r[:result]}" }.join("\n") : "no heartbeat"
+      when "start" then heartbeat&.start!; "heartbeat started"
+      when "stop"  then heartbeat&.stop!;  "heartbeat stopped"
+      else heartbeat&.list || "no heartbeat"
+      end
     end
 
     def utility_commands(agent, root, cache)

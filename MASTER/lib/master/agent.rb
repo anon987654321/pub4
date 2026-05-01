@@ -43,18 +43,11 @@ module Master
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
                    event_bus: nil, model_router: nil, reasoning_modes: nil,
                    memory: nil, personality: nil, code_index: nil, context_window: nil)
-      @code_index      = code_index
-      @config          = config
-      @session         = session
-      @tools           = tools
-      @circuit_breaker = circuit_breaker
-      @cache           = cache
-      @bus             = event_bus
-      @model_router    = model_router
-      @reasoning_modes = reasoning_modes
-      @memory          = memory
-      @personality     = personality
-      @context_window  = context_window
+      @config, @session, @tools          = config, session, tools
+      @circuit_breaker, @cache, @bus     = circuit_breaker, cache, event_bus
+      @model_router, @reasoning_modes    = model_router, reasoning_modes
+      @memory, @personality, @code_index = memory, personality, code_index
+      @context_window                    = context_window
     end
 
     def chat(message, stream: true, escalation_depth: 0, &blk)
@@ -72,9 +65,9 @@ module Master
         return Result.err(rate_err.message, category: rate_err.category)
       end
 
-      last_response = attempt_chat_with_fallbacks(candidate_models, prompt, context, stream, &blk)
+      last_response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
       return last_response if last_response.respond_to?(:err?) && last_response.err?
-      last_response = maybe_escalate(last_response, prompt, context, message, stream, escalation_depth, &blk)
+      last_response = maybe_escalate(last_response, message, stream:, escalation_depth:, &blk)
 
       text = last_response.to_s
       @session.add_message(role: :assistant, content: text)

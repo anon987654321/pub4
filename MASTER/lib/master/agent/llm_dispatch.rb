@@ -6,38 +6,35 @@ module Master
     module LlmDispatch
       private
 
-      def attempt_chat_with_fallbacks(candidate_models, prompt, context, stream, &blk)
-        capable = candidate_models.select { |m|
-          replicate_model?(m) || ferrum_model?(m) || tool_capable?(m)
-        }
-        if capable.empty?
-          return Result.err(
-            "no tool-capable model available",
-            category: :validation
-          )
-        end
+      def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
+        capable = select_capable_models(candidate_models)
+        return capable if capable.respond_to?(:err?) && capable.err?
 
         last_response = nil
         capable.each_with_index do |selected_model, index|
           response = send_with_cache(
             selected_model,
             context + [{ role: "user", content: prompt }],
-            stream: stream, &blk
+            stream:, &blk
           )
           last_response = response
-          if response.respond_to?(:ok?) && response.ok?
-            @bus&.publish(
-              "llm:response",
-              model: selected_model, success: true,
-              tokens_approx: response.to_s.bytesize / 4
-            )
-          end
+          publish_llm_success(selected_model, response) if response.respond_to?(:ok?) && response.ok?
           break response unless response.respond_to?(:err?) && response.err? && index < capable.length - 1
         end
         last_response
       end
 
-      def maybe_escalate(last_response, prompt, context, original_message, stream, escalation_depth, &blk)
+      def select_capable_models(candidates)
+        capable = candidates.select { |m| replicate_model?(m) || ferrum_model?(m) || tool_capable?(m) }
+        return Result.err("no tool-capable model available", category: :validation) if capable.empty?
+        capable
+      end
+
+      def publish_llm_success(model, response)
+        @bus&.publish("llm:response", model:, success: true, tokens_approx: response.to_s.bytesize / 4)
+      end
+
+      def maybe_escalate(last_response, original_message, stream:, escalation_depth:, &blk)
         return last_response unless @model_router
         return last_response if escalation_depth >= 2
 
@@ -73,10 +70,10 @@ module Master
         if ferrum_model?(selected_model)
           return send_ferrum(selected_model, messages)
         elsif replicate_model?(selected_model)
-          return send_replicate(selected_model, messages, sys, stream, &blk)
+          return send_replicate(selected_model, messages, sys:, stream:, &blk)
         end
 
-        send_ruby_llm(selected_model, messages, sys, stream, &blk)
+        send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
       end
 
       def send_ferrum(selected_model, messages)
@@ -90,15 +87,15 @@ module Master
         )
       end
 
-      def send_replicate(selected_model, messages, sys, stream, &blk)
+      def send_replicate(selected_model, messages, sys:, stream:, &blk)
         reply = Bridges::Replicate.new.chat(
-          model: selected_model, messages: messages, system: sys,
-          stream: stream, &(stream ? blk : nil)
+          model: selected_model, messages:, system: sys,
+          stream:, &(stream ? blk : nil)
         )
         Result.ok(reply.content.to_s)
       end
 
-      def send_ruby_llm(selected_model, messages, sys, stream, &blk)
+      def send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
         chat_session = RubyLLM.chat(model: selected_model)
         final_sys = nemotron_system_prompt(selected_model, sys)
         chat_session.with_instructions(final_sys) if final_sys

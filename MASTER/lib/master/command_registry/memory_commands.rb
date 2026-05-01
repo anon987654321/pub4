@@ -6,48 +6,42 @@ module Master
 
     def memory_commands(memory, agent)
       {
-        "memory" => ->(ctx) {
-          arg = ctx[:args].to_s.strip
-          if arg.start_with?("forget ")
-            key = arg.sub("forget ", "").strip
-            memory.forget(key)
-            "forgot: #{key}"
-          elsif arg.start_with?("remember ")
-            parts = arg.sub("remember ", "").split("=", 2)
-            key = parts[0].strip
-            setting_value = parts[1]&.strip
-            setting_value ? (memory.remember(key, setting_value); "remembered: #{key}") : "usage: /memory remember key=value"
-          elsif arg.start_with?("search ")
-            query = arg.sub("search ", "").strip
-            hits = if memory.respond_to?(:semantic_recall)
-                     memory.semantic_recall(query)
-                   else
-                     memory.all.select { |k, v| k.to_s.include?(query) || v.to_s.include?(query) }
-                   end
-            hits.empty? ? "(no matches: #{query})" : hits.map { |k, v| "#{k}: #{v}" }.join("\n")
-          elsif arg.empty?
-            entries = memory.all
-            entries.empty? ? "(no memories)" : entries.map { |k, v| "#{k}: #{v}" }.join("\n")
-          else
-            recalled = memory.recall(arg)
-            recalled ? "#{arg}: #{recalled}" : "(not found: #{arg})"
-          end
-        },
+        "memory" => ->(ctx) { handle_memory(memory, ctx[:args].to_s.strip) },
         "dreams" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           if arg == "consolidate"
             memory.respond_to?(:consolidate!) ? memory.consolidate!(agent:) : "dreaming not available"
           else
-            entries = memory.all
+            entries  = memory.all
             archived = entries.count { |k, _| k.to_s.start_with?("archive/") }
-            active = entries.count { |k, _| !k.to_s.start_with?("archive/") }
-            summary = memory.recall("_consolidated_summary")
-            lines = ["active: #{active} memories, archived: #{archived}"]
+            active   = entries.count { |k, _| !k.to_s.start_with?("archive/") }
+            summary  = memory.recall("_consolidated_summary")
+            lines    = ["active: #{active} memories, archived: #{archived}"]
             lines << "last consolidation: #{summary}" if summary
             lines.join("\n")
           end
         }
       }
+    end
+
+    def handle_memory(memory, arg)
+      case arg
+      when /\Aforget (.+)/  then memory.forget($1.strip); "forgot: #{$1.strip}"
+      when /\Aremember (.+)/
+        key, val = $1.split("=", 2).map(&:strip)
+        val ? (memory.remember(key, val); "remembered: #{key}") : "usage: /memory remember key=value"
+      when /\Asearch (.+)/ then memory_search(memory, $1.strip)
+      when ""
+        (e = memory.all).empty? ? "(no memories)" : e.map { |k, v| "#{k}: #{v}" }.join("\n")
+      else
+        (r = memory.recall(arg)) ? "#{arg}: #{r}" : "(not found: #{arg})"
+      end
+    end
+
+    def memory_search(memory, query)
+      hits = memory.respond_to?(:semantic_recall) ? memory.semantic_recall(query) :
+               memory.all.select { |k, v| k.to_s.include?(query) || v.to_s.include?(query) }
+      hits.empty? ? "(no matches: #{query})" : hits.map { |k, v| "#{k}: #{v}" }.join("\n")
     end
   end
 end

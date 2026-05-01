@@ -22,25 +22,15 @@ module Master
     attr_reader :container
 
     def initialize(container:)
-      @container   = container
-      @session     = container[:session]
-      @agent       = container[:agent]
-      @renderer    = container[:renderer]
-      @logging     = container[:logging]
-      @undo        = container[:undo]
-      @config      = container[:config]
-      @pipeline    = container[:pipeline]
-      @scanner     = container[:scanner]
-      @root        = container[:root] || Dir.pwd
-      @diff_stager = container[:diff_stager]
-      @bus         = container[:bus]
-      @reader      = TTY::Reader.new(track_history: true)
-      @running     = false
-      @interrupt_at = Time.now
-      @last_ok     = true
-      @tts_on      = Speech.available? && @config["tts"] != false
-      @violations  = 0
-      @scan_thread = nil
+      @container = container
+      assign_container_refs!(container)
+      @reader          = TTY::Reader.new(track_history: true)
+      @running         = false
+      @interrupt_at    = Time.now
+      @last_ok         = true
+      @tts_on          = Speech.available? && @config["tts"] != false
+      @violations      = 0
+      @scan_thread     = nil
       @seen_violations = {}
     end
 
@@ -84,6 +74,20 @@ module Master
     end
 
     private
+
+    def assign_container_refs!(c)
+      @session     = c[:session]
+      @agent       = c[:agent]
+      @renderer    = c[:renderer]
+      @logging     = c[:logging]
+      @undo        = c[:undo]
+      @config      = c[:config]
+      @pipeline    = c[:pipeline]
+      @scanner     = c[:scanner]
+      @root        = c[:root] || Dir.pwd
+      @diff_stager = c[:diff_stager]
+      @bus         = c[:bus]
+    end
 
     def repl_loop
       while @running

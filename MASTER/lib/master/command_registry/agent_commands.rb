@@ -5,41 +5,15 @@ module Master
     module_function
 
     def agent_commands(ai:, root:, infra:)
+      scan_loop_commands(ai:, root:, infra:).merge(model_agent_commands(ai:, root:, infra:))
+    end
+
+    def scan_loop_commands(ai:, root:, infra:)
       agent = ai[:agent]
       scanner = ai[:scanner]
-      config = infra[:config]
       bus = infra[:bus]
-      metrics = infra[:metrics]
       deliberation = ai[:deliberation]
-      council_stage = ai[:council_stage]
-      swarm = ai[:swarm]
       {
-        "council" => ->(ctx) {
-          case ctx[:args].to_s.strip
-          when "on"  then council_stage.enable!; "council: enabled"
-          when "off" then council_stage.disable!; "council: disabled"
-          else "council: #{council_stage.enabled? ? "on" : "off"}"
-          end
-        },
-        "swarm" => ->(ctx) {
-          args = ctx[:args].to_s.strip.split(" ", 2)
-          role = args[0]&.to_sym
-          task = args[1].to_s
-          if role.nil? || task.empty?
-            "usage: /swarm <role> <task>  roles: #{swarm.worker_roles.join(", ")}"
-          else
-            result = swarm.dispatch(role, task:, context_slice: {})
-            result.ok? ? result.value!.inspect : result.message
-          end
-        },
-        "explain" => ->(_ctx) {
-          map = Introspection::SelfMap.new(root:)
-          info = map.describe
-          coverage = map.axiom_coverage
-          cov_lines = coverage.map { |ax, n| "  #{ax}: #{n}" }.join("\n")
-          stages = "Intake->Infer->Route->Guard->Execute->Council->Lint->Prune->Memo->Render"
-          "MASTER -- #{info[:files]} files, #{info[:lines]} lines\npipeline: #{stages}\n\naxiom coverage:\n#{cov_lines}"
-        },
         "autoloop" => ->(ctx) {
           max = ctx[:args].to_s.strip.to_i
           max = AutoLoop::MAX_CYCLES if max <= 0
@@ -60,43 +34,6 @@ module Master
           }
           ([result.ok? ? result.value! : result.message] + log).join("\n")
         },
-        "model" => ->(ctx) {
-          arg = ctx[:args].to_s.strip
-          if arg == "list"
-            yml_path = File.join(root, "data", "models.yml")
-            if File.exist?(yml_path)
-              data = Master.load_yaml(yml_path)
-              tiers = data["models"] || {}
-              model_lines = tiers.flat_map { |tier, ms|
-                ms.to_a.map { |mod| "  [#{tier}] #{mod["id"]}" }
-              }
-              quality_lines = metrics&.model_quality&.map { |mod, stat|
-                "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
-              } || []
-              sections = ["available models:"] + model_lines
-              sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
-              sections.join("\n")
-            else
-              "model: #{agent.model}"
-            end
-          elsif arg.empty?
-            "model: #{agent.model}"
-          else
-            agent.model = arg
-            config.save!
-            "model: #{arg}"
-          end
-        },
-        "why" => ->(ctx) {
-          rule = ctx[:args].to_s.strip
-          if rule.empty?
-            "usage: /why <rule_name>"
-          else
-            prompt = "Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
-                     "give a before/after Ruby example, and state why it matters."
-            agent.ask_once(prompt)
-          end
-        },
         "scan" => ->(ctx) {
           depth = ctx[:args].to_s.include?("deep") ? :deep : :standard
           raw_arg = ctx[:args].to_s.sub("deep", "").strip
@@ -113,10 +50,8 @@ module Master
             next "scan failed" unless dir_result.ok?
             dir_result.value!
           end
-          result = Result.ok(pairs)
-          next "scan failed" unless result.ok?
           by_rule = Hash.new { |h, k| h[k] = [] }
-          result.value!.each do |_file, file_result|
+          pairs.each do |_file, file_result|
             next unless file_result.respond_to?(:ok?) && file_result.ok?
             file_result.value!.each { |v| by_rule[v[:rule].to_s] << v }
           end
@@ -130,6 +65,77 @@ module Master
           lines.join("\n")
         }
       }
+    end
+
+    def model_agent_commands(ai:, root:, infra:)
+      council_meta_commands(ai:, root:).merge(model_commands(ai:, root:, infra:))
+    end
+
+    def council_meta_commands(ai:, root:)
+      council_stage = ai[:council_stage]
+      swarm         = ai[:swarm]
+      {
+        "council" => ->(ctx) {
+          case ctx[:args].to_s.strip
+          when "on"  then council_stage.enable!; "council: enabled"
+          when "off" then council_stage.disable!; "council: disabled"
+          else "council: #{council_stage.enabled? ? "on" : "off"}"
+          end
+        },
+        "swarm"   => ->(ctx) { handle_swarm(swarm, ctx[:args].to_s.strip) },
+        "explain" => ->(_ctx) { explain_master(root) }
+      }
+    end
+
+    def handle_swarm(swarm, arg)
+      parts = arg.split(" ", 2)
+      role  = parts[0]&.to_sym
+      task  = parts[1].to_s
+      return "usage: /swarm <role> <task>  roles: #{swarm.worker_roles.join(", ")}" if role.nil? || task.empty?
+      result = swarm.dispatch(role, task:, context_slice: {})
+      result.ok? ? result.value!.inspect : result.message
+    end
+
+    def explain_master(root)
+      map    = Introspection::SelfMap.new(root:)
+      info   = map.describe
+      cov    = map.axiom_coverage.map { |ax, n| "  #{ax}: #{n}" }.join("\n")
+      stages = "Intake->Infer->Route->Guard->Execute->Council->Lint->Prune->Memo->Render"
+      "MASTER -- #{info[:files]} files, #{info[:lines]} lines\npipeline: #{stages}\n\naxiom coverage:\n#{cov}"
+    end
+
+    def model_commands(ai:, root:, infra:)
+      agent   = ai[:agent]
+      config  = infra[:config]
+      metrics = infra[:metrics]
+      {
+        "model" => ->(ctx) {
+          arg = ctx[:args].to_s.strip
+          next list_models(root, metrics, agent) if arg == "list"
+          next "model: #{agent.model}" if arg.empty?
+          agent.model = arg; config.save!; "model: #{arg}"
+        },
+        "why" => ->(ctx) {
+          rule = ctx[:args].to_s.strip
+          next "usage: /why <rule_name>" if rule.empty?
+          agent.ask_once("Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
+                         "give a before/after Ruby example, and state why it matters.")
+        }
+      }
+    end
+
+    def list_models(root, metrics, agent)
+      yml_path = File.join(root, "data", "models.yml")
+      return "model: #{agent.model}" unless File.exist?(yml_path)
+      data = Master.load_yaml(yml_path)
+      tiers = data["models"] || {}
+      model_lines = tiers.flat_map { |tier, ms| ms.to_a.map { |mod| "  [#{tier}] #{mod["id"]}" } }
+      quality_lines = metrics&.model_quality&.map { |mod, stat|
+        "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
+      } || []
+      sections = ["available models:"] + model_lines
+      sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
+      sections.join("\n")
     end
   end
 end

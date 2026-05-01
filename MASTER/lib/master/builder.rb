@@ -57,67 +57,81 @@ module Master
     end
 
     def build_ai_stack(root, infra)
-      config = infra[:config]
-      bus = infra[:bus]
+      agent, soul_doc, scanner, swarm, deliberation, council_stage = build_agent_core(root, infra)
+      autonomous = build_autonomous(root, infra, agent:, scanner:, soul: soul_doc)
+      {
+        agent:, soul: soul_doc, scanner:, swarm:, deliberation:, council_stage:,
+        guard: Security::InjectionGuard.new
+      }.merge(autonomous)
+    end
 
-      tools = build_tools(root:, infra:)
-      tools += infra[:mcp].tools
-      router = Routing::ModelRouter.new(config:)
-      modes = Reasoning::Modes.new
+    def build_agent_core(root, infra)
+      bus          = infra[:bus]
+      agent, tools = build_agent_instance(root, infra)
+      soul_doc     = Soul.new(root:, agent:)
+      tools << Tools::AskLlm.new(agent:, governor: infra[:governor],
+                                  circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
+      ctx = ContextWindow.new(session: infra[:session], agent:, model_context: CTX_WINDOW_SIZE)
+      ctx.check_and_compact!
+      agent.wire_context_window(ctx)
+      scanner               = build_scanner(root:, agent:, bus:)
+      swarm                 = Swarm::Coordinator.new(agent:, event_bus: bus)
+      deliberation, council = build_council(root, infra, agent:)
+      [agent, soul_doc, scanner, swarm, deliberation, council]
+    end
+
+    def build_council(root, infra, agent:)
+      personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
+      deliberation = Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus])
+      [deliberation, Stages::Council.new(deliberation:, config: infra[:config])]
+    end
+
+    def build_agent_instance(root, infra)
+      tools = build_tools(root:, infra:) + infra[:mcp].tools
       agent = Agent.new(
-        config:, session: infra[:session], tools:,
-        circuit_breaker: infra[:breaker], cache: infra[:cache],
-        event_bus: bus, model_router: router, reasoning_modes: modes,
-        memory: infra[:memory], personality: infra[:personality],
-        code_index: infra[:code_index]
+        config: infra[:config], session: infra[:session], tools:,
+        circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: infra[:bus],
+        model_router: Routing::ModelRouter.new(config: infra[:config]),
+        reasoning_modes: Reasoning::Modes.new,
+        memory: infra[:memory], personality: infra[:personality], code_index: infra[:code_index]
       )
-      soul_doc = Soul.new(root:, agent:)
-      tools << Tools::AskLlm.new(
-        agent:, governor: infra[:governor],
-        circuit_breaker: infra[:breaker], cache: infra[:cache],
-        event_bus: bus
-      )
+      [agent, tools]
+    end
 
-      ctx_window = ContextWindow.new(
-        session: infra[:session], agent:, model_context: CTX_WINDOW_SIZE
-      )
-      ctx_window.check_and_compact!
-      agent.wire_context_window(ctx_window)
-
-      scanner = build_scanner(root:, agent:, bus:)
-      swarm = Swarm::Coordinator.new(agent:, event_bus: bus)
-      personas = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
-      deliberation = Council::Deliberation.new(personas:, agent:, event_bus: bus)
-      council_stage = Stages::Council.new(deliberation:, config:)
-
+    def build_autonomous(root, infra, agent:, scanner:, soul:)
+      bus      = infra[:bus]
       standing = StandingOrders.new(pipeline: nil, event_bus: bus)
       learnings = Learnings.new(root:)
-      autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul: soul_doc, learnings:)
-      skills = Skills.new(root:, event_bus: bus)
+      autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
+      skills   = Skills.new(root:, event_bus: bus)
       skills.discover!
       heartbeat = Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus)
-      triggers = Triggers.new(event_bus: bus, scanner:, agent:)
+      triggers  = Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
-
-      {
-        agent:, soul: soul_doc, scanner:, swarm:, deliberation:,
-        council_stage:, standing:, autoloop:, learnings:,
-        guard: Security::InjectionGuard.new,
-        heartbeat:, skills:, triggers:
-      }
+      { standing:, learnings:, autoloop:, skills:, heartbeat:, triggers: }
     end
 
     def build_pipeline_and_gateway(root, infra, ai)
-      config = infra[:config]
-      bus = infra[:bus]
+      config   = infra[:config]
+      bus      = infra[:bus]
       commands = CommandRegistry.build(infra:, ai:, root:)
+      stages   = build_stages(root:, infra:, ai:, commands:)
+      pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
+      ai[:standing].wire_pipeline(pipeline)
+      gateway = Gateway.new(pipeline:, session: infra[:session], event_bus: bus)
+      commands["gateway"] = ->(ctx) { gateway.channels }
+      [pipeline, gateway]
+    end
 
-      stages = [
+    def build_stages(root:, infra:, ai:, commands:)
+      config = infra[:config]
+      bus    = infra[:bus]
+      [
         Stages::Intake.new,
         Stages::Infer.new,
         Stages::Route.new(commands:, agent: ai[:agent]),
         Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
-        Stages::Deliberate.new(agent: ai[:agent], config: infra[:config]),
+        Stages::Deliberate.new(agent: ai[:agent], config:),
         Stages::Execute.new,
         Pipeline::SkipOnPressure.new(Pipeline::ParallelGroup.new(
           ai[:council_stage],
@@ -127,14 +141,6 @@ module Master
         Stages::Memo.new(memory: infra[:memory], event_bus: bus),
         Stages::Render.new(renderer: infra[:renderer])
       ]
-
-      pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
-      ai[:standing].wire_pipeline(pipeline)
-
-      gateway = Gateway.new(pipeline:, session: infra[:session], event_bus: bus)
-      commands["gateway"] = ->(ctx) { gateway.channels }
-
-      [pipeline, gateway]
     end
 
     def build_tools(root:, infra:)
