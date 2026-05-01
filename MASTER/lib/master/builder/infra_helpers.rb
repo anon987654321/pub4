@@ -12,7 +12,8 @@ module Master
         Scan::Rules::LongMethodRule, Scan::Rules::GodClassRule,
         Scan::Rules::DuplicateCodeRule, Scan::Rules::PruneRule,
         Scan::Rules::SrpRule, Scan::Rules::PolaRule,
-        Scan::Rules::NielsenRule, Scan::Rules::AxiomCoverageRule
+        Scan::Rules::NielsenRule, Scan::Rules::AxiomCoverageRule,
+        Scan::Rules::ThreadSafetyRule
       ].each { |klass| scanner.add_rule(klass.new) }
       scanner.add_rule(Scan::Rules::RubocopRule.new(root:))
       scanner.add_rule(Scan::Rules::ReekRule.new(root:))

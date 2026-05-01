@@ -27,7 +27,6 @@ macos:
   service_manager: launchctl
   shell: zsh
 
-# Optional placeholders for future extensions
 windows:
   audio: powershell
   firewall: windows_defender
@@ -36,5 +35,3 @@ windows:
   privilege: runas
   service_manager: sc
   shell: powershell
-
-# End of platform definitions

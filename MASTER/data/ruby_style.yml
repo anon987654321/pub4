@@ -1,0 +1,84 @@
+# Ruby, shell, and git style rules enforced by MASTER.
+# Scan rules reference these; Personality injects them into every LLM system prompt.
+
+ruby:
+  quotes: double  # always double-quoted strings; single only inside regex or '\1' backrefs
+  frozen_string: true  # every .rb file must start with # frozen_string_literal: true
+
+  comments:
+    max_lines: 1           # class/module/method comments: 1 line or none
+    require_why: true      # only add when WHY is non-obvious (hidden constraint, workaround)
+    forbidden:
+      - what_comments      # never describe what the code does — identifiers do that
+      - yard_doc_blocks    # no # Public:, # Returns, # param - style blocks
+      - section_separators # no # ----, # ====, # ---- Public API ---- etc.
+      - numbered_steps     # no # 1., # 2. inline step comments
+      - multi_line_prose   # cut verbosity; one line survives, paragraph does not
+
+  bugs_to_avoid:
+    - pattern: "Dir.chdir"
+      reason: "process-wide; thread-unsafe in multi-threaded agents"
+      fix: "pass -C root to git; expand paths with File.expand_path"
+
+    - pattern: "Prism.parse(src, freeze: true)"
+      reason: "freeze: kwarg dropped in Ruby 3.4"
+      fix: "Prism.parse(src)"
+
+    - pattern: "next if condition inside flat_map"
+      reason: "next if returns nil into flat_map, producing nil entries in output"
+      fix: "next [] if condition"
+
+    - pattern: "rescue => e (multi-line bare rescue)"
+      reason: "unclear; explicitly name StandardError for clarity"
+      fix: "rescue StandardError => e"
+
+    - pattern: "rescue nil (inline rescue returning nil)"
+      reason: "inline rescue already catches StandardError; rescue nil is correct idiom"
+      note: "do NOT change to rescue StandardError — that returns the class object, not nil"
+
+    - pattern: "@bus&.publish(...) || value"
+      reason: "when bus is present, returns bus result (truthy), masking the real value"
+      fix: "call @bus&.publish(...) on its own line; return value separately"
+
+    - pattern: "backtick shell commands with interpolation"
+      reason: "shell injection risk"
+      fix: "Open3.capture2e('cmd', '-flag', arg) with arg arrays"
+
+    - pattern: "system/Open3 with string interpolation"
+      reason: "shell injection risk"
+      fix: "Open3.capture2e(*%w[cmd -flag], variable) with separate arguments"
+
+    - pattern: "mutate state before publishing event that reads old state"
+      reason: "event receives new state instead of previous state"
+      fix: "capture prev = current before mutation; use prev in publish/return"
+
+  blank_lines:
+    max_consecutive: 1     # no double blank lines anywhere
+
+shell:
+  decorations_forbidden:
+    - "=== banner ===" # no ASCII section banners
+    - "--- separator ---"
+    - "*** header ***"
+    - "emoji in print/echo output"  # no ✅ ❌ 🚀 etc. in scripts
+    - "numbered step comments"      # no # Step 1:, # Phase 2: etc.
+
+  credentials_forbidden: true  # never hardcode passwords/tokens in scripts
+
+  prefer:
+    - "pure zsh parameter expansion over external tools (see zsh_patterns.yml)"
+    - "Open3.capture2e with arg arrays in Ruby over shell interpolation"
+    - "File.expand_path over pwd + concatenation"
+
+git:
+  commit_style:
+    voice: active           # "Fix bug" not "Fixed bug", "Add feature" not "Added feature"
+    format: "type: short summary\n\nBody if needed."
+    subject_max: 72
+    no_what_if_diff_shows: true  # don't describe what changed if the diff makes it obvious
+    separate_concerns: true      # don't mix bug fixes with style changes in one commit
+
+  forbidden:
+    - "Dir.chdir in Ruby before git commands"
+    - "string-interpolated git commands"
+    - "rm -rf in deploy scripts without explicit guard"

@@ -27,7 +27,6 @@ module Master
         (prev - curr).abs.to_f / [prev, 1].max < CONVERGE_THRESHOLD
       end
 
-      # γ-discounted improvement signal. Stalled when weighted sum ≈ 0.
       def trajectory_stalled?(history)
         return false if history.size < 3
         deltas = history.each_cons(2).map { |a, b| a - b }

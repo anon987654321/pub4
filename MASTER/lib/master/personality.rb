@@ -130,15 +130,31 @@ module Master
       ls << "PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally."
       ls << "BE_CONCISE: minimal response. If the answer is one word, say one word."
 
-      zsh = load_zsh_patterns
+      zsh = load_yaml_data("zsh_patterns.yml")
       if zsh
         banned_cmds = Array(zsh["banned_commands"]).join(", ")
         ls << "Zsh scripts: never use #{banned_cmds}. Use pure zsh parameter expansion and builtins instead."
       end
 
+      style = load_yaml_data("ruby_style.yml")
+      if style
+        bugs = Array(style.dig("ruby", "bugs_to_avoid"))
+                  .map { |b| "#{b["pattern"]}: #{b["fix"] || b["note"]}" }
+                  .first(5)
+        ls << "Ruby bugs to avoid: #{bugs.join("; ")}." if bugs.any?
+        shell_forbidden = Array(style.dig("shell", "decorations_forbidden"))
+        ls << "Shell scripts: no ASCII banners (===,---), no emoji, no hardcoded credentials." if shell_forbidden.any?
+      end
+
       ls.join("\n")
+    end
+
     def load_zsh_patterns
-      path = File.join(Master::ROOT, "data", "zsh_patterns.yml")
+      load_yaml_data("zsh_patterns.yml")
+    end
+
+    def load_yaml_data(filename)
+      path = File.join(Master::ROOT, "data", filename)
       Master.load_yaml(path) if File.exist?(path)
     rescue StandardError
       nil
