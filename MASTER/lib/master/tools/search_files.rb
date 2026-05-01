@@ -2,12 +2,12 @@
 
 module Master
   module Tools
-    # SearchFiles — regex search across project files with context lines.
     class SearchFiles
-      TIER        = :safe
-      NAME        = "search_files".freeze
-      DESCRIPTION = "Search for a pattern in files under the project root.".freeze
-      MAX_RESULTS = 200
+      TIER               = :safe
+      NAME               = "search_files".freeze
+      DESCRIPTION        = "Search for a pattern in files under the project root.".freeze
+      MAX_RESULTS        = 200
+      BINARY_SAMPLE_BYTES = 512
 
       def initialize(root:, event_bus: nil)
         @root = File.realpath(root)
@@ -47,7 +47,7 @@ module Master
       private
 
       def binary_file?(path)
-        sample = File.read(path, 512) rescue ""
+        sample = begin; File.read(path, BINARY_SAMPLE_BYTES); rescue StandardError; ""; end
         sample.include?("\x00")
       end
     end

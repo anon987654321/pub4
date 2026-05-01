@@ -2,6 +2,8 @@
 
 module Master
   module CommandRegistry
+    BINARY_SNIFF_BYTES = 512
+
     module_function
 
     def control_commands(standing, soul)
@@ -82,7 +84,7 @@ module Master
           files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
                       .select { |f| File.file?(f) && File.size(f) < CTX_WINDOW_SIZE }
                       .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
-                      .reject { |f| File.binread(f, 512).include?("\x00") rescue true }
+                      .reject { |f| begin; File.binread(f, BINARY_SNIFF_BYTES).include?("\x00"); rescue StandardError; true; end }
                       .sort
           lines = ["# MASTER Codebase Snapshot", "Generated: #{Time.now.utc.iso8601}", ""]
           files.each do |f|

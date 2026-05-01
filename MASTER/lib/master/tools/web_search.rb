@@ -5,11 +5,11 @@ require "json"
 
 module Master
   module Tools
-    # WebSearch — query external search APIs with governor rate limiting.
     class WebSearch
       TIER               = :guarded
       MAX_QUERY_CHARS    = 300
       MAX_SEARCH_RESULTS = 5
+      HTTP_OK            = "200".freeze
 
       NAME        = "web_search".freeze
       DESCRIPTION = "Search DuckDuckGo instant answers API.".freeze
@@ -39,7 +39,7 @@ module Master
           }
         }
 
-        return Result.err("web_search: HTTP #{response.code}", category: :infrastructure) unless response.code == "200"
+        return Result.err("web_search: HTTP #{response.code}", category: :infrastructure) unless response.code == HTTP_OK
 
         data    = JSON.parse(response.body)
         results = extract_results(data)

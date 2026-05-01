@@ -9,6 +9,10 @@ module Master
     DATA_PATH  = File.join(Master::ROOT, "data", "heartbeat.yml").freeze
     STATE_PATH = ".master/heartbeat_state.yml".freeze
 
+    RESULT_TRUNCATE     = 200
+    SECONDS_PER_HOUR    = 3600
+    SECONDS_PER_2HOURS  = 7200
+
     JOB_HANDLERS = {
       "prune_memory" => :prune_memory,
       "check_models" => :check_model_availability,
@@ -63,7 +67,7 @@ module Master
 
         @bus&.publish("heartbeat:run", job: name)
         result = execute_job(job)
-        @state[name] = { "last_run" => now, "result" => result.to_s[0, 200] }
+        @state[name] = { "last_run" => now, "result" => result.to_s[0, RESULT_TRUNCATE] }
         results << { name: name, result: result }
       end
 
@@ -155,8 +159,8 @@ module Master
 
     def default_jobs
       [
-        { "name" => "prune_memory", "action" => "prune_memory", "interval_seconds" => 3600 },
-        { "name" => "self_test", "action" => "self_test", "interval_seconds" => 7200 },
+        { "name" => "prune_memory", "action" => "prune_memory", "interval_seconds" => SECONDS_PER_HOUR },
+        { "name" => "self_test", "action" => "self_test", "interval_seconds" => SECONDS_PER_2HOURS },
         { "name" => "prune_undo", "action" => "prune_undo", "interval_seconds" => 86_400 },
         { "name" => "snapshot", "action" => "snapshot", "interval_seconds" => 14_400 }
       ]

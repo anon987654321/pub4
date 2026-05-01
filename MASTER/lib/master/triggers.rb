@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
 module Master
-  # Triggers — event-driven reactive actions.
-  # Ported from MASTER2. Registers handlers on EventBus events
-  # and fires automatic responses (auto-fix after scan, budget switching, etc.)
   class Triggers
-    DEFAULTS = %i[after_scan on_error budget_low tool_after].freeze
+    DEFAULTS       = %i[after_scan on_error budget_low tool_after].freeze
+    ERROR_TRUNCATE = 200
 
     def initialize(event_bus:, scanner: nil, agent: nil)
       @bus     = event_bus
@@ -23,7 +21,7 @@ module Master
       end
 
       register(:on_error) do |ctx|
-        @bus.publish("triggers:error_logged", error: ctx[:error].to_s[0, 200])
+        @bus.publish("triggers:error_logged", error: ctx[:error].to_s[0, ERROR_TRUNCATE])
       end
 
       register(:budget_low) do |_ctx|

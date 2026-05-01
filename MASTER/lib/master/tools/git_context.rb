@@ -2,11 +2,11 @@
 
 module Master
   module Tools
-    # Read-only git queries: log, blame, diff, status.
     class GitContext
-      TIER        = :safe
-      NAME        = "git_context".freeze
-      DESCRIPTION = "Query git log, blame, diff, and status for the project.".freeze
+      TIER            = :safe
+      NAME            = "git_context".freeze
+      DESCRIPTION     = "Query git log, blame, diff, and status for the project.".freeze
+      MAX_OUTPUT_CHARS = 4000
 
       def initialize(root:, event_bus: nil)
         @root = File.realpath(root)
@@ -60,7 +60,7 @@ module Master
       def git_show(ref)
         ref_s = (ref.to_s.empty? ? "HEAD" : ref.to_s).gsub(/[^a-zA-Z0-9._~^:\-\/]/, "")
         out = IO.popen(["git", "-C", @root, "show", "--stat", "--no-color", ref_s], err: File::NULL) { |io| io.read }
-        Result.ok(out.strip.empty? ? "(not found)" : out.strip[0..4000])
+        Result.ok(out.strip.empty? ? "(not found)" : out.strip[0..MAX_OUTPUT_CHARS])
       end
 
       def safe_path(path)

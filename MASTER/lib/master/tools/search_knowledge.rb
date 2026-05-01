@@ -7,7 +7,7 @@ module Master
       TIER        = :safe
       NAME        = "search_knowledge".freeze
       DESCRIPTION = "Search local knowledge base (ruby_llm docs, OpenBSD man pages, system prompts, gem docs). " \
-                    "Use for: how does X work in ruby_llm? what does man pf.conf say? example system prompts?"
+                    "Use for: how does X work in ruby_llm? what does man pf.conf say? example system prompts?".freeze
       MAX_RESULTS = 30
 
       def initialize(root:, event_bus: nil)

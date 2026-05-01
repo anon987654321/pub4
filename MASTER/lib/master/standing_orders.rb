@@ -2,9 +2,10 @@
 
 module Master
   class StandingOrders
-    DAILY_INTERVAL  = 86_400
-    WEEKLY_INTERVAL = 604_800
-    STORE_PATH      = File.join(Master::ROOT, "data", "standing_orders.yml")
+    DAILY_INTERVAL   = 86_400
+    WEEKLY_INTERVAL  = 604_800
+    ERROR_TRUNCATE   = 200
+    STORE_PATH       = File.join(Master::ROOT, "data", "standing_orders.yml")
     VALID_STATES    = %w[pending running done error].freeze
 
     BUILTIN_ORDERS = [
@@ -48,7 +49,7 @@ module Master
           order.delete("last_error")
         else
           order["state"] = "error"
-          order["last_error"] = result.message.to_s[0, 200]
+          order["last_error"] = result.message.to_s[0, ERROR_TRUNCATE]
         end
 
         results << { name: order["name"], result: }

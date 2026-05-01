@@ -3,6 +3,7 @@
 module Master
   class AutoLoop
     module FixEvaluator
+      ERROR_TRUNCATE = 200
       private
 
       def build_fix_prompt(violation, src)
@@ -14,7 +15,7 @@ module Master
       end
 
       def reflected_prompt(base, last_error, attempt)
-        "Prior attempt (#{attempt}) failed with: #{last_error[0, 200]}\n" \
+        "Prior attempt (#{attempt}) failed with: #{last_error[0, ERROR_TRUNCATE]}\n" \
           "Reflect briefly on what went wrong, then retry.\n\n" \
           "#{base}"
       end
