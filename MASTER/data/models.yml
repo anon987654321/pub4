@@ -1,13 +1,11 @@
-# Model routing profile — OpenRouter primary, Gemini direct fallback.
-# Free tier: meta-llama/llama-3.3-70b-instruct primary, qwen/qwen3-coder fallback.
-# Gemini 2.5 Flash: direct Google API (free tier, 1500 req/day) — final fallback.
+# Model routing profile — Gemini primary, Mistral/DeepSeek/OpenRouter fallback.
 
 routing:
   enabled: true
   strategy: weighted
   escalation_enabled: true
   escalation_tier: strong
-  provider: openrouter
+  provider: gemini
 
 weights: &weights
   quality: 0.50
@@ -25,65 +23,74 @@ defaults: &model_defaults
   score: { quality: 0.0, speed: 0.0, cost: 0.0 }
 
 model_defs:
-  llama_70b: &llama_70b
-    id: meta-llama/llama-3.3-70b-instruct:free
-    <<: *model_defaults
-    score: { quality: 0.78, speed: 0.70, cost: 1.0 }
-  qwen_coder: &qwen_coder
-    id: qwen/qwen3-coder:free
-    <<: *model_defaults
-    score: { quality: 0.75, speed: 0.65, cost: 1.0 }
   gemini_flash: &gemini_flash
-    id: gemini-2.0-flash
+    id: gemini-2.5-flash
     <<: *model_defaults
-    score: { quality: 0.85, speed: 0.90, cost: 0.95 }
+    score: { quality: 0.88, speed: 0.90, cost: 0.95 }
+  gemini_pro: &gemini_pro
+    id: gemini-2.5-pro
+    <<: *model_defaults
+    score: { quality: 0.95, speed: 0.70, cost: 0.80 }
+  mistral_large: &mistral_large
+    id: mistral-large-latest
+    <<: *model_defaults
+    score: { quality: 0.90, speed: 0.75, cost: 0.70 }
+  mistral_small: &mistral_small
+    id: mistral-small-latest
+    <<: *model_defaults
+    score: { quality: 0.78, speed: 0.85, cost: 0.90 }
+  deepseek_chat: &deepseek_chat
+    id: deepseek-chat
+    <<: *model_defaults
+    score: { quality: 0.88, speed: 0.70, cost: 0.95 }
+  deepseek_coder: &deepseek_coder
+    id: deepseek-coder
+    <<: *model_defaults
+    score: { quality: 0.85, speed: 0.70, cost: 0.95 }
   claude_sonnet: &claude_sonnet
     id: anthropic/claude-sonnet-4-6
     <<: *model_defaults
     score: { quality: 0.95, speed: 0.75, cost: 0.60 }
-  gpt_4o: &gpt_4o
-    id: openai/gpt-4o
-    <<: *model_defaults
-    score: { quality: 0.93, speed: 0.80, cost: 0.55 }
   nemotron_super: &nemotron_super
     id: nvidia/nemotron-3-super-120b-a12b:free
     <<: *model_defaults
     score: { quality: 0.90, speed: 0.75, cost: 1.0 }
-qwen3_next: &qwen3_next
-  id: qwen/qwen3-next-80b-a3b-instruct:free
-  <<: *model_defaults
-  score: { quality: 0.80, speed: 0.70, cost: 1.0 }
-  gpt_oss: &gpt_oss
-    id: openai/gpt-oss-120b:free
+  qwen_coder: &qwen_coder
+    id: qwen/qwen3-coder:free
     <<: *model_defaults
-    score: { quality: 0.72, speed: 0.60, cost: 1.0 }
-minimax_m25: &minimax_m25
-  id: minimax/minimax-m2.5:free
-  <<: *model_defaults
-  score: { quality: 0.82, speed: 0.65, cost: 1.0 }
-hermes_405b: &hermes_405b
-  id: nousresearch/hermes-3-llama-3.1-405b:free
-  <<: *model_defaults
-  score: { quality: 0.85, speed: 0.50, cost: 1.0 }
+    score: { quality: 0.75, speed: 0.65, cost: 1.0 }
+  llama_70b: &llama_70b
+    id: meta-llama/llama-3.3-70b-instruct:free
+    <<: *model_defaults
+    score: { quality: 0.78, speed: 0.70, cost: 1.0 }
+  hermes_405b: &hermes_405b
+    id: nousresearch/hermes-3-llama-3.1-405b:free
+    <<: *model_defaults
+    score: { quality: 0.85, speed: 0.50, cost: 1.0 }
+  gpt_4o: &gpt_4o
+    id: openai/gpt-4o
+    <<: *model_defaults
+    score: { quality: 0.93, speed: 0.80, cost: 0.55 }
 
 models:
   default:
+    - *gemini_flash
+    - *mistral_large
+    - *deepseek_chat
     - *nemotron_super
     - *qwen_coder
-    - *minimax_m25
-    - *gpt_oss
-    - *gemini_flash
   strong:
-    - *hermes_405b
+    - *gemini_pro
+    - *mistral_large
     - *claude_sonnet
     - *gpt_4o
-    - *nemotron_super
     - *gemini_flash
   cheap:
+    - *gemini_flash
+    - *mistral_small
+    - *deepseek_chat
     - *llama_70b
     - *qwen_coder
-    - *gpt_oss
-    - *gemini_flash
 
 routes:
   code_generation: default
@@ -94,8 +101,6 @@ routes:
   exploration: cheap
   fallback_default: cheap
 
-# Model name prefixes that support tool use (anchored match).
-# Agent.tool_capable? checks model IDs against these prefixes.
 tool_capable_prefixes:
   - claude
   - gpt-4
@@ -116,15 +121,11 @@ tool_capable_prefixes:
   - openai/gpt
   - google/gemini
 
-# Merged from fallback_models.yml
 continuity:
   enabled: true
-  updated_at: "2026-03-11T00:00:00Z"
+  updated_at: "2026-05-01T00:00:00Z"
 
 openrouter:
   free_latest:
     - nvidia/nemotron-3-super-120b-a12b:free
     - qwen/qwen3-coder:free
-    - openai/gpt-oss-120b:free
-    - minimax/minimax-m2.5:free
-

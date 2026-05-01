@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "zeitwerk"
+require "yaml"
 
 module Master
   ROOT = File.expand_path("..", __dir__).freeze
@@ -21,7 +22,9 @@ module Master
     anthropic_api_key:  "ANTHROPIC_API_KEY",
     openai_api_key:     "OPENAI_API_KEY",
     gemini_api_key:     "GEMINI_API_KEY",
-    openrouter_api_key: "OPENROUTER_API_KEY"
+    openrouter_api_key: "OPENROUTER_API_KEY",
+    mistral_api_key:    "MISTRAL_API_KEY",
+    deepseek_api_key:   "DEEPSEEK_API_KEY"
   }.freeze
 
   loader = Zeitwerk::Loader.for_gem
@@ -69,7 +72,9 @@ module Master
     return "claude-sonnet-4-6" if api_key_present?("ANTHROPIC_API_KEY")
     return "gpt-4o" if api_key_present?("OPENAI_API_KEY")
     return "gemini-2.5-flash" if api_key_present?("GEMINI_API_KEY")
-    raise "No LLM API key found. Set OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY."
+    return "mistral-large-latest" if api_key_present?("MISTRAL_API_KEY")
+    return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
+    raise "No LLM API key found. Set OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY, MISTRAL_API_KEY, or DEEPSEEK_API_KEY."
   end
 
   def self.load_yaml(path)
