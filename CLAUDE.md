@@ -209,7 +209,7 @@ Known fixes already applied (commits `39bff649`, `33a23ded`, `d39ed302`):
 - [ ] Rename rc.d service `master3web` → `masterweb` on VPS
 - [ ] Update `~/.zshrc`: still references `MASTER3/exe/master3` → `MASTER/exe/master`
 - [ ] Deploy brgen.no Rails app publicly
-- [ ] Task #13: Parallelize swarm worker dispatch
-- [ ] Task #15: Confidence-based dynamic model escalation
+- [x] Task #13: Parallelize swarm worker dispatch (analyse_and_review uses fan_out)
+- [x] Task #15: Confidence-based dynamic model escalation (escalate_if_low_confidence in model_router)
 - [ ] Verify EventSource orb visualizer in browser (`/events/stream`)
 - [ ] openbsd.sh deploy: stage_1 stalled (only 2 lines logged) — needs restart + debug
