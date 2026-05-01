@@ -4,7 +4,7 @@ module Master
   module Tools
     # ReadFile — read file contents with line-range support and undo tracking.
     class ReadFile
-        include PathGuard
+      include PathGuard
       TIER        = :safe
       MAX_LINES   = 2000
       NAME        = "read_file".freeze

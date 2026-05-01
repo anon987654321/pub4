@@ -93,7 +93,7 @@ end
       return unless dirty?
 
       @bus&.publish("pipeline:rollback", category: result.category, message: result.message[0, 120])
-      system("git -C \#{@root} reset --hard HEAD > /dev/null 2>&1")
+      Open3.capture2e("git", "-C", @root, "reset", "--hard", "HEAD")
     end
 
     def git_workspace?

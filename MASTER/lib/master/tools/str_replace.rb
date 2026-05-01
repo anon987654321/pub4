@@ -4,7 +4,7 @@ module Master
   module Tools
     # StrReplace — surgical string replacement in files with undo support.
     class StrReplace
-        include PathGuard
+      include PathGuard
       TIER        = :guarded
       NAME        = "str_replace".freeze
       DESCRIPTION = "Replace unique string in a file. Fails if pattern matches 0 or 2+ times."
