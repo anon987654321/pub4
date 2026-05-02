@@ -18,12 +18,11 @@ def boot_web_ui(config)
   host = config["web_host"] || "0.0.0.0"
 
   if Master::Platform.openbsd?
-    # Kill stale falcon/ruby processes on the port before rcctl start.
     system("doas pkill -TERM -f 'falcon.*#{port}' 2>/dev/null || true")
     sleep 0.5
     system("doas rcctl restart master > /dev/null 2>&1")
+    $stderr.puts "web: http://#{host}:#{port}"
   else
-    # Non-OpenBSD: kill anything on the port, then spawn Falcon directly.
     require "open3"
     Open3.capture3("lsof -ti:#{port} 2>/dev/null | xargs -r kill -TERM 2>/dev/null")
     sleep 0.5
@@ -35,6 +34,7 @@ def boot_web_ui(config)
         chdir: web_dir,
         out: File::NULL, err: File::NULL
       )
+      $stderr.puts "web: http://#{host}:#{port}"
     end
   end
 rescue StandardError => e
