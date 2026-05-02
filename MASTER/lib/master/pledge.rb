@@ -34,7 +34,7 @@ module Master
 
     # Stage 1: called before Builder.build -- widest promises, no lock
     def stage1_boot!(root)
-      pledge("stdio rpath wpath cpath proc exec inet dns tty unveil")
+      pledge("stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec")
       unveil("/", "")
       unveil(root, "rwc")
       unveil(Dir.home, "rwc")
@@ -49,7 +49,7 @@ module Master
 
     # Stage 2: called after CLI is fully initialized -- lock filesystem
     def stage2_lock!
-      pledge("stdio rpath wpath cpath proc exec inet dns tty")
+      pledge("stdio rpath wpath cpath proc exec inet dns tty prot_exec")
       lock_unveil!
     end
 
