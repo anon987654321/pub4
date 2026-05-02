@@ -4,13 +4,11 @@ require "yaml"
 
 module Master
   module Stages
-    # Runs 6-persona deliberation; appends PRAISE votes to exemplars.yml.
+    # Council — 6-persona deliberation on dangerous or multi-file changes.
+    # PRAISE votes are appended to data/exemplars.yml for future reference.
     class Council
-      EXEMPLARS_PATH   = File.join(Master::ROOT, "data", "exemplars.yml").freeze
-      PATTERNS_PATH    = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
-      PRAISE_MIN_COUNT = 3
-      MSG_TRUNCATE     = 120
-      FEEDBACK_TRUNCATE = 240
+      EXEMPLARS_PATH  = File.join(Master::ROOT, "data", "exemplars.yml").freeze
+      PATTERNS_PATH   = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
 
       def initialize(deliberation:, config: nil, enabled: false)
         @deliberation      = deliberation
@@ -50,7 +48,7 @@ module Master
 
       def load_patterns
         data = Master.load_yaml(PATTERNS_PATH)
-        (data["dangerous"] || []).flatten.map { |str| Regexp.new(str, Regexp::IGNORECASE) }
+        (data["dangerous"] || []).flatten.filter_map { |str| Regexp.new(str, Regexp::IGNORECASE) rescue nil }
       end
 
       def should_run?(ctx)
@@ -77,16 +75,18 @@ module Master
         end
       end
 
+      # Detect unanimous or majority PRAISE in council feedback text.
       def praise?(feedback)
         text = feedback.to_s.downcase
-        text.scan(/\bpraise\b/).size >= PRAISE_MIN_COUNT
+        text.scan(/\bpraise\b/).size >= 3
       end
 
+      # Append a PRAISE entry to data/exemplars.yml.
       def log_praise(message, feedback)
         entry = {
           "timestamp" => Time.now.iso8601,
-          "message"   => message.to_s[0, MSG_TRUNCATE],
-          "feedback"  => feedback.to_s[0, FEEDBACK_TRUNCATE]
+          "message"   => message.to_s[0, 120],
+          "feedback"  => feedback.to_s[0, 240]
         }
         existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
         File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))
