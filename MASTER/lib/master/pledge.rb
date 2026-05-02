@@ -1,30 +1,31 @@
 # frozen_string_literal: true
 
-require "fiddle"
-require "fiddle/import"
-
 module Master
   module Pledge
     extend self
 
     if RUBY_PLATFORM.include?("openbsd")
-      extend Fiddle::Importer
-      dlload "libc.so"
-      extern "int pledge(const char *, const char *)"
-      extern "int unveil(const char *, const char *)"
+      require "fiddle"
+      require "fiddle/import"
+
+      module LibC
+        extend Fiddle::Importer
+        dlload "libc.so"
+        extern "int pledge(const char *, const char *)"
+        extern "int unveil(const char *, const char *)"
+      end
 
       def pledge(promises, execpromises = nil)
-        ep = execpromises ? Fiddle::Pointer[execpromises] : Fiddle::NULL
-        result = self.__pledge(promises, ep)
+        result = LibC.pledge(promises, execpromises || Fiddle::NULL)
         raise SystemCallError.new("pledge failed", Fiddle.last_error) if result == -1
       end
 
       def unveil(path, permissions)
-        result = self.__unveil(path, permissions)
+        result = LibC.unveil(path, permissions)
         raise SystemCallError.new("unveil failed", Fiddle.last_error) if result == -1
       end
 
-      def lock_unveil! = unveil(nil, nil)
+      def lock_unveil! = LibC.unveil(Fiddle::NULL, Fiddle::NULL)
     else
       def pledge(*) = nil
       def unveil(*) = nil
