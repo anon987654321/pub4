@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fiddle"
+require "fiddle/import"
 
 module Master
   module Pledge
