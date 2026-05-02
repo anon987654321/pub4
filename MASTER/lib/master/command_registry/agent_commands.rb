@@ -5,7 +5,9 @@ module Master
     module_function
 
     def agent_commands(ai:, root:, infra:)
-      scan_loop_commands(ai:, root:, infra:).merge(model_agent_commands(ai:, root:, infra:))
+      scan_loop_commands(ai:, root:, infra:)
+        .merge(model_agent_commands(ai:, root:, infra:))
+        .merge(crit_command(ai:, root:))
     end
 
     def scan_loop_commands(ai:, root:, infra:)
@@ -136,6 +138,31 @@ module Master
       sections = ["available models:"] + model_lines
       sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
       sections.join("\n")
+    end
+
+    def crit_command(ai:, root:)
+      deliberation = ai[:deliberation]
+      {
+        "crit" => ->(ctx) {
+          arg = ctx[:args].to_s.strip
+          next "usage: /crit <file|text>" if arg.empty?
+          payload = if File.exist?(File.expand_path(arg, root))
+            File.read(File.expand_path(arg, root), encoding: "UTF-8")
+          else
+            arg
+          end
+          result = deliberation.review(payload, context: "explicit /crit session")
+          next result.message if result.err?
+          format_crit_feedback(result.value!)
+        }
+      }
+    end
+
+    def format_crit_feedback(feedback)
+      feedback.map { |f|
+        veto = f[:veto_role] ? " [VETO ELIGIBLE]" : ""
+        "#{f[:persona]} (#{f[:role]})#{veto}:\n#{f[:feedback].to_s.strip}"
+      }.join("\n\n---\n\n")
     end
   end
 end

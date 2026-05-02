@@ -161,7 +161,7 @@ The Ruby pipeline reads these at boot via `Master.build` and enforces them throu
 
 ### Slash commands
 
-`/scan [deep]`, `/sweep`, `/autoloop`, `/council`, `/tts`, `/profile`, `/heartbeat`, `/orders`, `/soul`, `/dmesg`
+`/scan [deep]`, `/sweep`, `/autoloop`, `/council`, `/crit <file|text>`, `/tts`, `/profile`, `/heartbeat`, `/orders`, `/soul`, `/dmesg`
 
 ---
 
