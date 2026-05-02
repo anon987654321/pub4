@@ -52,7 +52,8 @@ module Master
           if t.join(PARALLEL_TIMEOUT_S)
             t.value
           else
-            begin; t.kill; rescue StandardError; nil; end
+            begin; t.kill; rescue ThreadError; nil; end
+            @bus&.publish("pipeline:stage_timeout", stage: @stages[i].class.name)
             Result.ok(frozen_ctx.merge(_parallel_timeout: @stages[i].class.name))
           end
         end

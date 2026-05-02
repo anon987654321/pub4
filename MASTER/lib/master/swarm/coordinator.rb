@@ -55,7 +55,8 @@ module Master
           if th.join(timeout)
             th.value
           else
-            begin; th.kill; rescue StandardError; nil; end
+            begin; th.kill; rescue ThreadError; nil; end
+            @bus&.publish(:swarm_worker_timeout, timeout:)
             [:timeout, Result.err("worker timed out after #{timeout}s")]
           end
         end.to_h
@@ -81,7 +82,13 @@ module Master
         end
 
         results = threads.map do |th|
-          th.join(deadline)&.value || [nil, Result.err("join timeout")]
+          if th.join(deadline)
+            th.value
+          else
+            begin; th.kill; rescue ThreadError; nil; end
+            @bus&.publish(:swarm_parallel_timeout, deadline:)
+            [nil, Result.err("worker exceeded shared deadline")]
+          end
         end.to_h
 
         sr = build_swarm_result(results)

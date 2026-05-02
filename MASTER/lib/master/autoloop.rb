@@ -60,8 +60,8 @@ module Master
         stagger = RATE_LIMIT_SLEEP.to_f / BATCH_SIZE  # 5 s apart — stays within free-tier quota
 
         threads = by_file.each_with_index.map do |v, idx|
-          sleep(stagger * idx) if idx.positive?
           Thread.new do
+            sleep(stagger * idx) if idx.positive?
             fix = request_fix(v)
             mutex.synchronize { fixes[v[:file]] = [v, fix] } if fix
           end

@@ -4,6 +4,7 @@ module Master
   module Council
     class Deliberation
       Result = Master::Result
+      MAX_CONCURRENT = 4
 
       def initialize(personas:, agent:, event_bus: nil)
         @personas = personas
@@ -15,13 +16,22 @@ module Master
       def review(code, context: nil)
         return Result.err("council: no personas configured", category: :validation) if @personas.empty?
 
+        slots = Mutex.new
+        available = MAX_CONCURRENT
+        ready = ConditionVariable.new
+
         threads = @personas.map do |persona|
           Thread.new do
-            response = @agent.ask(build_prompt(persona, code, context))
-            entry = { persona: persona.name, role: persona.role,
-                      veto_role: veto_role?(persona), feedback: response }
-            @bus&.publish(:council_feedback, entry)
-            entry
+            slots.synchronize { ready.wait(slots) until available > 0; available -= 1 }
+            begin
+              response = @agent.ask(build_prompt(persona, code, context))
+              entry = { persona: persona.name, role: persona.role,
+                        veto_role: veto_role?(persona), feedback: response }
+              @bus&.publish(:council_feedback, entry)
+              entry
+            ensure
+              slots.synchronize { available += 1; ready.signal }
+            end
           end
         end
         feedback = threads.map { |t| t.join(30) ? t.value : nil }.compact
@@ -71,8 +81,10 @@ module Master
         PROMPT
       end
 
+      VETO_RE = /\AVETO:/i.freeze
+
       def veto_text?(feedback)
-        feedback.to_s.strip.start_with?("VETO:")
+        VETO_RE.match?(feedback.to_s.strip)
       end
     end
   end
