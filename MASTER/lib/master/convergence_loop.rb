@@ -99,7 +99,7 @@ module Master
 
     def apply_rewrite
       sweep = Sweep.new(agent: @agent, scanner: @scanner, root: @root, event_bus: @bus)
-      sweep.run_single_cycle(target: @target)
+      sweep.run(@root, max_cycles: 1)
     end
 
     def build_surgical_prompt(path, violations)
