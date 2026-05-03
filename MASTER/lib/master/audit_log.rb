@@ -10,6 +10,7 @@ module Master
 
     def initialize(root:, event_bus:)
       @path  = File.join(root, LOG_PATH)
+      @mutex = Mutex.new
       FileUtils.mkdir_p(File.dirname(@path))
       event_bus.subscribe("tool:before") { |event_data| append(event_data) }
     end
@@ -21,7 +22,7 @@ module Master
                                 .map { |k, v| "#{k}=#{v.to_s[0, MAX_VAL].inspect}" }
                                 .join(" ")
       log_line = "#{Time.now.utc.iso8601} tool=#{event_data[:tool]} #{payload_pairs}"
-      File.open(@path, "a") { |f| f.puts(log_line) }
+      @mutex.synchronize { File.open(@path, "a") { |f| f.puts(log_line) } }
     end
   end
 end

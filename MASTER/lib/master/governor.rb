@@ -52,7 +52,7 @@ module Master
       now = Time.now.to_f
       @rate_mutex.synchronize do
         calls = @rate_windows[tier]
-        calls.reject! { |t| now - t > 60.0 }
+        calls.reject! { |t| now - t > RATE_WINDOW }
         if calls.size >= limit
           return Result.err("rate limit: #{tier} tier (#{limit}/min)", category: :rate_limit)
         end
