@@ -7,18 +7,25 @@ require_relative "autoloop/fix_evaluator"
 
 module Master
   class AutoLoop
-    MAX_CYCLES           = 12
-    BATCH_SIZE           = 3
-    RATE_LIMIT_SLEEP     = 15
-    MAX_FIX_RETRIES      = 3
-    SCORE_INCREMENT      = 0.25
-    MAX_SIZE_RATIO       = 2.0
-    MIN_SIZE_RATIO       = 0.80
-    CONFIDENCE_THRESHOLD = 0.60
-    MAX_FILE_BYTES       = 16_000
+    def self.load_cfg
+      Master.load_yaml(File.join(Master::ROOT, "data", "workflow.yml"))
+            .dig("autoloop") || {}
+    rescue StandardError
+      {}
+    end
 
-    # Cross-file or LLM-only rules; single-file rewrite can't fix these.
-    SKIP_RULES = %w[duplicate_code conceptual adversarial axiom_coverage immutable self_explaining long_method pola srp cqs].freeze
+    _cfg = load_cfg
+    MAX_CYCLES           = _cfg.fetch("max_cycles",           12)
+    BATCH_SIZE           = _cfg.fetch("batch_size",            3)
+    RATE_LIMIT_SLEEP     = _cfg.fetch("rate_limit_sleep",     15)
+    MAX_FIX_RETRIES      = _cfg.fetch("max_fix_retries",       3)
+    CONFIDENCE_THRESHOLD = _cfg.fetch("confidence_threshold", 0.60)
+    MAX_FILE_BYTES       = _cfg.fetch("max_file_bytes",   16_000)
+    SKIP_RULES           = Array(_cfg.fetch("skip_rules", [])).freeze
+
+    SCORE_INCREMENT = 0.25
+    MAX_SIZE_RATIO  = 2.0
+    MIN_SIZE_RATIO  = 0.80
 
     SEVERITY_RANK = Master::SEVERITY_RANK
     MIN_SEVERITY  = SEVERITY_RANK[:warning]

@@ -81,8 +81,12 @@ scan_rules:
 autoloop:
   scan_depth: standard
   fix_depth: llm
-  batch_size: 5
+  batch_size: 3
   max_cycles: 12
+  rate_limit_sleep: 15
+  max_file_bytes: 16000
+  max_fix_retries: 3
+  confidence_threshold: 0.60
   targets:
     - lib/
     - test/
@@ -91,6 +95,17 @@ autoloop:
     - vendor/
     - fix_
     - patch_
+  skip_rules:
+    - duplicate_code
+    - conceptual
+    - adversarial
+    - axiom_coverage
+    - immutable
+    - self_explaining
+    - long_method
+    - pola
+    - srp
+    - cqs
 
 sweep:
   scan_depth: deep
