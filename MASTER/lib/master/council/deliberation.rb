@@ -31,6 +31,9 @@ module Master
                         veto_role: veto_role?(persona), feedback: response }
               @bus&.publish(:council_feedback, entry)
               entry
+            rescue StandardError => e
+              @bus&.publish("council:persona_error", persona: persona.name, error: e.message)
+              nil
             ensure
               slots.synchronize { available += 1; ready.signal }
             end
