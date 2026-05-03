@@ -100,7 +100,8 @@ module Master
       @soul = updated
 
       # Git tag
-      `git -C #{@root} add SOUL.md && git -C #{@root} commit -m "soul: v#{new_version} — evolution protocol update" 2>&1`
+      Open3.capture2e("git", "-C", @root, "add", "SOUL.md")
+      Open3.capture2e("git", "-C", @root, "commit", "-m", "soul: v#{new_version} — evolution protocol update")
 
       "soul updated to v#{new_version}"
     rescue StandardError => e

@@ -101,16 +101,18 @@ module Master
         "diff" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           base = arg.empty? ? "HEAD" : arg
-          out = `git -C #{root.shellescape} diff #{base} --stat 2>&1`.strip
-          out.empty? ? "(no changes since #{base})" : out
+          out, = Open3.capture2e("git", "-C", root, "diff", base, "--stat")
+          out.strip.empty? ? "(no changes since #{base})" : out.strip
         },
         "commit" => ->(_ctx) {
-          diff = `git -C #{root.shellescape} diff --cached --stat 2>&1`.strip
-          diff = `git -C #{root.shellescape} diff --stat 2>&1`.strip if diff.empty?
-          next "nothing to commit" if diff.empty?
+          diff, = Open3.capture2e("git", "-C", root, "diff", "--cached", "--stat")
+          diff, = Open3.capture2e("git", "-C", root, "diff", "--stat") if diff.strip.empty?
+          next "nothing to commit" if diff.strip.empty?
           prompt = "Write a concise git commit message (1 line, imperative mood) for these changes:\n#{diff}"
-          msg = agent.ask_once(prompt).strip.lines.first.to_s.strip.gsub(/"/, "'")
-          `git -C #{root.shellescape} add -u 2>&1 && git -C #{root.shellescape} commit -m "#{msg}" 2>&1`.strip
+          msg = agent.ask_once(prompt).strip.lines.first.to_s.strip
+          Open3.capture2e("git", "-C", root, "add", "-u")
+          out, = Open3.capture2e("git", "-C", root, "commit", "-m", msg)
+          out.strip
         },
         "knowledge" => ->(ctx) {
           arg = ctx[:args].to_s.strip
