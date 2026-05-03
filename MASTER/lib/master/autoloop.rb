@@ -71,6 +71,8 @@ module Master
             sleep(stagger * idx) if idx.positive?
             fix = request_fix(v)
             mutex.synchronize { fixes[v[:file]] = [v, fix] } if fix
+          rescue StandardError => e
+            @bus&.publish("autoloop:thread_error", file: v[:file], error: e.message)
           end
         end
         threads.each(&:join)
