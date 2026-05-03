@@ -2,10 +2,10 @@
 
 module Master
   module Stages
-    # Deliberate — enumerate N approaches before coding; prevents first-solution fixation.
+    # Deliberate — enumerate N approaches before acting; prevents first-solution fixation.
     class Deliberate
       MIN_OPTIONS   = 4
-      CODING_TYPES  = %i[coding].freeze
+      CODING_TYPES  = %i[coding refactor architecture infrastructure].freeze
 
       def initialize(agent:, config:)
         @agent  = agent
@@ -31,7 +31,7 @@ module Master
         <<~PROMPT
           #{msg}
 
-          Before writing any code: list #{MIN_OPTIONS} distinct implementation approaches (numbered). Each: one-line name + one-line trade-off. Then implement the strongest one. State which you chose and why in one sentence.
+          Before acting: list #{MIN_OPTIONS} distinct approaches (numbered). Each: one-line name + one-line trade-off. Then execute the strongest one. State which you chose and why in one sentence.
         PROMPT
       end
     end
