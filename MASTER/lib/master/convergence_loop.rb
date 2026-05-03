@@ -88,15 +88,17 @@ module Master
         next unless File.exist?(path)
         file_violations = violations.select { |v| v[:path] == path }
         prompt = build_surgical_prompt(path, file_violations)
-        result = @agent.ask(prompt)
-        next unless result.respond_to?(:ok?) && result.ok?
-        apply_patch(path, result)
+        begin
+          result = @agent.ask(prompt)
+          apply_patch(path, result)
+        rescue StandardError => e
+          @bus&.publish("convergence_loop:fix_error", path:, error: e.message)
+        end
       end
     end
 
     def apply_rewrite
-      # Delegate to Sweep for full-file rewrite strategy
-      sweep = Sweep.new(@agent, @scanner, @root, @bus)
+      sweep = Sweep.new(agent: @agent, scanner: @scanner, root: @root, event_bus: @bus)
       sweep.run_single_cycle(target: @target)
     end
 

@@ -19,7 +19,7 @@ module Master
         "autoloop" => ->(ctx) {
           max = ctx[:args].to_s.strip.to_i
           max = AutoLoop::MAX_CYCLES if max <= 0
-          looper = AutoLoop.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
+          looper = AutoLoop.new(agent:, scanner:, root:, event_bus: bus)
           log = []
           result = looper.run(max_cycles: max) { |cycle, violations|
             log << "  cycle #{cycle}: #{violations.size} violation(s)"

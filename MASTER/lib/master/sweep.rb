@@ -49,10 +49,9 @@ circuit\sopen|retry\sin|llm_request)\b
     include Rewriter
     include Convergence
 
-    def initialize(agent:, scanner:, council:, root:, event_bus: nil, code_index: nil)
+    def initialize(agent:, scanner:, root:, council: nil, event_bus: nil, code_index: nil)
       @agent      = agent
       @scanner    = scanner
-      @council    = council
       @root       = root
       @bus        = event_bus
       @code_index = code_index
