@@ -40,13 +40,21 @@ module Master
     class ParallelGroup
       PARALLEL_TIMEOUT_S = 30
 
-      def initialize(*stages)
+      def initialize(*stages, bus: nil)
         @stages = stages
+        @bus    = bus
       end
 
       def call(ctx)
         frozen_ctx = ctx.freeze
-        threads    = @stages.map { |s| Thread.new { s.call(frozen_ctx) } }
+        threads    = @stages.map do |s|
+          Thread.new do
+            s.call(frozen_ctx)
+          rescue StandardError => e
+            @bus&.publish("pipeline:stage_error", stage: s.class.name, error: e.message)
+            Result.ok(frozen_ctx.merge(_stage_error: e.message))
+          end
+        end
 
         results = threads.each_with_index.map do |t, i|
           if t.join(PARALLEL_TIMEOUT_S)
