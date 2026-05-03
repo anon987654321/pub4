@@ -4,7 +4,9 @@ module Master
   module Council
     class Deliberation
       Result = Master::Result
-      MAX_CONCURRENT = 4
+      MAX_CONCURRENT  = 4
+      MAX_CODE_BYTES  = 8_192
+      TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
 
       def initialize(personas:, agent:, event_bus: nil)
         @personas = personas
@@ -70,15 +72,22 @@ module Master
       def build_prompt(persona, code, context)
         ctx = context ? "\nContext: #{context}\n" : ""
         veto_hint = veto_role?(persona) ? " You may prefix VETO: if this must not ship." : ""
+        safe_code = truncate_code(code.to_s)
         <<~PROMPT
           You are #{persona.name} (#{persona.role}, bias: #{persona.bias}).#{ctx}
           #{persona.prompt}
 
           Code:
-          #{code}
+          #{safe_code}
 
           Provide terse, actionable feedback.#{veto_hint}
         PROMPT
+      end
+
+      def truncate_code(code)
+        return code if code.bytesize <= MAX_CODE_BYTES
+        @bus&.publish(:council_code_truncated, bytes: code.bytesize, limit: MAX_CODE_BYTES)
+        code.byteslice(0, MAX_CODE_BYTES) + TRUNCATE_MARKER
       end
 
       VETO_RE = /\AVETO:/i.freeze
