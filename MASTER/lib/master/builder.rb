@@ -57,10 +57,10 @@ module Master
     end
 
     def build_ai_stack(root, infra)
-      agent, soul_doc, scanner, swarm, deliberation, council_stage = build_agent_core(root, infra)
+      agent, soul_doc, scanner, swarm, deliberation, council_stage, ideation = build_agent_core(root, infra)
       autonomous = build_autonomous(root, infra, agent:, scanner:, soul: soul_doc)
       {
-        agent:, soul: soul_doc, scanner:, swarm:, deliberation:, council_stage:,
+        agent:, soul: soul_doc, scanner:, swarm:, deliberation:, council_stage:, ideation:,
         guard: Security::InjectionGuard.new
       }.merge(autonomous)
     end
@@ -76,14 +76,15 @@ module Master
       agent.wire_context_window(ctx)
       scanner               = build_scanner(root:, agent:, bus:)
       swarm                 = Swarm::Coordinator.new(agent:, event_bus: bus)
-      deliberation, council = build_council(root, infra, agent:)
-      [agent, soul_doc, scanner, swarm, deliberation, council]
+      deliberation, council, ideation = build_council(root, infra, agent:)
+      [agent, soul_doc, scanner, swarm, deliberation, council, ideation]
     end
 
     def build_council(root, infra, agent:)
       personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
       deliberation = Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus])
-      [deliberation, Stages::Council.new(deliberation:, config: infra[:config])]
+      ideation     = Council::Ideation.new(agent:, event_bus: infra[:bus])
+      [deliberation, Stages::Council.new(deliberation:, config: infra[:config]), ideation]
     end
 
     def build_agent_instance(root, infra)

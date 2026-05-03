@@ -8,6 +8,7 @@ module Master
       scan_loop_commands(ai:, root:, infra:)
         .merge(model_agent_commands(ai:, root:, infra:))
         .merge(crit_command(ai:, root:))
+        .merge(ideate_command(ai:))
     end
 
     def scan_loop_commands(ai:, root:, infra:)
@@ -195,6 +196,30 @@ module Master
         veto = f[:veto_role] ? " [VETO ELIGIBLE]" : ""
         "#{f[:persona]} (#{f[:role]})#{veto}:\n#{f[:feedback].to_s.strip}"
       }.join("\n\n---\n\n")
+    end
+
+    def ideate_command(ai:)
+      ideation = ai[:ideation]
+      {
+        "ideate" => ->(ctx) {
+          arg = ctx[:args].to_s.strip
+          next "usage: /ideate <prompt> [-- constraint1, constraint2]" if arg.empty?
+          prompt, constraints_raw = arg.split(" -- ", 2)
+          constraints = constraints_raw ? constraints_raw.split(",").map(&:strip).reject(&:empty?) : []
+          result = ideation.ideate(prompt.strip, constraints:)
+          next result.message if result.err?
+          v = result.value!
+          lines = []
+          lines << "ideas (#{v[:ideas].size}):"
+          v[:ideas].each { |i| lines << "  - #{i}" }
+          lines << ""
+          v[:critiques].each_with_index { |c, n| lines << "critique #{n + 1}: #{c}" }
+          lines << ""
+          lines << "synthesis:"
+          lines << v[:final]
+          lines.join("\n")
+        }
+      }
     end
   end
 end
