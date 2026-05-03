@@ -7,11 +7,26 @@ module Master
       private
 
       def build_fix_prompt(violation, src)
-        "Fix this Ruby violation in #{violation[:file]}.\n" \
+        "#{constitutional_preamble}\n\n" \
+          "Fix this Ruby violation in #{violation[:file]}.\n" \
           "Rule: #{violation[:rule]}\n" \
           "Issue: #{violation[:message]} (line #{violation[:line]})\n\n" \
           "Return ONLY the corrected Ruby file content, no explanation.\n\n" \
           "```ruby\n#{src}\n```"
+      end
+
+      def constitutional_preamble
+        @constitutional_preamble ||= begin
+          soul  = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
+          rules = Master.load_yaml(File.join(Master::ROOT, "data", "rules.yml"))
+          golden = soul.dig("absolute", "golden_rule") || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+          zen = rules.fetch("zen", {})
+          lines = ["Constitutional constraints:", "- Golden rule: #{golden}"]
+          zen.each_value { |v| lines << "- #{v}" } if zen.is_a?(Hash)
+          lines.join("\n")
+        rescue StandardError
+          "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+        end
       end
 
       def reflected_prompt(base, last_error, attempt)
