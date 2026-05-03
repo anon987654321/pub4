@@ -37,7 +37,7 @@ module Master
             attrs = { veto_role: false }.merge(attrs)
             Persona.new(**attrs)
           end.freeze
-        rescue StandardError
+        rescue StandardError => _e
           DEFAULTS
         end
       end

@@ -64,7 +64,7 @@ module Master
             _, _, s = Open3.capture3("bundle", "exec", "reek", "--version",
                                      chdir: @root || Dir.pwd)
             s.success?
-          rescue StandardError
+          rescue StandardError => _e
             false
           end
         end

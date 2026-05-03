@@ -92,7 +92,7 @@ module Master
         return 0 unless path.end_with?(".rb") && File.exist?(path)
         scan_result = @scanner.scan(path, depth: :deep)
         scan_result.ok? ? scan_result.value!.size : 0
-      rescue StandardError
+      rescue StandardError => _e
         0
       end
 
@@ -103,7 +103,7 @@ module Master
           scan_result = @scanner.scan(f.path, depth: :deep)
           scan_result.ok? ? scan_result.value!.size : 0
         end
-      rescue StandardError
+      rescue StandardError => _e
         0
       end
     end

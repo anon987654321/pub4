@@ -5,7 +5,7 @@ module Master
   class ConvergenceLoop
     def self.sweep_cfg
       Master.load_yaml(File.join(Master::ROOT, "data", "workflow.yml")).dig("sweep") || {}
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
 

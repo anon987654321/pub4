@@ -45,7 +45,7 @@ module Master
           regexes = (spec["patterns"] || []).map { |src| Regexp.new(src, Regexp::IGNORECASE | Regexp::EXTENDED) }
           out[name.to_s] = { regexes: regexes, capture: spec["capture"].to_s }
         end
-      rescue StandardError
+      rescue StandardError => _e
         {}
       end
 

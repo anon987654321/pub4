@@ -32,7 +32,7 @@ module Master
       PROMPT
       resp = fast_model ? agent.ask_once_with_model(prompt, model: fast_model) : agent.ask(prompt)
       resp.respond_to?(:value!) ? resp.value! : resp.to_s
-    rescue StandardError
+    rescue StandardError => _e
       "previous attempt failed — try a different approach"
     end
 

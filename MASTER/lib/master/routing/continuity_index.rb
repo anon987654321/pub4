@@ -38,7 +38,7 @@ module Master
         if @data_cache.nil? || current_mtime != @data_mtime
           @data_cache = begin
             Master.load_yaml(path) || {}
-          rescue StandardError
+          rescue StandardError => _e
             {}
           end
           @data_mtime = current_mtime

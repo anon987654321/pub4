@@ -112,7 +112,7 @@ module Master
     def model_reachable?(model_id)
       RubyLLM.chat(model: model_id).ask("ping")
       true
-    rescue StandardError
+    rescue StandardError => _e
       false
     end
 
@@ -153,7 +153,7 @@ module Master
       return default_jobs unless File.exist?(path)
 
       result = Master.load_yaml(path); result.is_a?(Array) ? result : default_jobs
-    rescue StandardError
+    rescue StandardError => _e
       default_jobs
     end
 
@@ -171,7 +171,7 @@ module Master
       return {} unless File.exist?(path)
 
       Master.load_yaml(path) || {}
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
 

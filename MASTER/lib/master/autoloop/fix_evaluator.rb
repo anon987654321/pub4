@@ -24,7 +24,7 @@ module Master
           lines = ["Constitutional constraints:", "- Golden rule: #{golden}"]
           zen.each_value { |v| lines << "- #{v}" } if zen.is_a?(Hash)
           lines.join("\n")
-        rescue StandardError
+        rescue StandardError => _e
           "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
         end
       end
@@ -61,7 +61,7 @@ module Master
           f.flush
           system("ruby", "-c", f.path, out: File::NULL, err: File::NULL)
         end
-      rescue StandardError
+      rescue StandardError => _e
         false
       end
 

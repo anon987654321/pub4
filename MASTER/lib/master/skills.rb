@@ -92,7 +92,7 @@ module Master
       return {} if parts.size < 3
 
       YAML.safe_load(parts[1]) || {}
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
   end

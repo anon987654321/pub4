@@ -31,11 +31,13 @@ module Master
       @clients.flat_map do |name, client|
         client.tools.filter_map do |tool|
           McpToolWrapper.new(name:, client:, tool:)
-        rescue StandardError
+        rescue StandardError => e
+          @bus&.publish("mcp:tool_wrap_error", name:, error: e.message)
           nil
         end
       end
-    rescue StandardError
+    rescue StandardError => e
+      @bus&.publish("mcp:tools_error", error: e.message)
       []
     end
 
@@ -79,7 +81,7 @@ module Master
       require "yaml"
       data = Master.load_yaml(path) || {}
       data.fetch("servers", {})
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
   end

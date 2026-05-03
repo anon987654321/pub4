@@ -79,7 +79,7 @@ module Master
       return { "phase" => "idle", "met_gates" => [] } unless File.exist?(path)
       data = Master.load_yaml(path)
       data.is_a?(Hash) ? data : { "phase" => "idle", "met_gates" => [] }
-    rescue StandardError
+    rescue StandardError => _e
       { "phase" => "idle", "met_gates" => [] }
     end
 

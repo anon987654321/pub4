@@ -47,7 +47,7 @@ module Master
         lang = FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
         src  = File.read(f, encoding: "UTF-8", invalid: :replace)
         ["## #{rel}", "```#{lang}", src.rstrip, "```", ""]
-      rescue StandardError
+      rescue StandardError => _e
         []
       end
     end

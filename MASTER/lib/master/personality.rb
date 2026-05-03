@@ -156,7 +156,7 @@ module Master
     def load_yaml_data(filename)
       path = File.join(Master::ROOT, "data", filename)
       Master.load_yaml(path) if File.exist?(path)
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
   end

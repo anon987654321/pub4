@@ -101,7 +101,7 @@ module Master
         )
         line = begin
           @reader.read_line("", echo: true).chomp
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
         break if line.nil?
@@ -126,7 +126,7 @@ module Master
           out, = Open3.capture2e("git", "-C", @root, "diff", "--name-only", "HEAD")
           out.strip.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }
                                            .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
-        rescue StandardError
+        rescue StandardError => _e
           []
         end
 
@@ -172,7 +172,7 @@ module Master
 
       print @renderer.render("thinking...", mode: :dim)
       $stdout.flush
-    rescue StandardError
+    rescue StandardError => _e
       print "thinking..."
     end
 

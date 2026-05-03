@@ -89,7 +89,7 @@ module Master
       def const_name_safe(node)
         name = const_name(node)
         name.empty? ? nil : name
-      rescue StandardError
+      rescue StandardError => _e
         nil
       end
     end

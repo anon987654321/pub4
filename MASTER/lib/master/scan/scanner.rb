@@ -68,7 +68,7 @@ module Master
           data = Master.load_yaml(RULES_PATH)
           data["scan_depths"] || {}
         end
-      rescue StandardError
+      rescue StandardError => _e
         @depth_rules = {}
       end
 

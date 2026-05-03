@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "open3"
 require "yaml"
 require "fileutils"
 
@@ -117,7 +118,6 @@ module Master
     end
 
     def rollback
-      require "open3"
       log_out, = Open3.capture2e("git", "-C", @root, "log", "--oneline", "SOUL.md")
       out = log_out.lines
       return "no git history for SOUL.md" if out.size < 2
@@ -153,7 +153,7 @@ module Master
 
     def load_soul
       File.exist?(SOUL_PATH) ? File.read(SOUL_PATH, encoding: "UTF-8") : ""
-    rescue StandardError
+    rescue StandardError => _e
       ""
     end
 

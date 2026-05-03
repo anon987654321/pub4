@@ -39,7 +39,7 @@ module Master
             data = File.exist?(DATA_PATH) ? Master.load_yaml(DATA_PATH) : {}
             data.dig("voice", "strunk") || {}
           end
-        rescue StandardError
+        rescue StandardError => _e
           @rules = {}
         end
 
@@ -54,7 +54,7 @@ module Master
           }
           return nil if words.empty?
           /(#{words.join("|")})/i
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
 
@@ -65,7 +65,7 @@ module Master
           }
           return nil if phrases.empty?
           /\#.*(?:#{phrases.join("|")})/i
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
       end

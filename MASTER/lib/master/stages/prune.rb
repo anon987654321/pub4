@@ -72,7 +72,7 @@ module Master
           data = File.exist?(RULES_PATH) ? Master.load_yaml(RULES_PATH) : {}
           data.dig("voice", "strunk") || {}
         end
-      rescue StandardError
+      rescue StandardError => _e
         @rules = {}
       end
     end

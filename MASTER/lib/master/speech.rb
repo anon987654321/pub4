@@ -57,7 +57,7 @@ module Master
       path = synthesize(text, **opts)
       return nil unless path
       bytes = File.binread(path)
-      File.unlink(path) rescue StandardError
+      File.unlink(path) rescue StandardError => _e
       bytes
     end
 

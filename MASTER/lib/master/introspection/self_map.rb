@@ -33,7 +33,7 @@ module Master
         data = Master.load_yaml(rules_path)
         tags = (data["rules"] || {}).keys
         tags.empty? ? AXIOM_FALLBACK : tags
-      rescue StandardError
+      rescue StandardError => _e
         AXIOM_FALLBACK
       end
     end

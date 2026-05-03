@@ -116,7 +116,7 @@ module Master
       return nil unless File.exist?(path)
 
       Master.load_yaml(path)
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
   end

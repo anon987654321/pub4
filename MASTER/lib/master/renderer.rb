@@ -77,16 +77,17 @@ module Master
     private
 
     def uptime_str
-      out = `uptime 2>/dev/null`.strip
+      out, = Open3.capture2e("uptime")
+      out = out.strip
       out.empty? ? nil : out.split(",").first.gsub(/.*up\s+/, "").strip
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
     def git_rev
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--short", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -97,7 +98,7 @@ module Master
     def git_branch
       out, _, status = Open3.capture3("git", "rev-parse", "--abbrev-ref", "HEAD")
       status.success? ? out.strip : nil
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -105,7 +106,7 @@ module Master
       stdout, _stderr, _status = Open3.capture3("dmesg")
       raw = stdout.lines.first(DMESG_LINE_COUNT).map(&:chomp)
       raw.empty? ? ["dmesg unavailable"] : raw
-    rescue StandardError
+    rescue StandardError => _e
       ["dmesg unavailable"]
     end
 

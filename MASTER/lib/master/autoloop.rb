@@ -10,7 +10,7 @@ module Master
     def self.load_cfg
       Master.load_yaml(File.join(Master::ROOT, "data", "workflow.yml"))
             .dig("autoloop") || {}
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
 
