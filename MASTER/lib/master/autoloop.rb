@@ -80,8 +80,8 @@ module Master
         if @git.dirty?("lib/")
           @git.add_lib_files
           @git.commit("autoloop: fix scan violations [cycle #{cycle}]")
-          (@learnings || Learnings.new(root: @root)).tap do |l|
-            fixes.each_value { |v, _| l.record(trigger: v[:rule].to_s, strategy: "autoloop_fix", outcome: "commit") }
+          if @learnings
+            fixes.each_value { |v, _| @learnings.record(trigger: v[:rule].to_s, strategy: "autoloop_fix", outcome: "commit") }
           end
         end
         track_recurrence(violations)

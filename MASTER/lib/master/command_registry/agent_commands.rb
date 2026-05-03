@@ -15,13 +15,13 @@ module Master
       scanner = ai[:scanner]
       bus = infra[:bus]
       deliberation = ai[:deliberation]
+      autoloop = ai[:autoloop]
       {
         "autoloop" => ->(ctx) {
           max = ctx[:args].to_s.strip.to_i
           max = AutoLoop::MAX_CYCLES if max <= 0
-          looper = AutoLoop.new(agent:, scanner:, root:, event_bus: bus)
           log = []
-          result = looper.run(max_cycles: max) { |cycle, violations|
+          result = autoloop.run(max_cycles: max) { |cycle, violations|
             log << "  cycle #{cycle}: #{violations.size} violation(s)"
           }
           ([result.ok? ? result.value! : result.message] + log).join("\n")
