@@ -97,6 +97,19 @@ module Master
     include FixEvaluator
     private
 
+    def apply_fix(rel_path, fixed_src)
+      path = File.join(@root, rel_path)
+      return unless File.exist?(path)
+      original = File.read(path, encoding: "UTF-8")
+      return if fixed_src.strip == original.strip
+      tmp = "#{path}.tmp.#{Process.pid}"
+      File.write(tmp, fixed_src)
+      File.rename(tmp, path)
+      @bus&.publish("autoloop:fix_applied", file: rel_path)
+    rescue StandardError => e
+      @bus&.publish("autoloop:write_error", file: rel_path, error: e.message)
+    end
+
     def extract_violations(dir_results)
       dir_results.flat_map { |path, r|
         next [] unless r.ok?
