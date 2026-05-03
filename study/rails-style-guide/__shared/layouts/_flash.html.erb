@@ -1,0 +1,24 @@
+<%# Renders a flash message with a dismiss button – expects locals: flash_message, flash_type %>
+<% return unless flash_message.present? %>
+
+<div class="flash flash-<%= h flash_type %>"
+     role="alert"
+     aria-live="assertive"
+     aria-atomic="true"
+     data-controller="flash"
+     data-action="click->flash#dismiss">
+  <div class="flash__content" data-flash-target="content">
+    <%= sanitize(
+          flash_message,
+          tags: %w[p b i u strong em a br],
+          attributes: %w[href target]
+        ) %>
+  </div>
+  <button type="button"
+          class="flash-dismiss"
+          aria-label="Dismiss alert"
+          data-action="click->flash#dismiss">
+    <span aria-hidden="true">&times;</span>
+    <span class="visually-hidden">Dismiss this message</span>
+  </button>
+</div>

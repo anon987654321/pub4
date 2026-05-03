@@ -58,6 +58,7 @@ circuit\sopen|retry\sin|llm_request)\b
       @map        = nil
       @prompts    = nil
       @rename_log = Hash.new { |h, k| h[k] = [] }
+      @cycle_log  = []
     end
 
     def run(target = @root, max_cycles: MAX_CYCLES, types: GLOBS.keys)
@@ -77,37 +78,23 @@ circuit\sopen|retry\sin|llm_request)\b
         @bus&.publish("sweep:cycle", cycle:, target:)
 
         collect_files(target, types).each do |path|
-          rel     = path.delete_prefix("#{@root}/")
-          before  = violations_in(path)
-          src     = File.read(path, encoding: "UTF-8")
-          new_src = rewrite(path, rel)
+          rel    = path.delete_prefix("#{@root}/")
+          before = violations_in(path)
+          src    = File.read(path, encoding: "UTF-8")
 
-          unless new_src && new_src.strip != src.strip && syntax_ok?(path, new_src)
+          new_src, after = evaluate_rewrite(rel, src, before, cycle)
+          if new_src.nil?
             cycle_defer += before
             next
           end
 
-          after = violations_in_text(new_src, path)
-          if after > before
-            cycle_defer += before
-            next
-          end
-
-          # Oscillation check: track name-level renames and reject if they
-          # revert recent changes. Naming-focused prompts are the known
-          # trigger (see arxiv:2602.21833 §4.3).
-          if rename_oscillation?(rel, src, new_src, cycle)
-            @bus&.publish("sweep:oscillation_rejected", file: rel, cycle:)
-            cycle_defer += before
-            next
-          end
-
+          delta = before - after
           File.write(path, new_src, encoding: "UTF-8")
           changed     += 1
           cycle_viol  += after
-          cycle_fixed += (before - after)
+          cycle_fixed += delta
           @bus&.publish("sweep:improved", file: rel, before:, after:)
-          yield cycle, rel, before - after if block_given?
+          yield cycle, rel, delta if block_given?
         end
 
         violation_history << cycle_viol
@@ -126,6 +113,23 @@ circuit\sopen|retry\sin|llm_request)\b
       Result.ok(summary)
     rescue StandardError => e
       Result.err("sweep: #{e.message}", category: :unknown)
+    end
+
+    private
+
+    def evaluate_rewrite(rel, src, before, cycle)
+      new_src = rewrite(File.join(@root, rel), rel)
+      return nil unless new_src && new_src.strip != src.strip && syntax_ok?(File.join(@root, rel), new_src)
+
+      after = violations_in_text(new_src, File.join(@root, rel))
+      return nil if after > before
+
+      if rename_oscillation?(rel, src, new_src, cycle)
+        @bus&.publish("sweep:oscillation_rejected", file: rel, cycle:)
+        return nil
+      end
+
+      [new_src, after]
     end
   end
 end

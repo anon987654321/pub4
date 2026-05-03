@@ -1,6 +1,6 @@
 # MASTER Snapshot
-Generated: 2026-05-01T19:29:58Z
-Files: 141
+Generated: 2026-05-03T19:14:35Z
+Files: 145
 
 ## data/council.yml
 ```yaml
@@ -505,16 +505,14 @@ servers:
 
 ## data/models.yml
 ```yaml
-# Model routing profile — OpenRouter primary, Gemini direct fallback.
-# Free tier: meta-llama/llama-3.3-70b-instruct primary, qwen/qwen3-coder fallback.
-# Gemini 2.5 Flash: direct Google API (free tier, 1500 req/day) — final fallback.
+# Model routing profile — Gemini primary, Mistral/DeepSeek/OpenRouter fallback.
 
 routing:
   enabled: true
   strategy: weighted
   escalation_enabled: true
   escalation_tier: strong
-  provider: openrouter
+  provider: gemini
 
 weights: &weights
   quality: 0.50
@@ -532,65 +530,74 @@ defaults: &model_defaults
   score: { quality: 0.0, speed: 0.0, cost: 0.0 }
 
 model_defs:
-  llama_70b: &llama_70b
-    id: meta-llama/llama-3.3-70b-instruct:free
-    <<: *model_defaults
-    score: { quality: 0.78, speed: 0.70, cost: 1.0 }
-  qwen_coder: &qwen_coder
-    id: qwen/qwen3-coder:free
-    <<: *model_defaults
-    score: { quality: 0.75, speed: 0.65, cost: 1.0 }
   gemini_flash: &gemini_flash
-    id: gemini-2.0-flash
+    id: gemini-2.5-flash
     <<: *model_defaults
-    score: { quality: 0.85, speed: 0.90, cost: 0.95 }
+    score: { quality: 0.88, speed: 0.90, cost: 0.95 }
+  gemini_pro: &gemini_pro
+    id: gemini-2.5-pro
+    <<: *model_defaults
+    score: { quality: 0.95, speed: 0.70, cost: 0.80 }
+  mistral_large: &mistral_large
+    id: mistral-large-latest
+    <<: *model_defaults
+    score: { quality: 0.90, speed: 0.75, cost: 0.70 }
+  mistral_small: &mistral_small
+    id: mistral-small-latest
+    <<: *model_defaults
+    score: { quality: 0.78, speed: 0.85, cost: 0.90 }
+  deepseek_chat: &deepseek_chat
+    id: deepseek-chat
+    <<: *model_defaults
+    score: { quality: 0.88, speed: 0.70, cost: 0.95 }
+  deepseek_coder: &deepseek_coder
+    id: deepseek-coder
+    <<: *model_defaults
+    score: { quality: 0.85, speed: 0.70, cost: 0.95 }
   claude_sonnet: &claude_sonnet
     id: anthropic/claude-sonnet-4-6
     <<: *model_defaults
     score: { quality: 0.95, speed: 0.75, cost: 0.60 }
-  gpt_4o: &gpt_4o
-    id: openai/gpt-4o
-    <<: *model_defaults
-    score: { quality: 0.93, speed: 0.80, cost: 0.55 }
   nemotron_super: &nemotron_super
     id: nvidia/nemotron-3-super-120b-a12b:free
     <<: *model_defaults
     score: { quality: 0.90, speed: 0.75, cost: 1.0 }
-qwen3_next: &qwen3_next
-  id: qwen/qwen3-next-80b-a3b-instruct:free
-  <<: *model_defaults
-  score: { quality: 0.80, speed: 0.70, cost: 1.0 }
-  gpt_oss: &gpt_oss
-    id: openai/gpt-oss-120b:free
+  qwen_coder: &qwen_coder
+    id: qwen/qwen3-coder:free
     <<: *model_defaults
-    score: { quality: 0.72, speed: 0.60, cost: 1.0 }
-minimax_m25: &minimax_m25
-  id: minimax/minimax-m2.5:free
-  <<: *model_defaults
-  score: { quality: 0.82, speed: 0.65, cost: 1.0 }
-hermes_405b: &hermes_405b
-  id: nousresearch/hermes-3-llama-3.1-405b:free
-  <<: *model_defaults
-  score: { quality: 0.85, speed: 0.50, cost: 1.0 }
+    score: { quality: 0.75, speed: 0.65, cost: 1.0 }
+  llama_70b: &llama_70b
+    id: meta-llama/llama-3.3-70b-instruct:free
+    <<: *model_defaults
+    score: { quality: 0.78, speed: 0.70, cost: 1.0 }
+  hermes_405b: &hermes_405b
+    id: nousresearch/hermes-3-llama-3.1-405b:free
+    <<: *model_defaults
+    score: { quality: 0.85, speed: 0.50, cost: 1.0 }
+  gpt_4o: &gpt_4o
+    id: openai/gpt-4o
+    <<: *model_defaults
+    score: { quality: 0.93, speed: 0.80, cost: 0.55 }
 
 models:
   default:
+    - *gemini_flash
+    - *mistral_large
+    - *deepseek_chat
     - *nemotron_super
     - *qwen_coder
-    - *minimax_m25
-    - *gpt_oss
-    - *gemini_flash
   strong:
-    - *hermes_405b
+    - *gemini_pro
+    - *mistral_large
     - *claude_sonnet
     - *gpt_4o
-    - *nemotron_super
     - *gemini_flash
   cheap:
+    - *gemini_flash
+    - *mistral_small
+    - *deepseek_chat
     - *llama_70b
     - *qwen_coder
-    - *gpt_oss
-    - *gemini_flash
 
 routes:
   code_generation: default
@@ -601,8 +608,6 @@ routes:
   exploration: cheap
   fallback_default: cheap
 
-# Model name prefixes that support tool use (anchored match).
-# Agent.tool_capable? checks model IDs against these prefixes.
 tool_capable_prefixes:
   - claude
   - gpt-4
@@ -623,17 +628,105 @@ tool_capable_prefixes:
   - openai/gpt
   - google/gemini
 
-# Merged from fallback_models.yml
 continuity:
   enabled: true
-  updated_at: "2026-03-11T00:00:00Z"
+  updated_at: "2026-05-01T00:00:00Z"
 
 openrouter:
   free_latest:
     - nvidia/nemotron-3-super-120b-a12b:free
     - qwen/qwen3-coder:free
-    - openai/gpt-oss-120b:free
-    - minimax/minimax-m2.5:free
+```
+
+## data/openbsd.yml
+```yaml
+# openbsd.yml — OpenBSD config validators
+# Restored from master.yml v49.75; extended for OpenBSD 7.8
+
+man_base_url: "https://man.openbsd.org"
+cache_ttl: 86400
+
+configs:
+  pf.conf:
+    daemon: pf
+    man: pf.conf.5
+    required_patterns:
+      - "set skip on lo"
+    warnings:
+      - pattern: "pass all"
+        message: "Overly permissive — add interface/protocol guards"
+
+  nsd.conf:
+    daemon: nsd
+    man: nsd.conf.5
+    required_patterns:
+      - "server:"
+      - "zone:"
+    warnings:
+      - pattern: "rrl-size"
+        absent_message: "Missing RRL config — vulnerable to amplification DDoS"
+      - pattern: "hide-version"
+        absent_message: "Consider hide-version: yes"
+
+  httpd.conf:
+    daemon: httpd
+    man: httpd.conf.5
+    required_patterns:
+      - "server"
+
+  smtpd.conf:
+    daemon: smtpd
+    man: smtpd.conf.5
+    required_patterns:
+      - "listen on"
+      - "action"
+      - "match"
+    warnings:
+      - pattern: "match from any"
+        message: "Open relay risk — restrict to authenticated senders"
+
+  relayd.conf:
+    daemon: relayd
+    man: relayd.conf.5
+    required_patterns:
+      - "relay"
+
+  acme-client.conf:
+    daemon: acme-client
+    man: acme-client.conf.5
+    required_patterns:
+      - "authority"
+      - "domain"
+
+  doas.conf:
+    daemon: doas
+    man: doas.conf.5
+    required_patterns:
+      - "permit"
+    warnings:
+      - pattern: "nopass"
+        message: "Allows passwordless privilege escalation"
+
+  sshd_config:
+    daemon: sshd
+    man: sshd_config.5
+    warnings:
+      - pattern: "PermitRootLogin yes"
+        message: "Security risk — use PermitRootLogin prohibit-password"
+      - pattern: "PasswordAuthentication yes"
+        message: "Consider key-only auth"
+
+  ntpd.conf:
+    daemon: ntpd
+    man: ntpd.conf.5
+    required_patterns:
+      - "server"
+
+  unbound.conf:
+    daemon: unbound
+    man: unbound.conf.5
+    required_patterns:
+      - "server:"
 ```
 
 ## data/openbsd_patterns.yml
@@ -1027,12 +1120,22 @@ evolution_log:
   state: done
   last_run_at: 1777530792
 - name: weekly_scan
-  description: Weekly codebase axiom scan for regressions
+  description: Weekly full-codebase axiom scan — all file types, all rules
   trigger: scheduled
   interval_s: 604800
   command: scan
-  enabled: false
+  enabled: true
   state: pending
+  last_run_at: 0
+- name: universal_scope
+  description: >
+    Standing policy: all axioms, principles, and philosophies apply to every
+    file type. Scan and fix Ruby, YAML, Zsh, HTML, CSS, JS, Markdown identically.
+  trigger: always
+  interval_s: 0
+  command: noop
+  enabled: true
+  state: active
   last_run_at: 0
 - name: data_integrity_check
   description: Detect and recover from corrupted data/ YAML files (LLM error strings
@@ -1042,12 +1145,24 @@ evolution_log:
   command: "/scan data/"
   enabled: true
   state: done
-  last_run_at: 1777579560
+  last_run_at: 1777590915
 ```
 
 ## data/sweep_prompts.yml
 ```yaml
 # Sweep stage prompt building blocks
+
+axioms: |
+  Constitutional constraints (non-negotiable):
+  - Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+  - Default to no change if improvement is uncertain (PRESERVE_FIRST)
+  - Minimum change that eliminates the violation (SIMPLEST_WORKS)
+  - Raise/log errors; never swallow them silently (FAIL_VISIBLY)
+  - Config in data/*.yml; code reads from there (ONE_SOURCE_OF_TRUTH)
+  - rescue SpecificError => e; never bare rescue (SPECIFIC_RESCUE)
+  - Extract literals to named constants; no magic numbers
+  - Read current behavior before changing anything (zen: observe)
+  - Change one axis at a time with clear boundaries (zen: isolate)
 
 structural_techniques:
   - ASSERT
@@ -1283,23 +1398,94 @@ scan_rules:
     - reek
   notes:
     nielsen: "puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are."
-    prune: "Loads patterns from data/strunk.yml — single source of truth."
-    conceptual: "Loads philosophy from data/axioms.yml — single source of truth."
+    prune: "Loads patterns from data/rules.yml (voice.strunk) — single source of truth."
+    conceptual: "Loads philosophy from data/rules.yml (zen + voice) — single source of truth."
     deep_caution: "deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes."
+
+principle_groups:
+  axioms:      [frozen_string, explicit, immutable, self_explaining]
+  solid:       [srp, cqs, pola]
+  clean_code:  [long_method, god_class, duplicate_code, bare_rescue]
+  interface:   [nielsen, prune]
+  llm_rules:   [conceptual, adversarial]
+  heavy:       [rubocop, reek]
+  quick:       [frozen_string, bare_rescue, explicit, long_method, god_class]
+  critical:    [frozen_string, bare_rescue, explicit, immutable, srp, cqs]
+
+scan_profiles:
+  quick:
+    depth: standard
+    rules: quick
+    description: "Fast scan — core violations only"
+  full:
+    depth: deep
+    rules: "*"
+    description: "All rules, deep LLM analysis"
+  critical:
+    depth: standard
+    rules: critical
+    description: "Critical issues blocking ship"
+  solid:
+    depth: standard
+    rules: solid
+    description: "SOLID principles focus"
+  axioms:
+    depth: standard
+    rules: axioms
+    description: "Constitutional axioms only"
+
+conflicts:
+  strategy: highest_priority_wins
+  rules:
+    - condition: "dry conflicts with wet or aha"
+      resolution: "favor wet/aha if fewer than 3 duplications exist"
+    - condition: "clarity conflicts with simplicity"
+      resolution: "favor clarity"
+    - condition: "fix introduces higher priority violation"
+      resolution: "reject fix, report to autoloop"
+
+universal_scope:
+  policy: ALL_PRINCIPLES_ALL_FILES
+  statement: >
+    All axioms, principles, and philosophies apply to every file in the codebase
+    regardless of file type: Ruby, YAML, Zsh, HTML, CSS, JavaScript, Markdown.
+    Language-specific rules apply only to their target language; universal rules
+    (SQUINT_TEST, TYPOGRAPHY_DISCIPLINE, MEANINGFUL_NAMES, etc.) apply everywhere.
+  scan_glob: "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}"
+  conceptual_rules: all_known_languages
+  adversarial_rules: all_known_languages
 
 autoloop:
   scan_depth: standard
   fix_depth: llm
-  batch_size: 5
+  batch_size: 3
   max_cycles: 12
+  rate_limit_sleep: 15
+  max_file_bytes: 16000
+  max_fix_retries: 3
+  confidence_threshold: 0.60
   targets:
     - lib/
     - test/
-  excludes:
+    - data/
+    - web/
     - DEPLOY/
+  excludes:
     - vendor/
+    - knowledge/
     - fix_
     - patch_
+  skip_rules:
+    - duplicate_code
+    - conceptual
+    - adversarial
+    - axiom_coverage
+    - immutable
+    - self_explaining
+    - long_method
+    - pola
+    - srp
+    - cqs
 
 sweep:
   scan_depth: deep
@@ -1388,9 +1574,9 @@ phases:
       - monitoring_configured
 session_startup:
   mandatory_reads:
-    - data/axioms.yml
-    - data/constitution.yml
-    - data/language_rules.yml
+    - data/soul.yml
+    - data/rules.yml
+    - data/ruby_style.yml
     - data/workflow.yml
     - data/standing_orders.yml
   check_standing_orders: "Verify FSM state before any mutation -- UNCHANGE blocks refactoring"
@@ -1509,12 +1695,11 @@ def boot_web_ui(config)
   host = config["web_host"] || "0.0.0.0"
 
   if Master::Platform.openbsd?
-    # Kill stale falcon/ruby processes on the port before rcctl start.
     system("doas pkill -TERM -f 'falcon.*#{port}' 2>/dev/null || true")
     sleep 0.5
     system("doas rcctl restart master > /dev/null 2>&1")
+    $stderr.puts "web: http://#{host}:#{port}"
   else
-    # Non-OpenBSD: kill anything on the port, then spawn Falcon directly.
     require "open3"
     Open3.capture3("lsof -ti:#{port} 2>/dev/null | xargs -r kill -TERM 2>/dev/null")
     sleep 0.5
@@ -1526,6 +1711,7 @@ def boot_web_ui(config)
         chdir: web_dir,
         out: File::NULL, err: File::NULL
       )
+      $stderr.puts "web: http://#{host}:#{port}"
     end
   end
 rescue StandardError => e
@@ -1639,12 +1825,8 @@ module Master
       result.to_s
     end
 
-    def ask_once(prompt, system: nil)
-      send_with_cache(model, [{ role: "user", content: prompt.to_s }], system: system, stream: false).to_s
-    end
-
-    def ask_once_with_model(prompt, model:, system: nil)
-      send_with_cache(model, [{ role: "user", content: prompt.to_s }], system: system, stream: false).to_s
+    def ask_once(prompt, system: nil, model: nil)
+      send_with_cache(model || self.model, [{ role: "user", content: prompt.to_s }], system: system, stream: false).to_s
     end
 
     def call(ctx)
@@ -1906,6 +2088,7 @@ module Master
 
     def initialize(root:, event_bus:)
       @path  = File.join(root, LOG_PATH)
+      @mutex = Mutex.new
       FileUtils.mkdir_p(File.dirname(@path))
       event_bus.subscribe("tool:before") { |event_data| append(event_data) }
     end
@@ -1917,7 +2100,7 @@ module Master
                                 .map { |k, v| "#{k}=#{v.to_s[0, MAX_VAL].inspect}" }
                                 .join(" ")
       log_line = "#{Time.now.utc.iso8601} tool=#{event_data[:tool]} #{payload_pairs}"
-      File.open(@path, "a") { |f| f.puts(log_line) }
+      @mutex.synchronize { File.open(@path, "a") { |f| f.puts(log_line) } }
     end
   end
 end
@@ -1934,18 +2117,27 @@ require_relative "autoloop/fix_evaluator"
 
 module Master
   class AutoLoop
-    MAX_CYCLES           = 12
-    BATCH_SIZE           = 3
-    RATE_LIMIT_SLEEP     = 15
-    MAX_FIX_RETRIES      = 3
-    SCORE_INCREMENT      = 0.25
-    MAX_SIZE_RATIO       = 2.0
-    MIN_SIZE_RATIO       = 0.80
-    CONFIDENCE_THRESHOLD = 0.60
-    MAX_FILE_BYTES       = 16_000
+    def self.load_cfg
+      Master.load_yaml(File.join(Master::ROOT, "data", "workflow.yml"))
+            .dig("autoloop") || {}
+    rescue StandardError => _e
+      {}
+    end
 
-    # Cross-file or LLM-only rules; single-file rewrite can't fix these.
-    SKIP_RULES = %w[duplicate_code conceptual adversarial axiom_coverage immutable self_explaining long_method pola srp cqs].freeze
+    _cfg = load_cfg
+    MAX_CYCLES           = _cfg.fetch("max_cycles",           12)
+    BATCH_SIZE           = _cfg.fetch("batch_size",            3)
+    RATE_LIMIT_SLEEP     = _cfg.fetch("rate_limit_sleep",     15)
+    MAX_FIX_RETRIES      = _cfg.fetch("max_fix_retries",       3)
+    CONFIDENCE_THRESHOLD = _cfg.fetch("confidence_threshold", 0.60)
+    MAX_FILE_BYTES       = _cfg.fetch("max_file_bytes",   16_000)
+    SKIP_RULES           = Array(_cfg.fetch("skip_rules", [])).freeze
+    TARGETS              = Array(_cfg.fetch("targets", %w[lib/ test/ data/ web/ DEPLOY/])).freeze
+    EXCLUDES             = Array(_cfg.fetch("excludes", %w[vendor/ knowledge/])).freeze
+
+    SCORE_INCREMENT = 0.25
+    MAX_SIZE_RATIO  = 2.0
+    MIN_SIZE_RATIO  = 0.80
 
     SEVERITY_RANK = Master::SEVERITY_RANK
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
@@ -1968,7 +2160,8 @@ module Master
         cycle = i + 1
         @bus&.publish("autoloop:cycle", cycle:)
 
-        scan_paths  = %w[lib test].map { |d| File.join(@root, d) }
+        scan_paths  = TARGETS.map { |d| File.join(@root, d.delete_suffix("/")) }
+                              .select { |d| File.directory?(d) }
         all_results = scan_paths.flat_map { |dir|
           scan_result = @scanner.scan_dir(dir, depth: :standard)
           scan_result.ok? ? scan_result.value! : []
@@ -1987,10 +2180,12 @@ module Master
         stagger = RATE_LIMIT_SLEEP.to_f / BATCH_SIZE  # 5 s apart — stays within free-tier quota
 
         threads = by_file.each_with_index.map do |v, idx|
-          sleep(stagger * idx) if idx.positive?
           Thread.new do
+            sleep(stagger * idx) if idx.positive?
             fix = request_fix(v)
             mutex.synchronize { fixes[v[:file]] = [v, fix] } if fix
+          rescue StandardError => e
+            @bus&.publish("autoloop:thread_error", file: v[:file], error: e.message)
           end
         end
         threads.each(&:join)
@@ -2000,8 +2195,8 @@ module Master
         if @git.dirty?("lib/")
           @git.add_lib_files
           @git.commit("autoloop: fix scan violations [cycle #{cycle}]")
-          (@learnings || Learnings.new(root: @root)).tap do |l|
-            fixes.each_value { |v, _| l.record(trigger: v[:rule].to_s, strategy: "autoloop_fix", outcome: "commit") }
+          if @learnings
+            fixes.each_value { |v, _| @learnings.record(trigger: v[:rule].to_s, strategy: "autoloop_fix", outcome: "commit") }
           end
         end
         track_recurrence(violations)
@@ -2015,13 +2210,28 @@ module Master
     include FixEvaluator
     private
 
+    def apply_fix(rel_path, fixed_src)
+      path = File.join(@root, rel_path)
+      return unless File.exist?(path)
+      original = File.read(path, encoding: "UTF-8")
+      return if fixed_src.strip == original.strip
+      tmp = "#{path}.tmp.#{Process.pid}"
+      File.write(tmp, fixed_src)
+      File.rename(tmp, path)
+      @bus&.publish("autoloop:fix_applied", file: rel_path)
+    rescue StandardError => e
+      @bus&.publish("autoloop:write_error", file: rel_path, error: e.message)
+    end
+
     def extract_violations(dir_results)
       dir_results.flat_map { |path, r|
         next [] unless r.ok?
+        rel = path.delete_prefix("#{@root}/")
+        next [] if EXCLUDES.any? { |ex| rel.start_with?(ex) }
         r.value!
           .select { |f| (SEVERITY_RANK[f[:severity]] || 0) >= MIN_SEVERITY }
           .reject { |f| SKIP_RULES.include?(f[:rule].to_s) }
-          .map    { |f| f.merge(file: path.delete_prefix("#{@root}/")) }
+          .map    { |f| f.merge(file: rel) }
       }.select { |f|
         full_path = File.join(@root, f[:file])
         File.exist?(full_path) && File.size(full_path) <= MAX_FILE_BYTES # GUARD_EXPENSIVE
@@ -2075,11 +2285,26 @@ module Master
       private
 
       def build_fix_prompt(violation, src)
-        "Fix this Ruby violation in #{violation[:file]}.\n" \
+        "#{constitutional_preamble}\n\n" \
+          "Fix this Ruby violation in #{violation[:file]}.\n" \
           "Rule: #{violation[:rule]}\n" \
           "Issue: #{violation[:message]} (line #{violation[:line]})\n\n" \
           "Return ONLY the corrected Ruby file content, no explanation.\n\n" \
           "```ruby\n#{src}\n```"
+      end
+
+      def constitutional_preamble
+        @constitutional_preamble ||= begin
+          soul  = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
+          rules = Master.load_yaml(File.join(Master::ROOT, "data", "rules.yml"))
+          golden = soul.dig("absolute", "golden_rule") || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+          zen = rules.fetch("zen", {})
+          lines = ["Constitutional constraints:", "- Golden rule: #{golden}"]
+          zen.each_value { |v| lines << "- #{v}" } if zen.is_a?(Hash)
+          lines.join("\n")
+        rescue StandardError => _e
+          "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+        end
       end
 
       def reflected_prompt(base, last_error, attempt)
@@ -2114,7 +2339,7 @@ module Master
           f.flush
           system("ruby", "-c", f.path, out: File::NULL, err: File::NULL)
         end
-      rescue StandardError
+      rescue StandardError => _e
         false
       end
 
@@ -2256,7 +2481,7 @@ module Master
       return nil unless File.exist?(path)
 
       Master.load_yaml(path)
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
   end
@@ -2324,10 +2549,10 @@ module Master
     end
 
     def build_ai_stack(root, infra)
-      agent, soul_doc, scanner, swarm, deliberation, council_stage = build_agent_core(root, infra)
+      agent, soul_doc, scanner, swarm, deliberation, council_stage, ideation = build_agent_core(root, infra)
       autonomous = build_autonomous(root, infra, agent:, scanner:, soul: soul_doc)
       {
-        agent:, soul: soul_doc, scanner:, swarm:, deliberation:, council_stage:,
+        agent:, soul: soul_doc, scanner:, swarm:, deliberation:, council_stage:, ideation:,
         guard: Security::InjectionGuard.new
       }.merge(autonomous)
     end
@@ -2343,14 +2568,15 @@ module Master
       agent.wire_context_window(ctx)
       scanner               = build_scanner(root:, agent:, bus:)
       swarm                 = Swarm::Coordinator.new(agent:, event_bus: bus)
-      deliberation, council = build_council(root, infra, agent:)
-      [agent, soul_doc, scanner, swarm, deliberation, council]
+      deliberation, council, ideation = build_council(root, infra, agent:)
+      [agent, soul_doc, scanner, swarm, deliberation, council, ideation]
     end
 
     def build_council(root, infra, agent:)
       personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
       deliberation = Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus])
-      [deliberation, Stages::Council.new(deliberation:, config: infra[:config])]
+      ideation     = Council::Ideation.new(agent:, event_bus: infra[:bus])
+      [deliberation, Stages::Council.new(deliberation:, config: infra[:config]), ideation]
     end
 
     def build_agent_instance(root, infra)
@@ -2402,7 +2628,8 @@ module Master
         Stages::Execute.new,
         Pipeline::SkipOnPressure.new(Pipeline::ParallelGroup.new(
           ai[:council_stage],
-          Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:)
+          Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:, event_bus: bus),
+          bus:
         )),
         Pipeline::SkipOnPressure.new(Stages::Prune.new),
         Stages::Memo.new(memory: infra[:memory], event_bus: bus),
@@ -2451,7 +2678,8 @@ module Master
       Scan::Rules::DuplicateCodeRule, Scan::Rules::PruneRule,
       Scan::Rules::SrpRule, Scan::Rules::PolaRule,
       Scan::Rules::NielsenRule, Scan::Rules::AxiomCoverageRule,
-      Scan::Rules::ThreadSafetyRule
+      Scan::Rules::ThreadSafetyRule,
+      Scan::Rules::LexicalRule, Scan::Rules::UniversalRule,
     ].freeze
 
     def build_scanner(root:, agent:, bus:)
@@ -2487,7 +2715,7 @@ module Master
         lang = FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
         src  = File.read(f, encoding: "UTF-8", invalid: :replace)
         ["## #{rel}", "```#{lang}", src.rstrip, "```", ""]
-      rescue StandardError
+      rescue StandardError => _e
         []
       end
     end
@@ -2768,7 +2996,7 @@ module Master
         )
         line = begin
           @reader.read_line("", echo: true).chomp
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
         break if line.nil?
@@ -2793,7 +3021,7 @@ module Master
           out, = Open3.capture2e("git", "-C", @root, "diff", "--name-only", "HEAD")
           out.strip.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }
                                            .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
-        rescue StandardError
+        rescue StandardError => _e
           []
         end
 
@@ -2839,7 +3067,7 @@ module Master
 
       print @renderer.render("thinking...", mode: :dim)
       $stdout.flush
-    rescue StandardError
+    rescue StandardError => _e
       print "thinking..."
     end
 
@@ -2925,7 +3153,7 @@ module Master
       rescue StandardError => e
         @bus&.publish("tts:error", message: e.message)
       ensure
-        begin; File.unlink(audio_path); rescue StandardError; nil; end if defined?(audio_path) && audio_path
+        begin; File.unlink(audio_path); rescue StandardError => _e; nil; end if defined?(audio_path) && audio_path
       end
     end
 
@@ -3200,7 +3428,7 @@ module Master
       def const_name_safe(node)
         name = const_name(node)
         name.empty? ? nil : name
-      rescue StandardError
+      rescue StandardError => _e
         nil
       end
     end
@@ -3310,7 +3538,10 @@ module Master
     module_function
 
     def agent_commands(ai:, root:, infra:)
-      scan_loop_commands(ai:, root:, infra:).merge(model_agent_commands(ai:, root:, infra:))
+      scan_loop_commands(ai:, root:, infra:)
+        .merge(model_agent_commands(ai:, root:, infra:))
+        .merge(crit_command(ai:, root:))
+        .merge(ideate_command(ai:))
     end
 
     def scan_loop_commands(ai:, root:, infra:)
@@ -3318,13 +3549,13 @@ module Master
       scanner = ai[:scanner]
       bus = infra[:bus]
       deliberation = ai[:deliberation]
+      autoloop = ai[:autoloop]
       {
         "autoloop" => ->(ctx) {
           max = ctx[:args].to_s.strip.to_i
           max = AutoLoop::MAX_CYCLES if max <= 0
-          looper = AutoLoop.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
           log = []
-          result = looper.run(max_cycles: max) { |cycle, violations|
+          result = autoloop.run(max_cycles: max) { |cycle, violations|
             log << "  cycle #{cycle}: #{violations.size} violation(s)"
           }
           ([result.ok? ? result.value! : result.message] + log).join("\n")
@@ -3332,7 +3563,7 @@ module Master
         "sweep" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           target = arg.empty? ? root : File.expand_path(arg, root)
-          sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
+          sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus, code_index: infra[:code_index])
           log = []
           result = sweeper.run(target) { |cycle, file, delta|
             log << "  cycle #{cycle}  #{file}  +#{delta}"
@@ -3340,8 +3571,9 @@ module Master
           ([result.ok? ? result.value! : result.message] + log).join("\n")
         },
         "scan" => ->(ctx) {
-          depth = ctx[:args].to_s.include?("deep") ? :deep : :standard
-          raw_arg = ctx[:args].to_s.sub("deep", "").strip
+          arg = ctx[:args].to_s.strip
+          profile, depth, rule_filter = resolve_scan_profile(arg, root)
+          raw_arg = arg.sub(/\A(?:deep|quick|full|critical|solid|axioms)\s*/, "").strip
           target_arg = raw_arg.empty? ? nil : File.expand_path(raw_arg)
           pairs = if target_arg && File.file?(target_arg)
             fr = scanner.scan(target_arg, depth:)
@@ -3358,18 +3590,49 @@ module Master
           by_rule = Hash.new { |h, k| h[k] = [] }
           pairs.each do |_file, file_result|
             next unless file_result.respond_to?(:ok?) && file_result.ok?
-            file_result.value!.each { |v| by_rule[v[:rule].to_s] << v }
+            file_result.value!.each do |v|
+              next if rule_filter && !rule_filter.include?(v[:rule].to_s)
+              by_rule[v[:rule].to_s] << v
+            end
           end
           total = by_rule.values.sum(&:size)
-          next "clean -- no violations" if total.zero?
+          header = profile ? "[profile: #{profile}] " : ""
+          next "#{header}clean -- no violations" if total.zero?
           lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
             ["[#{rule}] #{vs.size}"] +
               vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, VIOLATION_TRUNCATE]}" }
           end
-          lines << "#{total} total violations"
+          lines << "#{header}#{total} total violations"
           lines.join("\n")
         }
       }
+    end
+
+    def resolve_scan_profile(arg, root)
+      profiles_cfg = begin
+        data = Master.load_yaml(File.join(root, "data", "workflow.yml"))
+        groups  = data.dig("principle_groups") || {}
+        profiles = data.dig("scan_profiles") || {}
+        [groups, profiles]
+      rescue StandardError => _e
+        [{}, {}]
+      end
+      groups, profiles = profiles_cfg
+
+      profile_name = %w[quick full critical solid axioms].find { |p| arg.start_with?(p) }
+      profile_name ||= "deep" if arg.start_with?("deep")
+
+      if profile_name && profile_name != "deep"
+        cfg   = profiles[profile_name] || {}
+        depth = (cfg["depth"] == "deep") ? :deep : :standard
+        rule_ids = groups[cfg["rules"].to_s]
+        rule_filter = (rule_ids && cfg["rules"] != "*") ? rule_ids.map(&:to_s).to_set : nil
+        [profile_name, depth, rule_filter]
+      elsif profile_name == "deep"
+        [nil, :deep, nil]
+      else
+        [nil, :standard, nil]
+      end
     end
 
     def model_agent_commands(ai:, root:, infra:)
@@ -3441,6 +3704,55 @@ module Master
       sections = ["available models:"] + model_lines
       sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
       sections.join("\n")
+    end
+
+    def crit_command(ai:, root:)
+      deliberation = ai[:deliberation]
+      {
+        "crit" => ->(ctx) {
+          arg = ctx[:args].to_s.strip
+          next "usage: /crit <file|text>" if arg.empty?
+          payload = if File.exist?(File.expand_path(arg, root))
+            File.read(File.expand_path(arg, root), encoding: "UTF-8")
+          else
+            arg
+          end
+          result = deliberation.review(payload, context: "explicit /crit session")
+          next result.message if result.err?
+          format_crit_feedback(result.value!)
+        }
+      }
+    end
+
+    def format_crit_feedback(feedback)
+      feedback.map { |f|
+        veto = f[:veto_role] ? " [VETO ELIGIBLE]" : ""
+        "#{f[:persona]} (#{f[:role]})#{veto}:\n#{f[:feedback].to_s.strip}"
+      }.join("\n\n---\n\n")
+    end
+
+    def ideate_command(ai:)
+      ideation = ai[:ideation]
+      {
+        "ideate" => ->(ctx) {
+          arg = ctx[:args].to_s.strip
+          next "usage: /ideate <prompt> [-- constraint1, constraint2]" if arg.empty?
+          prompt, constraints_raw = arg.split(" -- ", 2)
+          constraints = constraints_raw ? constraints_raw.split(",").map(&:strip).reject(&:empty?) : []
+          result = ideation.ideate(prompt.strip, constraints:)
+          next result.message if result.err?
+          v = result.value!
+          lines = []
+          lines << "ideas (#{v[:ideas].size}):"
+          v[:ideas].each { |i| lines << "  - #{i}" }
+          lines << ""
+          v[:critiques].each_with_index { |c, n| lines << "critique #{n + 1}: #{c}" }
+          lines << ""
+          lines << "synthesis:"
+          lines << v[:final]
+          lines.join("\n")
+        }
+      }
     end
   end
 end
@@ -3573,7 +3885,7 @@ module Master
           files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
                       .select { |f| File.file?(f) && File.size(f) < CTX_WINDOW_SIZE }
                       .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
-                      .reject { |f| begin; File.binread(f, BINARY_SNIFF_BYTES).include?("\x00"); rescue StandardError; true; end }
+                      .reject { |f| begin; File.binread(f, BINARY_SNIFF_BYTES).include?("\x00"); rescue StandardError => _e; true; end }
                       .sort
           lines = ["# MASTER Codebase Snapshot", "Generated: #{Time.now.utc.iso8601}", ""]
           files.each do |f|
@@ -3602,16 +3914,18 @@ module Master
         "diff" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           base = arg.empty? ? "HEAD" : arg
-          out = `git -C #{root.shellescape} diff #{base} --stat 2>&1`.strip
-          out.empty? ? "(no changes since #{base})" : out
+          out, = Open3.capture2e("git", "-C", root, "diff", base, "--stat")
+          out.strip.empty? ? "(no changes since #{base})" : out.strip
         },
         "commit" => ->(_ctx) {
-          diff = `git -C #{root.shellescape} diff --cached --stat 2>&1`.strip
-          diff = `git -C #{root.shellescape} diff --stat 2>&1`.strip if diff.empty?
-          next "nothing to commit" if diff.empty?
+          diff, = Open3.capture2e("git", "-C", root, "diff", "--cached", "--stat")
+          diff, = Open3.capture2e("git", "-C", root, "diff", "--stat") if diff.strip.empty?
+          next "nothing to commit" if diff.strip.empty?
           prompt = "Write a concise git commit message (1 line, imperative mood) for these changes:\n#{diff}"
-          msg = agent.ask_once(prompt).strip.lines.first.to_s.strip.gsub(/"/, "'")
-          `git -C #{root.shellescape} add -u 2>&1 && git -C #{root.shellescape} commit -m "#{msg}" 2>&1`.strip
+          msg = agent.ask_once(prompt).strip.lines.first.to_s.strip
+          Open3.capture2e("git", "-C", root, "add", "-u")
+          out, = Open3.capture2e("git", "-C", root, "commit", "-m", msg)
+          out.strip
         },
         "knowledge" => ->(ctx) {
           arg = ctx[:args].to_s.strip
@@ -3803,9 +4117,19 @@ end
 module Master
   # Unified scan→fix loop; stops on convergence, max_cycles, or oscillation (arxiv:2602.21833).
   class ConvergenceLoop
-    MAX_CYCLES  = 16
-    THRESHOLD   = 0.05
-    WINDOW      = 2
+    def self.sweep_cfg
+      Master.load_yaml(File.join(Master::ROOT, "data", "workflow.yml")).dig("sweep") || {}
+    rescue StandardError => _e
+      {}
+    end
+
+    _cfg        = sweep_cfg
+    MAX_CYCLES  = _cfg.fetch("max_cycles",          16)
+    THRESHOLD   = _cfg.fetch("converge_threshold", 0.05)
+    WINDOW      = _cfg.fetch("converge_window",       2)
+
+    SEVERITY_WEIGHTS = { critical: 5.0, error: 3.0, warning: 1.0, info: 0.2 }.freeze
+    MIN_PATCH_RATIO  = 0.80
 
     STRATEGIES = %i[surgical rewrite].freeze
 
@@ -3859,7 +4183,7 @@ module Master
     end
 
     def severity_weight(sev)
-      { critical: 5.0, error: 3.0, warning: 1.0, info: 0.2 }.fetch(sev.to_sym, 1.0)
+      SEVERITY_WEIGHTS.fetch(sev.to_sym, 1.0)
     end
 
     def converged?
@@ -3888,16 +4212,18 @@ module Master
         next unless File.exist?(path)
         file_violations = violations.select { |v| v[:path] == path }
         prompt = build_surgical_prompt(path, file_violations)
-        result = @agent.ask(prompt)
-        next unless result.respond_to?(:ok?) && result.ok?
-        apply_patch(path, result)
+        begin
+          result = @agent.ask(prompt)
+          apply_patch(path, result)
+        rescue StandardError => e
+          @bus&.publish("convergence_loop:fix_error", path:, error: e.message)
+        end
       end
     end
 
     def apply_rewrite
-      # Delegate to Sweep for full-file rewrite strategy
-      sweep = Sweep.new(@agent, @scanner, @root, @bus)
-      sweep.run_single_cycle(target: @target)
+      sweep = Sweep.new(agent: @agent, scanner: @scanner, root: @root, event_bus: @bus)
+      sweep.run(@root, max_cycles: 1)
     end
 
     def build_surgical_prompt(path, violations)
@@ -3909,10 +4235,10 @@ module Master
     def apply_patch(path, result)
       content = result.is_a?(String) ? result : result.to_s
       return if content.strip.empty?
-      return if content.lines.size < (File.readlines(path).size * 0.8)
+      return if content.lines.size < (File.readlines(path).size * MIN_PATCH_RATIO)
       File.write(path, content)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("convergence_loop:patch_error", path:, error: e.message)
     end
   end
 end
@@ -3926,6 +4252,9 @@ module Master
   module Council
     class Deliberation
       Result = Master::Result
+      MAX_CONCURRENT  = 4
+      MAX_CODE_BYTES  = 8_192
+      TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
 
       def initialize(personas:, agent:, event_bus: nil)
         @personas = personas
@@ -3937,13 +4266,25 @@ module Master
       def review(code, context: nil)
         return Result.err("council: no personas configured", category: :validation) if @personas.empty?
 
+        slots = Mutex.new
+        available = MAX_CONCURRENT
+        ready = ConditionVariable.new
+
         threads = @personas.map do |persona|
           Thread.new do
-            response = @agent.ask(build_prompt(persona, code, context))
-            entry = { persona: persona.name, role: persona.role,
-                      veto_role: veto_role?(persona), feedback: response }
-            @bus&.publish(:council_feedback, entry)
-            entry
+            slots.synchronize { ready.wait(slots) until available > 0; available -= 1 }
+            begin
+              response = @agent.ask(build_prompt(persona, code, context))
+              entry = { persona: persona.name, role: persona.role,
+                        veto_role: veto_role?(persona), feedback: response }
+              @bus&.publish(:council_feedback, entry)
+              entry
+            rescue StandardError => e
+              @bus&.publish("council:persona_error", persona: persona.name, error: e.message)
+              nil
+            ensure
+              slots.synchronize { available += 1; ready.signal }
+            end
           end
         end
         feedback = threads.map { |t| t.join(30) ? t.value : nil }.compact
@@ -3982,19 +4323,112 @@ module Master
       def build_prompt(persona, code, context)
         ctx = context ? "\nContext: #{context}\n" : ""
         veto_hint = veto_role?(persona) ? " You may prefix VETO: if this must not ship." : ""
+        safe_code = truncate_code(code.to_s)
         <<~PROMPT
           You are #{persona.name} (#{persona.role}, bias: #{persona.bias}).#{ctx}
           #{persona.prompt}
 
           Code:
-          #{code}
+          #{safe_code}
 
           Provide terse, actionable feedback.#{veto_hint}
         PROMPT
       end
 
+      def truncate_code(code)
+        return code if code.bytesize <= MAX_CODE_BYTES
+        @bus&.publish(:council_code_truncated, bytes: code.bytesize, limit: MAX_CODE_BYTES)
+        code.byteslice(0, MAX_CODE_BYTES) + TRUNCATE_MARKER
+      end
+
+      VETO_RE = /\AVETO:/i.freeze
+
       def veto_text?(feedback)
-        feedback.to_s.strip.start_with?("VETO:")
+        VETO_RE.match?(feedback.to_s.strip)
+      end
+    end
+  end
+end
+```
+
+## lib/master/council/ideation.rb
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Council
+    class Ideation
+      Result = Master::Result
+
+      DEFAULT_CYCLES = 2
+
+      def initialize(agent:, event_bus: nil)
+        @agent = agent
+        @bus   = event_bus
+      end
+
+      def ideate(prompt, constraints: [], cycles: DEFAULT_CYCLES)
+        ideas     = []
+        critiques = []
+
+        cycles.times do |i|
+          r = brainstorm(prompt, ideas, constraints)
+          return r if r.err?
+          ideas += r.value
+          @bus&.publish("ideation:cycle", cycle: i + 1, ideas: ideas.size)
+
+          r = critique(ideas)
+          return r if r.err?
+          critiques << r.value
+        end
+
+        r = synthesize(prompt, ideas, critiques, constraints)
+        return r if r.err?
+
+        Result.ok(ideas: ideas, critiques: critiques, final: r.value)
+      end
+
+      private
+
+      def brainstorm(prompt, prior, constraints)
+        context = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
+        c       = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
+        raw     = @agent.ask_once(<<~PROMPT, system: "Generate 3-5 novel, bold ideas. One idea per bullet (- prefix).")
+          #{c}#{context}Generate ideas for: #{prompt}
+        PROMPT
+        return Result.err("ideation: brainstorm failed") if raw.to_s.strip.empty?
+
+        parsed = raw.scan(/^[-*]\s*(.+)/).flatten
+        parsed = [raw.strip] if parsed.empty?
+        Result.ok(parsed)
+      end
+
+      def critique(ideas)
+        list = ideas.map { |i| "- #{i}" }.join("\n")
+        raw  = @agent.ask_once(<<~PROMPT, system: "Critique these ideas. Identify weaknesses, blind spots, risks. Be direct.")
+          #{list}
+        PROMPT
+        return Result.err("ideation: critique failed") if raw.to_s.strip.empty?
+
+        Result.ok(raw.strip)
+      end
+
+      def synthesize(prompt, ideas, critiques, constraints)
+        c     = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
+        list  = ideas.map { |i| "- #{i}" }.join("\n")
+        crits = critiques.join("\n---\n")
+        raw   = @agent.ask_once(<<~PROMPT, system: "Synthesize the best elements into a concrete, practical recommendation. Preserve innovation. Address valid critiques.")
+          Goal: #{prompt}
+          #{c}
+          Ideas:
+          #{list}
+
+          Critiques:
+          #{crits}
+        PROMPT
+        return Result.err("ideation: synthesis failed") if raw.to_s.strip.empty?
+
+        Result.ok(raw.strip)
       end
     end
   end
@@ -4042,7 +4476,7 @@ module Master
             attrs = { veto_role: false }.merge(attrs)
             Persona.new(**attrs)
           end.freeze
-        rescue StandardError
+        rescue StandardError => _e
           DEFAULTS
         end
       end
@@ -4442,7 +4876,7 @@ module Master
       now = Time.now.to_f
       @rate_mutex.synchronize do
         calls = @rate_windows[tier]
-        calls.reject! { |t| now - t > 60.0 }
+        calls.reject! { |t| now - t > RATE_WINDOW }
         if calls.size >= limit
           return Result.err("rate limit: #{tier} tier (#{limit}/min)", category: :rate_limit)
         end
@@ -4596,7 +5030,7 @@ module Master
     def model_reachable?(model_id)
       RubyLLM.chat(model: model_id).ask("ping")
       true
-    rescue StandardError
+    rescue StandardError => _e
       false
     end
 
@@ -4637,7 +5071,7 @@ module Master
       return default_jobs unless File.exist?(path)
 
       result = Master.load_yaml(path); result.is_a?(Array) ? result : default_jobs
-    rescue StandardError
+    rescue StandardError => _e
       default_jobs
     end
 
@@ -4655,7 +5089,7 @@ module Master
       return {} unless File.exist?(path)
 
       Master.load_yaml(path) || {}
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
 
@@ -4705,7 +5139,7 @@ module Master
         data = Master.load_yaml(rules_path)
         tags = (data["rules"] || {}).keys
         tags.empty? ? AXIOM_FALLBACK : tags
-      rescue StandardError
+      rescue StandardError => _e
         AXIOM_FALLBACK
       end
     end
@@ -4726,46 +5160,53 @@ module Master
     CONFIDENCE_DECAY_DAYS = 30
 
     def initialize(root:)
-      @path = File.join(root, STORE_PATH)
+      @path    = File.join(root, STORE_PATH)
+      @mutex   = Mutex.new
       @entries = load_entries
     end
 
     def record(trigger:, strategy:, outcome:)
-      existing = @entries.find { |e| e["trigger"] == trigger.to_s && e["strategy"] == strategy.to_s }
-      if existing
-        existing["reuse_count"] = existing["reuse_count"].to_i + 1
-        existing["confidence"]  = [existing["confidence"].to_f + 0.05, 1.0].min
-        existing["outcome"]     = outcome.to_s
-        existing["timestamp"]   = Time.now.to_i
-      else
-        @entries << {
-          "trigger"     => trigger.to_s,
-          "strategy"    => strategy.to_s,
-          "outcome"     => outcome.to_s,
-          "confidence"  => outcome == :fixed ? 0.7 : 0.4,
-          "reuse_count" => 0,
-          "timestamp"   => Time.now.to_i
-        }
+      @mutex.synchronize do
+        existing = @entries.find { |e| e["trigger"] == trigger.to_s && e["strategy"] == strategy.to_s }
+        if existing
+          existing["reuse_count"] = existing["reuse_count"].to_i + 1
+          existing["confidence"]  = [existing["confidence"].to_f + 0.05, 1.0].min
+          existing["outcome"]     = outcome.to_s
+          existing["timestamp"]   = Time.now.to_i
+        else
+          @entries << {
+            "trigger"     => trigger.to_s,
+            "strategy"    => strategy.to_s,
+            "outcome"     => outcome.to_s,
+            "confidence"  => outcome == :fixed ? 0.7 : 0.4,
+            "reuse_count" => 0,
+            "timestamp"   => Time.now.to_i
+          }
+        end
+        prune_old!
+        persist
       end
-      prune_old!
-      persist
     end
 
     def search(trigger_fragment, limit: 3)
       fragment = trigger_fragment.to_s.downcase
-      @entries
-        .select { |e| e["trigger"].to_s.downcase.include?(fragment) && e["outcome"] != "failed" }
-        .sort_by { |e| -e["confidence"].to_f }
-        .first(limit)
+      @mutex.synchronize do
+        @entries
+          .select { |e| e["trigger"].to_s.downcase.include?(fragment) && e["outcome"] != "failed" }
+          .sort_by { |e| -e["confidence"].to_f }
+          .first(limit)
+      end
     end
 
-    def all = @entries.dup
+    def all = @mutex.synchronize { @entries.dup }
 
     def prune_stale!
       cutoff = Time.now.to_i - (CONFIDENCE_DECAY_DAYS * 86_400)
-      before = @entries.size
-      @entries.reject! { |e| e["reuse_count"].to_i == 0 && e["timestamp"].to_i < cutoff }
-      persist if @entries.size < before
+      @mutex.synchronize do
+        before = @entries.size
+        @entries.reject! { |e| e["reuse_count"].to_i == 0 && e["timestamp"].to_i < cutoff }
+        persist if @entries.size < before
+      end
     end
 
     private
@@ -4773,15 +5214,15 @@ module Master
     def load_entries
       return [] unless File.exist?(@path)
       File.readlines(@path, chomp: true)
-          .map { |l| begin; JSON.parse(l); rescue StandardError; nil; end }
+          .map { |l| begin; JSON.parse(l); rescue StandardError => _e; nil; end }
           .compact
-    rescue StandardError
+    rescue StandardError => _e
       []
     end
 
     def persist
       FileUtils.mkdir_p(File.dirname(@path))
-      tmp_path = "#{@path}.tmp"
+      tmp_path = "#{@path}.tmp.#{Process.pid}"
       File.write(tmp_path, @entries.map { |e| JSON.generate(e) }.join("\n") + "\n")
       File.rename(tmp_path, @path)
     end
@@ -4865,11 +5306,13 @@ module Master
       @clients.flat_map do |name, client|
         client.tools.filter_map do |tool|
           McpToolWrapper.new(name:, client:, tool:)
-        rescue StandardError
+        rescue StandardError => e
+          @bus&.publish("mcp:tool_wrap_error", name:, error: e.message)
           nil
         end
       end
-    rescue StandardError
+    rescue StandardError => e
+      @bus&.publish("mcp:tools_error", error: e.message)
       []
     end
 
@@ -4913,7 +5356,7 @@ module Master
       require "yaml"
       data = Master.load_yaml(path) || {}
       data.fetch("servers", {})
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
   end
@@ -5074,7 +5517,7 @@ module Master
     def load_store
       return {} unless File.exist?(@path)
       loaded = Master.load_yaml(@path, symbolize_names: false); loaded.is_a?(Hash) ? loaded : {}
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
 
@@ -5400,7 +5843,7 @@ module Master
     def load_yaml_data(filename)
       path = File.join(Master::ROOT, "data", filename)
       Master.load_yaml(path) if File.exist?(path)
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
   end
@@ -5490,7 +5933,7 @@ module Master
       return { "phase" => "idle", "met_gates" => [] } unless File.exist?(path)
       data = Master.load_yaml(path)
       data.is_a?(Hash) ? data : { "phase" => "idle", "met_gates" => [] }
-    rescue StandardError
+    rescue StandardError => _e
       { "phase" => "idle", "met_gates" => [] }
     end
 
@@ -5547,19 +5990,28 @@ module Master
     class ParallelGroup
       PARALLEL_TIMEOUT_S = 30
 
-      def initialize(*stages)
+      def initialize(*stages, bus: nil)
         @stages = stages
+        @bus    = bus
       end
 
       def call(ctx)
         frozen_ctx = ctx.freeze
-        threads    = @stages.map { |s| Thread.new { s.call(frozen_ctx) } }
+        threads    = @stages.map do |s|
+          Thread.new do
+            s.call(frozen_ctx)
+          rescue StandardError => e
+            @bus&.publish("pipeline:stage_error", stage: s.class.name, error: e.message)
+            Result.ok(frozen_ctx.merge(_stage_error: e.message))
+          end
+        end
 
         results = threads.each_with_index.map do |t, i|
           if t.join(PARALLEL_TIMEOUT_S)
             t.value
           else
-            begin; t.kill; rescue StandardError; nil; end
+            begin; t.kill; rescue ThreadError; nil; end
+            @bus&.publish("pipeline:stage_timeout", stage: @stages[i].class.name)
             Result.ok(frozen_ctx.merge(_parallel_timeout: @stages[i].class.name))
           end
         end
@@ -5611,30 +6063,32 @@ end
 ```ruby
 # frozen_string_literal: true
 
-require "fiddle"
-
 module Master
   module Pledge
     extend self
 
     if RUBY_PLATFORM.include?("openbsd")
-      extend Fiddle::Importer
-      dlload "libc.so"
-      extern "int pledge(const char *, const char *)"
-      extern "int unveil(const char *, const char *)"
+      require "fiddle"
+      require "fiddle/import"
+
+      module LibC
+        extend Fiddle::Importer
+        dlload "libc.so"
+        extern "int pledge(const char *, const char *)"
+        extern "int unveil(const char *, const char *)"
+      end
 
       def pledge(promises, execpromises = nil)
-        ep = execpromises ? Fiddle::Pointer[execpromises] : Fiddle::NULL
-        result = self.__pledge(promises, ep)
+        result = LibC.pledge(promises, execpromises || Fiddle::NULL)
         raise SystemCallError.new("pledge failed", Fiddle.last_error) if result == -1
       end
 
       def unveil(path, permissions)
-        result = self.__unveil(path, permissions)
+        result = LibC.unveil(path, permissions)
         raise SystemCallError.new("unveil failed", Fiddle.last_error) if result == -1
       end
 
-      def lock_unveil! = unveil(nil, nil)
+      def lock_unveil! = LibC.unveil(Fiddle::NULL, Fiddle::NULL)
     else
       def pledge(*) = nil
       def unveil(*) = nil
@@ -5643,7 +6097,7 @@ module Master
 
     # Stage 1: called before Builder.build -- widest promises, no lock
     def stage1_boot!(root)
-      pledge("stdio rpath wpath cpath proc exec inet dns tty unveil")
+      pledge("stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec")
       unveil("/", "")
       unveil(root, "rwc")
       unveil(Dir.home, "rwc")
@@ -5658,7 +6112,7 @@ module Master
 
     # Stage 2: called after CLI is fully initialized -- lock filesystem
     def stage2_lock!
-      pledge("stdio rpath wpath cpath proc exec inet dns tty")
+      pledge("stdio rpath wpath cpath proc exec inet dns tty prot_exec")
       lock_unveil!
     end
 
@@ -5742,9 +6196,9 @@ module Master
         Attempt output: #{result.to_s[0, TASK_TRUNCATE]}
         What specifically went wrong? Name the constraint violated. What must change in the next attempt? One paragraph, no preamble.
       PROMPT
-      resp = fast_model ? agent.ask_once_with_model(prompt, model: fast_model) : agent.ask(prompt)
+      resp = fast_model ? agent.ask_once(prompt, model: fast_model) : agent.ask(prompt)
       resp.respond_to?(:value!) ? resp.value! : resp.to_s
-    rescue StandardError
+    rescue StandardError => _e
       "previous attempt failed — try a different approach"
     end
 
@@ -5844,16 +6298,17 @@ module Master
     private
 
     def uptime_str
-      out = `uptime 2>/dev/null`.strip
+      out, = Open3.capture2e("uptime")
+      out = out.strip
       out.empty? ? nil : out.split(",").first.gsub(/.*up\s+/, "").strip
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
     def git_rev
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--short", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -5864,7 +6319,7 @@ module Master
     def git_branch
       out, _, status = Open3.capture3("git", "rev-parse", "--abbrev-ref", "HEAD")
       status.success? ? out.strip : nil
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -5872,7 +6327,7 @@ module Master
       stdout, _stderr, _status = Open3.capture3("dmesg")
       raw = stdout.lines.first(DMESG_LINE_COUNT).map(&:chomp)
       raw.empty? ? ["dmesg unavailable"] : raw
-    rescue StandardError
+    rescue StandardError => _e
       ["dmesg unavailable"]
     end
 
@@ -6050,7 +6505,7 @@ module Master
         if @data_cache.nil? || current_mtime != @data_mtime
           @data_cache = begin
             Master.load_yaml(path) || {}
-          rescue StandardError
+          rescue StandardError => _e
             {}
           end
           @data_mtime = current_mtime
@@ -6103,7 +6558,7 @@ module Master
         return [@config.model] unless enabled?
 
         pref = preferred(task_type:)
-        all = @rules.fetch("models", {}).values.flat_map { |m| [m["id"]] }.compact
+        all = @rules.fetch("models", {}).values.flat_map { |tier| tier.filter_map { |m| m["id"] } }
         continuity = @continuity_index.fallback_models
         ([pref] + all + continuity + [@config.model]).uniq
       end
@@ -6175,7 +6630,7 @@ module Master
       def load_rules
         path = File.join(@root, "data", "models.yml")
         Master.load_yaml(path) || {}
-      rescue StandardError
+      rescue StandardError => _e
         {}
       end
     end
@@ -6235,6 +6690,17 @@ end
 module Master
   module Scan
     class Rule
+      EXT_LANG = {
+        ".rb"      => "ruby",        ".rake"  => "ruby",   ".gemspec" => "ruby",
+        ".erb"     => "html",        ".html"  => "html",   ".htm"     => "html",
+        ".css"     => "css",         ".scss"  => "scss",   ".sass"    => "scss",
+        ".js"      => "javascript",  ".ts"    => "javascript",
+        ".jsx"     => "javascript",  ".tsx"   => "javascript",
+        ".zsh"     => "zsh",         ".sh"    => "zsh",    ".bash"    => "zsh",
+        ".yml"     => "yaml",        ".yaml"  => "yaml",
+        ".md"      => "markdown",    ".json"  => "json",
+      }.freeze
+
       attr_reader :id, :description, :severity, :axiom_tags, :auto_fix
 
       def self.inherited(subclass)
@@ -6259,6 +6725,16 @@ module Master
 
       def check(code, path:)
         raise NotImplementedError, "#{self.class}#check not implemented"
+      end
+
+      def language(path)
+        EXT_LANG[File.extname(path).downcase]
+      end
+
+      def applies_to?(path, languages)
+        return true if languages.nil? || languages.empty?
+        lang = language(path)
+        lang && languages.include?(lang)
       end
 
       protected
@@ -6326,10 +6802,9 @@ module Master
         end
 
         def check(code, path:)
-          return [] unless path.end_with?(".rb")
+          return [] unless (lang = language(path))
           return [] unless @agent
 
-          lang   = "ruby"
           prompt = format(PROMPT_TEMPLATE, path: File.basename(path),
                                            lang: lang,
                                            code: code[0, 3_000])
@@ -6528,7 +7003,7 @@ module Master
         end
 
         def check(code, path:)
-          return [] unless path.end_with?(".rb")
+          return [] unless language(path)
           return [] unless @agent
 
           prompt = build_prompt(code, path)
@@ -6897,6 +7372,73 @@ module Master
 end
 ```
 
+## lib/master/scan/rules/lexical_rule.rb
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      # LexicalRule — data-driven: loads all detect_lexical rules from rules.yml
+      # and applies them to the matching file language. Single class covering
+      # HTML, CSS, Zsh, JavaScript, and cross-language lexical checks.
+      class LexicalRule < Rule
+        RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
+
+        def initialize
+          super
+          @id          = "lexical"
+          @description = "Data-driven lexical checks from rules.yml for all file types"
+          @severity    = :warning
+          @axiom_tags  = [:UNIVERSAL]
+          @loaded      = load_lexical_rules
+        end
+
+        def check(code, path:)
+          lang = language(path)
+          return [] unless lang
+
+          @loaded
+            .select { |r| r[:languages].nil? || r[:languages].include?(lang) }
+            .flat_map { |r| apply(r, code, path) }
+        end
+
+        private
+
+        def load_lexical_rules
+          data = Master.load_yaml(RULES_PATH)
+          all  = (data["rules"] || {}).values.flatten
+          all.filter_map do |r|
+            next unless r["detect_lexical"] && !r["detect_lexical"].to_s.empty?
+            langs = Array(r["languages"]).compact
+            {
+              id:        r["id"],
+              message:   r["name"] || r["id"],
+              pattern:   Regexp.new(r["detect_lexical"]),
+              fix:       r["fix"],
+              severity:  (r["severity"] || "warning").to_sym,
+              languages: langs.empty? ? nil : langs,
+            }
+          rescue RegexpError
+            nil
+          end.compact
+        rescue StandardError => _e
+          []
+        end
+
+        def apply(rule, code, path)
+          code.each_line.with_index(1).filter_map do |line, num|
+            next unless line.match?(rule[:pattern])
+            { rule: rule[:id], message: rule[:message], line: num,
+              severity: rule[:severity], fix: rule[:fix] }
+          end
+        end
+      end
+    end
+  end
+end
+```
+
 ## lib/master/scan/rules/long_method_rule.rb
 ```ruby
 # frozen_string_literal: true
@@ -7113,7 +7655,7 @@ module Master
             data = File.exist?(DATA_PATH) ? Master.load_yaml(DATA_PATH) : {}
             data.dig("voice", "strunk") || {}
           end
-        rescue StandardError
+        rescue StandardError => _e
           @rules = {}
         end
 
@@ -7128,7 +7670,7 @@ module Master
           }
           return nil if words.empty?
           /(#{words.join("|")})/i
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
 
@@ -7139,7 +7681,7 @@ module Master
           }
           return nil if phrases.empty?
           /\#.*(?:#{phrases.join("|")})/i
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
       end
@@ -7216,7 +7758,7 @@ module Master
             _, _, s = Open3.capture3("bundle", "exec", "reek", "--version",
                                      chdir: @root || Dir.pwd)
             s.success?
-          rescue StandardError
+          rescue StandardError => _e
             false
           end
         end
@@ -7310,7 +7852,7 @@ module Master
             _, _, s = Open3.capture3("bundle", "exec", "rubocop", "--version",
                                      chdir: @root || Dir.pwd)
             s.success?
-          rescue StandardError
+          rescue StandardError => _e
             false
           end
         end
@@ -7472,6 +8014,67 @@ module Master
 end
 ```
 
+## lib/master/scan/rules/universal_rule.rb
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      # UniversalRule — cross-language axiom enforcement.
+      # Applies to every file type regardless of extension.
+      # Rules: SQUINT_TEST, TYPOGRAPHY_DISCIPLINE, MEANINGFUL_NAMES,
+      #        DEAD_CODE, WHITESPACE_PUNCTUATION.
+      class UniversalRule < Rule
+        BLANK_FLOOD      = /\n{4,}/.freeze
+        BOX_DRAWING      = /[╭╮╰╯│─┌┐└┘├┤┬┴┼═║╔╗╚╝]|={4,}|-{4,}/.freeze
+        OPAQUE_NAMES     = /\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\b\s*=/.freeze
+        DEAD_AFTER_STOP  = /\b(return|exit|raise|throw)\b.+\n\s*\S/.freeze
+        STALE_COMMENT    = /^\s*#\s*(TODO|FIXME|HACK|REVIEW|NOTE):\s*$/i.freeze
+
+        CHECKS = [
+          { id: "SQUINT_TEST",           pattern: BLANK_FLOOD,     message: "more than 3 consecutive blank lines — use single blank between sections" },
+          { id: "TYPOGRAPHY_DISCIPLINE", pattern: BOX_DRAWING,     message: "box-drawing chars or separator lines — use whitespace as layout tool" },
+          { id: "MEANINGFUL_NAMES",      pattern: OPAQUE_NAMES,    message: "generic variable name — use a domain-specific name" },
+          { id: "STALE_COMMENT",         pattern: STALE_COMMENT,   message: "empty TODO/FIXME marker — fill it or delete it" },
+        ].freeze
+
+        def initialize
+          super
+          @id          = "universal"
+          @description = "Cross-language axiom checks (all file types)"
+          @severity    = :info
+          @axiom_tags  = %i[SQUINT_TEST TYPOGRAPHY_DISCIPLINE MEANINGFUL_NAMES BE_CONCISE]
+        end
+
+        def check(code, path:)
+          return [] if language(path).nil?
+
+          findings = []
+          CHECKS.each do |chk|
+            code.each_line.with_index(1) do |line, num|
+              findings << finding(line: num, message: chk[:message]) if line.match?(chk[:pattern])
+            end
+          end
+
+          check_dead_code(code, findings)
+          findings
+        end
+
+        private
+
+        def check_dead_code(code, findings)
+          code.each_line.with_index(1).each_cons(2) do |(line_a, num_a), (line_b, _num_b)|
+            next unless line_a.match?(DEAD_AFTER_STOP) && line_b.match?(/\S/)
+            findings << finding(line: num_a, message: "dead code after #{line_a.strip.split.first} — remove unreachable lines")
+          end
+        end
+      end
+    end
+  end
+end
+```
+
 ## lib/master/scan/scanner.rb
 ```ruby
 # frozen_string_literal: true
@@ -7504,7 +8107,9 @@ module Master
         Result.err("scan failed: #{e.message}", category: :unknown)
       end
 
-      def scan_dir(dir, depth: :standard, glob: "**/*.rb")
+      SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
+
+      def scan_dir(dir, depth: :standard, glob: SCAN_GLOB)
         paths   = Dir.glob(File.join(dir, glob)).sort
         results = Array.new(paths.size)
         threads = []
@@ -7516,7 +8121,12 @@ module Master
             loop do
               current_index = semaphore.synchronize { (index += 1) - 1 }
               break if current_index >= paths.size
-              results[current_index] = [paths[current_index], scan(paths[current_index], depth:)]
+              begin
+                results[current_index] = [paths[current_index], scan(paths[current_index], depth:)]
+              rescue StandardError => e
+                @bus&.publish("scanner:thread_error", path: paths[current_index], error: e.message)
+                results[current_index] = [paths[current_index], Result.err(e.message, category: :unknown)]
+              end
             end
           end
         end
@@ -7544,7 +8154,7 @@ module Master
           data = Master.load_yaml(RULES_PATH)
           data["scan_depths"] || {}
         end
-      rescue StandardError
+      rescue StandardError => _e
         @depth_rules = {}
       end
 
@@ -7949,7 +8559,7 @@ module Master
       return {} if parts.size < 3
 
       YAML.safe_load(parts[1]) || {}
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
   end
@@ -7960,6 +8570,7 @@ end
 ```ruby
 # frozen_string_literal: true
 
+require "open3"
 require "yaml"
 require "fileutils"
 
@@ -8020,7 +8631,9 @@ module Master
         "BLOCKED: proposal would change ABSOLUTE sections: #{drift[:absolute_changed].join(", ")}. Add /override to force."
       else
         FileUtils.mkdir_p(File.dirname(PROPOSAL_PATH))
-        (tmp_w = "PROPOSAL_PATH.tmp"; File.write(tmp_w, draft); File.rename(tmp_w, PROPOSAL_PATH))
+        tmp_w = "#{PROPOSAL_PATH}.tmp.#{Process.pid}"
+        File.write(tmp_w, draft)
+        File.rename(tmp_w, PROPOSAL_PATH)
         risk = drift[:protected_changed].any? ? " [PROTECTED sections affected: #{drift[:protected_changed].join(", ")}]" : ""
         "proposal saved#{risk}. Review with `soul diff`, approve with `soul approve`, reject with `soul reject`."
       end
@@ -8055,12 +8668,15 @@ module Master
       entry   = "| #{new_version} | #{date} | Evolution Protocol change | Approved via `soul approve` |\n"
       updated = updated.sub(/\| 1\.0\.0 \|/, entry + "| 1.0.0 |")
 
-      (tmp_w = "SOUL_PATH.tmp"; File.write(tmp_w, updated); File.rename(tmp_w, SOUL_PATH))
+      tmp_w = "#{SOUL_PATH}.tmp.#{Process.pid}"
+      File.write(tmp_w, updated)
+      File.rename(tmp_w, SOUL_PATH)
       File.unlink(PROPOSAL_PATH)
       @soul = updated
 
       # Git tag
-      `git -C #{@root} add SOUL.md && git -C #{@root} commit -m "soul: v#{new_version} — evolution protocol update" 2>&1`
+      Open3.capture2e("git", "-C", @root, "add", "SOUL.md")
+      Open3.capture2e("git", "-C", @root, "commit", "-m", "soul: v#{new_version} — evolution protocol update")
 
       "soul updated to v#{new_version}"
     rescue StandardError => e
@@ -8074,7 +8690,6 @@ module Master
     end
 
     def rollback
-      require "open3"
       log_out, = Open3.capture2e("git", "-C", @root, "log", "--oneline", "SOUL.md")
       out = log_out.lines
       return "no git history for SOUL.md" if out.size < 2
@@ -8110,7 +8725,7 @@ module Master
 
     def load_soul
       File.exist?(SOUL_PATH) ? File.read(SOUL_PATH, encoding: "UTF-8") : ""
-    rescue StandardError
+    rescue StandardError => _e
       ""
     end
 
@@ -8201,7 +8816,7 @@ module Master
       path = synthesize(text, **opts)
       return nil unless path
       bytes = File.binread(path)
-      File.unlink(path) rescue StandardError
+      File.unlink(path) rescue StandardError => _e
       bytes
     end
 
@@ -8253,13 +8868,11 @@ require "yaml"
 
 module Master
   module Stages
-    # Runs 6-persona deliberation; appends PRAISE votes to exemplars.yml.
+    # Council — 6-persona deliberation on dangerous or multi-file changes.
+    # PRAISE votes are appended to data/exemplars.yml for future reference.
     class Council
-      EXEMPLARS_PATH   = File.join(Master::ROOT, "data", "exemplars.yml").freeze
-      PATTERNS_PATH    = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
-      PRAISE_MIN_COUNT = 3
-      MSG_TRUNCATE     = 120
-      FEEDBACK_TRUNCATE = 240
+      EXEMPLARS_PATH  = File.join(Master::ROOT, "data", "exemplars.yml").freeze
+      PATTERNS_PATH   = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
 
       def initialize(deliberation:, config: nil, enabled: false)
         @deliberation      = deliberation
@@ -8299,7 +8912,7 @@ module Master
 
       def load_patterns
         data = Master.load_yaml(PATTERNS_PATH)
-        (data["dangerous"] || []).flatten.map { |str| Regexp.new(str, Regexp::IGNORECASE) }
+        (data["dangerous"] || []).flatten.filter_map { |str| Regexp.new(str, Regexp::IGNORECASE) rescue nil }
       end
 
       def should_run?(ctx)
@@ -8326,16 +8939,18 @@ module Master
         end
       end
 
+      # Detect unanimous or majority PRAISE in council feedback text.
       def praise?(feedback)
         text = feedback.to_s.downcase
-        text.scan(/\bpraise\b/).size >= PRAISE_MIN_COUNT
+        text.scan(/\bpraise\b/).size >= 3
       end
 
+      # Append a PRAISE entry to data/exemplars.yml.
       def log_praise(message, feedback)
         entry = {
           "timestamp" => Time.now.iso8601,
-          "message"   => message.to_s[0, MSG_TRUNCATE],
-          "feedback"  => feedback.to_s[0, FEEDBACK_TRUNCATE]
+          "message"   => message.to_s[0, 120],
+          "feedback"  => feedback.to_s[0, 240]
         }
         existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
         File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))
@@ -8353,10 +8968,10 @@ end
 
 module Master
   module Stages
-    # Deliberate — enumerate N approaches before coding; prevents first-solution fixation.
+    # Deliberate — enumerate N approaches before acting; prevents first-solution fixation.
     class Deliberate
       MIN_OPTIONS   = 4
-      CODING_TYPES  = %i[coding].freeze
+      CODING_TYPES  = %i[coding refactor architecture infrastructure].freeze
 
       def initialize(agent:, config:)
         @agent  = agent
@@ -8382,7 +8997,7 @@ module Master
         <<~PROMPT
           #{msg}
 
-          Before writing any code: list #{MIN_OPTIONS} distinct implementation approaches (numbered). Each: one-line name + one-line trade-off. Then implement the strongest one. State which you chose and why in one sentence.
+          Before acting: list #{MIN_OPTIONS} distinct approaches (numbered). Each: one-line name + one-line trade-off. Then execute the strongest one. State which you chose and why in one sentence.
         PROMPT
       end
     end
@@ -8488,7 +9103,7 @@ module Master
           regexes = (spec["patterns"] || []).map { |src| Regexp.new(src, Regexp::IGNORECASE | Regexp::EXTENDED) }
           out[name.to_s] = { regexes: regexes, capture: spec["capture"].to_s }
         end
-      rescue StandardError
+      rescue StandardError => _e
         {}
       end
 
@@ -8568,19 +9183,19 @@ module Master
     class Lint
       FENCE_RE = /```(?:ruby)?\n(.*?)```/m
 
-      def initialize(scanner:, config:, autoloop: nil, root: nil)
+      def initialize(scanner:, config:, autoloop: nil, root: nil, event_bus: nil)
         @scanner  = scanner
         @config   = config
         @autoloop = autoloop
         @root     = root
+        @bus      = event_bus
       end
 
       def call(ctx)
         findings = []
 
         paths = Array(ctx[:written_files]).filter_map { |p| File.exist?(p) ? p : nil }
-                paths.each do |scan_path|
-          next unless File.exist?(scan_path)
+        paths.each do |scan_path|
           if File.directory?(scan_path)
             result = @scanner.scan_dir(scan_path, depth: :standard)
             findings.concat(result.value!.flat_map { |_, r| r.respond_to?(:ok?) && r.ok? ? r.value! : [] }) if result.respond_to?(:ok?) && result.ok?
@@ -8619,7 +9234,7 @@ module Master
         Tempfile.open(["lint_inline", ".rb"]) do |f|
           f.write("# frozen_string_literal: true\n\n#{code}")
           f.flush
-          result = @scanner.scan(f.path, depth: :quick)
+          result = @scanner.scan(f.path, depth: :standard)
           if result.respond_to?(:ok?) && result.ok?
             findings = result.value!.map { |v| v.merge(source: :inline) }
           end
@@ -8759,7 +9374,7 @@ module Master
           data = File.exist?(RULES_PATH) ? Master.load_yaml(RULES_PATH) : {}
           data.dig("voice", "strunk") || {}
         end
-      rescue StandardError
+      rescue StandardError => _e
         @rules = {}
       end
     end
@@ -9036,6 +9651,9 @@ module Master
         threads = tasks.map do |t|
           Thread.new do
             [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+          rescue StandardError => e
+            @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
+            [t[:role], Result.err("worker error: #{e.message}")]
           end
         end
 
@@ -9043,7 +9661,8 @@ module Master
           if th.join(timeout)
             th.value
           else
-            begin; th.kill; rescue StandardError; nil; end
+            begin; th.kill; rescue ThreadError; nil; end
+            @bus&.publish(:swarm_worker_timeout, timeout:)
             [:timeout, Result.err("worker timed out after #{timeout}s")]
           end
         end.to_h
@@ -9065,11 +9684,20 @@ module Master
             end
           rescue Timeout::Error
             [t[:role], Result.err("worker exceeded shared deadline")]
+          rescue StandardError => e
+            @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
+            [t[:role], Result.err("worker error: #{e.message}")]
           end
         end
 
         results = threads.map do |th|
-          th.join(deadline)&.value || [nil, Result.err("join timeout")]
+          if th.join(deadline)
+            th.value
+          else
+            begin; th.kill; rescue ThreadError; nil; end
+            @bus&.publish(:swarm_parallel_timeout, deadline:)
+            [nil, Result.err("worker exceeded shared deadline")]
+          end
         end.to_h
 
         sr = build_swarm_result(results)
@@ -9138,11 +9766,7 @@ module Master
         @bus&.publish(:swarm_worker_start, role: @role, task: task[0..60])
 
         preferred = self.class::PREFERRED_MODEL
-        raw = if preferred && @agent.respond_to?(:ask_once_with_model)
-          @agent.ask_once_with_model(prompt, model: preferred, system: worker_system_prompt)
-        else
-          @agent.ask_once(prompt, system: worker_system_prompt)
-        end
+        raw = @agent.ask_once(prompt, model: preferred, system: worker_system_prompt)
         @result, @confidence = parse_result(raw)
 
         @bus&.publish(:swarm_worker_done, role: @role, ok: @result.ok?)
@@ -9347,8 +9971,8 @@ module Master
     SYNTAX_CHECKERS = {
       ".rb"  => ->(p) { _, _, st = Open3.capture3("ruby", "-c", p); st.success? },
       ".sh"  => ->(p) { _, _, st = Open3.capture3("bash", "-n", p); st.success? },
-      ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue StandardError; false; end },
-      ".erb" => ->(p) { begin; RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src); true; rescue SyntaxError; false; rescue StandardError; true; end }
+      ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue StandardError => _e; false; end },
+      ".erb" => ->(p) { begin; RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src); true; rescue SyntaxError, StandardError => _e; false; end }
     }.freeze
 
     SEVERITY_RANK = Master::SEVERITY_RANK
@@ -9370,15 +9994,15 @@ circuit\sopen|retry\sin|llm_request)\b
     include Rewriter
     include Convergence
 
-    def initialize(agent:, scanner:, council:, root:, event_bus: nil)
-      @agent   = agent
-      @scanner = scanner
-      @council = council
-      @root    = root
-      @bus     = event_bus
-      @map     = nil
-      @prompts = nil
-      @rename_log = Hash.new { |h, k| h[k] = [] }  # file => [cycle: {before:, after:}]
+    def initialize(agent:, scanner:, root:, council: nil, event_bus: nil, code_index: nil)
+      @agent      = agent
+      @scanner    = scanner
+      @root       = root
+      @bus        = event_bus
+      @code_index = code_index
+      @map        = nil
+      @prompts    = nil
+      @rename_log = Hash.new { |h, k| h[k] = [] }
     end
 
     def run(target = @root, max_cycles: MAX_CYCLES, types: GLOBS.keys)
@@ -9386,11 +10010,14 @@ circuit\sopen|retry\sin|llm_request)\b
       @prompts        = load_prompts
       violation_history = []
       converge_streak   = 0
+      init_cycle_log
 
       max_cycles.times do |i|
-        cycle   = i + 1
-        changed = 0
-        cycle_viol = 0
+        cycle       = i + 1
+        changed     = 0
+        cycle_viol  = 0
+        cycle_fixed = 0
+        cycle_defer = 0
 
         @bus&.publish("sweep:cycle", cycle:, target:)
 
@@ -9400,44 +10027,48 @@ circuit\sopen|retry\sin|llm_request)\b
           src     = File.read(path, encoding: "UTF-8")
           new_src = rewrite(path, rel)
 
-          next unless new_src
-          next if new_src.strip == src.strip
-          next unless syntax_ok?(path, new_src)
+          unless new_src && new_src.strip != src.strip && syntax_ok?(path, new_src)
+            cycle_defer += before
+            next
+          end
 
           after = violations_in_text(new_src, path)
-          next if after > before
+          if after > before
+            cycle_defer += before
+            next
+          end
 
           # Oscillation check: track name-level renames and reject if they
           # revert recent changes. Naming-focused prompts are the known
-          # trigger (see arxiv:2602.21833 §4.3 — naming-focused prompts may
-          # induce oscillatory renaming behavior).
+          # trigger (see arxiv:2602.21833 §4.3).
           if rename_oscillation?(rel, src, new_src, cycle)
             @bus&.publish("sweep:oscillation_rejected", file: rel, cycle:)
+            cycle_defer += before
             next
           end
 
           File.write(path, new_src, encoding: "UTF-8")
-          changed    += 1
-          cycle_viol += after
+          changed     += 1
+          cycle_viol  += after
+          cycle_fixed += (before - after)
           @bus&.publish("sweep:improved", file: rel, before:, after:)
           yield cycle, rel, before - after if block_given?
         end
 
         violation_history << cycle_viol
+        entry = record_cycle(violations: cycle_viol, fixed: cycle_fixed, deferred: cycle_defer)
+        @bus&.publish("sweep:cycle_stats", cycle:, **entry)
         commit("sweep: full-codebase refactor [cycle #{cycle}]") if changed > 0 && git_dirty?
 
         converge_streak = converged?(violation_history) ? converge_streak + 1 : 0
         break if converge_streak >= CONVERGE_WINDOW
-
-        # Trajectory-value early stop: if γ-discounted improvement signal
-        # has flatlined, further cycles are unlikely to help and risk
-        # the "rare but non-zero per iteration" functionality breaks
-        # documented in arxiv:2602.21833.
         break if trajectory_stalled?(violation_history)
+        break if should_halt_early?
       end
 
-      final = violation_history.last.to_i
-      Result.ok("sweep: #{violation_history.size} cycle(s), #{final} violation(s) remaining")
+      summary = convergence_summary
+      @bus&.publish("sweep:done", summary:)
+      Result.ok(summary)
     rescue StandardError => e
       Result.err("sweep: #{e.message}", category: :unknown)
     end
@@ -9451,20 +10082,72 @@ end
 
 module Master
   class Sweep
+    # Per-cycle metrics tracking and early-stop logic for sweep loops.
+    # Detects stall, low success rate, and sign-reversal oscillation.
     module Convergence
+      LOW_SUCCESS_RATE = 0.10
+
       private
+
+      def init_cycle_log
+        @cycle_log = []
+      end
+
+      # Record one cycle's metrics. Returns the entry for bus publishing.
+      def record_cycle(violations:, fixed:, deferred:)
+        prev  = @cycle_log.last
+        delta = prev ? (prev[:violations] - violations) : fixed
+        total = violations + fixed
+        rate  = total.zero? ? 0.0 : (fixed.to_f / total).round(3)
+        entry = { violations:, fixed:, deferred:, delta:, rate: }
+        @cycle_log << entry
+        entry
+      end
+
+      # Unified early-stop: stall, low success rate, oscillation, or done.
+      def should_halt_early?
+        return false if @cycle_log.size < 2
+
+        last = @cycle_log.last
+        return true if last[:violations].zero?
+        return true if last[:rate] < LOW_SUCCESS_RATE
+        return true if @cycle_log.last(2).all? { |entry| entry[:delta] == 0 }
+        return true if oscillating?
+
+        false
+      end
+
+      def oscillating?
+        signs = @cycle_log.last(3).map { |entry| entry[:delta] <=> 0 }
+        return false if signs.size < 3
+        signs.each_cons(2).all? { |x, y| x != 0 && x == -y }
+      end
+
+      def convergence_summary
+        return "sweep: no cycles recorded" if @cycle_log.empty?
+        count = @cycle_log.size
+        last  = @cycle_log.last
+        prev  = count > 1 ? @cycle_log[-2][:violations] : "?"
+        osc   = oscillating? ? 1 : 0
+        "sweep: iter=#{count} violations=#{prev}->#{last[:violations]} " \
+          "fixed=#{last[:fixed]} deferred=#{last[:deferred]} rate=#{last[:rate]} oscillating=#{osc}"
+      end
 
       # A→B→A within RENAME_WINDOW cycles signals oscillation (arxiv:2602.21833 §4.3).
       def rename_oscillation?(rel, old_src, new_src, cycle)
-        removed_now = extract_names(old_src) - extract_names(new_src)
-        added_now   = extract_names(new_src) - extract_names(old_src)
+        old_names   = extract_names(old_src)
+        new_names   = extract_names(new_src)
+        removed_now = old_names - new_names
+        added_now   = new_names - old_names
         history     = @rename_log[rel]
-        oscillates  = history.last(RENAME_WINDOW).any? { |e|
-          (e[:removed] & added_now).any? && (e[:added] & removed_now).any?
-        }
+        oscillates  = history.last(RENAME_WINDOW).any? { |entry| names_reverted?(entry, added_now, removed_now) }
         history << { cycle:, removed: removed_now, added: added_now }
         @rename_log[rel] = history.last(RENAME_WINDOW * 2)
         oscillates
+      end
+
+      def names_reverted?(entry, added_now, removed_now)
+        (entry[:removed] & added_now).any? && (entry[:added] & removed_now).any?
       end
 
       def extract_names(source) = source.scan(NAME_RE).flatten.compact.uniq
@@ -9479,8 +10162,8 @@ module Master
       def trajectory_stalled?(history)
         return false if history.size < 3
         deltas = history.each_cons(2).map { |a, b| a - b }
-        v = deltas.last(CONVERGE_WINDOW + 1).each_with_index.sum { |d, i| d * (TRAJECTORY_GAMMA**i) }
-        v.abs < 1.0
+        weighted = deltas.last(CONVERGE_WINDOW + 1).each_with_index.sum { |d, idx| d * (TRAJECTORY_GAMMA**idx) }
+        weighted.abs < 1.0
       end
 
       def commit(msg)
@@ -9511,12 +10194,26 @@ module Master
       def load_prompts = Master.load_yaml(PROMPTS_PATH)
 
       def build_codebase_map
-        files = Dir.glob(File.join(@root, "lib", "**", "*.rb"))
-                   .reject { |f| f.include?("/vendor/") }
+        files = Dir.glob(File.join(@root, "lib", "**", Scan::Scanner::SCAN_GLOB))
+                   .reject { |f| f.include?("/vendor/") || f.include?("/knowledge/") }
                    .map    { |f| f.delete_prefix("#{@root}/") }
                    .sort
-        "## Codebase (#{files.size} Ruby files)\n" +
-          files.map { |f| "  #{f}" }.join("\n")
+        unless @code_index&.built?
+          return "## Codebase (#{files.size} files)\n" + files.map { |f| "  #{f}" }.join("\n")
+        end
+
+        lines = ["## Codebase (#{files.size} files)"]
+        files.each do |rel|
+          syms = @code_index.symbols_in(File.join(@root, rel))
+          if syms.empty?
+            lines << "  #{rel}"
+          else
+            lines << rel
+            syms.select { |s| %i[class module].include?(s.type) }.each { |s| lines << "  class #{s.fqn}" }
+            syms.select { |s| s.type == :method }.each { |s| lines << "  def #{s.fqn}" }
+          end
+        end
+        lines.join("\n")
       end
 
       def collect_files(dir, types)
@@ -9527,9 +10224,7 @@ module Master
 
       def rewrite(path, rel)
         src  = File.read(path, encoding: "UTF-8")
-        ext  = File.extname(path)
-        lang = { ".rb" => "ruby", ".sh" => "sh", ".yml" => "yaml",
-                 ".md" => "markdown", ".erb" => "erb" }.fetch(ext, "text")
+        lang = Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
         response = @agent.ask(build_prompt(src, rel, lang))
         extract(response.to_s, lang)
       rescue StandardError => e
@@ -9576,21 +10271,22 @@ module Master
       end
 
       def violations_in(path)
-        return 0 unless path.end_with?(".rb") && File.exist?(path)
+        return 0 unless Scan::Rule::EXT_LANG.key?(File.extname(path).downcase) && File.exist?(path)
         scan_result = @scanner.scan(path, depth: :deep)
         scan_result.ok? ? scan_result.value!.size : 0
-      rescue StandardError
+      rescue StandardError => _e
         0
       end
 
       def violations_in_text(content, ref_path)
-        return 0 unless ref_path.end_with?(".rb")
-        Tempfile.open(["vcheck", ".rb"]) do |f|
+        ext = File.extname(ref_path).downcase
+        return 0 unless Scan::Rule::EXT_LANG.key?(ext)
+        Tempfile.open(["vcheck", ext]) do |f|
           f.write(content); f.flush
           scan_result = @scanner.scan(f.path, depth: :deep)
           scan_result.ok? ? scan_result.value!.size : 0
         end
-      rescue StandardError
+      rescue StandardError => _e
         0
       end
     end

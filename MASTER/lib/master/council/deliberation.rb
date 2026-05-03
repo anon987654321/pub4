@@ -3,7 +3,6 @@
 module Master
   module Council
     class Deliberation
-      Result = Master::Result
       MAX_CONCURRENT  = 4
       MAX_CODE_BYTES  = 8_192
       TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
@@ -16,7 +15,7 @@ module Master
       end
 
       def review(code, context: nil)
-        return Result.err("council: no personas configured", category: :validation) if @personas.empty?
+        return Master::Result.err("council: no personas configured", category: :validation) if @personas.empty?
 
         slots = Mutex.new
         available = MAX_CONCURRENT
@@ -42,19 +41,19 @@ module Master
         feedback = threads.map { |t| t.join(30) ? t.value : nil }.compact
         if feedback.empty?
           @bus&.publish(:council_timeout, personas: @personas.map(&:name))
-          return Result.err("council: all personas timed out (#{@personas.size})", category: :timeout)
+          return Master::Result.err("council: all personas timed out (#{@personas.size})", category: :timeout)
         end
 
         vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
         unless vetoes.empty?
           veto = vetoes.first
           @bus&.publish(:council_veto, veto)
-          return Result.err("council: veto from #{veto[:persona]}\n#{veto[:feedback]}", category: :validation)
+          return Master::Result.err("council: veto from #{veto[:persona]}\n#{veto[:feedback]}", category: :validation)
         end
 
-        Result.ok(feedback)
+        Master::Result.ok(feedback)
       rescue StandardError => e
-        Result.err("council: #{e.message}", category: :unknown)
+        Master::Result.err("council: #{e.message}", category: :unknown)
       end
 
       private

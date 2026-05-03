@@ -8,7 +8,7 @@ module Master
   #   SKILL.md   — metadata (name, description, trigger patterns)
   #   skill.rb   — optional Ruby implementation (loaded as a tool)
   #
-  # Skills discovered at boot are registered as tools in the agent.
+  # Skills discovered at boot are available via /skills; tool registration is pending.
   class Skills
     SKILLS_DIR = "skills".freeze
 

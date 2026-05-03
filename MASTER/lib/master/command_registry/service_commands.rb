@@ -13,7 +13,7 @@ module Master
       }
     end
 
-    def service_commands(ai)
+    def service_commands(ai, phase_gates = nil)
       heartbeat = ai[:heartbeat]
       skills    = ai[:skills]
       {
@@ -22,8 +22,20 @@ module Master
           arg   = ctx[:args].to_s.strip
           found = skills&.find(arg)
           arg.empty? ? (skills&.list || "(no skills)") : (found ? "#{found[:name]}: #{found[:description]}" : "(not found: #{arg})")
-        }
+        },
+        "phase" => ->(ctx) { handle_phase(phase_gates, ctx[:args].to_s.strip) }
       }
+    end
+
+    def handle_phase(gates, arg)
+      return "no phase_gates configured" unless gates
+      case arg
+      when "", "status" then gates.status
+      when "advance"    then result = gates.advance!; result.ok? ? result.value! : result.message
+      when /\Aforce (.+)\z/  then gates.force!($1.strip).value!
+      when /\Ameet (.+)\z/   then gates.meet_gate!($1.strip); "gate met: #{$1.strip}"
+      else "phase: #{gates.current}  /phase [status|advance|force <name>|meet <gate>]"
+      end
     end
 
     def handle_orders(standing, arg)

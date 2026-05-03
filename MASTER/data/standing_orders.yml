@@ -6,24 +6,14 @@
   command: dreams consolidate
   enabled: true
   state: done
-  last_run_at: 1777530792
+  last_run_at: 1777836021
 - name: weekly_scan
-  description: Weekly full-codebase axiom scan — all file types, all rules
+  description: Weekly codebase axiom scan for regressions
   trigger: scheduled
   interval_s: 604800
   command: scan
-  enabled: true
+  enabled: false
   state: pending
-  last_run_at: 0
-- name: universal_scope
-  description: >
-    Standing policy: all axioms, principles, and philosophies apply to every
-    file type. Scan and fix Ruby, YAML, Zsh, HTML, CSS, JS, Markdown identically.
-  trigger: always
-  interval_s: 0
-  command: noop
-  enabled: true
-  state: active
   last_run_at: 0
 - name: data_integrity_check
   description: Detect and recover from corrupted data/ YAML files (LLM error strings
@@ -32,5 +22,5 @@
   interval_s: 3600
   command: "/scan data/"
   enabled: true
-  state: done
+  state: running
   last_run_at: 1777590915

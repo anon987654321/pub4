@@ -3,8 +3,6 @@
 module Master
   module Council
     class Ideation
-      Result = Master::Result
-
       DEFAULT_CYCLES = 2
 
       def initialize(agent:, event_bus: nil)
@@ -30,7 +28,7 @@ module Master
         r = synthesize(prompt, ideas, critiques, constraints)
         return r if r.err?
 
-        Result.ok(ideas: ideas, critiques: critiques, final: r.value)
+        Master::Result.ok(ideas: ideas, critiques: critiques, final: r.value)
       end
 
       private
@@ -41,11 +39,11 @@ module Master
         raw     = @agent.ask_once(<<~PROMPT, system: "Generate 3-5 novel, bold ideas. One idea per bullet (- prefix).")
           #{c}#{context}Generate ideas for: #{prompt}
         PROMPT
-        return Result.err("ideation: brainstorm failed") if raw.to_s.strip.empty?
+        return Master::Result.err("ideation: brainstorm failed") if raw.to_s.strip.empty?
 
         parsed = raw.scan(/^[-*]\s*(.+)/).flatten
         parsed = [raw.strip] if parsed.empty?
-        Result.ok(parsed)
+        Master::Result.ok(parsed)
       end
 
       def critique(ideas)
@@ -53,9 +51,9 @@ module Master
         raw  = @agent.ask_once(<<~PROMPT, system: "Critique these ideas. Identify weaknesses, blind spots, risks. Be direct.")
           #{list}
         PROMPT
-        return Result.err("ideation: critique failed") if raw.to_s.strip.empty?
+        return Master::Result.err("ideation: critique failed") if raw.to_s.strip.empty?
 
-        Result.ok(raw.strip)
+        Master::Result.ok(raw.strip)
       end
 
       def synthesize(prompt, ideas, critiques, constraints)
@@ -71,9 +69,9 @@ module Master
           Critiques:
           #{crits}
         PROMPT
-        return Result.err("ideation: synthesis failed") if raw.to_s.strip.empty?
+        return Master::Result.err("ideation: synthesis failed") if raw.to_s.strip.empty?
 
-        Result.ok(raw.strip)
+        Master::Result.ok(raw.strip)
       end
     end
   end
