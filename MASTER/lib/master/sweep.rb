@@ -65,11 +65,14 @@ circuit\sopen|retry\sin|llm_request)\b
       @prompts        = load_prompts
       violation_history = []
       converge_streak   = 0
+      init_cycle_log
 
       max_cycles.times do |i|
-        cycle   = i + 1
-        changed = 0
-        cycle_viol = 0
+        cycle       = i + 1
+        changed     = 0
+        cycle_viol  = 0
+        cycle_fixed = 0
+        cycle_defer = 0
 
         @bus&.publish("sweep:cycle", cycle:, target:)
 
@@ -79,44 +82,48 @@ circuit\sopen|retry\sin|llm_request)\b
           src     = File.read(path, encoding: "UTF-8")
           new_src = rewrite(path, rel)
 
-          next unless new_src
-          next if new_src.strip == src.strip
-          next unless syntax_ok?(path, new_src)
+          unless new_src && new_src.strip != src.strip && syntax_ok?(path, new_src)
+            cycle_defer += before
+            next
+          end
 
           after = violations_in_text(new_src, path)
-          next if after > before
+          if after > before
+            cycle_defer += before
+            next
+          end
 
           # Oscillation check: track name-level renames and reject if they
           # revert recent changes. Naming-focused prompts are the known
-          # trigger (see arxiv:2602.21833 §4.3 — naming-focused prompts may
-          # induce oscillatory renaming behavior).
+          # trigger (see arxiv:2602.21833 §4.3).
           if rename_oscillation?(rel, src, new_src, cycle)
             @bus&.publish("sweep:oscillation_rejected", file: rel, cycle:)
+            cycle_defer += before
             next
           end
 
           File.write(path, new_src, encoding: "UTF-8")
-          changed    += 1
-          cycle_viol += after
+          changed     += 1
+          cycle_viol  += after
+          cycle_fixed += (before - after)
           @bus&.publish("sweep:improved", file: rel, before:, after:)
           yield cycle, rel, before - after if block_given?
         end
 
         violation_history << cycle_viol
+        entry = record_cycle(violations: cycle_viol, fixed: cycle_fixed, deferred: cycle_defer)
+        @bus&.publish("sweep:cycle_stats", cycle:, **entry)
         commit("sweep: full-codebase refactor [cycle #{cycle}]") if changed > 0 && git_dirty?
 
         converge_streak = converged?(violation_history) ? converge_streak + 1 : 0
         break if converge_streak >= CONVERGE_WINDOW
-
-        # Trajectory-value early stop: if γ-discounted improvement signal
-        # has flatlined, further cycles are unlikely to help and risk
-        # the "rare but non-zero per iteration" functionality breaks
-        # documented in arxiv:2602.21833.
         break if trajectory_stalled?(violation_history)
+        break if should_halt_early?
       end
 
-      final = violation_history.last.to_i
-      Result.ok("sweep: #{violation_history.size} cycle(s), #{final} violation(s) remaining")
+      summary = convergence_summary
+      @bus&.publish("sweep:done", summary:)
+      Result.ok(summary)
     rescue StandardError => e
       Result.err("sweep: #{e.message}", category: :unknown)
     end
