@@ -40,7 +40,12 @@ module Master
             loop do
               current_index = semaphore.synchronize { (index += 1) - 1 }
               break if current_index >= paths.size
-              results[current_index] = [paths[current_index], scan(paths[current_index], depth:)]
+              begin
+                results[current_index] = [paths[current_index], scan(paths[current_index], depth:)]
+              rescue StandardError => e
+                @bus&.publish("scanner:thread_error", path: paths[current_index], error: e.message)
+                results[current_index] = [paths[current_index], Result.err(e.message, category: :unknown)]
+              end
             end
           end
         end
