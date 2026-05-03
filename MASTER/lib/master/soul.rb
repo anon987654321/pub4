@@ -96,7 +96,7 @@ module Master
       entry   = "| #{new_version} | #{date} | Evolution Protocol change | Approved via `soul approve` |\n"
       updated = updated.sub(/\| 1\.0\.0 \|/, entry + "| 1.0.0 |")
 
-      tmp_w = "#{SOUL_PATH}.tmp"
+      tmp_w = "#{SOUL_PATH}.tmp.#{Process.pid}"
       File.write(tmp_w, updated)
       File.rename(tmp_w, SOUL_PATH)
       File.unlink(PROPOSAL_PATH)

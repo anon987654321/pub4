@@ -72,7 +72,7 @@ module Master
           files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
                       .select { |f| File.file?(f) && File.size(f) < CTX_WINDOW_SIZE }
                       .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
-                      .reject { |f| begin; File.binread(f, BINARY_SNIFF_BYTES).include?("\x00"); rescue StandardError; true; end }
+                      .reject { |f| begin; File.binread(f, BINARY_SNIFF_BYTES).include?("\x00"); rescue StandardError => _e; true; end }
                       .sort
           lines = ["# MASTER Codebase Snapshot", "Generated: #{Time.now.utc.iso8601}", ""]
           files.each do |f|

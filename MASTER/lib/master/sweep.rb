@@ -26,8 +26,8 @@ module Master
     SYNTAX_CHECKERS = {
       ".rb"  => ->(p) { _, _, st = Open3.capture3("ruby", "-c", p); st.success? },
       ".sh"  => ->(p) { _, _, st = Open3.capture3("bash", "-n", p); st.success? },
-      ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue StandardError; false; end },
-      ".erb" => ->(p) { begin; RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src); true; rescue SyntaxError, StandardError; false; end }
+      ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue StandardError => _e; false; end },
+      ".erb" => ->(p) { begin; RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src); true; rescue SyntaxError, StandardError => _e; false; end }
     }.freeze
 
     SEVERITY_RANK = Master::SEVERITY_RANK
