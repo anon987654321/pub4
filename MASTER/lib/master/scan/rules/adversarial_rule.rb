@@ -45,10 +45,9 @@ module Master
         end
 
         def check(code, path:)
-          return [] unless path.end_with?(".rb")
+          return [] unless (lang = language(path))
           return [] unless @agent
 
-          lang   = "ruby"
           prompt = format(PROMPT_TEMPLATE, path: File.basename(path),
                                            lang: lang,
                                            code: code[0, 3_000])

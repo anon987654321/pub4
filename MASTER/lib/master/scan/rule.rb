@@ -3,6 +3,17 @@
 module Master
   module Scan
     class Rule
+      EXT_LANG = {
+        ".rb"      => "ruby",        ".rake"  => "ruby",   ".gemspec" => "ruby",
+        ".erb"     => "html",        ".html"  => "html",   ".htm"     => "html",
+        ".css"     => "css",         ".scss"  => "scss",   ".sass"    => "scss",
+        ".js"      => "javascript",  ".ts"    => "javascript",
+        ".jsx"     => "javascript",  ".tsx"   => "javascript",
+        ".zsh"     => "zsh",         ".sh"    => "zsh",    ".bash"    => "zsh",
+        ".yml"     => "yaml",        ".yaml"  => "yaml",
+        ".md"      => "markdown",    ".json"  => "json",
+      }.freeze
+
       attr_reader :id, :description, :severity, :axiom_tags, :auto_fix
 
       def self.inherited(subclass)
@@ -27,6 +38,16 @@ module Master
 
       def check(code, path:)
         raise NotImplementedError, "#{self.class}#check not implemented"
+      end
+
+      def language(path)
+        EXT_LANG[File.extname(path).downcase]
+      end
+
+      def applies_to?(path, languages)
+        return true if languages.nil? || languages.empty?
+        lang = language(path)
+        lang && languages.include?(lang)
       end
 
       protected

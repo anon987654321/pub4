@@ -11,7 +11,8 @@ module Master
       Scan::Rules::DuplicateCodeRule, Scan::Rules::PruneRule,
       Scan::Rules::SrpRule, Scan::Rules::PolaRule,
       Scan::Rules::NielsenRule, Scan::Rules::AxiomCoverageRule,
-      Scan::Rules::ThreadSafetyRule
+      Scan::Rules::ThreadSafetyRule,
+      Scan::Rules::LexicalRule, Scan::Rules::UniversalRule,
     ].freeze
 
     def build_scanner(root:, agent:, bus:)

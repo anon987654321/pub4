@@ -28,7 +28,9 @@ module Master
         Result.err("scan failed: #{e.message}", category: :unknown)
       end
 
-      def scan_dir(dir, depth: :standard, glob: "**/*.rb")
+      SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
+
+      def scan_dir(dir, depth: :standard, glob: SCAN_GLOB)
         paths   = Dir.glob(File.join(dir, glob)).sort
         results = Array.new(paths.size)
         threads = []

@@ -29,7 +29,7 @@ module Master
         end
 
         def check(code, path:)
-          return [] unless path.end_with?(".rb")
+          return [] unless language(path)
           return [] unless @agent
 
           prompt = build_prompt(code, path)

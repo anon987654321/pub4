@@ -22,6 +22,8 @@ module Master
     CONFIDENCE_THRESHOLD = _cfg.fetch("confidence_threshold", 0.60)
     MAX_FILE_BYTES       = _cfg.fetch("max_file_bytes",   16_000)
     SKIP_RULES           = Array(_cfg.fetch("skip_rules", [])).freeze
+    TARGETS              = Array(_cfg.fetch("targets", %w[lib/ test/ data/ web/ DEPLOY/])).freeze
+    EXCLUDES             = Array(_cfg.fetch("excludes", %w[vendor/ knowledge/])).freeze
 
     SCORE_INCREMENT = 0.25
     MAX_SIZE_RATIO  = 2.0
@@ -48,7 +50,8 @@ module Master
         cycle = i + 1
         @bus&.publish("autoloop:cycle", cycle:)
 
-        scan_paths  = %w[lib test].map { |d| File.join(@root, d) }
+        scan_paths  = TARGETS.map { |d| File.join(@root, d.delete_suffix("/")) }
+                              .select { |d| File.directory?(d) }
         all_results = scan_paths.flat_map { |dir|
           scan_result = @scanner.scan_dir(dir, depth: :standard)
           scan_result.ok? ? scan_result.value! : []
@@ -113,10 +116,12 @@ module Master
     def extract_violations(dir_results)
       dir_results.flat_map { |path, r|
         next [] unless r.ok?
+        rel = path.delete_prefix("#{@root}/")
+        next [] if EXCLUDES.any? { |ex| rel.start_with?(ex) }
         r.value!
           .select { |f| (SEVERITY_RANK[f[:severity]] || 0) >= MIN_SEVERITY }
           .reject { |f| SKIP_RULES.include?(f[:rule].to_s) }
-          .map    { |f| f.merge(file: path.delete_prefix("#{@root}/")) }
+          .map    { |f| f.merge(file: rel) }
       }.select { |f|
         full_path = File.join(@root, f[:file])
         File.exist?(full_path) && File.size(full_path) <= MAX_FILE_BYTES # GUARD_EXPENSIVE

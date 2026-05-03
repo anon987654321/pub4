@@ -120,6 +120,17 @@ conflicts:
     - condition: "fix introduces higher priority violation"
       resolution: "reject fix, report to autoloop"
 
+universal_scope:
+  policy: ALL_PRINCIPLES_ALL_FILES
+  statement: >
+    All axioms, principles, and philosophies apply to every file in the codebase
+    regardless of file type: Ruby, YAML, Zsh, HTML, CSS, JavaScript, Markdown.
+    Language-specific rules apply only to their target language; universal rules
+    (SQUINT_TEST, TYPOGRAPHY_DISCIPLINE, MEANINGFUL_NAMES, etc.) apply everywhere.
+  scan_glob: "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}"
+  conceptual_rules: all_known_languages
+  adversarial_rules: all_known_languages
+
 autoloop:
   scan_depth: standard
   fix_depth: llm
@@ -132,9 +143,12 @@ autoloop:
   targets:
     - lib/
     - test/
-  excludes:
+    - data/
+    - web/
     - DEPLOY/
+  excludes:
     - vendor/
+    - knowledge/
     - fix_
     - patch_
   skip_rules:
