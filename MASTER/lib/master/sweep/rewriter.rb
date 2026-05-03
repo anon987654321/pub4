@@ -14,8 +14,22 @@ module Master
                    .reject { |f| f.include?("/vendor/") }
                    .map    { |f| f.delete_prefix("#{@root}/") }
                    .sort
-        "## Codebase (#{files.size} Ruby files)\n" +
-          files.map { |f| "  #{f}" }.join("\n")
+        unless @code_index&.built?
+          return "## Codebase (#{files.size} Ruby files)\n" + files.map { |f| "  #{f}" }.join("\n")
+        end
+
+        lines = ["## Codebase (#{files.size} Ruby files)"]
+        files.each do |rel|
+          syms = @code_index.symbols_in(File.join(@root, rel))
+          if syms.empty?
+            lines << "  #{rel}"
+          else
+            lines << rel
+            syms.select { |s| %i[class module].include?(s.type) }.each { |s| lines << "  class #{s.fqn}" }
+            syms.select { |s| s.type == :method }.each { |s| lines << "  def #{s.fqn}" }
+          end
+        end
+        lines.join("\n")
       end
 
       def collect_files(dir, types)

@@ -49,15 +49,16 @@ circuit\sopen|retry\sin|llm_request)\b
     include Rewriter
     include Convergence
 
-    def initialize(agent:, scanner:, council:, root:, event_bus: nil)
-      @agent   = agent
-      @scanner = scanner
-      @council = council
-      @root    = root
-      @bus     = event_bus
-      @map     = nil
-      @prompts = nil
-      @rename_log = Hash.new { |h, k| h[k] = [] }  # file => [cycle: {before:, after:}]
+    def initialize(agent:, scanner:, council:, root:, event_bus: nil, code_index: nil)
+      @agent      = agent
+      @scanner    = scanner
+      @council    = council
+      @root       = root
+      @bus        = event_bus
+      @code_index = code_index
+      @map        = nil
+      @prompts    = nil
+      @rename_log = Hash.new { |h, k| h[k] = [] }
     end
 
     def run(target = @root, max_cycles: MAX_CYCLES, types: GLOBS.keys)

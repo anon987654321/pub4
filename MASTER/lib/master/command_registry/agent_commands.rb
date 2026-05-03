@@ -29,7 +29,7 @@ module Master
         "sweep" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           target = arg.empty? ? root : File.expand_path(arg, root)
-          sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus)
+          sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus, code_index: infra[:code_index])
           log = []
           result = sweeper.run(target) { |cycle, file, delta|
             log << "  cycle #{cycle}  #{file}  +#{delta}"
