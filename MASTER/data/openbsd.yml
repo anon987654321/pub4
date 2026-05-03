@@ -1,0 +1,87 @@
+# openbsd.yml — OpenBSD config validators
+# Restored from master.yml v49.75; extended for OpenBSD 7.8
+
+man_base_url: "https://man.openbsd.org"
+cache_ttl: 86400
+
+configs:
+  pf.conf:
+    daemon: pf
+    man: pf.conf.5
+    required_patterns:
+      - "set skip on lo"
+    warnings:
+      - pattern: "pass all"
+        message: "Overly permissive — add interface/protocol guards"
+
+  nsd.conf:
+    daemon: nsd
+    man: nsd.conf.5
+    required_patterns:
+      - "server:"
+      - "zone:"
+    warnings:
+      - pattern: "rrl-size"
+        absent_message: "Missing RRL config — vulnerable to amplification DDoS"
+      - pattern: "hide-version"
+        absent_message: "Consider hide-version: yes"
+
+  httpd.conf:
+    daemon: httpd
+    man: httpd.conf.5
+    required_patterns:
+      - "server"
+
+  smtpd.conf:
+    daemon: smtpd
+    man: smtpd.conf.5
+    required_patterns:
+      - "listen on"
+      - "action"
+      - "match"
+    warnings:
+      - pattern: "match from any"
+        message: "Open relay risk — restrict to authenticated senders"
+
+  relayd.conf:
+    daemon: relayd
+    man: relayd.conf.5
+    required_patterns:
+      - "relay"
+
+  acme-client.conf:
+    daemon: acme-client
+    man: acme-client.conf.5
+    required_patterns:
+      - "authority"
+      - "domain"
+
+  doas.conf:
+    daemon: doas
+    man: doas.conf.5
+    required_patterns:
+      - "permit"
+    warnings:
+      - pattern: "nopass"
+        message: "Allows passwordless privilege escalation"
+
+  sshd_config:
+    daemon: sshd
+    man: sshd_config.5
+    warnings:
+      - pattern: "PermitRootLogin yes"
+        message: "Security risk — use PermitRootLogin prohibit-password"
+      - pattern: "PasswordAuthentication yes"
+        message: "Consider key-only auth"
+
+  ntpd.conf:
+    daemon: ntpd
+    man: ntpd.conf.5
+    required_patterns:
+      - "server"
+
+  unbound.conf:
+    daemon: unbound
+    man: unbound.conf.5
+    required_patterns:
+      - "server:"

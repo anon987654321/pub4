@@ -37,8 +37,9 @@ module Master
           ([result.ok? ? result.value! : result.message] + log).join("\n")
         },
         "scan" => ->(ctx) {
-          depth = ctx[:args].to_s.include?("deep") ? :deep : :standard
-          raw_arg = ctx[:args].to_s.sub("deep", "").strip
+          arg = ctx[:args].to_s.strip
+          profile, depth, rule_filter = resolve_scan_profile(arg, root)
+          raw_arg = arg.sub(/\A(?:deep|quick|full|critical|solid|axioms)\s*/, "").strip
           target_arg = raw_arg.empty? ? nil : File.expand_path(raw_arg)
           pairs = if target_arg && File.file?(target_arg)
             fr = scanner.scan(target_arg, depth:)
@@ -55,18 +56,49 @@ module Master
           by_rule = Hash.new { |h, k| h[k] = [] }
           pairs.each do |_file, file_result|
             next unless file_result.respond_to?(:ok?) && file_result.ok?
-            file_result.value!.each { |v| by_rule[v[:rule].to_s] << v }
+            file_result.value!.each do |v|
+              next if rule_filter && !rule_filter.include?(v[:rule].to_s)
+              by_rule[v[:rule].to_s] << v
+            end
           end
           total = by_rule.values.sum(&:size)
-          next "clean -- no violations" if total.zero?
+          header = profile ? "[profile: #{profile}] " : ""
+          next "#{header}clean -- no violations" if total.zero?
           lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
             ["[#{rule}] #{vs.size}"] +
               vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, VIOLATION_TRUNCATE]}" }
           end
-          lines << "#{total} total violations"
+          lines << "#{header}#{total} total violations"
           lines.join("\n")
         }
       }
+    end
+
+    def resolve_scan_profile(arg, root)
+      profiles_cfg = begin
+        data = Master.load_yaml(File.join(root, "data", "workflow.yml"))
+        groups  = data.dig("principle_groups") || {}
+        profiles = data.dig("scan_profiles") || {}
+        [groups, profiles]
+      rescue StandardError => _e
+        [{}, {}]
+      end
+      groups, profiles = profiles_cfg
+
+      profile_name = %w[quick full critical solid axioms].find { |p| arg.start_with?(p) }
+      profile_name ||= "deep" if arg.start_with?("deep")
+
+      if profile_name && profile_name != "deep"
+        cfg   = profiles[profile_name] || {}
+        depth = (cfg["depth"] == "deep") ? :deep : :standard
+        rule_ids = groups[cfg["rules"].to_s]
+        rule_filter = (rule_ids && cfg["rules"] != "*") ? rule_ids.map(&:to_s).to_set : nil
+        [profile_name, depth, rule_filter]
+      elsif profile_name == "deep"
+        [nil, :deep, nil]
+      else
+        [nil, :standard, nil]
+      end
     end
 
     def model_agent_commands(ai:, root:, infra:)

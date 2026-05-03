@@ -78,6 +78,48 @@ scan_rules:
     conceptual: "Loads philosophy from data/rules.yml (zen + voice) — single source of truth."
     deep_caution: "deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes."
 
+principle_groups:
+  axioms:      [frozen_string, explicit, immutable, self_explaining]
+  solid:       [srp, cqs, pola]
+  clean_code:  [long_method, god_class, duplicate_code, bare_rescue]
+  interface:   [nielsen, prune]
+  llm_rules:   [conceptual, adversarial]
+  heavy:       [rubocop, reek]
+  quick:       [frozen_string, bare_rescue, explicit, long_method, god_class]
+  critical:    [frozen_string, bare_rescue, explicit, immutable, srp, cqs]
+
+scan_profiles:
+  quick:
+    depth: standard
+    rules: quick
+    description: "Fast scan — core violations only"
+  full:
+    depth: deep
+    rules: "*"
+    description: "All rules, deep LLM analysis"
+  critical:
+    depth: standard
+    rules: critical
+    description: "Critical issues blocking ship"
+  solid:
+    depth: standard
+    rules: solid
+    description: "SOLID principles focus"
+  axioms:
+    depth: standard
+    rules: axioms
+    description: "Constitutional axioms only"
+
+conflicts:
+  strategy: highest_priority_wins
+  rules:
+    - condition: "dry conflicts with wet or aha"
+      resolution: "favor wet/aha if fewer than 3 duplications exist"
+    - condition: "clarity conflicts with simplicity"
+      resolution: "favor clarity"
+    - condition: "fix introduces higher priority violation"
+      resolution: "reject fix, report to autoloop"
+
 autoloop:
   scan_depth: standard
   fix_depth: llm
