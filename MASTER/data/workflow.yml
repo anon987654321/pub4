@@ -74,8 +74,8 @@ scan_rules:
     - reek
   notes:
     nielsen: "puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are."
-    prune: "Loads patterns from data/strunk.yml — single source of truth."
-    conceptual: "Loads philosophy from data/axioms.yml — single source of truth."
+    prune: "Loads patterns from data/rules.yml (voice.strunk) — single source of truth."
+    conceptual: "Loads philosophy from data/rules.yml (zen + voice) — single source of truth."
     deep_caution: "deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes."
 
 autoloop:
@@ -179,9 +179,9 @@ phases:
       - monitoring_configured
 session_startup:
   mandatory_reads:
-    - data/axioms.yml
-    - data/constitution.yml
-    - data/language_rules.yml
+    - data/soul.yml
+    - data/rules.yml
+    - data/ruby_style.yml
     - data/workflow.yml
     - data/standing_orders.yml
   check_standing_orders: "Verify FSM state before any mutation -- UNCHANGE blocks refactoring"

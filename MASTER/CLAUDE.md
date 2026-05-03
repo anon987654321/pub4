@@ -13,9 +13,9 @@ claude --dangerously-skip-permissions
 ## Session Startup (mandatory)
 
 Before any coding work:
-1. `cat ~/pub4/MASTER/data/axioms.yml` -- kernel axioms and philosophy
-2. `cat ~/pub4/MASTER/data/constitution.yml` -- golden rule, communication style, banned output
-3. `cat ~/pub4/MASTER/data/language_rules.yml` -- Ruby/zsh/OpenBSD rules, banned commands
+1. `cat ~/pub4/MASTER/data/soul.yml` -- golden rule, anti-simulation, protection tiers, identity
+2. `cat ~/pub4/MASTER/data/rules.yml` -- structural rules, voice, zen principles
+3. `cat ~/pub4/MASTER/data/ruby_style.yml` -- Ruby/zsh/OpenBSD rules, banned commands
 4. `cat ~/pub4/MASTER/data/workflow.yml` -- READ_BEFORE_WRITE, scan depths, anti-sprawl
 5. `cat ~/pub4/MASTER/data/standing_orders.yml` -- current FSM state (UNCHANGE / REFACTOR / etc.)
 
@@ -84,8 +84,7 @@ pub4/
 ---
 
 ## MASTER — Architecture
-> `master.yml` (the old 1770-line YAML config) was deleted in Feb 2026. MASTER (the Ruby codebase) replaced it — the agent IS the config.
-
+> `master.yml` (1770-line monolithic config) deleted Feb 2026. The Ruby codebase replaced it — the agent IS the config.
 
 MASTER is a constitutional AI coding agent that **replaces Claude Code CLI**.
 
@@ -94,7 +93,7 @@ MASTER is a constitutional AI coding agent that **replaces Claude Code CLI**.
 - **Module**: `Master` (Zeitwerk autoloaded)
 - **Launch**: SSH auto-starts via `~/.zshrc` → `cd MASTER && bundle exec ruby exe/master`
 - **Pipe mode**: `echo "msg" | bundle exec ruby exe/master`
-- **rc.d service**: `master` (web UI daemon)
+- **rc.d service**: `masterweb` (web UI daemon)
 
 ### Pipeline (10 stages)
 
@@ -113,19 +112,16 @@ Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prun
 
 | File | Purpose |
 |---|---|
-| `axioms.yml` | Kernel axioms (PRESERVE_FIRST, SIMPLEST_WORKS, FAIL_VISIBLY, etc.) + top-25 philosophy principles |
-| `constitution.yml` | Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK; protection levels; anti-simulation rules; communication style: openbsd_dmesg |
-| `principles.yml` | KISS, DRY, YAGNI, SoC, SRP, SOLID — each with anti-patterns and auto-fix flag |
-| `language_rules.yml` | Ruby 3.3+ rules, Rails 8+ stack, OpenBSD config, zsh banned commands (sed/awk/grep/find/etc.) |
+| `soul.yml` | Golden rule, anti-simulation, protection tiers, persona identity |
+| `rules.yml` | Structural rules, voice/strunk prose patterns, zen principles |
+| `ruby_style.yml` | Ruby 3.3+ rules, Rails 8+ stack, OpenBSD config, zsh banned commands |
 | `standing_orders.yml` | Current FSM state (UNCHANGE / REFACTOR / etc.) |
 | `workflow.yml` | READ_FULL_FILES, READ_BEFORE_WRITE, scan depths, autoloop/sweep config, Zeitwerk inflections, anti-sprawl |
-| `language_axioms.yml` | Communication principles |
-| `scan_depths.yml` | standard / deep / hunt rule sets |
-| `fallback_models.yml` | Model fallback chain |
 | `models.yml` | Model capability table (uses YAML anchors — load with `aliases: true`) |
-| `council.yml` / `council_patterns.yml` | Council trigger patterns |
+| `council.yml` / `council_patterns.yml` | Council personas and trigger patterns |
 | `infer_patterns.yml` | Natural language → command routing |
-| `strunk.yml` | Strunk & White prose rules for Prune stage |
+| `sweep_prompts.yml` | Sweep structural/cosmetic technique prompts |
+| `zsh_patterns.yml` | Zsh idioms and banned-command replacements |
 | `prompts/` | LLM prompt templates |
 
 The Ruby pipeline reads these at boot via `Master.build` and enforces them through scan rules, pipeline stages, and tool guards.
