@@ -3,9 +3,19 @@
 module Master
   # Unified scan→fix loop; stops on convergence, max_cycles, or oscillation (arxiv:2602.21833).
   class ConvergenceLoop
-    MAX_CYCLES  = 16
-    THRESHOLD   = 0.05
-    WINDOW      = 2
+    def self.sweep_cfg
+      Master.load_yaml(File.join(Master::ROOT, "data", "workflow.yml")).dig("sweep") || {}
+    rescue StandardError
+      {}
+    end
+
+    _cfg        = sweep_cfg
+    MAX_CYCLES  = _cfg.fetch("max_cycles",          16)
+    THRESHOLD   = _cfg.fetch("converge_threshold", 0.05)
+    WINDOW      = _cfg.fetch("converge_window",       2)
+
+    SEVERITY_WEIGHTS = { critical: 5.0, error: 3.0, warning: 1.0, info: 0.2 }.freeze
+    MIN_PATCH_RATIO  = 0.80
 
     STRATEGIES = %i[surgical rewrite].freeze
 
@@ -59,7 +69,7 @@ module Master
     end
 
     def severity_weight(sev)
-      { critical: 5.0, error: 3.0, warning: 1.0, info: 0.2 }.fetch(sev.to_sym, 1.0)
+      SEVERITY_WEIGHTS.fetch(sev.to_sym, 1.0)
     end
 
     def converged?
@@ -111,10 +121,10 @@ module Master
     def apply_patch(path, result)
       content = result.is_a?(String) ? result : result.to_s
       return if content.strip.empty?
-      return if content.lines.size < (File.readlines(path).size * 0.8)
+      return if content.lines.size < (File.readlines(path).size * MIN_PATCH_RATIO)
       File.write(path, content)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      @bus&.publish("convergence_loop:patch_error", path:, error: e.message)
     end
   end
 end
