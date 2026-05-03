@@ -51,7 +51,7 @@ Council and Lint run in parallel (30s timeout). Rollback on axiom violation.
 
 ## Web UI
 
-Rails 8 + Falcon on port 10002 (internal). relayd proxies to ai.brgen.no:4430.
+Rails 8 + Falcon on port 53187 (internal). relayd proxies via HAProxy → ai.brgen.no:443.
 
 Canvas: 2000-particle orb, ambient pad engine, drum sequencer, 17 voice FX.
 

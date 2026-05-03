@@ -21,18 +21,18 @@ Resume after interruption: `doas zsh openbsd.sh --resume`
 
 **Stage 2** (services):
 - pf firewall rules (ports 22, 25, 80, 443, 3000, 4430, 8080–8086)
-- relayd TLS termination (443 → 10002, 4430 → 10002)
+- relayd TLS termination (443 → 53187, 4430 → 53187)
 - httpd static file server
 - smtpd mail server
 - nsd authoritative DNS
-- masterweb rc.d service (127.0.0.1:10002)
+- master rc.d service (127.0.0.1:53187)
 - Rails apps under /home/dev/rails/
 
 ## Checks
 
 After deploy:
 ```zsh
-doas rcctl check masterweb
+doas rcctl check master
 doas pfctl -s rules
 curl -sk https://ai.brgen.no:4430/chat/metrics
 ```

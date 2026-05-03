@@ -97,7 +97,7 @@ MASTER is a constitutional AI coding agent that **replaces Claude Code CLI**.
 - **Module**: `Master` (Zeitwerk autoloaded)
 - **Launch**: SSH auto-starts via `~/.zshrc` → `cd MASTER && bundle exec ruby exe/master`
 - **Pipe mode**: `echo "msg" | bundle exec ruby exe/master`
-- **rc.d service**: `masterweb` (was `master3web` — rename pending on VPS)
+- **rc.d service**: `master` (port 53187, bound to 127.0.0.1)
 
 ### Pipeline (10 stages)
 
@@ -148,10 +148,10 @@ The Ruby pipeline reads these at boot via `Master.build` and enforces them throu
 
 ### Web UI
 
-- **Framework**: Sinatra + Falcon (port `10002` internal)
+- **Framework**: Rails 8 + Falcon (port `53187` internal)
 - **Public**: relayd proxies → `http://ai.brgen.no:3000`
 - **Routes**: `GET /` chat, `POST /chat/message` (SSE), `GET /chat/metrics`, `GET /chat/dmesg`
-- **rc.d**: `masterweb` daemon
+- **rc.d**: `master` daemon
 
 ### Models
 
@@ -185,7 +185,7 @@ Resume: `doas zsh openbsd.sh --resume`
 
 Known fixes already applied (commits `39bff649`, `33a23ded`, `d39ed302`):
 - PF pass rule includes ports 22, 25, 80, 443, 3000, 4430, 8080–8086
-- masterweb binds to `127.0.0.1:10002`
+- master binds to `127.0.0.1:53187`
 - acme-client.conf: domain explicitly listed as first SAN entry
 - Disk check: 10MB root, 512MB /var
 
@@ -206,10 +206,10 @@ Known fixes already applied (commits `39bff649`, `33a23ded`, `d39ed302`):
 
 ## TODO / Backlog
 
-- [ ] Rename rc.d service `master3web` → `masterweb` on VPS
-- [ ] Update `~/.zshrc`: still references `MASTER3/exe/master3` → `MASTER/exe/master`
+- [x] Rename rc.d service `master3web` → `master` on VPS (done; running ok on port 53187)
+- [x] `.zshrc` MASTER3 references — none found
+- [x] openbsd.sh stage_1 stalled — resolved: DNS glue record for ns.brgen.no now propagated (185.52.176.18); stage_2 completed
 - [ ] Deploy brgen.no Rails app publicly
-- [x] Task #13: Parallelize swarm worker dispatch (analyse_and_review uses fan_out)
-- [x] Task #15: Confidence-based dynamic model escalation (escalate_if_low_confidence in model_router)
 - [ ] Verify EventSource orb visualizer in browser (`/events/stream`)
-- [ ] openbsd.sh deploy: stage_1 stalled (only 2 lines logged) — needs restart + debug
+- [x] Task #13: Parallelize swarm worker dispatch
+- [x] Task #15: Confidence-based dynamic model escalation

@@ -1,6 +1,6 @@
 # MASTER Web UI
 
-Rails 8 + Falcon server. Internal port 10002; relayd proxies to ai.brgen.no:4430.
+Rails 8 + Falcon server. Internal port 53187; relayd proxies to ai.brgen.no:4430.
 
 ## Routes
 
@@ -25,8 +25,8 @@ Rails 8 + Falcon server. Internal port 10002; relayd proxies to ai.brgen.no:4430
 ## rc.d service
 
 ```zsh
-doas rcctl enable masterweb
-doas rcctl start masterweb
+doas rcctl enable master
+doas rcctl start master
 ```
 
-Daemon binds to 127.0.0.1:10002. relayd handles TLS termination.
+Daemon binds to 127.0.0.1:53187. relayd handles TLS termination.

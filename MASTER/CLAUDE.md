@@ -93,7 +93,7 @@ MASTER is a constitutional AI coding agent that **replaces Claude Code CLI**.
 - **Module**: `Master` (Zeitwerk autoloaded)
 - **Launch**: SSH auto-starts via `~/.zshrc` → `cd MASTER && bundle exec ruby exe/master`
 - **Pipe mode**: `echo "msg" | bundle exec ruby exe/master`
-- **rc.d service**: `masterweb` (web UI daemon)
+- **rc.d service**: `master` (port 53187, bound to 127.0.0.1)
 
 ### Pipeline (10 stages)
 
@@ -143,7 +143,7 @@ The Ruby pipeline reads these at boot via `Master.build` and enforces them throu
 
 ### Web UI
 
-- **Framework**: Rails 8 + Falcon (port `10002` internal)
+- **Framework**: Rails 8 + Falcon (port `53187` internal)
 - **Public**: relayd proxies → `http://ai.brgen.no:3000` / `https://ai.brgen.no:4430`
 - **Routes**: `GET /` chat, `POST /chat/message` (SSE), `POST /chat/tts`, `POST /chat/speak`, `GET /chat/metrics`, `GET /chat/dmesg`, `GET /events/stream`
 - **rc.d**: `master` daemon
