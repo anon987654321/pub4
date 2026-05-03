@@ -48,6 +48,9 @@ module Master
         threads = tasks.map do |t|
           Thread.new do
             [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
+          rescue StandardError => e
+            @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
+            [t[:role], Result.err("worker error: #{e.message}")]
           end
         end
 
@@ -78,6 +81,9 @@ module Master
             end
           rescue Timeout::Error
             [t[:role], Result.err("worker exceeded shared deadline")]
+          rescue StandardError => e
+            @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
+            [t[:role], Result.err("worker error: #{e.message}")]
           end
         end
 
