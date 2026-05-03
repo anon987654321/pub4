@@ -1,2 +1,9 @@
-git clone https://github.com/brgen/rails.git
-cd rails
+# brgen tv
+
+Video and live-streaming subapp for brgen.no. Rails 8. PostgreSQL + Redis.
+
+## Deploy
+
+```zsh
+doas zsh brgen_tv.sh
+```

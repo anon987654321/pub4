@@ -1,11 +1,45 @@
-MASTER2 v1.0.0
+# pub4
 
-An AI that reviews its own code, argues with itself, and ships the result.
+Constitutional AI coding agent and web platform. OpenBSD-first. Ruby-only.
 
-Documentation in MASTER2/README.md
+## Layout
 
-Runs Ruby code through twelve adversarial personas enforcing thirty-two axioms from Clean Code and The Pragmatic Programmer. Seven stage pipeline. Four reasoning patterns. Ten dollar session cap. Circuit breaker. Rollback safety. Result monad. No exceptions. OpenBSD first.
+```
+pub4/
+  MASTER/          Constitutional AI agent (~6K LOC Ruby)
+  DEPLOY/openbsd/  Two-stage OpenBSD deploy script (openbsd.sh)
+  multimedia/      Audio tools: TTS, Dilla, Postpro, Repligen
+  mix/             Audio mixes
+  sh/              Shell scripts
+```
 
-Installation: cd MASTER2, bundle install, export OPENROUTER_API_KEY, run bin/master
+## MASTER
 
-MIT License
+Self-hosting AI agent that replaces Claude Code CLI on the VPS.
+
+```zsh
+cd MASTER && bundle exec ruby exe/master
+```
+
+10-stage pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
+
+Key features: scan, sweep (self-refactor), autoloop (continuous fix), council (adversarial review), TTS, soul (identity evolution).
+
+## Deploy
+
+```zsh
+cd MASTER/DEPLOY/openbsd
+doas zsh openbsd.sh
+```
+
+Deploys full OpenBSD stack: pf, relayd, httpd, smtpd, nsd, Rails apps, masterweb rc.d service.
+
+## Requirements
+
+- OpenBSD 7.8 (VPS) or proot Ubuntu (Termux)
+- Ruby 3.3+, Bundler
+- `OPENROUTER_API_KEY`
+
+## License
+
+MIT
