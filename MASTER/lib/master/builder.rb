@@ -135,7 +135,7 @@ module Master
         Stages::Execute.new,
         Pipeline::SkipOnPressure.new(Pipeline::ParallelGroup.new(
           ai[:council_stage],
-          Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:)
+          Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:, event_bus: bus)
         )),
         Pipeline::SkipOnPressure.new(Stages::Prune.new),
         Stages::Memo.new(memory: infra[:memory], event_bus: bus),

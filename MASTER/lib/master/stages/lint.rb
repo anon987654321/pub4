@@ -6,19 +6,19 @@ module Master
     class Lint
       FENCE_RE = /```(?:ruby)?\n(.*?)```/m
 
-      def initialize(scanner:, config:, autoloop: nil, root: nil)
+      def initialize(scanner:, config:, autoloop: nil, root: nil, event_bus: nil)
         @scanner  = scanner
         @config   = config
         @autoloop = autoloop
         @root     = root
+        @bus      = event_bus
       end
 
       def call(ctx)
         findings = []
 
         paths = Array(ctx[:written_files]).filter_map { |p| File.exist?(p) ? p : nil }
-                paths.each do |scan_path|
-          next unless File.exist?(scan_path)
+        paths.each do |scan_path|
           if File.directory?(scan_path)
             result = @scanner.scan_dir(scan_path, depth: :standard)
             findings.concat(result.value!.flat_map { |_, r| r.respond_to?(:ok?) && r.ok? ? r.value! : [] }) if result.respond_to?(:ok?) && result.ok?
@@ -57,7 +57,7 @@ module Master
         Tempfile.open(["lint_inline", ".rb"]) do |f|
           f.write("# frozen_string_literal: true\n\n#{code}")
           f.flush
-          result = @scanner.scan(f.path, depth: :quick)
+          result = @scanner.scan(f.path, depth: :standard)
           if result.respond_to?(:ok?) && result.ok?
             findings = result.value!.map { |v| v.merge(source: :inline) }
           end
