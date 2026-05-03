@@ -84,12 +84,8 @@ module Master
       result.to_s
     end
 
-    def ask_once(prompt, system: nil)
-      send_with_cache(model, [{ role: "user", content: prompt.to_s }], system: system, stream: false).to_s
-    end
-
-    def ask_once_with_model(prompt, model:, system: nil)
-      send_with_cache(model, [{ role: "user", content: prompt.to_s }], system: system, stream: false).to_s
+    def ask_once(prompt, system: nil, model: nil)
+      send_with_cache(model || self.model, [{ role: "user", content: prompt.to_s }], system: system, stream: false).to_s
     end
 
     def call(ctx)

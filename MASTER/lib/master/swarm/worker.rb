@@ -24,11 +24,7 @@ module Master
         @bus&.publish(:swarm_worker_start, role: @role, task: task[0..60])
 
         preferred = self.class::PREFERRED_MODEL
-        raw = if preferred && @agent.respond_to?(:ask_once_with_model)
-          @agent.ask_once_with_model(prompt, model: preferred, system: worker_system_prompt)
-        else
-          @agent.ask_once(prompt, system: worker_system_prompt)
-        end
+        raw = @agent.ask_once(prompt, model: preferred, system: worker_system_prompt)
         @result, @confidence = parse_result(raw)
 
         @bus&.publish(:swarm_worker_done, role: @role, ok: @result.ok?)

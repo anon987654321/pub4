@@ -10,15 +10,15 @@ module Master
       def load_prompts = Master.load_yaml(PROMPTS_PATH)
 
       def build_codebase_map
-        files = Dir.glob(File.join(@root, "lib", "**", "*.rb"))
-                   .reject { |f| f.include?("/vendor/") }
+        files = Dir.glob(File.join(@root, "lib", "**", Scan::Scanner::SCAN_GLOB))
+                   .reject { |f| f.include?("/vendor/") || f.include?("/knowledge/") }
                    .map    { |f| f.delete_prefix("#{@root}/") }
                    .sort
         unless @code_index&.built?
-          return "## Codebase (#{files.size} Ruby files)\n" + files.map { |f| "  #{f}" }.join("\n")
+          return "## Codebase (#{files.size} files)\n" + files.map { |f| "  #{f}" }.join("\n")
         end
 
-        lines = ["## Codebase (#{files.size} Ruby files)"]
+        lines = ["## Codebase (#{files.size} files)"]
         files.each do |rel|
           syms = @code_index.symbols_in(File.join(@root, rel))
           if syms.empty?
@@ -40,9 +40,7 @@ module Master
 
       def rewrite(path, rel)
         src  = File.read(path, encoding: "UTF-8")
-        ext  = File.extname(path)
-        lang = { ".rb" => "ruby", ".sh" => "sh", ".yml" => "yaml",
-                 ".md" => "markdown", ".erb" => "erb" }.fetch(ext, "text")
+        lang = Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
         response = @agent.ask(build_prompt(src, rel, lang))
         extract(response.to_s, lang)
       rescue StandardError => e
@@ -89,7 +87,7 @@ module Master
       end
 
       def violations_in(path)
-        return 0 unless path.end_with?(".rb") && File.exist?(path)
+        return 0 unless Scan::Rule::EXT_LANG.key?(File.extname(path).downcase) && File.exist?(path)
         scan_result = @scanner.scan(path, depth: :deep)
         scan_result.ok? ? scan_result.value!.size : 0
       rescue StandardError => _e
@@ -97,8 +95,9 @@ module Master
       end
 
       def violations_in_text(content, ref_path)
-        return 0 unless ref_path.end_with?(".rb")
-        Tempfile.open(["vcheck", ".rb"]) do |f|
+        ext = File.extname(ref_path).downcase
+        return 0 unless Scan::Rule::EXT_LANG.key?(ext)
+        Tempfile.open(["vcheck", ext]) do |f|
           f.write(content); f.flush
           scan_result = @scanner.scan(f.path, depth: :deep)
           scan_result.ok? ? scan_result.value!.size : 0

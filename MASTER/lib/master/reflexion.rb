@@ -30,7 +30,7 @@ module Master
         Attempt output: #{result.to_s[0, TASK_TRUNCATE]}
         What specifically went wrong? Name the constraint violated. What must change in the next attempt? One paragraph, no preamble.
       PROMPT
-      resp = fast_model ? agent.ask_once_with_model(prompt, model: fast_model) : agent.ask(prompt)
+      resp = fast_model ? agent.ask_once(prompt, model: fast_model) : agent.ask(prompt)
       resp.respond_to?(:value!) ? resp.value! : resp.to_s
     rescue StandardError => _e
       "previous attempt failed — try a different approach"
