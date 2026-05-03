@@ -9,46 +9,53 @@ module Master
     CONFIDENCE_DECAY_DAYS = 30
 
     def initialize(root:)
-      @path = File.join(root, STORE_PATH)
+      @path    = File.join(root, STORE_PATH)
+      @mutex   = Mutex.new
       @entries = load_entries
     end
 
     def record(trigger:, strategy:, outcome:)
-      existing = @entries.find { |e| e["trigger"] == trigger.to_s && e["strategy"] == strategy.to_s }
-      if existing
-        existing["reuse_count"] = existing["reuse_count"].to_i + 1
-        existing["confidence"]  = [existing["confidence"].to_f + 0.05, 1.0].min
-        existing["outcome"]     = outcome.to_s
-        existing["timestamp"]   = Time.now.to_i
-      else
-        @entries << {
-          "trigger"     => trigger.to_s,
-          "strategy"    => strategy.to_s,
-          "outcome"     => outcome.to_s,
-          "confidence"  => outcome == :fixed ? 0.7 : 0.4,
-          "reuse_count" => 0,
-          "timestamp"   => Time.now.to_i
-        }
+      @mutex.synchronize do
+        existing = @entries.find { |e| e["trigger"] == trigger.to_s && e["strategy"] == strategy.to_s }
+        if existing
+          existing["reuse_count"] = existing["reuse_count"].to_i + 1
+          existing["confidence"]  = [existing["confidence"].to_f + 0.05, 1.0].min
+          existing["outcome"]     = outcome.to_s
+          existing["timestamp"]   = Time.now.to_i
+        else
+          @entries << {
+            "trigger"     => trigger.to_s,
+            "strategy"    => strategy.to_s,
+            "outcome"     => outcome.to_s,
+            "confidence"  => outcome == :fixed ? 0.7 : 0.4,
+            "reuse_count" => 0,
+            "timestamp"   => Time.now.to_i
+          }
+        end
+        prune_old!
+        persist
       end
-      prune_old!
-      persist
     end
 
     def search(trigger_fragment, limit: 3)
       fragment = trigger_fragment.to_s.downcase
-      @entries
-        .select { |e| e["trigger"].to_s.downcase.include?(fragment) && e["outcome"] != "failed" }
-        .sort_by { |e| -e["confidence"].to_f }
-        .first(limit)
+      @mutex.synchronize do
+        @entries
+          .select { |e| e["trigger"].to_s.downcase.include?(fragment) && e["outcome"] != "failed" }
+          .sort_by { |e| -e["confidence"].to_f }
+          .first(limit)
+      end
     end
 
-    def all = @entries.dup
+    def all = @mutex.synchronize { @entries.dup }
 
     def prune_stale!
       cutoff = Time.now.to_i - (CONFIDENCE_DECAY_DAYS * 86_400)
-      before = @entries.size
-      @entries.reject! { |e| e["reuse_count"].to_i == 0 && e["timestamp"].to_i < cutoff }
-      persist if @entries.size < before
+      @mutex.synchronize do
+        before = @entries.size
+        @entries.reject! { |e| e["reuse_count"].to_i == 0 && e["timestamp"].to_i < cutoff }
+        persist if @entries.size < before
+      end
     end
 
     private
@@ -64,7 +71,7 @@ module Master
 
     def persist
       FileUtils.mkdir_p(File.dirname(@path))
-      tmp_path = "#{@path}.tmp"
+      tmp_path = "#{@path}.tmp.#{Process.pid}"
       File.write(tmp_path, @entries.map { |e| JSON.generate(e) }.join("\n") + "\n")
       File.rename(tmp_path, @path)
     end

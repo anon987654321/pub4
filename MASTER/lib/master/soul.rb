@@ -61,7 +61,9 @@ module Master
         "BLOCKED: proposal would change ABSOLUTE sections: #{drift[:absolute_changed].join(", ")}. Add /override to force."
       else
         FileUtils.mkdir_p(File.dirname(PROPOSAL_PATH))
-        (tmp_w = "PROPOSAL_PATH.tmp"; File.write(tmp_w, draft); File.rename(tmp_w, PROPOSAL_PATH))
+        tmp_w = "#{PROPOSAL_PATH}.tmp.#{Process.pid}"
+        File.write(tmp_w, draft)
+        File.rename(tmp_w, PROPOSAL_PATH)
         risk = drift[:protected_changed].any? ? " [PROTECTED sections affected: #{drift[:protected_changed].join(", ")}]" : ""
         "proposal saved#{risk}. Review with `soul diff`, approve with `soul approve`, reject with `soul reject`."
       end
