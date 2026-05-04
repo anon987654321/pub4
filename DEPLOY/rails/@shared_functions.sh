@@ -268,31 +268,7 @@ SCSS
 }
 
 write_base_css() { write_base_scss; }
-
-write_layout() {
-  local app_title=${1:-App}
-  mkdir -p app/views/layouts
-  cat > app/views/layouts/application.html.erb << LAYOUT
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title><%= content_for?(:title) ? yield(:title) + " – ${app_title}" : "${app_title}" %></title>
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
-  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_importmap_tags %>
-</head>
-<body>
-<% if notice %><div class="flash-notice"><%= notice %></div><% end %>
-<% if alert  %><div class="flash-alert"><%= alert  %></div><% end %>
-<main><%= yield %></main>
-</body>
-</html>
-LAYOUT
-  log_ok "Layout written"
-}
+write_layout()     { write_full_layout "$@"; }
 
 install_rcd() {
   local svc=$1 app_dir=$2 port=$3 user=$4
@@ -354,4 +330,182 @@ FALCON
 install_thruster() {
   add_gem thruster
   log_ok "Thruster added"
+}
+
+# ── Stimulus + Importmap ────────────────────────────────────────────────────
+
+setup_stimulus() {
+  log "Setting up Stimulus"
+  bin/importmap pin @hotwired/stimulus --download 2>/dev/null || true
+  mkdir -p app/javascript/controllers
+  cat > app/javascript/controllers/application.js << 'JS'
+import { Application } from "@hotwired/stimulus"
+const application = Application.start()
+application.debug = false
+window.Stimulus = application
+export { application }
+JS
+  cat > app/javascript/controllers/index.js << 'JS'
+import { application } from "./application"
+// controllers are auto-imported via eagerLoadControllersFrom in application.js
+// or listed here explicitly:
+JS
+  cat >> app/javascript/application.js << 'JS'
+
+import { application } from "controllers/application"
+import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
+eagerLoadControllersFrom("controllers", application)
+JS
+  log_ok "Stimulus ready"
+}
+
+write_stimulus_controller() {
+  local name=$1 content=$2
+  mkdir -p app/javascript/controllers
+  print -r -- "$content" > "app/javascript/controllers/${name}_controller.js"
+  log_ok "Stimulus ${name}_controller.js written"
+}
+
+# ── Pagy ───────────────────────────────────────────────────────────────────
+
+setup_pagy() {
+  add_gem pagy
+  mkdir -p config/initializers
+  cat > config/initializers/pagy.rb << 'RUBY'
+require "pagy/extras/overflow"
+require "pagy/extras/metadata"
+Pagy::DEFAULT[:limit] = 25
+Pagy::DEFAULT[:overflow] = :last_page
+RUBY
+  cat >> app/helpers/application_helper.rb << 'RUBY'
+
+  include Pagy::Frontend
+RUBY
+  log_ok "Pagy configured"
+}
+
+# ── Shared partials ─────────────────────────────────────────────────────────
+
+write_shared_partials() {
+  mkdir -p app/views/shared
+  cat > app/views/shared/_flash.html.erb << 'ERB'
+<% flash.each do |type, msg| %>
+  <div class="flash flash--<%= type %>"><%= msg %></div>
+<% end %>
+ERB
+
+  cat > app/views/shared/_errors.html.erb << 'ERB'
+<% if object.errors.any? %>
+  <div class="errors">
+    <% object.errors.full_messages.each do |msg| %>
+      <p class="error-msg"><%= msg %></p>
+    <% end %>
+  </div>
+<% end %>
+ERB
+
+  cat > app/views/shared/_pagination.html.erb << 'ERB'
+<%= pagy_nav(pagy) if pagy.pages > 1 %>
+ERB
+  log_ok "Shared partials written"
+}
+
+# ── Auth views ──────────────────────────────────────────────────────────────
+
+write_auth_views() {
+  mkdir -p app/views/sessions app/views/passwords
+  cat > app/views/sessions/new.html.erb << 'ERB'
+<div class="auth-form">
+  <h1>Sign in</h1>
+  <%= form_with url: session_path do |f| %>
+    <%= render "shared/errors", object: f.object if f.object.respond_to?(:errors) %>
+    <div class="field">
+      <%= f.label :email_address, "Email" %>
+      <%= f.email_field :email_address, autofocus: true, autocomplete: "email" %>
+    </div>
+    <div class="field">
+      <%= f.label :password %>
+      <%= f.password_field :password, autocomplete: "current-password" %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Sign in", class: "btn btn--primary" %>
+    </div>
+    <p><%= link_to "Forgot password?", new_password_path %></p>
+  <% end %>
+</div>
+ERB
+
+  cat > app/views/passwords/new.html.erb << 'ERB'
+<div class="auth-form">
+  <h1>Reset password</h1>
+  <%= form_with url: passwords_path do |f| %>
+    <div class="field">
+      <%= f.label :email_address, "Email" %>
+      <%= f.email_field :email_address, autofocus: true, autocomplete: "email" %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Send reset link", class: "btn btn--primary" %>
+    </div>
+  <% end %>
+</div>
+ERB
+
+  cat > app/views/passwords/edit.html.erb << 'ERB'
+<div class="auth-form">
+  <h1>New password</h1>
+  <%= form_with model: @user, url: password_path(params[:token]), method: :put do |f| %>
+    <div class="field">
+      <%= f.label :password, "New password" %>
+      <%= f.password_field :password, autocomplete: "new-password" %>
+    </div>
+    <div class="field">
+      <%= f.label :password_confirmation, "Confirm password" %>
+      <%= f.password_field :password_confirmation, autocomplete: "new-password" %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Set password", class: "btn btn--primary" %>
+    </div>
+  <% end %>
+</div>
+ERB
+  log_ok "Auth views written"
+}
+
+# ── Enhanced layout ─────────────────────────────────────────────────────────
+
+write_full_layout() {
+  local app_title=${1:-App}
+  local nav_links=${2:-}
+  mkdir -p app/views/layouts
+  cat > app/views/layouts/application.html.erb << LAYOUT
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="turbo-cache-control" content="no-preview">
+  <title><%= content_for?(:title) ? yield(:title) + " – ${app_title}" : "${app_title}" %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav__brand"><%= link_to "${app_title}", root_path %></div>
+  <div class="nav__links">
+    ${nav_links}
+    <% if authenticated? %>
+      <%= link_to "Sign out", session_path, data: { turbo_method: :delete }, class: "nav__link" %>
+    <% else %>
+      <%= link_to "Sign in", new_session_path, class: "nav__link" %>
+    <% end %>
+  </div>
+</nav>
+<%= render "shared/flash" %>
+<main class="main"><%= yield %></main>
+</body>
+</html>
+LAYOUT
+  log_ok "Full layout written"
 }

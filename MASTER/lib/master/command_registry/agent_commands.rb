@@ -22,21 +22,22 @@ module Master
         "autoloop" => ->(ctx) {
           max = ctx[:args].to_s.strip.to_i
           max = AutoLoop::MAX_CYCLES if max <= 0
-          log = []
           result = autoloop.run(max_cycles: max) { |cycle, violations|
-            log << "  cycle #{cycle}: #{violations.size} violation(s)"
+            top = violations.first(3).map { |v| "#{File.basename(v[:file])}:#{v[:rule]}" }.join(" ")
+            $stdout.puts "autoloop: cycle #{cycle} #{violations.size} violation(s) #{top}"
+            $stdout.flush
           }
-          ([result.ok? ? result.value! : result.message] + log).join("\n")
+          result.ok? ? result.value! : result.message
         },
         "sweep" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           target = arg.empty? ? root : File.expand_path(arg, root)
           sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus, code_index: infra[:code_index])
-          log = []
           result = sweeper.run(target) { |cycle, file, delta|
-            log << "  cycle #{cycle}  #{file}  +#{delta}"
+            $stdout.puts "sweep: cycle #{cycle} #{file} +#{delta}"
+            $stdout.flush
           }
-          ([result.ok? ? result.value! : result.message] + log).join("\n")
+          result.ok? ? result.value! : result.message
         },
         "scan" => ->(ctx) {
           arg = ctx[:args].to_s.strip
