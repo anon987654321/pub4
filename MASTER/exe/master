@@ -16,8 +16,8 @@ def boot_web_ui(config)
   port = config["web_port"] || 53187
   host = config["web_host"] || "127.0.0.1"
 
-  if Master::Platform.openbsd?
-    running = system("pgrep -f 'falcon.*#{port}' > /dev/null 2>&1")
+  if RUBY_PLATFORM.include?("openbsd")
+    running = system("pgrep", "-qf", "falcon.*#{port}")
     $stderr.puts "web: http://#{host}:#{port} (#{running ? "up" : "down — run: doas rcctl start master"})"
   else
     require "open3"
