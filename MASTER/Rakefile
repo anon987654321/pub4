@@ -9,4 +9,36 @@ Rake::TestTask.new(:test) do |t|
   t.warning = false
 end
 
+desc "Deep scan lib/ — exit 1 if any violations found (static rules, no LLM)"
+task :constitution do
+  $LOAD_PATH.unshift(File.join(__dir__, "lib"))
+  require "master"
+
+  root    = __dir__
+  scanner = Master::Scan::Scanner.new
+  Master::Scan::Rule.registry.select(&:auto_build?).each { |klass| scanner.add_rule(klass.new) }
+  scanner.add_rule(Master::Scan::Rules::AxiomCoverageRule.new(root:))
+  scanner.add_rule(Master::Scan::Rules::RubocopRule.new(root:))
+  scanner.add_rule(Master::Scan::Rules::ReekRule.new(root:))
+  scanner.add_rule(Master::Scan::Rules::InterconnectRule.new(root:))
+
+  result = scanner.scan_dir(File.join(root, "lib"), depth: :deep, stream: false)
+  abort "constitution: scan failed: #{result.message}" unless result.respond_to?(:ok?) && result.ok?
+
+  violations = result.value!.flat_map { |_f, r| (r.respond_to?(:ok?) && r.ok?) ? r.value! : [] }
+  total      = violations.size
+
+  if total.zero?
+    puts "constitution: clean"
+  else
+    by_rule = violations.group_by { |v| v[:rule] }
+    by_rule.sort_by { |_, vs| -vs.size }.each do |rule, vs|
+      puts "[#{rule}] #{vs.size}"
+      vs.first(5).each { |v| puts "  #{v[:file]}:#{v[:line]}: #{v[:message]}" }
+    end
+    puts "constitution: #{total} violation(s)"
+    exit 1
+  end
+end
+
 task default: :test
