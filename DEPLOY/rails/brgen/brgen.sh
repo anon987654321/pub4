@@ -831,10 +831,9 @@ cat > app/assets/stylesheets/application.scss << 'SCSS'
 body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, sans-serif; }
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
-.nav { background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; height: var(--nav-h); padding: 0 1rem; gap: 1rem; position: sticky; top: 0; z-index: 100; }
-.nav__brand { font-weight: 700; font-size: 1.1rem; color: var(--primary); }
-.nav__links { display: flex; gap: .75rem; align-items: center; margin-left: auto; }
-.nav__link { color: var(--text); }
+nav { background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; height: var(--nav-h); padding: 0 1rem; gap: 1rem; position: sticky; top: 0; z-index: 100; }
+nav a { color: var(--text); }
+nav .brand { font-weight: 700; font-size: 1.1rem; color: var(--primary); margin-right: auto; }
 .main { max-width: 1200px; margin: 0 auto; padding: 1rem; display: grid; grid-template-columns: 1fr 312px; gap: 1.5rem; }
 @media (max-width: 960px) { .main { grid-template-columns: 1fr; } }
 .btn { display: inline-block; padding: .4rem .9rem; border-radius: 99px; border: 1px solid var(--primary); color: var(--primary); font-size: .8rem; font-weight: 600; cursor: pointer; background: transparent; }
@@ -904,7 +903,7 @@ a:hover { text-decoration: underline; }
 SCSS
 
 # ── Assets + Infrastructure ─────────────────────────────────────────────────
-write_full_layout "Brgen" '<%= link_to "Communities", root_path, class: "nav__link" %><%= link_to "Feed", feed_path, class: "nav__link" if authenticated? %><%= link_to "Stories", stories_path, class: "nav__link" %>'
+write_full_layout "Brgen" '<%= link_to "Communities", root_path %><%= link_to "Feed", feed_path if authenticated? %><%= link_to "Stories", stories_path %>'
 write_falcon_config "$APP_PORT"
 configure_production
 install_rcd brgen "$APP_DIR" "$APP_PORT" brgen

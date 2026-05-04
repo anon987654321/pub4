@@ -199,29 +199,17 @@ a {
   &:focus { outline: 2px solid #4285f4; outline-offset: 2px; }
 }
 
-// ==================== HEADER ====================
-.header {
+// ==================== NAV ====================
+nav {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: var(--space-md);
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-extra-light-grey);
 
-  &__tabs {
-    display: flex;
-    gap: var(--space-md);
-  }
-
-  &__tab {
-    padding: var(--space-xs) var(--space-md);
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    font-size: inherit;
-    font-family: inherit;
-
-    &:hover { background-color: var(--color-extra-light-grey); }
-  }
+  a { color: inherit; }
+  a:hover { text-decoration: underline; }
+  .brand { font-weight: 700; margin-right: auto; }
 }
 
 // ==================== MAIN ====================
@@ -493,16 +481,14 @@ write_full_layout() {
   <%= javascript_importmap_tags %>
 </head>
 <body>
-<nav class="nav">
-  <div class="nav__brand"><%= link_to "${app_title}", root_path %></div>
-  <div class="nav__links">
-    ${nav_links}
-    <% if authenticated? %>
-      <%= link_to "Sign out", session_path, data: { turbo_method: :delete }, class: "nav__link" %>
-    <% else %>
-      <%= link_to "Sign in", new_session_path, class: "nav__link" %>
-    <% end %>
-  </div>
+<nav>
+  <%= link_to "${app_title}", root_path, class: "brand" %>
+  ${nav_links}
+  <% if authenticated? %>
+    <%= link_to "Sign out", session_path, data: { turbo_method: :delete } %>
+  <% else %>
+    <%= link_to "Sign in", new_session_path %>
+  <% end %>
 </nav>
 <%= render "shared/flash" %>
 <main class="main"><%= yield %></main>
