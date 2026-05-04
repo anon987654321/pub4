@@ -162,6 +162,8 @@ autoloop:
     - pola
     - srp
     - cqs
+    - rubocop
+    - reek
 
 sweep:
   scan_depth: deep

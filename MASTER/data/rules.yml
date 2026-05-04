@@ -93,8 +93,6 @@ scan_depths:
     - ArityRule
     - TellDontAskRule
     - ThresholdDriftRule
-    - RubocopRule
-    - ReekRule
   deep: &deep
     - AdversarialRule
     - ConceptualRule
