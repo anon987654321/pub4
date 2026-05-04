@@ -27,7 +27,7 @@ module Master
       user  = ENV["USER"] || "dev"
       shell = File.basename(ENV["SHELL"] || "zsh")
       pchar = shell == "zsh" ? "%" : "$"
-      rev   = git_rev
+      rev   = git_rev || "1"
       url   = @config["web_public_url"] || "https://ai.brgen.no"
       token = @config["web_token"]
       web   = token ? "#{url}/?token=#{token}" : url
@@ -37,17 +37,16 @@ module Master
       lines << ""
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
-      lines << d("MASTER (CONSTITUTIONAL) #1: #{now.strftime('%a %b %-d %H:%M:%S %Z %Y')}")
+      lines << d("MASTER (CONSTITUTIONAL) ##{rev}: #{now.strftime('%a %b %e %H:%M:%S %Z %Y')}")
       lines << d("    #{user}@#{host}:#{@config["root"] || Dir.pwd}")
-      lines << d("runtime0: #{RUBY_PLATFORM}  ruby #{RUBY_VERSION}  #{shell} #{user}#{pchar}")
-      lines << d("model0:   #{short_model(model)}")
-      lines << d("rev0:     #{rev}") if rev
-      lines << d("security0: #{pledge_ok ? "pledge armed" : "pledge unavailable"}")
-      lines << d("web0:     #{web}")
+      lines << d("ruby0 at #{RUBY_PLATFORM}: #{RUBY_VERSION} #{shell}#{pchar}")
+      lines << d("model0 at openrouter: #{short_model(model)}")
+      lines << d("pledge0: #{pledge_ok ? "armed" : "unavailable"}")
+      lines << d("web0: #{web}")
       elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SEC).round
-      lines << d("boot0:    #{elapsed}ms")
+      lines << d("boot0: #{elapsed}ms")
       lines << ""
-      lines << @p.bold.red("master") + @p.dim("@#{host} ready -- /help for commands")
+      lines << @p.bold.red("master") + @p.dim("@#{host} ready")
       lines << ""
       lines.join("\n")
     end

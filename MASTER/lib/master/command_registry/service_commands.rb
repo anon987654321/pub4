@@ -158,11 +158,13 @@ module Master
           end
 
           buf << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc} / est. tokens: ~#{n_lines * 6 / 5}"
-          File.write(out, buf.join("\n"))
+          tmp = "#{out}.tmp.#{Process.pid}"
+          File.write(tmp, buf.join("\n"))
+          File.rename(tmp, out)
 
           day = Time.now.strftime("%Y-%m-%d")
-          system("git", "-C", root, "add", "snapshot_latest.md")
-          system("git", "-C", root, "commit", "-m", "snapshot: #{day} — #{files.size} files")
+          system("git", "-C", root, "add", "snapshot_latest.md") or raise "git add failed"
+          system("git", "-C", root, "commit", "-m", "snapshot: #{day} — #{files.size} files") or raise "git commit failed"
 
           gist_out, gist_st = Open3.capture2e("gh", "gist", "create", out,
                                               "--public",
