@@ -405,6 +405,146 @@ a:hover { text-decoration: underline; }
 .flash-alert  { background: #3a1a1a; color: #e57373; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
 CSS
 
+# ── Views ───────────────────────────────────────────────────────────────────
+mkdir -p app/views/rooms app/views/messages
+
+write_shared_partials
+write_auth_views
+
+cat > app/views/rooms/index.html.erb << 'ERB'
+<% content_for :title, "Rooms" %>
+<header>
+  <h1>Rooms</h1>
+  <%= link_to "New room", new_room_path, class: "btn-primary btn" %>
+  <%= form_with url: join_room_path(code: ""), method: :get, class: "join-form" do |f| %>
+    <%= f.text_field :code, placeholder: "Enter access code", maxlength: 8, class: "code-input" %>
+    <%= f.submit "Join", class: "btn btn-primary" %>
+  <% end %>
+</header>
+<% if @live_rooms.any? %>
+  <h2>Live now</h2>
+  <div class="room-grid" id="live_rooms">
+    <%= render @live_rooms %>
+  </div>
+<% end %>
+<% if @rooms.any? %>
+  <h2>My rooms</h2>
+  <div class="room-grid"><%= render @rooms %></div>
+  <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<% else %>
+  <p>No rooms yet. <%= link_to "Create one", new_room_path %>.</p>
+<% end %>
+ERB
+
+cat > app/views/rooms/_room.html.erb << 'ERB'
+<article class="room-card" id="<%= dom_id(room) %>">
+  <div class="room-preview">
+    <% if room.status == "live" %>
+      <span><span class="live-dot"></span>LIVE</span>
+    <% else %>
+      <span class="dim"><%= room.status.upcase %></span>
+    <% end %>
+  </div>
+  <div class="room-info">
+    <%= link_to room.name, room %>
+    <span class="dim"><%= room.viewer_count %> / <%= room.max_viewers %> viewers</span>
+    <p class="dim"><%= room.description %></p>
+    <span class="access-code"><%= room.access_code %></span>
+  </div>
+</article>
+ERB
+
+cat > app/views/rooms/show.html.erb << 'ERB'
+<% content_for :title, @room.name %>
+<div class="room-layout" data-controller="chat">
+  <section class="room-main">
+    <header>
+      <h1>
+        <% if @room.status == "live" %><span class="live-dot"></span><% end %>
+        <%= @room.name %>
+      </h1>
+      <span class="access-code"><%= @room.access_code %></span>
+      <% if @room.user == Current.user %>
+        <% if @room.status != "live" %>
+          <%= button_to "Go live", go_live_room_path(@room), method: :post, class: "btn btn-live" %>
+        <% else %>
+          <%= button_to "End", end_room_room_path(@room), method: :post, class: "btn btn-end", data: { turbo_confirm: "End this room?" } %>
+        <% end %>
+      <% end %>
+    </header>
+    <p class="dim"><%= @room.description %></p>
+    <p class="dim"><%= @room.viewer_count %> viewer<%= "s" if @room.viewer_count != 1 %></p>
+    <% if @room.user == Current.user %>
+      <%= form_with url: invite_room_path(@room), method: :post, class: "invite-form" do |f| %>
+        <%= f.email_field :email, placeholder: "Invite by email" %>
+        <%= f.submit "Invite", class: "btn btn-primary" %>
+      <% end %>
+    <% end %>
+  </section>
+  <aside class="chat-panel">
+    <div class="chat-messages" id="messages" data-chat-target="messages">
+      <%= render @messages %>
+    </div>
+    <%= form_with url: room_messages_path(@room), data: { action: "turbo:submit-end->chat#reset", controller: "chat" } do |f| %>
+      <%= f.text_field :content, placeholder: "Message…", data: { chat_target: "input" }, autocomplete: "off" %>
+      <%= f.hidden_field :message_type, value: "chat" %>
+      <%= f.submit "Send", class: "btn btn-primary" %>
+    <% end %>
+  </aside>
+</div>
+ERB
+
+cat > app/views/rooms/go_live.turbo_stream.erb << 'ERB'
+<%= turbo_stream.replace dom_id(@room), partial: "rooms/room", locals: { room: @room } %>
+<%= turbo_stream.replace "live_rooms", partial: "rooms/room", locals: { room: @room } %>
+ERB
+
+cat > app/views/rooms/new.html.erb << 'ERB'
+<% content_for :title, "New room" %>
+<h1>New room</h1>
+<%= form_with model: @room, class: "form" do |f| %>
+  <%= render "shared/errors", object: @room %>
+  <div class="field"><%= f.label :name %><%= f.text_field :name, autofocus: true %></div>
+  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
+  <div class="field"><%= f.label :max_viewers %><%= f.number_field :max_viewers, min: 1, max: 1000 %></div>
+  <div class="field"><%= f.label :recording_enabled %><%= f.check_box :recording_enabled %></div>
+  <div class="actions"><%= f.submit "Create room", class: "btn btn-primary" %> <%= link_to "Cancel", rooms_path %></div>
+<% end %>
+ERB
+
+cat > app/views/messages/_message.html.erb << 'ERB'
+<p class="chat-message" id="<%= dom_id(message) %>">
+  <span class="chat-author"><%= message.user.email_address.split("@").first %></span>
+  <%= message.content %>
+  <% if message.user == Current.user %>
+    <%= button_to "×", room_message_path(message.room, message), method: :delete, class: "btn-del" %>
+  <% end %>
+</p>
+ERB
+
+cat > app/views/messages/create.turbo_stream.erb << 'ERB'
+<%= turbo_stream.append "messages", partial: "messages/message", locals: { message: @message } %>
+ERB
+
+cat > app/views/messages/destroy.turbo_stream.erb << 'ERB'
+<%= turbo_stream.remove dom_id(@message) %>
+ERB
+
+# ── Stimulus ────────────────────────────────────────────────────────────────
+setup_stimulus
+
+mkdir -p app/javascript/controllers
+cat > app/javascript/controllers/chat_controller.js << 'JS'
+import { Controller } from "@hotwired/stimulus"
+export default class extends Controller {
+  static targets = ["messages", "input"]
+  connect() { this.scroll() }
+  messageTargetConnected() { this.scroll() }
+  scroll() { this.messagesTarget.scrollTop = this.messagesTarget.scrollHeight }
+  reset() { this.inputTarget.value = "" }
+}
+JS
+
 write_layout "Privcam"
 write_falcon_config "$APP_PORT"
 configure_production

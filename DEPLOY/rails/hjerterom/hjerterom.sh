@@ -416,6 +416,267 @@ a:hover { text-decoration: underline; }
 .flash-alert  { background: #f8d7da; color: #721c24; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
 CSS
 
+# ── Views ───────────────────────────────────────────────────────────────────
+mkdir -p app/views/home app/views/resources app/views/food_listings app/views/food_requests app/views/community
+
+write_shared_partials
+write_auth_views
+
+cat > app/views/home/index.html.erb << 'ERB'
+<% content_for :title, "Hjerterom" %>
+<% if @crisis_lines.any? %>
+  <aside class="crisis-banner">
+    <strong>Crisis support:</strong>
+    <% @crisis_lines.each do |c| %>
+      <%= c.title %> <strong><%= c.phone %></strong><%= " · " unless c == @crisis_lines.last %>
+    <% end %>
+  </aside>
+<% end %>
+<div class="home-grid">
+  <section>
+    <h2>Food available</h2>
+    <% @food_listings.each do |listing| %>
+      <article class="card">
+        <%= link_to listing.title, food_listing_path(listing) %>
+        <p class="dim"><%= listing.city %> · available until <%= listing.available_until&.strftime("%b %-d") %></p>
+      </article>
+    <% end %>
+    <%= link_to "All food listings →", food_listings_path %>
+  </section>
+  <section>
+    <h2>Community</h2>
+    <% @posts.each do |post| %>
+      <article class="card">
+        <%= link_to post.title, community_show_path(post) %>
+      </article>
+    <% end %>
+    <%= link_to "All posts →", community_path %>
+    <% if authenticated? %><%= link_to "New post", new_community_post_path, class: "btn btn-primary" %><% end %>
+  </section>
+  <section>
+    <h2>Resources</h2>
+    <% @resources.each do |resource| %>
+      <article class="card">
+        <%= link_to resource.title, resource_path(resource) %>
+        <p class="dim"><%= resource.resource_type %><%= " · #{resource.city}" if resource.city.present? %></p>
+      </article>
+    <% end %>
+    <%= link_to "All resources →", resources_path %>
+  </section>
+</div>
+ERB
+
+cat > app/views/resources/index.html.erb << 'ERB'
+<% content_for :title, "Resources" %>
+<header>
+  <h1>Resources</h1>
+  <% if authenticated? %><%= link_to "Add resource", new_resource_path, class: "btn btn-primary" %><% end %>
+</header>
+<div id="resources">
+  <% @resources.each do |resource| %>
+    <article class="card">
+      <%= link_to resource.title, resource %>
+      <span class="badge badge-<%= resource.resource_type %>"><%= resource.resource_type %></span>
+      <p class="dim"><%= resource.description %></p>
+      <p class="dim"><%= [resource.city, resource.phone].compact.join(" · ") %></p>
+    </article>
+  <% end %>
+</div>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+ERB
+
+cat > app/views/resources/show.html.erb << 'ERB'
+<% content_for :title, @resource.title %>
+<article class="card">
+  <h1><%= @resource.title %></h1>
+  <span class="badge badge-<%= @resource.resource_type %>"><%= @resource.resource_type %></span>
+  <p><%= @resource.description %></p>
+  <dl class="meta">
+    <% if @resource.address.present? %><dt>Address</dt><dd><%= @resource.address %>, <%= @resource.city %></dd><% end %>
+    <% if @resource.phone.present? %><dt>Phone</dt><dd><%= @resource.phone %></dd><% end %>
+    <% if @resource.email.present? %><dt>Email</dt><dd><%= mail_to @resource.email %></dd><% end %>
+    <% if @resource.url.present? %><dt>Website</dt><dd><%= link_to @resource.url, @resource.url %></dd><% end %>
+    <% if @resource.opening_hours.present? %><dt>Hours</dt><dd><%= @resource.opening_hours %></dd><% end %>
+  </dl>
+  <% if @resource.user == Current.user %>
+    <%= link_to "Edit", edit_resource_path(@resource), class: "btn" %>
+    <%= button_to "Delete", @resource, method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger" %>
+  <% end %>
+</article>
+ERB
+
+cat > app/views/resources/new.html.erb << 'ERB'
+<% content_for :title, "Add resource" %>
+<h1>Add resource</h1>
+<%= render "form", resource: @resource %>
+ERB
+
+cat > app/views/resources/edit.html.erb << 'ERB'
+<% content_for :title, "Edit resource" %>
+<h1>Edit resource</h1>
+<%= render "form", resource: @resource %>
+ERB
+
+cat > app/views/resources/_form.html.erb << 'ERB'
+<%= form_with model: resource, class: "form" do |f| %>
+  <%= render "shared/errors", object: resource %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
+  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
+  <div class="field">
+    <%= f.label :resource_type %>
+    <%= f.select :resource_type, %w[mental_health food shelter legal medical], include_blank: "Select…" %>
+  </div>
+  <div class="field"><%= f.label :address %><%= f.text_field :address %></div>
+  <div class="field"><%= f.label :city %><%= f.text_field :city %></div>
+  <div class="field"><%= f.label :phone %><%= f.telephone_field :phone %></div>
+  <div class="field"><%= f.label :email %><%= f.email_field :email %></div>
+  <div class="field"><%= f.label :url, "Website" %><%= f.url_field :url %></div>
+  <div class="field"><%= f.label :opening_hours %><%= f.text_field :opening_hours %></div>
+  <div class="actions"><%= f.submit class: "btn btn-primary" %> <%= link_to "Cancel", resources_path %></div>
+<% end %>
+ERB
+
+cat > app/views/food_listings/index.html.erb << 'ERB'
+<% content_for :title, "Food" %>
+<header>
+  <h1>Available food</h1>
+  <% if authenticated? %><%= link_to "List food", new_food_listing_path, class: "btn btn-primary" %><% end %>
+</header>
+<div id="food_listings">
+  <% @food_listings.each do |listing| %>
+    <article class="card">
+      <%= link_to listing.title, food_listing_path(listing) %>
+      <p class="dim"><%= listing.quantity %> <%= listing.unit %> · <%= listing.city %></p>
+      <p class="dim">Until <%= listing.available_until&.strftime("%b %-d, %H:%M") %></p>
+      <% if listing.dietary_info.present? %>
+        <span class="badge badge-food"><%= listing.dietary_info %></span>
+      <% end %>
+    </article>
+  <% end %>
+</div>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+ERB
+
+cat > app/views/food_listings/show.html.erb << 'ERB'
+<% content_for :title, @listing.title %>
+<article class="card">
+  <h1><%= @listing.title %></h1>
+  <p><%= @listing.description %></p>
+  <dl class="meta">
+    <dt>Quantity</dt><dd><%= @listing.quantity %> <%= @listing.unit %></dd>
+    <dt>Pickup</dt><dd><%= @listing.pickup_address %>, <%= @listing.city %></dd>
+    <dt>Available</dt><dd><%= @listing.available_from&.strftime("%b %-d, %H:%M") %> – <%= @listing.available_until&.strftime("%b %-d, %H:%M") %></dd>
+    <% if @listing.dietary_info.present? %><dt>Dietary</dt><dd><%= @listing.dietary_info %></dd><% end %>
+  </dl>
+  <% if authenticated? && @listing.user != Current.user && @listing.status == "available" %>
+    <%= form_with url: food_listing_food_requests_path(@listing), class: "form" do |f| %>
+      <div class="field"><%= f.text_area :message, rows: 2, placeholder: "Message (optional)…" %></div>
+      <div class="field"><%= f.datetime_local_field :pickup_time %></div>
+      <%= f.submit "Request pickup", class: "btn btn-primary" %>
+    <% end %>
+  <% end %>
+  <% if @listing.user == Current.user %>
+    <%= link_to "Edit", edit_food_listing_path(@listing), class: "btn" %>
+    <%= button_to "Delete", @listing, method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger" %>
+  <% end %>
+</article>
+ERB
+
+cat > app/views/food_listings/new.html.erb << 'ERB'
+<% content_for :title, "List food" %>
+<h1>List food</h1>
+<%= render "form", listing: @listing %>
+ERB
+
+cat > app/views/food_listings/edit.html.erb << 'ERB'
+<% content_for :title, "Edit listing" %>
+<h1>Edit listing</h1>
+<%= render "form", listing: @listing %>
+ERB
+
+cat > app/views/food_listings/_form.html.erb << 'ERB'
+<%= form_with model: listing, url: listing.new_record? ? food_listings_path : food_listing_path(listing), class: "form" do |f| %>
+  <%= render "shared/errors", object: listing %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
+  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 2 %></div>
+  <div class="field"><%= f.label :quantity %><%= f.number_field :quantity, min: 1 %></div>
+  <div class="field"><%= f.label :unit %><%= f.text_field :unit, placeholder: "kg, portions, bags…" %></div>
+  <div class="field"><%= f.label :pickup_address %><%= f.text_field :pickup_address %></div>
+  <div class="field"><%= f.label :city %><%= f.text_field :city %></div>
+  <div class="field"><%= f.label :available_from %><%= f.datetime_local_field :available_from %></div>
+  <div class="field"><%= f.label :available_until %><%= f.datetime_local_field :available_until %></div>
+  <div class="field"><%= f.label :dietary_info %><%= f.text_field :dietary_info, placeholder: "vegan, nut-free…" %></div>
+  <div class="actions"><%= f.submit class: "btn btn-primary" %> <%= link_to "Cancel", food_listings_path %></div>
+<% end %>
+ERB
+
+cat > app/views/community/index.html.erb << 'ERB'
+<% content_for :title, "Community" %>
+<header>
+  <h1>Community</h1>
+  <% if authenticated? %><%= link_to "New post", new_community_post_path, class: "btn btn-primary" %><% end %>
+</header>
+<div id="community_posts">
+  <% @posts.each do |post| %>
+    <article class="card">
+      <%= link_to post.title, community_show_path(post) %>
+      <span class="dim"><%= post.anonymous? ? "Anonymous" : post.user.email_address.split("@").first %></span>
+    </article>
+  <% end %>
+</div>
+ERB
+
+cat > app/views/community/show.html.erb << 'ERB'
+<% content_for :title, @post.title %>
+<article class="card post">
+  <h1><%= @post.title %></h1>
+  <span class="dim"><%= @post.anonymous? ? "Anonymous" : @post.user.email_address.split("@").first %></span>
+  <%= @post.body %>
+</article>
+<section id="comments">
+  <h2>Comments</h2>
+  <%= render @comments %>
+  <% if authenticated? %>
+    <%= form_with url: community_comments_path, class: "form" do |f| %>
+      <%= f.hidden_field :post_id, value: @post.id %>
+      <div class="field"><%= f.text_area :content, rows: 3, placeholder: "Comment…" %></div>
+      <div class="actions"><%= f.submit "Comment", class: "btn btn-primary" %></div>
+    <% end %>
+  <% end %>
+</section>
+ERB
+
+cat > app/views/community/new.html.erb << 'ERB'
+<% content_for :title, "New post" %>
+<h1>New post</h1>
+<%= form_with url: community_path, class: "form" do |f| %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title, name: "post[title]", autofocus: true %></div>
+  <div class="field"><%= f.label :body %><%= f.rich_text_area :body, name: "post[body]" %></div>
+  <div class="field field--check">
+    <%= label_tag :anonymous, "Post anonymously" %>
+    <%= check_box_tag "post[anonymous]" %>
+  </div>
+  <div class="actions"><%= f.submit "Post", class: "btn btn-primary" %> <%= link_to "Cancel", community_path %></div>
+<% end %>
+ERB
+
+# ── SCSS additions ───────────────────────────────────────────────────────────
+cat >> app/assets/stylesheets/application.css << 'CSS'
+.home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+.meta { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; margin: 1rem 0; }
+.meta dt { font-weight: 600; }
+.btn { display: inline-block; padding: .5rem 1.25rem; border-radius: 8px; border: none; cursor: pointer; font-size: .9rem; font-weight: 600; text-decoration: none; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-danger { background: #dc3545; color: #fff; }
+.dim { color: var(--text-dim); font-size: .85rem; }
+.form { max-width: 560px; }
+.form .field { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .75rem; }
+.form .field--check { flex-direction: row; align-items: center; gap: .5rem; }
+.form input, .form select, .form textarea { border: 1px solid #cbd5e0; border-radius: 6px; padding: .45rem .6rem; font: inherit; }
+.form .actions { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; }
+h1, h2 { margin-bottom: .5rem; }
+CSS
+
 write_layout "Hjerterom"
 write_falcon_config "$APP_PORT"
 configure_production

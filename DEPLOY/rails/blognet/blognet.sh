@@ -308,9 +308,153 @@ Rails.application.routes.draw do
 end
 RUBY
 
+# ── Views ───────────────────────────────────────────────────────────────────
+mkdir -p app/views/blogs app/views/posts app/views/comments
+
+write_shared_partials
+write_auth_views
+
+cat > app/views/blogs/index.html.erb << 'ERB'
+<% content_for :title, "Blogs" %>
+<header>
+  <h1>Blogs</h1>
+  <% if authenticated? %><%= link_to "New blog", new_blog_path, class: "btn" %><% end %>
+</header>
+<div id="blogs">
+  <% @blogs.each do |blog| %>
+    <article>
+      <%= link_to blog.name, blog_path(blog) %>
+      <p class="dim"><%= blog.description %></p>
+      <span class="dim"><%= blog.posts_count %> posts</span>
+    </article>
+  <% end %>
+</div>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+ERB
+
+cat > app/views/blogs/show.html.erb << 'ERB'
+<% content_for :title, @blog.name %>
+<header>
+  <h1><%= @blog.name %></h1>
+  <p class="dim"><%= @blog.description %></p>
+  <% if @blog.user == Current.user %>
+    <%= link_to "New post", new_blog_post_path(@blog), class: "btn" %>
+    <%= link_to "Edit", edit_blog_path(@blog), class: "btn" %>
+  <% end %>
+</header>
+<div id="posts">
+  <% @posts.each do |post| %>
+    <article>
+      <%= link_to post.title, blog_post_path(@blog, post) %>
+      <span class="dim"><%= post.published_at&.strftime("%b %-d, %Y") %> · <%= post.views_count %> views · <%= post.comments_count %> comments</span>
+    </article>
+  <% end %>
+</div>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+ERB
+
+cat > app/views/blogs/new.html.erb << 'ERB'
+<% content_for :title, "New blog" %>
+<h1>New blog</h1>
+<%= render "form", blog: @blog %>
+ERB
+
+cat > app/views/blogs/edit.html.erb << 'ERB'
+<% content_for :title, "Edit blog" %>
+<h1>Edit <%= @blog.name %></h1>
+<%= render "form", blog: @blog %>
+ERB
+
+cat > app/views/blogs/_form.html.erb << 'ERB'
+<%= form_with model: blog, class: "form" do |f| %>
+  <%= render "shared/errors", object: blog %>
+  <div class="field"><%= f.label :name %><%= f.text_field :name, autofocus: true %></div>
+  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 2 %></div>
+  <div class="field field--check"><%= f.label :published %><%= f.check_box :published %></div>
+  <div class="actions"><%= f.submit class: "btn" %> <%= link_to "Cancel", blogs_path %></div>
+<% end %>
+ERB
+
+cat > app/views/posts/show.html.erb << 'ERB'
+<% content_for :title, @post.title %>
+<article class="post">
+  <header>
+    <h1><%= @post.title %></h1>
+    <span class="dim"><%= @post.user.email_address.split("@").first %> · <%= @post.published_at&.strftime("%b %-d, %Y") %> · <%= @post.views_count %> views</span>
+    <% if @post.user == Current.user %>
+      <%= link_to "Edit", edit_blog_post_path(@blog, @post), class: "btn" %>
+      <%= button_to "Delete", blog_post_path(@blog, @post), method: :delete, data: { turbo_confirm: "Delete post?" }, class: "btn btn-danger" %>
+    <% end %>
+  </header>
+  <%= @post.body %>
+</article>
+<section id="comments">
+  <h2>Comments (<%= @post.comments_count %>)</h2>
+  <%= render @comments %>
+  <% if authenticated? %>
+    <%= form_with url: blog_post_comments_path(@blog, @post), class: "form" do |f| %>
+      <div class="field"><%= f.text_area :content, rows: 3, placeholder: "Add a comment…" %></div>
+      <div class="actions"><%= f.submit "Comment", class: "btn" %></div>
+    <% end %>
+  <% end %>
+</section>
+ERB
+
+cat > app/views/posts/new.html.erb << 'ERB'
+<% content_for :title, "New post" %>
+<h1>New post</h1>
+<%= render "form", blog: @blog, post: @post %>
+ERB
+
+cat > app/views/posts/edit.html.erb << 'ERB'
+<% content_for :title, "Edit post" %>
+<h1>Edit post</h1>
+<%= render "form", blog: @blog, post: @post %>
+ERB
+
+cat > app/views/posts/_form.html.erb << 'ERB'
+<%= form_with model: [@blog, post], class: "form" do |f| %>
+  <%= render "shared/errors", object: post %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
+  <div class="field"><%= f.label :body %><%= f.rich_text_area :body %></div>
+  <div class="field field--check"><%= f.label :published %><%= f.check_box :published %></div>
+  <div class="actions"><%= f.submit class: "btn" %> <%= link_to "Cancel", blog_path(@blog) %></div>
+<% end %>
+ERB
+
+cat > app/views/comments/_comment.html.erb << 'ERB'
+<article class="comment" id="<%= dom_id(comment) %>">
+  <span class="dim"><%= comment.user.email_address.split("@").first %></span>
+  <p><%= comment.content %></p>
+  <% if authenticated? && (comment.user == Current.user || @blog.user == Current.user) %>
+    <%= button_to "Delete", blog_post_comment_path(@blog, @post, comment), method: :delete, class: "btn-sm btn-danger" %>
+  <% end %>
+</article>
+ERB
+
 # ── Assets + Layout + Infrastructure ────────────────────────────────────────
 install_dartsass
 write_base_scss
+
+cat >> app/assets/stylesheets/application.scss << 'SCSS'
+
+.post { max-width: 720px; }
+.post header { margin-bottom: var(--space-lg); }
+article { margin-bottom: var(--space-md); padding-bottom: var(--space-md); border-bottom: 1px solid var(--color-extra-light-grey); }
+article:last-child { border-bottom: none; }
+.comment { padding: var(--space-sm) 0; border-bottom: 1px solid var(--color-extra-light-grey); }
+.btn { display: inline-block; padding: .3rem .8rem; background: var(--color-black); color: var(--color-white); border: none; border-radius: 3px; cursor: pointer; font-size: .85rem; text-decoration: none; }
+.btn-sm { padding: .2rem .5rem; font-size: .75rem; background: #444; color: #fff; border: none; border-radius: 3px; cursor: pointer; }
+.btn-danger { background: #c00; }
+.dim { color: #666; font-size: .85rem; }
+.form { max-width: 680px; }
+.form .field { display: flex; flex-direction: column; gap: .2rem; margin-bottom: var(--space-sm); }
+.form .field--check { flex-direction: row; align-items: center; gap: var(--space-sm); }
+.form input, .form textarea { border: 1px solid #ccc; border-radius: 3px; padding: .4rem .6rem; font: inherit; }
+.form .actions { display: flex; gap: var(--space-sm); align-items: center; margin-top: var(--space-md); }
+h1, h2 { margin-bottom: var(--space-sm); }
+SCSS
+
 write_layout "Blognet"
 write_falcon_config "$APP_PORT"
 configure_production

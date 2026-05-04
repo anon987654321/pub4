@@ -357,9 +357,300 @@ Rails.application.routes.draw do
 end
 RUBY
 
+# ── Views ───────────────────────────────────────────────────────────────────
+mkdir -p app/views/home app/views/items app/views/outfits app/views/ai
+
+write_shared_partials
+write_auth_views
+
+cat > app/views/home/index.html.erb << 'ERB'
+<% content_for :title, "Dashboard" %>
+<% if authenticated? %>
+  <header class="dash-stats">
+    <dl>
+      <div><dt>Items</dt><dd><%= @items_count %></dd></div>
+      <div><dt>Spark joy</dt><dd><%= @joy_count %></dd></div>
+      <div><dt>Never worn</dt><dd><%= @never_worn %></dd></div>
+    </dl>
+    <%= link_to "Add item", new_item_path, class: "btn" %>
+    <%= link_to "AI suggestions", ai_suggest_outfits_path, class: "btn" %>
+  </header>
+  <% if @recent_items.any? %>
+    <h2>Recent</h2>
+    <div class="item-grid"><%= render @recent_items %></div>
+    <p><%= link_to "All items →", items_path %></p>
+  <% else %>
+    <p><%= link_to "Add your first item", new_item_path %></p>
+  <% end %>
+  <% if @recent_outfits.any? %>
+    <h2>Outfits</h2>
+    <div class="item-grid"><%= render @recent_outfits %></div>
+  <% end %>
+<% else %>
+  <p>Welcome to Amber. <%= link_to "Sign in", new_session_path %> to manage your wardrobe.</p>
+<% end %>
+ERB
+
+cat > app/views/items/index.html.erb << 'ERB'
+<% content_for :title, "Wardrobe" %>
+<section data-controller="filter">
+  <header>
+    <h1>Wardrobe (<%= @pagy.count %>)</h1>
+    <%= link_to "Add item", new_item_path, class: "btn" %>
+    <select data-action="change->filter#filter" data-filter-target="select">
+      <option value="">All</option>
+      <% Item::CATEGORIES.each do |cat| %>
+        <option value="<%= cat %>"><%= cat %></option>
+      <% end %>
+    </select>
+  </header>
+  <div class="item-grid" id="items" data-filter-target="grid">
+    <%= render @items %>
+  </div>
+  <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+</section>
+ERB
+
+cat > app/views/items/_item.html.erb << 'ERB'
+<article class="item-card" id="<%= dom_id(item) %>" data-category="<%= item.category %>">
+  <% if item.photos.attached? %>
+    <%= image_tag item.photos.first.variant(resize_to_fill: [300, 300]), class: "item-photo" %>
+  <% end %>
+  <%= link_to item.title, item, class: "item-title" %>
+  <span class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></span>
+  <span class="dim">Worn <%= item.times_worn.to_i %>×<%= " · #{number_to_currency(item.price)}" if item.price? %></span>
+  <nav>
+    <%= button_to "Wear", wear_item_path(item), method: :post, class: "btn-sm" %>
+    <% unless item.spark_joy? %>
+      <%= button_to "Joy", spark_joy_item_path(item), method: :post, class: "btn-sm" %>
+    <% end %>
+    <%= link_to "Edit", edit_item_path(item), class: "btn-sm" %>
+  </nav>
+</article>
+ERB
+
+cat > app/views/items/show.html.erb << 'ERB'
+<% content_for :title, @item.title %>
+<article class="item-detail">
+  <% if @item.photos.attached? %>
+    <div class="item-photos">
+      <% @item.photos.each do |p| %>
+        <%= image_tag p.variant(resize_to_limit: [600, 600]) %>
+      <% end %>
+    </div>
+  <% end %>
+  <header>
+    <h1><%= @item.title %></h1>
+    <% if @item.spark_joy? %><span class="badge">Sparks joy</span><% end %>
+  </header>
+  <dl class="meta">
+    <dt>Category</dt><dd><%= @item.category %></dd>
+    <% if @item.color.present? %><dt>Color</dt><dd><%= @item.color %></dd><% end %>
+    <% if @item.size.present? %><dt>Size</dt><dd><%= @item.size %></dd><% end %>
+    <% if @item.material.present? %><dt>Material</dt><dd><%= @item.material %></dd><% end %>
+    <% if @item.brand.present? %><dt>Brand</dt><dd><%= @item.brand %></dd><% end %>
+    <% if @item.price? %><dt>Price</dt><dd><%= number_to_currency(@item.price) %></dd><% end %>
+    <dt>Worn</dt><dd><%= @item.times_worn.to_i %> times</dd>
+    <% if @item.purchase_date? %><dt>Purchased</dt><dd><%= @item.purchase_date.strftime("%b %Y") %></dd><% end %>
+  </dl>
+  <div id="item_<%= @item.id %>_analysis"></div>
+  <nav>
+    <%= button_to "Worn today", wear_item_path(@item), method: :post, class: "btn" %>
+    <%= button_to "AI analyze", ai_analyze_item_path(@item), method: :post, class: "btn" %>
+    <%= link_to "Edit", edit_item_path(@item), class: "btn" %>
+    <%= button_to "Delete", @item, method: :delete, data: { turbo_confirm: "Remove this item?" }, class: "btn btn-danger" %>
+  </nav>
+</article>
+ERB
+
+cat > app/views/items/new.html.erb << 'ERB'
+<% content_for :title, "Add item" %>
+<h1>Add item</h1>
+<%= render "form", item: @item %>
+ERB
+
+cat > app/views/items/edit.html.erb << 'ERB'
+<% content_for :title, "Edit" %>
+<h1>Edit <%= @item.title %></h1>
+<%= render "form", item: @item %>
+ERB
+
+cat > app/views/items/_form.html.erb << 'ERB'
+<%= form_with model: item, class: "form" do |f| %>
+  <%= render "shared/errors", object: item %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
+  <div class="field">
+    <%= f.label :category %>
+    <%= f.select :category, Item::CATEGORIES, include_blank: "Select…" %>
+  </div>
+  <div class="field"><%= f.label :color %><%= f.text_field :color %></div>
+  <div class="field"><%= f.label :size %><%= f.text_field :size %></div>
+  <div class="field"><%= f.label :material %><%= f.text_field :material %></div>
+  <div class="field"><%= f.label :brand %><%= f.text_field :brand %></div>
+  <div class="field"><%= f.label :price %><%= f.number_field :price, step: "0.01", min: 0 %></div>
+  <div class="field"><%= f.label :purchase_date %><%= f.date_field :purchase_date %></div>
+  <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
+  <div class="actions"><%= f.submit class: "btn" %> <%= link_to "Cancel", items_path %></div>
+<% end %>
+ERB
+
+cat > app/views/outfits/index.html.erb << 'ERB'
+<% content_for :title, "Outfits" %>
+<header>
+  <h1>Outfits</h1>
+  <%= link_to "New outfit", new_outfit_path, class: "btn" %>
+</header>
+<div class="item-grid" id="outfits"><%= render @outfits %></div>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+ERB
+
+cat > app/views/outfits/_outfit.html.erb << 'ERB'
+<article class="item-card" id="<%= dom_id(outfit) %>">
+  <%= link_to outfit.name, outfit, class: "item-title" %>
+  <span class="dim"><%= [outfit.season, outfit.occasion].compact.join(" · ") %></span>
+  <span class="dim"><%= outfit.items.count %> items · <%= outfit.likes_count %> likes</span>
+</article>
+ERB
+
+cat > app/views/outfits/show.html.erb << 'ERB'
+<% content_for :title, @outfit.name %>
+<header>
+  <h1><%= @outfit.name %></h1>
+  <span class="dim"><%= [@outfit.season, @outfit.category, @outfit.occasion].compact.join(" · ") %></span>
+</header>
+<p><%= @outfit.description %></p>
+<div class="item-grid"><%= render @outfit.items %></div>
+<nav>
+  <%= button_to "Like (#{@outfit.likes_count})", like_outfit_path(@outfit), method: :post, class: "btn" %>
+  <%= link_to "Edit", edit_outfit_path(@outfit), class: "btn" %>
+  <%= button_to "Delete", @outfit, method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger" %>
+</nav>
+ERB
+
+cat > app/views/outfits/new.html.erb << 'ERB'
+<% content_for :title, "New outfit" %>
+<h1>New outfit</h1>
+<%= render "form", outfit: @outfit %>
+ERB
+
+cat > app/views/outfits/edit.html.erb << 'ERB'
+<% content_for :title, "Edit outfit" %>
+<h1>Edit <%= @outfit.name %></h1>
+<%= render "form", outfit: @outfit %>
+ERB
+
+cat > app/views/outfits/_form.html.erb << 'ERB'
+<%= form_with model: outfit, class: "form" do |f| %>
+  <%= render "shared/errors", object: outfit %>
+  <div class="field"><%= f.label :name %><%= f.text_field :name, autofocus: true %></div>
+  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
+  <div class="field">
+    <%= f.label :category %>
+    <%= f.select :category, %w[Casual Formal Work Workout Evening], include_blank: "Select…" %>
+  </div>
+  <div class="field">
+    <%= f.label :season %>
+    <%= f.select :season, Item::SEASONS, include_blank: "Select…" %>
+  </div>
+  <div class="field"><%= f.label :occasion %><%= f.text_field :occasion %></div>
+  <div class="actions"><%= f.submit class: "btn" %> <%= link_to "Cancel", outfits_path %></div>
+<% end %>
+ERB
+
+cat > app/views/ai/_analysis.html.erb << 'ERB'
+<aside class="ai-card">
+  <% if result["sparks_joy"].nil? %>
+    <p class="dim">Analysis unavailable</p>
+  <% else %>
+    <strong><%= result["sparks_joy"] ? "Sparks joy" : "Does not spark joy" %></strong>
+    <p><%= result["reason"] %></p>
+    <p class="dim"><em><%= result["suggestion"] %></em></p>
+  <% end %>
+</aside>
+ERB
+
+cat > app/views/ai/suggest_outfits.html.erb << 'ERB'
+<% content_for :title, "Outfit suggestions" %>
+<h1>Outfit suggestions</h1>
+<% @suggestions.each_with_index do |s, i| %>
+  <article class="ai-card">
+    <h2>Option <%= i + 1 %></h2>
+    <p><%= s["outfit"] %></p>
+    <p class="dim"><%= s["reason"] %></p>
+  </article>
+<% end %>
+<p><%= link_to "Back to wardrobe", items_path %></p>
+ERB
+
+cat > app/views/ai/declutter_guide.html.erb << 'ERB'
+<% content_for :title, "Declutter guide" %>
+<h1>Declutter guide</h1>
+<% if @candidates.any? %>
+  <p class="dim">Items to consider letting go:</p>
+  <div class="item-grid"><%= render @candidates %></div>
+<% else %>
+  <p>No declutter candidates — your wardrobe is in great shape.</p>
+<% end %>
+<p><%= link_to "Back", items_path %></p>
+ERB
+
+# ── Stimulus ────────────────────────────────────────────────────────────────
+setup_stimulus
+
+mkdir -p app/javascript/controllers
+cat > app/javascript/controllers/filter_controller.js << 'JS'
+import { Controller } from "@hotwired/stimulus"
+export default class extends Controller {
+  static targets = ["select", "grid"]
+  filter() {
+    const val = this.selectTarget.value
+    this.gridTarget.querySelectorAll("[data-category]").forEach(c => {
+      c.hidden = val && c.dataset.category !== val
+    })
+  }
+}
+JS
+
 # ── Assets + Layout ─────────────────────────────────────────────────────────
 install_dartsass
 write_base_scss
+
+cat >> app/assets/stylesheets/application.scss << 'SCSS'
+
+.dash-stats dl { display: flex; gap: var(--space-lg); margin-bottom: var(--space-md); }
+.dash-stats dt { font-size: .75rem; color: #666; text-transform: uppercase; }
+.dash-stats dd { font-size: 1.5rem; font-weight: 700; }
+
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-md); }
+.item-card { display: flex; flex-direction: column; gap: var(--space-xs); padding: var(--space-sm); border: 1px solid var(--color-extra-light-grey); border-radius: 4px; }
+.item-card .item-photo { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 2px; }
+.item-card .item-title { font-weight: 600; }
+.item-card nav { display: flex; gap: var(--space-xs); flex-wrap: wrap; margin-top: auto; }
+
+.item-detail { max-width: 700px; }
+.item-detail .item-photos { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-md); }
+.item-detail .item-photos img { width: 200px; border-radius: 4px; }
+
+.meta { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-xs) var(--space-md); margin: var(--space-md) 0; }
+.meta dt { font-weight: 600; }
+
+.ai-card { background: var(--color-extra-light-grey); border-radius: 4px; padding: var(--space-md); margin: var(--space-md) 0; }
+
+.btn { display: inline-block; padding: .3rem .8rem; background: var(--color-black); color: var(--color-white); border: none; border-radius: 3px; cursor: pointer; font-size: .85rem; text-decoration: none; }
+.btn-sm { padding: .2rem .5rem; font-size: .75rem; background: #444; color: #fff; border: none; border-radius: 3px; cursor: pointer; }
+.btn-danger { background: #c00; }
+.btn-joy { background: #c5820a; }
+.badge { display: inline-block; background: #f0c040; padding: .1rem .4rem; border-radius: 3px; font-size: .75rem; font-weight: 600; }
+.dim { color: #666; font-size: .85rem; }
+
+.form { max-width: 480px; }
+.form .field { display: flex; flex-direction: column; gap: .2rem; margin-bottom: var(--space-sm); }
+.form input, .form select, .form textarea { border: 1px solid #ccc; border-radius: 3px; padding: .4rem .6rem; font: inherit; }
+.form .actions { display: flex; gap: var(--space-sm); align-items: center; margin-top: var(--space-md); }
+
+h1, h2 { margin-bottom: var(--space-sm); }
+SCSS
+
 write_layout "Amber"
 
 # ── Puma + production ───────────────────────────────────────────────────────

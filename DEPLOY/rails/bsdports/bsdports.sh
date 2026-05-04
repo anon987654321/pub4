@@ -252,6 +252,124 @@ a:hover { text-decoration: underline; }
 .flash-alert  { background: #3a1a1a; color: #e57373; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; font-family: system-ui, sans-serif; }
 CSS
 
+# ── Views ───────────────────────────────────────────────────────────────────
+mkdir -p app/views/ports app/views/categories app/views/comments
+
+write_shared_partials
+write_auth_views
+
+cat > app/views/ports/index.html.erb << 'ERB'
+<% content_for :title, "Ports" %>
+<header>
+  <h1>OpenBSD Ports</h1>
+  <%= form_with url: ports_path, method: :get do |f| %>
+    <%= f.search_field :q, value: params[:q], placeholder: "Search ports…", class: "search" %>
+  <% end %>
+</header>
+<% if @category %>
+  <p><span class="badge badge-category"><%= @category.name %></span> &mdash; <%= @category.description %></p>
+<% end %>
+<div id="ports">
+  <% @ports.each do |port| %>
+    <div class="port-row">
+      <%= link_to port.name, port, class: "port-name" %>
+      <span class="badge badge-version"><%= port.version %></span>
+      <span class="badge badge-category"><%= link_to port.category.name, category_path(port.category) %></span>
+      <span class="port-comment"><%= port.comment %></span>
+    </div>
+  <% end %>
+</div>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+ERB
+
+cat > app/views/ports/show.html.erb << 'ERB'
+<% content_for :title, @port.name %>
+<article class="card">
+  <header>
+    <h1><%= @port.name %> <span class="badge badge-version"><%= @port.version %></span></h1>
+    <span class="dim"><%= link_to @port.category.name, category_path(@port.category) %></span>
+  </header>
+  <p><%= @port.comment %></p>
+  <p><%= @port.description %></p>
+  <dl class="meta">
+    <dt>Maintainer</dt><dd><%= @port.maintainer %></dd>
+    <dt>Pkgpath</dt><dd><code><%= @port.pkgpath %></code></dd>
+    <% if @port.homepage.present? %><dt>Homepage</dt><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
+    <dt>Updated</dt><dd><%= @port.last_updated&.strftime("%Y-%m-%d") %></dd>
+  </dl>
+  <% if @dependencies.any? %>
+    <h2>Dependencies</h2>
+    <% @dependencies.each do |dep| %>
+      <div class="port-row">
+        <%= link_to dep.depends_on.name, port_path(dep.depends_on), class: "port-name" %>
+        <span class="badge badge-category"><%= dep.dep_type %></span>
+      </div>
+    <% end %>
+  <% end %>
+  <% if @updates.any? %>
+    <h2>Version history</h2>
+    <% @updates.each do |update| %>
+      <div class="port-row">
+        <span class="badge badge-version"><%= update.old_version %> → <%= update.new_version %></span>
+        <span class="port-comment"><%= update.commit_message %></span>
+        <span class="dim"><%= update.committed_at&.strftime("%Y-%m-%d") %></span>
+      </div>
+    <% end %>
+  <% end %>
+  <nav>
+    <% if authenticated? %>
+      <% if @watching %>
+        <%= button_to "Unwatch", unwatch_port_path(@port), method: :delete, class: "btn btn-primary" %>
+      <% else %>
+        <%= button_to "Watch", watch_port_path(@port), method: :post, class: "btn btn-primary" %>
+      <% end %>
+    <% end %>
+  </nav>
+</article>
+<section class="card" id="comments">
+  <h2>Comments</h2>
+  <%= render @comments %>
+  <% if authenticated? %>
+    <%= form_with url: port_comments_path(@port), class: "form" do |f| %>
+      <div class="field"><%= f.text_area :content, rows: 3, placeholder: "Add a comment…" %></div>
+      <div class="actions"><%= f.submit "Comment", class: "btn btn-primary" %></div>
+    <% end %>
+  <% end %>
+</section>
+ERB
+
+cat > app/views/categories/index.html.erb << 'ERB'
+<% content_for :title, "Categories" %>
+<h1>Categories</h1>
+<div id="categories">
+  <% @categories.each do |cat| %>
+    <div class="port-row">
+      <%= link_to cat.name, category_path(cat), class: "port-name" %>
+      <span class="port-comment"><%= cat.description %></span>
+    </div>
+  <% end %>
+</div>
+ERB
+
+cat > app/views/categories/show.html.erb << 'ERB'
+<% content_for :title, @category.name %>
+<header>
+  <h1><%= @category.name %></h1>
+  <p class="dim"><%= @category.description %></p>
+</header>
+<%= render "ports/index" %>
+ERB
+
+cat > app/views/comments/_comment.html.erb << 'ERB'
+<article class="comment" id="<%= dom_id(comment) %>">
+  <span class="dim"><%= comment.user.email_address.split("@").first %></span>
+  <p><%= comment.content %></p>
+  <% if authenticated? && comment.user == Current.user %>
+    <%= button_to "Delete", port_comment_path(@port, comment), method: :delete, class: "btn-sm" %>
+  <% end %>
+</article>
+ERB
+
 write_layout "BSDports"
 write_falcon_config "$APP_PORT"
 configure_production

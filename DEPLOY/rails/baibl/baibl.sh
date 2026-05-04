@@ -263,6 +263,123 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 .flash-alert  { background: #3a1a1a; color: #e57373; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
 CSS
 
+# ── Views ───────────────────────────────────────────────────────────────────
+mkdir -p app/views/scriptures app/views/highlights app/views/bookmarks
+
+write_shared_partials
+write_auth_views
+
+cat > app/views/scriptures/index.html.erb << 'ERB'
+<% content_for :title, "Scripture" %>
+<nav class="book-nav">
+  <% @books.each do |book| %>
+    <%= link_to book.abbreviation, scripture_book_path(book.abbreviation), title: book.name %>
+  <% end %>
+</nav>
+<% if @books.any? %>
+  <p class="dim">Select a book to begin reading.</p>
+<% end %>
+ERB
+
+cat > app/views/scriptures/book.html.erb << 'ERB'
+<% content_for :title, @book.name %>
+<h1><%= @book.name %></h1>
+<nav class="chapter-nav">
+  <% @chapters.each do |chapter| %>
+    <%= link_to chapter.number, scripture_chapter_path(@book.abbreviation, chapter.number) %>
+  <% end %>
+</nav>
+ERB
+
+cat > app/views/scriptures/chapter.html.erb << 'ERB'
+<% content_for :title, "#{@book.name} #{@chapter.number}" %>
+<header>
+  <h1><%= @book.name %> <%= @chapter.number %></h1>
+  <nav>
+    <% if @prev_chapter %>
+      <%= link_to "← #{@book.abbreviation} #{@prev_chapter}", scripture_chapter_path(@book.abbreviation, @prev_chapter) %>
+    <% end %>
+    <%= link_to @book.name, scripture_book_path(@book.abbreviation) %>
+    <% if @next_chapter %>
+      <%= link_to "#{@book.abbreviation} #{@next_chapter} →", scripture_chapter_path(@book.abbreviation, @next_chapter) %>
+    <% end %>
+  </nav>
+</header>
+<div class="verse-block">
+  <% @verses.each do |verse| %>
+    <span id="v<%= verse.number %>" class="verse" data-controller="verse" data-verse-id="<%= verse.id %>">
+      <sup class="verse-num"><%= verse.number %></sup>
+      <span class="verse-text"><%= verse.content %></span>
+      <% if authenticated? %>
+        <% highlight = @highlights[verse.id] %>
+        <% bookmark  = @bookmarks[verse.id] %>
+        <%= button_to highlight ? "★" : "☆", highlights_path(verse_id: verse.id), method: highlight ? :delete : :post, params: highlight ? { id: highlight.id } : {}, class: "verse-action #{"active" if highlight}", data: { turbo_stream: true } %>
+        <%= button_to bookmark ? "🔖" : "📌", bookmark ? bookmark_path(bookmark) : bookmarks_path(verse_id: verse.id), method: bookmark ? :delete : :post, class: "verse-action #{"active" if bookmark}", data: { turbo_stream: true } %>
+      <% end %>
+    </span>
+  <% end %>
+</div>
+ERB
+
+cat > app/views/scriptures/search.html.erb << 'ERB'
+<% content_for :title, "Search" %>
+<%= form_with url: scripture_search_path, method: :get do |f| %>
+  <%= f.search_field :q, value: @query, placeholder: "Search scripture…", autofocus: true, class: "search" %>
+  <%= f.submit "Search" %>
+<% end %>
+<% if @results %>
+  <p class="dim"><%= @results.size %> results for "<%= @query %>"</p>
+  <% @results.each do |verse| %>
+    <div class="verse-block">
+      <p class="verse-ref"><%= verse.book.abbreviation %> <%= verse.chapter.number %>:<%= verse.number %></p>
+      <p class="verse-text"><%= verse.content %></p>
+    </div>
+  <% end %>
+<% end %>
+ERB
+
+cat > app/views/bookmarks/index.html.erb << 'ERB'
+<% content_for :title, "Bookmarks" %>
+<h1>Bookmarks</h1>
+<% if @bookmarks.any? %>
+  <% @bookmarks.each do |bookmark| %>
+    <div class="verse-block" id="<%= dom_id(bookmark) %>">
+      <p class="verse-ref"><%= link_to "#{bookmark.verse.book.abbreviation} #{bookmark.verse.chapter.number}:#{bookmark.verse.number}", scripture_chapter_path(bookmark.verse.book.abbreviation, bookmark.verse.chapter.number) %></p>
+      <p class="verse-text"><%= bookmark.verse.content %></p>
+      <% if bookmark.note.present? %><p class="dim"><%= bookmark.note %></p><% end %>
+      <%= button_to "Remove", bookmark, method: :delete, class: "verse-action" %>
+    </div>
+  <% end %>
+  <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<% else %>
+  <p class="dim">No bookmarks yet. Bookmark verses while reading.</p>
+<% end %>
+ERB
+
+cat > app/views/highlights/create.turbo_stream.erb << 'ERB'
+<%= turbo_stream.replace "highlight_#{@highlight.verse_id}", partial: "highlights/toggle", locals: { verse: @highlight.verse, highlight: @highlight } %>
+ERB
+
+cat > app/views/highlights/destroy.turbo_stream.erb << 'ERB'
+<%= turbo_stream.replace "highlight_#{@highlight.verse_id}", partial: "highlights/toggle", locals: { verse: @highlight.verse, highlight: nil } %>
+ERB
+
+# ── SCSS additions ───────────────────────────────────────────────────────────
+cat >> app/assets/stylesheets/application.css << 'CSS'
+.book-nav { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 1.5rem; }
+.book-nav a { padding: .25rem .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; font-size: .8rem; color: var(--primary); }
+.book-nav a:hover { background: var(--primary); color: var(--bg); text-decoration: none; }
+.chapter-nav { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chapter-nav a { width: 2.2rem; text-align: center; padding: .25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--primary); font-size: .9rem; }
+.verse { display: block; margin-bottom: .75rem; position: relative; }
+.verse-action { background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: .8rem; padding: 0 .2rem; }
+.verse-action.active { color: var(--primary); }
+.search { width: 100%; max-width: 480px; padding: .5rem .75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 1rem; }
+.dim { color: var(--text-dim); font-size: .85rem; }
+nav { display: flex; gap: 1rem; align-items: center; margin: 1rem 0; }
+h1, h2 { margin-bottom: .75rem; color: var(--primary); }
+CSS
+
 write_layout "Baibl"
 write_falcon_config "$APP_PORT"
 configure_production
