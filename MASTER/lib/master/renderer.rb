@@ -103,10 +103,15 @@ module Master
     end
 
     def dmesg_lines
-      stdout, _stderr, _status = Open3.capture3("dmesg")
-      raw = stdout.lines.first(DMESG_LINE_COUNT).map(&:chomp)
+      boot_log = "/var/run/dmesg.boot"
+      raw = if File.readable?(boot_log)
+              File.readlines(boot_log, chomp: true).first(DMESG_LINE_COUNT)
+            else
+              stdout, = Open3.capture3("dmesg")
+              stdout.lines(chomp: true).first(DMESG_LINE_COUNT)
+            end
       raw.empty? ? ["dmesg unavailable"] : raw
-    rescue StandardError => _e
+    rescue StandardError
       ["dmesg unavailable"]
     end
 
