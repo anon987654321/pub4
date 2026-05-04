@@ -56,11 +56,11 @@ add_gem() {
     else
       print "gem \"${gem}\"" >> Gemfile
     fi
-    bundle install --quiet
     log_ok "gem ${gem} added"
   else
     log_ok "gem ${gem} already present"
   fi
+  bundle check 2>/dev/null || bundle install --quiet
 }
 
 add_gem_group() {
