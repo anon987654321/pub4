@@ -163,9 +163,6 @@ module Master
           File.rename(tmp, out)
 
           day = Time.now.strftime("%Y-%m-%d")
-          system("git", "-C", root, "add", "snapshot_latest.md") or raise "git add failed"
-          system("git", "-C", root, "commit", "-m", "snapshot: #{day} — #{files.size} files") or raise "git commit failed"
-
           gist_out, gist_st = Open3.capture2e("gh", "gist", "create", out,
                                               "--public",
                                               "--desc", "MASTER #{day}",
