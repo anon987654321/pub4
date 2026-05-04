@@ -23,9 +23,7 @@ module Master
       end
     end
 
-    def workflow
-      @workflow.freeze
-    end
+    def workflow = @workflow.freeze
 
     def philosophy(limit: nil)
       @philosophy ||= begin
@@ -38,13 +36,8 @@ module Master
       limit ? @philosophy.first(limit) : @philosophy
     end
 
-    def all_rules
-      @all_rules ||= (@data["rules"] || {}).values.flatten.freeze
-    end
-
-    def rules_for_scope(scope)
-      (@data.dig("rules", scope.to_s) || []).freeze
-    end
+    def all_rules     = @all_rules ||= (@data["rules"] || {}).values.flatten.freeze
+    def rules_for_scope(scope) = (@data.dig("rules", scope.to_s) || []).freeze
 
     def kernel_block
       return nil if kernel.empty?
@@ -61,17 +54,9 @@ module Master
       "## Rules (top #{items.size})\n#{top}"
     end
 
-    def voice
-      @voice ||= (@data["voice"] || {}).freeze
-    end
-
-    def strunk
-      @strunk ||= (voice["strunk"] || {}).freeze
-    end
-
-    def preserve
-      @preserve ||= (voice["preserve"] || {}).freeze
-    end
+    def voice    = @voice    ||= (@data["voice"] || {}).freeze
+    def strunk   = @strunk   ||= (voice["strunk"] || {}).freeze
+    def preserve = @preserve ||= (voice["preserve"] || {}).freeze
 
     def constitution
       @constitution ||= begin
@@ -85,39 +70,19 @@ module Master
       end
     end
 
-    def thresholds
-      @thresholds ||= (@data["thresholds"] || {}).freeze
-    end
-
-    def scan_depths
-      @scan_depths ||= (@data["scan_depths"] || {}).freeze
-    end
-
-    def languages_config
-      @languages_config ||= (@data["languages"] || {}).freeze
-    end
-
-    def workflow_rule(key)
-      @workflow.dig(key.to_s) || {}
-    end
+    def thresholds       = @thresholds       ||= (@data["thresholds"] || {}).freeze
+    def scan_depths      = @scan_depths      ||= (@data["scan_depths"] || {}).freeze
+    def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
+    def workflow_rule(key) = @workflow.dig(key.to_s) || {}
 
     def lookup(id)
       id_str = id.to_s
       kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")
     end
 
-    def valid_id?(id)
-      id_str = id.to_s
-      all_ids.include?(id_str)
-    end
-
-    def all_ids
-      @all_ids ||= all_rules.map { |r| r["id"] }.compact.to_set.freeze
-    end
-
-    def empty?
-      @data.empty?
-    end
+    def valid_id?(id) = all_ids.include?(id.to_s)
+    def all_ids       = @all_ids ||= all_rules.map { |r| r["id"] }.compact.to_set.freeze
+    def empty?        = @data.empty?
 
     private
 

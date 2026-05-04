@@ -57,7 +57,7 @@ module Master
       candidate_models = routed_models
       prompt = apply_reasoning_mode(message)
       context = conversation_context
-      @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / 4)
+      @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / Session::TOKENS_PER_CHAR)
 
       begin
         @circuit_breaker.check_rate!

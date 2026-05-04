@@ -53,7 +53,7 @@ module Master
 
       recent.each do |k, v|
         text = "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}"
-        est  = text.bytesize / 4
+        est  = text.bytesize / Session::TOKENS_PER_CHAR
         break if token_sum + est > MAX_INJECT_TOKENS
         lines << text
         token_sum += est

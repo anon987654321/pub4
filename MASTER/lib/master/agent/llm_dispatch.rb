@@ -31,7 +31,7 @@ module Master
       end
 
       def publish_llm_success(model, response)
-        @bus&.publish("llm:response", model:, success: true, tokens_approx: response.to_s.bytesize / 4)
+        @bus&.publish("llm:response", model:, success: true, tokens_approx: response.to_s.bytesize / Session::TOKENS_PER_CHAR)
       end
 
       def maybe_escalate(last_response, original_message, stream:, escalation_depth:, &blk)
@@ -169,7 +169,7 @@ module Master
       end
 
       def estimate_cost(prompt)
-        (prompt.bytesize / 4) * COST_PER_TOKEN
+        (prompt.bytesize / Session::TOKENS_PER_CHAR) * COST_PER_TOKEN
       end
 
       def llm_tools(selected_model = model)

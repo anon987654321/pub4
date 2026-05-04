@@ -15,14 +15,14 @@ module Master
 
     def push(item)
       synchronize do
-      write_pos = (@start + @size) % @capacity
-      if @size < @capacity
-        @buf[write_pos] = item
-        @size += 1
-      else
-        @buf[@start] = item
-        @start = (@start + 1) % @capacity
-      end
+        write_pos = (@start + @size) % @capacity
+        if @size < @capacity
+          @buf[write_pos] = item
+          @size += 1
+        else
+          @buf[@start] = item
+          @start = (@start + 1) % @capacity
+        end
       end
       self
     end
