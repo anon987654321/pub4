@@ -49,14 +49,14 @@ module Master
 
     # Stage 2: called after CLI is fully initialized -- lock filesystem
     def stage2_lock!
-      pledge("stdio rpath wpath cpath proc exec inet dns tty prot_exec")
       lock_unveil!
+      pledge("stdio rpath wpath cpath proc exec inet dns tty prot_exec")
     end
 
     # Stage 3: scan-only sessions (no network, no exec)
     def stage3_scan_only!
-      pledge("stdio rpath wpath cpath tty")
       lock_unveil!
+      pledge("stdio rpath wpath cpath tty")
     end
 
     def openbsd? = RUBY_PLATFORM.include?("openbsd")
