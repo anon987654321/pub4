@@ -38,7 +38,7 @@ module Master
             end
           end
         end
-        feedback = threads.map { |t| t.join(30) ? t.value : nil }.compact
+        feedback = threads.map { |thread| thread.join(30) ? thread.value : nil }.compact
         if feedback.empty?
           @bus&.publish(:council_timeout, personas: @personas.map(&:name))
           return Master::Result.err("council: all personas timed out (#{@personas.size})", category: :timeout)

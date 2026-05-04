@@ -29,6 +29,7 @@ module Master
       prev   = current
       target = to&.to_s || next_phase
       return Master::Result.err("unknown phase: #{target}") unless PHASES.include?(target)
+      return Master::Result.err("already at final phase: #{prev}") if prev == "idle" && target == "idle"
 
       unmet = unmet_gates(prev)
       if unmet.any?

@@ -9,6 +9,7 @@ module Master
         .merge(model_agent_commands(ai:, root:, infra:))
         .merge(crit_command(ai:, root:))
         .merge(ideate_command(ai:))
+        .merge(topic_command(infra:))
     end
 
     def scan_loop_commands(ai:, root:, infra:)
@@ -196,6 +197,22 @@ module Master
         veto = f[:veto_role] ? " [VETO ELIGIBLE]" : ""
         "#{f[:persona]} (#{f[:role]})#{veto}:\n#{f[:feedback].to_s.strip}"
       }.join("\n\n---\n\n")
+    end
+
+    def topic_command(infra:)
+      session = infra[:session]
+      {
+        "topic" => ->(ctx) {
+          arg = ctx[:args].to_s.strip
+          if arg.empty?
+            t = session.respond_to?(:topic) ? session.topic : nil
+            t ? "topic: #{t}" : "no topic set  /topic <description>"
+          else
+            session.topic = arg if session.respond_to?(:topic=)
+            "topic: #{arg}"
+          end
+        }
+      }
     end
 
     def ideate_command(ai:)
