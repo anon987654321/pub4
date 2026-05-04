@@ -66,6 +66,19 @@ module Master
         strong_model
       end
 
+      def constrained_for(operation:)
+        constraint = @rules.dig("operation_constraints", operation.to_s)
+        return preferred unless constraint
+
+        min_quality = constraint.fetch("min_quality", 0.0).to_f
+        preferred_tier = constraint.fetch("preferred_tier", "strong")
+        candidates = @rules.dig("models", preferred_tier).to_a
+        qualified = candidates.select { |m| m.dig("score", "quality").to_f >= min_quality }
+        return preferred if qualified.empty?
+
+        qualified.max_by { |m| weighted_score(m["score"] || {}) }&.dig("id") || preferred
+      end
+
       def tier_for_model(model_id)
         @rules.fetch("models", {}).each do |tier, models|
           return tier if models.is_a?(Array) && models.any? { |m| m["id"] == model_id }

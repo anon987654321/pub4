@@ -144,6 +144,12 @@ module Master
         ls << "Ruby bugs to avoid: #{bugs.join("; ")}." if bugs.any?
         shell_forbidden = Array(style.dig("shell", "decorations_forbidden"))
         ls << "Shell scripts: no ASCII banners (===,---), no emoji, no hardcoded credentials." if shell_forbidden.any?
+        abbrev_rule = style.dig("ruby", "naming", "rule")
+        ls << "Naming: #{abbrev_rule}" if abbrev_rule
+        string_rule = style.dig("ruby", "prefer_string_methods", "rule")
+        ls << "String methods: #{string_rule}" if string_rule
+        gem_rule = style.dig("ruby", "outsource_to_gems", "rule")
+        ls << "Gems: #{gem_rule}" if gem_rule
       end
 
       ls.join("\n")
