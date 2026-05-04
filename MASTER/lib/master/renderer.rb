@@ -9,37 +9,45 @@ module Master
   DEFAULT_WEB_PORT = Config::DEFAULT_WEB_PORT
 
   class Renderer
-    TICK  = "\u2714".freeze
-    CROSS = "\u2718".freeze
+    TICK             = "\u2714".freeze
+    CROSS            = "\u2718".freeze
     DMESG_LINE_COUNT = 5
-    MILLISECONDS_PER_SECOND = 1000
+    MS_PER_SEC       = 1000
 
     def initialize(config:)
-      @config = config
-      @p      = Pastel.new
+      @config   = config
+      @p        = Pastel.new
+      @boot_ms  = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i
     end
 
     def splash(model)
+      t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       now   = Time.now
-      host  = Socket.gethostname rescue "openbsd"
-      ruby  = RUBY_VERSION
-      up    = uptime_str
-      url   = @config["web_public_url"] || "https://ai.brgen.no"
-      mod   = short_model(model)
+      host  = (Socket.gethostname rescue "openbsd")
+      user  = ENV["USER"] || "dev"
+      shell = File.basename(ENV["SHELL"] || "zsh")
+      pchar = shell == "zsh" ? "%" : "$"
       rev   = git_rev
+      url   = @config["web_public_url"] || "https://ai.brgen.no"
+      token = @config["web_token"]
+      web   = token ? "#{url}/?token=#{token}" : url
+      pledge_ok = RUBY_PLATFORM.include?("openbsd")
 
       lines = []
       lines << ""
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
-      lines << @p.bold.red("MASTER") + @p.dim(" constitutional AI agent")
-      lines << @p.dim("hostname #{host}  ruby #{ruby}  #{now.strftime('%Y-%m-%d %H:%M:%S')}")
-      lines << @p.dim("model    #{mod}")
-      lines << @p.dim("web      #{url}")
-      lines << @p.dim("rev      #{rev}") if rev
-      lines << @p.dim("uptime   #{up}") if up
+      lines << d("MASTER (CONSTITUTIONAL) #1: #{now.strftime('%a %b %-d %H:%M:%S %Z %Y')}")
+      lines << d("    #{user}@#{host}:#{@config["root"] || Dir.pwd}")
+      lines << d("runtime0: #{RUBY_PLATFORM}  ruby #{RUBY_VERSION}  #{shell} #{user}#{pchar}")
+      lines << d("model0:   #{short_model(model)}")
+      lines << d("rev0:     #{rev}") if rev
+      lines << d("security0: #{pledge_ok ? "pledge armed" : "pledge unavailable"}")
+      lines << d("web0:     #{web}")
+      elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SEC).round
+      lines << d("boot0:    #{elapsed}ms")
       lines << ""
-      lines << @p.bold.red("master") + @p.dim("@#{host} ready -- type ") + @p.bright_red("help") + @p.dim(" for commands")
+      lines << @p.bold.red("master") + @p.dim("@#{host} ready -- /help for commands")
       lines << ""
       lines.join("\n")
     end
@@ -50,9 +58,10 @@ module Master
       branch = git_branch
       tok    = tokens && tokens > 0 ? @p.dim("#{tokens}t ") : ""
       vbadge = violations > 0 ? @p.red("[#{violations}v] ") : ""
+      phase_str = phase && phase.to_s != "idle" ? @p.dim("{#{phase}} ") : ""
       branch_str = branch ? "#{@p.dim("(")}#{@p.red(branch)}#{@p.dim(")")} " : ""
       dollar = last_ok ? @p.bright_red("$") : @p.red("$")
-      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{tok}#{vbadge}#{dollar} "
+      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{phase_str}#{tok}#{vbadge}#{dollar} "
     end
 
     def render(content, mode: :plain)
@@ -66,39 +75,35 @@ module Master
       end
     end
 
-    def format_error(message)
-      render(message, mode: :error)
-    end
+    def format_error(message)  = render(message, mode: :error)
+    def format_dmesg(line)     = @p.dim(line.to_s)
 
-    def format_dmesg(line)
-      @p.dim(line.to_s)
+    def beautify(text)
+      text
+        .gsub(/"([^"]*?)"/) { "\u201C#{Regexp.last_match(1)}\u201D" }
+        .gsub(/\s--\s/, " \u2014 ")
+        .gsub("...", "\u2026")
     end
 
     private
 
-    def uptime_str
-      out, = Open3.capture2e("uptime")
-      out = out.strip
-      out.empty? ? nil : out.split(",").first.gsub(/.*up\s+/, "").strip
-    rescue StandardError => _e
-      nil
-    end
+    def d(text) = @p.dim(text)
 
     def git_rev
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--short", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError => _e
+    rescue StandardError
       nil
     end
 
     def short_model(model)
-      model.to_s.split("/").last
+      model.to_s.split("/").last.sub(/:free$/, "")
     end
 
     def git_branch
-      out, _, status = Open3.capture3("git", "rev-parse", "--abbrev-ref", "HEAD")
-      status.success? ? out.strip : nil
-    rescue StandardError => _e
+      out, _, st = Open3.capture3("git", "rev-parse", "--abbrev-ref", "HEAD")
+      st.success? ? out.strip : nil
+    rescue StandardError
       nil
     end
 
@@ -113,12 +118,6 @@ module Master
       raw.empty? ? ["dmesg unavailable"] : raw
     rescue StandardError
       ["dmesg unavailable"]
-    end
-
-    def elapsed_ms
-      @start_ms ||= (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MILLISECONDS_PER_SECOND).to_i
-      now = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MILLISECONDS_PER_SECOND).to_i
-      format("%d.%03d", (now - @start_ms) / MILLISECONDS_PER_SECOND, (now - @start_ms) % MILLISECONDS_PER_SECOND)
     end
   end
 end
