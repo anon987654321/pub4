@@ -274,10 +274,12 @@ install_rcd() {
   local svc=$1 app_dir=$2 port=$3 user=$4
   local rcd="/etc/rc.d/${svc}"
   [[ -f $rcd ]] && { log_ok "rc.d/${svc} already exists"; return 0; }
+  local secret
+  secret=$(ruby34 -e 'require "securerandom"; print SecureRandom.hex(64)')
   $_PRIV tee "$rcd" > /dev/null << EOS
 #!/bin/ksh
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 falcon serve --bind http://127.0.0.1:${port}"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${secret} falcon serve --bind http://127.0.0.1:${port}"
 daemon_user="${user}"
 daemon_execdir="${app_dir}"
 daemon_timeout="60"

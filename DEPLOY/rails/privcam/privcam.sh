@@ -87,7 +87,7 @@ class Room < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :max_viewers, numericality: { only_integer: true, greater_than: 0 }
 
-  default_value_for :status, "idle"
+  attribute :status, :string, default: "idle"
 
   before_create :generate_access_code
 
