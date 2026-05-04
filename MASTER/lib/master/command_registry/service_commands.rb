@@ -68,6 +68,61 @@ module Master
       end
     end
 
+    TEXT_EXTS  = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini .env].to_set.freeze
+    TEXT_NAMES = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
+    SKIP_SEGS  = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
+
+    def dispatch_snapshot(root)
+      out       = File.join(root, "snapshot_latest.md")
+      skip_path = ->(rel) { rel.split("/").any? { |s| SKIP_SEGS.include?(s) } }
+      text_file = ->(f)   { TEXT_EXTS.include?(File.extname(f).downcase) || TEXT_NAMES.include?(File.basename(f)) }
+
+      all   = Dir.glob(File.join(root, "**", "*")).reject { |f| File.basename(f).start_with?(".") }
+                 .reject { |f| skip_path.(f.delete_prefix("#{root}/")) }.sort
+      dirs  = all.select { |f| File.directory?(f) }
+      files = all.select { |f| File.file?(f) && text_file.(f) && File.size(f) < CTX_WINDOW_SIZE }
+
+      stamp = Time.now.utc.iso8601
+      buf   = ["# MASTER Snapshot — #{stamp}", "", "## Tree", "```"]
+      dirs.each  { |d| buf << "#{d.delete_prefix("#{root}/")}/" }
+      files.each { |f| buf << f.delete_prefix("#{root}/") }
+      buf << "```" << ""
+
+      max_file_lines = 400
+      n_trunc = 0
+      n_lines = 0
+
+      files.each do |f|
+        rel  = f.delete_prefix("#{root}/")
+        lang = FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
+        body = File.read(f, encoding: "UTF-8", invalid: :replace).lines
+        n_lines += body.size
+        buf << "## `#{rel}`" << "```#{lang}"
+        if body.size > max_file_lines
+          buf.concat(body.first(max_file_lines).map(&:rstrip))
+          buf << "... #{body.size - max_file_lines} lines truncated (#{body.size} total)"
+          n_trunc += 1
+        else
+          buf.concat(body.map(&:rstrip))
+        end
+        buf << "```" << ""
+      rescue StandardError => e
+        buf << "## `#{rel}`" << "[skipped: #{e.message}]" << ""
+      end
+
+      buf << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc} / est. tokens: ~#{n_lines * 6 / 5}"
+      tmp = "#{out}.tmp.#{Process.pid}"
+      File.write(tmp, buf.join("\n"))
+      File.rename(tmp, out)
+
+      day = Time.now.strftime("%Y-%m-%d")
+      gist_out, gist_st = Open3.capture2e("gh", "gist", "create", out,
+                                          "--public", "--desc", "MASTER #{day}",
+                                          "--filename", "snapshot_latest.md")
+      gist_url = gist_st.success? ? " → #{gist_out.strip}" : ""
+      "snapshot: #{files.size} files #{n_lines} lines#{gist_url}"
+    end
+
     SCORE_WEIGHTS = { error: 10, critical: 10, warning: 3, style: 1 }.freeze
 
     def score_file(scanner, arg)
@@ -114,62 +169,7 @@ module Master
 
     def utility_commands(agent, root, cache)
       {
-        "snapshot" => ->(_ctx) {
-          out        = File.join(root, "snapshot_latest.md")
-          text_exts  = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini .env].to_set.freeze
-          text_names = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
-          skip_segs  = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
-          skip_path  = ->(rel) { rel.split("/").any? { |s| skip_segs.include?(s) } }
-          text_file  = ->(f)   { text_exts.include?(File.extname(f).downcase) || text_names.include?(File.basename(f)) }
-
-          all   = Dir.glob(File.join(root, "**", "*")).reject { |f| File.basename(f).start_with?(".") }
-                     .reject { |f| skip_path.(f.delete_prefix("#{root}/")) }.sort
-          dirs  = all.select { |f| File.directory?(f) }
-          files = all.select { |f| File.file?(f) && text_file.(f) && File.size(f) < CTX_WINDOW_SIZE }
-
-          stamp = Time.now.utc.iso8601
-          buf   = ["# MASTER Snapshot — #{stamp}", ""]
-
-          buf << "## Tree" << "```"
-          dirs.each  { |d| buf << "#{d.delete_prefix("#{root}/")}/" }
-          files.each { |f| buf << f.delete_prefix("#{root}/") }
-          buf << "```" << ""
-
-          max_file_lines = 400
-          n_trunc = 0
-          n_lines = 0
-
-          files.each do |f|
-            rel  = f.delete_prefix("#{root}/")
-            lang = FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
-            body = File.read(f, encoding: "UTF-8", invalid: :replace).lines
-            n_lines += body.size
-            buf << "## `#{rel}`" << "```#{lang}"
-            if body.size > max_file_lines
-              buf.concat(body.first(max_file_lines).map(&:rstrip))
-              buf << "... #{body.size - max_file_lines} lines truncated (#{body.size} total)"
-              n_trunc += 1
-            else
-              buf.concat(body.map(&:rstrip))
-            end
-            buf << "```" << ""
-          rescue StandardError => e
-            buf << "## `#{rel}`" << "[skipped: #{e.message}]" << ""
-          end
-
-          buf << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc} / est. tokens: ~#{n_lines * 6 / 5}"
-          tmp = "#{out}.tmp.#{Process.pid}"
-          File.write(tmp, buf.join("\n"))
-          File.rename(tmp, out)
-
-          day = Time.now.strftime("%Y-%m-%d")
-          gist_out, gist_st = Open3.capture2e("gh", "gist", "create", out,
-                                              "--public",
-                                              "--desc", "MASTER #{day}",
-                                              "--filename", "snapshot_latest.md")
-          gist_url = gist_st.success? ? " → #{gist_out.strip}" : ""
-          "snapshot: #{files.size} files #{n_lines} lines#{gist_url}"
-        },
+        "snapshot" => ->(_ctx) { dispatch_snapshot(root) },
         "cache" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           case arg

@@ -39,42 +39,41 @@ module Master
           }
           result.ok? ? result.value! : result.message
         },
-        "scan" => ->(ctx) {
-          arg = ctx[:args].to_s.strip
-          profile, depth, rule_filter = resolve_scan_profile(arg, root)
-          raw_arg = arg.sub(/\A(?:deep|quick|full|critical|solid|axioms)\s*/, "").strip
-          target_arg = raw_arg.empty? ? nil : File.expand_path(raw_arg)
-          pairs = if target_arg && File.file?(target_arg)
-            fr = scanner.scan(target_arg, depth:)
-            [[target_arg, fr]]
-          elsif target_arg && File.directory?(target_arg)
-            dir_result = scanner.scan_dir(target_arg, depth:, glob: "**/*", stream: true)
-            next "scan failed" unless dir_result.ok?
-            dir_result.value!
-          else
-            dir_result = scanner.scan_dir(File.join(root, "lib"), depth:, stream: true)
-            next "scan failed" unless dir_result.ok?
-            dir_result.value!
-          end
-          by_rule = Hash.new { |h, k| h[k] = [] }
-          pairs.each do |_file, file_result|
-            next unless file_result.respond_to?(:ok?) && file_result.ok?
-            file_result.value!.each do |v|
-              next if rule_filter && !rule_filter.include?(v[:rule].to_s)
-              by_rule[v[:rule].to_s] << v
-            end
-          end
-          total = by_rule.values.sum(&:size)
-          header = profile ? "[profile: #{profile}] " : ""
-          next "#{header}clean -- no violations" if total.zero?
-          lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
-            ["[#{rule}] #{vs.size}"] +
-              vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, VIOLATION_TRUNCATE]}" }
-          end
-          lines << "#{header}#{total} total violations"
-          lines.join("\n")
-        }
+        "scan" => ->(ctx) { dispatch_scan(scanner, root, ctx[:args].to_s.strip) }
       }
+    end
+
+    def dispatch_scan(scanner, root, arg)
+      profile, depth, rule_filter = resolve_scan_profile(arg, root)
+      raw_arg    = arg.sub(/\A(?:deep|quick|full|critical|solid|axioms)\s*/, "").strip
+      target_arg = raw_arg.empty? ? nil : File.expand_path(raw_arg)
+      pairs = if target_arg && File.file?(target_arg)
+        [[target_arg, scanner.scan(target_arg, depth:)]]
+      elsif target_arg && File.directory?(target_arg)
+        result = scanner.scan_dir(target_arg, depth:, glob: "**/*", stream: true)
+        return "scan failed" unless result.ok?
+        result.value!
+      else
+        result = scanner.scan_dir(File.join(root, "lib"), depth:, stream: true)
+        return "scan failed" unless result.ok?
+        result.value!
+      end
+      by_rule = Hash.new { |h, k| h[k] = [] }
+      pairs.each do |_file, file_result|
+        next unless file_result.respond_to?(:ok?) && file_result.ok?
+        file_result.value!.each do |v|
+          next if rule_filter && !rule_filter.include?(v[:rule].to_s)
+          by_rule[v[:rule].to_s] << v
+        end
+      end
+      total  = by_rule.values.sum(&:size)
+      header = profile ? "[profile: #{profile}] " : ""
+      return "#{header}clean -- no violations" if total.zero?
+      lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
+        ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, VIOLATION_TRUNCATE]}" }
+      end
+      lines << "#{header}#{total} total violations"
+      lines.join("\n")
     end
 
     def resolve_scan_profile(arg, root)
