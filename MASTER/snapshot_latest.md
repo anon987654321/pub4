@@ -1,4 +1,4 @@
-# MASTER Snapshot — 2026-05-04T12:53:32Z
+# MASTER Snapshot — 2026-05-04T14:30:17Z
 
 ## Tree
 ```
@@ -146,8 +146,12 @@ lib/master/scan/rules/adversarial_rule.rb
 lib/master/scan/rules/arity_rule.rb
 lib/master/scan/rules/axiom_coverage_rule.rb
 lib/master/scan/rules/bare_rescue_rule.rb
+lib/master/scan/rules/comment_quality_rule.rb
 lib/master/scan/rules/conceptual_rule.rb
 lib/master/scan/rules/cqs_rule.rb
+lib/master/scan/rules/dead_assign_rule.rb
+lib/master/scan/rules/dead_code_rule.rb
+lib/master/scan/rules/debug_output_rule.rb
 lib/master/scan/rules/duplicate_code_rule.rb
 lib/master/scan/rules/explicit_rule.rb
 lib/master/scan/rules/frozen_string_rule.rb
@@ -156,6 +160,8 @@ lib/master/scan/rules/immutable_rule.rb
 lib/master/scan/rules/interconnect_rule.rb
 lib/master/scan/rules/lexical_rule.rb
 lib/master/scan/rules/long_method_rule.rb
+lib/master/scan/rules/naming_rule.rb
+lib/master/scan/rules/nesting_depth_rule.rb
 lib/master/scan/rules/nielsen_rule.rb
 lib/master/scan/rules/opportunity_rule.rb
 lib/master/scan/rules/pola_rule.rb
@@ -164,10 +170,14 @@ lib/master/scan/rules/reek_rule.rb
 lib/master/scan/rules/rubocop_rule.rb
 lib/master/scan/rules/self_explaining_rule.rb
 lib/master/scan/rules/srp_rule.rb
+lib/master/scan/rules/structure_rule.rb
 lib/master/scan/rules/tell_dont_ask_rule.rb
+lib/master/scan/rules/terse_rule.rb
 lib/master/scan/rules/thread_safety_rule.rb
 lib/master/scan/rules/threshold_drift_rule.rb
+lib/master/scan/rules/trailing_comment_rule.rb
 lib/master/scan/rules/universal_rule.rb
+lib/master/scan/rules/yaml_quality_rule.rb
 lib/master/scan/scanner.rb
 lib/master/security/injection_guard.rb
 lib/master/security/permissions.rb
@@ -2203,6 +2213,16 @@ scan_depths:
     - ArityRule
     - TellDontAskRule
     - ThresholdDriftRule
+    - TerseRule
+    - DeadAssignRule
+    - NestingDepthRule
+    - TrailingCommentRule
+    - NamingRule
+    - CommentQualityRule
+    - DebugOutputRule
+    - YamlQualityRule
+    - StructureRule
+    - DeadCodeRule
   deep: &deep
     - AdversarialRule
     - ConceptualRule
@@ -2498,17 +2518,7 @@ rules:
       detect_conceptual: "Is there creeping disorder — naming inconsistencies, abandoned conventions, accumulating exceptions? In a legal code, contradictory amendments?"
       fix: "Actively resist entropy. Regular cleanup. Remove what no longer serves."
 
-    - id: DONT_OUTRUN_HEADLIGHTS
-      name: "Only plan as far as you can see"
-      tier: philosophy
-      severity: info
-      autofix: false
-      detect_conceptual: "Is this making detailed plans for unpredictable scenarios? Projecting five years out? Designing for hypothetical scale?"
-      fix: "Small deliberate steps. Reassess after each. Feedback from each step illuminates the next."
-
-    - id: REVERSIBILITY
-      name: "Prefer decisions that are easy to undo"
-... 1054 lines truncated (1454 total)
+... 1064 lines truncated (1464 total)
 ```
 
 ## `data/soul.yml`
@@ -5451,6 +5461,7 @@ module Master
     def service_commands(ai, phase_gates = nil)
       heartbeat = ai[:heartbeat]
       skills    = ai[:skills]
+      scanner   = ai[:scanner]
       {
         "heartbeat" => ->(ctx) { dispatch_heartbeat(heartbeat, ctx[:args].to_s.strip) },
         "skills"    => ->(ctx) {
@@ -5458,7 +5469,8 @@ module Master
           found = skills&.find(arg)
           arg.empty? ? (skills&.list || "(no skills)") : (found ? "#{found[:name]}: #{found[:description]}" : "(not found: #{arg})")
         },
-        "phase" => ->(ctx) { dispatch_phase(phase_gates, ctx[:args].to_s.strip) }
+        "phase" => ->(ctx) { dispatch_phase(phase_gates, ctx[:args].to_s.strip) },
+        "score" => ->(ctx) { score_file(scanner, ctx[:args].to_s.strip) }
       }
     end
 
@@ -5499,6 +5511,41 @@ module Master
       when /\Apropose (.+)\z/  then soul.propose($1.strip)
       else "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
       end
+    end
+
+    SCORE_WEIGHTS = { error: 10, critical: 10, warning: 3, style: 1 }.freeze
+
+    def score_file(scanner, arg)
+      return "usage: /score <file>" if arg.empty?
+      path = File.expand_path(arg)
+      return "not found: #{arg}" unless File.exist?(path)
+
+      src   = File.read(path, encoding: "UTF-8")
+      lines = src.lines
+      total = lines.size
+      return "empty file" if total.zero?
+
+      blank   = lines.count { |l| l.strip.empty? }
+      comment = lines.count { |l| l.strip.start_with?("#") }
+      long    = lines.count { |l| l.chomp.length > 100 }
+
+      result = scanner&.scan(path, depth: :standard)
+      violations = result.respond_to?(:ok?) && result.ok? ? result.value! : []
+
+      penalty = violations.sum { |v| SCORE_WEIGHTS[v[:severity]] || 1 }
+      score   = [100 - penalty, 0].max
+
+      by_rule = violations.group_by { |v| v[:rule] }
+                          .sort_by { |_, vs| -vs.size }
+                          .map { |rule, vs| "  #{rule}: #{vs.size}" }
+
+      lines_out = [
+        "score: #{score}/100  #{path.split("/").last}",
+        "  #{total} lines  #{blank} blank  #{comment} comment  #{long} over 100 chars",
+        "  #{violations.size} violation(s)  -#{penalty} pts"
+      ]
+      lines_out.concat(by_rule) unless by_rule.empty?
+      lines_out.join("\n")
     end
 
     def dispatch_heartbeat(heartbeat, arg)
@@ -8620,6 +8667,74 @@ module Master
 end
 ```
 
+## `lib/master/scan/rules/comment_quality_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      class CommentQualityRule < Rule
+        TODO_NO_REF      = /^\s*#\s*TODO(?!.*[:(#@])/.freeze
+        FIXME_NO_REF     = /^\s*#\s*FIXME(?!.*[:(#@])/.freeze
+        CODE_LINE_RE     = /(?:def |end\b|=\s|\.call|if |unless |return |@@|@\w+ =)/.freeze
+        MIN_CODE_COMMENTS = 3
+
+        def initialize
+          super
+          @id          = "comment_quality"
+          @description = "Low-quality comments — TODO without ref, commented-out code"
+          @severity    = :style
+          @axiom_tags  = [:SELF_EXPLAINING]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".rb")
+          line_findings = []
+          lines = code.lines
+
+          lines.each_with_index do |line, i|
+            num = i + 1
+            line_findings << finding(line: num, message: "TODO without owner or issue ref — add TODO(name) or TODO(#123)") if line.match?(TODO_NO_REF)
+            line_findings << finding(line: num, message: "FIXME without owner or issue ref — add FIXME(name)") if line.match?(FIXME_NO_REF)
+          end
+
+          line_findings + commented_out_blocks(lines)
+        end
+
+        private
+
+        def commented_out_blocks(lines)
+          findings  = []
+          run_start = nil
+          run_count = 0
+
+          lines.each_with_index do |line, i|
+            stripped = line.strip
+            if stripped.start_with?("#") && CODE_LINE_RE.match?(stripped[1..].to_s)
+              run_start ||= i + 1
+              run_count  += 1
+            else
+              if run_count >= MIN_CODE_COMMENTS
+                findings << finding(line: run_start, message: "#{run_count} consecutive lines of commented-out code — delete it, git history preserves it")
+              end
+              run_start = nil
+              run_count = 0
+            end
+          end
+
+          if run_count >= MIN_CODE_COMMENTS
+            findings << finding(line: run_start, message: "#{run_count} consecutive lines of commented-out code — delete it, git history preserves it")
+          end
+
+          findings
+        end
+      end
+    end
+  end
+end
+```
+
 ## `lib/master/scan/rules/conceptual_rule.rb`
 ```ruby
 # frozen_string_literal: true
@@ -8759,6 +8874,182 @@ module Master
             end
           end
 
+          findings
+        end
+      end
+    end
+  end
+end
+```
+
+## `lib/master/scan/rules/dead_assign_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      class DeadAssignRule < Rule
+        # Match: leading whitespace, lowercase lvar, single = (not ==, +=, -=, =~, =>)
+        ASSIGN = /^\s+([a-z_][a-z0-9_]*)\s*=(?![>=~])/.freeze
+
+        def initialize
+          super
+          @id          = "dead_assign"
+          @description = "Local variable assigned but never read — remove or use it"
+          @severity    = :warning
+          @axiom_tags  = [:EXPLICIT]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".rb")
+          extract_methods(code).flat_map { |m| check_method(m) }
+        end
+
+        private
+
+        def extract_methods(code)
+          methods = []
+          lines   = code.lines
+          i       = 0
+          while i < lines.size
+            if lines[i].match?(/^\s*def \w/)
+              start = i
+              depth = 1
+              i += 1
+              while i < lines.size && depth > 0
+                stripped = lines[i].strip
+                depth += stripped.scan(/\b(?:def|do|begin|if|unless|case|class|module)\b/).size
+                depth -= stripped.scan(/\bend\b/).size
+                i += 1
+              end
+              methods << { lines: lines[start...i], start_line: start + 1 }
+            else
+              i += 1
+            end
+          end
+          methods
+        end
+
+        def check_method(method)
+          lines    = method[:lines]
+          start    = method[:start_line]
+          findings = []
+
+          lines.each_with_index do |line, i|
+            stripped = line.strip
+            next if stripped.start_with?("#")
+            m = line.match(ASSIGN)
+            next unless m
+
+            var = m[1]
+            next if var.start_with?("_")               # intentionally unused
+            next if %w[true false nil self].include?(var)
+
+            rest = lines[(i + 1)..].join
+            next if rest.match?(/\b#{Regexp.escape(var)}\b/)
+
+            findings << finding(line: start + i, message: "#{var} is assigned but never read — remove or use it")
+          end
+          findings
+        end
+      end
+    end
+  end
+end
+```
+
+## `lib/master/scan/rules/dead_code_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      class DeadCodeRule < Rule
+        EMPTY_RESCUE = /rescue\s+\w[\w:]*(?:\s*=>\s*\w+)?\s*\n\s*end/.freeze
+        CONST_DEF    = /^\s*([A-Z][A-Z0-9_]{2,})\s*=(?!=)/.freeze
+
+        def initialize
+          super
+          @id          = "dead_code"
+          @description = "Dead constants and empty rescue blocks"
+          @severity    = :warning
+          @axiom_tags  = [:EXPLICIT]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".rb")
+          line_rescue_findings(code) + dead_constants(code)
+        end
+
+        private
+
+        def line_rescue_findings(code)
+          findings = []
+          lines    = code.lines
+          lines.each_with_index do |line, i|
+            next unless line.match?(/^\s*rescue\b/)
+            next_stripped = lines[i + 1]&.strip
+            if next_stripped == "end"
+              findings << finding(line: i + 1, message: "empty rescue block swallows errors silently — log or re-raise")
+            end
+          end
+          findings
+        end
+
+        def dead_constants(code)
+          findings = []
+          lines    = code.lines
+          lines.each_with_index do |line, i|
+            m = line.match(CONST_DEF)
+            next unless m
+
+            const = m[1]
+            rest  = (lines[0...i] + lines[(i + 1)..]).join
+            next if rest.match?(/\b#{Regexp.escape(const)}\b/)
+
+            findings << finding(line: i + 1, message: "#{const} is defined but never referenced — remove it")
+          end
+          findings
+        end
+      end
+    end
+  end
+end
+```
+
+## `lib/master/scan/rules/debug_output_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      class DebugOutputRule < Rule
+        PP_CALL     = /^\s*pp?\s+(?!self\b)/.freeze
+        STDERR_PUTS = /\$stderr\.puts\b/.freeze
+        BINDING_PRY = /\bbinding\.pry\b/.freeze
+        DEBUGGER    = /\bdebugger\b/.freeze
+
+        def initialize
+          super
+          @id          = "debug_output"
+          @description = "Debug output left in lib/ — remove before shipping"
+          @severity    = :error
+          @axiom_tags  = [:FAIL_VISIBLY]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".rb") && path.include?("/lib/")
+          findings = []
+          code.each_line.with_index(1) do |line, num|
+            next if line.strip.start_with?("#")
+            findings << finding(line: num, message: "p/pp debug call — remove or publish via event bus") if line.match?(PP_CALL)
+            findings << finding(line: num, message: "$stderr.puts — use @bus.publish or $stdout for structured output") if line.match?(STDERR_PUTS)
+            findings << finding(line: num, message: "binding.pry left in — remove before commit") if line.match?(BINDING_PRY)
+            findings << finding(line: num, message: "debugger left in — remove before commit") if line.match?(DEBUGGER)
+          end
           findings
         end
       end
@@ -9226,6 +9517,117 @@ module Master
             end
           end
 
+          findings
+        end
+      end
+    end
+  end
+end
+```
+
+## `lib/master/scan/rules/naming_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      class NamingRule < Rule
+        IS_PREFIX      = /def is_\w+(?!\?)/.freeze
+        GET_PREFIX     = /def get_\w+/.freeze
+        SET_PREFIX     = /def set_\w+/.freeze
+        BOOL_NO_QMARK  = /def (?:has|can|should|will|did|was|have)_\w+(?!\?)/.freeze
+        SCREAMING_ABBR = /\b[A-Z]{4,}\b/.freeze
+
+        def initialize
+          super
+          @id          = "naming"
+          @description = "Method names violate Ruby conventions"
+          @severity    = :style
+          @axiom_tags  = [:SELF_EXPLAINING]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".rb")
+          findings = []
+          code.each_line.with_index(1) do |line, num|
+            next if line.strip.start_with?("#")
+            findings << finding(line: num, message: "is_ prefix: use adjective with ? suffix (e.g. valid? not is_valid?)") if line.match?(IS_PREFIX)
+            findings << finding(line: num, message: "get_ prefix: Ruby readers drop get_ (e.g. name not get_name)") if line.match?(GET_PREFIX)
+            findings << finding(line: num, message: "set_ prefix: use name= for writers (e.g. name= not set_name)") if line.match?(SET_PREFIX)
+            findings << finding(line: num, message: "boolean predicate missing ? suffix — add ? to indicate it returns bool") if line.match?(BOOL_NO_QMARK)
+          end
+          findings
+        end
+      end
+    end
+  end
+end
+```
+
+## `lib/master/scan/rules/nesting_depth_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      class NestingDepthRule < Rule
+        DEFAULT_DEPTH = 2
+
+        OPEN_KWORDS  = /\b(?:if|unless|case|while|until|for|begin)\b/.freeze
+        CLOSE_KWORD  = /\bend\b/.freeze
+
+        def initialize
+          super
+          @threshold   = Master::Axioms.new.thresholds.dig("method", "max_nesting") || DEFAULT_DEPTH
+          @id          = "nesting_depth"
+          @description = "Nesting deeper than #{@threshold} — use guard clauses to flatten"
+          @severity    = :warning
+          @axiom_tags  = [:GUARD_CLAUSES_FIRST]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".rb")
+          findings    = []
+          in_method   = false
+          nesting     = 0   # depth relative to method body (0 = top of method)
+          over        = false
+
+          code.each_line.with_index(1) do |line, num|
+            stripped = line.strip
+            next if stripped.start_with?("#")
+
+            if !in_method && stripped.match?(/\bdef \w/)
+              in_method = true
+              nesting   = 0
+              over      = false
+              next
+            end
+            next unless in_method
+
+            opens  = stripped.scan(OPEN_KWORDS).size
+            closes = stripped.scan(CLOSE_KWORD).size
+
+            nesting += opens
+
+            if nesting > @threshold && !over
+              over = true
+              findings << finding(line: num, message: "nesting depth #{nesting} exceeds #{@threshold} — extract method or add guard clause")
+            end
+
+            nesting -= closes
+            nesting  = [nesting, 0].max
+
+            if nesting <= @threshold
+              over = false
+            end
+
+            if nesting < 0 || (stripped == "end" && nesting == 0)
+              in_method = false
+              nesting   = 0
+            end
+          end
           findings
         end
       end
@@ -9847,6 +10249,95 @@ module Master
 end
 ```
 
+## `lib/master/scan/rules/structure_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      class StructureRule < Rule
+        UNREACHABLE_ELSE = /^\s*return\b[^\n]*\n(?:\s*#[^\n]*\n)*\s*else\b/.freeze
+        GUARD_RETURN     = /^\s*if\s+.+\n\s*return\b/.freeze
+        FLATTEN_NO_ARG   = /\.flatten\s*(?:\.|$|\))/.freeze
+        SINGLE_WHEN      = /\bcase\b/.freeze
+
+        def initialize
+          super
+          @id          = "structure"
+          @description = "Structural anti-patterns — guard clauses, unreachable code, flatten depth"
+          @severity    = :warning
+          @axiom_tags  = [:GUARD_CLAUSES_FIRST]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".rb")
+          findings = []
+
+          findings.concat(scan_lines(code, FLATTEN_NO_ARG,
+            message: ".flatten without depth arg flattens infinitely — use .flatten(1) unless full depth is intended"))
+
+          findings.concat(check_guard_candidates(code))
+          findings.concat(check_single_when(code))
+          findings.concat(check_unreachable_else(code))
+          findings
+        end
+
+        private
+
+        def check_guard_candidates(code)
+          findings = []
+          lines    = code.lines
+          lines.each_with_index do |line, i|
+            next unless line.match?(/^\s*if\s+/)
+            next_sig = lines[i + 1]&.strip
+            next unless next_sig&.start_with?("return")
+            findings << finding(line: i + 1, message: "if/return block — invert to guard clause: return X if condition")
+          end
+          findings
+        end
+
+        def check_single_when(code)
+          findings = []
+          in_case  = false
+          when_count = 0
+          case_line  = 0
+
+          code.each_line.with_index(1) do |line, num|
+            stripped = line.strip
+            if stripped.start_with?("case")
+              in_case    = true
+              when_count = 0
+              case_line  = num
+            elsif in_case
+              when_count += 1 if stripped.start_with?("when")
+              if stripped == "end"
+                findings << finding(line: case_line, message: "case with one `when` — use if/else") if when_count == 1
+                in_case = false
+              end
+            end
+          end
+          findings
+        end
+
+        def check_unreachable_else(code)
+          findings = []
+          lines    = code.lines
+          lines.each_with_index do |line, i|
+            next unless line.strip.start_with?("return")
+            j = i + 1
+            j += 1 while j < lines.size && lines[j].strip.start_with?("#")
+            next unless j < lines.size && lines[j].strip.start_with?("else")
+            findings << finding(line: j + 1, message: "else after return is unreachable — remove the else and dedent")
+          end
+          findings
+        end
+      end
+    end
+  end
+end
+```
+
 ## `lib/master/scan/rules/tell_dont_ask_rule.rb`
 ```ruby
 # frozen_string_literal: true
@@ -9882,6 +10373,95 @@ module Master
               message: "TDA: nil? guard before method call — use Null Object or move nil check into the object") if line.match?(NIL_GUARD)
             findings << finding(line: num,
               message: "TDA: ready? check then method call on same object — replace with a single command method") if line.match?(READY_QUERY)
+          end
+          findings
+        end
+      end
+    end
+  end
+end
+```
+
+## `lib/master/scan/rules/terse_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      class TerseRule < Rule
+        BOOL_CMP      = /(?:==|!=)\s*(?:true|false)\b/.freeze
+        NIL_EQ        = /==\s*nil\b/.freeze
+        NIL_NEQ       = /!=\s*nil\b/.freeze
+        THEN_KWORD    = /\b(?:if|unless|when)\b[^#\n]*\bthen\b/.freeze
+        SYMBOL_PROC   = /\.(map|select|reject|flat_map|filter_map|sort_by|min_by|max_by|count|sum|any\?|all\?|none\?|find)\s*\{\s*\|(\w+)\|\s*\2\.(\w+)\s*\}/.freeze
+        NOT_EMPTY     = /!\s*\w+\.empty\?/.freeze
+        LEN_ZERO      = /\.(length|size|count)\s*==\s*0\b/.freeze
+        LEN_POS       = /\.(length|size|count)\s*(?:>|>=)\s*[01]\b/.freeze
+        DOUBLE_BANG   = /!!\s*\w/.freeze
+        UNLESS_NOT    = /\bunless\s+!/.freeze
+        TERNARY_SELF  = /(\w+)\s*\?\s*\1\s*:/.freeze
+
+        def initialize
+          super
+          @id          = "terse"
+          @description = "Verbose Ruby patterns — use idiomatic shortcuts"
+          @severity    = :style
+          @axiom_tags  = [:EXPLICIT]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".rb")
+          line_findings = []
+          code.each_line.with_index(1) do |line, num|
+            next if line.strip.start_with?("#")
+            line_findings << finding(line: num, message: "== true/false is redundant — use the boolean directly") if line.match?(BOOL_CMP)
+            line_findings << finding(line: num, message: "use .nil? instead of == nil") if line.match?(NIL_EQ)
+            line_findings << finding(line: num, message: "use object instead of != nil — truthy check suffices") if line.match?(NIL_NEQ)
+            line_findings << finding(line: num, message: "remove `then` — it is noise in multi-line if/unless") if line.match?(THEN_KWORD)
+            line_findings << finding(line: num, message: "symbol-to-proc: .map(&:method_name) instead of block") if line.match?(SYMBOL_PROC)
+            line_findings << finding(line: num, message: "!x.empty? → x.any?") if line.match?(NOT_EMPTY)
+            line_findings << finding(line: num, message: ".length/size/count == 0 → .empty?") if line.match?(LEN_ZERO)
+            line_findings << finding(line: num, message: ".length/size/count > 0 → .any?") if line.match?(LEN_POS)
+            line_findings << finding(line: num, message: "!! is a no-op on booleans and obscures intent — use explicit truthiness") if line.match?(DOUBLE_BANG)
+            line_findings << finding(line: num, message: "unless !x → if x") if line.match?(UNLESS_NOT)
+            line_findings << finding(line: num, message: "x ? x : y → x || y") if line.match?(TERNARY_SELF)
+          end
+          line_findings + redundant_returns(code)
+        end
+
+        private
+
+        def redundant_returns(code)
+          findings = []
+          method_lines = []
+          in_method = false
+          depth = 0
+
+          code.each_line.with_index(1) do |line, num|
+            stripped = line.strip
+            if !in_method && stripped.match?(/\bdef \w/)
+              in_method = true
+              method_lines = []
+              depth = 1
+              next
+            end
+            next unless in_method
+
+            depth += stripped.scan(/\b(?:def|do|begin|if|unless|case|class|module)\b/).size
+            depth -= stripped.scan(/\bend\b/).size
+
+            if depth <= 0
+              last = method_lines.reverse.find { |l| !l[:text].strip.empty? && !l[:text].strip.start_with?("#") }
+              if last && last[:text].match?(/^\s*return\s+\S/) && !last[:text].match?(/return\s+.+\bif\b/)
+                findings << finding(line: last[:num], message: "redundant return — last expression is the implicit return value")
+              end
+              in_method = false
+              method_lines = []
+              depth = 0
+            else
+              method_lines << { text: line, num: }
+            end
           end
           findings
         end
@@ -9962,6 +10542,59 @@ module Master
 end
 ```
 
+## `lib/master/scan/rules/trailing_comment_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      # Flags inline trailing comments whose text restates identifiers already
+      # visible in the same line. The name should speak; the comment is noise.
+      class TrailingCommentRule < Rule
+        INLINE_COMMENT = /^([^#\n]+\S)\s+#\s*(.+)$/.freeze
+        NOISE_WORDS    = %w[the a an this that returns gets sets is are be].to_set.freeze
+
+        def initialize
+          super
+          @id          = "trailing_comment"
+          @description = "Trailing comment restates the code — rename instead of annotating"
+          @severity    = :style
+          @axiom_tags  = [:SELF_EXPLAINING]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".rb")
+          findings = []
+          code.each_line.with_index(1) do |line, num|
+            m = line.match(INLINE_COMMENT)
+            next unless m
+
+            code_part = m[1]
+            comment   = m[2].strip
+            next if comment.length > 60
+            next unless restatement?(code_part, comment)
+
+            findings << finding(line: num, message: "trailing comment restates the code — remove it or rename the identifier")
+          end
+          findings
+        end
+
+        private
+
+        def restatement?(code_part, comment)
+          comment_words = comment.downcase.scan(/[a-z_]+/).reject { |w| NOISE_WORDS.include?(w) }
+          return false if comment_words.empty? || comment_words.size > 4
+          code_words = code_part.downcase.scan(/[a-z_]+/).to_set
+          overlap = comment_words.count { |w| code_words.include?(w) }
+          overlap.to_f / comment_words.size >= 0.75
+        end
+      end
+    end
+  end
+end
+```
+
 ## `lib/master/scan/rules/universal_rule.rb`
 ```ruby
 # frozen_string_literal: true
@@ -10022,6 +10655,43 @@ module Master
             next unless stripped_a == "end" && stripped_b.start_with?("def ")
             findings << finding(line: number_a, message: "no blank line between method definitions — add vertical spacing", fix: "insert blank line")
           end
+        end
+      end
+    end
+  end
+end
+```
+
+## `lib/master/scan/rules/yaml_quality_rule.rb`
+```ruby
+# frozen_string_literal: true
+
+module Master
+  module Scan
+    module Rules
+      class YamlQualityRule < Rule
+        QUOTED_BOOL   = /:\s*["'](true|false|yes|no|null)["']/.freeze
+        QUOTED_INT    = /:\s*["'](\d+)["']/.freeze
+        UNNECESSARY_Q = /:\s*"([a-zA-Z0-9_\-\/\.]+)"/.freeze
+
+        def initialize
+          super
+          @id          = "yaml_quality"
+          @description = "YAML verbosity — unnecessary quotes, type coercions"
+          @severity    = :style
+          @axiom_tags  = [:EXPLICIT]
+        end
+
+        def check(code, path:)
+          return [] unless path.end_with?(".yml") || path.end_with?(".yaml")
+          findings = []
+          code.each_line.with_index(1) do |line, num|
+            next if line.strip.start_with?("#")
+            findings << finding(line: num, message: "boolean/null as quoted string — remove quotes so YAML parses the type correctly") if line.match?(QUOTED_BOOL)
+            findings << finding(line: num, message: "integer as quoted string — remove quotes") if line.match?(QUOTED_INT)
+            findings << finding(line: num, message: "unnecessary quotes — plain scalars don't need quoting unless they contain : or #") if line.match?(UNNECESSARY_Q) && !line.match?(QUOTED_BOOL) && !line.match?(QUOTED_INT)
+          end
+          findings
         end
       end
     end
@@ -12338,6 +13008,9 @@ module Master
       out.gsub!(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/, "")
       out.gsub!(/[ \t]+$/, "")
       out.gsub!(/([^\n\t ]) {2,}/, '\1 ')
+      out.gsub!("\u00A0", " ")
+      out.gsub!(/^\t+$/, "")
+      out.gsub!(/\n{3,}/, "\n\n")
 
       if ensure_final_newline && text_like?(filename) && !out.empty? && !out.end_with?("\n")
         out << "\n"
@@ -21642,4 +22315,4 @@ var disableFormElements = form => formElements(form, formDisableSelector).forEac
 # See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
 ```
 
-files: 230 / lines: 36155 / truncated: 11 / est. tokens: ~43386
+files: 240 / lines: 36788 / truncated: 11 / est. tokens: ~44145
