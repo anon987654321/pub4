@@ -16,3 +16,5 @@ web/.env*
 .master3/memory.yml
 chrome.core
 *.core
+snapshot_latest.md
+snapshot.md

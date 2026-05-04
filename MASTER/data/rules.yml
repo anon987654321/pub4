@@ -97,6 +97,12 @@ scan_depths:
     - DeadAssignRule
     - NestingDepthRule
     - TrailingCommentRule
+    - NamingRule
+    - CommentQualityRule
+    - DebugOutputRule
+    - YamlQualityRule
+    - StructureRule
+    - DeadCodeRule
   deep: &deep
     - AdversarialRule
     - ConceptualRule

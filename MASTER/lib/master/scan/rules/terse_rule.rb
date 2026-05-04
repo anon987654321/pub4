@@ -10,6 +10,11 @@ module Master
         THEN_KWORD    = /\b(?:if|unless|when)\b[^#\n]*\bthen\b/.freeze
         SYMBOL_PROC   = /\.(map|select|reject|flat_map|filter_map|sort_by|min_by|max_by|count|sum|any\?|all\?|none\?|find)\s*\{\s*\|(\w+)\|\s*\2\.(\w+)\s*\}/.freeze
         NOT_EMPTY     = /!\s*\w+\.empty\?/.freeze
+        LEN_ZERO      = /\.(length|size|count)\s*==\s*0\b/.freeze
+        LEN_POS       = /\.(length|size|count)\s*(?:>|>=)\s*[01]\b/.freeze
+        DOUBLE_BANG   = /!!\s*\w/.freeze
+        UNLESS_NOT    = /\bunless\s+!/.freeze
+        TERNARY_SELF  = /(\w+)\s*\?\s*\1\s*:/.freeze
 
         def initialize
           super
@@ -30,6 +35,11 @@ module Master
             line_findings << finding(line: num, message: "remove `then` — it is noise in multi-line if/unless") if line.match?(THEN_KWORD)
             line_findings << finding(line: num, message: "symbol-to-proc: .map(&:method_name) instead of block") if line.match?(SYMBOL_PROC)
             line_findings << finding(line: num, message: "!x.empty? → x.any?") if line.match?(NOT_EMPTY)
+            line_findings << finding(line: num, message: ".length/size/count == 0 → .empty?") if line.match?(LEN_ZERO)
+            line_findings << finding(line: num, message: ".length/size/count > 0 → .any?") if line.match?(LEN_POS)
+            line_findings << finding(line: num, message: "!! is a no-op on booleans and obscures intent — use explicit truthiness") if line.match?(DOUBLE_BANG)
+            line_findings << finding(line: num, message: "unless !x → if x") if line.match?(UNLESS_NOT)
+            line_findings << finding(line: num, message: "x ? x : y → x || y") if line.match?(TERNARY_SELF)
           end
           line_findings + redundant_returns(code)
         end

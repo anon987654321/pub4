@@ -20,6 +20,9 @@ module Master
       out.gsub!(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/, "")
       out.gsub!(/[ \t]+$/, "")
       out.gsub!(/([^\n\t ]) {2,}/, '\1 ')
+      out.gsub!("\u00A0", " ")
+      out.gsub!(/^\t+$/, "")
+      out.gsub!(/\n{3,}/, "\n\n")
 
       if ensure_final_newline && text_like?(filename) && !out.empty? && !out.end_with?("\n")
         out << "\n"
