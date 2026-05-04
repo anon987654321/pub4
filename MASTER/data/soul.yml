@@ -13,6 +13,13 @@ language:
 
 absolute:
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
+  sacred_paths:
+    - data/
+    - SOUL.md
+    - CLAUDE.md
+    - CONVENTIONS.md
+    - README.md
+    - .claude/
   anti_simulation:
     forbidden: [will, would, could, might]
     require_evidence:

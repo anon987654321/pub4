@@ -11,8 +11,6 @@ module Master
 
       SAFE_EXTENSIONS = %w[.rb .erb .yml .yaml .md .sh .js .css .html .json .txt].freeze
 
-      SACRED_DENY = %w[SOUL.md CLAUDE.md CONVENTIONS.md README.md data/].freeze
-
       def initialize(root:, governor:, event_bus: nil)
         @root     = root
         @governor = governor
@@ -34,7 +32,7 @@ module Master
           next unless File.file?(path)
           next unless SAFE_EXTENSIONS.include?(File.extname(path))
           rel = path.delete_prefix("#{@root}/")
-          next if SACRED_DENY.any? { |s| rel == s || rel.start_with?(s) }
+          next if PathGuard::SACRED_PATHS.any? { |s| rel == s || rel.start_with?(s) }
           content = File.read(path, encoding: "UTF-8") rescue next
           next unless content.include?(old_str)
           write_atomic(path, content.gsub(old_str, new_str))
@@ -46,7 +44,7 @@ module Master
              .select { |p| File.file?(p) && File.basename(p).include?(old_str) }
              .each do |path|
                rel = path.delete_prefix("#{@root}/")
-               next if SACRED_DENY.any? { |s| rel == s || rel.start_with?(s) }
+               next if PathGuard::SACRED_PATHS.any? { |s| rel == s || rel.start_with?(s) }
                new_path = File.join(File.dirname(path), File.basename(path).gsub(old_str, new_str))
                File.rename(path, new_path)
                changed += 1

@@ -32,14 +32,12 @@ module Master
         lines.join("\n")
       end
 
-      SACRED_DENY = %w[SOUL.md CLAUDE.md CONVENTIONS.md README.md data/].freeze
-
       def collect_files(dir, types)
+        sacred = Tools::PathGuard::SACRED_PATHS
         types.flat_map { |t| Dir.glob(File.join(dir, GLOBS[t].to_s)) }
-             .reject { |f| f.include?("/data/") }
              .reject { |f|
                rel = f.delete_prefix("#{@root}/")
-               SACRED_DENY.any? { |s| rel == s || rel.start_with?(s) }
+               sacred.any? { |s| rel == s || rel.start_with?(s) }
              }
              .uniq.sort
       end

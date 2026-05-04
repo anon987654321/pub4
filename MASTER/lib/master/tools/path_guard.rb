@@ -3,7 +3,12 @@
 module Master
   module Tools
     module PathGuard
-      SACRED_PATHS = %w[data/ SOUL.md CLAUDE.md .claude/].freeze
+      SACRED_PATHS = begin
+        data = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
+        Array(data.dig("absolute", "sacred_paths")).freeze
+      rescue StandardError
+        %w[data/ SOUL.md CLAUDE.md CONVENTIONS.md README.md .claude/].freeze
+      end
 
       def resolve(path)
         full = File.expand_path(path, @root)
