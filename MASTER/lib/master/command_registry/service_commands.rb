@@ -98,7 +98,12 @@ module Master
           stamp = Time.now.strftime("%Y-%m-%d")
           system("git", "-C", root, "add", "snapshot.md")
           system("git", "-C", root, "commit", "-m", "snapshot: #{stamp} — #{files.size} files")
-          "snapshot: #{files.size} files → snapshot.md (committed)"
+          gist_url, status = Open3.capture2e("gh", "gist", "create", out,
+                                             "--public",
+                                             "--desc", "MASTER snapshot #{stamp}",
+                                             "--filename", "snapshot.md")
+          gist_line = status.success? ? " gist: #{gist_url.strip}" : ""
+          "snapshot: #{files.size} files → snapshot.md (committed)#{gist_line}"
         },
         "cache" => ->(ctx) {
           arg = ctx[:args].to_s.strip
