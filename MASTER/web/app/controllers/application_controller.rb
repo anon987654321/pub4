@@ -4,8 +4,8 @@ $LOAD_PATH.unshift File.expand_path("../../../../lib", __FILE__)
 require "master"
 
 class ApplicationController < ActionController::Base
-  # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
+  before_action :authenticate!
 
   @@container        = nil
   @@mutex            = Mutex.new
@@ -14,16 +14,45 @@ class ApplicationController < ActionController::Base
 
   private
 
+  def authenticate!
+    return if request.path == "/up" || request.path == "/health"
+    return if session[:authenticated]
+    tok = web_token
+    if params[:token] == tok || request.headers["X-Token"] == tok
+      session[:authenticated] = true
+      return
+    end
+    render plain: "401 Unauthorized — visit with ?token=#{tok}", status: :unauthorized
+  end
+
+  def web_token
+    cfg_file = File.join(Rails.root, "../.master/config.yml")
+    cfg = YAML.safe_load_file(cfg_file, permitted_classes: [], aliases: true) rescue {}
+    cfg["web_token"].presence || generate_token!(cfg_file, cfg)
+  end
+
+  def generate_token!(cfg_file, cfg)
+    require "securerandom"
+    tok = SecureRandom.urlsafe_base64(24)
+    cfg["web_token"] = tok
+    File.write(cfg_file, cfg.to_yaml)
+    tok
+  end
+
   def container
     @@mutex.synchronize do
-      @@container ||= Master.build(root: Rails.root.join("..").to_s).tap { |c| start_scheduler(c); Master.generate_boot_snapshot(c) rescue nil; c[:heartbeat]&.start! }
+      @@container ||= Master.build(root: Rails.root.join("..").to_s).tap do |c|
+        start_scheduler(c)
+        Master.generate_boot_snapshot(c) rescue nil
+        c[:heartbeat]&.start!
+      end
     end
   end
 
   def start_scheduler(c)
     return if @@scheduler_thread&.alive?
     @@scheduler_thread = Thread.new do
-      sleep 300 # wait 5 min after boot before first check
+      sleep 300
       loop do
         begin
           due = c[:standing].due
@@ -32,9 +61,9 @@ class ApplicationController < ActionController::Base
             results.each { |r| c[:bus].publish("scheduler:ran", name: r[:name]) rescue nil }
           end
         rescue StandardError
-          # swallow — never crash the scheduler
+          nil
         end
-        sleep 900 # check every 15 min
+        sleep 900
       end
     end
     @@scheduler_thread.abort_on_exception = false

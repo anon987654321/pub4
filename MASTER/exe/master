@@ -18,7 +18,10 @@ def boot_web_ui(config)
 
   if RUBY_PLATFORM.include?("openbsd")
     running = system("pgrep", "-qf", "falcon.*#{port}")
-    $stderr.puts "web: http://#{host}:#{port} (#{running ? "up" : "down — run: doas rcctl start master"})"
+    token = config["web_token"]
+    url   = config["web_public_url"] || "http://#{host}:#{port}"
+    url  += "/?token=#{token}" if token
+    $stderr.puts "web: #{url} (#{running ? "up" : "down — run: doas rcctl start master"})"
   else
     require "open3"
     web_dir = File.expand_path("../web", __dir__)
