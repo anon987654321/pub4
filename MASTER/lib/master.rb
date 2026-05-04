@@ -52,6 +52,9 @@ module Master
   loader.setup
 
   def self.configure_providers!
+    # Stub Bedrock before ruby_llm loads — avoids openssl.so on OpenBSD/LibreSSL.
+    # MASTER only uses OpenRouter; Bedrock is never needed.
+    require_relative "master/bedrock_stub"
     require "ruby_llm"
     require_relative "master/ruby_llm_patch"
     RubyLLM.configure do |cfg|
