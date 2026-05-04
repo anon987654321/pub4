@@ -52,6 +52,47 @@ ruby:
       reason: "event receives new state instead of previous state"
       fix: "capture prev = current before mutation; use prev in publish/return"
 
+  naming:
+    spell_out: true        # no abbreviations: index not idx, signature not sig, temporary_path not tmp
+    forbidden_abbreviations:
+      - idx
+      - sig
+      - tmp
+      - buf
+      - val
+      - ret
+      - obj
+      - str
+      - arr
+      - num
+      - cnt
+      - ptr
+      - msg   # unless it IS the domain term (e.g., a Message object named msg is ok if short-lived)
+    rule: "Spell identifiers out. Domain names can be short (id, url, ip) — abbreviations cannot."
+
+  prefer_string_methods:
+    rule: "Prefer start_with? / include? / end_with? / split over regex when string methods suffice."
+    rationale: "Regex is expressive but noisy. Use it when patterns require it, not as a default."
+    prefer:
+      - "str.start_with?(prefix)        over  str.match?(/^prefix/)"
+      - "str.include?(substr)           over  str.match?(/substr/)"
+      - "str.end_with?(suffix)          over  str.match?(/suffix$/)"
+      - "str.split(sep, n)              over  str.scan(/pattern/)"
+    still_use_regex_for:
+      - "Character classes: /[a-z]/, /\d+/"
+      - "Anchored multiline patterns"
+      - "Alternation with more than 2 branches"
+
+  outsource_to_gems:
+    rule: "If a well-maintained gem solves the problem correctly, use it. Do not reimplement."
+    rationale: "Gems carry tests, edge cases, and maintenance. Home-grown duplicates carry bugs."
+    examples:
+      - "flay for AST-level duplicate detection"
+      - "reek for code smell analysis"
+      - "rubocop for style enforcement"
+      - "prism for Ruby parsing"
+    caveat: "Evaluate gem quality first: maintained, tested, minimal footprint."
+
   blank_lines:
     max_consecutive: 1     # no double blank lines anywhere
 
@@ -69,6 +110,8 @@ shell:
     - "pure zsh parameter expansion over external tools (see zsh_patterns.yml)"
     - "Open3.capture2e with arg arrays in Ruby over shell interpolation"
     - "File.expand_path over pwd + concatenation"
+    - "print -r -- \"$(<file)\" to read files in zsh (not cat, not bare < file via SSH — triggers pager)"
+    - "lines=(\"${(@f)$(<file)}\") for line arrays; last 50: print -l $lines[-50,-1]"
 
 git:
   commit_style:

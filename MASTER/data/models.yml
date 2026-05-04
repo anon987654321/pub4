@@ -121,6 +121,16 @@ tool_capable_prefixes:
   - openai/gpt
   - google/gemini
 
+operation_constraints:
+  # Operations that write files, run autoloop/sweep, or execute destructive commands
+  # require a model with quality score >= 0.88 (default and cheap tiers excluded).
+  # Equivalent to: claude-sonnet-4-6, gemini-2.5-pro, mistral-large, gpt-4o.
+  file_write:    { min_quality: 0.88, preferred_tier: strong }
+  autoloop:      { min_quality: 0.88, preferred_tier: strong }
+  sweep:         { min_quality: 0.88, preferred_tier: strong }
+  council:       { min_quality: 0.88, preferred_tier: strong }
+  destructive:   { min_quality: 0.90, preferred_tier: strong }
+
 continuity:
   enabled: true
   updated_at: "2026-05-01T00:00:00Z"
