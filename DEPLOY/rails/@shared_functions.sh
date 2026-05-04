@@ -362,9 +362,9 @@ JS
 }
 
 write_stimulus_controller() {
-  local name=$1 content=$2
+  local name=$1
   mkdir -p app/javascript/controllers
-  print -r -- "$content" > "app/javascript/controllers/${name}_controller.js"
+  cat > "app/javascript/controllers/${name}_controller.js"
   log_ok "Stimulus ${name}_controller.js written"
 }
 

@@ -132,7 +132,7 @@ class Post < ApplicationRecord
   validates :content, presence: true, if: -> { post_type == "text" }
   validates :url, presence: true, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]) }, if: -> { post_type == "link" }
 
-  default_value_for :post_type, "text"
+  attribute :post_type, :string, default: "text"
 
   scope :hot, -> {
     order(Arel.sql("(upvotes - downvotes) / POWER(((julianday('now') - julianday(created_at)) * 24 + 2), 1.5) DESC"))

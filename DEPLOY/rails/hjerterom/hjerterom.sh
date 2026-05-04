@@ -128,7 +128,7 @@ class FoodListing < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :unit, inclusion: { in: UNITS }
 
-  default_value_for :status, "available"
+  attribute :status, :string, default: "available"
 
   geocoded_by :pickup_address
   after_validation :geocode, if: :pickup_address_changed?
