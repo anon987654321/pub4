@@ -76,13 +76,13 @@ module Master
         return false if history.size < 2
         prev, curr = history[-2], history[-1]
         return true if curr.zero?
-        (prev - curr).abs.to_f / [prev, 1].max < CONVERGE_THRESHOLD
+        (prev - curr).abs.to_f / [prev, 1].max < @converge_threshold
       end
 
       def trajectory_stalled?(history)
         return false if history.size < 3
         deltas = history.each_cons(2).map { |a, b| a - b }
-        weighted = deltas.last(CONVERGE_WINDOW + 1).each_with_index.sum { |d, idx| d * (TRAJECTORY_GAMMA**idx) }
+        weighted = deltas.last(@converge_window + 1).each_with_index.sum { |d, idx| d * (TRAJECTORY_GAMMA**idx) }
         weighted.abs < 1.0
       end
 

@@ -64,6 +64,9 @@ circuit\sopen|retry\sin|llm_request)\b
     def run(target = @root, max_cycles: MAX_CYCLES, types: GLOBS.keys)
       saved_model = @agent.model
       @agent.model = @agent.model_for(operation: :sweep)
+      cfg = Master.load_yaml(File.join(@root, "data", "workflow.yml")).dig("sweep") || {}
+      @converge_threshold = cfg.fetch("converge_threshold", CONVERGE_THRESHOLD)
+      @converge_window    = cfg.fetch("converge_window",    CONVERGE_WINDOW)
       @map            = build_codebase_map
       @prompts        = load_prompts
       violation_history = []
@@ -107,7 +110,7 @@ circuit\sopen|retry\sin|llm_request)\b
         commit("sweep: full-codebase refactor [cycle #{cycle}]") if changed > 0 && git_dirty?
 
         converge_streak = converged?(violation_history) ? converge_streak + 1 : 0
-        break if converge_streak >= CONVERGE_WINDOW
+        break if converge_streak >= @converge_window
         break if trajectory_stalled?(violation_history)
         break if should_halt_early?
       end
