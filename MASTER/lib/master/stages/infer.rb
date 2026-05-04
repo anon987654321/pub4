@@ -7,6 +7,19 @@ module Master
       # Heuristic task-type detection — used by ModelRouter for tiered model selection.
       PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 
+      VAGUE_STUBS  = /\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|good\s+\w+|test(?:ing)?|please)\z/i.freeze
+      ACTIONABLE   = /\b(?:fix|write|add|explain|refactor|scan|implement|show|list|create|delete|update|find|run|check|what|how|why|where|when|who|which|read|open|build|deploy|revert|move|rename)\b/i.freeze
+      FILE_REF     = /[`'"]|\/|\.\w{2,4}\b/.freeze
+      ELICIT_WORDS = 5
+
+      ELICIT_QUESTIONS = {
+        implement: "which file, which method, and what change exactly?",
+        refactor:  "which file, which method, and what change exactly?",
+        design:    "what interface — inputs, outputs, constraints?",
+        discover:  "what problem, and how will you measure success?",
+      }.freeze
+      ELICIT_DEFAULT = "be specific: which file or function, and what should change?".freeze
+
       TASK_TYPE_PATTERNS = {
         coding:   /\b(?:def |class |module |require |\.rb\b|fix\s+(?:the\s+)?(?:bug|error|issue)|refactor|implement|write\s+(?:a\s+)?(?:method|class|function|test)|add\s+(?:a\s+)?(?:method|feature)|```(?:ruby|python|js|javascript|bash))/i,
         research: /\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|explain\s+(?:how|what|why)|tell\s+me\s+about)\b/i,
@@ -31,6 +44,11 @@ module Master
           end
         end
 
+        if vague?(msg)
+          q = ELICIT_QUESTIONS[ctx[:phase]&.to_sym] || ELICIT_DEFAULT
+          return Result.ok(ctx.merge(intent: :clarify, clarifying_question: q))
+        end
+
         pressure = msg.match?(PRESSURE_PATTERN)
         Result.ok(ctx.merge(task_type: infer_task_type(msg), pressure: pressure || ctx[:pressure]))
       end
@@ -47,6 +65,12 @@ module Master
         end
       rescue StandardError => _e
         {}
+      end
+
+      def vague?(msg)
+        return true if msg.match?(VAGUE_STUBS)
+
+        msg.split.size <= ELICIT_WORDS && !msg.match?(ACTIONABLE) && !msg.match?(FILE_REF)
       end
 
       def infer_task_type(msg)
