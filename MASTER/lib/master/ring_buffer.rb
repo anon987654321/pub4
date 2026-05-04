@@ -8,7 +8,7 @@ module Master
     def initialize(capacity)
       super()
       @capacity = capacity
-      @buf      = Array.new(capacity)
+      @buffer      = Array.new(capacity)
       @start    = 0
       @size     = 0
     end
@@ -17,10 +17,10 @@ module Master
       synchronize do
         write_pos = (@start + @size) % @capacity
         if @size < @capacity
-          @buf[write_pos] = item
+          @buffer[write_pos] = item
           @size += 1
         else
-          @buf[@start] = item
+          @buffer[@start] = item
           @start = (@start + 1) % @capacity
         end
       end
@@ -31,10 +31,10 @@ module Master
 
     def each
       return enum_for(__method__) unless block_given?
-      synchronize { @size.times { |i| yield @buf[(@start + i) % @capacity] } }
+      synchronize { @size.times { |i| yield @buffer[(@start + i) % @capacity] } }
     end
 
-    def to_a    = @size.times.map { |i| @buf[(@start + i) % @capacity] }
+    def to_a    = @size.times.map { |i| @buffer[(@start + i) % @capacity] }
     def size    = @size
     def full?   = @size == @capacity
     def empty?  = @size.zero?

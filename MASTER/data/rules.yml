@@ -80,9 +80,11 @@ scan_depths:
   quick: &quick
     - FrozenStringRule
     - BareRescueRule
+    - UniversalRule
   standard: &standard
     - FrozenStringRule
     - BareRescueRule
+    - UniversalRule
     - ExplicitRule
     - ImmutableRule
     - CqsRule
@@ -105,6 +107,7 @@ scan_depths:
     - DuplicateCodeRule
     - FrozenStringRule
     - BareRescueRule
+    - UniversalRule
     - ExplicitRule
     - ImmutableRule
     - CqsRule

@@ -37,7 +37,7 @@ module Master
         @description = ""
         @severity    = :warning
         @axiom_tags  = []
-        @auto_fix    = false
+        @auto_fix    = true
       end
 
       def check(code, path:)
