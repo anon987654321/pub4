@@ -62,6 +62,8 @@ circuit\sopen|retry\sin|llm_request)\b
     end
 
     def run(target = @root, max_cycles: MAX_CYCLES, types: GLOBS.keys)
+      saved_model = @agent.model
+      @agent.model = @agent.model_for(operation: :sweep)
       @map            = build_codebase_map
       @prompts        = load_prompts
       violation_history = []
@@ -113,6 +115,8 @@ circuit\sopen|retry\sin|llm_request)\b
       Result.ok(summary)
     rescue StandardError => e
       Result.err("sweep: #{e.message}", category: :unknown)
+    ensure
+      @agent.model = saved_model if defined?(saved_model) && saved_model
     end
 
     private

@@ -46,6 +46,8 @@ module Master
     end
 
     def run(max_cycles: MAX_CYCLES)
+      saved_model = @agent.model
+      @agent.model = @agent.model_for(operation: :autoloop)
       max_cycles.times do |i|
         cycle = i + 1
         @bus&.publish("autoloop:cycle", cycle:)
@@ -95,6 +97,8 @@ module Master
       Result.ok("max cycles (#{MAX_CYCLES}) reached")
     rescue StandardError => e
       Result.err("autoloop: #{e.message}", category: :unknown)
+    ensure
+      @agent.model = saved_model if defined?(saved_model) && saved_model
     end
 
     include FixEvaluator
