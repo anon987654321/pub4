@@ -1,5 +1,5 @@
 # MASTER Codebase Snapshot
-Generated: 2026-05-04T11:12:23Z
+Generated: 2026-05-04T11:30:29Z
 
 ## data/council.yml
 ```yaml
@@ -627,6 +627,16 @@ tool_capable_prefixes:
   - openai/gpt
   - google/gemini
 
+operation_constraints:
+  # Operations that write files, run autoloop/sweep, or execute destructive commands
+  # require a model with quality score >= 0.88 (default and cheap tiers excluded).
+  # Equivalent to: claude-sonnet-4-6, gemini-2.5-pro, mistral-large, gpt-4o.
+  file_write:    { min_quality: 0.88, preferred_tier: strong }
+  autoloop:      { min_quality: 0.88, preferred_tier: strong }
+  sweep:         { min_quality: 0.88, preferred_tier: strong }
+  council:       { min_quality: 0.88, preferred_tier: strong }
+  destructive:   { min_quality: 0.90, preferred_tier: strong }
+
 continuity:
   enabled: true
   updated_at: "2026-05-01T00:00:00Z"
@@ -1033,6 +1043,47 @@ ruby:
       reason: "event receives new state instead of previous state"
       fix: "capture prev = current before mutation; use prev in publish/return"
 
+  naming:
+    spell_out: true        # no abbreviations: index not idx, signature not sig, temporary_path not tmp
+    forbidden_abbreviations:
+      - idx
+      - sig
+      - tmp
+      - buf
+      - val
+      - ret
+      - obj
+      - str
+      - arr
+      - num
+      - cnt
+      - ptr
+      - msg   # unless it IS the domain term (e.g., a Message object named msg is ok if short-lived)
+    rule: "Spell identifiers out. Domain names can be short (id, url, ip) — abbreviations cannot."
+
+  prefer_string_methods:
+    rule: "Prefer start_with? / include? / end_with? / split over regex when string methods suffice."
+    rationale: "Regex is expressive but noisy. Use it when patterns require it, not as a default."
+    prefer:
+      - "str.start_with?(prefix)        over  str.match?(/^prefix/)"
+      - "str.include?(substr)           over  str.match?(/substr/)"
+      - "str.end_with?(suffix)          over  str.match?(/suffix$/)"
+      - "str.split(sep, n)              over  str.scan(/pattern/)"
+    still_use_regex_for:
+      - "Character classes: /[a-z]/, /\d+/"
+      - "Anchored multiline patterns"
+      - "Alternation with more than 2 branches"
+
+  outsource_to_gems:
+    rule: "If a well-maintained gem solves the problem correctly, use it. Do not reimplement."
+    rationale: "Gems carry tests, edge cases, and maintenance. Home-grown duplicates carry bugs."
+    examples:
+      - "flay for AST-level duplicate detection"
+      - "reek for code smell analysis"
+      - "rubocop for style enforcement"
+      - "prism for Ruby parsing"
+    caveat: "Evaluate gem quality first: maintained, tested, minimal footprint."
+
   blank_lines:
     max_consecutive: 1     # no double blank lines anywhere
 
@@ -1050,6 +1101,8 @@ shell:
     - "pure zsh parameter expansion over external tools (see zsh_patterns.yml)"
     - "Open3.capture2e with arg arrays in Ruby over shell interpolation"
     - "File.expand_path over pwd + concatenation"
+    - "print -r -- \"$(<file)\" to read files in zsh (not cat, not bare < file via SSH — triggers pager)"
+    - "lines=(\"${(@f)$(<file)}\") for line arrays; last 50: print -l $lines[-50,-1]"
 
 git:
   commit_style:
@@ -4212,7 +4265,7 @@ module Master
     def check_budget(estimate)
       return unless @budget_max.positive? # Only check budget if it's a positive value.
       synchronize do
-        raise CircuitError.new("budget: $#{(@session_total + estimate).round(4)} would exceed $#{@budget_max}", :budget) if @session_total + estimate > @budget_max
+        raise CircuitError.new("budget: $#{(@session_total + estimate).round(4)} exceeds $#{@budget_max}", :budget) if @session_total + estimate > @budget_max
       end
     end
 
@@ -7534,37 +7587,45 @@ module Master
   DEFAULT_WEB_PORT = Config::DEFAULT_WEB_PORT
 
   class Renderer
-    TICK  = "\u2714".freeze
-    CROSS = "\u2718".freeze
+    TICK             = "\u2714".freeze
+    CROSS            = "\u2718".freeze
     DMESG_LINE_COUNT = 5
-    MILLISECONDS_PER_SECOND = 1000
+    MS_PER_SEC       = 1000
 
     def initialize(config:)
-      @config = config
-      @p      = Pastel.new
+      @config   = config
+      @p        = Pastel.new
+      @boot_ms  = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i
     end
 
     def splash(model)
+      t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       now   = Time.now
-      host  = Socket.gethostname rescue "openbsd"
-      ruby  = RUBY_VERSION
-      up    = uptime_str
-      url   = @config["web_public_url"] || "https://ai.brgen.no"
-      mod   = short_model(model)
+      host  = (Socket.gethostname rescue "openbsd")
+      user  = ENV["USER"] || "dev"
+      shell = File.basename(ENV["SHELL"] || "zsh")
+      pchar = shell == "zsh" ? "%" : "$"
       rev   = git_rev
+      url   = @config["web_public_url"] || "https://ai.brgen.no"
+      token = @config["web_token"]
+      web   = token ? "#{url}/?token=#{token}" : url
+      pledge_ok = RUBY_PLATFORM.include?("openbsd")
 
       lines = []
       lines << ""
       dmesg_lines.each { |l| lines << @p.dim(l) }
       lines << ""
-      lines << @p.bold.red("MASTER") + @p.dim(" constitutional AI agent")
-      lines << @p.dim("hostname #{host}  ruby #{ruby}  #{now.strftime('%Y-%m-%d %H:%M:%S')}")
-      lines << @p.dim("model    #{mod}")
-      lines << @p.dim("web      #{url}")
-      lines << @p.dim("rev      #{rev}") if rev
-      lines << @p.dim("uptime   #{up}") if up
+      lines << d("MASTER (CONSTITUTIONAL) #1: #{now.strftime('%a %b %-d %H:%M:%S %Z %Y')}")
+      lines << d("    #{user}@#{host}:#{@config["root"] || Dir.pwd}")
+      lines << d("runtime0: #{RUBY_PLATFORM}  ruby #{RUBY_VERSION}  #{shell} #{user}#{pchar}")
+      lines << d("model0:   #{short_model(model)}")
+      lines << d("rev0:     #{rev}") if rev
+      lines << d("security0: #{pledge_ok ? "pledge armed" : "pledge unavailable"}")
+      lines << d("web0:     #{web}")
+      elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SEC).round
+      lines << d("boot0:    #{elapsed}ms")
       lines << ""
-      lines << @p.bold.red("master") + @p.dim("@#{host} ready -- type ") + @p.bright_red("help") + @p.dim(" for commands")
+      lines << @p.bold.red("master") + @p.dim("@#{host} ready -- /help for commands")
       lines << ""
       lines.join("\n")
     end
@@ -7575,9 +7636,10 @@ module Master
       branch = git_branch
       tok    = tokens && tokens > 0 ? @p.dim("#{tokens}t ") : ""
       vbadge = violations > 0 ? @p.red("[#{violations}v] ") : ""
+      phase_str = phase && phase.to_s != "idle" ? @p.dim("{#{phase}} ") : ""
       branch_str = branch ? "#{@p.dim("(")}#{@p.red(branch)}#{@p.dim(")")} " : ""
       dollar = last_ok ? @p.bright_red("$") : @p.red("$")
-      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{tok}#{vbadge}#{dollar} "
+      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{phase_str}#{tok}#{vbadge}#{dollar} "
     end
 
     def render(content, mode: :plain)
@@ -7591,39 +7653,35 @@ module Master
       end
     end
 
-    def format_error(message)
-      render(message, mode: :error)
-    end
+    def format_error(message)  = render(message, mode: :error)
+    def format_dmesg(line)     = @p.dim(line.to_s)
 
-    def format_dmesg(line)
-      @p.dim(line.to_s)
+    def beautify(text)
+      text
+        .gsub(/"([^"]*?)"/) { "\u201C#{Regexp.last_match(1)}\u201D" }
+        .gsub(/\s--\s/, " \u2014 ")
+        .gsub("...", "\u2026")
     end
 
     private
 
-    def uptime_str
-      out, = Open3.capture2e("uptime")
-      out = out.strip
-      out.empty? ? nil : out.split(",").first.gsub(/.*up\s+/, "").strip
-    rescue StandardError => _e
-      nil
-    end
+    def d(text) = @p.dim(text)
 
     def git_rev
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--short", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError => _e
+    rescue StandardError
       nil
     end
 
     def short_model(model)
-      model.to_s.split("/").last
+      model.to_s.split("/").last.sub(/:free$/, "")
     end
 
     def git_branch
-      out, _, status = Open3.capture3("git", "rev-parse", "--abbrev-ref", "HEAD")
-      status.success? ? out.strip : nil
-    rescue StandardError => _e
+      out, _, st = Open3.capture3("git", "rev-parse", "--abbrev-ref", "HEAD")
+      st.success? ? out.strip : nil
+    rescue StandardError
       nil
     end
 
@@ -7638,12 +7696,6 @@ module Master
       raw.empty? ? ["dmesg unavailable"] : raw
     rescue StandardError
       ["dmesg unavailable"]
-    end
-
-    def elapsed_ms
-      @start_ms ||= (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MILLISECONDS_PER_SECOND).to_i
-      now = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MILLISECONDS_PER_SECOND).to_i
-      format("%d.%03d", (now - @start_ms) / MILLISECONDS_PER_SECOND, (now - @start_ms) % MILLISECONDS_PER_SECOND)
     end
   end
 end
@@ -9617,14 +9669,10 @@ end
 module Master
   module Scan
     module Rules
-      # UniversalRule — cross-language axiom enforcement.
-      # All rules apply to all file types; vertical-spacing checks skip HTML/ERB
-      # since blank lines affect markup output.
+      # UniversalRule — cross-language axiom checks applied to every file type.
       class UniversalRule < Rule
-        BLANK_FLOOD     = /\n{4,}/.freeze
-        BOX_CHARS   = [0x256D,0x256E,0x2570,0x256F,0x2502,0x2500,0x250C,0x2510,0x2514,0x2518,
-                       0x251C,0x2524,0x252C,0x2534,0x253C,0x2550,0x2551,0x2554,0x2557,0x255A,0x255D]
-                       .map { |cp| cp.chr(Encoding::UTF_8) }.join.freeze
+        BLANK_FLOOD = /\n{4,}/.freeze
+        BOX_CHARS   = "\u256D\u256E\u2570\u256F\u2502\u2500\u250C\u2510\u2514\u2518\u251C\u2524\u252C\u2534\u253C\u2550\u2551\u2554\u2557\u255A\u255D".freeze
         BOX_DRAWING = Regexp.new("[#{Regexp.escape(BOX_CHARS)}]|={4,}|-{4,}").freeze
         OPAQUE_NAMES    = /\b(tmp|temp|val|ret|obj|str|arr|buf)\b\s*=/.freeze
         DEAD_AFTER_STOP = /\b(return|exit|raise|throw)\b.+\n\s*\S/.freeze
@@ -10234,7 +10282,7 @@ module Master
       blocked = drift[:absolute_changed].any?
 
       if blocked
-        "BLOCKED: proposal would change ABSOLUTE sections: #{drift[:absolute_changed].join(", ")}. Add /override to force."
+        "BLOCKED: proposal changes ABSOLUTE sections: #{drift[:absolute_changed].join(", ")}. Add /override to force."
       else
         FileUtils.mkdir_p(File.dirname(PROPOSAL_PATH))
         tmp_w = "#{PROPOSAL_PATH}.tmp.#{Process.pid}"
@@ -10477,8 +10525,10 @@ module Master
     # Council — 6-persona deliberation on dangerous or multi-file changes.
     # PRAISE votes are appended to data/exemplars.yml for future reference.
     class Council
-      EXEMPLARS_PATH  = File.join(Master::ROOT, "data", "exemplars.yml").freeze
-      PATTERNS_PATH   = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
+      EXEMPLARS_PATH       = File.join(Master::ROOT, "data", "exemplars.yml").freeze
+      PATTERNS_PATH        = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
+      EXEMPLAR_MSG_CHARS   = 120
+      EXEMPLAR_FEEDBACK_CHARS = 240
 
       def initialize(deliberation:, config: nil, enabled: false)
         @deliberation      = deliberation
@@ -10518,7 +10568,11 @@ module Master
 
       def load_patterns
         data = Master.load_yaml(PATTERNS_PATH)
-        (data["dangerous"] || []).flatten.filter_map { |str| Regexp.new(str, Regexp::IGNORECASE) rescue nil }
+        (data["dangerous"] || []).flatten.filter_map do |str|
+          Regexp.new(str, Regexp::IGNORECASE)
+        rescue RegexpError
+          nil
+        end
       end
 
       def should_run?(ctx)
@@ -10555,8 +10609,8 @@ module Master
       def log_praise(message, feedback)
         entry = {
           "timestamp" => Time.now.iso8601,
-          "message"   => message.to_s[0, 120],
-          "feedback"  => feedback.to_s[0, 240]
+          "message"   => message.to_s[0, EXEMPLAR_MSG_CHARS],
+          "feedback"  => feedback.to_s[0, EXEMPLAR_FEEDBACK_CHARS]
         }
         existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
         File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))
