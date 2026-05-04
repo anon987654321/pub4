@@ -4,12 +4,15 @@ module Master
   # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
   class Axioms
     DATA_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "rules.yml").freeze
+    SOUL_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "soul.yml").freeze
     WORKFLOW_PATH = File.join(File.expand_path("../../..", __dir__), "data", "workflow.yml").freeze
 
     def initialize(root: nil)
       @rules_path    = root ? File.join(root, "data", "rules.yml")    : DATA_PATH
+      @soul_path     = root ? File.join(root, "data", "soul.yml")     : SOUL_PATH
       @workflow_path = root ? File.join(root, "data", "workflow.yml") : WORKFLOW_PATH
       @data          = load_yaml(@rules_path)    || {}
+      @soul_data     = load_yaml(@soul_path)     || {}
       @workflow      = load_yaml(@workflow_path) || {}
     end
 
@@ -60,13 +63,14 @@ module Master
 
     def constitution
       @constitution ||= begin
-        constitution_data = {}
-        constitution_data["golden_rule"]         = @data["golden_rule"]
-        constitution_data["protection"]          = @data["protection"]
-        constitution_data["banned_output"]       = voice["banned_output"]
-        constitution_data["anti_simulation"]     = voice["anti_simulation"]
-        constitution_data["communication_style"] = voice["style"]
-        constitution_data.freeze
+        absolute = @soul_data["absolute"] || {}
+        {
+          "golden_rule"         => absolute["golden_rule"]      || @data["golden_rule"],
+          "protection"          => absolute["protection_tiers"] || @data["protection"],
+          "banned_output"       => voice["banned_output"],
+          "anti_simulation"     => absolute["anti_simulation"]  || voice["anti_simulation"],
+          "communication_style" => voice["style"]
+        }.freeze
       end
     end
 

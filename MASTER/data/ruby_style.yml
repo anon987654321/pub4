@@ -79,7 +79,7 @@ ruby:
       - "str.end_with?(suffix)          over  str.match?(/suffix$/)"
       - "str.split(sep, n)              over  str.scan(/pattern/)"
     still_use_regex_for:
-      - "Character classes: /[a-z]/, /\d+/"
+      - 'Character classes: /[a-z]/, /\d+/'
       - "Anchored multiline patterns"
       - "Alternation with more than 2 branches"
 

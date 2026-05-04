@@ -21,9 +21,10 @@ module Master
       ELICIT_DEFAULT = "be specific: which file or function, and what should change?".freeze
 
       TASK_TYPE_PATTERNS = {
-        coding:   /\b(?:def |class |module |require |\.rb\b|fix\s+(?:the\s+)?(?:bug|error|issue)|refactor|implement|write\s+(?:a\s+)?(?:method|class|function|test)|add\s+(?:a\s+)?(?:method|feature)|```(?:ruby|python|js|javascript|bash))/i,
-        research: /\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|explain\s+(?:how|what|why)|tell\s+me\s+about)\b/i,
-        qa:       /\?(?:\s*$|\s+[A-Z])/m,
+        architecture: /\b(?:restructur|reorganiz|hierarch|layout|folder|director|module\s+boundar|decouple|extract\s+(?:a\s+)?(?:module|class|layer|service)|where\s+should|how\s+should\s+(?:we|i)\s+organiz|split\s+(?:this\s+)?(?:into|across)|consolidat)/i,
+        coding:       /\b(?:def |class |module |require |\.rb\b|fix\s+(?:the\s+)?(?:bug|error|issue)|refactor|implement|write\s+(?:a\s+)?(?:method|class|function|test)|add\s+(?:a\s+)?(?:method|feature)|```(?:ruby|python|js|javascript|bash))/i,
+        research:     /\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|explain\s+(?:how|what|why)|tell\s+me\s+about)\b/i,
+        qa:           /\?(?:\s*$|\s+[A-Z])/m,
       }.freeze
 
       PATTERNS_PATH = File.join(Master::ROOT, "data", "infer_patterns.yml").freeze

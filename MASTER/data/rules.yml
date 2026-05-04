@@ -2,13 +2,7 @@
 # scope: codebase > file > unit > line
 # applies to: code, prose, law, business, science, design
 
-golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-
-protection:
-  ABSOLUTE: "Abort pipeline"
-  PROTECTED: "Emit warning, continue"
-  NEGOTIABLE: "Allow if explicitly permitted"
-  FLEXIBLE: "Negotiate at runtime"
+# golden_rule and protection_tiers live in soul.yml (ABSOLUTE section) — single source.
 
 voice:
   style: openbsd_dmesg
@@ -145,7 +139,7 @@ languages:
   zsh:
     shebang: "#!/usr/bin/env zsh"
     options: "set -euo pipefail; setopt nullglob extendedglob"
-    banned: [sed, awk, tr, grep, cut, head, tail, find, wc, sudo, perl, ruby, dd, xargs]
+    # banned commands live in zsh_patterns.yml — single source.
   openbsd:
     service: rcctl
     packages: pkg_add
