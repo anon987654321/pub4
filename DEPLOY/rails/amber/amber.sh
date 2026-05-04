@@ -20,11 +20,12 @@ log "Amber — AI Fashion Wardrobe Assistant"
 create_rails_app "$APP_DIR"
 
 # ── Gems ────────────────────────────────────────────────────────────────────
-add_gem pagy
+add_gem pagy '"~> 9.3"'
 add_gem image_processing
 add_gem ruby-openai
 install_solid_stack
 install_security_tools
+setup_pagy
 
 # ── Auth ───────────────────────────────────────────────────────────────────
 install_auth
@@ -42,7 +43,7 @@ bin/rails generate model Item \
 
 bin/rails generate model Outfit \
   name:string description:text category:string \
-  season:string occasion:string likes_count:integer:default[0] \
+  season:string occasion:string "likes_count:integer:default[0]" \
   user:references \
   --no-test-framework
 
@@ -147,6 +148,7 @@ RUBY
 # ── Controllers ─────────────────────────────────────────────────────────────
 cat > app/controllers/application_controller.rb << 'RUBY'
 class ApplicationController < ActionController::Base
+  include Authentication
   include Pagy::Backend
   allow_browser versions: :modern
 end
@@ -223,8 +225,11 @@ class ItemsController < ApplicationController
 
   private
 
-  def set_item    = @item = Item.find(params[:id])
-  def authorize!  = redirect_to(items_path, alert: "Unauthorized") unless @item.user == Current.user
+  def set_item   = @item = Item.find(params[:id])
+
+  def authorize!
+    redirect_to(items_path, alert: "Unauthorized") unless @item.user == Current.user
+  end
 
   def item_params
     params.require(:item).permit(
@@ -276,8 +281,11 @@ class OutfitsController < ApplicationController
 
   private
 
-  def set_outfit   = @outfit = Outfit.find(params[:id])
-  def authorize!   = redirect_to(outfits_path, alert: "Unauthorized") unless @outfit.user == Current.user
+  def set_outfit = @outfit = Outfit.find(params[:id])
+
+  def authorize!
+    redirect_to(outfits_path, alert: "Unauthorized") unless @outfit.user == Current.user
+  end
 
   def outfit_params
     params.require(:outfit).permit(:name, :description, :category, :season, :occasion)
