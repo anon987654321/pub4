@@ -25,7 +25,7 @@ module Master
       end
 
       def select_capable_models(candidates)
-        capable = candidates.select { |m| tool_capable?(m) }
+        capable = candidates.select { |m| claude_cli_model?(m) || tool_capable?(m) }
         return Result.err("no tool-capable model available", category: :validation) if capable.empty?
         capable
       end
@@ -66,7 +66,26 @@ module Master
       end
 
       def send_llm_request(selected_model, messages, system: nil, stream: false, &blk)
+        if claude_cli_model?(selected_model)
+          return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys: system || system_prompt)
+        end
         send_ruby_llm(selected_model, messages, sys: system || system_prompt, stream:, &blk)
+      end
+
+      def send_claude_cli(model_alias, messages, sys:)
+        require "open3"
+        prompt = messages.last[:content].to_s
+        context = messages[0...-1].map { |m| "#{m[:role]}: #{m[:content]}" }.join("\n\n")
+        full_prompt = context.empty? ? prompt : "#{context}\n\nuser: #{prompt}"
+
+        args = ["claude", "--print", "--model", model_alias]
+        args += ["--system-prompt", sys] if sys && !sys.empty?
+
+        out, err, status = Open3.capture3(*args, stdin_data: full_prompt)
+        return Result.err("claude-cli: #{err.strip}", category: :provider_error) unless status.success?
+        Result.ok(out.strip)
+      rescue StandardError => e
+        Result.err("claude-cli: #{e.message}", category: :provider_error)
       end
 
       def send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
@@ -101,6 +120,8 @@ module Master
       def breaker_for(model_id)
         @circuit_breaker.respond_to?(:for) ? @circuit_breaker.for(model_id) : @circuit_breaker
       end
+
+      def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
 
       def tool_capable?(model_id)
         TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)

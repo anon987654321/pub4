@@ -71,6 +71,14 @@ model_defs:
     id: openai/gpt-4o
     <<: *model_defaults
     score: { quality: 0.93, speed: 0.80, cost: 0.55 }
+  claude_cli_sonnet: &claude_cli_sonnet
+    id: claude-cli:claude-sonnet-4-6
+    <<: *model_defaults
+    score: { quality: 0.95, speed: 0.70, cost: 0.60 }
+  claude_cli_opus: &claude_cli_opus
+    id: claude-cli:claude-opus-4-7
+    <<: *model_defaults
+    score: { quality: 0.99, speed: 0.50, cost: 0.30 }
 
 models:
   default:
@@ -91,6 +99,9 @@ models:
     - *deepseek_chat
     - *llama_70b
     - *qwen_coder
+  claude_code:
+    - *claude_cli_sonnet
+    - *claude_cli_opus
 
 routes:
   code_generation: default
@@ -103,6 +114,7 @@ routes:
 
 tool_capable_prefixes:
   - claude
+  - claude-cli
   - gpt-4
   - gpt-4o
   - gemini
