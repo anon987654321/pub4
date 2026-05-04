@@ -35,9 +35,7 @@ module Master
     end
 
     def open_models
-      synchronize do
-        @breakers.filter_map { |id, breaker| id if breaker.respond_to?(:open?) && breaker.open? }
-      end
+      synchronize { @breakers.filter_map { |id, breaker| id if breaker.state == :open } }
     end
   end
 end

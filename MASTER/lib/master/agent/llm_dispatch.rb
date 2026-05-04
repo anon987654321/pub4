@@ -61,6 +61,8 @@ module Master
             send_llm_request(selected_model, messages, system: system, stream: stream, &blk)
           }
         }
+      rescue CircuitBreaker::CircuitError => err
+        Result.err(err.message, category: err.category)
       rescue StandardError => err
         Result.err("llm_request: #{err.message}", category: :llm_call_failure)
       end

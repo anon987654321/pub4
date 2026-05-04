@@ -11,6 +11,7 @@ module Master
     MAX_DIFF_SIZE_LINES = MAX_DIFF_SIZE_LIMIT.freeze
     ROLLBACK_RATE_THRESHOLD = 0.15
     DECISION_LATENCY_MS_THRESHOLD = 5000
+    MAX_SAMPLE_SIZE = 500
 
     def initialize(root:, event_bus: nil)
       @path        = File.join(root, ".master", "metrics.jsonl")
@@ -25,13 +26,13 @@ module Master
     end
 
     def record_latency(ms)
-      @mutex.synchronize { @latencies << ms }
+      @mutex.synchronize { @latencies << ms; @latencies.shift if @latencies.size > MAX_SAMPLE_SIZE }
       check_threshold(:decision_latency_ms, average(@latencies))
       append(decision_latency_ms: ms)
     end
 
     def record_diff(lines)
-      @mutex.synchronize { @diff_sizes << lines; @writes += 1 }
+      @mutex.synchronize { @diff_sizes << lines; @diff_sizes.shift if @diff_sizes.size > MAX_SAMPLE_SIZE; @writes += 1 }
       check_threshold(:diff_size_lines, average(@diff_sizes))
       append(diff_size_lines: lines)
     end
