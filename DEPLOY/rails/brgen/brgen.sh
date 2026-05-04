@@ -54,6 +54,15 @@ bin/rails generate model Post \
   post_type:string \
   --no-test-framework
 
+bin/rails generate model Follow \
+  follower:references{User} followee:references{User} \
+  --no-test-framework
+
+bin/rails generate model Story \
+  user:references caption:string expires_at:datetime \
+  views_count:integer:default[0] \
+  --no-test-framework
+
 bin/rails db:migrate
 
 # ── Reddit features ─────────────────────────────────────────────────────────
@@ -72,6 +81,12 @@ class User < ApplicationRecord
   has_many :votes, dependent: :destroy
   has_many :community_memberships, dependent: :destroy
   has_many :communities, through: :community_memberships
+  has_many :stories, dependent: :destroy
+
+  has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy
+  has_many :follows_as_followee, class_name: "Follow", foreign_key: :followee_id, dependent: :destroy
+  has_many :following, through: :follows_as_follower, source: :followee
+  has_many :followers, through: :follows_as_followee, source: :follower
 
   has_one_attached :avatar
 
@@ -81,6 +96,12 @@ class User < ApplicationRecord
 
   normalizes :email_address, with: -> e { e.strip.downcase }
   normalizes :username,      with: -> u { u.strip.downcase }
+
+  def following?(other) = follows_as_follower.exists?(followee: other)
+
+  def timeline_posts
+    Post.where(user: [self] + following).order(created_at: :desc)
+  end
 
   def recalculate_karma!
     k = posts.sum(:score) + comments.sum(:score)
@@ -142,6 +163,35 @@ class Post < ApplicationRecord
   scope :rising,   -> {
     where("created_at > ?", 24.hours.ago).order(score: :desc)
   }
+end
+RUBY
+
+cat > app/models/follow.rb << 'RUBY'
+class Follow < ApplicationRecord
+  belongs_to :follower, class_name: "User"
+  belongs_to :followee, class_name: "User"
+
+  validates :follower_id, uniqueness: { scope: :followee_id }
+  validate :no_self_follow
+
+  private
+
+  def no_self_follow
+    errors.add(:base, "cannot follow yourself") if follower_id == followee_id
+  end
+end
+RUBY
+
+cat > app/models/story.rb << 'RUBY'
+class Story < ApplicationRecord
+  belongs_to :user
+  has_one_attached :media
+
+  validates :media, presence: true
+
+  scope :active, -> { where("expires_at > ?", Time.current).order(created_at: :desc) }
+
+  before_create -> { self.expires_at = 24.hours.from_now }
 end
 RUBY
 
@@ -211,6 +261,12 @@ class PostsController < ApplicationController
   def index
     @sort = params[:sort] || "hot"
     @pagy, @posts = pagy(Post.includes(:user, :community).public_send(@sort.in?(%w[hot top new_first rising]) ? @sort : "hot"))
+  end
+
+  def feed
+    require_authentication
+    @pagy, @posts = pagy(Current.user.timeline_posts.includes(:user, :community))
+    render :index
   end
 
   def show
@@ -284,6 +340,65 @@ class CommentsController < ApplicationController
 end
 RUBY
 
+cat > app/controllers/users_controller.rb << 'RUBY'
+class UsersController < ApplicationController
+  def show
+    @user = User.find_by!(username: params[:id])
+    @pagy, @posts = pagy(@user.posts.includes(:community).order(created_at: :desc))
+  end
+end
+RUBY
+
+cat > app/controllers/follows_controller.rb << 'RUBY'
+class FollowsController < ApplicationController
+  before_action :require_authentication
+
+  def create
+    user = User.find(params[:user_id])
+    Current.user.follows_as_follower.find_or_create_by!(followee: user)
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to user_path(user) }
+    end
+  end
+
+  def destroy
+    user = User.find(params[:user_id])
+    Current.user.follows_as_follower.find_by!(followee: user).destroy!
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to user_path(user) }
+    end
+  end
+end
+RUBY
+
+cat > app/controllers/stories_controller.rb << 'RUBY'
+class StoriesController < ApplicationController
+  before_action :require_authentication, except: :index
+
+  def index
+    @stories = Story.active.includes(:user).where(user: Current.user&.following).limit(50)
+  end
+
+  def new = (@story = Story.new)
+
+  def create
+    @story = Current.user.stories.build(story_params)
+    @story.save ? redirect_to(stories_path, notice: "Story posted") : render(:new, status: :unprocessable_entity)
+  end
+
+  def destroy
+    Current.user.stories.find(params[:id]).destroy!
+    redirect_to stories_path
+  end
+
+  private
+
+  def story_params = params.require(:story).permit(:caption, :media)
+end
+RUBY
+
 # ── Routes ─────────────────────────────────────────────────────────────────
 cat > config/routes.rb << 'RUBY'
 Rails.application.routes.draw do
@@ -291,6 +406,8 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
 
   root "communities#index"
+
+  get "feed", to: "posts#feed", as: :feed
 
   resources :communities, path: "r" do
     member do
@@ -302,8 +419,12 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :users, only: %i[show], param: :id do
+    resource :follow, only: %i[create destroy], controller: :follows
+  end
+
+  resources :stories, only: %i[index new create destroy]
   resources :votes, only: %i[create]
-  resources :users, only: %i[show]
 
   get "up", to: "rails/health#show", as: :rails_health_check
 end
@@ -313,7 +434,7 @@ RUBY
 write_shared_partials
 write_auth_views
 
-mkdir -p app/views/communities app/views/posts app/views/comments app/views/votes
+mkdir -p app/views/communities app/views/posts app/views/comments app/views/votes app/views/users app/views/stories
 
 cat > app/views/communities/index.html.erb << 'ERB'
 <div class="page-header">
@@ -570,6 +691,83 @@ cat > app/views/votes/create.turbo_stream.erb << 'ERB'
       "<span id='vote-score-#{params[:votable_type].downcase}-#{params[:votable_id]}'></span>" %>
 ERB
 
+cat > app/views/users/show.html.erb << 'ERB'
+<% content_for :title, "@#{@user.username}" %>
+<div class="profile-header">
+  <% if @user.avatar.attached? %>
+    <%= image_tag @user.avatar, class: "avatar avatar--lg" %>
+  <% else %>
+    <div class="avatar avatar--lg avatar--placeholder"><%= @user.username[0].upcase %></div>
+  <% end %>
+  <div class="profile-header__body">
+    <h1>@<%= @user.username %></h1>
+    <p class="text-dim"><%= pluralize(@user.followers.count, "follower") %> · <%= @user.following.count %> following · <%= @user.karma %> karma</p>
+    <% if authenticated? && Current.user != @user %>
+      <% if Current.user.following?(@user) %>
+        <%= button_to "Unfollow", user_follow_path(@user), method: :delete, class: "btn" %>
+      <% else %>
+        <%= button_to "Follow", user_follow_path(@user), method: :post, class: "btn btn--primary" %>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+<div class="post-list">
+  <% @posts.each do |post| %>
+    <%= render "posts/post", post: post %>
+  <% end %>
+</div>
+<%= render "shared/pagination", pagy: @pagy %>
+ERB
+
+cat > app/views/stories/index.html.erb << 'ERB'
+<% content_for :title, "Stories" %>
+<div class="stories-bar">
+  <% @stories.group_by(&:user).each do |user, stories| %>
+    <div class="story-avatar" title="<%= user.username %>">
+      <%= link_to stories_path do %>
+        <% if user.avatar.attached? %>
+          <%= image_tag user.avatar, class: "avatar" %>
+        <% else %>
+          <div class="avatar avatar--placeholder"><%= user.username[0].upcase %></div>
+        <% end %>
+        <span class="story-username">@<%= user.username %></span>
+      <% end %>
+    </div>
+  <% end %>
+  <% if authenticated? %>
+    <div class="story-avatar story-avatar--add">
+      <%= link_to new_story_path do %>
+        <div class="avatar avatar--add">+</div>
+        <span class="story-username">Add</span>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+<% if @stories.empty? %>
+  <p class="text-dim">No stories from people you follow.</p>
+<% end %>
+ERB
+
+cat > app/views/stories/new.html.erb << 'ERB'
+<% content_for :title, "New Story" %>
+<div class="form-page">
+  <h1>New Story</h1>
+  <%= form_with model: @story, url: stories_path do |f| %>
+    <div class="field">
+      <%= f.label :media, "Photo or Video" %>
+      <%= f.file_field :media, accept: "image/*,video/*" %>
+    </div>
+    <div class="field">
+      <%= f.label :caption %>
+      <%= f.text_field :caption, maxlength: 200 %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Post Story", class: "btn btn--primary" %>
+    </div>
+  <% end %>
+</div>
+ERB
+
 # ── Stimulus controllers ─────────────────────────────────────────────────────
 setup_stimulus
 
@@ -693,10 +891,20 @@ a:hover { text-decoration: underline; }
 .form-page h1 { margin-bottom: 1rem; }
 .auth-form { max-width: 400px; margin: 3rem auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
 .auth-form h1 { margin-bottom: 1.5rem; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.avatar--lg { width: 80px; height: 80px; }
+.avatar--placeholder, .avatar--add { display: flex; align-items: center; justify-content: center; background: var(--primary); color: #fff; font-weight: 700; font-size: 1.1rem; }
+.avatar--add { background: #edeff1; color: var(--text); font-size: 1.4rem; }
+.profile-header { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
+.profile-header__body { flex: 1; }
+.stories-bar { display: flex; gap: 1rem; overflow-x: auto; padding: .5rem 0 1rem; margin-bottom: .5rem; }
+.story-avatar { display: flex; flex-direction: column; align-items: center; gap: .25rem; text-decoration: none; }
+.story-avatar .avatar { border: 2px solid var(--primary); }
+.story-username { font-size: .65rem; color: var(--text-dim); max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 SCSS
 
 # ── Assets + Infrastructure ─────────────────────────────────────────────────
-write_full_layout "Brgen" '<%= link_to "Posts", root_path, class: "nav__link" %><%= link_to "Submit", new_community_post_path(Community.first) rescue nil, class: "nav__link" %>'
+write_full_layout "Brgen" '<%= link_to "Communities", root_path, class: "nav__link" %><%= link_to "Feed", feed_path, class: "nav__link" if authenticated? %><%= link_to "Stories", stories_path, class: "nav__link" %>'
 write_falcon_config "$APP_PORT"
 configure_production
 install_rcd brgen "$APP_DIR" "$APP_PORT" brgen
