@@ -10,6 +10,7 @@ module Master
         .merge(crit_command(ai:, root:))
         .merge(ideate_command(ai:))
         .merge(topic_command(infra:))
+        .merge(rsi_command(infra:))
     end
 
     def scan_loop_commands(ai:, root:, infra:)
@@ -237,6 +238,41 @@ module Master
           lines.join("\n")
         }
       }
+    end
+
+    def rsi_command(infra:)
+      learnings = infra[:learnings]
+      {
+        "rsi" => ->(ctx) { dispatch_rsi(learnings, ctx[:args].to_s.strip) }
+      }
+    end
+
+    def dispatch_rsi(learnings, arg)
+      return "no learnings configured" unless learnings
+
+      case arg
+      when "stats"
+        # Show all dimensions with recorded events
+        all = learnings.all
+        return "no learnings recorded" if all.empty?
+        lines = all.last(10).map { |e| "  #{e["trigger"][0, 40]}: #{e["outcome"]} (conf=#{e["confidence"]})" }
+        "learnings (last 10):\n#{lines.join("\n")}"
+      when /\Astats (.+)\z/
+        dim = $1.strip
+        stats = learnings.stats_by_dimension(dim)
+        "#{dim}: success=#{stats[:success]} failure=#{stats[:failure]} fail_rate=#{stats[:fail_rate]}"
+      else
+        ops = learnings.opportunities
+        return "rsi: no opportunities detected in last 7 days" if ops.empty?
+        lines = ops.map { |o|
+          case o[:category]
+          when :high_failure       then "  HIGH_FAIL  #{o[:dimension]}: fail_rate=#{o[:fail_rate]} (#{o[:total]} calls)"
+          when :repeated_correction then "  CORRECTION #{o[:dimension]}: #{o[:count]} corrections"
+          when :provider_errors    then "  PROVIDER   #{o[:dimension]}: #{o[:count]} errors"
+          end
+        }
+        "rsi opportunities (7d):\n#{lines.join("\n")}\n\nuse /rsi stats [dimension] for details"
+      end
     end
   end
 end

@@ -47,12 +47,13 @@ module Master
       personality = Personality.new(
         config["persona"]&.to_sym || Personality::DEFAULT, root:
       )
+      learnings   = Learnings.new(root:)
 
       phase_gates = PhaseGates.new(root:, event_bus: bus)
       {
         config:, ring:, bus:, logging:, session:, undo:, breaker:, cache:,
         governor:, renderer:, metrics:, code_index:, diff_stager:, mcp:,
-        memory:, personality:, phase_gates:
+        memory:, personality:, phase_gates:, learnings:
       }
     end
 
@@ -102,7 +103,7 @@ module Master
     def build_autonomous(root, infra, agent:, scanner:, soul:)
       bus      = infra[:bus]
       standing = StandingOrders.new(pipeline: nil, event_bus: bus)
-      learnings = Learnings.new(root:)
+      learnings = infra[:learnings]
       autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
       skills   = Skills.new(root:, event_bus: bus)
       skills.discover!
@@ -163,7 +164,8 @@ module Master
         Tools::Tree.new(root:, event_bus: bus),
         Tools::SymbolLookup.new(code_index: infra[:code_index], event_bus: bus),
         Tools::Clean.new(root:, governor:, event_bus: bus),
-        Tools::SearchKnowledge.new(root:, event_bus: bus)
+        Tools::SearchKnowledge.new(root:, event_bus: bus),
+        Tools::FeedbackRecord.new(learnings: infra[:learnings])
       ]
     end
 

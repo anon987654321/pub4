@@ -33,7 +33,8 @@ module Master
       Tools::AskLlm          => Tools::LLM::AskLlm,
       Tools::GitContext      => Tools::LLM::GitContext,
       Tools::AstEdit         => Tools::LLM::AstEdit,
-      Tools::SearchKnowledge => Tools::LLM::SearchKnowledge
+      Tools::SearchKnowledge  => Tools::LLM::SearchKnowledge,
+      Tools::FeedbackRecord   => Tools::LLM::FeedbackRecord
     }.freeze
 
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
