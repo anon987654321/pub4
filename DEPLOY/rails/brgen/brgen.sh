@@ -309,10 +309,394 @@ Rails.application.routes.draw do
 end
 RUBY
 
-# ── Assets + Infrastructure ─────────────────────────────────────────────────
+# ── Views ───────────────────────────────────────────────────────────────────
+write_shared_partials
+write_auth_views
+
+mkdir -p app/views/communities app/views/posts app/views/comments app/views/votes
+
+cat > app/views/communities/index.html.erb << 'ERB'
+<div class="page-header">
+  <h1>Communities</h1>
+  <%= link_to "New community", new_community_path, class: "btn btn--primary" if authenticated? %>
+</div>
+<div class="community-list">
+  <% @communities.each do |c| %>
+    <%= render "communities/community", community: c %>
+  <% end %>
+</div>
+<%= render "shared/pagination", pagy: @pagy %>
+ERB
+
+cat > app/views/communities/_community.html.erb << 'ERB'
+<div class="community-card" id="<%= dom_id(community) %>">
+  <div class="community-card__icon">
+    <% if community.icon.attached? %>
+      <%= image_tag community.icon, class: "community-icon" %>
+    <% else %>
+      <span class="community-icon--placeholder"><%= community.name[0].upcase %></span>
+    <% end %>
+  </div>
+  <div class="community-card__body">
+    <h3><%= link_to community.name, community_path(community) %></h3>
+    <p class="text-dim"><%= community.description&.truncate(120) %></p>
+    <span class="badge"><%= community.subscribers_count %> members</span>
+  </div>
+</div>
+ERB
+
+cat > app/views/communities/show.html.erb << 'ERB'
+<div class="community-header">
+  <% if @community.banner.attached? %>
+    <%= image_tag @community.banner, class: "community-banner" %>
+  <% end %>
+  <div class="community-header__body">
+    <h1>r/<%= @community.name %></h1>
+    <p><%= @community.description %></p>
+    <div class="community-header__actions">
+      <%= link_to "New post", new_community_post_path(@community), class: "btn btn--primary" if authenticated? %>
+      <% if authenticated? %>
+        <% if @community.members.include?(Current.user) %>
+          <%= button_to "Leave", unsubscribe_community_path(@community), class: "btn" %>
+        <% else %>
+          <%= button_to "Join", subscribe_community_path(@community), class: "btn btn--primary" %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>
+<div class="sort-bar">
+  <% %w[hot top new_first rising].each do |s| %>
+    <%= link_to s.humanize, community_path(@community, sort: s), class: "sort-link #{@sort == s ? 'active' : ''}" %>
+  <% end %>
+</div>
+<div class="post-list">
+  <% @posts.each do |post| %>
+    <%= render "posts/post", post: post %>
+  <% end %>
+</div>
+<%= render "shared/pagination", pagy: @pagy %>
+ERB
+
+cat > app/views/communities/new.html.erb << 'ERB'
+<div class="form-page">
+  <h1>New community</h1>
+  <%= form_with model: @community, url: communities_path do |f| %>
+    <%= render "shared/errors", object: @community %>
+    <div class="field">
+      <%= f.label :name %>
+      <%= f.text_field :name, autofocus: true %>
+    </div>
+    <div class="field">
+      <%= f.label :description %>
+      <%= f.text_area :description, rows: 4 %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Create community", class: "btn btn--primary" %>
+    </div>
+  <% end %>
+</div>
+ERB
+
+cat > app/views/posts/index.html.erb << 'ERB'
+<div class="sort-bar">
+  <% %w[hot top new_first rising].each do |s| %>
+    <%= link_to s.humanize, posts_path(sort: s), class: "sort-link #{@sort == s ? 'active' : ''}" %>
+  <% end %>
+</div>
+<div class="post-list">
+  <% @posts.each do |post| %>
+    <%= render "posts/post", post: post %>
+  <% end %>
+</div>
+<%= render "shared/pagination", pagy: @pagy %>
+ERB
+
+cat > app/views/posts/_post.html.erb << 'ERB'
+<article class="post-card" id="<%= dom_id(post) %>">
+  <div class="vote-col" data-controller="vote" data-vote-score-value="<%= post.score %>">
+    <% if authenticated? %>
+      <button class="vote-btn vote-btn--up" data-action="click->vote#upvote"
+              data-vote-votable-type-param="Post" data-vote-votable-id-param="<%= post.id %>">▲</button>
+    <% else %>
+      <span class="vote-btn vote-btn--up">▲</span>
+    <% end %>
+    <span class="vote-score" data-vote-target="score"><%= post.score %></span>
+    <% if authenticated? %>
+      <button class="vote-btn vote-btn--down" data-action="click->vote#downvote"
+              data-vote-votable-type-param="Post" data-vote-votable-id-param="<%= post.id %>">▼</button>
+    <% else %>
+      <span class="vote-btn vote-btn--down">▼</span>
+    <% end %>
+  </div>
+  <div class="post-card__body">
+    <div class="post-card__meta">
+      r/<%= link_to post.community.name, community_path(post.community) %> ·
+      u/<%= post.user.username %> · <%= time_ago_in_words(post.created_at) %> ago
+    </div>
+    <h2 class="post-card__title"><%= link_to post.title, post_path(post) %></h2>
+    <% if post.post_type == "link" && post.url.present? %>
+      <a href="<%= post.url %>" class="post-link" target="_blank" rel="noopener">
+        <%= URI.parse(post.url).host rescue post.url %>
+      </a>
+    <% end %>
+    <% if post.post_type == "text" && post.content.present? %>
+      <p class="post-card__excerpt"><%= truncate(post.content, length: 200) %></p>
+    <% end %>
+    <div class="post-card__actions">
+      <%= link_to "#{post.comments_count} comments", post_path(post), class: "action-link" %>
+    </div>
+  </div>
+</article>
+ERB
+
+cat > app/views/posts/show.html.erb << 'ERB'
+<%= render "posts/post", post: @post %>
+<% if @post.post_type == "text" && @post.content.present? %>
+  <div class="post-body"><%= @post.content %></div>
+<% end %>
+
+<section class="comments-section">
+  <h2><%= @post.comments_count %> Comments</h2>
+  <% if authenticated? %>
+    <%= form_with model: [@post, @comment], url: post_comments_path(@post) do |f| %>
+      <div class="field">
+        <%= f.text_area :content, placeholder: "Add a comment...", rows: 4 %>
+      </div>
+      <div class="actions">
+        <%= f.submit "Comment", class: "btn btn--primary" %>
+      </div>
+    <% end %>
+  <% end %>
+  <div id="comments">
+    <% @comments.each do |comment| %>
+      <%= render "comments/comment", comment: comment, depth: 0 %>
+    <% end %>
+  </div>
+</section>
+ERB
+
+cat > app/views/posts/new.html.erb << 'ERB'
+<div class="form-page">
+  <h1>New post in r/<%= @community.name %></h1>
+  <%= form_with model: [@community, @post] do |f| %>
+    <%= render "shared/errors", object: @post %>
+    <div class="post-type-tabs">
+      <%= f.radio_button :post_type, "text", id: "type_text" %>
+      <label for="type_text">Text</label>
+      <%= f.radio_button :post_type, "link", id: "type_link" %>
+      <label for="type_link">Link</label>
+    </div>
+    <div class="field">
+      <%= f.label :title %>
+      <%= f.text_field :title, autofocus: true, maxlength: 300 %>
+    </div>
+    <div class="field" id="field-content">
+      <%= f.label :content %>
+      <%= f.text_area :content, rows: 6 %>
+    </div>
+    <div class="field" id="field-url" style="display:none">
+      <%= f.label :url, "URL" %>
+      <%= f.url_field :url %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Post", class: "btn btn--primary" %>
+      <%= link_to "Cancel", community_path(@community), class: "btn" %>
+    </div>
+  <% end %>
+</div>
+ERB
+
+cat > app/views/posts/edit.html.erb << 'ERB'
+<div class="form-page">
+  <h1>Edit post</h1>
+  <%= form_with model: @post do |f| %>
+    <%= render "shared/errors", object: @post %>
+    <div class="field">
+      <%= f.label :title %>
+      <%= f.text_field :title %>
+    </div>
+    <div class="field">
+      <%= f.label :content %>
+      <%= f.text_area :content, rows: 6 %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Update", class: "btn btn--primary" %>
+    </div>
+  <% end %>
+</div>
+ERB
+
+cat > app/views/comments/_comment.html.erb << 'ERB'
+<div class="comment" id="<%= dom_id(comment) %>" style="margin-left:<%= depth * 1.5 %>rem">
+  <div class="comment__meta">
+    u/<%= comment.user.username %> · <%= time_ago_in_words(comment.created_at) %> ago ·
+    <span data-controller="vote" data-vote-score-value="<%= comment.score %>">
+      <% if authenticated? %>
+        <button class="vote-btn--inline" data-action="click->vote#upvote"
+                data-vote-votable-type-param="Comment" data-vote-votable-id-param="<%= comment.id %>">▲</button>
+      <% end %>
+      <span data-vote-target="score"><%= comment.score %></span>
+      <% if authenticated? %>
+        <button class="vote-btn--inline" data-action="click->vote#downvote"
+                data-vote-votable-type-param="Comment" data-vote-votable-id-param="<%= comment.id %>">▼</button>
+      <% end %>
+    </span>
+    <% if authenticated? && comment.user == Current.user %>
+      <%= button_to "delete", post_comment_path(comment.commentable_id, comment),
+            method: :delete, class: "btn-link", data: { turbo_confirm: "Delete?" } %>
+    <% end %>
+  </div>
+  <div class="comment__body"><%= simple_format comment.content %></div>
+  <% if depth < 6 %>
+    <% comment.replies.top.each do |reply| %>
+      <%= render "comments/comment", comment: reply, depth: depth + 1 %>
+    <% end %>
+  <% end %>
+</div>
+ERB
+
+cat > app/views/comments/create.turbo_stream.erb << 'ERB'
+<%= turbo_stream.prepend "comments", partial: "comments/comment",
+      locals: { comment: @comment, depth: 0 } %>
+ERB
+
+cat > app/views/comments/destroy.turbo_stream.erb << 'ERB'
+<%= turbo_stream.remove dom_id(@comment) %>
+ERB
+
+cat > app/views/votes/create.turbo_stream.erb << 'ERB'
+<%= turbo_stream.replace "vote-score-#{params[:votable_type].downcase}-#{params[:votable_id]}",
+      "<span id='vote-score-#{params[:votable_type].downcase}-#{params[:votable_id]}'></span>" %>
+ERB
+
+# ── Stimulus controllers ─────────────────────────────────────────────────────
+setup_stimulus
+
+write_stimulus_controller vote << 'JS'
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static values = { score: Number }
+  static targets = ["score"]
+
+  upvote(event) { this.#vote(event, 1) }
+  downvote(event) { this.#vote(event, -1) }
+
+  #vote(event, value) {
+    const { votableType, votableId } = event.params
+    fetch("/votes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": document.querySelector("[name='csrf-token']")?.content,
+        "Accept": "text/vnd.turbo-stream.html"
+      },
+      body: JSON.stringify({ votable_type: votableType, votable_id: votableId, value })
+    })
+    .then(r => r.text())
+    .then(html => Turbo.renderStreamMessage(html))
+  }
+}
+JS
+
+write_stimulus_controller post_type << 'JS'
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  connect() {
+    this.element.querySelectorAll("input[name='post[post_type]']").forEach(radio => {
+      radio.addEventListener("change", () => this.#toggle(radio.value))
+    })
+    const checked = this.element.querySelector("input[name='post[post_type]']:checked")
+    if (checked) this.#toggle(checked.value)
+  }
+
+  #toggle(type) {
+    document.getElementById("field-content").style.display = type === "text" ? "" : "none"
+    document.getElementById("field-url").style.display     = type === "link" ? "" : "none"
+  }
+}
+JS
+
+# ── CSS ─────────────────────────────────────────────────────────────────────
 install_dartsass
-write_base_scss
-write_layout "Brgen"
+mkdir -p app/assets/stylesheets
+cat > app/assets/stylesheets/application.scss << 'SCSS'
+:root {
+  --bg: #dae0e6; --surface: #fff; --border: #edeff1;
+  --text: #1c1c1c; --text-dim: #878a8c; --primary: #ff4500;
+  --primary-hover: #e03d00; --upvote: #ff4500; --downvote: #7193ff;
+  --radius: 4px; --nav-h: 48px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, sans-serif; }
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.nav { background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; height: var(--nav-h); padding: 0 1rem; gap: 1rem; position: sticky; top: 0; z-index: 100; }
+.nav__brand { font-weight: 700; font-size: 1.1rem; color: var(--primary); }
+.nav__links { display: flex; gap: .75rem; align-items: center; margin-left: auto; }
+.nav__link { color: var(--text); }
+.main { max-width: 1200px; margin: 0 auto; padding: 1rem; display: grid; grid-template-columns: 1fr 312px; gap: 1.5rem; }
+@media (max-width: 960px) { .main { grid-template-columns: 1fr; } }
+.btn { display: inline-block; padding: .4rem .9rem; border-radius: 99px; border: 1px solid var(--primary); color: var(--primary); font-size: .8rem; font-weight: 600; cursor: pointer; background: transparent; }
+.btn--primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn--primary:hover { background: var(--primary-hover); }
+.btn-link { background: none; border: none; color: var(--text-dim); font-size: .75rem; cursor: pointer; padding: 0; }
+.flash { padding: .6rem 1rem; margin: .5rem 0; border-radius: var(--radius); }
+.flash--notice { background: #e8f5e9; color: #2e7d32; }
+.flash--alert  { background: #ffebee; color: #c62828; }
+.errors { background: #ffebee; border: 1px solid #ef9a9a; border-radius: var(--radius); padding: .75rem 1rem; margin-bottom: 1rem; }
+.error-msg { color: #c62828; font-size: .875rem; }
+.field { margin-bottom: 1rem; }
+.field label { display: block; font-weight: 600; margin-bottom: .25rem; font-size: .875rem; }
+.field input, .field textarea, .field select { width: 100%; border: 1px solid #edeff1; border-radius: var(--radius); padding: .5rem .75rem; font: inherit; }
+.field textarea { resize: vertical; }
+.actions { margin-top: 1rem; display: flex; gap: .5rem; align-items: center; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.community-list { display: flex; flex-direction: column; gap: .5rem; }
+.community-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .75rem 1rem; display: flex; gap: 1rem; align-items: center; }
+.community-icon { width: 40px; height: 40px; border-radius: 50%; }
+.community-icon--placeholder { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff; font-weight: 700; }
+.community-header { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1rem; overflow: hidden; }
+.community-banner { width: 100%; height: 160px; object-fit: cover; }
+.community-header__body { padding: 1rem; }
+.community-header__actions { display: flex; gap: .5rem; margin-top: .75rem; }
+.sort-bar { display: flex; gap: .25rem; margin-bottom: .75rem; }
+.sort-link { padding: .4rem .75rem; border-radius: 99px; color: var(--text-dim); font-weight: 600; font-size: .85rem; }
+.sort-link.active { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+.post-list { display: flex; flex-direction: column; gap: .5rem; }
+.post-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; overflow: hidden; }
+.vote-col { display: flex; flex-direction: column; align-items: center; padding: .5rem .4rem; background: #f8f9fa; gap: .1rem; min-width: 40px; }
+.vote-btn { background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: 1rem; padding: 2px; line-height: 1; }
+.vote-btn--up:hover, .vote-btn--up.active { color: var(--upvote); }
+.vote-btn--down:hover, .vote-btn--down.active { color: var(--downvote); }
+.vote-btn--inline { background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: .7rem; padding: 0 2px; }
+.vote-score { font-size: .75rem; font-weight: 700; color: var(--text); }
+.post-card__body { flex: 1; padding: .5rem .75rem; }
+.post-card__meta { font-size: .75rem; color: var(--text-dim); margin-bottom: .25rem; }
+.post-card__title { font-size: 1.05rem; font-weight: 500; margin-bottom: .3rem; }
+.post-card__title a { color: var(--text); }
+.post-link { font-size: .75rem; color: var(--primary); }
+.post-card__excerpt { font-size: .875rem; color: var(--text-dim); margin-bottom: .3rem; }
+.post-card__actions { display: flex; gap: .75rem; }
+.action-link { font-size: .75rem; color: var(--text-dim); font-weight: 600; }
+.post-body { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin: .5rem 0; white-space: pre-wrap; }
+.post-type-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.comments-section { margin-top: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+.comment { border-top: 1px solid var(--border); padding: .75rem 0; }
+.comment__meta { font-size: .75rem; color: var(--text-dim); display: flex; gap: .5rem; align-items: center; margin-bottom: .3rem; flex-wrap: wrap; }
+.comment__body { font-size: .9rem; white-space: pre-wrap; }
+.badge { font-size: .7rem; color: var(--text-dim); background: #f6f7f8; border-radius: 99px; padding: 2px 6px; }
+.text-dim { color: var(--text-dim); }
+.form-page { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; max-width: 600px; }
+.form-page h1 { margin-bottom: 1rem; }
+.auth-form { max-width: 400px; margin: 3rem auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+.auth-form h1 { margin-bottom: 1.5rem; }
+SCSS
+
+# ── Assets + Infrastructure ─────────────────────────────────────────────────
+write_full_layout "Brgen" '<%= link_to "Posts", root_path, class: "nav__link" %><%= link_to "Submit", new_community_post_path(Community.first) rescue nil, class: "nav__link" %>'
 write_falcon_config "$APP_PORT"
 configure_production
 install_rcd brgen "$APP_DIR" "$APP_PORT" brgen

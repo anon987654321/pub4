@@ -371,17 +371,17 @@ write_stimulus_controller() {
 setup_pagy() {
   add_gem pagy
   mkdir -p config/initializers
+  # Pagy 43.x: Pagy::OPTIONS replaces Pagy::DEFAULT (redesigned API)
   cat > config/initializers/pagy.rb << 'RUBY'
 require "pagy/extras/overflow"
-require "pagy/extras/metadata"
-Pagy::DEFAULT[:limit] = 25
-Pagy::DEFAULT[:overflow] = :last_page
+Pagy::OPTIONS[:limit]    = 25
+Pagy::OPTIONS[:overflow] = :last_page
 RUBY
   cat >> app/helpers/application_helper.rb << 'RUBY'
 
   include Pagy::Frontend
 RUBY
-  log_ok "Pagy configured"
+  log_ok "Pagy 43.x configured"
 }
 
 # ── Shared partials ─────────────────────────────────────────────────────────

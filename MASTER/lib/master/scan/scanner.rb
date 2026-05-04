@@ -30,23 +30,30 @@ module Master
 
       SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
 
-      def scan_dir(dir, depth: :standard, glob: SCAN_GLOB)
-        paths   = Dir.glob(File.join(dir, glob)).sort
-        results = Array.new(paths.size)
-        threads = []
+      def scan_dir(dir, depth: :standard, glob: SCAN_GLOB, stream: false)
+        paths     = Dir.glob(File.join(dir, glob)).sort
+        results   = Array.new(paths.size)
+        threads   = []
         semaphore = Mutex.new
-        index = 0
+        index     = 0
 
         POOL_SIZE.times do
           threads << Thread.new do
             loop do
               current_index = semaphore.synchronize { (index += 1) - 1 }
               break if current_index >= paths.size
+              path = paths[current_index]
               begin
-                results[current_index] = [paths[current_index], scan(paths[current_index], depth:)]
+                file_result = scan(path, depth:)
+                results[current_index] = [path, file_result]
+                if stream && file_result.respond_to?(:ok?) && file_result.ok?
+                  count = file_result.value!.size
+                  $stdout.puts "scan: #{path.sub(dir, "").delete_prefix("/")} #{count > 0 ? "#{count} violation(s)" : "ok"}" if count > 0
+                  $stdout.flush
+                end
               rescue StandardError => e
-                @bus&.publish("scanner:thread_error", path: paths[current_index], error: e.message)
-                results[current_index] = [paths[current_index], Result.err(e.message, category: :unknown)]
+                @bus&.publish("scanner:thread_error", path:, error: e.message)
+                results[current_index] = [path, Result.err(e.message, category: :unknown)]
               end
             end
           end

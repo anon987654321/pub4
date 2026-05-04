@@ -77,8 +77,19 @@ module Master
     end
 
     class SkipOnPressure
-      def initialize(stage) = @stage = stage
-      def call(ctx) = ctx[:pressure] ? Result.ok(ctx) : @stage.call(ctx)
+      def initialize(stage, bus: nil)
+        @stage = stage
+        @bus   = bus
+      end
+
+      def call(ctx)
+        return @stage.call(ctx) unless ctx[:pressure]
+        label = @stage.respond_to?(:stages) ? "parallel[#{@stage.stages.map { |s| s.class.name.split("::").last }.join(",")}]" : @stage.class.name.split("::").last
+        @bus&.publish("pipeline:skipped", stage: label, reason: "pressure")
+        $stdout.puts "pipeline: skipped #{label} (pressure)"
+        $stdout.flush
+        Result.ok(ctx)
+      end
     end
 
     private
