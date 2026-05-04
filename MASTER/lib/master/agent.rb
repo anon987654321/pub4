@@ -11,8 +11,6 @@ module Master
     DEFAULT_MESSAGE_WINDOW_SIZE = 16
     COST_PER_TOKEN = 0.000_015
 
-    REPLICATE_OWNERS = %w[deepseek-ai mistralai xai meta-replicate].freeze
-
     def self.build_tool_capable_re
       yml_path = File.join(Master::ROOT, "data", "models.yml")
       prefixes = Master.load_yaml(yml_path).fetch("tool_capable_prefixes", [])
@@ -21,8 +19,6 @@ module Master
     end
 
     TOOL_CAPABLE_RE = build_tool_capable_re.freeze
-    MAX_TOOL_TURNS = 5
-    TOOL_CALL_RE = /(?:<use_tool>\s*(.*?)\s*<\/use_tool>|^ACTION:\s*(\{.*?\})\s*$|^TOOL:\s*(\{.*?\})\s*$)/m.freeze
     NEMOTRON3_RE = /nemotron-3/i.freeze
     LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
 

@@ -25,7 +25,7 @@ module Master
       end
 
       def select_capable_models(candidates)
-        capable = candidates.select { |m| replicate_model?(m) || ferrum_model?(m) || tool_capable?(m) }
+        capable = candidates.select { |m| tool_capable?(m) }
         return Result.err("no tool-capable model available", category: :validation) if capable.empty?
         capable
       end
@@ -66,33 +66,7 @@ module Master
       end
 
       def send_llm_request(selected_model, messages, system: nil, stream: false, &blk)
-        sys = system || system_prompt
-        if ferrum_model?(selected_model)
-          return send_ferrum(selected_model, messages)
-        elsif replicate_model?(selected_model)
-          return send_replicate(selected_model, messages, sys:, stream:, &blk)
-        end
-
-        send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
-      end
-
-      def send_ferrum(selected_model, messages)
-        alias_name = selected_model.split(":", 3).last
-        response = Bridges::FerrumWebChat.new.ask(
-          model_alias: alias_name, prompt: messages.last[:content]
-        )
-        return response if response.respond_to?(:err?) && response.err?
-        Result.ok(
-          response.respond_to?(:ok?) && response.ok? ? response.value! : response.to_s
-        )
-      end
-
-      def send_replicate(selected_model, messages, sys:, stream:, &blk)
-        reply = Bridges::Replicate.new.chat(
-          model: selected_model, messages:, system: sys,
-          stream:, &(stream ? blk : nil)
-        )
-        Result.ok(reply.content.to_s)
+        send_ruby_llm(selected_model, messages, sys: system || system_prompt, stream:, &blk)
       end
 
       def send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
@@ -126,15 +100,6 @@ module Master
 
       def breaker_for(model_id)
         @circuit_breaker.respond_to?(:for) ? @circuit_breaker.for(model_id) : @circuit_breaker
-      end
-
-      def replicate_model?(model_id)
-        return false unless ENV["REPLICATE_API_KEY"].to_s.length >= MIN_API_KEY_LENGTH
-        REPLICATE_OWNERS.include?(model_id.to_s.split("/").first)
-      end
-
-      def ferrum_model?(model_id)
-        model_id.to_s.start_with?("ferrum:webchat:")
       end
 
       def tool_capable?(model_id)

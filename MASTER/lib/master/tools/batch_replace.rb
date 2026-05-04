@@ -8,6 +8,10 @@ module Master
       NAME        = "replace".freeze
       DESCRIPTION = "Find and replace text across all files in a directory.".freeze
 
+      SAFE_EXTENSIONS = %w[.rb .erb .yml .yaml .md .sh .js .css .html .json .txt].freeze
+
+      SACRED_DENY = %w[SOUL.md CLAUDE.md CONVENTIONS.md README.md data/].freeze
+
       def initialize(root:, governor:, event_bus: nil)
         @root     = root
         @governor = governor
@@ -27,9 +31,15 @@ module Master
         changed = 0
         Dir.glob("#{target}/**/*").each do |path|
           next unless File.file?(path)
+          next unless SAFE_EXTENSIONS.include?(File.extname(path))
+          rel = path.delete_prefix("#{@root}/")
+          next if SACRED_DENY.any? { |s| rel == s || rel.start_with?(s) }
           content = File.read(path, encoding: "UTF-8") rescue next
           next unless content.include?(old_str)
-          File.write(path, content.gsub(old_str, new_str))
+          new_content = content.gsub(old_str, new_str)
+          tmp = "#{path}.tmp.#{Process.pid}"
+          File.write(tmp, new_content, encoding: "UTF-8")
+          File.rename(tmp, path)
           changed += 1
         end
 
@@ -37,6 +47,8 @@ module Master
           Dir.glob("#{target}/**/*")
              .select { |p| File.file?(p) && File.basename(p).include?(old_str) }
              .each do |path|
+               rel = path.delete_prefix("#{@root}/")
+               next if SACRED_DENY.any? { |s| rel == s || rel.start_with?(s) }
                new_path = File.join(File.dirname(path), File.basename(path).gsub(old_str, new_str))
                File.rename(path, new_path)
                changed += 1
