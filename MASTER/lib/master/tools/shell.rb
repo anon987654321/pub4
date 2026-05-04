@@ -13,7 +13,12 @@ module Master
       DESCRIPTION = "Execute a zsh command in the project root.".freeze
       TIMEOUT     = 30
       BLOCKLIST   = Security::Permissions::BLOCKLIST
-      ZSH_BANNED  = %w[sed awk grep find head tail wc cut tr bash sudo perl python].freeze
+      ZSH_BANNED  = begin
+        data = Master.load_yaml(File.join(Master::ROOT, "data", "zsh_patterns.yml"))
+        Array(data["banned_commands"]).freeze
+      rescue StandardError
+        %w[sed awk grep find head tail wc cut tr bash sudo perl python].freeze
+      end
 
       def initialize(root:, governor:, event_bus: nil)
         @root     = root

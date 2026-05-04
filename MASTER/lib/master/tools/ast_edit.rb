@@ -6,6 +6,8 @@ module Master
     # Supports: find_method, rename_method, extract_lines_to_method, add_after_method.
     # Uses Ripper::SexpBuilder for structure-awareness without external gem dependencies.
     class AstEdit
+      include PathGuard
+      include AtomicWrite
       TIER        = :guarded
       NAME        = "ast_edit".freeze
       DESCRIPTION = "AST-aware code editing: find, rename, or restructure Ruby methods safely.".freeze
@@ -125,28 +127,6 @@ module Master
         ranges
       end
 
-      def resolve(path)
-        full = File.expand_path(path.to_s, @root)
-        return Result.err("path escapes root: #{path}", category: :validation) unless full.start_with?(@root)
-        rel = full.delete_prefix(@root + "/")
-        return Result.err("#{rel} is sacred-tier. Amend via `soul propose`.", category: :validation) if sacred?(rel)
-        Result.ok(full)
-      end
-
-      SACRED_PATHS = %w[data/ SOUL.md CLAUDE.md .claude/].freeze
-
-      def sacred?(rel)
-        SACRED_PATHS.any? { |s| rel.start_with?(s) || rel == s.chomp("/") }
-      end
-
-      def atomic_write(path, content)
-        tmp = "#{path}.tmp.#{Process.pid}"
-        File.write(tmp, content)
-        File.rename(tmp, path)
-      rescue StandardError => e
-        File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
-        raise e
-      end
     end
   end
 end
