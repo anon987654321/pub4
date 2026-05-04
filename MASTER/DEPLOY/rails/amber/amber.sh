@@ -5,7 +5,7 @@ set -euo pipefail
 
 APP_NAME=amber
 APP_DIR=/home/${APP_NAME}/app
-APP_PORT=10006
+APP_PORT=61352
 SCRIPT_DIR=${0:a:h}
 
 . "${SCRIPT_DIR:h}/@shared_functions.sh"
@@ -362,7 +362,7 @@ write_base_css
 write_layout "Amber"
 
 # ── Puma + production ───────────────────────────────────────────────────────
-write_puma_config "$APP_PORT"
+write_falcon_config "$APP_PORT"
 configure_production
 
 # ── rc.d service ───────────────────────────────────────────────────────────

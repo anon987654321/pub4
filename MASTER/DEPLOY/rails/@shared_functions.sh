@@ -144,22 +144,53 @@ write_base_css() {
   mkdir -p app/assets/stylesheets
   cat > app/assets/stylesheets/application.css << 'CSS'
 :root {
-  --bg: #0a0a0a; --surface: #1a1a1a; --text: #e8eaed;
-  --text-dim: #9aa0a6; --primary: #8ab4f8; --accent: #ff4500;
-  --radius: 8px; --space: 8px;
+  --color-black: #000;
+  --color-white: #fff;
+  --color-extra-light-grey: #f0f0f0;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --font-size-base: 14px;
+  --line-height-base: 1.5;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-main { max-width: 1200px; margin: 0 auto; padding: calc(var(--space)*2); }
-a { color: var(--primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
-.card { background: var(--surface); border-radius: var(--radius); padding: calc(var(--space)*2); margin-bottom: calc(var(--space)*2); }
-.btn { display: inline-block; padding: .4rem 1rem; border-radius: var(--radius); border: none; cursor: pointer; font-size: .9rem; }
-.btn-primary { background: var(--primary); color: #000; }
-.btn-danger  { background: #c62828; color: #fff; }
-.flash-notice { background: #1a3a1a; color: #81c784; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
-.flash-alert  { background: #3a1a1a; color: #e57373; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
-@media (max-width: 768px) { main { padding: var(--space); } }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-black);
+  background-color: var(--color-white);
+  display: flex;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-extra-light-grey);
+}
+.header__tabs { display: flex; gap: var(--space-md); }
+.header__tab {
+  padding: var(--space-xs) var(--space-md);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-size: inherit;
+  font-family: inherit;
+}
+.header__tab:hover { background-color: var(--color-extra-light-grey); }
+@media (max-width: 768px) {
+  .header { flex-direction: column; gap: var(--space-md); padding: var(--space-sm); }
+  .header__tabs { gap: var(--space-sm); flex-wrap: wrap; justify-content: center; }
+}
+@media (max-width: 480px) {
+  html, body { font-size: 12px; }
+  .header__tabs { gap: var(--space-xs); }
+  .header__tab { padding: var(--space-xs) var(--space-sm); font-size: 0.9em; }
+}
 CSS
   log_ok "Base CSS written"
 }
@@ -195,15 +226,20 @@ install_rcd() {
   [[ -f $rcd ]] && { log_ok "rc.d/${svc} already exists"; return 0; }
   $_PRIV tee "$rcd" > /dev/null << EOS
 #!/bin/ksh
-daemon="${app_dir}/bin/puma"
-daemon_flags="-C ${app_dir}/config/puma.rb -e production"
+daemon="/usr/local/bin/bundle"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 falcon serve --bind http://127.0.0.1:${port}"
 daemon_user="${user}"
+daemon_execdir="${app_dir}"
+daemon_timeout="60"
 . /etc/rc.d/rc.subr
+pexp="ruby.*${port}"
+rc_bg=YES
+rc_reload=NO
 rc_cmd \$1
 EOS
   $_PRIV chmod 755 "$rcd"
   $_PRIV rcctl enable "$svc"
-  log_ok "rc.d/${svc} installed"
+  log_ok "rc.d/${svc} installed (falcon on :${port})"
 }
 
 relayd_add_relay() {
@@ -222,19 +258,23 @@ EOS
   log_ok "relayd table <${table}> -> :${port} added"
 }
 
-write_puma_config() {
+write_falcon_config() {
   local port=${1:-3000}
-  cat > config/puma.rb << PUMA
-max_threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }
-min_threads_count = ENV.fetch("RAILS_MIN_THREADS") { max_threads_count }
-threads min_threads_count, max_threads_count
-worker_timeout 3600 if ENV.fetch("RAILS_ENV", "development") == "development"
-port ENV.fetch("PORT") { ${port} }
-environment ENV.fetch("RAILS_ENV") { "development" }
-pidfile ENV.fetch("PIDFILE") { "tmp/pids/server.pid" }
-plugin :tmp_restart
-PUMA
-  log_ok "Puma config written"
+  add_gem falcon
+  cat > config/falcon.rb << FALCON
+#!/usr/bin/env -S falcon host
+# frozen_string_literal: true
+
+load :rack, :supervisor
+
+hostname = File.basename(__dir__)
+port = ENV.fetch("PORT", ${port}).to_i
+
+rack hostname do
+  endpoint Async::HTTP::Endpoint.parse("http://0.0.0.0:\#{port}")
+end
+FALCON
+  log_ok "Falcon config written (:${port})"
 }
 
 install_thruster() {

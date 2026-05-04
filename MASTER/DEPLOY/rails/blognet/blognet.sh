@@ -311,7 +311,7 @@ RUBY
 # ── Assets + Layout + Infrastructure ────────────────────────────────────────
 write_base_css
 write_layout "Blognet"
-write_puma_config "$APP_PORT"
+write_falcon_config "$APP_PORT"
 configure_production
 install_rcd blognet "$APP_DIR" "$APP_PORT" blognet
 

@@ -406,7 +406,7 @@ a:hover { text-decoration: underline; }
 CSS
 
 write_layout "Privcam"
-write_puma_config "$APP_PORT"
+write_falcon_config "$APP_PORT"
 configure_production
 install_rcd privcam "$APP_DIR" "$APP_PORT" privcam
 

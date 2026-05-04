@@ -378,7 +378,7 @@ main { max-width: 480px; margin: 0 auto; padding: var(--space); }
 CSS
 
 write_layout "Brgen Dating"
-write_puma_config "$APP_PORT"
+write_falcon_config "$APP_PORT"
 configure_production
 install_rcd brgen_dating "$APP_DIR" "$APP_PORT" brgen_dating
 

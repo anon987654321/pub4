@@ -290,7 +290,7 @@ RUBY
 # ── Assets + Infrastructure ─────────────────────────────────────────────────
 write_base_css
 write_layout "Brgen Marketplace"
-write_puma_config "$APP_PORT"
+write_falcon_config "$APP_PORT"
 configure_production
 install_rcd brgen_marketplace "$APP_DIR" "$APP_PORT" brgen_marketplace
 

@@ -264,7 +264,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); pad
 CSS
 
 write_layout "Baibl"
-write_puma_config "$APP_PORT"
+write_falcon_config "$APP_PORT"
 configure_production
 
 # ── rc.d service ───────────────────────────────────────────────────────────

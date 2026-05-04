@@ -306,7 +306,7 @@ a:hover { color: var(--primary); }
 CSS
 
 write_layout "Brgen Playlist"
-write_puma_config "$APP_PORT"
+write_falcon_config "$APP_PORT"
 configure_production
 install_rcd brgen_playlist "$APP_DIR" "$APP_PORT" brgen_playlist
 

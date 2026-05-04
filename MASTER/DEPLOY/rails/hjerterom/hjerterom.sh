@@ -5,7 +5,7 @@ set -euo pipefail
 
 APP_NAME=hjerterom
 APP_DIR=/home/${APP_NAME}/app
-APP_PORT=10004
+APP_PORT=38891
 SCRIPT_DIR=${0:a:h}
 
 . "${SCRIPT_DIR:h}/@shared_functions.sh"
@@ -417,7 +417,7 @@ a:hover { text-decoration: underline; }
 CSS
 
 write_layout "Hjerterom"
-write_puma_config "$APP_PORT"
+write_falcon_config "$APP_PORT"
 configure_production
 install_rcd hjerterom "$APP_DIR" "$APP_PORT" hjerterom
 

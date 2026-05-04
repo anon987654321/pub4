@@ -5,7 +5,7 @@ set -euo pipefail
 
 APP_NAME=bsdports
 APP_DIR=/home/${APP_NAME}/app
-APP_PORT=10003
+APP_PORT=47312
 SCRIPT_DIR=${0:a:h}
 
 . "${SCRIPT_DIR:h}/@shared_functions.sh"
@@ -253,7 +253,7 @@ a:hover { text-decoration: underline; }
 CSS
 
 write_layout "BSDports"
-write_puma_config "$APP_PORT"
+write_falcon_config "$APP_PORT"
 configure_production
 install_rcd bsdports "$APP_DIR" "$APP_PORT" bsdports
 
