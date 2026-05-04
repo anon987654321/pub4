@@ -78,8 +78,7 @@ module Master
     def utility_commands(agent, root, cache)
       {
         "snapshot" => ->(_ctx) {
-          stamp = Time.now.strftime("%Y%m%d_%H%M%S")
-          out = File.expand_path("~/master_snapshot_#{stamp}.md")
+          out  = File.join(root, "snapshot.md")
           dirs = %w[exe lib/master web/app web/config data].map { |d| File.join(root, d) }
           files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
                       .select { |f| File.file?(f) && File.size(f) < CTX_WINDOW_SIZE }
@@ -96,7 +95,10 @@ module Master
             lines << "## #{rel}" << "[skipped: #{e.message}]" << ""
           end
           File.write(out, lines.join("\n"))
-          "snapshot: #{files.size} files written to #{out}"
+          stamp = Time.now.strftime("%Y-%m-%d")
+          system("git", "-C", root, "add", "snapshot.md")
+          system("git", "-C", root, "commit", "-m", "snapshot: #{stamp} — #{files.size} files")
+          "snapshot: #{files.size} files → snapshot.md (committed)"
         },
         "cache" => ->(ctx) {
           arg = ctx[:args].to_s.strip

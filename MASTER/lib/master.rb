@@ -3,6 +3,14 @@
 require "zeitwerk"
 require "yaml"
 
+# Pre-load openssl before pledge stage1 engages — faraday-net_http requires it
+# lazily on first HTTPS call, which fails after unveil restricts dlopen paths.
+begin
+  require "openssl"
+rescue LoadError => e
+  warn "openssl: #{e.message} — LLM calls will fail"
+end
+
 module Master
   ROOT = File.expand_path("..", __dir__).freeze
 
