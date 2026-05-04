@@ -59,7 +59,7 @@ module Master
           .gsub(/\b#{Regexp.escape(from)}\s*\(/, "#{to}(")
           .gsub(/\b#{Regexp.escape(from)}\b(?!\s*[:=])/) { |m| to }
 
-        File.write(fp, updated)
+        atomic_write(fp, updated)
         @bus&.publish("tool:ast_edit", op: "rename", from: from, to: to, path: fp)
         Result.ok("renamed #{from} → #{to} in #{File.basename(fp)}")
       end
@@ -77,7 +77,7 @@ module Master
         lines.insert(insert_at, "\n", code.chomp + "\n")
 
         @undo.snapshot(fp)
-        File.write(fp, lines.join)
+        atomic_write(fp, lines.join)
         @bus&.publish("tool:ast_edit", op: "add_after", after: after_name, path: fp)
         Result.ok("inserted method after #{after_name} in #{File.basename(fp)}")
       end
@@ -128,7 +128,24 @@ module Master
       def resolve(path)
         full = File.expand_path(path.to_s, @root)
         return Result.err("path escapes root: #{path}", category: :validation) unless full.start_with?(@root)
+        rel = full.delete_prefix(@root + "/")
+        return Result.err("#{rel} is sacred-tier. Amend via `soul propose`.", category: :validation) if sacred?(rel)
         Result.ok(full)
+      end
+
+      SACRED_PATHS = %w[data/ SOUL.md CLAUDE.md .claude/].freeze
+
+      def sacred?(rel)
+        SACRED_PATHS.any? { |s| rel.start_with?(s) || rel == s.chomp("/") }
+      end
+
+      def atomic_write(path, content)
+        tmp = "#{path}.tmp.#{Process.pid}"
+        File.write(tmp, content)
+        File.rename(tmp, path)
+      rescue StandardError => e
+        File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+        raise e
       end
     end
   end

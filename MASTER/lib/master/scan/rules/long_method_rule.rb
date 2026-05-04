@@ -25,7 +25,7 @@ module Master
           code.each_line.with_index(1) do |line, num|
             if line.match?(/^\s*def /)
               method_start = num
-              method_name  = line.match(/def (\w+)/)[1]
+              method_name  = line.match(/def (\w+)/)&.[](1) || "unknown"
               depth        = 1
             elsif method_start
               depth += line.scan(/\bdo\b|\bbegin\b|\bif\b|\bcase\b|\bclass\b|\bmodule\b|\bdef\b/).size

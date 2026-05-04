@@ -34,7 +34,7 @@ module Master
               @bus&.publish("council:persona_error", persona: persona.name, error: e.message)
               nil
             ensure
-              slots.synchronize { available += 1; ready.signal }
+              slots.synchronize { available += 1; ready.broadcast }
             end
           end
         end

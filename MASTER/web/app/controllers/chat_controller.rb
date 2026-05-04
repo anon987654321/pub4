@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "shellwords"
+require "open3"
 
 class ChatController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:message, :tts, :speak]
@@ -11,14 +11,16 @@ class ChatController < ApplicationController
   end
 
   def dmesg
-    lines = `dmesg 2>/dev/null`.lines.first(20).map(&:chomp)
+    out, = Open3.capture2e("dmesg")
+    lines = out.lines.first(20).map(&:chomp)
     render json: { lines: lines }
   end
 
   def metrics
     c = container
     repo_root = Rails.root.join("..").to_s
-    dirty = `git -C #{Shellwords.escape(repo_root)} status --porcelain 2>/dev/null`.lines.count
+    out, = Open3.capture2e("git", "-C", repo_root, "status", "--porcelain")
+    dirty = out.lines.count
     open_models = c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : []
     render json: {
       model:            c[:agent].model.to_s.split("/").last,

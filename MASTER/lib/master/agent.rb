@@ -86,7 +86,7 @@ module Master
 
     def ask_once(prompt, system: nil, model: nil)
       result = send_with_cache(model || self.model, [{ role: "user", content: prompt.to_s }], system:, stream: false)
-      result.is_a?(String) ? result : (result.ok? ? result.value!.to_s : "")
+      result.ok? ? result.value!.to_s : ""
     end
 
     def call(ctx)

@@ -26,7 +26,8 @@ def boot_web_ui(config)
     require "open3"
     web_dir = File.expand_path("../web", __dir__)
     return unless Dir.exist?(web_dir)
-    Open3.capture3("lsof -ti:#{port} 2>/dev/null | xargs -r kill -TERM 2>/dev/null")
+    pids_out, = Open3.capture2e("lsof", "-ti", ":#{port}")
+    pids_out.split.each { |pid| Process.kill("TERM", pid.to_i) rescue nil }
     sleep 0.5
     spawn(
       { "RAILS_ENV" => "production", "SECRET_KEY_BASE_DUMMY" => "1" },

@@ -94,8 +94,13 @@ module Master
           "message"   => message.to_s[0, EXEMPLAR_MSG_CHARS],
           "feedback"  => feedback.to_s[0, EXEMPLAR_FEEDBACK_CHARS]
         }
-        existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
-        File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))
+        @exemplar_mutex ||= Mutex.new
+        @exemplar_mutex.synchronize do
+          existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
+          tmp = "#{EXEMPLARS_PATH}.tmp.#{Process.pid}"
+          File.write(tmp, YAML.dump(existing + [entry]))
+          File.rename(tmp, EXEMPLARS_PATH)
+        end
       rescue StandardError => e
         @bus&.publish("council:exemplar_error", error: e.message)
       end

@@ -20,7 +20,7 @@ module Master
           lines = code.lines.size
           return [] if lines <= @threshold
 
-          class_name = code.match(/class (\w+)/i)&.[](1) || File.basename(path, ".rb")
+          class_name = code.match(/class ([A-Z]\w*)/)&.[](1) || File.basename(path, ".rb")
           [finding(
             line: 1,
             message: "#{class_name} is #{lines} lines (threshold: #{@threshold}) — split by responsibility"

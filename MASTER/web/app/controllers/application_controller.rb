@@ -22,7 +22,7 @@ class ApplicationController < ActionController::Base
       session[:authenticated] = true
       return
     end
-    render plain: "401 Unauthorized — visit with ?token=#{tok}", status: :unauthorized
+    render plain: "401 Unauthorized", status: :unauthorized
   end
 
   def web_token

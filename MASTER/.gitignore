@@ -1,3 +1,4 @@
+web/config/master.key
 *.bak
 *.bak2
 *.orig

@@ -143,7 +143,12 @@ module Master
     def persist
       return unless @orders.is_a?(Array)
       FileUtils.mkdir_p(File.dirname(STORE_PATH))
-      File.write(STORE_PATH, YAML.dump(@orders))
+      tmp = "#{STORE_PATH}.tmp.#{Process.pid}"
+      File.write(tmp, YAML.dump(@orders))
+      File.rename(tmp, STORE_PATH)
+    rescue StandardError => e
+      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      raise e
     end
   end
 end

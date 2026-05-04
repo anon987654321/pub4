@@ -123,14 +123,21 @@ module Master
 
     def load_store
       return {} unless File.exist?(@path)
-      loaded = Master.load_yaml(@path, symbolize_names: false); loaded.is_a?(Hash) ? loaded : {}
+      loaded = Master.load_yaml(@path)
+      loaded.is_a?(Hash) ? loaded : {}
     rescue StandardError => _e
       {}
     end
 
     def persist
-      FileUtils.mkdir_p(File.dirname(@path))
-      File.write(@path, @store.to_yaml)
+      dir = File.dirname(@path)
+      FileUtils.mkdir_p(dir)
+      tmp = "#{@path}.tmp.#{Process.pid}"
+      File.write(tmp, @store.to_yaml)
+      File.rename(tmp, @path)
+    rescue StandardError => e
+      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      raise e
     end
 
   end
