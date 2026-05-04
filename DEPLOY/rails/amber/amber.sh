@@ -56,6 +56,15 @@ bin/rails generate model PlannedOutfit \
   planned_date:date notes:text \
   --no-test-framework
 
+bin/rails generate model Follow \
+  follower:references followee:references \
+  --no-test-framework
+
+bin/rails generate model Post \
+  body:text user:references outfit:references item:references \
+  "likes_count:integer:default[0]" \
+  --no-test-framework
+
 bin/rails generate migration AddExtendedFieldsToItems \
   mood_effect:string life_phase:string \
   occasion_tags:string season:string \
@@ -144,6 +153,62 @@ class PlannedOutfit < ApplicationRecord
   scope :this_week, -> { where(planned_date: Date.today..7.days.from_now) }
 end
 RUBY
+
+cat > app/models/follow.rb << 'RUBY'
+class Follow < ApplicationRecord
+  belongs_to :follower, class_name: "User"
+  belongs_to :followee, class_name: "User"
+
+  validates :follower_id, uniqueness: { scope: :followee_id }
+  validate :no_self_follow
+
+  private
+
+  def no_self_follow
+    errors.add(:followee, "can't follow yourself") if follower_id == followee_id
+  end
+end
+RUBY
+
+cat > app/models/post.rb << 'RUBY'
+class Post < ApplicationRecord
+  belongs_to :user
+  belongs_to :outfit, optional: true
+  belongs_to :item,   optional: true
+
+  validates :body, presence: true, length: { maximum: 500 }
+
+  scope :recent, -> { order(created_at: :desc) }
+
+  def like!
+    increment!(:likes_count)
+  end
+end
+RUBY
+
+# Update User model with social associations after generation
+ruby34 -e "
+  path = 'app/models/user.rb'
+  src = File.read(path)
+  unless src.include?('has_many :posts')
+    src.sub!(\"has_secure_password\", <<~RUBY.strip)
+      has_secure_password
+
+      has_many :posts,    dependent: :destroy
+      has_many :items,    dependent: :destroy
+      has_many :outfits,  dependent: :destroy
+      has_many :planned_outfits, dependent: :destroy
+      has_many :follows_as_follower, class_name: 'Follow', foreign_key: :follower_id, dependent: :destroy
+      has_many :follows_as_followee, class_name: 'Follow', foreign_key: :followee_id, dependent: :destroy
+      has_many :following, through: :follows_as_follower, source: :followee
+      has_many :followers, through: :follows_as_followee, source: :follower
+
+      def following?(other) = follows_as_follower.exists?(followee: other)
+      def feed_posts = Post.where(user: [self] + following.to_a).recent
+    RUBY
+    File.write(path, src)
+  end
+"
 
 # ── Controllers ─────────────────────────────────────────────────────────────
 cat > app/controllers/application_controller.rb << 'RUBY'
@@ -558,6 +623,74 @@ class PlannedOutfitsController < ApplicationController
 end
 RUBY
 
+cat > app/controllers/posts_controller.rb << 'RUBY'
+class PostsController < ApplicationController
+  before_action :set_post, only: %i[show destroy like]
+
+  def index
+    @pagy, @posts = pagy(Post.recent.includes(:user, :outfit, :item))
+  end
+
+  def feed
+    @pagy, @posts = pagy(Current.user.feed_posts.includes(:user, :outfit, :item))
+  end
+
+  def show; end
+
+  def new = render
+
+  def create
+    @post = Current.user.posts.build(post_params)
+    @post.save ? redirect_to(posts_path, notice: "Posted") : render(:new, status: :unprocessable_entity)
+  end
+
+  def destroy
+    @post.destroy!
+    redirect_to posts_path
+  end
+
+  def like
+    @post.like!
+    redirect_back fallback_location: posts_path
+  end
+
+  private
+
+  def set_post = @post = Post.find(params[:id])
+
+  def post_params
+    params.require(:post).permit(:body, :outfit_id, :item_id)
+  end
+end
+RUBY
+
+cat > app/controllers/follows_controller.rb << 'RUBY'
+class FollowsController < ApplicationController
+  def create
+    user = User.find(params[:user_id])
+    Current.user.follows_as_follower.find_or_create_by!(followee: user) unless Current.user == user
+    redirect_back fallback_location: user_path(user)
+  end
+
+  def destroy
+    user = User.find(params[:user_id])
+    Current.user.follows_as_follower.find_by(followee: user)&.destroy!
+    redirect_back fallback_location: user_path(user)
+  end
+end
+RUBY
+
+cat > app/controllers/users_controller.rb << 'RUBY'
+class UsersController < ApplicationController
+  def show
+    @user   = User.find(params[:id])
+    @items  = @user.items.recent.limit(12)
+    @outfits = @user.outfits.order(created_at: :desc).limit(6)
+    @posts  = @user.posts.recent.limit(10)
+  end
+end
+RUBY
+
 # ── Routes ─────────────────────────────────────────────────────────────────
 cat > config/routes.rb << 'RUBY'
 Rails.application.routes.draw do
@@ -579,6 +712,18 @@ Rails.application.routes.draw do
 
   resources :planned_outfits, only: %i[index create destroy]
 
+  resources :posts, only: %i[index show new create destroy] do
+    member { post :like }
+    collection { get :feed }
+  end
+
+  resources :users, only: :show do
+    member do
+      post :follow
+      delete :unfollow
+    end
+  end
+
   scope :ai do
     post "items/:id/analyze", to: "ai#analyze_item",    as: :ai_analyze_item
     post "items/:id/tag",     to: "ai#tag_item",        as: :ai_tag_item
@@ -597,7 +742,7 @@ end
 RUBY
 
 # ── Views ───────────────────────────────────────────────────────────────────
-mkdir -p app/views/home app/views/items app/views/outfits app/views/ai
+mkdir -p app/views/home app/views/items app/views/outfits app/views/ai app/views/posts app/views/users
 
 write_shared_partials
 write_auth_views
@@ -1047,8 +1192,108 @@ cat > app/views/ai/_item_tags.html.erb << 'ERB'
 </div>
 ERB
 
-# ── Stimulus ────────────────────────────────────────────────────────────────
+# ── Social views ────────────────────────────────────────────────────────────
+
+cat > app/views/posts/_post.html.erb << 'ERB'
+<article>
+  <header>
+    <%= link_to post.user.email_address.split("@").first, user_path(post.user) %>
+    <time datetime="<%= post.created_at.iso8601 %>"><%= time_ago_in_words(post.created_at) %> ago</time>
+  </header>
+  <p><%= post.body %></p>
+  <% if post.outfit %>
+    <p><em>Outfit: <%= link_to post.outfit.name, outfit_path(post.outfit) %></em></p>
+  <% end %>
+  <% if post.item %>
+    <p><em>Item: <%= link_to post.item.title, item_path(post.item) %></em></p>
+  <% end %>
+  <footer>
+    <%= button_to "♥ #{post.likes_count}", like_post_path(post), method: :post %>
+    <% if post.user == Current.user %>
+      <%= button_to "Delete", post_path(post), method: :delete, data: { turbo_confirm: "Delete post?" } %>
+    <% end %>
+  </footer>
+</article>
+ERB
+
+cat > app/views/posts/index.html.erb << 'ERB'
+<h1>Community</h1>
+<%= render @posts %>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+ERB
+
+cat > app/views/posts/feed.html.erb << 'ERB'
+<h1>Your Feed</h1>
+<%= link_to "New post", new_post_path, class: "btn" %>
+<%= render @posts %>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+ERB
+
+cat > app/views/posts/show.html.erb << 'ERB'
+<%= render @post %>
+<%= link_to "Back", posts_path %>
+ERB
+
+cat > app/views/posts/new.html.erb << 'ERB'
+<h1>Share a look</h1>
+<%= form_with model: @post do |f| %>
+  <%= render "shared/errors", object: @post %>
+  <div class="field">
+    <%= f.label :body, "What are you wearing?" %>
+    <%= f.text_area :body, rows: 3, maxlength: 500, placeholder: "Share your outfit…" %>
+  </div>
+  <div class="field">
+    <%= f.label :outfit_id, "Tag an outfit (optional)" %>
+    <%= f.select :outfit_id, Current.user.outfits.map { |o| [o.name, o.id] }, { include_blank: "—" } %>
+  </div>
+  <div class="field">
+    <%= f.label :item_id, "Tag an item (optional)" %>
+    <%= f.select :item_id, Current.user.items.map { |i| [i.title, i.id] }, { include_blank: "—" } %>
+  </div>
+  <div class="actions">
+    <%= f.submit "Post", class: "btn btn--primary" %>
+  </div>
+<% end %>
+ERB
+
+cat > app/views/users/show.html.erb << 'ERB'
+<header class="profile-header">
+  <h1><%= @user.email_address.split("@").first %></h1>
+  <p><%= @user.items.count %> items · <%= @user.followers.count %> followers · <%= @user.following.count %> following</p>
+  <% if authenticated? && Current.user != @user %>
+    <% if Current.user.following?(@user) %>
+      <%= button_to "Unfollow", unfollow_user_path(@user), method: :delete, class: "btn" %>
+    <% else %>
+      <%= button_to "Follow", follow_user_path(@user), method: :post, class: "btn btn--primary" %>
+    <% end %>
+  <% end %>
+</header>
+
+<h2>Recent items</h2>
+<div class="item-grid">
+  <% @items.each do |item| %>
+    <%= link_to item_path(item) do %>
+      <% if item.photos.attached? %>
+        <%= image_tag item.photos.first, alt: item.title %>
+      <% else %>
+        <div class="item-placeholder"><%= item.category %></div>
+      <% end %>
+      <p><%= item.title %></p>
+    <% end %>
+  <% end %>
+</div>
+
+<h2>Posts</h2>
+<%= render @posts %>
+ERB
+
+# ── Stimulus + Components ───────────────────────────────────────────────────
 setup_stimulus
+
+bin/importmap pin stimulus-clipboard --download 2>/dev/null || true
+bin/importmap pin stimulus-reveal-controller --download 2>/dev/null || true
+bin/importmap pin stimulus-scroll-to --download 2>/dev/null || true
+bin/importmap pin stimulus-lightbox --download 2>/dev/null || true
 
 mkdir -p app/javascript/controllers
 cat > app/javascript/controllers/filter_controller.js << 'JS'
@@ -1131,7 +1376,44 @@ h1, h2 { margin-bottom: var(--space-sm); }
 .capsule-decision { font-size: .7rem; font-weight: 700; text-transform: uppercase; min-width: 60px; padding-top: .15rem; }
 SCSS
 
-write_full_layout "Amber" '<%= link_to "Wardrobe", items_path %><%= link_to "Planner", planned_outfits_path %><%= link_to "Search", ai_search_path %><%= link_to "Occasions", ai_occasions_path %>'
+cat > app/views/layouts/application.html.erb << 'LAYOUT'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="turbo-cache-control" content="no-preview">
+  <title><%= content_for?(:title) ? yield(:title) + " – Amber" : "Amber" %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body>
+<nav>
+  <%= link_to root_path, class: "brand" do %>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.86H5v10c0 1.1.9 2 2 2h10a2 2 0 002-2V10h1.15a1 1 0 00.99-.86l.58-3.57a2 2 0 00-1.34-2.23z"/></svg>
+    Amber
+  <% end %>
+  <% if authenticated? %>
+    <%= link_to "Feed",      feed_posts_path %>
+    <%= link_to "Post",      new_post_path %>
+    <%= link_to "Wardrobe",  items_path %>
+    <%= link_to "Outfits",   outfits_path %>
+    <%= link_to "Planner",   planned_outfits_path %>
+    <%= link_to "Search",    ai_search_path %>
+    <%= link_to "Occasions", ai_occasions_path %>
+    <%= link_to "Sign out",  session_path, data: { turbo_method: :delete } %>
+  <% else %>
+    <%= link_to "Sign in",  new_session_path %>
+    <%= link_to "Sign up",  new_registration_path %>
+  <% end %>
+</nav>
+<%= render "shared/flash" %>
+<main><%= yield %></main>
+</body>
+</html>
+LAYOUT
 
 # ── Initializer: stdlib requires ────────────────────────────────────────────
 mkdir -p config/initializers
