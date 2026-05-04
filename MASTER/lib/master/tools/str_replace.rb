@@ -4,6 +4,7 @@ module Master
   module Tools
     class StrReplace
       include PathGuard
+      include AtomicWrite
       TIER        = :guarded
       NAME        = "str_replace".freeze
       DESCRIPTION = "Replace unique string in a file. Fails if pattern matches 0 or 2+ times.".freeze
@@ -39,15 +40,11 @@ module Master
         end
 
         @undo.snapshot(full)
-
-        tmp_path = "#{full}.tmp.#{Process.pid}"
-        File.write(tmp_path, new_content)
-        File.rename(tmp_path, full)
+        write_atomic(full, new_content)
 
         @bus&.publish("tool:after", tool: NAME, path:)
         Result.ok(full)
       rescue StandardError => e
-        File.delete(tmp_path) if tmp_path && File.exist?(tmp_path)
         Result.err("str_replace: #{e.message}", category: :unknown)
       end
 

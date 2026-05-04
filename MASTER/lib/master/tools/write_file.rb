@@ -6,6 +6,7 @@ module Master
   module Tools
     class WriteFile
       include PathGuard
+      include AtomicWrite
       TIER        = :guarded
       NAME        = "write_file".freeze
       DESCRIPTION = "Atomically write content to a file, with undo snapshot.".freeze
@@ -30,15 +31,11 @@ module Master
 
         @undo.snapshot(full)
         FileUtils.mkdir_p(File.dirname(full))
-
-        tmp_path = "#{full}.tmp.#{Process.pid}"
-        File.write(tmp_path, content)
-        File.rename(tmp_path, full)
+        write_atomic(full, content)
 
         @bus&.publish("tool:after", tool: NAME, path:)
         Result.ok(full)
       rescue StandardError => e
-        File.delete(tmp_path) if tmp_path && File.exist?(tmp_path)
         Result.err("write_file: #{e.message}", category: :unknown)
       end
 

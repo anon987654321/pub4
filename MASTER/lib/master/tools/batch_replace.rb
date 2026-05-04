@@ -4,6 +4,7 @@ module Master
   module Tools
     # BatchReplace — apply multiple search-and-replace operations in one pass.
     class BatchReplace
+      include AtomicWrite
       TIER        = :guarded
       NAME        = "replace".freeze
       DESCRIPTION = "Find and replace text across all files in a directory.".freeze
@@ -36,10 +37,7 @@ module Master
           next if SACRED_DENY.any? { |s| rel == s || rel.start_with?(s) }
           content = File.read(path, encoding: "UTF-8") rescue next
           next unless content.include?(old_str)
-          new_content = content.gsub(old_str, new_str)
-          tmp = "#{path}.tmp.#{Process.pid}"
-          File.write(tmp, new_content, encoding: "UTF-8")
-          File.rename(tmp, path)
+          write_atomic(path, content.gsub(old_str, new_str))
           changed += 1
         end
 
