@@ -42,8 +42,8 @@ Never use `ruby -i` with heredoc -- will empty file on script error.
 | | |
 |---|---|
 | **Dev machine** | OpenBSD VPS · `dev@brgen.no` · `185.52.176.18` (wheel, passwordless doas) |
-| **Password** | `h00te10tu` (changes each session) |
-| **SSH** | `sshpass -p 'h00te10tu' ssh -o StrictHostKeyChecking=no dev@185.52.176.18 'cmd'` |
+| **Password** | ask user at session start: `read -s 'VPS_PASS?VPS password: '` |
+| **SSH** | `sshpass -p "$VPS_PASS" ssh -o StrictHostKeyChecking=no dev@185.52.176.18 'cmd'` |
 | **Shell** | zsh — ControlMaster does NOT persist across Bash tool calls, use sshpass every time |
 | **Local** | proot-distro Ubuntu inside Termux on Android — audio production only |
 | **OS** | OpenBSD 7.8 on VPS, Ubuntu in proot |
