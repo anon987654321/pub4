@@ -10,6 +10,7 @@ module Master
       scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
       scanner.add_rule(Scan::Rules::RubocopRule.new(root:))
       scanner.add_rule(Scan::Rules::ReekRule.new(root:))
+      scanner.add_rule(Scan::Rules::InterconnectRule.new(root:))
       scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
       scanner.add_rule(Scan::Rules::AdversarialRule.new(agent:))
       scanner

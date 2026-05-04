@@ -126,7 +126,10 @@ module Master
       # Code generation axioms — [K] enforced
       ls << "Code axioms — refuse to generate code that violates these:"
       ls << "FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class."
-      ls << "SIMPLEST_WORKS: refuse to create god classes (>300 lines, >20 methods). Push back and suggest decomposition."
+      thresholds   = @axioms.thresholds
+      max_lines    = thresholds.dig("class", "max_lines")    || 200
+      max_methods  = thresholds.dig("class", "max_methods")  || 6
+      ls << "SIMPLEST_WORKS: refuse to create god classes (>#{max_lines} lines, >#{max_methods} methods). Push back and suggest decomposition."
       ls << "PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally."
       ls << "BE_CONCISE: minimal response. If the answer is one word, say one word."
 

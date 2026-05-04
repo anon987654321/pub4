@@ -104,6 +104,7 @@ scan_depths:
   deep: &deep
     - AdversarialRule
     - ConceptualRule
+    - InterconnectRule
     - DuplicateCodeRule
     - FrozenStringRule
     - BareRescueRule
