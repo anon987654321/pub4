@@ -3,14 +3,10 @@
 module Master
   module Scan
     module Rules
-      # UniversalRule — cross-language axiom enforcement.
-      # All rules apply to all file types; vertical-spacing checks skip HTML/ERB
-      # since blank lines affect markup output.
+      # UniversalRule — cross-language axiom checks applied to every file type.
       class UniversalRule < Rule
-        BLANK_FLOOD     = /\n{4,}/.freeze
-        BOX_CHARS   = [0x256D,0x256E,0x2570,0x256F,0x2502,0x2500,0x250C,0x2510,0x2514,0x2518,
-                       0x251C,0x2524,0x252C,0x2534,0x253C,0x2550,0x2551,0x2554,0x2557,0x255A,0x255D]
-                       .map { |cp| cp.chr(Encoding::UTF_8) }.join.freeze
+        BLANK_FLOOD = /\n{4,}/.freeze
+        BOX_CHARS   = "\u256D\u256E\u2570\u256F\u2502\u2500\u250C\u2510\u2514\u2518\u251C\u2524\u252C\u2534\u253C\u2550\u2551\u2554\u2557\u255A\u255D".freeze
         BOX_DRAWING = Regexp.new("[#{Regexp.escape(BOX_CHARS)}]|={4,}|-{4,}").freeze
         OPAQUE_NAMES    = /\b(tmp|temp|val|ret|obj|str|arr|buf)\b\s*=/.freeze
         DEAD_AFTER_STOP = /\b(return|exit|raise|throw)\b.+\n\s*\S/.freeze

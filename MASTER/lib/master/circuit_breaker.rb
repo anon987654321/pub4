@@ -67,7 +67,7 @@ module Master
     def check_budget(estimate)
       return unless @budget_max.positive? # Only check budget if it's a positive value.
       synchronize do
-        raise CircuitError.new("budget: $#{(@session_total + estimate).round(4)} would exceed $#{@budget_max}", :budget) if @session_total + estimate > @budget_max
+        raise CircuitError.new("budget: $#{(@session_total + estimate).round(4)} exceeds $#{@budget_max}", :budget) if @session_total + estimate > @budget_max
       end
     end
 

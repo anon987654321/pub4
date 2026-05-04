@@ -7,8 +7,10 @@ module Master
     # Council — 6-persona deliberation on dangerous or multi-file changes.
     # PRAISE votes are appended to data/exemplars.yml for future reference.
     class Council
-      EXEMPLARS_PATH  = File.join(Master::ROOT, "data", "exemplars.yml").freeze
-      PATTERNS_PATH   = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
+      EXEMPLARS_PATH       = File.join(Master::ROOT, "data", "exemplars.yml").freeze
+      PATTERNS_PATH        = File.join(Master::ROOT, "data", "council_patterns.yml").freeze
+      EXEMPLAR_MSG_CHARS   = 120
+      EXEMPLAR_FEEDBACK_CHARS = 240
 
       def initialize(deliberation:, config: nil, enabled: false)
         @deliberation      = deliberation
@@ -48,7 +50,11 @@ module Master
 
       def load_patterns
         data = Master.load_yaml(PATTERNS_PATH)
-        (data["dangerous"] || []).flatten.filter_map { |str| Regexp.new(str, Regexp::IGNORECASE) rescue nil }
+        (data["dangerous"] || []).flatten.filter_map do |str|
+          Regexp.new(str, Regexp::IGNORECASE)
+        rescue RegexpError
+          nil
+        end
       end
 
       def should_run?(ctx)
@@ -85,8 +91,8 @@ module Master
       def log_praise(message, feedback)
         entry = {
           "timestamp" => Time.now.iso8601,
-          "message"   => message.to_s[0, 120],
-          "feedback"  => feedback.to_s[0, 240]
+          "message"   => message.to_s[0, EXEMPLAR_MSG_CHARS],
+          "feedback"  => feedback.to_s[0, EXEMPLAR_FEEDBACK_CHARS]
         }
         existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
         File.write(EXEMPLARS_PATH, YAML.dump(existing + [entry]))

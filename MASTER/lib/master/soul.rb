@@ -58,7 +58,7 @@ module Master
       blocked = drift[:absolute_changed].any?
 
       if blocked
-        "BLOCKED: proposal would change ABSOLUTE sections: #{drift[:absolute_changed].join(", ")}. Add /override to force."
+        "BLOCKED: proposal changes ABSOLUTE sections: #{drift[:absolute_changed].join(", ")}. Add /override to force."
       else
         FileUtils.mkdir_p(File.dirname(PROPOSAL_PATH))
         tmp_w = "#{PROPOSAL_PATH}.tmp.#{Process.pid}"

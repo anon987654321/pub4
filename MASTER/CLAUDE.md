@@ -24,6 +24,8 @@ Before any coding work:
 **Banned in zsh scripts and SSH commands:** sed, awk, tr, grep, cut, head, tail, find, wc, sudo, perl, ruby (in zsh), dd, xargs
 Use: zsh builtins, parameter expansion, `doas` for privilege, Ruby scripts for complex logic.
 
+**External LLM context:** `cat ~/pub4/MASTER/CONVENTIONS.md` — dense reference distilled from data/*.yml for any LLM reviewing or editing MASTER.
+
 **Use MASTER's own scan before external analysis:**
 `eval "$(grep '^export' ~/.zshrc)" && cd ~/pub4/MASTER && echo "/scan deep lib/" | bundle exec ruby exe/master`
 Do not use external agents to find code issues when MASTER can scan itself.
