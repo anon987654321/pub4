@@ -1301,37 +1301,18 @@ EOF
   # Generate Rails app code via feature scripts
   if ! is_step_completed "rails_apps_generated"; then
     log INFO "Generating Rails apps from feature scripts"
-    typeset deploy_dir="/home/dev/pub4/MASTER/DEPLOY/rails"
+    typeset deploy_dir="/home/dev/pub4/DEPLOY/rails"
 
-    # brgen
-    if [[ -f "${deploy_dir}/brgen/brgen.sh" ]]; then
-      log INFO "Running brgen setup"
-      doas -u brgen zsh "${deploy_dir}/brgen/brgen.sh" || log WARN "brgen.sh exited non-zero"
-    fi
-
-    # amber
-    if [[ -f "${deploy_dir}/amber/amber.sh" ]]; then
-      log INFO "Running amber setup"
-      doas -u amber zsh "${deploy_dir}/amber/amber.sh" || log WARN "amber.sh exited non-zero"
-    fi
-
-    # hjerterom
-    if [[ -f "${deploy_dir}/hjerterom/hjerterom.sh" ]]; then
-      log INFO "Running hjerterom setup"
-      doas zsh "${deploy_dir}/hjerterom/hjerterom.sh" || log WARN "hjerterom.sh exited non-zero"
-    fi
-
-    # privcam
-    if [[ -f "${deploy_dir}/privcam/privcam.sh" ]]; then
-      log INFO "Running privcam setup"
-      doas zsh "${deploy_dir}/privcam/privcam.sh" || log WARN "privcam.sh exited non-zero"
-    fi
-
-    # baibl
-    if [[ -f "${deploy_dir}/baibl/baibl.sh" ]]; then
-      log INFO "Running baibl setup"
-      doas zsh "${deploy_dir}/baibl/baibl.sh" || log WARN "baibl.sh exited non-zero"
-    fi
+    for app_script in brgen/brgen.sh amber/amber.sh blognet/blognet.sh bsdports/bsdports.sh hjerterom/hjerterom.sh privcam/privcam.sh baibl/baibl.sh; do
+      typeset script_path="${deploy_dir}/${app_script}"
+      typeset app_name="${app_script%%/*}"
+      if [[ -f $script_path ]]; then
+        log INFO "Running ${app_name} setup"
+        doas -u ${app_name} zsh "$script_path" || log WARN "${app_name}.sh exited non-zero"
+      else
+        log WARN "Not found: $script_path"
+      fi
+    done
 
     mark_step_completed "rails_apps_generated"
     log INFO "Rails app generation done"
