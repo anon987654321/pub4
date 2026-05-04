@@ -32,11 +32,11 @@ model_defs:
     <<: *model_defaults
     score: { quality: 0.95, speed: 0.70, cost: 0.80 }
   mistral_large: &mistral_large
-    id: mistral-large-latest
+    id: mistralai/mistral-large
     <<: *model_defaults
     score: { quality: 0.90, speed: 0.75, cost: 0.70 }
   mistral_small: &mistral_small
-    id: mistral-small-latest
+    id: mistralai/mistral-small-3.1-24b
     <<: *model_defaults
     score: { quality: 0.78, speed: 0.85, cost: 0.90 }
   deepseek_chat: &deepseek_chat
@@ -107,6 +107,7 @@ tool_capable_prefixes:
   - gpt-4o
   - gemini
   - mistral
+  - mistralai
   - mixtral
   - llama-3.1
   - llama-3.3

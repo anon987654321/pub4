@@ -8,7 +8,7 @@ module Master
       PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 
       VAGUE_STUBS  = /\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|good\s+\w+|test(?:ing)?|please)\z/i.freeze
-      ACTIONABLE   = /\b(?:fix|write|add|explain|refactor|scan|implement|show|list|create|delete|update|find|run|check|what|how|why|where|when|who|which|read|open|build|deploy|revert|move|rename)\b/i.freeze
+      ACTIONABLE   = /\b(?:fix|write|add|explain|refactor|scan|implement|show|list|create|delete|update|find|run|check|what|whats|how|why|where|when|who|which|read|open|build|deploy|revert|move|rename|tell|url|path|help)\b/i.freeze
       FILE_REF     = /[`'"]|\/|\.\w{2,4}\b/.freeze
       ELICIT_WORDS = 5
 
@@ -18,6 +18,7 @@ module Master
         design:    "what interface — inputs, outputs, constraints?",
         discover:  "what problem, and how will you measure success?",
       }.freeze
+      GREETING_STUBS = /\A(?:hi+|hey|hello|good\s+\w+)\z/i.freeze
       ELICIT_DEFAULT = "be specific: which file or function, and what should change?".freeze
 
       TASK_TYPE_PATTERNS = {
@@ -46,6 +47,9 @@ module Master
         end
 
         if vague?(msg)
+          if msg.match?(GREETING_STUBS)
+            return Result.ok(ctx.merge(intent: :clarify, clarifying_question: "ready. what are you working on?"))
+          end
           q = ELICIT_QUESTIONS[ctx[:phase]&.to_sym] || ELICIT_DEFAULT
           return Result.ok(ctx.merge(intent: :clarify, clarifying_question: q))
         end
