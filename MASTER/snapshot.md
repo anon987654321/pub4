@@ -1,5 +1,5 @@
 # MASTER Codebase Snapshot
-Generated: 2026-05-04T11:30:29Z
+Generated: 2026-05-04T12:20:04Z
 
 ## data/council.yml
 ```yaml
@@ -1070,7 +1070,7 @@ ruby:
       - "str.end_with?(suffix)          over  str.match?(/suffix$/)"
       - "str.split(sep, n)              over  str.scan(/pattern/)"
     still_use_regex_for:
-      - "Character classes: /[a-z]/, /\d+/"
+      - 'Character classes: /[a-z]/, /\d+/'
       - "Anchored multiline patterns"
       - "Alternation with more than 2 branches"
 
@@ -1124,13 +1124,7 @@ git:
 # scope: codebase > file > unit > line
 # applies to: code, prose, law, business, science, design
 
-golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-
-protection:
-  ABSOLUTE: "Abort pipeline"
-  PROTECTED: "Emit warning, continue"
-  NEGOTIABLE: "Allow if explicitly permitted"
-  FLEXIBLE: "Negotiate at runtime"
+# golden_rule and protection_tiers live in soul.yml (ABSOLUTE section) — single source.
 
 voice:
   style: openbsd_dmesg
@@ -1226,6 +1220,7 @@ scan_depths:
   deep: &deep
     - AdversarialRule
     - ConceptualRule
+    - InterconnectRule
     - DuplicateCodeRule
     - FrozenStringRule
     - BareRescueRule
@@ -1266,7 +1261,7 @@ languages:
   zsh:
     shebang: "#!/usr/bin/env zsh"
     options: "set -euo pipefail; setopt nullglob extendedglob"
-    banned: [sed, awk, tr, grep, cut, head, tail, find, wc, sudo, perl, ruby, dd, xargs]
+    # banned commands live in zsh_patterns.yml — single source.
   openbsd:
     service: rcctl
     packages: pkg_add
@@ -2541,6 +2536,46 @@ rules:
       autofix: false
       detect_conceptual: "Is this comment explaining what bad code does instead of rewriting the code to be self-evident? In prose, is a footnote compensating for an unclear sentence? In a contract, is a definition section papering over ambiguous clauses?"
       fix: "Rewrite the artifact so explanation is unnecessary. If it needs a comment, it needs a rewrite."
+
+    - id: POSTEL
+      name: "Be conservative in what you send, liberal in what you accept"
+      tier: architecture
+      severity: info
+      autofix: false
+      detect_conceptual: "Does this interface reject valid inputs that differ only in form? Does it emit outputs with more precision or structure than callers need? Does this protocol refuse valid encodings? Does this form reject data that could be safely normalized?"
+      fix: "Accept broadly, emit precisely. Validate structure not style. Normalize on the way in."
+
+    - id: HYRUM
+      name: "All observable behaviors become depended upon at scale"
+      tier: architecture
+      severity: warning
+      autofix: false
+      detect_conceptual: "Is this changing an undocumented behavior that callers may rely on? Is this removing a side effect that was never specified but may be consumed? Is this contract revision eliminating something parties have silently come to depend on?"
+      fix: "Treat every observable behavior as a contract once you have users. Deprecate explicitly, remove slowly."
+
+    - id: LEAKY_ABSTRACTION
+      name: "All non-trivial abstractions leak"
+      tier: architecture
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does this abstraction force the caller to know about implementation details? Does the interface require knowledge of underlying protocols, data formats, or failure modes it was supposed to hide? Does this clause invoke legal theory the reader must independently research?"
+      fix: "Plan for the leak. Document what leaks. Make the happy path abstracted, the edge cases explicit."
+
+    - id: TEMPORAL_COUPLING
+      name: "Hidden sequential dependencies are fragile"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does this require callers to call methods in a specific order without enforcing it? Is there an implicit initialization sequence that crashes if violated? Does this workflow assume steps execute in a fixed order without encoding that order?"
+      fix: "Enforce sequencing structurally: pass initialized objects, not bare instances. Use builder pattern. Make invalid order unrepresentable."
+
+    - id: HUMBLE_OBJECT
+      name: "Separate testable logic from hard-to-test boundaries"
+      tier: design
+      severity: info
+      autofix: false
+      detect_conceptual: "Is business logic mixed with IO, UI rendering, or external API calls making it untestable? Is decision logic tangled with presentation in a way that forces integration tests where unit tests would suffice?"
+      fix: "Extract the logic into a pure object (Humble Object). Keep the IO shell thin and untested; test the logic object exhaustively."
 ```
 
 ## data/soul.yml
@@ -3843,12 +3878,15 @@ module Master
   # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
   class Axioms
     DATA_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "rules.yml").freeze
+    SOUL_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "soul.yml").freeze
     WORKFLOW_PATH = File.join(File.expand_path("../../..", __dir__), "data", "workflow.yml").freeze
 
     def initialize(root: nil)
       @rules_path    = root ? File.join(root, "data", "rules.yml")    : DATA_PATH
+      @soul_path     = root ? File.join(root, "data", "soul.yml")     : SOUL_PATH
       @workflow_path = root ? File.join(root, "data", "workflow.yml") : WORKFLOW_PATH
       @data          = load_yaml(@rules_path)    || {}
+      @soul_data     = load_yaml(@soul_path)     || {}
       @workflow      = load_yaml(@workflow_path) || {}
     end
 
@@ -3899,13 +3937,14 @@ module Master
 
     def constitution
       @constitution ||= begin
-        constitution_data = {}
-        constitution_data["golden_rule"]         = @data["golden_rule"]
-        constitution_data["protection"]          = @data["protection"]
-        constitution_data["banned_output"]       = voice["banned_output"]
-        constitution_data["anti_simulation"]     = voice["anti_simulation"]
-        constitution_data["communication_style"] = voice["style"]
-        constitution_data.freeze
+        absolute = @soul_data["absolute"] || {}
+        {
+          "golden_rule"         => absolute["golden_rule"]      || @data["golden_rule"],
+          "protection"          => absolute["protection_tiers"] || @data["protection"],
+          "banned_output"       => voice["banned_output"],
+          "anti_simulation"     => absolute["anti_simulation"]  || voice["anti_simulation"],
+          "communication_style" => voice["style"]
+        }.freeze
       end
     end
 
@@ -4149,6 +4188,7 @@ module Master
       scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
       scanner.add_rule(Scan::Rules::RubocopRule.new(root:))
       scanner.add_rule(Scan::Rules::ReekRule.new(root:))
+      scanner.add_rule(Scan::Rules::InterconnectRule.new(root:))
       scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
       scanner.add_rule(Scan::Rules::AdversarialRule.new(agent:))
       scanner
@@ -4396,6 +4436,7 @@ module Master
       @session.load! if @session.exists?
       scan_in_background
       puts @renderer.splash(@agent.model)
+      puts @renderer.render("session0: #{@session.name}", mode: :dim) if @session.name
       process(initial_message) if initial_message
       @running = true
       repl_loop
@@ -4466,6 +4507,8 @@ module Master
 
         if line.strip == "/exit"
           exit_cli
+        elsif line.strip == "<<"
+          run_input(read_multiline)
         else
           run_input(line)
         end
@@ -4475,6 +4518,19 @@ module Master
     end
 
     def exit_cli = (@session.save!; @running = false)
+
+    def read_multiline
+      lines = []
+      puts @renderer.render("-- enter lines, blank line to send --", mode: :dim)
+      loop do
+        print "  "
+        inner = (@reader.read_line("", echo: true).chomp rescue nil)
+        break if inner.nil? || inner.strip.empty?
+
+        lines << inner
+      end
+      lines.join("\n")
+    end
 
     def scan_in_background
       @scan_thread = Thread.new do
@@ -5370,8 +5426,7 @@ module Master
     def utility_commands(agent, root, cache)
       {
         "snapshot" => ->(_ctx) {
-          stamp = Time.now.strftime("%Y%m%d_%H%M%S")
-          out = File.expand_path("~/master_snapshot_#{stamp}.md")
+          out  = File.join(root, "snapshot.md")
           dirs = %w[exe lib/master web/app web/config data].map { |d| File.join(root, d) }
           files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
                       .select { |f| File.file?(f) && File.size(f) < CTX_WINDOW_SIZE }
@@ -5388,7 +5443,10 @@ module Master
             lines << "## #{rel}" << "[skipped: #{e.message}]" << ""
           end
           File.write(out, lines.join("\n"))
-          "snapshot: #{files.size} files written to #{out}"
+          stamp = Time.now.strftime("%Y-%m-%d")
+          system("git", "-C", root, "add", "snapshot.md")
+          system("git", "-C", root, "commit", "-m", "snapshot: #{stamp} — #{files.size} files")
+          "snapshot: #{files.size} files → snapshot.md (committed)"
         },
         "cache" => ->(ctx) {
           arg = ctx[:args].to_s.strip
@@ -7167,7 +7225,10 @@ module Master
       # Code generation axioms — [K] enforced
       ls << "Code axioms — refuse to generate code that violates these:"
       ls << "FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class."
-      ls << "SIMPLEST_WORKS: refuse to create god classes (>300 lines, >20 methods). Push back and suggest decomposition."
+      thresholds   = @axioms.thresholds
+      max_lines    = thresholds.dig("class", "max_lines")    || 200
+      max_methods  = thresholds.dig("class", "max_methods")  || 6
+      ls << "SIMPLEST_WORKS: refuse to create god classes (>#{max_lines} lines, >#{max_methods} methods). Push back and suggest decomposition."
       ls << "PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally."
       ls << "BE_CONCISE: minimal response. If the answer is one word, say one word."
 
@@ -7185,6 +7246,12 @@ module Master
         ls << "Ruby bugs to avoid: #{bugs.join("; ")}." if bugs.any?
         shell_forbidden = Array(style.dig("shell", "decorations_forbidden"))
         ls << "Shell scripts: no ASCII banners (===,---), no emoji, no hardcoded credentials." if shell_forbidden.any?
+        abbrev_rule = style.dig("ruby", "naming", "rule")
+        ls << "Naming: #{abbrev_rule}" if abbrev_rule
+        string_rule = style.dig("ruby", "prefer_string_methods", "rule")
+        ls << "String methods: #{string_rule}" if string_rule
+        gem_rule = style.dig("ruby", "outsource_to_gems", "rule")
+        ls << "Gems: #{gem_rule}" if gem_rule
       end
 
       ls.join("\n")
@@ -7947,6 +8014,19 @@ module Master
         return nil if current_model == strong_model
 
         strong_model
+      end
+
+      def constrained_for(operation:)
+        constraint = @rules.dig("operation_constraints", operation.to_s)
+        return preferred unless constraint
+
+        min_quality = constraint.fetch("min_quality", 0.0).to_f
+        preferred_tier = constraint.fetch("preferred_tier", "strong")
+        candidates = @rules.dig("models", preferred_tier).to_a
+        qualified = candidates.select { |m| m.dig("score", "quality").to_f >= min_quality }
+        return preferred if qualified.empty?
+
+        qualified.max_by { |m| weighted_score(m["score"] || {}) }&.dig("id") || preferred
       end
 
       def tier_for_model(model_id)
@@ -8805,6 +8885,94 @@ module Master
             return lines[current_line].include?(".freeze") if depth <= 0
           end
           false
+        end
+      end
+    end
+  end
+end
+```
+
+## lib/master/scan/rules/interconnect_rule.rb
+```ruby
+# frozen_string_literal: true
+
+require "yaml"
+
+module Master
+  module Scan
+    module Rules
+      # Detects phantom reads — Ruby code digs keys that don't exist in the corresponding data/*.yml.
+      # Also detects orphan keys — top-level YAML keys with zero references in lib/.
+      # Only meaningful when scanning lib/ with root: access.
+      class InterconnectRule < Rule
+        LOAD_CALL   = /load_yaml(?:_data)?\s*\(\s*["']([^"']+\.yml)["']/.freeze
+        DIG_CALL    = /\.dig\(\s*((?:["'][^"']+["']\s*,?\s*)+)\)/.freeze
+        FETCH_CALL  = /\.fetch\(\s*["']([^"']+)["']/.freeze
+        BRACKET_KEY = /\[["']([^"']+)["']\]/.freeze
+
+        def self.auto_build? = false
+
+        def initialize(root:)
+          super()
+          @id          = "interconnect"
+          @description = "Phantom YAML key reads and orphan data keys"
+          @severity    = :warning
+          @auto_fix    = false
+          @axiom_tags  = %i[ONE_SOURCE SINGLE_SOURCE_OF_TRUTH]
+          @root        = root
+          @data_dir    = File.join(root, "data")
+          @lib_source  = load_lib_source(root)
+        end
+
+        def check(code, path:)
+          return [] unless path.include?("/lib/") && path.end_with?(".rb")
+
+          findings = []
+          yaml_files = extract_loaded_yamls(code)
+          yaml_files.each do |yml_name|
+            yml_path = File.join(@data_dir, yml_name)
+            next unless File.exist?(yml_path)
+
+            yaml_data = YAML.safe_load(File.read(yml_path), aliases: true) rescue next
+            dug_paths = extract_dig_paths(code)
+            dug_paths.each do |path_keys|
+              next if yaml_data.dig(*path_keys)
+
+              code.each_line.with_index(1) do |line, number|
+                key_pattern = path_keys.first.to_s
+                next unless line.include?(key_pattern)
+
+                findings << finding(
+                  line: number,
+                  message: "phantom key #{path_keys.inspect} not found in #{yml_name} — stale dig path or missing YAML entry"
+                )
+                break
+              end
+            end
+          end
+          findings
+        end
+
+        private
+
+        def extract_loaded_yamls(code)
+          code.scan(LOAD_CALL).flatten.compact
+        end
+
+        def extract_dig_paths(code)
+          code.scan(DIG_CALL).filter_map do |match|
+            keys = match.first.to_s.scan(/["']([^"']+)["']/).flatten
+            keys.size >= 1 ? keys : nil
+          end
+        end
+
+        def load_lib_source(root)
+          lib_dir = File.join(root, "lib")
+          return "" unless File.directory?(lib_dir)
+
+          Dir.glob(File.join(lib_dir, "**", "*.rb"))
+            .filter_map { |path| File.read(path) rescue nil }
+            .join("\n")
         end
       end
     end
@@ -10725,10 +10893,24 @@ module Master
       # Heuristic task-type detection — used by ModelRouter for tiered model selection.
       PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 
+      VAGUE_STUBS  = /\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|good\s+\w+|test(?:ing)?|please)\z/i.freeze
+      ACTIONABLE   = /\b(?:fix|write|add|explain|refactor|scan|implement|show|list|create|delete|update|find|run|check|what|how|why|where|when|who|which|read|open|build|deploy|revert|move|rename)\b/i.freeze
+      FILE_REF     = /[`'"]|\/|\.\w{2,4}\b/.freeze
+      ELICIT_WORDS = 5
+
+      ELICIT_QUESTIONS = {
+        implement: "which file, which method, and what change exactly?",
+        refactor:  "which file, which method, and what change exactly?",
+        design:    "what interface — inputs, outputs, constraints?",
+        discover:  "what problem, and how will you measure success?",
+      }.freeze
+      ELICIT_DEFAULT = "be specific: which file or function, and what should change?".freeze
+
       TASK_TYPE_PATTERNS = {
-        coding:   /\b(?:def |class |module |require |\.rb\b|fix\s+(?:the\s+)?(?:bug|error|issue)|refactor|implement|write\s+(?:a\s+)?(?:method|class|function|test)|add\s+(?:a\s+)?(?:method|feature)|```(?:ruby|python|js|javascript|bash))/i,
-        research: /\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|explain\s+(?:how|what|why)|tell\s+me\s+about)\b/i,
-        qa:       /\?(?:\s*$|\s+[A-Z])/m,
+        architecture: /\b(?:restructur|reorganiz|hierarch|layout|folder|director|module\s+boundar|decouple|extract\s+(?:a\s+)?(?:module|class|layer|service)|where\s+should|how\s+should\s+(?:we|i)\s+organiz|split\s+(?:this\s+)?(?:into|across)|consolidat)/i,
+        coding:       /\b(?:def |class |module |require |\.rb\b|fix\s+(?:the\s+)?(?:bug|error|issue)|refactor|implement|write\s+(?:a\s+)?(?:method|class|function|test)|add\s+(?:a\s+)?(?:method|feature)|```(?:ruby|python|js|javascript|bash))/i,
+        research:     /\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|explain\s+(?:how|what|why)|tell\s+me\s+about)\b/i,
+        qa:           /\?(?:\s*$|\s+[A-Z])/m,
       }.freeze
 
       PATTERNS_PATH = File.join(Master::ROOT, "data", "infer_patterns.yml").freeze
@@ -10749,6 +10931,11 @@ module Master
           end
         end
 
+        if vague?(msg)
+          q = ELICIT_QUESTIONS[ctx[:phase]&.to_sym] || ELICIT_DEFAULT
+          return Result.ok(ctx.merge(intent: :clarify, clarifying_question: q))
+        end
+
         pressure = msg.match?(PRESSURE_PATTERN)
         Result.ok(ctx.merge(task_type: infer_task_type(msg), pressure: pressure || ctx[:pressure]))
       end
@@ -10765,6 +10952,12 @@ module Master
         end
       rescue StandardError => _e
         {}
+      end
+
+      def vague?(msg)
+        return true if msg.match?(VAGUE_STUBS)
+
+        msg.split.size <= ELICIT_WORDS && !msg.match?(ACTIONABLE) && !msg.match?(FILE_REF)
       end
 
       def infer_task_type(msg)
@@ -11087,9 +11280,10 @@ module Master
 
       def call(ctx)
         case ctx[:intent]
-        when :command then route_command(ctx)
-        when :llm     then Result.ok(ctx.merge(handler: @agent))
-        else               Result.err("route: unknown intent #{ctx[:intent].inspect}", category: :validation)
+        when :command  then route_command(ctx)
+        when :llm      then Result.ok(ctx.merge(handler: @agent))
+        when :clarify  then Result.ok(ctx.merge(handler: ->(_c) { ctx[:clarifying_question] }))
+        else                Result.err("route: unknown intent #{ctx[:intent].inspect}", category: :validation)
         end
       end
 
@@ -11097,9 +11291,32 @@ module Master
 
       def route_command(ctx)
         cmd = @commands[ctx[:command]]
-        return Result.err("unknown command: /#{ctx[:command]}", category: :validation) unless cmd
-
+        unless cmd
+          suggestion = closest_command(ctx[:command])
+          msg = "unknown command: /#{ctx[:command]}"
+          msg += " -- did you mean /#{suggestion}?" if suggestion
+          return Result.err(msg, category: :validation)
+        end
         Result.ok(ctx.merge(handler: cmd))
+      end
+
+      def closest_command(name)
+        best = @commands.keys.min_by { |k| levenshtein(k, name) }
+        return nil unless best && levenshtein(best, name) <= [name.length, 3].min
+
+        best
+      end
+
+      def levenshtein(a, b)
+        m = a.length
+        n = b.length
+        dp = Array.new(m + 1) { |i| Array.new(n + 1) { |j| i.zero? ? j : (j.zero? ? i : 0) } }
+        (1..m).each do |i|
+          (1..n).each do |j|
+            dp[i][j] = a[i - 1] == b[j - 1] ? dp[i - 1][j - 1] : 1 + [dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]].min
+          end
+        end
+        dp[m][n]
       end
     end
   end
