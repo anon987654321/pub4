@@ -93,6 +93,10 @@ scan_depths:
     - ArityRule
     - TellDontAskRule
     - ThresholdDriftRule
+    - TerseRule
+    - DeadAssignRule
+    - NestingDepthRule
+    - TrailingCommentRule
   deep: &deep
     - AdversarialRule
     - ConceptualRule

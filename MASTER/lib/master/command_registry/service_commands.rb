@@ -16,6 +16,7 @@ module Master
     def service_commands(ai, phase_gates = nil)
       heartbeat = ai[:heartbeat]
       skills    = ai[:skills]
+      scanner   = ai[:scanner]
       {
         "heartbeat" => ->(ctx) { dispatch_heartbeat(heartbeat, ctx[:args].to_s.strip) },
         "skills"    => ->(ctx) {
@@ -23,7 +24,8 @@ module Master
           found = skills&.find(arg)
           arg.empty? ? (skills&.list || "(no skills)") : (found ? "#{found[:name]}: #{found[:description]}" : "(not found: #{arg})")
         },
-        "phase" => ->(ctx) { dispatch_phase(phase_gates, ctx[:args].to_s.strip) }
+        "phase" => ->(ctx) { dispatch_phase(phase_gates, ctx[:args].to_s.strip) },
+        "score" => ->(ctx) { score_file(scanner, ctx[:args].to_s.strip) }
       }
     end
 
@@ -64,6 +66,41 @@ module Master
       when /\Apropose (.+)\z/  then soul.propose($1.strip)
       else "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
       end
+    end
+
+    SCORE_WEIGHTS = { error: 10, critical: 10, warning: 3, style: 1 }.freeze
+
+    def score_file(scanner, arg)
+      return "usage: /score <file>" if arg.empty?
+      path = File.expand_path(arg)
+      return "not found: #{arg}" unless File.exist?(path)
+
+      src   = File.read(path, encoding: "UTF-8")
+      lines = src.lines
+      total = lines.size
+      return "empty file" if total.zero?
+
+      blank   = lines.count { |l| l.strip.empty? }
+      comment = lines.count { |l| l.strip.start_with?("#") }
+      long    = lines.count { |l| l.chomp.length > 100 }
+
+      result = scanner&.scan(path, depth: :standard)
+      violations = result.respond_to?(:ok?) && result.ok? ? result.value! : []
+
+      penalty = violations.sum { |v| SCORE_WEIGHTS[v[:severity]] || 1 }
+      score   = [100 - penalty, 0].max
+
+      by_rule = violations.group_by { |v| v[:rule] }
+                          .sort_by { |_, vs| -vs.size }
+                          .map { |rule, vs| "  #{rule}: #{vs.size}" }
+
+      lines_out = [
+        "score: #{score}/100  #{path.split("/").last}",
+        "  #{total} lines  #{blank} blank  #{comment} comment  #{long} over 100 chars",
+        "  #{violations.size} violation(s)  -#{penalty} pts"
+      ]
+      lines_out.concat(by_rule) unless by_rule.empty?
+      lines_out.join("\n")
     end
 
     def dispatch_heartbeat(heartbeat, arg)
