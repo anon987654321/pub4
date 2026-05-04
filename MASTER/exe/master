@@ -10,32 +10,27 @@ $stderr.set_encoding("UTF-8")
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 
-# Boot the web UI alongside the CLI.
-# Kills any leftover process on the web port before starting fresh.
-# Both CLI and web UI read port/host from the same config.
+# Check if the rc.d web daemon is already running; print its URL.
+# Never restarts or spawns on OpenBSD — the rc.d service owns that lifecycle.
 def boot_web_ui(config)
-  port = config["web_port"] || 10002
-  host = config["web_host"] || "0.0.0.0"
+  port = config["web_port"] || 53187
+  host = config["web_host"] || "127.0.0.1"
 
   if Master::Platform.openbsd?
-    system("doas pkill -TERM -f 'falcon.*#{port}' 2>/dev/null || true")
-    sleep 0.5
-    system("doas rcctl restart master > /dev/null 2>&1")
-    $stderr.puts "web: http://#{host}:#{port}"
+    running = system("pgrep -f 'falcon.*#{port}' > /dev/null 2>&1")
+    $stderr.puts "web: http://#{host}:#{port} (#{running ? "up" : "down — run: doas rcctl start master"})"
   else
     require "open3"
+    web_dir = File.expand_path("../web", __dir__)
+    return unless Dir.exist?(web_dir)
     Open3.capture3("lsof -ti:#{port} 2>/dev/null | xargs -r kill -TERM 2>/dev/null")
     sleep 0.5
-    web_dir = File.expand_path("../web", __dir__)
-    if Dir.exist?(web_dir)
-      spawn(
-        { "RAILS_ENV" => "production", "SECRET_KEY_BASE_DUMMY" => "1" },
-        "bundle", "exec", "falcon", "serve", "--bind", "http://#{host}:#{port}",
-        chdir: web_dir,
-        out: File::NULL, err: File::NULL
-      )
-      $stderr.puts "web: http://#{host}:#{port}"
-    end
+    spawn(
+      { "RAILS_ENV" => "production", "SECRET_KEY_BASE_DUMMY" => "1" },
+      "bundle", "exec", "falcon", "serve", "--bind", "http://#{host}:#{port}",
+      chdir: web_dir, out: File::NULL, err: File::NULL
+    )
+    $stderr.puts "web: http://#{host}:#{port}"
   end
 rescue StandardError => e
   $stderr.puts "web_ui: #{e.message}"
