@@ -562,6 +562,7 @@ RUBY
 cat > config/routes.rb << 'RUBY'
 Rails.application.routes.draw do
   resource  :session
+  resource  :registration, only: %i[new create]
   resources :passwords, param: :token
 
   resources :items do
@@ -600,6 +601,7 @@ mkdir -p app/views/home app/views/items app/views/outfits app/views/ai
 
 write_shared_partials
 write_auth_views
+write_registration
 
 cat > app/views/home/index.html.erb << 'ERB'
 <% content_for :title, "Dashboard" %>

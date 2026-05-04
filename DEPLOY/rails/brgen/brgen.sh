@@ -403,6 +403,7 @@ RUBY
 cat > config/routes.rb << 'RUBY'
 Rails.application.routes.draw do
   resource  :session
+  resource  :registration, only: %i[new create]
   resources :passwords, param: :token
 
   root "communities#index"
@@ -433,6 +434,7 @@ RUBY
 # ── Views ───────────────────────────────────────────────────────────────────
 write_shared_partials
 write_auth_views
+write_registration
 
 mkdir -p app/views/communities app/views/posts app/views/comments app/views/votes app/views/users app/views/stories
 

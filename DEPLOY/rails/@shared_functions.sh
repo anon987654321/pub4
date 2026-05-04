@@ -460,6 +460,60 @@ ERB
   log_ok "Auth views written"
 }
 
+# ── Registration (sign-up) ───────────────────────────────────────────────────
+
+write_registration() {
+  mkdir -p app/views/registrations
+  cat > app/controllers/registrations_controller.rb << 'RUBY'
+class RegistrationsController < ApplicationController
+  allow_unauthenticated_access only: %i[new create]
+
+  def new = render
+
+  def create
+    user = User.new(registration_params)
+    if user.save
+      start_new_session_for user
+      redirect_to root_path, notice: "Welcome!"
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def registration_params
+    params.require(:user).permit(:email_address, :password, :password_confirmation)
+  end
+end
+RUBY
+  cat > app/views/registrations/new.html.erb << 'ERB'
+<div class="auth-form">
+  <h1>Create account</h1>
+  <%= form_with model: User.new, url: registration_path do |f| %>
+    <%= render "shared/errors", object: f.object %>
+    <div class="field">
+      <%= f.label :email_address, "Email" %>
+      <%= f.email_field :email_address, autofocus: true, autocomplete: "email" %>
+    </div>
+    <div class="field">
+      <%= f.label :password %>
+      <%= f.password_field :password, autocomplete: "new-password" %>
+    </div>
+    <div class="field">
+      <%= f.label :password_confirmation, "Confirm password" %>
+      <%= f.password_field :password_confirmation, autocomplete: "new-password" %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Create account", class: "btn btn--primary" %>
+    </div>
+    <p><%= link_to "Sign in instead", new_session_path %></p>
+  <% end %>
+</div>
+ERB
+  log_ok "Registration written"
+}
+
 # ── Enhanced layout ─────────────────────────────────────────────────────────
 
 write_full_layout() {
@@ -490,7 +544,7 @@ write_full_layout() {
   <% end %>
 </nav>
 <%= render "shared/flash" %>
-<main class="main"><%= yield %></main>
+<main><%= yield %></main>
 </body>
 </html>
 LAYOUT
