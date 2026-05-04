@@ -46,7 +46,7 @@ module Master
       unveil("/usr/local/share", "r")
       [Dir.home + "/.local/share/gem", Dir.home + "/.gem"].each { |p| unveil(p, "r") if Dir.exist?(p) }
       unveil("/dev/urandom", "r")
-      unveil("/var/run", "r") if Dir.exist?("/var/run")
+      unveil("/var/run", "r")
     end
 
     # Stage 2: called after CLI is fully initialized -- lock filesystem
