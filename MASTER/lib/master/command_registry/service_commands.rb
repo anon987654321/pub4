@@ -78,32 +78,61 @@ module Master
     def utility_commands(agent, root, cache)
       {
         "snapshot" => ->(_ctx) {
-          out  = File.join(root, "snapshot.md")
-          dirs = %w[exe lib/master web/app web/config data].map { |d| File.join(root, d) }
-          files = dirs.flat_map { |d| Dir.glob(File.join(d, "**", "*")) }
-                      .select { |f| File.file?(f) && File.size(f) < CTX_WINDOW_SIZE }
-                      .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
-                      .reject { |f| begin; File.binread(f, BINARY_SNIFF_BYTES).include?("\x00"); rescue StandardError => _e; true; end }
-                      .sort
-          lines = ["# MASTER Codebase Snapshot", "Generated: #{Time.now.utc.iso8601}", ""]
+          out        = File.join(root, "snapshot_latest.md")
+          text_exts  = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini .env].to_set.freeze
+          text_names = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
+          skip_segs  = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
+          skip_path  = ->(rel) { rel.split("/").any? { |s| skip_segs.include?(s) } }
+          text_file  = ->(f)   { text_exts.include?(File.extname(f).downcase) || text_names.include?(File.basename(f)) }
+
+          all   = Dir.glob(File.join(root, "**", "*")).reject { |f| File.basename(f).start_with?(".") }
+                     .reject { |f| skip_path.(f.delete_prefix("#{root}/")) }.sort
+          dirs  = all.select { |f| File.directory?(f) }
+          files = all.select { |f| File.file?(f) && text_file.(f) && File.size(f) < CTX_WINDOW_SIZE }
+
+          stamp = Time.now.utc.iso8601
+          buf   = ["# MASTER Snapshot — #{stamp}", ""]
+
+          buf << "## Tree" << "```"
+          dirs.each  { |d| buf << "#{d.delete_prefix("#{root}/")}/" }
+          files.each { |f| buf << f.delete_prefix("#{root}/") }
+          buf << "```" << ""
+
+          max_file_lines = 400
+          n_trunc = 0
+          n_lines = 0
+
           files.each do |f|
-            rel = f.sub("#{root}/", "")
+            rel  = f.delete_prefix("#{root}/")
             lang = FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
-            src = File.read(f, encoding: "UTF-8", invalid: :replace)
-            lines << "## #{rel}" << "```#{lang}" << src.rstrip << "```" << ""
+            body = File.read(f, encoding: "UTF-8", invalid: :replace).lines
+            n_lines += body.size
+            buf << "## `#{rel}`" << "```#{lang}"
+            if body.size > max_file_lines
+              buf.concat(body.first(max_file_lines).map(&:rstrip))
+              buf << "... #{body.size - max_file_lines} lines truncated (#{body.size} total)"
+              n_trunc += 1
+            else
+              buf.concat(body.map(&:rstrip))
+            end
+            buf << "```" << ""
           rescue StandardError => e
-            lines << "## #{rel}" << "[skipped: #{e.message}]" << ""
+            buf << "## `#{rel}`" << "[skipped: #{e.message}]" << ""
           end
-          File.write(out, lines.join("\n"))
-          stamp = Time.now.strftime("%Y-%m-%d")
-          system("git", "-C", root, "add", "snapshot.md")
-          system("git", "-C", root, "commit", "-m", "snapshot: #{stamp} — #{files.size} files")
-          gist_url, status = Open3.capture2e("gh", "gist", "create", out,
-                                             "--public",
-                                             "--desc", "MASTER snapshot #{stamp}",
-                                             "--filename", "snapshot.md")
-          gist_line = status.success? ? " gist: #{gist_url.strip}" : ""
-          "snapshot: #{files.size} files → snapshot.md (committed)#{gist_line}"
+
+          buf << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc} / est. tokens: ~#{n_lines * 6 / 5}"
+          File.write(out, buf.join("\n"))
+
+          day = Time.now.strftime("%Y-%m-%d")
+          system("git", "-C", root, "add", "snapshot_latest.md")
+          system("git", "-C", root, "commit", "-m", "snapshot: #{day} — #{files.size} files")
+
+          gist_out, gist_st = Open3.capture2e("gh", "gist", "create", out,
+                                              "--public",
+                                              "--desc", "MASTER #{day}",
+                                              "--filename", "snapshot_latest.md")
+          gist_url = gist_st.success? ? " → #{gist_out.strip}" : ""
+          "snapshot: #{files.size} files #{n_lines} lines#{gist_url}"
         },
         "cache" => ->(ctx) {
           arg = ctx[:args].to_s.strip
