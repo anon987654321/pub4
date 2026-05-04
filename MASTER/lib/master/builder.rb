@@ -138,8 +138,8 @@ module Master
           ai[:council_stage],
           Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:, event_bus: bus),
           bus:
-        )),
-        Pipeline::SkipOnPressure.new(Stages::Prune.new),
+        ), bus:),
+        Pipeline::SkipOnPressure.new(Stages::Prune.new, bus:),
         Stages::Memo.new(memory: infra[:memory], event_bus: bus),
         Stages::Render.new(renderer: infra[:renderer])
       ]

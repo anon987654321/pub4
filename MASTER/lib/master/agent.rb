@@ -102,6 +102,10 @@ module Master
       @config["model"] = val
     end
 
+    def model_for(operation:)
+      @model_router&.constrained_for(operation:) || model
+    end
+
     def wire_context_window(ctx_window)
       @context_window = ctx_window
     end

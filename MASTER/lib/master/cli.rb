@@ -142,7 +142,9 @@ module Master
     end
 
     def start_background_loop
-      idle_interval = AutoLoop.load_cfg.fetch("idle_sleep", IDLE_SLEEP_DEFAULT)
+      cfg           = AutoLoop.load_cfg
+      return unless cfg.fetch("background", true)
+      idle_interval = cfg.fetch("idle_sleep", IDLE_SLEEP_DEFAULT)
       @bg_thread = Thread.new do
         boot_scan
         loop do
