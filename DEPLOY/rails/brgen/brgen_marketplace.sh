@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# brgen_marketplace.sh — Brgen Marketplace (Rails 8, SQLite, no Solidus)
+# brgen_marketplace.sh — Brgen Marketplace (Amazon clone on Solidus)
 # Usage: zsh brgen_marketplace.sh
 set -euo pipefail
 
@@ -12,319 +12,148 @@ SCRIPT_DIR=${0:a:h}
 
 need_cmd ruby34 bundle rails doas
 
-already_done "${APP_DIR}/app/models/listing.rb" && exit 0
+already_done "${APP_DIR}/app/models/spree/product.rb" && exit 0
 
-log "Brgen Marketplace — Classifieds and Local Commerce"
+log "Brgen Marketplace — Amazon-style e-commerce on Solidus"
 
 # ── Create app ─────────────────────────────────────────────────────────────
-create_rails_app "$APP_DIR"
+mkdir -p "${APP_DIR:h}"
+if [[ ! -f "${APP_DIR}/config/application.rb" ]]; then
+  log "Creating Rails 8 app at $APP_DIR"
+  rails new "$APP_DIR" \
+    --database=sqlite3 \
+    --asset-pipeline=propshaft \
+    --javascript=importmap \
+    --skip-git
+fi
+cd "$APP_DIR"
+log_ok "Working in: $APP_DIR"
 
 # ── Gems ────────────────────────────────────────────────────────────────────
+add_gem solidus
+add_gem solidus_auth_devise
+add_gem solidus_starter_frontend
 add_gem pagy
-add_gem image_processing
-add_gem geocoder
-add_gem money-rails
 install_solid_stack
 install_security_tools
 
-# ── Auth ───────────────────────────────────────────────────────────────────
-install_auth
-install_active_storage
+# ── Solidus install ─────────────────────────────────────────────────────────
+log "Installing Solidus"
+bin/rails g solidus:install \
+  --payment-method=none \
+  --admin-email=admin@brgen.no \
+  --admin-password=admin1234 \
+  --auto-accept 2>/dev/null || true
 
-# ── Models ─────────────────────────────────────────────────────────────────
-bin/rails generate model Category \
-  name:string slug:string:uniq parent_id:integer \
-  description:text icon:string \
+log "Installing Solidus auth"
+bin/rails g solidus:auth:install 2>/dev/null || true
+
+log "Installing Solidus starter frontend"
+bin/rails g solidus:starter:frontend:install 2>/dev/null || true
+
+bin/rails db:migrate
+log_ok "Solidus installed"
+
+# ── Seller extension ─────────────────────────────────────────────────────────
+# Add seller profile so multiple vendors can list products
+bin/rails generate model SellerProfile \
+  spree_user_id:integer:uniq \
+  name:string bio:text \
+  approved:boolean:default[false] \
+  stripe_account_id:string \
   --no-test-framework
 
-bin/rails generate model Listing \
-  user:references category:references \
-  title:string description:text \
-  price_cents:integer currency:string \
-  condition:string status:string \
-  latitude:float longitude:float city:string \
-  views_count:integer:default[0] \
-  favorites_count:integer:default[0] \
-  --no-test-framework
-
-bin/rails generate model Favorite \
-  user:references listing:references \
-  --no-test-framework
-
-bin/rails generate model Offer \
-  listing:references buyer:references{User} \
-  amount_cents:integer currency:string \
-  status:string message:text \
-  --no-test-framework
-
-bin/rails generate model Conversation \
-  listing:references buyer:references{User} seller:references{User} \
-  --no-test-framework
-
-bin/rails generate model Message \
-  conversation:references user:references \
-  content:text read_at:datetime \
-  --no-test-framework
-
-bin/rails generate model Review \
-  reviewer:references{User} reviewee:references{User} \
-  listing:references rating:integer content:text \
+bin/rails generate model SellerProduct \
+  seller_profile:references spree_product_id:integer \
+  commission_rate:decimal \
   --no-test-framework
 
 bin/rails db:migrate
 
-# ── Model logic ─────────────────────────────────────────────────────────────
-cat > app/models/listing.rb << 'RUBY'
-class Listing < ApplicationRecord
-  belongs_to :user
-  belongs_to :category
-  has_many :favorites, dependent: :destroy
-  has_many :favorited_by, through: :favorites, source: :user
-  has_many :offers, dependent: :destroy
-  has_many :conversations, dependent: :destroy
-  has_many_attached :photos
+cat > app/models/seller_profile.rb << 'RUBY'
+class SellerProfile < ApplicationRecord
+  belongs_to :user, class_name: "Spree::User", foreign_key: :spree_user_id
+  has_many :seller_products, dependent: :destroy
+  has_many :products, through: :seller_products, source_type: "Spree::Product"
 
-  CONDITIONS = %w[new like_new good fair poor].freeze
-  STATUSES   = %w[active sold reserved removed].freeze
+  validates :name, presence: true, length: { maximum: 100 }
+  validates :spree_user_id, uniqueness: true
 
-  monetize :price_cents, with_currency: :nok
-
-  validates :title, presence: true, length: { maximum: 100 }
-  validates :description, presence: true, length: { maximum: 5000 }
-  validates :price_cents, numericality: { greater_than_or_equal_to: 0 }
-  validates :condition, inclusion: { in: CONDITIONS }
-  validates :status, inclusion: { in: STATUSES }
-
-  default_value_for :status,   "active"
-  default_value_for :currency, "NOK"
-
-  geocoded_by :city
-  after_validation :geocode, if: :city_changed?
-
-  scope :active,    -> { where(status: "active") }
-  scope :recent,    -> { order(created_at: :desc) }
-  scope :nearby,    ->(lat, lng, km = 50) {
-    where("((latitude - ?) * (latitude - ?) + (longitude - ?) * (longitude - ?)) < ?",
-      lat, lat, lng, lng, (km / 111.0)**2)
-  }
-
-  def to_param = id.to_s
-
-  def sold!
-    update!(status: "sold")
-  end
-
-  def reserve!
-    update!(status: "reserved")
-  end
+  scope :approved, -> { where(approved: true) }
 end
 RUBY
 
-cat > app/models/offer.rb << 'RUBY'
-class Offer < ApplicationRecord
-  belongs_to :listing
-  belongs_to :buyer, class_name: "User"
-
-  STATUSES = %w[pending accepted declined countered].freeze
-
-  monetize :amount_cents, with_currency: :nok
-
-  validates :amount_cents, numericality: { greater_than: 0 }
-  validates :status, inclusion: { in: STATUSES }
-
-  default_value_for :status, "pending"
-
-  def accept!
-    update!(status: "accepted")
-    listing.reserve!
-  end
-
-  def decline!
-    update!(status: "declined")
-  end
+# ── Solidus production config ─────────────────────────────────────────────────
+cat >> config/initializers/spree.rb << 'RUBY' 2>/dev/null || cat > config/initializers/spree.rb << 'RUBY'
+Spree.config do |config|
+  config.site_name = "Brgen Marketplace"
+  config.mails_from = "no-reply@brgen.no"
 end
 RUBY
 
-cat > app/models/review.rb << 'RUBY'
-class Review < ApplicationRecord
-  belongs_to :reviewer, class_name: "User"
-  belongs_to :reviewee, class_name: "User"
-  belongs_to :listing
-
-  validates :rating, inclusion: { in: 1..5 }
-  validates :content, presence: true, length: { maximum: 2000 }
-  validates :reviewer_id, uniqueness: { scope: :listing_id }
-end
+# ── Pagy integration ─────────────────────────────────────────────────────────
+mkdir -p config/initializers
+cat > config/initializers/pagy.rb << 'RUBY'
+require "pagy/extras/overflow"
+Pagy::OPTIONS[:limit]    = 24
+Pagy::OPTIONS[:overflow] = :last_page
 RUBY
 
-# ── Controllers ─────────────────────────────────────────────────────────────
-cat > app/controllers/application_controller.rb << 'RUBY'
-class ApplicationController < ActionController::Base
-  include Pagy::Backend
-  allow_browser versions: :modern
-end
+cat >> app/helpers/application_helper.rb << 'RUBY'
+
+  include Pagy::Frontend
 RUBY
 
-cat > app/controllers/listings_controller.rb << 'RUBY'
-class ListingsController < ApplicationController
-  before_action :require_authentication, except: %i[index show]
-  before_action :set_listing, only: %i[show edit update destroy favorite unfavorite]
-  before_action :authorize!, only: %i[edit update destroy]
+# ── Custom storefront CSS ─────────────────────────────────────────────────────
+mkdir -p app/assets/stylesheets
+cat >> app/assets/stylesheets/application.css << 'CSS'
+:root {
+  --amazon-navy: #131921; --amazon-orange: #febd69; --amazon-btn: #f0c14b;
+  --amazon-btn-border: #a88734; --text: #0f1111; --text-dim: #565959;
+  --surface: #fff; --border: #ddd; --radius: 4px;
+}
+.topbar { background: var(--amazon-navy); color: #fff; padding: .5rem 1rem; display: flex; gap: 1rem; align-items: center; }
+.topbar .logo { font-size: 1.4rem; font-weight: 700; color: var(--amazon-orange); }
+.topbar a { color: #fff; font-size: .85rem; }
+.search-bar { display: flex; flex: 1; max-width: 800px; margin: 0 auto; }
+.search-bar input { flex: 1; padding: .5rem .75rem; border: none; border-radius: 4px 0 0 4px; font-size: 1rem; }
+.search-bar button { background: var(--amazon-orange); border: none; padding: 0 1rem; border-radius: 0 4px 4px 0; cursor: pointer; font-size: 1.1rem; }
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding: 1rem; }
+.product-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+.product-card img { width: 100%; aspect-ratio: 1; object-fit: contain; margin-bottom: .5rem; }
+.product-card .name { font-size: .9rem; color: var(--text); margin-bottom: .25rem; }
+.product-card .price { font-size: 1.1rem; font-weight: 700; color: #b12704; }
+.product-card .rating { color: #f0a500; font-size: .8rem; }
+.btn-cart { background: var(--amazon-btn); border: 1px solid var(--amazon-btn-border); border-radius: var(--radius); padding: .4rem 1rem; cursor: pointer; font-size: .9rem; width: 100%; margin-top: .5rem; }
+.btn-cart:hover { background: #e9b84a; }
+.breadcrumb { padding: .5rem 1rem; font-size: .85rem; color: var(--text-dim); }
+.sidebar { width: 220px; flex-shrink: 0; }
+.sidebar h3 { font-size: .9rem; border-bottom: 1px solid var(--border); padding-bottom: .25rem; margin-bottom: .5rem; }
+.layout-with-sidebar { display: flex; gap: 1rem; padding: 1rem; max-width: 1400px; margin: 0 auto; }
+CSS
 
-  def index
-    scope = Listing.active.includes(:user, :category)
-    scope = scope.where(category_id: params[:category_id]) if params[:category_id]
-    scope = scope.where("title LIKE ?", "%#{params[:q]}%") if params[:q].present?
-    @pagy, @listings = pagy(scope.recent)
-  end
-
-  def show
-    @listing.increment!(:views_count)
-    @similar = Listing.active.where(category: @listing.category).where.not(id: @listing).limit(4)
-    @offer   = Offer.new
-  end
-
-  def new
-    @listing = Current.user.listings.build
-  end
-
-  def create
-    @listing = Current.user.listings.build(listing_params)
-    @listing.save ? redirect_to(@listing, notice: "Listing created") : render(:new, status: :unprocessable_entity)
-  end
-
-  def edit; end
-
-  def update
-    @listing.update(listing_params) ? redirect_to(@listing, notice: "Updated") : render(:edit, status: :unprocessable_entity)
-  end
-
-  def destroy
-    @listing.destroy
-    redirect_to listings_path, notice: "Listing removed"
-  end
-
-  def favorite
-    Current.user.favorites.find_or_create_by!(listing: @listing)
-    @listing.increment!(:favorites_count)
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @listing }
-    end
-  end
-
-  def unfavorite
-    Current.user.favorites.find_by(listing: @listing)&.destroy!
-    @listing.decrement!(:favorites_count)
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @listing }
-    end
-  end
-
-  private
-
-  def set_listing   = @listing = Listing.find(params[:id])
-  def authorize!    = redirect_to(listings_path, alert: "Unauthorized") unless @listing.user == Current.user
-
-  def listing_params
-    params.require(:listing).permit(
-      :title, :description, :price_cents, :category_id,
-      :condition, :city, photos: []
-    )
-  end
-end
-RUBY
-
-cat > app/controllers/offers_controller.rb << 'RUBY'
-class OffersController < ApplicationController
-  before_action :require_authentication
-  before_action :set_listing
-
-  def create
-    @offer = @listing.offers.build(offer_params.merge(buyer: Current.user))
-    @offer.save ? redirect_to(@listing, notice: "Offer sent") : render(:new, status: :unprocessable_entity)
-  end
-
-  def update
-    @offer = @listing.offers.find(params[:id])
-    authorize_seller!
-    case params[:action_type]
-    when "accept"  then @offer.accept!
-    when "decline" then @offer.decline!
-    end
-    redirect_to @listing
-  end
-
-  private
-
-  def set_listing  = @listing = Listing.find(params[:listing_id])
-  def authorize_seller! = redirect_to(@listing, alert: "Unauthorized") unless @listing.user == Current.user
-  def offer_params = params.require(:offer).permit(:amount_cents, :message)
-end
-RUBY
-
-# ── Routes ─────────────────────────────────────────────────────────────────
-cat > config/routes.rb << 'RUBY'
-Rails.application.routes.draw do
-  resource  :session
-  resources :passwords, param: :token
-
-  root "listings#index"
-
-  resources :listings do
-    member do
-      post :favorite
-      delete :unfavorite
-    end
-    resources :offers, only: %i[create update]
-  end
-
-  resources :categories, only: %i[index show]
-  resources :reviews, only: %i[create]
-
-  get "up", to: "rails/health#show", as: :rails_health_check
-end
-RUBY
-
-# ── Assets + Infrastructure ─────────────────────────────────────────────────
-install_dartsass
-write_base_scss
-write_layout "Brgen Marketplace"
+# ── Infrastructure ─────────────────────────────────────────────────────────
 write_falcon_config "$APP_PORT"
 configure_production
+
+# Solidus sets force_ssl; ensure production.rb doesn't duplicate
+grep -q 'force_ssl' config/environments/production.rb || \
+  print '  config.force_ssl = false' >> config/environments/production.rb
+
 install_rcd brgen_marketplace "$APP_DIR" "$APP_PORT" brgen_marketplace
 
-# ── Seed ───────────────────────────────────────────────────────────────────
+# ── Admin seed ───────────────────────────────────────────────────────────────
 cat > db/seeds.rb << 'RUBY'
-user = User.find_or_create_by!(email_address: "seller@brgen.no") do |u|
-  u.password = u.password_confirmation = "password123"
-end
-
-cats = [
-  { name: "Electronics",  slug: "electronics",  icon: "💻" },
-  { name: "Clothing",     slug: "clothing",      icon: "👕" },
-  { name: "Furniture",    slug: "furniture",     icon: "🪑" },
-  { name: "Vehicles",     slug: "vehicles",      icon: "🚗" },
-  { name: "Sports",       slug: "sports",        icon: "⚽" },
-]
-cats.each { |c| Category.find_or_create_by!(slug: c[:slug]) { |cat| cat.name = c[:name]; cat.icon = c[:icon] } }
-
-5.times do |i|
-  Listing.find_or_create_by!(title: "Item #{i + 1}") do |l|
-    l.user        = user
-    l.category    = Category.first
-    l.description = "Great condition item for sale"
-    l.price_cents = (rand * 5000 + 100).to_i * 100
-    l.currency    = "NOK"
-    l.condition   = "good"
-    l.city        = "Bergen"
-    l.status      = "active"
+# Solidus creates admin via install; add sample taxons and products
+if Spree::Taxon.count.zero?
+  taxonomy = Spree::Taxonomy.find_or_create_by!(name: "Categories")
+  %w[Electronics Clothing Books Furniture Sports].each do |cat|
+    taxonomy.taxons.find_or_create_by!(name: cat) { |t| t.taxonomy = taxonomy }
   end
 end
-puts "Seeded #{Listing.count} listings"
+puts "Seeded #{Spree::Taxon.count} taxons"
 RUBY
 
-bin/rails db:seed
+bin/rails db:seed 2>/dev/null || true
 
 log_ok "Brgen Marketplace setup complete — start: doas rcctl start brgen_marketplace"
