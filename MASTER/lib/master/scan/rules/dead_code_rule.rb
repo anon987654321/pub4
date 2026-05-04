@@ -43,8 +43,7 @@ module Master
             next unless m
 
             const = m[1]
-            rest  = (lines[0...i] + lines[(i + 1)..]).join
-            next if rest.match?(/\b#{Regexp.escape(const)}\b/)
+            next if code.scan(/\b#{Regexp.escape(const)}\b/).size > 1
 
             findings << finding(line: i + 1, message: "#{const} is defined but never referenced — remove it")
           end

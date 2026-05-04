@@ -62,7 +62,9 @@ module Master
       applied = []
       targets.each do |entry|
         FileUtils.mkdir_p(File.dirname(entry.path))
-        File.write(entry.path, entry.new_content)
+        tmp = "#{entry.path}.tmp.#{Process.pid}"
+        File.write(tmp, entry.new_content)
+        File.rename(tmp, entry.path)
         @mutex.synchronize { @pending.delete(entry) }
         remove_persisted(entry)
         @bus&.publish("stage:applied", id: entry.id, path: entry.path)

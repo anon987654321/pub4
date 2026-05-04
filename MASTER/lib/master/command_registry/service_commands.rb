@@ -204,14 +204,15 @@ module Master
           if arg.start_with?("add ")
             url = arg.sub("add ", "").strip
             require "open-uri"
-            require "shellwords"
             next "usage: /knowledge add <url>" if url.empty?
+            parsed = URI(url) rescue nil
+            next "knowledge: only http/https URLs allowed" unless parsed && %w[http https].include?(parsed.scheme)
             slug = url.gsub(/[^a-z0-9._-]/i, "_").downcase[0, 60]
             kdir = File.join(root, "knowledge", "web")
             FileUtils.mkdir_p(kdir)
             dest = File.join(kdir, "#{slug}.txt")
-            content = URI.open(url, read_timeout: 15, &:read)
-                         .encode("UTF-8", invalid: :replace, undef: :replace)
+            content = parsed.open(read_timeout: 15, &:read)
+                            .encode("UTF-8", invalid: :replace, undef: :replace)
             File.write(dest, content, encoding: "UTF-8")
             "saved #{content.bytesize} bytes to knowledge/web/#{slug}.txt"
           else

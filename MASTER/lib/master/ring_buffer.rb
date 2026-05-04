@@ -34,13 +34,13 @@ module Master
       synchronize { @size.times { |i| yield @buffer[(@start + i) % @capacity] } }
     end
 
-    def to_a    = @size.times.map { |i| @buffer[(@start + i) % @capacity] }
+    def to_a    = synchronize { @size.times.map { |i| @buffer[(@start + i) % @capacity] } }
     def size    = @size
     def full?   = @size == @capacity
     def empty?  = @size.zero?
 
     def clear
-      @start = @size = 0
+      synchronize { @start = @size = 0 }
       self
     end
   end

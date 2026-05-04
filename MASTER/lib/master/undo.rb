@@ -60,8 +60,13 @@ module Master
       if content.nil?
         File.delete(path) if File.exist?(path)
       else
-        File.write(path, content)
+        tmp = "#{path}.tmp.#{Process.pid}"
+        File.write(tmp, content)
+        File.rename(tmp, path)
       end
+    rescue StandardError => e
+      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      raise e
     end
 
     def load_journal
@@ -78,9 +83,12 @@ module Master
 
     def persist_journal
       FileUtils.mkdir_p(File.dirname(@journal))
-      File.open(@journal, "w") do |f|
-        @stack.each { |entry| f.puts(JSON.generate(entry)) }
-      end
+      tmp = "#{@journal}.tmp.#{Process.pid}"
+      File.open(tmp, "w") { |f| @stack.each { |entry| f.puts(JSON.generate(entry)) } }
+      File.rename(tmp, @journal)
+    rescue StandardError => e
+      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      raise e
     end
   end
 end

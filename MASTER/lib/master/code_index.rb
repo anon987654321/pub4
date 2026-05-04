@@ -25,37 +25,39 @@ module Master
     end
 
     def build(path: nil)
-      target = path ? File.expand_path(path, @root) : @root
-      files  = Dir.glob(File.join(target, "**", "*.rb"))
-                  .reject { |f| f.include?("/vendor/") }
+      @lock.synchronize do
+        target = path ? File.expand_path(path, @root) : @root
+        files  = Dir.glob(File.join(target, "**", "*.rb"))
+                    .reject { |f| f.include?("/vendor/") }
 
-      if @built_at.nil?
-        @symbols.clear
-        @references.clear
-        @mtimes.clear
-        files.each do |f|
-          index_file(f)
-          @mtimes[f] = File.mtime(f) rescue Errno::ENOENT
+        if @built_at.nil?
+          @symbols.clear
+          @references.clear
+          @mtimes.clear
+          files.each do |f|
+            index_file(f)
+            @mtimes[f] = File.mtime(f) rescue Errno::ENOENT
+          end
+        else
+          changed = 0
+          (@mtimes.keys - files).each do |gone|
+            @symbols.delete_if { |_, s| s.file == gone }
+            @references.reject! { |r| r.from_file == gone }
+            @mtimes.delete(gone)
+          end
+          files.each do |f|
+            mt = File.mtime(f) rescue Errno::ENOENT
+            next if @mtimes[f] == mt
+            reindex(f)
+            @mtimes[f] = mt
+            changed += 1
+          end
+          @bus&.publish("code_index:incremental", changed: changed, total: files.size) if changed > 0
         end
-      else
-        changed = 0
-        (@mtimes.keys - files).each do |gone|
-          @symbols.delete_if { |_, s| s.file == gone }
-          @references.reject! { |r| r.from_file == gone }
-          @mtimes.delete(gone)
-        end
-        files.each do |f|
-          mt = File.mtime(f) rescue Errno::ENOENT
-          next if @mtimes[f] == mt
-          reindex(f)
-          @mtimes[f] = mt
-          changed += 1
-        end
-        @bus&.publish("code_index:incremental", changed: changed, total: files.size) if changed > 0
+
+        @built_at = Time.now
+        @bus&.publish("code_index:built", files: files.size, symbols: @symbols.size)
       end
-
-      @built_at = Time.now
-      @bus&.publish("code_index:built", files: files.size, symbols: @symbols.size)
       self
     rescue StandardError => e
       @bus&.publish("code_index:error", error: e.message)
@@ -71,10 +73,12 @@ module Master
     def wait_for_build = @build_thread&.join
 
     def reindex(file)
-      full = File.expand_path(file, @root)
-      @symbols.delete_if { |_, s| s.file == full }
-      @references.reject! { |r| r.from_file == full }
-      index_file(full) if File.file?(full)
+      @lock.synchronize do
+        full = File.expand_path(file, @root)
+        @symbols.delete_if { |_, s| s.file == full }
+        @references.reject! { |r| r.from_file == full }
+        index_file(full) if File.file?(full)
+      end
     rescue StandardError => e
       @bus&.publish("code_index:reindex_error", path: file, error: e.message)
     end
@@ -82,68 +86,75 @@ module Master
     def symbols_in(file)
       wait_for_build unless ready?
       full = File.expand_path(file, @root)
-      @symbols.values.select { |s| s.file == full }
+      @lock.synchronize { @symbols.values.select { |s| s.file == full } }
     end
 
     def find(name)
       wait_for_build unless ready?
-      exact = @symbols[name]
-      return [exact] if exact
-
-      suffix = name.to_s
-      @symbols.values.select { |s| s.fqn.end_with?(suffix) || s.fqn.include?(suffix) }
+      @lock.synchronize do
+        exact = @symbols[name]
+        return [exact] if exact
+        suffix = name.to_s
+        @symbols.values.select { |s| s.fqn.end_with?(suffix) || s.fqn.include?(suffix) }
+      end
     end
 
     def references_to(fqn)
       wait_for_build unless ready?
-      @references.select { |r| r.to_fqn == fqn || r.to_fqn.end_with?("##{fqn}") }
+      @lock.synchronize { @references.select { |r| r.to_fqn == fqn || r.to_fqn.end_with?("##{fqn}") } }
     end
 
     def impact(fqn)
       wait_for_build unless ready?
-      refs = references_to(fqn)
-      files = refs.map(&:from_file).uniq.map { |f| f.sub("#{@root}/", "") }
-      callers = refs.map { |r| "#{r.from_file.sub("#{@root}/", "")}:#{r.from_line}" }.uniq
-      { fqn:, reference_count: refs.size, files:, callers: }
+      @lock.synchronize do
+        refs = @references.select { |r| r.to_fqn == fqn || r.to_fqn.end_with?("##{fqn}") }
+        files = refs.map(&:from_file).uniq.map { |f| f.sub("#{@root}/", "") }
+        callers = refs.map { |r| "#{r.from_file.sub("#{@root}/", "")}:#{r.from_line}" }.uniq
+        { fqn:, reference_count: refs.size, files:, callers: }
+      end
     end
 
     def summary(limit: nil)
       wait_for_build unless ready?
-      classes = @symbols.values
-                         .select { |s| %i[class module].include?(s.type) }
-                         .reject { |s| s.file.include?("/DEPLOY/") || s.file.match?(/fix_|patch_/) }
-                         .reject { |s| %w[Entry Message Symbol CircuitError].any? { |n| s.fqn.end_with?("::#{n}") } }
-                         .sort_by(&:fqn)
-                         .map do |s|
-        parent = s.parent && s.parent != "Object" ? " < #{s.parent}" : ""
-        "  #{s.fqn}#{parent} (#{s.file.sub("#{@root}/", "")}:#{s.line})"
-      end
+      @lock.synchronize do
+        classes = @symbols.values
+                          .select { |s| %i[class module].include?(s.type) }
+                          .reject { |s| s.file.include?("/DEPLOY/") || s.file.match?(/fix_|patch_/) }
+                          .reject { |s| %w[Entry Message Symbol CircuitError].any? { |n| s.fqn.end_with?("::#{n}") } }
+                          .sort_by(&:fqn)
+                          .map do |s|
+          parent = s.parent && s.parent != "Object" ? " < #{s.parent}" : ""
+          "  #{s.fqn}#{parent} (#{s.file.sub("#{@root}/", "")}:#{s.line})"
+        end
 
-      lib_count = @symbols.values.count { |s| s.file.include?("/lib/") }
-      header = "# Codebase: #{lib_count} lib symbols (indexed #{built_at&.strftime("%H:%M") || "never"})"
-      title = "## Classes & Modules (#{classes.size})"
-      [header, title, *classes].join("\n")
+        lib_count = @symbols.values.count { |s| s.file.include?("/lib/") }
+        header = "# Codebase: #{lib_count} lib symbols (indexed #{@built_at&.strftime("%H:%M") || "never"})"
+        title = "## Classes & Modules (#{classes.size})"
+        [header, title, *classes].join("\n")
+      end
     end
 
     def query(name)
       wait_for_build unless ready?
-      hits = find(name)
-      return { error: "not found: #{name}" } if hits.empty?
+      @lock.synchronize do
+        hits = find(name)
+        return { error: "not found: #{name}" } if hits.empty?
 
-      hits.map do |s|
-        refs = references_to(s.fqn)
-        {
-          fqn: s.fqn,
-          type: s.type,
-          file: s.file.sub("#{@root}/", ""),
-          line: s.line,
-          parent: s.parent,
-          used_in: refs.first(10).map { |r| "#{r.from_file.sub("#{@root}/", "")}:#{r.from_line}" }
-        }
+        hits.map do |s|
+          refs = @references.select { |r| r.to_fqn == s.fqn || r.to_fqn.end_with?("##{s.fqn}") }
+          {
+            fqn: s.fqn,
+            type: s.type,
+            file: s.file.sub("#{@root}/", ""),
+            line: s.line,
+            parent: s.parent,
+            used_in: refs.first(10).map { |r| "#{r.from_file.sub("#{@root}/", "")}:#{r.from_line}" }
+          }
+        end
       end
     end
 
-    def size = @symbols.size
+    def size  = @lock.synchronize { @symbols.size }
     def built? = !@built_at.nil?
 
     private

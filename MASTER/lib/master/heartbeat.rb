@@ -99,14 +99,11 @@ module Master
     end
 
     def check_model_availability
-      models_path = File.join(@root, "data", "models.yml")
-      return "no models.yml" unless File.exist?(models_path)
-
-      data = Master.load_yaml(models_path)
-      tiers = data["models"] || {}
-      ids = tiers.values.flat_map { |m| [m["id"]] }.compact
-      alive = ids.select { |id| model_reachable?(id) }
-      "models: #{alive.size}/#{ids.size} reachable"
+      return "no agent" unless @agent
+      id = @agent.model.to_s
+      return "no active model" if id.empty?
+      alive = model_reachable?(id)
+      "model: #{id.split("/").last} #{alive ? "reachable" : "unreachable"}"
     end
 
     def model_reachable?(model_id)
@@ -178,7 +175,12 @@ module Master
     def persist_state
       path = File.join(@root, STATE_PATH)
       FileUtils.mkdir_p(File.dirname(path))
-      File.write(path, @state.to_yaml)
+      tmp = "#{path}.tmp.#{Process.pid}"
+      File.write(tmp, @state.to_yaml)
+      File.rename(tmp, path)
+    rescue StandardError => e
+      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      raise e
     end
   end
 end

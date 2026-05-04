@@ -158,10 +158,6 @@ module Master
       ls.join("\n")
     end
 
-    def load_zsh_patterns
-      load_yaml_data("zsh_patterns.yml")
-    end
-
     def load_yaml_data(filename)
       path = File.join(Master::ROOT, "data", filename)
       Master.load_yaml(path) if File.exist?(path)

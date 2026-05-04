@@ -62,9 +62,11 @@ module Master
 
     def load_entries
       return [] unless File.exist?(@path)
-      File.readlines(@path, chomp: true)
-          .map { |l| begin; JSON.parse(l); rescue StandardError => _e; nil; end }
-          .compact
+      File.readlines(@path, chomp: true).filter_map do |l|
+        JSON.parse(l)
+      rescue JSON::ParserError
+        nil
+      end
     rescue StandardError => _e
       []
     end
