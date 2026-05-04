@@ -14,30 +14,30 @@ module Master
         ideas     = []
         critiques = []
 
-        cycles.times do |i|
-          r = brainstorm(prompt, ideas, constraints)
-          return r if r.err?
-          ideas += r.value
-          @bus&.publish("ideation:cycle", cycle: i + 1, ideas: ideas.size)
+        cycles.times do |cycle|
+          result = brainstorm(prompt, ideas, constraints)
+          return result if result.err?
+          ideas += result.value
+          @bus&.publish("ideation:cycle", cycle: cycle + 1, ideas: ideas.size)
 
-          r = critique(ideas)
-          return r if r.err?
-          critiques << r.value
+          result = critique(ideas)
+          return result if result.err?
+          critiques << result.value
         end
 
-        r = synthesize(prompt, ideas, critiques, constraints)
-        return r if r.err?
+        result = synthesize(prompt:, ideas:, critiques:, constraints:)
+        return result if result.err?
 
-        Master::Result.ok(ideas: ideas, critiques: critiques, final: r.value)
+        Master::Result.ok(ideas: ideas, critiques: critiques, final: result.value)
       end
 
       private
 
       def brainstorm(prompt, prior, constraints)
-        context = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
-        c       = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
+        context           = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
+        constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
         raw     = @agent.ask_once(<<~PROMPT, system: "Generate 3-5 novel, bold ideas. One idea per bullet (- prefix).")
-          #{c}#{context}Generate ideas for: #{prompt}
+          #{constraint_prefix}#{context}Generate ideas for: #{prompt}
         PROMPT
         return Master::Result.err("ideation: brainstorm failed") if raw.to_s.strip.empty?
 
@@ -47,7 +47,7 @@ module Master
       end
 
       def critique(ideas)
-        list = ideas.map { |i| "- #{i}" }.join("\n")
+        list = ideas.map { |idea| "- #{idea}" }.join("\n")
         raw  = @agent.ask_once(<<~PROMPT, system: "Critique these ideas. Identify weaknesses, blind spots, risks. Be direct.")
           #{list}
         PROMPT
@@ -56,13 +56,13 @@ module Master
         Master::Result.ok(raw.strip)
       end
 
-      def synthesize(prompt, ideas, critiques, constraints)
-        c     = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
-        list  = ideas.map { |i| "- #{i}" }.join("\n")
+      def synthesize(prompt:, ideas:, critiques:, constraints:)
+        constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
+        list              = ideas.map { |idea| "- #{idea}" }.join("\n")
         crits = critiques.join("\n---\n")
         raw   = @agent.ask_once(<<~PROMPT, system: "Synthesize the best elements into a concrete, practical recommendation. Preserve innovation. Address valid critiques.")
           Goal: #{prompt}
-          #{c}
+          #{constraint_prefix}
           Ideas:
           #{list}
 

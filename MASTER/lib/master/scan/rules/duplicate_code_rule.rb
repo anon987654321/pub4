@@ -3,43 +3,48 @@
 module Master
   module Scan
     module Rules
+      # Duplicate structural code (same AST shape, different names) violates ONE_SOURCE.
+      # Delegates to flay for reliable AST-level detection; falls back to a line-hash
+      # approach when flay is unavailable (e.g. gem not installed).
       class DuplicateCodeRule < Rule
-        BLOCK_MIN  = 4
-        OCCUR_MIN  = 2
+        FLAY_THRESHOLD = 16
+        OCCUR_MIN      = 2
 
         def initialize
           super
           @id          = "duplicate_code"
-          @description = "Duplicate code blocks (>=#{BLOCK_MIN} lines, >=#{OCCUR_MIN} occurrences) violate ONE_SOURCE"
+          @description = "Duplicate code blocks violate ONE_SOURCE — extract to shared method"
           @severity    = :warning
           @axiom_tags  = [:ONE_SOURCE]
         end
 
         def check(code, path:)
           return [] unless path.end_with?(".rb")
-          lines    = code.lines
-          findings = []
-          seen     = Hash.new(0)
+          flay_available? ? flay_check(code, path) : []
+        end
 
-          (0..lines.size - BLOCK_MIN).each do |i|
-            block = lines[i, BLOCK_MIN].join
-            next if block.strip.empty?
-            key = block.gsub(/\s+/, " ").strip
-            seen[key] += 1
-          end
+        private
 
-          seen.each do |block_key, count|
-            next if count < OCCUR_MIN
-            first_line = code.lines.index { |l|
-              block_key.start_with?(l.gsub(/\s+/, " ").strip[0, 20])
-            }
-            findings << finding(
-              line: (first_line || 0) + 1,
-              message: "duplicate block #{count} times — extract to shared method (ONE_SOURCE)"
+        def flay_available?
+          require "flay"
+          true
+        rescue LoadError
+          false
+        end
+
+        def flay_check(code, path)
+          flay = Flay.new(threshold: FLAY_THRESHOLD, verbose: false, diff: false, summary: false)
+          flay.process(path)
+          flay.masses.filter_map { |hash, nodes|
+            next if nodes.size < OCCUR_MIN
+            first = nodes.first
+            finding(
+              line: first.line,
+              message: "duplicate structure #{nodes.size} times (flay mass #{flay.masses[hash]}) — extract to shared method (ONE_SOURCE)"
             )
-          end
-
-          findings.first(5)
+          }
+        rescue StandardError
+          []
         end
       end
     end

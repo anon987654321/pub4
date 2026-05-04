@@ -105,9 +105,9 @@ module Master
       return unless File.exist?(path)
       original = File.read(path, encoding: "UTF-8")
       return if fixed_src.strip == original.strip
-      tmp = "#{path}.tmp.#{Process.pid}"
-      File.write(tmp, fixed_src)
-      File.rename(tmp, path)
+      temporary_path = "#{path}.tmp.#{Process.pid}"
+      File.write(temporary_path, fixed_src)
+      File.rename(temporary_path, path)
       @bus&.publish("autoloop:fix_applied", file: rel_path)
     rescue StandardError => e
       @bus&.publish("autoloop:write_error", file: rel_path, error: e.message)

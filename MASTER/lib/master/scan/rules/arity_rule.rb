@@ -20,18 +20,18 @@ module Master
         def check(code, path:)
           return [] unless path.end_with?(".rb")
           findings = []
-          lines = code.lines
-          i = 0
-          while i < lines.size
-            line = lines[i]
+          lines    = code.lines
+          index    = 0
+          while index < lines.size
+            line = lines[index]
             if line.match?(/^\s*def\s+initialize\s*\(/)
-              sig, end_idx = collect_signature(lines, i)
-              count = count_params(sig)
-              findings << finding(line: i + 1,
-                message: "initialize takes #{count} args (max #{@max_params}) — extract AgentContext or Config struct") if count > @max_params
-              i = end_idx + 1
+              signature, end_index = collect_signature(lines, index)
+              param_count = count_params(signature)
+              findings << finding(line: index + 1,
+                message: "initialize takes #{param_count} args (max #{@max_params}) — extract AgentContext or Config struct") if param_count > @max_params
+              index = end_index + 1
             else
-              i += 1
+              index += 1
             end
           end
           findings
@@ -40,27 +40,27 @@ module Master
         private
 
         def collect_signature(lines, start)
-          sig = +""
-          depth = 0
-          i = start
-          while i < lines.size
-            sig << lines[i]
-            depth += lines[i].count("(") - lines[i].count(")")
+          signature = +""
+          depth     = 0
+          current   = start
+          while current < lines.size
+            signature << lines[current]
+            depth += lines[current].count("(") - lines[current].count(")")
             break if depth <= 0
-            i += 1
+            current += 1
           end
-          [sig, i]
+          [signature, current]
         end
 
-        def count_params(sig)
-          inner = sig.match(/def\s+initialize\s*\((.+)\)/m)
+        def count_params(signature)
+          inner = signature.match(/def\s+initialize\s*\((.+)\)/m)
           return 0 unless inner
           content = inner[1].strip
           return 0 if content.empty?
           depth = 0
           count = 1
-          content.each_char do |c|
-            case c
+          content.each_char do |char|
+            case char
             when "(", "[", "{" then depth += 1
             when ")", "]", "}" then depth -= 1
             when "," then count += 1 if depth.zero?

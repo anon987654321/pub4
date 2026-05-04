@@ -28,8 +28,8 @@ module Master
       case arg
       when /\Aforget (.+)/  then memory.forget($1.strip); "forgot: #{$1.strip}"
       when /\Aremember (.+)/
-        key, val = $1.split("=", 2).map(&:strip)
-        val ? (memory.remember(key, val); "remembered: #{key}") : "usage: /memory remember key=value"
+        key, value = $1.split("=", 2).map(&:strip)
+        value ? (memory.remember(key, value); "remembered: #{key}") : "usage: /memory remember key=value"
       when /\Asearch (.+)/ then memory_search(memory, $1.strip)
       when ""
         (e = memory.all).empty? ? "(no memories)" : e.map { |k, v| "#{k}: #{v}" }.join("\n")

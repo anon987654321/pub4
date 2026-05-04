@@ -205,8 +205,8 @@ module Master
         "topic" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           if arg.empty?
-            t = session.respond_to?(:topic) ? session.topic : nil
-            t ? "topic: #{t}" : "no topic set  /topic <description>"
+            current_topic = session.respond_to?(:topic) ? session.topic : nil
+            current_topic ? "topic: #{current_topic}" : "no topic set  /topic <description>"
           else
             session.topic = arg if session.respond_to?(:topic=)
             "topic: #{arg}"
