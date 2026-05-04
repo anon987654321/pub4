@@ -101,7 +101,7 @@ class OutfitItem < ApplicationRecord
 
   validates :outfit, :item, presence: true
   validates :item_id, uniqueness: { scope: :outfit_id }
-  acts_as_list scope: :outfit if respond_to?(:acts_as_list)
+  default_scope { order(:position) }
 end
 RUBY
 
@@ -128,7 +128,7 @@ RUBY
 
 cat > app/controllers/items_controller.rb << 'RUBY'
 class ItemsController < ApplicationController
-  before_action :require_authentication, except: %i[index show]
+  before_action :require_authentication
   before_action :set_item, only: %i[show edit update destroy spark_joy declutter wear]
   before_action :authorize!, only: %i[edit update destroy spark_joy declutter wear]
 
@@ -189,7 +189,7 @@ RUBY
 
 cat > app/controllers/outfits_controller.rb << 'RUBY'
 class OutfitsController < ApplicationController
-  before_action :require_authentication, except: %i[index show]
+  before_action :require_authentication
   before_action :set_outfit, only: %i[show edit update destroy like]
   before_action :authorize!, only: %i[edit update destroy]
 
@@ -241,9 +241,15 @@ cat > app/services/wardrobe_ai_service.rb << 'RUBY'
 # frozen_string_literal: true
 
 class WardrobeAiService
+  OPENROUTER_BASE = "https://openrouter.ai/api/v1"
+  MODEL = "google/gemini-2.0-flash-001"
+
   def initialize(user)
     @user   = user
-    @client = OpenAI::Client.new(access_token: ENV.fetch("OPENAI_API_KEY"))
+    @client = OpenAI::Client.new(
+      access_token: ENV.fetch("OPENROUTER_API_KEY"),
+      uri_base:     OPENROUTER_BASE
+    )
   end
 
   def analyze_joy(item)
@@ -260,7 +266,7 @@ class WardrobeAiService
 
     response = @client.chat(
       parameters: {
-        model: "gpt-4o-mini",
+        model: MODEL,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" }
       }
@@ -278,12 +284,12 @@ class WardrobeAiService
       #{occasion ? "Occasion: #{occasion}" : ""}
       #{season ? "Season: #{season}" : ""}
       Items: #{items_summary}
-      Reply with JSON array: [{"name": "outfit name", "items": ["item1", ...], "description": "why it works"}]
+      Reply with JSON: {"outfits": [{"name": "outfit name", "items": ["item1", ...], "description": "why it works"}]}
     PROMPT
 
     response = @client.chat(
       parameters: {
-        model: "gpt-4o-mini",
+        model: MODEL,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" }
       }
@@ -574,9 +580,9 @@ cat > app/views/ai/suggest_outfits.html.erb << 'ERB'
 <h1>Outfit suggestions</h1>
 <% @suggestions.each_with_index do |s, i| %>
   <article class="ai-card">
-    <h2>Option <%= i + 1 %></h2>
-    <p><%= s["outfit"] %></p>
-    <p class="dim"><%= s["reason"] %></p>
+    <h2><%= s["name"] || "Option #{i + 1}" %></h2>
+    <p class="dim"><%= s["items"]&.join(", ") %></p>
+    <p><%= s["description"] %></p>
   </article>
 <% end %>
 <p><%= link_to "Back to wardrobe", items_path %></p>
