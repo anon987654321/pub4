@@ -1,14 +1,10 @@
 # frozen_string_literal: true
 
-
 module Master
   module Scan
     module Rules
-      # ConceptualRule — LLM-based rule violation detection.
-      #
-      # Checks rules that resist lexical detection via detect_conceptual prompts.
-      # Runs only at :deep depth. Makes one LLM call per file and parses
-      # structured findings. Skips if no agent is set.
+      # LLM review for rules whose violations resist lexical detection; deep depth only.
+      # Rules with detect_conceptual prompts in rules.yml are batched into one LLM call per file.
       class ConceptualRule < Rule
         RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
         CODE_SNIPPET_LIMIT = 2000
@@ -22,6 +18,8 @@ module Master
           @axioms      = load_conceptual_rules
           @axiom_tags  = @axioms.keys.map(&:to_sym)
         end
+
+        def self.auto_build? = false
 
         def set_agent(agent)
           @agent = agent

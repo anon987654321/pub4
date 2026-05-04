@@ -6,11 +6,9 @@ require "json"
 module Master
   module Scan
     module Rules
-      # RubocopRule — AST-based analysis via rubocop.
-      # Maps rubocop cop categories to MASTER axioms. Only a focused subset
-      # of cops is enabled (see .rubocop.yml) to avoid noise.
+      # Rubocop AST analysis filtered to cops that map directly to MASTER axioms.
+      # Degrades gracefully when rubocop is unavailable (CI, fresh installs).
       class RubocopRule < Rule
-        # Map rubocop cop → axiom tag + severity
         COP_MAP = {
           "Metrics/MethodLength"        => { axiom: "ONE_JOB",       sev: :warning },
           "Metrics/ClassLength"         => { axiom: "SIMPLEST_WORKS", sev: :warning },
@@ -36,6 +34,8 @@ module Master
           @root        = root
         end
 
+        def self.auto_build? = false
+
         def check(code, path:)
           return [] unless path.end_with?(".rb")
           return [] unless rubocop_available?
@@ -53,8 +53,7 @@ module Master
           return [] unless status.exitstatus&.<= 1  # 0=clean 1=offenses 2=error
 
           parse_offenses(out)
-        rescue StandardError => e
-          # degrade gracefully — external tool unavailable
+        rescue StandardError => _e
           []
         end
 
@@ -87,8 +86,7 @@ module Master
               )
             end
           end
-        rescue StandardError => e
-          # degrade gracefully — external tool unavailable
+        rescue StandardError => _e
           []
         end
       end

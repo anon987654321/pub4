@@ -4,12 +4,13 @@ module Master
   module Scan
     module Rules
       class LongMethodRule < Rule
-        THRESHOLD = 15
+        DEFAULT_THRESHOLD = 10
 
         def initialize
           super
+          @threshold   = Master::Axioms.new.thresholds.dig("method", "max_lines") || DEFAULT_THRESHOLD
           @id          = "long_method"
-          @description = "Methods over #{THRESHOLD} lines should be extracted"
+          @description = "Methods over #{@threshold} lines should be extracted"
           @severity    = :warning
           @axiom_tags  = [:ONE_JOB]
         end
@@ -31,10 +32,10 @@ module Master
               depth -= line.scan(/\bend\b/).size
               if depth <= 0
                 length = num - method_start + 1
-                if length > THRESHOLD
+                if length > @threshold
                   findings << finding(
                     line: method_start,
-                    message: "method #{method_name} is #{length} lines (threshold: #{THRESHOLD}) — extract responsibilities"
+                    message: "method #{method_name} is #{length} lines (threshold: #{@threshold}) — extract responsibilities"
                   )
                 end
                 method_start = nil

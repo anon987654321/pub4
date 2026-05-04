@@ -8,8 +8,8 @@ module Master
 
     def control_commands(standing, soul)
       {
-        "orders" => ->(ctx) { handle_orders(standing, ctx[:args].to_s.strip) },
-        "soul"   => ->(ctx) { handle_soul(soul, ctx[:args].to_s.strip) }
+        "orders" => ->(ctx) { dispatch_orders(standing, ctx[:args].to_s.strip) },
+        "soul"   => ->(ctx) { dispatch_soul(soul, ctx[:args].to_s.strip) }
       }
     end
 
@@ -17,17 +17,17 @@ module Master
       heartbeat = ai[:heartbeat]
       skills    = ai[:skills]
       {
-        "heartbeat" => ->(ctx) { handle_heartbeat(heartbeat, ctx[:args].to_s.strip) },
+        "heartbeat" => ->(ctx) { dispatch_heartbeat(heartbeat, ctx[:args].to_s.strip) },
         "skills"    => ->(ctx) {
           arg   = ctx[:args].to_s.strip
           found = skills&.find(arg)
           arg.empty? ? (skills&.list || "(no skills)") : (found ? "#{found[:name]}: #{found[:description]}" : "(not found: #{arg})")
         },
-        "phase" => ->(ctx) { handle_phase(phase_gates, ctx[:args].to_s.strip) }
+        "phase" => ->(ctx) { dispatch_phase(phase_gates, ctx[:args].to_s.strip) }
       }
     end
 
-    def handle_phase(gates, arg)
+    def dispatch_phase(gates, arg)
       return "no phase_gates configured" unless gates
       case arg
       when "", "status" then gates.status
@@ -38,7 +38,7 @@ module Master
       end
     end
 
-    def handle_orders(standing, arg)
+    def dispatch_orders(standing, arg)
       case arg
       when "list", "" then standing.list
       when /\Aenable (.+)\z/  then standing.enable($1.strip)
@@ -53,7 +53,7 @@ module Master
       end
     end
 
-    def handle_soul(soul, arg)
+    def dispatch_soul(soul, arg)
       case arg
       when "", "show"          then soul.summary
       when "version", "changelog" then soul.changelog
@@ -66,7 +66,7 @@ module Master
       end
     end
 
-    def handle_heartbeat(heartbeat, arg)
+    def dispatch_heartbeat(heartbeat, arg)
       case arg
       when "run"   then heartbeat ? heartbeat.run_due!.map { |r| "#{r[:name]}: #{r[:result]}" }.join("\n") : "no heartbeat"
       when "start" then heartbeat&.start!; "heartbeat started"

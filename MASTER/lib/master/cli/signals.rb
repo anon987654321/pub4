@@ -5,18 +5,18 @@ module Master
     private
 
     def setup_signals
-      trap("USR1") { handle_usr1 }
-      trap("INT")  { handle_int }
+      trap("USR1") { on_usr1 }
+      trap("INT")  { on_int }
     end
 
-    def handle_usr1
+    def on_usr1
       Zeitwerk::Loader.for_gem.reload
       puts "\n#{@renderer.render("reloaded", mode: :success)}"
     rescue StandardError => e
       puts "\n#{@renderer.render("reload failed: #{e.message}", mode: :error)}"
     end
 
-    def handle_int
+    def on_int
       if Time.now - @interrupt_at < 1
         @scan_thread&.kill
         @session.save!

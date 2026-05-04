@@ -3,21 +3,11 @@
 module Master
   module Builder
     module_function
-    STATIC_SCAN_RULES = [
-      Scan::Rules::FrozenStringRule, Scan::Rules::BareRescueRule,
-      Scan::Rules::ExplicitRule, Scan::Rules::ImmutableRule,
-      Scan::Rules::CqsRule, Scan::Rules::SelfExplainingRule,
-      Scan::Rules::LongMethodRule, Scan::Rules::GodClassRule,
-      Scan::Rules::DuplicateCodeRule, Scan::Rules::PruneRule,
-      Scan::Rules::SrpRule, Scan::Rules::PolaRule,
-      Scan::Rules::NielsenRule, Scan::Rules::AxiomCoverageRule,
-      Scan::Rules::ThreadSafetyRule,
-      Scan::Rules::LexicalRule, Scan::Rules::UniversalRule,
-    ].freeze
 
     def build_scanner(root:, agent:, bus:)
       scanner = Scan::Scanner.new(event_bus: bus)
-      STATIC_SCAN_RULES.each { |klass| scanner.add_rule(klass.new) }
+      Scan::Rule.registry.select(&:auto_build?).each { |klass| scanner.add_rule(klass.new) }
+      scanner.add_rule(Scan::Rules::AxiomCoverageRule.new(root:))
       scanner.add_rule(Scan::Rules::RubocopRule.new(root:))
       scanner.add_rule(Scan::Rules::ReekRule.new(root:))
       scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))

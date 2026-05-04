@@ -3,14 +3,9 @@
 module Master
   module Scan
     module Rules
-      # AdversarialRule — red-team scan via two competing LLM perspectives.
-      #
-      # First asks: "What are the three strongest arguments this code is correct?"
-      # Then asks: "What are the three strongest arguments it must change?"
-      # Only the second list becomes findings — false positives are suppressed
-      # because the model must first steelman the code before attacking it.
-      #
-      # Runs only at :deep depth. One LLM call per file.
+      # Steelman-first red-team: the model must defend the code before it can attack it.
+      # This suppresses false positives by forcing consideration of legitimate reasons
+      # before a violation can survive. Deep depth only; one LLM call per file.
       class AdversarialRule < Rule
         PROMPT_TEMPLATE = <<~PROMPT.freeze
           Red-team review of %<path>s.
@@ -38,6 +33,8 @@ module Master
           @severity    = :error
           @axiom_tags  = %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE]
         end
+
+        def self.auto_build? = false
 
         def set_agent(agent)
           @agent = agent
@@ -72,4 +69,3 @@ module Master
     end
   end
 end
-

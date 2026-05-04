@@ -4,12 +4,13 @@ module Master
   module Scan
     module Rules
       class GodClassRule < Rule
-        THRESHOLD = 200
+        DEFAULT_THRESHOLD = 200
 
         def initialize
           super
+          @threshold   = Master::Axioms.new.thresholds.dig("class", "max_lines") || DEFAULT_THRESHOLD
           @id          = "god_class"
-          @description = "Classes over #{THRESHOLD} lines should be split by responsibility"
+          @description = "Classes over #{@threshold} lines should be split by responsibility"
           @severity    = :warning
           @axiom_tags  = [:SIMPLEST_WORKS]
         end
@@ -17,12 +18,12 @@ module Master
         def check(code, path:)
           return [] unless path.end_with?(".rb")
           lines = code.lines.size
-          return [] if lines <= THRESHOLD
+          return [] if lines <= @threshold
 
           class_name = code.match(/class (\w+)/i)&.[](1) || File.basename(path, ".rb")
           [finding(
             line: 1,
-            message: "#{class_name} is #{lines} lines (threshold: #{THRESHOLD}) — split by responsibility"
+            message: "#{class_name} is #{lines} lines (threshold: #{@threshold}) — split by responsibility"
           )]
         end
       end

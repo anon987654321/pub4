@@ -58,7 +58,7 @@ module Master
       streamed = false
       thinking_shown = true
 
-      on_chunk = build_chunk_handler(accumulated) do |text|
+      on_chunk = chunk_accumulator(accumulated) do |text|
         if thinking_shown && $stdout.isatty
           print "\r\e[K"
           thinking_shown = false
@@ -70,7 +70,7 @@ module Master
 
       print_thinking_indicator
       result = @pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
-      handle_pipeline_result(result, accumulated, streamed)
+      display_result(result, accumulated, streamed)
     end
 
     private
@@ -157,7 +157,7 @@ module Master
       end
     end
 
-    def build_chunk_handler(buffer)
+    def chunk_accumulator(buffer)
       lambda do |chunk|
         text = chunk.respond_to?(:content) ? chunk.content.to_s : chunk.to_s
         next if text.empty?
@@ -176,18 +176,18 @@ module Master
       print "thinking..."
     end
 
-    def handle_pipeline_result(result, accumulated, streamed)
+    def display_result(result, accumulated, streamed)
       case result
       in Master::Result::Ok => ok
         @last_ok = true
-        handle_ok_result(ok, accumulated, streamed)
+        display_ok(ok, accumulated, streamed)
       in Master::Result::Err => err
         @last_ok = false
         puts @renderer.render(err.message, mode: :error)
       end
     end
 
-    def handle_ok_result(ok, accumulated, streamed)
+    def display_ok(ok, accumulated, streamed)
       if streamed
         puts
         speak_async(accumulated) if @tts_on

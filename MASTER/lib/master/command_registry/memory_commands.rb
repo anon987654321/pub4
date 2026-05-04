@@ -6,7 +6,7 @@ module Master
 
     def memory_commands(memory, agent)
       {
-        "memory" => ->(ctx) { handle_memory(memory, ctx[:args].to_s.strip) },
+        "memory" => ->(ctx) { dispatch_memory(memory, ctx[:args].to_s.strip) },
         "dreams" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           if arg == "consolidate"
@@ -24,7 +24,7 @@ module Master
       }
     end
 
-    def handle_memory(memory, arg)
+    def dispatch_memory(memory, arg)
       case arg
       when /\Aforget (.+)/  then memory.forget($1.strip); "forgot: #{$1.strip}"
       when /\Aremember (.+)/

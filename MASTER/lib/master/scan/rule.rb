@@ -28,6 +28,10 @@ module Master
         @registry_mutex.synchronize { @registry || [] }
       end
 
+      # Rules that need constructor args (root:, agent:) override this to false.
+      # Builder uses it to auto-discover zero-arg rules from the registry.
+      def self.auto_build? = true
+
       def initialize
         @id         = self.class.name&.split("::")&.last&.downcase || "unknown"
         @description = ""

@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
-
 module Master
   module Scan
     module Rules
-      # PruneRule — flags hedge words and preamble phrases in Ruby comments.
+      # Hedge words and preamble phrases in comments dilute signal.
+      # Applies to Ruby and shell files — both use # comments.
       # Patterns loaded from data/rules.yml (voice.strunk section).
       class PruneRule < Rule
-        DATA_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
+        DATA_PATH   = File.join(Master::ROOT, "data", "rules.yml").freeze
+        COMMENT_EXT = %w[.rb .sh .zsh .bash].freeze
 
         def initialize
           super
@@ -18,7 +19,7 @@ module Master
         end
 
         def check(code, path:)
-          return [] unless path.end_with?(".rb")
+          return [] unless COMMENT_EXT.include?(File.extname(path).downcase)
 
           hedge_re    = build_hedge_re
           preamble_re = build_preamble_re

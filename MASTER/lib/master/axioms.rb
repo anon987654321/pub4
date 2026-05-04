@@ -106,6 +106,15 @@ module Master
       kernel[id_str] || philosophy.find { |a| a["id"] == id_str }&.dig("name")
     end
 
+    def valid_id?(id)
+      id_str = id.to_s
+      all_ids.include?(id_str)
+    end
+
+    def all_ids
+      @all_ids ||= all_rules.map { |r| r["id"] }.compact.to_set.freeze
+    end
+
     def empty?
       @data.empty?
     end

@@ -6,8 +6,8 @@ require "json"
 module Master
   module Scan
     module Rules
-      # ReekRule — code smell detection via reek.
-      # Maps smell types to MASTER axioms.
+      # Reek smell detection mapped to MASTER axioms.
+      # Degrades gracefully when reek is unavailable (CI, fresh installs).
       class ReekRule < Rule
         SMELL_MAP = {
           "TooManyMethods"         => { axiom: "ONE_JOB",        sev: :warning },
@@ -39,6 +39,8 @@ module Master
           @root        = root
         end
 
+        def self.auto_build? = false
+
         def check(code, path:)
           return [] unless path.end_with?(".rb")
           return [] unless reek_available?
@@ -52,8 +54,7 @@ module Master
           )
 
           parse_smells(out)
-        rescue StandardError => e
-          # degrade gracefully — external tool unavailable
+        rescue StandardError => _e
           []
         end
 
@@ -79,8 +80,7 @@ module Master
               message: "[#{meta[:axiom]}] #{smell["smell_type"]}: #{smell["message"]}"
             )
           end
-        rescue StandardError => e
-          # degrade gracefully — external tool unavailable
+        rescue StandardError => _e
           []
         end
       end

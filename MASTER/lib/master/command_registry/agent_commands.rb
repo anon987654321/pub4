@@ -118,12 +118,12 @@ module Master
           else "council: #{council_stage.enabled? ? "on" : "off"}"
           end
         },
-        "swarm"   => ->(ctx) { handle_swarm(swarm, ctx[:args].to_s.strip) },
+        "swarm"   => ->(ctx) { dispatch_swarm(swarm, ctx[:args].to_s.strip) },
         "explain" => ->(_ctx) { explain_master(root) }
       }
     end
 
-    def handle_swarm(swarm, arg)
+    def dispatch_swarm(swarm, arg)
       parts = arg.split(" ", 2)
       role  = parts[0]&.to_sym
       task  = parts[1].to_s

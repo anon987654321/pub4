@@ -5,9 +5,8 @@ require "prism"
 module Master
   module Scan
     module Rules
-      # AxiomCoverageRule — meta-level rule. Checks that every rule ID in
-      # rules.yml has at least one scan rule referencing it via @axiom_tags,
-      # and that all @axiom_tags assignments correspond to real rule IDs.
+      # Every rule ID in rules.yml must have scan rule coverage; every @axiom_tags
+      # symbol must name a real rule ID. Orphaned tags and uncovered rules both signal drift.
       class AxiomCoverageRule < Rule
         def initialize(root: nil)
           super()
@@ -17,6 +16,8 @@ module Master
           @severity    = :warning
           @axiom_tags  = []
         end
+
+        def self.auto_build? = false
 
         def check(code, path:)
           return [] unless path.include?("scan/rules") || path.include?("scan/rule.rb")
@@ -46,8 +47,7 @@ module Master
           data = Master.load_yaml(path)
           all_rules = (data["rules"] || {}).values.flatten
           all_rules.map { |r| r["id"] }.compact.uniq
-        rescue StandardError => e
-          # degrade gracefully — external tool unavailable
+        rescue StandardError => _e
           []
         end
 
@@ -58,8 +58,7 @@ module Master
           Dir.glob(File.join(rules_dir, "*.rb")).flat_map { |f|
             extract_axiom_tags(File.read(f))
           }.uniq
-        rescue StandardError => e
-          # degrade gracefully — external tool unavailable
+        rescue StandardError => _e
           []
         end
 
@@ -70,8 +69,7 @@ module Master
           collector = TagCollector.new
           collector.visit(result.value)
           collector.tags
-        rescue StandardError => e
-          # degrade gracefully — external tool unavailable
+        rescue StandardError => _e
           []
         end
 
