@@ -33,8 +33,9 @@ module Master
     end
 
     # Stage 1: called before Builder.build -- widest promises, no lock
+    # "error" converts unknown-ioctl pledge kills to EPERM so tty gems degrade gracefully.
     def stage1_boot!(root)
-      pledge("stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec")
+      pledge("stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec error")
       unveil("/", "")
       unveil(root, "rwc")
       unveil(Dir.home, "rwc")
@@ -50,7 +51,7 @@ module Master
     # Stage 2: called after CLI is fully initialized -- lock filesystem
     def stage2_lock!
       lock_unveil!
-      pledge("stdio rpath wpath cpath proc exec inet dns tty prot_exec")
+      pledge("stdio rpath wpath cpath proc exec inet dns tty prot_exec error")
     end
 
     # Stage 3: scan-only sessions (no network, no exec)
