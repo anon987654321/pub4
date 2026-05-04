@@ -39,7 +39,9 @@ module Master
     def call(cost_estimate, &blk)
       check_budget(cost_estimate)
       check_circuit
-      execute_with_tracking(blk)
+      result = execute_with_tracking(blk)
+      record_cost(cost_estimate) if result.respond_to?(:ok?) && result.ok?
+      result
     rescue CircuitError => e
       # Budget/circuit-open errors are not backend failures — don't penalize.
       Result.err(e.message, category: e.category)

@@ -27,8 +27,8 @@ module Master
       @mutex.synchronize do
         prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
         @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
+        persist
       end
-      persist
     end
 
     def recall(key)
@@ -36,8 +36,7 @@ module Master
     end
 
     def forget(key)
-      @mutex.synchronize { @store.delete(key.to_s) }
-      persist
+      @mutex.synchronize { @store.delete(key.to_s); persist }
     end
 
     def all = @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v }
@@ -71,39 +70,39 @@ module Master
     def consolidate!(agent: nil)
       return "nothing to consolidate" if @store.empty?
 
-      now      = Time.now.to_i
-      entries  = @store.reject { |k, _| k.to_s.start_with?("archive/") }
+      now = Time.now.to_i
+      entries = nil
       archived = 0
 
-      scored = entries.map do |key, data|
-        ts    = data.is_a?(Hash) ? data["ts"].to_i : 0
-        value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
-        age_d = (now - ts) / 86_400.0
-        { key: key, value: value, score: 1.0 / (1.0 + age_d / TTL_DAYS.to_f) }
-      end
-
-      scored.each do |entry|
-        next if entry[:key] == "_consolidated_summary"
-        next unless entry[:score] < 0.33
-        @store["archive/#{entry[:key]}"] = @store.delete(entry[:key])
-        archived += 1
+      @mutex.synchronize do
+        entries = @store.reject { |k, _| k.to_s.start_with?("archive/") }
+        scored  = entries.map do |key, data|
+          ts    = data.is_a?(Hash) ? data["ts"].to_i : 0
+          age_d = (now - ts) / 86_400.0
+          { key: key, score: 1.0 / (1.0 + age_d / TTL_DAYS.to_f) }
+        end
+        scored.each do |entry|
+          next if entry[:key] == "_consolidated_summary"
+          next unless entry[:score] < 0.33
+          @store["archive/#{entry[:key]}"] = @store.delete(entry[:key])
+          archived += 1
+        end
+        persist
       end
 
       if agent
-        active_text = @store
-          .reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
-          .map    { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
-          .join("\n")
-
+        active_text = @mutex.synchronize do
+          @store
+            .reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
+            .map    { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
+            .join("\n")
+        end
         unless active_text.strip.empty?
-          summary = agent.ask_once(
-            "Summarize in 2 concise sentences, preserving all key facts:\n#{active_text}"
-          )
+          summary = agent.ask_once("Summarize in 2 concise sentences, preserving all key facts:\n#{active_text}")
           remember("_consolidated_summary", summary.strip)
         end
       end
 
-      persist
       "dreaming: #{entries.size} entries checked, #{archived} archived"
     rescue StandardError => e
       "consolidation error: #{e.message}"

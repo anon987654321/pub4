@@ -24,7 +24,7 @@ module Master
         return Result.err("not found: #{path}", category: :validation) unless File.exist?(full)
 
         content = File.read(full)
-        count   = content.scan(Regexp.quote(old_string)).size
+        count   = content.scan(old_string).size
 
         return Result.err("str_replace: pattern not found in #{path}", category: :validation) if count.zero?
         return Result.err("str_replace: pattern matches #{count} times in #{path} (must be unique)", category: :validation) if count > 1

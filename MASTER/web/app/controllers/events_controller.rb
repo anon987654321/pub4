@@ -34,8 +34,8 @@ class EventsController < ApplicationController
 
     bus      = container[:bus]
     received = Queue.new
-    sub      = bus.subscribe("*") { |type, payload|
-      received << { t: Time.now.to_f, type: type, data: payload }
+    sub      = bus.subscribe("*") { |ev|
+      received << { t: Time.now.to_f, type: ev[:event], data: ev }
     }
     deadline = Time.now + MAX_STREAM_S
 
@@ -53,7 +53,7 @@ class EventsController < ApplicationController
   rescue IOError, ActionController::Live::ClientDisconnected
     # Client went away — normal. Stop streaming.
   ensure
-    bus&.unsubscribe(sub) if sub && bus.respond_to?(:unsubscribe)
+    sub.call if sub
     response.stream.close rescue nil
   end
 end

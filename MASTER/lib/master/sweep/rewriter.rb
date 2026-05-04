@@ -32,9 +32,15 @@ module Master
         lines.join("\n")
       end
 
+      SACRED_DENY = %w[SOUL.md CLAUDE.md CONVENTIONS.md README.md data/].freeze
+
       def collect_files(dir, types)
         types.flat_map { |t| Dir.glob(File.join(dir, GLOBS[t].to_s)) }
              .reject { |f| f.include?("/data/") }
+             .reject { |f|
+               rel = f.delete_prefix("#{@root}/")
+               SACRED_DENY.any? { |s| rel == s || rel.start_with?(s) }
+             }
              .uniq.sort
       end
 
@@ -42,7 +48,7 @@ module Master
         src  = File.read(path, encoding: "UTF-8")
         lang = Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
         response = @agent.ask(build_prompt(src, rel, lang))
-        extract(response.to_s, lang)
+        extract(response.to_s, lang, original_size: src.bytesize)
       rescue StandardError => e
         @bus&.publish("sweep:rewrite_error", file: path, error: e.message)
         nil
@@ -69,10 +75,11 @@ module Master
         PROMPT
       end
 
-      def extract(text, lang)
+      def extract(text, lang, original_size: 0)
         return nil if text.strip == "UNCHANGED"
-        return nil if text.bytesize < MIN_REWRITE_BYTES && ERROR_PATTERNS.match?(text)
-        fence_re = /```(?:#{Regexp.escape(lang)}|ruby|sh|bash|yaml|erb)?\n(.*?)```/m
+        return nil if ERROR_PATTERNS.match?(text)
+        return nil if original_size > 0 && text.bytesize < (original_size * 0.50)
+        fence_re = /```(?:#{Regexp.escape(lang)}|ruby|sh|yaml|erb)?\n(.*?)```/m
         return text.match(fence_re)[1]         if text.match?(fence_re)
         return text.match(/```\n(.*?)```/m)[1] if text.match?(/```\n(.*?)```/m)
         text.strip.empty? ? nil : text

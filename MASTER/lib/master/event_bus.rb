@@ -23,7 +23,7 @@ module Master
     def publish(event, payload = {})
       ts      = elapsed_ms
       payload = payload.merge(event:, ts:)
-      synchronize { matching_handlers(event) }.each { |h| h.call(payload) }
+      synchronize { matching_handlers(event) }.each { |h| h.call(payload) rescue nil }
       self
     end
 

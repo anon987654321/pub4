@@ -87,7 +87,7 @@ module Master
       end
 
       def commit(msg)
-        TARGETS.each { |d| Open3.capture2e("git", "-C", @root, "add", "--", d) }
+        Master::AutoLoop::TARGETS.each { |d| Open3.capture2e("git", "-C", @root, "add", "--", d) }
         Open3.capture2e("git", "-C", @root, "commit", "-m", msg.to_s)
       end
 

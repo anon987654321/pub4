@@ -226,7 +226,11 @@ module Master
         display_ok(ok, accumulated, streamed)
       in Master::Result::Err => err
         @last_ok = false
-        puts @renderer.render(err.message, mode: :error)
+        if err.category == :shutdown
+          exit_cli
+        else
+          puts @renderer.render(err.message, mode: :error)
+        end
       end
     end
 

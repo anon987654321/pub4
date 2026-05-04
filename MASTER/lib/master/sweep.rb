@@ -25,7 +25,7 @@ module Master
 
     SYNTAX_CHECKERS = {
       ".rb"  => ->(p) { _, _, st = Open3.capture3("ruby", "-c", p); st.success? },
-      ".sh"  => ->(p) { _, _, st = Open3.capture3("bash", "-n", p); st.success? },
+      ".sh"  => ->(p) { _, _, st = Open3.capture3("zsh", "-n", p); st.success? },
       ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue StandardError => _e; false; end },
       ".erb" => ->(p) { begin; RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src); true; rescue SyntaxError, StandardError => _e; false; end }
     }.freeze
@@ -91,7 +91,9 @@ circuit\sopen|retry\sin|llm_request)\b
           end
 
           delta = before - after
-          File.write(path, new_src, encoding: "UTF-8")
+          tmp_path = "#{path}.tmp.#{Process.pid}"
+          File.write(tmp_path, new_src, encoding: "UTF-8")
+          File.rename(tmp_path, path)
           changed     += 1
           cycle_viol  += after
           cycle_fixed += delta
