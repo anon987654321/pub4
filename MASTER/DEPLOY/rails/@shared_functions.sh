@@ -140,23 +140,44 @@ install_security_tools() {
   log_ok "Security tools added"
 }
 
-write_base_css() {
+install_dartsass() {
+  add_gem dartsass-rails
+  bin/rails dartsass:install 2>/dev/null || true
+  log_ok "Dart Sass installed"
+}
+
+write_base_scss() {
   mkdir -p app/assets/stylesheets
-  cat > app/assets/stylesheets/application.css << 'CSS'
+  rm -f app/assets/stylesheets/application.css
+  cat > app/assets/stylesheets/application.scss << 'SCSS'
+// ==================== VARIABLES ====================
 :root {
+  // Colors
   --color-black: #000;
   --color-white: #fff;
   --color-extra-light-grey: #f0f0f0;
+
+  // Spacing
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
   --space-lg: 1.5rem;
   --space-xl: 2rem;
+
+  // Typography
   --font-size-base: 14px;
   --line-height-base: 1.5;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body {
+
+// ==================== RESET & BASE ====================
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   font-size: var(--font-size-base);
@@ -164,36 +185,89 @@ html, body {
   color: var(--color-black);
   background-color: var(--color-white);
   display: flex;
+  flex-direction: column;
 }
+
+img { max-width: 100%; display: block; }
+
+a {
+  color: #4285f4;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+  &:focus { outline: 2px solid #4285f4; outline-offset: 2px; }
+}
+
+// ==================== HEADER ====================
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--space-md);
   border-bottom: 1px solid var(--color-extra-light-grey);
+
+  &__tabs {
+    display: flex;
+    gap: var(--space-md);
+  }
+
+  &__tab {
+    padding: var(--space-xs) var(--space-md);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-size: inherit;
+    font-family: inherit;
+
+    &:hover { background-color: var(--color-extra-light-grey); }
+  }
 }
-.header__tabs { display: flex; gap: var(--space-md); }
-.header__tab {
-  padding: var(--space-xs) var(--space-md);
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  font-size: inherit;
-  font-family: inherit;
+
+// ==================== MAIN ====================
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+  padding: var(--space-md);
 }
-.header__tab:hover { background-color: var(--color-extra-light-grey); }
+
+// ==================== FLASH ====================
+.flash {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-extra-light-grey);
+
+  &--error, &--alert { color: #c00; }
+  &--notice { color: #060; }
+}
+
+// ==================== RESPONSIVE ====================
 @media (max-width: 768px) {
-  .header { flex-direction: column; gap: var(--space-md); padding: var(--space-sm); }
-  .header__tabs { gap: var(--space-sm); flex-wrap: wrap; justify-content: center; }
+  .header {
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-sm);
+
+    &__tabs {
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
 }
+
 @media (max-width: 480px) {
   html, body { font-size: 12px; }
+
   .header__tabs { gap: var(--space-xs); }
   .header__tab { padding: var(--space-xs) var(--space-sm); font-size: 0.9em; }
 }
-CSS
-  log_ok "Base CSS written"
+SCSS
+  log_ok "application.scss written"
 }
+
+write_base_css() { write_base_scss; }
 
 write_layout() {
   local app_title=${1:-App}

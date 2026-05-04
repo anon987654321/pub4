@@ -358,7 +358,8 @@ end
 RUBY
 
 # ── Assets + Layout ─────────────────────────────────────────────────────────
-write_base_css
+install_dartsass
+write_base_scss
 write_layout "Amber"
 
 # ── Puma + production ───────────────────────────────────────────────────────

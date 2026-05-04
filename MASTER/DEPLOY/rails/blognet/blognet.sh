@@ -309,7 +309,8 @@ end
 RUBY
 
 # ── Assets + Layout + Infrastructure ────────────────────────────────────────
-write_base_css
+install_dartsass
+write_base_scss
 write_layout "Blognet"
 write_falcon_config "$APP_PORT"
 configure_production

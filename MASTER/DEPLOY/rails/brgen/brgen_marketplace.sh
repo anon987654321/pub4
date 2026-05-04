@@ -288,7 +288,8 @@ end
 RUBY
 
 # ── Assets + Infrastructure ─────────────────────────────────────────────────
-write_base_css
+install_dartsass
+write_base_scss
 write_layout "Brgen Marketplace"
 write_falcon_config "$APP_PORT"
 configure_production
