@@ -94,6 +94,9 @@ scan_depths:
     - SrpRule
     - PolaRule
     - NielsenRule
+    - ArityRule
+    - TellDontAskRule
+    - ThresholdDriftRule
     - RubocopRule
     - ReekRule
   deep: &deep
@@ -111,6 +114,10 @@ scan_depths:
     - SrpRule
     - PolaRule
     - NielsenRule
+    - ArityRule
+    - TellDontAskRule
+    - ThresholdDriftRule
+    - OpportunityRule
     - RubocopRule
     - ReekRule
   hunt: *deep
