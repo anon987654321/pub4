@@ -132,6 +132,8 @@ universal_scope:
   adversarial_rules: all_known_languages
 
 autoloop:
+  background: true
+  idle_sleep: 60
   scan_depth: standard
   fix_depth: llm
   batch_size: 3

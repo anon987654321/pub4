@@ -10,7 +10,8 @@ require "fileutils"
 
 module Master
   class CLI
-    DMESG_LINES = 50
+    DMESG_LINES        = 50
+    IDLE_SLEEP_DEFAULT = 60
 
     SEVERITY_ICON = {
       error: "!!",
@@ -30,14 +31,15 @@ module Master
       @last_ok         = true
       @tts_on          = Speech.available? && @config["tts"] != false
       @violations      = 0
-      @scan_thread     = nil
+      @bg_thread       = nil
       @seen_violations = {}
+      @user_active     = false
     end
 
     def run(initial_message = nil)
       setup_signals
       @session.load! if @session.exists?
-      scan_in_background
+      start_background_loop
       puts @renderer.splash(@agent.model)
       puts @renderer.render("session0: #{@session.name}", mode: :dim) if @session.name
       process(initial_message) if initial_message
@@ -55,6 +57,7 @@ module Master
     def run_input(input)
       return if input.strip.empty?
 
+      @user_active = true
       accumulated = +""
       streamed = false
       thinking_shown = true
@@ -72,6 +75,8 @@ module Master
       print_thinking_indicator
       result = @pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
       display_result(result, accumulated, streamed)
+    ensure
+      @user_active = false
     end
 
     private
@@ -85,6 +90,7 @@ module Master
       @config      = c[:config]
       @pipeline    = c[:pipeline]
       @scanner     = c[:scanner]
+      @autoloop    = c[:autoloop]
       @root        = c[:root] || Dir.pwd
       @diff_stager = c[:diff_stager]
       @bus         = c[:bus]
@@ -116,7 +122,7 @@ module Master
           run_input(line)
         end
       end
-      @scan_thread&.kill
+      @bg_thread&.kill
       @session.save!
     end
 
@@ -135,42 +141,61 @@ module Master
       lines.join("\n")
     end
 
-    def scan_in_background
-      @scan_thread = Thread.new do
-        lib_dir = File.join(@root, "lib")
-        changed = begin
-          out, = Open3.capture2e("git", "-C", @root, "diff", "--name-only", "HEAD")
-          out.strip.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }
-                                           .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
-        rescue StandardError => _e
-          []
+    def start_background_loop
+      idle_interval = AutoLoop.load_cfg.fetch("idle_sleep", IDLE_SLEEP_DEFAULT)
+      @bg_thread = Thread.new do
+        boot_scan
+        loop do
+          sleep idle_interval
+          background_cycle unless @user_active
         end
-
-        result = if changed.any?
-                   Result.ok(changed.map { |p| [p, @scanner.scan(p, depth: :standard)] })
-                 else
-                   @scanner.scan_dir(lib_dir, depth: :standard)
-                 end
-
-        next unless result.respond_to?(:ok?) && result.ok?
-
-        count = result.value!.sum do |_file, file_result|
-          file_result.respond_to?(:ok?) && file_result.ok? ? file_result.value!.size : 0
-        end
-        @violations = count
-
-        next if count.zero?
-
-        puts "\n#{@renderer.render("boot scan: #{count} violation(s)", mode: :dim)}"
-        print @renderer.prompt_line(
-          @agent.model,
-          @session.phase,
-          last_ok: @last_ok,
-          violations: @violations
-        )
       rescue StandardError => e
-        @bus&.publish("cli:warn", message: e.message)
+        @bus&.publish("cli:bg_error", error: e.message)
       end
+    end
+
+    def boot_scan
+      lib_dir = File.join(@root, "lib")
+      changed = begin
+        out, = Open3.capture2e("git", "-C", @root, "diff", "--name-only", "HEAD")
+        out.strip.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }
+                                         .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
+      rescue StandardError => _e
+        []
+      end
+
+      result = if changed.any?
+                 Result.ok(changed.map { |p| [p, @scanner.scan(p, depth: :standard)] })
+               else
+                 @scanner.scan_dir(lib_dir, depth: :standard)
+               end
+
+      return unless result.respond_to?(:ok?) && result.ok?
+
+      count = result.value!.sum do |_file, file_result|
+        file_result.respond_to?(:ok?) && file_result.ok? ? file_result.value!.size : 0
+      end
+      @violations = count
+      return if count.zero?
+
+      puts "\n#{@renderer.render("boot scan: #{count} violation(s)", mode: :dim)}"
+      print @renderer.prompt_line(@agent.model, @session.phase, last_ok: @last_ok, violations: @violations)
+    rescue StandardError => e
+      @bus&.publish("cli:warn", error: e.message)
+    end
+
+    def background_cycle
+      return unless @autoloop
+
+      @autoloop.run(max_cycles: 1) do |_cycle, violations|
+        next if violations.empty?
+        @violations = violations.size
+        top = violations.first(3).map { |v| "#{File.basename(v[:file])}:#{v[:rule]}" }.join(" ")
+        $stdout.puts "\nautoloop: #{violations.size} violation(s) #{top}"
+        $stdout.flush
+      end
+    rescue StandardError => e
+      @bus&.publish("autoloop:bg_error", error: e.message)
     end
 
     def chunk_accumulator(buffer)
