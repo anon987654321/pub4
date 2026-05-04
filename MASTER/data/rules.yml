@@ -1420,3 +1420,43 @@ rules:
       autofix: false
       detect_conceptual: "Is this comment explaining what bad code does instead of rewriting the code to be self-evident? In prose, is a footnote compensating for an unclear sentence? In a contract, is a definition section papering over ambiguous clauses?"
       fix: "Rewrite the artifact so explanation is unnecessary. If it needs a comment, it needs a rewrite."
+
+    - id: POSTEL
+      name: "Be conservative in what you send, liberal in what you accept"
+      tier: architecture
+      severity: info
+      autofix: false
+      detect_conceptual: "Does this interface reject valid inputs that differ only in form? Does it emit outputs with more precision or structure than callers need? Does this protocol refuse valid encodings? Does this form reject data that could be safely normalized?"
+      fix: "Accept broadly, emit precisely. Validate structure not style. Normalize on the way in."
+
+    - id: HYRUM
+      name: "All observable behaviors become depended upon at scale"
+      tier: architecture
+      severity: warning
+      autofix: false
+      detect_conceptual: "Is this changing an undocumented behavior that callers may rely on? Is this removing a side effect that was never specified but may be consumed? Is this contract revision eliminating something parties have silently come to depend on?"
+      fix: "Treat every observable behavior as a contract once you have users. Deprecate explicitly, remove slowly."
+
+    - id: LEAKY_ABSTRACTION
+      name: "All non-trivial abstractions leak"
+      tier: architecture
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does this abstraction force the caller to know about implementation details? Does the interface require knowledge of underlying protocols, data formats, or failure modes it was supposed to hide? Does this clause invoke legal theory the reader must independently research?"
+      fix: "Plan for the leak. Document what leaks. Make the happy path abstracted, the edge cases explicit."
+
+    - id: TEMPORAL_COUPLING
+      name: "Hidden sequential dependencies are fragile"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_conceptual: "Does this require callers to call methods in a specific order without enforcing it? Is there an implicit initialization sequence that crashes if violated? Does this workflow assume steps execute in a fixed order without encoding that order?"
+      fix: "Enforce sequencing structurally: pass initialized objects, not bare instances. Use builder pattern. Make invalid order unrepresentable."
+
+    - id: HUMBLE_OBJECT
+      name: "Separate testable logic from hard-to-test boundaries"
+      tier: design
+      severity: info
+      autofix: false
+      detect_conceptual: "Is business logic mixed with IO, UI rendering, or external API calls making it untestable? Is decision logic tangled with presentation in a way that forces integration tests where unit tests would suffice?"
+      fix: "Extract the logic into a pure object (Humble Object). Keep the IO shell thin and untested; test the logic object exhaustively."

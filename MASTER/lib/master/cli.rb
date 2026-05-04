@@ -39,6 +39,7 @@ module Master
       @session.load! if @session.exists?
       scan_in_background
       puts @renderer.splash(@agent.model)
+      puts @renderer.render("session0: #{@session.name}", mode: :dim) if @session.name
       process(initial_message) if initial_message
       @running = true
       repl_loop
@@ -109,6 +110,8 @@ module Master
 
         if line.strip == "/exit"
           exit_cli
+        elsif line.strip == "<<"
+          run_input(read_multiline)
         else
           run_input(line)
         end
@@ -118,6 +121,19 @@ module Master
     end
 
     def exit_cli = (@session.save!; @running = false)
+
+    def read_multiline
+      lines = []
+      puts @renderer.render("-- enter lines, blank line to send --", mode: :dim)
+      loop do
+        print "  "
+        inner = (@reader.read_line("", echo: true).chomp rescue nil)
+        break if inner.nil? || inner.strip.empty?
+
+        lines << inner
+      end
+      lines.join("\n")
+    end
 
     def scan_in_background
       @scan_thread = Thread.new do

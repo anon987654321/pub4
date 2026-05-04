@@ -24,9 +24,32 @@ module Master
 
       def route_command(ctx)
         cmd = @commands[ctx[:command]]
-        return Result.err("unknown command: /#{ctx[:command]}", category: :validation) unless cmd
-
+        unless cmd
+          suggestion = closest_command(ctx[:command])
+          msg = "unknown command: /#{ctx[:command]}"
+          msg += " -- did you mean /#{suggestion}?" if suggestion
+          return Result.err(msg, category: :validation)
+        end
         Result.ok(ctx.merge(handler: cmd))
+      end
+
+      def closest_command(name)
+        best = @commands.keys.min_by { |k| levenshtein(k, name) }
+        return nil unless best && levenshtein(best, name) <= [name.length, 3].min
+
+        best
+      end
+
+      def levenshtein(a, b)
+        m = a.length
+        n = b.length
+        dp = Array.new(m + 1) { |i| Array.new(n + 1) { |j| i.zero? ? j : (j.zero? ? i : 0) } }
+        (1..m).each do |i|
+          (1..n).each do |j|
+            dp[i][j] = a[i - 1] == b[j - 1] ? dp[i - 1][j - 1] : 1 + [dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]].min
+          end
+        end
+        dp[m][n]
       end
     end
   end
