@@ -100,7 +100,7 @@ module Master
       elsif profile_name == "deep"
         [nil, :deep, nil]
       else
-        [nil, :standard, nil]
+        [nil, :deep, nil]
       end
     end
 
