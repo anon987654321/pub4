@@ -181,6 +181,22 @@ thresholds:
     max_per_session: 5.00
     max_per_request: 0.50
     warn_at: 0.25
+  web_performance:
+    lcp_seconds: 2.5
+    inp_milliseconds: 200
+    cls: 0.1
+  accessibility:
+    minimum_contrast_ratio: 4.5
+    minimum_touch_target_pixels: 24
+    standard: WCAG_AA
+  typography:
+    line_length_ideal: 66
+    line_height_body: [1.4, 1.6]
+    base_unit: 8
+  convergence:
+    consecutive_clean_runs_required: 2
+    max_iterations: 15
+    stagnant_threshold: 3
 
 scan_depths:
   quick: &quick

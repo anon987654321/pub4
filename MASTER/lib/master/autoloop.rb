@@ -48,6 +48,7 @@ module Master
     def run(max_cycles: MAX_CYCLES)
       saved_model = @agent.model
       @agent.model = @agent.model_for(operation: :autoloop)
+      consecutive_clean = 0
       max_cycles.times do |i|
         cycle = i + 1
         @bus&.publish("autoloop:cycle", cycle:)
@@ -60,7 +61,13 @@ module Master
         }
 
         violations = extract_violations(all_results)
-        return Result.ok("clean after #{cycle} cycle(s)") if violations.empty?
+        if violations.empty?
+          consecutive_clean += 1
+          return Result.ok("clean after #{cycle} cycle(s) (fixed-point: 2 silent runs)") if consecutive_clean >= 2
+          @bus&.publish("autoloop:provisional_clean", cycle:, consecutive_clean:)
+          next
+        end
+        consecutive_clean = 0
 
         yield cycle, violations if block_given?
 
