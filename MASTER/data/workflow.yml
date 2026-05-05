@@ -206,6 +206,8 @@ phases:
     id: 1
     goal: "Understand actual need"
     output: "Problem statement with success criteria"
+    personas: [chaos, user]
+    introspect: "What assumptions did we make?"
     gates:
       - no_vague_words
       - audience_identified
@@ -214,6 +216,8 @@ phases:
     id: 2
     goal: "Break into components"
     output: "Component diagram with dependencies"
+    personas: [skeptic, maintainer]
+    introspect: "What did we miss?"
     gates:
       - components_distinct
       - dependencies_acyclic
@@ -221,6 +225,8 @@ phases:
     id: 3
     goal: "Generate 15+ alternatives"
     output: "List of approaches with trade‑offs"
+    personas: [minimalist, chaos]
+    introspect: "Which ideas surprised us?"
     gates:
       - count_gte_15
       - trade_offs_documented
@@ -228,6 +234,8 @@ phases:
     id: 4
     goal: "Specific architecture"
     output: "Interface definitions and error handling"
+    personas: [security, accessibility]
+    introspect: "What could break?"
     gates:
       - interfaces_explicit
       - errors_documented
@@ -235,6 +243,8 @@ phases:
     id: 5
     goal: "Execute with zero violations"
     output: "Working code at 100/100 score"
+    personas: [performance, security]
+    introspect: "Is this the simplest solution?"
     gates:
       - tests_pass
       - zero_violations
@@ -242,6 +252,8 @@ phases:
     id: 6
     goal: "Prove with evidence"
     output: "Test results, benchmarks"
+    personas: [skeptic, security]
+    introspect: "What evidence proves it works?"
     gates:
       - zero_test_failures
       - edge_cases_covered
@@ -249,9 +261,20 @@ phases:
     id: 7
     goal: "Ship with monitoring"
     output: "Deployed code with dashboards"
+    personas: [realist]
+    introspect: "What would the user complain about?"
     gates:
       - deployed
       - monitoring_configured
+  learn:
+    id: 8
+    goal: "Extract durable lessons"
+    output: "Updated defaults, new memory entries, refined rules"
+    personas: [skeptic, chaos]
+    introspect: "What would we do differently next time?"
+    gates:
+      - lessons_captured
+      - defaults_updated
 session_startup:
   mandatory_reads:
     - data/soul.yml
