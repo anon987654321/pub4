@@ -1,3 +1,4 @@
+# config_status: aspirational  # spec exists, runtime wiring pending
 # Multi-OS speak-and-listen channels (the openclaw "lobster way").
 # Source: openclaw reunification (#86). Capability spec.
 voice_channels:

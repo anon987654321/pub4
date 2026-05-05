@@ -1,3 +1,4 @@
+# config_status: aspirational  # spec exists, runtime wiring pending
 # Sign every audit-log entry and every commit body with signify(1).
 # Source: cross-cutting reunification (#96).
 audit_signature:

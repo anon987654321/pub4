@@ -1,3 +1,4 @@
+# config_status: aspirational  # spec exists, runtime wiring pending
 # Web routes for the live canvas surface. Read by the Rails app at boot.
 # Source: openclaw + #87.
 routes:

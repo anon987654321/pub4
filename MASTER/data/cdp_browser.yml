@@ -1,3 +1,4 @@
+# config_status: aspirational  # spec exists, runtime wiring pending
 # Headless Chrome via Chrome DevTools Protocol — verifies UI renders without a human.
 # Source: opencrabs reunification (#85). Capability spec; impl follows later.
 cdp_browser:

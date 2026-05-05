@@ -1,0 +1,14 @@
+# Externalized from lib/master/autoloop.rb so failure_taxonomy.transient and the
+# retry regex stay one source. Source: yaml/ruby split audit (#6).
+patterns:
+  - "429"
+  - "throttl"
+  - "rate.?limit"
+  - "high demand"
+  - "provider.?error"
+  - "overload"
+  - "capacity"
+  - "503"
+  - "timeout"
+  - "ECONNRESET"
+  - "ETIMEDOUT"

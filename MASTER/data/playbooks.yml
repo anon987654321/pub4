@@ -1,3 +1,4 @@
+# config_status: aspirational  # spec exists, runtime wiring pending
 # Named recovery scripts per failure mode. Pairs with rules.yml failure_modes.
 # Source: cross-cutting reunification (#49).
 playbooks:

@@ -1,3 +1,4 @@
+# config_status: aspirational  # spec exists, runtime wiring pending
 # Live agent-controlled canvas for the web UI. Sketch the user can watch fill in.
 # Source: openclaw reunification (#87).
 canvas:

@@ -1,3 +1,4 @@
+# config_status: aspirational  # spec exists, runtime wiring pending
 # data/prompts/ encrypted at rest; signify-decrypted on demand.
 # Source: cross-cutting reunification (#99).
 prompt_vault:

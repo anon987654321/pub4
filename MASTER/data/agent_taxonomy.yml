@@ -1,3 +1,4 @@
+# config_status: aspirational  # spec exists, runtime wiring pending
 # Typed child agents (cleaner than ad-hoc thread spawning).
 # Source: opencrabs + Manus reunification (#76, #81).
 agent_types:

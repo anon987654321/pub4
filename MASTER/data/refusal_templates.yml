@@ -1,3 +1,4 @@
+# config_status: aspirational  # spec exists, runtime wiring pending
 # Refusal scaffolding when MASTER cannot or should not act.
 # Source: OpenAI / Anthropic system-prompt reunification (#74).
 
