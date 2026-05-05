@@ -1616,3 +1616,48 @@ failure_modes:
   rubber_stamp:        "council approves everything — adversarial role lost"
   blocks_everything:   "council vetoes every proposal — gridlock, no shipping"
   self_violation:      "MASTER produces output it would itself reject — recursive quality broken"
+
+# Principle enforcement tiers — tier1 strict, tier2 strong, tier3 opportunistic.
+# Source: master.json v225 reunification.
+principle_priorities:
+  tier1_critical:                          # halts pipeline on violation
+    - evidence:    "@assumption -> validate"
+    - reversible:  "@irreversible -> add_rollback"
+    - security:    "@untrusted -> validate_sanitize"
+    - self_apply:  "@output -> must_pass_own_constitution"
+  tier2_quality:                           # warns and routes to refactor
+    - dry:         "@duplication>=3 -> abstract"
+    - kiss:        "@complexity>10 -> simplify"
+    - srp:         "@two_reasons_to_change -> split"
+  tier3_polish:                            # opportunistic improvements
+    - explicit:    "@implicit -> make_explicit"
+    - minimalism:  "@bloat -> subtract"
+    - rhythm:      "@inconsistent -> align"
+
+# Failure taxonomy — what to retry, what to fail-fast, what to escalate.
+# Source: master.json v225 reunification.
+failure_taxonomy:
+  transient:
+    examples:    [network_timeout, rate_limit, temp_file_conflict, provider_overload]
+    strategy:    exponential_backoff
+    max_retries: 3
+  permanent:
+    examples:    [syntax_error, missing_dependency, permission_denied, schema_violation]
+    strategy:    fail_fast
+    max_retries: 0
+  ambiguous:
+    examples:           [partial_write, unknown_error, half_committed_state]
+    strategy:           human_intervention
+    checkpoint_before:  true
+
+# Evidence weights for ship/no-ship decisions. Sum >= 80 to pass tier1 gates.
+# Source: master.json v225 reunification.
+evidence_scoring:
+  weights:
+    test_pass:        35
+    scan_clean:       25
+    code_review:      20
+    log_analysis:     10
+    profiling_data:   10
+  pass_threshold:     80
+  block_threshold:    50    # below this, propose rollback

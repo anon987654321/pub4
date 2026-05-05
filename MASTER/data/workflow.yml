@@ -291,3 +291,60 @@ corruption_prevention:
   sweep_excludes_data: "Sweep must never rewrite data/*.yml -- these are structured config, not code to refactor"
   yaml_type_guards: "All load_yaml calls must type-check result before use (is_a?(Array/Hash)) -- circuit-open strings parse as valid YAML scalars"
   ask_raises_on_error: "agent#ask must raise StandardError when result.err? -- callers must rescue, never silently propagate error strings as LLM output"
+
+# Phase-appropriate quality gates — prototype is permissive, production is strict.
+# Source: master.json v225 reunification.
+quality_phases:
+  prototype:
+    gates:           [functional]
+    debt_allowed:    high
+    speed:           maximize
+  production:
+    gates:           [functional, secure, maintainable, performant]
+    debt_allowed:    none
+    speed:           sustainable
+  legacy:
+    gates:           [functional, secure]
+    changes:         surgical_only
+    risk_tolerance:  minimal
+
+# Conflicts already declared above; add reinforcements that multiply effectiveness.
+# Source: master.json v225 reunification.
+principle_reinforcements:
+  dry_and_kiss:               multiply_effectiveness
+  evidence_and_reversible:    enables_confident_change
+  single_responsibility_and_dependency_injection: enables_isolated_testing
+
+# Observability spec — structured logging, levels, exported metrics.
+# Source: master.json v225 reunification.
+observability:
+  logging:
+    format:    json
+    fields:    [timestamp, level, phase, file, evidence_score, decision]
+    levels:
+      trace:  every_operation
+      debug:  decision_points
+      info:   phase_transitions
+      warn:   evidence_below_threshold
+      error:  gate_failures
+  metrics:
+    track:             [evidence_score, complexity, coverage, churn, council_consensus]
+    export_format:     prometheus
+    threshold_alerts:  true
+
+# Adaptive file-processing strategy by size. Replaces hard MAX_FILE_BYTES cutoff.
+# Source: master.json v225 reunification.
+processing_strategies:
+  small_file:
+    condition: "size <= 10240"
+    method:    full_read
+    context:   entire_file
+  medium_file:
+    condition: "10240 < size <= 1048576"
+    method:    streaming
+    context:   line_by_line_with_lookahead
+  large_file:
+    condition: "size > 1048576"
+    method:    chunked
+    context:   section_by_section
+    checkpoint: per_chunk

@@ -19,3 +19,7 @@ chrome.core
 *.core
 snapshot_latest.md
 snapshot.md
+
+# Resumable task state — see data/session_recovery.yml
+.session_recovery
+.session_recovery.archive/
