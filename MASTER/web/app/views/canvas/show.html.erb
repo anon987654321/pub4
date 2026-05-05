@@ -1,107 +1,107 @@
-<% content_for :title, "MASTER — live canvas" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>MASTER · canvas</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#0b0b0b;color:#ddd;font:.8rem/1.4 ui-monospace,Menlo,monospace}
+article{position:fixed;inset:0}
+article > section{position:absolute;inset:0}
+svg{width:100%;height:100%;display:block}
+circle{fill:#1a1a1a;stroke:#444;stroke-width:1.5}
+g[data-kind=violation] circle{stroke:#c44}
+g[data-kind=fix] circle{stroke:#4c4}
+g[data-kind=persona] circle{stroke:#4a8}
+text{fill:#ddd;font-size:10px;pointer-events:none}
+line{stroke:#333;stroke-width:1}
+line[data-kind=fixes]{stroke:#4c4}
+line[data-kind=conflicts]{stroke:#c44;stroke-dasharray:3 2}
+article > header,
+article > aside{position:absolute;background:rgba(11,11,11,.92);backdrop-filter:blur(6px);transition:transform .25s ease;z-index:1}
+article > header{top:0;left:0;right:0;padding:1rem;border-bottom:1px solid #222;transform:translateY(-100%)}
+article > aside{top:0;bottom:0;right:0;width:min(28rem,80vw);padding:1rem;border-left:1px solid #222;overflow-y:auto;transform:translateX(100%)}
+article[data-reveal=header] > header,
+article[data-reveal=all] > header{transform:translateY(0)}
+article[data-reveal=thread] > aside,
+article[data-reveal=all] > aside{transform:translateX(0)}
+h1{margin:0 0 .25rem;font-size:1rem;letter-spacing:.08em;text-transform:uppercase}
+header p{margin:0;font-size:.7rem;color:#888}
+h2{margin:0 0 .5rem;font-size:.75rem;color:#888;text-transform:uppercase}
+ol{margin:0;padding:0;list-style:none}
+li{padding:.15rem 0;border-bottom:1px solid #1a1a1a;color:#aaa;word-break:break-all}
+</style>
+</head>
+<body>
 <article id="canvas" data-session="<%= @session_id %>" data-reveal="">
-  <header>
-    <h1>live canvas</h1>
-    <p>swipe top: header · swipe right: thread · shake: pause</p>
-  </header>
-
-  <section>
-    <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" aria-label="live decision graph"></svg>
-  </section>
-
-  <aside>
-    <h2>thread</h2>
-    <ol></ol>
-  </aside>
-
-  <%= javascript_tag nonce: true do %>
-    (function () {
-      const root  = document.getElementById('canvas');
-      const svg   = root.querySelector('svg');
-      const log   = root.querySelector('ol');
-      const NS    = 'http://www.w3.org/2000/svg';
-      const nodes = new Map();
-      let nx = 80, ny = 80, paused = false, hideTimer;
-
-      // reveal state: "" hidden, "header", "thread", "all"
-      const reveal = (mode) => {
-        root.dataset.reveal = mode;
-        clearTimeout(hideTimer);
-        if (mode) hideTimer = setTimeout(() => root.dataset.reveal = '', 4000);
-      };
-
-      // swipe: top-edge → header, right-edge → thread, two-finger or long-press → all
-      let t0 = null;
-      addEventListener('touchstart', e => { t0 = e.touches[0] && {x: e.touches[0].clientX, y: e.touches[0].clientY, n: e.touches.length, t: Date.now()}; });
-      addEventListener('touchend',   e => {
-        if (!t0) return;
-        const tch = e.changedTouches[0]; if (!tch) return;
-        const dx = tch.clientX - t0.x, dy = tch.clientY - t0.y, dt = Date.now() - t0.t;
-        if (t0.n >= 2)                      reveal('all');
-        else if (t0.y < 40 && dy > 60)      reveal('header');
-        else if (t0.x > innerWidth - 40 && dx < -60) reveal('thread');
-        else if (dt > 500 && Math.abs(dx) < 10 && Math.abs(dy) < 10) reveal('all');
-        t0 = null;
-      });
-      addEventListener('mousemove', e => { if (e.clientY < 8 || e.clientX > innerWidth - 8) reveal('all'); });
-      addEventListener('keydown',   e => { if (e.key === 'Escape') reveal(''); if (e.key === ' ') paused = !paused; });
-
-      // device sensors: shake → pause, tilt → reveal
-      if (window.DeviceMotionEvent) {
-        let last = 0;
-        addEventListener('devicemotion', e => {
-          const a = e.accelerationIncludingGravity; if (!a) return;
-          const m = Math.hypot(a.x||0, a.y||0, a.z||0);
-          const now = Date.now();
-          if (m > 25 && now - last > 1000) { paused = !paused; reveal('all'); last = now; }
-        });
-      }
-      if (window.DeviceOrientationEvent) {
-        addEventListener('deviceorientation', e => { if (Math.abs(e.gamma||0) > 60) reveal('all'); });
-      }
-
-      function node({id, label, kind}) {
-        if (nodes.has(id)) return;
-        const g = document.createElementNS(NS, 'g');
-        g.dataset.kind = kind || 'unknown';
-        g.setAttribute('transform', `translate(${nx},${ny})`);
-        const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', 22);
-        const t = document.createElementNS(NS, 'text');   t.setAttribute('y', 4); t.setAttribute('text-anchor', 'middle');
-        t.textContent = (label || id).slice(0, 14);
-        g.appendChild(c); g.appendChild(t); svg.appendChild(g);
-        nodes.set(id, {x: nx, y: ny, el: g});
-        nx += 110; if (nx > 1100) { nx = 80; ny += 90; }
-      }
-
-      function edge({from, to, kind}) {
-        const a = nodes.get(from), b = nodes.get(to); if (!a || !b) return;
-        const l = document.createElementNS(NS, 'line');
-        l.setAttribute('x1', a.x); l.setAttribute('y1', a.y);
-        l.setAttribute('x2', b.x); l.setAttribute('y2', b.y);
-        l.dataset.kind = kind || 'plain';
-        svg.insertBefore(l, svg.firstChild);
-      }
-
-      function entry(topic, payload) {
-        const li = document.createElement('li');
-        li.textContent = `${new Date().toISOString().slice(11,19)} ${topic} ${JSON.stringify(payload)}`;
-        log.insertBefore(li, log.firstChild);
-        while (log.children.length > 80) log.removeChild(log.lastChild);
-      }
-
-      function handle(topic, p) {
-        if (paused) return;
-        entry(topic, p);
-        if (topic === 'scan:violation' && p.rule)       node({id: p.rule, label: p.rule, kind: 'violation'});
-        if (topic === 'autoloop:fix_applied' && p.file) node({id: p.file, label: p.file.split('/').pop(), kind: 'fix'});
-        if (topic === 'council:vote' && p.persona)      node({id: p.persona, label: p.persona, kind: 'persona'});
-        if (topic === 'canvas:edge')                    edge(p);
-      }
-
-      const es = new EventSource('/canvas/stream');
-      es.addEventListener('bus', e => {
-        try { const m = JSON.parse(e.data); handle(m.topic, m.payload || {}); } catch (_) {}
-      });
-    })();
-  <% end %>
+  <header><h1>live canvas</h1><p>swipe top: header · swipe right: thread · shake: pause</p></header>
+  <section><svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" aria-label="live decision graph"></svg></section>
+  <aside><h2>thread</h2><ol></ol></aside>
+<script>
+(function(){
+  const root=document.getElementById('canvas');
+  const svg=root.querySelector('svg'), log=root.querySelector('ol');
+  const NS='http://www.w3.org/2000/svg', nodes=new Map();
+  let nx=80, ny=80, paused=false, hideTimer;
+  const reveal=(m)=>{root.dataset.reveal=m;clearTimeout(hideTimer);if(m)hideTimer=setTimeout(()=>root.dataset.reveal='',4000)};
+  let t0=null;
+  addEventListener('touchstart',e=>{t0=e.touches[0]&&{x:e.touches[0].clientX,y:e.touches[0].clientY,n:e.touches.length,t:Date.now()}});
+  addEventListener('touchend',e=>{
+    if(!t0)return;
+    const tch=e.changedTouches[0];if(!tch)return;
+    const dx=tch.clientX-t0.x, dy=tch.clientY-t0.y, dt=Date.now()-t0.t;
+    if(t0.n>=2)reveal('all');
+    else if(t0.y<40&&dy>60)reveal('header');
+    else if(t0.x>innerWidth-40&&dx<-60)reveal('thread');
+    else if(dt>500&&Math.abs(dx)<10&&Math.abs(dy)<10)reveal('all');
+    t0=null;
+  });
+  addEventListener('mousemove',e=>{if(e.clientY<8||e.clientX>innerWidth-8)reveal('all')});
+  addEventListener('keydown',e=>{if(e.key==='Escape')reveal('');if(e.key===' ')paused=!paused});
+  if(window.DeviceMotionEvent){
+    let last=0;
+    addEventListener('devicemotion',e=>{
+      const a=e.accelerationIncludingGravity;if(!a)return;
+      const m=Math.hypot(a.x||0,a.y||0,a.z||0), now=Date.now();
+      if(m>25&&now-last>1000){paused=!paused;reveal('all');last=now}
+    });
+  }
+  if(window.DeviceOrientationEvent){
+    addEventListener('deviceorientation',e=>{if(Math.abs(e.gamma||0)>60)reveal('all')});
+  }
+  function node({id,label,kind}){
+    if(nodes.has(id))return;
+    const g=document.createElementNS(NS,'g');g.dataset.kind=kind||'unknown';g.setAttribute('transform',`translate(${nx},${ny})`);
+    const c=document.createElementNS(NS,'circle');c.setAttribute('r',22);
+    const t=document.createElementNS(NS,'text');t.setAttribute('y',4);t.setAttribute('text-anchor','middle');t.textContent=(label||id).slice(0,14);
+    g.appendChild(c);g.appendChild(t);svg.appendChild(g);
+    nodes.set(id,{x:nx,y:ny,el:g});
+    nx+=110;if(nx>1100){nx=80;ny+=90}
+  }
+  function edge({from,to,kind}){
+    const a=nodes.get(from),b=nodes.get(to);if(!a||!b)return;
+    const l=document.createElementNS(NS,'line');l.setAttribute('x1',a.x);l.setAttribute('y1',a.y);l.setAttribute('x2',b.x);l.setAttribute('y2',b.y);l.dataset.kind=kind||'plain';
+    svg.insertBefore(l,svg.firstChild);
+  }
+  function entry(t,p){
+    const li=document.createElement('li');li.textContent=`${new Date().toISOString().slice(11,19)} ${t} ${JSON.stringify(p)}`;
+    log.insertBefore(li,log.firstChild);
+    while(log.children.length>80)log.removeChild(log.lastChild);
+  }
+  function handle(t,p){
+    if(paused)return;
+    entry(t,p);
+    if(t==='scan:violation'&&p.rule)node({id:p.rule,label:p.rule,kind:'violation'});
+    if(t==='autoloop:fix_applied'&&p.file)node({id:p.file,label:p.file.split('/').pop(),kind:'fix'});
+    if(t==='council:vote'&&p.persona)node({id:p.persona,label:p.persona,kind:'persona'});
+    if(t==='canvas:edge')edge(p);
+  }
+  const es=new EventSource('/canvas/stream');
+  es.addEventListener('bus',e=>{try{const m=JSON.parse(e.data);handle(m.topic,m.payload||{})}catch(_){}});
+})();
+</script>
 </article>
+</body>
+</html>

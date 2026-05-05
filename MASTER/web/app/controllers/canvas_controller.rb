@@ -7,6 +7,7 @@ class CanvasController < ApplicationController
 
   def show
     @session_id = session[:canvas_id] ||= SecureRandom.hex(8)
+    render layout: false
   end
 
   def stream
