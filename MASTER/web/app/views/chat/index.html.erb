@@ -116,7 +116,7 @@
     }
     #ui.highlight{opacity:1;color:#993333;}
 
-    #ui .dots{
+    #ui-dots{
       display:inline-block;
       width:3ch;
       text-align:left;
@@ -181,8 +181,7 @@
       white-space:nowrap;
       text-overflow:ellipsis;
     }
-
-    .arrow{
+    #arrow-left,#arrow-right{
       position:fixed;
       top:50%;
       transform:translateY(-50%);
@@ -199,13 +198,13 @@
       -webkit-tap-highlight-color:transparent;
     }
 
-    .arrow:hover{opacity:0.5;}
-    .arrow:active{opacity:0.8;}
+    #arrow-left:hover,#arrow-right:hover{opacity:0.5;}
+    #arrow-left:active,#arrow-right:active{opacity:0.8;}
 
     #arrow-left{left:calc(10px + var(--safe-left));}
     #arrow-right{right:calc(10px + var(--safe-right));}
 
-    .arrow span{
+    #arrow-left span,#arrow-right span{
       color:#333;
       font-size:24px;
       font-weight:300;
@@ -219,7 +218,7 @@
       align-items:center;
       justify-content:center;
       gap:28px;
-      background:#000;
+      background:transparent;
       cursor:pointer;
       user-select:none;
       z-index:1000;
@@ -267,7 +266,7 @@
     #chat-log .entry.user{color:#ccc;}
     #chat-log .entry.master{color:#777;}
     #chat-log .entry.user::before{content:'> ';color:#555;}
-    #chat-log .tab-hint{
+    #tab-hint{
       position:fixed;top:12px;right:16px;
       font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
     }
@@ -289,7 +288,7 @@
   <%= csrf_meta_tags %>
 </head>
 <body>
-  <div id="chat-log"><span class="tab-hint">TAB TO CLOSE</span></div>
+  <ol id="chat-log"><small id="tab-hint">TAB TO CLOSE</small></ol>
   <section id="status">◉</section>
   <aside id="sidebar" aria-label="System status">
     <h3>Circuit Breakers</h3><div id="sb-breakers"></div>
@@ -297,10 +296,10 @@
     <h3>Phase</h3><div id="sb-phase"></div>
     <h3>Standing Orders</h3><div id="sb-orders"></div>
   </aside>
-  <section id="ui"><span id="ui-label">MASTER</span><span class="dots" id="ui-dots"></span></section>
+  <section id="ui"><span id="ui-label">MASTER</span><span id="ui-dots"></span></section>
 
-  <section id="arrow-left" class="arrow"><span>‹</span></section>
-  <section id="arrow-right" class="arrow"><span>›</span></section>
+  <section id="arrow-left"><span>‹</span></section>
+  <section id="arrow-right"><span>›</span></section>
 
   <section id="input-field">
     <input type="text" placeholder="Ask anything…" autocomplete="off" maxlength="512" aria-label="Message">
@@ -437,7 +436,29 @@ const renderMd = raw => {
 
     let audioCtx,analyser,dataArray;
     let audioLevel=0;
-    // Pre-load voices immediately so they are available synchronously on first gesture.
+    // master:tilt-reveal — chrome via device motion/orientation
+if (window.DeviceOrientationEvent) {
+  let lastTilt = 0;
+  window.addEventListener('deviceorientation', e => {
+    const now = Date.now(); if (now - lastTilt < 600) return;
+    const sb = document.getElementById('sidebar');
+    if (Math.abs(e.gamma||0) > 55 && sb) { sb.classList.toggle('open'); lastTilt = now; }
+  });
+}
+if (window.DeviceMotionEvent) {
+  let lastShake = 0;
+  window.addEventListener('devicemotion', e => {
+    const a = e.accelerationIncludingGravity; if (!a) return;
+    const m = Math.hypot(a.x||0, a.y||0, a.z||0);
+    const now = Date.now();
+    if (m > 28 && now - lastShake > 1200) {
+      const cl = document.getElementById('chat-log');
+      if (cl) cl.classList.toggle('open');
+      lastShake = now;
+    }
+  });
+}
+// Pre-load voices immediately so they are available synchronously on first gesture.
     let _cachedVoices=[];
     if('speechSynthesis' in window){
       _cachedVoices=window.speechSynthesis.getVoices();
