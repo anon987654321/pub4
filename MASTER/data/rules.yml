@@ -1678,12 +1678,12 @@ schema_metadata:
 # Source: master.json v225 ANALYSIS reunification (#23).
 anti_patterns:
   forbidden:
-    - {pattern: "eval\(.*user.*\)",   reason: arbitrary_code_execution}
+    - {pattern: 'eval\(.*user.*\)',   reason: arbitrary_code_execution}
     - {pattern: "rm -rf /",              reason: data_loss}
     - {pattern: "while true.*no sleep",  reason: resource_exhaustion}
-    - {pattern: "system\(.*\$\{",     reason: command_injection}
-    - {pattern: "Marshal\.load",        reason: deserialization_rce}
-    - {pattern: "open\(.*\$\{",       reason: shell_through_open}
+    - {pattern: 'system\(.*\$\{',     reason: command_injection}
+    - {pattern: 'Marshal\.load',        reason: deserialization_rce}
+    - {pattern: 'open\(.*\$\{',       reason: shell_through_open}
   discouraged:
     - {pattern: god_object,                reason: violates_solid_srp}
     - {pattern: premature_optimization,    reason: violates_yagni}
