@@ -48,7 +48,7 @@ module Master
           prompt = format(PROMPT_TEMPLATE, path: File.basename(path),
                                            lang: lang,
                                            code: code[0, 3_000])
-          response = @agent.ask(prompt).to_s
+          response = @agent.ask(prompt, operation: :scan_adversarial).to_s
           parse_findings(response)
         rescue StandardError => e
           [finding(line: 1, message: "adversarial: scan error — #{e.message}")]

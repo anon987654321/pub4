@@ -6,7 +6,7 @@ axioms: |
   - Default to no change if improvement is uncertain (PRESERVE_FIRST)
   - Minimum change that eliminates the violation (SIMPLEST_WORKS)
   - Raise/log errors; never swallow them silently (FAIL_VISIBLY)
-  - Config in data/*.yml; code reads from there (ONE_SOURCE_OF_TRUTH)
+  - Config in data/*.yml; code reads from there (ONE_SOURCE)
   - rescue SpecificError => e; never bare rescue (SPECIFIC_RESCUE)
   - Extract literals to named constants; no magic numbers
   - Read current behavior before changing anything (zen: observe)

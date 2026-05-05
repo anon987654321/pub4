@@ -11,7 +11,7 @@ module Master
   class Renderer
     TICK             = "\u2714".freeze
     CROSS            = "\u2718".freeze
-    DMESG_LINE_COUNT = 5
+    BOOT_DMESG_LINES = 5
     MS_PER_SEC       = 1000
 
     def initialize(config:)
@@ -109,10 +109,10 @@ module Master
     def dmesg_lines
       boot_log = "/var/run/dmesg.boot"
       raw = if File.readable?(boot_log)
-              File.readlines(boot_log, chomp: true).first(DMESG_LINE_COUNT)
+              File.readlines(boot_log, chomp: true).first(BOOT_DMESG_LINES)
             else
               stdout, = Open3.capture3("dmesg")
-              stdout.lines(chomp: true).first(DMESG_LINE_COUNT)
+              stdout.lines(chomp: true).first(BOOT_DMESG_LINES)
             end
       raw.empty? ? ["dmesg unavailable"] : raw
     rescue StandardError

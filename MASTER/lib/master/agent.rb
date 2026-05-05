@@ -73,9 +73,9 @@ module Master
       Result.err("agent: #{chat_error.message}", category: :handler_exception)
     end
 
-    def ask(prompt, context: nil)
+    def ask(prompt, context: nil, operation: nil)
       messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
-      selected_model = routed_models.first
+      selected_model = operation ? model_for(operation:) : routed_models.first
       result = send_with_cache(selected_model, messages, stream: false)
       raise result.message if result.respond_to?(:err?) && result.err?
       result.to_s

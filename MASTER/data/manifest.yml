@@ -112,7 +112,7 @@ rules:
   - id: interconnect
     description: "Phantom YAML key reads and orphan data keys"
     severity: warning
-    axiom_tags: [ONE_SOURCE, SINGLE_SOURCE_OF_TRUTH]
+    axiom_tags: [ONE_SOURCE]
     enforcement: lib/master/scan/rules/interconnect_rule.rb
     test: null
 
@@ -231,7 +231,7 @@ rules:
   - id: threshold_drift
     description: "Hardcoded threshold constant in scan rule — read from Axioms instead"
     severity: warning
-    axiom_tags: [SINGLE_SOURCE_OF_TRUTH]
+    axiom_tags: [ONE_SOURCE]
     enforcement: lib/master/scan/rules/threshold_drift_rule.rb
     test: null
 

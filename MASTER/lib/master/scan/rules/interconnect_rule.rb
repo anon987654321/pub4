@@ -22,7 +22,7 @@ module Master
           @description = "Phantom YAML key reads and orphan data keys"
           @severity    = :warning
           @auto_fix    = false
-          @axiom_tags  = %i[ONE_SOURCE SINGLE_SOURCE_OF_TRUTH]
+          @axiom_tags  = %i[ONE_SOURCE]
           @root        = root
           @data_dir    = File.join(root, "data")
           @lib_source  = load_lib_source(root)

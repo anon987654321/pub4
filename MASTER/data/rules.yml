@@ -294,14 +294,6 @@ rules:
       detect_conceptual: "Are there global variables or class-level mutable state shared across modules?"
       fix: "Inject configuration. Use dependency injection."
 
-    - id: SINGLE_SOURCE_OF_TRUTH
-      name: "One place defines each fact"
-      tier: kernel
-      severity: error
-      autofix: false
-      detect_conceptual: "Is the same fact, rule, or definition stated in more than one place? In a legal system, is the same right defined in multiple statutes? In a genome, is the same regulatory element duplicated with divergent mutations?"
-      fix: "One canonical source. Everything else references it. Never copy when you can point."
-
     - id: TRACER_BULLETS
       name: "End-to-end skeleton first, flesh out second"
       tier: architecture

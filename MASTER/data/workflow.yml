@@ -27,7 +27,7 @@ code_principles:
     rule: NO_HARDCODED_CONSTANTS
     statement: "Prose, patterns, and config belong in data/*.yml, not Ruby strings."
   single_source:
-    rule: ONE_SOURCE_OF_TRUTH
+    rule: ONE_SOURCE
     statement: "If it is in a data file, the code reads from there. No duplicates."
   no_magic_numbers:
     rule: NAMED_CONSTANTS

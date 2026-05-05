@@ -10,7 +10,6 @@ require "fileutils"
 
 module Master
   class CLI
-    DMESG_LINES        = 50
     IDLE_SLEEP_DEFAULT = 60
 
     SEVERITY_ICON = {

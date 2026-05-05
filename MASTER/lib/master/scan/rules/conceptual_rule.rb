@@ -31,7 +31,7 @@ module Master
           return [] unless @agent
 
           prompt = build_prompt(code, path)
-          response = @agent.ask(prompt).to_s
+          response = @agent.ask(prompt, operation: :scan_conceptual).to_s
           parse_findings(response)
         rescue StandardError => e
           [finding(line: 1, message: "conceptual: scan error — #{e.message}")]
