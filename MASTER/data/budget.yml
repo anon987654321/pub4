@@ -11,3 +11,11 @@ budget:
   on_exceed:
     action: degrade_route
     notify: bus
+
+# Beyond dollars, track approximate kWh / CO2 per session.
+# Source: cross-cutting reunification (#98).
+carbon_budget:
+  kwh_per_million_tokens:   0.5     # rough industry estimate
+  co2_g_per_kwh:          400       # mixed grid baseline
+  daily_kwh_cap:            1.0
+  on_exceed:                "switch to local model only; publish carbon:exceeded"

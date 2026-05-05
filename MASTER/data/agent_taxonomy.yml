@@ -1,0 +1,34 @@
+# Typed child agents (cleaner than ad-hoc thread spawning).
+# Source: opencrabs + Manus reunification (#76, #81).
+agent_types:
+  explore:
+    purpose:     "search, glob, grep, read-only inspection"
+    tools:       [read_file, list_dir, search_files, symbol_lookup, tree]
+    max_runtime: 60s
+  plan:
+    purpose:     "read code + propose stepwise plan; never edits"
+    tools:       [read_file, search_knowledge, list_dir]
+    output:      structured_plan
+  code:
+    purpose:     "apply the plan; one file at a time"
+    tools:       [read_file, str_replace, write_file, ast_edit, atomic_write]
+    requires:    plan_id
+  research:
+    purpose:     "external lookup, citations, summaries"
+    tools:       [web_search, web_fetch, search_knowledge]
+    max_runtime: 120s
+  verify:
+    purpose:     "ruby -c, scan, test, council vote"
+    tools:       [shell, scan, council_call]
+    output:      pass_fail_with_evidence
+
+toolset_groups:
+  research:    [web_search, web_fetch, search_knowledge, deepwiki]
+  build:       [read_file, str_replace, write_file, ast_edit, atomic_write, batch_replace]
+  verify:      [shell, scan, council_call]
+  ship:        [git_context, atomic_write, audit_log]
+
+spawn_policy:
+  max_concurrent_children: 4
+  inherit_governor:        true
+  sanitize_output_via:     InjectionGuard

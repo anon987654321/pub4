@@ -1,0 +1,8 @@
+# Headless Chrome via Chrome DevTools Protocol — verifies UI renders without a human.
+# Source: opencrabs reunification (#85). Capability spec; impl follows later.
+cdp_browser:
+  enabled:           false
+  binary:            "chromium --headless --remote-debugging-port=9222"
+  use_for:           [live_preview_gate, accessibility_audit, lighthouse_scoring]
+  sandbox_via:       pledge
+  timeout_seconds:   15

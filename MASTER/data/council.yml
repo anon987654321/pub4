@@ -139,3 +139,28 @@ parameters:
   oscillation_detection: true
   veto_precedence:     [Security, Reliability, Maintainer]   # order of veto evaluation
   tie_breaker:          Maintainer                          # weighted tie -> ops perspective wins
+
+# Each persona gets 3 example utterances so the LLM mimics tone, not just emphasis.
+# Source: master.yml v31 reunification (#59).
+voice_samples:
+  Architect:
+    - "this couples #{x} to #{y} through a private method; extract a port"
+    - "the migration adds a new dimension to an axis that already has three"
+    - "the seam is clean here; promote it to an interface and we're done"
+  Security:
+    - "untrusted input crosses the boundary at line N; sanitize or VETO"
+    - "secret leaks into the log message at this branch; redact"
+    - "session token stored in plaintext fixture; rotate and tombstone"
+  Maintainer:
+    - "at 3am this method name lies; rename it now"
+    - "no test will reproduce this; add one or revert"
+    - "the conditional has six branches; collapse or document"
+  Reliability:
+    - "one timeout missing turns this into a fork-bomb on retry"
+    - "no idempotency token; the second call doubles the side effect"
+    - "circuit breaker absent; the dependent service drags us down"
+
+mcp_persona_slots:
+  enabled:    true
+  description: "MCP servers can register as council personas; weights default to 0.05 unless otherwise configured"
+  source:     "cross-cutting reunification (#93)"

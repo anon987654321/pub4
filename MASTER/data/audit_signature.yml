@@ -1,0 +1,12 @@
+# Sign every audit-log entry and every commit body with signify(1).
+# Source: cross-cutting reunification (#96).
+audit_signature:
+  enabled:       true
+  keypair_path:  "/etc/signify/master.sec"
+  public_path:   "/etc/signify/master.pub"
+  sign_targets:
+    - "audit_log entries"
+    - "commit messages (trailer line)"
+    - "rules.yml on save"
+  verify_on_boot: true
+  on_mismatch:    "halt; require human signing key reissue"

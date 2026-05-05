@@ -1,0 +1,8 @@
+# data/prompts/ encrypted at rest; signify-decrypted on demand.
+# Source: cross-cutting reunification (#99).
+prompt_vault:
+  enabled:           false
+  cipher:            "age | signify+xchacha"
+  keyring_path:      "/etc/master/keyring/"
+  decrypt_into:      tmpfs
+  redact_in_logs:    true

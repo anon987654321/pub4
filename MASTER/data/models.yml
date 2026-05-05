@@ -154,3 +154,21 @@ openrouter:
   free_latest:
     - nvidia/nemotron-3-super-120b-a12b:free
     - qwen/qwen3-coder:free
+
+# Provider trust tracked over time; weights routing beyond raw cost.
+# Source: master.json v225 reunification (#52).
+trust_scoring:
+  initial_score:        0.50
+  success_increment:    0.02
+  failure_decrement:    0.10
+  deprecate_below:      0.20
+  persist_to:           "data/provider_trust.yml"
+  consider_in_routing:  true
+
+three_mirror_redundancy:
+  # Three models vote; ship only on >= 2 agreement for critical fixes.
+  # Source: cross-cutting reunification (#95).
+  enabled_for:   [tier1_critical, security_relevant, irreversible]
+  pool:          [openrouter_primary, openrouter_secondary, claude_cli]
+  quorum:        2
+  on_disagreement: "fall back to council vote with all dissent recorded"

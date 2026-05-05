@@ -1,0 +1,9 @@
+# Multi-OS speak-and-listen channels (the openclaw "lobster way").
+# Source: openclaw reunification (#86). Capability spec.
+voice_channels:
+  enabled:       false
+  surfaces:      [macOS, iOS, Android, OpenBSD]
+  pipeline:      "stt -> infer -> tts"
+  stt_engine:    whisper_local_or_api
+  tts_engine:    "system_default | piper | bark"
+  canvas_link:   "render speech as live caption layer over data/canvas.yml"

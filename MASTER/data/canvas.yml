@@ -1,0 +1,17 @@
+# Live agent-controlled canvas for the web UI. Sketch the user can watch fill in.
+# Source: openclaw reunification (#87).
+canvas:
+  enabled:        true
+  mount_path:     "/canvas"
+  surface:        "html5_canvas + svg overlay"
+  update_channel: "EventBus -> SSE stream"
+  persist:        "web/db/canvas_sessions/${session_id}.jsonl"
+  primitives:
+    - draw_node:    {x: int, y: int, label: string, kind: "violation | fix | persona"}
+    - draw_edge:    {from: node_id, to: node_id, kind: "fixes | depends | conflicts"}
+    - highlight:    {node_id: id, color: "ok | warn | err"}
+    - annotate:     {x: int, y: int, text: string, ttl_ms: int}
+  capabilities:
+    - "render scan findings as a graph"
+    - "render council deliberation as a deliberation tree"
+    - "render autoloop cycles as a sweep timeline"

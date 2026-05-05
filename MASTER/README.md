@@ -20,6 +20,8 @@ The voice is OpenBSD dmesg. Structured. Unhedged. Active. No headlines, no bulle
 
 Launch from the project root with `bundle exec ruby exe/master`. Pipe input through stdin for one-shot mode. The Rails 8 web face listens on 53187, fronted by relayd to ai.brgen.no — a 2000-particle orb, an ambient pad engine, seventeen voice effects, all incidental.
 
+A live canvas — the openclaw inheritance — sits at `/canvas`. The agent draws nodes for violations, edges for fixes, a deliberation tree for council rounds, a timeline for sweep cycles. The user watches the constitution argue with the code in real time. Spec at `data/canvas.yml`, routes at `data/canvas_routes.yml`.
+
 Deploy through `DEPLOY/openbsd/openbsd.sh`, two stages, resumable.
 
 MIT.

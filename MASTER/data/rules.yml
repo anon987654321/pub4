@@ -1661,3 +1661,85 @@ evidence_scoring:
     profiling_data:   10
   pass_threshold:     80
   block_threshold:    50    # below this, propose rollback
+
+# Schema metadata for every named rule. Optional fields per rule.
+# Source: master.json v225 + master.yml v49 reunification (#51, #53, #57, #64).
+schema_metadata:
+  optional_fields:
+    reversibility:    "free | cheap | surgical | impossible"  # rollback cost
+    time_horizon:     "review | deploy | incident"            # when this fires
+    blast_radius:     "files_touched: integer"                # batching hint
+    provenance:
+      added_in_commit: sha
+      rationale:       string
+      last_revised:    iso8601
+
+# Explicit forbidden + discouraged patterns with reasons.
+# Source: master.json v225 ANALYSIS reunification (#23).
+anti_patterns:
+  forbidden:
+    - {pattern: "eval\(.*user.*\)",   reason: arbitrary_code_execution}
+    - {pattern: "rm -rf /",              reason: data_loss}
+    - {pattern: "while true.*no sleep",  reason: resource_exhaustion}
+    - {pattern: "system\(.*\$\{",     reason: command_injection}
+    - {pattern: "Marshal\.load",        reason: deserialization_rce}
+    - {pattern: "open\(.*\$\{",       reason: shell_through_open}
+  discouraged:
+    - {pattern: god_object,                reason: violates_solid_srp}
+    - {pattern: premature_optimization,    reason: violates_yagni}
+    - {pattern: defensive_copying_everywhere, reason: complexity_for_imagined_failure}
+    - {pattern: speculative_generality,    reason: yagni_in_disguise}
+
+# Recursive proof — for each Universal Law, MASTER must satisfy the law itself.
+# Source: master.yml v31 reunification (#58).
+self_test:
+  laws_apply_to_self:
+    ROBUSTNESS:   "scan lib/master/ for bare_rescue + missing timeouts"
+    SINGULARITY:  "rules.yml entries unique by id; no two YAMLs define same key"
+    LINEARITY:    "no nesting_depth > 4 in lib/master/"
+    PROXIMITY:    "test files within 1 directory of source"
+    ABSTRACTION:  "no class > god_class threshold in lib/master/"
+    DENSITY:      "no method > long_method threshold in lib/master/"
+  fail_action: "publish self_violation event; refuse autoloop fixes that don't restore the law"
+
+# Before marking a task done, re-read the file fresh — never trust cached state.
+# Source: Junie reunification (#71).
+ground_truth_check:
+  require_fresh_read_before:
+    - claim_task_complete
+    - council_vote_on_change
+    - commit_creation
+  cache_max_age_seconds: 5
+
+# Refactors must not silently change behavior. Cleaner is not a license to differ.
+# Source: Cursor v2.0 reunification (#66).
+preserve_user_intent:
+  forbidden_changes_during_refactor:
+    - public_method_signature
+    - error_class_raised
+    - return_type_shape
+    - side_effects_order
+    - log_format_consumed_by_others
+  require_explicit_approval_for: behavior_change
+
+# Detect and recover from LLM gaslighting / repetition / bad XML.
+# Source: opencrabs reunification (#82).
+phantom_recovery:
+  detectors:
+    gaslighting_preamble:    "/^(I('ll| will| can| would)|Let me|Sure,)/i"
+    text_repetition_loop:    "same 60-char span repeats >= 3 times"
+    xml_tool_call_failure:   "<tool> open without close OR malformed JSON in args"
+    empty_tool_response:     "tool returned nil twice in a row"
+  recovery:
+    - "discard last response, reset context to last successful checkpoint"
+    - "switch model tier (escalate or fall back) on second occurrence"
+    - "publish phantom:detected event, halt loop on third"
+
+# Never assume a gem is available. Check Gemfile / require_relative target before use.
+# Source: Devin reunification (#36).
+library_verify:
+  pre_flight_checks:
+    - "Gemfile.lock contains the gem at the expected version"
+    - "require_relative path exists on disk"
+    - "binary on PATH (which / command -v) before shell-out"
+  fail_action: "Result.err :missing_dependency; do not retry without human"
