@@ -1,67 +1,101 @@
 <% content_for :title, "MASTER — live canvas" %>
-<article id="canvas-app" data-session-id="<%= @session_id %>">
+<article id="canvas" data-session="<%= @session_id %>" data-reveal="">
   <header>
     <h1>live canvas</h1>
-    <p>the constitution argues with the code, in real time</p>
+    <p>swipe top: header · swipe right: thread · shake: pause</p>
   </header>
 
-  <section class="canvas-stage">
-    <svg id="canvas-svg" viewbox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" aria-label="live decision graph"></svg>
+  <section>
+    <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" aria-label="live decision graph"></svg>
   </section>
 
-  <aside class="canvas-log">
+  <aside>
     <h2>thread</h2>
-    <ol id="canvas-events"></ol>
+    <ol></ol>
   </aside>
 
   <%= javascript_tag nonce: true do %>
     (function () {
-      const svg    = document.getElementById('canvas-svg');
-      const log    = document.getElementById('canvas-events');
-      const NS     = 'http://www.w3.org/2000/svg';
-      const nodes  = new Map();
-      let nextX = 80, nextY = 80;
+      const root  = document.getElementById('canvas');
+      const svg   = root.querySelector('svg');
+      const log   = root.querySelector('ol');
+      const NS    = 'http://www.w3.org/2000/svg';
+      const nodes = new Map();
+      let nx = 80, ny = 80, paused = false, hideTimer;
 
-      function drawNode({id, label, kind}) {
+      // reveal state: "" hidden, "header", "thread", "all"
+      const reveal = (mode) => {
+        root.dataset.reveal = mode;
+        clearTimeout(hideTimer);
+        if (mode) hideTimer = setTimeout(() => root.dataset.reveal = '', 4000);
+      };
+
+      // swipe: top-edge → header, right-edge → thread, two-finger or long-press → all
+      let t0 = null;
+      addEventListener('touchstart', e => { t0 = e.touches[0] && {x: e.touches[0].clientX, y: e.touches[0].clientY, n: e.touches.length, t: Date.now()}; });
+      addEventListener('touchend',   e => {
+        if (!t0) return;
+        const tch = e.changedTouches[0]; if (!tch) return;
+        const dx = tch.clientX - t0.x, dy = tch.clientY - t0.y, dt = Date.now() - t0.t;
+        if (t0.n >= 2)                      reveal('all');
+        else if (t0.y < 40 && dy > 60)      reveal('header');
+        else if (t0.x > innerWidth - 40 && dx < -60) reveal('thread');
+        else if (dt > 500 && Math.abs(dx) < 10 && Math.abs(dy) < 10) reveal('all');
+        t0 = null;
+      });
+      addEventListener('mousemove', e => { if (e.clientY < 8 || e.clientX > innerWidth - 8) reveal('all'); });
+      addEventListener('keydown',   e => { if (e.key === 'Escape') reveal(''); if (e.key === ' ') paused = !paused; });
+
+      // device sensors: shake → pause, tilt → reveal
+      if (window.DeviceMotionEvent) {
+        let last = 0;
+        addEventListener('devicemotion', e => {
+          const a = e.accelerationIncludingGravity; if (!a) return;
+          const m = Math.hypot(a.x||0, a.y||0, a.z||0);
+          const now = Date.now();
+          if (m > 25 && now - last > 1000) { paused = !paused; reveal('all'); last = now; }
+        });
+      }
+      if (window.DeviceOrientationEvent) {
+        addEventListener('deviceorientation', e => { if (Math.abs(e.gamma||0) > 60) reveal('all'); });
+      }
+
+      function node({id, label, kind}) {
         if (nodes.has(id)) return;
         const g = document.createElementNS(NS, 'g');
-        g.setAttribute('class', 'canvas-node canvas-' + (kind || 'unknown'));
-        g.setAttribute('transform', 'translate(' + nextX + ',' + nextY + ')');
-        const c = document.createElementNS(NS, 'circle');
-        c.setAttribute('r', 22);
-        const t = document.createElementNS(NS, 'text');
-        t.setAttribute('y', 4);
-        t.setAttribute('text-anchor', 'middle');
+        g.dataset.kind = kind || 'unknown';
+        g.setAttribute('transform', `translate(${nx},${ny})`);
+        const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', 22);
+        const t = document.createElementNS(NS, 'text');   t.setAttribute('y', 4); t.setAttribute('text-anchor', 'middle');
         t.textContent = (label || id).slice(0, 14);
         g.appendChild(c); g.appendChild(t); svg.appendChild(g);
-        nodes.set(id, {x: nextX, y: nextY, el: g});
-        nextX += 110; if (nextX > 1100) { nextX = 80; nextY += 90; }
+        nodes.set(id, {x: nx, y: ny, el: g});
+        nx += 110; if (nx > 1100) { nx = 80; ny += 90; }
       }
 
-      function drawEdge({from, to, kind}) {
-        const a = nodes.get(from), b = nodes.get(to);
-        if (!a || !b) return;
-        const line = document.createElementNS(NS, 'line');
-        line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
-        line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
-        line.setAttribute('class', 'canvas-edge canvas-edge-' + (kind || 'plain'));
-        svg.insertBefore(line, svg.firstChild);
+      function edge({from, to, kind}) {
+        const a = nodes.get(from), b = nodes.get(to); if (!a || !b) return;
+        const l = document.createElementNS(NS, 'line');
+        l.setAttribute('x1', a.x); l.setAttribute('y1', a.y);
+        l.setAttribute('x2', b.x); l.setAttribute('y2', b.y);
+        l.dataset.kind = kind || 'plain';
+        svg.insertBefore(l, svg.firstChild);
       }
 
-      function logEvent(topic, payload) {
+      function entry(topic, payload) {
         const li = document.createElement('li');
-        const ts = new Date().toISOString().slice(11, 19);
-        li.textContent = ts + ' ' + topic + ' ' + JSON.stringify(payload);
+        li.textContent = `${new Date().toISOString().slice(11,19)} ${topic} ${JSON.stringify(payload)}`;
         log.insertBefore(li, log.firstChild);
         while (log.children.length > 80) log.removeChild(log.lastChild);
       }
 
-      function handle(topic, payload) {
-        logEvent(topic, payload);
-        if (topic === 'scan:violation' && payload.rule)        drawNode({id: payload.rule, label: payload.rule, kind: 'violation'});
-        if (topic === 'autoloop:fix_applied' && payload.file)  drawNode({id: payload.file, label: payload.file.split('/').pop(), kind: 'fix'});
-        if (topic === 'council:vote' && payload.persona)       drawNode({id: payload.persona, label: payload.persona, kind: 'persona'});
-        if (topic === 'canvas:edge')                            drawEdge(payload);
+      function handle(topic, p) {
+        if (paused) return;
+        entry(topic, p);
+        if (topic === 'scan:violation' && p.rule)       node({id: p.rule, label: p.rule, kind: 'violation'});
+        if (topic === 'autoloop:fix_applied' && p.file) node({id: p.file, label: p.file.split('/').pop(), kind: 'fix'});
+        if (topic === 'council:vote' && p.persona)      node({id: p.persona, label: p.persona, kind: 'persona'});
+        if (topic === 'canvas:edge')                    edge(p);
       }
 
       const es = new EventSource('/canvas/stream');
