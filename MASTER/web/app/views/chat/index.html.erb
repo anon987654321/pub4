@@ -80,6 +80,7 @@
       touch-action:none;
       cursor:pointer;
     }
+    #orb-iframe{position:fixed;inset:0;width:100%;height:100%;border:none;z-index:0;background:#000;}
 
     #status{
       position:fixed;
@@ -308,7 +309,8 @@
     <span id="attach-label"></span>
   </section>
 
-  <canvas id="canvas"></canvas>
+  <iframe id="orb-iframe" src="/orbs/orb_particle.html" frameborder="0" allow="microphone"></iframe>
+  <canvas id="canvas" hidden></canvas>
 
   <section id="overlay" role="dialog" aria-modal="true">
     <h1>MASTER</h1>
@@ -436,7 +438,21 @@ const renderMd = raw => {
 
     let audioCtx,analyser,dataArray;
     let audioLevel=0;
-    // master:tilt-reveal — chrome via device motion/orientation
+    // master:orb-cycle — restored from cli.html v284
+(function(){
+  const ORBS=['orb_particle','orb_blob','orb_backlight','orb_connected','orb_loader','orb_retro','orb_warp'];
+  const orbEl=document.getElementById('orb-iframe'); if(!orbEl) return;
+  let cur=Math.max(0,ORBS.indexOf(localStorage.getItem('master_orb')||'orb_particle'));
+  const swap=(i)=>{cur=(i+ORBS.length)%ORBS.length;orbEl.src='/orbs/'+ORBS[cur]+'.html';localStorage.setItem('master_orb',ORBS[cur]);};
+  swap(cur);
+  addEventListener('keydown',e=>{
+    if(document.activeElement && document.activeElement.tagName==='INPUT') return;
+    const n=parseInt(e.key); if(n>=1&&n<=ORBS.length){swap(n-1);return;}
+    if(e.key==='ArrowRight') swap(cur+1);
+    if(e.key==='ArrowLeft')  swap(cur-1);
+  });
+})();
+// master:tilt-reveal — chrome via device motion/orientation
 if (window.DeviceOrientationEvent) {
   let lastTilt = 0;
   window.addEventListener('deviceorientation', e => {
