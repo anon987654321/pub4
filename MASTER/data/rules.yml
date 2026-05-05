@@ -24,6 +24,13 @@ voice:
     hedges: ["will", "would", "might", "could", "perhaps", "seems", "appears"]
     endings: ["as a result.", "for this reason.", "thus.", "in effect.", "accordingly."]
     code_preambles: ["# TODO: clarify intent", "# FIXME: review edge cases", "# NOTE: performance considerations", "# HACK: temporary workaround", "# REVIEW: assess after refactor"]
+    apply_to: [prose, comments, documentation, strings]
+    never_apply_to: [code_logic, algorithms, data_structures]
+    safeguards:
+      - never_delete_variable_names
+      - never_delete_function_calls
+      - never_simplify_conditional_logic
+      - never_collapse_diagnostic_output
   inverted_pyramid:
     - "Lead with the outcome."
     - "Provide key evidence next."
@@ -45,6 +52,111 @@ zen:
   isolate: "Change one axis at a time with clear boundaries."
   verify: "Run checks and gather objective evidence."
   reflect: "Capture learning and improve defaults."
+
+# Six Universal Laws — single hierarchical priority for every rule and persona.
+# When two rules conflict, the lower-numbered law wins.
+laws:
+  ROBUSTNESS:
+    priority: 1
+    principle: "Errors fail safely; security first; handle edge cases."
+    applies_to: [security, errors, input_validation, resource_management]
+  SINGULARITY:
+    priority: 2
+    principle: "One source of truth; no duplication; data integrity."
+    applies_to: [duplication, consistency, data_integrity]
+  LINEARITY:
+    priority: 3
+    principle: "Sequential flow; minimal branches; clear path."
+    applies_to: [control_flow, nesting, complexity]
+  PROXIMITY:
+    priority: 4
+    principle: "Related code together; cohesive modules."
+    applies_to: [organization, coupling, modules]
+  ABSTRACTION:
+    priority: 5
+    principle: "Right level; no leaky abstractions; appropriate hiding."
+    applies_to: [interfaces, encapsulation, apis]
+  DENSITY:
+    priority: 6
+    principle: "Information dense; no noise; signal not noise."
+    applies_to: [verbosity, comments, naming]
+
+# Cognitive biases and anti-patterns — meta-rules above lexical detection.
+biases:
+  critical:
+    hallucination:
+      detect: [claim_without_reading, quote_without_source, invented_stats]
+      apply: cite_or_remove
+      violates_law: ROBUSTNESS
+    simulation:
+      detect: [future_tense, "imperative_we_must", "lets_do_this"]
+      apply: rewrite_indicative_past
+      violates_law: DENSITY
+    completion_theater:
+      detect: [ellipsis, etcetera, rest_of_placeholder]
+      apply: complete_or_delete
+      violates_law: ROBUSTNESS
+  high:
+    sycophancy:
+      detect: ["great question", "absolutely", "excellent", "wonderful"]
+      apply: delete
+      violates_law: DENSITY
+    false_confidence:
+      detect: hidden_uncertainty
+      apply: state_uncertainty_explicitly
+      violates_law: ROBUSTNESS
+  cognitive_traps: [anchoring, recency, verbosity, pattern_completion, premature_commitment]
+
+# Structural operations — verbs the rewriter may apply, with risk and verify spec.
+structural_ops:
+  preserve_note: "These keep getting deleted in self-runs — DO NOT REMOVE."
+  verify_after_each: true
+  ops:
+    merge:           {desc: "combine similar logic",       risk: medium, verify: "merged logic identical",      supports_law: SINGULARITY}
+    semantic_regroup: {desc: "reorganize logically",       risk: low,    verify: "functionality unchanged",     supports_law: PROXIMITY}
+    defrag:          {desc: "consolidate fragments",       risk: low,    verify: "all fragments accessible",    supports_law: PROXIMITY}
+    decouple:        {desc: "separate concerns",           risk: high,   verify: "interfaces preserved",        supports_law: ABSTRACTION}
+    hoist:           {desc: "move to proper scope",        risk: medium, verify: "scope correct",               supports_law: PROXIMITY}
+    flatten:         {desc: "reduce nesting",              risk: medium, verify: "logic flow identical",        supports_law: LINEARITY}
+    delete:          {desc: "remove dead code",            risk: high,   verify: "truly dead, no references",   supports_law: DENSITY}
+    expand:          {desc: "extract for clarity",         risk: low,    verify: "extracted correctly",         supports_law: ABSTRACTION}
+    reduce_noise:    {desc: "clean messy lines",           risk: low,    verify: "formatting only, no logic",   supports_law: DENSITY}
+
+# Veto patterns — concrete regex detectors that block merge unconditionally.
+veto_patterns:
+  secrets:         {detect: 'sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----', apply: move_to_env,        violates_law: ROBUSTNESS}
+  sql_injection:   {detect: 'execute|query.*#\{',                                              apply: parameterize,       violates_law: ROBUSTNESS}
+  unfinished:      {detect: '\.\.\.|TODO|FIXME|pending',                                       apply: complete_or_track,  violates_law: ROBUSTNESS}
+  unsafe_calls:    {detect: '\w+\.\w+\((?!&\.)',                                               apply: add_safe_nav,       violates_law: ROBUSTNESS}
+  race_conditions: {detect: 'if.*\n.*=.*\n.*if',                                               apply: add_mutex,          violates_law: ROBUSTNESS}
+
+# Beauty — aesthetic anchors from masters of their craft.
+# The user is an architect; these are first-class engineering anchors, not decoration.
+beauty:
+  typography_bringhurst:
+    - choose_appropriate_typeface_for_function
+    - set_text_in_sizes_that_suit_its_nature
+    - use_vertical_motion_that_suits_typeface
+    - rhythm_proportion_modulation_harmony
+  architecture_ando:
+    - simplicity_silence_emptiness
+    - light_shadow_materiality
+    - geometry_nature_coexistence
+    - space_between_as_important_as_form
+  design_rams:
+    - innovative_useful_aesthetic
+    - unobtrusive_honest_long_lasting
+    - thorough_environmentally_friendly
+    - as_little_design_as_possible
+  code_martin:
+    - meaningful_names_intention_revealing
+    - functions_do_one_thing_small
+    - comments_explain_why_not_what
+    - error_handling_separate_from_logic
+  zen_japanese:
+    wabi_sabi: imperfect_authentic
+    ma:        emptiness_pause
+    kanso:     eliminate_essence
 
 thresholds:
   file:
