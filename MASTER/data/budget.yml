@@ -1,0 +1,13 @@
+# Cost ceiling for a session. Routes degrade strong -> fast -> cheap as spend climbs.
+# Source: master2 reunification.
+
+budget:
+  limit:    10.0
+  currency: USD
+  thresholds:
+    strong: 5.0
+    fast:   1.0
+    cheap:  0.0
+  on_exceed:
+    action: degrade_route
+    notify: bus

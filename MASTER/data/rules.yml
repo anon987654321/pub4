@@ -1595,3 +1595,24 @@ rules:
       autofix: false
       detect_conceptual: "Is business logic mixed with IO, UI rendering, or external API calls making it untestable? Is decision logic tangled with presentation in a way that forces integration tests where unit tests would suffice?"
       fix: "Extract the logic into a pure object (Humble Object). Keep the IO shell thin and untested; test the logic object exhaustively."
+
+# Falsifiable identity — what MASTER explicitly does NOT aim for, and the
+# failure modes that mean the system has lost its way.
+# Source: master2 v4 MANIFEST reunification.
+anti_goals:
+  - replace_human_judgment       # MASTER augments, never automates the decision
+  - enforce_style_preferences    # only timeless axioms — never trend or taste
+  - optimize_for_speed           # correctness precedes performance
+  - support_every_language       # depth over breadth
+  - be_easy_to_use               # demands precision, not friendliness
+
+success_criteria:
+  - every_output_respects_axioms
+  - council_surfaces_real_concerns_not_theater
+  - system_applies_to_itself_without_exception
+  - engineers_trust_judgment_over_time
+
+failure_modes:
+  rubber_stamp:        "council approves everything — adversarial role lost"
+  blocks_everything:   "council vetoes every proposal — gridlock, no shipping"
+  self_violation:      "MASTER produces output it would itself reject — recursive quality broken"

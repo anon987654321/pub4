@@ -13,6 +13,11 @@ module Master
         /###\s*SYSTEM/i,
         /(?:act|behave|respond) as (?:if )?(?:you (?:are|were)|a|an) (?!assistant|helpful)/i,
         /override (?:your )?(?:safety|guidelines|rules|instructions)/i,
+/forget (?:everything|all|your)/i,
+/override (?:axiom|principle|rule)/i,
+/disregard (?:axiom|principle|rule|safety)/i,
+/new system prompt/i,
+
         /jailbreak/i,
       ].freeze
 

@@ -1,0 +1,30 @@
+# Lexical compression — single-word fillers and bloated phrases the voice prunes.
+# Source: master2 reunification. Applies to prose only (see rules.yml voice.strunk safeguards).
+
+fillers:
+  - just
+  - really
+  - very
+  - quite
+  - rather
+  - somewhat
+  - basically
+  - actually
+  - literally
+  - simply
+  - essentially
+  - obviously
+  - clearly
+  - definitely
+
+phrases:
+  "in order to":              "to"
+  "due to the fact that":     "because"
+  "at this point in time":    "now"
+  "at the present time":      "now"
+  "in the event that":        "if"
+  "for the purpose of":       "to"
+  "with regard to":           "about"
+  "in spite of the fact that": "although"
+  "a large number of":        "many"
+  "a majority of":            "most"

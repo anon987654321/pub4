@@ -131,3 +131,11 @@
   emphasizes: [ROBUSTNESS, ABSTRACTION]
   can_veto: false
   prompt: Audit keyboard navigation, screen-reader semantics, contrast, focus order, and reduced-motion handling.
+
+# Council deliberation parameters. Source: master2 v4 reunification.
+parameters:
+  consensus_threshold:  0.70   # weighted majority required to accept proposal
+  max_iterations:       25     # oscillation halt — forces explicit human decision
+  oscillation_detection: true
+  veto_precedence:     [Security, Reliability, Maintainer]   # order of veto evaluation
+  tie_breaker:          Maintainer                          # weighted tie -> ops perspective wins
