@@ -39,11 +39,14 @@ module Master
 
         private
 
+        # Drop "info" severity rules from the LLM prompt — they're aesthetic noise that
+        # doubles prompt size and triggers rate-limit cascades on paid tiers.
+        # Keep error + warning + kernel-tier rules: the 57 that actually matter.
         def load_conceptual_rules
           data = Master.load_yaml(RULES_PATH)
           all_rules = (data["rules"] || {}).values.flatten
           all_rules
-            .select { |r| r["detect_conceptual"] }
+            .select { |r| r["detect_conceptual"] && (r["severity"] != "info" || r["tier"] == "kernel") }
             .each_with_object({}) { |r, h| h[r["id"]] = r["detect_conceptual"] }
         end
 
