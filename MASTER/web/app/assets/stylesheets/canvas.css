@@ -1,0 +1,28 @@
+/* Live canvas — minimal, dmesg-flavoured. */
+#canvas-app {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "header header" "stage log";
+  height: 100vh;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  background: #0b0b0b;
+  color: #e5e5e5;
+}
+#canvas-app header { grid-area: header; padding: 1rem; border-bottom: 1px solid #222; }
+#canvas-app header h1 { font-size: 1rem; margin: 0 0 .25rem; letter-spacing: .08em; text-transform: uppercase; }
+#canvas-app header p  { font-size: .8rem; color: #888; margin: 0; }
+.canvas-stage { grid-area: stage; overflow: hidden; }
+#canvas-svg   { width: 100%; height: 100%; display: block; }
+.canvas-node circle { fill: #1a1a1a; stroke: #444; stroke-width: 1.5; }
+.canvas-violation circle { stroke: #c44; }
+.canvas-fix       circle { stroke: #4c4; }
+.canvas-persona   circle { stroke: #4a8; }
+.canvas-node text { fill: #ddd; font-size: 10px; pointer-events: none; }
+.canvas-edge       { stroke: #333; stroke-width: 1; }
+.canvas-edge-fixes { stroke: #4c4; }
+.canvas-edge-conflicts { stroke: #c44; stroke-dasharray: 3 2; }
+.canvas-log { grid-area: log; border-left: 1px solid #222; padding: 1rem; overflow-y: auto; font-size: .75rem; }
+.canvas-log h2 { font-size: .8rem; margin: 0 0 .5rem; color: #888; text-transform: uppercase; }
+.canvas-log ol { list-style: none; padding: 0; margin: 0; }
+.canvas-log li { padding: .15rem 0; border-bottom: 1px solid #1a1a1a; color: #aaa; word-break: break-all; }

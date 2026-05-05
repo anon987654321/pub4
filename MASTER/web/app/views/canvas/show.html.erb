@@ -1,0 +1,73 @@
+<% content_for :title, "MASTER — live canvas" %>
+<article id="canvas-app" data-session-id="<%= @session_id %>">
+  <header>
+    <h1>live canvas</h1>
+    <p>the constitution argues with the code, in real time</p>
+  </header>
+
+  <section class="canvas-stage">
+    <svg id="canvas-svg" viewbox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" aria-label="live decision graph"></svg>
+  </section>
+
+  <aside class="canvas-log">
+    <h2>thread</h2>
+    <ol id="canvas-events"></ol>
+  </aside>
+
+  <%= javascript_tag nonce: true do %>
+    (function () {
+      const svg    = document.getElementById('canvas-svg');
+      const log    = document.getElementById('canvas-events');
+      const NS     = 'http://www.w3.org/2000/svg';
+      const nodes  = new Map();
+      let nextX = 80, nextY = 80;
+
+      function drawNode({id, label, kind}) {
+        if (nodes.has(id)) return;
+        const g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', 'canvas-node canvas-' + (kind || 'unknown'));
+        g.setAttribute('transform', 'translate(' + nextX + ',' + nextY + ')');
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('r', 22);
+        const t = document.createElementNS(NS, 'text');
+        t.setAttribute('y', 4);
+        t.setAttribute('text-anchor', 'middle');
+        t.textContent = (label || id).slice(0, 14);
+        g.appendChild(c); g.appendChild(t); svg.appendChild(g);
+        nodes.set(id, {x: nextX, y: nextY, el: g});
+        nextX += 110; if (nextX > 1100) { nextX = 80; nextY += 90; }
+      }
+
+      function drawEdge({from, to, kind}) {
+        const a = nodes.get(from), b = nodes.get(to);
+        if (!a || !b) return;
+        const line = document.createElementNS(NS, 'line');
+        line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+        line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+        line.setAttribute('class', 'canvas-edge canvas-edge-' + (kind || 'plain'));
+        svg.insertBefore(line, svg.firstChild);
+      }
+
+      function logEvent(topic, payload) {
+        const li = document.createElement('li');
+        const ts = new Date().toISOString().slice(11, 19);
+        li.textContent = ts + ' ' + topic + ' ' + JSON.stringify(payload);
+        log.insertBefore(li, log.firstChild);
+        while (log.children.length > 80) log.removeChild(log.lastChild);
+      }
+
+      function handle(topic, payload) {
+        logEvent(topic, payload);
+        if (topic === 'scan:violation' && payload.rule)        drawNode({id: payload.rule, label: payload.rule, kind: 'violation'});
+        if (topic === 'autoloop:fix_applied' && payload.file)  drawNode({id: payload.file, label: payload.file.split('/').pop(), kind: 'fix'});
+        if (topic === 'council:vote' && payload.persona)       drawNode({id: payload.persona, label: payload.persona, kind: 'persona'});
+        if (topic === 'canvas:edge')                            drawEdge(payload);
+      }
+
+      const es = new EventSource('/canvas/stream');
+      es.addEventListener('bus', e => {
+        try { const m = JSON.parse(e.data); handle(m.topic, m.payload || {}); } catch (_) {}
+      });
+    })();
+  <% end %>
+</article>
