@@ -137,7 +137,7 @@ RUBY
 # ── Controllers ─────────────────────────────────────────────────────────────
 cat > app/controllers/application_controller.rb << 'RUBY'
 class ApplicationController < ActionController::Base
-  include Pagy::Backend
+  include Pagy::Method
   allow_browser versions: :modern
 end
 RUBY
@@ -350,7 +350,7 @@ cat > app/views/bookmarks/index.html.erb << 'ERB'
       <%= button_to "Remove", bookmark, method: :delete, class: "verse-action" %>
     </div>
   <% end %>
-  <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+  <%= @pagy.series_nav if @pagy.pages > 1 %>
 <% else %>
   <p class="dim">No bookmarks yet. Bookmark verses while reading.</p>
 <% end %>

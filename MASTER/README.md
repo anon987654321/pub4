@@ -1,66 +1,21 @@
 # MASTER
 
-Constitutional AI coding agent. OpenBSD-first. Ruby-only. Self-hosting.
+A constitutional AI coding agent. Ruby. OpenBSD. Self-hosting.
 
-Reviews its own code, argues with itself via adversarial council, ships the result.
+MASTER reads its own constitution at boot, scans its own code for violation, sweeps the corruption, and argues the result through an adversarial council before shipping. It edits files. It does not narrate.
 
-## Quick start
+The pipeline runs in ten stages — Intake, Infer, Route, Guard, Execute, Council and Lint in parallel, Prune, Memo, Render. Every stage returns a Result monad. An axiom violation rolls the workspace back to HEAD. A thirty-second deadline binds the parallel pair.
 
-```zsh
-cd ~/pub4/MASTER
-bundle install
-export OPENROUTER_API_KEY=...
-bundle exec ruby exe/master
-```
+The constitution lives in `data/`. Eleven YAML files — soul, rules, ruby_style, workflow, standing_orders, models, council, infer_patterns, sweep_prompts, zsh_patterns, prompts — replace the 1770-line monolith MASTER inherited and burned. The Ruby code reads these at boot. The agent is the config.
 
-## Architecture
+The scanner sweeps the tree in parallel across CPUs, applies one hundred and fifty-four named rules across four scopes, and emits findings as data. Sweep takes those findings and rewrites the source — rubocop autocorrect first, deterministic and free; then the LLM, surgical and rate-limited; then the corruption guards reject anything that lost half its length, matched an error pattern, or failed `ruby -c`.
 
-10-stage Result-monadic pipeline:
+The council convenes adversarial personas — pragmatist, purist, skeptic, historian — when a change touches a protection tier. Each speaks once. The pipeline waits, then ships or rolls back.
 
-```
-Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
-```
+The voice is OpenBSD dmesg. Structured. Unhedged. Active. No headlines, no bullet lists without content, no apology. The forbidden words — *will*, *would*, *could*, *might* — surrender to the indicative.
 
-Council and Lint run in parallel (30s timeout). Rollback on axiom violation.
+Launch from the project root with `bundle exec ruby exe/master`. Pipe input through stdin for one-shot mode. The Rails 8 web face listens on 53187, fronted by relayd to ai.brgen.no — a 2000-particle orb, an ambient pad engine, seventeen voice effects, all incidental.
 
-## Key commands
+Deploy through `DEPLOY/openbsd/openbsd.sh`, two stages, resumable.
 
-```
-/scan [deep|quick|critical]   Scan lib/ for violations
-/sweep [path]                 Self-refactor loop (convergence-driven)
-/autoloop [n]                 Fix violations autonomously, n cycles
-/crit <file|text>             Adversarial council review
-/soul                         Identity evolution commands
-/model [id|list]              Show or switch model
-/why <rule>                   Explain a scan rule
-```
-
-## Data files
-
-`data/*.yml` is the living spec — replaces the old master.yml monolith:
-
-| File | Purpose |
-|---|---|
-| `soul.yml` | Golden rule, anti-simulation, protection tiers |
-| `rules.yml` | Structural rules, voice, zen principles |
-| `ruby_style.yml` | Ruby/zsh/OpenBSD rules, banned commands |
-| `workflow.yml` | Scan depths, autoloop config, anti-sprawl |
-| `standing_orders.yml` | Current FSM state |
-| `models.yml` | Model capability table |
-| `council.yml` | Council personas and trigger patterns |
-
-## Web UI
-
-Rails 8 + Falcon on port 53187 (internal). relayd proxies via HAProxy → ai.brgen.no:443.
-
-Canvas: 2000-particle orb, ambient pad engine, drum sequencer, 17 voice FX.
-
-## Deploy
-
-```zsh
-cd DEPLOY/openbsd && doas zsh openbsd.sh
-```
-
-## License
-
-MIT
+MIT.

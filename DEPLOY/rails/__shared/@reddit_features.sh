@@ -13,8 +13,8 @@ setup_reddit_models() {
   generate_model Comment \
     user:references commentable:references{polymorphic}:index \
     parent_id:integer content:text \
-    score:integer:default[0] \
-    upvotes:integer:default[0] downvotes:integer:default[0]
+    score:integer:'default[0]' \
+    upvotes:integer:'default[0]' downvotes:integer:'default[0]'
 
   log_ok "Reddit models ready"
 }

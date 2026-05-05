@@ -37,7 +37,7 @@ bin/rails generate model Port \
   name:string:uniq version:string category:references \
   maintainer:string comment:text description:text \
   homepage:string pkgpath:string:uniq \
-  permit_file_distfiles:boolean:default[false] \
+  permit_file_distfiles:boolean:'default[false]' \
   last_updated:date \
   --no-test-framework
 
@@ -52,7 +52,7 @@ bin/rails generate model PortUpdate \
 
 bin/rails generate model Watch \
   user:references port:references \
-  notify_on_update:boolean:default[true] \
+  notify_on_update:boolean:'default[true]' \
   --no-test-framework
 
 bin/rails generate model Comment \
@@ -110,7 +110,7 @@ RUBY
 # ── Controllers ─────────────────────────────────────────────────────────────
 cat > app/controllers/application_controller.rb << 'RUBY'
 class ApplicationController < ActionController::Base
-  include Pagy::Backend
+  include Pagy::Method
   allow_browser versions: :modern
 end
 RUBY
@@ -279,7 +279,7 @@ cat > app/views/ports/index.html.erb << 'ERB'
     </div>
   <% end %>
 </div>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
 ERB
 
 cat > app/views/ports/show.html.erb << 'ERB'

@@ -51,7 +51,7 @@ generate_if_missing() {
 }
 
 generate_if_missing Follow follower_id:integer:index followed_id:integer:index
-generate_if_missing Hashtag name:string:uniq usage_count:integer:default[0]
+generate_if_missing Hashtag name:string:uniq usage_count:integer:'default[0]'
 generate_if_missing Tagging taggable:references{polymorphic} hashtag:references
 generate_if_missing Mention mentionable:references{polymorphic} mentioned_user:references{user}
 

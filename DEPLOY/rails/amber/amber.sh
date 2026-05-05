@@ -43,7 +43,7 @@ bin/rails generate model Item \
 
 bin/rails generate model Outfit \
   name:string description:text category:string \
-  season:string occasion:string "likes_count:integer:default[0]" \
+  season:string occasion:string "likes_count:integer:'default[0]'" \
   user:references \
   --no-test-framework
 
@@ -62,7 +62,7 @@ bin/rails generate model Follow \
 
 bin/rails generate model Post \
   body:text user:references outfit:references item:references \
-  "likes_count:integer:default[0]" \
+  "likes_count:integer:'default[0]'" \
   --no-test-framework
 
 bin/rails generate migration AddExtendedFieldsToItems \
@@ -214,7 +214,7 @@ ruby34 -e "
 cat > app/controllers/application_controller.rb << 'RUBY'
 class ApplicationController < ActionController::Base
   include Authentication
-  include Pagy::Backend
+  include Pagy::Method
   allow_browser versions: :modern
 end
 RUBY
@@ -836,7 +836,7 @@ cat > app/views/items/index.html.erb << 'ERB'
   <div class="item-grid" id="items" data-filter-target="grid">
     <%= render @items %>
   </div>
-  <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+  <%= @pagy.series_nav if @pagy.pages > 1 %>
 </section>
 ERB
 
@@ -954,7 +954,7 @@ cat > app/views/outfits/index.html.erb << 'ERB'
   <%= link_to "New outfit", new_outfit_path, class: "btn" %>
 </header>
 <div class="item-grid" id="outfits"><%= render @outfits %></div>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
 ERB
 
 cat > app/views/outfits/_outfit.html.erb << 'ERB'
@@ -1219,14 +1219,14 @@ ERB
 cat > app/views/posts/index.html.erb << 'ERB'
 <h1>Community</h1>
 <%= render @posts %>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
 ERB
 
 cat > app/views/posts/feed.html.erb << 'ERB'
 <h1>Your Feed</h1>
 <%= link_to "New post", new_post_path, class: "btn" %>
 <%= render @posts %>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
 ERB
 
 cat > app/views/posts/show.html.erb << 'ERB'

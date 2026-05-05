@@ -1,159 +1,385 @@
 #!/usr/bin/env zsh
-# brgen_marketplace.sh — Brgen Marketplace (Amazon clone on Solidus)
-# Usage: zsh brgen_marketplace.sh
+# brgen_marketplace.sh — Add Marketplace:: namespace to the main brgen Rails app
 set -euo pipefail
 
-APP_NAME=brgen_marketplace
-APP_DIR=/home/${APP_NAME}/app
-APP_PORT=10009
+APP_DIR=/home/brgen/app
 SCRIPT_DIR=${0:a:h}
 
-. "${SCRIPT_DIR:h}/@shared_functions.sh"
+. "${SCRIPT_DIR}/@shared_functions.sh" 2>/dev/null || . /tmp/shared_functions.sh
 
 need_cmd ruby34 bundle rails doas
 
-already_done "${APP_DIR}/app/models/spree/product.rb" && exit 0
+already_done "${APP_DIR}/app/models/marketplace/listing.rb" && exit 0
 
-log "Brgen Marketplace — Amazon-style e-commerce on Solidus"
-
-# ── Create app ─────────────────────────────────────────────────────────────
-mkdir -p "${APP_DIR:h}"
-if [[ ! -f "${APP_DIR}/config/application.rb" ]]; then
-  log "Creating Rails 8 app at $APP_DIR"
-  rails new "$APP_DIR" \
-    --database=sqlite3 \
-    --asset-pipeline=propshaft \
-    --javascript=importmap \
-    --skip-git
-fi
+log "Brgen Marketplace — adding Marketplace namespace to brgen app"
 cd "$APP_DIR"
-log_ok "Working in: $APP_DIR"
 
-# ── Gems ────────────────────────────────────────────────────────────────────
-add_gem solidus
-add_gem solidus_auth_devise
-add_gem solidus_starter_frontend
-add_gem pagy
-install_solid_stack
-install_security_tools
-
-# ── Solidus install ─────────────────────────────────────────────────────────
-log "Installing Solidus"
-bin/rails g solidus:install \
-  --payment-method=none \
-  --admin-email=admin@brgen.no \
-  --admin-password=admin1234 \
-  --auto-accept 2>/dev/null || true
-
-log "Installing Solidus auth"
-bin/rails g solidus:auth:install 2>/dev/null || true
-
-log "Installing Solidus starter frontend"
-bin/rails g solidus:starter:frontend:install 2>/dev/null || true
-
-bin/rails db:migrate
-log_ok "Solidus installed"
-
-# ── Seller extension ─────────────────────────────────────────────────────────
-# Add seller profile so multiple vendors can list products
-bin/rails generate model SellerProfile \
-  spree_user_id:integer:uniq \
-  name:string bio:text \
-  approved:boolean:default[false] \
-  stripe_account_id:string \
+# ── Models ─────────────────────────────────────────────────────────────────
+bin/rails generate model Marketplace::Category \
+  name:string slug:string parent_id:integer \
   --no-test-framework
 
-bin/rails generate model SellerProduct \
-  seller_profile:references spree_product_id:integer \
-  commission_rate:decimal \
+bin/rails generate model Marketplace::Listing \
+  user:references category:references \
+  title:string description:text \
+  price_cents:integer currency:string \
+  condition:string status:string \
+  location:string views_count:integer \
   --no-test-framework
 
-bin/rails db:migrate
+bin/rails generate model Marketplace::Order \
+  buyer:references listing:references \
+  status:string message:text \
+  price_cents:integer \
+  --no-test-framework
 
-cat > app/models/seller_profile.rb << 'RUBY'
-class SellerProfile < ApplicationRecord
-  belongs_to :user, class_name: "Spree::User", foreign_key: :spree_user_id
-  has_many :seller_products, dependent: :destroy
-  has_many :products, through: :seller_products, source_type: "Spree::Product"
+RAILS_ENV=production bin/rails db:migrate
 
-  validates :name, presence: true, length: { maximum: 100 }
-  validates :spree_user_id, uniqueness: true
+# ── Model logic ─────────────────────────────────────────────────────────────
+mkdir -p app/models/marketplace
 
-  scope :approved, -> { where(approved: true) }
+cat > app/models/marketplace/category.rb << 'RUBY'
+class Marketplace::Category < ApplicationRecord
+  belongs_to :parent, class_name: "Marketplace::Category", optional: true
+  has_many :children, class_name: "Marketplace::Category", foreign_key: :parent_id, dependent: :nullify
+  has_many :listings, class_name: "Marketplace::Listing", foreign_key: :category_id, dependent: :nullify
+
+  validates :name, :slug, presence: true
+  validates :slug, uniqueness: true
+
+  before_validation { self.slug ||= name.to_s.parameterize }
+
+  scope :roots, -> { where(parent_id: nil) }
+
+  def to_param = slug
 end
 RUBY
 
-# ── Solidus production config ─────────────────────────────────────────────────
-cat >> config/initializers/spree.rb << 'RUBY' 2>/dev/null || cat > config/initializers/spree.rb << 'RUBY'
-Spree.config do |config|
-  config.site_name = "Brgen Marketplace"
-  config.mails_from = "no-reply@brgen.no"
+cat > app/models/marketplace/listing.rb << 'RUBY'
+class Marketplace::Listing < ApplicationRecord
+  belongs_to :user
+  belongs_to :category, class_name: "Marketplace::Category",
+             foreign_key: :category_id, optional: true
+  has_many :orders, class_name: "Marketplace::Order",
+           foreign_key: :listing_id, dependent: :destroy
+  has_many_attached :photos
+
+  CONDITIONS = %w[new like_new good fair poor].freeze
+  STATUSES   = %w[active sold reserved removed].freeze
+
+  validates :title, presence: true, length: { maximum: 200 }
+  validates :price_cents, numericality: { greater_than_or_equal_to: 0 }
+  validates :condition, inclusion: { in: CONDITIONS }, allow_nil: true
+  validates :status, inclusion: { in: STATUSES }
+
+  before_validation { self.status ||= "active"; self.currency ||= "NOK" }
+
+  scope :active,   -> { where(status: "active") }
+  scope :recent,   -> { order(created_at: :desc) }
+  scope :popular,  -> { order(views_count: :desc) }
+
+  def price_display  = "#{price_cents / 100.0} #{currency}"
+  def sold?          = status == "sold"
 end
 RUBY
 
-# ── Pagy integration ─────────────────────────────────────────────────────────
-mkdir -p config/initializers
-cat > config/initializers/pagy.rb << 'RUBY'
-require "pagy/extras/overflow"
-Pagy::OPTIONS[:limit]    = 24
-Pagy::OPTIONS[:overflow] = :last_page
+cat > app/models/marketplace/order.rb << 'RUBY'
+class Marketplace::Order < ApplicationRecord
+  belongs_to :buyer,   class_name: "User"
+  belongs_to :listing, class_name: "Marketplace::Listing"
+
+  STATUSES = %w[pending accepted declined completed].freeze
+
+  validates :status, inclusion: { in: STATUSES }
+  before_validation { self.status ||= "pending" }
+
+  def seller = listing.user
+  def accept! = update!(status: "accepted")
+  def decline! = update!(status: "declined")
+end
 RUBY
 
-cat >> app/helpers/application_helper.rb << 'RUBY'
+# ── Controllers ─────────────────────────────────────────────────────────────
+mkdir -p app/controllers/marketplace
 
-  include Pagy::Frontend
+cat > app/controllers/marketplace/base_controller.rb << 'RUBY'
+class Marketplace::BaseController < ApplicationController
+
+end
 RUBY
 
-# ── Custom storefront CSS ─────────────────────────────────────────────────────
-mkdir -p app/assets/stylesheets
-cat >> app/assets/stylesheets/application.css << 'CSS'
-:root {
-  --amazon-navy: #131921; --amazon-orange: #febd69; --amazon-btn: #f0c14b;
-  --amazon-btn-border: #a88734; --text: #0f1111; --text-dim: #565959;
-  --surface: #fff; --border: #ddd; --radius: 4px;
-}
-.topbar { background: var(--amazon-navy); color: #fff; padding: .5rem 1rem; display: flex; gap: 1rem; align-items: center; }
-.topbar .logo { font-size: 1.4rem; font-weight: 700; color: var(--amazon-orange); }
-.topbar a { color: #fff; font-size: .85rem; }
-.search-bar { display: flex; flex: 1; max-width: 800px; margin: 0 auto; }
-.search-bar input { flex: 1; padding: .5rem .75rem; border: none; border-radius: 4px 0 0 4px; font-size: 1rem; }
-.search-bar button { background: var(--amazon-orange); border: none; padding: 0 1rem; border-radius: 0 4px 4px 0; cursor: pointer; font-size: 1.1rem; }
-.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding: 1rem; }
-.product-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
-.product-card img { width: 100%; aspect-ratio: 1; object-fit: contain; margin-bottom: .5rem; }
-.product-card .name { font-size: .9rem; color: var(--text); margin-bottom: .25rem; }
-.product-card .price { font-size: 1.1rem; font-weight: 700; color: #b12704; }
-.product-card .rating { color: #f0a500; font-size: .8rem; }
-.btn-cart { background: var(--amazon-btn); border: 1px solid var(--amazon-btn-border); border-radius: var(--radius); padding: .4rem 1rem; cursor: pointer; font-size: .9rem; width: 100%; margin-top: .5rem; }
-.btn-cart:hover { background: #e9b84a; }
-.breadcrumb { padding: .5rem 1rem; font-size: .85rem; color: var(--text-dim); }
-.sidebar { width: 220px; flex-shrink: 0; }
-.sidebar h3 { font-size: .9rem; border-bottom: 1px solid var(--border); padding-bottom: .25rem; margin-bottom: .5rem; }
-.layout-with-sidebar { display: flex; gap: 1rem; padding: 1rem; max-width: 1400px; margin: 0 auto; }
-CSS
+cat > app/controllers/marketplace/listings_controller.rb << 'RUBY'
+class Marketplace::ListingsController < Marketplace::BaseController
+  allow_unauthenticated_access only: %i[index show]
+  before_action :set_listing, only: %i[show edit update destroy]
 
-# ── Infrastructure ─────────────────────────────────────────────────────────
-write_falcon_config "$APP_PORT"
-configure_production
+  def index
+    scope = Marketplace::Listing.active.includes(:user, :category)
+    scope = scope.where("title LIKE ?", "%#{params[:q]}%") if params[:q].present?
+    scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
+    @pagy, @listings = pagy(scope.recent)
+    @categories = Marketplace::Category.roots.includes(:children)
+  end
 
-# Solidus sets force_ssl; ensure production.rb doesn't duplicate
-grep -q 'force_ssl' config/environments/production.rb || \
-  print '  config.force_ssl = false' >> config/environments/production.rb
+  def show
+    @listing.increment!(:views_count)
+    @order = Marketplace::Order.new if authenticated?
+  end
 
-install_rcd brgen_marketplace "$APP_DIR" "$APP_PORT" brgen_marketplace
+  def new
+    @listing   = Marketplace::Listing.new
+    @categories = Marketplace::Category.all
+  end
 
-# ── Admin seed ───────────────────────────────────────────────────────────────
-cat > db/seeds.rb << 'RUBY'
-# Solidus creates admin via install; add sample taxons and products
-if Spree::Taxon.count.zero?
-  taxonomy = Spree::Taxonomy.find_or_create_by!(name: "Categories")
-  %w[Electronics Clothing Books Furniture Sports].each do |cat|
-    taxonomy.taxons.find_or_create_by!(name: cat) { |t| t.taxonomy = taxonomy }
+  def create
+    @listing = Current.user.marketplace_listings.build(listing_params)
+    @listing.save ?
+      redirect_to(marketplace_listing_path(@listing), notice: "Listed") :
+      render(:new, status: :unprocessable_entity)
+  end
+
+  def edit
+    @categories = Marketplace::Category.all
+  end
+
+  def update
+    @listing.update(listing_params) ?
+      redirect_to(marketplace_listing_path(@listing)) :
+      render(:edit, status: :unprocessable_entity)
+  end
+
+  def destroy
+    @listing.update!(status: "removed")
+    redirect_to marketplace_listings_path
+  end
+
+  private
+  def set_listing    = (@listing = Marketplace::Listing.find(params[:id]))
+  def listing_params = params.require(:marketplace_listing).permit(
+    :title, :description, :price_cents, :condition, :status, :location,
+    :category_id, photos: []
+  )
+end
+RUBY
+
+cat > app/controllers/marketplace/orders_controller.rb << 'RUBY'
+class Marketplace::OrdersController < Marketplace::BaseController
+  before_action :set_listing
+
+  def create
+    @order = @listing.orders.build(buyer: Current.user,
+                                   message: params.dig(:marketplace_order, :message),
+                                   price_cents: @listing.price_cents)
+    @order.save ?
+      redirect_to(marketplace_listing_path(@listing), notice: "Offer sent") :
+      redirect_to(marketplace_listing_path(@listing), alert: "Could not send offer")
+  end
+
+  def update
+    @order = Marketplace::Order.find(params[:id])
+    if @order.seller == Current.user
+      @order.accept!   if params[:accept]
+      @order.decline!  if params[:decline]
+    end
+    redirect_to marketplace_listing_path(@listing)
+  end
+
+  private
+  def set_listing = (@listing = Marketplace::Listing.find(params[:listing_id]))
+end
+RUBY
+
+cat > app/controllers/marketplace/categories_controller.rb << 'RUBY'
+class Marketplace::CategoriesController < Marketplace::BaseController
+  allow_unauthenticated_access only: %i[show]
+
+  def show
+    @category = Marketplace::Category.find_by!(slug: params[:id])
+    @pagy, @listings = pagy(@category.listings.active.recent)
   end
 end
-puts "Seeded #{Spree::Taxon.count} taxons"
 RUBY
 
-bin/rails db:seed 2>/dev/null || true
+# ── Views ────────────────────────────────────────────────────────────────────
+mkdir -p app/views/marketplace/listings app/views/marketplace/categories
 
-log_ok "Brgen Marketplace setup complete — start: doas rcctl start brgen_marketplace"
+cat > app/views/marketplace/listings/index.html.erb << 'ERB'
+<% content_for :title, "Marketplace" %>
+<h1>Marketplace</h1>
+<% if authenticated? %><%= link_to "Sell something", new_marketplace_listing_path, class: "btn btn--primary" %><% end %>
+
+<form method="get">
+  <input name="q" value="<%= params[:q] %>" placeholder="Search listings…">
+  <button type="submit">Search</button>
+</form>
+
+<% if @categories.any? %>
+  <nav>
+    <% @categories.each do |cat| %>
+      <%= link_to cat.name, marketplace_category_path(cat) %>
+    <% end %>
+  </nav>
+<% end %>
+
+<div class="listing-grid">
+  <% @listings.each do |l| %>
+    <article>
+      <% if l.photos.attached? %>
+        <%= link_to marketplace_listing_path(l) do %>
+          <%= image_tag l.photos.first %>
+        <% end %>
+      <% end %>
+      <%= link_to l.title, marketplace_listing_path(l) %>
+      <p><strong><%= l.price_display %></strong></p>
+      <small><%= l.location %> · <%= l.condition %></small>
+    </article>
+  <% end %>
+</div>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
+ERB
+
+cat > app/views/marketplace/listings/show.html.erb << 'ERB'
+<% content_for :title, @listing.title %>
+<% if @listing.photos.attached? %>
+  <div>
+    <% @listing.photos.each do |photo| %>
+      <%= image_tag photo %>
+    <% end %>
+  </div>
+<% end %>
+
+<h1><%= @listing.title %></h1>
+<p><strong><%= @listing.price_display %></strong></p>
+<p><%= @listing.description %></p>
+<p>Condition: <%= @listing.condition %> · Location: <%= @listing.location %></p>
+<p>Seller: <%= @listing.user.email_address.split("@").first %></p>
+
+<% if authenticated? && Current.user != @listing.user && !@listing.sold? %>
+  <h2>Make an offer</h2>
+  <%= form_with model: @order, url: marketplace_listing_orders_path(@listing) do |f| %>
+    <%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3 %>
+    <%= f.submit "Send offer", class: "btn btn--primary" %>
+  <% end %>
+<% end %>
+
+<% if authenticated? && Current.user == @listing.user %>
+  <h2>Offers</h2>
+  <% @listing.orders.includes(:buyer).each do |o| %>
+    <article>
+      <p><%= o.buyer.email_address.split("@").first %> — <%= o.status %></p>
+      <% if o.message.present? %><p><%= o.message %></p><% end %>
+      <% if o.status == "pending" %>
+        <%= button_to "Accept", marketplace_listing_order_path(@listing, o), params: { accept: true }, method: :patch, class: "btn btn--primary" %>
+        <%= button_to "Decline", marketplace_listing_order_path(@listing, o), params: { decline: true }, method: :patch, class: "btn" %>
+      <% end %>
+    </article>
+  <% end %>
+  <nav>
+    <%= link_to "Edit", edit_marketplace_listing_path(@listing), class: "btn" %>
+    <%= button_to "Remove", marketplace_listing_path(@listing), method: :delete, class: "btn" %>
+  </nav>
+<% end %>
+ERB
+
+cat > app/views/marketplace/listings/new.html.erb << 'ERB'
+<h1>New listing</h1>
+<%= form_with model: @listing, url: marketplace_listings_path do |f| %>
+  <%= render "shared/errors", object: @listing %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title %></div>
+  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4 %></div>
+  <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents %></div>
+  <div class="field">
+    <%= f.label :condition %>
+    <%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %>
+  </div>
+  <div class="field">
+    <%= f.label :category_id, "Category" %>
+    <%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %>
+  </div>
+  <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
+  <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
+  <div class="actions"><%= f.submit "List it", class: "btn btn--primary" %></div>
+<% end %>
+ERB
+
+cat > app/views/marketplace/listings/edit.html.erb << 'ERB'
+<h1>Edit listing</h1>
+<%= form_with model: @listing, url: marketplace_listing_path(@listing), method: :patch do |f| %>
+  <%= render "shared/errors", object: @listing %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title %></div>
+  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4 %></div>
+  <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents %></div>
+  <div class="field">
+    <%= f.label :condition %>
+    <%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %>
+  </div>
+  <div class="field">
+    <%= f.label :category_id, "Category" %>
+    <%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %>
+  </div>
+  <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
+  <div class="field">
+    <%= f.label :status %>
+    <%= f.select :status, Marketplace::Listing::STATUSES %>
+  </div>
+  <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
+  <div class="actions"><%= f.submit "Save", class: "btn btn--primary" %></div>
+<% end %>
+ERB
+
+cat > app/views/marketplace/categories/show.html.erb << 'ERB'
+<% content_for :title, @category.name %>
+<h1><%= @category.name %></h1>
+<div class="listing-grid">
+  <% @listings.each do |l| %>
+    <article>
+      <%= link_to l.title, marketplace_listing_path(l) %>
+      <p><strong><%= l.price_display %></strong></p>
+    </article>
+  <% end %>
+</div>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
+ERB
+
+# ── Route patch ─────────────────────────────────────────────────────────────
+ruby34 -e "
+r = File.read('config/routes.rb')
+unless r.include?('namespace :marketplace')
+  patch = %q(
+  namespace :marketplace do
+    root 'listings#index'
+    resources :listings do
+      resources :orders, only: %i[create update]
+    end
+    resources :categories, only: :show, param: :id
+  end
+)
+  r.sub!('root \"home#index\"', patch + '  root \"home#index\"')
+  File.write('config/routes.rb', r)
+  puts 'Routes patched'
+end
+"
+
+# ── User association ─────────────────────────────────────────────────────────
+ruby34 -e "
+u = File.read('app/models/user.rb')
+unless u.include?('marketplace_listings')
+  u.sub!('has_secure_password', %Q(has_secure_password
+  has_many :marketplace_listings, class_name: 'Marketplace::Listing', dependent: :destroy
+  has_many :marketplace_orders,   class_name: 'Marketplace::Order',   foreign_key: :buyer_id, dependent: :destroy))
+  File.write('app/models/user.rb', u)
+  puts 'User model patched'
+end
+"
+
+# ── Seed categories ──────────────────────────────────────────────────────────
+ruby34 -e "
+require_relative 'config/environment'
+%w[Electronics Clothing Books Furniture Sports Vehicles Homes Other].each do |name|
+  Marketplace::Category.find_or_create_by!(name: name)
+end
+puts 'Categories seeded'
+" 2>/dev/null || true
+
+doas rcctl restart brgen 2>/dev/null || true
+log_ok "Brgen Marketplace namespace added — visit /marketplace"

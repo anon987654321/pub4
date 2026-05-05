@@ -34,17 +34,17 @@ install_action_text
 # ── Models ─────────────────────────────────────────────────────────────────
 bin/rails generate model Blog \
   name:string description:text slug:string:uniq \
-  user:references published:boolean:default[false] \
-  posts_count:integer:default[0] \
+  user:references published:boolean:'default[false]' \
+  posts_count:integer:'default[0]' \
   --no-test-framework
 
 bin/rails generate model Post \
   title:string slug:string:uniq \
   blog:references user:references \
-  published:boolean:default[false] \
+  published:boolean:'default[false]' \
   published_at:datetime \
-  views_count:integer:default[0] \
-  comments_count:integer:default[0] \
+  views_count:integer:'default[0]' \
+  comments_count:integer:'default[0]' \
   --no-test-framework
 
 bin/rails generate model Category name:string slug:string:uniq description:text \
@@ -56,10 +56,10 @@ bin/rails generate model Categorization post:references category:references \
 bin/rails generate model Comment \
   post:references user:references \
   parent_id:integer content:text \
-  approved:boolean:default[true] \
+  approved:boolean:'default[true]' \
   --no-test-framework
 
-bin/rails generate model Tag name:string:uniq posts_count:integer:default[0] \
+bin/rails generate model Tag name:string:uniq posts_count:integer:'default[0]' \
   --no-test-framework
 
 bin/rails generate model Tagging post:references tag:references \
@@ -159,7 +159,7 @@ RUBY
 # ── Controllers ─────────────────────────────────────────────────────────────
 cat > app/controllers/application_controller.rb << 'RUBY'
 class ApplicationController < ActionController::Base
-  include Pagy::Backend
+  include Pagy::Method
   allow_browser versions: :modern
 end
 RUBY
@@ -329,7 +329,7 @@ cat > app/views/blogs/index.html.erb << 'ERB'
     </article>
   <% end %>
 </div>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
 ERB
 
 cat > app/views/blogs/show.html.erb << 'ERB'
@@ -350,7 +350,7 @@ cat > app/views/blogs/show.html.erb << 'ERB'
     </article>
   <% end %>
 </div>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
 ERB
 
 cat > app/views/blogs/new.html.erb << 'ERB'

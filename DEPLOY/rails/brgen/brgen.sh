@@ -37,7 +37,7 @@ bin/rails generate migration AddUsernameAndKarmaToUsers \
 
 bin/rails generate model Community \
   name:string description:text slug:string:uniq \
-  subscribers_count:integer:default[0] \
+  subscribers_count:integer \
   user:references \
   --no-test-framework
 
@@ -48,9 +48,9 @@ bin/rails generate model CommunityMembership \
 bin/rails generate model Post \
   title:string content:text url:string \
   community:references user:references \
-  score:integer:default[0] \
-  upvotes:integer:default[0] downvotes:integer:default[0] \
-  comments_count:integer:default[0] \
+  score:integer \
+  upvotes:integer downvotes:integer \
+  comments_count:integer \
   post_type:string \
   --no-test-framework
 
@@ -60,7 +60,7 @@ bin/rails generate model Follow \
 
 bin/rails generate model Story \
   user:references caption:string expires_at:datetime \
-  views_count:integer:default[0] \
+  views_count:integer \
   --no-test-framework
 
 bin/rails db:migrate
@@ -198,7 +198,7 @@ RUBY
 # ── Controllers ─────────────────────────────────────────────────────────────
 cat > app/controllers/application_controller.rb << 'RUBY'
 class ApplicationController < ActionController::Base
-  include Pagy::Backend
+  include Pagy::Method
   allow_browser versions: :modern
 end
 RUBY

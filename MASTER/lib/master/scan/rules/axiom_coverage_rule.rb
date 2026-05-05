@@ -8,11 +8,19 @@ module Master
       # Every rule ID in rules.yml must have scan rule coverage; every @axiom_tags
       # symbol must name a real rule ID. Orphaned tags and uncovered rules both signal drift.
       class AxiomCoverageRule < Rule
+        RULE_ID           = "axiom_coverage"
+        DESCRIPTION       = "Every rule must have scan rule coverage; every tag must be a real rule"
+        RULES_YML_PATH    = File.join("data", "rules.yml")
+        SCAN_RULES_DIR    = File.join("lib", "master", "scan", "rules")
+        AXIOM_TAGS_VAR    = :@axiom_tags
+        ORPHANED_TAG_MSG  = "axiom_tag :%s has no entry in rules.yml — define it or remove the tag"
+        UNCOVERED_RULE_MSG = "rule %s has no scan rule coverage — add a rule or accept as advisory"
+
         def initialize(root: nil)
           super()
           @root        = root
-          @id          = "axiom_coverage"
-          @description = "Every rule must have scan rule coverage; every tag must be a real rule"
+          @id          = RULE_ID
+          @description = DESCRIPTION
           @severity    = :warning
           @axiom_tags  = []
         end
@@ -20,7 +28,7 @@ module Master
         def self.auto_build? = false
 
         def check(code, path:)
-          return [] unless path.include?("scan/rules") || path.include?("scan/rule.rb")
+          return [] unless path.include?(SCAN_RULES_DIR) || path.include?("scan/rule.rb")
           return [] unless @root
 
           axiom_ids  = load_axiom_ids
@@ -28,11 +36,11 @@ module Master
           findings   = []
 
           (tagged_ids - axiom_ids).each do |id|
-            findings << finding(line: 1, message: "axiom_tag :#{id} has no entry in rules.yml — define it or remove the tag")
+            findings << finding(line: 1, message: format(ORPHANED_TAG_MSG, id))
           end
 
           (axiom_ids - tagged_ids).each do |id|
-            findings << finding(line: 1, message: "rule #{id} has no scan rule coverage — add a rule or accept as advisory")
+            findings << finding(line: 1, message: format(UNCOVERED_RULE_MSG, id))
           end
 
           findings
@@ -41,24 +49,24 @@ module Master
         private
 
         def load_axiom_ids
-          path = File.join(@root, "data", "rules.yml")
-          return [] unless File.exist?(path)
+          full_path = File.join(@root, RULES_YML_PATH)
+          return [] unless File.exist?(full_path)
 
-          data = Master.load_yaml(path)
+          data = Master.load_yaml(full_path)
           all_rules = (data["rules"] || {}).values.flatten
           all_rules.map { |r| r["id"] }.compact.uniq
-        rescue StandardError => _e
+        rescue StandardError
           []
         end
 
         def load_tagged_ids
-          rules_dir = File.join(@root, "lib", "master", "scan", "rules")
-          return [] unless Dir.exist?(rules_dir)
+          full_rules_dir = File.join(@root, SCAN_RULES_DIR)
+          return [] unless Dir.exist?(full_rules_dir)
 
-          Dir.glob(File.join(rules_dir, "*.rb")).flat_map { |f|
+          Dir.glob(File.join(full_rules_dir, "*.rb")).flat_map { |f|
             extract_axiom_tags(File.read(f))
           }.uniq
-        rescue StandardError => _e
+        rescue StandardError
           []
         end
 
@@ -69,19 +77,20 @@ module Master
           collector = TagCollector.new
           collector.visit(result.value)
           collector.tags
-        rescue StandardError => _e
+        rescue StandardError
           []
         end
 
         class TagCollector < Prism::Visitor
           attr_reader :tags
+
           def initialize
             super
             @tags = []
           end
 
           def visit_instance_variable_write_node(node)
-            if node.name == :@axiom_tags
+            if node.name == AXIOM_TAGS_VAR
               @tags.concat(collect_symbols(node.value))
             end
             super

@@ -5,8 +5,9 @@ require "etc"
 module Master
   module Scan
     class Scanner
-      RULES_PATH   = File.join(Master::ROOT, "data", "rules.yml").freeze
-      POOL_SIZE    = [Etc.nprocessors, 8].min
+      RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
+      POOL_SIZE  = [Etc.nprocessors, 8].min
+      SCAN_GLOB  = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
 
       def initialize(rules: nil, event_bus: nil)
         @rules = rules || []
@@ -18,9 +19,7 @@ module Master
         return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
 
         code     = File.read(path, encoding: "UTF-8")
-        active   = active_rules(depth)
-        findings = active.flat_map { |rule| rule.check(code, path:) }
-
+        findings = active_rules(depth).flat_map { |rule| rule.check(code, path:) }
         @bus&.publish("scan:complete", path:, depth:, count: findings.size)
         Result.ok(findings)
       rescue StandardError => e
@@ -28,38 +27,10 @@ module Master
         Result.err("scan failed: #{e.message}", category: :unknown)
       end
 
-      SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
-
       def scan_dir(dir, depth: :standard, glob: SCAN_GLOB, stream: false)
-        paths     = Dir.glob(File.join(dir, glob)).sort
-        results   = Array.new(paths.size)
-        threads   = []
-        semaphore = Mutex.new
-        index     = 0
-
-        POOL_SIZE.times do
-          threads << Thread.new do
-            loop do
-              current_index = semaphore.synchronize { (index += 1) - 1 }
-              break if current_index >= paths.size
-              path = paths[current_index]
-              begin
-                file_result = scan(path, depth:)
-                results[current_index] = [path, file_result]
-                if stream && file_result.respond_to?(:ok?) && file_result.ok?
-                  count = file_result.value!.size
-                  $stdout.puts "scan: #{path.sub(dir, "").delete_prefix("/")} #{count > 0 ? "#{count} violation(s)" : "ok"}" if count > 0
-                  $stdout.flush
-                end
-              rescue StandardError => e
-                @bus&.publish("scanner:thread_error", path:, error: e.message)
-                results[current_index] = [path, Result.err(e.message, category: :unknown)]
-              end
-            end
-          end
-        end
-
-        threads.each(&:join)
+        paths   = Dir.glob(File.join(dir, glob)).sort
+        results = Array.new(paths.size)
+        parallel_each(paths) { |path, idx| results[idx] = scan_one(dir, path, depth, stream) }
         Result.ok(results)
       rescue StandardError => e
         Result.err("scan_dir: #{e.message}", category: :unknown)
@@ -76,6 +47,38 @@ module Master
       end
 
       private
+
+      def parallel_each(items)
+        cursor = Mutex.new
+        index  = 0
+        Array.new(POOL_SIZE) do
+          Thread.new do
+            loop do
+              i = cursor.synchronize { (index += 1) - 1 }
+              break if i >= items.size
+              yield items[i], i
+            end
+          end
+        end.each(&:join)
+      end
+
+      def scan_one(dir, path, depth, stream)
+        file_result = scan(path, depth:)
+        stream_progress(dir, path, file_result) if stream
+        [path, file_result]
+      rescue StandardError => e
+        @bus&.publish("scanner:thread_error", path:, error: e.message)
+        [path, Result.err(e.message, category: :unknown)]
+      end
+
+      def stream_progress(dir, path, file_result)
+        return unless file_result.respond_to?(:ok?) && file_result.ok?
+        count = file_result.value!.size
+        return unless count.positive?
+        rel = path.sub(dir, "").delete_prefix("/")
+        $stdout.puts "scan: #{rel} #{count} violation(s)"
+        $stdout.flush
+      end
 
       def depth_rules
         @depth_rules ||= begin

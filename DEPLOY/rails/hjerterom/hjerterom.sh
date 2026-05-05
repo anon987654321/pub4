@@ -42,7 +42,7 @@ bin/rails generate model Resource \
   title:string description:text url:string \
   address:string city:string postal_code:string \
   latitude:float longitude:float phone:string email:string \
-  verified:boolean:default[false] \
+  verified:boolean:'default[false]' \
   resource_type:string \
   opening_hours:text \
   --no-test-framework
@@ -50,7 +50,7 @@ bin/rails generate model Resource \
 bin/rails generate model Crisis \
   title:string description:text \
   phone:string sms:string chat_url:string \
-  available_24h:boolean:default[false] \
+  available_24h:boolean:'default[false]' \
   languages:string \
   country:string \
   --no-test-framework
@@ -75,13 +75,13 @@ bin/rails generate model FoodRequest \
 # Community
 bin/rails generate model Post \
   user:references category:references \
-  title:string anonymous:boolean:default[false] \
-  pinned:boolean:default[false] views_count:integer:default[0] \
+  title:string anonymous:boolean:'default[false]' \
+  pinned:boolean:'default[false]' views_count:integer:'default[0]' \
   --no-test-framework
 
 bin/rails generate model Comment \
   user:references post:references parent_id:integer \
-  content:text anonymous:boolean:default[false] \
+  content:text anonymous:boolean:'default[false]' \
   --no-test-framework
 
 bin/rails generate model SupportRequest \
@@ -191,7 +191,7 @@ RUBY
 # ── Controllers ─────────────────────────────────────────────────────────────
 cat > app/controllers/application_controller.rb << 'RUBY'
 class ApplicationController < ActionController::Base
-  include Pagy::Backend
+  include Pagy::Method
   allow_browser versions: :modern
 end
 RUBY
@@ -482,7 +482,7 @@ cat > app/views/resources/index.html.erb << 'ERB'
     </article>
   <% end %>
 </div>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
 ERB
 
 cat > app/views/resources/show.html.erb << 'ERB'
@@ -554,7 +554,7 @@ cat > app/views/food_listings/index.html.erb << 'ERB'
     </article>
   <% end %>
 </div>
-<%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
 ERB
 
 cat > app/views/food_listings/show.html.erb << 'ERB'

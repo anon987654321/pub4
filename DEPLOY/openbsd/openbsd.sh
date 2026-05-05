@@ -216,9 +216,11 @@ ALL_APPS=(
 
   brgen:brgen.no
 
-  amber:amberapp.com
+  amber:amber.brgen.no
 
   bsdports:bsdports.org
+
+  baibl:baibl.no
 
 )
 
@@ -328,9 +330,6 @@ ALL_DOMAINS=(
   bsddocs.org
 
   discordb.org
-
-  privcam.no
-
   foodielicio.us
 
   stacyspassion.com
@@ -342,6 +341,10 @@ ALL_DOMAINS=(
   antigamblingblog.com
 
   foball.no
+
+  amber.brgen.no
+
+  baibl.no
 
 )
 
@@ -828,29 +831,21 @@ EOF
   # Configure HTTP
   [[ -d /var/www/acme ]] || { log ERROR "/var/www/acme missing"; exit 1 }
 
-  cat > /etc/httpd.conf <<EOF
+  cat > /etc/httpd.conf <<'EOF'
 
-# HTTP for ACME (httpd.conf(5))
+# HTTP: ACME challenges + HTTP→HTTPS redirect (httpd.conf(5))
 
-brgen_ip="$BRGEN_IP"
-
-server "acme" {
-  listen on $brgen_ip port 80
+server "*" {
+  listen on 0.0.0.0 port 80
 
   location "/.well-known/acme-challenge/*" {
-
     root "/acme"
-
     request strip 2
-
   }
 
-  location "*" {
-
+  location * {
     block return 301 "https://$HTTP_HOST$REQUEST_URI"
-
   }
-
 }
 
 EOF
@@ -1058,11 +1053,11 @@ ALL_DOMAINS=(
 
   wshingtondc.com pub.healthcare pub.attorney freehelp.legal
 
-  bsdports.org bsddocs.org discordb.org privcam.no foodielicio.us
+  bsdports.org bsddocs.org discordb.org foodielicio.us
 
   stacyspassion.com antibettingblog.com anticasinoblog.com
 
-  antigamblingblog.com foball.no amberapp.com
+  antigamblingblog.com foball.no
 
 )
 
@@ -1146,15 +1141,89 @@ setup_services() {
 
 }
 
+configure_haproxy() {
+  log INFO "Writing HAProxy config (SNI-based TLS termination)"
+
+  pkg_add haproxy 2>/dev/null || true
+
+  # Build PEM bundles: fullchain + key for each SSL domain
+  typeset -a SSL_DOMAINS=(brgen.no amber.brgen.no ai.brgen.no bsdports.org)
+  for d in $SSL_DOMAINS; do
+    [[ -f /etc/ssl/${d}.fullchain.pem && -f /etc/ssl/private/${d}.key ]] || continue
+    cat /etc/ssl/${d}.fullchain.pem /etc/ssl/private/${d}.key > /etc/haproxy/${d}.pem
+    chmod 600 /etc/haproxy/${d}.pem
+  done
+
+  # Build bind line from available PEMs
+  typeset crt_list=""
+  for d in $SSL_DOMAINS; do
+    [[ -f /etc/haproxy/${d}.pem ]] && crt_list="$crt_list crt /etc/haproxy/${d}.pem"
+  done
+
+  cat > /etc/haproxy/haproxy.cfg <<EOF
+global
+	log 127.0.0.1 local0 debug
+	maxconn 1024
+	chroot /var/haproxy
+	user _haproxy
+	group _haproxy
+	daemon
+	pidfile /var/run/haproxy.pid
+
+defaults
+	log global
+	mode http
+	option httplog
+	option dontlognull
+	option redispatch
+	retries 3
+	maxconn 2000
+	timeout connect 5s
+	timeout client 30s
+	timeout server 30s
+
+frontend https
+	bind *:443 ssl${crt_list}
+	http-request set-header X-Forwarded-Proto https
+	http-request set-header X-Forwarded-For %[src]
+
+	use_backend master   if { ssl_fc_sni ai.brgen.no }
+	use_backend brgen    if { ssl_fc_sni brgen.no }
+	use_backend amber    if { ssl_fc_sni amber.brgen.no }
+	use_backend bsdports if { ssl_fc_sni bsdports.org }
+	default_backend master
+
+backend master
+	option forwardfor
+	server master 127.0.0.1:53187 check
+
+backend brgen
+	option forwardfor
+	server brgen 127.0.0.1:11006 check
+
+backend amber
+	option forwardfor
+	server amber 127.0.0.1:61352 check
+
+backend bsdports
+	option forwardfor
+	server bsdports 127.0.0.1:47312 check
+EOF
+
+  haproxy -c -f /etc/haproxy/haproxy.cfg || { log ERROR "haproxy.cfg invalid"; exit 1 }
+  /usr/sbin/rcctl enable haproxy
+  /usr/sbin/rcctl restart haproxy || { log ERROR "haproxy failed"; exit 1 }
+  typeset _h; _h=$(/usr/sbin/rcctl check haproxy); [[ $_h == *"haproxy(ok)"* ]] || { log ERROR "haproxy not running"; exit 1 }
+  log INFO "HAProxy running — TLS termination active"
+}
+
 configure_relayd() {
   log INFO "Writing relayd.conf (HTTP + HTTPS, separate ports per app)"
 
   # name:internal_port:external_http_port
   typeset -a APPS=(
-    "brgen:11006:80"
-    "amber:10006:8080"
-    "hjerterom:10004:8082"
-    "privcam:10005:8084"
+    "amber:61352:8080"
+    "bsdports:47312:8081"
     "baibl:10007:8086"
   )
 
@@ -1303,7 +1372,7 @@ EOF
     log INFO "Generating Rails apps from feature scripts"
     typeset deploy_dir="/home/dev/pub4/DEPLOY/rails"
 
-    for app_script in brgen/brgen.sh amber/amber.sh blognet/blognet.sh bsdports/bsdports.sh hjerterom/hjerterom.sh privcam/privcam.sh baibl/baibl.sh; do
+    for app_script in brgen/brgen.sh amber/amber.sh blognet/blognet.sh bsdports/bsdports.sh hjerterom/hjerterom.sh baibl/baibl.sh; do
       typeset script_path="${deploy_dir}/${app_script}"
       typeset app_name="${app_script%%/*}"
       if [[ -f $script_path ]]; then
@@ -1357,28 +1426,25 @@ EOF
 
     }
 
-    # Database setup removed (SQLite or external DB expected)
+    # Database: create + migrate in production
+    su -l $app -c "cd $app_dir && HOME=/home/$app RAILS_ENV=production bundle exec rails db:create db:migrate" || {
+      log WARN "db:create/migrate failed for $app (may already exist)"
+    }
+
+    typeset secret; secret=$(su -l $app -c "cd $app_dir && HOME=/home/$app RAILS_ENV=production bundle exec rails secret")
 
     cat > /etc/rc.d/$app <<EOF
-
 #!/bin/ksh
-
-# rc.d for $app (rc.d(8))
-
-daemon_user="$app"
+daemon="/usr/local/bin/bundle"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${secret} HOME=/home/${app} falcon serve --bind http://127.0.0.1:${port}"
+daemon_user="${app}"
+daemon_execdir="${app_dir}"
+daemon_timeout="60"
 . /etc/rc.d/rc.subr
-rc_start() {
-  cd $app_dir || return 1
-
-  export RAILS_ENV=production
-
-  export PATH=${HOME}/.gem/ruby/3.4/bin:$PATH
-
-  ${rcexec} "bin/rails server -b 0.0.0.0 -p $port -e production"
-
-}
-
-rc_cmd $1
+pexp="ruby.*${port}"
+rc_bg=YES
+rc_reload=NO
+rc_cmd \$1
 EOF
 
     chmod 755 /etc/rc.d/$app
@@ -1426,54 +1492,7 @@ log INFO "Service $svc_name handled by master rc.d"
     # Read API keys from dev's .zshrc for the rc.d service
     typeset env_line=""
     while IFS= read -r _line; do
-      [[ $_line == export\ *_API_KEY=* ]] && {
-        typeset _k=${_line#export }
-        env_line="$env_line ${_k%%=*}=${${_k#*=}//[\"
-  configure_relayd
-
-  print -r -- stage_2_complete > $STATE_FILE
-  log INFO "Stage 2 complete. Setup complete. Test: 'curl http://ai.brgen.no:3000/chat/metrics', 'rcctl check master'."
-
-  exit 0
-
-}
-
-# Main execution
-main() {
-
-  typeset arg1=${1:-}
-
-  [[ -f $STATE_FILE && ! -r $STATE_FILE ]] && { log ERROR "$STATE_FILE not readable"; exit 1 }
-
-  if [[ $arg1 = --help ]]; then
-
-    print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC and minimal OpenSMTPD.
-Usage: doas zsh openbsd.sh [--help | --resume]"
-
-    exit 0
-
-  fi
-
-  if [[ $arg1 = --resume && -f $STATE_FILE && $(<$STATE_FILE) = stage_1_complete ]]; then
-
-    stage_2
-
-  elif [[ -z $arg1 && ! -f $STATE_FILE ]]; then
-
-    stage_1
-
-  else
-
-    log ERROR "Invalid state. Use --help, --resume, or remove $STATE_FILE."
-
-    exit 1
-
-  fi
-
-}
-
-main "$@"
-]}"
+        env_line="$env_line ${_k%%=*}=${_k#*=}"
       }
     done < /home/dev/.zshrc
 
@@ -1496,10 +1515,12 @@ RCEOF
     mark_step_completed "master_deployed"
     log INFO "MASTER web UI running on :53187 (relayd :3000 -> :53187)"
   fi
+
   configure_relayd
+  configure_haproxy
 
   print -r -- stage_2_complete > $STATE_FILE
-  log INFO "Stage 2 complete. Setup complete. Test: 'curl https://brgen.no', 'curl https://ai.brgen.no'."
+  log INFO "Stage 2 complete. Test: curl https://brgen.no, rcctl check master."
 
   exit 0
 
@@ -1513,28 +1534,18 @@ main() {
   [[ -f $STATE_FILE && ! -r $STATE_FILE ]] && { log ERROR "$STATE_FILE not readable"; exit 1 }
 
   if [[ $arg1 = --help ]]; then
-
-    print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC and minimal OpenSMTPD.
+    print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC and HAProxy TLS.
 Usage: doas zsh openbsd.sh [--help | --resume]"
-
     exit 0
-
   fi
 
   if [[ $arg1 = --resume && -f $STATE_FILE && $(<$STATE_FILE) = stage_1_complete ]]; then
-
     stage_2
-
   elif [[ -z $arg1 && ! -f $STATE_FILE ]]; then
-
     stage_1
-
   else
-
     log ERROR "Invalid state. Use --help, --resume, or remove $STATE_FILE."
-
     exit 1
-
   fi
 
 }

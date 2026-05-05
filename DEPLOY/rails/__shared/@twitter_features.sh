@@ -8,9 +8,9 @@ setup_twitter_models() {
 
   generate_model Post \
     user:references content:string \
-    likes_count:integer:default[0] \
-    reposts_count:integer:default[0] \
-    replies_count:integer:default[0] \
+    likes_count:integer:'default[0]' \
+    reposts_count:integer:'default[0]' \
+    replies_count:integer:'default[0]' \
     in_reply_to_id:integer
 
   generate_model Follow \
@@ -22,7 +22,7 @@ setup_twitter_models() {
   generate_model Repost \
     user:references post:references quote:text
 
-  generate_model Hashtag name:string:uniq posts_count:integer:default[0]
+  generate_model Hashtag name:string:uniq posts_count:integer:'default[0]'
 
   generate_model Tagging \
     post:references hashtag:references

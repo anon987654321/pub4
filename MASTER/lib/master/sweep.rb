@@ -127,18 +127,51 @@ circuit\sopen|retry\sin|llm_request)\b
     private
 
     def evaluate_rewrite(rel, src, before, cycle)
-      new_src = rewrite(File.join(@root, rel), rel)
-      return nil unless new_src && new_src.strip != src.strip && syntax_ok?(File.join(@root, rel), new_src)
-
-      after = violations_in_text(new_src, File.join(@root, rel))
+      abs = File.join(@root, rel)
+      native_src = native_autofix(abs, src)
+      if native_src
+        native_after = violations_in_text(native_src, abs)
+        if native_after < before
+          @bus&.publish("sweep:native_fix", file: rel, before:, after: native_after)
+          return [native_src, native_after]
+        end
+        src = native_src
+        before = native_after
+      end
+    
+      new_src = rewrite(abs, rel)
+      return nil unless new_src && new_src.strip != src.strip && syntax_ok?(abs, new_src)
+    
+      after = violations_in_text(new_src, abs)
       return nil if after > before
-
+    
       if rename_oscillation?(rel, src, new_src, cycle)
         @bus&.publish("sweep:oscillation_rejected", file: rel, cycle:)
         return nil
       end
-
+    
       [new_src, after]
+    end
+    
+    def native_autofix(path, src)
+      return nil unless path.end_with?(".rb")
+      result = nil
+      Tempfile.open(["sweep_native", ".rb"]) do |f|
+        f.write(src)
+        f.flush
+        _, _, status = Open3.capture3(
+          "bundle", "exec", "rubocop", "-A", "--no-color",
+          "--format", "quiet", f.path, chdir: @root
+        )
+        next unless status.exitstatus.to_i <= 1
+        candidate = File.read(f.path, encoding: "UTF-8")
+        next if candidate == src
+        next unless syntax_ok?(path, candidate)
+        result = candidate
+      end
+      result
+    rescue StandardError => _e
+      nil
     end
   end
 end

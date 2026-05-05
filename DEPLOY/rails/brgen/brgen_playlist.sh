@@ -1,127 +1,83 @@
 #!/usr/bin/env zsh
-# brgen_playlist.sh — Brgen Playlist music/media curator (Rails 8)
-# Usage: zsh brgen_playlist.sh
+# brgen_playlist.sh — Add Playlist:: namespace to the main brgen Rails app
 set -euo pipefail
 
-APP_NAME=brgen_playlist
-APP_DIR=/home/${APP_NAME}/app
-APP_PORT=10010
+APP_DIR=/home/brgen/app
 SCRIPT_DIR=${0:a:h}
 
-. "${SCRIPT_DIR:h}/@shared_functions.sh"
+. "${SCRIPT_DIR}/@shared_functions.sh" 2>/dev/null || . /tmp/shared_functions.sh
 
 need_cmd ruby34 bundle rails doas
 
-already_done "${APP_DIR}/app/models/playlist.rb" && exit 0
+already_done "${APP_DIR}/app/models/playlist/playlist.rb" && exit 0
 
-log "Brgen Playlist — Music Curation Platform"
-
-# ── Create app ─────────────────────────────────────────────────────────────
-create_rails_app "$APP_DIR"
-
-# ── Gems ────────────────────────────────────────────────────────────────────
-add_gem pagy
-add_gem image_processing
-install_solid_stack
-install_security_tools
-
-# ── Auth ───────────────────────────────────────────────────────────────────
-install_auth
-install_active_storage
+log "Brgen Playlist — adding Playlist namespace to brgen app"
+cd "$APP_DIR"
 
 # ── Models ─────────────────────────────────────────────────────────────────
-bin/rails generate model Playlist \
+bin/rails generate model Playlist::Playlist \
   user:references name:string description:text \
-  public_access:boolean:default[true] \
-  plays_count:integer:default[0] \
-  likes_count:integer:default[0] \
-  tracks_count:integer:default[0] \
-  cover_color:string \
+  public_access:boolean plays_count:integer \
+  likes_count:integer tracks_count:integer \
   --no-test-framework
 
-bin/rails generate model Track \
+bin/rails generate model Playlist::Track \
   title:string artist:string album:string \
   duration_seconds:integer genre:string \
-  year:integer bpm:integer \
-  source_type:string source_id:string source_url:string \
+  source_type:string source_url:string \
   --no-test-framework
 
-bin/rails generate model PlaylistTrack \
-  playlist:references track:references \
-  position:integer added_by:references{User} \
+bin/rails generate model Playlist::PlaylistTrack \
+  playlist_playlist:references playlist_track:references \
+  position:integer user:references \
   --no-test-framework
 
-bin/rails generate model Follow \
-  follower:references{User} followable:references{polymorphic}:index \
+bin/rails generate model Playlist::Listen \
+  user:references playlist_track:references \
   --no-test-framework
 
-bin/rails generate model Like \
-  user:references likeable:references{polymorphic}:index \
-  --no-test-framework
-
-bin/rails generate model Listening \
-  user:references track:references \
-  playlist:references started_at:datetime completed:boolean:default[false] \
-  --no-test-framework
-
-bin/rails db:migrate
+RAILS_ENV=production bin/rails db:migrate
 
 # ── Model logic ─────────────────────────────────────────────────────────────
-cat > app/models/playlist.rb << 'RUBY'
-class Playlist < ApplicationRecord
+mkdir -p app/models/playlist
+
+cat > app/models/playlist/playlist.rb << 'RUBY'
+class Playlist::Playlist < ApplicationRecord
   belongs_to :user
-  has_many :playlist_tracks, dependent: :destroy
-  has_many :tracks, through: :playlist_tracks
-  has_many :likes, as: :likeable, dependent: :destroy
-  has_many :follows, as: :followable, dependent: :destroy
-  has_one_attached :cover
+  has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
+           foreign_key: :playlist_playlist_id, dependent: :destroy
+  has_many :tracks, through: :playlist_tracks, class_name: "Playlist::Track",
+           source: :track
 
   validates :name, presence: true, length: { maximum: 100 }
 
-  COVER_COLORS = %w[#e91e63 #9c27b0 #3f51b5 #2196f3 #00bcd4 #4caf50 #ff9800 #f44336].freeze
-
-  before_create :assign_cover_color
-
   scope :public_playlists, -> { where(public_access: true) }
-  scope :popular,          -> { order(plays_count: :desc) }
-  scope :recent,           -> { order(created_at: :desc) }
+  scope :popular,           -> { order(plays_count: :desc) }
+  scope :recent,            -> { order(created_at: :desc) }
 
-  def add_track!(track, user:, position: nil)
-    pos = position || (playlist_tracks.maximum(:position) || 0) + 1
+  def add_track!(track, user:)
+    pos = playlist_tracks.maximum(:position).to_i + 1
     playlist_tracks.find_or_create_by!(track: track) do |pt|
-      pt.position  = pos
-      pt.added_by  = user
+      pt.position = pos
+      pt.user     = user
     end
     increment!(:tracks_count)
-  end
-
-  def like_by!(user)
-    likes.find_or_create_by!(user: user)
-    increment!(:likes_count)
-  end
-
-  private
-
-  def assign_cover_color
-    self.cover_color ||= COVER_COLORS.sample
   end
 end
 RUBY
 
-cat > app/models/track.rb << 'RUBY'
-class Track < ApplicationRecord
-  has_many :playlist_tracks, dependent: :destroy
-  has_many :playlists, through: :playlist_tracks
-  has_many :listenings, dependent: :destroy
+cat > app/models/playlist/track.rb << 'RUBY'
+class Playlist::Track < ApplicationRecord
+  has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
+           foreign_key: :playlist_track_id, dependent: :destroy
+  has_many :playlists, through: :playlist_tracks, class_name: "Playlist::Playlist"
+  has_many :listens, class_name: "Playlist::Listen",
+           foreign_key: :playlist_track_id, dependent: :destroy
 
   SOURCE_TYPES = %w[youtube spotify soundcloud direct].freeze
 
   validates :title, :artist, presence: true
-  validates :duration_seconds, numericality: { greater_than: 0 }, allow_nil: true
   validates :source_type, inclusion: { in: SOURCE_TYPES }, allow_nil: true
-
-  scope :by_genre, ->(g) { where(genre: g) }
-  scope :recent,   -> { order(created_at: :desc) }
 
   def duration_formatted
     return "—" unless duration_seconds
@@ -131,183 +87,236 @@ class Track < ApplicationRecord
 end
 RUBY
 
-cat > app/models/listening.rb << 'RUBY'
-class Listening < ApplicationRecord
+cat > app/models/playlist/playlist_track.rb << 'RUBY'
+class Playlist::PlaylistTrack < ApplicationRecord
+  belongs_to :playlist, class_name: "Playlist::Playlist", foreign_key: :playlist_playlist_id
+  belongs_to :track,    class_name: "Playlist::Track",    foreign_key: :playlist_track_id
   belongs_to :user
-  belongs_to :track
-  belongs_to :playlist
 
-  after_create_commit :increment_play_count
+  validates :playlist_playlist_id, uniqueness: { scope: :playlist_track_id }
+  default_scope { order(:position) }
+end
+RUBY
+
+cat > app/models/playlist/listen.rb << 'RUBY'
+class Playlist::Listen < ApplicationRecord
+  belongs_to :user
+  belongs_to :track, class_name: "Playlist::Track", foreign_key: :playlist_track_id
+
+  after_create :increment_plays
 
   private
-
-  def increment_play_count
-    playlist.increment!(:plays_count)
+  def increment_plays
+    track.playlists.each { |pl| pl.increment!(:plays_count) }
   end
 end
 RUBY
 
 # ── Controllers ─────────────────────────────────────────────────────────────
-cat > app/controllers/application_controller.rb << 'RUBY'
-class ApplicationController < ActionController::Base
-  include Pagy::Backend
-  allow_browser versions: :modern
+mkdir -p app/controllers/playlist
+
+cat > app/controllers/playlist/base_controller.rb << 'RUBY'
+class Playlist::BaseController < ApplicationController
+
 end
 RUBY
 
-cat > app/controllers/playlists_controller.rb << 'RUBY'
-class PlaylistsController < ApplicationController
-  before_action :require_authentication, except: %i[index show]
-  before_action :set_playlist, only: %i[show edit update destroy like]
-  before_action :authorize!, only: %i[edit update destroy]
+cat > app/controllers/playlist/playlists_controller.rb << 'RUBY'
+class Playlist::PlaylistsController < Playlist::BaseController
+  allow_unauthenticated_access only: %i[index show]
+  before_action :set_playlist, only: %i[show edit update destroy]
 
   def index
-    scope = Playlist.public_playlists.includes(:user)
-    scope = scope.where("name LIKE ?", "%#{params[:q]}%") if params[:q].present?
-    @pagy, @playlists = pagy(scope.popular)
+    @pagy, @playlists = pagy(Playlist::Playlist.public_playlists.popular.includes(:user))
   end
 
   def show
-    @tracks   = @playlist.playlist_tracks.order(:position).includes(:track)
-    @add_form = Track.new
+    @tracks = @playlist.playlist_tracks.includes(:track)
   end
 
   def new
-    @playlist = Current.user.playlists.build
+    @playlist = Playlist::Playlist.new
   end
 
   def create
-    @playlist = Current.user.playlists.build(playlist_params)
-    @playlist.save ? redirect_to(@playlist, notice: "Playlist created") : render(:new, status: :unprocessable_entity)
+    @playlist = Current.user.playlist_playlists.build(playlist_params)
+    @playlist.save ?
+      redirect_to(playlist_playlist_path(@playlist), notice: "Playlist created") :
+      render(:new, status: :unprocessable_entity)
   end
 
   def edit; end
 
   def update
-    @playlist.update(playlist_params) ? redirect_to(@playlist, notice: "Updated") : render(:edit, status: :unprocessable_entity)
+    @playlist.update(playlist_params) ?
+      redirect_to(playlist_playlist_path(@playlist)) :
+      render(:edit, status: :unprocessable_entity)
   end
 
   def destroy
     @playlist.destroy
-    redirect_to playlists_path, notice: "Playlist deleted"
-  end
-
-  def like
-    @playlist.like_by!(Current.user)
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @playlist }
-    end
+    redirect_to playlist_playlists_path
   end
 
   private
-
-  def set_playlist  = @playlist = Playlist.find(params[:id])
-  def authorize!    = redirect_to(playlists_path, alert: "Unauthorized") unless @playlist.user == Current.user
-
-  def playlist_params
-    params.require(:playlist).permit(:name, :description, :public_access, :cover)
-  end
+  def set_playlist    = (@playlist = Playlist::Playlist.find(params[:id]))
+  def playlist_params = params.require(:playlist_playlist).permit(:name, :description, :public_access)
 end
 RUBY
 
-cat > app/controllers/tracks_controller.rb << 'RUBY'
-class TracksController < ApplicationController
-  before_action :require_authentication, except: %i[index show]
+cat > app/controllers/playlist/tracks_controller.rb << 'RUBY'
+class Playlist::TracksController < Playlist::BaseController
   before_action :set_playlist
 
   def create
-    track    = Track.find_or_create_by!(track_create_params)
-    @playlist.add_track!(track, user: Current.user)
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @playlist, notice: "Track added" }
+    track = Playlist::Track.find_or_create_by!(title: params.dig(:playlist_track, :title),
+                                               artist: params.dig(:playlist_track, :artist)) do |t|
+      t.assign_attributes(track_params.except(:title, :artist))
     end
+    @playlist.add_track!(track, user: Current.user)
+    redirect_to playlist_playlist_path(@playlist), notice: "Track added"
   end
 
   def destroy
     pt = @playlist.playlist_tracks.find(params[:id])
-    if pt.added_by == Current.user || @playlist.user == Current.user
-      pt.destroy!
-      @playlist.decrement!(:tracks_count)
-    end
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @playlist }
-    end
+    pt.destroy
+    redirect_to playlist_playlist_path(@playlist)
   end
 
   private
-
-  def set_playlist = @playlist = Playlist.find(params[:playlist_id])
-
-  def track_create_params
-    params.require(:track).permit(:title, :artist, :album, :duration_seconds, :source_type, :source_url, :genre, :year)
-  end
+  def set_playlist  = (@playlist = Playlist::Playlist.find(params[:playlist_id]))
+  def track_params  = params.require(:playlist_track).permit(:title, :artist, :album, :duration_seconds, :source_type, :source_url, :genre)
 end
 RUBY
 
-cat > app/controllers/listenings_controller.rb << 'RUBY'
-class ListeningsController < ApplicationController
-  before_action :require_authentication
-
+cat > app/controllers/playlist/listens_controller.rb << 'RUBY'
+class Playlist::ListensController < Playlist::BaseController
   def create
-    playlist = Playlist.find(params[:playlist_id])
-    track    = Track.find(params[:track_id])
-    Listening.create!(user: Current.user, track: track, playlist: playlist, started_at: Time.current)
-    render json: { status: "ok" }
+    track = Playlist::Track.find(params[:track_id])
+    Playlist::Listen.create!(user: Current.user, track: track)
+    render json: { ok: true }
   end
 end
 RUBY
 
-# ── Routes ─────────────────────────────────────────────────────────────────
-cat > config/routes.rb << 'RUBY'
-Rails.application.routes.draw do
-  resource  :session
-  resources :passwords, param: :token
+# ── Views ────────────────────────────────────────────────────────────────────
+mkdir -p app/views/playlist/playlists app/views/playlist/tracks
 
-  root "playlists#index"
+cat > app/views/playlist/playlists/index.html.erb << 'ERB'
+<% content_for :title, "Playlists" %>
+<h1>Playlists</h1>
+<% if authenticated? %><%= link_to "New playlist", new_playlist_playlist_path, class: "btn btn--primary" %><% end %>
+<div class="playlist-grid">
+  <% @playlists.each do |pl| %>
+    <article>
+      <%= link_to pl.name, playlist_playlist_path(pl) %>
+      <small><%= pl.tracks_count %> tracks · <%= pl.plays_count %> plays · <%= pl.user.email_address.split("@").first %></small>
+    </article>
+  <% end %>
+</div>
+<%= @pagy.series_nav if @pagy.pages > 1 %>
+ERB
 
-  resources :playlists do
-    member { post :like }
-    resources :tracks, only: %i[create destroy]
-    resources :listenings, only: %i[create]
+cat > app/views/playlist/playlists/show.html.erb << 'ERB'
+<% content_for :title, @playlist.name %>
+<h1><%= @playlist.name %></h1>
+<p><%= @playlist.description %></p>
+<p><small><%= @playlist.tracks_count %> tracks · <%= @playlist.plays_count %> plays</small></p>
+
+<% if authenticated? && Current.user == @playlist.user %>
+  <nav>
+    <%= link_to "Edit", edit_playlist_playlist_path(@playlist), class: "btn" %>
+    <%= button_to "Delete", playlist_playlist_path(@playlist), method: :delete, class: "btn", data: { turbo_confirm: "Delete?" } %>
+  </nav>
+<% end %>
+
+<ol>
+  <% @tracks.each do |pt| %>
+    <li>
+      <strong><%= pt.track.title %></strong> — <%= pt.track.artist %>
+      <small><%= pt.track.duration_formatted %></small>
+      <% if authenticated? && (Current.user == pt.user || Current.user == @playlist.user) %>
+        <%= button_to "Remove", playlist_playlist_track_path(@playlist, pt), method: :delete %>
+      <% end %>
+    </li>
+  <% end %>
+</ol>
+
+<% if authenticated? %>
+  <h2>Add a track</h2>
+  <%= form_with url: playlist_playlist_tracks_path(@playlist) do |f| %>
+    <%= f.text_field :title, placeholder: "Title", name: "playlist_track[title]" %>
+    <%= f.text_field :artist, placeholder: "Artist", name: "playlist_track[artist]" %>
+    <%= f.text_field :source_url, placeholder: "URL (optional)", name: "playlist_track[source_url]" %>
+    <%= f.submit "Add" %>
+  <% end %>
+<% end %>
+ERB
+
+cat > app/views/playlist/playlists/new.html.erb << 'ERB'
+<h1>New playlist</h1>
+<%= form_with model: @playlist, url: playlist_playlists_path do |f| %>
+  <%= render "shared/errors", object: @playlist %>
+  <div class="field">
+    <%= f.label :name %><%= f.text_field :name %>
+  </div>
+  <div class="field">
+    <%= f.label :description %><%= f.text_area :description, rows: 3 %>
+  </div>
+  <div class="field">
+    <%= f.check_box :public_access %> <%= f.label :public_access, "Public" %>
+  </div>
+  <div class="actions"><%= f.submit "Create", class: "btn btn--primary" %></div>
+<% end %>
+ERB
+
+cat > app/views/playlist/playlists/edit.html.erb << 'ERB'
+<h1>Edit playlist</h1>
+<%= form_with model: @playlist, url: playlist_playlist_path(@playlist), method: :patch do |f| %>
+  <%= render "shared/errors", object: @playlist %>
+  <div class="field">
+    <%= f.label :name %><%= f.text_field :name %>
+  </div>
+  <div class="field">
+    <%= f.label :description %><%= f.text_area :description, rows: 3 %>
+  </div>
+  <div class="field">
+    <%= f.check_box :public_access %> <%= f.label :public_access, "Public" %>
+  </div>
+  <div class="actions"><%= f.submit "Save", class: "btn btn--primary" %></div>
+<% end %>
+ERB
+
+# ── Route patch ─────────────────────────────────────────────────────────────
+ruby34 -e "
+r = File.read('config/routes.rb')
+unless r.include?('namespace :playlist')
+  patch = %q(
+  namespace :playlist do
+    root 'playlists#index'
+    resources :playlists do
+      resources :tracks, only: %i[create destroy]
+    end
+    resources :listens, only: :create
   end
-
-  resources :users, only: %i[show]
-
-  get "up", to: "rails/health#show", as: :rails_health_check
+)
+  r.sub!('root \"home#index\"', patch + '  root \"home#index\"')
+  File.write('config/routes.rb', r)
+  puts 'Routes patched'
 end
-RUBY
+"
 
-# ── Assets + Infrastructure ─────────────────────────────────────────────────
-mkdir -p app/assets/stylesheets
-cat > app/assets/stylesheets/application.css << 'CSS'
-:root {
-  --bg: #050505; --surface: #121212; --surface-alt: #1e1e1e;
-  --text: #ffffff; --text-dim: #b3b3b3;
-  --primary: #1db954; --radius: 8px; --space: 8px;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: "Circular","Helvetica Neue",Helvetica,Arial,sans-serif; background: var(--bg); color: var(--text); }
-main { max-width: 1400px; margin: 0 auto; padding: calc(var(--space)*2); }
-a { color: inherit; text-decoration: none; }
-a:hover { color: var(--primary); }
-.card { background: var(--surface); border-radius: var(--radius); padding: 1rem; transition: background .2s; }
-.card:hover { background: var(--surface-alt); }
-.playlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
-.playlist-cover { aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
-.track-row { display: flex; align-items: center; gap: 1rem; padding: .75rem; border-radius: 4px; }
-.track-row:hover { background: var(--surface-alt); }
-.btn { display: inline-block; padding: .4rem 1rem; border-radius: 2rem; border: none; cursor: pointer; }
-.btn-primary { background: var(--primary); color: #000; font-weight: 700; }
-.flash-notice { background: #1a3a1a; color: #81c784; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
-.flash-alert  { background: #3a1a1a; color: #e57373; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
-CSS
+# ── User association ─────────────────────────────────────────────────────────
+ruby34 -e "
+u = File.read('app/models/user.rb')
+unless u.include?('playlist_playlists')
+  u.sub!('has_secure_password', %Q(has_secure_password
+  has_many :playlist_playlists, class_name: 'Playlist::Playlist', dependent: :destroy
+  has_many :playlist_listens,   class_name: 'Playlist::Listen',   dependent: :destroy))
+  File.write('app/models/user.rb', u)
+  puts 'User model patched'
+end
+"
 
-write_layout "Brgen Playlist"
-write_falcon_config "$APP_PORT"
-configure_production
-install_rcd brgen_playlist "$APP_DIR" "$APP_PORT" brgen_playlist
-
-log_ok "Brgen Playlist setup complete — start: doas rcctl start brgen_playlist"
+doas rcctl restart brgen 2>/dev/null || true
+log_ok "Brgen Playlist namespace added — visit /playlist"

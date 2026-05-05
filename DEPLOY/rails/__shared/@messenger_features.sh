@@ -12,7 +12,7 @@ setup_messenger_models() {
 
   generate_model ConversationParticipant \
     conversation:references user:references \
-    last_read_at:datetime muted:boolean:default[false]
+    last_read_at:datetime muted:boolean:'default[false]'
 
   generate_model Message \
     conversation:references user:references \
