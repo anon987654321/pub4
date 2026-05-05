@@ -31,27 +31,28 @@ module Master
         def check(code, path:)
           return [] unless path.include?("/lib/") && path.end_with?(".rb")
 
-          findings = []
           yaml_files = extract_loaded_yamls(code)
-          yaml_files.each do |yml_name|
+          return [] if yaml_files.empty?
+
+          loaded = yaml_files.filter_map do |yml_name|
             yml_path = File.join(@data_dir, yml_name)
             next unless File.exist?(yml_path)
+            YAML.safe_load(File.read(yml_path), aliases: true) rescue nil
+          end
+          return [] if loaded.empty?
 
-            yaml_data = YAML.safe_load(File.read(yml_path), aliases: true) rescue next
-            dug_paths = extract_dig_paths(code)
-            dug_paths.each do |path_keys|
-              next if yaml_data.dig(*path_keys)
+          findings = []
+          extract_dig_paths(code).each do |path_keys|
+            next if loaded.any? { |y| y.respond_to?(:dig) && y.dig(*path_keys) }
 
-              code.each_line.with_index(1) do |line, number|
-                key_pattern = path_keys.first.to_s
-                next unless line.include?(key_pattern)
+            code.each_line.with_index(1) do |line, number|
+              next unless line.include?(path_keys.first.to_s)
 
-                findings << finding(
-                  line: number,
-                  message: "phantom key #{path_keys.inspect} not found in #{yml_name} — stale dig path or missing YAML entry"
-                )
-                break
-              end
+              findings << finding(
+                line: number,
+                message: "phantom key #{path_keys.inspect} not found in any loaded yaml — stale dig path or missing entry"
+              )
+              break
             end
           end
           findings

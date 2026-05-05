@@ -55,7 +55,7 @@ module Master
         scan_paths  = TARGETS.map { |d| File.join(@root, d.delete_suffix("/")) }
                               .select { |d| File.directory?(d) }
         all_results = scan_paths.flat_map { |dir|
-          scan_result = @scanner.scan_dir(dir, depth: :standard)
+          scan_result = @scanner.scan_dir(dir, depth: :deep)
           scan_result.ok? ? scan_result.value! : []
         }
 

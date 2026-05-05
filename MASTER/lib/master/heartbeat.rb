@@ -117,7 +117,7 @@ module Master
       return "no scanner" unless @scanner
 
       target = File.join(@root, "lib")
-      result = @scanner.scan_dir(target, depth: :standard)
+      result = @scanner.scan_dir(target, depth: :deep)
       return "scan failed" unless result.respond_to?(:ok?) && result.ok?
 
       count = result.value!.sum do |_, fr|
