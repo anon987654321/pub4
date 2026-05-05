@@ -1,62 +1,11 @@
 # MASTER — Reference
 
-## Pipeline stages
+The pipeline runs ten stages. Intake normalizes input and tags the channel — CLI, web, IRC, Matrix, API. Infer routes natural language to a command through `infer_patterns.yml`. Route picks the model tier, the tool, or the pipeline branch. Guard enforces the kernel axioms and aborts on violation. Execute calls the LLM, dispatches a tool, or invokes the command handler. Council and Lint run together under a thirty-second deadline — the council brings adversarial personas; the lint pass scans the output against the rule registry. Prune trims the prose. Memo writes to memory and the audit log. Render emits to the originating channel.
 
-| Stage | Role |
-|---|---|
-| Intake | Normalize input, detect channel (CLI/web/IRC/Matrix) |
-| Infer | NLP → command routing via infer_patterns.yml |
-| Route | Select model tier, tool, or pipeline branch |
-| Guard | Axiom enforcement; abort on violation |
-| Execute | LLM call, tool dispatch, or command handler |
-| Council | Adversarial multi-persona review (parallel) |
-| Lint | Scan output for rule violations (parallel) |
-| Prune | Strunk & White prose pass; trim verbosity |
-| Memo | Write to memory, learnings, audit log |
-| Render | Format and emit to source channel |
+The scan registry holds one hundred and fifty-four named rules across four scopes and twenty-two tiers. The frequent ones — FROZEN_STRING for the literal pragma, EXPLICIT for bare rescue and shadow variables, IMMUTABLE for mutable constants and shared state, CQS for methods that command and query at once, SRP for classes carrying multiple responsibilities, SELF_EXPLAINING for unclear names, LONG_METHOD for anything past ten lines, GOD_CLASS for files past three hundred, DUPLICATE for copy-paste blocks, BARE_RESCUE for naked rescue clauses. Sweep runs rubocop autocorrect first, deterministic and free, then escalates to the LLM rewriter under the corruption guards.
 
-## Scan rules
+The default model is `nvidia/nemotron-3-super-120b-a12b:free`. The fallback chain — qwen3-coder, minimax-m2.5, gpt-oss-120b, gemini-2.0-flash — kicks in when the circuit breaker trips at eight failures or sixty requests a minute.
 
-| Rule | Checks |
-|---|---|
-| FROZEN_STRING | Missing `# frozen_string_literal: true` |
-| EXPLICIT | Bare rescue, implicit returns, shadow variables |
-| IMMUTABLE | Mutable constants, shared mutable state |
-| CQS | Methods that command and query simultaneously |
-| SRP | Classes with multiple responsibilities |
-| SELF_EXPLAINING | Unclear names, missing intent |
-| LONG_METHOD | Methods over ~20 lines |
-| GOD_CLASS | Files over ~300 lines with too many concerns |
-| DUPLICATE | Copy-paste code blocks |
-| BARE_RESCUE | `rescue` without error variable |
+The constitution starts at PRESERVE_THEN_IMPROVE_NEVER_BREAK and unfolds through eight kernel axioms — PRESERVE_FIRST, SIMPLEST_WORKS, FAIL_VISIBLY, ONE_SOURCE, DECOUPLE, GUARD_EXPENSIVE, DEGRADE_GRACEFULLY, BE_CONCISE. Violation aborts the pipeline.
 
-## Models
-
-Default: `nvidia/nemotron-3-super-120b-a12b:free`
-
-Fallback chain: qwen3-coder:free → minimax-m2.5:free → gpt-oss-120b:free → gemini-2.0-flash
-
-Circuit breaker: FAILURE_THRESHOLD=8, RATE_MAX=60/min.
-
-## Constitution
-
-Golden rule: **PRESERVE_THEN_IMPROVE_NEVER_BREAK**
-
-Kernel axioms (violation aborts pipeline):
-- PRESERVE_FIRST
-- SIMPLEST_WORKS
-- FAIL_VISIBLY
-- ONE_SOURCE
-- DECOUPLE
-- GUARD_EXPENSIVE
-- DEGRADE_GRACEFULLY
-- BE_CONCISE
-
-## Evolution Protocol
-
-1. `soul propose <rationale>` — LLM drafts amendment
-2. `soul diff` — review changes
-3. `soul approve` — bump version, commit, tag
-4. `soul reject` — discard
-
-ABSOLUTE sections (anti-simulation rule, golden rule) block without `/override`.
+Evolution runs through four verbs — `soul propose <rationale>` drafts an amendment, `soul diff` shows it, `soul approve` bumps and tags, `soul reject` discards. The ABSOLUTE sections — anti-simulation, the golden rule — refuse amendment without `/override`.
