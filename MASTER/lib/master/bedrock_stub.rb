@@ -6,7 +6,7 @@
 # MASTER uses OpenRouter exclusively — Bedrock is never needed.
 module RubyLLM
   module Providers
-    module Bedrock
+    class Bedrock
       module Auth
         def self.included(_base); end
       end
