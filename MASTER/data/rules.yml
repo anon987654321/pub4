@@ -103,11 +103,9 @@ scan_depths:
     - YamlQualityRule
     - StructureRule
     - DeadCodeRule
+    - RubocopRule
+    - ReekRule
   deep: &deep
-    - AdversarialRule
-    - ConceptualRule
-    - InterconnectRule
-    - DuplicateCodeRule
     - FrozenStringRule
     - BareRescueRule
     - UniversalRule
@@ -117,15 +115,30 @@ scan_depths:
     - SelfExplainingRule
     - LongMethodRule
     - GodClassRule
+    - DuplicateCodeRule
+    - PruneRule
     - SrpRule
     - PolaRule
     - NielsenRule
     - ArityRule
     - TellDontAskRule
     - ThresholdDriftRule
-    - OpportunityRule
+    - TerseRule
+    - DeadAssignRule
+    - NestingDepthRule
+    - TrailingCommentRule
+    - NamingRule
+    - CommentQualityRule
+    - DebugOutputRule
+    - YamlQualityRule
+    - StructureRule
+    - DeadCodeRule
     - RubocopRule
     - ReekRule
+    - OpportunityRule
+    - InterconnectRule
+    - AdversarialRule
+    - ConceptualRule
   hunt: *deep
   critique: *deep
 
