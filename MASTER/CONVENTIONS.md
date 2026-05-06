@@ -43,7 +43,7 @@ In Markdown documents, plain `---` for an `<hr>` and table separators are fine �
 - **No regex when string methods suffice** — `start_with?`, `include?`, `end_with?`.
 - **Outsource to gems** — if it exists and works, use it.
 - **Endless methods** — single-expression methods use `def foo = expr`.
-- **Result monad** — check with `respond_to?(:ok?)`, not `is_a?(Result)`.
+- **Result monad** — check with `respond_to?(:ok?)`, not `is_a?(Result)`. Unwrap with `.value!` only after `.ok?` is true; on an `Err` it raises.
 - **No flag arguments** — a boolean that selects behavior is two methods in one.
 - **Guard clauses first** — `return Result.ok(ctx) unless condition` before main logic.
 - **Dependency injection** — never instantiate collaborators inside a method.
@@ -80,7 +80,7 @@ Read files over SSH with `cat path` — read the whole file once. Do not stitch 
 
 ## Architecture
 
-Pipeline: `Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render`. Council and Lint run concurrently under a 30s deadline via `ParallelGroup`. Rollback on `axiom_violation` or `validation`: `git reset --hard HEAD`. Scan rules auto-register via `Rule.inherited`; zero-arg rules through `auto_build?`. `axiom_coverage_rule` flags any `scan/rules/*.rb` that fails to inherit from `Rule`, so silent registry drift is caught at scan time. All rules ship with `@auto_fix = true` and participate in sweep. Sweep runs rubocop autocorrect first, then escalates to LLM rewrite under the corruption guards.
+Pipeline: `Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render`. Council and Lint run concurrently under a 30s deadline via `ParallelGroup`. Rollback on `axiom_violation` or `validation`: `git reset --hard HEAD`. Scan rules auto-register via the `Rule.inherited` callback — every file under `scan/rules/` must subclass `Rule` or it goes silently unrun. Rules with no constructor args set `def auto_build? = true` to opt into the registry's zero-arg construction path. `axiom_coverage_rule` walks `scan/rules/*.rb` with a Prism `SuperclassFinder` and flags any file whose top-level class does not inherit from `Rule`, so silent registry drift is caught at scan time. All rules ship with `@auto_fix = true` and participate in sweep. Sweep runs rubocop autocorrect first, then escalates to LLM rewrite under the corruption guards.
 
 Council deliberation samples a focus question per persona per turn from `data/council_questions.yml` (8 categories — assumptions, failure_modes, attacker, edge_cases, degradation, ops_maint, economics, clarity). Architect → assumptions, Skeptic → failure_modes, Security → attacker, User → edge_cases, Pragmatist → economics, Mentor → clarity. Unmapped personas pass through with no question.
 
