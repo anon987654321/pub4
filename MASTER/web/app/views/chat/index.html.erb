@@ -1178,7 +1178,7 @@ if (window.DeviceMotionEvent) {
 
     // Web Audio effect chain — cycle with long-press on status circle
     const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone','vocoder','autotune','choir','telephone','void'];
-    let fxIdx=LOW_END?0:1+Math.floor(Math.random()*(FX_MODES.length-1)); // off on low-end
+    let fxIdx=0; // default 'off' — no FX on TTS, no double-vocal. Long-press status to cycle.
     let fxTaps=0;let fxTapTimer=0;
 
     const showFxMode=()=>{
@@ -2257,6 +2257,7 @@ const AMBIENT=[
     let camX=0,camY=0;
     const animate=()=>{
       requestAnimationFrame(animate);
+      if(canvas.hidden) return; // Iframe orbs are the active visualizer; skip canvas compute.
       t+=0.016;
       speechPulse*=0.92;
       if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
