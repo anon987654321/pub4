@@ -41,7 +41,8 @@ circuit\sopen|retry\sin|llm_request)\b
     /ix.freeze
 
     PROMPTS_PATH      = File.join(Master::ROOT, "data", "sweep_prompts.yml").freeze
-    MIN_REWRITE_BYTES = 500
+    MIN_REWRITE_BYTES   = 500
+    MIN_LENGTH_FRACTION = 0.50
 
     # Regex for Ruby method/class/constant names — used by rename tracker.
     NAME_RE = /\b(?:def\s+(\w+)|class\s+([A-Z]\w*)|[A-Z][A-Z_]+)\b/.freeze

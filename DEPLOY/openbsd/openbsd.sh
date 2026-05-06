@@ -756,7 +756,7 @@ EOF
 
     typeset zsk ksk
 
-    zsk=$(ldns-keygen -a ECDSAP256SHA256 -b 2048 "$domain")
+    zsk=$(ldns-keygen -a ECDSAP256SHA256 "$domain")
 
     ksk=$(ldns-keygen -k -a ECDSAP256SHA256 -b 2048 "$domain")
 

@@ -10,43 +10,61 @@ module Master
       def load_prompts = Master.load_yaml(PROMPTS_PATH)
 
       def build_codebase_map
-        files = Dir.glob(File.join(@root, "lib", "**", Scan::Scanner::SCAN_GLOB))
-                   .reject { |f| f.include?("/vendor/") || f.include?("/knowledge/") }
-                   .map    { |f| f.delete_prefix("#{@root}/") }
-                   .sort
-        unless @code_index&.built?
-          return "## Codebase (#{files.size} files)\n" + files.map { |f| "  #{f}" }.join("\n")
-        end
+        files = library_files
+        return simple_codebase_map(files) unless @code_index&.built?
+        indexed_codebase_map(files)
+      end
 
-        lines = ["## Codebase (#{files.size} files)"]
-        files.each do |rel|
-          syms = @code_index.symbols_in(File.join(@root, rel))
-          if syms.empty?
-            lines << "  #{rel}"
-          else
-            lines << rel
-            syms.select { |s| %i[class module].include?(s.type) }.each { |s| lines << "  class #{s.fqn}" }
-            syms.select { |s| s.type == :method }.each { |s| lines << "  def #{s.fqn}" }
-          end
-        end
-        lines.join("\n")
+      def library_files
+        Dir.glob(File.join(@root, "lib", "**", Scan::Scanner::SCAN_GLOB))
+           .reject { |path| path.include?("/vendor/") || path.include?("/knowledge/") }
+           .map    { |path| path.delete_prefix("#{@root}/") }
+           .sort
+      end
+
+      def codebase_header(files) = "## Codebase (#{files.size} files)"
+
+      def simple_codebase_map(files)
+        ([codebase_header(files)] + files.map { |path| "  #{path}" }).join("\n")
+      end
+
+      def indexed_codebase_map(files)
+        ([codebase_header(files)] + files.flat_map { |rel| symbol_lines(rel) }).join("\n")
+      end
+
+      def symbol_lines(rel)
+        symbols = @code_index.symbols_in(File.join(@root, rel))
+        return ["  #{rel}"] if symbols.empty?
+        [rel] + class_lines(symbols) + method_lines(symbols)
+      end
+
+      def class_lines(symbols)
+        symbols.select { |sym| %i[class module].include?(sym.type) }
+               .map    { |sym| "  class #{sym.fqn}" }
+      end
+
+      def method_lines(symbols)
+        symbols.select { |sym| sym.type == :method }
+               .map    { |sym| "  def #{sym.fqn}" }
       end
 
       def collect_files(dir, types)
         sacred = Tools::PathGuard::SACRED_PATHS
-        types.flat_map { |t| Dir.glob(File.join(dir, GLOBS[t].to_s)) }
-             .reject { |f|
-               rel = f.delete_prefix("#{@root}/")
-               sacred.any? { |s| rel == s || rel.start_with?(s) }
-             }
+        types.flat_map { |type| Dir.glob(File.join(dir, GLOBS[type].to_s)) }
+             .reject { |path| sacred_match?(path, sacred) }
              .uniq.sort
       end
 
+      def sacred_match?(path, sacred)
+        rel = path.delete_prefix("#{@root}/")
+        sacred.any? { |s| rel == s || rel.start_with?(s) }
+      end
+
       def rewrite(path, rel)
-        src  = File.read(path, encoding: "UTF-8")
-        lang = Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
-        response = @agent.ask(build_prompt(src, rel, lang))
-        extract(response.to_s, lang, original_size: src.bytesize)
+        source   = File.read(path, encoding: "UTF-8")
+        lang     = Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
+        response = @agent.ask(build_prompt(source, rel, lang))
+        extract(response.to_s, lang, original_size: source.bytesize)
       rescue StandardError => e
         @bus&.publish("sweep:rewrite_error", file: path, error: e.message)
         nil
@@ -76,18 +94,30 @@ module Master
       def extract(text, lang, original_size: 0)
         return nil if text.strip == "UNCHANGED"
         return nil if ERROR_PATTERNS.match?(text)
-        return nil if original_size > 0 && text.bytesize < (original_size * 0.50)
-        fence_re = /```(?:#{Regexp.escape(lang)}|ruby|sh|yaml|erb)?\n(.*?)```/m
-        return text.match(fence_re)[1]         if text.match?(fence_re)
-        return text.match(/```\n(.*?)```/m)[1] if text.match?(/```\n(.*?)```/m)
+        return nil if too_short?(text, original_size)
+        fenced = extract_fenced(text, lang)
+        return fenced if fenced
         text.strip.empty? ? nil : text
+      end
+
+      def too_short?(text, original_size)
+        original_size > 0 && text.bytesize < (original_size * MIN_LENGTH_FRACTION)
+      end
+
+      def extract_fenced(text, lang)
+        langs    = "#{Regexp.escape(lang)}|ruby|sh|yaml|erb"
+        fence_re = /```(?:#{langs})?\n(.*?)```/m
+        match    = text.match(fence_re)
+        return match[1] if match
+        bare = text.match(/```\n(.*?)```/m)
+        bare&.[](1)
       end
 
       def syntax_ok?(path, content)
         checker = SYNTAX_CHECKERS[File.extname(path)]
         return true unless checker
-        Tempfile.open(["sweep", File.extname(path)]) do |f|
-          f.write(content); f.flush; checker.call(f.path)
+        Tempfile.open(["sweep", File.extname(path)]) do |file|
+          file.write(content); file.flush; checker.call(file.path)
         end
       end
 
@@ -102,9 +132,9 @@ module Master
       def violations_in_text(content, ref_path)
         ext = File.extname(ref_path).downcase
         return 0 unless Scan::Rule::EXT_LANG.key?(ext)
-        Tempfile.open(["vcheck", ext]) do |f|
-          f.write(content); f.flush
-          scan_result = @scanner.scan(f.path, depth: :deep)
+        Tempfile.open(["vcheck", ext]) do |file|
+          file.write(content); file.flush
+          scan_result = @scanner.scan(file.path, depth: :deep)
           scan_result.ok? ? scan_result.value!.size : 0
         end
       rescue StandardError => _e
