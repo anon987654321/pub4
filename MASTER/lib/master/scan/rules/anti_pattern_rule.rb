@@ -6,36 +6,42 @@ module Master
     module Rules
       # Reads anti_patterns block from data/rules.yml; emits forbidden findings as
       # critical, discouraged as warning. Single source of truth — no Ruby regex literals.
-      class AntiPatternRule
-        ID = :anti_pattern
-
+      class AntiPatternRule < Rule
         def initialize(rules_path: File.join(Master::ROOT, "data", "rules.yml"))
+          super()
+          @id          = "anti_pattern"
+          @description = "Forbidden / discouraged patterns from data/rules.yml"
+          @severity    = :critical
+          @axiom_tags  = []
           data = Master.load_yaml(rules_path) || {}
           ap = data["anti_patterns"] || {}
           @forbidden   = (ap["forbidden"] || []).map   { |h| compile(h) }.compact
           @discouraged = (ap["discouraged"] || []).map { |h| compile(h) }.compact
         end
 
-        def check(code, path:)
+        def check(code, _path: nil, **)
           findings = []
           @forbidden.each do |pat, reason|
-            code.each_line.with_index(1) do |line, n|
-              next unless line.match?(pat)
-              findings << {rule: ID, severity: :critical, line: n, message: "anti-pattern: #{reason}"}
-              break
-            end
+            line_no = first_match_line(code, pat)
+            findings << finding_with(severity: :critical, line: line_no, message: "anti-pattern: #{reason}") if line_no
           end
           @discouraged.each do |pat, reason|
-            code.each_line.with_index(1) do |line, n|
-              next unless line.match?(pat)
-              findings << {rule: ID, severity: :warning, line: n, message: "discouraged: #{reason}"}
-              break
-            end
+            line_no = first_match_line(code, pat)
+            findings << finding_with(severity: :warning, line: line_no, message: "discouraged: #{reason}") if line_no
           end
           findings
         end
 
         private
+
+        def first_match_line(code, pat)
+          code.each_line.with_index(1) { |line, n| return n if line.match?(pat) }
+          nil
+        end
+
+        def finding_with(severity:, line:, message:)
+          { rule: @id, severity:, line:, message:, fix: nil }
+        end
 
         def compile(h)
           pat = h["pattern"] || h[:pattern]
