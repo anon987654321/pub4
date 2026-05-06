@@ -5,6 +5,8 @@ class Outfit < ApplicationRecord
 
   validates :name, presence: true
 
+  broadcasts_refreshes
+
   def like!
     increment!(:likes_count)
   end

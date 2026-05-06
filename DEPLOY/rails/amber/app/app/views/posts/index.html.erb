@@ -1,3 +1,4 @@
+<%= turbo_stream_from "posts" %>
 <h1>Community</h1>
 <%= render @posts %>
 <%= pagy_nav(@pagy) if @pagy.pages > 1 %>

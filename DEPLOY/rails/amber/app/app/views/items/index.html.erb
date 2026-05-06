@@ -1,4 +1,5 @@
 <% content_for :title, "Wardrobe" %>
+<%= turbo_stream_from "items" %>
 <section data-controller="filter">
   <header>
     <h1>Wardrobe (<%= @pagy.count %>)</h1>

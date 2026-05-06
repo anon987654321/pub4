@@ -8,6 +8,8 @@ class Item < ApplicationRecord
   validates :times_worn, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validates :price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
+  broadcasts_refreshes
+
   scope :joy,          -> { where(spark_joy: true) }
   scope :by_category,  ->(c) { where(category: c) }
   scope :by_mood,      ->(m) { where(mood_effect: m) }
