@@ -79,6 +79,62 @@ model_defs:
     id: claude-cli:claude-opus-4-7
     <<: *model_defaults
     score: { quality: 0.99, speed: 0.50, cost: 0.30 }
+  gemma_2_9b_free: &gemma_2_9b_free
+    id: google/gemma-2-9b-it:free
+    <<: *model_defaults
+    score: { quality: 0.72, speed: 0.88, cost: 1.0 }
+  gemma_2_27b: &gemma_2_27b
+    id: google/gemma-2-27b-it
+    <<: *model_defaults
+    score: { quality: 0.82, speed: 0.78, cost: 0.92 }
+  gemini_2_flash_exp_free: &gemini_2_flash_exp_free
+    id: google/gemini-2.0-flash-exp:free
+    <<: *model_defaults
+    score: { quality: 0.85, speed: 0.92, cost: 1.0 }
+  gemini_flash_lite: &gemini_flash_lite
+    id: google/gemini-flash-lite-latest
+    <<: *model_defaults
+    score: { quality: 0.78, speed: 0.96, cost: 0.97 }
+  phi_4_free: &phi_4_free
+    id: microsoft/phi-4:free
+    <<: *model_defaults
+    score: { quality: 0.74, speed: 0.90, cost: 1.0 }
+  glm_4_5_air_free: &glm_4_5_air_free
+    id: z-ai/glm-4.5-air:free
+    <<: *model_defaults
+    score: { quality: 0.80, speed: 0.82, cost: 1.0 }
+  yi_lightning: &yi_lightning
+    id: 01-ai/yi-lightning
+    <<: *model_defaults
+    score: { quality: 0.78, speed: 0.94, cost: 0.94 }
+  command_r_plus: &command_r_plus
+    id: cohere/command-r-plus
+    <<: *model_defaults
+    score: { quality: 0.86, speed: 0.72, cost: 0.65 }
+  grok_4_fast: &grok_4_fast
+    id: x-ai/grok-4-fast
+    <<: *model_defaults
+    score: { quality: 0.88, speed: 0.92, cost: 0.78 }
+  reka_flash: &reka_flash
+    id: rekaai/reka-flash-3:free
+    <<: *model_defaults
+    score: { quality: 0.74, speed: 0.86, cost: 1.0 }
+  deepseek_v3_free: &deepseek_v3_free
+    id: deepseek/deepseek-chat-v3.1:free
+    <<: *model_defaults
+    score: { quality: 0.90, speed: 0.72, cost: 1.0 }
+  llama_4_scout_free: &llama_4_scout_free
+    id: meta-llama/llama-4-scout:free
+    <<: *model_defaults
+    score: { quality: 0.84, speed: 0.78, cost: 1.0 }
+  groq_llama_3_3_70b: &groq_llama_3_3_70b
+    id: groq/llama-3.3-70b-versatile
+    <<: *model_defaults
+    score: { quality: 0.85, speed: 0.99, cost: 0.85 }
+  cerebras_llama_3_1_8b: &cerebras_llama_3_1_8b
+    id: cerebras/llama-3.1-8b
+    <<: *model_defaults
+    score: { quality: 0.70, speed: 0.99, cost: 0.92 }
 ollama_qwen: &ollama_qwen
   id: ollama:qwen2.5-coder:7b
   <<: *model_defaults
@@ -99,18 +155,41 @@ models:
     - *deepseek_chat
     - *nemotron_super
     - *qwen_coder
+    - *grok_4_fast
+    - *deepseek_v3_free
   strong:
     - *gemini_pro
     - *mistral_large
     - *claude_sonnet
     - *gpt_4o
     - *gemini_flash
+    - *command_r_plus
   cheap:
     - *gemini_flash
     - *mistral_small
     - *deepseek_chat
     - *llama_70b
     - *qwen_coder
+    - *gemma_2_9b_free
+    - *gemini_flash_lite
+    - *yi_lightning
+  fast:
+    - *groq_llama_3_3_70b
+    - *cerebras_llama_3_1_8b
+    - *gemini_flash_lite
+    - *gemini_2_flash_exp_free
+  free:
+    - *gemini_2_flash_exp_free
+    - *gemma_2_9b_free
+    - *deepseek_v3_free
+    - *llama_4_scout_free
+    - *phi_4_free
+    - *glm_4_5_air_free
+    - *reka_flash
+    - *nemotron_super
+    - *qwen_coder
+    - *llama_70b
+    - *hermes_405b
   claude_code:
     - *claude_cli_sonnet
     - *claude_cli_opus
@@ -139,8 +218,10 @@ tool_capable_prefixes:
   - mixtral
   - llama-3.1
   - llama-3.3
+  - llama-4
   - qwen
   - command-r
+  - cohere/command
   - deepseek
   - stepfun
   - nvidia
@@ -149,6 +230,14 @@ tool_capable_prefixes:
   - anthropic/claude
   - openai/gpt
   - google/gemini
+  - google/gemma
+  - microsoft/phi
+  - z-ai/glm
+  - 01-ai/yi
+  - x-ai/grok
+  - rekaai/reka
+  - groq
+  - cerebras
 
 operation_constraints:
   # Operations that write files, run autoloop/sweep, or execute destructive commands
