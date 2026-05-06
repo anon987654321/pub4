@@ -4,6 +4,8 @@ module Master
   class Agent
     # LlmDispatch — LLM routing, caching, and escalation; extracted from Agent.
     module LlmDispatch
+      VISITOR_ALLOWED_TOOLS = %w[AskLlm WebSearch].freeze
+
       private
 
       def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
@@ -162,13 +164,16 @@ module Master
 
       def llm_tools(selected_model = model)
         return [] unless tool_capable?(selected_model)
+        return build_llm_tools(visitor: true) if Thread.current[:master_visitor]
         @llm_tools ||= build_llm_tools
       end
 
-      def build_llm_tools
+      def build_llm_tools(visitor: false)
         @tools.filter_map do |tool|
           wrapper = LLM_TOOL_MAP[tool.class]
-          wrapper&.new(tool)
+          next nil unless wrapper
+          next nil if visitor && !VISITOR_ALLOWED_TOOLS.include?(tool.class.name.split("::").last)
+          wrapper.new(tool)
         end
       rescue StandardError => err
         @bus&.publish("agent:llm_tools_error", error: err.message)

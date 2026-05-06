@@ -7,6 +7,7 @@ class ChatController < ApplicationController
 
   def index
     @model = container[:agent].model.to_s.split("/").last
+    @tier  = session[:tier].to_s
     render layout: false
   end
 
@@ -28,7 +29,8 @@ class ChatController < ApplicationController
       cost:             "$%.4f" % (c[:session].respond_to?(:cost) ? c[:session].cost : 0.0),
       uptime:           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
       repo_dirty_count: dirty,
-      open_breakers:    open_models
+      open_breakers:    open_models,
+      tier:             session[:tier].to_s
     }
   end
 
@@ -39,6 +41,9 @@ class ChatController < ApplicationController
     response.headers["Content-Type"]      = "text/event-stream"
     response.headers["Cache-Control"]     = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"
+
+    visitor = session[:tier] != "authenticated"
+    Thread.current[:master_visitor] = visitor
 
     sse = response.stream
     begin
@@ -58,7 +63,7 @@ class ChatController < ApplicationController
         sse.write("data: #{encoded}\n\n")
       }
 
-      ctx = { user_message: input, on_chunk: on_chunk }
+      ctx = { user_message: input, on_chunk: on_chunk, visitor: visitor }
       if (img = params[:image]).present?
         ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
       end
@@ -84,6 +89,7 @@ class ChatController < ApplicationController
       sse.write("data: ERROR: #{e.message}\n\n")
       sse.write("data: [DONE]\n\n")
     ensure
+      Thread.current[:master_visitor] = nil
       begin
         tool_sub.call if defined?(tool_sub) && tool_sub
       rescue StandardError

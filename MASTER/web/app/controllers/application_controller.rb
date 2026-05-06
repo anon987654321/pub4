@@ -16,14 +16,21 @@ class ApplicationController < ActionController::Base
 
   def authenticate!
     return if request.path == "/up" || request.path == "/health"
-    return if session[:authenticated]
-    tok = web_token
-    if params[:token] == tok || request.headers["X-Token"] == tok
-      session[:authenticated] = true
+    if session[:tier] == "authenticated"
       return
     end
-    render plain: "401 Unauthorized", status: :unauthorized
+    tok = web_token
+    if params[:token] == tok || request.headers["X-Token"] == tok
+      session[:tier] = "authenticated"
+      return
+    end
+    session[:tier] ||= "visitor"
   end
+
+  def visitor?
+    session[:tier] != "authenticated"
+  end
+  helper_method :visitor? if respond_to?(:helper_method)
 
   def web_token
     cfg_file = File.join(Rails.root, "../.master/config.yml")
