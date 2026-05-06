@@ -1,5 +1,0 @@
-translations:
-- file: "app/assets/javascripts/i18n/translations_%{locale}.js"
-  only: "photo_editor_js"
-  # only: ["photo_editor_js", "other_js"]
-
