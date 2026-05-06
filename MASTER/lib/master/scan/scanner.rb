@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "etc"
+require "prism"
 
 module Master
   module Scan
@@ -8,6 +9,7 @@ module Master
       RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
       POOL_SIZE  = [Etc.nprocessors, 8].min
       SCAN_GLOB  = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
+      RUBY_EXT   = %w[.rb .rake .gemspec].freeze
 
       def initialize(rules: nil, event_bus: nil)
         @rules = rules || []
@@ -19,7 +21,8 @@ module Master
         return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
 
         code     = File.read(path, encoding: "UTF-8")
-        findings = active_rules(depth).flat_map { |rule| rule.check(code, path:) }
+        ast      = parse_ruby(code, path)
+        findings = active_rules(depth).flat_map { |rule| run_rule(rule, code, ast, path) }
         @bus&.publish("scan:complete", path:, depth:, count: findings.size)
         Result.ok(findings)
       rescue StandardError => e
@@ -47,6 +50,22 @@ module Master
       end
 
       private
+
+      def parse_ruby(code, path)
+        return nil unless RUBY_EXT.include?(File.extname(path))
+        result = Prism.parse(code)
+        result.success? ? result.value : nil
+      rescue StandardError
+        nil
+      end
+
+      def run_rule(rule, code, ast, path)
+        if ast && rule.respond_to?(:check_ast)
+          rule.check_ast(ast, code, path:)
+        else
+          rule.check(code, path:)
+        end
+      end
 
       def parallel_each(items)
         cursor = Mutex.new

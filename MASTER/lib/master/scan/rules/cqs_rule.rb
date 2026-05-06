@@ -1,15 +1,19 @@
 # frozen_string_literal: true
 
+require "prism"
+
 module Master
   module Scan
     module Rules
-      # CqsRule — detects Command/Query Separation violations.
-      # A method should either return a value (query) or change state (command), not both.
-      # Flags methods named like queries (get_*, find_*, fetch_*, load_*) that also
-      # contain state-mutating patterns (@x =, save!, update!, write).
+      # CqsRule — Command/Query Separation. A method named like a query
+      # (get_*, find_*, fetch_*, etc.) must not mutate state in its body.
       class CqsRule < Rule
-        QUERY_PREFIX   = /^\s+def\s+(get_|find_|fetch_|load_|read_|list_|show_|describe_)\w+/.freeze
-        MUTATION_IN_BODY = /(@\w+\s*=(?!=)|\.save[!\s]|\.update[!\s]|\.write[!\s]|File\.write)/.freeze
+        QUERY_PREFIXES = %w[get_ find_ fetch_ load_ read_ list_ show_ describe_].freeze
+        MUTATING_CALLS = %i[
+          save save! update update! update_attribute update_attribute!
+          update_columns update_column delete destroy destroy! create create!
+          write write! push pop shift unshift clear concat
+        ].freeze
 
         def initialize
           super
@@ -19,42 +23,73 @@ module Master
           @axiom_tags  = [:CQS]
         end
 
-        def check(code, path:)
+        def check_ast(ast, _code, path:)
           return [] unless path.end_with?(".rb")
+          visitor = Visitor.new
+          ast.accept(visitor)
+          visitor.findings.map do |line, name|
+            finding(line:, message: "query method `#{name}` mutates state — split into command + query")
+          end
+        end
 
-          findings = []
-          in_query  = false
-          query_line = 0
-          depth      = 0
+        class Visitor < Prism::Visitor
+          attr_reader :findings
 
-          code.each_line.with_index(1) do |line, num|
-            if !in_query && line.match?(QUERY_PREFIX)
-              in_query   = true
-              query_line = num
-              depth      = 1
-              next
-            end
-
-            if in_query
-              depth += line.scan(/^\s*(?:if|case|begin|do)\b|\bdo\s*(?:\|[^|]*\|)?\s*$|\bdef\s/).size
-              depth -= line.scan(/\bend\b/).size
-
-              if depth <= 0
-                in_query = false
-                next
-              end
-
-              if line.match?(MUTATION_IN_BODY)
-                findings << finding(
-                  line: query_line,
-                  message: "query method mutates state (line #{num}) — split into separate command and query"
-                )
-                in_query = false
-              end
-            end
+          def initialize
+            super
+            @findings = []
           end
 
-          findings
+          def visit_def_node(node)
+            name = node.name.to_s
+            if QUERY_PREFIXES.any? { |p| name.start_with?(p) } && mutates?(node.body)
+              @findings << [node.location.start_line, name]
+            end
+            super
+          end
+
+          private
+
+          def mutates?(body)
+            return false if body.nil?
+            finder = MutationFinder.new
+            body.accept(finder)
+            finder.mutating?
+          end
+        end
+
+        class MutationFinder < Prism::Visitor
+          def initialize
+            super
+            @found = false
+          end
+
+          def mutating? = @found
+
+          def visit_call_node(node)
+            @found = true if MUTATING_CALLS.include?(node.name)
+            super
+          end
+
+          def visit_instance_variable_write_node(_node)
+            @found = true
+            super
+          end
+
+          def visit_instance_variable_operator_write_node(_node)
+            @found = true
+            super
+          end
+
+          def visit_instance_variable_and_write_node(_node)
+            @found = true
+            super
+          end
+
+          def visit_instance_variable_or_write_node(_node)
+            @found = true
+            super
+          end
         end
       end
     end
