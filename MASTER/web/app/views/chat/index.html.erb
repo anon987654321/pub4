@@ -8,6 +8,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <title>MASTER &middot; <%= @model %></title>
   <meta name="theme-color" content="#000000"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&display=swap"/>
 <style>
   @layer base, components, utilities;
 
@@ -140,22 +143,45 @@
       opacity:1;
     }
 
+    #input-field{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      padding:12px 14px;
+      background:rgba(2,0,0,0.65);
+      border:1px solid #1a0606;
+      border-radius:4px;
+      backdrop-filter:blur(6px);
+    }
+
+    #prompt-glyph{
+      font-family:'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size:16px;
+      font-weight:500;
+      color:#993333;
+      user-select:none;
+      letter-spacing:0;
+    }
+
     #input-field input{
-      width:calc(100% - 28px);
+      flex:1;
+      min-width:0;
       background:transparent;
       border:none;
-      color:#ccc;
-      font-family:Helvetica,Arial,sans-serif;
-      font-size:18px;
-      font-weight:300;
-      letter-spacing:0.05em;
-      padding:12px 0;
+      color:#dcdcdc;
+      font-family:'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size:16px;
+      font-weight:400;
+      letter-spacing:0;
+      padding:0;
       outline:none;
-      text-align:center;
+      text-align:left;
+      caret-color:#993333;
     }
 
     #input-field input::placeholder{
-      color:#333;
+      color:#444;
+      font-style:normal;
     }
 
     #attach-btn{
@@ -303,7 +329,8 @@
   <section id="arrow-right"><span>›</span></section>
 
   <section id="input-field">
-    <input type="text" placeholder="Ask anything…" autocomplete="off" maxlength="512" aria-label="Message">
+    <span id="prompt-glyph">master ❯</span>
+    <input type="text" placeholder="ask, ideate, /scan, /sweep…" autocomplete="off" maxlength="512" aria-label="Message">
     <button id="attach-btn" title="Attach image">+</button>
     <input type="file" id="file-input" accept="image/*,text/*,.pdf" hidden>
     <span id="attach-label"></span>

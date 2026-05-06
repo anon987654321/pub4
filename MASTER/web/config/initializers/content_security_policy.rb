@@ -7,12 +7,12 @@
 Rails.application.configure do
   config.content_security_policy do |policy|
     policy.default_src :self
-    policy.font_src    :self, :data
+    policy.font_src    :self, :data, "https://fonts.gstatic.com"
     policy.img_src     :self, :data
     policy.object_src  :none
-    policy.script_src  :self, :unsafe_inline  # orb canvas + drum sequencer require inline JS
-    policy.style_src   :self, :unsafe_inline  # orb inline styles
-    policy.connect_src :self                  # SSE streams, fetch
-    policy.media_src   :self, :blob           # TTS audio
+    policy.script_src  :self, :unsafe_inline
+    policy.style_src   :self, :unsafe_inline, "https://fonts.googleapis.com"
+    policy.connect_src :self
+    policy.media_src   :self, :blob
   end
 end
