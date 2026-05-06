@@ -92,9 +92,9 @@ module Master
       end
 
       def extract(text, lang, original_size: 0)
-        return nil if text.strip == "UNCHANGED"
-        return nil if ERROR_PATTERNS.match?(text)
-        return nil if too_short?(text, original_size)
+        return if text.strip == "UNCHANGED"
+        return if ERROR_PATTERNS.match?(text)
+        return if too_short?(text, original_size)
         fenced = extract_fenced(text, lang)
         return fenced if fenced
         text.strip.empty? ? nil : text
