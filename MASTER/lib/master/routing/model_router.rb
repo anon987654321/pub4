@@ -14,11 +14,10 @@ module Master
       ESCALATION_CHAIN = %w[cheap default strong].freeze
       DEFAULT_THRESHOLD = 0.3
 
-      def initialize(config:, root: Master::ROOT, continuity_index: nil)
+      def initialize(config:, root: Master::ROOT)
         @config = config
         @root = root
         @rules = load_rules
-        @continuity_index = continuity_index || ContinuityIndex.new(root: @root)
       end
 
       def preferred(task_type: :exploration)
@@ -37,8 +36,16 @@ module Master
 
         pref = preferred(task_type:)
         all = @rules.fetch("models", {}).values.flat_map { |tier| tier.filter_map { |m| m["id"] } }
-        continuity = @continuity_index.fallback_models
-        ([pref] + all + continuity + [@config.model]).uniq
+        ([pref] + all + continuity_models + [@config.model]).uniq
+      end
+
+      def continuity_models
+        return [] if @rules.dig("continuity", "enabled") == false
+        latest = [
+          @rules.dig("openrouter", "free_latest"),
+          @rules.dig("ferrum_web_chat", "free_latest")
+        ]
+        latest.flatten.compact.uniq
       end
 
       def escalate?(response, threshold: DEFAULT_THRESHOLD)
