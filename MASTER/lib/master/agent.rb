@@ -38,12 +38,13 @@ module Master
 
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
                    event_bus: nil, model_router: nil, reasoning_modes: nil,
-                   memory: nil, personality: nil, code_index: nil, context_window: nil)
+                   memory: nil, personality: nil, code_index: nil, context_window: nil,
+                   homeostat: nil)
       @config, @session, @tools          = config, session, tools
       @circuit_breaker, @cache, @bus     = circuit_breaker, cache, event_bus
       @model_router, @reasoning_modes    = model_router, reasoning_modes
       @memory, @personality, @code_index = memory, personality, code_index
-      @context_window                    = context_window
+      @context_window, @homeostat        = context_window, homeostat
     end
 
     def chat(message, stream: true, escalation_depth: 0, &blk)
