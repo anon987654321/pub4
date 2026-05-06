@@ -8,6 +8,29 @@ module Master
       TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
       JUDGE_TIMEOUT   = 30
 
+      QUESTIONS_PATH = File.join(Master::ROOT, "data", "council_questions.yml").freeze
+      QUESTION_CATEGORY = {
+        "Architect"  => "assumptions",
+        "Skeptic"    => "failure_modes",
+        "Security"   => "attacker",
+        "User"       => "edge_cases",
+        "Pragmatist" => "economics",
+        "Mentor"     => "clarity"
+      }.freeze
+      @questions = nil
+
+      def self.questions
+        @questions ||= File.exist?(QUESTIONS_PATH) ? (Master.load_yaml(QUESTIONS_PATH) || {}) : {}
+      rescue StandardError
+        {}
+      end
+
+      def self.sample_question(persona_name)
+        cat = QUESTION_CATEGORY[persona_name.to_s]
+        bank = questions[cat]
+        bank&.sample
+      end
+
       def initialize(personas:, agent:, event_bus: nil, axioms: nil, judge_enabled: true)
         @personas      = personas
         @agent         = agent
@@ -126,10 +149,11 @@ module Master
         safe_code = truncate_code(code.to_s)
         axiom = axiom_line(persona)
         axiom_block = axiom.empty? ? "" : "#{axiom}\n"
+        question = self.class.sample_question(persona.name)
+        question_block = question ? "\nFocus question for this turn: #{question}\n" : ""
         <<~PROMPT
           You are #{persona.name} (#{persona.role}, bias: #{persona.bias}).#{ctx}
-          #{axiom_block}#{persona.prompt}
-
+          #{axiom_block}#{persona.prompt}#{question_block}
           Code:
           #{safe_code}
 
