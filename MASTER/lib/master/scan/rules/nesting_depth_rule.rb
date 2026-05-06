@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
+require "prism"
+
 module Master
   module Scan
     module Rules
       class NestingDepthRule < Rule
         DEFAULT_DEPTH = 2
-
-        OPEN_KWORDS  = /\b(?:if|unless|case|while|until|for|begin)\b/.freeze
-        CLOSE_KWORD  = /\bend\b/.freeze
+        NESTING_NODES = %i[
+          visit_if_node visit_unless_node visit_case_node visit_case_match_node
+          visit_while_node visit_until_node visit_for_node
+        ].freeze
 
         def initialize
           super
@@ -18,48 +21,53 @@ module Master
           @axiom_tags  = [:GUARD_CLAUSES_FIRST]
         end
 
-        def check(code, path:)
+        def check_ast(ast, _code, path:)
           return [] unless path.end_with?(".rb")
-          findings    = []
-          in_method   = false
-          nesting     = 0   # depth relative to method body (0 = top of method)
-          over        = false
+          visitor = Visitor.new(@threshold)
+          ast.accept(visitor)
+          visitor.findings.map do |line, depth|
+            finding(line:, message: "nesting depth #{depth} exceeds #{@threshold} — extract method or add guard clause")
+          end
+        end
 
-          code.each_line.with_index(1) do |line, num|
-            stripped = line.strip
-            next if stripped.start_with?("#")
+        class Visitor < Prism::Visitor
+          attr_reader :findings
 
-            if !in_method && stripped.match?(/\bdef \w/)
-              in_method = true
-              nesting   = 0
-              over      = false
-              next
-            end
-            next unless in_method
+          def initialize(threshold)
+            super()
+            @threshold = threshold
+            @findings = []
+          end
 
-            opens  = stripped.scan(OPEN_KWORDS).size
-            closes = stripped.scan(CLOSE_KWORD).size
+          def visit_def_node(node)
+            counter = DepthCounter.new
+            node.body&.accept(counter)
+            @findings << [node.location.start_line, counter.max] if counter.max > @threshold
+            super
+          end
+        end
 
-            nesting += opens
+        class DepthCounter < Prism::Visitor
+          attr_reader :max
 
-            if nesting > @threshold && !over
-              over = true
-              findings << finding(line: num, message: "nesting depth #{nesting} exceeds #{@threshold} — extract method or add guard clause")
-            end
+          def initialize
+            super
+            @depth = 0
+            @max = 0
+          end
 
-            nesting -= closes
-            nesting  = [nesting, 0].max
-
-            if nesting <= @threshold
-              over = false
-            end
-
-            if nesting < 0 || (stripped == "end" && nesting == 0)
-              in_method = false
-              nesting   = 0
+          NESTING_NODES.each do |m|
+            define_method(m) do |node|
+              @depth += 1
+              @max = @depth if @depth > @max
+              super(node)
+              @depth -= 1
             end
           end
-          findings
+
+          def visit_def_node(_node) = nil
+          def visit_class_node(_node) = nil
+          def visit_module_node(_node) = nil
         end
       end
     end
