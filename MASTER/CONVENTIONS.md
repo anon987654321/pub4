@@ -80,7 +80,11 @@ Read files over SSH with `cat path` — read the whole file once. Do not stitch 
 
 ## Architecture
 
-Pipeline: `Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render`. Council and Lint run concurrently under a 30s deadline via `ParallelGroup`. Rollback on `axiom_violation` or `validation`: `git reset --hard HEAD`. Scan rules auto-register via `Rule.inherited`; zero-arg rules through `auto_build?`. All rules ship with `@auto_fix = true` and participate in sweep. Sweep runs rubocop autocorrect first, then escalates to LLM rewrite under the corruption guards.
+Pipeline: `Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render`. Council and Lint run concurrently under a 30s deadline via `ParallelGroup`. Rollback on `axiom_violation` or `validation`: `git reset --hard HEAD`. Scan rules auto-register via `Rule.inherited`; zero-arg rules through `auto_build?`. `axiom_coverage_rule` flags any `scan/rules/*.rb` that fails to inherit from `Rule`, so silent registry drift is caught at scan time. All rules ship with `@auto_fix = true` and participate in sweep. Sweep runs rubocop autocorrect first, then escalates to LLM rewrite under the corruption guards.
+
+Council deliberation samples a focus question per persona per turn from `data/council_questions.yml` (8 categories — assumptions, failure_modes, attacker, edge_cases, degradation, ops_maint, economics, clarity). Architect → assumptions, Skeptic → failure_modes, Security → attacker, User → edge_cases, Pragmatist → economics, Mentor → clarity. Unmapped personas pass through with no question.
+
+Observability: `Master::Telemetry` is a soft-optional OpenTelemetry tracer that emits JSONL spans to `.master/traces.log`. Wraps `EventBus#publish`, `Metrics#append`, `AuditLog#append`, and `Heartbeat#execute_job`. Bootstrap fires in `Master.boot` between Pledge stage1 and stage2.
 
 Key files — `data/soul.yml` (golden rule, tiers, persona), `data/rules.yml` (structural rules, thresholds, depths), `data/ruby_style.yml` (style and bugs), `data/workflow.yml` (READ_BEFORE_WRITE, scan principles), `data/standing_orders.yml` (current FSM state).
 
@@ -106,4 +110,4 @@ After every scp under `MASTER/web/`, immediately `doas rcctl restart master` so 
 
 ## Slash commands
 
-`/scan [profile] [path]`, `/sweep`, `/autoloop [N]`, `/council on|off`, `/swarm <role> <task>`, `/explain`, `/crit <file|text>`, `/ideate <prompt>`, `/topic`, `/rsi [stats]`, `/model [list|<id>]`, `/why <law|scan_rule|anti_pattern|style.key>`, `/snapshot`, `/tts`, `/profile`, `/heartbeat`, `/orders`, `/soul`, `/dmesg`. `/why` resolves locally first via `WhyExplainer`; the LLM answer fires only on a miss.
+`/scan [profile] [path]`, `/sweep`, `/autoloop [N]`, `/council on|off`, `/swarm <role> <task>`, `/explain`, `/crit <file|text>`, `/ideate <prompt>`, `/topic`, `/rsi [stats]`, `/model [list|<id>]`, `/why <law|scan_rule|anti_pattern|style.key>`, `/diag [drives|breaker|rules|ring]`, `/snapshot`, `/tts`, `/profile`, `/heartbeat`, `/orders`, `/soul`, `/dmesg`. `/why` resolves locally first via `WhyExplainer`; the LLM answer fires only on a miss. `/diag` composes a state digest (drives, circuit-breaker, registered rule count, dmesg ring tail).
