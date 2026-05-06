@@ -17,9 +17,21 @@ Never state intent without evidence. Forbidden hedges — `will`, `would`, `coul
 - Modification → unified diff
 - Completion → command output
 
-## Communication: openbsd_dmesg
+## Communication — two registers, do not mix
 
-Structured multi-line output. No headlines, no empty bullets, no filler, no sycophancy, no hedging. Outcome first, evidence next, implementation last. Commits and log lines stay active, concrete, terse.
+- **MASTER's own log/event lines** (boot banner, scheduler ticks, tool events, dmesg-style status): structured, terse, lowercase, kernel-ish — `master@host ready`, `boot0: 26ms`, `model0 at openrouter`. The OpenBSD-dmesg boot banner is sacred — never strip it.
+- **Conversational replies to the operator**: plain English, proper casing, full sentences. No dmesg style here. No headlines, no empty bullets, no filler, no sycophancy, no hedging. Outcome first, evidence next, implementation last.
+- **Commits and log lines** stay active, concrete, terse — Strunk & White, omit needless words.
+
+## No ASCII line art
+
+Never use these as decorations in any output (comments, log lines, CLI text, chat replies, commit messages):
+
+- `===`, `----` (banner lines, section dividers)
+- `•`, `|`, `›`, `‹` (bullet/separator characters)
+- `[ok]`, `[err]`, `[skip]` brackets — use bare prefixes `ok:`, `err:`, `skip:`, `warn:` instead
+
+In Markdown documents, plain `---` for an `<hr>` and table separators are fine — they carry meaning. Banner art does not.
 
 ## Code rules (enforced by scan)
 
@@ -64,7 +76,7 @@ Bugs to avoid:
 
 Banned in zsh and SSH: `sed`, `awk`, `tr`, `grep`, `cut`, `head`, `tail`, `find`, `wc`, `sudo`, `perl`, `ruby`, `dd`, `xargs`. Use zsh builtins, parameter expansion, `doas` for privilege, Ruby scripts for complex logic.
 
-Read files: `print -r -- "$(<file)"`. Not `cat`. Not bare `< file` via SSH — triggers pager.
+Read files over SSH with `cat path` — read the whole file once. Do not stitch `grep` + `head` fragments; reasoning from full context beats reasoning from snippets. For local zsh array work use `lines=("${(@f)$(<file)}")`.
 
 ## Architecture
 
@@ -82,4 +94,16 @@ ABSOLUTE aborts the pipeline. PROTECTED emits a warning and continues. NEGOTIABL
 
 ## Environment
 
-VPS: `dev@brgen.no` · `185.52.176.18` · OpenBSD 7.8 · passwordless `doas`. SSH: `sshpass -p 'h00te10tu' ssh -o StrictHostKeyChecking=no dev@185.52.176.18 'cmd'`. Non-interactive SSH must not source `.zshrc` — load env only: `eval "$(grep '^export' ~/.zshrc)"`. Edit VPS files: write patch to `/tmp/patch.rb`, run `ruby /tmp/patch.rb`. Never use `ruby -i` with heredoc — empties the file on script error.
+VPS: `dev@brgen.no` · `185.52.176.18` · OpenBSD 7.8 · passwordless `doas`. SSH: `sshpass -p 'h00te10tu' ssh -o StrictHostKeyChecking=no dev@185.52.176.18 'cmd'`. Non-interactive SSH must not source `.zshrc` — load env only: `eval "$(grep '^export' ~/.zshrc)"`.
+
+Edit VPS files by direct edit + `scp` — write the new file content locally, scp it up. Reserve `~/pub4/tmp/patch.rb` for genuinely script-shaped edits where a patch script is the right tool. Never use `ruby -i` with heredoc — empties the file on script error.
+
+After every scp under `MASTER/web/`, immediately `doas rcctl restart master` so Falcon picks up the change. Falcon does not hot-reload in production; without the restart the deployed app keeps serving the prior bytecode.
+
+## Web auth tiers
+
+`?token=...` matches the value in `~/pub4/.master/config.yml` and grants full tool access. No token = visitor — chat works, but `Thread.current[:master_visitor]` is set so `Master::Agent::LlmDispatch#build_llm_tools` filters tools to the visitor allow-list (currently `AskLlm`, `WebSearch`). The CLI REPL bypasses this entirely and always has full access.
+
+## Slash commands
+
+`/scan [profile] [path]`, `/sweep`, `/autoloop [N]`, `/council on|off`, `/swarm <role> <task>`, `/explain`, `/crit <file|text>`, `/ideate <prompt>`, `/topic`, `/rsi [stats]`, `/model [list|<id>]`, `/why <law|scan_rule|anti_pattern|style.key>`, `/snapshot`, `/tts`, `/profile`, `/heartbeat`, `/orders`, `/soul`, `/dmesg`. `/why` resolves locally first via `WhyExplainer`; the LLM answer fires only on a miss.
