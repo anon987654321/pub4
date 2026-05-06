@@ -154,7 +154,9 @@ module Master
         },
         "why" => ->(ctx) {
           rule = ctx[:args].to_s.strip
-          next "usage: /why <rule_name>" if rule.empty?
+          next "usage: /why <law|scan_rule|anti_pattern|style.key>" if rule.empty?
+          local = WhyExplainer.new(root:).explain(rule)
+          next local if local
           agent.ask_once("Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
                          "give a before/after Ruby example, and state why it matters.")
         }
