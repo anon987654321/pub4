@@ -23,7 +23,10 @@ module Master
     def publish(event, payload = {})
       ts      = elapsed_ms
       payload = payload.merge(event:, ts:)
-      synchronize { matching_handlers(event) }.each { |h| h.call(payload) rescue nil }
+      handlers = synchronize { matching_handlers(event) }
+      Master::Telemetry.span("event_bus.publish", event:, n_handlers: handlers.size) do
+        handlers.each { |h| h.call(payload) rescue nil }
+      end
       self
     end
 

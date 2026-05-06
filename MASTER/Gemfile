@@ -32,3 +32,4 @@ gem "ruby_llm-mcp"
 gem "rubocop", "~> 1.60", require: false
 gem "reek", "~> 6.4", require: false
 gem "flay", require: false
+gem "opentelemetry-sdk", "~> 1.11", require: false

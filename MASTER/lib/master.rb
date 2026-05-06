@@ -101,6 +101,7 @@ module Master
 
   def self.boot(root: Dir.pwd, argv: [])
     Pledge.stage1_boot!(root)
+    Telemetry.bootstrap!(root: root)
     container = Builder.build(root:)
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
