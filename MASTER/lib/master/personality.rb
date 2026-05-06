@@ -153,6 +153,24 @@ module Master
         ls << "String methods: #{string_rule}" if string_rule
         gem_rule = style.dig("ruby", "outsource_to_gems", "rule")
         ls << "Gems: #{gem_rule}" if gem_rule
+
+        if (html = style["html"])
+          forbidden = Array(html["forbidden"]).first(3).join(", ")
+          ls << "HTML: semantic tags only (header/nav/main/article/section/aside/footer); bare-tag CSS targeting; forbid: #{forbidden}." if forbidden && !forbidden.empty?
+        end
+        if (css = style["css"])
+          ls << "CSS: tag selectors first, classes last; @layer base/components/utilities; rem units; no !important; no inline style attributes."
+        end
+        if (typ = style["typography"])
+          fams = typ.dig("families", "sans") || ""
+          ls << "Typography: Swiss style; one family per surface; #{fams}; scale ratio #{typ["ratio"] || 1.25}; measure 65ch; left-align body."
+        end
+        if (nh = style["nielsen_heuristics"]) && nh.is_a?(Array) && nh.any?
+          ls << "Nielsen heuristics enforced: " + nh.first(10).map { |h| "#{h["id"]}.#{h["name"]}" }.join(", ") + "."
+        end
+        if (a11y = style["accessibility"])
+          ls << "Accessibility target: #{a11y["target"] || "wcag_2_2_aaa"}; keyboard-complete; focus-visible; respect prefers-reduced-motion + color-scheme; never tabindex>0; never autoplay sound."
+        end
       end
 
       ls.join("\n")

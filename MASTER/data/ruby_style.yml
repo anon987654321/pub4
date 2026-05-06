@@ -199,3 +199,105 @@ git:
     - "Dir.chdir in Ruby before git commands"
     - "string-interpolated git commands"
     - "rm -rf in deploy scripts without explicit guard"
+
+# ===== HTML / CSS / TYPOGRAPHY / NIELSEN / A11Y =====
+# Restored from master4.yml/master7.yml (universal_quality_framework v66).
+
+html:
+  semantic_only: true
+  bare_tag_targeting: true        # nav a not .nav__link; section, article, aside, etc.
+  forbidden:
+    - divitis                     # no excessive nesting; no styling-only divs
+    - class_attribute_when_tag_targetable
+    - non_semantic_markup
+    - copy_paste_html
+    - framework_class_explosion   # no class="row col-md-6 mt-4 px-2 d-flex" soup
+  landmarks:
+    - header
+    - nav
+    - main
+    - article
+    - section
+    - aside
+    - footer
+  forms:
+    label_required: every input has a label
+    input_type_specific: email/url/tel/date — never bare type=text
+    autocomplete: "set autocomplete on every meaningful input"
+
+css:
+  targeting: bare_tag_first        # tag selectors > attribute selectors > id; class only when nothing else fits
+  layer_order: [base, components, utilities]
+  custom_properties: ":root with --safe-top, --safe-right, --safe-bottom, --safe-left"
+  units:
+    length: rem                    # px only for borders <2px and 1px hairlines
+    typography: "rem with clamp() for fluid type"
+    spacing: "rem multiples of .25 (4px grid)"
+  forbidden:
+    - "!important except for utility overrides"
+    - inline_style_attributes
+    - vendor_prefixes_in_2026     # autoprefixer or skip
+    - framework_class_bloat
+  perf:
+    content_visibility: "auto on long-scroll sections"
+    will_change: "only when actually animating, then remove"
+
+typography:
+  style: swiss                     # objective, hierarchical, generous whitespace
+  families:
+    sans: "Helvetica, Arial, system-ui, sans-serif"
+    mono: "ui-monospace, Menlo, Consolas, monospace"
+  scale:
+    base: 16px
+    ratio: 1.25                    # major-third
+  leading: 1.5                     # body
+  measure: 65ch                    # ideal line length
+  rules:
+    - "one type family per surface (mono OR sans, not both unless purposeful)"
+    - "size hierarchy via scale — never arbitrary px values"
+    - "color contrast >= WCAG 2.2 AAA on body text (7:1)"
+    - "tracking: tighten display, loosen all-caps (.08em)"
+    - "no centered body copy; left-align for left-to-right languages"
+
+nielsen_heuristics:
+  - { id: 1, name: visibility_of_system_status,        rule: "every async action shows progress within 100ms" }
+  - { id: 2, name: match_real_world,                   rule: "use users' language; mirror real-world conventions" }
+  - { id: 3, name: user_control_and_freedom,           rule: "undo, cancel, escape from every flow" }
+  - { id: 4, name: consistency_and_standards,          rule: "platform conventions; consistent terminology across surface" }
+  - { id: 5, name: error_prevention,                   rule: "constraints + confirmation > error messages" }
+  - { id: 6, name: recognition_over_recall,            rule: "show options; don't make users remember" }
+  - { id: 7, name: flexibility_and_efficiency,         rule: "shortcuts for experts; defaults for novices" }
+  - { id: 8, name: aesthetic_and_minimalist_design,    rule: "every element earns its place; cut ruthlessly" }
+  - { id: 9, name: help_users_recognize_recover_errors, rule: "plain language; suggest the fix; one-click recovery" }
+  - { id: 10, name: help_and_documentation,            rule: "context-sensitive; concrete examples; searchable" }
+
+accessibility:
+  target: wcag_2_2_aaa
+  requirements:
+    - keyboard_navigation_complete
+    - focus_visible_always
+    - aria_only_when_html_insufficient
+    - reduced_motion_respected         # @media (prefers-reduced-motion: reduce)
+    - color_scheme_respected           # @media (prefers-color-scheme: dark)
+    - color_not_only_signal
+    - text_resizable_to_200pct
+    - skip_to_main_link
+    - alt_text_meaningful_or_empty
+  forbidden:
+    - tabindex_above_zero
+    - autoplay_media_with_sound
+    - removing_focus_outline_without_replacement
+    - text_in_images_for_meaning
+
+parametric_design:
+  principle: "components vary along measured axes (density, scale, contrast) — not by copy-paste variants"
+  examples:
+    - "spacing: --gap-{xs,sm,md,lg,xl} = .25/.5/1/2/4 rem"
+    - "color: oklch with hue/chroma/lightness vars; light+dark via lightness flip"
+    - "type: clamp(min, fluid, max) per scale step, no per-breakpoint overrides"
+
+cultural_sensitivity:
+  text_direction: "honor dir=rtl; mirror layouts; logical properties (margin-inline-start)"
+  locale_specific: "use Intl.DateTimeFormat / NumberFormat; never assume MM/DD/YYYY"
+  color_meaning: "red=danger is Western; verify per locale"
+  imagery: "diverse representation; avoid culture-specific idioms in core UI"
