@@ -1,0 +1,76 @@
+<% content_for :title, @post.title %>
+<%= turbo_stream_from @post %>
+
+<div class="main-col">
+  <article class="post-show">
+    <div class="post-show-row">
+      <div class="vote-col">
+        <% if authenticated? %>
+          <%= button_to "▲", post_vote_path(@post), params: { vote: { value: 1 } },
+                class: "vote-btn #{"active-up" if @post.upvoted_by?(Current.user)}" %>
+        <% else %>
+          <span class="vote-btn">▲</span>
+        <% end %>
+        <span class="vote-score" data-controller="animated-number"><%= @post.score %></span>
+        <% if authenticated? %>
+          <%= button_to "▼", post_vote_path(@post), params: { vote: { value: -1 } },
+                class: "vote-btn down #{"active-down" if @post.downvoted_by?(Current.user)}" %>
+        <% else %>
+          <span class="vote-btn">▼</span>
+        <% end %>
+      </div>
+
+      <div class="post-show-body">
+        <div class="post-meta">
+          <% if @post.community %>
+            <%= link_to @post.community.name, community_path(@post.community), class: "community" %> •
+          <% end %>
+          posted by <%= @post.author_name %> •
+          <time datetime="<%= @post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(@post.created_at) %> ago</time>
+        </div>
+        <h1><%= @post.title %></h1>
+        <% if @post.content.present? %>
+          <div class="post-content"><%= @post.content %></div>
+        <% end %>
+      </div>
+    </div>
+  </article>
+
+  <section class="comments-section">
+    <% if authenticated? %>
+      <div class="comment-form-wrap" id="comment_form">
+        <h3>Comment as <%= Current.user.username || "guest" %></h3>
+        <%= form_with model: [@post, @new_comment], data: { turbo: true } do |f| %>
+          <div class="field">
+            <%= f.text_area :content, placeholder: "What do you think?", rows: 4,
+                  data: { controller: "textarea-autogrow character-counter", "character-counter-max-value": 10000 } %>
+            <span data-character-counter-target="counter" class="char-count"></span>
+          </div>
+          <%= f.submit "Comment", class: "btn" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div id="comments">
+      <% if @comments.any? %>
+        <% @comments.each do |comment| %>
+          <%= render "comments/comment", comment: comment %>
+        <% end %>
+      <% else %>
+        <div class="empty">No comments yet. Be first.</div>
+      <% end %>
+    </div>
+  </section>
+</div>
+
+<aside class="side-col">
+  <div class="sidebar-card">
+    <h3>About</h3>
+    <% if @post.community %>
+      <p><%= @post.community.description.presence || @post.community.name %></p>
+      <%= link_to "View community", community_path(@post.community), class: "btn btn-ghost" %>
+    <% else %>
+      <p>brgen — Bergen community platform</p>
+    <% end %>
+  </div>
+</aside>

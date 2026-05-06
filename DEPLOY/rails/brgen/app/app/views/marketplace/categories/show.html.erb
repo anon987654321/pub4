@@ -1,0 +1,11 @@
+<% content_for :title, @category.name %>
+<h1><%= @category.name %></h1>
+<div class="listing-grid">
+  <% @listings.each do |l| %>
+    <article>
+      <%= link_to l.title, marketplace_listing_path(l) %>
+      <p><strong><%= l.price_display %></strong></p>
+    </article>
+  <% end %>
+</div>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

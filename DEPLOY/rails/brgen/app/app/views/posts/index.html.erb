@@ -1,0 +1,33 @@
+<%= turbo_stream_from "posts" %>
+
+<div class="main-col">
+  <div class="page-header">
+    <h1>All Posts</h1>
+    <% if authenticated? %><%= link_to "+ New Post", new_post_path, class: "btn" %><% end %>
+  </div>
+
+  <div class="sort-tabs">
+    <%= link_to "hot",   posts_path,               class: "sort-tab #{"active" unless params[:sort]}" %>
+    <%= link_to "fresh", posts_path(sort: "fresh"), class: "sort-tab #{"active" if params[:sort] == "fresh"}" %>
+    <%= link_to "top",   posts_path(sort: "top"),   class: "sort-tab #{"active" if params[:sort] == "top"}" %>
+  </div>
+
+  <% if @posts.any? %>
+    <% @posts.each do |post| %>
+      <%= render "posts/post", post: post %>
+    <% end %>
+  <% else %>
+    <div class="empty">No posts yet.</div>
+  <% end %>
+</div>
+
+<div class="side-col">
+  <div class="sidebar-card">
+    <h3>Communities</h3>
+    <ul>
+      <% Community.popular.limit(8).each do |c| %>
+        <li><%= link_to c.name, community_path(c) %></li>
+      <% end %>
+    </ul>
+  </div>
+</div>

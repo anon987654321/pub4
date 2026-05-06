@@ -1,0 +1,32 @@
+<% content_for :title, "Marketplace" %>
+<h1>Marketplace</h1>
+<% if authenticated? %><%= link_to "Sell something", new_marketplace_listing_path, class: "btn btn--primary" %><% end %>
+
+<form method="get">
+  <input name="q" value="<%= params[:q] %>" placeholder="Search listings…">
+  <button type="submit">Search</button>
+</form>
+
+<% if @categories.any? %>
+  <nav>
+    <% @categories.each do |cat| %>
+      <%= link_to cat.name, marketplace_category_path(cat) %>
+    <% end %>
+  </nav>
+<% end %>
+
+<div class="listing-grid">
+  <% @listings.each do |l| %>
+    <article>
+      <% if l.photos.attached? %>
+        <%= link_to marketplace_listing_path(l) do %>
+          <%= image_tag l.photos.first %>
+        <% end %>
+      <% end %>
+      <%= link_to l.title, marketplace_listing_path(l) %>
+      <p><strong><%= l.price_display %></strong></p>
+      <small><%= l.location %> · <%= l.condition %></small>
+    </article>
+  <% end %>
+</div>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

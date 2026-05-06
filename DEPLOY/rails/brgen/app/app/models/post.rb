@@ -1,0 +1,27 @@
+class Post < ApplicationRecord
+  include Votable
+
+  belongs_to :user
+  belongs_to :community, optional: true
+
+  has_many :comments, as: :commentable, dependent: :destroy
+  has_many :votes, as: :votable, dependent: :destroy
+  has_many :taggings, dependent: :destroy
+  has_many :hashtags, through: :taggings
+  has_many :mentions, dependent: :destroy
+
+  validates :title,   presence: true, length: { maximum: 300 }
+  validates :content, length: { maximum: 40_000 }
+
+  broadcasts_refreshes
+
+  VOTE_SQL = Arel.sql("SUM(COALESCE(votes.value,0)) DESC, posts.created_at DESC")
+  TOP_SQL  = Arel.sql("SUM(COALESCE(votes.value,0)) DESC")
+
+  scope :hot,   -> { left_joins(:votes).group(:id).order(VOTE_SQL) }
+  scope :fresh, -> { order(created_at: :desc) }
+  scope :top,   -> { left_joins(:votes).group(:id).order(TOP_SQL) }
+
+  def comment_count = comments.count
+  def author_name   = user&.username.presence || "anon"
+end

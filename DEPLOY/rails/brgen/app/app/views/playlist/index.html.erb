@@ -1,0 +1,11 @@
+<div class="card">
+  <h2>🎵 Playlists</h2>
+  <p>Discover music from Bergen and beyond.</p>
+</div>
+
+<% @playlists.each do |playlist| %>
+  <div class="card">
+    <h2><%= playlist[:name] %></h2>
+    <p><strong><%= playlist[:tracks] %></strong> tracks • <%= playlist[:genre] %></p>
+  </div>
+<% end %>

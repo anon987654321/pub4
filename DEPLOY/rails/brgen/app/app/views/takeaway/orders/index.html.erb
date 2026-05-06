@@ -1,0 +1,11 @@
+<% content_for :title, "My Orders" %>
+<h1>My Orders</h1>
+<% @orders.each do |o| %>
+  <article>
+    <%= link_to o.restaurant.name, takeaway_order_path(o) %>
+    <span><%= o.status %></span>
+    <span><%= o.total_display %></span>
+    <time><%= o.created_at.strftime("%d %b %Y") %></time>
+  </article>
+<% end %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

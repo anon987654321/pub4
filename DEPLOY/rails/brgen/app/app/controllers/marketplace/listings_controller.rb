@@ -1,0 +1,51 @@
+class Marketplace::ListingsController < Marketplace::BaseController
+  allow_unauthenticated_access only: %i[index show]
+  before_action :set_listing, only: %i[show edit update destroy]
+
+  def index
+    scope = Marketplace::Listing.active.includes(:user, :category)
+    scope = scope.where("title LIKE ?", "%#{params[:q]}%") if params[:q].present?
+    scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
+    @pagy, @listings = pagy(scope.recent)
+    @categories = Marketplace::Category.roots.includes(:children)
+  end
+
+  def show
+    @listing.increment!(:views_count)
+    @order = Marketplace::Order.new if authenticated?
+  end
+
+  def new
+    @listing   = Marketplace::Listing.new
+    @categories = Marketplace::Category.all
+  end
+
+  def create
+    @listing = Current.user.marketplace_listings.build(listing_params)
+    @listing.save ?
+      redirect_to(marketplace_listing_path(@listing), notice: "Listed") :
+      render(:new, status: :unprocessable_entity)
+  end
+
+  def edit
+    @categories = Marketplace::Category.all
+  end
+
+  def update
+    @listing.update(listing_params) ?
+      redirect_to(marketplace_listing_path(@listing)) :
+      render(:edit, status: :unprocessable_entity)
+  end
+
+  def destroy
+    @listing.update!(status: "removed")
+    redirect_to marketplace_listings_path
+  end
+
+  private
+  def set_listing    = (@listing = Marketplace::Listing.find(params[:id]))
+  def listing_params = params.require(:marketplace_listing).permit(
+    :title, :description, :price_cents, :condition, :status, :location,
+    :category_id, photos: []
+  )
+end

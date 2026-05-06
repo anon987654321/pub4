@@ -1,0 +1,23 @@
+<% content_for :title, "Dating" %>
+<h1>Discover</h1>
+<nav>
+  <%= link_to "Matches", dating_matches_path, class: "btn" %>
+  <%= link_to "Edit profile", edit_dating_profile_path, class: "btn" %>
+</nav>
+<div class="profile-deck">
+  <% @profiles.each do |p| %>
+    <article class="profile-card">
+      <% if p.photos.attached? %>
+        <%= image_tag p.photos.first, class: "profile-photo" %>
+      <% end %>
+      <h2><%= p.user.email_address.split("@").first %><% if p.age %>, <%= p.age %><% end %></h2>
+      <% if p.location.present? %><p><%= p.location %></p><% end %>
+      <p><%= p.bio %></p>
+      <div>
+        <%= button_to "Like", dating_likes_path(user_id: p.user_id), method: :post, class: "btn btn--primary" %>
+        <%= button_to "Pass", dating_dislikes_path(user_id: p.user_id), method: :post, class: "btn" %>
+      </div>
+    </article>
+  <% end %>
+</div>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

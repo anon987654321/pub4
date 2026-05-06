@@ -1,0 +1,7 @@
+<% content_for :title, @video.title %>
+<% if @video.video_file.attached? %>
+  <%= video_tag url_for(@video.video_file), controls: true, class: "video-player" %>
+<% end %>
+<h1><%= @video.title %></h1>
+<p><%= link_to @video.channel.name, tv_channel_path(@video.channel) %> · <%= @video.views_count %> views · <%= @video.duration_formatted %></p>
+<p><%= @video.description %></p>

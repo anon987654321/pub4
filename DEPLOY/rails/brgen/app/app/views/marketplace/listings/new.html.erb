@@ -1,0 +1,18 @@
+<h1>New listing</h1>
+<%= form_with model: @listing, url: marketplace_listings_path do |f| %>
+  <%= render "shared/errors", object: @listing %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title %></div>
+  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4 %></div>
+  <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents %></div>
+  <div class="field">
+    <%= f.label :condition %>
+    <%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %>
+  </div>
+  <div class="field">
+    <%= f.label :category_id, "Category" %>
+    <%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %>
+  </div>
+  <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
+  <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
+  <div class="actions"><%= f.submit "List it", class: "btn btn--primary" %></div>
+<% end %>

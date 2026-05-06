@@ -1,0 +1,14 @@
+<% content_for :title, "Order ##{@order.id}" %>
+<h1>Order #<%= @order.id %></h1>
+<p>Status: <strong><%= @order.status %></strong></p>
+<p>Restaurant: <%= link_to @order.restaurant.name, takeaway_restaurant_path(@order.restaurant) %></p>
+<p>Delivery to: <%= @order.delivery_address %></p>
+<ul>
+  <% @order.order_items.includes(:menu_item).each do |oi| %>
+    <li><%= oi.menu_item.name %> × <%= oi.quantity %> — <%= oi.subtotal_display %></li>
+  <% end %>
+</ul>
+<p>Total: <strong><%= @order.total_display %></strong></p>
+<% if Current.user == @order.restaurant.user && @order.status != "delivered" %>
+  <%= button_to "Advance status", takeaway_order_path(@order), method: :patch, class: "btn btn--primary" %>
+<% end %>

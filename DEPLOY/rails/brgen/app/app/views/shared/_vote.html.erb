@@ -1,0 +1,11 @@
+<div class="vote-buttons">
+  <%= form_with url: votes_path(votable_type: votable.class.name, votable_id: votable.id), method: :post do |f| %>
+    <%= f.hidden_field :value, value: 1 %>
+    <%= f.button "▲", class: "vote-btn upvote", type: :submit %>
+  <% end %>
+  <span class="vote-score"><%= votable.score %></span>
+  <%= form_with url: votes_path(votable_type: votable.class.name, votable_id: votable.id), method: :post do |f| %>
+    <%= f.hidden_field :value, value: -1 %>
+    <%= f.button "▼", class: "vote-btn downvote", type: :submit %>
+  <% end %>
+</div>

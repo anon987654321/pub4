@@ -1,0 +1,19 @@
+class Takeaway::MenuItemsController < Takeaway::BaseController
+  before_action :set_restaurant
+
+  def create
+    @item = @restaurant.menu_items.build(item_params)
+    @item.save ?
+      redirect_to(takeaway_restaurant_path(@restaurant), notice: "Item added") :
+      redirect_to(takeaway_restaurant_path(@restaurant), alert: @item.errors.full_messages.to_sentence)
+  end
+
+  def destroy
+    @restaurant.menu_items.find(params[:id]).destroy
+    redirect_to takeaway_restaurant_path(@restaurant)
+  end
+
+  private
+  def set_restaurant = (@restaurant = Current.user.takeaway_restaurants.find(params[:restaurant_id]))
+  def item_params    = params.require(:takeaway_menu_item).permit(:name, :description, :price_cents, :available, :vegetarian, :vegan, :photo)
+end

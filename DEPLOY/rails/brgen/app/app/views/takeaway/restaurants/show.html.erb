@@ -1,0 +1,38 @@
+<% content_for :title, @restaurant.name %>
+<h1><%= @restaurant.name %></h1>
+<p><%= @restaurant.description %></p>
+<p><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city %></p>
+<p>Min order: <%= @restaurant.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= @restaurant.delivery_fee_cents.to_i / 100.0 %> NOK</p>
+
+<% if authenticated? && Current.user == @restaurant.user %>
+  <nav>
+    <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn" %>
+    <h2>Add menu item</h2>
+    <%= form_with url: takeaway_restaurant_menu_items_path(@restaurant) do |f| %>
+      <input name="takeaway_menu_item[name]" placeholder="Name" required>
+      <input name="takeaway_menu_item[price_cents]" type="number" placeholder="Price (øre)" required>
+      <input name="takeaway_menu_item[description]" placeholder="Description">
+      <button type="submit">Add</button>
+    <% end %>
+  </nav>
+<% end %>
+
+<h2>Menu</h2>
+<% if authenticated? %>
+  <%= form_with url: takeaway_restaurant_orders_path(@restaurant) do |f| %>
+    <ul>
+      <% @menu_items.each do |item| %>
+        <li>
+          <strong><%= item.name %></strong> — <%= item.price_display %>
+          <% if item.description.present? %><br><small><%= item.description %></small><% end %>
+          <input type="number" name="takeaway_order[items][<%= item.id %>]" min="0" value="0" style="width:4rem">
+        </li>
+      <% end %>
+    </ul>
+    <input name="takeaway_order[delivery_address]" placeholder="Delivery address" required>
+    <textarea name="takeaway_order[special_instructions]" placeholder="Special instructions (optional)"></textarea>
+    <button type="submit" class="btn btn--primary">Place order</button>
+  <% end %>
+<% else %>
+  <%= link_to "Sign in to order", new_session_path, class: "btn btn--primary" %>
+<% end %>

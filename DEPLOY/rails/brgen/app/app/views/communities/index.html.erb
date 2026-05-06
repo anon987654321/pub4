@@ -1,0 +1,26 @@
+<div class="main-col">
+  <div class="page-header">
+    <h1>Communities</h1>
+    <% if authenticated? %><%= link_to "+ New", new_community_path, class: "btn" %><% end %>
+  </div>
+
+  <% if @communities.any? %>
+    <% @communities.each do |c| %>
+      <div class="post-card" style="padding:16px 20px;display:block">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-weight:600;font-size:1rem"><%= link_to c.name, community_path(c), style: "color:var(--text)" %></div>
+            <% if c.description.present? %>
+              <div style="color:var(--text-dim);font-size:0.875rem;margin-top:4px"><%= c.description %></div>
+            <% end %>
+          </div>
+          <div style="color:var(--text-dim);font-size:0.8rem"><%= c.posts.count %> posts</div>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="empty">No communities yet. <%= link_to "Create one", new_community_path if authenticated? %></div>
+  <% end %>
+</div>
+
+<div class="side-col"></div>

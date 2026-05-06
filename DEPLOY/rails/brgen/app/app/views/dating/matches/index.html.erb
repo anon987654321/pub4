@@ -1,0 +1,19 @@
+<% content_for :title, "Matches" %>
+<h1>Matches</h1>
+<%= link_to "Back to discover", dating_root_path, class: "btn" %>
+<% if @matches.none? %>
+  <p>No matches yet.</p>
+<% else %>
+  <div class="match-list">
+    <% @matches.each do |m| %>
+      <% other = m.other_user(Current.user) %>
+      <article>
+        <% if other.dating_profile&.photos&.attached? %>
+          <%= image_tag other.dating_profile.photos.first %>
+        <% end %>
+        <p><%= other.email_address.split("@").first %></p>
+      </article>
+    <% end %>
+  </div>
+<% end %>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

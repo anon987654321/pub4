@@ -1,0 +1,22 @@
+<div class="form-wrap">
+  <h1 style="margin-bottom:20px">New Community</h1>
+  <%= form_with model: @community do |f| %>
+    <% if @community.errors.any? %>
+      <div class="flash-alert" style="grid-column:auto">
+        <% @community.errors.full_messages.each do |msg| %><div><%= msg %></div><% end %>
+      </div>
+    <% end %>
+    <div class="field">
+      <%= f.label :name %>
+      <%= f.text_field :name, placeholder: "e.g. bergen, tech, musikk" %>
+    </div>
+    <div class="field">
+      <%= f.label :description %>
+      <%= f.text_area :description, placeholder: "What is this community about?", rows: 3 %>
+    </div>
+    <div style="display:flex;gap:12px">
+      <%= f.submit "Create", class: "btn" %>
+      <%= link_to "Cancel", communities_path, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+</div>

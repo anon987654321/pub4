@@ -1,0 +1,35 @@
+source "https://rubygems.org"
+ruby "~> 3.3"
+
+gem "rails", "~> 8.0"
+gem "sqlite3", "~> 2.1"
+gem "falcon"
+gem "async"
+gem "async-http"
+
+# Real-time
+gem "turbo-rails"
+gem "stimulus-rails"
+gem "importmap-rails"
+
+# Solid Stack (Rails 8)
+gem "solid_queue"
+gem "solid_cache"
+gem "solid_cable"
+
+# Authentication
+gem "bcrypt", "~> 3.1"
+
+# Social
+gem "acts_as_tenant"
+
+# Features
+gem "pagy"
+gem "image_processing"
+gem "geocoder"
+
+group :development, :test do
+  gem "brakeman"
+  gem "rubocop-rails-omakase"
+  gem "faker"
+end

@@ -1,0 +1,10 @@
+<h1>Channels</h1>
+<div class="channel-grid">
+  <% @channels.each do |c| %>
+    <article>
+      <%= link_to c.name, tv_channel_path(c) %>
+      <small><%= c.subscribers_count %> subscribers<% if c.live? %> · <span class="live-badge">LIVE</span><% end %></small>
+    </article>
+  <% end %>
+</div>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

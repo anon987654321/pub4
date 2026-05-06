@@ -1,0 +1,31 @@
+<%= turbo_frame_tag dom_id(comment) do %>
+<div class="comment" style="<%= "margin-left:#{[comment.depth * 16, 64].min}px" %>">
+  <div class="comment-meta">
+    <span class="author"><%= comment.user&.username || "anon" %></span>
+    <span> • <%= time_ago_in_words(comment.created_at) %> ago</span>
+    <% if authenticated? %>
+      •
+      <% root = comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable.commentable %>
+      <%= link_to "reply", "#reply-#{comment.id}", data: { action: "click->reply#toggle" }, style: "font-size:0.75rem;color:var(--text-dim)" %>
+      <% if comment.user == Current.user %>
+        <%= button_to "delete", comment, method: :delete, data: { turbo_confirm: "Delete?" }, class: "vote-btn", style: "font-size:0.7rem;color:var(--text-dim)" %>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="comment-body"><%= comment.content %></div>
+
+  <% if authenticated? %>
+    <div id="reply-<%= comment.id %>" style="display:none;margin-top:8px">
+      <%= form_with url: post_comments_path(comment.commentable.is_a?(Post) ? comment.commentable : comment.commentable), data: { turbo: true } do |f| %>
+        <%= f.hidden_field :parent_id, value: comment.id %>
+        <div class="field"><%= f.text_area :content, placeholder: "Reply...", rows: 3, style: "font-size:0.875rem" %></div>
+        <%= f.submit "Reply", class: "btn", style: "padding:6px 14px;font-size:0.8rem" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% comment.replies.best.each do |reply| %>
+    <%= render "comments/comment", comment: reply %>
+  <% end %>
+</div>
+<% end %>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%= content_for?(:title) ? "#{yield :title} — brgen" : "brgen" %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body>
+
+<nav>
+  <%= link_to "brgen", root_path, class: "logo" %>
+  <div class="nav-links">
+    <%= link_to "communities", communities_path %>
+    <%= link_to "posts",       posts_path %>
+    <% if authenticated? %>
+      <%= link_to "inbox",   conversations_path %>
+      <%= link_to "sign out", session_path, data: { turbo_method: :delete } %>
+    <% else %>
+      <%= link_to "sign in",  new_session_path %>
+    <% end %>
+  </div>
+</nav>
+
+<div class="page">
+  <% if notice %><div class="flash-notice"><%= notice %></div><% end %>
+  <% if alert  %><div class="flash-alert"><%=  alert  %></div><% end %>
+  <%= yield %>
+</div>
+
+</body>
+</html>

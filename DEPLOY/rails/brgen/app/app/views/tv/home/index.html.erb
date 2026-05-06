@@ -1,0 +1,23 @@
+<% content_for :title, "Brgen TV" %>
+<h1>Brgen TV</h1>
+<%= link_to "All Channels", tv_channels_path %>
+<% if authenticated? %> · <%= link_to "Create channel", new_tv_channel_path %><% end %>
+<% if @live.any? %>
+<section>
+  <h2>Live now</h2>
+  <div class="video-grid">
+    <% @live.each do |b| %>
+      <article><%= link_to tv_channel_path(b.channel) do %><span class="live-badge">LIVE</span> <%= b.title %> — <%= b.channel.name %><% end %></article>
+    <% end %>
+  </div>
+</section>
+<% end %>
+<section>
+  <h2>Trending</h2>
+  <div class="video-grid"><%= render @trending %></div>
+  <%= @pagy_trending.series_nav if @pagy_trending.pages > 1 %>
+</section>
+<section>
+  <h2>Recent</h2>
+  <div class="video-grid"><%= render @recent %></div>
+</section>

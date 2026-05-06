@@ -1,0 +1,40 @@
+class Playlist::PlaylistsController < Playlist::BaseController
+  allow_unauthenticated_access only: %i[index show]
+  before_action :set_playlist, only: %i[show edit update destroy]
+
+  def index
+    @pagy, @playlists = pagy(Playlist::Playlist.public_playlists.popular.includes(:user))
+  end
+
+  def show
+    @tracks = @playlist.playlist_tracks.includes(:track)
+  end
+
+  def new
+    @playlist = Playlist::Playlist.new
+  end
+
+  def create
+    @playlist = Current.user.playlist_playlists.build(playlist_params)
+    @playlist.save ?
+      redirect_to(playlist_playlist_path(@playlist), notice: "Playlist created") :
+      render(:new, status: :unprocessable_entity)
+  end
+
+  def edit; end
+
+  def update
+    @playlist.update(playlist_params) ?
+      redirect_to(playlist_playlist_path(@playlist)) :
+      render(:edit, status: :unprocessable_entity)
+  end
+
+  def destroy
+    @playlist.destroy
+    redirect_to playlist_playlists_path
+  end
+
+  private
+  def set_playlist    = (@playlist = Playlist::Playlist.find(params[:id]))
+  def playlist_params = params.require(:playlist_playlist).permit(:name, :description, :public_access)
+end
