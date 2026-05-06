@@ -1492,8 +1492,9 @@ log INFO "Service $svc_name handled by master rc.d"
     # Read API keys from dev's .zshrc for the rc.d service
     typeset env_line=""
     while IFS= read -r _line; do
-        env_line="$env_line ${_k%%=*}=${_k#*=}"
-      }
+        [[ $_line == export* ]] || continue
+        typeset _kv=${_line#export }
+        env_line="$env_line ${_kv%%=*}=${_kv#*=}"
     done < /home/dev/.zshrc
 
     cat > /etc/rc.d/master <<RCEOF
