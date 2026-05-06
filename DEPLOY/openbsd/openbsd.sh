@@ -1489,17 +1489,16 @@ log INFO "Service $svc_name handled by master rc.d"
     bundle config set --local path vendor/bundle
     bundle install --quiet
 
-    # Read API keys from dev's .zshrc for the rc.d service
+    # Read OPENROUTER_API_KEY from dev's environment
+    typeset openrouter_key=""
+    openrouter_key=$(grep -m1 '^export OPENROUTER_API_KEY=' /home/dev/.zshrc 2>/dev/null | cut -d= -f2- | tr -d '"'"'" | head -1 || true)
     typeset env_line=""
-    while IFS= read -r _line; do
-        env_line="$env_line ${_k%%=*}=${_k#*=}"
-      }
-    done < /home/dev/.zshrc
+    [[ -n $openrouter_key ]] && env_line=" OPENROUTER_API_KEY=${openrouter_key}"
 
     cat > /etc/rc.d/master <<RCEOF
 #!/bin/ksh
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1${env_line} falcon serve --bind http://127.0.0.1:53187"
+daemon_flags="exec env HOME=/home/dev RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1${env_line} falcon serve --bind http://127.0.0.1:53187"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_timeout="90"
