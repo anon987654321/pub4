@@ -83,7 +83,7 @@
       touch-action:none;
       cursor:pointer;
     }
-    #orb-iframe{position:fixed;inset:0;width:100%;height:100%;border:none;z-index:0;background:#000;}
+    #orb-iframe{display:none;position:fixed;inset:0;width:100%;height:100%;border:none;z-index:0;background:#000;}
 
     #status{
       position:fixed;
@@ -337,7 +337,7 @@
   </section>
 
   <iframe id="orb-iframe" src="/orbs/orb_particle.html" frameborder="0" allow="microphone"></iframe>
-  <canvas id="canvas" hidden></canvas>
+  <canvas id="canvas"></canvas>
 
   <section id="overlay" role="dialog" aria-modal="true">
     <h1>MASTER</h1>
@@ -2284,7 +2284,7 @@ const AMBIENT=[
     let camX=0,camY=0;
     const animate=()=>{
       requestAnimationFrame(animate);
-      if(canvas.hidden) return; // Iframe orbs are the active visualizer; skip canvas compute.
+      if(canvas.hidden) return;
       t+=0.016;
       speechPulse*=0.92;
       if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);

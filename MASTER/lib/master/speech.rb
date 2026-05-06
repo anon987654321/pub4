@@ -25,7 +25,7 @@ module Master
     }.freeze
 
     DEFAULT_VOICE = :osman
-    DEFAULT_STYLE = :heavy
+    DEFAULT_STYLE = :slow
 
     PULSE_SOCKET     = "/tmp/pulse/native".freeze
     PULSE_DAEMON     = "/data/data/com.termux/files/usr/bin/pulseaudio".freeze
