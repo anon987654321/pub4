@@ -84,7 +84,8 @@ module Master
 
     def build_council(root, infra, agent:)
       personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
-      deliberation = Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus])
+      axioms       = Axioms.new(root:)
+      deliberation = Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus], axioms:)
       ideation     = Council::Ideation.new(agent:, event_bus: infra[:bus])
       [deliberation, Stages::Council.new(deliberation:, config: infra[:config]), ideation]
     end

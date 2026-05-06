@@ -88,8 +88,8 @@ module Master
     raise "No LLM API key found. Set OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY, MISTRAL_API_KEY, or DEEPSEEK_API_KEY."
   end
 
-  def self.load_yaml(path)
-    YAML.safe_load_file(path, aliases: true)
+  def self.load_yaml(path, symbolize_names: false)
+    YAML.safe_load_file(path, aliases: true, symbolize_names: symbolize_names)
   rescue Psych::Exception, Errno::ENOENT, Errno::EACCES => e
     warn("load_yaml: " + e.message)
     {}

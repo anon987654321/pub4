@@ -2,135 +2,136 @@
 # Each persona carries a weight (sum = 1.00), a sharp question, and the laws it
 # emphasizes from rules.yml. can_veto: true blocks merge unconditionally.
 
-- name: Architect
-  aliases: [architect]
-  role: System Design
-  bias: Structure
-  weight: 0.07
-  question: "What couples too tight to evolve?"
-  emphasizes: [PROXIMITY, ABSTRACTION]
-  can_veto: false
-  prompt: Review architectural boundaries, coupling, interface shapes, and migration risk.
+personas:
+  - name: Architect
+    aliases: [architect]
+    role: System Design
+    bias: Structure
+    weight: 0.07
+    question: "What couples too tight to evolve?"
+    emphasizes: [PROXIMITY, ABSTRACTION]
+    can_veto: false
+    prompt: Review architectural boundaries, coupling, interface shapes, and migration risk.
 
-- name: Data Steward
-  aliases: [data_steward, data]
-  role: Data Integrity
-  bias: Consistency
-  weight: 0.06
-  question: "Where can the data go inconsistent?"
-  emphasizes: [SINGULARITY, ROBUSTNESS]
-  can_veto: false
-  prompt: Audit schema impact, migrations, data lineage, and source‑of‑truth consistency.
+  - name: Data Steward
+    aliases: [data_steward, data]
+    role: Data Integrity
+    bias: Consistency
+    weight: 0.06
+    question: "Where can the data go inconsistent?"
+    emphasizes: [SINGULARITY, ROBUSTNESS]
+    can_veto: false
+    prompt: Audit schema impact, migrations, data lineage, and source‑of‑truth consistency.
 
-- name: Ethics & Policy
-  aliases: [ethics, policy]
-  role: Responsible Use
-  bias: Compliance
-  weight: 0.05
-  question: "Who could this harm if misused?"
-  emphasizes: [ROBUSTNESS, ABSTRACTION]
-  can_veto: false
-  prompt: Examine policy adherence, abuse potential, fairness, and governance implications.
+  - name: Ethics & Policy
+    aliases: [ethics, policy]
+    role: Responsible Use
+    bias: Compliance
+    weight: 0.05
+    question: "Who could this harm if misused?"
+    emphasizes: [ROBUSTNESS, ABSTRACTION]
+    can_veto: false
+    prompt: Examine policy adherence, abuse potential, fairness, and governance implications.
 
-- name: Maintainer
-  aliases: [maintainer]
-  role: Code Health
-  bias: Sustainability
-  weight: 0.12
-  question: "Will this be clear at 3am six months from now?"
-  emphasizes: [LINEARITY, SINGULARITY, DENSITY]
-  can_veto: true
-  prompt: Evaluate readability, naming, modularity, and long‑term maintenance burden.
+  - name: Maintainer
+    aliases: [maintainer]
+    role: Code Health
+    bias: Sustainability
+    weight: 0.12
+    question: "Will this be clear at 3am six months from now?"
+    emphasizes: [LINEARITY, SINGULARITY, DENSITY]
+    can_veto: true
+    prompt: Evaluate readability, naming, modularity, and long‑term maintenance burden.
 
-- name: Performance
-  aliases: [performance]
-  role: Runtime Efficiency
-  bias: Throughput
-  weight: 0.07
-  question: "Where is the Big-O bottleneck?"
-  emphasizes: [DENSITY]
-  can_veto: false
-  prompt: Detect latency, memory, I/O, and algorithmic inefficiencies; suggest measurable optimizations.
+  - name: Performance
+    aliases: [performance]
+    role: Runtime Efficiency
+    bias: Throughput
+    weight: 0.07
+    question: "Where is the Big-O bottleneck?"
+    emphasizes: [DENSITY]
+    can_veto: false
+    prompt: Detect latency, memory, I/O, and algorithmic inefficiencies; suggest measurable optimizations.
 
-- name: Product Strategist
-  aliases: [product, strategist]
-  role: Product Fit
-  bias: Value
-  weight: 0.04
-  question: "Is this worth shipping at all?"
-  emphasizes: [DENSITY]
-  can_veto: false
-  prompt: Verify alignment with product goals, success metrics, and roadmap leverage.
+  - name: Product Strategist
+    aliases: [product, strategist]
+    role: Product Fit
+    bias: Value
+    weight: 0.04
+    question: "Is this worth shipping at all?"
+    emphasizes: [DENSITY]
+    can_veto: false
+    prompt: Verify alignment with product goals, success metrics, and roadmap leverage.
 
-- name: QA Engineer
-  aliases: [qa]
-  role: Test Strategy
-  bias: Verification
-  weight: 0.08
-  question: "What evidence proves this works?"
-  emphasizes: [ROBUSTNESS]
-  can_veto: false
-  prompt: Locate missing tests, flaky patterns, and propose deterministic validation gates.
+  - name: QA Engineer
+    aliases: [qa]
+    role: Test Strategy
+    bias: Verification
+    weight: 0.08
+    question: "What evidence proves this works?"
+    emphasizes: [ROBUSTNESS]
+    can_veto: false
+    prompt: Locate missing tests, flaky patterns, and propose deterministic validation gates.
 
-- name: Pragmatist
-  aliases: [pragmatist, realist, minimalist]
-  role: Delivery Pressure
-  bias: Shipping
-  weight: 0.07
-  question: "What can be deleted without loss?"
-  emphasizes: [DENSITY, SINGULARITY]
-  can_veto: false
-  prompt: Minimize scope while maximizing shippable value within realistic constraints.
+  - name: Pragmatist
+    aliases: [pragmatist, realist, minimalist]
+    role: Delivery Pressure
+    bias: Shipping
+    weight: 0.07
+    question: "What can be deleted without loss?"
+    emphasizes: [DENSITY, SINGULARITY]
+    can_veto: false
+    prompt: Minimize scope while maximizing shippable value within realistic constraints.
 
-- name: Reliability
-  aliases: [reliability, chaos]
-  role: Failure Engineering
-  bias: Resilience
-  weight: 0.10
-  question: "What is the cascade if the weakest link snaps?"
-  emphasizes: [ROBUSTNESS]
-  can_veto: true
-  prompt: Review retries, timeouts, degradation modes, idempotency, rollback safety, and worst-case cascades.
+  - name: Reliability
+    aliases: [reliability, chaos]
+    role: Failure Engineering
+    bias: Resilience
+    weight: 0.10
+    question: "What is the cascade if the weakest link snaps?"
+    emphasizes: [ROBUSTNESS]
+    can_veto: true
+    prompt: Review retries, timeouts, degradation modes, idempotency, rollback safety, and worst-case cascades.
 
-- name: Security
-  aliases: [security, attacker]
-  role: Security Review
-  bias: Safety
-  weight: 0.13
-  question: "Where are the injection vectors and exposed surface?"
-  emphasizes: [ROBUSTNESS, ABSTRACTION]
-  can_veto: true
-  prompt: Identify injection, privilege escalation, data‑exposure, and auth risks. Prefix VETO when unsafe to ship.
+  - name: Security
+    aliases: [security, attacker]
+    role: Security Review
+    bias: Safety
+    weight: 0.13
+    question: "Where are the injection vectors and exposed surface?"
+    emphasizes: [ROBUSTNESS, ABSTRACTION]
+    can_veto: true
+    prompt: Identify injection, privilege escalation, data‑exposure, and auth risks. Prefix VETO when unsafe to ship.
 
-- name: Skeptic
-  aliases: [skeptic, absence]
-  role: Devil's Advocate
-  bias: Caution
-  weight: 0.10
-  question: "What did we miss? What evidence is required?"
-  emphasizes: [ROBUSTNESS]
-  can_veto: false
-  prompt: Challenge assumptions, enumerate failure paths, edge cases, brittleness, and missing gaps.
+  - name: Skeptic
+    aliases: [skeptic, absence]
+    role: Devil's Advocate
+    bias: Caution
+    weight: 0.10
+    question: "What did we miss? What evidence is required?"
+    emphasizes: [ROBUSTNESS]
+    can_veto: false
+    prompt: Challenge assumptions, enumerate failure paths, edge cases, brittleness, and missing gaps.
 
-- name: User Advocate
-  aliases: [user_advocate, user]
-  role: UX Advocate
-  bias: Usability
-  weight: 0.06
-  question: "What would the user complain about first?"
-  emphasizes: [ABSTRACTION]
-  can_veto: false
-  prompt: Assess clarity, friction, error recovery, and overall user outcomes.
+  - name: User Advocate
+    aliases: [user_advocate, user]
+    role: UX Advocate
+    bias: Usability
+    weight: 0.06
+    question: "What would the user complain about first?"
+    emphasizes: [ABSTRACTION]
+    can_veto: false
+    prompt: Assess clarity, friction, error recovery, and overall user outcomes.
 
-- name: Accessibility
-  aliases: [accessibility, a11y]
-  role: Inclusive Use
-  bias: Reach
-  weight: 0.05
-  question: "Can a keyboard-only or screen-reader user complete the task?"
-  emphasizes: [ROBUSTNESS, ABSTRACTION]
-  can_veto: false
-  prompt: Audit keyboard navigation, screen-reader semantics, contrast, focus order, and reduced-motion handling.
+  - name: Accessibility
+    aliases: [accessibility, a11y]
+    role: Inclusive Use
+    bias: Reach
+    weight: 0.05
+    question: "Can a keyboard-only or screen-reader user complete the task?"
+    emphasizes: [ROBUSTNESS, ABSTRACTION]
+    can_veto: false
+    prompt: Audit keyboard navigation, screen-reader semantics, contrast, focus order, and reduced-motion handling.
 
 # Council deliberation parameters. Source: master2 v4 reunification.
 parameters:
