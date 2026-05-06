@@ -1,0 +1,4 @@
+<h1>Your Feed</h1>
+<%= link_to "New post", new_post_path, class: "btn" %>
+<%= render @posts %>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>

@@ -1,0 +1,17 @@
+<h1>Share a look</h1>
+<%= form_with model: @post do |f| %>
+  <%= render "shared/errors", object: @post %>
+  <div class="field">
+    <%= f.label :body, "What are you wearing?" %>
+    <%= f.text_area :body, rows: 3, maxlength: 500, placeholder: "Share your outfit…" %>
+  </div>
+  <div class="field">
+    <%= f.label :outfit_id, "Tag an outfit (optional)" %>
+    <%= f.select :outfit_id, Current.user.outfits.map { |o| [o.name, o.id] }, { include_blank: "—" } %>
+  </div>
+  <div class="field">
+    <%= f.label :item_id, "Tag an item (optional)" %>
+    <%= f.select :item_id, Current.user.items.map { |i| [i.title, i.id] }, { include_blank: "—" } %>
+  </div>
+  <div class="actions"><%= f.submit "Post", class: "btn btn--primary" %></div>
+<% end %>

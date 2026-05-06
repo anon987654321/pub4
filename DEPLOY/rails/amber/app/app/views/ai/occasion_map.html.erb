@@ -1,0 +1,17 @@
+<% content_for :title, "Occasion Coverage" %>
+<h1>Occasion coverage map</h1>
+<div class="occasion-grid">
+  <% @coverage.each do |occasion, items| %>
+    <div class="occasion-card occasion-card--<%= items.size < 2 ? 'sparse' : 'covered' %>">
+      <h3><%= occasion.capitalize %></h3>
+      <span class="occasion-count"><%= items.size %> items</span>
+      <% if items.size < 2 %>
+        <p class="dim occasion-warn">Gap — consider adding pieces</p>
+      <% end %>
+      <% items.first(3).each do |item| %>
+        <div class="dim"><%= link_to item.title, item %></div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+<p><%= link_to "← Dashboard", root_path %></p>

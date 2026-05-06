@@ -1,0 +1,11 @@
+<div id="item_<%= item.id %>_tags" class="ai-card">
+  <% if item.mood_effect.present? %>
+    <span class="tag">Mood: <%= item.mood_effect %></span>
+  <% end %>
+  <% if item.life_phase.present? %>
+    <span class="tag tag--phase"><%= item.life_phase %></span>
+  <% end %>
+  <% if result["reason"].present? %>
+    <p class="dim"><%= result["reason"] %></p>
+  <% end %>
+</div>

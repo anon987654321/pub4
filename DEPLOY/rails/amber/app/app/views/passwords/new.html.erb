@@ -1,0 +1,12 @@
+<div class="auth-form">
+  <h1>Reset password</h1>
+  <%= form_with url: passwords_path do |f| %>
+    <div class="field">
+      <%= f.label :email_address, "Email" %>
+      <%= f.email_field :email_address, autofocus: true, autocomplete: "email" %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Send reset link", class: "btn btn--primary" %>
+    </div>
+  <% end %>
+</div>

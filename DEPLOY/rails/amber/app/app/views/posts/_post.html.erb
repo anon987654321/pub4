@@ -1,0 +1,15 @@
+<article>
+  <header>
+    <%= link_to post.user.email_address.split("@").first, user_path(post.user) %>
+    <time datetime="<%= post.created_at.iso8601 %>"><%= time_ago_in_words(post.created_at) %> ago</time>
+  </header>
+  <p><%= post.body %></p>
+  <% if post.outfit %><p><em>Outfit: <%= link_to post.outfit.name, outfit_path(post.outfit) %></em></p><% end %>
+  <% if post.item %><p><em>Item: <%= link_to post.item.title, item_path(post.item) %></em></p><% end %>
+  <footer>
+    <%= button_to "♥ #{post.likes_count}", like_post_path(post), method: :post %>
+    <% if post.user == Current.user %>
+      <%= button_to "Delete", post_path(post), method: :delete, data: { turbo_confirm: "Delete?" } %>
+    <% end %>
+  </footer>
+</article>

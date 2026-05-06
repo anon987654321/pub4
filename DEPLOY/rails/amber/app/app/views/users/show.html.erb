@@ -1,0 +1,26 @@
+<header class="profile-header">
+  <h1><%= @user.email_address.split("@").first %></h1>
+  <p><%= @user.items.count %> items · <%= @user.followers.count %> followers · <%= @user.following.count %> following</p>
+  <% if authenticated? && Current.user != @user %>
+    <% if Current.user.following?(@user) %>
+      <%= button_to "Unfollow", unfollow_user_path(@user), method: :delete, class: "btn" %>
+    <% else %>
+      <%= button_to "Follow", follow_user_path(@user), method: :post, class: "btn btn--primary" %>
+    <% end %>
+  <% end %>
+</header>
+<h2>Recent items</h2>
+<div class="item-grid">
+  <% @items.each do |item| %>
+    <%= link_to item_path(item) do %>
+      <% if item.photos.attached? %>
+        <%= image_tag item.photos.first, alt: item.title %>
+      <% else %>
+        <div class="item-placeholder"><%= item.category %></div>
+      <% end %>
+      <p><%= item.title %></p>
+    <% end %>
+  <% end %>
+</div>
+<h2>Posts</h2>
+<%= render @posts %>

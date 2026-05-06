@@ -1,0 +1,7 @@
+<% content_for :title, "Outfits" %>
+<header>
+  <h1>Outfits</h1>
+  <%= link_to "New outfit", new_outfit_path, class: "btn" %>
+</header>
+<div class="item-grid" id="outfits"><%= render @outfits %></div>
+<%= pagy_nav(@pagy) if @pagy.pages > 1 %>

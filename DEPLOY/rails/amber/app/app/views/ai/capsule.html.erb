@@ -1,0 +1,20 @@
+<% content_for :title, "Capsule Optimizer" %>
+<h1>Capsule Wardrobe Optimizer</h1>
+<% if @result["items"] %>
+  <div class="capsule-list">
+    <% @result["items"].each do |item| %>
+      <div class="capsule-row capsule-row--<%= item["decision"] %>">
+        <span class="capsule-decision"><%= item["decision"] %></span>
+        <strong><%= item["title"] %></strong>
+        <span class="dim"><%= item["reason"] %></span>
+      </div>
+    <% end %>
+  </div>
+  <% if @result["gap_items"]&.any? %>
+    <h2>Gap items to consider buying</h2>
+    <ul><% @result["gap_items"].each do |g| %><li><%= g %></li><% end %></ul>
+  <% end %>
+<% else %>
+  <p class="dim">Add more items to your wardrobe first.</p>
+<% end %>
+<p><%= link_to "← Dashboard", root_path %></p>

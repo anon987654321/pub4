@@ -1,0 +1,5 @@
+<article class="item-card" id="<%= dom_id(outfit) %>">
+  <%= link_to outfit.name, outfit, class: "item-title" %>
+  <span class="dim"><%= [outfit.season, outfit.occasion].compact.join(" · ") %></span>
+  <span class="dim"><%= outfit.items.count %> items · <%= outfit.likes_count %> likes</span>
+</article>

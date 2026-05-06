@@ -1,0 +1,69 @@
+<% content_for :title, "Dashboard" %>
+<% if authenticated? %>
+  <% if @weather %>
+    <div class="weather-bar">
+      <%= @weather[:description] %> · <%= @weather[:temp] %>°C
+      <% if @weather[:temp] < 10 %>· Wear layers<% elsif @weather[:temp] > 20 %>· Light fabrics<% end %>
+    </div>
+  <% end %>
+
+  <header class="dash-stats">
+    <dl>
+      <div><dt>Items</dt><dd><%= @items_count %></dd></div>
+      <div><dt>Spark joy</dt><dd><%= @joy_count %></dd></div>
+      <div><dt>Never worn</dt><dd><%= @never_worn_count %></dd></div>
+      <div><dt>Utilisation</dt><dd class="<%= @utilization_rate < 20 ? 'stat-warn' : '' %>"><%= @utilization_rate %>%</dd></div>
+    </dl>
+    <nav>
+      <%= link_to "Add item", new_item_path, class: "btn" %>
+      <%= link_to "Search wardrobe", ai_search_path, class: "btn" %>
+      <%= link_to "Capsule plan", ai_capsule_path, class: "btn" %>
+    </nav>
+  </header>
+
+  <% if @planned_this_week.any? %>
+    <section>
+      <h2>This week</h2>
+      <div class="plan-list">
+        <% @planned_this_week.each do |plan| %>
+          <div class="plan-row">
+            <span class="plan-date"><%= plan.planned_date.strftime("%a %-d") %></span>
+            <%= link_to plan.outfit.name, plan.outfit %>
+            <%= button_to "✕", planned_outfit_path(plan), method: :delete, class: "btn-link" %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @worst_cpw.any? %>
+    <section>
+      <h2>Worst cost-per-wear</h2>
+      <div class="cpw-list">
+        <% @worst_cpw.each do |item| %>
+          <div class="cpw-row">
+            <%= link_to item.title, item %>
+            <span class="cpw-val">£<%= item.cost_per_wear %>/wear · worn <%= item.times_worn %>×</span>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @aging_unworn.any? %>
+    <section>
+      <h2>Aging unworn</h2>
+      <div class="item-grid"><%= render @aging_unworn %></div>
+    </section>
+  <% end %>
+
+  <% if @recent_items.any? %>
+    <h2>Recent</h2>
+    <div class="item-grid"><%= render @recent_items %></div>
+    <p><%= link_to "All items →", items_path %></p>
+  <% else %>
+    <p><%= link_to "Add your first item", new_item_path %></p>
+  <% end %>
+<% else %>
+  <p>Welcome to Amber. <%= link_to "Sign in", new_session_path %> to manage your wardrobe.</p>
+<% end %>

@@ -1,0 +1,9 @@
+<% content_for :title, "Declutter guide" %>
+<h1>Declutter guide</h1>
+<% if @candidates.any? %>
+  <p class="dim">Items to consider letting go:</p>
+  <div class="item-grid"><%= render @candidates %></div>
+<% else %>
+  <p>No declutter candidates — your wardrobe is in great shape.</p>
+<% end %>
+<p><%= link_to "Back", items_path %></p>

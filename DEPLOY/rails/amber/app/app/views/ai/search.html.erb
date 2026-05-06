@@ -1,0 +1,16 @@
+<% content_for :title, "Search Wardrobe" %>
+<h1>Search your wardrobe</h1>
+<%= form_with url: ai_search_path, method: :get do |f| %>
+  <div class="field-row">
+    <%= f.search_field :q, value: @query, placeholder: "e.g. something warm but not bulky for a meeting", autofocus: true, class: "input input--wide" %>
+    <%= f.submit "Search", class: "btn" %>
+  </div>
+<% end %>
+<% if @explanation.present? %>
+  <p class="dim"><%= @explanation %></p>
+<% end %>
+<% if @items&.any? %>
+  <div class="item-grid"><%= render @items %></div>
+<% elsif @query.present? %>
+  <p class="dim">No matches found.</p>
+<% end %>

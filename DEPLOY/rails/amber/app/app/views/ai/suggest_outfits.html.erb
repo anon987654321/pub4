@@ -1,0 +1,10 @@
+<% content_for :title, "Outfit suggestions" %>
+<h1>Outfit suggestions</h1>
+<% @suggestions.each_with_index do |s, i| %>
+  <article class="ai-card">
+    <h2><%= s["name"] || "Option #{i + 1}" %></h2>
+    <p class="dim"><%= s["items"]&.join(", ") %></p>
+    <p><%= s["description"] %></p>
+  </article>
+<% end %>
+<p><%= link_to "Back to wardrobe", items_path %></p>

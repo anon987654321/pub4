@@ -1,0 +1,9 @@
+<aside class="ai-card">
+  <% if result["sparks_joy"].nil? %>
+    <p class="dim">Analysis unavailable</p>
+  <% else %>
+    <strong><%= result["sparks_joy"] ? "Sparks joy" : "Does not spark joy" %></strong>
+    <p><%= result["reason"] %></p>
+    <p class="dim"><em><%= result["suggestion"] %></em></p>
+  <% end %>
+</aside>

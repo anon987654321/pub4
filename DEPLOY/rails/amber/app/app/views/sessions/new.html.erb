@@ -1,0 +1,18 @@
+<div class="auth-form">
+  <h1>Sign in</h1>
+  <%= form_with url: session_path do |f| %>
+    <%= render "shared/errors", object: f.object if f.object.respond_to?(:errors) %>
+    <div class="field">
+      <%= f.label :email_address, "Email" %>
+      <%= f.email_field :email_address, autofocus: true, autocomplete: "email" %>
+    </div>
+    <div class="field">
+      <%= f.label :password %>
+      <%= f.password_field :password, autocomplete: "current-password" %>
+    </div>
+    <div class="actions">
+      <%= f.submit "Sign in", class: "btn btn--primary" %>
+    </div>
+    <p><%= link_to "Forgot password?", new_password_path %></p>
+  <% end %>
+</div>

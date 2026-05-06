@@ -1,0 +1,17 @@
+<% content_for :title, "Wardrobe" %>
+<section data-controller="filter">
+  <header>
+    <h1>Wardrobe (<%= @pagy.count %>)</h1>
+    <%= link_to "Add item", new_item_path, class: "btn" %>
+    <select data-action="change->filter#filter" data-filter-target="select">
+      <option value="">All</option>
+      <% Item::CATEGORIES.each do |cat| %>
+        <option value="<%= cat %>"><%= cat %></option>
+      <% end %>
+    </select>
+  </header>
+  <div class="item-grid" id="items" data-filter-target="grid">
+    <%= render @items %>
+  </div>
+  <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
+</section>

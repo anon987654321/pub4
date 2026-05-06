@@ -1,0 +1,39 @@
+<% content_for :title, @item.title %>
+<article class="item-detail">
+  <% if @item.photos.attached? %>
+    <div class="item-photos">
+      <% @item.photos.each do |p| %>
+        <%= image_tag p.variant(resize_to_limit: [600, 600]) %>
+      <% end %>
+    </div>
+  <% end %>
+  <header>
+    <h1><%= @item.title %></h1>
+    <% if @item.spark_joy? %><span class="badge">Sparks joy</span><% end %>
+  </header>
+  <dl class="meta">
+    <dt>Category</dt><dd><%= @item.category %></dd>
+    <% if @item.color.present? %><dt>Color</dt><dd><%= @item.color %></dd><% end %>
+    <% if @item.size.present? %><dt>Size</dt><dd><%= @item.size %></dd><% end %>
+    <% if @item.material.present? %><dt>Material</dt><dd><%= @item.material %></dd><% end %>
+    <% if @item.brand.present? %><dt>Brand</dt><dd><%= @item.brand %></dd><% end %>
+    <% if @item.price? %><dt>Price</dt><dd><%= number_to_currency(@item.price) %></dd><% end %>
+    <dt>Worn</dt><dd><%= @item.times_worn.to_i %> times</dd>
+    <% if @item.purchase_date? %><dt>Purchased</dt><dd><%= @item.purchase_date.strftime("%b %Y") %></dd><% end %>
+  </dl>
+  <% if @item.mood_effect.present? || @item.life_phase.present? %>
+    <div class="tag-row">
+      <% if @item.mood_effect.present? %><span class="tag">Mood: <%= @item.mood_effect %></span><% end %>
+      <% if @item.life_phase.present? %><span class="tag tag--phase"><%= @item.life_phase %></span><% end %>
+    </div>
+  <% end %>
+  <div id="item_<%= @item.id %>_analysis"></div>
+  <div id="item_<%= @item.id %>_tags"></div>
+  <nav>
+    <%= button_to "Worn today", wear_item_path(@item), method: :post, class: "btn" %>
+    <%= button_to "AI analyse", ai_analyze_item_path(@item), method: :post, class: "btn" %>
+    <%= button_to "AI tag mood", ai_tag_item_path(@item), method: :post, class: "btn" %>
+    <%= link_to "Edit", edit_item_path(@item), class: "btn" %>
+    <%= button_to "Delete", @item, method: :delete, data: { turbo_confirm: "Remove this item?" }, class: "btn btn-danger" %>
+  </nav>
+</article>

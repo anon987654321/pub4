@@ -1,0 +1,12 @@
+<% content_for :title, @outfit.name %>
+<header>
+  <h1><%= @outfit.name %></h1>
+  <span class="dim"><%= [@outfit.season, @outfit.category, @outfit.occasion].compact.join(" · ") %></span>
+</header>
+<p><%= @outfit.description %></p>
+<div class="item-grid"><%= render @outfit.items %></div>
+<nav>
+  <%= button_to "Like (#{@outfit.likes_count})", like_outfit_path(@outfit), method: :post, class: "btn" %>
+  <%= link_to "Edit", edit_outfit_path(@outfit), class: "btn" %>
+  <%= button_to "Delete", @outfit, method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger" %>
+</nav>

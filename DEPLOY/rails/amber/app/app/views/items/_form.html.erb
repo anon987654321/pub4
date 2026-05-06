@@ -1,0 +1,32 @@
+<%= form_with model: item, class: "form" do |f| %>
+  <%= render "shared/errors", object: item %>
+  <div class="field"><%= f.label :title %><%= f.text_field :title, autofocus: true %></div>
+  <div class="field">
+    <%= f.label :category %>
+    <%= f.select :category, Item::CATEGORIES, include_blank: "Select…" %>
+  </div>
+  <div class="field"><%= f.label :color %><%= f.text_field :color %></div>
+  <div class="field"><%= f.label :size %><%= f.text_field :size %></div>
+  <div class="field"><%= f.label :material %><%= f.text_field :material %></div>
+  <div class="field"><%= f.label :brand %><%= f.text_field :brand %></div>
+  <div class="field"><%= f.label :price %><%= f.number_field :price, step: "0.01", min: 0 %></div>
+  <div class="field"><%= f.label :purchase_date %><%= f.date_field :purchase_date %></div>
+  <div class="field">
+    <%= f.label :season %>
+    <%= f.select :season, Item::SEASONS, include_blank: "Select…" %>
+  </div>
+  <div class="field">
+    <%= f.label :occasion_tags, "Occasions (comma-separated)" %>
+    <%= f.text_field :occasion_tags, placeholder: "work, casual, formal" %>
+  </div>
+  <div class="field">
+    <%= f.label :mood_effect, "Mood effect" %>
+    <%= f.select :mood_effect, Item::MOOD_EFFECTS, include_blank: "Not set" %>
+  </div>
+  <div class="field">
+    <%= f.label :life_phase, "Life phase" %>
+    <%= f.select :life_phase, Item::LIFE_PHASES, include_blank: "Not set" %>
+  </div>
+  <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
+  <div class="actions"><%= f.submit class: "btn" %> <%= link_to "Cancel", items_path %></div>
+<% end %>
