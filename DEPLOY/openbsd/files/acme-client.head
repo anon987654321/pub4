@@ -1,0 +1,5 @@
+# ACME for Let's Encrypt (acme-client.conf(5))
+authority letsencrypt {
+  api url "https://acme-v02.api.letsencrypt.org/directory"
+  account key "/etc/acme/letsencrypt_privkey.pem"
+}

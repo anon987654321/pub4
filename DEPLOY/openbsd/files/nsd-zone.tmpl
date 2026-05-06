@@ -1,0 +1,6 @@
+
+zone:
+  name: "$domain"
+  zonefile: "$domain.zone.signed"
+  provide-xfr: $HYP_IP NOKEY
+  notify: $HYP_IP NOKEY

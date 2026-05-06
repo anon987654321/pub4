@@ -168,6 +168,30 @@ log() {
 
 }
 
+# Template helpers — render files/* with $var expansion, install to dest
+install_template() {
+  typeset src=${SCRIPT_DIR}/$1 dst=$2
+  [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
+  typeset content; content=$(<"$src")
+  eval "cat > \"$dst\" <<INSTALL_TEMPLATE_EOF
+$content
+INSTALL_TEMPLATE_EOF"
+}
+append_template() {
+  typeset src=${SCRIPT_DIR}/$1 dst=$2
+  [[ -f $src ]] || { log ERROR "Missing template: $src"; exit 1 }
+  typeset content; content=$(<"$src")
+  eval "cat >> \"$dst\" <<APPEND_TEMPLATE_EOF
+$content
+APPEND_TEMPLATE_EOF"
+}
+install_static() {
+  typeset src=${SCRIPT_DIR}/$1 dst=$2
+  [[ -f $src ]] || { log ERROR "Missing file: $src"; exit 1 }
+  cp "$src" "$dst"
+}
+
+
 # Configuration settings (constants per master.yml p04: explicit over implicit)
 typeset -r BRGEN_IP="185.52.176.18"   # Primary server IP (updated for this VPS)
 
@@ -178,6 +202,8 @@ typeset -r LOCALHOST="127.0.0.1"      # Localhost constant
 typeset -r EMAIL_ADDRESS="bergen@pub.attorney"  # Email address for OpenSMTPD
 
 typeset -r STATE_FILE="./openbsd_setup_state"   # Runtime state file
+
+SCRIPT_DIR=${0:a:h}
 
 typeset -a PUBLIC_RESOLVERS=(8.8.8.8 1.1.1.1 9.9.9.9)  # Public DNS resolvers
 
@@ -599,22 +625,7 @@ stage_1() {
   /sbin/pfctl -e || { log ERROR "pf enable failed"; exit 1 }
 
   # Configure minimal pf
-  cat > /etc/pf.conf <<EOF
-
-# Minimal PF for DNS in Stage 1 (pf.conf(5))
-
-ext_if="vio0"
-
-brgen_ip="$BRGEN_IP"
-
-hyp_ip="$HYP_IP"
-
-set skip on lo
-pass in on $ext_if inet proto { tcp, udp } to $brgen_ip port 53
-
-pass out on $ext_if inet proto udp to $hyp_ip port 53
-
-EOF
+  install_template files/pf.stage1.conf /etc/pf.conf
 
   /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
 
@@ -635,60 +646,11 @@ EOF
   transaction_log "DELETE" "/var/nsd/etc/* and /var/nsd/zones/master/*" "SUCCESS"
 
   # Configure NSD
-  cat > /var/nsd/etc/nsd.conf <<EOF
-
-# NSD for DNSSEC (nsd.conf(5))
-
-server:
-
-  ip-address: $BRGEN_IP
-
-  hide-version: yes
-
-  verbosity: 1
-
-  username: _nsd
-
-  zonesdir: "/var/nsd/zones/master"
-
-  zonelistfile: "/var/nsd/db/zone.list"
-
-  xfrdfile: "/var/nsd/run/xfrd.state"
-
-  server-count: 2
-
-  # Response Rate Limiting (DDoS mitigation)
-  rrl-size: 1000000
-
-  rrl-ratelimit: 200
-
-  rrl-slip: 2
-
-  rrl-whitelist-ratelimit: 2000
-
-remote-control:
-
-  control-enable: yes
-
-  control-interface: $LOCALHOST
-
-EOF
+  install_template files/nsd.conf.head /var/nsd/etc/nsd.conf
 
   for domain in ${ALL_DOMAINS[*]%%:*}; do
 
-    cat >> /var/nsd/etc/nsd.conf <<EOF
-
-zone:
-
-  name: "$domain"
-
-  zonefile: "$domain.zone.signed"
-
-  provide-xfr: $HYP_IP NOKEY
-
-  notify: $HYP_IP NOKEY
-
-EOF
+    append_template files/nsd-zone.tmpl /var/nsd/etc/nsd.conf
 
   done
 
@@ -708,27 +670,7 @@ EOF
 
     [[ $subdomains = $domain ]] && subdomains=""
 
-    cat > /var/nsd/zones/master/$domain.zone <<EOF
-
-$ORIGIN $domain.
-
-$TTL 3600
-
-@ IN SOA ns.brgen.no. hostmaster.$domain. (
-
-    $serial 1800 900 604800 86400)
-
-@ IN NS ns.brgen.no.
-
-@ IN NS ns.hyp.net.
-
-@ IN A $BRGEN_IP
-
-@ IN MX 10 mail.$domain.
-
-mail IN A $BRGEN_IP
-
-EOF
+    install_template files/zone.tmpl /var/nsd/zones/master/$domain.zone
 
     [[ $domain = brgen.no ]] && print -r -- "ns IN A $BRGEN_IP" >> /var/nsd/zones/master/$domain.zone
 
@@ -831,24 +773,7 @@ EOF
   # Configure HTTP
   [[ -d /var/www/acme ]] || { log ERROR "/var/www/acme missing"; exit 1 }
 
-  cat > /etc/httpd.conf <<'EOF'
-
-# HTTP: ACME challenges + HTTP→HTTPS redirect (httpd.conf(5))
-
-server "*" {
-  listen on 0.0.0.0 port 80
-
-  location "/.well-known/acme-challenge/*" {
-    root "/acme"
-    request strip 2
-  }
-
-  location * {
-    block return 301 "https://$HTTP_HOST$REQUEST_URI"
-  }
-}
-
-EOF
+  install_static files/httpd.conf /etc/httpd.conf
 
   httpd -n -f /etc/httpd.conf || { log ERROR "httpd.conf invalid"; exit 1 }
 
@@ -879,19 +804,7 @@ EOF
 
   chmod 640 /etc/acme/letsencrypt_privkey.pem
 
-  cat > /etc/acme-client.conf <<'EOF'
-
-# ACME for Let's Encrypt (acme-client.conf(5))
-
-authority letsencrypt {
-
-  api url "https://acme-v02.api.letsencrypt.org/directory"
-
-  account key "/etc/acme/letsencrypt_privkey.pem"
-
-}
-
-EOF
+  install_static files/acme-client.head /etc/acme-client.conf
 
   for domain_entry in $ALL_DOMAINS; do
 
@@ -990,94 +903,7 @@ EOF
   (( $#FAILED_CERTS )) && retry_failed_certs
 
   # Schedule renewals - create renewal script
-  cat > /usr/local/bin/renew-certs.sh <<'RENEWSCRIPT'
-
-#!/bin/ksh
-
-# Certificate renewal script
-
-# Function to generate TLSA record
-generate_tlsa_record() {
-
-  typeset domain=$1
-
-  typeset cert=/etc/ssl/$domain.fullchain.pem
-
-  typeset zonefile=/var/nsd/zones/master/$domain.zone
-
-  typeset zsk=/var/nsd/zones/master/K$domain.+013+zsk.key
-
-  typeset ksk=/var/nsd/zones/master/K$domain.+013+ksk.key
-
-  [[ ! -f $cert ]] && return 1
-  typeset tlsa_record=$(openssl x509 -noout -pubkey -in "$cert" | \
-    openssl pkey -pubin -outform der 2>/dev/null | \
-
-    openssl dgst -sha256 2>/dev/null); tlsa_record=${tlsa_record##* }
-
-  [[ -z $tlsa_record ]] && return 1
-  # Remove old TLSA record and add new one (pure zsh)
-  typeset -a lines
-
-  lines=("${(@f)$(<$zonefile)}")
-
-  lines=("${(@)lines:#_443._tcp.$domain. IN TLSA*}")
-
-  print -rl -- $lines > "$zonefile"
-
-  print -r -- "_443._tcp.$domain. IN TLSA 3 1 1 $tlsa_record" >> "$zonefile"
-
-  # Re-sign zone
-  ldns-signzone -n -p -s $(dd if=/dev/random bs=16 count=1 2>/dev/null | sha1 -q) "$zonefile" "$zsk" "$ksk"
-
-  nsd-control reload
-
-}
-
-# Domain list
-ALL_DOMAINS=(
-
-  brgen.no longyearbyn.no oshlo.no stvanger.no trmso.no trndheim.no
-
-  reykjavk.is kbenhvn.dk gtebrg.se mlmoe.se stholm.se hlsinki.fi
-
-  brmingham.uk cardff.uk edinbrgh.uk glasgw.uk lndon.uk lverpool.uk
-
-  mnchester.uk amstrdam.nl rottrdam.nl utrcht.nl brssels.be zrich.ch
-
-  lchtenstein.li frankfrt.de brdeaux.fr mrseille.fr mlan.it lisbon.pt
-
-  wrsawa.pl gdnsk.pl austn.us chcago.us denvr.us dllas.us dnver.us
-
-  dtroit.us houstn.us lsangeles.com mnnesota.com newyrk.us prtland.com
-
-  wshingtondc.com pub.healthcare pub.attorney freehelp.legal
-
-  bsdports.org bsddocs.org discordb.org foodielicio.us
-
-  stacyspassion.com antibettingblog.com anticasinoblog.com
-
-  antigamblingblog.com foball.no
-
-)
-
-# Renew certificates
-for domain in ${ALL_DOMAINS[@]}; do
-
-  if acme-client -v -f /etc/acme-client.conf "$domain"; then
-
-    echo "Renewed: $domain"
-
-    generate_tlsa_record "$domain"
-
-  fi
-
-done
-
-# Reload relayd if any certs were renewed
-/usr/sbin/rcctl reload relayd
-
-RENEWSCRIPT
+  install_static files/renew-certs.sh /usr/local/bin/renew-certs.sh
 
   chmod 755 /usr/local/bin/renew-certs.sh
   # Add to crontab
@@ -1160,55 +986,7 @@ configure_haproxy() {
     [[ -f /etc/haproxy/${d}.pem ]] && crt_list="$crt_list crt /etc/haproxy/${d}.pem"
   done
 
-  cat > /etc/haproxy/haproxy.cfg <<EOF
-global
-	log 127.0.0.1 local0 debug
-	maxconn 1024
-	chroot /var/haproxy
-	user _haproxy
-	group _haproxy
-	daemon
-	pidfile /var/run/haproxy.pid
-
-defaults
-	log global
-	mode http
-	option httplog
-	option dontlognull
-	option redispatch
-	retries 3
-	maxconn 2000
-	timeout connect 5s
-	timeout client 30s
-	timeout server 30s
-
-frontend https
-	bind *:443 ssl${crt_list}
-	http-request set-header X-Forwarded-Proto https
-	http-request set-header X-Forwarded-For %[src]
-
-	use_backend master   if { ssl_fc_sni ai.brgen.no }
-	use_backend brgen    if { ssl_fc_sni brgen.no }
-	use_backend amber    if { ssl_fc_sni amber.brgen.no }
-	use_backend bsdports if { ssl_fc_sni bsdports.org }
-	default_backend master
-
-backend master
-	option forwardfor
-	server master 127.0.0.1:53187 check
-
-backend brgen
-	option forwardfor
-	server brgen 127.0.0.1:11006 check
-
-backend amber
-	option forwardfor
-	server amber 127.0.0.1:61352 check
-
-backend bsdports
-	option forwardfor
-	server bsdports 127.0.0.1:47312 check
-EOF
+  install_template files/haproxy.cfg /etc/haproxy/haproxy.cfg
 
   haproxy -c -f /etc/haproxy/haproxy.cfg || { log ERROR "haproxy.cfg invalid"; exit 1 }
   /usr/sbin/rcctl enable haproxy
@@ -1296,65 +1074,14 @@ stage_2() {
   }
 
   # Configure PF
-  cat > /etc/pf.conf <<EOF
-
-# PF for DNS, HTTP/HTTPS, SSH, SMTP (pf.conf(5))
-
-ext_if="vio0"
-
-brgen_ip="$BRGEN_IP"
-
-hyp_ip="$HYP_IP"
-
-set skip on lo
-set block-policy return
-
-set loginterface $ext_if
-
-set reassemble yes
-
-set limit { states 10000, frags 5000 }
-
-block log all
-
-scrub in all
-
-table <bruteforce> persist
-
-block quick from <bruteforce>
-
-pass out quick on \$ext_if all
-
-pass in on \$ext_if inet proto tcp to \$ext_if port 22 keep state \\
-
-  (max-src-conn 15, max-src-conn-rate 5/3, overload <bruteforce> flush global)
-
-pass in on \$ext_if inet proto { tcp, udp } to \$brgen_ip port 53 log
-
-pass in on \$ext_if inet proto tcp to \$brgen_ip port { 22, 25, 80, 443, 3000, 8080, 8082, 8084, 8086 } log
-
-pass out on \$ext_if inet proto tcp to any port 25
-
-EOF
+  install_template files/pf.stage2.conf /etc/pf.conf
 
   /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
 
   /sbin/pfctl -f /etc/pf.conf || { log ERROR "pf failed"; exit 1 }
 
   # Configure OpenSMTPD
-  cat > /etc/mail/smtpd.conf <<EOF
-
-# OpenSMTPD for outbound email (smtpd.conf(5))
-
-table aliases file:/etc/mail/aliases
-
-pki mail.pub.attorney cert "/etc/ssl/smtp.crt"
-pki mail.pub.attorney key "/etc/ssl/private/smtp.key"
-
-listen on $BRGEN_IP port 25 tls pki mail.pub.attorney
-action "outbound" relay
-match from local for any action "outbound"
-EOF
+  install_template files/smtpd.conf /etc/mail/smtpd.conf
 
   smtpd -n -f /etc/mail/smtpd.conf || { log ERROR "smtpd.conf invalid"; exit 1 }
 
@@ -1433,19 +1160,7 @@ EOF
 
     typeset secret; secret=$(su -l $app -c "cd $app_dir && HOME=/home/$app RAILS_ENV=production bundle exec rails secret")
 
-    cat > /etc/rc.d/$app <<EOF
-#!/bin/ksh
-daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE=${secret} HOME=/home/${app} falcon serve --bind http://127.0.0.1:${port}"
-daemon_user="${app}"
-daemon_execdir="${app_dir}"
-daemon_timeout="60"
-. /etc/rc.d/rc.subr
-pexp="ruby.*${port}"
-rc_bg=YES
-rc_reload=NO
-rc_cmd \$1
-EOF
+    install_template files/rc.d/rails-app.tmpl /etc/rc.d/$app
 
     chmod 755 /etc/rc.d/$app
 
@@ -1497,19 +1212,7 @@ log INFO "Service $svc_name handled by master rc.d"
         env_line="$env_line ${_kv%%=*}=${_kv#*=}"
     done < /home/dev/.zshrc
 
-    cat > /etc/rc.d/master <<RCEOF
-#!/bin/ksh
-daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1${env_line} falcon serve --bind http://127.0.0.1:53187"
-daemon_user="dev"
-daemon_execdir="/home/dev/pub4/MASTER/web"
-daemon_timeout="90"
-. /etc/rc.d/rc.subr
-pexp="ruby34.*falcon.*53187"
-rc_bg=YES
-rc_reload=NO
-rc_cmd \$1
-RCEOF
+    install_template files/rc.d/master.tmpl /etc/rc.d/master
     chmod 555 /etc/rc.d/master
     rcctl enable master
     rcctl start master

@@ -1,0 +1,17 @@
+# NSD for DNSSEC (nsd.conf(5))
+server:
+  ip-address: $BRGEN_IP
+  hide-version: yes
+  verbosity: 1
+  username: _nsd
+  zonesdir: "/var/nsd/zones/master"
+  zonelistfile: "/var/nsd/db/zone.list"
+  xfrdfile: "/var/nsd/run/xfrd.state"
+  server-count: 2
+  rrl-size: 1000000
+  rrl-ratelimit: 200
+  rrl-slip: 2
+  rrl-whitelist-ratelimit: 2000
+remote-control:
+  control-enable: yes
+  control-interface: $LOCALHOST
