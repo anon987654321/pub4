@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
+require "prism"
+
 module Master
   module Scan
     module Rules
       class DeadCodeRule < Rule
-        EMPTY_RESCUE = /rescue\s+\w[\w:]*(?:\s*=>\s*\w+)?\s*\n\s*end/.freeze
-        CONST_DEF    = /^\s*([A-Z][A-Z0-9_]{2,})\s*=(?!=)/.freeze
-
         def initialize
           super
           @id          = "dead_code"
@@ -17,37 +16,54 @@ module Master
 
         def check(code, path:)
           return [] unless path.end_with?(".rb")
-          line_rescue_findings(code) + dead_constants(code)
-        end
+          result = Prism.parse(code)
+          return [] unless result.success?
 
-        private
+          visitor = DeadCodeVisitor.new
+          visitor.visit(result.value)
 
-        def line_rescue_findings(code)
           findings = []
-          lines    = code.lines
-          lines.each_with_index do |line, i|
-            next unless line.match?(/^\s*rescue\b/)
-            next_stripped = lines[i + 1]&.strip
-            if next_stripped == "end"
-              findings << finding(line: i + 1, message: "empty rescue block swallows errors silently — log or re-raise")
-            end
+          visitor.empty_rescues.each do |line|
+            findings << finding(line:, message: "empty rescue block swallows errors silently — log or re-raise")
+          end
+          visitor.constant_writes.each do |name, line|
+            next if visitor.constant_reads.include?(name)
+            findings << finding(line:, message: "#{name} is defined but never referenced — remove it")
           end
           findings
         end
 
-        def dead_constants(code)
-          findings = []
-          lines    = code.lines
-          lines.each_with_index do |line, i|
-            m = line.match(CONST_DEF)
-            next unless m
+        class DeadCodeVisitor < Prism::Visitor
+          attr_reader :empty_rescues, :constant_writes, :constant_reads
 
-            const = m[1]
-            next if code.scan(/\b#{Regexp.escape(const)}\b/).size > 1
-
-            findings << finding(line: i + 1, message: "#{const} is defined but never referenced — remove it")
+          def initialize
+            super
+            @empty_rescues   = []
+            @constant_writes = {}
+            @constant_reads  = []
           end
-          findings
+
+          def visit_rescue_node(node)
+            stmts = node.statements
+            empty = stmts.nil? || (stmts.respond_to?(:body) && stmts.body.empty?)
+            @empty_rescues << node.location.start_line if empty
+            super
+          end
+
+          def visit_constant_write_node(node)
+            @constant_writes[node.name.to_s] ||= node.location.start_line
+            super
+          end
+
+          def visit_constant_read_node(node)
+            @constant_reads << node.name.to_s
+            super
+          end
+
+          def visit_constant_path_node(node)
+            @constant_reads << node.name.to_s if node.name
+            super
+          end
         end
       end
     end

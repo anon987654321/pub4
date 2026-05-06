@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
+require "prism"
+
 module Master
   module Scan
     module Rules
       class NestingDepthRule < Rule
         DEFAULT_DEPTH = 2
-
-        OPEN_KWORDS  = /\b(?:if|unless|case|while|until|for|begin)\b/.freeze
-        CLOSE_KWORD  = /\bend\b/.freeze
 
         def initialize
           super
@@ -20,46 +19,59 @@ module Master
 
         def check(code, path:)
           return [] unless path.end_with?(".rb")
-          findings    = []
-          in_method   = false
-          nesting     = 0   # depth relative to method body (0 = top of method)
-          over        = false
+          result = Prism.parse(code)
+          return [] unless result.success?
 
-          code.each_line.with_index(1) do |line, num|
-            stripped = line.strip
-            next if stripped.start_with?("#")
+          visitor = NestingVisitor.new(@threshold)
+          visitor.visit(result.value)
+          visitor.violations.map do |line, depth|
+            finding(
+              line:,
+              message: "nesting depth #{depth} exceeds #{@threshold} — extract method or add guard clause"
+            )
+          end
+        end
 
-            if !in_method && stripped.match?(/\bdef \w/)
-              in_method = true
-              nesting   = 0
-              over      = false
-              next
-            end
-            next unless in_method
+        class NestingVisitor < Prism::Visitor
+          attr_reader :violations
 
-            opens  = stripped.scan(OPEN_KWORDS).size
-            closes = stripped.scan(CLOSE_KWORD).size
+          def initialize(threshold)
+            super()
+            @threshold  = threshold
+            @violations = []
+            @in_method  = 0
+            @depth      = 0
+            @reported   = false
+          end
 
-            nesting += opens
+          def visit_def_node(node)
+            saved = [@in_method, @depth, @reported]
+            @in_method += 1
+            @depth      = 0
+            @reported   = false
+            super
+            @in_method, @depth, @reported = saved
+          end
 
-            if nesting > @threshold && !over
-              over = true
-              findings << finding(line: num, message: "nesting depth #{nesting} exceeds #{@threshold} — extract method or add guard clause")
-            end
-
-            nesting -= closes
-            nesting  = [nesting, 0].max
-
-            if nesting <= @threshold
-              over = false
-            end
-
-            if nesting < 0 || (stripped == "end" && nesting == 0)
-              in_method = false
-              nesting   = 0
+          %i[
+            visit_if_node visit_unless_node visit_case_node visit_case_match_node
+            visit_while_node visit_until_node visit_for_node visit_begin_node
+          ].each do |m|
+            define_method(m) do |node|
+              if @in_method.positive?
+                @depth += 1
+                if @depth > @threshold && !@reported
+                  @violations << [node.location.start_line, @depth]
+                  @reported = true
+                end
+                super(node)
+                @depth -= 1
+                @reported = false if @depth <= @threshold
+              else
+                super(node)
+              end
             end
           end
-          findings
         end
       end
     end

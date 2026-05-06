@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "prism"
+
 module Master
   module Scan
     module Rules
@@ -17,33 +19,35 @@ module Master
 
         def check(code, path:)
           return [] unless path.end_with?(".rb")
-          findings = []
-          method_start = nil
-          method_name  = nil
-          depth        = 0
+          result = Prism.parse(code)
+          return [] unless result.success?
 
-          code.each_line.with_index(1) do |line, num|
-            if line.match?(/^\s*def /)
-              method_start = num
-              method_name  = line.match(/def (\w+)/)&.[](1) || "unknown"
-              depth        = 1
-            elsif method_start
-              depth += line.scan(/\bdo\b|\bbegin\b|\bif\b|\bcase\b|\bclass\b|\bmodule\b|\bdef\b/).size
-              depth -= line.scan(/\bend\b/).size
-              if depth <= 0
-                length = num - method_start + 1
-                if length > @threshold
-                  findings << finding(
-                    line: method_start,
-                    message: "method #{method_name} is #{length} lines (threshold: #{@threshold}) — extract responsibilities"
-                  )
-                end
-                method_start = nil
-              end
-            end
+          visitor = MethodVisitor.new(@threshold)
+          visitor.visit(result.value)
+          visitor.methods_over_threshold.map do |name, line, length|
+            finding(
+              line:,
+              message: "method #{name} is #{length} lines (threshold: #{@threshold}) — extract responsibilities"
+            )
+          end
+        end
+
+        class MethodVisitor < Prism::Visitor
+          attr_reader :methods_over_threshold
+
+          def initialize(threshold)
+            super()
+            @threshold              = threshold
+            @methods_over_threshold = []
           end
 
-          findings
+          def visit_def_node(node)
+            length = node.location.end_line - node.location.start_line + 1
+            if length > @threshold
+              @methods_over_threshold << [node.name.to_s, node.location.start_line, length]
+            end
+            super
+          end
         end
       end
     end
