@@ -5,7 +5,7 @@ Full VPS stack deploy for OpenBSD 7.8 at 185.52.176.18.
 ## Run
 
 ```zsh
-cd ~/pub4/MASTER/DEPLOY/openbsd
+cd ~/pub4/DEPLOY/openbsd
 tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"
 tmux attach -t deploy
 ```
