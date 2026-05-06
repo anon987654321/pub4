@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "prism"
+
 module Master
   module Scan
     module Rules
@@ -15,16 +17,31 @@ module Master
           @axiom_tags  = [:SIMPLEST_WORKS]
         end
 
-        def check(code, path:)
+        def check_ast(ast, _code, path:)
           return [] unless path.end_with?(".rb")
-          lines = code.lines.size
-          return [] if lines <= @threshold
+          visitor = Visitor.new(@threshold)
+          ast.accept(visitor)
+          visitor.findings.map do |line, name, lines|
+            finding(line:, message: "#{name} is #{lines} lines (threshold: #{@threshold}) — split by responsibility")
+          end
+        end
 
-          class_name = code.match(/class ([A-Z]\w*)/)&.[](1) || File.basename(path, ".rb")
-          [finding(
-            line: 1,
-            message: "#{class_name} is #{lines} lines (threshold: #{@threshold}) — split by responsibility"
-          )]
+        class Visitor < Prism::Visitor
+          attr_reader :findings
+
+          def initialize(threshold)
+            super()
+            @threshold = threshold
+            @findings = []
+          end
+
+          def visit_class_node(node)
+            lines = node.location.end_line - node.location.start_line + 1
+            if lines > @threshold
+              @findings << [node.location.start_line, node.name.to_s, lines]
+            end
+            super
+          end
         end
       end
     end
