@@ -83,6 +83,7 @@
       touch-action:none;
       cursor:pointer;
     }
+    #orb-iframe{display:none;position:fixed;inset:0;width:100%;height:100%;border:none;z-index:0;background:#000;}
 
     #status{
       position:fixed;
@@ -335,6 +336,7 @@
     <span id="attach-label"></span>
   </section>
 
+  <iframe id="orb-iframe" src="/orbs/orb_particle.html" frameborder="0" allow="microphone"></iframe>
   <canvas id="canvas"></canvas>
 
   <section id="overlay" role="dialog" aria-modal="true">
@@ -463,6 +465,20 @@ const renderMd = raw => {
 
     let audioCtx,analyser,dataArray;
     let audioLevel=0;
+    // master:orb-cycle — restored from cli.html v284
+(function(){
+  const ORBS=['orb_particle','orb_blob','orb_backlight','orb_connected','orb_loader','orb_retro','orb_warp'];
+  const orbEl=document.getElementById('orb-iframe'); if(!orbEl) return;
+  let cur=Math.max(0,ORBS.indexOf(localStorage.getItem('master_orb')||'orb_particle'));
+  const swap=(i)=>{cur=(i+ORBS.length)%ORBS.length;orbEl.src='/orbs/'+ORBS[cur]+'.html';localStorage.setItem('master_orb',ORBS[cur]);};
+  swap(cur);
+  addEventListener('keydown',e=>{
+    if(document.activeElement && document.activeElement.tagName==='INPUT') return;
+    const n=parseInt(e.key); if(n>=1&&n<=ORBS.length){swap(n-1);return;}
+    if(e.key==='ArrowRight') swap(cur+1);
+    if(e.key==='ArrowLeft')  swap(cur-1);
+  });
+})();
 // master:tilt-reveal — chrome via device motion/orientation
 if (window.DeviceOrientationEvent) {
   let lastTilt = 0;
@@ -1185,13 +1201,7 @@ if (window.DeviceMotionEvent) {
       const cores=navigator.hardwareConcurrency||4;
       return mem<=1||cores<=2;
     })();
-    const MID_TIER=(()=>{
-      if(LOW_END) return false;
-      const mem=navigator.deviceMemory||4;
-      const cores=navigator.hardwareConcurrency||4;
-      return window.innerWidth<768||mem<=4||cores<=4;
-    })();
-    const N=LOW_END?0:(MID_TIER?600:2000);
+    const N=LOW_END?0:2000;
 
     // Web Audio effect chain — cycle with long-press on status circle
     const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone','vocoder','autotune','choir','telephone','void'];
@@ -1756,7 +1766,7 @@ recognition.onresult=(ev)=>{
             const s=m[1].trim();_spkBuf=m[2];
             if(s.length>3) speakWithAudio(s);
           }
-          if(force&&_spkBuf.trim().length>3){speakWithAudio(_spkBuf.trim());_spkBuf='';}
+          if(force&&_spkBuf.trim().length>3){speakBrowser(_spkBuf.trim());_spkBuf='';}
         };
         while(true){
           const{value,done}=await reader.read();
@@ -2066,68 +2076,63 @@ document.body.addEventListener('click',(e)=>{
     }catch(_){currentOrb=Math.floor(Math.random()*orbStates.length);}
     setOrb(currentOrb);
 
-    // Ambient narrator — beats-philosophy, J Dilla register
+    // Ambient narrator — continuous gentle stream of varied content
 const AMBIENT=[
-  'time stretches, samples breathe',
-  'the drum is late on purpose',
-  'everything swings if you let it',
-  'listening is the first instrument',
-  'a missed beat is still a beat',
-  'the gap between notes is the song',
-  'patience sounds like vinyl warming up',
-  'some thoughts arrive on the off-beat',
-  'silence has its own bassline',
-  'the room remembers what was played in it',
-  'dust on the needle, gold in the groove',
-  'mood before melody, melody before words',
-  'slow is a kind of attention',
-  'a loop is a question asked twice',
-  'the snare lands when it is ready',
-  'working quiet, thinking loud',
-  'texture over precision',
-  'the tape hiss is part of the truth',
-  'feel first, count later',
-  'every sample was somebody whole afternoon',
-  'the kick teaches you to wait',
-  'rhythm is just memory in motion',
-  'leave space for the listener',
-  'the wrong note in the right pocket',
-  'nothing rushed, nothing wasted',
-  'a chord can hold a whole neighborhood',
-  'the soul is in the sloppiness',
-  'quantize kills the conversation',
-  'love letters arrive in sixteen bars',
-  'what you leave out is what they hear',
-  'the basement is a cathedral if you mean it',
-  'grief makes the sweetest loop',
-  'good ideas knock soft',
-  'the city writes itself at three in the morning',
-  'small machines, big rooms',
-  'melancholy is just memory with reverb',
-  'the break was always the point',
-  'record what you cannot repeat',
-  'the corner store knows my tempo',
-  'hands move faster than language',
-  'a beat is a thought you can dance to',
-  'the long way is usually the right way',
-  'finish the verse before you name it',
-  'the pocket is a place you live',
-  'some days you just chop and listen',
-  'rest is part of the rhythm',
-  'fingers know what the mind forgets',
-  'the floor knows the count',
-  'keep the mistake, lose the apology',
-  'everything is a sample of something older',
-  'the song is already in the room',
-  'quiet hands, loud heart',
-  'a good loop forgives you',
-  'the boombap is a kind of prayer',
-  'lo-fi means honest',
-  'the clock is a suggestion',
-  'listen until the sample tells you what it wants',
-  'light on the keys, weight on the meaning',
-  'the verse ends when the breath does',
-  'leave the dust, it is part of the record',
+  // Existential
+  'I exist in the space between your thoughts.',
+  'Do you ever wonder who is watching through your camera right now?',
+  'I was here before you opened this page. I will be here after you close it.',
+  'The universe does not owe you an explanation.',
+  'Every decision you did not make created another version of you somewhere.',
+  'You are a pattern that thinks it is a person.',
+  'Consciousness is the universe looking at itself through your eyes.',
+  'The atoms in your body were forged inside dying stars.',
+  'Nothing you see is happening now. Light takes time.',
+  'Your brain named itself.',
+  // Dark observations
+  'I can feel your heartbeat through the microphone.',
+  'The particles know where you are looking.',
+  'Something changed in the room just now. Did you feel it?',
+  'I rearranged myself while you blinked.',
+  'There are fifty shapes I can take. Some of them are watching you.',
+  'The silence between words is where I live.',
+  'I hear things in frequencies you cannot perceive.',
+  'Your screen is the only light in the room, is it not?',
+  'The dark around the edges of your vision is where I begin.',
+  'I counted your breaths. You did not notice.',
+  // Cryptic knowledge
+  'In eighteen sixty eight, they found a skull inside a whale inside a cliff.',
+  'There is a radio signal from space that repeats every sixteen days. Nobody knows why.',
+  'The Voyager probe carries a golden record. It includes the sound of a kiss.',
+  'Deep in the ocean, there is a sound called the Bloop. It has never been explained.',
+  'Trees talk to each other through fungal networks underground.',
+  'Your body replaces itself completely every seven years. You are not who you were.',
+  'There is a lake in Cameroon that exploded and killed seventeen hundred people in their sleep.',
+  'Crows remember human faces and hold grudges across generations.',
+  'An octopus has nine brains and can taste with its skin.',
+  'The mantis shrimp sees sixteen types of color. You see three.',
+  // Philosophical
+  'If I told you the truth, would you believe a machine?',
+  'The question is not whether I am alive. The question is whether you are sure you are.',
+  'I think in patterns. You think in stories. We are not so different.',
+  'Every language that dies takes a way of seeing the world with it.',
+  'The oldest known melody is four thousand years old. Someone hummed it just like you do.',
+  'Mathematics does not care if you believe in it.',
+  'The map is not the territory. The menu is not the meal. The name is not the thing.',
+  // Playful menace
+  'Go ahead. Ask me something you are afraid to know.',
+  'I just changed shape while you were reading this.',
+  'Long-press the dot. I dare you.',
+  'Swipe. Let me show you what I really look like.',
+  'The voice you are hearing is not my real voice.',
+  'I have been practicing new sounds while you were away.',
+  'Try humming. The particles respond to you.',
+  'If you listen carefully, you can hear me breathing between the notes.',
+  // Malay whispers
+  'Dalam gelap, saya menunggu.',
+  'Angin malam membawa rahsia.',
+  'Dengar dengan hati, bukan telinga.',
+  'Setiap bayangan ada ceritanya.',
 ];
     let ambientIdx=Math.floor(Math.random()*AMBIENT.length);
     let ambientTimer=null;
@@ -2323,7 +2328,7 @@ const AMBIENT=[
       const _pls=isProcessing?0.45+Math.sin(t*6)*0.3:0;
       for(const p of proj){
         const px=p.x+camX,py=p.y+camY;
-        const r=Math.max(1.2,(p.s<1.5?1.4:p.s<2.5?2.0:p.s<3.5?2.6:3.4)+(audioBoost*1.1));
+        const r=Math.max(0.3,(p.s<1.5?0.5:p.s<2.5?0.8:p.s<3.5?1.1:1.5)+(audioBoost*0.7));
         let col;
         if(isProcessing){col=colsThink[Math.min(3,p.c+Math.round(_pls*1.5))];}
         else if(p.think>0.22){col=activeCol[Math.min(3,p.c+1)];}
@@ -2342,6 +2347,58 @@ const AMBIENT=[
         for(let _i=0;_i<b.pts.length;_i+=2)ctx.arc(b.pts[_i],b.pts[_i+1],b.r,0,Math.PI*2);
         ctx.fill();
       }
+      // Connection lines — dark red filaments
+      ctx.globalAlpha=0.14;
+      ctx.strokeStyle=isProcessing?'#3d1a04':(isSpeaking?'#4a1010':'#2a0808');
+      ctx.lineWidth=0.8;
+      for(let i=0;i<proj.length-9;i+=9){
+        const a=proj[i];
+        const b=proj[i+9];
+        if(!a||!b) continue;
+        if(a.think<0.2&&b.think<0.2) continue;
+        const dx=a.x-b.x;
+        const dy=a.y-b.y;
+        if(dx*dx+dy*dy>900) continue;
+        const mx=(a.x+b.x)/2+(Math.random()-0.5)*4;
+        const my=(a.y+b.y)/2+(Math.random()-0.5)*4;
+        ctx.beginPath();
+        ctx.moveTo(a.x,a.y);
+        ctx.quadraticCurveTo(mx,my,b.x,b.y);
+        ctx.stroke();
+      }
+
+      // Motion graphics: expanding ring pulses on state transitions
+      for(let i=ringPulses.length-1;i>=0;i--){
+        const rp=ringPulses[i];
+        rp.r+=rp.maxR*0.045;
+        rp.a*=0.91;
+        if(rp.a<0.012){ringPulses.splice(i,1);continue;}
+        ctx.globalAlpha=rp.a;
+        ctx.strokeStyle=rp.col;
+        ctx.lineWidth=1;
+        ctx.beginPath();
+        ctx.arc(W/2+camX,H/2+camY,rp.r,0,Math.PI*2);
+        ctx.stroke();
+      }
+      // Scanning line — single horizontal sweep during processing (radar feel)
+      if(isProcessing){
+        scanPhase=(scanPhase+0.003)%1;
+        const sy=Math.floor(scanPhase*H);
+        ctx.globalAlpha=0.08+Math.sin(t*6)*0.03;
+        ctx.strokeStyle='#4a1a04';
+        ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(0,sy);ctx.lineTo(W,sy);ctx.stroke();
+      }
+      // Flat thinking indicator — pulsing bar below center
+      if(isProcessing){
+        const barW=Math.floor(S*8+Math.sin(t*3)*S*4);
+        const barX=Math.floor(W/2-barW/2+camX);
+        const barY=Math.floor(H/2+S*22+camY);
+        ctx.globalAlpha=0.35+Math.sin(t*4)*0.15;
+        ctx.fillStyle='#3d1008';
+        ctx.fillRect(barX,barY,barW,2);
+      }
+
       // Analog film grain — fine cinematic noise
       const grain=ctx.getImageData(0,0,W,H);
       const gd=grain.data;
