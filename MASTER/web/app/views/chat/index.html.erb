@@ -1750,7 +1750,7 @@ recognition.onresult=(ev)=>{
             const s=m[1].trim();_spkBuf=m[2];
             if(s.length>3) speakWithAudio(s);
           }
-          if(force&&_spkBuf.trim().length>3){speakBrowser(_spkBuf.trim());_spkBuf='';}
+          if(force&&_spkBuf.trim().length>3){speakWithAudio(_spkBuf.trim());_spkBuf='';}
         };
         while(true){
           const{value,done}=await reader.read();
@@ -2336,58 +2336,6 @@ const AMBIENT=[
         for(let _i=0;_i<b.pts.length;_i+=2)ctx.arc(b.pts[_i],b.pts[_i+1],b.r,0,Math.PI*2);
         ctx.fill();
       }
-      // Connection lines — dark red filaments
-      ctx.globalAlpha=0.05;
-      ctx.strokeStyle=isProcessing?'#3d1a04':(isSpeaking?'#4a1010':'#2a0808');
-      ctx.lineWidth=0.8;
-      for(let i=0;i<proj.length-9;i+=9){
-        const a=proj[i];
-        const b=proj[i+9];
-        if(!a||!b) continue;
-        if(a.think<0.2&&b.think<0.2) continue;
-        const dx=a.x-b.x;
-        const dy=a.y-b.y;
-        if(dx*dx+dy*dy>900) continue;
-        const mx=(a.x+b.x)/2+(Math.random()-0.5)*4;
-        const my=(a.y+b.y)/2+(Math.random()-0.5)*4;
-        ctx.beginPath();
-        ctx.moveTo(a.x,a.y);
-        ctx.quadraticCurveTo(mx,my,b.x,b.y);
-        ctx.stroke();
-      }
-
-      // Motion graphics: expanding ring pulses on state transitions
-      for(let i=ringPulses.length-1;i>=0;i--){
-        const rp=ringPulses[i];
-        rp.r+=rp.maxR*0.045;
-        rp.a*=0.91;
-        if(rp.a<0.012){ringPulses.splice(i,1);continue;}
-        ctx.globalAlpha=rp.a;
-        ctx.strokeStyle=rp.col;
-        ctx.lineWidth=1;
-        ctx.beginPath();
-        ctx.arc(W/2+camX,H/2+camY,rp.r,0,Math.PI*2);
-        ctx.stroke();
-      }
-      // Scanning line — single horizontal sweep during processing (radar feel)
-      if(isProcessing){
-        scanPhase=(scanPhase+0.003)%1;
-        const sy=Math.floor(scanPhase*H);
-        ctx.globalAlpha=0.08+Math.sin(t*6)*0.03;
-        ctx.strokeStyle='#4a1a04';
-        ctx.lineWidth=1;
-        ctx.beginPath();ctx.moveTo(0,sy);ctx.lineTo(W,sy);ctx.stroke();
-      }
-      // Flat thinking indicator — pulsing bar below center
-      if(isProcessing){
-        const barW=Math.floor(S*8+Math.sin(t*3)*S*4);
-        const barX=Math.floor(W/2-barW/2+camX);
-        const barY=Math.floor(H/2+S*22+camY);
-        ctx.globalAlpha=0.35+Math.sin(t*4)*0.15;
-        ctx.fillStyle='#3d1008';
-        ctx.fillRect(barX,barY,barW,2);
-      }
-
       // Analog film grain — fine cinematic noise
       const grain=ctx.getImageData(0,0,W,H);
       const gd=grain.data;
