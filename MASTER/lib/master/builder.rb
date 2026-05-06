@@ -25,6 +25,7 @@ module Master
       bus = EventBus.new
       ring = RingBuffer.new(RING_SIZE)
       logging = Logging.new(ring_buffer: ring, event_bus: bus)
+      homeostat = Homeostat.new(event_bus: bus)
       session = Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
       undo = Undo.new(session:, event_bus: bus, root:)
       breaker = CircuitBreakerRegistry.new(
@@ -45,13 +46,13 @@ module Master
 
       memory = Memory.new(root:)
       personality = Personality.new(
-        config["persona"]&.to_sym || Personality::DEFAULT, root:
+        config["persona"]&.to_sym || Personality::DEFAULT, root:, homeostat:
       )
       learnings   = Learnings.new(root:)
 
       phase_gates = PhaseGates.new(root:, event_bus: bus)
       {
-        config:, ring:, bus:, logging:, session:, undo:, breaker:, cache:,
+        config:, ring:, bus:, logging:, homeostat:, session:, undo:, breaker:, cache:,
         governor:, renderer:, metrics:, code_index:, diff_stager:, mcp:,
         memory:, personality:, phase_gates:, learnings:
       }
@@ -95,7 +96,8 @@ module Master
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: infra[:bus],
         model_router: Routing::ModelRouter.new(config: infra[:config]),
         reasoning_modes: Reasoning::Modes.new,
-        memory: infra[:memory], personality: infra[:personality], code_index: infra[:code_index]
+        memory: infra[:memory], personality: infra[:personality], code_index: infra[:code_index],
+        homeostat: infra[:homeostat]
       )
       [agent, tools]
     end
@@ -107,7 +109,7 @@ module Master
       autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
       skills   = Skills.new(root:, event_bus: bus)
       skills.discover!
-      heartbeat = Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus)
+      heartbeat = Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus, homeostat: infra[:homeostat])
       triggers  = Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
       { standing:, learnings:, autoloop:, skills:, heartbeat:, triggers: }

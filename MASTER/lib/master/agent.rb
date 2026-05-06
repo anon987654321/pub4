@@ -41,12 +41,14 @@ module Master
 
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
                    event_bus: nil, model_router: nil, reasoning_modes: nil,
-                   memory: nil, personality: nil, code_index: nil, context_window: nil)
+                   memory: nil, personality: nil, code_index: nil, context_window: nil,
+                   homeostat: nil)
       @config, @session, @tools          = config, session, tools
       @circuit_breaker, @cache, @bus     = circuit_breaker, cache, event_bus
       @model_router, @reasoning_modes    = model_router, reasoning_modes
       @memory, @personality, @code_index = memory, personality, code_index
       @context_window                    = context_window
+      @homeostat                         = homeostat
     end
 
     def chat(message, stream: true, escalation_depth: 0, &blk)
@@ -57,21 +59,28 @@ module Master
       prompt = apply_reasoning_mode(message)
       context = conversation_context
       @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / Session::TOKENS_PER_CHAR)
+      @homeostat&.observe(:llm_call)
 
       begin
         @circuit_breaker.check_rate!
       rescue CircuitBreaker::CircuitError => rate_err
+        @homeostat&.observe(:llm_failure)
         return Result.err(rate_err.message, category: rate_err.category)
       end
 
       last_response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
-      return last_response if last_response.respond_to?(:err?) && last_response.err?
+      if last_response.respond_to?(:err?) && last_response.err?
+        @homeostat&.observe(:llm_failure)
+        return last_response
+      end
       last_response = maybe_escalate(last_response, message, stream:, escalation_depth:, &blk)
 
       text = last_response.to_s
       @session.add_message(role: :assistant, content: text)
+      @homeostat&.observe(:llm_success)
       Result.ok(text)
     rescue StandardError => chat_error
+      @homeostat&.observe(:llm_failure)
       Result.err("agent: #{chat_error.message}", category: :handler_exception)
     end
 

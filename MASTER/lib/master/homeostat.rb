@@ -1,0 +1,93 @@
+# frozen_string_literal: true
+
+module Master
+  # Continuous-time homeostatic drives (CTCS-HRRL, arXiv 2401.08999).
+  # State vector decays toward setpoint; events shift it; readers bias routing,
+  # reasoning depth, and persona mood. No external deps.
+  class Homeostat
+    DRIVES = {
+      energy:         { setpoint: 0.7, decay: 0.02 },
+      error_rate:     { setpoint: 0.0, decay: 0.05 },
+      novelty_hunger: { setpoint: 0.5, decay: 0.01 },
+      fatigue:        { setpoint: 0.0, decay: 0.03 },
+      satiety:        { setpoint: 0.6, decay: 0.01 }
+    }.freeze
+
+    EVENT_DELTAS = {
+      llm_call:    { energy: -0.05, fatigue: +0.03 },
+      llm_success: { error_rate: -0.04, satiety: +0.06, novelty_hunger: -0.02 },
+      llm_failure: { error_rate: +0.15, satiety: -0.08, energy: -0.04 },
+      tool_call:   { fatigue: +0.01 },
+      tool_failure: { error_rate: +0.08, fatigue: +0.02 },
+      novel_task:  { novelty_hunger: -0.20, energy: +0.03 },
+      idle_tick:   {}
+    }.freeze
+
+    attr_reader :state
+
+    def initialize(event_bus: nil)
+      @bus = event_bus
+      @mutex = Mutex.new
+      @state = DRIVES.transform_values { |spec| spec[:setpoint] }
+      @started_at = Time.now
+    end
+
+    def observe(event, **_kwargs)
+      deltas = EVENT_DELTAS[event] || {}
+      @mutex.synchronize do
+        deltas.each { |k, v| @state[k] = clamp(@state[k] + v) }
+        decay_drift!
+      end
+      @bus&.publish("homeostat:observe", event: event, state: @state.dup)
+      @state.dup
+    end
+
+    def model_tier_bias
+      return :cheap  if @state[:error_rate] > 0.4 || @state[:fatigue] > 0.7
+      return :strong if @state[:novelty_hunger] > 0.7 && @state[:energy] > 0.5
+      :default
+    end
+
+    def reasoning_depth_bias
+      score = @state[:energy] - @state[:fatigue] - @state[:error_rate]
+      return 2 if score > 0.5
+      return 1 if score > 0.0
+      0
+    end
+
+    def mood
+      return :tense   if @state[:error_rate] > 0.4
+      return :weary   if @state[:fatigue] > 0.6 || @state[:energy] < 0.3
+      return :curious if @state[:novelty_hunger] > 0.6
+      :focused
+    end
+
+    def circadian_phase
+      h = Time.now.hour
+      return :morning   if (5..11).cover?(h)
+      return :afternoon if (12..17).cover?(h)
+      return :evening   if (18..22).cover?(h)
+      :night
+    end
+
+    def summary
+      pairs = @state.map { |k, v| "#{k}=#{format("%.2f", v)}" }.join(" ")
+      "homeostat: #{pairs} | mood=#{mood} phase=#{circadian_phase}"
+    end
+
+    def to_h
+      { state: @state.dup, mood: mood, phase: circadian_phase, tier: model_tier_bias }
+    end
+
+    private
+
+    def decay_drift!
+      DRIVES.each do |drive, spec|
+        gap = spec[:setpoint] - @state[drive]
+        @state[drive] = clamp(@state[drive] + gap * spec[:decay])
+      end
+    end
+
+    def clamp(value) = value.clamp(0.0, 1.0)
+  end
+end

@@ -82,9 +82,23 @@ module Master
     DEFAULT = :dark_malay
     AXIOM_DISPLAY_LIMIT = 10
 
+    MOOD_LINES = {
+      tense:   "Mood: tense — error rate elevated. Be conservative; verify before asserting.",
+      weary:   "Mood: weary — fatigue high. Cut non-essential elaboration; defer deep dives.",
+      curious: "Mood: curious — novelty hunger. Explore lateral framings when warranted.",
+      focused: "Mood: focused — drives at setpoint. Default depth and tier."
+    }.freeze
+
+    PHASE_LINES = {
+      morning:   "Phase: morning. Bias toward structural work; prefer rigorous review.",
+      afternoon: "Phase: afternoon. Steady throughput; pragmatic decisions.",
+      evening:   "Phase: evening. Wrap loops; avoid starting large refactors.",
+      night:     "Phase: night. Minimal voice; conserve cycles; defer non-urgent."
+    }.freeze
+
     attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
 
-    def initialize(name = DEFAULT, root: nil)
+    def initialize(name = DEFAULT, root: nil, homeostat: nil)
       @name      = name.to_sym
       persona    = PERSONAS.fetch(@name, PERSONAS[DEFAULT])
       @voice     = persona[:voice]
@@ -93,17 +107,23 @@ module Master
       @style     = persona[:style]
       @desc      = persona[:description]
       @axioms    = Axioms.new(root:)
+      @homeostat = homeostat
     end
 
     # Injected before every LLM call. Pulls from rules.yml via Axioms.
+    # Recomputed each call so mood/phase updates propagate.
     def system_prompt
-      @system_prompt ||= build_system_prompt
+      build_system_prompt
     end
 
     private
 
     def build_system_prompt
       ls = ["You are MASTER. #{@desc} OpenBSD-first. Constitutional AI."]
+      if @homeostat
+        ls << MOOD_LINES[@homeostat.mood]
+        ls << PHASE_LINES[@homeostat.circadian_phase]
+      end
       constitution = @axioms.constitution
       strunk = @axioms.strunk
       banned  = (constitution["banned_output"] || [])

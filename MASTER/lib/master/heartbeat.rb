@@ -21,16 +21,17 @@ module Master
       "snapshot"     => :run_snapshot
     }.freeze
 
-    def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil)
-      @root    = root
-      @agent   = agent
-      @scanner = scanner
-      @memory  = memory
-      @bus     = event_bus
-      @jobs    = load_jobs
-      @state   = load_state
-      @thread  = nil
-      @stop    = false
+    def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil, homeostat: nil)
+      @root      = root
+      @agent     = agent
+      @scanner   = scanner
+      @memory    = memory
+      @bus       = event_bus
+      @homeostat = homeostat
+      @jobs      = load_jobs
+      @state     = load_state
+      @thread    = nil
+      @stop      = false
     end
 
     def start!
@@ -41,6 +42,7 @@ module Master
         loop do
           break if @stop
           run_due!
+          @homeostat&.observe(:idle_tick)
           sleep POLL_INTERVAL
         end
       rescue StandardError => e
