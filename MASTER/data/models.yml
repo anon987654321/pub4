@@ -79,6 +79,18 @@ model_defs:
     id: claude-cli:claude-opus-4-7
     <<: *model_defaults
     score: { quality: 0.99, speed: 0.50, cost: 0.30 }
+ollama_qwen: &ollama_qwen
+  id: ollama:qwen2.5-coder:7b
+  <<: *model_defaults
+  score: { quality: 0.62, speed: 0.85, cost: 1.0 }
+ollama_llama: &ollama_llama
+  id: ollama:llama3.2:3b
+  <<: *model_defaults
+  score: { quality: 0.55, speed: 0.92, cost: 1.0 }
+ollama_phi: &ollama_phi
+  id: ollama:phi4:mini
+  <<: *model_defaults
+  score: { quality: 0.58, speed: 0.95, cost: 1.0 }
 
 models:
   default:
@@ -102,6 +114,10 @@ models:
   claude_code:
     - *claude_cli_sonnet
     - *claude_cli_opus
+  local:
+    - *ollama_phi
+    - *ollama_llama
+    - *ollama_qwen
 
 routes:
   code_generation: default
@@ -172,3 +188,13 @@ three_mirror_redundancy:
   pool:          [openrouter_primary, openrouter_secondary, claude_cli]
   quorum:        2
   on_disagreement: "fall back to council vote with all dissent recorded"
+
+# Tier-D (local ollama) — env-gated; activates only when OLLAMA_BASE_URL is set.
+# Default: http://localhost:11434/v1 (OpenAI-compatible endpoint).
+# Trust starts at 0.40 (below cloud providers) until measured success raises it.
+ollama:
+  enabled_when_env: OLLAMA_BASE_URL
+  default_base_url: "http://localhost:11434/v1"
+  initial_trust: 0.40
+  use_for: [exploration, fallback_default]   # cheapest-acceptable tasks only
+  never_for: [council, sweep, autoloop, file_write, destructive]
