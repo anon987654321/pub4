@@ -165,7 +165,9 @@ module Master
         Tools::SymbolLookup.new(code_index: infra[:code_index], event_bus: bus),
         Tools::Clean.new(root:, governor:, event_bus: bus),
         Tools::SearchKnowledge.new(root:, event_bus: bus),
-        Tools::FeedbackRecord.new(learnings: infra[:learnings])
+        Tools::FeedbackRecord.new(learnings: infra[:learnings]),
+        Tools::Postpro.new(root:, governor:, event_bus: bus),
+        Tools::Repligen.new(root:, governor:, event_bus: bus)
       ]
     end
 

@@ -182,6 +182,36 @@ module Master
         end
       end
 
+      class Postpro < RubyLLM::Tool
+        description "Apply cinematic post-processing (film stocks, presets, recipes) to images via ruby-vips. Writes processed copies next to originals."
+        param :target_dir, desc: "Directory containing source images (relative to project root)", required: true
+        param :preset,     desc: "One of: portrait, landscape, street, blockbuster", required: false
+        param :variations, desc: "1-5 output variations per file", type: "integer", required: false
+        param :recipe,     desc: "JSON recipe filename (overrides preset)", required: false
+
+        def initialize(tool) = @tool = tool
+
+        def execute(target_dir:, preset: "portrait", variations: 2, recipe: nil)
+          result = @tool.call(target_dir: target_dir.to_s, preset: preset.to_s,
+                              variations: variations.to_i, recipe: recipe&.to_s)
+          result.ok? ? result.value! : "Error: #{result.message}"
+        end
+      end
+
+      class Repligen < RubyLLM::Tool
+        description "Discover, search, and run Replicate.com models. Actions: sync, search, stats. Requires REPLICATE_API_TOKEN for sync."
+        param :action, desc: "One of: sync, search, stats", required: true
+        param :query,  desc: "Search query (required for action=search)", required: false
+        param :limit,  desc: "Sync limit (1-1000, default 100)", type: "integer", required: false
+
+        def initialize(tool) = @tool = tool
+
+        def execute(action:, query: nil, limit: nil)
+          result = @tool.call(action: action.to_s, query: query&.to_s, limit: limit&.to_i)
+          result.ok? ? result.value! : "Error: #{result.message}"
+        end
+      end
+
     end
   end
 end
