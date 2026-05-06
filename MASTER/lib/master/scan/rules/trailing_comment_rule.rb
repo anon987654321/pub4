@@ -29,7 +29,8 @@ module Master
             next if comment.length > 60
             next unless restatement?(code_part, comment)
 
-            findings << finding(line: num, message: "trailing comment restates the code — remove it or rename the identifier")
+            findings << finding(line: num, 
+message: "trailing comment restates the code — remove it or rename the identifier")
           end
           findings
         end

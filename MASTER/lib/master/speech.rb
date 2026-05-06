@@ -44,7 +44,7 @@ module Master
     end
 
     def synthesize(text, voice: DEFAULT_VOICE, style: DEFAULT_STYLE)
-      return nil if text.to_s.strip.empty?
+      return if text.to_s.strip.empty?
 
       if EDGE_TTS
         synthesize_edge(text, voice: voice, style: style)
@@ -55,7 +55,7 @@ module Master
 
     def synthesize_bytes(text, **opts)
       path = synthesize(text, **opts)
-      return nil unless path
+      return unless path
       bytes = File.binread(path)
       File.unlink(path) rescue StandardError => _e
       bytes

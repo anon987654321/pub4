@@ -30,16 +30,22 @@ module Master
 
             if line.match?(UNFROZEN_CONST)
               if line.match?(MULTILINE_OPEN) && !inline_close?(line)
-                findings << finding(line: line_number, message: "unfrozen constant — append .freeze") unless multiline_frozen?(lines, line_index)
+                findings << finding(line: line_number, 
+message: "unfrozen constant — append .freeze") unless multiline_frozen?(
+lines, line_index)
               elsif line.match?(STRING_CONTINUATION)
-                findings << finding(line: line_number, message: "unfrozen constant — append .freeze") unless string_continuation_frozen?(lines, line_index)
+                findings << finding(line: line_number, 
+message: "unfrozen constant — append .freeze") unless string_continuation_frozen?(
+lines, line_index)
               else
                 findings << finding(line: line_number, message: "unfrozen constant — append .freeze")
               end
             end
 
-            findings << finding(line: line_number, message: "class variable mutation (@@) — use instance state or inject") if line.match?(CLASS_VAR_WRITE)
-            findings << finding(line: line_number, message: "global variable mutation ($) — eliminate shared global state") if line.match?(GLOBAL_WRITE)
+            findings << finding(line: line_number, 
+message: "class variable mutation (@@) — use instance state or inject") if line.match?(CLASS_VAR_WRITE)
+            findings << finding(line: line_number, 
+message: "global variable mutation ($) — eliminate shared global state") if line.match?(GLOBAL_WRITE)
           end
 
           findings

@@ -13,10 +13,14 @@ module Master
         STALE_COMMENT   = /^\s*#\s*(TODO|FIXME|HACK|REVIEW|NOTE):\s*$/i.freeze
 
         CHECKS = [
-          { pattern: BLANK_FLOOD,     message: "more than 3 consecutive blank lines — use single blank between sections",       fix: "collapse to one blank line" },
-          { pattern: BOX_DRAWING,     message: "box-drawing chars or separator lines — use whitespace as layout tool",          fix: "delete separators" },
-          { pattern: OPAQUE_NAMES,    message: "generic variable name — use a domain-specific name",                            fix: nil },
-          { pattern: STALE_COMMENT,   message: "empty TODO/FIXME marker — fill it or delete it",                               fix: "delete marker" },
+          { pattern: BLANK_FLOOD,     
+message: "more than 3 consecutive blank lines — use single blank between sections",       fix: "collapse to one blank line" },
+          { pattern: BOX_DRAWING,     
+message: "box-drawing chars or separator lines — use whitespace as layout tool",          fix: "delete separators" },
+          { pattern: OPAQUE_NAMES,    
+message: "generic variable name — use a domain-specific name",                            fix: nil },
+          { pattern: STALE_COMMENT,   
+message: "empty TODO/FIXME marker — fill it or delete it",                               fix: "delete marker" },
         ].freeze
 
         def initialize
@@ -32,7 +36,8 @@ module Master
           findings = []
           CHECKS.each do |check|
             code.each_line.with_index(1) do |line, number|
-              findings << finding(line: number, message: check[:message], fix: check[:fix]) if line.match?(check[:pattern])
+              findings << finding(line: number, message: check[:message], 
+fix: check[:fix]) if line.match?(check[:pattern])
             end
           end
           check_dead_code(code, findings)
@@ -45,7 +50,8 @@ module Master
         def check_dead_code(code, findings)
           code.each_line.with_index(1).each_cons(2) do |(line_a, number_a), (line_b, _)|
             next unless line_a.match?(DEAD_AFTER_STOP) && line_b.match?(/\S/)
-            findings << finding(line: number_a, message: "dead code after #{line_a.strip.split.first} — remove unreachable lines", fix: "delete unreachable lines")
+            findings << finding(line: number_a, 
+message: "dead code after #{line_a.strip.split.first} — remove unreachable lines", fix: "delete unreachable lines")
           end
         end
 
@@ -54,7 +60,8 @@ module Master
             stripped_a = line_a.strip
             stripped_b = line_b.strip
             next unless stripped_a == "end" && stripped_b.start_with?("def ")
-            findings << finding(line: number_a, message: "no blank line between method definitions — add vertical spacing", fix: "insert blank line")
+            findings << finding(line: number_a, 
+message: "no blank line between method definitions — add vertical spacing", fix: "insert blank line")
           end
         end
       end

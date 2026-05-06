@@ -24,7 +24,7 @@ module Master
 
     def lookup(pattern)
       entry = @data[pattern]
-      return nil unless entry && entry[:weight] >= DEPRECATE_BELOW
+      return unless entry && entry[:weight] >= DEPRECATE_BELOW
       entry
     end
 

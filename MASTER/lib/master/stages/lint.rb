@@ -21,7 +21,8 @@ module Master
         paths.each do |scan_path|
           if File.directory?(scan_path)
             result = @scanner.scan_dir(scan_path, depth: :standard)
-            findings.concat(result.value!.flat_map { |_, r| r.respond_to?(:ok?) && r.ok? ? r.value! : [] }) if result.respond_to?(:ok?) && result.ok?
+            findings.concat(result.value!.flat_map { |_, r|
+ r.respond_to?(:ok?) && r.ok? ? r.value! : [] }) if result.respond_to?(:ok?) && result.ok?
           elsif scan_path.end_with?(".rb")
             result = @scanner.scan(scan_path, depth: :standard)
             findings.concat(result.value!) if result.respond_to?(:ok?) && result.ok?

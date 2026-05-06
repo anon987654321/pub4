@@ -36,7 +36,7 @@ module Master
 
       def closest_command(name)
         best = @commands.keys.min_by { |k| levenshtein(k, name) }
-        return nil unless best && levenshtein(best, name) <= [name.length, 3].min
+        return unless best && levenshtein(best, name) <= [name.length, 3].min
 
         best
       end

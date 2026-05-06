@@ -12,7 +12,7 @@ module Master
 
     def explain(id)
       key = id.to_s.strip
-      return nil if key.empty?
+      return if key.empty?
       law(key) || scan_rule(key) || anti_pattern(key) || style_key(key)
     end
 
@@ -28,7 +28,7 @@ module Master
 
     def law(key)
       laws = rules["laws"] || {}
-      hit = laws[key.upcase] or return nil
+      hit = laws[key.upcase] or return
       [
         "law: #{key.upcase}",
         "  priority:  #{hit["priority"]}",
@@ -40,7 +40,7 @@ module Master
     def scan_rule(key)
       slug = key.downcase.tr("-", "_")
       path = File.join(@root, SCAN_RULES_DIR, "#{slug}_rule.rb")
-      return nil unless File.file?(path)
+      return unless File.file?(path)
       src = File.read(path, encoding: "UTF-8")
       desc = src[/@description\s*=\s*["']([^"']+)["']/, 1] || "(no description)"
       tags = src[/@axiom_tags\s*=\s*%i\[([^\]]+)\]/, 1].to_s.split.first(6).join(" ")
@@ -81,8 +81,10 @@ module Master
     def render(node, indent: 0)
       pad = " " * indent
       case node
-      when Hash  then node.map { |k, v| "#{pad}#{k}: #{v.is_a?(Hash) || v.is_a?(Array) ? "\n" + render(v, indent: indent + 2) : v}" }.join("\n") + "\n"
-      when Array then node.map { |v| "#{pad}- #{v.is_a?(Hash) ? "\n" + render(v, indent: indent + 2) : v}" }.join("\n") + "\n"
+      when Hash  then node.map { |k, v|
+ "#{pad}#{k}: #{v.is_a?(Hash) || v.is_a?(Array) ? "\n" + render(v, indent: indent + 2) : v}" }.join("\n") + "\n"
+      when Array then node.map { |v|
+ "#{pad}- #{v.is_a?(Hash) ? "\n" + render(v, indent: indent + 2) : v}" }.join("\n") + "\n"
       else node.to_s + "\n"
       end
     end

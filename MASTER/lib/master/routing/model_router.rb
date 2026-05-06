@@ -58,10 +58,10 @@ module Master
       end
 
       def escalate_if_low_confidence(response, current_model:, task_type: :exploration)
-        return nil unless escalate?(response)
+        return unless escalate?(response)
 
         strong_model = stronger_model(task_type:)
-        return nil if current_model == strong_model
+        return if current_model == strong_model
 
         strong_model
       end
@@ -88,7 +88,7 @@ module Master
 
       def next_escalation_tier(current_tier)
         tier_index = ESCALATION_CHAIN.index(current_tier.to_s)
-        return nil unless tier_index
+        return unless tier_index
 
         ESCALATION_CHAIN[tier_index + 1]
       end

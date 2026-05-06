@@ -141,21 +141,21 @@ circuit\sopen|retry\sin|llm_request)\b
       end
     
       new_src = rewrite(abs, rel)
-      return nil unless new_src && new_src.strip != src.strip && syntax_ok?(abs, new_src)
+      return unless new_src && new_src.strip != src.strip && syntax_ok?(abs, new_src)
     
       after = violations_in_text(new_src, abs)
-      return nil if after > before
+      return if after > before
     
       if rename_oscillation?(rel, src, new_src, cycle)
         @bus&.publish("sweep:oscillation_rejected", file: rel, cycle:)
-        return nil
+        return
       end
     
       [new_src, after]
     end
     
     def native_autofix(path, src)
-      return nil unless path.end_with?(".rb")
+      return unless path.end_with?(".rb")
       result = nil
       Tempfile.open(["sweep_native", ".rb"]) do |f|
         f.write(src)

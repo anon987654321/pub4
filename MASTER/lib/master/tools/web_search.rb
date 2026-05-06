@@ -39,7 +39,8 @@ module Master
           }
         }
 
-        return Result.err("web_search: HTTP #{response.code}", category: :infrastructure) unless response.code == HTTP_OK
+        return Result.err("web_search: HTTP #{response.code}", 
+category: :infrastructure) unless response.code == HTTP_OK
 
         data    = JSON.parse(response.body)
         results = extract_results(data)

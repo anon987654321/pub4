@@ -125,7 +125,7 @@ module Master
         sym = role.to_sym
         @workers.fetch(sym) do
           klass = WORKER_CLASSES[sym]
-          return nil unless klass
+          return unless klass
 
           @workers[sym] = klass.new(agent: @agent, event_bus: @bus)
         end

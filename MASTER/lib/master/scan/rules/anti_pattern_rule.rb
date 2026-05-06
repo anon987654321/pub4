@@ -45,7 +45,7 @@ module Master
 
         def compile(h)
           pat = h["pattern"] || h[:pattern]
-          return nil unless pat.is_a?(String)
+          return unless pat.is_a?(String)
           [Regexp.new(pat), h["reason"] || h[:reason] || "anti-pattern"]
         rescue RegexpError
           nil

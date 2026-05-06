@@ -53,7 +53,8 @@ module Master
       # Rename all occurrences of a method definition and calls
       def rename_method(fp, src, from, to)
         return Result.err("ast_edit: from/to required", category: :validation) if from.empty? || to.empty?
-        return Result.err("ast_edit: invalid name: #{to}", category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
+        return Result.err("ast_edit: invalid name: #{to}", 
+category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
 
         @undo.snapshot(fp)
         updated = src

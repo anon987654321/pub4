@@ -22,9 +22,12 @@ module Master
           findings = []
           code.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("#")
-            findings << finding(line: num, message: "p/pp debug call — remove or publish via event bus") if line.match?(PP_CALL)
-            findings << finding(line: num, message: "$stderr.puts — use @bus.publish or $stdout for structured output") if line.match?(STDERR_PUTS)
-            findings << finding(line: num, message: "binding.pry left in — remove before commit") if line.match?(BINDING_PRY)
+            findings << finding(line: num, 
+message: "p/pp debug call — remove or publish via event bus") if line.match?(PP_CALL)
+            findings << finding(line: num, 
+message: "$stderr.puts — use @bus.publish or $stdout for structured output") if line.match?(STDERR_PUTS)
+            findings << finding(line: num, 
+message: "binding.pry left in — remove before commit") if line.match?(BINDING_PRY)
             findings << finding(line: num, message: "debugger left in — remove before commit") if line.match?(DEBUGGER)
           end
           findings

@@ -53,7 +53,7 @@ module Master
               h.strip.empty? ? nil : Regexp.escape(h.strip)
             end
           }
-          return nil if words.empty?
+          return if words.empty?
           /(#{words.join("|")})/i
         rescue StandardError => _e
           nil
@@ -64,7 +64,7 @@ module Master
             next unless p.is_a?(String)
             p.strip.empty? ? nil : Regexp.escape(p.strip)
           }
-          return nil if phrases.empty?
+          return if phrases.empty?
           /\#.*(?:#{phrases.join("|")})/i
         rescue StandardError => _e
           nil

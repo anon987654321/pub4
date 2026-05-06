@@ -77,7 +77,7 @@ module Master
     end
 
     def read_entry(path)
-      return nil unless File.exist?(path)
+      return unless File.exist?(path)
       entry = JSON.parse(File.read(path), symbolize_names: true)
       return expire_entry!(path) if stale?(entry)
       promote_lru(path)

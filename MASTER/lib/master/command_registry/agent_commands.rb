@@ -33,7 +33,8 @@ module Master
         "sweep" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           target = arg.empty? ? root : File.expand_path(arg, root)
-          sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus, code_index: infra[:code_index])
+          sweeper = Sweep.new(agent:, scanner:, council: deliberation, root:, event_bus: bus, 
+code_index: infra[:code_index])
           result = sweeper.run(target) { |cycle, file, delta|
             $stdout.puts "sweep: cycle #{cycle} #{file} +#{delta}"
             $stdout.flush

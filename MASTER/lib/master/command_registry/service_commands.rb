@@ -69,7 +69,8 @@ module Master
       end
     end
 
-    TEXT_EXTS  = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini .env].to_set.freeze
+    TEXT_EXTS  = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini 
+.env].to_set.freeze
     TEXT_NAMES = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
     SKIP_SEGS  = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
 
@@ -161,7 +162,8 @@ module Master
 
     def dispatch_heartbeat(heartbeat, arg)
       case arg
-      when "run"   then heartbeat ? heartbeat.run_due!.map { |r| "#{r[:name]}: #{r[:result]}" }.join("\n") : "no heartbeat"
+      when "run"   then heartbeat ? heartbeat.run_due!.map { |r|
+ "#{r[:name]}: #{r[:result]}" }.join("\n") : "no heartbeat"
       when "start" then heartbeat&.start!; "heartbeat started"
       when "stop"  then heartbeat&.stop!;  "heartbeat stopped"
       else heartbeat&.list || "no heartbeat"

@@ -29,7 +29,8 @@ module Master
         perm = @governor.permit?(NAME, TIER, url)
         return perm if perm.err?
 
-        response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: TIMEOUT, open_timeout: TIMEOUT) do |h|
+        response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: TIMEOUT, 
+open_timeout: TIMEOUT) do |h|
           h.get(uri.request_uri, "User-Agent" => "MASTER/1 (web_fetch)")
         end
 

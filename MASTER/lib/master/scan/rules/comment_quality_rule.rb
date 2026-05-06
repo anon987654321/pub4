@@ -24,8 +24,10 @@ module Master
 
           lines.each_with_index do |line, i|
             num = i + 1
-            line_findings << finding(line: num, message: "TODO without owner or issue ref — add TODO(name) or TODO(#123)") if line.match?(TODO_NO_REF)
-            line_findings << finding(line: num, message: "FIXME without owner or issue ref — add FIXME(name)") if line.match?(FIXME_NO_REF)
+            line_findings << finding(line: num, 
+message: "TODO without owner or issue ref — add TODO(name) or TODO(#123)") if line.match?(TODO_NO_REF)
+            line_findings << finding(line: num, 
+message: "FIXME without owner or issue ref — add FIXME(name)") if line.match?(FIXME_NO_REF)
           end
 
           line_findings + commented_out_blocks(lines)
@@ -45,7 +47,8 @@ module Master
               run_count  += 1
             else
               if run_count >= MIN_CODE_COMMENTS
-                findings << finding(line: run_start, message: "#{run_count} consecutive lines of commented-out code — delete it, git history preserves it")
+                findings << finding(line: run_start, 
+message: "#{run_count} consecutive lines of commented-out code — delete it, git history preserves it")
               end
               run_start = nil
               run_count = 0
@@ -53,7 +56,8 @@ module Master
           end
 
           if run_count >= MIN_CODE_COMMENTS
-            findings << finding(line: run_start, message: "#{run_count} consecutive lines of commented-out code — delete it, git history preserves it")
+            findings << finding(line: run_start, 
+message: "#{run_count} consecutive lines of commented-out code — delete it, git history preserves it")
           end
 
           findings

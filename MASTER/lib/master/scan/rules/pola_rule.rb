@@ -26,8 +26,10 @@ module Master
 
           code.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("#")
-            findings << finding(line: num, message: "boolean positional default — use keyword arg (def method(flag: false)) to name intent at call site") if line.match?(BOOL_POSITIONAL)
-            findings << finding(line: num, message: "double negation detected — invert condition and use positive form") if line.match?(DOUBLE_NEG)
+            findings << finding(line: num, 
+message: "boolean positional default — use keyword arg (def method(flag: false)) to name intent at call site") if line.match?(BOOL_POSITIONAL)
+            findings << finding(line: num, 
+message: "double negation detected — invert condition and use positive form") if line.match?(DOUBLE_NEG)
             findings << finding(line: num,
               message: "negative attribute name — name what it IS, not what it ISN'T") if line.match?(NEG_BOOL_ATTR)
 

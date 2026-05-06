@@ -169,7 +169,8 @@ module Master
 
       class FeedbackRecord < RubyLLM::Tool
         description "Record RSI feedback: tool_success, tool_failure, user_correction, provider_error, user_feedback."
-        param :event_type, desc: "One of: tool_success tool_failure user_correction provider_error user_feedback", required: true
+        param :event_type, desc: "One of: tool_success tool_failure user_correction provider_error user_feedback", 
+required: true
         param :dimension,  desc: "Tool name, provider name, or pattern label", required: true
         param :value,      desc: "Numeric value (1.0=success 0.0=failure or duration)", type: "number", required: false
         param :metadata,   desc: "Additional context string", required: false

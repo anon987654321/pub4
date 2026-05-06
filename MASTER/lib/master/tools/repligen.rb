@@ -25,7 +25,8 @@ module Master
       def call(action:, query: nil, limit: nil)
         action = action.to_s
         return Result.err("repligen: unknown action #{action}", category: :validation) unless ACTIONS.include?(action)
-        return Result.err("repligen: REPLICATE_API_TOKEN not set", category: :validation) if action == "sync" && ENV["REPLICATE_API_TOKEN"].to_s.empty?
+        return Result.err("repligen: REPLICATE_API_TOKEN not set", 
+category: :validation) if action == "sync" && ENV["REPLICATE_API_TOKEN"].to_s.empty?
 
         script = File.expand_path(SCRIPT_REL, @root)
         return Result.err("repligen: script missing at #{script}", category: :infrastructure) unless File.exist?(script)

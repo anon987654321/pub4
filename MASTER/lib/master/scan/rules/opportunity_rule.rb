@@ -66,7 +66,8 @@ module Master
           code.each_line.with_index(1) do |line, number|
             stripped = line.strip
             next unless stripped.start_with?('"') && stripped.include?("=>") && stripped.include?("->")
-            count = code.lines.count { |other| other.strip.start_with?('"') && other.strip.include?("=>") && other.strip.include?("->") }
+            count = code.lines.count { |other|
+ other.strip.start_with?('"') && other.strip.include?("=>") && other.strip.include?("->") }
             if count >= LAMBDA_TABLE_MIN
               results << finding(line: number,
                 message: "lambda dispatch table (#{count} entries) — regroup into Command objects or a registry")

@@ -44,7 +44,7 @@ module Master
     # Token-limited injection for system prompt. Caps at MAX_INJECT_TOKENS.
     def context_summary
       active = @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
-      return nil if active.empty?
+      return if active.empty?
 
       recent    = active.sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) }.first(MAX_INJECT_ENTRIES)
       lines     = []
@@ -57,7 +57,7 @@ module Master
         lines << text
         token_sum += est
       end
-      return nil if lines.empty?
+      return if lines.empty?
 
       archived_n = @store.count { |k, _| k.to_s.start_with?("archive/") }
       summary    = recall("_consolidated_summary")

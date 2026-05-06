@@ -28,7 +28,8 @@ module Master
         count   = content.scan(old_string).size
 
         return Result.err("str_replace: pattern not found in #{path}", category: :validation) if count.zero?
-        return Result.err("str_replace: pattern matches #{count} times in #{path} (must be unique)", category: :validation) if count > 1
+        return Result.err("str_replace: pattern matches #{count} times in #{path} (must be unique)", 
+category: :validation) if count > 1
 
         perm = @governor.permit?(NAME, TIER, path)
         return perm if perm.err?

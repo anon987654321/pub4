@@ -111,7 +111,8 @@ module Master
       autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
       skills   = Skills.new(root:, event_bus: bus)
       skills.discover!
-      heartbeat = Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus, homeostat: infra[:homeostat])
+      heartbeat = Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus, 
+homeostat: infra[:homeostat])
       triggers  = Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
       { standing:, learnings:, autoloop:, skills:, heartbeat:, triggers: }

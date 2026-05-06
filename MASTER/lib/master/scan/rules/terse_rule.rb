@@ -29,15 +29,20 @@ module Master
           line_findings = []
           code.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("#")
-            line_findings << finding(line: num, message: "== true/false is redundant — use the boolean directly") if line.match?(BOOL_CMP)
+            line_findings << finding(line: num, 
+message: "== true/false is redundant — use the boolean directly") if line.match?(BOOL_CMP)
             line_findings << finding(line: num, message: "use .nil? instead of == nil") if line.match?(NIL_EQ)
-            line_findings << finding(line: num, message: "use object instead of != nil — truthy check suffices") if line.match?(NIL_NEQ)
-            line_findings << finding(line: num, message: "remove `then` — it is noise in multi-line if/unless") if line.match?(THEN_KWORD)
-            line_findings << finding(line: num, message: "symbol-to-proc: .map(&:method_name) instead of block") if line.match?(SYMBOL_PROC)
+            line_findings << finding(line: num, 
+message: "use object instead of != nil — truthy check suffices") if line.match?(NIL_NEQ)
+            line_findings << finding(line: num, 
+message: "remove `then` — it is noise in multi-line if/unless") if line.match?(THEN_KWORD)
+            line_findings << finding(line: num, 
+message: "symbol-to-proc: .map(&:method_name) instead of block") if line.match?(SYMBOL_PROC)
             line_findings << finding(line: num, message: "!x.empty? → x.any?") if line.match?(NOT_EMPTY)
             line_findings << finding(line: num, message: ".length/size/count == 0 → .empty?") if line.match?(LEN_ZERO)
             line_findings << finding(line: num, message: ".length/size/count > 0 → .any?") if line.match?(LEN_POS)
-            line_findings << finding(line: num, message: "!! is a no-op on booleans and obscures intent — use explicit truthiness") if line.match?(DOUBLE_BANG)
+            line_findings << finding(line: num, 
+message: "!! is a no-op on booleans and obscures intent — use explicit truthiness") if line.match?(DOUBLE_BANG)
             line_findings << finding(line: num, message: "unless !x → if x") if line.match?(UNLESS_NOT)
             line_findings << finding(line: num, message: "x ? x : y → x || y") if line.match?(TERNARY_SELF)
           end
@@ -68,7 +73,8 @@ module Master
             if depth <= 0
               last = method_lines.reverse.find { |l| !l[:text].strip.empty? && !l[:text].strip.start_with?("#") }
               if last && last[:text].match?(/^\s*return\s+\S/) && !last[:text].match?(/return\s+.+\bif\b/)
-                findings << finding(line: last[:num], message: "redundant return — last expression is the implicit return value")
+                findings << finding(line: last[:num], 
+message: "redundant return — last expression is the implicit return value")
               end
               in_method = false
               method_lines = []

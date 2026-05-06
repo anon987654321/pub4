@@ -48,7 +48,7 @@ module Master
 
     def check_rate_limit!(tier)
       limit = TIER_RATE_LIMITS[tier]
-      return nil unless limit
+      return unless limit
       now = Time.now.to_f
       @rate_mutex.synchronize do
         calls = @rate_windows[tier]

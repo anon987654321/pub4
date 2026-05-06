@@ -21,9 +21,12 @@ module Master
           findings = []
           code.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("#")
-            findings << finding(line: num, message: "boolean/null as quoted string — remove quotes so YAML parses the type correctly") if line.match?(QUOTED_BOOL)
-            findings << finding(line: num, message: "integer as quoted string — remove quotes") if line.match?(QUOTED_INT)
-            findings << finding(line: num, message: "unnecessary quotes — plain scalars don't need quoting unless they contain : or #") if line.match?(UNNECESSARY_Q) && !line.match?(QUOTED_BOOL) && !line.match?(QUOTED_INT)
+            findings << finding(line: num, 
+message: "boolean/null as quoted string — remove quotes so YAML parses the type correctly") if line.match?(QUOTED_BOOL)
+            findings << finding(line: num, 
+message: "integer as quoted string — remove quotes") if line.match?(QUOTED_INT)
+            findings << finding(line: num, 
+message: "unnecessary quotes — plain scalars don't need quoting unless they contain : or #") if line.match?(UNNECESSARY_Q) && !line.match?(QUOTED_BOOL) && !line.match?(QUOTED_INT)
           end
           findings
         end

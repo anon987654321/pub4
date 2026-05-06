@@ -23,10 +23,14 @@ module Master
           findings = []
           code.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("#")
-            findings << finding(line: num, message: "is_ prefix: use adjective with ? suffix (e.g. valid? not is_valid?)") if line.match?(IS_PREFIX)
-            findings << finding(line: num, message: "get_ prefix: Ruby readers drop get_ (e.g. name not get_name)") if line.match?(GET_PREFIX)
-            findings << finding(line: num, message: "set_ prefix: use name= for writers (e.g. name= not set_name)") if line.match?(SET_PREFIX)
-            findings << finding(line: num, message: "boolean predicate missing ? suffix — add ? to indicate it returns bool") if line.match?(BOOL_NO_QMARK)
+            findings << finding(line: num, 
+message: "is_ prefix: use adjective with ? suffix (e.g. valid? not is_valid?)") if line.match?(IS_PREFIX)
+            findings << finding(line: num, 
+message: "get_ prefix: Ruby readers drop get_ (e.g. name not get_name)") if line.match?(GET_PREFIX)
+            findings << finding(line: num, 
+message: "set_ prefix: use name= for writers (e.g. name= not set_name)") if line.match?(SET_PREFIX)
+            findings << finding(line: num, 
+message: "boolean predicate missing ? suffix — add ? to indicate it returns bool") if line.match?(BOOL_NO_QMARK)
           end
           findings
         end

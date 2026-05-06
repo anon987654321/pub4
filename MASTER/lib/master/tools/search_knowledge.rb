@@ -59,7 +59,8 @@ module Master
 
       def available_topics
         return [] unless Dir.exist?(@knowledge_root)
-        Dir.entries(@knowledge_root).select { |e| File.directory?(File.join(@knowledge_root, e)) && !e.start_with?(".") }
+        Dir.entries(@knowledge_root).select { |e|
+ File.directory?(File.join(@knowledge_root, e)) && !e.start_with?(".") }
       end
 
       private

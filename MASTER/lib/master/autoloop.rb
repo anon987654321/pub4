@@ -95,7 +95,8 @@ module Master
           @git.add_lib_files
           @git.commit("autoloop: fix scan violations [cycle #{cycle}]")
           if @learnings
-            fixes.each_value { |v, _| @learnings.record(trigger: v[:rule].to_s, strategy: "autoloop_fix", outcome: "commit") }
+            fixes.each_value { |v, _|
+ @learnings.record(trigger: v[:rule].to_s, strategy: "autoloop_fix", outcome: "commit") }
           end
         end
         track_recurrence(violations)
@@ -141,13 +142,13 @@ module Master
 
     def request_fix(violation)
       path = File.join(@root, violation[:file])
-      return nil unless File.exist?(path)
+      return unless File.exist?(path)
 
       file_size = File.size(path)
       if file_size > MAX_FILE_BYTES
         @bus&.publish("autoloop:fix_skipped", file: violation[:file],
                       reason: "file too large (#{file_size} bytes)")
-        return nil
+        return
       end
 
       src         = File.read(path, encoding: "UTF-8")

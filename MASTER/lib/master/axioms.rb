@@ -43,7 +43,7 @@ module Master
     def rules_for_scope(scope) = (@data.dig("rules", scope.to_s) || []).freeze
 
     def kernel_block
-      return nil if kernel.empty?
+      return if kernel.empty?
 
       pairs = kernel.map { |id, stmt| "  #{id}: #{stmt}" }.join("\n")
       "## Kernel Rules (enforced)\n#{pairs}"
@@ -51,7 +51,7 @@ module Master
 
     def philosophy_block(limit: 5)
       items = philosophy(limit: limit)
-      return nil if items.empty?
+      return if items.empty?
 
       top = items.map { |a| "  #{a["id"]}: #{a["name"]}" }.join("\n")
       "## Rules (top #{items.size})\n#{top}"
@@ -91,7 +91,7 @@ module Master
     private
 
     def load_yaml(path)
-      return nil unless File.exist?(path)
+      return unless File.exist?(path)
 
       Master.load_yaml(path)
     rescue StandardError => _e

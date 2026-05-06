@@ -17,7 +17,8 @@ module Master
 
       def call(path: nil)
         target = path ? File.expand_path(path, @root) : @root
-        return Result.err("path not found: #{target}", category: :validation) unless File.exist?(target) || Dir.exist?(target)
+        return Result.err("path not found: #{target}", 
+category: :validation) unless File.exist?(target) || Dir.exist?(target)
 
         guard = @governor.guard("clean #{target}")
         return Result.err(guard.message, category: :policy) if guard.respond_to?(:ok?) && !guard.ok?
