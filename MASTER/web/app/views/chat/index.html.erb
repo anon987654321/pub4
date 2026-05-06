@@ -2317,7 +2317,7 @@ const AMBIENT=[
       const _pls=isProcessing?0.45+Math.sin(t*6)*0.3:0;
       for(const p of proj){
         const px=p.x+camX,py=p.y+camY;
-        const r=Math.max(0.3,(p.s<1.5?0.5:p.s<2.5?0.8:p.s<3.5?1.1:1.5)+(audioBoost*0.7));
+        const r=Math.max(1.2,(p.s<1.5?1.4:p.s<2.5?2.0:p.s<3.5?2.6:3.4)+(audioBoost*1.1));
         let col;
         if(isProcessing){col=colsThink[Math.min(3,p.c+Math.round(_pls*1.5))];}
         else if(p.think>0.22){col=activeCol[Math.min(3,p.c+1)];}
@@ -2337,7 +2337,7 @@ const AMBIENT=[
         ctx.fill();
       }
       // Connection lines — dark red filaments
-      ctx.globalAlpha=0.14;
+      ctx.globalAlpha=0.05;
       ctx.strokeStyle=isProcessing?'#3d1a04':(isSpeaking?'#4a1010':'#2a0808');
       ctx.lineWidth=0.8;
       for(let i=0;i<proj.length-9;i+=9){
