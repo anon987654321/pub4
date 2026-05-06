@@ -75,7 +75,6 @@ module Master
     SKIP_SEGS  = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
 
     def dispatch_snapshot(root)
-      out       = File.join(root, "snapshot_latest.md")
       skip_path = ->(rel) { rel.split("/").any? { |s| SKIP_SEGS.include?(s) } }
       text_file = ->(f)   { TEXT_EXTS.include?(File.extname(f).downcase) || TEXT_NAMES.include?(File.basename(f)) }
 
@@ -113,16 +112,15 @@ module Master
       end
 
       buf << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc} / est. tokens: ~#{n_lines * 6 / 5}"
-      tmp = "#{out}.tmp.#{Process.pid}"
-      File.write(tmp, buf.join("\n"))
-      File.rename(tmp, out)
 
-      day = Time.now.strftime("%Y-%m-%d")
-      gist_out, gist_st = Open3.capture2e("gh", "gist", "create", out,
+      day  = Time.now.strftime("%Y-%m-%d")
+      body = buf.join("\n")
+      gist_out, gist_st = Open3.capture2e("gh", "gist", "create", "-",
                                           "--public", "--desc", "MASTER #{day}",
-                                          "--filename", "snapshot_latest.md")
-      gist_url = gist_st.success? ? " → #{gist_out.strip}" : ""
-      "snapshot: #{files.size} files #{n_lines} lines#{gist_url}"
+                                          "--filename", "snapshot_latest.md",
+                                          stdin_data: body)
+      return "snapshot: gist publish failed: #{gist_out.strip}" unless gist_st.success?
+      "snapshot: #{files.size} files #{n_lines} lines → #{gist_out.strip}"
     end
 
     SCORE_WEIGHTS = { error: 10, critical: 10, warning: 3, style: 1 }.freeze
@@ -170,9 +168,15 @@ module Master
       end
     end
 
-    def utility_commands(agent, root, cache)
+    def utility_commands(agent, root, cache, code_index = nil)
       {
         "snapshot" => ->(_ctx) { dispatch_snapshot(root) },
+        "repo_map" => ->(ctx) {
+          return "no code_index" unless code_index
+          arg    = ctx[:args].to_s.strip
+          budget = arg.to_i.positive? ? arg.to_i : Master::RepoMap::DEFAULT_TOKEN_BUDGET
+          Master::RepoMap.new(code_index:, root:, token_budget: budget).render
+        },
         "cache" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           case arg

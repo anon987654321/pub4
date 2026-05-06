@@ -7,6 +7,10 @@ module Master
     module Rules
       class NestingDepthRule < Rule
         DEFAULT_DEPTH = 2
+        NESTING_NODES = %i[
+          visit_if_node visit_unless_node visit_case_node visit_case_match_node
+          visit_while_node visit_until_node visit_for_node
+        ].freeze
 
         def initialize
           super
@@ -17,61 +21,53 @@ module Master
           @axiom_tags  = [:GUARD_CLAUSES_FIRST]
         end
 
-        def check(code, path:)
+        def check_ast(ast, _code, path:)
           return [] unless path.end_with?(".rb")
-          result = Prism.parse(code)
-          return [] unless result.success?
-
-          visitor = NestingVisitor.new(@threshold)
-          visitor.visit(result.value)
-          visitor.violations.map do |line, depth|
-            finding(
-              line:,
-              message: "nesting depth #{depth} exceeds #{@threshold} — extract method or add guard clause"
-            )
+          visitor = Visitor.new(@threshold)
+          ast.accept(visitor)
+          visitor.findings.map do |line, depth|
+            finding(line:, message: "nesting depth #{depth} exceeds #{@threshold} — extract method or add guard clause")
           end
         end
 
-        class NestingVisitor < Prism::Visitor
-          attr_reader :violations
+        class Visitor < Prism::Visitor
+          attr_reader :findings
 
           def initialize(threshold)
             super()
-            @threshold  = threshold
-            @violations = []
-            @in_method  = 0
-            @depth      = 0
-            @reported   = false
+            @threshold = threshold
+            @findings = []
           end
 
           def visit_def_node(node)
-            saved = [@in_method, @depth, @reported]
-            @in_method += 1
-            @depth      = 0
-            @reported   = false
+            counter = DepthCounter.new
+            node.body&.accept(counter)
+            @findings << [node.location.start_line, counter.max] if counter.max > @threshold
             super
-            @in_method, @depth, @reported = saved
+          end
+        end
+
+        class DepthCounter < Prism::Visitor
+          attr_reader :max
+
+          def initialize
+            super
+            @depth = 0
+            @max = 0
           end
 
-          %i[
-            visit_if_node visit_unless_node visit_case_node visit_case_match_node
-            visit_while_node visit_until_node visit_for_node visit_begin_node
-          ].each do |m|
+          NESTING_NODES.each do |m|
             define_method(m) do |node|
-              if @in_method.positive?
-                @depth += 1
-                if @depth > @threshold && !@reported
-                  @violations << [node.location.start_line, @depth]
-                  @reported = true
-                end
-                super(node)
-                @depth -= 1
-                @reported = false if @depth <= @threshold
-              else
-                super(node)
-              end
+              @depth += 1
+              @max = @depth if @depth > @max
+              super(node)
+              @depth -= 1
             end
           end
+
+          def visit_def_node(_node) = nil
+          def visit_class_node(_node) = nil
+          def visit_module_node(_node) = nil
         end
       end
     end

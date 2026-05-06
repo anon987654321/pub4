@@ -17,8 +17,8 @@ web/.env*
 .master3/memory.yml
 chrome.core
 *.core
+snapshot.md
 
 # Resumable task state — see data/session_recovery.yml
 .session_recovery
 .session_recovery.archive/
-snapshot_*.md
