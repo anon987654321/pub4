@@ -15,7 +15,7 @@ module Master
         agent_commands(ai:, root:, infra:),
         memory_commands(infra[:memory], ai[:agent]),
         service_commands(ai, infra[:phase_gates]),
-        utility_commands(ai[:agent], root, infra[:cache]),
+        utility_commands(ai[:agent], root, infra[:cache], infra[:code_index]),
         control_commands(ai[:standing], ai[:soul]),
         "help" => ->(_ctx) {
           "just talk. intent is inferred automatically.\n" \

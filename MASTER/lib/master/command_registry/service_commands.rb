@@ -165,9 +165,15 @@ module Master
       end
     end
 
-    def utility_commands(agent, root, cache)
+    def utility_commands(agent, root, cache, code_index = nil)
       {
         "snapshot" => ->(_ctx) { dispatch_snapshot(root) },
+        "repo_map" => ->(ctx) {
+          return "no code_index" unless code_index
+          arg    = ctx[:args].to_s.strip
+          budget = arg.to_i.positive? ? arg.to_i : Master::RepoMap::DEFAULT_TOKEN_BUDGET
+          Master::RepoMap.new(code_index:, root:, token_budget: budget).render
+        },
         "cache" => ->(ctx) {
           arg = ctx[:args].to_s.strip
           case arg
