@@ -1185,7 +1185,13 @@ if (window.DeviceMotionEvent) {
       const cores=navigator.hardwareConcurrency||4;
       return mem<=1||cores<=2;
     })();
-    const N=LOW_END?0:2000;
+    const MID_TIER=(()=>{
+      if(LOW_END) return false;
+      const mem=navigator.deviceMemory||4;
+      const cores=navigator.hardwareConcurrency||4;
+      return window.innerWidth<768||mem<=4||cores<=4;
+    })();
+    const N=LOW_END?0:(MID_TIER?600:2000);
 
     // Web Audio effect chain — cycle with long-press on status circle
     const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone','vocoder','autotune','choir','telephone','void'];
