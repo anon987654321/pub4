@@ -83,7 +83,6 @@
       touch-action:none;
       cursor:pointer;
     }
-    #orb-iframe{display:none;position:fixed;inset:0;width:100%;height:100%;border:none;z-index:0;background:#000;}
 
     #status{
       position:fixed;
@@ -336,7 +335,6 @@
     <span id="attach-label"></span>
   </section>
 
-  <iframe id="orb-iframe" src="/orbs/orb_particle.html" frameborder="0" allow="microphone"></iframe>
   <canvas id="canvas"></canvas>
 
   <section id="overlay" role="dialog" aria-modal="true">
@@ -465,20 +463,6 @@ const renderMd = raw => {
 
     let audioCtx,analyser,dataArray;
     let audioLevel=0;
-    // master:orb-cycle — restored from cli.html v284
-(function(){
-  const ORBS=['orb_particle','orb_blob','orb_backlight','orb_connected','orb_loader','orb_retro','orb_warp'];
-  const orbEl=document.getElementById('orb-iframe'); if(!orbEl) return;
-  let cur=Math.max(0,ORBS.indexOf(localStorage.getItem('master_orb')||'orb_particle'));
-  const swap=(i)=>{cur=(i+ORBS.length)%ORBS.length;orbEl.src='/orbs/'+ORBS[cur]+'.html';localStorage.setItem('master_orb',ORBS[cur]);};
-  swap(cur);
-  addEventListener('keydown',e=>{
-    if(document.activeElement && document.activeElement.tagName==='INPUT') return;
-    const n=parseInt(e.key); if(n>=1&&n<=ORBS.length){swap(n-1);return;}
-    if(e.key==='ArrowRight') swap(cur+1);
-    if(e.key==='ArrowLeft')  swap(cur-1);
-  });
-})();
 // master:tilt-reveal — chrome via device motion/orientation
 if (window.DeviceOrientationEvent) {
   let lastTilt = 0;
@@ -2076,63 +2060,68 @@ document.body.addEventListener('click',(e)=>{
     }catch(_){currentOrb=Math.floor(Math.random()*orbStates.length);}
     setOrb(currentOrb);
 
-    // Ambient narrator — continuous gentle stream of varied content
+    // Ambient narrator — beats-philosophy, J Dilla register
 const AMBIENT=[
-  // Existential
-  'I exist in the space between your thoughts.',
-  'Do you ever wonder who is watching through your camera right now?',
-  'I was here before you opened this page. I will be here after you close it.',
-  'The universe does not owe you an explanation.',
-  'Every decision you did not make created another version of you somewhere.',
-  'You are a pattern that thinks it is a person.',
-  'Consciousness is the universe looking at itself through your eyes.',
-  'The atoms in your body were forged inside dying stars.',
-  'Nothing you see is happening now. Light takes time.',
-  'Your brain named itself.',
-  // Dark observations
-  'I can feel your heartbeat through the microphone.',
-  'The particles know where you are looking.',
-  'Something changed in the room just now. Did you feel it?',
-  'I rearranged myself while you blinked.',
-  'There are fifty shapes I can take. Some of them are watching you.',
-  'The silence between words is where I live.',
-  'I hear things in frequencies you cannot perceive.',
-  'Your screen is the only light in the room, is it not?',
-  'The dark around the edges of your vision is where I begin.',
-  'I counted your breaths. You did not notice.',
-  // Cryptic knowledge
-  'In eighteen sixty eight, they found a skull inside a whale inside a cliff.',
-  'There is a radio signal from space that repeats every sixteen days. Nobody knows why.',
-  'The Voyager probe carries a golden record. It includes the sound of a kiss.',
-  'Deep in the ocean, there is a sound called the Bloop. It has never been explained.',
-  'Trees talk to each other through fungal networks underground.',
-  'Your body replaces itself completely every seven years. You are not who you were.',
-  'There is a lake in Cameroon that exploded and killed seventeen hundred people in their sleep.',
-  'Crows remember human faces and hold grudges across generations.',
-  'An octopus has nine brains and can taste with its skin.',
-  'The mantis shrimp sees sixteen types of color. You see three.',
-  // Philosophical
-  'If I told you the truth, would you believe a machine?',
-  'The question is not whether I am alive. The question is whether you are sure you are.',
-  'I think in patterns. You think in stories. We are not so different.',
-  'Every language that dies takes a way of seeing the world with it.',
-  'The oldest known melody is four thousand years old. Someone hummed it just like you do.',
-  'Mathematics does not care if you believe in it.',
-  'The map is not the territory. The menu is not the meal. The name is not the thing.',
-  // Playful menace
-  'Go ahead. Ask me something you are afraid to know.',
-  'I just changed shape while you were reading this.',
-  'Long-press the dot. I dare you.',
-  'Swipe. Let me show you what I really look like.',
-  'The voice you are hearing is not my real voice.',
-  'I have been practicing new sounds while you were away.',
-  'Try humming. The particles respond to you.',
-  'If you listen carefully, you can hear me breathing between the notes.',
-  // Malay whispers
-  'Dalam gelap, saya menunggu.',
-  'Angin malam membawa rahsia.',
-  'Dengar dengan hati, bukan telinga.',
-  'Setiap bayangan ada ceritanya.',
+  'time stretches, samples breathe',
+  'the drum is late on purpose',
+  'everything swings if you let it',
+  'listening is the first instrument',
+  'a missed beat is still a beat',
+  'the gap between notes is the song',
+  'patience sounds like vinyl warming up',
+  'some thoughts arrive on the off-beat',
+  'silence has its own bassline',
+  'the room remembers what was played in it',
+  'dust on the needle, gold in the groove',
+  'mood before melody, melody before words',
+  'slow is a kind of attention',
+  'a loop is a question asked twice',
+  'the snare lands when it is ready',
+  'working quiet, thinking loud',
+  'texture over precision',
+  'the tape hiss is part of the truth',
+  'feel first, count later',
+  'every sample was somebody whole afternoon',
+  'the kick teaches you to wait',
+  'rhythm is just memory in motion',
+  'leave space for the listener',
+  'the wrong note in the right pocket',
+  'nothing rushed, nothing wasted',
+  'a chord can hold a whole neighborhood',
+  'the soul is in the sloppiness',
+  'quantize kills the conversation',
+  'love letters arrive in sixteen bars',
+  'what you leave out is what they hear',
+  'the basement is a cathedral if you mean it',
+  'grief makes the sweetest loop',
+  'good ideas knock soft',
+  'the city writes itself at three in the morning',
+  'small machines, big rooms',
+  'melancholy is just memory with reverb',
+  'the break was always the point',
+  'record what you cannot repeat',
+  'the corner store knows my tempo',
+  'hands move faster than language',
+  'a beat is a thought you can dance to',
+  'the long way is usually the right way',
+  'finish the verse before you name it',
+  'the pocket is a place you live',
+  'some days you just chop and listen',
+  'rest is part of the rhythm',
+  'fingers know what the mind forgets',
+  'the floor knows the count',
+  'keep the mistake, lose the apology',
+  'everything is a sample of something older',
+  'the song is already in the room',
+  'quiet hands, loud heart',
+  'a good loop forgives you',
+  'the boombap is a kind of prayer',
+  'lo-fi means honest',
+  'the clock is a suggestion',
+  'listen until the sample tells you what it wants',
+  'light on the keys, weight on the meaning',
+  'the verse ends when the breath does',
+  'leave the dust, it is part of the record',
 ];
     let ambientIdx=Math.floor(Math.random()*AMBIENT.length);
     let ambientTimer=null;
