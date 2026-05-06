@@ -13,7 +13,7 @@ module Master
       }
     end
 
-    def service_commands(ai, phase_gates = nil)
+    def service_commands(ai, phase_gates = nil, diag: nil)
       heartbeat = ai[:heartbeat]
       skills    = ai[:skills]
       scanner   = ai[:scanner]
@@ -25,7 +25,8 @@ module Master
           arg.empty? ? (skills&.list || "(no skills)") : (found ? "#{found[:name]}: #{found[:description]}" : "(not found: #{arg})")
         },
         "phase" => ->(ctx) { dispatch_phase(phase_gates, ctx[:args].to_s.strip) },
-        "score" => ->(ctx) { score_file(scanner, ctx[:args].to_s.strip) }
+        "score" => ->(ctx) { score_file(scanner, ctx[:args].to_s.strip) },
+        "diag"  => ->(ctx) { diag ? diag.render(ctx[:args].to_s.strip) : "diag: not configured" }
       }
     end
 

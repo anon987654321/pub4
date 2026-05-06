@@ -51,10 +51,11 @@ module Master
       learnings   = Learnings.new(root:)
 
       phase_gates = PhaseGates.new(root:, event_bus: bus)
+      diag        = Diag.new(homeostat:, breaker:, logging:)
       {
         config:, ring:, bus:, logging:, homeostat:, session:, undo:, breaker:, cache:,
         governor:, renderer:, metrics:, code_index:, diff_stager:, mcp:,
-        memory:, personality:, phase_gates:, learnings:
+        memory:, personality:, phase_gates:, learnings:, diag:
       }
     end
 

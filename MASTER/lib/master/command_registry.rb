@@ -14,7 +14,7 @@ module Master
         mode_commands(infra[:config]),
         agent_commands(ai:, root:, infra:),
         memory_commands(infra[:memory], ai[:agent]),
-        service_commands(ai, infra[:phase_gates]),
+        service_commands(ai, infra[:phase_gates], diag: infra[:diag]),
         utility_commands(ai[:agent], root, infra[:cache]),
         control_commands(ai[:standing], ai[:soul]),
         "help" => ->(_ctx) {
