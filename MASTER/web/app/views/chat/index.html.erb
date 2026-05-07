@@ -16,23 +16,47 @@
 
   @layer base{
   :root{
-
-      --safe-top:env(safe-area-inset-top,0px);
-      --safe-right:env(safe-area-inset-right,0px);
-      --safe-bottom:env(safe-area-inset-bottom,0px);
-      --safe-left:env(safe-area-inset-left,0px);
-    }
-
-    html,body{
-      margin:0;
-      height:100%;
-      background:#020000;
-      color:#dcdcdc;
-      font:16px/1.5 Helvetica,Arial,sans-serif;
-      overflow:hidden;
-  touch-action:none;
-}
-}/* end @layer base */
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-right:env(safe-area-inset-right,0px);
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+    --safe-left:env(safe-area-inset-left,0px);
+    --pitch:#0a0c0a;
+    --iron:#1f221d;
+    --bone:#cdc5b6;
+    --rust:#a0522d;
+    --brine:#4a7d80;
+    --amber:#d6a13f;
+    --grit:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    --ease:cubic-bezier(.2,.8,.2,1);
+  }
+  html,body{
+    margin:0;
+    height:100%;
+    background:var(--pitch);
+    color:var(--bone);
+    font:14px/1.5 "Roboto Mono",ui-monospace,Menlo,Monaco,Consolas,monospace;
+    -webkit-font-smoothing:none;
+    -moz-osx-font-smoothing:grayscale;
+    font-smooth:never;
+    text-rendering:optimizeSpeed;
+    overflow:hidden;
+    touch-action:none;
+  }
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    z-index:9998;pointer-events:none;
+    background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.22) 100%);
+  }
+  body::after{
+    content:"";
+    position:fixed;inset:0;
+    z-index:9999;pointer-events:none;
+    background-image:var(--grit);
+    opacity:.045;mix-blend-mode:overlay;
+  }
+  *{transition-timing-function:var(--ease);}
+  }/* end @layer base */
 
 @layer components{
 /* Low-end CSS orb

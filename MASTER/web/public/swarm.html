@@ -6,8 +6,18 @@
 <title>swarm</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:#000}
+html,body{height:100%;overflow:hidden;background:#0a0c0a}
 canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;cursor:none}
+body::after{
+  content:"";
+  position:fixed;inset:0;
+  pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0,rgba(0,0,0,.22) 1px,transparent 1px,transparent 3px);
+  mix-blend-mode:multiply;
+  z-index:9;
+  animation:scan 24s linear infinite;
+}
+@keyframes scan{0%{background-position:0 0}100%{background-position:0 200px}}
 </style>
 </head>
 <body>
@@ -44,12 +54,14 @@ let flashUntil = 0;
 const pointer = { x: W/2, y: H/2, active:false };
 
 const PALETTE = {
-  idle:   '#cfd2d6',
-  cohere: '#7df9ff',
-  burst:  '#ff8f3a',
-  ripple: '#ff6cc8',
-  slow:   '#5a78a8'
+  idle: '#cdc5b6',
+  cohere: '#4a7d80',
+  burst: '#d6a13f',
+  ripple: '#a0522d',
+  slow: '#1f221d'
 };
+const FRAME_MS = 1000/30;
+let lastFrame = 0;
 
 const density = new Uint8Array(W*H);
 
@@ -126,14 +138,14 @@ const buf = document.createElement('canvas');
 buf.width = W; buf.height = H;
 const bctx = buf.getContext('2d', { alpha:false });
 bctx.imageSmoothingEnabled = false;
-bctx.fillStyle = '#000';
+bctx.fillStyle = '#0a0c0a';
 bctx.fillRect(0,0,W,H);
 
-function step(){
-  const now = performance.now();
+function step(now){
+  if (now - lastFrame < FRAME_MS) { requestAnimationFrame(step); return; }
+  lastFrame = now;
   if (now > modeUntil) mode = 'idle';
-
-  bctx.fillStyle = 'rgba(0,0,0,0.18)';
+  bctx.fillStyle = 'rgba(10,12,10,0.22)';
   bctx.fillRect(0,0,W,H);
 
   const sepR = 4, alignR = 12, cohR = 16;
@@ -179,7 +191,7 @@ function step(){
     if (b.y < 0) b.y += H; else if (b.y >= H) b.y -= H;
   }
 
-  const baseColor = (now < flashUntil) ? '#fff' : PALETTE[mode] || PALETTE.idle;
+  const baseColor = (now < flashUntil) ? '#cdc5b6' : PALETTE[mode] || PALETTE.idle;
   bctx.fillStyle = baseColor;
   for (let i=0; i<N; i++) {
     const b = boids[i];
@@ -188,7 +200,7 @@ function step(){
   }
 
   if (pointer.active) {
-    bctx.fillStyle = '#fff';
+    bctx.fillStyle = '#cdc5b6';
     const px = pointer.x|0, py = pointer.y|0;
     bctx.fillRect(px-1, py, 3, 1);
     bctx.fillRect(px, py-1, 1, 3);
