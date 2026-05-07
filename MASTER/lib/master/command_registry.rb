@@ -17,7 +17,14 @@ module Master
         service_commands(ai, infra[:phase_gates], diag: infra[:diag]),
         utility_commands(ai[:agent], root, infra[:cache], infra[:code_index]),
         control_commands(ai[:standing], ai[:soul]),
-        "help" => ->(_ctx) {
+"orient" => ->(_ctx) {
+  require "stringio"
+  buf = StringIO.new
+  Orient.new(root: root, io: buf).call
+  buf.string
+},
+"help" => ->(_ctx) {
+
           "just talk. intent is inferred automatically.\n" \
           "exit with /exit or ctrl-C twice."
         }
