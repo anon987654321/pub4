@@ -31,7 +31,8 @@ module Master
         private
 
         def rails_app?(path)
-          path.include?("/app/") || path.include?("/lib/") && File.exist?(File.join(File.dirname(path), "..", "..", "config", "application.rb"))
+          path.include?("/app/") || path.include?("/lib/") && File.exist?(File.join(File.dirname(path), "..", "..", 
+"config", "application.rb"))
         end
       end
     end

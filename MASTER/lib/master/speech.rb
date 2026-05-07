@@ -106,7 +106,7 @@ module Master
         WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
         stdin_data: text.to_s
       )
-      return nil unless status.success?
+      return unless status.success?
 
       (File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
     end

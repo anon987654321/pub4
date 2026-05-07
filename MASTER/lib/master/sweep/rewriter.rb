@@ -84,7 +84,7 @@ module Master
       def rewrite_best_of(source, path, rel, lang, n:)
         baseline = violations_in_text(source, path)
         candidates = n.times.map { single_rewrite(source, rel, lang) }.compact
-        return nil if candidates.empty?
+        return if candidates.empty?
         scored = candidates.map { |c| [score_candidate(c, path, baseline, source.bytesize), c] }
         winner = scored.max_by { |s, _| s }
         @bus&.publish("sweep:best_of_picked", file: path, n: candidates.size,

@@ -67,7 +67,7 @@ module Master
       private
 
       def parse_ruby(code, path)
-        return nil unless RUBY_EXT.include?(File.extname(path))
+        return unless RUBY_EXT.include?(File.extname(path))
         result = Prism.parse(code)
         result.success? ? result.value : nil
       rescue StandardError

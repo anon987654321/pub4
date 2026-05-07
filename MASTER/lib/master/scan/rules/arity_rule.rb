@@ -24,7 +24,8 @@ module Master
           visitor = Visitor.new(@max_params)
           ast.accept(visitor)
           visitor.findings.map do |line, count|
-            finding(line:, message: "initialize takes #{count} args (max #{@max_params}) — extract AgentContext or Config struct")
+            finding(line:, 
+message: "initialize takes #{count} args (max #{@max_params}) — extract AgentContext or Config struct")
           end
         end
 

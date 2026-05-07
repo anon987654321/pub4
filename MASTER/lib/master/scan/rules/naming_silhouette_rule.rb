@@ -22,9 +22,14 @@ module Master
           return [] unless path.end_with?(".rb")
           findings = []
           methods(code).each do |name, line, body|
-            findings << finding(line: line, message: "predicate `#{name}` should end with `?`") if predicate_unmarked?(name, body)
-            findings << finding(line: line, message: "mutator `#{name}` ends with `!` but body has no mutation") if bang_without_mutation?(name, body)
-            findings << finding(line: line, message: "factory `#{name}` should return a built object, not nil") if factory_returns_nil?(name, body)
+            findings << finding(line: line, message: "predicate `#{name}` should end with `?`") if predicate_unmarked?(
+name, body)
+            findings << finding(line: line, 
+message: "mutator `#{name}` ends with `!` but body has no mutation") if bang_without_mutation?(
+name, body)
+            findings << finding(line: line, 
+message: "factory `#{name}` should return a built object, not nil") if factory_returns_nil?(
+name, body)
           end
           findings
         end

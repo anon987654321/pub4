@@ -30,7 +30,8 @@ module Master
           mine = clusters[fp] || 1
           total = clusters.values.sum
           return [] unless mine.to_f / total < OUTLIER_THRESHOLD
-          [finding(line: 1, message: "silhouette #{fp.inspect} differs from dominant #{dominant.inspect} (#{mine}/#{total} files)")]
+          [finding(line: 1, 
+message: "silhouette #{fp.inspect} differs from dominant #{dominant.inspect} (#{mine}/#{total} files)")]
         end
 
         private

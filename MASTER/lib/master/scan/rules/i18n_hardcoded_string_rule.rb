@@ -23,10 +23,14 @@ module Master
           findings = []
           code.each_line.with_index(1) do |line, num|
             next if line.strip.start_with?("#")
-            findings << finding(line: num, message: "flash literal — wrap in t('...') for i18n") if line.match?(FLASH_LITERAL)
-            findings << finding(line: num, message: "render literal — extract to locale file") if line.match?(RENDER_TEXT)
-            findings << finding(line: num, message: "redirect_to notice literal — extract to locale file") if line.match?(REDIRECT_NOTICE)
-            findings << finding(line: num, message: "redirect_to alert literal — extract to locale file") if line.match?(REDIRECT_ALERT)
+            findings << finding(line: num, 
+message: "flash literal — wrap in t('...') for i18n") if line.match?(FLASH_LITERAL)
+            findings << finding(line: num, 
+message: "render literal — extract to locale file") if line.match?(RENDER_TEXT)
+            findings << finding(line: num, 
+message: "redirect_to notice literal — extract to locale file") if line.match?(REDIRECT_NOTICE)
+            findings << finding(line: num, 
+message: "redirect_to alert literal — extract to locale file") if line.match?(REDIRECT_ALERT)
           end
           findings
         end

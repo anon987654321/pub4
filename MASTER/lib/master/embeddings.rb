@@ -15,8 +15,8 @@ module Master
     def enabled? = !ENV["OLLAMA_BASE_URL"].to_s.strip.empty?
 
     def embed(text)
-      return nil unless enabled?
-      return nil if text.to_s.strip.empty?
+      return unless enabled?
+      return if text.to_s.strip.empty?
       ollama_embed(text.to_s)
     rescue StandardError
       nil
@@ -44,7 +44,7 @@ module Master
       req = Net::HTTP::Post.new(uri.request_uri, "Content-Type" => "application/json")
       req.body = JSON.generate(model: ENV.fetch("EMBEDDINGS_MODEL", DEFAULT_MODEL), prompt: text)
       res = http.request(req)
-      return nil unless res.is_a?(Net::HTTPSuccess)
+      return unless res.is_a?(Net::HTTPSuccess)
       vec = JSON.parse(res.body)["embedding"]
       vec.is_a?(Array) ? vec : nil
     end

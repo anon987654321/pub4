@@ -24,7 +24,8 @@ module Master
             next unless line.include?("#") && line.match?(DEBT_TAGS)
             age = blame_age_days(path, num)
             next unless age && age > STALE_DAYS
-            findings << finding(line: num, message: "debt tag #{age} days old — resolve or delete: #{line.strip[0, 80]}")
+            findings << finding(line: num, 
+message: "debt tag #{age} days old — resolve or delete: #{line.strip[0, 80]}")
           end
           findings
         rescue StandardError
@@ -34,10 +35,11 @@ module Master
         private
 
         def blame_age_days(path, line)
-          out, _, status = Open3.capture3("git", "-C", File.dirname(path), "blame", "-L", "#{line},#{line}", "--porcelain", File.basename(path))
-          return nil unless status.success?
+          out, _, status = Open3.capture3("git", "-C", File.dirname(path), "blame", "-L", "#{line},#{line}", 
+"--porcelain", File.basename(path))
+          return unless status.success?
           ts = out[/^author-time (\d+)/, 1]&.to_i
-          return nil unless ts
+          return unless ts
           ((Time.now.to_i - ts) / 86_400).to_i
         end
       end

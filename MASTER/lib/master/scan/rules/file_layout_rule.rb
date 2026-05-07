@@ -32,7 +32,8 @@ module Master
 
         def header_findings(code)
           first = code.lines.first&.rstrip
-          return [finding(line: 1, message: "missing `# frozen_string_literal: true` magic comment")] unless first&.match?(FROZEN_RE)
+          return [finding(line: 1, 
+message: "missing `# frozen_string_literal: true` magic comment")] unless first&.match?(FROZEN_RE)
           []
         end
 
@@ -51,9 +52,13 @@ module Master
           before = code.lines[0...private_idx[1]]
           after  = code.lines[(private_idx[1] + 1)..]
           findings = []
-          findings << finding(line: line_num, message: "`private` should sit on its own line with blank line above") unless blank_above?(code.lines, private_idx[1])
-          findings << finding(line: line_num, message: "method order: definitions before `private` should not include helpers (move below)") if mixed_section?(before)
-          findings << finding(line: line_num, message: "constants/attr_* must precede first def") if late_constants?(before)
+          findings << finding(line: line_num, 
+message: "`private` should sit on its own line with blank line above") unless blank_above?(
+code.lines, private_idx[1])
+          findings << finding(line: line_num, 
+message: "method order: definitions before `private` should not include helpers (move below)") if mixed_section?(before)
+          findings << finding(line: line_num, 
+message: "constants/attr_* must precede first def") if late_constants?(before)
           findings
         end
 
