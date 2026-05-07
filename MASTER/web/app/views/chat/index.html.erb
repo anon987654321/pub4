@@ -73,12 +73,13 @@
       50%     {transform:translate(-50%,-50%) scale(1.05) translateZ(0);opacity:1;}
     }
 
-    canvas{
+    #swarm-iframe{
       position:fixed;
       inset:0;
       width:100dvw;
       height:100dvh;
       display:block;
+      border:0;
       background:#020000;
       touch-action:none;
       cursor:pointer;
@@ -207,35 +208,6 @@
       white-space:nowrap;
       text-overflow:ellipsis;
     }
-    #arrow-left,#arrow-right{
-      position:fixed;
-      top:50%;
-      transform:translateY(-50%);
-      width:60px;
-      height:100px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      z-index:100;
-      opacity:0;
-      transition:opacity 0.4s;
-      user-select:none;
-      -webkit-tap-highlight-color:transparent;
-    }
-
-    #arrow-left:hover,#arrow-right:hover{opacity:0.5;}
-    #arrow-left:active,#arrow-right:active{opacity:0.8;}
-
-    #arrow-left{left:calc(10px + var(--safe-left));}
-    #arrow-right{right:calc(10px + var(--safe-right));}
-
-    #arrow-left span,#arrow-right span{
-      color:#333;
-      font-size:24px;
-      font-weight:300;
-    }
-
     #overlay{
       position:fixed;
       inset:0;
@@ -324,9 +296,6 @@
   </aside>
   <section id="ui"><span id="ui-label">MASTER</span><span id="ui-dots"></span></section>
 
-  <section id="arrow-left"><span>‹</span></section>
-  <section id="arrow-right"><span>›</span></section>
-
   <section id="input-field">
     <span id="prompt-glyph">master ❯</span>
     <input type="text" placeholder="ask, ideate, /scan, /sweep…" autocomplete="off" maxlength="512" aria-label="Message">
@@ -335,7 +304,7 @@
     <span id="attach-label"></span>
   </section>
 
-  <canvas id="canvas"></canvas>
+  <iframe id="swarm-iframe" src="/swarm.html" allow="microphone"></iframe>
 
   <section id="overlay" role="dialog" aria-modal="true">
     <h1>MASTER</h1>
@@ -344,8 +313,7 @@
 
   <script>
     "use strict";
-    const canvas=document.getElementById('canvas');
-    const ctx=canvas.getContext('2d',{alpha:false});
+    const swarmIframe=document.getElementById('swarm-iframe');
     const statusEl=document.getElementById('status');
     const uiLabel=document.getElementById('ui-label');
     const uiDots=document.getElementById('ui-dots');
@@ -357,8 +325,6 @@
     const attachLabel=document.getElementById('attach-label');
     const chatLog=document.getElementById('chat-log');
     const overlay=document.getElementById('overlay');
-    const arrowLeft=document.getElementById('arrow-left');
-    const arrowRight=document.getElementById('arrow-right');
     const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
     const MASTER_TOKEN='x';
     const COMPAT_LABEL="master or+rep";
@@ -395,12 +361,6 @@
     document.addEventListener('keydown',e=>{
       if(e.key==='Tab'){e.preventDefault();chatLog.classList.toggle('open');}
     });
-    let lastCanvasTap=0;
-    canvas.addEventListener('touchend',()=>{
-      const now=Date.now();
-      if(now-lastCanvasTap<350) chatLog.classList.toggle('open');
-      lastCanvasTap=now;
-    },{passive:true});
     let pullStartY=0,pullStartX=0,pullActive=false;
     window.addEventListener('touchstart',e=>{
       const touch=e.touches[0];
@@ -453,9 +413,6 @@ const renderMd = raw => {
       W=window.innerWidth;
       H=window.innerHeight;
       S=Math.min(W,H)/100;
-      canvas.width=W;
-      canvas.height=H;
-      ctx.imageSmoothingEnabled=true;
     };
     window.addEventListener('resize',resize);
     window.addEventListener('orientationchange',()=>setTimeout(resize,100));
@@ -640,12 +597,6 @@ if (window.DeviceMotionEvent) {
     let repoDirtyCount=0;
     let spinnerIntervalMs=180;
     let spinnerColor="#555";
-    const BRAIN_LOBES=[
-      {x:-22,y:-8,z:10,w:1.0},
-      {x:22,y:-8,z:10,w:1.0},
-      {x:0,y:18,z:-6,w:0.9},
-      {x:0,y:-20,z:18,w:0.8}
-    ];
 
     const initAudio=async()=>{
       try{
@@ -1337,11 +1288,11 @@ if (window.DeviceMotionEvent) {
 
     const showFxMode=()=>{
       uiLabel.textContent='♪ '+FX_MODES[fxIdx];
-      setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
+      setTimeout(()=>{if(!isProcessing)uiLabel.textContent='MASTER';},2000);
     };
     const showVoice=()=>{
       uiLabel.textContent='♫ '+VOICES[voiceIdx]+' · '+STYLES[styleIdx];
-      setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
+      setTimeout(()=>{if(!isProcessing)uiLabel.textContent='MASTER';},2000);
     };
 
     const buildFxChain=(src)=>{
@@ -1786,52 +1737,12 @@ recognition.onresult=(ev)=>{
       }catch(_e){}
     };
 
-    let tiltX=0,tiltY=0;
-    const initMotion=()=>{
-      if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
-        DeviceOrientationEvent.requestPermission().then(r=>{
-          if(r==='granted'){
-            window.addEventListener('deviceorientation',e=>{
-              tiltX=(e.gamma||0)/45;
-              tiltY=(e.beta||0)/45;
-            },true);
-          }
-        });
-      }else{
-        window.addEventListener('deviceorientation',e=>{
-          tiltX=(e.gamma||0)/45;
-          tiltY=(e.beta||0)/45;
-        },true);
-      }
-    };
-
-    let touchX=0,touchY=0,touching=false;
-    const handleTouch=e=>{
-      const p=e.touches?e.touches[0]:e;
-      touchX=((p.clientX/W)*2-1)*1.2;
-      touchY=((p.clientY/H)*2-1)*1.2;
-      touching=true;
-    };
-
-    window.addEventListener('mousemove',handleTouch);
-    window.addEventListener('touchmove',handleTouch,{passive:true});
-    window.addEventListener('touchstart',handleTouch,{passive:true});
-    window.addEventListener('touchend',()=>{touching=false;});
-
     const haptic=(ms=10)=>{try{navigator.vibrate(ms);}catch(_){}};
 
     // Motion graphics: spawn expanding ring from center on state change
     const spawnRing=(maxR,col)=>{
       ringPulses.push({r:2,maxR:maxR||Math.min(W,H)*0.38,a:0.55,col:col||'#4a1410'});
     };
-
-    // Swipe left/right to change orb
-    let swipeStartX=0;
-    window.addEventListener('touchstart',e=>{swipeStartX=e.touches[0].clientX;},{passive:true});
-    window.addEventListener('touchend',e=>{
-      const dx=e.changedTouches[0].clientX-swipeStartX;
-      if(Math.abs(dx)>60){setOrb(currentOrb+(dx<0?1:-1));haptic(15);}
-    },{passive:true});
 
     let isTyping=false;
     input.addEventListener('input',()=>{isTyping=input.value.length>0;});
@@ -1881,11 +1792,6 @@ recognition.onresult=(ev)=>{
       statusEl.classList.add('processing');
       spawnRing(Math.min(W,H)*0.16,'#4a2a04');
       activeSpinner=spinnerSets[Math.floor(Math.random()*spinnerSets.length)] || spinnerFallback;
-      for(const n of neurons){
-        n.vx+=(Math.random()-0.5)*100;
-        n.vy+=(Math.random()-0.5)*100;
-        n.vz+=(Math.random()-0.5)*100;
-      }
       try{
         const payload={
           message,
@@ -1992,11 +1898,6 @@ recognition.onresult=(ev)=>{
         isProcessing=false;
         statusEl.classList.remove('processing');
         spawnRing(Math.min(W,H)*0.44,'#7a2020');
-        for(const n of neurons){
-          n.vx+=(Math.random()-0.5)*80;
-          n.vy+=(Math.random()-0.5)*80;
-          n.vz+=(Math.random()-0.5)*80;
-        }
       }catch(_e){
         uiLabel.textContent='Can\u2019t reach server';
         isProcessing=false;
@@ -2005,7 +1906,6 @@ recognition.onresult=(ev)=>{
     };
 
 // Tap anywhere on body (not on UI chrome) → toggle input field
-// Works on LOW_END too (canvas is display:none there, replaced by CSS orb)
 const _toggleInput=()=>{
   if(_overlayJustDismissed) return;
   if(inputField.classList.contains('active')){
@@ -2019,8 +1919,8 @@ const _toggleInput=()=>{
 const _isUiTarget=(el)=>{
   if(!el) return false;
   const id=el.id||'';
-  if(['status','input-field','chat-log','arrow-left','arrow-right'].includes(id)) return true;
-  if(el.closest&&(el.closest('#input-field')||el.closest('#status')||el.closest('#chat-log')||el.closest('.arrow'))) return true;
+  if(['status','input-field','chat-log'].includes(id)) return true;
+  if(el.closest&&(el.closest('#input-field')||el.closest('#status')||el.closest('#chat-log'))) return true;
   return false;
 };
 document.body.addEventListener('touchend',(e)=>{
@@ -2032,236 +1932,33 @@ document.body.addEventListener('click',(e)=>{
   _toggleInput();
 });
 
-    const orbStates=[
-      {name:"SPHERE",desc:"Perfect form",s:1},{name:"CUBE",desc:"Solid geometry",s:2},
-      {name:"TORUS",desc:"Endless loop",s:3},{name:"CONE",desc:"Focal point",s:4},{name:"CYLINDER",desc:"Rolling mass",s:5},
-      {name:"SPIRAL",desc:"Golden growth",s:6},{name:"HELIX",desc:"DNA strand",s:7},{name:"RING",desc:"Orbital path",s:8},
-      {name:"DISC",desc:"Flat world",s:9},{name:"MOBIUS",desc:"One surface",s:10},{name:"KLEIN",desc:"Bottle form",s:11},
-      {name:"BOY",desc:"Immersion",s:12},{name:"CROSS",desc:"Intersection",s:13},
-      {name:"NAUTILUS",desc:"Log spiral",s:14},{name:"GRID",desc:"Floor plane",s:15},{name:"PLANE",desc:"Flat array",s:16},
-      {name:"TUBE",desc:"Twisting pipe",s:17},{name:"STAR",desc:"Radial spikes",s:18},
-      {name:"CRYSTAL",desc:"Faceted light",s:19},{name:"CELL",desc:"Division life",s:20},
-      {name:"NEURAL",desc:"Firing net",s:21},{name:"ROOT",desc:"Branching down",s:22},{name:"FLOWER",desc:"Petal bloom",s:23},
-      {name:"LEAF",desc:"Veined surface",s:24},{name:"CORAL",desc:"Sea branch",s:25},{name:"BRANCH",desc:"Tree growth",s:26},
-      {name:"RINGS",desc:"Concentric orbits",s:27},{name:"MATRIX",desc:"Data rain",s:28},{name:"SPORE",desc:"Drifting seed",s:29},
-      {name:"ORBIT",desc:"Gravity well",s:30},{name:"FALL",desc:"Rain down",s:31},{name:"FLOAT",desc:"Buoyant drift",s:32},
-      {name:"SWARM",desc:"Flocking mass",s:33},{name:"CHAIN",desc:"Linked springs",s:34},{name:"PENDULUM",desc:"Swinging time",s:35},
-      {name:"BOUNCE",desc:"Elastic hit",s:36},{name:"VORTEX",desc:"Spinning drain",s:37},{name:"PULSE",desc:"Heartbeat",s:38},
-      {name:"FIELD",desc:"Vector flow",s:39},{name:"NOISE",desc:"Perlin form",s:40},{name:"WAVE",desc:"Interference",s:41},
-      {name:"INTERFERENCE",desc:"Double source",s:42},{name:"MOIRE",desc:"Rotating grids",s:43},{name:"FRACTAL",desc:"Recursive tree",s:44},
-      {name:"ATTRACTOR",desc:"Lorenz chaos",s:45},{name:"MANDALA",desc:"Symmetric pattern",s:46},{name:"FILAMENT",desc:"Flow lines",s:47},
-      {name:"RADIAL",desc:"Expanding circles",s:48},{name:"ZEN",desc:"Breathing minimal",s:49},
-      {name:"FACE",desc:"Human form",s:50}
-    ];
-
-    let currentOrb=0;
-    let orbFade=1; // 0→1 crossfade on orb change
-    // Persist prefs (defined early so setOrb can call it)
-    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({orb:currentOrb,fx:fxIdx,voice:voiceIdx,style:styleIdx}));}catch(_){}};
-    const setOrb=(idx)=>{
-      currentOrb=((idx%orbStates.length)+orbStates.length)%orbStates.length;
-      if(!isProcessing) uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;
-      orbFade=0;
-      for(const n of neurons) n.reset(orbStates[currentOrb].s);
-      savePrefs();
-    };
-
-    arrowLeft.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb-1);});
-    arrowRight.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb+1);});
+    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({fx:fxIdx,voice:voiceIdx,style:styleIdx}));}catch(_){}};
 
     window.addEventListener('keydown',e=>{
       if(e.target&&/INPUT|TEXTAREA/.test(e.target.tagName)) return;
-      if(e.key==='ArrowLeft')setOrb(currentOrb-1);
-      else if(e.key==='ArrowRight')setOrb(currentOrb+1);
-      else if(e.key==='v'||e.key==='V'){voiceIdx=(voiceIdx+1)%VOICES.length;showVoice();savePrefs();}
+      if(e.key==='v'||e.key==='V'){voiceIdx=(voiceIdx+1)%VOICES.length;showVoice();savePrefs();}
       else if(e.key==='s'||e.key==='S'){styleIdx=(styleIdx+1)%STYLES.length;showVoice();savePrefs();}
     });
 
-    // Low-end: replace canvas with CSS orb, skip all canvas rendering
+    // Low-end: hide swarm iframe, show CSS orb instead.
     let _cssOrb=null;
     if(LOW_END){
-      canvas.style.display='none';
+      swarmIframe.style.display='none';
       _cssOrb=document.createElement('div');
       _cssOrb.id='orb-css';
-      document.body.insertBefore(_cssOrb,canvas);
-      // Lightweight state poll — updates CSS classes, no canvas work
+      document.body.insertBefore(_cssOrb,swarmIframe);
       setInterval(()=>{
         _cssOrb.classList.toggle('speaking',isSpeaking);
         _cssOrb.classList.toggle('processing',isProcessing&&!isSpeaking);
       },150);
     }
 
-    const neurons=[];
-
-    class Neuron{
-      constructor(i){this.i=i;this.reset(1);}
-
-      reset(stateIdx){
-        const s=stateIdx;
-        if(s===0){this.ox=0;this.oy=0;this.oz=0;}
-        else if(s===1){const phi=Math.acos(1-2*(this.i+0.5)/N);const theta=Math.PI*(1+Math.sqrt(5))*this.i;this.ox=Math.cos(theta)*Math.sin(phi)*50;this.oy=Math.cos(phi)*50;this.oz=Math.sin(theta)*Math.sin(phi)*50;}
-        else if(s===2){const face=Math.floor(this.i/(N/6));const u=(this.i%(N/6))/(N/6)*2-1;const v=Math.random()*2-1;const faces=[[1,u,v],[-1,u,v],[u,1,v],[u,-1,v],[u,v,1],[u,v,-1]];this.ox=faces[face][0]*40;this.oy=faces[face][1]*40;this.oz=faces[face][2]*40;}
-        else if(s===3){const u=(this.i/N)*Math.PI*2;const v=((this.i*7)%N/N)*Math.PI*2;const R=35,r=15;this.ox=(R+r*Math.cos(v))*Math.cos(u);this.oy=r*Math.sin(v);this.oz=(R+r*Math.cos(v))*Math.sin(u);}
-        else if(s===4){const h=(this.i/N)*60-30;const r=(1-this.i/N)*30;const a=(this.i*137.5)%360;this.ox=Math.cos(a)*r;this.oy=h;this.oz=Math.sin(a)*r;}
-        else if(s===5){const h=(this.i/N)*60-30;const a=(this.i*137.5)%360;this.ox=Math.cos(a)*30;this.oy=h;this.oz=Math.sin(a)*30;}
-        else if(s===6){const t=(this.i/N)*Math.PI*6;const r=(this.i/N)*40;this.ox=Math.cos(t)*r;this.oy=(this.i/N)*60-30;this.oz=Math.sin(t)*r;}
-        else if(s===7){const t=(this.i/N)*Math.PI*4;this.ox=Math.cos(t)*25;this.oy=(this.i/N)*60-30;this.oz=Math.sin(t)*25;}
-        else if(s===8){const a=(this.i/N)*Math.PI*2;this.ox=Math.cos(a)*40;this.oy=Math.sin(a)*40;this.oz=0;}
-        else if(s===9){const a=(this.i/N)*Math.PI*2;const r=Math.sqrt(this.i/N)*40;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=0;}
-        else if(s===10){const u=(this.i/N)*Math.PI*2;const v=((this.i*3)%N/N)*0.4-0.2;this.ox=(1+v*Math.cos(u/2))*Math.cos(u)*40;this.oy=(1+v*Math.cos(u/2))*Math.sin(u)*40;this.oz=v*Math.sin(u/2)*40;}
-        else if(s===11){const u=(this.i/N)*Math.PI*2;const v=((this.i*5)%N/N)*Math.PI*2;this.ox=(2+Math.cos(v/2)*Math.sin(u)-Math.sin(v/2)*Math.sin(2*u))*Math.cos(v)*20;this.oy=(2+Math.cos(v/2)*Math.sin(u)-Math.sin(v/2)*Math.sin(2*u))*Math.sin(v)*20;this.oz=(Math.sin(v/2)*Math.sin(u)+Math.cos(v/2)*Math.sin(2*u))*20;}
-        else if(s===12){const u=(this.i/N)*Math.PI;const v=((this.i*7)%N/N)*Math.PI;const d=2-Math.cos(2*u)*Math.sin(2*v);this.ox=(Math.cos(u)*Math.sin(2*v))/d*50;this.oy=(Math.sin(u)*Math.sin(2*v))/d*50;this.oz=(Math.sin(u)*Math.cos(v)*Math.cos(v))/d*50;}
-        else if(s===13){const u=(this.i/N)*Math.PI;const v=((this.i*11)%N/N)*Math.PI;this.ox=Math.sin(u)*Math.sin(2*v)*40;this.oy=Math.sin(2*u)*Math.cos(v)*Math.cos(v)*40;this.oz=Math.cos(2*u)*Math.cos(v)*Math.cos(v)*40;}
-        else if(s===14){const t=(this.i/N)*Math.PI*6;const r=Math.exp(t*0.1)*0.3;this.ox=Math.cos(t)*r;this.oy=Math.sin(t)*r;this.oz=(this.i/N)*30-15;}
-        else if(s===15){const x=(this.i%64)/64*80-40;const z=Math.floor(this.i/64)/32*80-40;this.ox=x;this.oy=0;this.oz=z;}
-        else if(s===16){const x=(this.i%45)/45*90-45;const y=Math.floor(this.i/45)/45*90-45;this.ox=x;this.oy=y;this.oz=0;}
-        else if(s===17){const a=(this.i/N)*Math.PI*2;const r=20+Math.sin(a*3)*8;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=(this.i/N)*60-30;}
-        else if(s===18){const a=(this.i/N)*Math.PI*2;const r=15+(this.i%5)*8;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=(Math.random()-0.5)*15;}
-        else if(s===19){const v=[[0,-50,0],[0,50,0],[40,-25,0],[-40,-25,0],[0,-25,40],[0,-25,-40],[40,25,0],[-40,25,0],[0,25,40],[0,25,-40]];const vi=this.i%10;this.ox=v[vi][0]+(Math.random()-0.5)*8;this.oy=v[vi][1]+(Math.random()-0.5)*8;this.oz=v[vi][2]+(Math.random()-0.5)*8;}
-        else if(s===20){const gen=Math.floor(Math.log2(this.i+1));const a=(this.i/Math.pow(2,gen))*Math.PI*2;const r=gen*10;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=gen*3;}
-        else if(s===21){const layer=Math.floor(this.i/400);const node=this.i%400;this.ox=(layer-2.5)*40;this.oy=((node%20)-10)*6;this.oz=Math.floor(node/20)*6;}
-        else if(s===22){this.ox=0;this.oy=30;this.oz=0;this.a=Math.random()*Math.PI*2;this.d=0;}
-        else if(s===23){const petal=Math.floor(this.i/(N/5));const a=(this.i%(N/5))/(N/5)*Math.PI;const r=Math.sin(a)*30;const pa=petal*(Math.PI*2/5);this.ox=Math.cos(pa)*r;this.oy=Math.sin(pa)*r;this.oz=(this.i%(N/5))/(N/5)*15-7;}
-        else if(s===24){const u=(this.i/N)*2-1;const vv=Math.random();const w=25*(1-Math.abs(u))*(0.5+0.5*Math.cos(vv*Math.PI));this.ox=u*30;this.oy=vv*60-30;this.oz=w*(Math.random()-0.5)*0.5;}
-        else if(s===25){const b=Math.floor(this.i/80);const ss=this.i%80;const a=b*0.5;this.ox=Math.cos(a)*ss;this.oy=Math.sin(a)*ss;this.oz=ss*0.4;}
-        else if(s===26){const d=this.i/N;const w=(1-d)*25;this.ox=(Math.random()-0.5)*w;this.oy=d*60-30;this.oz=(Math.random()-0.5)*w;}
-        else if(s===27){const ring=Math.floor(this.i/200);const a=(this.i%200)/200*Math.PI*2;const r=ring*10;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=(Math.random()-0.5)*4;}
-        else if(s===28){const x=(this.i%50)/50*45-22;const y=Math.floor(this.i/50)/40*60-30;this.ox=x+(Math.random()-0.5)*2;this.oy=y;this.oz=(Math.random()-0.5)*8;}
-        else if(s===29){this.ox=(Math.random()-0.5)*60;this.oy=(Math.random()-0.5)*60;this.oz=(Math.random()-0.5)*60;this.vx=0;this.vy=0;this.vz=0;}
-        else if(s===30){this.ox=(Math.random()-0.5)*80;this.oy=(Math.random()-0.5)*80;this.oz=(Math.random()-0.5)*15;this.vx=0;this.vy=0;}
-        else if(s===31){this.ox=(this.i%40)/40*60-30;this.oy=-40-Math.random()*40;this.oz=Math.floor(this.i/40)*8-40;this.vy=0;}
-        else if(s===32){this.ox=(Math.random()-0.5)*80;this.oy=(Math.random()-0.5)*80;this.oz=(Math.random()-0.5)*80;this.t=Math.random()*Math.PI*2;}
-        else if(s===33){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.oz=(Math.random()-0.5)*50;this.vx=0;this.vy=0;this.vz=0;}
-        else if(s===34){this.idx=this.i;this.ox=0;this.oy=(this.i/N)*60-30;this.oz=0;}
-        else if(s===35){this.a=(this.i/N)*Math.PI*4;this.l=15+(this.i%10)*4;this.v=0;}
-        else if(s===36){this.ox=(Math.random()-0.5)*60;this.oy=(Math.random()-0.5)*60;this.oz=(Math.random()-0.5)*30;this.vy=0;}
-        else if(s===37){this.t=(this.i/N)*Math.PI*8;this.r=(this.i/N)*40;this.vt=0.1;this.vr=0.1;}
-        else if(s===38){const a=(this.i/N)*Math.PI*2;this.ox=Math.cos(a)*25;this.oy=Math.sin(a)*25;this.oz=0;this.a=a;}
-        else if(s===39){this.ox=(this.i%32)/32*60-30;this.oy=Math.floor(this.i/32)/64*60-30;this.oz=0;}
-        else if(s===40){this.ox=(this.i%64)/64*80-40;this.oy=Math.floor(this.i/64)/32*80-40;this.oz=0;}
-        else if(s===41){const a=(this.i/N)*Math.PI*2;this.ox=Math.cos(a)*40;this.oy=Math.sin(a)*40;this.oz=0;this.a=a;}
-        else if(s===42){this.ox=(Math.random()-0.5)*80;this.oy=(Math.random()-0.5)*80;this.oz=0;}
-        else if(s===43){const x=(this.i%50)/50*60-30;const y=Math.floor(this.i/50)/40*60-30;this.ox=x;this.oy=y;this.oz=0;}
-        else if(s===44){let x=0,y=0;for(let j=0;j<8;j++){const bit=(this.i>>j)&1;const ang=bit*Math.PI/2;x+=Math.cos(ang)*Math.pow(0.6,j)*50;y+=Math.sin(ang)*Math.pow(0.6,j)*50;}this.ox=x;this.oy=y;this.oz=0;}
-        else if(s===45){this.ox=(Math.random()-0.5)*20;this.oy=(Math.random()-0.5)*20;this.oz=0;}
-        else if(s===46){const ring=Math.floor(this.i/128);const a=(this.i%128)/128*Math.PI*2;const r=ring*8;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=0;}
-        else if(s===47){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.oz=(Math.random()-0.5)*50;this.l=0;}
-        else if(s===48){const n=20;const f=this.i%n;const a=(f/n)*Math.PI*2;const r=25+Math.floor(this.i/n)*6;this.ox=Math.cos(a)*r;this.oy=Math.sin(a)*r;this.oz=Math.floor(this.i/n)*3;}
-        else if(s===50){const n=this.i,j=()=>(Math.random()-0.5)*1.8;if(n<200){const a=(n/200)*Math.PI*2,fw=44*(1-Math.max(0,Math.cos(a+Math.PI))*0.4);this.ox=Math.sin(a)*fw+j();this.oy=Math.cos(a)*62+j();this.oz=j();}else if(n<260){const t=(n-200)/60;this.ox=-27+t*18+j();this.oy=28-t*(1-t)*8+j();this.oz=j();}else if(n<320){const t=(n-260)/60;this.ox=9+t*18+j();this.oy=28-t*(1-t)*8+j();this.oz=j();}else if(n<400){const a=(n-320)/80*Math.PI*2;this.ox=-18+Math.cos(a)*9+j();this.oy=17+Math.sin(a)*5+j();this.oz=j();}else if(n<480){const a=(n-400)/80*Math.PI*2;this.ox=18+Math.cos(a)*9+j();this.oy=17+Math.sin(a)*5+j();this.oz=j();}else if(n<520){const a=(n-480)/40*Math.PI*2;this.ox=-18+Math.cos(a)*3+j()*0.5;this.oy=17+Math.sin(a)*3+j()*0.5;this.oz=j();}else if(n<560){const a=(n-520)/40*Math.PI*2;this.ox=18+Math.cos(a)*3+j()*0.5;this.oy=17+Math.sin(a)*3+j()*0.5;this.oz=j();}else if(n<610){const t=(n-560)/50;this.ox=j()*2;this.oy=12-t*22+j();this.oz=j();}else if(n<680){const side=(n%2)*2-1,tt=((n-610)%35)/35,a=tt*Math.PI;this.ox=side*7+Math.cos(a)*5+j();this.oy=-10-Math.sin(a)*4+j();this.oz=j();}else if(n<760){const t=(n-680)/80,bow=Math.sin(t*Math.PI)*3;this.ox=-15+t*30+j();this.oy=-27+bow+j();this.oz=j();}else if(n<840){const t=(n-760)/80;this.ox=-13+t*26+j();this.oy=-32-Math.sin(t*Math.PI)*5+j();this.oz=j();}else if(n<900){const a=(n-840)/60*Math.PI;this.ox=Math.sin(a)*12+j();this.oy=-53+Math.sin(a)*4+j();this.oz=j();}else if(n<960){const t=(n-900)/60;this.ox=-40+j()*2;this.oy=-8+t*25+j()*5;this.oz=j();}else if(n<1020){const t=(n-960)/60;this.ox=40+j()*2;this.oy=-8+t*25+j()*5;this.oz=j();}else if(n<1100){const t=(n-1020)/80,a=(t-0.5)*Math.PI*1.1;this.ox=Math.sin(a)*42+j()*3;this.oy=50+Math.cos(a)*10+j()*2;this.oz=j();}else{const ff=n*0.618033,fx=((ff*53)%80)-40,fy=((ff*31)%100)-55,inside=(fx*fx/1600+fy*fy/3025)<0.85;this.ox=(inside?fx*0.7:(Math.random()-0.5)*50)+j()*3;this.oy=(inside?fy*0.75:(Math.random()-0.5)*60)+j()*3;this.oz=j();}}
-        else{const phi=Math.acos(1-2*(this.i+0.5)/N);const theta=Math.PI*(1+Math.sqrt(5))*this.i;this.ox=Math.cos(theta)*Math.sin(phi)*30;this.oy=Math.cos(phi)*30;this.oz=Math.sin(theta)*Math.sin(phi)*30;}
-
-        this.px=this.ox;this.py=this.oy;this.pz=this.oz;this.vx=0;this.vy=0;this.vz=0;this.c=0;
-        this.think=0;
-      }
-
-      update(t,stateIdx){
-        const s=stateIdx;
-
-        if(s===22){if(this.d===0)this.d=this.i/N*50;this.a+=(Math.random()-0.5)*0.3;this.d+=0.4;this.tx=Math.cos(this.a)*this.d;this.ty=30-this.d*0.4;this.tz=Math.sin(this.a)*this.d;if(this.d>60){this.d=0;this.a=Math.random()*Math.PI*2;}}
-        else if(s===29){this.vx=(this.vx||0)*0.95-0.01*this.ox+(Math.random()-0.5);this.vy=(this.vy||0)*0.95-0.01*this.oy+(Math.random()-0.5);this.vz=(this.vz||0)*0.95-0.01*this.oz+(Math.random()-0.5);this.tx=this.ox+this.vx;this.ty=this.oy+this.vy;this.tz=this.oz+this.vz;this.ox=this.tx;this.oy=this.ty;this.oz=this.tz;}
-        else if(s===30){const d=Math.sqrt(this.ox*this.ox+this.oy*this.oy);const f=80/(d*d+10);this.vx=(this.vx||0)*0.99-this.ox/d*f-this.oy/d*2;this.vy=(this.vy||0)*0.99-this.oy/d*f+this.ox/d*2;this.ox+=this.vx;this.oy+=this.vy;this.tx=this.ox*(1+audioLevel);this.ty=this.oy*(1+audioLevel);this.tz=this.oz;}
-        else if(s===31){this.vy=(this.vy||0)*0.99+0.4;this.oy+=this.vy;if(this.oy>40){this.oy=-40;this.vy=0;}this.tx=this.ox+Math.sin(t+this.oz)*audioLevel*10;this.ty=this.oy;this.tz=this.oz;}
-        else if(s===32){this.t+=0.02;this.tx=this.ox+Math.sin(this.t)*10*(1+audioLevel);this.ty=this.oy+Math.cos(this.t*0.7)*10*(1+audioLevel);this.tz=this.oz+Math.sin(this.t*1.3)*5;}
-        else if(s===33){let cx=0,cy=0,cz=0;for(let j=0;j<5;j++){const o=neurons[(this.i+j)%N];cx+=o.ox;cy+=o.oy;cz+=o.oz;}cx/=5;cy/=5;cz/=5;this.vx=(this.vx||0)*0.9+(cx-this.ox)*0.01;this.vy=(this.vy||0)*0.9+(cy-this.oy)*0.01;this.vz=(this.vz||0)*0.9+(cz-this.oz)*0.01;this.ox+=this.vx;this.oy+=this.vy;this.oz+=this.vz;this.tx=this.ox*(1+audioLevel);this.ty=this.oy*(1+audioLevel);this.tz=this.oz*(1+audioLevel);}
-        else if(s===34){const prev=neurons[(this.i+N-1)%N];const dx=prev.ox-this.ox;const dy=prev.oy-this.oy;const d=Math.sqrt(dx*dx+dy*dy);const target=2;if(d>target){this.ox+=dx/d*(d-target)*0.5;this.oy+=dy/d*(d-target)*0.5;}this.oy+=Math.sin(t+this.i*0.1)*0.4;this.tx=this.ox+tiltX*15;this.ty=this.oy;this.tz=this.oz;}
-        else if(s===35){const g=0.3;const f=-g/this.l*Math.sin(this.a);this.v=(this.v||0)*0.99+f;this.a+=this.v;this.tx=Math.sin(this.a)*this.l;this.ty=Math.cos(this.a)*this.l;this.tz=(this.i%5)*3-6;}
-        else if(s===36){this.vy=(this.vy||0)-0.4;this.oy+=this.vy;if(this.oy<-30){this.oy=-30;this.vy=-this.vy*0.8;}if(this.oy>30){this.oy=30;this.vy=-this.vy*0.8;}this.tx=this.ox;this.ty=this.oy;this.tz=this.oz;}
-        else if(s===37){this.vt=this.vt*0.99+0.04;this.vr=this.vr*0.98+0.02;this.t+=this.vt;this.r+=this.vr;if(this.r>50){this.r=0;this.t=0;}this.tx=Math.cos(this.t)*this.r;this.ty=Math.sin(this.t)*this.r;this.tz=this.r*0.3;}
-        else if(s===38){const beat=Math.exp(-Math.pow((t*2)%2-0.5,2)*4);const r=25+beat*15*(1+audioLevel*2);this.tx=Math.cos(this.a)*r;this.ty=Math.sin(this.a)*r;this.tz=beat*8;}
-        else if(s===39){const angle=Math.sin(this.ox*0.1)*Math.cos(this.oy*0.1)*Math.PI*2+t;const f=4+audioLevel*12;this.tx=this.ox+Math.cos(angle)*f;this.ty=this.oy+Math.sin(angle)*f;this.tz=this.oz+Math.sin(angle*2)*8;}
-        else if(s===40){const n=Math.sin(this.ox*0.3+t)*Math.sin(this.oy*0.3+t*0.7);this.tx=this.ox;this.ty=this.oy;this.tz=n*15*(1+audioLevel);}
-        else if(s===41){const waves=Math.sin(this.a*3-t*2)+Math.sin(this.a*7-t*3)*0.5;const r=40+waves*8*(1+audioLevel*2);this.tx=Math.cos(this.a)*r;this.ty=Math.sin(this.a)*r;this.tz=waves*4;}
-        else if(s===42){const d1=Math.sqrt((this.ox+25)*(this.ox+25)+this.oy*this.oy);const d2=Math.sqrt((this.ox-25)*(this.ox-25)+this.oy*this.oy);const amp=Math.sin(d1*0.2-t*3)+Math.sin(d2*0.2-t*3);this.tx=this.ox;this.ty=this.oy;this.tz=amp*12*(1+audioLevel);}
-        else if(s===43){const rot=t*0.2;const rx=this.ox*Math.cos(rot)-this.oy*Math.sin(rot);const ry=this.ox*Math.sin(rot)+this.oy*Math.cos(rot);const beat=Math.sin(t*4)>0?1+audioLevel:1;this.tx=rx*beat;this.ty=ry*beat;this.tz=this.oz;}
-        else if(s===44){const ss=1+Math.sin(t+this.i)*0.2*audioLevel;this.tx=this.ox*ss;this.ty=this.oy*ss;this.tz=this.oz;}
-        else if(s===45){const a=10,b=28,c=8/3;const dt=0.01;const dx=a*(this.oy-this.ox)*dt;const dy=(this.ox*(b-this.oz)-this.oy)*dt;const dz=(this.ox*this.oy-c*this.oz)*dt;this.ox+=dx;this.oy+=dy;this.oz+=dz;this.tx=this.ox*1.5;this.ty=this.oy*1.5;this.tz=this.oz*1.5;}
-        else if(s===46){const sym=6+Math.floor(Math.sin(t)*2);const sector=Math.floor(Math.atan2(this.oy,this.ox)/(Math.PI*2)*sym);const sa=sector*(Math.PI*2/sym);const r=Math.sqrt(this.ox*this.ox+this.oy*this.oy);const beat=1+Math.sin(t*3)*0.3*audioLevel;this.tx=Math.cos(sa)*r*beat;this.ty=Math.sin(sa)*r*beat;this.tz=this.oz;}
-        else if(s===47){this.l++;const a=Math.sin(this.ox*0.1)*Math.cos(this.oy*0.1)*Math.PI*2+t;this.ox+=Math.cos(a)*1.5;this.oy+=Math.sin(a)*1.5;if(this.l>80||Math.abs(this.ox)>60||Math.abs(this.oy)>60){this.ox=(Math.random()-0.5)*50;this.oy=(Math.random()-0.5)*50;this.l=0;}this.tx=this.ox;this.ty=this.oy;this.tz=this.oz+Math.sin(t+this.l*0.1)*8;}
-        else if(s===48){const tilt=Math.sin(t*0.5)*0.3;const rx=this.ox*Math.cos(tilt)-this.oz*Math.sin(tilt);const rz=this.ox*Math.sin(tilt)+this.oz*Math.cos(tilt);this.tx=rx*(1+audioLevel*0.5);this.ty=this.oy*(1+audioLevel*0.5);this.tz=rz;}
-        else if(s===49){const breath=(Math.sin(t*0.3)+1)/2;const ss=0.5+breath*0.5+audioLevel*0.5;this.tx=this.ox*ss;this.ty=this.oy*ss;this.tz=this.oz*ss;}
-        else if(s===50){const b=Math.sin(t*0.5)*1.5*(0.5+audioLevel);this.tx=this.ox+b*0.3*(this.ox/50);this.ty=this.oy+b*0.5*(this.oy/60);this.tz=this.oz+Math.sin(t*1.2+this.i*0.005)*1.5*(1+audioLevel);}
-        else{
-          // Idle breathing — never fully static
-          const breath=1+Math.sin(t*0.8+this.i*0.003)*0.06;
-          this.tx=this.ox*breath*(1+audioLevel*1.5);
-          this.ty=this.oy*breath*(1+audioLevel*1.5);
-          this.tz=this.oz*breath*(1+audioLevel*1.5);
-        }
-
-        let maxThink=0;
-        for(const l of BRAIN_LOBES){
-          const wobbleX=l.x+Math.sin(t*0.9+this.i*0.0007)*5;
-          const wobbleY=l.y+Math.cos(t*0.7+this.i*0.0009)*4;
-          const wobbleZ=l.z+Math.sin(t*0.5)*3;
-          const dx=wobbleX-this.tx;
-          const dy=wobbleY-this.ty;
-          const dz=wobbleZ-this.tz;
-          const d2=dx*dx+dy*dy+dz*dz+1;
-          const pull=(40/d2)*l.w*(0.8+audioLevel*1.5);
-          this.tx+=dx*pull;
-          this.ty+=dy*pull;
-          this.tz+=dz*pull;
-          const localThink=Math.min(1,55/d2);
-          if(localThink>maxThink) maxThink=localThink;
-        }
-        this.think=maxThink;
-
-        this.tx+=tiltX*25*(this.pz/50);
-        this.ty+=tiltY*25*(this.pz/50);
-
-        if(touching){
-          const dx=this.px-touchX*100;
-          const dy=this.py-touchY*100;
-          const d=Math.sqrt(dx*dx+dy*dy);
-          if(d<40&&d>0){const f=(40-d)*2;this.tx+=(dx/d)*f;this.ty+=(dy/d)*f;this.tz+=f;}
-        }
-
-      // When processing (waiting for LLM), contract orb and add turbulence
-      if(isProcessing){
-        const breathe=0.45+Math.sin(t*3.5)*0.15;
-        this.tx*=breathe;
-        this.ty*=breathe;
-        this.tz*=breathe;
-        this.vx+=(Math.random()-0.5)*2.5;
-        this.vy+=(Math.random()-0.5)*2.5;
-      }
-      if(isTyping&&!isProcessing){
-        this.tx*=0.7;this.ty*=0.7;this.tz*=0.7;
-      }
-
-        const k=0.04,damp=0.91;
-        this.vx+=(this.tx-this.px)*k;
-        this.vy+=(this.ty-this.py)*k;
-        this.vz+=(this.tz-this.pz)*k;
-        this.vx*=damp;this.vy*=damp;this.vz*=damp;
-        this.px+=this.vx;this.py+=this.vy;this.pz+=this.vz;
-
-        const v=Math.abs(this.vx)+Math.abs(this.vy)+Math.abs(this.vz);
-        if((audioLevel+this.think*0.8)>0.6||v>20)this.c=3;
-        else if(audioLevel>0.3||v>12)this.c=2;
-        else if(audioLevel>0.1||v>6)this.c=1;
-        else if(this.pz>15)this.c=0;
-        else this.c=1;
-      }
-
-      project(){
-        const fl=180;
-        const ss=fl/(fl+this.pz);
-        const depthFade=Math.max(0.15,Math.min(1,(1-this.pz/80)));
-        return{x:Math.floor(W/2+this.px*S*ss),y:Math.floor(H/2+this.py*S*ss),s:Math.max(1,Math.floor(ss*2)),a:Math.min(1,ss*1.2*depthFade),z:this.pz,c:this.c,think:this.think};
-      }
-    }
-
-    for(let i=0;i<N;i++) neurons.push(new Neuron(i));
     try{
       const saved=JSON.parse(localStorage.getItem('m2_prefs')||'{}');
-      if(saved.orb!=null&&saved.orb>=0&&saved.orb<orbStates.length) currentOrb=saved.orb;
-      else{const ni=orbStates.findIndex(o=>o.name==='NEURAL');currentOrb=ni>=0?ni:Math.floor(Math.random()*orbStates.length);}
       if(saved.fx!=null&&saved.fx>=0&&saved.fx<FX_MODES.length) fxIdx=saved.fx;
       if(saved.voice!=null&&saved.voice>=0&&saved.voice<VOICES.length) voiceIdx=saved.voice;
       if(saved.style!=null&&saved.style>=0&&saved.style<STYLES.length) styleIdx=saved.style;
-    }catch(_){currentOrb=Math.floor(Math.random()*orbStates.length);}
-    setOrb(currentOrb);
+    }catch(_){}
 
     // Ambient narrator — continuous gentle stream of varied content
 const AMBIENT=[
@@ -2400,7 +2097,6 @@ const AMBIENT=[
         // Speak synchronously from gesture — must NOT create AudioContext before speech starts
         // (iOS AudioContext creation steals audio focus and silently cancels speechSynthesis).
         try{speakBrowser(greeting);}catch(_){}
-        try{initMotion();}catch(_){}
         try{setupRecognition();}catch(_){}
         if(!LOW_END){try{setTimeout(initPads,500);setTimeout(initDrums,650);}catch(_){}}
         try{refreshMetrics();setInterval(refreshMetrics,30000);}catch(_){}
@@ -2471,23 +2167,13 @@ const AMBIENT=[
       }
     });
 
-    const _bkts=new Map();
     let t=0;
-    const ringPulses=[]; // motion graphics: ring events {r,maxR,a,col}
-    let scanPhase=0;
-    let camX=0,camY=0;
+    const ringPulses=[];
     const animate=()=>{
       requestAnimationFrame(animate);
-      if(canvas.hidden) return;
       t+=0.016;
       speechPulse*=0.92;
-      _bargePoll(); // P3: cancel TTS on user voice during speech
-      if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
-
-      // Cinematic camera drift — slow, organic
-      camX=Math.sin(t*0.13)*8+Math.sin(t*0.31)*3;
-      camY=Math.cos(t*0.17)*5+Math.cos(t*0.23)*2;
-
+      _bargePoll();
       if(analyser){
         analyser.getByteFrequencyData(dataArray);
         let sum=0;
@@ -2495,121 +2181,22 @@ const AMBIENT=[
         for(let i=6;i<12;i++) sum+=dataArray[i]*0.6;
         audioLevel=Math.min(1,sum/9/255+speechPulse*0.45);
       }else{
-        // Simulate syllable rhythm when speaking, pad breathing when idle
         if(isSpeaking) speechPulse=0.38+Math.abs(Math.sin(t*12.6))*0.42;
         else speechPulse*=0.92;
         const padBreath=padMaster?0.08+Math.abs(Math.sin(t*0.8))*0.12:0;
         audioLevel=audioLevel*0.92+padBreath;
       }
-
-      // Background: motion trail — deep black fade
-      const trailAlpha=isProcessing?0.12:isSpeaking?0.08:0.06;
-      ctx.fillStyle=`rgba(4,0,0,${1-trailAlpha-0.04})`; // near-black with red bias
-      ctx.fillRect(0,0,W,H);
-
-      for(const n of neurons) n.update(t,orbStates[currentOrb].s);
-      const proj=neurons.map(n=>n.project()).filter(Boolean);
-
-      // Dark crimson-to-ember palette — reddish, fades to black
-      // Idle: near-black embers. Speaking: deep crimson-rose. Processing: dark amber.
-      const cols     =['#2a0a08','#4a1410','#7a2018','#a03020']; // ember ramp (brighter)
-      const colsSpeak=['#3d1010','#6a1a1a','#aa2828','#dd4040']; // crimson on speech (brighter)
-      const colsThink=['#281402','#4a2a04','#7a4808','#a06010']; // dark amber on think (brighter)
-      const activeCol=isProcessing?colsThink:(isSpeaking?colsSpeak:cols);
-      const audioBoost=Math.min(1,audioLevel*1.8);
-
-      // Batch arc draws by color+alpha bucket (~12 fill() calls vs N)
-      _bkts.clear();
-      const _pls=isProcessing?0.45+Math.sin(t*6)*0.3:0;
-      for(const p of proj){
-        const px=p.x+camX,py=p.y+camY;
-        const r=Math.max(0.3,(p.s<1.5?0.5:p.s<2.5?0.8:p.s<3.5?1.1:1.5)+(audioBoost*0.7));
-        let col;
-        if(isProcessing){col=colsThink[Math.min(3,p.c+Math.round(_pls*1.5))];}
-        else if(p.think>0.22){col=activeCol[Math.min(3,p.c+1)];}
-        else if(audioBoost>0.08){const mix=Math.min(1,audioBoost*1.5);col=mix>0.7?(isSpeaking?'#cc4444':'#882222'):(activeCol[Math.min(3,p.c+1)]);}
-        else{col=activeCol[p.c]||activeCol[1];}
-        const aQ=Math.round(Math.min(1,p.a*(0.85+p.think*0.35)*orbFade)*4)/4;
-        const key=col+'|'+aQ+'|'+(r*10|0);
-        let b=_bkts.get(key);
-        if(!b){b={col,aQ,r,pts:[]};_bkts.set(key,b);}
-        b.pts.push(px,py);
-      }
-      for(const b of _bkts.values()){
-        ctx.globalAlpha=b.aQ;
-        ctx.fillStyle=b.col;
-        ctx.beginPath();
-        for(let _i=0;_i<b.pts.length;_i+=2)ctx.arc(b.pts[_i],b.pts[_i+1],b.r,0,Math.PI*2);
-        ctx.fill();
-      }
-      // Connection lines — dark red filaments
-      ctx.globalAlpha=0.14;
-      ctx.strokeStyle=isProcessing?'#3d1a04':(isSpeaking?'#4a1010':'#2a0808');
-      ctx.lineWidth=0.8;
-      for(let i=0;i<proj.length-9;i+=9){
-        const a=proj[i];
-        const b=proj[i+9];
-        if(!a||!b) continue;
-        if(a.think<0.2&&b.think<0.2) continue;
-        const dx=a.x-b.x;
-        const dy=a.y-b.y;
-        if(dx*dx+dy*dy>900) continue;
-        const mx=(a.x+b.x)/2+(Math.random()-0.5)*4;
-        const my=(a.y+b.y)/2+(Math.random()-0.5)*4;
-        ctx.beginPath();
-        ctx.moveTo(a.x,a.y);
-        ctx.quadraticCurveTo(mx,my,b.x,b.y);
-        ctx.stroke();
-      }
-
-      // Motion graphics: expanding ring pulses on state transitions
       for(let i=ringPulses.length-1;i>=0;i--){
         const rp=ringPulses[i];
         rp.r+=rp.maxR*0.045;
         rp.a*=0.91;
-        if(rp.a<0.012){ringPulses.splice(i,1);continue;}
-        ctx.globalAlpha=rp.a;
-        ctx.strokeStyle=rp.col;
-        ctx.lineWidth=1;
-        ctx.beginPath();
-        ctx.arc(W/2+camX,H/2+camY,rp.r,0,Math.PI*2);
-        ctx.stroke();
+        if(rp.a<0.012) ringPulses.splice(i,1);
       }
-      // Scanning line — single horizontal sweep during processing (radar feel)
-      if(isProcessing){
-        scanPhase=(scanPhase+0.003)%1;
-        const sy=Math.floor(scanPhase*H);
-        ctx.globalAlpha=0.08+Math.sin(t*6)*0.03;
-        ctx.strokeStyle='#4a1a04';
-        ctx.lineWidth=1;
-        ctx.beginPath();ctx.moveTo(0,sy);ctx.lineTo(W,sy);ctx.stroke();
-      }
-      // Flat thinking indicator — pulsing bar below center
-      if(isProcessing){
-        const barW=Math.floor(S*8+Math.sin(t*3)*S*4);
-        const barX=Math.floor(W/2-barW/2+camX);
-        const barY=Math.floor(H/2+S*22+camY);
-        ctx.globalAlpha=0.35+Math.sin(t*4)*0.15;
-        ctx.fillStyle='#3d1008';
-        ctx.fillRect(barX,barY,barW,2);
-      }
-
-      // Analog film grain — fine cinematic noise
-      const grain=ctx.getImageData(0,0,W,H);
-      const gd=grain.data;
-      const glen=gd.length;
-      for(let i=(Math.random()*16|0)*4;i<glen;i+=16){
-        const n=((Math.random()-0.5)*6)|0;
-        gd[i]+=n>>1; gd[i+1]+=n; gd[i+2]+=n>>1;
-      }
-      ctx.putImageData(grain,0,0);
-      ctx.globalAlpha=1;
     };
 
     animate();
 
-    // ── 
-    // -- Sidebar --
+    // Sidebar
     (function(){
       var sb=document.getElementById("sidebar");
       document.getElementById("status").addEventListener("click",function(){sb.classList.toggle("open");});
@@ -2630,7 +2217,7 @@ const AMBIENT=[
         if(ev.type==="phase:changed") document.getElementById("sb-phase").innerHTML=row("phase",(ev.data||{}).phase);
       };
     })();
-    // ── EventBus → orb reactions ──────────────────────────────────────────
+    // EventBus → swarm reactions
     (function(){
       const es=new EventSource('/events/stream');
       es.onmessage=function(e){
@@ -2643,7 +2230,7 @@ const AMBIENT=[
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.3,a:0.45,col:'#6a1a1a'});
           swarmSignal('morph',{shape:'sphere'});
         }else if(t==='llm:escalation'){
-          setOrb((currentOrb+1)%orbStates.length);
+          swarmSignal('escalation',ev.data||{});
         }else if(t==='tool:used'||t==='tool:before'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.2,a:0.3,col:'#2a1a04'});
           swarmSignal('tool',{name:(ev.data||{}).tool||''});
