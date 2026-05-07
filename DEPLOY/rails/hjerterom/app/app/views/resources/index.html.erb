@@ -1,0 +1,16 @@
+<% content_for :title, "Resources" %>
+<header>
+  <h1>Resources</h1>
+  <% if authenticated? %><%= link_to "Add resource", new_resource_path, class: "btn btn-primary" %><% end %>
+</header>
+<div id="resources">
+  <% @resources.each do |resource| %>
+    <article class="card">
+      <%= link_to resource.title, resource %>
+      <span class="badge badge-<%= resource.resource_type %>"><%= resource.resource_type %></span>
+      <p class="dim"><%= resource.description %></p>
+      <p class="dim"><%= [resource.city, resource.phone].compact.join(" · ") %></p>
+    </article>
+  <% end %>
+</div>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

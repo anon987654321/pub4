@@ -1,10 +1,12 @@
-/*
- * This is a manifest file that'll be compiled into application.css.
- *
- * With Propshaft, assets are served efficiently without preprocessing steps. You can still include
- * application-wide styles in this file, but keep in mind that CSS precedence will follow the standard
- * cascading order, meaning styles declared later in the document or manifest will override earlier ones,
- * depending on specificity.
- *
- * Consider organizing styles into separate files for maintainability.
- */
+.book-nav { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 1.5rem; }
+.book-nav a { padding: .25rem .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; font-size: .8rem; color: var(--primary); }
+.book-nav a:hover { background: var(--primary); color: var(--bg); text-decoration: none; }
+.chapter-nav { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chapter-nav a { width: 2.2rem; text-align: center; padding: .25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--primary); font-size: .9rem; }
+.verse { display: block; margin-bottom: .75rem; position: relative; }
+.verse-action { background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: .8rem; padding: 0 .2rem; }
+.verse-action.active { color: var(--primary); }
+.search { width: 100%; max-width: 480px; padding: .5rem .75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 1rem; }
+.dim { color: var(--text-dim); font-size: .85rem; }
+nav { display: flex; gap: 1rem; align-items: center; margin: 1rem 0; }
+h1, h2 { margin-bottom: .75rem; color: var(--primary); }

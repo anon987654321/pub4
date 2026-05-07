@@ -1,0 +1,6 @@
+<% content_for :title, @category.name %>
+<header>
+  <h1><%= @category.name %></h1>
+  <p class="dim"><%= @category.description %></p>
+</header>
+<%= render "ports/index" %>

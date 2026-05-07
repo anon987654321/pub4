@@ -1,10 +1,13 @@
-/*
- * This is a manifest file that'll be compiled into application.css.
- *
- * With Propshaft, assets are served efficiently without preprocessing steps. You can still include
- * application-wide styles in this file, but keep in mind that CSS precedence will follow the standard
- * cascading order, meaning styles declared later in the document or manifest will override earlier ones,
- * depending on specificity.
- *
- * Consider organizing styles into separate files for maintainability.
- */
+.home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+.meta { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; margin: 1rem 0; }
+.meta dt { font-weight: 600; }
+.btn { display: inline-block; padding: .5rem 1.25rem; border-radius: 8px; border: none; cursor: pointer; font-size: .9rem; font-weight: 600; text-decoration: none; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-danger { background: #dc3545; color: #fff; }
+.dim { color: var(--text-dim); font-size: .85rem; }
+.form { max-width: 560px; }
+.form .field { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .75rem; }
+.form .field--check { flex-direction: row; align-items: center; gap: .5rem; }
+.form input, .form select, .form textarea { border: 1px solid #cbd5e0; border-radius: 6px; padding: .45rem .6rem; font: inherit; }
+.form .actions { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; }
+h1, h2 { margin-bottom: .5rem; }

@@ -1,0 +1,27 @@
+<% content_for :title, "#{@book.name} #{@chapter.number}" %>
+<header>
+  <h1><%= @book.name %> <%= @chapter.number %></h1>
+  <nav>
+    <% if @prev_chapter %>
+      <%= link_to "← #{@book.abbreviation} #{@prev_chapter}", scripture_chapter_path(@book.abbreviation, @prev_chapter) %>
+    <% end %>
+    <%= link_to @book.name, scripture_book_path(@book.abbreviation) %>
+    <% if @next_chapter %>
+      <%= link_to "#{@book.abbreviation} #{@next_chapter} →", scripture_chapter_path(@book.abbreviation, @next_chapter) %>
+    <% end %>
+  </nav>
+</header>
+<div class="verse-block">
+  <% @verses.each do |verse| %>
+    <span id="v<%= verse.number %>" class="verse" data-controller="verse" data-verse-id="<%= verse.id %>">
+      <sup class="verse-num"><%= verse.number %></sup>
+      <span class="verse-text"><%= verse.content %></span>
+      <% if authenticated? %>
+        <% highlight = @highlights[verse.id] %>
+        <% bookmark  = @bookmarks[verse.id] %>
+        <%= button_to highlight ? "★" : "☆", highlights_path(verse_id: verse.id), method: highlight ? :delete : :post, params: highlight ? { id: highlight.id } : {}, class: "verse-action #{"active" if highlight}", data: { turbo_stream: true } %>
+        <%= button_to bookmark ? "🔖" : "📌", bookmark ? bookmark_path(bookmark) : bookmarks_path(verse_id: verse.id), method: bookmark ? :delete : :post, class: "verse-action #{"active" if bookmark}", data: { turbo_stream: true } %>
+      <% end %>
+    </span>
+  <% end %>
+</div>

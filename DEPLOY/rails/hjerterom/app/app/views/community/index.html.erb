@@ -1,0 +1,13 @@
+<% content_for :title, "Community" %>
+<header>
+  <h1>Community</h1>
+  <% if authenticated? %><%= link_to "New post", new_community_post_path, class: "btn btn-primary" %><% end %>
+</header>
+<div id="community_posts">
+  <% @posts.each do |post| %>
+    <article class="card">
+      <%= link_to post.title, community_show_path(post) %>
+      <span class="dim"><%= post.anonymous? ? "Anonymous" : post.user.email_address.split("@").first %></span>
+    </article>
+  <% end %>
+</div>

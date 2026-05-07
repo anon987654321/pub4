@@ -1,0 +1,22 @@
+<% content_for :title, "New channel" %>
+<h1>New channel</h1>
+<%= form_with model: @channel, url: tv_channels_path do |f| %>
+  <%= render "shared/errors", object: @channel %>
+  <div class="field">
+    <%= f.label :name %>
+    <%= f.text_field :name, required: true %>
+  </div>
+  <div class="field">
+    <%= f.label :description %>
+    <%= f.text_area :description, rows: 4 %>
+  </div>
+  <div class="field">
+    <%= f.label :avatar %>
+    <%= f.file_field :avatar, accept: "image/*" %>
+  </div>
+  <div class="field">
+    <%= f.label :banner %>
+    <%= f.file_field :banner, accept: "image/*" %>
+  </div>
+  <div class="actions"><%= f.submit "Create channel", class: "btn btn--primary" %></div>
+<% end %>

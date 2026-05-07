@@ -1,0 +1,18 @@
+<% content_for :title, "Food" %>
+<header>
+  <h1>Available food</h1>
+  <% if authenticated? %><%= link_to "List food", new_food_listing_path, class: "btn btn-primary" %><% end %>
+</header>
+<div id="food_listings">
+  <% @food_listings.each do |listing| %>
+    <article class="card">
+      <%= link_to listing.title, food_listing_path(listing) %>
+      <p class="dim"><%= listing.quantity %> <%= listing.unit %> · <%= listing.city %></p>
+      <p class="dim">Until <%= listing.available_until&.strftime("%b %-d, %H:%M") %></p>
+      <% if listing.dietary_info.present? %>
+        <span class="badge badge-food"><%= listing.dietary_info %></span>
+      <% end %>
+    </article>
+  <% end %>
+</div>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

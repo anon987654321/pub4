@@ -1,0 +1,7 @@
+<article class="comment" id="<%= dom_id(comment) %>">
+  <span class="dim"><%= comment.user.email_address.split("@").first %></span>
+  <p><%= comment.content %></p>
+  <% if authenticated? && comment.user == Current.user %>
+    <%= button_to "Delete", port_comment_path(@port, comment), method: :delete, class: "btn-sm" %>
+  <% end %>
+</article>

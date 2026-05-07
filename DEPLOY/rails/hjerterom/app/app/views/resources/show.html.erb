@@ -1,0 +1,17 @@
+<% content_for :title, @resource.title %>
+<article class="card">
+  <h1><%= @resource.title %></h1>
+  <span class="badge badge-<%= @resource.resource_type %>"><%= @resource.resource_type %></span>
+  <p><%= @resource.description %></p>
+  <dl class="meta">
+    <% if @resource.address.present? %><dt>Address</dt><dd><%= @resource.address %>, <%= @resource.city %></dd><% end %>
+    <% if @resource.phone.present? %><dt>Phone</dt><dd><%= @resource.phone %></dd><% end %>
+    <% if @resource.email.present? %><dt>Email</dt><dd><%= mail_to @resource.email %></dd><% end %>
+    <% if @resource.url.present? %><dt>Website</dt><dd><%= link_to @resource.url, @resource.url %></dd><% end %>
+    <% if @resource.opening_hours.present? %><dt>Hours</dt><dd><%= @resource.opening_hours %></dd><% end %>
+  </dl>
+  <% if @resource.user == Current.user %>
+    <%= link_to "Edit", edit_resource_path(@resource), class: "btn" %>
+    <%= button_to "Delete", @resource, method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger" %>
+  <% end %>
+</article>

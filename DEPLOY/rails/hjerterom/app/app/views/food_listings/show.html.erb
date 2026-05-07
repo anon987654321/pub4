@@ -1,0 +1,22 @@
+<% content_for :title, @listing.title %>
+<article class="card">
+  <h1><%= @listing.title %></h1>
+  <p><%= @listing.description %></p>
+  <dl class="meta">
+    <dt>Quantity</dt><dd><%= @listing.quantity %> <%= @listing.unit %></dd>
+    <dt>Pickup</dt><dd><%= @listing.pickup_address %>, <%= @listing.city %></dd>
+    <dt>Available</dt><dd><%= @listing.available_from&.strftime("%b %-d, %H:%M") %> – <%= @listing.available_until&.strftime("%b %-d, %H:%M") %></dd>
+    <% if @listing.dietary_info.present? %><dt>Dietary</dt><dd><%= @listing.dietary_info %></dd><% end %>
+  </dl>
+  <% if authenticated? && @listing.user != Current.user && @listing.status == "available" %>
+    <%= form_with url: food_listing_food_requests_path(@listing), class: "form" do |f| %>
+      <div class="field"><%= f.text_area :message, rows: 2, placeholder: "Message (optional)…" %></div>
+      <div class="field"><%= f.datetime_local_field :pickup_time %></div>
+      <%= f.submit "Request pickup", class: "btn btn-primary" %>
+    <% end %>
+  <% end %>
+  <% if @listing.user == Current.user %>
+    <%= link_to "Edit", edit_food_listing_path(@listing), class: "btn" %>
+    <%= button_to "Delete", @listing, method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger" %>
+  <% end %>
+</article>

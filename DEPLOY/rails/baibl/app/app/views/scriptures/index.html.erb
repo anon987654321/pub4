@@ -1,0 +1,9 @@
+<% content_for :title, "Scripture" %>
+<nav class="book-nav">
+  <% @books.each do |book| %>
+    <%= link_to book.abbreviation, scripture_book_path(book.abbreviation), title: book.name %>
+  <% end %>
+</nav>
+<% if @books.any? %>
+  <p class="dim">Select a book to begin reading.</p>
+<% end %>
