@@ -763,7 +763,7 @@ rules:
     - id: OPEN_CLOSED
       name: "Open for extension, closed for modification"
       tier: solid
-      severity: info
+      severity: warning
       autofix: false
       detect_conceptual: "Must you modify core code to extend this?"
       fix: "Strategy pattern, dependency injection, hooks."
@@ -771,7 +771,7 @@ rules:
     - id: LISKOV
       name: "Subtypes must substitute for base types"
       tier: solid
-      severity: info
+      severity: warning
       autofix: false
       detect_conceptual: "Does a subclass break the parent's contract?"
       fix: "Use composition if substitutability fails."
@@ -779,7 +779,7 @@ rules:
     - id: INTERFACE_SEGREGATION
       name: "No fat interfaces"
       tier: solid
-      severity: info
+      severity: warning
       autofix: false
       detect_conceptual: "Does this interface force implementors to stub unused methods?"
       fix: "Split into smaller role-based interfaces."

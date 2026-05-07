@@ -14,7 +14,7 @@ module Master
           @id          = "long_method"
           @description = "Methods over #{@threshold} lines should be extracted"
           @severity    = :warning
-          @axiom_tags  = [:ONE_JOB]
+          @axiom_tags  = %i[ONE_JOB KISS]
         end
 
         def check(code, path:)

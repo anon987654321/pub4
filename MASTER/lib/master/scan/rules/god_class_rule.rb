@@ -14,7 +14,7 @@ module Master
           @id          = "god_class"
           @description = "Classes over #{@threshold} lines should be split by responsibility"
           @severity    = :warning
-          @axiom_tags  = [:SIMPLEST_WORKS]
+          @axiom_tags  = %i[SIMPLEST_WORKS KISS SRP]
         end
 
         def check_ast(ast, _code, path:)

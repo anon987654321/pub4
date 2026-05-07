@@ -15,7 +15,7 @@ module Master
           @id          = "duplicate_code"
           @description = "Duplicate code blocks violate ONE_SOURCE — extract to shared method"
           @severity    = :warning
-          @axiom_tags  = [:ONE_SOURCE]
+          @axiom_tags  = %i[ONE_SOURCE DRY]
         end
 
         def check(code, path:)

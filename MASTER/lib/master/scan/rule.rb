@@ -57,7 +57,7 @@ module Master
       protected
 
       def finding(line:, message:, fix: nil)
-        { rule: @id, message:, line:, severity: @severity, fix: }
+        { rule: @id, message:, line:, severity: @severity, fix:, tags: @axiom_tags }
       end
 
       def scan_lines(code, pattern, message:, fix: nil)
