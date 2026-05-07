@@ -11,6 +11,8 @@
 # Stem manifest for dilla.html sample rack:
 #   ruby make.rb stems                         scan stems/ + write manifest.json
 #   ruby make.rb stems add <name> <dir> [bpm]  register a new stem set
+# Long-form WAV liveset (auto-runs after every vN):
+#   ruby make.rb liveset [set] [minutes]       60-min default; LIVESET_MIN env
 # Standalone beat synthesizers (no source needed):
 #   ruby dilla_hiphop.rb [out.mp3]             86 BPM × 8 bars, lo-fi
 #   ruby techno_hate.rb [out.mp3]              142 BPM × 8 bars, distorted
@@ -23,10 +25,11 @@
 
 require "fileutils"
 
-DIR  = __dir__
-BEAT = ENV.fetch("BEAT", "/sdcard/Download/Voicemails.mp3")
-DUR  = 146
-BPM  = 118.6
+DIR         = __dir__
+BEAT        = ENV.fetch("BEAT", "/sdcard/Download/Voicemails.mp3")
+DUR         = 146
+BPM         = 118.6
+LIVESET_MIN = (ENV["LIVESET_MIN"] || 60).to_i
 
 VOCALS = {
   processed: File.join(DIR, "vocals_processed.wav"),
@@ -464,6 +467,49 @@ def slice_band(src, dest, label, eq:)
     inputs: ["-i", src], map: "[out]", filter: "[0:a]#{eq}[out]"
 end
 
+# ── liveset ───────────────────────────────────────────────────────────────────
+# Long-form WAV from any source (mix or stems set). Per-source ultra-slow
+# tremolo with prime-number periods keeps layers from re-syncing — gives the
+# natural swell-and-fade of a DJ set. Master glue + soft tape sat + limiter.
+
+LIVESET_PERIODS = [97, 113, 127, 149, 163, 179, 193, 211, 227, 251].freeze
+
+def liveset_filter(count, periods: LIVESET_PERIODS)
+  per_input = (0...count).map do |i|
+    p     = periods[i % periods.size]
+    phase = (i * 1.7).round(3)
+    base  = (0.55 + (i % 3) * 0.05).round(2)
+    "[#{i}:a]aformat=sample_rates=44100:channel_layouts=stereo," \
+      "volume='#{base}*(0.55+0.45*sin(2*PI*(t+#{phase})/#{p}))':eval=frame[s#{i}]"
+  end
+  taps = (0...count).map { |i| "[s#{i}]" }.join
+  weights = Array.new(count, 1).join(" ")
+  master = <<~F.tr("\n", " ").strip
+    [mix]acompressor=threshold=-20dB:ratio=2.5:attack=20:release=300:makeup=2,
+    equalizer=f=55:t=o:w=0.8:g=2,
+    equalizer=f=2200:t=o:w=0.6:g=-2,
+    aphaser=in_gain=0.4:out_gain=0.7:delay=2:decay=0.3:speed=0.12:type=sinusoidal,
+    aeval='tanh(val(0)*1.6)/tanh(1.6)|tanh(val(1)*1.6)/tanh(1.6)',
+    alimiter=level_in=1.0:level_out=0.95:limit=0.95:attack=5:release=80[out]
+  F
+  "#{per_input.join(';')};#{taps}amix=inputs=#{count}:weights=#{weights}:duration=longest[mix];#{master}"
+end
+
+def liveset(name = "default", minutes: LIVESET_MIN, set: nil)
+  m = stems_load_manifest
+  set ||= m["sets"][name] || m["sets"][m["active"]] or abort "liveset: no stem set '#{name}'"
+  base_dir = File.join(STEMS_DIR, set["dir"] || ".")
+  files    = set["files"]
+  abort "liveset: empty set" if files.nil? || files.empty?
+  inputs = files.flat_map { |f| ["-stream_loop", "-1", "-i", File.join(base_dir, f)] }
+  out    = File.join(DIR, "liveset_#{name}_#{minutes}m.wav")
+  run "liveset: #{minutes}m wav (#{files.size} stems × tremolo)",
+      "ffmpeg", "-y", *inputs,
+      "-filter_complex", liveset_filter(files.size),
+      "-map", "[out]", "-t", (minutes * 60).to_s, "-ar", "44100", "-c:a", "pcm_s16le", out
+  puts "liveset -> #{out}"
+end
+
 STEMS_DIR     = File.join(DIR, "stems")
 MANIFEST_PATH = File.join(STEMS_DIR, "manifest.json")
 STEM_EXTS     = %w[.mp3 .wav .ogg .flac].freeze
@@ -544,11 +590,16 @@ when "stems"
     stems_register("default", STEMS_DIR, bpm: 90, source: "Sirkel Sag · Voicemails")
   else abort "usage: ruby make.rb stems [add <name> <dir> [bpm]]"
   end
+when "liveset"
+  set  = ARGV[1] || stems_load_manifest["active"] || "default"
+  mins = (ARGV[2] || LIVESET_MIN).to_i
+  liveset(set, minutes: mins)
 when nil, /\Av\d+\z/
   ver = ARGV[0] || "v11"
   abort "unknown: #{ver}  have: #{RECIPES.keys.join(", ")}" unless RECIPES[ver]
   RECIPES[ver].call
   puts "done -> #{out_path(ver)}"
+  liveset(stems_load_manifest["active"] || "default", minutes: LIVESET_MIN) if File.exist?(MANIFEST_PATH)
 else
-  abort "usage: ruby make.rb [v7|v8|v9|v10|v11] | demux <url|path> [deep] | stems [add <name> <dir> [bpm]]"
+  abort "usage: ruby make.rb [v7|v8|v9|v10|v11] | demux <url|path> [deep] | stems [add <name> <dir> [bpm]] | liveset [set] [minutes]"
 end
