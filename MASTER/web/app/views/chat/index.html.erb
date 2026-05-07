@@ -188,7 +188,9 @@
       animation:prompt-breathe 2.4s ease-in-out infinite;
     }
     @keyframes prompt-breathe{0%,100%{opacity:.6;}50%{opacity:1;}}
-    @media(prefers-reduced-motion:reduce){#prompt-glyph{animation:none;}}
+    @keyframes token-fade{0%,100%{opacity:1;}50%{opacity:.85;}}
+    .entry.streaming{animation:token-fade 1.6s ease-in-out infinite;}
+    @media(prefers-reduced-motion:reduce){#prompt-glyph,.entry.streaming{animation:none;}}
 
     #input-field input{
       flex:1;
@@ -1887,7 +1889,7 @@ recognition.onresult=(ev)=>{
         uiLabel.textContent='Thinking\u2026';
         // Streaming placeholder — text appears word-by-word as it arrives
         const _msgEl=document.createElement('div');
-        _msgEl.className='entry master';
+        _msgEl.className='entry master streaming';
         chatLog.appendChild(_msgEl);
         const reader=resp.body.getReader();
         const dec=new TextDecoder();
@@ -1941,6 +1943,7 @@ recognition.onresult=(ev)=>{
           }
         }
         _speakFlush(true);
+        _msgEl.classList.remove('streaming');
         // Final: render markdown, persist. Strip [confirm:tool] before render.
         const reply=_consumeConfirm(fullText.trim());
         _msgEl.innerHTML=renderMd(reply);
