@@ -64,9 +64,13 @@ class ChatController < ApplicationController
       }
 
       ctx = { user_message: input, on_chunk: on_chunk, visitor: visitor }
+      ctx[:voice] = true if params[:voice].present?
       if (img = params[:image]).present?
         ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
       end
+
+      # P2: ack backchannel for long messages — bridges silence while LLM thinks.
+      container[:bus].publish("speak:backchannel", reason: "user_long_input") if input.length >= 120
 
       mutated_flag    = false
       web_mutated     = false

@@ -4,9 +4,10 @@ module Master
   module Stages
     # Memo — extract memories from :user_message only; assistant output ignored to prevent hallucination loops.
     class Memo
-      REMEMBER_RE = /\bremember\s+(?:that\s+)?(.{10,200}?)(?:[.!]|$)/im.freeze
-      DECISION_RE = /\bwe(?:'ve|\s+have)?\s+decided\s+(?:to\s+)?(.{10,150}?)(?:[.!]|$)/im.freeze
-      PREFER_RE   = /\bI\s+prefer\s+(.{5,100}?)(?:[.!]|$)/im.freeze
+      REMEMBER_RE   = /\bremember\s+(?:that\s+)?(.{10,200}?)(?:[.!]|$)/im.freeze
+      DECISION_RE   = /\bwe(?:'ve|\s+have)?\s+decided\s+(?:to\s+)?(.{10,150}?)(?:[.!]|$)/im.freeze
+      PREFER_RE     = /\bI\s+prefer\s+(.{5,100}?)(?:[.!]|$)/im.freeze
+      EPISODE_CHARS = 160
 
       def initialize(memory:, event_bus: nil)
         @memory = memory
@@ -16,6 +17,7 @@ module Master
       def call(ctx)
         text = user_text(ctx)
         scan_for_memories(text) if text && !text.empty?
+        record_episode(ctx, text) if ctx[:voice] && text && !text.empty?
         Result.ok(ctx)
       rescue StandardError => e
         @bus&.publish("memo:error", message: e.message)
@@ -26,6 +28,12 @@ module Master
 
       def user_text(ctx)
         ctx[:user_message].to_s
+      end
+
+      def record_episode(ctx, user_text)
+        reply  = ctx[:rendered].to_s
+        digest = "user: #{user_text[0, EPISODE_CHARS]} | reply: #{reply[0, EPISODE_CHARS]}"
+        @memory.remember("episode_#{Time.now.to_i}", digest)
       end
 
       def scan_for_memories(text)
