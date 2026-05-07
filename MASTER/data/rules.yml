@@ -273,6 +273,7 @@ scan_depths:
     - VerticalRhythmRule
     - NamingSilhouetteRule
     - FileSilhouetteRule
+    - ConceptualOpportunityRule
   hunt: *deep
   critique: *deep
 

@@ -14,6 +14,7 @@ module Master
       scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
       scanner.add_rule(Scan::Rules::AdversarialRule.new(agent:))
       scanner.add_rule(Scan::Rules::CommentDriftRule.new(agent:))
+      scanner.add_rule(Scan::Rules::ConceptualOpportunityRule.new(agent:))
       scanner
     end
 

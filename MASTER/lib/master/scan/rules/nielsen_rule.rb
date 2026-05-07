@@ -25,8 +25,8 @@ module Master
           @id          = "nielsen"
           @description = "Nielsen's 10 heuristics: error quality, recognition, minimalism, user control"
           @severity    = :warning
-          @axiom_tags  = %i[ERROR_RECOVERY REAL_WORLD_MATCH USER_CONTROL AESTHETIC_MINIMALISM
-                            RECOGNITION_NOT_RECALL CONSISTENCY]
+          @axiom_tags  = %i[NN_GROUP ERROR_RECOVERY REAL_WORLD_MATCH USER_CONTROL
+                            AESTHETIC_MINIMALISM RECOGNITION_NOT_RECALL CONSISTENCY]
         end
 
         def check(code, path:)

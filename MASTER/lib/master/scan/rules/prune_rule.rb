@@ -27,10 +27,15 @@ module Master
           code.each_line.with_index(1).flat_map { |line, num|
             next [] unless line.include?("#")
             findings = []
-            findings << finding(line: num, message: "hedge in comment: #{line.strip}")    if hedge_re&.match?(line)
-            findings << finding(line: num, message: "preamble in comment: #{line.strip}") if preamble_re&.match?(line)
+            findings << labelled(:HEDGE,    num, line) if hedge_re&.match?(line)
+            findings << labelled(:PREAMBLE, num, line) if preamble_re&.match?(line)
             findings
           }
+        end
+
+        def labelled(subrule, num, line)
+          { rule: "#{@id}.#{subrule.to_s.downcase}", message: "#{subrule}: #{line.strip}",
+            line: num, severity: @severity, fix: nil, tags: [@axiom_tags.first, subrule] }
         end
 
         private
