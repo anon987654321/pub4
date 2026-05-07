@@ -468,7 +468,8 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   pre     = [target * spatial * GRAIN_BLUR_INVERSE, 0.001].max
 
   linear = image.colourspace("scrgb")
-  luma = linear.extract_band(1)
+  r, g, b = linear.bandsplit
+  luma = r * 0.2126 + g * 0.7152 + b * 0.0722
   envelope = (luma * luma.linear([-1], [1])).linear([4], [0])
 
   bands = 3.times.map do
