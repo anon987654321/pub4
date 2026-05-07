@@ -30,18 +30,28 @@ def synthesize(dest)
   step  = beat / 4
   total = (bar * BARS).round(3)
 
-  kick_steps = [0, 4, 8, 12]      # quarter pulse
-  clap_steps = [4, 12]            # 2 and 4
-  hat_steps  = [2, 6, 10, 14]     # offbeat 8ths
-  open_steps = [14]                # tail-into-bar
-  acid_steps = [0, 3, 6, 8, 11, 14]
+  kick_per_bar = Array.new(BARS) { [0, 4, 8, 12] }
+  kick_per_bar[7] = [0, 4, 8, 12, 14, 15]
 
+  clap_per_bar = Array.new(BARS) { [4, 12] }
+  clap_per_bar[3] = [4, 12, 14]
+  clap_per_bar[7] = [4, 10, 12, 14]
+
+  hat_per_bar = Array.new(BARS) { [2, 6, 10, 14] }
+  hat_per_bar[3] = []
+  hat_per_bar[5] = [0, 2, 4, 6, 8, 10, 12, 14]
+
+  open_per_bar = Array.new(BARS) { [] }
+  open_per_bar[3] = [14]
+  open_per_bar[7] = [14]
+
+  acid_steps = [0, 3, 6, 8, 11, 14]
   bass_notes = [65.41, 65.41, 87.31, 65.41, 98.00, 98.00, 87.31, 65.41]  # C C F C G G F C
 
-  kicks = BARS.times.flat_map { |b| kick_steps.map { |s| (b * bar + s * step).round(4) } }
-  claps = BARS.times.flat_map { |b| clap_steps.map { |s| (b * bar + s * step).round(4) } }
-  hats  = BARS.times.flat_map { |b| hat_steps.map  { |s| (b * bar + s * step).round(4) } }
-  opens = BARS.times.flat_map { |b| open_steps.map { |s| (b * bar + s * step).round(4) } }
+  kicks = BARS.times.flat_map { |b| kick_per_bar[b].map { |s| (b * bar + s * step).round(4) } }
+  claps = BARS.times.flat_map { |b| clap_per_bar[b].map { |s| (b * bar + s * step).round(4) } }
+  hats  = BARS.times.flat_map { |b| hat_per_bar[b].map  { |s| (b * bar + s * step).round(4) } }
+  opens = BARS.times.flat_map { |b| open_per_bar[b].map { |s| (b * bar + s * step).round(4) } }
 
   acid_hits = BARS.times.flat_map do |b|
     f = bass_notes[b]
