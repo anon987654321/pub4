@@ -194,6 +194,9 @@ module Master
         if (directives = style["operator_directives"]) && directives.is_a?(Array) && directives.any?
           ls << "Operator directives: " + directives.join(" / ")
         end
+        if (convo = style["conversation_directives"]) && convo.is_a?(Array) && convo.any?
+          ls << "Conversation directives: " + convo.join(" / ")
+        end
       end
 
       ls.join("\n")
