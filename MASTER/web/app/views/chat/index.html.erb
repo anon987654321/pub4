@@ -2224,13 +2224,20 @@ const AMBIENT=[
       const wantVoice=ev.shiftKey||ev.altKey;
       statusLongPress=setTimeout(()=>{
         statusLongPress='long';
-        if(wantVoice){
-          voiceIdx=(voiceIdx+1)%VOICES.length;
-          showVoice();
-        }else{
-          fxIdx=(fxIdx+1)%FX_MODES.length;
-          showFxMode();
-        }
+        const fadeIn=()=>{uiLabel.style.opacity='1';};
+        uiLabel.style.transition='opacity .2s linear';
+        uiLabel.style.opacity='0';
+        setTimeout(()=>{
+          if(wantVoice){
+            voiceIdx=(voiceIdx+1)%VOICES.length;
+            try{ if(_ttsCurrent){ _ttsCurrent.onended=null; _ttsCurrent.stop(); } }catch(_){}
+            showVoice();
+          }else{
+            fxIdx=(fxIdx+1)%FX_MODES.length;
+            showFxMode();
+          }
+          requestAnimationFrame(fadeIn);
+        },200);
         haptic(12);
         savePrefs();
       },600);
