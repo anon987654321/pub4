@@ -4,7 +4,7 @@ set -euo pipefail
 
 APP_NAME=brgen
 APP_DIR=/home/${APP_NAME}/app
-APP_PORT=11006
+APP_PORT=38182
 SCRIPT_DIR=${0:a:h}
 SRC_DIR=${SCRIPT_DIR}/app
 
