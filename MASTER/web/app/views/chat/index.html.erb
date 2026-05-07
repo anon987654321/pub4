@@ -190,7 +190,11 @@
     @keyframes prompt-breathe{0%,100%{opacity:.6;}50%{opacity:1;}}
     @keyframes token-fade{0%,100%{opacity:1;}50%{opacity:.85;}}
     .entry.streaming{animation:token-fade 1.6s ease-in-out infinite;}
-    @media(prefers-reduced-motion:reduce){#prompt-glyph,.entry.streaming{animation:none;}}
+    @keyframes entry-rise{from{opacity:0;transform:translateY(2px);}to{opacity:1;transform:none;}}
+    .entry{animation:entry-rise .32s ease-out both;}
+    .entry:nth-child(2n){animation-delay:60ms;}
+    .entry:nth-child(3n){animation-delay:80ms;}
+    @media(prefers-reduced-motion:reduce){#prompt-glyph,.entry,.entry.streaming{animation:none;}}
 
     #input-field input{
       flex:1;
