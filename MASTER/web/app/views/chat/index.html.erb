@@ -83,7 +83,6 @@
       touch-action:none;
       cursor:pointer;
     }
-    #orb-iframe{display:none;position:fixed;inset:0;width:100%;height:100%;border:none;z-index:0;background:#000;}
 
     #status{
       position:fixed;
@@ -336,7 +335,6 @@
     <span id="attach-label"></span>
   </section>
 
-  <iframe id="orb-iframe" src="/orbs/orb_particle.html" frameborder="0" allow="microphone"></iframe>
   <canvas id="canvas"></canvas>
 
   <section id="overlay" role="dialog" aria-modal="true">
@@ -465,20 +463,6 @@ const renderMd = raw => {
 
     let audioCtx,analyser,dataArray;
     let audioLevel=0;
-    // master:orb-cycle — restored from cli.html v284
-(function(){
-  const ORBS=['orb_particle','orb_blob','orb_backlight','orb_connected','orb_loader','orb_retro','orb_warp'];
-  const orbEl=document.getElementById('orb-iframe'); if(!orbEl) return;
-  let cur=Math.max(0,ORBS.indexOf(localStorage.getItem('master_orb')||'orb_particle'));
-  const swap=(i)=>{cur=(i+ORBS.length)%ORBS.length;orbEl.src='/orbs/'+ORBS[cur]+'.html';localStorage.setItem('master_orb',ORBS[cur]);};
-  swap(cur);
-  addEventListener('keydown',e=>{
-    if(document.activeElement && document.activeElement.tagName==='INPUT') return;
-    const n=parseInt(e.key); if(n>=1&&n<=ORBS.length){swap(n-1);return;}
-    if(e.key==='ArrowRight') swap(cur+1);
-    if(e.key==='ArrowLeft')  swap(cur-1);
-  });
-})();
 // master:tilt-reveal — chrome via device motion/orientation
 if (window.DeviceOrientationEvent) {
   let lastTilt = 0;
@@ -510,6 +494,29 @@ if (window.DeviceMotionEvent) {
       });
     }
     let speechPulse=0;
+    // Echo guard: remember recent TTS phrases so mic-loopback doesn't get re-sent to LLM.
+    const _recentTts=[]; // [{text, until}]
+    const _ttsRemember=(text)=>{
+      const t=String(text||'').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+      if(!t) return;
+      _recentTts.push({t,until:Date.now()+25000});
+      while(_recentTts.length&&_recentTts[0].until<Date.now()) _recentTts.shift();
+    };
+    const _ttsEchoes=(heard)=>{
+      const h=String(heard||'').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+      if(h.length<3) return false;
+      const now=Date.now();
+      for(const r of _recentTts){
+        if(r.until<now) continue;
+        if(r.t.includes(h)||h.includes(r.t)) return true;
+        const hw=new Set(h.split(' '));const rw=r.t.split(' ');
+        let m=0;for(const w of rw) if(hw.has(w)) m++;
+        if(rw.length&&m/rw.length>=0.6) return true;
+      }
+      return false;
+    };
+    // Sentence queue for server TTS — prevents overlapping BufferSource playback.
+    const _ttsQueue=[]; let _ttsBusy=false;
     let recognition=null;
     let recognitionActive=false;
     let isSpeaking=false;
@@ -1504,17 +1511,19 @@ if(mode==='void'){
     const speakBrowser=(text)=>{
       if(!('speechSynthesis' in window)) return false;
       window.speechSynthesis.cancel();
+      _ttsRemember(text);
       const u=new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g,'').substring(0,500));
-      u.lang='ms-MY'; u.rate=0.92; u.pitch=0.85; u.volume=1.0;
+      u.lang='ms-MY'; u.rate=0.96; u.pitch=1.02; u.volume=1.0;
       u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');duckPads();if(padModulate)padModulate('speak');if(recognition&&recognitionActive)try{recognition.stop();}catch(_e){}};
       u.onend=()=>{unduckPads();_onSpeakEnd();}; u.onerror=()=>{unduckPads();_onSpeakEnd();};
       // Always speak synchronously — must stay inside gesture call stack on mobile.
       // _cachedVoices is populated eagerly at page load and kept fresh via voiceschanged.
       const saved=localStorage.getItem('pref_voice');
       const pick=( saved && _cachedVoices.find(v=>v.name===saved) )
-        ||_cachedVoices.find(v=>/osman/i.test(v.name))
+        ||_cachedVoices.find(v=>v.lang==='ms-MY'&&!/osman/i.test(v.name)&&v.localService)
+        ||_cachedVoices.find(v=>v.lang==='ms-MY'&&!/osman/i.test(v.name))
+        ||_cachedVoices.find(v=>v.lang.startsWith('ms')&&!/osman/i.test(v.name))
         ||_cachedVoices.find(v=>v.lang==='ms-MY'&&v.localService)
-        ||_cachedVoices.find(v=>v.lang.startsWith('ms'))
         ||_cachedVoices.find(v=>v.lang.startsWith('en-')&&v.localService)
         ||_cachedVoices.find(v=>v.lang.startsWith('en-'))
         ||_cachedVoices[0];
@@ -1526,10 +1535,11 @@ if(mode==='void'){
       return true;
     };
 
-    const speakWithAudio=async(text)=>{
-      if(LOW_END) return speakBrowser(text);
-
-      if(!audioCtx) return speakBrowser(text);
+    const _ttsDrain=async()=>{
+      if(_ttsBusy||!_ttsQueue.length) return;
+      _ttsBusy=true;
+      const text=_ttsQueue.shift();
+      if(LOW_END||!audioCtx){ _ttsBusy=false; speakBrowser(text); return _ttsDrain(); }
       if(audioCtx.state==='suspended') await audioCtx.resume();
       try{
         const resp=await fetch("/chat/tts",{
@@ -1537,11 +1547,10 @@ if(mode==='void'){
           headers:{"Content-Type":"application/json","X-CSRF-Token":csrfToken()},
           body:JSON.stringify({text})
         });
-        if(!resp.ok) return speakBrowser(text);
+        if(!resp.ok){ _ttsBusy=false; speakBrowser(text); return _ttsDrain(); }
         const buf=await resp.arrayBuffer();
-        if(!buf.byteLength) return speakBrowser(text);
+        if(!buf.byteLength){ _ttsBusy=false; speakBrowser(text); return _ttsDrain(); }
         const decoded=await audioCtx.decodeAudioData(buf);
-        // Cancel local TTS — server audio is higher quality
         if('speechSynthesis' in window) window.speechSynthesis.cancel();
         const src=audioCtx.createBufferSource();
         src.buffer=decoded;
@@ -1552,10 +1561,21 @@ if(mode==='void'){
         statusEl.classList.remove('think');
         statusEl.classList.add('speak');
         if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
-        src.onended=_onSpeakEnd;
+        src.onended=()=>{ _ttsBusy=false; _onSpeakEnd(); _ttsDrain(); };
         src.start();
-        return true;
-      }catch(_e){ return speakBrowser(text); }
+      }catch(_e){ _ttsBusy=false; speakBrowser(text); _ttsDrain(); }
+    };
+
+    const speakWithAudio=async(text)=>{
+      const t=String(text||'').trim();
+      if(!t) return false;
+      // De-duplicate identical phrases queued back-to-back (e.g., re-flush on stream chunks).
+      const last=_ttsQueue[_ttsQueue.length-1];
+      if(last&&last.trim()===t) return true;
+      _ttsRemember(t);
+      _ttsQueue.push(t);
+      _ttsDrain();
+      return true;
     };
 
     const startRecognition=()=>{
@@ -1573,7 +1593,7 @@ if(mode==='void'){
       recognition.onstart=()=>{ recognitionActive=true; statusEl.classList.add('think'); };
       recognition.onend=()=>{
         recognitionActive=false;
-        if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,500);
+        if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,1500);
       };
       recognition.onerror=(ev)=>{
         if(ev.error==='not-allowed') uiLabel.textContent='Microphone blocked';
@@ -1599,6 +1619,10 @@ recognition.onresult=(ev)=>{
         if(/^hey\s+master$/i.test(finalText)){
           haptic(25);
           uiLabel.textContent='Listening…';
+          return;
+        }
+        if(_ttsEchoes(finalText)){
+          uiLabel.textContent='(echo ignored)';
           return;
         }
         uiLabel.textContent=finalText.slice(0,60);
