@@ -221,3 +221,67 @@ mcp_persona_slots:
   enabled:    true
   description: "MCP servers can register as council personas; weights default to 0.05 unless otherwise configured"
   source:     "cross-cutting reunification (#93)"
+
+# Merged from former data/council_questions.yml — critic prompts rotated per turn.
+questions:
+  assumptions:
+    - what are we assuming that could be false?
+    - which assumption is load-bearing vs convenience?
+    - if a key assumption flips, what still works?
+    - which assumption have we never tested?
+  failure_modes:
+    - how does this fail catastrophically?
+    - what breaks first under load or partial outage?
+    - what happens when it fails silently?
+    - how do cascading failures propagate?
+  attacker:
+    - what would an attacker do here?
+    - where can input be abused or poisoned?
+    - which trust boundary is weakest?
+    - how would we exploit this ourselves?
+  edge_cases:
+    - which edge case will users hit first?
+    - what happens with malformed input?
+    - which rare but high-impact case is unhandled?
+    - what edge cases live at integration points?
+  degradation:
+    - how do we degrade gracefully?
+    - what is minimal viable behavior under stress?
+    - which features sacrifice first?
+    - how do we keep core function during partial failure?
+  ops_maint:
+    - what is the long-term maintenance burden?
+    - how do we observe, debug, and rollback quickly?
+    - which operational complexity is hidden?
+    - how do we troubleshoot under pressure?
+  economics:
+    - where is waste or needless complexity?
+    - what is the roi vs simpler alternatives?
+    - which costs are hidden or deferred?
+    - what are the opportunity costs?
+  clarity:
+    - is the intent obvious from the names alone?
+    - which concept lacks a name and should have one?
+    - where does the code lie about what it does?
+    - what would a fresh reader misread first?
+
+# Merged from former data/council_patterns.yml — regex strings that auto-trigger council.
+auto_trigger_patterns:
+  - '\beval\s+\('
+  - '\bexec\s+\('
+  - '\bsystem\s+\('
+  - '\brm\s+-rf\b'
+  - '\b(?:drop|truncate)\s+table\b'
+  - '\bchmod\s+777\b'
+  - '\b(?:delete|remove)\s+all\b'
+  - '\b(fork|execve?)\b'
+  - '\bgit\s+(push\s+--force|reset\s+--hard|rebase\s+-i)\b'
+  - '\bdd\s+if=.*\s+of=.*\b'
+  - '\b(mkfs|fdisk|parted)\b'
+  - '\b(poweroff|reboot|shutdown\s+-[hr])\b'
+  - '\bcurl\s+.*\s+-o\s+/\w+\b'
+  - '\bwget\s+.*\s+--output-document=/.+\b'
+  - '\b(chown|chgrp)\s+.*\s+/\w+\b'
+  - '\bln\s+-sf\s+.*\s+/\w+\b'
+  - '\bsystemctl\s+(mask|disable|stop)\b'
+  - '\bumount\s+.*\b'

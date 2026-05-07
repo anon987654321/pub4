@@ -8,7 +8,7 @@ module Master
       TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
       JUDGE_TIMEOUT   = 30
 
-      QUESTIONS_PATH = File.join(Master::ROOT, "data", "council_questions.yml").freeze
+      COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
       QUESTION_CATEGORY = {
         "Architect"  => "assumptions",
         "Skeptic"    => "failure_modes",
@@ -20,7 +20,10 @@ module Master
       @questions = nil
 
       def self.questions
-        @questions ||= File.exist?(QUESTIONS_PATH) ? (Master.load_yaml(QUESTIONS_PATH) || {}) : {}
+        @questions ||= begin
+          data = File.exist?(COUNCIL_PATH) ? (Master.load_yaml(COUNCIL_PATH) || {}) : {}
+          data["questions"] || {}
+        end
       rescue StandardError
         {}
       end
