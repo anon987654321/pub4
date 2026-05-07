@@ -8,10 +8,16 @@ Constitutional AI coding agent and web platform. OpenBSD-first. Ruby-only.
 pub4/
   MASTER/          Constitutional AI agent (~6K LOC Ruby)
   DEPLOY/openbsd/  Two-stage OpenBSD deploy script (openbsd.sh)
+  DEPLOY/rails/    Rails 8 sub-apps (brgen, amber, baibl, bsdports, …)
   multimedia/      Audio tools: TTS, Dilla, Postpro, Repligen
   dilla/           Audio mixes and dilla.html canvas
   sh/              Shell scripts
+  index.html       Radio Bergen — warp tunnel visualizer
 ```
+
+## Radio Bergen (`index.html`)
+
+Audio-reactive 3D warp tunnel. Three.js for scene + particle rings; p5.js audio FFT modulates ring radius, particle density, and color gradient; Cannon.js gives particle physics. Mobile parallax via deviceorientation. City carousel cycles brgen domain names. Open in any modern browser, click to start audio.
 
 ## MASTER
 
