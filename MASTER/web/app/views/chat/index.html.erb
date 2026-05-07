@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#000000"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&display=swap"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&family=VT323&family=Major+Mono+Display&display=swap"/>
 <style>
   @layer base, components, utilities;
 
@@ -34,7 +34,7 @@
     height:100%;
     background:var(--pitch);
     color:var(--bone);
-    font:14px/1.5 "Roboto Mono",ui-monospace,Menlo,Monaco,Consolas,monospace;
+    font:16px/1.5 "VT323","Roboto Mono",ui-monospace,Menlo,Monaco,Consolas,monospace;
     -webkit-font-smoothing:none;
     -moz-osx-font-smoothing:grayscale;
     font-smooth:never;
@@ -265,10 +265,11 @@
 
     #overlay h1{
       margin:0;
-      font-size:clamp(18px,4vw,28px);
-      font-weight:300;
+      font-family:"Major Mono Display","VT323",ui-monospace,monospace;
+      font-size:clamp(20px,5vw,34px);
+      font-weight:400;
       color:#666;
-      letter-spacing:.25em;
+      letter-spacing:.18em;
       text-transform:uppercase;
       transition:transform .12s steps(2);
     }
