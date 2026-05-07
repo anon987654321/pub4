@@ -590,6 +590,19 @@ if (window.DeviceMotionEvent) {
       const f=_swarm(); if(!f||!f.contentWindow) return;
       try{ f.contentWindow.postMessage({type,data:data||{}},'*'); }catch(_){}
     };
+    const stageBell=(freq)=>{
+      if(!audioCtx) return;
+      try{
+        const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+        o.type='sine'; o.frequency.value=freq;
+        const t=audioCtx.currentTime;
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(0.05,t+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
+        o.connect(g).connect(audioCtx.destination);
+        o.start(t); o.stop(t+0.2);
+      }catch(_){}
+    };
 
     // P9: voice confirmation gate. Server may add `[confirm:tool_name]` to a reply that needs
     // an explicit yes/no before tool runs. Stash and listen for next user transcript.
@@ -2283,14 +2296,17 @@ const AMBIENT=[
           speechPulse=Math.max(speechPulse,0.55);
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.3,a:0.45,col:'#6a1a1a'});
           swarmSignal('morph',{shape:'sphere'});
+          stageBell(250);
         }else if(t==='llm:escalation'){
           swarmSignal('escalation',ev.data||{});
         }else if(t==='tool:used'||t==='tool:before'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.2,a:0.3,col:'#2a1a04'});
           swarmSignal('tool',{name:(ev.data||{}).tool||''});
+          stageBell(350);
         }else if(t==='pipeline:rollback'){
           speechPulse=0.9;
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.5,a:0.7,col:'#cc1010'});
+          stageBell(500);
         }else if(t==='sweep:cycle'||t==='autoloop:cycle'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.15,a:0.2,col:'#3d1a04'});
         }else if(t==='speak:text'){
