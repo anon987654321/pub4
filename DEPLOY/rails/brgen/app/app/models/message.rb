@@ -7,6 +7,8 @@ class Message < ApplicationRecord
   validates :content, presence: true, length: { maximum: 10_000 }
   validates :message_type, inclusion: { in: %w[text image file audio] }
 
+  broadcasts_to :conversation, inserts_by: :append, target: "messages"
+
   after_create :deliver_receipts
   after_create :clear_typing_indicators
 

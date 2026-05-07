@@ -1,16 +1,15 @@
 class VotesController < ApplicationController
   before_action :require_authentication
 
-  ALLOWED = %w[Post Comment].freeze
-
   def create
-    votable = find_votable
-    vote    = votable.votes.find_or_initialize_by(user: Current.user)
+    @votable = find_votable
+    vote     = @votable.votes.find_or_initialize_by(user: Current.user)
+    value    = params.dig(:vote, :value).to_i
 
-    if vote.persisted? && vote.value == params[:vote][:value].to_i
+    if vote.persisted? && vote.value == value
       vote.destroy
     else
-      vote.update!(value: params[:vote][:value])
+      vote.update!(value:)
     end
 
     respond_to do |format|
@@ -22,8 +21,8 @@ class VotesController < ApplicationController
   private
 
   def find_votable
-    type = params[:votable_type].to_s.classify
-    raise ArgumentError unless ALLOWED.include?(type)
-    type.constantize.find(params[:votable_id])
+    return Post.find(params[:post_id])       if params[:post_id]
+    return Comment.find(params[:comment_id]) if params[:comment_id]
+    raise ActiveRecord::RecordNotFound, "no votable in params"
   end
 end

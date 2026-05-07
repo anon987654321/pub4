@@ -1,0 +1,11 @@
+<%= turbo_stream.replace "new_message" do %>
+  <%= form_with model: Message.new, url: conversation_messages_path(@conversation),
+                id: "new_message",
+                data: { turbo: true, controller: "typing-input", typing_input_url_value: conversation_typing_indicators_path(@conversation) } do |f| %>
+    <div class="field">
+      <%= f.text_area :content, rows: 3, placeholder: "Send a message...", data: { action: "input->typing-input#ping" } %>
+    </div>
+    <%= f.hidden_field :message_type, value: "text" %>
+    <%= f.submit "Send", class: "btn" %>
+  <% end %>
+<% end %>

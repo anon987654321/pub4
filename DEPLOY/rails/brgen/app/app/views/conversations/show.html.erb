@@ -1,0 +1,27 @@
+<%= turbo_stream_from @conversation %>
+
+<div class="main-col">
+  <% other = (@conversation.participants - [Current.user]).first %>
+  <div class="page-header">
+    <h1><%= other&.username || "conversation" %></h1>
+    <%= link_to "← all", conversations_path %>
+  </div>
+
+  <div id="messages" class="messages-list">
+    <% @messages.each do |m| %>
+      <%= render "messages/message", message: m %>
+    <% end %>
+  </div>
+
+  <div id="typing-indicator" class="typing-indicator" data-controller="typing" data-typing-conversation-id-value="<%= @conversation.id %>"></div>
+
+  <%= form_with model: @message, url: conversation_messages_path(@conversation),
+                id: "new_message",
+                data: { turbo: true, controller: "typing-input", typing_input_url_value: conversation_typing_indicators_path(@conversation) } do |f| %>
+    <div class="field">
+      <%= f.text_area :content, rows: 3, placeholder: "Send a message...", data: { action: "input->typing-input#ping" } %>
+    </div>
+    <%= f.hidden_field :message_type, value: "text" %>
+    <%= f.submit "Send", class: "btn" %>
+  <% end %>
+</div>

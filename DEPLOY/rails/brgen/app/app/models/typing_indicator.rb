@@ -5,6 +5,14 @@ class TypingIndicator < ApplicationRecord
   scope :active, -> { where("expires_at > ?", Time.now) }
 
   def self.set!(conversation:, user:)
-    find_or_create_by(conversation:, user:).update!(expires_at: 5.seconds.from_now)
+    rec = find_or_create_by(conversation:, user:)
+    rec.update!(expires_at: 5.seconds.from_now)
+    Turbo::StreamsChannel.broadcast_replace_to(
+      conversation,
+      target:  "typing-indicator",
+      partial: "typing_indicators/indicator",
+      locals:  { conversation:, except_user: user }
+    )
+    rec
   end
 end

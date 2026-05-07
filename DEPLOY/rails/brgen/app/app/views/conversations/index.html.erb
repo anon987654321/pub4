@@ -1,0 +1,25 @@
+<div class="main-col">
+  <div class="page-header"><h1>Messages</h1></div>
+
+  <% if @conversations.any? %>
+    <ul class="conversation-list">
+      <% @conversations.each do |c| %>
+        <% other = (c.participants - [Current.user]).first %>
+        <% last  = c.messages.last %>
+        <li class="conversation-row">
+          <%= link_to conversation_path(c), class: "conversation-link" do %>
+            <span class="conversation-peer"><%= other&.username || "unknown" %></span>
+            <% if last %>
+              <span class="conversation-snippet"><%= truncate(last.content.to_s, length: 80) %></span>
+              <time datetime="<%= last.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(last.created_at) %> ago</time>
+            <% end %>
+            <% unread = c.unread_count_for(Current.user) %>
+            <% if unread.positive? %><span class="unread-badge"><%= unread %></span><% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="empty">No conversations yet.</div>
+  <% end %>
+</div>

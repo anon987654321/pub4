@@ -1,0 +1,6 @@
+<%= turbo_stream.replace dom_id(@votable) do %>
+  <% case @votable %>
+  <% when Post %><%= render "posts/post", post: @votable %>
+  <% when Comment %><%= render "comments/comment", comment: @votable %>
+  <% end %>
+<% end %>

@@ -1,0 +1,19 @@
+<div class="main-col">
+  <div class="page-header"><h1>New message</h1></div>
+
+  <% if @message&.errors&.any? %>
+    <div class="errors">
+      <% @message.errors.full_messages.each do |msg| %>
+        <div class="error"><%= msg %></div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= form_with model: @message, url: conversation_messages_path(@conversation), id: "new_message" do |f| %>
+    <div class="field">
+      <%= f.text_area :content, rows: 4, placeholder: "Message..." %>
+    </div>
+    <%= f.hidden_field :message_type, value: "text" %>
+    <%= f.submit "Send", class: "btn" %>
+  <% end %>
+</div>

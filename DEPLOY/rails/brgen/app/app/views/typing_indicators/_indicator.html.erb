@@ -1,0 +1,9 @@
+<div id="typing-indicator" class="typing-indicator">
+  <% typers = conversation.typing_indicators.active.includes(:user).reject { |t| t.user_id == except_user&.id } %>
+  <% if typers.any? %>
+    <span class="typing-dot"></span>
+    <span class="typing-names">
+      <%= typers.map { |t| t.user.username }.join(", ") %> typing...
+    </span>
+  <% end %>
+</div>
