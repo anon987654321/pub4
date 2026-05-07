@@ -26,7 +26,11 @@ module Master
     def remember(key, value)
       @mutex.synchronize do
         prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
-        @store[key.to_s] = { "value" => value.to_s, "ts" => Time.now.to_i }
+        entry = { "value" => value.to_s, "ts" => Time.now.to_i }
+        if (vec = Embeddings.embed("#{key} #{value}"))
+          entry["vec"] = vec
+        end
+        @store[key.to_s] = entry
         persist
       end
     end

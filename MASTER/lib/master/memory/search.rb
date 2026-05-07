@@ -5,21 +5,34 @@ module Master
     module Search
       def semantic_recall(query, top_n: 3)
         return [] if @store.empty?
-
-        query_terms = tokenize(query)
-        return [] if query_terms.empty?
-
-        scored = @store.filter_map do |key, data|
-          value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
-          score = tfidf_score(query_terms, tokenize("#{key} #{value}"))
-          next if score.zero?
-          { key: key, value: value, score: score }
+        if Embeddings.enabled? && (qvec = Embeddings.embed(query))
+          hits = vector_recall(qvec, top_n)
+          return hits unless hits.empty?
         end
-
-        scored.sort_by { |e| -e[:score] }.first(top_n)
+        tfidf_recall(query, top_n)
       end
 
       private
+
+      def vector_recall(qvec, top_n)
+        @store.filter_map do |key, data|
+          next unless data.is_a?(Hash) && data["vec"].is_a?(Array)
+          score = Embeddings.cosine(qvec, data["vec"])
+          next if score < Embeddings::MIN_SIM
+          { key: key, value: data["value"].to_s, score: score }
+        end.sort_by { |e| -e[:score] }.first(top_n)
+      end
+
+      def tfidf_recall(query, top_n)
+        terms = tokenize(query)
+        return [] if terms.empty?
+        @store.filter_map { |key, data|
+          value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
+          score = tfidf_score(terms, tokenize("#{key} #{value}"))
+          next if score.zero?
+          { key: key, value: value, score: score }
+        }.sort_by { |e| -e[:score] }.first(top_n)
+      end
 
       def tokenize(text) = text.downcase.scan(/\b[a-z]{2,}\b/)
 

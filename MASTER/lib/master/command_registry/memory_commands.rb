@@ -39,9 +39,14 @@ module Master
     end
 
     def memory_search(memory, query)
-      hits = memory.respond_to?(:semantic_recall) ? memory.semantic_recall(query) :
-               memory.all.select { |k, v| k.to_s.include?(query) || v.to_s.include?(query) }
-      hits.empty? ? "(no matches: #{query})" : hits.map { |k, v| "#{k}: #{v}" }.join("\n")
+      if memory.respond_to?(:semantic_recall)
+        hits = memory.semantic_recall(query)
+        return "(no matches: #{query})" if hits.empty?
+        hits.map { |h| "#{h[:key]}: #{h[:value]}" }.join("\n")
+      else
+        hits = memory.all.select { |k, v| k.to_s.include?(query) || v.to_s.include?(query) }
+        hits.empty? ? "(no matches: #{query})" : hits.map { |k, v| "#{k}: #{v}" }.join("\n")
+      end
     end
   end
 end
