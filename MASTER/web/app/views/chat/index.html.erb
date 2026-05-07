@@ -301,6 +301,10 @@
     #chat-log .entry.user{color:#ccc;}
     #chat-log .entry.master{color:#777;}
     #chat-log .entry.user::before{content:'> ';color:#555;}
+    #chat-log .entry.master::before{content:': ';color:#444;}
+    #chat-log .entry.system{color:#666;}
+    #chat-log .entry.system::before{content:'! ';color:#a0522d;}
+    #chat-log .entry.tool::before{content:'* ';color:#4a7d80;}
     #tab-hint{
       position:fixed;top:12px;right:16px;
       font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
