@@ -42,7 +42,8 @@
   trigger: scheduled
   interval_s: 604800
   command: "audit architecture"
-  enabled: false
+  callable: architecture_audit
+  enabled: true
   state: pending
   last_run_at: 0
 - name: rails_stack_audit
@@ -61,6 +62,7 @@
     matching Write/Edit/Create/FilePatch. Wired in chat_controller.rb post-turn block.
   trigger: event
   command: "git autocommit"
+  callable: autocommit
   enabled: true
   state: pending
   last_run_at: 0
@@ -70,6 +72,7 @@
     in chat_controller.rb post-turn block (web_mutated branch).
   trigger: event
   command: "doas rcctl restart master"
+  callable: restart_master
   enabled: true
   state: pending
   last_run_at: 0

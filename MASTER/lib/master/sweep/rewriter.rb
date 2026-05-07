@@ -108,7 +108,7 @@ module Master
 
           #{@prompts["axioms"]}
           #{@prompts["structural_techniques"]}
-          #{@prompts["prose_techniques"]}
+          #{@prompts["cosmetic_techniques"]}
 
           Improve every dimension of #{rel} in a single pass.
           Return ONLY the improved file content — no explanation, no markdown fences

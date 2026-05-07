@@ -1,0 +1,32 @@
+# Tool registry — declarative metadata for built-in tools. Adapters in
+# lib/master/tools/ supply behavior; this file supplies tier, visibility, and
+# default arguments. Operators tune visibility per tier without editing code.
+#
+# Schema:
+#   name        — class name (under Master::Tools)
+#   tier        — safe | dangerous (filters which tools the LLM can call)
+#   visitor     — true if visitors can call (visitor allow-list)
+#   default     — true to enable on boot; false leaves it off until /enable
+#   description — one-line, surfaced in tool list
+
+---
+- { name: AskLlm,         tier: safe,      visitor: true,  default: true,  description: Sub-LLM call for nested reasoning }
+- { name: ReadFile,       tier: safe,      visitor: false, default: true,  description: Read a file from disk }
+- { name: WriteFile,      tier: dangerous, visitor: false, default: true,  description: Write a new file }
+- { name: AtomicWrite,    tier: dangerous, visitor: false, default: true,  description: Atomic write (tmp + rename) }
+- { name: StrReplace,     tier: dangerous, visitor: false, default: true,  description: Replace exact string in a file }
+- { name: BatchReplace,   tier: dangerous, visitor: false, default: true,  description: Replace many files in one call }
+- { name: AstEdit,        tier: dangerous, visitor: false, default: true,  description: Prism AST-aware Ruby edit }
+- { name: Tree,           tier: safe,      visitor: false, default: true,  description: Directory tree summary }
+- { name: ListDir,        tier: safe,      visitor: false, default: true,  description: List a single directory }
+- { name: SearchFiles,    tier: safe,      visitor: false, default: true,  description: Glob/grep file search }
+- { name: SearchKnowledge, tier: safe,     visitor: false, default: true,  description: Search knowledge/ snapshots }
+- { name: SymbolLookup,   tier: safe,      visitor: false, default: true,  description: Look up symbol via code_index }
+- { name: Shell,          tier: dangerous, visitor: false, default: true,  description: Execute zsh command }
+- { name: GitContext,     tier: safe,      visitor: false, default: true,  description: git status/log summary }
+- { name: WebFetch,       tier: safe,      visitor: false, default: true,  description: Fetch URL content }
+- { name: WebSearch,      tier: safe,      visitor: true,  default: true,  description: Web search (visitor allowed) }
+- { name: Clean,          tier: dangerous, visitor: false, default: true,  description: Remove tmp/build artifacts }
+- { name: Repligen,       tier: dangerous, visitor: false, default: true,  description: Replicate-API media generation }
+- { name: Postpro,        tier: dangerous, visitor: false, default: true,  description: Post-process audio/video }
+- { name: FeedbackRecord, tier: safe,      visitor: false, default: true,  description: Record operator feedback into corrections.yml }
