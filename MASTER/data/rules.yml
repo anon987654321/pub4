@@ -267,6 +267,8 @@ scan_depths:
     - InterconnectRule
     - AdversarialRule
     - ConceptualRule
+    - CommentDriftRule
+    - CoChangeCouplingRule
   hunt: *deep
   critique: *deep
 

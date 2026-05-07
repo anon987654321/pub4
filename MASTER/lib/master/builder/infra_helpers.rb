@@ -13,6 +13,7 @@ module Master
       scanner.add_rule(Scan::Rules::InterconnectRule.new(root:))
       scanner.add_rule(Scan::Rules::ConceptualRule.new(agent:))
       scanner.add_rule(Scan::Rules::AdversarialRule.new(agent:))
+      scanner.add_rule(Scan::Rules::CommentDriftRule.new(agent:))
       scanner
     end
 
