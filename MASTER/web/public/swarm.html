@@ -6,391 +6,143 @@
 <title>swarm</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:#020000}
-canvas{display:block;width:100%;height:100%;cursor:pointer}
+html,body{height:100%;overflow:hidden;background:#000}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;cursor:none}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<script type="importmap">
-{ "imports": { "three": "/three.module.js" } }
-</script>
-<script type="module">
-import * as THREE from 'three';
+<script>
+'use strict';
+const W = 320, H = 200;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d', { alpha:false });
+ctx.imageSmoothingEnabled = false;
 
-const N = 15000;
-const PORTRAIT_URL = '/face_points.json';
-
-const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setClearColor(0x020000, 1);
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
-camera.position.set(0, 0, 18);
-
-function resize() {
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
+function resize(){
+  const dpr = Math.min(devicePixelRatio||1, 2);
+  cv.width = Math.floor(innerWidth * dpr);
+  cv.height = Math.floor(innerHeight * dpr);
 }
+resize();
 addEventListener('resize', resize);
 
-// ── particle geometry ──────────────────────────────────────────────────
-const positions = new Float32Array(N * 3);
-const targets = new Float32Array(N * 3);
-const seeds = new Float32Array(N);
-const accent = new Float32Array(N); // 0=skin, 1=eye, 2=mouth — drives reactivity
-
-for (let i = 0; i < N; i++) {
-  const r = 8 * Math.cbrt(Math.random());
-  const t = Math.random() * Math.PI * 2, p = Math.acos(2 * Math.random() - 1);
-  positions[3*i] = r * Math.sin(p) * Math.cos(t);
-  positions[3*i+1] = r * Math.sin(p) * Math.sin(t);
-  positions[3*i+2] = r * Math.cos(p);
-  seeds[i] = Math.random();
-}
-
-const geom = new THREE.BufferGeometry();
-geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-geom.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 1));
-geom.setAttribute('aAccent', new THREE.BufferAttribute(accent, 1));
-
-const uniforms = {
-  uTime: { value: 0 },
-  uAudio: { value: 0 },
-  uTreble: { value: 0 },
-  uThink: { value: 0 },
-  uPixel: { value: renderer.getPixelRatio() }
-};
-
-const material = new THREE.ShaderMaterial({
-  uniforms,
-  transparent: true,
-  depthWrite: false,
-  blending: THREE.AdditiveBlending,
-  vertexShader: `
-    attribute float aSeed;
-    attribute float aAccent;
-    uniform float uTime;
-    uniform float uAudio;
-    uniform float uTreble;
-    uniform float uThink;
-    uniform float uPixel;
-    varying float vGlow;
-    varying float vAccent;
-    void main() {
-      vec3 pos = position;
-      float wob = sin(uTime * 0.6 + aSeed * 6.28) * 0.04 + uThink * sin(uTime * 2.0 + aSeed * 12.0) * 0.18;
-      pos += normalize(pos + vec3(0.001)) * wob;
-      vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-      gl_Position = projectionMatrix * mv;
-      float base = 2.6 + uAudio * 1.4 + (aAccent > 1.5 ? uAudio * 2.0 : 0.0) + (aAccent > 0.5 && aAccent < 1.5 ? uTreble * 2.5 : 0.0);
-      gl_PointSize = base * uPixel * (40.0 / max(-mv.z, 1.0));
-      vGlow = 0.55 + 0.45 * uAudio + (aAccent > 0.5 ? uTreble * 0.6 : 0.0);
-      vAccent = aAccent;
-    }
-  `,
-  fragmentShader: `
-    varying float vGlow;
-    varying float vAccent;
-    void main() {
-      vec2 uv = gl_PointCoord - 0.5;
-      float d = length(uv);
-      if (d > 0.5) discard;
-      float a = smoothstep(0.5, 0.0, d);
-      vec3 col = mix(vec3(0.78, 0.32, 0.22), vec3(0.95, 0.55, 0.30), vGlow);
-      if (vAccent > 1.5) col = mix(col, vec3(1.0, 0.78, 0.55), 0.7); // mouth — warmer
-      else if (vAccent > 0.5) col = mix(col, vec3(0.95, 0.85, 0.65), 0.5); // eyes — brighter
-      gl_FragColor = vec4(col * vGlow, a * 0.85);
-    }
-  `
-});
-
-const points = new THREE.Points(geom, material);
-scene.add(points);
-
-// ── target generators ─────────────────────────────────────────────────
-function makeFace() {
-  // Sepik/Asmat tribal-mask form: elongated oval, hooked vertical nose ridge,
-  // narrow staring eye slits inside cowrie-ring outlines, wide mouth with teeth bars,
-  // parallel scarification slashes on each cheek, forehead band, pointed chin.
-  const out = new Float32Array(N * 3);
-  const acc = new Float32Array(N);
-  function densityAt(x, y) {
-    if (y > 2.8 && y < 3.5 && Math.abs(x) < 2.3) return 6.0;
-    for (const ex of [-1.4, 1.4]) {
-      const dx = (x - ex) / 0.85, dy = (y - 1.0) / 0.42;
-      const r = dx * dx + dy * dy;
-      if (Math.abs(r - 1.0) < 0.18) return 7.0;
-      if (r < 0.95 && Math.abs(y - 1.0) < 0.08) return 9.0;
-    }
-    let nx = 0;
-    if (y < -1.0 && y > -1.6) nx = 0.45 * (1 - Math.abs(y + 1.3) / 0.3);
-    if (y < 2.5 && y > -1.6 && Math.abs(x - nx) < 0.18) return 6.5;
-    if (Math.hypot(x + 0.5, y + 0.9) < 0.18) return 5.0;
-    if (Math.hypot(x - 0.5, y + 0.9) < 0.18) return 5.0;
-    if (Math.abs(y + 2.5) < 0.13 && Math.abs(x) < 1.3) return 7.0;
-    for (let k = -2; k <= 2; k++) {
-      const tx = k * 0.45;
-      if (Math.abs(x - tx) < 0.07 && Math.abs(y + 2.5) < 0.28) return 8.0;
-    }
-    for (const sx of [-1, 1]) {
-      for (let k = 0; k < 3; k++) {
-        const ox = sx * (1.6 + k * 0.22);
-        const oy = -0.1 - k * 0.12;
-        const t = ((x - ox) * sx + (y - oy) * (-1)) / Math.SQRT2;
-        const d = ((x - ox) * (-1) - (y - oy) * sx) / Math.SQRT2;
-        if (t > 0 && t < 0.55 && Math.abs(d) < 0.05) return 5.0;
-      }
-    }
-    if (y < -3.4 && y > -4.2 && Math.abs(x) < 0.35 + (y + 4.2) * 0.4) return 4.0;
-    return 0.35;
-  }
-  function accentAt(x, y) {
-    for (const ex of [-1.4, 1.4]) {
-      const dx = (x - ex) / 0.85, dy = (y - 1.0) / 0.42;
-      if (dx * dx + dy * dy < 1.05) return 1.0;
-    }
-    if (Math.abs(y + 2.5) < 0.28 && Math.abs(x) < 1.3) return 2.0;
-    return 0.0;
-  }
-  const A = 2.8, B = 5.0;
-  let i = 0, guard = 0;
-  while (i < N && guard < N * 80) {
-    guard++;
-    const x = (Math.random() * 2 - 1) * A * 1.05;
-    const y = (Math.random() * 2 - 1) * B * 1.08;
-    if ((x * x) / (A * A) + (y * y) / (B * B) > 1.0) continue;
-    const d = densityAt(x, y);
-    if (Math.random() * 9.0 > d) continue;
-    out[3*i] = x;
-    out[3*i+1] = y;
-    let z = (Math.random() - 0.5) * 0.5 - Math.abs(x) * 0.18;
-    const noseHook = (y < -1.0 && y > -1.6) ? 0.45 * (1 - Math.abs(y + 1.3) / 0.3) : 0;
-    if (Math.abs(x - noseHook) < 0.2 && y > -1.6 && y < 2.5) z += 0.7;
-    out[3*i+2] = z;
-    acc[i] = accentAt(x, y);
-    i++;
-  }
-  while (i < N) {
-    const x = (Math.random() * 2 - 1) * A;
-    const y = (Math.random() * 2 - 1) * B;
-    out[3*i] = x; out[3*i+1] = y; out[3*i+2] = 0;
-    acc[i] = 0; i++;
-  }
-  return { pos: out, accent: acc };
-}
-
-function makeSphere() {
-  const out = new Float32Array(N * 3);
-  const acc = new Float32Array(N);
-  const phi = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < N; i++) {
-    const y = 1 - (i / (N - 1)) * 2;
-    const r = Math.sqrt(1 - y * y) * 5;
-    const theta = phi * i;
-    out[3*i] = Math.cos(theta) * r;
-    out[3*i+1] = y * 5;
-    out[3*i+2] = Math.sin(theta) * r;
-  }
-  return { pos: out, accent: acc };
-}
-
-function makeCube() {
-  const out = new Float32Array(N * 3);
-  const acc = new Float32Array(N);
-  const s = 4.5;
-  for (let i = 0; i < N; i++) {
-    const face = i % 6;
-    const u = (Math.random() * 2 - 1) * s;
-    const v = (Math.random() * 2 - 1) * s;
-    if (face === 0) { out[3*i]=s; out[3*i+1]=u; out[3*i+2]=v; }
-    else if (face === 1) { out[3*i]=-s; out[3*i+1]=u; out[3*i+2]=v; }
-    else if (face === 2) { out[3*i]=u; out[3*i+1]=s; out[3*i+2]=v; }
-    else if (face === 3) { out[3*i]=u; out[3*i+1]=-s; out[3*i+2]=v; }
-    else if (face === 4) { out[3*i]=u; out[3*i+1]=v; out[3*i+2]=s; }
-    else { out[3*i]=u; out[3*i+1]=v; out[3*i+2]=-s; }
-  }
-  return { pos: out, accent: acc };
-}
-
-function makeTorus(R = 4, r = 1.4) {
-  const out = new Float32Array(N * 3);
-  const acc = new Float32Array(N);
-  for (let i = 0; i < N; i++) {
-    const u = Math.random() * Math.PI * 2;
-    const v = Math.random() * Math.PI * 2;
-    out[3*i] = (R + r * Math.cos(v)) * Math.cos(u);
-    out[3*i+1] = r * Math.sin(v);
-    out[3*i+2] = (R + r * Math.cos(v)) * Math.sin(u);
-  }
-  return { pos: out, accent: acc };
-}
-
-function makeText(text = 'MASTER') {
-  // Stipple via offscreen canvas glyph
-  const cv = document.createElement('canvas');
-  const W = 800, H = 200;
-  cv.width = W; cv.height = H;
-  const g = cv.getContext('2d');
-  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
-  g.fillStyle = '#fff';
-  g.font = 'bold 140px ui-monospace, monospace';
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(text, W/2, H/2);
-  const data = g.getImageData(0, 0, W, H).data;
-  const pts = [];
-  for (let y = 0; y < H; y += 2) {
-    for (let x = 0; x < W; x += 2) {
-      if (data[(y*W + x) * 4] > 128) pts.push([x, y]);
-    }
-  }
-  const out = new Float32Array(N * 3);
-  const acc = new Float32Array(N);
-  if (!pts.length) { return { pos: out, accent: acc }; }
-  for (let i = 0; i < N; i++) {
-    const p = pts[Math.floor(Math.random() * pts.length)];
-    out[3*i]   = (p[0] - W/2) / 50;
-    out[3*i+1] = (H/2 - p[1]) / 50;
-    out[3*i+2] = (Math.random() - 0.5) * 0.3;
-  }
-  return { pos: out, accent: acc };
-}
-
-// ── morph state ───────────────────────────────────────────────────────
-let currentTarget = null;
-const accentAttr = geom.getAttribute('aAccent');
-
-function applyTarget(t) {
-  currentTarget = t;
-  for (let i = 0; i < N * 3; i++) targets[i] = t.pos[i];
-  for (let i = 0; i < N; i++) accentAttr.array[i] = t.accent[i];
-  accentAttr.needsUpdate = true;
-}
-
-const SHAPES = {
-  face: () => makeFace(),
-  sphere: () => makeSphere(),
-  cube: () => makeCube(),
-  torus: () => makeTorus(),
-  text: (s) => makeText(s || 'MASTER')
-};
-
-let lastMorph = performance.now();
-function morphTo(name, arg) {
-  const fn = SHAPES[name];
-  if (!fn) return;
-  applyTarget(fn(arg));
-  lastMorph = performance.now();
-}
-
-// initial state — face. Try real portrait first, fall back to procedural.
-fetch(PORTRAIT_URL).then(r => r.ok ? r.json() : null).then(j => {
-  if (j && j.points && j.points.length >= N * 3) {
-    const t = { pos: new Float32Array(j.points.slice(0, N * 3)), accent: new Float32Array(j.accent || N) };
-    applyTarget(t);
-  } else {
-    applyTarget(makeFace());
-  }
-}).catch(() => applyTarget(makeFace()));
-
-// ── audio reactivity ──────────────────────────────────────────────────
-let audioBass = 0, audioTreble = 0;
-navigator.mediaDevices?.getUserMedia({ audio: true }).then(stream => {
-  const ac = new (window.AudioContext || window.webkitAudioContext)();
-  const src = ac.createMediaStreamSource(stream);
-  const an = ac.createAnalyser();
-  an.fftSize = 256; an.smoothingTimeConstant = 0.75;
-  src.connect(an);
-  const buf = new Uint8Array(an.frequencyBinCount);
-  function sample() {
-    an.getByteFrequencyData(buf);
-    let lo = 0, hi = 0;
-    for (let i = 0; i < 12; i++) lo += buf[i];
-    for (let i = 40; i < 80; i++) hi += buf[i];
-    audioBass = lo / 12 / 255;
-    audioTreble = hi / 40 / 255;
-    requestAnimationFrame(sample);
-  }
-  sample();
-}).catch(() => {});
-
-// ── thinking pulse from SSE ───────────────────────────────────────────
-let thinkPulse = 0;
-let lastEvent = 0;
-try {
-  const es = new EventSource('/events/stream');
-  es.onmessage = e => {
-    try {
-      const ev = JSON.parse(e.data);
-      lastEvent = performance.now();
-      thinkPulse = Math.min(1, thinkPulse + 0.4);
-      const type = ev.type || '';
-      // Pipeline events trigger morphs in parent if available
-      if (type === 'tool:used' || type === 'llm:request') {
-        // brief shape burst then back to face
-        morphTo('sphere');
-        setTimeout(() => morphTo('face'), 1800);
-      }
-    } catch(_) {}
+const N = 480;
+const boids = new Array(N);
+for (let i=0; i<N; i++) {
+  boids[i] = {
+    x: Math.random()*W, y: Math.random()*H,
+    vx: (Math.random()-0.5)*1.2, vy: (Math.random()-0.5)*1.2
   };
-} catch(_) {}
+}
 
-// ── parent-frame control ──────────────────────────────────────────────
+let mode = 'idle';
+let modeUntil = 0;
+let speed = 1.0;
+let target = null;
+let flashUntil = 0;
+const pointer = { x: W/2, y: H/2, active:false };
+
+addEventListener('pointermove', e => {
+  pointer.x = (e.clientX / innerWidth) * W;
+  pointer.y = (e.clientY / innerHeight) * H;
+  pointer.active = true;
+});
+addEventListener('pointerout', () => { pointer.active = false; });
+
 addEventListener('message', e => {
   const d = e.data || {};
-  if (d.type === 'morph' && SHAPES[d.target]) morphTo(d.target, d.arg);
+  switch (d.type) {
+    case 'morph':
+      mode = 'cohere'; modeUntil = performance.now() + 2400;
+      target = { x: W/2, y: H/2 }; break;
+    case 'confidence':
+      speed = 0.6 + Math.max(0, Math.min(1, +d.c||0)) * 1.0; break;
+    case 'escalation':
+      mode = 'burst'; modeUntil = performance.now() + 900;
+      flashUntil = performance.now() + 120; break;
+    case 'tool':
+      mode = 'ripple'; modeUntil = performance.now() + 600;
+      target = { x: Math.random()*W, y: Math.random()*H }; break;
+    case 'confirm:pending':
+      mode = 'slow'; modeUntil = performance.now() + 3000; break;
+  }
 });
 
-// ── keyboard demo cycler ──────────────────────────────────────────────
-addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return;
-  const map = { '1': 'face', '2': 'sphere', '3': 'cube', '4': 'torus', '5': 'text' };
-  if (map[e.key]) morphTo(map[e.key]);
-});
+const buf = document.createElement('canvas');
+buf.width = W; buf.height = H;
+const bctx = buf.getContext('2d', { alpha:false });
+bctx.imageSmoothingEnabled = false;
+bctx.fillStyle = '#000';
+bctx.fillRect(0,0,W,H);
 
-// ── render loop ───────────────────────────────────────────────────────
-const posAttr = geom.getAttribute('position');
-const tmpA = new THREE.Vector3();
-let last = performance.now();
+function step(){
+  const now = performance.now();
+  if (now > modeUntil) mode = 'idle';
 
-function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
-  uniforms.uTime.value = now * 0.001;
-  uniforms.uAudio.value += (audioBass - uniforms.uAudio.value) * 0.15;
-  uniforms.uTreble.value += (audioTreble - uniforms.uTreble.value) * 0.15;
-  thinkPulse *= Math.pow(0.4, dt); // decay
-  uniforms.uThink.value = thinkPulse;
+  bctx.fillStyle = 'rgba(0,0,0,0.18)';
+  bctx.fillRect(0,0,W,H);
 
-  // lerp positions toward target with per-particle rate
-  if (currentTarget) {
-    const arr = posAttr.array;
-    for (let i = 0; i < N; i++) {
-      const k = 1 - Math.exp(-dt * (1.4 + seeds[i] * 1.6));
-      const ix = 3 * i;
-      arr[ix]   += (targets[ix]   - arr[ix])   * k;
-      arr[ix+1] += (targets[ix+1] - arr[ix+1]) * k;
-      arr[ix+2] += (targets[ix+2] - arr[ix+2]) * k;
+  const sepR = 4, alignR = 12, cohR = 16;
+  const cohereBoost = mode === 'cohere' ? 4 : 1;
+  const burstBoost  = mode === 'burst'  ? 2 : 1;
+  const slowDamp    = mode === 'slow'   ? 0.4 : 1;
+
+  for (let i=0; i<N; i++) {
+    const b = boids[i];
+    let sx=0, sy=0, ax=0, ay=0, cx=0, cy=0, sn=0, an=0, cn=0;
+    for (let j=0; j<N; j++) {
+      if (i===j) continue;
+      const o = boids[j];
+      const dx = o.x - b.x, dy = o.y - b.y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < sepR*sepR && d2 > 0.001) { sx -= dx; sy -= dy; sn++; }
+      if (d2 < alignR*alignR) { ax += o.vx; ay += o.vy; an++; }
+      if (d2 < cohR*cohR)    { cx += o.x;  cy += o.y;  cn++; }
     }
-    posAttr.needsUpdate = true;
+    if (sn>0) { b.vx += (sx/sn)*0.05; b.vy += (sy/sn)*0.05; }
+    if (an>0) { b.vx += (ax/an - b.vx)*0.04; b.vy += (ay/an - b.vy)*0.04; }
+    if (cn>0) { b.vx += (cx/cn - b.x)*0.0008*cohereBoost; b.vy += (cy/cn - b.y)*0.0008*cohereBoost; }
+
+    const aim = (mode === 'cohere' || mode === 'ripple') ? target : (pointer.active ? pointer : null);
+    if (aim) {
+      const dx = aim.x - b.x, dy = aim.y - b.y;
+      const k = mode === 'ripple' ? -0.012 : 0.004;
+      b.vx += dx*k; b.vy += dy*k;
+    }
+
+    b.vx *= slowDamp; b.vy *= slowDamp;
+
+    const sp = Math.hypot(b.vx, b.vy);
+    const cap = 1.6 * speed * burstBoost;
+    if (sp > cap) { b.vx = b.vx/sp*cap; b.vy = b.vy/sp*cap; }
+
+    b.x += b.vx; b.y += b.vy;
+    if (b.x < 0) b.x += W; else if (b.x >= W) b.x -= W;
+    if (b.y < 0) b.y += H; else if (b.y >= H) b.y -= H;
   }
 
-  // slow camera orbit for parallax
-  const t = now * 0.00012;
-  camera.position.x = Math.sin(t) * 2.0;
-  camera.position.y = Math.cos(t * 0.7) * 0.6;
-  camera.lookAt(0, 0, 0);
+  bctx.fillStyle = (now < flashUntil) ? '#fff' : '#e0e0e0';
+  for (let i=0; i<N; i++) {
+    const b = boids[i];
+    const x = b.x|0, y = b.y|0;
+    bctx.fillRect(x, y, 2, 2);
+  }
 
-  renderer.render(scene, camera);
-  requestAnimationFrame(frame);
+  if (pointer.active) {
+    bctx.fillStyle = '#fff';
+    const px = pointer.x|0, py = pointer.y|0;
+    bctx.fillRect(px-1, py, 3, 1);
+    bctx.fillRect(px, py-1, 1, 3);
+  }
+
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(buf, 0, 0, cv.width, cv.height);
+
+  requestAnimationFrame(step);
 }
 
-resize();
-requestAnimationFrame(frame);
+requestAnimationFrame(step);
 </script>
 </body>
 </html>
