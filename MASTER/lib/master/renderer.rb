@@ -11,11 +11,20 @@ module Master
   class Renderer
     BOOT_DMESG_LINES = 12
     MS_PER_SEC = 1000
+    TOKEN_BUDGET = 8000
+    BAR_CELLS = 12
 
     def initialize(config:)
       @config = config
       @p = Pastel.new
       @boot_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i
+    end
+
+    def uptime
+      s = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i - @boot_ms) / MS_PER_SEC
+      h, rem = s.divmod(3600)
+      m, _ = rem.divmod(60)
+      h > 0 ? "up #{h}h#{m}m" : "up #{m}m"
     end
 
     def splash(model)
@@ -54,12 +63,19 @@ module Master
 
     def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil)
       branch = git_branch
-      tok    = tokens && tokens > 0 ? @p.dim("#{tokens}t ") : ""
+      bar = token_bar(tokens)
       vbadge = violations > 0 ? @p.red("[#{violations}v] ") : ""
       phase_str = phase && phase.to_s != "idle" ? @p.dim("{#{phase}} ") : ""
       branch_str = branch ? "#{@p.dim("(")}#{@p.red(branch)}#{@p.dim(")")} " : ""
       dollar = last_ok ? @p.bright_red("$") : @p.red("$")
-      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{phase_str}#{tok}#{vbadge}#{dollar} "
+      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{phase_str}#{bar}#{vbadge}#{dollar} "
+    end
+
+    def token_bar(tokens)
+      return "" unless tokens && tokens > 0
+      budget = (@config["token_budget"] || TOKEN_BUDGET).to_i
+      filled = ((tokens.to_f / budget) * BAR_CELLS).clamp(0, BAR_CELLS).round
+      @p.dim(("\u25B0" * filled) + ("\u25B1" * (BAR_CELLS - filled))) + " "
     end
 
     def render(content, mode: :plain)
