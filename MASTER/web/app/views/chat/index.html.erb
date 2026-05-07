@@ -270,7 +270,10 @@
       color:#666;
       letter-spacing:.25em;
       text-transform:uppercase;
+      transition:transform .12s steps(2);
     }
+    #overlay h1:hover{transform:translate(1px,-1px);}
+    @media(prefers-reduced-motion:reduce){#overlay h1{transition:none;}#overlay h1:hover{transform:none;}}
 
     #overlay .hint{
       font-size:10px;
@@ -346,6 +349,14 @@
 
   <script>
     "use strict";
+    (function(){
+      const h=new Date().getHours();
+      const tint=(h<6||h>=21)?'sepia(.06) hue-rotate(-8deg) brightness(.94)'
+                :(h<10)?'sepia(.05) brightness(1.02)'
+                :(h>=17)?'sepia(.08) hue-rotate(-4deg) brightness(.97)'
+                :'none';
+      if(tint!=='none') document.documentElement.style.filter=tint;
+    })();
     const swarmIframe=document.getElementById('swarm-iframe');
     const statusEl=document.getElementById('status');
     const uiLabel=document.getElementById('ui-label');
