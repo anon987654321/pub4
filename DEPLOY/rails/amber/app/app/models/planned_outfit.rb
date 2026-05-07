@@ -7,4 +7,6 @@ class PlannedOutfit < ApplicationRecord
 
   scope :upcoming, -> { where("planned_date >= ?", Date.today).order(:planned_date) }
   scope :this_week, -> { where(planned_date: Date.today..7.days.from_now) }
+
+  broadcasts_refreshes
 end

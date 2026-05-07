@@ -1,3 +1,4 @@
+<%= turbo_stream_from @user %>
 <header class="profile-header">
   <h1><%= @user.email_address.split("@").first %></h1>
   <p><%= @user.items.count %> items · <%= @user.followers.count %> followers · <%= @user.following.count %> following</p>
