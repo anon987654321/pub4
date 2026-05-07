@@ -60,14 +60,43 @@ module Master
         sacred.any? { |s| rel == s || rel.start_with?(s) }
       end
 
+      CANDIDATE_THRESHOLD_BYTES = 4_000
+      CANDIDATE_COUNT           = 3
+
       def rewrite(path, rel)
-        source   = File.read(path, encoding: "UTF-8")
-        lang     = Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
-        response = @agent.ask(build_prompt(source, rel, lang))
-        extract(response.to_s, lang, original_size: source.bytesize)
+        source = File.read(path, encoding: "UTF-8")
+        lang   = Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
+        if source.bytesize >= CANDIDATE_THRESHOLD_BYTES
+          rewrite_best_of(source, path, rel, lang, n: CANDIDATE_COUNT)
+        else
+          single_rewrite(source, rel, lang)
+        end
       rescue StandardError => e
         @bus&.publish("sweep:rewrite_error", file: path, error: e.message)
         nil
+      end
+
+      def single_rewrite(source, rel, lang)
+        response = @agent.ask(build_prompt(source, rel, lang))
+        extract(response.to_s, lang, original_size: source.bytesize)
+      end
+
+      def rewrite_best_of(source, path, rel, lang, n:)
+        baseline = violations_in_text(source, path)
+        candidates = n.times.map { single_rewrite(source, rel, lang) }.compact
+        return nil if candidates.empty?
+        scored = candidates.map { |c| [score_candidate(c, path, baseline, source.bytesize), c] }
+        winner = scored.max_by { |s, _| s }
+        @bus&.publish("sweep:best_of_picked", file: path, n: candidates.size,
+                      baseline_violations: baseline, winner_score: winner.first)
+        winner.last
+      end
+
+      def score_candidate(content, path, baseline, original_size)
+        violations  = violations_in_text(content, path)
+        delta_viol  = baseline - violations
+        delta_size  = (content.bytesize - original_size).abs
+        (delta_viol * 10) - (delta_size / 100.0)
       end
 
       def build_prompt(src, rel, lang)
