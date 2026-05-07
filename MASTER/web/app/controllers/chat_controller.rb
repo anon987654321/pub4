@@ -110,7 +110,12 @@ class ChatController < ApplicationController
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
-    bytes = Master::Speech.synthesize_bytes(text)
+    voice = params[:voice].to_s.downcase.to_sym
+    style = params[:style].to_s.downcase.to_sym
+    voice = Master::Speech::DEFAULT_VOICE unless Master::Speech::VOICES.key?(voice)
+    style = Master::Speech::DEFAULT_STYLE unless Master::Speech::STYLES.key?(style)
+
+    bytes = Master::Speech.synthesize_bytes(text, voice: voice, style: style)
     if bytes && bytes.bytesize > 0
       send_data bytes, type: "audio/mpeg", disposition: "inline"
     else

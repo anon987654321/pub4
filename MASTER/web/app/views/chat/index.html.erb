@@ -1215,8 +1215,17 @@ if (window.DeviceMotionEvent) {
     let fxIdx=0; // default 'off' — no FX on TTS, no double-vocal. Long-press status to cycle.
     let fxTaps=0;let fxTapTimer=0;
 
+    // Server TTS voices + styles (Edge-TTS, mirror lib/master/speech.rb).
+    const VOICES=['yasmin','ryan','steffan','finn','osman'];
+    const STYLES=['natural','normal','slow','heavy','deep'];
+    let voiceIdx=0, styleIdx=0;
+
     const showFxMode=()=>{
       uiLabel.textContent='♪ '+FX_MODES[fxIdx];
+      setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
+    };
+    const showVoice=()=>{
+      uiLabel.textContent='♫ '+VOICES[voiceIdx]+' · '+STYLES[styleIdx];
       setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
     };
 
@@ -1545,7 +1554,7 @@ if(mode==='void'){
         const resp=await fetch("/chat/tts",{
           method:"POST",
           headers:{"Content-Type":"application/json","X-CSRF-Token":csrfToken()},
-          body:JSON.stringify({text})
+          body:JSON.stringify({text,voice:VOICES[voiceIdx],style:STYLES[styleIdx]})
         });
         if(!resp.ok){ _ttsBusy=false; speakBrowser(text); return _ttsDrain(); }
         const buf=await resp.arrayBuffer();
@@ -1899,7 +1908,7 @@ document.body.addEventListener('click',(e)=>{
     let currentOrb=0;
     let orbFade=1; // 0→1 crossfade on orb change
     // Persist prefs (defined early so setOrb can call it)
-    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({orb:currentOrb,fx:fxIdx}));}catch(_){}};
+    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({orb:currentOrb,fx:fxIdx,voice:voiceIdx,style:styleIdx}));}catch(_){}};
     const setOrb=(idx)=>{
       currentOrb=((idx%orbStates.length)+orbStates.length)%orbStates.length;
       if(!isProcessing) uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;
@@ -1912,8 +1921,11 @@ document.body.addEventListener('click',(e)=>{
     arrowRight.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb+1);});
 
     window.addEventListener('keydown',e=>{
+      if(e.target&&/INPUT|TEXTAREA/.test(e.target.tagName)) return;
       if(e.key==='ArrowLeft')setOrb(currentOrb-1);
-      if(e.key==='ArrowRight')setOrb(currentOrb+1);
+      else if(e.key==='ArrowRight')setOrb(currentOrb+1);
+      else if(e.key==='v'||e.key==='V'){voiceIdx=(voiceIdx+1)%VOICES.length;showVoice();savePrefs();}
+      else if(e.key==='s'||e.key==='S'){styleIdx=(styleIdx+1)%STYLES.length;showVoice();savePrefs();}
     });
 
     // Low-end: replace canvas with CSS orb, skip all canvas rendering
@@ -2097,6 +2109,8 @@ document.body.addEventListener('click',(e)=>{
       if(saved.orb!=null&&saved.orb>=0&&saved.orb<orbStates.length) currentOrb=saved.orb;
       else{const ni=orbStates.findIndex(o=>o.name==='NEURAL');currentOrb=ni>=0?ni:Math.floor(Math.random()*orbStates.length);}
       if(saved.fx!=null&&saved.fx>=0&&saved.fx<FX_MODES.length) fxIdx=saved.fx;
+      if(saved.voice!=null&&saved.voice>=0&&saved.voice<VOICES.length) voiceIdx=saved.voice;
+      if(saved.style!=null&&saved.style>=0&&saved.style<STYLES.length) styleIdx=saved.style;
     }catch(_){currentOrb=Math.floor(Math.random()*orbStates.length);}
     setOrb(currentOrb);
 
@@ -2256,13 +2270,19 @@ const AMBIENT=[
     overlay.addEventListener('click',_activateOverlay);
     overlay.addEventListener('touchend',e=>{e.preventDefault();_activateOverlay();},{passive:false});
 
-    // Status circle: tap toggles mic, long-press cycles voice effect
+    // Status circle: tap toggles mic, long-press cycles FX, longer-press cycles voice.
     let statusLongPress=null;
-    statusEl.addEventListener('pointerdown',()=>{
+    statusEl.addEventListener('pointerdown',(ev)=>{
+      const wantVoice=ev.shiftKey||ev.altKey;
       statusLongPress=setTimeout(()=>{
         statusLongPress='long';
-        fxIdx=(fxIdx+1)%FX_MODES.length;
-        showFxMode();
+        if(wantVoice){
+          voiceIdx=(voiceIdx+1)%VOICES.length;
+          showVoice();
+        }else{
+          fxIdx=(fxIdx+1)%FX_MODES.length;
+          showFxMode();
+        }
         haptic(12);
         savePrefs();
       },600);
