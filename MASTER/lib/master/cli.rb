@@ -125,7 +125,12 @@ module Master
       nil
     end
 
-    def exit_cli = (@session.save!; @running = false)
+    def exit_cli
+      @session.save!
+      line = @renderer.closing
+      puts line if line
+      @running = false
+    end
 
     def read_multiline
       lines = []
