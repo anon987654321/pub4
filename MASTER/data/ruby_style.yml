@@ -275,6 +275,13 @@ operator_directives:
   - "Restart MASTER after every web edit: doas rcctl restart master per scp under MASTER/web/."
   - "No Python: Ruby only for scripting."
   - "Proper casing in prose; no === ---- [ok] • | ASCII decorations. Boot dmesg banner is sacred."
+  - "Pair violations with opportunities — every scan output surfaces both, never just bugs."
+  - "Aim for 2x architectural wins over 5% incremental fixes; ask what shape, not what tweak."
+  - "Subrule findings carry the subrule id (HEDGE, PREAMBLE, OCP, LSP, NN_GROUP), not just the parent."
+  - "When similar code repeats across files, default to merge/decouple/flatten before local patching."
+  - "Architecture data shapes are not sacred — re-examine them periodically for misfit."
+  - "After landing a batch, surface what's next or structurally off — don't itemize the diff."
+  - "Best-of-N for non-trivial autofixes: generate candidates, score by violation delta, pick winner."
 
 # html, css, typography, nielsen, a11y — restored from master4.yml/master7.yml
 # (universal_quality_framework v66)

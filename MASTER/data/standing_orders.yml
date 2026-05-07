@@ -34,6 +34,17 @@
   enabled: true
   state: running
   last_run_at: 1777590915
+- name: architecture_audit
+  description: Weekly review of data/* shape misfit. Walk every yaml under data/, flag
+    files that grew past 200 lines (split candidate), files with overlapping top-level
+    keys (merge candidate), and code modules whose responsibility no longer matches
+    their name. Emit suggestions, do not auto-apply.
+  trigger: scheduled
+  interval_s: 604800
+  command: "audit architecture"
+  enabled: false
+  state: pending
+  last_run_at: 0
 - name: rails_stack_audit
   description: Audit Rails apps for the default StimulusReflex stack (cubism, futurism,
     optimism, all_futures, solder, cable_ready_callbacks). Report missing gems and
