@@ -39,9 +39,9 @@ module Master
 
       TOOL_CAPABLE_RE = build_tool_capable_re.freeze
 
-      def initialize(config:, cache:, circuit_breaker:, tools:, bus:, system_prompt:)
-        @config, @cache, @circuit_breaker = config, cache, circuit_breaker
-        @tools, @bus, @system_prompt_proc = tools, bus, system_prompt
+      def initialize(deps:, system_prompt:)
+        @config, @cache, @circuit_breaker = deps.config, deps.cache, deps.circuit_breaker
+        @tools, @bus, @system_prompt_proc = deps.tools, deps.bus, system_prompt
       end
 
       def send_with_cache(selected_model, messages, system: nil, stream: false, &blk)

@@ -93,15 +93,15 @@ module Master
 
     def build_agent_instance(root, infra)
       tools = build_tools(root:, infra:) + infra[:mcp].tools
-      agent = Agent.new(
+      deps  = Agent::Dependencies.from_kwargs(
         config: infra[:config], session: infra[:session], tools:,
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: infra[:bus],
         model_router: Routing::ModelRouter.new(config: infra[:config]),
         reasoning_modes: Reasoning::Modes.new,
-        memory: infra[:memory], personality: infra[:personality], code_index: infra[:code_index],
-        homeostat: infra[:homeostat]
+        memory: infra[:memory], personality: infra[:personality],
+        code_index: infra[:code_index], homeostat: infra[:homeostat]
       )
-      [agent, tools]
+      [Agent.new(deps:), tools]
     end
 
     def build_autonomous(root, infra, agent:, scanner:, soul:)

@@ -6,19 +6,31 @@ module Master
   class Agent
     DEFAULT_MESSAGE_WINDOW_SIZE = 16
 
-    def initialize(config:, session:, tools:, circuit_breaker:, cache:,
-                   event_bus: nil, model_router: nil, reasoning_modes: nil,
-                   memory: nil, personality: nil, code_index: nil, context_window: nil,
-                   homeostat: nil)
-      @config, @session, @tools          = config, session, tools
-      @circuit_breaker, @cache, @bus     = circuit_breaker, cache, event_bus
-      @model_router, @reasoning_modes    = model_router, reasoning_modes
-      @memory, @personality, @code_index = memory, personality, code_index
-      @context_window, @homeostat        = context_window, homeostat
-      @dispatcher = LLMDispatcher.new(
-        config: @config, cache: @cache, circuit_breaker: @circuit_breaker,
-        tools: @tools, bus: @bus, system_prompt: -> { system_prompt }
-      )
+    Dependencies = Data.define(
+      :config, :session, :tools, :circuit_breaker, :cache, :bus,
+      :model_router, :reasoning_modes, :memory, :personality,
+      :code_index, :context_window, :homeostat
+    ) do
+      def self.from_kwargs(config:, session:, tools:, circuit_breaker:, cache:,
+                           event_bus: nil, model_router: nil, reasoning_modes: nil,
+                           memory: nil, personality: nil, code_index: nil,
+                           context_window: nil, homeostat: nil)
+        new(
+          config:, session:, tools:, circuit_breaker:, cache:, bus: event_bus,
+          model_router:, reasoning_modes:, memory:, personality:,
+          code_index:, context_window:, homeostat:
+        )
+      end
+    end
+
+    def initialize(deps:)
+      @deps                              = deps
+      @config, @session, @tools          = deps.config, deps.session, deps.tools
+      @circuit_breaker, @cache, @bus     = deps.circuit_breaker, deps.cache, deps.bus
+      @model_router, @reasoning_modes    = deps.model_router, deps.reasoning_modes
+      @memory, @personality, @code_index = deps.memory, deps.personality, deps.code_index
+      @context_window, @homeostat        = deps.context_window, deps.homeostat
+      @dispatcher                        = LLMDispatcher.new(deps:, system_prompt: -> { system_prompt })
     end
 
     def chat(message, stream: true, escalation_depth: 0, &blk)
