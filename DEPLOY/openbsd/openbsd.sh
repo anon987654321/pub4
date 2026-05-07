@@ -814,41 +814,23 @@ stage_1() {
 
     [[ $subdomains = $domain ]] && subdomains=""
 
-    cat >> /etc/acme-client.conf <<EOF
-domain $domain {
-
-EOF
-
-    # Add alternative names (FQDNs) if subdomains exist
-    if [[ -n $subdomains ]]; then
-
-      print -r -- "  alternative names {" >> /etc/acme-client.conf
-
-      print -r -- "    ${domain}" >> /etc/acme-client.conf
-
-      for subdomain in ${(s:,:)subdomains}; do
-
-        print -r -- "    ${subdomain}.${domain}" >> /etc/acme-client.conf
-
-      done
-
-      print -r -- "  }" >> /etc/acme-client.conf
-
-    fi
-
-    cat >> /etc/acme-client.conf <<EOF
-  domain key /etc/ssl/private/$domain.key
-
-  domain full chain certificate /etc/ssl/$domain.fullchain.pem
-
-  sign with letsencrypt
-
-  challengedir "/var/www/acme"
-
-}
-
-EOF
-
+    {
+      print -r -- "domain $domain {"
+      if [[ -n $subdomains ]]; then
+        print -r -- "  alternative names {"
+        print -r -- "    $domain"
+        for sub in ${(s:,:)subdomains}; do
+          print -r -- "    $sub.$domain"
+        done
+        print -r -- "  }"
+      fi
+      print -r -- "  domain key /etc/ssl/private/$domain.key"
+      print -r -- "  domain full chain certificate /etc/ssl/$domain.fullchain.pem"
+      print -r -- "  sign with letsencrypt"
+      print -r -- "  challengedir \"/var/www/acme\""
+      print -r -- "}"
+      print -r -- ""
+    } >> /etc/acme-client.conf
   done
 
   acme-client -n -f /etc/acme-client.conf || { log ERROR "acme-client.conf invalid"; exit 1 }
@@ -967,96 +949,147 @@ setup_services() {
 
 }
 
-configure_haproxy() {
-  log INFO "Writing HAProxy config (SNI-based TLS termination)"
+# Bootstrap a tracked Rails app: copy source tree, install gems, migrate, install rc.d.
+# Mines the structural pattern of brgen_0806.sh (rails new + bundle + db + service)
+# but applies it to a committed source tree instead of generating from scratch.
+bootstrap_rails_app() {
+  typeset app=$1 port=$2
+  typeset src=/home/dev/pub4/DEPLOY/rails/$app/app
+  typeset app_dir=/home/$app/app
+  typeset bundle_home=/home/$app/.bundle
+  typeset secret
 
-  pkg_add haproxy 2>/dev/null || true
+  [[ -d $src ]] || { log ERROR "source tree missing: $src"; return 1 }
 
-  # Build PEM bundles: fullchain + key for each SSL domain
-  typeset -a SSL_DOMAINS=(brgen.no amber.brgen.no ai.brgen.no bsdports.org)
-  for d in $SSL_DOMAINS; do
-    [[ -f /etc/ssl/${d}.fullchain.pem && -f /etc/ssl/private/${d}.key ]] || continue
-    cat /etc/ssl/${d}.fullchain.pem /etc/ssl/private/${d}.key > /etc/haproxy/${d}.pem
-    chmod 600 /etc/haproxy/${d}.pem
-  done
+  log INFO "bootstrapping $app -> $app_dir on :$port"
 
-  # Build bind line from available PEMs
-  typeset crt_list=""
-  for d in $SSL_DOMAINS; do
-    [[ -f /etc/haproxy/${d}.pem ]] && crt_list="$crt_list crt /etc/haproxy/${d}.pem"
-  done
+  id "$app" >/dev/null 2>&1 || useradd -m -L daemon -s /bin/ksh "$app"
+  mkdir -p "$app_dir"
+  cp -R "${src}/." "${app_dir}/"
+  chown -R "${app}:${app}" "/home/$app"
 
-  install_template files/haproxy.cfg /etc/haproxy/haproxy.cfg
+  # Share resolved gems from amber to avoid OOM on first bundle install.
+  # Only override BUNDLE_PATH when the donor exists; otherwise let the app's
+  # own .bundle/config stand and bundler installs into vendor/bundle.
+  if [[ ! -d $bundle_home/gems && $app != amber && -d /home/amber/.bundle/gems ]]; then
+    log INFO "  seeding gems from amber donor"
+    mkdir -p "$bundle_home"
+    cp -R /home/amber/.bundle/gems "$bundle_home/"
+    chown -R "${app}:${app}" "$bundle_home"
+    mkdir -p "$app_dir/.bundle"
+    print -r -- "---" > "$app_dir/.bundle/config"
+    print -r -- "BUNDLE_PATH: \"${bundle_home}/gems\"" >> "$app_dir/.bundle/config"
+    chown "${app}:${app}" "$app_dir/.bundle/config"
+  fi
 
-  haproxy -c -f /etc/haproxy/haproxy.cfg || { log ERROR "haproxy.cfg invalid"; exit 1 }
-  /usr/sbin/rcctl enable haproxy
-  /usr/sbin/rcctl restart haproxy || { log ERROR "haproxy failed"; exit 1 }
-  typeset _h; _h=$(/usr/sbin/rcctl check haproxy); [[ $_h == *"haproxy(ok)"* ]] || { log ERROR "haproxy not running"; exit 1 }
-  log INFO "HAProxy running — TLS termination active"
+  su -l "$app" -c "gem install --user-install rails bundler falcon" >/dev/null 2>&1 || :
+  su -l "$app" -c "cd $app_dir && RAILS_ENV=production bundle install --deployment --without development:test" || {
+    log ERROR "bundle install failed for $app"; return 1
+  }
+  su -l "$app" -c "cd $app_dir && RAILS_ENV=production bin/rails db:create db:migrate" \
+    || log WARN "db:create/migrate non-zero for $app (idempotent skip likely)"
+  [[ -f $app_dir/db/seeds.rb ]] && \
+    su -l "$app" -c "cd $app_dir && RAILS_ENV=production bin/rails db:seed" || :
+
+  secret=$(su -l "$app" -c "cd $app_dir && RAILS_ENV=production bundle exec rails secret 2>/dev/null" | tail -1)
+  [[ ${#secret} -ge 64 ]] || { log ERROR "$app: secret capture failed (got ${#secret} chars)"; return 1 }
+  install_template files/rc.d/rails-app.tmpl /etc/rc.d/$app
+  chmod 755 /etc/rc.d/$app
+  /usr/sbin/rcctl enable $app
+  /usr/sbin/rcctl restart $app || /usr/sbin/rcctl start $app \
+    || { log ERROR "$app failed to start"; return 1 }
+  sleep 5
+  typeset _c; _c=$(/usr/sbin/rcctl check $app)
+  [[ $_c == *"${app}(ok)"* ]] || { log ERROR "$app not running"; return 1 }
+  log INFO "  $app live on :$port"
 }
 
 configure_relayd() {
-  log INFO "Writing relayd.conf (HTTP + HTTPS, separate ports per app)"
+  # Native relayd(8) on :443 with multi-keypair SNI termination + per-Host
+  # backend routing. Source of truth is ALL_APPS (app:domain) plus ALL_DOMAINS
+  # (domain:csv-of-subdomains). Every ALL_DOMAINS entry without an explicit
+  # backend defaults to <brgen> — that array IS the brgen network.
+  log INFO "Writing relayd.conf (TLS+SNI on :443)"
 
-  # name:internal_port:external_http_port
-  typeset -a APPS=(
-    "amber:61352:8080"
-    "bsdports:47312:8081"
-    "baibl:10007:8086"
-  )
+  typeset -A DOMAIN_BACKEND=() BACKEND_PORT=()
+  typeset app_entry app dom entry rest sub backend
+
+  for app_entry in $ALL_APPS; do
+    app=${app_entry%%:*}; dom=${app_entry##*:}
+    DOMAIN_BACKEND[$dom]=$app
+    BACKEND_PORT[$app]=${APP_PORTS[$app]:-0}
+  done
+  # MASTER web tier: not a Rails app in ALL_APPS, but terminates TLS here.
+  DOMAIN_BACKEND[ai.brgen.no]=master
+  BACKEND_PORT[master]=53187
+  # Default the rest of ALL_DOMAINS to brgen (the brgen network).
+  for entry in $ALL_DOMAINS; do
+    dom=${entry%%:*}
+    [[ -n ${DOMAIN_BACKEND[$dom]:-} ]] && continue
+    DOMAIN_BACKEND[$dom]=brgen
+  done
+
+  for dom in ${(k)DOMAIN_BACKEND}; do
+    [[ -f /etc/ssl/${dom}.fullchain.pem ]] || continue
+    ln -sf /etc/ssl/${dom}.fullchain.pem /etc/ssl/${dom}.crt
+  done
 
   {
     print -r -- "log connection"
     print -r -- ""
-
-    # Tables
-    print -r -- "table <master> { 127.0.0.1 }"
-    for entry in "${APPS[@]}"; do
-      typeset name="${entry%%:*}"
-      print -r -- "table <${name}> { 127.0.0.1 }"
+    for backend in ${(k)BACKEND_PORT}; do
+      print -r -- "table <${backend}> { 127.0.0.1 }"
     done
     print -r -- ""
-
-    # HTTP protocol (plain)
-    print -r -- "http protocol \"http_proxy\" {"
-    print -r -- "  match request header append \"X-Forwarded-For\"   value \"\$REMOTE_ADDR\""
-    print -r -- "  match request header append \"X-Forwarded-Proto\" value \"http\""
-    print -r -- "  return error"
+    print -r -- "http protocol \"https_proxy\" {"
+    for dom in ${(k)DOMAIN_BACKEND}; do
+      [[ -L /etc/ssl/${dom}.crt ]] && print -r -- "  tls keypair \"${dom}\""
+    done
+    print -r -- "  match request header set \"X-Forwarded-Proto\" value \"https\""
+    print -r -- "  match request header set \"X-Forwarded-For\"   value \"\$REMOTE_ADDR\""
+    for dom in ${(k)DOMAIN_BACKEND}; do
+      backend=${DOMAIN_BACKEND[$dom]}
+      print -r -- "  match request header \"Host\" value \"${dom}\" forward to <${backend}>"
+      # Subdomains from ALL_DOMAINS' csv list; skip any that have their own
+      # explicit backend (e.g. ai.brgen.no → master, not brgen).
+      for entry in $ALL_DOMAINS; do
+        [[ ${entry%%:*} == $dom ]] || continue
+        rest=${entry#*:}
+        [[ $rest == $dom ]] && break
+        for sub in ${(s:,:)rest}; do
+          [[ -n ${DOMAIN_BACKEND[${sub}.${dom}]:-} ]] && continue
+          print -r -- "  match request header \"Host\" value \"${sub}.${dom}\" forward to <${backend}>"
+        done
+        break
+      done
+    done
     print -r -- "  pass"
     print -r -- "}"
     print -r -- ""
-
-    # HTTPS protocol for ai.brgen.no (TLS termination via relayd keypair)
-    # master: HAProxy 443 -> port 3000 -> Falcon 53187
-    print -r -- "relay \"master_http\" {"
-    print -r -- "  listen on 0.0.0.0 port 3000"
-    print -r -- "  protocol \"http_proxy\""
-    print -r -- "  forward to <master> port 53187 check http \"/health\" code 200"
-    print -r -- "}"
-    print -r -- ""
-    print -r -- ""
-
-    # Other apps (HTTP only)
-    for entry in "${APPS[@]}"; do
-      typeset name="${entry%%:*}"
-      typeset rest="${entry#*:}"
-      typeset iport="${rest%%:*}"
-      typeset eport="${rest##*:}"
-      print -r -- "relay \"${name}_http\" {"
-      print -r -- "  listen on 0.0.0.0 port ${eport}"
-      print -r -- "  protocol \"http_proxy\""
-      print -r -- "  forward to <${name}> port ${iport} check tcp"
-      print -r -- "}"
-      print -r -- ""
+    print -r -- "relay \"https_in\" {"
+    print -r -- "  listen on 0.0.0.0 port 443 tls"
+    print -r -- "  protocol \"https_proxy\""
+    for backend in ${(k)BACKEND_PORT}; do
+      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check tcp"
     done
+    print -r -- "}"
   } > /etc/relayd.conf
 
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid"; exit 1 }
-  log INFO "relayd configuration valid"
-  /usr/sbin/rcctl restart relayd || /usr/sbin/rcctl start relayd || { log ERROR "relayd failed"; exit 1 }
+  /usr/sbin/rcctl enable relayd
+  /usr/sbin/rcctl restart relayd || /usr/sbin/rcctl start relayd \
+    || { log ERROR "relayd failed"; exit 1 }
   sleep 3
-  typeset _relayd_check; _relayd_check=$(/usr/sbin/rcctl check relayd); [[ $_relayd_check == *"relayd(ok)"* ]] || { log ERROR "relayd not running"; exit 1 }
-  log INFO "relayd started successfully"
+  typeset _c; _c=$(/usr/sbin/rcctl check relayd)
+  [[ $_c == *"relayd(ok)"* ]] || { log ERROR "relayd not running"; exit 1 }
+  log INFO "relayd live — TLS+SNI on :443"
+
+  # Disable HAProxy if still around from prior deploys
+  /usr/sbin/rcctl get haproxy >/dev/null 2>&1 && {
+    log INFO "Disabling legacy HAProxy"
+    /usr/sbin/rcctl stop haproxy 2>/dev/null
+    /usr/sbin/rcctl disable haproxy 2>/dev/null
+  }
 }
 
 # Stage 2: Services and Rails Apps
@@ -1094,84 +1127,18 @@ stage_2() {
   # PostgreSQL and Redis configuration removed per user request
   setup_services
 
-  # Generate Rails app code via feature scripts
-  if ! is_step_completed "rails_apps_generated"; then
-    log INFO "Generating Rails apps from feature scripts"
-    typeset deploy_dir="/home/dev/pub4/DEPLOY/rails"
-
-    for app_script in brgen/brgen.sh amber/amber.sh blognet/blognet.sh bsdports/bsdports.sh hjerterom/hjerterom.sh baibl/baibl.sh; do
-      typeset script_path="${deploy_dir}/${app_script}"
-      typeset app_name="${app_script%%/*}"
-      if [[ -f $script_path ]]; then
-        log INFO "Running ${app_name} setup"
-        doas -u ${app_name} zsh "$script_path" || log WARN "${app_name}.sh exited non-zero"
-      else
-        log WARN "Not found: $script_path"
-      fi
-    done
-
-    mark_step_completed "rails_apps_generated"
-    log INFO "Rails app generation done"
-  fi
-
-  # Deploy Rails apps
+  # Deploy Rails apps. Source trees committed under DEPLOY/rails/$app/app/.
+  # Bootstrap amber first so its resolved gem set can seed siblings.
+  typeset -a deploy_order=(amber)
   for app_entry in $ALL_APPS; do
+    typeset app=${app_entry[(ws:*:)1]}
+    [[ $app != amber ]] && deploy_order+=($app)
+  done
 
-    typeset app=${app_entry[(ws:*:)1]} domain=${${(s:*:)app_entry}[-1]}
-
+  for app in $deploy_order; do
     typeset port=${APP_PORTS[$app]:=$(generate_random_port)}
-
     APP_PORTS[$app]=$port
-
-    typeset app_dir=/home/$app/$app
-
-    useradd -m -s /bin/ksh -L rails $app 2>/dev/null || :
-
-    [[ ! -f $app_dir/Gemfile || ! -f $app_dir/config/database.yml ]] && {
-
-      log ERROR "Missing Gemfile or database.yml in $app_dir"
-
-      exit 1
-
-    }
-
-    chown -R $app:$app /home/$app
-
-    su -l $app -c "gem install --user-install rails bundler falcon" || {
-
-      log ERROR "gem install failed for $app"
-
-      exit 1
-
-    }
-
-    su -l $app -c "cd $app_dir && bundle config set --typeset without 'development test' && bundle check || bundle install" || {
-
-      log ERROR "bundle install failed for $app"
-
-      exit 1
-
-    }
-
-    # Database: create + migrate in production
-    su -l $app -c "cd $app_dir && HOME=/home/$app RAILS_ENV=production bundle exec rails db:create db:migrate" || {
-      log WARN "db:create/migrate failed for $app (may already exist)"
-    }
-
-    typeset secret; secret=$(su -l $app -c "cd $app_dir && HOME=/home/$app RAILS_ENV=production bundle exec rails secret")
-
-    install_template files/rc.d/rails-app.tmpl /etc/rc.d/$app
-
-    chmod 755 /etc/rc.d/$app
-
-    /usr/sbin/rcctl enable $app
-
-    /usr/sbin/rcctl start $app || { log ERROR "$app failed"; exit 1 }
-
-    sleep 5
-
-    typeset _app_check; _app_check=$(/usr/sbin/rcctl check $app); [[ $_app_check == *"${app}(ok)"* ]] || { log ERROR "$app not running"; exit 1 }
-
+    bootstrap_rails_app "$app" "$port" || { log ERROR "bootstrap failed: $app"; exit 1 }
   done
 
   # Setup non-Rails services (from SERVICES array)
@@ -1221,7 +1188,6 @@ log INFO "Service $svc_name handled by master rc.d"
   fi
 
   configure_relayd
-  configure_haproxy
 
   print -r -- stage_2_complete > $STATE_FILE
   log INFO "Stage 2 complete. Test: curl https://brgen.no, rcctl check master."
@@ -1238,7 +1204,7 @@ main() {
   [[ -f $STATE_FILE && ! -r $STATE_FILE ]] && { log ERROR "$STATE_FILE not readable"; exit 1 }
 
   if [[ $arg1 = --help ]]; then
-    print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC and HAProxy TLS.
+    print -r -- "Sets up OpenBSD 7.8 for Rails with DNSSEC and relayd TLS+SNI.
 Usage: doas zsh openbsd.sh [--help | --resume]"
     exit 0
   fi
