@@ -67,14 +67,27 @@ module Master
 
     alias banner splash
 
-    def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil)
+    def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil, cost: nil)
       branch = git_branch
       bar = token_bar(tokens)
       vbadge = violations > 0 ? @p.red("[#{violations}v] ") : ""
+      cost_str = cost_label(cost)
       phase_str = phase && phase.to_s != "idle" ? @p.dim("{#{phase}} ") : ""
       branch_str = branch ? "#{@p.dim("(")}#{@p.red(branch)}#{@p.dim(")")} " : ""
       dollar = last_ok ? @p.bright_red("$") : @p.red("$")
-      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{phase_str}#{bar}#{vbadge}#{dollar} "
+      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{phase_str}#{bar}#{cost_str}#{vbadge}#{dollar} "
+    end
+
+    def cost_label(cost)
+      return "" unless cost && cost > 0
+      cents = (cost.to_f * 100).round(2)
+      @p.dim("\u00A2#{format('%.2f', cents)} ")
+    end
+
+    def status_row(uptime:, turns:, violations: 0)
+      bits = ["stat0:", uptime, "#{turns} turns"]
+      bits << "#{violations}v" if violations > 0
+      @p.dim(bits.join(" "))
     end
 
     def token_bar(tokens)

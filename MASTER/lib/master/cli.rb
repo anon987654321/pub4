@@ -99,9 +99,12 @@ module Master
 
     def repl_loop
       while @running
+        tokens = @session.token_est
+        status = @renderer.status_row(uptime: @renderer.uptime, turns: @session.messages.size, violations: @violations)
+        puts status if status
         print @renderer.prompt_line(
           @agent.model, @session.phase,
-          last_ok: @last_ok, violations: @violations, tokens: @session.token_est
+          last_ok: @last_ok, violations: @violations, tokens: tokens, cost: @session.cost
         )
         line = safe_read_line
         break if line.nil?
