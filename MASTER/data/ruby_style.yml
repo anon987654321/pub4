@@ -8,12 +8,29 @@ ruby:
   comments:
     max_lines: 1           # class/module/method comments: 1 line or none
     require_why: true      # only add when WHY is non-obvious (hidden constraint, workaround)
+    reassess_on_touch: true  # every edit re-reads each comment in the file: delete if obvious,
+                             # rewrite Strunk-and-White style if kept (active voice, omit needless
+                             # words, concrete verbs, one line). No grandfathered fluff.
     forbidden:
       - what_comments      # never describe what the code does — identifiers do that
       - yard_doc_blocks    # no # Public:, # Returns, # param - style blocks
       - section_separators # no # ----, # ====, # ---- Public API ---- etc.
       - numbered_steps     # no # 1., # 2. inline step comments
       - multi_line_prose   # cut verbosity; one line survives, paragraph does not
+
+  line_order:
+    rule: "Reorder lines/blocks so the most important content comes first. Newspaper inverted pyramid."
+    rationale: "A reader who stops halfway must still have the gist. Public API > primary behavior > helpers > privates > edge cases."
+    sequence:
+      - "frozen_string_literal + requires"
+      - "module/class declaration + headline docstring (≤1 line)"
+      - "public API methods, ordered by call-frequency / importance"
+      - "primary algorithm or main loop"
+      - "private helpers in order of dependency"
+      - "constants and lookup tables (unless small enough to inline at top)"
+      - "edge-case handlers, rescue branches, fallback paths"
+    applies_to: [ruby, yaml, erb, js, css, html, sh, md]
+    enforced_by: "sweep IMPORTANCE_ORDER technique; council Maintainer + Layperson personas"
 
   bugs_to_avoid:
     - pattern: "Dir.chdir"

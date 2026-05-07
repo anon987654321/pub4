@@ -21,10 +21,17 @@ structural_techniques:
   - EXTRACT
   - FLATTEN
   - HOIST
+  - IMPORTANCE_ORDER  # Reorder file so the most important content (public API,
+                     # primary behavior, headline algorithm) is at top; helpers,
+                     # privates, edge-case handlers descend below. Newspaper-style
+                     # inverted pyramid — a reader who stops halfway has the gist.
   - INLINE
   - MERGE
   - NAME
-  - RECOMMENT
+  - RECOMMENT       # Reassess every comment in the file: delete if it merely restates
+                    # what the code does, otherwise rewrite Strunk-and-White style —
+                    # active voice, omit needless words, concrete verbs, one line max.
+                    # No grandfathered prose; touch the file = touch its comments.
   - REFLOW
   - REGROUP
   - SPLIT
