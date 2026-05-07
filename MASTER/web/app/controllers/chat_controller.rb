@@ -68,6 +68,12 @@ class ChatController < ApplicationController
         ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
       end
 
+      mutated_flag = false
+      mutate_sub = container[:bus].subscribe("tool:after") do |ev|
+        # If the tool wrote/edited/created a file, mark for post-turn triad.
+        mutated_flag ||= %w[Write Edit Create FilePatch].include?(ev[:tool].to_s)
+      end
+
       result = container[:pipeline].call(Master::Result.ok(**ctx))
 
       unless streamed
@@ -85,6 +91,22 @@ class ChatController < ApplicationController
       end
 
       sse.write("data: [DONE]\n\n")
+
+      # Auto-triad: if this turn mutated source, run scan→sweep→council in the
+      # background so the user never has to type slash commands.
+      if mutated_flag
+        Thread.new do
+          Thread.current.report_on_exception = false
+          begin
+            container[:bus].publish("triad:auto_start", reason: "post_chat_mutation")
+            triad_cmd = container[:command_registry].dig("triad")
+            triad_cmd&.call(args: "deep .")
+            container[:bus].publish("triad:auto_done")
+          rescue StandardError => err
+            container[:bus].publish("triad:auto_error", error: err.message)
+          end
+        end
+      end
     rescue => e
       sse.write("data: ERROR: #{e.message}\n\n")
       sse.write("data: [DONE]\n\n")
@@ -92,6 +114,7 @@ class ChatController < ApplicationController
       Thread.current[:master_visitor] = nil
       begin
         tool_sub.call if defined?(tool_sub) && tool_sub
+        mutate_sub.call if defined?(mutate_sub) && mutate_sub
       rescue StandardError
         nil
       end
