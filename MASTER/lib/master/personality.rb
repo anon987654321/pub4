@@ -199,6 +199,14 @@ module Master
         end
       end
 
+      social = load_yaml_data("social.yml")&.dig("social")
+      if social.is_a?(Hash) && social.any?
+        social.each do |group, rules|
+          next unless rules.is_a?(Array) && rules.any?
+          ls << "Social/#{group}: " + rules.join(" | ")
+        end
+      end
+
       ls.join("\n")
     end
 
