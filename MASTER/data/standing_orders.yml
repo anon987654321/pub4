@@ -47,18 +47,19 @@
 - name: autocommit_post_chat
   description: After any /chat turn that mutated source, generate a Strunk-style commit
     message and create a small commit on the active branch. Driven by tool:after events
-    matching Write/Edit/Create/FilePatch.
+    matching Write/Edit/Create/FilePatch. Wired in chat_controller.rb post-turn block.
   trigger: event
   command: "git autocommit"
-  enabled: false
+  enabled: true
   state: pending
   last_run_at: 0
 - name: restart_master_on_web_edit
   description: When a file under MASTER/web/ is written or edited, schedule `doas rcctl
-    restart master` so chat UI changes take effect without manual intervention.
+    restart master` so chat UI changes take effect without manual intervention. Wired
+    in chat_controller.rb post-turn block (web_mutated branch).
   trigger: event
   command: "doas rcctl restart master"
-  enabled: false
+  enabled: true
   state: pending
   last_run_at: 0
 - name: pre_edit_scan

@@ -68,10 +68,15 @@ class ChatController < ApplicationController
         ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
       end
 
-      mutated_flag = false
+      mutated_flag    = false
+      web_mutated     = false
+      mutated_paths   = []
       mutate_sub = container[:bus].subscribe("tool:after") do |ev|
-        # If the tool wrote/edited/created a file, mark for post-turn triad.
-        mutated_flag ||= %w[Write Edit Create FilePatch].include?(ev[:tool].to_s)
+        next unless %w[Write Edit Create FilePatch].include?(ev[:tool].to_s)
+        mutated_flag = true
+        path = ev[:path].to_s
+        mutated_paths << path unless path.empty?
+        web_mutated ||= path.include?("/MASTER/web/")
       end
 
       result = container[:pipeline].call(Master::Result.ok(**ctx))
@@ -92,18 +97,39 @@ class ChatController < ApplicationController
 
       sse.write("data: [DONE]\n\n")
 
-      # Auto-triad: if this turn mutated source, run scan→sweep→council in the
-      # background so the user never has to type slash commands.
+      # Post-turn standing orders: triad, autocommit, restart on web edits.
       if mutated_flag
         Thread.new do
           Thread.current.report_on_exception = false
           begin
             container[:bus].publish("triad:auto_start", reason: "post_chat_mutation")
-            triad_cmd = container[:command_registry].dig("triad")
-            triad_cmd&.call(args: "deep .")
+            container[:command_registry].dig("triad")&.call(args: "deep .")
             container[:bus].publish("triad:auto_done")
           rescue StandardError => err
             container[:bus].publish("triad:auto_error", error: err.message)
+          end
+        end
+
+        Thread.new do
+          Thread.current.report_on_exception = false
+          repo_root = Rails.root.join("..", "..").to_s
+          msg = "auto: chat-turn mutation (#{mutated_paths.size} file(s))"
+          _, status = Open3.capture2e("git", "-C", repo_root, "add", "-A")
+          if status.success?
+            _, st = Open3.capture2e("git", "-C", repo_root, "commit", "-m", msg)
+            container[:bus].publish("autocommit:done", ok: st.success?)
+          end
+        rescue StandardError => err
+          container[:bus].publish("autocommit:error", error: err.message)
+        end
+
+        if web_mutated
+          Thread.new do
+            Thread.current.report_on_exception = false
+            _, status = Open3.capture2e("doas", "rcctl", "restart", "master")
+            container[:bus].publish("master:restart", ok: status.success?)
+          rescue StandardError => err
+            container[:bus].publish("master:restart_error", error: err.message)
           end
         end
       end
