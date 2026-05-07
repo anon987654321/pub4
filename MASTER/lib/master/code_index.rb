@@ -8,53 +8,29 @@ require_relative "code_index/symbol_visitor"
 module Master
   # Live Prism-parsed symbol graph; rebuilt on write events.
   class CodeIndex
-    Symbol = Struct.new(:fqn, :type, :file, :line, :parent, :includes, keyword_init: true)
+    Symbol    = Struct.new(:fqn, :type, :file, :line, :parent, :includes, keyword_init: true)
     Reference = Struct.new(:from_file, :from_line, :to_fqn, :ref_type, keyword_init: true)
+
+    SUMMARY_SKIP_NAMES = %w[Entry Message Symbol CircuitError].freeze
 
     attr_reader :symbols, :references, :built_at
 
     def initialize(root:, event_bus: nil)
-      @root = File.expand_path(root)
-      @bus = event_bus
-      @symbols = {}
-      @references = []
-      @mtimes = {}
-      @built_at = nil
-      @lock = Monitor.new
+      @root         = File.expand_path(root)
+      @bus          = event_bus
+      @symbols      = {}
+      @references   = []
+      @mtimes       = {}
+      @built_at     = nil
+      @lock         = Monitor.new
       @build_thread = nil
     end
 
     def build(path: nil)
       @lock.synchronize do
         target = path ? File.expand_path(path, @root) : @root
-        files  = Dir.glob(File.join(target, "**", "*.rb"))
-                    .reject { |f| f.include?("/vendor/") }
-
-        if @built_at.nil?
-          @symbols.clear
-          @references.clear
-          @mtimes.clear
-          files.each do |f|
-            index_file(f)
-            @mtimes[f] = File.mtime(f) rescue Errno::ENOENT
-          end
-        else
-          changed = 0
-          (@mtimes.keys - files).each do |gone|
-            @symbols.delete_if { |_, s| s.file == gone }
-            @references.reject! { |r| r.from_file == gone }
-            @mtimes.delete(gone)
-          end
-          files.each do |f|
-            mt = File.mtime(f) rescue Errno::ENOENT
-            next if @mtimes[f] == mt
-            reindex(f)
-            @mtimes[f] = mt
-            changed += 1
-          end
-          @bus&.publish("code_index:incremental", changed: changed, total: files.size) if changed > 0
-        end
-
+        files  = Dir.glob(File.join(target, "**", "*.rb")).reject { |f| f.include?("/vendor/") }
+        @built_at.nil? ? first_build(files) : incremental_build(files)
         @built_at = Time.now
         @bus&.publish("code_index:built", files: files.size, symbols: @symbols.size)
       end
@@ -69,14 +45,15 @@ module Master
       self
     end
 
-    def ready?     = !@built_at.nil?
+    def ready?         = !@built_at.nil?
     def wait_for_build = @build_thread&.join
+    def built?         = !@built_at.nil?
+    def size           = @lock.synchronize { @symbols.size }
 
     def reindex(file)
       @lock.synchronize do
         full = File.expand_path(file, @root)
-        @symbols.delete_if { |_, s| s.file == full }
-        @references.reject! { |r| r.from_file == full }
+        purge_file(full)
         index_file(full) if File.file?(full)
       end
     rescue StandardError => e
@@ -84,94 +61,147 @@ module Master
     end
 
     def symbols_in(file)
-      wait_for_build unless ready?
-      full = File.expand_path(file, @root)
-      @lock.synchronize { @symbols.values.select { |s| s.file == full } }
-    end
-
-    def find(name)
-      wait_for_build unless ready?
-      @lock.synchronize do
-        exact = @symbols[name]
-        return [exact] if exact
-        suffix = name.to_s
-        @symbols.values.select { |s| s.fqn.end_with?(suffix) || s.fqn.include?(suffix) }
+      with_built_index do
+        full = File.expand_path(file, @root)
+        @symbols.values.select { |s| s.file == full }
       end
     end
 
+    def find(name)
+      with_built_index { find_locked(name) }
+    end
+
     def references_to(fqn)
-      wait_for_build unless ready?
-      @lock.synchronize { @references.select { |r| r.to_fqn == fqn || r.to_fqn.end_with?("##{fqn}") } }
+      with_built_index { references_for(fqn) }
     end
 
     def impact(fqn)
-      wait_for_build unless ready?
-      @lock.synchronize do
-        refs = @references.select { |r| r.to_fqn == fqn || r.to_fqn.end_with?("##{fqn}") }
-        files = refs.map(&:from_file).uniq.map { |f| f.sub("#{@root}/", "") }
-        callers = refs.map { |r| "#{r.from_file.sub("#{@root}/", "")}:#{r.from_line}" }.uniq
+      with_built_index do
+        refs    = references_for(fqn)
+        files   = refs.map(&:from_file).uniq.map { |f| relativize(f) }
+        callers = refs.map { |r| "#{relativize(r.from_file)}:#{r.from_line}" }.uniq
         { fqn:, reference_count: refs.size, files:, callers: }
       end
     end
 
     def summary(limit: nil)
-      wait_for_build unless ready?
-      @lock.synchronize do
-        classes = @symbols.values
-                          .select { |s| %i[class module].include?(s.type) }
-                          .reject { |s| s.file.include?("/DEPLOY/") || s.file.match?(/fix_|patch_/) }
-                          .reject { |s| %w[Entry Message Symbol CircuitError].any? { |n| s.fqn.end_with?("::#{n}") } }
-                          .sort_by(&:fqn)
-                          .map do |s|
-          parent = s.parent && s.parent != "Object" ? " < #{s.parent}" : ""
-          "  #{s.fqn}#{parent} (#{s.file.sub("#{@root}/", "")}:#{s.line})"
-        end
-
+      with_built_index do
+        classes   = summary_classes
         lib_count = @symbols.values.count { |s| s.file.include?("/lib/") }
-        header = "# Codebase: #{lib_count} lib symbols (indexed #{@built_at&.strftime("%H:%M") || "never"})"
-        title = "## Classes & Modules (#{classes.size})"
-        [header, title, *classes].join("\n")
+        stamp     = @built_at&.strftime("%H:%M") || "never"
+        [
+          "# Codebase: #{lib_count} lib symbols (indexed #{stamp})",
+          "## Classes & Modules (#{classes.size})",
+          *classes
+        ].join("\n")
       end
     end
 
     def query(name)
-      wait_for_build unless ready?
-      @lock.synchronize do
-        hits = find(name)
-        return { error: "not found: #{name}" } if hits.empty?
-
-        hits.map do |s|
-          refs = @references.select { |r| r.to_fqn == s.fqn || r.to_fqn.end_with?("##{s.fqn}") }
-          {
-            fqn: s.fqn,
-            type: s.type,
-            file: s.file.sub("#{@root}/", ""),
-            line: s.line,
-            parent: s.parent,
-            used_in: refs.first(10).map { |r| "#{r.from_file.sub("#{@root}/", "")}:#{r.from_line}" }
-          }
-        end
+      with_built_index do
+        hits = find_locked(name)
+        next { error: "not found: #{name}" } if hits.empty?
+        hits.map { |s| query_entry(s) }
       end
     end
 
-    def size  = @lock.synchronize { @symbols.size }
-    def built? = !@built_at.nil?
-
     private
 
+    def with_built_index(&blk)
+      wait_for_build unless ready?
+      @lock.synchronize(&blk)
+    end
+
+    def first_build(files)
+      @symbols.clear
+      @references.clear
+      @mtimes.clear
+      files.each do |f|
+        index_file(f)
+        @mtimes[f] = File.mtime(f) rescue Errno::ENOENT
+      end
+    end
+
+    def incremental_build(files)
+      (@mtimes.keys - files).each { |gone| purge_file(gone) }
+      changed = files.count { |f| reindex_if_stale(f) }
+      @bus&.publish("code_index:incremental", changed: changed, total: files.size) if changed > 0
+    end
+
+    def reindex_if_stale(file)
+      mt = File.mtime(file) rescue Errno::ENOENT
+      return false if @mtimes[file] == mt
+      reindex(file)
+      @mtimes[file] = mt
+      true
+    end
+
+    def purge_file(full)
+      @symbols.delete_if { |_, s| s.file == full }
+      @references.reject! { |r| r.from_file == full }
+      @mtimes.delete(full)
+    end
+
+    def references_for(fqn)
+      tail = "##{fqn}"
+      @references.select { |r| to = r.to_fqn; to == fqn || to.end_with?(tail) }
+    end
+
+    def relativize(file)
+      file.sub("#{@root}/", "")
+    end
+
+    def find_locked(name)
+      exact = @symbols[name]
+      return [exact] if exact
+      suffix = name.to_s
+      @symbols.values.select { |sym| fqn = sym.fqn; fqn.end_with?(suffix) || fqn.include?(suffix) }
+    end
+
+    def summary_class?(sym)
+      return false unless %i[class module].include?(sym.type)
+      file = sym.file
+      return false if file.include?("/DEPLOY/") || file.match?(/fix_|patch_/)
+      fqn = sym.fqn
+      SUMMARY_SKIP_NAMES.none? { |n| fqn.end_with?("::#{n}") }
+    end
+
+    def summary_classes
+      @symbols.values
+              .select { |sym| summary_class?(sym) }
+              .sort_by(&:fqn)
+              .map { |sym| format_summary_entry(sym) }
+    end
+
+    def format_summary_entry(sym)
+      parent_name = sym.parent
+      parent = parent_name && parent_name != "Object" ? " < #{parent_name}" : ""
+      "  #{sym.fqn}#{parent} (#{relativize(sym.file)}:#{sym.line})"
+    end
+
+    def query_entry(sym)
+      refs = references_for(sym.fqn)
+      {
+        fqn:     sym.fqn,
+        type:    sym.type,
+        file:    relativize(sym.file),
+        line:    sym.line,
+        parent:  sym.parent,
+        used_in: refs.first(10).map { |r| "#{relativize(r.from_file)}:#{r.from_line}" }
+      }
+    end
+
     def index_file(file)
-      src = File.read(file, encoding: "UTF-8")
+      src    = File.read(file, encoding: "UTF-8")
       result = Prism.parse(src)
       return unless result.success?
 
       visitor = SymbolVisitor.new(file:, root: @root)
       result.value.accept(visitor)
-
       visitor.symbols.each { |s| @symbols[s.fqn] = s }
       @references.concat(visitor.references)
     rescue StandardError => e
       @bus&.publish("code_index:parse_error", path: file, error: e.message)
     end
-
   end
 end
