@@ -43,6 +43,48 @@ let target = null;
 let flashUntil = 0;
 const pointer = { x: W/2, y: H/2, active:false };
 
+const PALETTE = {
+  idle:   '#cfd2d6',
+  cohere: '#7df9ff',
+  burst:  '#ff8f3a',
+  ripple: '#ff6cc8',
+  slow:   '#5a78a8'
+};
+
+const density = new Uint8Array(W*H);
+
+function paintDefaultDensity(){
+  density.fill(0);
+  for (let y=8; y<H-8; y+=14) {
+    for (let x=W*0.18|0; x<W*0.82; x++) {
+      const a = 220 - Math.abs(x - W/2)*1.4;
+      if (a > 0) density[y*W + x] = Math.max(density[y*W + x], a|0);
+    }
+  }
+  const corners = [[10,10],[W-12,10],[10,H-12],[W-12,H-12]];
+  for (const [cx,cy] of corners) {
+    for (let dy=-6; dy<=6; dy++) for (let dx=-6; dx<=6; dx++) {
+      const x = cx+dx, y = cy+dy;
+      if (x<0||y<0||x>=W||y>=H) continue;
+      const a = 255 - (dx*dx+dy*dy)*4;
+      if (a > 0) density[y*W + x] = Math.max(density[y*W + x], a|0);
+    }
+  }
+}
+paintDefaultDensity();
+
+function paintRectsDensity(rects){
+  density.fill(0);
+  for (const r of rects) {
+    const x0 = Math.max(0, r.x|0), y0 = Math.max(0, r.y|0);
+    const x1 = Math.min(W, (r.x + r.w)|0), y1 = Math.min(H, (r.y + r.h)|0);
+    const peak = r.kind === 'metal' ? 255 : 180;
+    for (let y=y0; y<y1; y++) for (let x=x0; x<x1; x++) {
+      density[y*W + x] = Math.max(density[y*W + x], peak);
+    }
+  }
+}
+
 addEventListener('pointermove', e => {
   pointer.x = (e.clientX / innerWidth) * W;
   pointer.y = (e.clientY / innerHeight) * H;
@@ -66,8 +108,19 @@ addEventListener('message', e => {
       target = { x: Math.random()*W, y: Math.random()*H }; break;
     case 'confirm:pending':
       mode = 'slow'; modeUntil = performance.now() + 3000; break;
+    case 'density':
+      Array.isArray(d.rects) ? paintRectsDensity(d.rects) : paintDefaultDensity(); break;
   }
 });
+
+function sampleGradient(x, y){
+  const xi = x|0, yi = y|0;
+  if (xi<1||yi<1||xi>=W-1||yi>=H-1) return [0,0,0];
+  const here = density[yi*W + xi];
+  const gx = density[yi*W + xi+1] - density[yi*W + xi-1];
+  const gy = density[(yi+1)*W + xi] - density[(yi-1)*W + xi];
+  return [gx, gy, here];
+}
 
 const buf = document.createElement('canvas');
 buf.width = W; buf.height = H;
@@ -87,6 +140,7 @@ function step(){
   const cohereBoost = mode === 'cohere' ? 4 : 1;
   const burstBoost  = mode === 'burst'  ? 2 : 1;
   const slowDamp    = mode === 'slow'   ? 0.4 : 1;
+  const densityK    = mode === 'burst' ? 0.00018 : 0.00065;
 
   for (let i=0; i<N; i++) {
     const b = boids[i];
@@ -103,6 +157,9 @@ function step(){
     if (sn>0) { b.vx += (sx/sn)*0.05; b.vy += (sy/sn)*0.05; }
     if (an>0) { b.vx += (ax/an - b.vx)*0.04; b.vy += (ay/an - b.vy)*0.04; }
     if (cn>0) { b.vx += (cx/cn - b.x)*0.0008*cohereBoost; b.vy += (cy/cn - b.y)*0.0008*cohereBoost; }
+
+    const [gx, gy] = sampleGradient(b.x, b.y);
+    b.vx += gx * densityK; b.vy += gy * densityK;
 
     const aim = (mode === 'cohere' || mode === 'ripple') ? target : (pointer.active ? pointer : null);
     if (aim) {
@@ -122,7 +179,8 @@ function step(){
     if (b.y < 0) b.y += H; else if (b.y >= H) b.y -= H;
   }
 
-  bctx.fillStyle = (now < flashUntil) ? '#fff' : '#e0e0e0';
+  const baseColor = (now < flashUntil) ? '#fff' : PALETTE[mode] || PALETTE.idle;
+  bctx.fillStyle = baseColor;
   for (let i=0; i<N; i++) {
     const b = boids[i];
     const x = b.x|0, y = b.y|0;
