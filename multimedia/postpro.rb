@@ -231,8 +231,17 @@ PRESETS = {
   portrait: { fx: %w[skin_protect film_curve highlight_roll micro_contrast grain color_temp base_tint], stock: :kodak_portra, temp: 5200, intensity: 0.8 },
   landscape: { fx: %w[film_curve color_separate highlight_roll micro_contrast grain vintage_lens], stock: :fuji_velvia, temp: 5800, intensity: 0.9 },
   street: { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain], stock: :tri_x, temp: 5600, intensity: 1.0 },
-  blockbuster: { fx: %w[teal_orange grain bloom_pro highlight_roll micro_contrast], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
+  blockbuster: { fx: %w[teal_orange halation grain bloom_pro highlight_roll micro_contrast], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
 }.freeze
+
+def halation_tint_for(stock)
+  case stock
+  when :kodak_vision3 then HALATION_TINT_VISION3
+  when :kodak_portra  then HALATION_TINT_PORTRA
+  when :tri_x         then HALATION_TINT_TRI_X
+  else                     HALATION_TINT_VISION3
+  end
+end
 
 # Per-channel characteristic curve baked into a 256-entry LUT. Each channel
 # carries [Dmin, Dmax, pivot, gamma] — pivot is the linear midtone fulcrum
@@ -503,6 +512,29 @@ def bloom_pro(image, intensity = 1.0)
   safe_cast(image + combined)
 end
 
+# Halation in linear (exposure) space. Bright light penetrates the emulsion,
+# reflects off the substrate's antihalation backing imperfectly, and re-exposes
+# nearby grains. Red wavelengths penetrate deepest, so the rebound glow is
+# red-orange — never neutral. Default tint matches Vision3-style stocks; Velvia
+# antihalation is near-perfect (drop intensity), Tri-X has none (boost it).
+# Pipeline: linearize → soft-threshold highlights at L≈0.7 → wide gaussian on
+# the mono source map → tint asymmetrically (R>G>>B) → add back → re-encode.
+HALATION_TINT_VISION3 = [1.0,  0.35, 0.08].freeze
+HALATION_TINT_PORTRA  = [1.0,  0.30, 0.06].freeze
+HALATION_TINT_TRI_X   = [0.55, 0.55, 0.55].freeze
+HALATION_THRESHOLD    = 0.7
+
+def halation(image, intensity = 1.0, tint: HALATION_TINT_VISION3, sigma_div: 60)
+  sigma = [image.width / sigma_div.to_f, 4.0].max
+  linear = image.colourspace("scrgb")
+  red    = linear.extract_band(0)
+  excess = red.linear([1], [-HALATION_THRESHOLD])
+  bright = (excess > 0).ifthenelse(excess, 0) ** 2
+  glow_src = bright.gaussblur(sigma)
+  glow = Vips::Image.bandjoin(tint.map { |w| glow_src.linear([w * intensity], [0]) })
+  safe_cast((linear + glow).colourspace("srgb"))
+end
+
 # Preset Application
 def preset(image, name)
   p = PRESETS[name.to_sym]
@@ -523,6 +555,7 @@ def preset(image, name)
              when 'vintage_lens' then vintage_lens(result, 'zeiss', p[:intensity] * 0.8)
              when 'teal_orange' then teal_orange(result, p[:intensity])
              when 'bloom_pro' then bloom_pro(result, p[:intensity])
+             when 'halation' then halation(result, p[:intensity], tint: halation_tint_for(p[:stock]))
              else result
              end
   end
