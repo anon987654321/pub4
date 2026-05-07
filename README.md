@@ -9,7 +9,7 @@ pub4/
   MASTER/          Constitutional AI agent (~6K LOC Ruby)
   DEPLOY/openbsd/  Two-stage OpenBSD deploy script (openbsd.sh)
   multimedia/      Audio tools: TTS, Dilla, Postpro, Repligen
-  mix/             Audio mixes
+  dilla/           Audio mixes and dilla.html canvas
   sh/              Shell scripts
 ```
 
