@@ -8,6 +8,9 @@
 # Sample harvest (YouTube → stems):
 #   ruby make.rb demux <url-or-path>           6-stem demucs
 #   ruby make.rb demux <url-or-path> deep      6-stem + EQ sub-bands + M/S
+# Stem manifest for dilla.html sample rack:
+#   ruby make.rb stems                         scan stems/ + write manifest.json
+#   ruby make.rb stems add <name> <dir> [bpm]  register a new stem set
 # Standalone beat synthesizers (no source needed):
 #   ruby dilla_hiphop.rb [out.mp3]             86 BPM × 8 bars, lo-fi
 #   ruby techno_hate.rb [out.mp3]              142 BPM × 8 bars, distorted
@@ -451,12 +454,45 @@ def demux_six(src)
   run "demucs #{MODEL}", "demucs", "-n", MODEL, "-o", out, audio
   stems = File.join(out, MODEL, File.basename(audio, ".*"))
   puts "stems -> #{stems}"
+  name = File.basename(audio, ".*").gsub(/[^A-Za-z0-9_-]/, "_")[0, 32]
+  stems_register(name, stems, source: src) if Dir.exist?(stems) && !stems_scan_set(stems).empty?
   stems
 end
 
 def slice_band(src, dest, label, eq:)
   render "band: #{label}", dest,
     inputs: ["-i", src], map: "[out]", filter: "[0:a]#{eq}[out]"
+end
+
+STEMS_DIR     = File.join(DIR, "stems")
+MANIFEST_PATH = File.join(STEMS_DIR, "manifest.json")
+STEM_EXTS     = %w[.mp3 .wav .ogg .flac].freeze
+
+def stems_load_manifest
+  return { "active" => "default", "sets" => {} } unless File.exist?(MANIFEST_PATH)
+  require "json"
+  JSON.parse(File.read(MANIFEST_PATH, encoding: "utf-8"))
+end
+
+def stems_write_manifest(m)
+  require "json"
+  File.write(MANIFEST_PATH, JSON.pretty_generate(m) + "\n")
+  puts "manifest -> #{MANIFEST_PATH}"
+end
+
+def stems_scan_set(dir)
+  Dir.children(dir).select { |f| STEM_EXTS.include?(File.extname(f).downcase) }.sort
+end
+
+def stems_register(name, dir, bpm: nil, source: nil)
+  rel = dir.sub(%r{\A#{Regexp.escape(STEMS_DIR)}/?}, "")
+  rel = "." if rel.empty?
+  files = stems_scan_set(dir)
+  abort "no stems in #{dir}" if files.empty?
+  m = stems_load_manifest
+  m["sets"][name] = { "dir" => rel, "bpm" => bpm, "source" => source, "files" => files }.compact
+  m["active"] ||= name
+  stems_write_manifest(m)
 end
 
 def demux_deep(src)
@@ -498,11 +534,21 @@ case ARGV[0]
 when "demux"
   src = ARGV[1] or abort "usage: ruby make.rb demux <url-or-path> [deep]"
   ARGV[2] == "deep" ? demux_deep(src) : demux_six(src)
+when "stems"
+  case ARGV[1]
+  when "add"
+    name = ARGV[2] or abort "usage: ruby make.rb stems add <name> <dir> [bpm]"
+    dir  = ARGV[3] or abort "usage: ruby make.rb stems add <name> <dir> [bpm]"
+    stems_register(name, File.expand_path(dir), bpm: (ARGV[4] && ARGV[4].to_f))
+  when nil
+    stems_register("default", STEMS_DIR, bpm: 90, source: "Sirkel Sag · Voicemails")
+  else abort "usage: ruby make.rb stems [add <name> <dir> [bpm]]"
+  end
 when nil, /\Av\d+\z/
   ver = ARGV[0] || "v11"
   abort "unknown: #{ver}  have: #{RECIPES.keys.join(", ")}" unless RECIPES[ver]
   RECIPES[ver].call
   puts "done -> #{out_path(ver)}"
 else
-  abort "usage: ruby make.rb [v7|v8|v9|v10|v11]   ruby make.rb demux <url-or-path> [deep]"
+  abort "usage: ruby make.rb [v7|v8|v9|v10|v11] | demux <url|path> [deep] | stems [add <name> <dir> [bpm]]"
 end

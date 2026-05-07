@@ -1,0 +1,18 @@
+{
+  "active": "default",
+  "sets": {
+    "default": {
+      "dir": ".",
+      "bpm": 90,
+      "source": "Sirkel Sag · Voicemails",
+      "files": [
+        "bass.mp3",
+        "center.mp3",
+        "highs_pluck.mp3",
+        "mids.mp3",
+        "sides.mp3",
+        "sub_bass.mp3"
+      ]
+    }
+  }
+}

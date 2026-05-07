@@ -103,6 +103,12 @@ select:focus{outline:1px solid var(--acc)}
 .style-chip:hover{border-color:var(--mut);color:var(--txt)}
 .style-chip.active{border-color:var(--acc);color:var(--acc)}
 
+/* stems */
+.stm-rack{grid-template-columns:1fr;gap:2px}
+.stm-row{display:grid;grid-template-columns:24px 90px 1fr 32px;align-items:center;gap:6px;font-size:10px}
+.stm-mute{background:none;border:1px solid var(--brd);color:var(--mut);cursor:pointer;padding:0;line-height:1.4}
+.stm-row label{color:var(--mut)}
+
 /* patterns */
 #root-display{color:var(--acc);font-weight:700}
 .lock-btn{padding:0 2px;font-size:9px;border:none;background:none;cursor:pointer;color:var(--mut);min-height:auto;line-height:1}
@@ -228,6 +234,16 @@ footer{border-top:1px solid var(--brd);margin-top:6px;padding-top:4px;font-size:
 <label>Pads <output id="pads-vol-o">50</output></label><input id="pads-vol" type="range" min="0" max="100" value="50">
 <label>Master <output id="master-vol-o">75</output></label><input id="master-vol" type="range" min="0" max="100" value="75">
 </fieldset>
+</details>
+<details>
+<summary>Stems</summary>
+<fieldset>
+<label>Set</label><select id="stm-set" aria-label="Stem set"></select>
+<button id="stm-load" title="Load stems">load</button>
+<button id="stm-fit" title="Fit loop to bar">fit</button>
+<output id="stm-status">unloaded</output>
+</fieldset>
+<fieldset id="stm-rack" class="stm-rack"></fieldset>
 </details>
 <details>
 <summary>Patterns</summary>
@@ -465,13 +481,14 @@ log('mood applied','k');
 let st_={started:false,playing:false,idx:-1,timer:null,layoutIdx:49,heartbeat:null,paintMode:false,tapTimes:[],history:[],historyIdx:-1,stepCount:16,theme:'dark',rafId:null,peakL:0,peakR:0,muteState:{k:0,s:0,c:0,h:0,o:0}};
 let aud_={bpm:82,swing:36,drive:44,tape:58,comp:72,width:58,reverb:58,delay:34,filter:72,wobble:16,vinyl:22,crackle:14,drift:0.05};
 let mix_={drum:80,bass:70,keys:60,pads:50,master:75};
+let stm_={set:null,manifest:null,players:[],gains:[],vol:[],mute:[],bus:null,loaded:false};
 let pat_={d:'dusty1',b:'dustybass1',k:'neosoul',p:'ambientwash'};
 let seq_={};
 ['k','s','c','h','o'].forEach(t=>{seq_[t]=Array(16).fill(0).map(()=>({v:0.85+rnd(0,0.15),t:rnd(-15,15),p:100,r:1}))});
 ['b','keys','p'].forEach(t=>{seq_[t]=Array(16).fill(0).map(()=>({v:0.85+rnd(0,0.15),t:rnd(-15,15),p:100,r:1}))});
 
 let kickN,kickSub,kickClk,kickBody,snareN,snareRng,clapN,hatN,openN,bassN,bassSub,keysN,keysChorus,padsN,padsFlt,padsShift;
-let drumG,bassG,keysG,padsG,masterG,limiter,vinylNoise,crackleNoise,wobbLFO,flutterLFO,driftLFO,analyser;
+let drumG,bassG,keysG,padsG,stmBus,masterG,limiter,vinylNoise,crackleNoise,wobbLFO,flutterLFO,driftLFO,analyser;
 let fxRev,fxDly,fxFlt,tapeSat,compPar,sslComp,widener,kickSat,keySat,drumSat,outSat,bitCrush,revSend,dlySend;
 let drumTube,kickComp,vintageSat,phaserFX,lofiNoise,lofiComp,tapeWS,padsLFO,kickClkBP,snareRngBP,keysTrem,keysCrush;
 
@@ -713,6 +730,9 @@ const padsSat=new Tone.Chebyshev(2);padsSat.wet.value=0.2;
 padsG.connect(padsBW);padsBW.connect(padsSat);padsSat.connect(masterG);padsSat.connect(revSend);padsSat.connect(dlySend);
 // route remaining tracks
 [drumG,bassG].forEach(g=>{g.connect(masterG);g.connect(revSend);g.connect(dlySend);});
+stmBus=new Tone.Gain(Tone.dbToGain(-6));
+const stmSat=new Tone.Chebyshev(2);stmSat.wet.value=0.15;
+stmBus.connect(stmSat);stmSat.connect(masterG);stmBus.connect(revSend);stmBus.connect(dlySend);
 randomizeFX();
 log("audio engine init (analog++)","k");
 }
@@ -736,6 +756,63 @@ if(crackleNoise)crackleNoise.volume.value=-65+aud_.crackle/100*20;
 if(wobbLFO){wobbLFO.frequency.value=.05+aud_.wobble/100*PARAMS.WOBB_FREQ_MAX;wobbLFO.min=1-aud_.wobble/100*.04;wobbLFO.max=1+aud_.wobble/100*.04;}
 if(bitCrush)bitCrush.wet.value=(100-aud_.drive)/400;
 if(driftLFO)driftLFO.frequency.value=.05+aud_.drift*.15;
+stm_.players.forEach((p,i)=>{
+if(stm_.gains[i])stm_.gains[i].gain.value=stm_.mute[i]?0:(stm_.vol[i]/100);
+});
+}
+
+async function loadStemManifest(){
+const r=await fetch('stems/manifest.json',{cache:'no-store'});
+if(!r.ok)throw new Error('manifest '+r.status);
+stm_.manifest=await r.json();
+const sel=$id('stm-set');sel.innerHTML='';
+Object.keys(stm_.manifest.sets).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o)});
+sel.value=stm_.set=stm_.manifest.active||sel.options[0]?.value;
+}
+
+async function loadStems(){
+if(!stm_.manifest)await loadStemManifest();
+if(!stmBus){await initAudio();}
+stm_.players.forEach(p=>{try{p.stop();p.dispose()}catch(e){}});
+stm_.gains.forEach(g=>g.dispose());
+stm_.players=[];stm_.gains=[];stm_.vol=[];stm_.mute=[];
+const set=stm_.manifest.sets[stm_.set];
+$id('stm-status').textContent='loading…';
+const dir=set.dir||'.';
+await Promise.all(set.files.map(async(f,i)=>{
+const url=`stems/${dir}/${f}`.replace('/./','/');
+const p=new Tone.Player({url,loop:true,autostart:false,fadeIn:0.01,fadeOut:0.01});
+const g=new Tone.Gain(0.7);p.connect(g);g.connect(stmBus);
+await Tone.loaded();
+p.sync().start(0);
+stm_.players[i]=p;stm_.gains[i]=g;stm_.vol[i]=70;stm_.mute[i]=true;
+g.gain.value=0;
+}));
+stm_.loaded=true;
+$id('stm-status').textContent=`${set.files.length} loaded · ${set.bpm||'?'} bpm`;
+renderStemRack();
+log(`stems: loaded set "${stm_.set}"`,'k');
+}
+
+function fitStemsToBar(){
+const set=stm_.manifest?.sets[stm_.set];if(!set)return;
+const srcBpm=set.bpm||aud_.bpm;
+const ratio=aud_.bpm/srcBpm;
+stm_.players.forEach(p=>{p.playbackRate=ratio});
+log(`stems: fit ${srcBpm}→${aud_.bpm} bpm (${ratio.toFixed(3)}×)`,'k');
+}
+
+function renderStemRack(){
+const r=$id('stm-rack');r.innerHTML='';
+const set=stm_.manifest?.sets[stm_.set];if(!set)return;
+set.files.forEach((f,i)=>{
+const row=document.createElement('div');row.className='stm-row';
+const name=f.replace(/\.(mp3|wav|ogg)$/i,'');
+row.innerHTML=`<button class="stm-mute" data-i="${i}" title="${stm_.mute[i]?'unmute':'mute'}">${stm_.mute[i]?'○':'●'}</button><label>${name}</label><input class="stm-vol" type="range" data-i="${i}" min="0" max="100" value="${stm_.vol[i]}"><output>${stm_.vol[i]}</output>`;
+r.appendChild(row);
+});
+r.querySelectorAll('.stm-mute').forEach(b=>b.addEventListener('click',e=>{const i=+e.target.dataset.i;stm_.mute[i]=!stm_.mute[i];e.target.textContent=stm_.mute[i]?'○':'●';applyFX();}));
+r.querySelectorAll('.stm-vol').forEach(s=>s.addEventListener('input',e=>{const i=+e.target.dataset.i;stm_.vol[i]=+e.target.value;e.target.nextElementSibling.value=stm_.vol[i];applyFX();}));
 }
 
 // Shared helper function for triggering notes - eliminates duplication between scheduleLoop and exportWAV
@@ -1151,6 +1228,10 @@ sel_d.addEventListener('change',e=>{pushHistory();pat_.d=e.target.value;log(`dru
 sel_b.addEventListener('change',e=>{pushHistory();pat_.b=e.target.value;log(`bass: ${pat_.b}`)});
 sel_k.addEventListener('change',e=>{pushHistory();pat_.k=e.target.value;log(`keys: ${pat_.k}`)});
 sel_p.addEventListener('change',e=>{pushHistory();pat_.p=e.target.value;log(`pads: ${pat_.p}`)});
+loadStemManifest().catch(e=>log('stems: '+e.message,'w'));
+$id('stm-set').addEventListener('change',e=>{stm_.set=e.target.value;stm_.loaded=false;$id('stm-status').textContent='unloaded';$id('stm-rack').innerHTML='';});
+$id('stm-load').addEventListener('click',()=>loadStems().catch(e=>log('stems load: '+e.message,'e')));
+$id('stm-fit').addEventListener('click',fitStemsToBar);
 const styles_c=$id('styles');
 const filterStyles=q=>{
 const query=q.toLowerCase();
