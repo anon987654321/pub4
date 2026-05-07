@@ -200,11 +200,11 @@ thresholds:
 
 scan_depths:
   quick: &quick
-    - FrozenStringRule
+    - TableLexicalRule
     - BareRescueRule
     - UniversalRule
   standard: &standard
-    - FrozenStringRule
+    - TableLexicalRule
     - BareRescueRule
     - UniversalRule
     - ExplicitRule
@@ -224,17 +224,15 @@ scan_depths:
     - TerseRule
     - DeadAssignRule
     - NestingDepthRule
-    - TrailingCommentRule
     - NamingRule
     - CommentQualityRule
-    - DebugOutputRule
     - YamlQualityRule
     - StructureRule
     - DeadCodeRule
     - RubocopRule
     - ReekRule
   deep: &deep
-    - FrozenStringRule
+    - TableLexicalRule
     - BareRescueRule
     - UniversalRule
     - ExplicitRule
@@ -254,10 +252,8 @@ scan_depths:
     - TerseRule
     - DeadAssignRule
     - NestingDepthRule
-    - TrailingCommentRule
     - NamingRule
     - CommentQualityRule
-    - DebugOutputRule
     - YamlQualityRule
     - StructureRule
     - DeadCodeRule

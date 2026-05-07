@@ -1,0 +1,64 @@
+# Lexical scan rules expressed as data. Each entry replaces a 25-50 LOC Ruby class.
+# Loaded by Scan::Rules::TableLexicalRule. Adding a new lexical rule = one yaml entry.
+#
+# Schema:
+#   id            — short snake_case id, used as the `rule:` field on each finding
+#   description   — one line, shown in /why
+#   severity      — info | warning | error
+#   axiom_tags    — list of constitutional axiom symbols
+#   langs         — file extensions to apply to (default: ['.rb'])
+#   path_includes — optional substring the path must contain
+#   path_excludes — optional substring the path must NOT contain
+#   skip_comments — true to skip lines starting with `#`
+#   patterns      — list of {regex, message} pairs evaluated per line
+#   first_line    — true to only check the first line and emit one finding if matched
+
+---
+- id: frozen_string
+  description: Ruby files should declare # frozen_string_literal magic comment
+  severity: warning
+  axiom_tags: [PERFORMANCE]
+  first_line: true
+  patterns:
+    - regex: '\Afrozen_string_literal: true'
+      negate: true
+      message: missing # frozen_string_literal: true
+      one_per_file: true
+
+- id: debug_output
+  description: Debug output left in lib/ — remove before shipping
+  severity: error
+  axiom_tags: [FAIL_VISIBLY]
+  path_includes: /lib/
+  skip_comments: true
+  patterns:
+    - regex: '^\s*pp?\s+(?!self\b)'
+      message: p/pp debug call — remove or publish via event bus
+    - regex: '\$stderr\.puts\b'
+      message: $stderr.puts — use @bus.publish or $stdout
+    - regex: '\bbinding\.pry\b'
+      message: binding.pry left in — remove before commit
+    - regex: '\bdebugger\b'
+      message: debugger left in — remove before commit
+
+- id: trailing_comment
+  description: Trailing comment after code — promote to a leading comment if it adds value, else delete
+  severity: info
+  axiom_tags: [STRUNK_WHITE, BE_CONCISE]
+  skip_comments: true
+  patterns:
+    - regex: '\S\s+#\s+\S'
+      message: trailing comment — promote above the line or delete
+
+- id: time_zone_unsafe
+  description: Bare Time.now / Date.today / DateTime.now bypasses Rails Time.zone
+  severity: warning
+  axiom_tags: [ROBUSTNESS]
+  skip_comments: true
+  patterns:
+    - regex: '(?<![A-Za-z_.])Time\.now\b'
+      message: Time.now ignores Time.zone — use Time.current
+    - regex: '(?<![A-Za-z_.])Date\.today\b'
+      message: Date.today ignores Time.zone — use Date.current
+    - regex: '(?<![A-Za-z_.])DateTime\.now\b'
+      message: DateTime.now ignores Time.zone — use Time.current.to_datetime
