@@ -8,7 +8,7 @@ module Master
       PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 
       VAGUE_STUBS  = /\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|good\s+\w+|test(?:ing)?|please)\z/i.freeze
-      ACTIONABLE   = /\b(?:fix|write|add|explain|refactor|scan|implement|show|list|create|delete|update|find|run|check|what|whats|how|why|where|when|who|which|read|open|build|deploy|revert|move|rename|tell|url|path|help)\b/i.freeze
+      ACTIONABLE   = /\b(?:fix|write|add|explain|refactor|scan|implement|show|list|create|delete|update|find|run|check|what|whats|how|why|where|when|who|which|read|open|build|deploy|revert|move|rename|tell|url|path|help|suggest|propose|recommend|brainstorm|improve|enhance|design|polish|tighten|simplify|make|change|review|critique|rethink|redesign|tune|adjust|sketch|draft)\b/i.freeze
       FILE_REF     = /[`'"]|\/|\.\w{2,4}\b/.freeze
       ELICIT_WORDS = 5
 

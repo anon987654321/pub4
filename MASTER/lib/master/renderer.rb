@@ -11,7 +11,7 @@ module Master
   class Renderer
     TICK             = "\u2714".freeze
     CROSS            = "\u2718".freeze
-    BOOT_DMESG_LINES = 5
+    BOOT_DMESG_LINES = 12
     MS_PER_SEC       = 1000
 
     def initialize(config:)
@@ -39,12 +39,13 @@ module Master
       lines << ""
       lines << d("MASTER (CONSTITUTIONAL) ##{rev}: #{now.strftime('%a %b %e %H:%M:%S %Z %Y')}")
       lines << d("    #{user}@#{host}:#{@config["root"] || Dir.pwd}")
-      lines << d("ruby0 at #{RUBY_PLATFORM}: #{RUBY_VERSION} #{shell}#{pchar}")
-      lines << d("model0 at openrouter: #{short_model(model)}")
-      lines << d("pledge0: #{pledge_ok ? "armed" : "unavailable"}")
-      lines << d("web0: #{web}")
+      lines << d("runtime0:  #{RUBY_PLATFORM}  ruby #{RUBY_VERSION}  #{shell} #{user}#{pchar}")
+      lines << d("model0:    #{short_model(model)} (#{provider_for(model)})")
+      lines << d("rev0:      #{rev}")
+      lines << d("security0: #{pledge_ok ? "pledge armed" : "pledge unavailable"}")
+      lines << d("web0:      #{web}")
       elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SEC).round
-      lines << d("boot0: #{elapsed}ms")
+      lines << d("boot0:     #{elapsed}ms")
       lines << ""
       lines << @p.bold.red("master") + @p.dim("@#{host} ready")
       lines << ""
@@ -96,7 +97,16 @@ module Master
     end
 
     def short_model(model)
-      model.to_s.split("/").last.sub(/:free$/, "")
+      model.to_s.sub(/\Aclaude-cli:/, "").sub(/\Aweb-chat:/, "").split("/").last.sub(/:free$/, "")
+    end
+
+    def provider_for(model)
+      m = model.to_s
+      return "claude-cli"   if m.start_with?("claude-cli:")
+      return "web-chat"     if m.start_with?("web-chat:")
+      return "ollama"       if m.start_with?("ollama/")
+      return "google"       if m.include?("gemini")
+      "openrouter"
     end
 
     def git_branch
@@ -109,12 +119,14 @@ module Master
     def dmesg_lines
       boot_log = "/var/run/dmesg.boot"
       raw = if File.readable?(boot_log)
-              File.readlines(boot_log, chomp: true).first(BOOT_DMESG_LINES)
+              File.readlines(boot_log, chomp: true)
             else
               stdout, = Open3.capture3("dmesg")
-              stdout.lines(chomp: true).first(BOOT_DMESG_LINES)
+              stdout.lines(chomp: true)
             end
-      raw.empty? ? ["dmesg unavailable"] : raw
+      filtered = raw.reject { |l| l.match?(/\A(?:OpenBSD\s+\d|Copyright\s|The Regents)/) }
+      lines = filtered.first(BOOT_DMESG_LINES)
+      lines.empty? ? ["dmesg unavailable"] : lines
     rescue StandardError
       ["dmesg unavailable"]
     end
