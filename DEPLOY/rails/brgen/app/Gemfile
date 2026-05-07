@@ -28,6 +28,9 @@ gem "pagy"
 gem "image_processing"
 gem "geocoder"
 
+# Discovery — vision-LLM scrapers (lib/tasks/{reddit,amazon}.rake)
+gem "ferrum"
+
 group :development, :test do
   gem "brakeman"
   gem "rubocop-rails-omakase"
