@@ -11,30 +11,20 @@ module Master
     attr_reader :last_timings
 
     def initialize(stages, bus: nil, trace: false, root: nil, event_bus: nil)
-      @stages = stages
+      @stages       = stages
       @last_timings = {}
-      @bus   = bus || event_bus
-      @trace = trace
-      @root  = root
+      @bus          = bus || event_bus
+      @trace        = trace
+      @root         = root
     end
 
     def call(initial)
       timings = {}
-      @stages.reduce(initial) do |result, stage|
-        result.and_then(stage_label(stage)) do |ctx|
-          t0     = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          stage_result = stage.call(ctx)
-          ms     = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SECOND).round
-          timings[stage_label(stage)] = ms
-          if stage_result.respond_to?(:ok?) && stage_result.ok?
-            @last_timings = timings.dup
-            @bus&.publish("pipeline:stage", stage: stage_label(stage), ms:) if @trace
-            Result.ok(stage_result.value!.merge(_timings: timings.dup))
-          else
-            stage_result
-          end
-        end
-      end.tap { |final| maybe_rollback(final) }
+      final = @stages.reduce(initial) do |result, stage|
+        result.and_then(stage_label(stage)) { |ctx| run_stage(stage, ctx, timings) }
+      end
+      maybe_rollback(final)
+      final
     end
 
     class ParallelGroup
@@ -46,34 +36,51 @@ module Master
       end
 
       def call(ctx)
-        frozen_ctx = ctx.freeze
-        threads    = @stages.map do |s|
-          Thread.new do
-            s.call(frozen_ctx)
-          rescue StandardError => e
-            @bus&.publish("pipeline:stage_error", stage: s.class.name, error: e.message)
-            Result.ok(frozen_ctx.merge(_stage_error: e.message))
-          end
-        end
-
-        results = threads.each_with_index.map do |t, i|
-          if t.join(PARALLEL_TIMEOUT_S)
-            t.value
-          else
-            begin; t.kill; rescue ThreadError; nil; end
-            @bus&.publish("pipeline:stage_timeout", stage: @stages[i].class.name)
-            Result.ok(frozen_ctx.merge(_parallel_timeout: @stages[i].class.name))
-          end
-        end
-
-        errors = results.filter_map { |r| r.respond_to?(:err?) && r.err? ? r.message : nil }
-        merged = results.reduce(ctx) { |acc, r| r.respond_to?(:ok?) && r.ok? ? acc.merge(r.value!) : acc }
-        merged = merged.merge(_parallel_errors: errors) unless errors.empty?
-
-        Result.ok(merged)
+        frozen  = ctx.freeze
+        threads = spawn_stage_threads(frozen)
+        results = collect_results(threads, frozen)
+        Result.ok(merge_results(ctx, results))
       rescue StandardError => e
         Result.ok(ctx.merge(_parallel_errors: [e.message]))
       end
+
+      private
+
+      def spawn_stage_threads(frozen)
+        @stages.map do |stage|
+          Thread.new do
+            stage.call(frozen)
+          rescue StandardError => e
+            @bus&.publish("pipeline:stage_error", stage: stage.class.name, error: e.message)
+            Result.ok(frozen.merge(_stage_error: e.message))
+          end
+        end
+      end
+
+      def collect_results(threads, frozen)
+        threads.each_with_index.map do |thread, i|
+          next thread.value if thread.join(PARALLEL_TIMEOUT_S)
+          handle_timeout(thread, @stages[i], frozen)
+        end
+      end
+
+      def handle_timeout(thread, stage, frozen)
+        thread.kill
+        @bus&.publish("pipeline:stage_timeout", stage: stage.class.name)
+        Result.ok(frozen.merge(_parallel_timeout: stage.class.name))
+      rescue ThreadError
+        Result.ok(frozen.merge(_parallel_timeout: stage.class.name))
+      end
+
+      def merge_results(ctx, results)
+        ok_values = results.filter_map { |r| r.value! if ok?(r) }
+        merged    = ok_values.reduce(ctx, &:merge)
+        errors    = results.filter_map { |r| r.message if err?(r) }
+        errors.empty? ? merged : merged.merge(_parallel_errors: errors)
+      end
+
+      def ok?(result);  result.respond_to?(:ok?)  && result.ok?;  end
+      def err?(result); result.respond_to?(:err?) && result.err?; end
     end
 
     class SkipOnPressure
@@ -84,25 +91,49 @@ module Master
 
       def call(ctx)
         return @stage.call(ctx) unless ctx[:pressure]
-        label = @stage.respond_to?(:stages) ? "parallel[#{@stage.stages.map { |s|
- s.class.name.split("::").last }.join(",")}]" : @stage.class.name.split("::").last
+        label = pressure_label
         @bus&.publish("pipeline:skipped", stage: label, reason: "pressure")
         $stdout.puts "pipeline: skipped #{label} (pressure)"
         $stdout.flush
         Result.ok(ctx)
       end
+
+      private
+
+      def pressure_label
+        return @stage.class.name.split("::").last unless @stage.respond_to?(:stages)
+        names = @stage.stages.map { |s| s.class.name.split("::").last }.join(",")
+        "parallel[#{names}]"
+      end
     end
 
     private
 
-    def maybe_rollback(result)
-      return unless result.respond_to?(:err?) && result.err?
-      return unless ROLLBACK_CATEGORIES.include?(result.category)
-      return unless @root && git_workspace?
-      return unless dirty?
+    def run_stage(stage, ctx, timings)
+      label = stage_label(stage)
+      t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      stage_result = stage.call(ctx)
+      ms    = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SECOND).round
+      timings[label] = ms
+      return stage_result unless stage_result.respond_to?(:ok?) && stage_result.ok?
 
-      @bus&.publish("pipeline:rollback", category: result.category, message: result.message[0, ROLLBACK_MSG_TRUNCATE])
+      @last_timings = timings.dup
+      @bus&.publish("pipeline:stage", stage: label, ms:) if @trace
+      Result.ok(stage_result.value!.merge(_timings: timings.dup))
+    end
+
+    def maybe_rollback(result)
+      return unless rollback_eligible?(result)
+
+      category = result.category
+      @bus&.publish("pipeline:rollback", category: category, message: result.message[0, ROLLBACK_MSG_TRUNCATE])
       Open3.capture2e("git", "-C", @root, "reset", "--hard", "HEAD")
+    end
+
+    def rollback_eligible?(result)
+      return false unless result.respond_to?(:err?) && result.err?
+      return false unless ROLLBACK_CATEGORIES.include?(result.category)
+      @root && git_workspace? && dirty?
     end
 
     def git_workspace?
