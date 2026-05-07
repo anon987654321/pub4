@@ -79,8 +79,8 @@ module Master
         errors.empty? ? merged : merged.merge(_parallel_errors: errors)
       end
 
-      def ok?(result);  result.respond_to?(:ok?)  && result.ok?;  end
-      def err?(result); result.respond_to?(:err?) && result.err?; end
+      def ok?(result);  result.is_a?(Master::Result::Ok);  end
+      def err?(result); result.is_a?(Master::Result::Err); end
     end
 
     class SkipOnPressure
@@ -115,7 +115,7 @@ module Master
       stage_result = stage.call(ctx)
       ms    = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SECOND).round
       timings[label] = ms
-      return stage_result unless stage_result.respond_to?(:ok?) && stage_result.ok?
+      return stage_result unless stage_result.is_a?(Master::Result::Ok)
 
       @last_timings = timings.dup
       @bus&.publish("pipeline:stage", stage: label, ms:) if @trace
@@ -131,7 +131,7 @@ module Master
     end
 
     def rollback_eligible?(result)
-      return false unless result.respond_to?(:err?) && result.err?
+      return false unless result.is_a?(Master::Result::Err)
       return false unless ROLLBACK_CATEGORIES.include?(result.category)
       @root && git_workspace? && dirty?
     end

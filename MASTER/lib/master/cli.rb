@@ -160,7 +160,7 @@ module Master
       lib_dir = File.join(@root, "lib")
       changed = changed_lib_files(lib_dir)
       result  = changed.any? ? scan_files(changed) : @scanner.scan_dir(lib_dir, depth: :standard)
-      return unless result.respond_to?(:ok?) && result.ok?
+      return unless result.is_a?(Master::Result::Ok)
 
       @violations = count_violations(result.value!)
       return if @violations.zero?
@@ -187,7 +187,7 @@ module Master
 
     def count_violations(pairs)
       pairs.sum do |_file, file_result|
-        file_result.respond_to?(:ok?) && file_result.ok? ? file_result.value!.size : 0
+        file_result.is_a?(Master::Result::Ok) ? file_result.value!.size : 0
       end
     end
 

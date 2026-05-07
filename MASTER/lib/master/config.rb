@@ -42,11 +42,11 @@ module Master
     def budget_max     = self['budget_max'].to_f
     def req_max        = self['req_max'].to_f
     def trace          = (ENV['MASTER_TRACE'] || self['trace']).to_i
-    def prescan?       = !!self['prescan']
-    def auto?          = !!self['auto']
+    def prescan?       = self['prescan'] == true
+    def auto?          = self['auto'] == true
     def reasoning_mode = self['reasoning_mode'].to_s
     def task_type      = self['task_type'].to_s
-    def auto_testing?  = !!self['auto_testing']
+    def auto_testing?  = self['auto_testing'] == true
 
     # Persist atomically; fsync ensures durability.
     def save!
@@ -84,8 +84,8 @@ module Master
       deep_dup(DEFAULTS)
     end
 
-    def deep_merge(a, b)
-      a.merge(b) do |_key, old_val, new_val|
+    def deep_merge(base, overlay)
+      base.merge(overlay) do |_key, old_val, new_val|
         old_val.is_a?(Hash) && new_val.is_a?(Hash) ? deep_merge(old_val, new_val) : new_val
       end
     end

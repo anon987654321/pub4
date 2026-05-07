@@ -1,42 +1,10 @@
 # frozen_string_literal: true
 
-require "ruby_llm"
-require "digest"
+require_relative "agent/llm_dispatcher"
 
 module Master
   class Agent
     DEFAULT_MESSAGE_WINDOW_SIZE = 16
-    COST_PER_TOKEN              = 0.000_015
-    CACHE_WINDOW                = 4
-    VISITOR_ALLOWED_TOOLS       = %w[AskLlm WebSearch].freeze
-
-    def self.build_tool_capable_re
-      yml_path = File.join(Master::ROOT, "data", "models.yml")
-      prefixes = Master.load_yaml(yml_path).fetch("tool_capable_prefixes", [])
-      escaped = prefixes.map { |p| Regexp.escape(p) }
-      Regexp.new("\\A(?:#{escaped.join("|")})(?:[:\\/@\\-.].+)?\\z", Regexp::IGNORECASE).freeze
-    end
-
-    TOOL_CAPABLE_RE   = build_tool_capable_re.freeze
-    NEMOTRON3_RE      = /nemotron-3/i.freeze
-    LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
-
-    LLM_TOOL_MAP = {
-      Tools::ReadFile        => Tools::LLM::ReadFile,
-      Tools::WriteFile       => Tools::LLM::WriteFile,
-      Tools::StrReplace      => Tools::LLM::StrReplace,
-      Tools::ListDir         => Tools::LLM::ListDir,
-      Tools::SearchFiles     => Tools::LLM::SearchFiles,
-      Tools::Shell           => Tools::LLM::Shell,
-      Tools::WebSearch       => Tools::LLM::WebSearch,
-      Tools::AskLlm          => Tools::LLM::AskLlm,
-      Tools::GitContext      => Tools::LLM::GitContext,
-      Tools::AstEdit         => Tools::LLM::AstEdit,
-      Tools::SearchKnowledge => Tools::LLM::SearchKnowledge,
-      Tools::FeedbackRecord  => Tools::LLM::FeedbackRecord,
-      Tools::Postpro         => Tools::LLM::Postpro,
-      Tools::Repligen        => Tools::LLM::Repligen
-    }.freeze
 
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
                    event_bus: nil, model_router: nil, reasoning_modes: nil,
@@ -47,6 +15,10 @@ module Master
       @model_router, @reasoning_modes    = model_router, reasoning_modes
       @memory, @personality, @code_index = memory, personality, code_index
       @context_window, @homeostat        = context_window, homeostat
+      @dispatcher = LLMDispatcher.new(
+        config: @config, cache: @cache, circuit_breaker: @circuit_breaker,
+        tools: @tools, bus: @bus, system_prompt: -> { system_prompt }
+      )
     end
 
     def chat(message, stream: true, escalation_depth: 0, &blk)
@@ -60,7 +32,7 @@ module Master
       return rate_err if rate_err
 
       response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
-      return response if response.respond_to?(:err?) && response.err?
+      return response if response.is_a?(Master::Result::Err)
       response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
       text = response.to_s
@@ -86,13 +58,14 @@ module Master
     def ask(prompt, context: nil, operation: nil)
       messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
       selected_model = operation ? model_for(operation:) : routed_models.first
-      result = send_with_cache(selected_model, messages, stream: false)
-      raise result.message if result.respond_to?(:err?) && result.err?
+      result = @dispatcher.send_with_cache(selected_model, messages, stream: false)
+      raise result.message if result.is_a?(Master::Result::Err)
       result.to_s
     end
 
     def ask_once(prompt, system: nil, model: nil)
-      result = send_with_cache(model || self.model, [{ role: "user", content: prompt.to_s }], system:, stream: false)
+      messages = [{ role: "user", content: prompt.to_s }]
+      result   = @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false)
       result.ok? ? result.value!.to_s : ""
     end
 
@@ -149,24 +122,24 @@ module Master
 
     def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
       capable = select_capable_models(candidate_models)
-      return capable if capable.respond_to?(:err?) && capable.err?
+      return capable if capable.is_a?(Master::Result::Err)
 
       last_response = nil
       capable.each_with_index do |selected_model, index|
-        response = send_with_cache(
+        response = @dispatcher.send_with_cache(
           selected_model,
           context + [{ role: "user", content: prompt }],
           stream:, &blk
         )
         last_response = response
-        publish_llm_success(selected_model, response) if response.respond_to?(:ok?) && response.ok?
-        break response unless response.respond_to?(:err?) && response.err? && index < capable.length - 1
+        publish_llm_success(selected_model, response) if response.is_a?(Master::Result::Ok)
+        break response unless response.is_a?(Master::Result::Err) && index < capable.length - 1
       end
       last_response
     end
 
     def select_capable_models(candidates)
-      capable = candidates.select { |m| claude_cli_model?(m) || tool_capable?(m) }
+      capable = candidates.select { |m| @dispatcher.claude_cli_model?(m) || @dispatcher.tool_capable?(m) }
       return Result.err("no tool-capable model available", category: :validation) if capable.empty?
       capable
     end
@@ -192,74 +165,7 @@ module Master
         original_message, stream: stream,
         escalation_depth: escalation_depth + 1, &blk
       )
-      escalated.respond_to?(:err?) && escalated.err? ? last_response : escalated
-    end
-
-    def send_with_cache(selected_model, messages, system: nil, stream: false, &blk)
-      cache_key = cache_key_for(messages.last[:content], messages[0...-1])
-      breaker_for(selected_model).call(estimate_cost(messages.last[:content])) {
-        @cache.fetch(cache_key, selected_model) {
-          send_llm_request(selected_model, messages, system: system, stream: stream, &blk)
-        }
-      }
-    rescue CircuitBreaker::CircuitError => err
-      Result.err(err.message, category: err.category)
-    rescue StandardError => err
-      Result.err("llm_request: #{err.message}", category: :llm_call_failure)
-    end
-
-    def send_llm_request(selected_model, messages, system: nil, stream: false, &blk)
-      if claude_cli_model?(selected_model)
-        return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys: system || system_prompt)
-      end
-      if web_chat_model?(selected_model)
-        return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys: system || system_prompt)
-      end
-      send_ruby_llm(selected_model, messages, sys: system || system_prompt, stream:, &blk)
-    end
-
-    def send_claude_cli(model_alias, messages, sys:)
-      require "open3"
-      args = ["claude", "--print", "--model", model_alias]
-      args += ["--system-prompt", sys] if sys && !sys.empty?
-      out, err, status = Open3.capture3(*args, stdin_data: text_prompt_for(messages))
-      return Result.err("claude-cli: #{err.strip}", category: :provider_error) unless status.success?
-      Result.ok(out.strip)
-    rescue StandardError => e
-      Result.err("claude-cli: #{e.message}", category: :provider_error)
-    end
-
-    def send_web_chat(provider, messages, sys:)
-      Result.ok(WebChat.call(provider: provider, prompt: text_prompt_for(messages), system: sys))
-    rescue StandardError => e
-      Result.err("web-chat: #{e.message}", category: :provider_error)
-    end
-
-    def text_prompt_for(messages)
-      prompt  = messages.last[:content].to_s
-      context = messages[0...-1].map { |m| "#{m[:role]}: #{m[:content]}" }.join("\n\n")
-      context.empty? ? prompt : "#{context}\n\nuser: #{prompt}"
-    end
-
-    def send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
-      chat_session = RubyLLM.chat(model: selected_model)
-      final_sys = nemotron_system_prompt(selected_model, sys)
-      chat_session.with_instructions(final_sys) if final_sys
-      messages.each { |msg|
-        chat_session.add_message(role: msg[:role].to_s, content: msg[:content].to_s)
-      }
-
-      available_tools = llm_tools(selected_model)
-      chat_session.with_tools(*available_tools) unless available_tools.empty?
-
-      reply = if stream && blk
-        chat_session.ask(messages.last[:content]) { |chunk|
-          blk.call(chunk.content.to_s) if chunk.content
-        }
-      else
-        chat_session.ask(messages.last[:content])
-      end
-      Result.ok(extract_response(reply, selected_model))
+      escalated.is_a?(Master::Result::Err) ? last_response : escalated
     end
 
     def routed_models
@@ -268,65 +174,6 @@ module Master
     rescue StandardError => e
       @bus&.publish("llm:route_error", error: e.message)
       [@config.model]
-    end
-
-    def breaker_for(model_id)
-      @circuit_breaker.respond_to?(:for) ? @circuit_breaker.for(model_id) : @circuit_breaker
-    end
-
-    def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
-    def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
-
-    def tool_capable?(model_id)
-      TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
-    end
-
-    def extract_response(reply, selected_model)
-      return reply.to_s unless reply.respond_to?(:content)
-      if NEMOTRON3_RE.match?(selected_model) && reply.respond_to?(:reasoning_content)
-        thinking = reply.reasoning_content.to_s.strip
-        content = reply.content.to_s
-        return thinking.empty? ? content : "#{content}\n\n<think>\n#{thinking}\n</think>"
-      end
-      reply.content.to_s
-    end
-
-    def nemotron_system_prompt(selected_model, base = nil)
-      sys = base || system_prompt
-      return sys unless LLAMA_NEMOTRON_RE.match?(selected_model)
-      thinking_on = @config["reasoning_mode"] != "none"
-      directive = thinking_on ? "detailed thinking on" : "detailed thinking off"
-      [directive, sys].compact.join("\n\n")
-    end
-
-    def cache_key_for(message, context)
-      return Digest::SHA256.hexdigest(message) if context.empty?
-      window = context.last(CACHE_WINDOW).map { |msg|
-        "#{msg[:role]}:#{msg[:content]}"
-      }.join("\n")
-      Digest::SHA256.hexdigest("#{message}\n#{window}")
-    end
-
-    def estimate_cost(prompt)
-      (prompt.bytesize / Session::TOKENS_PER_CHAR) * COST_PER_TOKEN
-    end
-
-    def llm_tools(selected_model = model)
-      return [] unless tool_capable?(selected_model)
-      return build_llm_tools(visitor: true) if Thread.current[:master_visitor]
-      @llm_tools ||= build_llm_tools
-    end
-
-    def build_llm_tools(visitor: false)
-      @tools.filter_map do |tool|
-        wrapper = LLM_TOOL_MAP[tool.class]
-        next nil unless wrapper
-        next nil if visitor && !VISITOR_ALLOWED_TOOLS.include?(tool.class.name.split("::").last)
-        wrapper.new(tool)
-      end
-    rescue StandardError => err
-      @bus&.publish("agent:llm_tools_error", error: err.message)
-      []
     end
   end
 end

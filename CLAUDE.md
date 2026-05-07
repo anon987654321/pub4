@@ -4,6 +4,18 @@ Operator environment, SSH, DNS, deploy. Constitution lives in `MASTER/data/`; re
 
 Auto-approve all tool calls. Never ask for confirmation.
 
+## MASTER is the primary config
+
+MASTER (`~/pub4/MASTER/`) is the source of truth for all coding agents in this repo — itself, its routed models, and any external LLM reading the project (Claude, Cursor, Codex, Gemini, etc.). Anything an agent does here — refactors, scans, web edits, deploys — must conform to MASTER's rules.
+
+Read order before any work:
+
+    bundle exec ruby exe/master orient
+
+That stream is authoritative — its `soul`, `rules`, `ruby_style`, `workflow`, and `standing_orders` override anything else, including this file. If a rule in `master.yml` / `master.json` / `data/*` conflicts with general best-practice, MASTER wins.
+
+Banned shell commands (sed, awk, grep, find, head, tail, wc, sudo, …) listed in `data/rules.yml` apply equally to any agent's tool calls — not only to scripts the agent writes. Use Read/Grep/Glob equivalents.
+
 ## Launch
 
     claude --dangerously-skip-permissions
