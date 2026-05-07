@@ -88,7 +88,7 @@ module Master
       axioms       = Axioms.new(root:)
       deliberation = Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus], axioms:)
       ideation     = Council::Ideation.new(agent:, event_bus: infra[:bus])
-      [deliberation, Stages::Council.new(deliberation:, config: infra[:config]), ideation]
+      [deliberation, Stages::Council.new(deliberation:, config: infra[:config], event_bus: infra[:bus]), ideation]
     end
 
     def build_agent_instance(root, infra)
