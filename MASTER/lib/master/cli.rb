@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "cli/tts"
 require_relative "cli/signals"
 
 require "open3"
@@ -28,7 +27,6 @@ module Master
       @running         = false
       @interrupt_at    = Time.now
       @last_ok         = true
-      @tts_on          = Speech.available? && @config["tts"] != false
       @violations      = 0
       @bg_thread       = nil
       @seen_violations = {}
@@ -240,17 +238,15 @@ module Master
       end
     end
 
-    def display_ok(ok, accumulated, streamed)
+    def display_ok(ok, _accumulated, streamed)
       if streamed
         puts
-        speak_async(accumulated) if @tts_on
       else
         print "\r\e[K" if $stdout.isatty
         value    = ok.value
         rendered = value.is_a?(Hash) ? value[:rendered] : nil
         text     = rendered || value.to_s
         puts text
-        speak_async(text) if @tts_on
       end
     end
   end

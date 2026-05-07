@@ -48,7 +48,6 @@ module Master
     autoloop/fix_evaluator.rb
     builder/infra_helpers.rb
     cli/signals.rb
-    cli/tts.rb
     command_registry/agent_commands.rb
     command_registry/memory_commands.rb
     command_registry/service_commands.rb
