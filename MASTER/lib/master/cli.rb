@@ -63,12 +63,14 @@ module Master
       result = @pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
       display_result(result, accumulated, state[:streamed])
     ensure
+      stop_thinking_indicator
       @user_active = false
     end
 
     def stream_chunk_handler(accumulated, state)
       chunk_accumulator(accumulated) do |text|
         if state[:thinking_shown] && $stdout.isatty
+          stop_thinking_indicator
           print "\r\e[K"
           state[:thinking_shown] = false
         end
@@ -219,13 +221,28 @@ module Master
       end
     end
 
+    SPIN_FRAMES = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
+    SPIN_INTERVAL = 0.25
+
     def print_thinking_indicator
       return unless $stdout.isatty
 
-      print @renderer.render("thinking...", mode: :dim)
-      $stdout.flush
-    rescue StandardError => _e
-      print "thinking..."
+      @spin_thread = Thread.new do
+        i = 0
+        loop do
+          print "\r\e[K#{@renderer.render("#{SPIN_FRAMES[i % SPIN_FRAMES.size]} thinking", mode: :dim)}"
+          $stdout.flush
+          sleep SPIN_INTERVAL
+          i += 1
+        end
+      rescue StandardError => _e
+        nil
+      end
+    end
+
+    def stop_thinking_indicator
+      @spin_thread&.kill
+      @spin_thread = nil
     end
 
     def display_result(result, accumulated, streamed)
