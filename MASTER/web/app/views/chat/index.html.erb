@@ -1331,7 +1331,8 @@ if (window.DeviceMotionEvent) {
 
     // Server TTS voices + styles (Edge-TTS, mirror lib/master/speech.rb).
     const VOICES=['yasmin','ryan','steffan','finn','osman'];
-    const STYLES=['natural','normal','slow','heavy','deep'];
+    // P4: 'auto' lets server pick per-clause prosody (question/exclaim/grave/whisper).
+    const STYLES=['auto','natural','normal','slow','heavy','deep'];
     let voiceIdx=0, styleIdx=0;
 
     const showFxMode=()=>{
