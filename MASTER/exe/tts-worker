@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+#
+# TTS subprocess — runs EventMachine in isolation from Falcon's Async fiber
+# scheduler. Reads text from stdin, writes audio to argv[3].
+#
+# Usage: tts-worker VOICE RATE PITCH OUT_PATH < text
+
+require "bundler/setup"
+require "rb_edge_tts"
+require "faye/websocket"
+
+# rb-edge-tts hardcodes verify_peer:true + ca_file:, but EM 1.2.7 ignores ca_file.
+# Strip verification so the connection negotiates at all.
+Faye::WebSocket::Client.singleton_class.prepend(Module.new do
+  def new(url, protocols = [], options = {})
+    super(url, protocols, options.merge(tls: { verify_peer: false }))
+  end
+end)
+
+voice, rate, pitch, out_path = ARGV
+text = $stdin.read
+
+begin
+  RbEdgeTTS::Communicate.new(text, voice, rate: rate, pitch: pitch).save_sync(out_path)
+  exit(File.exist?(out_path) && File.size(out_path) > 0 ? 0 : 1)
+rescue StandardError => e
+  warn "tts-worker: #{e.class}: #{e.message}"
+  exit 1
+end

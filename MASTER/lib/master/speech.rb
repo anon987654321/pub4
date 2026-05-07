@@ -2,15 +2,17 @@
 
 require "securerandom"
 require "fileutils"
+require "open3"
 
 module Master
   module Speech
-    EDGE_TTS = %w[/home/dev/.local/bin/edge-tts /usr/local/bin/edge-tts].find { |p| File.executable?(p) }
+    WORKER   = File.expand_path("../../exe/tts-worker", __dir__)
+    EDGE_TTS = File.executable?(WORKER)
     ESPEAK   = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
 
     VOICES = {
       osman:   "ms-MY-OsmanNeural",
-      yasmin:  "en-MY-YasminNeural",
+      yasmin:  "ms-MY-YasminNeural",
       ryan:    "en-GB-RyanNeural",
       finn:    "nb-NO-FinnNeural",
       steffan: "en-US-SteffanNeural"
@@ -92,22 +94,21 @@ module Master
 
     module_function
 
+    # Shells out to exe/tts-worker — Falcon's Async scheduler blocks Process.fork
+    # ("Closing scheduler with blocked operations"), and EventMachine.run inside a
+    # request fiber conflicts with Falcon's reactor. A subprocess sidesteps both.
     def synthesize_edge(text, voice:, style:)
       audio_path   = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
       voice_name   = VOICES.fetch(voice.to_sym, VOICES[DEFAULT_VOICE])
       style_config = STYLES.fetch(style.to_sym, STYLES[DEFAULT_STYLE])
 
-      ok = system(
-        EDGE_TTS,
-        "--voice", voice_name,
-        "--rate=#{style_config[:rate]}",
-        "--pitch=#{style_config[:pitch]}",
-        "--text", text.to_s,
-        "--write-media", audio_path,
-        out: File::NULL, err: File::NULL
+      _out, _err, status = Open3.capture3(
+        WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
+        stdin_data: text.to_s
       )
+      return nil unless status.success?
 
-      (ok && File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
+      (File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
     end
 
     def synthesize_espeak(text)

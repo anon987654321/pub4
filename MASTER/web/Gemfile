@@ -19,3 +19,6 @@ group :development, :test do
 end
 
 gem "master", path: ".."
+
+# Pure-Ruby Edge TTS (replaces python edge-tts CLI)
+gem "rb-edge-tts", git: "https://github.com/ZPVIP/rb-edge-tts"
