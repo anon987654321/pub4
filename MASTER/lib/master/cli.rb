@@ -37,6 +37,7 @@ module Master
       setup_signals
       @session.load! if @session.exists?
       start_background_loop
+      first_boot_bar
       puts @renderer.splash(@agent.model)
       puts @renderer.session_line(@session.name) if @session.name
       process(initial_message) if initial_message
@@ -246,6 +247,27 @@ module Master
     def stop_thinking_indicator
       @spin_thread&.kill
       @spin_thread = nil
+    end
+
+    INIT_FRAMES = 20
+    INIT_FRAME_MS = 0.04
+
+    def first_boot_bar
+      return unless $stdout.isatty
+      flag = File.join(@root, ".master", "booted_once")
+      return if File.exist?(flag)
+      INIT_FRAMES.times do |i|
+        bar = ("\u25B0" * (i + 1)) + ("\u25B1" * (INIT_FRAMES - i - 1))
+        pct = ((i + 1) * 100 / INIT_FRAMES).to_s.rjust(3)
+        print "\rinit0: #{bar} #{pct}%"
+        $stdout.flush
+        sleep INIT_FRAME_MS
+      end
+      puts
+      FileUtils.mkdir_p(File.dirname(flag))
+      File.write(flag, Time.now.to_s)
+    rescue StandardError
+      nil
     end
 
     def display_result(result, accumulated, streamed)
