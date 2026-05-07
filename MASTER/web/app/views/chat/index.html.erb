@@ -1916,6 +1916,11 @@ recognition.onresult=(ev)=>{
             _spkBuf+=chunk;
             _msgEl.textContent=fullText;
             chatLog.scrollTop=chatLog.scrollHeight;
+            const _np=performance.now();
+            if(!window._lastPulseAt||_np-window._lastPulseAt>80){
+              swarmSignal('pulse',{x:160+(Math.random()-0.5)*80,y:100+(Math.random()-0.5)*60});
+              window._lastPulseAt=_np;
+            }
             _speakFlush(false);
           }
         }

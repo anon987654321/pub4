@@ -127,13 +127,15 @@ addEventListener('message', e => {
       mode = 'slow'; modeUntil = performance.now() + 3000; break;
     case 'density':
       Array.isArray(d.rects) ? paintRectsDensity(d.rects) : paintDefaultDensity(); break;
-    case 'pulse':
+    case 'pulse': {
+      const p = d.data || d;
       pulses.push({
-        x: typeof d.x === 'number' ? d.x : Math.random()*W,
-        y: typeof d.y === 'number' ? d.y : Math.random()*H,
+        x: typeof p.x === 'number' ? p.x : Math.random()*W,
+        y: typeof p.y === 'number' ? p.y : Math.random()*H,
         until: performance.now() + PULSE_MS
       });
       break;
+    }
   }
 });
 
