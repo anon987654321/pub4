@@ -1,11 +1,11 @@
 <% content_for :title, @post.title %>
-<article class="post">
+<article>
   <header>
     <h1><%= @post.title %></h1>
-    <span class="dim"><%= @post.user.email_address.split("@").first %> · <%= @post.published_at&.strftime("%b %-d, %Y") %> · <%= @post.views_count %> views</span>
+    <small><%= @post.user.email_address.split("@").first %> · <%= @post.published_at&.strftime("%b %-d, %Y") %> · <%= @post.views_count %> views</small>
     <% if @post.user == Current.user %>
-      <%= link_to "Edit", edit_blog_post_path(@blog, @post), class: "btn" %>
-      <%= button_to "Delete", blog_post_path(@blog, @post), method: :delete, data: { turbo_confirm: "Delete post?" }, class: "btn btn-danger" %>
+      <%= link_to "Edit", edit_blog_post_path(@blog, @post) %>
+      <%= button_to "Delete", blog_post_path(@blog, @post), method: :delete, data: { turbo_confirm: "Delete post?" } %>
     <% end %>
   </header>
   <%= @post.body %>
@@ -14,9 +14,9 @@
   <h2>Comments (<%= @post.comments_count %>)</h2>
   <%= render @comments %>
   <% if authenticated? %>
-    <%= form_with url: blog_post_comments_path(@blog, @post), class: "form" do |f| %>
-      <div class="field"><%= f.text_area :content, rows: 3, placeholder: "Add a comment…" %></div>
-      <div class="actions"><%= f.submit "Comment", class: "btn" %></div>
+    <%= form_with url: blog_post_comments_path(@blog, @post) do |f| %>
+      <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…" %></p>
+      <p><%= f.submit "Comment" %></p>
     <% end %>
   <% end %>
 </section>

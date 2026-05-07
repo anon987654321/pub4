@@ -24,8 +24,8 @@ module Master
       natural: { rate: "+8%",  pitch: "+20Hz"  }
     }.freeze
 
-    DEFAULT_VOICE = :osman
-    DEFAULT_STYLE = :slow
+    DEFAULT_VOICE = :yasmin
+    DEFAULT_STYLE = :natural
 
     PULSE_SOCKET     = "/tmp/pulse/native".freeze
     PULSE_DAEMON     = "/data/data/com.termux/files/usr/bin/pulseaudio".freeze

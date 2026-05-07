@@ -1,40 +1,38 @@
 <%= turbo_frame_tag dom_id(post) do %>
-<article class="post-card">
-  <div class="vote-col">
-    <% if authenticated? %>
-      <%= button_to "▲", post_vote_path(post), params: { vote: { value: 1 } },
-            class: "vote-btn #{"active-up" if post.upvoted_by?(Current.user)}" %>
-    <% else %>
-      <span class="vote-btn">▲</span>
-    <% end %>
-    <span class="vote-score" data-controller="animated-number"><%= post.score %></span>
-    <% if authenticated? %>
-      <%= button_to "▼", post_vote_path(post), params: { vote: { value: -1 } },
-            class: "vote-btn down #{"active-down" if post.downvoted_by?(Current.user)}" %>
-    <% else %>
-      <span class="vote-btn">▼</span>
-    <% end %>
-  </div>
+<article>
+  <% if authenticated? %>
+    <%= button_to "▲", post_vote_path(post), params: { vote: { value: 1 } },
+          class: ("active-up" if post.upvoted_by?(Current.user)) %>
+  <% else %>
+    <span>▲</span>
+  <% end %>
+  <span data-controller="animated-number"><%= post.score %></span>
+  <% if authenticated? %>
+    <%= button_to "▼", post_vote_path(post), params: { vote: { value: -1 } },
+          class: ("active-down" if post.downvoted_by?(Current.user)) %>
+  <% else %>
+    <span>▼</span>
+  <% end %>
 
-  <div class="post-body">
-    <div class="post-meta">
-      <% if post.community %>
-        <%= link_to post.community.name, community_path(post.community), class: "community" %>
-        <span>•</span>
-      <% end %>
-      posted by <span><%= post.author_name %></span>
-      <span>•</span>
-      <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %> ago</time>
-    </div>
-    <h2 class="post-title"><%= link_to post.title, post %></h2>
-    <div class="post-actions">
-      <%= link_to "#{post.comment_count} comments", post_path(post) %>
-      <%= button_to "share", "#", data: { controller: "clipboard", clipboard_source_value: post_url(post), action: "click->clipboard#copy" }, class: "vote-btn" %>
-      <% if authenticated? && post.user == Current.user %>
-        <%= link_to "edit",   edit_post_path(post) %>
-        <%= button_to "delete", post, method: :delete, data: { turbo_confirm: "Delete this post?" }, class: "vote-btn" %>
-      <% end %>
-    </div>
-  </div>
+  <header>
+    <% if post.community %>
+      <%= link_to post.community.name, community_path(post.community) %>
+      ·
+    <% end %>
+    posted by <span><%= post.author_name %></span>
+    ·
+    <time datetime="<%= post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(post.created_at) %> ago</time>
+  </header>
+
+  <h2><%= link_to post.title, post %></h2>
+
+  <footer>
+    <%= link_to "#{post.comment_count} comments", post_path(post) %>
+    <%= button_to "share", "#", data: { controller: "clipboard", clipboard_source_value: post_url(post), action: "click->clipboard#copy" } %>
+    <% if authenticated? && post.user == Current.user %>
+      <%= link_to "edit", edit_post_path(post) %>
+      <%= button_to "delete", post, method: :delete, data: { turbo_confirm: "Delete this post?" } %>
+    <% end %>
+  </footer>
 </article>
 <% end %>

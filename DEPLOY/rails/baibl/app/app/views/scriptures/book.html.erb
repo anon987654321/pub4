@@ -1,6 +1,6 @@
 <% content_for :title, @book.name %>
 <h1><%= @book.name %></h1>
-<nav class="chapter-nav">
+<nav>
   <% @chapters.each do |chapter| %>
     <%= link_to chapter.number, scripture_chapter_path(@book.abbreviation, chapter.number) %>
   <% end %>

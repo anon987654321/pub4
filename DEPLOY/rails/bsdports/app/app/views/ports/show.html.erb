@@ -1,53 +1,61 @@
 <% content_for :title, @port.name %>
-<article class="card">
+<article>
   <header>
-    <h1><%= @port.name %> <span class="badge badge-version"><%= @port.version %></span></h1>
-    <span class="dim"><%= link_to @port.category.name, category_path(@port.category) %></span>
+    <h1><%= @port.name %> <small><%= @port.version %></small></h1>
+    <small><%= link_to @port.category.name, category_path(@port.category) %></small>
   </header>
   <p><%= @port.comment %></p>
   <p><%= @port.description %></p>
-  <dl class="meta">
+  <dl>
     <dt>Maintainer</dt><dd><%= @port.maintainer %></dd>
     <dt>Pkgpath</dt><dd><code><%= @port.pkgpath %></code></dd>
     <% if @port.homepage.present? %><dt>Homepage</dt><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
     <dt>Updated</dt><dd><%= @port.last_updated&.strftime("%Y-%m-%d") %></dd>
   </dl>
+
   <% if @dependencies.any? %>
     <h2>Dependencies</h2>
-    <% @dependencies.each do |dep| %>
-      <div class="port-row">
-        <%= link_to dep.depends_on.name, port_path(dep.depends_on), class: "port-name" %>
-        <span class="badge badge-category"><%= dep.dep_type %></span>
-      </div>
-    <% end %>
+    <ul>
+      <% @dependencies.each do |dep| %>
+        <li>
+          <%= link_to dep.depends_on.name, port_path(dep.depends_on) %>
+          <small><%= dep.dep_type %></small>
+        </li>
+      <% end %>
+    </ul>
   <% end %>
+
   <% if @updates.any? %>
     <h2>Version history</h2>
-    <% @updates.each do |update| %>
-      <div class="port-row">
-        <span class="badge badge-version"><%= update.old_version %> → <%= update.new_version %></span>
-        <span class="port-comment"><%= update.commit_message %></span>
-        <span class="dim"><%= update.committed_at&.strftime("%Y-%m-%d") %></span>
-      </div>
-    <% end %>
+    <ul>
+      <% @updates.each do |update| %>
+        <li>
+          <small><%= update.old_version %> → <%= update.new_version %></small>
+          <small><%= update.commit_message %></small>
+          <small><%= update.committed_at&.strftime("%Y-%m-%d") %></small>
+        </li>
+      <% end %>
+    </ul>
   <% end %>
+
   <nav>
     <% if authenticated? %>
       <% if @watching %>
-        <%= button_to "Unwatch", unwatch_port_path(@port), method: :delete, class: "btn btn-primary" %>
+        <%= button_to "Unwatch", unwatch_port_path(@port), method: :delete %>
       <% else %>
-        <%= button_to "Watch", watch_port_path(@port), method: :post, class: "btn btn-primary" %>
+        <%= button_to "Watch", watch_port_path(@port), method: :post %>
       <% end %>
     <% end %>
   </nav>
 </article>
-<section class="card" id="comments">
+
+<section id="comments">
   <h2>Comments</h2>
   <%= render @comments %>
   <% if authenticated? %>
-    <%= form_with url: port_comments_path(@port), class: "form" do |f| %>
-      <div class="field"><%= f.text_area :content, rows: 3, placeholder: "Add a comment…" %></div>
-      <div class="actions"><%= f.submit "Comment", class: "btn btn-primary" %></div>
+    <%= form_with url: port_comments_path(@port) do |f| %>
+      <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…" %></p>
+      <p><%= f.submit "Comment" %></p>
     <% end %>
   <% end %>
 </section>

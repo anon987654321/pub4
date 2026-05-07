@@ -516,7 +516,121 @@ if (window.DeviceMotionEvent) {
       return false;
     };
     // Sentence queue for server TTS — prevents overlapping BufferSource playback.
-    const _ttsQueue=[]; let _ttsBusy=false;
+    const _ttsQueue=[]; let _ttsBusy=false; let _ttsCurrent=null;
+
+    // P5: affect tag → voice/style swap. Stream may emit `[mood:calm]`, `[mood:urgent]` etc.
+    const AFFECT_MAP={
+      calm:    {voice:'yasmin', style:'slow'},
+      urgent:  {voice:'steffan',style:'normal'},
+      playful: {voice:'yasmin', style:'natural'},
+      sober:   {voice:'ryan',   style:'slow'},
+      warm:    {voice:'yasmin', style:'natural'},
+      grim:    {voice:'osman',  style:'deep'}
+    };
+    const _extractAffect=(s)=>{
+      return String(s||'').replace(/\[mood:([a-z]+)\]/gi,(_,k)=>{
+        const a=AFFECT_MAP[k.toLowerCase()];
+        if(a){
+          const vi=VOICES.indexOf(a.voice); if(vi>=0) voiceIdx=vi;
+          const si=STYLES.indexOf(a.style); if(si>=0) styleIdx=si;
+        }
+        return '';
+      }).replace(/\s{2,}/g,' ').trim();
+    };
+
+    // SI2: mood vector — accumulates from user messages. Decays each turn.
+    // {valence: -1..1, arousal: 0..1, formality: 0..1}
+    const mood={valence:0, arousal:0.3, formality:0.5, profanity:0, updated:Date.now()};
+    const POS_RX=/\b(thanks|nice|great|love|good|cool|amazing|perfect|yes!|yay|haha|lol|👍|♥)\b/i;
+    const NEG_RX=/\b(ugh|fuck|shit|damn|broken|stuck|frustrated|tired of|hate|stupid|wtf|annoying|bullshit)\b/i;
+    const URGENT_RX=/(!{2,}|now|asap|urgent|hurry|right now|immediately|stop)/i;
+    const FORMAL_RX=/\b(please|kindly|would you|could you|thank you)\b/i;
+    const PROFAN_RX=/\b(fuck|shit|damn|bullshit|wtf|crap)\b/i;
+    const REPAIR_RX=/^(no[.,!\s]|not what|i meant|that('?s| is) not|wrong|let me rephrase)/i;
+    const IMPLICIT_RX=/\b(ugh|keep getting|tired of|always|every time|won'?t work|broken again)\b/i;
+    const decayMood=()=>{
+      const dt=(Date.now()-mood.updated)/60000; // minutes
+      const k=Math.exp(-dt*0.4); // half-life ~1.7 min
+      mood.valence  *=k; mood.arousal*=k; mood.profanity*=k;
+      mood.updated=Date.now();
+    };
+    const updateMood=(text)=>{
+      decayMood();
+      const t=String(text||''); const len=t.length;
+      const longSentence=len>140;
+      if(POS_RX.test(t))      mood.valence=Math.min(1, mood.valence+0.35);
+      if(NEG_RX.test(t))      mood.valence=Math.max(-1,mood.valence-0.45);
+      if(URGENT_RX.test(t))   mood.arousal=Math.min(1, mood.arousal+0.4);
+      if(FORMAL_RX.test(t))   mood.formality=Math.min(1,mood.formality*0.8+0.25);
+      else                    mood.formality=Math.max(0,mood.formality*0.92);
+      if(PROFAN_RX.test(t))   mood.profanity=Math.min(1, mood.profanity+0.4);
+      if(longSentence)        mood.arousal=Math.max(0, mood.arousal-0.05);
+      mood.updated=Date.now();
+    };
+    // Send mood snapshot to server as part of /chat/message — server prompt uses it.
+    const moodSnapshot=()=>({
+      valence:Number(mood.valence.toFixed(2)),
+      arousal:Number(mood.arousal.toFixed(2)),
+      formality:Number(mood.formality.toFixed(2)),
+      profanity:Number(mood.profanity.toFixed(2))
+    });
+
+    // P3: barge-in — when speaking, listen to mic energy via mediaStreamSource → cut TTS on speech.
+    let _bargeStream=null, _bargeAnalyser=null, _bargeData=null, _bargeTimer=null;
+    const _bargeStart=async()=>{
+      if(_bargeAnalyser||!audioCtx) return;
+      try{
+        _bargeStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+        const src=audioCtx.createMediaStreamSource(_bargeStream);
+        _bargeAnalyser=audioCtx.createAnalyser();
+        _bargeAnalyser.fftSize=512;
+        _bargeData=new Uint8Array(_bargeAnalyser.fftSize);
+        src.connect(_bargeAnalyser);
+      }catch(_){ _bargeAnalyser=null; }
+    };
+    const _bargePoll=()=>{
+      if(!_bargeAnalyser) return;
+      _bargeAnalyser.getByteTimeDomainData(_bargeData);
+      let sum=0; for(let i=0;i<_bargeData.length;i++){const v=(_bargeData[i]-128)/128;sum+=v*v;}
+      const rms=Math.sqrt(sum/_bargeData.length);
+      // Threshold tuned for speech; ignores ambient room noise.
+      if(rms>0.10&&isSpeaking){ _ttsCancel(); }
+    };
+    const _ttsCancel=()=>{
+      try{ if(_ttsCurrent){_ttsCurrent.onended=null; _ttsCurrent.stop(); _ttsCurrent.disconnect&&_ttsCurrent.disconnect();} }catch(_){}
+      _ttsCurrent=null; _ttsQueue.length=0; _ttsBusy=false;
+      try{ if('speechSynthesis' in window) window.speechSynthesis.cancel(); }catch(_){}
+      isSpeaking=false; statusEl.classList.remove('speak'); unduckPads();
+    };
+
+    // P10: swarm bridge — forward LLM/tool/confidence signals into the swarm iframe.
+    const _swarm=()=>document.getElementById('swarm-iframe');
+    const swarmSignal=(type,data)=>{
+      const f=_swarm(); if(!f||!f.contentWindow) return;
+      try{ f.contentWindow.postMessage({type,data:data||{}},'*'); }catch(_){}
+    };
+
+    // P9: voice confirmation gate. Server may add `[confirm:tool_name]` to a reply that needs
+    // an explicit yes/no before tool runs. Stash and listen for next user transcript.
+    let _pendingConfirm=null; // {tool, expires}
+    const _CONFIRM_RX=/\[confirm:([\w:.\-]+)\]/i;
+    const _consumeConfirm=(s)=>{
+      const m=s.match(_CONFIRM_RX);
+      if(m){ _pendingConfirm={tool:m[1], expires:Date.now()+15000}; }
+      return s.replace(_CONFIRM_RX,'').trim();
+    };
+    const _checkConfirmReply=(t)=>{
+      if(!_pendingConfirm||_pendingConfirm.expires<Date.now()){_pendingConfirm=null;return null;}
+      if(/^\s*(yes|yeah|yep|do it|go|sure|confirm|ok|okay)\b/i.test(t)){
+        const tool=_pendingConfirm.tool; _pendingConfirm=null;
+        return {ok:true,tool};
+      }
+      if(/^\s*(no|nope|cancel|stop|nevermind|don'?t)\b/i.test(t)){
+        const tool=_pendingConfirm.tool; _pendingConfirm=null;
+        return {ok:false,tool};
+      }
+      return null;
+    };
     let recognition=null;
     let recognitionActive=false;
     let isSpeaking=false;
@@ -1523,7 +1637,7 @@ if(mode==='void'){
       _ttsRemember(text);
       const u=new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g,'').substring(0,500));
       u.lang='ms-MY'; u.rate=0.96; u.pitch=1.02; u.volume=1.0;
-      u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');duckPads();if(padModulate)padModulate('speak');if(recognition&&recognitionActive)try{recognition.stop();}catch(_e){}};
+      u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');duckPads();if(padModulate)padModulate('speak');};
       u.onend=()=>{unduckPads();_onSpeakEnd();}; u.onerror=()=>{unduckPads();_onSpeakEnd();};
       // Always speak synchronously — must stay inside gesture call stack on mobile.
       // _cachedVoices is populated eagerly at page load and kept fresh via voiceschanged.
@@ -1564,13 +1678,15 @@ if(mode==='void'){
         const src=audioCtx.createBufferSource();
         src.buffer=decoded;
         buildFxChain(src);
+        _ttsCurrent=src; // P3 barge-in handle
         isSpeaking=true; speechPulse=0.6;
         duckPads();
         if(padModulate) padModulate('speak');
         statusEl.classList.remove('think');
         statusEl.classList.add('speak');
-        if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
-        src.onended=()=>{ _ttsBusy=false; _onSpeakEnd(); _ttsDrain(); };
+        // P3: do NOT stop recognition during TTS — we want barge-in. Recognition.onresult
+        // already filters echo via _ttsEchoes(), so leaving the mic open is safe.
+        src.onended=()=>{ _ttsCurrent=null; _ttsBusy=false; _onSpeakEnd(); _ttsDrain(); };
         src.start();
       }catch(_e){ _ttsBusy=false; speakBrowser(text); _ttsDrain(); }
     };
@@ -1635,6 +1751,9 @@ recognition.onresult=(ev)=>{
           return;
         }
         uiLabel.textContent=finalText.slice(0,60);
+        // P9: short-circuit yes/no answers to a pending confirmation — server expects them too,
+        // but we mark mood arousal so the visual reflects the user's commitment.
+        if(_pendingConfirm) mood.arousal=Math.min(1,mood.arousal+0.2);
         transmit(finalText);
       };
     };
@@ -1746,6 +1865,14 @@ recognition.onresult=(ev)=>{
     });
 
     const transmit=async(message)=>{
+      // SI3: conversation-repair flag — server sees this and rephrases, doesn't repeat.
+      const isRepair=REPAIR_RX.test(message);
+      // SI9: implicit-ask flag — server should offer help, not just acknowledge.
+      const implicitAsk=IMPLICIT_RX.test(message);
+      // SI2: update mood vector and snapshot for server.
+      updateMood(message);
+      // P9: did the user just answer a pending confirmation prompt?
+      const confirmReply=_checkConfirmReply(message);
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
       isProcessing=true;
       if(padModulate) padModulate('think');
@@ -1759,7 +1886,14 @@ recognition.onresult=(ev)=>{
         n.vz+=(Math.random()-0.5)*100;
       }
       try{
-        const payload={message};
+        const payload={
+          message,
+          mood:moodSnapshot(),
+          repair:isRepair||undefined,
+          implicit_ask:implicitAsk||undefined,
+          confirm:confirmReply||undefined,
+          user_name:(localStorage.getItem('pref_user_name')||undefined)
+        };
         if(pendingFile){
           const b64=await new Promise((res,rej)=>{
             const fr=new FileReader();
@@ -1792,14 +1926,24 @@ recognition.onresult=(ev)=>{
         const reader=resp.body.getReader();
         const dec=new TextDecoder();
         let buf='';let fullText='';let _spkBuf='';
-        // Progressive TTS: speak each sentence as it completes
+        // P1: Progressive TTS — flush at clause boundaries (,;:.!?) once we have ~12+ chars,
+        // so the first words land before the full sentence is generated.
+        const _CLAUSE_RE=/^([\s\S]+?[.!?\u2026,;:](?:\s|$))([\s\S]*)$/;
         const _speakFlush=(force)=>{
           let m;
-          while((m=_spkBuf.match(/^([\s\S]+?[.!?\u2026](?:\s|$))([\s\S]*)$/))){
-            const s=m[1].trim();_spkBuf=m[2];
-            if(s.length>3) speakWithAudio(s);
+          while((m=_spkBuf.match(_CLAUSE_RE))){
+            const s=m[1].trim();
+            if(s.length<12&&!force&&!/[.!?\u2026]$/.test(s)) break; // wait for more text
+            _spkBuf=m[2];
+            // P5: pluck [mood:X] affect tags out of the spoken stream and swap voice/style.
+            const cleaned=_extractAffect(s);
+            if(cleaned.length>3) speakWithAudio(cleaned);
           }
-          if(force&&_spkBuf.trim().length>3){speakBrowser(_spkBuf.trim());_spkBuf='';}
+          if(force&&_spkBuf.trim().length>3){
+            const cleaned=_extractAffect(_spkBuf.trim());
+            if(cleaned) speakBrowser(cleaned);
+            _spkBuf='';
+          }
         };
         while(true){
           const{value,done}=await reader.read();
@@ -1826,9 +1970,13 @@ recognition.onresult=(ev)=>{
           }
         }
         _speakFlush(true);
-        // Final: render markdown, persist
-        const reply=fullText.trim();
+        // Final: render markdown, persist. Strip [confirm:tool] before render.
+        const reply=_consumeConfirm(fullText.trim());
         _msgEl.innerHTML=renderMd(reply);
+        if(_pendingConfirm){
+          uiLabel.textContent='Awaiting yes/no for '+_pendingConfirm.tool;
+          swarmSignal('confirm:pending',{tool:_pendingConfirm.tool});
+        }
         chatLog.scrollTop=chatLog.scrollHeight;
         try{
           const stored=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
@@ -2257,6 +2405,7 @@ const AMBIENT=[
         try{refreshMetrics();setInterval(refreshMetrics,30000);}catch(_){}
         // Delay AudioContext init until after speech has had time to start.
         setTimeout(()=>{ try{initAudio();}catch(_){} },2000);
+        setTimeout(()=>{ try{_bargeStart();}catch(_){} },2200); // P3
         setTimeout(()=>{
           overlay.hidden=true;
           _overlayJustDismissed=true;
@@ -2331,6 +2480,7 @@ const AMBIENT=[
       if(canvas.hidden) return;
       t+=0.016;
       speechPulse*=0.92;
+      _bargePoll(); // P3: cancel TTS on user voice during speech
       if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
 
       // Cinematic camera drift — slow, organic
@@ -2490,10 +2640,12 @@ const AMBIENT=[
         if(t==='llm:request'){
           speechPulse=Math.max(speechPulse,0.55);
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.3,a:0.45,col:'#6a1a1a'});
+          swarmSignal('morph',{shape:'sphere'});
         }else if(t==='llm:escalation'){
           setOrb((currentOrb+1)%orbStates.length);
         }else if(t==='tool:used'||t==='tool:before'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.2,a:0.3,col:'#2a1a04'});
+          swarmSignal('tool',{name:(ev.data||{}).tool||''});
         }else if(t==='pipeline:rollback'){
           speechPulse=0.9;
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.5,a:0.7,col:'#cc1010'});
@@ -2501,6 +2653,14 @@ const AMBIENT=[
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.15,a:0.2,col:'#3d1a04'});
         }else if(t==='speak:text'){
           speakWithAudio((ev.data||{}).text||'');
+        }else if(t==='speak:backchannel'){
+          // P2: tiny vocal grunt — non-blocking, ducks pads briefly.
+          const phrases=['mm','right','go on','yeah','uh-huh','ok'];
+          speakBrowser(phrases[Math.floor(Math.random()*phrases.length)]);
+        }else if(t==='llm:confidence'){
+          // P10: pulse swarm with model confidence (0..1).
+          const c=Number((ev.data||{}).c||0.5);
+          swarmSignal('confidence',{c});
         }else if(t==='scan:complete'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.25,a:0.35,col:'#1a3a1a'});
         }

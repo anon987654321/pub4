@@ -2,25 +2,25 @@
 <h1>Upload video</h1>
 <%= form_with model: @video, url: tv_videos_path, multipart: true do |f| %>
   <%= render "shared/errors", object: @video %>
-  <div class="field">
+  <p>
     <%= f.label :tv_channel_id, "Channel" %>
     <%= f.collection_select :tv_channel_id, Current.user.tv_channels.order(:name), :id, :name, include_blank: false %>
-  </div>
-  <div class="field">
+  </p>
+  <p>
     <%= f.label :title %>
     <%= f.text_field :title, required: true %>
-  </div>
-  <div class="field">
+  </p>
+  <p>
     <%= f.label :description %>
     <%= f.text_area :description, rows: 4 %>
-  </div>
-  <div class="field">
+  </p>
+  <p>
     <%= f.label :video_file %>
     <%= f.file_field :video_file, accept: "video/*", required: true %>
-  </div>
-  <div class="field">
+  </p>
+  <p>
     <%= f.label :thumbnail %>
     <%= f.file_field :thumbnail, accept: "image/*" %>
-  </div>
-  <div class="actions"><%= f.submit "Upload", class: "btn btn--primary" %></div>
+  </p>
+  <p><%= f.submit "Upload" %></p>
 <% end %>

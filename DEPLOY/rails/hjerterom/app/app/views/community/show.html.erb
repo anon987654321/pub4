@@ -1,17 +1,17 @@
 <% content_for :title, @post.title %>
-<article class="card post">
+<article>
   <h1><%= @post.title %></h1>
-  <span class="dim"><%= @post.anonymous? ? "Anonymous" : @post.user.email_address.split("@").first %></span>
+  <small><%= @post.anonymous? ? "Anonymous" : @post.user.email_address.split("@").first %></small>
   <%= @post.body %>
 </article>
 <section id="comments">
   <h2>Comments</h2>
   <%= render @comments %>
   <% if authenticated? %>
-    <%= form_with url: community_comments_path, class: "form" do |f| %>
+    <%= form_with url: community_comments_path do |f| %>
       <%= f.hidden_field :post_id, value: @post.id %>
-      <div class="field"><%= f.text_area :content, rows: 3, placeholder: "Comment…" %></div>
-      <div class="actions"><%= f.submit "Comment", class: "btn btn-primary" %></div>
+      <p><%= f.text_area :content, rows: 3, placeholder: "Comment…" %></p>
+      <p><%= f.submit "Comment" %></p>
     <% end %>
   <% end %>
 </section>

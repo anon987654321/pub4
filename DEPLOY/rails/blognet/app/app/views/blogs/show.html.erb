@@ -1,18 +1,18 @@
 <% content_for :title, @blog.name %>
 <header>
   <h1><%= @blog.name %></h1>
-  <p class="dim"><%= @blog.description %></p>
+  <p><%= @blog.description %></p>
   <% if @blog.user == Current.user %>
-    <%= link_to "New post", new_blog_post_path(@blog), class: "btn" %>
-    <%= link_to "Edit", edit_blog_path(@blog), class: "btn" %>
+    <%= link_to "New post", new_blog_post_path(@blog) %>
+    <%= link_to "Edit", edit_blog_path(@blog) %>
   <% end %>
 </header>
-<div id="posts">
+<section id="posts">
   <% @posts.each do |post| %>
     <article>
       <%= link_to post.title, blog_post_path(@blog, post) %>
-      <span class="dim"><%= post.published_at&.strftime("%b %-d, %Y") %> · <%= post.views_count %> views · <%= post.comments_count %> comments</span>
+      <small><%= post.published_at&.strftime("%b %-d, %Y") %> · <%= post.views_count %> views · <%= post.comments_count %> comments</small>
     </article>
   <% end %>
-</div>
+</section>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

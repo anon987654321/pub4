@@ -1,17 +1,21 @@
 <% content_for :title, "Takeaway" %>
-<h1>Order Food</h1>
-<% if authenticated? %><%= link_to "Add restaurant", new_takeaway_restaurant_path, class: "btn btn--primary" %><% end %>
+<h1>Order food</h1>
+<% if authenticated? %><%= link_to "Add restaurant", new_takeaway_restaurant_path %><% end %>
+
 <form method="get">
-  <input name="q" value="<%= params[:q] %>" placeholder="Search restaurants…">
-  <select name="cuisine">
-    <option value="">All cuisines</option>
-    <% Takeaway::Restaurant::CUISINE_TYPES.each do |c| %>
-      <option value="<%= c %>" <%= "selected" if params[:cuisine] == c %>><%= c %></option>
-    <% end %>
-  </select>
-  <button type="submit">Search</button>
+  <p><input name="q" value="<%= params[:q] %>" placeholder="Search restaurants…"></p>
+  <p>
+    <select name="cuisine">
+      <option value="">All cuisines</option>
+      <% Takeaway::Restaurant::CUISINE_TYPES.each do |c| %>
+        <option value="<%= c %>" <%= "selected" if params[:cuisine] == c %>><%= c %></option>
+      <% end %>
+    </select>
+  </p>
+  <p><button type="submit">Search</button></p>
 </form>
-<div class="restaurant-grid">
+
+<section>
   <% @restaurants.each do |r| %>
     <article>
       <%= link_to r.name, takeaway_restaurant_path(r) %>
@@ -19,5 +23,5 @@
       <small>Min order: <%= r.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= r.delivery_fee_cents.to_i / 100.0 %> NOK</small>
     </article>
   <% end %>
-</div>
+</section>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

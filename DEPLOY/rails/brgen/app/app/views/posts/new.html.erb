@@ -1,34 +1,25 @@
-<div class="form-wrap">
-  <h1 style="margin-bottom:20px"><%= @post.new_record? ? "New Post" : "Edit Post" %></h1>
-
-  <%= form_with model: [@community, @post].compact do |f| %>
-    <% if @post.errors.any? %>
-      <div class="flash-alert" style="grid-column:auto">
-        <% @post.errors.full_messages.each do |msg| %>
-          <div><%= msg %></div>
-        <% end %>
-      </div>
-    <% end %>
-
-    <div class="field">
-      <%= f.label :community_id, "Community (optional)" %>
-      <%= f.collection_select :community_id, Community.order(:name), :id, :name,
-            { include_blank: "— no community —" } %>
-    </div>
-
-    <div class="field">
-      <%= f.label :title %>
-      <%= f.text_field :title, placeholder: "Title", autofocus: true %>
-    </div>
-
-    <div class="field">
-      <%= f.label :content, "Body (optional)" %>
-      <%= f.text_area :content, placeholder: "Text (optional)", rows: 8 %>
-    </div>
-
-    <div style="display:flex;gap:12px;align-items:center">
-      <%= f.submit @post.new_record? ? "Post" : "Save", class: "btn" %>
-      <%= link_to "Cancel", @post.new_record? ? posts_path : @post, class: "btn btn-ghost" %>
-    </div>
+<h1><%= @post.new_record? ? "New post" : "Edit post" %></h1>
+<%= form_with model: [@community, @post].compact do |f| %>
+  <% if @post.errors.any? %>
+    <ul>
+      <% @post.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+    </ul>
   <% end %>
-</div>
+  <p>
+    <%= f.label :community_id, "Community (optional)" %>
+    <%= f.collection_select :community_id, Community.order(:name), :id, :name,
+          { include_blank: "— no community —" } %>
+  </p>
+  <p>
+    <%= f.label :title %>
+    <%= f.text_field :title, placeholder: "Title", autofocus: true %>
+  </p>
+  <p>
+    <%= f.label :content, "Body (optional)" %>
+    <%= f.text_area :content, placeholder: "Text (optional)", rows: 8 %>
+  </p>
+  <p>
+    <%= f.submit @post.new_record? ? "Post" : "Save" %>
+    <%= link_to "Cancel", @post.new_record? ? posts_path : @post %>
+  </p>
+<% end %>

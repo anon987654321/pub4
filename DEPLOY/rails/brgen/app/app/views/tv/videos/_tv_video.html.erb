@@ -1,9 +1,9 @@
-<article class="video-card">
+<article>
   <%= link_to tv_video_path(tv_video) do %>
     <% if tv_video.thumbnail.attached? %>
-      <%= image_tag tv_video.thumbnail, class: "video-thumb" %>
+      <%= image_tag tv_video.thumbnail %>
     <% else %>
-      <div class="video-thumb-placeholder"><%= tv_video.title[0] %></div>
+      <span><%= tv_video.title[0] %></span>
     <% end %>
     <p><strong><%= tv_video.title %></strong></p>
     <small><%= tv_video.channel.name %> · <%= tv_video.views_count %> views · <%= tv_video.duration_formatted %></small>

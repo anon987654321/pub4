@@ -1,21 +1,21 @@
 <% content_for :title, "Ports" %>
 <header>
-  <h1>OpenBSD Ports</h1>
+  <h1>OpenBSD ports</h1>
   <%= form_with url: ports_path, method: :get do |f| %>
-    <%= f.search_field :q, value: params[:q], placeholder: "Search ports…", class: "search" %>
+    <%= f.search_field :q, value: params[:q], placeholder: "Search ports…" %>
   <% end %>
 </header>
 <% if @category %>
-  <p><span class="badge badge-category"><%= @category.name %></span> &mdash; <%= @category.description %></p>
+  <p><mark><%= @category.name %></mark> — <%= @category.description %></p>
 <% end %>
-<div id="ports">
+<ul id="ports">
   <% @ports.each do |port| %>
-    <div class="port-row">
-      <%= link_to port.name, port, class: "port-name" %>
-      <span class="badge badge-version"><%= port.version %></span>
-      <span class="badge badge-category"><%= link_to port.category.name, category_path(port.category) %></span>
-      <span class="port-comment"><%= port.comment %></span>
-    </div>
+    <li>
+      <%= link_to port.name, port %>
+      <small><%= port.version %></small>
+      <small><%= link_to port.category.name, category_path(port.category) %></small>
+      <small><%= port.comment %></small>
+    </li>
   <% end %>
-</div>
+</ul>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

@@ -1,10 +1,10 @@
 <% content_for :title, "Matches" %>
 <h1>Matches</h1>
-<%= link_to "Back to discover", dating_root_path, class: "btn" %>
+<%= link_to "Back to discover", dating_root_path %>
 <% if @matches.none? %>
   <p>No matches yet.</p>
 <% else %>
-  <div class="match-list">
+  <section>
     <% @matches.each do |m| %>
       <% other = m.other_user(Current.user) %>
       <article>
@@ -14,6 +14,6 @@
         <p><%= other.email_address.split("@").first %></p>
       </article>
     <% end %>
-  </div>
+  </section>
 <% end %>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

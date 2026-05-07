@@ -1,10 +1,10 @@
 <% content_for :title, @listing.title %>
 <% if @listing.photos.attached? %>
-  <div>
+  <ul>
     <% @listing.photos.each do |photo| %>
-      <%= image_tag photo %>
+      <li><%= image_tag photo %></li>
     <% end %>
-  </div>
+  </ul>
 <% end %>
 
 <h1><%= @listing.title %></h1>
@@ -16,8 +16,8 @@
 <% if authenticated? && Current.user != @listing.user && !@listing.sold? %>
   <h2>Make an offer</h2>
   <%= form_with model: @order, url: marketplace_listing_orders_path(@listing) do |f| %>
-    <%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3 %>
-    <%= f.submit "Send offer", class: "btn btn--primary" %>
+    <p><%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3 %></p>
+    <p><%= f.submit "Send offer" %></p>
   <% end %>
 <% end %>
 
@@ -28,13 +28,13 @@
       <p><%= o.buyer.email_address.split("@").first %> — <%= o.status %></p>
       <% if o.message.present? %><p><%= o.message %></p><% end %>
       <% if o.status == "pending" %>
-        <%= button_to "Accept", marketplace_listing_order_path(@listing, o), params: { accept: true }, method: :patch, class: "btn btn--primary" %>
-        <%= button_to "Decline", marketplace_listing_order_path(@listing, o), params: { decline: true }, method: :patch, class: "btn" %>
+        <%= button_to "Accept",  marketplace_listing_order_path(@listing, o), params: { accept:  true }, method: :patch %>
+        <%= button_to "Decline", marketplace_listing_order_path(@listing, o), params: { decline: true }, method: :patch %>
       <% end %>
     </article>
   <% end %>
   <nav>
-    <%= link_to "Edit", edit_marketplace_listing_path(@listing), class: "btn" %>
-    <%= button_to "Remove", marketplace_listing_path(@listing), method: :delete, class: "btn" %>
+    <%= link_to "Edit", edit_marketplace_listing_path(@listing) %>
+    <%= button_to "Remove", marketplace_listing_path(@listing), method: :delete %>
   </nav>
 <% end %>

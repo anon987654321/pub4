@@ -11,17 +11,17 @@
     <% end %>
   </nav>
 </header>
-<div class="verse-block">
+<section>
   <% @verses.each do |verse| %>
-    <span id="v<%= verse.number %>" class="verse" data-controller="verse" data-verse-id="<%= verse.id %>">
-      <sup class="verse-num"><%= verse.number %></sup>
-      <span class="verse-text"><%= verse.content %></span>
+    <span id="v<%= verse.number %>" data-controller="verse" data-verse-id="<%= verse.id %>">
+      <sup><%= verse.number %></sup>
+      <span><%= verse.content %></span>
       <% if authenticated? %>
         <% highlight = @highlights[verse.id] %>
         <% bookmark  = @bookmarks[verse.id] %>
-        <%= button_to highlight ? "★" : "☆", highlights_path(verse_id: verse.id), method: highlight ? :delete : :post, params: highlight ? { id: highlight.id } : {}, class: "verse-action #{"active" if highlight}", data: { turbo_stream: true } %>
-        <%= button_to bookmark ? "🔖" : "📌", bookmark ? bookmark_path(bookmark) : bookmarks_path(verse_id: verse.id), method: bookmark ? :delete : :post, class: "verse-action #{"active" if bookmark}", data: { turbo_stream: true } %>
+        <%= button_to highlight ? "★" : "☆", highlights_path(verse_id: verse.id), method: highlight ? :delete : :post, params: highlight ? { id: highlight.id } : {}, class: ("active" if highlight), data: { turbo_stream: true } %>
+        <%= button_to bookmark ? "🔖" : "📌", bookmark ? bookmark_path(bookmark) : bookmarks_path(verse_id: verse.id), method: bookmark ? :delete : :post, class: ("active" if bookmark), data: { turbo_stream: true } %>
       <% end %>
     </span>
   <% end %>
-</div>
+</section>

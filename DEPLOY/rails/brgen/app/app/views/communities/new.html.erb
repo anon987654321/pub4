@@ -1,22 +1,20 @@
-<div class="form-wrap">
-  <h1 style="margin-bottom:20px">New Community</h1>
-  <%= form_with model: @community do |f| %>
-    <% if @community.errors.any? %>
-      <div class="flash-alert" style="grid-column:auto">
-        <% @community.errors.full_messages.each do |msg| %><div><%= msg %></div><% end %>
-      </div>
-    <% end %>
-    <div class="field">
-      <%= f.label :name %>
-      <%= f.text_field :name, placeholder: "e.g. bergen, tech, musikk" %>
-    </div>
-    <div class="field">
-      <%= f.label :description %>
-      <%= f.text_area :description, placeholder: "What is this community about?", rows: 3 %>
-    </div>
-    <div style="display:flex;gap:12px">
-      <%= f.submit "Create", class: "btn" %>
-      <%= link_to "Cancel", communities_path, class: "btn btn-ghost" %>
-    </div>
+<h1>New community</h1>
+<%= form_with model: @community do |f| %>
+  <% if @community.errors.any? %>
+    <ul>
+      <% @community.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+    </ul>
   <% end %>
-</div>
+  <p>
+    <%= f.label :name %>
+    <%= f.text_field :name, placeholder: "e.g. bergen, tech, musikk" %>
+  </p>
+  <p>
+    <%= f.label :description %>
+    <%= f.text_area :description, placeholder: "What is this community about?", rows: 3 %>
+  </p>
+  <p>
+    <%= f.submit "Create" %>
+    <%= link_to "Cancel", communities_path %>
+  </p>
+<% end %>

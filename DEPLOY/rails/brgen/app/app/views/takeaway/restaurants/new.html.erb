@@ -1,17 +1,17 @@
 <h1>Add restaurant</h1>
 <%= form_with model: @restaurant, url: takeaway_restaurants_path do |f| %>
   <%= render "shared/errors", object: @restaurant %>
-  <div class="field"><%= f.label :name %><%= f.text_field :name %></div>
-  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
-  <div class="field"><%= f.label :address %><%= f.text_field :address %></div>
-  <div class="field"><%= f.label :city %><%= f.text_field :city %></div>
-  <div class="field"><%= f.label :phone %><%= f.text_field :phone %></div>
-  <div class="field">
+  <p><%= f.label :name %><%= f.text_field :name %></p>
+  <p><%= f.label :description %><%= f.text_area :description, rows: 3 %></p>
+  <p><%= f.label :address %><%= f.text_field :address %></p>
+  <p><%= f.label :city %><%= f.text_field :city %></p>
+  <p><%= f.label :phone %><%= f.text_field :phone %></p>
+  <p>
     <%= f.label :cuisine_type %>
     <%= f.select :cuisine_type, Takeaway::Restaurant::CUISINE_TYPES, { include_blank: "—" } %>
-  </div>
-  <div class="field"><%= f.label :delivery_fee_cents, "Delivery fee (øre)" %><%= f.number_field :delivery_fee_cents %></div>
-  <div class="field"><%= f.label :min_order_cents, "Min order (øre)" %><%= f.number_field :min_order_cents %></div>
-  <div class="field"><%= f.check_box :active %> <%= f.label :active, "Active" %></div>
-  <div class="actions"><%= f.submit "Save", class: "btn btn--primary" %></div>
+  </p>
+  <p><%= f.label :delivery_fee_cents, "Delivery fee (øre)" %><%= f.number_field :delivery_fee_cents %></p>
+  <p><%= f.label :min_order_cents, "Min order (øre)" %><%= f.number_field :min_order_cents %></p>
+  <p><%= f.check_box :active %> <%= f.label :active, "Active" %></p>
+  <p><%= f.submit "Save" %></p>
 <% end %>

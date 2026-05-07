@@ -1,15 +1,15 @@
 <% content_for :title, "Blogs" %>
 <header>
   <h1>Blogs</h1>
-  <% if authenticated? %><%= link_to "New blog", new_blog_path, class: "btn" %><% end %>
+  <% if authenticated? %><%= link_to "New blog", new_blog_path %><% end %>
 </header>
-<div id="blogs">
+<section id="blogs">
   <% @blogs.each do |blog| %>
     <article>
       <%= link_to blog.name, blog_path(blog) %>
-      <p class="dim"><%= blog.description %></p>
-      <span class="dim"><%= blog.posts_count %> posts</span>
+      <p><%= blog.description %></p>
+      <small><%= blog.posts_count %> posts</small>
     </article>
   <% end %>
-</div>
+</section>
 <%= @pagy.series_nav if @pagy.pages > 1 %>
