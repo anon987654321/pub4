@@ -6,7 +6,7 @@
   command: dreams consolidate
   enabled: true
   state: done
-  last_run_at: 1778024187
+  last_run_at: 1778110621
 - name: weekly_scan
   description: Weekly codebase axiom scan for regressions
   trigger: scheduled
