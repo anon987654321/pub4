@@ -451,17 +451,31 @@ def color_separate(image, intensity = 0.6)
   safe_cast(image * (1 - intensity) + separated * intensity)
 end
 
+GRAIN_SPATIAL_DIV  = 8
+GRAIN_TARGET_DIV   = 1600.0
+GRAIN_BLUR_INVERSE = 1.0 / 0.36
+
+# Newson-Delon density-space grain: three independent per-channel noise images
+# blurred to a stock-specific correlation length, then modulated by a midtone
+# visibility envelope 4L(1-L) so highlights stay clean (low silver halide
+# density = no grain visible) and shadows soften (dye clouds at maximum
+# density dominate). Independence across R/G/B mirrors the three dye layers
+# of colour film. Operates in linearized sRGB so noise stays photometric.
 def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   data = STOCKS[stock]
-  sigma = data[:grain] * Math.sqrt(iso / 100.0) * intensity
-  
-  noise = Vips::Image.gaussnoise(image.width, image.height, sigma: sigma)
-  brightness = image.colourspace('grey16').cast('float') / 255.0
-  raw_strength = brightness.linear(-1, 1.2)
-  strength = (raw_strength < 0.3).ifthenelse(0.3, raw_strength) * intensity
+  spatial = [data[:grain] / GRAIN_SPATIAL_DIV.to_f, 0.5].max
+  target  = data[:grain] * Math.sqrt(iso / 100.0) * intensity / GRAIN_TARGET_DIV
+  pre     = [target * spatial * GRAIN_BLUR_INVERSE, 0.001].max
 
-  grain_rgb = rgb_bands(noise * strength.bandjoin([strength, strength]))
-  safe_cast(image + grain_rgb * 0.25)
+  linear = image.colourspace("scrgb")
+  luma = linear.extract_band(1)
+  envelope = (luma * luma.linear([-1], [1])).linear([4], [0])
+
+  bands = 3.times.map do
+    Vips::Image.gaussnoise(image.width, image.height, sigma: pre, mean: 0.0).gaussblur(spatial)
+  end
+  noise = Vips::Image.bandjoin(bands)
+  safe_cast((linear + noise * envelope).colourspace("srgb"))
 end
 
 def base_tint(image, color = [252, 248, 240], intensity = 0.08)
