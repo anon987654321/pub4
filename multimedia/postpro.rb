@@ -212,11 +212,19 @@ REPLIGEN_PRESENT = File.exist?("repligen.rb")
 CAMERA_PROFILES = BOOTSTRAP[:camera_profiles]
 CONFIG = BOOTSTRAP[:config]
 
+# Per-stock data: grain sigma (legacy), 3x3 colour matrix, and characteristic
+# curve [Dmin, Dmax, pivot, gamma] per R/G/B. Dmin lifts shadows (base+fog),
+# Dmax caps highlights (shoulder), pivot is the linear midtone fulcrum (≈0.18),
+# gamma is contrast (>1 = steeper). Per-channel offsets create stock colour cast.
 STOCKS = {
-  kodak_portra: { grain: 15, gamma: 0.65, rolloff: 0.88, lift: 0.05, matrix: [1.05, -0.02, -0.03, 0.02, 0.98, 0.00, 0.01, -0.05, 1.04] },
-  kodak_vision3: { grain: 20, gamma: 0.65, rolloff: 0.85, lift: 0.08, matrix: [1.08, -0.05, -0.03, 0.03, 0.95, 0.02, 0.02, -0.08, 1.06] },
-  fuji_velvia: { grain: 8, gamma: 0.75, rolloff: 0.92, lift: 0.03, matrix: [1.12, -0.08, -0.04, 0.05, 1.05, -0.02, 0.01, -0.12, 1.11] },
-  tri_x: { grain: 25, gamma: 0.70, rolloff: 0.80, lift: 0.12, matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0] }
+  kodak_portra:  { grain: 15, matrix: [1.05, -0.02, -0.03, 0.02, 0.98, 0.00, 0.01, -0.05, 1.04],
+                   hd: { r: [0.06, 0.93, 0.18, 1.10], g: [0.05, 0.94, 0.18, 1.10], b: [0.04, 0.92, 0.20, 1.05] } },
+  kodak_vision3: { grain: 20, matrix: [1.08, -0.05, -0.03, 0.03, 0.95, 0.02, 0.02, -0.08, 1.06],
+                   hd: { r: [0.07, 0.95, 0.17, 1.15], g: [0.06, 0.95, 0.18, 1.20], b: [0.08, 0.90, 0.20, 1.10] } },
+  fuji_velvia:   { grain:  8, matrix: [1.12, -0.08, -0.04, 0.05, 1.05, -0.02, 0.01, -0.12, 1.11],
+                   hd: { r: [0.02, 0.97, 0.18, 1.45], g: [0.02, 0.98, 0.18, 1.50], b: [0.03, 0.95, 0.20, 1.40] } },
+  tri_x:         { grain: 25, matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+                   hd: { r: [0.05, 0.95, 0.18, 1.30], g: [0.05, 0.95, 0.18, 1.30], b: [0.05, 0.95, 0.18, 1.30] } }
 }.freeze
 
 PRESETS = {
@@ -225,6 +233,58 @@ PRESETS = {
   street: { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain], stock: :tri_x, temp: 5600, intensity: 1.0 },
   blockbuster: { fx: %w[teal_orange grain bloom_pro highlight_roll micro_contrast], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
 }.freeze
+
+# Per-channel characteristic curve baked into a 256-entry LUT. Each channel
+# carries [Dmin, Dmax, pivot, gamma] — pivot is the linear midtone fulcrum
+# (≈0.18 for ISO-calibrated film), gamma is contrast, Dmin/Dmax are the
+# shadow floor and highlight ceiling in linear output. Operates in
+# linearized sRGB so middle gray maps to itself, and per-channel offset
+# from neutral creates the colour cast that defines a stock's look.
+# One maplut at runtime; CPU spent only on cache miss.
+module HD
+  CACHE = {}
+
+  module_function
+
+  def srgb_to_linear(v)
+    v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055)**2.4
+  end
+
+  def linear_to_srgb(v)
+    v <= 0.0031308 ? v * 12.92 : 1.055 * v**(1.0 / 2.4) - 0.055
+  end
+
+  def develop(linear, params)
+    d_min, d_max, pivot, gamma = params
+    if linear < pivot
+      d_min + (pivot - d_min) * (linear / pivot)**(1.0 / gamma)
+    else
+      pivot + (d_max - pivot) * ((linear - pivot) / (1.0 - pivot))**gamma
+    end
+  end
+
+  def channel_curve(params)
+    (0..255).map do |i|
+      out = develop(srgb_to_linear(i / 255.0), params)
+      (linear_to_srgb(out.clamp(0, 1)) * 255.0).round.clamp(0, 255)
+    end
+  end
+
+  def build_lut(stock_data)
+    hd = stock_data[:hd] or return nil
+    bands = %i[r g b].map { |c| Vips::Image.new_from_array([channel_curve(hd[c])]) }
+    Vips::Image.bandjoin(bands).cast('uchar')
+  end
+
+  def lut_for(stock_data)
+    CACHE[stock_data.object_id] ||= build_lut(stock_data)
+  end
+
+  def apply(image, stock_data)
+    lut = lut_for(stock_data)
+    lut ? image.maplut(lut) : image
+  end
+end
 
 def safe_cast(image, format = 'uchar')
   image.cast(format)
@@ -240,7 +300,7 @@ end
 
 def load_image(file)
   return nil unless File.exist?(file) && File.readable?(file)
-  image = Vips::Image.new_from_file(file, access: :sequential)
+  image = Vips::Image.new_from_file(file, access: :random)
   image = image.colourspace("srgb") if image.bands < 3
   rgb_bands(image)
 rescue StandardError => e
@@ -338,31 +398,29 @@ def skin_protect(image, intensity = 1.0)
   
   protection = skin_mask.cast('float') / 255.0 * (1.0 - intensity * 0.7)
   protection_rgb = protection.bandjoin([protection, protection])
-  
-  safe_cast(image * (1.0 - protection_rgb) + image * protection_rgb)
+  inv_protection = protection_rgb.linear(-1, 1)
+
+  safe_cast(image * inv_protection + image * protection_rgb)
 end
 
 def film_curve(image, stock = :kodak_portra, intensity = 1.0)
-  data = STOCKS[stock] || STOCKS[:kodak_portra]
-  
-  shadows = image.linear([1.0], [data[:lift] * 255 * intensity])
-  gamma_corrected = shadows.pow(data[:gamma])
-  highlights = gamma_corrected.pow(data[:rolloff])
-  
-  safe_cast(image * (1 - intensity) + highlights * intensity)
+  data      = STOCKS[stock] || STOCKS[:kodak_portra]
+  developed = HD.apply(image, data)
+  safe_cast(image * (1 - intensity) + developed * intensity)
 end
 
 def highlight_roll(image, threshold = 200, intensity = 1.0)
   mask = image > threshold
   over_exposed = image - threshold
-  rolled_off = threshold + (over_exposed * 0.3).pow(0.7)
+  rolled_off = ((over_exposed * 0.3) ** 0.7) + threshold
   result = mask.ifthenelse(rolled_off, image)
   safe_cast(image * (1 - intensity) + result * intensity)
 end
 
 def shadow_lift(image, lift = 0.15, preserve_blacks = true)
   gray = image.colourspace('grey16').cast('float') / 255.0
-  shadow_mask = preserve_blacks ? ((1.0 - gray).pow(2.0)) * 0.8 : (1.0 - gray) * lift
+  inv_gray    = gray.linear(-1, 1)
+  shadow_mask = preserve_blacks ? (inv_gray ** 2.0) * 0.8 : inv_gray * lift
   lift_rgb = shadow_mask.bandjoin([shadow_mask, shadow_mask])
   safe_cast(image.linear([1.0, 1.0, 1.0], [lift_rgb * 255 * lift]))
 end
@@ -390,8 +448,9 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   
   noise = Vips::Image.gaussnoise(image.width, image.height, sigma: sigma)
   brightness = image.colourspace('grey16').cast('float') / 255.0
-  strength = (1.2 - brightness).max(0.3) * intensity
-  
+  raw_strength = brightness.linear(-1, 1.2)
+  strength = (raw_strength < 0.3).ifthenelse(0.3, raw_strength) * intensity
+
   grain_rgb = rgb_bands(noise * strength.bandjoin([strength, strength]))
   safe_cast(image + grain_rgb * 0.25)
 end
@@ -401,12 +460,12 @@ def base_tint(image, color = [252, 248, 240], intensity = 0.08)
   overlay_norm = overlay.cast('float') / 255.0
   image_norm = image.cast('float') / 255.0
   
-  result = image_norm.ifthenelse(
-    overlay_norm < 0.5,
-    2 * image_norm * overlay_norm,
-    1 - 2 * (1 - image_norm) * (1 - overlay_norm)
-  )
-  
+  inv_image   = image_norm.linear(-1, 1)
+  inv_overlay = overlay_norm.linear(-1, 1)
+  multiply    = image_norm * overlay_norm * 2
+  screen      = (inv_image * inv_overlay).linear(-2, 1)
+  result      = (overlay_norm < 0.5).ifthenelse(multiply, screen)
+
   blended = result * 255
   safe_cast(image * (1 - intensity) + blended * intensity)
 end
