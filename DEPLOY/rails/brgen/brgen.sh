@@ -37,7 +37,7 @@ fi
 print -- "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
 
 # ── Install + migrate + seed ───────────────────────────────────────────────
-doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bundle install --deployment --without development:test"
+doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && bundle config set --local deployment true && bundle config set --local without 'development test' && RAILS_ENV=production bundle install"
 doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bin/rails db:create db:migrate"
 [[ -f ${APP_DIR}/db/seeds.rb ]] && doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bin/rails db:seed" || true
 
