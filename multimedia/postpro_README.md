@@ -94,6 +94,17 @@ Numbers from `STOCKS[…][:hd][…]` in postpro.rb.
 
 - `color_temp(kelvin, intensity)` — CIE-based per-channel multipliers.
   <5500K warms (boosts R, dampens B), >5500K cools.
+- `spectral_temp(source_kelvin, target_kelvin, intensity)` — the same idea
+  but spectrally exact. Each pixel's RGB is upsampled to a 31-sample
+  spectrum via a Gaussian basis calibrated under D65, reweighted by
+  Planckian illuminants at source and target Kelvin, then re-integrated
+  against CIE 1931 2° CMFs and projected back to sRGB. All operations are
+  linear, so the entire pipeline collapses to a single 3×3 `recomb`
+  matrix at runtime — applied in linear scrgb. At source = target the
+  matrix is exactly identity; at 5500→3200K the R channel rises ~29% while
+  B drops to ~47% (correct tungsten signature); at 5500→8000K the inverse.
+  Cross-channel coupling reflects black-body physics, not a per-channel
+  fudge.
 - `teal_orange(intensity)` — skin-protected blockbuster grade. R/B push,
   G dampen, with HSV skin mask exempting faces.
 - `color_separate(intensity)` — analog colour-separation characteristic

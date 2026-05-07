@@ -381,7 +381,130 @@ def apply_camera_profile(image, profile)
   end
 end
 
-# Professional Color Science
+# Spectral chromatic adaptation. Black-body physics, not ad-hoc R/G/B
+# multipliers. Each pixel's RGB is upsampled to a 31-sample spectrum via a
+# Gaussian basis calibrated so that under D65 the round-trip is identity;
+# then reweighted by I_target/I_source (Planck's law); then re-integrated
+# against CIE 1931 2° CMFs and projected to sRGB. All steps are linear, so
+# they collapse to a single 3×3 matrix at runtime — applied via recomb in
+# linear scrgb space.
+module Spectral
+  WAVELENGTHS = (400..700).step(10).to_a.freeze
+  DELTA = 10.0
+
+  CMF_X = [0.0143, 0.0435, 0.1344, 0.2839, 0.3483, 0.3362, 0.2908, 0.1954,
+           0.0956, 0.0320, 0.0049, 0.0093, 0.0633, 0.1655, 0.2904, 0.4334,
+           0.5945, 0.7621, 0.9163, 1.0263, 1.0622, 1.0026, 0.8544, 0.6424,
+           0.4479, 0.2835, 0.1649, 0.0874, 0.0468, 0.0227, 0.0114].freeze
+  CMF_Y = [0.0004, 0.0012, 0.0040, 0.0116, 0.0230, 0.0380, 0.0600, 0.0910,
+           0.1390, 0.2080, 0.3230, 0.5030, 0.7100, 0.8620, 0.9540, 0.9950,
+           0.9950, 0.9520, 0.8700, 0.7570, 0.6310, 0.5030, 0.3810, 0.2650,
+           0.1750, 0.1070, 0.0610, 0.0320, 0.0170, 0.0082, 0.0041].freeze
+  CMF_Z = [0.0679, 0.2074, 0.6456, 1.3856, 1.7471, 1.7721, 1.6692, 1.2876,
+           0.8130, 0.4652, 0.2720, 0.1582, 0.0782, 0.0422, 0.0203, 0.0087,
+           0.0039, 0.0021, 0.0017, 0.0011, 0.0008, 0.0003, 0.0002, 0.0000,
+           0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000].freeze
+
+  XYZ_TO_SRGB = [[ 3.2406, -1.5372, -0.4986],
+                 [-0.9689,  1.8758,  0.0415],
+                 [ 0.0557, -0.2040,  1.0570]].freeze
+
+  PLANCK_C1 = 2 * 6.62607015e-34 * (2.99792458e8)**2
+  PLANCK_C2 = 6.62607015e-34 * 2.99792458e8 / 1.380649e-23
+  D65_KELVIN = 6504.0
+  PRIMARY_CENTERS = [611.0, 549.0, 464.0].freeze
+  PRIMARY_SIGMA = 30.0
+  CACHE = {}
+
+  module_function
+
+  def planckian(kelvin)
+    WAVELENGTHS.map do |nm|
+      l = nm * 1e-9
+      PLANCK_C1 / (l**5 * (Math.exp(PLANCK_C2 / (l * kelvin)) - 1))
+    end
+  end
+
+  def normalize_to_y1(spd)
+    y = spd.zip(CMF_Y).sum { |s, c| s * c } * DELTA
+    spd.map { |v| v / y }
+  end
+
+  def gaussian_basis
+    PRIMARY_CENTERS.map do |c|
+      WAVELENGTHS.map { |λ| Math.exp(-(λ - c)**2 / (2 * PRIMARY_SIGMA**2)) }
+    end
+  end
+
+  def spd_to_xyz(spd, illuminant)
+    weighted = spd.each_with_index.map { |s, i| s * illuminant[i] }
+    [CMF_X, CMF_Y, CMF_Z].map { |cmf| weighted.zip(cmf).sum { |w, c| w * c } * DELTA }
+  end
+
+  def matvec3(m, v)
+    (0..2).map { |i| (0..2).sum { |j| m[i][j] * v[j] } }
+  end
+
+  def inv3(m)
+    a, b, c = m[0]; d, e, f = m[1]; g, h, i = m[2]
+    det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
+    raise "singular" if det.abs < 1e-12
+    inv = 1.0 / det
+    [[(e * i - f * h) * inv, (c * h - b * i) * inv, (b * f - c * e) * inv],
+     [(f * g - d * i) * inv, (a * i - c * g) * inv, (c * d - a * f) * inv],
+     [(d * h - e * g) * inv, (b * g - a * h) * inv, (a * e - b * d) * inv]]
+  end
+
+  def calibrated_basis
+    CACHE[:basis] ||= begin
+      raw = gaussian_basis
+      d65 = normalize_to_y1(planckian(D65_KELVIN))
+      cols = raw.map { |b| matvec3(XYZ_TO_SRGB, spd_to_xyz(b, d65)) }
+      m = [[cols[0][0], cols[1][0], cols[2][0]],
+           [cols[0][1], cols[1][1], cols[2][1]],
+           [cols[0][2], cols[1][2], cols[2][2]]]
+      m_inv = inv3(m)
+      (0..2).map do |j|
+        WAVELENGTHS.each_index.map do |λi|
+          (0..2).sum { |k| m_inv[j][k] * raw[k][λi] }
+        end
+      end
+    end
+  end
+
+  def integration_matrix(illuminant)
+    basis = calibrated_basis
+    (0..2).map do |i|
+      (0..2).map do |j|
+        WAVELENGTHS.each_index.sum do |λi|
+          xyz_dot = XYZ_TO_SRGB[i][0] * CMF_X[λi] +
+                    XYZ_TO_SRGB[i][1] * CMF_Y[λi] +
+                    XYZ_TO_SRGB[i][2] * CMF_Z[λi]
+          basis[j][λi] * illuminant[λi] * xyz_dot * DELTA
+        end
+      end
+    end
+  end
+
+  def matmul3(a, b)
+    (0..2).map { |i| (0..2).map { |j| (0..2).sum { |k| a[i][k] * b[k][j] } } }
+  end
+
+  def adaptation_matrix(source_kelvin, target_kelvin)
+    src = normalize_to_y1(planckian(source_kelvin))
+    tgt = normalize_to_y1(planckian(target_kelvin))
+    matmul3(integration_matrix(tgt), inv3(integration_matrix(src)))
+  end
+end
+
+def spectral_temp(image, source_kelvin: 5500, target_kelvin: 6504, intensity: 1.0)
+  matrix = Spectral.adaptation_matrix(source_kelvin, target_kelvin)
+  linear = image.colourspace("scrgb")
+  graded = linear.recomb(matrix)
+  blended = linear * (1.0 - intensity) + graded * intensity
+  safe_cast(blended.colourspace("srgb"))
+end
+
 def color_temp(image, kelvin, intensity = 1.0)
   factor = kelvin / 5500.0
   r_mult, g_mult, b_mult = if factor < 1.0
@@ -389,7 +512,6 @@ def color_temp(image, kelvin, intensity = 1.0)
                            else
                              [factor**-0.3, 1.0, 1.0 + (factor - 1.0) * 0.5]
                            end
-  
   safe_cast(image.linear([
     1.0 + (r_mult - 1.0) * intensity,
     1.0 + (g_mult - 1.0) * intensity,
@@ -616,6 +738,7 @@ def preset(image, name)
              when 'bloom_pro' then bloom_pro(result, p[:intensity])
              when 'halation' then halation(result, p[:intensity], tint: halation_tint_for(p[:stock]))
              when 'tonemap' then tonemap(result, type: :aces, exposure: 0.0, intensity: p[:intensity] * 0.7)
+             when 'spectral_temp' then spectral_temp(result, source_kelvin: 5500, target_kelvin: p[:temp], intensity: p[:intensity] * 0.6)
              else result
              end
   end
