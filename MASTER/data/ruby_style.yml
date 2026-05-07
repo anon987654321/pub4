@@ -200,8 +200,8 @@ git:
     - "string-interpolated git commands"
     - "rm -rf in deploy scripts without explicit guard"
 
-# ===== HTML / CSS / TYPOGRAPHY / NIELSEN / A11Y =====
-# Restored from master4.yml/master7.yml (universal_quality_framework v66).
+# html, css, typography, nielsen, a11y — restored from master4.yml/master7.yml
+# (universal_quality_framework v66)
 
 html:
   semantic_only: true
