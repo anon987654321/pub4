@@ -592,6 +592,17 @@ if (window.DeviceMotionEvent) {
     let recognitionActive=false;
     let isSpeaking=false;
     const nonstopVoice=true;
+    // Wake-word gate: utterances are ignored unless "hey master" armed the window.
+    // Each successful transmit re-arms; the window decays so an idle mic stops sending.
+    let wakeArmed=false;
+    let wakeArmedUntil=0;
+    const WAKE_WINDOW_MS=30000;
+    const WAKE_RE=/^\s*(hey|ok|okay|yo)\s+master\b[,.\s]*/i;
+    // VAD: time-domain RMS over the same analyser used for audioLevel.
+    // Gates barge-in and gives a cheap silence indicator when recognition is dormant.
+    let vadRMS=0;
+    let vadSpeaking=false;
+    const VAD_THRESHOLD=12;
     let isProcessing=false;
     let padModulate=null;
     let repoDirtyCount=0;
@@ -1693,19 +1704,27 @@ recognition.onresult=(ev)=>{
         if(!finalText) return;
         const detectedLang=_detectLang(finalText);
         if(recognition.lang!==detectedLang){recognition.lang=detectedLang;}
-        if(/^hey\s+master$/i.test(finalText)){
+        if(WAKE_RE.test(finalText)){
+          wakeArmed=true;
+          wakeArmedUntil=Date.now()+WAKE_WINDOW_MS;
           haptic(25);
-          uiLabel.textContent='Listening…';
-          return;
+          finalText=finalText.replace(WAKE_RE,'').trim();
+          if(!finalText){ uiLabel.textContent='Listening…'; return; }
         }
         if(_ttsEchoes(finalText)){
           uiLabel.textContent='(echo ignored)';
+          return;
+        }
+        const armed=wakeArmed&&Date.now()<wakeArmedUntil;
+        if(!_pendingConfirm&&!armed){
+          uiLabel.textContent='Say "hey master"';
           return;
         }
         uiLabel.textContent=finalText.slice(0,60);
         // P9: short-circuit yes/no answers to a pending confirmation — server expects them too,
         // but we mark mood arousal so the visual reflects the user's commitment.
         if(_pendingConfirm) mood.arousal=Math.min(1,mood.arousal+0.2);
+        wakeArmedUntil=Date.now()+WAKE_WINDOW_MS;
         transmit(finalText);
       };
     };
@@ -2180,6 +2199,12 @@ const AMBIENT=[
         for(let i=0;i<6;i++) sum+=dataArray[i];
         for(let i=6;i<12;i++) sum+=dataArray[i]*0.6;
         audioLevel=Math.min(1,sum/9/255+speechPulse*0.45);
+        // VAD: cheap RMS over the same magnitude bins. dataArray is byte-domain
+        // frequency, so 'silence' sits near 0 and speech rides above ~10-15.
+        let vSum=0;
+        for(let i=0;i<dataArray.length;i++) vSum+=dataArray[i];
+        vadRMS=vSum/dataArray.length;
+        vadSpeaking=vadRMS>VAD_THRESHOLD&&!isSpeaking;
       }else{
         if(isSpeaking) speechPulse=0.38+Math.abs(Math.sin(t*12.6))*0.42;
         else speechPulse*=0.92;
