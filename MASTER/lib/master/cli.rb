@@ -38,7 +38,7 @@ module Master
       @session.load! if @session.exists?
       start_background_loop
       puts @renderer.splash(@agent.model)
-      puts @renderer.render("session0: #{@session.name}", mode: :dim) if @session.name
+      puts @renderer.session_line(@session.name) if @session.name
       process(initial_message) if initial_message
       @running = true
       repl_loop

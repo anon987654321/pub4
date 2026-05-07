@@ -20,6 +20,12 @@ module Master
       @boot_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i
     end
 
+    def session_line(name)
+      label = @p.dim("session0: ")
+      tag = @p.dim.underline(name.to_s.downcase)
+      label + tag
+    end
+
     def uptime
       s = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i - @boot_ms) / MS_PER_SEC
       h, rem = s.divmod(3600)
