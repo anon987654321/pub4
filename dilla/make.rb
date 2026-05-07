@@ -484,12 +484,18 @@ def liveset_filter(count, periods: LIVESET_PERIODS)
   end
   taps = (0...count).map { |i| "[s#{i}]" }.join
   weights = Array.new(count, 1).join(" ")
+  # SSL-style glue → head-bump HPF (30 Hz Q=1.2 → +1 dB @ 45 Hz, restores
+  # sub after tape rolloff) → SP-1200 crusher (12-bit, 26.04k decimation,
+  # samples=44100/26040≈1.69) → Pultec presence cut → slow phaser → Ampex
+  # 456 asymmetric tanh (3rd-harmonic dominant) → limiter.
   master = <<~F.tr("\n", " ").strip
-    [mix]acompressor=threshold=-20dB:ratio=2.5:attack=20:release=300:makeup=2,
+    [mix]acompressor=threshold=-20dB:ratio=4:attack=30:release=300:makeup=2,
+    highpass=f=30:width_type=q:width=1.2,
     equalizer=f=55:t=o:w=0.8:g=2,
+    acrusher=bits=12:samples=1.69:level_in=1:level_out=1:mix=0.35,
     equalizer=f=2200:t=o:w=0.6:g=-2,
     aphaser=in_gain=0.4:out_gain=0.7:delay=2:decay=0.3:speed=0.12:type=sinusoidal,
-    aeval='tanh(val(0)*1.6)/tanh(1.6)|tanh(val(1)*1.6)/tanh(1.6)',
+    aeval='(tanh((val(0)+0.05)*1.6)-0.0798)/0.853|(tanh((val(1)+0.05)*1.6)-0.0798)/0.853',
     alimiter=level_in=1.0:level_out=0.95:limit=0.95:attack=5:release=80[out]
   F
   "#{per_input.join(';')};#{taps}amix=inputs=#{count}:weights=#{weights}:duration=longest[mix];#{master}"

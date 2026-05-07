@@ -9,7 +9,7 @@
 <meta name="description" content="RG-69 analog beat machine. Single HTML file sequencer with Tone.js.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎹</text></svg>">
 <title>RG-69 | Beat Machine</title>
-<script src="assets/tone-14.8.49.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <style>
 :root{--bg:#0c0c0c;--brd:#252525;--txt:#d0d0d0;--mut:#484848;--acc:#c8902e;--dng:#8c3030;--z-modal:1000;--transition-fast:100ms}
 [data-theme="light"]{--bg:#f2f2f2;--brd:#c0c0c0;--txt:#111;--mut:#888;--acc:#9c6a10;--dng:#993030}
@@ -496,7 +496,7 @@ let seq_={};
 let kickN,kickSub,kickClk,kickBody,snareN,snareRng,clapN,hatN,openN,bassN,bassSub,keysN,keysChorus,padsN,padsFlt,padsShift;
 let drumG,bassG,keysG,padsG,stmBus,masterG,limiter,vinylNoise,crackleNoise,wobbLFO,flutterLFO,driftLFO,analyser;
 let fxRev,fxDly,fxFlt,tapeSat,compPar,sslComp,widener,kickSat,keySat,drumSat,outSat,bitCrush,revSend,dlySend;
-let drumTube,kickComp,vintageSat,phaserFX,lofiNoise,lofiComp,tapeWS,padsLFO,kickClkBP,snareRngBP,keysTrem,keysCrush;
+let drumTube,kickComp,vintageSat,phaserFX,lofiNoise,lofiComp,tapeWS,padsLFO,kickClkBP,snareRngBP,keysTrem,keysCrush,headBumpHP,sp1200LP;
 
 const fxPool=['AutoWah','AutoFilter','AutoPanner','BitCrusher','Chebyshev','Chorus','Distortion','FeedbackDelay','Freeverb','FrequencyShifter','JCReverb','Phaser','PingPongDelay','PitchShift','Tremolo','Vibrato','StereoWidener'];
 let drumFX=[],bassFX=[],keysFX=[],padsFX=[],masterFX=[];
@@ -658,7 +658,10 @@ sslComp=new Tone.Compressor(-18,4);
 sslComp.attack.value=0.01;
 sslComp.release.value=0.3;
 widener=new Tone.StereoWidener(0.4);
-bitCrush=new Tone.BitCrusher(8);
+// SP-1200: 12-bit + 17 kHz LP (Nyquist of 26.04 kHz, where E-mu's lack of
+// reconstruction filter folded back as the signature alias grit).
+bitCrush=new Tone.BitCrusher(12);
+sp1200LP=new Tone.Filter({frequency:17000,type:'lowpass',rolloff:-12});
 limiter=new Tone.Limiter(-1);
 outSat=new Tone.Distortion(0.01);
 vintageSat=new Tone.Chebyshev(2);
@@ -668,15 +671,22 @@ phaserFX.wet.value=0.15;
 lofiComp=new Tone.Compressor(-24,3);
 lofiComp.attack.value=0.003;
 lofiComp.release.value=0.1;
-tapeWS=new Tone.WaveShaper((val)=>Math.tanh(val*1.5),4096);
+// Ampex 456: asymmetric tanh — DC offset before clip skews toward 3rd
+// harmonic over 2nd, matching Roger Mayer SOS measurements.
+tapeWS=new Tone.WaveShaper((val)=>Math.tanh((val+0.05)*1.5)-0.0747,4096);
 tapeWS.oversample='2x';
+// Head-bump HPF: 30 Hz / Q≈1.2 puts a +1 dB resonance at ~45 Hz, restoring
+// perceived sub after tape's natural LF rolloff.
+headBumpHP=new Tone.Filter({frequency:30,type:'highpass',rolloff:-12,Q:1.2});
 masterG=new Tone.Gain(0.8).connect(bitCrush);
 bitCrush.wet.value=0;
-bitCrush.connect(outSat);
+bitCrush.connect(sp1200LP);
+sp1200LP.connect(outSat);
 outSat.connect(limiter);
 limiter.connect(Tone.Destination);
 masterG.disconnect();
-masterG.connect(fxFlt);
+masterG.connect(headBumpHP);
+headBumpHP.connect(fxFlt);
 fxFlt.connect(vintageSat);
 vintageSat.connect(phaserFX);
 phaserFX.connect(lofiComp);
