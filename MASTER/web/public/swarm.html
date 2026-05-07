@@ -90,6 +90,25 @@ function paintDefaultDensity(){
 }
 paintDefaultDensity();
 
+function paintTextDensity(text){
+  density.fill(0);
+  const t = document.createElement('canvas');
+  t.width = W; t.height = H;
+  const tc = t.getContext('2d', { willReadFrequently:true });
+  tc.fillStyle = '#000'; tc.fillRect(0,0,W,H);
+  tc.fillStyle = '#fff';
+  tc.font = 'bold 22px "Major Mono Display","VT323",monospace';
+  tc.textAlign = 'center';
+  tc.textBaseline = 'middle';
+  tc.fillText(text, W/2, H/2);
+  const img = tc.getImageData(0,0,W,H).data;
+  for (let y=0; y<H; y++) {
+    for (let x=0; x<W; x++) {
+      if (img[(y*W+x)*4] > 128) density[y*W + x] = 220;
+    }
+  }
+}
+
 function paintRectsDensity(rects){
   density.fill(0);
   for (const r of rects) {
@@ -127,6 +146,12 @@ addEventListener('message', e => {
       mode = 'slow'; modeUntil = performance.now() + 3000; break;
     case 'density':
       Array.isArray(d.rects) ? paintRectsDensity(d.rects) : paintDefaultDensity(); break;
+    case 'text': {
+      const p = d.data || d;
+      const txt = String(p.text || '').slice(0, 24);
+      if (txt) { paintTextDensity(txt); mode = 'cohere'; modeUntil = performance.now() + 8000; }
+      break;
+    }
     case 'pulse': {
       const p = d.data || d;
       pulses.push({

@@ -611,6 +611,16 @@ if (window.DeviceMotionEvent) {
       const f=_swarm(); if(!f||!f.contentWindow) return;
       try{ f.contentWindow.postMessage({type,data:data||{}},'*'); }catch(_){}
     };
+    let _lastActivity=Date.now();
+    const _bumpActivity=()=>{ _lastActivity=Date.now(); };
+    const _modelTag=String(<%= @model.to_s.split('/').last.sub(/:free$/,'').to_json.html_safe %>).toUpperCase();
+    setInterval(()=>{
+      if(isProcessing||isSpeaking) return;
+      if(Date.now()-_lastActivity>30000){
+        swarmSignal('text',{text:_modelTag});
+        _lastActivity=Date.now();
+      }
+    },5000);
     const stageBell=(freq)=>{
       if(!audioCtx) return;
       try{
@@ -1872,7 +1882,7 @@ recognition.onresult=(ev)=>{
       // P9: did the user just answer a pending confirmation prompt?
       const confirmReply=_checkConfirmReply(message);
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
-      isProcessing=true;
+      isProcessing=true; _bumpActivity();
       if(padModulate) padModulate('think');
       statusEl.classList.remove('think','speak');
       statusEl.classList.add('processing');
