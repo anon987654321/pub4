@@ -1,4 +1,14 @@
 ---
+- name: triad_default
+  description: Default pipeline — deep scan, autofix sweep, council review.
+    Runs hourly and after any /chat or CLI session that mutated MASTER source.
+    User never types this; agent_commands/triad_command runs all three.
+  trigger: scheduled
+  interval_s: 3600
+  command: "triad deep ."
+  enabled: true
+  state: pending
+  last_run_at: 0
 - name: nightly_dreams
   description: Consolidate memories during low-activity periods
   trigger: scheduled
@@ -12,7 +22,7 @@
   trigger: scheduled
   interval_s: 604800
   command: scan
-  enabled: false
+  enabled: true
   state: pending
   last_run_at: 0
 - name: data_integrity_check

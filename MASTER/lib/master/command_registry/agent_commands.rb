@@ -11,6 +11,28 @@ module Master
         .merge(ideate_command(ai:))
         .merge(topic_command(infra:))
         .merge(rsi_command(infra:))
+        .merge(triad_command(ai:, root:, infra:))
+    end
+
+    # Default scan→sweep→council triad — runs as a single command so users
+    # never have to chain three slash invocations themselves.
+    def triad_command(ai:, root:, infra:)
+      bus = infra[:bus]
+      cmds = scan_loop_commands(ai:, root:, infra:)
+      meta = council_meta_commands(ai:, root:)
+      {
+        "triad" => ->(ctx) {
+          target = ctx[:args].to_s.strip
+          target = "deep ." if target.empty?
+          parts = []
+          bus&.publish("triad:start", target: target)
+          parts << "scan:\n#{cmds['scan'].call(args: target)}"
+          parts << "sweep:\n#{cmds['sweep'].call(args: target.sub(/\Adeep\s*/, ''))}"
+          parts << "council:\n#{meta['council'].call(args: '')}"
+          bus&.publish("triad:done")
+          parts.join("\n\n")
+        }
+      }
     end
 
     def scan_loop_commands(ai:, root:, infra:)
