@@ -119,6 +119,22 @@ gaussian blur σ=width/60 → asymmetric R>G>>B re-add → sRGB on output.
 0.2 weight. Cheaper than halation; works in display gamma. Use for stylised
 highlight glow when physical accuracy is not the goal.
 
+### Tonemap
+
+`tonemap(type:, exposure:, intensity:)` — filmic S-curve in linear space
+ahead of the film LUT. Exposure is in stops (`+1.0` doubles linear light
+pre-curve, `-1.0` halves it). Two curves:
+
+| Type   | Source                                | Notes                                |
+|--------|---------------------------------------|--------------------------------------|
+| `:aces`| Narkowicz fit to Academy RRT+ODT       | Default. Soft shoulder, slight toe lift, no blowouts |
+| `:hable`| Uncharted-2 filmic, W=1.0 for LDR     | More aggressive midtone lift, white pinned to 255    |
+
+Per-channel; chroma drift in the shoulder is the expected filmic look.
+Both curves are monotone, photometric, applied before any film LUT so the
+H&D curve sees compressed scene-referred light, not display-clipped sRGB.
+Pre-multiply HDR sources by exposure stops if needed.
+
 ### Grain
 
 `grain(iso, stock, intensity)` — Newson-Delon stochastic grain in linear
@@ -163,7 +179,7 @@ PRESETS = {
                  stock: :fuji_velvia,   temp: 5800, intensity: 0.9 },
   street:      { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain],
                  stock: :tri_x,         temp: 5600, intensity: 1.0 },
-  blockbuster: { fx: %w[teal_orange halation grain bloom_pro highlight_roll micro_contrast],
+  blockbuster: { fx: %w[tonemap teal_orange halation grain bloom_pro highlight_roll micro_contrast],
                  stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
 }
 ```

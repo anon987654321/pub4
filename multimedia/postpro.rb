@@ -231,7 +231,7 @@ PRESETS = {
   portrait: { fx: %w[skin_protect film_curve highlight_roll micro_contrast grain color_temp base_tint], stock: :kodak_portra, temp: 5200, intensity: 0.8 },
   landscape: { fx: %w[film_curve color_separate highlight_roll micro_contrast grain vintage_lens], stock: :fuji_velvia, temp: 5800, intensity: 0.9 },
   street: { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain], stock: :tri_x, temp: 5600, intensity: 1.0 },
-  blockbuster: { fx: %w[teal_orange halation grain bloom_pro highlight_roll micro_contrast], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
+  blockbuster: { fx: %w[tonemap teal_orange halation grain bloom_pro highlight_roll micro_contrast], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
 }.freeze
 
 def halation_tint_for(stock)
@@ -550,6 +550,50 @@ def halation(image, intensity = 1.0, tint: HALATION_TINT_VISION3, sigma_div: 60)
   safe_cast((linear + glow).colourspace("srgb"))
 end
 
+# Filmic tonemap in linear (exposure) space. ACES is the Narkowicz fit to the
+# Academy RRT+ODT — fast, photometric, the canonical "filmic" curve. Hable is
+# Uncharted-2's S-curve, slightly more controllable shoulder, used in many
+# cinematic productions. Both per-channel; chroma drift in the shoulder is the
+# expected filmic behaviour. Exposure is applied in stops (2^EV) before the
+# curve, so a +1.0 stop doubles linear light pre-tonemap.
+TONEMAP_ACES = { a: 2.51, b: 0.03, c: 2.43, d: 0.59, e: 0.14 }.freeze
+TONEMAP_HABLE = { a: 0.15, b: 0.50, c: 0.10, d: 0.20, e: 0.02, f: 0.30, w: 1.0 }.freeze
+
+def tonemap(image, type: :aces, exposure: 0.0, intensity: 1.0)
+  linear = image.colourspace("scrgb")
+  exposed = linear.linear([2.0**exposure] * 3, [0, 0, 0])
+  curved = case type.to_sym
+           when :hable then tonemap_hable(exposed)
+           else             tonemap_aces(exposed)
+           end
+  blended = linear * (1 - intensity) + clamp01(curved) * intensity
+  safe_cast(blended.colourspace("srgb"))
+end
+
+def clamp01(image)
+  lifted = (image > 0).ifthenelse(image, 0)
+  (lifted < 1).ifthenelse(lifted, 1)
+end
+
+def tonemap_aces(linear)
+  a, b, c, d, e = TONEMAP_ACES.values_at(:a, :b, :c, :d, :e)
+  sq = linear * linear
+  num = sq.linear([a] * 3, [0, 0, 0]) + linear.linear([b] * 3, [0, 0, 0])
+  den = sq.linear([c] * 3, [0, 0, 0]) + linear.linear([d] * 3, [e] * 3)
+  num / den
+end
+
+def tonemap_hable(linear)
+  a, b, c, d, e, f, w = TONEMAP_HABLE.values_at(:a, :b, :c, :d, :e, :f, :w)
+  white = ((w * (a * w + c * b) + d * e) / (w * (a * w + b) + d * f)) - e / f
+  curved = linear.bandsplit.map do |x|
+    num = (x * x).linear([a], [0]) + x.linear([c * b], [d * e])
+    den = (x * x).linear([a], [0]) + x.linear([b], [d * f])
+    num / den - e / f
+  end
+  Vips::Image.bandjoin(curved).linear([1.0 / white] * 3, [0, 0, 0])
+end
+
 # Preset Application
 def preset(image, name)
   p = PRESETS[name.to_sym]
@@ -571,6 +615,7 @@ def preset(image, name)
              when 'teal_orange' then teal_orange(result, p[:intensity])
              when 'bloom_pro' then bloom_pro(result, p[:intensity])
              when 'halation' then halation(result, p[:intensity], tint: halation_tint_for(p[:stock]))
+             when 'tonemap' then tonemap(result, type: :aces, exposure: 0.0, intensity: p[:intensity] * 0.7)
              else result
              end
   end
