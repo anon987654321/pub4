@@ -50,29 +50,37 @@ module Master
     end
 
     def chat(message, stream: true, escalation_depth: 0, &blk)
-      @context_window&.check_and_compact!
-      @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
-      @session.add_message(role: :user, content: message)
+      prepare_chat_turn(message)
       candidate_models = routed_models
-      prompt = apply_reasoning_mode(message)
-      context = conversation_context
+      prompt   = apply_reasoning_mode(message)
+      context  = conversation_context
       @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / Session::TOKENS_PER_CHAR)
 
-      begin
-        @circuit_breaker.check_rate!
-      rescue CircuitBreaker::CircuitError => rate_err
-        return Result.err(rate_err.message, category: rate_err.category)
-      end
+      rate_err = check_rate_limit
+      return rate_err if rate_err
 
-      last_response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
-      return last_response if last_response.respond_to?(:err?) && last_response.err?
-      last_response = maybe_escalate(last_response, message, stream:, escalation_depth:, &blk)
+      response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
+      return response if response.respond_to?(:err?) && response.err?
+      response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
-      text = last_response.to_s
+      text = response.to_s
       @session.add_message(role: :assistant, content: text)
       Result.ok(text)
     rescue StandardError => chat_error
       Result.err("agent: #{chat_error.message}", category: :handler_exception)
+    end
+
+    def prepare_chat_turn(message)
+      @context_window&.check_and_compact!
+      @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
+      @session.add_message(role: :user, content: message)
+    end
+
+    def check_rate_limit
+      @circuit_breaker.check_rate!
+      nil
+    rescue CircuitBreaker::CircuitError => err
+      Result.err(err.message, category: err.category)
     end
 
     def ask(prompt, context: nil, operation: nil)
@@ -204,23 +212,33 @@ module Master
       if claude_cli_model?(selected_model)
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys: system || system_prompt)
       end
+      if web_chat_model?(selected_model)
+        return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys: system || system_prompt)
+      end
       send_ruby_llm(selected_model, messages, sys: system || system_prompt, stream:, &blk)
     end
 
     def send_claude_cli(model_alias, messages, sys:)
       require "open3"
-      prompt = messages.last[:content].to_s
-      context = messages[0...-1].map { |m| "#{m[:role]}: #{m[:content]}" }.join("\n\n")
-      full_prompt = context.empty? ? prompt : "#{context}\n\nuser: #{prompt}"
-
       args = ["claude", "--print", "--model", model_alias]
       args += ["--system-prompt", sys] if sys && !sys.empty?
-
-      out, err, status = Open3.capture3(*args, stdin_data: full_prompt)
+      out, err, status = Open3.capture3(*args, stdin_data: text_prompt_for(messages))
       return Result.err("claude-cli: #{err.strip}", category: :provider_error) unless status.success?
       Result.ok(out.strip)
     rescue StandardError => e
       Result.err("claude-cli: #{e.message}", category: :provider_error)
+    end
+
+    def send_web_chat(provider, messages, sys:)
+      Result.ok(WebChat.call(provider: provider, prompt: text_prompt_for(messages), system: sys))
+    rescue StandardError => e
+      Result.err("web-chat: #{e.message}", category: :provider_error)
+    end
+
+    def text_prompt_for(messages)
+      prompt  = messages.last[:content].to_s
+      context = messages[0...-1].map { |m| "#{m[:role]}: #{m[:content]}" }.join("\n\n")
+      context.empty? ? prompt : "#{context}\n\nuser: #{prompt}"
     end
 
     def send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
@@ -248,7 +266,7 @@ module Master
       return [@config.model] unless @model_router
       @model_router.fallback_chain(task_type: @config.task_type.to_sym)
     rescue StandardError => e
-      @bus&.publish("llm:route_error", error: e.message) if defined?(@bus)
+      @bus&.publish("llm:route_error", error: e.message)
       [@config.model]
     end
 
@@ -257,6 +275,7 @@ module Master
     end
 
     def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
+    def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
 
     def tool_capable?(model_id)
       TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
