@@ -9,7 +9,7 @@
 <meta name="description" content="RG-69 analog beat machine. Single HTML file sequencer with Tone.js.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎹</text></svg>">
 <title>RG-69 | Beat Machine</title>
-<script src="assets/tone-14.8.49.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <style>
 :root{--bg:#0c0c0c;--brd:#252525;--txt:#d0d0d0;--mut:#484848;--acc:#c8902e;--dng:#8c3030;--z-modal:1000;--transition-fast:100ms}
 [data-theme="light"]{--bg:#f2f2f2;--brd:#c0c0c0;--txt:#111;--mut:#888;--acc:#9c6a10;--dng:#993030}
@@ -102,6 +102,12 @@ select:focus{outline:1px solid var(--acc)}
 .style-chip{padding:2px 7px;border:1px solid var(--brd);cursor:pointer;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:var(--mut)}
 .style-chip:hover{border-color:var(--mut);color:var(--txt)}
 .style-chip.active{border-color:var(--acc);color:var(--acc)}
+
+/* stems */
+.stm-rack{grid-template-columns:1fr;gap:2px}
+.stm-row{display:grid;grid-template-columns:24px 90px 1fr 32px;align-items:center;gap:6px;font-size:10px}
+.stm-mute{background:none;border:1px solid var(--brd);color:var(--mut);cursor:pointer;padding:0;line-height:1.4}
+.stm-row label{color:var(--mut)}
 
 /* patterns */
 #root-display{color:var(--acc);font-weight:700}
@@ -230,6 +236,16 @@ footer{border-top:1px solid var(--brd);margin-top:6px;padding-top:4px;font-size:
 </fieldset>
 </details>
 <details>
+<summary>Stems</summary>
+<fieldset>
+<label>Set</label><select id="stm-set" aria-label="Stem set"></select>
+<button id="stm-load" title="Load stems">load</button>
+<button id="stm-fit" title="Fit loop to bar">fit</button>
+<output id="stm-status">unloaded</output>
+</fieldset>
+<fieldset id="stm-rack" class="stm-rack"></fieldset>
+</details>
+<details>
 <summary>Patterns</summary>
 <fieldset>
 <label>Drums <button class="lock-btn" data-lock="drum" title="Lock">🔓</button> <span id="root-display"></span></label><select id="drum-pat" aria-label="Drum pattern"></select>
@@ -298,6 +314,12 @@ const PARAMS={
   PADS_LP_HZ:3500,
   INSTANCE_TTL_MS:8000,
 };
+
+// MPC60 / Dilla pocket — measured offsets from Charnas (Dilla Time, 2022) and
+// Hein. kick drags, snare rushes, bass lags behind kick (Pino on Voodoo).
+// Values in ms; positive = late, negative = early. Hat humanises ±8 per hit.
+const DILLA_MICRO_MS={k:25,s:-10,c:-8,h:0,o:0,b:35,keys:0,p:0};
+const DILLA_HAT_JITTER_MS=8;
 
 
 const DRUM_PATTERNS={
@@ -465,13 +487,14 @@ log('mood applied','k');
 let st_={started:false,playing:false,idx:-1,timer:null,layoutIdx:49,heartbeat:null,paintMode:false,tapTimes:[],history:[],historyIdx:-1,stepCount:16,theme:'dark',rafId:null,peakL:0,peakR:0,muteState:{k:0,s:0,c:0,h:0,o:0}};
 let aud_={bpm:82,swing:36,drive:44,tape:58,comp:72,width:58,reverb:58,delay:34,filter:72,wobble:16,vinyl:22,crackle:14,drift:0.05};
 let mix_={drum:80,bass:70,keys:60,pads:50,master:75};
+let stm_={set:null,manifest:null,players:[],gains:[],vol:[],mute:[],bus:null,loaded:false};
 let pat_={d:'dusty1',b:'dustybass1',k:'neosoul',p:'ambientwash'};
 let seq_={};
 ['k','s','c','h','o'].forEach(t=>{seq_[t]=Array(16).fill(0).map(()=>({v:0.85+rnd(0,0.15),t:rnd(-15,15),p:100,r:1}))});
 ['b','keys','p'].forEach(t=>{seq_[t]=Array(16).fill(0).map(()=>({v:0.85+rnd(0,0.15),t:rnd(-15,15),p:100,r:1}))});
 
 let kickN,kickSub,kickClk,kickBody,snareN,snareRng,clapN,hatN,openN,bassN,bassSub,keysN,keysChorus,padsN,padsFlt,padsShift;
-let drumG,bassG,keysG,padsG,masterG,limiter,vinylNoise,crackleNoise,wobbLFO,flutterLFO,driftLFO,analyser;
+let drumG,bassG,keysG,padsG,stmBus,masterG,limiter,vinylNoise,crackleNoise,wobbLFO,flutterLFO,driftLFO,analyser;
 let fxRev,fxDly,fxFlt,tapeSat,compPar,sslComp,widener,kickSat,keySat,drumSat,outSat,bitCrush,revSend,dlySend;
 let drumTube,kickComp,vintageSat,phaserFX,lofiNoise,lofiComp,tapeWS,padsLFO,kickClkBP,snareRngBP,keysTrem,keysCrush;
 
@@ -583,10 +606,12 @@ Tone.getContext().rawContext.addEventListener('statechange',()=>{
   }
 });
 driftLFO=new Tone.LFO(rnd(0.05,0.2),0.9995,1.0005).start();
-kickN=new Tone.MembraneSynth({pitchDecay:.05,octaves:6,oscillator:{type:'sine'},envelope:{attack:.001*rnd(.97,1.03),decay:.4*rnd(.97,1.03),sustain:0,release:.1*rnd(.97,1.03)}});
-kickSub=new Tone.Synth({oscillator:{type:'sine'},envelope:{attack:.001,decay:.5,sustain:0,release:.1}});
+// Dilla kick: 150→50 Hz pitch sweep over ~80 ms (ratio 1.58 octaves),
+// click @1.8 kHz, sub layer 55 Hz / 400 ms decay. Per Charnas + E-mu refs.
+kickN=new Tone.MembraneSynth({pitchDecay:.025,octaves:2,oscillator:{type:'sine'},envelope:{attack:.001*rnd(.97,1.03),decay:.4*rnd(.97,1.03),sustain:0,release:.1*rnd(.97,1.03)}});
+kickSub=new Tone.Synth({oscillator:{type:'sine'},envelope:{attack:.001,decay:.4,sustain:0,release:.1}});
 kickClk=new Tone.NoiseSynth({noise:{type:'white'},envelope:{attack:.001,decay:.02,sustain:0}});
-kickClkBP=new Tone.Filter(1200,'bandpass');
+kickClkBP=new Tone.Filter(1800,'bandpass');
 kickClkBP.Q.value=5;
 kickClk.connect(kickClkBP);
 kickBody=new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:.001,decay:.08,sustain:0}});
@@ -713,6 +738,9 @@ const padsSat=new Tone.Chebyshev(2);padsSat.wet.value=0.2;
 padsG.connect(padsBW);padsBW.connect(padsSat);padsSat.connect(masterG);padsSat.connect(revSend);padsSat.connect(dlySend);
 // route remaining tracks
 [drumG,bassG].forEach(g=>{g.connect(masterG);g.connect(revSend);g.connect(dlySend);});
+stmBus=new Tone.Gain(Tone.dbToGain(-6));
+const stmSat=new Tone.Chebyshev(2);stmSat.wet.value=0.15;
+stmBus.connect(stmSat);stmSat.connect(masterG);stmBus.connect(revSend);stmBus.connect(dlySend);
 randomizeFX();
 log("audio engine init (analog++)","k");
 }
@@ -736,30 +764,91 @@ if(crackleNoise)crackleNoise.volume.value=-65+aud_.crackle/100*20;
 if(wobbLFO){wobbLFO.frequency.value=.05+aud_.wobble/100*PARAMS.WOBB_FREQ_MAX;wobbLFO.min=1-aud_.wobble/100*.04;wobbLFO.max=1+aud_.wobble/100*.04;}
 if(bitCrush)bitCrush.wet.value=(100-aud_.drive)/400;
 if(driftLFO)driftLFO.frequency.value=.05+aud_.drift*.15;
+stm_.players.forEach((p,i)=>{
+if(stm_.gains[i])stm_.gains[i].gain.value=stm_.mute[i]?0:(stm_.vol[i]/100);
+});
+}
+
+async function loadStemManifest(){
+const r=await fetch('stems/manifest.json',{cache:'no-store'});
+if(!r.ok)throw new Error('manifest '+r.status);
+stm_.manifest=await r.json();
+const sel=$id('stm-set');sel.innerHTML='';
+Object.keys(stm_.manifest.sets).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o)});
+sel.value=stm_.set=stm_.manifest.active||sel.options[0]?.value;
+}
+
+async function loadStems(){
+if(!stm_.manifest)await loadStemManifest();
+if(!stmBus){await initAudio();}
+stm_.players.forEach(p=>{try{p.stop();p.dispose()}catch(e){}});
+stm_.gains.forEach(g=>g.dispose());
+stm_.players=[];stm_.gains=[];stm_.vol=[];stm_.mute=[];
+const set=stm_.manifest.sets[stm_.set];
+$id('stm-status').textContent='loading…';
+const dir=set.dir||'.';
+await Promise.all(set.files.map(async(f,i)=>{
+const url=`stems/${dir}/${f}`.replace('/./','/');
+const p=new Tone.Player({url,loop:true,autostart:false,fadeIn:0.01,fadeOut:0.01});
+const g=new Tone.Gain(0.7);p.connect(g);g.connect(stmBus);
+await Tone.loaded();
+p.sync().start(0);
+stm_.players[i]=p;stm_.gains[i]=g;stm_.vol[i]=70;stm_.mute[i]=true;
+g.gain.value=0;
+}));
+stm_.loaded=true;
+$id('stm-status').textContent=`${set.files.length} loaded · ${set.bpm||'?'} bpm`;
+renderStemRack();
+log(`stems: loaded set "${stm_.set}"`,'k');
+}
+
+function fitStemsToBar(){
+const set=stm_.manifest?.sets[stm_.set];if(!set)return;
+const srcBpm=set.bpm||aud_.bpm;
+const ratio=aud_.bpm/srcBpm;
+stm_.players.forEach(p=>{p.playbackRate=ratio});
+log(`stems: fit ${srcBpm}→${aud_.bpm} bpm (${ratio.toFixed(3)}×)`,'k');
+}
+
+function renderStemRack(){
+const r=$id('stm-rack');r.innerHTML='';
+const set=stm_.manifest?.sets[stm_.set];if(!set)return;
+set.files.forEach((f,i)=>{
+const row=document.createElement('div');row.className='stm-row';
+const name=f.replace(/\.(mp3|wav|ogg)$/i,'');
+row.innerHTML=`<button class="stm-mute" data-i="${i}" title="${stm_.mute[i]?'unmute':'mute'}">${stm_.mute[i]?'○':'●'}</button><label>${name}</label><input class="stm-vol" type="range" data-i="${i}" min="0" max="100" value="${stm_.vol[i]}"><output>${stm_.vol[i]}</output>`;
+r.appendChild(row);
+});
+r.querySelectorAll('.stm-mute').forEach(b=>b.addEventListener('click',e=>{const i=+e.target.dataset.i;stm_.mute[i]=!stm_.mute[i];e.target.textContent=stm_.mute[i]?'○':'●';applyFX();}));
+r.querySelectorAll('.stm-vol').forEach(s=>s.addEventListener('input',e=>{const i=+e.target.dataset.i;stm_.vol[i]=+e.target.value;e.target.nextElementSibling.value=stm_.vol[i];applyFX();}));
 }
 
 // Shared helper function for triggering notes - eliminates duplication between scheduleLoop and exportWAV
 function triggerNotes(stepIdx,baseTime,synths,opts){
 const sixteenth=opts.sixteenth||60/aud_.bpm/4;
 const dp=DRUM_PATTERNS[pat_.d]||DRUM_PATTERNS.basic;
+// MPC swing: push odd-step 16ths late by (swing-50)/100 of a sixteenth.
+// 50=straight, 66.7=triplet feel, Dilla MPC60 zone is 56-62.
+const swingOff=(stepIdx%2===1)?Math.max(0,(aud_.swing-50)/100)*sixteenth:0;
+const microOff=v=>{const m=DILLA_MICRO_MS[v]||0;return v==='h'?(m+(Math.random()-0.5)*DILLA_HAT_JITTER_MS)/1000:m/1000};
 ['k','s','c','h','o'].forEach(v=>{
 if(opts.muteMap&&opts.muteMap[v])return;
 const vel=dp[v]?dp[v][stepIdx]:0;
 const prob=seq_[v][stepIdx].p||100;
 if(vel>0&&(!opts.applyProb||Math.random()*100<prob)){
 const drift=opts.applyTranspose?(Math.random()-0.5)*5:0;
-const t=baseTime+seq_[v][stepIdx].t/1000;
+const t=baseTime+swingOff+microOff(v)+seq_[v][stepIdx].t/1000;
 const vl=vel*seq_[v][stepIdx].v;
 const ratch=opts.applyRatchet?seq_[v][stepIdx].r||1:1;
 for(let r=0;r<ratch;r++){
-const rt=t+(opts.addSwing?r*(sixteenth/ratch):r*(sixteenth/ratch));
+const rt=t+r*(sixteenth/ratch);
 if(v==='k'){
-const kpitch='C1';
-const kfreq=opts.applyTranspose?Tone.Frequency(kpitch).toFrequency()*(1+drift/1200):Tone.Frequency(kpitch).toFrequency();
+// Dilla kick: top @ ~150 Hz (D3 = 146.8), sub @ 55 Hz (A1).
+const kfreq=146.8*(opts.applyTranspose?(1+drift/1200):1);
 synths.kick.triggerAttackRelease(kfreq,'8n',rt,vl);
-synths.kickSub.triggerAttackRelease(opts.applyTranspose?Tone.Frequency(kpitch).transpose(-12):'C0','8n',rt,vl*.7);
+synths.kickSub.triggerAttackRelease(55,'4n',rt,vl*.7);
 synths.kickClk.triggerAttackRelease(rt,vl*0.3);
-synths.kickBody.triggerAttackRelease(opts.applyTranspose?Tone.Frequency(kpitch).transpose(12):'C2','32n',rt,vl*.2);
+synths.kickBody.triggerAttackRelease(opts.applyTranspose?'C3':'C3','32n',rt,vl*.2);
 }
 else if(v==='s'){synths.snare.triggerAttackRelease(rt,vl);synths.snareRng.triggerAttackRelease('E4','16n',rt,vl*0.5)}
 else if(v==='c')synths.clap.triggerAttackRelease(rt,vl);
@@ -769,27 +858,30 @@ else if(v==='o')synths.open.triggerAttackRelease(rt,vl);
 }
 });
 const bn=BASS_PATS[pat_.b]?.split(',')||[];
+const bOff=baseTime+swingOff+microOff('b');
 if(bn[stepIdx]&&bn[stepIdx]!==''){
 const nt=bn[stepIdx];
 const drift=opts.applyTranspose?(Math.random()-0.5)*2:0;
 const freq=opts.applyTranspose?Tone.Frequency(nt).toFrequency()*(1+drift/1200):Tone.Frequency(nt).toFrequency();
-synths.bass.triggerAttackRelease(freq,'8n',baseTime+seq_.b[stepIdx].t/1000,seq_.b[stepIdx].v);
-synths.bassSub.frequency.setValueAtTime(Tone.Frequency(nt).toFrequency()/2,baseTime+seq_.b[stepIdx].t/1000);
+synths.bass.triggerAttackRelease(freq,'8n',bOff+seq_.b[stepIdx].t/1000,seq_.b[stepIdx].v);
+synths.bassSub.frequency.setValueAtTime(Tone.Frequency(nt).toFrequency()/2,bOff+seq_.b[stepIdx].t/1000);
 }
 const kn=KEYS_PATS[pat_.k]||[];
+const kOff=baseTime+swingOff+microOff('keys');
 if(kn[stepIdx]&&kn[stepIdx]!==0){
 const ch=kn[stepIdx];
 if(Array.isArray(ch)){
-synths.keys.triggerAttackRelease(ch,'8n',baseTime+seq_.keys[stepIdx].t/1000,seq_.keys[stepIdx].v);
+synths.keys.triggerAttackRelease(ch,'8n',kOff+seq_.keys[stepIdx].t/1000,seq_.keys[stepIdx].v);
 }else if(typeof ch==='string'){
-synths.keys.triggerAttackRelease(ch,'8n',baseTime+seq_.keys[stepIdx].t/1000,seq_.keys[stepIdx].v);
+synths.keys.triggerAttackRelease(ch,'8n',kOff+seq_.keys[stepIdx].t/1000,seq_.keys[stepIdx].v);
 }
 }
 const pn=PAD_PATS[pat_.p]||[];
+const pOff=baseTime+swingOff+microOff('p');
 if(pn[stepIdx]&&pn[stepIdx]!==0){
 const pad=pn[stepIdx];
 if(Array.isArray(pad)){
-synths.pads.triggerAttackRelease(pad,'2n',baseTime+seq_.p[stepIdx].t/1000,seq_.p[stepIdx].v*0.6);
+synths.pads.triggerAttackRelease(pad,'2n',pOff+seq_.p[stepIdx].t/1000,seq_.p[stepIdx].v*0.6);
 }
 }
 }
@@ -1151,6 +1243,10 @@ sel_d.addEventListener('change',e=>{pushHistory();pat_.d=e.target.value;log(`dru
 sel_b.addEventListener('change',e=>{pushHistory();pat_.b=e.target.value;log(`bass: ${pat_.b}`)});
 sel_k.addEventListener('change',e=>{pushHistory();pat_.k=e.target.value;log(`keys: ${pat_.k}`)});
 sel_p.addEventListener('change',e=>{pushHistory();pat_.p=e.target.value;log(`pads: ${pat_.p}`)});
+loadStemManifest().catch(e=>log('stems: '+e.message,'w'));
+$id('stm-set').addEventListener('change',e=>{stm_.set=e.target.value;stm_.loaded=false;$id('stm-status').textContent='unloaded';$id('stm-rack').innerHTML='';});
+$id('stm-load').addEventListener('click',()=>loadStems().catch(e=>log('stems load: '+e.message,'e')));
+$id('stm-fit').addEventListener('click',fitStemsToBar);
 const styles_c=$id('styles');
 const filterStyles=q=>{
 const query=q.toLowerCase();

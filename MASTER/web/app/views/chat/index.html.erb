@@ -622,7 +622,7 @@ if (window.DeviceMotionEvent) {
     };
     let _lastActivity=Date.now();
     const _bumpActivity=()=>{ _lastActivity=Date.now(); };
-    const _modelTag=String(<%= @model.to_s.split('/').last.sub(/:free$/,'').to_json.html_safe %>).toUpperCase();
+    const _modelTag=String(<%= ((@model.to_s.split('/').last || @model.to_s).sub(/:free$/, '')).to_json.html_safe %>).toUpperCase();
     setInterval(()=>{
       if(isProcessing||isSpeaking) return;
       if(Date.now()-_lastActivity>30000){
