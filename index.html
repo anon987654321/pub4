@@ -10,25 +10,21 @@
   <meta name="description" content="Classic warp tunnel with multiple views. Tilt device for parallax."/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>"/>
   <style>
-    :root{--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--zoom:1;--transition-fast:180ms;--transition-normal:300ms;--z-base:10;--z-ui:90;--z-modal:1000}
+    :root{--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--zoom:1}
     html,body{margin:0;height:100%;background:#000;color:#dcdcdc;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
-    canvas{position:fixed;inset:0;width:100dvw;height:100dvh;display:block;background:#000;touch-action:none;image-rendering:pixelated;transition:filter var(--transition-fast) ease,transform var(--transition-fast) ease;transform-origin:center;transform:scale(var(--zoom));will-change:transform,filter}
+    canvas{position:fixed;inset:0;width:100dvw;height:100dvh;display:block;background:#000;touch-action:none;image-rendering:pixelated;transition:filter 140ms ease,transform 120ms ease;transform-origin:center;transform:scale(var(--zoom))}
     canvas.canvas-inverted{filter:invert(1) hue-rotate(180deg)}
     @keyframes start-ack{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}canvas.start-ack{animation:start-ack 240ms ease-out}
-    h1.city-carousel{position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:calc(var(--z-ui) + 5);pointer-events:none;user-select:none;overflow:hidden;margin:0;font-family:Helvetica,sans-serif}
+    h1.city-carousel{position:fixed;top:calc(10px + var(--safe-top));left:calc(10px + var(--safe-left));width:min(92vw,560px);height:38px;z-index:95;pointer-events:none;user-select:none;overflow:hidden;margin:0;font-family:Helvetica,sans-serif}
     .carousel-container{width:100%;height:100%;position:relative;overflow:hidden}
-    .carousel-slide{height:100%;display:flex;align-items:center;justify-content:flex-start;font-weight:700;font-size:clamp(16px,4vw,28px);color:#dcdcdc;letter-spacing:.02em;transition:transform var(--transition-normal) ease,opacity var(--transition-normal) ease;position:absolute;top:0;left:0;width:100%;opacity:0;transform:translateY(100%);white-space:nowrap;will-change:transform,opacity}
+    .carousel-slide{height:100%;display:flex;align-items:center;justify-content:flex-start;font-weight:700;font-size:clamp(16px,4vw,28px);color:#dcdcdc;letter-spacing:.02em;transition:transform .3s ease,opacity .3s ease;position:absolute;top:0;left:0;width:100%;opacity:0;transform:translateY(100%);white-space:nowrap}
     .carousel-slide.active{opacity:1;transform:translateY(0%)}
-    .ui{position:fixed;right:calc(12px + var(--safe-right));bottom:calc(10px + var(--safe-bottom));color:#dcdcdc;font:9px/1.1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;text-transform:uppercase;letter-spacing:.28em;white-space:nowrap;pointer-events:none;user-select:none;text-align:right;max-width:min(72vw,800px);overflow:hidden;text-overflow:ellipsis;z-index:var(--z-ui);opacity:.86;background:#000;padding:0 1px}
+    .ui{position:fixed;right:calc(12px + var(--safe-right));bottom:calc(10px + var(--safe-bottom));color:#dcdcdc;font:9px/1.1 ui-monospace,"SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;text-transform:uppercase;letter-spacing:.28em;white-space:nowrap;pointer-events:none;user-select:none;text-align:right;max-width:min(72vw,800px);overflow:hidden;text-overflow:ellipsis;z-index:90;opacity:.86;background:#000;padding:0 1px}
     .ui .label{margin-right:6px}.ui .dots{display:inline-block;width:3ch;text-align:left}.ui-inverted{color:#dcdcdc!important}
-    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.86);color:#9aa;cursor:pointer;user-select:none;z-index:var(--z-modal);text-align:center;padding:16px;opacity:1;transition:opacity var(--transition-fast) ease}
+    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.86);color:#9aa;cursor:pointer;user-select:none;z-index:1000;text-align:center;padding:16px;opacity:1;transition:opacity .18s ease}
     .overlay.ack{opacity:0}.overlay[hidden]{display:none}
-    .overlay h1{margin:0 0 8px 0;font-size:clamp(2rem,10vw,4.5rem);font-weight:300;color:#dcdcdc;letter-spacing:-.01em;transition:transform var(--transition-fast) ease}.overlay h1.clicked{transform:scale(1.04)}
-    .overlay .tagline{color:#778;font-size:clamp(.8rem,2.5vw,.95rem);margin:0 0 1.8rem;max-width:30em;line-height:1.5}
-    .overlay .chips{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin-bottom:1.5rem}
-    .overlay .chip{padding:.25rem .7rem;border:1px solid #2a3a3a;font:9px/1.4 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.08em;color:#556;pointer-events:none}
-    .overlay .hint{color:#3a4a4a;font-size:.7rem;letter-spacing:.04em}
-    .swipe-hint{position:fixed;bottom:calc(50px + var(--safe-bottom));left:50%;transform:translateX(-50%);color:#9aa;font-size:16px;opacity:0;transition:opacity var(--transition-normal) ease;z-index:var(--z-ui)}
+    .overlay h2{margin:0 0 20px 0;font-size:32px;font-weight:300;color:#dcdcdc;transition:transform .18s ease}.overlay h2.clicked{transform:scale(1.06)}
+    .swipe-hint{position:fixed;bottom:calc(50px + var(--safe-bottom));left:50%;transform:translateX(-50%);color:#9aa;font-size:16px;opacity:0;transition:opacity .5s ease;z-index:99}
     .swipe-hint.show{opacity:1}
     :focus-visible{outline:2px solid #dcdcdc;outline-offset:2px}*,*::before,*::after{box-sizing:border-box}
     @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -52,22 +48,7 @@
     </div>
   </h1>
   <canvas id="canvas" aria-label="Audio-reactive warp tunnel visualizer" tabindex="0"></canvas>
-  <div id="overlay" class="overlay" role="dialog" aria-labelledby="start-title" aria-modal="true" tabindex="0">
-    <div>
-      <h1 id="start-title">Radio Bergen</h1>
-      <p class="tagline">Warp tunnel audio player. J Dilla · Flying Lotus · Madlib · local artists.</p>
-      <div class="chips">
-        <span class="chip">▶ tap to play</span>
-        <span class="chip">N / ← next</span>
-        <span class="chip">M mute</span>
-        <span class="chip">↑↓ speed</span>
-        <span class="chip">F fullscreen</span>
-        <span class="chip">X psychedelic</span>
-        <span class="chip"><a href="rg69.html" onclick="event.stopPropagation()" style="color:inherit;text-decoration:none;">RG-69 BEAT MACHINE →</a></span>
-      </div>
-      <p class="hint">tap anywhere to begin · swipe left/right to skip tracks · tilt for parallax</p>
-    </div>
-  </div>
+  <div id="overlay" class="overlay" role="dialog" aria-labelledby="start-title" aria-modal="true" tabindex="0"><div><h2 id="start-title">Tap to start</h2><a href="rg69.html" onclick="event.stopPropagation()" style="display:block;margin-top:24px;color:#556;font:9px/1.4 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.08em;text-decoration:none">RG-69 BEAT MACHINE →</a></div></div>
   <div class="ui" id="ui" role="status" aria-live="polite" aria-atomic="true"><span class="label" id="uiLabel">Streaming</span><span class="dots" id="uiDots" aria-hidden="true"></span></div>
   <div class="swipe-hint" id="swipeHint">← Swipe for tracks →</div>
   <div id="yt-player-a" aria-hidden="true" class="yt-hidden"></div>
@@ -76,40 +57,16 @@
   <iframe id="player-fallback-b" src="about:blank" title="YouTube audio player B (hidden)" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen" class="yt-hidden"></iframe>
   <script>
     "use strict";
-    const DEBUG=false;
-    const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
 
-    // ============================================================================
-    // MASTER2 Axiom Compliance:
-    // - ONE_SOURCE: Configuration centralized, track list single source
-    // - SIMPLEST_WORKS: Canvas 2D API, native Web Audio, minimal dependencies
-    // - ONE_JOB: Separate classes (Carousel, AudioEngine, Renderer, TunnelRenderer)
-    // - FAIL_VISIBLY: Try/catch on all external APIs (YouTube, Audio), error logging
-    // - NO_SURPRISES: Graceful degradation (sandbox mode, low-end devices)
-    // - DEADLINES: YouTube API timeout (10s), frame throttling, emergency brake
-    // ============================================================================
-
-    // Global error handlers for FAIL_VISIBLY axiom
-    window.addEventListener('unhandledrejection', (event) => {
-      console.error('Unhandled promise rejection:', event.reason);
-      // Don't prevent default to allow browser's error reporting
-    });
-
-    window.addEventListener('error', (event) => {
-      console.error('Global error:', event.error || event.message);
-    });
-
-    // Environment & Performance Config - Single Source of Truth
-    // Browser requirements: Chrome 108+, Safari 15.4+, Firefox 110+ (for dvh/dvw units)
-    const IN_SANDBOX = false;  // Set true when running in sandboxed iframe
-    const FADE_MS = 3500;      // Crossfade duration between tracks
-    const START_FADE_IN = true; // Fade in first track
-    const MAX_TRACK_MS = 40000; // 40 seconds max per track (for podcast/sample mode)
-    const DPR = Math.min(2, window.devicePixelRatio || 1); // Cap DPR for performance
+    // Environment & Performance Config
+    const IN_SANDBOX = false;
+    const FADE_MS = 3500;
+    const START_FADE_IN = true;
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
     const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) || 
                      (navigator.deviceMemory && navigator.deviceMemory <= 2);
 
-    let audio; // Global audio engine instance
+    let audio;
 
     // Animated loading dots UI (". " → ".. " → "..." pattern)
     (() => {
@@ -125,11 +82,7 @@
       };
       
       updateDots();
-      try { 
-        clearInterval(window.__RB_DOTS_IV); 
-      } catch (e) { 
-        // Safe to ignore: interval may not exist on first load
-      }
+      try { clearInterval(window.__RB_DOTS_IV); } catch {}
       window.__RB_DOTS_IV = setInterval(updateDots, 600);
     })();
 
@@ -141,9 +94,7 @@
       return 1;
     };
 
-    // ============================================================================
-    // City name carousel - ONE_JOB principle (single responsibility)
-    // ============================================================================
+    // City name carousel (cycles through playlist.city.tld domains)
     class SimpleCarousel {
       constructor(element, intervalMs = 2800) {
         this.slides = Array.from(element.querySelectorAll(".carousel-slide"));
@@ -168,12 +119,12 @@
       {artist:"AKMD",title:"Stailings",src:".mp3/akmd-stailings.mp3"},
       {artist:"AKMD & Mike T",title:"Alt Kan Skje",src:".mp3/akmd_mike_t-alt_kan_skje.mp3"},
       {artist:"AKMD, Mike T & Jan Hakim",title:"Diverse",src:".mp3/akmd_mike_t_jan_hakim-diverse.mp3"},
+      // {artist:"Angelo Reira & Johann",title:"Sandviken Hotell A",src:".mp3/angelo_reira_and_johann-sandviken_hotell_a.mp3"}, // file missing
       {artist:"Angelo Reira & Johann",title:"Sandviken Hotell B",src:".mp3/angelo_reira_and_johann-sandviken_hotell_b.mp3"},
       {artist:"Chase Swayze",title:"Traffic",src:".mp3/chase_swayze-traffic.mp3"},
       {artist:"Haisam & Johann",title:"PB1",src:".mp3/haisam_and_johann-pb1.mp3"},
       {artist:"Jan Hakim & Johann",title:"Stailings A",src:".mp3/jan_hakim_and_johann-stailings_a.mp3"},
-      {artist:"Mike T Jr",title:"Rauingar",src:".mp3/mike_t_jr-rauingar.mp3"},
-      {artist:"Zaiton",title:"Zaiton",src:".mp3/zaiton.mp3"}
+      {artist:"Mike T Jr",title:"Rauingar",src:".mp3/mike_t_jr-rauingar.mp3"}
     ];
     const YOUTUBE_TRACKS=[
       {artist:"J Dilla",title:"Microphone Master",id:"9EGHwkDix78"},
@@ -220,28 +171,20 @@
     const YT_ORIGIN="https://www.youtube.com";
     const ytPost=(i,f,a=[])=>{if(IN_SANDBOX)return;try{if(!i||!i.contentWindow)return;i.contentWindow.postMessage({event:"command",func:f,args:a},YT_ORIGIN)}catch{try{i.contentWindow.postMessage({event:"command",func:f,args:a},"*")}catch{}}};
 
-    // ============================================================================
-    // UNIFIED AUDIO ENGINE - Handles MP3 and YouTube playback with crossfading
-    // MASTER2: ONE_JOB (single responsibility - audio playback and analysis)
-    // MASTER2: FAIL_VISIBLY (explicit error handling, graceful degradation)
-    // ============================================================================
+    // ===== UNIFIED AUDIO ENGINE (MP3 + YouTube) =====
     class UnifiedAudioEngine{
       constructor(tracks){
         this.started=false;this.muted=false;this.trackIndex=0;
-        this.tracks=tracks.slice().sort(()=>Math.random()-.5); // Shuffle on init
+        this.tracks=tracks.slice().sort(()=>Math.random()-.5);
         this.activeKey="a";this.inactiveKey="b";
-        // Dual MP3 players for crossfading
         this.mp3Players={a:new Audio(),b:new Audio()};
         this.mp3Players.a.crossOrigin="anonymous";this.mp3Players.b.crossOrigin="anonymous";
         this.mp3Players.a.preload="metadata";this.mp3Players.b.preload="metadata";
         this.mp3Players.a.volume=0;this.mp3Players.b.volume=0;
-        // Dual YouTube players for crossfading
         this.ytPlayers={a:null,b:null};this.ytReady=false;
         this._fadeIv=null;this._prefadeTimer=null;this._loadWatch=null;
-        // Beat detection state
         this.beatPhase=0;this.energyLevel=.5;this._beatEnv=0;
         this.audioContext=null;this.analyser=null;this.compressor=null;this.dataArray=null;
-        // Initialize Web Audio API with error handling (MASTER2: FAIL_VISIBLY)
         try{
           this.audioContext=new(window.AudioContext||window.webkitAudioContext)();
           
@@ -296,10 +239,7 @@
         p.onloadedmetadata=()=>{
           const d=p.duration;
           if(d>0){
-            // Use shorter of track duration or MAX_TRACK_MS
-            const maxMs=t.maxMs||MAX_TRACK_MS||Infinity;
-            const trackMs=Math.min(d*1000,maxMs);
-            const m=Math.max(FADE_MS+1000,trackMs-FADE_MS-500);
+            const m=Math.max(FADE_MS+1000,d*1000-FADE_MS-500);
             clearTimeout(this._prefadeTimer);
             this._prefadeTimer=setTimeout(()=>this.next({}),m);
           }
@@ -342,7 +282,7 @@
     const initAudioEngine=async()=>{
       const allTracks=[...MP3_TRACKS,...YOUTUBE_TRACKS];
       audio=new UnifiedAudioEngine(allTracks);
-      if(DEBUG)console.log(`Unified: ${MP3_TRACKS.length} MP3 + ${YOUTUBE_TRACKS.length} YT = ${allTracks.length} total`);
+      console.log(`Unified: ${MP3_TRACKS.length} MP3 + ${YOUTUBE_TRACKS.length} YT = ${allTracks.length} total`);
       return audio;
     };
 
@@ -357,6 +297,7 @@
     const updateMinFrameInterval=()=>MIN_FRAME_MS=typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?33:16;
     const applyInternalScale=(b=isLowEnd?.6:.7)=>INTERNAL_SCALE=Math.max(SCALE_MIN,Math.min(SCALE_MAX,b*Math.min(2,DPR)));
     (()=>{
+      const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
       class PixelTunnel{
         constructor(c){this.ctx=c;this.w=0;this.h=0;this.s=1;this.imageData=null;this.data=null;this.u32=null;this.BLACK32=0;this.fov=250;this.speed=.75;this.segments=isLowEnd?32:48;this.baseRadius=75;this.zStep=isLowEnd?6:4;this.particles=[];this.centers=[];this.time=0;this.mouse={x:0,y:0,down:false,active:false};this.ori={active:false,beta:0,gamma:0};this.tieRowStride=1;this.ringPxCull=.15;this.stars=[]}
         resize(w,h,s){
@@ -484,62 +425,7 @@
           }
           if(s)this.particles=this.particles.sort((a,b)=>b[0].z-a[0].z);
           this.time+=(this.mouse.down?-.005:.005)*m;
-          // Draw central orb merged with tunnel
-          this.drawOrb(a);
           this.ctx.putImageData(this.imageData,0,0);
-        }
-        drawOrb(a){
-          const cx=this.w/2,cy=this.h/2;
-          const bass=a?.bass||0.5,beat=a?.beat||0,avg=a?.average||0.4;
-          const baseR=Math.min(this.w,this.h)*0.08;
-          const pulse=baseR+bass*15+beat*8;
-          const layers=4;
-          const segs=10;
-          const wobble=this.bassWobble||0;
-          if(!this._orbCos||this._orbCos.length!==segs){
-            this._orbCos=new Float32Array(segs);
-            this._orbSin=new Float32Array(segs);
-            for(let i=0;i<segs;i++){const ang=i*Math.PI*2/segs;this._orbCos[i]=Math.cos(ang);this._orbSin[i]=Math.sin(ang);}
-          }
-          for(let layer=0;layer<layers;layer++){
-            const z=(layer-layers/2)*12;
-            const scale=this.fov/(this.fov+z+wobble*8);
-            const r=pulse*scale;
-            const depth=layer/layers;
-            const br=Math.round((30+depth*50+beat*25)/8)*8;
-            const g=Math.round((70+depth*100+bass*30)/8)*8;
-            const b=Math.round((50+depth*70)/8)*8;
-            const col=pack32(br,g,b+br/2,255);
-            const ct=Math.cos(this.time*0.6+layer*0.4+wobble*0.15);
-            const st=Math.sin(this.time*0.6+layer*0.4+wobble*0.15);
-            let px0,py0;
-            for(let i=0;i<=segs;i++){
-              const idx=i%segs;
-              const cosA=this._orbCos[idx]*ct-this._orbSin[idx]*st;
-              const sinA=this._orbSin[idx]*ct+this._orbCos[idx]*st;
-              const px=cx+cosA*r;
-              const py=cy+sinA*r*0.55;
-              if(i>0)this.drawLine32(px0|0,py0|0,px|0,py|0,col);
-              px0=px;py0=py;
-            }
-            if(layer%2===1){
-              for(let i=0;i<segs;i+=2){
-                const cosA=this._orbCos[i]*ct-this._orbSin[i]*st;
-                const sinA=this._orbSin[i]*ct+this._orbCos[i]*st;
-                this.drawLine32(cx|0,cy|0,(cx+cosA*r)|0,(cy+sinA*r*0.55)|0,col);
-              }
-            }
-          }
-          const glowR=2+beat*1.5;
-          const glowCol=pack32(80,200,160,255);
-          for(let dx=-glowR;dx<=glowR;dx++){
-            for(let dy=-glowR;dy<=glowR;dy++){
-              if(dx*dx+dy*dy<=glowR*glowR){
-                const px=(cx+dx)|0,py=(cy+dy)|0;
-                if(px>0&&px<this.w&&py>0&&py<this.h)this.setPixel32(px,py,glowCol);
-              }
-            }
-          }
         }
       }
       const ctx=canvas.getContext("2d",{alpha:false,willReadFrequently:true})||canvas.getContext("2d");
@@ -609,11 +495,6 @@
     const touchDistance=(t1,t2)=>Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY);
     const applyZoom=z=>{zoom=Math.max(.85,Math.min(1.25,z));document.documentElement.style.setProperty("--zoom",String(zoom))};
     const resetPinch=()=>{pinchStartDist=0;baseZoom=zoom};
-    
-    // Cache canvas bounding rect, update on resize
-    let canvasRect=canvas.getBoundingClientRect();
-    window.addEventListener('resize',()=>{canvasRect=canvas.getBoundingClientRect()},{passive:true});
-    
     const startApp=async e=>{if(audio?.started)return;
       if(!audio)await audioInitPromise;
       try{navigator.vibrate?.(12)}catch{}if(e)rippleAtEvent(e);document.getElementById("overlay").style.pointerEvents="none";document.getElementById("overlay").classList.add("ack");document.getElementById("start-title").classList.add("clicked");canvas.classList.add("start-ack");setupSensors();if(IN_SANDBOX){const u=document.getElementById("uiLabel");if(u)u.textContent="Visual-only (sandboxed)"}else{loadYouTubeAPI();audio.start()}setTimeout(()=>{document.getElementById("overlay").hidden=true;document.getElementById("overlay").classList.remove("ack");document.getElementById("start-title").classList.remove("clicked");canvas.classList.remove("start-ack");canvas.focus?.()},220)};
@@ -621,23 +502,23 @@
     overlayEl.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();startApp(e)});
     overlayEl.addEventListener("pointerdown",e=>{rippleAtEvent(e);try{navigator.vibrate?.(8)}catch{}},{passive:true});
     overlayEl.addEventListener("keydown",e=>{if(e.code==="Enter"||e.code==="Space"){e.preventDefault();startApp()}if(e.code==="Tab"){e.preventDefault();overlayEl.focus()}});
-    canvas.addEventListener("mousedown",e=>{mouseDown=true;mouseActive=true;canvas.classList.add("canvas-inverted");setUIInversion(true);canvasRect=canvas.getBoundingClientRect();sendInput();rippleAtEvent(e)},false);
+    canvas.addEventListener("mousedown",e=>{mouseDown=true;mouseActive=true;canvas.classList.add("canvas-inverted");setUIInversion(true);sendInput();rippleAtEvent(e)},false);
     canvas.addEventListener("mouseup",e=>{mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput();rippleAtEvent(e)},false);
-    canvas.addEventListener("mousemove",e=>{const x=e.clientX-canvasRect.left,y=e.clientY-canvasRect.top;mousePos.x=x*INTERNAL_SCALE;mousePos.y=y*INTERNAL_SCALE;mouseActive=true;sendInput()},false);
+    canvas.addEventListener("mousemove",e=>{const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;mousePos.x=x*INTERNAL_SCALE;mousePos.y=y*INTERNAL_SCALE;mouseActive=true;sendInput()},false);
     canvas.addEventListener("mouseleave",()=>{mouseActive=false;mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput()},false);
     let touchStartX=0,touchStartY=0,lastTapTime=0;const swipeThreshold=70,doubleTapMs=300;
-    canvas.addEventListener("touchstart",e=>{e.preventDefault();canvasRect=canvas.getBoundingClientRect();if(e.touches.length===1){const t=e.touches[0],x=t.clientX-canvasRect.left,y=t.clientY-canvasRect.top;touchStartX=x;touchStartY=y;mousePos.x=x*INTERNAL_SCALE;mousePos.y=y*INTERNAL_SCALE;mouseDown=true;canvas.classList.add("canvas-inverted");setUIInversion(true);sendInput();rippleAtEvent(e);resetPinch()}else if(e.touches.length===2){pinchStartDist=touchDistance(e.touches[0],e.touches[1]);baseZoom=zoom}},{passive:false});
-    canvas.addEventListener("touchmove",e=>{e.preventDefault();if(e.touches.length===1){const t=e.touches[0],x=t.clientX-canvasRect.left,y=t.clientY-canvasRect.top;mousePos.x=x*INTERNAL_SCALE;mousePos.y=y*INTERNAL_SCALE;sendInput()}else if(e.touches.length===2){if(pinchStartDist===0){pinchStartDist=touchDistance(e.touches[0],e.touches[1]);baseZoom=zoom}const d=touchDistance(e.touches[0],e.touches[1]);if(pinchStartDist>0){const s=d/pinchStartDist;applyZoom(baseZoom*s)}}else resetPinch()},{passive:false});
-    canvas.addEventListener("touchend",e=>{e.preventDefault();if(e.touches.length<2)resetPinch();if(e.touches.length===0){mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput();rippleAtEvent(e)}if(audio?.started&&!IN_SANDBOX){const t=e.changedTouches[0],endX=t.clientX-canvasRect.left,endY=t.clientY-canvasRect.top,dx=endX-touchStartX,dy=endY-touchStartY;if(Math.abs(dx)>swipeThreshold||Math.abs(dy)>swipeThreshold){if(Math.abs(dx)>Math.abs(dy)){dx>0?audio.next():audio.prev()}else{const s=document.getElementById("swipeHint");s.textContent="Warp Tunnel";s.classList.add("show");setTimeout(()=>s.classList.remove("show"),1400)}try{navigator.vibrate?.(10)}catch{}}else{const n=performance.now();if(n-lastTapTime<doubleTapMs)toggleFullscreen();lastTapTime=n}}},{passive:false});
+    canvas.addEventListener("touchstart",e=>{e.preventDefault();if(e.touches.length===1){const t=e.touches[0],r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;touchStartX=x;touchStartY=y;mousePos.x=x*INTERNAL_SCALE;mousePos.y=y*INTERNAL_SCALE;mouseDown=true;canvas.classList.add("canvas-inverted");setUIInversion(true);sendInput();rippleAtEvent(e);resetPinch()}else if(e.touches.length===2){pinchStartDist=touchDistance(e.touches[0],e.touches[1]);baseZoom=zoom}},{passive:false});
+    canvas.addEventListener("touchmove",e=>{e.preventDefault();if(e.touches.length===1){const t=e.touches[0],r=canvas.getBoundingClientRect(),x=t.clientX-r.left,y=t.clientY-r.top;mousePos.x=x*INTERNAL_SCALE;mousePos.y=y*INTERNAL_SCALE;sendInput()}else if(e.touches.length===2){if(pinchStartDist===0){pinchStartDist=touchDistance(e.touches[0],e.touches[1]);baseZoom=zoom}const d=touchDistance(e.touches[0],e.touches[1]);if(pinchStartDist>0){const s=d/pinchStartDist;applyZoom(baseZoom*s)}}else resetPinch()},{passive:false});
+    canvas.addEventListener("touchend",e=>{e.preventDefault();if(e.touches.length<2)resetPinch();if(e.touches.length===0){mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput();rippleAtEvent(e)}if(audio?.started&&!IN_SANDBOX){const t=e.changedTouches[0],r=canvas.getBoundingClientRect(),endX=t.clientX-r.left,endY=t.clientY-r.top,dx=endX-touchStartX,dy=endY-touchStartY;if(Math.abs(dx)>swipeThreshold||Math.abs(dy)>swipeThreshold){if(Math.abs(dx)>Math.abs(dy)){dx>0?audio.next():audio.prev()}else{const s=document.getElementById("swipeHint");s.textContent="Warp Tunnel";s.classList.add("show");setTimeout(()=>s.classList.remove("show"),1400)}try{navigator.vibrate?.(10)}catch{}}else{const n=performance.now();if(n-lastTapTime<doubleTapMs)toggleFullscreen();lastTapTime=n}}},{passive:false});
     canvas.addEventListener("touchcancel",()=>{resetPinch();mouseDown=false;canvas.classList.remove("canvas-inverted");setUIInversion(false);sendInput()},{passive:true});
     window.vizSpeed=1.0;window.vizIntensity=1.0;window.psychedelicMode=0;
-    addEventListener("keydown",e=>{if(e.key?.toLowerCase()==="m"){e.preventDefault();if(audio?.started)audio.toggleMute();return}if(e.code==="ArrowRight"||e.code==="KeyN"){e.preventDefault();if(audio?.started)audio.next();return}if(e.code==="ArrowLeft"||e.code==="KeyP"){e.preventDefault();if(audio?.started)audio.prev();return}if(e.code==="KeyF"||e.code==="F11"){e.preventDefault();toggleFullscreen();return}if(e.code==="Space"||e.code==="KeyK"){e.preventDefault();if(!audio?.started){startApp()}else{audio.toggleMute()}return}if(e.code==="ArrowUp"){e.preventDefault();window.vizSpeed=Math.min(3,window.vizSpeed+0.1);if(DEBUG)console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="ArrowDown"){e.preventDefault();window.vizSpeed=Math.max(0.1,window.vizSpeed-0.1);if(DEBUG)console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="BracketRight"){e.preventDefault();window.vizIntensity=Math.min(2,window.vizIntensity+0.1);if(DEBUG)console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="BracketLeft"){e.preventDefault();window.vizIntensity=Math.max(0.2,window.vizIntensity-0.1);if(DEBUG)console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="KeyX"){e.preventDefault();window.psychedelicMode=(window.psychedelicMode+1)%4;const modes=['Off','Trails','Color Shift','Kaleidoscope'];if(DEBUG)console.log('Psychedelic:',modes[window.psychedelicMode]);return}if(e.code==="Escape"){e.preventDefault();if(document.fullscreenElement)toggleFullscreen();return}if(e.code==="Digit0"||e.code==="Numpad0"){e.preventDefault();audio.trackIndex=0;audio.beginCrossfade({fast:true});return}if(e.code==="KeyI"){e.preventDefault();canvas.classList.toggle("canvas-inverted");return}});
+    addEventListener("keydown",e=>{if(e.key?.toLowerCase()==="m"){e.preventDefault();if(audio?.started)audio.toggleMute();return}if(e.code==="ArrowRight"||e.code==="KeyN"){e.preventDefault();if(audio?.started)audio.next();return}if(e.code==="ArrowLeft"||e.code==="KeyP"){e.preventDefault();if(audio?.started)audio.prev();return}if(e.code==="KeyF"||e.code==="F11"){e.preventDefault();toggleFullscreen();return}if(e.code==="Space"||e.code==="KeyK"){e.preventDefault();if(!audio?.started){startApp()}else{audio.toggleMute()}return}if(e.code==="ArrowUp"){e.preventDefault();window.vizSpeed=Math.min(3,window.vizSpeed+0.1);console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="ArrowDown"){e.preventDefault();window.vizSpeed=Math.max(0.1,window.vizSpeed-0.1);console.log('Speed:',window.vizSpeed.toFixed(1)+'x');return}if(e.code==="BracketRight"){e.preventDefault();window.vizIntensity=Math.min(2,window.vizIntensity+0.1);console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="BracketLeft"){e.preventDefault();window.vizIntensity=Math.max(0.2,window.vizIntensity-0.1);console.log('Intensity:',window.vizIntensity.toFixed(1)+'x');return}if(e.code==="KeyX"){e.preventDefault();window.psychedelicMode=(window.psychedelicMode+1)%4;const modes=['Off','Trails','Color Shift','Kaleidoscope'];console.log('Psychedelic:',modes[window.psychedelicMode]);return}if(e.code==="Escape"){e.preventDefault();if(document.fullscreenElement)toggleFullscreen();return}if(e.code==="Digit0"||e.code==="Numpad0"){e.preventDefault();audio.trackIndex=0;audio.beginCrossfade({fast:true});return}if(e.code==="KeyI"){e.preventDefault();canvas.classList.toggle("canvas-inverted");return}});
     let pageHidden=document.hidden;
     document.addEventListener("visibilitychange",()=>{
       pageHidden=document.hidden;
       if(pageHidden&&audio?.started){
         // Pause intensive operations when hidden
-        if(DEBUG)console.log("Page hidden - reduced activity");
+        console.log("Page hidden - reduced activity");
       }
     });
     let lastFrameT=performance.now(),lastRenderT=lastFrameT;
@@ -723,6 +604,7 @@
     // ===== VISUALIZER ENHANCEMENTS (PIXEL-BASED) =====
     (function(){
     'use strict';
+    const pack32=(r,g,b,a)=>((a&255)<<24)|((b&255)<<16)|((g&255)<<8)|(r&255);
     const TAU=Math.PI*2,HALF_PI=Math.PI/2,THIRD_PI=Math.PI/3,PHI=1.618033988749895;
     const makeRotation=(cx,cy,angle)=>{const c=Math.cos(angle),s=Math.sin(angle);return{x:(x,y)=>cx+(x-cx)*c-(y-cy)*s,y:(x,y)=>cy+(x-cx)*s+(y-cy)*c};};
     const atmosphericHue=(depth,baseHue)=>baseHue+(1-depth)*30;
@@ -749,7 +631,7 @@
     // Helper: Initialize pixel buffer for visualizers
     const initBuffer=(ctx,w,h)=>{const imageData=ctx.getImageData(0,0,w,h);const u32=new Uint32Array(imageData.data.buffer);const t=new Uint8ClampedArray(4);t[3]=255;const BLACK32=new Uint32Array(t.buffer)[0];return{imageData,u32,BLACK32}};
     // VIZ 1: INFINITY GRID - Dense square tunnel grid with beat pops & rotation
-    function init(){const canvas=document.getElementById('canvas');if(!canvas)return console.error('Canvas not found');const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true})||canvas.getContext('2d');sizeCanvas();if(DEBUG){console.log('✓ 8-bit lofi warp tunnel loaded');console.log('Keys: X=psychedelic, ↑↓=speed, []=intensity');}}
+    function init(){const canvas=document.getElementById('canvas');if(!canvas)return console.error('Canvas not found');const ctx=canvas.getContext('2d',{alpha:false,willReadFrequently:true})||canvas.getContext('2d');sizeCanvas();console.log('✓ 8-bit lofi warp tunnel loaded');console.log('Keys: X=psychedelic, ↑↓=speed, []=intensity');}
     if(window.tunnelRenderer){init();}else{const check=setInterval(()=>{if(window.tunnelRenderer){clearInterval(check);setTimeout(init,100);}},100);}
     })();
   </script>
