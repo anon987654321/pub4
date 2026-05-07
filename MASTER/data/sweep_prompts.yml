@@ -1,4 +1,6 @@
-# Sweep stage prompt building blocks
+# Sweep stage prompt building blocks. Each technique is named, defined in one line,
+# and enriched with consolidation triggers ("apply when…") so the LLM can decide
+# when to fire it without inventing semantics.
 
 axioms: |
   Constitutional constraints (non-negotiable):
@@ -12,36 +14,100 @@ axioms: |
   - Read current behavior before changing anything (zen: observe)
   - Change one axis at a time with clear boundaries (zen: isolate)
 
-structural_techniques:
-  - ASSERT
-  - DECOUPLE
-  - DEFRAG
-  - DEHEDGE
-  - DEPREAMBLE
-  - EXTRACT
-  - FLATTEN
-  - HOIST
-  - IMPORTANCE_ORDER  # Reorder file so the most important content (public API,
-                     # primary behavior, headline algorithm) is at top; helpers,
-                     # privates, edge-case handlers descend below. Newspaper-style
-                     # inverted pyramid — a reader who stops halfway has the gist.
-  - INLINE
-  - MERGE
-  - NAME
-  - RECOMMENT       # Reassess every comment in the file: delete if it merely restates
-                    # what the code does, otherwise rewrite Strunk-and-White style —
-                    # active voice, omit needless words, concrete verbs, one line max.
-                    # No grandfathered prose; touch the file = touch its comments.
-  - REFLOW
-  - REGROUP
-  - SPLIT
-  - TELLPROSE_TECHNIQUES
+# Structural techniques. Format: NAME — one-line essence. Apply when: trigger.
+structural_techniques: |
+  Structural techniques (apply when the trigger matches; never invent reasons):
 
-cosmetic_techniques:
-  - ALIGN_SPACE
-  - CONTRACT
-  - EXPAND
-  - FENCE_CONSTANT
-  - PRIVATE_DIMENSION_ASSESSMENT
-  - MERGE
-  - SPLIT
+  - DEFRAG — gather scattered fragments of one concept into a single locus.
+    Apply when: the same domain noun (auth, retry, parsing, telemetry) is touched
+    in 3+ files or 3+ methods that don't call each other. Pull the duplicated
+    fragments into one module/class/section; leave thin pass-throughs only if
+    callers can't be updated in this pass.
+
+  - MERGE — collapse two near-duplicate units into one parameterised unit.
+    Apply when: two methods/classes/blocks differ only in a literal, a type, or
+    a single branch. Combine them; pass the difference as an argument. Never
+    merge units whose names describe genuinely different intents — same shape
+    but different meaning is a coincidence, not duplication.
+
+  - DECOUPLE — break a hidden dependency that prevents independent change.
+    Apply when: A reads B's private state, A constructs B inline, or A's tests
+    can't run without B. Insert a seam (interface, port, callback, dependency
+    injection). Coupling is acceptable; hidden coupling is not.
+
+  - FLATTEN — remove a layer of nesting or indirection that earns nothing.
+    Apply when: a wrapper does no more than forward; a conditional pyramid is
+    deeper than 3; a one-call helper exists only to "look clean". Inline the
+    wrapper, return early, hoist the guard. Three similar lines beat a premature
+    abstraction.
+
+  - EXTRACT — promote an inline expression into a named unit when the name
+    carries information the code can't. Apply when: a comment describes what
+    the next 3+ lines do — that comment is the missing method name. Inverse
+    of FLATTEN; choose by whether naming clarifies or obscures.
+
+  - INLINE — fold a single-use helper back into its only caller. Apply when:
+    a private method has exactly one call site and adds no abstraction value.
+
+  - HOIST — move an invariant computation out of a loop or hot path.
+    Apply when: a value computed inside a loop doesn't depend on the iterator.
+
+  - SPLIT — divide a unit that mixes two responsibilities. Apply when: a
+    method's name needs "and" to be honest, or a class has two cohesive
+    subsets of methods that don't share state.
+
+  - REGROUP — reorder declarations so cohesive members sit together.
+    Apply when: methods that call each other are scattered, or related
+    constants are interspersed with unrelated code. Sibling of IMPORTANCE_ORDER
+    but at the local-section scale.
+
+  - REFLOW — rewrite a control-flow tangle as a linear sequence with early
+    returns. Apply when: deep `else` branches mirror the success path, or
+    flag variables track state a return could express directly.
+
+  - IMPORTANCE_ORDER — newspaper inverted pyramid. Public API > primary
+    behavior > helpers > privates > edge cases. Apply on every touched file:
+    a reader who stops halfway should still have the gist.
+
+  - NAME — rename an identifier whose name lies. Apply when: the name is
+    abbreviated past recognition, or the implementation has drifted from the
+    name's promise. Spell domain words out; abbreviations are forbidden.
+
+  - RECOMMENT — reassess every comment; delete if it restates code, rewrite
+    Strunk-and-White if it carries hidden WHY. One line, active voice,
+    concrete verbs. No grandfathered prose.
+
+  - ASSERT — add a runtime invariant where silent breakage would mislead.
+    Apply when: a downstream branch depends on an upstream guarantee that
+    isn't checked. Raise a specific error; never swallow.
+
+  - DEHEDGE — strip qualifying language from prose, comments, log lines, and
+    error messages. Apply when: text contains "perhaps", "might", "should
+    probably", "I think". State what is true. Hedging in errors confuses
+    operators; hedging in prose wastes the reader.
+
+  - DEPREAMBLE — delete throat-clearing introductions before the real point.
+    Apply when: a method docstring or a comment opens with "This method...",
+    "In order to...", "Note that...". Cut to the verb.
+
+  - TELLPROSE_TECHNIQUES — apply Strunk & White to all natural language in
+    the file: comments, log lines, error messages, string literals shown to
+    users. Active voice, omit needless words, concrete over abstract.
+
+# Cosmetic techniques run after structural passes. Cheap, mechanical, safe to
+# apply without semantic understanding.
+cosmetic_techniques: |
+  Cosmetic techniques (mechanical, apply last):
+
+  - ALIGN_SPACE — align hash rockets, equals, comments only when alignment
+    survives the next edit. Misaligned-after-edit is worse than never aligned.
+  - CONTRACT — collapse multi-line constructs to one line when the result
+    stays under the line budget and reads cleanly.
+  - EXPAND — break a one-line construct across lines when it crosses the
+    line budget or hides a non-trivial branch.
+  - FENCE_CONSTANT — promote a magic literal to a named constant at the top
+    of the class/module. No magic numbers.
+  - PRIVATE_DIMENSION_ASSESSMENT — verify that private methods are actually
+    private (no external callers). Promote to public or move to a helper module.
+  - MERGE / SPLIT — at the cosmetic level, only adjacent same-purpose lines
+    (consecutive `attr_reader`s, consecutive `require`s).

@@ -724,6 +724,34 @@ rules:
       detect_conceptual: "Does this unit contain unnecessary verbosity?"
       fix: "Omit needless words. Omit needless code."
 
+    - id: DRY
+      name: "Don't Repeat Yourself"
+      tier: principle
+      severity: warning
+      autofix: false
+      aliases: [duplicate_code]
+      detect_conceptual: "Are two units expressing the same idea twice?"
+      fix: "MERGE or DEFRAG. Pass the difference as an argument; never copy a block to vary one literal."
+      tension: "DRY conflicts with WET/AHA — singularity wins for data, DRY wins for code."
+
+    - id: KISS
+      name: "Keep It Simple"
+      tier: principle
+      severity: warning
+      autofix: false
+      aliases: [long_method, god_class, nesting_depth, arity]
+      detect_conceptual: "Does this unit introduce complexity the problem doesn't require?"
+      fix: "FLATTEN nesting; SPLIT god classes; INLINE single-call helpers; delete abstractions until it hurts."
+
+    - id: POLA_PRINCIPLE
+      name: "Principle of Least Astonishment"
+      tier: principle
+      severity: warning
+      autofix: false
+      aliases: [pola]
+      detect_conceptual: "Does the name promise behavior the implementation contradicts?"
+      fix: "NAME truthfully; rename when the implementation drifts."
+
     - id: SRP
       name: "Single Responsibility"
       tier: solid

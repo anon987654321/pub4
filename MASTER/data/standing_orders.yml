@@ -34,3 +34,39 @@
   enabled: true
   state: running
   last_run_at: 1777590915
+- name: rails_stack_audit
+  description: Audit Rails apps for the default StimulusReflex stack (cubism, futurism,
+    optimism, all_futures, solder, cable_ready_callbacks). Report missing gems and
+    propose Gemfile additions. Stack defined in data/ruby_style.yml stimulus_reflex_stack.
+  trigger: scheduled
+  interval_s: 604800
+  command: "scan rails_stack"
+  enabled: false
+  state: pending
+  last_run_at: 0
+- name: autocommit_post_chat
+  description: After any /chat turn that mutated source, generate a Strunk-style commit
+    message and create a small commit on the active branch. Driven by tool:after events
+    matching Write/Edit/Create/FilePatch.
+  trigger: event
+  command: "git autocommit"
+  enabled: false
+  state: pending
+  last_run_at: 0
+- name: restart_master_on_web_edit
+  description: When a file under MASTER/web/ is written or edited, schedule `doas rcctl
+    restart master` so chat UI changes take effect without manual intervention.
+  trigger: event
+  command: "doas rcctl restart master"
+  enabled: false
+  state: pending
+  last_run_at: 0
+- name: pre_edit_scan
+  description: Before any Edit/Write tool call, run /scan on the target file and surface
+    existing violations alongside the proposed change. Same pass fixes pre-existing
+    issues; no orphan violations left behind.
+  trigger: pre_tool
+  command: "scan {target_file}"
+  enabled: false
+  state: pending
+  last_run_at: 0

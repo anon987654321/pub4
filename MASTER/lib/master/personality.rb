@@ -191,6 +191,9 @@ module Master
         if (a11y = style["accessibility"])
           ls << "Accessibility target: #{a11y["target"] || "wcag_2_2_aaa"}; keyboard-complete; focus-visible; respect prefers-reduced-motion + color-scheme; never tabindex>0; never autoplay sound."
         end
+        if (directives = style["operator_directives"]) && directives.is_a?(Array) && directives.any?
+          ls << "Operator directives: " + directives.join(" / ")
+        end
       end
 
       ls.join("\n")
