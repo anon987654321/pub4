@@ -57,72 +57,74 @@ module Master
       return if input.strip.empty?
 
       @user_active = true
+      state    = { streamed: false, thinking_shown: true }
       accumulated = +""
-      streamed = false
-      thinking_shown = true
-
-      on_chunk = chunk_accumulator(accumulated) do |text|
-        if thinking_shown && $stdout.isatty
-          print "\r\e[K"
-          thinking_shown = false
-        end
-        print text
-        $stdout.flush
-        streamed = true
-      end
+      on_chunk = stream_chunk_handler(accumulated, state)
 
       print_thinking_indicator
       result = @pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
-      display_result(result, accumulated, streamed)
+      display_result(result, accumulated, state[:streamed])
     ensure
       @user_active = false
     end
 
+    def stream_chunk_handler(accumulated, state)
+      chunk_accumulator(accumulated) do |text|
+        if state[:thinking_shown] && $stdout.isatty
+          print "\r\e[K"
+          state[:thinking_shown] = false
+        end
+        print text
+        $stdout.flush
+        state[:streamed] = true
+      end
+    end
+
     private
 
-    def assign_container_refs!(c)
-      @session     = c[:session]
-      @agent       = c[:agent]
-      @renderer    = c[:renderer]
-      @logging     = c[:logging]
-      @undo        = c[:undo]
-      @config      = c[:config]
-      @pipeline    = c[:pipeline]
-      @scanner     = c[:scanner]
-      @autoloop    = c[:autoloop]
-      @root        = c[:root] || Dir.pwd
-      @diff_stager = c[:diff_stager]
-      @bus         = c[:bus]
+    def assign_container_refs!(deps)
+      @session     = deps[:session]
+      @agent       = deps[:agent]
+      @renderer    = deps[:renderer]
+      @logging     = deps[:logging]
+      @undo        = deps[:undo]
+      @config      = deps[:config]
+      @pipeline    = deps[:pipeline]
+      @scanner     = deps[:scanner]
+      @autoloop    = deps[:autoloop]
+      @root        = deps[:root] || Dir.pwd
+      @diff_stager = deps[:diff_stager]
+      @bus         = deps[:bus]
     end
 
     def repl_loop
       while @running
-        tokens = @session.token_est
         print @renderer.prompt_line(
-          @agent.model,
-          @session.phase,
-          last_ok: @last_ok,
-          violations: @violations,
-          tokens: tokens
+          @agent.model, @session.phase,
+          last_ok: @last_ok, violations: @violations, tokens: @session.token_est
         )
-        line = begin
-          @reader.read_line("", echo: true).chomp
-        rescue StandardError => _e
-          nil
-        end
+        line = safe_read_line
         break if line.nil?
-        next if line.strip.empty?
-
-        if line.strip == "/exit"
-          exit_cli
-        elsif line.strip == "<<"
-          run_input(read_multiline)
-        else
-          run_input(line)
-        end
+        handle_repl_line(line)
       end
       @bg_thread&.kill
       @session.save!
+    end
+
+    def handle_repl_line(line)
+      stripped = line.strip
+      return if stripped.empty?
+      case stripped
+      when "/exit" then exit_cli
+      when "<<"    then run_input(read_multiline)
+      else              run_input(line)
+      end
+    end
+
+    def safe_read_line
+      @reader.read_line("", echo: true).chomp
+    rescue StandardError
+      nil
     end
 
     def exit_cli = (@session.save!; @running = false)
@@ -132,9 +134,8 @@ module Master
       puts @renderer.render("-- enter lines, blank line to send --", mode: :dim)
       loop do
         print "  "
-        inner = (@reader.read_line("", echo: true).chomp rescue nil)
+        inner = safe_read_line
         break if inner.nil? || inner.strip.empty?
-
         lines << inner
       end
       lines.join("\n")
@@ -157,42 +158,48 @@ module Master
 
     def boot_scan
       lib_dir = File.join(@root, "lib")
-      changed = begin
-        out, = Open3.capture2e("git", "-C", @root, "diff", "--name-only", "HEAD")
-        out.strip.empty? ? [] : out.lines.map { |l| File.join(@root, l.strip) }
-                                         .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
-      rescue StandardError => _e
-        []
-      end
-
-      result = if changed.any?
-                 Result.ok(changed.map { |p| [p, @scanner.scan(p, depth: :standard)] })
-               else
-                 @scanner.scan_dir(lib_dir, depth: :standard)
-               end
-
+      changed = changed_lib_files(lib_dir)
+      result  = changed.any? ? scan_files(changed) : @scanner.scan_dir(lib_dir, depth: :standard)
       return unless result.respond_to?(:ok?) && result.ok?
 
-      count = result.value!.sum do |_file, file_result|
-        file_result.respond_to?(:ok?) && file_result.ok? ? file_result.value!.size : 0
-      end
-      @violations = count
-      return if count.zero?
+      @violations = count_violations(result.value!)
+      return if @violations.zero?
 
-      puts "\n#{@renderer.render("boot scan: #{count} violation(s)", mode: :dim)}"
+      puts "\n#{@renderer.render("boot scan: #{@violations} violation(s)", mode: :dim)}"
       print @renderer.prompt_line(@agent.model, @session.phase, last_ok: @last_ok, violations: @violations)
     rescue StandardError => e
       @bus&.publish("cli:warn", error: e.message)
+    end
+
+    def changed_lib_files(lib_dir)
+      out, = Open3.capture2e("git", "-C", @root, "diff", "--name-only", "HEAD")
+      return [] if out.strip.empty?
+      out.lines
+         .map { |l| File.join(@root, l.strip) }
+         .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
+    rescue StandardError
+      []
+    end
+
+    def scan_files(paths)
+      Result.ok(paths.map { |p| [p, @scanner.scan(p, depth: :standard)] })
+    end
+
+    def count_violations(pairs)
+      pairs.sum do |_file, file_result|
+        file_result.respond_to?(:ok?) && file_result.ok? ? file_result.value!.size : 0
+      end
     end
 
     def background_cycle
       return unless @autoloop
 
       @autoloop.run(max_cycles: 1) do |_cycle, violations|
-        next if violations.empty?
-        @violations = violations.size
+        n = violations.size
+        next if n.zero?
+        @violations = n
         top = violations.first(3).map { |v| "#{File.basename(v[:file])}:#{v[:rule]}" }.join(" ")
-        $stdout.puts "\nautoloop: #{violations.size} violation(s) #{top}"
+        $stdout.puts "\nautoloop: #{n} violation(s) #{top}"
         $stdout.flush
       end
     rescue StandardError => e
@@ -239,8 +246,9 @@ module Master
         speak_async(accumulated) if @tts_on
       else
         print "\r\e[K" if $stdout.isatty
-        value = ok.value
-        text = value.is_a?(Hash) && value[:rendered] ? value[:rendered] : value.to_s
+        value    = ok.value
+        rendered = value.is_a?(Hash) ? value[:rendered] : nil
+        text     = rendered || value.to_s
         puts text
         speak_async(text) if @tts_on
       end
