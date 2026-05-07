@@ -1355,7 +1355,7 @@ if (window.DeviceMotionEvent) {
     const N=LOW_END?0:2000;
 
     // Web Audio effect chain — cycle with long-press on status circle
-    const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone','vocoder','autotune','choir','telephone','void'];
+    const FX_MODES=['lofi','off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone','vocoder','autotune','choir','telephone','void'];
     let fxIdx=0; // default 'off' — no FX on TTS, no double-vocal. Long-press status to cycle.
     let fxTaps=0;let fxTapTimer=0;
 
@@ -1380,6 +1380,14 @@ if (window.DeviceMotionEvent) {
       const out=audioCtx.destination;
       const an=analyser||audioCtx.createGain(); // guard: null when mic denied
       if(mode==='off'){src.connect(an);src.connect(out);return;}
+      if(mode==='lofi'){
+        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=200;hp.Q.value=0.7;
+        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3500;lp.Q.value=0.7;
+        const tilt=audioCtx.createBiquadFilter();tilt.type='peaking';tilt.frequency.value=900;tilt.gain.value=2;tilt.Q.value=0.6;
+        src.connect(hp);hp.connect(lp);lp.connect(tilt);
+        tilt.connect(an);tilt.connect(out);
+        return;
+      }
       // Dark: pitch down, heavy bass
       if(mode==='dark'){
         src.playbackRate.value=0.78;
