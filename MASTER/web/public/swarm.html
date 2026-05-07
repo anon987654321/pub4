@@ -52,6 +52,11 @@ let speed = 1.0;
 let target = null;
 let flashUntil = 0;
 const pointer = { x: W/2, y: H/2, active:false };
+const pulses = [];
+const PULSE_MS = 200;
+const PULSE_R2 = 400;
+const PULSE_K = 0.06;
+const SKIP_PROB = 0.033;
 
 const PALETTE = {
   idle: '#cdc5b6',
@@ -122,6 +127,13 @@ addEventListener('message', e => {
       mode = 'slow'; modeUntil = performance.now() + 3000; break;
     case 'density':
       Array.isArray(d.rects) ? paintRectsDensity(d.rects) : paintDefaultDensity(); break;
+    case 'pulse':
+      pulses.push({
+        x: typeof d.x === 'number' ? d.x : Math.random()*W,
+        y: typeof d.y === 'number' ? d.y : Math.random()*H,
+        until: performance.now() + PULSE_MS
+      });
+      break;
   }
 });
 
@@ -154,7 +166,12 @@ function step(now){
   const slowDamp    = mode === 'slow'   ? 0.4 : 1;
   const densityK    = mode === 'burst' ? 0.00018 : 0.00065;
 
+  for (let p=pulses.length-1; p>=0; p--) {
+    if (now > pulses[p].until) pulses.splice(p,1);
+  }
+
   for (let i=0; i<N; i++) {
+    if (Math.random() < SKIP_PROB) continue;
     const b = boids[i];
     let sx=0, sy=0, ax=0, ay=0, cx=0, cy=0, sn=0, an=0, cn=0;
     for (let j=0; j<N; j++) {
@@ -178,6 +195,14 @@ function step(now){
       const dx = aim.x - b.x, dy = aim.y - b.y;
       const k = mode === 'ripple' ? -0.012 : 0.004;
       b.vx += dx*k; b.vy += dy*k;
+    }
+
+    for (const pl of pulses) {
+      const dxp = b.x - pl.x, dyp = b.y - pl.y;
+      const d2p = dxp*dxp + dyp*dyp;
+      if (d2p < PULSE_R2 && d2p > 0.001) {
+        b.vx += dxp*PULSE_K; b.vy += dyp*PULSE_K;
+      }
     }
 
     b.vx *= slowDamp; b.vy *= slowDamp;
