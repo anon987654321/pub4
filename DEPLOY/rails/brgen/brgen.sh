@@ -34,7 +34,7 @@ if [[ ! -d ${bundle_home}/gems ]]; then
   doas cp -R /home/amber/.bundle/gems "$bundle_home/"
   doas chown -R "${APP_NAME}:${APP_NAME}" "$bundle_home"
 fi
-print "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
+print -- "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
 
 # ── Install + migrate + seed ───────────────────────────────────────────────
 doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bundle install --deployment --without development:test"
