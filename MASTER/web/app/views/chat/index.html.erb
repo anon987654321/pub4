@@ -185,7 +185,10 @@
       color:#993333;
       user-select:none;
       letter-spacing:0;
+      animation:prompt-breathe 2.4s ease-in-out infinite;
     }
+    @keyframes prompt-breathe{0%,100%{opacity:.6;}50%{opacity:1;}}
+    @media(prefers-reduced-motion:reduce){#prompt-glyph{animation:none;}}
 
     #input-field input{
       flex:1;
