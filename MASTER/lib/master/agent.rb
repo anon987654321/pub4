@@ -33,7 +33,9 @@ module Master
       Tools::GitContext      => Tools::LLM::GitContext,
       Tools::AstEdit         => Tools::LLM::AstEdit,
       Tools::SearchKnowledge => Tools::LLM::SearchKnowledge,
-      Tools::FeedbackRecord  => Tools::LLM::FeedbackRecord
+      Tools::FeedbackRecord  => Tools::LLM::FeedbackRecord,
+      Tools::Postpro         => Tools::LLM::Postpro,
+      Tools::Repligen        => Tools::LLM::Repligen
     }.freeze
 
     def initialize(config:, session:, tools:, circuit_breaker:, cache:,
