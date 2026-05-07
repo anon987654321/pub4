@@ -65,8 +65,8 @@ def synthesize(dest)
   opn_env = opens.map { |t| "between(t,#{t},#{t + 0.5})*exp(-(t-#{t})*10)" }.join("+")
 
   inputs = [
-    *lavfi("aevalsrc=#{kick_sig}:d=#{total}:s=44100"),
-    *lavfi("aevalsrc=#{acid_sig}:d=#{total}:s=44100"),
+    *lavfi("aevalsrc='#{kick_sig}':d=#{total}:s=44100"),
+    *lavfi("aevalsrc='#{acid_sig}':d=#{total}:s=44100"),
     *lavfi("anoisesrc=color=white:r=44100:amplitude=0.5:d=#{total}"),
   ]
 

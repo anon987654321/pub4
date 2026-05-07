@@ -50,8 +50,8 @@ def synthesize(dest)
   loops   = BARS - 1
 
   inputs = [
-    *lavfi("aevalsrc=#{kick_sig}:d=#{bar_dur}:s=44100"),
-    *lavfi("aevalsrc=#{sub_sig}:d=#{bar_dur}:s=44100"),
+    *lavfi("aevalsrc='#{kick_sig}':d=#{bar_dur}:s=44100"),
+    *lavfi("aevalsrc='#{sub_sig}':d=#{bar_dur}:s=44100"),
     *lavfi("anoisesrc=color=white:r=44100:amplitude=0.5:d=#{bar_dur}"),
     *lavfi("anoisesrc=color=pink:r=44100:amplitude=0.04:d=#{total}"),
   ]
