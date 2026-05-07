@@ -269,6 +269,10 @@ scan_depths:
     - ConceptualRule
     - CommentDriftRule
     - CoChangeCouplingRule
+    - FileLayoutRule
+    - VerticalRhythmRule
+    - NamingSilhouetteRule
+    - FileSilhouetteRule
   hunt: *deep
   critique: *deep
 
