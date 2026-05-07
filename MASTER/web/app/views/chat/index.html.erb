@@ -1708,6 +1708,15 @@ if(mode==='void'){
         // already filters echo via _ttsEchoes(), so leaving the mic open is safe.
         src.onended=()=>{ _ttsCurrent=null; _ttsBusy=false; _onSpeakEnd(); _ttsDrain(); };
         src.start();
+        try{
+          const baseRate=src.playbackRate.value||1;
+          const realDur=decoded.duration/baseRate;
+          if(realDur>0.4){
+            const t=audioCtx.currentTime+realDur-0.12;
+            src.playbackRate.setValueAtTime(baseRate,t);
+            src.playbackRate.linearRampToValueAtTime(0.0001,t+0.12);
+          }
+        }catch(_){}
       }catch(_e){ _ttsBusy=false; speakBrowser(text); _ttsDrain(); }
     };
 
