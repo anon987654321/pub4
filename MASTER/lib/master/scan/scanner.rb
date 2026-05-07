@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "etc"
+require "open3"
 require "prism"
 
 module Master
@@ -37,6 +38,20 @@ module Master
         Result.ok(results)
       rescue StandardError => e
         Result.err("scan_dir: #{e.message}", category: :unknown)
+      end
+
+      # Scan only files changed since git ref — orders of magnitude faster on big repos.
+      def scan_since(ref = "HEAD~1", dir: ".", depth: :standard, stream: false)
+        out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
+        return Result.err("git diff failed", category: :validation) unless status.success?
+        paths = out.lines.map(&:strip).reject(&:empty?)
+                  .map { |rel| File.join(dir, rel) }
+                  .select { |p| File.exist?(p) && File.extname(p).match?(/\.(rb|erb|yml|js|css|sh|zsh)\z/) }
+        results = Array.new(paths.size)
+        parallel_each(paths) { |path, idx| results[idx] = scan_one(dir, path, depth, stream) }
+        Result.ok(results)
+      rescue StandardError => e
+        Result.err("scan_since: #{e.message}", category: :unknown)
       end
 
       def add_rule(rule)

@@ -1,0 +1,15 @@
+<% content_for :title, "Bookmarks" %>
+<h1>Bookmarks</h1>
+<% if @bookmarks.any? %>
+  <% @bookmarks.each do |bookmark| %>
+    <article id="<%= dom_id(bookmark) %>">
+      <p><%= link_to "#{bookmark.verse.book.abbreviation} #{bookmark.verse.chapter.number}:#{bookmark.verse.number}", scripture_chapter_path(bookmark.verse.book.abbreviation, bookmark.verse.chapter.number) %></p>
+      <p><%= bookmark.verse.content %></p>
+      <% if bookmark.note.present? %><p><%= bookmark.note %></p><% end %>
+      <%= button_to "Remove", bookmark, method: :delete %>
+    </article>
+  <% end %>
+  <%= @pagy.series_nav if @pagy.pages > 1 %>
+<% else %>
+  <p>No bookmarks yet. Bookmark verses while reading.</p>
+<% end %>

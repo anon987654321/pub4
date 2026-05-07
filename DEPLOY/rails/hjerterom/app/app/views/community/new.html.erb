@@ -1,0 +1,11 @@
+<% content_for :title, "New post" %>
+<h1>New post</h1>
+<%= form_with url: community_path do |f| %>
+  <p><%= f.label :title %><%= f.text_field :title, name: "post[title]", autofocus: true %></p>
+  <p><%= f.label :body %><%= f.rich_text_area :body, name: "post[body]" %></p>
+  <p>
+    <%= label_tag :anonymous, "Post anonymously" %>
+    <%= check_box_tag "post[anonymous]" %>
+  </p>
+  <p><%= f.submit "Post" %> <%= link_to "Cancel", community_path %></p>
+<% end %>

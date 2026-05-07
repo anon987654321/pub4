@@ -1,0 +1,61 @@
+<% content_for :title, @port.name %>
+<article>
+  <header>
+    <h1><%= @port.name %> <small><%= @port.version %></small></h1>
+    <small><%= link_to @port.category.name, category_path(@port.category) %></small>
+  </header>
+  <p><%= @port.comment %></p>
+  <p><%= @port.description %></p>
+  <dl>
+    <dt>Maintainer</dt><dd><%= @port.maintainer %></dd>
+    <dt>Pkgpath</dt><dd><code><%= @port.pkgpath %></code></dd>
+    <% if @port.homepage.present? %><dt>Homepage</dt><dd><%= link_to @port.homepage, @port.homepage %></dd><% end %>
+    <dt>Updated</dt><dd><%= @port.last_updated&.strftime("%Y-%m-%d") %></dd>
+  </dl>
+
+  <% if @dependencies.any? %>
+    <h2>Dependencies</h2>
+    <ul>
+      <% @dependencies.each do |dep| %>
+        <li>
+          <%= link_to dep.depends_on.name, port_path(dep.depends_on) %>
+          <small><%= dep.dep_type %></small>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% if @updates.any? %>
+    <h2>Version history</h2>
+    <ul>
+      <% @updates.each do |update| %>
+        <li>
+          <small><%= update.old_version %> → <%= update.new_version %></small>
+          <small><%= update.commit_message %></small>
+          <small><%= update.committed_at&.strftime("%Y-%m-%d") %></small>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <nav>
+    <% if authenticated? %>
+      <% if @watching %>
+        <%= button_to "Unwatch", unwatch_port_path(@port), method: :delete %>
+      <% else %>
+        <%= button_to "Watch", watch_port_path(@port), method: :post %>
+      <% end %>
+    <% end %>
+  </nav>
+</article>
+
+<section id="comments">
+  <h2>Comments</h2>
+  <%= render @comments %>
+  <% if authenticated? %>
+    <%= form_with url: port_comments_path(@port) do |f| %>
+      <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…" %></p>
+      <p><%= f.submit "Comment" %></p>
+    <% end %>
+  <% end %>
+</section>

@@ -4,10 +4,10 @@
 <p><%= @channel.description %></p>
 <% if authenticated? && Current.user != @channel.user %>
   <% if @channel.subscriptions.exists?(user: Current.user) %>
-    <%= button_to "Unsubscribe", unsubscribe_tv_channel_path(@channel), method: :delete, class: "btn" %>
+    <%= button_to "Unsubscribe", unsubscribe_tv_channel_path(@channel), method: :delete %>
   <% else %>
-    <%= button_to "Subscribe", subscribe_tv_channel_path(@channel), method: :post, class: "btn btn--primary" %>
+    <%= button_to "Subscribe", subscribe_tv_channel_path(@channel), method: :post %>
   <% end %>
 <% end %>
-<div class="video-grid"><%= render @videos %></div>
+<section><%= render @videos %></section>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

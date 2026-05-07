@@ -1,35 +1,27 @@
 <% content_for :title, @community.name %>
 
-<div class="main-col">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px">
-    <h1 style="font-size:1.4rem;margin-bottom:6px"><%= @community.name %></h1>
-    <% if @community.description.present? %>
-      <p style="color:var(--text-dim);font-size:0.9rem"><%= @community.description %></p>
-    <% end %>
-    <div style="margin-top:12px;display:flex;gap:12px;font-size:0.8rem;color:var(--text-dim)">
-      <span><strong style="color:var(--text)"><%= @community.posts.count %></strong> posts</span>
-    </div>
-  </div>
+<header>
+  <h1><%= @community.name %></h1>
+  <% if @community.description.present? %><p><%= @community.description %></p><% end %>
+  <p><strong><%= @community.posts.count %></strong> posts</p>
+</header>
 
+<% if authenticated? %>
+  <p><%= link_to "+ New post in #{@community.name}", new_community_post_path(@community) %></p>
+<% end %>
+
+<% if @posts.any? %>
+  <% @posts.each do |post| %>
+    <%= render "posts/post", post: post %>
+  <% end %>
+<% else %>
+  <p>No posts yet in this community.</p>
+<% end %>
+
+<aside>
+  <h3>About <%= @community.name %></h3>
+  <p><%= @community.description.presence || "No description." %></p>
   <% if authenticated? %>
-    <div style="margin-bottom:16px"><%= link_to "+ New post in #{@community.name}", new_community_post_path(@community), class: "btn" %></div>
+    <p><%= link_to "New post", new_community_post_path(@community) %></p>
   <% end %>
-
-  <% if @posts.any? %>
-    <% @posts.each do |post| %>
-      <%= render "posts/post", post: post %>
-    <% end %>
-  <% else %>
-    <div class="empty">No posts yet in this community.</div>
-  <% end %>
-</div>
-
-<div class="side-col">
-  <div class="sidebar-card">
-    <h3>About <%= @community.name %></h3>
-    <p style="font-size:0.875rem;color:var(--text-dim)"><%= @community.description.presence || "No description." %></p>
-    <% if authenticated? %>
-      <div style="margin-top:12px"><%= link_to "New post", new_community_post_path(@community), class: "btn", style: "width:100%;text-align:center" %></div>
-    <% end %>
-  </div>
-</div>
+</aside>

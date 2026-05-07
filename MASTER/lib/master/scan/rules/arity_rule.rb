@@ -16,7 +16,7 @@ module Master
           @id          = "arity"
           @description = "initialize with > #{@max_params} args — extract a context struct or config object"
           @severity    = :warning
-          @axiom_tags  = %i[DECOUPLE ONE_JOB]
+          @axiom_tags  = %i[DECOUPLE ONE_JOB KISS]
         end
 
         def check_ast(ast, _code, path:)

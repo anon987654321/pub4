@@ -1,0 +1,22 @@
+<% content_for :title, @listing.title %>
+<article>
+  <h1><%= @listing.title %></h1>
+  <p><%= @listing.description %></p>
+  <dl>
+    <dt>Quantity</dt><dd><%= @listing.quantity %> <%= @listing.unit %></dd>
+    <dt>Pickup</dt><dd><%= @listing.pickup_address %>, <%= @listing.city %></dd>
+    <dt>Available</dt><dd><%= @listing.available_from&.strftime("%b %-d, %H:%M") %> – <%= @listing.available_until&.strftime("%b %-d, %H:%M") %></dd>
+    <% if @listing.dietary_info.present? %><dt>Dietary</dt><dd><%= @listing.dietary_info %></dd><% end %>
+  </dl>
+  <% if authenticated? && @listing.user != Current.user && @listing.status == "available" %>
+    <%= form_with url: food_listing_food_requests_path(@listing) do |f| %>
+      <p><%= f.text_area :message, rows: 2, placeholder: "Message (optional)…" %></p>
+      <p><%= f.datetime_local_field :pickup_time %></p>
+      <p><%= f.submit "Request pickup" %></p>
+    <% end %>
+  <% end %>
+  <% if @listing.user == Current.user %>
+    <%= link_to "Edit", edit_food_listing_path(@listing) %>
+    <%= button_to "Delete", @listing, method: :delete, data: { turbo_confirm: "Delete?" } %>
+  <% end %>
+</article>

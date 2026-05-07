@@ -5,8 +5,8 @@
 
 <% if authenticated? && Current.user == @playlist.user %>
   <nav>
-    <%= link_to "Edit", edit_playlist_playlist_path(@playlist), class: "btn" %>
-    <%= button_to "Delete", playlist_playlist_path(@playlist), method: :delete, class: "btn", data: { turbo_confirm: "Delete?" } %>
+    <%= link_to "Edit", edit_playlist_playlist_path(@playlist) %>
+    <%= button_to "Delete", playlist_playlist_path(@playlist), method: :delete, data: { turbo_confirm: "Delete?" } %>
   </nav>
 <% end %>
 
@@ -25,9 +25,9 @@
 <% if authenticated? %>
   <h2>Add a track</h2>
   <%= form_with url: playlist_playlist_tracks_path(@playlist) do |f| %>
-    <%= f.text_field :title, placeholder: "Title", name: "playlist_track[title]" %>
-    <%= f.text_field :artist, placeholder: "Artist", name: "playlist_track[artist]" %>
-    <%= f.text_field :source_url, placeholder: "URL (optional)", name: "playlist_track[source_url]" %>
-    <%= f.submit "Add" %>
+    <p><%= f.text_field :title, placeholder: "Title", name: "playlist_track[title]" %></p>
+    <p><%= f.text_field :artist, placeholder: "Artist", name: "playlist_track[artist]" %></p>
+    <p><%= f.text_field :source_url, placeholder: "URL (optional)", name: "playlist_track[source_url]" %></p>
+    <p><%= f.submit "Add" %></p>
   <% end %>
 <% end %>

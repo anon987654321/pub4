@@ -1,0 +1,17 @@
+<% content_for :title, @post.title %>
+<article>
+  <h1><%= @post.title %></h1>
+  <small><%= @post.anonymous? ? "Anonymous" : @post.user.email_address.split("@").first %></small>
+  <%= @post.body %>
+</article>
+<section id="comments">
+  <h2>Comments</h2>
+  <%= render @comments %>
+  <% if authenticated? %>
+    <%= form_with url: community_comments_path do |f| %>
+      <%= f.hidden_field :post_id, value: @post.id %>
+      <p><%= f.text_area :content, rows: 3, placeholder: "Comment…" %></p>
+      <p><%= f.submit "Comment" %></p>
+    <% end %>
+  <% end %>
+</section>

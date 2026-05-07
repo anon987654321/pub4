@@ -1,0 +1,7 @@
+<%= form_with model: [@blog, post] do |f| %>
+  <%= render "shared/errors", object: post %>
+  <p><%= f.label :title %><%= f.text_field :title, autofocus: true %></p>
+  <p><%= f.label :body %><%= f.rich_text_area :body %></p>
+  <p><%= f.label :published %><%= f.check_box :published %></p>
+  <p><%= f.submit %> <%= link_to "Cancel", blog_path(@blog) %></p>
+<% end %>

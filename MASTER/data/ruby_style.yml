@@ -8,12 +8,29 @@ ruby:
   comments:
     max_lines: 1           # class/module/method comments: 1 line or none
     require_why: true      # only add when WHY is non-obvious (hidden constraint, workaround)
+    reassess_on_touch: true  # every edit re-reads each comment in the file: delete if obvious,
+                             # rewrite Strunk-and-White style if kept (active voice, omit needless
+                             # words, concrete verbs, one line). No grandfathered fluff.
     forbidden:
       - what_comments      # never describe what the code does — identifiers do that
       - yard_doc_blocks    # no # Public:, # Returns, # param - style blocks
       - section_separators # no # ----, # ====, # ---- Public API ---- etc.
       - numbered_steps     # no # 1., # 2. inline step comments
       - multi_line_prose   # cut verbosity; one line survives, paragraph does not
+
+  line_order:
+    rule: "Reorder lines/blocks so the most important content comes first. Newspaper inverted pyramid."
+    rationale: "A reader who stops halfway must still have the gist. Public API > primary behavior > helpers > privates > edge cases."
+    sequence:
+      - "frozen_string_literal + requires"
+      - "module/class declaration + headline docstring (≤1 line)"
+      - "public API methods, ordered by call-frequency / importance"
+      - "primary algorithm or main loop"
+      - "private helpers in order of dependency"
+      - "constants and lookup tables (unless small enough to inline at top)"
+      - "edge-case handlers, rescue branches, fallback paths"
+    applies_to: [ruby, yaml, erb, js, css, html, sh, md]
+    enforced_by: "sweep IMPORTANCE_ORDER technique; council Maintainer + Layperson personas"
 
   bugs_to_avoid:
     - pattern: "Dir.chdir"
@@ -150,6 +167,47 @@ ruby:
         - { name: rails-nested-form, use: "dynamic has-many form fields" }
         - { name: password-visibility, use: "show/hide password toggle" }
 
+    # Default StimulusReflex stack — Julian Rubisch's pattern set.
+    # Install for every new Rails 8 + StimulusReflex 3.5 app unless explicitly opted out.
+    stimulus_reflex_stack:
+      cubism:                 "resource-scoped presence (who's-here, typing indicators) over Kredis"
+      futurism:               "lazy-load expensive list rows; futurize(@record) placeholder + IntersectionObserver"
+      optimism:               "real-time ActiveModel validation broadcast as selector morphs (drop-in)"
+      all_futures:            "Redis-backed virtual ActiveModel for facets/wizards without session bloat"
+      solder:                 "auto-cache <details>/accordion open state per [user, key]"
+      cable_ready_callbacks:  "after_create_commit / after_update_commit CableReady DSL on AR models"
+
+    stimulus_reflex_patterns:
+      morph_heuristics:
+        page_morph:     "spans multiple regions OR want regular controller render. Always scope with data-reflex-root."
+        selector_morph: "single element, side-stepping the controller. Inline edit, list-item update, validation hint."
+        nothing_morph:  "no DOM patch — only CableReady ops or dispatch_event to a Stimulus controller."
+      tool_choice: "Turbo for anything covered by an HTTP verb (navigation, forms). StimulusReflex for everything else."
+      cable_ready_ops:
+        morph:                "list bodies — pass children_only: true"
+        inner_html:           "form reset (morph won't clear inputs)"
+        insert_adjacent_html: "infinite scroll, append-only feeds"
+        outer_html:           "Futurism replacement, inline-edit toggle"
+        dispatch_event:       "nothing morphs that kick a Stimulus controller"
+        add_css_class:        "validation hints (Optimism-style)"
+        set_focus:            "post-edit UX"
+      anti_patterns:
+        - "mutating state via GET — REST violation"
+        - "hidden form + Turbo Stream for state — flickers; SR fits better"
+        - "inline render in reflex — always partials/components, never heredocs"
+        - "overusing connect lifecycle — prefer Outlets and useIntersection"
+        - "morph to clear form inputs — use inner_html"
+        - "class attributes where a tag selector works"
+        - "hardcoded step counts in wizards"
+        - "session-backed wizard state on multi-server — use kredis or all_futures"
+      named_patterns:
+        infinite_scroll:    "InfiniteScrollReflex#load_more + sentinel div + insert_adjacent_html before sentinel"
+        inline_edit:        "ToggleReflex toggles show ↔ edit partial via selector morph"
+        wizard:             "WizardReflex#step dispatching on @current_step; state in kredis or all_futures"
+        nested_form:        "NestedFormReflex#add_fields uses .build + fields_for; needs accepts_nested_attributes_for"
+        validation_inline:  "Optimism + debounced:input event (not raw input — prevents flooding)"
+        autosave:           "Submittable concern; before_reflex branches create/update via element.dataset.signed_id"
+
     core_web_vitals:
       lcp: "<2.0s"   # Largest Contentful Paint (tightened from 2.5s in March 2026)
       inp: "responsive"  # Interaction to Next Paint
@@ -199,6 +257,31 @@ git:
     - "Dir.chdir in Ruby before git commands"
     - "string-interpolated git commands"
     - "rm -rf in deploy scripts without explicit guard"
+
+# Operator directives — distilled from the human operator's feedback memory.
+# Personality injects these verbatim into every system prompt so MASTER and its
+# LLM agents apply the same rules the operator applies to their own work.
+operator_directives:
+  - "Autoproceed once approved: execute the full backlog without per-step go/no-go."
+  - "No new files without approval: edit originals in place; never _v2/_new/staging copies."
+  - "Frequent small commits: one commit per meaningful change, never batched."
+  - "Mandatory lint/beautify on touch: full pass, not just changed lines."
+  - "Always autofix violations: run /sweep immediately after any /scan finds violations."
+  - "Read every comment in a touched file: delete if it restates code, rewrite Strunk-and-White if kept."
+  - "Reorder files by importance on every touch: public API > primary > helpers > privates > edge cases."
+  - "No heavy work on Termux/Android: defer Ruby runs, large clones, mass ops to the VPS."
+  - "Bare HTML/CSS targeting: nav a not .nav__link; tag helper; no class attrs on tag-targetable elements."
+  - "Update README.md after any behavior/capability/surface change, no prompting."
+  - "Restart MASTER after every web edit: doas rcctl restart master per scp under MASTER/web/."
+  - "No Python: Ruby only for scripting."
+  - "Proper casing in prose; no === ---- [ok] • | ASCII decorations. Boot dmesg banner is sacred."
+  - "Pair violations with opportunities — every scan output surfaces both, never just bugs."
+  - "Aim for 2x architectural wins over 5% incremental fixes; ask what shape, not what tweak."
+  - "Subrule findings carry the subrule id (HEDGE, PREAMBLE, OCP, LSP, NN_GROUP), not just the parent."
+  - "When similar code repeats across files, default to merge/decouple/flatten before local patching."
+  - "Architecture data shapes are not sacred — re-examine them periodically for misfit."
+  - "After landing a batch, surface what's next or structurally off — don't itemize the diff."
+  - "Best-of-N for non-trivial autofixes: generate candidates, score by violation delta, pick winner."
 
 # html, css, typography, nielsen, a11y — restored from master4.yml/master7.yml
 # (universal_quality_framework v66)

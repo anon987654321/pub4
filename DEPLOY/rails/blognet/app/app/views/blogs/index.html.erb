@@ -1,0 +1,15 @@
+<% content_for :title, "Blogs" %>
+<header>
+  <h1>Blogs</h1>
+  <% if authenticated? %><%= link_to "New blog", new_blog_path %><% end %>
+</header>
+<section id="blogs">
+  <% @blogs.each do |blog| %>
+    <article>
+      <%= link_to blog.name, blog_path(blog) %>
+      <p><%= blog.description %></p>
+      <small><%= blog.posts_count %> posts</small>
+    </article>
+  <% end %>
+</section>
+<%= @pagy.series_nav if @pagy.pages > 1 %>

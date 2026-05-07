@@ -106,6 +106,11 @@ module Master
     def state_of(order) = VALID_STATES.include?(order["state"]) ? order["state"] : "done"
 
     def execute_order(order)
+      if (callable_key = order["callable"])
+        klass = Master::Orders::Registry.lookup(callable_key)
+        return Result.err("unknown callable: #{callable_key}") unless klass
+        return klass.new(container: { bus: @bus, root: Master::ROOT }).call
+      end
       return Result.err("no pipeline") unless @pipeline
       @pipeline.call(Result.ok(user_message: order["command"].to_s))
     rescue StandardError => e

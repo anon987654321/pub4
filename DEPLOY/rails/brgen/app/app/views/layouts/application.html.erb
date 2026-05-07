@@ -12,24 +12,22 @@
 <body>
 
 <nav>
-  <%= link_to "brgen", root_path, class: "logo" %>
-  <div class="nav-links">
-    <%= link_to "communities", communities_path %>
-    <%= link_to "posts",       posts_path %>
-    <% if authenticated? %>
-      <%= link_to "inbox",   conversations_path %>
-      <%= link_to "sign out", session_path, data: { turbo_method: :delete } %>
-    <% else %>
-      <%= link_to "sign in",  new_session_path %>
-    <% end %>
-  </div>
+  <%= link_to "brgen", root_path %>
+  <%= link_to "communities", communities_path %>
+  <%= link_to "posts",       posts_path %>
+  <% if authenticated? %>
+    <%= link_to "inbox",   conversations_path %>
+    <%= link_to "sign out", session_path, data: { turbo_method: :delete } %>
+  <% else %>
+    <%= link_to "sign in",  new_session_path %>
+  <% end %>
 </nav>
 
-<div class="page">
-  <% if notice %><div class="flash-notice"><%= notice %></div><% end %>
-  <% if alert  %><div class="flash-alert"><%=  alert  %></div><% end %>
+<main>
+  <% if notice %><p role="status"><%= notice %></p><% end %>
+  <% if alert  %><p role="alert"><%=  alert  %></p><% end %>
   <%= yield %>
-</div>
+</main>
 
 </body>
 </html>

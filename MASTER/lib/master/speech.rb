@@ -21,11 +21,29 @@ module Master
       heavy:   { rate: "-30%", pitch: "-120Hz" },
       normal:  { rate: "+0%",  pitch: "+0Hz"   },
       slow:    { rate: "-20%", pitch: "-60Hz"  },
-      natural: { rate: "+8%",  pitch: "+20Hz"  }
+      natural: { rate: "+8%",  pitch: "+20Hz"  },
+      # Clause-aware variants — auto-applied by infer_style when caller passes :auto.
+      question:{ rate: "-10%", pitch: "+40Hz"  }, # rising lift, slight slowdown
+      exclaim: { rate: "+15%", pitch: "+60Hz"  }, # energetic, brighter
+      whisper: { rate: "-15%", pitch: "-30Hz"  }, # quiet, intimate
+      grave:   { rate: "-25%", pitch: "-80Hz"  }  # sober, weighty
     }.freeze
 
-    DEFAULT_VOICE = :osman
-    DEFAULT_STYLE = :slow
+    DEFAULT_VOICE = :yasmin
+    DEFAULT_STYLE = :natural
+
+    # P4: pick a style from text shape when caller asks for :auto.
+    # Heuristic — questions lift, exclamations brighten, ALL-CAPS shouts,
+    # ellipses/short-final go grave. Fallback: caller's default.
+    def infer_style(text, fallback: DEFAULT_STYLE)
+      t = text.to_s.strip
+      return fallback if t.empty?
+      return :exclaim  if t.match?(/!{1,3}\s*$/) || t.match?(/\b[A-Z]{4,}\b/)
+      return :question if t.end_with?("?")
+      return :grave    if t.match?(/\.{3,}\s*$|\u2026\s*$/) || t.match?(/\b(sorry|i'?m sorry|condolences|grief|loss)\b/i)
+      return :whisper  if t.start_with?("(") && t.end_with?(")")
+      fallback
+    end
 
     PULSE_SOCKET     = "/tmp/pulse/native".freeze
     PULSE_DAEMON     = "/data/data/com.termux/files/usr/bin/pulseaudio".freeze
@@ -45,6 +63,10 @@ module Master
 
     def synthesize(text, voice: DEFAULT_VOICE, style: DEFAULT_STYLE)
       return if text.to_s.strip.empty?
+
+      style = infer_style(text, fallback: DEFAULT_STYLE) if style == :auto
+      style = DEFAULT_STYLE unless STYLES.key?(style)
+      voice = DEFAULT_VOICE unless VOICES.key?(voice)
 
       if EDGE_TTS
         synthesize_edge(text, voice: voice, style: style)

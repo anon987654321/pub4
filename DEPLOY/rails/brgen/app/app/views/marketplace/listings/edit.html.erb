@@ -1,22 +1,22 @@
 <h1>Edit listing</h1>
 <%= form_with model: @listing, url: marketplace_listing_path(@listing), method: :patch do |f| %>
   <%= render "shared/errors", object: @listing %>
-  <div class="field"><%= f.label :title %><%= f.text_field :title %></div>
-  <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 4 %></div>
-  <div class="field"><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents %></div>
-  <div class="field">
+  <p><%= f.label :title %><%= f.text_field :title %></p>
+  <p><%= f.label :description %><%= f.text_area :description, rows: 4 %></p>
+  <p><%= f.label :price_cents, "Price (øre)" %><%= f.number_field :price_cents %></p>
+  <p>
     <%= f.label :condition %>
     <%= f.select :condition, Marketplace::Listing::CONDITIONS, { include_blank: "—" } %>
-  </div>
-  <div class="field">
+  </p>
+  <p>
     <%= f.label :category_id, "Category" %>
     <%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %>
-  </div>
-  <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
-  <div class="field">
+  </p>
+  <p><%= f.label :location %><%= f.text_field :location %></p>
+  <p>
     <%= f.label :status %>
     <%= f.select :status, Marketplace::Listing::STATUSES %>
-  </div>
-  <div class="field"><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*" %></div>
-  <div class="actions"><%= f.submit "Save", class: "btn btn--primary" %></div>
+  </p>
+  <p><%= f.label :photos %><%= f.file_field :photos, multiple: true, accept: "image/*" %></p>
+  <p><%= f.submit "Save" %></p>
 <% end %>

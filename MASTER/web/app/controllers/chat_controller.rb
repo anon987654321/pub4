@@ -68,6 +68,17 @@ class ChatController < ApplicationController
         ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
       end
 
+      mutated_flag    = false
+      web_mutated     = false
+      mutated_paths   = []
+      mutate_sub = container[:bus].subscribe("tool:after") do |ev|
+        next unless %w[Write Edit Create FilePatch].include?(ev[:tool].to_s)
+        mutated_flag = true
+        path = ev[:path].to_s
+        mutated_paths << path unless path.empty?
+        web_mutated ||= path.include?("/MASTER/web/")
+      end
+
       result = container[:pipeline].call(Master::Result.ok(**ctx))
 
       unless streamed
@@ -85,6 +96,43 @@ class ChatController < ApplicationController
       end
 
       sse.write("data: [DONE]\n\n")
+
+      # Post-turn standing orders: triad, autocommit, restart on web edits.
+      if mutated_flag
+        Thread.new do
+          Thread.current.report_on_exception = false
+          begin
+            container[:bus].publish("triad:auto_start", reason: "post_chat_mutation")
+            container[:command_registry].dig("triad")&.call(args: "deep .")
+            container[:bus].publish("triad:auto_done")
+          rescue StandardError => err
+            container[:bus].publish("triad:auto_error", error: err.message)
+          end
+        end
+
+        Thread.new do
+          Thread.current.report_on_exception = false
+          repo_root = Rails.root.join("..", "..").to_s
+          msg = "auto: chat-turn mutation (#{mutated_paths.size} file(s))"
+          _, status = Open3.capture2e("git", "-C", repo_root, "add", "-A")
+          if status.success?
+            _, st = Open3.capture2e("git", "-C", repo_root, "commit", "-m", msg)
+            container[:bus].publish("autocommit:done", ok: st.success?)
+          end
+        rescue StandardError => err
+          container[:bus].publish("autocommit:error", error: err.message)
+        end
+
+        if web_mutated
+          Thread.new do
+            Thread.current.report_on_exception = false
+            _, status = Open3.capture2e("doas", "rcctl", "restart", "master")
+            container[:bus].publish("master:restart", ok: status.success?)
+          rescue StandardError => err
+            container[:bus].publish("master:restart_error", error: err.message)
+          end
+        end
+      end
     rescue => e
       sse.write("data: ERROR: #{e.message}\n\n")
       sse.write("data: [DONE]\n\n")
@@ -92,6 +140,7 @@ class ChatController < ApplicationController
       Thread.current[:master_visitor] = nil
       begin
         tool_sub.call if defined?(tool_sub) && tool_sub
+        mutate_sub.call if defined?(mutate_sub) && mutate_sub
       rescue StandardError
         nil
       end
@@ -110,7 +159,13 @@ class ChatController < ApplicationController
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
-    bytes = Master::Speech.synthesize_bytes(text)
+    voice = params[:voice].to_s.downcase.to_sym
+    style = params[:style].to_s.downcase.to_sym
+    voice = Master::Speech::DEFAULT_VOICE unless Master::Speech::VOICES.key?(voice)
+    # :auto opts in to per-clause infer_style. Otherwise enforce whitelist.
+    style = Master::Speech::DEFAULT_STYLE if style != :auto && !Master::Speech::STYLES.key?(style)
+
+    bytes = Master::Speech.synthesize_bytes(text, voice: voice, style: style)
     if bytes && bytes.bytesize > 0
       send_data bytes, type: "audio/mpeg", disposition: "inline"
     else

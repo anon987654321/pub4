@@ -1,14 +1,8 @@
 <h1>Edit playlist</h1>
 <%= form_with model: @playlist, url: playlist_playlist_path(@playlist), method: :patch do |f| %>
   <%= render "shared/errors", object: @playlist %>
-  <div class="field">
-    <%= f.label :name %><%= f.text_field :name %>
-  </div>
-  <div class="field">
-    <%= f.label :description %><%= f.text_area :description, rows: 3 %>
-  </div>
-  <div class="field">
-    <%= f.check_box :public_access %> <%= f.label :public_access, "Public" %>
-  </div>
-  <div class="actions"><%= f.submit "Save", class: "btn btn--primary" %></div>
+  <p><%= f.label :name %><%= f.text_field :name %></p>
+  <p><%= f.label :description %><%= f.text_area :description, rows: 3 %></p>
+  <p><%= f.check_box :public_access %> <%= f.label :public_access, "Public" %></p>
+  <p><%= f.submit "Save" %></p>
 <% end %>

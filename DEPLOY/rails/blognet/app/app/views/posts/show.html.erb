@@ -1,0 +1,22 @@
+<% content_for :title, @post.title %>
+<article>
+  <header>
+    <h1><%= @post.title %></h1>
+    <small><%= @post.user.email_address.split("@").first %> · <%= @post.published_at&.strftime("%b %-d, %Y") %> · <%= @post.views_count %> views</small>
+    <% if @post.user == Current.user %>
+      <%= link_to "Edit", edit_blog_post_path(@blog, @post) %>
+      <%= button_to "Delete", blog_post_path(@blog, @post), method: :delete, data: { turbo_confirm: "Delete post?" } %>
+    <% end %>
+  </header>
+  <%= @post.body %>
+</article>
+<section id="comments">
+  <h2>Comments (<%= @post.comments_count %>)</h2>
+  <%= render @comments %>
+  <% if authenticated? %>
+    <%= form_with url: blog_post_comments_path(@blog, @post) do |f| %>
+      <p><%= f.text_area :content, rows: 3, placeholder: "Add a comment…" %></p>
+      <p><%= f.submit "Comment" %></p>
+    <% end %>
+  <% end %>
+</section>

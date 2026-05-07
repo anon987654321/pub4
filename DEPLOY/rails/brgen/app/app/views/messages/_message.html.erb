@@ -1,21 +1,19 @@
 <%= turbo_frame_tag dom_id(message) do %>
-<article class="message <%= message.sender == Current.user ? "message-self" : "message-peer" %>">
-  <div class="message-meta">
-    <span class="author"><%= message.sender.username %></span>
+<article data-from="<%= message.sender == Current.user ? "self" : "peer" %>">
+  <header>
+    <span><%= message.sender.username %></span>
     <time datetime="<%= message.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(message.created_at) %> ago</time>
-  </div>
-  <div class="message-body"><%= message.content %></div>
+  </header>
+  <p><%= message.content %></p>
   <% if message.attachment.attached? %>
-    <div class="message-attachment">
-      <% case message.message_type %>
-      <% when "image" %>
-        <%= image_tag message.attachment %>
-      <% when "audio" %>
-        <%= audio_tag message.attachment, controls: true %>
-      <% else %>
-        <%= link_to message.attachment.filename, message.attachment %>
-      <% end %>
-    </div>
+    <% case message.message_type %>
+    <% when "image" %>
+      <%= image_tag message.attachment %>
+    <% when "audio" %>
+      <%= audio_tag message.attachment, controls: true %>
+    <% else %>
+      <%= link_to message.attachment.filename, message.attachment %>
+    <% end %>
   <% end %>
 </article>
 <% end %>

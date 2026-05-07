@@ -200,11 +200,11 @@ thresholds:
 
 scan_depths:
   quick: &quick
-    - FrozenStringRule
+    - TableLexicalRule
     - BareRescueRule
     - UniversalRule
   standard: &standard
-    - FrozenStringRule
+    - TableLexicalRule
     - BareRescueRule
     - UniversalRule
     - ExplicitRule
@@ -224,17 +224,15 @@ scan_depths:
     - TerseRule
     - DeadAssignRule
     - NestingDepthRule
-    - TrailingCommentRule
     - NamingRule
     - CommentQualityRule
-    - DebugOutputRule
     - YamlQualityRule
     - StructureRule
     - DeadCodeRule
     - RubocopRule
     - ReekRule
   deep: &deep
-    - FrozenStringRule
+    - TableLexicalRule
     - BareRescueRule
     - UniversalRule
     - ExplicitRule
@@ -254,10 +252,8 @@ scan_depths:
     - TerseRule
     - DeadAssignRule
     - NestingDepthRule
-    - TrailingCommentRule
     - NamingRule
     - CommentQualityRule
-    - DebugOutputRule
     - YamlQualityRule
     - StructureRule
     - DeadCodeRule
@@ -267,6 +263,13 @@ scan_depths:
     - InterconnectRule
     - AdversarialRule
     - ConceptualRule
+    - CommentDriftRule
+    - CoChangeCouplingRule
+    - FileLayoutRule
+    - VerticalRhythmRule
+    - NamingSilhouetteRule
+    - FileSilhouetteRule
+    - ConceptualOpportunityRule
   hunt: *deep
   critique: *deep
 
@@ -724,6 +727,34 @@ rules:
       detect_conceptual: "Does this unit contain unnecessary verbosity?"
       fix: "Omit needless words. Omit needless code."
 
+    - id: DRY
+      name: "Don't Repeat Yourself"
+      tier: principle
+      severity: warning
+      autofix: false
+      aliases: [duplicate_code]
+      detect_conceptual: "Are two units expressing the same idea twice?"
+      fix: "MERGE or DEFRAG. Pass the difference as an argument; never copy a block to vary one literal."
+      tension: "DRY conflicts with WET/AHA — singularity wins for data, DRY wins for code."
+
+    - id: KISS
+      name: "Keep It Simple"
+      tier: principle
+      severity: warning
+      autofix: false
+      aliases: [long_method, god_class, nesting_depth, arity]
+      detect_conceptual: "Does this unit introduce complexity the problem doesn't require?"
+      fix: "FLATTEN nesting; SPLIT god classes; INLINE single-call helpers; delete abstractions until it hurts."
+
+    - id: POLA_PRINCIPLE
+      name: "Principle of Least Astonishment"
+      tier: principle
+      severity: warning
+      autofix: false
+      aliases: [pola]
+      detect_conceptual: "Does the name promise behavior the implementation contradicts?"
+      fix: "NAME truthfully; rename when the implementation drifts."
+
     - id: SRP
       name: "Single Responsibility"
       tier: solid
@@ -735,7 +766,7 @@ rules:
     - id: OPEN_CLOSED
       name: "Open for extension, closed for modification"
       tier: solid
-      severity: info
+      severity: warning
       autofix: false
       detect_conceptual: "Must you modify core code to extend this?"
       fix: "Strategy pattern, dependency injection, hooks."
@@ -743,7 +774,7 @@ rules:
     - id: LISKOV
       name: "Subtypes must substitute for base types"
       tier: solid
-      severity: info
+      severity: warning
       autofix: false
       detect_conceptual: "Does a subclass break the parent's contract?"
       fix: "Use composition if substitutability fails."
@@ -751,7 +782,7 @@ rules:
     - id: INTERFACE_SEGREGATION
       name: "No fat interfaces"
       tier: solid
-      severity: info
+      severity: warning
       autofix: false
       detect_conceptual: "Does this interface force implementors to stub unused methods?"
       fix: "Split into smaller role-based interfaces."

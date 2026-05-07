@@ -1,0 +1,14 @@
+<% content_for :title, "Search" %>
+<%= form_with url: scripture_search_path, method: :get do |f| %>
+  <%= f.search_field :q, value: @query, placeholder: "Search scripture…", autofocus: true %>
+  <%= f.submit "Search" %>
+<% end %>
+<% if @results %>
+  <p><%= @results.size %> results for "<%= @query %>"</p>
+  <% @results.each do |verse| %>
+    <article>
+      <p><%= verse.book.abbreviation %> <%= verse.chapter.number %>:<%= verse.number %></p>
+      <p><%= verse.content %></p>
+    </article>
+  <% end %>
+<% end %>

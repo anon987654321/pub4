@@ -83,7 +83,6 @@
       touch-action:none;
       cursor:pointer;
     }
-    #orb-iframe{display:none;position:fixed;inset:0;width:100%;height:100%;border:none;z-index:0;background:#000;}
 
     #status{
       position:fixed;
@@ -336,7 +335,6 @@
     <span id="attach-label"></span>
   </section>
 
-  <iframe id="orb-iframe" src="/orbs/orb_particle.html" frameborder="0" allow="microphone"></iframe>
   <canvas id="canvas"></canvas>
 
   <section id="overlay" role="dialog" aria-modal="true">
@@ -465,20 +463,6 @@ const renderMd = raw => {
 
     let audioCtx,analyser,dataArray;
     let audioLevel=0;
-    // master:orb-cycle — restored from cli.html v284
-(function(){
-  const ORBS=['orb_particle','orb_blob','orb_backlight','orb_connected','orb_loader','orb_retro','orb_warp'];
-  const orbEl=document.getElementById('orb-iframe'); if(!orbEl) return;
-  let cur=Math.max(0,ORBS.indexOf(localStorage.getItem('master_orb')||'orb_particle'));
-  const swap=(i)=>{cur=(i+ORBS.length)%ORBS.length;orbEl.src='/orbs/'+ORBS[cur]+'.html';localStorage.setItem('master_orb',ORBS[cur]);};
-  swap(cur);
-  addEventListener('keydown',e=>{
-    if(document.activeElement && document.activeElement.tagName==='INPUT') return;
-    const n=parseInt(e.key); if(n>=1&&n<=ORBS.length){swap(n-1);return;}
-    if(e.key==='ArrowRight') swap(cur+1);
-    if(e.key==='ArrowLeft')  swap(cur-1);
-  });
-})();
 // master:tilt-reveal — chrome via device motion/orientation
 if (window.DeviceOrientationEvent) {
   let lastTilt = 0;
@@ -510,6 +494,143 @@ if (window.DeviceMotionEvent) {
       });
     }
     let speechPulse=0;
+    // Echo guard: remember recent TTS phrases so mic-loopback doesn't get re-sent to LLM.
+    const _recentTts=[]; // [{text, until}]
+    const _ttsRemember=(text)=>{
+      const t=String(text||'').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+      if(!t) return;
+      _recentTts.push({t,until:Date.now()+25000});
+      while(_recentTts.length&&_recentTts[0].until<Date.now()) _recentTts.shift();
+    };
+    const _ttsEchoes=(heard)=>{
+      const h=String(heard||'').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+      if(h.length<3) return false;
+      const now=Date.now();
+      for(const r of _recentTts){
+        if(r.until<now) continue;
+        if(r.t.includes(h)||h.includes(r.t)) return true;
+        const hw=new Set(h.split(' '));const rw=r.t.split(' ');
+        let m=0;for(const w of rw) if(hw.has(w)) m++;
+        if(rw.length&&m/rw.length>=0.6) return true;
+      }
+      return false;
+    };
+    // Sentence queue for server TTS — prevents overlapping BufferSource playback.
+    const _ttsQueue=[]; let _ttsBusy=false; let _ttsCurrent=null;
+
+    // P5: affect tag → voice/style swap. Stream may emit `[mood:calm]`, `[mood:urgent]` etc.
+    const AFFECT_MAP={
+      calm:    {voice:'yasmin', style:'slow'},
+      urgent:  {voice:'steffan',style:'normal'},
+      playful: {voice:'yasmin', style:'natural'},
+      sober:   {voice:'ryan',   style:'slow'},
+      warm:    {voice:'yasmin', style:'natural'},
+      grim:    {voice:'osman',  style:'deep'}
+    };
+    const _extractAffect=(s)=>{
+      return String(s||'').replace(/\[mood:([a-z]+)\]/gi,(_,k)=>{
+        const a=AFFECT_MAP[k.toLowerCase()];
+        if(a){
+          const vi=VOICES.indexOf(a.voice); if(vi>=0) voiceIdx=vi;
+          const si=STYLES.indexOf(a.style); if(si>=0) styleIdx=si;
+        }
+        return '';
+      }).replace(/\s{2,}/g,' ').trim();
+    };
+
+    // SI2: mood vector — accumulates from user messages. Decays each turn.
+    // {valence: -1..1, arousal: 0..1, formality: 0..1}
+    const mood={valence:0, arousal:0.3, formality:0.5, profanity:0, updated:Date.now()};
+    const POS_RX=/\b(thanks|nice|great|love|good|cool|amazing|perfect|yes!|yay|haha|lol|👍|♥)\b/i;
+    const NEG_RX=/\b(ugh|fuck|shit|damn|broken|stuck|frustrated|tired of|hate|stupid|wtf|annoying|bullshit)\b/i;
+    const URGENT_RX=/(!{2,}|now|asap|urgent|hurry|right now|immediately|stop)/i;
+    const FORMAL_RX=/\b(please|kindly|would you|could you|thank you)\b/i;
+    const PROFAN_RX=/\b(fuck|shit|damn|bullshit|wtf|crap)\b/i;
+    const REPAIR_RX=/^(no[.,!\s]|not what|i meant|that('?s| is) not|wrong|let me rephrase)/i;
+    const IMPLICIT_RX=/\b(ugh|keep getting|tired of|always|every time|won'?t work|broken again)\b/i;
+    const decayMood=()=>{
+      const dt=(Date.now()-mood.updated)/60000; // minutes
+      const k=Math.exp(-dt*0.4); // half-life ~1.7 min
+      mood.valence  *=k; mood.arousal*=k; mood.profanity*=k;
+      mood.updated=Date.now();
+    };
+    const updateMood=(text)=>{
+      decayMood();
+      const t=String(text||''); const len=t.length;
+      const longSentence=len>140;
+      if(POS_RX.test(t))      mood.valence=Math.min(1, mood.valence+0.35);
+      if(NEG_RX.test(t))      mood.valence=Math.max(-1,mood.valence-0.45);
+      if(URGENT_RX.test(t))   mood.arousal=Math.min(1, mood.arousal+0.4);
+      if(FORMAL_RX.test(t))   mood.formality=Math.min(1,mood.formality*0.8+0.25);
+      else                    mood.formality=Math.max(0,mood.formality*0.92);
+      if(PROFAN_RX.test(t))   mood.profanity=Math.min(1, mood.profanity+0.4);
+      if(longSentence)        mood.arousal=Math.max(0, mood.arousal-0.05);
+      mood.updated=Date.now();
+    };
+    // Send mood snapshot to server as part of /chat/message — server prompt uses it.
+    const moodSnapshot=()=>({
+      valence:Number(mood.valence.toFixed(2)),
+      arousal:Number(mood.arousal.toFixed(2)),
+      formality:Number(mood.formality.toFixed(2)),
+      profanity:Number(mood.profanity.toFixed(2))
+    });
+
+    // P3: barge-in — when speaking, listen to mic energy via mediaStreamSource → cut TTS on speech.
+    let _bargeStream=null, _bargeAnalyser=null, _bargeData=null, _bargeTimer=null;
+    const _bargeStart=async()=>{
+      if(_bargeAnalyser||!audioCtx) return;
+      try{
+        _bargeStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+        const src=audioCtx.createMediaStreamSource(_bargeStream);
+        _bargeAnalyser=audioCtx.createAnalyser();
+        _bargeAnalyser.fftSize=512;
+        _bargeData=new Uint8Array(_bargeAnalyser.fftSize);
+        src.connect(_bargeAnalyser);
+      }catch(_){ _bargeAnalyser=null; }
+    };
+    const _bargePoll=()=>{
+      if(!_bargeAnalyser) return;
+      _bargeAnalyser.getByteTimeDomainData(_bargeData);
+      let sum=0; for(let i=0;i<_bargeData.length;i++){const v=(_bargeData[i]-128)/128;sum+=v*v;}
+      const rms=Math.sqrt(sum/_bargeData.length);
+      // Threshold tuned for speech; ignores ambient room noise.
+      if(rms>0.10&&isSpeaking){ _ttsCancel(); }
+    };
+    const _ttsCancel=()=>{
+      try{ if(_ttsCurrent){_ttsCurrent.onended=null; _ttsCurrent.stop(); _ttsCurrent.disconnect&&_ttsCurrent.disconnect();} }catch(_){}
+      _ttsCurrent=null; _ttsQueue.length=0; _ttsBusy=false;
+      try{ if('speechSynthesis' in window) window.speechSynthesis.cancel(); }catch(_){}
+      isSpeaking=false; statusEl.classList.remove('speak'); unduckPads();
+    };
+
+    // P10: swarm bridge — forward LLM/tool/confidence signals into the swarm iframe.
+    const _swarm=()=>document.getElementById('swarm-iframe');
+    const swarmSignal=(type,data)=>{
+      const f=_swarm(); if(!f||!f.contentWindow) return;
+      try{ f.contentWindow.postMessage({type,data:data||{}},'*'); }catch(_){}
+    };
+
+    // P9: voice confirmation gate. Server may add `[confirm:tool_name]` to a reply that needs
+    // an explicit yes/no before tool runs. Stash and listen for next user transcript.
+    let _pendingConfirm=null; // {tool, expires}
+    const _CONFIRM_RX=/\[confirm:([\w:.\-]+)\]/i;
+    const _consumeConfirm=(s)=>{
+      const m=s.match(_CONFIRM_RX);
+      if(m){ _pendingConfirm={tool:m[1], expires:Date.now()+15000}; }
+      return s.replace(_CONFIRM_RX,'').trim();
+    };
+    const _checkConfirmReply=(t)=>{
+      if(!_pendingConfirm||_pendingConfirm.expires<Date.now()){_pendingConfirm=null;return null;}
+      if(/^\s*(yes|yeah|yep|do it|go|sure|confirm|ok|okay)\b/i.test(t)){
+        const tool=_pendingConfirm.tool; _pendingConfirm=null;
+        return {ok:true,tool};
+      }
+      if(/^\s*(no|nope|cancel|stop|nevermind|don'?t)\b/i.test(t)){
+        const tool=_pendingConfirm.tool; _pendingConfirm=null;
+        return {ok:false,tool};
+      }
+      return null;
+    };
     let recognition=null;
     let recognitionActive=false;
     let isSpeaking=false;
@@ -1208,8 +1329,18 @@ if (window.DeviceMotionEvent) {
     let fxIdx=0; // default 'off' — no FX on TTS, no double-vocal. Long-press status to cycle.
     let fxTaps=0;let fxTapTimer=0;
 
+    // Server TTS voices + styles (Edge-TTS, mirror lib/master/speech.rb).
+    const VOICES=['yasmin','ryan','steffan','finn','osman'];
+    // P4: 'auto' lets server pick per-clause prosody (question/exclaim/grave/whisper).
+    const STYLES=['auto','natural','normal','slow','heavy','deep'];
+    let voiceIdx=0, styleIdx=0;
+
     const showFxMode=()=>{
       uiLabel.textContent='♪ '+FX_MODES[fxIdx];
+      setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
+    };
+    const showVoice=()=>{
+      uiLabel.textContent='♫ '+VOICES[voiceIdx]+' · '+STYLES[styleIdx];
       setTimeout(()=>{if(!isProcessing)uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;},2000);
     };
 
@@ -1504,17 +1635,19 @@ if(mode==='void'){
     const speakBrowser=(text)=>{
       if(!('speechSynthesis' in window)) return false;
       window.speechSynthesis.cancel();
+      _ttsRemember(text);
       const u=new SpeechSynthesisUtterance(text.replace(/```[\s\S]*?```/g,'').substring(0,500));
-      u.lang='ms-MY'; u.rate=0.92; u.pitch=0.85; u.volume=1.0;
-      u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');duckPads();if(padModulate)padModulate('speak');if(recognition&&recognitionActive)try{recognition.stop();}catch(_e){}};
+      u.lang='ms-MY'; u.rate=0.96; u.pitch=1.02; u.volume=1.0;
+      u.onstart=()=>{isSpeaking=true;speechPulse=0.6;statusEl.classList.add('speak');duckPads();if(padModulate)padModulate('speak');};
       u.onend=()=>{unduckPads();_onSpeakEnd();}; u.onerror=()=>{unduckPads();_onSpeakEnd();};
       // Always speak synchronously — must stay inside gesture call stack on mobile.
       // _cachedVoices is populated eagerly at page load and kept fresh via voiceschanged.
       const saved=localStorage.getItem('pref_voice');
       const pick=( saved && _cachedVoices.find(v=>v.name===saved) )
-        ||_cachedVoices.find(v=>/osman/i.test(v.name))
+        ||_cachedVoices.find(v=>v.lang==='ms-MY'&&!/osman/i.test(v.name)&&v.localService)
+        ||_cachedVoices.find(v=>v.lang==='ms-MY'&&!/osman/i.test(v.name))
+        ||_cachedVoices.find(v=>v.lang.startsWith('ms')&&!/osman/i.test(v.name))
         ||_cachedVoices.find(v=>v.lang==='ms-MY'&&v.localService)
-        ||_cachedVoices.find(v=>v.lang.startsWith('ms'))
         ||_cachedVoices.find(v=>v.lang.startsWith('en-')&&v.localService)
         ||_cachedVoices.find(v=>v.lang.startsWith('en-'))
         ||_cachedVoices[0];
@@ -1526,36 +1659,49 @@ if(mode==='void'){
       return true;
     };
 
-    const speakWithAudio=async(text)=>{
-      if(LOW_END) return speakBrowser(text);
-
-      if(!audioCtx) return speakBrowser(text);
+    const _ttsDrain=async()=>{
+      if(_ttsBusy||!_ttsQueue.length) return;
+      _ttsBusy=true;
+      const text=_ttsQueue.shift();
+      if(LOW_END||!audioCtx){ _ttsBusy=false; speakBrowser(text); return _ttsDrain(); }
       if(audioCtx.state==='suspended') await audioCtx.resume();
       try{
         const resp=await fetch("/chat/tts",{
           method:"POST",
           headers:{"Content-Type":"application/json","X-CSRF-Token":csrfToken()},
-          body:JSON.stringify({text})
+          body:JSON.stringify({text,voice:VOICES[voiceIdx],style:STYLES[styleIdx]})
         });
-        if(!resp.ok) return speakBrowser(text);
+        if(!resp.ok){ _ttsBusy=false; speakBrowser(text); return _ttsDrain(); }
         const buf=await resp.arrayBuffer();
-        if(!buf.byteLength) return speakBrowser(text);
+        if(!buf.byteLength){ _ttsBusy=false; speakBrowser(text); return _ttsDrain(); }
         const decoded=await audioCtx.decodeAudioData(buf);
-        // Cancel local TTS — server audio is higher quality
         if('speechSynthesis' in window) window.speechSynthesis.cancel();
         const src=audioCtx.createBufferSource();
         src.buffer=decoded;
         buildFxChain(src);
+        _ttsCurrent=src; // P3 barge-in handle
         isSpeaking=true; speechPulse=0.6;
         duckPads();
         if(padModulate) padModulate('speak');
         statusEl.classList.remove('think');
         statusEl.classList.add('speak');
-        if(recognition&&recognitionActive) try{recognition.stop();}catch(_e){}
-        src.onended=_onSpeakEnd;
+        // P3: do NOT stop recognition during TTS — we want barge-in. Recognition.onresult
+        // already filters echo via _ttsEchoes(), so leaving the mic open is safe.
+        src.onended=()=>{ _ttsCurrent=null; _ttsBusy=false; _onSpeakEnd(); _ttsDrain(); };
         src.start();
-        return true;
-      }catch(_e){ return speakBrowser(text); }
+      }catch(_e){ _ttsBusy=false; speakBrowser(text); _ttsDrain(); }
+    };
+
+    const speakWithAudio=async(text)=>{
+      const t=String(text||'').trim();
+      if(!t) return false;
+      // De-duplicate identical phrases queued back-to-back (e.g., re-flush on stream chunks).
+      const last=_ttsQueue[_ttsQueue.length-1];
+      if(last&&last.trim()===t) return true;
+      _ttsRemember(t);
+      _ttsQueue.push(t);
+      _ttsDrain();
+      return true;
     };
 
     const startRecognition=()=>{
@@ -1573,7 +1719,7 @@ if(mode==='void'){
       recognition.onstart=()=>{ recognitionActive=true; statusEl.classList.add('think'); };
       recognition.onend=()=>{
         recognitionActive=false;
-        if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,500);
+        if(nonstopVoice&&!isSpeaking) setTimeout(startRecognition,1500);
       };
       recognition.onerror=(ev)=>{
         if(ev.error==='not-allowed') uiLabel.textContent='Microphone blocked';
@@ -1601,7 +1747,14 @@ recognition.onresult=(ev)=>{
           uiLabel.textContent='Listening…';
           return;
         }
+        if(_ttsEchoes(finalText)){
+          uiLabel.textContent='(echo ignored)';
+          return;
+        }
         uiLabel.textContent=finalText.slice(0,60);
+        // P9: short-circuit yes/no answers to a pending confirmation — server expects them too,
+        // but we mark mood arousal so the visual reflects the user's commitment.
+        if(_pendingConfirm) mood.arousal=Math.min(1,mood.arousal+0.2);
         transmit(finalText);
       };
     };
@@ -1713,6 +1866,14 @@ recognition.onresult=(ev)=>{
     });
 
     const transmit=async(message)=>{
+      // SI3: conversation-repair flag — server sees this and rephrases, doesn't repeat.
+      const isRepair=REPAIR_RX.test(message);
+      // SI9: implicit-ask flag — server should offer help, not just acknowledge.
+      const implicitAsk=IMPLICIT_RX.test(message);
+      // SI2: update mood vector and snapshot for server.
+      updateMood(message);
+      // P9: did the user just answer a pending confirmation prompt?
+      const confirmReply=_checkConfirmReply(message);
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
       isProcessing=true;
       if(padModulate) padModulate('think');
@@ -1726,7 +1887,14 @@ recognition.onresult=(ev)=>{
         n.vz+=(Math.random()-0.5)*100;
       }
       try{
-        const payload={message};
+        const payload={
+          message,
+          mood:moodSnapshot(),
+          repair:isRepair||undefined,
+          implicit_ask:implicitAsk||undefined,
+          confirm:confirmReply||undefined,
+          user_name:(localStorage.getItem('pref_user_name')||undefined)
+        };
         if(pendingFile){
           const b64=await new Promise((res,rej)=>{
             const fr=new FileReader();
@@ -1759,14 +1927,24 @@ recognition.onresult=(ev)=>{
         const reader=resp.body.getReader();
         const dec=new TextDecoder();
         let buf='';let fullText='';let _spkBuf='';
-        // Progressive TTS: speak each sentence as it completes
+        // P1: Progressive TTS — flush at clause boundaries (,;:.!?) once we have ~12+ chars,
+        // so the first words land before the full sentence is generated.
+        const _CLAUSE_RE=/^([\s\S]+?[.!?\u2026,;:](?:\s|$))([\s\S]*)$/;
         const _speakFlush=(force)=>{
           let m;
-          while((m=_spkBuf.match(/^([\s\S]+?[.!?\u2026](?:\s|$))([\s\S]*)$/))){
-            const s=m[1].trim();_spkBuf=m[2];
-            if(s.length>3) speakWithAudio(s);
+          while((m=_spkBuf.match(_CLAUSE_RE))){
+            const s=m[1].trim();
+            if(s.length<12&&!force&&!/[.!?\u2026]$/.test(s)) break; // wait for more text
+            _spkBuf=m[2];
+            // P5: pluck [mood:X] affect tags out of the spoken stream and swap voice/style.
+            const cleaned=_extractAffect(s);
+            if(cleaned.length>3) speakWithAudio(cleaned);
           }
-          if(force&&_spkBuf.trim().length>3){speakBrowser(_spkBuf.trim());_spkBuf='';}
+          if(force&&_spkBuf.trim().length>3){
+            const cleaned=_extractAffect(_spkBuf.trim());
+            if(cleaned) speakBrowser(cleaned);
+            _spkBuf='';
+          }
         };
         while(true){
           const{value,done}=await reader.read();
@@ -1793,9 +1971,13 @@ recognition.onresult=(ev)=>{
           }
         }
         _speakFlush(true);
-        // Final: render markdown, persist
-        const reply=fullText.trim();
+        // Final: render markdown, persist. Strip [confirm:tool] before render.
+        const reply=_consumeConfirm(fullText.trim());
         _msgEl.innerHTML=renderMd(reply);
+        if(_pendingConfirm){
+          uiLabel.textContent='Awaiting yes/no for '+_pendingConfirm.tool;
+          swarmSignal('confirm:pending',{tool:_pendingConfirm.tool});
+        }
         chatLog.scrollTop=chatLog.scrollHeight;
         try{
           const stored=JSON.parse(localStorage.getItem(CHAT_KEY)||'[]');
@@ -1875,7 +2057,7 @@ document.body.addEventListener('click',(e)=>{
     let currentOrb=0;
     let orbFade=1; // 0→1 crossfade on orb change
     // Persist prefs (defined early so setOrb can call it)
-    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({orb:currentOrb,fx:fxIdx}));}catch(_){}};
+    const savePrefs=()=>{try{localStorage.setItem('m2_prefs',JSON.stringify({orb:currentOrb,fx:fxIdx,voice:voiceIdx,style:styleIdx}));}catch(_){}};
     const setOrb=(idx)=>{
       currentOrb=((idx%orbStates.length)+orbStates.length)%orbStates.length;
       if(!isProcessing) uiLabel.textContent=orbStates[currentOrb].name+' · '+orbStates[currentOrb].desc;
@@ -1888,8 +2070,11 @@ document.body.addEventListener('click',(e)=>{
     arrowRight.addEventListener('click',e=>{e.stopPropagation();setOrb(currentOrb+1);});
 
     window.addEventListener('keydown',e=>{
+      if(e.target&&/INPUT|TEXTAREA/.test(e.target.tagName)) return;
       if(e.key==='ArrowLeft')setOrb(currentOrb-1);
-      if(e.key==='ArrowRight')setOrb(currentOrb+1);
+      else if(e.key==='ArrowRight')setOrb(currentOrb+1);
+      else if(e.key==='v'||e.key==='V'){voiceIdx=(voiceIdx+1)%VOICES.length;showVoice();savePrefs();}
+      else if(e.key==='s'||e.key==='S'){styleIdx=(styleIdx+1)%STYLES.length;showVoice();savePrefs();}
     });
 
     // Low-end: replace canvas with CSS orb, skip all canvas rendering
@@ -2073,6 +2258,8 @@ document.body.addEventListener('click',(e)=>{
       if(saved.orb!=null&&saved.orb>=0&&saved.orb<orbStates.length) currentOrb=saved.orb;
       else{const ni=orbStates.findIndex(o=>o.name==='NEURAL');currentOrb=ni>=0?ni:Math.floor(Math.random()*orbStates.length);}
       if(saved.fx!=null&&saved.fx>=0&&saved.fx<FX_MODES.length) fxIdx=saved.fx;
+      if(saved.voice!=null&&saved.voice>=0&&saved.voice<VOICES.length) voiceIdx=saved.voice;
+      if(saved.style!=null&&saved.style>=0&&saved.style<STYLES.length) styleIdx=saved.style;
     }catch(_){currentOrb=Math.floor(Math.random()*orbStates.length);}
     setOrb(currentOrb);
 
@@ -2219,6 +2406,7 @@ const AMBIENT=[
         try{refreshMetrics();setInterval(refreshMetrics,30000);}catch(_){}
         // Delay AudioContext init until after speech has had time to start.
         setTimeout(()=>{ try{initAudio();}catch(_){} },2000);
+        setTimeout(()=>{ try{_bargeStart();}catch(_){} },2200); // P3
         setTimeout(()=>{
           overlay.hidden=true;
           _overlayJustDismissed=true;
@@ -2232,13 +2420,19 @@ const AMBIENT=[
     overlay.addEventListener('click',_activateOverlay);
     overlay.addEventListener('touchend',e=>{e.preventDefault();_activateOverlay();},{passive:false});
 
-    // Status circle: tap toggles mic, long-press cycles voice effect
+    // Status circle: tap toggles mic, long-press cycles FX, longer-press cycles voice.
     let statusLongPress=null;
-    statusEl.addEventListener('pointerdown',()=>{
+    statusEl.addEventListener('pointerdown',(ev)=>{
+      const wantVoice=ev.shiftKey||ev.altKey;
       statusLongPress=setTimeout(()=>{
         statusLongPress='long';
-        fxIdx=(fxIdx+1)%FX_MODES.length;
-        showFxMode();
+        if(wantVoice){
+          voiceIdx=(voiceIdx+1)%VOICES.length;
+          showVoice();
+        }else{
+          fxIdx=(fxIdx+1)%FX_MODES.length;
+          showFxMode();
+        }
         haptic(12);
         savePrefs();
       },600);
@@ -2287,6 +2481,7 @@ const AMBIENT=[
       if(canvas.hidden) return;
       t+=0.016;
       speechPulse*=0.92;
+      _bargePoll(); // P3: cancel TTS on user voice during speech
       if(orbFade<1) orbFade=Math.min(1,orbFade+0.04);
 
       // Cinematic camera drift — slow, organic
@@ -2446,10 +2641,12 @@ const AMBIENT=[
         if(t==='llm:request'){
           speechPulse=Math.max(speechPulse,0.55);
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.3,a:0.45,col:'#6a1a1a'});
+          swarmSignal('morph',{shape:'sphere'});
         }else if(t==='llm:escalation'){
           setOrb((currentOrb+1)%orbStates.length);
         }else if(t==='tool:used'||t==='tool:before'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.2,a:0.3,col:'#2a1a04'});
+          swarmSignal('tool',{name:(ev.data||{}).tool||''});
         }else if(t==='pipeline:rollback'){
           speechPulse=0.9;
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.5,a:0.7,col:'#cc1010'});
@@ -2457,6 +2654,14 @@ const AMBIENT=[
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.15,a:0.2,col:'#3d1a04'});
         }else if(t==='speak:text'){
           speakWithAudio((ev.data||{}).text||'');
+        }else if(t==='speak:backchannel'){
+          // P2: tiny vocal grunt — non-blocking, ducks pads briefly.
+          const phrases=['mm','right','go on','yeah','uh-huh','ok'];
+          speakBrowser(phrases[Math.floor(Math.random()*phrases.length)]);
+        }else if(t==='llm:confidence'){
+          // P10: pulse swarm with model confidence (0..1).
+          const c=Number((ev.data||{}).c||0.5);
+          swarmSignal('confidence',{c});
         }else if(t==='scan:complete'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.25,a:0.35,col:'#1a3a1a'});
         }
