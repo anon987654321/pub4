@@ -21,7 +21,7 @@ module Master
 category: :validation) unless File.exist?(target) || Dir.exist?(target)
 
         guard = @governor.guard("clean #{target}")
-        return Result.err(guard.message, category: :policy) if guard.respond_to?(:ok?) && !guard.ok?
+        return Result.err(guard.message, category: :policy) if guard.err?
 
         out, err, status = Open3.capture3("zsh", SCRIPT, target)
         return Result.err("clean failed: #{err.strip}", category: :unknown) unless status.success?

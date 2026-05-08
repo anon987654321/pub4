@@ -170,7 +170,7 @@ module Master
           nil
         end
       end
-      result.respond_to?(:ok?) && result.ok? ? result.value! : nil
+      Result.wrap(result).value_or(nil)
     end
   end
 end

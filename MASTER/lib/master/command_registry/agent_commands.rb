@@ -112,8 +112,7 @@ module Master
     def format_scan_results(pairs, profile, rule_filter)
       by_rule = Hash.new { |h, k| h[k] = [] }
       pairs.each do |_file, file_result|
-        next unless file_result.respond_to?(:ok?) && file_result.ok?
-        file_result.value!.each do |v|
+        Result.wrap(file_result).value_or([]).each do |v|
           next if rule_filter && !rule_filter.include?(v[:rule].to_s)
           by_rule[v[:rule].to_s] << v
         end

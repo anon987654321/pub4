@@ -20,12 +20,10 @@ module Master
         paths = Array(ctx[:written_files]).filter_map { |p| File.exist?(p) ? p : nil }
         paths.each do |scan_path|
           if File.directory?(scan_path)
-            result = @scanner.scan_dir(scan_path, depth: :standard)
-            findings.concat(result.value!.flat_map { |_, r|
- r.respond_to?(:ok?) && r.ok? ? r.value! : [] }) if result.respond_to?(:ok?) && result.ok?
+            dir_map = Result.wrap(@scanner.scan_dir(scan_path, depth: :standard)).value_or({})
+            findings.concat(dir_map.values.flat_map { |r| Result.wrap(r).value_or([]) })
           elsif scan_path.end_with?(".rb")
-            result = @scanner.scan(scan_path, depth: :standard)
-            findings.concat(result.value!) if result.respond_to?(:ok?) && result.ok?
+            findings.concat(Result.wrap(@scanner.scan(scan_path, depth: :standard)).value_or([]))
           end
         end
 
@@ -58,10 +56,8 @@ module Master
         Tempfile.open(["lint_inline", ".rb"]) do |f|
           f.write("# frozen_string_literal: true\n\n#{code}")
           f.flush
-          result = @scanner.scan(f.path, depth: :standard)
-          if result.respond_to?(:ok?) && result.ok?
-            findings = result.value!.map { |v| v.merge(source: :inline) }
-          end
+          findings = Result.wrap(@scanner.scan(f.path, depth: :standard))
+            .value_or([]).map { |v| v.merge(source: :inline) }
         end
         findings
       rescue StandardError => e

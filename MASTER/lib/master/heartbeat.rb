@@ -122,11 +122,9 @@ module Master
 
       target = File.join(@root, "lib")
       result = @scanner.scan_dir(target, depth: :deep)
-      return "scan failed" unless result.respond_to?(:ok?) && result.ok?
+      return "scan failed" unless Result.wrap(result).ok?
 
-      count = result.value!.sum do |_, fr|
-        fr.respond_to?(:ok?) && fr.ok? ? fr.value!.size : 0
-      end
+      count = result.value!.sum { |_, fr| Result.wrap(fr).value_or([]).size }
       @bus&.publish("heartbeat:self_test", violations: count)
       "self-test: #{count} violations"
     end

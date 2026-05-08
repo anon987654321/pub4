@@ -73,14 +73,10 @@ module Master
       end
 
       def merge_results(ctx, results)
-        ok_values = results.filter_map { |r| r.value! if ok?(r) }
-        merged    = ok_values.reduce(ctx, &:merge)
-        errors    = results.filter_map { |r| r.message if err?(r) }
+        merged = results.filter_map { |r| r.value! if r.ok? }.reduce(ctx, &:merge)
+        errors = results.filter_map { |r| r.message if r.err? }
         errors.empty? ? merged : merged.merge(_parallel_errors: errors)
       end
-
-      def ok?(result);  result.is_a?(Master::Result::Ok);  end
-      def err?(result); result.is_a?(Master::Result::Err); end
     end
 
     class SkipOnPressure
@@ -115,11 +111,11 @@ module Master
       stage_result = stage.call(ctx)
       ms    = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SECOND).round
       timings[label] = ms
-      return stage_result unless stage_result.is_a?(Master::Result::Ok)
+      return stage_result if stage_result.err?
 
       @last_timings = timings.dup
       @bus&.publish("pipeline:stage", stage: label, ms:) if @trace
-      Result.ok(stage_result.value!.merge(_timings: timings.dup))
+      stage_result.map { |c| c.merge(_timings: timings.dup) }
     end
 
     def maybe_rollback(result)

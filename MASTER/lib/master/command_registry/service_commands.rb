@@ -179,7 +179,7 @@ module Master
 
     def score_violations(scanner, path)
       result = scanner&.scan(path, depth: :standard)
-      result.respond_to?(:ok?) && result.ok? ? result.value! : []
+      Result.wrap(result).value_or([])
     end
 
     def format_score(path, total, stats, violations, penalty, score)

@@ -36,12 +36,11 @@ module Master
       result = @pipeline.call(Result.ok(ctx))
 
       if (adapter = @adapters[channel])
-        text = result.respond_to?(:ok?) && result.ok? ? extract_text(result) : result.to_s
+        text = result.ok? ? extract_text(result) : result.to_s
         adapter.respond_to?(:render) ? adapter.render(text, metadata) : adapter.call(text, metadata)
       end
 
-      ok = result.respond_to?(:ok?) && result.ok?
-      @bus&.publish("gateway:turn_done", turn_id:, ok:, error: ok ? nil : result.message&.to_s&.[](0, 120))
+      @bus&.publish("gateway:turn_done", turn_id:, ok: result.ok?, error: result.ok? ? nil : result.message&.to_s&.[](0, 120))
       result
     end
 
