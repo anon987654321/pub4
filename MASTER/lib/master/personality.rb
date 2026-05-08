@@ -34,6 +34,10 @@ module Master
 
     attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
 
+    def self.persona_names(root: nil)
+      Axioms.new(root:).data(:personas).keys.map(&:to_sym)
+    end
+
     def initialize(name = DEFAULT, root: nil, homeostat: nil)
       @name      = name.to_sym
       @axioms    = Axioms.new(root:)

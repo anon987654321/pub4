@@ -28,14 +28,30 @@ module Master
       case arg
       when /\Aforget (.+)/  then memory.forget($1.strip); "forgot: #{$1.strip}"
       when /\Aremember (.+)/
-        key, value = $1.split("=", 2).map(&:strip)
-        value ? (memory.remember(key, value); "remembered: #{key}") : "usage: /memory remember key=value"
+        body, type = parse_remember($1)
+        key, value = body.split("=", 2).map(&:strip)
+        value ? (memory.remember(key, value, type:); "remembered [#{type}]: #{key}") : "usage: /memory remember [type=user|feedback|project|reference] key=value"
       when /\Asearch (.+)/ then memory_search(memory, $1.strip)
+      when /\Atype (\S+)/  then list_by_type(memory, $1.strip)
+      when "types"         then memory.type_counts.map { |t, n| "#{t}: #{n}" }.join("\n").then { |s| s.empty? ? "(no memories)" : s }
       when ""
         (e = memory.all).empty? ? "(no memories)" : e.map { |k, v| "#{k}: #{v}" }.join("\n")
       else
         (r = memory.recall(arg)) ? "#{arg}: #{r}" : "(not found: #{arg})"
       end
+    end
+
+    def parse_remember(text)
+      if text =~ /\Atype=(\S+)\s+(.+)/
+        [$2, $1]
+      else
+        [text, "general"]
+      end
+    end
+
+    def list_by_type(memory, type)
+      hits = memory.by_type(type)
+      hits.empty? ? "(no memories of type: #{type})" : hits.map { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }.join("\n")
     end
 
     def memory_search(memory, query)

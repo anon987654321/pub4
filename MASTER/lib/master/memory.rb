@@ -14,6 +14,12 @@ module Master
     SECONDS_PER_DAY = 86_400
     MAX_INJECT_TOKENS = 2000
     MAX_INJECT_ENTRIES = 5
+    TYPES = %w[user feedback project reference general].freeze
+    AUTO_SAVE_PATTERNS = {
+      "user"     => /\b(?:i'?m a|i am a|my role is|i work as)\s+([^.,;\n]{3,80})/i,
+      "feedback" => /\b(?:don'?t|stop|never|always|prefer|from now on)\s+([^.,;\n]{3,120})/i,
+      "project"  => /\b(?:we'?re|deadline|launching|deploying|migrating)\s+([^.,;\n]{3,120})/i
+    }.freeze
 
     include Search
 
@@ -23,16 +29,46 @@ module Master
       @store = load_store
     end
 
-    def remember(key, value)
+    def remember(key, value, type: "general")
+      type = TYPES.include?(type.to_s) ? type.to_s : "general"
       @mutex.synchronize do
         prune_stale! if @store.size > CONSOLIDATE_THRESHOLD
-        entry = { "value" => value.to_s, "ts" => Time.now.to_i }
+        entry = { "value" => value.to_s, "ts" => Time.now.to_i, "type" => type }
         if (vec = Embeddings.embed("#{key} #{value}"))
           entry["vec"] = vec
         end
         @store[key.to_s] = entry
         persist
       end
+    end
+
+    def by_type(type)
+      @store.select { |k, v| v.is_a?(Hash) && v["type"] == type.to_s && !k.start_with?("archive/") }
+    end
+
+    def type_counts
+      counts = Hash.new(0)
+      @store.each do |k, v|
+        next if k.start_with?("archive/") || k == "_consolidated_summary"
+        counts[v.is_a?(Hash) ? (v["type"] || "general") : "general"] += 1
+      end
+      counts
+    end
+
+    # Heuristic auto-save. Scans text for first matching pattern; saves under "auto/<type>/<n>".
+    # Returns saved key or nil.
+    def auto_save(text)
+      return if text.to_s.empty?
+      AUTO_SAVE_PATTERNS.each do |type, re|
+        next unless (m = text.match(re))
+        snippet = m[1].strip
+        next if snippet.length < 3
+        n   = @store.keys.count { |k| k.start_with?("auto/#{type}/") } + 1
+        key = "auto/#{type}/#{n}"
+        remember(key, snippet, type: type)
+        return key
+      end
+      nil
     end
 
     def recall(key)
@@ -45,16 +81,22 @@ module Master
 
     def all = @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v }
 
-    # Token-limited injection for system prompt. Caps at MAX_INJECT_TOKENS.
+    # Token-limited injection for system prompt. Groups by type, caps at MAX_INJECT_TOKENS.
     def context_summary
       active = @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
       return if active.empty?
 
-      recent    = active.sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) }.first(MAX_INJECT_ENTRIES)
-      lines     = []
-      token_sum = 0
+      grouped = active.group_by { |_, v| v.is_a?(Hash) ? (v["type"] || "general") : "general" }
+      ordered = TYPES.flat_map { |t| (grouped[t] || []).sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) } }
+                     .first(MAX_INJECT_ENTRIES * 2)
+      lines, token_sum, current_type = [], 0, nil
 
-      recent.each do |k, v|
+      ordered.each do |k, v|
+        type = v.is_a?(Hash) ? (v["type"] || "general") : "general"
+        if type != current_type
+          lines << "[#{type}]"
+          current_type = type
+        end
         text = "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}"
         est  = text.bytesize / Session::TOKENS_PER_CHAR
         break if token_sum + est > MAX_INJECT_TOKENS

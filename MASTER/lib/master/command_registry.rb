@@ -70,7 +70,7 @@ module Master
       {
         "persona" => ->(ctx) {
           arg   = ctx[:args].to_s.strip.to_sym
-          names = Personality::PERSONAS.keys
+          names = Personality.persona_names
           if names.include?(arg)
             config["persona"] = arg.to_s; config.save!; "persona: #{arg}"
           else
