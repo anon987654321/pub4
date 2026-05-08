@@ -10,6 +10,8 @@ module Master
   # Full-codebase refactor to convergence; stops on delta/oscillation/stall (arxiv:2602.21833).
   class Sweep
     MAX_CYCLES         = 16
+    SMALL_CHANGE_LINES = 5
+    MEDIUM_CHANGE_LINES = 30
     CONVERGE_THRESHOLD = 0.05
     CONVERGE_WINDOW    = 2
     RENAME_WINDOW    = 3
@@ -70,6 +72,7 @@ circuit\sopen|retry\sin|llm_request)\b
       @converge_window    = cfg.fetch("converge_window",    CONVERGE_WINDOW)
       @map            = build_codebase_map
       @prompts        = load_prompts
+      sweep_types     = select_types(target, types)
       violation_history = []
       converge_streak   = 0
       init_cycle_log
@@ -83,7 +86,7 @@ circuit\sopen|retry\sin|llm_request)\b
 
         @bus&.publish("sweep:cycle", cycle:, target:)
 
-        collect_files(target, types).each do |path|
+        collect_files(target, sweep_types).each do |path|
           rel    = path.delete_prefix("#{@root}/")
           before = violations_in(path)
           src    = File.read(path, encoding: "UTF-8")
@@ -126,6 +129,26 @@ circuit\sopen|retry\sin|llm_request)\b
     end
 
     private
+
+    def select_types(target, fallback_types)
+      changed = changed_line_count(target)
+      return %i[rb sh] if changed < SMALL_CHANGE_LINES
+      return %i[rb sh yml] if changed <= MEDIUM_CHANGE_LINES
+      fallback_types
+    end
+
+    def changed_line_count(target)
+      rel = target.to_s == @root ? nil : target.delete_prefix(@root + "/")
+      cmd = ["git", "-C", @root, "diff", "--numstat", "HEAD"]
+      cmd << "--" << rel if rel && !rel.empty?
+      out, = Open3.capture2(*cmd)
+      out.lines.sum do |line|
+        a, d, = line.split("	", 3)
+        a.to_i + d.to_i
+      end
+    rescue StandardError
+      MEDIUM_CHANGE_LINES
+    end
 
     def evaluate_rewrite(rel, src, before, cycle)
       abs = File.join(@root, rel)

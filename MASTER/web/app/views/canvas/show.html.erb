@@ -6,102 +6,125 @@
 <meta name="color-scheme" content="dark">
 <title>MASTER · canvas</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:#0b0b0b;color:#ddd;font:.8rem/1.4 ui-monospace,Menlo,monospace}
-article{position:fixed;inset:0}
-article > section{position:absolute;inset:0}
-svg{width:100%;height:100%;display:block}
-circle{fill:#1a1a1a;stroke:#444;stroke-width:1.5}
-g[data-kind=violation] circle{stroke:#c44}
-g[data-kind=fix] circle{stroke:#4c4}
-g[data-kind=persona] circle{stroke:#4a8}
-text{fill:#ddd;font-size:10px;pointer-events:none}
-line{stroke:#333;stroke-width:1}
-line[data-kind=fixes]{stroke:#4c4}
-line[data-kind=conflicts]{stroke:#c44;stroke-dasharray:3 2}
-article > header,
-article > aside{position:absolute;background:rgba(11,11,11,.92);backdrop-filter:blur(6px);transition:transform .25s ease;z-index:1}
-article > header{top:0;left:0;right:0;padding:1rem;border-bottom:1px solid #222;transform:translateY(-100%)}
-article > aside{top:0;bottom:0;right:0;width:min(28rem,80vw);padding:1rem;border-left:1px solid #222;overflow-y:auto;transform:translateX(100%)}
-article[data-reveal=header] > header,
-article[data-reveal=all] > header{transform:translateY(0)}
-article[data-reveal=thread] > aside,
-article[data-reveal=all] > aside{transform:translateX(0)}
-h1{margin:0 0 .25rem;font-size:1rem;letter-spacing:.08em;text-transform:uppercase}
-header p{margin:0;font-size:.7rem;color:#888}
-h2{margin:0 0 .5rem;font-size:.75rem;color:#888;text-transform:uppercase}
-ol{margin:0;padding:0;list-style:none}
-li{padding:.15rem 0;border-bottom:1px solid #1a1a1a;color:#aaa;word-break:break-all}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;font:400 .95rem/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+article{position:fixed;inset:0;background:#000}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
+#messages{position:absolute;top:12vh;left:6vw;max-width:min(62ch,88vw);display:flex;flex-direction:column;gap:1rem;pointer-events:none}
+#messages p{margin:0;opacity:.95;white-space:pre-wrap}
+#messages p[data-role=master]{border-left:1px solid rgba(255,255,255,.8);padding-left:.8rem;animation:fadeout 7s ease forwards}
+#messages p[data-role=user]{opacity:.88}
+#prompt-shell{position:absolute;left:0;right:0;bottom:0;height:1px;background:#fff;transition:height .12s ease}
+#prompt-shell[data-active=true]{height:3rem}
+#prompt{position:absolute;left:0;right:0;bottom:0;width:100%;height:100%;border:0;outline:0;background:transparent;color:#fff;font:400 .95rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;padding:.85rem .8rem .7rem;opacity:0;transition:opacity .12s ease}
+#prompt-shell[data-active=true] #prompt{opacity:1}
+@keyframes fadeout{0%{opacity:.95}75%{opacity:.95}100%{opacity:.45}}
 </style>
 </head>
 <body>
-<article id="canvas" data-session="<%= @session_id %>" data-reveal="">
-  <header><h1>live canvas</h1><p>swipe top: header · swipe right: thread · shake: pause</p></header>
-  <section><svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" aria-label="live decision graph"></svg></section>
-  <aside><h2>thread</h2><ol></ol></aside>
+<article id="canvas" data-session="<%= @session_id %>">
+  <canvas id="field" aria-label="MASTER particle canvas"></canvas>
+  <section id="messages" aria-live="polite"></section>
+  <form id="prompt-shell" autocomplete="off"><input id="prompt" type="text" autocorrect="off" autocapitalize="none" spellcheck="false"></form>
+</article>
 <script>
-(function(){
+(()=>{
   const root=document.getElementById('canvas');
-  const svg=root.querySelector('svg'), log=root.querySelector('ol');
-  const NS='http://www.w3.org/2000/svg', nodes=new Map();
-  let nx=80, ny=80, paused=false, hideTimer;
-  const reveal=(m)=>{root.dataset.reveal=m;clearTimeout(hideTimer);if(m)hideTimer=setTimeout(()=>root.dataset.reveal='',4000)};
-  let t0=null;
-  addEventListener('touchstart',e=>{t0=e.touches[0]&&{x:e.touches[0].clientX,y:e.touches[0].clientY,n:e.touches.length,t:Date.now()}});
-  addEventListener('touchend',e=>{
-    if(!t0)return;
-    const tch=e.changedTouches[0];if(!tch)return;
-    const dx=tch.clientX-t0.x, dy=tch.clientY-t0.y, dt=Date.now()-t0.t;
-    if(t0.n>=2)reveal('all');
-    else if(t0.y<40&&dy>60)reveal('header');
-    else if(t0.x>innerWidth-40&&dx<-60)reveal('thread');
-    else if(dt>500&&Math.abs(dx)<10&&Math.abs(dy)<10)reveal('all');
-    t0=null;
-  });
-  addEventListener('mousemove',e=>{if(e.clientY<8||e.clientX>innerWidth-8)reveal('all')});
-  addEventListener('keydown',e=>{if(e.key==='Escape')reveal('');if(e.key===' ')paused=!paused});
-  if(window.DeviceMotionEvent){
-    let last=0;
-    addEventListener('devicemotion',e=>{
-      const a=e.accelerationIncludingGravity;if(!a)return;
-      const m=Math.hypot(a.x||0,a.y||0,a.z||0), now=Date.now();
-      if(m>25&&now-last>1000){paused=!paused;reveal('all');last=now}
-    });
+  const surface=document.getElementById('field');
+  const ctx=surface.getContext('2d',{alpha:false,desynchronized:true});
+  const shell=document.getElementById('prompt-shell');
+  const prompt=document.getElementById('prompt');
+  const messages=document.getElementById('messages');
+  const COUNT=3000, WHITE='#fff';
+  const particles=Array.from({length:COUNT},()=>({x:0,y:0,vx:0,vy:0,tx:null,ty:null}));
+  const mood={drift:.22,jitter:.06,cohesion:.012};
+  let w=0,h=0,dpr=Math.max(1,Math.floor(devicePixelRatio||1));
+  let scatter=0, lastKick=0, faceUntil=performance.now()+2000, oneShotFace=true, audioTick=0;
+  let fieldKind='idle';
+
+  function resize(){
+    w=Math.max(1,innerWidth); h=Math.max(1,innerHeight);
+    surface.width=w*dpr; surface.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    particles.forEach(p=>{p.x=Math.random()*w;p.y=Math.random()*h;p.vx=(Math.random()-.5)*.2;p.vy=(Math.random()-.5)*.2;});
   }
-  if(window.DeviceOrientationEvent){
-    addEventListener('deviceorientation',e=>{if(Math.abs(e.gamma||0)>60)reveal('all')});
+
+  function pushMessage(text,role='master'){
+    const p=document.createElement('p'); p.dataset.role=role; p.textContent=text;
+    messages.prepend(p); while(messages.children.length>6)messages.lastElementChild.remove();
   }
-  function node({id,label,kind}){
-    if(nodes.has(id))return;
-    const g=document.createElementNS(NS,'g');g.dataset.kind=kind||'unknown';g.setAttribute('transform',`translate(${nx},${ny})`);
-    const c=document.createElementNS(NS,'circle');c.setAttribute('r',22);
-    const t=document.createElementNS(NS,'text');t.setAttribute('y',4);t.setAttribute('text-anchor','middle');t.textContent=(label||id).slice(0,14);
-    g.appendChild(c);g.appendChild(t);svg.appendChild(g);
-    nodes.set(id,{x:nx,y:ny,el:g});
-    nx+=110;if(nx>1100){nx=80;ny+=90}
+
+  function shapeFace(){
+    const pts=[]; const cx=w*.5, cy=h*.45, s=Math.min(w,h)*.22;
+    for(let i=0;i<160;i++){const t=i/159*Math.PI; pts.push([cx+Math.cos(t)*s*.72,cy-Math.sin(t)*s]);}
+    for(let i=0;i<90;i++){const t=i/89; pts.push([cx-s*.18+t*s*.36,cy-s*.18+t*s*.5]);}
+    for(let i=0;i<120;i++){const t=i/119*Math.PI; pts.push([cx+Math.cos(t)*s*.52,cy+s*.26+Math.sin(t)*s*.24]);}
+    for(let i=0;i<80;i++){const x=cx-s*.26+i*(s*.52/79); pts.push([x,cy-s*.64+Math.sin(i/79*Math.PI)*2]);}
+    return pts;
   }
-  function edge({from,to,kind}){
-    const a=nodes.get(from),b=nodes.get(to);if(!a||!b)return;
-    const l=document.createElementNS(NS,'line');l.setAttribute('x1',a.x);l.setAttribute('y1',a.y);l.setAttribute('x2',b.x);l.setAttribute('y2',b.y);l.dataset.kind=kind||'plain';
-    svg.insertBefore(l,svg.firstChild);
+
+  function assignTargets(points){
+    particles.forEach((p,i)=>{const q=points[i%points.length]; p.tx=q[0]; p.ty=q[1];});
   }
-  function entry(t,p){
-    const li=document.createElement('li');li.textContent=`${new Date().toISOString().slice(11,19)} ${t} ${JSON.stringify(p)}`;
-    log.insertBefore(li,log.firstChild);
-    while(log.children.length>80)log.removeChild(log.lastChild);
+
+  function setMode(kind,payload={}){
+    fieldKind=kind;
+    if(kind==='face'){assignTargets(shapeFace()); faceUntil=performance.now()+2000; oneShotFace=false; return;}
+    if(kind==='scan'){const pts=[]; const cols=12, rows=8, gap=18, startX=w*.2, startY=h*.34; let idx=0;
+      (payload.items||[]).slice(0,96).forEach(item=>{const c=idx%cols,r=Math.floor(idx/cols);const base=2+(item.severity||1);for(let j=0;j<base*7;j++)pts.push([startX+c*gap+Math.random()*5,startY+r*gap+Math.random()*5]);idx++;});
+      assignTargets(pts.length?pts:shapeFace()); return;}
+    if(kind==='pipeline'){const names=payload.stages||['ingest','scan','council','render']; const pts=[];
+      names.forEach((_,i)=>{const x=w*.2+i*((w*.6)/Math.max(1,names.length-1));for(let k=0;k<120;k++)pts.push([x+(Math.random()-.5)*14,h*.5+(Math.random()-.5)*14]);});
+      assignTargets(pts); return;}
+    particles.forEach(p=>{p.tx=null;p.ty=null});
   }
-  function handle(t,p){
-    if(paused)return;
-    entry(t,p);
-    if(t==='scan:violation'&&p.rule)node({id:p.rule,label:p.rule,kind:'violation'});
-    if(t==='autoloop:fix_applied'&&p.file)node({id:p.file,label:p.file.split('/').pop(),kind:'fix'});
-    if(t==='council:vote'&&p.persona)node({id:p.persona,label:p.persona,kind:'persona'});
-    if(t==='canvas:edge')edge(p);
+
+  function scatterKick(power=.9){scatter=Math.min(1.4,scatter+power); lastKick=performance.now();}
+
+  function updateMood(tag){
+    if(tag==='focused'){mood.drift=.17;mood.jitter=.035;mood.cohesion=.018;}
+    else if(tag==='curious'){mood.drift=.26;mood.jitter=.05;mood.cohesion=.01;}
+    else if(tag==='tense'){mood.drift=.38;mood.jitter=.11;mood.cohesion=.008;}
+    else if(tag==='weary'){mood.drift=.08;mood.jitter=.02;mood.cohesion=.006;}
   }
+
+  function tick(t){
+    audioTick+=0.011; const low=(Math.sin(audioTick*2.2)+1)*.5; const high=(Math.sin(audioTick*8.5)+1)*.5;
+    if(performance.now()-lastKick>250)scatter*=.93;
+    if(oneShotFace && t<faceUntil)setMode('face');
+    if(!oneShotFace && t>faceUntil && fieldKind==='face')setMode('idle');
+
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h); ctx.fillStyle=WHITE;
+    for(const p of particles){
+      const turn=(low-.5)*0.017; const ca=Math.cos(turn), sa=Math.sin(turn);
+      let vx=p.vx*ca-p.vy*sa, vy=p.vx*sa+p.vy*ca;
+      vx+=(Math.random()-.5)*mood.jitter + (high-.5)*.04; vy+=(Math.random()-.5)*mood.jitter;
+      if(p.tx!=null){vx+=(p.tx-p.x)*mood.cohesion; vy+=(p.ty-p.y)*mood.cohesion;}
+      if(scatter>.01){const dx=p.x-w/2,dy=p.y-h/2,d=Math.max(20,Math.hypot(dx,dy));vx+=(dx/d)*scatter*.23;vy+=(dy/d)*scatter*.23;}
+      p.vx=vx*mood.drift+vx*.78; p.vy=vy*mood.drift+vy*.78; p.x+=p.vx*.08; p.y+=p.vy*.08;
+      if(p.x<0)p.x+=w; if(p.x>=w)p.x-=w; if(p.y<0)p.y+=h; if(p.y>=h)p.y-=h;
+      ctx.fillRect(p.x|0,p.y|0,1,1);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  prompt.addEventListener('input',()=>shell.dataset.active=prompt.value.length>0?'true':'false');
+  prompt.addEventListener('keydown',e=>{if(e.key==='Escape'){prompt.value='';shell.dataset.active='false';prompt.blur();}});
+  document.addEventListener('keydown',e=>{if(e.key.length===1&&!e.metaKey&&!e.ctrlKey&&!e.altKey){if(document.activeElement!==prompt){prompt.focus();}shell.dataset.active='true';scatterKick(.45);}});
+  root.addEventListener('click',()=>prompt.focus());
+
+  prompt.form.addEventListener('submit',e=>{e.preventDefault();const value=prompt.value.trim();if(!value)return;pushMessage(value,'user');
+    if(value==='/face')setMode('face'); if(value.includes('scan'))setMode('scan',{items:Array.from({length:40},(_,i)=>({severity:(i%3)+1}))});
+    if(value.includes('pipeline'))setMode('pipeline',{}); prompt.value=''; shell.dataset.active='false';});
+
   const es=new EventSource('/canvas/stream');
-  es.addEventListener('bus',e=>{try{const m=JSON.parse(e.data);handle(m.topic,m.payload||{})}catch(_){}});
+  es.addEventListener('bus',e=>{try{const m=JSON.parse(e.data),t=m.topic,p=m.payload||{};
+    if(t==='chat:assistant'||t==='master:speak'){pushMessage(p.text||p.message||'MASTER speaks.','master'); scatterKick(.2);} 
+    if(t==='homeostat:mood'){updateMood(p.mood||p.state);} if(t==='canvas:face')setMode('face');
+    if(t==='scan:summary')setMode('scan',p); if(t==='pipeline:stages')setMode('pipeline',p); if(t==='audio:transient')scatterKick(.9);
+  }catch(_){}});
+
+  resize(); addEventListener('resize',resize,{passive:true}); requestAnimationFrame(tick);
 })();
 </script>
-</article>
 </body>
 </html>

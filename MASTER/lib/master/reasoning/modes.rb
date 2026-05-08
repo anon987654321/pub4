@@ -3,7 +3,7 @@
 module Master
   module Reasoning
     class Modes
-      SUPPORTED = %w[direct react rewoo].freeze
+      SUPPORTED = %w[direct react rewoo code_agent].freeze
 
       def initialize(root: Master::ROOT)
         @root = root

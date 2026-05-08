@@ -3,6 +3,7 @@
 module Master
   module Scan
     module Rules
+      require_relative "../finding"
       # LLM review for rules whose violations resist lexical detection; deep depth only.
       # Rules with detect_semantic prompts in rules.yml are batched into one LLM call per file.
       class SemanticRule < Rule
@@ -72,8 +73,12 @@ module Master
             match_data = line.strip.match(/\A([A-Z_]+):(\d+):(.+)\z/)
             next unless match_data && @axioms.key?(match_data[1])
             rule_id = match_data[1]
-            { rule: rule_id.downcase, message: match_data[3].strip, line: match_data[2].to_i,
-              severity: @severity, fix: nil, tags: [rule_id.to_sym] }
+            Finding.build(rule: rule_id.downcase,
+                          message: match_data[3].strip,
+                          line: match_data[2].to_i,
+                          severity: @severity,
+                          fix: nil,
+                          tags: [rule_id.to_sym])
           end
         end
       end

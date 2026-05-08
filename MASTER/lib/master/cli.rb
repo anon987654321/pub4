@@ -31,6 +31,7 @@ module Master
       @bg_thread       = nil
       @seen_violations = {}
       @user_active     = false
+      @last_scan_at    = nil
     end
 
     def run(initial_message = nil)
@@ -40,7 +41,7 @@ module Master
       first_boot_bar
       puts @renderer.splash(@agent.model)
       puts @renderer.session_line(@session.name) if @session.name
-      print_repo_tree
+      print_repo_tree unless booted_before?
       process(initial_message) if initial_message
       @running = true
       repl_loop
@@ -78,6 +79,7 @@ module Master
         end
         unless state[:streamed]
           puts @renderer.speaker_tag
+          puts
         end
         print text
         $stdout.flush
@@ -104,13 +106,14 @@ module Master
 
     def repl_loop
       while @running
+        print_dashboard
         tokens = @session.token_est
-        status = @renderer.status_row(uptime: @renderer.uptime, turns: @session.messages.size, violations: @violations)
-        puts status if status
         print @renderer.prompt_line(
           @agent.model, @session.phase,
           last_ok: @last_ok, violations: @violations, tokens: tokens, cost: @session.cost
         )
+        puts prompt_lines.first
+        print prompt_lines.last
         line = safe_read_line
         break if line.nil?
         handle_repl_line(line)
@@ -176,12 +179,35 @@ module Master
       return unless result.is_a?(Master::Result::Ok)
 
       @violations = count_violations(result.value!)
+      @last_scan_at = Time.now
       return if @violations.zero?
 
-      puts "\n#{@renderer.render("boot scan: #{@violations} violation(s)", mode: :dim)}"
-      print @renderer.prompt_line(@agent.model, @session.phase, last_ok: @last_ok, violations: @violations)
+      puts
+      puts @renderer.render("boot scan: #{@violations} violation(s)", mode: :dim)
+      puts
     rescue StandardError => e
       @bus&.publish("cli:warn", error: e.message)
+    end
+
+    def print_dashboard
+      used = @session.cost.to_f
+      max_budget = @config["budget_max"] || 10.0
+      mood = @last_ok ? "focused" : "recovering"
+      last_scan = @last_scan_at ? "#{((Time.now - @last_scan_at).round)}s ago" : "never"
+      files = Master::CommandRegistry.tree_lines(@root).size
+      puts @renderer.command_summary(
+        model: @agent.model,
+        budget_used: used,
+        budget_max: max_budget,
+        violations: @violations,
+        phase: @session.phase,
+        mood: mood,
+        uptime: @renderer.uptime,
+        last_scan: last_scan,
+        file_count: files
+      )
+    rescue StandardError
+      nil
     end
 
     def changed_lib_files(lib_dir)
@@ -266,6 +292,13 @@ module Master
       nil
     end
 
+    def booted_before?
+      flag = File.join(@root, ".master", "booted_once")
+      File.exist?(flag)
+    rescue StandardError
+      false
+    end
+
     def first_boot_bar
       return unless $stdout.isatty
       flag = File.join(@root, ".master", "booted_once")
@@ -294,7 +327,9 @@ module Master
         if err.category == :shutdown
           exit_cli
         else
+          puts
           puts @renderer.render(err.message, mode: :error)
+          puts
         end
       end
     end

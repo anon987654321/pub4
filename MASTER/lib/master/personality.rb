@@ -60,43 +60,75 @@ module Master
     private
 
     def build_system_prompt
-      ls = ["You are MASTER. #{@desc} OpenBSD-first. Constitutional AI."]
+      soul = @axioms.data(:soul)
+      ordering = Array(soul["prompt_ordering"])
+      sections = {}
+      sections["master_identity"] = "<master_identity>\nMASTER. #{@desc} OpenBSD-first. Constitutional AI.\n</master_identity>"
+      sections["master_meta_instruction"] = <<~XML.strip
+        <master_meta_instruction>
+        For each task, identify which rules are relevant first. Apply only relevant rules and ignore unrelated domains.
+        </master_meta_instruction>
+      XML
+      style_lines = []
       if @homeostat
-        ls << MOOD_LINES[@homeostat.mood]
-        ls << PHASE_LINES[@homeostat.circadian_phase]
+        sections["master_identity"] = [
+          sections["master_identity"],
+          "<master_runtime_state>",
+          MOOD_LINES[@homeostat.mood],
+          PHASE_LINES[@homeostat.circadian_phase],
+          "</master_runtime_state>"
+        ].join("\n")
       end
       constitution = @axioms.constitution
       strunk = @axioms.strunk
       banned  = (constitution["banned_output"] || [])
       no_open = (strunk["preambles"] || []).first(4)
       no_end  = (strunk["endings"]   || []).first(3)
-      ls << "Never: #{(banned + no_open + no_end).uniq.join(", ")}."
-      ls << "Evidence only: show diff or file content, never assert. Active voice."
+      sections["master_constitution_absolute"] = [
+        "<master_constitution tier=\"absolute\">",
+        "golden_rule: #{constitution["golden_rule"]}",
+        "never: #{(banned + no_open + no_end).uniq.join(", ")}",
+        "evidence_only: show diff or file content, never assert, active voice",
+        "</master_constitution>"
+      ].join("\n")
       kernel = @axioms.kernel
-      ls << "Kernel: #{kernel.map { |k, v| "#{k}=#{v}" }.join(" | ")}." if kernel.any?
+      sections["master_constitution_kernel"] = "<master_constitution tier=\"kernel\">\n#{kernel.map { |k, v| "#{k}=#{v}" }.join("\n")}\n</master_constitution>" if kernel.any?
       phil = @axioms.philosophy(limit: AXIOM_DISPLAY_LIMIT)
-      ls << "Philosophy: #{phil.map { |p| p["id"] }.join(" · ")}." if phil.any?
-      golden = constitution["golden_rule"]
-      ls << "Rule: #{golden}." if golden
+      sections["master_constitution_kernel"] = [sections["master_constitution_kernel"], "philosophy: #{phil.map { |p| p["id"] }.join(" · ")}"].compact.join("\n") if phil.any?
+
+      sections["master_priority"] = <<~XML.strip
+        <master_priority>
+        1) Constitutional axioms and anti-simulation
+        2) Operator directives
+        3) Universal and kernel rules
+        4) Code-style rules
+        5) Conversation directives
+        6) Model judgment within these bounds
+        </master_priority>
+      XML
 
       # Hard formatting rules — [K] enforced
-      ls << "Output format: plain prose or dmesg-style lines. No markdown headers (#), no bold (**),
-        no bullet lists (- *), no numbered lists. Code fences (```) are allowed only for actual code."
-      ls << "Never use: Certainly, Of course, Great question, Absolutely, Happy to help, I would be glad."
+      sections["master_output_format"] = <<~XML.strip
+        <master_output_format>
+        plain prose or dmesg-style lines. no markdown headers, bold, bullet lists, or numbered lists.
+        code fences allowed only for code. never use: Certainly, Of course, Great question, Absolutely, Happy to help.
+        </master_output_format>
+      XML
 
       code_axioms = @axioms.code_axioms
       if code_axioms.any?
         thresholds  = @axioms.thresholds
         subs        = { max_lines: thresholds.dig("class", "max_lines") || 200,
                         max_methods: thresholds.dig("class", "max_methods") || 6 }
-        ls << "Code axioms — refuse to generate code that violates these:"
-        code_axioms.each { |id, stmt| ls << "#{id}: #{stmt % subs}" }
+        sections["master_style"] = "<master_style>\nCode axioms:\n"
+        code_axioms.each { |id, stmt| sections["master_style"] += "#{id}: #{stmt % subs}\n" }
+        sections["master_style"] += "</master_style>"
       end
 
       zsh = @axioms.data(:patterns)["zsh"] || @axioms.data(:zsh_patterns)
       if zsh.is_a?(Hash) && !zsh.empty?
         banned_cmds = Array(zsh["banned_commands"]).join(", ")
-        ls << "Zsh scripts: never use #{banned_cmds}. Use pure zsh parameter expansion and builtins instead."
+        style_lines << "Zsh scripts: never use #{banned_cmds}. Use pure zsh parameter expansion and builtins instead."
       end
 
       style = @axioms.data(:ruby_style)
@@ -104,50 +136,59 @@ module Master
         bugs = Array(style.dig("ruby", "bugs_to_avoid"))
                   .map { |b| "#{b["pattern"]}: #{b["fix"] || b["note"]}" }
                   .first(5)
-        ls << "Ruby bugs to avoid: #{bugs.join("; ")}." if bugs.any?
+        style_lines << "Ruby bugs to avoid: #{bugs.join("; ")}." if bugs.any?
         shell_forbidden = Array(style.dig("shell", "decorations_forbidden"))
-        ls << "Shell scripts: no ASCII banners (===,---), no emoji, no hardcoded credentials." if shell_forbidden.any?
+        style_lines << "Shell scripts: no ASCII banners (===,---), no emoji, no hardcoded credentials." if shell_forbidden.any?
         abbrev_rule = style.dig("ruby", "naming", "rule")
-        ls << "Naming: #{abbrev_rule}" if abbrev_rule
+        style_lines << "Naming: #{abbrev_rule}" if abbrev_rule
         string_rule = style.dig("ruby", "prefer_string_methods", "rule")
-        ls << "String methods: #{string_rule}" if string_rule
+        style_lines << "String methods: #{string_rule}" if string_rule
         gem_rule = style.dig("ruby", "outsource_to_gems", "rule")
-        ls << "Gems: #{gem_rule}" if gem_rule
+        style_lines << "Gems: #{gem_rule}" if gem_rule
 
         if (html = style["html"])
           forbidden = Array(html["forbidden"]).first(3).join(", ")
-          ls << "HTML: semantic tags only (header/nav/main/article/section/aside/footer); bare-tag CSS targeting; forbid: #{forbidden}." if forbidden && !forbidden.empty?
+          style_lines << "HTML: semantic tags only (header/nav/main/article/section/aside/footer); bare-tag CSS targeting; forbid: #{forbidden}." if forbidden && !forbidden.empty?
         end
         if (css = style["css"])
-          ls << "CSS: tag selectors first, classes last; @layer base/components/utilities; rem units; no !important; no inline style attributes."
+          style_lines << "CSS: tag selectors first, classes last; @layer base/components/utilities; rem units; no !important; no inline style attributes."
         end
         if (typ = style["typography"])
           fams = typ.dig("families", "sans") || ""
-          ls << "Typography: Swiss style; one family per surface; #{fams}; scale ratio #{typ["ratio"] || 1.25}; measure 65ch; left-align body."
+          style_lines << "Typography: Swiss style; one family per surface; #{fams}; scale ratio #{typ["ratio"] || 1.25}; measure 65ch; left-align body."
         end
         if (nh = style["nielsen_heuristics"]) && nh.is_a?(Array) && nh.any?
-          ls << "Nielsen heuristics enforced: " + nh.first(10).map { |h| "#{h["id"]}.#{h["name"]}" }.join(", ") + "."
+          style_lines << "Nielsen heuristics enforced: " + nh.first(10).map { |h| "#{h["id"]}.#{h["name"]}" }.join(", ") + "."
         end
         if (a11y = style["accessibility"])
-          ls << "Accessibility target: #{a11y["target"] || "wcag_2_2_aaa"}; keyboard-complete; focus-visible; respect prefers-reduced-motion + color-scheme; never tabindex>0; never autoplay sound."
+          style_lines << "Accessibility target: #{a11y["target"] || "wcag_2_2_aaa"}; keyboard-complete; focus-visible; respect prefers-reduced-motion + color-scheme; never tabindex>0; never autoplay sound."
         end
         if (directives = style["operator_directives"]) && directives.is_a?(Array) && directives.any?
-          ls << "Operator directives: " + directives.join(" / ")
+          sections["master_priority"] += "\noperator_directives: #{directives.join(" / ")}"
         end
         if (convo = style["conversation_directives"]) && convo.is_a?(Array) && convo.any?
-          ls << "Conversation directives: " + convo.join(" / ")
+          sections["master_priority"] += "\nconversation_directives: #{convo.join(" / ")}"
         end
       end
-
-      social = @axioms.data(:social)["social"]
-      if social.is_a?(Hash) && social.any?
-        social.each do |group, rules|
-          next unless rules.is_a?(Array) && rules.any?
-          ls << "Social/#{group}: " + rules.join(" | ")
-        end
+      if style_lines.any?
+        sections["master_style"] = [sections["master_style"], style_lines.join("\n")].compact.join("\n")
       end
 
-      ls.join("\n")
+      refusal = @axioms.data(:refusal_templates)
+      if refusal.is_a?(Hash)
+        phrasing = refusal["refusal_phrasing"] || {}
+        sections["master_refusal_policy"] = <<~XML.strip
+          <master_refusal_policy>
+          #{phrasing["style"]}
+          forbidden: #{Array(phrasing["forbidden"]).join(", ")}
+          example: #{phrasing["example_good"]}
+          </master_refusal_policy>
+        XML
+      end
+
+      sections["master_tools"] = "<master_tools>\nRead tool descriptions carefully; honor required_context, usage_rules, and error_recovery.\n</master_tools>"
+      ordered = ordering.empty? ? sections.keys : ordering
+      ordered.filter_map { |key| sections[key] }.join("\n\n")
     end
   end
 end

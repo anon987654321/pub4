@@ -68,24 +68,24 @@ module Master
     alias banner splash
 
     def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil, cost: nil)
-      branch = git_branch
-      bar = token_bar(tokens)
-      vbadge = violations > 0 ? @p.red("[#{violations}v] ") : ""
+      branch = git_branch || "detached"
+      usage = token_label(tokens)
+      model_str = @p.dim(short_model(model))
+      branch_str = @p.dim("branch:") + @p.red(branch)
+      vbadge = violations > 0 ? @p.red("[#{violations}v]") : @p.dim("[0v]")
+      phase_str = phase && phase.to_s != "idle" ? @p.dim(" #{phase}") : ""
       cost_str = cost_label(cost)
-      phase_str = phase && phase.to_s != "idle" ? @p.dim("{#{phase}} ") : ""
-      branch_str = branch ? "#{@p.dim("(")}#{@p.red(branch)}#{@p.dim(")")} " : ""
-      dollar = last_ok ? @p.bright_red("$") : @p.red("$")
-      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{phase_str}#{bar}#{cost_str}#{vbadge}#{dollar} "
+      prompt = last_ok ? @p.bold.red("master$") : @p.red("master$")
+      ["#{branch_str}  #{model_str}  ↖ #{usage}  #{cost_str} #{vbadge}#{phase_str}", prompt + " "]
     end
 
     def cost_label(cost)
-      return "" unless cost && cost > 0
       cents = (cost.to_f * 100).round(2)
-      @p.dim("\u00A2#{format('%.2f', cents)} ")
+      @p.dim("¢#{format('%.2f', cents)}")
     end
 
     def speaker_tag(name = "master")
-      "#{@p.dim("<")}#{@p.bold.red(name)}#{@p.dim(">")}"
+      "#{@p.dim("─")} #{@p.bold.red(name)} #{@p.dim("─")}" 
     end
 
     def status_row(uptime:, turns:, violations: 0)
@@ -94,21 +94,37 @@ module Master
       @p.dim(bits.join(" "))
     end
 
+    def command_summary(model:, budget_used:, budget_max:, violations:, phase:, mood:, uptime:, last_scan:, file_count:)
+      budget = format("$%.2f / $%.2f", budget_used.to_f, budget_max.to_f)
+      [
+        "model: #{short_model(model)} (#{provider_for(model)})    budget: #{budget}    violations: #{violations}",
+        "phase: #{phase}    mood: #{mood}    uptime: #{uptime}    last scan: #{last_scan}",
+        "tree: #{file_count} files  --  /tree [N]   /diag   /orders   /help"
+      ].map { |line| @p.dim(line) }.join("\n")
+    end
+
     def token_bar(tokens)
       return "" unless tokens && tokens > 0
       budget = (@config["token_budget"] || TOKEN_BUDGET).to_i
       filled = ((tokens.to_f / budget) * BAR_CELLS).clamp(0, BAR_CELLS).round
-      @p.dim(("\u25B0" * filled) + ("\u25B1" * (BAR_CELLS - filled))) + " "
+      @p.dim(("▰" * filled) + ("▱" * (BAR_CELLS - filled))) + " "
+    end
+
+    def token_label(tokens)
+      return "0" unless tokens && tokens > 0
+      value = tokens.to_i
+      value >= 1000 ? format("%.1fk", value / 1000.0) : value.to_s
     end
 
     def render(content, mode: :plain)
+      text = beautify(content.to_s)
       case mode
-      when :error   then @p.red("err: #{content}")
-      when :success then @p.bright_red("ok: #{content}")
-      when :warning then @p.red("warn: #{content}")
-      when :dim     then @p.dim(content.to_s)
-      when :dmesg   then format_dmesg(content)
-      else content.to_s
+      when :error   then @p.red("err: #{text}")
+      when :success then @p.bright_red("ok: #{text}")
+      when :warning then @p.red("warn: #{text}")
+      when :dim     then @p.dim(text)
+      when :dmesg   then format_dmesg(text)
+      else text
       end
     end
 

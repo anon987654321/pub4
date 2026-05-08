@@ -1,0 +1,18 @@
+banned_commands:
+  sed: "${var//old/new}"
+  awk: "${${(s:,:)line}[4]}"
+  grep: "${(M)arr:#*pattern*}"
+  wc: "${#lines}"
+  head: "${arr[1,10]}"
+  tail: "${arr[-10,-1]}"
+  cut: "${${(s:,:)var}[3]}"
+  find: "**/*.rb(.)"
+  sudo: "doas"
+
+token_economics:
+  philosophy: "Single-grammar transforms reduce process boundaries and token overhead."
+  bad: "awk -F, '{print $4}' | sed 's/\\r//g' | tr '[:upper:]' '[:lower:]'"
+  good: "lower=${(L)${${(s:,:)line}[4]//$'\\r'/}}"
+
+ssh_reading:
+  rule: "cat path — read the whole file once, never stitch with grep|head|tail"

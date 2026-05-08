@@ -1,5 +1,16 @@
 # frozen_string_literal: true
 
+if ENV["COVERAGE"] == "1"
+  require "simplecov"
+  SimpleCov.start do
+    add_filter "/test/"
+    add_group "Scan", "lib/master/scan"
+    add_group "Stages", "lib/master/stages"
+    add_group "Council", "lib/master/council"
+    minimum_coverage 85
+  end
+end
+
 require "minitest/autorun"
 require "tmpdir"
 require "timeout"
