@@ -90,7 +90,7 @@ Key files — `data/soul.yml` (golden rule, tiers, persona), `data/rules.yml` (s
 
 ## Running scans
 
-Standard: `eval "$(grep '^export' ~/.zshrc)" && cd ~/pub4/MASTER && echo "/scan lib/" | bundle exec ruby exe/master`. Deep: `/scan deep lib/`. Autofix sweep: `/autoloop 20`. Do not use external agents when MASTER can scan itself.
+Standard: `eval "$(grep '^export' ~/.zshrc)" && cd ~/pub4/MASTER && echo "/scan lib/" | bundle exec ruby exe/master`. Autofix sweep: `/autoloop 20`. Do not use external agents when MASTER can scan itself. Depth knobs are gone — every scan is full by default.
 
 ## Protection tiers
 
@@ -98,7 +98,7 @@ ABSOLUTE aborts the pipeline. PROTECTED emits a warning and continues. NEGOTIABL
 
 ## Environment
 
-VPS: `dev@brgen.no` · `185.52.176.18` · OpenBSD 7.8 · passwordless `doas`. SSH: `sshpass -p 'h00te10tu' ssh -o StrictHostKeyChecking=no dev@185.52.176.18 'cmd'`. Non-interactive SSH must not source `.zshrc` — load env only: `eval "$(grep '^export' ~/.zshrc)"`.
+VPS: `dev@brgen.no` · OpenBSD 7.8 · passwordless `doas`. SSH credentials live in the operator's environment, never in versioned docs. Non-interactive SSH must not source `.zshrc` — load env only: `eval "$(grep '^export' ~/.zshrc)"`.
 
 Edit VPS files by direct edit + `scp` — write the new file content locally, scp it up. Reserve `~/pub4/tmp/patch.rb` for genuinely script-shaped edits where a patch script is the right tool. Never use `ruby -i` with heredoc — empties the file on script error.
 
@@ -110,4 +110,4 @@ After every scp under `MASTER/web/`, immediately `doas rcctl restart master` so 
 
 ## Slash commands
 
-`/scan [profile] [path]`, `/sweep`, `/autoloop [N]`, `/council on|off`, `/swarm <role> <task>`, `/explain`, `/crit <file|text>`, `/ideate <prompt>`, `/topic`, `/rsi [stats]`, `/model [list|<id>]`, `/why <law|scan_rule|anti_pattern|style.key>`, `/diag [drives|breaker|rules|ring]`, `/snapshot`, `/tts`, `/profile`, `/heartbeat`, `/orders`, `/soul`, `/dmesg`. `/why` resolves locally first via `WhyExplainer`; the LLM answer fires only on a miss. `/diag` composes a state digest (drives, circuit-breaker, registered rule count, dmesg ring tail).
+`/scan [profile] [path]`, `/sweep`, `/autoloop [N]`, `/triad [path]`, `/council on|off`, `/swarm <role> <task>`, `/explain`, `/crit <file|text>`, `/ideate <prompt>`, `/topic`, `/rsi [stats]`, `/model [list|<id>]`, `/why <law|scan_rule|anti_pattern|style.key>`, `/diag [drives|breaker|rules|ring]`, `/snapshot [folder]`, `/tts`, `/profile`, `/heartbeat`, `/orders`, `/soul`, `/dmesg`. `/triad` runs scan + sweep + council deliberation in one pass. `/snapshot` captures a state baseline (file inventory + git rev) for drift detection. `/why` resolves locally first via `WhyExplainer`; the LLM answer fires only on a miss. `/diag` composes a state digest (drives, circuit-breaker, registered rule count, dmesg ring tail).

@@ -43,7 +43,7 @@ class ChatController < ApplicationController
     response.headers["X-Accel-Buffering"] = "no"
 
     visitor = session[:tier] != "authenticated"
-    Thread.current[:master_visitor] = visitor
+    Fiber[:master_visitor] = visitor
 
     sse = response.stream
     begin
@@ -141,7 +141,7 @@ class ChatController < ApplicationController
       sse.write("data: ERROR: #{e.message}\n\n")
       sse.write("data: [DONE]\n\n")
     ensure
-      Thread.current[:master_visitor] = nil
+      Fiber[:master_visitor] = nil
       begin
         tool_sub.call if defined?(tool_sub) && tool_sub
         mutate_sub.call if defined?(mutate_sub) && mutate_sub
