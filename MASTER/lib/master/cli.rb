@@ -40,7 +40,7 @@ module Master
       first_boot_bar
       puts @renderer.splash(@agent.model)
       puts @renderer.session_line(@session.name) if @session.name
-      print_repo_tree
+      print_repo_tree unless booted_before?
       process(initial_message) if initial_message
       @running = true
       repl_loop
@@ -78,6 +78,7 @@ module Master
         end
         unless state[:streamed]
           puts @renderer.speaker_tag
+          puts
         end
         print text
         $stdout.flush
@@ -107,10 +108,12 @@ module Master
         tokens = @session.token_est
         status = @renderer.status_row(uptime: @renderer.uptime, turns: @session.messages.size, violations: @violations)
         puts status if status
-        print @renderer.prompt_line(
+        prompt_lines = @renderer.prompt_line(
           @agent.model, @session.phase,
           last_ok: @last_ok, violations: @violations, tokens: tokens, cost: @session.cost
         )
+        puts prompt_lines.first
+        print prompt_lines.last
         line = safe_read_line
         break if line.nil?
         handle_repl_line(line)
@@ -178,8 +181,9 @@ module Master
       @violations = count_violations(result.value!)
       return if @violations.zero?
 
-      puts "\n#{@renderer.render("boot scan: #{@violations} violation(s)", mode: :dim)}"
-      print @renderer.prompt_line(@agent.model, @session.phase, last_ok: @last_ok, violations: @violations)
+      puts
+      puts @renderer.render("boot scan: #{@violations} violation(s)", mode: :dim)
+      puts
     rescue StandardError => e
       @bus&.publish("cli:warn", error: e.message)
     end
@@ -266,6 +270,13 @@ module Master
       nil
     end
 
+    def booted_before?
+      flag = File.join(@root, ".master", "booted_once")
+      File.exist?(flag)
+    rescue StandardError
+      false
+    end
+
     def first_boot_bar
       return unless $stdout.isatty
       flag = File.join(@root, ".master", "booted_once")
@@ -294,7 +305,9 @@ module Master
         if err.category == :shutdown
           exit_cli
         else
+          puts
           puts @renderer.render(err.message, mode: :error)
+          puts
         end
       end
     end
