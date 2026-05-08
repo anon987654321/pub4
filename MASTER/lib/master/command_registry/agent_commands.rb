@@ -29,11 +29,11 @@ module Master
       {
         "triad" => ->(ctx) {
           target = arg_for(ctx)
-          target = "deep ." if target.empty?
+          target = "." if target.empty?
           parts = []
           bus&.publish("triad:start", target: target)
           parts << "scan:\n#{cmds['scan'].call(args: target)}"
-          parts << "sweep:\n#{cmds['sweep'].call(args: target.sub(/\Adeep\s*/, ''))}"
+          parts << "sweep:\n#{cmds['sweep'].call(args: target)}"
           parts << "tribunal:\n#{run_tribunal(deliberation, parts.join("\n\n"), target)}"
           bus&.publish("triad:done")
           parts.join("\n\n")
@@ -91,60 +91,36 @@ module Master
     end
 
     def dispatch_scan(scanner, root, arg)
-      profile, depth, rule_filter = resolve_scan_profile(arg, root)
-      pairs = collect_scan_pairs(scanner, root, arg, depth)
+      pairs = collect_scan_pairs(scanner, root, arg)
       return pairs if pairs.is_a?(String)
-      format_scan_results(pairs, profile, rule_filter)
+      format_scan_results(pairs)
     end
 
-    def collect_scan_pairs(scanner, root, arg, depth)
-      raw_arg    = arg.sub(/\A(?:deep|quick|full|critical|solid|axioms)\s*/, "").strip
-      target_arg = raw_arg.empty? ? nil : File.expand_path(raw_arg)
+    def collect_scan_pairs(scanner, root, arg)
+      target_arg = arg.empty? ? nil : File.expand_path(arg)
       if target_arg && File.file?(target_arg)
-        [[target_arg, scanner.scan(target_arg, depth:)]]
+        [[target_arg, scanner.scan(target_arg, depth: :deep)]]
       else
         dir = (target_arg && File.directory?(target_arg)) ? target_arg : File.join(root, "lib")
-        result = scanner.scan_dir(dir, depth:, glob: "**/*", stream: true)
+        result = scanner.scan_dir(dir, depth: :deep, glob: "**/*", stream: true)
         result.ok? ? result.value! : "scan failed"
       end
     end
 
-    def format_scan_results(pairs, profile, rule_filter)
+    def format_scan_results(pairs)
       by_rule = Hash.new { |h, k| h[k] = [] }
       pairs.each do |_file, file_result|
-        Result.wrap(file_result).value_or([]).each do |v|
-          next if rule_filter && !rule_filter.include?(v[:rule].to_s)
-          by_rule[v[:rule].to_s] << v
-        end
+        Result.wrap(file_result).value_or([]).each { |v| by_rule[v[:rule].to_s] << v }
       end
       total  = by_rule.values.sum(&:size)
-      header = profile ? "[profile: #{profile}] " : ""
-      return "#{header}clean -- no violations" if total.zero?
+      return "clean -- no violations" if total.zero?
       lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
         ["[#{rule}] #{vs.size}"] + vs.first(3).map { |v| "  L#{v[:line]}: #{v[:message][0, VIOLATION_TRUNCATE]}" }
       end
-      lines << "#{header}#{total} total violations"
+      lines << "#{total} total violations"
       lines.join("\n")
     end
 
-    def resolve_scan_profile(arg, root)
-      groups, profiles = load_workflow_profiles(root)
-      profile_name = %w[quick full critical solid axioms].find { |p| arg.start_with?(p) }
-      return [nil, :deep, nil] if profile_name.nil?
-
-      cfg         = profiles[profile_name] || {}
-      depth       = (cfg["depth"] == "deep") ? :deep : :standard
-      rule_ids    = groups[cfg["rules"].to_s]
-      rule_filter = (rule_ids && cfg["rules"] != "*") ? rule_ids.map(&:to_s).to_set : nil
-      [profile_name, depth, rule_filter]
-    end
-
-    def load_workflow_profiles(root)
-      data = Master.load_yaml(File.join(root, "data", "workflow.yml"))
-      [data["principle_groups"] || {}, data["scan_profiles"] || {}]
-    rescue StandardError
-      [{}, {}]
-    end
 
     def model_agent_commands(ai:, root:, infra:)
       council_meta_commands(ai:, root:).merge(model_commands(ai:, root:, infra:))
