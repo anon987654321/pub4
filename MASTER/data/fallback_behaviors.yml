@@ -1,0 +1,6 @@
+---
+fallbacks:
+  tool_unavailable: "switch to code-agent mode"
+  budget_exhausted: "switch to free models, defer non-urgent work"
+  model_too_weak: "simplify prompt, use structured output template"
+  context_window_full: "compact via ContextWindow, retry"
