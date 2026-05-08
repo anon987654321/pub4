@@ -15,9 +15,9 @@ module Master
     end
 
     def triad_command(ai:, root:, infra:)
-      bus  = infra[:bus]
-      cmds = scan_loop_commands(ai:, root:, infra:)
-      meta = council_meta_commands(ai:, root:)
+      bus          = infra[:bus]
+      cmds         = scan_loop_commands(ai:, root:, infra:)
+      deliberation = ai[:deliberation]
       {
         "triad" => ->(ctx) {
           target = arg_for(ctx)
@@ -26,11 +26,20 @@ module Master
           bus&.publish("triad:start", target: target)
           parts << "scan:\n#{cmds['scan'].call(args: target)}"
           parts << "sweep:\n#{cmds['sweep'].call(args: target.sub(/\Adeep\s*/, ''))}"
-          parts << "council:\n#{meta['council'].call(args: '')}"
+          parts << "tribunal:\n#{run_tribunal(deliberation, parts.join("\n\n"), target)}"
           bus&.publish("triad:done")
           parts.join("\n\n")
         }
       }
+    end
+
+    def run_tribunal(deliberation, artifact, target)
+      return "tribunal: deliberation not configured" unless deliberation
+
+      result = deliberation.review(artifact, context: target)
+      result.ok? ? result.value! : result.message
+    rescue StandardError => e
+      "tribunal: #{e.message}"
     end
 
     def scan_loop_commands(ai:, root:, infra:)
