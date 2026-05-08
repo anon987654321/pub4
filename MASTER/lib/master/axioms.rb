@@ -19,13 +19,19 @@ module Master
       @cache         = {}
     end
 
-    # Cached access to any data/<name>.yml. Memoized per process.
+    # mtime-aware cache. Reloads automatically when data/<name>.yml changes on disk.
     def data(name)
-      key = name.to_sym
-      @cache[key] ||= begin
-        path = File.join(@data_dir, "#{name}.yml")
-        File.exist?(path) ? (Master.load_yaml(path) || {}) : {}
-      end
+      key  = name.to_sym
+      path = File.join(@data_dir, "#{name}.yml")
+      return @cache[key]&.first || {} unless File.exist?(path)
+
+      mtime = File.mtime(path)
+      cached = @cache[key]
+      return cached.first if cached && cached.last >= mtime
+
+      payload = Master.load_yaml(path) || {}
+      @cache[key] = [payload, mtime]
+      payload
     end
 
     def kernel
