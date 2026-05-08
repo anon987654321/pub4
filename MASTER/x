@@ -1,1 +1,0 @@
-aria2c --enable-dht=true --dht-listen-port=6881 --bt-tracker-connect-timeout=60 --bt-tracker-timeout=60 --seed-time=0 'magnet:?xt=urn:btih:F72A9CF2B79020A2FA1C8FB6F646FD384905EFE9&tr=udp://94.140.14.14:1337/announce'
