@@ -16,7 +16,7 @@ module Master
       def initialize(msg, category) = (super(msg); @category = category)
     end
 
-    def initialize(budget_max:, req_max:, event_bus: nil)
+    def initialize(budget_max:, req_max:, event_bus: nil, rate_window_s: RATE_WINDOW_S, rate_max: RATE_MAX)
       super()
       @budget_max    = budget_max
       @bus           = event_bus
@@ -25,14 +25,15 @@ module Master
       @state         = :closed
       @session_total = 0.0
       @req_times     = []
+      @rate_window   = rate_window_s
+      @rate_max      = rate_max
     end
 
     def check_rate!
       synchronize do
         now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        @req_times.reject! { |t| now - t > RATE_WINDOW_S }
-        raise CircuitError.new("rate limit: #{RATE_MAX} req/min exceeded", 
-:infrastructure) if @req_times.size >= RATE_MAX
+        @req_times.reject! { |t| now - t > @rate_window }
+        raise CircuitError.new("rate limit: #{@rate_max} req/min exceeded", :infrastructure) if @req_times.size >= @rate_max
         @req_times << now
       end
     end

@@ -39,12 +39,17 @@ module Master
       prompt   = apply_reasoning_mode(message)
       context  = conversation_context
       @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / Session::TOKENS_PER_CHAR)
+      @deps.homeostat&.observe(:llm_call)
 
       rate_err = check_rate_limit
       return rate_err if rate_err
 
       response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
-      return response if response.is_a?(Master::Result::Err)
+      if response.is_a?(Master::Result::Err)
+        @deps.homeostat&.observe(:llm_failure)
+        return response
+      end
+      @deps.homeostat&.observe(:llm_success)
       response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
       text = response.to_s
@@ -71,14 +76,13 @@ module Master
       messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
       selected_model = operation ? model_for(operation:) : routed_models.first
       result = @dispatcher.send_with_cache(selected_model, messages, stream: false)
-      raise result.message if result.is_a?(Master::Result::Err)
+      return result if result.is_a?(Master::Result::Err)
       result.to_s
     end
 
     def ask_once(prompt, system: nil, model: nil)
       messages = [{ role: "user", content: prompt.to_s }]
-      result   = @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false)
-      result.ok? ? result.value!.to_s : ""
+      @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false)
     end
 
     def call(ctx)

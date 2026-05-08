@@ -39,8 +39,9 @@ module Master
         raw     = @agent.ask_once(<<~PROMPT, system: "Generate 3-5 novel, bold ideas. One idea per bullet (- prefix).")
           #{constraint_prefix}#{context}Generate ideas for: #{prompt}
         PROMPT
-        return Master::Result.err("ideation: brainstorm failed") if raw.to_s.strip.empty?
+        return Master::Result.err("ideation: brainstorm failed") unless raw.ok?
 
+        raw = raw.value!
         parsed = raw.scan(/^[-*]\s*(.+)/).flatten
         parsed = [raw.strip] if parsed.empty?
         Master::Result.ok(parsed)
@@ -51,8 +52,9 @@ module Master
         raw  = @agent.ask_once(<<~PROMPT, system: "Critique these ideas. Identify weaknesses, blind spots, risks. Be direct.")
           #{list}
         PROMPT
-        return Master::Result.err("ideation: critique failed") if raw.to_s.strip.empty?
+        return Master::Result.err("ideation: critique failed") unless raw.ok?
 
+        raw = raw.value!
         Master::Result.ok(raw.strip)
       end
 
@@ -69,8 +71,9 @@ module Master
           Critiques:
           #{crits}
         PROMPT
-        return Master::Result.err("ideation: synthesis failed") if raw.to_s.strip.empty?
+        return Master::Result.err("ideation: synthesis failed") unless raw.ok?
 
+        raw = raw.value!
         Master::Result.ok(raw.strip)
       end
     end

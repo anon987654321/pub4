@@ -2,20 +2,14 @@
 
 module Master
   module Stages
-    # Guard — reject messages that contain prompt-injection patterns.
-    # Skips scan when message is absent (command-only paths set no :message).
     class Guard
       def initialize(governor:, injection_guard:)
-        @governor        = governor
+        @governor = governor
         @injection_guard = injection_guard
       end
 
       def call(ctx)
-        msg = ctx[:message].to_s
-        return Result.ok(ctx) if msg.empty?
-
-        scan = @injection_guard.scan(msg)
-        return Result.err("guard: #{scan.message}", category: :validation) if scan.err?
+        return Result.err("injection detected", category: :validation) if @injection_guard && !@injection_guard.safe?(ctx[:user_message])
 
         Result.ok(ctx)
       end

@@ -21,6 +21,7 @@ module Master
           @severity    = :info
           @axiom_tags  = %i[DECOUPLE ONE_JOB]
           @graph_mutex = Mutex.new
+          @graph = nil
         end
 
         def check(_code, path:)
@@ -49,7 +50,7 @@ module Master
         def build_graph
           out, _, status = Open3.capture3("git", "-C", repo_root,
                                           "log", "--name-only", "--pretty=format:--commit--",
-                                          "-n", COMMITS_WINDOW.to_s)
+                                          "-n", COMMITS_WINDOW.to_s, "--", "*.rb")
           return {} unless status.success?
           adjacency = Hash.new { |h, k| h[k] = Hash.new(0) }
           out.split("--commit--").each do |chunk|

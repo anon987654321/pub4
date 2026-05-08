@@ -140,6 +140,21 @@ module Master
       }.sort_by { |f| -SEVERITY_RANK.fetch(f[:severity], 0) }
     end
 
+
+    def track_recurrence(violations)
+      return unless @soul
+
+      violations.each do |violation|
+        rule_id = violation[:rule].to_s
+        @rule_recurrence[rule_id] += 1
+        next unless @rule_recurrence[rule_id] >= 3
+
+        sample = violation[:message].to_s
+        @bus&.publish("autoloop:soul_proposal", rule: rule_id, sample: sample)
+        @bus&.publish("autoloop:soul_proposal", rule: rule_id, result: "queued")
+      end
+    end
+
     def request_fix(violation)
       path = File.join(@root, violation[:file])
       return unless File.exist?(path)

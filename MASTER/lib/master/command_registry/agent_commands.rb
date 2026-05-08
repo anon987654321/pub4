@@ -206,8 +206,9 @@ module Master
       return "usage: /why <law|scan_rule|anti_pattern|style.key>" if rule.empty?
       local = WhyExplainer.new(root:).explain(rule)
       return local if local
-      agent.ask_once("Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
-                     "give a before/after Ruby example, and state why it matters.")
+      response = agent.ask_once("Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
+                                "give a before/after Ruby example, and state why it matters.")
+      response.ok? ? response.value! : response.message
     end
 
     def list_models(root, metrics, agent)
