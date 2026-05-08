@@ -18,7 +18,7 @@ module Master
         @mutex = Mutex.new
       end
 
-      def scan(path, depth: :standard)
+      def scan(path, depth: :deep)
         return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
 
         code     = File.read(path, encoding: "UTF-8")
@@ -31,7 +31,7 @@ module Master
         Result.err("scan failed: #{e.message}", category: :infrastructure)
       end
 
-      def scan_dir(dir, depth: :standard, glob: SCAN_GLOB, stream: false)
+      def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
         paths   = Dir.glob(File.join(dir, glob)).sort
         results = Array.new(paths.size)
         parallel_each(paths) { |path, idx| results[idx] = scan_one(dir, path, depth, stream) }
@@ -41,7 +41,7 @@ module Master
       end
 
       # Scan only files changed since git ref — orders of magnitude faster on big repos.
-      def scan_since(ref = "HEAD~1", dir: ".", depth: :standard, stream: false)
+      def scan_since(ref = "HEAD~1", dir: ".", depth: :deep, stream: false)
         out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
         return Result.err("git diff failed", category: :validation) unless status.success?
         paths = out.lines.map(&:strip).reject(&:empty?)
