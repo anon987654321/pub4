@@ -75,7 +75,7 @@ module Master
         def initialize(tool) = @tool = tool
 
         def execute(pattern:, path: ".", context: 2)
-          result = @tool.call(pattern: pattern.to_s, path: path.to_s, context: context.to_i)
+          result = @tool.call(pattern: pattern.to_s, glob: path.to_s, context_lines: context.to_i)
           result.ok? ? result.value! : "Error: #{result.message}"
         end
       end
