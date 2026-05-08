@@ -75,6 +75,9 @@ module Master
           print "\r\e[K"
           state[:thinking_shown] = false
         end
+        unless state[:streamed]
+          puts @renderer.speaker_tag
+        end
         print text
         $stdout.flush
         state[:streamed] = true
@@ -288,12 +291,15 @@ module Master
     def display_ok(ok, _accumulated, streamed)
       if streamed
         puts
+        puts
       else
         print "\r\e[K" if $stdout.isatty
         value    = ok.value
         rendered = value.is_a?(Hash) ? value[:rendered] : nil
         text     = rendered || value.to_s
+        puts @renderer.speaker_tag
         puts text
+        puts
       end
     end
   end

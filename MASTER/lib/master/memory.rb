@@ -24,9 +24,11 @@ module Master
     include Search
 
     def initialize(root: Dir.pwd)
+      @root  = root
       @path  = File.join(root, ".master", "memory.yml")
       @mutex = Mutex.new
       @store = load_store
+      import_external!
     end
 
     def remember(key, value, type: "general")
@@ -155,6 +157,31 @@ module Master
     end
 
     private
+
+    # Imports markdown memory files from data/claude/ on first boot.
+    # Each file's frontmatter type maps to MASTER's memory type; body becomes the value.
+    def import_external!
+      dir = File.join(@root, "data", "claude")
+      return unless Dir.exist?(dir)
+      Dir.glob(File.join(dir, "*.md")).each do |path|
+        next if File.basename(path) == "MEMORY.md"
+        key = "claude/#{File.basename(path, ".md")}"
+        next if @store.key?(key)
+        type, body = parse_frontmatter(path)
+        next if body.empty?
+        remember(key, body, type: type)
+      end
+    rescue StandardError
+      nil
+    end
+
+    def parse_frontmatter(path)
+      raw = File.read(path, encoding: "UTF-8")
+      m = raw.match(/\A---\n(.*?)\n---\n(.*)/m)
+      return ["general", raw.strip] unless m
+      meta = YAML.safe_load(m[1]) || {}
+      [meta["type"].to_s, m[2].strip]
+    end
 
     def prune_stale!
       cutoff = Time.now.to_i - TTL_DAYS * SECONDS_PER_DAY

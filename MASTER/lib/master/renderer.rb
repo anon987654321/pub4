@@ -84,6 +84,10 @@ module Master
       @p.dim("\u00A2#{format('%.2f', cents)} ")
     end
 
+    def speaker_tag(name = "master")
+      "#{@p.dim("<")}#{@p.bold.red(name)}#{@p.dim(">")}"
+    end
+
     def status_row(uptime:, turns:, violations: 0)
       bits = ["stat0:", uptime, "#{turns} turns"]
       bits << "#{violations}v" if violations > 0
