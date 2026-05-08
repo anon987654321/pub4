@@ -56,9 +56,15 @@ scan_rules:
     - frozen_string
     - bare_rescue
     - explicit
+    - immutable
+    - cqs
+    - self_explaining
+    - long_method
     - god_class
     - duplicate_code
     - prune
+    - srp
+    - pola
     - nielsen
   deep_only:
     - semantic
@@ -83,24 +89,13 @@ principle_groups:
   critical:    [frozen_string, bare_rescue, explicit, immutable, srp, cqs]
 
 scan_profiles:
-  quick:
-    depth: standard
-    rules: quick
-    description: "Fast scan — core violations only"
-  full:
-    depth: deep
-    rules: "*"
-    description: "All rules, deep LLM analysis"
   critical:
-    depth: standard
     rules: critical
     description: "Critical issues blocking ship"
   solid:
-    depth: standard
     rules: solid
     description: "SOLID principles focus"
   axioms:
-    depth: standard
     rules: axioms
     description: "Constitutional axioms only"
 
@@ -152,6 +147,12 @@ autoloop:
     - semantic
     - adversarial
     - axiom_coverage
+    - immutable
+    - self_explaining
+    - long_method
+    - pola
+    - srp
+    - cqs
     - rubocop
     - reek
 

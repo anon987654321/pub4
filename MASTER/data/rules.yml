@@ -1641,6 +1641,15 @@ rules:
       detect_semantic: "Is business logic mixed with IO, UI rendering, or external API calls making it untestable? Is decision logic tangled with presentation in a way that forces integration tests where unit tests would suffice?"
       fix: "Extract the logic into a pure object (Humble Object). Keep the IO shell thin and untested; test the logic object exhaustively."
 
+    - id: FULL_BY_DEFAULT
+      name: "No fake-choice tiers — defaults are maximal correctness"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_lexical: "\\b(shallow|standard|quick|lite|basic|light|simple)\\b\\s*[|,)\\]]\\s*\\b(deep|full|advanced|complete|thorough)\\b"
+      detect_semantic: "Does this API expose a 'do less' tier (shallow/standard/quick/lite/basic) alongside a 'do full' tier — where every real user always picks the full one? If so, it's a fake choice. Either drop the lower tier and make full the only mode, or, if a real cost tradeoff exists, name the tiers honestly (e.g. lexical|structural|semantic) so the cost actually being paid is surfaced."
+      fix: "Drop the degraded tier. If a real cost tradeoff exists, rename to surface the cost (lexical < structural < semantic), not the result quality."
+
 # Falsifiable identity — what MASTER explicitly does NOT aim for, and the
 # failure modes that mean the system has lost its way.
 # Source: master2 v4 MANIFEST reunification.
