@@ -28,7 +28,7 @@ module Master
         Result.ok(findings)
       rescue StandardError => e
         @bus&.publish("scan:error", path:, error: e.message)
-        Result.err("scan failed: #{e.message}", category: :unknown)
+        Result.err("scan failed: #{e.message}", category: :infrastructure)
       end
 
       def scan_dir(dir, depth: :standard, glob: SCAN_GLOB, stream: false)
@@ -37,7 +37,7 @@ module Master
         parallel_each(paths) { |path, idx| results[idx] = scan_one(dir, path, depth, stream) }
         Result.ok(results)
       rescue StandardError => e
-        Result.err("scan_dir: #{e.message}", category: :unknown)
+        Result.err("scan_dir: #{e.message}", category: :infrastructure)
       end
 
       # Scan only files changed since git ref — orders of magnitude faster on big repos.
@@ -51,7 +51,7 @@ module Master
         parallel_each(paths) { |path, idx| results[idx] = scan_one(dir, path, depth, stream) }
         Result.ok(results)
       rescue StandardError => e
-        Result.err("scan_since: #{e.message}", category: :unknown)
+        Result.err("scan_since: #{e.message}", category: :infrastructure)
       end
 
       def add_rule(rule)
@@ -102,7 +102,7 @@ module Master
         [path, file_result]
       rescue StandardError => e
         @bus&.publish("scanner:thread_error", path:, error: e.message)
-        [path, Result.err(e.message, category: :unknown)]
+        [path, Result.err(e.message, category: :infrastructure)]
       end
 
       def stream_progress(dir, path, file_result)

@@ -2,9 +2,24 @@
 
 module Master
   class Result
-    def self.ok(value)                      = Ok.new(value)
-    def self.err(msg, category: :unknown)   = Err.new(msg, category)
-    def self.wrap(val)                      = val.respond_to?(:ok?) ? val : Ok.new(val)
+    CATEGORIES = {
+      validation: "input failed preconditions",
+      axiom_violation: "constitutional rule broken",
+      provider_error: "upstream model / network failure",
+      llm_failure: "LLM returned unusable output",
+      infrastructure: "system / disk / git error",
+      timeout: "operation exceeded deadline",
+      budget: "cost limit hit"
+    }.freeze
+
+    def self.ok(value) = Ok.new(value)
+
+    def self.err(msg, category: :unknown)
+      raise ArgumentError, "unknown category: #{category}" unless category == :unknown || CATEGORIES.key?(category)
+      Err.new(msg, category)
+    end
+
+    def self.wrap(val) = val.respond_to?(:ok?) ? val : Ok.new(val)
 
     class Ok
       attr_reader :value
@@ -27,7 +42,7 @@ module Master
         result = blk.call(@value)
         result.respond_to?(:ok?) ? result : Result.ok(result)
       rescue StandardError => e
-        Result.err("#{label || "stage"}: #{e.message}", category: :unknown)
+        Result.err("#{label || "stage"}: #{e.message}", category: :infrastructure)
       end
 
       def deconstruct_keys(_keys) = { value: @value }

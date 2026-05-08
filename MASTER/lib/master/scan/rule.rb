@@ -2,6 +2,8 @@
 
 module Master
   module Scan
+    require_relative "finding"
+
     class Rule
       EXT_LANG = {
         ".rb"      => "ruby",        ".rake"  => "ruby",   ".gemspec" => "ruby",
@@ -57,7 +59,7 @@ module Master
       protected
 
       def finding(line:, message:, fix: nil)
-        { rule: @id, message:, line:, severity: @severity, fix:, tags: @axiom_tags }
+        Finding.build(rule: @id, message:, line:, severity: @severity, fix:, tags: @axiom_tags)
       end
 
       def scan_lines(code, pattern, message:, fix: nil)
