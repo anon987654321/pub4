@@ -4,13 +4,37 @@
 
 # golden_rule and protection_tiers live in soul.yml (ABSOLUTE section) — single source.
 
-# detection trichotomy:
+# detection axes — each rule is a *principle* with one or more medium-aware adapters.
+#
 #   detect_lexical    — regex pattern. cheap. handled by LexicalRule + table_lexical_rule.
-#   detect_structural — names a dedicated AST handler (e.g. long_method, god_class).
-#                       cheap, deterministic, autofix-safe.
+#                       autofix-safe.
+#   detect_structural — names a dedicated tree handler (e.g. long_method, god_class).
+#                       medium-agnostic: dispatches on artifact type — ruby AST, json/yaml
+#                       trees, html DOM, prose paragraph trees, css rule trees. cheap,
+#                       deterministic, autofix-safe.
 #   detect_semantic   — natural-language prompt. expensive LLM call, batched per file.
 #                       review-only — autofix risky.
+#   detect_history    — synchronic vs diachronic. rule compares current state to git
+#                       history (e.g. function tripled in size since 2024-Q1, comments
+#                       not updated since code changed, test coverage regression).
+#                       requires git-aware scanner mode.
+#   detect_convention — codebase-wide pattern. rule compares local code to established
+#                       norms across the repo (e.g. naming convention drift, parameter-
+#                       ordering deviation, error-handling shape mismatch). requires
+#                       codebase-model scanner mode.
+#
 # a rule may carry any combination; each axis emits separate findings tagged by id.
+# rule shape:
+#   id: SCREAMING_SNAKE
+#   name: short concrete sentence
+#   principle: the universal it embodies (small_parts, low_nesting, vertical_rhythm)
+#   medium: [ruby, yaml, json, html, prose, css]   # where this rule applies
+#   tier: clean_code | design | core | clarity | …  # category, not cost
+#   severity: info | warning | error
+#   mode: violation | opportunity     # how to frame finding (default: violation)
+#   autofix: bool
+#   detect_*: …
+#   fix: instructional sentence
 
 paths:
   skip_dirs: [.git, vendor, tmp, var, node_modules, .bundle, coverage, log, dist, knowledge]
