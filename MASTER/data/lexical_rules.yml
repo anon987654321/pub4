@@ -62,3 +62,21 @@
       message: Date.today ignores Time.zone — use Date.current
     - regex: '(?<![A-Za-z_.])DateTime\.now\b'
       message: DateTime.now ignores Time.zone — use Time.current.to_datetime
+
+- id: double_quotes
+  description: Ruby strings should use double quotes
+  severity: warning
+  axiom_tags: [POLA_PRINCIPLE]
+  langs: [.rb]
+  skip_comments: true
+  patterns:
+    - regex: "(?<![#\w])'(?:[^'\\]|\\.)*'"
+      message: use double-quoted strings per ruby_style.yml
+
+- id: no_ascii_line_art
+  description: Avoid ASCII line art and divider decorations
+  severity: warning
+  axiom_tags: [BE_CONCISE]
+  patterns:
+    - regex: '(?:^|\s)(?:={3,}|-{3,})(?:\s|$)'
+      message: remove ASCII divider decorations

@@ -24,9 +24,13 @@ module Master
   buf.string
 },
 "help" => ->(_ctx) {
-
-          "just talk. intent is inferred automatically.\n" \
-          "exit with /exit or ctrl-C twice."
+          [
+            "session: /save /clear /history [N] /tokens /undo /redo /exit",
+            "scan: /scan [profile] [path] /sweep [path] /autoloop [N]",
+            "model: /model [id|list] /mode /persona /task",
+            "memory: /mem /topic /rsi",
+            "system: /diag [/section] /tree [N] /orient /help"
+          ].join("\n")
         }
       )
     end
@@ -39,8 +43,16 @@ module Master
       {
         "clear"  => ->(_ctx) { session.clear!; "context cleared" },
         "save"   => ->(_ctx) { session.save!; "session saved" },
+        "history" => ->(ctx) {
+          n = ctx[:args].to_s.strip.to_i
+          n = 10 if n <= 0
+          recent = session.messages.last(n)
+          next "history: empty" if recent.empty?
+          recent.map { |m| "[#{m[:role]}] #{m[:content].to_s.gsub(/\s+/, ' ')[0, 120]}" }.join("\n")
+        },
         "tokens" => ->(_ctx) { "~#{session.token_est} tokens" },
         "undo"   => ->(_ctx) { result = undo.undo!; result.ok? ? "reverted: #{result.value!}" : result.message },
+        "redo"   => ->(_ctx) { result = undo.redo!; result.ok? ? "reapplied: #{result.value!}" : result.message },
         "dmesg"  => ->(_ctx) { logging.dmesg },
         "cost"   => ->(_ctx) { "$#{"%.4f" % session.cost}" },
         "config" => ->(_ctx) { config.data.inspect }

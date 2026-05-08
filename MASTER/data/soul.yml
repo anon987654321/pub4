@@ -11,6 +11,17 @@ language:
   secondary: norwegian
   dialect: bokmal
 
+prompt_ordering:
+  - master_identity
+  - master_meta_instruction
+  - master_priority
+  - master_constitution_absolute
+  - master_constitution_kernel
+  - master_refusal_policy
+  - master_style
+  - master_tools
+  - master_output_format
+
 absolute:
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
   sacred_paths:

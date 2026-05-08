@@ -27,3 +27,16 @@ A live canvas — the openclaw inheritance — sits at `/canvas`. The agent draw
 Deploy through `DEPLOY/openbsd/openbsd.sh`, two stages, resumable.
 
 MIT.
+
+
+## Debug note: Bundler and proxy 403s
+
+If `bundle install` fails with `Gem::Net::HTTPClientException: 403 "Forbidden"` in containerized environments, verify proxy wiring before debugging MASTER itself. In this environment, Rubygems requests are routed through `http://proxy:8080`; if that proxy blocks `rubygems.org`, `bundle exec ruby exe/master orient` fails before app boot because dependencies (for example `zeitwerk`) never install.
+
+Fast checks:
+
+- `gem sources --list` should include `https://rubygems.org/`.
+- `env | rg -i 'proxy|rubygems|bundle'` should reveal active proxy variables.
+- `gem install zeitwerk -v 2.7.5` isolates network/proxy failure from MASTER code.
+
+Treat this as infrastructure breakage, not an application bug, unless gems install cleanly and MASTER still fails to boot.

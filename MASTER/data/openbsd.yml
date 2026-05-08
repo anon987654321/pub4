@@ -85,3 +85,19 @@ configs:
     man: unbound.conf.5
     required_patterns:
       - "server:"
+
+
+system_health_checks:
+  - name: "patch_level"
+    command: "syspatch -c"
+    expected: ""
+  - name: "disk_usage"
+    command: "df -h /"
+    max_percent: 80
+
+service_definitions:
+  master:
+    service: "master"
+    check: "rcctl check master"
+    restart: "doas rcctl restart master"
+    logs: "/var/log/master.log"
