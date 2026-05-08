@@ -15,7 +15,7 @@ module Master
           super
           @id          = "file_silhouette"
           @description = "Structural skeleton diverges from repo-dominant file shape"
-          @severity    = :info
+          @severity    = :warning
           @axiom_tags  = %i[POLA_PRINCIPLE IMPORTANCE_ORDER]
           @cluster_mutex = Mutex.new
         end

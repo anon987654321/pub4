@@ -8,8 +8,8 @@ module Master
       # to reveal purpose without reading the implementation.
       class SelfExplainingRule < Rule
         NOISE_NAMES   = /^\s+def\s+(?:self\.)?(do_it|handle|process|run_it|execute_it|go|doit)\b/.freeze
-        ABBREV_METHOD = /^\s+def\s+(tmp|res|ret|val|obj|thingy|stuff|thing|data2|info2)\b/.freeze
-        ABBREV_VAR    = /\b(tmp|res|ret|val|obj|arr|lst|hsh|idx|cnt|num|str)\s*=(?!=)/.freeze
+        ABBREV_METHOD = /^\s+def\s+(tmp|res|ret|val|obj|thingy|stuff|thing|data2|info2|buf|sig|ctx|cfg)\b/.freeze
+        ABBREV_VAR    = /\b(tmp|res|ret|val|obj|arr|lst|hsh|idx|cnt|num|str|buf|sig|ctx|cfg)\s*=(?!=)/.freeze
 
         def initialize
           super

@@ -51,6 +51,59 @@ code_principles:
     rule: RESULT_MONAD
     statement: "Use respond_to?(:ok?) not is_a?(Result) for duck‑typing."
 
+scan_rules:
+  standard_depth:
+    - frozen_string
+    - bare_rescue
+    - explicit
+    - god_class
+    - duplicate_code
+    - prune
+    - nielsen
+  deep_only:
+    - semantic
+    - adversarial
+  hunt_only:
+    - rubocop
+    - reek
+  notes:
+    nielsen: "puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are."
+    prune: "Loads patterns from data/rules.yml (voice.strunk) — single source of truth."
+    semantic: "Loads philosophy from data/rules.yml (zen + voice) — single source of truth."
+    deep_caution: "deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes."
+
+principle_groups:
+  axioms:      [frozen_string, explicit, immutable, self_explaining]
+  solid:       [srp, cqs, pola]
+  clean_code:  [long_method, god_class, duplicate_code, bare_rescue]
+  interface:   [nielsen, prune]
+  llm_rules:   [semantic, adversarial]
+  heavy:       [rubocop, reek]
+  quick:       [frozen_string, bare_rescue, explicit, long_method, god_class]
+  critical:    [frozen_string, bare_rescue, explicit, immutable, srp, cqs]
+
+scan_profiles:
+  quick:
+    depth: standard
+    rules: quick
+    description: "Fast scan — core violations only"
+  full:
+    depth: deep
+    rules: "*"
+    description: "All rules, deep LLM analysis"
+  critical:
+    depth: standard
+    rules: critical
+    description: "Critical issues blocking ship"
+  solid:
+    depth: standard
+    rules: solid
+    description: "SOLID principles focus"
+  axioms:
+    depth: standard
+    rules: axioms
+    description: "Constitutional axioms only"
+
 conflicts:
   strategy: highest_priority_wins
   rules:
@@ -99,12 +152,6 @@ autoloop:
     - semantic
     - adversarial
     - axiom_coverage
-    - immutable
-    - self_explaining
-    - long_method
-    - pola
-    - srp
-    - cqs
     - rubocop
     - reek
 
