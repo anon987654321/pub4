@@ -80,15 +80,14 @@ module Master
         no bullet lists (- *), no numbered lists. Code fences (```) are allowed only for actual code."
       ls << "Never use: Certainly, Of course, Great question, Absolutely, Happy to help, I would be glad."
 
-      # Code generation axioms — [K] enforced
-      ls << "Code axioms — refuse to generate code that violates these:"
-      ls << "FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class."
-      thresholds   = @axioms.thresholds
-      max_lines    = thresholds.dig("class", "max_lines")    || 200
-      max_methods  = thresholds.dig("class", "max_methods")  || 6
-      ls << "SIMPLEST_WORKS: refuse to create god classes (>#{max_lines} lines, >#{max_methods} methods). Push back and suggest decomposition."
-      ls << "PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally."
-      ls << "BE_CONCISE: minimal response. If the answer is one word, say one word."
+      code_axioms = @axioms.code_axioms
+      if code_axioms.any?
+        thresholds  = @axioms.thresholds
+        subs        = { max_lines: thresholds.dig("class", "max_lines") || 200,
+                        max_methods: thresholds.dig("class", "max_methods") || 6 }
+        ls << "Code axioms — refuse to generate code that violates these:"
+        code_axioms.each { |id, stmt| ls << "#{id}: #{stmt % subs}" }
+      end
 
       zsh = @axioms.data(:patterns)["zsh"] || @axioms.data(:zsh_patterns)
       if zsh.is_a?(Hash) && !zsh.empty?

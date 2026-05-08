@@ -86,6 +86,7 @@ module Master
       end
     end
 
+    def code_axioms      = @code_axioms      ||= (@soul_data.dig("absolute", "code_axioms") || {}).freeze
     def thresholds       = @thresholds       ||= (@data["thresholds"] || {}).freeze
     def scan_depths      = @scan_depths      ||= (@data["scan_depths"] || {}).freeze
     def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
