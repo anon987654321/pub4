@@ -14,7 +14,6 @@ module Master
       scanner.add_rule(Scan::Rules::SemanticRule.new(agent:))
       scanner.add_rule(Scan::Rules::AdversarialRule.new(agent:))
       scanner.add_rule(Scan::Rules::CommentDriftRule.new(agent:))
-      scanner.add_rule(Scan::Rules::SemanticOpportunityRule.new(agent:))
       scanner
     end
 

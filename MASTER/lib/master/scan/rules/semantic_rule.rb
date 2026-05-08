@@ -4,8 +4,10 @@ module Master
   module Scan
     module Rules
       require_relative "../finding"
-      # LLM review for rules whose violations resist lexical detection; deep depth only.
-      # Rules with detect_semantic prompts in rules.yml are batched into one LLM call per file.
+      # LLM review for rules whose violations resist lexical detection.
+      # Each rules.yml entry with a detect_semantic prompt is folded into one LLM
+      # call per file. Rules carry mode: violation (default) or opportunity —
+      # the prompt frame and severity follow from that.
       class SemanticRule < Rule
         RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
         CODE_SNIPPET_LIMIT = 2000
@@ -14,7 +16,7 @@ module Master
           super()
           @agent       = agent
           @id          = "semantic"
-          @description = "LLM-based rule review (runs at :deep depth only)"
+          @description = "LLM-based rule review (violations + opportunities)"
           @severity    = :warning
           @axioms      = load_semantic_rules
           @axiom_tags  = @axioms.keys.map(&:to_sym)
@@ -28,11 +30,9 @@ module Master
         end
 
         def check(code, path:)
-          return [] unless language(path)
-          return [] unless @agent
+          return [] unless language(path) && @agent
 
-          prompt = build_prompt(code, path)
-          response = @agent.ask(prompt, operation: :scan_semantic).to_s
+          response = @agent.ask(build_prompt(code, path), operation: :scan_semantic).to_s
           parse_findings(response)
         rescue StandardError => e
           [finding(line: 1, message: "semantic: scan error — #{e.message}")]
@@ -40,45 +40,74 @@ module Master
 
         private
 
-        # Drop "info" severity rules from the LLM prompt — they're aesthetic noise that
-        # doubles prompt size and triggers rate-limit cascades on paid tiers.
-        # Keep error + warning + kernel-tier rules: the 57 that actually matter.
+        # Each axiom is { prompt:, severity:, mode: }. info-tier violations stay
+        # out of the prompt — they're noise that doubles cost. info-tier
+        # opportunities stay in: that's their whole point.
         def load_semantic_rules
           data = Master.load_yaml(RULES_PATH)
-          all_rules = (data["rules"] || {}).values.flatten
-          all_rules
-            .select { |r| r["detect_semantic"] && (r["severity"] != "info" || r["tier"] == "kernel") }
-            .each_with_object({}) { |r, h| h[r["id"]] = r["detect_semantic"] }
+          (data["rules"] || {}).values.flatten
+            .select { |r| r["detect_semantic"] }
+            .reject { |r| r["severity"] == "info" && r["mode"] != "opportunity" && r["tier"] != "kernel" }
+            .each_with_object({}) do |r, h|
+              h[r["id"]] = {
+                prompt: r["detect_semantic"],
+                severity: (r["severity"] || "warning").to_sym,
+                mode: (r["mode"] || "violation").to_sym
+              }
+            end
         end
 
         def build_prompt(code, path)
-          axiom_list = @axioms.map { |id, stmt| "#{id}: #{stmt}" }.join("\n")
+          violations = @axioms.select { |_, a| a[:mode] == :violation }
+          opportunities = @axioms.select { |_, a| a[:mode] == :opportunity }
+          parts = []
+          parts << violation_block(violations) unless violations.empty?
+          parts << opportunity_block(opportunities) unless opportunities.empty?
           <<~PROMPT
-            Review #{File.basename(path)} against these rules. List ONLY clear violations.
-            Format each as: RULE_ID:LINE:description (one per line)
-            If clean, respond with exactly: CLEAN
+            Review #{File.basename(path)}.
 
-            Rules:
-            #{axiom_list}
+            #{parts.join("\n\n")}
 
             Code (first #{CODE_SNIPPET_LIMIT} chars):
             #{code[0, CODE_SNIPPET_LIMIT]}
           PROMPT
         end
 
-        def parse_findings(response)
-          return [] if response.strip.upcase == "CLEAN"
+        def violation_block(rules)
+          list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
+          <<~BLOCK
+            VIOLATIONS — list ONLY clear breaches. Format: RULE_ID:LINE:description.
+            If clean, write CLEAN on its own line.
+            #{list}
+          BLOCK
+        end
 
+        def opportunity_block(rules)
+          list = rules.map { |id, a| "#{id}: #{a[:prompt]}" }.join("\n")
+          <<~BLOCK
+            OPPORTUNITIES — list refactors only if they would simplify. Format: RULE_ID:LINE:reason.
+            If none, write NONE on its own line.
+            #{list}
+          BLOCK
+        end
+
+        def parse_findings(response)
           response.lines.filter_map do |line|
-            match_data = line.strip.match(/\A([A-Z_]+):(\d+):(.+)\z/)
-            next unless match_data && @axioms.key?(match_data[1])
-            rule_id = match_data[1]
-            Finding.build(rule: rule_id.downcase,
-                          message: match_data[3].strip,
-                          line: match_data[2].to_i,
-                          severity: @severity,
-                          fix: nil,
-                          tags: [rule_id.to_sym])
+            stripped = line.strip
+            next if stripped.empty? || %w[CLEAN NONE].include?(stripped.upcase)
+
+            match = stripped.match(/\A([A-Z_][A-Z0-9_]*):(\d+):(.+)\z/)
+            next unless match && @axioms.key?(match[1])
+
+            axiom = @axioms[match[1]]
+            Finding.build(
+              rule: match[1].downcase,
+              message: match[3].strip,
+              line: match[2].to_i,
+              severity: axiom[:severity],
+              fix: nil,
+              tags: [match[1].to_sym, axiom[:mode]]
+            )
           end
         end
       end

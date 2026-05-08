@@ -1674,6 +1674,17 @@ rules:
       detect_semantic: "Does this API expose a 'do less' tier (shallow/standard/quick/lite/basic) alongside a 'do full' tier — where every real user always picks the full one? If so, it's a fake choice. Either drop the lower tier and make full the only mode, or, if a real cost tradeoff exists, name the tiers honestly (e.g. lexical|structural|semantic) so the cost actually being paid is surfaced."
       fix: "Drop the degraded tier. If a real cost tradeoff exists, rename to surface the cost (lexical < structural < semantic), not the result quality."
 
+    - id: PATTERN_EXTRACTION
+      name: "File is 80% of the way to a named design pattern"
+      tier: design
+      severity: info
+      mode: opportunity
+      autofix: false
+      principle: "Crystallize emergent shape into a name; the right pattern compresses code and makes intent legible."
+      medium: [ruby]
+      detect_semantic: "Is this file close to instantiating a known pattern from {Strategy, Decorator, Pipeline, Visitor, Builder, Observer, Command, State, Adapter, NullObject}? Only flag when extraction would genuinely reduce complexity — never propose a pattern that adds ceremony for its own sake. Format: PATTERN:LINE:short reason."
+      fix: "Extract toward the named pattern only if the resulting code is simpler than the current shape; otherwise leave it."
+
 # Falsifiable identity — what MASTER explicitly does NOT aim for, and the
 # failure modes that mean the system has lost its way.
 # Source: master2 v4 MANIFEST reunification.
