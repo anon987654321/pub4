@@ -4,6 +4,14 @@
 
 # golden_rule and protection_tiers live in soul.yml (ABSOLUTE section) — single source.
 
+# detection trichotomy:
+#   detect_lexical    — regex pattern. cheap. handled by LexicalRule + table_lexical_rule.
+#   detect_structural — names a dedicated AST handler (e.g. long_method, god_class).
+#                       cheap, deterministic, autofix-safe.
+#   detect_semantic   — natural-language prompt. expensive LLM call, batched per file.
+#                       review-only — autofix risky.
+# a rule may carry any combination; each axis emits separate findings tagged by id.
+
 paths:
   skip_dirs: [.git, vendor, tmp, var, node_modules, .bundle, coverage, log, dist, knowledge]
   tree:
@@ -425,7 +433,7 @@ rules:
       tier: core
       severity: error
       autofix: false
-      detect_semantic: "Does any class exceed 300 lines or 20 public methods?"
+      detect_structural: god_class
       fix: "Decompose into focused classes."
 
     - id: NO_SHOTGUN_SURGERY
@@ -588,7 +596,7 @@ rules:
       severity: warning
       autofix: false
       detect_lexical: null
-      detect_semantic: "Does this file exceed 300 lines?"
+      detect_structural: file_silhouette
       fix: "Split at module boundaries."
 
     - id: CONSISTENT_FILE_STRUCTURE
@@ -857,7 +865,7 @@ rules:
       tier: clean_code
       severity: warning
       autofix: true
-      detect_semantic: "Does this method exceed 20 lines?"
+      detect_structural: long_method
       fix: "Extract: validate(), calculate(), persist()."
 
     - id: FEW_ARGUMENTS
