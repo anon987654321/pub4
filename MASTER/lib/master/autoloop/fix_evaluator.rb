@@ -73,8 +73,8 @@ module Master
           next unless @rule_recurrence[rule_id] >= 3
           @rule_recurrence.delete(rule_id)
           sample = violations.select { |v| v[:rule].to_s == rule_id }.first(5)
-          result = @soul.propose_from_violations(rule_id, sample, agent: @agent)
-          @bus&.publish("autoloop:soul_proposal", rule: rule_id, result: result.to_s[0, 80])
+          @bus&.publish("autoloop:soul_proposal", rule: rule_id, sample: sample)
+          @bus&.publish("autoloop:soul_proposal", rule: rule_id, result: "queued")
         end
         (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
       end

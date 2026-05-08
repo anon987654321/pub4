@@ -4,7 +4,7 @@ require "open3"
 
 module Master
   class Pipeline
-    ROLLBACK_CATEGORIES   = %i[validation axiom_violation].freeze
+    ROLLBACK_CATEGORIES   = %i[validation axiom_violation unknown provider_error llm_call_failure].freeze
     MS_PER_SECOND         = 1000
     ROLLBACK_MSG_TRUNCATE = 120
 

@@ -1,0 +1,15 @@
+gems:
+  devise:
+    purpose: "Authentication framework"
+    common_mistakes:
+      - "custom routes without devise_for"
+      - "forgetting :lockable for rate limiting"
+  pundit:
+    purpose: "Authorization"
+    common_mistakes:
+      - "policy not scoped to current_user"
+      - "missing verify_authorized"
+  pagy:
+    purpose: "Pagination"
+    common_mistakes:
+      - "using Pagy::DEFAULT instead of Pagy::OPTIONS (43.x change)"

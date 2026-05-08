@@ -15,11 +15,18 @@ module Master
     end
 
     def for(model_id)
-      synchronize { @breakers[model_id.to_s] ||= CircuitBreaker.new(**@defaults) }
+      synchronize do
+        @breakers[model_id.to_s] ||= CircuitBreaker.new(
+          **@defaults.merge(rate_window_s: CircuitBreaker::RATE_WINDOW_S, rate_max: CircuitBreaker::RATE_MAX)
+        )
+      end
     end
 
     def check_rate!
-      @global.check_rate!
+      synchronize do
+        @breakers.values.each(&:check_rate!)
+        @global.check_rate!
+      end
     end
 
     def session_total

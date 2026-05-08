@@ -36,15 +36,20 @@ module Master
     def chat(message, stream: true, escalation_depth: 0, &blk)
       prepare_chat_turn(message)
       candidate_models = routed_models
-      prompt   = apply_reasoning_mode(message)
+      prompt   = message
       context  = conversation_context
       @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / Session::TOKENS_PER_CHAR)
+      @deps.homeostat&.observe(:llm_call)
 
       rate_err = check_rate_limit
       return rate_err if rate_err
 
       response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
-      return response if response.is_a?(Master::Result::Err)
+      if response.is_a?(Master::Result::Err)
+        @deps.homeostat&.observe(:llm_failure)
+        return response
+      end
+      @deps.homeostat&.observe(:llm_success)
       response = maybe_escalate(response, message, stream:, escalation_depth:, &blk)
 
       text = response.to_s
@@ -71,14 +76,14 @@ module Master
       messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
       selected_model = operation ? model_for(operation:) : routed_models.first
       result = @dispatcher.send_with_cache(selected_model, messages, stream: false)
-      raise result.message if result.is_a?(Master::Result::Err)
+      return result if result.is_a?(Master::Result::Err)
       result.to_s
     end
 
     def ask_once(prompt, system: nil, model: nil)
       messages = [{ role: "user", content: prompt.to_s }]
       result   = @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false)
-      result.ok? ? result.value!.to_s : ""
+      result
     end
 
     def call(ctx)
@@ -113,9 +118,9 @@ module Master
       @config["task_type"] = old
     end
 
-    def apply_reasoning_mode(message)
+    def apply_reasoning_mode(message, mode: @config.reasoning_mode)
       return message unless @reasoning_modes
-      @reasoning_modes.wrap(message, mode: @config.reasoning_mode)
+      @reasoning_modes.wrap(message, mode:)
     end
 
     def system_prompt
@@ -133,27 +138,45 @@ module Master
     end
 
     def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
-      capable = select_capable_models(candidate_models)
-      return capable if capable.is_a?(Master::Result::Err)
-
+      stage_warnings = []
+      fallback_modes = mode_chain_for(candidate_models)
       last_response = nil
-      capable.each_with_index do |selected_model, index|
+
+      fallback_modes.each do |attempt|
+        selected_model = attempt.fetch(:model)
+        mode = attempt.fetch(:mode)
+        wrapped = apply_reasoning_mode(prompt, mode: mode)
         response = @dispatcher.send_with_cache(
           selected_model,
-          context + [{ role: "user", content: prompt }],
+          context + [{ role: "user", content: wrapped }],
           stream:, &blk
         )
+        if response.is_a?(Master::Result::Ok)
+          publish_llm_success(selected_model, response)
+          @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
+          return response
+        end
+
         last_response = response
-        publish_llm_success(selected_model, response) if response.is_a?(Master::Result::Ok)
-        break response unless response.is_a?(Master::Result::Err) && index < capable.length - 1
+        stage_warnings << "llm failed in #{mode} on #{selected_model}: #{response.message}"
       end
-      last_response
+
+      @bus&.publish("agent:stage_warnings", warnings: stage_warnings)
+      Result.ok("I can’t run tools right now, but here’s my best guess: #{prompt}")
     end
 
-    def select_capable_models(candidates)
-      capable = candidates.select { |m| @dispatcher.claude_cli_model?(m) || @dispatcher.tool_capable?(m) }
-      return Result.err("no tool-capable model available", category: :validation) if capable.empty?
-      capable
+    def mode_chain_for(candidates)
+      models = candidates.dup
+      selected = models.first || @config.model
+      if @dispatcher.claude_cli_model?(selected) || @dispatcher.tool_capable?(selected)
+        return [{ model: selected, mode: @config.reasoning_mode.to_s },
+                { model: selected, mode: "code_agent" },
+                { model: selected, mode: "react" }]
+      end
+
+      [{ model: selected, mode: "code_agent" },
+       { model: selected, mode: "react" },
+       { model: selected, mode: "direct" }]
     end
 
     def publish_llm_success(model, response)
