@@ -27,9 +27,12 @@ module Master
       channel = channel.to_sym
       return Result.err("unknown channel: #{channel}", category: :validation) unless CHANNELS.include?(channel)
 
-      @bus&.publish("gateway:receive", channel: channel, size: message.bytesize)
+      msg     = message.to_s.strip
+      turn_id = "#{Process.pid}-#{Time.now.to_i}-#{rand(36**4).to_s(36)}"
+      @bus&.publish("gateway:turn_start", turn_id:, channel:, message: msg[0, 200])
+      @bus&.publish("gateway:receive", channel: channel, size: msg.bytesize)
 
-      ctx = { user_message: message.to_s.strip, channel: channel, metadata: metadata }
+      ctx = { user_message: msg, channel: channel, metadata: metadata, turn_id: }
       result = @pipeline.call(Result.ok(ctx))
 
       if (adapter = @adapters[channel])
@@ -37,6 +40,8 @@ module Master
         adapter.respond_to?(:render) ? adapter.render(text, metadata) : adapter.call(text, metadata)
       end
 
+      ok = result.respond_to?(:ok?) && result.ok?
+      @bus&.publish("gateway:turn_done", turn_id:, ok:, error: ok ? nil : result.message&.to_s&.[](0, 120))
       result
     end
 

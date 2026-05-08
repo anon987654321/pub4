@@ -12,6 +12,14 @@ module Master
         .merge(topic_command(infra:))
         .merge(rsi_command(infra:))
         .merge(triad_command(ai:, root:, infra:))
+        .merge(why_command(infra:))
+    end
+
+    def why_command(infra:)
+      trace = infra[:trace]
+      {
+        "why" => ->(_ctx) { trace ? trace.pretty_last : "trace not configured" }
+      }
     end
 
     def triad_command(ai:, root:, infra:)
