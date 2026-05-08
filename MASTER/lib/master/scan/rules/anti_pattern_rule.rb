@@ -14,9 +14,13 @@ module Master
           @severity    = :critical
           @axiom_tags  = []
           data = Master.load_yaml(rules_path) || {}
-          ap = data["anti_patterns"] || {}
-          @forbidden   = (ap["forbidden"] || []).map   { |h| compile(h) }.compact
-          @discouraged = (ap["discouraged"] || []).map { |h| compile(h) }.compact
+          ap = data["anti_patterns"]
+          if ap
+            @forbidden   = (ap["forbidden"] || []).map   { |h| compile(h) }.compact
+            @discouraged = (ap["discouraged"] || []).map { |h| compile(h) }.compact
+          else
+            @forbidden = @discouraged = []
+          end
         end
 
         def check(code, _path: nil, **)

@@ -32,7 +32,7 @@ module Master
       @started_at = Time.now
     end
 
-    def observe(event, **_kwargs)
+    def observe(event, **_kwargs) # kwargs kept for compatibility
       deltas = EVENT_DELTAS[event] || {}
       @mutex.synchronize do
         deltas.each { |k, v| @state[k] = clamp(@state[k] + v) }
