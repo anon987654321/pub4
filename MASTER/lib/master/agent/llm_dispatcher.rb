@@ -9,7 +9,6 @@ module Master
     class LLMDispatcher
       COST_PER_TOKEN        = 0.000_015
       CACHE_WINDOW          = 4
-      VISITOR_ALLOWED_TOOLS = %w[AskLlm WebSearch].freeze
       NEMOTRON3_RE          = /nemotron-3/i.freeze
       LLAMA_NEMOTRON_RE     = /llama.*nemotron|nemotron.*llama/i.freeze
 
@@ -42,6 +41,8 @@ module Master
       def initialize(deps:, system_prompt:)
         @config, @cache, @circuit_breaker = deps.config, deps.cache, deps.circuit_breaker
         @tools, @bus, @system_prompt_proc = deps.tools, deps.bus, system_prompt
+        @model_router = deps.model_router
+        @tool_registry = load_tool_registry
       end
 
       def send_with_cache(selected_model, messages, system: nil, stream: false, &blk)
@@ -154,15 +155,28 @@ module Master
       end
 
       def build_llm_tools(visitor: false)
+        tier = @model_router&.tier_for_model(@config.model).to_s
         @tools.filter_map do |tool|
           wrapper = LLM_TOOL_MAP[tool.class]
           next nil unless wrapper
-          next nil if visitor && !VISITOR_ALLOWED_TOOLS.include?(tool.class.name.split("::").last)
+
+          tool_name = tool.class.name.split("::").last
+          meta = @tool_registry.fetch(tool_name, {})
+          next nil if visitor && meta["visitor"] != true
+          next nil if tier == "cheap" && meta["tier"] == "dangerous"
+
           wrapper.new(tool)
         end
       rescue StandardError => err
         @bus&.publish("agent:llm_tools_error", error: err.message)
         []
+      end
+
+      def load_tool_registry
+        path = File.join(Master::ROOT, "data", "tools.yml")
+        rows = Master.load_yaml(path)
+        return {} unless rows.is_a?(Array)
+        rows.each_with_object({}) { |row, out| out[row["name"].to_s] = row if row.is_a?(Hash) }
       end
     end
   end
