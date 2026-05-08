@@ -153,28 +153,48 @@ homeostat: infra[:homeostat])
     end
 
     def build_tools(root:, infra:)
+      definitions = load_tool_definitions(root)
+      definitions.filter_map do |defn|
+        next unless defn["default"] == true
+        build_tool_instance(defn["name"], root:, infra:)
+      end
+    end
+
+    def load_tool_definitions(root)
+      path = File.join(root, "data", "tools.yml")
+      data = Master.load_yaml(path)
+      return [] unless data.is_a?(Array)
+      data
+    end
+
+    def build_tool_instance(name, root:, infra:)
       bus = infra[:bus]
       undo = infra[:undo]
       governor = infra[:governor]
-      [
-        Tools::ReadFile.new(root:, undo:, event_bus: bus),
-        Tools::WriteFile.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager]),
-        Tools::StrReplace.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager]),
-        Tools::ListDir.new(root:, event_bus: bus),
-        Tools::SearchFiles.new(root:, event_bus: bus),
-        Tools::WebSearch.new(governor:, event_bus: bus),
-        Tools::Shell.new(root:, governor:, event_bus: bus),
-        Tools::BatchReplace.new(root:, governor:, event_bus: bus),
-        Tools::GitContext.new(root:, event_bus: bus),
-        Tools::AstEdit.new(root:, undo:, event_bus: bus),
-        Tools::Tree.new(root:, event_bus: bus),
-        Tools::SymbolLookup.new(code_index: infra[:code_index], event_bus: bus),
-        Tools::Clean.new(root:, governor:, event_bus: bus),
-        Tools::SearchKnowledge.new(root:, event_bus: bus),
-        Tools::FeedbackRecord.new(learnings: infra[:learnings]),
-        Tools::Postpro.new(root:, governor:, event_bus: bus),
-        Tools::Repligen.new(root:, governor:, event_bus: bus)
-      ]
+      case name.to_s
+      when "ReadFile" then Tools::ReadFile.new(root:, undo:, event_bus: bus)
+      when "WriteFile" then Tools::WriteFile.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
+      when "AtomicWrite" then Tools::AtomicWrite.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
+      when "StrReplace" then Tools::StrReplace.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
+      when "BatchReplace" then Tools::BatchReplace.new(root:, governor:, event_bus: bus)
+      when "AstEdit" then Tools::AstEdit.new(root:, undo:, event_bus: bus)
+      when "Tree" then Tools::Tree.new(root:, event_bus: bus)
+      when "ListDir" then Tools::ListDir.new(root:, event_bus: bus)
+      when "SearchFiles" then Tools::SearchFiles.new(root:, event_bus: bus)
+      when "SearchKnowledge" then Tools::SearchKnowledge.new(root:, event_bus: bus)
+      when "SymbolLookup" then Tools::SymbolLookup.new(code_index: infra[:code_index], event_bus: bus)
+      when "Shell" then Tools::Shell.new(root:, governor:, event_bus: bus)
+      when "GitContext" then Tools::GitContext.new(root:, event_bus: bus)
+      when "WebFetch" then Tools::WebFetch.new(governor:, event_bus: bus)
+      when "WebSearch" then Tools::WebSearch.new(governor:, event_bus: bus)
+      when "Clean" then Tools::Clean.new(root:, governor:, event_bus: bus)
+      when "Repligen" then Tools::Repligen.new(root:, governor:, event_bus: bus)
+      when "Postpro" then Tools::Postpro.new(root:, governor:, event_bus: bus)
+      when "FeedbackRecord" then Tools::FeedbackRecord.new(learnings: infra[:learnings])
+      else
+        bus&.publish("builder:tool_skipped", tool: name.to_s)
+        nil
+      end
     end
 
   end
