@@ -174,7 +174,6 @@ homeostat: infra[:homeostat])
       case name.to_s
       when "ReadFile" then Tools::ReadFile.new(root:, undo:, event_bus: bus)
       when "WriteFile" then Tools::WriteFile.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
-      when "AtomicWrite" then Tools::AtomicWrite.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
       when "StrReplace" then Tools::StrReplace.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
       when "BatchReplace" then Tools::BatchReplace.new(root:, governor:, event_bus: bus)
       when "AstEdit" then Tools::AstEdit.new(root:, undo:, event_bus: bus)
