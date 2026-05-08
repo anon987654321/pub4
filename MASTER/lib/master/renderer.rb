@@ -94,6 +94,15 @@ module Master
       @p.dim(bits.join(" "))
     end
 
+    def command_summary(model:, budget_used:, budget_max:, violations:, phase:, mood:, uptime:, last_scan:, file_count:)
+      budget = format("$%.2f / $%.2f", budget_used.to_f, budget_max.to_f)
+      [
+        "model: #{short_model(model)} (#{provider_for(model)})    budget: #{budget}    violations: #{violations}",
+        "phase: #{phase}    mood: #{mood}    uptime: #{uptime}    last scan: #{last_scan}",
+        "tree: #{file_count} files  --  /tree [N]   /diag   /orders   /help"
+      ].map { |line| @p.dim(line) }.join("\n")
+    end
+
     def token_bar(tokens)
       return "" unless tokens && tokens > 0
       budget = (@config["token_budget"] || TOKEN_BUDGET).to_i
