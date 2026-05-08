@@ -42,3 +42,10 @@ task :constitution do
 end
 
 task default: :test
+
+namespace :test do
+  desc "Run web system tests"
+  task :web do
+    sh "ruby -Ilib:test test/test_web_ui.rb"
+  end
+end
