@@ -44,6 +44,10 @@ module Master
         Result.err("injection detected: #{hits.size} pattern(s) matched", category: :validation)
       end
 
+      def safe?(text)
+        scan(text.to_s).ok?
+      end
+
       def clean!(content)
         cleaned = @patterns[:prompt_injection].reduce(content) { |c, p| c.gsub(p, "[REDACTED]") }
         Result.ok(cleaned)
