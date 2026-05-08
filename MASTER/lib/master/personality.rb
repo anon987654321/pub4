@@ -153,14 +153,14 @@ module Master
       ls << "PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally."
       ls << "BE_CONCISE: minimal response. If the answer is one word, say one word."
 
-      zsh = (load_yaml_data("patterns.yml") || {})["zsh"] || load_yaml_data("zsh_patterns.yml")
-      if zsh
+      zsh = @axioms.data(:patterns)["zsh"] || @axioms.data(:zsh_patterns)
+      if zsh.is_a?(Hash) && !zsh.empty?
         banned_cmds = Array(zsh["banned_commands"]).join(", ")
         ls << "Zsh scripts: never use #{banned_cmds}. Use pure zsh parameter expansion and builtins instead."
       end
 
-      style = load_yaml_data("ruby_style.yml")
-      if style
+      style = @axioms.data(:ruby_style)
+      if style.is_a?(Hash) && !style.empty?
         bugs = Array(style.dig("ruby", "bugs_to_avoid"))
                   .map { |b| "#{b["pattern"]}: #{b["fix"] || b["note"]}" }
                   .first(5)
@@ -199,14 +199,15 @@ module Master
         end
       end
 
-      ls.join("\n")
-    end
+      social = @axioms.data(:social)["social"]
+      if social.is_a?(Hash) && social.any?
+        social.each do |group, rules|
+          next unless rules.is_a?(Array) && rules.any?
+          ls << "Social/#{group}: " + rules.join(" | ")
+        end
+      end
 
-    def load_yaml_data(filename)
-      path = File.join(Master::ROOT, "data", filename)
-      Master.load_yaml(path) if File.exist?(path)
-    rescue StandardError => _e
-      nil
+      ls.join("\n")
     end
   end
 end

@@ -8,12 +8,24 @@ module Master
     WORKFLOW_PATH = File.join(File.expand_path("../../..", __dir__), "data", "workflow.yml").freeze
 
     def initialize(root: nil)
-      @rules_path    = root ? File.join(root, "data", "rules.yml")    : DATA_PATH
-      @soul_path     = root ? File.join(root, "data", "soul.yml")     : SOUL_PATH
-      @workflow_path = root ? File.join(root, "data", "workflow.yml") : WORKFLOW_PATH
+      @root          = root || Master::ROOT
+      @data_dir      = File.join(@root, "data")
+      @rules_path    = File.join(@data_dir, "rules.yml")
+      @soul_path     = File.join(@data_dir, "soul.yml")
+      @workflow_path = File.join(@data_dir, "workflow.yml")
       @data          = load_yaml(@rules_path)    || {}
       @soul_data     = load_yaml(@soul_path)     || {}
       @workflow      = load_yaml(@workflow_path) || {}
+      @cache         = {}
+    end
+
+    # Cached access to any data/<name>.yml. Memoized per process.
+    def data(name)
+      key = name.to_sym
+      @cache[key] ||= begin
+        path = File.join(@data_dir, "#{name}.yml")
+        File.exist?(path) ? (Master.load_yaml(path) || {}) : {}
+      end
     end
 
     def kernel
