@@ -10,29 +10,53 @@
   <meta name="theme-color" content="#000000"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&display=swap"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&family=VT323&family=Major+Mono+Display&display=swap"/>
 <style>
   @layer base, components, utilities;
 
   @layer base{
   :root{
-
-      --safe-top:env(safe-area-inset-top,0px);
-      --safe-right:env(safe-area-inset-right,0px);
-      --safe-bottom:env(safe-area-inset-bottom,0px);
-      --safe-left:env(safe-area-inset-left,0px);
-    }
-
-    html,body{
-      margin:0;
-      height:100%;
-      background:#020000;
-      color:#dcdcdc;
-      font:16px/1.5 Helvetica,Arial,sans-serif;
-      overflow:hidden;
-  touch-action:none;
-}
-}/* end @layer base */
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-right:env(safe-area-inset-right,0px);
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+    --safe-left:env(safe-area-inset-left,0px);
+    --pitch:#0a0c0a;
+    --iron:#1f221d;
+    --bone:#cdc5b6;
+    --rust:#a0522d;
+    --brine:#4a7d80;
+    --amber:#d6a13f;
+    --grit:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    --ease:cubic-bezier(.2,.8,.2,1);
+  }
+  html,body{
+    margin:0;
+    height:100%;
+    background:var(--pitch);
+    color:var(--bone);
+    font:16px/1.5 "VT323","Roboto Mono",ui-monospace,Menlo,Monaco,Consolas,monospace;
+    -webkit-font-smoothing:none;
+    -moz-osx-font-smoothing:grayscale;
+    font-smooth:never;
+    text-rendering:optimizeSpeed;
+    overflow:hidden;
+    touch-action:none;
+  }
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    z-index:9998;pointer-events:none;
+    background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.22) 100%);
+  }
+  body::after{
+    content:"";
+    position:fixed;inset:0;
+    z-index:9999;pointer-events:none;
+    background-image:var(--grit);
+    opacity:.045;mix-blend-mode:overlay;
+  }
+  *{transition-timing-function:var(--ease);}
+  }/* end @layer base */
 
 @layer components{
 /* Low-end CSS orb
@@ -161,7 +185,16 @@
       color:#993333;
       user-select:none;
       letter-spacing:0;
+      animation:prompt-breathe 2.4s ease-in-out infinite;
     }
+    @keyframes prompt-breathe{0%,100%{opacity:.6;}50%{opacity:1;}}
+    @keyframes token-fade{0%,100%{opacity:1;}50%{opacity:.85;}}
+    .entry.streaming{animation:token-fade 1.6s ease-in-out infinite;}
+    @keyframes entry-rise{from{opacity:0;transform:translateY(2px);}to{opacity:1;transform:none;}}
+    .entry{animation:entry-rise .32s ease-out both;}
+    .entry:nth-child(2n){animation-delay:60ms;}
+    .entry:nth-child(3n){animation-delay:80ms;}
+    @media(prefers-reduced-motion:reduce){#prompt-glyph,.entry,.entry.streaming{animation:none;}}
 
     #input-field input{
       flex:1;
@@ -232,12 +265,16 @@
 
     #overlay h1{
       margin:0;
-      font-size:clamp(18px,4vw,28px);
-      font-weight:300;
+      font-family:"Major Mono Display","VT323",ui-monospace,monospace;
+      font-size:clamp(20px,5vw,34px);
+      font-weight:400;
       color:#666;
-      letter-spacing:.25em;
+      letter-spacing:.18em;
       text-transform:uppercase;
+      transition:transform .12s steps(2);
     }
+    #overlay h1:hover{transform:translate(1px,-1px);}
+    @media(prefers-reduced-motion:reduce){#overlay h1{transition:none;}#overlay h1:hover{transform:none;}}
 
     #overlay .hint{
       font-size:10px;
@@ -264,6 +301,15 @@
     #chat-log .entry.user{color:#ccc;}
     #chat-log .entry.master{color:#777;}
     #chat-log .entry.user::before{content:'> ';color:#555;}
+    #chat-log .entry.master::before{content:': ';color:#444;}
+    #chat-log .entry.system{color:#666;}
+    #chat-log .entry.system::before{content:'! ';color:#a0522d;}
+    #chat-log .entry.tool::before{content:'* ';color:#4a7d80;}
+    body{cursor:default;}
+    #chat-log{cursor:text;}
+    #status{cursor:ns-resize;}
+    #input-field input{cursor:text;}
+    button,a,[role=button]{cursor:pointer;}
     #tab-hint{
       position:fixed;top:12px;right:16px;
       font-size:10px;color:#333;letter-spacing:.1em;pointer-events:none;
@@ -313,6 +359,14 @@
 
   <script>
     "use strict";
+    (function(){
+      const h=new Date().getHours();
+      const tint=(h<6||h>=21)?'sepia(.06) hue-rotate(-8deg) brightness(.94)'
+                :(h<10)?'sepia(.05) brightness(1.02)'
+                :(h>=17)?'sepia(.08) hue-rotate(-4deg) brightness(.97)'
+                :'none';
+      if(tint!=='none') document.documentElement.style.filter=tint;
+    })();
     const swarmIframe=document.getElementById('swarm-iframe');
     const statusEl=document.getElementById('status');
     const uiLabel=document.getElementById('ui-label');
@@ -565,6 +619,29 @@ if (window.DeviceMotionEvent) {
     const swarmSignal=(type,data)=>{
       const f=_swarm(); if(!f||!f.contentWindow) return;
       try{ f.contentWindow.postMessage({type,data:data||{}},'*'); }catch(_){}
+    };
+    let _lastActivity=Date.now();
+    const _bumpActivity=()=>{ _lastActivity=Date.now(); };
+    const _modelTag=String(<%= ((@model.to_s.split('/').last || @model.to_s).sub(/:free$/, '')).to_json.html_safe %>).toUpperCase();
+    setInterval(()=>{
+      if(isProcessing||isSpeaking) return;
+      if(Date.now()-_lastActivity>30000){
+        swarmSignal('text',{text:_modelTag});
+        _lastActivity=Date.now();
+      }
+    },5000);
+    const stageBell=(freq)=>{
+      if(!audioCtx) return;
+      try{
+        const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+        o.type='sine'; o.frequency.value=freq;
+        const t=audioCtx.currentTime;
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(0.05,t+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
+        o.connect(g).connect(audioCtx.destination);
+        o.start(t); o.stop(t+0.2);
+      }catch(_){}
     };
 
     // P9: voice confirmation gate. Server may add `[confirm:tool_name]` to a reply that needs
@@ -1287,7 +1364,7 @@ if (window.DeviceMotionEvent) {
     const N=LOW_END?0:2000;
 
     // Web Audio effect chain — cycle with long-press on status circle
-    const FX_MODES=['off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone','vocoder','autotune','choir','telephone','void'];
+    const FX_MODES=['lofi','off','dark','demon','radio','underwater','ghost','oracle','glitch','cathedral','broken','whisper','megaphone','vocoder','autotune','choir','telephone','void'];
     let fxIdx=0; // default 'off' — no FX on TTS, no double-vocal. Long-press status to cycle.
     let fxTaps=0;let fxTapTimer=0;
 
@@ -1312,6 +1389,14 @@ if (window.DeviceMotionEvent) {
       const out=audioCtx.destination;
       const an=analyser||audioCtx.createGain(); // guard: null when mic denied
       if(mode==='off'){src.connect(an);src.connect(out);return;}
+      if(mode==='lofi'){
+        const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=200;hp.Q.value=0.7;
+        const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3500;lp.Q.value=0.7;
+        const tilt=audioCtx.createBiquadFilter();tilt.type='peaking';tilt.frequency.value=900;tilt.gain.value=2;tilt.Q.value=0.6;
+        src.connect(hp);hp.connect(lp);lp.connect(tilt);
+        tilt.connect(an);tilt.connect(out);
+        return;
+      }
       // Dark: pitch down, heavy bass
       if(mode==='dark'){
         src.playbackRate.value=0.78;
@@ -1651,6 +1736,15 @@ if(mode==='void'){
         // already filters echo via _ttsEchoes(), so leaving the mic open is safe.
         src.onended=()=>{ _ttsCurrent=null; _ttsBusy=false; _onSpeakEnd(); _ttsDrain(); };
         src.start();
+        try{
+          const baseRate=src.playbackRate.value||1;
+          const realDur=decoded.duration/baseRate;
+          if(realDur>0.4){
+            const t=audioCtx.currentTime+realDur-0.12;
+            src.playbackRate.setValueAtTime(baseRate,t);
+            src.playbackRate.linearRampToValueAtTime(0.0001,t+0.12);
+          }
+        }catch(_){}
       }catch(_e){ _ttsBusy=false; speakBrowser(text); _ttsDrain(); }
     };
 
@@ -1805,7 +1899,7 @@ recognition.onresult=(ev)=>{
       // P9: did the user just answer a pending confirmation prompt?
       const confirmReply=_checkConfirmReply(message);
       logAppend('user', pendingFile ? `${message} [+${pendingFile.name}]` : message);
-      isProcessing=true;
+      isProcessing=true; _bumpActivity();
       if(padModulate) padModulate('think');
       statusEl.classList.remove('think','speak');
       statusEl.classList.add('processing');
@@ -1847,7 +1941,7 @@ recognition.onresult=(ev)=>{
         uiLabel.textContent='Thinking\u2026';
         // Streaming placeholder — text appears word-by-word as it arrives
         const _msgEl=document.createElement('div');
-        _msgEl.className='entry master';
+        _msgEl.className='entry master streaming';
         chatLog.appendChild(_msgEl);
         const reader=resp.body.getReader();
         const dec=new TextDecoder();
@@ -1892,10 +1986,16 @@ recognition.onresult=(ev)=>{
             _spkBuf+=chunk;
             _msgEl.textContent=fullText;
             chatLog.scrollTop=chatLog.scrollHeight;
+            const _np=performance.now();
+            if(!window._lastPulseAt||_np-window._lastPulseAt>80){
+              swarmSignal('pulse',{x:160+(Math.random()-0.5)*80,y:100+(Math.random()-0.5)*60});
+              window._lastPulseAt=_np;
+            }
             _speakFlush(false);
           }
         }
         _speakFlush(true);
+        _msgEl.classList.remove('streaming');
         // Final: render markdown, persist. Strip [confirm:tool] before render.
         const reply=_consumeConfirm(fullText.trim());
         _msgEl.innerHTML=renderMd(reply);
@@ -2141,13 +2241,20 @@ const AMBIENT=[
       const wantVoice=ev.shiftKey||ev.altKey;
       statusLongPress=setTimeout(()=>{
         statusLongPress='long';
-        if(wantVoice){
-          voiceIdx=(voiceIdx+1)%VOICES.length;
-          showVoice();
-        }else{
-          fxIdx=(fxIdx+1)%FX_MODES.length;
-          showFxMode();
-        }
+        const fadeIn=()=>{uiLabel.style.opacity='1';};
+        uiLabel.style.transition='opacity .2s linear';
+        uiLabel.style.opacity='0';
+        setTimeout(()=>{
+          if(wantVoice){
+            voiceIdx=(voiceIdx+1)%VOICES.length;
+            try{ if(_ttsCurrent){ _ttsCurrent.onended=null; _ttsCurrent.stop(); } }catch(_){}
+            showVoice();
+          }else{
+            fxIdx=(fxIdx+1)%FX_MODES.length;
+            showFxMode();
+          }
+          requestAnimationFrame(fadeIn);
+        },200);
         haptic(12);
         savePrefs();
       },600);
@@ -2254,14 +2361,17 @@ const AMBIENT=[
           speechPulse=Math.max(speechPulse,0.55);
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.3,a:0.45,col:'#6a1a1a'});
           swarmSignal('morph',{shape:'sphere'});
+          stageBell(250);
         }else if(t==='llm:escalation'){
           swarmSignal('escalation',ev.data||{});
         }else if(t==='tool:used'||t==='tool:before'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.2,a:0.3,col:'#2a1a04'});
           swarmSignal('tool',{name:(ev.data||{}).tool||''});
+          stageBell(350);
         }else if(t==='pipeline:rollback'){
           speechPulse=0.9;
           ringPulses.push({r:2,maxR:Math.min(W,H)*0.5,a:0.7,col:'#cc1010'});
+          stageBell(500);
         }else if(t==='sweep:cycle'||t==='autoloop:cycle'){
           ringPulses.push({r:1,maxR:Math.min(W,H)*0.15,a:0.2,col:'#3d1a04'});
         }else if(t==='speak:text'){

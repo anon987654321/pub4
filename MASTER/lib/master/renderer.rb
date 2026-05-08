@@ -9,15 +9,28 @@ module Master
   DEFAULT_WEB_PORT = Config::DEFAULT_WEB_PORT
 
   class Renderer
-    TICK             = "\u2714".freeze
-    CROSS            = "\u2718".freeze
     BOOT_DMESG_LINES = 12
-    MS_PER_SEC       = 1000
+    MS_PER_SEC = 1000
+    TOKEN_BUDGET = 8000
+    BAR_CELLS = 12
 
     def initialize(config:)
-      @config   = config
-      @p        = Pastel.new
-      @boot_ms  = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i
+      @config = config
+      @p = Pastel.new
+      @boot_ms = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i
+    end
+
+    def session_line(name)
+      label = @p.dim("session0: ")
+      tag = @p.dim.underline(name.to_s.downcase)
+      label + tag
+    end
+
+    def uptime
+      s = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i - @boot_ms) / MS_PER_SEC
+      h, rem = s.divmod(3600)
+      m, _ = rem.divmod(60)
+      h > 0 ? "up #{h}h#{m}m" : "up #{m}m"
     end
 
     def splash(model)
@@ -54,29 +67,58 @@ module Master
 
     alias banner splash
 
-    def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil)
+    def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil, cost: nil)
       branch = git_branch
-      tok    = tokens && tokens > 0 ? @p.dim("#{tokens}t ") : ""
+      bar = token_bar(tokens)
       vbadge = violations > 0 ? @p.red("[#{violations}v] ") : ""
+      cost_str = cost_label(cost)
       phase_str = phase && phase.to_s != "idle" ? @p.dim("{#{phase}} ") : ""
       branch_str = branch ? "#{@p.dim("(")}#{@p.red(branch)}#{@p.dim(")")} " : ""
       dollar = last_ok ? @p.bright_red("$") : @p.red("$")
-      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{phase_str}#{tok}#{vbadge}#{dollar} "
+      "#{@p.bold.red("master")}@#{@p.red(short_model(model))} #{branch_str}#{phase_str}#{bar}#{cost_str}#{vbadge}#{dollar} "
+    end
+
+    def cost_label(cost)
+      return "" unless cost && cost > 0
+      cents = (cost.to_f * 100).round(2)
+      @p.dim("\u00A2#{format('%.2f', cents)} ")
+    end
+
+    def status_row(uptime:, turns:, violations: 0)
+      bits = ["stat0:", uptime, "#{turns} turns"]
+      bits << "#{violations}v" if violations > 0
+      @p.dim(bits.join(" "))
+    end
+
+    def token_bar(tokens)
+      return "" unless tokens && tokens > 0
+      budget = (@config["token_budget"] || TOKEN_BUDGET).to_i
+      filled = ((tokens.to_f / budget) * BAR_CELLS).clamp(0, BAR_CELLS).round
+      @p.dim(("\u25B0" * filled) + ("\u25B1" * (BAR_CELLS - filled))) + " "
     end
 
     def render(content, mode: :plain)
       case mode
-      when :error   then "#{@p.red(CROSS)} #{@p.red(content)}"
-      when :success then "#{@p.bright_red(TICK)} #{@p.bright_red(content)}"
-      when :warning then @p.red("! #{content}")
+      when :error   then @p.red("err: #{content}")
+      when :success then @p.bright_red("ok: #{content}")
+      when :warning then @p.red("warn: #{content}")
       when :dim     then @p.dim(content.to_s)
       when :dmesg   then format_dmesg(content)
-      else               content.to_s
+      else content.to_s
       end
     end
 
-    def format_error(message)  = render(message, mode: :error)
-    def format_dmesg(line)     = @p.dim(line.to_s)
+    def format_error(message) = render(message, mode: :error)
+    def format_dmesg(line) = @p.dim(line.to_s)
+
+    def closing
+      path = File.join(Master::ROOT, "data", "closings.yml")
+      lines = (Master.load_yaml(path) || {})["closings"]
+      return nil unless lines.is_a?(Array) && lines.any?
+      @p.dim(lines.sample)
+    rescue StandardError
+      nil
+    end
 
     def beautify(text)
       text
