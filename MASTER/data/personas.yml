@@ -2,7 +2,7 @@
 # Add a new persona here, restart MASTER (or wait for hot-reload).
 # style: deep | heavy | slow | normal | natural — see lib/master/speech.rb STYLES.
 
-dark_malay:
+malay:
   voice: ms-MY-OsmanNeural
   tts_rate: "-35%"
   tts_pitch: "-150Hz"

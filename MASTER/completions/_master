@@ -21,7 +21,7 @@ _master() {
     'knowledge:Add URL to knowledge base (/knowledge add <url>)'
     'why:Explain a scan rule (/why ExplicitRule)'
     'explain:Describe MASTER architecture and axiom coverage'
-    'persona:Switch voice persona (dark_malay|british|norwegian)'
+    'persona:Switch voice persona (malay|british|norwegian)'
     'council:Enable/disable multi-agent council'
     'swarm:Dispatch a swarm worker (/swarm <role> <task>)'
     'sweep:Sweep-refactor a directory'
@@ -41,7 +41,7 @@ _master() {
         model)   _values 'subcommand' list ;;
         cache)   _values 'subcommand' clear stats ;;
         mode)    _values 'mode' direct react rewoo ;;
-        persona) _values 'persona' dark_malay british norwegian ;;
+        persona) _values 'persona' malay british norwegian ;;
         council) _values 'toggle' on off ;;
         autotest) _values 'toggle' on off ;;
         scan)    _values 'depth' deep standard ;;

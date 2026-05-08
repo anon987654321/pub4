@@ -4,9 +4,9 @@ require "yaml"
 
 module Master
   # MASTER's behavioral persona: voice, TTS settings, and LLM style.
-  # Personas live in data/personas.yml. Default: dark_malay.
+  # Personas live in data/personas.yml. Default: malay.
   class Personality
-    DEFAULT = :dark_malay
+    DEFAULT = :malay
     AXIOM_DISPLAY_LIMIT = 10
 
     # Fallback if data/personas.yml is missing or malformed.

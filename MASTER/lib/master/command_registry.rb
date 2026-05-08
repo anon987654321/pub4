@@ -74,7 +74,7 @@ module Master
           if names.include?(arg)
             config["persona"] = arg.to_s; config.save!; "persona: #{arg}"
           else
-            "persona: #{config["persona"] || "dark_malay"} -- available: #{names.join(", ")}"
+            "persona: #{config["persona"] || "malay"} -- available: #{names.join(", ")}"
           end
         },
       }

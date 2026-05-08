@@ -4,7 +4,7 @@
 # Negotiable sections: soul propose -> soul approve -> bump version.
 
 version: "2.3.0"
-persona: dark_malay
+persona: malay
 voice: ms-MY-OsmanNeural
 language:
   primary: english

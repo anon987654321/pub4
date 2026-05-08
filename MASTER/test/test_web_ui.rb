@@ -187,17 +187,17 @@ class TestWebUI < Minitest::Test
 
   # ── Personality ──────────────────────────────────────────────────────────
 
-  def test_personality_default_is_dark_malay
-    assert_equal :dark_malay, Master::Personality::DEFAULT
+  def test_personality_default_is_malay
+    assert_equal :malay, Master::Personality::DEFAULT
   end
 
   def test_personality_system_prompt_non_empty
-    p = Master::Personality.new(:dark_malay)
+    p = Master::Personality.new(:malay)
     assert p.system_prompt.length > 10
   end
 
   def test_personality_system_prompt_memoized
-    p = Master::Personality.new(:dark_malay)
+    p = Master::Personality.new(:malay)
     assert_same p.system_prompt, p.system_prompt
   end
 
