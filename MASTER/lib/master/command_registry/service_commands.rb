@@ -84,7 +84,49 @@ module Master
       .toml .gemspec .txt .erb .conf .ini .env
     ].to_set.freeze
     TEXT_NAMES = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
-    SKIP_SEGS  = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
+    DEFAULT_SKIP = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].freeze
+
+    def paths_config
+      @paths_config ||= (Master.load_yaml(File.join(Master::ROOT, "data", "rules.yml")) || {})["paths"] || {}
+    end
+
+    def skip_segs
+      @skip_segs ||= (paths_config["skip_dirs"] || DEFAULT_SKIP).to_set
+    end
+
+    SKIP_SEGS = DEFAULT_SKIP.to_set.freeze
+
+    def tree_lines(root, max_depth: nil, max_lines: nil)
+      cfg = paths_config["tree"] || {}
+      depth = max_depth || cfg["max_depth"] || 2
+      cap   = max_lines || cfg["max_lines"] || 200
+      skip  = skip_segs
+      buf   = []
+      walker = lambda do |dir, level|
+        return if level > depth || buf.size >= cap
+        Dir.children(dir).sort.each do |name|
+          break if buf.size >= cap
+          next if name.start_with?(".") || skip.include?(name)
+          path   = File.join(dir, name)
+          indent = "  " * (level - 1)
+          if File.directory?(path)
+            buf << "#{indent}#{name}/"
+            walker.call(path, level + 1)
+          else
+            buf << "#{indent}#{name}"
+          end
+        end
+      rescue Errno::EACCES, Errno::ENOENT
+        nil
+      end
+      walker.call(root, 1)
+      buf
+    end
+
+    def dispatch_tree(root, arg)
+      depth = arg.to_i.positive? ? arg.to_i : nil
+      tree_lines(root, max_depth: depth).join("\n")
+    end
 
     def dispatch_snapshot(root)
       dirs, files = collect_snapshot_files(root)
@@ -213,6 +255,7 @@ module Master
       {
         "snapshot"  => ->(_ctx) { dispatch_snapshot(root) },
         "repo_map"  => ->(ctx)  { dispatch_repo_map(code_index, root, arg_for(ctx)) },
+        "tree"      => ->(ctx)  { dispatch_tree(root, arg_for(ctx)) },
         "cache"     => ->(ctx)  { dispatch_cache(cache, arg_for(ctx)) },
         "diff"      => ->(ctx)  { dispatch_diff(root, arg_for(ctx)) },
         "commit"    => ->(_ctx) { dispatch_commit(agent, root) },

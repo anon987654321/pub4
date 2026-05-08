@@ -4,6 +4,12 @@
 
 # golden_rule and protection_tiers live in soul.yml (ABSOLUTE section) — single source.
 
+paths:
+  skip_dirs: [.git, vendor, tmp, var, node_modules, .bundle, coverage, log, dist, knowledge]
+  tree:
+    max_depth: 2
+    max_lines: 200
+
 voice:
   style: openbsd_dmesg
   anti_simulation:

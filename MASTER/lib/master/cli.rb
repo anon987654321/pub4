@@ -40,6 +40,7 @@ module Master
       first_boot_bar
       puts @renderer.splash(@agent.model)
       puts @renderer.session_line(@session.name) if @session.name
+      print_repo_tree
       process(initial_message) if initial_message
       @running = true
       repl_loop
@@ -254,6 +255,16 @@ module Master
 
     INIT_FRAMES = 20
     INIT_FRAME_MS = 0.04
+
+    def print_repo_tree
+      lines = Master::CommandRegistry.tree_lines(@root)
+      return if lines.empty?
+      puts @renderer.render("tree0: #{File.basename(@root)} (#{lines.size} entries)", mode: :dim)
+      lines.each { |l| puts @renderer.render(l, mode: :dim) }
+      puts
+    rescue StandardError
+      nil
+    end
 
     def first_boot_bar
       return unless $stdout.isatty
