@@ -3,54 +3,36 @@
 module Master
   module Tools
     class StrReplace
-      include PathGuard
-      include AtomicWrite
+      include Base
       TIER        = :guarded
       NAME        = "str_replace".freeze
       DESCRIPTION = "Replace unique string in a file. Fails if pattern matches 0 or 2+ times.".freeze
 
       def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil)
-        @root        = File.realpath(root)
-        @undo        = undo
-        @governor    = governor
-        @bus         = event_bus
-        @diff_stager = diff_stager
+        @root, @undo, @governor, @bus, @diff_stager =
+          File.realpath(root), undo, governor, event_bus, diff_stager
       end
 
       def call(path:, old_string:, new_string:)
-        resolved = resolve(path)
-        return resolved if resolved.err?
+        safely do
+          resolved = resolve(path)
+          next resolved if resolved.err?
 
-        full    = resolved.value!
-        return Result.err("not found: #{path}", category: :validation) unless File.exist?(full)
+          full = resolved.value!
+          next Result.err("not found: #{path}", category: :validation) unless File.exist?(full)
 
-        content = File.read(full)
-        count   = content.scan(old_string).size
+          content = File.read(full)
+          count   = content.scan(old_string).size
+          next Result.err("str_replace: pattern not found in #{path}", category: :validation) if count.zero?
+          next Result.err("str_replace: pattern matches #{count} times in #{path} (must be unique)",
+                          category: :validation) if count > 1
 
-        return Result.err("str_replace: pattern not found in #{path}", category: :validation) if count.zero?
-        return Result.err("str_replace: pattern matches #{count} times in #{path} (must be unique)", 
-category: :validation) if count > 1
+          perm = permit(path)
+          next perm if perm.err?
 
-        perm = @governor.permit?(NAME, TIER, path)
-        return perm if perm.err?
-
-        new_content = content.sub(old_string, new_string)
-
-        if @diff_stager
-          return @diff_stager.stage(path: full, new_content:, tool: NAME)
+          commit_write(full, content.sub(old_string, new_string), path:)
         end
-
-        @undo.snapshot(full)
-        write_atomic(full, new_content)
-
-        @bus&.publish("tool:after", tool: NAME, path:)
-        Result.ok(full)
-      rescue StandardError => e
-        Result.err("str_replace: #{e.message}", category: :unknown)
       end
-
-      private
-
     end
   end
 end
