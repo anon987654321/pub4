@@ -10,7 +10,7 @@ module Master
           super
           @id          = "vertical_rhythm"
           @description = "Inter-method blank-line spacing deviates from house rhythm"
-          @severity    = :info
+          @severity    = :warning
           @axiom_tags  = %i[POLA_PRINCIPLE IMPORTANCE_ORDER]
         end
 

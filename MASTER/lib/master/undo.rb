@@ -15,6 +15,7 @@ module Master
       @root    = root
       @journal = File.join(root, ".master", "undo_journal.jsonl")
       @stack   = load_journal
+      @redo    = []
     end
 
     def snapshot(path)
@@ -36,9 +37,27 @@ module Master
 
       steps.times do
         entry = @stack.pop
+        @redo << { "path" => entry["path"], "content" => (File.exist?(entry["path"]) ? File.read(entry["path"]) : nil), "ts" => Time.now.to_i }
         restore(entry["path"], entry["content"])
         paths << entry["path"]
         @bus&.publish("undo:applied", path: paths.last)
+      end
+
+      persist_journal
+      Result.ok(paths.size == 1 ? paths.first : paths)
+    end
+
+    def redo!(steps: 1)
+      return Result.err("nothing to redo", category: :validation) if @redo.empty?
+
+      steps = [steps, @redo.size].min
+      paths = []
+      steps.times do
+        entry = @redo.pop
+        @stack << { "path" => entry["path"], "content" => (File.exist?(entry["path"]) ? File.read(entry["path"]) : nil), "ts" => Time.now.to_i }
+        restore(entry["path"], entry["content"])
+        paths << entry["path"]
+        @bus&.publish("redo:applied", path: paths.last)
       end
 
       persist_journal
