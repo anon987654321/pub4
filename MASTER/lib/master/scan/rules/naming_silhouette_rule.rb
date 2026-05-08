@@ -14,7 +14,7 @@ module Master
           super
           @id          = "naming_silhouette"
           @description = "Method name doesn't match its return shape — predicate/mutator/factory drift"
-          @severity    = :info
+          @severity    = :warning
           @axiom_tags  = %i[POLA_PRINCIPLE SELF_EXPLAINING]
         end
 
