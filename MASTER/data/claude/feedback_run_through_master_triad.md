@@ -8,4 +8,4 @@ When the user says "run X through MASTER" (or "expose X to MASTER", "MASTER on X
 
 Why: User confirmed "yeah when user says run this or that through master, then a triad is what i expect" → "/scan+sweep+tribunal" (2026-05-08). User uses "tribunal", code uses "council" — same thing.
 
-How to apply: For any directive "run/scan/process X through master" where X is a path or codebase, invoke `/triad deep <path>`. Bug to flag: current /triad's third step calls the council META command (just on/off toggle) instead of running an actual deliberation.review — surface this when relevant.
+How to apply: For any directive "run/scan/process X through master" where X is a path or codebase, invoke `/triad <path>` (depth knob removed; "deep" is now the default). Step 3 wires through `Master::Council::Deliberation.review` directly — bug fixed 2026-05-08.

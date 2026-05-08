@@ -17,4 +17,8 @@ The zsh-banned-commands list in MASTER (`sed`, `awk`, `tr`, `grep`, `cut`, `head
 - Privilege → `doas`, never `sudo`
 - Complex parsing → write a Ruby script and run it, never inline `sed`/`awk`
 
-The exception that already holds: `git`, `gh`, `bundle`, `ssh`, `scp`, `sshpass`, `eval`, plain `ls`, `mkdir`, `cd`, `print`, `echo`, parameter expansion. Those stay fine.
+The exception that already holds: `git`, `gh`, `bundle`, `ssh`, `scp`, `sshpass`, plain `ls`, `mkdir`, `cd`, `print`, `echo`, parameter expansion. Those stay fine.
+
+**Narrow exceptions:**
+- `eval` — only for loading exports from `.zshrc` (`eval "$(grep '^export' ~/.zshrc)"`). Banned for arbitrary code execution.
+- `bundle exec ruby exe/master` — permitted because it boots the project executable. Standalone `ruby -e` from zsh stays banned; use `tmp/patch.rb` + `ruby tmp/patch.rb` for transient scripts.
