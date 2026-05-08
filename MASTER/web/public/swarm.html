@@ -7,16 +7,16 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden;background:#000}
-canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;cursor:none}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;cursor:none}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <script>
-'use strict';
+"use strict";
 const W = 320, H = 200;
-const cv = document.getElementById('c');
-const ctx = cv.getContext('2d', { alpha:false });
+const cv = document.getElementById("c");
+const ctx = cv.getContext("2d", { alpha:false });
 ctx.imageSmoothingEnabled = false;
 
 function resize(){
@@ -25,173 +25,129 @@ function resize(){
   cv.height = Math.floor(innerHeight * dpr);
 }
 resize();
-addEventListener('resize', resize);
+addEventListener("resize", resize);
 
-const N = 480;
-const boids = new Array(N);
-for (let i=0; i<N; i++) {
-  boids[i] = {
+const N = 720;
+const ps = new Array(N);
+for (let i=0; i<N; i++){
+  const z = 0.3 + Math.random()*0.7;
+  ps[i] = {
     x: Math.random()*W, y: Math.random()*H,
-    vx: (Math.random()-0.5)*1.2, vy: (Math.random()-0.5)*1.2
+    px: 0, py: 0, z,
+    speed: 0.55 + z*0.95,
+    jitter: (Math.random()-0.5)*0.3
   };
+  ps[i].px = ps[i].x;
+  ps[i].py = ps[i].y;
 }
 
-let mode = 'idle';
+let mode = "idle";
 let modeUntil = 0;
-let speed = 1.0;
-let target = null;
+let confidence = 1.0;
 let flashUntil = 0;
 const pointer = { x: W/2, y: H/2, active:false };
 
-const PALETTE = {
-  idle:   '#cfd2d6',
-  cohere: '#7df9ff',
-  burst:  '#ff8f3a',
-  ripple: '#ff6cc8',
-  slow:   '#5a78a8'
+const PAL = {
+  idle:   ["#2e2a26","#544b41","#7c7164"],
+  cohere: ["#2a3a44","#4f6f80","#7da0b8"],
+  burst:  ["#3a1808","#8a3812","#d56830"],
+  ripple: ["#2e1a3e","#603a72","#9a5cb0"],
+  slow:   ["#202c40","#3e4c66","#5e6c88"]
 };
 
-const density = new Uint8Array(W*H);
-
-function paintDefaultDensity(){
-  density.fill(0);
-  for (let y=8; y<H-8; y+=14) {
-    for (let x=W*0.18|0; x<W*0.82; x++) {
-      const a = 220 - Math.abs(x - W/2)*1.4;
-      if (a > 0) density[y*W + x] = Math.max(density[y*W + x], a|0);
-    }
-  }
-  const corners = [[10,10],[W-12,10],[10,H-12],[W-12,H-12]];
-  for (const [cx,cy] of corners) {
-    for (let dy=-6; dy<=6; dy++) for (let dx=-6; dx<=6; dx++) {
-      const x = cx+dx, y = cy+dy;
-      if (x<0||y<0||x>=W||y>=H) continue;
-      const a = 255 - (dx*dx+dy*dy)*4;
-      if (a > 0) density[y*W + x] = Math.max(density[y*W + x], a|0);
-    }
-  }
-}
-paintDefaultDensity();
-
-function paintRectsDensity(rects){
-  density.fill(0);
-  for (const r of rects) {
-    const x0 = Math.max(0, r.x|0), y0 = Math.max(0, r.y|0);
-    const x1 = Math.min(W, (r.x + r.w)|0), y1 = Math.min(H, (r.y + r.h)|0);
-    const peak = r.kind === 'metal' ? 255 : 180;
-    for (let y=y0; y<y1; y++) for (let x=x0; x<x1; x++) {
-      density[y*W + x] = Math.max(density[y*W + x], peak);
-    }
-  }
-}
-
-addEventListener('pointermove', e => {
+addEventListener("pointermove", e => {
   pointer.x = (e.clientX / innerWidth) * W;
   pointer.y = (e.clientY / innerHeight) * H;
   pointer.active = true;
 });
-addEventListener('pointerout', () => { pointer.active = false; });
+addEventListener("pointerout", () => { pointer.active = false; });
 
-addEventListener('message', e => {
+addEventListener("message", e => {
   const d = e.data || {};
-  switch (d.type) {
-    case 'morph':
-      mode = 'cohere'; modeUntil = performance.now() + 2400;
-      target = { x: W/2, y: H/2 }; break;
-    case 'confidence':
-      speed = 0.6 + Math.max(0, Math.min(1, +d.c||0)) * 1.0; break;
-    case 'escalation':
-      mode = 'burst'; modeUntil = performance.now() + 900;
-      flashUntil = performance.now() + 120; break;
-    case 'tool':
-      mode = 'ripple'; modeUntil = performance.now() + 600;
-      target = { x: Math.random()*W, y: Math.random()*H }; break;
-    case 'confirm:pending':
-      mode = 'slow'; modeUntil = performance.now() + 3000; break;
-    case 'density':
-      Array.isArray(d.rects) ? paintRectsDensity(d.rects) : paintDefaultDensity(); break;
+  switch (d.type){
+    case "morph":
+      mode = "cohere"; modeUntil = performance.now() + 2400; break;
+    case "confidence":
+      confidence = 0.55 + Math.max(0, Math.min(1, +d.c||0)) * 1.05; break;
+    case "escalation":
+      mode = "burst"; modeUntil = performance.now() + 900;
+      flashUntil = performance.now() + 110; break;
+    case "tool":
+      mode = "ripple"; modeUntil = performance.now() + 600; break;
+    case "confirm:pending":
+      mode = "slow"; modeUntil = performance.now() + 3000; break;
   }
 });
 
-function sampleGradient(x, y){
-  const xi = x|0, yi = y|0;
-  if (xi<1||yi<1||xi>=W-1||yi>=H-1) return [0,0,0];
-  const here = density[yi*W + xi];
-  const gx = density[yi*W + xi+1] - density[yi*W + xi-1];
-  const gy = density[(yi+1)*W + xi] - density[(yi-1)*W + xi];
-  return [gx, gy, here];
+// Curl-noise-ish field. Two harmonics, divergence-free shape, slight upward bias.
+function field(x, y, t){
+  const fx = Math.sin(y*0.022 + t*0.00040)
+           + 0.55*Math.sin(y*0.071 - t*0.00072)
+           + 0.30*Math.cos(x*0.013 + t*0.00018);
+  const fy = Math.cos(x*0.022 + t*0.00040)
+           + 0.55*Math.cos(x*0.054 + t*0.00091)
+           - 0.18;
+  return [fx*0.95, fy*0.95];
 }
 
-const buf = document.createElement('canvas');
+const buf = document.createElement("canvas");
 buf.width = W; buf.height = H;
-const bctx = buf.getContext('2d', { alpha:false });
-bctx.imageSmoothingEnabled = false;
-bctx.fillStyle = '#000';
+const bctx = buf.getContext("2d", { alpha:false });
+bctx.fillStyle = "#000";
 bctx.fillRect(0,0,W,H);
+bctx.lineCap = "round";
 
 function step(){
   const now = performance.now();
-  if (now > modeUntil) mode = 'idle';
+  if (now > modeUntil) mode = "idle";
 
-  bctx.fillStyle = 'rgba(0,0,0,0.18)';
+  // Long persistence: streaks fade slow → flying-blur look
+  bctx.fillStyle = "rgba(0,0,0,0.16)";
   bctx.fillRect(0,0,W,H);
 
-  const sepR = 4, alignR = 12, cohR = 16;
-  const cohereBoost = mode === 'cohere' ? 4 : 1;
-  const burstBoost  = mode === 'burst'  ? 2 : 1;
-  const slowDamp    = mode === 'slow'   ? 0.4 : 1;
-  const densityK    = mode === 'burst' ? 0.00018 : 0.00065;
+  const palette = PAL[mode] || PAL.idle;
+  const slowDamp = mode === "slow"  ? 0.55 : 1.0;
+  const burstK   = mode === "burst" ? 1.75 : 1.0;
+  const rippleK  = mode === "ripple" ? 1.25 : 1.0;
+  const baseSpeed = confidence * burstK * slowDamp * rippleK;
 
-  for (let i=0; i<N; i++) {
-    const b = boids[i];
-    let sx=0, sy=0, ax=0, ay=0, cx=0, cy=0, sn=0, an=0, cn=0;
-    for (let j=0; j<N; j++) {
-      if (i===j) continue;
-      const o = boids[j];
-      const dx = o.x - b.x, dy = o.y - b.y;
-      const d2 = dx*dx + dy*dy;
-      if (d2 < sepR*sepR && d2 > 0.001) { sx -= dx; sy -= dy; sn++; }
-      if (d2 < alignR*alignR) { ax += o.vx; ay += o.vy; an++; }
-      if (d2 < cohR*cohR)    { cx += o.x;  cy += o.y;  cn++; }
-    }
-    if (sn>0) { b.vx += (sx/sn)*0.05; b.vy += (sy/sn)*0.05; }
-    if (an>0) { b.vx += (ax/an - b.vx)*0.04; b.vy += (ay/an - b.vy)*0.04; }
-    if (cn>0) { b.vx += (cx/cn - b.x)*0.0008*cohereBoost; b.vy += (cy/cn - b.y)*0.0008*cohereBoost; }
+  for (let i=0; i<N; i++){
+    const p = ps[i];
+    p.px = p.x; p.py = p.y;
 
-    const [gx, gy] = sampleGradient(b.x, b.y);
-    b.vx += gx * densityK; b.vy += gy * densityK;
+    let [fx, fy] = field(p.x, p.y, now);
 
-    const aim = (mode === 'cohere' || mode === 'ripple') ? target : (pointer.active ? pointer : null);
-    if (aim) {
-      const dx = aim.x - b.x, dy = aim.y - b.y;
-      const k = mode === 'ripple' ? -0.012 : 0.004;
-      b.vx += dx*k; b.vy += dy*k;
+    // Pointer = gentle deflection (NOT attraction). Particles fly past it.
+    if (pointer.active){
+      const dx = p.x - pointer.x, dy = p.y - pointer.y;
+      const r2 = dx*dx + dy*dy;
+      if (r2 < 1100 && r2 > 0.5){
+        const r = Math.sqrt(r2);
+        const k = (1 - r2/1100) * 0.65;
+        fx += dx/r * k;
+        fy += dy/r * k;
+      }
     }
 
-    b.vx *= slowDamp; b.vy *= slowDamp;
+    fx += p.jitter * (Math.random()-0.5);
+    fy += p.jitter * (Math.random()-0.5);
 
-    const sp = Math.hypot(b.vx, b.vy);
-    const cap = 1.6 * speed * burstBoost;
-    if (sp > cap) { b.vx = b.vx/sp*cap; b.vy = b.vy/sp*cap; }
+    const sp = p.speed * baseSpeed;
+    p.x += fx * sp;
+    p.y += fy * sp;
 
-    b.x += b.vx; b.y += b.vy;
-    if (b.x < 0) b.x += W; else if (b.x >= W) b.x -= W;
-    if (b.y < 0) b.y += H; else if (b.y >= H) b.y -= H;
-  }
+    if (p.x < 0)        p.x += W, p.px = p.x;
+    else if (p.x >= W)  p.x -= W, p.px = p.x;
+    if (p.y < 0)        p.y += H, p.py = p.y;
+    else if (p.y >= H)  p.y -= H, p.py = p.y;
 
-  const baseColor = (now < flashUntil) ? '#fff' : PALETTE[mode] || PALETTE.idle;
-  bctx.fillStyle = baseColor;
-  for (let i=0; i<N; i++) {
-    const b = boids[i];
-    const x = b.x|0, y = b.y|0;
-    bctx.fillRect(x, y, 2, 2);
-  }
-
-  if (pointer.active) {
-    bctx.fillStyle = '#fff';
-    const px = pointer.x|0, py = pointer.y|0;
-    bctx.fillRect(px-1, py, 3, 1);
-    bctx.fillRect(px, py-1, 1, 3);
+    const tier = p.z < 0.5 ? 0 : (p.z < 0.8 ? 1 : 2);
+    bctx.strokeStyle = (now < flashUntil) ? "#fff" : palette[tier];
+    bctx.lineWidth   = p.z < 0.5 ? 0.6 : (p.z < 0.8 ? 1.0 : 1.4);
+    bctx.beginPath();
+    bctx.moveTo(p.px, p.py);
+    bctx.lineTo(p.x,  p.y);
+    bctx.stroke();
   }
 
   ctx.imageSmoothingEnabled = false;
