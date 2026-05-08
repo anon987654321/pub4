@@ -633,7 +633,7 @@ rules:
       tier: clarity
       severity: info
       autofix: false
-      detect_semantic: "Does this file follow the order: magic comments, requires, module, constants, public, private, end?"
+      detect_structural: file_layout
       fix: "Reorder to match convention."
       languages: [ruby]
 
@@ -867,8 +867,7 @@ rules:
       tier: design
       severity: warning
       autofix: true
-      detect_lexical: null
-      detect_semantic: "Does a method both return data and change state?"
+      detect_structural: cqs
       fix: "Split: query() + command(). Never mix."
       languages: [ruby]
 
@@ -1220,7 +1219,7 @@ rules:
       tier: kernel
       severity: warning
       autofix: true
-      detect_semantic: "Is this line relying on implicit behavior?"
+      detect_structural: explicit
       fix: "Make it explicit."
 
     - id: SELF_EXPLAINING
