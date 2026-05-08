@@ -24,6 +24,11 @@
 #                       codebase-model scanner mode.
 #
 # a rule may carry any combination; each axis emits separate findings tagged by id.
+# the axes themselves are the cost gradient — lexical is free, structural is
+# fast and deterministic, semantic is expensive, history needs git, convention
+# needs a codebase model. there is no separate cost: field; the axis is the
+# cost. frequency is also implicit: every wired rule runs every scan; opt out
+# at the wiring layer (infra_helpers.rb), never via a per-rule knob.
 # rule shape:
 #   id: SCREAMING_SNAKE
 #   name: short concrete sentence
