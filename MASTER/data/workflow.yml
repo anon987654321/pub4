@@ -67,7 +67,7 @@ scan_rules:
     - pola
     - nielsen
   deep_only:
-    - conceptual
+    - semantic
     - adversarial
   hunt_only:
     - rubocop
@@ -75,7 +75,7 @@ scan_rules:
   notes:
     nielsen: "puts is NOT debug output in a CLI. Only p, pp, binding.pry, debugger are."
     prune: "Loads patterns from data/rules.yml (voice.strunk) — single source of truth."
-    conceptual: "Loads philosophy from data/rules.yml (zen + voice) — single source of truth."
+    semantic: "Loads philosophy from data/rules.yml (zen + voice) — single source of truth."
     deep_caution: "deep adds 2 LLM calls per file. With 90 files at 8 req/min free tier = 22+ minutes."
 
 principle_groups:
@@ -83,7 +83,7 @@ principle_groups:
   solid:       [srp, cqs, pola]
   clean_code:  [long_method, god_class, duplicate_code, bare_rescue]
   interface:   [nielsen, prune]
-  llm_rules:   [conceptual, adversarial]
+  llm_rules:   [semantic, adversarial]
   heavy:       [rubocop, reek]
   quick:       [frozen_string, bare_rescue, explicit, long_method, god_class]
   critical:    [frozen_string, bare_rescue, explicit, immutable, srp, cqs]
@@ -128,7 +128,7 @@ universal_scope:
     Language-specific rules apply only to their target language; universal rules
     (SQUINT_TEST, TYPOGRAPHY_DISCIPLINE, MEANINGFUL_NAMES, etc.) apply everywhere.
   scan_glob: "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}"
-  conceptual_rules: all_known_languages
+  semantic_rules: all_known_languages
   adversarial_rules: all_known_languages
 
 autoloop:
@@ -155,7 +155,7 @@ autoloop:
     - patch_
   skip_rules:
     - duplicate_code
-    - conceptual
+    - semantic
     - adversarial
     - axiom_coverage
     - immutable

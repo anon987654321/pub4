@@ -39,11 +39,11 @@ rules:
     enforcement: lib/master/scan/rules/comment_quality_rule.rb
     test: null
 
-  - id: conceptual
+  - id: semantic
     description: "LLM-based rule review (deep scan only)"
     severity: warning
     axiom_tags: []
-    enforcement: lib/master/scan/rules/conceptual_rule.rb
+    enforcement: lib/master/scan/rules/semantic_rule.rb
     test: null
 
   - id: cqs

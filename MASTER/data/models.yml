@@ -247,7 +247,7 @@ operation_constraints:
   autoloop:         { min_quality: 0.88, preferred_tier: strong }
   sweep:            { min_quality: 0.88, preferred_tier: strong }
   council:          { min_quality: 0.88, preferred_tier: strong }
-  scan_conceptual:  { min_quality: 0.88, preferred_tier: strong }
+  scan_semantic:  { min_quality: 0.88, preferred_tier: strong }
   scan_adversarial: { min_quality: 0.88, preferred_tier: strong }
   destructive:      { min_quality: 0.90, preferred_tier: strong }
 

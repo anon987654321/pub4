@@ -268,14 +268,14 @@ scan_depths:
     - OpportunityRule
     - InterconnectRule
     - AdversarialRule
-    - ConceptualRule
+    - SemanticRule
     - CommentDriftRule
     - CoChangeCouplingRule
     - FileLayoutRule
     - VerticalRhythmRule
     - NamingSilhouetteRule
     - FileSilhouetteRule
-    - ConceptualOpportunityRule
+    - SemanticOpportunityRule
   hunt: *deep
   critique: *deep
 
@@ -321,7 +321,7 @@ rules:
       tier: kernel
       severity: error
       autofix: false
-      detect_conceptual: "Does this change modify working code without reading it first?"
+      detect_semantic: "Does this change modify working code without reading it first?"
       fix: "Read before write. Patch minimally."
 
     - id: ONE_SOURCE
@@ -329,7 +329,7 @@ rules:
       tier: kernel
       severity: error
       autofix: true
-      detect_conceptual: "Is the same logic or data defined in multiple places?"
+      detect_semantic: "Is the same logic or data defined in multiple places?"
       fix: "Extract to single source, reference from all consumers."
 
     - id: DECOUPLE
@@ -337,7 +337,7 @@ rules:
       tier: kernel
       severity: error
       autofix: false
-      detect_conceptual: "Are there implicit couplings between modules that should be injected?"
+      detect_semantic: "Are there implicit couplings between modules that should be injected?"
       fix: "Inject dependencies through constructor. No global state."
 
     - id: DEGRADE_GRACEFULLY
@@ -345,7 +345,7 @@ rules:
       tier: kernel
       severity: error
       autofix: false
-      detect_conceptual: "Does this code crash on partial failure instead of degrading?"
+      detect_semantic: "Does this code crash on partial failure instead of degrading?"
       fix: "Circuit breakers, timeouts, fallbacks."
 
     - id: GALLS_LAW
@@ -353,7 +353,7 @@ rules:
       tier: philosophy
       severity: info
       autofix: false
-      detect_conceptual: "Is this attempting to build a complex system from scratch rather than evolving from a working simple one?"
+      detect_semantic: "Is this attempting to build a complex system from scratch rather than evolving from a working simple one?"
       fix: "Start simple, prove it works, then extend."
 
     - id: CHESTERTONS_FENCE
@@ -361,7 +361,7 @@ rules:
       tier: philosophy
       severity: warning
       autofix: false
-      detect_conceptual: "Is code being removed without understanding why it was added?"
+      detect_semantic: "Is code being removed without understanding why it was added?"
       fix: "Read git blame, understand the rationale, then decide."
 
     - id: UNIX_PHILOSOPHY
@@ -369,7 +369,7 @@ rules:
       tier: architecture
       severity: info
       autofix: false
-      detect_conceptual: "Does this module try to do too many unrelated things?"
+      detect_semantic: "Does this module try to do too many unrelated things?"
       fix: "Extract services. Clear module boundaries. Compose with pipes."
 
     - id: FUNCTIONAL_CORE
@@ -377,7 +377,7 @@ rules:
       tier: architecture
       severity: info
       autofix: false
-      detect_conceptual: "Are IO/DB calls scattered deep in business logic?"
+      detect_semantic: "Are IO/DB calls scattered deep in business logic?"
       fix: "Return data from core, let shell handle IO."
 
     - id: CONVENTION_OVER_CONFIG
@@ -385,7 +385,7 @@ rules:
       tier: productivity
       severity: info
       autofix: false
-      detect_conceptual: "Does this require explicit config where a convention would suffice?"
+      detect_semantic: "Does this require explicit config where a convention would suffice?"
       fix: "Provide sensible defaults, override only when needed."
 
     - id: MONOLITH_FIRST
@@ -393,7 +393,7 @@ rules:
       tier: architecture
       severity: info
       autofix: false
-      detect_conceptual: "Is this prematurely splitting into services?"
+      detect_semantic: "Is this prematurely splitting into services?"
       fix: "Keep it in one app until extraction is clearly needed."
 
     - id: CONSISTENT_ERROR_STRATEGY
@@ -401,15 +401,15 @@ rules:
       tier: design
       severity: warning
       autofix: false
-      detect_conceptual: "Does this module mix Result objects, exceptions, and nil-returns?"
+      detect_semantic: "Does this module mix Result objects, exceptions, and nil-returns?"
       fix: "Pick one strategy per module. MASTER uses Result monad."
 
     - id: DUAL_DETECTION
-      name: "Layer lexical and conceptual detection"
+      name: "Layer lexical and semantic detection"
       tier: verification
       severity: info
       autofix: false
-      detect_conceptual: "Is detection relying on regex alone or LLM alone?"
+      detect_semantic: "Is detection relying on regex alone or LLM alone?"
       fix: "Layer deterministic patterns with LLM semantic analysis."
 
     - id: MASS_GENERATE_CURATE
@@ -417,7 +417,7 @@ rules:
       tier: creative
       severity: info
       autofix: false
-      detect_conceptual: "Is the first draft being accepted without exploring alternatives?"
+      detect_semantic: "Is the first draft being accepted without exploring alternatives?"
       fix: "Generate a swarm and curate when stakes are high."
 
     - id: NO_GOD_CLASS
@@ -425,7 +425,7 @@ rules:
       tier: core
       severity: error
       autofix: false
-      detect_conceptual: "Does any class exceed 300 lines or 20 public methods?"
+      detect_semantic: "Does any class exceed 300 lines or 20 public methods?"
       fix: "Decompose into focused classes."
 
     - id: NO_SHOTGUN_SURGERY
@@ -433,7 +433,7 @@ rules:
       tier: core
       severity: warning
       autofix: false
-      detect_conceptual: "Does a single conceptual change span many files?"
+      detect_semantic: "Does a single conceptual change span many files?"
       fix: "Extract the missing abstraction."
 
     - id: NO_HIDDEN_GLOBAL_STATE
@@ -441,7 +441,7 @@ rules:
       tier: core
       severity: error
       autofix: false
-      detect_conceptual: "Are there global variables or class-level mutable state shared across modules?"
+      detect_semantic: "Are there global variables or class-level mutable state shared across modules?"
       fix: "Inject configuration. Use dependency injection."
 
     - id: TRACER_BULLETS
@@ -449,7 +449,7 @@ rules:
       tier: architecture
       severity: info
       autofix: false
-      detect_conceptual: "Is this building infrastructure without an end-to-end path? Is this business plan elaborating budgets before proving the revenue model? Is this research paper expanding methodology before demonstrating the finding?"
+      detect_semantic: "Is this building infrastructure without an end-to-end path? Is this business plan elaborating budgets before proving the revenue model? Is this research paper expanding methodology before demonstrating the finding?"
       fix: "Wire the simplest end-to-end path first. Prove it works. Then add depth."
 
     - id: ORTHOGONALITY
@@ -457,7 +457,7 @@ rules:
       tier: architecture
       severity: warning
       autofix: false
-      detect_conceptual: "Does changing one aspect force changes in unrelated aspects? Does reformatting break content? Does modifying one gene's expression alter another pathway?"
+      detect_semantic: "Does changing one aspect force changes in unrelated aspects? Does reformatting break content? Does modifying one gene's expression alter another pathway?"
       fix: "Decouple dimensions. Database changes should not require UI changes. Style should not affect structure."
 
     - id: TRANSFORMATIONS
@@ -465,7 +465,7 @@ rules:
       tier: architecture
       severity: info
       autofix: false
-      detect_conceptual: "Is this modeling the problem as mutable state instead of flowing transformations? Does this document bury its flow in scattered cross-references?"
+      detect_semantic: "Is this modeling the problem as mutable state instead of flowing transformations? Does this document bury its flow in scattered cross-references?"
       fix: "Express work as a chain of transformations. Each stage takes input, produces output, holds no state."
 
     - id: DEEP_MODULES
@@ -473,7 +473,7 @@ rules:
       tier: architecture
       severity: warning
       autofix: false
-      detect_conceptual: "Is this module shallow — complex interface, trivial implementation? Does this form ask 40 questions for a simple task? Does this clause require five cross-references?"
+      detect_semantic: "Is this module shallow — complex interface, trivial implementation? Does this form ask 40 questions for a simple task? Does this clause require five cross-references?"
       fix: "Simple interface, rich implementation. A deep module does much with little ceremony."
 
     - id: INFORMATION_HIDING
@@ -481,7 +481,7 @@ rules:
       tier: architecture
       severity: warning
       autofix: false
-      detect_conceptual: "Is implementation detail leaking across boundaries? Would changing an internal decision force changes elsewhere?"
+      detect_semantic: "Is implementation detail leaking across boundaries? Would changing an internal decision force changes elsewhere?"
       fix: "Encapsulate each decision in one module. If it changes, only that module changes."
 
     - id: DIFFERENT_LAYER_DIFFERENT_ABSTRACTION
@@ -489,7 +489,7 @@ rules:
       tier: architecture
       severity: warning
       autofix: false
-      detect_conceptual: "Do adjacent layers use the same abstraction? Are there pass-through methods that add no value? Does this management layer just relay without transforming?"
+      detect_semantic: "Do adjacent layers use the same abstraction? Are there pass-through methods that add no value? Does this management layer just relay without transforming?"
       fix: "Each layer must transform, not relay. If a layer adds no abstraction, remove it."
 
     - id: STRUCTURAL_HONESTY
@@ -497,7 +497,7 @@ rules:
       tier: architecture
       severity: warning
       autofix: false
-      detect_conceptual: "Does the structure match the domain? Does the module hierarchy match the conceptual hierarchy? Does the floor plan match the workflow?"
+      detect_semantic: "Does the structure match the domain? Does the module hierarchy match the conceptual hierarchy? Does the floor plan match the workflow?"
       fix: "Align structure with reality. Natural domain boundaries become system boundaries."
 
     - id: GRACEFUL_BOUNDARIES
@@ -505,7 +505,7 @@ rules:
       tier: architecture
       severity: info
       autofix: false
-      detect_conceptual: "Does this boundary assume perfect fidelity? Does this integration assume the other side never changes?"
+      detect_semantic: "Does this boundary assume perfect fidelity? Does this integration assume the other side never changes?"
       fix: "Every boundary is a translation layer. Validate at every boundary. Degrade gracefully when translation fails."
 
     - id: PULL_COMPLEXITY_DOWN
@@ -513,7 +513,7 @@ rules:
       tier: architecture
       severity: info
       autofix: false
-      detect_conceptual: "Is complexity pushed up to the caller instead of absorbed by the implementation?"
+      detect_semantic: "Is complexity pushed up to the caller instead of absorbed by the implementation?"
       fix: "Absorb complexity into the implementation. The caller should not need to know how it works."
 
     - id: ETC
@@ -521,7 +521,7 @@ rules:
       tier: philosophy
       severity: info
       autofix: false
-      detect_conceptual: "Does this design decision make the system harder to change? Does this contract make renegotiation unnecessarily difficult?"
+      detect_semantic: "Does this design decision make the system harder to change? Does this contract make renegotiation unnecessarily difficult?"
       fix: "Choose the option that keeps more options open. Decoupled, parameterized, replaceable."
 
     - id: BROKEN_WINDOWS
@@ -529,7 +529,7 @@ rules:
       tier: philosophy
       severity: warning
       autofix: false
-      detect_conceptual: "Is there visible rot being left unfixed — dead code, broken links, stale references? In a brief, citations to overruled cases?"
+      detect_semantic: "Is there visible rot being left unfixed — dead code, broken links, stale references? In a brief, citations to overruled cases?"
       fix: "Fix it now. One broken window invites more."
 
     - id: ENTROPY_RESISTANCE
@@ -537,7 +537,7 @@ rules:
       tier: philosophy
       severity: warning
       autofix: false
-      detect_conceptual: "Is there creeping disorder — naming inconsistencies, abandoned conventions, accumulating exceptions? In a legal code, contradictory amendments?"
+      detect_semantic: "Is there creeping disorder — naming inconsistencies, abandoned conventions, accumulating exceptions? In a legal code, contradictory amendments?"
       fix: "Actively resist entropy. Regular cleanup. Remove what no longer serves."
 
     - id: DONT_OUTRUN_HEADLIGHTS
@@ -545,7 +545,7 @@ rules:
       tier: philosophy
       severity: info
       autofix: false
-      detect_conceptual: "Is this making detailed plans for unpredictable scenarios? Projecting five years out? Designing for hypothetical scale?"
+      detect_semantic: "Is this making detailed plans for unpredictable scenarios? Projecting five years out? Designing for hypothetical scale?"
       fix: "Small deliberate steps. Reassess after each. Feedback from each step illuminates the next."
 
     - id: REVERSIBILITY
@@ -553,7 +553,7 @@ rules:
       tier: philosophy
       severity: info
       autofix: false
-      detect_conceptual: "Is this decision hard to reverse? Does it lock in a vendor? Waive future rights? Have no rollback pathway?"
+      detect_semantic: "Is this decision hard to reverse? Does it lock in a vendor? Waive future rights? Have no rollback pathway?"
       fix: "Soft-delete over hard-delete. Option agreements over binding. Feature flags over big-bang."
 
     - id: DESIGN_IT_TWICE
@@ -561,7 +561,7 @@ rules:
       tier: philosophy
       severity: info
       autofix: false
-      detect_conceptual: "Was this designed once without considering alternatives?"
+      detect_semantic: "Was this designed once without considering alternatives?"
       fix: "Sketch two designs. Compare tradeoffs. Five minutes saves five days."
 
     - id: PROPERTY_BASED_TESTING
@@ -569,7 +569,7 @@ rules:
       tier: verification
       severity: info
       autofix: false
-      detect_conceptual: "Are tests only checking specific examples instead of universal properties? Is QA only sampling instead of testing invariants?"
+      detect_semantic: "Are tests only checking specific examples instead of universal properties? Is QA only sampling instead of testing invariants?"
       fix: "Define properties that must always hold. Generate many inputs. Verify the property survives all."
 
   file:
@@ -579,7 +579,7 @@ rules:
       tier: kernel
       severity: error
       autofix: false
-      detect_conceptual: "Does this file perform expensive operations (API calls, disk IO) without checking preconditions?"
+      detect_semantic: "Does this file perform expensive operations (API calls, disk IO) without checking preconditions?"
       fix: "Guard clause before costly work. Estimate cost. Confirm if destructive."
 
     - id: SMALL_FILES
@@ -588,7 +588,7 @@ rules:
       severity: warning
       autofix: false
       detect_lexical: null
-      detect_conceptual: "Does this file exceed 300 lines?"
+      detect_semantic: "Does this file exceed 300 lines?"
       fix: "Split at module boundaries."
 
     - id: CONSISTENT_FILE_STRUCTURE
@@ -596,7 +596,7 @@ rules:
       tier: clarity
       severity: info
       autofix: false
-      detect_conceptual: "Does this file follow the order: magic comments, requires, module, constants, public, private, end?"
+      detect_semantic: "Does this file follow the order: magic comments, requires, module, constants, public, private, end?"
       fix: "Reorder to match convention."
       languages: [ruby]
 
@@ -678,7 +678,7 @@ rules:
       severity: info
       autofix: true
       detect_lexical: "\\n{4,}"
-      detect_conceptual: "Does this file have dense blocks with no visual breaks, or ragged indentation?"
+      detect_semantic: "Does this file have dense blocks with no visual breaks, or ragged indentation?"
       fix: "One blank line between sections, never more than two consecutive."
 
     - id: WHITESPACE_PUNCTUATION
@@ -695,7 +695,7 @@ rules:
       severity: warning
       autofix: false
       detect_lexical: "<%|<script|<style|SQL|HEREDOC"
-      detect_conceptual: "Does this file embed multiple languages or notations? Does this document mix incompatible frameworks?"
+      detect_semantic: "Does this file embed multiple languages or notations? Does this document mix incompatible frameworks?"
       fix: "One language per layer. Separate into distinct files or clearly demarcated sections."
 
     - id: ARTIFICIAL_COUPLING
@@ -703,7 +703,7 @@ rules:
       tier: clean_code
       severity: warning
       autofix: false
-      detect_conceptual: "Are unrelated concepts coupled by proximity or shared container? In a filing, are unrelated claims bundled into one count?"
+      detect_semantic: "Are unrelated concepts coupled by proximity or shared container? In a filing, are unrelated claims bundled into one count?"
       fix: "Separate into independent units. Each removable without affecting others."
 
   unit:
@@ -713,7 +713,7 @@ rules:
       tier: kernel
       severity: error
       autofix: false
-      detect_conceptual: "Does this unit introduce unnecessary complexity?"
+      detect_semantic: "Does this unit introduce unnecessary complexity?"
       fix: "Delete abstractions until it hurts. KISS."
 
     - id: FAIL_VISIBLY
@@ -722,7 +722,7 @@ rules:
       severity: error
       autofix: false
       detect_lexical: "rescue\\s*$|rescue\\s+Exception"
-      detect_conceptual: "Does this code swallow exceptions or fail silently?"
+      detect_semantic: "Does this code swallow exceptions or fail silently?"
       fix: "Catch specific errors, log context, re-raise or return Result."
 
     - id: BE_CONCISE
@@ -730,7 +730,7 @@ rules:
       tier: kernel
       severity: warning
       autofix: true
-      detect_conceptual: "Does this unit contain unnecessary verbosity?"
+      detect_semantic: "Does this unit contain unnecessary verbosity?"
       fix: "Omit needless words. Omit needless code."
 
     - id: DRY
@@ -739,7 +739,7 @@ rules:
       severity: warning
       autofix: false
       aliases: [duplicate_code]
-      detect_conceptual: "Are two units expressing the same idea twice?"
+      detect_semantic: "Are two units expressing the same idea twice?"
       fix: "MERGE or DEFRAG. Pass the difference as an argument; never copy a block to vary one literal."
       tension: "DRY conflicts with WET/AHA — singularity wins for data, DRY wins for code."
 
@@ -749,7 +749,7 @@ rules:
       severity: warning
       autofix: false
       aliases: [long_method, god_class, nesting_depth, arity]
-      detect_conceptual: "Does this unit introduce complexity the problem doesn't require?"
+      detect_semantic: "Does this unit introduce complexity the problem doesn't require?"
       fix: "FLATTEN nesting; SPLIT god classes; INLINE single-call helpers; delete abstractions until it hurts."
 
     - id: POLA_PRINCIPLE
@@ -758,7 +758,7 @@ rules:
       severity: warning
       autofix: false
       aliases: [pola]
-      detect_conceptual: "Does the name promise behavior the implementation contradicts?"
+      detect_semantic: "Does the name promise behavior the implementation contradicts?"
       fix: "NAME truthfully; rename when the implementation drifts."
 
     - id: SRP
@@ -766,7 +766,7 @@ rules:
       tier: solid
       severity: warning
       autofix: false
-      detect_conceptual: "Does this class have more than one reason to change?"
+      detect_semantic: "Does this class have more than one reason to change?"
       fix: "Extract concerns into focused classes."
 
     - id: OPEN_CLOSED
@@ -774,7 +774,7 @@ rules:
       tier: solid
       severity: warning
       autofix: false
-      detect_conceptual: "Must you modify core code to extend this?"
+      detect_semantic: "Must you modify core code to extend this?"
       fix: "Strategy pattern, dependency injection, hooks."
 
     - id: LISKOV
@@ -782,7 +782,7 @@ rules:
       tier: solid
       severity: warning
       autofix: false
-      detect_conceptual: "Does a subclass break the parent's contract?"
+      detect_semantic: "Does a subclass break the parent's contract?"
       fix: "Use composition if substitutability fails."
 
     - id: INTERFACE_SEGREGATION
@@ -790,7 +790,7 @@ rules:
       tier: solid
       severity: warning
       autofix: false
-      detect_conceptual: "Does this interface force implementors to stub unused methods?"
+      detect_semantic: "Does this interface force implementors to stub unused methods?"
       fix: "Split into smaller role-based interfaces."
 
     - id: DEPENDENCY_INVERSION
@@ -798,7 +798,7 @@ rules:
       tier: solid
       severity: warning
       autofix: false
-      detect_conceptual: "Does this class directly instantiate its dependencies?"
+      detect_semantic: "Does this class directly instantiate its dependencies?"
       fix: "Inject dependencies through constructor."
 
     - id: ONE_JOB
@@ -806,7 +806,7 @@ rules:
       tier: philosophy
       severity: warning
       autofix: false
-      detect_conceptual: "Does this module handle unrelated responsibilities?"
+      detect_semantic: "Does this module handle unrelated responsibilities?"
       fix: "Split into focused modules."
 
     - id: NO_SURPRISES
@@ -814,7 +814,7 @@ rules:
       tier: philosophy
       severity: warning
       autofix: false
-      detect_conceptual: "Would a reader be surprised by this behavior?"
+      detect_semantic: "Would a reader be surprised by this behavior?"
       fix: "Rename or split to match expectations."
 
     - id: COMPOSABLE
@@ -822,7 +822,7 @@ rules:
       tier: philosophy
       severity: info
       autofix: false
-      detect_conceptual: "Is this monolithic where it could be composed from smaller parts?"
+      detect_semantic: "Is this monolithic where it could be composed from smaller parts?"
       fix: "Build small pieces that combine cleanly."
 
     - id: CQS
@@ -831,7 +831,7 @@ rules:
       severity: warning
       autofix: true
       detect_lexical: null
-      detect_conceptual: "Does a method both return data and change state?"
+      detect_semantic: "Does a method both return data and change state?"
       fix: "Split: query() + command(). Never mix."
       languages: [ruby]
 
@@ -841,7 +841,7 @@ rules:
       severity: warning
       autofix: true
       detect_lexical: "\\w+\\.\\w+\\.\\w+\\.\\w+"
-      detect_conceptual: "Does this code reach through multiple objects?"
+      detect_semantic: "Does this code reach through multiple objects?"
       fix: "Add delegate method. Talk only to direct collaborators."
 
     - id: COMPOSITION_OVER_INHERITANCE
@@ -849,7 +849,7 @@ rules:
       tier: design
       severity: info
       autofix: false
-      detect_conceptual: "Is inheritance used for code reuse rather than substitutability?"
+      detect_semantic: "Is inheritance used for code reuse rather than substitutability?"
       fix: "Use composition. Mixins for shared behavior."
 
     - id: SMALL_FUNCTIONS
@@ -857,7 +857,7 @@ rules:
       tier: clean_code
       severity: warning
       autofix: true
-      detect_conceptual: "Does this method exceed 20 lines?"
+      detect_semantic: "Does this method exceed 20 lines?"
       fix: "Extract: validate(), calculate(), persist()."
 
     - id: FEW_ARGUMENTS
@@ -874,7 +874,7 @@ rules:
       tier: clean_code
       severity: info
       autofix: false
-      detect_conceptual: "Does this function mix high-level policy with low-level detail?"
+      detect_semantic: "Does this function mix high-level policy with low-level detail?"
       fix: "Extract low-level detail into helper methods."
 
     - id: STEPDOWN
@@ -882,7 +882,7 @@ rules:
       tier: clean_code
       severity: info
       autofix: false
-      detect_conceptual: "Does this code read top-down like a newspaper?"
+      detect_semantic: "Does this code read top-down like a newspaper?"
       fix: "Public methods at top, private helpers below."
 
     - id: BOUNDARY_ISOLATION
@@ -890,7 +890,7 @@ rules:
       tier: clean_code
       severity: warning
       autofix: false
-      detect_conceptual: "Does third-party API surface leak into core logic?"
+      detect_semantic: "Does third-party API surface leak into core logic?"
       fix: "Wrap in adapter. Keep it from leaking."
 
     - id: NO_MAGIC
@@ -898,7 +898,7 @@ rules:
       tier: clean_code
       severity: warning
       autofix: true
-      detect_conceptual: "Are there unexplained numeric literals or boolean flags?"
+      detect_semantic: "Are there unexplained numeric literals or boolean flags?"
       fix: "Extract to named constants."
 
     - id: FAIL_FAST
@@ -906,7 +906,7 @@ rules:
       tier: reliability
       severity: warning
       autofix: true
-      detect_conceptual: "Does this code defer error reporting instead of failing immediately?"
+      detect_semantic: "Does this code defer error reporting instead of failing immediately?"
       fix: "Raise or return Result.err at point of detection."
 
     - id: IDEMPOTENT
@@ -914,7 +914,7 @@ rules:
       tier: reliability
       severity: info
       autofix: false
-      detect_conceptual: "Would repeating this operation produce different results?"
+      detect_semantic: "Would repeating this operation produce different results?"
       fix: "Use set_value() instead of increment(). Add idempotency keys."
 
     - id: DEFENSIVE_INPUT
@@ -922,7 +922,7 @@ rules:
       tier: reliability
       severity: warning
       autofix: true
-      detect_conceptual: "Is external input used without validation?"
+      detect_semantic: "Is external input used without validation?"
       fix: "Validate at boundaries. Whitelist, sanitize."
 
     - id: GRACEFUL_DEGRADATION
@@ -930,7 +930,7 @@ rules:
       tier: reliability
       severity: warning
       autofix: false
-      detect_conceptual: "Does one failure crash everything?"
+      detect_semantic: "Does one failure crash everything?"
       fix: "Circuit breakers, timeouts, fallback to stale data."
 
     - id: NO_SIDE_EFFECTS
@@ -938,7 +938,7 @@ rules:
       tier: functional
       severity: info
       autofix: false
-      detect_conceptual: "Does this function modify external state silently?"
+      detect_semantic: "Does this function modify external state silently?"
       fix: "Make side effects explicit. Return values instead of mutating."
 
     - id: IMMUTABLE
@@ -947,7 +947,7 @@ rules:
       severity: info
       autofix: true
       detect_lexical: "^\\s*[A-Z][A-Z_]*\\s*=\\s*[\\[{](?!.*\\.freeze)"
-      detect_conceptual: "Are mutable objects shared across threads or scopes?"
+      detect_semantic: "Are mutable objects shared across threads or scopes?"
       fix: "Freeze collections. Use frozen/const by default."
       languages: [ruby]
 
@@ -956,7 +956,7 @@ rules:
       tier: functional
       severity: info
       autofix: true
-      detect_conceptual: "Does this function depend on hidden state?"
+      detect_semantic: "Does this function depend on hidden state?"
       fix: "Pass all dependencies as parameters."
 
     - id: PRIMITIVE_OBSESSION
@@ -964,7 +964,7 @@ rules:
       tier: refactoring
       severity: info
       autofix: false
-      detect_conceptual: "Are primitives used where a value object would be clearer?"
+      detect_semantic: "Are primitives used where a value object would be clearer?"
       fix: "Create a value object."
 
     - id: MESSAGE_CHAIN
@@ -980,7 +980,7 @@ rules:
       tier: refactoring
       severity: info
       autofix: false
-      detect_conceptual: "Does this class delegate most methods to another?"
+      detect_semantic: "Does this class delegate most methods to another?"
       fix: "Remove middle man. Talk directly."
 
     - id: LAZY_CLASS
@@ -988,7 +988,7 @@ rules:
       tier: refactoring
       severity: info
       autofix: false
-      detect_conceptual: "Is this class doing too little to earn its existence?"
+      detect_semantic: "Is this class doing too little to earn its existence?"
       fix: "Inline into caller."
 
     - id: DIVERGENT_CHANGE
@@ -996,7 +996,7 @@ rules:
       tier: refactoring
       severity: warning
       autofix: false
-      detect_conceptual: "Is this class modified for multiple unrelated reasons?"
+      detect_semantic: "Is this class modified for multiple unrelated reasons?"
       fix: "Split by axis of change."
 
     - id: SPECULATIVE_GENERALITY
@@ -1004,7 +1004,7 @@ rules:
       tier: refactoring
       severity: info
       autofix: true
-      detect_conceptual: "Is this code written for a future requirement that does not exist yet?"
+      detect_semantic: "Is this code written for a future requirement that does not exist yet?"
       fix: "Delete it. YAGNI."
 
     - id: INAPPROPRIATE_INTIMACY
@@ -1012,7 +1012,7 @@ rules:
       tier: refactoring
       severity: warning
       autofix: false
-      detect_conceptual: "Does this code access internals of another class?"
+      detect_semantic: "Does this code access internals of another class?"
       fix: "Use public interface. Enforce boundaries."
 
     - id: SYSTEM_STATUS
@@ -1020,7 +1020,7 @@ rules:
       tier: ux
       severity: info
       autofix: true
-      detect_conceptual: "Does this long operation provide feedback to the user?"
+      detect_semantic: "Does this long operation provide feedback to the user?"
       fix: "Spinner, progress bar, status message."
 
     - id: USER_CONTROL
@@ -1028,7 +1028,7 @@ rules:
       tier: ux
       severity: info
       autofix: false
-      detect_conceptual: "Can the user undo or cancel this operation?"
+      detect_semantic: "Can the user undo or cancel this operation?"
       fix: "Add undo support. Confirm destructive actions."
 
     - id: ERROR_RECOVERY
@@ -1036,7 +1036,7 @@ rules:
       tier: ux
       severity: warning
       autofix: false
-      detect_conceptual: "Do error messages explain what went wrong and what to do?"
+      detect_semantic: "Do error messages explain what went wrong and what to do?"
       fix: "Name the problem. Suggest a fix. Show context."
 
     - id: AESTHETIC_MINIMALISM
@@ -1044,7 +1044,7 @@ rules:
       tier: ux
       severity: info
       autofix: false
-      detect_conceptual: "Does this output contain information that does not earn its place?"
+      detect_semantic: "Does this output contain information that does not earn its place?"
       fix: "Every element must earn its place."
 
     - id: CONSISTENCY
@@ -1052,7 +1052,7 @@ rules:
       tier: ux
       severity: warning
       autofix: false
-      detect_conceptual: "Are the same concepts named differently in different places?"
+      detect_semantic: "Are the same concepts named differently in different places?"
       fix: "Follow conventions. One name per concept."
 
     - id: COST_TRANSPARENCY
@@ -1060,7 +1060,7 @@ rules:
       tier: llm
       severity: warning
       autofix: true
-      detect_conceptual: "Are API calls made without showing token count or cost?"
+      detect_semantic: "Are API calls made without showing token count or cost?"
       fix: "Display [$0.0023, 847 tokens] after each call."
 
     - id: CACHE_LLM
@@ -1068,7 +1068,7 @@ rules:
       tier: llm
       severity: info
       autofix: true
-      detect_conceptual: "Is the same prompt sent multiple times without caching?"
+      detect_semantic: "Is the same prompt sent multiple times without caching?"
       fix: "Hash prompt, cache response with bounded TTL."
 
     - id: GUARD_EXPENSIVE_OPS
@@ -1076,7 +1076,7 @@ rules:
       tier: safety
       severity: error
       autofix: true
-      detect_conceptual: "Does this execute an expensive or destructive operation without confirmation?"
+      detect_semantic: "Does this execute an expensive or destructive operation without confirmation?"
       fix: "Cost estimate before execution. Require opt-in for danger."
 
     - id: NO_FLAG_ARGUMENTS
@@ -1085,7 +1085,7 @@ rules:
       severity: warning
       autofix: false
       detect_lexical: "def \\w+\\([^)]*\\btrue\\b|def \\w+\\([^)]*\\bfalse\\b"
-      detect_conceptual: "Does a boolean cause this unit to do two different things? In a contract, does one condition branch into contradictory obligations?"
+      detect_semantic: "Does a boolean cause this unit to do two different things? In a contract, does one condition branch into contradictory obligations?"
       fix: "Split into two distinct units. Each does one thing."
 
     - id: NO_OUTPUT_ARGUMENTS
@@ -1093,7 +1093,7 @@ rules:
       tier: clean_code
       severity: warning
       autofix: false
-      detect_conceptual: "Does this modify its arguments instead of returning a result? Does this clause silently alter a definition from a prior section?"
+      detect_semantic: "Does this modify its arguments instead of returning a result? Does this clause silently alter a definition from a prior section?"
       fix: "Return the result. Leave inputs untouched."
 
     - id: NO_SELECTOR_ARGUMENTS
@@ -1101,7 +1101,7 @@ rules:
       tier: clean_code
       severity: warning
       autofix: false
-      detect_conceptual: "Is an argument used as a switch to select between behaviors? Does a field mean different things in different contexts?"
+      detect_semantic: "Is an argument used as a switch to select between behaviors? Does a field mean different things in different contexts?"
       fix: "Separate functions, separate types, separate document sections."
 
     - id: DESIGN_BY_CONTRACT
@@ -1109,7 +1109,7 @@ rules:
       tier: reliability
       severity: info
       autofix: false
-      detect_conceptual: "Are preconditions, postconditions, and invariants left implicit? Does this API lack documentation of valid inputs and guaranteed outputs?"
+      detect_semantic: "Are preconditions, postconditions, and invariants left implicit? Does this API lack documentation of valid inputs and guaranteed outputs?"
       fix: "Make contracts explicit. Preconditions, postconditions, invariants."
 
     - id: CRASH_EARLY
@@ -1117,7 +1117,7 @@ rules:
       tier: reliability
       severity: warning
       autofix: false
-      detect_conceptual: "Does this limp along in a broken state instead of stopping cleanly? Does this continue after contraindication signals?"
+      detect_semantic: "Does this limp along in a broken state instead of stopping cleanly? Does this continue after contraindication signals?"
       fix: "Stop when invariants break. A clean crash is recoverable. Corruption is not."
 
     - id: DEFINE_ERRORS_OUT
@@ -1125,7 +1125,7 @@ rules:
       tier: design
       severity: info
       autofix: false
-      detect_conceptual: "Is this handling errors that could be eliminated by redesigning the interface? Does this validation reject input that better design would prevent?"
+      detect_semantic: "Is this handling errors that could be eliminated by redesigning the interface? Does this validation reject input that better design would prevent?"
       fix: "Redesign so the error cannot occur."
 
     - id: SURFACE_AREA
@@ -1133,7 +1133,7 @@ rules:
       tier: design
       severity: warning
       autofix: false
-      detect_conceptual: "Is the public interface larger than necessary? Does this contract have more exceptions than rules?"
+      detect_semantic: "Is the public interface larger than necessary? Does this contract have more exceptions than rules?"
       fix: "Fewer public methods. Fewer clauses. Fewer points of contact mean fewer points of failure."
 
     - id: PROGRESSIVE_DISCLOSURE
@@ -1141,7 +1141,7 @@ rules:
       tier: ux
       severity: info
       autofix: false
-      detect_conceptual: "Does this present all complexity at once? Does this front-load definitions before stating obligations?"
+      detect_semantic: "Does this present all complexity at once? Does this front-load definitions before stating obligations?"
       fix: "Lead with the simple case. Reveal depth on demand."
 
     - id: FEEDBACK_LOOPS
@@ -1149,7 +1149,7 @@ rules:
       tier: ux
       severity: warning
       autofix: false
-      detect_conceptual: "Does this perform work without reporting progress? Does this protocol lack checkpoints?"
+      detect_semantic: "Does this perform work without reporting progress? Does this protocol lack checkpoints?"
       fix: "Close the loop. Every action produces feedback. Every milestone gets measured."
 
     - id: DATA_CLASS
@@ -1157,7 +1157,7 @@ rules:
       tier: refactoring
       severity: info
       autofix: false
-      detect_conceptual: "Does this hold data but contain no behavior? Is logic scattered across other modules? Is this a spreadsheet of raw numbers with formulas elsewhere?"
+      detect_semantic: "Does this hold data but contain no behavior? Is logic scattered across other modules? Is this a spreadsheet of raw numbers with formulas elsewhere?"
       fix: "Push behavior into the data. Methods belong with the data they operate on."
 
     - id: PARALLEL_INHERITANCE
@@ -1165,7 +1165,7 @@ rules:
       tier: refactoring
       severity: warning
       autofix: false
-      detect_conceptual: "Does adding a type in one hierarchy require adding one in another? Does a new product line require changes in both catalog and billing?"
+      detect_semantic: "Does adding a type in one hierarchy require adding one in another? Does a new product line require changes in both catalog and billing?"
       fix: "Merge the hierarchies or use composition."
 
     - id: REFUSED_BEQUEST
@@ -1173,7 +1173,7 @@ rules:
       tier: refactoring
       severity: info
       autofix: false
-      detect_conceptual: "Does this variant ignore most of what it inherits? Does this addendum negate most of the base agreement?"
+      detect_semantic: "Does this variant ignore most of what it inherits? Does this addendum negate most of the base agreement?"
       fix: "Use composition instead of inheritance."
 
   line:
@@ -1183,7 +1183,7 @@ rules:
       tier: kernel
       severity: warning
       autofix: true
-      detect_conceptual: "Is this line relying on implicit behavior?"
+      detect_semantic: "Is this line relying on implicit behavior?"
       fix: "Make it explicit."
 
     - id: SELF_EXPLAINING
@@ -1191,7 +1191,7 @@ rules:
       tier: kernel
       severity: info
       autofix: true
-      detect_conceptual: "Does this name clearly reveal intent?"
+      detect_semantic: "Does this name clearly reveal intent?"
       fix: "Rename to reveal intent."
 
     - id: GUARD_CLAUSE
@@ -1502,7 +1502,7 @@ rules:
       tier: style
       severity: info
       autofix: true
-      detect_conceptual: "Does this multi-line collection lack a trailing comma?"
+      detect_semantic: "Does this multi-line collection lack a trailing comma?"
       fix: "Add trailing comma so additions produce one-line diffs."
 
     - id: TYPOGRAPHIC_EXCELLENCE
@@ -1518,7 +1518,7 @@ rules:
       tier: interface
       severity: info
       autofix: false
-      detect_conceptual: "Does this output say more than necessary for a successful operation?"
+      detect_semantic: "Does this output say more than necessary for a successful operation?"
       fix: "Default to silence on success. One line for routine completions."
 
     - id: TYPOGRAPHY_DISCIPLINE
@@ -1534,7 +1534,7 @@ rules:
       tier: performance
       severity: info
       autofix: true
-      detect_conceptual: "Are trig functions or noise lookups called per-frame per-object?"
+      detect_semantic: "Are trig functions or noise lookups called per-frame per-object?"
       fix: "Precompute tables. Cache distance. Use squared distance comparison."
 
     - id: AUDIO_SMOOTHING
@@ -1542,7 +1542,7 @@ rules:
       tier: aesthetic
       severity: info
       autofix: false
-      detect_conceptual: "Do visual elements jump erratically with raw audio data?"
+      detect_semantic: "Do visual elements jump erratically with raw audio data?"
       fix: "Exponential smoothing. Separate decay rates. Attack-decay envelope."
 
     - id: GRACEFUL_LOAD
@@ -1550,7 +1550,7 @@ rules:
       tier: performance
       severity: warning
       autofix: true
-      detect_conceptual: "Does this run at full quality until it crashes instead of scaling down?"
+      detect_semantic: "Does this run at full quality until it crashes instead of scaling down?"
       fix: "EWMA frame timing. Dynamic resolution scaling. Emergency brake."
 
     - id: ANALOG_WARMTH
@@ -1558,7 +1558,7 @@ rules:
       tier: aesthetic
       severity: info
       autofix: true
-      detect_conceptual: "Is generated imagery clinically perfect with zero texture?"
+      detect_semantic: "Is generated imagery clinically perfect with zero texture?"
       fix: "Film grain. Vintage lens softness. Subtle color cast."
 
     - id: DOMAIN_LANGUAGE
@@ -1566,7 +1566,7 @@ rules:
       tier: clarity
       severity: warning
       autofix: false
-      detect_conceptual: "Does this code use generic programming terms (manager, handler, processor, data) instead of domain terms (patient, invoice, genome, verdict)? Does this legal document use lay terms where precise legal terms exist? Does this medical report use colloquial language instead of standard nomenclature?"
+      detect_semantic: "Does this code use generic programming terms (manager, handler, processor, data) instead of domain terms (patient, invoice, genome, verdict)? Does this legal document use lay terms where precise legal terms exist? Does this medical report use colloquial language instead of standard nomenclature?"
       fix: "Use the ubiquitous language of the domain. Every domain has precise terms — use them."
 
     - id: LOAD_BEARING_NAMES
@@ -1574,7 +1574,7 @@ rules:
       tier: clarity
       severity: warning
       autofix: false
-      detect_conceptual: "Are names vague, generic, or misleading? Does 'data' mean input, output, or both? Does 'process' mean validate, transform, or persist? Does 'miscellaneous' appear as a category? In law, are terms used loosely that have precise legal meaning? In medicine, is a diagnosis vague where a specific code exists?"
+      detect_semantic: "Are names vague, generic, or misleading? Does 'data' mean input, output, or both? Does 'process' mean validate, transform, or persist? Does 'miscellaneous' appear as a category? In law, are terms used loosely that have precise legal meaning? In medicine, is a diagnosis vague where a specific code exists?"
       fix: "Names are load-bearing walls. They define how people think about the system. Choose names that carry the full weight of their meaning."
 
     - id: ERROR_CONTEXT
@@ -1582,7 +1582,7 @@ rules:
       tier: reliability
       severity: warning
       autofix: false
-      detect_conceptual: "Does this error message lack context about where and why it occurred? Does this rejection letter fail to state which requirement was not met? Does this lab result omit which sample or protocol produced the anomaly?"
+      detect_semantic: "Does this error message lack context about where and why it occurred? Does this rejection letter fail to state which requirement was not met? Does this lab result omit which sample or protocol produced the anomaly?"
       fix: "Wrap low-level errors with domain context. State what was attempted, what failed, and what to do next."
 
     - id: COMMENTS_AS_DEODORANT
@@ -1590,7 +1590,7 @@ rules:
       tier: clean_code
       severity: warning
       autofix: false
-      detect_conceptual: "Is this comment explaining what bad code does instead of rewriting the code to be self-evident? In prose, is a footnote compensating for an unclear sentence? In a contract, is a definition section papering over ambiguous clauses?"
+      detect_semantic: "Is this comment explaining what bad code does instead of rewriting the code to be self-evident? In prose, is a footnote compensating for an unclear sentence? In a contract, is a definition section papering over ambiguous clauses?"
       fix: "Rewrite the artifact so explanation is unnecessary. If it needs a comment, it needs a rewrite."
 
     - id: POSTEL
@@ -1598,7 +1598,7 @@ rules:
       tier: architecture
       severity: info
       autofix: false
-      detect_conceptual: "Does this interface reject valid inputs that differ only in form? Does it emit outputs with more precision or structure than callers need? Does this protocol refuse valid encodings? Does this form reject data that could be safely normalized?"
+      detect_semantic: "Does this interface reject valid inputs that differ only in form? Does it emit outputs with more precision or structure than callers need? Does this protocol refuse valid encodings? Does this form reject data that could be safely normalized?"
       fix: "Accept broadly, emit precisely. Validate structure not style. Normalize on the way in."
 
     - id: HYRUM
@@ -1606,7 +1606,7 @@ rules:
       tier: architecture
       severity: warning
       autofix: false
-      detect_conceptual: "Is this changing an undocumented behavior that callers may rely on? Is this removing a side effect that was never specified but may be consumed? Is this contract revision eliminating something parties have silently come to depend on?"
+      detect_semantic: "Is this changing an undocumented behavior that callers may rely on? Is this removing a side effect that was never specified but may be consumed? Is this contract revision eliminating something parties have silently come to depend on?"
       fix: "Treat every observable behavior as a contract once you have users. Deprecate explicitly, remove slowly."
 
     - id: LEAKY_ABSTRACTION
@@ -1614,7 +1614,7 @@ rules:
       tier: architecture
       severity: warning
       autofix: false
-      detect_conceptual: "Does this abstraction force the caller to know about implementation details? Does the interface require knowledge of underlying protocols, data formats, or failure modes it was supposed to hide? Does this clause invoke legal theory the reader must independently research?"
+      detect_semantic: "Does this abstraction force the caller to know about implementation details? Does the interface require knowledge of underlying protocols, data formats, or failure modes it was supposed to hide? Does this clause invoke legal theory the reader must independently research?"
       fix: "Plan for the leak. Document what leaks. Make the happy path abstracted, the edge cases explicit."
 
     - id: TEMPORAL_COUPLING
@@ -1622,7 +1622,7 @@ rules:
       tier: design
       severity: warning
       autofix: false
-      detect_conceptual: "Does this require callers to call methods in a specific order without enforcing it? Is there an implicit initialization sequence that crashes if violated? Does this workflow assume steps execute in a fixed order without encoding that order?"
+      detect_semantic: "Does this require callers to call methods in a specific order without enforcing it? Is there an implicit initialization sequence that crashes if violated? Does this workflow assume steps execute in a fixed order without encoding that order?"
       fix: "Enforce sequencing structurally: pass initialized objects, not bare instances. Use builder pattern. Make invalid order unrepresentable."
 
     - id: HUMBLE_OBJECT
@@ -1630,7 +1630,7 @@ rules:
       tier: design
       severity: info
       autofix: false
-      detect_conceptual: "Is business logic mixed with IO, UI rendering, or external API calls making it untestable? Is decision logic tangled with presentation in a way that forces integration tests where unit tests would suffice?"
+      detect_semantic: "Is business logic mixed with IO, UI rendering, or external API calls making it untestable? Is decision logic tangled with presentation in a way that forces integration tests where unit tests would suffice?"
       fix: "Extract the logic into a pure object (Humble Object). Keep the IO shell thin and untested; test the logic object exhaustively."
 
 # Falsifiable identity — what MASTER explicitly does NOT aim for, and the

@@ -3,11 +3,11 @@
 module Master
   module Scan
     module Rules
-      # Mirror of ConceptualRule for refactor opportunities, not violations. Asks the
+      # Mirror of SemanticRule for refactor opportunities, not violations. Asks the
       # LLM what pattern this file is 80% of the way to (Strategy, Decorator, Pipeline,
       # Visitor, Builder) and where extraction would pay off. Severity :info — deep
       # depth only — opportunities are aspirational, not failing checks.
-      class ConceptualOpportunityRule < Rule
+      class SemanticOpportunityRule < Rule
         CODE_SNIPPET_LIMIT = 2000
         PATTERNS = %w[Strategy Decorator Pipeline Visitor Builder Observer Command
                       State Adapter NullObject].freeze
@@ -15,7 +15,7 @@ module Master
         def initialize(agent: nil)
           super()
           @agent       = agent
-          @id          = "conceptual_opportunity"
+          @id          = "semantic_opportunity"
           @description = "Refactor opportunity — pattern this file is 80% of the way to"
           @severity    = :info
           @axiom_tags  = %i[SIMPLEST_WORKS DECOUPLE ABSTRACTION]
@@ -30,7 +30,7 @@ module Master
 
         def check(code, path:)
           return [] unless language(path) && @agent
-          response = @agent.ask(build_prompt(code, path), operation: :scan_conceptual_opportunity).to_s
+          response = @agent.ask(build_prompt(code, path), operation: :scan_semantic_opportunity).to_s
           parse_findings(response)
         rescue StandardError
           []
