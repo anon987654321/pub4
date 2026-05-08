@@ -45,7 +45,21 @@ module Master
                 message: "bare rescue: specify exception type (e.g. rescue StandardError)"
               )
             end
+            if rescues_exception_class?(node)
+              @findings << @rule.emit(
+                line: node.location.start_line,
+                message: "rescue Exception is too broad: rescue StandardError or a specific class"
+              )
+            end
             super
+          end
+
+          private
+
+          def rescues_exception_class?(node)
+            node.exceptions.any? do |exception_node|
+              exception_node.is_a?(Prism::ConstantReadNode) && exception_node.name == :Exception
+            end
           end
         end
       end
