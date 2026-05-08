@@ -56,15 +56,9 @@ scan_rules:
     - frozen_string
     - bare_rescue
     - explicit
-    - immutable
-    - cqs
-    - self_explaining
-    - long_method
     - god_class
     - duplicate_code
     - prune
-    - srp
-    - pola
     - nielsen
   deep_only:
     - semantic
@@ -158,12 +152,6 @@ autoloop:
     - semantic
     - adversarial
     - axiom_coverage
-    - immutable
-    - self_explaining
-    - long_method
-    - pola
-    - srp
-    - cqs
     - rubocop
     - reek
 
