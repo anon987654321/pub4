@@ -743,6 +743,70 @@ rules:
       detect_semantic: "Are unrelated concepts coupled by proximity or shared container? In a filing, are unrelated claims bundled into one count?"
       fix: "Separate into independent units. Each removable without affecting others."
 
+    - id: I18N_COVERAGE
+      name: "Wrap user-facing literals in I18n helpers"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_lexical: ">\\s*[A-Za-z][^<]{3,}<"
+      fix: "Replace literal with t('.key')."
+      languages: [html]
+      path_match: "/app/views/"
+
+    - id: STRICT_LOADING_MISSING
+      name: "AR model lacks strict_loading_by_default"
+      tier: design
+      severity: info
+      autofix: false
+      detect_lexical: "class\\s+\\w+\\s+<\\s+(?:ApplicationRecord|ActiveRecord::Base)\\b"
+      requires_absent: "\\bstrict_loading_by_default\\b"
+      whole_file: true
+      fix: "Add `self.strict_loading_by_default = true` to surface missing eager-loads."
+      languages: [ruby]
+      path_match: "/app/models/"
+
+    - id: RATE_LIMITING_MISSING
+      name: "Sensitive controller missing rate_limit/throttle"
+      tier: security
+      severity: error
+      autofix: false
+      detect_lexical: "(login|signup|sign_up|password|reset)"
+      requires_absent: "rate_limit|throttle"
+      whole_file: true
+      fix: "Add rate_limit/throttle to sensitive actions."
+      languages: [ruby]
+      path_match: "/app/controllers/"
+
+    - id: MIGRATION_ADD_REFERENCE_NO_FK
+      name: "add_reference without foreign_key:"
+      tier: robustness
+      severity: error
+      autofix: false
+      detect_lexical: "add_reference(?!.*foreign_key:)"
+      fix: "Add `foreign_key: true` to enforce referential integrity."
+      languages: [ruby]
+      path_match: "/db/migrate/"
+
+    - id: MIGRATION_REMOVE_COLUMN
+      name: "remove_column is destructive"
+      tier: robustness
+      severity: error
+      autofix: false
+      detect_lexical: "remove_column"
+      fix: "Document safety/backfill path before removing a column."
+      languages: [ruby]
+      path_match: "/db/migrate/"
+
+    - id: MIGRATION_FIND_OR_CREATE_BY
+      name: "find_or_create_by needs unique index"
+      tier: robustness
+      severity: warning
+      autofix: false
+      detect_lexical: "find_or_create_by"
+      fix: "Back find_or_create_by with a unique index to prevent duplicates."
+      languages: [ruby]
+      path_match: "/db/migrate/"
+
   unit:
 
     - id: SIMPLEST_WORKS
