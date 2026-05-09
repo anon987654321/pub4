@@ -58,12 +58,12 @@ module Master
       autoloop     = ai[:autoloop]
       code_index   = infra[:code_index]
       {
-        "autoloop" => ->(ctx) { run_autoloop(autoloop, arg_for(ctx)) },
+        "autoloop" => cmd(:run_autoloop, autoloop),
         "sweep"    => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
           run_sweep(agent, scanner, deliberation, root, bus, code_index, target)
         },
-        "scan"     => ->(ctx) { dispatch_scan(scanner, root, arg_for(ctx)) }
+        "scan"     => cmd(:dispatch_scan, scanner, root)
       }
     end
 
@@ -153,8 +153,8 @@ module Master
       council_stage = ai[:council_stage]
       swarm         = ai[:swarm]
       {
-        "council" => ->(ctx) { dispatch_council(council_stage, arg_for(ctx)) },
-        "swarm"   => ->(ctx) { dispatch_swarm(swarm, arg_for(ctx)) },
+        "council" => cmd(:dispatch_council, council_stage),
+        "swarm"   => cmd(:dispatch_swarm, swarm),
         "explain" => ->(_ctx) { explain_master(root) }
       }
     end
@@ -188,8 +188,8 @@ module Master
       config  = infra[:config]
       metrics = infra[:metrics]
       {
-        "model" => ->(ctx) { dispatch_model(agent, config, metrics, root, arg_for(ctx)) },
-        "why"   => ->(ctx) { dispatch_why(agent, root, arg_for(ctx)) }
+        "model" => cmd(:dispatch_model, agent, config, metrics, root),
+        "why"   => cmd(:dispatch_why, agent, root)
       }
     end
 
@@ -226,7 +226,7 @@ module Master
     def crit_command(ai:, root:)
       deliberation = ai[:deliberation]
       {
-        "crit" => ->(ctx) { dispatch_crit(deliberation, root, arg_for(ctx)) }
+        "crit" => cmd(:dispatch_crit, deliberation, root)
       }
     end
 
@@ -249,7 +249,7 @@ module Master
     def topic_command(infra:)
       session = infra[:session]
       {
-        "topic" => ->(ctx) { dispatch_topic(session, arg_for(ctx)) }
+        "topic" => cmd(:dispatch_topic, session)
       }
     end
 
@@ -266,7 +266,7 @@ module Master
     def ideate_command(ai:)
       ideation = ai[:ideation]
       {
-        "ideate" => ->(ctx) { dispatch_ideate(ideation, arg_for(ctx)) }
+        "ideate" => cmd(:dispatch_ideate, ideation)
       }
     end
 
@@ -293,7 +293,7 @@ module Master
     def rsi_command(infra:)
       learnings = infra[:learnings]
       {
-        "rsi" => ->(ctx) { dispatch_rsi(learnings, arg_for(ctx)) }
+        "rsi" => cmd(:dispatch_rsi, learnings)
       }
     end
 
@@ -340,6 +340,11 @@ module Master
 
     def expand_or_root(arg, root)
       arg.empty? ? root : File.expand_path(arg, root)
+    end
+
+    # cmd — DSL helper. Wraps `->(ctx) { send(method, *services, arg_for(ctx)) }`.
+    def cmd(method, *services)
+      ->(ctx) { send(method, *services, arg_for(ctx)) }
     end
   end
 end

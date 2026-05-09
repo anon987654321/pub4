@@ -8,8 +8,8 @@ module Master
 
     def control_commands(standing, soul)
       {
-        "orders" => ->(ctx) { dispatch_orders(standing, arg_for(ctx)) },
-        "soul"   => ->(ctx) { dispatch_soul(soul, arg_for(ctx)) }
+        "orders" => cmd(:dispatch_orders, standing),
+        "soul"   => cmd(:dispatch_soul, soul)
       }
     end
 
@@ -18,10 +18,10 @@ module Master
       skills    = ai[:skills]
       scanner   = ai[:scanner]
       {
-        "heartbeat" => ->(ctx) { dispatch_heartbeat(heartbeat, arg_for(ctx)) },
-        "skills"    => ->(ctx) { dispatch_skills(skills, arg_for(ctx)) },
-        "phase"     => ->(ctx) { dispatch_phase(phase_gates, arg_for(ctx)) },
-        "score"     => ->(ctx) { score_file(scanner, arg_for(ctx)) },
+        "heartbeat" => cmd(:dispatch_heartbeat, heartbeat),
+        "skills"    => cmd(:dispatch_skills, skills),
+        "phase"     => cmd(:dispatch_phase, phase_gates),
+        "score"     => cmd(:score_file, scanner),
         "diag"      => ->(ctx) { diag ? diag.render(arg_for(ctx)) : "diag: not configured" }
       }
     end
@@ -262,12 +262,12 @@ module Master
     def utility_commands(agent, root, cache, code_index = nil)
       {
         "snapshot"  => ->(_ctx) { dispatch_snapshot(root) },
-        "repo_map"  => ->(ctx)  { dispatch_repo_map(code_index, root, arg_for(ctx)) },
-        "tree"      => ->(ctx)  { dispatch_tree(root, arg_for(ctx)) },
-        "cache"     => ->(ctx)  { dispatch_cache(cache, arg_for(ctx)) },
-        "diff"      => ->(ctx)  { dispatch_diff(root, arg_for(ctx)) },
+        "repo_map"  => cmd(:dispatch_repo_map, code_index, root),
+        "tree"      => cmd(:dispatch_tree, root),
+        "cache"     => cmd(:dispatch_cache, cache),
+        "diff"      => cmd(:dispatch_diff, root),
         "commit"    => ->(_ctx) { dispatch_commit(agent, root) },
-        "knowledge" => ->(ctx)  { dispatch_knowledge(root, arg_for(ctx)) }
+        "knowledge" => cmd(:dispatch_knowledge, root)
       }
     end
 
