@@ -7,7 +7,7 @@ class ChatController < ApplicationController
 
   def index
     @model = container[:agent].model.to_s.split("/").last
-    @tier  = session[:tier].to_s
+    @tier  = request.env["master.tier"].to_s
     render layout: false
   end
 
@@ -30,7 +30,7 @@ class ChatController < ApplicationController
       uptime:           ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1000).to_i - start_ms),
       repo_dirty_count: dirty,
       open_breakers:    open_models,
-      tier:             session[:tier].to_s
+      tier:             request.env["master.tier"].to_s
     }
   end
 
@@ -42,7 +42,7 @@ class ChatController < ApplicationController
     response.headers["Cache-Control"]     = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"
 
-    visitor = session[:tier] != "authenticated"
+    visitor = request.env["master.tier"] != "authenticated"
     Fiber[:master_visitor] = visitor
 
     sse = response.stream

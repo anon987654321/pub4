@@ -18,6 +18,8 @@ require "action_view/railtie"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+require_relative "../app/middleware/auth_tier"
+
 module Web
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
@@ -38,5 +40,10 @@ module Web
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    config.middleware.use(
+      AuthTier,
+      config_path: Rails.root.join("..", ".master", "config.yml").to_s
+    )
   end
 end
