@@ -108,7 +108,7 @@ module Master
       while @running
         print_dashboard
         tokens = @session.token_est
-        print @renderer.prompt_line(
+        prompt_lines = @renderer.prompt_line(
           @agent.model, @session.phase,
           last_ok: @last_ok, violations: @violations, tokens: tokens, cost: @session.cost
         )
