@@ -99,12 +99,17 @@ module Master
     Builder.build(root:)
   end
 
-  def self.boot(root: Dir.pwd, argv: [])
-    Pledge.stage1_boot!(root)
+  def self.bootstrap_container(root: Dir.pwd)
     Telemetry.bootstrap!(root: root)
     container = Builder.build(root:)
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
+    container
+  end
+
+  def self.boot(root: Dir.pwd, argv: [])
+    Pledge.stage1_boot!(root)
+    container = bootstrap_container(root: root)
     Pledge.stage2_lock!
     CLI.new(container:)
   end
