@@ -92,6 +92,8 @@ Key files — `data/soul.yml` (golden rule, tiers, persona), `data/rules.yml` (s
 
 Standard: `eval "$(grep '^export' ~/.zshrc)" && cd ~/pub4/MASTER && echo "/scan lib/" | bundle exec ruby exe/master`. Autofix sweep: `/autoloop 20`. Do not use external agents when MASTER can scan itself. Depth knobs are gone — every scan is full by default.
 
+Pre-commit constitution check: `exe/master-audit` runs the scanner over staged files and fails the commit on any kernel-tier rule or critical/error violation. Wire as a git pre-commit hook by writing `exec exe/master-audit` into `.git/hooks/pre-commit`.
+
 ## Protection tiers
 
 ABSOLUTE aborts the pipeline. PROTECTED emits a warning and continues. NEGOTIABLE allows if explicitly permitted. FLEXIBLE negotiates at runtime. ABSOLUTE sections in `data/soul.yml` require `/override` to amend.
