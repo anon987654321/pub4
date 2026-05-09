@@ -128,60 +128,77 @@ module Master
       tree_lines(root, max_depth: depth).join("\n")
     end
 
-    def dispatch_snapshot(root, arg)
-      target = arg.empty? ? root : File.expand_path(arg, root)
-      return "snapshot: not found: #{arg}" unless File.exist?(target)
-
-      files    = snapshot_files(target)
-      data     = snapshot_data(root, target, files)
-      out_path = write_snapshot(root, data)
-      rev      = (data["rev"] || "no-git")[0, 8]
-      "snapshot0: #{data["target"]} (#{files.size} files, rev=#{rev}) -> #{out_path.delete_prefix("#{root}/")}"
+    def dispatch_snapshot(root)
+      [
+        publish_snapshot(root, "MASTER"),
+        publish_snapshot(File.expand_path("../DEPLOY", root), "DEPLOY")
+      ].join("\n")
     end
 
-    def snapshot_files(target)
-      return [target] if File.file?(target)
-      Dir.glob(File.join(target, "**", "*"))
-         .select { |f| File.file?(f) }
-         .reject { |f| f.delete_prefix("#{target}/").split("/").any? { |s| SKIP_SEGS.include?(s) } }
-         .reject { |f| File.basename(f).start_with?(".") }
-         .sort
+    def publish_snapshot(target, label)
+      return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
+      dirs, files = collect_snapshot_files(target)
+      stamp       = Time.now.utc.iso8601
+      buf, stats  = render_snapshot_body(target, label, stamp, dirs, files)
+      publish_snapshot_gist(label, buf, files.size, stats)
     end
 
-    def snapshot_data(root, target, files)
-      base = File.directory?(target) ? target : File.dirname(target)
-      rel  = target.delete_prefix("#{root}/")
-      rel  = target if rel == target
-      {
-        "ts"     => Time.now.utc.iso8601,
-        "rev"    => snapshot_git_rev(root),
-        "target" => rel,
-        "files"  => files.to_h { |f|
-          [f.delete_prefix("#{base}/"), { "lines" => snapshot_line_count(f), "size" => File.size(f) }]
-        }
-      }
+    def collect_snapshot_files(root)
+      skip_path = ->(rel) { rel.split("/").any? { |s| SKIP_SEGS.include?(s) } }
+      text_file = ->(f)   { TEXT_EXTS.include?(File.extname(f).downcase) || TEXT_NAMES.include?(File.basename(f)) }
+      all = Dir.glob(File.join(root, "**", "*"))
+               .reject { |f| File.basename(f).start_with?(".") }
+               .reject { |f| skip_path.(f.delete_prefix("#{root}/")) }
+               .sort
+      dirs  = all.select { |f| File.directory?(f) }
+      files = all.select { |f| File.file?(f) && text_file.(f) && File.size(f) < CTX_WINDOW_SIZE }
+      [dirs, files]
     end
 
-    def snapshot_git_rev(root)
-      out, _, st = Open3.capture3("git", "-C", root, "rev-parse", "HEAD")
-      st.success? ? out.strip : nil
-    rescue StandardError
-      nil
+    def render_snapshot_body(root, label, stamp, dirs, files)
+      buf = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
+      dirs.each  { |d| buf << "#{d.delete_prefix("#{root}/")}/" }
+      files.each { |f| buf << f.delete_prefix("#{root}/") }
+      buf << "```" << ""
+      n_lines, n_trunc = render_snapshot_files(buf, root, files)
+      buf << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc}"
+      [buf.join("\n"), { lines: n_lines, truncated: n_trunc }]
     end
 
-    def snapshot_line_count(file)
-      File.foreach(file).count
-    rescue StandardError
-      0
+    def render_snapshot_files(buf, root, files)
+      max_lines = 400
+      n_trunc   = 0
+      n_lines   = 0
+      files.each do |f|
+        rel  = f.delete_prefix("#{root}/")
+        lang = FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
+        body = File.read(f, encoding: "UTF-8", invalid: :replace).lines
+        n_lines += body.size
+        buf << "## `#{rel}`" << "```#{lang}"
+        if body.size > max_lines
+          buf.concat(body.first(max_lines).map(&:rstrip))
+          buf << "... #{body.size - max_lines} lines truncated (#{body.size} total)"
+          n_trunc += 1
+        else
+          buf.concat(body.map(&:rstrip))
+        end
+        buf << "```" << ""
+      rescue StandardError => e
+        buf << "## `#{rel}`" << "[skipped: #{e.message}]" << ""
+      end
+      [n_lines, n_trunc]
     end
 
-    def write_snapshot(root, data)
-      stamp    = data["ts"].tr(":", "-").sub("T", "_").sub("Z", "")
-      out_dir  = File.join(root, ".master", "snapshots")
-      FileUtils.mkdir_p(out_dir)
-      out_path = File.join(out_dir, "#{stamp}.yml")
-      File.write(out_path, data.to_yaml)
-      out_path
+    def publish_snapshot_gist(label, body, file_count, stats)
+      day = Time.now.strftime("%Y-%m-%d")
+      out, status = Open3.capture2e(
+        "gh", "gist", "create", "-",
+        "--public", "--desc", "#{label} #{day}",
+        "--filename", "snapshot_latest.md",
+        stdin_data: body
+      )
+      return "snapshot:#{label.downcase}: gist publish failed: #{out.strip}" unless status.success?
+      "snapshot:#{label.downcase}: #{file_count} files #{stats[:lines]} lines → #{out.strip}"
     end
 
     SCORE_WEIGHTS = { error: 10, critical: 10, warning: 3, style: 1 }.freeze
@@ -244,7 +261,7 @@ module Master
 
     def utility_commands(agent, root, cache, code_index = nil)
       {
-        "snapshot"  => ->(ctx)  { dispatch_snapshot(root, arg_for(ctx)) },
+        "snapshot"  => ->(_ctx) { dispatch_snapshot(root) },
         "repo_map"  => ->(ctx)  { dispatch_repo_map(code_index, root, arg_for(ctx)) },
         "tree"      => ->(ctx)  { dispatch_tree(root, arg_for(ctx)) },
         "cache"     => ->(ctx)  { dispatch_cache(cache, arg_for(ctx)) },
