@@ -76,14 +76,15 @@ module Master
       messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
       selected_model = operation ? model_for(operation:) : routed_models.first
       result = @dispatcher.send_with_cache(selected_model, messages, stream: false)
-      return result if result.is_a?(Master::Result::Err)
+      raise StandardError, result.message if result.is_a?(Master::Result::Err)
       result.to_s
     end
 
     def ask_once(prompt, system: nil, model: nil)
       messages = [{ role: "user", content: prompt.to_s }]
       result   = @dispatcher.send_with_cache(model || self.model, messages, system:, stream: false)
-      result
+      raise StandardError, result.message if result.is_a?(Master::Result::Err)
+      result.to_s
     end
 
     def call(ctx)
@@ -161,8 +162,8 @@ module Master
         stage_warnings << "llm failed in #{mode} on #{selected_model}: #{response.message}"
       end
 
-      @bus&.publish("agent:stage_warnings", warnings: stage_warnings)
-      Result.ok("I can’t run tools right now, but here’s my best guess: #{prompt}")
+      @bus&.publish("agent:all_fallbacks_exhausted", warnings: stage_warnings)
+      last_response || Result.err("all LLM fallback modes exhausted", category: :llm_call_failure)
     end
 
     def mode_chain_for(candidates)
