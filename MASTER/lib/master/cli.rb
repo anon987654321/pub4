@@ -328,10 +328,18 @@ module Master
           exit_cli
         else
           puts
-          puts @renderer.render(err.message, mode: :error)
+          error_text = format_error_message(err)
+          puts @renderer.render(error_text, mode: :error)
           puts
         end
       end
+    end
+
+    def format_error_message(err)
+      msg = err.message.to_s
+      return msg if msg.bytesize <= 200
+
+      msg[0, 197] + "…"
     end
 
     def display_ok(ok, _accumulated, streamed)
