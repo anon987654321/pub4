@@ -7,123 +7,323 @@
 <title>MASTER · canvas</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;font:400 .95rem/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-article{position:fixed;inset:0;background:#000}
+html,body{margin:0;height:100%;background:#0a0c0a;color:#cdc5b6;overflow:hidden;font:400 .9rem/1.4 'Monaco','Courier New','SF Mono',ui-monospace,monospace}
+article{position:fixed;inset:0;background:#0a0c0a;display:flex;flex-direction:column}
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
-#messages{position:absolute;top:12vh;left:6vw;max-width:min(62ch,88vw);display:flex;flex-direction:column;gap:1rem;pointer-events:none}
-#messages p{margin:0;opacity:.95;white-space:pre-wrap}
-#messages p[data-role=master]{border-left:1px solid rgba(255,255,255,.8);padding-left:.8rem;animation:fadeout 7s ease forwards}
-#messages p[data-role=user]{opacity:.88}
-#prompt-shell{position:absolute;left:0;right:0;bottom:0;height:1px;background:#fff;transition:height .12s ease}
-#prompt-shell[data-active=true]{height:3rem}
-#prompt{position:absolute;left:0;right:0;bottom:0;width:100%;height:100%;border:0;outline:0;background:transparent;color:#fff;font:400 .95rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;padding:.85rem .8rem .7rem;opacity:0;transition:opacity .12s ease}
-#prompt-shell[data-active=true] #prompt{opacity:1}
-@keyframes fadeout{0%{opacity:.95}75%{opacity:.95}100%{opacity:.45}}
+#shell{position:absolute;left:0;right:0;bottom:0;padding:.5rem .75rem;background:rgba(26,28,26,.88);border-top:1px solid #1f221d;font-family:inherit;line-height:1.4;z-index:100}
+#prompt-wrapper{display:flex;gap:.25rem;align-items:center}
+#prefix{color:#a0522d;font-weight:600}
+#prompt{flex:1;background:transparent;border:0;outline:0;color:#cdc5b6;font:inherit;padding:0}
+#prompt::placeholder{color:#544b41;opacity:.6}
+#messages{position:absolute;top:1.25rem;left:1rem;right:1rem;max-width:64ch;max-height:30vh;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem;pointer-events:none;font-size:.85rem;z-index:10}
+#messages p{margin:0;padding:.5rem .75rem;background:rgba(31,34,29,.45);border-left:2px solid #4a7d80;color:#cdc5b6;border-radius:2px;white-space:pre-wrap;word-wrap:break-word}
+#messages p[data-role=user]{border-left-color:#a0522d;background:rgba(160,82,45,.1)}
+#messages p[data-role=master]{border-left-color:#4a7d80;animation:fadeout 8s ease forwards}
+@keyframes fadeout{0%{opacity:1}80%{opacity:1}100%{opacity:.3}}
+#status{position:absolute;bottom:.5rem;right:1rem;font-size:.75rem;color:#544b41;opacity:.7;font-family:monospace;text-align:right}
 </style>
 </head>
 <body>
-<article id="canvas" data-session="<%= @session_id %>">
-  <canvas id="field" aria-label="MASTER particle canvas"></canvas>
+<article id="canvas">
+  <canvas id="field" aria-label="MASTER particle field"></canvas>
   <section id="messages" aria-live="polite"></section>
-  <form id="prompt-shell" autocomplete="off"><input id="prompt" type="text" autocorrect="off" autocapitalize="none" spellcheck="false"></form>
+  <section id="status"></section>
+  <section id="shell">
+    <div id="prompt-wrapper">
+      <span id="prefix">MASTER ❯</span>
+      <form id="form" style="flex:1;display:flex"><input id="prompt" type="text" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="(type or /face)"></form>
+    </div>
+  </section>
 </article>
 <script>
 (()=>{
-  const root=document.getElementById('canvas');
-  const surface=document.getElementById('field');
-  const ctx=surface.getContext('2d',{alpha:false,desynchronized:true});
-  const shell=document.getElementById('prompt-shell');
-  const prompt=document.getElementById('prompt');
+  const field=document.getElementById('field');
+  const ctx=field.getContext('2d',{alpha:false,desynchronized:true});
   const messages=document.getElementById('messages');
-  const COUNT=3000, WHITE='#fff';
-  const particles=Array.from({length:COUNT},()=>({x:0,y:0,vx:0,vy:0,tx:null,ty:null}));
-  const mood={drift:.22,jitter:.06,cohesion:.012};
-  let w=0,h=0,dpr=Math.max(1,Math.floor(devicePixelRatio||1));
-  let scatter=0, lastKick=0, faceUntil=performance.now()+2000, oneShotFace=true, audioTick=0;
+  const prompt=document.getElementById('prompt');
+  const status=document.getElementById('status');
+  const form=document.getElementById('form');
+
+  const COUNT=1200;
+  const MAX_FPS=45;
+  const FRAME_MS=1000/MAX_FPS;
+  let lastFrameTime=performance.now();
+
+  let w=0, h=0, dpr=Math.max(1,Math.floor(devicePixelRatio||1));
+  let particles=[];
   let fieldKind='idle';
+  let faceUntil=performance.now()+2500;
+  let lastKick=performance.now();
+  let scatter=0;
+  let audioTick=0;
+  let mood={drift:.18,jitter:.04,cohesion:.016,disperse:.02};
+
+  function initParticles(){
+    particles=Array.from({length:COUNT},()=>({
+      x:Math.random()*w, y:Math.random()*h,
+      vx:(Math.random()-.5)*.15, vy:(Math.random()-.5)*.15,
+      tx:null, ty:null, life:1.0, trail:[]
+    }));
+  }
 
   function resize(){
     w=Math.max(1,innerWidth); h=Math.max(1,innerHeight);
-    surface.width=w*dpr; surface.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
-    particles.forEach(p=>{p.x=Math.random()*w;p.y=Math.random()*h;p.vx=(Math.random()-.5)*.2;p.vy=(Math.random()-.5)*.2;});
+    field.width=w*dpr; field.height=h*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    initParticles();
   }
 
-  function pushMessage(text,role='master'){
-    const p=document.createElement('p'); p.dataset.role=role; p.textContent=text;
-    messages.prepend(p); while(messages.children.length>6)messages.lastElementChild.remove();
-  }
+  function drawFace(){
+    const pts=[];
+    const cx=w*.5, cy=h*.45;
+    const s=Math.min(w,h)*.15;
 
-  function shapeFace(){
-    const pts=[]; const cx=w*.5, cy=h*.45, s=Math.min(w,h)*.22;
-    for(let i=0;i<160;i++){const t=i/159*Math.PI; pts.push([cx+Math.cos(t)*s*.72,cy-Math.sin(t)*s]);}
-    for(let i=0;i<90;i++){const t=i/89; pts.push([cx-s*.18+t*s*.36,cy-s*.18+t*s*.5]);}
-    for(let i=0;i<120;i++){const t=i/119*Math.PI; pts.push([cx+Math.cos(t)*s*.52,cy+s*.26+Math.sin(t)*s*.24]);}
-    for(let i=0;i<80;i++){const x=cx-s*.26+i*(s*.52/79); pts.push([x,cy-s*.64+Math.sin(i/79*Math.PI)*2]);}
+    ctx.save();
+    ctx.fillStyle='rgba(204,197,182,.06)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy-s*.2, s*.65, s*.72, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle='#4a7d80';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    for(let i=0;i<=20;i++){
+      const t=(i/20)*Math.PI;
+      const ex=cx+Math.cos(t)*s*.55;
+      const ey=cy-s*.15+Math.sin(t)*s*.08;
+      i===0?ctx.moveTo(ex,ey):ctx.lineTo(ex,ey);
+    }
+    ctx.stroke();
+
+    ctx.beginPath();
+    for(let i=0;i<=20;i++){
+      const t=(i/20)*Math.PI;
+      const ex=cx-Math.cos(t)*s*.55;
+      const ey=cy-s*.15+Math.sin(t)*s*.08;
+      i===0?ctx.moveTo(ex,ey):ctx.lineTo(ex,ey);
+    }
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx-s*.18, cy-s*.12, s*.08, 0, Math.PI*2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx+s*.18, cy-s*.12, s*.08, 0, Math.PI*2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    const mouthW=s*.26, mouthH=s*.12;
+    for(let i=0;i<=16;i++){
+      const t=(i/16)*Math.PI;
+      const mx=cx+Math.cos(t+Math.PI)*mouthW*.5;
+      const my=cy+s*.08+Math.sin(t)*mouthH*.3;
+      i===0?ctx.moveTo(mx,my):ctx.lineTo(mx,my);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    for(let i=0;i<160;i++){
+      const t=i/159*Math.PI;
+      pts.push([cx+Math.cos(t+Math.PI)*s*.55, cy-s*.2+Math.sin(t)*s*.08]);
+    }
+    for(let i=0;i<80;i++){
+      const t=i/79*Math.PI;
+      pts.push([cx-Math.cos(t)*s*.55, cy-s*.2+Math.sin(t)*s*.08]);
+    }
+    for(let i=0;i<120;i++){
+      const t=i/119*Math.PI;
+      pts.push([cx+Math.cos(t+Math.PI)*s*.26, cy+s*.1+Math.sin(t)*mouthH*.4]);
+    }
+
     return pts;
   }
 
   function assignTargets(points){
-    particles.forEach((p,i)=>{const q=points[i%points.length]; p.tx=q[0]; p.ty=q[1];});
+    particles.forEach((p,i)=>{
+      const q=points[i%points.length];
+      p.tx=q[0]; p.ty=q[1];
+    });
   }
 
-  function setMode(kind,payload={}){
+  function setMode(kind, payload={}){
     fieldKind=kind;
-    if(kind==='face'){assignTargets(shapeFace()); faceUntil=performance.now()+2000; oneShotFace=false; return;}
-    if(kind==='scan'){const pts=[]; const cols=12, rows=8, gap=18, startX=w*.2, startY=h*.34; let idx=0;
-      (payload.items||[]).slice(0,96).forEach(item=>{const c=idx%cols,r=Math.floor(idx/cols);const base=2+(item.severity||1);for(let j=0;j<base*7;j++)pts.push([startX+c*gap+Math.random()*5,startY+r*gap+Math.random()*5]);idx++;});
-      assignTargets(pts.length?pts:shapeFace()); return;}
-    if(kind==='pipeline'){const names=payload.stages||['ingest','scan','council','render']; const pts=[];
-      names.forEach((_,i)=>{const x=w*.2+i*((w*.6)/Math.max(1,names.length-1));for(let k=0;k<120;k++)pts.push([x+(Math.random()-.5)*14,h*.5+(Math.random()-.5)*14]);});
-      assignTargets(pts); return;}
+    if(kind==='face'){
+      assignTargets(drawFace());
+      faceUntil=performance.now()+2500;
+      return;
+    }
+    if(kind==='scan'){
+      const pts=[];
+      const cols=10, rows=6, gap=22;
+      const startX=w*.15, startY=h*.35;
+      let idx=0;
+      (payload.items||[]).slice(0,60).forEach(item=>{
+        const c=idx%cols, r=Math.floor(idx/cols);
+        const severity=(item.severity||1);
+        const count=Math.max(2,Math.floor(severity*8));
+        for(let j=0;j<count;j++){
+          pts.push([startX+c*gap+Math.random()*8, startY+r*gap+Math.random()*8]);
+        }
+        idx++;
+      });
+      assignTargets(pts.length?pts:drawFace());
+      return;
+    }
+    if(kind==='pipeline'){
+      const names=payload.stages||['ingest','scan','council','render'];
+      const pts=[];
+      names.forEach((_,i)=>{
+        const x=w*.2+i*((w*.6)/Math.max(1,names.length-1));
+        for(let k=0;k<100;k++){
+          pts.push([x+(Math.random()-.5)*18, h*.5+(Math.random()-.5)*18]);
+        }
+      });
+      assignTargets(pts);
+      return;
+    }
     particles.forEach(p=>{p.tx=null;p.ty=null});
   }
 
-  function scatterKick(power=.9){scatter=Math.min(1.4,scatter+power); lastKick=performance.now();}
-
-  function updateMood(tag){
-    if(tag==='focused'){mood.drift=.17;mood.jitter=.035;mood.cohesion=.018;}
-    else if(tag==='curious'){mood.drift=.26;mood.jitter=.05;mood.cohesion=.01;}
-    else if(tag==='tense'){mood.drift=.38;mood.jitter=.11;mood.cohesion=.008;}
-    else if(tag==='weary'){mood.drift=.08;mood.jitter=.02;mood.cohesion=.006;}
+  function pushMessage(text, role='master'){
+    const p=document.createElement('p');
+    p.dataset.role=role;
+    p.textContent=text;
+    messages.prepend(p);
+    while(messages.children.length>5) messages.lastElementChild.remove();
   }
 
-  function tick(t){
-    audioTick+=0.011; const low=(Math.sin(audioTick*2.2)+1)*.5; const high=(Math.sin(audioTick*8.5)+1)*.5;
-    if(performance.now()-lastKick>250)scatter*=.93;
-    if(oneShotFace && t<faceUntil)setMode('face');
-    if(!oneShotFace && t>faceUntil && fieldKind==='face')setMode('idle');
+  function updateMood(tag){
+    if(tag==='focused'){mood.drift=.16;mood.jitter=.03;mood.cohesion=.020;}
+    else if(tag==='curious'){mood.drift=.24;mood.jitter=.06;mood.cohesion=.012;}
+    else if(tag==='tense'){mood.drift=.34;mood.jitter=.12;mood.cohesion=.010;}
+    else if(tag==='weary'){mood.drift=.10;mood.jitter=.02;mood.cohesion=.008;}
+  }
 
-    ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h); ctx.fillStyle=WHITE;
+  function tick(now){
+    const dt=Math.min(FRAME_MS, now-lastFrameTime);
+    lastFrameTime=now;
+
+    audioTick+=0.0085;
+    const low=(Math.sin(audioTick*2.1)+1)*.5;
+    const high=(Math.sin(audioTick*7.8)+1)*.5;
+
+    if(now-lastKick>300) scatter=Math.max(0, scatter*0.94);
+    if(now<faceUntil && fieldKind!=='face' && fieldKind==='idle') setMode('face');
+    if(now>faceUntil && fieldKind==='face') setMode('idle');
+
+    ctx.fillStyle='#0a0c0a';
+    ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#cdc5b6';
+
+    let onScreen=0;
     for(const p of particles){
-      const turn=(low-.5)*0.017; const ca=Math.cos(turn), sa=Math.sin(turn);
-      let vx=p.vx*ca-p.vy*sa, vy=p.vx*sa+p.vy*ca;
-      vx+=(Math.random()-.5)*mood.jitter + (high-.5)*.04; vy+=(Math.random()-.5)*mood.jitter;
-      if(p.tx!=null){vx+=(p.tx-p.x)*mood.cohesion; vy+=(p.ty-p.y)*mood.cohesion;}
-      if(scatter>.01){const dx=p.x-w/2,dy=p.y-h/2,d=Math.max(20,Math.hypot(dx,dy));vx+=(dx/d)*scatter*.23;vy+=(dy/d)*scatter*.23;}
-      p.vx=vx*mood.drift+vx*.78; p.vy=vy*mood.drift+vy*.78; p.x+=p.vx*.08; p.y+=p.vy*.08;
-      if(p.x<0)p.x+=w; if(p.x>=w)p.x-=w; if(p.y<0)p.y+=h; if(p.y>=h)p.y-=h;
-      ctx.fillRect(p.x|0,p.y|0,1,1);
+      if(!p) continue;
+      const turn=(low-.5)*0.014;
+      const ca=Math.cos(turn), sa=Math.sin(turn);
+
+      let vx=p.vx*ca-p.vy*sa;
+      let vy=p.vx*sa+p.vy*ca;
+
+      vx+=(Math.random()-.5)*mood.jitter+(high-.5)*.028;
+      vy+=(Math.random()-.5)*mood.jitter;
+
+      if(p.tx!=null){
+        vx+=(p.tx-p.x)*mood.cohesion;
+        vy+=(p.ty-p.y)*mood.cohesion;
+      }
+
+      if(scatter>.005){
+        const dx=p.x-w/2, dy=p.y-h/2;
+        const d=Math.max(25, Math.hypot(dx,dy));
+        const mag=(scatter*.22)/(1+d/300);
+        vx+=(dx/d)*mag;
+        vy+=(dy/d)*mag;
+      }
+
+      p.vx=vx*mood.drift+vx*.82;
+      p.vy=vy*mood.drift+vy*.82;
+
+      p.x+=p.vx*.07;
+      p.y+=p.vy*.07;
+
+      if(p.x<-2)p.x+=w+4;
+      if(p.x>w+2)p.x-=w+4;
+      if(p.y<-2)p.y+=h+4;
+      if(p.y>h+2)p.y-=h+4;
+
+      p.life=Math.min(1.0, p.life+.01);
+      const alpha=p.life*.8;
+
+      ctx.globalAlpha=alpha;
+      ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 1.2, 1.2);
+
+      if(p.x>=0 && p.x<w && p.y>=0 && p.y<h) onScreen++;
     }
+    ctx.globalAlpha=1;
+
+    status.textContent=`particles: ${onScreen}/${COUNT} | mode: ${fieldKind} | fps: ${Math.round(1000/dt)}`;
+
     requestAnimationFrame(tick);
   }
 
-  prompt.addEventListener('input',()=>shell.dataset.active=prompt.value.length>0?'true':'false');
-  prompt.addEventListener('keydown',e=>{if(e.key==='Escape'){prompt.value='';shell.dataset.active='false';prompt.blur();}});
-  document.addEventListener('keydown',e=>{if(e.key.length===1&&!e.metaKey&&!e.ctrlKey&&!e.altKey){if(document.activeElement!==prompt){prompt.focus();}shell.dataset.active='true';scatterKick(.45);}});
-  root.addEventListener('click',()=>prompt.focus());
+  prompt.addEventListener('input',()=>{});
+  prompt.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){prompt.value='';prompt.blur();}
+  });
 
-  prompt.form.addEventListener('submit',e=>{e.preventDefault();const value=prompt.value.trim();if(!value)return;pushMessage(value,'user');
-    if(value==='/face')setMode('face'); if(value.includes('scan'))setMode('scan',{items:Array.from({length:40},(_,i)=>({severity:(i%3)+1}))});
-    if(value.includes('pipeline'))setMode('pipeline',{}); prompt.value=''; shell.dataset.active='false';});
+  form.addEventListener('submit',e=>{
+    e.preventDefault();
+    const value=prompt.value.trim();
+    if(!value) return;
+    pushMessage(value, 'user');
+
+    if(value==='/face') setMode('face');
+    if(value.includes('scan')) setMode('scan',{items:Array.from({length:30},(_,i)=>({severity:(i%3)+1}))});
+    if(value.includes('pipeline')) setMode('pipeline',{});
+
+    prompt.value='';
+  });
+
+  document.addEventListener('keydown',e=>{
+    if(e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){
+      if(document.activeElement!==prompt){
+        prompt.focus();
+        scatter=Math.min(1.4, scatter+0.3);
+        lastKick=performance.now();
+      }
+    }
+  });
+
+  document.addEventListener('click',()=>{
+    prompt.focus();
+    scatter=Math.min(1.4, scatter+0.25);
+    lastKick=performance.now();
+  });
 
   const es=new EventSource('/canvas/stream');
-  es.addEventListener('bus',e=>{try{const m=JSON.parse(e.data),t=m.topic,p=m.payload||{};
-    if(t==='chat:assistant'||t==='master:speak'){pushMessage(p.text||p.message||'MASTER speaks.','master'); scatterKick(.2);} 
-    if(t==='homeostat:mood'){updateMood(p.mood||p.state);} if(t==='canvas:face')setMode('face');
-    if(t==='scan:summary')setMode('scan',p); if(t==='pipeline:stages')setMode('pipeline',p); if(t==='audio:transient')scatterKick(.9);
-  }catch(_){}});
+  es.addEventListener('bus',e=>{
+    try{
+      const m=JSON.parse(e.data);
+      const t=m.topic, p=m.payload||{};
+      if(t==='chat:assistant' || t==='master:speak'){
+        pushMessage((p.text||p.message||'...').substring(0,120), 'master');
+        scatter=Math.min(1.4, scatter+0.2);
+        lastKick=performance.now();
+      }
+      if(t==='homeostat:mood') updateMood(p.mood||p.state);
+      if(t==='canvas:face') setMode('face');
+      if(t==='scan:summary') setMode('scan',p);
+      if(t==='pipeline:stages') setMode('pipeline',p);
+      if(t==='audio:transient') scatter=Math.min(1.4,scatter+0.8);
+    }catch(err){}
+  });
 
-  resize(); addEventListener('resize',resize,{passive:true}); requestAnimationFrame(tick);
+  resize();
+  addEventListener('resize',resize,{passive:true});
+  requestAnimationFrame(tick);
 })();
 </script>
 </body>
