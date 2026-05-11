@@ -155,10 +155,12 @@ module Master
 
     def provider_for(model)
       m = model.to_s
-      return "claude-cli"   if m.start_with?("claude-cli:")
-      return "web-chat"     if m.start_with?("web-chat:")
-      return "ollama"       if m.start_with?("ollama/")
-      return "google"       if m.include?("gemini")
+      return "claude-cli" if m.start_with?("claude-cli:")
+      return "web-chat"   if m.start_with?("web-chat:")
+      return "ollama"     if m.start_with?("ollama:", "ollama/")
+      return "openrouter" if m.include?("/")
+      return "deepseek"   if m.start_with?("deepseek-")
+      return "google"     if m.include?("gemini")
       "openrouter"
     end
 
