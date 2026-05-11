@@ -20,7 +20,7 @@ module Master
       critical: "!!"
     }.freeze
 
-    SLASH_COMMANDS = %w[/exit /undo /redo /history /why /focus /last /cmd /dmesg /chips].freeze
+    SLASH_COMMANDS = %w[/exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose].freeze
 
     attr_reader :container
 
@@ -139,17 +139,15 @@ module Master
     end
 
     def suggested_next_prompt
-      last = @session.messages.last
-      return nil unless last && last[:role] == :assistant
-      text = last[:content].to_s
-      case text
-      when /violation[s]? found|need(s)? fixing|to fix/i then "/sweep"
-      when /\bunchanged\b|\balready\b/i                  then "/undo"
-      when /\bdiff\b|\bedit\b|\bpatch\b/i                then "show the diff"
-      when /(error|fail|exception|crash)/i               then "what went wrong?"
-      when /\bscan(ned)?\b/i                             then "/why"
-      else                                                    nil
-      end
+      top = proposer.top
+      return nil unless top
+      "#{top[:action]}  (#{top[:reason]})"
+    end
+
+    def proposer
+      @proposer ||= Master::Propose.new(container: @container)
+      @proposer.violations = @violations
+      @proposer
     end
 
     def handle_repl_line(line)
@@ -166,6 +164,7 @@ module Master
       when "/cmd"     then run_cmd
       when "/dmesg"   then toggle_dmesg
       when "/chips"   then toggle_chips
+      when "/propose" then run_propose
       when "<<"       then run_input(read_multiline)
       else                 run_input(line)
       end
@@ -247,6 +246,19 @@ module Master
     def toggle_chips
       @show_chips = !@show_chips
       puts @renderer.render("chips: #{@show_chips ? "on" : "off"}", mode: :dim)
+    end
+
+    def run_propose
+      rows = proposer.call
+      if rows.empty?
+        puts @renderer.render("propose: nothing pressing — try /history or scan a dir", mode: :dim)
+        return
+      end
+      puts @renderer.render("propose0: top #{rows.size} suggestion(s)", mode: :dim)
+      rows.each_with_index do |r, i|
+        line = format("  %d. %-22s %s", i + 1, r[:action], r[:reason])
+        puts @renderer.render(line, mode: :dim)
+      end
     end
 
     def safe_read_line
