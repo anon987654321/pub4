@@ -231,9 +231,8 @@ function step(now){
     if (p.y < 0)        p.y += H, p.py = p.y;
     else if (p.y >= H)  p.y -= H, p.py = p.y;
 
-    const tier = p.z < 0.5 ? 0 : (p.z < 0.8 ? 1 : 2);
-    bctx.strokeStyle = (now < flashUntil) ? "#fff" : palette[tier];
-    bctx.lineWidth   = p.z < 0.5 ? 0.6 : (p.z < 0.8 ? 1.0 : 1.4);
+    bctx.strokeStyle = (now < flashUntil) ? "#fff" : palette[1];
+    bctx.lineWidth   = 1;
     bctx.beginPath();
     bctx.moveTo(p.px, p.py);
     bctx.lineTo(p.x,  p.y);
