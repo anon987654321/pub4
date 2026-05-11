@@ -10,8 +10,13 @@ $stderr.set_encoding("UTF-8")
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 
-# Check if the rc.d web daemon is already running; print its URL.
-# Never restarts or spawns on OpenBSD — the rc.d service owns that lifecycle.
+if %w[--help -h].include?(ARGV.first)
+  puts "Usage: master [message]"
+  puts "       master orient"
+  puts "       master --help"
+  exit 0
+end
+
 def boot_web_ui(config)
   port = config["web_port"] || 53187
   host = config["web_host"] || "127.0.0.1"
