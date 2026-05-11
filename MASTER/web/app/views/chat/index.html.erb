@@ -49,6 +49,7 @@
     const Face = {
       zones: {}, anchors: [],
       rot: 0, rotTarget: 0,
+      yaw: 0, yawTarget: 0, pitch: 0, pitchTarget: 0,
       blink: 0, blinkPhase: 0,
       gaze: [0, 0], gazeTarget: [0, 0],
       pupil: 1.0, pupilTarget: 1.0,
@@ -299,11 +300,44 @@
       return z;
     }
     function buildMask(name, cx, cy, s) {
-      if (name === 'asmat') return buildAsmat(cx, cy, s);
-      if (name === 'baining') return buildBaining(cx, cy, s);
-      if (name === 'tolai') return buildTolai(cx, cy, s);
-      if (name === 'malagan') return buildMalagan(cx, cy, s);
-      return buildSepik(cx, cy, s);
+      let z;
+      if (name === 'asmat') z = buildAsmat(cx, cy, s);
+      else if (name === 'baining') z = buildBaining(cx, cy, s);
+      else if (name === 'tolai') z = buildTolai(cx, cy, s);
+      else if (name === 'malagan') z = buildMalagan(cx, cy, s);
+      else z = buildSepik(cx, cy, s);
+      return applyZ(z, s);
+    }
+    // ─── Z (depth) — anchors carry z so mask reads as solid under rotation
+    const ZONE_Z = {
+      pupilL: -0.18, pupilR: -0.18,
+      eyeL: -0.08,   eyeR: -0.08,
+      browL: 0.10,   browR: 0.10,
+      noseFlare: 0.36,
+      scarL: 0.06,   scarR: 0.06,
+      forehead: 0.08,
+      outlineL: 0.0, outlineR: 0.0,
+      chin: -0.02,
+      mouth: 0.04
+    };
+    function applyZ(zones, s) {
+      for (const [name, list] of Object.entries(zones)) {
+        const base = (ZONE_Z[name] !== undefined ? ZONE_Z[name] : 0) * s;
+        for (let i = 0; i < list.length; i++) {
+          let zi = base;
+          if (name === 'noseRidge') {
+            const t = i / Math.max(1, list.length - 1);
+            zi = (0.06 + t * 0.38) * s;
+          } else if (name === 'crown') {
+            zi = Math.sin(i * 0.71) * 0.20 * s;
+          } else if (name === 'tasselL' || name === 'tasselR') {
+            const t = i / Math.max(1, list.length - 1);
+            zi = (0.42 + t * 0.18) * s;
+          }
+          list[i].z = zi;
+        }
+      }
+      return zones;
     }
     let zonesA = null, zonesB = null;
     let maskPhase = 0, maskTransitioning = false, lastMaskSwitch = performance.now();
@@ -322,7 +356,11 @@
     const particles = [];
     for (let i = 0; i < N; i++) particles.push({
       x: Math.random() * 600, y: Math.random() * 600,
-      vx: 0, vy: 0, hx: 0, hy: 0, hx1: 0, hy1: 0, hx2: 0, hy2: 0,
+      vx: 0, vy: 0,
+      hx: 0, hy: 0, hz: 0,
+      hx1: 0, hy1: 0, hz1: 0,
+      hx2: 0, hy2: 0, hz2: 0,
+      ox: Math.sin(i * 7.13) * 0.5, oy: Math.cos(i * 11.7) * 0.5, oz: Math.sin(i * 3.97) * 0.4,
       zone: 'crown', life: 1.0
     });
     function assignHomes() {
@@ -334,9 +372,9 @@
         const a = A[i % A.length];
         const b = B[i % B.length];
         const p = particles[i];
-        p.hx1 = a.x; p.hy1 = a.y;
-        p.hx2 = b.x; p.hy2 = b.y;
-        p.hx = a.x; p.hy = a.y;
+        p.hx1 = a.x + p.ox; p.hy1 = a.y + p.oy; p.hz1 = (a.z || 0) + p.oz;
+        p.hx2 = b.x + p.ox; p.hy2 = b.y + p.oy; p.hz2 = (b.z || 0) + p.oz;
+        p.hx = p.hx1; p.hy = p.hy1; p.hz = p.hz1;
         p.zone = a.zone;
       }
     }
@@ -346,6 +384,7 @@
         const p = particles[i];
         p.hx = p.hx1 + (p.hx2 - p.hx1) * t;
         p.hy = p.hy1 + (p.hy2 - p.hy1) * t;
+        p.hz = p.hz1 + (p.hz2 - p.hz1) * t;
       }
     }
     function maybeSwitchMask(now, dt) {
@@ -358,7 +397,7 @@
           zonesA = zonesB;
           for (let i = 0; i < particles.length; i++) {
             const p = particles[i];
-            p.hx1 = p.hx2; p.hy1 = p.hy2;
+            p.hx1 = p.hx2; p.hy1 = p.hy2; p.hz1 = p.hz2;
           }
         }
         return;
@@ -371,7 +410,8 @@
         const B = [].concat(...Object.values(zonesB));
         for (let i = 0; i < particles.length; i++) {
           const b = B[i % B.length];
-          particles[i].hx2 = b.x; particles[i].hy2 = b.y;
+          const p = particles[i];
+          p.hx2 = b.x + p.ox; p.hy2 = b.y + p.oy; p.hz2 = (b.z || 0) + p.oz;
         }
         maskPhase = 0;
         maskTransitioning = true;
@@ -773,8 +813,8 @@
       const da = a - Gesture.rotA0;
       if (Math.abs(da) > 0.4) cyclePalette(da > 0 ? 1 : -1);
     }
-    function nod(dir) { Face.rotTarget = dir * 0.18; setTimeout(() => Face.rotTarget = 0, 380); }
-    function shake(dir) { Face.rotTarget = dir * 0.22; setTimeout(() => Face.rotTarget = -Face.rotTarget, 180); setTimeout(() => Face.rotTarget = 0, 380); }
+    function nod(dir) { Face.pitchTarget = dir * 0.28; setTimeout(() => Face.pitchTarget = 0, 380); }
+    function shake(dir) { Face.yawTarget = dir * 0.32; setTimeout(() => Face.yawTarget = -Face.yawTarget, 180); setTimeout(() => Face.yawTarget = 0, 380); }
     function sendSlash(cmd) { try { fetch(`/chat/message?message=${encodeURIComponent(cmd)}`, { method: 'GET' }); } catch (e) {} }
 
     // palette cycle (mood overrides)
@@ -959,6 +999,8 @@
 
       // smooth state lerps
       Face.rot     += (Face.rotTarget - Face.rot) * 0.12;
+      Face.yaw     += (Face.yawTarget - Face.yaw) * 0.12;
+      Face.pitch   += (Face.pitchTarget - Face.pitch) * 0.12;
       Face.pupil   += (Face.pupilTarget - Face.pupil) * 0.10;
       Face.brow    += (Face.browTarget - Face.brow) * 0.08;
       Face.dispersion += (Face.dispersionTarget - Face.dispersion) * 0.06;
@@ -971,12 +1013,13 @@
       Face.edgePulse  *= 0.96;
       Face.vortex     *= 0.93;
 
-      // blink scheduler — low confidence blinks more often
+      // blink scheduler — cosine envelope, low confidence blinks more often
       Face.blinkPhase += dt * 0.001;
       const baseInt = State.mode === 'thinking' ? 0.9 : (State.mode === 'idle' ? 5.0 : 3.0);
       const interval = baseInt * (0.4 + State.confidence * 0.6);
-      if (Face.blinkPhase > interval) { Face.blink = 1.0; Face.blinkPhase = 0; }
-      Face.blink *= 0.78;
+      if (Face.blinkPhase > interval) { Face.blinkAt = now; Face.blinkPhase = 0; }
+      const blinkAge = now - (Face.blinkAt || 0);
+      Face.blink = blinkAge < 140 ? Math.sin(blinkAge / 140 * Math.PI) : 0;
 
       const idleMs = now - State.lastTouch;
       if (idleMs > 60000 && State.mode === 'idle') State.mode = 'rain';
@@ -1015,21 +1058,23 @@
     function tickParticles(dt, now) {
       const cx = Face.cx, cy = Face.cy, s = Face.s;
       const rot = Face.rot, cosR = Math.cos(rot), sinR = Math.sin(rot);
+      const yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(now * 0.00022) * 0.06;
+      const pitch = Face.pitch + State.tiltY * 0.30;
+      const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+      const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
       const disp = Face.dispersion;
       const scale = Face.bodyScale;
       const blinkClose = Face.blink > 0.3 ? 1 : 0;
-      const gazeX = Face.gaze[0] * Face.s * 0.06;
-      const gazeY = Face.gaze[1] * Face.s * 0.06;
+      const gazeX = Face.gaze[0] * s * 0.06;
+      const gazeY = Face.gaze[1] * s * 0.06;
       const pupilK = Face.pupil;
       const browDrop = Face.brow * s * 0.06;
       const audioPunch = State.audioLevel;
-      const tiltOffX = State.tiltX * s * 0.06;
-      const tiltOffY = State.tiltY * s * 0.04;
+      const NP = particles.length;
 
-      for (let i = 0; i < particles.length; i++) {
+      for (let i = 0; i < NP; i++) {
         const p = particles[i];
-        let tx = p.hx, ty = p.hy;
-        // Sepik mask deformations — eyes at s*0.32 from center, scarification audio-reactive
+        let tx = p.hx, ty = p.hy, tz = p.hz;
         if (p.zone === 'pupilL' || p.zone === 'pupilR') {
           const ex = (p.zone === 'pupilL') ? cx - s * 0.32 : cx + s * 0.32;
           const ey = cy - s * 0.10;
@@ -1042,36 +1087,36 @@
         }
         if (p.zone === 'browL' || p.zone === 'browR') ty = p.hy + browDrop;
         if (p.zone === 'scarL' || p.zone === 'scarR') {
-          // scarification trembles with audio (cheek-pulse equivalent)
           tx = p.hx + (Math.random() - 0.5) * audioPunch * s * 0.06;
         }
         if (p.zone === 'tasselL' || p.zone === 'tasselR') {
-          // tassels sway with tilt
           tx = p.hx + State.tiltX * s * 0.08;
           ty = p.hy + Math.sin(now * 0.002 + p.hy * 0.05) * s * 0.02;
         }
         if (p.zone === 'crown') {
-          // crown feathers ruffle on dispersion
           tx = p.hx + Math.sin(now * 0.001 + p.hx * 0.02) * s * 0.02 * (1 + Face.dispersion);
         }
-        // scale + rotate around center
-        let dx = (tx - cx) * scale, dy = (ty - cy) * scale;
-        const rx = dx * cosR - dy * sinR;
-        const ry = dx * sinR + dy * cosR;
-        tx = cx + rx + tiltOffX;
-        ty = cy + ry + tiltOffY;
-        // dispersion (face → swarm)
+        // 3D transform around centroid: scale → roll → yaw → pitch
+        let dx = (tx - cx) * scale, dy = (ty - cy) * scale, dz = tz * scale;
+        const xR = dx * cosR - dy * sinR;
+        const yR = dx * sinR + dy * cosR;
+        dx = xR; dy = yR;
+        const xY = dx * cosY + dz * sinY;
+        const zY = -dx * sinY + dz * cosY;
+        dx = xY; dz = zY;
+        const yP = dy * cosP - dz * sinP;
+        dy = yP;
+        tx = cx + dx;
+        ty = cy + dy;
         if (disp > 0) {
-          const ax = (Math.random() - 0.5) * s * 2 * disp;
-          const ay = (Math.random() - 0.5) * s * 2 * disp * 0.5;
-          tx += ax * 0.04; ty += ay * 0.04;
+          const dxn = (Math.random() - 0.5) * s * 2 * disp;
+          const dyn = (Math.random() - 0.5) * s * 2 * disp * 0.5;
+          tx += dxn * 0.04; ty += dyn * 0.04;
         } else if (disp < 0) {
-          // sleep mode: collapse to center
           const k = -disp;
           tx = cx * k + tx * (1 - k);
           ty = cy * k + ty * (1 - k);
         }
-        // vortex
         if (Face.vortex > 0.01) {
           const vdx = p.x - cx, vdy = p.y - cy;
           const va = Math.atan2(vdy, vdx) + Face.vortex * 0.25;
@@ -1079,16 +1124,30 @@
           tx = cx + Math.cos(va) * vr;
           ty = cy + Math.sin(va) * vr;
         }
-        // rain mode
         if (State.mode === 'rain') {
           p.vy += 0.04;
           if (p.y > H) { p.y = -10; p.x = Math.random() * W; p.vy = 0; }
           tx = p.x; ty = p.y + 1;
         }
-        const ax = (tx - p.x) * 0.06, ay = (ty - p.y) * 0.06;
-        p.vx += ax + State.tiltX * 0.04;
-        p.vy += ay + State.tiltY * 0.02;
-        p.vx *= 0.86; p.vy *= 0.86;
+        // underdamped spring — overshoot-and-settle landing
+        const ax = (tx - p.x) * 0.08, ay = (ty - p.y) * 0.08;
+        p.vx += ax;
+        p.vy += ay;
+        p.vx *= 0.91; p.vy *= 0.91;
+        // velocity ceiling
+        const v2 = p.vx*p.vx + p.vy*p.vy;
+        if (v2 > 1.96) { const k = 1.4 / Math.sqrt(v2); p.vx *= k; p.vy *= k; }
+        // sub-pixel repulsion (stochastic 2-neighbor)
+        for (let kk = 0; kk < 2; kk++) {
+          const j = (i + 137 + kk * 257) % NP;
+          const q = particles[j];
+          const rdx = p.x - q.x, rdy = p.y - q.y;
+          const d2 = rdx*rdx + rdy*rdy;
+          if (d2 < 2.25 && d2 > 0.01) {
+            const f = 0.05 / d2;
+            p.vx += rdx * f; p.vy += rdy * f;
+          }
+        }
         p.x += p.vx; p.y += p.vy;
       }
     }
@@ -1096,7 +1155,9 @@
     function drawParticles() {
       const fog = weather.fog * 0.4;
       const alpha = State.mode === 'sleep' ? 0.35 : (State.mode === 'rain' ? 0.55 : 0.95);
-      ctx.fillStyle = `rgba(${palette.highlight},${alpha - fog})`;
+      const hi = palette.highlight.split(',');
+      const d = () => (Math.random() < 0.33 ? -1 : Math.random() < 0.5 ? 0 : 1);
+      ctx.fillStyle = `rgba(${(+hi[0]+d())|0},${(+hi[1]+d())|0},${(+hi[2]+d())|0},${alpha - fog})`;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
