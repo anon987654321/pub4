@@ -1,11 +1,11 @@
-# Model routing profile — Gemini primary, Mistral/DeepSeek/OpenRouter fallback.
+# Model routing profile — OpenRouter free-tier with tool calling.
 
 routing:
   enabled: true
   strategy: weighted
   escalation_enabled: true
   escalation_tier: strong
-  provider: gemini
+  provider: openrouter
 
 weights: &weights
   quality: 0.50
@@ -59,6 +59,14 @@ model_defs:
     id: qwen/qwen3-coder:free
     <<: *model_defaults
     score: { quality: 0.75, speed: 0.65, cost: 1.0 }
+  qwen3_next: &qwen3_next
+    id: qwen/qwen3-next-80b-a3b-instruct:free
+    <<: *model_defaults
+    score: { quality: 0.82, speed: 0.88, cost: 1.0 }
+  gpt_oss_120b: &gpt_oss_120b
+    id: openai/gpt-oss-120b:free
+    <<: *model_defaults
+    score: { quality: 0.86, speed: 0.70, cost: 1.0 }
   llama_70b: &llama_70b
     id: meta-llama/llama-3.3-70b-instruct:free
     <<: *model_defaults
@@ -150,13 +158,11 @@ ollama_phi: &ollama_phi
 
 models:
   default:
-    - *gemini_flash
-    - *mistral_large
-    - *deepseek_chat
     - *nemotron_super
+    - *gpt_oss_120b
+    - *qwen3_next
+    - *llama_70b
     - *qwen_coder
-    - *grok_4_fast
-    - *deepseek_v3_free
   strong:
     - *gemini_pro
     - *mistral_large
@@ -258,6 +264,9 @@ continuity:
 openrouter:
   free_latest:
     - nvidia/nemotron-3-super-120b-a12b:free
+    - openai/gpt-oss-120b:free
+    - qwen/qwen3-next-80b-a3b-instruct:free
+    - meta-llama/llama-3.3-70b-instruct:free
     - qwen/qwen3-coder:free
 
 # Provider trust tracked over time; weights routing beyond raw cost.
