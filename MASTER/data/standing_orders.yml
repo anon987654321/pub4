@@ -1,11 +1,11 @@
 ---
-- name: triad_default
-  description: Default pipeline — deep scan, autofix sweep, council review. Runs hourly
-    and after any /chat or CLI session that mutated MASTER source. User never types
-    this; agent_commands/triad_command runs all three.
+- name: auto_default
+  description: Default pipeline — iterative scan + autofix sweep + council review until
+    plateau (Δ&lt;5% violations) or 4 rounds. Runs hourly and after any /chat or CLI
+    session that mutated MASTER source. User never types this.
   trigger: scheduled
   interval_s: 3600
-  command: triad deep .
+  command: auto .
   enabled: true
   state: done
   last_run_at: 1778522373

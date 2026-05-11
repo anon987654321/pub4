@@ -22,23 +22,42 @@ module Master
       }
     end
 
+    AUTO_MAX_ROUNDS = 4
+    AUTO_PLATEAU_RATIO = 0.05
+
     def triad_command(ai:, root:, infra:)
       bus          = infra[:bus]
       cmds         = scan_loop_commands(ai:, root:, infra:)
       deliberation = ai[:deliberation]
-      {
-        "triad" => ->(ctx) {
-          target = arg_for(ctx)
-          target = "." if target.empty?
-          parts = []
-          bus&.publish("triad:start", target: target)
-          parts << "scan:\n#{cmds['scan'].call(args: target)}"
-          parts << "sweep:\n#{cmds['sweep'].call(args: target)}"
-          parts << "tribunal:\n#{run_tribunal(deliberation, parts.join("\n\n"), target, bus)}"
-          bus&.publish("triad:done")
-          parts.join("\n\n")
-        }
+      auto = ->(ctx) {
+        target = arg_for(ctx)
+        target = "." if target.empty?
+        run_auto_cascade(target, cmds, deliberation, bus)
       }
+      { "auto" => auto }
+    end
+
+    def run_auto_cascade(target, cmds, deliberation, bus)
+      bus&.publish("auto:start", target: target)
+      prev_violations = nil
+      transcript = []
+      AUTO_MAX_ROUNDS.times do |round|
+        scan_out  = cmds["scan"].call(args: target)
+        violations = scan_out.scan(/(\d+) violation/).flatten.map(&:to_i).sum
+        bus&.publish("auto:round", round: round + 1, violations: violations)
+        if prev_violations && violations > 0 && (prev_violations - violations).abs.to_f / prev_violations < AUTO_PLATEAU_RATIO
+          transcript << "round #{round + 1}: plateau at #{violations} violation(s)"
+          break
+        end
+        sweep_out = cmds["sweep"].call(args: target)
+        artifact  = "scan:\n#{scan_out}\n\nsweep:\n#{sweep_out}"
+        verdict   = run_tribunal(deliberation, artifact, target, bus)
+        transcript << "round #{round + 1}: violations=#{violations}\n#{verdict.lines.first(3).join}"
+        prev_violations = violations
+        break if violations.zero?
+      end
+      bus&.publish("auto:done", rounds: transcript.size)
+      "auto cascade (#{transcript.size} round(s)):\n#{transcript.join("\n---\n")}"
     end
 
     def run_tribunal(deliberation, artifact, target, bus = nil)

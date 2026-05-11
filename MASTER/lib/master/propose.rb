@@ -53,7 +53,7 @@ module Master
       out << prop("show the diff", "assistant referenced an edit/patch", 0.65) if text.match?(/\bdiff\b|\bedit\b|\bpatch\b/i)
       out << prop("what went wrong?", "error/failure in last reply",     0.7)  if text.match?(/(error|fail|exception|crash)/i)
       out << prop("/why",          "decision/score worth inspecting",    0.6)  if text.match?(/\b(routed|tier|escalat|chose|picked)\b/i)
-      out << prop("/triad",        "constitutional question raised",     0.55) if text.match?(/\bshould we\b|\btradeoff\b|\beither\b/i)
+      out << prop("/auto",        "constitutional question raised",     0.55) if text.match?(/\bshould we\b|\btradeoff\b|\beither\b/i)
       out << prop("/commit",       "patch landed, ready to commit",      0.8)  if text.match?(/\b(applied|wrote|patched|edited)\b/i)
       out
     end
@@ -72,7 +72,7 @@ module Master
       case @session.phase.to_s
       when "discover"  then [prop("/scan",  "discover phase — survey state",    0.4)]
       when "implement" then [prop("/diff",  "implement phase — review staging", 0.45)]
-      when "audit"     then [prop("/triad", "audit phase — convene council",    0.5)]
+      when "audit"     then [prop("/auto", "audit phase — convene council",    0.5)]
       else                  []
       end
     end

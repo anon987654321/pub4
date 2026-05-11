@@ -114,16 +114,16 @@ class ChatController < ApplicationController
 
       sse.write("data: [DONE]\n\n")
 
-      # Post-turn standing orders: triad, autocommit, restart on web edits.
+      # Post-turn standing orders: auto cascade, autocommit, restart on web edits.
       if mutated_flag
         Thread.new do
           Thread.current.report_on_exception = false
           begin
-            container[:bus].publish("triad:auto_start", reason: "post_chat_mutation")
-            container[:command_registry].dig("triad")&.call(args: "deep .")
-            container[:bus].publish("triad:auto_done")
+            container[:bus].publish("auto:auto_start", reason: "post_chat_mutation")
+            container[:command_registry].dig("auto")&.call(args: mutated_paths.first || ".")
+            container[:bus].publish("auto:auto_done")
           rescue StandardError => err
-            container[:bus].publish("triad:auto_error", error: err.message)
+            container[:bus].publish("auto:auto_error", error: err.message)
           end
         end
 

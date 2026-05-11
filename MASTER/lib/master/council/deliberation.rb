@@ -7,6 +7,8 @@ module Master
       MAX_CODE_BYTES  = 8_192
       TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
       JUDGE_TIMEOUT   = 30
+      TOTAL_BUDGET_S  = 120
+      MIN_QUORUM      = 3
 
       COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
       QUESTION_CATEGORY = {
@@ -50,6 +52,7 @@ module Master
         available = MAX_CONCURRENT
         ready = ConditionVariable.new
 
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
         threads = @personas.map do |persona|
           Thread.new do
             slots.synchronize { ready.wait(slots) until available > 0; available -= 1 }
@@ -68,10 +71,13 @@ module Master
             end
           end
         end
-        feedback = threads.map { |thread| thread.join(30) ? thread.value : nil }.compact
-        if feedback.empty?
-          @bus&.publish(:council_timeout, personas: @personas.map(&:name))
-          return Master::Result.err("council: all personas timed out (#{@personas.size})", category: :timeout)
+        feedback = threads.map do |thread|
+          remaining = [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0.1].max
+          thread.join(remaining) ? thread.value : (thread.kill; nil)
+        end.compact
+        if feedback.size < MIN_QUORUM
+          @bus&.publish(:council_timeout, completed: feedback.size, total: @personas.size)
+          return Master::Result.err("council: quorum not reached (#{feedback.size}/#{@personas.size})", category: :timeout)
         end
 
         vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
