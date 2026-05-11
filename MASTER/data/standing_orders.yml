@@ -1,14 +1,14 @@
 ---
 - name: triad_default
-  description: Default pipeline — full scan, autofix sweep, council review. Runs hourly
+  description: Default pipeline — deep scan, autofix sweep, council review. Runs hourly
     and after any /chat or CLI session that mutated MASTER source. User never types
     this; agent_commands/triad_command runs all three.
   trigger: scheduled
   interval_s: 3600
-  command: triad .
+  command: triad deep .
   enabled: true
   state: done
-  last_run_at: 1778205973
+  last_run_at: 1778440363
 - name: nightly_dreams
   description: Consolidate memories during low-activity periods
   trigger: scheduled
@@ -16,7 +16,7 @@
   command: dreams consolidate
   enabled: true
   state: done
-  last_run_at: 1778197873
+  last_run_at: 1778371961
 - name: weekly_scan
   description: Weekly codebase axiom scan for regressions
   trigger: scheduled

@@ -1,0 +1,1 @@
+{"id":"24862-1778210791-9l3l","start_ts":1778210791,"channel":"cli","message":"/help","events":[{"channel":"cli","size":5,"event":"gateway:receive","ts_ms":0},{"turn_id":"24862-1778210791-9l3l","ok":true,"error":null,"event":"gateway:turn_done","ts_ms":79}],"t0":1837}

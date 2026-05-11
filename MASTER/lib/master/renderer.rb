@@ -85,7 +85,7 @@ module Master
     end
 
     def speaker_tag(name = "master")
-      "#{@p.dim("─")} #{@p.bold.red(name)} #{@p.dim("─")}" 
+      "#{@p.dim("<")}#{@p.bold.red(name)}#{@p.dim(">")}"
     end
 
     def status_row(uptime:, turns:, violations: 0)

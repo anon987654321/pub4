@@ -18,6 +18,7 @@ GEM
     bigdecimal (4.0.1)
     concurrent-ruby (1.3.6)
     diffy (3.4.4)
+    docile (1.4.1)
     dry-configurable (1.3.0)
       dry-core (~> 1.1)
       zeitwerk (~> 2.6)
@@ -174,6 +175,12 @@ GEM
       zeitwerk (~> 2)
     ruby_llm-schema (0.3.0)
     sexp_processor (4.17.5)
+    simplecov (0.22.0)
+      docile (~> 1.1)
+      simplecov-html (~> 0.11)
+      simplecov_json_formatter (~> 0.1)
+    simplecov-html (0.13.2)
+    simplecov_json_formatter (0.1.4)
     sinatra (4.2.1)
       logger (>= 1.6.0)
       mustermann (~> 3.0)
@@ -263,6 +270,7 @@ DEPENDENCIES
   rubocop (~> 1.60)
   ruby_llm (~> 1.3)
   ruby_llm-mcp
+  simplecov
   sinatra (~> 4.0)
   sinatra-contrib (~> 4.0)
   tty-box (~> 0.7)
@@ -286,6 +294,7 @@ CHECKSUMS
   bigdecimal (4.0.1) sha256=8b07d3d065a9f921c80ceaea7c9d4ae596697295b584c296fe599dd0ad01c4a7
   concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
   diffy (3.4.4) sha256=79384ab5ca82d0e115b2771f0961e27c164c456074bd2ec46b637ebf7b6e47e3
+  docile (1.4.1)
   dry-configurable (1.3.0) sha256=882d862858567fc1210d2549d4c090f34370fc1bb7c5c1933de3fe792e18afa8
   dry-core (1.2.0) sha256=0cc5a7da88df397f153947eeeae42e876e999c1e30900f3c536fb173854e96a1
   dry-inflector (1.3.1) sha256=7fb0c2bb04f67638f25c52e7ba39ab435d922a3a5c3cd196120f63accb682dcc
@@ -349,6 +358,9 @@ CHECKSUMS
   ruby_llm-mcp (0.5.1) sha256=07de990440e9c916b83c3c8a56ff595268ad1f24dfcf454867da14f80e2beba4
   ruby_llm-schema (0.3.0) sha256=a591edc5ca1b7f0304f0e2261de61ba4b3bea17be09f5cf7558153adfda3dec6
   sexp_processor (4.17.5) sha256=ae2b48ba98353d5d465ce8759836b7a05f2e12c5879fcd14d7815b026de32f0e
+  simplecov (0.22.0)
+  simplecov-html (0.13.2)
+  simplecov_json_formatter (0.1.4)
   sinatra (4.2.1) sha256=b7aeb9b11d046b552972ade834f1f9be98b185fa8444480688e3627625377080
   sinatra-contrib (4.2.1) sha256=10d091c944d268aa910c618ea40a3c3ebe0533e6e32990d84af92235a3d26b4a
   strings (0.2.1) sha256=933293b3c95cf85b81eb44b3cf673e3087661ba739bbadfeadf442083158d6fb
