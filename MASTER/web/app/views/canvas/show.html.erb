@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <title>MASTER · canvas</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#0a0c0a;color:#cdc5b6;overflow:hidden;font:400 .9rem/1.4 'Monaco','Courier New','SF Mono',ui-monospace,monospace}
@@ -531,6 +535,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
   resize();
   addEventListener('resize',resize,{passive:true});
   requestAnimationFrame(tick);
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 })();
 </script>
 </body>
