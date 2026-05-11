@@ -9,15 +9,16 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #000;
-      --fg: #fff;
-      --dim: rgba(255,255,255,0.3);
-      --hairline: rgba(255,255,255,0.12);
-      --accent: 255, 255, 255;
-      --think-accent: 200, 220, 255;
+      --fg: 215,165,130;
+      --dim: rgba(215,165,130,0.32);
+      --hairline: rgba(215,165,130,0.14);
+      --accent: 210,115,75;
+      --think-accent: 230,140,95;
       --max-line-width: 60ch;
       --pad: 1.5rem;
     }
-    html, body { height: 100%; background: var(--bg); color: var(--fg); }
+    html, body { color: rgb(var(--fg)); }
+    html, body { height: 100%; background: var(--bg); }
     body {
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-size: 16px;
@@ -59,7 +60,11 @@
     .message .text {
       white-space: pre-wrap;
       line-height: 1.6;
-      color: var(--fg);
+      color: rgb(var(--fg));
+    }
+    .message .text .sp {
+      color: rgb(var(--accent));
+      transition: color 0.4s ease;
     }
     .message .meta {
       font-size: 0.75rem;
@@ -83,12 +88,25 @@
     #input-line {
       flex: 1;
       background: transparent; border: none; outline: none;
-      color: var(--fg);
+      color: rgb(var(--fg));
       font: inherit; font-size: 1rem;
-      caret-color: var(--fg);
+      caret-color: rgb(var(--accent));
       padding: 0.5rem 0;
       resize: none;
     }
+    #ghost {
+      position: absolute; left: var(--pad); right: var(--pad); bottom: 0.7rem;
+      pointer-events: none; color: var(--dim); font-size: 1rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #debug {
+      position: fixed; top: 0.5rem; right: 0.75rem;
+      font-size: 0.65rem; color: var(--dim); z-index: 2;
+      font-family: ui-monospace, monospace; text-align: right;
+      pointer-events: none; display: none;
+    }
+    #debug.on { display: block; }
+    main.muted #input-area { border-top-color: rgba(215,165,130,0.04); }
     #input-line::placeholder { color: var(--dim); }
     button { display: none; } /* no buttons */
 
@@ -106,10 +124,12 @@
   <canvas id="particles"></canvas>
   <main>
     <div id="messages"></div>
-    <div id="input-area">
+    <div id="input-area" style="position:relative">
       <input id="input-line" type="text" placeholder="…" autofocus autocomplete="off" autocapitalize="off" />
+      <div id="ghost"></div>
     </div>
   </main>
+  <div id="debug"></div>
 
   <script>
     // ─── Particle system ──────────────────────────────────────────────
@@ -229,6 +249,22 @@
       osc1.connect(gain1); gain1.connect(analyser); analyser.connect(audioCtx.destination);
       osc2.connect(gain2); gain2.connect(analyser);
       osc1.start(); osc2.start();
+      tts.padGain1 = gain1; tts.padGain2 = gain2;
+      tts.osc1 = osc1; tts.osc2 = osc2;
+    }
+    const MOOD_FREQ = {
+      focused: [110.00, 164.81],
+      curious: [123.47, 196.00],
+      tense:   [130.81, 207.65],
+      weary:   [98.00,  146.83],
+      idle:    [110.00, 164.81]
+    };
+    function moodTone(tag) {
+      if (!tts.osc1) return;
+      const f = MOOD_FREQ[tag] || MOOD_FREQ.idle;
+      const t = audioCtx.currentTime;
+      tts.osc1.frequency.linearRampToValueAtTime(f[0], t + 0.8);
+      tts.osc2.frequency.linearRampToValueAtTime(f[1], t + 0.8);
     }
 
     function getAudioData() {
@@ -244,17 +280,95 @@
       requestAnimationFrame(animate);
       const audioData = getAudioData();
       particles.forEach(p => p.update(window._attractors, audioData));
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = 'rgba(215,165,130,0.85)';
       for (let p of particles) {
-        ctx.fillRect(p.x, p.y, 1, 1);
+        ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
       }
     }
     animate();
 
+    // ─── TTS engine ─────────────────────────────────────────────────
+    const tts = {
+      enabled: true, muted: false, voice: null, rate: 1.0, pitch: 1.0,
+      queue: [], speaking: null, model: null, mood: 'idle',
+      padGain1: null, padGain2: null
+    };
+    const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
+    function pickVoice() {
+      if (!('speechSynthesis' in window)) { tts.enabled = false; return; }
+      const v = speechSynthesis.getVoices();
+      if (!v.length) return;
+      const en = v.filter(x => /en[-_]/i.test(x.lang));
+      tts.voice = en.find(x => /Google.*US|Samantha|Daniel|Karen/i.test(x.name)) || en[0] || v[0];
+    }
+    if ('speechSynthesis' in window) {
+      speechSynthesis.onvoiceschanged = pickVoice;
+      pickVoice();
+    }
+    const MODEL_TIMBRE = {
+      'deepseek': { rate: 0.96, pitch: 0.92 },
+      'claude':   { rate: 1.00, pitch: 1.00 },
+      'gemini':   { rate: 1.05, pitch: 1.08 },
+      'gpt':      { rate: 0.98, pitch: 1.04 }
+    };
+    const MOOD_PROSODY = {
+      focused: { rate: 1.00, pitch: 0.98 },
+      curious: { rate: 1.10, pitch: 1.12 },
+      tense:   { rate: 1.15, pitch: 1.05 },
+      weary:   { rate: 0.88, pitch: 0.92 },
+      idle:    { rate: 1.00, pitch: 1.00 }
+    };
+    function ttsParams() {
+      const m = (tts.model || '').toLowerCase();
+      const tb = Object.entries(MODEL_TIMBRE).find(([k]) => m.includes(k));
+      const t = tb ? tb[1] : { rate: 1.0, pitch: 1.0 };
+      const p = MOOD_PROSODY[tts.mood] || MOOD_PROSODY.idle;
+      return { rate: t.rate * p.rate, pitch: t.pitch * p.pitch };
+    }
+    function duck(on) {
+      if (!tts.padGain1) return;
+      const target1 = on ? 0.006 : 0.03;
+      const target2 = on ? 0.004 : 0.02;
+      tts.padGain1.gain.linearRampToValueAtTime(target1, audioCtx.currentTime + 0.25);
+      tts.padGain2.gain.linearRampToValueAtTime(target2, audioCtx.currentTime + 0.25);
+    }
+    function enqueueSpeech(text, opts = {}) {
+      if (!tts.enabled || tts.muted || !text) return;
+      const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`]/g, '').trim();
+      if (!clean) return;
+      const u = new SpeechSynthesisUtterance(clean);
+      const p = ttsParams();
+      u.rate = p.rate; u.pitch = p.pitch;
+      if (tts.voice) u.voice = tts.voice;
+      u.onstart = () => { tts.speaking = u; duck(true); if (opts.span) opts.span.classList.add('sp'); };
+      u.onend   = () => { tts.speaking = null; duck(false); if (opts.span) opts.span.classList.remove('sp'); ttsTick(); };
+      tts.queue.push(u);
+      ttsTick();
+    }
+    function ttsTick() {
+      if (!tts.enabled || tts.muted) return;
+      if (speechSynthesis.speaking || speechSynthesis.pending) return;
+      const u = tts.queue.shift();
+      if (u) speechSynthesis.speak(u);
+    }
+    function ttsSkip() {
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      tts.queue.length = 0;
+      duck(false);
+    }
+    function ttsToggleMute() {
+      tts.muted = !tts.muted;
+      if (tts.muted) ttsSkip();
+      document.querySelector('main').classList.toggle('muted', tts.muted);
+    }
+
     // ─── Chat logic ─────────────────────────────────────────────────
     const messagesDiv = document.getElementById('messages');
     const inputLine = document.getElementById('input-line');
+    const ghost = document.getElementById('ghost');
+    const debug = document.getElementById('debug');
     let isThinking = false;
 
     function addMessage(role, text) {
@@ -280,30 +394,58 @@
     }
 
     async function sendMessage(text) {
+      if (text.startsWith('/')) { if (handleSlash(text)) return; }
       addMessage('user', text);
       updateThinking(true);
-      // SSE connection
+      ttsSkip();
       const token = new URLSearchParams(window.location.search).get('token') || '';
       const url = `/chat/message?token=${encodeURIComponent(token)}`;
       const eventSource = new EventSource(`${url}&message=${encodeURIComponent(text)}`);
-      let assistantDiv = null;
-      let fullText = '';
+      let assistantDiv = null, textDiv = null;
+      let fullText = '', spoken = '', pending = '';
+      const t0 = performance.now();
+      let firstTok = 0, tokCount = 0;
 
       eventSource.onmessage = (event) => {
         if (!assistantDiv) {
           assistantDiv = addMessage('assistant', '');
           assistantDiv.classList.add('thinking');
+          textDiv = assistantDiv.querySelector('.text');
         }
         const data = JSON.parse(event.data);
+        if (data.model && !tts.model) tts.model = data.model;
+        if (data.mood) { tts.mood = data.mood; moodTone(data.mood); }
         if (data.chunk) {
+          if (!firstTok) firstTok = performance.now() - t0;
+          tokCount++;
           fullText += data.chunk;
-          assistantDiv.querySelector('.text').textContent = fullText;
+          pending += data.chunk;
+          textDiv.textContent = fullText;
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          const m = pending.match(SENT_BREAK);
+          while (m) {
+            const cut = m.index + m[0].length;
+            const sent = pending.slice(0, cut).trim();
+            pending = pending.slice(cut);
+            if (sent) {
+              spoken += sent + ' ';
+              const span = document.createElement('span');
+              span.textContent = sent + ' ';
+              enqueueSpeech(sent, { span });
+            }
+            const next = pending.match(SENT_BREAK);
+            if (!next) break;
+            m[0] = next[0]; m.index = next.index;
+          }
+          updateDebug({ ttft: firstTok|0, toks: tokCount, model: tts.model, mood: tts.mood });
         }
         if (data.done) {
+          if (pending.trim()) enqueueSpeech(pending.trim());
+          pending = '';
           assistantDiv.classList.remove('thinking');
           updateThinking(false);
           eventSource.close();
+          updateDebug({ ttft: firstTok|0, toks: tokCount, model: tts.model, mood: tts.mood, total: ((performance.now()-t0)|0) });
         }
       };
       eventSource.onerror = () => {
@@ -311,6 +453,31 @@
         updateThinking(false);
         eventSource.close();
       };
+    }
+
+    function handleSlash(line) {
+      const cmd = line.split(/\s+/)[0].toLowerCase();
+      if (cmd === '/mute')  { ttsToggleMute(); inputLine.value=''; return true; }
+      if (cmd === '/skip')  { ttsSkip(); inputLine.value=''; return true; }
+      if (cmd === '/read')  { readAll(); inputLine.value=''; return true; }
+      if (cmd === '/debug') { debug.classList.toggle('on'); inputLine.value=''; return true; }
+      return false;
+    }
+    function readAll() {
+      ttsSkip();
+      document.querySelectorAll('.message.assistant .text').forEach(t => {
+        enqueueSpeech(t.textContent);
+      });
+    }
+    function updateDebug(o) {
+      if (!debug.classList.contains('on')) return;
+      const bits = [];
+      if (o.ttft !== undefined) bits.push(`ttft ${o.ttft}ms`);
+      if (o.toks !== undefined) bits.push(`${o.toks} chunks`);
+      if (o.total !== undefined) bits.push(`total ${o.total}ms`);
+      if (o.model) bits.push(o.model.split('/').pop());
+      if (o.mood && o.mood !== 'idle') bits.push(o.mood);
+      debug.textContent = bits.join(' · ');
     }
 
     inputLine.addEventListener('keydown', (e) => {
@@ -349,15 +516,22 @@
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
       recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.trim();
-        if (transcript) {
-          inputLine.value = transcript;
-          sendMessage(transcript);
+        let interim = '', final = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const r = event.results[i];
+          if (r.isFinal) final += r[0].transcript;
+          else interim += r[0].transcript;
+        }
+        ghost.textContent = interim;
+        if (final.trim()) {
+          ghost.textContent = '';
+          inputLine.value = final.trim();
+          sendMessage(final.trim());
         }
       };
-      // long press input to activate voice
+      recognition.onend = () => { ghost.textContent = ''; };
       inputLine.addEventListener('pointerdown', startVoiceTimer);
       inputLine.addEventListener('pointerup', cancelVoiceTimer);
     }
@@ -371,11 +545,23 @@
       clearTimeout(voiceTimer);
     }
 
+    let lastTap = 0;
+    canvas.addEventListener('pointerdown', (e) => {
+      const now = performance.now();
+      if (now - lastTap < 320) { ttsToggleMute(); lastTap = 0; return; }
+      lastTap = now;
+      if (tts.speaking || tts.queue.length) ttsSkip();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') ttsSkip();
+      if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
+    });
+
     // ─── Boot sequence ──────────────────────────────────────────────
     function boot() {
-      showFace(3000); // face appears for 3 seconds
+      showFace(3000);
       initAudio();
-      // initial message
       addMessage('assistant', 'master ready');
     }
     boot();
