@@ -42,7 +42,11 @@ model_defs:
   deepseek_chat: &deepseek_chat
     id: deepseek-chat
     <<: *model_defaults
-    score: { quality: 0.92, speed: 0.70, cost: 0.95 }
+    score: { quality: 0.96, speed: 0.85, cost: 0.95 }
+  deepseek_reasoner: &deepseek_reasoner
+    id: deepseek-reasoner
+    <<: *model_defaults
+    score: { quality: 0.97, speed: 0.55, cost: 0.85 }
   deepseek_coder: &deepseek_coder
     id: deepseek-coder
     <<: *model_defaults
@@ -165,6 +169,8 @@ models:
     - *llama_70b
     - *qwen_coder
   strong:
+    - *deepseek_reasoner
+    - *deepseek_chat
     - *gemini_pro
     - *mistral_large
     - *claude_sonnet
@@ -172,9 +178,9 @@ models:
     - *gemini_flash
     - *command_r_plus
   cheap:
+    - *deepseek_chat
     - *gemini_flash
     - *mistral_small
-    - *deepseek_chat
     - *llama_70b
     - *qwen_coder
     - *gemma_2_9b_free
