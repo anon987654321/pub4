@@ -18,11 +18,19 @@
     #primer::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: rgb(215,165,130); animation: pulse 1.6s ease-in-out infinite; }
     #primer.gone { opacity: 0; pointer-events: none; transition: opacity 0.9s ease; }
     @keyframes pulse { 0%,100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(2.2); opacity: 1; } }
+    #zsh { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 14px env(safe-area-inset-bottom, 10px) 14px; display: flex; align-items: center; gap: 6px; font: 13px ui-monospace, 'SF Mono', Menlo, monospace; color: rgba(220,170,135,0.92); background: linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0)); border-top: 1px solid rgba(220,170,135,0.10); z-index: 8; opacity: 0; transform: translateY(8px); transition: opacity 0.6s ease, transform 0.6s ease; pointer-events: none; }
+    #zsh.live { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #zsh .pp { color: rgb(220,90,70); font-weight: 700; letter-spacing: 0.02em; }
+    #zsh .sep { color: rgba(220,170,135,0.45); }
+    #zsh input { flex: 1; background: transparent; border: 0; outline: 0; color: inherit; font: inherit; caret-color: rgb(220,90,70); padding: 2px 0; }
+    #zsh input::placeholder { color: rgba(220,170,135,0.32); }
   </style>
+  <link rel="preconnect" href="/">
 </head>
 <body>
   <canvas id="face"></canvas>
   <div id="primer"></div>
+  <div id="zsh"><span class="pp">master</span><span class="sep">$</span><input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder=""></div>
   <script>
   (() => {
     "use strict";
@@ -101,84 +109,212 @@
       return out;
     }
 
-    // Sepik River mask anatomy — elongated vertical, ridge nose, cowrie eyes,
-    // tooth-bared mouth, radiating feather crown, cheek scarification, side tassels.
-    function computeZones() {
-      const cx = W * 0.5, cy = H * 0.50;
-      const s = Math.min(W, H * 0.78) * 0.22;
-      Face.cx = cx; Face.cy = cy; Face.s = s;
+    // ─── Mask library — auto-rotates between PNG mask traditions ───────
+    // Sepik River, Asmat, Baining fire dance, Tolai Tubuan, Malagan.
+    // Each builder returns a flat anchor list. Cross-fade handled below.
+    const MASKS = ['sepik', 'asmat', 'baining', 'tolai', 'malagan'];
+    let maskIdx = 0, maskNextIdx = 0, maskCrossfade = 1.0; // 1 = no transition
+    function buildSepik(cx, cy, s) {
       const z = {};
-      // Mask outline — elongated oval (1.5x tall), narrowing to chin
-      z.outlineL = [];
-      z.outlineR = [];
+      z.outlineL = []; z.outlineR = [];
       for (let i = 0; i < 60; i++) {
-        const t = i / 59;
-        const y = cy - s * 1.45 + t * s * 2.9;
-        const taper = Math.sin(t * Math.PI);
-        const w = s * (0.65 * taper + 0.15);
+        const t = i / 59, y = cy - s * 1.45 + t * s * 2.9;
+        const w = s * (0.65 * Math.sin(t * Math.PI) + 0.15);
         z.outlineL.push({ x: cx - w, y, zone: 'outlineL' });
         z.outlineR.push({ x: cx + w, y, zone: 'outlineR' });
       }
-      // Crown — radiating "feathers" from top of head
       z.crown = [];
-      const FEATHERS = 14;
-      for (let i = 0; i < FEATHERS; i++) {
-        const a = -Math.PI * 0.5 + (i - FEATHERS / 2) * 0.12;
+      for (let i = 0; i < 14; i++) {
+        const a = -Math.PI * 0.5 + (i - 7) * 0.12;
         const len = s * (0.7 + Math.sin(i * 1.3) * 0.25);
         for (let t = 0; t < 1; t += 0.08) {
           const r = s * 0.8 + t * len;
           z.crown.push({ x: cx + Math.cos(a) * r * 0.6, y: cy - s * 0.7 + Math.sin(a) * r, zone: 'crown' });
         }
       }
-      // Forehead ridge — V-shape descending into nose
-      z.forehead = line(cx - s * 0.35, cy - s * 0.85, cx, cy - s * 0.5, 8, 'forehead')
-                  .concat(line(cx, cy - s * 0.5, cx + s * 0.35, cy - s * 0.85, 8, 'forehead'));
-      // Nose ridge — long central vertical line (signature of Sepik masks)
       z.noseRidge = line(cx, cy - s * 0.5, cx, cy + s * 0.55, 28, 'noseRidge');
-      // Nose flare at base — small triangle
       z.noseFlare = line(cx - s * 0.12, cy + s * 0.55, cx + s * 0.12, cy + s * 0.55, 10, 'noseFlare');
-      // Brow ridge — heavy diagonal descending toward nose
       z.browL = line(cx - s * 0.55, cy - s * 0.4, cx - s * 0.12, cy - s * 0.2, 14, 'browL');
       z.browR = line(cx + s * 0.12, cy - s * 0.2, cx + s * 0.55, cy - s * 0.4, 14, 'browR');
-      // Cowrie-shell eyes — concentric ovals, narrower than Western eyes
-      z.eyeL = ring(cx - s * 0.32, cy - s * 0.1, s * 0.12, 0, Math.PI * 2, 20, 'eyeL');
-      z.eyeR = ring(cx + s * 0.32, cy - s * 0.1, s * 0.12, 0, Math.PI * 2, 20, 'eyeR');
-      // Tighter inner ring (cowrie texture)
-      z.eyeL = z.eyeL.concat(ring(cx - s * 0.32, cy - s * 0.1, s * 0.07, 0, Math.PI * 2, 12, 'eyeL'));
-      z.eyeR = z.eyeR.concat(ring(cx + s * 0.32, cy - s * 0.1, s * 0.07, 0, Math.PI * 2, 12, 'eyeR'));
-      // Tiny pupil dots
+      z.eyeL = ring(cx - s * 0.32, cy - s * 0.1, s * 0.12, 0, Math.PI * 2, 20, 'eyeL')
+              .concat(ring(cx - s * 0.32, cy - s * 0.1, s * 0.07, 0, Math.PI * 2, 12, 'eyeL'));
+      z.eyeR = ring(cx + s * 0.32, cy - s * 0.1, s * 0.12, 0, Math.PI * 2, 20, 'eyeR')
+              .concat(ring(cx + s * 0.32, cy - s * 0.1, s * 0.07, 0, Math.PI * 2, 12, 'eyeR'));
       z.pupilL = disc(cx - s * 0.32, cy - s * 0.1, s * 0.025, 5, 'pupilL');
       z.pupilR = disc(cx + s * 0.32, cy - s * 0.1, s * 0.025, 5, 'pupilR');
-      // Cheek scarification — 3 horizontal hash marks per side
-      z.scarL = [];
-      z.scarR = [];
+      z.scarL = []; z.scarR = [];
       for (let r = 0; r < 3; r++) {
         const y = cy + s * (0.08 + r * 0.13);
         z.scarL = z.scarL.concat(line(cx - s * 0.55, y, cx - s * 0.30, y, 8, 'scarL'));
         z.scarR = z.scarR.concat(line(cx + s * 0.30, y, cx + s * 0.55, y, 8, 'scarR'));
       }
-      // Wide mouth with tooth tick marks
       z.mouth = mouthArc(cx, cy + s * 0.92, s * 0.7, Face.mouth, 30);
-      const teeth = [];
       for (let i = 0; i < 7; i++) {
         const tx = cx - s * 0.32 + i * (s * 0.64 / 6);
-        teeth.push({ x: tx, y: cy + s * 0.88, zone: 'mouth' });
-        teeth.push({ x: tx, y: cy + s * 0.96, zone: 'mouth' });
+        z.mouth.push({ x: tx, y: cy + s * 0.88, zone: 'mouth' });
+        z.mouth.push({ x: tx, y: cy + s * 0.96, zone: 'mouth' });
       }
-      z.mouth = z.mouth.concat(teeth);
-      // Chin point — angular
       z.chin = line(cx - s * 0.18, cy + s * 1.15, cx, cy + s * 1.40, 8, 'chin')
               .concat(line(cx, cy + s * 1.40, cx + s * 0.18, cy + s * 1.15, 8, 'chin'));
-      // Side tassels — hanging beads beside the mask
-      z.tasselL = [];
-      z.tasselR = [];
+      z.tasselL = []; z.tasselR = [];
       for (let r = 0; r < 6; r++) {
         const y = cy - s * 0.4 + r * s * 0.25;
         z.tasselL.push({ x: cx - s * 0.95, y, zone: 'tasselL' });
         z.tasselR.push({ x: cx + s * 0.95, y, zone: 'tasselR' });
       }
-      Face.zones = z;
-      Face.anchors = [].concat(...Object.values(z));
+      return z;
+    }
+    // Asmat — wood-carved, cylindrical eye protrusions, narrower, geometric
+    function buildAsmat(cx, cy, s) {
+      const z = {};
+      z.outlineL = []; z.outlineR = [];
+      for (let i = 0; i < 60; i++) {
+        const t = i / 59, y = cy - s * 1.3 + t * s * 2.6;
+        const w = s * (0.55 - Math.abs(t - 0.5) * 0.4);
+        z.outlineL.push({ x: cx - w, y, zone: 'outlineL' });
+        z.outlineR.push({ x: cx + w, y, zone: 'outlineR' });
+      }
+      // cylindrical eye tubes protruding outward
+      z.eyeL = []; z.eyeR = [];
+      for (let i = 0; i < 18; i++) {
+        const t = i / 17;
+        z.eyeL.push({ x: cx - s * 0.30 - t * s * 0.15, y: cy - s * 0.05, zone: 'eyeL' });
+        z.eyeR.push({ x: cx + s * 0.30 + t * s * 0.15, y: cy - s * 0.05, zone: 'eyeR' });
+      }
+      z.pupilL = disc(cx - s * 0.45, cy - s * 0.05, s * 0.04, 6, 'pupilL');
+      z.pupilR = disc(cx + s * 0.45, cy - s * 0.05, s * 0.04, 6, 'pupilR');
+      z.noseRidge = line(cx, cy - s * 0.3, cx, cy + s * 0.5, 22, 'noseRidge');
+      // hooked nose tip
+      z.noseRidge = z.noseRidge.concat(line(cx, cy + s * 0.5, cx + s * 0.18, cy + s * 0.45, 6, 'noseRidge'));
+      z.mouth = ring(cx, cy + s * 0.85, s * 0.18, 0, Math.PI * 2, 18, 'mouth');
+      // geometric forehead chevrons
+      z.crown = [];
+      for (let r = 0; r < 3; r++) {
+        const y = cy - s * (0.7 + r * 0.15);
+        z.crown = z.crown.concat(line(cx - s * 0.4, y, cx, y - s * 0.1, 8, 'crown'))
+                          .concat(line(cx, y - s * 0.1, cx + s * 0.4, y, 8, 'crown'));
+      }
+      // ear/jaw bones
+      z.tasselL = line(cx - s * 0.6, cy + s * 0.3, cx - s * 0.7, cy + s * 0.9, 10, 'tasselL');
+      z.tasselR = line(cx + s * 0.6, cy + s * 0.3, cx + s * 0.7, cy + s * 0.9, 10, 'tasselR');
+      return z;
+    }
+    // Baining fire dance — large white-on-black, big round eye-holes, exaggerated mouth
+    function buildBaining(cx, cy, s) {
+      const z = {};
+      // huge round outline
+      z.outlineL = []; z.outlineR = [];
+      for (let i = 0; i < 70; i++) {
+        const a = -Math.PI + i / 70 * Math.PI * 2;
+        const r = s * 1.3;
+        const p = { x: cx + Math.cos(a) * r * 0.85, y: cy + Math.sin(a) * r, zone: a < 0 ? 'outlineL' : 'outlineR' };
+        (a < 0 ? z.outlineL : z.outlineR).push(p);
+      }
+      // giant round eye holes
+      z.eyeL = ring(cx - s * 0.45, cy - s * 0.25, s * 0.30, 0, Math.PI * 2, 32, 'eyeL');
+      z.eyeR = ring(cx + s * 0.45, cy - s * 0.25, s * 0.30, 0, Math.PI * 2, 32, 'eyeR');
+      z.pupilL = disc(cx - s * 0.45, cy - s * 0.25, s * 0.08, 10, 'pupilL');
+      z.pupilR = disc(cx + s * 0.45, cy - s * 0.25, s * 0.08, 10, 'pupilR');
+      // small triangle nose
+      z.noseRidge = line(cx, cy + s * 0.05, cx, cy + s * 0.35, 12, 'noseRidge');
+      // wide exaggerated mouth
+      z.mouth = ring(cx, cy + s * 0.7, s * 0.45, 0, Math.PI, 22, 'mouth');
+      z.mouth = z.mouth.concat(line(cx - s * 0.45, cy + s * 0.7, cx + s * 0.45, cy + s * 0.7, 16, 'mouth'));
+      // antenna-like crown protrusions
+      z.crown = [];
+      for (let i = 0; i < 4; i++) {
+        const ax = cx + (i - 1.5) * s * 0.3;
+        z.crown = z.crown.concat(line(ax, cy - s * 1.3, ax, cy - s * 1.7, 8, 'crown'));
+      }
+      return z;
+    }
+    // Tolai Tubuan — conical/triangular, wide round eyes, tassel-heavy
+    function buildTolai(cx, cy, s) {
+      const z = {};
+      // triangular silhouette — wide bottom narrowing to point
+      z.outlineL = []; z.outlineR = [];
+      for (let i = 0; i < 50; i++) {
+        const t = i / 49;
+        const y = cy - s * 1.4 + t * s * 2.6;
+        const w = s * 0.15 + t * s * 0.7;
+        z.outlineL.push({ x: cx - w, y, zone: 'outlineL' });
+        z.outlineR.push({ x: cx + w, y, zone: 'outlineR' });
+      }
+      // wide round eyes
+      z.eyeL = ring(cx - s * 0.30, cy + s * 0.05, s * 0.18, 0, Math.PI * 2, 24, 'eyeL');
+      z.eyeR = ring(cx + s * 0.30, cy + s * 0.05, s * 0.18, 0, Math.PI * 2, 24, 'eyeR');
+      z.pupilL = disc(cx - s * 0.30, cy + s * 0.05, s * 0.06, 8, 'pupilL');
+      z.pupilR = disc(cx + s * 0.30, cy + s * 0.05, s * 0.06, 8, 'pupilR');
+      z.noseRidge = line(cx, cy + s * 0.25, cx, cy + s * 0.7, 14, 'noseRidge');
+      z.mouth = mouthArc(cx, cy + s * 0.95, s * 0.4, 'O', 20);
+      // crown — single tall point
+      z.crown = line(cx, cy - s * 1.4, cx, cy - s * 1.9, 12, 'crown');
+      // dense tassels both sides
+      z.tasselL = []; z.tasselR = [];
+      for (let r = 0; r < 10; r++) {
+        const y = cy + s * (0.5 + r * 0.18);
+        z.tasselL.push({ x: cx - s * (0.85 - r * 0.02), y, zone: 'tasselL' });
+        z.tasselR.push({ x: cx + s * (0.85 - r * 0.02), y, zone: 'tasselR' });
+      }
+      return z;
+    }
+    // Malagan — openwork carving, multi-zone, animal-totem layers
+    function buildMalagan(cx, cy, s) {
+      const z = {};
+      z.outlineL = []; z.outlineR = [];
+      for (let i = 0; i < 55; i++) {
+        const t = i / 54, y = cy - s * 1.2 + t * s * 2.4;
+        const w = s * (0.6 - Math.sin(t * Math.PI * 3) * 0.08);
+        z.outlineL.push({ x: cx - w, y, zone: 'outlineL' });
+        z.outlineR.push({ x: cx + w, y, zone: 'outlineR' });
+      }
+      // beak-like nose protrusion
+      z.noseRidge = line(cx, cy - s * 0.2, cx, cy + s * 0.4, 18, 'noseRidge')
+                    .concat(line(cx, cy + s * 0.4, cx - s * 0.15, cy + s * 0.55, 6, 'noseRidge'));
+      // narrow slit eyes
+      z.eyeL = line(cx - s * 0.45, cy - s * 0.1, cx - s * 0.18, cy - s * 0.1, 14, 'eyeL');
+      z.eyeR = line(cx + s * 0.18, cy - s * 0.1, cx + s * 0.45, cy - s * 0.1, 14, 'eyeR');
+      z.pupilL = disc(cx - s * 0.3, cy - s * 0.1, s * 0.02, 4, 'pupilL');
+      z.pupilR = disc(cx + s * 0.3, cy - s * 0.1, s * 0.02, 4, 'pupilR');
+      z.mouth = line(cx - s * 0.3, cy + s * 0.7, cx + s * 0.3, cy + s * 0.7, 18, 'mouth');
+      // animal-totem stacking above head — bird/fish silhouettes
+      z.crown = [];
+      for (let i = 0; i < 18; i++) {
+        const a = i / 17;
+        const y = cy - s * (1.0 + a * 0.8);
+        const w = s * (0.5 - a * 0.3);
+        z.crown.push({ x: cx - w, y, zone: 'crown' });
+        z.crown.push({ x: cx + w, y, zone: 'crown' });
+        if (i % 3 === 0) z.crown.push({ x: cx, y, zone: 'crown' });
+      }
+      // openwork dots — scattered across face
+      z.scarL = []; z.scarR = [];
+      for (let i = 0; i < 16; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = s * (0.2 + Math.random() * 0.4);
+        const x = cx + Math.cos(a) * r;
+        const y = cy + Math.sin(a) * r * 0.8;
+        (x < cx ? z.scarL : z.scarR).push({ x, y, zone: x < cx ? 'scarL' : 'scarR' });
+      }
+      return z;
+    }
+    function buildMask(name, cx, cy, s) {
+      if (name === 'asmat') return buildAsmat(cx, cy, s);
+      if (name === 'baining') return buildBaining(cx, cy, s);
+      if (name === 'tolai') return buildTolai(cx, cy, s);
+      if (name === 'malagan') return buildMalagan(cx, cy, s);
+      return buildSepik(cx, cy, s);
+    }
+    let zonesA = null, zonesB = null;
+    let maskPhase = 0, maskTransitioning = false, lastMaskSwitch = performance.now();
+    function computeZones() {
+      const cx = W * 0.5, cy = H * 0.50;
+      const s = Math.min(W, H * 0.78) * 0.22;
+      Face.cx = cx; Face.cy = cy; Face.s = s;
+      zonesA = buildMask(MASKS[maskIdx], cx, cy, s);
+      zonesB = buildMask(MASKS[maskNextIdx], cx, cy, s);
+      Face.zones = zonesA;
+      Face.anchors = [].concat(...Object.values(zonesA));
     }
 
     // ─── Particles ─────────────────────────────────────────────────────
@@ -186,14 +322,60 @@
     const particles = [];
     for (let i = 0; i < N; i++) particles.push({
       x: Math.random() * 600, y: Math.random() * 600,
-      vx: 0, vy: 0, hx: 0, hy: 0, zone: 'crown', life: 1.0
+      vx: 0, vy: 0, hx: 0, hy: 0, hx1: 0, hy1: 0, hx2: 0, hy2: 0,
+      zone: 'crown', life: 1.0
     });
     function assignHomes() {
-      const A = Face.anchors;
+      if (!zonesA) return;
+      const A = [].concat(...Object.values(zonesA));
+      const B = zonesB ? [].concat(...Object.values(zonesB)) : A;
       if (!A.length) return;
       for (let i = 0; i < particles.length; i++) {
         const a = A[i % A.length];
-        particles[i].hx = a.x; particles[i].hy = a.y; particles[i].zone = a.zone;
+        const b = B[i % B.length];
+        const p = particles[i];
+        p.hx1 = a.x; p.hy1 = a.y;
+        p.hx2 = b.x; p.hy2 = b.y;
+        p.hx = a.x; p.hy = a.y;
+        p.zone = a.zone;
+      }
+    }
+    function updateHomeLerp() {
+      const t = easeInOutCubic(maskPhase);
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.hx = p.hx1 + (p.hx2 - p.hx1) * t;
+        p.hy = p.hy1 + (p.hy2 - p.hy1) * t;
+      }
+    }
+    function maybeSwitchMask(now, dt) {
+      if (maskTransitioning) {
+        maskPhase = Math.min(1, maskPhase + dt / 3000);
+        updateHomeLerp();
+        if (maskPhase >= 1) {
+          maskTransitioning = false;
+          maskIdx = maskNextIdx;
+          zonesA = zonesB;
+          for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.hx1 = p.hx2; p.hy1 = p.hy2;
+          }
+        }
+        return;
+      }
+      const interval = State.mode === 'idle' ? 90000 : 180000;
+      if (now - lastMaskSwitch > interval) {
+        lastMaskSwitch = now;
+        maskNextIdx = (maskIdx + 1) % MASKS.length;
+        zonesB = buildMask(MASKS[maskNextIdx], Face.cx, Face.cy, Face.s);
+        const B = [].concat(...Object.values(zonesB));
+        for (let i = 0; i < particles.length; i++) {
+          const b = B[i % B.length];
+          particles[i].hx2 = b.x; particles[i].hy2 = b.y;
+        }
+        maskPhase = 0;
+        maskTransitioning = true;
+        mandalaLock();
       }
     }
 
@@ -508,16 +690,45 @@
       const p = pointerXY(e);
       Gesture.x0 = p.x; Gesture.y0 = p.y; Gesture.x1 = p.x; Gesture.y1 = p.y; Gesture.t0 = performance.now();
       Gesture.longTimer = setTimeout(() => { if (Gesture.down && dist(Gesture.x0, Gesture.y0, Gesture.x1, Gesture.y1) < 12) startSTT(); }, 420);
-      // mood track gaze toward cursor
       Face.gazeTarget = [(p.x - W * 0.5) / W, (p.y - H * 0.5) / H];
+      rippleAt(p.x, p.y);
+    }
+    function rippleAt(x, y) {
+      const R2 = Face.s * Face.s * 0.36;
+      for (let i = 0; i < particles.length; i++) {
+        const pp = particles[i];
+        const dx = pp.x - x, dy = pp.y - y, d2 = dx*dx + dy*dy;
+        if (d2 < R2 && d2 > 1) {
+          const f = (1 - d2 / R2) * 3.5;
+          const inv = 1 / Math.sqrt(d2);
+          pp.vx += dx * inv * f;
+          pp.vy += dy * inv * f;
+        }
+      }
     }
     function pointerMove(e) {
       if (!Gesture.down) return;
       const p = pointerXY(e);
+      const movedFar = dist(Gesture.x1, Gesture.y1, p.x, p.y);
       Gesture.x1 = p.x; Gesture.y1 = p.y;
       if (dist(Gesture.x0, Gesture.y0, p.x, p.y) > 14 && Gesture.longTimer) { clearTimeout(Gesture.longTimer); Gesture.longTimer = null; }
       Face.gazeTarget = [(p.x - W * 0.5) / W, (p.y - H * 0.5) / H];
+      if (movedFar > 2) dragDisplace(p.x, p.y, movedFar);
       if (e.touches && e.touches.length === 2) handlePinch(e);
+    }
+    function dragDisplace(x, y, vel) {
+      const R2 = Face.s * Face.s * 0.18;
+      const k = Math.min(1.2, vel * 0.08);
+      for (let i = 0; i < particles.length; i++) {
+        const pp = particles[i];
+        const dx = pp.x - x, dy = pp.y - y, d2 = dx*dx + dy*dy;
+        if (d2 < R2 && d2 > 1) {
+          const f = (1 - d2 / R2) * k;
+          const inv = 1 / Math.sqrt(d2);
+          pp.vx += dx * inv * f;
+          pp.vy += dy * inv * f;
+        }
+      }
     }
     function pointerEnd(e) {
       if (!Gesture.down) return;
@@ -760,9 +971,10 @@
       Face.edgePulse  *= 0.96;
       Face.vortex     *= 0.93;
 
-      // blink scheduler
+      // blink scheduler — low confidence blinks more often
       Face.blinkPhase += dt * 0.001;
-      const interval = State.mode === 'thinking' ? 0.9 : (State.mode === 'idle' ? 5.0 : 3.0);
+      const baseInt = State.mode === 'thinking' ? 0.9 : (State.mode === 'idle' ? 5.0 : 3.0);
+      const interval = baseInt * (0.4 + State.confidence * 0.6);
       if (Face.blinkPhase > interval) { Face.blink = 1.0; Face.blinkPhase = 0; }
       Face.blink *= 0.78;
 
@@ -773,6 +985,8 @@
       sampleAudio();
       flock();
       tickFX(dt);
+      maybeSwitchMask(now, dt);
+      maybeLookAway(now);
       tickParticles(dt, now);
 
       // bg
@@ -786,6 +1000,7 @@
       drawGhostMirror();
       drawEdgePulse();
       drawChromatic();
+      drawThinkingOrbit(now);
       drawCorona();
       drawVortex();
       drawCatalogGhost();
@@ -912,6 +1127,37 @@
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(Face.cx, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
     }
+    function drawThinkingOrbit(now) {
+      if (State.mode !== 'thinking') return;
+      const r = Face.s * 1.05;
+      const a0 = now * 0.0018;
+      ctx.strokeStyle = `rgba(${palette.accent},0.22)`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < 22; i++) {
+        const t = i / 22, a = a0 + t * Math.PI * 2;
+        const x = Face.cx + Math.cos(a) * r;
+        const y = Face.cy - Face.s * 0.7 + Math.sin(a) * r * 0.35;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // ─── Look-aways — periodic gaze averts to break the stare ──────────
+    let nextLookAway = performance.now() + 12000 + Math.random() * 6000;
+    let lookAwayUntil = 0;
+    function maybeLookAway(now) {
+      if (State.mode !== 'idle' || (tts.currentUtt && tts.queue.length)) return;
+      if (now > lookAwayUntil && now > nextLookAway) {
+        Face.gazeTarget = [(Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.3];
+        lookAwayUntil = now + 900 + Math.random() * 700;
+      } else if (now > lookAwayUntil && now < nextLookAway && lookAwayUntil > 0 && now - lookAwayUntil < 200) {
+        Face.gazeTarget = [0, 0];
+        nextLookAway = now + 12000 + Math.random() * 8000;
+        lookAwayUntil = 0;
+      }
+    }
+
     function drawVortex() {
       if (Face.vortex < 0.05) return;
       const r = Face.s * 0.6;
@@ -942,6 +1188,8 @@
 
     // ─── Primer unlock (the TTS fix) ───────────────────────────────────
     const primer = document.getElementById('primer');
+    const zshBar = document.getElementById('zsh');
+    const zshIn  = document.getElementById('zin');
     function startEverything() {
       primer.classList.add('gone');
       setTimeout(() => primer.remove(), 1000);
@@ -954,10 +1202,23 @@
       DMESG_PHRASES.slice(0, -1).forEach((p, i) => setTimeout(() => whisper(p), 400 + i * 600));
       setTimeout(() => enqueueSpeech('ready'), 400 + DMESG_PHRASES.length * 600);
       Face.dispersionTarget = 0; Face.coronaFlash = 0.3;
+      setTimeout(() => zshBar.classList.add('live'), 600);
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
     primer.addEventListener('pointerdown', startEverything, { once: true });
     primer.addEventListener('click', startEverything, { once: true });
+
+    // ─── Zsh prompt bar ────────────────────────────────────────────────
+    zshIn.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const v = zshIn.value.trim();
+      if (!v) return;
+      e.preventDefault();
+      zshIn.value = '';
+      Face.dispersionTarget = 0.25; // skeleton tension before any byte arrives
+      sendMessage(v);
+    });
+    zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
 
     // ─── Keyboard fallback ─────────────────────────────────────────────
     document.addEventListener('keydown', (e) => {

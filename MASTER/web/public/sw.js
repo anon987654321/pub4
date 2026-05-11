@@ -1,4 +1,4 @@
-const CACHE = 'master-v4';
+const CACHE = 'master-v5';
 const SHELL = ['/', '/canvas', '/swarm.html', '/icon.png', '/icon.svg', '/manifest.json'];
 const NETWORK_ONLY = /^\/(chat\/message|canvas\/stream|api\/)/;
 
