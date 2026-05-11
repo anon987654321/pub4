@@ -68,17 +68,37 @@ module Master
     alias banner splash
 
     def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil, cost: nil)
-      branch = git_branch || "detached"
-      bar = token_bar(tokens)
-      usage = token_label(tokens)
-      model_str = @p.dim(short_model(model))
+      branch     = git_branch || "detached"
+      bar        = token_bar(tokens)
+      usage      = token_label(tokens)
+      model_str  = @p.dim(short_model(model))
       branch_str = @p.red(branch)
-      vbadge = violations > 0 ? @p.red("[#{violations}v]") : @p.dim("[0v]")
-      phase_str = phase && phase.to_s != "idle" ? @p.dim(" :#{phase}") : ""
-      cost_str = cost_label(cost)
-      cost_seg = cost_str.empty? ? "" : "#{cost_str} "
-      prompt = last_ok ? @p.bold.red("master$") : @p.red("master$")
+      vbadge     = violations > 0 ? @p.red("[#{violations}v]") : @p.dim("[0v]")
+      phase_str  = phase && phase.to_s != "idle" ? phase_tinted(" :#{phase}", phase) : ""
+      cost_str   = cost_label(cost)
+      cost_seg   = cost_str.empty? ? "" : "#{cost_str} "
+      prompt     = phase_prompt(last_ok, phase)
       ["#{branch_str}  #{model_str}  ↖ #{bar}#{usage}  #{cost_seg}#{vbadge}#{phase_str}", prompt + " "]
+    end
+
+    def phase_tinted(text, phase)
+      case phase.to_s
+      when "discover"  then @p.dim.yellow(text)
+      when "implement" then @p.dim.cyan(text)
+      when "audit"     then @p.dim.red(text)
+      else                  @p.dim(text)
+      end
+    end
+
+    def phase_prompt(last_ok, phase)
+      base = "master$"
+      return @p.red(base) unless last_ok
+      case phase.to_s
+      when "discover"  then @p.bold.yellow(base)
+      when "implement" then @p.bold.cyan(base)
+      when "audit"     then @p.bold.red(base)
+      else                  @p.bold.red(base)
+      end
     end
 
     def cost_label(cost)

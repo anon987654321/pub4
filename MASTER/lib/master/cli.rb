@@ -10,6 +10,8 @@ require "fileutils"
 module Master
   class CLI
     IDLE_SLEEP_DEFAULT = 60
+    REPLAY_TURNS       = 5
+    DMESG_BUFFER       = 80
 
     SEVERITY_ICON = {
       error: "!!",
@@ -17,6 +19,8 @@ module Master
       style: ".",
       critical: "!!"
     }.freeze
+
+    SLASH_COMMANDS = %w[/exit /undo /redo /history /why /focus /last /cmd /dmesg /chips].freeze
 
     attr_reader :container
 
@@ -28,9 +32,15 @@ module Master
       @interrupt_at    = Time.now
       @last_ok         = true
       @violations      = 0
+      @prev_violations = 0
       @bg_thread       = nil
       @seen_violations = {}
       @user_active     = false
+      @focus_mode      = false
+      @show_chips      = false
+      @last_input      = nil
+      @last_cost       = 0.0
+      @dmesg_sub       = nil
     end
 
     def run(initial_message = nil)
@@ -41,6 +51,7 @@ module Master
       puts @renderer.splash(@agent.model)
       puts @renderer.session_line(@session.name) if @session.name
       print_repo_tree unless booted_before?
+      replay_recent_turns if @session.messages.any?
       process(initial_message) if initial_message
       @running = true
       repl_loop
@@ -49,7 +60,6 @@ module Master
     def pipe(input)
       stripped = input.strip
       return if stripped.empty?
-
       run_input(stripped)
     end
 
@@ -57,6 +67,7 @@ module Master
       return if input.strip.empty?
 
       @user_active = true
+      @last_input  = input
       state    = { streamed: false, thinking_shown: true }
       accumulated = +""
       on_chunk = stream_chunk_handler(accumulated, state)
@@ -104,21 +115,41 @@ module Master
 
     def repl_loop
       while @running
-        status = @renderer.status_row(uptime: @renderer.uptime, turns: @session.messages.size, violations: @violations)
-        puts status if status
-        tokens = @session.token_est
-        prompt_lines = @renderer.prompt_line(
-          @agent.model, @session.phase,
-          last_ok: @last_ok, violations: @violations, tokens: tokens, cost: @session.cost
-        )
-        puts prompt_lines.first
-        print prompt_lines.last
+        unless @focus_mode
+          status = @renderer.status_row(uptime: @renderer.uptime, turns: @session.messages.size, violations: @violations)
+          puts status if status
+          sugg = suggested_next_prompt
+          puts @renderer.render("  ↳ #{sugg}", mode: :dim) if sugg
+          tokens = @session.token_est
+          prompt_lines = @renderer.prompt_line(
+            @agent.model, @session.phase,
+            last_ok: @last_ok, violations: @violations, tokens: tokens, cost: @session.cost
+          )
+          puts prompt_lines.first
+          print prompt_lines.last
+        else
+          print @renderer.render("master$ ", mode: :dim)
+        end
         line = safe_read_line
         break if line.nil?
         handle_repl_line(line)
       end
       @bg_thread&.kill
       @session.save!
+    end
+
+    def suggested_next_prompt
+      last = @session.messages.last
+      return nil unless last && last[:role] == :assistant
+      text = last[:content].to_s
+      case text
+      when /violation[s]? found|need(s)? fixing|to fix/i then "/sweep"
+      when /\bunchanged\b|\balready\b/i                  then "/undo"
+      when /\bdiff\b|\bedit\b|\bpatch\b/i                then "show the diff"
+      when /(error|fail|exception|crash)/i               then "what went wrong?"
+      when /\bscan(ned)?\b/i                             then "/why"
+      else                                                    nil
+      end
     end
 
     def handle_repl_line(line)
@@ -130,6 +161,11 @@ module Master
       when "/redo"    then run_redo
       when "/history" then run_history
       when "/why"     then run_why
+      when "/focus"   then toggle_focus
+      when "/last"    then run_last
+      when "/cmd"     then run_cmd
+      when "/dmesg"   then toggle_dmesg
+      when "/chips"   then toggle_chips
       when "<<"       then run_input(read_multiline)
       else                 run_input(line)
       end
@@ -175,6 +211,44 @@ module Master
       end
     end
 
+    def toggle_focus
+      @focus_mode = !@focus_mode
+      puts @renderer.render("focus: #{@focus_mode ? "on" : "off"}", mode: :dim)
+    end
+
+    def run_last
+      if @last_input
+        puts @renderer.render("rerun: #{@last_input[0, 60]}", mode: :dim)
+        run_input(@last_input)
+      else
+        puts @renderer.render("no prior input", mode: :dim)
+      end
+    end
+
+    def run_cmd
+      SLASH_COMMANDS.each { |c| puts @renderer.render("  #{c}", mode: :dim) }
+    end
+
+    def toggle_dmesg
+      if @dmesg_sub
+        @dmesg_sub.call
+        @dmesg_sub = nil
+        puts @renderer.render("dmesg: off", mode: :dim)
+      else
+        @dmesg_sub = @bus&.subscribe("*") do |payload|
+          ts   = payload[:ts] || 0
+          line = "  [#{ts.to_s.rjust(7)}] #{payload[:event]}"
+          $stdout.puts @renderer.render(line, mode: :dim) rescue nil
+        end
+        puts @renderer.render("dmesg: on (events stream below)", mode: :dim)
+      end
+    end
+
+    def toggle_chips
+      @show_chips = !@show_chips
+      puts @renderer.render("chips: #{@show_chips ? "on" : "off"}", mode: :dim)
+    end
+
     def safe_read_line
       @reader.read_line("", echo: true).chomp
     rescue StandardError
@@ -200,6 +274,18 @@ module Master
       lines.join("\n")
     end
 
+    def replay_recent_turns
+      tail = @session.messages.last(REPLAY_TURNS * 2)
+      return if tail.empty?
+      puts @renderer.render("resume0: replaying last #{tail.size} messages", mode: :dim)
+      tail.each do |msg|
+        tag     = msg[:role] == :user ? "you" : "master"
+        snippet = msg[:content].to_s.lines.first.to_s.strip[0, 100]
+        puts @renderer.render("  #{tag}: #{snippet}", mode: :dim)
+      end
+      puts
+    end
+
     def start_background_loop
       cfg           = AutoLoop.load_cfg
       return unless cfg.fetch("background", true)
@@ -221,11 +307,15 @@ module Master
       result  = changed.any? ? scan_files(changed) : @scanner.scan_dir(lib_dir, depth: :standard)
       return unless result.is_a?(Master::Result::Ok)
 
-      @violations = count_violations(result.value!)
-      return if @violations.zero?
+      prev = @prev_violations
+      @violations      = count_violations(result.value!)
+      @prev_violations = @violations
+      return if @violations.zero? && prev.zero?
 
+      delta = @violations - prev
+      arrow = delta.zero? ? "·" : (delta.positive? ? "↑" : "↓")
       puts
-      puts @renderer.render("boot scan: #{@violations} violation(s)", mode: :dim)
+      puts @renderer.render("boot scan: #{prev} #{arrow} #{@violations} violation(s)", mode: :dim)
       puts
     rescue StandardError => e
       @bus&.publish("cli:warn", error: e.message)
@@ -276,7 +366,7 @@ module Master
       end
     end
 
-    SPIN_FRAMES = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
+    SPIN_FRAMES   = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
     SPIN_INTERVAL = 0.25
 
     def print_thinking_indicator
@@ -300,7 +390,7 @@ module Master
       @spin_thread = nil
     end
 
-    INIT_FRAMES = 20
+    INIT_FRAMES   = 20
     INIT_FRAME_MS = 0.04
 
     def print_repo_tree
@@ -376,6 +466,35 @@ module Master
         puts text
         puts
       end
+      print_cost_tooltip
+      print_chips if @show_chips
+    end
+
+    def print_cost_tooltip
+      now_cost = @session.cost.to_f
+      delta    = now_cost - @last_cost
+      @last_cost = now_cost
+      tokens = @session.token_est
+      cents  = (delta * 100).round(2)
+      return if cents.zero? && tokens.zero?
+      line = "cost: +¢#{format('%.2f', cents)} · #{tokens} tok · #{short_model(@agent.model)}"
+      puts @renderer.render(line, mode: :dim)
+    end
+
+    def print_chips
+      chips = next_action_chips
+      return if chips.empty?
+      puts @renderer.render("  next: #{chips.join("  ")}", mode: :dim)
+    end
+
+    def next_action_chips
+      base = ["[/undo]", "[/why]", "[/last]"]
+      base.unshift("[/sweep #{@violations}v]") if @violations.positive?
+      base
+    end
+
+    def short_model(model)
+      model.to_s.sub(/\Aclaude-cli:/, "").sub(/\Aweb-chat:/, "").split("/").last.to_s.sub(/:free$/, "")
     end
   end
 end
