@@ -50,7 +50,7 @@ module Master
             [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
           rescue StandardError => e
             @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
-            [t[:role], Result.err("worker error: #{e.message}")]
+            [t[:role], Result.err("worker error: #{e.message}", category: :infrastructure)]
           end
         end
 
@@ -60,7 +60,7 @@ module Master
           else
             begin; th.kill; rescue ThreadError; nil; end
             @bus&.publish(:swarm_worker_timeout, timeout:)
-            [:timeout, Result.err("worker timed out after #{timeout}s")]
+            [:timeout, Result.err("worker timed out after #{timeout}s", category: :timeout)]
           end
         end.to_h
 
@@ -80,10 +80,10 @@ module Master
               [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
             end
           rescue Timeout::Error
-            [t[:role], Result.err("worker exceeded shared deadline")]
+            [t[:role], Result.err("worker exceeded shared deadline", category: :timeout)]
           rescue StandardError => e
             @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)
-            [t[:role], Result.err("worker error: #{e.message}")]
+            [t[:role], Result.err("worker error: #{e.message}", category: :infrastructure)]
           end
         end
 
@@ -93,7 +93,7 @@ module Master
           else
             begin; th.kill; rescue ThreadError; nil; end
             @bus&.publish(:swarm_parallel_timeout, deadline:)
-            [nil, Result.err("worker exceeded shared deadline")]
+            [nil, Result.err("worker exceeded shared deadline", category: :timeout)]
           end
         end.to_h
 
@@ -109,7 +109,7 @@ module Master
       def build_swarm_result(results)
         successes = results.reject { |role, _| role == :timeout }
                            .select { |_, r| r.respond_to?(:ok?) && r.ok? }
-        artifacts = successes.transform_values(&:value!)
+        artifacts = successes.transform_values { |r| r.value! }
         confidence = results.empty? ? 0.0 : successes.size.to_f / results.size
         lines = successes.map { |role, r| "### #{role}\n#{r.value!.to_s.strip}" }
         reasoning = lines.empty? ? "(no results)" : lines.join("\n\n")

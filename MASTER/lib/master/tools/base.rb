@@ -19,6 +19,7 @@ module Master
         return @diff_stager.stage(path: full, new_content: content, tool: self.class::NAME) if @diff_stager
 
         @undo.snapshot(full)
+        FileUtils.mkdir_p(File.dirname(full))
         write_atomic(full, content)
         @bus&.publish("tool:after", tool: self.class::NAME, path: path || full)
         Result.ok(full)
