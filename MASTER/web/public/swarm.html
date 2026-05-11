@@ -51,6 +51,21 @@ for (let i=0; i<N; i++){
   ps[i].py = ps[i].y;
 }
 
+// Fibonacci sphere → head ellipsoid (taller than wide, slightly compressed depth).
+const headAnchors = (() => {
+  const out = new Array(N);
+  const golden = Math.PI*(3 - Math.sqrt(5));
+  for (let i=0;i<N;i++){
+    const y = 1 - (i/(N-1))*2;
+    const r = Math.sqrt(1 - y*y);
+    const t = golden*i;
+    out[i] = { x: Math.cos(t)*r, y: 1.25*y, z: 0.85*Math.sin(t)*r };
+  }
+  return out;
+})();
+for (let i=0;i<N;i++) ps[i].a = headAnchors[i];
+let headTheta = 0;
+
 let mode = "idle";
 let modeUntil = 0;
 let confidence = 1.0;
@@ -68,7 +83,8 @@ const PAL = {
   cohere: ["#2a3a44","#4f6f80","#7da0b8"],
   burst:  ["#3a1808","#8a3812","#d56830"],
   ripple: ["#2e1a3e","#603a72","#9a5cb0"],
-  slow:   ["#202c40","#3e4c66","#5e6c88"]
+  slow:   ["#202c40","#3e4c66","#5e6c88"],
+  face:   ["#1c1612","#4a3a2c","#a89070"]
 };
 
 addEventListener("pointermove", e => {
@@ -92,6 +108,8 @@ addEventListener("message", e => {
       mode = "ripple"; modeUntil = performance.now() + 600; break;
     case "confirm:pending":
       mode = "slow"; modeUntil = performance.now() + 3000; break;
+    case "face":
+      mode = "face"; modeUntil = performance.now() + (d.ms || 12000); break;
     case "pulse": {
       const p = d.data || d;
       pulses.push({
@@ -141,9 +159,41 @@ function step(now){
   const rippleK  = mode === "ripple" ? 1.25 : 1.0;
   const baseSpeed = confidence * burstK * slowDamp * rippleK;
 
+  const inFace = mode === "face";
+  let hc, hs, hcx, hcy, hsc;
+  if (inFace){
+    headTheta += 0.006;
+    hc = Math.cos(headTheta); hs = Math.sin(headTheta);
+    hcx = W*0.5; hcy = H*0.5; hsc = 55;
+  }
+
   for (let i=0; i<N; i++){
     const p = ps[i];
     p.px = p.x; p.py = p.y;
+
+    if (inFace){
+      const a = p.a;
+      const rx = a.x*hc + a.z*hs;
+      const rz = -a.x*hs + a.z*hc;
+      if (rz >= -0.05){
+        const sx = hcx + rx*hsc;
+        const sy = hcy + a.y*hsc;
+        p.x += (sx - p.x)*0.20 + (Math.random()-0.5)*0.55;
+        p.y += (sy - p.y)*0.20 + (Math.random()-0.5)*0.55;
+        const zNow = 0.35 + (rz + 1)*0.32;
+        const tier = zNow < 0.5 ? 0 : (zNow < 0.8 ? 1 : 2);
+        bctx.strokeStyle = (now < flashUntil) ? "#fff" : palette[tier];
+        bctx.lineWidth   = zNow < 0.5 ? 0.6 : (zNow < 0.8 ? 1.0 : 1.4);
+        bctx.beginPath();
+        bctx.moveTo(p.px, p.py);
+        bctx.lineTo(p.x, p.y);
+        bctx.stroke();
+      } else {
+        p.x += (Math.random()-0.5)*0.4;
+        p.y += (Math.random()-0.5)*0.4;
+      }
+      continue;
+    }
 
     let [fx, fy] = field(p.x, p.y, now);
 
