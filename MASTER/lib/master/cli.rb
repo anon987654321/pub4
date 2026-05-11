@@ -31,7 +31,6 @@ module Master
       @bg_thread       = nil
       @seen_violations = {}
       @user_active     = false
-      @last_scan_at    = nil
     end
 
     def run(initial_message = nil)
@@ -106,7 +105,8 @@ module Master
 
     def repl_loop
       while @running
-        print_dashboard
+        status = @renderer.status_row(uptime: @renderer.uptime, turns: @session.messages.size, violations: @violations)
+        puts status if status
         tokens = @session.token_est
         prompt_lines = @renderer.prompt_line(
           @agent.model, @session.phase,
@@ -179,7 +179,6 @@ module Master
       return unless result.is_a?(Master::Result::Ok)
 
       @violations = count_violations(result.value!)
-      @last_scan_at = Time.now
       return if @violations.zero?
 
       puts
@@ -187,27 +186,6 @@ module Master
       puts
     rescue StandardError => e
       @bus&.publish("cli:warn", error: e.message)
-    end
-
-    def print_dashboard
-      used = @session.cost.to_f
-      max_budget = @config["budget_max"] || 10.0
-      mood = @last_ok ? "focused" : "recovering"
-      last_scan = @last_scan_at ? "#{((Time.now - @last_scan_at).round)}s ago" : "never"
-      files = Master::CommandRegistry.tree_lines(@root).size
-      puts @renderer.command_summary(
-        model: @agent.model,
-        budget_used: used,
-        budget_max: max_budget,
-        violations: @violations,
-        phase: @session.phase,
-        mood: mood,
-        uptime: @renderer.uptime,
-        last_scan: last_scan,
-        file_count: files
-      )
-    rescue StandardError
-      nil
     end
 
     def changed_lib_files(lib_dir)
