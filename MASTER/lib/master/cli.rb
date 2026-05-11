@@ -125,9 +125,53 @@ module Master
       stripped = line.strip
       return if stripped.empty?
       case stripped
-      when "/exit" then exit_cli
-      when "<<"    then run_input(read_multiline)
-      else              run_input(line)
+      when "/exit"    then exit_cli
+      when "/undo"    then run_undo
+      when "/redo"    then run_redo
+      when "/history" then run_history
+      when "/why"     then run_why
+      when "<<"       then run_input(read_multiline)
+      else                 run_input(line)
+      end
+    end
+
+    def run_undo
+      res = @undo.undo!
+      if res.is_a?(Master::Result::Ok)
+        puts @renderer.render("undo: #{Array(res.value!).join(", ")}", mode: :success)
+      else
+        puts @renderer.render(res.message, mode: :warning)
+      end
+    end
+
+    def run_redo
+      res = @undo.redo!
+      if res.is_a?(Master::Result::Ok)
+        puts @renderer.render("redo: #{Array(res.value!).join(", ")}", mode: :success)
+      else
+        puts @renderer.render(res.message, mode: :warning)
+      end
+    end
+
+    def run_history
+      lines = @undo.history(limit: 10)
+      if lines.empty?
+        puts @renderer.render("no undo history", mode: :dim)
+      else
+        lines.each { |l| puts @renderer.render(l, mode: :dim) }
+      end
+    end
+
+    def run_why
+      router = Master::Routing::ModelRouter.new(config: @config, root: Master::ROOT)
+      task = @session.phase == :implement ? :implement : :exploration
+      tier = router.current_tier(task_type: task)
+      rows = router.score_breakdown(task_type: task).first(5)
+      puts @renderer.render("router: phase=#{@session.phase} task=#{task} tier=#{tier}", mode: :dim)
+      rows.each_with_index do |r, i|
+        line = format("  %d. %-40s q=%.2f s=%.2f c=%.2f → %.3f",
+                      i + 1, r[:id].to_s[0, 40], r[:q], r[:s], r[:c], r[:total])
+        puts @renderer.render(line, mode: :dim)
       end
     end
 

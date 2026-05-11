@@ -58,11 +58,20 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
   let audioTick=0;
   let mood={drift:.18,jitter:.04,cohesion:.016,disperse:.02};
 
+  const pointer={x:0,y:0,active:false};
+  addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;pointer.active=true;},{passive:true});
+  addEventListener('pointerleave',()=>{pointer.active=false;});
+
+  let faceMesh=null;
+  const faceLandmarks=[];
+
   function initParticles(){
-    particles=Array.from({length:COUNT},()=>({
+    particles=Array.from({length:COUNT},(_,i)=>({
+      idx:i,
       x:Math.random()*w, y:Math.random()*h,
       vx:(Math.random()-.5)*.15, vy:(Math.random()-.5)*.15,
-      tx:null, ty:null, life:1.0, trail:[]
+      tx:null, ty:null, life:1.0,
+      z:0.3+Math.random()*0.7
     }));
   }
 
@@ -148,6 +157,35 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
     });
   }
 
+  async function startFaceCam(){
+    if(faceMesh) { fieldKind='facecam'; return; }
+    try{
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js';
+        s.onload=res; s.onerror=rej;
+        document.head.appendChild(s);
+      });
+      faceMesh=new FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+      faceMesh.setOptions({maxNumFaces:1,refineLandmarks:false,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
+      faceMesh.onResults(res=>{
+        faceLandmarks.length=0;
+        const lm=res.multiFaceLandmarks&&res.multiFaceLandmarks[0];
+        if(!lm) return;
+        for(const l of lm) faceLandmarks.push([l.x*w, l.y*h]);
+      });
+      const stream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:240,facingMode:'user'},audio:false});
+      const video=document.createElement('video');
+      video.srcObject=stream; video.playsInline=true; video.muted=true;
+      await video.play();
+      fieldKind='facecam';
+      const loop=async()=>{ if(faceMesh){ await faceMesh.send({image:video}); requestAnimationFrame(loop); } };
+      loop();
+    }catch(err){
+      pushMessage('facecam: '+(err.message||'denied'), 'master');
+    }
+  }
+
   function setMode(kind, payload={}){
     fieldKind=kind;
     if(kind==='face'){
@@ -214,6 +252,13 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
     if(now<faceUntil && fieldKind!=='face' && fieldKind==='idle') setMode('face');
     if(now>faceUntil && fieldKind==='face') setMode('idle');
 
+    if(fieldKind==='facecam' && faceLandmarks.length>0){
+      for(let i=0;i<particles.length;i++){
+        const q=faceLandmarks[i%faceLandmarks.length];
+        particles[i].tx=q[0]; particles[i].ty=q[1];
+      }
+    }
+
     ctx.fillStyle='#0a0c0a';
     ctx.fillRect(0,0,w,h);
     ctx.fillStyle='#cdc5b6';
@@ -243,6 +288,17 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
         vy+=(dy/d)*mag;
       }
 
+      if(pointer.active){
+        const dx=p.x-pointer.x, dy=p.y-pointer.y;
+        const r2=dx*dx+dy*dy;
+        if(r2<22500 && r2>9){
+          const r=Math.sqrt(r2);
+          const k=(1-r2/22500)*0.45*p.z;
+          vx+=(-dy/r)*k - (dx/r)*k*0.18;
+          vy+=( dx/r)*k - (dy/r)*k*0.18;
+        }
+      }
+
       p.vx=vx*mood.drift+vx*.82;
       p.vy=vy*mood.drift+vy*.82;
 
@@ -255,12 +311,40 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
       if(p.y>h+2)p.y-=h+4;
 
       p.life=Math.min(1.0, p.life+.01);
-      const alpha=p.life*.8;
+      const alpha=p.life*.8*(0.45+p.z*0.55);
+      const sz=p.z<0.5?1.0:(p.z<0.8?1.2:1.5);
 
       ctx.globalAlpha=alpha;
-      ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 1.2, 1.2);
+      ctx.fillRect(Math.floor(p.x), Math.floor(p.y), sz, sz);
 
       if(p.x>=0 && p.x<w && p.y>=0 && p.y<h) onScreen++;
+    }
+
+    const grid=new Map(), CELL=40, RAD2=900;
+    for(const p of particles){
+      const k=(((p.x/CELL)|0)<<16)|((p.y/CELL)|0);
+      const b=grid.get(k); if(b) b.push(p); else grid.set(k,[p]);
+    }
+    ctx.lineWidth=0.5;
+    for(let i=0;i<particles.length;i++){
+      const p=particles[i];
+      const cx=(p.x/CELL)|0, cy=(p.y/CELL)|0;
+      for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++){
+        const b=grid.get(((cx+dx)<<16)|(cy+dy)); if(!b) continue;
+        for(const q of b){
+          if(q.idx<=i) continue;
+          const ax=p.x-q.x, ay=p.y-q.y, r2=ax*ax+ay*ay;
+          if(r2<RAD2){
+            const a=(1-r2/RAD2)*0.16*Math.min(p.z,q.z);
+            if(a>0.025){
+              ctx.strokeStyle=`rgba(205,197,182,${a.toFixed(3)})`;
+              ctx.beginPath();
+              ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+              ctx.stroke();
+            }
+          }
+        }
+      }
     }
     ctx.globalAlpha=1;
 
@@ -281,6 +365,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
     pushMessage(value, 'user');
 
     if(value==='/face') setMode('face');
+    if(value==='/facecam') startFaceCam();
     if(value.includes('scan')) setMode('scan',{items:Array.from({length:30},(_,i)=>({severity:(i%3)+1}))});
     if(value.includes('pipeline')) setMode('pipeline',{});
 
