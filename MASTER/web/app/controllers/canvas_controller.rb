@@ -36,6 +36,22 @@ class CanvasController < ApplicationController
     head :accepted
   end
 
+  # canvas/state — closed-loop UI → MASTER. Client posts mood/mode/idle/etc.;
+  # bus broadcasts so prompt-builder can include user state context.
+  def state
+    payload = {
+      mood:       params[:mood].to_s,
+      mode:       params[:mode].to_s,
+      idle_s:     params[:idle].to_i,
+      palette:    params[:palette].to_i,
+      confidence: params[:confidence].to_f,
+      tilt_x:     params[:tilt_x].to_f,
+      tilt_y:     params[:tilt_y].to_f
+    }
+    Master::EventBus.instance.publish(:canvas_state, **payload) rescue nil
+    head :accepted
+  end
+
   class SSE
     def initialize(io, retry: nil)
       @io = io

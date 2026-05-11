@@ -8,7 +8,7 @@
   command: triad deep .
   enabled: true
   state: done
-  last_run_at: 1778440363
+  last_run_at: 1778516405
 - name: nightly_dreams
   description: Consolidate memories during low-activity periods
   trigger: scheduled
@@ -16,7 +16,7 @@
   command: dreams consolidate
   enabled: true
   state: done
-  last_run_at: 1778371961
+  last_run_at: 1778516405
 - name: weekly_scan
   description: Weekly codebase axiom scan for regressions
   trigger: scheduled
@@ -84,4 +84,12 @@
   command: scan {target_file}
   enabled: false
   state: pending
+  last_run_at: 0
+- name: daily_self_audit
+  description: Daily critical-rule scan against lib/master to surface drift early
+  trigger: scheduled
+  interval_s: 86400
+  command: scan critical lib/master
+  enabled: true
+  state: done
   last_run_at: 0

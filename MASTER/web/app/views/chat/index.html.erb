@@ -353,7 +353,7 @@
       Face.pupilTarget = 1.0;
     }
 
-    // ─── SSE chat (no DOM rendering — TTS + face gestures only) ────────
+    // ─── SSE chat — raw text chunks, named events for state ────────────
     let evtSrc = null;
     function sendMessage(text) {
       if (evtSrc) { try { evtSrc.close(); } catch (e) {} }
@@ -362,36 +362,67 @@
       Face.dispersionTarget = 0.35;
       Face.browTarget = 0.4;
       const token = new URLSearchParams(window.location.search).get('token') || '';
-      const url = `/chat/message?token=${encodeURIComponent(token)}&message=${encodeURIComponent(text)}`;
+      const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|${palIdx}`);
+      const url = `/chat/message?token=${encodeURIComponent(token)}&message=${encodeURIComponent(text)}&state=${stateBlob}`;
       evtSrc = new EventSource(url);
-      let pending = '', full = '';
+      let pending = '';
       evtSrc.onmessage = (ev) => {
-        const d = JSON.parse(ev.data || '{}');
-        if (d.model) { tts.model = d.model; applyProviderTint(d.model); }
-        if (d.mood)  { tts.mood = d.mood; State.mood = d.mood; moodTone(d.mood); }
-        if (typeof d.confidence === 'number') { State.confidence = d.confidence; Face.browTarget = 1 - d.confidence; Face.dispersionTarget = Math.max(0, 1 - d.confidence) * 0.4; }
-        if (d.verdict) { fadePaletteTo(VERDICT_TINT[d.verdict] || timePalette()); pulseEdge(); }
-        if (d.chunk) {
-          full += d.chunk; pending += d.chunk;
-          Face.dispersionTarget = 0;
-          let m;
-          while ((m = pending.match(SENT_BREAK))) {
-            const cut = m.index + m[0].length;
-            const sent = pending.slice(0, cut).trim();
-            pending = pending.slice(cut);
-            if (sent) enqueueSpeech(sent);
-          }
-        }
-        if (d.done) {
+        const raw = ev.data || '';
+        if (raw === '[DONE]') {
           if (pending.trim()) enqueueSpeech(pending.trim());
           pending = '';
           State.mode = 'idle'; Face.browTarget = 0; Face.dispersionTarget = 0;
-          evtSrc.close();
+          mandalaLock();
+          try { evtSrc.close(); } catch (e) {}
+          return;
         }
-        if (d.error) { Face.coronaFlash = 1.0; State.mode = 'error'; fadePaletteTo(VERDICT_TINT.veto); }
+        if (raw.startsWith('ERROR:')) { Face.coronaFlash = 1.0; State.mode = 'error'; fadePaletteTo(VERDICT_TINT.veto); return; }
+        const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+        pending += chunk;
+        Face.dispersionTarget = 0;
+        let m;
+        while ((m = pending.match(SENT_BREAK))) {
+          const cut = m.index + m[0].length;
+          const sent = pending.slice(0, cut).trim();
+          pending = pending.slice(cut);
+          if (sent) { enqueueSpeech(sent); chromaticPulse(); }
+        }
       };
+      evtSrc.addEventListener('tool', (ev) => {
+        try { const d = JSON.parse(ev.data); datamosh(); Face.dispersionTarget = 0.2; } catch (e) {}
+      });
+      evtSrc.addEventListener('mood', (ev) => {
+        const m = (ev.data || '').trim();
+        if (!m) return;
+        tts.mood = m; State.mood = m; moodTone(m);
+      });
+      evtSrc.addEventListener('model', (ev) => {
+        const m = (ev.data || '').trim();
+        if (!m) return;
+        tts.model = m; applyProviderTint(m);
+      });
+      evtSrc.addEventListener('verdict', (ev) => {
+        const v = (ev.data || '').trim();
+        fadePaletteTo(VERDICT_TINT[v] || timePalette());
+        pulseEdge();
+      });
+      evtSrc.addEventListener('confidence', (ev) => {
+        const c = parseFloat(ev.data); if (isNaN(c)) return;
+        State.confidence = c; Face.browTarget = 1 - c; Face.dispersionTarget = Math.max(0, (1 - c) * 0.4);
+      });
       evtSrc.onerror = () => { Face.coronaFlash = 0.6; State.mode = 'error'; try { evtSrc.close(); } catch (e) {} };
     }
+
+    // periodic state ping (closed-loop canvas → MASTER)
+    setInterval(() => {
+      const idleS = ((performance.now() - State.lastTouch) / 1000) | 0;
+      const body = new URLSearchParams({
+        mood: State.mood, mode: State.mode, idle: String(idleS),
+        palette: String(palIdx), confidence: State.confidence.toFixed(2),
+        tilt_x: State.tiltX.toFixed(2), tilt_y: State.tiltY.toFixed(2)
+      });
+      try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (e) {}
+    }, 8000);
     function applyProviderTint(model) {
       const m = (model || '').toLowerCase();
       const key = Object.keys(PROVIDER_TINT).find(k => m.includes(k));
@@ -527,6 +558,120 @@
       }
     }
 
+    // ─── Aesthetic effects (Warp / Low End Theory / Flamagra) ─────────
+    const FX = {
+      anaglyph: 0, anaglyphTarget: 0,   // R/cyan offset (bass-reactive)
+      ghostMirror: 0,                    // Pepper's-ghost vertical second-stack alpha
+      chromatic: 0,                      // chromatic-aberration pulse on stressed syllables
+      cutBlack: 0,                       // 1-frame canvas clear on transient
+      mandala: 0, mandalaPhase: 0,       // radial symmetry lock on long silence
+      datamosh: 0, datamoshFrames: 0,    // velocity-hold smear on tool event
+      scanline: 0,                       // VHS scanline overlay (memory state)
+      embers: false                      // ember-rise mode (warm mood)
+    };
+    function chromaticPulse() { FX.chromatic = 1.0; }
+    function datamosh()       { FX.datamosh  = 1.0; FX.datamoshFrames = 6; }
+    function mandalaLock()    { FX.mandala   = 1.0; FX.mandalaPhase = 0; }
+    function cutBlack()       { FX.cutBlack  = 1.0; }
+    function tickFX(dt) {
+      // anaglyph follows bass
+      if (analyser && freqData) {
+        const bass = (freqData[1] + freqData[2] + freqData[3]) / (3 * 255);
+        FX.anaglyphTarget = bass * 6;
+        if (bass > 0.85) cutBlack();
+      }
+      FX.anaglyph += (FX.anaglyphTarget - FX.anaglyph) * 0.18;
+      // ghost mirror when speaking
+      FX.ghostMirror += ((State.mode === 'speaking' ? 0.35 : 0) - FX.ghostMirror) * 0.06;
+      FX.chromatic *= 0.86;
+      FX.cutBlack  *= 0.4;
+      FX.mandala   *= 0.97;
+      FX.mandalaPhase += dt * 0.0018;
+      if (FX.datamoshFrames > 0) FX.datamoshFrames--; else FX.datamosh *= 0.85;
+      FX.scanline = (State.mode === 'thinking' || State.mode === 'rain') ? 0.4 : 0;
+      FX.embers = (State.mood === 'curious' || State.mode === 'speaking');
+    }
+    function drawGhostMirror() {
+      if (FX.ghostMirror < 0.02) return;
+      ctx.save();
+      ctx.globalAlpha = FX.ghostMirror;
+      ctx.translate(0, Face.cy * 2);
+      ctx.scale(1, -1);
+      ctx.fillStyle = `rgba(${palette.highlight},0.5)`;
+      for (let i = 0; i < particles.length; i += 2) {
+        const p = particles[i];
+        ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
+      }
+      ctx.restore();
+    }
+    function drawAnaglyph() {
+      if (FX.anaglyph < 0.3) return;
+      const off = FX.anaglyph | 0;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = `rgba(255,40,40,0.18)`;
+      for (let i = 0; i < particles.length; i += 3) { const p = particles[i]; ctx.fillRect((p.x | 0) - off, p.y | 0, 1, 1); }
+      ctx.fillStyle = `rgba(40,200,255,0.18)`;
+      for (let i = 0; i < particles.length; i += 3) { const p = particles[i]; ctx.fillRect((p.x | 0) + off, p.y | 0, 1, 1); }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    function drawChromatic() {
+      if (FX.chromatic < 0.05) return;
+      const r = Face.s * 1.1;
+      ctx.strokeStyle = `rgba(255,80,80,${FX.chromatic * 0.18})`;
+      ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Face.cx - 2, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = `rgba(80,200,255,${FX.chromatic * 0.18})`;
+      ctx.beginPath(); ctx.arc(Face.cx + 2, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
+    }
+    function drawMandala() {
+      if (FX.mandala < 0.05) return;
+      ctx.save();
+      ctx.translate(Face.cx, Face.cy);
+      ctx.strokeStyle = `rgba(${palette.accent},${FX.mandala * 0.5})`;
+      ctx.lineWidth = 1;
+      const arms = 8;
+      for (let a = 0; a < arms; a++) {
+        ctx.rotate((Math.PI * 2) / arms);
+        ctx.beginPath();
+        for (let t = 0; t < 1; t += 0.05) {
+          const r = Face.s * t * 0.9;
+          const x = Math.cos(t * 8 + FX.mandalaPhase) * r;
+          const y = Math.sin(t * 8 + FX.mandalaPhase) * r * 0.4;
+          t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    function drawScanline() {
+      if (FX.scanline < 0.05) return;
+      ctx.fillStyle = `rgba(0,0,0,${FX.scanline * 0.35})`;
+      for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+    }
+    function drawCutBlack() {
+      if (FX.cutBlack < 0.5) return;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, W, H);
+    }
+    function drawCatalogGhost() {
+      ctx.fillStyle = `rgba(${palette.midtone},0.06)`;
+      ctx.font = '10px ui-monospace, monospace';
+      ctx.fillText(`MASTER-${State.session.toString(36).toUpperCase()}`, 8, H - 8);
+    }
+
+    // ─── Whisper voice (low-volume asides) ─────────────────────────────
+    function whisper(text) {
+      if (!tts.enabled || tts.muted || !text) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.1; u.pitch = 0.86; u.volume = 0.45;
+      if (tts.voice) u.voice = tts.voice;
+      tts.queue.push(u); ttsTick();
+    }
+    // dmesg-style boot phrases — randomized cadence
+    const DMESG_PHRASES = [
+      'master booting', 'soul loaded', 'constitution online', 'tools registered',
+      'pipeline armed', 'council convened', 'ready'
+    ];
+
     // ─── Render loop ───────────────────────────────────────────────────
     let lastT = performance.now(), idlePulse = 0;
     function frame(now) {
@@ -560,18 +705,29 @@
 
       sampleAudio();
       flock();
+      tickFX(dt);
       tickParticles(dt);
 
       // bg
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, W, H);
 
+      drawScanline();
+      drawMandala();
       drawParticles();
+      drawAnaglyph();
+      drawGhostMirror();
       drawEdgePulse();
+      drawChromatic();
       drawCorona();
       drawVortex();
+      drawCatalogGhost();
+      drawCutBlack();
 
       idlePulse += dt * 0.002;
+
+      // mandala lock auto-trigger on long silence
+      if (State.mode === 'idle' && idlePulse % 20 > 19.9 && FX.mandala < 0.05) mandalaLock();
     }
 
     function tickParticles(dt) {
@@ -721,7 +877,9 @@
       unlockTTS();
       pickVoice();
       fetchWeather();
-      enqueueSpeech('master ready');
+      // dmesg→chat intro: stagger whispered boot phrases, then say "ready"
+      DMESG_PHRASES.slice(0, -1).forEach((p, i) => setTimeout(() => whisper(p), 400 + i * 600));
+      setTimeout(() => enqueueSpeech('ready'), 400 + DMESG_PHRASES.length * 600);
       Face.dispersionTarget = 0; Face.coronaFlash = 0.3;
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
     }

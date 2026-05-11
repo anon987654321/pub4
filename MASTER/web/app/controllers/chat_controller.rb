@@ -56,6 +56,19 @@ class ChatController < ApplicationController
           nil
         end
       end
+      # Bridge bus state → named SSE events so the face UI can react gesturally.
+      mood_sub      = container[:bus].subscribe("agent:mood")        { |ev| sse.write("event: mood\ndata: #{ev[:mood] || ev[:value]}\n\n") rescue nil }
+      model_sub     = container[:bus].subscribe("llm:request")       { |ev| sse.write("event: model\ndata: #{ev[:model]}\n\n") rescue nil }
+      verdict_sub   = container[:bus].subscribe("tribunal:rendered") do |ev|
+        v = ev[:vetoes].to_i.positive? ? "veto" : (ev[:judge] ? "pass" : "unclear")
+        sse.write("event: verdict\ndata: #{v}\n\n") rescue nil
+      end
+      escalate_sub  = container[:bus].subscribe("llm:escalation")    { |_| sse.write("event: confidence\ndata: 0.4\n\n") rescue nil }
+      # Publish incoming canvas state into bus so prompt-builder can include it.
+      if (st = params[:state]).present?
+        mood, mode, idle_s, palette = st.to_s.split("|")
+        container[:bus].publish(:canvas_state, mood:, mode:, idle_s: idle_s.to_i, palette: palette.to_i) rescue nil
+      end
 
       on_chunk = ->(token) {
         streamed = true
@@ -145,6 +158,10 @@ class ChatController < ApplicationController
       begin
         tool_sub.call if defined?(tool_sub) && tool_sub
         mutate_sub.call if defined?(mutate_sub) && mutate_sub
+        mood_sub.call if defined?(mood_sub) && mood_sub
+        model_sub.call if defined?(model_sub) && model_sub
+        verdict_sub.call if defined?(verdict_sub) && verdict_sub
+        escalate_sub.call if defined?(escalate_sub) && escalate_sub
       rescue StandardError
         nil
       end

@@ -9,6 +9,8 @@ Rails.application.routes.draw do
 get  "canvas",         to: "canvas#show"
 get  "canvas/stream",  to: "canvas#stream"
 post "canvas/event",   to: "canvas#post_event"
+  post "canvas/state",   to: "canvas#state"
+  get  "chat/message",  to: "chat#message"
   get  "up" => "rails/health#show", as: :rails_health_check
   get  "health" => "health#show"
 end
