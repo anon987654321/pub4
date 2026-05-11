@@ -182,7 +182,6 @@ models:
   cheap:
     - *gemini_flash
     - *mistral_small
-    - *deepseek_chat
     - *llama_70b
     - *qwen_coder
     - *gemma_2_9b_free

@@ -167,17 +167,16 @@ module Master
     end
 
     def mode_chain_for(candidates)
-      models = candidates.dup
-      selected = models.first || @config.model
-      if @dispatcher.claude_cli_model?(selected) || @dispatcher.tool_capable?(selected)
-        return [{ model: selected, mode: @config.reasoning_mode.to_s },
-                { model: selected, mode: "code_agent" },
-                { model: selected, mode: "react" }]
-      end
-
-      [{ model: selected, mode: "code_agent" },
-       { model: selected, mode: "react" },
-       { model: selected, mode: "direct" }]
+      models = Array(candidates).empty? ? [@config.model] : candidates
+      primary = models.first
+      modes = if @dispatcher.claude_cli_model?(primary) || @dispatcher.tool_capable?(primary)
+                [@config.reasoning_mode.to_s, "code_agent", "react"]
+              else
+                ["code_agent", "react", "direct"]
+              end
+      chain = models.map { |m| { model: m, mode: modes.first } }
+      chain.concat(modes.drop(1).map { |mode| { model: primary, mode: mode } })
+      chain
     end
 
     def publish_llm_success(model, response)
