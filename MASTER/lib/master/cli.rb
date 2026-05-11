@@ -78,7 +78,6 @@ module Master
         end
         unless state[:streamed]
           puts @renderer.speaker_tag
-          puts
         end
         print text
         $stdout.flush

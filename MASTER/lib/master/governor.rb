@@ -31,7 +31,9 @@ module Master
       case tier
       when :safe      then return Result.ok(true)
       when :guarded   then return Result.ok(true) if @auto || @approve_all
-      when :dangerous then return Result.ok(true) if @auto || @approve_all
+      when :dangerous
+        return Result.ok(true) if @auto || @approve_all
+        return Result.ok(true) unless needs_human?(description)
       end
 
       ask_user(tool_name, tier, description)
@@ -45,6 +47,12 @@ module Master
     def reset_approve! = @approve_all = false
 
     private
+
+    PRIVILEGE_RE = /\b(?:doas|sudo|su)\b/.freeze
+
+    def needs_human?(description)
+      description.to_s.match?(PRIVILEGE_RE)
+    end
 
     def check_rate_limit!(tier)
       limit = TIER_RATE_LIMITS[tier]

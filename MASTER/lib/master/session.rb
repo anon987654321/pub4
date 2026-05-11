@@ -81,8 +81,12 @@ module Master
 
     private
 
+    SHELL_RE = /\A(?:cd|ls|pwd|grep|find|cat|echo|export|sudo|doas|git|bundle|ruby|exec|eval|bash|zsh|sh)\b|[$`|;&]/.freeze
+
     def auto_name(content)
-      content.to_s.split.first(5).join(" ").then { |s| s[0, SESSION_NAME_MAX] }
+      stripped = content.to_s.strip
+      return Time.now.strftime("%Y%m%d-%H%M") if stripped.match?(SHELL_RE)
+      stripped.split.first(5).join(" ")[0, SESSION_NAME_MAX]
     end
 
     def rotate_costs!

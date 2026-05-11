@@ -72,16 +72,18 @@ module Master
       bar = token_bar(tokens)
       usage = token_label(tokens)
       model_str = @p.dim(short_model(model))
-      branch_str = @p.dim("branch:") + @p.red(branch)
+      branch_str = @p.red(branch)
       vbadge = violations > 0 ? @p.red("[#{violations}v]") : @p.dim("[0v]")
-      phase_str = phase && phase.to_s != "idle" ? @p.dim(" #{phase}") : ""
+      phase_str = phase && phase.to_s != "idle" ? @p.dim(" :#{phase}") : ""
       cost_str = cost_label(cost)
+      cost_seg = cost_str.empty? ? "" : "#{cost_str} "
       prompt = last_ok ? @p.bold.red("master$") : @p.red("master$")
-      ["#{branch_str}  #{model_str}  ↖ #{bar}#{usage}  #{cost_str} #{vbadge}#{phase_str}", prompt + " "]
+      ["#{branch_str}  #{model_str}  ↖ #{bar}#{usage}  #{cost_seg}#{vbadge}#{phase_str}", prompt + " "]
     end
 
     def cost_label(cost)
       cents = (cost.to_f * 100).round(2)
+      return "" if cents.zero?
       @p.dim("¢#{format('%.2f', cents)}")
     end
 
@@ -95,11 +97,19 @@ module Master
       @p.dim(bits.join(" "))
     end
 
+    BAR_FRACTIONS = ["\u00A0", "\u258F", "\u258E", "\u258D", "\u258C", "\u258B", "\u258A", "\u2589", "\u2588"].freeze
+
     def token_bar(tokens)
       return "" unless tokens && tokens > 0
       budget = (@config["token_budget"] || TOKEN_BUDGET).to_i
-      filled = ((tokens.to_f / budget) * BAR_CELLS).clamp(0, BAR_CELLS).round
-      @p.dim(("▰" * filled) + ("▱" * (BAR_CELLS - filled))) + " "
+      pct    = (tokens.to_f / budget).clamp(0.0, 1.0)
+      eighths = (pct * BAR_CELLS * 8).round
+      full   = eighths / 8
+      rem    = eighths % 8
+      bar    = ("\u2588" * full)
+      bar   += BAR_FRACTIONS[rem] if full < BAR_CELLS
+      bar   += "\u00A0" * (BAR_CELLS - full - (full < BAR_CELLS ? 1 : 0))
+      @p.dim(bar) + " "
     end
 
     def token_label(tokens)
@@ -136,6 +146,7 @@ module Master
       text
         .gsub(/"([^"]*?)"/) { "\u201C#{Regexp.last_match(1)}\u201D" }
         .gsub(/\s--\s/, " \u2014 ")
+        .gsub(/(\d)-(\d)/, "\\1\u2013\\2")
         .gsub("...", "\u2026")
     end
 
