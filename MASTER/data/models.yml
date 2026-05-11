@@ -18,6 +18,9 @@ fallback_policy:
     - timeout
     - network_error
     - refusal
+    - insufficient_balance
+    - rate_limit
+    - quota_exceeded
 
 defaults: &model_defaults
   score: { quality: 0.0, speed: 0.0, cost: 0.0 }
@@ -134,7 +137,7 @@ model_defs:
   deepseek_v3_free: &deepseek_v3_free
     id: deepseek/deepseek-chat-v3.1:free
     <<: *model_defaults
-    score: { quality: 0.90, speed: 0.72, cost: 1.0 }
+    score: { quality: 0.95, speed: 0.85, cost: 1.0 }
   llama_4_scout_free: &llama_4_scout_free
     id: meta-llama/llama-4-scout:free
     <<: *model_defaults
@@ -162,9 +165,9 @@ ollama_phi: &ollama_phi
 
 models:
   default:
-    - *deepseek_chat
     - *nemotron_super
     - *gpt_oss_120b
+    - *deepseek_chat
     - *qwen3_next
     - *llama_70b
     - *qwen_coder
@@ -194,7 +197,6 @@ models:
   free:
     - *gemini_2_flash_exp_free
     - *gemma_2_9b_free
-    - *deepseek_v3_free
     - *llama_4_scout_free
     - *phi_4_free
     - *glm_4_5_air_free
