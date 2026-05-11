@@ -69,6 +69,7 @@ module Master
 
     def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil, cost: nil)
       branch = git_branch || "detached"
+      bar = token_bar(tokens)
       usage = token_label(tokens)
       model_str = @p.dim(short_model(model))
       branch_str = @p.dim("branch:") + @p.red(branch)
@@ -76,7 +77,7 @@ module Master
       phase_str = phase && phase.to_s != "idle" ? @p.dim(" #{phase}") : ""
       cost_str = cost_label(cost)
       prompt = last_ok ? @p.bold.red("master$") : @p.red("master$")
-      ["#{branch_str}  #{model_str}  ↖ #{usage}  #{cost_str} #{vbadge}#{phase_str}", prompt + " "]
+      ["#{branch_str}  #{model_str}  ↖ #{bar}#{usage}  #{cost_str} #{vbadge}#{phase_str}", prompt + " "]
     end
 
     def cost_label(cost)
