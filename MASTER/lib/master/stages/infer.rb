@@ -7,10 +7,7 @@ module Master
       # Heuristic task-type detection — used by ModelRouter for tiered model selection.
       PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 
-      VAGUE_STUBS  = /\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|good\s+\w+|test(?:ing)?|please)\z/i.freeze
-      ACTIONABLE   = /\b(?:fix|write|add|explain|refactor|scan|implement|show|list|create|delete|update|find|run|check|what|whats|how|why|where|when|who|which|read|open|build|deploy|revert|move|rename|tell|url|path|help|suggest|propose|recommend|brainstorm|improve|enhance|design|polish|tighten|simplify|make|change|review|critique|rethink|redesign|tune|adjust|sketch|draft)\b/i.freeze
-      FILE_REF     = /[`'"]|\/|\.\w{2,4}\b/.freeze
-      ELICIT_WORDS = 5
+      VAGUE_STUBS = /\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|good\s+\w+|test(?:ing)?|please)\z/i.freeze
 
       ELICIT_QUESTIONS = {
         implement: "which file, which method, and what change exactly?",
@@ -72,11 +69,7 @@ module Master
         {}
       end
 
-      def vague?(msg)
-        return true if msg.match?(VAGUE_STUBS)
-
-        msg.split.size <= ELICIT_WORDS && !msg.match?(ACTIONABLE) && !msg.match?(FILE_REF)
-      end
+      def vague?(msg) = msg.match?(VAGUE_STUBS)
 
       def infer_task_type(msg)
         TASK_TYPE_PATTERNS.each { |type, pat| return type if msg.match?(pat) }
