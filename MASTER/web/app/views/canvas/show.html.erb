@@ -290,20 +290,21 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
       }
     }
 
-    const trailAlpha=screensaver?0.06:0.22;
-    ctx.fillStyle=`rgba(10,12,10,${trailAlpha})`;
+    ctx.fillStyle='#0a0c0a';
     ctx.fillRect(0,0,w,h);
     breath+=0.018;
     const breathAlpha=screensaver?(0.55+Math.sin(breath)*0.18):1;
-    ctx.fillStyle=`rgba(${palette.body},${breathAlpha.toFixed(2)})`;
 
     for(let i=pulses.length-1;i>=0;i--){
       const pl=pulses[i];
       pl.r+=12; pl.life-=0.025;
       if(pl.life<=0){ pulses.splice(i,1); continue; }
-      ctx.strokeStyle=`rgba(${palette.accent},${(pl.life*0.4).toFixed(3)})`;
-      ctx.lineWidth=1;
-      ctx.beginPath(); ctx.arc(pl.x,pl.y,pl.r,0,Math.PI*2); ctx.stroke();
+      const a=Math.round(pl.life*255*0.4)/255;
+      ctx.fillStyle=`rgba(${palette.accent},${a.toFixed(3)})`;
+      const cx=Math.round(pl.x), cy=Math.round(pl.y), r=Math.round(pl.r);
+      for(let theta=0; theta<Math.PI*2; theta+=Math.PI/64){
+        ctx.fillRect(Math.round(cx+Math.cos(theta)*r), Math.round(cy+Math.sin(theta)*r), 1, 1);
+      }
     }
     ctx.fillStyle=`rgba(${palette.body},${breathAlpha.toFixed(2)})`;
 
@@ -369,11 +370,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
       if(p.y>h+2)p.y-=h+4;
 
       p.life=Math.min(1.0, p.life+.01);
-      const alpha=p.life*.8*(0.45+p.z*0.55);
-      const sz=p.z<0.5?1.0:(p.z<0.8?1.2:1.5);
-
-      ctx.globalAlpha=alpha;
-      ctx.fillRect(Math.floor(p.x), Math.floor(p.y), sz, sz);
+      ctx.globalAlpha=p.life*0.85*breathAlpha;
+      ctx.fillRect(Math.floor(p.x), Math.floor(p.y), 1, 1);
 
       if(p.x>=0 && p.x<w && p.y>=0 && p.y<h) onScreen++;
     }
@@ -397,7 +395,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
           if(r2<RAD2){
             mvx+=q.vx; mvy+=q.vy; nc++;
             if(q.idx>i){
-              const a=(1-r2/RAD2)*0.16*Math.min(p.z,q.z)*lineBoost;
+              const a=(1-r2/RAD2)*0.16*lineBoost;
               if(a>0.025){
                 ctx.strokeStyle=`rgba(${palette.body},${a.toFixed(3)})`;
                 ctx.beginPath();
