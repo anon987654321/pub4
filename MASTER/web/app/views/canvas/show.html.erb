@@ -72,20 +72,52 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
   let screensaver=false;
   const pulses=[];
   let breath=0;
-  let modelTheme=null;
+
+  const easeOutCubic=t=>1-Math.pow(1-t,3);
+  const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  const parseRGB=s=>s.split(',').map(Number);
+  const fmtRGB=a=>a.map(n=>Math.round(n)).join(',');
+  const lerpRGB=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+
   function timePalette(){
     const h=new Date().getHours();
-    if(h<6)  return {body:'205,197,182',accent:'140,180,200'};
-    if(h<11) return {body:'220,210,190',accent:'200,140,90'};
-    if(h<17) return {body:'205,197,182',accent:'160,82,45'};
-    if(h<21) return {body:'210,180,160',accent:'180,90,60'};
-    return     {body:'185,175,160',accent:'120,80,140'};
+    if(h<6)  return {shadow:'14,10,10',  midtone:'90,55,50',    highlight:'170,120,105', accent:'180,90,75'};
+    if(h<11) return {shadow:'16,12,10',  midtone:'120,75,60',   highlight:'200,150,120', accent:'200,110,80'};
+    if(h<17) return {shadow:'14,10,8',   midtone:'130,80,60',   highlight:'215,165,130', accent:'210,115,75'};
+    if(h<21) return {shadow:'16,10,10',  midtone:'140,75,55',   highlight:'210,150,120', accent:'215,100,70'};
+    return     {shadow:'12,8,10',   midtone:'95,55,55',    highlight:'175,120,110', accent:'180,80,75'};
   }
+  const MOOD_GRADE={
+    focused: {shadow:'12,10,12',  midtone:'95,75,75',    highlight:'185,150,140', accent:'190,120,105'},
+    curious: {shadow:'18,12,10',  midtone:'150,90,65',   highlight:'225,165,125', accent:'220,135,85'},
+    tense:   {shadow:'24,8,8',    midtone:'170,55,45',   highlight:'235,140,120', accent:'235,80,55'},
+    weary:   {shadow:'14,10,12',  midtone:'90,65,70',    highlight:'160,125,125', accent:'160,95,95'},
+    idle:    null
+  };
   let palette=timePalette();
-  setInterval(()=>palette=timePalette(), 600000);
+  let paletteFrom=palette, paletteTo=palette, paletteStart=0, PALETTE_MS=600;
+  function gradeTo(target){
+    if(!target) return;
+    paletteFrom={shadow:palette.shadow, midtone:palette.midtone, highlight:palette.highlight, accent:palette.accent};
+    paletteTo=target;
+    paletteStart=performance.now();
+  }
+  function tickPalette(now){
+    const t=Math.min(1,(now-paletteStart)/PALETTE_MS);
+    if(t>=1){ palette=paletteTo; return; }
+    const k=easeInOutCubic(t);
+    palette={
+      shadow:   fmtRGB(lerpRGB(parseRGB(paletteFrom.shadow),    parseRGB(paletteTo.shadow),    k)),
+      midtone:  fmtRGB(lerpRGB(parseRGB(paletteFrom.midtone),   parseRGB(paletteTo.midtone),   k)),
+      highlight:fmtRGB(lerpRGB(parseRGB(paletteFrom.highlight), parseRGB(paletteTo.highlight), k)),
+      accent:   fmtRGB(lerpRGB(parseRGB(paletteFrom.accent),    parseRGB(paletteTo.accent),    k))
+    };
+  }
+  setInterval(()=>gradeTo(timePalette()), 600000);
 
+  const PULSE_MS=1200, PULSE_MAX_R=380;
   function pulse(x,y,strength=1){
-    pulses.push({x,y,r:0,life:1,k:strength});
+    pulses.push({x,y,t0:performance.now(),k:strength});
     if(pulses.length>12) pulses.shift();
   }
 
@@ -265,6 +297,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
     else if(tag==='curious'){mood.drift=.24;mood.jitter=.06;mood.cohesion=.012;}
     else if(tag==='tense'){mood.drift=.34;mood.jitter=.12;mood.cohesion=.010;}
     else if(tag==='weary'){mood.drift=.10;mood.jitter=.02;mood.cohesion=.008;}
+    if(MOOD_GRADE[tag]) gradeTo(MOOD_GRADE[tag]);
+    else gradeTo(timePalette());
   }
 
   function tick(now){
@@ -290,23 +324,26 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
       }
     }
 
-    ctx.fillStyle='#0a0c0a';
+    tickPalette(now);
+    ctx.fillStyle='#000';
     ctx.fillRect(0,0,w,h);
     breath+=0.018;
     const breathAlpha=screensaver?(0.55+Math.sin(breath)*0.18):1;
 
     for(let i=pulses.length-1;i>=0;i--){
       const pl=pulses[i];
-      pl.r+=12; pl.life-=0.025;
-      if(pl.life<=0){ pulses.splice(i,1); continue; }
-      const a=Math.round(pl.life*255*0.4)/255;
+      const t=(now-pl.t0)/PULSE_MS;
+      if(t>=1){ pulses.splice(i,1); continue; }
+      const eased=easeOutCubic(t);
+      const r=eased*PULSE_MAX_R*pl.k;
+      const a=(1-t)*(1-t)*0.45*pl.k;
       ctx.fillStyle=`rgba(${palette.accent},${a.toFixed(3)})`;
-      const cx=Math.round(pl.x), cy=Math.round(pl.y), r=Math.round(pl.r);
+      const cx=Math.round(pl.x), cy=Math.round(pl.y), rr=Math.round(r);
       for(let theta=0; theta<Math.PI*2; theta+=Math.PI/64){
-        ctx.fillRect(Math.round(cx+Math.cos(theta)*r), Math.round(cy+Math.sin(theta)*r), 1, 1);
+        ctx.fillRect(Math.round(cx+Math.cos(theta)*rr), Math.round(cy+Math.sin(theta)*rr), 1, 1);
       }
     }
-    ctx.fillStyle=`rgba(${palette.body},${breathAlpha.toFixed(2)})`;
+    ctx.fillStyle=`rgba(${palette.highlight},${breathAlpha.toFixed(2)})`;
 
     let onScreen=0;
     for(const p of particles){
@@ -345,10 +382,13 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
       }
 
       for(const pl of pulses){
+        const t=(now-pl.t0)/PULSE_MS;
+        if(t>=1) continue;
+        const ringR=easeOutCubic(t)*PULSE_MAX_R*pl.k;
         const dxp=p.x-pl.x, dyp=p.y-pl.y;
         const rp=Math.hypot(dxp,dyp);
-        if(rp>1 && Math.abs(rp-pl.r)<28){
-          const f=pl.life*pl.k*0.6*p.z;
+        if(rp>1 && Math.abs(rp-ringR)<28){
+          const f=(1-t)*pl.k*0.6*p.z;
           vx+=(dxp/rp)*f; vy+=(dyp/rp)*f;
         }
       }
@@ -397,7 +437,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
             if(q.idx>i){
               const a=(1-r2/RAD2)*0.16*lineBoost;
               if(a>0.025){
-                ctx.strokeStyle=`rgba(${palette.body},${a.toFixed(3)})`;
+                ctx.strokeStyle=`rgba(${palette.midtone},${a.toFixed(3)})`;
                 ctx.beginPath();
                 ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
                 ctx.stroke();
