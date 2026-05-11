@@ -34,20 +34,43 @@ module Master
           bus&.publish("triad:start", target: target)
           parts << "scan:\n#{cmds['scan'].call(args: target)}"
           parts << "sweep:\n#{cmds['sweep'].call(args: target)}"
-          parts << "tribunal:\n#{run_tribunal(deliberation, parts.join("\n\n"), target)}"
+          parts << "tribunal:\n#{run_tribunal(deliberation, parts.join("\n\n"), target, bus)}"
           bus&.publish("triad:done")
           parts.join("\n\n")
         }
       }
     end
 
-    def run_tribunal(deliberation, artifact, target)
+    def run_tribunal(deliberation, artifact, target, bus = nil)
       return "tribunal: deliberation not configured" unless deliberation
 
       result = deliberation.review(artifact, context: target)
-      result.ok? ? result.value! : result.message
+      return result.message if result.err?
+      format_tribunal(result.value!, bus)
     rescue StandardError => e
       "tribunal: #{e.message}"
+    end
+
+    def format_tribunal(feedback, bus = nil)
+      judge  = feedback.find { |f| f[:role] == "Synthesis" }
+      jurors = feedback.reject { |f| f[:role] == "Synthesis" }
+      vetoes = jurors.select { |f| f[:veto_role] && f[:feedback].to_s.strip =~ /\AVETO:/i }
+      out = []
+      out << "verdict: #{judge[:feedback].to_s.strip}" if judge
+      unless vetoes.empty?
+        out << ""
+        out << "vetoes:"
+        vetoes.each { |v| out << "  #{v[:persona]}: #{v[:feedback].to_s.strip.sub(/\AVETO:\s*/i, '')}" }
+      end
+      out << ""
+      out << "jurors:"
+      jurors.each do |f|
+        axiom = f[:axiom] ? "[#{f[:axiom]}] " : ""
+        body  = f[:feedback].to_s.strip.lines.first(3).map(&:chomp).join(" ")
+        out << "  #{axiom}#{f[:persona]} (#{f[:role]}): #{body}"
+      end
+      bus&.publish("tribunal:rendered", jurors: jurors.size, vetoes: vetoes.size, judge: !judge.nil?)
+      out.join("\n")
     end
 
     def scan_loop_commands(ai:, root:, infra:)
