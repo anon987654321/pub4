@@ -78,6 +78,8 @@ module Master
       ctx = ContextWindow.new(session: infra[:session], agent:, model_context: CTX_WINDOW_SIZE)
       ctx.check_and_compact!
       agent.wire_context_window(ctx)
+      constitution = Constitution.new
+      agent.wire_constitution(constitution)
       scanner               = build_scanner(root:, agent:, bus:)
       swarm                 = Swarm::Coordinator.new(agent:, event_bus: bus)
       deliberation, council, ideation = build_council(root, infra, agent:)

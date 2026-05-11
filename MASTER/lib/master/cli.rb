@@ -20,7 +20,7 @@ module Master
       critical: "!!"
     }.freeze
 
-    SLASH_COMMANDS = %w[/exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose].freeze
+    SLASH_COMMANDS = %w[/exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles].freeze
 
     attr_reader :container
 
@@ -164,7 +164,8 @@ module Master
       when "/cmd"     then run_cmd
       when "/dmesg"   then toggle_dmesg
       when "/chips"   then toggle_chips
-      when "/propose" then run_propose
+      when "/propose"    then run_propose
+      when "/principles" then run_principles
       when "<<"       then run_input(read_multiline)
       else                 run_input(line)
       end
@@ -246,6 +247,17 @@ module Master
     def toggle_chips
       @show_chips = !@show_chips
       puts @renderer.render("chips: #{@show_chips ? "on" : "off"}", mode: :dim)
+    end
+
+    def run_principles
+      c = Master::Constitution.new
+      lines = c.list
+      if lines.empty?
+        puts @renderer.render("no principles loaded (data/principles/*.md)", mode: :dim)
+      else
+        puts @renderer.render("constitution: #{lines.size} principle(s)", mode: :dim)
+        lines.each { |l| puts @renderer.render("  #{l}", mode: :dim) }
+      end
     end
 
     def run_propose

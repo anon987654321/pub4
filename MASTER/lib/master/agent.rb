@@ -30,8 +30,11 @@ module Master
       @model_router, @reasoning_modes    = deps.model_router, deps.reasoning_modes
       @memory, @personality, @code_index = deps.memory, deps.personality, deps.code_index
       @context_window, @homeostat        = deps.context_window, deps.homeostat
+      @constitution                      = nil
       @dispatcher                        = LLMDispatcher.new(deps:, system_prompt: -> { system_prompt })
     end
+
+    def wire_constitution(constitution) = @constitution = constitution
 
     def chat(message, stream: true, escalation_depth: 0, &blk)
       prepare_chat_turn(message)
@@ -126,9 +129,11 @@ module Master
 
     def system_prompt
       parts = []
+      parts << @constitution.system_prompt if @constitution && !@constitution.empty?
       parts << @personality.system_prompt if @personality
       parts << @code_index.summary if @code_index&.built?
       parts << @memory.context_summary if @memory&.context_summary
+      parts.compact!
       parts.empty? ? nil : parts.join("\n\n")
     end
 
