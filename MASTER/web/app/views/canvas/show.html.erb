@@ -314,7 +314,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
         lastKick=performance.now();
       }
       if(t==='homeostat:mood') updateMood(p.mood||p.state);
-      if(t==='canvas:face') setMode('face');
+      if(t==='canvas:face' || t==='council:start' || t==='confirm:pending' || t==='llm:escalation') setMode('face');
       if(t==='scan:summary') setMode('scan',p);
       if(t==='pipeline:stages') setMode('pipeline',p);
       if(t==='audio:transient') scatter=Math.min(1.4,scatter+0.8);
