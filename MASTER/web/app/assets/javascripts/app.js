@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const input=document.getElementById('input');
   const status=document.getElementById('status');
   let frames=0;
-  const spinner=['|','/','-','\\'];
+  const spinner=['*','@','#','&','%'];
   function update(){
     status.textContent=`thinking ${spinner[frames%spinner.length]}`;
     frames+=1;

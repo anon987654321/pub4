@@ -392,15 +392,24 @@ module Master
 
     SPIN_FRAMES   = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
     SPIN_INTERVAL = 0.25
+    DMESG_IGNORE  = %w[bus:subscribe bus:unsubscribe ring:write].freeze
 
     def print_thinking_indicator
       return unless $stdout.isatty
 
+      @think_mutex = Mutex.new
+      @think_t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      @think_sub   = @bus&.subscribe("*") do |payload|
+        emit_dmesg_line(payload)
+      end
+
       @spin_thread = Thread.new do
         i = 0
         loop do
-          print "\r\e[K#{@renderer.render("#{SPIN_FRAMES[i % SPIN_FRAMES.size]} thinking", mode: :dim)}"
-          $stdout.flush
+          @think_mutex.synchronize do
+            print "\r\e[K#{@renderer.render("#{SPIN_FRAMES[i % SPIN_FRAMES.size]} thinking", mode: :dim)}"
+            $stdout.flush
+          end
           sleep SPIN_INTERVAL
           i += 1
         end
@@ -412,6 +421,24 @@ module Master
     def stop_thinking_indicator
       @spin_thread&.kill
       @spin_thread = nil
+      @think_sub&.call
+      @think_sub = nil
+    end
+
+    def emit_dmesg_line(payload)
+      ev = payload[:event].to_s
+      return if ev.empty? || DMESG_IGNORE.include?(ev)
+      ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - (@think_t0 || 0)) * 1000).to_i
+      kv = payload.reject { |k, _| %i[event ts topic].include?(k) }
+                  .map { |k, v| "#{k}=#{v.to_s[0, 60]}" }.join(" ")
+      line = "  [%7d] %s%s" % [ms, ev, kv.empty? ? "" : " #{kv}"]
+      @think_mutex&.synchronize do
+        print "\r\e[K"
+        $stdout.puts @renderer.render(line, mode: :dim)
+        $stdout.flush
+      end
+    rescue StandardError
+      nil
     end
 
     INIT_FRAMES   = 20

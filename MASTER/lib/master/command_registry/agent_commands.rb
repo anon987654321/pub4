@@ -169,25 +169,38 @@ module Master
     end
 
     def model_agent_commands(ai:, root:, infra:)
-      council_meta_commands(ai:, root:).merge(model_commands(ai:, root:, infra:))
+      council_meta_commands(ai:, root:, infra:).merge(model_commands(ai:, root:, infra:))
     end
 
-    def council_meta_commands(ai:, root:)
-      council_stage = ai[:council_stage]
-      swarm         = ai[:swarm]
+    def council_meta_commands(ai:, root:, infra:)
+      stage        = ai[:council_stage]
+      swarm        = ai[:swarm]
+      deliberation = ai[:deliberation]
+      bus          = infra[:bus]
       {
-        "council" => cmd(:dispatch_council, council_stage),
+        "council" => ->(ctx) { dispatch_council(stage, deliberation, root, bus, arg_for(ctx)) },
         "swarm"   => cmd(:dispatch_swarm, swarm),
         "explain" => ->(_ctx) { explain_master(root) }
       }
     end
 
-    def dispatch_council(stage, arg)
+    def dispatch_council(stage, deliberation, root, bus, arg)
       case arg
-      when "on"  then stage.enable!;  "council: enabled"
-      when "off" then stage.disable!; "council: disabled"
-      else "council: #{stage.enabled? ? "on" : "off"}"
+      when "on"     then stage.enable!;  "council: enabled in pipeline"
+      when "off"    then stage.disable!; "council: disabled in pipeline"
+      when "status" then "council: #{stage.enabled? ? "on" : "off"} in pipeline"
+      else
+        target   = arg.empty? ? "." : arg
+        artifact = snapshot_artifact(expand_or_root(target, root))
+        run_tribunal(deliberation, artifact, target, bus)
       end
+    end
+
+    def snapshot_artifact(abs_path)
+      return "not found: #{abs_path}" unless File.exist?(abs_path)
+      return File.read(abs_path).b[0, 16_000] if File.file?(abs_path)
+      files = Dir.glob(File.join(abs_path, "**/*.{rb,erb,yml}")).first(40)
+      files.map { |f| "--- #{f.sub(abs_path + "/", "")} ---\n#{File.read(f).b[0, 800]}" }.join("\n\n")[0, 24_000]
     end
 
     def dispatch_swarm(swarm, arg)

@@ -7,8 +7,8 @@
   interval_s: 3600
   command: triad deep .
   enabled: true
-  state: running
-  last_run_at: 1778516405
+  state: done
+  last_run_at: 1778522373
 - name: nightly_dreams
   description: Consolidate memories during low-activity periods
   trigger: scheduled
@@ -91,5 +91,5 @@
   interval_s: 86400
   command: scan critical lib/master
   enabled: true
-  state: done
+  state: running
   last_run_at: 0
