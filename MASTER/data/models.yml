@@ -1,11 +1,11 @@
-# Model routing profile — OpenRouter free-tier with tool calling.
+# Model routing profile — DeepSeek primary, OpenRouter free-tier fallback.
 
 routing:
   enabled: true
   strategy: weighted
   escalation_enabled: true
   escalation_tier: strong
-  provider: openrouter
+  provider: deepseek
 
 weights: &weights
   quality: 0.50
@@ -42,7 +42,7 @@ model_defs:
   deepseek_chat: &deepseek_chat
     id: deepseek-chat
     <<: *model_defaults
-    score: { quality: 0.88, speed: 0.70, cost: 0.95 }
+    score: { quality: 0.92, speed: 0.70, cost: 0.95 }
   deepseek_coder: &deepseek_coder
     id: deepseek-coder
     <<: *model_defaults
@@ -158,6 +158,7 @@ ollama_phi: &ollama_phi
 
 models:
   default:
+    - *deepseek_chat
     - *nemotron_super
     - *gpt_oss_120b
     - *qwen3_next
