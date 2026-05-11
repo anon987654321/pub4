@@ -6,6 +6,7 @@ require "open3"
 require "socket"
 
 module Master
+  module Voice
   DEFAULT_WEB_PORT = Config::DEFAULT_WEB_PORT
 
   class Renderer
@@ -225,5 +226,6 @@ module Master
     rescue StandardError
       ["dmesg unavailable"]
     end
+  end
   end
 end

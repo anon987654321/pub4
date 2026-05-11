@@ -5,6 +5,7 @@ require "fileutils"
 require "open3"
 
 module Master
+  module Voice
   module Speech
     WORKER   = File.expand_path("../../exe/tts-worker", __dir__)
     EDGE_TTS = File.executable?(WORKER)
@@ -120,5 +121,6 @@ module Master
       )
       (ok && File.exist?(audio_path) && File.size(audio_path) > 0) ? audio_path : nil
     end
+  end
   end
 end

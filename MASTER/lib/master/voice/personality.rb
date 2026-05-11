@@ -3,6 +3,7 @@
 require "yaml"
 
 module Master
+  module Voice
   # MASTER's behavioral persona: voice, TTS settings, and LLM style.
   # Personas live in data/personas.yml. Default: malay.
   class Personality
@@ -190,5 +191,6 @@ module Master
       ordered = ordering.empty? ? sections.keys : ordering
       ordered.filter_map { |key| sections[key] }.join("\n\n")
     end
+  end
   end
 end

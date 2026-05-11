@@ -33,7 +33,7 @@ module Master
       )
       cache = SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
       governor = Governor.new(config:, event_bus: bus)
-      renderer = Renderer.new(config:)
+      renderer = Voice::Renderer.new(config:)
       metrics = Metrics.new(root:, event_bus: bus)
       AuditLog.new(root:, event_bus: bus)
 

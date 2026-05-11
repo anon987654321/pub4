@@ -5,6 +5,7 @@ require "yaml"
 require "fileutils"
 
 module Master
+  module Voice
   # Manages SOUL.md identity document; Evolution Protocol: propose→test→approve→tag.
   class Soul
     SOUL_PATH     = File.join(Master::ROOT, "SOUL.md").freeze
@@ -181,5 +182,6 @@ module Master
       protected_changed = PROTECTED_PATTERNS.select { |p| old_doc.match?(p) && !new_doc.match?(p) }.map(&:source)
       { absolute_changed:, protected_changed: }
     end
+  end
   end
 end
