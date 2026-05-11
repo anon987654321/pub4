@@ -101,25 +101,84 @@
       return out;
     }
 
+    // Sepik River mask anatomy — elongated vertical, ridge nose, cowrie eyes,
+    // tooth-bared mouth, radiating feather crown, cheek scarification, side tassels.
     function computeZones() {
-      const cx = W * 0.5, cy = H * 0.46;
-      const s = Math.min(W, H) * 0.24;
+      const cx = W * 0.5, cy = H * 0.50;
+      const s = Math.min(W, H * 0.78) * 0.22;
       Face.cx = cx; Face.cy = cy; Face.s = s;
-      Face.zones = {
-        crown:    ring(cx, cy - s * 0.08, s * 1.05, Math.PI * 1.08, Math.PI * 1.92, 80, 'crown'),
-        jaw:      ring(cx, cy + s * 0.05, s * 1.00, Math.PI * 0.10, Math.PI * 0.90, 90, 'jaw'),
-        eyeL:     ring(cx - s * 0.42, cy - s * 0.22, s * 0.16, 0, Math.PI * 2, 28, 'eyeL'),
-        eyeR:     ring(cx + s * 0.42, cy - s * 0.22, s * 0.16, 0, Math.PI * 2, 28, 'eyeR'),
-        pupilL:   disc(cx - s * 0.42, cy - s * 0.22, s * 0.05, 10, 'pupilL'),
-        pupilR:   disc(cx + s * 0.42, cy - s * 0.22, s * 0.05, 10, 'pupilR'),
-        browL:    line(cx - s * 0.62, cy - s * 0.46, cx - s * 0.22, cy - s * 0.46, 14, 'browL'),
-        browR:    line(cx + s * 0.22, cy - s * 0.46, cx + s * 0.62, cy - s * 0.46, 14, 'browR'),
-        nose:     line(cx, cy - s * 0.08, cx, cy + s * 0.18, 10, 'nose'),
-        cheekL:   disc(cx - s * 0.58, cy + s * 0.12, s * 0.14, 16, 'cheekL'),
-        cheekR:   disc(cx + s * 0.58, cy + s * 0.12, s * 0.14, 16, 'cheekR'),
-        mouth:    mouthArc(cx, cy + s * 0.52, s * 0.55, Face.mouth, 34)
-      };
-      Face.anchors = [].concat(...Object.values(Face.zones));
+      const z = {};
+      // Mask outline — elongated oval (1.5x tall), narrowing to chin
+      z.outlineL = [];
+      z.outlineR = [];
+      for (let i = 0; i < 60; i++) {
+        const t = i / 59;
+        const y = cy - s * 1.45 + t * s * 2.9;
+        const taper = Math.sin(t * Math.PI);
+        const w = s * (0.65 * taper + 0.15);
+        z.outlineL.push({ x: cx - w, y, zone: 'outlineL' });
+        z.outlineR.push({ x: cx + w, y, zone: 'outlineR' });
+      }
+      // Crown — radiating "feathers" from top of head
+      z.crown = [];
+      const FEATHERS = 14;
+      for (let i = 0; i < FEATHERS; i++) {
+        const a = -Math.PI * 0.5 + (i - FEATHERS / 2) * 0.12;
+        const len = s * (0.7 + Math.sin(i * 1.3) * 0.25);
+        for (let t = 0; t < 1; t += 0.08) {
+          const r = s * 0.8 + t * len;
+          z.crown.push({ x: cx + Math.cos(a) * r * 0.6, y: cy - s * 0.7 + Math.sin(a) * r, zone: 'crown' });
+        }
+      }
+      // Forehead ridge — V-shape descending into nose
+      z.forehead = line(cx - s * 0.35, cy - s * 0.85, cx, cy - s * 0.5, 8, 'forehead')
+                  .concat(line(cx, cy - s * 0.5, cx + s * 0.35, cy - s * 0.85, 8, 'forehead'));
+      // Nose ridge — long central vertical line (signature of Sepik masks)
+      z.noseRidge = line(cx, cy - s * 0.5, cx, cy + s * 0.55, 28, 'noseRidge');
+      // Nose flare at base — small triangle
+      z.noseFlare = line(cx - s * 0.12, cy + s * 0.55, cx + s * 0.12, cy + s * 0.55, 10, 'noseFlare');
+      // Brow ridge — heavy diagonal descending toward nose
+      z.browL = line(cx - s * 0.55, cy - s * 0.4, cx - s * 0.12, cy - s * 0.2, 14, 'browL');
+      z.browR = line(cx + s * 0.12, cy - s * 0.2, cx + s * 0.55, cy - s * 0.4, 14, 'browR');
+      // Cowrie-shell eyes — concentric ovals, narrower than Western eyes
+      z.eyeL = ring(cx - s * 0.32, cy - s * 0.1, s * 0.12, 0, Math.PI * 2, 20, 'eyeL');
+      z.eyeR = ring(cx + s * 0.32, cy - s * 0.1, s * 0.12, 0, Math.PI * 2, 20, 'eyeR');
+      // Tighter inner ring (cowrie texture)
+      z.eyeL = z.eyeL.concat(ring(cx - s * 0.32, cy - s * 0.1, s * 0.07, 0, Math.PI * 2, 12, 'eyeL'));
+      z.eyeR = z.eyeR.concat(ring(cx + s * 0.32, cy - s * 0.1, s * 0.07, 0, Math.PI * 2, 12, 'eyeR'));
+      // Tiny pupil dots
+      z.pupilL = disc(cx - s * 0.32, cy - s * 0.1, s * 0.025, 5, 'pupilL');
+      z.pupilR = disc(cx + s * 0.32, cy - s * 0.1, s * 0.025, 5, 'pupilR');
+      // Cheek scarification — 3 horizontal hash marks per side
+      z.scarL = [];
+      z.scarR = [];
+      for (let r = 0; r < 3; r++) {
+        const y = cy + s * (0.08 + r * 0.13);
+        z.scarL = z.scarL.concat(line(cx - s * 0.55, y, cx - s * 0.30, y, 8, 'scarL'));
+        z.scarR = z.scarR.concat(line(cx + s * 0.30, y, cx + s * 0.55, y, 8, 'scarR'));
+      }
+      // Wide mouth with tooth tick marks
+      z.mouth = mouthArc(cx, cy + s * 0.92, s * 0.7, Face.mouth, 30);
+      const teeth = [];
+      for (let i = 0; i < 7; i++) {
+        const tx = cx - s * 0.32 + i * (s * 0.64 / 6);
+        teeth.push({ x: tx, y: cy + s * 0.88, zone: 'mouth' });
+        teeth.push({ x: tx, y: cy + s * 0.96, zone: 'mouth' });
+      }
+      z.mouth = z.mouth.concat(teeth);
+      // Chin point — angular
+      z.chin = line(cx - s * 0.18, cy + s * 1.15, cx, cy + s * 1.40, 8, 'chin')
+              .concat(line(cx, cy + s * 1.40, cx + s * 0.18, cy + s * 1.15, 8, 'chin'));
+      // Side tassels — hanging beads beside the mask
+      z.tasselL = [];
+      z.tasselR = [];
+      for (let r = 0; r < 6; r++) {
+        const y = cy - s * 0.4 + r * s * 0.25;
+        z.tasselL.push({ x: cx - s * 0.95, y, zone: 'tasselL' });
+        z.tasselR.push({ x: cx + s * 0.95, y, zone: 'tasselR' });
+      }
+      Face.zones = z;
+      Face.anchors = [].concat(...Object.values(z));
     }
 
     // ─── Particles ─────────────────────────────────────────────────────
@@ -320,7 +379,15 @@
     function setMouth(shape) {
       if (Face.mouth === shape) return;
       Face.mouth = shape;
-      Face.zones.mouth = mouthArc(Face.cx, Face.cy + Face.s * 0.52, Face.s * 0.55, shape, 34);
+      const cx = Face.cx, cy = Face.cy, s = Face.s;
+      let m = mouthArc(cx, cy + s * 0.92, s * 0.7, shape, 30);
+      // teeth tick marks (mask signature)
+      for (let i = 0; i < 7; i++) {
+        const tx = cx - s * 0.32 + i * (s * 0.64 / 6);
+        m.push({ x: tx, y: cy + s * 0.88, zone: 'mouth' });
+        m.push({ x: tx, y: cy + s * 0.96, zone: 'mouth' });
+      }
+      Face.zones.mouth = m;
       Face.anchors = [].concat(...Object.values(Face.zones));
       assignHomes();
     }
@@ -706,7 +773,7 @@
       sampleAudio();
       flock();
       tickFX(dt);
-      tickParticles(dt);
+      tickParticles(dt, now);
 
       // bg
       ctx.fillStyle = '#000';
@@ -730,7 +797,7 @@
       if (State.mode === 'idle' && idlePulse % 20 > 19.9 && FX.mandala < 0.05) mandalaLock();
     }
 
-    function tickParticles(dt) {
+    function tickParticles(dt, now) {
       const cx = Face.cx, cy = Face.cy, s = Face.s;
       const rot = Face.rot, cosR = Math.cos(rot), sinR = Math.sin(rot);
       const disp = Face.dispersion;
@@ -747,24 +814,30 @@
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         let tx = p.hx, ty = p.hy;
-        // zone-specific deformations
+        // Sepik mask deformations — eyes at s*0.32 from center, scarification audio-reactive
         if (p.zone === 'pupilL' || p.zone === 'pupilR') {
-          const ex = (p.zone === 'pupilL') ? cx - s * 0.42 : cx + s * 0.42;
-          const ey = cy - s * 0.22;
+          const ex = (p.zone === 'pupilL') ? cx - s * 0.32 : cx + s * 0.32;
+          const ey = cy - s * 0.10;
           tx = ex + (p.hx - ex) * pupilK + gazeX;
           ty = ey + (p.hy - ey) * pupilK + gazeY;
         }
         if (p.zone === 'eyeL' || p.zone === 'eyeR') {
-          const ey = cy - s * 0.22;
+          const ey = cy - s * 0.10;
           ty = ey + (p.hy - ey) * (1 - blinkClose * 0.95);
         }
         if (p.zone === 'browL' || p.zone === 'browR') ty = p.hy + browDrop;
-        if (p.zone === 'cheekL' || p.zone === 'cheekR') {
-          const cxL = (p.zone === 'cheekL') ? cx - s * 0.58 : cx + s * 0.58;
-          const cyL = cy + s * 0.12;
-          const k = 1 + audioPunch * 0.4;
-          tx = cxL + (p.hx - cxL) * k;
-          ty = cyL + (p.hy - cyL) * k;
+        if (p.zone === 'scarL' || p.zone === 'scarR') {
+          // scarification trembles with audio (cheek-pulse equivalent)
+          tx = p.hx + (Math.random() - 0.5) * audioPunch * s * 0.06;
+        }
+        if (p.zone === 'tasselL' || p.zone === 'tasselR') {
+          // tassels sway with tilt
+          tx = p.hx + State.tiltX * s * 0.08;
+          ty = p.hy + Math.sin(now * 0.002 + p.hy * 0.05) * s * 0.02;
+        }
+        if (p.zone === 'crown') {
+          // crown feathers ruffle on dispersion
+          tx = p.hx + Math.sin(now * 0.001 + p.hx * 0.02) * s * 0.02 * (1 + Face.dispersion);
         }
         // scale + rotate around center
         let dx = (tx - cx) * scale, dy = (ty - cy) * scale;
