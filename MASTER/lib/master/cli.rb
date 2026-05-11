@@ -274,7 +274,7 @@ module Master
     end
 
     def run_principles
-      c = Master::Constitution.new
+      c = Master::Ground::Constitution.new
       lines = c.list
       if lines.empty?
         puts @renderer.render("no principles loaded (data/principles/*.md)", mode: :dim)

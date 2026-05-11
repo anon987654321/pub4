@@ -7,7 +7,7 @@ require "socket"
 
 module Master
   module Voice
-  DEFAULT_WEB_PORT = Config::DEFAULT_WEB_PORT
+  DEFAULT_WEB_PORT = Ground::Config::DEFAULT_WEB_PORT
 
   class Renderer
     BOOT_DMESG_LINES = 12

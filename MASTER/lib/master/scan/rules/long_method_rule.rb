@@ -10,7 +10,7 @@ module Master
 
         def initialize
           super
-          @threshold   = Master::Axioms.new.thresholds.dig("method", "max_lines") || DEFAULT_THRESHOLD
+          @threshold   = Master::Ground::Axioms.new.thresholds.dig("method", "max_lines") || DEFAULT_THRESHOLD
           @id          = "long_method"
           @description = "Methods over #{@threshold} lines should be extracted"
           @severity    = :warning

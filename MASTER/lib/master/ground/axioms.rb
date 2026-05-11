@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Ground
   # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
   class Axioms
     DATA_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "rules.yml").freeze
@@ -116,5 +117,6 @@ module Master
     rescue StandardError => _e
       nil
     end
+  end
   end
 end

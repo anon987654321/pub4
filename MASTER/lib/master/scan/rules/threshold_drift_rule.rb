@@ -20,7 +20,7 @@ module Master
         def check(code, path:)
           return [] unless path.include?("scan/rules") && path.end_with?(".rb")
           scan_lines(code, DRIFT_CONST,
-            message: "hardcoded threshold — use Master::Axioms.new.thresholds.dig(...) so rules.yml is the single source")
+            message: "hardcoded threshold — use Master::Ground::Axioms.new.thresholds.dig(...) so rules.yml is the single source")
         end
       end
     end

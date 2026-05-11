@@ -4,6 +4,7 @@ require "yaml"
 require "fileutils"
 
 module Master
+  module Ground
   class Config
     BUDGET_MAX_DEFAULT = 10.0
     HISTORY_MAX = 500
@@ -99,5 +100,6 @@ module Master
     def deep_dup(hash)
       Marshal.load(Marshal.dump(hash))
     end
+  end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Ground
   class Constitution
     DIR = File.join(Master::ROOT, "data", "principles").freeze
     MAX_PRINCIPLES = 40
@@ -51,5 +52,6 @@ module Master
     rescue StandardError
       nil
     end
+  end
   end
 end

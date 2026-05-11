@@ -19,7 +19,7 @@ module Master
     end
 
     def build_infrastructure(root)
-      config = Config.new(root)
+      config = Ground::Config.new(root)
       config["model"] ||= Master.default_model
 
       bus = Trace::EventBus.new
@@ -78,7 +78,7 @@ module Master
       ctx = ContextWindow.new(session: infra[:session], agent:, model_context: CTX_WINDOW_SIZE)
       ctx.check_and_compact!
       agent.wire_context_window(ctx)
-      constitution = Constitution.new
+      constitution = Ground::Constitution.new
       agent.wire_constitution(constitution)
       scanner               = build_scanner(root:, agent:, bus:)
       swarm                 = Swarm::Coordinator.new(agent:, event_bus: bus)
@@ -88,7 +88,7 @@ module Master
 
     def build_council(root, infra, agent:)
       personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
-      axioms       = Axioms.new(root:)
+      axioms       = Ground::Axioms.new(root:)
       deliberation = Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus], axioms:)
       ideation     = Council::Ideation.new(agent:, event_bus: infra[:bus])
       [deliberation, Stages::Council.new(deliberation:, config: infra[:config], event_bus: infra[:bus]), ideation]

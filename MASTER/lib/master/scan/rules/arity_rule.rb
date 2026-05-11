@@ -12,7 +12,7 @@ module Master
 
         def initialize
           super
-          @max_params  = Master::Axioms.new.thresholds.dig("method", "max_params") || DEFAULT_MAX
+          @max_params  = Master::Ground::Axioms.new.thresholds.dig("method", "max_params") || DEFAULT_MAX
           @id          = "arity"
           @description = "initialize with > #{@max_params} args — extract a context struct or config object"
           @severity    = :warning

@@ -14,7 +14,7 @@ module Master
 
         def initialize
           super
-          @threshold   = Master::Axioms.new.thresholds.dig("method", "max_nesting") || DEFAULT_DEPTH
+          @threshold   = Master::Ground::Axioms.new.thresholds.dig("method", "max_nesting") || DEFAULT_DEPTH
           @id          = "nesting_depth"
           @description = "Nesting deeper than #{@threshold} — use guard clauses to flatten"
           @severity    = :warning

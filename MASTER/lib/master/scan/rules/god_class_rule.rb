@@ -10,7 +10,7 @@ module Master
 
         def initialize
           super
-          @threshold   = Master::Axioms.new.thresholds.dig("class", "max_lines") || DEFAULT_THRESHOLD
+          @threshold   = Master::Ground::Axioms.new.thresholds.dig("class", "max_lines") || DEFAULT_THRESHOLD
           @id          = "god_class"
           @description = "Classes over #{@threshold} lines should be split by responsibility"
           @severity    = :warning
