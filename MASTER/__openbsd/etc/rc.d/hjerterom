@@ -1,0 +1,11 @@
+#!/bin/ksh
+daemon="/usr/local/bin/bundle"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE= HOME=/home/hjerterom falcon serve --bind http://127.0.0.1:38891"
+daemon_user="hjerterom"
+daemon_execdir="/home/hjerterom/app"
+daemon_timeout="60"
+. /etc/rc.d/rc.subr
+pexp="ruby.*38891"
+rc_bg=YES
+rc_reload=NO
+rc_cmd $1
