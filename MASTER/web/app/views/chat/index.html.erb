@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icon.png">
@@ -12,318 +12,257 @@
   <title>MASTER</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #000;
-      --fg: 215,165,130;
-      --dim: rgba(215,165,130,0.32);
-      --hairline: rgba(215,165,130,0.14);
-      --accent: 210,115,75;
-      --think-accent: 230,140,95;
-      --max-line-width: 60ch;
-      --pad: 1.5rem;
-    }
-    html, body { color: rgb(var(--fg)); }
-    html, body { height: 100%; background: var(--bg); }
-    body {
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-size: 16px;
-      line-height: 1.5;
-      overflow: hidden;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      user-select: none;
-    }
-
-    canvas#particles {
-      position: fixed; inset: 0; z-index: 0;
-    }
-
-    main {
-      position: relative; z-index: 1;
-      display: flex; flex-direction: column; height: 100%;
-    }
-
-    #messages {
-      flex: 1; overflow-y: auto; padding: var(--pad);
-      display: flex; flex-direction: column; gap: 1rem;
-      scroll-behavior: smooth;
-    }
-    .message {
-      max-width: var(--max-line-width);
-      animation: fadeSlide 0.3s ease-out;
-    }
-    .message.user { align-self: flex-end; }
-    .message.assistant {
-      align-self: flex-start;
-      border-left: 1px solid var(--hairline);
-      padding-left: 1rem;
-    }
-    .message.assistant.thinking {
-      border-left-color: rgb(var(--think-accent));
-      transition: border-color 0.6s;
-    }
-    .message .text {
-      white-space: pre-wrap;
-      line-height: 1.6;
-      color: rgb(var(--fg));
-    }
-    .message .text .sp {
-      color: rgb(var(--accent));
-      transition: color 0.4s ease;
-    }
-    .message .meta {
-      font-size: 0.75rem;
-      color: var(--dim);
-      margin-top: 0.25rem;
-      display: none;
-    }
-
-    @keyframes fadeSlide {
-      from { opacity: 0; transform: translateY(0.5rem); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    #input-area {
-      flex-shrink: 0;
-      border-top: 1px solid var(--hairline);
-      padding: 0.5rem var(--pad);
-      display: flex; align-items: center;
-      background: var(--bg);
-    }
-    #input-line {
-      flex: 1;
-      background: transparent; border: none; outline: none;
-      color: rgb(var(--fg));
-      font: inherit; font-size: 1rem;
-      caret-color: rgb(var(--accent));
-      padding: 0.5rem 0;
-      resize: none;
-    }
-    #ghost {
-      position: absolute; left: var(--pad); right: var(--pad); bottom: 0.7rem;
-      pointer-events: none; color: var(--dim); font-size: 1rem;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    #debug {
-      position: fixed; top: 0.5rem; right: 0.75rem;
-      font-size: 0.65rem; color: var(--dim); z-index: 2;
-      font-family: ui-monospace, monospace; text-align: right;
-      pointer-events: none; display: none;
-    }
-    #debug.on { display: block; }
-    main.muted #input-area { border-top-color: rgba(215,165,130,0.04); }
-    #input-line::placeholder { color: var(--dim); }
-    button { display: none; } /* no buttons */
-
-    @media (max-width: 600px) {
-      :root { --pad: 1rem; }
-      body { font-size: 15px; }
-    }
-
-    /* subtle scrollbar */
-    #messages::-webkit-scrollbar { width: 4px; }
-    #messages::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 2px; }
+    html, body { height: 100%; background: #000; overflow: hidden; -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none; }
+    canvas { position: fixed; inset: 0; display: block; }
+    #primer { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9; cursor: pointer; }
+    #primer::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: rgb(215,165,130); animation: pulse 1.6s ease-in-out infinite; }
+    #primer.gone { opacity: 0; pointer-events: none; transition: opacity 0.9s ease; }
+    @keyframes pulse { 0%,100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(2.2); opacity: 1; } }
   </style>
 </head>
 <body>
-  <canvas id="particles"></canvas>
-  <main>
-    <div id="messages"></div>
-    <div id="input-area" style="position:relative">
-      <input id="input-line" type="text" placeholder="…" autofocus autocomplete="off" autocapitalize="off" />
-      <div id="ghost"></div>
-    </div>
-  </main>
-  <div id="debug"></div>
-
+  <canvas id="face"></canvas>
+  <div id="primer"></div>
   <script>
-    // ─── Particle system ──────────────────────────────────────────────
-    const canvas = document.getElementById('particles');
-    const ctx = canvas.getContext('2d');
-    let width, height;
-    let particles = [];
-    const PARTICLE_COUNT = 2500;
-    const FACE_POINTS = []; // will hold outline coords for brief face display
-
+  (() => {
+    "use strict";
+    const cv = document.getElementById('face');
+    const ctx = cv.getContext('2d');
+    let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
     function resize() {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    // Generate wireframe face points (a stylized geometric face outline)
-    function generateFaceOutline() {
-      const cx = width * 0.5, cy = height * 0.45;
-      const scale = Math.min(width, height) * 0.15;
-      const points = [];
-      // simple face: two eyes, nose line, mouth
-      // left eye
-      for (let a = 0; a < Math.PI * 2; a += 0.3) {
-        points.push([cx - scale * 1.2 + Math.cos(a)*scale*0.4, cy - scale*0.3 + Math.sin(a)*scale*0.25]);
-      }
-      // right eye
-      for (let a = 0; a < Math.PI * 2; a += 0.3) {
-        points.push([cx + scale * 1.2 + Math.cos(a)*scale*0.4, cy - scale*0.3 + Math.sin(a)*scale*0.25]);
-      }
-      // nose bridge
-      for (let t = 0; t <= 1; t += 0.1) {
-        points.push([cx + (t-0.5)*scale*0.3, cy - scale*0.3 + t*scale*0.8]);
-      }
-      // mouth
-      for (let a = 0; a < Math.PI; a += 0.2) {
-        points.push([cx + Math.cos(a)*scale*0.7, cy + scale*0.7 + Math.sin(a)*scale*0.15]);
-      }
-      return points;
-    }
-    FACE_POINTS.push(...generateFaceOutline());
-
-    class Particle {
-      constructor() {
-        this.reset();
-      }
-      reset() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-        this.vx = 0; this.vy = 0;
-        this.homeX = this.x; this.homeY = this.y;
-      }
-      update(attractors, audioData) {
-        // drift toward nearest attractor or home
-        let targetX = this.homeX, targetY = this.homeY;
-        if (attractors && attractors.length > 0) {
-          let minDist = Infinity;
-          for (let a of attractors) {
-            const dx = a[0] - this.x, dy = a[1] - this.y;
-            const d = dx*dx + dy*dy;
-            if (d < minDist) { minDist = d; targetX = a[0]; targetY = a[1]; }
-          }
-        }
-        const ax = (targetX - this.x) * 0.003;
-        const ay = (targetY - this.y) * 0.003;
-        // audio influence: low frequencies cause grouping, high add jitter
-        let jitter = 0;
-        if (audioData) {
-          const bass = audioData[0] / 255;   // 0-1
-          const treble = audioData[Math.floor(audioData.length*0.7)] / 255;
-          jitter = treble * 0.5;
-          this.vx += (Math.random() - 0.5) * jitter;
-          this.vy += (Math.random() - 0.5) * jitter;
-        }
-        this.vx += ax + (Math.random() - 0.5) * 0.02;
-        this.vy += ay + (Math.random() - 0.5) * 0.02;
-        this.vx *= 0.96; this.vy *= 0.96;
-        this.x += this.vx; this.y += this.vy;
-        // bounce edges
-        if (this.x < 0) this.x = 0;
-        if (this.x > width) this.x = width;
-        if (this.y < 0) this.y = 0;
-        if (this.y > height) this.y = height;
-      }
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = W * DPR; cv.height = H * DPR;
+      cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      computeZones(); assignHomes();
     }
 
-    for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
-
-    let faceShowTimer = null;
-    function showFace(duration = 2000) {
-      // set attractors to FACE_POINTS
-      window._attractors = FACE_POINTS;
-      clearTimeout(faceShowTimer);
-      faceShowTimer = setTimeout(() => {
-        window._attractors = null; // release to home positions
-      }, duration);
-    }
-    window._attractors = null; // idle
-
-    // audio engine: generate an ambient pad and provide frequency data
-    let audioCtx = null, analyser = null;
-    function initAudio() {
-      if (audioCtx) return;
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      // create gentle pad
-      const osc1 = audioCtx.createOscillator();
-      osc1.type = 'sine'; osc1.frequency.value = 110;
-      const osc2 = audioCtx.createOscillator();
-      osc2.type = 'sine'; osc2.frequency.value = 164.81;
-      const gain1 = audioCtx.createGain(); gain1.gain.value = 0.03;
-      const gain2 = audioCtx.createGain(); gain2.gain.value = 0.02;
-      osc1.connect(gain1); gain1.connect(analyser); analyser.connect(audioCtx.destination);
-      osc2.connect(gain2); gain2.connect(analyser);
-      osc1.start(); osc2.start();
-      tts.padGain1 = gain1; tts.padGain2 = gain2;
-      tts.osc1 = osc1; tts.osc2 = osc2;
-    }
-    const MOOD_FREQ = {
-      focused: [110.00, 164.81],
-      curious: [123.47, 196.00],
-      tense:   [130.81, 207.65],
-      weary:   [98.00,  146.83],
-      idle:    [110.00, 164.81]
+    // ─── Face zones (Fibonacci-sphere-projected anchors) ───────────────
+    const Face = {
+      zones: {}, anchors: [],
+      rot: 0, rotTarget: 0,
+      blink: 0, blinkPhase: 0,
+      gaze: [0, 0], gazeTarget: [0, 0],
+      pupil: 1.0, pupilTarget: 1.0,
+      brow: 0, browTarget: 0,
+      mouth: 'neutral', mouthMorph: 0,
+      breath: 0,
+      vortex: 0,
+      dispersion: 0, dispersionTarget: 0,
+      coronaFlash: 0,
+      edgePulse: 0,
+      bodyScale: 1.0,
+      heartRate: 1.0
     };
-    function moodTone(tag) {
-      if (!tts.osc1) return;
-      const f = MOOD_FREQ[tag] || MOOD_FREQ.idle;
-      const t = audioCtx.currentTime;
-      tts.osc1.frequency.linearRampToValueAtTime(f[0], t + 0.8);
-      tts.osc2.frequency.linearRampToValueAtTime(f[1], t + 0.8);
+
+    function ring(cx, cy, r, a0, a1, n, zone) {
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const t = a0 + (a1 - a0) * (i / (n - 1));
+        out.push({ x: cx + Math.cos(t) * r, y: cy + Math.sin(t) * r * 0.95, zone });
+      }
+      return out;
+    }
+    function disc(cx, cy, r, n, zone) {
+      const out = [];
+      const golden = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < n; i++) {
+        const rr = r * Math.sqrt((i + 0.5) / n);
+        const a = i * golden;
+        out.push({ x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr, zone });
+      }
+      return out;
+    }
+    function line(x0, y0, x1, y1, n, zone) {
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const t = i / (n - 1);
+        out.push({ x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t, zone });
+      }
+      return out;
+    }
+    function mouthArc(cx, cy, w, shape, n) {
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const t = i / (n - 1);
+        const x = cx - w / 2 + w * t;
+        let y = cy;
+        const u = (t - 0.5) * 2;
+        if (shape === 'smile')   y = cy - Math.sin(t * Math.PI) * w * 0.18 + u * u * w * 0.05;
+        if (shape === 'frown')   y = cy + Math.sin(t * Math.PI) * w * 0.18 - u * u * w * 0.05;
+        if (shape === 'O')       y = cy + Math.sin(t * Math.PI) * w * 0.32 - 0;
+        if (shape === 'A')       y = cy + Math.sin(t * Math.PI) * w * 0.45;
+        if (shape === 'E')       y = cy + Math.sin(t * Math.PI) * w * 0.08;
+        if (shape === 'M')       y = cy + Math.sin(t * Math.PI) * w * 0.02;
+        if (shape === 'I')       y = cy + Math.sin(t * Math.PI) * w * 0.12;
+        if (shape === 'U')       y = cy + Math.sin(t * Math.PI) * w * 0.25;
+        out.push({ x, y, zone: 'mouth' });
+      }
+      return out;
     }
 
-    function getAudioData() {
-      if (!analyser) return null;
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-      analyser.getByteFrequencyData(dataArray);
-      return dataArray;
+    function computeZones() {
+      const cx = W * 0.5, cy = H * 0.46;
+      const s = Math.min(W, H) * 0.24;
+      Face.cx = cx; Face.cy = cy; Face.s = s;
+      Face.zones = {
+        crown:    ring(cx, cy - s * 0.08, s * 1.05, Math.PI * 1.08, Math.PI * 1.92, 80, 'crown'),
+        jaw:      ring(cx, cy + s * 0.05, s * 1.00, Math.PI * 0.10, Math.PI * 0.90, 90, 'jaw'),
+        eyeL:     ring(cx - s * 0.42, cy - s * 0.22, s * 0.16, 0, Math.PI * 2, 28, 'eyeL'),
+        eyeR:     ring(cx + s * 0.42, cy - s * 0.22, s * 0.16, 0, Math.PI * 2, 28, 'eyeR'),
+        pupilL:   disc(cx - s * 0.42, cy - s * 0.22, s * 0.05, 10, 'pupilL'),
+        pupilR:   disc(cx + s * 0.42, cy - s * 0.22, s * 0.05, 10, 'pupilR'),
+        browL:    line(cx - s * 0.62, cy - s * 0.46, cx - s * 0.22, cy - s * 0.46, 14, 'browL'),
+        browR:    line(cx + s * 0.22, cy - s * 0.46, cx + s * 0.62, cy - s * 0.46, 14, 'browR'),
+        nose:     line(cx, cy - s * 0.08, cx, cy + s * 0.18, 10, 'nose'),
+        cheekL:   disc(cx - s * 0.58, cy + s * 0.12, s * 0.14, 16, 'cheekL'),
+        cheekR:   disc(cx + s * 0.58, cy + s * 0.12, s * 0.14, 16, 'cheekR'),
+        mouth:    mouthArc(cx, cy + s * 0.52, s * 0.55, Face.mouth, 34)
+      };
+      Face.anchors = [].concat(...Object.values(Face.zones));
     }
 
-    // Animation loop
-    function animate() {
-      requestAnimationFrame(animate);
-      const audioData = getAudioData();
-      particles.forEach(p => p.update(window._attractors, audioData));
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, width, height);
-      ctx.fillStyle = 'rgba(215,165,130,0.85)';
-      for (let p of particles) {
-        ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
+    // ─── Particles ─────────────────────────────────────────────────────
+    const N = 2200;
+    const particles = [];
+    for (let i = 0; i < N; i++) particles.push({
+      x: Math.random() * 600, y: Math.random() * 600,
+      vx: 0, vy: 0, hx: 0, hy: 0, zone: 'crown', life: 1.0
+    });
+    function assignHomes() {
+      const A = Face.anchors;
+      if (!A.length) return;
+      for (let i = 0; i < particles.length; i++) {
+        const a = A[i % A.length];
+        particles[i].hx = a.x; particles[i].hy = a.y; particles[i].zone = a.zone;
       }
     }
-    animate();
 
-    // ─── TTS engine ─────────────────────────────────────────────────
+    // ─── Palettes (time-of-day + state overlays) ───────────────────────
+    function timePalette() {
+      const h = new Date().getHours();
+      if (h < 6)  return { shadow: '14,10,8',    midtone: '90,60,50',    highlight: '180,140,110', accent: '210,115,75' };
+      if (h < 11) return { shadow: '16,12,10',   midtone: '120,80,60',   highlight: '215,165,130', accent: '215,140,100' };
+      if (h < 17) return { shadow: '14,10,8',    midtone: '130,85,60',   highlight: '220,170,135', accent: '215,125,85'  };
+      if (h < 21) return { shadow: '18,12,10',   midtone: '140,90,65',   highlight: '225,160,120', accent: '220,110,75'  };
+      return         { shadow: '10,8,6',     midtone: '70,50,40',    highlight: '160,120,95',  accent: '190,95,65'   };
+    }
+    let palette = timePalette(), targetPalette = palette, palBlend = 1.0;
+    function lerpRGB(a, b, t) {
+      const A = a.split(',').map(Number), B = b.split(',').map(Number);
+      return `${A[0]+(B[0]-A[0])*t|0},${A[1]+(B[1]-A[1])*t|0},${A[2]+(B[2]-A[2])*t|0}`;
+    }
+    function lerpPalette(a, b, t) {
+      return { shadow: lerpRGB(a.shadow, b.shadow, t), midtone: lerpRGB(a.midtone, b.midtone, t),
+               highlight: lerpRGB(a.highlight, b.highlight, t), accent: lerpRGB(a.accent, b.accent, t) };
+    }
+    const PROVIDER_TINT = {
+      claude:   { shadow: '14,8,6',   midtone: '160,80,60',  highlight: '230,150,110', accent: '230,100,70' },
+      deepseek: { shadow: '6,10,14',  midtone: '60,90,130',  highlight: '120,160,200', accent: '110,170,220' },
+      gemini:   { shadow: '12,8,16',  midtone: '110,80,140', highlight: '180,150,220', accent: '170,120,230' },
+      gpt:      { shadow: '6,14,10',  midtone: '60,130,90',  highlight: '140,210,170', accent: '120,220,160' }
+    };
+    const VERDICT_TINT = {
+      pass:    { shadow: '8,14,8',  midtone: '60,130,80',  highlight: '140,210,160', accent: '120,220,140' },
+      veto:    { shadow: '20,4,4',  midtone: '180,40,40',  highlight: '240,90,70',   accent: '255,80,60'   },
+      unclear: { shadow: '20,14,4', midtone: '180,140,40', highlight: '240,200,90',  accent: '250,200,80'  }
+    };
+    function fadePaletteTo(p, ms = 600) {
+      targetPalette = p; palBlend = 0; palStart = performance.now(); palDur = ms;
+    }
+    let palStart = performance.now(), palDur = 600;
+
+    function tickPalette(now) {
+      if (palBlend < 1) {
+        const t = Math.min(1, (now - palStart) / palDur);
+        palBlend = easeInOutCubic(t);
+        palette = lerpPalette(palette, targetPalette, palBlend < 1 ? 0.04 : 1.0);
+        if (t >= 1) { palette = targetPalette; palBlend = 1; }
+      }
+    }
+    const easeOutCubic   = t => 1 - Math.pow(1 - t, 3);
+    const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+
+    // ─── State ─────────────────────────────────────────────────────────
+    const State = {
+      mode: 'idle', // idle|listening|thinking|speaking|ack|reject|error|sleep|rain
+      mood: 'idle', model: '', provider: '',
+      lastTouch: performance.now(),
+      sttActive: false, sttInterim: '',
+      confidence: 1.0,
+      audioLevel: 0,
+      tiltX: 0, tiltY: 0,
+      session: Math.floor(Math.random() * 1e9)
+    };
+
+    // ─── Audio (ambient pad + analyser) ────────────────────────────────
+    let actx = null, analyser = null, freqData = null, padGain1 = null, padGain2 = null, osc1 = null, osc2 = null;
+    const MOOD_FREQ = {
+      focused:[110.00, 164.81], curious:[123.47, 196.00], tense:[130.81, 207.65],
+      weary:[98.00, 146.83], idle:[110.00, 164.81]
+    };
+    function initAudio() {
+      if (actx) return;
+      try {
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = actx.createAnalyser(); analyser.fftSize = 256;
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        osc1 = actx.createOscillator(); osc1.type = 'sine'; osc1.frequency.value = 110;
+        osc2 = actx.createOscillator(); osc2.type = 'sine'; osc2.frequency.value = 164.81;
+        padGain1 = actx.createGain(); padGain1.gain.value = 0.025;
+        padGain2 = actx.createGain(); padGain2.gain.value = 0.018;
+        osc1.connect(padGain1); padGain1.connect(analyser);
+        osc2.connect(padGain2); padGain2.connect(analyser);
+        analyser.connect(actx.destination);
+        osc1.start(); osc2.start();
+      } catch (e) {}
+    }
+    function moodTone(tag) {
+      if (!osc1) return;
+      const f = MOOD_FREQ[tag] || MOOD_FREQ.idle;
+      const t = actx.currentTime;
+      osc1.frequency.linearRampToValueAtTime(f[0], t + 0.8);
+      osc2.frequency.linearRampToValueAtTime(f[1], t + 0.8);
+    }
+    function duck(on) {
+      if (!padGain1) return;
+      const t1 = on ? 0.005 : 0.025, t2 = on ? 0.003 : 0.018;
+      padGain1.gain.linearRampToValueAtTime(t1, actx.currentTime + 0.25);
+      padGain2.gain.linearRampToValueAtTime(t2, actx.currentTime + 0.25);
+    }
+    function sampleAudio() {
+      if (!analyser) return 0;
+      analyser.getByteFrequencyData(freqData);
+      let sum = 0;
+      for (let i = 0; i < freqData.length; i++) sum += freqData[i];
+      State.audioLevel = sum / (freqData.length * 255);
+      return State.audioLevel;
+    }
+
+    // ─── TTS (with primer unlock) ──────────────────────────────────────
     const tts = {
-      enabled: true, muted: false, voice: null, rate: 1.0, pitch: 1.0,
-      queue: [], speaking: null, model: null, mood: 'idle',
-      padGain1: null, padGain2: null
+      enabled: 'speechSynthesis' in window, muted: false, voice: null,
+      queue: [], model: '', mood: 'idle', unlocked: false, currentUtt: null
     };
     const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
     function pickVoice() {
-      if (!('speechSynthesis' in window)) { tts.enabled = false; return; }
+      if (!tts.enabled) return;
       const v = speechSynthesis.getVoices();
       if (!v.length) return;
       const en = v.filter(x => /en[-_]/i.test(x.lang));
-      tts.voice = en.find(x => /Google.*US|Samantha|Daniel|Karen/i.test(x.name)) || en[0] || v[0];
+      tts.voice = en.find(x => /Google.*US|Samantha|Daniel|Karen|Alex/i.test(x.name)) || en[0] || v[0];
     }
-    if ('speechSynthesis' in window) {
+    if (tts.enabled) {
       speechSynthesis.onvoiceschanged = pickVoice;
       pickVoice();
     }
     const MODEL_TIMBRE = {
-      'deepseek': { rate: 0.96, pitch: 0.92 },
-      'claude':   { rate: 1.00, pitch: 1.00 },
-      'gemini':   { rate: 1.05, pitch: 1.08 },
-      'gpt':      { rate: 0.98, pitch: 1.04 }
+      deepseek:{rate:0.96, pitch:0.92}, claude:{rate:1.00, pitch:1.00},
+      gemini:{rate:1.05, pitch:1.08}, gpt:{rate:0.98, pitch:1.04}
     };
     const MOOD_PROSODY = {
-      focused: { rate: 1.00, pitch: 0.98 },
-      curious: { rate: 1.10, pitch: 1.12 },
-      tense:   { rate: 1.15, pitch: 1.05 },
-      weary:   { rate: 0.88, pitch: 0.92 },
-      idle:    { rate: 1.00, pitch: 1.00 }
+      focused:{rate:1.00, pitch:0.98}, curious:{rate:1.10, pitch:1.12},
+      tense:{rate:1.15, pitch:1.05}, weary:{rate:0.88, pitch:0.92}, idle:{rate:1.00, pitch:1.00}
     };
     function ttsParams() {
       const m = (tts.model || '').toLowerCase();
@@ -332,23 +271,25 @@
       const p = MOOD_PROSODY[tts.mood] || MOOD_PROSODY.idle;
       return { rate: t.rate * p.rate, pitch: t.pitch * p.pitch };
     }
-    function duck(on) {
-      if (!tts.padGain1) return;
-      const target1 = on ? 0.006 : 0.03;
-      const target2 = on ? 0.004 : 0.02;
-      tts.padGain1.gain.linearRampToValueAtTime(target1, audioCtx.currentTime + 0.25);
-      tts.padGain2.gain.linearRampToValueAtTime(target2, audioCtx.currentTime + 0.25);
+    function unlockTTS() {
+      if (tts.unlocked || !tts.enabled) return;
+      try {
+        const u = new SpeechSynthesisUtterance(' ');
+        u.volume = 0; speechSynthesis.speak(u);
+        tts.unlocked = true;
+      } catch (e) {}
     }
-    function enqueueSpeech(text, opts = {}) {
-      if (!tts.enabled || tts.muted || !text) return;
-      const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`]/g, '').trim();
+    function enqueueSpeech(text) {
+      if (!tts.enabled || tts.muted) return;
+      const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`~]/g, '').trim();
       if (!clean) return;
       const u = new SpeechSynthesisUtterance(clean);
       const p = ttsParams();
       u.rate = p.rate; u.pitch = p.pitch;
       if (tts.voice) u.voice = tts.voice;
-      u.onstart = () => { tts.speaking = u; duck(true); if (opts.span) opts.span.classList.add('sp'); };
-      u.onend   = () => { tts.speaking = null; duck(false); if (opts.span) opts.span.classList.remove('sp'); ttsTick(); };
+      u.onstart = () => { tts.currentUtt = u; duck(true); State.mode = 'speaking'; };
+      u.onboundary = (e) => { driveViseme(clean, e.charIndex || 0); };
+      u.onend   = () => { tts.currentUtt = null; duck(false); ttsTick(); if (!tts.queue.length) setMouth('neutral'); if (State.mode === 'speaking') State.mode = 'idle'; };
       tts.queue.push(u);
       ttsTick();
     }
@@ -359,218 +300,445 @@
       if (u) speechSynthesis.speak(u);
     }
     function ttsSkip() {
-      if ('speechSynthesis' in window) speechSynthesis.cancel();
-      tts.queue.length = 0;
-      duck(false);
+      if (tts.enabled) speechSynthesis.cancel();
+      tts.queue.length = 0; tts.currentUtt = null; duck(false);
+      setMouth('neutral');
     }
     function ttsToggleMute() {
       tts.muted = !tts.muted;
       if (tts.muted) ttsSkip();
-      document.querySelector('main').classList.toggle('muted', tts.muted);
+      // flash brief corona to signal
+      Face.coronaFlash = tts.muted ? 0.6 : 0.3;
+    }
+    function driveViseme(text, idx) {
+      const c = (text[idx] || '').toLowerCase();
+      if ('aeiou'.indexOf(c) >= 0) setMouth(c.toUpperCase());
+      else if ('mbpfwv'.indexOf(c) >= 0) setMouth('M');
+      else if (c === ' ' || c === '.') setMouth('neutral');
+      else setMouth('E');
+    }
+    function setMouth(shape) {
+      if (Face.mouth === shape) return;
+      Face.mouth = shape;
+      Face.zones.mouth = mouthArc(Face.cx, Face.cy + Face.s * 0.52, Face.s * 0.55, shape, 34);
+      Face.anchors = [].concat(...Object.values(Face.zones));
+      assignHomes();
     }
 
-    // ─── Chat logic ─────────────────────────────────────────────────
-    const messagesDiv = document.getElementById('messages');
-    const inputLine = document.getElementById('input-line');
-    const ghost = document.getElementById('ghost');
-    const debug = document.getElementById('debug');
-    let isThinking = false;
-
-    function addMessage(role, text) {
-      const div = document.createElement('div');
-      div.className = `message ${role}`;
-      const textDiv = document.createElement('div');
-      textDiv.className = 'text';
-      textDiv.textContent = text;
-      div.appendChild(textDiv);
-      messagesDiv.appendChild(div);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      return div;
-    }
-
-    function updateThinking(thinking) {
-      isThinking = thinking;
-      // change particle accent color
-      if (thinking) {
-        document.documentElement.style.setProperty('--accent', 'var(--think-accent)');
-      } else {
-        document.documentElement.style.setProperty('--accent', '255, 255, 255');
-      }
-    }
-
-    async function sendMessage(text) {
-      if (text.startsWith('/')) { if (handleSlash(text)) return; }
-      addMessage('user', text);
-      updateThinking(true);
-      ttsSkip();
-      const token = new URLSearchParams(window.location.search).get('token') || '';
-      const url = `/chat/message?token=${encodeURIComponent(token)}`;
-      const eventSource = new EventSource(`${url}&message=${encodeURIComponent(text)}`);
-      let assistantDiv = null, textDiv = null;
-      let fullText = '', spoken = '', pending = '';
-      const t0 = performance.now();
-      let firstTok = 0, tokCount = 0;
-
-      eventSource.onmessage = (event) => {
-        if (!assistantDiv) {
-          assistantDiv = addMessage('assistant', '');
-          assistantDiv.classList.add('thinking');
-          textDiv = assistantDiv.querySelector('.text');
+    // ─── STT (long-press to talk) ──────────────────────────────────────
+    let recognition = null;
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SR();
+      recognition.continuous = false; recognition.interimResults = true;
+      recognition.onresult = (e) => {
+        let interim = '', final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          (r.isFinal ? final += r[0].transcript : interim += r[0].transcript);
         }
-        const data = JSON.parse(event.data);
-        if (data.model && !tts.model) tts.model = data.model;
-        if (data.mood) { tts.mood = data.mood; moodTone(data.mood); }
-        if (data.chunk) {
-          if (!firstTok) firstTok = performance.now() - t0;
-          tokCount++;
-          fullText += data.chunk;
-          pending += data.chunk;
-          textDiv.textContent = fullText;
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-          const m = pending.match(SENT_BREAK);
-          while (m) {
+        State.sttInterim = interim;
+        if (final.trim()) { State.sttInterim = ''; State.sttActive = false; sendMessage(final.trim()); }
+      };
+      recognition.onend = () => { State.sttActive = false; State.sttInterim = ''; };
+      recognition.onerror = () => { State.sttActive = false; };
+    }
+    function startSTT() {
+      if (!recognition || State.sttActive) return;
+      try { recognition.start(); State.sttActive = true; State.mode = 'listening'; Face.pupilTarget = 1.4; } catch (e) {}
+    }
+    function stopSTT() {
+      if (!recognition || !State.sttActive) return;
+      try { recognition.stop(); } catch (e) {}
+      Face.pupilTarget = 1.0;
+    }
+
+    // ─── SSE chat (no DOM rendering — TTS + face gestures only) ────────
+    let evtSrc = null;
+    function sendMessage(text) {
+      if (evtSrc) { try { evtSrc.close(); } catch (e) {} }
+      ttsSkip();
+      State.mode = 'thinking';
+      Face.dispersionTarget = 0.35;
+      Face.browTarget = 0.4;
+      const token = new URLSearchParams(window.location.search).get('token') || '';
+      const url = `/chat/message?token=${encodeURIComponent(token)}&message=${encodeURIComponent(text)}`;
+      evtSrc = new EventSource(url);
+      let pending = '', full = '';
+      evtSrc.onmessage = (ev) => {
+        const d = JSON.parse(ev.data || '{}');
+        if (d.model) { tts.model = d.model; applyProviderTint(d.model); }
+        if (d.mood)  { tts.mood = d.mood; State.mood = d.mood; moodTone(d.mood); }
+        if (typeof d.confidence === 'number') { State.confidence = d.confidence; Face.browTarget = 1 - d.confidence; Face.dispersionTarget = Math.max(0, 1 - d.confidence) * 0.4; }
+        if (d.verdict) { fadePaletteTo(VERDICT_TINT[d.verdict] || timePalette()); pulseEdge(); }
+        if (d.chunk) {
+          full += d.chunk; pending += d.chunk;
+          Face.dispersionTarget = 0;
+          let m;
+          while ((m = pending.match(SENT_BREAK))) {
             const cut = m.index + m[0].length;
             const sent = pending.slice(0, cut).trim();
             pending = pending.slice(cut);
-            if (sent) {
-              spoken += sent + ' ';
-              const span = document.createElement('span');
-              span.textContent = sent + ' ';
-              enqueueSpeech(sent, { span });
-            }
-            const next = pending.match(SENT_BREAK);
-            if (!next) break;
-            m[0] = next[0]; m.index = next.index;
+            if (sent) enqueueSpeech(sent);
           }
-          updateDebug({ ttft: firstTok|0, toks: tokCount, model: tts.model, mood: tts.mood });
         }
-        if (data.done) {
+        if (d.done) {
           if (pending.trim()) enqueueSpeech(pending.trim());
           pending = '';
-          assistantDiv.classList.remove('thinking');
-          updateThinking(false);
-          eventSource.close();
-          updateDebug({ ttft: firstTok|0, toks: tokCount, model: tts.model, mood: tts.mood, total: ((performance.now()-t0)|0) });
+          State.mode = 'idle'; Face.browTarget = 0; Face.dispersionTarget = 0;
+          evtSrc.close();
         }
+        if (d.error) { Face.coronaFlash = 1.0; State.mode = 'error'; fadePaletteTo(VERDICT_TINT.veto); }
       };
-      eventSource.onerror = () => {
-        if (assistantDiv) assistantDiv.classList.remove('thinking');
-        updateThinking(false);
-        eventSource.close();
-      };
+      evtSrc.onerror = () => { Face.coronaFlash = 0.6; State.mode = 'error'; try { evtSrc.close(); } catch (e) {} };
     }
+    function applyProviderTint(model) {
+      const m = (model || '').toLowerCase();
+      const key = Object.keys(PROVIDER_TINT).find(k => m.includes(k));
+      if (key) fadePaletteTo(PROVIDER_TINT[key]);
+    }
+    function pulseEdge() { Face.edgePulse = 1.0; }
 
-    function handleSlash(line) {
-      const cmd = line.split(/\s+/)[0].toLowerCase();
-      if (cmd === '/mute')  { ttsToggleMute(); inputLine.value=''; return true; }
-      if (cmd === '/skip')  { ttsSkip(); inputLine.value=''; return true; }
-      if (cmd === '/read')  { readAll(); inputLine.value=''; return true; }
-      if (cmd === '/debug') { debug.classList.toggle('on'); inputLine.value=''; return true; }
-      return false;
+    // ─── Gesture detection ─────────────────────────────────────────────
+    const Gesture = {
+      down: false, x0: 0, y0: 0, t0: 0, x1: 0, y1: 0, longTimer: null,
+      pinchDist0: 0, rotA0: 0, lastTap: 0, twoPtr: false
+    };
+    function pointerStart(e) {
+      State.lastTouch = performance.now();
+      Gesture.down = true;
+      const p = pointerXY(e);
+      Gesture.x0 = p.x; Gesture.y0 = p.y; Gesture.x1 = p.x; Gesture.y1 = p.y; Gesture.t0 = performance.now();
+      Gesture.longTimer = setTimeout(() => { if (Gesture.down && dist(Gesture.x0, Gesture.y0, Gesture.x1, Gesture.y1) < 12) startSTT(); }, 420);
+      // mood track gaze toward cursor
+      Face.gazeTarget = [(p.x - W * 0.5) / W, (p.y - H * 0.5) / H];
     }
-    function readAll() {
-      ttsSkip();
-      document.querySelectorAll('.message.assistant .text').forEach(t => {
-        enqueueSpeech(t.textContent);
-      });
+    function pointerMove(e) {
+      if (!Gesture.down) return;
+      const p = pointerXY(e);
+      Gesture.x1 = p.x; Gesture.y1 = p.y;
+      if (dist(Gesture.x0, Gesture.y0, p.x, p.y) > 14 && Gesture.longTimer) { clearTimeout(Gesture.longTimer); Gesture.longTimer = null; }
+      Face.gazeTarget = [(p.x - W * 0.5) / W, (p.y - H * 0.5) / H];
+      if (e.touches && e.touches.length === 2) handlePinch(e);
     }
-    function updateDebug(o) {
-      if (!debug.classList.contains('on')) return;
-      const bits = [];
-      if (o.ttft !== undefined) bits.push(`ttft ${o.ttft}ms`);
-      if (o.toks !== undefined) bits.push(`${o.toks} chunks`);
-      if (o.total !== undefined) bits.push(`total ${o.total}ms`);
-      if (o.model) bits.push(o.model.split('/').pop());
-      if (o.mood && o.mood !== 'idle') bits.push(o.mood);
-      debug.textContent = bits.join(' · ');
-    }
-
-    inputLine.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && inputLine.value.trim()) {
-        sendMessage(inputLine.value.trim());
-        inputLine.value = '';
+    function pointerEnd(e) {
+      if (!Gesture.down) return;
+      Gesture.down = false;
+      if (Gesture.longTimer) { clearTimeout(Gesture.longTimer); Gesture.longTimer = null; }
+      if (State.sttActive) { stopSTT(); return; }
+      const dx = Gesture.x1 - Gesture.x0, dy = Gesture.y1 - Gesture.y0;
+      const d = Math.hypot(dx, dy), dt = performance.now() - Gesture.t0;
+      if (d < 14 && dt < 240) {
+        const now = performance.now();
+        if (now - Gesture.lastTap < 320) { ttsToggleMute(); Gesture.lastTap = 0; return; }
+        Gesture.lastTap = now;
+        if (tts.currentUtt || tts.queue.length) ttsSkip();
+        return;
       }
-    });
+      if (d > 60 && dt < 600) handleSwipe(dx, dy);
+    }
+    function pointerXY(e) {
+      if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      return { x: e.clientX, y: e.clientY };
+    }
+    function dist(x1,y1,x2,y2) { return Math.hypot(x2-x1, y2-y1); }
+    function handleSwipe(dx, dy) {
+      const ax = Math.abs(dx), ay = Math.abs(dy);
+      if (ay > ax) {
+        if (dy < 0) { sendSlash('/undo');    nod(-1); }
+        else        { sendSlash('/redo');    nod(+1); }
+      } else {
+        if (dx < 0) { sendSlash('/focus');   shake(-1); }
+        else        { sendSlash('/history'); shake(+1); }
+      }
+    }
+    function handlePinch(e) {
+      if (e.touches.length !== 2) return;
+      const t0 = e.touches[0], t1 = e.touches[1];
+      const d = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+      if (!Gesture.twoPtr) { Gesture.twoPtr = true; Gesture.pinchDist0 = d; Gesture.rotA0 = Math.atan2(t1.clientY - t0.clientY, t1.clientX - t0.clientX); return; }
+      const ratio = d / Gesture.pinchDist0;
+      if (ratio < 0.55) { State.mode = 'sleep'; Face.dispersionTarget = -1.0; }
+      else if (ratio > 1.6) { State.mode = 'idle'; Face.dispersionTarget = 0; }
+      const a = Math.atan2(t1.clientY - t0.clientY, t1.clientX - t0.clientX);
+      const da = a - Gesture.rotA0;
+      if (Math.abs(da) > 0.4) cyclePalette(da > 0 ? 1 : -1);
+    }
+    function nod(dir) { Face.rotTarget = dir * 0.18; setTimeout(() => Face.rotTarget = 0, 380); }
+    function shake(dir) { Face.rotTarget = dir * 0.22; setTimeout(() => Face.rotTarget = -Face.rotTarget, 180); setTimeout(() => Face.rotTarget = 0, 380); }
+    function sendSlash(cmd) { try { fetch(`/chat/message?message=${encodeURIComponent(cmd)}`, { method: 'GET' }); } catch (e) {} }
 
-    // ─── Mobile sensors ─────────────────────────────────────────────
-    if (window.DeviceOrientationEvent) {
-      window.addEventListener('deviceorientation', (event) => {
-        if (event.gamma !== null) {
-          // tilt left-right affects particle drift bias
-          const tilt = event.gamma / 90; // -1 to 1
-          // modify global drift factor (applied in particle update via wind)
-          window._tiltX = tilt * 0.2;
-        }
+    // palette cycle (mood overrides)
+    const MOOD_PALETTES = [timePalette(),
+      PROVIDER_TINT.claude, PROVIDER_TINT.deepseek, PROVIDER_TINT.gemini, PROVIDER_TINT.gpt];
+    let palIdx = 0;
+    function cyclePalette(dir) {
+      palIdx = (palIdx + dir + MOOD_PALETTES.length) % MOOD_PALETTES.length;
+      fadePaletteTo(MOOD_PALETTES[palIdx], 800);
+    }
+
+    // shake to reset
+    let lastShake = 0, lastAccel = [0,0,0];
+    if (window.DeviceMotionEvent) {
+      window.addEventListener('devicemotion', (e) => {
+        const a = e.accelerationIncludingGravity || e.acceleration;
+        if (!a) return;
+        const dx = a.x - lastAccel[0], dy = a.y - lastAccel[1], dz = a.z - lastAccel[2];
+        const m = Math.hypot(dx, dy, dz);
+        lastAccel = [a.x, a.y, a.z];
+        const now = performance.now();
+        if (m > 24 && now - lastShake > 800) { lastShake = now; vortex(); ttsSkip(); State.mode = 'idle'; Face.dispersionTarget = 0; }
       });
     }
-    // Ambient light sensor
-    if ('AmbientLightSensor' in window) {
-      try {
-        const sensor = new AmbientLightSensor();
-        sensor.onreading = () => {
-          const brightness = Math.min(sensor.illuminance / 400, 1);
-          document.documentElement.style.opacity = 0.7 + brightness * 0.3;
-        };
-        sensor.start();
-      } catch (e) { /* not supported */ }
+    function vortex() { Face.vortex = 1.0; Face.dispersionTarget = 0.6; setTimeout(() => Face.dispersionTarget = 0, 700); }
+
+    // tilt
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener('deviceorientation', (e) => {
+        if (e.gamma != null) State.tiltX = e.gamma / 90;
+        if (e.beta  != null) State.tiltY = (e.beta - 45) / 90;
+      });
     }
 
-    // Speech recognition (optional, tap and hold input to activate voice)
-    let recognition = null;
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.onresult = (event) => {
-        let interim = '', final = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const r = event.results[i];
-          if (r.isFinal) final += r[0].transcript;
-          else interim += r[0].transcript;
+    // ─── Weather (#26) — best-effort, silent fail ──────────────────────
+    let weather = { rain: 0, fog: 0 };
+    function fetchWeather() {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        const u = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,cloud_cover`;
+        fetch(u).then(r => r.json()).then(d => {
+          const c = d.current || {};
+          weather.rain = Math.min(1, (c.precipitation || 0) / 3);
+          weather.fog  = Math.min(1, (c.cloud_cover || 0) / 100);
+        }).catch(() => {});
+      }, () => {}, { timeout: 4000, maximumAge: 3600000 });
+    }
+
+    // ─── Boids neighbor flock (light, only when idle long) ─────────────
+    function flock() {
+      if (State.mode !== 'idle') return;
+      const idle = (performance.now() - State.lastTouch) > 30000;
+      if (!idle) return;
+      for (let i = 0; i < particles.length; i += 8) {
+        const p = particles[i], q = particles[(i + 17) % particles.length];
+        p.vx += (q.vx - p.vx) * 0.002;
+        p.vy += (q.vy - p.vy) * 0.002;
+      }
+    }
+
+    // ─── Render loop ───────────────────────────────────────────────────
+    let lastT = performance.now(), idlePulse = 0;
+    function frame(now) {
+      requestAnimationFrame(frame);
+      const dt = Math.min(50, now - lastT); lastT = now;
+      tickPalette(now);
+
+      // smooth state lerps
+      Face.rot     += (Face.rotTarget - Face.rot) * 0.12;
+      Face.pupil   += (Face.pupilTarget - Face.pupil) * 0.10;
+      Face.brow    += (Face.browTarget - Face.brow) * 0.08;
+      Face.dispersion += (Face.dispersionTarget - Face.dispersion) * 0.06;
+      Face.gaze[0] += (Face.gazeTarget[0] - Face.gaze[0]) * 0.10;
+      Face.gaze[1] += (Face.gazeTarget[1] - Face.gaze[1]) * 0.10;
+      Face.breath  += dt * 0.001;
+      Face.heartRate = 1.0 + (State.mode === 'thinking' ? 0.6 : 0) + (State.mode === 'error' ? 1.2 : 0);
+      Face.bodyScale = 1.0 + Math.sin(Face.breath * Math.PI * 2 * Face.heartRate) * 0.012;
+      Face.coronaFlash *= 0.94;
+      Face.edgePulse  *= 0.96;
+      Face.vortex     *= 0.93;
+
+      // blink scheduler
+      Face.blinkPhase += dt * 0.001;
+      const interval = State.mode === 'thinking' ? 0.9 : (State.mode === 'idle' ? 5.0 : 3.0);
+      if (Face.blinkPhase > interval) { Face.blink = 1.0; Face.blinkPhase = 0; }
+      Face.blink *= 0.78;
+
+      const idleMs = now - State.lastTouch;
+      if (idleMs > 60000 && State.mode === 'idle') State.mode = 'rain';
+      if (idleMs < 1000 && State.mode === 'rain') State.mode = 'idle';
+
+      sampleAudio();
+      flock();
+      tickParticles(dt);
+
+      // bg
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, W, H);
+
+      drawParticles();
+      drawEdgePulse();
+      drawCorona();
+      drawVortex();
+
+      idlePulse += dt * 0.002;
+    }
+
+    function tickParticles(dt) {
+      const cx = Face.cx, cy = Face.cy, s = Face.s;
+      const rot = Face.rot, cosR = Math.cos(rot), sinR = Math.sin(rot);
+      const disp = Face.dispersion;
+      const scale = Face.bodyScale;
+      const blinkClose = Face.blink > 0.3 ? 1 : 0;
+      const gazeX = Face.gaze[0] * Face.s * 0.06;
+      const gazeY = Face.gaze[1] * Face.s * 0.06;
+      const pupilK = Face.pupil;
+      const browDrop = Face.brow * s * 0.06;
+      const audioPunch = State.audioLevel;
+      const tiltOffX = State.tiltX * s * 0.06;
+      const tiltOffY = State.tiltY * s * 0.04;
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        let tx = p.hx, ty = p.hy;
+        // zone-specific deformations
+        if (p.zone === 'pupilL' || p.zone === 'pupilR') {
+          const ex = (p.zone === 'pupilL') ? cx - s * 0.42 : cx + s * 0.42;
+          const ey = cy - s * 0.22;
+          tx = ex + (p.hx - ex) * pupilK + gazeX;
+          ty = ey + (p.hy - ey) * pupilK + gazeY;
         }
-        ghost.textContent = interim;
-        if (final.trim()) {
-          ghost.textContent = '';
-          inputLine.value = final.trim();
-          sendMessage(final.trim());
+        if (p.zone === 'eyeL' || p.zone === 'eyeR') {
+          const ey = cy - s * 0.22;
+          ty = ey + (p.hy - ey) * (1 - blinkClose * 0.95);
         }
-      };
-      recognition.onend = () => { ghost.textContent = ''; };
-      inputLine.addEventListener('pointerdown', startVoiceTimer);
-      inputLine.addEventListener('pointerup', cancelVoiceTimer);
-    }
-    let voiceTimer;
-    function startVoiceTimer(e) {
-      voiceTimer = setTimeout(() => {
-        if (recognition) recognition.start();
-      }, 600);
-    }
-    function cancelVoiceTimer() {
-      clearTimeout(voiceTimer);
+        if (p.zone === 'browL' || p.zone === 'browR') ty = p.hy + browDrop;
+        if (p.zone === 'cheekL' || p.zone === 'cheekR') {
+          const cxL = (p.zone === 'cheekL') ? cx - s * 0.58 : cx + s * 0.58;
+          const cyL = cy + s * 0.12;
+          const k = 1 + audioPunch * 0.4;
+          tx = cxL + (p.hx - cxL) * k;
+          ty = cyL + (p.hy - cyL) * k;
+        }
+        // scale + rotate around center
+        let dx = (tx - cx) * scale, dy = (ty - cy) * scale;
+        const rx = dx * cosR - dy * sinR;
+        const ry = dx * sinR + dy * cosR;
+        tx = cx + rx + tiltOffX;
+        ty = cy + ry + tiltOffY;
+        // dispersion (face → swarm)
+        if (disp > 0) {
+          const ax = (Math.random() - 0.5) * s * 2 * disp;
+          const ay = (Math.random() - 0.5) * s * 2 * disp * 0.5;
+          tx += ax * 0.04; ty += ay * 0.04;
+        } else if (disp < 0) {
+          // sleep mode: collapse to center
+          const k = -disp;
+          tx = cx * k + tx * (1 - k);
+          ty = cy * k + ty * (1 - k);
+        }
+        // vortex
+        if (Face.vortex > 0.01) {
+          const vdx = p.x - cx, vdy = p.y - cy;
+          const va = Math.atan2(vdy, vdx) + Face.vortex * 0.25;
+          const vr = Math.hypot(vdx, vdy) * (1 + Face.vortex * 0.02);
+          tx = cx + Math.cos(va) * vr;
+          ty = cy + Math.sin(va) * vr;
+        }
+        // rain mode
+        if (State.mode === 'rain') {
+          p.vy += 0.04;
+          if (p.y > H) { p.y = -10; p.x = Math.random() * W; p.vy = 0; }
+          tx = p.x; ty = p.y + 1;
+        }
+        const ax = (tx - p.x) * 0.06, ay = (ty - p.y) * 0.06;
+        p.vx += ax + State.tiltX * 0.04;
+        p.vy += ay + State.tiltY * 0.02;
+        p.vx *= 0.86; p.vy *= 0.86;
+        p.x += p.vx; p.y += p.vy;
+      }
     }
 
-    let lastTap = 0;
-    canvas.addEventListener('pointerdown', (e) => {
-      const now = performance.now();
-      if (now - lastTap < 320) { ttsToggleMute(); lastTap = 0; return; }
-      lastTap = now;
-      if (tts.speaking || tts.queue.length) ttsSkip();
-    });
+    function drawParticles() {
+      const fog = weather.fog * 0.4;
+      const alpha = State.mode === 'sleep' ? 0.35 : (State.mode === 'rain' ? 0.55 : 0.95);
+      ctx.fillStyle = `rgba(${palette.highlight},${alpha - fog})`;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
+      }
+      // weather rain overlay
+      if (weather.rain > 0) {
+        ctx.fillStyle = `rgba(${palette.midtone},${0.15 * weather.rain})`;
+        const drops = (weather.rain * 80) | 0;
+        for (let i = 0; i < drops; i++) {
+          const x = (idlePulse * 200 + i * 37) % W;
+          const y = ((idlePulse * 500 + i * 91) % H);
+          ctx.fillRect(x | 0, y | 0, 1, 4);
+        }
+      }
+    }
+    function drawEdgePulse() {
+      if (Face.edgePulse < 0.02) return;
+      const r = Face.s * (1.0 + (1.0 - Face.edgePulse) * 1.6);
+      const a = Face.edgePulse * 0.35;
+      ctx.strokeStyle = `rgba(${palette.accent},${a})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(Face.cx, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
+    }
+    function drawCorona() {
+      if (Face.coronaFlash < 0.02) return;
+      const r = Face.s * 1.35;
+      ctx.strokeStyle = `rgba(240,80,60,${Face.coronaFlash})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(Face.cx, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
+    }
+    function drawVortex() {
+      if (Face.vortex < 0.05) return;
+      const r = Face.s * 0.6;
+      ctx.strokeStyle = `rgba(${palette.accent},${Face.vortex * 0.25})`;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        for (let t = 0; t < Math.PI * 4; t += 0.1) {
+          const rr = r * (t / (Math.PI * 4));
+          const a = t + Face.vortex * 2 + i * 0.6;
+          const x = Face.cx + Math.cos(a) * rr;
+          const y = Face.cy + Math.sin(a) * rr;
+          t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+    }
 
+    // ─── Wire events ───────────────────────────────────────────────────
+    cv.addEventListener('pointerdown', pointerStart);
+    cv.addEventListener('pointermove', pointerMove);
+    cv.addEventListener('pointerup',   pointerEnd);
+    cv.addEventListener('pointercancel', pointerEnd);
+    cv.addEventListener('touchstart', (e) => { if (e.touches.length === 2) { Gesture.twoPtr = false; handlePinch(e); } }, { passive: true });
+    cv.addEventListener('touchmove',  (e) => { if (e.touches.length === 2) handlePinch(e); }, { passive: true });
+    cv.addEventListener('touchend',   () => { Gesture.twoPtr = false; });
+    window.addEventListener('resize', resize);
+
+    // ─── Primer unlock (the TTS fix) ───────────────────────────────────
+    const primer = document.getElementById('primer');
+    function startEverything() {
+      primer.classList.add('gone');
+      setTimeout(() => primer.remove(), 1000);
+      initAudio();
+      if (actx && actx.state === 'suspended') actx.resume();
+      unlockTTS();
+      pickVoice();
+      fetchWeather();
+      enqueueSpeech('master ready');
+      Face.dispersionTarget = 0; Face.coronaFlash = 0.3;
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+    primer.addEventListener('pointerdown', startEverything, { once: true });
+    primer.addEventListener('click', startEverything, { once: true });
+
+    // ─── Keyboard fallback ─────────────────────────────────────────────
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') ttsSkip();
       if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
     });
 
-    // ─── Boot sequence ──────────────────────────────────────────────
-    function boot() {
-      showFace(3000);
-      initAudio();
-      addMessage('assistant', 'master ready');
-      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
-    boot();
+    // boot
+    resize();
+    fadePaletteTo(timePalette(), 1000);
+    requestAnimationFrame(frame);
+  })();
   </script>
 </body>
 </html>
