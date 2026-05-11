@@ -9,12 +9,6 @@ module Master
 
       VAGUE_STUBS = /\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|good\s+\w+|test(?:ing)?|please)\z/i.freeze
 
-      ELICIT_QUESTIONS = {
-        implement: "which file, which method, and what change exactly?",
-        refactor:  "which file, which method, and what change exactly?",
-        design:    "what interface — inputs, outputs, constraints?",
-        discover:  "what problem, and how will you measure success?",
-      }.freeze
       GREETING_STUBS = /\A(?:hi+|hey|hello|good\s+\w+)\z/i.freeze
       ELICIT_DEFAULT = "be specific: which file or function, and what should change?".freeze
 
@@ -47,8 +41,7 @@ module Master
           if msg.match?(GREETING_STUBS)
             return Result.ok(ctx.merge(intent: :clarify, clarifying_question: "ready. what are you working on?"))
           end
-          q = ELICIT_QUESTIONS[ctx[:phase]&.to_sym] || ELICIT_DEFAULT
-          return Result.ok(ctx.merge(intent: :clarify, clarifying_question: q))
+          return Result.ok(ctx.merge(intent: :clarify, clarifying_question: ELICIT_DEFAULT))
         end
 
         pressure = msg.match?(PRESSURE_PATTERN)

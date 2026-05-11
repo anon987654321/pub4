@@ -9,8 +9,7 @@ module Master
       class ExplicitRule < Rule
         RESCUE_NIL   = /rescue\s+nil\b/.freeze
         MAGIC_NUM    = /[^:]\b([2-9]\d{2,}|[1-9]\d{3,})\b(?!\s*[#=])/.freeze
-        OPAQUE_VAR   = /^\s+[a-z]\s*=(?!=)/.freeze # x = ... (not x == or x +=)
-        IMPLICIT_NIL = /def\s+\w+[^;]*\n(?:\s*#[^\n]*\n)*\s*end/.freeze # empty method body
+        OPAQUE_VAR   = /^\s+[a-z]\s*=(?!=)/.freeze
 
         def initialize
           super
