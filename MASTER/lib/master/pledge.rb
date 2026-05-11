@@ -44,6 +44,8 @@ module Master
       unveil("/usr/local/bin", "rx")
       unveil("/usr/local/lib", "r")
       unveil("/usr/local/share", "r")
+      unveil("/etc/ssl", "r")
+      unveil("/etc/resolv.conf", "r")
       [Dir.home + "/.local/share/gem", Dir.home + "/.gem"].each { |p| unveil(p, "r") if Dir.exist?(p) }
       unveil("/dev/urandom", "r")
       unveil("/var/run", "r")
