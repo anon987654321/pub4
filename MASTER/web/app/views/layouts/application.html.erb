@@ -20,10 +20,15 @@
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app %>
+    <%= javascript_include_tag :app, defer: true %>
   </head>
 
   <body>
     <%= yield %>
-      <nav><a href="/">chat</a> <a href="/canvas">canvas</a></nav>
-</body>
+    <nav><a href="/">chat</a> <a href="/canvas">canvas</a></nav>
+    <section>
+      <textarea id="input" rows="1" placeholder="type here..." style="width:100%;"></textarea>
+      <div id="status" aria-live="polite" style="font-family:monospace;min-height:1rem;"></div>
+    </section>
+  </body>
 </html>

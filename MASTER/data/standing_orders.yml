@@ -7,7 +7,7 @@
   interval_s: 3600
   command: triad deep .
   enabled: true
-  state: done
+  state: running
   last_run_at: 1778516405
 - name: nightly_dreams
   description: Consolidate memories during low-activity periods

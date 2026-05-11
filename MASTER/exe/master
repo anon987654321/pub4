@@ -10,13 +10,6 @@ $stderr.set_encoding("UTF-8")
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 
-if %w[--help -h].include?(ARGV.first)
-  puts "Usage: master [message]"
-  puts "       master orient"
-  puts "       master --help"
-  exit 0
-end
-
 def boot_web_ui(config)
   port = config["web_port"] || 53187
   host = config["web_host"] || "127.0.0.1"
@@ -24,8 +17,8 @@ def boot_web_ui(config)
   if RUBY_PLATFORM.include?("openbsd")
     running = system("pgrep", "-qf", "falcon.*#{port}")
     token = config["web_token"]
-    url   = config["web_public_url"] || "http://#{host}:#{port}"
-    url  += "/?token=#{token}" if token
+    url = config["web_public_url"] || "http://#{host}:#{port}"
+    url += "/?token=#{token}" if token
     $stderr.puts "web: #{url} (#{running ? "up" : "down — run: doas rcctl start master"})"
   else
     require "open3"
