@@ -61,7 +61,7 @@ model_defs:
   nemotron_super: &nemotron_super
     id: nvidia/nemotron-3-super-120b-a12b:free
     <<: *model_defaults
-    score: { quality: 0.90, speed: 0.75, cost: 1.0 }
+    score: { quality: 0.90, speed: 0.88, cost: 1.0 }
   qwen_coder: &qwen_coder
     id: qwen/qwen3-coder:free
     <<: *model_defaults
@@ -167,7 +167,6 @@ models:
   default:
     - *nemotron_super
     - *gpt_oss_120b
-    - *deepseek_chat
     - *qwen3_next
     - *llama_70b
     - *qwen_coder
@@ -181,9 +180,9 @@ models:
     - *gemini_flash
     - *command_r_plus
   cheap:
-    - *deepseek_chat
     - *gemini_flash
     - *mistral_small
+    - *deepseek_chat
     - *llama_70b
     - *qwen_coder
     - *gemma_2_9b_free
