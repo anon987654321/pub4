@@ -1,10 +1,10 @@
-# __openbsd — live system snapshot
+# snapshot — live VPS state
 
-Mirror of OpenBSD VPS `/etc/*`, `/var/nsd/etc/*`, `/home/dev/.zshrc` as deployed on `dev@brgen.no`. Snapshot, not a template: `DEPLOY/openbsd/` is what actually provisions.
+Mirror of OpenBSD `dev@brgen.no`: `/etc/*`, `/var/nsd/etc/*`, `/home/dev/.zshrc`. Sibling to `files/` (templates we deploy from). Diff the two to see drift.
 
-Secrets are redacted to `__REDACTED__`. Pull a fresh snapshot:
+Secrets are redacted to `__REDACTED__`. Refresh:
 
-    doas ruby ~/pub4/MASTER/__openbsd/sync.rb
+    doas ruby ~/pub4/DEPLOY/openbsd/snapshot/sync.rb
 
 Sources tracked: `rc.d/{master,brgen,brgen_tv,brgen_rails,amber,amber_rails,baibl,blognet,blognet_rails,bsdports,bsdports_rails,hjerterom,hjerterom_rails}`, `relayd.conf`, `httpd.conf`, `pf.conf`, `acme-client.conf`, `nsd.conf`, `login.conf`, `rc.conf.local`, `.zshrc`.
 
