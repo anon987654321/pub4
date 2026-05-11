@@ -17,6 +17,12 @@ module Master
     end
 
     def on_int
+      if @pipeline_thread&.alive?
+        @pipeline_thread.kill
+        @pipeline_thread = nil
+        puts "\n#{@renderer.render("aborted", mode: :warning)}"
+        return
+      end
       if Time.now - @interrupt_at < 1
         @scan_thread&.kill
         @session.save!

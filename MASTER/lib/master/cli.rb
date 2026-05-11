@@ -20,7 +20,7 @@ module Master
       critical: "!!"
     }.freeze
 
-    SLASH_COMMANDS = %w[/exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles].freeze
+    SLASH_COMMANDS = %w[/exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart].freeze
 
     attr_reader :container
 
@@ -73,9 +73,18 @@ module Master
       on_chunk = stream_chunk_handler(accumulated, state)
 
       print_thinking_indicator
-      result = @pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
+      @pipeline_thread = Thread.new do
+        Thread.current.report_on_exception = false
+        @pipeline.call(Result.ok(user_message: input, on_chunk: on_chunk))
+      end
+      result = begin
+        @pipeline_thread.value
+      rescue StandardError
+        Result.err("aborted", category: :abort)
+      end
       display_result(result, accumulated, state[:streamed])
     ensure
+      @pipeline_thread = nil
       stop_thinking_indicator
       @user_active = false
     end
@@ -141,7 +150,14 @@ module Master
     def suggested_next_prompt
       top = proposer.top
       return nil unless top
+      @last_suggestion = top[:action]
       "#{top[:action]}  (#{top[:reason]})"
+    end
+
+    def accept_top_suggestion
+      return unless @last_suggestion
+      puts @renderer.render("↳ #{@last_suggestion}", mode: :dim)
+      handle_repl_line(@last_suggestion)
     end
 
     def proposer
@@ -152,7 +168,7 @@ module Master
 
     def handle_repl_line(line)
       stripped = line.strip
-      return if stripped.empty?
+      return accept_top_suggestion if stripped.empty?
       case stripped
       when "/exit"    then exit_cli
       when "/undo"    then run_undo
@@ -166,9 +182,17 @@ module Master
       when "/chips"   then toggle_chips
       when "/propose"    then run_propose
       when "/principles" then run_principles
+      when "/restart"    then run_restart
       when "<<"       then run_input(read_multiline)
       else                 run_input(line)
       end
+    end
+
+    def run_restart
+      @session.save!
+      puts @renderer.render("restart: exec'ing fresh master in place", mode: :dim)
+      $stdout.flush
+      Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
     end
 
     def run_undo
