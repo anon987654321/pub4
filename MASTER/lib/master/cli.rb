@@ -393,13 +393,18 @@ module Master
     SPIN_FRAMES   = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
     SPIN_INTERVAL = 0.25
     DMESG_IGNORE  = %w[bus:subscribe bus:unsubscribe ring:write].freeze
+    VERDICT_GLYPH = {
+      ok: "\u2713", fail: "\u00D7", warn: "!", info: "\u00B7"
+    }.freeze
 
     def print_thinking_indicator
       return unless $stdout.isatty
 
       @think_mutex = Mutex.new
       @think_t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      @think_stage = "intake"
       @think_sub   = @bus&.subscribe("*") do |payload|
+        update_think_stage(payload)
         emit_dmesg_line(payload)
       end
 
@@ -407,7 +412,7 @@ module Master
         i = 0
         loop do
           @think_mutex.synchronize do
-            print "\r\e[K#{@renderer.render("#{SPIN_FRAMES[i % SPIN_FRAMES.size]} thinking", mode: :dim)}"
+            print "\r\e[K#{@renderer.render("#{SPIN_FRAMES[i % SPIN_FRAMES.size]} #{@think_stage}", mode: :dim)}"
             $stdout.flush
           end
           sleep SPIN_INTERVAL
@@ -425,18 +430,47 @@ module Master
       @think_sub = nil
     end
 
+    def update_think_stage(payload)
+      ev = payload[:event].to_s
+      return unless ev.start_with?("stage:")
+      stage = payload[:stage] || ev.sub("stage:", "")
+      @think_stage = stage.to_s
+    end
+
+    def glyph_for_event(ev)
+      case ev
+      when /:(done|ok|success|rendered|synthesis)\b/ then VERDICT_GLYPH[:ok]
+      when /:(error|fail|timeout|veto)\b/            then VERDICT_GLYPH[:fail]
+      when /:(warn|warning|escalat)\b/               then VERDICT_GLYPH[:warn]
+      else                                                VERDICT_GLYPH[:info]
+      end
+    end
+
+    MUTATING_TOOLS = %w[WriteFile Edit StrReplace BatchReplace AstEdit FilePatch].freeze
+
     def emit_dmesg_line(payload)
       ev = payload[:event].to_s
       return if ev.empty? || DMESG_IGNORE.include?(ev)
       ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - (@think_t0 || 0)) * 1000).to_i
       kv = payload.reject { |k, _| %i[event ts topic].include?(k) }
                   .map { |k, v| "#{k}=#{v.to_s[0, 60]}" }.join(" ")
-      line = "  [%7d] %s%s" % [ms, ev, kv.empty? ? "" : " #{kv}"]
+      diff = ev == "tool:after" && MUTATING_TOOLS.include?(payload[:tool].to_s) ? diff_stat(payload[:path]) : nil
+      tail = diff ? " #{diff}" : ""
+      line = "  %s [%7d] %s%s%s" % [glyph_for_event(ev), ms, ev, kv.empty? ? "" : " #{kv}", tail]
       @think_mutex&.synchronize do
         print "\r\e[K"
         $stdout.puts @renderer.render(line, mode: :dim)
         $stdout.flush
       end
+    rescue StandardError
+      nil
+    end
+
+    def diff_stat(path)
+      return nil unless path && !path.empty?
+      out, _ = Open3.capture2e("git", "-C", @root, "diff", "--numstat", "--", path)
+      m = out.lines.first&.match(/^(\d+)\s+(\d+)/)
+      m ? "+#{m[1]}/-#{m[2]}" : nil
     rescue StandardError
       nil
     end

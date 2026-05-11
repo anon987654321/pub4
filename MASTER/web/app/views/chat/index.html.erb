@@ -674,7 +674,11 @@
           const cut = m.index + m[0].length;
           const sent = pending.slice(0, cut).trim();
           pending = pending.slice(cut);
-          if (sent) { enqueueSpeech(sent); chromaticPulse(); }
+          if (sent) {
+            enqueueSpeech(sent); chromaticPulse();
+            Face.dispersionTarget = Math.min(0.06, (Face.dispersionTarget || 0) + 0.04);
+            setTimeout(() => { if (Face.dispersionTarget > 0) Face.dispersionTarget = Math.max(0, Face.dispersionTarget - 0.04); }, 250);
+          }
         }
       };
       evtSrc.addEventListener('tool', (ev) => {
@@ -733,18 +737,25 @@
       Face.gazeTarget = [(p.x - W * 0.5) / W, (p.y - H * 0.5) / H];
       rippleAt(p.x, p.y);
     }
-    function rippleAt(x, y) {
+    function rippleAt(x, y, amp = 1.0) {
       const R2 = Face.s * Face.s * 0.36;
       for (let i = 0; i < particles.length; i++) {
         const pp = particles[i];
         const dx = pp.x - x, dy = pp.y - y, d2 = dx*dx + dy*dy;
         if (d2 < R2 && d2 > 1) {
-          const f = (1 - d2 / R2) * 3.5;
+          const f = (1 - d2 / R2) * 3.5 * amp;
           const inv = 1 / Math.sqrt(d2);
           pp.vx += dx * inv * f;
           pp.vy += dy * inv * f;
         }
       }
+      if (amp >= 1.0) setTimeout(() => rippleAt(x, y, 0.3), 80);
+    }
+    function curlAt(x, y, t) {
+      const k = 0.012, k2 = 0.018;
+      const u =  Math.sin(y * k + t * 0.0007) - Math.cos(x * k2 - t * 0.0011);
+      const v = -Math.sin(x * k + t * 0.0009) + Math.cos(y * k2 + t * 0.0013);
+      return [u, v];
     }
     function pointerMove(e) {
       if (!Gesture.down) return;
@@ -1109,9 +1120,9 @@
         tx = cx + dx;
         ty = cy + dy;
         if (disp > 0) {
-          const dxn = (Math.random() - 0.5) * s * 2 * disp;
-          const dyn = (Math.random() - 0.5) * s * 2 * disp * 0.5;
-          tx += dxn * 0.04; ty += dyn * 0.04;
+          const [cu, cv] = curlAt(p.x, p.y, now);
+          tx += cu * s * disp * 0.08;
+          ty += cv * s * disp * 0.05;
         } else if (disp < 0) {
           const k = -disp;
           tx = cx * k + tx * (1 - k);
@@ -1242,6 +1253,11 @@
     cv.addEventListener('pointermove', pointerMove);
     cv.addEventListener('pointerup',   pointerEnd);
     cv.addEventListener('pointercancel', pointerEnd);
+    document.addEventListener('pointermove', (e) => {
+      if (Gesture.down || e.pointerType !== 'mouse') return;
+      const lean = 0.25;
+      Face.gazeTarget = [(e.clientX - W * 0.5) / W * lean, (e.clientY - H * 0.5) / H * lean];
+    }, { passive: true });
     cv.addEventListener('touchstart', (e) => { if (e.touches.length === 2) { Gesture.twoPtr = false; handlePinch(e); } }, { passive: true });
     cv.addEventListener('touchmove',  (e) => { if (e.touches.length === 2) handlePinch(e); }, { passive: true });
     cv.addEventListener('touchend',   () => { Gesture.twoPtr = false; });

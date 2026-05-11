@@ -104,7 +104,15 @@ module Master
     def cost_label(cost)
       cents = (cost.to_f * 100).round(2)
       return "" if cents.zero?
-      @p.dim("¢#{format('%.2f', cents)}")
+      budget = @config.respond_to?(:budget_max) ? @config.budget_max.to_f : 0.0
+      label = "¢#{format('%.2f', cents)}"
+      return @p.dim(label) unless budget.positive?
+      pct = (cost.to_f / budget).clamp(0.0, 1.0)
+      eighths = (pct * 4 * 8).round
+      full = eighths / 8
+      rem  = eighths % 8
+      bar = ("\u2588" * full) + (full < 4 ? BAR_FRACTIONS[rem] : "") + ("\u00A0" * (4 - full - (full < 4 ? 1 : 0)))
+      @p.dim("#{label} #{bar}")
     end
 
     def speaker_tag(name = "master")
