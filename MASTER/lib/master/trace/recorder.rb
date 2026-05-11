@@ -4,10 +4,11 @@ require "json"
 require "fileutils"
 
 module Master
+  module Trace
   # Trace — captures all bus events for the current turn into a JSONL log
   # at data/traces/YYYY-MM-DD.jsonl. Each line is one turn record.
   # /why pretty-prints the last turn.
-  class Trace
+  class Recorder
     EVENT_PATTERNS = %w[gateway:* pipeline:* tool:after route:* council:* memo:* lint:* governor:*].freeze
     MAX_EVENTS_PER_TURN = 200
 
@@ -87,5 +88,6 @@ module Master
     rescue StandardError
       nil
     end
+  end
   end
 end

@@ -3,6 +3,7 @@
 require "monitor"
 
 module Master
+  module Trace
   class EventBus
     include MonitorMixin
 
@@ -24,7 +25,7 @@ module Master
       ts      = elapsed_ms
       payload = payload.merge(event:, ts:)
       handlers = synchronize { matching_handlers(event) }
-      Master::Telemetry.span("event_bus.publish", event:, n_handlers: handlers.size) do
+      Master::Trace::Telemetry.span("event_bus.publish", event:, n_handlers: handlers.size) do
         handlers.each { |h| h.call(payload) rescue nil }
       end
       self
@@ -49,5 +50,6 @@ module Master
       )
       re.match?(event)
     end
+  end
   end
 end

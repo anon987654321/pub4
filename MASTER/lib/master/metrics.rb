@@ -105,7 +105,7 @@ module Master
 
     def append(entry)
       entry[:ts] = Time.now.to_i
-      Master::Telemetry.span("metrics.append", keys: entry.keys.join(",")) do
+      Master::Trace::Telemetry.span("metrics.append", keys: entry.keys.join(",")) do
         File.open(@path, "a") { |f| f.puts(JSON.generate(entry)) }
       end
     rescue StandardError => e

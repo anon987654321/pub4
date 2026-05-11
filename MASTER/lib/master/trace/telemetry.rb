@@ -3,6 +3,7 @@
 require "json"
 
 module Master
+  module Trace
   # OpenTelemetry tracer wrapper. Soft-optional — if the SDK isn't loaded,
   # span() degrades to a plain yield. Spans emit JSONL to .master/traces.log.
   module Telemetry
@@ -78,5 +79,6 @@ module Master
       def force_flush(timeout: nil) = SUCCESS
       def shutdown(timeout: nil)    = SUCCESS
     end
+  end
   end
 end

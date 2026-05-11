@@ -23,7 +23,7 @@ module Master
                                 .map { |k, v| "#{k}=#{v.to_s[0, MAX_VAL].inspect}" }
                                 .join(" ")
       log_line = "#{Time.now.utc.iso8601} tool=#{event_data[:tool]} #{payload_pairs}"
-      Master::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
+      Master::Trace::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
         @mutex.synchronize do
           rotate! if File.exist?(@path) && File.size(@path) > MAX_BYTES
           File.open(@path, "a") { |f| f.puts(log_line) }

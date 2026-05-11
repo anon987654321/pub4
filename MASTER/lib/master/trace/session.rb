@@ -4,6 +4,7 @@ require "json"
 require "fileutils"
 
 module Master
+  module Trace
   class Session
     TOKENS_PER_CHAR  = 4
     SESSION_NAME_MAX = 40
@@ -97,5 +98,6 @@ module Master
       keep  = lines.last([lines.size / 2, 1].max)
       File.write(@costs_path, keep.join)
     end
+  end
   end
 end

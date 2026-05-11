@@ -22,12 +22,12 @@ module Master
       config = Config.new(root)
       config["model"] ||= Master.default_model
 
-      bus = EventBus.new
+      bus = Trace::EventBus.new
       ring = RingBuffer.new(RING_SIZE)
       logging = Logging.new(ring_buffer: ring, event_bus: bus)
       homeostat = Homeostat.new(event_bus: bus)
-      session = Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
-      undo = Undo.new(session:, event_bus: bus, root:)
+      session = Trace::Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
+      undo = Trace::Undo.new(session:, event_bus: bus, root:)
       breaker = CircuitBreakerRegistry.new(
         budget_max: config.budget_max, req_max: config.req_max, event_bus: bus
       )
@@ -45,14 +45,14 @@ module Master
       bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
 
       memory = Memory.new(root:)
-      personality = Personality.new(
-        config["persona"]&.to_sym || Personality::DEFAULT, root:, homeostat:
+      personality = Voice::Personality.new(
+        config["persona"]&.to_sym || Voice::Personality::DEFAULT, root:, homeostat:
       )
       learnings   = Learnings.new(root:)
 
       phase_gates = PhaseGates.new(root:, event_bus: bus)
       diag        = Diag.new(homeostat:, breaker:, logging:)
-      trace       = Trace.new(root:, event_bus: bus)
+      trace       = Trace::Recorder.new(root:, event_bus: bus)
       {
         config:, ring:, bus:, logging:, homeostat:, session:, undo:, breaker:, cache:,
         governor:, renderer:, metrics:, code_index:, diff_stager:, mcp:,
@@ -72,7 +72,7 @@ module Master
     def build_agent_core(root, infra)
       bus          = infra[:bus]
       agent, tools = build_agent_instance(root, infra)
-      soul_doc     = Soul.new(root:, agent:)
+      soul_doc     = Voice::Soul.new(root:, agent:)
       tools << Tools::AskLlm.new(agent:, governor: infra[:governor],
                                   circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
       ctx = ContextWindow.new(session: infra[:session], agent:, model_context: CTX_WINDOW_SIZE)

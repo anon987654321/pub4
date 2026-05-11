@@ -4,6 +4,7 @@ require "json"
 require "fileutils"
 
 module Master
+  module Trace
   # Persistent undo: snapshots file content before writes, restores on demand.
   # Journal survives restarts via .master/undo_journal.jsonl.
   class Undo
@@ -109,5 +110,6 @@ module Master
       File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
       raise e
     end
+  end
   end
 end

@@ -91,7 +91,7 @@ module Master
       method_name = JOB_HANDLERS[job["action"]]
       return "unknown action: #{job["action"]}" unless method_name
 
-      Master::Telemetry.span("heartbeat.tick", job: job["name"].to_s) do
+      Master::Trace::Telemetry.span("heartbeat.tick", job: job["name"].to_s) do
         send(method_name)
       end
     rescue StandardError => e
