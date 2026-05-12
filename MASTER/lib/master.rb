@@ -37,15 +37,14 @@ module Master
 
   loader = Zeitwerk::Loader.for_gem
   loader.inflector.inflect(
-    "autoloop"        => "AutoLoop",
-    "cli"             => "CLI",
-    "llm"             => "LLM",
-    "llm_dispatcher"  => "LLMDispatcher"
+    "cli"            => "CLI",
+    "llm"            => "LLM",
+    "llm_dispatcher" => "LLMDispatcher"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.ignore(File.join(__dir__, "master", "ruby_llm_patch.rb"))
   %w[
-    loop/autoloop/fix_evaluator.rb
+    loop/auto_loop/fix_evaluator.rb
     builder/infra_helpers.rb
     now/cli/signals.rb
     command_registry/agent_commands.rb

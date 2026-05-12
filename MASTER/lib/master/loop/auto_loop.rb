@@ -3,7 +3,7 @@
 require "open3"
 require_relative "../git_operations"
 
-require_relative "autoloop/fix_evaluator"
+require_relative "auto_loop/fix_evaluator"
 
 module Master
   module Loop
