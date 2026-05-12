@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     class ListDir
       TIER        = :safe
       NAME        = "list_dir".freeze

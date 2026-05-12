@@ -73,7 +73,7 @@ module Master
       bus          = infra[:bus]
       agent, tools = build_agent_instance(root, infra)
       soul_doc     = Voice::Soul.new(root:, agent:)
-      tools << Tools::AskLlm.new(agent:, governor: infra[:governor],
+      tools << Reach::AskLlm.new(agent:, governor: infra[:governor],
                                   circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
       ctx = ContextWindow.new(session: infra[:session], agent:, model_context: CTX_WINDOW_SIZE)
       ctx.check_and_compact!
@@ -174,24 +174,24 @@ module Master
       undo = infra[:undo]
       governor = infra[:governor]
       case name.to_s
-      when "ReadFile" then Tools::ReadFile.new(root:, undo:, event_bus: bus)
-      when "WriteFile" then Tools::WriteFile.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
-      when "StrReplace" then Tools::StrReplace.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
-      when "BatchReplace" then Tools::BatchReplace.new(root:, governor:, event_bus: bus)
-      when "AstEdit" then Tools::AstEdit.new(root:, undo:, event_bus: bus)
-      when "Tree" then Tools::Tree.new(root:, event_bus: bus)
-      when "ListDir" then Tools::ListDir.new(root:, event_bus: bus)
-      when "SearchFiles" then Tools::SearchFiles.new(root:, event_bus: bus)
-      when "SearchKnowledge" then Tools::SearchKnowledge.new(root:, event_bus: bus)
-      when "SymbolLookup" then Tools::SymbolLookup.new(code_index: infra[:code_index], event_bus: bus)
-      when "Shell" then Tools::Shell.new(root:, governor:, event_bus: bus)
-      when "GitContext" then Tools::GitContext.new(root:, event_bus: bus)
-      when "WebFetch" then Tools::WebFetch.new(governor:, event_bus: bus)
-      when "WebSearch" then Tools::WebSearch.new(governor:, event_bus: bus)
-      when "Clean" then Tools::Clean.new(root:, governor:, event_bus: bus)
-      when "Repligen" then Tools::Repligen.new(root:, governor:, event_bus: bus)
-      when "Postpro" then Tools::Postpro.new(root:, governor:, event_bus: bus)
-      when "FeedbackRecord" then Tools::FeedbackRecord.new(learnings: infra[:learnings])
+      when "ReadFile" then Reach::ReadFile.new(root:, undo:, event_bus: bus)
+      when "WriteFile" then Reach::WriteFile.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
+      when "StrReplace" then Reach::StrReplace.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
+      when "BatchReplace" then Reach::BatchReplace.new(root:, governor:, event_bus: bus)
+      when "AstEdit" then Reach::AstEdit.new(root:, undo:, event_bus: bus)
+      when "Tree" then Reach::Tree.new(root:, event_bus: bus)
+      when "ListDir" then Reach::ListDir.new(root:, event_bus: bus)
+      when "SearchFiles" then Reach::SearchFiles.new(root:, event_bus: bus)
+      when "SearchKnowledge" then Reach::SearchKnowledge.new(root:, event_bus: bus)
+      when "SymbolLookup" then Reach::SymbolLookup.new(code_index: infra[:code_index], event_bus: bus)
+      when "Shell" then Reach::Shell.new(root:, governor:, event_bus: bus)
+      when "GitContext" then Reach::GitContext.new(root:, event_bus: bus)
+      when "WebFetch" then Reach::WebFetch.new(governor:, event_bus: bus)
+      when "WebSearch" then Reach::WebSearch.new(governor:, event_bus: bus)
+      when "Clean" then Reach::Clean.new(root:, governor:, event_bus: bus)
+      when "Repligen" then Reach::Repligen.new(root:, governor:, event_bus: bus)
+      when "Postpro" then Reach::Postpro.new(root:, governor:, event_bus: bus)
+      when "FeedbackRecord" then Reach::FeedbackRecord.new(learnings: infra[:learnings])
       else
         bus&.publish("builder:tool_skipped", tool: name.to_s)
         nil

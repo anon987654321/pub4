@@ -3,7 +3,7 @@
 require "open3"
 
 module Master
-  module Tools
+  module Reach
     # Tree — lists directory structure using sh/tree.sh.
     # Safe: read-only, no writes.
     class Tree

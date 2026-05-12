@@ -3,7 +3,7 @@
 require "open3"
 
 module Master
-  module Tools
+  module Reach
     # Clean — removes trailing whitespace, CRLF, and excess blank lines
     # from text files under a given path, using sh/clean.sh.
     class Clean

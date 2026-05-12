@@ -4,7 +4,7 @@ require "uri"
 require "json"
 
 module Master
-  module Tools
+  module Reach
     class WebSearch
       TIER               = :guarded
       MAX_QUERY_CHARS    = 300

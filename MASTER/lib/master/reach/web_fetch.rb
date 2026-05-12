@@ -3,7 +3,7 @@ require "net/http"
 require "uri"
 
 module Master
-  module Tools
+  module Reach
     # Fetches a URL, returns first ~16KB of content with HTML stripped to plain text.
     # Rewrites well-known sites to the most useful underlying URL:
     #   github.com/.../blob/...     → raw.githubusercontent.com

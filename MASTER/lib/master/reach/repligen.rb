@@ -4,7 +4,7 @@ require "open3"
 require "shellwords"
 
 module Master
-  module Tools
+  module Reach
     # Repligen — drive the multimedia/repligen.rb Replicate.com CLI from MASTER.
     # Shells out so SQLite + net/http stay in their own process. REPLICATE_API_TOKEN
     # must be set in the parent env.

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     module AtomicWrite
       private
 

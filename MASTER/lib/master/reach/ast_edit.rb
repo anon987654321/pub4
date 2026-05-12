@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     # AST-aware editing tool using Ruby's Ripper (stdlib) for parsing.
     # Supports: find_method, rename_method, extract_lines_to_method, add_after_method.
     # Uses Ripper::SexpBuilder for structure-awareness without external gem dependencies.

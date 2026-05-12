@@ -49,7 +49,7 @@ module Master
       end
 
       def collect_files(dir, types)
-        sacred = Tools::PathGuard::SACRED_PATHS
+        sacred = Reach::PathGuard::SACRED_PATHS
         types.flat_map { |type| Dir.glob(File.join(dir, GLOBS[type].to_s)) }
              .reject { |path| sacred_match?(path, sacred) }
              .uniq.sort

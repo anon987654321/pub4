@@ -7,7 +7,7 @@ require "tmpdir"
 require "fileutils"
 
 module Master
-  module Tools
+  module Reach
     # Postpro — drive the multimedia/postpro.rb pipeline (libvips/ruby-vips,
     # film stocks, presets, recipes) from MASTER. Shells out so we don't
     # pollute Master's namespace with postpro's top-level constants.

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     # ReadFile — read file contents with line-range support and undo tracking.
     class ReadFile
       include PathGuard

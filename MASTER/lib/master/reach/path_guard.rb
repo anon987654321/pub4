@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     module PathGuard
       SACRED_PATHS = begin
         data = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))

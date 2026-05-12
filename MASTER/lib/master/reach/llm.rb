@@ -3,7 +3,7 @@
 require "ruby_llm"
 
 module Master
-  module Tools
+  module Reach
     # LLM-callable wrappers around the existing Master tool instances.
     # Each class holds a reference to the underlying tool via initialize,
     # so governor, undo, and event_bus plumbing is preserved.

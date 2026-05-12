@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     # Search the local knowledge base: cloned docs, man pages, system prompts, gem READMEs.
     class SearchKnowledge
       TIER        = :safe

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     # FeedbackRecord — LLM-callable tool to record RSI feedback events.
     # Event types: tool_success, tool_failure, user_correction, provider_error, user_feedback.
     # Dimension: tool name, provider name, or pattern label.

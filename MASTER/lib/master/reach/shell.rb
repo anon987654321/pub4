@@ -5,7 +5,7 @@ require "timeout"
 require "shellwords"
 
 module Master
-  module Tools
+  module Reach
     # Shell — execute zsh commands with timeout and governor approval.
     # Three-layer defense (OpenCrabs pattern):
     #   1. BLOCKLIST: hard-blocked destructive commands

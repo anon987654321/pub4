@@ -3,7 +3,7 @@
 require "fileutils"
 
 module Master
-  module Tools
+  module Reach
     class WriteFile
       include Base
       TIER        = :guarded

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     # AskLlm — delegate sub-questions to the LLM agent mid-pipeline.
     class AskLlm
       TIER        = :guarded

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     # SymbolLookup — query the live symbol graph; returns definition, callers, and impact.
     class SymbolLookup
       NAME        = "symbol_lookup".freeze

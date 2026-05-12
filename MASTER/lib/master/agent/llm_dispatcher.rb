@@ -13,20 +13,20 @@ module Master
       LLAMA_NEMOTRON_RE     = /llama.*nemotron|nemotron.*llama/i.freeze
 
       LLM_TOOL_MAP = {
-        Tools::ReadFile        => Tools::LLM::ReadFile,
-        Tools::WriteFile       => Tools::LLM::WriteFile,
-        Tools::StrReplace      => Tools::LLM::StrReplace,
-        Tools::ListDir         => Tools::LLM::ListDir,
-        Tools::SearchFiles     => Tools::LLM::SearchFiles,
-        Tools::Shell           => Tools::LLM::Shell,
-        Tools::WebSearch       => Tools::LLM::WebSearch,
-        Tools::AskLlm          => Tools::LLM::AskLlm,
-        Tools::GitContext      => Tools::LLM::GitContext,
-        Tools::AstEdit         => Tools::LLM::AstEdit,
-        Tools::SearchKnowledge => Tools::LLM::SearchKnowledge,
-        Tools::FeedbackRecord  => Tools::LLM::FeedbackRecord,
-        Tools::Postpro         => Tools::LLM::Postpro,
-        Tools::Repligen        => Tools::LLM::Repligen
+        Reach::ReadFile        => Reach::LLM::ReadFile,
+        Reach::WriteFile       => Reach::LLM::WriteFile,
+        Reach::StrReplace      => Reach::LLM::StrReplace,
+        Reach::ListDir         => Reach::LLM::ListDir,
+        Reach::SearchFiles     => Reach::LLM::SearchFiles,
+        Reach::Shell           => Reach::LLM::Shell,
+        Reach::WebSearch       => Reach::LLM::WebSearch,
+        Reach::AskLlm          => Reach::LLM::AskLlm,
+        Reach::GitContext      => Reach::LLM::GitContext,
+        Reach::AstEdit         => Reach::LLM::AstEdit,
+        Reach::SearchKnowledge => Reach::LLM::SearchKnowledge,
+        Reach::FeedbackRecord  => Reach::LLM::FeedbackRecord,
+        Reach::Postpro         => Reach::LLM::Postpro,
+        Reach::Repligen        => Reach::LLM::Repligen
       }.freeze
 
       def self.build_tool_capable_re

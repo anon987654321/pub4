@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Tools
+  module Reach
     # BatchReplace — apply multiple search-and-replace operations in one pass.
     class BatchReplace
       include AtomicWrite
