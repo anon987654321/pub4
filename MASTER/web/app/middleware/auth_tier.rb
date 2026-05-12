@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
-# AuthTier — sets request env["master.tier"] to "authenticated" or "visitor"
-# based on token match. Public paths bypass entirely. Token comes from
-# .master/config.yml; first request seeds it if missing.
+# AuthTier — gates all non-public paths behind a token match.
+# Visitor requests get 401 Unauthorized; authenticated requests pass through
+# with env["master.tier"] = "authenticated". Token lives in .master/config.yml.
 class AuthTier
-  PUBLIC_PATHS = %w[/up /health].freeze
+  PUBLIC_PATHS  = %w[/up /health /manifest.json /icon.png /icon.svg /sw.js].freeze
+  PUBLIC_PREFIX = %w[/assets/].freeze
 
   def initialize(app, config_path:)
     @app = app
@@ -12,19 +13,27 @@ class AuthTier
   end
 
   def call(env)
-    return @app.call(env) if PUBLIC_PATHS.include?(env["PATH_INFO"])
-    env["master.tier"] = tier_for(env)
-    @app.call(env)
+    path = env["PATH_INFO"].to_s
+    return @app.call(env) if public?(path)
+
+    if authenticated?(env)
+      env["master.tier"] = "authenticated"
+      @app.call(env)
+    else
+      [401, { "content-type" => "text/plain; charset=utf-8" }, ["Unauthorized\n"]]
+    end
   end
 
   private
 
-  def tier_for(env)
+  def public?(path)
+    PUBLIC_PATHS.include?(path) || PUBLIC_PREFIX.any? { |p| path.start_with?(p) }
+  end
+
+  def authenticated?(env)
     request = Rack::Request.new(env)
-    token = web_token
-    return "authenticated" if request.params["token"] == token
-    return "authenticated" if env["HTTP_X_TOKEN"] == token
-    "visitor"
+    tok = web_token
+    request.params["token"] == tok || env["HTTP_X_TOKEN"] == tok
   end
 
   def web_token
