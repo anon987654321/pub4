@@ -145,7 +145,7 @@ module Master
       end
 
       def estimate_cost(prompt)
-        (prompt.bytesize / Session::TOKENS_PER_CHAR) * COST_PER_TOKEN
+        (prompt.bytesize / Master::Trace::Session::TOKENS_PER_CHAR) * COST_PER_TOKEN
       end
 
       def llm_tools(selected_model)

@@ -7,9 +7,15 @@ module Master
       axiom_violation: "constitutional rule broken",
       provider_error: "upstream model / network failure",
       llm_failure: "LLM returned unusable output",
+      llm_call_failure: "LLM dispatch exception (network / SDK)",
       infrastructure: "system / disk / git error",
+      handler_exception: "unexpected error during handler execution",
       timeout: "operation exceeded deadline",
-      budget: "cost limit hit"
+      rate_limit: "tier rate limit exceeded",
+      budget: "cost limit hit",
+      policy: "blocked by policy / kernel rule",
+      shutdown: "user quit / shutdown requested",
+      abort: "operation aborted"
     }.freeze
 
     def self.ok(value) = Ok.new(value)

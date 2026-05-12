@@ -37,7 +37,7 @@ module Master
       private
 
       def estimate_cost(prompt)
-        (prompt.bytesize / Session::TOKENS_PER_CHAR) * Agent::COST_PER_TOKEN
+        (prompt.bytesize / Master::Trace::Session::TOKENS_PER_CHAR) * Agent::COST_PER_TOKEN
       end
     end
   end

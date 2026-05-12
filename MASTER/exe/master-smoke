@@ -47,6 +47,17 @@ end
 
 port = (container.dig(:config) && container[:config].respond_to?(:web_port) ? container[:config].web_port : nil) || 53187
 
+failures << "chat" unless step("chat turn (pipe mode)") do
+  exe = File.expand_path("master", __dir__)
+  env = { "MASTER_QUIET" => "1" }
+  if File.readable?("/etc/master.env")
+    File.foreach("/etc/master.env") { |l| k, v = l.chomp.split("=", 2); env[k] = v if k && v }
+  end
+  out, _st = Open3.capture2e(env, exe, stdin_data: "ping\n")
+  bug = out =~ /\b(unknown category|NameError|NoMethodError|uninitialized constant)/i
+  [bug.nil?, bug ? out.lines.find { |l| l =~ /\b(unknown category|NameError|NoMethodError|uninitialized constant)/i }&.strip : nil]
+end
+
 if ARGV.include?("--web")
   failures << "web" unless step("web GET /up") do
     uri = URI("http://127.0.0.1:#{port}/up")

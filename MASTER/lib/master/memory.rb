@@ -100,7 +100,7 @@ module Master
           current_type = type
         end
         text = "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}"
-        est  = text.bytesize / Session::TOKENS_PER_CHAR
+        est  = text.bytesize / Master::Trace::Session::TOKENS_PER_CHAR
         break if token_sum + est > MAX_INJECT_TOKENS
         lines << text
         token_sum += est
