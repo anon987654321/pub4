@@ -38,7 +38,7 @@ module Master
 
     def chat(message, stream: true, escalation_depth: 0, &blk)
       prepare_chat_turn(message)
-      candidate_models = routed_models
+      candidate_models = routed_models(message)
       prompt   = message
       context  = conversation_context
       @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / Session::TOKENS_PER_CHAR)
@@ -208,9 +208,10 @@ module Master
       escalated.is_a?(Master::Result::Err) ? last_response : escalated
     end
 
-    def routed_models
+    def routed_models(message = nil)
       return [@config.model] unless @model_router
-      @model_router.fallback_chain(task_type: @config.task_type.to_sym)
+      task = message ? @model_router.classify_intent(message) : @config.task_type.to_sym
+      @model_router.fallback_chain(task_type: task)
     rescue StandardError => e
       @bus&.publish("llm:route_error", error: e.message)
       [@config.model]
