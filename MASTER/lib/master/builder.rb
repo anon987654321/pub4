@@ -111,10 +111,10 @@ module Master
       bus      = infra[:bus]
       standing = StandingOrders.new(pipeline: nil, event_bus: bus)
       learnings = infra[:learnings]
-      autoloop = AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
+      autoloop = Loop::AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
       skills   = Skills.new(root:, event_bus: bus)
       skills.discover!
-      heartbeat = Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus,
+      heartbeat = Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus,
                                homeostat: infra[:homeostat])
       triggers  = Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!

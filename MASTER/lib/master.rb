@@ -45,15 +45,15 @@ module Master
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.ignore(File.join(__dir__, "master", "ruby_llm_patch.rb"))
   %w[
-    autoloop/fix_evaluator.rb
+    loop/autoloop/fix_evaluator.rb
     builder/infra_helpers.rb
     cli/signals.rb
     command_registry/agent_commands.rb
     command_registry/memory_commands.rb
     command_registry/service_commands.rb
     memory/search.rb
-    sweep/rewriter.rb
-    sweep/convergence.rb
+    loop/sweep/rewriter.rb
+    loop/sweep/convergence.rb
   ].each do |rel|
     loader.ignore(File.join(__dir__, "master", rel))
   end

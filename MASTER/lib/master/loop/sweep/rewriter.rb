@@ -3,6 +3,7 @@
 require "tempfile"
 
 module Master
+  module Loop
   class Sweep
     module Rewriter
       private
@@ -170,5 +171,6 @@ module Master
         0
       end
     end
+  end
   end
 end

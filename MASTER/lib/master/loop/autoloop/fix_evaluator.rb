@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Loop
   class AutoLoop
     module FixEvaluator
       ERROR_TRUNCATE = 200
@@ -79,5 +80,6 @@ module Master
         (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
       end
     end
+  end
   end
 end

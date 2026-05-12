@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Loop
   class Sweep
     # Typed view over data/sweep_prompts.yml's techniques: catalogue. Lets the
     # rewriter (or a future planner) filter by layer, risk, language, or path
@@ -35,5 +36,6 @@ module Master
         true
       end
     end
+  end
   end
 end

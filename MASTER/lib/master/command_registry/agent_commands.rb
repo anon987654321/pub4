@@ -121,7 +121,7 @@ module Master
     end
 
     def run_sweep(agent, scanner, deliberation, root, bus, code_index, target)
-      sweeper = Sweep.new(
+      sweeper = Master::Loop::Sweep.new(
         agent:, scanner:, council: deliberation, root:,
         event_bus: bus, code_index: code_index
       )

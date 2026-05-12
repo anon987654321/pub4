@@ -3,6 +3,7 @@
 require "yaml"
 
 module Master
+  module Loop
   class Heartbeat
     POLL_INTERVAL = 60
     JOURNAL_KEEP = 50
@@ -184,5 +185,6 @@ module Master
       File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
       raise e
     end
+  end
   end
 end

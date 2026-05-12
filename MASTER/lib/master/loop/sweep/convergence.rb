@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Loop
   class Sweep
     # Per-cycle metrics tracking and early-stop logic for sweep loops.
     # Detects stall, low success rate, and sign-reversal oscillation.
@@ -96,5 +97,6 @@ module Master
         !out.strip.empty?
       end
     end
+  end
   end
 end

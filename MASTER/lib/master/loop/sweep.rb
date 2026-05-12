@@ -7,6 +7,7 @@ require_relative "sweep/rewriter"
 require_relative "sweep/convergence"
 
 module Master
+  module Loop
   # Full-codebase refactor to convergence; stops on delta/oscillation/stall (arxiv:2602.21833).
   class Sweep
     MAX_CYCLES         = 16
@@ -197,5 +198,6 @@ circuit\sopen|retry\sin|llm_request)\b
     rescue StandardError => _e
       nil
     end
+  end
   end
 end

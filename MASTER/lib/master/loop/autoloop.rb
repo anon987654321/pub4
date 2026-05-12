@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
 require "open3"
-require_relative "git_operations"
+require_relative "../git_operations"
 
 require_relative "autoloop/fix_evaluator"
 
 module Master
+  module Loop
   class AutoLoop
     def self.load_cfg
       Master.load_yaml(File.join(Master::ROOT, "data", "workflow.yml"))
@@ -172,5 +173,6 @@ module Master
       end
       Result.wrap(result).value_or(nil)
     end
+  end
   end
 end
