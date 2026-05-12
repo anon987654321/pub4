@@ -63,7 +63,7 @@ module Master
     def run_tribunal(deliberation, artifact, target, bus = nil)
       return "tribunal: deliberation not configured" unless deliberation
 
-      result = deliberation.review(artifact, context: target)
+      result = deliberation.review_convergent(artifact, context: target)
       return result.message if result.err?
       format_tribunal(result.value!, bus)
     rescue StandardError => e
@@ -289,7 +289,7 @@ module Master
       return "usage: /crit <file|text>" if arg.empty?
       path    = File.expand_path(arg, root)
       payload = File.exist?(path) ? File.read(path, encoding: "UTF-8") : arg
-      result  = deliberation.review(payload, context: "explicit /crit session")
+      result  = deliberation.review_convergent(payload, context: "explicit /crit session")
       return result.message if result.err?
       format_crit_feedback(result.value!)
     end

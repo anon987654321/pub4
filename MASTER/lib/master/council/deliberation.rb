@@ -9,6 +9,9 @@ module Master
       JUDGE_TIMEOUT   = 30
       TOTAL_BUDGET_S  = 120
       MIN_QUORUM      = 3
+      CONVERGENCE_ROUNDS = 3
+      PLATEAU_OVERLAP    = 0.7
+      PLATEAU_TEXT_SIM   = 0.6
 
       COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
       QUESTION_CATEGORY = {
@@ -43,6 +46,24 @@ module Master
         @axioms        = axioms
         @judge_enabled = judge_enabled
         validate_dependencies!
+      end
+
+      def review_convergent(code, context: nil, max_rounds: CONVERGENCE_ROUNDS)
+        history = []
+        round_context = context
+        max_rounds.times do |i|
+          @bus&.publish(:council_round_start, round: i + 1, max: max_rounds)
+          result = review(code, context: round_context)
+          return result unless result.is_a?(Master::Result::Ok)
+          feedback = result.value!
+          history << feedback
+          if history.size >= 2 && plateau?(history[-2], history[-1])
+            @bus&.publish(:council_converged, round: i + 1)
+            break
+          end
+          round_context = round_digest(feedback, context)
+        end
+        Master::Result.ok(history.last || [])
       end
 
       def review(code, context: nil)
@@ -100,6 +121,30 @@ module Master
       end
 
       private
+
+      def plateau?(prev, curr)
+        return false if prev.empty? || curr.empty? || prev.size != curr.size
+        prev_texts = prev.map { |f| f[:feedback].to_s }
+        curr_texts = curr.map { |f| f[:feedback].to_s }
+        same = curr_texts.zip(prev_texts).count { |c, p| jaccard(c, p) >= PLATEAU_TEXT_SIM }
+        same.to_f / curr_texts.size >= PLATEAU_OVERLAP
+      end
+
+      def jaccard(a, b)
+        return 0.0 if a.empty? || b.empty?
+        sa = a.downcase.scan(/\w+/).uniq
+        sb = b.downcase.scan(/\w+/).uniq
+        union = (sa | sb).size
+        union.zero? ? 0.0 : (sa & sb).size.to_f / union
+      end
+
+      def round_digest(feedback, base_context)
+        lines = feedback.reject { |f| f[:persona] == "Judge" }.map do |f|
+          "#{f[:persona]} (#{f[:role]}): #{f[:feedback].to_s.lines.first(2).join.strip}"
+        end
+        digest = "\n--- prior round ---\n" + lines.join("\n") + "\n--- end ---\n"
+        [base_context, digest].compact.join
+      end
 
       def judge(feedback, code, context)
         prompt = build_judge_prompt(feedback, code, context)
