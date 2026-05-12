@@ -1,0 +1,71 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+# frozen_string_literal: true
+
+# master-smoke — boot + wire-check + (optional) web ping. Exits 0 clean, 1 on
+# any failure. Use after every refactor pass and as a pre-restart gate:
+#   exe/master-smoke && doas rcctl restart master
+
+Encoding.default_external = Encoding::UTF_8
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
+require "open3"
+require "net/http"
+require "uri"
+
+def step(name)
+  print "smoke: #{name.ljust(28)} "
+  $stdout.flush
+  t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  ok, msg = yield
+  dt = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * 1000).round
+  puts ok ? "ok (#{dt}ms)" : "fail (#{dt}ms) — #{msg}"
+  ok
+end
+
+failures = []
+
+require "master"
+failures << "require" unless step("require master") { [true, nil] }
+
+container = nil
+failures << "bootstrap" unless step("bootstrap container") do
+  container = Master.bootstrap_container(root: Dir.pwd)
+  [container.is_a?(Hash), "got #{container.class}"]
+end
+
+failures << "builder" unless step("builder.build") do
+  res = Master::Builder.build
+  [res.is_a?(Hash) && !res.empty?, "got #{res.class}"]
+end
+
+%i[agent pipeline scanner config bus renderer].each do |key|
+  failures << "wire:#{key}" unless step("wire #{key}") do
+    [container && container[key], "missing"]
+  end
+end
+
+port = (container.dig(:config) && container[:config].respond_to?(:web_port) ? container[:config].web_port : nil) || 53187
+
+if ARGV.include?("--web")
+  failures << "web" unless step("web GET /up") do
+    uri = URI("http://127.0.0.1:#{port}/up")
+    res = Net::HTTP.start(uri.host, uri.port, open_timeout: 2, read_timeout: 5) { |h| h.get(uri.path) }
+    [res.code.to_i.between?(200, 399), "HTTP #{res.code}"]
+  end
+
+  failures << "log" unless step("daemon log errors") do
+    out, = Open3.capture2e("doas", "tail", "-200", "/var/log/daemon")
+    recent = out.lines.last(200).join
+    bad = recent.scan(/NameError|uninitialized constant|undefined method|NoMethodError/i).size
+    [bad.zero?, "#{bad} suspicious entries"]
+  end
+end
+
+if failures.empty?
+  puts "smoke: clean"
+  exit 0
+else
+  puts "smoke: #{failures.size} failure(s): #{failures.join(", ")}"
+  exit 1
+end
