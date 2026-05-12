@@ -16,7 +16,7 @@ class CanvasController < ApplicationController
     response.headers["X-Accel-Buffering"] = "no"
 
     sse = SSE.new(response.stream, retry: 1500)
-    bus = Master::EventBus.instance rescue nil
+    bus = Master::Trace::EventBus.instance rescue nil
     sub = bus&.subscribe { |topic, payload| sse.write({topic:, payload:}, event: "bus") }
 
     keepalive = Thread.new { loop { sleep 15; sse.write({}, event: "ping") rescue break } }
@@ -32,7 +32,7 @@ class CanvasController < ApplicationController
   def post_event
     topic   = params.require(:topic)
     payload = params.fetch(:payload, {}).permit!.to_h
-    Master::EventBus.instance.publish(topic, **payload.transform_keys(&:to_sym)) rescue nil
+    Master::Trace::EventBus.instance.publish(topic, **payload.transform_keys(&:to_sym)) rescue nil
     head :accepted
   end
 
@@ -48,7 +48,7 @@ class CanvasController < ApplicationController
       tilt_x:     params[:tilt_x].to_f,
       tilt_y:     params[:tilt_y].to_f
     }
-    Master::EventBus.instance.publish(:canvas_state, **payload) rescue nil
+    Master::Trace::EventBus.instance.publish(:canvas_state, **payload) rescue nil
     head :accepted
   end
 

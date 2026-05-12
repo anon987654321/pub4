@@ -182,11 +182,11 @@ class ChatController < ApplicationController
 
     voice = params[:voice].to_s.downcase.to_sym
     style = params[:style].to_s.downcase.to_sym
-    voice = Master::Speech::DEFAULT_VOICE unless Master::Speech::VOICES.key?(voice)
+    voice = Master::Voice::Speech::DEFAULT_VOICE unless Master::Voice::Speech::VOICES.key?(voice)
     # :auto opts in to per-clause infer_style. Otherwise enforce whitelist.
-    style = Master::Speech::DEFAULT_STYLE if style != :auto && !Master::Speech::STYLES.key?(style)
+    style = Master::Voice::Speech::DEFAULT_STYLE if style != :auto && !Master::Voice::Speech::STYLES.key?(style)
 
-    bytes = Master::Speech.synthesize_bytes(text, voice: voice, style: style)
+    bytes = Master::Voice::Speech.synthesize_bytes(text, voice: voice, style: style)
     if bytes && bytes.bytesize > 0
       send_data bytes, type: "audio/mpeg", disposition: "inline"
     else

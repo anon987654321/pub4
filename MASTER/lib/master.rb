@@ -100,7 +100,7 @@ module Master
   end
 
   def self.bootstrap_container(root: Dir.pwd)
-    Telemetry.bootstrap!(root: root)
+    Trace::Telemetry.bootstrap!(root: root)
     container = Builder.build(root:)
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
