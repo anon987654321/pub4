@@ -6,7 +6,7 @@ module Master
     SECTIONS = %i[drives breaker rules ring].freeze
     RING_LINES = 8
 
-    def initialize(homeostat:, breaker:, logging:, scan_registry: Master::Scan::Rule)
+    def initialize(homeostat:, breaker:, logging:, scan_registry: Master::Judge::Scan::Rule)
       @homeostat = homeostat
       @breaker   = breaker
       @logging   = logging

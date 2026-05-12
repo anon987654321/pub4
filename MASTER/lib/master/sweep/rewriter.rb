@@ -16,7 +16,7 @@ module Master
       end
 
       def library_files
-        Dir.glob(File.join(@root, "lib", "**", Scan::Scanner::SCAN_GLOB))
+        Dir.glob(File.join(@root, "lib", "**", Master::Judge::Scan::Scanner::SCAN_GLOB))
            .reject { |path| path.include?("/vendor/") || path.include?("/knowledge/") }
            .map    { |path| path.delete_prefix("#{@root}/") }
            .sort
@@ -65,7 +65,7 @@ module Master
 
       def rewrite(path, rel)
         source = File.read(path, encoding: "UTF-8")
-        lang   = Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
+        lang   = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
         if source.bytesize >= CANDIDATE_THRESHOLD_BYTES
           rewrite_best_of(source, path, rel, lang, n: CANDIDATE_COUNT)
         else
@@ -151,7 +151,7 @@ module Master
       end
 
       def violations_in(path)
-        return 0 unless Scan::Rule::EXT_LANG.key?(File.extname(path).downcase) && File.exist?(path)
+        return 0 unless Master::Judge::Scan::Rule::EXT_LANG.key?(File.extname(path).downcase) && File.exist?(path)
         scan_result = @scanner.scan(path, depth: :deep)
         scan_result.ok? ? scan_result.value!.size : 0
       rescue StandardError => _e
@@ -160,7 +160,7 @@ module Master
 
       def violations_in_text(content, ref_path)
         ext = File.extname(ref_path).downcase
-        return 0 unless Scan::Rule::EXT_LANG.key?(ext)
+        return 0 unless Master::Judge::Scan::Rule::EXT_LANG.key?(ext)
         Tempfile.open(["vcheck", ext]) do |file|
           file.write(content); file.flush
           scan_result = @scanner.scan(file.path, depth: :deep)

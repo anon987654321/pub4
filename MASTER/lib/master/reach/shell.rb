@@ -19,7 +19,7 @@ module Master
       FAILURE_WINDOW = 5
       FAILURE_WARN_AT = 3
 
-      BLOCKLIST   = Security::Permissions::BLOCKLIST
+      BLOCKLIST   = Judge::Security::Permissions::BLOCKLIST
       ZSH_BANNED  = begin
         merged = Master.load_yaml(File.join(Master::ROOT, "data", "patterns.yml"))
         zsh_data = (merged && merged["zsh"]) ||

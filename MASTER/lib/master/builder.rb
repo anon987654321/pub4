@@ -65,7 +65,7 @@ module Master
       autonomous = build_autonomous(root, infra, agent:, scanner:, soul: soul_doc)
       {
         agent:, soul: soul_doc, scanner:, swarm:, deliberation:, council_stage:, ideation:,
-        guard: Security::InjectionGuard.new
+        guard: Judge::Security::InjectionGuard.new
       }.merge(autonomous)
     end
 
@@ -81,16 +81,16 @@ module Master
       constitution = Ground::Constitution.new
       agent.wire_constitution(constitution)
       scanner               = build_scanner(root:, agent:, bus:)
-      swarm                 = Swarm::Coordinator.new(agent:, event_bus: bus)
+      swarm                 = Judge::Swarm::Coordinator.new(agent:, event_bus: bus)
       deliberation, council, ideation = build_council(root, infra, agent:)
       [agent, soul_doc, scanner, swarm, deliberation, council, ideation]
     end
 
     def build_council(root, infra, agent:)
-      personas     = Council::Personas.load(File.join(ROOT, "data", "council.yml"))
+      personas     = Judge::Council::Personas.load(File.join(ROOT, "data", "council.yml"))
       axioms       = Ground::Axioms.new(root:)
-      deliberation = Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus], axioms:)
-      ideation     = Council::Ideation.new(agent:, event_bus: infra[:bus])
+      deliberation = Judge::Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus], axioms:)
+      ideation     = Judge::Council::Ideation.new(agent:, event_bus: infra[:bus])
       [deliberation, Stages::Council.new(deliberation:, config: infra[:config], event_bus: infra[:bus]), ideation]
     end
 
