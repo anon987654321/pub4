@@ -8,6 +8,14 @@ $stdout.set_encoding("UTF-8")
 $stderr.set_encoding("UTF-8")
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
+if File.readable?("/etc/master.env")
+  File.foreach("/etc/master.env") do |line|
+    key, val = line.chomp.split("=", 2)
+    ENV[key] ||= val if key && val
+  end
+end
+
 require "master"
 
 def boot_web_ui(config)

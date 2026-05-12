@@ -6,6 +6,8 @@ module Master
     # Route — attach the correct handler to the context.
     # :command looks up registered command. :llm uses the agent.
     class Route
+      EXIT_ALIASES = %w[exit quit q bye].freeze
+
       def initialize(commands:, agent:)
         @commands = commands
         @agent    = agent
@@ -25,6 +27,8 @@ module Master
       private
 
       def route_command(ctx)
+        return Result.err("bye", category: :shutdown) if EXIT_ALIASES.include?(ctx[:command])
+
         cmd = @commands[ctx[:command]]
         unless cmd
           suggestion = closest_command(ctx[:command])

@@ -40,7 +40,7 @@ module Master
 
         if vague?(msg)
           if msg.match?(GREETING_STUBS)
-            return Result.ok(ctx.merge(intent: :clarify, clarifying_question: "ready. what are you working on?"))
+            return Result.ok(ctx.merge(intent: :clarify, clarifying_question: "ready. what are you working on? (try /help)"))
           end
           return Result.ok(ctx.merge(intent: :clarify, clarifying_question: ELICIT_DEFAULT))
         end
