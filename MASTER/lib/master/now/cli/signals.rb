@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   class CLI
     private
 
@@ -32,5 +33,6 @@ module Master
         puts "\n#{@renderer.render("^C again to quit", mode: :warning)}"
       end
     end
+  end
   end
 end

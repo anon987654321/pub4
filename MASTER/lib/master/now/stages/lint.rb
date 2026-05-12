@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Lint — scan written files and chat code blocks; autofix via autoloop if available.
     class Lint
@@ -65,5 +66,6 @@ module Master
         []
       end
     end
+  end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Infer — promote natural-language messages to :command intent via data/infer_patterns.yml.
     class Infer
@@ -94,5 +95,6 @@ module Master
         end
       end
     end
+  end
   end
 end

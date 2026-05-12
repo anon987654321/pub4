@@ -3,6 +3,7 @@
 require "open3"
 
 module Master
+  module Now
   class Pipeline
     ROLLBACK_CATEGORIES   = %i[validation axiom_violation unknown provider_error llm_call_failure].freeze
     MS_PER_SECOND         = 1000
@@ -144,5 +145,6 @@ module Master
     def stage_label(stage)
       stage.class.name.split("::").last
     end
+  end
   end
 end

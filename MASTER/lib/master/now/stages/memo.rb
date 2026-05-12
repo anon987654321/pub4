@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Memo — extract memories from :user_message only; assistant output ignored to prevent hallucination loops.
     class Memo
@@ -59,5 +60,6 @@ module Master
         end
       end
     end
+  end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Execute — call the handler resolved by Route and store its output.
     class Execute
@@ -13,5 +14,6 @@ module Master
         Result.err("execute: #{e.message}", category: :handler_exception)
       end
     end
+  end
   end
 end

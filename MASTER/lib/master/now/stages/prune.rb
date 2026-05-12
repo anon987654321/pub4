@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Prune — strip sycophancy and markdown formatting from LLM responses.
     # Rules loaded from data/rules.yml (voice.strunk). Fence-aware: prunes prose, leaves code blocks.
@@ -76,5 +77,6 @@ module Master
         @rules = {}
       end
     end
+  end
   end
 end

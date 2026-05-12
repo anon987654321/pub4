@@ -56,7 +56,7 @@ if $stdin.tty?
   cli.run(message.empty? ? nil : message)
 else
   container = Master.build(root: Dir.pwd)
-  cli       = Master::CLI.new(container:)
+  cli       = Master::Now::CLI.new(container:)
   $stdout.sync = true
   $stdin.each_line { |line| cli.pipe(line) }
 end

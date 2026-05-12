@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Deliberate — enumerate N approaches before acting; prevents first-solution fixation.
     class Deliberate
@@ -35,5 +36,6 @@ module Master
         PROMPT
       end
     end
+  end
   end
 end

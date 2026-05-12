@@ -3,6 +3,7 @@
 require "yaml"
 
 module Master
+  module Now
   module Stages
     # Council — 6-persona deliberation on dangerous or multi-file changes.
     # PRAISE votes are appended to data/exemplars.yml for future reference.
@@ -106,5 +107,6 @@ module Master
         @bus&.publish("council:exemplar_error", error: e.message)
       end
     end
+  end
   end
 end

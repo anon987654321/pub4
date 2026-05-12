@@ -91,7 +91,7 @@ module Master
       axioms       = Ground::Axioms.new(root:)
       deliberation = Judge::Council::Deliberation.new(personas:, agent:, event_bus: infra[:bus], axioms:)
       ideation     = Judge::Council::Ideation.new(agent:, event_bus: infra[:bus])
-      [deliberation, Stages::Council.new(deliberation:, config: infra[:config], event_bus: infra[:bus]), ideation]
+      [deliberation, Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: infra[:bus]), ideation]
     end
 
     def build_agent_instance(root, infra)
@@ -126,7 +126,7 @@ module Master
       bus      = infra[:bus]
       commands = CommandRegistry.build(infra:, ai:, root:)
       stages   = build_stages(root:, infra:, ai:, commands:)
-      pipeline = Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
+      pipeline = Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
       ai[:standing].wire_pipeline(pipeline)
       gateway = Gateway.new(pipeline:, session: infra[:session], event_bus: bus)
       commands["gateway"] = ->(ctx) { gateway.channels }
@@ -137,20 +137,20 @@ module Master
       config = infra[:config]
       bus    = infra[:bus]
       [
-        Stages::Intake.new,
-        Stages::Infer.new,
-        Stages::Route.new(commands:, agent: ai[:agent]),
-        Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
-        Stages::Deliberate.new(agent: ai[:agent], config:),
-        Stages::Execute.new,
-        Pipeline::SkipOnPressure.new(Pipeline::ParallelGroup.new(
+        Now::Stages::Intake.new,
+        Now::Stages::Infer.new,
+        Now::Stages::Route.new(commands:, agent: ai[:agent]),
+        Now::Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
+        Now::Stages::Deliberate.new(agent: ai[:agent], config:),
+        Now::Stages::Execute.new,
+        Now::Pipeline::SkipOnPressure.new(Now::Pipeline::ParallelGroup.new(
           ai[:council_stage],
-          Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:, event_bus: bus),
+          Now::Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:, event_bus: bus),
           bus:
         ), bus:),
-        Pipeline::SkipOnPressure.new(Stages::Prune.new, bus:),
-        Stages::Memo.new(memory: infra[:memory], event_bus: bus),
-        Stages::Render.new(renderer: infra[:renderer])
+        Now::Pipeline::SkipOnPressure.new(Now::Stages::Prune.new, bus:),
+        Now::Stages::Memo.new(memory: infra[:memory], event_bus: bus),
+        Now::Stages::Render.new(renderer: infra[:renderer])
       ]
     end
 

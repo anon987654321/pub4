@@ -8,6 +8,7 @@ require "tty-prompt"
 require "fileutils"
 
 module Master
+  module Now
   class CLI
     IDLE_SLEEP_DEFAULT = 60
     REPLAY_TURNS       = 5
@@ -605,5 +606,6 @@ module Master
     def short_model(model)
       model.to_s.sub(/\Aclaude-cli:/, "").sub(/\Aweb-chat:/, "").split("/").last.to_s.sub(/:free$/, "")
     end
+  end
   end
 end

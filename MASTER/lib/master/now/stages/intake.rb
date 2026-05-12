@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Intake — parse raw user message into intent + structured fields.
     # Slash syntax: /command args → intent :command.
@@ -24,5 +25,6 @@ module Master
         end
       end
     end
+  end
   end
 end

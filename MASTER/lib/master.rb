@@ -47,7 +47,7 @@ module Master
   %w[
     loop/autoloop/fix_evaluator.rb
     builder/infra_helpers.rb
-    cli/signals.rb
+    now/cli/signals.rb
     command_registry/agent_commands.rb
     command_registry/memory_commands.rb
     command_registry/service_commands.rb

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Route — attach the correct handler to the context.
     # :command looks up registered command. :llm uses the agent.
@@ -53,5 +54,6 @@ module Master
         dp[m][n]
       end
     end
+  end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Guard — reject messages that contain prompt-injection patterns.
     # Skips scan when message is absent (command-only paths set no :message).
@@ -20,5 +21,6 @@ module Master
         Result.ok(ctx)
       end
     end
+  end
   end
 end

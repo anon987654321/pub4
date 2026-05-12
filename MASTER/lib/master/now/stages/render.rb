@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Master
+  module Now
   module Stages
     # Render — format the final output for display.
     class Render
@@ -19,5 +20,6 @@ module Master
         Result.ok(ctx.merge(rendered:))
       end
     end
+  end
   end
 end
