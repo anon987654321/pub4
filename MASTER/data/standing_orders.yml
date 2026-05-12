@@ -1,14 +1,15 @@
 ---
 - name: auto_default
-  description: Default pipeline — iterative scan + autofix sweep + council review until
-    plateau (Δ&lt;5% violations) or 4 rounds. Runs hourly and after any /chat or CLI
-    session that mutated MASTER source. User never types this.
+  description: Default pipeline — iterative scan + autofix sweep + council review
+    until plateau (Δ&lt;5% violations) or 4 rounds. Runs hourly and after any /chat
+    or CLI session that mutated MASTER source. User never types this.
   trigger: scheduled
   interval_s: 3600
   command: auto .
   enabled: true
-  state: done
-  last_run_at: 1778522373
+  state: error
+  last_run_at: 1778581438
+  last_error: 'Execute: unknown category: handler_exception'
 - name: nightly_dreams
   description: Consolidate memories during low-activity periods
   trigger: scheduled
