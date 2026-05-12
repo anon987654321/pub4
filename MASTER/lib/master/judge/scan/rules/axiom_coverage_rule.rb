@@ -12,11 +12,11 @@ module Master
         RULE_ID           = "axiom_coverage"
         DESCRIPTION       = "Every rule must have scan rule coverage; every tag must be a real rule"
         RULES_YML_PATH    = File.join("data", "rules.yml")
-        SCAN_RULES_DIR    = File.join("lib", "master", "scan", "rules")
+        SCAN_RULES_DIR    = File.join("lib", "master", "judge", "scan", "rules")
         AXIOM_TAGS_VAR    = :@axiom_tags
         ORPHANED_TAG_MSG  = "axiom_tag :%s has no entry in rules.yml — define it or remove the tag"
         UNCOVERED_RULE_MSG = "rule %s has no scan rule coverage — add a rule or accept as advisory"
-        ORPHAN_FILE_MSG   = "scan rule file %s does not define a class inheriting from Master::Scan::Rule — registry will skip it silently"
+        ORPHAN_FILE_MSG   = "scan rule file %s does not define a class inheriting from Master::Judge::Scan::Rule — registry will skip it silently"
 
         def initialize(root: nil)
           super()
