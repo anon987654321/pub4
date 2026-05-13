@@ -37,9 +37,15 @@ module Master
 
   loader = Zeitwerk::Loader.for_gem
   loader.inflector.inflect(
-    "cli"            => "CLI",
-    "llm"            => "LLM",
-    "llm_dispatcher" => "LLMDispatcher"
+    "cli"             => "CLI",
+    "llm"             => "LLM",
+    "llm_dispatcher"  => "LLMDispatcher",
+    "mcp_server"      => "MCPServer",
+    "mcp_coordinator" => "McpCoordinator",
+    "diff_stager"     => "DiffStager",
+    "code_index"      => "CodeIndex",
+    "git_context"     => "GitContext",
+    "ast_edit"        => "AstEdit"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.ignore(File.join(__dir__, "master", "ruby_llm_patch.rb"))
