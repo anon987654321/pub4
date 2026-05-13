@@ -42,6 +42,7 @@ module Master
       @last_input      = nil
       @last_cost       = 0.0
       @dmesg_sub       = nil
+      set_visitor_mode_if_unauthenticated
     end
 
     def run(initial_message = nil)
@@ -53,7 +54,7 @@ module Master
       puts @renderer.session_line(@session.name) if @session.name
       print_repo_tree unless booted_before?
       replay_recent_turns if @session.messages.any?
-      process(initial_message) if initial_message
+      run_input(initial_message) if initial_message
       @running = true
       repl_loop
     end
@@ -62,6 +63,10 @@ module Master
       stripped = input.strip
       return if stripped.empty?
       run_input(stripped)
+    end
+
+    def process(input)
+      run_input(input)
     end
 
     def run_input(input)
@@ -107,6 +112,11 @@ module Master
     end
 
     private
+
+    def set_visitor_mode_if_unauthenticated
+      web_token = @config&.dig("web_token")
+      Thread.current[:master_visitor] = true if web_token.nil? || web_token.empty?
+    end
 
     def assign_container_refs!(deps)
       @session     = deps[:session]
@@ -198,7 +208,7 @@ module Master
 
     def run_undo
       res = @undo.undo!
-      if res.is_a?(Master::Result::Ok)
+      if res.respond_to?(:ok?) && res.ok?
         puts @renderer.render("undo: #{Array(res.value!).join(", ")}", mode: :success)
       else
         puts @renderer.render(res.message, mode: :warning)
@@ -207,7 +217,7 @@ module Master
 
     def run_redo
       res = @undo.redo!
-      if res.is_a?(Master::Result::Ok)
+      if res.respond_to?(:ok?) && res.ok?
         puts @renderer.render("redo: #{Array(res.value!).join(", ")}", mode: :success)
       else
         puts @renderer.render(res.message, mode: :warning)
@@ -336,7 +346,7 @@ module Master
     end
 
     def start_background_loop
-      cfg           = Master::Loop::Master::Loop::Master::Loop::AutoLoop.load_cfg
+      cfg           = Master::Loop::AutoLoop.load_cfg
       return unless cfg.fetch("background", true)
       idle_interval = cfg.fetch("idle_sleep", IDLE_SLEEP_DEFAULT)
       @bg_thread = Thread.new do
@@ -354,7 +364,7 @@ module Master
       lib_dir = File.join(@root, "lib")
       changed = changed_lib_files(lib_dir)
       result  = changed.any? ? scan_files(changed) : @scanner.scan_dir(lib_dir, depth: :standard)
-      return unless result.is_a?(Master::Result::Ok)
+      return unless result.respond_to?(:ok?) && result.ok?
 
       prev = @prev_violations
       @violations      = count_violations(result.value!)
@@ -386,7 +396,7 @@ module Master
 
     def count_violations(pairs)
       pairs.sum do |_file, file_result|
-        file_result.is_a?(Master::Result::Ok) ? file_result.value!.size : 0
+        file_result.respond_to?(:ok?) && file_result.ok? ? file_result.value!.size : 0
       end
     end
 
