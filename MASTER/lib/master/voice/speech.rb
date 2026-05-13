@@ -48,16 +48,6 @@ module Master
       fallback
     end
 
-    PULSE_SOCKET     = "/tmp/pulse/native".freeze
-    PULSE_DAEMON     = "/data/data/com.termux/files/usr/bin/pulseaudio".freeze
-    PAPLAY_CANDIDATES = %w[
-      /data/data/com.termux/files/usr/bin/paplay
-      /usr/bin/paplay
-      /usr/local/bin/paplay
-    ].freeze
-    FFMPEG_CANDIDATES = %w[/usr/bin/ffmpeg /usr/local/bin/ffmpeg].freeze
-    DIRECT_PLAYERS    = %w[aucat mpv ffplay aplay].freeze
-
     module_function
 
     def available?
@@ -81,19 +71,12 @@ module Master
     def synthesize_bytes(text, **opts)
       path = synthesize(text, **opts)
       return unless path
-      bytes = File.binread(path)
-      File.unlink(path) rescue StandardError => _e
-      bytes
+      begin
+        File.binread(path)
+      ensure
+        File.unlink(path) rescue nil
+      end
     end
-
-    def play(audio_path)
-      return false unless audio_path && File.exist?(audio_path)
-      play_via_pulse(audio_path) || play_direct(audio_path)
-    end
-
-    private
-
-    module_function
 
     # Shells out to exe/tts-worker — Falcon's Async scheduler blocks Process.fork
     # ("Closing scheduler with blocked operations"), and EventMachine.run inside a

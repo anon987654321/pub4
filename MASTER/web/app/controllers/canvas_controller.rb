@@ -6,8 +6,8 @@
 class CanvasController < ApplicationController
   def post_event
     topic   = params.require(:topic)
-    payload = params.fetch(:payload, {}).permit!.to_h
-    Master::Trace::EventBus.instance.publish(topic, **payload.transform_keys(&:to_sym)) rescue nil
+    payload = params.fetch(:payload, {}).permit!.to_h.transform_keys(&:to_sym)
+    container[:bus].publish(topic, **payload) rescue nil
     head :accepted
   end
 
@@ -21,7 +21,7 @@ class CanvasController < ApplicationController
       tilt_x:     params[:tilt_x].to_f,
       tilt_y:     params[:tilt_y].to_f
     }
-    Master::Trace::EventBus.instance.publish(:canvas_state, **payload) rescue nil
+    container[:bus].publish(:canvas_state, **payload) rescue nil
     head :accepted
   end
 end

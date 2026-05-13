@@ -24,8 +24,9 @@
 class EventsController < ApplicationController
   include ActionController::Live
 
-  POLL_INTERVAL_S = 0.1
-  MAX_STREAM_S    = 600   # hard cap — 10 minute stream ceiling
+  POLL_INTERVAL_S    = 0.1
+  KEEPALIVE_EVERY_S  = 15.0  # SSE comment cadence — long enough to be silent, short enough to keep proxies happy
+  MAX_STREAM_S       = 600   # hard cap — 10 minute stream ceiling
 
   def stream
     response.headers["Content-Type"]      = "text/event-stream"
@@ -37,12 +38,16 @@ class EventsController < ApplicationController
     sub      = bus.subscribe("*") { |ev|
       received << { t: Time.now.to_f, type: ev[:event], data: ev }
     }
-    deadline = Time.now + MAX_STREAM_S
+    deadline       = Time.now + MAX_STREAM_S
+    next_keepalive = Time.now + KEEPALIVE_EVERY_S
 
     loop do
       break if Time.now > deadline
       if received.empty?
-        response.stream.write(": keepalive\n\n")  # SSE comment, prevents proxy timeout
+        if Time.now >= next_keepalive
+          response.stream.write(": keepalive\n\n")  # SSE comment, prevents proxy timeout
+          next_keepalive = Time.now + KEEPALIVE_EVERY_S
+        end
         sleep POLL_INTERVAL_S
       else
         event = received.pop(true) rescue nil

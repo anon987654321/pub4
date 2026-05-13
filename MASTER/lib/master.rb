@@ -87,11 +87,11 @@ module Master
     raise "No LLM API key found. Set DEEPSEEK_API_KEY, OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, or MISTRAL_API_KEY."
   end
 
-  def self.load_yaml(path, symbolize_names: false)
+  def self.load_yaml(path, symbolize_names: false, default: {})
     YAML.safe_load_file(path, aliases: true, symbolize_names: symbolize_names)
   rescue Psych::Exception, Errno::ENOENT, Errno::EACCES => e
     warn("load_yaml: " + e.message)
-    {}
+    default
   end
 
   def self.build(root: Dir.pwd)
@@ -106,10 +106,10 @@ module Master
     container
   end
 
-  def self.boot(root: Dir.pwd, argv: [])
+  def self.boot(root: Dir.pwd)
     Pledge.stage1_boot!(root)
     container = bootstrap_container(root: root)
     Pledge.stage2_lock!
-    CLI.new(container:)
+    Now::CLI.new(container:)
   end
 end

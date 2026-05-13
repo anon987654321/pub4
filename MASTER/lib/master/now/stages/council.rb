@@ -19,6 +19,7 @@ module Master
         @bus               = event_bus
         @enabled           = @config&.[]("council") == true || enabled
         @dangerous_patterns = load_patterns
+        @exemplar_mutex    = Mutex.new
       end
 
       def call(ctx)
@@ -30,6 +31,10 @@ module Master
 
         feedback = result.value!
         log_praise(ctx[:message], feedback) if praise?(feedback)
+        if reject?(feedback)
+          @bus&.publish("council:veto", message: ctx[:message].to_s[0, 120])
+          return Result.err("council vetoed: #{feedback.to_s[0, 240]}", category: :policy)
+        end
 
         Result.ok(ctx.merge(council_feedback: feedback))
       end
@@ -89,6 +94,12 @@ module Master
         text.scan(/\bpraise\b/).size >= 3
       end
 
+      # Detect majority REJECT/BLOCK/VETO in council feedback text.
+      def reject?(feedback)
+        text = feedback.to_s.downcase
+        text.scan(/\b(?:reject|block|veto)\b/).size >= 3
+      end
+
       # Append a PRAISE entry to data/exemplars.yml.
       def log_praise(message, feedback)
         entry = {
@@ -96,9 +107,9 @@ module Master
           "message"   => message.to_s[0, EXEMPLAR_MSG_CHARS],
           "feedback"  => feedback.to_s[0, EXEMPLAR_FEEDBACK_CHARS]
         }
-        @exemplar_mutex ||= Mutex.new
         @exemplar_mutex.synchronize do
-          existing = File.exist?(EXEMPLARS_PATH) ? (Master.load_yaml(EXEMPLARS_PATH) || []) : []
+          loaded   = File.exist?(EXEMPLARS_PATH) ? Master.load_yaml(EXEMPLARS_PATH, default: []) : []
+          existing = loaded.is_a?(Array) ? loaded : []
           tmp = "#{EXEMPLARS_PATH}.tmp.#{Process.pid}"
           File.write(tmp, YAML.dump(existing + [entry]))
           File.rename(tmp, EXEMPLARS_PATH)

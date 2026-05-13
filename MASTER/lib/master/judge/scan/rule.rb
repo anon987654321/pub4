@@ -19,16 +19,15 @@ module Master
 
       attr_reader :id, :description, :severity, :rule_tags, :auto_fix
 
+      @registry       = []
+      @registry_mutex = Mutex.new
+
       def self.inherited(subclass)
-        @registry_mutex ||= Mutex.new
-        @registry_mutex.synchronize do
-          (@registry ||= []) << subclass
-        end
+        @registry_mutex.synchronize { @registry << subclass }
       end
 
       def self.registry
-        @registry_mutex ||= Mutex.new
-        @registry_mutex.synchronize { @registry || [] }
+        @registry_mutex.synchronize { @registry.dup }
       end
 
       # Rules that need constructor args (root:, agent:) override this to false.

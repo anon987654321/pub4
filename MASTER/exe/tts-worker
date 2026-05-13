@@ -19,7 +19,15 @@ Faye::WebSocket::Client.singleton_class.prepend(Module.new do
 end)
 
 voice, rate, pitch, out_path = ARGV
+if [voice, rate, pitch, out_path].any?(&:nil?)
+  warn "tts-worker: usage: tts-worker VOICE RATE PITCH OUT_PATH < text"
+  exit 64 # EX_USAGE
+end
 text = $stdin.read
+if text.to_s.strip.empty?
+  warn "tts-worker: empty stdin"
+  exit 65 # EX_DATAERR
+end
 
 begin
   RbEdgeTTS::Communicate.new(text, voice, rate: rate, pitch: pitch).save_sync(out_path)

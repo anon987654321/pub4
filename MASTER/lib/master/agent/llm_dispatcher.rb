@@ -42,6 +42,7 @@ module Master
         @config, @cache, @circuit_breaker = deps.config, deps.cache, deps.circuit_breaker
         @tools, @bus, @system_prompt_proc = deps.tools, deps.bus, system_prompt
         @model_router = deps.model_router
+        @session      = deps.session
         @tool_registry = load_tool_registry
       end
 
@@ -113,7 +114,25 @@ module Master
         else
           chat_session.ask(messages.last[:content])
         end
+        record_usage(reply, selected_model)
         Result.ok(extract_response(reply, selected_model))
+      end
+
+      # Record actual token usage to the session so the CLI cost line reflects reality.
+      # Falls back to estimate when the provider doesn't surface usage fields.
+      def record_usage(reply, model)
+        return unless @session
+        input  = reply.respond_to?(:input_tokens)  ? reply.input_tokens.to_i  : 0
+        output = reply.respond_to?(:output_tokens) ? reply.output_tokens.to_i : 0
+        tokens = input + output
+        if tokens.zero? && reply.respond_to?(:content)
+          tokens = reply.content.to_s.bytesize / Master::Trace::Session::TOKENS_PER_CHAR
+        end
+        return if tokens.zero?
+        cost = (tokens * COST_PER_TOKEN).round(6)
+        @session.record_cost(cost, model: model, tokens: tokens)
+      rescue StandardError => e
+        @bus&.publish("cost:record_error", error: e.message)
       end
 
       def breaker_for(model_id)

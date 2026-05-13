@@ -56,15 +56,14 @@ cli = nil
 trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved"; exit 0 }
 trap("TERM") { cli&.container&.dig(:session)&.save! rescue nil; exit 0 }
 
+cli = Master.boot(root: Dir.pwd)
+
 if $stdin.tty?
-  cli = Master.boot(root: Dir.pwd, argv: ARGV)
   boot_web_ui(cli.container[:config])
 
   message = ARGV.join(" ").strip
   cli.run(message.empty? ? nil : message)
 else
-  container = Master.build(root: Dir.pwd)
-  cli       = Master::Now::CLI.new(container:)
   $stdout.sync = true
   $stdin.each_line { |line| cli.pipe(line) }
 end

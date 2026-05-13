@@ -1,0 +1,13 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #000; overflow: hidden; -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none; }
+canvas { position: fixed; inset: 0; display: block; }
+#primer { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9; cursor: pointer; }
+#primer::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: rgb(215,165,130); animation: pulse 1.6s ease-in-out infinite; }
+#primer.gone { opacity: 0; pointer-events: none; transition: opacity 0.9s ease; }
+@keyframes pulse { 0%,100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(2.2); opacity: 1; } }
+#zsh { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 14px env(safe-area-inset-bottom, 10px) 14px; display: flex; align-items: center; gap: 6px; font: 13px ui-monospace, 'SF Mono', Menlo, monospace; color: rgba(220,170,135,0.92); background: linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0)); border-top: 1px solid rgba(220,170,135,0.10); z-index: 8; opacity: 0; transform: translateY(8px); transition: opacity 0.6s ease, transform 0.6s ease; pointer-events: none; }
+#zsh.live { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#zsh .pp { color: rgb(220,90,70); font-weight: 700; letter-spacing: 0.02em; }
+#zsh .sep { color: rgba(220,170,135,0.45); }
+#zsh input { flex: 1; background: transparent; border: 0; outline: 0; color: inherit; font: inherit; caret-color: rgb(220,90,70); padding: 2px 0; }
+#zsh input::placeholder { color: rgba(220,170,135,0.32); }
