@@ -1,6 +1,6 @@
-const CACHE = 'master-v8';
-const SHELL = ['/', '/canvas', '/swarm.html', '/icon.png', '/icon.svg', '/manifest.json'];
-const NETWORK_ONLY = /^\/(chat\/message|canvas\/stream|api\/)/;
+const CACHE = 'master-v9';
+const SHELL = ['/', '/swarm.html', '/icon.png', '/icon.svg', '/manifest.json'];
+const NETWORK_ONLY = /^\/(chat\/message|api\/)/;
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

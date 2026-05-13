@@ -1,34 +1,9 @@
 # frozen_string_literal: true
 
-# Live agent-controlled canvas. Spec: data/canvas.yml.
-# Reads from EventBus, streams to browser via SSE.
+# Sink for closed-loop UI signals. Chat client posts mood/mode/idle/etc. and
+# raw bus events; we re-emit on the in-process EventBus so prompt-builder
+# can pick up user-state context. No view, no SSE.
 class CanvasController < ApplicationController
-  include ActionController::Live
-
-  def show
-    @session_id = session[:canvas_id] ||= SecureRandom.hex(8)
-    render layout: false
-  end
-
-  def stream
-    response.headers["Content-Type"]      = "text/event-stream"
-    response.headers["Cache-Control"]     = "no-cache"
-    response.headers["X-Accel-Buffering"] = "no"
-
-    sse = SSE.new(response.stream, retry: 1500)
-    bus = Master::Trace::EventBus.instance rescue nil
-    sub = bus&.subscribe { |topic, payload| sse.write({topic:, payload:}, event: "bus") }
-
-    keepalive = Thread.new { loop { sleep 15; sse.write({}, event: "ping") rescue break } }
-    sleep
-  rescue IOError, ActionController::Live::ClientDisconnected
-    # client gone
-  ensure
-    keepalive&.kill
-    bus&.unsubscribe(sub) if sub
-    sse&.close
-  end
-
   def post_event
     topic   = params.require(:topic)
     payload = params.fetch(:payload, {}).permit!.to_h
@@ -36,8 +11,6 @@ class CanvasController < ApplicationController
     head :accepted
   end
 
-  # canvas/state — closed-loop UI → MASTER. Client posts mood/mode/idle/etc.;
-  # bus broadcasts so prompt-builder can include user state context.
   def state
     payload = {
       mood:       params[:mood].to_s,
@@ -50,21 +23,5 @@ class CanvasController < ApplicationController
     }
     Master::Trace::EventBus.instance.publish(:canvas_state, **payload) rescue nil
     head :accepted
-  end
-
-  class SSE
-    def initialize(io, retry: nil)
-      @io = io
-      @io.write("retry: #{binding.local_variable_get(:retry)}\n\n") if binding.local_variable_get(:retry)
-    end
-
-    def write(data, event: nil)
-      @io.write("event: #{event}\n") if event
-      @io.write("data: #{data.to_json}\n\n")
-    end
-
-    def close
-      @io.close rescue nil
-    end
   end
 end

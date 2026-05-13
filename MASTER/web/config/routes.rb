@@ -6,8 +6,6 @@ Rails.application.routes.draw do
   get  "chat/metrics",  to: "chat#metrics"
   get  "chat/dmesg",    to: "chat#dmesg"
   get  "events/stream", to: "events#stream"
-get  "canvas",         to: "canvas#show"
-get  "canvas/stream",  to: "canvas#stream"
 post "canvas/event",   to: "canvas#post_event"
   post "canvas/state",   to: "canvas#state"
   get  "chat/message",  to: "chat#message"
