@@ -1,0 +1,149 @@
+principle: gems_are_capabilities_not_architecture
+
+existing:
+  ruby_llm:
+    role: model_provider_layer
+    wrap_with:
+      - provider_router
+      - health_scoring
+      - fallback_policy
+      - event_logging
+      - schema_validation
+
+  ruby_llm_mcp:
+    role: external_tool_bridge
+    wrap_with:
+      - tool_contracts
+      - permissions
+      - timeout_policy
+      - replay_events
+
+  tty_stack:
+    gems:
+      - tty-prompt
+      - tty-reader
+      - tty-spinner
+      - tty-markdown
+      - tty-table
+      - tty-screen
+      - tty-box
+      - tty-command
+      - tty-tree
+      - tty-config
+      - tty-logger
+      - tty-progressbar
+      - pastel
+    role: terminal_interface
+    rule: keep_output_grepable_and_dmesg_like
+    avoid:
+      - spinner_noise
+      - decorative_boxes_without_content
+      - color_without_semantics
+
+  sinatra:
+    role: lightweight_runtime_web_interface
+    wrap_with:
+      - auth_tier
+      - runtime_events
+      - pwa_contract
+      - accessibility_contract
+
+  rb_edge_tts:
+    role: optional_voice_output
+    rule: soft_optional_no_boot_failure
+
+  rubocop:
+    role: deterministic_style_enforcer
+    run_before: model_refactor
+
+  reek:
+    role: design_smell_detector
+    feed_into: scan_findings
+
+  flay:
+    role: duplication_detector
+    feed_into: quality_weights
+
+  diffy:
+    role: patch_visualization
+    feed_into:
+      - council_review
+      - replay
+      - audit_log
+
+  rouge:
+    role: code_rendering
+    use_in:
+      - terminal
+      - web
+      - review_ui
+
+  opentelemetry_sdk:
+    role: optional_trace_bridge
+    rule: runtime_events_remain_canonical
+
+recommended:
+  json_schemer:
+    role: contract_validation
+    reason: validates tool contracts, provider outputs, workflow specs, event schemas
+    priority: high
+
+  sqlite3:
+    role: local_runtime_state
+    reason: queues, provider health, semantic indexes, replay checkpoints
+    priority: high
+
+  sqlite_vec:
+    role: local_vector_search
+    reason: semantic memory and hybrid retrieval
+    priority: medium
+    caution: alpha_platform_gem_check_required
+
+  dry_schema:
+    role: typed_input_validation
+    reason: Ruby-native validation for commands and runtime objects
+    priority: medium
+
+  dry_monads:
+    role: result_flow
+    reason: could replace or reinforce custom Result if migration cost stays low
+    priority: low
+    caution: avoid_framework_overweight
+
+  async:
+    role: durable_concurrency_runtime
+    reason: heartbeat, provider calls, SSE, background workers
+    priority: medium
+
+  falcon:
+    role: async_web_runtime
+    reason: existing history used Falcon; useful if Sinatra is outgrown
+    priority: low
+    caution: only_add_if_web_runtime_needs_it
+
+  webmock:
+    role: deterministic_provider_tests
+    reason: mock LLM/provider HTTP paths
+    priority: high_for_tests
+
+  vcr:
+    role: replayable_http_tests
+    reason: provider regression testing
+    priority: medium_for_tests
+
+integration_rules:
+  - every_gem_enters_through_a_wrapper
+  - no_gem_calls_from_deep_business_logic
+  - no_optional_gem_can_break_boot
+  - provider_gems_emit_latency_failure_and_token_events
+  - validation_gems_guard_contract_boundaries
+  - cli_gems_must_preserve_grepable_output
+  - web_gems_must_preserve_pwa_and_a11y_contracts
+  - observability_gems_derive_from_runtime_events_not_replace_them
+
+delete_or_avoid:
+  - duplicate_cli_rendering_paths
+  - direct_provider_calls_bypassing_router
+  - direct_mcp_calls_bypassing_contract_executor
+  - gem_specific_logic_inside_core_workflows
+  - heavy_frameworks_that_duplicate_runtime_orchestration
