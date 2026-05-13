@@ -1,6 +1,6 @@
 # MASTER
 
-A constitutional AI coding agent. Ruby. OpenBSD. Self-hosting.
+Constitutional AI for any text artifact. Ruby. OpenBSD. Self-hosting.
 
 MASTER reads its own constitution at boot, scans its own code for violation, sweeps the corruption, and argues the result through an adversarial council before shipping. It edits files. It does not narrate.
 

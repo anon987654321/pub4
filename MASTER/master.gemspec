@@ -3,7 +3,7 @@
 Gem::Specification.new do |s|
   s.name    = "master"
   s.version = "3.0.0"
-  s.summary = "Constitutional governance for an autonomous coding agent"
+  s.summary = "Constitutional AI for any text artifact"
   s.authors = ["dev"]
   s.files   = Dir["lib/**/*.rb", "exe/*", "data/**/*", "*.yml"]
   s.executables = ["master"]
