@@ -157,12 +157,23 @@ module Master
 
     def render_snapshot_body(root, label, stamp, dirs, files)
       buf = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
-      dirs.each  { |d| buf << "#{d.delete_prefix("#{root}/")}/" }
-      files.each { |f| buf << f.delete_prefix("#{root}/") }
+      buf.concat(render_tree(root, dirs, files))
       buf << "```" << ""
       n_lines, n_trunc = render_snapshot_files(buf, root, files)
       buf << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc}"
       [buf.join("\n"), { lines: n_lines, truncated: n_trunc }]
+    end
+
+    # Indented tree: one entry per line, two spaces per depth, dirs with trailing slash.
+    def render_tree(root, dirs, files)
+      entries = dirs.map { |d| [d.delete_prefix("#{root}/"), :dir] } +
+                files.map { |f| [f.delete_prefix("#{root}/"), :file] }
+      entries.sort_by { |rel, _| rel.split("/") }.map do |rel, kind|
+        depth  = rel.count("/")
+        name   = File.basename(rel)
+        suffix = kind == :dir ? "/" : ""
+        "#{"  " * depth}#{name}#{suffix}"
+      end
     end
 
     def render_snapshot_files(buf, root, files)
