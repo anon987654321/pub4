@@ -21,22 +21,55 @@ The target shape is not another prompt layer. The target shape is an event-sourc
 5. Memory moves through canonical, episodic, semantic, compressed, and snapshot tiers.
 6. Repair follows observe -> classify -> propose -> sandbox -> validate -> merge.
 7. Tool contracts define inputs, outputs, permissions, retries, timeout, and validation.
+8. Git history is mined as repair memory, not treated as dead text.
+9. Context pressure is measured before escalation, compaction, or topology changes.
 
-## New subsystems
+## Landed subsystems
 
-- `brain/providers/` declarative routing and provider capability registry.
-- `brain/memory/` explicit memory tiers.
-- `runtime/events/` append-only cognition/event stream.
+- `brain/providers/routing.yml` declarative provider routing and fallback policy.
+- `runtime/events/` append-only cognition/event stream documentation.
 - `runtime/telemetry/` failure, correction, latency, token, and context-pressure journals.
-- `orchestration/router/` provider selection, voting, quorum, fallback, and scoring primitives.
-- `repair/` classifiers, playbooks, validations, and quarantines.
-- `tools/contracts/` typed tool execution contracts.
+- `runtime/context_pressure.rb` recovered cognitive-pressure tracking.
+- `runtime/experience.rb` recovered plan/provider/tool-route scoring.
+- `runtime/event_record.rb` canonical event record primitive.
+- `runtime/replay_reader.rb` replay reader for JSONL event streams.
+- `runtime/stale_namespace_audit.rb` permanent post-refactor namespace drift scanner.
+- `repair/git_history_miner.rb` commit-history mining for lost repair logic.
+- `tools/contracts/runtime_event.yml` contract for append-only event emission.
+- `data/stale_namespaces.yml` migration registry for stale constants.
+
+## Runtime spine
+
+```text
+workflow
+  -> event record
+  -> append-only stream
+  -> replay reader
+  -> telemetry derivation
+  -> repair learning
+  -> provider scoring
+  -> orchestration refinement
+```
 
 ## Rollout order
 
-1. Land file layout and policy files.
-2. Route all model calls through provider policy.
-3. Wrap tool execution with contracts and event logging.
-4. Add failure digest and provider health jobs to heartbeat.
-5. Add replay/checkpoint readers.
-6. Add UI panels for event stream, provider health, context pressure, and repair queue.
+1. Land runtime primitives and policy files.
+2. Make smoke and stale-namespace audit hard refactor gates.
+3. Route all model calls through provider policy.
+4. Wrap tool execution with contracts and event logging.
+5. Add failure digest and provider health jobs to heartbeat.
+6. Add checkpoint/replay reconstruction for full workflows.
+7. Feed visual bridge from canonical runtime events.
+8. Add UI panels for event stream, provider health, context pressure, and repair queue.
+
+## Deletion pressure
+
+Delete or collapse anything that creates competing runtime truth:
+
+- silent retries
+- hidden mutable globals
+- provider-specific execution branches
+- duplicate registries
+- telemetry-only state
+- UI-owned runtime state
+- stale namespace compatibility shims
