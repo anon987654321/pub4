@@ -1,0 +1,158 @@
+principle: every_rails_app_needs_identity_logic_views_styles_reflexes_and_search
+
+scope:
+  primary:
+    - brgen.no
+    - bsdports.org
+    - hjerterom
+    - amber
+    - blogger_aggregate
+    - seo_booster
+
+readme_audit:
+  required_sections:
+    - identity
+    - audience
+    - core_user_flows
+    - domain_model
+    - routes
+    - controllers
+    - views
+    - styles
+    - stimulus_controllers
+    - reflexes_or_turbo_streams
+    - pwa
+    - search
+    - seo
+    - accessibility
+    - observability
+    - modernization_gaps
+
+identity:
+  require:
+    - one_sentence_purpose
+    - target_users
+    - tone
+    - design_reference
+    - anti_identity
+
+logic:
+  inspect:
+    - models
+    - services
+    - policies
+    - jobs
+    - queries
+    - forms
+    - serializers
+    - imports
+    - search_indexes
+
+views:
+  inspect:
+    - semantic_html
+    - partial_boundaries
+    - turbo_frames
+    - turbo_streams
+    - reusable_view_components
+    - mobile_layouts
+    - empty_states
+    - error_states
+    - loading_states
+
+styles:
+  inspect:
+    - app_scss_entrypoint
+    - bsdports_baseline_usage
+    - tokens
+    - typography
+    - layout
+    - forms
+    - navigation
+    - timeline_feed
+    - runtime_states
+    - print_styles
+
+stimulus:
+  inspect:
+    - controllers
+    - data_attributes
+    - keyboard_shortcuts
+    - dialog_patterns
+    - dropdown_patterns
+    - clipboard_patterns
+    - auto_submit_patterns
+    - offline_patterns
+
+reflexes:
+  strategy: prefer_turbo_streams_first_use_stimulus_reflex_when_morphing_or_latency_requires_it
+
+  inspect:
+    - application_reflex_current_context
+    - morph_targets
+    - authorization
+    - idempotence
+    - telemetry_events
+    - fallback_for_no_js
+
+rails_8_modernization:
+  require:
+    - hotwire_first
+    - propshaft_or_modern_asset_pipeline
+    - importmap_or_minimal_js_bundle
+    - pwa_manifest
+    - service_worker
+    - solid_queue_or_job_policy
+    - sqlite_or_postgres_vector_plan
+    - strict_loading_where_useful
+    - cache_key_discipline
+    - accessibility_tests
+    - lighthouse_budget
+
+vector_search:
+  use_cases:
+    - blogger_aggregate_semantic_dedupe
+    - seo_booster_topic_graph
+    - brgen_local_content_search
+    - hjerterom_resource_matching
+    - MASTER_memory_retrieval
+
+  preferred_local_first:
+    - sqlite_vec
+    - sqlite_fts5
+    - postgres_pgvector_when_shared_db_needed
+
+  hybrid_retrieval:
+    required: true
+    combine:
+      - keyword
+      - vector
+      - graph
+      - recency
+      - authority
+
+external_reference_policy:
+  stimulus_components:
+    stance: use_individual_ui_agnostic_controllers_with_own_scss
+    avoid: importing_visual_framework_classes
+
+  web_dev:
+    stance: pwa_service_worker_offline_storage_lighthouse_accessibility_performance_as_baseline
+
+  css_tricks:
+    stance: use_for_css_architecture_patterns_grid_custom_properties_responsive_typography_and_debugging
+
+  stimulus_reflex_patterns:
+    stance: use_for_current_context_morphing_reflex_boundaries_and_rails_side_interaction_patterns
+
+anti_patterns:
+  - app_without_identity
+  - controllers_hiding_domain_logic
+  - views_without_empty_states
+  - styles_without_tokens
+  - stimulus_without_semantics
+  - reflexes_without_authorization
+  - search_without_canonical_metadata
+  - pwa_without_offline_failure_state
+  - seo_without_schema_org
+  - vector_search_without_keyword_fallback

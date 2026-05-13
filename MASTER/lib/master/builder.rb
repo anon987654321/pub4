@@ -22,7 +22,8 @@ module Master
       config = Ground::Config.new(root)
       config["model"] ||= Master.default_model
 
-      bus = Trace::EventBus.new
+      event_log = Runtime::EventLog.new(root:)
+      bus = Trace::EventBus.new(event_log:)
       ring = RingBuffer.new(RING_SIZE)
       logging = Logging.new(ring_buffer: ring, event_bus: bus)
       homeostat = Homeostat.new(event_bus: bus)
@@ -54,7 +55,7 @@ module Master
       diag        = Diag.new(homeostat:, breaker:, logging:)
       trace       = Trace::Recorder.new(root:, event_bus: bus)
       {
-        config:, ring:, bus:, logging:, homeostat:, session:, undo:, breaker:, cache:,
+        config:, event_log:, ring:, bus:, logging:, homeostat:, session:, undo:, breaker:, cache:,
         governor:, renderer:, metrics:, code_index:, diff_stager:, mcp:,
         memory:, personality:, phase_gates:, learnings:, diag:, trace:
       }
@@ -197,6 +198,5 @@ module Master
         nil
       end
     end
-
   end
 end

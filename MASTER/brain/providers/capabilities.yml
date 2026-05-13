@@ -1,0 +1,148 @@
+providers:
+  openrouter:
+    strengths:
+      - aggregation
+      - fallback
+      - free_model_access
+      - model_variety
+    weaknesses:
+      - provider_indirection
+      - variable_latency
+      - variable_schema_quality
+    best_for:
+      - cheap_cognition
+      - voting
+      - fallback_chains
+      - model_exploration
+
+  deepseek:
+    strengths:
+      - coding
+      - patch_generation
+      - low_cost_reasoning
+    weaknesses:
+      - occasional_schema_drift
+    best_for:
+      - coding
+      - refactor_suggestions
+      - patch_candidates
+      - critique
+
+  qwen:
+    strengths:
+      - cheap_reasoning
+      - multilingual
+      - coding
+      - summarization
+    weaknesses:
+      - variable_instruction_following
+    best_for:
+      - compression
+      - classification
+      - retrieval_ranking
+      - candidate_generation
+
+  gemini:
+    strengths:
+      - long_context
+      - fast_summarization
+      - multimodal
+    weaknesses:
+      - style_variance
+    best_for:
+      - large_context_triage
+      - repository_summarization
+      - document_analysis
+      - context_reduction
+
+  anthropic:
+    strengths:
+      - review_quality
+      - architecture_reasoning
+      - safety_reasoning
+      - prose_quality
+    weaknesses:
+      - cost
+    best_for:
+      - final_review
+      - council_arbitration
+      - high_risk_edits
+      - policy_interpretation
+
+  openai:
+    strengths:
+      - tool_use
+      - structured_outputs
+      - general_reasoning
+      - ecosystem_support
+    weaknesses:
+      - cost_variance
+    best_for:
+      - orchestration
+      - tool_contract_validation
+      - synthesis
+      - general_assistant_tasks
+
+  mistral:
+    strengths:
+      - fast_general_reasoning
+      - european_provider_option
+      - cost_efficiency
+    weaknesses:
+      - smaller_ecosystem
+    best_for:
+      - classification
+      - summarization
+      - lightweight_review
+
+  local:
+    strengths:
+      - privacy
+      - offline_operation
+      - zero_api_cost
+      - deterministic_availability
+    weaknesses:
+      - hardware_bound
+      - weaker_reasoning
+    best_for:
+      - embeddings
+      - bm25_fusion
+      - low_risk_classification
+      - memory_compaction
+      - log_digest
+
+capability_tags:
+  coding:
+    preferred:
+      - deepseek
+      - qwen
+      - anthropic
+      - openai
+
+  long_context:
+    preferred:
+      - gemini
+      - anthropic
+      - openai
+
+  cheap_cognition:
+    preferred:
+      - openrouter
+      - qwen
+      - mistral
+      - local
+
+  structured_output:
+    preferred:
+      - openai
+      - anthropic
+      - gemini
+
+  final_review:
+    preferred:
+      - anthropic
+      - openai
+
+  local_first:
+    preferred:
+      - local

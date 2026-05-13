@@ -1,0 +1,100 @@
+name: debug_trace
+version: 1
+
+purpose: enforce cleanup, debug, trace, and post-refactor verification discipline
+
+inputs:
+  workflow_id:
+    type: string
+    required: true
+
+  target:
+    type: string
+    required: true
+
+  mode:
+    type: string
+    enum:
+      - cleanup
+      - debug
+      - trace
+      - smoke
+      - replay
+    required: true
+
+outputs:
+  status:
+    type: string
+    enum:
+      - clean
+      - dirty
+      - failed
+      - degraded
+
+  findings:
+    type: array
+
+  trace_id:
+    type: string
+
+permissions:
+  filesystem:
+    - read
+    - write_trace
+    - write_telemetry
+    - write_repair_ticket
+
+required_events:
+  - debug_trace:before
+  - debug_trace:after
+
+failure_events:
+  - debug_trace:failure
+  - repair:ticket
+
+checks:
+  cleanup:
+    - stale_namespace_audit
+    - duplicate_registry_scan
+    - dead_doc_shadow_scan
+    - direct_provider_call_scan
+    - direct_tool_side_effect_scan
+    - ui_runtime_coupling_scan
+
+  debug:
+    - boot_smoke
+    - builder_wire_check
+    - result_contract_check
+    - provider_route_check
+    - config_load_check
+    - contract_schema_check
+
+  trace:
+    - event_stream_shape_check
+    - telemetry_shape_check
+    - missing_before_after_event_check
+    - workflow_id_presence_check
+    - provider_latency_presence_check
+
+  replay:
+    - checkpoint_presence_check
+    - event_order_check
+    - mutation_pair_check
+    - failure_reconstruction_check
+
+quality_gate:
+  fail_on:
+    - stale_namespace
+    - direct_irreversible_mutation
+    - missing_runtime_event
+    - invalid_contract_schema
+    - boot_failure
+    - provider_call_bypass
+
+retry_policy:
+  max_attempts: 1
+  exponential_backoff: false
+
+failure_policy:
+  open_repair_ticket: true
+  quarantine_after_failures: 3

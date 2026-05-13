@@ -1,0 +1,132 @@
+source:
+  - openbsd deployment scripts
+  - shell prompt history
+  - oh_my_zsh customizations
+  - terminal UI branches
+  - dmesg inspired runtime traces
+
+identity:
+  philosophy:
+    - calm_under_pressure
+    - terse_but_precise
+    - signal_over_noise
+    - operational_honesty
+    - deterministic_output
+    - text_is_interface
+
+openbsd:
+  principles:
+    - secure_by_default
+    - explicit_configuration
+    - composable_tools
+    - small_auditable_units
+    - operational_predictability
+    - minimal_background_magic
+
+  aesthetics:
+    - monochrome_terminal
+    - sparse_color_usage
+    - readable_boot_logs
+    - aligned_columns
+    - deterministic_ordering
+    - timestamped_runtime_events
+
+  dmesg_style:
+    preferred:
+      - subsystem_prefixes
+      - terse_status_lines
+      - stable_ordering
+      - hardware_like_event_streams
+      - explicit_failure_states
+
+    avoid:
+      - emoji_logs
+      - theatrical_status_text
+      - excessive_spinner_noise
+      - vague_success_messages
+      - decorative_ascii_spam
+
+shell:
+  philosophy:
+    - keyboard_first
+    - fast_feedback
+    - composable_commands
+    - pipes_over_monoliths
+    - readable_history
+
+  zsh:
+    preferred:
+      - vi_mode
+      - autosuggestions
+      - syntax_highlighting
+      - persistent_history
+      - directory_jump
+      - git_status
+
+    prompt:
+      left:
+        - hostname
+        - cwd
+        - git_branch
+
+      right:
+        - runtime_mode
+        - provider
+        - latency
+        - pressure_state
+
+      style:
+        - compact
+        - low_noise
+        - sparse_color
+        - semantic_symbols_only
+
+      avoid:
+        - giant_powerline_blocks
+        - rainbow_noise
+        - excessive_glyphs
+        - multi_line_sprawl
+
+runtime_cli:
+  output:
+    - aligned
+    - grepable
+    - timestamped
+    - stream_friendly
+    - resumable
+
+  progress:
+    prefer:
+      - event_lines
+      - structured_updates
+      - replayable_transitions
+
+    avoid:
+      - fake_progress
+      - endless_spinners
+      - hidden_failures
+
+observability:
+  traces:
+    style: dmesg_plus_event_sourcing
+
+    require:
+      - subsystem
+      - workflow_id
+      - provider
+      - latency
+      - state_transition
+      - failure_reason
+
+copy:
+  tone:
+    - understated
+    - technically_precise
+    - operational
+    - unsentimental
+
+  avoid:
+    - hype_language
+    - anthropomorphic_claims
+    - fake_certainty
+    - motivational_copy
