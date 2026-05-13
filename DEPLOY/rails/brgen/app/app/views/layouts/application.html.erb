@@ -1,33 +1,36 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="<%= Current.locale || I18n.locale %>">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= tag.meta charset: "utf-8" %>
+  <%= tag.meta name: "viewport", content: "width=device-width,initial-scale=1" %>
+
   <title><%= content_for?(:title) ? "#{yield :title} — brgen" : "brgen" %></title>
+
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
 </head>
 <body>
+  <%= tag.nav do %>
+    <%= link_to "brgen", root_path %>
+    <%= link_to t("navigation.communities", default: "communities"), communities_path %>
+    <%= link_to t("navigation.posts", default: "posts"), posts_path %>
 
-<nav>
-  <%= link_to "brgen", root_path %>
-  <%= link_to "communities", communities_path %>
-  <%= link_to "posts",       posts_path %>
-  <% if authenticated? %>
-    <%= link_to "inbox",   conversations_path %>
-    <%= link_to "sign out", session_path, data: { turbo_method: :delete } %>
-  <% else %>
-    <%= link_to "sign in",  new_session_path %>
+    <% if authenticated? %>
+      <%= link_to t("navigation.inbox", default: "inbox"), conversations_path %>
+      <%= link_to t("navigation.sign_out", default: "sign out"), session_path, data: { turbo_method: :delete } %>
+    <% else %>
+      <%= link_to t("navigation.sign_in", default: "sign in"), new_session_path %>
+    <% end %>
   <% end %>
-</nav>
 
-<main>
-  <% if notice %><p role="status"><%= notice %></p><% end %>
-  <% if alert  %><p role="alert"><%=  alert  %></p><% end %>
-  <%= yield %>
-</main>
+  <%= tag.main do %>
+    <%= tag.p(notice, role: "status") if notice %>
+    <%= tag.p(alert, role: "alert") if alert %>
 
+    <%= yield %>
+  <% end %>
 </body>
 </html>
