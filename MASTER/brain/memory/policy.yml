@@ -1,0 +1,55 @@
+memory:
+  canonical:
+    mutable: false
+    source_of_truth: true
+    compaction: never
+    examples:
+      - constitution
+      - standing_orders
+      - governance
+      - provider_policy
+
+  episodic:
+    mutable: append_only
+    retention_days: 30
+    compaction: summarize
+    examples:
+      - conversations
+      - workflows
+      - repair_cycles
+      - council_rounds
+
+  semantic:
+    mutable: regenerable
+    indexing:
+      - vector
+      - bm25
+      - graph
+    compaction: rebuild
+    examples:
+      - embeddings
+      - retrieval_chunks
+      - concept_links
+
+  compressed:
+    mutable: replaceable
+    generation: automated
+    examples:
+      - long_context_summaries
+      - workflow_digests
+      - repository_summaries
+
+  snapshots:
+    mutable: immutable
+    generation: checkpoint
+    examples:
+      - workflow_resume_state
+      - replay_checkpoints
+      - runtime_recovery
+
+rules:
+  - no_model_context_is_source_of_truth
+  - replay_over_memory
+  - append_before_mutation
+  - summarize_before_delete
+  - preserve_failure_history
