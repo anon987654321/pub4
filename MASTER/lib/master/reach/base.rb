@@ -16,6 +16,7 @@ module Master
       # Apply a write through the standard pipeline.
       # Returns Result.ok(full_path), or stages it if diff_stager is wired.
       def commit_write(full, content, path: nil)
+        content = WhitespaceNormalizer.normalize(content, path: full)
         return @diff_stager.stage(path: full, new_content: content, tool: self.class::NAME) if @diff_stager
 
         @undo.snapshot(full)

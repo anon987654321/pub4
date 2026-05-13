@@ -6,22 +6,22 @@ module Master
     module Rules
       # UniversalRule — cross-language axiom checks applied to every file type.
       class UniversalRule < Rule
-        BLANK_FLOOD = /\n{4,}/.freeze
-        BOX_CHARS   = "\u256D\u256E\u2570\u256F\u2502\u2500\u250C\u2510\u2514\u2518\u251C\u2524\u252C\u2534\u253C\u2550\u2551\u2554\u2557\u255A\u255D".freeze
-        BOX_DRAWING = Regexp.new("[#{Regexp.escape(BOX_CHARS)}]|={4,}|-{4,}").freeze
+        BLANK_FLOOD     = /\n{3,}/.freeze
+        TRAILING_WS     = /[ \t]+\z/.freeze
+        INTERNAL_RUN    = /\S {2,}\S/.freeze
+        BOX_CHARS       = "\u256D\u256E\u2570\u256F\u2502\u2500\u250C\u2510\u2514\u2518\u251C\u2524\u252C\u2534\u253C\u2550\u2551\u2554\u2557\u255A\u255D".freeze
+        BOX_DRAWING     = Regexp.new("[#{Regexp.escape(BOX_CHARS)}]|={4,}|-{4,}").freeze
         OPAQUE_NAMES    = /\b(tmp|temp|val|ret|obj|str|arr|buf)\b\s*=/.freeze
         DEAD_AFTER_STOP = /\b(return|exit|raise|throw)\b.+\n\s*\S/.freeze
         STALE_COMMENT   = /^\s*#\s*(TODO|FIXME|HACK|REVIEW|NOTE):\s*$/i.freeze
 
         CHECKS = [
-          { pattern: BLANK_FLOOD,     
-message: "more than 3 consecutive blank lines — use single blank between sections",       fix: "collapse to one blank line" },
-          { pattern: BOX_DRAWING,     
-message: "box-drawing chars or separator lines — use whitespace as layout tool",          fix: "delete separators" },
-          { pattern: OPAQUE_NAMES,    
-message: "generic variable name — use a domain-specific name",                            fix: nil },
-          { pattern: STALE_COMMENT,   
-message: "empty TODO/FIXME marker — fill it or delete it",                               fix: "delete marker" },
+          { pattern: BLANK_FLOOD, message: "more than one consecutive blank line — single blank between sections", fix: "collapse to one blank line" },
+          { pattern: TRAILING_WS, message: "trailing whitespace — strip end-of-line spaces", fix: "strip trailing whitespace" },
+          { pattern: INTERNAL_RUN, message: "aligned-column padding — collapse to single space", fix: "collapse multi-space runs" },
+          { pattern: BOX_DRAWING, message: "box-drawing chars or separator lines — use whitespace as layout tool", fix: "delete separators" },
+          { pattern: OPAQUE_NAMES, message: "generic variable name — use a domain-specific name", fix: nil },
+          { pattern: STALE_COMMENT, message: "empty TODO/FIXME marker — fill it or delete it", fix: "delete marker" }
         ].freeze
 
         def initialize
