@@ -1,0 +1,12 @@
+primary:
+  name: Brgen
+  city: Bergen
+  country: Norway
+  language: nb
+  tld: no
+  domains:
+    core: brgen.no
+    marketplace: markedsplass.brgen.no
+    playlist: spilleliste.brgen.no
+    tv: tv.brgen.no
+    takeaway: takeaway.brgen.no
