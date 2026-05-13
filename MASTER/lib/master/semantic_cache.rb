@@ -16,7 +16,7 @@ module Master
       @bus  = event_bus
       @lru  = []
       @lock = Monitor.new
-      Dir.mkdir(@root) unless Dir.exist?(@root)
+      FileUtils.mkdir_p(@root)
     end
 
     def fetch(prompt, model, &blk)
@@ -27,7 +27,7 @@ module Master
         hit = read_entry(path)
         if hit
           @bus&.publish("cache:hit", key:)
-          return hit
+          return restore_value(hit)
         end
       end
 
@@ -62,7 +62,7 @@ module Master
     def cache_key(prompt, model) = Digest::SHA256.hexdigest("#{prompt}::#{model}")
     def cache_path(key) = File.join(@root, "#{key}.json")
 
-    def stale?(entry) = Time.now.to_i - entry[:ts] > @ttl
+    def stale?(entry) = Time.now.to_i - entry.fetch(:ts, 0).to_i > @ttl
 
     def expire_entry!(path)
       @lru.delete(path)
@@ -82,15 +82,37 @@ module Master
       return expire_entry!(path) if stale?(entry)
       promote_lru(path)
       entry[:value]
-    rescue JSON::ParserError
+    rescue JSON::ParserError => e
+      Master::Swallow.log(e, context: "semantic_cache.read_entry", event_bus: @bus, path:)
       drop_entry!(path)
     end
 
     def write_entry(path, value, key)
-      value = value.value! if value.respond_to?(:ok?) && value.ok?
+      payload = serialize_value(value)
       evict_lru while @lru.size >= MAX_ENTRIES
-      File.write(path, JSON.generate({ ts: Time.now.to_i, value: }))
-      @lru.push(path)
+      File.write(path, JSON.generate({ ts: Time.now.to_i, value: payload }))
+      promote_lru(path)
+      @bus&.publish("cache:write", key:)
+    end
+
+    def serialize_value(value)
+      if defined?(Master::Result::Ok) && value.is_a?(Master::Result::Ok)
+        { __master_result: "ok", value: value.value! }
+      elsif defined?(Master::Result::Err) && value.is_a?(Master::Result::Err)
+        { __master_result: "err", message: value.message, category: value.category }
+      else
+        { __master_result: "raw", value: value }
+      end
+    end
+
+    def restore_value(payload)
+      return payload unless payload.is_a?(Hash)
+      case payload[:__master_result] || payload["__master_result"]
+      when "ok"  then Result.ok(payload[:value] || payload["value"])
+      when "err" then Result.err(payload[:message] || payload["message"], category: payload[:category] || payload["category"])
+      when "raw" then payload[:value] || payload["value"]
+      else payload
+      end
     end
 
     def promote_lru(path)
