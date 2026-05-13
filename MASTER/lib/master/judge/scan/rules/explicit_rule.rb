@@ -17,7 +17,7 @@ module Master
           @id          = 'explicit'
           @description = 'Implicit, opaque patterns — prefer explicit contracts'
           @severity    = :warning
-          @axiom_tags  = [:EXPLICIT]
+          @rule_tags  = [:EXPLICIT]
         end
 
         def check(code, path:)

@@ -15,7 +15,7 @@ module Master
           @id          = "structure"
           @description = "Structural anti-patterns — guard clauses, unreachable code, flatten depth"
           @severity    = :warning
-          @axiom_tags  = [:GUARD_CLAUSES_FIRST]
+          @rule_tags  = [:GUARD_CLAUSES_FIRST]
         end
 
         def check(code, path:)

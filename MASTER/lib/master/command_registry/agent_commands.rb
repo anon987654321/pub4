@@ -233,7 +233,7 @@ module Master
     def explain_master(root)
       map    = Introspection::SelfMap.new(root:)
       info   = map.describe
-      cov    = map.axiom_coverage.map { |ax, n| "  #{ax}: #{n}" }.join("\n")
+      cov    = map.rule_coverage.map { |ax, n| "  #{ax}: #{n}" }.join("\n")
       stages = "Intake->Infer->Route->Guard->Execute->Council->Lint->Prune->Memo->Render"
       "MASTER -- #{info[:files]} files, #{info[:lines]} lines\npipeline: #{stages}\n\naxiom coverage:\n#{cov}"
     end

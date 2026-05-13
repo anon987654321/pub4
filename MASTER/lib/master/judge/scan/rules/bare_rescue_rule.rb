@@ -12,7 +12,7 @@ module Master
           @id          = "bare_rescue"
           @description = "Never use bare rescue -- always specify exception type"
           @severity    = :error
-          @axiom_tags  = [:FAIL_VISIBLY]
+          @rule_tags  = [:FAIL_VISIBLY]
         end
 
         def check(code, path:)

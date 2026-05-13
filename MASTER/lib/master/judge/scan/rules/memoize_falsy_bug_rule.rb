@@ -14,7 +14,7 @@ module Master
           @id          = "memoize_falsy_bug"
           @description = "@x ||= memoization that may return false/nil — caller pays cost every time"
           @severity    = :warning
-          @axiom_tags  = %i[PERFORMANCE EXPLICIT]
+          @rule_tags  = %i[PERFORMANCE EXPLICIT]
         end
 
         def check(code, path:)

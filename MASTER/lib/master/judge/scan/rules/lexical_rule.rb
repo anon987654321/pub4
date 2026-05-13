@@ -15,7 +15,7 @@ module Master
           @id          = "lexical"
           @description = "Data-driven lexical checks from rules.yml for all file types"
           @severity    = :warning
-          @axiom_tags  = [:UNIVERSAL]
+          @rule_tags  = [:UNIVERSAL]
           @loaded      = load_lexical_rules
         end
 

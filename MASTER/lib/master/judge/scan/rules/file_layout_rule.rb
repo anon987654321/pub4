@@ -17,7 +17,7 @@ module Master
           @id          = "file_layout"
           @description = "File header or class member order deviates from house layout"
           @severity    = :warning
-          @axiom_tags  = %i[IMPORTANCE_ORDER POLA_PRINCIPLE]
+          @rule_tags  = %i[IMPORTANCE_ORDER POLA_PRINCIPLE]
         end
 
         def check(code, path:)

@@ -43,7 +43,7 @@ module Master
       return unless File.file?(path)
       src = File.read(path, encoding: "UTF-8")
       desc = src[/@description\s*=\s*["']([^"']+)["']/, 1] || "(no description)"
-      tags = src[/@axiom_tags\s*=\s*%i\[([^\]]+)\]/, 1].to_s.split.first(6).join(" ")
+      tags = src[/@rule_tags\s*=\s*%i\[([^\]]+)\]/, 1].to_s.split.first(6).join(" ")
       [
         "scan rule: #{slug}",
         "  description: #{desc}",

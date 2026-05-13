@@ -18,8 +18,8 @@ module Master
         { files: files.size, lines: lines }
       end
 
-      def axiom_coverage
-        tags = load_axiom_tags
+      def rule_coverage
+        tags = load_rule_tags
         src  = Dir.glob(File.join(@root, "lib/**/*.rb"))
                   .map { |f| File.read(f, encoding: "UTF-8") rescue "" }
                   .join("\n")
@@ -28,7 +28,7 @@ module Master
 
       private
 
-      def load_axiom_tags
+      def load_rule_tags
         rules_path = File.join(@root, "data", "rules.yml")
         data = Master.load_yaml(rules_path)
         tags = (data["rules"] || {}).keys

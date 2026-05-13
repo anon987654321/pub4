@@ -15,7 +15,7 @@ module Master
           @id          = "todo_debt"
           @description = "TODO/FIXME comment older than #{STALE_DAYS} days — resolve or delete"
           @severity    = :info
-          @axiom_tags  = %i[BE_CONCISE]
+          @rule_tags  = %i[BE_CONCISE]
         end
 
         def check(code, path:)

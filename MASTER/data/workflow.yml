@@ -146,7 +146,7 @@ autoloop:
     - duplicate_code
     - semantic
     - adversarial
-    - axiom_coverage
+    - rule_coverage
     - immutable
     - self_explaining
     - long_method

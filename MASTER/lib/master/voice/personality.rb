@@ -36,13 +36,13 @@ module Master
     attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
 
     def self.persona_names(root: nil)
-      Ground::Axioms.new(root:).data(:personas).keys.map(&:to_sym)
+      Ground::Rules.new(root:).data(:personas).keys.map(&:to_sym)
     end
 
     def initialize(name = DEFAULT, root: nil, homeostat: nil)
       @name      = name.to_sym
-      @axioms    = Ground::Axioms.new(root:)
-      personas   = @axioms.data(:personas)
+      @rules    = Ground::Rules.new(root:)
+      personas   = @rules.data(:personas)
       persona    = personas[@name.to_s] || personas[DEFAULT.to_s] || FALLBACK_PERSONA
       @voice     = persona["voice"]
       @tts_rate  = persona["tts_rate"]
@@ -61,7 +61,7 @@ module Master
     private
 
     def build_system_prompt
-      soul = @axioms.data(:soul)
+      soul = @rules.data(:soul)
       ordering = Array(soul["prompt_ordering"])
       sections = {}
       sections["master_identity"] = "<master_identity>\nMASTER. #{@desc} OpenBSD-first. Constitutional AI.\n</master_identity>"
@@ -80,8 +80,8 @@ module Master
           "</master_runtime_state>"
         ].join("\n")
       end
-      constitution = @axioms.constitution
-      strunk = @axioms.strunk
+      constitution = @rules.constitution
+      strunk = @rules.strunk
       banned  = (constitution["banned_output"] || [])
       no_open = (strunk["preambles"] || []).first(4)
       no_end  = (strunk["endings"]   || []).first(3)
@@ -92,9 +92,9 @@ module Master
         "evidence_only: show diff or file content, never assert, active voice",
         "</master_constitution>"
       ].join("\n")
-      kernel = @axioms.kernel
+      kernel = @rules.kernel
       sections["master_constitution_kernel"] = "<master_constitution tier=\"kernel\">\n#{kernel.map { |k, v| "#{k}=#{v}" }.join("\n")}\n</master_constitution>" if kernel.any?
-      phil = @axioms.philosophy(limit: AXIOM_DISPLAY_LIMIT)
+      phil = @rules.philosophy(limit: AXIOM_DISPLAY_LIMIT)
       sections["master_constitution_kernel"] = [sections["master_constitution_kernel"], "philosophy: #{phil.map { |p| p["id"] }.join(" · ")}"].compact.join("\n") if phil.any?
 
       sections["master_priority"] = <<~XML.strip
@@ -116,23 +116,23 @@ module Master
         </master_output_format>
       XML
 
-      code_axioms = @axioms.code_axioms
-      if code_axioms.any?
-        thresholds  = @axioms.thresholds
+      code_rules = @rules.code_rules
+      if code_rules.any?
+        thresholds  = @rules.thresholds
         subs        = { max_lines: thresholds.dig("class", "max_lines") || 200,
                         max_methods: thresholds.dig("class", "max_methods") || 6 }
         sections["master_style"] = "<master_style>\nCode axioms:\n"
-        code_axioms.each { |id, stmt| sections["master_style"] += "#{id}: #{stmt % subs}\n" }
+        code_rules.each { |id, stmt| sections["master_style"] += "#{id}: #{stmt % subs}\n" }
         sections["master_style"] += "</master_style>"
       end
 
-      zsh = @axioms.data(:patterns)["zsh"] || @axioms.data(:zsh_patterns)
+      zsh = @rules.data(:patterns)["zsh"] || @rules.data(:zsh_patterns)
       if zsh.is_a?(Hash) && !zsh.empty?
         banned_cmds = Array(zsh["banned_commands"]).join(", ")
         style_lines << "Zsh scripts: never use #{banned_cmds}. Use pure zsh parameter expansion and builtins instead."
       end
 
-      style = @axioms.data(:ruby_style)
+      style = @rules.data(:ruby_style)
       if style.is_a?(Hash) && !style.empty?
         bugs = Array(style.dig("ruby", "bugs_to_avoid"))
                   .map { |b| "#{b["pattern"]}: #{b["fix"] || b["note"]}" }
@@ -175,7 +175,7 @@ module Master
         sections["master_style"] = [sections["master_style"], style_lines.join("\n")].compact.join("\n")
       end
 
-      refusal = @axioms.data(:refusal_templates)
+      refusal = @rules.data(:refusal_templates)
       if refusal.is_a?(Hash)
         phrasing = refusal["refusal_phrasing"] || {}
         sections["master_refusal_policy"] = <<~XML.strip

@@ -17,7 +17,7 @@
 - id: frozen_string
   description: Ruby files should declare # frozen_string_literal magic comment
   severity: warning
-  axiom_tags: [PERFORMANCE]
+  rule_tags: [PERFORMANCE]
   first_line: true
   patterns:
     - regex: '\Afrozen_string_literal: true'
@@ -28,7 +28,7 @@
 - id: debug_output
   description: Debug output left in lib/ — remove before shipping
   severity: error
-  axiom_tags: [FAIL_VISIBLY]
+  rule_tags: [FAIL_VISIBLY]
   path_includes: /lib/
   skip_comments: true
   patterns:
@@ -44,7 +44,7 @@
 - id: trailing_comment
   description: Trailing comment after code — promote to a leading comment if it adds value, else delete
   severity: info
-  axiom_tags: [STRUNK_WHITE, BE_CONCISE]
+  rule_tags: [STRUNK_WHITE, BE_CONCISE]
   skip_comments: true
   patterns:
     - regex: '\S\s+#\s+\S'
@@ -53,7 +53,7 @@
 - id: time_zone_unsafe
   description: Bare Time.now / Date.today / DateTime.now bypasses Rails Time.zone
   severity: warning
-  axiom_tags: [ROBUSTNESS]
+  rule_tags: [ROBUSTNESS]
   skip_comments: true
   patterns:
     - regex: '(?<![A-Za-z_.])Time\.now\b'
@@ -66,7 +66,7 @@
 - id: double_quotes
   description: Ruby strings should use double quotes
   severity: warning
-  axiom_tags: [POLA_PRINCIPLE]
+  rule_tags: [POLA_PRINCIPLE]
   langs: [.rb]
   skip_comments: true
   patterns:
@@ -76,7 +76,7 @@
 - id: no_ascii_line_art
   description: Avoid ASCII line art and divider decorations
   severity: warning
-  axiom_tags: [BE_CONCISE]
+  rule_tags: [BE_CONCISE]
   patterns:
     - regex: '(?:^|\s)(?:={3,}|-{3,})(?:\s|$)'
       message: remove ASCII divider decorations

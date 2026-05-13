@@ -16,7 +16,7 @@ module Master
           @id          = "i18n_hardcoded_string"
           @description = "Hardcoded user-facing string — wrap in I18n.t(...) for localization"
           @severity    = :info
-          @axiom_tags  = %i[ABSTRACTION]
+          @rule_tags  = %i[ABSTRACTION]
         end
 
         def check(code, path:)

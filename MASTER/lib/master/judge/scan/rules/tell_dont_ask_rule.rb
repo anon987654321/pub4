@@ -18,7 +18,7 @@ module Master
           @id          = "tell_dont_ask"
           @description = "Tell-Don't-Ask: move state-based decisions into the object"
           @severity    = :warning
-          @axiom_tags  = %i[DECOUPLE EXPLICIT]
+          @rule_tags  = %i[DECOUPLE EXPLICIT]
         end
 
         def check(code, path:)

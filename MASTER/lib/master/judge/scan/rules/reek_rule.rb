@@ -36,7 +36,7 @@ module Master
           @id          = "reek"
           @description = "Code smell detection: feature envy, data clumps, boolean params (reek)"
           @severity    = :warning
-          @axiom_tags  = SMELL_MAP.values.map { |v| v[:axiom].to_sym }.uniq
+          @rule_tags  = SMELL_MAP.values.map { |v| v[:axiom].to_sym }.uniq
           @root        = root
         end
 

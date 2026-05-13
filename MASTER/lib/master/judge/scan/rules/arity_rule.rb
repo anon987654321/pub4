@@ -13,11 +13,11 @@ module Master
 
         def initialize
           super
-          @max_params  = Master::Ground::Axioms.new.thresholds.dig("method", "max_params") || DEFAULT_MAX
+          @max_params  = Master::Ground::Rules.new.thresholds.dig("method", "max_params") || DEFAULT_MAX
           @id          = "arity"
           @description = "initialize with > #{@max_params} args — extract a context struct or config object"
           @severity    = :warning
-          @axiom_tags  = %i[DECOUPLE ONE_JOB KISS]
+          @rule_tags  = %i[DECOUPLE ONE_JOB KISS]
         end
 
         def check_ast(ast, _code, path:)

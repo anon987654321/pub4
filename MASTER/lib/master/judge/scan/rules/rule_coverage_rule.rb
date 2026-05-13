@@ -6,14 +6,14 @@ module Master
   module Judge
   module Scan
     module Rules
-      # Every rule ID in rules.yml must have scan rule coverage; every @axiom_tags
+      # Every rule ID in rules.yml must have scan rule coverage; every @rule_tags
       # symbol must name a real rule ID. Orphaned tags and uncovered rules both signal drift.
-      class AxiomCoverageRule < Rule
-        RULE_ID           = "axiom_coverage"
+      class RuleCoverageRule < Rule
+        RULE_ID           = "rule_coverage"
         DESCRIPTION       = "Every rule must have scan rule coverage; every tag must be a real rule"
         RULES_YML_PATH    = File.join("data", "rules.yml")
         SCAN_RULES_DIR    = File.join("lib", "master", "judge", "scan", "rules")
-        AXIOM_TAGS_VAR    = :@axiom_tags
+        RULE_TAGS_VAR    = :@rule_tags
         ORPHANED_TAG_MSG  = "axiom_tag :%s has no entry in rules.yml — define it or remove the tag"
         UNCOVERED_RULE_MSG = "rule %s has no scan rule coverage — add a rule or accept as advisory"
         ORPHAN_FILE_MSG   = "scan rule file %s does not define a class inheriting from Master::Judge::Scan::Rule — registry will skip it silently"
@@ -24,7 +24,7 @@ module Master
           @id          = RULE_ID
           @description = DESCRIPTION
           @severity    = :warning
-          @axiom_tags  = []
+          @rule_tags  = []
         end
 
         def self.auto_build? = false
@@ -89,13 +89,13 @@ module Master
           return [] unless Dir.exist?(full_rules_dir)
 
           Dir.glob(File.join(full_rules_dir, "*.rb")).flat_map { |f|
-            extract_axiom_tags(File.read(f))
+            extract_rule_tags(File.read(f))
           }.uniq
         rescue StandardError
           []
         end
 
-        def extract_axiom_tags(source)
+        def extract_rule_tags(source)
           result = Prism.parse(source)
           return [] unless result.success?
 
@@ -145,7 +145,7 @@ module Master
           end
 
           def visit_instance_variable_write_node(node)
-            if node.name == AXIOM_TAGS_VAR
+            if node.name == RULE_TAGS_VAR
               @tags.concat(collect_symbols(node.value))
             end
             super

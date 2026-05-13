@@ -16,7 +16,7 @@ module Master
           @id          = "prune"
           @description = "Hedge words and preamble phrases in comments reduce clarity"
           @severity    = :warning
-          @axiom_tags  = [:STRUNK_WHITE]
+          @rule_tags  = [:STRUNK_WHITE]
         end
 
         def check(code, path:)
@@ -36,7 +36,7 @@ module Master
 
         def labelled(subrule, num, line)
           { rule: "#{@id}.#{subrule.to_s.downcase}", message: "#{subrule}: #{line.strip}",
-            line: num, severity: @severity, fix: nil, tags: [@axiom_tags.first, subrule] }
+            line: num, severity: @severity, fix: nil, tags: [@rule_tags.first, subrule] }
         end
 
         private

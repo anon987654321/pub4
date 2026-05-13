@@ -17,7 +17,7 @@ module Master
           @id          = "self_explaining"
           @description = "Opaque names — names should reveal purpose without reading the implementation"
           @severity    = :warning
-          @axiom_tags  = [:SELF_EXPLAINING]
+          @rule_tags  = [:SELF_EXPLAINING]
         end
 
         def check(code, path:)

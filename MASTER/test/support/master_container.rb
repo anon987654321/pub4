@@ -20,7 +20,7 @@ module Master
           persona: malay
           absolute:
             golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
-            code_axioms:
+            code_rules:
               FAIL_VISIBLY: never rescue Exception silently.
               SIMPLEST_WORKS: refuse god classes.
               PRESERVE_FIRST: never rewrite from scratch.

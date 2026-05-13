@@ -3,7 +3,7 @@
 module Master
   module Ground
   # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
-  class Axioms
+  class Rules
     DATA_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "rules.yml").freeze
     SOUL_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "soul.yml").freeze
     WORKFLOW_PATH = File.join(File.expand_path("../../..", __dir__), "data", "workflow.yml").freeze
@@ -93,7 +93,7 @@ module Master
       end
     end
 
-    def code_axioms      = @code_axioms      ||= (@soul_data.dig("absolute", "code_axioms") || {}).freeze
+    def code_rules      = @code_rules      ||= (@soul_data.dig("absolute", "code_rules") || {}).freeze
     def thresholds       = @thresholds       ||= (@data["thresholds"] || {}).freeze
     def scan_depths      = @scan_depths      ||= (@data["scan_depths"] || {}).freeze
     def languages_config = @languages_config ||= (@data["languages"] || {}).freeze

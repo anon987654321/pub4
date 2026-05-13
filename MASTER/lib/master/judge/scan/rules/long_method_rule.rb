@@ -11,11 +11,11 @@ module Master
 
         def initialize
           super
-          @threshold   = Master::Ground::Axioms.new.thresholds.dig("method", "max_lines") || DEFAULT_THRESHOLD
+          @threshold   = Master::Ground::Rules.new.thresholds.dig("method", "max_lines") || DEFAULT_THRESHOLD
           @id          = "long_method"
           @description = "Methods over #{@threshold} lines should be extracted"
           @severity    = :warning
-          @axiom_tags  = %i[ONE_JOB KISS]
+          @rule_tags  = %i[ONE_JOB KISS]
         end
 
         def check(code, path:)

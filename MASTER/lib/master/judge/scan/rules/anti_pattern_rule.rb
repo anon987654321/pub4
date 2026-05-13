@@ -13,7 +13,7 @@ module Master
           @id          = "anti_pattern"
           @description = "Forbidden / discouraged patterns from data/rules.yml"
           @severity    = :critical
-          @axiom_tags  = []
+          @rule_tags  = []
           data = Master.load_yaml(rules_path) || {}
           ap = data["anti_patterns"]
           if ap

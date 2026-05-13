@@ -16,7 +16,7 @@ module Master
           @id          = "immutable"
           @description = "Mutable shared state — prefer frozen constants and immutable data flow"
           @severity    = :warning
-          @axiom_tags  = [:IMMUTABLE]
+          @rule_tags  = [:IMMUTABLE]
         end
 
         def check(code, path:)

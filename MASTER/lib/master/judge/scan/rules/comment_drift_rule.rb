@@ -18,7 +18,7 @@ module Master
           @id          = "comment_drift"
           @description = "Comment claim doesn't match method body — comment is lying"
           @severity    = :warning
-          @axiom_tags  = %i[SELF_EXPLAINING EXPLICIT]
+          @rule_tags  = %i[SELF_EXPLAINING EXPLICIT]
         end
 
         def self.auto_build? = false

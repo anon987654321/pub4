@@ -31,7 +31,7 @@ module Master
           @id          = "rubocop"
           @description = "AST-based analysis: complexity, guard clauses, parameter names (rubocop)"
           @severity    = :warning
-          @axiom_tags  = COP_MAP.values.map { |v| v[:axiom].to_sym }.uniq
+          @rule_tags  = COP_MAP.values.map { |v| v[:axiom].to_sym }.uniq
           @root        = root
         end
 

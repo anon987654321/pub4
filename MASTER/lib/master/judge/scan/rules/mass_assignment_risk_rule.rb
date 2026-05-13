@@ -13,7 +13,7 @@ module Master
           @id          = "mass_assignment_risk"
           @description = "Mass assignment without strong-params .permit — exposes every attribute"
           @severity    = :error
-          @axiom_tags  = %i[ROBUSTNESS]
+          @rule_tags  = %i[ROBUSTNESS]
         end
 
         def check(code, path:)

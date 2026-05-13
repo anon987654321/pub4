@@ -19,7 +19,7 @@ module Master
           @id          = "opportunity"
           @description = "Structural improvement opportunity — refactor for clarity or cohesion"
           @severity    = :info
-          @axiom_tags  = %i[SIMPLEST_WORKS DECOUPLE ONE_JOB]
+          @rule_tags  = %i[SIMPLEST_WORKS DECOUPLE ONE_JOB]
         end
 
         def check(code, path:)

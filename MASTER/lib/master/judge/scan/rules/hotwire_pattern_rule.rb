@@ -10,7 +10,7 @@ module Master
           @id = "hotwire_pattern"
           @description = "Flags heavy Hotwire anti-patterns"
           @severity = :warning
-          @axiom_tags = %i[PERFORMANCE]
+          @rule_tags = %i[PERFORMANCE]
         end
 
         def check(code, path:)

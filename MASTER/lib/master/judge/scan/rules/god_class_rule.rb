@@ -11,11 +11,11 @@ module Master
 
         def initialize
           super
-          @threshold   = Master::Ground::Axioms.new.thresholds.dig("class", "max_lines") || DEFAULT_THRESHOLD
+          @threshold   = Master::Ground::Rules.new.thresholds.dig("class", "max_lines") || DEFAULT_THRESHOLD
           @id          = "god_class"
           @description = "Classes over #{@threshold} lines should be split by responsibility"
           @severity    = :warning
-          @axiom_tags  = %i[SIMPLEST_WORKS KISS SRP]
+          @rule_tags  = %i[SIMPLEST_WORKS KISS SRP]
         end
 
         def check_ast(ast, _code, path:)

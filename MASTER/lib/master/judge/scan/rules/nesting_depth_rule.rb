@@ -15,11 +15,11 @@ module Master
 
         def initialize
           super
-          @threshold   = Master::Ground::Axioms.new.thresholds.dig("method", "max_nesting") || DEFAULT_DEPTH
+          @threshold   = Master::Ground::Rules.new.thresholds.dig("method", "max_nesting") || DEFAULT_DEPTH
           @id          = "nesting_depth"
           @description = "Nesting deeper than #{@threshold} — use guard clauses to flatten"
           @severity    = :warning
-          @axiom_tags  = %i[GUARD_CLAUSES_FIRST KISS]
+          @rule_tags  = %i[GUARD_CLAUSES_FIRST KISS]
         end
 
         def check_ast(ast, _code, path:)

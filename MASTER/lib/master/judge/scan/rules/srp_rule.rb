@@ -21,7 +21,7 @@ module Master
           @id          = "srp"
           @description = "Single Responsibility Principle — class spans multiple concern domains"
           @severity    = :warning
-          @axiom_tags  = [:ONE_JOB]
+          @rule_tags  = [:ONE_JOB]
         end
 
         def check(code, path:)

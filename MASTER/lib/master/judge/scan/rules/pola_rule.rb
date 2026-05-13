@@ -14,7 +14,7 @@ module Master
           @id          = "pola"
           @description = "Principle of Least Astonishment — surprising names, contracts, or side-effects"
           @severity    = :warning
-          @axiom_tags  = %i[EXPLICIT POLA_PRINCIPLE]
+          @rule_tags  = %i[EXPLICIT POLA_PRINCIPLE]
         end
 
         def check(code, path:)

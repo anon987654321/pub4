@@ -30,7 +30,7 @@ message: "empty TODO/FIXME marker — fill it or delete it",                    
           @description = "Cross-language axiom checks"
           @severity    = :info
           @auto_fix    = true
-          @axiom_tags  = %i[SQUINT_TEST TYPOGRAPHY_DISCIPLINE MEANINGFUL_NAMES WHITESPACE_PUNCTUATION]
+          @rule_tags  = %i[SQUINT_TEST TYPOGRAPHY_DISCIPLINE MEANINGFUL_NAMES WHITESPACE_PUNCTUATION]
         end
 
         def check(code, path:)

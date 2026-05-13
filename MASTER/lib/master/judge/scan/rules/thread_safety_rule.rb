@@ -17,7 +17,7 @@ module Master
           @id          = "thread_safety"
           @description = "Detect thread-unsafe patterns: Dir.chdir, shell interpolation, dropped kwargs"
           @severity    = :error
-          @axiom_tags  = %i[FAIL_VISIBLY EXPLICIT]
+          @rule_tags  = %i[FAIL_VISIBLY EXPLICIT]
         end
 
         def check(code, path:)

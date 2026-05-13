@@ -22,7 +22,7 @@ module Master
           @id          = "terse"
           @description = "Verbose Ruby patterns — use idiomatic shortcuts"
           @severity    = :style
-          @axiom_tags  = [:EXPLICIT]
+          @rule_tags  = [:EXPLICIT]
         end
 
         def check(code, path:)

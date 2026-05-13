@@ -16,7 +16,7 @@ module Master
           @id          = "naming"
           @description = "Method names violate Ruby conventions"
           @severity    = :style
-          @axiom_tags  = [:SELF_EXPLAINING]
+          @rule_tags  = [:SELF_EXPLAINING]
         end
 
         def check(code, path:)

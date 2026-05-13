@@ -17,7 +17,7 @@ task :constitution do
   root    = __dir__
   scanner = Master::Scan::Scanner.new
   Master::Scan::Rule.registry.select(&:auto_build?).each { |klass| scanner.add_rule(klass.new) }
-  scanner.add_rule(Master::Scan::Rules::AxiomCoverageRule.new(root:))
+  scanner.add_rule(Master::Scan::Rules::RuleCoverageRule.new(root:))
   scanner.add_rule(Master::Scan::Rules::RubocopRule.new(root:))
   scanner.add_rule(Master::Scan::Rules::ReekRule.new(root:))
   scanner.add_rule(Master::Scan::Rules::InterconnectRule.new(root:))

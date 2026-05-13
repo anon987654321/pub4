@@ -10,7 +10,7 @@ module Master
           @id = "controller_bloat"
           @description = "Controllers with too many actions are hard to evolve"
           @severity = :warning
-          @axiom_tags = %i[COHESION]
+          @rule_tags = %i[COHESION]
         end
 
         def check(code, path:)

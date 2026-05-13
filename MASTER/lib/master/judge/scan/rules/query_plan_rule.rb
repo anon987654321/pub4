@@ -10,7 +10,7 @@ module Master
           @id = "query_plan"
           @description = "Query shapes likely to degrade at scale"
           @severity = :warning
-          @axiom_tags = %i[PERFORMANCE]
+          @rule_tags = %i[PERFORMANCE]
         end
 
         def check(code, path:)

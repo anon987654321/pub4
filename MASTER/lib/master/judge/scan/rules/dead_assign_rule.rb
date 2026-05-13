@@ -13,7 +13,7 @@ module Master
           @id          = "dead_assign"
           @description = "Local variable assigned but never read — remove or use it"
           @severity    = :warning
-          @axiom_tags  = [:EXPLICIT]
+          @rule_tags  = [:EXPLICIT]
         end
 
         def check(code, path:)

@@ -14,7 +14,7 @@ module Master
           @id          = "yaml_quality"
           @description = "YAML verbosity — unnecessary quotes, type coercions"
           @severity    = :style
-          @axiom_tags  = [:EXPLICIT]
+          @rule_tags  = [:EXPLICIT]
         end
 
         def check(code, path:)

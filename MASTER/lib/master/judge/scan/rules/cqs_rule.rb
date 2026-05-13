@@ -21,7 +21,7 @@ module Master
           @id          = "cqs"
           @description = "Command/Query Separation — queries must not mutate state"
           @severity    = :warning
-          @axiom_tags  = [:CQS]
+          @rule_tags  = [:CQS]
         end
 
         def check_ast(ast, _code, path:)

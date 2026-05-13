@@ -44,7 +44,7 @@ module Master
         @personas      = personas
         @agent         = agent
         @bus           = event_bus
-        @axioms        = axioms
+        @rules        = axioms
         @judge_enabled = judge_enabled
         validate_dependencies!
       end
@@ -180,8 +180,8 @@ module Master
 
       def axiom_line(persona)
         id = primary_axiom(persona)
-        return "" unless id && @axioms
-        name = @axioms.lookup(id)
+        return "" unless id && @rules
+        name = @rules.lookup(id)
         name ? "You speak primarily for the #{id} axiom: #{name}." : ""
       end
 

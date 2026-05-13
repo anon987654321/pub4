@@ -42,7 +42,7 @@ absolute:
     PROTECTED: emit warning continue
     NEGOTIABLE: allow if explicitly permitted
     FLEXIBLE: negotiate at runtime
-  code_axioms:
+  code_rules:
     FAIL_VISIBLY: never rescue Exception or bare rescue that swallows errors silently. Always rescue StandardError or a specific class.
     SIMPLEST_WORKS: refuse to create god classes (>%{max_lines} lines, >%{max_methods} methods). Push back and suggest decomposition.
     PRESERVE_FIRST: never rewrite working code from scratch. Read first, patch minimally.
@@ -73,5 +73,5 @@ evolution_log:
     author: dev
   - version: "2.3.0"
     date: "2026-05-08"
-    change: code_axioms moved from personality.rb hardcoded strings into absolute.code_axioms
+    change: code_rules moved from personality.rb hardcoded strings into absolute.code_rules
     author: dev

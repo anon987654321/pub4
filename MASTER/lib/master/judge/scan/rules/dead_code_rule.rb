@@ -12,7 +12,7 @@ module Master
           @id          = "dead_code"
           @description = "Dead constants and empty rescue blocks"
           @severity    = :warning
-          @axiom_tags  = [:EXPLICIT]
+          @rule_tags  = [:EXPLICIT]
         end
 
         def check(code, path:)

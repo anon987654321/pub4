@@ -15,7 +15,7 @@ module Master
           @id          = "comment_quality"
           @description = "Low-quality comments — TODO without ref, commented-out code"
           @severity    = :style
-          @axiom_tags  = [:SELF_EXPLAINING]
+          @rule_tags  = [:SELF_EXPLAINING]
         end
 
         def check(code, path:)

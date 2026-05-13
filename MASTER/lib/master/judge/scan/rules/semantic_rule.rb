@@ -19,8 +19,8 @@ module Master
           @id          = "semantic"
           @description = "LLM-based rule review (violations + opportunities)"
           @severity    = :warning
-          @axioms      = load_semantic_rules
-          @axiom_tags  = @axioms.keys.map(&:to_sym)
+          @rules      = load_semantic_rules
+          @rule_tags  = @rules.keys.map(&:to_sym)
         end
 
         def self.auto_build? = false
@@ -59,8 +59,8 @@ module Master
         end
 
         def build_prompt(code, path)
-          violations = @axioms.select { |_, a| a[:mode] == :violation }
-          opportunities = @axioms.select { |_, a| a[:mode] == :opportunity }
+          violations = @rules.select { |_, a| a[:mode] == :violation }
+          opportunities = @rules.select { |_, a| a[:mode] == :opportunity }
           parts = []
           parts << violation_block(violations) unless violations.empty?
           parts << opportunity_block(opportunities) unless opportunities.empty?
@@ -98,9 +98,9 @@ module Master
             next if stripped.empty? || %w[CLEAN NONE].include?(stripped.upcase)
 
             match = stripped.match(/\A([A-Z_][A-Z0-9_]*):(\d+):(.+)\z/)
-            next unless match && @axioms.key?(match[1])
+            next unless match && @rules.key?(match[1])
 
-            axiom = @axioms[match[1]]
+            axiom = @rules[match[1]]
             Finding.build(
               rule: match[1].downcase,
               message: match[3].strip,

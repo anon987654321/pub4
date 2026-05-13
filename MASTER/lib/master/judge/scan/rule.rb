@@ -17,7 +17,7 @@ module Master
         ".md"      => "markdown",    ".json"  => "json",
       }.freeze
 
-      attr_reader :id, :description, :severity, :axiom_tags, :auto_fix
+      attr_reader :id, :description, :severity, :rule_tags, :auto_fix
 
       def self.inherited(subclass)
         @registry_mutex ||= Mutex.new
@@ -39,7 +39,7 @@ module Master
         @id         = self.class.name&.split("::")&.last&.downcase || "unknown"
         @description = ""
         @severity    = :warning
-        @axiom_tags  = []
+        @rule_tags  = []
         @auto_fix    = true
       end
 
@@ -60,7 +60,7 @@ module Master
       protected
 
       def finding(line:, message:, fix: nil)
-        Finding.build(rule: @id, message:, line:, severity: @severity, fix:, tags: @axiom_tags)
+        Finding.build(rule: @id, message:, line:, severity: @severity, fix:, tags: @rule_tags)
       end
 
       def scan_lines(code, pattern, message:, fix: nil)

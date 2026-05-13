@@ -13,7 +13,7 @@ module Master
           @id          = "n_plus_one"
           @description = "Likely N+1 query — eager-load with includes/preload"
           @severity    = :warning
-          @axiom_tags  = %i[PERFORMANCE]
+          @rule_tags  = %i[PERFORMANCE]
         end
 
         def check(code, path:)

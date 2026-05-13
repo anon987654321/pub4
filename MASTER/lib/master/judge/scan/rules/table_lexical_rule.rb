@@ -16,7 +16,7 @@ module Master
           @id          = "table_lexical"
           @description = "Aggregator: emits findings under the id of each matching table row"
           @severity    = :warning
-          @axiom_tags  = []
+          @rule_tags  = []
           @entries     = load_entries
         end
 

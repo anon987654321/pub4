@@ -20,7 +20,7 @@ module Master
           @id          = "co_change_coupling"
           @description = "Files co-change with N+ peers across module boundaries — hidden coupling"
           @severity    = :info
-          @axiom_tags  = %i[DECOUPLE ONE_JOB]
+          @rule_tags  = %i[DECOUPLE ONE_JOB]
           @graph_mutex = Mutex.new
           @graph       = nil
         end
