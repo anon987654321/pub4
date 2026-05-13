@@ -1,0 +1,157 @@
+(() => {
+  "use strict";
+
+  const status = document.getElementById("status-bar") || document.getElementById("status");
+  const input = document.getElementById("zin") || document.getElementById("input");
+  const face = document.getElementById("face") || document.getElementById("mask");
+  const log = document.getElementById("chat-log");
+
+  const state = {
+    connected: false,
+    lastEventAt: 0,
+    entropy: 0.18,
+    confidence: 0.86,
+    topology: "papua-mask",
+    provider: "unknown",
+    active: false
+  };
+
+  const EVENT_MAP = [
+    [/llm:escalation|fallback|retry/i, { topology: "serpent", entropy: 0.62, confidence: 0.46, mode: "escalation" }],
+    [/llm:request|agent:start|pipeline:start/i, { topology: "papua-mask", entropy: 0.32, confidence: 0.72, mode: "thinking" }],
+    [/memory|retriev|context|compact/i, { topology: "neural", entropy: 0.28, confidence: 0.76, mode: "memory" }],
+    [/tool|scan|sweep|audit/i, { topology: "torus", entropy: 0.38, confidence: 0.70, mode: "tool" }],
+    [/error|rollback|failed|failure/i, { topology: "serpent", entropy: 0.78, confidence: 0.24, mode: "error" }],
+    [/done|complete|success|response/i, { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "complete" }]
+  ];
+
+  function classify(type, payload = {}) {
+    const text = `${type} ${JSON.stringify(payload)}`;
+    const matched = EVENT_MAP.find(([pattern]) => pattern.test(text));
+    const mapped = matched ? { ...matched[1] } : { topology: "sphere", entropy: 0.24, confidence: 0.68, mode: "event" };
+
+    const provider = text.match(/claude|deepseek|gemini|gpt|openai|openrouter|mistral/i)?.[0]?.toLowerCase();
+    if (provider) mapped.provider = provider;
+
+    return mapped;
+  }
+
+  function emitVisual(name, detail = {}) {
+    state.lastEventAt = performance.now();
+    state.entropy = clamp(detail.entropy ?? state.entropy, 0, 1);
+    state.confidence = clamp(detail.confidence ?? state.confidence, 0, 1);
+    state.topology = detail.topology || state.topology;
+    state.provider = detail.provider || state.provider;
+    state.active = !/complete|idle|done/.test(name);
+
+    const visual = {
+      name,
+      topology: state.topology,
+      entropy: state.entropy,
+      confidence: state.confidence,
+      provider: state.provider,
+      mode: detail.mode || name,
+      raw: detail.raw || null
+    };
+
+    window.dispatchEvent(new CustomEvent("master:visual", { detail: visual }));
+
+    if (window.MASTERMask && typeof window.MASTERMask.event === "function") {
+      window.MASTERMask.event(name, visual);
+    }
+
+    if (window.MASTERFace && typeof window.MASTERFace.event === "function") {
+      window.MASTERFace.event(name, visual);
+    }
+
+    reflectToDom(visual);
+  }
+
+  function reflectToDom(visual) {
+    document.documentElement.dataset.masterMode = visual.mode;
+    document.documentElement.dataset.masterTopology = visual.topology;
+    document.documentElement.style.setProperty("--master-entropy", String(visual.entropy));
+    document.documentElement.style.setProperty("--master-confidence", String(visual.confidence));
+
+    if (!face) return;
+    const blur = visual.entropy > 0.7 ? 0.6 : 0;
+    const saturation = 0.9 + visual.confidence * 0.35;
+    const contrast = 0.95 + visual.entropy * 0.20;
+    face.style.filter = `saturate(${saturation}) contrast(${contrast}) blur(${blur}px)`;
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, Number(value)));
+  }
+
+  function handleRuntimeEvent(event) {
+    const type = event?.type || event?.event || event?.data?.event || "runtime:event";
+    const mapped = classify(type, event);
+    mapped.raw = event;
+    emitVisual(type, mapped);
+  }
+
+  function connectSse() {
+    if (!window.EventSource) return;
+
+    const source = new EventSource("/events/stream");
+    source.onopen = () => {
+      state.connected = true;
+      emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.90, mode: "connected" });
+    };
+    source.onmessage = (message) => {
+      try {
+        handleRuntimeEvent(JSON.parse(message.data));
+      } catch (_error) {
+        emitVisual("events:raw", { topology: "sphere", entropy: 0.24, confidence: 0.62, raw: message.data });
+      }
+    };
+    source.onerror = () => {
+      state.connected = false;
+      emitVisual("events:disconnected", { topology: "serpent", entropy: 0.52, confidence: 0.38, mode: "disconnected" });
+    };
+  }
+
+  function observeDomSignals() {
+    if (input) {
+      input.addEventListener("input", () => {
+        const length = input.value.length;
+        emitVisual("input:change", {
+          topology: length > 120 ? "neural" : "papua-mask",
+          entropy: Math.min(0.55, length / 360),
+          confidence: length ? 0.66 : 0.86,
+          mode: "typing"
+        });
+      }, { passive: true });
+    }
+
+    if (status) {
+      const observer = new MutationObserver(() => {
+        const text = status.textContent || "";
+        if (!text.trim()) return;
+        const mapped = classify(text, { status: text });
+        emitVisual(`status:${mapped.mode}`, mapped);
+      });
+      observer.observe(status, { childList: true, characterData: true, subtree: true });
+    }
+
+    if (log) {
+      const observer = new MutationObserver((mutations) => {
+        const added = mutations.reduce((sum, mutation) => sum + mutation.addedNodes.length, 0);
+        if (added > 0) emitVisual("chat:append", { topology: "papua-mask", entropy: 0.18, confidence: 0.88, mode: "response" });
+      });
+      observer.observe(log, { childList: true, subtree: true });
+    }
+  }
+
+  window.MASTERVisual = {
+    state,
+    event: emitVisual,
+    runtime: handleRuntimeEvent,
+    classify
+  };
+
+  observeDomSignals();
+  connectSse();
+  emitVisual("visual:ready", { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "ready" });
+})();
