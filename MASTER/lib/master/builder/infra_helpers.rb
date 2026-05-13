@@ -7,9 +7,6 @@ module Master
     def build_scanner(root:, agent:, bus:)
       scanner = Judge::Scan::Scanner.new(event_bus: bus)
       Judge::Scan::Rule.registry.select(&:auto_build?).each { |klass| scanner.add_rule(klass.new) }
-      scanner.add_rule(Judge::Scan::Rules::RuleCoverageRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::RubocopRule.new(root:))
-      scanner.add_rule(Judge::Scan::Rules::ReekRule.new(root:))
       scanner.add_rule(Judge::Scan::Rules::InterconnectRule.new(root:))
       scanner.add_rule(Judge::Scan::Rules::SemanticRule.new(agent:))
       scanner.add_rule(Judge::Scan::Rules::AdversarialRule.new(agent:))
