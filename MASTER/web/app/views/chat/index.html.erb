@@ -352,7 +352,10 @@
     }
 
     // ─── Particles ─────────────────────────────────────────────────────
-    const N = 2200;
+    // Mobile budget: 2200 × 12-field × 3D transform per frame OOM'd phones.
+    // 600 keeps the silhouette legible without melting the GPU/JIT.
+    const COARSE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 768;
+    const N = COARSE ? 600 : 2200;
     const particles = [];
     for (let i = 0; i < N; i++) particles.push({
       x: Math.random() * 600, y: Math.random() * 600,
