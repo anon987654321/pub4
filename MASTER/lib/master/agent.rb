@@ -199,11 +199,15 @@ module Master
         task_type: @config.task_type.to_sym
       )
       return last_response unless escalation_model
+      return last_response if escalation_model.to_s == current.to_s
 
       @bus&.publish("llm:escalation", from: current, to: escalation_model)
-      escalated = chat(
-        original_message, stream: stream,
-        escalation_depth: escalation_depth + 1, &blk
+      escalated = attempt_chat_with_fallbacks(
+        candidate_models: [escalation_model],
+        prompt: original_message,
+        context: conversation_context,
+        stream: stream,
+        &blk
       )
       escalated.is_a?(Master::Result::Err) ? last_response : escalated
     end
