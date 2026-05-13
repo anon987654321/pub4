@@ -17,7 +17,6 @@ module Brgen
       "tv" => :tv,
       "marche" => :marketplace,
       "markadur" => :marketplace,
-      "markedplass" => :marketplace,
       "markedsplads" => :marketplace,
       "markedsplass" => :marketplace,
       "marketplace" => :marketplace,
