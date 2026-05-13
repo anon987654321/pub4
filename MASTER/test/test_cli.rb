@@ -25,7 +25,7 @@ class TestCLI < Minitest::Test
       pipeline: @pipeline
     }
 
-    @cli = Master::CLI.new(container: @container)
+    @cli = Master::Now::CLI.new(container: @container)
   end
 
   # ── container accessor ────────────────────────────────────────────────────

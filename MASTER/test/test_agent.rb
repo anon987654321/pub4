@@ -16,13 +16,13 @@ class TestAgent < Minitest::Test
   FakeCache   = Struct.new(:store) { def fetch(k, m, &b); (store[k] ||= b.call); end }
 
   def setup
-    @agent = Master::Agent.new(
+    @agent = Master::Agent.new(deps: Master::Agent::Dependencies.from_kwargs(
       config:          FakeConfig.new("claude-sonnet-4-6", :exploration, "none"),
       session:         FakeSession.new([]),
       tools:           [],
       circuit_breaker: FakeCB.new,
       cache:           FakeCache.new({})
-    )
+    ))
   end
 
   # tool_capable? — previously a substring-include check. After patch,

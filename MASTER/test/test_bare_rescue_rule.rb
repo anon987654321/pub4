@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestBareRescueRule < Minitest::Test
   def setup
-    @rule = Master::Scan::Rules::BareRescueRule.new
+    @rule = Master::Judge::Scan::Rules::BareRescueRule.new
   end
 
   def test_detects_bare_rescue

@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestAxioms < Minitest::Test
   def setup
-    @rules = Master::Axioms.new
+    @rules = Master::Ground::Rules.new
   end
 
   def test_kernel_not_empty

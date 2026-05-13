@@ -11,7 +11,10 @@ if ENV["COVERAGE"] == "1"
   end
 end
 
+ENV["MT_NO_PLUGINS"] = "1"
+gem "minitest", "~> 5.25"
 require "minitest/autorun"
+require "minitest/mock"
 require "tmpdir"
 require "timeout"
 

@@ -98,61 +98,19 @@ class TestWebUI < Minitest::Test
     assert_equal "FAKE-MP3-BYTES", bytes
   end
 
-  # ── Cognitive monitor ─────────────────────────────────────────────────────
-
-  def test_cognitive_monitor_starts_clean
-    m = Master::CognitiveMonitor.new
-    assert_equal 0.0, m.load
-    assert_equal :optimal, m.flow_state
-  end
-
-  def test_cognitive_monitor_push_increases_load
-    m = Master::CognitiveMonitor.new
-    m.push("concept_a", weight: 2.0)
-    assert_in_delta 2.0, m.load, 0.01
-  end
-
-  def test_cognitive_monitor_overload_after_threshold
-    m = Master::CognitiveMonitor.new
-    m.push("heavy", weight: 8.0)
-    assert m.overloaded?
-  end
-
-  def test_cognitive_monitor_reset
-    m = Master::CognitiveMonitor.new
-    5.times { |i| m.push("c#{i}", weight: 1.5) }
-    m.reset!(keep_recent: 2)
-    assert m.load <= 3.0
-    assert_equal 0, m.switches
-  end
-
-  def test_cognitive_monitor_update_flow_returns_self
-    m = Master::CognitiveMonitor.new
-    assert_same m, m.update_flow(context_switches: 1)
-  end
-
-  def test_cognitive_monitor_state_hash
-    m = Master::CognitiveMonitor.new
-    s = m.state
-    assert s.key?(:load)
-    assert s.key?(:flow_state)
-    assert s.key?(:overload_risk)
-    assert s.key?(:complexity)
-  end
-
   # ── SwarmCoordinator ─────────────────────────────────────────────────────
 
   def test_swarm_coordinator_worker_roles
     # Just check the list is non-empty without booting real agents
-    assert_includes Master::Swarm::Coordinator::WORKER_CLASSES.keys, :analyst
-    assert_includes Master::Swarm::Coordinator::WORKER_CLASSES.keys, :coder
-    assert_includes Master::Swarm::Coordinator::WORKER_CLASSES.keys, :reviewer
-    assert_includes Master::Swarm::Coordinator::WORKER_CLASSES.keys, :researcher
+    assert_includes Master::Judge::Swarm::Coordinator::WORKER_CLASSES.keys, :analyst
+    assert_includes Master::Judge::Swarm::Coordinator::WORKER_CLASSES.keys, :coder
+    assert_includes Master::Judge::Swarm::Coordinator::WORKER_CLASSES.keys, :reviewer
+    assert_includes Master::Judge::Swarm::Coordinator::WORKER_CLASSES.keys, :researcher
   end
 
   def test_swarm_coordinator_unknown_role
     mock_agent = Minitest::Mock.new
-    coord = Master::Swarm::Coordinator.new(agent: mock_agent)
+    coord = Master::Judge::Swarm::Coordinator.new(agent: mock_agent)
     result = coord.dispatch(:nonexistent, task: "foo")
     assert result.err?
     assert_includes result.message, "unknown role"
@@ -188,16 +146,16 @@ class TestWebUI < Minitest::Test
   # ── Personality ──────────────────────────────────────────────────────────
 
   def test_personality_default_is_malay
-    assert_equal :malay, Master::Personality::DEFAULT
+    assert_equal :malay, Master::Voice::Personality::DEFAULT
   end
 
   def test_personality_system_prompt_non_empty
-    p = Master::Personality.new(:malay)
+    p = Master::Voice::Personality.new(:malay)
     assert p.system_prompt.length > 10
   end
 
   def test_personality_system_prompt_memoized
-    p = Master::Personality.new(:malay)
+    p = Master::Voice::Personality.new(:malay)
     assert_same p.system_prompt, p.system_prompt
   end
 
