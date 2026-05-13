@@ -16,6 +16,7 @@
     topology: "papua-mask",
     provider: "unknown",
     lastEventAt: performance.now(),
+    terrainPhase: 0,
     time: 0
   };
 
@@ -32,9 +33,11 @@
   const memories = [];
   const trails = [];
   const weather = [];
+  const terrainImpacts = [];
   const MAX_TRAILS = reducedMotion ? 24 : 96;
   const MAX_WEATHER = reducedMotion ? 48 : 180;
   const MAX_MEMORIES = reducedMotion ? 18 : 64;
+  const MAX_IMPACTS = reducedMotion ? 8 : 28;
 
   function makeCanvas() {
     const node = document.createElement("canvas");
@@ -73,6 +76,12 @@
     return min + Math.random() * (max - min);
   }
 
+  function fieldNoise(x, y, t) {
+    return Math.sin(x * 0.015 + t) * 0.45 +
+      Math.cos(y * 0.019 - t * 0.7) * 0.32 +
+      Math.sin((x + y) * 0.009 + t * 1.3) * 0.23;
+  }
+
   function chooseWeather(name) {
     if (/error|rollback|failed|failure/.test(name)) return "storm";
     if (/escalat|fallback|retry/.test(name)) return "serpent";
@@ -94,6 +103,7 @@
 
     pulseAgents(name);
     spawnTrail(name, detail);
+    spawnTerrainImpact(name, detail);
     if (/memory|retriev|context|compact|chat:append|complete|success/.test(name)) spawnMemory(detail);
     if (/error|rollback|failed|failure|escalat|fallback|retry/.test(name)) spawnWeatherBurst(18, 1.0);
     else spawnWeatherBurst(6, 0.35);
@@ -124,6 +134,26 @@
       name
     });
     while (trails.length > MAX_TRAILS) trails.shift();
+  }
+
+  function spawnTerrainImpact(name, detail = {}) {
+    const [cx, cy] = center();
+    let kind = "rise";
+    if (/error|rollback|failed|failure/.test(name)) kind = "fracture";
+    else if (/memory|retriev|context|compact/.test(name)) kind = "basin";
+    else if (/escalat|fallback|retry/.test(name)) kind = "rift";
+    else if (/complete|success|done/.test(name)) kind = "stabilize";
+
+    terrainImpacts.push({
+      x: cx + rand(-0.36, 0.36) * state.width,
+      y: cy + rand(-0.30, 0.30) * state.height,
+      radius: rand(60, 180),
+      life: 1,
+      force: kind === "fracture" || kind === "rift" ? 1.0 : 0.55,
+      color: colorFor(name, detail),
+      kind
+    });
+    while (terrainImpacts.length > MAX_IMPACTS) terrainImpacts.shift();
   }
 
   function spawnMemory(detail) {
@@ -166,6 +196,87 @@
     if (/error|rollback/.test(name)) return "235,70,45";
     if (/memory|retriev/.test(name)) return "135,230,190";
     return "230,180,110";
+  }
+
+  function terrainHeight(x, y, t) {
+    const base = fieldNoise(x, y, t) * (0.35 + state.entropy * 0.75);
+    let impacts = 0;
+    for (const impact of terrainImpacts) {
+      const dx = x - impact.x;
+      const dy = y - impact.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const falloff = Math.max(0, 1 - distance / impact.radius);
+      const shape = falloff * falloff * (3 - 2 * falloff) * impact.life * impact.force;
+      if (impact.kind === "basin") impacts -= shape * 0.9;
+      else if (impact.kind === "stabilize") impacts += shape * 0.25;
+      else impacts += shape;
+    }
+    return base + impacts;
+  }
+
+  function drawSemanticTerrain(dt) {
+    state.terrainPhase += dt * 0.00016 * (0.4 + state.activity);
+    const [cx, cy] = center();
+    const rows = reducedMotion ? 7 : 13;
+    const cols = reducedMotion ? 12 : 24;
+    const spanX = state.width * 0.86;
+    const spanY = state.height * 0.56;
+    const t = state.terrainPhase;
+    const calm = state.confidence;
+    const alphaBase = 0.018 + state.activity * 0.032;
+
+    for (let r = 0; r < rows; r++) {
+      const v = r / Math.max(1, rows - 1);
+      const y = cy - spanY * 0.5 + v * spanY;
+      ctx.beginPath();
+      for (let c = 0; c < cols; c++) {
+        const u = c / Math.max(1, cols - 1);
+        const x = cx - spanX * 0.5 + u * spanX;
+        const h = terrainHeight(x, y, t);
+        const perspective = 0.55 + v * 0.45;
+        const px = x + Math.sin(t + v * 6) * 10 * state.entropy;
+        const py = y + h * 34 * perspective + Math.cos(t * 1.7 + u * 4) * 5 * (1 - calm);
+        if (c === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      const color = state.weather === "storm" || state.weather === "serpent" ? "235,80,45" : "120,220,185";
+      ctx.strokeStyle = `rgba(${color},${alphaBase * (0.55 + v)})`;
+      ctx.lineWidth = 0.75 + state.entropy * 1.2;
+      ctx.stroke();
+    }
+
+    for (let c = 0; c < cols; c += 2) {
+      const u = c / Math.max(1, cols - 1);
+      const x = cx - spanX * 0.5 + u * spanX;
+      ctx.beginPath();
+      for (let r = 0; r < rows; r++) {
+        const v = r / Math.max(1, rows - 1);
+        const y = cy - spanY * 0.5 + v * spanY;
+        const h = terrainHeight(x, y, t + 7.3);
+        const px = x + Math.sin(t + v * 6) * 10 * state.entropy;
+        const py = y + h * 28 * (0.55 + v * 0.45);
+        if (r === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.strokeStyle = `rgba(230,180,110,${alphaBase * 0.45})`;
+      ctx.lineWidth = 0.55;
+      ctx.stroke();
+    }
+
+    for (let i = terrainImpacts.length - 1; i >= 0; i--) {
+      const impact = terrainImpacts[i];
+      impact.life -= dt * 0.00036;
+      if (impact.life <= 0) {
+        terrainImpacts.splice(i, 1);
+        continue;
+      }
+      const radius = impact.radius * (1.15 - impact.life * 0.15);
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(${impact.color},${impact.life * 0.10})`;
+      ctx.lineWidth = impact.kind === "fracture" || impact.kind === "rift" ? 1.7 : 0.9;
+      ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
   function drawAgentSpirits(dt) {
@@ -277,6 +388,7 @@
 
     ctx.clearRect(0, 0, state.width, state.height);
     ctx.globalCompositeOperation = "lighter";
+    drawSemanticTerrain(dt);
     drawWeather(dt);
     drawMemories(dt);
     drawTrails(dt);
@@ -294,8 +406,10 @@
     agents,
     memories,
     trails,
+    terrainImpacts,
     event: (name, detail = {}) => ingestVisual({ ...detail, name }),
     memory: spawnMemory,
+    terrain: spawnTerrainImpact,
     burst: spawnWeatherBurst
   };
 
