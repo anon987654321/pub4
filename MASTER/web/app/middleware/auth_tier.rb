@@ -6,6 +6,9 @@
 class AuthTier
   PUBLIC_PATHS  = %w[/up /health /manifest.json /icon.png /icon.svg /sw.js].freeze
   PUBLIC_PREFIX = %w[/assets/].freeze
+  # Crockford base32 — no I/L/O/U, easy to read aloud.
+  TOKEN_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".chars.freeze
+  TOKEN_LENGTH   = 8
 
   def initialize(app, config_path:)
     @app = app
@@ -43,7 +46,7 @@ class AuthTier
 
   def seed_token(cfg)
     require "securerandom"
-    tok = SecureRandom.urlsafe_base64(24)
+    tok = Array.new(TOKEN_LENGTH) { TOKEN_ALPHABET.sample(random: SecureRandom) }.join
     cfg["web_token"] = tok
     FileUtils.mkdir_p(File.dirname(@config_path))
     File.write(@config_path, cfg.to_yaml)
