@@ -42,11 +42,26 @@ The current `DEPLOY/rails` stack is cleaner and more deployable. It already has 
 
 The old `pub/rails` scripts are noisier but contain feature modules worth restoring as **Brgen namespaced subapp templates**, not as direct script replacements.
 
-## Brgen topology correction
+## Brgen product correction
 
-`marketplace`, `playlist`, `dating`, `tv`, and `takeaway` are not unrelated Rails products. They are namespaced Brgen subapps.
+Brgen is Bergen, Norway first.
 
-Canonical namespace pattern:
+`brgen.no` is the main Bergen local superapp: Reddit + Craigslist/Finn-style marketplace + X.com-style posting + TikTok-style short media feed.
+
+The vertical apps are not separate city networks. They are Bergen/Brgen subdomains under `brgen.no`, with Norwegian names where appropriate.
+
+Canonical public pattern:
+
+```text
+brgen.no                         # main Bergen social/local superapp
+markedsplass.brgen.no            # marketplace / Craigslist / Finn-style vertical
+spilleliste.brgen.no             # playlist / music vertical
+dating.brgen.no                  # dating vertical
+tv.brgen.no                      # video / TV / live vertical
+takeaway.brgen.no                # food ordering / delivery vertical
+```
+
+English internal service names may stay useful in code:
 
 ```text
 brgen
@@ -57,15 +72,28 @@ brgen_tv
 brgen_takeaway
 ```
 
-Canonical deploy layout should be:
+but the public-facing domains and UX should prefer the Bergen/Norwegian naming pattern:
+
+```text
+markedsplass
+spilleliste
+dating
+tv
+takeaway
+```
+
+## Brgen topology
+
+Canonical deploy layout should be Bergen-first:
 
 ```text
 DEPLOY/rails/brgen/
   brgen.sh
+  domains.yml
   app/
   subapps/
-    marketplace/
-    playlist/
+    markedsplass/
+    spilleliste/
     dating/
     tv/
     takeaway/
@@ -74,8 +102,8 @@ DEPLOY/rails/brgen/
 or, if separate service users remain preferable:
 
 ```text
-DEPLOY/rails/brgen_marketplace/
-DEPLOY/rails/brgen_playlist/
+DEPLOY/rails/brgen_markedsplass/
+DEPLOY/rails/brgen_spilleliste/
 DEPLOY/rails/brgen_dating/
 DEPLOY/rails/brgen_tv/
 DEPLOY/rails/brgen_takeaway/
@@ -83,7 +111,7 @@ DEPLOY/rails/brgen_takeaway/
 
 but the documentation, locales, route namespaces, domains, and service descriptions should still treat them as Brgen subapps.
 
-## Brgen city/domain coverage
+## Domain coverage
 
 The old Brgen core script generated a `City` model with:
 
@@ -98,80 +126,49 @@ analytics
 tld
 ```
 
-That is the important domain model to preserve. Brgen is a city/community network where each city can carry its own subdomain, language, favicon, analytics ID, and TLD.
+Keep the useful metadata, but the product meaning is now clearer: `City` should represent Bergen-local configuration first, not a generic global city network.
 
-Domain pattern from the old app:
+Canonical Brgen registry:
 
-```text
-<city-subdomain>.brgen.<city-tld>
+```yaml
+primary:
+  name: Brgen
+  city: Bergen
+  country: Norway
+  language: nb
+  tld: no
+  domains:
+    core: brgen.no
+    marketplace: markedsplass.brgen.no
+    playlist: spilleliste.brgen.no
+    dating: dating.brgen.no
+    tv: tv.brgen.no
+    takeaway: takeaway.brgen.no
 ```
 
-Examples implied by the old scripts:
+Possible future city expansion should be explicit and secondary, not assumed by default.
 
-```text
-bergen.brgen.no
-oslo.brgen.no
-trondheim.brgen.no
-stavanger.brgen.no
-```
-
-Subapp domain pattern should extend that rather than replace it:
-
-```text
-marketplace.<city>.brgen.<tld>
-playlist.<city>.brgen.<tld>
-dating.<city>.brgen.<tld>
-tv.<city>.brgen.<tld>
-takeaway.<city>.brgen.<tld>
-```
-
-Alternative flat pattern if relayd/cert handling is simpler:
-
-```text
-<city>.marketplace.brgen.<tld>
-<city>.playlist.brgen.<tld>
-<city>.dating.brgen.<tld>
-<city>.tv.brgen.<tld>
-<city>.takeaway.brgen.<tld>
-```
+If expansion happens later, use separate brands or controlled local subdomains rather than making Bergen disappear inside a generic tenant model.
 
 Restore requirement:
 
-- keep `City` as the canonical tenant/community object
-- keep `subdomain`, `language`, `favicon`, `analytics`, and `tld`
-- make every Brgen subapp tenant-aware through `City`
-- document each deployed city/domain pair in a generated registry
-
-Suggested registry:
-
-```text
-DEPLOY/rails/brgen/domains.yml
-```
-
-Shape:
-
-```yaml
-cities:
-  - name: Bergen
-    city: Bergen
-    country: Norway
-    language: nb
-    subdomain: bergen
-    tld: no
-    domains:
-      core: bergen.brgen.no
-      marketplace: marketplace.bergen.brgen.no
-      playlist: playlist.bergen.brgen.no
-      dating: dating.bergen.brgen.no
-      tv: tv.bergen.brgen.no
-      takeaway: takeaway.bergen.brgen.no
-```
+- make Bergen/Brgen the primary tenant
+- keep Norwegian public naming for local verticals
+- keep `City` metadata only where it helps domain, locale, analytics, and branding
+- document every deployed Brgen domain in `DEPLOY/rails/brgen/domains.yml`
+- generate relayd/cert config from that registry
 
 ## Restore candidates
 
-### 1. Brgen marketplace subapp
+### 1. Brgen markedsplass subapp
 
 Old source: `rails/brgen/marketplace.sh`
+
+Public domain:
+
+```text
+markedsplass.brgen.no
+```
 
 Valuable logic:
 
@@ -188,7 +185,7 @@ Recommendation:
 Create a Brgen namespaced tracked subapp:
 
 ```text
-DEPLOY/rails/brgen/subapps/marketplace/
+DEPLOY/rails/brgen/subapps/markedsplass/
   app/
   README.md
 ```
@@ -196,17 +193,23 @@ DEPLOY/rails/brgen/subapps/marketplace/
 or a service wrapper:
 
 ```text
-DEPLOY/rails/brgen_marketplace/brgen_marketplace.sh
-DEPLOY/rails/brgen_marketplace/app/
+DEPLOY/rails/brgen_markedsplass/brgen_markedsplass.sh
+DEPLOY/rails/brgen_markedsplass/app/
 ```
 
 Do **not** blindly restore the full old script. Solidus plus generated controllers and models should be ported into the app tree and validated against Rails 8 first.
 
 Priority: high.
 
-### 2. Brgen playlist subapp
+### 2. Brgen spilleliste subapp
 
 Old source: `rails/brgen/playlist.sh`
+
+Public domain:
+
+```text
+spilleliste.brgen.no
+```
 
 Valuable logic:
 
@@ -220,7 +223,7 @@ Valuable logic:
 
 Recommendation:
 
-Restore as a Brgen subapp with `Playlist::*` namespacing preserved.
+Restore as a Brgen subapp with `Playlist::*` namespacing preserved internally, but Norwegian UX/domain naming externally.
 
 Priority: high.
 
@@ -228,25 +231,37 @@ Priority: high.
 
 Old source: `rails/brgen/dating.sh`
 
+Public domain:
+
+```text
+dating.brgen.no
+```
+
 Valuable logic:
 
 - profiles with location, gender, age, interests, photos
 - match, like, dislike models
 - `Dating::MatchmakingService`
-- location-aware matching
+- Bergen-aware matching
 - Mapbox profile map
 - profile/person JSON-LD
 - dating-specific locale namespace
 
 Recommendation:
 
-Restore only after normalizing safety/privacy boundaries and model names. Dating should be tenant-aware through `City` and should not leak profiles across city tenants unless explicitly configured.
+Restore only after normalizing safety/privacy boundaries and model names. Dating should be Bergen-local by default and must not expose profile/location data outside intended scopes.
 
 Priority: high, but privacy-sensitive.
 
 ### 4. Brgen TV subapp
 
 Old source: `rails/brgen/tv.sh`
+
+Public domain:
+
+```text
+tv.brgen.no
+```
 
 Valuable logic:
 
@@ -267,6 +282,12 @@ Priority: medium-high.
 ### 5. Brgen takeaway subapp
 
 Old source: `rails/brgen/takeaway.sh`
+
+Public domain:
+
+```text
+takeaway.brgen.no
+```
 
 Valuable logic:
 
@@ -324,7 +345,7 @@ Still worth restoring:
 - app-specific JSON-LD helpers
 - SEO meta helper conventions
 - structured i18n seed templates
-- city/domain registry generation
+- Brgen domain registry generation
 - relayd/cert generation from `brgen/domains.yml`
 
 Recommendation:
@@ -368,18 +389,18 @@ Avoid direct restoration of:
 - handwritten generated Rails controllers that reference missing columns
 - hard-coded `BRGEN_IP`
 - scripts that mutate existing apps without sentinels
-- subapps that ignore the `City` tenant/domain model
+- subapps that ignore the Brgen/Bergen primary product model
 
 ## Best restore sequence
 
-1. Add `DEPLOY/rails/brgen/domains.yml` with all known Brgen cities, TLDs, and subapp domains.
-2. Add Brgen subapp shell directories for marketplace, playlist, dating, tv, and takeaway.
+1. Add `DEPLOY/rails/brgen/domains.yml` with `brgen.no` and Brgen subdomains.
+2. Add Brgen subapp shell directories for markedsplass, spilleliste, dating, tv, and takeaway.
 3. Port only domain models, routes, locale keys, and views that pass Rails 8 syntax checks.
 4. Add PWA/offline helper to `@shared_functions.sh`.
 5. Add JSON-LD/meta helper conventions to `@shared_functions.sh`.
 6. Add relayd/cert generation from `brgen/domains.yml`.
 7. Add smoke checks for each Rails app deploy script.
-8. Add a docs table listing each app, port, domain, service user, tenant mode, and restore status.
+8. Add a docs table listing each app, port, domain, service user, public Norwegian name, and restore status.
 
 ## Restore policy
 
@@ -391,7 +412,7 @@ Correct direction:
 old generator idea
   -> reviewed Rails 8 app source
   -> Brgen namespaced app/source tree
-  -> City/domain-aware routing
+  -> brgen.no domain-aware routing
   -> current deploy wrapper
 ```
 
@@ -408,8 +429,8 @@ Create:
 
 ```text
 DEPLOY/rails/brgen/domains.yml
-DEPLOY/rails/brgen/subapps/marketplace/README.md
-DEPLOY/rails/brgen/subapps/playlist/README.md
+DEPLOY/rails/brgen/subapps/markedsplass/README.md
+DEPLOY/rails/brgen/subapps/spilleliste/README.md
 DEPLOY/rails/brgen/subapps/dating/README.md
 DEPLOY/rails/brgen/subapps/tv/README.md
 DEPLOY/rails/brgen/subapps/takeaway/README.md
