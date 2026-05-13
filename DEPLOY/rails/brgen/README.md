@@ -1,20 +1,41 @@
 # brgen
 
-## Hyperlocal social network
+## What matters nearby right now
 
-brgen gives each city its own social graph on one shared Rails platform.
+brgen gives each city its own local discovery system on one Rails 8 codebase.
 
-It combines local communities, marketplace, dating, playlists, TV, takeaway, events, and neighborhood identity into one local discovery system.
+The core loop is simple:
+
+1. See what matters nearby.
+2. Act on it.
+3. Leave a trust signal.
+4. Improve the next local recommendation.
+
+Everything else serves that loop.
 
 ## Value proposition
 
-For residents: see what is happening nearby.
+For residents: find people, events, food, posts, listings, music, and video near you.
 
-For creators: build a local audience without platform lock-in.
+For creators: build a local audience and earn from local attention.
 
-For merchants: reach nearby people directly.
+For merchants: reach nearby buyers without renting attention from global platforms.
 
-For cities: preserve local memory, trust, and activity.
+For cities: preserve local activity, memory, and trust.
+
+## Product rule
+
+Do not build five separate apps.
+
+Build one local graph with five surfaces:
+
+- commerce
+- dating
+- music
+- video
+- food
+
+A user, place, post, listing, channel, restaurant, playlist, and event should all belong to the same city graph.
 
 ## Domains
 
@@ -24,7 +45,7 @@ Current domain set includes brgen.no, oshlo.no, trndheim.no, stvanger.no, trmso.
 
 ## Sub-applications
 
-| Namespace | Subdomain | Concept | Models |
+| Namespace | Subdomain | Job | Models |
 |---|---|---|---|
 | `Marketplace::` | `markedsplass.*` and locale aliases | local commerce | Category, Listing, Order |
 | `Dating::` | `dating.*` | local matching | Profile, Like, Dislike, Match |
@@ -32,39 +53,96 @@ Current domain set includes brgen.no, oshlo.no, trndheim.no, stvanger.no, trmso.
 | `Tv::` | `tv.*` | local creator video | Channel, Video, Broadcast, Subscription, ViewEvent |
 | `Takeaway::` | `takeaway.*` | local food | Restaurant, MenuItem, Order, OrderItem |
 
-## Core systems to build next
+## Shared primitives
 
-### Local graph
+Build these once and use them everywhere:
 
-Model districts, neighborhoods, venues, campuses, streets, scenes, and local groups. Feed ranking should use place, trust, time, social proximity, and semantic similarity.
+- `City`
+- `Neighborhood`
+- `Place`
+- `User`
+- `TrustSignal`
+- `ReputationScore`
+- `Event`
+- `Post`
+- `Conversation`
+- `Notification`
+- `MediaAsset`
+- `SearchIndexEntry`
+- `Embedding`
 
-### City memory
+## Feed ranking
 
-Archive local stories, venues, photos, events, creators, and neighborhood changes. This gives each city a durable public memory.
+Rank by:
 
-### Trust layer
+- distance
+- freshness
+- trust
+- social proximity
+- semantic match
+- city relevance
+- user intent
 
-Add verified locals, merchant history, social vouching, transaction reputation, and local moderation councils.
+Do not rank by engagement alone.
 
-### Map-native interface
+## Map-native interface
 
-The map should show live activity, events, crowded places, creators, food, markets, and local alerts.
+The map should show:
 
-### Local agents
+- live posts
+- listings
+- restaurants
+- creators
+- events
+- venues
+- crowded places
+- neighborhood activity
 
-Build agents for tonight's events, cheap food, apartments, nightlife, local deals, music scenes, and people nearby.
+The feed explains the map. The map should not be an afterthought.
 
-### Local economy
+## Trust layer
 
-Add gigs, services, rentals, rides, tutoring, repairs, barter, local jobs, and creator storefronts.
+Add:
+
+- verified locals
+- verified merchants
+- profile age
+- transaction history
+- social vouching
+- moderation history
+- block and report signals
+
+Trust should affect reach, search, matching, and commerce.
+
+## Rails direction
+
+Use Rails 8 patterns for the operational core:
+
+- Hotwire for live feeds, maps, chat, order state, and packing screens
+- Solid Queue for ranking jobs, notifications, imports, media jobs, and digest jobs
+- Solid Cache for local feed fragments and city landing pages
+- Active Storage for photos, videos, thumbnails, menus, and documents
+- Action Text for posts, listings, articles, venue pages, and profiles
+- Action Mailbox later for inbound support, claims, abuse reports, and merchant workflows
 
 ## AI direction
 
-Use embeddings, semantic search, GraphRAG, trust-weighted ranking, geo-aware retrieval, and moderation pipelines.
+Use AI where it improves local discovery:
+
+- semantic search
+- listing deduplication
+- moderation
+- city summaries
+- event extraction
+- recommendation embeddings
+- map clustering
+- trust anomaly detection
+
+Do not lead with AI in the product. Lead with local usefulness.
 
 ## Stack
 
-Rails 8, SQLite3, Solid Queue, Solid Cache, Hotwire, Falcon, Active Storage, ImageProcessing, I18n, OpenBSD, relayd.
+Rails 8, SQLite3 now, PostgreSQL later where needed, Solid Queue, Solid Cache, Hotwire, Falcon, Active Storage, ImageProcessing, I18n, OpenBSD, relayd.
 
 ## Deploy
 
@@ -78,4 +156,4 @@ DNS, TLS, SNI routing, and city domain setup live under `DEPLOY/openbsd`.
 
 ## Long-term goal
 
-Make brgen the local operating layer for cities: social life, commerce, media, dating, music, food, memory, and trust.
+Make brgen the fastest way to understand and act on what matters nearby.
