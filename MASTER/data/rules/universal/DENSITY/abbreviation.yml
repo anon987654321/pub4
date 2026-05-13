@@ -1,0 +1,15 @@
+---
+id: abbreviation
+name: Abbreviation
+description: Use full words (index not idx).
+principle: DENSITY
+severity: style
+mode: violation
+auto_fix: false
+adapters:
+- medium: any
+  detection:
+    lexical:
+      file_line:
+        pattern: "\\b(idx|sig|tmp|buf|val|ret|obj|str|arr|num|cnt|ptr)\\b"
+        message: Spell out the full word

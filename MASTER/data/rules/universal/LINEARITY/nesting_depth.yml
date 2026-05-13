@@ -1,0 +1,15 @@
+---
+id: nesting_depth
+name: Deep Nesting
+description: Nesting level >2 – use guard clauses.
+principle: LINEARITY
+severity: warning
+mode: violation
+auto_fix: false
+adapters:
+- medium: ruby
+  detection:
+    structural:
+      file_unit:
+        matcher: nesting_depth
+        threshold: 3

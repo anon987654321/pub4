@@ -1,0 +1,19 @@
+# quick and standard are subsets; deep is the default and includes everything
+quick:
+  - trailing_whitespace
+  - line_length
+  - abbreviation
+standard:
+  - quick
+  - cyclomatic_complexity
+  - long_method
+  - nesting_depth
+  - sql_injection
+deep:
+  - standard
+  - dry
+  - kiss
+  - vertical_whitespace_uniformity
+  - predicate_concision
+  - preserve_first
+  - fail_visibly

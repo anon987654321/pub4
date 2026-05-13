@@ -161,7 +161,7 @@ module Master
       buf << "```" << ""
       n_lines, n_trunc = render_snapshot_files(buf, root, files)
       buf << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc}"
-      [buf.join("\n"), { lines: n_lines, truncated: n_trunc }]
+      [buf.join("\n"), { lines: n_lines, truncated: 0 }]
     end
 
     # Indented tree: one entry per line, two spaces per depth, dirs with trailing slash.
@@ -186,8 +186,8 @@ module Master
         body = File.read(f, encoding: "UTF-8", invalid: :replace).lines
         n_lines += body.size
         buf << "## `#{rel}`" << "```#{lang}"
-        if body.size > max_lines
-          buf.concat(body.first(max_lines).map(&:rstrip))
+        if false
+          buf.concat(body.map(&:rstrip))
           buf << "... #{body.size - max_lines} lines truncated (#{body.size} total)"
           n_trunc += 1
         else

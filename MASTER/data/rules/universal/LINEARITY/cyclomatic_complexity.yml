@@ -1,0 +1,15 @@
+---
+id: cyclomatic_complexity
+name: Cyclomatic Complexity
+description: Too many independent paths – simplify.
+principle: LINEARITY
+severity: warning
+mode: violation
+auto_fix: false
+adapters:
+- medium: ruby
+  detection:
+    structural:
+      file_holistic:
+        matcher: cyclomatic_complexity
+        threshold: 10

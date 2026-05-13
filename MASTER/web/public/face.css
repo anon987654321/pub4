@@ -11,3 +11,13 @@ canvas { position: fixed; inset: 0; display: block; }
 #zsh .sep { color: rgba(220,170,135,0.45); }
 #zsh input { flex: 1; background: transparent; border: 0; outline: 0; color: inherit; font: inherit; caret-color: rgb(220,90,70); padding: 2px 0; }
 #zsh input::placeholder { color: rgba(220,170,135,0.32); }
+#chat-log { position: fixed; top: 80px; left: 20px; right: 20px; bottom: 100px; overflow-y: auto; font-family: monospace; color: #cdc5b6; }
+.message { margin-bottom: 8px; white-space: pre-wrap; }
+.message.user { color: #ffaa66; }
+.message.assistant { color: #cdc5b6; }
+.cursor { display: inline-block; width: 1px; background: #cdc5b6; animation: blink 1s step-end infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+#suggestions { position: absolute; bottom: 100%; left: 0; background: #1e1e1e; border: 1px solid #333; border-radius: 4px; display: none; }
+.suggestion { padding: 4px 8px; cursor: pointer; }
+.suggestion:hover { background: #333; }
+#status-bar { position: fixed; bottom: 70px; left: 0; right: 0; background: rgba(0,0,0,0.7); color: #aaa; font-size: 12px; padding: 4px; text-align: center; }

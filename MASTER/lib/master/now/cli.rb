@@ -336,7 +336,7 @@ module Master
     end
 
     def start_background_loop
-      cfg           = AutoLoop.load_cfg
+      cfg           = Master::Loop::Master::Loop::Master::Loop::AutoLoop.load_cfg
       return unless cfg.fetch("background", true)
       idle_interval = cfg.fetch("idle_sleep", IDLE_SLEEP_DEFAULT)
       @bg_thread = Thread.new do

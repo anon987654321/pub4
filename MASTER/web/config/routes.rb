@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   root "chat#index"
   post "chat/message",  to: "chat#message"
+  get  "chat/history", to: "chat#history"
+  post "chat/command", to: "chat#command"
   post "chat/tts",      to: "chat#tts"
   post "chat/speak",    to: "chat#speak"
   get  "chat/metrics",  to: "chat#metrics"

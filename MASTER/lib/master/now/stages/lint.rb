@@ -37,7 +37,7 @@ module Master
         end
 
         if findings.any? && @autoloop
-          fixable = findings.select { |f| !AutoLoop::SKIP_RULES.include?(f[:rule].to_s) }
+          fixable = findings.select { |f| !Master::Loop::Master::Loop::Master::Loop::AutoLoop::SKIP_RULES.include?(f[:rule].to_s) }
           if fixable.any?
             fix_result = @autoloop.run(max_cycles: 3)
             ctx = ctx.merge(autofix_result: fix_result)

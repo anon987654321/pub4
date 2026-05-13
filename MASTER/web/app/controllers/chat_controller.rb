@@ -34,6 +34,21 @@ class ChatController < ApplicationController
     }
   end
 
+  def history
+    messages = container[:session].messages.last(200).map { |m| { role: m[:role], content: m[:content].to_s[0, 2000] } }
+    render json: messages
+  end
+
+  def command
+    cmd = params[:command] || JSON.parse(request.body.read)["command"]
+    result = container[:gateway].receive(channel: :cli, message: cmd)
+    output = result.ok? ? (result.value[:rendered] || result.value.to_s) : result.message
+    render json: { output: output }
+  rescue => e
+    render json: { output: "Error: #{e.message}" }, status: 500
+  end
+
+
   def message
     input = params[:message].to_s.strip
     return head(:bad_request) if input.empty?

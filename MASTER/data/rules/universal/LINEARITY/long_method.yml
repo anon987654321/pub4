@@ -1,0 +1,15 @@
+---
+id: long_method
+name: Long Method
+description: Method exceeds 10 lines – extract helper.
+principle: LINEARITY
+severity: warning
+mode: violation
+auto_fix: false
+adapters:
+- medium: ruby
+  detection:
+    structural:
+      file_unit:
+        matcher: method_length
+        threshold: 10

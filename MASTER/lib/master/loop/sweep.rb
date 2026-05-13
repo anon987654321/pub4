@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "erb"
 require "tempfile"
 require "set"
 require_relative "sweep/rewriter"

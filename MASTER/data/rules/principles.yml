@@ -1,0 +1,18 @@
+ROBUSTNESS:
+  priority: 1
+  description: "Errors fail safely; security first"
+SINGULARITY:
+  priority: 2
+  description: "One source of truth; no duplication"
+LINEARITY:
+  priority: 3
+  description: "Linear flow; low nesting; guard clauses"
+PROXIMITY:
+  priority: 4
+  description: "Cohesive modules; related code together"
+ABSTRACTION:
+  priority: 5
+  description: "Clean interfaces; appropriate hiding"
+DENSITY:
+  priority: 6
+  description: "No noise; concise; expressive names"

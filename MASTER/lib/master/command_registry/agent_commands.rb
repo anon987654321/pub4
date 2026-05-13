@@ -111,7 +111,7 @@ module Master
 
     def run_autoloop(autoloop, raw)
       max = raw.to_i
-      max = AutoLoop::MAX_CYCLES if max <= 0
+      max = Master::Loop::Master::Loop::Master::Loop::AutoLoop::MAX_CYCLES if max <= 0
       result = autoloop.run(max_cycles: max) { |cycle, violations|
         top = violations.first(3).map { |v| "#{File.basename(v[:file])}:#{v[:rule]}" }.join(" ")
         $stdout.puts "autoloop: cycle #{cycle} #{violations.size} violation(s) #{top}"

@@ -1,0 +1,15 @@
+---
+id: vertical_whitespace_uniformity
+name: Vertical Whitespace Uniformity
+description: Consistent blank lines between top-level declarations.
+principle: DENSITY
+severity: info
+mode: opportunity
+auto_fix: false
+adapters:
+- medium: any
+  detection:
+    structural:
+      file_holistic:
+        matcher: blank_line_variance
+        threshold: 1

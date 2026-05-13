@@ -94,3 +94,11 @@
   enabled: true
   state: running
   last_run_at: 0
+- name: daily_deep_scan
+  description: Daily deep scan of lib/ with semantic rules
+  trigger: scheduled
+  interval_s: 86400
+  command: scan lib/ --deep
+  enabled: true
+  state: pending
+  last_run_at: 0
