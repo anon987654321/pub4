@@ -30,7 +30,7 @@ module Master
           )
           return [] if stdout.empty?
 
-          smells = JSON.parse(stdout) rescue return []
+          smells = begin; JSON.parse(stdout); rescue JSON::ParserError; return []; end
           smells.flat_map do |smell|
             locations = smell["lines"] || [1]
             locations.map do |line|

@@ -30,7 +30,7 @@ module Master
           )
           return [] if stdout.empty?
 
-          data = JSON.parse(stdout) rescue return []
+          data = begin; JSON.parse(stdout); rescue JSON::ParserError; return []; end
           offenses = data.dig("files", 0, "offenses") || []
           offenses.map do |o|
             finding(
