@@ -17,6 +17,12 @@ module Master
         service_commands(ai, infra[:phase_gates], diag: infra[:diag]),
         utility_commands(ai[:agent], root, infra[:cache], infra[:code_index]),
         control_commands(ai[:standing], ai[:soul]),
+"ecology" => ->(ctx) {
+  scanner = RepoEcology.new(root:, event_bus: infra[:bus])
+  path = ctx[:args].to_s.strip
+  report = scanner.scan(path: path.empty? ? nil : path)
+  scanner.render(report)
+},
 "orient" => ->(_ctx) {
   require "stringio"
   buf = StringIO.new
@@ -26,7 +32,7 @@ module Master
 "help" => ->(_ctx) {
           [
             "session: /save /clear /history [N] /tokens /undo /redo /exit",
-            "scan: /scan [profile] [path] /sweep [path] /autoloop [N]",
+            "scan: /scan [profile] [path] /sweep [path] /autoloop [N] /ecology [path]",
             "model: /model [id|list] /mode /persona /task",
             "memory: /mem /topic /rsi",
             "system: /diag [/section] /tree [N] /orient /help"
