@@ -242,77 +242,22 @@ thresholds:
     stagnant_threshold: 3
 
 scan_depths:
+  # Only list class names that exist as files in lib/master/judge/scan/rules/.
+  # Phantom class names silently exclude rules — InterconnectRule catches drift.
   quick: &quick
     - TableLexicalRule
-    - BareRescueRule
-    - UniversalRule
   standard: &standard
     - TableLexicalRule
-    - BareRescueRule
-    - UniversalRule
-    - ExplicitRule
-    - ImmutableRule
-    - CqsRule
-    - SelfExplainingRule
-    - LongMethodRule
-    - GodClassRule
-    - DuplicateCodeRule
-    - PruneRule
-    - SrpRule
-    - PolaRule
-    - NielsenRule
-    - ArityRule
-    - TellDontAskRule
-    - ThresholdDriftRule
-    - TerseRule
-    - DeadAssignRule
-    - NestingDepthRule
-    - NamingRule
-    - CommentQualityRule
-    - YamlQualityRule
-    - StructureRule
-    - DeadCodeRule
-    - RubocopRule
-    - ReekRule
-  deep: &deep
-    - TableLexicalRule
-    - BareRescueRule
-    - UniversalRule
-    - ExplicitRule
-    - ImmutableRule
-    - CqsRule
-    - SelfExplainingRule
-    - LongMethodRule
-    - GodClassRule
-    - DuplicateCodeRule
-    - PruneRule
-    - SrpRule
-    - PolaRule
-    - NielsenRule
-    - ArityRule
-    - TellDontAskRule
-    - ThresholdDriftRule
-    - TerseRule
-    - DeadAssignRule
-    - NestingDepthRule
-    - NamingRule
-    - CommentQualityRule
-    - YamlQualityRule
-    - StructureRule
-    - DeadCodeRule
-    - RubocopRule
-    - ReekRule
-    - OpportunityRule
-    - InterconnectRule
-    - AdversarialRule
-    - SemanticRule
-    - CommentDriftRule
     - CoChangeCouplingRule
-    - FileLayoutRule
-    - VerticalRhythmRule
-    - NamingSilhouetteRule
-    - FileSilhouetteRule
-    - SemanticOpportunityRule
+    - InterconnectRule
+    - RuleCoverageRule
+    - RubocopRule
+    - ReekRule
+    - SemanticRule
+    - AdversarialRule
+    - CommentDriftRule
+  deep: &deep
+    - all
   hunt: *deep
   critique: *deep
 

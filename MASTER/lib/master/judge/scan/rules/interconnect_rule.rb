@@ -30,8 +30,15 @@ module Master
         end
 
         def check(code, path:)
-          return [] unless path.include?("/lib/") && path.end_with?(".rb")
+          findings = []
+          findings.concat(check_phantom_yaml_reads(code, path)) if path.include?("/lib/") && path.end_with?(".rb")
+          findings.concat(check_phantom_scan_classes(code, path)) if path.end_with?("rules.yml") && path.include?("/data/")
+          findings
+        end
 
+        private
+
+        def check_phantom_yaml_reads(code, _path)
           yaml_files = extract_loaded_yamls(code)
           return [] if yaml_files.empty?
 
@@ -45,13 +52,11 @@ module Master
           findings = []
           extract_dig_paths(code).each do |path_keys|
             next if loaded.any? { |y| y.respond_to?(:dig) && y.dig(*path_keys) }
-
             code.each_line.with_index(1) do |line, number|
               next unless line.include?(path_keys.first.to_s)
-
               findings << finding(
                 line: number,
-                message: "phantom key #{path_keys.inspect} not found in any loaded yaml — stale dig path or missing entry"
+                message: "phantom key #{path_keys.inspect} not found in any loaded yaml"
               )
               break
             end
@@ -59,7 +64,30 @@ module Master
           findings
         end
 
-        private
+        def check_phantom_scan_classes(code, _path)
+          data = YAML.safe_load(code, aliases: true) rescue nil
+          return [] unless data.is_a?(Hash)
+
+          depths = data["scan_depths"] || {}
+          rules_dir = File.join(@root, "lib", "master", "judge", "scan", "rules")
+          findings = []
+          depths.each_value do |class_names|
+            next unless class_names.is_a?(Array)
+            class_names.each do |name|
+              next if name == "all"
+              snake = name.gsub(/([A-Z])(?=[A-Z][a-z])|([a-z\d])([A-Z])/) { "#{$1 || $2}_#{$3}" }
+                         .downcase
+              file = File.join(rules_dir, "#{snake}.rb")
+              next if File.exist?(file)
+              line_num = code.each_line.with_index(1).find { |l, _| l.include?(name) }&.last || 1
+              findings << finding(
+                line: line_num,
+                message: "scan_depths references phantom class #{name} — #{snake}.rb not found in judge/scan/rules/"
+              )
+            end
+          end
+          findings
+        end
 
         def extract_loaded_yamls(code)
           code.scan(LOAD_CALL).flatten.compact
@@ -75,10 +103,9 @@ module Master
         def load_lib_source(root)
           lib_dir = File.join(root, "lib")
           return "" unless File.directory?(lib_dir)
-
           Dir.glob(File.join(lib_dir, "**", "*.rb"))
-            .filter_map { |path| File.read(path) rescue nil }
-            .join("\n")
+             .filter_map { |f| File.read(f) rescue nil }
+             .join("\n")
         end
       end
     end

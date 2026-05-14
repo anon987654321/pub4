@@ -10,6 +10,19 @@ module Master
       # entry, not a new Ruby file.
       class TableLexicalRule < Rule
         TABLE_PATH = File.join(Master::ROOT, "data", "lexical_rules.yml").freeze
+        RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
+
+        LANG_EXTS = {
+          "ruby"       => [".rb", ".rake", ".gemspec"],
+          "zsh"        => [".zsh", ".sh"],
+          "html"       => [".html", ".htm", ".erb"],
+          "css"        => [".css", ".scss", ".sass"],
+          "javascript" => [".js", ".ts", ".jsx", ".tsx"],
+          "yaml"       => [".yml", ".yaml"],
+          "markdown"   => [".md"],
+        }.freeze
+
+        ALL_EXTS = LANG_EXTS.values.flatten.freeze
 
         def initialize
           super
@@ -27,10 +40,43 @@ module Master
         private
 
         def load_entries
-          rows = Master.load_yaml(TABLE_PATH)
-          (rows || []).map { |r| compile_entry(r) }
-        rescue StandardError
-          []
+          table = begin
+            rows = Master.load_yaml(TABLE_PATH)
+            (rows || []).map { |r| compile_entry(r) }
+          rescue StandardError
+            []
+          end
+
+          from_rules = begin
+            data = Master.load_yaml(RULES_PATH)
+            all_rules = (data&.dig("rules") || {}).values.flatten
+            all_rules.filter_map { |r| compile_rules_entry(r) if r.is_a?(Hash) && r["detect_lexical"] }
+          rescue StandardError
+            []
+          end
+
+          table + from_rules
+        end
+
+        def compile_rules_entry(row)
+          pattern = row["detect_lexical"]
+          return nil if pattern.nil? || pattern.empty?
+          langs = row["languages"]
+          exts  = langs ? langs.flat_map { |l| LANG_EXTS[l.to_s] || [] } : ALL_EXTS
+          return nil if exts.empty?
+          {
+            id:           row["id"]&.downcase || "unknown",
+            severity:     (row["severity"] || "warning").to_sym,
+            tags:         [],
+            langs:        exts,
+            includes:     nil,
+            excludes:     nil,
+            skip_comments: false,
+            first_line:   false,
+            patterns:     [{ re: Regexp.new(pattern), msg: row["name"] || row["id"], negate: false, one_per_file: false }],
+          }
+        rescue RegexpError
+          nil
         end
 
         def compile_entry(row)
