@@ -66,6 +66,15 @@ In Markdown documents, plain `---` for an `<hr>` and table separators are fine �
 - `snake_case` throughout
 - Zeitwerk autoloading — file name matches class name
 
+## Rails view style
+
+- Prefer Rails tag helpers for dynamic or localized markup: `tag.p t("key")`, `tag.section class: state_class`, `tag.meta name: "viewport", content: "width=device-width,initial-scale=1"`.
+- Prefer `tag.*` blocks for semantic containers with dynamic attributes, Turbo data, ARIA, or localized content.
+- Keep plain HTML when markup is static and clearer as HTML. Do not turn views into helper soup.
+- Never hardcode user-facing text in reusable views when `t("key", default: "text")` is practical.
+- Prefer semantic tags and bare CSS targeting: `nav a`, `main section`, `article header`. Do not add class attributes where a tag selector works.
+- Use Rails form, link, button, Turbo, and tag helpers instead of hand-rolled HTML when the helper carries routing, CSRF, method, data, or escaping semantics.
+
 Bugs to avoid:
 - `Dir.chdir` — process-wide, thread-unsafe. Use `File.expand_path`.
 - `Prism.parse(src, freeze: true)` — `freeze:` dropped in 3.4. Use `Prism.parse(src)`.
