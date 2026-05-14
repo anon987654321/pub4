@@ -98,8 +98,20 @@ module Master
       bus          = infra[:bus]
       deliberation = ai[:deliberation]
       autoloop     = ai[:autoloop]
+      super_loop   = ai[:super_loop]
       code_index   = infra[:code_index]
       {
+        "run"      => ->(ctx) {
+          target = expand_or_root(arg_for(ctx), root)
+          result = super_loop.run_once(target)
+          summary = result[:rule_results].map { |r| "#{r[:rule]}: #{r[:status]} (#{r[:fixed]} fixed)" }.join("\n")
+          summary.empty? ? "clean" : summary
+        },
+        "self-run" => ->(_ctx) {
+          result = super_loop.run_once(root)
+          summary = result[:rule_results].map { |r| "#{r[:rule]}: #{r[:status]} (#{r[:fixed]} fixed)" }.join("\n")
+          summary.empty? ? "clean" : summary
+        },
         "grind"    => cmd(:run_autoloop, autoloop),
         "autoloop" => cmd(:run_autoloop, autoloop),
         "polish"   => ->(ctx) {

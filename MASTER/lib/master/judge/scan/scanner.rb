@@ -19,12 +19,14 @@ module Master
         @mutex = Mutex.new
       end
 
-      def scan(path, depth: :deep)
+      # rules: override skips depth filtering — used by RuleLoop for per-rule passes.
+      def scan(path, depth: :deep, rules: nil)
         return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
 
         code     = File.read(path, encoding: "UTF-8")
         ast      = parse_ruby(code, path)
-        findings = active_rules(depth).flat_map { |rule| run_rule(rule, code, ast, path) }
+        rule_set = rules || active_rules(depth)
+        findings = rule_set.flat_map { |rule| run_rule(rule, code, ast, path) }
         @bus&.publish("scan:complete", path:, depth:, count: findings.size)
         Result.ok(findings)
       rescue StandardError => e

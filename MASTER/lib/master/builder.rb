@@ -109,17 +109,21 @@ module Master
     end
 
     def build_autonomous(root, infra, agent:, scanner:, soul:)
-      bus      = infra[:bus]
-      standing = StandingOrders.new(pipeline: nil, event_bus: bus)
+      bus       = infra[:bus]
+      standing  = StandingOrders.new(pipeline: nil, event_bus: bus)
       learnings = infra[:learnings]
-      autoloop = Loop::AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
-      skills   = Skills.new(root:, event_bus: bus)
+      autoloop  = Loop::AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
+      rules     = scanner.instance_variable_get(:@rules)
+      git       = GitOperations.new(root)
+      super_loop = Loop::SuperLoop.new(rules:, agent:, scanner:, root:, bus:, git:)
+      Thread.new { super_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
+      skills    = Skills.new(root:, event_bus: bus)
       skills.discover!
       heartbeat = Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus,
                                homeostat: infra[:homeostat])
       triggers  = Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
-      { standing:, learnings:, autoloop:, skills:, heartbeat:, triggers: }
+      { standing:, learnings:, autoloop:, super_loop:, skills:, heartbeat:, triggers: }
     end
 
     def build_pipeline_and_gateway(root, infra, ai)

@@ -38,7 +38,7 @@ module Master
 "help" => ->(_ctx) {
           [
             "session: /save /clear /history [N] /tokens /undo /redo /exit",
-            "scan: /scan [profile] [path] /polish [path] /grind [N] /ecology [path]",
+            "scan: /run [path] /self-run /scan [profile] [path] /polish [path] /grind [N] /ecology [path]",
             "model: /model [id|list] /mode /persona /task",
             "memory: /mem /topic /rsi",
             "system: /diag [/section] /tree [N] /brief /help"

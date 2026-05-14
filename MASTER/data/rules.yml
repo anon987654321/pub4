@@ -5,23 +5,31 @@
 # golden_rule and protection_tiers live in soul.yml (ABSOLUTE section) — single source.
 
 # detection axes — each rule is a *principle* with one or more medium-aware adapters.
+# rules apply universally: code, prose, poems, legal text, YAML, HTML — the medium
+# only changes how the axis is evaluated, not whether the principle applies.
 #
-#   detect_lexical    — regex pattern. cheap. handled by LexicalRule + table_lexical_rule.
-#                       autofix-safe.
-#   detect_structural — names a dedicated tree handler (e.g. long_method, god_class).
-#                       medium-agnostic: dispatches on artifact type — ruby AST, json/yaml
-#                       trees, html DOM, prose paragraph trees, css rule trees. cheap,
-#                       deterministic, autofix-safe.
-#   detect_semantic   — natural-language prompt. expensive LLM call, batched per file.
-#                       review-only — autofix risky.
-#   detect_history    — synchronic vs diachronic. rule compares current state to git
-#                       history (e.g. function tripled in size since 2024-Q1, comments
-#                       not updated since code changed, test coverage regression).
+# granularity levels (scanning units):
+#   :line    — individual line / lexical token
+#   :unit    — method, function, paragraph, stanza, clause, CSS rule, YAML key block
+#   :section — class, module, chapter, section, JSON object, HTML component
+#   :file    — whole file, whole document
+#   :tree    — codebase / folder structure / visual layout
+#
+#   detect_lexical    — regex against individual lines. free. autofix-safe.
+#                       applies at :line granularity.
+#   detect_unit       — regex or structural check against each parsed unit (method,
+#                       paragraph, stanza, clause). medium-aware parser segments the
+#                       artifact first. cheap, deterministic.
+#   detect_structural — named tree handler (long_method, god_class, file_silhouette).
+#                       applies at :section and :file granularity. deterministic.
+#   detect_semantic   — LLM natural-language prompt, batched per file. expensive.
+#                       applies at :file and :unit granularity.
+#   detect_history    — compares current state to git history (regression, drift).
 #                       requires git-aware scanner mode.
-#   detect_convention — codebase-wide pattern. rule compares local code to established
-#                       norms across the repo (e.g. naming convention drift, parameter-
-#                       ordering deviation, error-handling shape mismatch). requires
-#                       codebase-model scanner mode.
+#   detect_convention — compares local code to codebase-wide norms (naming drift,
+#                       parameter ordering). requires codebase-model scanner mode.
+#   detect_tree       — evaluates folder/file structure, visual layout of the tree,
+#                       codebase topology. applies at :tree granularity.
 #
 # a rule may carry any combination; each axis emits separate findings tagged by id.
 # the axes themselves are the cost gradient — lexical is free, structural is
@@ -1697,6 +1705,160 @@ rules:
       medium: [ruby]
       detect_semantic: "Is this file close to instantiating a known pattern from {Strategy, Decorator, Pipeline, Visitor, Builder, Observer, Command, State, Adapter, NullObject}? Only flag when extraction would genuinely reduce complexity — never propose a pattern that adds ceremony for its own sake. Format: PATTERN:LINE:short reason."
       fix: "Extract toward the named pattern only if the resulting code is simpler than the current shape; otherwise leave it."
+
+    # ── Missing Fowler code smells ──────────────────────────────────────
+
+    - id: FEATURE_ENVY
+      name: "Method uses another object's data more than its own"
+      tier: refactoring
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this method access fields or methods of another object more than its own? Does it belong in that other class?"
+      fix: "Move the method to the class whose data it uses most."
+
+    - id: DATA_CLUMPS
+      name: "Extract recurring data clusters into objects"
+      tier: refactoring
+      severity: info
+      autofix: true
+      detect_semantic: "Do the same 3+ values (e.g. host, port, protocol) always appear together as separate parameters or fields? Do they travel as a group?"
+      fix: "Bundle them into a value object."
+
+    - id: SWITCH_STATEMENTS
+      name: "Type dispatch belongs in polymorphism, not case/if chains"
+      tier: refactoring
+      severity: warning
+      autofix: true
+      detect_semantic: "Is there a switch/case or if-elsif chain dispatching on a type tag, symbol, or string to choose behavior? Would adding a new type require editing this chain?"
+      fix: "Replace type dispatch with polymorphism or a strategy hash."
+
+    - id: TEMPORARY_FIELD
+      name: "Instance variables set only in some code paths"
+      tier: refactoring
+      severity: warning
+      autofix: false
+      detect_semantic: "Is an instance variable assigned only inside a conditional, a specific method, or only sometimes — making it nil in other paths?"
+      fix: "Extract into a parameter or a separate object for the relevant path."
+
+    - id: ALTERNATIVE_CLASSES
+      name: "Two classes doing the same thing under different names"
+      tier: refactoring
+      severity: info
+      autofix: false
+      detect_semantic: "Do two classes have different names but perform the same responsibility? Are they interchangeable in practice?"
+      fix: "Rename to the same interface. Merge or replace one."
+
+    # ── Rails doctrine ───────────────────────────────────────────────────
+
+    - id: INTEGRATED_WHOLE
+      name: "Use Rails conventions rather than bypassing them"
+      tier: rails
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this bypass Rails conventions — custom routing where resources would do, manual SQL where ActiveRecord would, raw HTML where form helpers apply — without documented justification?"
+      fix: "Prefer Rails primitives. Document the reason if bypassing."
+      languages: [ruby]
+
+    - id: SHARP_TOOLS
+      name: "Rails gives you the right tool; use it"
+      tier: rails
+      severity: info
+      autofix: true
+      detect_semantic: "Is this reinventing something Rails already provides — session handling, auth tokens, file uploads, pagination, background jobs, CSRF protection?"
+      fix: "Use the Rails-idiomatic primitive."
+      languages: [ruby]
+
+    # ── Thread safety ─────────────────────────────────────────────────────
+
+    - id: THREAD_SAFETY
+      name: "Mutable state shared across threads needs synchronization"
+      tier: concurrency
+      severity: error
+      autofix: false
+      detect_semantic: "Is an instance variable or module-level variable mutated in code that may run on multiple threads simultaneously without a Mutex or thread-safe primitive?"
+      fix: "Use Mutex#synchronize, Concurrent::AtomicReference, or freeze shared state."
+      languages: [ruby]
+
+    - id: MINIMAL_DSL
+      name: "A DSL should do exactly what it says, no more"
+      tier: design
+      severity: info
+      autofix: false
+      detect_semantic: "Does this DSL method do more than one observable thing? Does it hide significant behavior under an innocent-looking name?"
+      fix: "Split the DSL method. Name each part honestly."
+      languages: [ruby]
+
+    - id: AVOID_MONKEY_PATCHING
+      name: "Do not reopen core or third-party classes without necessity"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this file reopen String, Array, Hash, Integer, or a third-party class to add or change methods? Is there a refinement or decorator alternative?"
+      fix: "Use a refinement (using) or a wrapper. Never open core classes globally."
+      languages: [ruby]
+
+    # ── NNgroup heuristics (gap fill) ────────────────────────────────────
+
+    - id: RECOGNITION_NOT_RECALL
+      name: "Users recognize; they should not have to recall"
+      tier: ux
+      severity: info
+      autofix: false
+      detect_semantic: "Does this UI require the user to remember information from a previous screen or interaction? Are options, actions, or objects visible rather than memorized?"
+      fix: "Surface context, defaults, and recent history. Show; don't ask to recall."
+
+    - id: FLEXIBILITY
+      name: "Serve both novice and expert interaction styles"
+      tier: ux
+      severity: info
+      autofix: false
+      detect_semantic: "Does this interface support only one interaction mode — keyboard-only, mouse-only, or click-per-step with no shortcuts for frequent users?"
+      fix: "Add keyboard shortcuts, bulk operations, or quick-access patterns for power users."
+
+    # ── Strunk & White (gap fill) ─────────────────────────────────────────
+
+    - id: ACTIVE_VOICE
+      name: "Write in active voice"
+      tier: clarity
+      severity: info
+      autofix: true
+      detect_semantic: "Is this prose, comment, or error message written in passive voice? ('was processed by', 'is handled by', 'will be returned') Could it be rewritten as 'X does Y'?"
+      fix: "Rewrite as subject-verb-object. Active voice is shorter and clearer."
+
+    - id: OMIT_NEEDLESS
+      name: "Omit needless words"
+      tier: clarity
+      severity: info
+      autofix: true
+      detect_semantic: "Does this comment, docstring, error message, or prose contain filler words that add no meaning? ('In order to', 'It should be noted that', 'Due to the fact that', 'At this point in time')"
+      fix: "Delete filler. Cut to the load-bearing words."
+
+    - id: PARALLEL_STRUCTURE
+      name: "Parallel items must use consistent grammatical form"
+      tier: clarity
+      severity: info
+      autofix: true
+      detect_semantic: "Do list items, enum values, method names in a group, or bullet points mix grammatical forms — some nouns, some verbs, some gerunds?"
+      fix: "Align all items to the same grammatical form."
+
+    # ── Structural operations as detectable rules ─────────────────────────
+
+    - id: REFLOW
+      name: "Even density and rhythm — no spikes of verbosity"
+      tier: design
+      severity: info
+      autofix: true
+      detect_semantic: "Does this file have extreme density variation — some methods 1 line, one method 80 lines; some comments a word, one comment a paragraph? Is the rhythm jagged in a way that obscures structure?"
+      fix: "REFLOW: redistribute. Break the long spike into smaller units. Expand the one-word stub into a meaningful statement."
+
+    - id: HOIST_CONSTANTS
+      name: "Inline literals that repeat belong at the top as named constants"
+      tier: design
+      severity: warning
+      autofix: true
+      detect_lexical: "\\b(\\d{2,}|['\"]\\w{4,}['\"])(?=.*\\n.*\\b\\1\\b)"
+      detect_semantic: "Are there inline literals (numbers, strings, regexes) that appear in multiple places and would be clearer and safer as a named constant?"
+      fix: "HOIST to a named constant with .freeze."
 
 # Falsifiable identity — what MASTER explicitly does NOT aim for, and the
 # failure modes that mean the system has lost its way.
