@@ -51,6 +51,31 @@ Use stimulus-lightbox backed by lightGallery.js for gallery needs.
 
 Keep the license key in credentials or environment, never in committed source.
 
+All Rails apps should include live search.
+
+Baseline pattern: live search with Rails and StimulusReflex, following the Colby.so pattern from `https://www.colby.so/posts/live-search-with-rails-and-stimulusreflex`.
+
+Implementation rule:
+
+- Use StimulusReflex where already present.
+- Use Turbo/Stimulus-compatible live search where Reflex is not installed.
+- Search must be progressive enhancement, not a hard dependency for basic navigation.
+- Every search surface should support empty state, loading state, no-results state, and keyboard-friendly interaction.
+- Search should emit analytics/search events for shared discovery and ranking.
+
+Required live-search surfaces:
+
+- Brgen root feed
+- markedsplass listings
+- spilleliste playlists
+- tv videos and shows
+- takeaway restaurants and menu items
+- blognet posts and authors
+- Foodielicious recipes and ingredients
+- bsdports ports/packages
+- Hjerterom content/resources
+- Amber baseline examples
+
 ## Completion checklist
 
 - Brgen folder mirrors Rails structure.
@@ -62,3 +87,4 @@ Keep the license key in credentials or environment, never in committed source.
 - Marketplace restoration starts from Solidus Starter Frontend concepts and adapts them to local standards.
 - Shared frontend standards document Stimulus Components and lightGallery integration.
 - Every deployable app has README, domains/service notes, and restore status.
+- Every Rails app has live search on its primary index and discovery surfaces.
