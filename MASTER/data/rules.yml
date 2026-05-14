@@ -1860,6 +1860,301 @@ rules:
       detect_semantic: "Are there inline literals (numbers, strings, regexes) that appear in multiple places and would be clearer and safer as a named constant?"
       fix: "HOIST to a named constant with .freeze."
 
+    # ── Data / SQL ────────────────────────────────────────────────────────
+
+    - id: QUERY_SMELL
+      name: "Detect N+1, cartesian products, and missing index hints"
+      tier: data
+      severity: error
+      autofix: false
+      detect_semantic: "Does this code execute a query inside a loop (N+1)? Does a JOIN lack a WHERE clause that could produce a cartesian product? Are there large-table queries with no index hint or scope guard?"
+      fix: "Batch with includes/preload. Add WHERE guards. Annotate with an index hint or add the index."
+
+    - id: SCHEMA_DRIFT
+      name: "Column names in queries must match the live schema"
+      tier: data
+      severity: error
+      autofix: false
+      detect_semantic: "Do column or table names referenced in queries, migrations, or fixtures differ from the column names defined in the current schema? Are renamed columns used under their old name anywhere?"
+      fix: "Align query column names to the current schema. Run migrations before referencing new names."
+
+    - id: NULL_BLINDNESS
+      name: "Comparisons against nullable columns must use IS NULL, not ="
+      tier: data
+      severity: error
+      autofix: true
+      detect_lexical: "= NULL|!= NULL|== nil.*column|column.*== nil"
+      detect_semantic: "Does this code compare a nullable database column using = NULL or != NULL instead of IS NULL / IS NOT NULL? Does Ruby code use == nil where .nil? or SQL IS NULL is required?"
+      fix: "Replace = NULL with IS NULL. Replace != NULL with IS NOT NULL. Use .nil? in Ruby, not == nil for DB values."
+
+    # ── Security ──────────────────────────────────────────────────────────
+
+    - id: SECRET_PROXIMITY
+      name: "Secrets and their consumers must not share a file"
+      tier: security
+      severity: error
+      autofix: false
+      detect_lexical: "(password|secret|token|api_key|private_key)\\s*=\\s*['\"][^'\"]{8,}"
+      detect_semantic: "Does this file contain a hardcoded secret (password, token, API key, private key) alongside the code that uses it? Should the secret live in ENV, a vault, or a credentials file instead?"
+      fix: "Move secret to ENV or credentials store. Reference via ENV.fetch('KEY'). Never commit secrets."
+
+    - id: OVERPERMISSION
+      name: "Scope granted must not exceed scope demonstrably used"
+      tier: security
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this code request, grant, or declare a permission scope broader than the code demonstrably exercises? Are there admin/write/full-access grants where read-only would suffice? Are filesystem permissions wider than the operation requires?"
+      fix: "Reduce to the minimum permission the code actually uses. Document why any elevated scope is necessary."
+
+    - id: INPUT_TRUST
+      name: "User-supplied values must not reach a sink without validation"
+      tier: security
+      severity: error
+      autofix: false
+      detect_semantic: "Does user-supplied input (params, headers, form fields, query strings, uploaded filenames) reach a database query, shell command, file path, or eval without a validation boundary? Is there an injection risk?"
+      fix: "Validate at the boundary. Use parameterized queries. Whitelist allowed values. Never interpolate user input into shell or SQL."
+
+    # ── Async / concurrency ───────────────────────────────────────────────
+
+    - id: LOCK_ORDER
+      name: "Mutexes must be acquired in a consistent global order"
+      tier: concurrency
+      severity: error
+      autofix: false
+      detect_semantic: "Does this code acquire two or more mutexes in different orders across different call paths? Could two threads acquire mutex A then B in one path and B then A in another, creating a deadlock?"
+      fix: "Establish a global lock order. Always acquire in that order. Document the order with a comment at each lock site."
+
+    - id: CALLBACK_HELL
+      name: "Nested async callbacks deeper than 3 levels must be flattened"
+      tier: concurrency
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this code nest async callbacks, promises, or event handlers more than 3 levels deep? Is the success path buried inside multiple layers of closures that make error handling impossible to follow?"
+      fix: "Extract inner callbacks to named methods. Use promise chains or async/await. Flatten to a linear sequence."
+
+    - id: FIRE_AND_FORGET
+      name: "Async calls must have an error path — no silent failures"
+      tier: concurrency
+      severity: error
+      autofix: false
+      detect_semantic: "Does this code start an async operation (Thread.new, Fiber, Future, setTimeout, EventMachine callback) without any error handling on the result? If the async work fails, is the failure visible anywhere?"
+      fix: "Add error handling to every async call. Log or publish failures. Never let async errors disappear silently."
+
+    # ── API / protocol design ─────────────────────────────────────────────
+
+    - id: BREAKING_CHANGE
+      name: "Method signature or response shape changes require a version bump"
+      tier: api
+      severity: error
+      autofix: false
+      detect_semantic: "Does this change alter a public method signature (argument names, order, or type), a serialized response shape, or a wire protocol format without bumping the API version? Would existing callers break silently?"
+      fix: "Bump the version. Deprecate the old signature with a warning. Keep the old path working for one version cycle."
+
+    - id: IMPLICIT_CONTRACT
+      name: "Callers must not depend on undocumented side-effects"
+      tier: api
+      severity: warning
+      autofix: false
+      detect_semantic: "Do callers of this method rely on an undocumented side-effect — the order of returned items, a mutation of a shared object, a specific log line, a timing guarantee? Is the contract implicit and invisible to the caller?"
+      fix: "Make the contract explicit. Document it or encode it as a type/assertion. Undocumented side-effects are hidden coupling."
+
+    - id: CHATTY_API
+      name: "Multiple sequential calls to the same resource should be batched"
+      tier: api
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this code make 5 or more sequential calls to the same API, database, or service where a single batch call could replace them? Is round-trip latency multiplied unnecessarily?"
+      fix: "Batch calls: use bulk endpoints, IN queries, multi-get, or collect then flush. One round-trip beats five."
+
+    # ── Documentation ──────────────────────────────────────────────────────
+
+    - id: STALE_EXAMPLE
+      name: "Code examples in docs must reference methods that still exist"
+      tier: docs
+      severity: error
+      autofix: false
+      detect_semantic: "Does this documentation, README, or comment contain a code example that calls a method, class, or constant that no longer exists or has been renamed? Would a reader following the example get a NoMethodError?"
+      fix: "Update the example to the current API. If the method was removed, document the replacement."
+
+    - id: UNDOCUMENTED_EXCEPTION
+      name: "Public methods that raise must document what they raise"
+      tier: docs
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this public method raise a specific exception under documented conditions without any indication in its signature, comment, or type annotation? Would a caller be surprised by the exception?"
+      fix: "Add a @raise annotation or equivalent comment. Callers should never be surprised by an exception."
+
+    - id: IMPERATIVE_TITLE
+      name: "Section headers should state what the section does, not what it is"
+      tier: docs
+      severity: info
+      autofix: true
+      detect_semantic: "Does this section header use a bare noun ('Overview', 'Introduction', 'Details', 'Notes') where an active verb phrase ('How X works', 'Configure Y', 'When to use Z') would orient the reader faster?"
+      fix: "Rewrite as a verb phrase. 'Overview' → 'How the pipeline works'. Noun titles bury the reader's entry point."
+
+    # ── CSS / visual ──────────────────────────────────────────────────────
+
+    - id: MAGIC_COLOR
+      name: "Color values must reference design tokens, not raw hex/rgb"
+      tier: css
+      severity: warning
+      autofix: false
+      detect_lexical: "#[0-9a-fA-F]{3,6}\\b|rgb\\(|rgba\\(|hsl\\("
+      detect_semantic: "Does this CSS or inline style use a raw color literal (hex, rgb, hsl) instead of a CSS custom property or design token? Would a theme change require hunting every file for literal colors?"
+      fix: "Replace literal colors with var(--color-token). Define tokens in :root. One source of truth per color."
+
+    - id: SPECIFICITY_CREEP
+      name: "CSS selector specificity must not climb past 0-3-0 to force overrides"
+      tier: css
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this stylesheet use ID selectors, !important, or deeply nested selectors (4+ levels) to override earlier rules? Is specificity climbing because earlier rules were too specific?"
+      fix: "Flatten selectors. Use class selectors at one level. Refactor the conflicting rule rather than out-specificing it."
+
+    - id: VIEWPORT_BLINDNESS
+      name: "Layouts must handle viewports from 375px to 1440px"
+      tier: css
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this layout break or overflow below 375px or above 1440px viewport width? Are there fixed pixel widths with no responsive fallback? Are there media queries present but with gaps in the coverage range?"
+      fix: "Add media queries for the missing breakpoints. Use fluid units (%, vw, clamp()) for elements that must scale."
+
+    # ── Infra / ops ───────────────────────────────────────────────────────
+
+    - id: UNBOUNDED_RETRY
+      name: "Retry loops must have a max_attempts cap and backoff"
+      tier: ops
+      severity: error
+      autofix: true
+      detect_lexical: "retry|loop\\s*do|while\\s+true"
+      detect_semantic: "Does this retry loop have no maximum attempt count? Does it retry immediately without exponential backoff? Could it hammer a failing dependency forever?"
+      fix: "Add max_attempts. Add exponential backoff with jitter. Log each retry. Raise after exhaustion."
+
+    - id: MISSING_TIMEOUT
+      name: "Outbound HTTP and DB calls must have explicit timeouts"
+      tier: ops
+      severity: error
+      autofix: false
+      detect_semantic: "Does this outbound HTTP request, database query, or external service call have no explicit timeout set? Could a slow or unresponsive dependency cause this thread to hang indefinitely?"
+      fix: "Set explicit open_timeout and read_timeout on HTTP clients. Set statement_timeout on DB connections. Default timeouts are often infinite."
+
+    - id: OBSERVABILITY_GAP
+      name: "New code paths must emit at least one log, metric, or trace"
+      tier: ops
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this new code path — a branch, a rescue handler, an async worker, a background job — emit no log line, metric, or trace event? If it fails silently or takes unexpectedly long, would oncall have any signal?"
+      fix: "Add one @bus.publish / logger.info / StatsD.increment at the entry and exit of each significant path. Dark code is unoperatable code."
+
+    # ── Universal design archetypes (cross-disciplinary) ──────────────────
+    # Each archetype is a principle that holds across code, music, law, prose,
+    # city-planning, and mechanics. The detect_semantic probes for violations
+    # in whatever medium the file represents.
+
+    - id: SIMPLICITY
+      name: "Prefer the simplest solution that works — never simplistic"
+      tier: design
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this solution introduce more moving parts, layers, or abstractions than the problem requires? Is there a simpler path (fewer classes, fewer files, fewer dependencies) that solves the same problem without sacrificing essential complexity? Warning: do not flag complexity that is genuinely load-bearing."
+      fix: "Remove the unnecessary layer. Inline the single-use abstraction. KISS and YAGNI — but only where the complexity is speculative, not where it encodes a real constraint."
+
+    - id: COHESION
+      name: "Related things must live together; unrelated things must not"
+      tier: design
+      severity: warning
+      autofix: true
+      detect_semantic: "Are methods, classes, or sections that work on the same concept scattered across unrelated files or modules? Conversely, does one file or module mix two unrelated responsibilities? Applies to code modules, song sections, legal clauses, business plan sections equally."
+      fix: "Apply DEFRAG: pull scattered fragments of one concept into one locus. Apply SPLIT: divide units that mix two responsibilities."
+
+    - id: DECOUPLING
+      name: "Dependencies between components must be explicit and minimal"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this component read another's private state, construct a dependency inline, or make itself untestable without its dependency? Is there hidden coupling — shared globals, action-at-a-distance, temporal coupling — that makes independent change impossible?"
+      fix: "Insert a seam: interface, port, callback, or dependency injection. Name the dependency explicitly. Hidden coupling is the primary source of fragility."
+
+    - id: ABSTRACTION
+      name: "Interfaces must be stable and hide irrelevant complexity"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this interface expose implementation details the caller should not know — internal state, processing order, intermediate representations? Has the abstraction leaked? Does the caller need to know how the implementation works to use it correctly?"
+      fix: "Encapsulate what varies. The interface should express what, not how. Stable interface, free internal implementation."
+
+    - id: REUSABILITY
+      name: "Knowledge must have one home — duplication is a knowledge problem"
+      tier: design
+      severity: warning
+      autofix: true
+      detect_semantic: "Is the same knowledge (a business rule, a validation, a formula, a config value, a musical motif, a legal clause) expressed in more than one place? Warning: do not flag structural similarity between unrelated things — only flag duplicated knowledge or intent."
+      fix: "Apply DRY at the knowledge level: one authoritative definition, referenced everywhere. Never DRY by forcing unrelated things together."
+
+    - id: BALANCE_SYMMETRY
+      name: "Functional and aesthetic equilibrium — asymmetry must be intentional"
+      tier: design
+      severity: info
+      autofix: false
+      detect_semantic: "Is there unintentional asymmetry in this design — one side of an API heavier than the other, one section of a document much denser than its siblings, a visual layout with one element dominating without compositional reason? Is the imbalance accidental or deliberate?"
+      fix: "If accidental, redistribute. If deliberate, signal the intent: a comment, a compositional anchor, a visual weight counterpart."
+
+    - id: HIERARCHY
+      name: "Organize from specific to general — layers must not cross"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_semantic: "Does a low-level layer reference a high-level layer (dependency rule violation)? Does a concrete implementation know about its orchestrator? Do lower layers import upper-layer types? Applies to OSI model, MVC, legal hierarchy (statute vs. regulation), city arterial/local street distinction."
+      fix: "Enforce the dependency rule: inner layers must not reference outer layers. Extract an interface if the low-level needs to call up."
+
+    - id: ECONOMY_EFFICIENCY
+      name: "Maximum effect with minimum means — no waste"
+      tier: design
+      severity: info
+      autofix: true
+      detect_semantic: "Does this solution use more tokens, lines, calls, or steps than necessary to achieve the result? Is there a 20% of the work that delivers 80% of the value being obscured by the other 80%? Warning: premature optimization differs from genuine waste — measure before cutting."
+      fix: "Identify the high-leverage core. Cut what serves it least. Pareto: find the 20%."
+
+    - id: RESILIENCE_ROBUSTNESS
+      name: "Tolerate faults and unexpected inputs — degrade gracefully"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this component fail catastrophically on unexpected input instead of degrading gracefully? Is there no fallback when a dependency is unavailable? Warning: being liberal in what you accept can perpetuate broken implementations — validate strictly at interfaces, be tolerant only at compatibility boundaries."
+      fix: "Add graceful degradation. Validate at boundaries. Retry with backoff. Circuit-break on repeated failure."
+
+    - id: CLARITY_READABILITY
+      name: "Design must be obvious — astonishment is a defect"
+      tier: design
+      severity: info
+      autofix: true
+      detect_semantic: "Would a competent reader be surprised by this code's behavior, naming, or structure? Does it violate the Principle of Least Astonishment? Are dependencies implicit? Are names misleading? Does a reader need context not present in the file to understand it?"
+      fix: "Apply NAME, RECOMMENT, ASSERT. Make the surprising part explicit. Self-documenting code reads like a domain description."
+
+    - id: CONSISTENCY
+      name: "Conform to established conventions — divergence must be justified"
+      tier: design
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this code, document, or design diverge from the established conventions of its context — naming style, formatting, platform idioms, response shape — without a stated reason? Inconsistency forces readers to context-switch and creates false signals of intentional difference."
+      fix: "Align to the prevailing convention. If divergence is intentional, document why. Convention over configuration."
+
+    - id: CONSTRAINT_AFFORDANCE
+      name: "Design must suggest correct use and make misuse hard"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this API, form, or interface allow misuse that the design could prevent? Does the type system, naming, or structure guide callers toward the correct path? Can a caller use this incorrectly and get no error until runtime — or ever?"
+      fix: "Encode constraints in types, guard clauses, or naming. Make the pit of success the path of least resistance. Wrong usage should be loud or impossible."
+
+    - id: FEEDBACK_MONITORING
+      name: "Every system must observe its own outcomes and surface them"
+      tier: design
+      severity: warning
+      autofix: false
+      detect_semantic: "Does this system, module, or process emit observable signals about its own health and outcomes? Are there test suites, metrics, logs, or CI gates that would catch a regression? Is there a feedback loop that lets the system adapt to its observed behavior?"
+      fix: "Add observability. Tests for correctness, metrics for performance, logs for forensics. A system that can't observe itself cannot improve."
+
     # ── Interaction quality — grooved path for LLM output ─────────────────
     # Rules that assess responses, prompts, and conversation artifacts for
     # variance, expertise calibration, friction, and desire-path alignment.
