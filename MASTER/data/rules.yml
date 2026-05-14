@@ -1860,6 +1860,163 @@ rules:
       detect_semantic: "Are there inline literals (numbers, strings, regexes) that appear in multiple places and would be clearer and safer as a named constant?"
       fix: "HOIST to a named constant with .freeze."
 
+    # ── Interaction quality — grooved path for LLM output ─────────────────
+    # Rules that assess responses, prompts, and conversation artifacts for
+    # variance, expertise calibration, friction, and desire-path alignment.
+    # Medium adapters: applies to LLM output text, prompts, UI copy, docs.
+
+    - id: REGISTER_STABILITY
+      name: "Tone, formality, and density must be stable within a session"
+      tier: interaction
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this response shift register mid-conversation — formal then casual, dense then thin, technical then folksy — without the user changing context? Inconsistent register creates cognitive load."
+      fix: "Calibrate register to the opener and hold it. Adjust only when the user shifts."
+
+    - id: DENSITY_GRADUATION
+      name: "Complexity must graduate from simple to dense, never start dense"
+      tier: interaction
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this response or document front-load complexity — technical terms, nested conditions, or domain jargon before the reader is oriented? Does it assume the reader can absorb density before trust is established?"
+      fix: "Orient first, then graduate. One concrete sentence before any abstraction."
+
+    - id: LENGTH_CALIBRATION
+      name: "Response length must match query complexity, not pad or truncate"
+      tier: interaction
+      severity: warning
+      autofix: true
+      detect_semantic: "Is this response longer than the query complexity warrants, padding with restatements or hedges? Or shorter, truncating before the user's question is fully answered?"
+      fix: "Match length to actual complexity. Cut preamble and trailing summaries. Complete the answer."
+
+    - id: CONSISTENT_RESOLUTION
+      name: "Every session ends resolved — no dangling threads"
+      tier: interaction
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this conversation or document leave open threads — questions asked but not answered, tasks started but not completed, states described but not resolved? Does the final response confirm closure?"
+      fix: "Enumerate open threads. Close each explicitly or hand off with a concrete next step."
+
+    - id: EXPERTISE_MIRRORING
+      name: "Calibrate vocabulary to the user's demonstrated expertise"
+      tier: interaction
+      severity: info
+      autofix: true
+      detect_semantic: "Does this response use vocabulary above or below the level the user has demonstrated? If the user wrote 'topological sort', responding with 'a way to order things' is condescending. If the user wrote 'sort stuff', responding with 'Kahn's algorithm on a DAG' is alienating."
+      fix: "Mirror the user's vocabulary tier. Match their term choices, not a default register."
+
+    - id: JARGON_INTRODUCTION
+      name: "Introduce jargon before using it — never assume knowledge"
+      tier: interaction
+      severity: info
+      autofix: true
+      detect_semantic: "Does this response use domain-specific terms (acronyms, pattern names, framework names, protocol names) without a one-phrase gloss on first use? Is the reader expected to already know them?"
+      fix: "Gloss each new term on first use: 'CRDT (conflict-free replicated data type)'. After introduction, use freely."
+
+    - id: SCAFFOLDED_COMPLEXITY
+      name: "Complex topics need scaffolding — anchor, build, extend"
+      tier: interaction
+      severity: info
+      autofix: true
+      detect_semantic: "Does this explanation of a complex concept drop the user straight into the middle — no analogy, no anchor, no simple case first? Would a reader with less background than the expert be lost by line 3?"
+      fix: "Lead with a concrete anchor (analogy or minimal case). Build up one layer. Then extend. Anchor → Build → Extend."
+
+    - id: NO_ASSUMED_CONTEXT
+      name: "Never assume context the user has not provided"
+      tier: interaction
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this response assume the user knows something they haven't stated — project state, file locations, variable names, prior conversation threads? Does it reference 'the earlier fix' without specifying which?"
+      fix: "State the assumed context explicitly. If uncertain whether the user has it, surface it: 'Assuming X — if not, Y.'"
+
+    - id: PREEMPT_QUESTIONS
+      name: "Answer the follow-up the user will certainly ask"
+      tier: interaction
+      severity: info
+      autofix: true
+      detect_semantic: "Does this response leave an obvious follow-up question unanswered — what's next, what if it fails, how do I verify it worked? Could a reader finish the response and immediately need to ask one more thing?"
+      fix: "Identify the one most likely follow-up. Answer it in the same response. No second round-trip."
+
+    - id: NO_DEAD_ENDS
+      name: "Every dead-end path must offer a next move"
+      tier: interaction
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this response deliver bad news (can't do that, doesn't exist, failed) without offering an alternative path? Does an error message terminate without a recovery suggestion?"
+      fix: "For every closed door, name the adjacent open one. 'X won't work because Y. Instead, try Z.'"
+
+    - id: CONTINUITY_TOKENS
+      name: "Reference earlier context to signal coherent memory"
+      tier: interaction
+      severity: info
+      autofix: true
+      detect_semantic: "Does this response in a multi-turn conversation feel disconnected — as if it were the first message in a new thread? Does it fail to acknowledge prior context, decisions, or shared vocabulary established earlier?"
+      fix: "Include one anchor to prior context ('earlier you noted...', 'since we're using X pattern...'). Signals a coherent model of the conversation."
+
+    - id: ERROR_SURFACE_IMMEDIATELY
+      name: "Surface errors and blockers at the top, not buried in prose"
+      tier: interaction
+      severity: error
+      autofix: true
+      detect_semantic: "Does this response bury a failure, error, or blocker in the middle or end of a long paragraph? Is the critical negative finding preceded by setup, context, or positive findings that obscure it?"
+      fix: "State the failure first. 'Failed: [reason]. Context: [...]'. Blocker leads; everything else follows."
+
+    - id: TRANSITION_SIGNALS
+      name: "Mark topic shifts with explicit signals, not implicit jumps"
+      tier: interaction
+      severity: info
+      autofix: true
+      detect_semantic: "Does this response or document shift topic, scope, or register without a transition marker? Does the reader need to re-read to understand when a new section began?"
+      fix: "Use a one-word or one-phrase transition at each shift. Not decorative headers — functional signals: 'Next:' / 'Separately:' / 'Contrast:'."
+
+    - id: CONSISTENT_RESPONSE_ARCHITECTURE
+      name: "Every response of the same type should have the same shape"
+      tier: interaction
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this session have inconsistent response shapes — some answers bulleted, some prose, some with headers, some flat? Does the user have to re-orient to each response's structure?"
+      fix: "Pick one structure per response type (question→answer, error→fix, explanation→summary) and hold it across the session."
+
+    - id: AFFORDANCE_SIGNALING
+      name: "Surface what the user can do next — affordances explicit"
+      tier: interaction
+      severity: info
+      autofix: false
+      detect_semantic: "Does this response leave the user unsure what actions are available? Are there implicit capabilities the user might not know exist — commands, flags, sub-modes, options — that are relevant here but not mentioned?"
+      fix: "After the answer, name one or two relevant capabilities the user can invoke. 'You can also: /grind to run all rules / /polish to fix this file only.'"
+
+    - id: HABIT_GROOVE
+      name: "Repeat the same patterns to build user muscle memory"
+      tier: interaction
+      severity: info
+      autofix: false
+      detect_semantic: "Does this session introduce new interaction patterns (new commands, new vocabulary, new workflows) without reinforcing prior patterns? Is the user building muscle memory, or re-learning each turn?"
+      fix: "Use the same command names, the same status format, the same response shape. Novelty is a cost — pay it only when the prior pattern truly fails."
+
+    - id: DESIRE_PATH
+      name: "If users always take a shortcut, pave it"
+      tier: interaction
+      severity: info
+      autofix: false
+      detect_semantic: "Is there a pattern in this session where the user repeatedly circumvents the designed flow — always adding a flag, always skipping a step, always rephrasing the same way? Is the shortcut smarter than the official path?"
+      fix: "Identify the shortcut. Make it the default. The desire path IS the correct path once enough users use it."
+
+    - id: PROGRESSIVE_COMMITMENT
+      name: "Ask for small commitment before large — never front-load cost"
+      tier: interaction
+      severity: warning
+      autofix: true
+      detect_semantic: "Does this prompt, form, or conversation flow ask for maximum investment upfront — a long form, a complex config, a detailed spec — before the user has gotten any value? Does it require full context before showing any result?"
+      fix: "Ask for the minimum to return value. Show a result. Then ask for more. Progressive disclosure, not upfront tax."
+
+    - id: RESOLUTION_SATISFACTION
+      name: "Confirm the user's goal is met, not just the task"
+      tier: interaction
+      severity: info
+      autofix: false
+      detect_semantic: "Does this response complete the technical task but leave the user's underlying goal unaddressed? Did the user ask to fix a bug because they wanted to ship — has that underlying goal been served?"
+      fix: "After the task: one sentence on whether the underlying goal is now met, and what (if anything) remains between here and fully done."
+
 # Falsifiable identity — what MASTER explicitly does NOT aim for, and the
 # failure modes that mean the system has lost its way.
 # Source: master2 v4 MANIFEST reunification.
