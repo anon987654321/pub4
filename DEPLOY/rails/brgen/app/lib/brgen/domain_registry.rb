@@ -3,7 +3,7 @@
 module Brgen
   class DomainRegistry
     Entry = Data.define(:domain, :city, :country, :locale, :currency, :marketplace_subdomain)
-    Result = Data.define(:entry, :subapp, :host)
+    Result = Data.define(:entry, :city_record, :subapp, :host)
 
     class UnknownHost < StandardError; end
     class UnknownSubdomain < StandardError; end
@@ -82,9 +82,12 @@ module Brgen
     def self.resolve(host)
       normalized_host = normalize_host(host)
       normalized_host = "brgen.no" if LOCAL_HOSTS.include?(normalized_host)
+
       entry = entry_for(normalized_host)
+      city_record = resolve_city_record(entry)
       subdomain = subdomain_for(normalized_host, entry.domain)
-      Result.new(entry, subapp_for(subdomain, entry), normalized_host)
+
+      Result.new(entry, city_record, subapp_for(subdomain, entry), normalized_host)
     end
 
     def self.normalize_host(host)
@@ -94,6 +97,12 @@ module Brgen
     def self.entry_for(host)
       ENTRIES_BY_DOMAIN.values.find { |entry| host == entry.domain || host.end_with?(".#{entry.domain}") } ||
         raise(UnknownHost, host)
+    end
+
+    def self.resolve_city_record(entry)
+      return unless defined?(City)
+
+      City.find_by(domain: entry.domain)
     end
 
     def self.subdomain_for(host, domain)
