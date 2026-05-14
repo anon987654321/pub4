@@ -11,7 +11,7 @@ module Master
 
         Result.ok(ctx.merge(output: handler.call(ctx)))
       rescue StandardError => e
-        Result.err("execute: #{e.message}", category: :handler_exception)
+        Result.err("execute: #{e.message}", category: :unknown)
       end
     end
   end

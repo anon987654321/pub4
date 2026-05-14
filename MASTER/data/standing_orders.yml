@@ -1,104 +1,116 @@
 ---
+# Standing orders — event and manual triggers only. No scheduled intervals.
+# trigger: event  — fires when matching bus event is published
+# trigger: pre_tool — fires before a tool call matching on: pattern
+# trigger: manual  — only runs when explicitly called via /command
+#
+# Runtime state (state/last_run_at/last_error) lives here temporarily.
+# TODO: move state fields to .master/standing_orders_state.yml once
+#       standing_orders.rb splits config from FSM state.
+
 - name: auto_default
-  description: Default pipeline — iterative scan + autofix sweep + council review
-    until plateau (Δ&lt;5% violations) or 4 rounds. Runs hourly and after any /chat
-    or CLI session that mutated MASTER source. User never types this.
-  trigger: scheduled
-  interval_s: 3600
+  description: Scan + sweep + council after any source mutation. Primary self-maintenance loop.
+  trigger: event
+  on: "tool:after"
+  filter: "Write|Edit|Create|FilePatch"
+  exclude: "data/|test/"
   command: auto .
   enabled: true
-  state: error
-  last_run_at: 1778581438
-  last_error: 'Execute: unknown category: handler_exception'
-- name: nightly_dreams
-  description: Consolidate memories during low-activity periods
-  trigger: scheduled
-  interval_s: 86400
+  state: pending
+  last_run_at: 0
+
+- name: data_integrity_check
+  description: Scan data/ YAML files for corruption after any data/ write.
+  trigger: event
+  on: "tool:after"
+  filter: "data/"
+  command: /scan data/
+  enabled: true
+  state: pending
+  last_run_at: 0
+
+- name: dreams
+  description: Consolidate memories. Run via /dreams or after session end.
+  trigger: manual
   command: dreams consolidate
   enabled: true
-  state: done
-  last_run_at: 1778641917
-- name: weekly_scan
-  description: Weekly codebase axiom scan for regressions
-  trigger: scheduled
-  interval_s: 604800
-  command: scan
-  enabled: true
-  state: done
-  last_run_at: 1778147617
-- name: data_integrity_check
-  description: Detect and recover from corrupted data/ YAML files (LLM error strings
-    written as file content)
-  trigger: scheduled
-  interval_s: 3600
-  command: "/scan data/"
-  enabled: true
-  state: running
-  last_run_at: 1777590915
+  state: pending
+  last_run_at: 0
+
 - name: architecture_audit
-  description: Weekly review of data/* shape misfit. Walk every yaml under data/,
-    flag files that grew past 200 lines (split candidate), files with overlapping
-    top-level keys (merge candidate), and code modules whose responsibility no longer
-    matches their name. Emit suggestions, do not auto-apply.
-  trigger: scheduled
-  interval_s: 604800
+  description: Review data/* for shape misfit (files >200 lines, overlapping keys, misnamed modules). Run via /audit architecture.
+  trigger: manual
   command: audit architecture
   callable: architecture_audit
   enabled: true
-  state: done
-  last_run_at: 1778147617
-- name: rails_stack_audit
-  description: Audit Rails apps for the default StimulusReflex stack (cubism, futurism,
-    optimism, all_futures, solder, cable_ready_callbacks). Report missing gems and
-    propose Gemfile additions. Stack defined in data/ruby_style.yml stimulus_reflex_stack.
-  trigger: scheduled
-  interval_s: 604800
-  command: scan rails_stack
-  enabled: false
   state: pending
   last_run_at: 0
+
 - name: autocommit_post_chat
-  description: After any /chat turn that mutated source, generate a Strunk-style commit
-    message and create a small commit on the active branch. Driven by tool:after events
-    matching Write/Edit/Create/FilePatch. Wired in chat_controller.rb post-turn block.
+  description: After any turn that mutated source, generate a Strunk-style commit message and commit.
   trigger: event
+  on: "tool:after"
+  filter: "Write|Edit|Create|FilePatch"
   command: git autocommit
   callable: autocommit
   enabled: true
   state: pending
   last_run_at: 0
+
 - name: restart_master_on_web_edit
-  description: When a file under MASTER/web/ is written or edited, schedule `doas
-    rcctl restart master` so chat UI changes take effect without manual intervention.
-    Wired in chat_controller.rb post-turn block (web_mutated branch).
+  description: Restart MASTER service when web/ files change so edits take effect immediately.
   trigger: event
+  on: "tool:after"
+  filter: "web/"
   command: doas rcctl restart master
   callable: restart_master
   enabled: true
   state: pending
   last_run_at: 0
+
 - name: pre_edit_scan
-  description: Before any Edit/Write tool call, run /scan on the target file and surface
-    existing violations alongside the proposed change. Same pass fixes pre-existing
-    issues; no orphan violations left behind.
+  description: Before any Edit/Write, scan the target file and surface existing violations alongside the proposed change.
   trigger: pre_tool
+  on: "Write|Edit|FilePatch"
   command: scan {target_file}
-  enabled: false
+  enabled: true
   state: pending
   last_run_at: 0
-- name: daily_self_audit
-  description: Daily critical-rule scan against lib/master to surface drift early
-  trigger: scheduled
-  interval_s: 86400
-  command: scan critical lib/master
+
+- name: live_preview_gate
+  description: After editing a web view or asset, verify the page renders within 10s. Block commit on failure.
+  trigger: event
+  on: "tool:after"
+  filter: "web/app/views/|web/app/assets/"
+  command: preview gate
   enabled: true
-  state: running
+  state: pending
   last_run_at: 0
-- name: daily_deep_scan
-  description: Daily deep scan of lib/ with semantic rules
-  trigger: scheduled
-  interval_s: 86400
-  command: scan lib/ --deep
+
+- name: reverse_introspection
+  description: Every 10th commit, feed MASTER its own last 5 commits and ask whether it approves them.
+  trigger: event
+  on: "git:commit"
+  every: 10
+  command: audit introspect
   enabled: true
+  state: pending
+  last_run_at: 0
+
+- name: test_generation
+  description: When a scan rule definition changes, auto-generate test cases proving it fires and passes correctly.
+  trigger: event
+  on: "tool:after"
+  filter: "judge/scan/rules/"
+  command: test generate rules
+  enabled: true
+  state: pending
+  last_run_at: 0
+
+- name: rails_stack_audit
+  description: Audit Rails apps for the StimulusReflex stack. Run via /audit rails.
+  trigger: manual
+  command: scan rails_stack
+  enabled: false
   state: pending
   last_run_at: 0

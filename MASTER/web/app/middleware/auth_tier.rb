@@ -10,7 +10,7 @@ class AuthTier
   PUBLIC_PREFIX = %w[/assets/].freeze
   # Crockford base32 — no I/L/O/U, easy to read aloud.
   TOKEN_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".chars.freeze
-  TOKEN_LENGTH   = 8
+  TOKEN_LENGTH   = 16
 
   def initialize(app, config_path:)
     @app = app

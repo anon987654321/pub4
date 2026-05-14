@@ -1,0 +1,48 @@
+# Visual contract for MASTER web surfaces.
+# Source: DESIGN.md v1. Any UI change must comply with these directives.
+# These are constitutional for the web layer — treat as PROTECTED tier.
+
+colors:
+  background: "#000000"
+  foreground: "#ffffff"
+  muted_foreground: "rgba(255,255,255,0.55)"
+
+spacing:
+  base: 0.5rem
+  scale: [0.5rem, 1rem, 1.5rem, 2rem, 3rem]
+
+typography:
+  body: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+  mono: "ui-monospace, SFMono-Regular, Menlo, monospace"
+  text_size: "0.95rem"
+
+borders:
+  hairline: "1px solid #ffffff"
+  radius: "0"
+
+particles:
+  size: "1px"
+  count: 3000
+  color: "#ffffff"
+
+directives:
+  - "Absolute black (#000000) edge-to-edge background."
+  - "White foreground only. No accent palette unless a feature explicitly requires it."
+  - "Particle visuals are device-pixel points (1px × 1px). No blur, glow, gradient, or bloom."
+  - "Preserve whitespace. Typography stays restrained and readable."
+  - "No ornamental components: no hamburger menus, no decorative borders, no floating chrome."
+  - "Prefer declarative HTML + SSE updates. Minimize custom JavaScript to simulation and runtime needs."
+  - "rem-based spacing on an 8px grid."
+  - "No framework class explosion and no !important."
+
+canvas_states:
+  idle: "Low-amplitude Brownian drift."
+  boot: "Brief wireframe face coalescence (~2s) then dissolve."
+  command: "Particles regroup into structural diagrams for scans, pipeline stages, council signals."
+  mood: "Motion quality reflects homeostat state (focused / curious / tense / weary)."
+  audio: "Low frequencies influence cohesion. Transients trigger short scatter impulses."
+
+text_treatment:
+  messages: "Plain white text, upper-third left alignment."
+  assistant_emphasis: "Temporary 1px left hairline."
+  input: "Bottom hairline that expands only while typing."

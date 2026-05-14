@@ -418,3 +418,28 @@ self_rewrite_throttle:
     - exe/master
     - data/standing_orders.yml
   autoloop_action: "skip with publish autoloop:throttled event; surface to user"
+
+# Adversarial questioning — every scan, sweep, and council turn asks these.
+# Trivial findings get autofixed immediately. Non-trivial findings get N options
+# proposed, from which the best is cherry-picked by the operator or judge.
+adversarial_questioning:
+  mandate: fires_on_every_scan_and_council_turn
+  questions:
+    - "What is wrong with this design that I have not spotted?"
+    - "What would an attacker do with this code?"
+    - "What assumption is this built on that could be false?"
+    - "What breaks at scale or under failure?"
+    - "Is this wired to anything? Could it be deleted without loss?"
+    - "Is there a simpler approach that was not taken?"
+    - "What should be relocated or transformed to a different format?"
+  resolution:
+    trivial: autofix immediately — no proposal, no prompt
+    non_trivial: "propose 3 concrete options (OPTION 1/2/3 + RECOMMEND), await cherry-pick"
+    threshold: "non-trivial if the fix spans more than one file, touches architecture, or has security implications"
+
+# Known issues — active bugs and watch-outs from HANDOFF.md.
+known_issues:
+  tts_broken: "Master::Voice::Speech.synthesize_bytes shells to exe/tts-worker; if edge-tts is missing or tts-worker crashes, speech silently falls back to espeak. Verify exe/tts-worker exists and edge-tts is installed (pkg_add py3-edge-tts or pip)."
+  particle_swarm: "cognition_ecology.js trail/weather/memory-node system suspected broken — visual_bridge.js dispatches master:visual CustomEvents but cognition_ecology.js event listener may not be registering. Check addEventListener target and event name match."
+  gemfile_separation: "MASTER/Gemfile and MASTER/web/Gemfile are independent. Any gem used by lib/master/ code that is also called from web/ controllers must appear in both. Adding to one only causes LoadError in the other context."
+  tts_worker_process: "Process.fork inside a Falcon fiber raises 'Closing scheduler' — EM-based gems and subprocess-heavy tools must use Open3.popen or shell out via exe/<name>-worker, never fork."

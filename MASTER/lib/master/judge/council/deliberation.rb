@@ -4,25 +4,35 @@ module Master
   module Judge
   module Council
     class Deliberation
-      MAX_CONCURRENT  = 4
-      MAX_CODE_BYTES  = 8_192
-      TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
-      JUDGE_TIMEOUT   = 30
-      TOTAL_BUDGET_S  = 120
-      MIN_QUORUM      = 3
-      CONVERGENCE_ROUNDS = 3
-      PLATEAU_OVERLAP    = 0.7
-      PLATEAU_TEXT_SIM   = 0.6
+      MAX_CONCURRENT       = 4
+      MAX_CODE_BYTES       = 8_192
+      TRUNCATE_MARKER      = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
+      JUDGE_TIMEOUT        = 30
+      TOTAL_BUDGET_S       = 120
+      MIN_QUORUM           = 3
+      CONVERGENCE_ROUNDS   = 3
+      CONVERGENCE_OVERLAP  = 0.7
+      CONVERGENCE_TEXT_SIM = 0.6
 
       COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
-      QUESTION_CATEGORY = {
-        "Architect"  => "assumptions",
-        "Skeptic"    => "failure_modes",
-        "Security"   => "attacker",
-        "User"       => "edge_cases",
-        "Pragmatist" => "economics",
-        "Mentor"     => "clarity"
+
+      # Maps each council persona to the question bank category they draw from.
+      PERSONA_QUESTION = {
+        "Architect"          => "assumptions",
+        "Data Steward"       => "consistency",
+        "Ethics & Policy"    => "harm",
+        "Maintainer"         => "clarity",
+        "Performance"        => "bottlenecks",
+        "Product Strategist" => "economics",
+        "QA Engineer"        => "evidence",
+        "Pragmatist"         => "scope",
+        "Reliability"        => "failure_modes",
+        "Security"           => "attacker",
+        "Skeptic"            => "failure_modes",
+        "User"               => "edge_cases",
+        "Mentor"             => "clarity"
       }.freeze
+
       @questions = nil
 
       def self.questions
@@ -35,7 +45,7 @@ module Master
       end
 
       def self.sample_question(persona_name)
-        cat = QUESTION_CATEGORY[persona_name.to_s]
+        cat = PERSONA_QUESTION[persona_name.to_s]
         bank = questions[cat]
         bank&.sample
       end
@@ -44,7 +54,7 @@ module Master
         @personas      = personas
         @agent         = agent
         @bus           = event_bus
-        @rules        = axioms
+        @rules         = axioms
         @judge_enabled = judge_enabled
         validate_dependencies!
       end
@@ -58,11 +68,11 @@ module Master
           return result unless result.is_a?(Master::Result::Ok)
           feedback = result.value!
           history << feedback
-          if history.size >= 2 && plateau?(history[-2], history[-1])
+          if history.size >= 2 && converged?(history[-2], history[-1])
             @bus&.publish(:council_converged, round: i + 1)
             break
           end
-          round_context = round_digest(feedback, context)
+          round_context = feedback_summary(feedback, context)
         end
         Master::Result.ok(history.last || [])
       end
@@ -123,15 +133,15 @@ module Master
 
       private
 
-      def plateau?(prev, curr)
+      def converged?(prev, curr)
         return false if prev.empty? || curr.empty? || prev.size != curr.size
         prev_texts = prev.map { |f| f[:feedback].to_s }
         curr_texts = curr.map { |f| f[:feedback].to_s }
-        same = curr_texts.zip(prev_texts).count { |c, p| jaccard(c, p) >= PLATEAU_TEXT_SIM }
-        same.to_f / curr_texts.size >= PLATEAU_OVERLAP
+        same = curr_texts.zip(prev_texts).count { |c, p| text_similarity(c, p) >= CONVERGENCE_TEXT_SIM }
+        same.to_f / curr_texts.size >= CONVERGENCE_OVERLAP
       end
 
-      def jaccard(a, b)
+      def text_similarity(a, b)
         return 0.0 if a.empty? || b.empty?
         sa = a.downcase.scan(/\w+/).uniq
         sb = b.downcase.scan(/\w+/).uniq
@@ -139,12 +149,12 @@ module Master
         union.zero? ? 0.0 : (sa & sb).size.to_f / union
       end
 
-      def round_digest(feedback, base_context)
+      def feedback_summary(feedback, base_context)
         lines = feedback.reject { |f| f[:persona] == "Judge" }.map do |f|
           "#{f[:persona]} (#{f[:role]}): #{f[:feedback].to_s.lines.first(2).join.strip}"
         end
-        digest = "\n--- prior round ---\n" + lines.join("\n") + "\n--- end ---\n"
-        [base_context, digest].compact.join
+        summary = "\n--- prior round ---\n" + lines.join("\n") + "\n--- end ---\n"
+        [base_context, summary].compact.join
       end
 
       def judge(feedback, code, context)
@@ -162,14 +172,23 @@ module Master
         end.join("\n\n")
         <<~PROMPT
           You are the Council judge. Each juror below speaks for a distinct constitutional
-          axiom. Synthesise a single conclusion: extract the load-bearing critique,
-          drop redundancy, surface unresolved disagreement explicitly, and end with one
-          actionable recommendation.
+          axiom. Extract the load-bearing critique, drop redundancy, surface unresolved
+          disagreement.
 
           Jurors:
           #{rounds}
 
-          Output: 3-6 lines, terse, no preamble.
+          Classify the finding:
+          - TRIVIAL (safe to auto-fix): output exactly → AUTOFIX: <one-line description of the fix>
+          - NON-TRIVIAL (needs a decision): output exactly →
+              ISSUE: <one sentence>
+              OPTION 1: <approach and trade-off>
+              OPTION 2: <approach and trade-off>
+              OPTION 3: <approach and trade-off>
+              RECOMMEND: <which option and why in one sentence>
+
+          Non-trivial if: spans more than one file, touches architecture, or has security implications.
+          3-8 lines total. No preamble.
         PROMPT
       end
 
@@ -205,7 +224,7 @@ module Master
         axiom = axiom_line(persona)
         axiom_block = axiom.empty? ? "" : "#{axiom}\n"
         question = self.class.sample_question(persona.name)
-        question_block = question ? "\nFocus question for this turn: #{question}\n" : ""
+        question_block = question ? "\nAdversarial question for this turn: #{question}\n" : ""
         <<~PROMPT
           You are #{persona.name} (#{persona.role}, bias: #{persona.bias}).#{ctx}
           #{axiom_block}#{persona.prompt}#{question_block}

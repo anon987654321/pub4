@@ -1,22 +1,26 @@
-# Heartbeat — autonomous scheduled jobs.
-# Each entry runs at interval_seconds. Actions: prune_memory, check_models, self_test, prune_undo, snapshot.
+# Heartbeat jobs — all disabled. Schedule-based maintenance removed.
+# These actions are now triggered by events or manual slash commands:
+#   prune_memory → /dreams
+#   self_test     → auto_default standing order (fires after any source mutation)
+#   prune_undo    → manual: /prune undo
+#   snapshot      → manual: /snapshot
 
 - name: prune_memory
   action: prune_memory
-  interval_seconds: 3600
-  description: Consolidate and archive stale memory entries.
+  enabled: false
+  description: Use /dreams instead.
 
 - name: self_test
   action: self_test
-  interval_seconds: 7200
-  description: Run standard scan against lib/ and report violations.
+  enabled: false
+  description: Covered by auto_default standing order.
 
 - name: prune_undo
   action: prune_undo
-  interval_seconds: 86400
-  description: Trim undo journal to last 50 entries.
+  enabled: false
+  description: Use /prune undo instead.
 
 - name: snapshot
   action: snapshot
-  interval_seconds: 14400
-  description: Regenerate .master/snapshot.md with current codebase state.
+  enabled: false
+  description: Use /snapshot instead.
