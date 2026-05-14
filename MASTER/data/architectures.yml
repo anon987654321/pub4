@@ -1,0 +1,188 @@
+# MASTER loop architectures — 15 approaches from conventional to radical.
+# status: concept | scaffolded | implemented
+# Each implemented entry is wired somewhere in lib/ or data/.
+# Nothing here is aspirational decoration — every entry is a real spec.
+---
+
+architectures:
+
+  - id: priority_queue
+    name: "Priority queue over round-robin"
+    status: implemented
+    description: >
+      Sort rules by recent violation density descending before each pass.
+      Highest-impact rules run first, reducing total cycles to convergence.
+    wired_to: lib/master/loop/super_loop.rb (sort_rules_by_priority)
+    ref: "#1"
+
+  - id: rule_dependency_graph
+    name: "Rule dependency graph with topological ordering"
+    status: implemented
+    description: >
+      Some fixes create violations for other rules (FLATTEN before DECOUPLE;
+      HOIST before MERGE). A DAG declared in data/rule_deps.yml ensures rules
+      run in an order that minimises cascade re-triggering.
+    wired_to:
+      - lib/master/loop/super_loop.rb (topo_sort_rules)
+      - data/rule_deps.yml
+    ref: "#2"
+
+  - id: file_first
+    name: "File-first convergence (alternative to rule-first)"
+    status: implemented
+    description: >
+      Converge all rules on one file before moving to the next.
+      Better cache locality, fewer re-reads, faster for large repos.
+      Available as strategy: :file_first on SuperLoop#run_once.
+    wired_to: "lib/master/loop/super_loop.rb (run_file_first)"
+    ref: "#3"
+
+  - id: ast_autofixes
+    name: "Deterministic AST-level autofixes for mechanical rules"
+    status: scaffolded
+    description: >
+      Mechanical violations (frozen_string_literal, trailing commas, bare rescue,
+      double-quote enforcement) can be fixed with Prism AST transforms —
+      no LLM call, no token cost, no false negative. Sweep already calls
+      rubocop -A for Ruby; this extends that to YAML/HTML/CSS/JS via
+      language-specific transformers.
+    wired_to: lib/master/judge/scan/ast_fixer.rb (TODO)
+    ref: "#4"
+
+  - id: diff_only_fixes
+    name: "Unified diff output instead of whole-file rewrites"
+    status: scaffolded
+    description: >
+      LLM produces a unified diff patch rather than regenerating the whole file.
+      Token cost drops 60-80% for large files. Patch is applied with a
+      deterministic patcher — malformed diffs are rejected, not applied blindly.
+    wired_to: "lib/master/loop/rule_loop.rb (fix mode diff, TODO)"
+    ref: "#5"
+
+  - id: council_fixes
+    name: "Multi-agent council deliberation for architectural violations"
+    status: scaffolded
+    description: >
+      Architectural violations (THREAD_SAFETY, DECOUPLE, INTEGRATED_WHOLE)
+      route to a 3-persona mini-council (skeptic/security/maintainer) rather
+      than a direct LLM rewrite. Council proposes, votes, applies only on
+      consensus. Slower; much higher quality for high-stakes changes.
+    wired_to:
+      - lib/master/judge/council/deliberation.rb (existing)
+      - "lib/master/loop/rule_loop.rb (council mode for severity error, TODO)"
+    ref: "#6"
+
+  - id: reactive_event_driven
+    name: "File-watcher reactive trigger — no polling"
+    status: scaffolded
+    description: >
+      Rather than sleeping and polling, listen for filesystem events (inotify
+      on Linux, kqueue on OpenBSD, FSEvents on macOS). A changed file triggers
+      a targeted rule_loop pass on that file only. The system quiesces
+      naturally. No STARTUP_DELAY, no idle sleep waste.
+    wired_to:
+      - lib/master/loop/super_loop.rb (watch_mode, TODO)
+      - Gemfile (listen gem or rb-kqueue for OpenBSD, TODO)
+    ref: "#7"
+
+  - id: dataflow_pipeline
+    name: "Staged dataflow pipeline: Detect → Triage → Fix → Validate → Apply"
+    status: scaffolded
+    description: >
+      Violations flow through named stages as objects. Each stage is a
+      separate worker queue. Stages are independently parallelisable.
+      The existing 10-stage pipeline (Intake→Render) provides the pattern;
+      this extends it to the fix loop.
+    wired_to:
+      - lib/master/now/pipeline.rb (existing pattern)
+      - lib/master/loop/ (TODO: fix_pipeline.rb)
+    ref: "#8"
+
+  - id: genetic_fixes
+    name: "Genetic algorithm for fix candidate selection"
+    status: scaffolded
+    description: >
+      Generate N fix candidates per violation, score each by post-fix
+      violation count, apply the winner. Breed high-scoring candidates
+      across passes. Sweep#rewrite_best_of already does this for whole-file
+      rewrites; this extends it per-violation in RuleLoop.
+    wired_to: lib/master/loop/sweep/rewriter.rb#rewrite_best_of (existing)
+    ref: "#9"
+
+  - id: reinforcement_learning
+    name: "Reinforcement learning: track fix quality, update rule priorities"
+    status: scaffolded
+    description: >
+      Record which rule+file_type pairs produce fixes that stick (no
+      regression in next scan). Update a fix_quality score per rule.
+      SuperLoop's priority queue uses fix_quality as secondary sort key.
+      AutoLoop already tracks rule_recurrence — this extends it with
+      outcome tracking.
+    wired_to:
+      - lib/master/loop/auto_loop.rb#track_recurrence (existing scaffold)
+      - lib/master/learnings.rb (existing)
+      - data/learnings/ (persistence, TODO)
+    ref: "#10"
+
+  - id: constitution_type_system
+    name: "Constitution as a type system on the AST IR"
+    status: concept
+    description: >
+      Encode constitutional rules as type constraints on a typed AST IR.
+      Violations become type errors. Fixes are derivable from the complement
+      constraint. The type checker is sound and complete — no LLM, no
+      probabilistic inference. Requires a typed IR for every supported medium.
+    wired_to: "future: lib/master/ground/type_checker.rb"
+    ref: "#11"
+
+  - id: datalog_rules
+    name: "Datalog/Prolog rule engine — logical clause rules"
+    status: concept
+    description: >
+      Each rule is a logical Horn clause. Violations are queries against
+      the program's fact base (AST facts). Fixes are derived from the
+      complement clause. Sound, complete, no neural network involved.
+      Roda/Sequel author Jeremy Evans' style: logic over magic.
+    wired_to: "future: lib/master/judge/scan/datalog_engine.rb"
+    ref: "#12"
+
+  - id: crdt_convergence
+    name: "CRDT-based codebase convergence for distributed agents"
+    status: concept
+    description: >
+      Treat the codebase as a CRDT. Rules define merge functions. Multiple
+      agents make concurrent fixes; the CRDT guarantees eventual consistency
+      without conflict resolution overhead. Required for multi-agent MASTER
+      instances on the same repo.
+    wired_to: "future: lib/master/loop/crdt_loop.rb"
+    ref: "#13"
+
+  - id: bayesian_priors
+    name: "Hierarchical Bayesian violation priors per language/tier"
+    status: scaffolded
+    description: >
+      Each rule has a prior probability of firing per language and file type.
+      Posterior updated by observed violation counts. SuperLoop's priority
+      queue uses expected violation rate (prior × posterior) as primary
+      sort key. High-probability rules run first; low-probability rules
+      skip files where they've never fired before.
+    wired_to:
+      - lib/master/loop/super_loop.rb (priority queue, existing scaffold)
+      - data/violation_priors.yml (TODO)
+    ref: "#14"
+
+  - id: embodied_codebase
+    name: "Codebase as embodied 3D space — particle topology"
+    status: implemented
+    description: >
+      The codebase is a spatial body. Files are particles; modules are
+      clusters; call-graph edges are force bonds; violations make particles
+      agitated and drift from their cluster; fixes cause particles to settle.
+      The face particle system renders this in real time via SSE events.
+      Structural operations (DEFRAG, FLATTEN, MERGE, DECOUPLE) become
+      observable particle migrations — you watch the codebase reorganize.
+    wired_to:
+      - lib/master/loop/super_loop.rb (codebase:topology events)
+      - web/public/visual_bridge.js (master:codebase dispatch)
+      - web/public/codebase.js (particle cluster renderer)
+    ref: "#15"

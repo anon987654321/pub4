@@ -1,0 +1,58 @@
+# Rule dependency graph — topological ordering for SuperLoop passes.
+# A rule listed under 'after' must not run before all its dependencies complete.
+# This prevents fix cascades where rule A's fix re-introduces rule B's violation.
+# Loaded by SuperLoop#topo_sort_rules.
+---
+
+deps:
+
+  # Structural operations: flatten nesting before decoupling (flattening
+  # exposes the hidden coupling that DECOUPLE then targets).
+  DECOUPLE:
+    after: [FLATTEN, LINEARITY]
+
+  # Hoist constants before merge — merged code references the hoisted constant.
+  MERGE:
+    after: [HOIST_CONSTANTS, HOIST]
+
+  # Kill dead code before defrag — defragging dead code wastes effort.
+  DEFRAG:
+    after: [DEAD_CODE, SPECULATIVE_GENERALITY]
+
+  # Fix small-files violations before feature_envy — moving a method to
+  # its right class only makes sense when both files are well-sized.
+  FEATURE_ENVY:
+    after: [SMALL_FILES, SMALL_FUNCTIONS]
+
+  # Remove data clumps before primitive obsession — bundling into objects
+  # subsumes the primitive check.
+  PRIMITIVE_OBSESSION:
+    after: [DATA_CLUMPS]
+
+  # Fix switch statements (type dispatch) after removing middle men —
+  # middle men often hide the type dispatch.
+  SWITCH_STATEMENTS:
+    after: [MIDDLE_MAN]
+
+  # Comment drift after all structural changes — restructured code needs
+  # comment review, not before.
+  COMMENTS_AS_DEODORANT:
+    after: [DEFRAG, MERGE, FLATTEN, EXTRACT]
+
+  # Strunk rules after all structural operations — prose quality is a
+  # final-pass concern.
+  OMIT_NEEDLESS:
+    after: [DEFRAG, REFLOW]
+  ACTIVE_VOICE:
+    after: [OMIT_NEEDLESS]
+  PARALLEL_STRUCTURE:
+    after: [ACTIVE_VOICE]
+
+  # Reflow after all density changes.
+  REFLOW:
+    after: [MERGE, FLATTEN, DEFRAG]
+
+  # Bayesian/RL priors updated last — they need the post-fix violation
+  # counts from all other rules.
+  PATTERN_EXTRACTION:
+    after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
