@@ -24,35 +24,35 @@ module Master
 
       event_log = Runtime::EventLog.new(root:)
       bus = Trace::EventBus.new(event_log:)
-      ring = RingBuffer.new(RING_SIZE)
-      logging = Logging.new(ring_buffer: ring, event_bus: bus)
-      homeostat = Homeostat.new(event_bus: bus)
+      ring = Trace::RingBuffer.new(RING_SIZE)
+      logging = Trace::Logging.new(ring_buffer: ring, event_bus: bus)
+      homeostat = Loop::Homeostat.new(event_bus: bus)
       session = Trace::Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
       undo = Trace::Undo.new(session:, event_bus: bus, root:)
-      breaker = CircuitBreakerRegistry.new(
+      breaker = Reach::CircuitBreakerRegistry.new(
         budget_max: config.budget_max, req_max: config.req_max, event_bus: bus
       )
-      cache = SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
-      governor = Governor.new(config:, event_bus: bus)
+      cache = Reach::SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
+      governor = Loop::Governor.new(config:, event_bus: bus)
       renderer = Voice::Renderer.new(config:)
-      metrics = Metrics.new(root:, event_bus: bus)
-      AuditLog.new(root:, event_bus: bus)
+      metrics = Trace::Metrics.new(root:, event_bus: bus)
+      Trace::AuditLog.new(root:, event_bus: bus)
 
-      code_index = CodeIndex.new(root:, event_bus: bus)
-      diff_stager = config["staging_enabled"] ? DiffStager.new(root:, event_bus: bus) : nil
-      mcp = McpCoordinator.new(root:, event_bus: bus)
+      code_index = Judge::CodeIndex.new(root:, event_bus: bus)
+      diff_stager = config["staging_enabled"] ? Loop::DiffStager.new(root:, event_bus: bus) : nil
+      mcp = Reach::McpCoordinator.new(root:, event_bus: bus)
       mcp.connect_all
       code_index.build_async
       bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
 
-      memory = Memory.new(root:)
+      memory = Ground::Memory.new(root:)
       personality = Voice::Personality.new(
         config["persona"]&.to_sym || Voice::Personality::DEFAULT, root:, homeostat:
       )
-      learnings   = Learnings.new(root:)
+      learnings   = Ground::Learnings.new(root:)
 
-      phase_gates = PhaseGates.new(root:, event_bus: bus)
-      diag        = Diag.new(homeostat:, breaker:, logging:)
+      phase_gates = Loop::PhaseGates.new(root:, event_bus: bus)
+      diag        = Trace::Diag.new(homeostat:, breaker:, logging:)
       trace       = Trace::Recorder.new(root:, event_bus: bus)
       {
         config:, event_log:, ring:, bus:, logging:, homeostat:, session:, undo:, breaker:, cache:,
@@ -76,7 +76,7 @@ module Master
       soul_doc     = Voice::Soul.new(root:, agent:)
       tools << Reach::AskLlm.new(agent:, governor: infra[:governor],
                                   circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus)
-      ctx = ContextWindow.new(session: infra[:session], agent:, model_context: CTX_WINDOW_SIZE)
+      ctx = Now::ContextWindow.new(session: infra[:session], agent:, model_context: CTX_WINDOW_SIZE)
       ctx.check_and_compact!
       agent.wire_context_window(ctx)
       constitution = Ground::Constitution.new
@@ -97,31 +97,31 @@ module Master
 
     def build_agent_instance(root, infra)
       tools = build_tools(root:, infra:) + infra[:mcp].tools
-      deps  = Agent::Dependencies.from_kwargs(
+      deps  = Judge::Agent::Dependencies.from_kwargs(
         config: infra[:config], session: infra[:session], tools:,
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: infra[:bus],
-        model_router: Routing::ModelRouter.new(config: infra[:config]),
-        reasoning_modes: Reasoning::Modes.new,
+        model_router: Now::Routing::ModelRouter.new(config: infra[:config]),
+        reasoning_modes: Judge::Reasoning::Modes.new,
         memory: infra[:memory], personality: infra[:personality],
         code_index: infra[:code_index], homeostat: infra[:homeostat]
       )
-      [Agent.new(deps:), tools]
+      [Judge::Agent.new(deps:), tools]
     end
 
     def build_autonomous(root, infra, agent:, scanner:, soul:)
       bus       = infra[:bus]
-      standing  = StandingOrders.new(pipeline: nil, event_bus: bus)
+      standing  = Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
       learnings = infra[:learnings]
       autoloop  = Loop::AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
       rules     = scanner.instance_variable_get(:@rules)
-      git       = GitOperations.new(root)
+      git       = Reach::GitOperations.new(root)
       super_loop = Loop::SuperLoop.new(rules:, agent:, scanner:, root:, bus:, git:)
       Thread.new { super_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
-      skills    = Skills.new(root:, event_bus: bus)
+      skills    = Now::Skills.new(root:, event_bus: bus)
       skills.discover!
       heartbeat = Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus,
                                homeostat: infra[:homeostat])
-      triggers  = Triggers.new(event_bus: bus, scanner:, agent:)
+      triggers  = Loop::Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
       { standing:, learnings:, autoloop:, super_loop:, skills:, heartbeat:, triggers: }
     end
@@ -129,11 +129,11 @@ module Master
     def build_pipeline_and_gateway(root, infra, ai)
       config   = infra[:config]
       bus      = infra[:bus]
-      commands = CommandRegistry.build(infra:, ai:, root:)
+      commands = Now::CommandRegistry.build(infra:, ai:, root:)
       stages   = build_stages(root:, infra:, ai:, commands:)
       pipeline = Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
       ai[:standing].wire_pipeline(pipeline)
-      gateway = Gateway.new(pipeline:, session: infra[:session], event_bus: bus)
+      gateway = Reach::Gateway.new(pipeline:, session: infra[:session], event_bus: bus)
       commands["gateway"] = ->(ctx) { gateway.channels }
       [pipeline, gateway]
     end

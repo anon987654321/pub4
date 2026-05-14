@@ -48,15 +48,16 @@ module Master
     "ast_edit"        => "AstEdit"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
-  loader.ignore(File.join(__dir__, "master", "ruby_llm_patch.rb"))
+  loader.ignore(File.join(__dir__, "master", "reach", "ruby_llm_patch.rb"))
+  loader.ignore(File.join(__dir__, "master", "reach", "bedrock_stub.rb"))
   %w[
     loop/auto_loop/fix_evaluator.rb
     builder/infra_helpers.rb
     now/cli/signals.rb
-    command_registry/agent_commands.rb
-    command_registry/memory_commands.rb
-    command_registry/service_commands.rb
-    memory/search.rb
+    now/command_registry/agent_commands.rb
+    now/command_registry/memory_commands.rb
+    now/command_registry/service_commands.rb
+    ground/memory/search.rb
     loop/sweep/rewriter.rb
     loop/sweep/convergence.rb
   ].each do |rel|
@@ -67,9 +68,9 @@ module Master
   def self.configure_providers!
     # Stub Bedrock before ruby_llm loads — avoids openssl.so on OpenBSD/LibreSSL.
     # MASTER only uses OpenRouter; Bedrock is never needed.
-    require_relative "master/bedrock_stub"
+    require_relative "master/reach/bedrock_stub"
     require "ruby_llm"
-    require_relative "master/ruby_llm_patch"
+    require_relative "master/reach/ruby_llm_patch"
     RubyLLM.configure do |cfg|
       API_KEY_PROVIDERS.each do |attr, env_var|
         api_key = ENV[env_var].to_s
@@ -113,9 +114,9 @@ module Master
   end
 
   def self.boot(root: Dir.pwd)
-    Pledge.stage1_boot!(root)
+    Ground::Pledge.stage1_boot!(root)
     container = bootstrap_container(root: root)
-    Pledge.stage2_lock!
+    Ground::Pledge.stage2_lock!
     Now::CLI.new(container:)
   end
 end

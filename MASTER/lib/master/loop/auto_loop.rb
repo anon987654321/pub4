@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
-require_relative "../git_operations"
+require_relative "../reach/git_operations"
 
 require_relative "auto_loop/fix_evaluator"
 
@@ -43,7 +43,7 @@ module Master
       @soul            = soul
       @learnings       = learnings
       @rule_recurrence = Hash.new(0) # rule_id => consecutive_cycle_count
-      @git             = GitOperations.new(root)
+      @git             = Reach::GitOperations.new(root)
     end
 
     def run(max_cycles: MAX_CYCLES)
@@ -154,7 +154,7 @@ module Master
 
       src         = File.read(path, encoding: "UTF-8")
       base_prompt = build_fix_prompt(violation, src)
-      result = Reflexion.run(agent: @agent, task: base_prompt, max: MAX_FIX_RETRIES) do |prompt, attempt|
+      result = Judge::Reflexion.run(agent: @agent, task: base_prompt, max: MAX_FIX_RETRIES) do |prompt, attempt|
         sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
         begin
           fix = extract_code(@agent.ask(prompt).to_s)

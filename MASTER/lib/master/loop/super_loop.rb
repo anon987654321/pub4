@@ -27,7 +27,7 @@ module Master
       @scanner      = scanner
       @root         = root
       @bus          = bus
-      @git          = git || GitOperations.new(root)
+      @git          = git || Reach::GitOperations.new(root)
       @violation_counts = Hash.new(0)  # rule_id → cumulative violations seen
     end
 
