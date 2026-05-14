@@ -418,14 +418,3 @@ self_rewrite_throttle:
     - exe/master
     - data/standing_orders.yml
   autoloop_action: "skip with publish autoloop:throttled event; surface to user"
-
-# Self-rewrite throttle — sensitive paths require explicit user approval.
-# Source: cross-cutting reunification (#100).
-self_rewrite_throttle:
-  sensitive_paths:
-    - lib/master/autoloop/
-    - lib/master/governor.rb
-    - lib/master/security/
-    - exe/master
-    - data/standing_orders.yml
-  autoloop_action: "skip with publish autoloop:throttled event; surface to user"
