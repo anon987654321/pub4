@@ -1,67 +1,90 @@
 # blognet
 
-## Publishing network
+blognet is the publishing and editorial network product.
+
+It should mirror a standard Rails application structure:
+
+- app
+- config
+- db
+- lib
+- public
+- storage
+- test
+
+## Product role
 
 blognet is a semantic publishing and knowledge platform built on Rails 8.
 
-It combines longform writing, semantic discovery, AI-assisted editing, creator subscriptions, and knowledge graph navigation into one durable publishing system.
+It combines longform writing, semantic discovery, AI-assisted editing, creator subscriptions, recipe/editorial verticals, and knowledge graph navigation into one durable publishing system.
 
-## Value proposition
+## Core ownership
 
-Most publishing systems optimize for short-term engagement.
+blognet owns:
 
-blognet should optimize for:
-
-- durable writing
-- knowledge preservation
-- semantic discovery
-- intellectual communities
-- independent publishing
-
-## Core concepts
-
-### Semantic publishing
-
-Connect:
-
+- blogs
 - posts
-- concepts
-- citations
-- people
-- timelines
-- entities
-- references
+- recipes
+- categories
+- tags
+- editorial workflows
+- media embeds
+- comments
+- feeds
+- structured article metadata
+- author profiles
+- publication discovery
+- semantic search
+- knowledge graph indexing
 
-### Discovery graph
+## Foodielicious
 
-Users should discover:
+Foodielicious is the food vertical inside blognet.
 
-- adjacent ideas
-- related thinkers
-- topic clusters
-- semantic pathways
-- intellectual history
+Public brand:
 
-### Writer graph
+foodielicio.us
 
-Model:
+Foodielicious direction:
 
-- collaborations
-- influences
-- citation relationships
-- recurring themes
-- shared audiences
+- recipe-first editorial UX
+- rich media galleries
+- structured recipe schema
+- ingredient metadata
+- step-by-step cooking views
+- short-form food clips
+- locality-aware restaurant and ingredient references
+- recipe collections and playlists
+- seasonal food guides
+- Norwegian food culture coverage
 
-### AI-assisted writing
+The inspiration is Matprat-style usefulness: recipes, guides, editorial food knowledge, seasonal collections, and practical cooking flows. The implementation, branding, copy, and visual identity should remain original.
 
-Support:
+## Shared platform dependencies
 
-- semantic summaries
-- readability scoring
-- argument mapping
-- citation suggestions
-- structure analysis
-- multilingual translation
+blognet should integrate with shared Rails platform systems:
+
+- identity
+- media pipeline
+- comments
+- moderation
+- search
+- notifications
+- analytics
+- structured data helpers
+- Stimulus component registry
+
+## Frontend direction
+
+Use:
+
+- Stimulus Components
+- stimulus-lightbox
+- lightGallery.js
+- Turbo
+- importmap
+
+The public product should feel editorial and locality-aware, not like a generic CMS.
 
 ## Features
 
@@ -73,6 +96,9 @@ Support:
 - semantic clustering
 - citation systems
 - topic exploration
+- recipe publishing
+- media galleries
+- food verticals
 
 ## Systems to build next
 
@@ -94,9 +120,18 @@ Support:
 - timeline generation
 - knowledge archives
 
-### Personal knowledge bases
+### Recipe mode
 
-Turn blogs into searchable memory systems.
+Support:
+
+- ingredients
+- methods
+- cook time
+- difficulty
+- nutrition metadata
+- recipe cards
+- collections
+- gallery/video support
 
 ## Stack
 
@@ -108,11 +143,10 @@ Use embeddings, semantic retrieval, GraphRAG, clustering, and knowledge graph in
 
 ## Deploy
 
-```zsh
 cd ~/pub4/DEPLOY/rails/blognet
+
 doas zsh blognet.sh
-```
 
 ## Long-term goal
 
-Build a durable semantic publishing and knowledge network for independent writers.
+Build a durable semantic publishing and knowledge network for independent writers and high-quality editorial verticals.
