@@ -36,8 +36,9 @@ module Master
       @data  = load_config
     end
 
-    def [](key)         = @data[key.to_s]
-    def []=(key, value) ; @mutex.synchronize { @data[key.to_s] = value } ; end
+    def [](key)               = @data[key.to_s]
+    def []=(key, value)       ; @mutex.synchronize { @data[key.to_s] = value } ; end
+    def dig(key, *rest)       = rest.empty? ? @data[key.to_s] : @data.dig(key.to_s, *rest)
 
     def model          = self['model']
     def budget_max     = self['budget_max'].to_f
