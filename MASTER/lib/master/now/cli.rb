@@ -609,7 +609,7 @@ module Master
 
     def next_action_chips
       base = ["[/undo]", "[/why]", "[/last]"]
-      base.unshift("[/sweep #{@violations}v]") if @violations.positive?
+      base.unshift("[/polish #{@violations}v]") if @violations.positive?
       base
     end
 

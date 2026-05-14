@@ -10,7 +10,7 @@ MASTER is the source of truth for all coding agents in this repo — itself, its
 
 Read order before any work:
 
-    cd ~/pub4/MASTER && bundle exec ruby exe/master orient
+    cd ~/pub4/MASTER && bundle exec ruby exe/master brief
 
 That stream is authoritative — its `soul`, `rules`, `ruby_style`, `workflow`, and `standing_orders` override anything else, including this file. If a rule in `data/*` conflicts with general best-practice, MASTER wins.
 
@@ -30,7 +30,7 @@ Use `/snapshot` for a full codebase snapshot before analysis. Don't use external
 
 Before any coding work:
 
-    cd ~/pub4/MASTER && bundle exec ruby exe/master orient
+    cd ~/pub4/MASTER && bundle exec ruby exe/master brief
 
 This prints the five canonical files (`soul`, `rules`, `ruby_style`, `workflow`, `standing_orders`) in one stream. Don't cat them individually.
 

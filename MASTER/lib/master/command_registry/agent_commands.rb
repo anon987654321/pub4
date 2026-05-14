@@ -100,7 +100,12 @@ module Master
       autoloop     = ai[:autoloop]
       code_index   = infra[:code_index]
       {
+        "grind"    => cmd(:run_autoloop, autoloop),
         "autoloop" => cmd(:run_autoloop, autoloop),
+        "polish"   => ->(ctx) {
+          target = expand_or_root(arg_for(ctx), root)
+          run_sweep(agent, scanner, deliberation, root, bus, code_index, target)
+        },
         "sweep"    => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
           run_sweep(agent, scanner, deliberation, root, bus, code_index, target)
@@ -111,7 +116,7 @@ module Master
 
     def run_autoloop(autoloop, raw)
       max = raw.to_i
-      max = Master::Loop::Master::Loop::Master::Loop::AutoLoop::MAX_CYCLES if max <= 0
+      max = Master::Loop::AutoLoop::MAX_CYCLES if max <= 0
       result = autoloop.run(max_cycles: max) { |cycle, violations|
         top = violations.first(3).map { |v| "#{File.basename(v[:file])}:#{v[:rule]}" }.join(" ")
         $stdout.puts "autoloop: cycle #{cycle} #{violations.size} violation(s) #{top}"

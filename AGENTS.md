@@ -4,7 +4,7 @@ Bootstrap for autonomous coding agents (Claude Code, Cursor, Aider, Codex, Conti
 
 ## Read first
 
-    cd ~/pub4/MASTER && bundle exec ruby exe/master orient
+    cd ~/pub4/MASTER && bundle exec ruby exe/master brief
 
 The five canonical files (`soul`, `rules`, `ruby_style`, `workflow`, `standing_orders`) are authoritative. If your training contradicts them, defer to them. Operator environment, SSH, DNS, and deploy details live in `CLAUDE.md`.
 
@@ -18,4 +18,4 @@ Restart the service: `doas rcctl restart master`. Falcon does not hot-reload in 
 
 ## Key slash commands
 
-`/orient`, `/scan [profile] [path]`, `/sweep`, `/autoloop [N]`, `/snapshot`, `/why <id>`, `/explain`. Type `/help` inside MASTER for the full list.
+`/brief`, `/scan [profile] [path]`, `/polish`, `/grind [N]`, `/snapshot`, `/why <id>`, `/explain`. Type `/help` inside MASTER for the full list.

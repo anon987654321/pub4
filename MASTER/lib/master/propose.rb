@@ -40,7 +40,7 @@ module Master
 
     def from_violations
       return [] if @violations.zero?
-      [{ action: "/sweep", reason: "#{@violations} unresolved violation(s)", weight: 0.9 + [@violations / 50.0, 0.1].min }]
+      [{ action: "/polish", reason: "#{@violations} unresolved violation(s)", weight: 0.9 + [@violations / 50.0, 0.1].min }]
     end
 
     def from_last_assistant
@@ -48,7 +48,7 @@ module Master
       return [] unless last && last[:role] == :assistant
       text = last[:content].to_s
       out = []
-      out << prop("/sweep",        "assistant flagged violations",       0.85) if text.match?(/violation[s]? found|need(s)? fixing|to fix/i)
+      out << prop("/polish",        "assistant flagged violations",       0.85) if text.match?(/violation[s]? found|need(s)? fixing|to fix/i)
       out << prop("/undo",         "assistant says nothing changed",     0.75) if text.match?(/\bunchanged\b|\balready\b/i)
       out << prop("show the diff", "assistant referenced an edit/patch", 0.65) if text.match?(/\bdiff\b|\bedit\b|\bpatch\b/i)
       out << prop("what went wrong?", "error/failure in last reply",     0.7)  if text.match?(/(error|fail|exception|crash)/i)

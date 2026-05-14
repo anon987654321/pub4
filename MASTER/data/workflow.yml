@@ -277,7 +277,7 @@ session_startup:
 
 corruption_prevention:
   llm_error_in_file: "git checkout HEAD -- data/ && rcctl restart master -- LLM error strings silently overwrite YAML data files when circuit is open and agent#ask returns error string instead of raising"
-  sweep_excludes_data: "Sweep must never rewrite data/*.yml -- these are structured config, not code to refactor"
+  sweep_excludes_data: "Sweep may scan data/*.yml but must not LLM-rewrite them. Structural violations (duplicate keys, bad indentation) are auto-fixed. Exclude .master/ runtime state files entirely."
   yaml_type_guards: "All load_yaml calls must type-check result before use (is_a?(Array/Hash)) -- circuit-open strings parse as valid YAML scalars"
   ask_raises_on_error: "agent#ask must raise StandardError when result.err? -- callers must rescue, never silently propagate error strings as LLM output"
 

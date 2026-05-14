@@ -23,6 +23,12 @@ module Master
   report = scanner.scan(path: path.empty? ? nil : path)
   scanner.render(report)
 },
+"brief"  => ->(_ctx) {
+  require "stringio"
+  buf = StringIO.new
+  Orient.new(root: root, io: buf).call
+  buf.string
+},
 "orient" => ->(_ctx) {
   require "stringio"
   buf = StringIO.new
@@ -32,10 +38,10 @@ module Master
 "help" => ->(_ctx) {
           [
             "session: /save /clear /history [N] /tokens /undo /redo /exit",
-            "scan: /scan [profile] [path] /sweep [path] /autoloop [N] /ecology [path]",
+            "scan: /scan [profile] [path] /polish [path] /grind [N] /ecology [path]",
             "model: /model [id|list] /mode /persona /task",
             "memory: /mem /topic /rsi",
-            "system: /diag [/section] /tree [N] /orient /help"
+            "system: /diag [/section] /tree [N] /brief /help"
           ].join("\n")
         }
       )
