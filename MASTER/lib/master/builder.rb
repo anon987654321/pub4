@@ -27,6 +27,7 @@ module Master
       ring = RingBuffer.new(RING_SIZE)
       logging = Logging.new(ring_buffer: ring, event_bus: bus)
       homeostat = Homeostat.new(event_bus: bus)
+      pressure = PressureEngine.new(event_bus: bus)
       session = Trace::Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
       undo = Trace::Undo.new(session:, event_bus: bus, root:)
       breaker = CircuitBreakerRegistry.new(
@@ -44,6 +45,7 @@ module Master
       mcp.connect_all
       code_index.build_async
       bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
+      wire_pressure_engine(bus:, pressure:)
 
       memory = Memory.new(root:)
       personality = Voice::Personality.new(
@@ -55,10 +57,20 @@ module Master
       diag        = Diag.new(homeostat:, breaker:, logging:)
       trace       = Trace::Recorder.new(root:, event_bus: bus)
       {
-        config:, event_log:, ring:, bus:, logging:, homeostat:, session:, undo:, breaker:, cache:,
+        config:, event_log:, ring:, bus:, logging:, homeostat:, pressure:, session:, undo:, breaker:, cache:,
         governor:, renderer:, metrics:, code_index:, diff_stager:, mcp:,
         memory:, personality:, phase_gates:, learnings:, diag:, trace:
       }
+    end
+
+    def wire_pressure_engine(bus:, pressure:)
+      bus.subscribe("*") do |ev|
+        event_name = ev[:event] || ev["event"] || ev[:type] || ev["type"] || "event"
+        next if event_name.to_s.start_with?("pressure:")
+        pressure.ingest(event: event_name, payload: ev)
+      rescue StandardError => e
+        Master::Swallow.log(e, context: "builder.pressure_engine_subscriber", event_bus: bus)
+      end
     end
 
     def build_ai_stack(root, infra)
