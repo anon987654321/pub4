@@ -61,9 +61,11 @@ module Master
         def compile_rules_entry(row)
           pattern = row["detect_lexical"]
           return nil if pattern.nil? || pattern.empty?
+          return nil if pattern.include?("\\n")  # cross-line patterns need full-file mode; skip
           langs = row["languages"]
           exts  = langs ? langs.flat_map { |l| LANG_EXTS[l.to_s] || [] } : ALL_EXTS
           return nil if exts.empty?
+          first_line = pattern.include?("\\A")
           {
             id:           row["id"]&.downcase || "unknown",
             severity:     (row["severity"] || "warning").to_sym,
@@ -72,8 +74,9 @@ module Master
             includes:     nil,
             excludes:     nil,
             skip_comments: false,
-            first_line:   false,
-            patterns:     [{ re: Regexp.new(pattern), msg: row["name"] || row["id"], negate: false, one_per_file: false }],
+            first_line:   first_line,
+            patterns:     [{ re: Regexp.new(pattern), msg: row["name"] || row["id"],
+                             negate: false, one_per_file: !first_line }],
           }
         rescue RegexpError
           nil
