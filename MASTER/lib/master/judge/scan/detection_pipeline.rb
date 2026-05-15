@@ -93,9 +93,58 @@ module Master
           { rule: @def.id, message: message, line: line, severity: @def.severity }
         end
 
-        def calculate_cc(code); 5; end
-        def max_method_length(code); 12; end
-        def max_nesting(code); 4; end
+        CC_NODES = %w[
+          IfNode UnlessNode WhileNode UntilNode ForNode
+          CaseNode WhenNode RescueNode AndNode OrNode
+        ].map { |n| "Prism::#{n}" }.to_set.freeze
+
+        def calculate_cc(code)
+          result = Prism.parse(code)
+          return nil if result.failure?
+          count = 1
+          result.value.breadth_first_search { |node|
+            count += 1 if CC_NODES.include?(node.class.name)
+            false
+          }
+          count
+        rescue StandardError
+          nil
+        end
+
+        def max_method_length(code)
+          result = Prism.parse(code)
+          return nil if result.failure?
+          max = 0
+          result.value.breadth_first_search { |node|
+            if node.is_a?(Prism::DefNode)
+              len = node.location.end_line - node.location.start_line
+              max = len if len > max
+            end
+            false
+          }
+          max.zero? ? nil : max
+        rescue StandardError
+          nil
+        end
+
+        def max_nesting(code)
+          result = Prism.parse(code)
+          return nil if result.failure?
+          max_depth(result.value, 0)
+        rescue StandardError
+          nil
+        end
+
+        NESTING_NODES = [
+          Prism::ModuleNode, Prism::ClassNode, Prism::DefNode,
+          Prism::IfNode, Prism::WhileNode, Prism::CaseNode
+        ].freeze
+
+        def max_depth(node, depth)
+          return depth unless node.respond_to?(:child_nodes)
+          child_depth = NESTING_NODES.include?(node.class) ? depth + 1 : depth
+          node.child_nodes.compact.reduce(child_depth) { |m, c| [m, max_depth(c, child_depth)].max }
+        end
       end
     end
   end

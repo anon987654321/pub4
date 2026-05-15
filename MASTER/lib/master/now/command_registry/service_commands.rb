@@ -14,7 +14,7 @@ module Master
       }
     end
 
-    def service_commands(ai, phase_gates = nil, diag: nil)
+    def service_commands(ai, phase_gates = nil, diag: nil, root: Dir.pwd)
       heartbeat = ai[:heartbeat]
       skills    = ai[:skills]
       scanner   = ai[:scanner]
@@ -23,7 +23,13 @@ module Master
         "skills"    => cmd(:dispatch_skills, skills),
         "phase"     => cmd(:dispatch_phase, phase_gates),
         "score"     => cmd(:score_file, scanner),
-        "diag"      => ->(ctx) { diag ? diag.render(arg_for(ctx)) : "diag: not configured" }
+        "diag"      => ->(ctx) { diag ? diag.render(arg_for(ctx)) : "diag: not configured" },
+        "guard"     => ->(ctx) {
+          depth = arg_for(ctx).to_i
+          depth = Judge::CommitGuard::DEFAULT_DEPTH if depth <= 0
+          guard = Judge::CommitGuard.new(root: root, depth: depth)
+          guard.render(guard.check)
+        }
       }
     end
 

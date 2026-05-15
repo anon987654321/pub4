@@ -15,7 +15,7 @@ module Master
         mode_commands(infra[:config]),
         agent_commands(ai:, root:, infra:),
         memory_commands(infra[:memory], ai[:agent]),
-        service_commands(ai, infra[:phase_gates], diag: infra[:diag]),
+        service_commands(ai, infra[:phase_gates], diag: infra[:diag], root: root),
         utility_commands(ai[:agent], root, infra[:cache], infra[:code_index]),
         control_commands(ai[:standing], ai[:soul]),
 "ecology" => ->(ctx) {
@@ -32,7 +32,7 @@ module Master
             "scan: /run [path] /self-run /scan [profile] [path] /polish [path] /grind [N] /ecology [path]",
             "model: /model [id|list] /mode /persona /task",
             "memory: /mem /topic /rsi",
-            "system: /diag [/section] /tree [N] /brief /help"
+            "system: /diag [/section] /tree [N] /brief /guard [N] /help"
           ].join("\n")
         }
       )
