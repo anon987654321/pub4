@@ -75,6 +75,39 @@ module Master
     }
     findings
   end
+
+  RuleDSL.rule :DEBUG_OUTPUT,
+    severity: :error, tags: %i[FAIL_VISIBLY], applies_to: %i[ruby],
+    description: "debug output left in lib/" do |src, path:|
+    next [] unless path.to_s.include?("/lib/")
+    findings = scan_lines(src, /^\s*pp?\s+(?!self\b)/, message: "p/pp debug call — remove or publish via event bus")
+    findings += scan_lines(src, /\$stderr\.puts\b/, message: "$stderr.puts — use @bus.publish or $stdout")
+    findings
+  end
+
+  RuleDSL.rule :TRAILING_COMMENT,
+    severity: :info, tags: %i[BE_CONCISE],
+    description: "trailing comment after code" do |src, path:|
+    src.each_line.with_index(1).filter_map { |line, n|
+      next if line.strip.start_with?("#")
+      finding(line: n, message: "trailing comment — promote above the line or delete") if line.match?(/\S\s+#\s+\S/)
+    }
+  end
+
+  RuleDSL.rule :TIME_ZONE_UNSAFE,
+    severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[ruby],
+    description: "bare Time.now/Date.today bypasses Rails Time.zone" do |src, path:|
+    findings = scan_lines(src, /(?<![A-Za-z_.])Time\.now\b/, message: "Time.now ignores Time.zone — use Time.current")
+    findings += scan_lines(src, /(?<![A-Za-z_.])Date\.today\b/, message: "Date.today ignores Time.zone — use Date.current")
+    findings += scan_lines(src, /(?<![A-Za-z_.])DateTime\.now\b/, message: "DateTime.now — use Time.current.to_datetime")
+    findings
+  end
+
+  RuleDSL.rule :NO_ASCII_LINE_ART,
+    severity: :warning, tags: %i[BE_CONCISE],
+    description: "ASCII divider decorations" do |src, path:|
+    scan_lines(src, /(?:^|\s)(?:={3,}|-{3,})(?:\s|$)/, message: "remove ASCII divider decorations")
+  end
   end
   end
   end
