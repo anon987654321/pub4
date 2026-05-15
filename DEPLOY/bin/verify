@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+root = File.expand_path("../..", __dir__)
+commands = [
+  ["ruby", File.join(root, "DEPLOY", "verify_deploy_identity.rb")]
+]
+
+commands.each do |command|
+  puts "+ #{command.join(' ')}"
+  system(*command) or exit($CHILD_STATUS&.exitstatus || 1)
+end
+
+puts "DEPLOY verification passed"
