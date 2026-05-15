@@ -29,13 +29,14 @@ module Master
                 .select { |f| File.file?(f) && File.size(f) < SNAPSHOT_MAX_BYTES }
                 .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
                 .sort
-      body  = files.flat_map { |f|
+      body  = files.flat_map do |f|
         rel  = f.delete_prefix("#{root}/")
         lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
         src  = File.read(f, encoding: "UTF-8", invalid: :replace)
         ["## #{rel}", "```#{lang}", src.rstrip, "```", ""]
-      rescue StandardError; []
-      }
+      rescue StandardError
+        []
+      end
       header  = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]
       content = (header + body).join("\n")
       out     = File.join(root, ".master", "snapshot.md")
