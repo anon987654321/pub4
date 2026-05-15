@@ -45,7 +45,8 @@ module Master
     "diff_stager"     => "DiffStager",
     "code_index"      => "CodeIndex",
     "git_context"     => "GitContext",
-    "ast_edit"        => "AstEdit"
+    "ast_edit"        => "AstEdit",
+    "rule_dsl"        => "RuleDSL"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.ignore(File.join(__dir__, "master", "reach", "ruby_llm_patch.rb"))
@@ -60,6 +61,10 @@ module Master
     loop/sweep/rewriter.rb
     loop/sweep/convergence.rb
     judge/scan/rules/lexical_rules.rb
+    judge/scan/rules/ruby_rules.rb
+    judge/scan/rules/web_rules.rb
+    judge/scan/rules/js_rules.rb
+    judge/scan/rules/universal_rules.rb
   ].each do |rel|
     loader.ignore(File.join(__dir__, "master", rel))
   end
@@ -107,6 +112,17 @@ module Master
   rescue Psych::Exception, Errno::ENOENT, Errno::EACCES => e
     warn("load_yaml: " + e.message)
     default
+  end
+
+  # Loads rules.yml meta + merges split data/rules/*.yml into ["rules"] key.
+  def self.load_rules(root: ROOT)
+    data_dir = File.join(root, "data")
+    base     = load_yaml(File.join(data_dir, "rules.yml"))
+    rules_dir = File.join(data_dir, "rules")
+    merged = Dir.glob(File.join(rules_dir, "*.yml")).sort.each_with_object({}) do |f, h|
+      (load_yaml(f) || {}).each { |scope, list| (h[scope] ||= []).concat(Array(list)) }
+    end
+    base.merge("rules" => merged)
   end
 
   def self.build(root: Dir.pwd)

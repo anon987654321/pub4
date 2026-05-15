@@ -38,3 +38,7 @@ module Master
 end
 
 require_relative "rules/lexical_rules"
+require_relative "rules/ruby_rules"
+require_relative "rules/web_rules"
+require_relative "rules/js_rules"
+require_relative "rules/universal_rules"
