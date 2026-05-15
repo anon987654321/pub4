@@ -1,0 +1,57 @@
+# Canonical deploy metadata for Rails apps under DEPLOY/rails.
+# Scripts, docs, and verifiers should agree with this file.
+apps:
+  amber:
+    title: Amber
+    domain: amber.brgen.no
+    port: 61352
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_later: PostgreSQL, pgvector, multimodal retrieval, richer PWA/offline features
+    deploy_script: DEPLOY/rails/amber/amber.sh
+    app_path: DEPLOY/rails/amber/app
+    public: true
+  baibl:
+    title: Baibl
+    domain: baibl.no
+    port: 10007
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_later: PostgreSQL, pgvector, GraphRAG, semantic scripture retrieval
+    deploy_script: DEPLOY/rails/baibl/baibl.sh
+    app_path: DEPLOY/rails/baibl/app
+    public: true
+  blognet:
+    title: Blognet
+    domain: blognet.no
+    port: 10002
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_later: PostgreSQL, pgvector, editorial knowledge graph, Foodielicious vertical routing
+    deploy_script: DEPLOY/rails/blognet/blognet.sh
+    app_path: DEPLOY/rails/blognet/app
+    public: true
+  brgen:
+    title: Brgen
+    domain: brgen.no
+    port: 38182
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, Solid Queue, Solid Cache, OpenBSD, relayd
+    stack_later: PostgreSQL where needed, city graph scaling, richer SNI/domain routing
+    deploy_script: DEPLOY/rails/brgen/brgen.sh
+    app_path: DEPLOY/rails/brgen/app
+    public: true
+  bsdports:
+    title: bsdports
+    domain: bsdports.org
+    port: 47312
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_later: PostgreSQL, pgvector, infrastructure knowledge graph, OpenBSD package intelligence
+    deploy_script: DEPLOY/rails/bsdports/bsdports.sh
+    app_path: DEPLOY/rails/bsdports/app
+    public: true
+  hjerterom:
+    title: Hjerterom
+    domain: hjerterom.no
+    port: 38891
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_later: PostgreSQL, route optimization, reporting jobs, operational forecasting
+    deploy_script: DEPLOY/rails/hjerterom/hjerterom.sh
+    app_path: DEPLOY/rails/hjerterom/app
+    public: true
