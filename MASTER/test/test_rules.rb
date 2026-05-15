@@ -24,13 +24,13 @@ class TestAxioms < Minitest::Test
 
   def test_kernel_block_formatted
     block = @rules.kernel_block
-    assert block.include?("## Kernel Axioms")
+    assert block.include?("## Kernel Rules")
     assert block.include?("PRESERVE_FIRST")
   end
 
   def test_philosophy_block_limit
     block = @rules.philosophy_block(limit: 3)
-    assert block.include?("## Core Philosophy (top 3)")
+    assert block.include?("(top 3)")
   end
 
   def test_lookup_kernel

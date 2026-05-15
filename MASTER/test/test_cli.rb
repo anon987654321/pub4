@@ -14,6 +14,7 @@ class TestCLI < Minitest::Test
 
     @config.expect(:[], false, ["tts"])
     @config.expect(:prescan?, false)
+    @config.expect(:dig, nil, ["web_token"])
 
     @container = {
       session:  @session,
