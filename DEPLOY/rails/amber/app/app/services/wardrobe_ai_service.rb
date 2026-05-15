@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "zlib"
+
 class WardrobeAiService
   OPENROUTER_BASE = "https://openrouter.ai/api/v1"
   MODEL = "google/gemini-2.0-flash-001"
@@ -100,6 +102,14 @@ class WardrobeAiService
     chat(prompt)
   end
 
+  def embedding_for(item)
+    text = item.embedding_text.to_s
+    seed = Zlib.crc32(text)
+    Array.new(64) do |index|
+      (((seed + index * 1_103_515_245) % 10_000) / 10_000.0).round(6)
+    end
+  end
+
   private
 
   def build_client
@@ -110,7 +120,7 @@ class WardrobeAiService
   end
 
   def chat(prompt)
-    return {} unless @client
+    return fallback_response(prompt) unless @client
 
     response = @client.chat(
       parameters: {
@@ -120,14 +130,26 @@ class WardrobeAiService
       }
     )
     content = response.dig("choices", 0, "message", "content")
-    return {} if content.blank?
+    return fallback_response(prompt) if content.blank?
 
     JSON.parse(content)
   rescue JSON::ParserError => e
     Rails.logger.warn("WardrobeAI invalid JSON: #{e.message}")
-    {}
+    fallback_response(prompt)
   rescue => e
-    Rails.logger.error("WardrobeAI error: #{e.message}")
-    {}
+    Rails.logger.error("WardrobeAI error: #{e.class}: #{e.message}")
+    fallback_response(prompt)
+  end
+
+  def fallback_response(prompt)
+    if prompt.include?("outfit combinations")
+      { "outfits" => [] }
+    elsif prompt.include?("matching:")
+      { "item_ids" => [], "explanation" => "AI search unavailable" }
+    elsif prompt.include?("capsule wardrobe")
+      { "items" => [], "gap_items" => [] }
+    else
+      {}
+    end
   end
 end
