@@ -24,6 +24,16 @@ module Master
       "FeedbackRecord"  => ->(r, i) { Master::Reach::FeedbackRecord.new(learnings: i[:learnings]) },
     }.freeze
 
+    def self.boot(root:, config:, bus:)
+      breaker = Master::Reach::CircuitBreakerRegistry.new(
+        budget_max: config.budget_max, req_max: config.req_max, event_bus: bus
+      )
+      cache = Master::Reach::SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
+      mcp   = Master::Reach::McpCoordinator.new(root:, event_bus: bus)
+      mcp.connect_all
+      { breaker:, cache:, mcp: }
+    end
+
     def self.build_tools(root:, infra:)
       path = File.join(root, "data", "tools.yml")
       defs = Master.load_yaml(path)

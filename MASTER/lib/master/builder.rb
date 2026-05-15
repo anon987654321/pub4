@@ -4,7 +4,6 @@ require_relative "builder/infra_helpers"
 
 module Master
   module Builder
-    RING_SIZE = 1000
     SNAPSHOT_MAX_BYTES = 50_000
     SNAPSHOT_DIRS = %w[exe lib/master data].freeze
 
@@ -21,44 +20,20 @@ module Master
     def build_infrastructure(root)
       config = Ground::Config.new(root)
       config["model"] ||= Master.default_model
+      trace  = Plugins::Trace.boot(root:, config:)
+      loop_c = Plugins::Loop.boot(root:, config:, bus: trace[:bus])
+      reach  = Plugins::Reach.boot(root:, config:, bus: trace[:bus])
+      ground = Plugins::Ground.boot(root:, config:, homeostat: loop_c[:homeostat])
 
-      event_log = Runtime::EventLog.new(root:)
-      bus = Trace::EventBus.new(event_log:)
-      ring = Trace::RingBuffer.new(RING_SIZE)
-      logging = Trace::Logging.new(ring_buffer: ring, event_bus: bus)
-      homeostat = Loop::Homeostat.new(event_bus: bus)
-      session = Trace::Session.new(root:, budget_max: config.budget_max, req_max: config.req_max)
-      undo = Trace::Undo.new(session:, event_bus: bus, root:)
-      breaker = Reach::CircuitBreakerRegistry.new(
-        budget_max: config.budget_max, req_max: config.req_max, event_bus: bus
-      )
-      cache = Reach::SemanticCache.new(root:, ttl: config["cache_ttl"], event_bus: bus)
-      governor = Loop::Governor.new(config:, event_bus: bus)
-      renderer = Voice::Renderer.new(config:)
-      metrics = Trace::Metrics.new(root:, event_bus: bus)
-      Trace::AuditLog.new(root:, event_bus: bus)
-
+      bus        = trace[:bus]
+      renderer   = Voice::Renderer.new(config:)
       code_index = Judge::CodeIndex.new(root:, event_bus: bus)
-      diff_stager = config["staging_enabled"] ? Loop::DiffStager.new(root:, event_bus: bus) : nil
-      mcp = Reach::McpCoordinator.new(root:, event_bus: bus)
-      mcp.connect_all
       code_index.build_async
       bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
+      diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging])
 
-      memory = Ground::Memory.new(root:)
-      personality = Voice::Personality.new(
-        config["persona"]&.to_sym || Voice::Personality::DEFAULT, root:, homeostat:
-      )
-      learnings   = Ground::Learnings.new(root:)
-
-      phase_gates = Loop::PhaseGates.new(root:, event_bus: bus)
-      diag        = Trace::Diag.new(homeostat:, breaker:, logging:)
-      trace       = Trace::Recorder.new(root:, event_bus: bus)
-      {
-        config:, event_log:, ring:, bus:, logging:, homeostat:, session:, undo:, breaker:, cache:,
-        governor:, renderer:, metrics:, code_index:, diff_stager:, mcp:,
-        memory:, personality:, phase_gates:, learnings:, diag:, trace:
-      }
+      { config:, renderer:, code_index:, diag: }
+        .merge(trace).merge(loop_c).merge(reach).merge(ground)
     end
 
     def build_ai_stack(root, infra)
@@ -109,21 +84,10 @@ module Master
     end
 
     def build_autonomous(root, infra, agent:, scanner:, soul:)
-      bus       = infra[:bus]
-      standing  = Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
-      learnings = infra[:learnings]
-      autoloop  = Loop::AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings:)
-      rules     = scanner.instance_variable_get(:@rules)
-      git       = Reach::GitOperations.new(root)
-      super_loop = Loop::SuperLoop.new(rules:, agent:, scanner:, root:, bus:, git:)
-      Thread.new { super_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
-      skills    = Now::Skills.new(root:, event_bus: bus)
+      skills = Now::Skills.new(root:, event_bus: infra[:bus])
       skills.discover!
-      heartbeat = Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus,
-                               homeostat: infra[:homeostat])
-      triggers  = Loop::Triggers.new(event_bus: bus, scanner:, agent:)
-      triggers.install_defaults!
-      { standing:, learnings:, autoloop:, super_loop:, skills:, heartbeat:, triggers: }
+      Plugins::Loop.boot_autonomous(root:, infra:, agent:, scanner:, soul:)
+                   .merge(learnings: infra[:learnings], skills:)
     end
 
     def build_pipeline_and_gateway(root, infra, ai)
