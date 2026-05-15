@@ -52,7 +52,6 @@ module Master
   loader.ignore(File.join(__dir__, "master", "reach", "bedrock_stub.rb"))
   %w[
     loop/auto_loop/fix_evaluator.rb
-    builder/infra_helpers.rb
     now/cli/signals.rb
     now/command_registry/agent_commands.rb
     now/command_registry/memory_commands.rb
@@ -111,13 +110,13 @@ module Master
   end
 
   def self.build(root: Dir.pwd)
-    Builder.build(root:)
+    ENV["MASTER_SCAN_ONLY"] == "1" ? Builder.build_scan_only(root:) : Builder.build(root:)
   end
 
   def self.bootstrap_container(root: Dir.pwd)
     Trace::Telemetry.bootstrap!(root: root)
     container = Builder.build(root:)
-    Builder.boot_snapshot(container)
+    Plugins::Trace.boot_snapshot(container)
     container[:heartbeat]&.start!
     container
   end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "fileutils"
+
 module Master
   module Plugins
   module Trace
@@ -16,6 +18,33 @@ module Master
       Master::Trace::AuditLog.new(root:, event_bus: bus)
       recorder  = Master::Trace::Recorder.new(root:, event_bus: bus)
       { event_log:, bus:, ring:, logging:, session:, undo:, metrics:, trace: recorder }
+    end
+
+    SNAPSHOT_MAX_BYTES = 50_000
+    SNAPSHOT_DIRS      = %w[exe lib/master data].freeze
+
+    def self.boot_snapshot(container)
+      root  = container[:root]
+      files = Dir[*SNAPSHOT_DIRS.map { |d| File.join(root, d, "**", "*") }]
+                .select { |f| File.file?(f) && File.size(f) < SNAPSHOT_MAX_BYTES }
+                .reject { |f| f.include?("/knowledge/") || f.include?("/vendor/") }
+                .sort
+      body  = files.flat_map { |f|
+        rel  = f.delete_prefix("#{root}/")
+        lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
+        src  = File.read(f, encoding: "UTF-8", invalid: :replace)
+        ["## #{rel}", "```#{lang}", src.rstrip, "```", ""]
+      rescue StandardError; []
+      }
+      header  = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]
+      content = (header + body).join("\n")
+      out     = File.join(root, ".master", "snapshot.md")
+      FileUtils.mkdir_p(File.dirname(out))
+      File.write(out, content)
+      File.write(File.join(root, "snapshot.md"), content)
+      container[:bus]&.publish("boot:snapshot", files: files.size)
+    rescue StandardError => e
+      container[:bus]&.publish("boot:snapshot_error", error: e.message)
     end
 
     Master::Plugin.register(:trace, self)

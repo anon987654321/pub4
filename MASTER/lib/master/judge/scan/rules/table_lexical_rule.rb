@@ -47,9 +47,11 @@ module Master
       langs = row["languages"]
       exts  = langs ? langs.flat_map { |l| LANG_EXTS[l.to_s] || [] } : ALL_EXTS
       return nil if exts.empty?
-      first = pattern.include?("\\A")
+      first  = pattern.include?("\\A")
+      absent = row["requires_absent"] ? Regexp.new(row["requires_absent"]) : nil
       { id: row["id"]&.downcase || "unknown", severity: (row["severity"] || "warning").to_sym,
-        langs: exts, first_line: first,
+        langs: exts, first_line: first, path_match: row["path_match"],
+        requires_absent: absent, whole_file: row["whole_file"] == true,
         re: Regexp.new(pattern), msg: row["name"] || row["id"] }
     rescue RegexpError
       nil
@@ -57,6 +59,8 @@ module Master
 
     def run_entry(e, code, path)
       return [] unless e[:langs].include?(File.extname(path).downcase)
+      return [] if e[:path_match] && !path.include?(e[:path_match])
+      return [] if e[:requires_absent] && e[:whole_file] && code.match?(e[:requires_absent])
       e[:first_line] ? check_first_line(e, code) : scan_all(e, code)
     end
 
@@ -67,6 +71,7 @@ module Master
 
     def scan_all(e, code)
       code.each_line.with_index(1).filter_map { |line, n|
+        next if e[:requires_absent] && !e[:whole_file] && line.match?(e[:requires_absent])
         emit(e, n) if line.match?(e[:re])
       }
     end

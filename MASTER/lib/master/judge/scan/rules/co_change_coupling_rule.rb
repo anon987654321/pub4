@@ -75,10 +75,12 @@ module Master
           full.start_with?(prefix) ? full.delete_prefix(prefix) : nil
         end
 
-        def same_module?(a, b)
-          top_a = a.split("/").first(3).join("/")
-          top_b = b.split("/").first(3).join("/")
-          top_a == top_b
+        def same_module?(a, b) = module_of(a) == module_of(b)
+
+        def module_of(path)
+          parts = path.split("/")
+          # MASTER/lib/master/<module>/... → use the module dir (judge/trace/etc.)
+          parts[0] == "MASTER" ? (parts[3] || parts[0]) : parts[0]
         end
       end
     end

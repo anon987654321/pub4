@@ -1,14 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "builder/infra_helpers"
-
 module Master
   module Builder
-    SNAPSHOT_MAX_BYTES = 50_000
-    SNAPSHOT_DIRS = %w[exe lib/master data].freeze
-
     module_function
 
+    # Full boot: all 6 plugins, AI stack, pipeline.
     def build(root: Dir.pwd)
       Master.configure_providers!
       infra = build_infrastructure(root)
@@ -17,9 +13,22 @@ module Master
       infra.merge(ai).merge(pipeline:, gateway:, root:)
     end
 
+    # Scan-only boot: trace + judge only — no LLM, no loop, no reach network.
+    # Used by MASTER_SCAN_ONLY=1 and CI environments.
+    def build_scan_only(root: Dir.pwd)
+      config      = Ground::Config.new(root)
+      boot_config = config.freeze_boot
+      trace       = Plugins::Trace.boot(root:, config:)
+      bus         = trace[:bus]
+      code_index  = Judge::CodeIndex.new(root:, event_bus: bus)
+      scanner     = Plugins::Judge.configure(nil, root:, bus:)
+      trace.merge(config:, boot_config:, code_index:, scanner:, root:)
+    end
+
     def build_infrastructure(root)
-      config = Ground::Config.new(root)
+      config      = Ground::Config.new(root)
       config["model"] ||= Master.default_model
+      boot_config = config.freeze_boot
       trace  = Plugins::Trace.boot(root:, config:)
       loop_c = Plugins::Loop.boot(root:, config:, bus: trace[:bus])
       reach  = Plugins::Reach.boot(root:, config:, bus: trace[:bus])
@@ -32,7 +41,7 @@ module Master
       bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
       diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging])
 
-      { config:, renderer:, code_index:, diag: }
+      { config:, boot_config:, renderer:, code_index:, diag: }
         .merge(trace).merge(loop_c).merge(reach).merge(ground)
     end
 
