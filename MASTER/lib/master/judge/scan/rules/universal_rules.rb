@@ -12,6 +12,48 @@ module Master
       message: "mixed medium — extract to a dedicated file")
   end
 
+  RuleDSL.rule :SAFE_NAVIGATION,
+    severity: :warning, tags: %i[READABILITY],
+    description: "use null-safe navigation over nil-guard && chains" do |src, path:|
+    scan_lines(src, /(\w+)\s*&&\s*\1\.\w+/,
+      message: "foo && foo.bar — use foo&.bar (Ruby) or foo?.bar (JS/TS)")
+  end
+
+  RuleDSL.rule :FEW_ARGUMENTS,
+    severity: :warning, tags: %i[SMALL_PARTS],
+    description: "ideal is zero to two arguments" do |src, path:|
+    scan_lines(src, /def \w+\([^)]*,[^:)]+,[^:)]+,[^:)]+\)/,
+      message: "4+ positional args — refactor into keyword args or a value object")
+  end
+
+  RuleDSL.rule :KEYWORD_ARGS,
+    severity: :info, tags: %i[SMALL_PARTS],
+    description: "keyword arguments for 3+ parameters" do |src, path:|
+    scan_lines(src, /def \w+\([^)]*,\s*[^:)]+,\s*[^:)]+,\s*[^:)]+\)/,
+      message: "3+ positional args — use keyword arguments")
+  end
+
+  RuleDSL.rule :N_PLUS_ONE,
+    severity: :warning, tags: %i[PERFORMANCE],
+    description: "loading records one-by-one inside a loop" do |src, path:|
+    scan_lines(src, /\.(each|map|collect)\s*(do|\{).*\.\w+\.\w+/,
+      message: "N+1 query candidate — use includes/eager_load or equivalent")
+  end
+
+  RuleDSL.rule :NO_FLAG_ARGUMENTS,
+    severity: :warning, tags: %i[SMALL_PARTS],
+    description: "a flag that selects behavior means two things hiding as one" do |src, path:|
+    scan_lines(src, /def \w+\([^)]*\btrue\b|def \w+\([^)]*\bfalse\b/,
+      message: "boolean flag arg — split into two methods")
+  end
+
+  RuleDSL.rule :LAW_OF_DEMETER,
+    severity: :warning, tags: %i[COUPLING],
+    description: "only talk to immediate friends" do |src, path:|
+    scan_lines(src, /\w+\.\w+\.\w+\.\w+/,
+      message: "4-level chain — introduce a local variable or delegation")
+  end
+
   RuleDSL.rule :MEANINGFUL_NAMES,
     severity: :info, tags: %i[READABILITY],
     description: "names reveal intent" do |src, path:|
@@ -66,32 +108,6 @@ module Master
     description: "retry loops must have a max_attempts cap and backoff" do |src, path:|
     scan_lines(src, /\bretry\b|loop\s*do|while\s+true/,
       message: "unbounded retry/loop — add max_attempts cap and exponential backoff")
-  end
-
-  RuleDSL.rule :FAIL_VISIBLY,
-    severity: :error, tags: %i[FAIL_VISIBLY],
-    description: "surface errors immediately" do |src, path:|
-    scan_lines(src, /rescue\s*$|rescue\s+Exception/,
-      message: "silent rescue — re-raise, log, or use Ground::Swallow.log")
-  end
-
-  RuleDSL.rule :LAW_OF_DEMETER,
-    severity: :warning, tags: %i[COUPLING],
-    description: "only talk to immediate friends" do |src, path:|
-    scan_lines(src, /\w+\.\w+\.\w+\.\w+/, message: "4-level chain — introduce a local variable or delegation")
-  end
-
-  RuleDSL.rule :MESSAGE_CHAIN,
-    severity: :warning, tags: %i[COUPLING],
-    description: "avoid a.b.c.d chains" do |src, path:|
-    scan_lines(src, /\w+\.\w+\.\w+\.\w+/, message: "message chain — break at responsibility boundary")
-  end
-
-  RuleDSL.rule :NO_FLAG_ARGUMENTS,
-    severity: :warning, tags: %i[SMALL_PARTS],
-    description: "a flag that selects behavior means two things hiding as one" do |src, path:|
-    scan_lines(src, /def \w+\([^)]*\btrue\b|def \w+\([^)]*\bfalse\b/,
-      message: "boolean flag arg — split into two methods")
   end
 
   end

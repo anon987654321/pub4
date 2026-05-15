@@ -299,7 +299,6 @@ scan_depths:
     - logical_properties
     - clamp_typography
     - const_by_default
-    - optional_chaining
     - nullish_coalescing
     - template_literals
     - async_await
@@ -316,9 +315,7 @@ scan_depths:
     - secret_proximity
     - magic_color
     - unbounded_retry
-    - fail_visibly
     - law_of_demeter
-    - message_chain
     - no_flag_arguments
   standard: &standard
     - CoChangeCouplingRule

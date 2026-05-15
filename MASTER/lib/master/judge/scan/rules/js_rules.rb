@@ -11,12 +11,6 @@ module Master
     scan_lines(src, /\blet\s+(\w+)\s*=/, message: "let — use const unless value is reassigned")
   end
 
-  RuleDSL.rule :OPTIONAL_CHAINING,
-    severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
-    description: "use ?. over && chains" do |src, path:|
-    scan_lines(src, /(\w+)\s*&&\s*\1\.\w+/, message: "foo && foo.bar — use foo?.bar")
-  end
-
   RuleDSL.rule :NULLISH_COALESCING,
     severity: :info, tags: %i[READABILITY], applies_to: %i[javascript],
     description: "use ?? over || for defaults" do |src, path:|
