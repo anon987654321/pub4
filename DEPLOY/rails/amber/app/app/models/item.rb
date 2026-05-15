@@ -2,10 +2,13 @@ class Item < ApplicationRecord
   belongs_to :user
   has_one :garment_embedding, dependent: :destroy
   has_one :sustainability_metric, dependent: :destroy
+  has_one :declutter_review, dependent: :destroy
+  has_one :declutter_outcome, dependent: :destroy
   has_many :outfit_items, dependent: :destroy
   has_many :outfits, through: :outfit_items
   has_many :wear_logs, dependent: :destroy
   has_many :affiliate_links, dependent: :destroy
+  has_many :declutter_challenges, dependent: :destroy
   has_many_attached :photos
 
   validates :title, :category, presence: true
@@ -24,12 +27,16 @@ class Item < ApplicationRecord
   scope :never_worn,   -> { where("times_worn = 0 OR times_worn IS NULL") }
   scope :aging_unworn, -> { never_worn.where("purchase_date < ?", 6.months.ago) }
   scope :embeddable,   -> { where.not(title: [nil, ""]).where.not(category: [nil, ""]) }
+  scope :active_wardrobe, -> { where.not(lifecycle_state: %w[released donated sold recycled]) }
+  scope :declutter_box, -> { where(lifecycle_state: "declutter_box") }
+  scope :sentimental, -> { where(lifecycle_state: "sentimental_archive") }
 
   CATEGORIES   = %w[Tops Bottoms Dresses Shoes Accessories Outerwear].freeze
   SEASONS      = %w[Spring Summer Autumn Winter All-Season].freeze
   MOOD_EFFECTS = %w[energising calming confident playful neutral].freeze
   LIFE_PHASES  = %w[current past-self aspirational].freeze
   OCCASIONS    = %w[work casual formal gym date travel].freeze
+  LIFECYCLE_STATES = %w[active repair clean_needed tailor declutter_box sentimental_archive resale donate sold donated recycled released].freeze
 
   def cost_per_wear
     return nil unless price.present? && times_worn.to_i > 0
@@ -43,6 +50,7 @@ class Item < ApplicationRecord
   def wear!(worn_on: Date.current, outfit: nil, context: nil)
     transaction do
       increment!(:times_worn)
+      update!(last_worn_on: worn_on, lifecycle_state: "active") if has_attribute?(:last_worn_on)
       wear_logs.create!(user:, outfit:, worn_on:, context:)
       touch
     end
@@ -51,4 +59,20 @@ class Item < ApplicationRecord
   def embedding_text
     [title, category, color, brand, material, season, mood_effect, life_phase, occasion_tags].compact.join(" ")
   end
+
+  def declutter_score
+    DeclutterScoreService.new(self).score
+  end
+
+  def declutter_recommendation
+    DeclutterScoreService.new(self).recommendation
+  end
+
+  def duplicate_key
+    [category, color, material, brand].map { |value| value.to_s.strip.downcase.presence || "unknown" }.join(":")
+  end
+
+  def in_declutter_box? = lifecycle_state == "declutter_box"
+  def released? = %w[released donated sold recycled].include?(lifecycle_state)
+  def sentimental? = lifecycle_state == "sentimental_archive"
 end
