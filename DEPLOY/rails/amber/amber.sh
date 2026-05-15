@@ -1,13 +1,14 @@
 #!/usr/bin/env zsh
-# amber.sh — deploys tracked Rails tree at app/ as %APP_NAME%
+# amber.sh — deploys the tracked Amber Rails tree at app/.
 set -euo pipefail
 
-APP_NAME=%APP_NAME%
+APP_NAME=amber
 APP_DIR=/home/${APP_NAME}/app
 APP_PORT=61352
 APP_DOMAIN=amber.brgen.no
 SCRIPT_DIR=${0:a:h}
 SRC_DIR=${SCRIPT_DIR}/app
+SHARED_BUNDLE_CACHE=${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby34}
 
 . "${SCRIPT_DIR:h}/@shared_functions.sh"
 
@@ -26,15 +27,26 @@ doas chown -R "${APP_NAME}:${APP_NAME}" "$APP_DIR"
 cd "$APP_DIR"
 
 typeset bundle_home="/home/${APP_NAME}/.bundle"
+doas mkdir -p "$bundle_home"
+
 if [[ ! -d ${bundle_home}/gems ]]; then
-  log "Bootstrapping gems from amber"
-  doas mkdir -p "$bundle_home"
-  doas cp -R /home/amber/.bundle/gems "$bundle_home/"
+  if [[ -d ${SHARED_BUNDLE_CACHE}/gems ]]; then
+    log "Bootstrapping gems from ${SHARED_BUNDLE_CACHE}"
+    doas cp -R "${SHARED_BUNDLE_CACHE}/gems" "$bundle_home/"
+    [[ -d ${SHARED_BUNDLE_CACHE}/cache ]] && doas cp -R "${SHARED_BUNDLE_CACHE}/cache" "$bundle_home/" || true
+  elif [[ -d /home/amber/.bundle/gems && ${bundle_home} != /home/amber/.bundle ]]; then
+    log "Bootstrapping gems from /home/amber/.bundle"
+    doas cp -R /home/amber/.bundle/gems "$bundle_home/"
+    [[ -d /home/amber/.bundle/cache ]] && doas cp -R /home/amber/.bundle/cache "$bundle_home/" || true
+  else
+    log_warn "No shared bundle cache found; bundle install will resolve gems normally"
+  fi
   doas chown -R "${APP_NAME}:${APP_NAME}" "$bundle_home"
 fi
+
 print "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
 
-doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bundle install --deployment --without development:test"
+doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && bundle config set --local deployment true && bundle config set --local without 'development test' && RAILS_ENV=production bundle install"
 doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bin/rails db:create db:migrate"
 [[ -f ${APP_DIR}/db/seeds.rb ]] && doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bin/rails db:seed" || true
 
