@@ -40,7 +40,7 @@ module Master
     def chat(message, stream: true, escalation_depth: 0, &blk)
       prepare_chat_turn(message)
       candidate_models = routed_models(message)
-      prompt   = message
+      prompt   = topic_anchored(message)
       context  = conversation_context
       @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / Trace::Session::TOKENS_PER_CHAR)
       @deps.homeostat&.observe(:llm_call)
@@ -123,6 +123,15 @@ module Master
       @config["task_type"] = old
     end
 
+    TOPIC_DRIFT_THRESHOLD = 6
+
+    def topic_anchored(message)
+      topic = @session.respond_to?(:topic) && @session.topic
+      return message unless topic
+      return message if @session.messages.length < TOPIC_DRIFT_THRESHOLD
+      "#{message}\n\n[task: #{topic}]"
+    end
+
     def apply_reasoning_mode(message, mode: @config.reasoning_mode)
       return message unless @reasoning_modes
       @reasoning_modes.wrap(message, mode:)
@@ -130,6 +139,7 @@ module Master
 
     def system_prompt
       parts = []
+      parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic
       parts << @constitution.system_prompt if @constitution && !@constitution.empty?
       parts << @personality.system_prompt if @personality
       parts << @code_index.summary if @code_index&.built?

@@ -276,7 +276,7 @@ DEPENDENCIES
   simplecov
   sinatra (~> 4.0)
   sinatra-contrib (~> 4.0)
-  sqlite3
+  sqlite3 (~> 2.9)
   tty-box (~> 0.7)
   tty-command (~> 0.10)
   tty-config (~> 0.6)

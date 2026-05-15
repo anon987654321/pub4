@@ -11,6 +11,7 @@ module Master
     COSTS_MAX_BYTES  = 102_400     # 100 KB
 
     attr_reader :name, :messages, :cost, :phase, :snapshots
+    attr_accessor :topic
 
     def initialize(root: Dir.pwd, budget_max: 10.0, req_max: 1.0)
       @root       = root
@@ -22,6 +23,7 @@ module Master
       @cost       = 0.0
       @phase      = :discover
       @name       = nil
+      @topic      = nil
       @path       = File.join(root, ".master", "session.json")
       @costs_path = File.join(root, ".master", "costs.jsonl")
       Dir.mkdir(File.join(root, ".master")) unless Dir.exist?(File.join(root, ".master"))
@@ -58,7 +60,7 @@ module Master
 
     def save!
       FileUtils.mkdir_p(File.dirname(@path))
-      data = { name: @name, phase: @phase, messages: @messages, cost: @cost, ts: Time.now.to_i }
+      data = { name: @name, phase: @phase, topic: @topic, messages: @messages, cost: @cost, ts: Time.now.to_i }
       File.write(@path, JSON.generate(data))
     end
 
@@ -71,13 +73,14 @@ module Master
       end
       @name     = data[:name]
       @phase    = data[:phase]&.to_sym || :discover
+      @topic    = data[:topic]
       @messages = data[:messages] || []
       @cost     = data[:cost].to_f
       self
     end
 
     def exists?    = File.exist?(@path)
-    def clear!     = (@messages = [] ; @cost = 0.0 ; @name = nil ; self)
+    def clear!     = (@messages = [] ; @cost = 0.0 ; @name = nil ; @topic = nil ; self)
     def token_est  = @messages.sum { |m| m[:content].to_s.bytesize / TOKENS_PER_CHAR }
 
     private
