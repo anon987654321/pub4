@@ -1,7 +1,11 @@
 class Item < ApplicationRecord
   belongs_to :user
+  has_one :garment_embedding, dependent: :destroy
+  has_one :sustainability_metric, dependent: :destroy
   has_many :outfit_items, dependent: :destroy
   has_many :outfits, through: :outfit_items
+  has_many :wear_logs, dependent: :destroy
+  has_many :affiliate_links, dependent: :destroy
   has_many_attached :photos
 
   validates :title, :category, presence: true
@@ -13,12 +17,13 @@ class Item < ApplicationRecord
   scope :joy,          -> { where(spark_joy: true) }
   scope :by_category,  ->(c) { where(category: c) }
   scope :by_mood,      ->(m) { where(mood_effect: m) }
-  scope :by_occasion,  ->(o) { where("occasion_tags LIKE ?", "%#{o}%") }
+  scope :by_occasion,  ->(o) { where("occasion_tags LIKE ?", "%#{sanitize_sql_like(o.to_s)}%") }
   scope :current_self, -> { where(life_phase: "current") }
   scope :recent,       -> { order(created_at: :desc) }
   scope :worn_most,    -> { order(times_worn: :desc) }
   scope :never_worn,   -> { where("times_worn = 0 OR times_worn IS NULL") }
   scope :aging_unworn, -> { never_worn.where("purchase_date < ?", 6.months.ago) }
+  scope :embeddable,   -> { where.not(title: [nil, ""]).where.not(category: [nil, ""]) }
 
   CATEGORIES   = %w[Tops Bottoms Dresses Shoes Accessories Outerwear].freeze
   SEASONS      = %w[Spring Summer Autumn Winter All-Season].freeze
@@ -32,11 +37,18 @@ class Item < ApplicationRecord
   end
 
   def occasions
-    occasion_tags.to_s.split(",").map(&:strip)
+    occasion_tags.to_s.split(",").map(&:strip).reject(&:blank?)
   end
 
-  def wear!
-    increment!(:times_worn)
-    touch
+  def wear!(worn_on: Date.current, outfit: nil, context: nil)
+    transaction do
+      increment!(:times_worn)
+      wear_logs.create!(user:, outfit:, worn_on:, context:)
+      touch
+    end
+  end
+
+  def embedding_text
+    [title, category, color, brand, material, season, mood_effect, life_phase, occasion_tags].compact.join(" ")
   end
 end
