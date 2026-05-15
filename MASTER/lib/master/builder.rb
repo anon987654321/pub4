@@ -96,7 +96,7 @@ module Master
     end
 
     def build_agent_instance(root, infra)
-      tools = build_tools(root:, infra:) + infra[:mcp].tools
+      tools = Plugins::Reach.build_tools(root:, infra:) + infra[:mcp].tools
       deps  = Judge::Agent::Dependencies.from_kwargs(
         config: infra[:config], session: infra[:session], tools:,
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: infra[:bus],
@@ -159,48 +159,5 @@ module Master
       ]
     end
 
-    def build_tools(root:, infra:)
-      definitions = load_tool_definitions(root)
-      definitions.filter_map do |defn|
-        next unless defn["default"] == true
-        build_tool_instance(defn["name"], root:, infra:)
-      end
-    end
-
-    def load_tool_definitions(root)
-      path = File.join(root, "data", "tools.yml")
-      data = Master.load_yaml(path)
-      return [] unless data.is_a?(Array)
-      data
-    end
-
-    def build_tool_instance(name, root:, infra:)
-      bus = infra[:bus]
-      undo = infra[:undo]
-      governor = infra[:governor]
-      case name.to_s
-      when "ReadFile" then Reach::ReadFile.new(root:, undo:, event_bus: bus)
-      when "WriteFile" then Reach::WriteFile.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
-      when "StrReplace" then Reach::StrReplace.new(root:, undo:, governor:, event_bus: bus, diff_stager: infra[:diff_stager])
-      when "BatchReplace" then Reach::BatchReplace.new(root:, governor:, event_bus: bus)
-      when "AstEdit" then Reach::AstEdit.new(root:, undo:, event_bus: bus)
-      when "Tree" then Reach::Tree.new(root:, event_bus: bus)
-      when "ListDir" then Reach::ListDir.new(root:, event_bus: bus)
-      when "SearchFiles" then Reach::SearchFiles.new(root:, event_bus: bus)
-      when "SearchKnowledge" then Reach::SearchKnowledge.new(root:, event_bus: bus)
-      when "SymbolLookup" then Reach::SymbolLookup.new(code_index: infra[:code_index], event_bus: bus)
-      when "Shell" then Reach::Shell.new(root:, governor:, event_bus: bus)
-      when "GitContext" then Reach::GitContext.new(root:, event_bus: bus)
-      when "WebFetch" then Reach::WebFetch.new(governor:, event_bus: bus)
-      when "WebSearch" then Reach::WebSearch.new(governor:, event_bus: bus)
-      when "Clean" then Reach::Clean.new(root:, governor:, event_bus: bus)
-      when "Repligen" then Reach::Repligen.new(root:, governor:, event_bus: bus)
-      when "Postpro" then Reach::Postpro.new(root:, governor:, event_bus: bus)
-      when "FeedbackRecord" then Reach::FeedbackRecord.new(learnings: infra[:learnings])
-      else
-        bus&.publish("builder:tool_skipped", tool: name.to_s)
-        nil
-      end
-    end
   end
 end
