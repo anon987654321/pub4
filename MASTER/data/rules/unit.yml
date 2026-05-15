@@ -1,0 +1,474 @@
+# frozen — subset of rules.yml rules.unit; loaded by Ground::Rules
+unit:
+
+  - id: SIMPLEST_WORKS
+    name: "Fewest moving parts that solve the problem"
+    tier: kernel
+    severity: error
+    autofix: false
+    detect_semantic: "Does this unit introduce unnecessary complexity?"
+    fix: "Delete abstractions until it hurts. KISS."
+
+  - id: FAIL_VISIBLY
+    name: "Surface errors immediately"
+    tier: kernel
+    severity: error
+    autofix: false
+    detect_lexical: "rescue\\s*$|rescue\\s+Exception"
+    detect_semantic: "Does this code swallow exceptions or fail silently?"
+    fix: "Catch specific errors, log context, re-raise or return Result."
+
+  - id: BE_CONCISE
+    name: "Avoid unnecessary words, tokens, or lines"
+    tier: kernel
+    severity: warning
+    autofix: true
+    detect_semantic: "Does this unit contain unnecessary verbosity?"
+    fix: "Omit needless words. Omit needless code."
+
+  - id: DRY
+    name: "Don't Repeat Yourself"
+    tier: principle
+    severity: warning
+    autofix: false
+    aliases: [duplicate_code]
+    detect_semantic: "Are two units expressing the same idea twice?"
+    fix: "MERGE or DEFRAG. Pass the difference as an argument; never copy a block to vary one literal."
+    tension: "DRY conflicts with WET/AHA — singularity wins for data, DRY wins for code."
+
+  - id: KISS
+    name: "Keep It Simple"
+    tier: principle
+    severity: warning
+    autofix: false
+    aliases: [long_method, god_class, nesting_depth, arity]
+    detect_semantic: "Does this unit introduce complexity the problem doesn't require?"
+    fix: "FLATTEN nesting; SPLIT god classes; INLINE single-call helpers; delete abstractions until it hurts."
+
+  - id: POLA_PRINCIPLE
+    name: "Principle of Least Astonishment"
+    tier: principle
+    severity: warning
+    autofix: false
+    aliases: [pola]
+    detect_semantic: "Does the name promise behavior the implementation contradicts?"
+    fix: "NAME truthfully; rename when the implementation drifts."
+
+  - id: SRP
+    name: "Single Responsibility"
+    tier: solid
+    severity: warning
+    autofix: false
+    detect_semantic: "Does this class have more than one reason to change?"
+    fix: "Extract concerns into focused classes."
+
+  - id: OPEN_CLOSED
+    name: "Open for extension, closed for modification"
+    tier: solid
+    severity: warning
+    autofix: false
+    detect_semantic: "Must you modify core code to extend this?"
+    fix: "Strategy pattern, dependency injection, hooks."
+
+  - id: LISKOV
+    name: "Subtypes must substitute for base types"
+    tier: solid
+    severity: warning
+    autofix: false
+    detect_semantic: "Does a subclass break the parent's contract?"
+    fix: "Use composition if substitutability fails."
+
+  - id: INTERFACE_SEGREGATION
+    name: "No fat interfaces"
+    tier: solid
+    severity: warning
+    autofix: false
+    detect_semantic: "Does this interface force implementors to stub unused methods?"
+    fix: "Split into smaller role-based interfaces."
+
+  - id: DEPENDENCY_INVERSION
+    name: "Depend on abstractions, not concretions"
+    tier: solid
+    severity: warning
+    autofix: false
+    detect_semantic: "Does this class directly instantiate its dependencies?"
+    fix: "Inject dependencies through constructor."
+
+  - id: ONE_JOB
+    name: "Each module has one clear reason to change"
+    tier: philosophy
+    severity: warning
+    autofix: false
+    detect_semantic: "Does this module handle unrelated responsibilities?"
+    fix: "Split into focused modules."
+
+  - id: NO_SURPRISES
+    name: "Predictable over clever"
+    tier: philosophy
+    severity: warning
+    autofix: false
+    detect_semantic: "Would a reader be surprised by this behavior?"
+    fix: "Rename or split to match expectations."
+
+  - id: COMPOSABLE
+    name: "Small pieces that combine cleanly"
+    tier: philosophy
+    severity: info
+    autofix: false
+    detect_semantic: "Is this monolithic where it could be composed from smaller parts?"
+    fix: "Build small pieces that combine cleanly."
+
+  - id: CQS
+    name: "Separate queries from state mutations"
+    tier: design
+    severity: warning
+    autofix: true
+    detect_structural: cqs
+    fix: "Split: query() + command(). Never mix."
+    languages: [ruby]
+
+  - id: LAW_OF_DEMETER
+    name: "Only talk to immediate friends"
+    tier: design
+    severity: warning
+    autofix: true
+    detect_lexical: "\\w+\\.\\w+\\.\\w+\\.\\w+"
+    detect_semantic: "Does this code reach through multiple objects?"
+    fix: "Add delegate method. Talk only to direct collaborators."
+
+  - id: COMPOSITION_OVER_INHERITANCE
+    name: "Favor has_a over is_a"
+    tier: design
+    severity: info
+    mode: opportunity
+    autofix: false
+    detect_semantic: "Could an inheritance hierarchy be replaced with composition — making the parts independently testable and the combination more flexible? Only suggest when the hierarchy is used for code reuse, not substitutability."
+    fix: "Use composition. Mixins for shared behavior."
+
+  - id: SMALL_FUNCTIONS
+    name: "Methods under 10 lines ideal, max 20"
+    tier: clean_code
+    severity: warning
+    autofix: true
+    detect_structural: long_method
+    fix: "Extract: validate(), calculate(), persist()."
+
+  - id: FEW_ARGUMENTS
+    name: "Ideal is zero to two arguments"
+    tier: clean_code
+    severity: warning
+    autofix: true
+    detect_lexical: "def \\w+\\([^)]*,[^:)]+,[^:)]+,[^:)]+\\)"
+    fix: "Group into keyword arguments or parameter object."
+    languages: [ruby]
+
+  - id: ONE_ABSTRACTION_LEVEL
+    name: "Each function at one abstraction level"
+    tier: clean_code
+    severity: info
+    autofix: false
+    detect_semantic: "Does this function mix high-level policy with low-level detail?"
+    fix: "Extract low-level detail into helper methods."
+
+  - id: STEPDOWN
+    name: "Functions call only one level below"
+    tier: clean_code
+    severity: info
+    mode: opportunity
+    autofix: false
+    detect_semantic: "Could this code be reorganized so callers appear above callees, making it readable top-to-bottom like a newspaper? Only suggest if the reordering would meaningfully improve comprehension."
+    fix: "Public methods at top, private helpers below."
+
+  - id: BOUNDARY_ISOLATION
+    name: "Wrap third-party code at the edge"
+    tier: clean_code
+    severity: warning
+    autofix: false
+    detect_semantic: "Does third-party API surface leak into core logic?"
+    fix: "Wrap in adapter. Keep it from leaking."
+
+  - id: NO_MAGIC
+    name: "No unexplained constants or flags"
+    tier: clean_code
+    severity: warning
+    autofix: true
+    detect_semantic: "Are there unexplained numeric literals or boolean flags?"
+    fix: "Extract to named constants."
+
+  - id: FAIL_FAST
+    name: "Report errors at detection point"
+    tier: reliability
+    severity: warning
+    autofix: true
+    detect_semantic: "Does this code defer error reporting instead of failing immediately?"
+    fix: "Raise or return Result.err at point of detection."
+
+  - id: IDEMPOTENT
+    name: "Same operation, same result"
+    tier: reliability
+    severity: info
+    autofix: false
+    detect_semantic: "Would repeating this operation produce different results?"
+    fix: "Use set_value() instead of increment(). Add idempotency keys."
+
+  - id: DEFENSIVE_INPUT
+    name: "Never trust input at system boundaries"
+    tier: reliability
+    severity: warning
+    autofix: true
+    detect_semantic: "Is external input used without validation?"
+    fix: "Validate at boundaries. Whitelist, sanitize."
+
+  - id: GRACEFUL_DEGRADATION
+    name: "Partial functionality beats total failure"
+    tier: reliability
+    severity: warning
+    autofix: false
+    detect_semantic: "Does one failure crash everything?"
+    fix: "Circuit breakers, timeouts, fallback to stale data."
+
+  - id: NO_SIDE_EFFECTS
+    name: "Functions should not change state they do not own"
+    tier: functional
+    severity: info
+    autofix: false
+    detect_semantic: "Does this function modify external state silently?"
+    fix: "Make side effects explicit. Return values instead of mutating."
+
+  - id: IMMUTABLE
+    name: "Default to immutable data"
+    tier: functional
+    severity: info
+    autofix: true
+    detect_lexical: "^\\s*[A-Z][A-Z_]*\\s*=\\s*[\\[{](?!.*\\.freeze)"
+    detect_semantic: "Are mutable objects shared across threads or scopes?"
+    fix: "Freeze collections. Use frozen/const by default."
+    languages: [ruby]
+
+  - id: PURE_FUNCTIONS
+    name: "Same input, same output"
+    tier: functional
+    severity: info
+    autofix: true
+    detect_semantic: "Does this function depend on hidden state?"
+    fix: "Pass all dependencies as parameters."
+
+  - id: PRIMITIVE_OBSESSION
+    name: "Replace repeated primitives with value objects"
+    tier: refactoring
+    severity: info
+    mode: opportunity
+    autofix: false
+    detect_semantic: "Would a small value object (e.g. Money, Email, Coordinate) make intent clearer and consolidate scattered validation? Only suggest when the primitive appears 3+ times with associated logic."
+    fix: "Create a value object."
+
+  - id: MESSAGE_CHAIN
+    name: "Avoid a.b.c.d chains"
+    tier: refactoring
+    severity: warning
+    autofix: true
+    fix: "Talk only to immediate collaborators."
+
+  - id: MIDDLE_MAN
+    name: "Eliminate pure-delegation classes"
+    tier: refactoring
+    severity: info
+    mode: opportunity
+    autofix: false
+    detect_semantic: "Does this class mostly delegate to one other? Would removing the indirection simplify the call chain without losing encapsulation?"
+    fix: "Remove middle man. Talk directly."
+
+  - id: LAZY_CLASS
+    name: "Remove classes too small to justify existence"
+    tier: refactoring
+    severity: info
+    mode: opportunity
+    autofix: false
+    detect_semantic: "Does this class do too little to justify its existence — could it be inlined into its primary caller or merged with a collaborator?"
+    fix: "Inline into caller."
+
+  - id: DIVERGENT_CHANGE
+    name: "Split classes changed for unrelated reasons"
+    tier: refactoring
+    severity: warning
+    autofix: false
+    detect_semantic: "Is this class modified for multiple unrelated reasons?"
+    fix: "Split by axis of change."
+
+  - id: SPECULATIVE_GENERALITY
+    name: "Remove code for hypothetical needs"
+    tier: refactoring
+    severity: info
+    mode: opportunity
+    autofix: true
+    detect_semantic: "Is there abstraction, genericity, or configuration that no current caller uses? Would removing it simplify the code without losing real flexibility?"
+    fix: "Delete it. YAGNI."
+
+  - id: INAPPROPRIATE_INTIMACY
+    name: "Do not access another class's private data"
+    tier: refactoring
+    severity: warning
+    autofix: false
+    detect_semantic: "Does this code access internals of another class?"
+    fix: "Use public interface. Enforce boundaries."
+
+  - id: SYSTEM_STATUS
+    name: "Keep users informed of progress"
+    tier: ux
+    severity: info
+    autofix: true
+    detect_semantic: "Does this long operation provide feedback to the user?"
+    fix: "Spinner, progress bar, status message."
+
+  - id: USER_CONTROL
+    name: "Support undo and emergency exits"
+    tier: ux
+    severity: info
+    autofix: false
+    detect_semantic: "Can the user undo or cancel this operation?"
+    fix: "Add undo support. Confirm destructive actions."
+
+  - id: ERROR_RECOVERY
+    name: "Error messages must name the problem and suggest a fix"
+    tier: ux
+    severity: warning
+    autofix: false
+    detect_semantic: "Do error messages explain what went wrong and what to do?"
+    fix: "Name the problem. Suggest a fix. Show context."
+
+  - id: AESTHETIC_MINIMALISM
+    name: "Show only relevant information"
+    tier: ux
+    severity: info
+    autofix: false
+    detect_semantic: "Does this output contain information that does not earn its place?"
+    fix: "Every element must earn its place."
+
+  - id: CONSISTENCY
+    name: "Same term means same thing everywhere"
+    tier: ux
+    severity: warning
+    autofix: false
+    detect_semantic: "Are the same concepts named differently in different places?"
+    fix: "Follow conventions. One name per concept."
+
+  - id: COST_TRANSPARENCY
+    name: "Show LLM costs in real-time"
+    tier: llm
+    severity: warning
+    autofix: true
+    detect_semantic: "Are API calls made without showing token count or cost?"
+    fix: "Display [$0.0023, 847 tokens] after each call."
+
+  - id: CACHE_LLM
+    name: "Cache deterministic LLM responses"
+    tier: llm
+    severity: info
+    autofix: true
+    detect_semantic: "Is the same prompt sent multiple times without caching?"
+    fix: "Hash prompt, cache response with bounded TTL."
+
+  - id: GUARD_EXPENSIVE_OPS
+    name: "Confirm before costly or destructive operations"
+    tier: safety
+    severity: error
+    autofix: true
+    detect_semantic: "Does this execute an expensive or destructive operation without confirmation?"
+    fix: "Cost estimate before execution. Require opt-in for danger."
+
+  - id: NO_FLAG_ARGUMENTS
+    name: "A flag that selects behavior means two things hiding as one"
+    tier: clean_code
+    severity: warning
+    autofix: false
+    detect_lexical: "def \\w+\\([^)]*\\btrue\\b|def \\w+\\([^)]*\\bfalse\\b"
+    detect_semantic: "Does a boolean cause this unit to do two different things? In a contract, does one condition branch into contradictory obligations?"
+    fix: "Split into two distinct units. Each does one thing."
+
+  - id: NO_OUTPUT_ARGUMENTS
+    name: "Return results, never secretly modify what was passed in"
+    tier: clean_code
+    severity: warning
+    autofix: false
+    detect_semantic: "Does this modify its arguments instead of returning a result? Does this clause silently alter a definition from a prior section?"
+    fix: "Return the result. Leave inputs untouched."
+
+  - id: NO_SELECTOR_ARGUMENTS
+    name: "Arguments that switch behavior indicate hidden multiplicity"
+    tier: clean_code
+    severity: warning
+    autofix: false
+    detect_semantic: "Is an argument used as a switch to select between behaviors? Does a field mean different things in different contexts?"
+    fix: "Separate functions, separate types, separate document sections."
+
+  - id: DESIGN_BY_CONTRACT
+    name: "State what you expect, what you promise, what must remain true"
+    tier: reliability
+    severity: info
+    autofix: false
+    detect_semantic: "Are preconditions, postconditions, and invariants left implicit? Does this API lack documentation of valid inputs and guaranteed outputs?"
+    fix: "Make contracts explicit. Preconditions, postconditions, invariants."
+
+  - id: CRASH_EARLY
+    name: "A dead process does less damage than a corrupted one"
+    tier: reliability
+    severity: warning
+    autofix: false
+    detect_semantic: "Does this limp along in a broken state instead of stopping cleanly? Does this continue after contraindication signals?"
+    fix: "Stop when invariants break. A clean crash is recoverable. Corruption is not."
+
+  - id: DEFINE_ERRORS_OUT
+    name: "Design so error conditions cannot arise"
+    tier: design
+    severity: info
+    autofix: false
+    detect_semantic: "Is this handling errors that could be eliminated by redesigning the interface? Does this validation reject input that better design would prevent?"
+    fix: "Redesign so the error cannot occur."
+
+  - id: SURFACE_AREA
+    name: "Minimize the boundary between inside and outside"
+    tier: design
+    severity: warning
+    autofix: false
+    detect_semantic: "Is the public interface larger than necessary? Does this contract have more exceptions than rules?"
+    fix: "Fewer public methods. Fewer clauses. Fewer points of contact mean fewer points of failure."
+
+  - id: PROGRESSIVE_DISCLOSURE
+    name: "Reveal complexity only as needed"
+    tier: ux
+    severity: info
+    autofix: false
+    detect_semantic: "Does this present all complexity at once? Does this front-load definitions before stating obligations?"
+    fix: "Lead with the simple case. Reveal depth on demand."
+
+  - id: FEEDBACK_LOOPS
+    name: "Every action must produce observable feedback"
+    tier: ux
+    severity: warning
+    autofix: false
+    detect_semantic: "Does this perform work without reporting progress? Does this protocol lack checkpoints?"
+    fix: "Close the loop. Every action produces feedback. Every milestone gets measured."
+
+  - id: DATA_CLASS
+    name: "Data without behavior is a missed abstraction"
+    tier: refactoring
+    severity: info
+    autofix: false
+    detect_semantic: "Does this hold data but contain no behavior? Is logic scattered across other modules? Is this a spreadsheet of raw numbers with formulas elsewhere?"
+    fix: "Push behavior into the data. Methods belong with the data they operate on."
+
+  - id: PARALLEL_INHERITANCE
+    name: "Two hierarchies that must change in lockstep"
+    tier: refactoring
+    severity: warning
+    autofix: false
+    detect_semantic: "Does adding a type in one hierarchy require adding one in another? Does a new product line require changes in both catalog and billing?"
+    fix: "Merge the hierarchies or use composition."
+
+  - id: REFUSED_BEQUEST
+    name: "Inheriting what you do not use"
+    tier: refactoring
+    severity: info
+    autofix: false
+    detect_semantic: "Does this variant ignore most of what it inherits? Does this addendum negate most of the base agreement?"
+    fix: "Use composition instead of inheritance."

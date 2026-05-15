@@ -1,0 +1,261 @@
+# frozen — subset of rules.yml rules.codebase; loaded by Ground::Rules
+codebase:
+
+  - id: PRESERVE_FIRST
+    name: "Never break working code"
+    tier: kernel
+    severity: error
+    autofix: false
+    detect_semantic: "Does this change modify working code without reading it first?"
+    fix: "Read before write. Patch minimally."
+
+  - id: ONE_SOURCE
+    name: "One authoritative representation per concept"
+    tier: kernel
+    severity: error
+    autofix: true
+    detect_semantic: "Is the same logic or data defined in multiple places?"
+    fix: "Extract to single source, reference from all consumers."
+
+  - id: DECOUPLE
+    name: "Make hidden dependencies explicit"
+    tier: kernel
+    severity: error
+    autofix: false
+    detect_semantic: "Are there implicit couplings between modules that should be injected?"
+    fix: "Inject dependencies through constructor. No global state."
+
+  - id: DEGRADE_GRACEFULLY
+    name: "Operate under partial failures"
+    tier: kernel
+    severity: error
+    autofix: false
+    detect_semantic: "Does this code crash on partial failure instead of degrading?"
+    fix: "Circuit breakers, timeouts, fallbacks."
+
+  - id: GALLS_LAW
+    name: "Complex systems evolve from simple working systems"
+    tier: philosophy
+    severity: info
+    autofix: false
+    detect_semantic: "Is this attempting to build a complex system from scratch rather than evolving from a working simple one?"
+    fix: "Start simple, prove it works, then extend."
+
+  - id: CHESTERTONS_FENCE
+    name: "Understand why something exists before removing it"
+    tier: philosophy
+    severity: warning
+    autofix: false
+    detect_semantic: "Is code being removed without understanding why it was added?"
+    fix: "Read git blame, understand the rationale, then decide."
+
+  - id: UNIX_PHILOSOPHY
+    name: "Do one thing well"
+    tier: architecture
+    severity: info
+    autofix: false
+    detect_semantic: "Does this module try to do too many unrelated things?"
+    fix: "Extract services. Clear module boundaries. Compose with pipes."
+
+  - id: FUNCTIONAL_CORE
+    name: "Pure logic in core, side effects at edges"
+    tier: architecture
+    severity: info
+    mode: opportunity
+    autofix: false
+    detect_semantic: "Could IO/DB calls be pushed to the edges, leaving a pure logic core that is easy to test without mocks? Only suggest if the extraction would meaningfully simplify testing."
+    fix: "Return data from core, let shell handle IO."
+
+  - id: CONVENTION_OVER_CONFIG
+    name: "Sensible defaults reduce decisions"
+    tier: productivity
+    severity: info
+    autofix: false
+    detect_semantic: "Does this require explicit config where a convention would suffice?"
+    fix: "Provide sensible defaults, override only when needed."
+
+  - id: MONOLITH_FIRST
+    name: "Start monolith, extract when team exceeds 15"
+    tier: architecture
+    severity: info
+    autofix: false
+    detect_semantic: "Is this prematurely splitting into services?"
+    fix: "Keep it in one app until extraction is clearly needed."
+
+  - id: CONSISTENT_ERROR_STRATEGY
+    name: "One error handling strategy per module"
+    tier: design
+    severity: warning
+    autofix: false
+    detect_semantic: "Does this module mix Result objects, exceptions, and nil-returns?"
+    fix: "Pick one strategy per module. MASTER uses Result monad."
+
+  - id: DUAL_DETECTION
+    name: "Layer lexical and semantic detection"
+    tier: verification
+    severity: info
+    autofix: false
+    detect_semantic: "Is detection relying on regex alone or LLM alone?"
+    fix: "Layer deterministic patterns with LLM semantic analysis."
+
+  - id: MASS_GENERATE_CURATE
+    name: "Generate many variations, curate ruthlessly"
+    tier: creative
+    severity: info
+    autofix: false
+    detect_semantic: "Is the first draft being accepted without exploring alternatives?"
+    fix: "Generate a swarm and curate when stakes are high."
+
+  - id: NO_GOD_CLASS
+    name: "No god classes"
+    tier: core
+    severity: error
+    autofix: false
+    detect_structural: god_class
+    fix: "Decompose into focused classes."
+
+  - id: NO_SHOTGUN_SURGERY
+    name: "One change should not require edits in many files"
+    tier: core
+    severity: warning
+    autofix: false
+    detect_semantic: "Does a single conceptual change span many files?"
+    fix: "Extract the missing abstraction."
+
+  - id: NO_HIDDEN_GLOBAL_STATE
+    name: "No hidden global state"
+    tier: core
+    severity: error
+    autofix: false
+    detect_semantic: "Are there global variables or class-level mutable state shared across modules?"
+    fix: "Inject configuration. Use dependency injection."
+
+  - id: TRACER_BULLETS
+    name: "End-to-end skeleton first, flesh out second"
+    tier: architecture
+    severity: info
+    autofix: false
+    detect_semantic: "Is this building infrastructure without an end-to-end path? Is this business plan elaborating budgets before proving the revenue model? Is this research paper expanding methodology before demonstrating the finding?"
+    fix: "Wire the simplest end-to-end path first. Prove it works. Then add depth."
+
+  - id: ORTHOGONALITY
+    name: "Changes in one dimension must not ripple into others"
+    tier: architecture
+    severity: warning
+    autofix: false
+    detect_semantic: "Does changing one aspect force changes in unrelated aspects? Does reformatting break content? Does modifying one gene's expression alter another pathway?"
+    fix: "Decouple dimensions. Database changes should not require UI changes. Style should not affect structure."
+
+  - id: TRANSFORMATIONS
+    name: "Think in pipelines: input transforms to output"
+    tier: architecture
+    severity: info
+    autofix: false
+    detect_semantic: "Is this modeling the problem as mutable state instead of flowing transformations? Does this document bury its flow in scattered cross-references?"
+    fix: "Express work as a chain of transformations. Each stage takes input, produces output, holds no state."
+
+  - id: DEEP_MODULES
+    name: "Powerful functionality behind simple interfaces"
+    tier: architecture
+    severity: info
+    mode: opportunity
+    autofix: false
+    detect_semantic: "Could the interface be simplified — fewer params, fewer calls — while preserving all functionality? Flag only when ceremony clearly outweighs value."
+    fix: "Simple interface, rich implementation. A deep module does much with little ceremony."
+
+  - id: INFORMATION_HIDING
+    name: "Each module encapsulates one design decision"
+    tier: architecture
+    severity: warning
+    autofix: false
+    detect_semantic: "Is implementation detail leaking across boundaries? Would changing an internal decision force changes elsewhere?"
+    fix: "Encapsulate each decision in one module. If it changes, only that module changes."
+
+  - id: DIFFERENT_LAYER_DIFFERENT_ABSTRACTION
+    name: "Each layer speaks a different language than its neighbors"
+    tier: architecture
+    severity: warning
+    autofix: false
+    detect_semantic: "Do adjacent layers use the same abstraction? Are there pass-through methods that add no value? Does this management layer just relay without transforming?"
+    fix: "Each layer must transform, not relay. If a layer adds no abstraction, remove it."
+
+  - id: STRUCTURAL_HONESTY
+    name: "The shape of the artifact must reflect the shape of the problem"
+    tier: architecture
+    severity: warning
+    autofix: false
+    detect_semantic: "Does the structure match the domain? Does the module hierarchy match the conceptual hierarchy? Does the floor plan match the workflow?"
+    fix: "Align structure with reality. Natural domain boundaries become system boundaries."
+
+  - id: GRACEFUL_BOUNDARIES
+    name: "Where systems meet, expect translation and loss"
+    tier: architecture
+    severity: info
+    autofix: false
+    detect_semantic: "Does this boundary assume perfect fidelity? Does this integration assume the other side never changes?"
+    fix: "Every boundary is a translation layer. Validate at every boundary. Degrade gracefully when translation fails."
+
+  - id: PULL_COMPLEXITY_DOWN
+    name: "Simple interface matters more than simple implementation"
+    tier: architecture
+    severity: info
+    mode: opportunity
+    autofix: false
+    detect_semantic: "Could complexity the caller is managing be absorbed into the implementation, giving the caller a simpler interface without losing control?"
+    fix: "Absorb complexity into the implementation. The caller should not need to know how it works."
+
+  - id: ETC
+    name: "Easier To Change — the meta-value behind every principle"
+    tier: philosophy
+    severity: info
+    autofix: false
+    detect_semantic: "Does this design decision make the system harder to change? Does this contract make renegotiation unnecessarily difficult?"
+    fix: "Choose the option that keeps more options open. Decoupled, parameterized, replaceable."
+
+  - id: BROKEN_WINDOWS
+    name: "Zero tolerance for visible decay"
+    tier: philosophy
+    severity: warning
+    autofix: false
+    detect_semantic: "Is there visible rot being left unfixed — dead code, broken links, stale references? In a brief, citations to overruled cases?"
+    fix: "Fix it now. One broken window invites more."
+
+  - id: ENTROPY_RESISTANCE
+    name: "Systems decay toward disorder unless actively maintained"
+    tier: philosophy
+    severity: warning
+    autofix: false
+    detect_semantic: "Is there creeping disorder — naming inconsistencies, abandoned conventions, accumulating exceptions? In a legal code, contradictory amendments?"
+    fix: "Actively resist entropy. Regular cleanup. Remove what no longer serves."
+
+  - id: DONT_OUTRUN_HEADLIGHTS
+    name: "Only plan as far as you can see"
+    tier: philosophy
+    severity: info
+    autofix: false
+    detect_semantic: "Is this making detailed plans for unpredictable scenarios? Projecting five years out? Designing for hypothetical scale?"
+    fix: "Small deliberate steps. Reassess after each. Feedback from each step illuminates the next."
+
+  - id: REVERSIBILITY
+    name: "Prefer decisions that are easy to undo"
+    tier: philosophy
+    severity: info
+    autofix: false
+    detect_semantic: "Is this decision hard to reverse? Does it lock in a vendor? Waive future rights? Have no rollback pathway?"
+    fix: "Soft-delete over hard-delete. Option agreements over binding. Feature flags over big-bang."
+
+  - id: DESIGN_IT_TWICE
+    name: "Consider at least two approaches before committing"
+    tier: philosophy
+    severity: info
+    autofix: false
+    detect_semantic: "Was this designed once without considering alternatives?"
+    fix: "Sketch two designs. Compare tradeoffs. Five minutes saves five days."
+
+  - id: PROPERTY_BASED_TESTING
+    name: "Test properties and invariants, not just examples"
+    tier: verification
+    severity: info
+    autofix: false
+    detect_semantic: "Are tests only checking specific examples instead of universal properties? Is QA only sampling instead of testing invariants?"
+    fix: "Define properties that must always hold. Generate many inputs. Verify the property survives all."
