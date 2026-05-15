@@ -4,12 +4,9 @@ class WardrobeAiService
   OPENROUTER_BASE = "https://openrouter.ai/api/v1"
   MODEL = "google/gemini-2.0-flash-001"
 
-  def initialize(user)
-    @user   = user
-    @client = OpenAI::Client.new(
-      access_token: ENV.fetch("OPENROUTER_API_KEY"),
-      uri_base:     OPENROUTER_BASE
-    )
+  def initialize(user, client: nil)
+    @user = user
+    @client = client || build_client
   end
 
   def analyze_joy(item)
@@ -105,7 +102,16 @@ class WardrobeAiService
 
   private
 
+  def build_client
+    token = ENV["OPENROUTER_API_KEY"].to_s.strip
+    return nil if token.empty?
+
+    OpenAI::Client.new(access_token: token, uri_base: OPENROUTER_BASE)
+  end
+
   def chat(prompt)
+    return {} unless @client
+
     response = @client.chat(
       parameters: {
         model: MODEL,
@@ -113,7 +119,13 @@ class WardrobeAiService
         response_format: { type: "json_object" }
       }
     )
-    JSON.parse(response.dig("choices", 0, "message", "content"))
+    content = response.dig("choices", 0, "message", "content")
+    return {} if content.blank?
+
+    JSON.parse(content)
+  rescue JSON::ParserError => e
+    Rails.logger.warn("WardrobeAI invalid JSON: #{e.message}")
+    {}
   rescue => e
     Rails.logger.error("WardrobeAI error: #{e.message}")
     {}
