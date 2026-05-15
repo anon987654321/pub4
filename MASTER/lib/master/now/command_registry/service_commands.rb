@@ -24,11 +24,16 @@ module Master
         "phase"     => cmd(:dispatch_phase, phase_gates),
         "score"     => cmd(:score_file, scanner),
         "diag"      => ->(ctx) { diag ? diag.render(arg_for(ctx)) : "diag: not configured" },
-        "guard"     => ->(ctx) {
+        "guard"  => ->(ctx) {
           depth = arg_for(ctx).to_i
           depth = Judge::CommitGuard::DEFAULT_DEPTH if depth <= 0
           guard = Judge::CommitGuard.new(root: root, depth: depth)
           guard.render(guard.check)
+        },
+        "reload" => ->(_ctx) {
+          scanner&.instance_variable_set(:@depth_rules, nil)
+          scanner&.instance_variable_set(:@rules, scanner.instance_variable_get(:@rules))
+          "rules reloaded: #{scanner&.instance_variable_get(:@rules)&.size || 0} active"
         }
       }
     end

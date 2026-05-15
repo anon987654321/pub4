@@ -129,7 +129,9 @@ module Master
       def active_rules(depth)
         allowed = depth_rules[depth.to_s]
         return @rules if allowed.nil? || allowed == ["all"] || allowed == :all
-        @rules.select { |r| allowed.include?(r.class.name.split("::").last) || allowed.include?(r.id) }
+        @rules.select { |r|
+          allowed.include?(r.class.name&.split("::")&.last) || allowed.include?(r.id)
+        }
       end
     end
   end

@@ -250,10 +250,23 @@ thresholds:
     stagnant_threshold: 3
 
 scan_depths:
-  # Only list class names that exist as files in lib/master/judge/scan/rules/.
-  # Phantom class names silently exclude rules — InterconnectRule catches drift.
+  # Class names for named Rule subclasses; lowercase ids for DSL-defined rules.
+  # Phantom entries silently exclude rules — InterconnectRule catches drift.
   quick: &quick
     - TableLexicalRule
+    - no_debug
+    - no_puts
+    - frozen_literal
+    - long_line
+    - trailing_whitespace
+    - todo_fixme
+    - rescue_exception
+    - empty_rescue
+    - consecutive_blank_lines
+    - debug_output
+    - trailing_comment
+    - time_zone_unsafe
+    - no_ascii_line_art
   standard: &standard
     - TableLexicalRule
     - CoChangeCouplingRule
@@ -264,6 +277,20 @@ scan_depths:
     - SemanticRule
     - AdversarialRule
     - CommentDriftRule
+    - AstOmissionRule
+    - no_debug
+    - no_puts
+    - frozen_literal
+    - long_line
+    - trailing_whitespace
+    - todo_fixme
+    - rescue_exception
+    - empty_rescue
+    - consecutive_blank_lines
+    - debug_output
+    - trailing_comment
+    - time_zone_unsafe
+    - no_ascii_line_art
   deep: &deep
     - all
   hunt: *deep

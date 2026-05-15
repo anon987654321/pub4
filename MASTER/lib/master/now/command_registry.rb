@@ -32,7 +32,7 @@ module Master
             "scan: /run [path] /self-run /scan [profile] [path] /polish [path] /grind [N] /ecology [path]",
             "model: /model [id|list] /mode /persona /task",
             "memory: /mem /topic /rsi",
-            "system: /diag [/section] /tree [N] /brief /guard [N] /help"
+            "system: /diag [/section] /tree [N] /brief /guard [N] /reload /help"
           ].join("\n")
         }
       )
