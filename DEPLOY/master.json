@@ -1,0 +1,8 @@
+{
+  "apps": [
+    { "name": "amber", "domain": "amber.brgen.no", "port": 4010 },
+    { "name": "baibl", "domain": "baibl.no", "port": 4011 },
+    { "name": "brgen", "domain": "brgen.no", "port": 4012 },
+    { "name": "bsdports", "domain": "bsdports.org", "port": 4013 }
+  ]
+}
