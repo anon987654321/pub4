@@ -1,0 +1,244 @@
+<% content_for :title, "MASTER Dashboard" %>
+
+<section class="master-dashboard-shell">
+  <div id="three-container" class="master-dashboard-canvas" aria-hidden="true"></div>
+
+  <main class="master-dashboard-panel">
+    <header class="master-dashboard-header">
+      <div>
+        <h1><span aria-hidden="true">◉</span> MASTER</h1>
+        <p>Living Cognitive Runtime</p>
+      </div>
+      <div class="master-dashboard-badges">
+        <span>LIVE</span>
+        <span id="fps-counter">FPS: --</span>
+        <span id="runtime-status">Runtime ready</span>
+      </div>
+    </header>
+
+    <section class="master-dashboard-grid">
+      <article class="master-dashboard-card master-dashboard-timeline">
+        <h2>📜 Live Event Timeline</h2>
+        <div id="timeline" class="master-dashboard-scroll">
+          <p>Runtime initialized. Awaiting events.</p>
+        </div>
+      </article>
+
+      <aside class="master-dashboard-stack">
+        <article class="master-dashboard-card">
+          <h2>🧠 Council Debate</h2>
+          <div id="council">
+            <p><strong>Runtime:</strong> particle field stable.</p>
+            <p><strong>Consensus:</strong> visual cognition online.</p>
+          </div>
+        </article>
+
+        <article class="master-dashboard-card">
+          <h2>✦ Morph Targets</h2>
+          <div class="master-dashboard-buttons">
+            <button type="button" data-master-topology="papua-mask">Papua Mask</button>
+            <button type="button" data-master-topology="sphere">Sphere</button>
+            <button type="button" data-master-topology="torus">Torus</button>
+            <button type="button" data-master-topology="serpent">Serpent</button>
+            <button type="button" data-master-topology="neural">Neural</button>
+            <button type="button" data-master-glyph="MASTER">MASTER</button>
+          </div>
+        </article>
+      </aside>
+    </section>
+  </main>
+</section>
+
+<style>
+  .master-dashboard-shell {
+    min-height: 100vh;
+    overflow: hidden;
+    background: #020403;
+    color: #34d399;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  .master-dashboard-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .master-dashboard-panel {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    padding: clamp(1rem, 4vw, 2rem);
+    background: radial-gradient(circle at center, rgba(16, 185, 129, 0.08), transparent 55%);
+  }
+
+  .master-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .master-dashboard-header h1 {
+    margin: 0;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    font-size: clamp(2rem, 5vw, 4rem);
+    letter-spacing: 0.25em;
+    color: #a7f3d0;
+  }
+
+  .master-dashboard-header h1 span {
+    color: #22d3ee;
+    animation: master-pulse 1.8s ease-in-out infinite;
+  }
+
+  .master-dashboard-header p {
+    margin: 0.5rem 0 0;
+    color: rgba(52, 211, 153, 0.72);
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    font-size: 0.75rem;
+  }
+
+  .master-dashboard-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .master-dashboard-badges span {
+    border: 1px solid rgba(52, 211, 153, 0.28);
+    border-radius: 999px;
+    background: rgba(9, 9, 11, 0.86);
+    padding: 0.45rem 0.75rem;
+  }
+
+  .master-dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(320px, 5fr);
+    gap: 1.5rem;
+  }
+
+  .master-dashboard-stack {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .master-dashboard-card {
+    border: 1px solid rgba(52, 211, 153, 0.28);
+    border-radius: 1.5rem;
+    background: rgba(9, 9, 11, 0.82);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 24px 80px rgba(6, 95, 70, 0.16);
+    padding: clamp(1rem, 3vw, 1.5rem);
+  }
+
+  .master-dashboard-card h2 {
+    margin: 0 0 1rem;
+    color: #d1fae5;
+    font-size: 1.1rem;
+  }
+
+  .master-dashboard-scroll {
+    max-height: 52vh;
+    overflow: auto;
+    color: rgba(209, 250, 229, 0.9);
+    line-height: 1.6;
+  }
+
+  .master-dashboard-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .master-dashboard-buttons button {
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    background: rgba(6, 78, 59, 0.85);
+    color: white;
+    padding: 0.9rem 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  }
+
+  .master-dashboard-buttons button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(34, 211, 238, 0.6);
+    background: rgba(8, 145, 178, 0.86);
+  }
+
+  @keyframes master-pulse {
+    0%, 100% { opacity: 0.48; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+
+  @media (max-width: 900px) {
+    .master-dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const timeline = document.getElementById("timeline");
+    const status = document.getElementById("runtime-status");
+    let frames = 0;
+    let last = performance.now();
+
+    function log(message) {
+      if (!timeline) return;
+      const row = document.createElement("p");
+      row.textContent = `${new Date().toLocaleTimeString()} • ${message}`;
+      timeline.prepend(row);
+    }
+
+    document.querySelectorAll("[data-master-topology]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const topology = button.dataset.masterTopology;
+        if (window.MASTERMask && window.MASTERMask.setTopology(topology)) {
+          status.textContent = `Morph: ${topology}`;
+          log(`Morph target changed to ${topology}.`);
+        } else {
+          status.textContent = "Mask runtime unavailable";
+          log("Mask runtime unavailable for topology change.");
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-master-glyph]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const glyph = button.dataset.masterGlyph;
+        if (window.MASTERMask && window.MASTERMask.glyph) {
+          window.MASTERMask.glyph(glyph);
+          status.textContent = `Glyph: ${glyph}`;
+          log(`Glyph target changed to ${glyph}.`);
+        }
+      });
+    });
+
+    function fpsLoop(now) {
+      frames += 1;
+      if (now - last >= 1000) {
+        const counter = document.getElementById("fps-counter");
+        if (counter) counter.textContent = `FPS: ${frames}`;
+        frames = 0;
+        last = now;
+      }
+      requestAnimationFrame(fpsLoop);
+    }
+
+    log("MASTER dashboard online.");
+    requestAnimationFrame(fpsLoop);
+  });
+</script>
