@@ -14,7 +14,7 @@ SHARED_BUNDLE_CACHE=${SHARED_BUNDLE_CACHE:-/var/cache/pub4/bundle/ruby34}
 
 need_cmd ruby34 bundle doas
 
-[[ -d $SRC_DIR ]] || { log_err "missing source tree: $SRC_DIR"; exit 1 }
+[[ -d $SRC_DIR ]] || { log_err "missing source tree: $SRC_DIR"; exit 1; }
 
 log "${APP_NAME} — deploying tracked tree → ${APP_DIR}"
 
@@ -44,7 +44,9 @@ if [[ ! -d ${bundle_home}/gems ]]; then
   doas chown -R "${APP_NAME}:${APP_NAME}" "$bundle_home"
 fi
 
-print "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
+doas mkdir -p "${APP_DIR}/.bundle"
+print -- "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" | doas tee "${APP_DIR}/.bundle/config" >/dev/null
+doas chown -R "${APP_NAME}:${APP_NAME}" "${APP_DIR}/.bundle"
 
 doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && bundle config set --local deployment true && bundle config set --local without 'development test' && RAILS_ENV=production bundle install"
 doas -u "$APP_NAME" sh -c "cd ${APP_DIR} && RAILS_ENV=production bin/rails db:create db:migrate"
