@@ -66,7 +66,13 @@ module Master
   end
   loader.setup
 
-  extend Plugin::ClassMethods
+  def self.plugin(name, **opts)
+    mod = Plugin.load(name)
+    extend(mod::ClassMethods)    if mod.const_defined?(:ClassMethods, false)
+    include(mod::InstanceMethods) if mod.const_defined?(:InstanceMethods, false)
+    mod.configure(self, **opts)  if mod.respond_to?(:configure)
+    mod
+  end
 
   def self.configure_providers!
     # Stub Bedrock before ruby_llm loads — avoids openssl.so on OpenBSD/LibreSSL.

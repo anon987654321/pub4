@@ -3,7 +3,7 @@
 module Master
   module Ground
   module Pledge
-    extend self
+    module_function
 
     if RUBY_PLATFORM.include?("openbsd")
       require "fiddle"
@@ -17,26 +17,31 @@ module Master
       end
 
       def pledge(promises, execpromises = nil)
-        result = LibC.pledge(promises, execpromises || Fiddle::NULL)
-        raise SystemCallError.new("pledge failed", Fiddle.last_error) if result == -1
+        r = LibC.pledge(promises, execpromises || Fiddle::NULL)
+        raise SystemCallError.new("pledge", Fiddle.last_error) if r == -1
       end
 
       def unveil(path, permissions)
-        result = LibC.unveil(path, permissions)
-        raise SystemCallError.new("unveil failed", Fiddle.last_error) if result == -1
+        r = LibC.unveil(path, permissions)
+        raise SystemCallError.new("unveil", Fiddle.last_error) if r == -1
       end
 
       def lock_unveil! = LibC.unveil(Fiddle::NULL, Fiddle::NULL)
+      def openbsd?     = true
     else
-      def pledge(*) = nil
-      def unveil(*) = nil
+      def pledge(*)    = nil
+      def unveil(*)    = nil
       def lock_unveil! = nil
+      def openbsd?     = false
     end
 
-    # Stage 1: called before Builder.build -- widest promises, no lock
-    # "error" converts unknown-ioctl pledge kills to EPERM so tty gems degrade gracefully.
+    GEM_DIRS = [".local/share/gem", ".gem"].freeze
+    STAGE1_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec error"
+    STAGE2_PROMISES = "stdio rpath wpath cpath proc exec inet dns tty prot_exec error"
+    STAGE3_PROMISES = "stdio rpath wpath cpath tty"
+
     def stage1_boot!(root)
-      pledge("stdio rpath wpath cpath proc exec inet dns tty unveil prot_exec error")
+      pledge(STAGE1_PROMISES)
       unveil("/", "")
       unveil(root, "rwc")
       unveil(Dir.home, "rwc")
@@ -47,24 +52,20 @@ module Master
       unveil("/usr/local/share", "r")
       unveil("/etc/ssl", "r")
       unveil("/etc/resolv.conf", "r")
-      [Dir.home + "/.local/share/gem", Dir.home + "/.gem"].each { |p| unveil(p, "r") if Dir.exist?(p) }
       unveil("/dev/urandom", "r")
       unveil("/var/run", "r")
+      GEM_DIRS.each { |d| (dir = File.join(Dir.home, d); unveil(dir, "r") if Dir.exist?(dir)) }
     end
 
-    # Stage 2: called after CLI is fully initialized -- lock filesystem
     def stage2_lock!
       lock_unveil!
-      pledge("stdio rpath wpath cpath proc exec inet dns tty prot_exec error")
+      pledge(STAGE2_PROMISES)
     end
 
-    # Stage 3: scan-only sessions (no network, no exec)
     def stage3_scan_only!
       lock_unveil!
-      pledge("stdio rpath wpath cpath tty")
+      pledge(STAGE3_PROMISES)
     end
-
-    def openbsd? = RUBY_PLATFORM.include?("openbsd")
   end
   end
 end
