@@ -69,25 +69,32 @@ module Master
     alias banner splash
 
     def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil, cost: nil)
-      branch     = git_branch || "detached"
-      bar        = token_bar(tokens)
-      usage      = token_label(tokens)
-      model_str  = @p.dim(short_model(model))
-      branch_str = @p.red(branch)
-      vbadge     = violations > 0 ? @p.red("[#{violations}v]") : @p.dim("[0v]")
-      phase_str  = phase && phase.to_s != "idle" ? phase_tinted(" :#{phase}", phase) : ""
-      cost_str   = cost_label(cost)
-      cost_seg   = cost_str.empty? ? "" : "#{cost_str} "
-      prompt     = phase_prompt(last_ok, phase)
+      branch        = git_branch || "detached"
+      dirty         = git_dirty?
+      ahead, behind = git_ahead_behind
+      bar           = token_bar(tokens)
+      usage         = token_label(tokens)
+      model_str     = @p.dim(short_model(model))
+      dirty_glyph   = dirty ? @p.red("●") : @p.dim("○")
+      ahead_str     = ahead  > 0 ? @p.dim(" ↑#{ahead}")    : ""
+      behind_str    = behind > 0 ? @p.yellow(" ↓#{behind}") : ""
+      branch_str    = @p.red(branch) + dirty_glyph + ahead_str + behind_str
+      vbadge        = violations > 0 ? @p.bold.red(" [#{violations}v]") : ""
+      phase_str     = phase && phase.to_s != "idle" ? phase_tinted(" :#{phase}", phase) : ""
+      cost_str      = cost_label(cost)
+      cost_seg      = cost_str.empty? ? "" : "#{cost_str} "
+      prompt        = phase_prompt(last_ok, phase)
       ["#{branch_str}  #{model_str}  ↖ #{bar}#{usage}  #{cost_seg}#{vbadge}#{phase_str}", prompt + " "]
     end
 
     def phase_tinted(text, phase)
       case phase.to_s
-      when "discover"  then @p.dim.yellow(text)
-      when "implement" then @p.dim.cyan(text)
-      when "audit"     then @p.dim.red(text)
-      else                  @p.dim(text)
+      when "discover"        then @p.dim.yellow(text)
+      when "implement"       then @p.dim.cyan(text)
+      when "audit"           then @p.dim.red(text)
+      when "grind", "polish" then @p.dim.magenta(text)
+      when "watch"           then @p.dim.blue(text)
+      else                        @p.dim(text)
       end
     end
 
@@ -95,10 +102,12 @@ module Master
       base = "master$"
       return @p.red(base) unless last_ok
       case phase.to_s
-      when "discover"  then @p.bold.yellow(base)
-      when "implement" then @p.bold.cyan(base)
-      when "audit"     then @p.bold.red(base)
-      else                  @p.bold.red(base)
+      when "discover"        then @p.bold.yellow(base)
+      when "implement"       then @p.bold.cyan(base)
+      when "audit"           then @p.bold.red(base)
+      when "grind", "polish" then @p.bold.magenta(base)
+      when "watch"           then @p.bold.blue(base)
+      else                        @p.bold.red(base)
       end
     end
 
@@ -206,10 +215,29 @@ module Master
     end
 
     def git_branch
-      out, _, st = Open3.capture3("git", "rev-parse", "--abbrev-ref", "HEAD")
+      out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--abbrev-ref", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError => _e
+    rescue StandardError
       nil
+    end
+
+    def git_dirty?
+      out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "status", "--porcelain")
+      st.success? && !out.strip.empty?
+    rescue StandardError
+      false
+    end
+
+    def git_ahead_behind
+      out, _, st = Open3.capture3(
+        "git", "-C", @config["root"] || Dir.pwd,
+        "rev-list", "--left-right", "--count", "HEAD...@{u}"
+      )
+      return [0, 0] unless st.success?
+      parts = out.strip.split
+      [parts[0].to_i, parts[1].to_i]
+    rescue StandardError
+      [0, 0]
     end
 
     def dmesg_lines

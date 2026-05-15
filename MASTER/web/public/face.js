@@ -27,7 +27,8 @@
     coronaFlash: 0,
     edgePulse: 0,
     bodyScale: 1.0,
-    heartRate: 1.0
+    heartRate: 1.0,
+    codespaceRatio: 0, codespaceTarget: 0
   };
 
   function ring(cx, cy, r, a0, a1, n, zone) {
@@ -489,75 +490,72 @@
     return State.audioLevel;
   }
 
-  // ─── TTS (with primer unlock) ──────────────────────────────────────
-  const tts = {
-    enabled: 'speechSynthesis' in window, muted: false, voice: null,
-    queue: [], model: '', mood: 'idle', unlocked: false, currentUtt: null
-  };
+  // ─── TTS — server-side edge-tts via /chat/tts ──────────────────────
+  // fetch MP3 → decodeAudioData → AudioBufferSourceNode through the
+  // existing analyser so particle reactivity works identically.
+  const tts = { muted: false, queue: [], model: '', playing: false, currentSrc: null };
   const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
-  function pickVoice() {
-    if (!tts.enabled) return;
-    const v = speechSynthesis.getVoices();
-    if (!v.length) return;
-    const en = v.filter(x => /en[-_]/i.test(x.lang));
-    tts.voice = en.find(x => /Google.*US|Samantha|Daniel|Karen|Alex/i.test(x.name)) || en[0] || v[0];
-  }
-  if (tts.enabled) {
-    speechSynthesis.onvoiceschanged = pickVoice;
-    pickVoice();
-  }
-  const MODEL_TIMBRE = {
-    deepseek:{rate:0.96, pitch:0.92}, claude:{rate:1.00, pitch:1.00},
-    gemini:{rate:1.05, pitch:1.08}, gpt:{rate:0.98, pitch:1.04}
-  };
-  const MOOD_PROSODY = {
-    focused:{rate:1.00, pitch:0.98}, curious:{rate:1.10, pitch:1.12},
-    tense:{rate:1.15, pitch:1.05}, weary:{rate:0.88, pitch:0.92}, idle:{rate:1.00, pitch:1.00}
-  };
-  function ttsParams() {
-    const m = (tts.model || '').toLowerCase();
-    const tb = Object.entries(MODEL_TIMBRE).find(([k]) => m.includes(k));
-    const t = tb ? tb[1] : { rate: 1.0, pitch: 1.0 };
-    const p = MOOD_PROSODY[tts.mood] || MOOD_PROSODY.idle;
-    return { rate: t.rate * p.rate, pitch: t.pitch * p.pitch };
-  }
+
   function unlockTTS() {
-    if (tts.unlocked || !tts.enabled) return;
-    try {
-      const u = new SpeechSynthesisUtterance(' ');
-      u.volume = 0; speechSynthesis.speak(u);
-      tts.unlocked = true;
-    } catch (e) {}
+    if (actx && actx.state === 'suspended') actx.resume();
   }
+
   function enqueueSpeech(text) {
-    if (!tts.enabled || tts.muted) return;
+    if (tts.muted) return;
     const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`~]/g, '').trim();
     if (!clean) return;
-    const u = new SpeechSynthesisUtterance(clean);
-    const p = ttsParams();
-    u.rate = p.rate; u.pitch = p.pitch;
-    if (tts.voice) u.voice = tts.voice;
-    u.onstart = () => { tts.currentUtt = u; duck(true); State.mode = 'speaking'; };
-    u.onboundary = (e) => { driveViseme(clean, e.charIndex || 0); };
-    u.onend   = () => { tts.currentUtt = null; duck(false); ttsTick(); if (!tts.queue.length) setMouth('neutral'); if (State.mode === 'speaking') State.mode = 'idle'; };
-    tts.queue.push(u);
+    tts.queue.push(clean);
     ttsTick();
   }
+
   function ttsTick() {
-    if (!tts.enabled || tts.muted) return;
-    if (speechSynthesis.speaking || speechSynthesis.pending) return;
-    const u = tts.queue.shift();
-    if (u) speechSynthesis.speak(u);
+    if (tts.muted || tts.playing) return;
+    const text = tts.queue.shift();
+    if (text) playServerTTS(text);
   }
+
+  async function playServerTTS(text) {
+    tts.playing = true;
+    duck(true); State.mode = 'speaking';
+    try {
+      const body = new URLSearchParams({ text, voice: 'osman', style: 'auto' });
+      const resp = await fetch('/chat/tts', { method: 'POST', body });
+      if (!resp.ok) throw new Error(resp.status);
+      const arrayBuf = await resp.arrayBuffer();
+      if (!actx) initAudio();
+      const audioBuf = await actx.decodeAudioData(arrayBuf);
+      const src = actx.createBufferSource();
+      src.buffer = audioBuf;
+      src.connect(analyser);
+      tts.currentSrc = src;
+      const CHARS_PER_SEC = 13;
+      let elapsed = 0;
+      const ti = setInterval(() => { elapsed += 0.08; driveViseme(text, Math.floor(elapsed * CHARS_PER_SEC)); }, 80);
+      src.onended = () => {
+        clearInterval(ti);
+        tts.playing = false; tts.currentSrc = null;
+        duck(false); setMouth('neutral');
+        if (State.mode === 'speaking') State.mode = 'idle';
+        ttsTick();
+      };
+      src.start();
+    } catch (_e) {
+      tts.playing = false; tts.currentSrc = null;
+      duck(false);
+      if (State.mode === 'speaking') State.mode = 'idle';
+      ttsTick();
+    }
+  }
+
   function ttsSkip() {
-    if (tts.enabled) speechSynthesis.cancel();
-    tts.queue.length = 0; tts.currentUtt = null; duck(false);
-    setMouth('neutral');
+    if (tts.currentSrc) { try { tts.currentSrc.stop(); } catch (_e) {} tts.currentSrc = null; }
+    tts.queue.length = 0; tts.playing = false;
+    duck(false); setMouth('neutral');
   }
+
   function ttsToggleMute() {
     tts.muted = !tts.muted;
     if (tts.muted) ttsSkip();
-    // flash brief corona to signal
     Face.coronaFlash = tts.muted ? 0.6 : 0.3;
   }
   function driveViseme(text, idx) {
@@ -958,11 +956,8 @@
 
   // ─── Whisper voice (low-volume asides) ─────────────────────────────
   function whisper(text) {
-    if (!tts.enabled || tts.muted || !text) return;
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 1.1; u.pitch = 0.86; u.volume = 0.45;
-    if (tts.voice) u.voice = tts.voice;
-    tts.queue.push(u); ttsTick();
+    if (tts.muted || !text) return;
+    tts.queue.push(text); ttsTick();
   }
   // dmesg-style boot phrases — randomized cadence
   const DMESG_PHRASES = [
@@ -989,9 +984,10 @@
     Face.breath  += dt * 0.001;
     Face.heartRate = 1.0 + (State.mode === 'thinking' ? 0.6 : 0) + (State.mode === 'error' ? 1.2 : 0);
     Face.bodyScale = 1.0 + Math.sin(Face.breath * Math.PI * 2 * Face.heartRate) * 0.012;
-    Face.coronaFlash *= 0.94;
-    Face.edgePulse  *= 0.96;
-    Face.vortex     *= 0.93;
+    Face.coronaFlash    *= 0.94;
+    Face.edgePulse      *= 0.96;
+    Face.vortex         *= 0.93;
+    Face.codespaceRatio += (Face.codespaceTarget - Face.codespaceRatio) * 0.03;
 
     // blink scheduler — cosine envelope, low confidence blinks more often
     Face.blinkPhase += dt * 0.001;
@@ -1103,6 +1099,15 @@
         const vr = Math.hypot(vdx, vdy) * (1 + Face.vortex * 0.02);
         tx = cx + Math.cos(va) * vr;
         ty = cy + Math.sin(va) * vr;
+      }
+      // Architecture #15: codebase topology — disperse face into orbital ring.
+      if (Face.codespaceRatio > 0.01) {
+        const phi = (i / NP) * Math.PI * 2;
+        const orbitR = Math.min(W, H) * 0.38;
+        const ox = cx + Math.cos(phi) * orbitR;
+        const oy = cy + Math.sin(phi) * orbitR * 0.55;
+        tx += (ox - tx) * Face.codespaceRatio;
+        ty += (oy - ty) * Face.codespaceRatio;
       }
       if (State.mode === 'rain') {
         p.vy += 0.04;
@@ -1232,7 +1237,13 @@
   cv.addEventListener('touchend',   () => { Gesture.twoPtr = false; });
   window.addEventListener('resize', resize);
 
-  // ─── Primer unlock (the TTS fix) ───────────────────────────────────
+  // Topology events from visual_bridge.js — drive codebase disperse.
+  window.addEventListener('master:visual', (e) => {
+    const top = (e.detail || {}).topology || '';
+    Face.codespaceTarget = top === 'codebase' ? 1.0 : 0.0;
+  });
+
+  // ─── Primer unlock ─────────────────────────────────────────────────
   const primer = document.getElementById('primer');
   const zshBar = document.getElementById('zsh');
   const zshIn  = document.getElementById('zin');
