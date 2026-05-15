@@ -27,6 +27,18 @@ Rails.application.routes.draw do
     member { post :follow; delete :unfollow }
   end
 
+  resources :declutter, only: :index, param: :id do
+    member do
+      get  :review
+      patch :update_review
+      post :move
+      post :challenge
+      post :complete_challenge
+      post :outcome
+      get  :last_chance
+    end
+  end
+
   scope :ai do
     post "items/:id/analyze", to: "ai#analyze_item",    as: :ai_analyze_item
     post "items/:id/tag",     to: "ai#tag_item",        as: :ai_tag_item
