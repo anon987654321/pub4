@@ -14,7 +14,8 @@ module Master
     class Postpro
       TIER        = :dangerous
       NAME        = "postpro".freeze
-      DESCRIPTION = "Apply cinematic post-processing (film grain, halation, teal-orange, presets, recipes) to images via ruby-vips.".freeze
+      DESCRIPTION = "Apply cinematic post-processing (film grain, halation, teal-orange, " \
+                    "presets, recipes) to images via ruby-vips.".freeze
       TIMEOUT     = 600
       PRESETS     = %w[portrait landscape street blockbuster].freeze
       SCRIPT_REL  = "../multimedia/postpro.rb".freeze
@@ -27,12 +28,12 @@ module Master
 
       def call(target_dir:, preset: "portrait", variations: 2, recipe: nil, patterns: nil)
         return Result.err("postpro: target_dir required", category: :validation) if target_dir.to_s.empty?
-        return Result.err("postpro: unknown preset #{preset}", 
-category: :validation) unless PRESETS.include?(preset.to_s) || recipe
+        return Result.err("postpro: unknown preset #{preset}",
+                          category: :validation) unless PRESETS.include?(preset.to_s) || recipe
 
         target_abs = absolute(target_dir)
-        return Result.err("postpro: not a directory: #{target_abs}", 
-category: :validation) unless File.directory?(target_abs)
+        return Result.err("postpro: not a directory: #{target_abs}",
+                          category: :validation) unless File.directory?(target_abs)
 
         perm = @governor.permit?(NAME, TIER, "postpro #{preset} #{target_abs}")
         return perm if perm.err?

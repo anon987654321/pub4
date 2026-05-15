@@ -33,17 +33,14 @@ module Master
       end
       @tracer  = OpenTelemetry.tracer_provider.tracer(service)
       @enabled = true
-    rescue LoadError
-      @enabled = false
-    rescue StandardError
-      @enabled = false
+    rescue LoadError; @enabled = false
+    rescue StandardError; @enabled = false
     end
 
     def self.span(name, attrs = {})
       return yield unless @enabled && @tracer
       @tracer.in_span(name, attributes: stringify(attrs)) { yield }
-    rescue StandardError
-      yield
+    rescue StandardError; yield
     end
 
     def self.stringify(hash)
@@ -72,8 +69,7 @@ module Master
           ))
         end
         SUCCESS
-      rescue StandardError
-        FAILURE
+      rescue StandardError; FAILURE
       end
 
       def force_flush(timeout: nil) = SUCCESS

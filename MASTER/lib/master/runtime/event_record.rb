@@ -7,9 +7,10 @@ module Master
   module Runtime
     EventRecord = Struct.new(:id, :timestamp, :workflow_id, :event, :payload, keyword_init: true) do
       def self.build(event:, workflow_id: nil, payload: {})
+        now = Time.now.utc
         new(
           id: SecureRandom.uuid,
-          timestamp: Time.now.utc.iso8601(6),
+          timestamp: now.iso8601(6),
           workflow_id: workflow_id,
           event: event.to_s,
           payload: payload || {}

@@ -80,7 +80,7 @@ module Master
             Timeout.timeout(remaining) do
               [t[:role], dispatch(t[:role], task: t[:task], context_slice: t.fetch(:context_slice, {}))]
             end
-          rescue Timeout::Error
+          rescue Timeout::Error => _e
             [t[:role], Result.err("worker exceeded shared deadline", category: :timeout)]
           rescue StandardError => e
             @bus&.publish("swarm:worker_error", role: t[:role], error: e.message)

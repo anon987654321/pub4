@@ -58,7 +58,7 @@ module Master
         base = "https://codepen.io/#{user}/pen/#{slug}"
         parts = %w[html css js].map do |ext|
           result = fetch_one("#{base}.#{ext}")
-          result.respond_to?(:ok?) && result.ok? ? "// === #{ext} ===\n#{result.value!}" : nil
+          result.respond_to?(:ok?) && result.ok? ? "// #{ext}\n#{result.value!}" : nil
         end
         Result.ok(parts.compact.join("\n\n"))
       end
@@ -79,7 +79,8 @@ module Master
       def deliver(url, response)
         return Result.err("web_fetch: HTTP #{response.code}", category: :infrastructure) unless response.code == HTTP_OK
 
-        body     = response.body.to_s.byteslice(0, MAX_BYTES * 4)
+        raw_body = response.body.to_s
+        body     = raw_body.byteslice(0, MAX_BYTES * 4)
         stripped = strip_html(body)[0, MAX_BYTES]
         @bus&.publish("tool:after", tool: NAME, url:)
         Result.ok(stripped)

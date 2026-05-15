@@ -15,7 +15,7 @@ module Master
 
         def build_prompt(task, ctx)
           parts = []
-          parts << "Language: #{ctx[:language] || "ruby"}"
+          parts << "Language: #{ctx.fetch(:language, "ruby")}"
           parts << "Existing code:\n```\n#{ctx[:code]}\n```" if ctx[:code]
           parts << "Spec: #{task}"
           parts.join("\n\n")

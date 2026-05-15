@@ -20,7 +20,8 @@ module Master
   RuleDSL.rule :TEMPLATE_LITERALS,
     severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
     description: "use template literals over concatenation" do |src, path:|
-    scan_lines(src, /["']\s*\+\s*\w+\s*\+\s*["']/, message: "string concatenation — use template literal `...${var}...`")
+    scan_lines(src, /["']\s*\+\s*\w+\s*\+\s*["']/,
+               message: "string concatenation — use template literal \`…\${var}…\`")
   end
 
   RuleDSL.rule :ASYNC_AWAIT,

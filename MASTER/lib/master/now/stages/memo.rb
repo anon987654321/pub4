@@ -56,7 +56,8 @@ module Master
         end
         if (m = text.match(ROLE_RE))
           role = m[1].strip
-          @memory.remember("user_role", role, type: "user") unless role.length < 4 || role =~ /\b(?:going|trying|sure|thinking|writing)\b/i
+          filler = /\b(?:going|trying|sure|thinking|writing)\b/i
+          @memory.remember("user_role", role, type: "user") unless role.length < 4 || role =~ filler
         end
       end
     end

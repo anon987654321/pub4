@@ -34,7 +34,9 @@ module Master
 
       unmet = unmet_gates(prev)
       if unmet.any?
-        return Master::Result.err("phase #{prev} gates unmet: #{unmet.join(",")} — override with /phase advance --force")
+        return Master::Result.err(
+          "phase #{prev} gates unmet: #{unmet.join(",")} — override with /phase advance --force"
+        )
       end
 
       @state["phase"] = target
@@ -88,11 +90,11 @@ module Master
     def persist
       path = File.join(@root, PHASE_STATE_PATH)
       FileUtils.mkdir_p(File.dirname(path))
-      tmp = "#{path}.tmp.#{Process.pid}"
-      File.write(tmp, YAML.dump(@state))
-      File.rename(tmp, path)
+      tmp_path = "#{path}.tmp.#{Process.pid}"
+      File.write(tmp_path, YAML.dump(@state))
+      File.rename(tmp_path, path)
     rescue StandardError => e
-      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
       raise e
     end
   end

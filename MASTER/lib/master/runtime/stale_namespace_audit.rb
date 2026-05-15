@@ -32,8 +32,7 @@ module Master
 
       def rules
         YAML.load_file(@registry).fetch("stale_constants", [])
-      rescue StandardError
-        []
+      rescue StandardError; []
       end
 
       def scan(rule)
@@ -54,8 +53,7 @@ module Master
               stale: old,
               replacement: replacement
             }
-          rescue StandardError
-            nil
+          rescue StandardError; nil
           end
         end
       end

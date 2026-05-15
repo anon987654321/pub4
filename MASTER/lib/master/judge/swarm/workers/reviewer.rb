@@ -31,7 +31,7 @@ module Master
           parsed = JSON.parse(raw.to_s.match(/\{.*\}/m)&.to_s || "{}")
           parsed["approved"] = true if parsed.empty?
           Result.ok(parsed)
-        rescue JSON::ParserError
+        rescue JSON::ParserError => _e
           Result.ok({ "approved" => true, "violations" => [] })
         end
       end

@@ -31,8 +31,9 @@ module Master
       end
 
       def reflected_prompt(base, last_error, attempt)
+        # Bounded by MAX_FIX_RETRIES in the calling Reflexion.run loop.
         "Prior attempt (#{attempt}) failed with: #{last_error[0, ERROR_TRUNCATE]}\n" \
-          "Reflect briefly on what went wrong, then retry.\n\n" \
+          "Reflect briefly on what went wrong, then revise.\n\n" \
           "#{base}"
       end
 

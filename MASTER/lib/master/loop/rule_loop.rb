@@ -8,7 +8,8 @@ module Master
   # Called by SuperLoop — one RuleLoop instance per rule per pass.
   class RuleLoop
     MAX_CYCLES          = 8
-    CONVERGE_THRESHOLD  = 0.05  # < 5% improvement = converged
+    # < 5% improvement = converged
+    CONVERGE_THRESHOLD  = 0.05
     RATE_LIMIT_SLEEP    = 10
     MAX_FIX_RETRIES     = 2
 
@@ -100,9 +101,9 @@ module Master
     end
 
     def apply(path, new_src)
-      tmp = "#{path}.rl.#{Process.pid}"
-      File.write(tmp, new_src, encoding: "UTF-8")
-      File.rename(tmp, path)
+      tmp_path = "#{path}.rl.#{Process.pid}"
+      File.write(tmp_path, new_src, encoding: "UTF-8")
+      File.rename(tmp_path, path)
       @bus&.publish("rule_loop:fix_applied", rule: @rule.id, file: path)
       true
     rescue StandardError => e
@@ -145,7 +146,7 @@ module Master
         soul  = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
         golden = soul.dig("absolute", "golden_rule") || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
         "Golden rule: #{golden}\nMinimum change that eliminates the violation. Do not touch unrelated code."
-      rescue StandardError
+      rescue StandardError => _e
         "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       end
     end

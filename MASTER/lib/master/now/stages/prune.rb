@@ -16,7 +16,10 @@ module Master
       NUMBERED_RE   = /^\s*\d+\.\s+/
       HR_RE         = /^-{3,}\s*$/
       LINK_RE       = /\[([^\]]+)\]\([^)]+\)/
-      SYCOPHANCY_RE = /\A\s*(?:certainly|of course|great question|absolutely|sure|happy to help|i(?:'d| would) be (?:happy|glad)|no problem)[!.,]*\s*/i
+      SYCOPHANCY_RE = /\A\s*(?:
+        certainly|of[ ]course|great[ ]question|absolutely|sure|
+        happy[ ]to[ ]help|i(?:'d|[ ]would)[ ]be[ ](?:happy|glad)|no[ ]problem
+      )[!.,]*\s*/ix
 
       def call(ctx)
         raw = ctx[:output]

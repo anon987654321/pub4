@@ -42,7 +42,8 @@ module Master
       @bus             = event_bus
       @soul            = soul
       @learnings       = learnings
-      @rule_recurrence = Hash.new(0) # rule_id => consecutive_cycle_count
+      # rule_id → consecutive cycle count
+      @rule_recurrence = Hash.new(0)
       @git             = Reach::GitOperations.new(root)
     end
 
@@ -77,7 +78,8 @@ module Master
 
         mutex   = Mutex.new
         fixes   = {}
-        stagger = RATE_LIMIT_SLEEP.to_f / BATCH_SIZE  # 5 s apart — stays within free-tier quota
+        # Stagger requests 5 s apart — stays within free-tier quota.
+        stagger = RATE_LIMIT_SLEEP.to_f / BATCH_SIZE
 
         threads = by_file.each_with_index.map do |v, idx|
           Thread.new do
@@ -137,7 +139,8 @@ module Master
           .map    { |f| f.merge(file: rel) }
       }.select { |f|
         full_path = File.join(@root, f[:file])
-        File.exist?(full_path) && File.size(full_path) <= MAX_FILE_BYTES # GUARD_EXPENSIVE
+        # GUARD_EXPENSIVE: skip files too large to process safely.
+        File.exist?(full_path) && File.size(full_path) <= MAX_FILE_BYTES
       }.sort_by { |f| -SEVERITY_RANK.fetch(f[:severity], 0) }
     end
 

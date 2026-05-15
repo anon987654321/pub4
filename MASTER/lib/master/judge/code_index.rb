@@ -119,7 +119,7 @@ module Master
       @mtimes.clear
       files.each do |f|
         index_file(f)
-        @mtimes[f] = File.mtime(f) rescue Errno::ENOENT
+        @mtimes[f] = (File.mtime(f) rescue nil)
       end
     end
 
@@ -130,7 +130,7 @@ module Master
     end
 
     def reindex_if_stale(file)
-      mt = File.mtime(file) rescue Errno::ENOENT
+      mt = (File.mtime(file) rescue nil)
       return false if @mtimes[file] == mt
       reindex(file)
       @mtimes[file] = mt
@@ -193,12 +193,12 @@ module Master
     end
 
     def index_file(file)
-      src    = File.read(file, encoding: "UTF-8")
-      result = Prism.parse(src)
-      return unless result.success?
+      src          = File.read(file, encoding: "UTF-8")
+      parse_result = Prism.parse(src)
+      return unless parse_result.success?
 
       visitor = SymbolVisitor.new(file:, root: @root)
-      result.value.accept(visitor)
+      parse_result.value.accept(visitor)
       visitor.symbols.each { |s| @symbols[s.fqn] = s }
       @references.concat(visitor.references)
     rescue StandardError => e

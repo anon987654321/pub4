@@ -19,9 +19,10 @@ module Master
       end
 
       def call(event_type:, dimension:, value: nil, metadata: nil)
-        return Result.err("feedback_record: unknown event_type #{event_type}", 
-category: :validation) unless VALID_EVENTS.include?(event_type.to_s)
-        return Result.err("feedback_record: dimension required", category: :validation) if dimension.to_s.strip.empty?
+        return Result.err("feedback_record: unknown event_type #{event_type}",
+                          category: :validation) unless VALID_EVENTS.include?(event_type.to_s)
+        dim_str = dimension.to_s.strip
+        return Result.err("feedback_record: dimension required", category: :validation) if dim_str.empty?
 
         @learnings.record_event(
           event_type: event_type.to_s,

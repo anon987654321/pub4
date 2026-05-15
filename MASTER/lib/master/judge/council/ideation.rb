@@ -16,20 +16,20 @@ module Master
         critiques = []
 
         cycles.times do |cycle|
-          result = brainstorm(prompt, ideas, constraints)
-          return result if result.err?
-          ideas += result.value
+          brainstorm_result = brainstorm(prompt, ideas, constraints)
+          return brainstorm_result if brainstorm_result.err?
+          ideas += brainstorm_result.value
           @bus&.publish("ideation:cycle", cycle: cycle + 1, ideas: ideas.size)
 
-          result = critique(ideas)
-          return result if result.err?
-          critiques << result.value
+          critique_result = critique(ideas)
+          return critique_result if critique_result.err?
+          critiques << critique_result.value
         end
 
-        result = synthesize(prompt:, ideas:, critiques:, constraints:)
-        return result if result.err?
+        synth_result = synthesize(prompt:, ideas:, critiques:, constraints:)
+        return synth_result if synth_result.err?
 
-        Master::Result.ok(ideas: ideas, critiques: critiques, final: result.value)
+        Master::Result.ok(ideas: ideas, critiques: critiques, final: synth_result.value)
       end
 
       private
@@ -37,31 +37,37 @@ module Master
       def brainstorm(prompt, prior, constraints)
         context           = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""
         constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
-        raw     = @agent.ask_once(<<~PROMPT, system: "Generate 3-5 novel, bold ideas. One idea per bullet (- prefix).")
+        system_msg = "Generate 3-5 novel, bold ideas. One idea per bullet (- prefix)."
+        raw = @agent.ask_once(<<~PROMPT, system: system_msg)
           #{constraint_prefix}#{context}Generate ideas for: #{prompt}
         PROMPT
-        return Master::Result.err("ideation: brainstorm failed") if raw.to_s.strip.empty?
+        raw_text = raw.to_s
+        return Master::Result.err("ideation: brainstorm failed") if raw_text.strip.empty?
 
-        parsed = raw.scan(/^[-*]\s*(.+)/).flatten
-        parsed = [raw.strip] if parsed.empty?
+        parsed = raw_text.scan(/^[-*]\s*(.+)/).flatten
+        parsed = [raw_text.strip] if parsed.empty?
         Master::Result.ok(parsed)
       end
 
       def critique(ideas)
-        list = ideas.map { |idea| "- #{idea}" }.join("\n")
-        raw  = @agent.ask_once(<<~PROMPT, system: "Critique these ideas. Identify weaknesses, blind spots, risks. Be direct.")
+        list       = ideas.map { |idea| "- #{idea}" }.join("\n")
+        system_msg = "Critique these ideas. Identify weaknesses, blind spots, risks. Be direct."
+        raw        = @agent.ask_once(<<~PROMPT, system: system_msg)
           #{list}
         PROMPT
-        return Master::Result.err("ideation: critique failed") if raw.to_s.strip.empty?
+        raw_text = raw.to_s
+        return Master::Result.err("ideation: critique failed") if raw_text.strip.empty?
 
-        Master::Result.ok(raw.strip)
+        Master::Result.ok(raw_text.strip)
       end
 
       def synthesize(prompt:, ideas:, critiques:, constraints:)
         constraint_prefix = constraints.any? ? "Constraints: #{constraints.join(', ')}\n\n" : ""
         list              = ideas.map { |idea| "- #{idea}" }.join("\n")
-        crits = critiques.join("\n---\n")
-        raw   = @agent.ask_once(<<~PROMPT, system: "Synthesize the best elements into a concrete, practical recommendation. Preserve innovation. Address valid critiques.")
+        crits      = critiques.join("\n\n")
+        system_msg = "Synthesize the best elements into a concrete, practical recommendation. " \
+                     "Preserve innovation. Address valid critiques."
+        raw = @agent.ask_once(<<~PROMPT, system: system_msg)
           Goal: #{prompt}
           #{constraint_prefix}
           Ideas:
@@ -70,9 +76,10 @@ module Master
           Critiques:
           #{crits}
         PROMPT
-        return Master::Result.err("ideation: synthesis failed") if raw.to_s.strip.empty?
+        raw_text = raw.to_s
+        return Master::Result.err("ideation: synthesis failed") if raw_text.strip.empty?
 
-        Master::Result.ok(raw.strip)
+        Master::Result.ok(raw_text.strip)
       end
     end
   end

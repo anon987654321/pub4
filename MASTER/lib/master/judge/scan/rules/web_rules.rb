@@ -22,7 +22,7 @@ module Master
     severity: :warning, tags: %i[I18N], applies_to: %i[html],
     description: "wrap user-facing literals in I18n helpers" do |src, path:|
     next [] unless path.include?("/app/views/")
-    scan_lines(src, />\s*[A-Za-z][^<]{3,}</, message: "bare text — wrap with t('...')")
+    scan_lines(src, />\s*[A-Za-z][^<]{3,}</, message: "bare text — wrap with t('…')")
   end
 
   RuleDSL.rule :IMG_ALT,
@@ -40,7 +40,8 @@ module Master
   RuleDSL.rule :ARIA_INTERACTIVE,
     severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
     description: "ARIA on non-semantic interactive elements" do |src, path:|
-    scan_lines(src, /<(div|span)\s+[^>]*onclick/, message: "use <button> or <a> for interactive elements, not div/span with onclick")
+    scan_lines(src, /<(div|span)\s+[^>]*onclick/,
+               message: "use <button> or <a> for interactive elements, not div/span with onclick")
   end
 
   RuleDSL.rule :LAZY_IMAGES,

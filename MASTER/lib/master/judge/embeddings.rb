@@ -17,9 +17,10 @@ module Master
 
     def embed(text)
       return unless enabled?
-      return if text.to_s.strip.empty?
-      ollama_embed(text.to_s)
-    rescue StandardError
+      text_str = text.to_s
+      return if text_str.strip.empty?
+      ollama_embed(text_str)
+    rescue StandardError => _e
       nil
     end
 

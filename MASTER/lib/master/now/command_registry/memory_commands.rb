@@ -31,10 +31,17 @@ module Master
       when /\Aremember (.+)/
         body, type = parse_remember($1)
         key, value = body.split("=", 2).map(&:strip)
-        value ? (memory.remember(key, value, type:); "remembered [#{type}]: #{key}") : "usage: /memory remember [type=user|feedback|project|reference] key=value"
+        if value
+          memory.remember(key, value, type:)
+          "remembered [#{type}]: #{key}"
+        else
+          "usage: /memory remember [type=user|feedback|project|reference] key=value"
+        end
       when /\Asearch (.+)/ then memory_search(memory, $1.strip)
       when /\Atype (\S+)/  then list_by_type(memory, $1.strip)
-      when "types"         then memory.type_counts.map { |t, n| "#{t}: #{n}" }.join("\n").then { |s| s.empty? ? "(no memories)" : s }
+      when "types"
+        counts = memory.type_counts.map { |t, n| "#{t}: #{n}" }.join("\n")
+        counts.empty? ? "(no memories)" : counts
       when ""
         (e = memory.all).empty? ? "(no memories)" : e.map { |k, v| "#{k}: #{v}" }.join("\n")
       else
@@ -52,7 +59,8 @@ module Master
 
     def list_by_type(memory, type)
       hits = memory.by_type(type)
-      hits.empty? ? "(no memories of type: #{type})" : hits.map { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }.join("\n")
+      return "(no memories of type: #{type})" if hits.empty?
+      hits.map { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }.join("\n")
     end
 
     def memory_search(memory, query)

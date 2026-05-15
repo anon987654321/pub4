@@ -8,7 +8,8 @@ module Master
   class Session
     TOKENS_PER_CHAR  = 4
     SESSION_NAME_MAX = 40
-    COSTS_MAX_BYTES  = 102_400     # 100 KB
+    # 100 KB
+    COSTS_MAX_BYTES  = 102_400
 
     attr_reader :name, :messages, :cost, :phase, :snapshots
     attr_accessor :topic
@@ -72,9 +73,9 @@ module Master
         data = {}
       end
       @name     = data[:name]
-      @phase    = data[:phase]&.to_sym || :discover
+      @phase    = data.fetch(:phase, nil)&.to_sym || :discover
       @topic    = data[:topic]
-      @messages = data[:messages] || []
+      @messages = data.fetch(:messages, [])
       @cost     = data[:cost].to_f
       self
     end
@@ -85,7 +86,8 @@ module Master
 
     private
 
-    SHELL_RE = /\A(?:cd|ls|pwd|grep|find|cat|echo|export|sudo|doas|git|bundle|ruby|exec|eval|bash|zsh|sh)\b|[$`|;&]/.freeze
+    SHELL_CMDS = "cd|ls|pwd|grep|find|cat|echo|export|sudo|doas|git|bundle|ruby|exec|eval|bash|zsh|sh"
+    SHELL_RE   = /\A(?:#{SHELL_CMDS})\b|[$`|;&]/.freeze
 
     def auto_name(content)
       stripped = content.to_s.strip

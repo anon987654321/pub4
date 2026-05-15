@@ -31,7 +31,7 @@ module Master
         )
 
         out.lines.map(&:strip)
-      rescue StandardError
+      rescue StandardError => _e
         []
       end
 

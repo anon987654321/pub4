@@ -67,12 +67,12 @@ module Master
 
     def expire_entry!(path)
       @lru.delete(path)
-      File.delete(path) rescue Errno::ENOENT
+      File.delete(path) rescue nil
       nil
     end
 
     def drop_entry!(path)
-      File.delete(path) rescue Errno::ENOENT
+      File.delete(path) rescue nil
       @lru.delete(path)
       nil
     end
@@ -108,10 +108,14 @@ module Master
 
     def restore_value(payload)
       return payload unless payload.is_a?(Hash)
-      case payload[:__master_result] || payload["__master_result"]
-      when "ok"  then Result.ok(payload[:value] || payload["value"])
-      when "err" then Result.err(payload[:message] || payload["message"], category: payload[:category] || payload["category"])
-      when "raw" then payload[:value] || payload["value"]
+      kind    = payload.fetch(:__master_result) { payload["__master_result"] }
+      value   = payload.fetch(:value)           { payload["value"] }
+      message = payload.fetch(:message)         { payload["message"] }
+      cat     = payload.fetch(:category)        { payload["category"] }
+      case kind
+      when "ok"  then Result.ok(value)
+      when "err" then Result.err(message, category: cat)
+      when "raw" then value
       else payload
       end
     end
@@ -124,7 +128,7 @@ module Master
     def evict_lru
       oldest = @lru.shift
       return unless oldest && File.exist?(oldest)
-      File.delete(oldest) rescue Errno::ENOENT
+      File.delete(oldest) rescue nil
     end
   end
   end

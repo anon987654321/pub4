@@ -32,7 +32,9 @@ module Master
         <<~PROMPT
           #{msg}
 
-          Before acting: list #{MIN_OPTIONS} distinct approaches (numbered). Each: one-line name + one-line trade-off. Then execute the strongest one. State which you chose and why in one sentence.
+          Before acting: list #{MIN_OPTIONS} distinct approaches (numbered).
+          Each: one-line name + one-line trade-off. Then execute the strongest one.
+          State which you chose and why in one sentence.
         PROMPT
       end
     end

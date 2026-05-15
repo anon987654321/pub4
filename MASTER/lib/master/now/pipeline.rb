@@ -69,7 +69,7 @@ module Master
         thread.kill
         @bus&.publish("pipeline:stage_timeout", stage: stage.class.name)
         Result.ok(frozen.merge(_parallel_timeout: stage.class.name))
-      rescue ThreadError
+      rescue ThreadError => _e
         Result.ok(frozen.merge(_parallel_timeout: stage.class.name))
       end
 
@@ -98,7 +98,9 @@ module Master
       private
 
       def pressure_label
-        return @stage.class.name.split("::").last unless @stage.respond_to?(:stages)
+        stage_class = @stage.class.name
+        short_name  = stage_class.split("::").last
+        return short_name unless @stage.respond_to?(:stages)
         names = @stage.stages.map { |s| s.class.name.split("::").last }.join(",")
         "parallel[#{names}]"
       end
@@ -143,7 +145,8 @@ module Master
     end
 
     def stage_label(stage)
-      stage.class.name.split("::").last
+      qualified = stage.class.name
+      qualified.split("::").last
     end
   end
   end

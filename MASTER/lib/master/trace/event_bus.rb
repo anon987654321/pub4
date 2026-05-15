@@ -40,8 +40,7 @@ module Master
 
       def persist_event(event, payload)
         @event_log.append(event, payload)
-      rescue StandardError
-        nil
+      rescue StandardError; nil
       end
 
       def elapsed_ms

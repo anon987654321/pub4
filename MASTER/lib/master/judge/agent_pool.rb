@@ -38,6 +38,7 @@ module Master
       Result.ok(thread)
     end
 
+    # intentional — each thread is an independent worker, not a DB query
     def join_all(timeout: nil)
       @workers.map { |w| w.thread.join(timeout) }
     end

@@ -59,7 +59,7 @@ module Master
         data = Master.load_yaml(COUNCIL_PATH)
         (data["auto_trigger_patterns"] || []).filter_map do |str|
           Regexp.new(str, Regexp::IGNORECASE)
-        rescue RegexpError
+        rescue RegexpError => _e
           nil
         end
       end
@@ -110,9 +110,9 @@ module Master
         @exemplar_mutex.synchronize do
           loaded   = File.exist?(EXEMPLARS_PATH) ? Master.load_yaml(EXEMPLARS_PATH, default: []) : []
           existing = loaded.is_a?(Array) ? loaded : []
-          tmp = "#{EXEMPLARS_PATH}.tmp.#{Process.pid}"
-          File.write(tmp, YAML.dump(existing + [entry]))
-          File.rename(tmp, EXEMPLARS_PATH)
+          tmp_path = "#{EXEMPLARS_PATH}.tmp.#{Process.pid}"
+          File.write(tmp_path, YAML.dump(existing + [entry]))
+          File.rename(tmp_path, EXEMPLARS_PATH)
         end
       rescue StandardError => e
         @bus&.publish("council:exemplar_error", error: e.message)

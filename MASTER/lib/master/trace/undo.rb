@@ -37,8 +37,9 @@ module Master
       paths = []
 
       steps.times do
-        entry = @stack.pop
-        @redo << { "path" => entry["path"], "content" => (File.exist?(entry["path"]) ? File.read(entry["path"]) : nil), "ts" => Time.now.to_i }
+        entry   = @stack.pop
+        current = File.exist?(entry["path"]) ? File.read(entry["path"]) : nil
+        @redo << { "path" => entry["path"], "content" => current, "ts" => Time.now.to_i }
         restore(entry["path"], entry["content"])
         paths << entry["path"]
         @bus&.publish("undo:applied", path: paths.last)
@@ -54,8 +55,9 @@ module Master
       steps = [steps, @redo.size].min
       paths = []
       steps.times do
-        entry = @redo.pop
-        @stack << { "path" => entry["path"], "content" => (File.exist?(entry["path"]) ? File.read(entry["path"]) : nil), "ts" => Time.now.to_i }
+        entry   = @redo.pop
+        current = File.exist?(entry["path"]) ? File.read(entry["path"]) : nil
+        @stack << { "path" => entry["path"], "content" => current, "ts" => Time.now.to_i }
         restore(entry["path"], entry["content"])
         paths << entry["path"]
         @bus&.publish("redo:applied", path: paths.last)
@@ -80,12 +82,12 @@ module Master
       if content.nil?
         File.delete(path) if File.exist?(path)
       else
-        tmp = "#{path}.tmp.#{Process.pid}"
-        File.write(tmp, content)
-        File.rename(tmp, path)
+        tmp_path = "#{path}.tmp.#{Process.pid}"
+        File.write(tmp_path, content)
+        File.rename(tmp_path, path)
       end
     rescue StandardError => e
-      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
       raise e
     end
 
@@ -93,8 +95,7 @@ module Master
       return [] unless File.exist?(@journal)
       File.readlines(@journal).filter_map do |line|
         JSON.parse(line.strip)
-      rescue JSON::ParserError
-        nil
+      rescue JSON::ParserError; nil
       end
     rescue StandardError => e
       @bus&.publish("undo:read_error", error: e.message) if defined?(@bus)
@@ -103,11 +104,11 @@ module Master
 
     def persist_journal
       FileUtils.mkdir_p(File.dirname(@journal))
-      tmp = "#{@journal}.tmp.#{Process.pid}"
-      File.open(tmp, "w") { |f| @stack.each { |entry| f.puts(JSON.generate(entry)) } }
-      File.rename(tmp, @journal)
+      tmp_path = "#{@journal}.tmp.#{Process.pid}"
+      File.open(tmp_path, "w") { |f| @stack.each { |entry| f.puts(JSON.generate(entry)) } }
+      File.rename(tmp_path, @journal)
     rescue StandardError => e
-      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
       raise e
     end
   end

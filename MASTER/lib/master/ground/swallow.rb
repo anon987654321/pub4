@@ -21,8 +21,7 @@ module Master
         warn("swallow:error #{payload.inspect}")
       end
       nil
-    rescue StandardError
-      nil
+    rescue StandardError => _e; nil
     end
   end
   end

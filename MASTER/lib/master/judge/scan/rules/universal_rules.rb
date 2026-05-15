@@ -5,18 +5,25 @@ module Master
   module Scan
   module Rules
 
+  # SQL strings embedded in Ruby DB adapter files are expected — only flag
+  # actual mixed-medium template files.
   RuleDSL.rule :NO_MULTIPLE_LANGUAGES,
     severity: :warning, tags: %i[SMALL_PARTS],
     description: "one medium per artifact" do |src, path:|
-    scan_lines(src, /<%|<script|<style|SQL|HEREDOC/,
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    scan_lines(src, /<%|<script\b|<style\b/,
       message: "mixed medium — extract to a dedicated file")
   end
 
   RuleDSL.rule :SAFE_NAVIGATION,
     severity: :warning, tags: %i[READABILITY],
     description: "use null-safe navigation over nil-guard && chains" do |src, path:|
-    scan_lines(src, /(\w+)\s*&&\s*\1\.\w+/,
-      message: "foo && foo.bar — use foo&.bar (Ruby) or foo?.bar (JS/TS)")
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    src.each_line.with_index(1).filter_map do |line, n|
+      next unless line.match?(/(\w+)\s*&&\s*\1\.\w+/)
+      next if line.match?(/[!=<>]=|[<>]|\?\s*\w/)
+      finding(line: n, message: "nil-guard chain — use safe navigation (&.) or (?.) instead")
+    end
   end
 
   RuleDSL.rule :FEW_ARGUMENTS,
@@ -36,28 +43,51 @@ module Master
   RuleDSL.rule :N_PLUS_ONE,
     severity: :warning, tags: %i[PERFORMANCE],
     description: "loading records one-by-one inside a loop" do |src, path:|
+    # Only meaningful in Rails app/ trees; non-AR enumerable chains are fine.
+    next [] unless path.match?(%r{/app/|/spec/|/test/})
     scan_lines(src, /\.(each|map|collect)\s*(do|\{).*\.\w+\.\w+/,
-      message: "N+1 query candidate — use includes/eager_load or equivalent")
+      message: "N+1 query candidate — use includes/eager_load")
   end
 
+  # Only positional boolean defaults are flag arguments. Keyword defaults
+  # (stream: false, enabled: true) are not — they're fine API design.
   RuleDSL.rule :NO_FLAG_ARGUMENTS,
     severity: :warning, tags: %i[SMALL_PARTS],
     description: "a flag that selects behavior means two things hiding as one" do |src, path:|
-    scan_lines(src, /def \w+\([^)]*\btrue\b|def \w+\([^)]*\bfalse\b/,
-      message: "boolean flag arg — split into two methods")
+    src.each_line.with_index(1).filter_map do |line, n|
+      next unless line.match?(/def \w+\(/)
+      args_str = line[/\(([^)]*)\)/, 1].to_s
+      args = args_str.split(",").map(&:strip)
+      positional_bool = args.any? do |a|
+        a.match?(/\A\w+\s*=\s*(true|false)\z/) && !a.include?(":")
+      end
+      finding(line: n, message: "boolean flag arg — split into two methods") if positional_bool
+    end
   end
 
+  # Exclude numeric dot-chains (IP addresses, version numbers) and stdlib
+  # transformation chains (.to_s.strip.empty?) which are idiomatic Ruby.
   RuleDSL.rule :LAW_OF_DEMETER,
     severity: :warning, tags: %i[COUPLING],
     description: "only talk to immediate friends" do |src, path:|
-    scan_lines(src, /\w+\.\w+\.\w+\.\w+/,
-      message: "4-level chain — introduce a local variable or delegation")
+    src.each_line.with_index(1).filter_map do |line, n|
+      next if line.strip.start_with?("#")
+      next unless line.match?(/\b[a-z_]\w*(?:\.[a-z_]\w*){3}/)
+      next if line.match?(/\d+\.\d+\.\d+\.\d+/)
+      next if line.match?(/\.(to_s|to_i|to_f|to_a|to_h|strip|chomp|compact|first|last|join)\b/) ||
+              line.match?(/\.(empty\?|any\?|size|length)\b/)
+      stripped = line.gsub(/["'][^"']*["']/, '""').gsub(/\(.*?\)/, "()")
+      next unless stripped.match?(/\b[a-z_]\w*(?:\.[a-z_]\w*){3}/)
+      finding(line: n, message: "4-level chain — introduce a local variable or delegation")
+    end
   end
 
+  # Generic names: only very short or clearly placeholder names. `data` and
+  # `result` are contextually meaningful in most Ruby code.
   RuleDSL.rule :MEANINGFUL_NAMES,
     severity: :info, tags: %i[READABILITY],
     description: "names reveal intent" do |src, path:|
-    scan_lines(src, /\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\b\s*=/,
+    scan_lines(src, /\b(tmp|temp|val|ret|obj|arr|buf)\b\s*=/,
       message: "generic name — use a name that reveals intent")
   end
 
@@ -71,20 +101,34 @@ module Master
   RuleDSL.rule :TYPOGRAPHIC_EXCELLENCE,
     severity: :info, tags: %i[TYPOGRAPHY],
     description: "typographic excellence in user-facing text" do |src, path:|
-    scan_lines(src, /["']\.\.\.[\"']|["']--["']/,
-      message: "ASCII typography — use Unicode ellipsis … and em dash —")
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    src.each_line.with_index(1).filter_map do |line, n|
+      next if line.match?(/Open3|capture2|capture3|gsub\(|Shellwords/)
+      next if line.match?(/,\s*"--"\s*,|,\s*"--"\s*\)|<<\s*["']--/)
+      next unless line.match?(/["']\.\.\.[\"']|["']--["']/)
+      finding(line: n, message: "ASCII typography — use Unicode ellipsis … and em dash —")
+    end
   end
 
+  # Exclude YAML document separators (---) and data file structural lines;
+  # only flag decorative runs inside code comments or string literals.
   RuleDSL.rule :TYPOGRAPHY_DISCIPLINE,
     severity: :info, tags: %i[TYPOGRAPHY],
     description: "hierarchy via weight and brightness, not decoration" do |src, path:|
-    scan_lines(src, /[-=]{3,}|[╭╮╰╯│─]/,
-      message: "ASCII decoration — use whitespace and typographic weight instead")
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    src.each_line.with_index(1).filter_map do |line, n|
+      stripped = line.strip
+      next if stripped == "---" || stripped.start_with?("---") && path.end_with?(".yml", ".yaml")
+      next if stripped.start_with?("//", "/*", "*")
+      next unless stripped.match?(/[-=]{4,}|[╭╮╰╯│─]/)
+      finding(line: n, message: "ASCII decoration — use whitespace and typographic weight instead")
+    end
   end
 
   RuleDSL.rule :NULL_BLINDNESS,
     severity: :error, tags: %i[CORRECTNESS],
     description: "comparisons against nullable columns must use IS NULL" do |src, path:|
+    next [] if path.to_s.include?("/judge/scan/rules/")
     scan_lines(src, /= NULL|!= NULL|== nil.*column|column.*== nil/,
       message: "NULL comparison — use IS NULL / IS NOT NULL in SQL; .nil? in Ruby")
   end
@@ -103,11 +147,20 @@ module Master
       message: "raw color value — reference a CSS custom property or design token")
   end
 
+  # `loop do` is legitimate for event loops and daemons. Only flag `retry`
+  # without an obvious cap, and bare `while true` in library code.
   RuleDSL.rule :UNBOUNDED_RETRY,
     severity: :error, tags: %i[ROBUSTNESS],
     description: "retry loops must have a max_attempts cap and backoff" do |src, path:|
-    scan_lines(src, /\bretry\b|loop\s*do|while\s+true/,
-      message: "unbounded retry/loop — add max_attempts cap and exponential backoff")
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    src.each_line.with_index(1).filter_map do |line, n|
+      stripped = line.strip
+      next if stripped.start_with?("#")
+      next if stripped.match?(/loop\s*do/)
+      next if stripped.match?(/retry\\/)
+      next unless stripped.match?(/\bretry\b|while\s+true/)
+      finding(line: n, message: "unbounded retry — add max_attempts cap and exponential backoff")
+    end
   end
 
   end

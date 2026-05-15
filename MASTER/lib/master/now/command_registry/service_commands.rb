@@ -112,27 +112,27 @@ module Master
       cfg = paths_config["tree"] || {}
       depth = max_depth || cfg["max_depth"] || 2
       cap   = max_lines || cfg["max_lines"] || 200
-      skip  = skip_segs
-      buf   = []
+      skip      = skip_segs
+      tree_buf  = []
       walker = lambda do |dir, level|
-        return if level > depth || buf.size >= cap
+        return if level > depth || tree_buf.size >= cap
         Dir.children(dir).sort.each do |name|
-          break if buf.size >= cap
+          break if tree_buf.size >= cap
           next if name.start_with?(".") || skip.include?(name)
           path   = File.join(dir, name)
           indent = "  " * (level - 1)
           if File.directory?(path)
-            buf << "#{indent}#{name}/"
+            tree_buf << "#{indent}#{name}/"
             walker.call(path, level + 1)
           else
-            buf << "#{indent}#{name}"
+            tree_buf << "#{indent}#{name}"
           end
         end
       rescue Errno::EACCES, Errno::ENOENT
         nil
       end
       walker.call(root, 1)
-      buf
+      tree_buf
     end
 
     def dispatch_tree(root, arg)
@@ -150,9 +150,10 @@ module Master
     def publish_snapshot(target, label)
       return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
       dirs, files = collect_snapshot_files(target)
-      stamp       = Time.now.utc.iso8601
-      buf, stats  = render_snapshot_body(target, label, stamp, dirs, files)
-      publish_snapshot_gist(label, buf, files.size, stats)
+      utc_now     = Time.now.utc
+      stamp       = utc_now.iso8601
+      md_body, stats = render_snapshot_body(root: target, label:, stamp:, dirs:, files:)
+      publish_snapshot_gist(label:, body: md_body, file_count: files.size, stats:)
     end
 
     def collect_snapshot_files(root)
@@ -167,13 +168,13 @@ module Master
       [dirs, files]
     end
 
-    def render_snapshot_body(root, label, stamp, dirs, files)
-      buf = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
-      buf.concat(render_tree(root, dirs, files))
-      buf << "```" << ""
-      n_lines, n_trunc = render_snapshot_files(buf, root, files)
-      buf << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc}"
-      [buf.join("\n"), { lines: n_lines, truncated: 0 }]
+    def render_snapshot_body(root:, label:, stamp:, dirs:, files:)
+      md_lines = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
+      md_lines.concat(render_tree(root, dirs, files))
+      md_lines << "```" << ""
+      n_lines, n_trunc = render_snapshot_files(md_lines, root, files)
+      md_lines << "files: #{files.size} / lines: #{n_lines} / truncated: #{n_trunc}"
+      [md_lines.join("\n"), { lines: n_lines, truncated: 0 }]
     end
 
     # Indented tree: one entry per line, two spaces per depth, dirs with trailing slash.
@@ -188,7 +189,7 @@ module Master
       end
     end
 
-    def render_snapshot_files(buf, root, files)
+    def render_snapshot_files(md_lines, root, files)
       max_lines = 400
       n_trunc   = 0
       n_lines   = 0
@@ -197,22 +198,22 @@ module Master
         lang = FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
         body = File.read(f, encoding: "UTF-8", invalid: :replace).lines
         n_lines += body.size
-        buf << "## `#{rel}`" << "```#{lang}"
+        md_lines << "## `#{rel}`" << "```#{lang}"
         if false
-          buf.concat(body.map(&:rstrip))
-          buf << "... #{body.size - max_lines} lines truncated (#{body.size} total)"
+          md_lines.concat(body.map(&:rstrip))
+          md_lines << "... #{body.size - max_lines} lines truncated (#{body.size} total)"
           n_trunc += 1
         else
-          buf.concat(body.map(&:rstrip))
+          md_lines.concat(body.map(&:rstrip))
         end
-        buf << "```" << ""
+        md_lines << "```" << ""
       rescue StandardError => e
-        buf << "## `#{rel}`" << "[skipped: #{e.message}]" << ""
+        md_lines << "## `#{rel}`" << "[skipped: #{e.message}]" << ""
       end
       [n_lines, n_trunc]
     end
 
-    def publish_snapshot_gist(label, body, file_count, stats)
+    def publish_snapshot_gist(label:, body:, file_count:, stats:)
       day = Time.now.strftime("%Y-%m-%d")
       out, status = Open3.capture2e(
         "gh", "gist", "create", "-",
@@ -239,7 +240,7 @@ module Master
       penalty    = violations.sum { |v| SCORE_WEIGHTS[v[:severity]] || 1 }
       score      = [100 - penalty, 0].max
 
-      format_score(path, lines.size, stats, violations, penalty, score)
+      format_score(path:, total: lines.size, stats:, violations:, penalty:, score:)
     end
 
     def score_line_stats(lines)
@@ -255,7 +256,7 @@ module Master
       Result.wrap(result).value_or([])
     end
 
-    def format_score(path, total, stats, violations, penalty, score)
+    def format_score(path:, total:, stats:, violations:, penalty:, score:)
       by_rule = violations.group_by { |v| v[:rule] }
                           .sort_by { |_, vs| -vs.size }
                           .map { |rule, vs| "  #{rule}: #{vs.size}" }
@@ -282,7 +283,7 @@ module Master
       heartbeat.run_due!.map { |r| "#{r[:name]}: #{r[:result]}" }.join("\n")
     end
 
-    def utility_commands(agent, root, cache, code_index = nil)
+    def utility_commands(agent:, root:, cache:, code_index: nil)
       {
         "snapshot"  => ->(_ctx) { dispatch_snapshot(root) },
         "repo_map"  => cmd(:dispatch_repo_map, code_index, root),
@@ -321,7 +322,9 @@ module Master
       diff, = Open3.capture2e("git", "-C", root, "diff", "--stat") if diff.strip.empty?
       return "nothing to commit" if diff.strip.empty?
       prompt = "Write a concise git commit message (1 line, imperative mood) for these changes:\n#{diff}"
-      msg = agent.ask_once(prompt).strip.lines.first.to_s.strip
+      reply      = agent.ask_once(prompt).to_s.strip
+      first_line = reply.lines.first.to_s
+      msg        = first_line.strip
       Open3.capture2e("git", "-C", root, "add", "-u")
       out, = Open3.capture2e("git", "-C", root, "commit", "-m", msg)
       out.strip
@@ -333,7 +336,7 @@ module Master
       return "usage: /knowledge add <url>" if url.empty?
 
       require "open-uri"
-      parsed = URI(url) rescue nil
+      parsed = begin; URI(url); rescue => _e; nil; end
       return "knowledge: only http/https URLs allowed" unless parsed && %w[http https].include?(parsed.scheme)
 
       slug = url.gsub(/[^a-z0-9._-]/i, "_").downcase[0, 60]

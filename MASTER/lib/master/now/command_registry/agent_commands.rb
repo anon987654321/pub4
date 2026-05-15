@@ -33,12 +33,12 @@ module Master
       auto = ->(ctx) {
         target = arg_for(ctx)
         target = "." if target.empty?
-        run_auto_cascade(target, cmds, deliberation, bus)
+        run_auto_cascade(target:, cmds:, deliberation:, bus:)
       }
       { "auto" => auto }
     end
 
-    def run_auto_cascade(target, cmds, deliberation, bus)
+    def run_auto_cascade(target:, cmds:, deliberation:, bus:)
       bus&.publish("auto:start", target: target)
       prev_violations = nil
       transcript = []
@@ -46,13 +46,15 @@ module Master
         scan_out  = cmds["scan"].call(args: target)
         violations = scan_out.scan(/(\d+) violation/).flatten.map(&:to_i).sum
         bus&.publish("auto:round", round: round + 1, violations: violations)
-        if prev_violations && violations > 0 && (prev_violations - violations).abs.to_f / prev_violations < AUTO_PLATEAU_RATIO
+        plateau = prev_violations && violations > 0 &&
+                  (prev_violations - violations).abs.to_f / prev_violations < AUTO_PLATEAU_RATIO
+        if plateau
           transcript << "round #{round + 1}: plateau at #{violations} violation(s)"
           break
         end
         sweep_out = cmds["sweep"].call(args: target)
         artifact  = "scan:\n#{scan_out}\n\nsweep:\n#{sweep_out}"
-        verdict   = run_tribunal(deliberation, artifact, target, bus)
+        verdict   = run_tribunal(deliberation:, artifact:, target:, bus:)
         transcript << "round #{round + 1}: violations=#{violations}\n#{verdict.lines.first(3).join}"
         prev_violations = violations
         break if violations.zero?
@@ -61,7 +63,7 @@ module Master
       "auto cascade (#{transcript.size} round(s)):\n#{transcript.join("\n---\n")}"
     end
 
-    def run_tribunal(deliberation, artifact, target, bus = nil)
+    def run_tribunal(deliberation:, artifact:, target:, bus: nil)
       return "tribunal: deliberation not configured" unless deliberation
 
       result = deliberation.review_convergent(artifact, context: target)
@@ -85,8 +87,9 @@ module Master
       out << ""
       out << "jurors:"
       jurors.each do |f|
-        axiom = f[:axiom] ? "[#{f[:axiom]}] " : ""
-        body  = f[:feedback].to_s.strip.lines.first(3).map(&:chomp).join(" ")
+        axiom          = f[:axiom] ? "[#{f[:axiom]}] " : ""
+        feedback_lines = f[:feedback].to_s.strip.lines
+        body           = feedback_lines.first(3).map(&:chomp).join(" ")
         out << "  #{axiom}#{f[:persona]} (#{f[:role]}): #{body}"
       end
       bus&.publish("tribunal:rendered", jurors: jurors.size, vetoes: vetoes.size, judge: !judge.nil?)
@@ -117,11 +120,11 @@ module Master
         "autoloop" => cmd(:run_autoloop, autoloop),
         "polish"   => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
-          run_sweep(agent, scanner, deliberation, root, bus, code_index, target)
+          run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)
         },
         "sweep"    => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
-          run_sweep(agent, scanner, deliberation, root, bus, code_index, target)
+          run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)
         },
         "scan"     => cmd(:dispatch_scan, scanner, root)
       }
@@ -138,7 +141,7 @@ module Master
       result.ok? ? result.value! : result.message
     end
 
-    def run_sweep(agent, scanner, deliberation, root, bus, code_index, target)
+    def run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)
       sweeper = Master::Loop::Sweep.new(
         agent:, scanner:, council: deliberation, root:,
         event_bus: bus, code_index: code_index
@@ -152,12 +155,12 @@ module Master
 
     def dispatch_scan(scanner, root, arg)
       profile, depth, rule_filter = resolve_scan_profile(arg, root)
-      pairs = collect_scan_pairs(scanner, root, arg, depth)
+      pairs = collect_scan_pairs(scanner:, root:, arg:, depth:)
       return pairs if pairs.is_a?(String)
       format_scan_results(pairs, profile, rule_filter)
     end
 
-    def collect_scan_pairs(scanner, root, arg, depth)
+    def collect_scan_pairs(scanner:, root:, arg:, depth:)
       raw_arg    = arg.sub(/\A(?:critical|solid|axioms)\s*/, "").strip
       target_arg = raw_arg.empty? ? nil : File.expand_path(raw_arg)
       if target_arg && File.file?(target_arg)
@@ -201,7 +204,7 @@ module Master
     def load_workflow_profiles(root)
       data = Master.load_yaml(File.join(root, "data", "workflow.yml"))
       [data["principle_groups"] || {}, data["scan_profiles"] || {}]
-    rescue StandardError
+    rescue StandardError => _e
       [{}, {}]
     end
 
@@ -215,13 +218,13 @@ module Master
       deliberation = ai[:deliberation]
       bus          = infra[:bus]
       {
-        "council" => ->(ctx) { dispatch_council(stage, deliberation, root, bus, arg_for(ctx)) },
+        "council" => ->(ctx) { dispatch_council(stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
         "swarm"   => cmd(:dispatch_swarm, swarm),
         "explain" => ->(_ctx) { explain_master(root) }
       }
     end
 
-    def dispatch_council(stage, deliberation, root, bus, arg)
+    def dispatch_council(stage:, deliberation:, root:, bus:, arg:)
       case arg
       when "on"     then stage.enable!;  "council: enabled in pipeline"
       when "off"    then stage.disable!; "council: disabled in pipeline"
@@ -229,7 +232,7 @@ module Master
       else
         target   = arg.empty? ? "." : arg
         artifact = snapshot_artifact(expand_or_root(target, root))
-        run_tribunal(deliberation, artifact, target, bus)
+        run_tribunal(deliberation:, artifact:, target:, bus:)
       end
     end
 
@@ -261,12 +264,12 @@ module Master
       config  = infra[:config]
       metrics = infra[:metrics]
       {
-        "model" => cmd(:dispatch_model, agent, config, metrics, root),
+        "model" => ->(c) { dispatch_model(agent:, config:, metrics:, root:, arg: arg_for(c)) },
         "why"   => cmd(:dispatch_why, agent, root)
       }
     end
 
-    def dispatch_model(agent, config, metrics, root, arg)
+    def dispatch_model(agent:, config:, metrics:, root:, arg:)
       return list_models(root, metrics, agent) if arg == "list"
       return "model: #{agent.model}" if arg.empty?
       agent.model = arg

@@ -17,8 +17,7 @@ module Master
 
         records = File.readlines(path, chomp: true).filter_map { |line| parse_line(line) }
         limit ? records.last(limit) : records
-      rescue SystemCallError
-        []
+      rescue SystemCallError; []
       end
 
       def workflows(workflow_id)
@@ -43,8 +42,7 @@ module Master
 
       def parse_line(line)
         JSON.parse(line)
-      rescue JSON::ParserError
-        nil
+      rescue JSON::ParserError; nil
       end
     end
   end

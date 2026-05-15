@@ -104,7 +104,8 @@ module Master
     return "gpt-4o" if api_key_present?("OPENAI_API_KEY")
     return "gemini-2.5-flash" if api_key_present?("GEMINI_API_KEY")
     return "mistral-large-latest" if api_key_present?("MISTRAL_API_KEY")
-    raise "No LLM API key found. Set DEEPSEEK_API_KEY, OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, or MISTRAL_API_KEY."
+    raise "No LLM API key found. Set DEEPSEEK_API_KEY, OPENROUTER_API_KEY, " \
+          "ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, or MISTRAL_API_KEY."
   end
 
   def self.load_yaml(path, symbolize_names: false, default: {})

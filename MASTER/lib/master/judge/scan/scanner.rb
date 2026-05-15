@@ -9,12 +9,12 @@ module Master
   module Scan
     class Scanner
       RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
-      POOL_SIZE  = [Etc.nprocessors, 8].min
+      POOL_SIZE  = [Etc.nprocessors, 8].min.freeze
       SCAN_GLOB  = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
       RUBY_EXT   = %w[.rb .rake .gemspec].freeze
 
       def initialize(rules: nil, event_bus: nil)
-        @rules = rules || []
+        @rules = Array(rules)
         @bus   = event_bus
         @mutex = Mutex.new
       end
@@ -26,7 +26,7 @@ module Master
         code     = File.read(path, encoding: "UTF-8")
         ast      = parse_ruby(code, path)
         rule_set = rules || active_rules(depth)
-        findings = rule_set.flat_map { |rule| run_rule(rule, code, ast, path) }
+        findings = rule_set.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
         @bus&.publish("scan:complete", path:, depth:, count: findings.size)
         Result.ok(findings)
       rescue StandardError => e
@@ -37,7 +37,7 @@ module Master
       def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
         paths   = Dir.glob(File.join(dir, glob)).sort
         results = Array.new(paths.size)
-        parallel_each(paths) { |path, idx| results[idx] = scan_one(dir, path, depth, stream) }
+        parallel_each(paths) { |path, idx| results[idx] = scan_one(dir:, path:, depth:, stream:) }
         Result.ok(results)
       rescue StandardError => e
         Result.err("scan_dir: #{e.message}", category: :infrastructure)
@@ -51,7 +51,7 @@ module Master
                   .map { |rel| File.join(dir, rel) }
                   .select { |p| File.exist?(p) && File.extname(p).match?(/\.(rb|erb|yml|js|css|sh|zsh)\z/) }
         results = Array.new(paths.size)
-        parallel_each(paths) { |path, idx| results[idx] = scan_one(dir, path, depth, stream) }
+        parallel_each(paths) { |path, idx| results[idx] = scan_one(dir:, path:, depth:, stream:) }
         Result.ok(results)
       rescue StandardError => e
         Result.err("scan_since: #{e.message}", category: :infrastructure)
@@ -73,11 +73,11 @@ module Master
         return unless RUBY_EXT.include?(File.extname(path))
         result = Prism.parse(code)
         result.success? ? result.value : nil
-      rescue StandardError
+      rescue StandardError => _e
         nil
       end
 
-      def run_rule(rule, code, ast, path)
+      def run_rule(rule:, code:, ast:, path:)
         if ast && rule.respond_to?(:check_ast)
           rule.check_ast(ast, code, path:)
         else
@@ -99,7 +99,7 @@ module Master
         end.each(&:join)
       end
 
-      def scan_one(dir, path, depth, stream)
+      def scan_one(dir:, path:, depth:, stream:)
         file_result = scan(path, depth:)
         stream_progress(dir, path, file_result) if stream
         [path, file_result]

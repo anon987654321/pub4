@@ -39,7 +39,8 @@ module Master
     end
 
     def build_graph
-      owners = @index.symbols.each_value.to_h { |s| [s.fqn, s.file] }
+      symbols = @index.symbols
+      owners = symbols.each_value.to_h { |s| [s.fqn, s.file] }
       edges  = Hash.new { |h, k| h[k] = Set.new }
       @index.references.each do |ref|
         target = owners[ref.to_fqn]
@@ -52,7 +53,7 @@ module Master
       nodes = (g.keys | g.values.flat_map(&:to_a)).uniq
       return {} if nodes.empty?
       rank = seed(nodes, focus)
-      ITERATIONS.times { rank = step(g, nodes, rank, focus) }
+      ITERATIONS.times { rank = step(g:, nodes:, rank:, focus:) }
       rank
     end
 
@@ -61,7 +62,7 @@ module Master
       nodes.to_h { |n| [n, focus.empty? || focus.include?(n) ? base : 0.0] }
     end
 
-    def step(g, nodes, rank, focus)
+    def step(g:, nodes:, rank:, focus:)
       tele = teleport(nodes, focus)
       out  = nodes.to_h { |n| [n, tele[n]] }
       nodes.each do |from|
@@ -84,17 +85,17 @@ module Master
     end
 
     def pack(ordered)
-      buf    = ["# Repo map", ""]
-      tokens = estimate(buf.join("\n"))
+      sections = ["# Repo map", ""]
+      tokens   = estimate(sections.join("\n"))
       ordered.each do |path|
         block = format_file(path)
         next if block.empty?
         cost = estimate(block.join("\n"))
         break if tokens + cost > @budget
-        buf.concat(block)
+        sections.concat(block)
         tokens += cost
       end
-      buf.join("\n")
+      sections.join("\n")
     end
 
     def format_file(path)

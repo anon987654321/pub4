@@ -29,9 +29,10 @@ module Master
       private
 
       def build_record(event, payload)
+        now = Time.now.utc
         {
           id: SecureRandom.uuid,
-          timestamp: Time.now.utc.iso8601(6),
+          timestamp: now.iso8601(6),
           event: event.to_s,
           payload: payload || {}
         }

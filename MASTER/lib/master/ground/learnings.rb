@@ -15,9 +15,10 @@ module Master
     CONFIDENCE_DECAY_DAYS = 30
 
     RSI_WINDOW_DAYS      = 7
-    RSI_FAIL_THRESHOLD   = 0.20   # >20% failure rate triggers opportunity
-    RSI_CORRECTION_MIN   = 3      # ≥3 user corrections triggers opportunity
-    RSI_PROVIDER_MIN     = 3      # ≥3 provider errors triggers opportunity
+    # Thresholds: >20% failure, ≥3 corrections, ≥3 provider errors.
+    RSI_FAIL_THRESHOLD   = 0.20
+    RSI_CORRECTION_MIN   = 3
+    RSI_PROVIDER_MIN     = 3
 
     def initialize(root:)
       @path        = File.join(root, STORE_PATH)
@@ -107,7 +108,7 @@ module Master
           failure = evs.count { |e| e["event_type"] == "tool_failure" }
           total   = success + failure
           rate    = total.zero? ? 0.0 : failure.to_f / total
-          { category: :high_failure, dimension: tool, fail_rate: rate.round(3), 
+          { category: :high_failure, dimension: tool, fail_rate: rate.round(3),
 total: } if rate >= RSI_FAIL_THRESHOLD && total >= 3
         }
 
@@ -144,7 +145,7 @@ total: } if rate >= RSI_FAIL_THRESHOLD && total >= 3
       return [] unless File.exist?(@path)
       File.readlines(@path, chomp: true).filter_map do |l|
         JSON.parse(l)
-      rescue JSON::ParserError
+      rescue JSON::ParserError => _e
         nil
       end
     rescue StandardError => _e
@@ -155,7 +156,7 @@ total: } if rate >= RSI_FAIL_THRESHOLD && total >= 3
       return [] unless File.exist?(@events_path)
       File.readlines(@events_path, chomp: true).filter_map do |l|
         JSON.parse(l)
-      rescue JSON::ParserError
+      rescue JSON::ParserError => _e
         nil
       end
     rescue StandardError => _e

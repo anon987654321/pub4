@@ -10,8 +10,8 @@ module Master
 
       def validate_intent!(intent)
         raise ArgumentError, "intent must be a Hash" unless intent.is_a?(Hash)
-        raise ArgumentError, "intent missing :type" unless intent[:type] || intent["type"]
-        raise ArgumentError, "intent missing :actor" unless intent[:actor] || intent["actor"]
+        raise ArgumentError, "intent missing :type" unless intent.fetch(:type) { intent["type"] }
+        raise ArgumentError, "intent missing :actor" unless intent.fetch(:actor) { intent["actor"] }
 
         true
       end

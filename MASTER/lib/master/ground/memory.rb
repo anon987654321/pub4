@@ -172,7 +172,7 @@ module Master
         next if body.empty?
         remember(key, body, type: type)
       end
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -205,11 +205,11 @@ module Master
     def persist
       dir = File.dirname(@path)
       FileUtils.mkdir_p(dir)
-      tmp = "#{@path}.tmp.#{Process.pid}"
-      File.write(tmp, @store.to_yaml)
-      File.rename(tmp, @path)
+      tmp_path = "#{@path}.tmp.#{Process.pid}"
+      File.write(tmp_path, @store.to_yaml)
+      File.rename(tmp_path, @path)
     rescue StandardError => e
-      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
       raise e
     end
 

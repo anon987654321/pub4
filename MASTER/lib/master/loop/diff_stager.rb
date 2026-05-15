@@ -63,9 +63,9 @@ module Master
       applied = []
       targets.each do |entry|
         FileUtils.mkdir_p(File.dirname(entry.path))
-        tmp = "#{entry.path}.tmp.#{Process.pid}"
-        File.write(tmp, entry.new_content)
-        File.rename(tmp, entry.path)
+        tmp_path = "#{entry.path}.tmp.#{Process.pid}"
+        File.write(tmp_path, entry.new_content)
+        File.rename(tmp_path, entry.path)
         @mutex.synchronize { @pending.delete(entry) }
         remove_persisted(entry)
         @bus&.publish("stage:applied", id: entry.id, path: entry.path)
@@ -90,7 +90,8 @@ module Master
       return pastel.dim("  (no staged changes)") if @pending.empty?
       @pending.map do |e|
         short = e.path.sub(@root + "/", "")
-        "  #{pastel.yellow("[#{e.id}]")} #{pastel.white(short)} #{pastel.dim(e.diff_stats)} #{pastel.dim("via #{e.tool}")}"
+        "  #{pastel.yellow("[#{e.id}]")} #{pastel.white(short)}" \
+        " #{pastel.dim(e.diff_stats)} #{pastel.dim("via #{e.tool}")}"
       end.join("\n")
     end
 
@@ -99,9 +100,10 @@ module Master
       entry = @pending.find { |e| e.id == id }
       return pastel.red("no staged change with id #{id}") unless entry
 
-      short = entry.path.sub(@root + "/", "")
-      header = "#{pastel.bold(short)} #{pastel.dim(entry.diff_stats)}\n"
-      diff_lines = entry.diff.to_s.lines.map do |line|
+      short      = entry.path.sub(@root + "/", "")
+      header     = "#{pastel.bold(short)} #{pastel.dim(entry.diff_stats)}\n"
+      diff_text  = entry.diff.to_s
+      diff_lines = diff_text.lines.map do |line|
         case line[0]
         when "+" then pastel.green(line.chomp)
         when "-" then pastel.red(line.chomp)

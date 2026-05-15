@@ -37,10 +37,10 @@ module Master
 
       def self.questions
         @questions ||= begin
-          data = File.exist?(COUNCIL_PATH) ? (Master.load_yaml(COUNCIL_PATH) || {}) : {}
-          data["questions"] || {}
+          council_data = File.exist?(COUNCIL_PATH) ? (Master.load_yaml(COUNCIL_PATH) || {}) : {}
+          council_data["questions"] || {}
         end
-      rescue StandardError
+      rescue StandardError => _e
         {}
       end
 
@@ -64,9 +64,9 @@ module Master
         round_context = context
         max_rounds.times do |i|
           @bus&.publish(:council_round_start, round: i + 1, max: max_rounds)
-          result = review(code, context: round_context)
-          return result unless result.is_a?(Master::Result::Ok)
-          feedback = result.value!
+          review_result = review(code, context: round_context)
+          return review_result unless review_result.is_a?(Master::Result::Ok)
+          feedback = review_result.value!
           history << feedback
           if history.size >= 2 && converged?(history[-2], history[-1])
             @bus&.publish(:council_converged, round: i + 1)
@@ -74,7 +74,7 @@ module Master
           end
           round_context = feedback_summary(feedback, context)
         end
-        Master::Result.ok(history.last || [])
+        Master::Result.ok(Array(history.last))
       end
 
       def review(code, context: nil)
@@ -109,7 +109,8 @@ module Master
         end.compact
         if feedback.size < MIN_QUORUM
           @bus&.publish(:council_timeout, completed: feedback.size, total: @personas.size)
-          return Master::Result.err("council: quorum not reached (#{feedback.size}/#{@personas.size})", category: :timeout)
+          quorum_msg = "council: quorum not reached (#{feedback.size}/#{@personas.size})"
+          return Master::Result.err(quorum_msg, category: :timeout)
         end
 
         vetoes = feedback.select { |f| f[:veto_role] && veto_text?(f[:feedback]) }
@@ -153,7 +154,7 @@ module Master
         lines = feedback.reject { |f| f[:persona] == "Judge" }.map do |f|
           "#{f[:persona]} (#{f[:role]}): #{f[:feedback].to_s.lines.first(2).join.strip}"
         end
-        summary = "\n--- prior round ---\n" + lines.join("\n") + "\n--- end ---\n"
+        summary = "\nprior round:\n" + lines.join("\n") + "\n"
         [base_context, summary].compact.join
       end
 

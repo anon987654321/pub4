@@ -29,7 +29,7 @@ module Master
       return "no trace recorded yet" unless turn
 
       lines = ["turn #{turn[:id]}  ts=#{turn[:start_ts]}  channel=#{turn[:channel]}"]
-      lines << "  message: #{(turn[:message] || "")[0, 100]}"
+      lines << "  message: #{(turn.fetch(:message, ""))[0, 100]}"
       turn[:events].each do |ev|
         ms = ev[:ts_ms]
         name = ev[:event]
@@ -63,20 +63,18 @@ module Master
         next if @current[:events].size >= MAX_EVENTS_PER_TURN
         @current[:events] << relative(event)
       end
-    rescue StandardError
-      # never break the bus
+    rescue StandardError; nil
     end
 
     def relative(ev)
-      ts0 = @current[:t0] || 0
-      ev.merge(ts_ms: (ev[:ts] || 0) - ts0).except(:ts)
+      ts0 = @current.fetch(:t0, 0)
+      ev.merge(ts_ms: (ev.fetch(:ts, 0)) - ts0).except(:ts)
     end
 
     def finalize(turn)
       path = File.join(@dir, "#{Time.now.strftime("%Y-%m-%d")}.jsonl")
       File.open(path, "a") { |f| f.puts JSON.generate(turn) }
-    rescue StandardError
-      # disk full / permission — drop silently rather than break the turn
+    rescue StandardError; nil
     end
 
     def load_last_from_disk
@@ -85,8 +83,7 @@ module Master
       last_line = nil
       File.foreach(files.last) { |l| last_line = l }
       last_line ? JSON.parse(last_line, symbolize_names: true) : nil
-    rescue StandardError
-      nil
+    rescue StandardError; nil
     end
   end
   end

@@ -9,7 +9,6 @@ module Master
   # from Ruby source via Prism. Used by CommitGuard to detect omissions.
   module AstSignature
     Sig = Data.define(:type, :name, :line)
-
     module_function
 
     def from_source(source)
@@ -18,7 +17,7 @@ module Master
       visitor = Visitor.new
       visitor.visit(result.value)
       visitor.sigs
-    rescue StandardError
+    rescue StandardError => _e
       []
     end
 
@@ -35,11 +34,7 @@ module Master
 
     class Visitor < Prism::Visitor
       attr_reader :sigs
-
-      def initialize
-        @sigs = []
-        @ns   = []
-      end
+      def initialize = (@sigs = []; @ns = [])
 
       def visit_module_node(node)
         name = node.constant_path.slice
@@ -60,12 +55,10 @@ module Master
       end
 
       def visit_def_node(node)
-        base  = @ns.join("::")
-        klass = node.receiver&.is_a?(Prism::SelfNode)
-        sep   = klass ? "." : "#"
-        full  = base.empty? ? node.name.to_s : "#{base}#{sep}#{node.name}"
+        base = @ns.join("::")
+        sep  = node.receiver&.is_a?(Prism::SelfNode) ? "." : "#"
+        full = base.empty? ? node.name.to_s : "#{base}#{sep}#{node.name}"
         @sigs << Sig.new(type: :method, name: full, line: node.location.start_line)
-        # don't descend — nested defs are implementation detail
       end
 
       def visit_constant_write_node(node)
@@ -79,7 +72,6 @@ module Master
       end
 
       private
-
       def fqn(name) = (@ns + [name]).join("::")
     end
   end

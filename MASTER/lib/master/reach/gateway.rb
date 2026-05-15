@@ -41,7 +41,8 @@ module Master
         adapter.respond_to?(:render) ? adapter.render(text, metadata) : adapter.call(text, metadata)
       end
 
-      @bus&.publish("gateway:turn_done", turn_id:, ok: result.ok?, error: result.ok? ? nil : result.message&.to_s&.[](0, 120))
+      err_msg = result.ok? ? nil : result.message&.to_s&.[](0, 120)
+      @bus&.publish("gateway:turn_done", turn_id:, ok: result.ok?, error: err_msg)
       result
     end
 

@@ -16,7 +16,7 @@ module Master
         agent_commands(ai:, root:, infra:),
         memory_commands(infra[:memory], ai[:agent]),
         service_commands(ai, infra[:phase_gates], diag: infra[:diag], root: root),
-        utility_commands(ai[:agent], root, infra[:cache], infra[:code_index]),
+        utility_commands(agent: ai[:agent], root:, cache: infra[:cache], code_index: infra[:code_index]),
         control_commands(ai[:standing], ai[:soul]),
 "ecology" => ->(ctx) {
   scanner = Judge::RepoEcology.new(root:, event_bus: infra[:bus])

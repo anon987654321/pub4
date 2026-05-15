@@ -21,7 +21,9 @@ module Master
       critical: "!!"
     }.freeze
 
-    SLASH_COMMANDS = %w[/exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart].freeze
+    SLASH_COMMANDS = %w[
+      /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
+    ].freeze
 
     attr_reader :container
 
@@ -85,7 +87,7 @@ module Master
       end
       result = begin
         @pipeline_thread.value
-      rescue StandardError
+      rescue StandardError => _e
         Result.err("aborted", category: :abort)
       end
       display_result(result, accumulated, state[:streamed])
@@ -128,7 +130,7 @@ module Master
       @pipeline    = deps[:pipeline]
       @scanner     = deps[:scanner]
       @autoloop    = deps[:autoloop]
-      @root        = deps[:root] || Dir.pwd
+      @root        = deps.fetch(:root, Dir.pwd)
       @diff_stager = deps[:diff_stager]
       @bus         = deps[:bus]
     end
@@ -136,7 +138,9 @@ module Master
     def repl_loop
       while @running
         unless @focus_mode
-          status = @renderer.status_row(uptime: @renderer.uptime, turns: @session.messages.size, violations: @violations)
+          status = @renderer.status_row(
+            uptime: @renderer.uptime, turns: @session.messages.size, violations: @violations
+          )
           puts status if status
           sugg = suggested_next_prompt
           puts @renderer.render("  ↳ #{sugg}", mode: :dim) if sugg
@@ -271,7 +275,7 @@ module Master
         puts @renderer.render("dmesg: off", mode: :dim)
       else
         @dmesg_sub = @bus&.subscribe("*") do |payload|
-          ts   = payload[:ts] || 0
+          ts   = payload.fetch(:ts, 0)
           line = "  [#{ts.to_s.rjust(7)}] #{payload[:event]}"
           $stdout.puts @renderer.render(line, mode: :dim) rescue nil
         end
@@ -310,7 +314,7 @@ module Master
 
     def safe_read_line
       @reader.read_line("", echo: true).chomp
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -323,7 +327,7 @@ module Master
 
     def read_multiline
       lines = []
-      puts @renderer.render("-- enter lines, blank line to send --", mode: :dim)
+      puts @renderer.render("enter lines, blank line to send", mode: :dim)
       loop do
         print "  "
         inner = safe_read_line
@@ -338,8 +342,10 @@ module Master
       return if tail.empty?
       puts @renderer.render("resume0: replaying last #{tail.size} messages", mode: :dim)
       tail.each do |msg|
-        tag     = msg[:role] == :user ? "you" : "master"
-        snippet = msg[:content].to_s.lines.first.to_s.strip[0, 100]
+        tag         = msg[:role] == :user ? "you" : "master"
+        content     = msg[:content].to_s
+        first_line  = content.lines.first.to_s
+        snippet     = first_line.strip[0, 100]
         puts @renderer.render("  #{tag}: #{snippet}", mode: :dim)
       end
       puts
@@ -386,7 +392,7 @@ module Master
       out.lines
          .map { |l| File.join(@root, l.strip) }
          .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
-    rescue StandardError
+    rescue StandardError => _e
       []
     end
 
@@ -468,7 +474,7 @@ module Master
     def update_think_stage(payload)
       ev = payload[:event].to_s
       return unless ev.start_with?("stage:")
-      stage = payload[:stage] || ev.sub("stage:", "")
+      stage = payload.fetch(:stage, ev.sub("stage:", ""))
       @think_stage = stage.to_s
     end
 
@@ -497,7 +503,7 @@ module Master
         $stdout.puts @renderer.render(line, mode: :dim)
         $stdout.flush
       end
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -506,7 +512,7 @@ module Master
       out, _ = Open3.capture2e("git", "-C", @root, "diff", "--numstat", "--", path)
       m = out.lines.first&.match(/^(\d+)\s+(\d+)/)
       m ? "+#{m[1]}/-#{m[2]}" : nil
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -519,14 +525,14 @@ module Master
       puts @renderer.render("tree0: #{File.basename(@root)} (#{lines.size} entries)", mode: :dim)
       lines.each { |l| puts @renderer.render(l, mode: :dim) }
       puts
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
     def booted_before?
       flag = File.join(@root, ".master", "booted_once")
       File.exist?(flag)
-    rescue StandardError
+    rescue StandardError => _e
       false
     end
 
@@ -544,7 +550,7 @@ module Master
       puts
       FileUtils.mkdir_p(File.dirname(flag))
       File.write(flag, Time.now.to_s)
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 

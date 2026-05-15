@@ -11,7 +11,7 @@ module Master
     def initialize(container:)
       @session     = container[:session]
       @config      = container[:config]
-      @root        = container[:root] || Dir.pwd
+      @root        = container.fetch(:root, Dir.pwd)
       @violations  = 0
       @bus         = container[:bus]
     end
@@ -41,7 +41,8 @@ module Master
 
     def from_violations
       return [] if @violations.zero?
-      [{ action: "/polish", reason: "#{@violations} unresolved violation(s)", weight: 0.9 + [@violations / 50.0, 0.1].min }]
+      weight = 0.9 + [@violations / 50.0, 0.1].min
+      [{ action: "/polish", reason: "#{@violations} unresolved violation(s)", weight: }]
     end
 
     def from_last_assistant
@@ -49,13 +50,20 @@ module Master
       return [] unless last && last[:role] == :assistant
       text = last[:content].to_s
       out = []
-      out << prop("/polish",        "assistant flagged violations",       0.85) if text.match?(/violation[s]? found|need(s)? fixing|to fix/i)
-      out << prop("/undo",         "assistant says nothing changed",     0.75) if text.match?(/\bunchanged\b|\balready\b/i)
-      out << prop("show the diff", "assistant referenced an edit/patch", 0.65) if text.match?(/\bdiff\b|\bedit\b|\bpatch\b/i)
-      out << prop("what went wrong?", "error/failure in last reply",     0.7)  if text.match?(/(error|fail|exception|crash)/i)
-      out << prop("/why",          "decision/score worth inspecting",    0.6)  if text.match?(/\b(routed|tier|escalat|chose|picked)\b/i)
-      out << prop("/auto",        "constitutional question raised",     0.55) if text.match?(/\bshould we\b|\btradeoff\b|\beither\b/i)
-      out << prop("/commit",       "patch landed, ready to commit",      0.8)  if text.match?(/\b(applied|wrote|patched|edited)\b/i)
+      out << prop("/polish", "assistant flagged violations", 0.85) \
+        if text.match?(/violation[s]? found|need(s)? fixing|to fix/i)
+      out << prop("/undo", "assistant says nothing changed", 0.75) \
+        if text.match?(/\bunchanged\b|\balready\b/i)
+      out << prop("show the diff", "assistant referenced an edit/patch", 0.65) \
+        if text.match?(/\bdiff\b|\bedit\b|\bpatch\b/i)
+      out << prop("what went wrong?", "error/failure in last reply", 0.7) \
+        if text.match?(/(error|fail|exception|crash)/i)
+      out << prop("/why", "decision/score worth inspecting", 0.6) \
+        if text.match?(/\b(routed|tier|escalat|chose|picked)\b/i)
+      out << prop("/auto", "constitutional question raised", 0.55) \
+        if text.match?(/\bshould we\b|\btradeoff\b|\beither\b/i)
+      out << prop("/commit", "patch landed, ready to commit", 0.8) \
+        if text.match?(/\b(applied|wrote|patched|edited)\b/i)
       out
     end
 
@@ -65,7 +73,7 @@ module Master
       dirty = out.lines.size
       return [] if dirty.zero?
       [prop("/commit", "#{dirty} uncommitted file(s)", 0.5 + [dirty / 40.0, 0.3].min)]
-    rescue StandardError
+    rescue StandardError => _e
       []
     end
 
@@ -81,7 +89,7 @@ module Master
     def from_idle
       last = @session.messages.last
       return [] unless last
-      ts = last[:ts] || last[:timestamp]
+      ts = last.fetch(:ts) { last[:timestamp] }
       return [] unless ts
       age = Time.now.to_i - ts.to_i
       return [] if age < 600
@@ -90,7 +98,7 @@ module Master
 
     def from_bus_tail
       return [] unless @bus.respond_to?(:tail)
-      events = @bus.tail(20) rescue []
+      events = begin; @bus.tail(20); rescue => _e; []; end
       return [] if events.empty?
       out = []
       escalations = events.count { |e| e[:event].to_s.include?("escalation") }

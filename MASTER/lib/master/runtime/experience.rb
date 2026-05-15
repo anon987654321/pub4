@@ -32,7 +32,7 @@ module Master
 
       def signature_for(plan)
         Array(plan).map do |step|
-          step[:tool] || step["tool"] || :unknown
+          step.fetch(:tool) { step.fetch("tool", :unknown) }
         end.join("->")
       end
     end

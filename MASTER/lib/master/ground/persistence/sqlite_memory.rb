@@ -31,7 +31,7 @@ module Master
 
       def recall(query, limit: 10)
         @db.execute(<<~SQL, [query.to_s, limit])
-          SELECT m.name, m.kind, m.description, snippet(memories_fts, 1, '[', ']', '...', 12) AS hit
+          SELECT m.name, m.kind, m.description, snippet(memories_fts, 1, '[', ']', '…', 12) AS hit
           FROM memories_fts JOIN memories m ON m.rowid = memories_fts.rowid
           WHERE memories_fts MATCH ? ORDER BY rank LIMIT ?
         SQL

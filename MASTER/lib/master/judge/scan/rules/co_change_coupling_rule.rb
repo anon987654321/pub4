@@ -13,7 +13,8 @@ module Master
       class CoChangeCouplingRule < Rule
         COMMITS_WINDOW    = 500
         WEIGHT_THRESHOLD  = 5
-        MAX_FILES_IN_COMMIT = 12  # skip mega-commits, they pollute the graph
+        # Skip mega-commits — they pollute the graph.
+        MAX_FILES_IN_COMMIT = 12
 
         def initialize
           super
@@ -48,13 +49,16 @@ module Master
           @graph_mutex.synchronize { @graph ||= build_graph }
         end
 
+        COMMIT_SEPARATOR = "===commit===".freeze
+
         def build_graph
           out, _, status = Open3.capture3("git", "-C", repo_root,
-                                          "log", "--name-only", "--pretty=format:--commit--",
+                                          "log", "--name-only",
+                                          "--pretty=format:#{COMMIT_SEPARATOR}",
                                           "-n", COMMITS_WINDOW.to_s, "--", "*.rb")
           return {} unless status.success?
           adjacency = Hash.new { |h, k| h[k] = Hash.new(0) }
-          out.split("--commit--").each do |chunk|
+          out.split(COMMIT_SEPARATOR).each do |chunk|
             files = chunk.lines.map(&:strip).reject(&:empty?).select { |f| f.end_with?(".rb") }
             next if files.size < 2 || files.size > MAX_FILES_IN_COMMIT
             files.combination(2) do |a, b|

@@ -27,8 +27,8 @@ module Master
         src = File.read(fp)
         case operation.to_s
         when "find_method"    then find_method(src, opts[:name].to_s)
-        when "rename_method"  then rename_method(fp, src, opts[:from].to_s, opts[:to].to_s)
-        when "add_after"      then add_after_method(fp, src, opts[:after].to_s, opts[:code].to_s)
+        when "rename_method"  then rename_method(fp:, src:, from: opts[:from].to_s, to: opts[:to].to_s)
+        when "add_after"      then add_after_method(fp:, src:, after_name: opts[:after].to_s, code: opts[:code].to_s)
         when "method_lines"   then method_lines(src, opts[:name].to_s)
         else
           Result.err("ast_edit: unknown operation: #{operation}", category: :validation)
@@ -51,10 +51,10 @@ module Master
       end
 
       # Rename all occurrences of a method definition and calls
-      def rename_method(fp, src, from, to)
+      def rename_method(fp:, src:, from:, to:)
         return Result.err("ast_edit: from/to required", category: :validation) if from.empty? || to.empty?
-        return Result.err("ast_edit: invalid name: #{to}", 
-category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
+        return Result.err("ast_edit: invalid name: #{to}",
+          category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
 
         @undo.snapshot(fp)
         updated = src
@@ -68,7 +68,7 @@ category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
       end
 
       # Insert a new method directly after an existing one
-      def add_after_method(fp, src, after_name, code)
+      def add_after_method(fp:, src:, after_name:, code:)
         return Result.err("ast_edit: after/code required", category: :validation) if after_name.empty? || code.empty?
 
         ranges = method_line_ranges(src)
@@ -76,7 +76,7 @@ category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
         return Result.err("ast_edit: method not found: #{after_name}", category: :validation) unless entry
 
         lines = src.lines
-        insert_at = entry[:end]  # after the 'end' of the target method
+        insert_at = entry[:end]
         lines.insert(insert_at, "\n", code.chomp + "\n")
 
         @undo.snapshot(fp)
@@ -97,7 +97,7 @@ category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
         require "ripper"
         lines  = src.lines
         ranges = []
-        stack  = []  # stack of {name:, start:, depth:}
+        stack  = []
         depth  = 0
 
         Ripper.lex(src).each do |(_line, _col), type, token, _state|

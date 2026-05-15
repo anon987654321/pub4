@@ -17,7 +17,7 @@ module Master
         prompt = load_prompt(selected)
         format(prompt.fetch("template", "%{message}"), message: message.to_s)
       rescue StandardError => e
-        $stderr.puts "reasoning/modes: wrap failed (mode=#{mode}): #{e.message}"
+        warn "reasoning/modes: wrap failed (mode=#{mode}): #{e.message}"
         message.to_s
       end
 

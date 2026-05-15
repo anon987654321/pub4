@@ -46,7 +46,8 @@ module Master
           @rules.dig("openrouter", "free_latest"),
           @rules.dig("ferrum_web_chat", "free_latest")
         ]
-        latest.flatten.compact.uniq
+        flat = latest.flatten.compact
+        flat.uniq
       end
 
       def escalate?(response, threshold: DEFAULT_THRESHOLD)
@@ -127,7 +128,6 @@ module Master
           { id: m["id"], q:, s: sp, c: co, total: q * sp * co }
         }.sort_by { |x| -x[:total] }
       end
-
 
 INTENT_PATTERNS = {
   code_generation: /\b(implement|build|add|create|write|make|generate|scaffold|port|wire)\b/i,

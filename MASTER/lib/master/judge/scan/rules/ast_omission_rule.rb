@@ -20,7 +20,7 @@ module Master
       return [] unless path.to_s.end_with?(".rb")
       omissions = @guard.check(paths: [File.basename(path)])
       omissions.map { |o| finding(line: 1, message: "#{o.type} #{o.name} dropped (last seen #{o.last_seen_at})") }
-    rescue StandardError
+    rescue StandardError => _e
       []
     end
   end

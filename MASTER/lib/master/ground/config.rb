@@ -55,15 +55,15 @@ module Master
       dir = File.dirname(@path)
       FileUtils.mkdir_p(dir)
 
-      tmp = "#{@path}.tmp.#{Process.pid}"
-      File.open(tmp, 'w') do |f|
+      tmp_path = "#{@path}.tmp.#{Process.pid}"
+      File.open(tmp_path, 'w') do |f|
         f.write(@data.to_yaml)
         f.flush
         f.fsync
       end
-      File.rename(tmp, @path)
+      File.rename(tmp_path, @path)
     ensure
-      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
     end
 
     def reload!

@@ -58,7 +58,8 @@ module Master
         private
 
         def parse_findings(response)
-          return [] if response.strip.upcase.start_with?("CLEAN")
+          response_normalized = response.strip.upcase
+          return [] if response_normalized.start_with?("CLEAN")
 
           response.lines.filter_map do |line|
             match = line.strip.match(/\AISSUE:(\d+):(.+)\z/)

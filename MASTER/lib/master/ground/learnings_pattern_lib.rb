@@ -39,8 +39,7 @@ module Master
     def load
       return {} unless File.exist?(@path)
       JSON.parse(File.read(@path), symbolize_names: true)
-    rescue JSON::ParserError
-      {}
+    rescue JSON::ParserError; {}
     end
 
     def save

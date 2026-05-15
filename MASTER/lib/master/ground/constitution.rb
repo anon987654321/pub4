@@ -29,19 +29,21 @@ module Master
       self
     end
 
+    YAML_FRONT_MATTER_MARKER = "---".freeze
+    YAML_FRONT_MATTER_RE     = /^---\s*$/.freeze
+
     private
 
     def load
       return [] unless File.directory?(@dir)
       Dir.glob(File.join(@dir, "*.md")).sort.filter_map { |f| parse(f) }.first(MAX_PRINCIPLES)
-    rescue StandardError
-      []
+    rescue StandardError; []
     end
 
     def parse(path)
       raw = File.read(path, encoding: "UTF-8")
-      return nil unless raw.start_with?("---")
-      _, frontmatter, body = raw.split(/^---\s*$/, 3)
+      return nil unless raw.start_with?(YAML_FRONT_MATTER_MARKER)
+      _, frontmatter, body = raw.split(YAML_FRONT_MATTER_RE, 3)
       meta = YAML.safe_load(frontmatter.to_s) || {}
       {
         name:        meta["name"].to_s,
@@ -49,8 +51,7 @@ module Master
         type:        meta["type"].to_s,
         body:        body.to_s.strip[0, MAX_BODY_CHARS]
       }
-    rescue StandardError
-      nil
+    rescue StandardError; nil
     end
   end
   end

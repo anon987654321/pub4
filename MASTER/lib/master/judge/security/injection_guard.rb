@@ -23,7 +23,9 @@ module Master
           /disregard (?:axiom|principle|rule|safety)/i,
           /new system prompt/i,
         ].freeze,
-        shell_injection: /```(?:bash|sh|zsh|shell)\n.*?(?:rm\s+-rf|curl\b.*?\|\s*(?:bash|sh)\b|wget\b.*?\|\s*(?:bash|sh)\b)/im.freeze,
+        shell_injection: /```(?:bash|sh|zsh|shell)\n.*?
+          (?:rm\s+-rf|curl\b.*?\|\s*(?:bash|sh)\b|wget\b.*?\|\s*(?:bash|sh)\b)
+        /imx.freeze,
       }.freeze
 
       ALLOWLIST_TOKEN = /\AMASTER_TRUSTED:[A-Za-z0-9]{16,}/.freeze
@@ -63,10 +65,10 @@ module Master
         shell  = data.dig("shell_injection", "multiline_pattern")
         {
           prompt_injection: prompt.empty? ? DEFAULTS[:prompt_injection] : prompt.freeze,
-          shell_injection:  shell ? Regexp.new(shell, 
+          shell_injection:  shell ? Regexp.new(shell,
 Regexp::MULTILINE | Regexp::IGNORECASE) : DEFAULTS[:shell_injection],
         }
-      rescue StandardError
+      rescue StandardError => _e
         DEFAULTS
       end
     end

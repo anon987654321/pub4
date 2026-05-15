@@ -34,7 +34,8 @@ module Master
       synchronize do
         now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @req_times.reject! { |t| now - t > @rate_window }
-        raise CircuitError.new("rate limit: #{@rate_max} req/min exceeded", :infrastructure) if @req_times.size >= @rate_max
+        over_rate = @req_times.size >= @rate_max
+        raise CircuitError.new("rate limit: #{@rate_max} req/min exceeded", :infrastructure) if over_rate
         @req_times << now
       end
     end
@@ -70,25 +71,25 @@ module Master
     end
 
     def check_budget(estimate)
-      return unless @budget_max.positive? # Only check budget if it's a positive value.
+      # Only check budget if it's a positive value.
+      return unless @budget_max.positive?
       synchronize do
-        raise CircuitError.new("budget: $#{(@session_total + estimate).round(4)} exceeds $#{@budget_max}", 
-:budget) if @session_total + estimate > @budget_max
+        over_budget = @session_total + estimate > @budget_max
+        raise CircuitError.new("budget: $#{(@session_total + estimate).round(4)} exceeds $#{@budget_max}",
+                               :budget) if over_budget
       end
     end
 
     def check_circuit
+      # No retry loop here — caller decides whether to retry after catching CircuitError.
       synchronize do
         return if @state == :closed
         if @state == :open
           elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - @opened_at
           unless elapsed >= COOLDOWN_S
-  raise CircuitError.new("circuit open: retry in #{(COOLDOWN_S - elapsed).ceil}s", :infrastructure)
-end
-            @state = :half_open
-          
-            
-          
+            raise CircuitError.new("circuit open: #{(COOLDOWN_S - elapsed).ceil}s cooldown remaining", :infrastructure)
+          end
+          @state = :half_open
         end
       end
     end

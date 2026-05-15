@@ -14,7 +14,9 @@ module Master
     def self.boot_autonomous(root:, infra:, agent:, scanner:, soul:)
       bus       = infra[:bus]
       standing  = Master::Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
-      autoloop  = Master::Loop::AutoLoop.new(agent:, scanner:, root:, event_bus: bus, soul:, learnings: infra[:learnings])
+      autoloop  = Master::Loop::AutoLoop.new(
+        agent:, scanner:, root:, event_bus: bus, soul:, learnings: infra[:learnings]
+      )
       git       = Master::Reach::GitOperations.new(root)
       super_loop = Master::Loop::SuperLoop.new(rules: scanner.instance_variable_get(:@rules),
                                                agent:, scanner:, root:, bus:, git:)

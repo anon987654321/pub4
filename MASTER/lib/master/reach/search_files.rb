@@ -24,8 +24,7 @@ module Master
         return @cache[key] if @cache.key?(key)
         begin
           re = Regexp.new(pattern)
-        rescue RegexpError
-          return Result.err("invalid pattern: #{pattern}", category: :validation)
+        rescue RegexpError; return Result.err("invalid pattern: #{pattern}", category: :validation)
         end
 
         paths   = cached_paths(glob)

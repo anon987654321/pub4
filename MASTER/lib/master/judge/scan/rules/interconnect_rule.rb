@@ -32,7 +32,8 @@ module Master
         def check(code, path:)
           findings = []
           findings.concat(check_phantom_yaml_reads(code, path)) if path.include?("/lib/") && path.end_with?(".rb")
-          findings.concat(check_phantom_scan_classes(code, path)) if path.end_with?("rules.yml") && path.include?("/data/")
+          findings.concat(check_phantom_scan_classes(code, path)) \
+            if path.end_with?("rules.yml") && path.include?("/data/")
           findings
         end
 
@@ -95,7 +96,8 @@ module Master
 
         def extract_dig_paths(code)
           code.scan(DIG_CALL).filter_map do |match|
-            keys = match.first.to_s.scan(/["']([^"']+)["']/).flatten
+            raw  = match.first.to_s
+            keys = raw.scan(/["']([^"']+)["']/).flatten
             keys.size >= 1 ? keys : nil
           end
         end

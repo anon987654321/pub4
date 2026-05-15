@@ -10,7 +10,8 @@ module Master
       # comments are factual bugs, not style noise.
       class CommentDriftRule < Rule
         MAX_PAIRS_PER_FILE = 8
-        BODY_SNIPPET       = 20  # lines of method body sent to LLM
+        # Lines of method body sent to LLM for drift comparison.
+        BODY_SNIPPET       = 20
 
         def initialize(agent: nil)
           super()
@@ -34,7 +35,7 @@ module Master
           return [] if pairs.empty?
           response = @agent.ask(build_prompt(pairs, path), operation: :scan_comment_drift).to_s
           parse_findings(response, pairs)
-        rescue StandardError
+        rescue StandardError => _e
           []
         end
 

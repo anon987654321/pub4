@@ -127,7 +127,8 @@ module Master
         output = reply.respond_to?(:output_tokens) ? reply.output_tokens.to_i : 0
         tokens = input + output
         if tokens.zero? && reply.respond_to?(:content)
-          tokens = reply.content.to_s.bytesize / Master::Trace::Session::TOKENS_PER_CHAR
+          content_str = reply.content.to_s
+          tokens = content_str.bytesize / Master::Trace::Session::TOKENS_PER_CHAR
         end
         return if tokens.zero?
         cost = (tokens * COST_PER_TOKEN).round(6)
@@ -143,7 +144,8 @@ module Master
       def extract_response(reply, selected_model)
         return reply.to_s unless reply.respond_to?(:content)
         if NEMOTRON3_RE.match?(selected_model) && reply.respond_to?(:reasoning_content)
-          thinking = reply.reasoning_content.to_s.strip
+          reasoning_content = reply.reasoning_content
+          thinking = reasoning_content.to_s.strip
           content  = reply.content.to_s
           return thinking.empty? ? content : "#{content}\n\n<think>\n#{thinking}\n</think>"
         end
@@ -175,7 +177,9 @@ module Master
       end
 
       def build_llm_tools(visitor: false)
-        tier = @model_router&.tier_for_model(@config.model).to_s
+        model_id    = @config.model
+        router_tier = @model_router&.tier_for_model(model_id)
+        tier = router_tier.to_s
         @tools.filter_map do |tool|
           wrapper = LLM_TOOL_MAP[tool.class]
           next nil unless wrapper

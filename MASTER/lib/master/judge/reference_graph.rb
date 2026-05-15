@@ -103,25 +103,25 @@ module Master
 
     def ruby_requires(content, rel)
       content.scan(/require(?:_relative)?\s+["']([^"']+)["']/).flatten.each do |target|
-        edge(rel, normalize_require(target), :require, 1.0)
+        edge(from: rel, to: normalize_require(target), type: :require, weight: 1.0)
       end
     end
 
     def constant_refs(content, rel)
       content.scan(/\b([A-Z][A-Za-z0-9_:]{2,})\b/).flatten.tally.each do |constant, count|
-        edge(rel, "const:#{constant}", :constant, count)
+        edge(from: rel, to: "const:#{constant}", type: :constant, weight: count)
       end
     end
 
     def command_refs(content, rel)
       content.scan(%r{/[a-z_]+}).flatten.tally.each do |command, count|
-        edge(rel, "command:#{command}", :command, count)
+        edge(from: rel, to: "command:#{command}", type: :command, weight: count)
       end
     end
 
     def event_refs(content, rel)
       content.scan(/["']([a-z_]+:[a-z_]+)["']/).flatten.tally.each do |event, count|
-        edge(rel, "event:#{event}", :event, count)
+        edge(from: rel, to: "event:#{event}", type: :event, weight: count)
       end
     end
 
@@ -130,7 +130,7 @@ module Master
       cleaned.end_with?(".rb") ? cleaned : "#{cleaned}.rb"
     end
 
-    def edge(from, to, type, weight)
+    def edge(from:, to:, type:, weight:)
       @edges << Edge.new(
         type:,
         from:,

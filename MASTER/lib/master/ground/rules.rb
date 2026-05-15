@@ -8,13 +8,16 @@ module Master
     SOUL_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "soul.yml").freeze
     WORKFLOW_PATH = File.join(File.expand_path("../../..", __dir__), "data", "workflow.yml").freeze
 
+    RULES_SUBDIR = "rules"
+
     def initialize(root: nil)
       @root          = root || Master::ROOT
       @data_dir      = File.join(@root, "data")
       @rules_path    = File.join(@data_dir, "rules.yml")
       @soul_path     = File.join(@data_dir, "soul.yml")
       @workflow_path = File.join(@data_dir, "workflow.yml")
-      @data          = load_yaml(@rules_path)    || {}
+      @data          = load_yaml(@rules_path) || {}
+      @data["rules"] = load_split_rules
       @soul_data     = load_yaml(@soul_path)     || {}
       @workflow      = load_yaml(@workflow_path) || {}
       @cache         = {}
@@ -110,12 +113,19 @@ module Master
 
     private
 
+    def load_split_rules
+      dir = File.join(@data_dir, RULES_SUBDIR)
+      return @data["rules"] || {} unless File.directory?(dir)
+      Dir.glob(File.join(dir, "*.yml")).sort.each_with_object({}) do |f, merged|
+        data = load_yaml(f) || {}
+        data.each { |scope, rules| (merged[scope] ||= []).concat(Array(rules)) }
+      end
+    end
+
     def load_yaml(path)
       return unless File.exist?(path)
-
       Master.load_yaml(path)
-    rescue StandardError => _e
-      nil
+    rescue StandardError; nil
     end
   end
   end

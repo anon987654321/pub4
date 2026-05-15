@@ -40,7 +40,8 @@ module Master
                     **PERSONA_DEFAULTS)
       ].freeze
 
-      ALLOWED_KEYS = Persona.members.to_set.freeze
+      persona_members = Persona.members
+      ALLOWED_KEYS = persona_members.to_set.freeze
 
       @cache = {}
 
@@ -50,7 +51,7 @@ module Master
 
         @cache[path] ||= begin
           raw = Master.load_yaml(path, symbolize_names: true)
-          rows = raw.is_a?(Array) ? raw : Array(raw[:personas] || raw["personas"])
+          rows = raw.is_a?(Array) ? raw : Array(raw.fetch(:personas) { raw["personas"] })
           raise "Invalid persona data" unless rows.is_a?(Array) && rows.any?
 
           rows.filter_map { |attrs| build_persona(attrs) }.freeze

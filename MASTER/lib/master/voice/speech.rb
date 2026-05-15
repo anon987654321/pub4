@@ -25,11 +25,12 @@ module Master
       normal:  { rate: "+0%",  pitch: "+0Hz"   },
       slow:    { rate: "-20%", pitch: "-60Hz"  },
       natural: { rate: "+8%",  pitch: "+20Hz"  },
-      # Clause-aware variants — auto-applied by infer_style when caller passes :auto.
-      question:{ rate: "-10%", pitch: "+40Hz"  }, # rising lift, slight slowdown
-      exclaim: { rate: "+15%", pitch: "+60Hz"  }, # energetic, brighter
-      whisper: { rate: "-15%", pitch: "-30Hz"  }, # quiet, intimate
-      grave:   { rate: "-25%", pitch: "-80Hz"  }  # sober, weighty
+      # Clause-aware: applied by infer_style when caller passes :auto.
+      # question → rising lift; exclaim → energetic; whisper → intimate; grave → weighty.
+      question:{ rate: "-10%", pitch: "+40Hz"  },
+      exclaim: { rate: "+15%", pitch: "+60Hz"  },
+      whisper: { rate: "-15%", pitch: "-30Hz"  },
+      grave:   { rate: "-25%", pitch: "-80Hz"  }
     }.freeze
 
     DEFAULT_VOICE = :yasmin
@@ -43,7 +44,8 @@ module Master
       return fallback if t.empty?
       return :exclaim  if t.match?(/!{1,3}\s*$/) || t.match?(/\b[A-Z]{4,}\b/)
       return :question if t.end_with?("?")
-      return :grave    if t.match?(/\.{3,}\s*$|\u2026\s*$/) || t.match?(/\b(sorry|i'?m sorry|condolences|grief|loss)\b/i)
+      return :grave    if t.match?(/\.{3,}\s*$|\u2026\s*$/) ||
+                         t.match?(/\b(sorry|i'?m sorry|condolences|grief|loss)\b/i)
       return :whisper  if t.start_with?("(") && t.end_with?(")")
       fallback
     end
@@ -55,7 +57,8 @@ module Master
     end
 
     def synthesize(text, voice: DEFAULT_VOICE, style: DEFAULT_STYLE)
-      return if text.to_s.strip.empty?
+      text_str = text.to_s.strip
+      return if text_str.empty?
 
       style = infer_style(text, fallback: DEFAULT_STYLE) if style == :auto
       style = DEFAULT_STYLE unless STYLES.key?(style)

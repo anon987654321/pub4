@@ -178,11 +178,11 @@ module Master
     def persist_state
       path = File.join(@root, STATE_PATH)
       FileUtils.mkdir_p(File.dirname(path))
-      tmp = "#{path}.tmp.#{Process.pid}"
-      File.write(tmp, @state.to_yaml)
-      File.rename(tmp, path)
+      tmp_path = "#{path}.tmp.#{Process.pid}"
+      File.write(tmp_path, @state.to_yaml)
+      File.rename(tmp_path, path)
     rescue StandardError => e
-      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
       raise e
     end
   end

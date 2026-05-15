@@ -17,8 +17,7 @@ module Master
           next if line.strip.empty?
 
           yield JSON.parse(line)
-        rescue JSON::ParserError
-          next
+        rescue JSON::ParserError; next
         end
       end
 

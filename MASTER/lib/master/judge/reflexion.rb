@@ -29,7 +29,8 @@ module Master
       prompt = <<~PROMPT
         Task: #{task.to_s[0, TASK_TRUNCATE]}
         Attempt output: #{result.to_s[0, TASK_TRUNCATE]}
-        What specifically went wrong? Name the constraint violated. What must change in the next attempt? One paragraph, no preamble.
+        What specifically went wrong? Name the constraint violated.
+        What must change in the next attempt? One paragraph, no preamble.
       PROMPT
       resp = fast_model ? agent.ask_once(prompt, model: fast_model) : agent.ask(prompt)
       resp.respond_to?(:value!) ? resp.value! : resp.to_s

@@ -45,7 +45,7 @@ module Master
         # out of the prompt — they're noise that doubles cost. info-tier
         # opportunities stay in: that's their whole point.
         def load_semantic_rules
-          data = Master.load_yaml(RULES_PATH)
+          data = Master.load_rules
           (data["rules"] || {}).values.flatten
             .select { |r| r["detect_semantic"] }
             .reject { |r| r["severity"] == "info" && r["mode"] != "opportunity" && r["tier"] != "kernel" }

@@ -4,6 +4,7 @@ module Master
   module Plugins
   module Judge
     def self.configure(base, root: Dir.pwd, agent: nil, bus: nil, **_opts)
+      Master::Judge::Scan::RuleDSL
       scanner = Master::Judge::Scan::Scanner.new(event_bus: bus)
       Master::Judge::Scan::Rule.registry.select(&:auto_build?).each { |k| scanner.add_rule(k.new) }
       scanner.add_rule(Master::Judge::Scan::Rules::RuleCoverageRule.new(root:))

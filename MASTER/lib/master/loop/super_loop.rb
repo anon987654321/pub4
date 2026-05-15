@@ -14,8 +14,9 @@ module Master
   # Topology:    emits codebase:topology SSE event after each pass (#15)
   #              so the particle system can render live codebase state.
   class SuperLoop
-    IDLE_SLEEP     = 300   # seconds between clean passes
-    STARTUP_DELAY  = 90    # seconds before first self-run after boot
+    # 300s between clean passes; 90s before first self-run after boot.
+    IDLE_SLEEP     = 300
+    STARTUP_DELAY  = 90
     SCAN_GLOB      = Master::Judge::Scan::Scanner::SCAN_GLOB
     SKIP_DIRS      = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
     GIT_COMMIT_MSG = "super_loop: autofix violations".freeze
@@ -28,7 +29,8 @@ module Master
       @root         = root
       @bus          = bus
       @git          = git || Reach::GitOperations.new(root)
-      @violation_counts = Hash.new(0)  # rule_id → cumulative violations seen
+      # rule_id → cumulative violations seen across passes
+      @violation_counts = Hash.new(0)
     end
 
     # One-shot: run all rule loops once against target.
@@ -66,8 +68,8 @@ module Master
     # Architecture #1 + #2: priority queue + topological ordering.
     def ordered_rules
       deps  = load_deps
-      rules = @rules.sort_by { |r| -@violation_counts[r.id] }  # #1: highest-impact first
-      topo_sort(rules, deps)                                     # #2: dependency order
+      rules = @rules.sort_by { |r| -@violation_counts[r.id] }
+      topo_sort(rules, deps)
     end
 
     # Architecture #3 (rule-first default): converge each rule across all files.
@@ -101,9 +103,10 @@ module Master
 
     # Architecture #15: emit codebase topology for particle visualization.
     def emit_topology(rule_results, target)
-      modules = group_by_module(rule_results, target)
+      modules   = group_by_module(rule_results, target)
+      timestamp = Time.now.utc.iso8601
       @bus&.publish("codebase:topology", {
-        timestamp:        Time.now.utc.iso8601,
+        timestamp:        timestamp,
         target:           target.delete_prefix(@root + "/"),
         total_violations: rule_results.sum { |r| r[:fixed] },
         any_dirty:        rule_results.any? { |r| r[:status] != :clean },
@@ -115,7 +118,8 @@ module Master
       # Map rules to module paths based on known structure.
       module_map = {}
       @rules.each do |rule|
-        mod = rule.class.name.to_s.split("::")[0..2].join("::").downcase.gsub("::", "/")
+        class_name = rule.class.name.to_s
+        mod = class_name.split("::")[0..2].join("::").downcase.gsub("::", "/")
         module_map[rule.id] = mod
       end
       by_mod = Hash.new { |h, k| h[k] = { path: k, violations: 0, rules: [], status: :clean } }
@@ -167,7 +171,7 @@ module Master
       data = Master.load_yaml(DEPS_PATH)
       deps_raw = data&.dig("deps") || {}
       deps_raw.transform_values { |v| Array(v["after"] || []) }
-    rescue StandardError
+    rescue StandardError => _e
       {}
     end
 

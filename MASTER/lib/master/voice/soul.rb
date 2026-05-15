@@ -25,9 +25,10 @@ module Master
     def wire_agent(agent) = @agent = agent
 
     def summary
-      version = extract_version
-      persona = extract_field("Persona")
-      voice   = extract_field("Voice").to_s.lines.first.to_s.strip[0, 120]
+      version    = extract_version
+      persona    = extract_field("Persona")
+      voice_raw  = extract_field("Voice").to_s
+      voice      = voice_raw.lines.first.to_s.strip[0, 120]
       "SOUL.md v#{version} | persona: #{persona}\n#{voice}"
     end
 
@@ -52,8 +53,9 @@ module Master
         Output the full updated SOUL.md. No preamble.
       PROMPT
 
-      draft = agent.ask_once(prompt)
-      return "draft failed" if draft.to_s.strip.empty?
+      draft      = agent.ask_once(prompt)
+      draft_text = draft.to_s.strip
+      return "draft failed" if draft_text.empty?
 
       drift = measure_drift(current, draft)
       blocked = drift[:absolute_changed].any?
@@ -65,7 +67,11 @@ module Master
         tmp_w = "#{PROPOSAL_PATH}.tmp.#{Process.pid}"
         File.write(tmp_w, draft)
         File.rename(tmp_w, PROPOSAL_PATH)
-        risk = drift[:protected_changed].any? ? " [PROTECTED sections affected: #{drift[:protected_changed].join(", ")}]" : ""
+        risk = if drift[:protected_changed].any?
+          " [PROTECTED sections affected: #{drift[:protected_changed].join(", ")}]"
+        else
+          ""
+        end
         "proposal saved#{risk}. Review with `soul diff`, approve with `soul approve`, reject with `soul reject`."
       end
     rescue StandardError => e

@@ -167,7 +167,7 @@ module Master
       lines = (Master.load_yaml(path) || {})["closings"]
       return nil unless lines.is_a?(Array) && lines.any?
       @p.dim(lines.sample)
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -186,7 +186,7 @@ module Master
     def git_rev
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--short", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -208,7 +208,7 @@ module Master
     def git_branch
       out, _, st = Open3.capture3("git", "rev-parse", "--abbrev-ref", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
@@ -223,7 +223,7 @@ module Master
       filtered = raw.reject { |l| l.match?(/\A(?:OpenBSD\s+\d|Copyright\s|The Regents)/) }
       lines = filtered.first(BOOT_DMESG_LINES)
       lines.empty? ? ["dmesg unavailable"] : lines
-    rescue StandardError
+    rescue StandardError => _e
       ["dmesg unavailable"]
     end
   end

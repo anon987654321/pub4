@@ -19,13 +19,13 @@ module Master
 
         full  = resolved.value!
         depth = [depth.to_i, MAX_DEPTH].min
-        lines = list_tree(full, full, depth, pattern)
+        lines = list_tree(base: full, dir: full, depth:, pattern:)
         Result.ok(lines.join("\n"))
       end
 
       private
 
-      def list_tree(base, dir, depth, pattern, indent = 0)
+      def list_tree(base:, dir:, depth:, pattern:, indent: 0)
         return [] if depth < 0
         entries = Dir.entries(dir).reject { |e| e.start_with?(".") }.sort
         entries.flat_map { |entry|
@@ -33,7 +33,7 @@ module Master
           next [] if pattern && !File.fnmatch?(pattern, entry)
           prefix = "  " * indent
           if File.directory?(full)
-            ["#{prefix}#{entry}/"] + list_tree(base, full, depth - 1, pattern, indent + 1)
+            ["#{prefix}#{entry}/"] + list_tree(base:, dir: full, depth: depth - 1, pattern:, indent: indent + 1)
           else
             ["#{prefix}#{entry}"]
           end

@@ -31,7 +31,14 @@ module Master
       ".rb"  => ->(p) { _, _, st = Open3.capture3("ruby", "-c", p); st.success? },
       ".sh"  => ->(p) { _, _, st = Open3.capture3("zsh", "-n", p); st.success? },
       ".yml" => ->(p) { begin; Master.load_yaml(p); true; rescue StandardError => _e; false; end },
-      ".erb" => ->(p) { begin; RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src); true; rescue SyntaxError, StandardError => _e; false; end }
+      ".erb" => ->(p) {
+        begin
+          RubyVM::InstructionSequence.compile(ERB.new(File.read(p, encoding: "UTF-8")).src)
+          true
+        rescue SyntaxError, StandardError => _e
+          false
+        end
+      }
     }.freeze
 
     SEVERITY_RANK = Master::SEVERITY_RANK
@@ -66,6 +73,7 @@ circuit\sopen|retry\sin|llm_request)\b
       @cycle_log  = []
     end
 
+    # Bounded by max_cycles (default MAX_CYCLES = 16); breaks early on convergence, stall, or halt.
     def run(target = @root, max_cycles: MAX_CYCLES, types: GLOBS.keys)
       saved_model = @agent.model
       @agent.model = @agent.model_for(operation: :sweep)
@@ -93,7 +101,7 @@ circuit\sopen|retry\sin|llm_request)\b
           before = violations_in(path)
           src    = File.read(path, encoding: "UTF-8")
 
-          new_src, after = evaluate_rewrite(rel, src, before, cycle)
+          new_src, after = evaluate_rewrite(rel:, src:, before:, cycle:)
           if new_src.nil?
             cycle_defer += before
             next
@@ -148,11 +156,11 @@ circuit\sopen|retry\sin|llm_request)\b
         a, d, = line.split("	", 3)
         a.to_i + d.to_i
       end
-    rescue StandardError
+    rescue StandardError => _e
       MEDIUM_CHANGE_LINES
     end
 
-    def evaluate_rewrite(rel, src, before, cycle)
+    def evaluate_rewrite(rel:, src:, before:, cycle:)
       abs = File.join(@root, rel)
       native_src = native_autofix(abs, src)
       if native_src
@@ -164,21 +172,21 @@ circuit\sopen|retry\sin|llm_request)\b
         src = native_src
         before = native_after
       end
-    
+
       new_src = rewrite(abs, rel)
       return unless new_src && new_src.strip != src.strip && syntax_ok?(abs, new_src)
-    
+
       after = violations_in_text(new_src, abs)
       return if after > before
-    
+
       if rename_oscillation?(rel, src, new_src, cycle)
         @bus&.publish("sweep:oscillation_rejected", file: rel, cycle:)
         return
       end
-    
+
       [new_src, after]
     end
-    
+
     def native_autofix(path, src)
       return unless path.end_with?(".rb")
       result = nil

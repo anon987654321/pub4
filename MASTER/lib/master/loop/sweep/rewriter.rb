@@ -86,14 +86,16 @@ module Master
         baseline = violations_in_text(source, path)
         candidates = n.times.map { single_rewrite(source, rel, lang) }.compact
         return if candidates.empty?
-        scored = candidates.map { |c| [score_candidate(c, path, baseline, source.bytesize), c] }
+        scored = candidates.map { |c|
+          [score_candidate(content: c, path:, baseline:, original_size: source.bytesize), c]
+        }
         winner = scored.max_by { |s, _| s }
         @bus&.publish("sweep:best_of_picked", file: path, n: candidates.size,
                       baseline_violations: baseline, winner_score: winner.first)
         winner.last
       end
 
-      def score_candidate(content, path, baseline, original_size)
+      def score_candidate(content:, path:, baseline:, original_size:)
         violations  = violations_in_text(content, path)
         delta_viol  = baseline - violations
         delta_size  = (content.bytesize - original_size).abs

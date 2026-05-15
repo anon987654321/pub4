@@ -5,7 +5,8 @@ module Master
   # Watches data/ for mtime changes; republishes config:reloaded events.
   # Polled — no inotify dependency on OpenBSD base.
   class HotReload
-    DEFAULT_INTERVAL = 5  # seconds
+    # seconds
+    DEFAULT_INTERVAL = 5
 
     def initialize(data_dir:, event_bus:, interval: DEFAULT_INTERVAL)
       @data_dir = data_dir

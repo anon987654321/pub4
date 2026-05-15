@@ -42,7 +42,8 @@ module Master
       candidate_models = routed_models(message)
       prompt   = topic_anchored(message)
       context  = conversation_context
-      @bus&.publish("llm:request", model: candidate_models.first, tokens: message.bytesize / Trace::Session::TOKENS_PER_CHAR)
+      tokens_approx = message.bytesize / Trace::Session::TOKENS_PER_CHAR
+      @bus&.publish("llm:request", model: candidate_models.first, tokens: tokens_approx)
       @deps.homeostat&.observe(:llm_call)
 
       rate_err = check_rate_limit
@@ -196,7 +197,8 @@ module Master
     end
 
     def publish_llm_success(model, response)
-      @bus&.publish("llm:response", model:, success: true, tokens_approx: response.to_s.bytesize / Trace::Session::TOKENS_PER_CHAR)
+      tokens_approx = response.to_s.bytesize / Trace::Session::TOKENS_PER_CHAR
+      @bus&.publish("llm:response", model:, success: true, tokens_approx:)
     end
 
     def maybe_escalate(last_response, original_message, stream:, escalation_depth:, &blk)

@@ -8,16 +8,32 @@ module Master
       # Heuristic task-type detection — used by ModelRouter for tiered model selection.
       PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 
-      VAGUE_STUBS = /\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|good\s+\w+|test(?:ing)?|please)\z/i.freeze
+      VAGUE_STUBS = Regexp.new(
+        '\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|' \
+        'good\s+\w+|test(?:ing)?|please)\z', Regexp::IGNORECASE
+      ).freeze
 
       GREETING_STUBS = /\A(?:hi+|hey|hello|good\s+\w+)\z/i.freeze
       ELICIT_DEFAULT = "be specific: which file or function, and what should change?".freeze
 
       TASK_TYPE_PATTERNS = {
-        architecture: /\b(?:restructur|reorganiz|hierarch|layout|folder|director|module\s+boundar|decouple|extract\s+(?:a\s+)?(?:module|class|layer|service)|where\s+should|how\s+should\s+(?:we|i)\s+organiz|split\s+(?:this\s+)?(?:into|across)|consolidat)/i,
-        coding:       /\b(?:def |class |module |require |\.rb\b|fix\s+(?:the\s+)?(?:bug|error|issue)|refactor|implement|write\s+(?:a\s+)?(?:method|class|function|test)|add\s+(?:a\s+)?(?:method|feature)|```(?:ruby|python|js|javascript|bash))/i,
-        research:     /\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|explain\s+(?:how|what|why)|tell\s+me\s+about)\b/i,
-        qa:           /\?(?:\s*$|\s+[A-Z])/m,
+        architecture: Regexp.new(
+          '\b(?:restructur|reorganiz|hierarch|layout|folder|director|module\s+boundar|' \
+          'decouple|extract\s+(?:a\s+)?(?:module|class|layer|service)|where\s+should|' \
+          'how\s+should\s+(?:we|i)\s+organiz|split\s+(?:this\s+)?(?:into|across)|consolidat)',
+          Regexp::IGNORECASE
+        ),
+        coding: Regexp.new(
+          '\b(?:def |class |module |require |\.rb\b|fix\s+(?:the\s+)?(?:bug|error|issue)|' \
+          'refactor|implement|write\s+(?:a\s+)?(?:method|class|function|test)|' \
+          'add\s+(?:a\s+)?(?:method|feature)|```(?:ruby|python|js|javascript|bash))',
+          Regexp::IGNORECASE
+        ),
+        research: Regexp.new(
+          '\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|' \
+          'explain\s+(?:how|what|why)|tell\s+me\s+about)\b', Regexp::IGNORECASE
+        ),
+        qa:       /\?(?:\s*$|\s+[A-Z])/m,
       }.freeze
 
       PATTERNS_PATH = File.join(Master::ROOT, "data", "infer_patterns.yml").freeze
@@ -33,14 +49,16 @@ module Master
         @patterns.each do |cmd, entry|
           entry[:regexes].each do |pattern|
             next unless (m = msg.match(pattern))
-            return Result.ok(ctx.merge(intent: :command, command: cmd, args: extract_args(cmd,
-              entry[:capture], m, msg)))
+            return Result.ok(ctx.merge(intent: :command, command: cmd,
+              args: extract_args(cmd:, capture: entry[:capture], match: m, msg:)))
           end
         end
 
         if vague?(msg)
           if msg.match?(GREETING_STUBS)
-            return Result.ok(ctx.merge(intent: :clarify, clarifying_question: "ready. what are you working on? (try /help)"))
+            return Result.ok(ctx.merge(
+              intent: :clarify, clarifying_question: "ready. what are you working on? (try /help)"
+            ))
           end
           return Result.ok(ctx.merge(intent: :clarify, clarifying_question: ELICIT_DEFAULT))
         end
@@ -70,7 +88,7 @@ module Master
         :general
       end
 
-      def extract_args(cmd, capture, match, msg)
+      def extract_args(cmd:, capture:, match:, msg:)
         case capture
         when "path"
           path = match[1]&.strip
@@ -81,7 +99,8 @@ module Master
         when "on_off"
           msg.match?(/\b(?:off|disable|stop|av|skru\s+av)\b/i) ? "off" : "on"
         when "first_group"
-          match.captures.compact.first.to_s.strip
+          first_cap = match.captures.compact.first
+          first_cap.to_s.strip
         when "persona_name"
           (match[1] || match[2] || match[3]).to_s.strip
         when "soul_subcmd"

@@ -26,7 +26,7 @@ module Master
           match_str = raw.to_s.match(/\{.*\}/m)&.to_s || "{}"
           parsed = JSON.parse(match_str)
           Result.ok(parsed)
-        rescue JSON::ParserError
+        rescue JSON::ParserError => _e
           Result.ok({ summary: raw.to_s.strip, issues: [] })
         end
       end

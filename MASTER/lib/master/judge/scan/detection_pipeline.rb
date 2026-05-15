@@ -107,7 +107,7 @@ module Master
             false
           }
           count
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
 
@@ -123,7 +123,7 @@ module Master
             false
           }
           max.zero? ? nil : max
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
 
@@ -131,7 +131,7 @@ module Master
           result = Prism.parse(code)
           return nil if result.failure?
           max_depth(result.value, 0)
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
 
@@ -143,7 +143,8 @@ module Master
         def max_depth(node, depth)
           return depth unless node.respond_to?(:child_nodes)
           child_depth = NESTING_NODES.include?(node.class) ? depth + 1 : depth
-          node.child_nodes.compact.reduce(child_depth) { |m, c| [m, max_depth(c, child_depth)].max }
+          children = node.child_nodes
+          children.compact.reduce(child_depth) { |m, c| [m, max_depth(c, child_depth)].max }
         end
       end
     end

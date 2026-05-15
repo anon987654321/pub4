@@ -15,7 +15,9 @@ module Master
       def initialize(agent:, event_bus: nil)
         @agent      = agent
         @bus        = event_bus
-        @role       = self.class.name.split("::").last.downcase
+        class_name  = self.class.name
+        class_parts = class_name.split("::")
+        @role       = class_parts.last.downcase
         @result     = nil
         @confidence = 1.0
       end

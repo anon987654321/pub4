@@ -28,9 +28,10 @@ module Master
       base = path ? File.expand_path(path, @root) : @root
       files = collect_files(base)
       records = files.map { |file| analyze_file(file) }
+      scanned_utc = Time.now.utc
       report = {
         root: @root,
-        scanned_at: Time.now.utc.iso8601,
+        scanned_at: scanned_utc.iso8601,
         files: records.size,
         score: score(records),
         dead_file_candidates: dead_file_candidates(records),
@@ -63,7 +64,9 @@ module Master
         "#{item[:path]} — #{item[:lines]} lines"
       })
       lines << ""
-      lines << "sprawl: max_depth=#{report[:sprawl][:max_depth]}, avg_depth=#{report[:sprawl][:avg_depth]}, orphan_dirs=#{report[:sprawl][:orphan_dirs]}"
+      sprawl = report[:sprawl]
+      lines << "sprawl: max_depth=#{sprawl[:max_depth]}, avg_depth=#{sprawl[:avg_depth]}, " \
+               "orphan_dirs=#{sprawl[:orphan_dirs]}"
       lines << "extensions: #{report[:extension_mix].map { |ext, count| "#{ext}=#{count}" }.join(', ')}"
       lines.join("\n")
     end

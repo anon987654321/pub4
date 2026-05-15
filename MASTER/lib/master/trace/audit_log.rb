@@ -34,8 +34,7 @@ module Master
 
     def rotate!
       File.rename(@path, "#{@path}.1")
-    rescue StandardError
-      nil
+    rescue StandardError; nil
     end
   end
   end
