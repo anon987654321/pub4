@@ -8,7 +8,7 @@ module Master
     RING_SIZE = 1000
 
     def self.boot(root:, config:)
-      event_log = Master::Runtime::EventLog.new(root:)
+      event_log = Master::Trace::EventLog.new(root:)
       bus       = Master::Trace::EventBus.new(event_log:)
       ring      = Master::Trace::RingBuffer.new(RING_SIZE)
       logging   = Master::Trace::Logging.new(ring_buffer: ring, event_bus: bus)

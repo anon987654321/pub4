@@ -14,7 +14,7 @@ module Master
         super()
         @subscribers   = Hash.new { |h, k| h[k] = [] }
         @pattern_cache = {}
-        @event_log     = event_log || Master::Runtime::EventLog.new
+        @event_log     = event_log || Master::Trace::EventLog.new
       end
 
       def subscribe(pattern, &handler)

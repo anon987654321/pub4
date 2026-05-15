@@ -6,15 +6,15 @@ require "securerandom"
 require "time"
 
 module Master
-  module Runtime
+  module Trace
     class EventLog
       DEFAULT_STREAM = "activity"
       STREAM_PATTERN = /\A[a-z0-9_\-]+\z/
 
       def initialize(root: Master::ROOT, stream: DEFAULT_STREAM)
-        @root = root
+        @root   = root
         @stream = normalize_stream(stream)
-        @path = File.join(@root, "runtime", "events", "#{@stream}.jsonl")
+        @path   = File.join(@root, "runtime", "events", "#{@stream}.jsonl")
       end
 
       def append(event, payload = {})
@@ -31,18 +31,16 @@ module Master
       def build_record(event, payload)
         now = Time.now.utc
         {
-          id: SecureRandom.uuid,
+          id:        SecureRandom.uuid,
           timestamp: now.iso8601(6),
-          event: event.to_s,
-          payload: payload || {}
+          event:     event.to_s,
+          payload:   payload || {}
         }
       end
 
       def normalize_stream(stream)
         candidate = stream.to_s
-        return candidate if candidate.match?(STREAM_PATTERN)
-
-        DEFAULT_STREAM
+        candidate.match?(STREAM_PATTERN) ? candidate : DEFAULT_STREAM
       end
     end
   end
