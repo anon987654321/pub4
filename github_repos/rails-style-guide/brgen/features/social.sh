@@ -112,8 +112,14 @@ module Taggable
 
   def sync_hashtags
     names = Hashtag.extract([try(:content), try(:title)].compact.join(" "))
-    tags = names.map { |n| Hashtag.find_or_create_by!(name: n).tap { |h| h.increment!(:usage_count) } }
+    tags = names.map { |name| Hashtag.find_or_create_by!(name:) }
+    previous_ids = hashtags.ids
+
     self.hashtags = tags
+
+    current_ids = tags.map(&:id)
+    Hashtag.where(id: previous_ids - current_ids).update_all("usage_count = CASE WHEN usage_count > 0 THEN usage_count - 1 ELSE 0 END")
+    tags.reject { |tag| previous_ids.include?(tag.id) }.each { |tag| tag.increment!(:usage_count) }
   end
 end
 RUBY
@@ -132,11 +138,16 @@ module Mentionable
 
   def sync_mentions
     usernames = [try(:content), try(:title)].compact.join(" ").scan(/@(\w+)/).flatten.uniq
-    usernames.each do |uname|
-      user = User.find_by(username: uname)
-      next unless user && user != try(:user)
+    users = User.where(username: usernames).index_by(&:username)
 
-      mentions.find_or_create_by!(mentioned_user: user)
+    mentions.destroy_all
+
+    usernames.each do |username|
+      user = users[username]
+      next unless user
+      next if user == try(:user)
+
+      mentions.create!(mentioned_user: user)
     end
   end
 end
