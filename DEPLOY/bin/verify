@@ -8,7 +8,7 @@ commands = [
 
 commands.each do |command|
   puts "+ #{command.join(' ')}"
-  system(*command) or exit($CHILD_STATUS&.exitstatus || 1)
+  system(*command) or exit($?.exitstatus || 1)
 end
 
 puts "DEPLOY verification passed"
