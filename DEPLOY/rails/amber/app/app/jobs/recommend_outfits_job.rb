@@ -1,0 +1,16 @@
+class RecommendOutfitsJob < ApplicationJob
+  queue_as :default
+
+  def perform(user_id, occasion: nil, season: nil)
+    user = User.find(user_id)
+    suggestions = WardrobeAiService.new(user).suggest_outfits(occasion:, season:)
+
+    Array(suggestions).each do |suggestion|
+      user.recommendations.create!(
+        kind: "outfit",
+        reason: suggestion["description"].presence || suggestion["reason"].presence || "AI outfit suggestion",
+        metadata: suggestion
+      )
+    end
+  end
+end
