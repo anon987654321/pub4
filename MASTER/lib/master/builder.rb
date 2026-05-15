@@ -81,7 +81,7 @@ module Master
       agent.wire_context_window(ctx)
       constitution = Ground::Constitution.new
       agent.wire_constitution(constitution)
-      scanner               = build_scanner(root:, agent:, bus:)
+      scanner               = Plugins::Judge.configure(self, root:, agent:, bus:)
       swarm                 = Judge::Swarm::Coordinator.new(agent:, event_bus: bus)
       deliberation, council, ideation = build_council(root, infra, agent:)
       [agent, soul_doc, scanner, swarm, deliberation, council, ideation]

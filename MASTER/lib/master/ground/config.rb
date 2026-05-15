@@ -70,6 +70,16 @@ module Master
       @mutex.synchronize { @data = load_config }
     end
 
+    # Frozen snapshot of read-only boot values — safe to share across threads.
+    BootConfig = Data.define(:root, :model, :web_host, :web_port, :web_public_url,
+                             :budget_max, :req_max, :cache_ttl, :history_max)
+
+    def freeze_boot = BootConfig.new(
+      root: @root, model: model, web_host: self["web_host"], web_port: self["web_port"].to_i,
+      web_public_url: self["web_public_url"], budget_max: budget_max, req_max: req_max,
+      cache_ttl: self["cache_ttl"].to_i, history_max: self["history_max"].to_i
+    ).freeze
+
     # Export as plain hash (deep dup to avoid external mutation)
     def to_h = Marshal.load(Marshal.dump(@data))
 

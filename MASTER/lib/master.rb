@@ -60,10 +60,13 @@ module Master
     ground/memory/search.rb
     loop/sweep/rewriter.rb
     loop/sweep/convergence.rb
+    judge/scan/rules/lexical_rules.rb
   ].each do |rel|
     loader.ignore(File.join(__dir__, "master", rel))
   end
   loader.setup
+
+  extend Plugin::ClassMethods
 
   def self.configure_providers!
     # Stub Bedrock before ruby_llm loads — avoids openssl.so on OpenBSD/LibreSSL.
