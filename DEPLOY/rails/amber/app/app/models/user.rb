@@ -14,6 +14,9 @@ class User < ApplicationRecord
   has_many :recommendations, dependent: :destroy
   has_many :identity_verifications, dependent: :destroy
   has_many :consent_events, dependent: :destroy
+  has_many :declutter_reviews, dependent: :destroy
+  has_many :declutter_challenges, dependent: :destroy
+  has_many :declutter_outcomes, dependent: :destroy
 
   has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy
   has_many :follows_as_followee, class_name: "Follow", foreign_key: :followee_id, dependent: :destroy
@@ -32,6 +35,7 @@ class User < ApplicationRecord
 
   def public_creator? = creator_profile&.public? || false
   def wardrobe_public? = privacy_setting&.public_wardrobe? || false
+  def declutter_summary = DeclutterDashboardService.new(self).summary
 
   private
 
