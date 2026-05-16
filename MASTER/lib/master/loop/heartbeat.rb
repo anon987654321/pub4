@@ -152,7 +152,9 @@ module Master
       path = File.join(@root, "data", "heartbeat.yml")
       return default_jobs unless File.exist?(path)
 
-      result = Master.load_yaml(path); result.is_a?(Array) ? result : default_jobs
+      result = Master.load_yaml(path)
+      jobs = result.is_a?(Array) ? result : default_jobs
+      jobs.select { |j| j["enabled"] != false }
     rescue StandardError => _e
       default_jobs
     end
