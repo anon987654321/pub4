@@ -3,13 +3,51 @@
 require "yaml"
 require "fileutils"
 
-require_relative "memory/search"
-
 module Master
   module Ground
   # Memory — persistent cross-session store with TF-IDF semantic search.
   # Stored at .master/memory.yml. Survives restarts.
   class Memory
+    module Search
+      def semantic_recall(query, top_n: 3)
+        return [] if @store.empty?
+        if Judge::Embeddings.enabled? && (qvec = Judge::Embeddings.embed(query))
+          hits = vector_recall(qvec, top_n)
+          return hits unless hits.empty?
+        end
+        tfidf_recall(query, top_n)
+      end
+
+      private
+
+      def vector_recall(qvec, top_n)
+        @store.filter_map do |key, data|
+          next unless data.is_a?(Hash) && data["vec"].is_a?(Array)
+          score = Judge::Embeddings.cosine(qvec, data["vec"])
+          next if score < Judge::Embeddings::MIN_SIM
+          { key: key, value: data["value"].to_s, score: score }
+        end.sort_by { |e| -e[:score] }.first(top_n)
+      end
+
+      def tfidf_recall(query, top_n)
+        terms = tokenize(query)
+        return [] if terms.empty?
+        @store.filter_map { |key, data|
+          value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
+          score = tfidf_score(terms, tokenize("#{key} #{value}"))
+          next if score.zero?
+          { key: key, value: value, score: score }
+        }.sort_by { |e| -e[:score] }.first(top_n)
+      end
+
+      def tokenize(text) = text.downcase.scan(/\b[a-z]{2,}\b/)
+
+      def tfidf_score(query_terms, doc_terms)
+        return 0.0 if doc_terms.empty?
+        freq = doc_terms.tally
+        query_terms.sum { |t| Math.log(1.0 + freq.fetch(t, 0).to_f) }
+      end
+    end
     TTL_DAYS = 90
     CONSOLIDATE_THRESHOLD = 40
     SECONDS_PER_DAY = 86_400

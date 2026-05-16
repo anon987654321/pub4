@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "agent/llm_dispatcher"
+require_relative "llm_dispatcher"
 
 module Master
   module Judge
@@ -32,7 +32,7 @@ module Master
       @memory, @personality, @code_index = deps.memory, deps.personality, deps.code_index
       @context_window, @homeostat        = deps.context_window, deps.homeostat
       @constitution                      = nil
-      @dispatcher                        = LLMDispatcher.new(deps:, system_prompt: -> { system_prompt })
+      @dispatcher                        = Master::Judge::LLMDispatcher.new(deps:, system_prompt: -> { system_prompt })
     end
 
     def wire_constitution(constitution) = @constitution = constitution

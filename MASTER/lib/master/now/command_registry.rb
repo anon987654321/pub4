@@ -80,9 +80,9 @@ module Master
       {
         "mode" => ->(ctx) {
           arg = ctx[:args].to_s.strip
-          Reasoning::Modes::SUPPORTED.include?(arg) ?
+          Master::Judge::Modes::SUPPORTED.include?(arg) ?
             (config["reasoning_mode"] = arg; config.save!; "mode: #{arg}") :
-            "mode: #{config.reasoning_mode} (supported: #{Reasoning::Modes::SUPPORTED.join(", ")})"
+            "mode: #{config.reasoning_mode} (supported: #{Master::Judge::Modes::SUPPORTED.join(", ")})"
         },
         "task" => ->(ctx) {
           arg = ctx[:args].to_s.strip

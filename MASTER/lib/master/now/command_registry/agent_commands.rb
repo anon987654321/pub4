@@ -252,7 +252,7 @@ module Master
     end
 
     def explain_master(root)
-      map    = Trace::Introspection::SelfMap.new(root:)
+      map    = Trace::SelfMap.new(root:)
       info   = map.describe
       cov    = map.rule_coverage.map { |ax, n| "  #{ax}: #{n}" }.join("\n")
       stages = "Intake->Infer->Route->Guard->Execute->Council->Lint->Prune->Memo->Render"

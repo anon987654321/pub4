@@ -2,7 +2,6 @@
 
 module Master
   module Judge
-  module Reasoning
     class Modes
       SUPPORTED = %w[direct react rewoo code_agent].freeze
 
@@ -17,7 +16,7 @@ module Master
         prompt = load_prompt(selected)
         format(prompt.fetch("template", "%{message}"), message: message.to_s)
       rescue StandardError => e
-        warn "reasoning/modes: wrap failed (mode=#{mode}): #{e.message}"
+        warn "judge/modes: wrap failed (mode=#{mode}): #{e.message}"
         message.to_s
       end
 
@@ -28,6 +27,5 @@ module Master
         Master.load_yaml(path) || {}
       end
     end
-  end
   end
 end

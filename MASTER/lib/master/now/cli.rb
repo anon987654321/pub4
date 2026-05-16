@@ -22,7 +22,7 @@ module Master
     }.freeze
 
     SLASH_COMMANDS = %w[
-      /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
+      /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart /ui-critique
     ].freeze
 
     attr_reader :container
@@ -196,8 +196,9 @@ module Master
       when "/dmesg"   then toggle_dmesg
       when "/chips"   then toggle_chips
       when "/propose"    then run_propose
-      when "/principles" then run_principles
-      when "/restart"    then run_restart
+      when "/principles"  then run_principles
+      when "/restart"     then run_restart
+      when "/ui-critique" then run_ui_critique
       when "<<"       then run_input(read_multiline)
       else                 run_input(line)
       end
@@ -309,6 +310,23 @@ module Master
       rows.each_with_index do |r, i|
         line = format("  %d. %-22s %s", i + 1, r[:action], r[:reason])
         puts @renderer.render(line, mode: :dim)
+      end
+    end
+
+    def run_ui_critique
+      puts @renderer.render("ui-critique: assembling panel — brutal honesty mode", mode: :dim)
+      critic = Master::Judge::Council::UiCritique.new(agent: @agent, event_bus: @bus)
+      result = critic.run
+      if result.ok?
+        data = result.value!
+        picks = data[:cherry_picks]
+        puts @renderer.render("ui-critique: #{picks.size} cherry-pick(s)", mode: :dim)
+        picks.each { |p| puts @renderer.render("  cherry: #{p}", mode: :dim) }
+        data[:feedback].each do |f|
+          puts @renderer.render("  [#{f[:persona]}] #{f[:feedback].to_s.lines.first.to_s.strip}", mode: :dim)
+        end
+      else
+        puts @renderer.render("ui-critique: #{result.message}", mode: :warning)
       end
     end
 

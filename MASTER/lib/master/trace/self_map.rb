@@ -2,7 +2,6 @@
 
 module Master
   module Trace
-  module Introspection
     class SelfMap
       AXIOM_FALLBACK = %w[
         PRESERVE_FIRST SIMPLEST_WORKS FAIL_VISIBLY EXPLICIT IMMUTABLE
@@ -38,6 +37,5 @@ module Master
         AXIOM_FALLBACK
       end
     end
-  end
   end
 end
