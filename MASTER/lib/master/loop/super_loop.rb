@@ -21,14 +21,16 @@ module Master
     SKIP_DIRS      = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
     GIT_COMMIT_MSG = "super_loop: autofix violations".freeze
     DEPS_PATH      = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
+    PRIORS_PATH    = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
 
-    def initialize(rules:, agent:, scanner:, root:, bus: nil, git: nil)
+    def initialize(rules:, agent:, scanner:, root:, bus: nil, git: nil, learnings: nil)
       @rules        = rules
       @agent        = agent
       @scanner      = scanner
       @root         = root
       @bus          = bus
       @git          = git || Reach::GitOperations.new(root)
+      @learnings    = learnings
       @violation_counts = Hash.new(0)
       # Build preamble once at boot — passed to each RuleLoop to avoid per-loop YAML reads.
       @preamble = build_preamble
@@ -66,17 +68,23 @@ module Master
 
     private
 
-    # Architecture #1 + #2: priority queue + topological ordering.
+    # Architecture #1 + #2 + #14: priority queue + topological ordering + Bayesian priors.
     def ordered_rules
-      deps  = load_deps
-      rules = @rules.sort_by { |r| -@violation_counts[r.id] }
+      deps   = load_deps
+      priors = load_priors
+      rules  = @rules.sort_by do |r|
+        observed = @violation_counts[r.id].to_f
+        prior    = priors.dig(r.id, "prior_p").to_f
+        # Primary: observed violations (arch #1). Secondary: prior probability (arch #14).
+        -(observed + prior)
+      end
       topo_sort(rules, deps)
     end
 
     # Architecture #3 (rule-first default): converge each rule across all files.
     def pass_rule_first(files)
       rule_results = ordered_rules.map do |rule|
-        rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus)
+        rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
         rl.injected_preamble = @preamble
         result = rl.run(files)
         @violation_counts[rule.id] += result[:fixed]
@@ -91,7 +99,7 @@ module Master
       rule_results_by_rule = Hash.new { |h, k| h[k] = { fixed: 0, cycles: 0, status: :clean, rule: k } }
       files.each do |path|
         ordered_rules.each do |rule|
-          rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus)
+          rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
         rl.injected_preamble = @preamble
           result = rl.run([path])
           @violation_counts[rule.id] += result[:fixed]
@@ -186,6 +194,12 @@ module Master
       data = Master.load_yaml(DEPS_PATH)
       deps_raw = data&.dig("deps") || {}
       deps_raw.transform_values { |v| Array(v["after"] || []) }
+    rescue StandardError => _e
+      {}
+    end
+
+    def load_priors
+      Master.load_yaml(PRIORS_PATH) || {}
     rescue StandardError => _e
       {}
     end
