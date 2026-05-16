@@ -8,7 +8,7 @@ module Master
       personality = Master::Voice::Personality.new(
         config["persona"]&.to_sym || Master::Voice::Personality::DEFAULT, root:, homeostat:
       )
-      learnings   = Master::Ground::Learnings.new(root:)
+      learnings   = Master::Ground::KnowledgeStore.new(root:)
       { memory:, personality:, learnings: }
     end
 

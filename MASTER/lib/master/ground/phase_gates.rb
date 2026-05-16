@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Loop
+  module Ground
   PHASES = %w[discover analyze ideate design implement validate deliver idle].freeze
 
   class PhaseGates
@@ -68,14 +68,13 @@ module Master
     private
 
     def next_phase
-      phase_index = PHASES.index(current) || 0
-      PHASES[[phase_index + 1, PHASES.size - 1].min]
+      idx = PHASES.index(current) || 0
+      PHASES[[idx + 1, PHASES.size - 1].min]
     end
 
     def unmet_gates(phase)
       required = GATES.fetch(phase, [])
-      met = @state["met_gates"] || []
-      required - met
+      (required - (@state["met_gates"] || []))
     end
 
     def load_state

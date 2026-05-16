@@ -63,6 +63,9 @@ module Master
       PERMANENT = %i[validation axiom_violation budget].freeze
 
       def initialize(message, category = :unknown)
+        raise ArgumentError, "message cannot be nil" if message.nil?
+        raise ArgumentError, "category must be a symbol" unless category.is_a?(Symbol)
+
         @message  = message
         @category = category
         freeze
@@ -70,7 +73,7 @@ module Master
 
       def ok?                   = false
       def err?                  = true
-      def value!                = raise(Master::UnwrapError, "Err#value\! called: #{@message}")
+      def value!                = raise(Master::UnwrapError, "Err#value! called: #{@message}")
       def unwrap                = value!
       def value_or(default)     = default
 

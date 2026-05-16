@@ -25,7 +25,7 @@ module Master
         config: infra[:config], session: infra[:session], tools:,
         circuit_breaker: infra[:breaker], cache: infra[:cache], event_bus: bus,
         model_router: Master::Now::Routing::ModelRouter.new(config: infra[:config]),
-        reasoning_modes: Master::Judge::Reasoning::Modes.new,
+        reasoning_modes: Master::Judge::Modes.new,
         memory: infra[:memory], personality: infra[:personality],
         code_index: infra[:code_index], homeostat: infra[:homeostat]
       )

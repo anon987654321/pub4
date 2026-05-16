@@ -6,7 +6,6 @@ require "open3"
 
 module Master
   module Judge
-  class Agent
     class LLMDispatcher
       COST_PER_TOKEN        = 0.000_015
       CACHE_WINDOW          = 4
@@ -119,8 +118,6 @@ module Master
         Result.ok(extract_response(reply, selected_model))
       end
 
-      # Record actual token usage to the session so the CLI cost line reflects reality.
-      # Falls back to estimate when the provider doesn't surface usage fields.
       def record_usage(reply, model)
         return unless @session
         input  = reply.respond_to?(:input_tokens)  ? reply.input_tokens.to_i  : 0
@@ -144,8 +141,7 @@ module Master
       def extract_response(reply, selected_model)
         return reply.to_s unless reply.respond_to?(:content)
         if NEMOTRON3_RE.match?(selected_model) && reply.respond_to?(:reasoning_content)
-          reasoning_content = reply.reasoning_content
-          thinking = reasoning_content.to_s.strip
+          thinking = reply.reasoning_content.to_s.strip
           content  = reply.content.to_s
           return thinking.empty? ? content : "#{content}\n\n<think>\n#{thinking}\n</think>"
         end
@@ -203,6 +199,5 @@ module Master
         rows.each_with_object({}) { |row, out| out[row["name"].to_s] = row if row.is_a?(Hash) }
       end
     end
-  end
   end
 end

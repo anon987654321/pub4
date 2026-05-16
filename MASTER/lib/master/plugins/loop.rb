@@ -7,7 +7,7 @@ module Master
       homeostat   = Master::Loop::Homeostat.new(event_bus: bus)
       governor    = Master::Loop::Governor.new(config:, event_bus: bus)
       diff_stager = config["staging_enabled"] ? Master::Loop::DiffStager.new(root:, event_bus: bus) : nil
-      phase_gates = Master::Loop::PhaseGates.new(root:, event_bus: bus)
+      phase_gates = Master::Ground::PhaseGates.new(root:, event_bus: bus)
       { homeostat:, governor:, diff_stager:, phase_gates: }
     end
 
@@ -23,7 +23,7 @@ module Master
       Thread.new { super_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
       heartbeat = Master::Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory],
                                               event_bus: bus, homeostat: infra[:homeostat])
-      triggers  = Master::Loop::Triggers.new(event_bus: bus, scanner:, agent:)
+      triggers  = Master::Trace::Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
       { standing:, autoloop:, super_loop:, heartbeat:, triggers: }
     end

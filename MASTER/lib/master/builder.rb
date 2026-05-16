@@ -39,9 +39,17 @@ module Master
       code_index = Judge::CodeIndex.new(root:, event_bus: bus)
       code_index.build_async
       bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
-      diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging])
+      diag     = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging])
+      pressure = PressureEngine.new(event_bus: bus)
+      bus.subscribe("*") do |ev|
+        event_name = ev[:event] || ev["event"] || ev[:type] || ev["type"] || "event"
+        next if event_name.to_s.start_with?("pressure:")
+        pressure.ingest(event: event_name, payload: ev)
+      rescue StandardError => e
+        Swallow.log(e, context: "builder.pressure_engine", event_bus: bus)
+      end
 
-      { config:, boot_config:, renderer:, code_index:, diag: }
+      { config:, boot_config:, renderer:, code_index:, diag:, pressure: }
         .merge(trace).merge(loop_c).merge(reach).merge(ground)
     end
 
