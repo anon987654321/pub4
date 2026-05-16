@@ -112,9 +112,11 @@ module Master
       value   = payload.fetch(:value)           { payload["value"] }
       message = payload.fetch(:message)         { payload["message"] }
       cat     = payload.fetch(:category)        { payload["category"] }
+      category = cat.to_s.empty? ? :unknown : cat.to_sym
+      category = :unknown unless Master::Result::CATEGORIES.key?(category)
       case kind
       when "ok"  then Result.ok(value)
-      when "err" then Result.err(message, category: cat)
+      when "err" then Result.err(message, category: category)
       when "raw" then value
       else payload
       end
