@@ -63,7 +63,7 @@ absolute:
     INVERTED_PYRAMID: commits, comments, and log lines lead with the fact. Context and explanation trail. dmesg format — no preamble.
 
 negotiable:
-  style: openbsd_dmesg
+  style: sentence_case
   default_model: openrouter/auto
   tts_voice: ms-MY-OsmanNeural
   language_detection: true

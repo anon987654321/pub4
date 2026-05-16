@@ -121,8 +121,8 @@ module Master
       # Hard formatting rules — [K] enforced
       sections["master_output_format"] = <<~XML.strip
         <master_output_format>
-        plain prose or dmesg-style lines. no markdown headers, bold, bullet lists, or numbered lists.
-        code fences allowed only for code. never use: Certainly, Of course, Great question, Absolutely, Happy to help.
+        Plain prose. Sentence case throughout. No markdown headers, bold, bullet lists, or numbered lists.
+        Code fences allowed only for code. Never use: Certainly, Of course, Great question, Absolutely, Happy to help.
         </master_output_format>
       XML
 

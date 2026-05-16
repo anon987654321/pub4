@@ -1122,10 +1122,10 @@
     if (tts.muted || !text) return;
     tts.queue.push(text); ttsTick();
   }
-  // dmesg-style boot phrases — randomized cadence
+  // Boot phrases — whispered at startup
   const DMESG_PHRASES = [
-    'master booting', 'soul loaded', 'constitution online', 'tools registered',
-    'pipeline armed', 'council convened', 'ready'
+    'Master booting', 'Soul loaded', 'Constitution online', 'Tools registered',
+    'Pipeline armed', 'Council convened', 'Ready'
   ];
 
   // Render loop
