@@ -1,6 +1,5 @@
-(() => {
-  "use strict";
-  const cv = document.getElementById('face');
+"use strict";
+const cv = document.getElementById('face');
   const ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
   function resize() {
@@ -694,10 +693,12 @@
         mandalaLock();
         if (navigator.vibrate) navigator.vibrate([80]);
         try { evtSrc.close(); } catch (e) {}
+        window._chatOnDone?.();
         return;
       }
-      if (raw.startsWith('ERROR:')) { Face.coronaFlash = 1.0; State.mode = 'error'; fadePaletteTo(VERDICT_TINT.veto); triggerSweat(); triggerChibi(); return; }
+      if (raw.startsWith('ERROR:')) { Face.coronaFlash = 1.0; State.mode = 'error'; fadePaletteTo(VERDICT_TINT.veto); triggerSweat(); triggerChibi(); window._chatOnError?.(); return; }
       const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+      window._chatOnChunk?.(chunk);
       pending += chunk;
       Face.dispersionTarget = 0;
       let m;
@@ -1502,8 +1503,9 @@
     const v = zshIn.value.trim();
     if (!v) return;
     e.preventDefault();
+    window._chatOnUser?.(v);
     zshIn.value = '';
-    Face.dispersionTarget = 0.25; // skeleton tension before any byte arrives
+    Face.dispersionTarget = 0.25;
     sendMessage(v);
   });
   zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
@@ -1514,8 +1516,9 @@
     if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
   });
 
+  window.sendMessage = sendMessage;
+
   // boot
   resize();
   fadePaletteTo(timePalette(), 1000);
   requestAnimationFrame(frame);
-})();
