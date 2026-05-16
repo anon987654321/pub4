@@ -206,6 +206,15 @@ line:
     fix: "for...in iterates prototype properties. Use for...of."
     languages: [javascript]
 
+  - id: NO_VAR
+    name: "No var declarations; use const or let"
+    tier: style
+    severity: error
+    autofix: true
+    detect_lexical: "\\bvar\\s+\\w"
+    fix: "const for bindings that don't change, let only when they do."
+    languages: [javascript]
+
   - id: QUOTE_VARIABLES
     name: "Always quote $variables"
     tier: safety

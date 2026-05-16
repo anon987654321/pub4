@@ -8,3 +8,5 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+#input { width: 100%; }
+#status { font-family: monospace; min-height: 1rem; }

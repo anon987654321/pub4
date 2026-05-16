@@ -196,3 +196,54 @@ file:
     fix: "Back find_or_create_by with a unique index to prevent duplicates."
     languages: [ruby]
     path_match: "/db/migrate/"
+
+  - id: META_CHARSET
+    name: "<meta charset=\"utf-8\"> required"
+    tier: core
+    severity: error
+    autofix: true
+    detect_lexical: "<html"
+    requires_absent: "<meta\\s+charset="
+    whole_file: true
+    fix: "Add <meta charset=\"utf-8\"> as first tag inside <head>."
+    languages: [html]
+
+  - id: NAMED_ROUTES
+    name: "Use named route helpers not controller/action hashes"
+    tier: style
+    severity: warning
+    autofix: false
+    detect_lexical: "(?:url_for|redirect_to|link_to)\\s*\\(?\\s*(?:controller:|action:)"
+    fix: "Use root_path, users_path, etc. Named helpers are refactor-safe."
+    languages: [ruby]
+    path_match: "/app/"
+
+  - id: JS_MODULE_SIZE
+    name: "Large JS files must use ES modules not a single IIFE"
+    tier: design
+    severity: warning
+    autofix: false
+    detect_structural: file_silhouette
+    detect_semantic: "Is this a JavaScript file over 300 lines structured as a single IIFE or inline script rather than ES modules with clear imports/exports?"
+    fix: "Split into ES modules: one concern per file, export what callers need."
+    languages: [javascript]
+
+  - id: README_STRUCTURE
+    name: "README follows pitch → quickstart → reference → explanation"
+    tier: clarity
+    severity: info
+    autofix: false
+    detect_semantic: "Does this README lead with what the project does (one sentence), then how to run it, then configuration reference, then architectural explanation? Or does it bury the pitch or omit the quickstart?"
+    fix: "Reorder: one-line pitch → install/run → config table → architecture."
+    languages: [markdown]
+    path_match: "README"
+
+  - id: ACTIVE_VOICE_DOCS
+    name: "Docs use active voice; no filler openers"
+    tier: clarity
+    severity: info
+    autofix: false
+    detect_lexical: "^(This (project|module|file|class|library) (is|was|can|will)|In order to|It (is|was|should|can)|There (is|are))"
+    detect_semantic: "Does this documentation use passive voice, filler openers, or start sentences with 'This project is'?"
+    fix: "Lead with a verb. 'MASTER scans and fixes.' not 'This is a tool that can scan and fix.'"
+    languages: [markdown]

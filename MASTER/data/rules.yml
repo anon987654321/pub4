@@ -317,6 +317,12 @@ scan_depths:
     - unbounded_retry
     - law_of_demeter
     - no_flag_arguments
+    - meta_charset
+    - no_var
+    - named_routes
+    - js_module_size
+    - readme_structure
+    - active_voice_docs
   standard: &standard
     - CoChangeCouplingRule
     - InterconnectRule

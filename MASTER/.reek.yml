@@ -1,8 +1,10 @@
 # Reek configuration for MASTER
 detectors:
+  # Module/class comments not required — naming + structure is the doc.
   IrresponsibleModule:
     enabled: false
 
+  # Single-char block vars are idiomatic Ruby.
   UncommunicativeVariableName:
     accept:
       - a
@@ -42,6 +44,49 @@ detectors:
       - _k
       - _v
 
+  # Threshold: 3+ calls to same expr warrant extraction; 2 is normal Ruby.
+  DuplicateMethodCall:
+    max_calls: 3
+    allow_calls:
+      - puts
+      - print
+      - raise
+
+  # method(bool) is valid for simple flag params; use keyword args for complex.
+  BooleanParameter:
+    enabled: false
+
+  # Parameter-controlled flow is normal; caller decides behavior.
+  ControlParameter:
+    enabled: false
+
+  # Mixins accessing @ivars they don't own is expected in this codebase.
+  InstanceVariableAssumption:
+    enabled: false
+
+  # _prefix convention covers unused params.
+  UnusedParameters:
+    enabled: false
+
+  # Grouped params (bus:, root:, agent:) are intentional constructor patterns.
+  DataClump:
+    enabled: false
+
+  # nil? and &. are idiomatic.
+  NilCheck:
+    enabled: false
+
+  # Static utility helpers don't need to be moved.
+  UtilityFunction:
+    enabled: false
+
+  ManualDispatch:
+    enabled: true
+  MissingSafeMethod:
+    enabled: false
+  FeatureEnvy:
+    enabled: false
+
   TooManyStatements:
     max_statements: 20
 
@@ -55,22 +100,10 @@ detectors:
     max_constants: 12
 
   LongParameterList:
-    max_params: 6
-
-  UtilityFunction:
-    enabled: false
-
-  ManualDispatch:
-    enabled: false
-
-  MissingSafeMethod:
-    enabled: false
-
-  FeatureEnvy:
-    enabled: false
-
-  BooleanParameter:
-    enabled: false
+    max_params: 5
 
   NestedIterators:
     max_allowed_nesting: 2
+
+  RepeatedConditional:
+    max_ifs: 3

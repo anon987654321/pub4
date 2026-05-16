@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
     <title><%= content_for(:title) || "MASTER" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,8 +27,8 @@
     <%= yield %>
     <nav><a href="/">chat</a></nav>
     <section>
-      <textarea id="input" rows="1" placeholder="type here..." style="width:100%;"></textarea>
-      <div id="status" aria-live="polite" style="font-family:monospace;min-height:1rem;"></div>
+      <textarea id="input" rows="1" placeholder="type here..."></textarea>
+      <div id="status" aria-live="polite"></div>
     </section>
     <script type="module" src="/three.module.js"></script>
     <script type="module" src="/mask.js" defer></script>
