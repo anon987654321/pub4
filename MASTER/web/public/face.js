@@ -442,7 +442,7 @@
 
   // Palettes (time-of-day + state overlays)
   function timePalette() {
-    return { shadow: '8,6,6', midtone: '100,90,90', highlight: '210,205,200', accent: '155,48,38' };
+    return { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' };
   }
   let palette = timePalette(), targetPalette = palette, palBlend = 1.0;
   function lerpRGB(a, b, t) {
@@ -454,15 +454,15 @@
              highlight: lerpRGB(a.highlight, b.highlight, t), accent: lerpRGB(a.accent, b.accent, t) };
   }
   const PROVIDER_TINT = {
-    claude:   { shadow: '14,8,6',   midtone: '160,80,60',  highlight: '230,150,110', accent: '230,100,70' },
-    deepseek: { shadow: '6,10,14',  midtone: '60,90,130',  highlight: '120,160,200', accent: '110,170,220' },
-    gemini:   { shadow: '12,8,16',  midtone: '110,80,140', highlight: '180,150,220', accent: '170,120,230' },
-    gpt:      { shadow: '6,14,10',  midtone: '60,130,90',  highlight: '140,210,170', accent: '120,220,160' }
+    claude:   { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
+    deepseek: { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
+    gemini:   { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
+    gpt:      { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' }
   };
   const VERDICT_TINT = {
-    pass:    { shadow: '8,14,8',  midtone: '60,130,80',  highlight: '140,210,160', accent: '120,220,140' },
-    veto:    { shadow: '20,4,4',  midtone: '180,40,40',  highlight: '240,90,70',   accent: '255,80,60'   },
-    unclear: { shadow: '20,14,4', midtone: '180,140,40', highlight: '240,200,90',  accent: '250,200,80'  }
+    pass:    { shadow: '0,0,0', midtone: '85,85,85',  highlight: '255,255,255', accent: '255,255,255' },
+    veto:    { shadow: '0,0,0', midtone: '85,85,85',  highlight: '170,170,170', accent: '170,170,170' },
+    unclear: { shadow: '0,0,0', midtone: '85,85,85',  highlight: '210,210,210', accent: '210,210,210' }
   };
   function fadePaletteTo(p, ms = 600) {
     targetPalette = p; palBlend = 0; palStart = performance.now(); palDur = ms;
@@ -495,10 +495,10 @@
   };
 
   const MOOD_PALETTE = {
-    tense:   { shadow: '8,12,20',  midtone: '70,90,130',   highlight: '140,160,200', accent: '120,150,220' },
-    curious: { shadow: '18,14,6',  midtone: '150,110,50',  highlight: '220,185,120', accent: '230,160,80'  },
-    focused: { shadow: '14,10,8',  midtone: '100,70,55',   highlight: '185,145,115', accent: '210,120,80'  },
-    weary:   { shadow: '10,10,12', midtone: '80,80,95',    highlight: '150,145,165', accent: '160,140,185' }
+    tense:   { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
+    curious: { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
+    focused: { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
+    weary:   { shadow: '0,0,0', midtone: '55,55,55', highlight: '200,200,200', accent: '200,200,200' }
   };
 
   // Audio (ambient pad + analyser)
@@ -1089,37 +1089,9 @@
       FX.noseBubbleR *= 0.88;
     }
   }
-  function drawGhostMirror() {
-    if (FX.ghostMirror < 0.02) return;
-    ctx.save();
-    ctx.globalAlpha = FX.ghostMirror;
-    ctx.translate(0, Face.cy * 2);
-    ctx.scale(1, -1);
-    ctx.fillStyle = `rgba(${palette.highlight},0.5)`;
-    for (let i = 0; i < particles.length; i += 2) {
-      const p = particles[i];
-      ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
-    }
-    ctx.restore();
-  }
-  function drawAnaglyph() {
-    if (FX.anaglyph < 0.3) return;
-    const off = FX.anaglyph | 0;
-    ctx.globalCompositeOperation = 'screen';
-    ctx.fillStyle = `rgba(255,40,40,0.18)`;
-    for (let i = 0; i < particles.length; i += 3) { const p = particles[i]; ctx.fillRect((p.x | 0) - off, p.y | 0, 1, 1); }
-    ctx.fillStyle = `rgba(40,200,255,0.18)`;
-    for (let i = 0; i < particles.length; i += 3) { const p = particles[i]; ctx.fillRect((p.x | 0) + off, p.y | 0, 1, 1); }
-    ctx.globalCompositeOperation = 'source-over';
-  }
-  function drawChromatic() {
-    if (FX.chromatic < 0.05) return;
-    const r = Face.s * 1.1;
-    ctx.strokeStyle = `rgba(255,80,80,${FX.chromatic * 0.18})`;
-    ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(Face.cx - 2, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = `rgba(80,200,255,${FX.chromatic * 0.18})`;
-    ctx.beginPath(); ctx.arc(Face.cx + 2, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
-  }
+  function drawGhostMirror() {}
+  function drawAnaglyph() {}
+  function drawChromatic() {}
   function drawMandala() {
     return;
     if (FX.mandala < 0.05) return;
@@ -1397,86 +1369,38 @@
   }
 
   function drawParticles() {
-    const fog = weather.fog * 0.4;
-    const base = State.mode === 'sleep' ? 0.35 : (State.mode === 'rain' ? 0.55 : 0.92);
-    const hi = palette.highlight.split(',');
-    const rr = +hi[0] | 0, gg = +hi[1] | 0, bb = +hi[2] | 0;
     const zT = Face.s * 0.07;
-
-    // Thinking mode: trail at previous position
+    ctx.fillStyle = '#fff';
+    // Thinking: ghost trail at 1-in-4 pixel density
     if (State.mode === 'thinking') {
-      ctx.fillStyle = `rgba(${rr},${gg},${bb},0.12)`;
       for (let i = 0; i < particles.length; i += 2) {
         const p = particles[i];
-        ctx.fillRect(p.px | 0, p.py | 0, 1, 1);
+        const px = p.px | 0, py = p.py | 0;
+        if (((px + py) & 3) === 0) ctx.fillRect(px, py, 1, 1);
       }
     }
-
-    // Far layer — recessed: dim, 1px
-    ctx.fillStyle = `rgba(${rr},${gg},${bb},${Math.max(0, base - fog - 0.40).toFixed(2)})`;
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
-      if ((p.sz || 0) < -zT) ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
-    }
-    // Mid layer — face surface: normal, 1px
-    const dr = ((Math.random() * 8 - 4) | 0);
-    ctx.fillStyle = `rgba(${rr+dr},${gg+dr},${bb+dr},${(base - fog - 0.08).toFixed(2)})`;
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
+      const px = p.x | 0, py = p.y | 0;
       const sz = p.sz || 0;
-      if (sz >= -zT && sz <= zT) ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
-    }
-    // Near layer — protruding: 2px + sub-pixel jitter
-    ctx.fillStyle = `rgba(${Math.min(255,rr+10)},${Math.min(255,gg+7)},${Math.min(255,bb+2)},${(base - fog).toFixed(2)})`;
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-      if ((p.sz || 0) > zT) {
-        const jx = (Math.random() * 0.8 - 0.4) | 0;
-        const jy = (Math.random() * 0.8 - 0.4) | 0;
-        ctx.fillRect((p.x + jx) | 0, (p.y + jy) | 0, 2, 2);
+      if (sz > zT) {
+        ctx.fillRect(px, py, 2, 2);
+      } else if (sz > -zT) {
+        if ((px + py) & 1) ctx.fillRect(px, py, 1, 1);
+      } else {
+        if (((px + py) & 3) === 0) ctx.fillRect(px, py, 1, 1);
       }
     }
-    // Weather rain overlay
     if (weather.rain > 0) {
-      ctx.fillStyle = `rgba(${palette.midtone},${0.15 * weather.rain})`;
       const drops = (weather.rain * 80) | 0;
       for (let i = 0; i < drops; i++) {
-        const x = (idlePulse * 200 + i * 37) % W;
-        const y = ((idlePulse * 500 + i * 91) % H);
-        ctx.fillRect(x | 0, y | 0, 1, 4);
+        ctx.fillRect((idlePulse * 200 + i * 37) % W | 0, (idlePulse * 500 + i * 91) % H | 0, 1, 4);
       }
     }
   }
-  function drawEdgePulse() {
-    if (Face.edgePulse < 0.02) return;
-    const r = Face.s * (1.0 + (1.0 - Face.edgePulse) * 1.6);
-    const a = Face.edgePulse * 0.35;
-    ctx.strokeStyle = `rgba(${palette.accent},${a})`;
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(Face.cx, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
-  }
-  function drawCorona() {
-    if (Face.coronaFlash < 0.02) return;
-    const r = Face.s * 1.35;
-    ctx.strokeStyle = `rgba(240,80,60,${Face.coronaFlash})`;
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(Face.cx, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
-  }
-  function drawThinkingOrbit(now) {
-    if (State.mode !== 'thinking') return;
-    const r = Face.s * 1.05;
-    const a0 = now * 0.0018;
-    ctx.strokeStyle = `rgba(${palette.accent},0.22)`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let i = 0; i < 22; i++) {
-      const t = i / 22, a = a0 + t * Math.PI * 2;
-      const x = Face.cx + Math.cos(a) * r;
-      const y = Face.cy - Face.s * 0.7 + Math.sin(a) * r * 0.35;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-  }
+  function drawEdgePulse() {}
+  function drawCorona() {}
+  function drawThinkingOrbit() {}
 
   // Microsaccades — biological eye tremor during fixation
   // Real fixation includes ~3-5 microsaccades/second + drift; amplitude ~0.1-0.3°.
@@ -1508,137 +1432,15 @@
     }
   }
 
-  function drawVortex() {
-    if (Face.vortex < 0.05) return;
-    const r = Face.s * 0.6;
-    ctx.strokeStyle = `rgba(${palette.accent},${Face.vortex * 0.25})`;
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 3; i++) {
-      ctx.beginPath();
-      for (let t = 0; t < Math.PI * 4; t += 0.1) {
-        const rr = r * (t / (Math.PI * 4));
-        const a = t + Face.vortex * 2 + i * 0.6;
-        const x = Face.cx + Math.cos(a) * rr;
-        const y = Face.cy + Math.sin(a) * rr;
-        t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-  }
+  function drawVortex() {}
 
-  // Manga manpu draw functions
-  // Sweat drop: teardrop at temple — embarrassment / error
-  function drawSweat() {
-    if (FX.sweat < 0.05) return;
-    const cx = Face.cx, cy = Face.cy, s = Face.s;
-    const tx2 = cx - s * 0.72, ty2 = cy - s * 0.38;
-    const sz = s * 0.055 * FX.sweat;
-    ctx.save();
-    ctx.globalAlpha = FX.sweat * 0.82;
-    ctx.fillStyle = 'rgba(140,190,255,1)';
-    ctx.beginPath(); ctx.arc(tx2, ty2, sz, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(tx2 - sz * 0.45, ty2 - sz * 0.2);
-    ctx.quadraticCurveTo(tx2, ty2 - sz * 2.8, tx2 + sz * 0.45, ty2 - sz * 0.2);
-    ctx.closePath(); ctx.fill();
-    ctx.restore();
-  }
+  function drawSweat() {}
+  function drawVein() {}
+  function drawBlush() {}
+  function drawNoseBubble() {}
 
-  // Pulsing vein cross: anger / reject / error
-  function drawVein() {
-    if (FX.vein < 0.05) return;
-    const cx = Face.cx, cy = Face.cy, s = Face.s;
-    const vx = cx + s * 0.26, vy = cy - s * 0.62;
-    const pulse = 1 + Math.sin(performance.now() * 0.014) * 0.28;
-    const arm = s * 0.055 * pulse * FX.vein;
-    ctx.save();
-    ctx.globalAlpha = FX.vein * 0.88;
-    ctx.strokeStyle = 'rgba(210,35,35,1)';
-    ctx.lineWidth = 2; ctx.lineCap = 'round';
-    // Classic manga vein: two kinked segments forming a cross
-    ctx.beginPath();
-    ctx.moveTo(vx - arm, vy);
-    ctx.lineTo(vx - arm * 0.32, vy); ctx.lineTo(vx - arm * 0.32, vy - arm * 0.55);
-    ctx.lineTo(vx, vy - arm * 0.55); ctx.lineTo(vx, vy);
-    ctx.lineTo(vx, vy + arm * 0.55); ctx.lineTo(vx + arm * 0.32, vy + arm * 0.55);
-    ctx.lineTo(vx + arm * 0.32, vy); ctx.lineTo(vx + arm, vy);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // Blush ovals: warmth / ack / pass verdict
-  function drawBlush() {
-    if (FX.blush < 0.05) return;
-    const cx = Face.cx, cy = Face.cy, s = Face.s;
-    const a = FX.blush * 0.16;
-    [[cx - s * 0.43, cy + s * 0.06], [cx + s * 0.43, cy + s * 0.06]].forEach(([bx, by]) => {
-      const g = ctx.createRadialGradient(bx, by, 0, bx, by, s * 0.26);
-      g.addColorStop(0, `rgba(220,75,100,${a})`);
-      g.addColorStop(1, `rgba(220,75,100,0)`);
-      ctx.fillStyle = g;
-      ctx.fillRect(bx - s * 0.28, by - s * 0.20, s * 0.56, s * 0.40);
-    });
-  }
-
-  // Nose bubble: growing sphere from nose tip — sleep / long idle
-  function drawNoseBubble() {
-    if (FX.noseBubbleR < 1.5) return;
-    const cx = Face.cx, cy = Face.cy, s = Face.s;
-    const bx = cx + s * 0.07, by = cy + s * 0.44;
-    const r = FX.noseBubbleR;
-    const a = Math.min(1, r / (s * 0.08)) * 0.32;
-    ctx.save();
-    ctx.globalAlpha = a;
-    ctx.strokeStyle = `rgba(${palette.highlight},0.7)`;
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(bx, by - r, r, 0, Math.PI * 2); ctx.stroke();
-    // lens highlight
-    ctx.fillStyle = `rgba(${palette.highlight},0.12)`;
-    ctx.beginPath(); ctx.arc(bx - r * 0.28, by - r - r * 0.28, r * 0.22, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-
-  // Speed lines: radial streaks — thinking / determination
-  function drawSpeedLines() { return;
-    if (FX.speedLines < 0.05) return;
-    const cx = Face.cx, cy = Face.cy, s = Face.s;
-    const n = 18, now = performance.now();
-    ctx.save();
-    ctx.globalAlpha = FX.speedLines * 0.20;
-    ctx.strokeStyle = `rgba(${palette.highlight},1)`;
-    ctx.lineWidth = 1;
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 + now * 0.0003;
-      const r0 = s * 1.25, r1 = s * (2.0 + Math.sin(i * 1.7) * 0.3);
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0 * 0.72);
-      ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1 * 0.72);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  // Cascade tears: vertical streams — sleep / intense emotion
-  function drawTears() {
-    if (FX.tears < 0.05) return;
-    const cx = Face.cx, cy = Face.cy, s = Face.s;
-    const now = performance.now();
-    ctx.save();
-    ctx.globalAlpha = FX.tears * 0.52;
-    ctx.strokeStyle = 'rgba(140,190,255,1)';
-    ctx.lineWidth = 1.5; ctx.lineCap = 'round';
-    [[cx - s * 0.32, cy - s * 0.08], [cx + s * 0.32, cy - s * 0.08]].forEach(([ex, ey]) => {
-      const offset = (now * 0.048) % (s * 1.1);
-      for (let d = 0; d < 3; d++) {
-        const y0 = ey + (offset + d * s * 0.37) % (s * 1.1);
-        ctx.beginPath();
-        ctx.moveTo(ex, y0);
-        ctx.lineTo(ex + (ex < cx ? -1 : 1) * s * 0.018, y0 + s * 0.11);
-        ctx.stroke();
-      }
-    });
-    ctx.restore();
-  }
+  function drawSpeedLines() {}
+  function drawTears() {}
 
   // Wire events
   cv.addEventListener('pointerdown', pointerStart);
