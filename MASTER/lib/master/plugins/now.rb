@@ -14,12 +14,9 @@ module Master
         Master::Now::Stages::Guard.new(governor: infra[:governor], injection_guard: ai[:guard]),
         Master::Now::Stages::Deliberate.new(agent: ai[:agent], config:),
         Master::Now::Stages::Execute.new,
-        Master::Now::Pipeline::SkipOnPressure.new(Master::Now::Pipeline::ParallelGroup.new(
-          ai[:council_stage],
-          Master::Now::Stages::Lint.new(scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:, event_bus: bus),
-          bus:
+        Master::Now::Pipeline::SkipOnPressure.new(Master::Now::Stages::Review.new(
+          council: ai[:council_stage], scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:, event_bus: bus
         ), bus:),
-        Master::Now::Pipeline::SkipOnPressure.new(Master::Now::Stages::Prune.new, bus:),
         Master::Now::Stages::Memo.new(memory: infra[:memory], event_bus: bus),
         Master::Now::Stages::Render.new(renderer: infra[:renderer])
       ]
