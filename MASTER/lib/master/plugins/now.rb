@@ -17,7 +17,7 @@ module Master
         Master::Now::Pipeline::SkipOnPressure.new(Master::Now::Stages::Review.new(
           council: ai[:council_stage], scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:, event_bus: bus
         ), bus:),
-        Master::Now::Stages::Memo.new(memory: infra[:memory], event_bus: bus),
+        Master::Now::Stages::Memory.new(memory: infra[:memory], event_bus: bus),
         Master::Now::Stages::Render.new(renderer: infra[:renderer])
       ]
       pipeline = Master::Now::Pipeline.new(stages, bus:, trace: config["trace_pipeline"] == true, root:)
