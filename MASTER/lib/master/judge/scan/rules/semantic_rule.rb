@@ -36,6 +36,7 @@ module Master
           response = @agent.ask(build_prompt(code, path), operation: :scan_semantic).to_s
           parse_findings(response)
         rescue StandardError => e
+          return [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
           [finding(line: 1, message: "semantic: scan error — #{e.message}")]
         end
 

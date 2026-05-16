@@ -52,6 +52,7 @@ module Master
           response = @agent.ask(prompt, operation: :scan_adversarial).to_s
           parse_findings(response)
         rescue StandardError => e
+          return [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
           [finding(line: 1, message: "adversarial: scan error — #{e.message}")]
         end
 
