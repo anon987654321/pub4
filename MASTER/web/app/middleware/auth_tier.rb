@@ -61,7 +61,7 @@ class AuthTier
 
   def read_config
     return [YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) || {}, true]
-  rescue Errno::ENOENT
+  rescue Errno::ENOENT => _e
     [{}, true]   # missing file is fine — we can create it
   rescue StandardError => e
     warn "auth_tier: config unreadable (#{e.class}): #{e.message} — declining to seed"

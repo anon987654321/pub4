@@ -154,8 +154,8 @@ module Master
       end
 
       class SearchKnowledge < RubyLLM::Tool
-        description "Search the local knowledge base: ruby_llm docs, OpenBSD man pages, system prompts, gem docs. Topics: ruby_llm,
-          openbsd, system_prompts, gems, awesome."
+        description "Search the local knowledge base: ruby_llm docs, OpenBSD man pages, " \
+          "system prompts, gem docs. Topics: ruby_llm, openbsd, system_prompts, gems, awesome."
         param :query, desc: "Search pattern (regex-capable)", required: true
         param :topic, desc: "Limit to topic folder: ruby_llm, openbsd, system_prompts, gems, awesome", required: false
 
@@ -184,7 +184,8 @@ required: true
       end
 
       class Postpro < RubyLLM::Tool
-        description "Apply cinematic post-processing (film stocks, presets, recipes) to images via ruby-vips. Writes processed copies next to originals."
+        description "Apply cinematic post-processing (film stocks, presets, recipes) to images " \
+          "via ruby-vips. Writes processed copies next to originals."
         param :target_dir, desc: "Directory containing source images (relative to project root)", required: true
         param :preset,     desc: "One of: portrait, landscape, street, blockbuster", required: false
         param :variations, desc: "1-5 output variations per file", type: "integer", required: false
@@ -200,7 +201,8 @@ required: true
       end
 
       class Repligen < RubyLLM::Tool
-        description "Discover, search, and run Replicate.com models. Actions: sync, search, stats. Requires REPLICATE_API_TOKEN for sync."
+        description "Discover, search, and run Replicate.com models. Actions: sync, search, stats. " \
+          "Requires REPLICATE_API_TOKEN for sync."
         param :action, desc: "One of: sync, search, stats", required: true
         param :query,  desc: "Search query (required for action=search)", required: false
         param :limit,  desc: "Sync limit (1-1000, default 100)", type: "integer", required: false

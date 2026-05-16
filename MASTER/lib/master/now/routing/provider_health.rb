@@ -68,7 +68,7 @@ module Master
             next if line.strip.empty?
 
             JSON.parse(line)
-          rescue JSON::ParserError
+          rescue JSON::ParserError => _e
             nil
           end.select { |event| event["model"].to_s == model_id }
         end

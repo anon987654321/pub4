@@ -217,14 +217,14 @@ module Master
     def git_branch
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--abbrev-ref", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError
+    rescue StandardError => _e
       nil
     end
 
     def git_dirty?
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "status", "--porcelain")
       st.success? && !out.strip.empty?
-    rescue StandardError
+    rescue StandardError => _e
       false
     end
 
@@ -236,7 +236,7 @@ module Master
       return [0, 0] unless st.success?
       parts = out.strip.split
       [parts[0].to_i, parts[1].to_i]
-    rescue StandardError
+    rescue StandardError => _e
       [0, 0]
     end
 

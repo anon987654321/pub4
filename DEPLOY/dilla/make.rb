@@ -56,7 +56,7 @@ def render(label, dest, inputs:, filter:, map:, args: ["-ar", "44100"])
       "-map", map, *args, dest
 end
 
-# ── v7 ────────────────────────────────────────────────────────────────────────
+# v7
 def v7
   ver = "v7"
   beat_pre, vocals_pre, crackle = tmp(ver, "beat"), tmp(ver, "vocals"), tmp(ver, "crackle")
@@ -134,7 +134,7 @@ def v7
     F
 end
 
-# ── v8 ────────────────────────────────────────────────────────────────────────
+# v8
 def v8
   ver = "v8"
   beat_pre, vocals_pre, crackle = tmp(ver, "beat"), tmp(ver, "vocals"), tmp(ver, "crackle")
@@ -191,7 +191,7 @@ def v8
     F
 end
 
-# ── v9 ────────────────────────────────────────────────────────────────────────
+# v9
 def v9
   ver  = "v9"
   slow = 0.92
@@ -275,7 +275,7 @@ def v9
     F
 end
 
-# ── v10 ───────────────────────────────────────────────────────────────────────
+# v10
 HEDD = "val(0)+0.28*val(0)*val(0)*(gt(val(0),0)-lt(val(0),0))+0.12*val(0)*val(0)*val(0)|" \
        "val(1)+0.28*val(1)*val(1)*(gt(val(1),0)-lt(val(1),0))+0.12*val(1)*val(1)*val(1)"
 
@@ -360,7 +360,7 @@ def v10
     F
 end
 
-# ── v11 ───────────────────────────────────────────────────────────────────────
+# v11
 def v11
   ver = "v11"
   d8  = dotted_8th(BPM)
@@ -434,7 +434,7 @@ def v11
     F
 end
 
-# ── demux ─────────────────────────────────────────────────────────────────────
+# demux
 # YouTube clip → 6-stem demucs → optional EQ sub-bands + M/S splits.
 # Mirrors the band layout already in stems/ (sub_bass, mids, center, sides...).
 
@@ -467,7 +467,7 @@ def slice_band(src, dest, label, eq:)
     inputs: ["-i", src], map: "[out]", filter: "[0:a]#{eq}[out]"
 end
 
-# ── liveset ───────────────────────────────────────────────────────────────────
+# liveset
 # Long-form WAV from any source (mix or stems set). Per-source ultra-slow
 # tremolo with prime-number periods keeps layers from re-syncing — gives the
 # natural swell-and-fade of a DJ set. Master glue + soft tape sat + limiter.
@@ -578,7 +578,7 @@ def demux_deep(src)
   puts "bands -> #{bands}"
 end
 
-# ── dispatch ──────────────────────────────────────────────────────────────────
+# dispatch
 RECIPES = { "v7" => method(:v7), "v8" => method(:v8), "v9" => method(:v9),
             "v10" => method(:v10), "v11" => method(:v11) }.freeze
 

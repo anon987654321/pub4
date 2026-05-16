@@ -64,7 +64,8 @@ module Master
       soul = @rules.data(:soul)
       ordering = Array(soul["prompt_ordering"])
       sections = {}
-      sections["master_identity"] = "<master_identity>\nMASTER. #{@desc} OpenBSD-first. Constitutional AI.\n</master_identity>"
+      sections["master_identity"] = "<master_identity>\n" \
+        "MASTER. #{@desc} OpenBSD-first. Constitutional AI.\n</master_identity>"
       sections["master_meta_instruction"] = <<~XML.strip
         <master_meta_instruction>
         For each task, identify which rules are relevant first. Apply only relevant rules and ignore unrelated domains.
@@ -93,9 +94,18 @@ module Master
         "</master_constitution>"
       ].join("\n")
       kernel = @rules.kernel
-      sections["master_constitution_kernel"] = "<master_constitution tier=\"kernel\">\n#{kernel.map { |k, v| "#{k}=#{v}" }.join("\n")}\n</master_constitution>" if kernel.any?
+      if kernel.any?
+        sections["master_constitution_kernel"] = "<master_constitution tier=\"kernel\">\n" \
+          "#{kernel.map { |k, v| "#{k}=#{v}" }.join("\n")}\n</master_constitution>"
+      end
       phil = @rules.philosophy(limit: AXIOM_DISPLAY_LIMIT)
-      sections["master_constitution_kernel"] = [sections["master_constitution_kernel"], "philosophy: #{phil.map { |p| p["id"] }.join(" · ")}"].compact.join("\n") if phil.any?
+      if phil.any?
+        phil_ids = phil.map { |p| p["id"] }.join(" · ")
+        sections["master_constitution_kernel"] = [
+          sections["master_constitution_kernel"],
+          "philosophy: #{phil_ids}"
+        ].compact.join("\n")
+      end
 
       sections["master_priority"] = <<~XML.strip
         <master_priority>
@@ -149,20 +159,28 @@ module Master
 
         if (html = style["html"])
           forbidden = Array(html["forbidden"]).first(3).join(", ")
-          style_lines << "HTML: semantic tags only (header/nav/main/article/section/aside/footer); bare-tag CSS targeting; forbid: #{forbidden}." if forbidden && !forbidden.empty?
+          if forbidden && !forbidden.empty?
+            style_lines << "HTML: semantic tags only (header/nav/main/article/section/aside/footer); " \
+              "bare-tag CSS targeting; forbid: #{forbidden}."
+          end
         end
-        if (css = style["css"])
-          style_lines << "CSS: tag selectors first, classes last; @layer base/components/utilities; rem units; no !important; no inline style attributes."
+        if style["css"]
+          style_lines << "CSS: tag selectors first, classes last; @layer base/components/utilities; " \
+            "rem units; no !important; no inline style attributes."
         end
         if (typ = style["typography"])
           fams = typ.dig("families", "sans") || ""
-          style_lines << "Typography: Swiss style; one family per surface; #{fams}; scale ratio #{typ["ratio"] || 1.25}; measure 65ch; left-align body."
+          style_lines << "Typography: Swiss style; one family per surface; #{fams}; " \
+            "scale ratio #{typ["ratio"] || 1.25}; measure 65ch; left-align body."
         end
         if (nh = style["nielsen_heuristics"]) && nh.is_a?(Array) && nh.any?
-          style_lines << "Nielsen heuristics enforced: " + nh.first(10).map { |h| "#{h["id"]}.#{h["name"]}" }.join(", ") + "."
+          style_lines << "Nielsen heuristics enforced: " +
+            nh.first(10).map { |h| "#{h["id"]}.#{h["name"]}" }.join(", ") + "."
         end
         if (a11y = style["accessibility"])
-          style_lines << "Accessibility target: #{a11y["target"] || "wcag_2_2_aaa"}; keyboard-complete; focus-visible; respect prefers-reduced-motion + color-scheme; never tabindex>0; never autoplay sound."
+          target = a11y["target"] || "wcag_2_2_aaa"
+          style_lines << "Accessibility target: #{target}; keyboard-complete; focus-visible; " \
+            "respect prefers-reduced-motion + color-scheme; never tabindex>0; never autoplay sound."
         end
         if (directives = style["operator_directives"]) && directives.is_a?(Array) && directives.any?
           sections["master_priority"] += "\noperator_directives: #{directives.join(" / ")}"
@@ -187,7 +205,9 @@ module Master
         XML
       end
 
-      sections["master_tools"] = "<master_tools>\nRead tool descriptions carefully; honor required_context, usage_rules, and error_recovery.\n</master_tools>"
+      sections["master_tools"] = "<master_tools>\n" \
+        "Read tool descriptions carefully; honor required_context, usage_rules, and error_recovery.\n" \
+        "</master_tools>"
       ordered = ordering.empty? ? sections.keys : ordering
       ordered.filter_map { |key| sections[key] }.join("\n\n")
     end

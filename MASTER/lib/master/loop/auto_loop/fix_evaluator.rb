@@ -32,7 +32,7 @@ module Master
           abs.fetch("code_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
           abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
           lines.join("\n")
-        rescue StandardError
+        rescue StandardError => _e
           "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
         end
       end

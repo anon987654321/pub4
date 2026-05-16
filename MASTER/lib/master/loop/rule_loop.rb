@@ -150,7 +150,8 @@ module Master
         soul   = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
         abs    = soul.fetch("absolute", {})
         golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-        lines  = ["Golden rule: #{golden}", "Minimum change that eliminates the violation. Do not touch unrelated code."]
+        lines  = ["Golden rule: #{golden}",
+                  "Minimum change that eliminates the violation. Do not touch unrelated code."]
         abs.fetch("code_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
         abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
         lines.join("\n")

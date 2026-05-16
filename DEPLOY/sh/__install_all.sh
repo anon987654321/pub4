@@ -61,7 +61,6 @@ done > "$checksum_file"
 EOF
 chmod +x backup.sh
 
-# ---
 
 cat << 'EOF' > clean.sh
 # Removes carriage returns, trailing whitespaces, and extra blank lines from text files.
@@ -98,7 +97,6 @@ done
 EOF
 chmod +x clean.sh
 
-# ---
 
 cat << 'EOF' > hack.sh
 # Finds text files matching a pattern and opens them in Vim.
@@ -141,7 +139,6 @@ fi
 EOF
 chmod +x hack.sh
 
-# ---
 
 cat << 'EOF' > lint.sh
 # Checks and fixes Ruby code files for errors.
@@ -179,7 +176,6 @@ find . -type f \( -name "*.rb" -o -name "*.erb" \) \
 EOF
 chmod +x lint.sh
 
-# ---
 
 cat << 'EOF' > perms.sh
 # Changes file ownership and permissions.
@@ -233,7 +229,6 @@ fi
 EOF
 chmod +x perms.sh
 
-# ---
 
 cat << 'EOF' > replace.sh
 # Swaps out words in files or renames them.
@@ -300,7 +295,6 @@ done
 EOF
 chmod +x replace.sh
 
-# ---
 
 cat << 'EOF' > showp.sh
 # Creates a Markdown list of text files and their contents.
@@ -335,7 +329,6 @@ echo "Saved: $output"
 EOF
 chmod +x showp.sh
 
-# ---
 
 cat << 'EOF' > svgomg.sh
 # Shrinks SVG files to save space.
@@ -365,7 +358,6 @@ done
 EOF
 chmod +x svgomg.sh
 
-# ---
 
 cat << 'EOF' > tree.sh
 # Displays a tree of directories and files.
@@ -407,7 +399,6 @@ print_tree "$folder"
 EOF
 chmod +x tree.sh
 
-# ---
 
 cat << 'EOF' > free_up_space.sh
 # Finds and deletes large files to free up space.
@@ -477,7 +468,6 @@ echo "Done."
 EOF
 chmod +x free_up_space.sh
 
-# ---
 
 # Deployment: Copy all tools to a place your computer can find them easily
 target_dir="$HOME/bin"

@@ -15,12 +15,12 @@ Rails.application.config.after_initialize do
           results = container[:standing].run_due!
           results.each { |r| container[:bus].publish("scheduler:ran", name: r[:name]) rescue nil }
         end
-      rescue StandardError
+      rescue StandardError => _e
         nil
       end
       sleep 900
     end
-  rescue StandardError
+  rescue StandardError => _e
     nil
   end
 end

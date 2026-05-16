@@ -76,7 +76,8 @@ module Master
     # Architecture #3 (rule-first default): converge each rule across all files.
     def pass_rule_first(files)
       rule_results = ordered_rules.map do |rule|
-        rl     = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus).tap { |r| r.injected_preamble = @preamble }
+        rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus)
+        rl.injected_preamble = @preamble
         result = rl.run(files)
         @violation_counts[rule.id] += result[:fixed]
         @bus&.publish("super_loop:rule_result", rule: rule.id, **result)
@@ -90,7 +91,8 @@ module Master
       rule_results_by_rule = Hash.new { |h, k| h[k] = { fixed: 0, cycles: 0, status: :clean, rule: k } }
       files.each do |path|
         ordered_rules.each do |rule|
-          rl     = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus).tap { |r| r.injected_preamble = @preamble }
+          rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus)
+        rl.injected_preamble = @preamble
           result = rl.run([path])
           @violation_counts[rule.id] += result[:fixed]
           agg = rule_results_by_rule[rule.id]

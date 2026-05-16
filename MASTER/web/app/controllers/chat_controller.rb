@@ -66,7 +66,7 @@ class ChatController < ApplicationController
         begin
           payload = { tool: ev[:tool].to_s, path: ev[:path].to_s }.to_json
           sse.write("event: tool\ndata: #{payload}\n\n")
-        rescue StandardError
+        rescue StandardError => _e
           nil
         end
       end
@@ -157,7 +157,7 @@ class ChatController < ApplicationController
         model_sub.call if defined?(model_sub) && model_sub
         verdict_sub.call if defined?(verdict_sub) && verdict_sub
         escalate_sub.call if defined?(escalate_sub) && escalate_sub
-      rescue StandardError
+      rescue StandardError => _e
         nil
       end
       sse.close
