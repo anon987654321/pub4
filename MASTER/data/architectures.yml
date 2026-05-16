@@ -39,7 +39,7 @@ architectures:
 
   - id: ast_autofixes
     name: "Deterministic AST-level autofixes for mechanical rules"
-    status: scaffolded
+    status: implemented
     description: >
       Mechanical violations (frozen_string_literal, trailing commas, bare rescue,
       double-quote enforcement) can be fixed with Prism AST transforms —
@@ -61,7 +61,7 @@ architectures:
 
   - id: council_fixes
     name: "Multi-agent council deliberation for architectural violations"
-    status: scaffolded
+    status: implemented
     description: >
       Architectural violations (THREAD_SAFETY, DECOUPLE, INTEGRATED_WHOLE)
       route to a 3-persona mini-council (skeptic/security/maintainer) rather
@@ -111,7 +111,7 @@ architectures:
 
   - id: reinforcement_learning
     name: "Reinforcement learning: track fix quality, update rule priorities"
-    status: scaffolded
+    status: implemented
     description: >
       Record which rule+file_type pairs produce fixes that stick (no
       regression in next scan). Update a fix_quality score per rule.
@@ -159,7 +159,7 @@ architectures:
 
   - id: bayesian_priors
     name: "Hierarchical Bayesian violation priors per language/tier"
-    status: scaffolded
+    status: implemented
     description: >
       Each rule has a prior probability of firing per language and file type.
       Posterior updated by observed violation counts. SuperLoop's priority
