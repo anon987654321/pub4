@@ -625,7 +625,7 @@ stage_1() {
   /sbin/pfctl -e || { log ERROR "pf enable failed"; exit 1 }
 
   # Configure minimal pf
-  install_template files/pf.stage1.conf /etc/pf.conf
+  install_template pf.stage1.conf /etc/pf.conf
 
   /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
 
@@ -646,11 +646,11 @@ stage_1() {
   transaction_log "DELETE" "/var/nsd/etc/* and /var/nsd/zones/master/*" "SUCCESS"
 
   # Configure NSD
-  install_template files/nsd.conf.head /var/nsd/etc/nsd.conf
+  install_template nsd.conf.head /var/nsd/etc/nsd.conf
 
   for domain in ${ALL_DOMAINS[*]%%:*}; do
 
-    append_template files/nsd-zone.tmpl /var/nsd/etc/nsd.conf
+    append_template nsd-zone.tmpl /var/nsd/etc/nsd.conf
 
   done
 
@@ -670,7 +670,7 @@ stage_1() {
 
     [[ $subdomains = $domain ]] && subdomains=""
 
-    install_template files/zone.tmpl /var/nsd/zones/master/$domain.zone
+    install_template zone.tmpl /var/nsd/zones/master/$domain.zone
 
     [[ $domain = brgen.no ]] && print -r -- "ns IN A $BRGEN_IP" >> /var/nsd/zones/master/$domain.zone
 
@@ -773,7 +773,7 @@ stage_1() {
   # Configure HTTP
   [[ -d /var/www/acme ]] || { log ERROR "/var/www/acme missing"; exit 1 }
 
-  install_static files/httpd.conf /etc/httpd.conf
+  install_static httpd.conf /etc/httpd.conf
 
   httpd -n -f /etc/httpd.conf || { log ERROR "httpd.conf invalid"; exit 1 }
 
@@ -804,7 +804,7 @@ stage_1() {
 
   chmod 640 /etc/acme/letsencrypt_privkey.pem
 
-  install_static files/acme-client.head /etc/acme-client.conf
+  install_static acme-client.head /etc/acme-client.conf
 
   for domain_entry in $ALL_DOMAINS; do
 
@@ -885,7 +885,7 @@ stage_1() {
   (( $#FAILED_CERTS )) && retry_failed_certs
 
   # Schedule renewals - create renewal script
-  install_static files/renew-certs.sh /usr/local/bin/renew-certs.sh
+  install_static renew-certs.sh /usr/local/bin/renew-certs.sh
 
   chmod 755 /usr/local/bin/renew-certs.sh
   # Add to crontab
@@ -993,7 +993,7 @@ bootstrap_rails_app() {
 
   secret=$(su -l "$app" -c "cd $app_dir && RAILS_ENV=production bundle exec rails secret 2>/dev/null" | tail -1)
   [[ ${#secret} -ge 64 ]] || { log ERROR "$app: secret capture failed (got ${#secret} chars)"; return 1 }
-  install_template files/rc.d/rails-app.tmpl /etc/rc.d/$app
+  install_template rc.d/rails-app.tmpl /etc/rc.d/$app
   chmod 755 /etc/rc.d/$app
   /usr/sbin/rcctl enable $app
   /usr/sbin/rcctl restart $app || /usr/sbin/rcctl start $app \
@@ -1047,6 +1047,13 @@ configure_relayd() {
     done
     print -r -- "  match request header set \"X-Forwarded-Proto\" value \"https\""
     print -r -- "  match request header set \"X-Forwarded-For\"   value \"\$REMOTE_ADDR\""
+    print -r -- "  match response header set \"Strict-Transport-Security\" value \"max-age=31536000; includeSubDomains; preload\""
+    print -r -- "  match response header set \"Content-Security-Policy\" value \"upgrade-insecure-requests; default-src https: 'self'\""
+    print -r -- "  match response header set \"Referrer-Policy\" value \"strict-origin\""
+    print -r -- "  match response header set \"X-Content-Type-Options\" value \"nosniff\""
+    print -r -- "  match response header set \"X-Frame-Options\" value \"SAMEORIGIN\""
+    print -r -- "  match response header set \"X-XSS-Protection\" value \"1; mode=block\""
+    print -r -- "  http websockets"
     for dom in ${(k)DOMAIN_BACKEND}; do
       backend=${DOMAIN_BACKEND[$dom]}
       print -r -- "  match request header \"Host\" value \"${dom}\" forward to <${backend}>"
@@ -1107,14 +1114,14 @@ stage_2() {
   }
 
   # Configure PF
-  install_template files/pf.stage2.conf /etc/pf.conf
+  install_template pf.stage2.conf /etc/pf.conf
 
   /sbin/pfctl -nf /etc/pf.conf || { log ERROR "pf.conf invalid"; exit 1 }
 
   /sbin/pfctl -f /etc/pf.conf || { log ERROR "pf failed"; exit 1 }
 
   # Configure OpenSMTPD
-  install_template files/smtpd.conf /etc/mail/smtpd.conf
+  install_template smtpd.conf /etc/mail/smtpd.conf
 
   smtpd -n -f /etc/mail/smtpd.conf || { log ERROR "smtpd.conf invalid"; exit 1 }
 
@@ -1179,7 +1186,7 @@ log INFO "Service $svc_name handled by master rc.d"
         env_line="$env_line ${_kv%%=*}=${_kv#*=}"
     done < /home/dev/.zshrc
 
-    install_template files/rc.d/master.tmpl /etc/rc.d/master
+    install_template rc.d/master.tmpl /etc/rc.d/master
     chmod 555 /etc/rc.d/master
     rcctl enable master
     rcctl start master

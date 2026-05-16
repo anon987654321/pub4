@@ -2,9 +2,10 @@
 
 require "rack/utils"
 
-# AuthTier — gates all non-public paths behind a token match.
-# Visitor requests get 401 Unauthorized; authenticated requests pass through
-# with env["master.tier"] = "authenticated". Token lives in .master/config.yml.
+# AuthTier — sets master.tier for every request.
+# "authenticated": valid ?token= or X-Token header — full tool access.
+# "visitor": no token — LLM + WebSearch only (tool guard in pipeline).
+# Public paths bypass tier logic entirely (health, assets, PWA manifest).
 class AuthTier
   PUBLIC_PATHS  = %w[/up /health /manifest.json /icon.png /icon.svg /sw.js /face.css /face.js].freeze
   PUBLIC_PREFIX = %w[/assets/].freeze
@@ -23,12 +24,8 @@ class AuthTier
     path = env["PATH_INFO"].to_s
     return @app.call(env) if public?(path)
 
-    if authenticated?(env)
-      env["master.tier"] = "authenticated"
-      @app.call(env)
-    else
-      [401, { "content-type" => "text/plain; charset=utf-8" }, ["Unauthorized\n"]]
-    end
+    env["master.tier"] = authenticated?(env) ? "authenticated" : "visitor"
+    @app.call(env)
   end
 
   private
