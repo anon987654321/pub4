@@ -100,8 +100,21 @@
         z.crown.push({ x: cx + Math.cos(a) * r * 0.6, y: cy - s * 0.7 + Math.sin(a) * r, zone: 'crown' });
       }
     }
-    z.noseRidge = line(cx, cy - s * 0.5, cx, cy + s * 0.55, 28, 'noseRidge');
-    z.noseFlare = line(cx - s * 0.12, cy + s * 0.55, cx + s * 0.12, cy + s * 0.55, 10, 'noseFlare');
+    // Sepik: hooked beak ridge — straight down then curves forward like a hornbill
+    const nrPts = [];
+    for (let i = 0; i < 22; i++) {
+      const t = i / 21;
+      nrPts.push({ x: cx, y: cy - s * 0.5 + t * s * 0.95, zone: 'noseRidge' });
+    }
+    for (let i = 0; i < 9; i++) {
+      const t = i / 8;
+      const a = -Math.PI * 0.5 + t * (Math.PI * 0.55);
+      nrPts.push({ x: cx + Math.cos(a) * s * 0.13, y: cy + s * 0.45 + Math.sin(a) * s * 0.13, zone: 'noseRidge' });
+    }
+    z.noseRidge = nrPts;
+    // nostril wings as small arcs rather than a straight bar
+    z.noseFlare = ring(cx - s * 0.08, cy + s * 0.52, s * 0.06, Math.PI * 0.5, Math.PI * 1.5, 6, 'noseFlare')
+                 .concat(ring(cx + s * 0.08, cy + s * 0.52, s * 0.06, -Math.PI * 0.5, Math.PI * 0.5, 6, 'noseFlare'));
     z.browL = line(cx - s * 0.55, cy - s * 0.4, cx - s * 0.12, cy - s * 0.2, 14, 'browL');
     z.browR = line(cx + s * 0.12, cy - s * 0.2, cx + s * 0.55, cy - s * 0.4, 14, 'browR');
     z.eyeL = ring(cx - s * 0.32, cy - s * 0.1, s * 0.12, 0, Math.PI * 2, 20, 'eyeL')
@@ -132,7 +145,7 @@
     }
     return z;
   }
-  // Asmat — wood-carved, cylindrical eye protrusions, narrower, geometric
+  // Asmat — wooden eye lozenges (diamond-carved), hornbill nosepiece, geometric incisions
   function buildAsmat(cx, cy, s) {
     const z = {};
     z.outlineL = []; z.outlineR = [];
@@ -142,15 +155,23 @@
       z.outlineL.push({ x: cx - w, y, zone: 'outlineL' });
       z.outlineR.push({ x: cx + w, y, zone: 'outlineR' });
     }
-    // cylindrical eye tubes protruding outward
-    z.eyeL = []; z.eyeR = [];
-    for (let i = 0; i < 18; i++) {
-      const t = i / 17;
-      z.eyeL.push({ x: cx - s * 0.30 - t * s * 0.15, y: cy - s * 0.05, zone: 'eyeL' });
-      z.eyeR.push({ x: cx + s * 0.30 + t * s * 0.15, y: cy - s * 0.05, zone: 'eyeR' });
+    // eye lozenges — diamond (♦) shape, Met collection reference
+    function lozenge(ex, ey, hw, hh, zone) {
+      const pts = [];
+      const n = 16;
+      for (let i = 0; i < n; i++) {
+        const t = i / n * Math.PI * 2;
+        // lozenge: |x/hw| + |y/hh| = 1 parameterised via angle
+        const cos = Math.cos(t), sin = Math.sin(t);
+        const r = 1 / (Math.abs(cos) / hw + Math.abs(sin) / hh);
+        pts.push({ x: ex + cos * r, y: ey + sin * r, zone });
+      }
+      return pts;
     }
-    z.pupilL = disc(cx - s * 0.45, cy - s * 0.05, s * 0.04, 6, 'pupilL');
-    z.pupilR = disc(cx + s * 0.45, cy - s * 0.05, s * 0.04, 6, 'pupilR');
+    z.eyeL = lozenge(cx - s * 0.30, cy - s * 0.05, s * 0.18, s * 0.10, 'eyeL');
+    z.eyeR = lozenge(cx + s * 0.30, cy - s * 0.05, s * 0.18, s * 0.10, 'eyeR');
+    z.pupilL = disc(cx - s * 0.30, cy - s * 0.05, s * 0.04, 6, 'pupilL');
+    z.pupilR = disc(cx + s * 0.30, cy - s * 0.05, s * 0.04, 6, 'pupilR');
     z.noseRidge = line(cx, cy - s * 0.3, cx, cy + s * 0.5, 22, 'noseRidge');
     // hooked nose tip
     z.noseRidge = z.noseRidge.concat(line(cx, cy + s * 0.5, cx + s * 0.18, cy + s * 0.45, 6, 'noseRidge'));
@@ -178,16 +199,28 @@
       const p = { x: cx + Math.cos(a) * r * 0.85, y: cy + Math.sin(a) * r, zone: a < 0 ? 'outlineL' : 'outlineR' };
       (a < 0 ? z.outlineL : z.outlineR).push(p);
     }
-    // giant round eye holes
+    // Baining: giant startled round eyes with spiraling pupils (Bowers Museum ref)
     z.eyeL = ring(cx - s * 0.45, cy - s * 0.25, s * 0.30, 0, Math.PI * 2, 32, 'eyeL');
     z.eyeR = ring(cx + s * 0.45, cy - s * 0.25, s * 0.30, 0, Math.PI * 2, 32, 'eyeR');
-    z.pupilL = disc(cx - s * 0.45, cy - s * 0.25, s * 0.08, 10, 'pupilL');
-    z.pupilR = disc(cx + s * 0.45, cy - s * 0.25, s * 0.08, 10, 'pupilR');
-    // small triangle nose
+    // spiral pupils — trace an Archimedean spiral
+    const spiralEye = (ex, ey, zone) => {
+      const pts = [];
+      for (let i = 0; i < 28; i++) {
+        const t = i / 27;
+        const a = t * Math.PI * 4;
+        const r = t * s * 0.20;
+        pts.push({ x: ex + Math.cos(a) * r, y: ey + Math.sin(a) * r * 0.8, zone });
+      }
+      return pts;
+    };
+    z.pupilL = spiralEye(cx - s * 0.45, cy - s * 0.25, 'pupilL');
+    z.pupilR = spiralEye(cx + s * 0.45, cy - s * 0.25, 'pupilR');
+    // small broad nose bridge
     z.noseRidge = line(cx, cy + s * 0.05, cx, cy + s * 0.35, 12, 'noseRidge');
-    // wide exaggerated mouth
-    z.mouth = ring(cx, cy + s * 0.7, s * 0.45, 0, Math.PI, 22, 'mouth');
-    z.mouth = z.mouth.concat(line(cx - s * 0.45, cy + s * 0.7, cx + s * 0.45, cy + s * 0.7, 16, 'mouth'));
+    // wide protruding lips — Vungvung reference: large, pronounced
+    z.mouth = ring(cx, cy + s * 0.72, s * 0.48, 0, Math.PI, 26, 'mouth');
+    z.mouth = z.mouth.concat(ring(cx, cy + s * 0.63, s * 0.40, 0, Math.PI, 18, 'mouth'))
+                     .concat(line(cx - s * 0.48, cy + s * 0.72, cx + s * 0.48, cy + s * 0.72, 16, 'mouth'));
     // antenna-like crown protrusions
     z.crown = [];
     for (let i = 0; i < 4; i++) {
@@ -255,14 +288,19 @@
       z.crown.push({ x: cx + w, y, zone: 'crown' });
       if (i % 3 === 0) z.crown.push({ x: cx, y, zone: 'crown' });
     }
-    // openwork dots — scattered across face
+    // openwork lattice — checkerboard diamond grid (New Ireland carved lattice)
     z.scarL = []; z.scarR = [];
-    for (let i = 0; i < 16; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = s * (0.2 + Math.random() * 0.4);
-      const x = cx + Math.cos(a) * r;
-      const y = cy + Math.sin(a) * r * 0.8;
-      (x < cx ? z.scarL : z.scarR).push({ x, y, zone: x < cx ? 'scarL' : 'scarR' });
+    const owRows = 7, owCols = 6;
+    for (let r = 0; r < owRows; r++) {
+      for (let c = 0; c < owCols; c++) {
+        if ((r + c) % 2 !== 0) continue;
+        const gx = cx - s * 0.48 + c * (s * 0.96 / (owCols - 1));
+        const gy = cy - s * 0.55 + r * (s * 0.90 / (owRows - 1));
+        const ox2 = Math.sin(r * 2.1 + c * 1.7) * s * 0.025;
+        const oy2 = Math.cos(r * 1.3 + c * 2.3) * s * 0.018;
+        const zone = gx < cx ? 'scarL' : 'scarR';
+        (gx < cx ? z.scarL : z.scarR).push({ x: gx + ox2, y: gy + oy2, zone });
+      }
     }
     return z;
   }
@@ -1115,6 +1153,7 @@
       dx = xY; dz = zY;
       const yP = dy * cosP - dz * sinP;
       dy = yP;
+      p.sz = dz; // eye-space z — drives depth-layered rendering
       tx = cx + dx;
       ty = cy + dy;
       if (disp > 0) {
@@ -1172,13 +1211,30 @@
 
   function drawParticles() {
     const fog = weather.fog * 0.4;
-    const alpha = State.mode === 'sleep' ? 0.35 : (State.mode === 'rain' ? 0.55 : 0.95);
+    const base = State.mode === 'sleep' ? 0.35 : (State.mode === 'rain' ? 0.55 : 0.92);
     const hi = palette.highlight.split(',');
-    const d = () => (Math.random() < 0.33 ? -1 : Math.random() < 0.5 ? 0 : 1);
-    ctx.fillStyle = `rgba(${(+hi[0]+d())|0},${(+hi[1]+d())|0},${(+hi[2]+d())|0},${alpha - fog})`;
+    const rr = (+hi[0]) | 0, gg = (+hi[1]) | 0, bb = (+hi[2]) | 0;
+    const zT = Face.s * 0.07; // depth threshold — proportional to mask scale
+
+    // Far layer — recessed zones (pupils, eye sockets): dim
+    ctx.fillStyle = `rgba(${rr},${gg},${bb},${Math.max(0, base - fog - 0.40).toFixed(2)})`;
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
-      ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
+      if ((p.sz || 0) < -zT) ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
+    }
+    // Mid layer — face surface: normal
+    const dr = ((Math.random() * 8 - 4) | 0);
+    ctx.fillStyle = `rgba(${rr+dr},${gg+dr},${bb+dr},${(base - fog - 0.08).toFixed(2)})`;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      const sz = p.sz || 0;
+      if (sz >= -zT && sz <= zT) ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
+    }
+    // Near layer — protruding features (nose ridge, tassels, flares): brightest
+    ctx.fillStyle = `rgba(${Math.min(255,rr+10)},${Math.min(255,gg+7)},${Math.min(255,bb+2)},${(base - fog).toFixed(2)})`;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if ((p.sz || 0) > zT) ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
     }
     // weather rain overlay
     if (weather.rain > 0) {
