@@ -1,11 +1,20 @@
-// tts.js — tts object, voice selection, enqueueSpeech(), ttsTick(), ttsSkip(), ttsToggleMute(), driveViseme(), setMouth(), unlockTTS()
+// tts.js — server-side edge-tts via /chat/tts, AudioContext playback
 "use strict";
 
 const tts = {
-  enabled: 'speechSynthesis' in window, muted: false, voice: null,
-  queue: [], model: '', mood: 'idle', unlocked: false, currentUtt: null
+  enabled: true, muted: false,
+  queue: [], model: '', mood: 'idle', unlocked: false, currentUtt: null,
+  playing: false
 };
 const SENT_BREAK = /([.!?…]+["'\u201D]?\s+|[\n]{2,})/;
+
+// Shared AudioContext — created on first user gesture (primer click)
+let _ttsActx = null;
+function _getTtsActx() {
+  if (!_ttsActx) _ttsActx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_ttsActx.state === 'suspended') _ttsActx.resume();
+  return _ttsActx;
+}
 
 function pickVoice() {
   if (!tts.enabled) return;
@@ -37,44 +46,54 @@ function ttsParams() {
 }
 
 function unlockTTS() {
-  if (tts.unlocked || !tts.enabled) return;
-  try {
-    const u = new SpeechSynthesisUtterance(' ');
-    u.volume = 0; speechSynthesis.speak(u);
-    tts.unlocked = true;
-  } catch (e) {}
+  if (tts.unlocked) return;
+  _getTtsActx();
+  tts.unlocked = true;
 }
 
 function enqueueSpeech(text) {
-  if (!tts.enabled || tts.muted) return;
+  if (tts.muted) return;
   const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`~]/g, '').trim();
   if (!clean) return;
-  const u = new SpeechSynthesisUtterance(clean);
-  const p = ttsParams();
-  u.rate = p.rate; u.pitch = p.pitch;
-  if (tts.voice) u.voice = tts.voice;
-  u.onstart = () => { tts.currentUtt = u; duck(true); State.mode = 'speaking'; };
-  u.onboundary = (e) => { driveViseme(clean, e.charIndex || 0); };
-  u.onend = () => {
-    tts.currentUtt = null; duck(false); ttsTick();
-    if (!tts.queue.length) setMouth('neutral');
-    if (State.mode === 'speaking') State.mode = 'idle';
-  };
-  tts.queue.push(u);
+  tts.queue.push(clean);
   ttsTick();
 }
 
 function ttsTick() {
-  if (!tts.enabled || tts.muted) return;
-  if (speechSynthesis.speaking || speechSynthesis.pending) return;
-  const u = tts.queue.shift();
-  if (u) speechSynthesis.speak(u);
+  if (tts.muted || tts.playing || !tts.queue.length) return;
+  const text = tts.queue.shift();
+  tts.playing = true;
+  const tok = new URLSearchParams(location.search).get('token') || '';
+  const url = `/chat/tts?text=${encodeURIComponent(text)}&voice=osman&style=auto`
+    + (tok ? `&token=${encodeURIComponent(tok)}` : '');
+  fetch(url)
+    .then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+    .then(buf => {
+      const ac = _getTtsActx();
+      return ac.decodeAudioData(buf).then(decoded => {
+        duck(true);
+        State.mode = 'speaking';
+        const src = ac.createBufferSource();
+        src.buffer = decoded;
+        src.connect(ac.destination);
+        tts.currentUtt = src;
+        src.onended = () => {
+          tts.currentUtt = null; tts.playing = false;
+          duck(false); setMouth('neutral');
+          if (State.mode === 'speaking') State.mode = 'idle';
+          ttsTick();
+        };
+        src.start();
+      });
+    })
+    .catch(() => { tts.playing = false; ttsTick(); });
 }
 
 function ttsSkip() {
-  if (tts.enabled) speechSynthesis.cancel();
-  tts.queue.length = 0; tts.currentUtt = null; duck(false);
-  setMouth('neutral');
+  tts.queue.length = 0;
+  if (tts.currentUtt && tts.currentUtt.stop) try { tts.currentUtt.stop(); } catch (_) {}
+  tts.currentUtt = null; tts.playing = false;
+  duck(false); setMouth('neutral');
 }
 
 function ttsToggleMute() {

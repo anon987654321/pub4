@@ -1,23 +1,60 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: #000; overflow: hidden; -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none; }
 canvas { position: fixed; inset: 0; display: block; }
+
 #primer { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9; cursor: pointer; }
-#primer::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: rgb(215,165,130); animation: pulse 1.6s ease-in-out infinite; }
+#primer::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: rgb(210,205,200); animation: pulse 1.6s ease-in-out infinite; }
 #primer.gone { opacity: 0; pointer-events: none; transition: opacity 0.9s ease; }
 @keyframes pulse { 0%,100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(2.2); opacity: 1; } }
-#zsh { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 14px env(safe-area-inset-bottom, 10px) 14px; display: flex; align-items: center; gap: 6px; font: 13px ui-monospace, 'SF Mono', Menlo, monospace; color: rgba(220,170,135,0.92); background: linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0)); border-top: 1px solid rgba(220,170,135,0.10); z-index: 8; opacity: 0; transform: translateY(8px); transition: opacity 0.6s ease, transform 0.6s ease; pointer-events: none; }
-#zsh.live { opacity: 1; transform: translateY(0); pointer-events: auto; }
-#zsh .pp { color: rgb(220,90,70); font-weight: 700; letter-spacing: 0.02em; }
-#zsh .sep { color: rgba(220,170,135,0.45); }
-#zsh input { flex: 1; background: transparent; border: 0; outline: 0; color: inherit; font: inherit; caret-color: rgb(220,90,70); padding: 2px 0; }
-#zsh input::placeholder { color: rgba(220,170,135,0.32); }
-#chat-log { position: fixed; top: 80px; left: 20px; right: 20px; bottom: 100px; overflow-y: auto; font-family: monospace; color: #cdc5b6; }
-.message { margin-bottom: 8px; white-space: pre-wrap; }
-.message.user { color: #ffaa66; }
-.message.assistant { color: #cdc5b6; }
-.cursor { display: inline-block; width: 1px; background: #cdc5b6; animation: blink 1s step-end infinite; }
+
+#chat-panel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(400px, 100vw);
+  background: rgba(0,0,0,0.90);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-left: 1px solid rgba(210,205,200,0.08);
+  transform: translateX(100%);
+  transition: transform 0.38s cubic-bezier(0.22,1,0.36,1);
+  z-index: 10;
+  display: flex; flex-direction: column;
+  overscroll-behavior: contain;
+}
+#chat-panel.open { transform: translateX(0); }
+
+#chat-banner {
+  flex-shrink: 0;
+  padding: env(safe-area-inset-top, 48px) 20px 14px;
+  border-bottom: 1px solid rgba(210,205,200,0.07);
+}
+.banner-name { display: block; font: 700 20px/1 ui-monospace,'SF Mono',Menlo,monospace; color: rgb(220,90,70); letter-spacing: 0.05em; }
+.banner-sub { display: block; margin-top: 5px; font: 11px ui-monospace,'SF Mono',Menlo,monospace; color: rgba(210,205,200,0.30); }
+
+#chat-log {
+  flex: 1; overflow-y: auto; padding: 14px 20px;
+  font: 13px/1.6 ui-monospace,'SF Mono',Menlo,monospace;
+  color: rgba(210,205,200,0.80);
+  -webkit-overflow-scrolling: touch;
+}
+.message { margin-bottom: 10px; white-space: pre-wrap; word-break: break-word; }
+.msg-prompt { font-weight: 700; }
+.message.user .msg-prompt { color: rgb(220,90,70); }
+.message.assistant .msg-prompt { color: rgba(210,205,200,0.30); }
+.msg-body { color: rgba(210,205,200,0.82); }
+.cursor { display: inline-block; width: 1px; height: 0.9em; background: rgba(210,205,200,0.6); vertical-align: text-bottom; animation: blink 1s step-end infinite; }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
-#suggestions { position: absolute; bottom: 100%; left: 0; background: #1e1e1e; border: 1px solid #333; border-radius: 4px; display: none; }
-.suggestion { padding: 4px 8px; cursor: pointer; }
-.suggestion:hover { background: #333; }
-#status-bar { position: fixed; bottom: 70px; left: 0; right: 0; background: rgba(0,0,0,0.7); color: #aaa; font-size: 12px; padding: 4px; text-align: center; }
+
+#zsh {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 0;
+  padding: 10px 20px env(safe-area-inset-bottom, 12px);
+  font: 13px ui-monospace,'SF Mono',Menlo,monospace;
+  color: rgba(210,205,200,0.80);
+  border-top: 1px solid rgba(210,205,200,0.07);
+  opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+}
+#zsh.live { opacity: 1; pointer-events: auto; }
+#zsh .pp { color: rgb(220,90,70); font-weight: 700; }
+#zsh .sep { color: rgba(210,205,200,0.35); }
+#zsh .sep2 { color: rgba(210,205,200,0.35); }
+#zsh input { flex: 1; background: transparent; border: 0; outline: 0; color: rgba(210,205,200,0.90); font: inherit; caret-color: rgb(220,90,70); padding: 2px 0; }
+#zsh input::placeholder { color: rgba(210,205,200,0.22); }

@@ -22,10 +22,16 @@ function sendMessage(text) {
       State.mode = 'idle'; Face.browTarget = 0; Face.dispersionTarget = 0;
       mandalaLock();
       try { evtSrc.close(); } catch (e) {}
+      if (typeof window._chatOnDone === 'function') window._chatOnDone();
       return;
     }
-    if (raw.startsWith('ERROR:')) { Face.coronaFlash = 1.0; State.mode = 'error'; fadePaletteTo(VERDICT_TINT.veto); return; }
+    if (raw.startsWith('ERROR:')) {
+      Face.coronaFlash = 1.0; State.mode = 'error'; fadePaletteTo(VERDICT_TINT.veto);
+      if (typeof window._chatOnError === 'function') window._chatOnError();
+      return;
+    }
     const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+    if (typeof window._chatOnChunk === 'function') window._chatOnChunk(chunk);
     pending += chunk;
     Face.dispersionTarget = 0;
     let m;

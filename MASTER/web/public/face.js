@@ -315,15 +315,18 @@
   }
   // Z (depth) — anchors carry z so mask reads as solid under rotation
   const ZONE_Z = {
-    pupilL: -0.18, pupilR: -0.18,
-    eyeL: -0.08,   eyeR: -0.08,
-    browL: 0.10,   browR: 0.10,
-    noseFlare: 0.36,
-    scarL: 0.06,   scarR: 0.06,
-    forehead: 0.08,
-    outlineL: 0.0, outlineR: 0.0,
-    chin: -0.02,
-    mouth: 0.04
+    pupilL:    0.22, pupilR:    0.22,
+    eyeL:      0.18, eyeR:      0.18,
+    browL:     0.30, browR:     0.30,
+    noseFlare: 0.52,
+    noseRidge: 0,   // handled by per-index ramp in applyZ
+    scarL:     0.15, scarR:     0.15,
+    forehead:  0.32,
+    outlineL:  0.0,  outlineR:  0.0,
+    chin:      0.22,
+    mouth:     0.26,
+    crown:     0.24,
+    tasselL:   0.06, tasselR:   0.06
   };
   function applyZ(zones, s) {
     for (const [name, list] of Object.entries(zones)) {
@@ -439,12 +442,7 @@
 
   // Palettes (time-of-day + state overlays)
   function timePalette() {
-    const h = new Date().getHours();
-    if (h < 6)  return { shadow: '14,10,8',    midtone: '90,60,50',    highlight: '180,140,110', accent: '210,115,75' };
-    if (h < 11) return { shadow: '16,12,10',   midtone: '120,80,60',   highlight: '215,165,130', accent: '215,140,100' };
-    if (h < 17) return { shadow: '14,10,8',    midtone: '130,85,60',   highlight: '220,170,135', accent: '215,125,85'  };
-    if (h < 21) return { shadow: '18,12,10',   midtone: '140,90,65',   highlight: '225,160,120', accent: '220,110,75'  };
-    return         { shadow: '10,8,6',     midtone: '70,50,40',    highlight: '160,120,95',  accent: '190,95,65'   };
+    return { shadow: '8,6,6', midtone: '100,90,90', highlight: '210,205,200', accent: '155,48,38' };
   }
   let palette = timePalette(), targetPalette = palette, palBlend = 1.0;
   function lerpRGB(a, b, t) {
@@ -1123,6 +1121,7 @@
     ctx.beginPath(); ctx.arc(Face.cx + 2, Face.cy, r, 0, Math.PI * 2); ctx.stroke();
   }
   function drawMandala() {
+    return;
     if (FX.mandala < 0.05) return;
     ctx.save();
     ctx.translate(Face.cx, Face.cy);
@@ -1246,8 +1245,8 @@
   function tickParticles(dt, now) {
     const cx = Face.cx, cy = Face.cy, s = Face.s;
     const rot = Face.rot, cosR = Math.cos(rot), sinR = Math.sin(rot);
-    const yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(now * 0.00022) * 0.06;
-    const pitch = Face.pitch + State.tiltY * 0.30;
+    const yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(now * 0.00022) * 0.35;
+    const pitch = Face.pitch + State.tiltY * 0.30 + Math.sin(now * 0.00015) * 0.15;
     const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
     const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
     const disp = Face.dispersion;
@@ -1365,7 +1364,7 @@
       const ZONE_K = { pupilL: 0.14, pupilR: 0.14, eyeL: 0.12, eyeR: 0.12,
                        browL: 0.10, browR: 0.10, crown: 0.04, tasselL: 0.035, tasselR: 0.035 };
       const k = ZONE_K[p.zone] || 0.08;
-      const kActive = (now >= p.activateAt) ? k : k * 0.08;
+      const kActive = (now >= p.activateAt) ? k : k * 0.04;
       const ax = (tx - p.x) * kActive / p.mass;
       const ay = (ty - p.y) * kActive / p.mass;
       p.vx += ax; p.vy += ay;
@@ -1398,8 +1397,7 @@
   function drawParticles() {
     const fog = weather.fog * 0.4;
     const base = State.mode === 'sleep' ? 0.35 : (State.mode === 'rain' ? 0.55 : 0.92);
-    const hi = palette.highlight.split(',');
-    const rr = (+hi[0]) | 0, gg = (+hi[1]) | 0, bb = (+hi[2]) | 0;
+    const rr = 210, gg = 205, bb = 200;
     const zT = Face.s * 0.07;
 
     // Thinking mode: trail at previous position
@@ -1598,7 +1596,7 @@
   }
 
   // Speed lines: radial streaks — thinking / determination
-  function drawSpeedLines() {
+  function drawSpeedLines() { return;
     if (FX.speedLines < 0.05) return;
     const cx = Face.cx, cy = Face.cy, s = Face.s;
     const n = 18, now = performance.now();
@@ -1653,6 +1651,12 @@
   cv.addEventListener('touchmove',  (e) => { if (e.touches.length === 2) handlePinch(e); }, { passive: true });
   cv.addEventListener('touchend',   () => { Gesture.twoPtr = false; });
   window.addEventListener('resize', resize);
+
+  document.addEventListener('mousemove', (e) => {
+    if (e.buttons) return;
+    Face.yawTarget   = (e.clientX / innerWidth  - 0.5) * 0.7;
+    Face.pitchTarget = (e.clientY / innerHeight - 0.5) * 0.45;
+  }, { passive: true });
 
   // Topology events from visual_bridge.js — drive codebase disperse.
   window.addEventListener('master:visual', (e) => {

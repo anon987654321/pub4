@@ -21,11 +21,21 @@
   <canvas id="cognition-ecology"></canvas>
   <canvas id="face"></canvas>
   <div id="primer"></div>
-  <div id="zsh"><span class="pp">master</span><span class="sep">$</span><input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder=""></div>
-  <div id="chat-log"></div>
-  <div id="suggestions"></div>
-  <div id="status-bar"></div>
+  <div id="chat-panel">
+    <div id="chat-banner">
+      <span class="banner-name">MASTER</span>
+      <span class="banner-sub" id="banner-sub">constitutional agent</span>
+    </div>
+    <div id="chat-log"></div>
+    <div id="zsh">
+      <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
+      <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything">
+    </div>
+  </div>
   <script src="/face.js" defer></script>
+  <script src="/tts.js" defer></script>
+  <script src="/gestures.js" defer></script>
+  <script src="/sse.js" defer></script>
   <script src="/visual_bridge.js" defer></script>
   <script src="/cognition_ecology.js" defer></script>
   <script src="/codebase.js" defer></script>
