@@ -252,7 +252,7 @@ module Master
     end
 
     def score_violations(scanner, path)
-      result = scanner&.scan(path, depth: :standard)
+      result = scanner&.scan(path, depth: :deep)
       Result.wrap(result).value_or([])
     end
 

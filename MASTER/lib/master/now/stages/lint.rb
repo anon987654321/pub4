@@ -21,10 +21,10 @@ module Master
         paths = Array(ctx[:written_files]).filter_map { |p| File.exist?(p) ? p : nil }
         paths.each do |scan_path|
           if File.directory?(scan_path)
-            dir_map = Result.wrap(@scanner.scan_dir(scan_path, depth: :standard)).value_or({})
+            dir_map = Result.wrap(@scanner.scan_dir(scan_path, depth: :deep)).value_or({})
             findings.concat(dir_map.values.flat_map { |r| Result.wrap(r).value_or([]) })
           elsif scan_path.end_with?(".rb")
-            findings.concat(Result.wrap(@scanner.scan(scan_path, depth: :standard)).value_or([]))
+            findings.concat(Result.wrap(@scanner.scan(scan_path, depth: :deep)).value_or([]))
           end
         end
 
@@ -58,7 +58,7 @@ module Master
         Tempfile.open(["lint_inline", ".rb"]) do |f|
           f.write("# frozen_string_literal: true\n\n#{code}")
           f.flush
-          findings = Result.wrap(@scanner.scan(f.path, depth: :standard))
+          findings = Result.wrap(@scanner.scan(f.path, depth: :deep))
             .value_or([]).map { |v| v.merge(source: :inline) }
         end
         findings

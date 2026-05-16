@@ -369,7 +369,7 @@ module Master
     def boot_scan
       lib_dir = File.join(@root, "lib")
       changed = changed_lib_files(lib_dir)
-      result  = changed.any? ? scan_files(changed) : @scanner.scan_dir(lib_dir, depth: :standard)
+      result  = changed.any? ? scan_files(changed) : @scanner.scan_dir(lib_dir, depth: :deep)
       return unless result.respond_to?(:ok?) && result.ok?
 
       prev = @prev_violations
@@ -397,7 +397,7 @@ module Master
     end
 
     def scan_files(paths)
-      Result.ok(paths.map { |p| [p, @scanner.scan(p, depth: :standard)] })
+      Result.ok(paths.map { |p| [p, @scanner.scan(p, depth: :deep)] })
     end
 
     def count_violations(pairs)
