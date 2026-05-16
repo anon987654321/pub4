@@ -17,7 +17,7 @@ module Master
       def initialize(msg, category) = (super(msg); @category = category)
     end
 
-    def initialize(budget_max:, req_max:, event_bus: nil, rate_window_s: RATE_WINDOW_S, rate_max: RATE_MAX)
+    def initialize(budget_max:, req_max:, event_bus: nil, rate_window_s: RATE_WINDOW_S, rate_max: nil)
       super()
       @budget_max    = budget_max
       @bus           = event_bus
@@ -27,7 +27,7 @@ module Master
       @session_total = 0.0
       @req_times     = []
       @rate_window   = rate_window_s
-      @rate_max      = rate_max
+      @rate_max      = normalize_rate_max(rate_max || req_max)
     end
 
     def check_rate!
@@ -35,7 +35,7 @@ module Master
         now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @req_times.reject! { |t| now - t > @rate_window }
         over_rate = @req_times.size >= @rate_max
-        raise CircuitError.new("rate limit: #{@rate_max} req/min exceeded", :infrastructure) if over_rate
+        raise CircuitError.new("rate limit: #{@rate_max} req/min exceeded", :rate_limit) if over_rate
         @req_times << now
       end
     end
@@ -64,7 +64,7 @@ module Master
       result
     rescue RubyLLM::RateLimitError => e
       # API rate limit is infrastructure noise — don't open the circuit.
-      Result.err("rate_limit: #{e.message}", category: :infrastructure)
+      Result.err("rate_limit: #{e.message}", category: :rate_limit)
     rescue StandardError => e
       on_failure
       Result.err(e.message, category: :provider_error)
@@ -112,6 +112,11 @@ module Master
         @opened_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @bus&.publish("circuit:open", failures: @failures)
       end
+    end
+
+    def normalize_rate_max(value)
+      n = value.to_i
+      n.positive? ? n : RATE_MAX
     end
   end
   end
