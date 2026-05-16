@@ -44,10 +44,9 @@ class ChatController < ApplicationController
     result = container[:gateway].receive(channel: :cli, message: cmd)
     output = result.ok? ? (result.value[:rendered] || result.value.to_s) : result.message
     render json: { output: output }
-  rescue => e
+  rescue StandardError => e
     render json: { output: "Error: #{e.message}" }, status: 500
   end
-
 
   def message
     input = params[:message].to_s.strip
@@ -101,14 +100,12 @@ class ChatController < ApplicationController
       container[:bus].publish("speak:backchannel", reason: "user_long_input") if input.length >= 120
 
       mutated_flag    = false
-      web_mutated     = false
       mutated_paths   = []
       mutate_sub = container[:bus].subscribe("tool:after") do |ev|
         next unless %w[Write Edit Create FilePatch].include?(ev[:tool].to_s)
         mutated_flag = true
         path = ev[:path].to_s
         mutated_paths << path unless path.empty?
-        web_mutated ||= path.include?("/MASTER/web/")
       end
 
       result = container[:pipeline].call(Master::Result.ok(**ctx))
@@ -129,43 +126,26 @@ class ChatController < ApplicationController
 
       sse.write("data: [DONE]\n\n")
 
-      # Post-turn standing orders: auto cascade, autocommit, restart on web edits.
       if mutated_flag
-        Thread.new do
-          Thread.current.report_on_exception = false
-          begin
-            container[:bus].publish("auto:auto_start", reason: "post_chat_mutation")
-            container[:command_registry].dig("auto")&.call(args: mutated_paths.first || ".")
-            container[:bus].publish("auto:auto_done")
-          rescue StandardError => err
-            container[:bus].publish("auto:auto_error", error: err.message)
-          end
-        end
-
-        Thread.new do
-          Thread.current.report_on_exception = false
-          repo_root = Rails.root.join("..", "..").to_s
-          msg = "auto: chat-turn mutation (#{mutated_paths.size} file(s))"
-          _, status = Open3.capture2e("git", "-C", repo_root, "add", "-A")
-          if status.success?
-            _, st = Open3.capture2e("git", "-C", repo_root, "commit", "-m", msg)
-            container[:bus].publish("autocommit:done", ok: st.success?)
-          end
-        rescue StandardError => err
-          container[:bus].publish("autocommit:error", error: err.message)
-        end
-
-        if web_mutated
+        container[:bus].publish("auto:auto_start", reason: "post_chat_mutation")
+        if mutated_paths.any?
           Thread.new do
             Thread.current.report_on_exception = false
-            _, status = Open3.capture2e("doas", "rcctl", "restart", "master")
-            container[:bus].publish("master:restart", ok: status.success?)
+            repo_root = Rails.root.join("..", "..").to_s
+            msg = "auto: chat-turn mutation (#{mutated_paths.size} file(s))"
+            paths_to_add = mutated_paths.select { |p| File.exist?(p) }
+            next if paths_to_add.empty?
+            _, status = Open3.capture2e("git", "-C", repo_root, "add", "--", *paths_to_add)
+            if status.success?
+              _, st = Open3.capture2e("git", "-C", repo_root, "commit", "-m", msg)
+              container[:bus].publish("autocommit:done", ok: st.success?)
+            end
           rescue StandardError => err
-            container[:bus].publish("master:restart_error", error: err.message)
+            container[:bus].publish("autocommit:error", error: err.message)
           end
         end
       end
-    rescue => e
+    rescue StandardError => e
       sse.write("data: ERROR: #{e.message}\n\n")
       sse.write("data: [DONE]\n\n")
     ensure
@@ -207,7 +187,7 @@ class ChatController < ApplicationController
     else
       head :service_unavailable
     end
-  rescue => e
+  rescue StandardError => e
     logger.error "TTS failed: #{e.message}"
     head :service_unavailable
   end

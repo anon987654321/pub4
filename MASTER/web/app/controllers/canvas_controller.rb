@@ -1,12 +1,17 @@
 # frozen_string_literal: true
 
-# Sink for closed-loop UI signals. Chat client posts mood/mode/idle/etc. and
-# raw bus events; we re-emit on the in-process EventBus so prompt-builder
-# can pick up user-state context. No view, no SSE.
 class CanvasController < ApplicationController
+  ALLOWED_TOPICS = %w[
+    canvas:mood canvas:mode canvas:gesture canvas:idle canvas:tilt
+    canvas:palette canvas:energy canvas:breath
+  ].freeze
+
   def post_event
-    topic   = params.require(:topic)
-    payload = params.fetch(:payload, {}).permit!.to_h.transform_keys(&:to_sym)
+    topic = params.require(:topic).to_s
+    return head(:unprocessable_entity) unless ALLOWED_TOPICS.include?(topic)
+    payload = params.fetch(:payload, {}).to_unsafe_h.slice(
+      "mood", "mode", "idle", "energy", "palette", "tilt_x", "tilt_y"
+    ).transform_keys(&:to_sym)
     container[:bus].publish(topic, **payload) rescue nil
     head :accepted
   end
