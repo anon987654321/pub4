@@ -25,7 +25,11 @@ module Master
       FileUtils.mkdir_p(File.dirname(path))
       @db = SQLite3::Database.new(path)
       @db.results_as_hash = true
-      @db.execute("PRAGMA journal_mode = WAL")
+      begin
+        @db.execute("PRAGMA journal_mode = WAL")
+      rescue SQLite3::IOException
+        @db.execute("PRAGMA journal_mode = DELETE")
+      end
       ensure_schema
     end
 
