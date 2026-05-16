@@ -163,7 +163,7 @@ module Master
           fix
         rescue StandardError => e
           err = e.message.to_s
-          if Master::Loop::TRANSIENT_RE.match?(err) && attempt < MAX_FIX_RETRIES - 1
+          if Master::Loop::Constants::TRANSIENT_RE.match?(err) && attempt < MAX_FIX_RETRIES - 1
             @bus&.publish("autoloop:rate_limit", sleep: RATE_LIMIT_SLEEP * (attempt + 1), attempt: attempt + 1)
           else
             @bus&.publish("autoloop:fix_error", file: violation[:file], error: err[0, 120])

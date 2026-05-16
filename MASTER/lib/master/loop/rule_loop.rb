@@ -99,7 +99,7 @@ module Master
         code     = extract(response, File.extname(path).downcase)
         return code if code && code.strip != src.strip
       rescue StandardError => e
-        next if Master::Loop::TRANSIENT_RE.match?(e.message.to_s)
+        next if Master::Loop::Constants::TRANSIENT_RE.match?(e.message.to_s)
         @bus&.publish("rule_loop:fix_error", rule: @rule.id, file: path, error: e.message[0, 120])
         return nil
       end
