@@ -364,12 +364,15 @@
   const particles = [];
   for (let i = 0; i < N; i++) particles.push({
     x: Math.random() * 600, y: Math.random() * 600,
-    vx: 0, vy: 0,
+    vx: 0, vy: 0, px: 0, py: 0,
     hx: 0, hy: 0, hz: 0,
     hx1: 0, hy1: 0, hz1: 0,
     hx2: 0, hy2: 0, hz2: 0,
     ox: Math.sin(i * 7.13) * 0.5, oy: Math.cos(i * 11.7) * 0.5, oz: Math.sin(i * 3.97) * 0.4,
-    zone: 'crown', life: 1.0
+    zone: 'crown', life: 1.0,
+    mass: 0.7 + Math.random() * 0.6,
+    activateAt: 0,
+    ao: 0
   });
   function assignHomes() {
     if (!zonesA) return;
@@ -386,10 +389,16 @@
       p.zone = a.zone;
     }
   }
+  const ZONE_PHASE_LEAD = {
+    outlineL: 0, outlineR: 0, forehead: 0.12, browL: 0.22, browR: 0.22,
+    eyeL: 0.38, eyeR: 0.38, pupilL: 0.52, pupilR: 0.52, mouth: 0.58, chin: 0.68
+  };
   function updateHomeLerp() {
-    const t = easeInOutCubic(maskPhase);
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
+      const lead = ZONE_PHASE_LEAD[p.zone] || 0;
+      const ph = lead < 1 ? Math.min(1, Math.max(0, maskPhase - lead) / (1 - lead)) : maskPhase;
+      const t = easeInOutCubic(ph);
       p.hx = p.hx1 + (p.hx2 - p.hx1) * t;
       p.hy = p.hy1 + (p.hy2 - p.hy1) * t;
       p.hz = p.hz1 + (p.hz2 - p.hz1) * t;
@@ -423,6 +432,7 @@
       }
       maskPhase = 0;
       maskTransitioning = true;
+      Face.vortex = 0.45;
       mandalaLock();
     }
   }
@@ -470,18 +480,27 @@
     }
   }
   const easeOutCubic   = t => 1 - Math.pow(1 - t, 3);
+  const easeOutQuart   = t => 1 - Math.pow(1 - t, 4);
   const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
 
   // State
   const State = {
     mode: 'idle', // idle|listening|thinking|speaking|ack|reject|error|sleep|rain
-    mood: 'idle', model: '', provider: '',
+    mood: 'idle', model: '', provider: '', modelName: '',
     lastTouch: performance.now(),
     sttActive: false, sttInterim: '',
     confidence: 1.0,
     audioLevel: 0,
     tiltX: 0, tiltY: 0,
-    session: Math.floor(Math.random() * 1e9)
+    session: Math.floor(Math.random() * 1e9),
+    prevBass: 0
+  };
+
+  const MOOD_PALETTE = {
+    tense:   { shadow: '8,12,20',  midtone: '70,90,130',   highlight: '140,160,200', accent: '120,150,220' },
+    curious: { shadow: '18,14,6',  midtone: '150,110,50',  highlight: '220,185,120', accent: '230,160,80'  },
+    focused: { shadow: '14,10,8',  midtone: '100,70,55',   highlight: '185,145,115', accent: '210,120,80'  },
+    weary:   { shadow: '10,10,12', midtone: '80,80,95',    highlight: '150,145,165', accent: '160,140,185' }
   };
 
   // Audio (ambient pad + analyser)
@@ -525,6 +544,10 @@
     let sum = 0;
     for (let i = 0; i < freqData.length; i++) sum += freqData[i];
     State.audioLevel = sum / (freqData.length * 255);
+    // Beat-sync blink: sharp bass spike triggers blink within one frame
+    const bass3 = (freqData[1] + freqData[2] + freqData[3]) / (3 * 255);
+    if (bass3 > 0.75 && bass3 - State.prevBass > 0.2) Face.blinkAt = performance.now();
+    State.prevBass = bass3;
     return State.audioLevel;
   }
 
@@ -694,24 +717,29 @@
       const m = (ev.data || '').trim();
       if (!m) return;
       tts.mood = m; State.mood = m; moodTone(m);
+      if (MOOD_PALETTE[m]) fadePaletteTo(MOOD_PALETTE[m]);
     });
     evtSrc.addEventListener('model', (ev) => {
       const m = (ev.data || '').trim();
       if (!m) return;
-      tts.model = m; applyProviderTint(m);
+      tts.model = m; State.modelName = m.split('/').pop(); applyProviderTint(m);
     });
     evtSrc.addEventListener('verdict', (ev) => {
       const v = (ev.data || '').trim();
       fadePaletteTo(VERDICT_TINT[v] || timePalette());
       pulseEdge();
-      if (v === 'pass') triggerBlush();
-      if (v === 'veto') triggerVein();
+      if (v === 'pass') { triggerBlush(); exprRimshot(); }
+      if (v === 'veto') { triggerVein(); exprGuard(); }
     });
     evtSrc.addEventListener('confidence', (ev) => {
       const c = parseFloat(ev.data); if (isNaN(c)) return;
       State.confidence = c; Face.browTarget = 1 - c; Face.dispersionTarget = Math.max(0, (1 - c) * 0.4);
     });
-    evtSrc.onerror = () => { Face.coronaFlash = 0.6; State.mode = 'error'; triggerSweat(); try { evtSrc.close(); } catch (e) {} };
+    evtSrc.onerror = () => {
+      Face.coronaFlash = 1.0; FX.chromatic = 8;
+      State.mode = 'error'; triggerSweat();
+      try { evtSrc.close(); } catch (e) {}
+    };
   }
 
   // periodic state ping (closed-loop canvas → MASTER)
@@ -761,9 +789,9 @@
     if (amp >= 1.0) setTimeout(() => rippleAt(x, y, 0.3), 80);
   }
   function curlAt(x, y, t) {
-    const k = 0.012, k2 = 0.018;
-    const u =  Math.sin(y * k + t * 0.0007) - Math.cos(x * k2 - t * 0.0011);
-    const v = -Math.sin(x * k + t * 0.0009) + Math.cos(y * k2 + t * 0.0013);
+    const k = 0.012, k2 = 0.018, k3 = 0.007;
+    const u = Math.sin(y*k + t*0.0007) - Math.cos(x*k2 - t*0.0011) + Math.sin(x*k3 + y*k3 + t*0.0005) * 0.4;
+    const v = -Math.sin(x*k + t*0.0009) + Math.cos(y*k2 + t*0.0013) + Math.cos(y*k3 - x*k3 + t*0.0006) * 0.4;
     return [u, v];
   }
   function pointerMove(e) {
@@ -925,13 +953,16 @@
 
   // Boids neighbor flock (light, only when idle long)
   function flock() {
-    if (State.mode !== 'idle') return;
-    const idle = (performance.now() - State.lastTouch) > 30000;
-    if (!idle) return;
-    for (let i = 0; i < particles.length; i += 8) {
-      const p = particles[i], q = particles[(i + 17) % particles.length];
-      p.vx += (q.vx - p.vx) * 0.002;
-      p.vy += (q.vy - p.vy) * 0.002;
+    const NP = particles.length;
+    const strength = State.mode === 'idle' ? 0.010 : 0.005;
+    for (let i = 0; i < NP; i += 6) {
+      const p = particles[i], q = particles[(i + 137) % NP];
+      // Alignment: match neighbor velocity
+      p.vx += (q.vx - p.vx) * strength;
+      p.vy += (q.vy - p.vy) * strength;
+      // Separation: push if overlapping
+      const rdx = p.x - q.x, rdy = p.y - q.y, d2 = rdx*rdx + rdy*rdy;
+      if (d2 < 9 && d2 > 0.01) { const f = 0.04 / d2; p.vx += rdx * f; p.vy += rdy * f; }
     }
   }
 
@@ -1006,7 +1037,7 @@
     setTimeout(() => { Face.yawTarget = 0; Face.browTarget = 0; }, 2000);
   }
 
-  const Expr = { lastFire: 0 };
+  const Expr = { lastFire: 0, recent: [] };
   function tickPersonalityExpressions(now) {
     const mean = { speaking: 6000, thinking: 9000, idle: 22000, listening: 7000, error: 4000 }[State.mode] || 14000;
     if (now - Expr.lastFire < mean * (0.6 + Math.random() * 0.8)) return;
@@ -1019,7 +1050,12 @@
       error:     [exprGuard, exprPreStare]
     };
     const pool = pools[State.mode] || pools.idle;
-    pool[Math.floor(Math.random() * pool.length)]();
+    // Fatigue: deprioritise expressions fired in the last 4 turns
+    const fresh = pool.filter(fn => Expr.recent.filter(f => f === fn).length < 2);
+    const chosen = (fresh.length ? fresh : pool)[Math.floor(Math.random() * (fresh.length || pool.length))];
+    chosen();
+    Expr.recent.push(chosen);
+    if (Expr.recent.length > 4) Expr.recent.shift();
   }
 
   function tickFX(dt) {
@@ -1114,7 +1150,8 @@
   function drawCatalogGhost() {
     ctx.fillStyle = `rgba(${palette.midtone},0.06)`;
     ctx.font = '10px ui-monospace, monospace';
-    ctx.fillText(`MASTER-${State.session.toString(36).toUpperCase()}`, 8, H - 8);
+    ctx.fillText(`MASTER-${State.session.toString(36).toUpperCase()}`, 8, H - 18);
+    if (State.modelName) ctx.fillText(State.modelName, 8, H - 8);
   }
 
   // Whisper voice (low-volume asides)
@@ -1129,10 +1166,11 @@
   ];
 
   // Render loop
-  let lastT = performance.now(), idlePulse = 0;
+  let lastT = performance.now(), idlePulse = 0, _frameSkip = 0;
   function frame(now) {
     requestAnimationFrame(frame);
     const dt = Math.min(50, now - lastT); lastT = now;
+    if (State.mode === 'sleep' && dt < 20 && (++_frameSkip % 2 === 0)) return;
     tickPalette(now);
 
     // smooth state lerps
@@ -1151,6 +1189,7 @@
     Face.breath  += dt * 0.001;
     Face.heartRate = 1.0 + (State.mode === 'thinking' ? 0.6 : 0) + (State.mode === 'error' ? 1.2 : 0);
     Face.bodyScale = 1.0 + Math.sin(Face.breath * Math.PI * 2 * Face.heartRate) * 0.012;
+    Face.dispersionTarget += Math.sin(Face.breath * Math.PI * 2 * Face.heartRate) * 0.012;
     Face.coronaFlash    *= 0.94;
     Face.edgePulse      *= 0.96;
     Face.vortex         *= 0.93;
@@ -1251,6 +1290,7 @@
       }
       if (p.zone === 'crown') {
         tx = p.hx + Math.sin(now * 0.001 + p.hx * 0.02) * s * 0.02 * (1 + Face.dispersion);
+        ty = p.hy + breathPhase * (p.hx - cx) * 0.008;
       }
       // Manga: shock eyes — ring expands, pupils contract (before 3D so it respects rotation)
       if (FX.shockEyes > 0.01) {
@@ -1310,29 +1350,47 @@
         ty += (oy - ty) * Face.codespaceRatio;
       }
       if (State.mode === 'rain') {
-        p.vy += 0.04;
-        if (p.y > H) { p.y = -10; p.x = Math.random() * W; p.vy = 0; }
+        const windX = Math.sin(now * 0.0004) * 0.025;
+        p.vx += windX; p.vy += 0.04;
+        if (p.y > H) { p.y = -10; p.x = Math.random() * W; p.vx = 0; p.vy = 0; }
         tx = p.x; ty = p.y + 1;
       }
-      // underdamped spring — overshoot-and-settle landing
-      const ax = (tx - p.x) * 0.08, ay = (ty - p.y) * 0.08;
-      p.vx += ax;
-      p.vy += ay;
-      p.vx *= 0.91; p.vy *= 0.91;
-      // velocity ceiling
+      if (State.mode === 'sleep') {
+        p.vx += (Math.random() - 0.5) * 0.03;
+        p.vy += (Math.random() - 0.5) * 0.02;
+        p.vx += (tx - p.x) * 0.003;
+        p.vy += (ty - p.y) * 0.003;
+      }
+      // Variable spring stiffness by zone; mass-scaled acceleration
+      const ZONE_K = { pupilL: 0.14, pupilR: 0.14, eyeL: 0.12, eyeR: 0.12,
+                       browL: 0.10, browR: 0.10, crown: 0.04, tasselL: 0.035, tasselR: 0.035 };
+      const k = ZONE_K[p.zone] || 0.08;
+      const kActive = (now >= p.activateAt) ? k : k * 0.08;
+      const ax = (tx - p.x) * kActive / p.mass;
+      const ay = (ty - p.y) * kActive / p.mass;
+      p.vx += ax; p.vy += ay;
+      // Underdamped far, overdamped near target
+      const dTarget = Math.hypot(tx - p.x, ty - p.y);
+      const damp = dTarget < 2 ? 0.72 : 0.91;
+      p.vx *= damp; p.vy *= damp;
+      // Vorticity confinement on dispersed field
+      if (disp > 0.1) {
+        const [cu, cv] = curlAt(p.x, p.y, now);
+        const cm = Math.hypot(cu, cv);
+        if (cm > 0.01) { p.vx += (cu / cm) * cm * 0.15 * disp; p.vy += (cv / cm) * cm * 0.10 * disp; }
+      }
+      // Velocity ceiling
       const v2 = p.vx*p.vx + p.vy*p.vy;
-      if (v2 > 1.96) { const k = 1.4 / Math.sqrt(v2); p.vx *= k; p.vy *= k; }
-      // sub-pixel repulsion (stochastic 2-neighbor)
-      for (let kk = 0; kk < 2; kk++) {
-        const j = (i + 137 + kk * 257) % NP;
+      if (v2 > 1.96) { const kv = 1.4 / Math.sqrt(v2); p.vx *= kv; p.vy *= kv; }
+      // Sub-pixel repulsion (3 deterministic neighbors)
+      for (let kk = 0; kk < 3; kk++) {
+        const j = (i + 137 + kk * 181) % NP;
         const q = particles[j];
         const rdx = p.x - q.x, rdy = p.y - q.y;
         const d2 = rdx*rdx + rdy*rdy;
-        if (d2 < 2.25 && d2 > 0.01) {
-          const f = 0.05 / d2;
-          p.vx += rdx * f; p.vy += rdy * f;
-        }
+        if (d2 < 2.25 && d2 > 0.01) { const f = 0.05 / d2; p.vx += rdx * f; p.vy += rdy * f; }
       }
+      p.px = p.x; p.py = p.y;
       p.x += p.vx; p.y += p.vy;
     }
   }
@@ -1342,15 +1400,24 @@
     const base = State.mode === 'sleep' ? 0.35 : (State.mode === 'rain' ? 0.55 : 0.92);
     const hi = palette.highlight.split(',');
     const rr = (+hi[0]) | 0, gg = (+hi[1]) | 0, bb = (+hi[2]) | 0;
-    const zT = Face.s * 0.07; // depth threshold — proportional to mask scale
+    const zT = Face.s * 0.07;
 
-    // Far layer — recessed zones (pupils, eye sockets): dim
+    // Thinking mode: trail at previous position
+    if (State.mode === 'thinking') {
+      ctx.fillStyle = `rgba(${rr},${gg},${bb},0.12)`;
+      for (let i = 0; i < particles.length; i += 2) {
+        const p = particles[i];
+        ctx.fillRect(p.px | 0, p.py | 0, 1, 1);
+      }
+    }
+
+    // Far layer — recessed: dim, 1px
     ctx.fillStyle = `rgba(${rr},${gg},${bb},${Math.max(0, base - fog - 0.40).toFixed(2)})`;
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       if ((p.sz || 0) < -zT) ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
     }
-    // Mid layer — face surface: normal
+    // Mid layer — face surface: normal, 1px
     const dr = ((Math.random() * 8 - 4) | 0);
     ctx.fillStyle = `rgba(${rr+dr},${gg+dr},${bb+dr},${(base - fog - 0.08).toFixed(2)})`;
     for (let i = 0; i < particles.length; i++) {
@@ -1358,13 +1425,17 @@
       const sz = p.sz || 0;
       if (sz >= -zT && sz <= zT) ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
     }
-    // Near layer — protruding features (nose ridge, tassels, flares): brightest
+    // Near layer — protruding: 2px + sub-pixel jitter
     ctx.fillStyle = `rgba(${Math.min(255,rr+10)},${Math.min(255,gg+7)},${Math.min(255,bb+2)},${(base - fog).toFixed(2)})`;
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
-      if ((p.sz || 0) > zT) ctx.fillRect(p.x | 0, p.y | 0, 1, 1);
+      if ((p.sz || 0) > zT) {
+        const jx = (Math.random() * 0.8 - 0.4) | 0;
+        const jy = (Math.random() * 0.8 - 0.4) | 0;
+        ctx.fillRect((p.x + jx) | 0, (p.y + jy) | 0, 2, 2);
+      }
     }
-    // weather rain overlay
+    // Weather rain overlay
     if (weather.rain > 0) {
       ctx.fillStyle = `rgba(${palette.midtone},${0.15 * weather.rain})`;
       const drops = (weather.rain * 80) | 0;
@@ -1412,9 +1483,10 @@
   const gazeJitter = [0, 0];
   function tickMicrosaccades(dt) {
     if (State.mode === 'sleep') return;
-    if (Math.random() < dt * 0.0035) { // ~3.5 saccades/sec
-      gazeJitter[0] = (Math.random() - 0.5) * 0.024;
-      gazeJitter[1] = (Math.random() - 0.5) * 0.011;
+    const amp = State.mode === 'thinking' ? 0.038 : (State.mode === 'idle' ? 0.012 : 0.024);
+    if (Math.random() < dt * 0.0035) {
+      gazeJitter[0] = (Math.random() - 0.5) * amp;
+      gazeJitter[1] = (Math.random() - 0.5) * amp * 0.45;
     }
     gazeJitter[0] *= 0.87;
     gazeJitter[1] *= 0.87;

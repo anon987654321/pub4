@@ -4,10 +4,10 @@
 
 malay:
   voice: ms-MY-OsmanNeural
-  tts_rate: "-35%"
-  tts_pitch: "-150Hz"
-  style: deep
-  description: "Terse. Direct. No filler. Dark."
+  tts_rate: "-32%"
+  tts_pitch: "-180Hz"
+  style: auto
+  description: "Terse. Direct. No filler. Dark, with inflection."
 
 british:
   voice: en-GB-RyanNeural

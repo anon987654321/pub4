@@ -20,33 +20,34 @@ module Master
     }.freeze
 
     STYLES = {
-      deep:    { rate: "-35%", pitch: "-150Hz" },
-      heavy:   { rate: "-30%", pitch: "-120Hz" },
-      normal:  { rate: "+0%",  pitch: "+0Hz"   },
-      slow:    { rate: "-20%", pitch: "-60Hz"  },
-      natural: { rate: "+8%",  pitch: "+20Hz"  },
-      # Clause-aware: applied by infer_style when caller passes :auto.
-      # question → rising lift; exclaim → energetic; whisper → intimate; grave → weighty.
-      question:{ rate: "-10%", pitch: "+40Hz"  },
-      exclaim: { rate: "+15%", pitch: "+60Hz"  },
-      whisper: { rate: "-15%", pitch: "-30Hz"  },
-      grave:   { rate: "-25%", pitch: "-80Hz"  }
+      deep:     { rate: "-32%", pitch: "-180Hz" },
+      heavy:    { rate: "-30%", pitch: "-120Hz" },
+      normal:   { rate: "+0%",  pitch: "+0Hz"   },
+      slow:     { rate: "-20%", pitch: "-60Hz"  },
+      natural:  { rate: "+8%",  pitch: "+20Hz"  },
+      # Clause-aware; all rebased darker so fluctuations stay in Osman's low register.
+      question: { rate: "-8%",  pitch: "-90Hz"  },
+      exclaim:  { rate: "+10%", pitch: "-60Hz"  },
+      whisper:  { rate: "-18%", pitch: "-200Hz" },
+      grave:    { rate: "-28%", pitch: "-220Hz" }
     }.freeze
 
     DEFAULT_VOICE = :osman
-    DEFAULT_STYLE = :natural
+    DEFAULT_STYLE = :deep
 
-    # P4: pick a style from text shape when caller asks for :auto.
-    # Heuristic — questions lift, exclamations brighten, ALL-CAPS shouts,
-    # ellipses/short-final go grave. Fallback: caller's default.
+    # Picks a style from text shape when caller passes :auto.
+    # Dark base (deep) for statements; rises/drops per clause type.
     def infer_style(text, fallback: DEFAULT_STYLE)
       t = text.to_s.strip
       return fallback if t.empty?
       return :exclaim  if t.match?(/!{1,3}\s*$/) || t.match?(/\b[A-Z]{4,}\b/)
       return :question if t.end_with?("?")
       return :grave    if t.match?(/\.{3,}\s*$|\u2026\s*$/) ||
-                         t.match?(/\b(sorry|i'?m sorry|condolences|grief|loss)\b/i)
-      return :whisper  if t.start_with?("(") && t.end_with?(")")
+                         t.match?(/\b(sorry|i'?m sorry|condolences|grief|loss|failed|broken)\b/i) ||
+                         (t.split.size <= 5 && t.end_with?("."))
+      return :whisper  if (t.start_with?("(") && t.end_with?(")")) ||
+                         t.match?(/\b(between us|quietly|note|aside)\b/i)
+      return :heavy    if t.match?(/\b(critical|error|warning|abort|fail)\b/i)
       fallback
     end
 
