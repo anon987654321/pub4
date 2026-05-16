@@ -40,13 +40,14 @@ module Master
     def chat(message, stream: true, escalation_depth: 0, &blk)
       prepare_chat_turn(message)
       candidate_models = routed_models(message)
+      selected_model = candidate_models.first
       prompt   = topic_anchored(message)
       context  = conversation_context
       tokens_approx = message.bytesize / Trace::Session::TOKENS_PER_CHAR
-      @bus&.publish("llm:request", model: candidate_models.first, tokens: tokens_approx)
+      @bus&.publish("llm:request", model: selected_model, tokens: tokens_approx)
       @deps.homeostat&.observe(:llm_call)
 
-      rate_err = check_rate_limit
+      rate_err = check_rate_limit(selected_model)
       return rate_err if rate_err
 
       response = attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, &blk)
@@ -70,8 +71,8 @@ module Master
       @session.add_message(role: :user, content: message)
     end
 
-    def check_rate_limit
-      @circuit_breaker.check_rate!
+    def check_rate_limit(model_id = nil)
+      @circuit_breaker.respond_to?(:check_rate!) ? @circuit_breaker.check_rate!(model_id) : nil
       nil
     rescue Reach::CircuitBreaker::CircuitError => err
       Result.err(err.message, category: err.category)

@@ -18,15 +18,15 @@ module Master
     def for(model_id)
       synchronize do
         @breakers[model_id.to_s] ||= CircuitBreaker.new(
-          **@defaults.merge(rate_window_s: CircuitBreaker::RATE_WINDOW_S, rate_max: CircuitBreaker::RATE_MAX)
+          **@defaults.merge(rate_window_s: CircuitBreaker::RATE_WINDOW_S)
         )
       end
     end
 
-    def check_rate!
+    def check_rate!(model_id = nil)
       synchronize do
-        @breakers.values.each(&:check_rate!)
         @global.check_rate!
+        self.for(model_id).check_rate! if model_id
       end
     end
 
