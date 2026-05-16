@@ -323,8 +323,32 @@ scan_depths:
     - js_module_size
     - readme_structure
     - active_voice_docs
+    - no_column_align
+  frontend: &frontend
+    - html_lang
+    - semantic_elements
+    - img_alt
+    - button_over_anchor
+    - aria_interactive
+    - lazy_images
+    - no_inline_styles
+    - mobile_first
+    - no_import_scss
+    - no_important
+    - logical_properties
+    - clamp_typography
+    - meta_charset
+    - const_by_default
+    - nullish_coalescing
+    - template_literals
+    - async_await
+    - for_of
+    - no_var
+    - js_module_size
     - no_ascii_line_art
     - no_column_align
+    - typographic_excellence
+    - typography_discipline
   standard: &standard
     - CoChangeCouplingRule
     - InterconnectRule

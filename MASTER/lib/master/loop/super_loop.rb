@@ -29,8 +29,9 @@ module Master
       @root         = root
       @bus          = bus
       @git          = git || Reach::GitOperations.new(root)
-      # rule_id → cumulative violations seen across passes
       @violation_counts = Hash.new(0)
+      # Build preamble once at boot — passed to each RuleLoop to avoid per-loop YAML reads.
+      @preamble = build_preamble
     end
 
     # One-shot: run all rule loops once against target.
@@ -75,7 +76,7 @@ module Master
     # Architecture #3 (rule-first default): converge each rule across all files.
     def pass_rule_first(files)
       rule_results = ordered_rules.map do |rule|
-        rl     = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus)
+        rl     = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus).tap { |r| r.injected_preamble = @preamble }
         result = rl.run(files)
         @violation_counts[rule.id] += result[:fixed]
         @bus&.publish("super_loop:rule_result", rule: rule.id, **result)
@@ -89,7 +90,7 @@ module Master
       rule_results_by_rule = Hash.new { |h, k| h[k] = { fixed: 0, cycles: 0, status: :clean, rule: k } }
       files.each do |path|
         ordered_rules.each do |rule|
-          rl     = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus)
+          rl     = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus).tap { |r| r.injected_preamble = @preamble }
           result = rl.run([path])
           @violation_counts[rule.id] += result[:fixed]
           agg = rule_results_by_rule[rule.id]
@@ -165,6 +166,18 @@ module Master
       end
       # Append any rules not in the dep graph (no deps declared).
       sorted + (rules - sorted)
+    end
+
+    def build_preamble
+      soul   = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
+      abs    = soul.fetch("absolute", {})
+      golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
+      lines  = ["Golden rule: #{golden}", "Minimum change that eliminates the violation. Do not touch unrelated code."]
+      abs.fetch("code_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
+      abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
+      lines.join("\n")
+    rescue StandardError => _e
+      "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
     end
 
     def load_deps
