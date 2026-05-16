@@ -59,7 +59,7 @@ absolute:
     IMPORTANCE_ORDER: every file's lines flow high-to-low importance. Public API first, primary logic next, helpers last. Readers should get the full picture from the top third.
     FLAT_UI: uniform particle/element size at rest; depth only when the collective resembles a 3D model. No fake-3D borders, no drop-shadows on flat surfaces.
     CINEMA_PALETTE: shadow/midtone/highlight triplets; complementary anchors. Never raw primaries, never linear easing — cubic-bezier curves on every transition.
-    STRUNK_ACTIVE: active voice throughout — code, comments, commit messages, CLI output, TTS. Omit needless words. Concrete verbs: "emit", "prune", "route", not "perform", "handle", "deal with".
+    STRUNK_ACTIVE: 'active voice throughout — code, comments, commit messages, CLI output, TTS. Omit needless words. Concrete verbs: emit, prune, route; not perform, handle, deal with.'
     INVERTED_PYRAMID: commits, comments, and log lines lead with the fact. Context and explanation trail. dmesg format — no preamble.
 
 negotiable:
