@@ -3,22 +3,25 @@
 require "tempfile"
 require_relative "../reach/atomic_write"
 require_relative "constants"
+require_relative "fix_helpers"
+require_relative "patch_applier"
 
 module Master
   module Loop
   # Runs a single rule to convergence on a set of files.
   # Called by SuperLoop — one RuleLoop instance per rule per pass.
   class RuleLoop
-    MAX_CYCLES          = 8
-    # < 5% improvement = converged
-    CONVERGE_THRESHOLD  = 0.05
-    RATE_LIMIT_SLEEP    = 10
-    MAX_FIX_RETRIES     = 2
+    MAX_CYCLES       = 8
+    RATE_LIMIT_SLEEP = 10
+    MAX_FIX_RETRIES  = 2
+    # Architecture #9: generate N candidates, score by rescan, apply winner.
+    CANDIDATE_COUNT  = 3
 
     SEVERITY_RANK = Master::SEVERITY_RANK
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
 
     include Master::Reach::AtomicWrite
+    include Master::Loop::FixHelpers
 
     def initialize(rule:, agent:, scanner:, root:, bus: nil, git: nil, learnings: nil)
       @rule      = rule
@@ -124,7 +127,7 @@ module Master
         sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
         response = @agent.ask(prompt).to_s
         return nil if response.strip == "UNCHANGED"
-        code = extract(response, File.extname(path).downcase)
+        code = extract_code(response, File.extname(path).downcase)
         return code if code && code.strip != src.strip
       rescue StandardError => e
         next if Master::Loop::Constants::TRANSIENT_RE.match?(e.message.to_s)
@@ -134,22 +137,71 @@ module Master
       nil
     end
 
+    # Architecture #5 + #9: diff mode for large files; genetic candidates for small files.
     def request_fix(violation)
       path = violation[:file]
       return unless File.exist?(path)
       src = File.read(path, encoding: "UTF-8")
-      prompt = build_prompt(violation, src, path)
+      return diff_fix(violation, src, path) if src.bytesize > PatchApplier::DIFF_THRESHOLD
+      genetic_fix(violation, src, path)
+    end
+
+    # Architecture #5: request unified diff patch; apply with PatchApplier.
+    def diff_fix(violation, src, path)
+      ext    = File.extname(path).downcase
+      prompt = build_diff_prompt(violation, src, path)
       MAX_FIX_RETRIES.times do |attempt|
         sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
         response = @agent.ask(prompt).to_s
-        code     = extract(response, File.extname(path).downcase)
-        return code if code && code.strip != src.strip
+        next if response.strip == "UNCHANGED"
+        result = PatchApplier.apply(src, response)
+        return result.source if result.is_a?(PatchApplier::Success)
       rescue StandardError => e
         next if Master::Loop::Constants::TRANSIENT_RE.match?(e.message.to_s)
         @bus&.publish("rule_loop:fix_error", rule: @rule.id, file: path, error: e.message[0, 120])
         return nil
       end
       nil
+    end
+
+    # Architecture #9: generate CANDIDATE_COUNT fixes, rescan each, apply best.
+    def genetic_fix(violation, src, path)
+      ext    = File.extname(path).downcase
+      prompt = build_prompt(violation, src, path)
+      candidates = CANDIDATE_COUNT.times.filter_map do |attempt|
+        sleep RATE_LIMIT_SLEEP if attempt.positive?
+        response = @agent.ask(prompt).to_s
+        code = extract_code(response, ext)
+        code if code && code.strip != src.strip
+      rescue StandardError => e
+        next if Master::Loop::Constants::TRANSIENT_RE.match?(e.message.to_s)
+        @bus&.publish("rule_loop:fix_error", rule: @rule.id, file: path, error: e.message[0, 120])
+        nil
+      end
+      best_candidate(candidates, path)
+    end
+
+    def best_candidate(candidates, path)
+      return nil if candidates.empty?
+      return candidates.first if candidates.size == 1
+      scored = candidates.filter_map do |c|
+        violations = rescan_candidate(c, path)
+        [violations, c]
+      end
+      scored.empty? ? candidates.first : scored.min_by { |count, _| count }.last
+    rescue StandardError
+      candidates.first
+    end
+
+    def rescan_candidate(candidate, path)
+      Tempfile.open(["rl_score", File.extname(path)]) do |f|
+        f.write(candidate)
+        f.flush
+        result = @scanner.scan(f.path, rules: [@rule])
+        result.ok? ? result.value!.size : 99
+      end
+    rescue StandardError
+      99
     end
 
     def apply(path, new_src)
@@ -180,15 +232,24 @@ module Master
       PROMPT
     end
 
-    def extract(text, ext)
-      return nil if text.strip == "UNCHANGED"
-      return nil if text.match?(/\b(?:error|exception|rate.?limit|i cannot|as an ai)\b/i)
-      lang = Master::Judge::Scan::Rule::EXT_LANG.fetch(ext, "text")
-      langs_re = Regexp.union(lang, "text", "")
-      if (m = text.match(/```(?:#{langs_re})?\n(.*?)```/m))
-        return m[1].strip
-      end
-      text.strip.empty? ? nil : text.strip
+    def build_diff_prompt(violation, src, path)
+      lang     = Master::Judge::Scan::Rule::EXT_LANG.fetch(File.extname(path).downcase, "text")
+      fix_hint = violation[:fix].to_s.strip
+      <<~PROMPT
+        #{preamble}
+
+        File: #{File.basename(path)} (#{lang})
+        Rule violated: #{violation[:rule]}
+        Line #{violation[:line]}: #{violation[:message]}
+        #{fix_hint.empty? ? "" : "How to fix: #{fix_hint}"}
+
+        Return a unified diff patch only (like `diff -u` output). Do NOT return the whole file.
+        Fix only the violation. If unsafe to autofix, return exactly: UNCHANGED
+
+        ```#{lang}
+        #{src}
+        ```
+      PROMPT
     end
 
     def preamble
@@ -204,12 +265,6 @@ module Master
       rescue StandardError => _e
         "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
       end
-    end
-
-    def converged?(prev, current)
-      return false unless prev
-      improvement = (prev - current).to_f / [prev, 1].max
-      improvement < CONVERGE_THRESHOLD
     end
 
     # Architecture #4: run AST mechanical fixes before LLM scan cycle.

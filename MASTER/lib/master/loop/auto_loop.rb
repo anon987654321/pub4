@@ -5,6 +5,7 @@ require "tempfile"
 require_relative "../reach/git_operations"
 require_relative "../reach/atomic_write"
 require_relative "constants"
+require_relative "fix_helpers"
 
 module Master
   module Loop
@@ -44,13 +45,6 @@ module Master
       def reflected_prompt(base, last_error, attempt)
         "Prior attempt (#{attempt}) failed with: #{last_error[0, ERROR_TRUNCATE]}\n" \
           "Reflect briefly on what went wrong, then revise.\n\n#{base}"
-      end
-
-      def extract_code(text)
-        return text.match(/```ruby\n(.*?)```/m)[1].strip if text.match?(/```ruby\n(.*?)```/m)
-        return text.match(/```\n(.*?)```/m)[1].strip     if text.match?(/```\n(.*?)```/m)
-        return text.strip if text.match?(/frozen_string_literal|module |class /)
-        nil
       end
 
       def confidence_score(code, original_src)
@@ -126,6 +120,7 @@ module Master
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
 
     include Master::Reach::AtomicWrite
+    include Master::Loop::FixHelpers
     include FixEvaluator
 
     def initialize(agent:, scanner:, root:, event_bus: nil, soul: nil, learnings: nil)
@@ -248,7 +243,7 @@ module Master
       result = Judge::Reflexion.run(agent: @agent, task: base_prompt, max: MAX_FIX_RETRIES) do |prompt, attempt|
         sleep RATE_LIMIT_SLEEP * attempt if attempt.positive?
         begin
-          fix = extract_code(@agent.ask(prompt).to_s)
+          fix = extract_code(@agent.ask(prompt).to_s, ".rb")
           next nil if fix.nil?
           next nil if confidence_score(fix, src) < CONFIDENCE_THRESHOLD
           fix

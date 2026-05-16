@@ -51,12 +51,14 @@ architectures:
 
   - id: diff_only_fixes
     name: "Unified diff output instead of whole-file rewrites"
-    status: scaffolded
+    status: implemented
     description: >
       LLM produces a unified diff patch rather than regenerating the whole file.
       Token cost drops 60-80% for large files. Patch is applied with a
       deterministic patcher — malformed diffs are rejected, not applied blindly.
-    wired_to: "lib/master/loop/rule_loop.rb (fix mode diff, TODO)"
+    wired_to:
+      - lib/master/loop/patch_applier.rb
+      - lib/master/loop/rule_loop.rb (diff_fix)
     ref: "#5"
 
   - id: council_fixes
@@ -87,7 +89,7 @@ architectures:
 
   - id: dataflow_pipeline
     name: "Staged dataflow pipeline: Detect → Triage → Fix → Validate → Apply"
-    status: scaffolded
+    status: implemented
     description: >
       Violations flow through named stages as objects. Each stage is a
       separate worker queue. Stages are independently parallelisable.
@@ -95,18 +97,20 @@ architectures:
       this extends it to the fix loop.
     wired_to:
       - lib/master/now/pipeline.rb (existing pattern)
-      - lib/master/loop/ (TODO: fix_pipeline.rb)
+      - lib/master/loop/fix_pipeline.rb
     ref: "#8"
 
   - id: genetic_fixes
     name: "Genetic algorithm for fix candidate selection"
-    status: scaffolded
+    status: implemented
     description: >
       Generate N fix candidates per violation, score each by post-fix
       violation count, apply the winner. Breed high-scoring candidates
       across passes. Sweep#rewrite_best_of already does this for whole-file
       rewrites; this extends it per-violation in RuleLoop.
-    wired_to: lib/master/loop/sweep/rewriter.rb#rewrite_best_of (existing)
+    wired_to:
+      - lib/master/loop/sweep/rewriter.rb (rewrite_best_of, existing)
+      - lib/master/loop/rule_loop.rb (genetic_fix, best_candidate)
     ref: "#9"
 
   - id: reinforcement_learning
