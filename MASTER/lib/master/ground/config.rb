@@ -38,7 +38,7 @@ module Master
 
     def [](key)               = @data[key.to_s]
     def []=(key, value)       ; @mutex.synchronize { @data[key.to_s] = value } ; end
-    def dig(key, *rest)       = rest.empty? ? @data[key.to_s] : @data.dig(key.to_s, *rest)
+    def dig(key, *rest)       = (k = key.to_s; rest.empty? ? @data[k] : @data.dig(k, *rest))
 
     def model          = self['model']
     def budget_max     = self['budget_max'].to_f
@@ -86,14 +86,14 @@ module Master
     private
 
     def load_config
-      return deep_dup(DEFAULTS) unless File.exist?(@path)
-
+      defaults = deep_dup(DEFAULTS)
+      return defaults unless File.exist?(@path)
       raw    = Master.load_yaml(@path)
       loaded = raw.is_a?(Hash) ? raw : {}
-      deep_merge(DEFAULTS, stringify_keys(loaded))
+      deep_merge(defaults, stringify_keys(loaded))
     rescue Psych::Exception => e
       warn "config: failed to parse #{@path}: #{e.message}"
-      deep_dup(DEFAULTS)
+      defaults
     end
 
     def deep_merge(base, overlay)

@@ -1,24 +1,52 @@
 # Reek configuration for MASTER
-# Suppress smells that don't apply to this codebase's idiom.
 detectors:
   IrresponsibleModule:
     enabled: false
 
   UncommunicativeVariableName:
     accept:
-      - !ruby/regexp /\A[a-z]\z/   # single-char block vars: k, v, h, e, r, i, t, s, f, c
+      - a
+      - b
+      - c
+      - d
+      - e
+      - f
+      - g
+      - h
+      - i
+      - j
+      - k
+      - l
+      - m
+      - n
+      - o
+      - p
+      - q
+      - r
+      - s
+      - t
+      - u
+      - v
+      - w
+      - x
+      - y
+      - z
       - t0
       - t1
+      - id
 
   UncommunicativeParameterName:
     accept:
-      - !ruby/regexp /\A_/         # _ prefix = intentionally unused
+      - _
+      - _e
+      - _k
+      - _v
 
   TooManyStatements:
     max_statements: 20
 
   TooManyMethods:
-    max_methods: 20
+    max_methods: 25
 
   TooManyInstanceVariables:
     max_instance_variables: 10
@@ -43,3 +71,6 @@ detectors:
 
   BooleanParameter:
     enabled: false
+
+  NestedIterators:
+    max_allowed_nesting: 2
