@@ -1,4 +1,5 @@
-# NSD for DNSSEC (nsd.conf(5))
+# NSD authoritative DNS per nsd.conf(5)
+
 server:
   ip-address: $BRGEN_IP
   hide-version: yes
@@ -12,6 +13,7 @@ server:
   rrl-ratelimit: 200
   rrl-slip: 2
   rrl-whitelist-ratelimit: 2000
+
 remote-control:
   control-enable: yes
   control-interface: $LOCALHOST
