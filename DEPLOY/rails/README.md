@@ -83,16 +83,17 @@ For every app:
 
 ```text
 rails/
+├─ @core.sh          bootstrap, gem management, db, security
+├─ @assets.sh        Dart Sass, SCSS/CSS generation
+├─ @server.sh        rc.d, relayd, Falcon, Thruster
+├─ @frontend.sh      Stimulus, Pagy
+├─ @views.sh         partials, auth views, registration, layout
+├─ @social.sh        votes+comments, hashtags, direct messaging
 ├─ amber/
 ├─ baibl/
 ├─ blognet/
 ├─ brgen/
 ├─ bsdports/
 ├─ hjerterom/
-├─ privcam/
-├─ __shared/
-├─ check_ports.sh
-├─ modernize_zsh.sh
-├─ rich_editor_system.sh
-└─ voting_system.sh
+└─ privcam/
 ```
