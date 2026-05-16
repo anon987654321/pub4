@@ -84,8 +84,19 @@ module Master
           sample = violations.select { |v| v[:rule].to_s == rule_id }.first(5)
           @bus&.publish("autoloop:soul_proposal", rule: rule_id, sample: sample)
           @bus&.publish("autoloop:soul_proposal", rule: rule_id, result: "queued")
+          append_improvement(rule_id, sample)
         end
         (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
+      end
+
+      def append_improvement(rule_id, sample)
+        path = File.join(@root, "runtime", "improvements.md")
+        FileUtils.mkdir_p(File.dirname(path))
+        files = sample.map { |v| v[:file] }.uniq.first(3).join(", ")
+        entry = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n"
+        File.open(path, "a") { |f| f.write(entry) }
+      rescue StandardError => _e
+        nil
       end
     end
   end

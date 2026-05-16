@@ -92,7 +92,7 @@ module Master
               response = @agent.ask(build_prompt(persona, code, context))
               entry = { persona: persona.name, role: persona.role,
                         veto_role: veto_role?(persona), axiom: primary_axiom(persona),
-                        feedback: response }
+                        feedback: response, confidence: score_confidence(response) }
               @bus&.publish(:council_feedback, entry)
               entry
             rescue StandardError => e
@@ -127,6 +127,9 @@ module Master
                         axiom: nil, feedback: synthesis }
         end
 
+        scores = feedback.filter_map { |f| f[:confidence] }
+        council_confidence = scores.empty? ? 0.5 : scores.sum / scores.size
+        @bus&.publish(:council_confidence, score: council_confidence.round(3), members: feedback.size)
         Master::Result.ok(feedback)
       rescue StandardError => e
         Master::Result.err("council: #{e.message}", category: :unknown)
@@ -246,6 +249,18 @@ module Master
 
       def veto_text?(feedback)
         VETO_RE.match?(feedback.to_s.strip)
+      end
+
+      HIGH_CONF = /\b(certain|clearly|definitely|must|always|never|critical|serious)\b/i.freeze
+      LOW_CONF = /\b(maybe|possibly|perhaps|unclear|might|could|unsure|uncertain)\b/i.freeze
+
+      def score_confidence(text)
+        t = text.to_s
+        highs = t.scan(HIGH_CONF).size
+        lows  = t.scan(LOW_CONF).size
+        total = highs + lows
+        return 0.5 if total.zero?
+        (0.5 + (highs - lows).to_f / (total * 2)).clamp(0.1, 0.95)
       end
     end
   end
