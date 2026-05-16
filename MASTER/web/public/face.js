@@ -629,6 +629,7 @@
         pending = '';
         State.mode = 'idle'; Face.browTarget = 0; Face.dispersionTarget = 0;
         mandalaLock();
+        if (navigator.vibrate) navigator.vibrate([80]);
         try { evtSrc.close(); } catch (e) {}
         return;
       }
@@ -675,6 +676,7 @@
 
   // periodic state ping (closed-loop canvas → MASTER)
   setInterval(() => {
+    if (document.hidden) return;
     const idleS = ((performance.now() - State.lastTouch) / 1000) | 0;
     const body = new URLSearchParams({
       mood: State.mood, mode: State.mode, idle: String(idleS),
@@ -819,12 +821,51 @@
   }
   function vortex() { Face.vortex = 1.0; Face.dispersionTarget = 0.6; setTimeout(() => Face.dispersionTarget = 0, 700); }
 
-  // tilt
-  if (window.DeviceOrientationEvent) {
+  // tilt — iOS requires explicit permission since Safari 13
+  function bindDeviceOrientation() {
     window.addEventListener('deviceorientation', (e) => {
       if (e.gamma != null) State.tiltX = e.gamma / 90;
       if (e.beta  != null) State.tiltY = (e.beta - 45) / 90;
     });
+  }
+  async function requestMotionPermission() {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try { const r = await DeviceOrientationEvent.requestPermission(); if (r === 'granted') bindDeviceOrientation(); }
+      catch (_e) {}
+    } else if (window.DeviceOrientationEvent) {
+      bindDeviceOrientation();
+    }
+  }
+
+  // VAD — energy-based AudioWorklet, no ONNX dependency
+  async function initVAD() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      if (!actx) initAudio();
+      await actx.audioWorklet.addModule('/vad-processor.js');
+      const src = actx.createMediaStreamSource(stream);
+      const node = new AudioWorkletNode(actx, 'vad-processor');
+      src.connect(node);
+      node.port.onmessage = ({ data }) => {
+        if (data.type === 'speech_start') { State.mode = 'listening'; Face.browTarget = 0.3; }
+        if (data.type === 'speech_end')   { State.mode = 'idle';      Face.browTarget = 0; }
+      };
+    } catch (_e) {}
+  }
+
+  // Screen Wake Lock — keep display on during sessions
+  let wakeLock = null;
+  async function acquireWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible' && !wakeLock) {
+          try { wakeLock = await navigator.wakeLock.request('screen'); } catch (_e) {}
+        }
+      });
+    } catch (_e) {}
   }
 
   // ─── Weather (#26) — best-effort, silent fail ──────────────────────
@@ -862,7 +903,6 @@
     cutBlack: 0,                       // 1-frame canvas clear on transient
     mandala: 0, mandalaPhase: 0,       // radial symmetry lock on long silence
     datamosh: 0, datamoshFrames: 0,    // velocity-hold smear on tool event
-    scanline: 0,                       // VHS scanline overlay (memory state)
     embers: false                      // ember-rise mode (warm mood)
   };
   function chromaticPulse() { FX.chromatic = 1.0; }
@@ -884,7 +924,6 @@
     FX.mandala   *= 0.97;
     FX.mandalaPhase += dt * 0.0018;
     if (FX.datamoshFrames > 0) FX.datamoshFrames--; else FX.datamosh *= 0.85;
-    FX.scanline = (State.mode === 'thinking' || State.mode === 'rain') ? 0.4 : 0;
     FX.embers = (State.mood === 'curious' || State.mode === 'speaking');
   }
   function drawGhostMirror() {
@@ -937,11 +976,6 @@
       ctx.stroke();
     }
     ctx.restore();
-  }
-  function drawScanline() {
-    if (FX.scanline < 0.05) return;
-    ctx.fillStyle = `rgba(0,0,0,${FX.scanline * 0.35})`;
-    for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
   }
   function drawCutBlack() {
     if (FX.cutBlack < 0.5) return;
@@ -1012,7 +1046,6 @@
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
 
-    drawScanline();
     drawMandala();
     drawParticles();
     drawAnaglyph();
@@ -1253,8 +1286,10 @@
     initAudio();
     if (actx && actx.state === 'suspended') actx.resume();
     unlockTTS();
-    pickVoice();
     fetchWeather();
+    requestMotionPermission();
+    acquireWakeLock();
+    initVAD();
     // dmesg→chat intro: stagger whispered boot phrases, then say "ready"
     DMESG_PHRASES.slice(0, -1).forEach((p, i) => setTimeout(() => whisper(p), 400 + i * 600));
     setTimeout(() => enqueueSpeech('ready'), 400 + DMESG_PHRASES.length * 600);
@@ -1263,8 +1298,7 @@
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   primer.addEventListener('pointerdown', startEverything, { once: true });
-  primer.addEventListener('click', startEverything, { once: true });
-
+  
   // ─── Zsh prompt bar ────────────────────────────────────────────────
   zshIn.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;

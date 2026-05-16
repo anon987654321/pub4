@@ -178,7 +178,7 @@ veto_patterns:
   secrets:         {detect: 'sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN.*KEY-----', apply: move_to_env,        violates_law: ROBUSTNESS}
   sql_injection:   {detect: 'execute|query.*#\{',                                              apply: parameterize,       violates_law: ROBUSTNESS}
   unfinished:      {detect: '\.\.\.|TODO|FIXME|pending',                                       apply: complete_or_track,  violates_law: ROBUSTNESS}
-  unsafe_calls:    {detect: '\w+\.\w+\((?!&\.)',                                               apply: add_safe_nav,       violates_law: ROBUSTNESS}
+  unsafe_calls:    {detect: 'system\s*\(|exec\s*\(|%x\{|Open3\.capture[23]\s*\([^)]*#\{', apply: add_safe_nav,       violates_law: ROBUSTNESS}
   race_conditions: {detect: 'if.*\n.*=.*\n.*if',                                               apply: add_mutex,          violates_law: ROBUSTNESS}
 
 # Beauty — aesthetic anchors from masters of their craft.

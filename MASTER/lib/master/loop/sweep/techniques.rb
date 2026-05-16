@@ -3,17 +3,12 @@
 module Master
   module Loop
   class Sweep
-    # Typed view over data/sweep_prompts.yml's techniques: catalogue. Lets the
-    # rewriter (or a future planner) filter by layer, risk, language, or path
-    # without reparsing prose. The prose blocks remain the LLM-facing surface;
-    # this is the Ruby-facing one.
     module Techniques
-      PATH = File.join(Master::ROOT, "data", "sweep_prompts.yml").freeze
-
       module_function
 
       def all
-        @all ||= (Master.load_yaml(PATH)["techniques"] || []).map { |e| e.transform_keys(&:to_s) }
+        path = Sweep::PROMPTS_PATH
+        @all ||= (Master.load_yaml(path)["techniques"] || []).map { |e| e.transform_keys(&:to_s) }
       end
 
       def by_layer(layer)

@@ -117,7 +117,7 @@ module Master
 
     def set_visitor_mode_if_unauthenticated
       web_token = @config&.dig("web_token")
-      Thread.current[:master_visitor] = true if web_token.nil? || web_token.empty?
+      Fiber[:master_visitor] = true if web_token.nil? || web_token.empty?
     end
 
     def assign_container_refs!(deps)

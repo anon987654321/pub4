@@ -27,7 +27,7 @@
 
 # - Privilege control via doas(1), idempotent operations, atomic config writes
 
-set +e  # Don't use errexit - handle errors explicitly
+set -euo pipefail
 setopt no_unset nullglob local_traps
 
 zmodload zsh/regex
@@ -64,7 +64,7 @@ error_handler() {
 }
 
 trap 'cleanup' EXIT
-trap 'error_handler $? $LINENO' INT TERM
+trap 'error_handler $? $LINENO' ERR INT TERM
 # ERR trap: log unexpected exits
 trap 'log ERROR "Script exited unexpectedly at line $LINENO with status $?"' ERR
 
