@@ -83,8 +83,8 @@ architectures:
       a targeted rule_loop pass on that file only. The system quiesces
       naturally. No STARTUP_DELAY, no idle sleep waste.
     wired_to:
-      - lib/master/loop/super_loop.rb (watch_mode, TODO)
-      - Gemfile (listen gem or rb-kqueue for OpenBSD, TODO)
+      - lib/master/loop/watch_loop.rb (WatchLoop, kqueue/inotify debounced)
+      - Gemfile (rb-kqueue for OpenBSD, rb-inotify for Linux — install on VPS)
     ref: "#7"
 
   - id: dataflow_pipeline
@@ -130,35 +130,35 @@ architectures:
 
   - id: constitution_type_system
     name: "Constitution as a type system on the AST IR"
-    status: concept
+    status: scaffolded
     description: >
       Encode constitutional rules as type constraints on a typed AST IR.
       Violations become type errors. Fixes are derivable from the complement
       constraint. The type checker is sound and complete — no LLM, no
       probabilistic inference. Requires a typed IR for every supported medium.
-    wired_to: "future: lib/master/ground/type_checker.rb"
+    wired_to: lib/master/ground/type_checker.rb (FROZEN_STRING_LITERAL + BARE_RESCUE constraints implemented)
     ref: "#11"
 
   - id: datalog_rules
     name: "Datalog/Prolog rule engine — logical clause rules"
-    status: concept
+    status: scaffolded
     description: >
       Each rule is a logical Horn clause. Violations are queries against
       the program's fact base (AST facts). Fixes are derived from the
       complement clause. Sound, complete, no neural network involved.
       Roda/Sequel author Jeremy Evans' style: logic over magic.
-    wired_to: "future: lib/master/judge/scan/datalog_engine.rb"
+    wired_to: lib/master/judge/scan/datalog_engine.rb (Prism fact extraction + forward-chaining Datalog subset)
     ref: "#12"
 
   - id: crdt_convergence
     name: "CRDT-based codebase convergence for distributed agents"
-    status: concept
+    status: scaffolded
     description: >
       Treat the codebase as a CRDT. Rules define merge functions. Multiple
       agents make concurrent fixes; the CRDT guarantees eventual consistency
       without conflict resolution overhead. Required for multi-agent MASTER
       instances on the same repo.
-    wired_to: "future: lib/master/loop/crdt_loop.rb"
+    wired_to: lib/master/loop/crdt_loop.rb (LWW-Register per file + vector clock + merge protocol)
     ref: "#13"
 
   - id: bayesian_priors
