@@ -33,7 +33,7 @@ module Master
       grave:   { rate: "-25%", pitch: "-80Hz"  }
     }.freeze
 
-    DEFAULT_VOICE = :yasmin
+    DEFAULT_VOICE = :osman
     DEFAULT_STYLE = :natural
 
     # P4: pick a style from text shape when caller asks for :auto.

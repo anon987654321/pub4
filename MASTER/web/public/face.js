@@ -1051,8 +1051,12 @@
     Face.pupil   += (Face.pupilTarget - Face.pupil) * 0.10;
     Face.brow    += (Face.browTarget - Face.brow) * 0.08;
     Face.dispersion += (Face.dispersionTarget - Face.dispersion) * 0.06;
-    Face.gaze[0] += (Face.gazeTarget[0] - Face.gaze[0]) * 0.10;
-    Face.gaze[1] += (Face.gazeTarget[1] - Face.gaze[1]) * 0.10;
+    // Saccadic profile: ballistic when far (>0.12), slow settle when close.
+    const gazeDist = Math.hypot(Face.gazeTarget[0] - Face.gaze[0], Face.gazeTarget[1] - Face.gaze[1]);
+    const gazeRate = gazeDist > 0.12 ? 0.30 : 0.08;
+    Face.gaze[0] += (Face.gazeTarget[0] - Face.gaze[0]) * gazeRate;
+    Face.gaze[1] += (Face.gazeTarget[1] - Face.gaze[1]) * gazeRate;
+    tickMicrosaccades(dt);
     Face.breath  += dt * 0.001;
     Face.heartRate = 1.0 + (State.mode === 'thinking' ? 0.6 : 0) + (State.mode === 'error' ? 1.2 : 0);
     Face.bodyScale = 1.0 + Math.sin(Face.breath * Math.PI * 2 * Face.heartRate) * 0.012;
@@ -1112,8 +1116,11 @@
     const disp = Face.dispersion;
     const scale = Face.bodyScale;
     const blinkClose = Face.blink > 0.3 ? 1 : 0;
-    const gazeX = Face.gaze[0] * s * 0.06;
-    const gazeY = Face.gaze[1] * s * 0.06;
+    // orbicularis oculi: smile squints the lower lid, narrowing the eye opening
+    const squint = Face.mouth === 'smile' ? 0.22 : 0;
+    const breathPhase = Math.sin(Face.breath * Math.PI * 2 * Face.heartRate);
+    const gazeX = (Face.gaze[0] + gazeJitter[0]) * s * 0.06;
+    const gazeY = (Face.gaze[1] + gazeJitter[1]) * s * 0.06;
     const pupilK = Face.pupil;
     const browDrop = Face.brow * s * 0.06;
     const audioPunch = State.audioLevel;
@@ -1130,11 +1137,15 @@
       }
       if (p.zone === 'eyeL' || p.zone === 'eyeR') {
         const ey = cy - s * 0.10;
-        ty = ey + (p.hy - ey) * (1 - blinkClose * 0.95);
+        ty = ey + (p.hy - ey) * (1 - blinkClose * 0.95 - squint * 0.28);
       }
       if (p.zone === 'browL' || p.zone === 'browR') ty = p.hy + browDrop;
       if (p.zone === 'scarL' || p.zone === 'scarR') {
         tx = p.hx + (Math.random() - 0.5) * audioPunch * s * 0.06;
+      }
+      if (p.zone === 'noseFlare') {
+        ty = p.hy + breathPhase * s * 0.014; // nostril flares on inhale
+        tx = p.hx + breathPhase * (p.hx > cx ? 1 : -1) * s * 0.008;
       }
       if (p.zone === 'tasselL' || p.zone === 'tasselR') {
         tx = p.hx + State.tiltX * s * 0.08;
@@ -1276,6 +1287,20 @@
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.stroke();
+  }
+
+  // ─── Microsaccades — biological eye tremor during fixation ─────────
+  // Real fixation includes ~3-5 microsaccades/second + drift; amplitude ~0.1-0.3°.
+  // Modelled as random impulse + exponential decay offset over the intended gaze.
+  const gazeJitter = [0, 0];
+  function tickMicrosaccades(dt) {
+    if (State.mode === 'sleep') return;
+    if (Math.random() < dt * 0.0035) { // ~3.5 saccades/sec
+      gazeJitter[0] = (Math.random() - 0.5) * 0.024;
+      gazeJitter[1] = (Math.random() - 0.5) * 0.011;
+    }
+    gazeJitter[0] *= 0.87;
+    gazeJitter[1] *= 0.87;
   }
 
   // ─── Look-aways — periodic gaze averts to break the stare ──────────
