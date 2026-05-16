@@ -23,7 +23,7 @@ module Master
           "```ruby\n#{src}\n```"
       end
 
-      def axioms=(text) = @injected_axioms = text
+      def axioms=(text); @injected_axioms = text; end
 
       def constitutional_preamble
         @constitutional_preamble ||= @injected_axioms || begin
