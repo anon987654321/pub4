@@ -313,36 +313,40 @@
     else z = buildSepik(cx, cy, s);
     return applyZ(z, s);
   }
-  // Z (depth) — anchors carry z so mask reads as solid under rotation
-  const ZONE_Z = {
-    pupilL:    0.22, pupilR:    0.22,
-    eyeL:      0.18, eyeR:      0.18,
-    browL:     0.30, browR:     0.30,
-    noseFlare: 0.52,
-    noseRidge: 0,   // handled by per-index ramp in applyZ
-    scarL:     0.15, scarR:     0.15,
-    forehead:  0.32,
-    outlineL:  0.0,  outlineR:  0.0,
-    chin:      0.22,
-    mouth:     0.26,
-    crown:     0.24,
-    tasselL:   0.06, tasselR:   0.06
+  // Z — spheroid depth field + zone sculpture displacement.
+  // Head modelled as oblate spheroid (w=0.85, h=1.45, d=0.45 in face-radii).
+  // Positive z = toward viewer; negative = receding behind face plane.
+  // Outline wraps to negative so rotation reveals back-of-head correctly.
+  const ZONE_DISP = {
+    noseFlare:  0.30, browL:     0.14, browR:     0.14,
+    eyeL:      -0.22, eyeR:     -0.22, pupilL:   -0.14, pupilR:   -0.14,
+    outlineL:  -0.38, outlineR: -0.38,
+    chin:       0.04, mouth:    -0.05, crown:      0.06,
+    scarL:      0.10, scarR:     0.10,
+    tasselL:   -0.14, tasselR:  -0.14,
+    forehead:   0.10,
   };
   function applyZ(zones, s) {
+    const cx = Face.cx, cy = Face.cy;
     for (const [name, list] of Object.entries(zones)) {
-      const base = (ZONE_Z[name] !== undefined ? ZONE_Z[name] : 0) * s;
       for (let i = 0; i < list.length; i++) {
-        let zi = base;
+        const p = list[i];
+        // Normalized model coords
+        const mx = (p.x - cx) / s;
+        const my = (p.y - cy) / s;
+        // Spheroid base depth — smooth dome, zero at silhouette edge
+        const base = 0.42 * Math.sqrt(Math.max(0, 1 - (mx / 0.85) ** 2 - (my / 1.45) ** 2));
+        let mz;
         if (name === 'noseRidge') {
+          // Tip protrudes furthest; ramp from base+0.12 at root to base+0.54 at tip
           const t = i / Math.max(1, list.length - 1);
-          zi = (0.06 + t * 0.38) * s;
+          mz = base + 0.12 + t * 0.42;
         } else if (name === 'crown') {
-          zi = Math.sin(i * 0.71) * 0.20 * s;
-        } else if (name === 'tasselL' || name === 'tasselR') {
-          const t = i / Math.max(1, list.length - 1);
-          zi = (0.42 + t * 0.18) * s;
+          mz = base + Math.sin(i * 0.71) * 0.08;
+        } else {
+          mz = base + (ZONE_DISP[name] || 0);
         }
-        list[i].z = zi;
+        p.z = mz * s;
       }
     }
     return zones;
