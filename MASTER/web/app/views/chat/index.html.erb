@@ -10,27 +10,21 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>MASTER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
   <link rel="preload" href="/face.css" as="style">
   <link rel="preload" href="/face.js"  as="script">
-  <link rel="preload" href="/visual_bridge.js"  as="script">
-  <link rel="preload" href="/cognition_ecology.js"  as="script">
-  <link rel="preload" href="/codebase.js"  as="script">
   <link rel="stylesheet" href="/face.css">
 </head>
 <body>
   <canvas id="cognition-ecology"></canvas>
   <canvas id="face"></canvas>
   <div id="primer"></div>
-  <div id="chat-panel">
-    <div id="chat-banner">
-      <span class="banner-name">MASTER</span>
-      <span class="banner-sub" id="banner-sub">constitutional agent</span>
-    </div>
-    <div id="chat-log"></div>
-    <div id="zsh">
-      <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
-      <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything">
-    </div>
+  <div id="chat-log"></div>
+  <div id="zsh">
+    <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
+    <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything">
   </div>
   <script src="/face.js" defer></script>
   <script src="/tts.js" defer></script>

@@ -1,8 +1,8 @@
 # MASTER
 
-Constitutional AI runtime for text and code artifacts. Ruby. OpenBSD. Self-hosting.
+Constitutional AI runtime for any text artifact — code, prose, design, structure. Ruby. OpenBSD. Self-hosting.
 
-Models propose. The orchestrator validates. Events record the truth. Repair loops digest failure. Memory compacts without forgetting. Providers compete by capability, cost, health, and evidence.
+Models propose. The constitution validates. Convergence loops digest violations. Memory learns what fixes stick. Pressure fields track epistemic health. Providers compete by capability, cost, and evidence.
 
 ## Quickstart
 
@@ -22,10 +22,32 @@ Four layers:
 
 1. **Brain** — declarative constitution, standing orders, roles, memory policy, provider routing, governance.
 2. **Runtime** — append-only events, telemetry, checkpoints, replay state, queues, locks, provider health, hot cache.
-3. **Orchestration** — routing, voting, fallback, quorum, workflow execution, tool contracts, repair loops.
+3. **Orchestration** — routing, voting, fallback, quorum, workflow execution, tool contracts, convergence loops.
 4. **Interface** — CLI, web face, canvas, dashboard, traces, graph, timelines.
 
 Ten-stage turn pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render. Council and Lint run concurrently with a 30 s timeout.
+
+### Convergence loop architectures
+
+15 architectures across `loop/` — 11 implemented, 4 scaffolded:
+
+| # | Name | Status |
+|---|------|--------|
+| 1 | Priority queue over round-robin | implemented |
+| 2 | Rule dependency graph (topological sort) | implemented |
+| 3 | File-first convergence strategy | implemented |
+| 4 | Deterministic AST autofixes (Prism) | implemented |
+| 5 | Unified diff output for large files | implemented |
+| 6 | Council deliberation for severity:error | implemented |
+| 7 | Reactive file watcher (kqueue/inotify) | scaffolded |
+| 8 | Staged dataflow pipeline Detect→Apply | implemented |
+| 9 | Genetic fix candidate selection | implemented |
+| 10 | Reinforcement learning fix quality | implemented |
+| 11 | Constitution as type system on AST IR | scaffolded |
+| 12 | Datalog/Prolog rule engine | scaffolded |
+| 13 | CRDT-based distributed convergence | scaffolded |
+| 14 | Hierarchical Bayesian violation priors | implemented |
+| 15 | Codebase as embodied particle topology | implemented |
 
 ## Operating law
 
@@ -72,10 +94,10 @@ Config lives at `.master/config.yml`. Override any key at runtime with `/config 
 
 `now` · `loop` · `judge` · `voice` · `ground` · `reach` · `trace`
 
-Constitution lives in `data/`. Brain files in `brain/`. Runtime state in `runtime/`.
+Constitution lives in `data/`. Runtime state in `.master/`. Knowledge store at `.master/knowledge.sqlite3`.
 
 ## Troubleshooting
 
-**Bundler 403 on install**: proxy is blocking rubygems.org. Check `gem sources --list` and `env | grep -i proxy`. Install a single gem to isolate the failure: `gem install zeitwerk -v 2.7.5`.
+**Bundler 403 on install**: proxy is blocking rubygems.org. Check `gem sources --list` and `env | grep -i proxy`. Install a single gem to isolate: `gem install zeitwerk -v 2.7.5`.
 
 MIT.
