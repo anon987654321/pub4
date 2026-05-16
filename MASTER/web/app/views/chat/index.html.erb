@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
   <link rel="preload" href="/face.css" as="style">
-  <link rel="preload" href="/face.js"  as="script">
+  <link rel="modulepreload" href="/face.js">
   <link rel="stylesheet" href="/face.css">
 </head>
 <body>
@@ -26,10 +26,7 @@
     <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
     <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything">
   </div>
-  <script src="/face.js" defer></script>
-  <script src="/tts.js" defer></script>
-  <script src="/gestures.js" defer></script>
-  <script src="/sse.js" defer></script>
+  <script type="module" src="/face.js"></script>
   <script src="/visual_bridge.js" defer></script>
   <script src="/cognition_ecology.js" defer></script>
   <script src="/codebase.js" defer></script>

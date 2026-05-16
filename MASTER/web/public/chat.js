@@ -28,6 +28,7 @@ function appendMsg(role, text = '') {
   log.scrollTop = log.scrollHeight;
 }
 
+window._chatOnUser  = (text) => { appendMsg('user', text); appendMsg('assistant'); };
 window._chatOnChunk = (raw) => {
   if (!_streamEl) return;
   _streamEl.textContent += raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
@@ -35,17 +36,6 @@ window._chatOnChunk = (raw) => {
 };
 window._chatOnDone  = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => c.remove()); };
 window._chatOnError = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => c.remove()); };
-
-input.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return;
-  const text = input.value.trim();
-  if (!text) return;
-  e.preventDefault();
-  input.value = '';
-  appendMsg('user', text);
-  appendMsg('assistant');
-  if (typeof sendMessage === 'function') sendMessage(text);
-});
 
 (function applyTier() {
   const tier = document.querySelector('meta[name=master-tier]')?.content
