@@ -9,7 +9,7 @@
 # Requires ~300MB free RAM. On low-memory servers, tests are auto-skipped.
 #
 # WHY CHROME TESTS SKIP ON OPENBSD
-# =================================
+# 
 # Chrome/Chromium exits with SIGSEGV (139) immediately on OpenBSD due to the
 # W^X (Write XOR Execute) memory protection policy enforced by the kernel.
 # Chrome's V8 engine — even with --jitless -- and its process model require

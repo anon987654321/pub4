@@ -11,7 +11,7 @@
     computeZones(); assignHomes();
   }
 
-  // ─── Face zones (Fibonacci-sphere-projected anchors) ───────────────
+  // Face zones (Fibonacci-sphere-projected anchors)
   const Face = {
     zones: {}, anchors: [],
     rot: 0, rotTarget: 0,
@@ -77,7 +77,7 @@
     return out;
   }
 
-  // ─── Mask library — auto-rotates between PNG mask traditions ───────
+  // Mask library — auto-rotates between PNG mask traditions
   // Sepik River, Asmat, Baining fire dance, Tolai Tubuan, Malagan.
   // Each builder returns a flat anchor list. Cross-fade handled below.
   const MASKS = ['sepik', 'asmat', 'baining', 'tolai', 'malagan'];
@@ -313,7 +313,7 @@
     else z = buildSepik(cx, cy, s);
     return applyZ(z, s);
   }
-  // ─── Z (depth) — anchors carry z so mask reads as solid under rotation
+  // Z (depth) — anchors carry z so mask reads as solid under rotation
   const ZONE_Z = {
     pupilL: -0.18, pupilR: -0.18,
     eyeL: -0.08,   eyeR: -0.08,
@@ -356,7 +356,7 @@
     Face.anchors = [].concat(...Object.values(zonesA));
   }
 
-  // ─── Particles ─────────────────────────────────────────────────────
+  // Particles
   // Mobile budget: 2200 × 12-field × 3D transform per frame OOM'd phones.
   // 600 keeps the silhouette legible without melting the GPU/JIT.
   const COARSE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 768;
@@ -427,7 +427,7 @@
     }
   }
 
-  // ─── Palettes (time-of-day + state overlays) ───────────────────────
+  // Palettes (time-of-day + state overlays)
   function timePalette() {
     const h = new Date().getHours();
     if (h < 6)  return { shadow: '14,10,8',    midtone: '90,60,50',    highlight: '180,140,110', accent: '210,115,75' };
@@ -472,7 +472,7 @@
   const easeOutCubic   = t => 1 - Math.pow(1 - t, 3);
   const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
 
-  // ─── State ─────────────────────────────────────────────────────────
+  // State
   const State = {
     mode: 'idle', // idle|listening|thinking|speaking|ack|reject|error|sleep|rain
     mood: 'idle', model: '', provider: '',
@@ -484,7 +484,7 @@
     session: Math.floor(Math.random() * 1e9)
   };
 
-  // ─── Audio (ambient pad + analyser) ────────────────────────────────
+  // Audio (ambient pad + analyser)
   let actx = null, analyser = null, freqData = null, padGain1 = null, padGain2 = null, osc1 = null, osc2 = null;
   const MOOD_FREQ = {
     focused:[110.00, 164.81], curious:[123.47, 196.00], tense:[130.81, 207.65],
@@ -528,7 +528,7 @@
     return State.audioLevel;
   }
 
-  // ─── TTS — server-side edge-tts via /chat/tts ──────────────────────
+  // TTS — server-side edge-tts via /chat/tts
   // fetch MP3 → decodeAudioData → AudioBufferSourceNode through the
   // existing analyser so particle reactivity works identically.
   const tts = { muted: false, queue: [], model: '', playing: false, currentSrc: null };
@@ -619,7 +619,7 @@
     assignHomes();
   }
 
-  // ─── STT (long-press to talk) ──────────────────────────────────────
+  // STT (long-press to talk)
   let recognition = null;
   if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -647,7 +647,7 @@
     Face.pupilTarget = 1.0;
   }
 
-  // ─── SSE chat — raw text chunks, named events for state ────────────
+  // SSE chat — raw text chunks, named events for state
   let evtSrc = null;
   function sendMessage(text) {
     if (evtSrc) { try { evtSrc.close(); } catch (e) {} }
@@ -671,7 +671,7 @@
         try { evtSrc.close(); } catch (e) {}
         return;
       }
-      if (raw.startsWith('ERROR:')) { Face.coronaFlash = 1.0; State.mode = 'error'; fadePaletteTo(VERDICT_TINT.veto); return; }
+      if (raw.startsWith('ERROR:')) { Face.coronaFlash = 1.0; State.mode = 'error'; fadePaletteTo(VERDICT_TINT.veto); triggerSweat(); triggerChibi(); return; }
       const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
       pending += chunk;
       Face.dispersionTarget = 0;
@@ -688,7 +688,7 @@
       }
     };
     evtSrc.addEventListener('tool', (ev) => {
-      try { const d = JSON.parse(ev.data); datamosh(); Face.dispersionTarget = 0.2; } catch (e) {}
+      try { const d = JSON.parse(ev.data); datamosh(); Face.dispersionTarget = 0.2; triggerShockEyes(); } catch (e) {}
     });
     evtSrc.addEventListener('mood', (ev) => {
       const m = (ev.data || '').trim();
@@ -704,12 +704,14 @@
       const v = (ev.data || '').trim();
       fadePaletteTo(VERDICT_TINT[v] || timePalette());
       pulseEdge();
+      if (v === 'pass') triggerBlush();
+      if (v === 'veto') triggerVein();
     });
     evtSrc.addEventListener('confidence', (ev) => {
       const c = parseFloat(ev.data); if (isNaN(c)) return;
       State.confidence = c; Face.browTarget = 1 - c; Face.dispersionTarget = Math.max(0, (1 - c) * 0.4);
     });
-    evtSrc.onerror = () => { Face.coronaFlash = 0.6; State.mode = 'error'; try { evtSrc.close(); } catch (e) {} };
+    evtSrc.onerror = () => { Face.coronaFlash = 0.6; State.mode = 'error'; triggerSweat(); try { evtSrc.close(); } catch (e) {} };
   }
 
   // periodic state ping (closed-loop canvas → MASTER)
@@ -730,7 +732,7 @@
   }
   function pulseEdge() { Face.edgePulse = 1.0; }
 
-  // ─── Gesture detection ─────────────────────────────────────────────
+  // Gesture detection
   const Gesture = {
     down: false, x0: 0, y0: 0, t0: 0, x1: 0, y1: 0, longTimer: null,
     pinchDist0: 0, rotA0: 0, lastTap: 0, twoPtr: false
@@ -906,7 +908,7 @@
     } catch (_e) {}
   }
 
-  // ─── Weather (#26) — best-effort, silent fail ──────────────────────
+  // Weather (#26) — best-effort, silent fail
   let weather = { rain: 0, fog: 0 };
   function fetchWeather() {
     if (!navigator.geolocation) return;
@@ -921,7 +923,7 @@
     }, () => {}, { timeout: 4000, maximumAge: 3600000 });
   }
 
-  // ─── Boids neighbor flock (light, only when idle long) ─────────────
+  // Boids neighbor flock (light, only when idle long)
   function flock() {
     if (State.mode !== 'idle') return;
     const idle = (performance.now() - State.lastTouch) > 30000;
@@ -933,20 +935,93 @@
     }
   }
 
-  // ─── Aesthetic effects (Warp / Low End Theory / Flamagra) ─────────
+  // Aesthetic effects (Warp / Low End Theory / Flamagra)
   const FX = {
-    anaglyph: 0, anaglyphTarget: 0,   // R/cyan offset (bass-reactive)
-    ghostMirror: 0,                    // Pepper's-ghost vertical second-stack alpha
-    chromatic: 0,                      // chromatic-aberration pulse on stressed syllables
-    cutBlack: 0,                       // 1-frame canvas clear on transient
-    mandala: 0, mandalaPhase: 0,       // radial symmetry lock on long silence
-    datamosh: 0, datamoshFrames: 0,    // velocity-hold smear on tool event
-    embers: false                      // ember-rise mode (warm mood)
+    anaglyph: 0, anaglyphTarget: 0, // R/cyan offset (bass-reactive)
+    ghostMirror: 0, // Pepper's-ghost vertical second-stack alpha
+    chromatic: 0, // chromatic-aberration pulse on stressed syllables
+    cutBlack: 0, // 1-frame canvas clear on transient
+    mandala: 0, mandalaPhase: 0, // radial symmetry lock on long silence
+    datamosh: 0, datamoshFrames: 0, // velocity-hold smear on tool event
+    embers: false, // ember-rise mode (warm mood)
+    // Manga manpu (漫符)
+    sweat: 0, // embarrassment/error — teardrop from temple
+    vein: 0, // anger/reject — pulsing cross on forehead
+    blush: 0, // warmth/ack/pass — rose ovals on cheeks
+    noseBubbleR: 0, // sleep — growing circle from nose tip, resets on pop
+    speedLines: 0, // thinking — radial streaks from face edge
+    tears: 0, // sleep — cascading streams from eye centers
+    shockEyes: 0, // surprise/tool — rings expand, pupils contract
+    chibi: 0 // error — brief vertical squash of whole face
   };
   function chromaticPulse() { FX.chromatic = 1.0; }
   function datamosh()       { FX.datamosh  = 1.0; FX.datamoshFrames = 6; }
   function mandalaLock()    { FX.mandala   = 1.0; FX.mandalaPhase = 0; }
   function cutBlack()       { FX.cutBlack  = 1.0; }
+  function triggerSweat()   { FX.sweat     = 1.0; }
+  function triggerVein()    { FX.vein      = 1.0; }
+  function triggerBlush()   { FX.blush     = 1.0; }
+  function triggerShockEyes() { FX.shockEyes = 1.0; }
+  function triggerChibi()   { FX.chibi     = 1.0; }
+
+  // Combat and performance expression vocabulary
+  // MMA guard: brow furrow + gaze lock (Muay Thai, Silat, UFC awareness posture)
+  function exprGuard() {
+    Face.browTarget = 0.88; Face.gazeTarget = [0, 0];
+    setTimeout(() => { Face.browTarget = 0; }, 2400);
+  }
+  // Pre-fight stare: pupils contract, blink suppressed 3s
+  function exprPreStare() {
+    Face.pupilTarget = 0.52; Face.blinkPhase = -3.0;
+    setTimeout(() => { Face.pupilTarget = 1.0; }, 3000);
+  }
+  // Muay Thai ram muay / Silat bunga: serene brow lift + slow head sway
+  function exprRamMuay() {
+    Face.browTarget = -0.58; Face.yawTarget = (Math.random() > 0.5 ? 1 : -1) * 0.09;
+    setTimeout(() => { Face.browTarget = 0; Face.yawTarget = 0; }, 2800);
+  }
+  // Silat aura: dreamy gaze drift + breath-pitch sway
+  function exprSilat() {
+    Face.gazeTarget = [(Math.random() - 0.5) * 0.32, (Math.random() - 0.5) * 0.18];
+    Face.pitchTarget = (Math.random() - 0.5) * 0.11;
+    setTimeout(() => { Face.gazeTarget = [0, 0]; Face.pitchTarget = 0; }, 3600);
+  }
+  // Standup comedy punchline: held beat → blush + chibi pop
+  function exprPunchline() {
+    setTimeout(() => { triggerBlush(); triggerChibi(); }, 380);
+  }
+  // Rimshot: high brow flash + shock eyes
+  function exprRimshot() {
+    Face.browTarget = -0.92; triggerShockEyes();
+    setTimeout(() => { Face.browTarget = 0; }, 1100);
+  }
+  // Slam/spoken-word emotional peak: blush + speed lines
+  function exprSpokenWord() {
+    triggerBlush(); FX.speedLines = Math.min(1, FX.speedLines + 0.72);
+  }
+  // Curious head-tilt: slight yaw + brow lift (universal)
+  function exprCurious() {
+    Face.yawTarget = (Math.random() > 0.5 ? 1 : -1) * 0.13;
+    Face.browTarget = -0.42;
+    setTimeout(() => { Face.yawTarget = 0; Face.browTarget = 0; }, 2000);
+  }
+
+  const Expr = { lastFire: 0 };
+  function tickPersonalityExpressions(now) {
+    const mean = { speaking: 6000, thinking: 9000, idle: 22000, listening: 7000, error: 4000 }[State.mode] || 14000;
+    if (now - Expr.lastFire < mean * (0.6 + Math.random() * 0.8)) return;
+    Expr.lastFire = now;
+    const pools = {
+      thinking:  [exprGuard, exprPreStare, exprSilat, exprCurious, exprGuard],
+      speaking:  [exprRimshot, exprPunchline, exprRamMuay, exprSpokenWord, exprCurious],
+      idle:      [exprSilat, exprRamMuay, exprCurious],
+      listening: [exprGuard, exprCurious, exprPreStare],
+      error:     [exprGuard, exprPreStare]
+    };
+    const pool = pools[State.mode] || pools.idle;
+    pool[Math.floor(Math.random() * pool.length)]();
+  }
+
   function tickFX(dt) {
     // anaglyph follows bass
     if (analyser && freqData) {
@@ -963,6 +1038,22 @@
     FX.mandalaPhase += dt * 0.0018;
     if (FX.datamoshFrames > 0) FX.datamoshFrames--; else FX.datamosh *= 0.85;
     FX.embers = (State.mood === 'curious' || State.mode === 'speaking');
+    // Manga manpu ticks
+    FX.sweat      *= 0.983;
+    FX.vein        = State.mode === 'error' ? Math.min(1, FX.vein + 0.07) : FX.vein * 0.94;
+    FX.blush       = State.mode === 'ack'   ? Math.min(1, FX.blush + 0.06) : FX.blush * 0.97;
+    FX.tears       = State.mode === 'sleep' ? Math.min(1, FX.tears + 0.04) : FX.tears * 0.91;
+    FX.speedLines  = State.mode === 'thinking' ? Math.min(1, FX.speedLines + 0.06) : FX.speedLines * 0.87;
+    FX.shockEyes  *= 0.91;
+    FX.chibi      *= 0.86;
+    // nose bubble: grows during extended idle/sleep, pops and resets
+    const longIdle = (performance.now() - State.lastTouch) > 55000;
+    if ((State.mode === 'sleep' || longIdle) && State.mode !== 'error') {
+      FX.noseBubbleR += dt * 0.012;
+      if (FX.noseBubbleR > Face.s * 0.28) FX.noseBubbleR = 0;
+    } else {
+      FX.noseBubbleR *= 0.88;
+    }
   }
   function drawGhostMirror() {
     if (FX.ghostMirror < 0.02) return;
@@ -1026,7 +1117,7 @@
     ctx.fillText(`MASTER-${State.session.toString(36).toUpperCase()}`, 8, H - 8);
   }
 
-  // ─── Whisper voice (low-volume asides) ─────────────────────────────
+  // Whisper voice (low-volume asides)
   function whisper(text) {
     if (tts.muted || !text) return;
     tts.queue.push(text); ttsTick();
@@ -1037,7 +1128,7 @@
     'pipeline armed', 'council convened', 'ready'
   ];
 
-  // ─── Render loop ───────────────────────────────────────────────────
+  // Render loop
   let lastT = performance.now(), idlePulse = 0;
   function frame(now) {
     requestAnimationFrame(frame);
@@ -1080,6 +1171,7 @@
     sampleAudio();
     flock();
     tickFX(dt);
+    tickPersonalityExpressions(now);
     maybeSwitchMask(now, dt);
     maybeLookAway(now);
     tickParticles(dt, now);
@@ -1089,6 +1181,7 @@
     ctx.fillRect(0, 0, W, H);
 
     drawMandala();
+    drawSpeedLines();
     drawParticles();
     drawAnaglyph();
     drawGhostMirror();
@@ -1099,6 +1192,11 @@
     drawVortex();
     drawCatalogGhost();
     drawCutBlack();
+    drawBlush();
+    drawTears();
+    drawSweat();
+    drawVein();
+    drawNoseBubble();
 
     idlePulse += dt * 0.002;
 
@@ -1153,6 +1251,25 @@
       }
       if (p.zone === 'crown') {
         tx = p.hx + Math.sin(now * 0.001 + p.hx * 0.02) * s * 0.02 * (1 + Face.dispersion);
+      }
+      // Manga: shock eyes — ring expands, pupils contract (before 3D so it respects rotation)
+      if (FX.shockEyes > 0.01) {
+        if (p.zone === 'eyeL' || p.zone === 'eyeR') {
+          const ex = (p.zone === 'eyeL') ? cx - s * 0.32 : cx + s * 0.32;
+          const ey2 = cy - s * 0.10;
+          tx = ex + (tx - ex) * (1 + FX.shockEyes * 0.50);
+          ty = ey2 + (ty - ey2) * (1 + FX.shockEyes * 0.50);
+        } else if (p.zone === 'pupilL' || p.zone === 'pupilR') {
+          const ex = (p.zone === 'pupilL') ? cx - s * 0.32 : cx + s * 0.32;
+          const ey2 = cy - s * 0.10;
+          tx = ex + (tx - ex) * (1 - FX.shockEyes * 0.70);
+          ty = ey2 + (ty - ey2) * (1 - FX.shockEyes * 0.70);
+        }
+      }
+      // Manga: chibi collapse — brief vertical squash, slight horizontal spread
+      if (FX.chibi > 0.01) {
+        ty = cy + (ty - cy) * (1 - FX.chibi * 0.52);
+        tx = cx + (tx - cx) * (1 + FX.chibi * 0.18);
       }
       // 3D transform around centroid: scale → roll → yaw → pitch
       let dx = (tx - cx) * scale, dy = (ty - cy) * scale, dz = tz * scale;
@@ -1289,7 +1406,7 @@
     ctx.stroke();
   }
 
-  // ─── Microsaccades — biological eye tremor during fixation ─────────
+  // Microsaccades — biological eye tremor during fixation
   // Real fixation includes ~3-5 microsaccades/second + drift; amplitude ~0.1-0.3°.
   // Modelled as random impulse + exponential decay offset over the intended gaze.
   const gazeJitter = [0, 0];
@@ -1303,7 +1420,7 @@
     gazeJitter[1] *= 0.87;
   }
 
-  // ─── Look-aways — periodic gaze averts to break the stare ──────────
+  // Look-aways — periodic gaze averts to break the stare
   let nextLookAway = performance.now() + 12000 + Math.random() * 6000;
   let lookAwayUntil = 0;
   function maybeLookAway(now) {
@@ -1336,7 +1453,121 @@
     }
   }
 
-  // ─── Wire events ───────────────────────────────────────────────────
+  // Manga manpu draw functions
+  // Sweat drop: teardrop at temple — embarrassment / error
+  function drawSweat() {
+    if (FX.sweat < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const tx2 = cx - s * 0.72, ty2 = cy - s * 0.38;
+    const sz = s * 0.055 * FX.sweat;
+    ctx.save();
+    ctx.globalAlpha = FX.sweat * 0.82;
+    ctx.fillStyle = 'rgba(140,190,255,1)';
+    ctx.beginPath(); ctx.arc(tx2, ty2, sz, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(tx2 - sz * 0.45, ty2 - sz * 0.2);
+    ctx.quadraticCurveTo(tx2, ty2 - sz * 2.8, tx2 + sz * 0.45, ty2 - sz * 0.2);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  // Pulsing vein cross: anger / reject / error
+  function drawVein() {
+    if (FX.vein < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const vx = cx + s * 0.26, vy = cy - s * 0.62;
+    const pulse = 1 + Math.sin(performance.now() * 0.014) * 0.28;
+    const arm = s * 0.055 * pulse * FX.vein;
+    ctx.save();
+    ctx.globalAlpha = FX.vein * 0.88;
+    ctx.strokeStyle = 'rgba(210,35,35,1)';
+    ctx.lineWidth = 2; ctx.lineCap = 'round';
+    // Classic manga vein: two kinked segments forming a cross
+    ctx.beginPath();
+    ctx.moveTo(vx - arm, vy);
+    ctx.lineTo(vx - arm * 0.32, vy); ctx.lineTo(vx - arm * 0.32, vy - arm * 0.55);
+    ctx.lineTo(vx, vy - arm * 0.55); ctx.lineTo(vx, vy);
+    ctx.lineTo(vx, vy + arm * 0.55); ctx.lineTo(vx + arm * 0.32, vy + arm * 0.55);
+    ctx.lineTo(vx + arm * 0.32, vy); ctx.lineTo(vx + arm, vy);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Blush ovals: warmth / ack / pass verdict
+  function drawBlush() {
+    if (FX.blush < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const a = FX.blush * 0.16;
+    [[cx - s * 0.43, cy + s * 0.06], [cx + s * 0.43, cy + s * 0.06]].forEach(([bx, by]) => {
+      const g = ctx.createRadialGradient(bx, by, 0, bx, by, s * 0.26);
+      g.addColorStop(0, `rgba(220,75,100,${a})`);
+      g.addColorStop(1, `rgba(220,75,100,0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(bx - s * 0.28, by - s * 0.20, s * 0.56, s * 0.40);
+    });
+  }
+
+  // Nose bubble: growing sphere from nose tip — sleep / long idle
+  function drawNoseBubble() {
+    if (FX.noseBubbleR < 1.5) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const bx = cx + s * 0.07, by = cy + s * 0.44;
+    const r = FX.noseBubbleR;
+    const a = Math.min(1, r / (s * 0.08)) * 0.32;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.strokeStyle = `rgba(${palette.highlight},0.7)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(bx, by - r, r, 0, Math.PI * 2); ctx.stroke();
+    // lens highlight
+    ctx.fillStyle = `rgba(${palette.highlight},0.12)`;
+    ctx.beginPath(); ctx.arc(bx - r * 0.28, by - r - r * 0.28, r * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Speed lines: radial streaks — thinking / determination
+  function drawSpeedLines() {
+    if (FX.speedLines < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const n = 18, now = performance.now();
+    ctx.save();
+    ctx.globalAlpha = FX.speedLines * 0.20;
+    ctx.strokeStyle = `rgba(${palette.highlight},1)`;
+    ctx.lineWidth = 1;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + now * 0.0003;
+      const r0 = s * 1.25, r1 = s * (2.0 + Math.sin(i * 1.7) * 0.3);
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0 * 0.72);
+      ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1 * 0.72);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Cascade tears: vertical streams — sleep / intense emotion
+  function drawTears() {
+    if (FX.tears < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const now = performance.now();
+    ctx.save();
+    ctx.globalAlpha = FX.tears * 0.52;
+    ctx.strokeStyle = 'rgba(140,190,255,1)';
+    ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+    [[cx - s * 0.32, cy - s * 0.08], [cx + s * 0.32, cy - s * 0.08]].forEach(([ex, ey]) => {
+      const offset = (now * 0.048) % (s * 1.1);
+      for (let d = 0; d < 3; d++) {
+        const y0 = ey + (offset + d * s * 0.37) % (s * 1.1);
+        ctx.beginPath();
+        ctx.moveTo(ex, y0);
+        ctx.lineTo(ex + (ex < cx ? -1 : 1) * s * 0.018, y0 + s * 0.11);
+        ctx.stroke();
+      }
+    });
+    ctx.restore();
+  }
+
+  // Wire events
   cv.addEventListener('pointerdown', pointerStart);
   cv.addEventListener('pointermove', pointerMove);
   cv.addEventListener('pointerup',   pointerEnd);
@@ -1357,7 +1588,7 @@
     Face.codespaceTarget = top === 'codebase' ? 1.0 : 0.0;
   });
 
-  // ─── Primer unlock ─────────────────────────────────────────────────
+  // Primer unlock
   const primer = document.getElementById('primer');
   const zshBar = document.getElementById('zsh');
   const zshIn  = document.getElementById('zin');
@@ -1380,7 +1611,7 @@
   }
   primer.addEventListener('pointerdown', startEverything, { once: true });
   
-  // ─── Zsh prompt bar ────────────────────────────────────────────────
+  // Zsh prompt bar
   zshIn.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     const v = zshIn.value.trim();
@@ -1392,7 +1623,7 @@
   });
   zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
 
-  // ─── Keyboard fallback ─────────────────────────────────────────────
+  // Keyboard fallback
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') ttsSkip();
     if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }

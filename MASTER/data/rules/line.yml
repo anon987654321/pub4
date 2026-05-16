@@ -486,8 +486,7 @@ line:
     detect_semantic: "Is this file close to instantiating a known pattern from {Strategy, Decorator, Pipeline, Visitor, Builder, Observer, Command, State, Adapter, NullObject}? Only flag when extraction would genuinely reduce complexity — never propose a pattern that adds ceremony for its own sake. Format: PATTERN:LINE:short reason."
     fix: "Extract toward the named pattern only if the resulting code is simpler than the current shape; otherwise leave it."
 
-  # ── Missing Fowler code smells ──────────────────────────────────────
-
+  # Missing Fowler code smells
   - id: FEATURE_ENVY
     name: "Method uses another object's data more than its own"
     tier: refactoring
@@ -530,8 +529,7 @@ line:
     detect_semantic: "Do two classes have different names but perform the same responsibility? Are they interchangeable in practice?"
     fix: "Rename to the same interface. Merge or replace one."
 
-  # ── Rails doctrine ───────────────────────────────────────────────────
-
+  # Rails doctrine
   - id: INTEGRATED_WHOLE
     name: "Use Rails conventions rather than bypassing them"
     tier: rails
@@ -550,8 +548,7 @@ line:
     fix: "Use the Rails-idiomatic primitive."
     languages: [ruby]
 
-  # ── Thread safety ─────────────────────────────────────────────────────
-
+  # Thread safety
   - id: THREAD_SAFETY
     name: "Mutable state shared across threads needs synchronization"
     tier: concurrency
@@ -579,8 +576,7 @@ line:
     fix: "Use a refinement (using) or a wrapper. Never open core classes globally."
     languages: [ruby]
 
-  # ── NNgroup heuristics (gap fill) ────────────────────────────────────
-
+  # NNgroup heuristics (gap fill)
   - id: RECOGNITION_NOT_RECALL
     name: "Users recognize; they should not have to recall"
     tier: ux
@@ -597,8 +593,7 @@ line:
     detect_semantic: "Does this interface support only one interaction mode — keyboard-only, mouse-only, or click-per-step with no shortcuts for frequent users?"
     fix: "Add keyboard shortcuts, bulk operations, or quick-access patterns for power users."
 
-  # ── Strunk & White (gap fill) ─────────────────────────────────────────
-
+  # Strunk & White (gap fill)
   - id: ACTIVE_VOICE
     name: "Write in active voice"
     tier: clarity
@@ -623,8 +618,7 @@ line:
     detect_semantic: "Do list items, enum values, method names in a group, or bullet points mix grammatical forms — some nouns, some verbs, some gerunds?"
     fix: "Align all items to the same grammatical form."
 
-  # ── Structural operations as detectable rules ─────────────────────────
-
+  # Structural operations as detectable rules
   - id: REFLOW
     name: "Even density and rhythm — no spikes of verbosity"
     tier: design
@@ -642,8 +636,7 @@ line:
     detect_semantic: "Are there inline literals (numbers, strings, regexes) that appear in multiple places and would be clearer and safer as a named constant?"
     fix: "HOIST to a named constant with .freeze."
 
-  # ── Data / SQL ────────────────────────────────────────────────────────
-
+  # Data / SQL
   - id: QUERY_SMELL
     name: "Detect N+1, cartesian products, and missing index hints"
     tier: data
@@ -669,8 +662,7 @@ line:
     detect_semantic: "Does this code compare a nullable database column using = NULL or != NULL instead of IS NULL / IS NOT NULL? Does Ruby code use == nil where .nil? or SQL IS NULL is required?"
     fix: "Replace = NULL with IS NULL. Replace != NULL with IS NOT NULL. Use .nil? in Ruby, not == nil for DB values."
 
-  # ── Security ──────────────────────────────────────────────────────────
-
+  # Security
   - id: SECRET_PROXIMITY
     name: "Secrets and their consumers must not share a file"
     tier: security
@@ -696,8 +688,7 @@ line:
     detect_semantic: "Does user-supplied input (params, headers, form fields, query strings, uploaded filenames) reach a database query, shell command, file path, or eval without a validation boundary? Is there an injection risk?"
     fix: "Validate at the boundary. Use parameterized queries. Whitelist allowed values. Never interpolate user input into shell or SQL."
 
-  # ── Async / concurrency ───────────────────────────────────────────────
-
+  # Async / concurrency
   - id: LOCK_ORDER
     name: "Mutexes must be acquired in a consistent global order"
     tier: concurrency
@@ -722,8 +713,7 @@ line:
     detect_semantic: "Does this code start an async operation (Thread.new, Fiber, Future, setTimeout, EventMachine callback) without any error handling on the result? If the async work fails, is the failure visible anywhere?"
     fix: "Add error handling to every async call. Log or publish failures. Never let async errors disappear silently."
 
-  # ── API / protocol design ─────────────────────────────────────────────
-
+  # API / protocol design
   - id: BREAKING_CHANGE
     name: "Method signature or response shape changes require a version bump"
     tier: api
@@ -748,8 +738,7 @@ line:
     detect_semantic: "Does this code make 5 or more sequential calls to the same API, database, or service where a single batch call could replace them? Is round-trip latency multiplied unnecessarily?"
     fix: "Batch calls: use bulk endpoints, IN queries, multi-get, or collect then flush. One round-trip beats five."
 
-  # ── Documentation ──────────────────────────────────────────────────────
-
+  # Documentation
   - id: STALE_EXAMPLE
     name: "Code examples in docs must reference methods that still exist"
     tier: docs
@@ -774,8 +763,7 @@ line:
     detect_semantic: "Does this section header use a bare noun ('Overview', 'Introduction', 'Details', 'Notes') where an active verb phrase ('How X works', 'Configure Y', 'When to use Z') would orient the reader faster?"
     fix: "Rewrite as a verb phrase. 'Overview' → 'How the pipeline works'. Noun titles bury the reader's entry point."
 
-  # ── CSS / visual ──────────────────────────────────────────────────────
-
+  # CSS / visual
   - id: MAGIC_COLOR
     name: "Color values must reference design tokens, not raw hex/rgb"
     tier: css
@@ -801,8 +789,7 @@ line:
     detect_semantic: "Does this layout break or overflow below 375px or above 1440px viewport width? Are there fixed pixel widths with no responsive fallback? Are there media queries present but with gaps in the coverage range?"
     fix: "Add media queries for the missing breakpoints. Use fluid units (%, vw, clamp()) for elements that must scale."
 
-  # ── Infra / ops ───────────────────────────────────────────────────────
-
+  # Infra / ops
   - id: UNBOUNDED_RETRY
     name: "Retry loops must have a max_attempts cap and backoff"
     tier: ops
@@ -828,7 +815,7 @@ line:
     detect_semantic: "Does this new code path — a branch, a rescue handler, an async worker, a background job — emit no log line, metric, or trace event? If it fails silently or takes unexpectedly long, would oncall have any signal?"
     fix: "Add one @bus.publish / logger.info / StatsD.increment at the entry and exit of each significant path. Dark code is unoperatable code."
 
-  # ── Universal design archetypes (cross-disciplinary) ──────────────────
+  # Universal design archetypes (cross-disciplinary)
   # Each archetype is a principle that holds across code, music, law, prose,
   # city-planning, and mechanics. The detect_semantic probes for violations
   # in whatever medium the file represents.
@@ -937,7 +924,7 @@ line:
     detect_semantic: "Does this system, module, or process emit observable signals about its own health and outcomes? Are there test suites, metrics, logs, or CI gates that would catch a regression? Is there a feedback loop that lets the system adapt to its observed behavior?"
     fix: "Add observability. Tests for correctness, metrics for performance, logs for forensics. A system that can't observe itself cannot improve."
 
-  # ── Interaction quality — grooved path for LLM output ─────────────────
+  # Interaction quality — grooved path for LLM output
   # Rules that assess responses, prompts, and conversation artifacts for
   # variance, expertise calibration, friction, and desire-path alignment.
   # Medium adapters: applies to LLM output text, prompts, UI copy, docs.
@@ -1093,3 +1080,21 @@ line:
     autofix: false
     detect_semantic: "Does this response complete the technical task but leave the user's underlying goal unaddressed? Did the user ask to fix a bug because they wanted to ship — has that underlying goal been served?"
     fix: "After the task: one sentence on whether the underlying goal is now met, and what (if anything) remains between here and fully done."
+
+  - id: NO_ASCII_LINE_ART
+    name: "No ASCII line art in comments"
+    tier: style
+    severity: warning
+    autofix: true
+    detect_lexical: "(?://|#)\\s*[-─━=]{3,}"
+    languages: [ruby, javascript, css, yaml, shell]
+    fix: "Replace decorative comment separators (# ----, // ====, // ───) with plain text. The comment content is the separator — dashes add noise, not clarity."
+
+  - id: NO_COLUMN_ALIGN
+    name: "No column alignment via extra spaces"
+    tier: style
+    severity: warning
+    autofix: true
+    detect_lexical: "\\S  +(?://|#)"
+    languages: [ruby, javascript]
+    fix: "Inline comments need one space before //. Aligned columns look like tables but decay into noise when one entry changes. Single space only."

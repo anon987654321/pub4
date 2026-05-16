@@ -29,21 +29,18 @@ class TestCLI < Minitest::Test
     @cli = Master::Now::CLI.new(container: @container)
   end
 
-  # ── container accessor ────────────────────────────────────────────────────
-
+  # container accessor
   def test_container_accessor
     assert_same @container, @cli.container
   end
 
-  # ── TTS flag ──────────────────────────────────────────────────────────────
-
+  # TTS flag
   def test_tts_off_when_unavailable
     refute @cli.instance_variable_get(:@tts_on),
       "tts_on should be false when Speech.available? is false"
   end
 
-  # ── handle_command dispatch ───────────────────────────────────────────────
-
+  # handle_command dispatch
   def test_handle_command_returns_false_for_non_command
     skip "drifted: API moved; port to new dispatcher/CLI shape"
     assert_equal false, @cli.send(:handle_command, "hello world")
@@ -86,8 +83,7 @@ class TestCLI < Minitest::Test
     @renderer.verify
   end
 
-  # ── process ───────────────────────────────────────────────────────────────
-
+  # process
   def test_process_skips_blank_input
     skip "drifted: API moved; port to new dispatcher/CLI shape"
     @pipeline.expect(:call, nil)
@@ -113,8 +109,7 @@ class TestCLI < Minitest::Test
     refute @cli.instance_variable_get(:@last_ok)
   end
 
-  # ── pipe ──────────────────────────────────────────────────────────────────
-
+  # pipe
   def test_pipe_calls_process
     skip "drifted: API moved; port to new dispatcher/CLI shape"
     result = Master::Result.ok(rendered: "pong")

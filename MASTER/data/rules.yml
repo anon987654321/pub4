@@ -323,6 +323,8 @@ scan_depths:
     - js_module_size
     - readme_structure
     - active_voice_docs
+    - no_ascii_line_art
+    - no_column_align
   standard: &standard
     - CoChangeCouplingRule
     - InterconnectRule

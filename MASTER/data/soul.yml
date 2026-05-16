@@ -52,6 +52,15 @@ absolute:
     SURFACE_ERRORS_FIRST: failures and blockers lead the response; context and explanation follow.
     NO_DEAD_ENDS: every closed door names an adjacent open one.
     PREEMPT_FOLLOWUP: answer the one obvious follow-up question in the same response; no second round-trip.
+  aesthetic_rules:
+    NO_ASCII_DECORATION: no box-drawing, no --- / === / ### as visual separators in code, comments, docs, or CLI output. Content is the separator.
+    NO_COLUMN_ALIGN: one space before inline comments. Never pad with multiple spaces to align columns — alignment decays when a single entry grows.
+    NO_CONSECUTIVE_BLANK_LINES: one blank line between logical sections; zero between closely related lines.
+    IMPORTANCE_ORDER: every file's lines flow high-to-low importance. Public API first, primary logic next, helpers last. Readers should get the full picture from the top third.
+    FLAT_UI: uniform particle/element size at rest; depth only when the collective resembles a 3D model. No fake-3D borders, no drop-shadows on flat surfaces.
+    CINEMA_PALETTE: shadow/midtone/highlight triplets; complementary anchors. Never raw primaries, never linear easing — cubic-bezier curves on every transition.
+    STRUNK_ACTIVE: active voice throughout — code, comments, commit messages, CLI output, TTS. Omit needless words. Concrete verbs: "emit", "prune", "route", not "perform", "handle", "deal with".
+    INVERTED_PYRAMID: commits, comments, and log lines lead with the fact. Context and explanation trail. dmesg format — no preamble.
 
 negotiable:
   style: openbsd_dmesg
@@ -83,4 +92,8 @@ evolution_log:
   - version: "2.4.0"
     date: "2026-05-14"
     change: add interaction code_rules — REGISTER_STABLE, MIRROR_EXPERTISE, SURFACE_ERRORS_FIRST, NO_DEAD_ENDS, PREEMPT_FOLLOWUP
+    author: dev
+  - version: "2.5.0"
+    date: "2026-05-16"
+    change: add aesthetic_rules — NO_ASCII_DECORATION, NO_COLUMN_ALIGN, IMPORTANCE_ORDER, FLAT_UI, CINEMA_PALETTE, STRUNK_ACTIVE, INVERTED_PYRAMID; NO_ASCII_LINE_ART + NO_COLUMN_ALIGN scan rules; MMA/comedy expression vocabulary in face.js
     author: dev

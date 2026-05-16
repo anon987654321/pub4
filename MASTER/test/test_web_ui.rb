@@ -47,8 +47,7 @@ class TestWebUI < Minitest::Test
     @container = FakeContainer.new
   end
 
-  # ── Result monad ──────────────────────────────────────────────────────────
-
+  # Result monad
   def test_result_ok_wraps_value
     r = Master::Result.ok("hello")
     assert r.ok?
@@ -76,8 +75,7 @@ class TestWebUI < Minitest::Test
     assert r.err?
   end
 
-  # ── Pipeline ─────────────────────────────────────────────────────────────
-
+  # Pipeline
   def test_pipeline_returns_result
     result = @container.pipeline.call(Master::Result.ok(user_message: "hi"))
     assert result.ok?
@@ -91,15 +89,13 @@ class TestWebUI < Minitest::Test
     assert_equal "model down", result.message
   end
 
-  # ── Speech bytes ─────────────────────────────────────────────────────────
-
+  # Speech bytes
   def test_speech_synthesize_bytes_stub
     bytes = FakeSpeech.synthesize_bytes("hello world")
     assert_equal "FAKE-MP3-BYTES", bytes
   end
 
-  # ── SwarmCoordinator ─────────────────────────────────────────────────────
-
+  # SwarmCoordinator
   def test_swarm_coordinator_worker_roles
     # Just check the list is non-empty without booting real agents
     assert_includes Master::Judge::Swarm::Coordinator::WORKER_CLASSES.keys, :analyst
@@ -116,8 +112,7 @@ class TestWebUI < Minitest::Test
     assert_includes result.message, "unknown role"
   end
 
-  # ── Memory ───────────────────────────────────────────────────────────────
-
+  # Memory
   def test_memory_remember_and_recall
     Dir.mktmpdir do |dir|
       m = Master::Memory.new(root: dir)
@@ -143,8 +138,7 @@ class TestWebUI < Minitest::Test
     end
   end
 
-  # ── Personality ──────────────────────────────────────────────────────────
-
+  # Personality
   def test_personality_default_is_malay
     assert_equal :malay, Master::Voice::Personality::DEFAULT
   end
@@ -159,8 +153,7 @@ class TestWebUI < Minitest::Test
     assert_same p.system_prompt, p.system_prompt
   end
 
-  # ── UnwrapError ──────────────────────────────────────────────────────────
-
+  # UnwrapError
   def test_unwrap_error_is_runtime_error_subclass
     assert Master::UnwrapError < RuntimeError
   end

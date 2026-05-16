@@ -3,8 +3,7 @@
 require_relative "test_helper"
 
 class TestSpeech < Minitest::Test
-  # ── module interface ──────────────────────────────────────────────────────
-
+  # module interface
   def test_available_returns_boolean
     assert_includes [true, false], Master::Voice::Speech.available?
   end
@@ -28,8 +27,7 @@ class TestSpeech < Minitest::Test
     assert_nil Master::Voice::Speech.synthesize_bytes("")
   end
 
-  # ── when edge-tts unavailable ─────────────────────────────────────────────
-
+  # when edge-tts unavailable
   def test_synthesize_returns_nil_when_unavailable
     # Stub Speech.available? to false
     Master::Voice::Speech.stub(:available?, false) do
@@ -43,8 +41,7 @@ class TestSpeech < Minitest::Test
     end
   end
 
-  # ── when edge-tts available (mock system call) ────────────────────────────
-
+  # when edge-tts available (mock system call)
   def test_synthesize_calls_edge_tts_with_correct_args
     skip "edge-tts not installed" unless Master::Voice::Speech.available?
 
@@ -70,8 +67,7 @@ class TestSpeech < Minitest::Test
     end
   end
 
-  # ── voice / style lookup ─────────────────────────────────────────────────
-
+  # voice / style lookup
   def test_unknown_voice_falls_back_to_default
     # Speech.synthesize uses VOICES.fetch(voice, VOICES[DEFAULT_VOICE])
     # so unknown symbol falls back to Osman
