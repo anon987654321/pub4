@@ -1321,8 +1321,10 @@
       const yP = dy * cosP - dz * sinP;
       dy = yP;
       p.sz = dz; // eye-space z — drives depth-layered rendering
-      tx = cx + dx;
-      ty = cy + dy;
+      const _fov = s * 3;
+      const _ps = _fov / Math.max(1, _fov - dz);
+      tx = cx + dx * _ps;
+      ty = cy + dy * _ps;
       if (disp > 0) {
         const [cu, cv] = curlAt(p.x, p.y, now);
         tx += cu * s * disp * 0.08;
@@ -1397,7 +1399,8 @@
   function drawParticles() {
     const fog = weather.fog * 0.4;
     const base = State.mode === 'sleep' ? 0.35 : (State.mode === 'rain' ? 0.55 : 0.92);
-    const rr = 210, gg = 205, bb = 200;
+    const hi = palette.highlight.split(',');
+    const rr = +hi[0] | 0, gg = +hi[1] | 0, bb = +hi[2] | 0;
     const zT = Face.s * 0.07;
 
     // Thinking mode: trail at previous position
