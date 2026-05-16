@@ -16,8 +16,12 @@ module Master
           "```ruby\n#{src}\n```"
       end
 
+      def axioms=(text)
+        @injected_axioms = text
+      end
+
       def constitutional_preamble
-        @constitutional_preamble ||= begin
+        @constitutional_preamble ||= @injected_axioms || begin
           soul  = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
           rules = Master.load_yaml(File.join(Master::ROOT, "data", "rules.yml"))
           golden = soul.dig("absolute", "golden_rule") || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
@@ -25,7 +29,7 @@ module Master
           lines = ["Constitutional constraints:", "- Golden rule: #{golden}"]
           zen.each_value { |v| lines << "- #{v}" } if zen.is_a?(Hash)
           lines.join("\n")
-        rescue StandardError => _e
+        rescue StandardError
           "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
         end
       end

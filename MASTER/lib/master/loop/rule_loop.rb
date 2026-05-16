@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "tempfile"
+require_relative "../reach/atomic_write"
+require_relative "constants"
 
 module Master
   module Loop
@@ -16,7 +18,7 @@ module Master
     SEVERITY_RANK = Master::SEVERITY_RANK
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
 
-    TRANSIENT_RE  = /429|throttl|rate.?limit|high demand|provider.?error|overload|capacity|503/i.freeze
+    include Master::Reach::AtomicWrite
 
     def initialize(rule:, agent:, scanner:, root:, bus: nil, git: nil)
       @rule    = rule
@@ -25,6 +27,10 @@ module Master
       @root    = root
       @bus     = bus
       @git     = git
+    end
+
+    def injected_preamble=(text)
+      @injected_preamble = text
     end
 
     # Returns { fixed:, cycles:, status: :clean | :converged | :max_cycles }
@@ -93,7 +99,7 @@ module Master
         code     = extract(response, File.extname(path).downcase)
         return code if code && code.strip != src.strip
       rescue StandardError => e
-        next if TRANSIENT_RE.match?(e.message.to_s)
+        next if Master::Loop::TRANSIENT_RE.match?(e.message.to_s)
         @bus&.publish("rule_loop:fix_error", rule: @rule.id, file: path, error: e.message[0, 120])
         return nil
       end
@@ -101,9 +107,7 @@ module Master
     end
 
     def apply(path, new_src)
-      tmp_path = "#{path}.rl.#{Process.pid}"
-      File.write(tmp_path, new_src, encoding: "UTF-8")
-      File.rename(tmp_path, path)
+      write_atomic(path, new_src, encoding: "UTF-8")
       @bus&.publish("rule_loop:fix_applied", rule: @rule.id, file: path)
       true
     rescue StandardError => e
@@ -142,7 +146,7 @@ module Master
     end
 
     def preamble
-      @preamble ||= begin
+      @preamble ||= @injected_preamble || begin
         soul  = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
         golden = soul.dig("absolute", "golden_rule") || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
         "Golden rule: #{golden}\nMinimum change that eliminates the violation. Do not touch unrelated code."

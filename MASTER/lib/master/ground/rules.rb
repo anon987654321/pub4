@@ -4,10 +4,6 @@ module Master
   module Ground
   # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
   class Rules
-    DATA_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "rules.yml").freeze
-    SOUL_PATH     = File.join(File.expand_path("../../..", __dir__), "data", "soul.yml").freeze
-    WORKFLOW_PATH = File.join(File.expand_path("../../..", __dir__), "data", "workflow.yml").freeze
-
     RULES_SUBDIR = "rules"
 
     def initialize(root: nil)

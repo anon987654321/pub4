@@ -27,14 +27,23 @@ module Master
     end
 
     def record_latency(ms)
-      @mutex.synchronize { @latencies << ms; @latencies.shift if @latencies.size > MAX_SAMPLE_SIZE }
-      check_threshold(:decision_latency_ms, average(@latencies))
+      avg = @mutex.synchronize do
+        @latencies << ms
+        @latencies.shift if @latencies.size > MAX_SAMPLE_SIZE
+        average(@latencies)
+      end
+      check_threshold(:decision_latency_ms, avg)
       append(decision_latency_ms: ms)
     end
 
     def record_diff(lines)
-      @mutex.synchronize { @diff_sizes << lines; @diff_sizes.shift if @diff_sizes.size > MAX_SAMPLE_SIZE; @writes += 1 }
-      check_threshold(:diff_size_lines, average(@diff_sizes))
+      avg = @mutex.synchronize do
+        @diff_sizes << lines
+        @diff_sizes.shift if @diff_sizes.size > MAX_SAMPLE_SIZE
+        @writes += 1
+        average(@diff_sizes)
+      end
+      check_threshold(:diff_size_lines, avg)
       append(diff_size_lines: lines)
     end
 

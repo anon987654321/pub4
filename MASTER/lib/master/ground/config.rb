@@ -8,12 +8,12 @@ module Master
   class Config
     BUDGET_MAX_DEFAULT = 10.0
     HISTORY_MAX = 500
-    DEFAULT_WEB_PORT = 10_002
+    DEFAULT_WEB_PORT = 53_187
 
     DEFAULTS = {
       'model'          => 'nvidia/nemotron-3-super-120b-a12b:free',
-      'web_host'       => '0.0.0.0',
-      'web_public_url' => 'http://ai.brgen.no:3000',
+      'web_host'       => '127.0.0.1',
+      'web_public_url' => 'https://ai.brgen.no',
       'web_port'       => DEFAULT_WEB_PORT,
       'budget_max'     => BUDGET_MAX_DEFAULT,
       'req_max'        => 1.0,

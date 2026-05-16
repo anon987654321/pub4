@@ -125,7 +125,9 @@ module Master
       return unless rollback_eligible?(result)
 
       category = result.category
-      @bus&.publish("pipeline:rollback", category: category, message: result.message[0, ROLLBACK_MSG_TRUNCATE])
+      tag = "master:rollback:#{category}:#{Process.pid}"
+      @bus&.publish("pipeline:rollback", category:, message: result.message[0, ROLLBACK_MSG_TRUNCATE], tag:)
+      Open3.capture2e("git", "-C", @root, "stash", "push", "-u", "-m", tag)
       Open3.capture2e("git", "-C", @root, "reset", "--hard", "HEAD")
     end
 
