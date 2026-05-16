@@ -6,6 +6,7 @@ require "tempfile"
 require "set"
 require_relative "sweep/rewriter"
 require_relative "sweep/convergence"
+require_relative "constants"
 
 module Master
   module Loop
@@ -75,67 +76,65 @@ circuit\sopen|retry\sin|llm_request)\b
 
     # Bounded by max_cycles (default MAX_CYCLES = 16); breaks early on convergence, stall, or halt.
     def run(target = @root, max_cycles: MAX_CYCLES, types: GLOBS.keys)
-      saved_model = @agent.model
-      @agent.model = @agent.model_for(operation: :sweep)
-      cfg = Master.load_yaml(File.join(@root, "data", "workflow.yml")).dig("sweep") || {}
-      @converge_threshold = cfg.fetch("converge_threshold", CONVERGE_THRESHOLD)
-      @converge_window    = cfg.fetch("converge_window",    CONVERGE_WINDOW)
-      @map            = build_codebase_map
-      @prompts        = load_prompts
-      sweep_types     = select_types(target, types)
-      violation_history = []
-      converge_streak   = 0
-      init_cycle_log
+      @agent.with_model(@agent.model_for(operation: :sweep)) do
+        cfg = Master.load_yaml(File.join(@root, "data", "workflow.yml")).dig("sweep") || {}
+        @converge_threshold = cfg.fetch("converge_threshold", CONVERGE_THRESHOLD)
+        @converge_window    = cfg.fetch("converge_window",    CONVERGE_WINDOW)
+        @map            = build_codebase_map
+        @prompts        = load_prompts
+        sweep_types     = select_types(target, types)
+        violation_history = []
+        converge_streak   = 0
+        init_cycle_log
 
-      max_cycles.times do |i|
-        cycle       = i + 1
-        changed     = 0
-        cycle_viol  = 0
-        cycle_fixed = 0
-        cycle_defer = 0
+        max_cycles.times do |i|
+          cycle       = i + 1
+          changed     = 0
+          cycle_viol  = 0
+          cycle_fixed = 0
+          cycle_defer = 0
 
-        @bus&.publish("sweep:cycle", cycle:, target:)
+          @bus&.publish("sweep:cycle", cycle:, target:)
 
-        collect_files(target, sweep_types).each do |path|
-          rel    = path.delete_prefix("#{@root}/")
-          before = violations_in(path)
-          src    = File.read(path, encoding: "UTF-8")
+          collect_files(target, sweep_types).each do |path|
+            rel    = path.delete_prefix("#{@root}/")
+            before = violations_in(path)
+            src    = File.read(path, encoding: "UTF-8")
 
-          new_src, after = evaluate_rewrite(rel:, src:, before:, cycle:)
-          if new_src.nil?
-            cycle_defer += before
-            next
+            new_src, after = evaluate_rewrite(rel:, src:, before:, cycle:)
+            if new_src.nil?
+              cycle_defer += before
+              next
+            end
+
+            delta = before - after
+            tmp_path = "#{path}.tmp.#{Process.pid}"
+            File.write(tmp_path, new_src, encoding: "UTF-8")
+            File.rename(tmp_path, path)
+            changed     += 1
+            cycle_viol  += after
+            cycle_fixed += delta
+            @bus&.publish("sweep:improved", file: rel, before:, after:)
+            yield cycle, rel, delta if block_given?
           end
 
-          delta = before - after
-          tmp_path = "#{path}.tmp.#{Process.pid}"
-          File.write(tmp_path, new_src, encoding: "UTF-8")
-          File.rename(tmp_path, path)
-          changed     += 1
-          cycle_viol  += after
-          cycle_fixed += delta
-          @bus&.publish("sweep:improved", file: rel, before:, after:)
-          yield cycle, rel, delta if block_given?
+          violation_history << cycle_viol
+          entry = record_cycle(violations: cycle_viol, fixed: cycle_fixed, deferred: cycle_defer)
+          @bus&.publish("sweep:cycle_stats", cycle:, **entry)
+          commit("sweep: full-codebase refactor [cycle #{cycle}]") if changed > 0 && git_dirty?
+
+          converge_streak = converged?(violation_history) ? converge_streak + 1 : 0
+          break if converge_streak >= @converge_window
+          break if trajectory_stalled?(violation_history)
+          break if should_halt_early?
         end
 
-        violation_history << cycle_viol
-        entry = record_cycle(violations: cycle_viol, fixed: cycle_fixed, deferred: cycle_defer)
-        @bus&.publish("sweep:cycle_stats", cycle:, **entry)
-        commit("sweep: full-codebase refactor [cycle #{cycle}]") if changed > 0 && git_dirty?
-
-        converge_streak = converged?(violation_history) ? converge_streak + 1 : 0
-        break if converge_streak >= @converge_window
-        break if trajectory_stalled?(violation_history)
-        break if should_halt_early?
+        summary = convergence_summary
+        @bus&.publish("sweep:done", summary:)
+        Result.ok(summary)
       end
-
-      summary = convergence_summary
-      @bus&.publish("sweep:done", summary:)
-      Result.ok(summary)
     rescue StandardError => e
       Result.err("sweep: #{e.message}", category: :unknown)
-    ensure
-      @agent.model = saved_model if defined?(saved_model) && saved_model
     end
 
     private

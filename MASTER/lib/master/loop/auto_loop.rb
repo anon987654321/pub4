@@ -2,8 +2,9 @@
 
 require "open3"
 require_relative "../reach/git_operations"
-
+require_relative "../reach/atomic_write"
 require_relative "auto_loop/fix_evaluator"
+require_relative "constants"
 
 module Master
   module Loop
@@ -33,7 +34,8 @@ module Master
     SEVERITY_RANK = Master::SEVERITY_RANK
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
 
-    TRANSIENT_RE = /429|throttl|rate.?limit|high demand|provider.?error|overload|capacity|503/i.freeze
+    include Master::Reach::AtomicWrite
+    include FixEvaluator
 
     def initialize(agent:, scanner:, root:, event_bus: nil, soul: nil, learnings: nil)
       @agent           = agent
@@ -48,71 +50,68 @@ module Master
     end
 
     def run(max_cycles: MAX_CYCLES)
-      saved_model = @agent.model
-      @agent.model = @agent.model_for(operation: :autoloop)
-      consecutive_clean = 0
-      max_cycles.times do |i|
-        cycle = i + 1
-        @bus&.publish("autoloop:cycle", cycle:)
-
-        scan_paths  = TARGETS.map { |d| File.join(@root, d.delete_suffix("/")) }
-                              .select { |d| File.directory?(d) }
-        all_results = scan_paths.flat_map { |dir|
-          scan_result = @scanner.scan_dir(dir, depth: :deep)
-          scan_result.ok? ? scan_result.value! : []
-        }
-
-        violations = extract_violations(all_results)
-        if violations.empty?
-          consecutive_clean += 1
-          return Result.ok("clean after #{cycle} cycle(s) (fixed-point: 2 silent runs)") if consecutive_clean >= 2
-          @bus&.publish("autoloop:provisional_clean", cycle:, consecutive_clean:)
-          next
-        end
+      @agent.with_model(@agent.model_for(operation: :autoloop)) do
         consecutive_clean = 0
+        max_cycles.times do |i|
+          cycle = i + 1
+          @bus&.publish("autoloop:cycle", cycle:)
 
-        yield cycle, violations if block_given?
+          scan_paths  = TARGETS.map { |d| File.join(@root, d.delete_suffix("/")) }
+                                .select { |d| File.directory?(d) }
+          all_results = scan_paths.flat_map { |dir|
+            scan_result = @scanner.scan_dir(dir, depth: :deep)
+            scan_result.ok? ? scan_result.value! : []
+          }
 
-        # Deduplicate by file — one fix per unique file to avoid write-race.
-        by_file = violations.first(BATCH_SIZE * 2).uniq { |v| v[:file] }.first(BATCH_SIZE)
-
-        mutex   = Mutex.new
-        fixes   = {}
-        # Stagger requests 5 s apart — stays within free-tier quota.
-        stagger = RATE_LIMIT_SLEEP.to_f / BATCH_SIZE
-
-        threads = by_file.each_with_index.map do |v, idx|
-          Thread.new do
-            sleep(stagger * idx) if idx.positive?
-            fix = request_fix(v)
-            mutex.synchronize { fixes[v[:file]] = [v, fix] } if fix
-          rescue StandardError => e
-            @bus&.publish("autoloop:thread_error", file: v[:file], error: e.message)
+          violations = extract_violations(all_results)
+          if violations.empty?
+            consecutive_clean += 1
+            return Result.ok("clean after #{cycle} cycle(s) (fixed-point: 2 silent runs)") if consecutive_clean >= 2
+            @bus&.publish("autoloop:provisional_clean", cycle:, consecutive_clean:)
+            next
           end
-        end
-        threads.each(&:join)
+          consecutive_clean = 0
 
-        fixes.each_value { |v, fix| apply_fix(v[:file], fix) }
+          yield cycle, violations if block_given?
 
-        if @git.dirty?("lib/")
-          @git.add_lib_files
-          @git.commit("autoloop: fix scan violations [cycle #{cycle}]")
-          if @learnings
-            fixes.each_value { |v, _|
+          # Deduplicate by file — one fix per unique file to avoid write-race.
+          by_file = violations.first(BATCH_SIZE * 2).uniq { |v| v[:file] }.first(BATCH_SIZE)
+
+          mutex   = Mutex.new
+          fixes   = {}
+          # Stagger requests 5 s apart — stays within free-tier quota.
+          stagger = RATE_LIMIT_SLEEP.to_f / BATCH_SIZE
+
+          threads = by_file.each_with_index.map do |v, idx|
+            Thread.new do
+              sleep(stagger * idx) if idx.positive?
+              fix = request_fix(v)
+              mutex.synchronize { fixes[v[:file]] = [v, fix] } if fix
+            rescue StandardError => e
+              @bus&.publish("autoloop:thread_error", file: v[:file], error: e.message)
+            end
+          end
+          threads.each(&:join)
+
+          fixes.each_value { |v, fix| apply_fix(v[:file], fix) }
+
+          if @git.dirty?("lib/")
+            @git.add_lib_files
+            @git.commit("autoloop: fix scan violations [cycle #{cycle}]")
+            if @learnings
+              fixes.each_value { |v, _|
  @learnings.record(trigger: v[:rule].to_s, strategy: "autoloop_fix", outcome: "commit") }
+            end
           end
+          track_recurrence(violations)
         end
-        track_recurrence(violations)
-      end
 
-      Result.ok("max cycles (#{MAX_CYCLES}) reached")
+        Result.ok("max cycles (#{MAX_CYCLES}) reached")
+      end
     rescue StandardError => e
       Result.err("autoloop: #{e.message}", category: :unknown)
-    ensure
-      @agent.model = saved_model if defined?(saved_model) && saved_model
     end
 
-    include FixEvaluator
     private
 
     def apply_fix(rel_path, fixed_src)
@@ -120,9 +119,7 @@ module Master
       return unless File.exist?(path)
       original = File.read(path, encoding: "UTF-8")
       return if fixed_src.strip == original.strip
-      temporary_path = "#{path}.tmp.#{Process.pid}"
-      File.write(temporary_path, fixed_src)
-      File.rename(temporary_path, path)
+      write_atomic(path, fixed_src)
       @bus&.publish("autoloop:fix_applied", file: rel_path)
     rescue StandardError => e
       @bus&.publish("autoloop:write_error", file: rel_path, error: e.message)
@@ -166,7 +163,7 @@ module Master
           fix
         rescue StandardError => e
           err = e.message.to_s
-          if TRANSIENT_RE.match?(err) && attempt < MAX_FIX_RETRIES - 1
+          if Master::Loop::TRANSIENT_RE.match?(err) && attempt < MAX_FIX_RETRIES - 1
             @bus&.publish("autoloop:rate_limit", sleep: RATE_LIMIT_SLEEP * (attempt + 1), attempt: attempt + 1)
           else
             @bus&.publish("autoloop:fix_error", file: violation[:file], error: err[0, 120])

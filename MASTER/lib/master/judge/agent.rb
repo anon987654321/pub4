@@ -105,6 +105,17 @@ module Master
       @config["model"] = val
     end
 
+    def with_model(override, &blk)
+      @model_mutex ||= Mutex.new
+      @model_mutex.synchronize do
+        prev = model
+        self.model = override
+        blk.call
+      ensure
+        self.model = prev
+      end
+    end
+
     def model_for(operation:)
       @model_router&.constrained_for(operation:) || model
     end
