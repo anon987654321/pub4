@@ -14,12 +14,12 @@ require "fileutils"
 
 # CONFIGURATION
 
-BASE_DIR = "G:/pub/multimedia/dilla"
-SOX = "#{BASE_DIR}/effects/sox/sox.exe"
+BASE_DIR = ENV.fetch("DILLA_DIR") { File.expand_path("~/dilla") }
+SOX = %w[sox /usr/local/bin/sox /usr/bin/sox].find { |p| system("which #{p} > /dev/null 2>&1") } || "sox"
 CHORDS_DIR = "#{BASE_DIR}/chords"
-DRUMS_DIR = "#{BASE_DIR}/drums"
-BASS_DIR = "#{BASE_DIR}/bass"
-FINAL_DIR = "#{BASE_DIR}/final"
+DRUMS_DIR  = "#{BASE_DIR}/drums"
+BASS_DIR   = "#{BASE_DIR}/bass"
+FINAL_DIR  = "#{BASE_DIR}/final"
 
 FileUtils.mkdir_p([CHORDS_DIR, DRUMS_DIR, BASS_DIR, FINAL_DIR])
 

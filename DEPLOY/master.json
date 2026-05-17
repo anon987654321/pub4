@@ -1,8 +1,10 @@
 {
   "apps": [
-    { "name": "amber", "domain": "amber.brgen.no", "port": 4010 },
-    { "name": "baibl", "domain": "baibl.no", "port": 4011 },
-    { "name": "brgen", "domain": "brgen.no", "port": 4012 },
-    { "name": "bsdports", "domain": "bsdports.org", "port": 4013 }
+    { "name": "amber",     "domain": "amber.brgen.no", "port": 61352 },
+    { "name": "baibl",     "domain": "baibl.no",       "port": 10007 },
+    { "name": "blognet",   "domain": "blognet.no",     "port": 10002 },
+    { "name": "brgen",     "domain": "brgen.no",       "port": 38182 },
+    { "name": "bsdports",  "domain": "bsdports.org",   "port": 47312 },
+    { "name": "hjerterom", "domain": "hjerterom.no",   "port": 38891 }
   ]
 }

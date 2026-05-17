@@ -18,7 +18,7 @@ require "fileutils"
 # ============================================================================
 
 CONFIG_PATH = File.expand_path("~/.config/repligen/config.json")
-DB_PATH = "G:/pub/multimedia/repligen/repligen.db"
+DB_PATH = ENV.fetch("REPLIGEN_DB") { File.expand_path("~/.local/share/repligen/repligen.db") }
 
 # Model type patterns (embedded)
 MODEL_TYPES = {
