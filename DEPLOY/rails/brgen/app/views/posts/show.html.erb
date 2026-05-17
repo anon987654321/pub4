@@ -24,6 +24,9 @@
     <time datetime="<%= @post.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(@post.created_at) %> ago</time>
   </header>
   <h1><%= @post.title %></h1>
+  <% if @post.image.attached? %>
+    <%= image_tag @post.image, class: "post-image" %>
+  <% end %>
   <% if @post.content.present? %>
     <p><%= @post.content %></p>
   <% end %>

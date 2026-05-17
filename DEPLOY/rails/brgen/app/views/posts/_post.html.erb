@@ -25,6 +25,9 @@
   </header>
 
   <h2><%= link_to post.title, post %></h2>
+  <% if post.image.attached? %>
+    <%= link_to post do %><%= image_tag post.image, class: "post-image" %><% end %>
+  <% end %>
 
   <footer>
     <%= link_to "#{post.comment_count} comments", post_path(post) %>

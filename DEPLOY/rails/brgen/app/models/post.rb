@@ -1,6 +1,8 @@
 class Post < ApplicationRecord
   include Votable
 
+  has_one_attached :image
+
   belongs_to :user
   belongs_to :community, optional: true
 
