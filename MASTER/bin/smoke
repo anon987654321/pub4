@@ -4,7 +4,7 @@
 
 # master-smoke — boot + wire-check + (optional) web ping. Exits 0 clean, 1 on
 # any failure. Use after every refactor pass and as a pre-restart gate:
-#   exe/master-smoke && doas rcctl restart master
+#   bin/smoke && doas rcctl restart master
 
 Encoding.default_external = Encoding::UTF_8
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
@@ -48,7 +48,7 @@ end
 port = (container.dig(:config) && container[:config].respond_to?(:web_port) ? container[:config].web_port : nil) || 53187
 
 failures << "chat" unless step("chat turn (pipe mode)") do
-  exe = File.expand_path("master", __dir__)
+  exe = File.expand_path("cli", __dir__)
   env = { "MASTER_QUIET" => "1" }
   if File.readable?("/etc/master.env")
     File.foreach("/etc/master.env") { |l| k, v = l.chomp.split("=", 2); env[k] = v if k && v }

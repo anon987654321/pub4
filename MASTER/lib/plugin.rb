@@ -7,7 +7,7 @@ module Master
   #   Master.plugin :judge
   #   Master.plugin :reach, timeout: 30
   #
-  # Plugin files live in lib/master/plugins/<name>.rb and must define
+  # Plugin files live in lib/plugins/<name>.rb and must define
   # Master::Plugins::<Name> with a self.configure(base, **opts) hook.
   module Plugin
     @registry = {}

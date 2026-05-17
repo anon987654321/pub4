@@ -5,7 +5,7 @@
 # master-audit — pre-commit constitution check.
 # Runs the scanner over staged files and exits non-zero on any kernel-tier
 # or critical/error violation. Wire as a git pre-commit hook:
-#   exec exe/master-audit
+#   exec bin/audit
 # Other tiers (design, style, etc.) are reported but do not fail the commit —
 # the scan rule registry is the place to tighten or loosen the bar.
 

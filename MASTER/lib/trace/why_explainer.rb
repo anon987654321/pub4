@@ -5,7 +5,7 @@ module Master
   # Local lookup for /why <id>: laws, scan rules, anti-patterns, style keys.
   # Returns nil when nothing matches; caller falls back to the LLM.
   class WhyExplainer
-    SCAN_RULES_DIR = "lib/master/scan/rules"
+    SCAN_RULES_DIR = "lib/judge/scan/rules"
 
     def initialize(root: Master::ROOT)
       @root = root

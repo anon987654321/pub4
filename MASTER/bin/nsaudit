@@ -20,7 +20,7 @@ rescue NameError
 end
 
 refs = Hash.new { |h, k| h[k] = [] }
-Dir.glob(["lib/**/*.rb", "web/app/**/*.rb", "web/config/**/*.rb", "exe/*"], base: ROOT).each do |rel|
+Dir.glob(["lib/**/*.rb", "web/app/**/*.rb", "web/config/**/*.rb", "bin/*"], base: ROOT).each do |rel|
   path = File.join(ROOT, rel)
   next if path =~ SKIP
   next unless File.file?(path)

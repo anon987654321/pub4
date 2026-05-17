@@ -9,7 +9,7 @@ Models propose. The constitution validates. Convergence loops digest violations.
 ```sh
 cd MASTER
 bundle install
-bundle exec ruby exe/master
+bundle exec ruby bin/cli
 ```
 
 Pipe input for one-shot mode. The web face starts on port 53187 behind relayd at `https://ai.brgen.no`.

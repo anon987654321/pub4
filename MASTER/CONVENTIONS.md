@@ -99,9 +99,9 @@ Key files — `data/soul.yml` (golden rule, tiers, persona), `data/rules.yml` (s
 
 ## Running scans
 
-Standard: `eval "$(grep '^export' ~/.zshrc)" && cd ~/pub4/MASTER && echo "/scan lib/" | bundle exec ruby exe/master`. Autofix sweep: `/autoloop 20`. Do not use external agents when MASTER can scan itself. Depth knobs are gone — every scan is full by default.
+Standard: `eval "$(grep '^export' ~/.zshrc)" && cd ~/pub4/MASTER && echo "/scan lib/" | bundle exec ruby bin/cli`. Autofix sweep: `/autoloop 20`. Do not use external agents when MASTER can scan itself. Depth knobs are gone — every scan is full by default.
 
-Pre-commit constitution check: `exe/master-audit` runs the scanner over staged files and fails the commit on any kernel-tier rule or critical/error violation. Wire as a git pre-commit hook by writing `exec exe/master-audit` into `.git/hooks/pre-commit`.
+Pre-commit constitution check: `bin/audit` runs the scanner over staged files and fails the commit on any kernel-tier rule or critical/error violation. Wire as a git pre-commit hook by writing `exec bin/audit` into `.git/hooks/pre-commit`.
 
 ## Protection tiers
 

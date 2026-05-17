@@ -21,7 +21,7 @@ module Master
     end
 
     SNAPSHOT_MAX_BYTES = 50_000
-    SNAPSHOT_DIRS      = %w[exe lib/master data].freeze
+    SNAPSHOT_DIRS      = %w[bin lib data].freeze
 
     def self.boot_snapshot(container)
       root  = container[:root]

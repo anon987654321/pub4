@@ -38,13 +38,13 @@
   const PARTICLE_COUNT = reducedMotion ? 6 : 20;
 
   const MODULE_PALETTE = {
-    "lib/master/judge": [255, 180,  80],   // amber — scrutiny
-    "lib/master/loop":  [ 80, 200, 160],   // teal  — iteration
-    "lib/master/now":   [140, 180, 255],   // blue  — pipeline
-    "lib/master/voice": [220, 140, 255],   // violet— personality
-    "lib/master/ground":[255, 255, 140],   // gold  — constitution
-    "lib/master/reach": [140, 255, 180],   // mint  — tools
-    "lib/master/trace": [180, 220, 255],   // sky   — telemetry
+    "lib/judge": [255, 180,  80],   // amber — scrutiny
+    "lib/loop":  [ 80, 200, 160],   // teal  — iteration
+    "lib/now":   [140, 180, 255],   // blue  — pipeline
+    "lib/voice": [220, 140, 255],   // violet— personality
+    "lib/ground":[255, 255, 140],   // gold  — constitution
+    "lib/reach": [140, 255, 180],   // mint  — tools
+    "lib/trace": [180, 220, 255],   // sky   — telemetry
     "web/app":          [255, 140, 140],   // rose  — web layer
     "data":             [200, 200, 200],   // grey  — config
     "unknown":          [120, 120, 120],   // dim   — unmapped

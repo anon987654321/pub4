@@ -14,7 +14,7 @@ Banned shell commands (sed, awk, grep, find, head, tail, wc, sudo, …) listed i
 
 Use MASTER's own scan for codebase analysis — not external grep/head/tail chains:
 
-    cd ~/pub4/MASTER && echo "/scan deep lib/" | bundle exec ruby exe/master
+    cd ~/pub4/MASTER && echo "/scan deep lib/" | bundle exec ruby bin/cli
 
 Use `/snapshot` for a full codebase snapshot before analysis. Don't use external agents to find code issues when MASTER can scan itself.
 
@@ -52,7 +52,7 @@ Git remote: `https://github.com/anon987654321/pub4.git` — same repo as `dev@br
 
 ## MASTER
 
-Path: `~/pub4/MASTER/`. Binary: `exe/master`. Module: `Master` (Zeitwerk). rc.d: `master` (port 53187, 127.0.0.1). Web: relayd → `https://ai.brgen.no:4430`.
+Path: `~/pub4/MASTER/`. Binary: `bin/cli`. Module: `Master` (Zeitwerk). rc.d: `master` (port 53187, 127.0.0.1). Web: relayd → `https://ai.brgen.no:4430`.
 
 Modules: `now` (CLI/pipeline) · `loop` (sweep/autoloop) · `judge` (scan/council/security/swarm) · `voice` (soul/personality/renderer/TTS) · `ground` (config/constitution/rules) · `reach` (tools) · `trace` (events/telemetry/session).
 

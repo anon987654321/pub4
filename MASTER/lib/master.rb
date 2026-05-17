@@ -35,7 +35,9 @@ module Master
     deepseek_api_key:   "DEEPSEEK_API_KEY"
   }.freeze
 
-  loader = Zeitwerk::Loader.for_gem
+  loader = Zeitwerk::Loader.new
+  loader.push_dir(__dir__, namespace: Master)
+  loader.ignore(__FILE__)
   loader.inflector.inflect(
     "cli"             => "CLI",
     "llm"             => "LLM",
@@ -49,8 +51,8 @@ module Master
     "rule_dsl"        => "RuleDSL"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
-  loader.ignore(File.join(__dir__, "master", "reach", "ruby_llm_patch.rb"))
-  loader.ignore(File.join(__dir__, "master", "reach", "bedrock_stub.rb"))
+  loader.ignore(File.join(__dir__, "reach", "ruby_llm_patch.rb"))
+  loader.ignore(File.join(__dir__, "reach", "bedrock_stub.rb"))
   %w[
     now/cli/signals.rb
     now/command_registry/memory_commands.rb
@@ -63,7 +65,7 @@ module Master
     judge/scan/rules/js_rules.rb
     judge/scan/rules/universal_rules.rb
   ].each do |rel|
-    loader.ignore(File.join(__dir__, "master", rel))
+    loader.ignore(File.join(__dir__, rel))
   end
   loader.setup
 
@@ -78,9 +80,9 @@ module Master
   def self.configure_providers!
     # Stub Bedrock before ruby_llm loads — avoids openssl.so on OpenBSD/LibreSSL.
     # MASTER only uses OpenRouter; Bedrock is never needed.
-    require_relative "master/reach/bedrock_stub"
+    require_relative "reach/bedrock_stub"
     require "ruby_llm"
-    require_relative "master/reach/ruby_llm_patch"
+    require_relative "reach/ruby_llm_patch"
     RubyLLM.configure do |cfg|
       API_KEY_PROVIDERS.each do |attr, env_var|
         api_key = ENV[env_var].to_s

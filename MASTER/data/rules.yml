@@ -505,12 +505,12 @@ anti_patterns:
 # Source: master.yml v31 reunification (#58).
 self_test:
   laws_apply_to_self:
-    ROBUSTNESS:   "scan lib/master/ for bare_rescue + missing timeouts"
+    ROBUSTNESS:   "scan lib/ for bare_rescue + missing timeouts"
     SINGULARITY:  "rules.yml entries unique by id; no two YAMLs define same key"
-    LINEARITY:    "no nesting_depth > 4 in lib/master/"
+    LINEARITY:    "no nesting_depth > 4 in lib/"
     PROXIMITY:    "test files within 1 directory of source"
-    ABSTRACTION:  "no class > god_class threshold in lib/master/"
-    DENSITY:      "no method > long_method threshold in lib/master/"
+    ABSTRACTION:  "no class > god_class threshold in lib/"
+    DENSITY:      "no method > long_method threshold in lib/"
   fail_action: "publish self_violation event; refuse autoloop fixes that don't restore the law"
 
 # Before marking a task done, re-read the file fresh — never trust cached state.

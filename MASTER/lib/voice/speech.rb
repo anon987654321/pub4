@@ -7,7 +7,7 @@ require "open3"
 module Master
   module Voice
   module Speech
-    WORKER   = File.expand_path("../../../exe/tts-worker", __dir__)
+    WORKER   = File.expand_path("../../../bin/tts-worker", __dir__)
     EDGE_TTS = File.executable?(WORKER)
     ESPEAK   = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
 

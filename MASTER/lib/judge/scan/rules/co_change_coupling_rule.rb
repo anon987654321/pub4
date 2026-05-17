@@ -83,8 +83,8 @@ module Master
 
         def module_of(path)
           parts = path.split("/")
-          # MASTER/lib/master/<module>/... → use the module dir (judge/trace/etc.)
-          parts[0] == "MASTER" ? (parts[3] || parts[0]) : parts[0]
+          # MASTER/lib/<module>/... → use the module dir (judge/trace/etc.)
+          parts[0] == "MASTER" ? (parts[2] || parts[0]) : parts[0]
         end
       end
     end

@@ -186,9 +186,9 @@ anti_sprawl:
   rule: "Edit existing files. Single source of truth."
 
 validation:
-  after_write: "ruby -c lib/master/FILE.rb"
+  after_write: "ruby -c lib/FILE.rb"
   after_commit: "ruby -e \"require_relative 'lib/master'; puts 'ok'\""
-  scan_file: "bundle exec ruby exe/master scan lib/master/FILE.rb"
+  scan_file: "bundle exec ruby bin/cli scan lib/FILE.rb"
 
 phases:
   discover:
@@ -412,10 +412,10 @@ test_generation:
 # Source: cross-cutting reunification (#100).
 self_rewrite_throttle:
   sensitive_paths:
-    - lib/master/autoloop/
-    - lib/master/governor.rb
-    - lib/master/security/
-    - exe/master
+    - lib/loop/
+    - lib/ground/
+    - lib/judge/security/
+    - bin/cli
     - data/standing_orders.yml
   autoloop_action: "skip with publish autoloop:throttled event; surface to user"
 
@@ -439,7 +439,7 @@ adversarial_questioning:
 
 # Known issues — active bugs and watch-outs from HANDOFF.md.
 known_issues:
-  tts_broken: "Master::Voice::Speech.synthesize_bytes shells to exe/tts-worker; if edge-tts is missing or tts-worker crashes, speech silently falls back to espeak. Verify exe/tts-worker exists and edge-tts is installed (pkg_add py3-edge-tts or pip)."
+  tts_broken: "Master::Voice::Speech.synthesize_bytes shells to bin/tts-worker; if edge-tts is missing or tts-worker crashes, speech silently falls back to espeak. Verify bin/tts-worker exists and edge-tts is installed (pkg_add py3-edge-tts or pip)."
   particle_swarm: "cognition_ecology.js trail/weather/memory-node system suspected broken — visual_bridge.js dispatches master:visual CustomEvents but cognition_ecology.js event listener may not be registering. Check addEventListener target and event name match."
-  gemfile_separation: "MASTER/Gemfile and MASTER/web/Gemfile are independent. Any gem used by lib/master/ code that is also called from web/ controllers must appear in both. Adding to one only causes LoadError in the other context."
+  gemfile_separation: "MASTER/Gemfile and MASTER/web/Gemfile are independent. Any gem used by lib/ code that is also called from web/ controllers must appear in both. Adding to one only causes LoadError in the other context."
   tts_worker_process: "Process.fork inside a Falcon fiber raises 'Closing scheduler' — EM-based gems and subprocess-heavy tools must use Open3.popen or shell out via exe/<name>-worker, never fork."
