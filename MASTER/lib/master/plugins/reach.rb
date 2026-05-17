@@ -33,6 +33,7 @@ module Master
         Master::Reach::Repligen.new(root: r, governor: i[:governor], event_bus: i[:bus])
       },
       "Postpro"         => ->(r, i) { Master::Reach::Postpro.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
+      "Dilla"           => ->(r, i) { Master::Reach::Dilla.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "FeedbackRecord"  => ->(r, i) { Master::Reach::FeedbackRecord.new(learnings: i[:learnings]) },
     }.freeze
 
