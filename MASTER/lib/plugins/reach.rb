@@ -29,11 +29,6 @@ module Master
       "WebFetch"        => ->(r, i) { Master::Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
       "WebSearch"       => ->(r, i) { Master::Reach::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
       "Clean"           => ->(r, i) { Master::Reach::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
-      "Repligen"        => ->(r, i) {
-        Master::Reach::Repligen.new(root: r, governor: i[:governor], event_bus: i[:bus])
-      },
-      "Postpro"         => ->(r, i) { Master::Reach::Postpro.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
-      "Dilla"           => ->(r, i) { Master::Reach::Dilla.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "FeedbackRecord"  => ->(r, i) { Master::Reach::FeedbackRecord.new(learnings: i[:learnings]) },
     }.freeze
 

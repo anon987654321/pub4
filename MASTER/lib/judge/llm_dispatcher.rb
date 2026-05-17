@@ -28,9 +28,7 @@ module Master
         Reach::GitContext      => Reach::LLM::GitContext,
         Reach::AstEdit         => Reach::LLM::AstEdit,
         Reach::SearchKnowledge => Reach::LLM::SearchKnowledge,
-        Reach::FeedbackRecord  => Reach::LLM::FeedbackRecord,
-        Reach::Postpro         => Reach::LLM::Postpro,
-        Reach::Repligen        => Reach::LLM::Repligen
+        Reach::FeedbackRecord  => Reach::LLM::FeedbackRecord
       }.freeze
 
       def self.build_tool_capable_re

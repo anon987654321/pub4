@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # Postpro.rb - Professional Cinematic Post-Processing
-# Version: 14.2.0 - Master.json Optimized
+# Version: 15.0.0 - Ultimate Hybrid
 
 require "logger"
 require "json"
@@ -217,29 +217,64 @@ CONFIG = BOOTSTRAP[:config]
 # Dmax caps highlights (shoulder), pivot is the linear midtone fulcrum (≈0.18),
 # gamma is contrast (>1 = steeper). Per-channel offsets create stock colour cast.
 STOCKS = {
-  kodak_portra:  { grain: 15, matrix: [1.05, -0.02, -0.03, 0.02, 0.98, 0.00, 0.01, -0.05, 1.04],
-                   hd: { r: [0.06, 0.93, 0.18, 1.10], g: [0.05, 0.94, 0.18, 1.10], b: [0.04, 0.92, 0.20, 1.05] } },
-  kodak_vision3: { grain: 20, matrix: [1.08, -0.05, -0.03, 0.03, 0.95, 0.02, 0.02, -0.08, 1.06],
-                   hd: { r: [0.07, 0.95, 0.17, 1.15], g: [0.06, 0.95, 0.18, 1.20], b: [0.08, 0.90, 0.20, 1.10] } },
-  fuji_velvia:   { grain:  8, matrix: [1.12, -0.08, -0.04, 0.05, 1.05, -0.02, 0.01, -0.12, 1.11],
-                   hd: { r: [0.02, 0.97, 0.18, 1.45], g: [0.02, 0.98, 0.18, 1.50], b: [0.03, 0.95, 0.20, 1.40] } },
-  tri_x:         { grain: 25, matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
-                   hd: { r: [0.05, 0.95, 0.18, 1.30], g: [0.05, 0.95, 0.18, 1.30], b: [0.05, 0.95, 0.18, 1.30] } }
+  kodak_portra:       { grain: 15, matrix: [1.05, -0.02, -0.03, 0.02, 0.98, 0.00, 0.01, -0.05, 1.04],
+                        hd: { r: [0.06, 0.93, 0.18, 1.10], g: [0.05, 0.94, 0.18, 1.10], b: [0.04, 0.92, 0.20, 1.05] } },
+  kodak_vision3:      { grain: 20, matrix: [1.08, -0.05, -0.03, 0.03, 0.95, 0.02, 0.02, -0.08, 1.06],
+                        hd: { r: [0.07, 0.95, 0.17, 1.15], g: [0.06, 0.95, 0.18, 1.20], b: [0.08, 0.90, 0.20, 1.10] } },
+  kodak_vision3_50d:  { grain:  8, matrix: [1.06, -0.03, -0.02, 0.02, 0.96, 0.01, 0.01, -0.05, 1.04],
+                        hd: { r: [0.05, 0.95, 0.18, 1.08], g: [0.04, 0.95, 0.18, 1.12], b: [0.03, 0.93, 0.20, 1.05] } },
+  kodak_vision3_500t: { grain: 20, matrix: [1.10, -0.06, -0.04, 0.04, 0.94, 0.03, 0.04, -0.10, 1.09],
+                        hd: { r: [0.08, 0.95, 0.17, 1.18], g: [0.06, 0.95, 0.18, 1.22], b: [0.10, 0.90, 0.20, 1.15] } },
+  cinestill_800t:     { grain: 22, matrix: [1.12, -0.07, -0.05, 0.04, 0.93, 0.03, 0.05, -0.12, 1.10],
+                        hd: { r: [0.09, 0.96, 0.17, 1.20], g: [0.07, 0.95, 0.18, 1.25], b: [0.12, 0.88, 0.20, 1.18] },
+                        halation: 0.8 },
+  ektachrome_100:     { grain: 10, matrix: [1.08, -0.04, -0.04, 0.02, 1.02, -0.02, 0.01, -0.08, 1.07],
+                        hd: { r: [0.02, 0.97, 0.18, 1.30], g: [0.02, 0.97, 0.18, 1.35], b: [0.03, 0.96, 0.20, 1.25] } },
+  fuji_velvia:        { grain:  8, matrix: [1.12, -0.08, -0.04, 0.05, 1.05, -0.02, 0.01, -0.12, 1.11],
+                        hd: { r: [0.02, 0.97, 0.18, 1.45], g: [0.02, 0.98, 0.18, 1.50], b: [0.03, 0.95, 0.20, 1.40] } },
+  tri_x:              { grain: 25, matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+                        hd: { r: [0.05, 0.95, 0.18, 1.30], g: [0.05, 0.95, 0.18, 1.30], b: [0.05, 0.95, 0.18, 1.30] } }
+}.freeze
+
+# Lens character: data-driven table drives vintage_lens().
+# vignette/glow/micro_contrast/chroma are intensity multipliers [0,1].
+LENSES = {
+  zeiss:      { micro_contrast: 0.40, flare: 0.08 },
+  leica:      { micro_contrast: 0.45, glow: 0.25 },
+  helios:     { micro_contrast: 0.30, chroma: 0.05 },
+  cooke:      { micro_contrast: 0.20, warmth: 0.10 },
+  anamorphic: { micro_contrast: 0.25, chroma: 0.08, flare: 0.50 },
 }.freeze
 
 PRESETS = {
-  portrait: { fx: %w[skin_protect film_curve highlight_roll micro_contrast grain color_temp base_tint], stock: :kodak_portra, temp: 5200, intensity: 0.8 },
-  landscape: { fx: %w[film_curve color_separate highlight_roll micro_contrast grain vintage_lens], stock: :fuji_velvia, temp: 5800, intensity: 0.9 },
-  street: { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain], stock: :tri_x, temp: 5600, intensity: 1.0 },
-  blockbuster: { fx: %w[tonemap teal_orange halation grain bloom_pro highlight_roll micro_contrast], stock: :kodak_vision3, temp: 4800, intensity: 1.2 }
+  portrait:    { fx: %w[skin_protect film_curve highlight_roll micro_contrast grain color_temp base_tint],
+                 stock: :kodak_portra,       temp: 5200, intensity: 0.8 },
+  landscape:   { fx: %w[film_curve color_separate highlight_roll micro_contrast grain vintage_lens],
+                 stock: :fuji_velvia,        temp: 5800, intensity: 0.9 },
+  street:      { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain],
+                 stock: :tri_x,              temp: 5600, intensity: 1.0 },
+  blockbuster: { fx: %w[tonemap teal_orange halation grain bloom_pro highlight_roll micro_contrast],
+                 stock: :kodak_vision3,      temp: 4800, intensity: 1.2 },
+  dream:       { fx: %w[film_curve halation shadow_lift desaturate vintage_lens],
+                 stock: :ektachrome_100,     temp: 5800, intensity: 0.8, lens: "leica" },
+  neon_night:  { fx: %w[film_curve halation grain teal_orange micro_contrast],
+                 stock: :cinestill_800t,     temp: 3200, intensity: 1.0 },
+  horror:      { fx: %w[film_curve green_push desaturate micro_contrast grain],
+                 stock: :tri_x,              temp: 5600, intensity: 1.0 },
+  golden_age:  { fx: %w[film_curve halation warmth vintage_lens grain micro_contrast],
+                 stock: :kodak_vision3_50d,  temp: 5200, intensity: 0.9, lens: "cooke" },
+  indie:       { fx: %w[film_curve grain shadow_lift vintage_lens micro_contrast],
+                 stock: :kodak_portra,       temp: 5400, intensity: 0.7 },
 }.freeze
 
 def halation_tint_for(stock)
   case stock
-  when :kodak_vision3 then HALATION_TINT_VISION3
-  when :kodak_portra  then HALATION_TINT_PORTRA
-  when :tri_x         then HALATION_TINT_TRI_X
-  else                     HALATION_TINT_VISION3
+  when :kodak_vision3, :kodak_vision3_500t then HALATION_TINT_VISION3
+  when :cinestill_800t                     then HALATION_TINT_VISION3
+  when :kodak_portra, :kodak_vision3_50d   then HALATION_TINT_PORTRA
+  when :tri_x                              then HALATION_TINT_TRI_X
+  when :ektachrome_100                     then HALATION_TINT_PORTRA
+  else                                          HALATION_TINT_VISION3
   end
 end
 
@@ -619,18 +654,56 @@ def base_tint(image, color = [252, 248, 240], intensity = 0.08)
   safe_cast(image * (1 - intensity) + blended * intensity)
 end
 
-def vintage_lens(image, type = 'zeiss', intensity = 0.7)
-  case type
-  when 'zeiss' then micro_contrast(image, 3, 0.4 * intensity)
-  when 'leica'
-    glow = image.gaussblur(20).linear([0.3 * intensity], [0])
-    safe_cast(image + glow)
-  when 'helios'
-    sharp = image.sharpen(mask: [[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-    safe_cast(image * (1 - intensity * 0.3) + sharp * (intensity * 0.3))
-  else
-    image
+def vintage_lens(image, type = "zeiss", intensity = 0.7)
+  spec = LENSES[type.to_sym] || LENSES[:zeiss]
+  result = image
+  result = micro_contrast(result, 4, spec[:micro_contrast] * intensity) if spec[:micro_contrast]
+  if spec[:glow]
+    glow = image.gaussblur(20) * (spec[:glow] * intensity)
+    result = safe_cast(result + glow)
   end
+  if spec[:chroma]
+    shift = [(spec[:chroma] * intensity * 6).round, 1].max
+    r, g, b = result.bandsplit
+    r = r.embed(shift, 0, result.width, result.height)
+    b = b.embed(-shift, 0, result.width, result.height)
+    result = safe_cast(Vips::Image.bandjoin([r, g, b]))
+  end
+  result = warmth(result, spec[:warmth] * intensity) if spec[:warmth]
+  result
+rescue StandardError => e
+  $logger.error "vintage_lens failed: #{e.message}"
+  image
+end
+
+def desaturate(image, amount = 0.5)
+  gray = image.colourspace("grey16").colourspace("srgb")
+  safe_cast(image * (1.0 - amount) + gray * amount)
+rescue StandardError => e
+  $logger.error "desaturate failed: #{e.message}"
+  image
+end
+
+# Gentle warm color push: R+, G mild+, B-. Stays subtle — use amount ≤ 0.3.
+def warmth(image, amount = 0.2)
+  image.linear(
+    [1.0 + 0.30 * amount, 1.0 + 0.08 * amount, 1.0 - 0.18 * amount],
+    [0, 0, 0]
+  ).then { |r| safe_cast(r) }
+rescue StandardError => e
+  $logger.error "warmth failed: #{e.message}"
+  image
+end
+
+# Desaturated green push for horror / cold clinical grades.
+def green_push(image, amount = 0.15)
+  image.linear(
+    [1.0 - amount * 0.50, 1.0 + amount, 1.0 - amount * 0.30],
+    [0, 0, 0]
+  ).then { |r| safe_cast(r) }
+rescue StandardError => e
+  $logger.error "green_push failed: #{e.message}"
+  image
 end
 
 def teal_orange(image, intensity = 1.0)
@@ -737,11 +810,15 @@ def preset(image, name)
              when 'base_tint' then base_tint(result, [255, 250, 245], 0.08)
              when 'color_separate' then color_separate(result, p[:intensity] * 0.6)
              when 'vintage_lens' then vintage_lens(result, 'zeiss', p[:intensity] * 0.8)
-             when 'teal_orange' then teal_orange(result, p[:intensity])
-             when 'bloom_pro' then bloom_pro(result, p[:intensity])
-             when 'halation' then halation(result, p[:intensity], tint: halation_tint_for(p[:stock]))
-             when 'tonemap' then tonemap(result, type: :aces, exposure: 0.0, intensity: p[:intensity] * 0.7)
-             when 'spectral_temp' then spectral_temp(result, source_kelvin: 5500, target_kelvin: p[:temp], intensity: p[:intensity] * 0.6)
+             when "teal_orange"   then teal_orange(result, p[:intensity])
+             when "bloom_pro"     then bloom_pro(result, p[:intensity])
+             when "halation"      then halation(result, p[:intensity], tint: halation_tint_for(p[:stock]))
+             when "tonemap"       then tonemap(result, type: :aces, exposure: 0.0, intensity: p[:intensity] * 0.7)
+             when "spectral_temp" then spectral_temp(result, source_kelvin: 5500, target_kelvin: p[:temp], intensity: p[:intensity] * 0.6)
+             when "desaturate"    then desaturate(result, p[:intensity] * 0.6)
+             when "warmth"        then warmth(result, p[:intensity] * 0.3)
+             when "green_push"    then green_push(result, p[:intensity] * 0.15)
+             when "vintage_lens"  then vintage_lens(result, p.fetch(:lens, "zeiss"), p[:intensity] * 0.8)
              else result
              end
   end
@@ -847,6 +924,35 @@ def recipe(image, recipe_data)
     result = respond_to?(method) ? send(method, result, intensity) : result
   end
   result
+end
+
+# Introspection
+def describe_preset(name)
+  p = PRESETS[name.to_sym] or return "unknown preset: #{name}"
+  stock = STOCKS[p[:stock]]
+  [
+    "#{name}: #{p[:stock]} / #{p.fetch(:temp, "?")}K / intensity #{p[:intensity]}",
+    "fx: #{p[:fx].join(" → ")}",
+    stock ? "grain σ=#{stock[:grain]}" : nil
+  ].compact.join("\n")
+end
+
+def list_presets = PRESETS.keys.map { |k| describe_preset(k) }.join("\n\n")
+def list_stocks  = STOCKS.keys.join(", ")
+def list_lenses  = LENSES.keys.join(", ")
+
+# CSS filter string approximating a preset — for lightweight web previews.
+def css_filter(preset_name = :portrait)
+  p = PRESETS[preset_name.to_sym] || PRESETS[:portrait]
+  stock = STOCKS[p[:stock]] || {}
+  hd = stock[:hd] || {}
+  contrast = (1 + ((hd[:r]&.last || 1.0) - 1.0) * 0.25).round(2)
+  saturate  = p[:fx].include?("teal_orange") ? 1.20 :
+              p[:fx].include?("desaturate")  ? 0.65 : 1.0
+  parts = ["contrast(#{contrast})", "saturate(#{saturate})"]
+  parts << "sepia(0.12)"    if %i[kodak_portra kodak_vision3_50d].include?(p[:stock])
+  parts << "grayscale(0.9)" if p[:stock] == :tri_x
+  parts.join(" ")
 end
 
 # Repligen Integration
@@ -972,6 +1078,24 @@ def one_shot_mode?
   argv_flag("--input") && argv_flag("--output") && argv_flag("--preset")
 end
 
+def introspect_mode?
+  (ARGV & %w[--list-presets --list-stocks --list-lenses --describe-preset --css-filter]).any?
+end
+
+def run_introspect
+  if ARGV.include?("--list-presets")
+    puts list_presets
+  elsif ARGV.include?("--list-stocks")
+    puts list_stocks
+  elsif ARGV.include?("--list-lenses")
+    puts list_lenses
+  elsif (name = argv_flag("--describe-preset"))
+    puts describe_preset(name)
+  elsif (name = argv_flag("--css-filter"))
+    puts css_filter(name.to_sym)
+  end
+end
+
 def run_one_shot
   input_path  = argv_flag("--input")
   output_path = argv_flag("--output")
@@ -1000,6 +1124,7 @@ def run_one_shot
 end
 
 def auto_launch
+  return run_introspect if introspect_mode?
   return run_one_shot if one_shot_mode?
   if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-repligen"))
     input = auto_mode
