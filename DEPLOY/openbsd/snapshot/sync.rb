@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
-# Mirror /etc/* into pub4/MASTER/__openbsd/etc/ with secret redaction.
-# Run on VPS: doas ruby ~/pub4/MASTER/__openbsd/sync.rb
+# Mirror live VPS config into snapshot/ with secret redaction.
+# Run on VPS: doas ruby ~/pub4/DEPLOY/openbsd/snapshot/sync.rb
 
 require "fileutils"
 
@@ -31,6 +31,16 @@ def redact(body)
   SECRET_PATTERNS.inject(body) { |acc, pat| acc.gsub(pat, '\1__REDACTED__') }
 end
 
+def dest_for(path)
+  case path
+  when %r{^/etc/rc\.d/(.+)}   then File.join(MIRROR, "rc.d", $1)
+  when %r{^/etc/(.+)}         then File.join(MIRROR, $1)
+  when %r{^/var/nsd/etc/(.+)} then File.join(MIRROR, $1)
+  when %r{^/home/dev/(.+)}    then File.join(MIRROR, File.basename($1))
+  else                              File.join(MIRROR, File.basename(path))
+  end
+end
+
 mirrored = []
 skipped  = []
 SOURCES.each do |path|
@@ -39,10 +49,9 @@ SOURCES.each do |path|
     next
   end
   body = File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
-  redacted = redact(body)
-  dest = File.join(MIRROR, path.sub(%r{^/}, ""))
+  dest = dest_for(path)
   FileUtils.mkdir_p(File.dirname(dest))
-  File.write(dest, redacted)
+  File.write(dest, redact(body))
   mirrored << path
 end
 

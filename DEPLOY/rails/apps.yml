@@ -1,33 +1,18 @@
-# Canonical deploy metadata for Rails apps under DEPLOY/rails.
-# Scripts, docs, and verifiers should agree with this file.
+# Canonical deploy metadata and feature matrix for Rails apps under DEPLOY/rails.
+#
+# Status values:
+#   done    verified in pub4/DEPLOY/rails/<app>/app
+#   port    old implementation exists in anon987654321/pub repo — needs porting to Rails 8 / Hotwire / Falcon / SQLite
+#   missing no implementation found anywhere
+#   planned roadmap only, no code
+#
+# Run `/scan deep DEPLOY/rails/<app>/app` through MASTER to verify `done` claims.
+# Sources: pub4 orbs/ extracted models, patch_tv_models.sh, brgen_seeds.rb,
+#          anon987654321/pub repo READMEs, brgen_app/ models,
+#          ~/pub4/tmp/pub_extract/ (generator scripts from __OLD_BACKUPS tgz archives).
+
 apps:
-  amber:
-    title: Amber
-    domain: amber.brgen.no
-    port: 61352
-    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
-    stack_later: PostgreSQL, pgvector, multimodal retrieval, richer PWA/offline features
-    deploy_script: DEPLOY/rails/amber/amber.sh
-    app_path: DEPLOY/rails/amber/app
-    public: true
-  baibl:
-    title: Baibl
-    domain: baibl.no
-    port: 10007
-    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
-    stack_later: PostgreSQL, pgvector, GraphRAG, semantic scripture retrieval
-    deploy_script: DEPLOY/rails/baibl/baibl.sh
-    app_path: DEPLOY/rails/baibl/app
-    public: true
-  blognet:
-    title: Blognet
-    domain: blognet.no
-    port: 10002
-    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
-    stack_later: PostgreSQL, pgvector, editorial knowledge graph, Foodielicious vertical routing
-    deploy_script: DEPLOY/rails/blognet/blognet.sh
-    app_path: DEPLOY/rails/blognet/app
-    public: true
+
   brgen:
     title: Brgen
     domain: brgen.no
@@ -37,6 +22,208 @@ apps:
     deploy_script: DEPLOY/rails/brgen/brgen.sh
     app_path: DEPLOY/rails/brgen/app
     public: true
+    features:
+      core:
+        - { name: User model + auth,                                       status: done }
+        - { name: Community (slug, name, description),                     status: done }
+        - { name: Post (title, content, hot/fresh/top scopes),             status: done }
+        - { name: Comment (threaded, polymorphic, controversial scope),    status: done }
+        - { name: Vote / Like (polymorphic, karma side-effect),            status: done }
+        - { name: Hashtag + Tagging join,                                  status: done }
+        - { name: Mention model,                                           status: done }
+        - { name: Votable concern,                                         status: done }
+        - { name: Hotwire broadcasts_refreshes,                            status: done }
+        - { name: OmniAuth (Vipps / Google / Snapchat),                       status: port }
+        - { name: Reaction (polymorphic on posts/messages, ActionCable),    status: port }
+        - { name: Follow (self-join, no self-follows, notifications),       status: port }
+        - { name: Notification (like/follow/custom, mark_as_read),          status: port }
+        - { name: DirectMessage (conversation_between, mark_as_read),       status: port }
+        - { name: full-text search (SQLite FTS5),                           status: port }
+        - { name: reading_time_minutes on posts,                            status: port }
+        - { name: city-scoped subdomain routing,                           status: missing }
+        - { name: proximity / geolocation filtering,                       status: missing }
+        - { name: moderation tools,                                        status: missing }
+        - { name: media pipeline (Active Storage variants),                status: missing }
+        - { name: AI feed ranking,                                         status: planned }
+        - { name: creator monetization,                                    status: planned }
+        - { name: maps surface,                                            status: planned }
+      subapp_tv:
+        - { name: Tv::Channel (slug, avatar, banner, subscribers_count),   status: done, notes: patch_tv_models.sh }
+        - { name: Tv::Video (status machine, duration_formatted),          status: done }
+        - { name: Tv::Broadcast (stream_key, go_live!/end_live!),          status: done }
+        - { name: Tv::Subscription,                                        status: done }
+        - { name: Tv::ViewEvent,                                           status: done }
+        - { name: Tv::Show,                                                status: missing }
+        - { name: Tv::Episode,                                             status: missing }
+        - { name: video upload + Active Storage variants,                  status: missing }
+        - { name: live stream infrastructure,                              status: planned }
+        - { name: VideoPublished / BroadcastScheduled events,             status: missing }
+      subapp_dating:
+        - { name: Dating::Profile (user, bio, interests),                   status: port }
+        - { name: Dating::Like (user, liked_user),                          status: port }
+        - { name: Dating::Dislike (user, disliked_user),                    status: port }
+        - { name: Dating::Match (MatchmakingService — mutual likes),        status: port }
+        - { name: swipe UI (Turbo Streams, Stimulus),                       status: port }
+        - { name: city + radius filter,                                     status: missing }
+        - { name: match → messaging handoff,                                status: missing }
+        - { name: photos on profile,                                        status: missing }
+        - { name: premium memberships / boost purchases,                    status: planned }
+      subapp_marketplace:
+        notes: Old impl used Solidus — pub4 needs native Rails 8 models instead
+        - { name: Marketplace::Product (name, description, price, image),   status: port }
+        - { name: Marketplace::Category,                                    status: port }
+        - { name: Marketplace::Review,                                      status: port }
+        - { name: schema.org Product microdata in views,                    status: port }
+        - { name: Marketplace::Order (state machine),                       status: missing }
+        - { name: buyer–seller Chat,                                        status: missing }
+        - { name: geo-localized listings,                                   status: missing }
+        - { name: locale subdomain routing (markedsplass/markadur/…),      status: missing }
+        - { name: FTS filtering,                                            status: port }
+        - { name: AI recommendations,                                       status: planned }
+      subapp_playlist:
+        - { name: Playlist::Set (name, description, user),                  status: port }
+        - { name: Playlist::Track (name, artist, audio_url, set),           status: port }
+        - { name: schema.org microdata in views,                            status: port }
+        - { name: Playlist::Listen,                                         status: missing }
+        - { name: embeddable player,                                        status: port }
+        - { name: Spotify/YouTube/SoundCloud import,                        status: missing }
+        - { name: city-scoped trending feed,                                status: missing }
+        - { name: expiration dates on tracks,                               status: missing }
+        - { name: creator donations / ad-free tier,                         status: planned }
+      subapp_takeaway:
+        - { name: Takeaway::Item (name, description, price),                status: port }
+        - { name: Takeaway::Order (user, status:string),                    status: port }
+        - { name: Restaurant model (geocoding),                             status: missing }
+        - { name: MenuItem availability state machine,                      status: missing }
+        - { name: Order full state machine (placed→delivered),              status: missing }
+
+  amber:
+    title: Amber
+    domain: amber.brgen.no
+    port: 61352
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_later: PostgreSQL, pgvector, multimodal retrieval, richer PWA/offline features
+    deploy_script: DEPLOY/rails/amber/amber.sh
+    app_path: DEPLOY/rails/amber/app
+    public: true
+    features:
+      core:
+        - { name: Item (title, color, size, material, texture, brand, price, category, sku, release_date, stock_quantity, available, user), status: done, notes: pub4 version adds mood/occasion/life_phase/times_worn on top }
+        - { name: cost_per_wear calculation,                               status: done }
+        - { name: wear! increment,                                         status: done }
+        - { name: aging_unworn / never_worn scopes,                        status: done }
+        - { name: Outfit (likes_count),                                    status: done }
+        - { name: OutfitItem join (position),                              status: done }
+        - { name: Item photos (Active Storage has_many_attached),          status: done }
+        - { name: Hotwire broadcasts_refreshes on Item/Outfit,             status: done }
+        - { name: items + outfits index/show views,                        status: done }
+        - { name: Post model for amber social feed,                        status: done }
+        - { name: Wardrobe model (collection container),                   status: port }
+        - { name: Connection model (follow / friend),                      status: port }
+        - { name: LiveStream model,                                        status: port }
+        - { name: Message model,                                           status: port }
+        - { name: wardrobe upload UI (drag-and-drop),                      status: missing }
+        - { name: garment segmentation / background removal,               status: missing }
+        - { name: outfit generation by weather/season/event,               status: missing }
+        - { name: style evolution timeline / aesthetic phases,             status: missing }
+        - { name: underused item surfacing,                                status: missing }
+        - { name: wardrobe analytics dashboard,                            status: port }
+        - { name: closet organisation tips (AI),                           status: missing }
+        - { name: social feed,                                             status: missing }
+        - { name: affiliate commerce links,                                status: port }
+      planned:
+        - { name: fashion embeddings (pgvector),                           status: planned }
+        - { name: visual similarity search,                                status: planned }
+        - { name: virtual fitting room,                                    status: planned }
+        - { name: mood matcher,                                            status: planned }
+        - { name: event outfit planner,                                    status: planned }
+        - { name: sustainable styles / resale,                             status: planned }
+        - { name: weather-based suggestions,                               status: planned }
+        - { name: global trends / local designer highlights,               status: planned }
+        - { name: style agents (MASTER integration),                       status: planned }
+
+  baibl:
+    title: Baibl
+    domain: baibl.no
+    port: 10007
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_later: PostgreSQL, pgvector, GraphRAG, semantic scripture retrieval
+    deploy_script: DEPLOY/rails/baibl/baibl.sh
+    app_path: DEPLOY/rails/baibl/app
+    public: true
+    features:
+      core:
+        - { name: Verse model,                                             status: port }
+        - { name: Translation model (Aramaic/KJV/multi-language),         status: port }
+        - { name: Analysis model (AI linguistic, confidence scoring),      status: port }
+        - { name: Comment model (threaded),                                status: port }
+        - { name: full-text scripture search,                              status: port }
+        - { name: real-time translation (Hotwire),                        status: port }
+        - { name: AI linguistic analysis (OpenAI / Langchain),             status: port }
+        - { name: Norwegian interface,                                     status: port }
+        - { name: Genesis Ch.1 trilingual seed data,                      status: port }
+        - { name: Book / Chapter navigation,                               status: missing }
+        - { name: collaborative annotation (Annotation model),             status: missing }
+        - { name: Theme / Doctrine cross-reference,                        status: missing }
+        - { name: historical context layer,                                status: missing }
+        - { name: linguistic context (Hebrew/Greek morphology),            status: missing }
+        - { name: RESTful API,                                             status: port }
+      planned:
+        - { name: study groups,                                            status: planned }
+        - { name: reading plans,                                           status: planned }
+        - { name: offline sync,                                            status: planned }
+        - { name: GraphRAG theology graph (pgvector),                      status: planned }
+        - { name: seminary integration,                                    status: planned }
+
+  blognet:
+    title: Blognet
+    domain: blognet.no
+    port: 10002
+    stack_now: SQLite3, Rails 8, Hotwire, Falcon, Active Storage, OpenBSD, relayd
+    stack_later: PostgreSQL, pgvector, editorial knowledge graph, Foodielicious vertical routing
+    deploy_script: DEPLOY/rails/blognet/blognet.sh
+    app_path: DEPLOY/rails/blognet/app
+    public: true
+    features:
+      core:
+        - { name: Blog model,                                              status: port }
+        - { name: Post / Article model,                                    status: port }
+        - { name: Category model,                                          status: port }
+        - { name: Comment model (polymorphic),                             status: port }
+        - { name: Like model (polymorphic),                                status: port }
+        - { name: multi-domain megablog routing (foodielicio.us etc.),    status: port }
+        - { name: public/megablog/private privacy tiers,                   status: port }
+        - { name: Author profile,                                          status: missing }
+        - { name: RSS / Atom feed,                                         status: missing }
+        - { name: structured article metadata (schema.org),                status: missing }
+        - { name: semantic search,                                         status: missing }
+        - { name: Membership / Subscription / paywall,                     status: missing }
+        - { name: AI narration (TTS article),                              status: missing }
+        - { name: citation system,                                         status: missing }
+        - { name: editorial workflow (draft/review/publish),               status: missing }
+        - { name: AI recommendations,                                      status: port }
+        - { name: ad-supported + sponsored posts,                          status: planned }
+      foodielicious:
+        notes: Food vertical, public brand foodielicio.us
+        - { name: Recipe model (structured schema.org),                    status: missing }
+        - { name: Ingredient model + metadata,                             status: missing }
+        - { name: step-by-step cooking view,                               status: missing }
+        - { name: recipe collections / playlists,                          status: missing }
+        - { name: rich media gallery (lightGallery.js),                    status: missing }
+        - { name: short-form food clips,                                   status: missing }
+        - { name: locality-aware restaurant references,                    status: missing }
+        - { name: seasonal food guides,                                    status: missing }
+      multimedia_pipeline:
+        - { name: article → podcast,                                       status: missing }
+        - { name: article → summary,                                       status: missing }
+        - { name: article → video,                                         status: missing }
+        - { name: article → thread,                                        status: missing }
+      research_mode:
+        - { name: semantic note system,                                    status: planned }
+        - { name: source clustering,                                       status: planned }
+        - { name: timeline generation,                                     status: planned }
+        - { name: knowledge archives,                                      status: planned }
+
   bsdports:
     title: bsdports
     domain: bsdports.org
@@ -46,6 +233,25 @@ apps:
     deploy_script: DEPLOY/rails/bsdports/bsdports.sh
     app_path: DEPLOY/rails/bsdports/app
     public: true
+    features:
+      core:
+        - { name: Platform (name) — OpenBSD/FreeBSD/NetBSD,                  status: port }
+        - { name: Category (name, platform),                                status: port }
+        - { name: Port (name, summary, url, description, category, platform), status: port, notes: generator calls model Port not Package }
+        - { name: Dependency model,                                         status: missing, notes: described in README but not in generator }
+        - { name: SecurityAdvisory model,                                   status: missing, notes: described in README but not in generator }
+        - { name: Maintainer model,                                         status: missing }
+        - { name: live search on name/summary/description (Hotwire),       status: port }
+        - { name: FTP import of real ports tree (OpenBSD/FreeBSD/NetBSD),  status: port }
+        - { name: dependency tree visualization,                            status: missing }
+        - { name: ports tree scheduled re-import job,                       status: missing }
+        - { name: WCAG AAA compliance pass,                                status: missing }
+        - { name: AI exploration assistant,                                status: missing }
+      planned:
+        - { name: semantic package search (pgvector),                      status: planned }
+        - { name: infrastructure knowledge graph,                          status: planned }
+        - { name: OpenBSD package intelligence,                            status: planned }
+
   hjerterom:
     title: Hjerterom
     domain: hjerterom.no
@@ -55,3 +261,16 @@ apps:
     deploy_script: DEPLOY/rails/hjerterom/hjerterom.sh
     app_path: DEPLOY/rails/hjerterom/app
     public: true
+    features:
+      core:
+        - { name: Donation / FoodItem intake model,                        status: missing }
+        - { name: Box (weekly food parcel) coordination,                   status: missing }
+        - { name: Volunteer model (shifts, availability),                  status: missing }
+        - { name: shift scheduling + notifications,                        status: missing }
+        - { name: Donor model + management,                                status: missing }
+        - { name: Beneficiary model + matching,                            status: missing }
+        - { name: clothing / toy / book reuse tracking,                    status: missing }
+        - { name: distribution route optimization,                         status: missing }
+      planned:
+        - { name: reporting jobs (Solid Queue),                            status: planned }
+        - { name: operational forecasting,                                 status: planned }

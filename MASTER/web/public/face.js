@@ -39,7 +39,7 @@ const ZONE_STAMP = {
 const _STAMP_DEFAULT = [[0,0]];
 
 // Pixel palette — CSS filter applied at blit time; cycles with P key
-// Index 5 = ZX Spectrum attribute mode (handled in Atkinson pass, no CSS filter)
+// Index 5 = ZX Spectrum attribute mode; index 6 = Bayer ordered dithering
 let pixelPal = 0;
 const PIXEL_FILTERS = [
   null,
@@ -47,9 +47,17 @@ const PIXEL_FILTERS = [
   'sepia(1) hue-rotate(200deg) saturate(4) brightness(0.75)',
   'sepia(1) hue-rotate(340deg) saturate(4) brightness(0.95)',
   'sepia(1) hue-rotate(290deg) saturate(6) brightness(1.05)',
-  null, // ZX — uses zbuf zone colours directly
+  null, // ZX — zone colours via zbuf
+  null, // BAYER — ordered threshold, no CSS filter
 ];
-const PIXEL_PAL_NAMES = ['MONO', 'GB', 'C64', 'AMB', 'NEO', 'ZX'];
+const PIXEL_PAL_NAMES = ['MONO', 'GB', 'C64', 'AMB', 'NEO', 'ZX', 'BAYER'];
+// Bayer 4×4 ordered dithering matrix, normalized 0→1
+const BAYER4 = new Float32Array([
+   0/16,  8/16,  2/16, 10/16,
+  12/16,  4/16, 14/16,  6/16,
+   3/16, 11/16,  1/16,  9/16,
+  15/16,  7/16, 13/16,  5/16,
+]);
 
 // ZX Spectrum attribute colours per zone (Uint32 RGBA little-endian)
 // R|(G<<8)|(B<<16)|(0xFF<<24)
@@ -76,6 +84,8 @@ const ZX_PALETTE = [
 
 // Preallocated curl output — avoids GC allocation every frame per particle
 const _curl = new Float64Array(2);
+// Scratch buffer for ZX 8×8 block vote — avoids per-block allocation
+const _zxVotes = new Uint8Array(16);
 
 // Frame counters
 let _repulseFrame = 0, _bfSkip = 0;
@@ -414,13 +424,13 @@ function _doResize() {
   // Positive z = toward viewer; negative = receding behind face plane.
   // Outline wraps to negative so rotation reveals back-of-head correctly.
   const ZONE_DISP = {
-    noseFlare:  0.30, browL:     0.14, browR:     0.14,
-    eyeL:      -0.22, eyeR:     -0.22, pupilL:   -0.14, pupilR:   -0.14,
+    noseFlare:  0.28, browL:     0.12, browR:     0.12,
+    eyeL:      -0.10, eyeR:     -0.10, pupilL:    0.14, pupilR:    0.14,
     outlineL:  -0.38, outlineR: -0.38,
-    chin:       0.04, mouth:    -0.05, crown:      0.06,
-    scarL:      0.10, scarR:     0.10,
-    tasselL:   -0.14, tasselR:  -0.14,
-    forehead:   0.10,
+    chin:       0.14, mouth:     0.16, crown:      0.04,
+    scarL:      0.06, scarR:     0.06,
+    tasselL:   -0.12, tasselR:  -0.12,
+    forehead:   0.08,
   };
   function applyZ(zones, s) {
     const cx = Face.cx, cy = Face.cy;
@@ -435,11 +445,10 @@ function _doResize() {
       const base = 0.42 * Math.sqrt(Math.max(0, 1 - mxn*mxn - myn*myn));
         let mz;
         if (name === 'noseRidge') {
-          // Tip protrudes furthest; ramp from base+0.12 at root to base+0.54 at tip
+          // Bell curve peaking at ~65% down the ridge (nose tip), falling toward bridge and nostrils
           const t = i / Math.max(1, list.length - 1);
-          mz = base + 0.12 + t * 0.42;
-        } else if (name === 'crown') {
-          mz = base + Math.sin(i * 0.71) * 0.08;
+          const bell = Math.sin(Math.min(t * 1.55, 1) * Math.PI * 0.5);
+          mz = base + 0.10 + bell * bell * 0.46;
         } else {
           mz = base + (ZONE_DISP[name] || 0);
         }
@@ -493,7 +502,8 @@ function _doResize() {
     zone: 'crown', life: 1.0,
     mass: 0.7 + Math.random() * 0.6,
     activateAt: 0,
-    ao: 0
+    ao: 0,
+    lx: (Math.random() - 0.5) * 2, ly: (Math.random() - 0.5) * 2, lz: 24 + Math.random() * 4
   });
   function assignHomes() {
     if (!zonesA) return;
@@ -541,21 +551,19 @@ function _doResize() {
       return;
     }
     const interval = State.mode === 'idle' ? 90000 : 180000;
-    if (now - lastMaskSwitch > interval) {
-      lastMaskSwitch = now;
-      maskNextIdx = (maskIdx + 1) % MASKS.length;
-      zonesB = buildMask(MASKS[maskNextIdx], Face.cx, Face.cy, Face.s);
-      const B = [].concat(...Object.values(zonesB));
-      for (let i = 0; i < particles.length; i++) {
-        const b = B[i % B.length];
-        const p = particles[i];
-        p.hx2 = b.x + p.ox; p.hy2 = b.y + p.oy; p.hz2 = (b.z || 0) + p.oz;
-      }
-      maskPhase = 0;
-      maskTransitioning = true;
-      Face.vortex = 0.45;
-      mandalaLock();
+    if (now - lastMaskSwitch > interval) triggerMaskSwitch();
+  }
+  function triggerMaskSwitch() {
+    if (maskTransitioning) return;
+    lastMaskSwitch = performance.now();
+    maskNextIdx = (maskIdx + 1) % MASKS.length;
+    zonesB = buildMask(MASKS[maskNextIdx], Face.cx, Face.cy, Face.s);
+    const B = [].concat(...Object.values(zonesB));
+    for (let i = 0; i < particles.length; i++) {
+      const b = B[i % B.length], p = particles[i];
+      p.hx2 = b.x + p.ox; p.hy2 = b.y + p.oy; p.hz2 = (b.z || 0) + p.oz;
     }
+    maskPhase = 0; maskTransitioning = true; Face.vortex = 0.45;
   }
 
   // Palettes (time-of-day + state overlays)
@@ -595,8 +603,6 @@ function _doResize() {
       if (t >= 1) { palette = targetPalette; palBlend = 1; }
     }
   }
-  const easeOutCubic   = t => 1 - Math.pow(1 - t, 3);
-  const easeOutQuart   = t => 1 - Math.pow(1 - t, 4);
   const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
 
   // State
@@ -609,7 +615,11 @@ function _doResize() {
     audioLevel: 0,
     tiltX: 0, tiltY: 0,
     session: Math.floor(Math.random() * 1e9),
-    prevBass: 0
+    prevBass: 0,
+    lorenzMode: false,
+    neonBleed: 0,
+    comboCount: 0, comboDecay: 0, comboY: 0,
+    continueCount: -1, continueTimer: 0
   };
 
   const MOOD_PALETTE = {
@@ -682,6 +692,11 @@ function _doResize() {
     const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*_`~]/g, '').trim();
     if (!clean) return;
     tts.queue.push(clean);
+    // combo counter + neon bleed on each sentence burst
+    State.comboCount++;
+    State.comboDecay = 2800;
+    State.comboY = Face.cy - Face.s * 0.5 - State.comboCount * 4;
+    State.neonBleed = 1.0;
     ttsTick();
   }
 
@@ -806,7 +821,6 @@ function _doResize() {
         if (pending.trim()) enqueueSpeech(pending.trim());
         pending = '';
         State.mode = 'idle'; Face.browTarget = 0; Face.dispersionTarget = 0;
-        mandalaLock();
         if (navigator.vibrate) navigator.vibrate([80]);
         try { evtSrc.close(); } catch (e) {}
         window._chatOnDone?.();
@@ -823,7 +837,7 @@ function _doResize() {
         const sent = pending.slice(0, cut).trim();
         pending = pending.slice(cut);
         if (sent) {
-          enqueueSpeech(sent); chromaticPulse();
+          enqueueSpeech(sent);
           Face.dispersionTarget = Math.min(0.06, (Face.dispersionTarget || 0) + 0.04);
           setTimeout(() => { if (Face.dispersionTarget > 0) Face.dispersionTarget = Math.max(0, Face.dispersionTarget - 0.04); }, 250);
         }
@@ -1066,21 +1080,6 @@ function _doResize() {
     osc.start(); osc.stop(actx.currentTime + dur);
   }
 
-  // Weather (#26) — best-effort, silent fail
-  let weather = { rain: 0, fog: 0 };
-  function fetchWeather() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const { latitude: lat, longitude: lon } = pos.coords;
-      const u = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,cloud_cover`;
-      fetch(u).then(r => r.json()).then(d => {
-        const c = d.current || {};
-        weather.rain = Math.min(1, (c.precipitation || 0) / 3);
-        weather.fog  = Math.min(1, (c.cloud_cover || 0) / 100);
-      }).catch(() => {});
-    }, () => {}, { timeout: 4000, maximumAge: 3600000 });
-  }
-
   // Boids neighbor flock (light, only when idle long)
   function flock() {
     const NP = particles.length;
@@ -1098,11 +1097,7 @@ function _doResize() {
 
   // Aesthetic effects (Warp / Low End Theory / Flamagra)
   const FX = {
-    anaglyph: 0, anaglyphTarget: 0, // R/cyan offset (bass-reactive)
-    ghostMirror: 0, // Pepper's-ghost vertical second-stack alpha
-    chromatic: 0, // chromatic-aberration pulse on stressed syllables
     cutBlack: 0, // 1-frame canvas clear on transient
-    mandala: 0, mandalaPhase: 0, // radial symmetry lock on long silence
     datamosh: 0, datamoshFrames: 0, // velocity-hold smear on tool event
     embers: false, // ember-rise mode (warm mood)
     // Manga manpu (漫符)
@@ -1116,10 +1111,8 @@ function _doResize() {
     chibi: 0, // error — brief vertical squash of whole face
     errorFlash: 0 // XOR canvas flash — error / mute toggle
   };
-  function chromaticPulse() { FX.chromatic = 1.0; }
-  function datamosh()       { FX.datamosh  = 1.0; FX.datamoshFrames = 6; }
-  function mandalaLock()    { FX.mandala   = 1.0; FX.mandalaPhase = 0; }
-  function cutBlack()       { FX.cutBlack  = 1.0; }
+  function datamosh() { FX.datamosh = 1.0; FX.datamoshFrames = 6; }
+  function cutBlack() { FX.cutBlack = 1.0; }
   function triggerSweat()   { FX.sweat     = 1.0; }
   function triggerVein()    { FX.vein      = 1.0; }
   function triggerBlush()   { FX.blush     = 1.0; }
@@ -1190,22 +1183,22 @@ function _doResize() {
   }
 
   function tickFX(dt) {
-    // anaglyph follows bass
     if (analyser && freqData) {
       const bass = (freqData[1] + freqData[2] + freqData[3]) / (3 * 255);
-      FX.anaglyphTarget = bass * 6;
       if (bass > 0.85) cutBlack();
     }
-    FX.anaglyph += (FX.anaglyphTarget - FX.anaglyph) * 0.18;
-    // ghost mirror when speaking
-    FX.ghostMirror += ((State.mode === 'speaking' ? 0.35 : 0) - FX.ghostMirror) * 0.06;
-    FX.chromatic *= 0.86;
-    FX.cutBlack  *= 0.4;
-    FX.mandala   *= 0.97;
-    FX.mandalaPhase += dt * 0.0018;
+    FX.cutBlack *= 0.4;
     if (FX.datamoshFrames > 0) FX.datamoshFrames--; else FX.datamosh *= 0.85;
     FX.embers = (State.mood === 'curious' || State.mode === 'speaking');
     // Manga manpu ticks
+    State.neonBleed *= 0.88;
+    // combo decay
+    if (State.comboDecay > 0) { State.comboDecay -= dt; if (State.comboDecay <= 0) { State.comboCount = 0; State.comboDecay = 0; } }
+    // CONTINUE? countdown during sleep
+    if (State.mode === 'sleep') {
+      if (State.continueCount < 0) { State.continueCount = 9; State.continueTimer = performance.now(); }
+      else if (performance.now() - State.continueTimer > 1000) { State.continueTimer = performance.now(); State.continueCount--; if (State.continueCount < 0) State.continueCount = 9; }
+    } else { State.continueCount = -1; }
     FX.sweat      *= 0.983;
     FX.vein        = State.mode === 'error' ? Math.min(1, FX.vein + 0.07) : FX.vein * 0.94;
     FX.blush       = State.mode === 'ack'   ? Math.min(1, FX.blush + 0.06) : FX.blush * 0.97;
@@ -1222,30 +1215,6 @@ function _doResize() {
     } else {
       FX.noseBubbleR *= 0.88;
     }
-  }
-  function drawGhostMirror() {}
-  function drawAnaglyph() {}
-  function drawChromatic() {}
-  function drawMandala() {
-    return;
-    if (FX.mandala < 0.05) return;
-    ctx.save();
-    ctx.translate(Face.cx, Face.cy);
-    ctx.strokeStyle = `rgba(${palette.accent},${FX.mandala * 0.5})`;
-    ctx.lineWidth = 1;
-    const arms = 8;
-    for (let a = 0; a < arms; a++) {
-      ctx.rotate((Math.PI * 2) / arms);
-      ctx.beginPath();
-      for (let t = 0; t < 1; t += 0.05) {
-        const r = Face.s * t * 0.9;
-        const x = Math.cos(t * 8 + FX.mandalaPhase) * r;
-        const y = Math.sin(t * 8 + FX.mandalaPhase) * r * 0.4;
-        t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-    ctx.restore();
   }
   function drawCutBlack() {
     if (FX.cutBlack < 0.5) return;
@@ -1331,7 +1300,6 @@ function _doResize() {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
 
-    drawMandala();
     drawSpeedLines();
     drawParticles();
 
@@ -1341,10 +1309,7 @@ function _doResize() {
       ctx.fillStyle = '#000';
       ctx.fillRect(wipeX, 0, W - wipeX, H);
     }
-    drawAnaglyph();
-    drawGhostMirror();
     drawEdgePulse();
-    drawChromatic();
     drawThinkingOrbit(now);
     drawCorona();
     drawVortex();
@@ -1356,12 +1321,11 @@ function _doResize() {
     drawVein();
     drawNoseBubble();
     drawOscilloscope();
+    drawCombo();
+    drawContinue();
     drawHUD();
 
     idlePulse += dt * 0.002;
-
-    // mandala lock auto-trigger on long silence
-    if (State.mode === 'idle' && idlePulse % 20 > 19.9 && FX.mandala < 0.05) mandalaLock();
   }
 
   function tickParticles(dt, now) {
@@ -1510,6 +1474,18 @@ function _doResize() {
         const cm2 = cu*cu + cv2*cv2;
         if (cm2 > 0.0001) { const cm = Math.sqrt(cm2); p.vx += (cu / cm) * cm * 0.15 * disp; p.vy += (cv2 / cm) * cm * 0.10 * disp; }
       }
+      // Lorenz attractor — advance per-particle butterfly orbit, blend into velocity
+      if (State.lorenzMode) {
+        const ldt = dt * 0.004;
+        const sigma = 10, rho = 28, beta = 2.667;
+        const dlx = sigma * (p.ly - p.lx) * ldt;
+        const dly = (p.lx * (rho - p.lz) - p.ly) * ldt;
+        const dlz = (p.lx * p.ly - beta * p.lz) * ldt;
+        p.lx += dlx; p.ly += dly; p.lz += dlz;
+        // Map Lorenz X/Y into particle velocity nudge (scaled to face size)
+        p.vx += p.lx * 0.004 * s * 0.001;
+        p.vy += p.ly * 0.004 * s * 0.001;
+      }
       // Velocity ceiling
       const vv = p.vx*p.vx + p.vy*p.vy;
       if (vv > 1.96) { const kv = 1.4 / Math.sqrt(vv); p.vx *= kv; p.vy *= kv; }
@@ -1542,7 +1518,9 @@ function _doResize() {
     const HX = -0.155, HY = -0.258, HZ = 0.953; // Blinn-Phong half-vector
     const A2 = 0.7225, B2 = 2.1025, C2 = 0.1764; // spheroid axes²
     const s = Face.s, fcx = Face.cx, fcy = Face.cy;
-    const sigma2 = (s * 0.28) * (s * 0.28) * 2;
+    // DoF focal plane at face centre depth (spheroid apex ≈ 0.38s forward)
+    const focalZ = s * 0.38;
+    const sigma2 = (s * 0.30) * (s * 0.30) * 2;
 
     // Accumulate particle contributions — glyph stamp per zone
     for (let i = 0; i < particles.length; i++) {
@@ -1558,21 +1536,32 @@ function _doResize() {
       const nlen = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
       const nnx = nx/nlen, nny = ny/nlen, nnz = nz/nlen;
 
-      // Lambert diffuse + ambient
+      // Lambert diffuse + ambient (lower ambient → more shadow depth)
       const NdotL = Math.max(0, LX*nnx + LY*nny + LZ*nnz);
-      const shade  = 0.25 + 0.75 * NdotL;
+      const shade  = 0.15 + 0.85 * NdotL;
 
-      // Gaussian DoF — sharp at z=0 focal plane
-      const focus = Math.exp(-(sz_ * sz_) / sigma2);
-      let bright = (3 + 13 * focus) * shade;
+      // Gaussian DoF — focal plane at face apex (~0.38s)
+      const dz = sz_ - focalZ;
+      const focus = Math.exp(-(dz * dz) / sigma2);
+      let bright = (2 + 14 * focus) * shade;
 
       const zone = p.zone;
 
-      // Blinn-Phong specular — nose/brow ceramic gloss
+      // Blinn-Phong specular — nose/brow ceramic gloss; cornea + lips wet gloss
       if (zone === 'noseRidge' || zone === 'noseFlare' || zone === 'browL' || zone === 'browR') {
         const NdotH = Math.max(0, HX*nnx + HY*nny + HZ*nnz);
         const h2 = NdotH*NdotH, h4 = h2*h2, h8 = h4*h4, h16 = h8*h8;
-        bright += h16 * h8 * h4 * 14; // h^28, 7 muls
+        bright += h16 * h8 * h4 * 14; // h^28
+      }
+      if (zone === 'pupilL' || zone === 'pupilR') {
+        const NdotH = Math.max(0, HX*nnx + HY*nny + HZ*nnz);
+        const h2 = NdotH*NdotH, h4 = h2*h2, h8 = h4*h4;
+        bright += h8 * h4 * h2 * 11; // h^14 — softer cornea highlight
+      }
+      if (zone === 'mouth') {
+        const NdotH = Math.max(0, HX*nnx + HY*nny + HZ*nnz);
+        const h2 = NdotH*NdotH, h4 = h2*h2;
+        bright += h4 * h2 * 8; // h^6 — broad wet-lip sheen
       }
 
       // Rim lighting — silhouette halo on outline
@@ -1596,37 +1585,62 @@ function _doResize() {
       }
     }
 
-    // Atkinson dithering — errors go to ebuf only; fbuf (phosphor) never touched
     const imgd = lpxCtx.getImageData(0, 0, lpxW, lpxH);
     const buf  = new Uint32Array(imgd.data.buffer);
     buf.fill(0xFF000000);
-    for (let y = 0; y < lpxH; y++) {
-      for (let x = 0; x < lpxW; x++) {
-        const idx = y * lpxW + x;
-        const v   = Math.min(1, Math.max(0, fbuf[idx] + ebuf[idx]));
-        const out = v >= 0.5 ? 1 : 0;
-        if (out) buf[idx] = pixelPal === 5 ? (ZX_PALETTE[zbuf[idx]] || 0xFFFFFFFF) : 0xFFFFFFFF;
-        const err = (v - out) * 0.125;
-        if (err === 0) continue;
-        if (x+1 < lpxW) ebuf[idx+1]       += err;
-        if (x+2 < lpxW) ebuf[idx+2]       += err;
-        if (y+1 < lpxH) {
-          if (x > 0)    ebuf[idx+lpxW-1]  += err;
-                        ebuf[idx+lpxW]    += err;
-          if (x+1<lpxW) ebuf[idx+lpxW+1] += err;
+    if (pixelPal === 6) {
+      // Bayer ordered dithering — threshold matrix, no error propagation, no temporal crawl
+      for (let y = 0; y < lpxH; y++) {
+        for (let x = 0; x < lpxW; x++) {
+          const idx = y * lpxW + x;
+          if (fbuf[idx] > BAYER4[(y & 3) * 4 + (x & 3)]) buf[idx] = 0xFFFFFFFF;
         }
-        if (y+2 < lpxH) ebuf[idx+lpxW*2] += err;
+      }
+    } else {
+      // Atkinson dithering — errors go to ebuf only; fbuf (phosphor) never touched
+      for (let y = 0; y < lpxH; y++) {
+        for (let x = 0; x < lpxW; x++) {
+          const idx = y * lpxW + x;
+          const v   = Math.min(1, Math.max(0, fbuf[idx] + ebuf[idx]));
+          const out = v >= 0.5 ? 1 : 0;
+          if (out) buf[idx] = pixelPal === 5 ? (ZX_PALETTE[zbuf[idx]] || 0xFFFFFFFF) : 0xFFFFFFFF;
+          const err = (v - out) * 0.125;
+          if (err === 0) continue;
+          if (x+1 < lpxW) ebuf[idx+1]       += err;
+          if (x+2 < lpxW) ebuf[idx+2]       += err;
+          if (y+1 < lpxH) {
+            if (x > 0)    ebuf[idx+lpxW-1]  += err;
+                          ebuf[idx+lpxW]    += err;
+            if (x+1<lpxW) ebuf[idx+lpxW+1] += err;
+          }
+          if (y+2 < lpxH) ebuf[idx+lpxW*2] += err;
+        }
       }
     }
 
-    // Rain overlay
-    if (weather.rain > 0) {
-      const drops = (weather.rain * 40) | 0;
-      for (let i = 0; i < drops; i++) {
-        const rx = ((idlePulse * 100 + i * 37) % lpxW) | 0;
-        const ry = ((idlePulse * 250 + i * 91) % (lpxH - 2)) | 0;
-        buf[ry * lpxW + rx] = 0xFFFFFFFF;
-        buf[(ry + 1) * lpxW + rx] = 0xFFFFFFFF;
+    // True ZX 8×8 attribute blocks — dominant zone per 8×8 cell overwrites all pixels in that cell
+    if (pixelPal === 5) {
+      const BLK = 8, NZ = _zxVotes.length;
+      for (let by = 0; by < lpxH; by += BLK) {
+        for (let bx = 0; bx < lpxW; bx += BLK) {
+          _zxVotes.fill(0);
+          for (let dy = 0; dy < BLK && by + dy < lpxH; dy++) {
+            for (let dx = 0; dx < BLK && bx + dx < lpxW; dx++) {
+              const z = zbuf[(by + dy) * lpxW + (bx + dx)];
+              if (z < NZ) _zxVotes[z]++;
+            }
+          }
+          let best = 0, bestV = 0;
+          for (let z = 0; z < NZ; z++) { if (_zxVotes[z] > bestV) { bestV = _zxVotes[z]; best = z; } }
+          if (best === 0) continue;
+          const col = ZX_PALETTE[best];
+          for (let dy = 0; dy < BLK && by + dy < lpxH; dy++) {
+            for (let dx = 0; dx < BLK && bx + dx < lpxW; dx++) {
+              const idx = (by + dy) * lpxW + (bx + dx);
+              if (buf[idx] !== 0xFF000000) buf[idx] = col;
+            }
+          }
+        }
       }
     }
 
@@ -1636,97 +1650,75 @@ function _doResize() {
     lpxCtx.putImageData(imgd, 0, 0);
     ctx.imageSmoothingEnabled = false;
     const _flt = PIXEL_FILTERS[pixelPal];
-    if (_flt) ctx.filter = _flt;
-    ctx.drawImage(lpxCV, 0, 0, W, H);
-    if (_flt) ctx.filter = 'none';
+    // Neon bleed — hue-rotate + slight scale-bloom on sentence burst
+    const nb = State.neonBleed;
+    const neonFlt = nb > 0.05
+      ? `hue-rotate(${(nb * 180) | 0}deg) saturate(${(1 + nb * 4).toFixed(2)})`
+      : null;
+    const combinedFlt = _flt && neonFlt ? `${_flt} ${neonFlt}` : (_flt || neonFlt);
+    if (combinedFlt) ctx.filter = combinedFlt;
+    if (nb > 0.05) {
+      const bloom = 1 + nb * 0.006;
+      const ox = W * (1 - bloom) * 0.5, oy = H * (1 - bloom) * 0.5;
+      ctx.drawImage(lpxCV, ox, oy, W * bloom, H * bloom);
+    } else {
+      ctx.drawImage(lpxCV, 0, 0, W, H);
+    }
+    if (combinedFlt) ctx.filter = 'none';
   }
 
-  // Zone polylines — connect sorted particles per zone with quadratic bezier splines
-  function drawZoneLines() {
-    if (Face.dispersion > 0.4) return;
-    const LINE_ZONES = ['outlineL','outlineR','browL','browR','noseRidge','mouth','chin'];
-    const RING_ZONES = ['eyeL','eyeR','pupilL','pupilR','crown','tasselL','tasselR'];
-
-    // Group current particle positions by zone
-    const byZone = {};
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-      (byZone[p.zone] || (byZone[p.zone] = [])).push(p);
-    }
-
-    ctx.save();
-    ctx.globalAlpha = 0.14;
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth   = 0.5;
-
-    // Contour zones — sort by home y, draw open spline
-    for (let z = 0; z < LINE_ZONES.length; z++) {
-      const pts = byZone[LINE_ZONES[z]];
-      if (!pts || pts.length < 3) continue;
-      pts.sort((a, b) => a.hy - b.hy);
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      for (let i = 1; i < pts.length - 1; i++) {
-        const mx = (pts[i].x + pts[i+1].x) * 0.5;
-        const my = (pts[i].y + pts[i+1].y) * 0.5;
-        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
-      }
-      ctx.lineTo(pts[pts.length-1].x, pts[pts.length-1].y);
-      ctx.stroke();
-    }
-
-    // Ring zones — sort by home angle, draw closed spline
-    for (let z = 0; z < RING_ZONES.length; z++) {
-      const pts = byZone[RING_ZONES[z]];
-      if (!pts || pts.length < 4) continue;
-      const rcx = pts.reduce((s, p) => s + p.hx, 0) / pts.length;
-      const rcy = pts.reduce((s, p) => s + p.hy, 0) / pts.length;
-      pts.sort((a, b) => Math.atan2(a.hy - rcy, a.hx - rcx) - Math.atan2(b.hy - rcy, b.hx - rcx));
-      ctx.beginPath();
-      ctx.moveTo((pts[0].x + pts[pts.length-1].x)*0.5, (pts[0].y + pts[pts.length-1].y)*0.5);
-      for (let i = 0; i < pts.length; i++) {
-        const next = pts[(i+1) % pts.length];
-        const mx = (pts[i].x + next.x) * 0.5, my = (pts[i].y + next.y) * 0.5;
-        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
-      }
-      ctx.closePath();
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  }
 
   // Oscilloscope XY mini-canvas — particle positions plotted as stereo XY scope
   // L=X, R=Y; the face shape emerges as a Lissajous figure in the bottom-right corner.
   function drawOscilloscope() {
     if (State.mode !== 'thinking' && State.mode !== 'speaking') return;
     const SZ = 128, fcx = Face.cx, fcy = Face.cy, fs = Face.s;
-    const scale = 52 / fs; // normalize face radius → ~52px in scope
+    const scale = 52 / fs;
+    const maxZ = fs * 0.8;
     // Phosphor decay
     for (let j = 0; j < SZ * SZ; j++) scopeBuf[j] = Math.max(0, scopeBuf[j] * 0.78 - 0.005);
-    // Accumulate particle XY positions
+    // Accumulate — nearer particles (sz > 0) contribute more brightness
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       const sx = ((p.x - fcx) * scale + SZ * 0.5) | 0;
       const sy = ((p.y - fcy) * scale + SZ * 0.5) | 0;
-      if (sx >= 0 && sx < SZ && sy >= 0 && sy < SZ) scopeBuf[sy * SZ + sx] = Math.min(1, scopeBuf[sy * SZ + sx] + 0.35);
+      if (sx >= 0 && sx < SZ && sy >= 0 && sy < SZ) {
+        const depth = 0.18 + 0.52 * Math.max(0, Math.min(1, (p.sz + maxZ) / (maxZ * 2)));
+        scopeBuf[sy * SZ + sx] = Math.min(1, scopeBuf[sy * SZ + sx] + depth);
+      }
     }
+    // Parse palette accent RGB for tinted phosphor
+    const acc = (palette.accent || '255,255,255').split(',').map(Number);
+    const aR = acc[0], aG = acc[1], aB = acc[2];
     // Render to scopeCV
     const imgd = scopeCtx.getImageData(0, 0, SZ, SZ);
     const sbuf = new Uint32Array(imgd.data.buffer);
     for (let j = 0; j < SZ * SZ; j++) {
-      const v = (scopeBuf[j] * 255) | 0;
-      sbuf[j] = v > 0 ? (0xFF000000 | v * 0x010101) : 0xFF000000;
+      const v = scopeBuf[j];
+      if (v <= 0) { sbuf[j] = 0xFF000000; continue; }
+      const vi = Math.min(255, v * 255) | 0;
+      sbuf[j] = 0xFF000000 | ((aB * vi / 255) & 0xFF) << 16 | ((aG * vi / 255) & 0xFF) << 8 | ((aR * vi / 255) & 0xFF);
+    }
+    // Frequency bar graph — 4px tall strip at bottom of scope canvas
+    if (freqData) {
+      const bars = 32, barH = 4;
+      for (let b = 0; b < bars; b++) {
+        const fi = (b / bars * freqData.length) | 0;
+        const fv = (freqData[fi] / 255 * barH) | 0;
+        const bx = (b / bars * SZ) | 0;
+        const bw = Math.max(1, (SZ / bars - 1) | 0);
+        for (let dy = 0; dy < fv; dy++) {
+          const idx = (SZ - 1 - dy) * SZ + bx;
+          for (let dx = 0; dx < bw; dx++) sbuf[idx + dx] = 0xFFFFFFFF;
+        }
+      }
     }
     scopeCtx.putImageData(imgd, 0, 0);
-    // Blit to main canvas — bottom-right corner, 2× scale
+    // Blit to main canvas — bottom-right corner
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = 0.72;
-    ctx.drawImage(scopeCV, W - 144, H - 144, SZ, SZ);
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(W - 144, H - 144, SZ, SZ);
+    ctx.drawImage(scopeCV, W - 136, 8, SZ, SZ);
     ctx.restore();
   }
   function drawEdgePulse() {
@@ -1926,12 +1918,41 @@ function _doResize() {
     ctx.globalAlpha = 1;
   }
 
+  function drawCombo() {
+    if (State.comboCount < 2 || State.comboDecay <= 0) return;
+    const frac = State.comboDecay / 2800;
+    // float upward as it decays
+    const floatY = State.comboY - (1 - frac) * Face.s * 0.18;
+    const sz = 8 + Math.min(8, (State.comboCount - 2) * 2);
+    ctx.font = `${sz}px "Silkscreen",ui-monospace,monospace`;
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = `rgba(255,255,255,${(frac * 0.85).toFixed(2)})`;
+    ctx.fillText(`x${State.comboCount}`, Math.min(W - 40, (Face.cx + Face.s * 0.6) | 0), floatY | 0);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function drawContinue() {
+    if (State.continueCount < 0) return;
+    const n = State.continueCount;
+    const pulse = 0.55 + Math.sin(performance.now() * 0.004) * 0.17;
+    ctx.font = '8px "Silkscreen",ui-monospace,monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = n > 3
+      ? `rgba(255,255,255,${pulse.toFixed(2)})`
+      : `rgba(255,${n > 1 ? 255 : 80},${n > 1 ? 255 : 80},${(pulse * 1.3).toFixed(2)})`;
+    ctx.fillText(`CONTINUE? ${n}`, Face.cx, Face.cy + Face.s * 1.6);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
   function drawHUD() {
     ctx.font = '8px "Silkscreen",ui-monospace,monospace';
     ctx.textBaseline = 'top';
     ctx.fillStyle = 'rgba(255,255,255,0.28)';
     const m = tts.muted ? ' [M]' : '';
-    ctx.fillText(`${State.mode[0].toUpperCase()} ${State.mood} ${PIXEL_PAL_NAMES[pixelPal]}${m}`, 8, 8);
+    const lorenzTag = State.lorenzMode ? ' LZ' : '';
+    ctx.fillText(`${State.mode[0].toUpperCase()} ${State.mood} ${PIXEL_PAL_NAMES[pixelPal]}${m}${lorenzTag}`, 8, 8);
     ctx.textBaseline = 'alphabetic';
   }
 
@@ -1991,7 +2012,7 @@ function _doResize() {
         setTimeout(() => primer.remove(), 1000);
         zshBar.classList.add('live');
         unlockTTS();
-        fetchWeather(); requestMotionPermission(); acquireWakeLock(); initVAD();
+        requestMotionPermission(); acquireWakeLock(); initVAD();
         Face.dispersionTarget = 0;
         DMESG_PHRASES.slice(0, -1).forEach((p, i) => setTimeout(() => whisper(p), 400 + i * 600));
         setTimeout(() => enqueueSpeech('ready'), 400 + DMESG_PHRASES.length * 600);
@@ -2015,6 +2036,10 @@ function _doResize() {
   });
   zshIn.addEventListener('focus', () => { State.lastTouch = performance.now(); });
 
+  // Konami code — ↑↑↓↓←→←→ba
+  const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let konamiIdx = 0;
+
   // Keyboard fallback
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') ttsSkip();
@@ -2023,6 +2048,32 @@ function _doResize() {
       pixelPal = (pixelPal + 1) % PIXEL_FILTERS.length;
       beep(440 + pixelPal * 110, 0.04);
     }
+    if (e.key === 'l' && !e.ctrlKey && !e.altKey && document.activeElement !== zshIn) {
+      State.lorenzMode = !State.lorenzMode;
+      if (State.lorenzMode) {
+        // Re-seed attractor state so particles start near the Lorenz attractor basin
+        for (let i = 0; i < particles.length; i++) {
+          particles[i].lx = (Math.random() - 0.5) * 2;
+          particles[i].ly = (Math.random() - 0.5) * 2;
+          particles[i].lz = 24 + Math.random() * 4;
+        }
+      }
+      beep(State.lorenzMode ? 660 : 330, 0.06);
+    }
+    if (e.key === 'm' && !e.ctrlKey && !e.altKey && document.activeElement !== zshIn) {
+      triggerMaskSwitch();
+      beep(550, 0.05);
+    }
+    // Konami sequence tracker
+    if (e.key === KONAMI[konamiIdx]) {
+      konamiIdx++;
+      if (konamiIdx === KONAMI.length) {
+        konamiIdx = 0;
+        vortex(); Face.coronaFlash = 1.0;
+        [330, 440, 550, 660, 880].forEach((f, i) => setTimeout(() => beep(f, 0.06), i * 80));
+        State.neonBleed = 1.0;
+      }
+    } else { konamiIdx = 0; }
   });
 
   window.sendMessage = sendMessage;

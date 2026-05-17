@@ -4,175 +4,186 @@ require "open3"
 
 module Master
   module Loop
-  # Act-react superloop — implements architectures #1, #2, #3, #15.
+  # Two-tier act-react loop — architectures #1, #2, #3, #14, #15.
   #
-  # Inner loops: one RuleLoop per rule, run to convergence.
-  # Outer loop:  runs all inner loops, itself autoloops indefinitely.
-  # Strategy:    :rule_first (default) or :file_first (#3).
-  # Ordering:    priority queue by recent violation density (#1) +
-  #              topological sort from data/rule_deps.yml (#2).
-  # Topology:    emits codebase:topology SSE event after each pass (#15)
-  #              so the particle system can render live codebase state.
+  # Each pass:
+  #   Tier 1 (fast)  — rubocop -A + AstFixer; no LLM; instant.
+  #   Tier 2 (LLM)   — one RuleLoop pass per rule, ordered by priority.
+  #
+  # Stops when violations reach zero (2 consecutive clean passes) or plateau.
+  # run_forever wraps run in an idle-sleep loop for the background daemon.
   class SuperLoop
-    # 300s between clean passes; 90s before first self-run after boot.
-    IDLE_SLEEP     = 300
-    STARTUP_DELAY  = 90
-    SCAN_GLOB      = Master::Judge::Scan::Scanner::SCAN_GLOB
-    SKIP_DIRS      = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
-    GIT_COMMIT_MSG = "super_loop: autofix violations".freeze
-    DEPS_PATH      = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
-    PRIORS_PATH    = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
+    IDLE_SLEEP      = 300
+    STARTUP_DELAY   = 90
+    MAX_PASSES      = 12
+    PLATEAU_WINDOW  = 2
+    SKIP_DIRS       = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
+    DEPS_PATH       = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
+    PRIORS_PATH     = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
 
     def initialize(rules:, agent:, scanner:, root:, bus: nil, git: nil, learnings: nil)
-      @rules        = rules
-      @agent        = agent
-      @scanner      = scanner
-      @root         = root
-      @bus          = bus
-      @git          = git || Reach::GitOperations.new(root)
-      @learnings    = learnings
+      @rules            = rules
+      @agent            = agent
+      @scanner          = scanner
+      @root             = root
+      @bus              = bus
+      @git              = git || Reach::GitOperations.new(root)
+      @learnings        = learnings
       @violation_counts = Hash.new(0)
-      # Build preamble once at boot — passed to each RuleLoop to avoid per-loop YAML reads.
-      @preamble = build_preamble
+      @rule_recurrence  = Hash.new(0)
+      @preamble         = build_preamble
     end
 
-    # One-shot: run all rule loops once against target.
-    # strategy: :rule_first | :file_first
-    def run_once(target = @root, strategy: :rule_first)
-      files = collect_files(target)
-      strategy == :file_first ? pass_file_first(files) : pass_rule_first(files)
-    end
+    # Bounded convergence loop — used by /fix and run_forever.
+    def run(target = @root, max_passes: MAX_PASSES)
+      files             = collect_files(target)
+      history           = []
+      consecutive_clean = 0
 
-    # Bounded: run outer loop until clean or violations plateau across consecutive passes.
-    def run_to_convergence(target = @root, max_passes: 12, plateau_window: 2)
-      history = []
       max_passes.times do |i|
-        result    = run_once(target)
-        any_dirty = result[:rule_results].any? { |r| r[:status] != :clean }
-        total     = result[:rule_results].sum { |r| r[:fixed] }
-        emit_topology(result[:rule_results], target)
-        @bus&.publish("super_loop:pass", pass: i + 1, target:, any_dirty:, fixed: total)
-        commit_if_dirty if any_dirty
-        return result.merge(converged: true, passes: i + 1) unless any_dirty
-        history << total
-        break if history.size >= plateau_window && history.last(plateau_window).uniq.size == 1
+        pass = i + 1
+        @bus&.publish("super_loop:pass_start", pass:, target:)
+
+        # Tier 1 — fast: rubocop -A + AstFixer, no LLM
+        fast_fixed = fast_pass(files)
+        commit_if_dirty("super_loop: fast-fix [pass #{pass}]") if fast_fixed > 0
+
+        violations = scan_violations(files)
+        emit_topology(violations, target)
+
+        if violations.empty?
+          consecutive_clean += 1
+          @bus&.publish("super_loop:clean", pass:, consecutive_clean:)
+          return Result.ok("clean after #{pass} pass(es)") if consecutive_clean >= 2
+          next
+        end
+        consecutive_clean = 0
+
+        history << violations.size
+        if history.size >= PLATEAU_WINDOW && history.last(PLATEAU_WINDOW).uniq.size == 1
+          @bus&.publish("super_loop:plateau", pass:, violations: violations.size)
+          break
+        end
+
+        # Tier 2 — LLM: one pass per rule in priority order
+        llm_fixed = llm_pass(violations, files, pass)
+        commit_if_dirty("super_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
+        track_recurrence(violations)
       end
-      run_once(target).merge(converged: false, passes: history.size)
+
+      Result.ok("plateau or max passes reached")
+    rescue StandardError => e
+      Result.err("super_loop: #{e.message}", category: :unknown)
     end
 
-    # Continuous: run forever. Sleeps IDLE_SLEEP when clean, retries immediately when dirty.
-    # Launch via Thread.new — this blocks its thread.
+    # Background daemon — blocks its thread. Launch via Thread.new.
     def run_forever(target = @root)
       sleep STARTUP_DELAY
       loop do
-        result    = run_once(target)
-        any_dirty = result[:rule_results].any? { |r| r[:status] != :clean }
-        emit_topology(result[:rule_results], target)
-        @bus&.publish("super_loop:pass", target:, any_dirty:,
-                      rules: result[:rule_results].size,
-                      fixed: result[:rule_results].sum { |r| r[:fixed] })
-        if any_dirty
-          commit_if_dirty
-        else
-          @bus&.publish("super_loop:idle", sleep: IDLE_SLEEP)
-          sleep IDLE_SLEEP
-        end
+        run(target)
+        @bus&.publish("super_loop:idle", sleep: IDLE_SLEEP)
+        sleep IDLE_SLEEP
       end
     rescue StandardError => e
       @bus&.publish("super_loop:error", error: e.message)
-      Result.err("super_loop: #{e.message}", category: :unknown)
     end
 
     private
 
-    # Architecture #1 + #2 + #14: priority queue + topological ordering + Bayesian priors.
+    # Tier 1: rubocop -A on .rb files + AstFixer transforms. No LLM.
+    def fast_pass(files)
+      fixed  = 0
+      rb     = files.select { |f| f.end_with?(".rb") }
+      if rb.any? && system("bundle", "exec", "rubocop", "-A", "--no-color", "-q", *rb,
+                           out: File::NULL, err: File::NULL, chdir: @root)
+        fixed += rb.size
+      end
+      rb.each do |path|
+        next unless File.exist?(path)
+        src    = File.read(path, encoding: "UTF-8")
+        result = Judge::Scan::AstFixer.fix(path, src)
+        next unless result&.changed
+        fixed += result.transforms.size
+        @bus&.publish("super_loop:ast_fixed", file: path.delete_prefix("#{@root}/"), transforms: result.transforms)
+      rescue StandardError => e
+        @bus&.publish("super_loop:fast_error", file: path, error: e.message)
+      end
+      fixed
+    end
+
+    # Tier 2: one RuleLoop pass per rule, highest-priority rules first.
+    def llm_pass(violations, files, pass)
+      fixed = 0
+      ordered_rules.each do |rule|
+        next unless violations.any? { |v| v[:rule] == rule.id }
+        rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root,
+                          bus: @bus, learnings: @learnings)
+        rl.injected_preamble = @preamble
+        result = rl.run_once(files)
+        @violation_counts[rule.id] += result[:fixed]
+        fixed += result[:fixed]
+        @bus&.publish("super_loop:rule_result", pass:, rule: rule.id, **result)
+      end
+      fixed
+    end
+
+    def scan_violations(files)
+      files.flat_map do |path|
+        next [] unless File.exist?(path)
+        result = @scanner.scan(path)
+        Result.wrap(result).value_or([]).map { |v| v.merge(file: path.delete_prefix("#{@root}/")) }
+      end
+    end
+
+    # Soul learning — flag rules recurring across 3+ consecutive passes.
+    def track_recurrence(violations)
+      tally = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
+      tally.each do |rule_id, _|
+        @rule_recurrence[rule_id] += 1
+        next unless @rule_recurrence[rule_id] >= 3
+        @rule_recurrence.delete(rule_id)
+        sample = violations.select { |v| v[:rule].to_s == rule_id }.first(5)
+        @bus&.publish("super_loop:soul_proposal", rule: rule_id, sample:)
+        append_improvement(rule_id, sample)
+      end
+      (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
+    end
+
+    def append_improvement(rule_id, sample)
+      path = File.join(@root, "runtime", "improvements.md")
+      FileUtils.mkdir_p(File.dirname(path))
+      files = sample.map { |v| v[:file] }.uniq.first(3).join(", ")
+      File.open(path, "a") { |f| f.write("#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n") }
+    rescue StandardError
+      nil
+    end
+
+    # Architecture #1 + #2 + #14: density + topological + Bayesian ordering.
     def ordered_rules
       deps   = load_deps
       priors = load_priors
-      rules  = @rules.sort_by do |r|
-        observed = @violation_counts[r.id].to_f
-        prior    = priors.dig(r.id, "prior_p").to_f
-        # Primary: observed violations (arch #1). Secondary: prior probability (arch #14).
-        -(observed + prior)
-      end
+      rules  = @rules.sort_by { |r| -(@violation_counts[r.id].to_f + priors.dig(r.id, "prior_p").to_f) }
       topo_sort(rules, deps)
     end
 
-    # Architecture #3 (rule-first default): converge each rule across all files.
-    def pass_rule_first(files)
-      rule_results = ordered_rules.map do |rule|
-        rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
-        rl.injected_preamble = @preamble
-        result = rl.run(files)
-        @violation_counts[rule.id] += result[:fixed]
-        @bus&.publish("super_loop:rule_result", rule: rule.id, **result)
-        result.merge(rule: rule.id)
-      end
-      { rule_results: }
-    end
-
-    # Architecture #3 (file-first): converge all rules on one file before next.
-    def pass_file_first(files)
-      rule_results_by_rule = Hash.new { |h, k| h[k] = { fixed: 0, cycles: 0, status: :clean, rule: k } }
-      files.each do |path|
-        ordered_rules.each do |rule|
-          rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root, bus: @bus, learnings: @learnings)
-        rl.injected_preamble = @preamble
-          result = rl.run([path])
-          @violation_counts[rule.id] += result[:fixed]
-          agg = rule_results_by_rule[rule.id]
-          agg[:fixed]  += result[:fixed]
-          agg[:cycles] += result[:cycles]
-          agg[:status]  = result[:status] if result[:status] != :clean
-        end
-      end
-      { rule_results: rule_results_by_rule.values }
-    end
-
-    # Architecture #15: emit codebase topology for particle visualization.
-    def emit_topology(rule_results, target)
-      modules   = group_by_module(rule_results, target)
-      timestamp = Time.now.utc.iso8601
+    # Architecture #15: emit module-grouped topology for particle visualisation.
+    def emit_topology(violations, target)
+      by_mod = violations.group_by { |v| v[:file].to_s.split("/").first(3).join("/") }
+                         .transform_values(&:size)
       @bus&.publish("codebase:topology", {
-        timestamp:        timestamp,
-        target:           target.delete_prefix(@root + "/"),
-        total_violations: rule_results.sum { |r| r[:fixed] },
-        any_dirty:        rule_results.any? { |r| r[:status] != :clean },
-        modules:          modules
+        timestamp:        Time.now.utc.iso8601,
+        target:           target.delete_prefix("#{@root}/"),
+        total_violations: violations.size,
+        any_dirty:        violations.any?,
+        modules:          by_mod.map { |path, count| { path:, violations: count } }
       })
     end
 
-    def group_by_module(rule_results, target)
-      # Map rules to module paths based on known structure.
-      module_map = {}
-      @rules.each do |rule|
-        class_name = rule.class.name.to_s
-        mod = class_name.split("::")[0..2].join("::").downcase.gsub("::", "/")
-        module_map[rule.id] = mod
-      end
-      by_mod = Hash.new { |h, k| h[k] = { path: k, violations: 0, rules: [], status: :clean } }
-      rule_results.each do |r|
-        mod = module_map[r[:rule]] || "unknown"
-        entry = by_mod[mod]
-        entry[:violations] += r[:fixed]
-        entry[:rules] << r[:rule] if r[:fixed].positive?
-        entry[:status] = :dirty if r[:status] != :clean
-      end
-      # Also count actual files in each module directory.
-      Dir.glob(File.join(target, "**", "*")).each do |f|
-        next unless File.file?(f)
-        rel = f.delete_prefix(@root + "/").split("/")[0..2].join("/")
-        by_mod[rel][:path] ||= rel
-      end
-      by_mod.values
-    end
-
-    # Architecture #2: Kahn's algorithm topological sort.
+    # Architecture #2: Kahn's topological sort on rule dependency graph.
     def topo_sort(rules, deps)
-      id_map   = rules.index_by(&:id)
-      in_deg   = Hash.new(0)
-      adj      = Hash.new { |h, k| h[k] = [] }
-
+      id_map = rules.index_by(&:id)
+      in_deg = Hash.new(0)
+      adj    = Hash.new { |h, k| h[k] = [] }
       rules.each do |rule|
         (deps[rule.id] || []).each do |dep_id|
           next unless id_map[dep_id]
@@ -180,18 +191,13 @@ module Master
           in_deg[rule.id] += 1
         end
       end
-
       queue  = rules.select { |r| in_deg[r.id].zero? }.map(&:id)
       sorted = []
       until queue.empty?
         id = queue.shift
         sorted << id_map[id]
-        adj[id].each do |nxt|
-          in_deg[nxt] -= 1
-          queue << nxt if in_deg[nxt].zero?
-        end
+        adj[id].each { |nxt| in_deg[nxt] -= 1; queue << nxt if in_deg[nxt].zero? }
       end
-      # Append any rules not in the dep graph (no deps declared).
       sorted + (rules - sorted)
     end
 
@@ -199,26 +205,13 @@ module Master
       soul   = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
       abs    = soul.fetch("absolute", {})
       golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-      lines  = ["Golden rule: #{golden}", "Minimum change that eliminates the violation. Do not touch unrelated code."]
+      lines  = ["Golden rule: #{golden}",
+                "Minimum change that eliminates the violation. Do not touch unrelated code."]
       abs.fetch("code_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
       abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
       lines.join("\n")
-    rescue StandardError => _e
+    rescue StandardError
       "Golden rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-    end
-
-    def load_deps
-      data = Master.load_yaml(DEPS_PATH)
-      deps_raw = data&.dig("deps") || {}
-      deps_raw.transform_values { |v| Array(v["after"] || []) }
-    rescue StandardError => _e
-      {}
-    end
-
-    def load_priors
-      Master.load_yaml(PRIORS_PATH) || {}
-    rescue StandardError => _e
-      {}
     end
 
     def collect_files(target)
@@ -228,12 +221,25 @@ module Master
          .sort
     end
 
-    def commit_if_dirty
+    def commit_if_dirty(msg)
       return unless @git&.dirty?(".")
       @git.add_lib_files
-      @git.commit(GIT_COMMIT_MSG)
+      @git.commit(msg)
     rescue StandardError => e
       @bus&.publish("super_loop:commit_error", error: e.message)
+    end
+
+    def load_deps
+      data = Master.load_yaml(DEPS_PATH)
+      (data&.dig("deps") || {}).transform_values { |v| Array(v["after"] || []) }
+    rescue StandardError
+      {}
+    end
+
+    def load_priors
+      Master.load_yaml(PRIORS_PATH) || {}
+    rescue StandardError
+      {}
     end
   end
   end

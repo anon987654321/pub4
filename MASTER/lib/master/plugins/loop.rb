@@ -12,20 +12,19 @@ module Master
     end
 
     def self.boot_autonomous(root:, infra:, agent:, scanner:, soul:)
-      bus       = infra[:bus]
-      standing  = Master::Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
-      autoloop  = Master::Loop::AutoLoop.new(
-        agent:, scanner:, root:, event_bus: bus, soul:, learnings: infra[:learnings]
+      bus        = infra[:bus]
+      standing   = Master::Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
+      git        = Master::Reach::GitOperations.new(root)
+      super_loop = Master::Loop::SuperLoop.new(
+        rules: scanner.instance_variable_get(:@rules),
+        agent:, scanner:, root:, bus:, git:, learnings: infra[:learnings]
       )
-      git       = Master::Reach::GitOperations.new(root)
-      super_loop = Master::Loop::SuperLoop.new(rules: scanner.instance_variable_get(:@rules),
-                                               agent:, scanner:, root:, bus:, git:)
       Thread.new { super_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
       heartbeat = Master::Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory],
                                               event_bus: bus, homeostat: infra[:homeostat])
       triggers  = Master::Trace::Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
-      { standing:, autoloop:, super_loop:, heartbeat:, triggers: }
+      { standing:, super_loop:, heartbeat:, triggers: }
     end
 
     Master::Plugin.register(:loop, self)
