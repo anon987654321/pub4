@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#1a1a1a">
   <meta name="turbo-cache-control" content="no-preview">
-  <title><%= content_for?(:title) ? "#{yield :title} — Hjerterom" : "Hjerterom" %></title>
-  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Hjerterom — oppdag og del matoppskrifter. Finn inspirasjon, planlegg måltider, og gled deg over god mat." %>">
+  <title><%= content_for?(:title) ? "#{yield :title} — Hjerterom Åsane" : "Hjerterom Åsane" %></title>
+  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Hjerterom Åsane — matredistribusjon og møteplass i Åsane, Bergen. Vi deler ut overskuddsmat, klær og bøker til de som trenger det." %>">
   <link rel="canonical" href="<%= request.original_url.split("?").first %>">
-  <meta property="og:site_name" content="Hjerterom">
-  <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : "Hjerterom" %>">
-  <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : "Oppdag og del matoppskrifter. Finn inspirasjon, planlegg måltider, og gled deg over god mat." %>">
+  <meta property="og:site_name" content="Hjerterom Åsane">
+  <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : "Hjerterom Åsane" %>">
+  <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : "Matredistribusjon og møteplass i Åsane, Bergen. Vi deler ut overskuddsmat, klær og bøker til de som trenger det." %>">
   <meta property="og:url" content="<%= request.original_url %>">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Hjerterom" %>">
-  <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "Oppdag og del matoppskrifter. Finn inspirasjon, planlegg måltider, og gled deg over god mat." %>">
+  <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Hjerterom Åsane" %>">
+  <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "Matredistribusjon og møteplass i Åsane, Bergen. Vi deler ut overskuddsmat, klær og bøker til de som trenger det." %>">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <link rel="icon" href="/icon.png" type="image/png">
