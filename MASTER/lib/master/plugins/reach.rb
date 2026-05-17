@@ -56,7 +56,6 @@ module Master
         factory = TOOL_MAP[defn["name"].to_s]
         factory ? factory.call(root, infra) : (infra[:bus]&.publish("builder:tool_skipped", tool: defn["name"]); nil)
       end
-      tools << TOOL_MAP.fetch("Dilla").call(root, infra) unless defs.any? { |defn| defn["name"].to_s == "Dilla" }
       tools
     end
 

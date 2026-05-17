@@ -28,4 +28,5 @@
 - { name: Clean,          tier: dangerous, visitor: false, default: true,  description: Remove tmp/build artifacts }
 - { name: Repligen,       tier: dangerous, visitor: false, default: true,  description: Replicate-API media generation }
 - { name: Postpro,        tier: dangerous, visitor: false, default: true,  description: Post-process audio/video }
+- { name: Dilla,          tier: dangerous, visitor: false, default: true,  description: Audio capture, separation, analysis, and rendering }
 - { name: FeedbackRecord, tier: safe,      visitor: false, default: true,  description: Record operator feedback into corrections.yml }
