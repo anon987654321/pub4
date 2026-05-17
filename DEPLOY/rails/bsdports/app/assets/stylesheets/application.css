@@ -4,7 +4,8 @@
   --green: #3fb950; --radius: 6px; --space: 8px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-nav { display: flex; gap: 1rem; align-items: center; padding: .5rem 1rem; border-bottom: 1px solid var(--border); font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; gap: 1rem; align-items: center; padding: .5rem 1rem; background: var(--bg); border-bottom: 1px solid var(--border); font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; transform: translateY(-100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+nav.nav-visible { transform: translateY(0); box-shadow: 0 2px 12px rgba(0,0,0,.4); }
 nav a { color: var(--text-dim); font-size: .85rem; text-decoration: none; }
 nav a:hover { color: var(--primary); text-decoration: none; }
 nav .brand { font-weight: 700; margin-right: auto; color: var(--primary); font-size: .95rem; }

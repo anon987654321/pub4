@@ -138,6 +138,8 @@ a:hover { text-decoration: underline; }
 
 /* ── Nav ── */
 nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   padding: calc(var(--sp) * 1.5) calc(var(--sp) * 3);
@@ -150,7 +152,11 @@ nav {
   padding-top: calc(var(--sp) * 1.5 + var(--safe-top));
   padding-left: calc(var(--sp) * 3 + var(--safe-left));
   padding-right: calc(var(--sp) * 3 + var(--safe-right));
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+
+nav.nav-visible { transform: translateY(0); }
 
 .logo { font-size: 1.3rem; font-weight: 700; color: var(--text); letter-spacing: -.03em; }
 .logo:hover { text-decoration: none; }

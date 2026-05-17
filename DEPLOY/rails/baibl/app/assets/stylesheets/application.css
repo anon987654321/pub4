@@ -8,7 +8,8 @@
 .verse-action.active { color: var(--primary); }
 .search { width: 100%; max-width: 480px; padding: .5rem .75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 1rem; }
 .dim { color: var(--text-dim); font-size: .85rem; }
-nav { display: flex; gap: 1rem; align-items: center; padding: .5rem 1rem; border-bottom: 1px solid var(--border); }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; gap: 1rem; align-items: center; padding: .5rem 1rem; background: var(--bg, #fff); border-bottom: 1px solid var(--border); transform: translateY(-100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+nav.nav-visible { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
 nav .brand { font-weight: 700; margin-right: auto; color: var(--primary); }
 h1, h2 { margin-bottom: .75rem; color: var(--primary); }
 
