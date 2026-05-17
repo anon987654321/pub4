@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # Postpro.rb - Professional Cinematic Post-Processing
-# Version: 15.0.0 - Ultimate Hybrid
+# Version: 16.0.0 - Full Analog Science
 
 require "logger"
 require "json"
@@ -233,7 +233,11 @@ STOCKS = {
   fuji_velvia:        { grain:  8, matrix: [1.12, -0.08, -0.04, 0.05, 1.05, -0.02, 0.01, -0.12, 1.11],
                         hd: { r: [0.02, 0.97, 0.18, 1.45], g: [0.02, 0.98, 0.18, 1.50], b: [0.03, 0.95, 0.20, 1.40] } },
   tri_x:              { grain: 25, matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
-                        hd: { r: [0.05, 0.95, 0.18, 1.30], g: [0.05, 0.95, 0.18, 1.30], b: [0.05, 0.95, 0.18, 1.30] } }
+                        hd: { r: [0.05, 0.95, 0.18, 1.30], g: [0.05, 0.95, 0.18, 1.30], b: [0.05, 0.95, 0.18, 1.30] } },
+  # Kodachrome: steep gamma, no in-film couplers, external development process.
+  # Punchy reds, heavy yellow separation, minimal shadow fog.
+  kodachrome:         { grain: 12, matrix: [1.15, -0.10, -0.05, 0.03, 1.00, -0.03, 0.00, -0.10, 1.10],
+                        hd: { r: [0.02, 0.97, 0.18, 1.42], g: [0.03, 0.97, 0.18, 1.36], b: [0.04, 0.95, 0.20, 1.20] } }
 }.freeze
 
 # Lens character: data-driven table drives vintage_lens().
@@ -246,25 +250,52 @@ LENSES = {
   anamorphic: { micro_contrast: 0.25, chroma: 0.08, flare: 0.50 },
 }.freeze
 
+# Per-stock R/G/B channel amplitude ratios for grain — mirrors the three
+# dye-layer sensitivities. Red layer is reference (1.00), green and blue
+# attenuated to match the stock's measured dye-cloud statistics.
+GRAIN_CHAN_SCALE = {
+  kodak_portra:       [1.00, 0.85, 0.70],
+  kodak_vision3:      [1.00, 0.90, 0.80],
+  kodak_vision3_50d:  [1.00, 0.88, 0.75],
+  kodak_vision3_500t: [1.00, 0.88, 0.72],
+  cinestill_800t:     [1.05, 0.88, 0.75],
+  ektachrome_100:     [0.95, 0.95, 1.05],
+  fuji_velvia:        [1.00, 1.10, 0.90],
+  tri_x:              [1.00, 1.00, 1.00],
+  kodachrome:         [1.00, 0.92, 0.82],
+}.freeze
+
 PRESETS = {
-  portrait:    { fx: %w[skin_protect film_curve highlight_roll micro_contrast grain color_temp base_tint],
-                 stock: :kodak_portra,       temp: 5200, intensity: 0.8 },
-  landscape:   { fx: %w[film_curve color_separate highlight_roll micro_contrast grain vintage_lens],
-                 stock: :fuji_velvia,        temp: 5800, intensity: 0.9 },
-  street:      { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain],
-                 stock: :tri_x,              temp: 5600, intensity: 1.0 },
-  blockbuster: { fx: %w[tonemap teal_orange halation grain bloom_pro highlight_roll micro_contrast],
-                 stock: :kodak_vision3,      temp: 4800, intensity: 1.2 },
-  dream:       { fx: %w[film_curve halation shadow_lift desaturate vintage_lens],
-                 stock: :ektachrome_100,     temp: 5800, intensity: 0.8, lens: "leica" },
-  neon_night:  { fx: %w[film_curve halation grain teal_orange micro_contrast],
-                 stock: :cinestill_800t,     temp: 3200, intensity: 1.0 },
-  horror:      { fx: %w[film_curve green_push desaturate micro_contrast grain],
-                 stock: :tri_x,              temp: 5600, intensity: 1.0 },
-  golden_age:  { fx: %w[film_curve halation warmth vintage_lens grain micro_contrast],
-                 stock: :kodak_vision3_50d,  temp: 5200, intensity: 0.9, lens: "cooke" },
-  indie:       { fx: %w[film_curve grain shadow_lift vintage_lens micro_contrast],
-                 stock: :kodak_portra,       temp: 5400, intensity: 0.7 },
+  portrait:       { fx: %w[skin_protect film_curve highlight_roll micro_contrast grain color_temp base_tint],
+                    stock: :kodak_portra,       temp: 5200, intensity: 0.8 },
+  landscape:      { fx: %w[film_curve color_separate highlight_roll micro_contrast grain vintage_lens],
+                    stock: :fuji_velvia,        temp: 5800, intensity: 0.9 },
+  street:         { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain],
+                    stock: :tri_x,              temp: 5600, intensity: 1.0 },
+  blockbuster:    { fx: %w[tonemap teal_orange halation grain bloom_pro highlight_roll micro_contrast],
+                    stock: :kodak_vision3,      temp: 4800, intensity: 1.2 },
+  dream:          { fx: %w[film_curve halation shadow_lift desaturate vintage_lens cross_fade],
+                    stock: :ektachrome_100,     temp: 5800, intensity: 0.8, lens: "leica" },
+  neon_night:     { fx: %w[film_curve halation grain teal_orange micro_contrast chromatic_aberration],
+                    stock: :cinestill_800t,     temp: 3200, intensity: 1.0 },
+  horror:         { fx: %w[film_curve green_push desaturate micro_contrast grain split_toning],
+                    stock: :tri_x,              temp: 5600, intensity: 1.0 },
+  golden_age:     { fx: %w[film_curve halation warmth vintage_lens grain micro_contrast dual_base_density],
+                    stock: :kodak_vision3_50d,  temp: 5200, intensity: 0.9, lens: "cooke" },
+  indie:          { fx: %w[film_curve grain shadow_lift vintage_lens micro_contrast faded_print],
+                    stock: :kodak_portra,       temp: 5400, intensity: 0.7 },
+  cinematic:      { fx: %w[tonemap bleach_bypass halation grain micro_contrast split_grade],
+                    stock: :kodak_vision3_500t, temp: 4500, intensity: 1.0 },
+  kodachrome_look:{ fx: %w[kodachrome_sim grain micro_contrast highlight_roll dir_coupler],
+                    stock: :kodachrome,         temp: 5600, intensity: 0.9 },
+  cross_process:  { fx: %w[film_curve color_separate grain shadow_lift micro_contrast split_toning],
+                    stock: :fuji_velvia,        temp: 5500, intensity: 1.2 },
+  silver_gelatin: { fx: %w[film_curve grain lith_print micro_contrast],
+                    stock: :tri_x,              temp: 5600, intensity: 0.8 },
+  vintage_chrome: { fx: %w[film_curve faded_print split_toning grain dual_base_density],
+                    stock: :ektachrome_100,     temp: 5200, intensity: 0.7 },
+  infrared_look:  { fx: %w[optical_blur infrared grain micro_contrast],
+                    stock: :tri_x,              temp: 5600, intensity: 0.9 },
 }.freeze
 
 def halation_tint_for(stock)
@@ -274,6 +305,7 @@ def halation_tint_for(stock)
   when :kodak_portra, :kodak_vision3_50d   then HALATION_TINT_PORTRA
   when :tri_x                              then HALATION_TINT_TRI_X
   when :ektachrome_100                     then HALATION_TINT_PORTRA
+  when :kodachrome                         then HALATION_TINT_PORTRA
   else                                          HALATION_TINT_VISION3
   end
 end
@@ -616,13 +648,13 @@ GRAIN_TARGET_DIV   = 1600.0
 GRAIN_BLUR_INVERSE = 1.0 / 0.36
 
 # Newson-Delon density-space grain: three independent per-channel noise images
-# blurred to a stock-specific correlation length, then modulated by a midtone
-# visibility envelope 4L(1-L) so highlights stay clean (low silver halide
-# density = no grain visible) and shadows soften (dye clouds at maximum
-# density dominate). Independence across R/G/B mirrors the three dye layers
-# of colour film. Operates in linearized sRGB so noise stays photometric.
+# blurred to stock-specific spatial σ, modulated by midtone visibility envelope
+# 4L(1-L). Per-channel amplitudes from GRAIN_CHAN_SCALE mirror the three dye
+# layers — red layer is coarsest, blue finest on most stocks. Operates in
+# linearized sRGB so noise stays photometric.
 def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
-  data = STOCKS[stock]
+  data    = STOCKS[stock] || STOCKS[:kodak_portra]
+  scales  = GRAIN_CHAN_SCALE[stock] || [1.0, 1.0, 1.0]
   spatial = [data[:grain] / GRAIN_SPATIAL_DIV.to_f, 0.5].max
   target  = data[:grain] * Math.sqrt(iso / 100.0) * intensity / GRAIN_TARGET_DIV
   pre     = [target * spatial * GRAIN_BLUR_INVERSE, 0.001].max
@@ -632,8 +664,8 @@ def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   luma = r * 0.2126 + g * 0.7152 + b * 0.0722
   envelope = (luma * luma.linear([-1], [1])).linear([4], [0])
 
-  bands = 3.times.map do
-    Vips::Image.gaussnoise(image.width, image.height, sigma: pre, mean: 0.0).gaussblur(spatial)
+  bands = scales.map do |scale|
+    Vips::Image.gaussnoise(image.width, image.height, sigma: pre * scale, mean: 0.0).gaussblur(spatial)
   end
   noise = Vips::Image.bandjoin(bands)
   safe_cast((linear + noise * envelope).colourspace("srgb"))
@@ -706,6 +738,222 @@ rescue StandardError => e
   image
 end
 
+# OLPF (optical low-pass filter) simulation — gentle pre-blur that removes
+# aliasing-scale detail before the film grain is laid down.
+def optical_blur(image, sigma = 0.6)
+  safe_cast(image.gaussblur([sigma, 0.3].max))
+rescue StandardError => e
+  $logger.error "optical_blur: #{e.message}"; image
+end
+
+# Lateral chromatic aberration: R/B fringe separation at sensor edges.
+def chromatic_aberration(image, strength = 0.5)
+  shift = [(strength * 3.0).round, 1].max
+  r, g, b = image.bandsplit
+  r2 = r.embed(shift, 0, image.width, image.height)
+  b2 = b.embed(-shift, 0, image.width, image.height)
+  safe_cast(Vips::Image.bandjoin([r2, g, b2]))
+rescue StandardError => e
+  $logger.error "chromatic_aberration: #{e.message}"; image
+end
+
+# DIR coupler inhibition: development byproducts from one dye layer inhibit
+# adjacent layers, slightly desaturating pure hues and sharpening edges.
+def dir_coupler(image, strength = 0.15)
+  blurred   = image.gaussblur(2.0)
+  high_pass = image.cast("float") - blurred.cast("float")
+  gray      = image.colourspace("grey16").colourspace("srgb").cast("float")
+  img_f     = image.cast("float")
+  desatd    = img_f * (1.0 - strength * 0.3) + gray * (strength * 0.3)
+  safe_cast((desatd + high_pass * (strength * 0.5)).cast("uchar"))
+rescue StandardError => e
+  $logger.error "dir_coupler: #{e.message}"; image
+end
+
+# Bleach bypass: skip bleach step, retain silver alongside dye. Result is
+# high contrast, desaturated, with lifted shadow detail. Screen-blend of a
+# B&W layer over the colour image.
+def bleach_bypass(image, intensity = 0.5)
+  img_f  = image.cast("float") / 255.0
+  gray_f = image.colourspace("grey16").colourspace("srgb").cast("float") / 255.0
+  screen = (img_f.linear(-1, 1) * gray_f.linear(-1, 1)).linear(-1, 1)
+  result = img_f * (1.0 - intensity) + screen * intensity
+  safe_cast(clamp01(result) * 255.0)
+rescue StandardError => e
+  $logger.error "bleach_bypass: #{e.message}"; image
+end
+
+# Push/pull processing: change development time equivalent. Positive stops
+# push (more exposure time → lifted blacks, boosted grain), negative pull
+# (reduced development → compressed shadows, softer contrast).
+def push_pull(image, stops = 1.0)
+  linear  = image.colourspace("scrgb")
+  exposed = clamp01(linear * (2.0**stops))
+  if stops > 0
+    shadow_add = exposed.linear(-1, 1) ** 2.0 * (stops * 0.04)
+    exposed    = clamp01(exposed + shadow_add)
+  end
+  safe_cast(exposed.colourspace("srgb"))
+rescue StandardError => e
+  $logger.error "push_pull: #{e.message}"; image
+end
+
+# Split toning: shadow and highlight color casts weighted by luminance.
+# shadow_rgb / hi_rgb are [R,G,B] triplets in 0-255.
+def split_toning(image, shadow_rgb = [45, 35, 60], hi_rgb = [255, 240, 210], intensity = 0.30)
+  luma  = image.colourspace("grey16").cast("float") / 255.0
+  img_f = image.cast("float") / 255.0
+  s_clr = (Vips::Image.black(image.width, image.height, bands: 3) + shadow_rgb).cast("float") / 255.0
+  h_clr = (Vips::Image.black(image.width, image.height, bands: 3) + hi_rgb).cast("float") / 255.0
+  s_w   = luma.linear(-1, 1) * intensity * 0.55
+  h_w   = luma               * intensity * 0.55
+  result = img_f + (s_clr - img_f) * s_w + (h_clr - img_f) * h_w
+  safe_cast(clamp01(result) * 255.0)
+rescue StandardError => e
+  $logger.error "split_toning: #{e.message}"; image
+end
+
+# Three-way color corrector: independent shadow / midtone / highlight casts.
+def split_grade(image, shadow_rgb = [30, 40, 60], mid_rgb = [255, 255, 248], hi_rgb = [255, 245, 220], intensity = 0.25)
+  luma  = image.colourspace("grey16").cast("float") / 255.0
+  img_f = image.cast("float") / 255.0
+  s_clr = (Vips::Image.black(image.width, image.height, bands: 3) + shadow_rgb).cast("float") / 255.0
+  m_clr = (Vips::Image.black(image.width, image.height, bands: 3) + mid_rgb).cast("float") / 255.0
+  h_clr = (Vips::Image.black(image.width, image.height, bands: 3) + hi_rgb).cast("float") / 255.0
+  s_w = (luma.linear(-1, 1) ** 2.0) * intensity * 0.5
+  m_w = (luma * luma.linear(-1, 1) * 4.0)  * intensity * 0.5
+  h_w = (luma ** 2.0)                       * intensity * 0.5
+  result = img_f + (s_clr - img_f) * s_w + (m_clr - img_f) * m_w + (h_clr - img_f) * h_w
+  safe_cast(clamp01(result) * 255.0)
+rescue StandardError => e
+  $logger.error "split_grade: #{e.message}"; image
+end
+
+# Film base density: multiplicative dye-density layer that shifts both color
+# and overall density — warmer and slightly darker than a simple tint.
+def dual_base_density(image, color = [255, 248, 235], opacity = 0.07)
+  r_m, g_m, b_m = color.map { |c| c / 255.0 }
+  img_f      = image.cast("float") / 255.0
+  multiplied = img_f.linear([r_m, g_m, b_m], [0, 0, 0])
+  result     = img_f * (1.0 - opacity) + multiplied * opacity
+  safe_cast(clamp01(result) * 255.0)
+rescue StandardError => e
+  $logger.error "dual_base_density: #{e.message}"; image
+end
+
+# Reciprocity failure: long exposures exhibit non-linear response — blue
+# channel lags most (needs correction exposure), shadows over-develop slightly.
+def reciprocity_failure(image, exposure_seconds = 10.0)
+  ev = Math.log2([exposure_seconds, 1.0].max) / 10.0
+  linear = image.colourspace("scrgb")
+  r, g, b = linear.bandsplit
+  luma    = r * 0.2126 + g * 0.7152 + b * 0.0722
+  dark_w  = luma.linear(-1, 1)
+  result  = Vips::Image.bandjoin([
+    r + dark_w * ev * 0.03,
+    g + dark_w * ev * 0.02,
+    b + (ev * 0.15) + dark_w * ev * 0.05
+  ])
+  safe_cast(clamp01(result).colourspace("srgb"))
+rescue StandardError => e
+  $logger.error "reciprocity_failure: #{e.message}"; image
+end
+
+# Dreamy soft cross-fade: soft-light blend of a blurred copy over the image.
+def cross_fade(image, intensity = 0.4)
+  blur_f = image.gaussblur(12.0).cast("float") / 255.0
+  img_f  = image.cast("float") / 255.0
+  screen = (img_f.linear(-1, 1) * blur_f.linear(-1, 1)).linear(-1, 1)
+  soft   = (blur_f < 0.5).ifthenelse(img_f * blur_f * 2.0, screen)
+  result = img_f * (1.0 - intensity) + soft * intensity
+  safe_cast(clamp01(result) * 255.0)
+rescue StandardError => e
+  $logger.error "cross_fade: #{e.message}"; image
+end
+
+# Infrared simulation: green channel → bright (foliage), blue → dark (sky).
+# Heavy green mix approximates IR film's extended-red/near-IR sensitivity.
+def infrared(image, intensity = 0.8)
+  r, g, b = image.cast("float").bandsplit
+  ir  = r * 0.20 + g * 0.80 + (b > 0).ifthenelse(b, 0).linear(-1, 0) * 0.15
+  ir  = (ir > 0).ifthenelse(ir, 0)
+  glow = ir.gaussblur(8.0) * 0.25
+  ir3 = Vips::Image.bandjoin([ir + glow, ir + glow, ir + glow])
+  result = image.cast("float") * (1.0 - intensity) + ir3 * intensity
+  safe_cast(result.cast("uchar"))
+rescue StandardError => e
+  $logger.error "infrared: #{e.message}"; image
+end
+
+# Cyanotype alt-process: Prussian blue shadows [0,52,102] to white highlights.
+def cyanotype(image, intensity = 0.90)
+  shadow = [0, 52, 102]
+  luma   = image.colourspace("grey16").cast("float") / 255.0
+  r = luma * (255 - shadow[0]) + shadow[0]
+  g = luma * (255 - shadow[1]) + shadow[1]
+  b = luma * (255 - shadow[2]) + shadow[2]
+  cyan   = Vips::Image.bandjoin([r, g, b])
+  result = image.cast("float") * (1.0 - intensity) + cyan * intensity
+  safe_cast(result.cast("uchar"))
+rescue StandardError => e
+  $logger.error "cyanotype: #{e.message}"; image
+end
+
+# Lith printing: aggressive contrast, warm sepia shadows, near-white highlights.
+def lith_print(image, intensity = 0.80)
+  gray = image.colourspace("grey16").cast("float") / 255.0
+  hi   = clamp01(gray ** 0.55 * 1.1)
+  s_w  = (gray.linear(-1, 1) ** 2.0) * 255.0
+  r    = hi * 255.0 + s_w * 0.12
+  g    = hi * 255.0 - s_w * 0.04
+  b    = hi * 255.0 - s_w * 0.16
+  lith = Vips::Image.bandjoin([r, g, b])
+  result = image.cast("float") * (1.0 - intensity) + lith * intensity
+  safe_cast(result.cast("uchar"))
+rescue StandardError => e
+  $logger.error "lith_print: #{e.message}"; image
+end
+
+# Technicolor 3-strip: per-channel strip registration offset + heavy dye saturation.
+def technicolor(image, intensity = 0.60)
+  r, g, b = image.bandsplit
+  r2 = r.embed(1, 0, image.width, image.height)
+  b2 = b.embed(-1, 1, image.width, image.height)
+  combined = Vips::Image.bandjoin([r2, g, b2])
+  hsv = combined.colourspace("hsv")
+  h, s, v = hsv.bandsplit
+  s_hi = safe_cast(s.linear([1.0 + intensity * 0.7], [0]))
+  boosted = Vips::Image.bandjoin([h, s_hi, v]).colourspace("srgb")
+  safe_cast((image.cast("float") * (1.0 - intensity) + boosted.cast("float") * intensity).cast("uchar"))
+rescue StandardError => e
+  $logger.error "technicolor: #{e.message}"; image
+end
+
+# Kodachrome simulation: steep per-channel H&D curve + external coupler saturation.
+def kodachrome_sim(image, intensity = 0.70)
+  result = film_curve(image, :kodachrome, intensity * 0.85)
+  hsv    = result.colourspace("hsv")
+  h, s, v = hsv.bandsplit
+  s_hi = safe_cast(s.linear([1.0 + intensity * 0.45], [0]))
+  v_hi = safe_cast(v.linear([1.0 + intensity * 0.08], [0]))
+  saturated = Vips::Image.bandjoin([h, s_hi, v_hi]).colourspace("srgb")
+  safe_cast((result.cast("float") * (1.0 - intensity * 0.25) +
+             saturated.cast("float") * intensity * 0.25).cast("uchar"))
+rescue StandardError => e
+  $logger.error "kodachrome_sim: #{e.message}"; image
+end
+
+# Aged photographic print: contrast compression, warm yellow-brown lift, soft blur.
+def faded_print(image, age = 0.5)
+  img_f = image.cast("float") / 255.0
+  comp  = img_f * (1.0 - age * 0.35) + (age * 0.12)
+  shift = comp.linear([1.0, 1.0, 1.0], [age * 0.10, age * 0.06, -(age * 0.12)])
+  out   = safe_cast(clamp01(shift) * 255.0)
+  age > 0.3 ? safe_cast(out.gaussblur(age * 1.2)) : out
+rescue StandardError => e
+  $logger.error "faded_print: #{e.message}"; image
+end
+
 def teal_orange(image, intensity = 1.0)
   protected = skin_protect(image, 0.8)
   r, g, b = protected.bandsplit
@@ -737,15 +985,25 @@ HALATION_TINT_PORTRA  = [1.0,  0.30, 0.06].freeze
 HALATION_TINT_TRI_X   = [0.55, 0.55, 0.55].freeze
 HALATION_THRESHOLD    = 0.7
 
-def halation(image, intensity = 1.0, tint: HALATION_TINT_VISION3, sigma_div: 60)
-  sigma = [image.width / sigma_div.to_f, 4.0].max
-  linear = image.colourspace("scrgb")
-  red    = linear.extract_band(0)
-  excess = red.linear([1], [-HALATION_THRESHOLD])
-  bright = (excess > 0).ifthenelse(excess, 0) ** 2
-  glow_src = bright.gaussblur(sigma)
-  glow = Vips::Image.bandjoin(tint.map { |w| glow_src.linear([w * intensity], [0]) })
-  safe_cast((linear + glow).colourspace("srgb"))
+# Halation: resolution-aware σ ≈ width/45 (≈43px at 2K, calibrated from agx
+# emulsion measurements). Luma-based bright mask rather than red-only, so
+# over-exposed highlights on any channel trigger the halo. Per-channel blur
+# radii R>G>>B model wavelength-dependent penetration depth in the emulsion
+# stack. Output clamp prevents HDR overshoot from adding solarization.
+def halation(image, intensity = 1.0, tint: HALATION_TINT_VISION3)
+  sigma_r = [image.width / 45.0, 6.0].max.clamp(6.0, 120.0)
+  sigma_g = sigma_r * 0.55
+  sigma_b = sigma_r * 0.25
+  linear  = image.colourspace("scrgb")
+  r, g, b = linear.bandsplit
+  luma    = r * 0.2126 + g * 0.7152 + b * 0.0722
+  excess  = luma.linear([1], [-HALATION_THRESHOLD])
+  bright  = (excess > 0).ifthenelse(excess, 0) ** 2
+  halo_r  = bright.gaussblur(sigma_r) * (tint[0] * intensity)
+  halo_g  = bright.gaussblur(sigma_g) * (tint[1] * intensity)
+  halo_b  = bright.gaussblur(sigma_b) * (tint[2] * intensity)
+  halo    = Vips::Image.bandjoin([halo_r, halo_g, halo_b])
+  safe_cast(clamp01(linear + halo).colourspace("srgb"))
 end
 
 # Filmic tonemap in linear (exposure) space. ACES is the Narkowicz fit to the
@@ -754,16 +1012,20 @@ end
 # cinematic productions. Both per-channel; chroma drift in the shoulder is the
 # expected filmic behaviour. Exposure is applied in stops (2^EV) before the
 # curve, so a +1.0 stop doubles linear light pre-tonemap.
-TONEMAP_ACES = { a: 2.51, b: 0.03, c: 2.43, d: 0.59, e: 0.14 }.freeze
+TONEMAP_ACES  = { a: 2.51, b: 0.03, c: 2.43, d: 0.59, e: 0.14 }.freeze
 TONEMAP_HABLE = { a: 0.15, b: 0.50, c: 0.10, d: 0.20, e: 0.02, f: 0.30, w: 1.0 }.freeze
+# Hejl-Burgess-Dawson: no division path in shadows, slight toe lift.
+# Good for scenes where ACES reads too contrasty in the blacks.
+TONEMAP_HBD   = { a: 6.2, b: 0.5, c: 1.7, d: 0.06 }.freeze
 
 def tonemap(image, type: :aces, exposure: 0.0, intensity: 1.0)
-  linear = image.colourspace("scrgb")
+  linear  = image.colourspace("scrgb")
   exposed = linear.linear([2.0**exposure] * 3, [0, 0, 0])
-  curved = case type.to_sym
-           when :hable then tonemap_hable(exposed)
-           else             tonemap_aces(exposed)
-           end
+  curved  = case type.to_sym
+            when :hable then tonemap_hable(exposed)
+            when :hbd   then tonemap_hbd(exposed)
+            else             tonemap_aces(exposed)
+            end
   blended = linear * (1 - intensity) + clamp01(curved) * intensity
   safe_cast(blended.colourspace("srgb"))
 end
@@ -792,6 +1054,16 @@ def tonemap_hable(linear)
   Vips::Image.bandjoin(curved).linear([1.0 / white] * 3, [0, 0, 0])
 end
 
+def tonemap_hbd(linear)
+  a, b, c, d = TONEMAP_HBD.values_at(:a, :b, :c, :d)
+  curved = linear.bandsplit.map do |x|
+    num = (x * x).linear([a], [0]) + x.linear([b], [0])
+    den = (x * x).linear([a], [0]) + x.linear([c], [d])
+    num / den
+  end
+  Vips::Image.bandjoin(curved)
+end
+
 # Preset Application
 def preset(image, name)
   p = PRESETS[name.to_sym]
@@ -810,15 +1082,31 @@ def preset(image, name)
              when 'base_tint' then base_tint(result, [255, 250, 245], 0.08)
              when 'color_separate' then color_separate(result, p[:intensity] * 0.6)
              when 'vintage_lens' then vintage_lens(result, 'zeiss', p[:intensity] * 0.8)
-             when "teal_orange"   then teal_orange(result, p[:intensity])
-             when "bloom_pro"     then bloom_pro(result, p[:intensity])
-             when "halation"      then halation(result, p[:intensity], tint: halation_tint_for(p[:stock]))
-             when "tonemap"       then tonemap(result, type: :aces, exposure: 0.0, intensity: p[:intensity] * 0.7)
-             when "spectral_temp" then spectral_temp(result, source_kelvin: 5500, target_kelvin: p[:temp], intensity: p[:intensity] * 0.6)
-             when "desaturate"    then desaturate(result, p[:intensity] * 0.6)
-             when "warmth"        then warmth(result, p[:intensity] * 0.3)
-             when "green_push"    then green_push(result, p[:intensity] * 0.15)
-             when "vintage_lens"  then vintage_lens(result, p.fetch(:lens, "zeiss"), p[:intensity] * 0.8)
+             when "teal_orange"          then teal_orange(result, p[:intensity])
+             when "bloom_pro"            then bloom_pro(result, p[:intensity])
+             when "halation"             then halation(result, p[:intensity], tint: halation_tint_for(p[:stock]))
+             when "tonemap"              then tonemap(result, type: :aces, exposure: 0.0, intensity: p[:intensity] * 0.7)
+             when "spectral_temp"        then spectral_temp(result, source_kelvin: 5500, target_kelvin: p[:temp], intensity: p[:intensity] * 0.6)
+             when "desaturate"           then desaturate(result, p[:intensity] * 0.6)
+             when "warmth"               then warmth(result, p[:intensity] * 0.3)
+             when "green_push"           then green_push(result, p[:intensity] * 0.15)
+             when "vintage_lens"         then vintage_lens(result, p.fetch(:lens, "zeiss"), p[:intensity] * 0.8)
+             when "optical_blur"         then optical_blur(result)
+             when "chromatic_aberration" then chromatic_aberration(result, p[:intensity] * 0.35)
+             when "dir_coupler"          then dir_coupler(result, p[:intensity] * 0.15)
+             when "bleach_bypass"        then bleach_bypass(result, p[:intensity] * 0.5)
+             when "push_pull"            then push_pull(result, p.fetch(:stops, 1.0))
+             when "split_toning"         then split_toning(result)
+             when "split_grade"          then split_grade(result)
+             when "dual_base_density"    then dual_base_density(result)
+             when "reciprocity_failure"  then reciprocity_failure(result, p.fetch(:exposure_secs, 10.0))
+             when "cross_fade"           then cross_fade(result, p[:intensity] * 0.4)
+             when "infrared"             then infrared(result, p[:intensity] * 0.8)
+             when "cyanotype"            then cyanotype(result, p[:intensity])
+             when "lith_print"           then lith_print(result, p[:intensity] * 0.8)
+             when "technicolor"          then technicolor(result, p[:intensity] * 0.6)
+             when "kodachrome_sim"       then kodachrome_sim(result, p[:intensity] * 0.7)
+             when "faded_print"          then faded_print(result, 0.5)
              else result
              end
   end
@@ -926,6 +1214,29 @@ def recipe(image, recipe_data)
   result
 end
 
+# Export a 3D LUT (.cube) for a preset. size³ lattice points; 17 is standard
+# for color-grading workflows, 33 for higher precision.
+def export_lut(preset_name, path, size = 17)
+  step = 1.0 / (size - 1)
+  lines = ["LUT_3D_SIZE #{size}", "DOMAIN_MIN 0.0 0.0 0.0", "DOMAIN_MAX 1.0 1.0 1.0", ""]
+  size.times do |bi|
+    size.times do |gi|
+      size.times do |ri|
+        pix = Vips::Image.black(1, 1, bands: 3) + [ri * step * 255, gi * step * 255, bi * step * 255]
+        out = preset(pix.cast("uchar"), preset_name)
+        ro = out.extract_band(0).avg / 255.0
+        go = out.extract_band(1).avg / 255.0
+        bo = out.extract_band(2).avg / 255.0
+        lines << "%.6f %.6f %.6f" % [ro.clamp(0, 1), go.clamp(0, 1), bo.clamp(0, 1)]
+      end
+    end
+  end
+  File.write(path, lines.join("\n") + "\n")
+  $cli_logger.info "LUT exported: #{path} (#{size}^3)"
+rescue StandardError => e
+  $cli_logger.error "export_lut failed: #{e.message}"
+end
+
 # Introspection
 def describe_preset(name)
   p = PRESETS[name.to_sym] or return "unknown preset: #{name}"
@@ -1005,7 +1316,11 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       output = file.sub(File.extname(file), "_#{suffix}_v#{i + 1}_#{timestamp}#{File.extname(file)}")
       
       quality = CONFIG["jpeg_quality"] || 95
-      processed.write_to_file(output, Q: quality)
+      if ARGV.include?("--tiff16") || output.end_with?(".tif", ".tiff")
+        processed.cast("ushort").write_to_file(output.sub(/\.(jpg|jpeg|png)$/i, ".tif"))
+      else
+        processed.write_to_file(output, Q: quality)
+      end
       $cli_logger.info "Saved masterpiece #{i + 1}: #{File.basename(output)}"
       processed_count += 1
       
@@ -1019,8 +1334,8 @@ end
 
 # Main Workflow
 def get_input
-  $cli_logger.info "Postpro.rb v14.2.0 Professional Edition"
-  $cli_logger.info "Advanced Color Science & Cinematic Workflows" + (REPLIGEN_PRESENT ? " | Repligen Active" : "")
+  $cli_logger.info "Postpro.rb v16.0.0 Full Analog Science"
+  $cli_logger.info "Physics-based film emulation" + (REPLIGEN_PRESENT ? " | Repligen Active" : "")
   
   check_repligen if REPLIGEN_PRESENT
   
@@ -1079,7 +1394,7 @@ def one_shot_mode?
 end
 
 def introspect_mode?
-  (ARGV & %w[--list-presets --list-stocks --list-lenses --describe-preset --css-filter]).any?
+  (ARGV & %w[--list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut]).any?
 end
 
 def run_introspect
@@ -1093,6 +1408,10 @@ def run_introspect
     puts describe_preset(name)
   elsif (name = argv_flag("--css-filter"))
     puts css_filter(name.to_sym)
+  elsif (name = argv_flag("--export-lut"))
+    out  = argv_flag("--output") || "#{name}.cube"
+    size = (argv_flag("--size") || "17").to_i
+    export_lut(name.to_sym, out, size)
   end
 end
 
