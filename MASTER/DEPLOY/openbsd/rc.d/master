@@ -13,9 +13,9 @@ rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
-	# Kill any orphan processes from previous failed starts before launching.
+	# Kill orphans from previous failed starts before launching.
 	pkill -f "falcon.*${PORT}" 2>/dev/null
-	pkill -f "ruby.*master.*web"  2>/dev/null
+	pkill -f "pub4/MASTER/web" 2>/dev/null
 	sleep 1
 }
 
