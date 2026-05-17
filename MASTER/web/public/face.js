@@ -10,8 +10,17 @@ let lpxCV = document.createElement('canvas');
 let lpxCtx = lpxCV.getContext('2d');
 let lpxW = 0, lpxH = 0;
 
-// Float accumulation buffer for Atkinson dithering + phosphor persistence
+// Oscilloscope XY mini-canvas — 128×128 particle XY plot, corner overlay
+const scopeCV  = document.createElement('canvas');
+const scopeCtx = scopeCV.getContext('2d');
+scopeCV.width = scopeCV.height = 128;
+let scopeBuf = new Float32Array(128 * 128);
+
+// Float accumulation buffer — phosphor persistence (never written by dithering)
 let fbuf = null, fbufSize = 0;
+// Per-frame Atkinson error buffer — zeroed each frame, never persists
+let ebuf = null;
+let zbuf = null; // zone index per lpxCV pixel — drives ZX attribute colour
 
 // Zone glyph stamps — [dx, dy] offsets in lpxCV (half-res) space
 // Suggest geometric character: | for contours, — for brows, □ for eyes, + for crown
@@ -20,13 +29,50 @@ const ZONE_STAMP = {
   noseRidge: [[0,0],[0,1]],
   browL:     [[0,0],[1,0]], browR:     [[0,0],[1,0]],
   mouth:     [[0,0],[1,0]], chin:      [[0,0],[1,0]],
-  eyeL:      [[0,0],[1,0],[0,1],[1,1]], eyeR: [[0,0],[1,0],[0,1],[1,1]],
+  eyeL:      [[0,0],[1,0],[0,1],[1,1]], eyeR:   [[0,0],[1,0],[0,1],[1,1]],
+  pupilL:    [[0,0],[1,0],[0,1],[1,1]], pupilR: [[0,0],[1,0],[0,1],[1,1]],
   crown:     [[-1,0],[0,0],[1,0],[0,-1]],
   scarL:     [[0,0],[1,1]], scarR: [[1,0],[0,1]],
   noseFlare: [[0,0],[1,0]],
   tasselL:   [[0,0],[0,1]], tasselR: [[0,0],[0,1]],
 };
 const _STAMP_DEFAULT = [[0,0]];
+
+// Pixel palette — CSS filter applied at blit time; cycles with P key
+// Index 5 = ZX Spectrum attribute mode (handled in Atkinson pass, no CSS filter)
+let pixelPal = 0;
+const PIXEL_FILTERS = [
+  null,
+  'sepia(1) hue-rotate(70deg)  saturate(5) brightness(0.85)',
+  'sepia(1) hue-rotate(200deg) saturate(4) brightness(0.75)',
+  'sepia(1) hue-rotate(340deg) saturate(4) brightness(0.95)',
+  'sepia(1) hue-rotate(290deg) saturate(6) brightness(1.05)',
+  null, // ZX — uses zbuf zone colours directly
+];
+const PIXEL_PAL_NAMES = ['MONO', 'GB', 'C64', 'AMB', 'NEO', 'ZX'];
+
+// ZX Spectrum attribute colours per zone (Uint32 RGBA little-endian)
+// R|(G<<8)|(B<<16)|(0xFF<<24)
+const ZX_ZONE_IDX = {
+  outlineL:1, outlineR:1, eyeL:2, eyeR:2, pupilL:3, pupilR:3,
+  browL:4, browR:4, noseRidge:5, noseFlare:5, mouth:6, chin:7,
+  crown:8, scarL:9, scarR:9, tasselL:10, tasselR:10,
+  sideL:11, sideR:11,
+};
+const ZX_PALETTE = [
+  0xFFFFFFFF, // 0 default white
+  0xFFFF00FF, // 1 outline  — magenta
+  0xFFC00000, // 2 eye      — blue
+  0xFFFFFFFF, // 3 pupil    — white (high-contrast in dark socket)
+  0xFF00FF00, // 4 brow     — green
+  0xFFC0C0C0, // 5 nose     — light grey
+  0xFF0000FF, // 6 mouth    — red
+  0xFF00FFFF, // 7 chin     — yellow
+  0xFFFFFF00, // 8 crown    — cyan
+  0xFFFF00C0, // 9 scar     — warm orange
+  0xFF80FF80, // 10 tassel  — pale green
+  0xFFC0C000, // 11 side    — teal
+];
 
 // Preallocated curl output — avoids GC allocation every frame per particle
 const _curl = new Float64Array(2);
@@ -404,12 +450,29 @@ function _doResize() {
   }
   let zonesA = null, zonesB = null;
   let maskPhase = 0, maskTransitioning = false, lastMaskSwitch = performance.now();
+  // Side-head anchors — temple/ear band, z=0 (equator plane).
+  // Rotation in tickParticles naturally reveals them as yaw increases.
+  function buildSideAnchors(cx, cy, s) {
+    const L = [], R = [];
+    for (let i = 0; i < 32; i++) {
+      const t = i / 31;
+      const y = cy - s * 0.72 + t * s * 1.44;
+      const bulge = Math.sin(t * Math.PI) * s * 0.07;
+      L.push({ x: cx - s * 0.88 - bulge, y, z: 0, zone: 'sideL' });
+      R.push({ x: cx + s * 0.88 + bulge, y, z: 0, zone: 'sideR' });
+    }
+    return { sideL: L, sideR: R };
+  }
   function computeZones() {
     const cx = W * 0.5, cy = H * 0.50;
     const s = Math.min(W, H * 0.78) * 0.22;
     Face.cx = cx; Face.cy = cy; Face.s = s;
     zonesA = buildMask(MASKS[maskIdx], cx, cy, s);
     zonesB = buildMask(MASKS[maskNextIdx], cx, cy, s);
+    const sidesA = buildSideAnchors(cx, cy, s);
+    zonesA.sideL = sidesA.sideL; zonesA.sideR = sidesA.sideR;
+    const sidesB = buildSideAnchors(cx, cy, s);
+    zonesB.sideL = sidesB.sideL; zonesB.sideR = sidesB.sideR;
     Face.zones = zonesA;
     Face.anchors = [].concat(...Object.values(zonesA));
   }
@@ -1292,6 +1355,8 @@ function _doResize() {
     drawSweat();
     drawVein();
     drawNoseBubble();
+    drawOscilloscope();
+    drawHUD();
 
     idlePulse += dt * 0.002;
 
@@ -1464,9 +1529,10 @@ function _doResize() {
   function drawParticles() {
     if (!lpxW || !lpxH) return;
 
-    // Reallocate float buffer on first call or after resize
+    // Reallocate float + zone buffers on first call or after resize
     const sz = lpxW * lpxH;
-    if (!fbuf || fbufSize !== sz) { fbuf = new Float32Array(sz); fbufSize = sz; }
+    if (!fbuf || fbufSize !== sz) { fbuf = new Float32Array(sz); ebuf = new Float32Array(sz); fbufSize = sz; zbuf = new Uint8Array(sz); }
+    else ebuf.fill(0);
 
     // Phosphor decay — persistent frame energy with hard floor drain to black
     for (let j = 0; j < sz; j++) fbuf[j] = Math.max(0, fbuf[j] * 0.80 - 0.004);
@@ -1486,8 +1552,8 @@ function _doResize() {
       const sz_ = p.sz || 0;
       if (sz_ < -s * 0.4) continue;
 
-      // Spheroid normal in view-space
-      const mx = (p.x - fcx) / s, my = (p.y - fcy) / s, mz = sz_ / s;
+      // Spheroid normal — home coords (rest-pose), not animated p.x/p.y
+      const mx = (p.hx - fcx) / s, my = (p.hy - fcy) / s, mz = p.hz / s;
       const nx = mx / A2, ny = my / B2, nz = mz / C2;
       const nlen = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
       const nnx = nx/nlen, nny = ny/nlen, nnz = nz/nlen;
@@ -1505,7 +1571,8 @@ function _doResize() {
       // Blinn-Phong specular — nose/brow ceramic gloss
       if (zone === 'noseRidge' || zone === 'noseFlare' || zone === 'browL' || zone === 'browR') {
         const NdotH = Math.max(0, HX*nnx + HY*nny + HZ*nnz);
-        bright += Math.pow(NdotH, 28) * 14;
+        const h2 = NdotH*NdotH, h4 = h2*h2, h8 = h4*h4, h16 = h8*h8;
+        bright += h16 * h8 * h4 * 14; // h^28, 7 muls
       }
 
       // Rim lighting — silhouette halo on outline
@@ -1517,36 +1584,38 @@ function _doResize() {
       const val = Math.min(bright, 16) / 16; // normalise 0..1
 
       // Zone-specific glyph stamp — clamped add prevents specular blowout
+      const zoneCol = ZX_ZONE_IDX[zone] || 0;
       const stamp = ZONE_STAMP[zone] || _STAMP_DEFAULT;
       for (let k = 0; k < stamp.length; k++) {
         const gx = px + stamp[k][0], gy = py + stamp[k][1];
         if (gx >= 0 && gx < lpxW && gy >= 0 && gy < lpxH) {
           const idx = gy * lpxW + gx;
           fbuf[idx] = Math.min(1, fbuf[idx] + val);
+          zbuf[idx] = zoneCol;
         }
       }
     }
 
-    // Atkinson dithering — distribute 1/8 error to 6 neighbors
+    // Atkinson dithering — errors go to ebuf only; fbuf (phosphor) never touched
     const imgd = lpxCtx.getImageData(0, 0, lpxW, lpxH);
     const buf  = new Uint32Array(imgd.data.buffer);
     buf.fill(0xFF000000);
     for (let y = 0; y < lpxH; y++) {
       for (let x = 0; x < lpxW; x++) {
         const idx = y * lpxW + x;
-        const v   = Math.min(1, Math.max(0, fbuf[idx]));
+        const v   = Math.min(1, Math.max(0, fbuf[idx] + ebuf[idx]));
         const out = v >= 0.5 ? 1 : 0;
-        if (out) buf[idx] = 0xFFFFFFFF;
+        if (out) buf[idx] = pixelPal === 5 ? (ZX_PALETTE[zbuf[idx]] || 0xFFFFFFFF) : 0xFFFFFFFF;
         const err = (v - out) * 0.125;
         if (err === 0) continue;
-        if (x+1 < lpxW) fbuf[idx+1]       += err;
-        if (x+2 < lpxW) fbuf[idx+2]       += err;
+        if (x+1 < lpxW) ebuf[idx+1]       += err;
+        if (x+2 < lpxW) ebuf[idx+2]       += err;
         if (y+1 < lpxH) {
-          if (x > 0)    fbuf[idx+lpxW-1]  += err;
-                        fbuf[idx+lpxW]    += err;
-          if (x+1<lpxW) fbuf[idx+lpxW+1] += err;
+          if (x > 0)    ebuf[idx+lpxW-1]  += err;
+                        ebuf[idx+lpxW]    += err;
+          if (x+1<lpxW) ebuf[idx+lpxW+1] += err;
         }
-        if (y+2 < lpxH) fbuf[idx+lpxW*2] += err;
+        if (y+2 < lpxH) ebuf[idx+lpxW*2] += err;
       }
     }
 
@@ -1566,7 +1635,10 @@ function _doResize() {
 
     lpxCtx.putImageData(imgd, 0, 0);
     ctx.imageSmoothingEnabled = false;
+    const _flt = PIXEL_FILTERS[pixelPal];
+    if (_flt) ctx.filter = _flt;
     ctx.drawImage(lpxCV, 0, 0, W, H);
+    if (_flt) ctx.filter = 'none';
   }
 
   // Zone polylines — connect sorted particles per zone with quadratic bezier splines
@@ -1624,46 +1696,78 @@ function _doResize() {
     ctx.restore();
   }
 
-  // Oscilloscope trace — single continuous sweep through all particles when active
-  const SCOPE_ZONE_ORDER = [
-    'outlineL','browL','eyeL','pupilL','noseRidge','noseFlare',
-    'pupilR','eyeR','browR','outlineR','mouth','chin','crown',
-    'scarL','scarR','tasselL','tasselR'
-  ];
+  // Oscilloscope XY mini-canvas — particle positions plotted as stereo XY scope
+  // L=X, R=Y; the face shape emerges as a Lissajous figure in the bottom-right corner.
   function drawOscilloscope() {
     if (State.mode !== 'thinking' && State.mode !== 'speaking') return;
-    const byZone = {};
+    const SZ = 128, fcx = Face.cx, fcy = Face.cy, fs = Face.s;
+    const scale = 52 / fs; // normalize face radius → ~52px in scope
+    // Phosphor decay
+    for (let j = 0; j < SZ * SZ; j++) scopeBuf[j] = Math.max(0, scopeBuf[j] * 0.78 - 0.005);
+    // Accumulate particle XY positions
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
-      (byZone[p.zone] || (byZone[p.zone] = [])).push(p);
+      const sx = ((p.x - fcx) * scale + SZ * 0.5) | 0;
+      const sy = ((p.y - fcy) * scale + SZ * 0.5) | 0;
+      if (sx >= 0 && sx < SZ && sy >= 0 && sy < SZ) scopeBuf[sy * SZ + sx] = Math.min(1, scopeBuf[sy * SZ + sx] + 0.35);
     }
-    const sweep = [];
-    for (let z = 0; z < SCOPE_ZONE_ORDER.length; z++) {
-      const pts = byZone[SCOPE_ZONE_ORDER[z]];
-      if (!pts) continue;
-      const rcx = pts.reduce((s, p) => s + p.hx, 0) / pts.length;
-      const rcy = pts.reduce((s, p) => s + p.hy, 0) / pts.length;
-      pts.sort((a, b) => Math.atan2(a.hy - rcy, a.hx - rcx) - Math.atan2(b.hy - rcy, b.hx - rcx));
-      for (let i = 0; i < pts.length; i += 3) sweep.push(pts[i]); // every 3rd = ~700 pts
+    // Render to scopeCV
+    const imgd = scopeCtx.getImageData(0, 0, SZ, SZ);
+    const sbuf = new Uint32Array(imgd.data.buffer);
+    for (let j = 0; j < SZ * SZ; j++) {
+      const v = (scopeBuf[j] * 255) | 0;
+      sbuf[j] = v > 0 ? (0xFF000000 | v * 0x010101) : 0xFF000000;
     }
-    if (sweep.length < 2) return;
+    scopeCtx.putImageData(imgd, 0, 0);
+    // Blit to main canvas — bottom-right corner, 2× scale
     ctx.save();
-    ctx.globalAlpha = State.mode === 'thinking' ? 0.10 : 0.07;
-    ctx.strokeStyle  = '#fff';
-    ctx.lineWidth    = 0.75;
-    ctx.beginPath();
-    ctx.moveTo(sweep[0].x, sweep[0].y);
-    for (let i = 1; i < sweep.length; i++) {
-      const mx = (sweep[i-1].x + sweep[i].x) * 0.5;
-      const my = (sweep[i-1].y + sweep[i].y) * 0.5;
-      ctx.quadraticCurveTo(sweep[i-1].x, sweep[i-1].y, mx, my);
-    }
-    ctx.stroke();
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = 0.72;
+    ctx.drawImage(scopeCV, W - 144, H - 144, SZ, SZ);
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(W - 144, H - 144, SZ, SZ);
     ctx.restore();
   }
-  function drawEdgePulse() {}
-  function drawCorona() {}
-  function drawThinkingOrbit() {}
+  function drawEdgePulse() {
+    if (Face.edgePulse < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s, a = Face.edgePulse;
+    ctx.fillStyle = '#fff'; ctx.globalAlpha = a;
+    for (let i = 0; i < 52; i++) {
+      const ang = (i / 52) * Math.PI * 2;
+      const r = s * (1.11 + (i % 3 === 0 ? 0.07 : 0));
+      ctx.fillRect((cx + Math.cos(ang) * r) | 0, (cy + Math.sin(ang) * r * 0.84) | 0, 1, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawCorona() {
+    if (Face.coronaFlash < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s, v = Face.coronaFlash;
+    const t = performance.now() * 0.001;
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 18; i++) {
+      const ang = (i / 18) * Math.PI * 2 + t * (i & 1 ? 0.4 : -0.4);
+      const r0 = s * 1.14, r1 = s * (1.24 + (i % 3 === 0 ? 0.16 : 0.04));
+      ctx.globalAlpha = v * (i % 3 === 0 ? 0.9 : 0.45);
+      for (let r = r0; r <= r1; r += 2.5) {
+        ctx.fillRect((cx + Math.cos(ang) * r) | 0, (cy + Math.sin(ang) * r * 0.84) | 0, 1, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawThinkingOrbit(now) {
+    if (State.mode !== 'thinking') return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const ang = now * 0.0023;
+    const rx = s * 1.35, ry = s * 1.0;
+    ctx.fillStyle = '#fff';
+    for (let t = 8; t >= 0; t--) {
+      const a2 = ang - t * 0.10;
+      ctx.globalAlpha = (1 - t / 9) * 0.92;
+      ctx.fillRect((cx + Math.cos(a2) * rx) | 0, (cy + Math.sin(a2) * ry) | 0, t === 0 ? 2 : 1, t === 0 ? 2 : 1);
+    }
+    ctx.globalAlpha = 1;
+  }
 
   // Microsaccades — biological eye tremor during fixation
   // Real fixation includes ~3-5 microsaccades/second + drift; amplitude ~0.1-0.3°.
@@ -1695,15 +1799,141 @@ function _doResize() {
     }
   }
 
-  function drawVortex() {}
+  function drawVortex() {
+    if (Face.vortex < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s, v = Face.vortex;
+    const t0 = performance.now() * 0.0018;
+    ctx.fillStyle = '#fff';
+    for (let arm = 0; arm < 3; arm++) {
+      const off = (arm / 3) * Math.PI * 2;
+      for (let j = 0; j <= 38; j++) {
+        const f = j / 38;
+        const ang = off + f * Math.PI * 3.6 + t0;
+        const r = s * 0.14 + f * s * 0.96;
+        ctx.globalAlpha = v * f * 0.65;
+        ctx.fillRect((cx + Math.cos(ang) * r) | 0, (cy + Math.sin(ang) * r * 0.82) | 0, 1, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
 
-  function drawSweat() {}
-  function drawVein() {}
-  function drawBlush() {}
-  function drawNoseBubble() {}
+  function drawSweat() {
+    if (FX.sweat < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s, a = FX.sweat;
+    const bx = cx + s * 0.72, by = cy - s * 0.22 + (1 - a) * s * 0.20;
+    const r = s * 0.055;
+    ctx.fillStyle = '#fff'; ctx.globalAlpha = Math.min(1, a * 1.1);
+    for (let i = 0; i < 18; i++) {
+      const ang = (i / 18) * Math.PI;
+      ctx.fillRect((bx + Math.cos(ang) * r) | 0, (by - Math.sin(ang) * r) | 0, 1, 1);
+    }
+    for (let j = 0; j <= 7; j++) {
+      const f = j / 7, w = (r * (1 - f) * 0.65) | 0;
+      ctx.fillRect((bx - w) | 0, (by + r + f * r * 1.4) | 0, Math.max(1, w * 2), 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawVein() {
+    if (FX.vein < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const pulse = 0.82 + Math.sin(performance.now() * 0.018) * 0.18;
+    const bx = cx + s * 0.28, by = cy - s * 0.60;
+    const r = s * 0.085 * pulse;
+    ctx.fillStyle = '#fff'; ctx.globalAlpha = FX.vein;
+    for (let arm = 0; arm < 4; arm++) {
+      const ang = (arm / 4) * Math.PI * 2, perp = ang + Math.PI / 2;
+      for (let j = 0; j <= 10; j++) {
+        const f = j / 10;
+        const ax = bx + Math.cos(ang) * r * f, ay = by + Math.sin(ang) * r * f;
+        const bulge = Math.sin(f * Math.PI) * r * 0.34;
+        ctx.fillRect((ax + Math.cos(perp) * bulge) | 0, (ay + Math.sin(perp) * bulge) | 0, 1, 1);
+        ctx.fillRect((ax - Math.cos(perp) * bulge) | 0, (ay - Math.sin(perp) * bulge) | 0, 1, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawBlush() {
+    if (FX.blush < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const w = s * 0.20, h = s * 0.08;
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    ctx.fillStyle = '#fff'; ctx.globalAlpha = FX.blush * 0.42;
+    for (const side of [-1, 1]) {
+      const bx = cx + side * s * 0.54, by = cy + s * 0.14;
+      for (let i = 0; i < 30; i++) {
+        const rr = Math.sqrt((i + 0.5) / 30);
+        const ang = i * golden;
+        ctx.fillRect((bx + Math.cos(ang) * rr * w) | 0, (by + Math.sin(ang) * rr * h) | 0, 1, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawNoseBubble() {
+    const r = FX.noseBubbleR;
+    if (r < 2) return;
+    const bx = Face.cx | 0, by = (Face.cy + Face.s * 0.46) | 0;
+    const al = Math.max(0, 0.72 - r / (Face.s * 0.28) * 0.58);
+    ctx.fillStyle = '#fff'; ctx.globalAlpha = al;
+    const n = Math.max(14, (r * 0.95) | 0);
+    for (let i = 0; i < n; i++) {
+      const ang = (i / n) * Math.PI * 2;
+      ctx.fillRect((bx + Math.cos(ang) * r) | 0, (by + Math.sin(ang) * r) | 0, 1, 1);
+    }
+    ctx.globalAlpha = al * 0.7;
+    ctx.fillRect((bx + r * 0.5) | 0, (by - r * 0.5) | 0, 2, 2);
+    ctx.globalAlpha = 1;
+  }
 
-  function drawSpeedLines() {}
-  function drawTears() {}
+  function drawSpeedLines() {
+    if (FX.speedLines < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s, a = FX.speedLines;
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 14; i++) {
+      const ang = (i / 14) * Math.PI * 2;
+      const r0 = s * 1.04, r1 = s * (1.38 + (i % 3) * 0.10);
+      ctx.globalAlpha = a * (0.32 + (i % 3 === 0 ? 0.48 : 0));
+      for (let r = r0; r < r1; r += 2.5) {
+        ctx.fillRect((cx + Math.cos(ang) * r) | 0, (cy + Math.sin(ang) * r * 0.84) | 0, 1, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawTears() {
+    if (FX.tears < 0.05) return;
+    const cx = Face.cx, cy = Face.cy, s = Face.s;
+    const now = performance.now();
+    ctx.fillStyle = '#fff';
+    for (const side of [-1, 1]) {
+      const ex = cx + side * s * 0.30, ey = cy - s * 0.04;
+      for (let d = 0; d < 3; d++) {
+        const phase = (now * 0.0008 + d * 0.34) % 1;
+        const px = (ex + side * phase * s * 0.04) | 0;
+        const py = (ey + phase * s * 0.70) | 0;
+        const al = FX.tears * Math.sin(phase * Math.PI);
+        if (al < 0.03) continue;
+        ctx.globalAlpha = al;
+        const r = s * 0.022;
+        for (let i = 0; i < 10; i++) {
+          const ang = (i / 10) * Math.PI;
+          ctx.fillRect((px + Math.cos(ang) * r) | 0, (py - Math.sin(ang) * r) | 0, 1, 1);
+        }
+        for (let j = 0; j <= 4; j++) {
+          const f = j / 4, w = (r * (1 - f) * 0.58) | 0;
+          ctx.fillRect(px - w, (py + r + f * r) | 0, Math.max(1, w * 2), 1);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHUD() {
+    ctx.font = '8px "Silkscreen",ui-monospace,monospace';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    const m = tts.muted ? ' [M]' : '';
+    ctx.fillText(`${State.mode[0].toUpperCase()} ${State.mood} ${PIXEL_PAL_NAMES[pixelPal]}${m}`, 8, 8);
+    ctx.textBaseline = 'alphabetic';
+  }
 
   // Wire events
   cv.addEventListener('pointerdown', pointerStart);
@@ -1789,6 +2019,10 @@ function _doResize() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') ttsSkip();
     if (e.ctrlKey && e.key === 'm') { e.preventDefault(); ttsToggleMute(); }
+    if (e.key === 'p' && !e.ctrlKey && !e.altKey && document.activeElement !== zshIn) {
+      pixelPal = (pixelPal + 1) % PIXEL_FILTERS.length;
+      beep(440 + pixelPal * 110, 0.04);
+    }
   });
 
   window.sendMessage = sendMessage;
