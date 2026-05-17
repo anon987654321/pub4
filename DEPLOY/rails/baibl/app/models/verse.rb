@@ -4,8 +4,11 @@ class Verse < ApplicationRecord
   belongs_to :chapter
   belongs_to :book
 
-  has_many :highlights, dependent: :destroy
-  has_many :bookmarks, dependent: :destroy
+  has_many :highlights,        dependent: :destroy
+  has_many :bookmarks,         dependent: :destroy
+  has_many :word_studies,      dependent: :destroy
+  has_many :cross_references,  dependent: :destroy
+  has_many :target_verses,     through: :cross_references
 
   validates :number, :content, presence: true
   validates :number, uniqueness: { scope: :chapter_id }

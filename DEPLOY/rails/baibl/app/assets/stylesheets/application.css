@@ -10,3 +10,36 @@
 .dim { color: var(--text-dim); font-size: .85rem; }
 nav { display: flex; gap: 1rem; align-items: center; margin: 1rem 0; }
 h1, h2 { margin-bottom: .75rem; color: var(--primary); }
+
+/* ── Chapter text ── */
+.chapter-text { line-height: 2; max-width: 680px; }
+.verse { display: inline; }
+.verse-num { font-size: .7em; color: #999; vertical-align: super; margin-right: .15em; }
+.word { cursor: pointer; border-radius: 2px; padding: 0 1px; transition: background .15s; }
+.word:hover, .word.active { background: #f0e9d2; }
+
+/* ── Word study popover ── */
+.word-popover {
+  position: absolute;
+  width: 300px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  padding: .75rem 1rem;
+  z-index: 100;
+  font-size: .85rem;
+}
+.ws-header { display: flex; flex-wrap: wrap; gap: .4rem; align-items: baseline; margin-bottom: .4rem; }
+.ws-ref    { font-size: .72rem; color: #999; }
+.ws-word   { font-weight: 700; }
+.ws-original { font-size: 1.1rem; direction: auto; }
+.ws-translit { color: #666; font-size: .8rem; }
+.ws-strongs  { font-size: .75rem; font-family: monospace; color: #0066cc; }
+.ws-definition { color: #333; margin: 0 0 .5rem; }
+.ws-empty    { color: #999; font-style: italic; }
+.ws-loading  { color: #aaa; }
+.ws-xrefs h4 { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: #888; margin: .5rem 0 .3rem; }
+.ws-xrefs ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .4rem; }
+.ws-xrefs blockquote { margin: .15rem 0 0; color: #555; font-size: .8rem; }
+.xr-kind { font-size: .65rem; background: #f0f0f0; border-radius: 3px; padding: .1rem .3rem; margin-left: .25rem; }

@@ -11,14 +11,24 @@
     <% end %>
   </nav>
 </header>
-<section>
+
+<div id="word-popover" class="word-popover" hidden></div>
+
+<section class="chapter-text">
   <% @verses.each do |verse| %>
-    <span id="v<%= verse.number %>" data-controller="verse" data-verse-id="<%= verse.id %>">
-      <sup><%= verse.number %></sup>
-      <span><%= verse.content %></span>
+    <span id="v<%= verse.number %>" class="verse">
+      <sup class="verse-num"><%= verse.number %></sup>
+      <% verse.content.split(/\s+/).each_with_index do |token, pos| %>
+        <span class="word"
+              data-controller="word-study"
+              data-action="click->word-study#toggle"
+              data-word-study-verse-id-value="<%= verse.id %>"
+              data-word-study-position-value="<%= pos %>"
+              data-word-study-url-value="<%= scripture_word_study_path(verse_id: verse.id, position: pos) %>"><%= token %></span>
+      <% end %>
       <% if authenticated? %>
-        <% highlight = @highlights[verse.id] %>
-        <% bookmark  = @bookmarks[verse.id] %>
+        <% highlight = @highlights&.[](verse.id) %>
+        <% bookmark  = @bookmarks&.[](verse.id) %>
         <%= button_to highlight ? "★" : "☆", highlights_path(verse_id: verse.id), method: highlight ? :delete : :post, params: highlight ? { id: highlight.id } : {}, class: ("active" if highlight), data: { turbo_stream: true } %>
         <%= button_to bookmark ? "🔖" : "📌", bookmark ? bookmark_path(bookmark) : bookmarks_path(verse_id: verse.id), method: bookmark ? :delete : :post, class: ("active" if bookmark), data: { turbo_stream: true } %>
       <% end %>

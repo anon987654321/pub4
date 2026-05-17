@@ -1,0 +1,35 @@
+<div class="ws-header">
+  <span class="ws-ref"><%= verse.reference %></span>
+  <% if study %>
+    <span class="ws-word"><%= study.word %></span>
+    <% if study.original.present? %>
+      <span class="ws-original" lang="<%= study.language %>"><%= study.original %></span>
+      <% if study.transliteration.present? %>
+        <em class="ws-translit"><%= study.transliteration %></em>
+      <% end %>
+    <% end %>
+    <% if study.strongs.present? %>
+      <a class="ws-strongs" href="<%= study.strongs_url %>" target="_blank" rel="noopener"><%= study.strongs %></a>
+    <% end %>
+  <% else %>
+    <span class="ws-empty">No word study yet</span>
+  <% end %>
+</div>
+<% if study&.definition.present? %>
+  <p class="ws-definition"><%= study.definition %></p>
+<% end %>
+<% if xrefs.any? %>
+  <div class="ws-xrefs">
+    <h4>Cross-references</h4>
+    <ul>
+      <% xrefs.each do |xr| %>
+        <li>
+          <% tv = xr.target_verse %>
+          <%= link_to tv.reference, scripture_chapter_path(tv.book.abbreviation, tv.chapter.number) + "#v#{tv.number}" %>
+          <% if xr.kind.present? %><span class="xr-kind"><%= xr.kind %></span><% end %>
+          <blockquote><%= truncate(tv.content, length: 120) %></blockquote>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
