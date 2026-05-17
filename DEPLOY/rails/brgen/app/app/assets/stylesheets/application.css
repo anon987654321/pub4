@@ -6,8 +6,8 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --bg: #000;
-  --surface: rgba(0, 0, 0, .88);
-  --surface2: rgba(10, 10, 10, .92);
+  --surface: rgba(0, 0, 0, .72);
+  --surface2: rgba(10, 10, 10, .80);
   --text: #dcdcdc;
   --text-dim: #778;
   --accent: #9aa;

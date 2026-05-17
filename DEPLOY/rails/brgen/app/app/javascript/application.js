@@ -150,17 +150,27 @@ function initTunnel() {
   sizeCanvas();
   window.addEventListener("resize", () => { clearTimeout(window.__rzT); window.__rzT = setTimeout(sizeCanvas, 80); });
 
-  let rect = canvas.getBoundingClientRect();
-  window.addEventListener("resize", () => { rect = canvas.getBoundingClientRect(); }, { passive: true });
-  canvas.addEventListener("mousemove", e => { tunnel.mouse = { x: (e.clientX - rect.left) * SCALE, y: (e.clientY - rect.top) * SCALE, down: tunnel.mouse.down, active: true }; }, false);
-  canvas.addEventListener("mouseleave", () => { tunnel.mouse.active = false; tunnel.mouse.down = false; }, false);
+  // Canvas fills the viewport (position:fixed; inset:0) so clientX === canvas X.
+  // Listen on window so app-shell (z-index:10) doesn't swallow the events.
+  window.addEventListener("mousemove", e => { if (!tunnel) return; tunnel.mouse = { x: e.clientX * SCALE, y: e.clientY * SCALE, down: tunnel.mouse.down, active: true }; }, { passive: true });
+  window.addEventListener("mouseleave", () => { if (!tunnel) return; tunnel.mouse.active = false; tunnel.mouse.down = false; });
 
   const animate = () => {
     const n = performance.now();
-    if (n - lastT >= 16) { tunnel.frame(syntheticData()); lastT = n; }
+    if (!document.hidden && n - lastT >= 16) { tunnel.frame(syntheticData()); lastT = n; }
     requestAnimationFrame(animate);
   };
   animate();
+}
+
+function updateCarouselPrefix() {
+  const el = document.getElementById("cityCarousel");
+  if (!el) return;
+  const slides = el.querySelectorAll(".carousel-slide");
+  slides.forEach(s => { if (!s.dataset.base) s.dataset.base = s.textContent.trim(); });
+  const parts = location.hostname.split(".");
+  const prefix = parts.length >= 3 && parts[0] !== "www" ? parts[0] + "." : "";
+  slides.forEach(s => { s.textContent = prefix + s.dataset.base; });
 }
 
 function initCarousel() {
@@ -168,6 +178,7 @@ function initCarousel() {
   if (!el || el.__carouselInit) return;
   el.__carouselInit = true;
   new SimpleCarousel(el);
+  updateCarouselPrefix();
 }
 
 function initSplash() {
@@ -195,7 +206,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initSplash();
 });
 
-// Re-run splash init on Turbo page loads (tunnel/carousel persist via data-turbo-permanent)
+// Re-run splash + carousel prefix on Turbo page loads (tunnel/carousel persist via data-turbo-permanent)
 document.addEventListener("turbo:load", () => {
   initSplash();
+  updateCarouselPrefix();
 });
