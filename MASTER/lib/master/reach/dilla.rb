@@ -10,6 +10,7 @@ module Master
       NAME = "dilla".freeze
       DESCRIPTION = "Capture, separate, study, render, and score audio with the dilla lab.".freeze
       ACTIONS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody ears].freeze
+      INPUT_REQUIRED = %w[source livestream separate clean study rhythm melody ears sample].freeze
 
       def initialize(root:, governor:, event_bus: nil)
         @root = root
@@ -20,26 +21,44 @@ module Master
       def call(action:, input: nil, output: nil, kind: nil, live_seconds: nil, bpm: nil, bars: nil)
         action = action.to_s
         return Result.err("dilla: unknown action #{action}", category: :validation) unless ACTIONS.include?(action)
+        return Result.err("dilla: input required for #{action}", category: :validation) if INPUT_REQUIRED.include?(action) && input.to_s.empty?
 
         script = script_path
         return Result.err("dilla: script missing", category: :infrastructure) unless script
 
-        argv = build_argv(action, input:, output:, kind:)
-        permission = @governor.permit?(NAME, TIER, "dilla #{argv.join(' ')}")
+        permission = @governor.permit?(NAME, TIER, "dilla #{action} #{input} #{output}")
         return permission if permission.err?
 
         env = runtime_env(live_seconds:, bpm:, bars:)
         @bus&.publish("tool:before", tool: NAME, action: action, input: input, output: output)
-        out, err, status = Open3.capture3(env, "ruby", script, *argv, chdir: File.dirname(script))
-        @bus&.publish("tool:after", tool: NAME, action: action, exit: status.exitstatus)
-        return Result.ok(format_output(out, err)) if status.success?
+        result = action == "sample" ? sample(script, env, input) : run(script, env, build_argv(action, input:, output:, kind:))
+        @bus&.publish("tool:after", tool: NAME, action: action, exit: result.fetch(:exit))
+        return Result.ok(result.fetch(:text)) if result.fetch(:exit).zero?
 
-        Result.err("dilla: exit #{status.exitstatus} #{err.strip}", category: :provider_error)
+        Result.err("dilla: exit #{result.fetch(:exit)} #{result.fetch(:text)}", category: :provider_error)
       rescue StandardError => error
         Result.err("dilla: #{error.message}", category: :infrastructure)
       end
 
       private
+
+      def sample(script, env, input)
+        source_path = File.join(File.dirname(script), "samples", "source.wav")
+        clean_path = File.join(File.dirname(script), "samples", "clean_harmonic.wav")
+        first = run(script, env, ["source", input, source_path])
+        return first unless first.fetch(:exit).zero?
+        second = run(script, env, ["separate", source_path])
+        return second unless second.fetch(:exit).zero?
+        stem = JSON.parse(second.fetch(:text)).fetch("other")
+        run(script, env, ["clean", File.expand_path(stem, File.dirname(script)), clean_path])
+      rescue JSON::ParserError, KeyError => error
+        { exit: 1, text: "sample: #{error.message}" }
+      end
+
+      def run(script, env, argv)
+        out, err, status = Open3.capture3(env, "ruby", script, *argv, chdir: File.dirname(script))
+        { exit: status.exitstatus || 1, text: format_output(out, err) }
+      end
 
       def build_argv(action, input:, output:, kind:)
         case action
