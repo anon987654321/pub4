@@ -265,37 +265,107 @@ GRAIN_CHAN_SCALE = {
   kodachrome:         [1.00, 0.92, 0.82],
 }.freeze
 
+# Physics-ordered chains: optical_blur → tonemap → halation → film_curve →
+# [chemistry: dir_coupler, push_pull, bleach_bypass] → [print: split_grade,
+# micro_contrast×2, highlight_roll, shadow_lift] → grain → dual_base_density.
+# micro_contrast listed twice dispatches at radius 4 (texture) then 12 (structure).
 PRESETS = {
-  portrait:       { fx: %w[skin_protect film_curve highlight_roll micro_contrast grain color_temp base_tint],
-                    stock: :kodak_portra,       temp: 5200, intensity: 0.8 },
-  landscape:      { fx: %w[film_curve color_separate highlight_roll micro_contrast grain vintage_lens],
-                    stock: :fuji_velvia,        temp: 5800, intensity: 0.9 },
-  street:         { fx: %w[film_curve shadow_lift micro_contrast vintage_lens grain],
-                    stock: :tri_x,              temp: 5600, intensity: 1.0 },
-  blockbuster:    { fx: %w[tonemap teal_orange halation grain bloom_pro highlight_roll micro_contrast],
+  portrait:       { fx: %w[optical_blur spectral_temp film_curve dir_coupler split_grade
+                            skin_protect shadow_lift highlight_roll micro_contrast micro_contrast
+                            grain color_temp base_tint dual_base_density],
+                    stock: :kodak_portra,       temp: 5200, intensity: 1.0 },
+
+  landscape:      { fx: %w[optical_blur tonemap film_curve color_separate halation highlight_roll
+                            shadow_lift micro_contrast micro_contrast chromatic_aberration
+                            grain vintage_lens dual_base_density],
+                    stock: :fuji_velvia,        temp: 5800, intensity: 1.1, lens: "zeiss" },
+
+  street:         { fx: %w[optical_blur film_curve push_pull shadow_lift highlight_roll
+                            micro_contrast micro_contrast vintage_lens grain lith_print dual_base_density],
+                    stock: :tri_x,              temp: 5600, intensity: 1.2, stops: 1.0 },
+
+  blockbuster:    { fx: %w[optical_blur tonemap bleach_bypass halation film_curve dir_coupler
+                            shadow_lift split_grade teal_orange micro_contrast micro_contrast
+                            grain bloom_pro highlight_roll dual_base_density],
+                    stock: :kodak_vision3,      temp: 4800, intensity: 1.3 },
+
+  dream:          { fx: %w[optical_blur cross_fade film_curve halation shadow_lift desaturate
+                            color_separate chromatic_aberration vintage_lens split_toning
+                            grain dual_base_density],
+                    stock: :ektachrome_100,     temp: 5800, intensity: 1.0, lens: "leica" },
+
+  neon_night:     { fx: %w[optical_blur push_pull reciprocity_failure tonemap film_curve halation
+                            shadow_lift teal_orange micro_contrast micro_contrast chromatic_aberration
+                            grain highlight_roll dual_base_density],
+                    stock: :cinestill_800t,     temp: 3200, intensity: 1.2,
+                    stops: 0.5, exposure_secs: 30.0 },
+
+  horror:         { fx: %w[optical_blur film_curve green_push desaturate shadow_lift
+                            micro_contrast micro_contrast grain split_toning highlight_roll],
+                    stock: :tri_x,              temp: 5600, intensity: 1.1 },
+
+  golden_age:     { fx: %w[optical_blur spectral_temp film_curve halation warmth dir_coupler
+                            chromatic_aberration vintage_lens shadow_lift micro_contrast micro_contrast
+                            grain faded_print dual_base_density],
+                    stock: :kodak_vision3_50d,  temp: 5200, intensity: 1.0, lens: "cooke" },
+
+  indie:          { fx: %w[optical_blur film_curve shadow_lift highlight_roll vintage_lens
+                            micro_contrast chromatic_aberration grain faded_print dual_base_density],
+                    stock: :kodak_portra,       temp: 5400, intensity: 1.0, lens: "helios" },
+
+  cinematic:      { fx: %w[optical_blur tonemap bleach_bypass halation film_curve dir_coupler
+                            shadow_lift split_grade micro_contrast micro_contrast
+                            grain highlight_roll dual_base_density],
+                    stock: :kodak_vision3_500t, temp: 4500, intensity: 1.2 },
+
+  kodachrome_look:{ fx: %w[optical_blur tonemap film_curve kodachrome_sim dir_coupler
+                            highlight_roll micro_contrast micro_contrast grain color_separate
+                            dual_base_density],
+                    stock: :kodachrome,         temp: 5600, intensity: 1.1 },
+
+  cross_process:  { fx: %w[optical_blur push_pull film_curve color_separate shadow_lift
+                            highlight_roll micro_contrast grain split_toning chromatic_aberration],
+                    stock: :fuji_velvia,        temp: 5500, intensity: 1.3, stops: 0.5 },
+
+  silver_gelatin: { fx: %w[optical_blur film_curve push_pull shadow_lift highlight_roll
+                            micro_contrast micro_contrast grain lith_print dual_base_density],
+                    stock: :tri_x,              temp: 5600, intensity: 1.0, stops: 0.5 },
+
+  vintage_chrome: { fx: %w[optical_blur film_curve dir_coupler spectral_temp color_separate
+                            chromatic_aberration highlight_roll grain split_toning
+                            faded_print dual_base_density],
+                    stock: :ektachrome_100,     temp: 5200, intensity: 1.0 },
+
+  infrared_look:  { fx: %w[optical_blur push_pull infrared film_curve highlight_roll
+                            micro_contrast micro_contrast grain dual_base_density],
+                    stock: :tri_x,              temp: 5600, intensity: 1.0, stops: 0.5 },
+
+  tungsten:       { fx: %w[optical_blur tonemap spectral_temp film_curve halation push_pull
+                            dir_coupler split_grade shadow_lift micro_contrast micro_contrast
+                            grain highlight_roll dual_base_density],
+                    stock: :kodak_vision3_500t, temp: 3200, intensity: 1.2,
+                    stops: 0.3, exposure_secs: 8.0 },
+
+  reversal:       { fx: %w[optical_blur film_curve color_separate highlight_roll shadow_lift
+                            micro_contrast micro_contrast chromatic_aberration grain dual_base_density],
+                    stock: :fuji_velvia,        temp: 5600, intensity: 1.1 },
+
+  lith:           { fx: %w[optical_blur film_curve push_pull shadow_lift highlight_roll
+                            lith_print micro_contrast micro_contrast grain dual_base_density],
+                    stock: :tri_x,              temp: 5600, intensity: 1.2, stops: 1.5 },
+
+  bleached:       { fx: %w[optical_blur tonemap bleach_bypass halation film_curve split_grade
+                            micro_contrast micro_contrast grain highlight_roll dual_base_density],
                     stock: :kodak_vision3,      temp: 4800, intensity: 1.2 },
-  dream:          { fx: %w[film_curve halation shadow_lift desaturate vintage_lens cross_fade],
-                    stock: :ektachrome_100,     temp: 5800, intensity: 0.8, lens: "leica" },
-  neon_night:     { fx: %w[film_curve halation grain teal_orange micro_contrast chromatic_aberration],
-                    stock: :cinestill_800t,     temp: 3200, intensity: 1.0 },
-  horror:         { fx: %w[film_curve green_push desaturate micro_contrast grain split_toning],
-                    stock: :tri_x,              temp: 5600, intensity: 1.0 },
-  golden_age:     { fx: %w[film_curve halation warmth vintage_lens grain micro_contrast dual_base_density],
-                    stock: :kodak_vision3_50d,  temp: 5200, intensity: 0.9, lens: "cooke" },
-  indie:          { fx: %w[film_curve grain shadow_lift vintage_lens micro_contrast faded_print],
-                    stock: :kodak_portra,       temp: 5400, intensity: 0.7 },
-  cinematic:      { fx: %w[tonemap bleach_bypass halation grain micro_contrast split_grade],
-                    stock: :kodak_vision3_500t, temp: 4500, intensity: 1.0 },
-  kodachrome_look:{ fx: %w[kodachrome_sim grain micro_contrast highlight_roll dir_coupler],
-                    stock: :kodachrome,         temp: 5600, intensity: 0.9 },
-  cross_process:  { fx: %w[film_curve color_separate grain shadow_lift micro_contrast split_toning],
-                    stock: :fuji_velvia,        temp: 5500, intensity: 1.2 },
-  silver_gelatin: { fx: %w[film_curve grain lith_print micro_contrast],
-                    stock: :tri_x,              temp: 5600, intensity: 0.8 },
-  vintage_chrome: { fx: %w[film_curve faded_print split_toning grain dual_base_density],
-                    stock: :ektachrome_100,     temp: 5200, intensity: 0.7 },
-  infrared_look:  { fx: %w[optical_blur infrared grain micro_contrast],
-                    stock: :tri_x,              temp: 5600, intensity: 0.9 },
+
+  dreamscape:     { fx: %w[optical_blur cross_fade film_curve halation shadow_lift desaturate
+                            split_toning grain dual_base_density],
+                    stock: :ektachrome_100,     temp: 5800, intensity: 1.0 },
+
+  process_e6:     { fx: %w[optical_blur push_pull film_curve color_separate highlight_roll
+                            chromatic_aberration micro_contrast micro_contrast grain
+                            base_tint dual_base_density],
+                    stock: :ektachrome_100,     temp: 5600, intensity: 1.3, stops: 2.0 },
 }.freeze
 
 def halation_tint_for(stock)
@@ -363,7 +433,14 @@ module HD
 end
 
 def safe_cast(image, format = 'uchar')
-  image.cast(format)
+  if format == 'uchar'
+    f = image.cast('float')
+    f = (f > 0).ifthenelse(f, 0)
+    f = (f < 255).ifthenelse(f, 255)
+    f.cast('uchar')
+  else
+    image.cast(format)
+  end
 rescue StandardError => e
   $logger.error "Cast failed: #{e.message}"
   image
@@ -616,7 +693,7 @@ def highlight_roll(image, threshold = 200, intensity = 1.0)
 end
 
 def shadow_lift(image, lift = 0.15, preserve_blacks = true)
-  gray = image.colourspace('grey16').cast('float') / 255.0
+  gray = image.colourspace('b-w').cast('float') / 255.0
   inv_gray    = gray.linear(-1, 1)
   shadow_mask = preserve_blacks ? (inv_gray ** 2.0) * 0.8 : inv_gray * lift
   lift_rgb = shadow_mask.bandjoin([shadow_mask, shadow_mask])
@@ -801,7 +878,7 @@ end
 # Split toning: shadow and highlight color casts weighted by luminance.
 # shadow_rgb / hi_rgb are [R,G,B] triplets in 0-255.
 def split_toning(image, shadow_rgb = [45, 35, 60], hi_rgb = [255, 240, 210], intensity = 0.30)
-  luma  = image.colourspace("grey16").cast("float") / 255.0
+  luma  = image.colourspace("b-w").cast("float") / 255.0
   img_f = image.cast("float") / 255.0
   s_clr = (Vips::Image.black(image.width, image.height, bands: 3) + shadow_rgb).cast("float") / 255.0
   h_clr = (Vips::Image.black(image.width, image.height, bands: 3) + hi_rgb).cast("float") / 255.0
@@ -814,8 +891,8 @@ rescue StandardError => e
 end
 
 # Three-way color corrector: independent shadow / midtone / highlight casts.
-def split_grade(image, shadow_rgb = [30, 40, 60], mid_rgb = [255, 255, 248], hi_rgb = [255, 245, 220], intensity = 0.25)
-  luma  = image.colourspace("grey16").cast("float") / 255.0
+def split_grade(image, shadow_rgb = [30, 40, 60], mid_rgb = [255, 255, 248], hi_rgb = [255, 245, 220], intensity: 0.25)
+  luma  = image.colourspace("b-w").cast("float") / 255.0
   img_f = image.cast("float") / 255.0
   s_clr = (Vips::Image.black(image.width, image.height, bands: 3) + shadow_rgb).cast("float") / 255.0
   m_clr = (Vips::Image.black(image.width, image.height, bands: 3) + mid_rgb).cast("float") / 255.0
@@ -888,7 +965,7 @@ end
 # Cyanotype alt-process: Prussian blue shadows [0,52,102] to white highlights.
 def cyanotype(image, intensity = 0.90)
   shadow = [0, 52, 102]
-  luma   = image.colourspace("grey16").cast("float") / 255.0
+  luma   = image.colourspace("b-w").cast("float") / 255.0
   r = luma * (255 - shadow[0]) + shadow[0]
   g = luma * (255 - shadow[1]) + shadow[1]
   b = luma * (255 - shadow[2]) + shadow[2]
@@ -901,7 +978,7 @@ end
 
 # Lith printing: aggressive contrast, warm sepia shadows, near-white highlights.
 def lith_print(image, intensity = 0.80)
-  gray = image.colourspace("grey16").cast("float") / 255.0
+  gray = image.colourspace("b-w").cast("float") / 255.0
   hi   = clamp01(gray ** 0.55 * 1.1)
   s_w  = (gray.linear(-1, 1) ** 2.0) * 255.0
   r    = hi * 255.0 + s_w * 0.12
@@ -1065,52 +1142,63 @@ def tonemap_hbd(linear)
 end
 
 # Preset Application
+# micro_contrast listed twice in an fx chain dispatches at radius 4 (fine
+# texture) on the first pass and radius 12 (local structure) on the second —
+# independent phenomena that a single radius cannot capture simultaneously.
 def preset(image, name)
   p = PRESETS[name.to_sym]
   return image unless p
-  result = image
-  
-  p[:fx].each do |fx|
+  result   = image
+  mc_pass  = 0
+  t_start  = Time.now
+  n_steps  = p[:fx].length
+  PostproBootstrap.dmesg "preset=#{name} stock=#{p[:stock]} steps=#{n_steps} intensity=#{p[:intensity]}"
+
+  p[:fx].each_with_index do |fx, i|
+    t0 = Time.now
     result = case fx
-             when 'skin_protect' then skin_protect(result, p[:intensity])
-             when 'film_curve' then film_curve(result, p[:stock], p[:intensity])
-             when 'highlight_roll' then highlight_roll(result, 200, p[:intensity] * 0.7)
-             when 'shadow_lift' then shadow_lift(result, 0.2, false)
-             when 'micro_contrast' then micro_contrast(result, 6, p[:intensity] * 0.4)
-             when 'grain' then grain(result, 400, p[:stock], p[:intensity] * 0.4)
-             when 'color_temp' then color_temp(result, p[:temp], p[:intensity] * 0.6)
-             when 'base_tint' then base_tint(result, [255, 250, 245], 0.08)
-             when 'color_separate' then color_separate(result, p[:intensity] * 0.6)
-             when 'vintage_lens' then vintage_lens(result, 'zeiss', p[:intensity] * 0.8)
-             when "teal_orange"          then teal_orange(result, p[:intensity])
-             when "bloom_pro"            then bloom_pro(result, p[:intensity])
+             when "optical_blur"         then optical_blur(result, 0.5)
+             when "tonemap"              then tonemap(result, type: :aces, exposure: p.fetch(:tonemap_ev, 0.0), intensity: p[:intensity] * 0.85)
              when "halation"             then halation(result, p[:intensity], tint: halation_tint_for(p[:stock]))
-             when "tonemap"              then tonemap(result, type: :aces, exposure: 0.0, intensity: p[:intensity] * 0.7)
-             when "spectral_temp"        then spectral_temp(result, source_kelvin: 5500, target_kelvin: p[:temp], intensity: p[:intensity] * 0.6)
-             when "desaturate"           then desaturate(result, p[:intensity] * 0.6)
-             when "warmth"               then warmth(result, p[:intensity] * 0.3)
-             when "green_push"           then green_push(result, p[:intensity] * 0.15)
-             when "vintage_lens"         then vintage_lens(result, p.fetch(:lens, "zeiss"), p[:intensity] * 0.8)
-             when "optical_blur"         then optical_blur(result)
-             when "chromatic_aberration" then chromatic_aberration(result, p[:intensity] * 0.35)
+             when "film_curve"           then film_curve(result, p[:stock], p[:intensity])
+             when "spectral_temp"        then spectral_temp(result, source_kelvin: 6504, target_kelvin: p[:temp], intensity: p[:intensity] * 0.55)
+             when "color_temp"           then color_temp(result, p[:temp], p[:intensity] * 0.6)
              when "dir_coupler"          then dir_coupler(result, p[:intensity] * 0.15)
-             when "bleach_bypass"        then bleach_bypass(result, p[:intensity] * 0.5)
              when "push_pull"            then push_pull(result, p.fetch(:stops, 1.0))
-             when "split_toning"         then split_toning(result)
-             when "split_grade"          then split_grade(result)
-             when "dual_base_density"    then dual_base_density(result)
+             when "bleach_bypass"        then bleach_bypass(result, p[:intensity] * 0.55)
              when "reciprocity_failure"  then reciprocity_failure(result, p.fetch(:exposure_secs, 10.0))
-             when "cross_fade"           then cross_fade(result, p[:intensity] * 0.4)
-             when "infrared"             then infrared(result, p[:intensity] * 0.8)
+             when "split_grade"          then split_grade(result, intensity: p[:intensity] * 0.3)
+             when "split_toning"         then split_toning(result)
+             when "skin_protect"         then skin_protect(result, p[:intensity])
+             when "shadow_lift"          then shadow_lift(result, 0.20, false)
+             when "highlight_roll"       then highlight_roll(result, 195, p[:intensity] * 0.80)
+             when "micro_contrast"       then (mc_pass += 1; micro_contrast(result, mc_pass == 1 ? 4 : 12, p[:intensity] * 0.45))
+             when "grain"                then grain(result, 800, p[:stock], p[:intensity] * 0.45)
+             when "color_separate"       then color_separate(result, p[:intensity] * 0.65)
+             when "chromatic_aberration" then chromatic_aberration(result, p[:intensity] * 0.30)
+             when "vintage_lens"         then vintage_lens(result, p.fetch(:lens, "zeiss"), p[:intensity] * 0.85)
+             when "teal_orange"          then teal_orange(result, p[:intensity])
+             when "bloom_pro"            then bloom_pro(result, p[:intensity] * 0.8)
+             when "desaturate"           then desaturate(result, p[:intensity] * 0.55)
+             when "warmth"               then warmth(result, p[:intensity] * 0.30)
+             when "green_push"           then green_push(result, p[:intensity] * 0.15)
+             when "cross_fade"           then cross_fade(result, p[:intensity] * 0.40)
+             when "infrared"             then infrared(result, p[:intensity] * 0.85)
+             when "lith_print"           then lith_print(result, p[:intensity] * 0.85)
+             when "kodachrome_sim"       then kodachrome_sim(result, p[:intensity] * 0.75)
+             when "technicolor"          then technicolor(result, p[:intensity] * 0.60)
              when "cyanotype"            then cyanotype(result, p[:intensity])
-             when "lith_print"           then lith_print(result, p[:intensity] * 0.8)
-             when "technicolor"          then technicolor(result, p[:intensity] * 0.6)
-             when "kodachrome_sim"       then kodachrome_sim(result, p[:intensity] * 0.7)
-             when "faded_print"          then faded_print(result, 0.5)
+             when "faded_print"          then faded_print(result, p.fetch(:age, 0.45))
+             when "base_tint"            then base_tint(result, [255, 250, 242], 0.09)
+             when "dual_base_density"    then dual_base_density(result, [255, 248, 236], 0.08)
              else result
              end
+    result = result.copy_memory
+    GC.start(full_mark: false) if (i % 4).zero?
+    PostproBootstrap.dmesg "  [%02d/%02d] %-24s %.2fs" % [i + 1, n_steps, fx, Time.now - t0]
   end
-  
+
+  PostproBootstrap.dmesg "preset=#{name} done total=%.2fs" % (Time.now - t_start)
   result
 end
 
