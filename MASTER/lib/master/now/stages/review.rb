@@ -5,9 +5,9 @@ module Master
   module Stages
     # Review — one post-execution pass for council feedback, lint, and pruning.
     class Review
-      def initialize(council:, scanner:, config:, autoloop: nil, root: nil, event_bus: nil)
+      def initialize(council:, scanner:, config:, root: nil, event_bus: nil, **_)
         @council = council
-        @lint    = Lint.new(scanner:, config:, autoloop:, root:, event_bus:)
+        @lint    = Lint.new(scanner:, config:, root:, event_bus:)
         @prune   = Prune.new
         @bus     = event_bus
       end

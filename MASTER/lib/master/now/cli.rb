@@ -129,10 +129,9 @@ module Master
       @config      = deps[:config]
       @pipeline    = deps[:pipeline]
       @scanner     = deps[:scanner]
-      @autoloop    = deps[:autoloop]
       @root        = deps.fetch(:root, Dir.pwd)
-      @diff_stager = deps[:diff_stager]
-      @bus         = deps[:bus]
+      @diff_stager  = deps[:diff_stager]
+      @bus          = deps[:bus]
     end
 
     def repl_loop
@@ -370,13 +369,10 @@ module Master
     end
 
     def start_background_loop
-      cfg           = Master::Loop::AutoLoop.load_cfg
-      return unless cfg.fetch("background", true)
-      idle_interval = cfg.fetch("idle_sleep", IDLE_SLEEP_DEFAULT)
       @bg_thread = Thread.new do
         boot_scan
         loop do
-          sleep idle_interval
+          sleep IDLE_SLEEP_DEFAULT
           background_cycle unless @user_active
         end
       rescue StandardError => e
@@ -425,18 +421,16 @@ module Master
     end
 
     def background_cycle
-      return unless @autoloop
-
-      @autoloop.run(max_cycles: 1) do |_cycle, violations|
-        n = violations.size
-        next if n.zero?
-        @violations = n
-        top = violations.first(3).map { |v| "#{File.basename(v[:file])}:#{v[:rule]}" }.join(" ")
-        $stdout.puts "\nautoloop: #{n} violation(s) #{top}"
-        $stdout.flush
-      end
+      lib_dir = File.join(@root, "lib")
+      result  = @scanner.scan_dir(lib_dir, depth: :deep)
+      return unless result.respond_to?(:ok?) && result.ok?
+      n = count_violations(result.value!)
+      return if n == @violations
+      @violations = n
+      $stdout.puts "\nbg: #{n} violation(s)" if n.positive?
+      $stdout.flush
     rescue StandardError => e
-      @bus&.publish("autoloop:bg_error", error: e.message)
+      @bus&.publish("cli:bg_error", error: e.message)
     end
 
     def chunk_accumulator(buffer)
@@ -633,7 +627,7 @@ module Master
 
     def next_action_chips
       base = ["[/undo]", "[/why]", "[/last]"]
-      base.unshift("[/polish #{@violations}v]") if @violations.positive?
+      base.unshift("[/fix #{@violations}v]") if @violations.positive?
       base
     end
 

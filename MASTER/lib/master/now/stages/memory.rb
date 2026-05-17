@@ -18,6 +18,7 @@ module Master
       end
 
       def call(ctx)
+        return Result.ok(ctx) unless @memory
         text = ctx[:user_message].to_s
         remember_user_text(text) unless text.empty?
         record_episode(ctx, text) if ctx[:voice] && !text.empty?

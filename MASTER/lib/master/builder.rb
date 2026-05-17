@@ -2,6 +2,8 @@
 
 module Master
   module Builder
+    MUTATING_TOOLS = %w[WriteFile StrReplace AstEdit Shell].freeze
+
     module_function
 
     # Full boot: all 6 plugins, AI stack, pipeline.
@@ -38,7 +40,10 @@ module Master
       renderer   = Voice::Renderer.new(config:)
       code_index = Judge::CodeIndex.new(root:, event_bus: bus)
       code_index.build_async
-      bus.subscribe("tool:after") { |ev| code_index.reindex(ev[:path]) if ev[:path] }
+      bus.subscribe("tool:after") do |ev|
+        next unless ev[:path] && MUTATING_TOOLS.include?(ev[:tool].to_s.split("::").last)
+        code_index.reindex(ev[:path])
+      end
       diag     = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging])
       pressure = PressureEngine.new(event_bus: bus)
       bus.subscribe("*") do |ev|

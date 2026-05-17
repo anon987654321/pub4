@@ -15,7 +15,7 @@ module Master
         Master::Now::Stages::Deliberate.new(agent: ai[:agent], config:),
         Master::Now::Stages::Execute.new,
         Master::Now::Pipeline::SkipOnPressure.new(Master::Now::Stages::Review.new(
-          council: ai[:council_stage], scanner: ai[:scanner], config:, autoloop: ai[:autoloop], root:, event_bus: bus
+          council: ai[:council_stage], scanner: ai[:scanner], config:, root:, event_bus: bus
         ), bus:),
         Master::Now::Stages::Memory.new(memory: infra[:memory], event_bus: bus),
         Master::Now::Stages::Render.new(renderer: infra[:renderer])

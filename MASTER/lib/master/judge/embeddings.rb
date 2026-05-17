@@ -13,7 +13,9 @@ module Master
     HTTP_TIMEOUT  = 5
     MIN_SIM       = 0.30
 
-    def enabled? = !ENV["OLLAMA_BASE_URL"].to_s.strip.empty?
+    @ollama_alive = nil
+
+    def enabled? = !ENV["OLLAMA_BASE_URL"].to_s.strip.empty? && ollama_alive?
 
     def embed(text)
       return unless enabled?
@@ -22,6 +24,19 @@ module Master
       ollama_embed(text_str)
     rescue StandardError => _e
       nil
+    end
+
+    def ollama_alive?
+      return @ollama_alive unless @ollama_alive.nil?
+      uri  = URI.join(ENV["OLLAMA_BASE_URL"], "/api/tags")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl      = uri.scheme == "https"
+      http.open_timeout = HTTP_TIMEOUT
+      http.read_timeout = HTTP_TIMEOUT
+      res = http.get(uri.request_uri)
+      @ollama_alive = res.is_a?(Net::HTTPSuccess)
+    rescue StandardError
+      @ollama_alive = false
     end
 
     def cosine(a, b)

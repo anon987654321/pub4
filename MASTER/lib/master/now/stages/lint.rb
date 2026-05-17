@@ -7,12 +7,11 @@ module Master
     class Lint
       FENCE_RE = /```(?:ruby)?\n(.*?)```/m
 
-      def initialize(scanner:, config:, autoloop: nil, root: nil, event_bus: nil)
-        @scanner  = scanner
-        @config   = config
-        @autoloop = autoloop
-        @root     = root
-        @bus      = event_bus
+      def initialize(scanner:, config:, root: nil, event_bus: nil, **_)
+        @scanner = scanner
+        @config  = config
+        @root    = root
+        @bus     = event_bus
       end
 
       def call(ctx)
@@ -34,15 +33,6 @@ module Master
           next if code.nil? || code.strip.empty?
           inline_findings = scan_inline(code)
           findings.concat(inline_findings)
-        end
-
-        if findings.any? && @autoloop
-          skip_rules = Master::Loop::AutoLoop::SKIP_RULES
-          fixable    = findings.reject { |f| skip_rules.include?(f[:rule].to_s) }
-          if fixable.any?
-            fix_result = @autoloop.run(max_cycles: 3)
-            ctx = ctx.merge(autofix_result: fix_result)
-          end
         end
 
         Result.ok(ctx.merge(lint_report: findings))

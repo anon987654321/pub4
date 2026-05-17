@@ -52,7 +52,6 @@ module Master
   loader.ignore(File.join(__dir__, "master", "reach", "ruby_llm_patch.rb"))
   loader.ignore(File.join(__dir__, "master", "reach", "bedrock_stub.rb"))
   %w[
-    loop/auto_loop/fix_evaluator.rb
     now/cli/signals.rb
     now/command_registry/agent_commands.rb
     now/command_registry/memory_commands.rb
