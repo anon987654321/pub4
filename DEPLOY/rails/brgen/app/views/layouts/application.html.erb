@@ -28,6 +28,10 @@
 <body>
   <canvas id="tunnel-canvas" data-turbo-permanent aria-hidden="true"></canvas>
 
+  <div id="nearby-alerts" class="nearby-alerts" data-turbo-permanent aria-live="polite"></div>
+  <div data-controller="geolocation" data-geolocation-url-value="<%= location_path %>" data-turbo-permanent></div>
+  <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" if Current.user %>
+
   <h1 id="cityCarousel" class="city-carousel" data-turbo-permanent aria-hidden="true">
     <div class="carousel-container">
       <span class="carousel-slide active">brgen.no</span>

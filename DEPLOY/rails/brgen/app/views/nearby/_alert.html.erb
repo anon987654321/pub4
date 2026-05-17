@@ -1,0 +1,8 @@
+<div class="nearby-alert" data-user-id="<%= user_id %>" role="alert">
+  <div class="nearby-alert-body">
+    <span class="nearby-alert-dot"></span>
+    <span><strong><%= handle %></strong> is nearby</span>
+  </div>
+  <%= button_to "Chat", nearby_path, params: { user_id: user_id }, method: :post, class: "btn btn-primary btn-sm nearby-alert-cta" %>
+  <button class="nearby-alert-close" onclick="this.closest('.nearby-alert').remove()" aria-label="Dismiss">✕</button>
+</div>
