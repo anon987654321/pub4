@@ -12,6 +12,7 @@ SAMPLE_CLEAN = File.join(SAMPLE_DIR, "clean_harmonic.wav")
 DEFAULT_BPM = 86.0
 DEFAULT_BARS = 88
 SAMPLE_RATE = 44_100
+PITCH_CLASSES = %w[C Db D Eb E F Gb G Ab A Bb B].freeze
 PAD_CHORDS = [
   { name: "Fm9", hz: [174.61, 207.65, 261.63, 311.13, 392.00] },
   { name: "Dbmaj9", hz: [138.59, 174.61, 207.65, 261.63, 311.13] },
@@ -27,7 +28,18 @@ PAD_CHORDS = [
   { name: "Gbmaj9", hz: [92.50, 116.54, 138.59, 174.61, 207.65] },
   { name: "C cluster", hz: [130.81, 138.59, 196.00, 233.08, 311.13] }
 ].freeze
-COMMANDS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody ears].freeze
+COMMANDS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody harmony semantics ears].freeze
+CHORD_TEMPLATES = {
+  "maj" => [0, 4, 7],
+  "min" => [0, 3, 7],
+  "7" => [0, 4, 7, 10],
+  "maj7" => [0, 4, 7, 11],
+  "m7" => [0, 3, 7, 10],
+  "m9" => [0, 3, 7, 10, 2],
+  "maj9" => [0, 4, 7, 11, 2],
+  "sus" => [0, 5, 7],
+  "dim" => [0, 3, 6]
+}.freeze
 
 def sh!(*command)
   puts ">>> #{command.flatten.join(' ')}"
@@ -104,6 +116,7 @@ def council
   puts "MASTER council"
   puts "preserve existing command surface"
   puts "separate source capture, demucs, rhythm study, melody study"
+  puts "add harmony and semantic texture evidence"
   puts "feed ears metrics into MASTER before aesthetic judgment"
   puts "keep render, clean, stems, chords intact"
 end
@@ -245,7 +258,7 @@ def stems(root = File.join(ROOT, "samples/demucs"), manifest = File.join(ROOT, "
     { "name" => File.basename(directory), "bpm" => bpm, "stems" => stem_paths(files) }
   end
   FileUtils.mkdir_p(File.dirname(manifest))
-  File.write(manifest, JSON.pretty_generate({ "version" => 5, "sets" => sets }) + "\n")
+  File.write(manifest, JSON.pretty_generate({ "version" => 6, "sets" => sets }) + "\n")
   puts "wrote #{manifest}"
 end
 
@@ -271,7 +284,9 @@ def study(kind, input = nil)
   abort "missing #{input}" unless File.exist?(input)
   return rhythm(input) if kind == "rhythm"
   return melody(input) if kind == "melody"
-  abort "study kind must be rhythm or melody"
+  return harmony(input) if kind == "harmony"
+  return semantics(input) if kind == "semantics"
+  abort "study kind must be rhythm, melody, harmony, or semantics"
 end
 
 def rhythm(input = nil)
@@ -285,6 +300,22 @@ def melody(input = nil)
   input ||= prompt("melodic stem path")
   data = spectral_windows(input)
   puts JSON.pretty_generate(type: "melody", path: input, duration_seconds: data.fetch(:duration_seconds), windows: data.fetch(:windows).first(128))
+end
+
+def harmony(input = nil)
+  input ||= prompt("harmonic stem path")
+  profile = pitch_profile(input)
+  ranking = chord_candidates(profile.fetch(:pitch_classes)).first(16)
+  puts JSON.pretty_generate(type: "harmony", path: input, duration_seconds: profile.fetch(:duration_seconds), pitch_classes: profile.fetch(:pitch_classes), chords: ranking)
+end
+
+def semantics(input = nil)
+  input ||= prompt("audio path")
+  rhythm_data = frame_energy(input, highpass: 60, lowpass: 12_000)
+  loudness = rhythm_data.fetch(:frames).map(&:last)
+  brightness = frame_energy(input, highpass: 2_400, lowpass: 12_000).fetch(:frames).map(&:last)
+  density = peak_frames(rhythm_data.fetch(:frames), rhythm_data.fetch(:hop_seconds)).length.to_f / [rhythm_data.fetch(:duration_seconds), 1.0].max
+  puts JSON.pretty_generate(type: "semantics", path: input, duration_seconds: rhythm_data.fetch(:duration_seconds), tags: semantic_tags(loudness, brightness, density))
 end
 
 def ears(path = File.join(ROOT, "full_track.mp3"))
@@ -317,6 +348,53 @@ def spectral_windows(path)
   { duration_seconds: raw.length.to_f / SAMPLE_RATE, windows: windows }
 end
 
+def pitch_profile(path)
+  raw = pipe_floats(path, "highpass=f=65,lowpass=f=5000,aformat=sample_fmts=flt:channel_layouts=mono")
+  window = 2_048
+  bins = Array.new(12, 0.0)
+  raw.each_slice(window) do |slice|
+    next if slice.length < window
+    estimate = zero_crossing_hz(slice)
+    next if estimate < 40.0 || estimate > 5_000.0
+    bins[pitch_class_for(estimate)] += slice.sum { |value| value.abs } / slice.length
+  end
+  total = bins.sum
+  normalized = total.positive? ? bins.map { |value| (value / total).round(5) } : bins
+  { duration_seconds: raw.length.to_f / SAMPLE_RATE, pitch_classes: PITCH_CLASSES.zip(normalized).to_h }
+end
+
+def chord_candidates(pitch_classes)
+  values = PITCH_CLASSES.map { |name| pitch_classes.fetch(name, 0.0) }
+  candidates = []
+  PITCH_CLASSES.each_with_index do |root_name, root_index|
+    CHORD_TEMPLATES.each do |suffix, intervals|
+      score = intervals.sum { |interval| values[(root_index + interval) % 12] }
+      candidates << { chord: "#{root_name}#{suffix}", score: score.round(5) }
+    end
+  end
+  candidates.sort_by { |candidate| -candidate.fetch(:score) }
+end
+
+def zero_crossing_hz(slice)
+  crossings = slice.each_cons(2).count { |left, right| (left.negative? && right.positive?) || (left.positive? && right.negative?) }
+  crossings.to_f * SAMPLE_RATE / (2.0 * slice.length)
+end
+
+def pitch_class_for(frequency)
+  (69 + (12 * Math.log2(frequency / 440.0))).round % 12
+end
+
+def semantic_tags(loudness, brightness, density)
+  mean_loudness = average(loudness)
+  mean_brightness = average(brightness)
+  tags = []
+  tags << (density > 2.5 ? "dense" : "spacious")
+  tags << (mean_brightness > mean_loudness * 0.45 ? "bright" : "warm")
+  tags << (standard_deviation(loudness) > mean_loudness * 0.8 ? "unstable" : "steady")
+  tags << (mean_loudness < 0.03 ? "intimate" : "forward")
+  tags
+end
+
 def pipe_floats(path, filter)
   output, error, status = capture("ffmpeg", "-v", "error", "-i", path, "-af", filter, "-f", "f32le", "-")
   abort error unless status.success?
@@ -326,23 +404,27 @@ end
 def peak_frames(frames, hop_seconds)
   return [] if frames.empty?
   values = frames.map(&:last)
-  threshold = values.sum / values.length + standard_deviation(values)
+  threshold = average(values) + standard_deviation(values)
   frames.each_cons(3).filter_map do |left, middle, right|
     next unless middle.last > threshold && middle.last > left.last && middle.last > right.last
     { time: middle.first.round(3), strength: middle.last.round(5), grid: (middle.first / hop_seconds).round }
   end
 end
 
+def average(values)
+  return 0.0 if values.empty?
+  values.sum / values.length
+end
+
 def standard_deviation(values)
-  mean = values.sum / values.length
-  Math.sqrt(values.sum { |value| (value - mean) * (value - mean) } / values.length)
+  mean = average(values)
+  Math.sqrt(values.sum { |value| (value - mean) * (value - mean) } / [values.length, 1].max)
 end
 
 def nearest_note(frequency)
   return nil if frequency <= 0
   midi = (69 + (12 * Math.log2(frequency / 440.0))).round
-  names = %w[C Db D Eb E F Gb G Ab A Bb B]
-  "#{names[midi % 12]}#{(midi / 12) - 1}"
+  "#{PITCH_CLASSES[midi % 12]}#{(midi / 12) - 1}"
 end
 
 def media_metadata(path)
@@ -407,6 +489,8 @@ when "stems" then stems(ARGV.shift || File.join(ROOT, "samples/demucs"), ARGV.sh
 when "study" then study(ARGV.shift, ARGV.shift)
 when "rhythm" then rhythm(ARGV.shift)
 when "melody" then melody(ARGV.shift)
+when "harmony" then harmony(ARGV.shift)
+when "semantics" then semantics(ARGV.shift)
 when "ears" then ears(ARGV.shift || File.join(ROOT, "full_track.mp3"))
 else
   puts "commands: #{COMMANDS.join(' | ')}"
