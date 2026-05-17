@@ -8,7 +8,8 @@
 .verse-action.active { color: var(--primary); }
 .search { width: 100%; max-width: 480px; padding: .5rem .75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 1rem; }
 .dim { color: var(--text-dim); font-size: .85rem; }
-nav { display: flex; gap: 1rem; align-items: center; margin: 1rem 0; }
+nav { display: flex; gap: 1rem; align-items: center; padding: .5rem 1rem; border-bottom: 1px solid var(--border); }
+nav .brand { font-weight: 700; margin-right: auto; color: var(--primary); }
 h1, h2 { margin-bottom: .75rem; color: var(--primary); }
 
 /* ── Chapter text ── */
