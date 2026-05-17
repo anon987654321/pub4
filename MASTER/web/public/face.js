@@ -128,6 +128,7 @@ function _doResize() {
     brow: 0, browTarget: 0,
     mouth: 'neutral',
     breath: 0,
+    blinkAt: 0,
     vortex: 0,
     dispersion: 0, dispersionTarget: 0,
     coronaFlash: 0,
@@ -166,7 +167,7 @@ function _doResize() {
   function mouthArc(cx, cy, w, shape, n) {
     const out = new Array(n);
     for (let i = 0; i < n; i++) {
-      const t = i / (n - 1);
+      const t = n > 1 ? i / (n - 1) : 0;
       const x = cx - w / 2 + w * t;
       let y = cy;
       const u = (t - 0.5) * 2;
@@ -618,7 +619,7 @@ function _doResize() {
     maskPhase = 0; maskTransitioning = true; Face.vortex = 0.45;
   }
 
-  // Palettes (time-of-day + state overlays)
+  // Palettes — base mono; state events call fadePaletteTo() to overlay
   function timePalette() {
     return { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' };
   }
@@ -1058,13 +1059,13 @@ function _doResize() {
   function shake(dir) { Face.yawTarget = dir * 0.32; setTimeout(() => Face.yawTarget = -Face.yawTarget, 180); setTimeout(() => Face.yawTarget = 0, 380); }
   function sendSlash(cmd) { try { fetch(`/chat/message?message=${encodeURIComponent(cmd)}`, { method: 'GET' }); } catch (e) {} }
 
-  // palette cycle (mood overrides)
-  const MOOD_PALETTES = [timePalette(),
+  // P-key palette cycle (mono → provider tints)
+  const CYCLE_PALETTES = [timePalette(),
     PROVIDER_TINT.claude, PROVIDER_TINT.deepseek, PROVIDER_TINT.gemini, PROVIDER_TINT.gpt];
   let palIdx = 0;
   function cyclePalette(dir) {
-    palIdx = (palIdx + dir + MOOD_PALETTES.length) % MOOD_PALETTES.length;
-    fadePaletteTo(MOOD_PALETTES[palIdx], 800);
+    palIdx = (palIdx + dir + CYCLE_PALETTES.length) % CYCLE_PALETTES.length;
+    fadePaletteTo(CYCLE_PALETTES[palIdx], 800);
   }
 
   // shake to reset
@@ -1363,7 +1364,7 @@ function _doResize() {
     ctx.fillRect(0, 0, W, H);
 
     drawSpeedLines();
-    drawParticles();
+    drawParticles(now);
 
     // Mask wipe: column sweep, alternating direction each transition
     if (maskTransitioning) {
@@ -1540,9 +1541,8 @@ function _doResize() {
       // Vorticity confinement on dispersed field
       if (disp > 0.1) {
         const curl = curlAt(p.x, p.y, now);
-        const cu = curl[0], cv2 = curl[1];
-        const cm2 = cu*cu + cv2*cv2;
-        if (cm2 > 0.0001) { const cm = Math.sqrt(cm2); p.vx += (cu / cm) * cm * 0.15 * disp; p.vy += (cv2 / cm) * cm * 0.10 * disp; }
+        p.vx += curl[0] * 0.15 * disp;
+        p.vy += curl[1] * 0.10 * disp;
       }
       // Lorenz attractor — advance per-particle butterfly orbit, blend into velocity
       if (State.lorenzMode) {
@@ -1572,7 +1572,7 @@ function _doResize() {
     }
   }
 
-  function drawParticles() {
+  function drawParticles(now) {
     if (!lpxW || !lpxH) return;
 
     // Reallocate float + zone buffers on first call or after resize
@@ -1589,7 +1589,7 @@ function _doResize() {
     const A2 = 0.7225, B2 = 2.1025, C2 = 0.1764;
     const s = Face.s, fcx = Face.cx, fcy = Face.cy;
     // Current yaw/pitch for rotating normals into world space
-    const _yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(performance.now() * 0.00022) * 0.14;
+    const _yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(now * 0.00022) * 0.14;
     const _pit = Face.pitch + State.tiltY * 0.30;
     const _cosY = Math.cos(_yaw), _sinY = Math.sin(_yaw);
     const _cosP = Math.cos(_pit), _sinP = Math.sin(_pit);
