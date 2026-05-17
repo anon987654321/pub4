@@ -1,5 +1,5 @@
 class PostsController < ApplicationController
-  before_action :require_real_user, only: [:new, :create, :edit, :update, :destroy]
+  before_action :require_real_user, only: [:edit, :update, :destroy]
   before_action :set_post,          only: [:show, :edit, :update, :destroy]
   before_action :set_community,     only: [:new, :create]
 
@@ -19,6 +19,7 @@ class PostsController < ApplicationController
   def create
     @post           = Post.new(post_params)
     @post.user      = Current.user
+    @post.anonymous = true if Current.user.guest?
     @post.community = @community if @community
     if @post.save
       redirect_to @post, notice: "Posted."
@@ -53,6 +54,6 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :community_id)
+    params.require(:post).permit(:title, :content, :community_id, :anonymous)
   end
 end

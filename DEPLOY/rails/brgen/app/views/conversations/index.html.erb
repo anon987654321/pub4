@@ -7,7 +7,7 @@
       <% last  = c.messages.last %>
       <li>
         <%= link_to conversation_path(c) do %>
-          <strong><%= other&.username || "unknown" %></strong>
+          <strong><%= other&.display_name || "anon" %></strong>
           <% if last %>
             <span><%= truncate(last.content.to_s, length: 80) %></span>
             <time datetime="<%= last.created_at.iso8601 %>" data-controller="timeago"><%= time_ago_in_words(last.created_at) %> ago</time>

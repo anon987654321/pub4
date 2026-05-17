@@ -1,5 +1,5 @@
 class MessagesController < ApplicationController
-  before_action :require_real_user
+  before_action :require_user_session
   before_action :set_conversation
 
   def create

@@ -30,25 +30,23 @@
 </article>
 
 <section id="comments-section">
-  <% if authenticated? %>
-    <h3>Comment as <%= Current.user.username || "guest" %></h3>
-    <%= form_with model: [@post, @new_comment], data: { turbo: true } do |f| %>
-      <p>
-        <%= f.text_area :content, placeholder: "What do you think?", rows: 4,
-              data: { controller: "textarea-autogrow character-counter", "character-counter-max-value": 10000 } %>
-        <span data-character-counter-target="counter"></span>
-      </p>
-      <p><%= f.submit "Comment" %></p>
-    <% end %>
+  <h3>Comment as <strong><%= Current.user&.guest? ? "anon" : (Current.user&.username || "anon") %></strong><% unless authenticated? %> · <%= link_to "sign in", new_session_path %><% end %></h3>
+  <%= form_with model: [@post, @new_comment], data: { turbo: true } do |f| %>
+    <div class="field">
+      <%= f.text_area :content, placeholder: "What do you think?", rows: 4,
+            data: { controller: "textarea-autogrow character-counter", "character-counter-max-value": 10000 } %>
+      <span data-character-counter-target="counter"></span>
+    </div>
+    <div class="field"><%= f.submit "Comment", class: "btn btn-primary btn-sm" %></div>
   <% end %>
 
   <ul id="comments">
     <% if @comments.any? %>
       <% @comments.each do |comment| %>
         <%= render "comments/comment", comment: comment %>
+      <% else %>
+        <li>No comments yet. Be first.</li>
       <% end %>
-    <% else %>
-      <li>No comments yet. Be first.</li>
     <% end %>
   </ul>
 </section>

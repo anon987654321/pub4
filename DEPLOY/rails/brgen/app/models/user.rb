@@ -40,6 +40,8 @@ class User < ApplicationRecord
 
   normalizes :email_address, with: ->(email_address) { email_address.strip.downcase }
 
+  def display_name = guest? ? "anon" : (username.presence || email_address.split("@").first)
+
   def assured?(level)
     identity_assurances.where(level: level).where("expires_at IS NULL OR expires_at > ?", Time.current).exists?
   end

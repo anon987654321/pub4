@@ -2,7 +2,7 @@
 
 <% other = (@conversation.participants - [Current.user]).first %>
 <header>
-  <h1><%= other&.username || "conversation" %></h1>
+  <h1><%= other&.display_name || "conversation" %></h1>
   <%= link_to "← all", conversations_path %>
 </header>
 

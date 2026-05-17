@@ -1,25 +1,33 @@
-<h1><%= @post.new_record? ? "New post" : "Edit post" %></h1>
-<%= form_with model: [@community, @post].compact do |f| %>
-  <% if @post.errors.any? %>
-    <ul>
-      <% @post.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
-    </ul>
+<% content_for :title, "New post" %>
+
+<div class="page-header"><h1>New post</h1></div>
+
+<div class="form-wrap">
+  <%= form_with model: [@community, @post].compact do |f| %>
+    <%= render "shared/errors", object: @post %>
+    <div class="field">
+      <%= f.label :community_id, "Community (optional)" %>
+      <%= f.collection_select :community_id, Community.order(:name), :id, :name, { include_blank: "— no community —" } %>
+    </div>
+    <div class="field">
+      <%= f.label :title %>
+      <%= f.text_field :title, placeholder: "Title", autofocus: true %>
+    </div>
+    <div class="field">
+      <%= f.label :content, "Body (optional)" %>
+      <%= f.text_area :content, placeholder: "Text (optional)", rows: 6 %>
+    </div>
+    <% if authenticated? %>
+      <div class="field field--check">
+        <%= f.check_box :anonymous %>
+        <%= f.label :anonymous, "Post anonymously" %>
+      </div>
+    <% else %>
+      <p class="dim" style="margin-bottom:12px">Posting as <strong>anon</strong> · <%= link_to "sign in", new_session_path %> to use your name</p>
+    <% end %>
+    <div class="field">
+      <%= f.submit "Post", class: "btn btn-primary" %>
+      <%= link_to "Cancel", posts_path, class: "btn btn-ghost" %>
+    </div>
   <% end %>
-  <p>
-    <%= f.label :community_id, "Community (optional)" %>
-    <%= f.collection_select :community_id, Community.order(:name), :id, :name,
-          { include_blank: "— no community —" } %>
-  </p>
-  <p>
-    <%= f.label :title %>
-    <%= f.text_field :title, placeholder: "Title", autofocus: true %>
-  </p>
-  <p>
-    <%= f.label :content, "Body (optional)" %>
-    <%= f.text_area :content, placeholder: "Text (optional)", rows: 8 %>
-  </p>
-  <p>
-    <%= f.submit @post.new_record? ? "Post" : "Save" %>
-    <%= link_to "Cancel", @post.new_record? ? posts_path : @post %>
-  </p>
-<% end %>
+</div>

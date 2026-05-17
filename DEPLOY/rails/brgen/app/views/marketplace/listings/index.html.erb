@@ -18,38 +18,45 @@
 
 <div class="page-header">
   <h1>Markedsplass</h1>
-  <%= link_to "Sell something", new_marketplace_listing_path, class: "btn" if authenticated? %>
+  <%= link_to "Sell", new_marketplace_listing_path, class: "btn btn-sm" if authenticated? %>
+</div>
+
+<div class="deal-search">
+  <%= form_with url: marketplace_listings_path, method: :get, local: true do |f| %>
+    <%= f.text_field :q, value: params[:q], placeholder: "Search deals…" %>
+    <%= f.submit "Search", class: "btn btn-sm" %>
+  <% end %>
 </div>
 
 <% if @categories.any? %>
-  <div class="sort-tabs" style="margin-bottom:16px">
+  <div class="deal-cats">
+    <%= link_to "All", marketplace_listings_path, class: "deal-cat#{" active" unless params[:category]}" %>
     <% @categories.each do |cat| %>
-      <%= link_to cat.name, marketplace_category_path(cat), class: "sort-tab" %>
+      <%= link_to cat.name, marketplace_category_path(cat), class: "deal-cat#{" active" if params[:category] == cat.slug}" %>
     <% end %>
   </div>
 <% end %>
 
-<%= form_with url: marketplace_listings_path, method: :get, local: true do |f| %>
-  <div style="display:flex;gap:8px;margin-bottom:16px">
-    <%= f.text_field :q, value: params[:q], placeholder: "Search listings…", style: "flex:1" %>
-    <%= f.submit "Search", class: "btn" %>
+<% if @listings.any? %>
+  <div class="deal-grid">
+    <% @listings.each do |l| %>
+      <div class="deal-card">
+        <a href="<%= marketplace_listing_path(l) %>" class="deal-card-img">
+          <% if l.photos.attached? %>
+            <%= image_tag l.photos.first, alt: l.title %>
+          <% end %>
+        </a>
+        <div class="deal-card-body">
+          <p class="deal-card-title"><%= l.title %></p>
+          <p class="deal-meta"><%= l.location %> · <%= l.condition %></p>
+          <p class="deal-price"><%= l.price_display %></p>
+        </div>
+        <%= link_to "View deal", marketplace_listing_path(l), class: "deal-cta" %>
+      </div>
+    <% end %>
   </div>
+<% else %>
+  <div class="empty"><p>No listings yet. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
 <% end %>
 
-<section>
-  <% @listings.each do |l| %>
-    <article>
-      <% if l.photos.attached? %>
-        <%= link_to marketplace_listing_path(l) do %>
-          <%= image_tag l.photos.first, style: "width:100%;max-height:200px;object-fit:cover;border-radius:2px;margin-bottom:8px" %>
-        <% end %>
-      <% end %>
-      <h2><%= link_to l.title, marketplace_listing_path(l) %></h2>
-      <p><strong><%= l.price_display %></strong> · <%= l.location %> · <%= l.condition %></p>
-    </article>
-  <% end %>
-  <% if @listings.empty? %>
-    <div class="empty"><p>No listings yet. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
-  <% end %>
-</section>
 <%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>

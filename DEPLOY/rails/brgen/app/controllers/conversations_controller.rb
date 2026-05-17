@@ -1,5 +1,5 @@
 class ConversationsController < ApplicationController
-  before_action :require_real_user
+  before_action :require_user_session
 
   def index
     @conversations = Conversation.for_user(Current.user)

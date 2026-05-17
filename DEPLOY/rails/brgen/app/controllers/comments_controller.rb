@@ -1,5 +1,5 @@
 class CommentsController < ApplicationController
-  before_action :require_real_user
+  before_action :require_real_user, only: [:destroy]
   before_action :set_commentable
 
   def create

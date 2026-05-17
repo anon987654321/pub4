@@ -62,6 +62,12 @@ module Authentication
     redirect_to new_session_path, alert: "Sign in to continue"
   end
 
+  def require_user_session
+    return if Current.user.present?
+
+    redirect_to new_session_path, alert: "Sign in to continue"
+  end
+
   alias_method :require_authentication, :resume_session
 
   def find_session_by_cookie

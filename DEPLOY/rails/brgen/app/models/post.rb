@@ -23,5 +23,5 @@ class Post < ApplicationRecord
   scope :top,   -> { left_joins(:votes).group(:id).order(TOP_SQL) }
 
   def comment_count = comments.count
-  def author_name   = user&.username.presence || "anon"
+  def author_name   = (anonymous? || user&.guest?) ? "anon" : (user&.username.presence || "anon")
 end
