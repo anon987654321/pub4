@@ -69,6 +69,7 @@ module Master
     }
   end
 
+<<<<<<< HEAD
   # Regexes hoisted out of the per-call hot path (HOIST).
   RESCUE_DISCARD = /\A(nil|false|0|\[\]|\{\}|next|return|return\s+(nil|false|0|\[\]|\{\})|raise)?\z/
   RESCUE_SINK    = /\b(raise\b|Swallow\.log|\.publish\b|\bwarn\b|\blog\b|Diag\b|Result\.err)/
