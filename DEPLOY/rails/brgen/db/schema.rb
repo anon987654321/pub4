@@ -421,6 +421,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_015530) do
     t.string "email_address", null: false
     t.boolean "guest", default: false, null: false
     t.integer "karma"
+    t.decimal "latitude",  precision: 10, scale: 7
+    t.decimal "longitude", precision: 10, scale: 7
+    t.datetime "location_updated_at"
     t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.string "username"

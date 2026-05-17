@@ -40,7 +40,27 @@ class User < ApplicationRecord
 
   normalizes :email_address, with: ->(email_address) { email_address.strip.downcase }
 
+  EARTH_KM = 6371.0
+
   def display_name = guest? ? "anon" : (username.presence || email_address.split("@").first)
+
+  def self.nearby(lat, lng, radius_km: 2)
+    lat, lng = lat.to_f, lng.to_f
+    d_lat = radius_km / EARTH_KM * (180.0 / Math::PI)
+    d_lng = d_lat / Math.cos(lat * Math::PI / 180.0)
+    candidates = where(latitude: (lat - d_lat)..(lat + d_lat), longitude: (lng - d_lng)..(lng + d_lng))
+                   .where.not(latitude: nil)
+    candidates.select { |u| haversine(lat, lng, u.latitude.to_f, u.longitude.to_f) <= radius_km }
+  end
+
+  def self.haversine(lat1, lng1, lat2, lng2)
+    dlat = (lat2 - lat1) * Math::PI / 180.0
+    dlng = (lng2 - lng1) * Math::PI / 180.0
+    a = Math.sin(dlat / 2)**2 + Math.cos(lat1 * Math::PI / 180.0) * Math.cos(lat2 * Math::PI / 180.0) * Math.sin(dlng / 2)**2
+    EARTH_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  end
+
+  def anon_handle = "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
 
   def assured?(level)
     identity_assurances.where(level: level).where("expires_at IS NULL OR expires_at > ?", Time.current).exists?

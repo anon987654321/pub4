@@ -96,6 +96,10 @@ Rails.application.routes.draw do
     end
   end
 
+  patch "location" => "locations#update", as: :location
+  get   "nearby"   => "nearby#index",   as: :nearby
+  post  "nearby"   => "nearby#create"
+
   root "home#index"
   get  "up" => "rails/health#show", as: :rails_health_check
 end

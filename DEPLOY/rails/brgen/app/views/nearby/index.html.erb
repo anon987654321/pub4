@@ -1,0 +1,30 @@
+<% content_for :title, "Nearby" %>
+
+<div class="page-header"><h1>Nearby</h1></div>
+
+<div data-controller="geolocation" data-geolocation-url-value="<%= location_path %>">
+  <% unless @located %>
+    <div style="padding:24px 16px;border-bottom:1px solid var(--border)">
+      <p style="font-weight:700;margin-bottom:6px">Share your location</p>
+      <p class="dim">Find strangers within 2 km and chat anonymously. Your exact position is never shown.</p>
+    </div>
+  <% end %>
+</div>
+
+<% if @located %>
+  <% if @nearby.any? %>
+    <% @nearby.each do |u| %>
+      <article style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <strong><%= u.anon_handle %></strong>
+          <p class="dim">nearby · anonymous</p>
+        </div>
+        <%= button_to "Chat", nearby_path, params: { user_id: u.id }, method: :post, class: "btn btn-primary btn-sm" %>
+      </article>
+    <% end %>
+  <% else %>
+    <div class="empty"><p>No one nearby right now. Check back later.</p></div>
+  <% end %>
+<% else %>
+  <div class="empty"><p>Waiting for your location…</p></div>
+<% end %>
