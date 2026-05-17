@@ -899,13 +899,13 @@ function _doResize() {
         pending = pending.slice(cut);
         if (sent) {
           enqueueSpeech(sent);
-          Face.dispersionTarget = Math.min(0.06, (Face.dispersionTarget || 0) + 0.04);
+          Face.dispersionTarget = Math.min(0.06, Face.dispersionTarget + 0.04);
           setTimeout(() => { if (Face.dispersionTarget > 0) Face.dispersionTarget = Math.max(0, Face.dispersionTarget - 0.04); }, 250);
         }
       }
     };
     evtSrc.addEventListener('tool', (ev) => {
-      try { const d = JSON.parse(ev.data); datamosh(); Face.dispersionTarget = 0.2; triggerShockEyes(); } catch (e) {}
+      try { JSON.parse(ev.data); datamosh(); Face.dispersionTarget = 0.2; triggerShockEyes(); } catch (e) {}
     });
     evtSrc.addEventListener('mood', (ev) => {
       const m = (ev.data || '').trim();
@@ -1346,7 +1346,7 @@ function _doResize() {
     const baseInt = State.mode === 'thinking' ? 0.9 : (State.mode === 'idle' ? 5.0 : 3.0);
     const interval = baseInt * (0.4 + State.confidence * 0.6);
     if (Face.blinkPhase > interval) { Face.blinkAt = now; Face.blinkPhase = 0; }
-    const blinkAge = now - (Face.blinkAt || 0);
+    const blinkAge = now - Face.blinkAt;
     Face.blink = blinkAge < 140 ? Math.sin(blinkAge / 140 * Math.PI) : 0;
 
     const idleMs = now - State.lastTouch;
@@ -1488,6 +1488,8 @@ function _doResize() {
         const [cu, cv] = curlAt(p.x, p.y, now);
         tx += cu * s * disp * 0.08;
         ty += cv * s * disp * 0.05;
+        // Vorticity confinement — reuse cached curl; avoid double curlAt call
+        if (disp > 0.1) { p.vx += cu * 0.15 * disp; p.vy += cv * 0.10 * disp; }
       } else if (disp < 0) {
         const k = -disp;
         tx = cx * k + tx * (1 - k);
@@ -1538,12 +1540,6 @@ function _doResize() {
       // Underdamped far, overdamped near target
       const damp = d2h < 4 ? 0.72 : 0.91;
       p.vx *= damp; p.vy *= damp;
-      // Vorticity confinement on dispersed field
-      if (disp > 0.1) {
-        const curl = curlAt(p.x, p.y, now);
-        p.vx += curl[0] * 0.15 * disp;
-        p.vy += curl[1] * 0.10 * disp;
-      }
       // Lorenz attractor — advance per-particle butterfly orbit, blend into velocity
       if (State.lorenzMode) {
         const ldt = dt * 0.0004;
@@ -1553,8 +1549,8 @@ function _doResize() {
         const dlz = (p.lx * p.ly - beta * p.lz) * ldt;
         p.lx += dlx; p.ly += dly; p.lz += dlz;
         // Map Lorenz X/Y into particle velocity nudge (scaled to face size)
-        p.vx += p.lx * 0.004 * s * 0.001;
-        p.vy += p.ly * 0.004 * s * 0.001;
+        p.vx += p.lx * s * 4e-6;
+        p.vy += p.ly * s * 4e-6;
       }
       // Velocity ceiling
       const vv = p.vx*p.vx + p.vy*p.vy;
