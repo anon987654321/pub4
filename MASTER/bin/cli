@@ -18,6 +18,11 @@ end
 
 require "master"
 
+if ARGV.first == "orient"
+  puts Master::Orient.render(root: File.expand_path("..", __dir__))
+  exit 0
+end
+
 def stable_web_secret(config)
   return config["web_secret_key_base"] if config["web_secret_key_base"].to_s.length >= 64
   require "securerandom"

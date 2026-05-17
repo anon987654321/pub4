@@ -16,13 +16,14 @@ module Master
         work_commands(ai:, root:, infra:),
         control_commands(ai[:standing], ai[:soul]),
         system_commands(ai[:agent], infra[:diag], root),
+        "orient" => ->(_ctx) { Master::Orient.render(root:) },
         "help" => ->(_ctx) {
           [
             "session: /save /clear /history [N] /tokens /cost /undo /redo /exit",
             "work:    /scan [profile] [path]  /fix [path]  /review [on|off|path]  /critique <text>  /why <rule>  /topic [desc]",
             "model:   /model [id|list] /mode /persona /task",
             "memory:  /memory  /dreams",
-            "system:  /tree [N] /diff [ref] /commit /snapshot /diag [section] /dmesg /reload /help"
+            "system:  /orient /tree [N] /diff [ref] /commit /snapshot /diag [section] /dmesg /reload /help"
           ].join("\n")
         }
       )
@@ -50,7 +51,7 @@ module Master
         "undo"    => ->(_ctx) { r = undo.undo!;  r.ok? ? "reverted: #{r.value!}"   : r.message },
         "redo"    => ->(_ctx) { r = undo.redo!;  r.ok? ? "reapplied: #{r.value!}"  : r.message },
         "dmesg"   => ->(_ctx) { logging.dmesg },
-        "config"  => ->(_ctx) { config.data.inspect }
+        "config"  => ->(_ctx) { config.to_h.inspect }
       }
     end
 
