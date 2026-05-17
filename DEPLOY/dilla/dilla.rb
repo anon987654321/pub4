@@ -28,7 +28,47 @@ PAD_CHORDS = [
   { name: "Gbmaj9", hz: [92.50, 116.54, 138.59, 174.61, 207.65] },
   { name: "C cluster", hz: [130.81, 138.59, 196.00, 233.08, 311.13] }
 ].freeze
-COMMANDS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody harmony semantics ears].freeze
+COMMANDS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody harmony semantics ears play live bass grade grade_list].freeze
+# Analog stock characters — digital signal equivalents of film stock data.
+# noise_amp: RMS amplitude of the noise floor (≈tape hiss level)
+# sat_drive: tanh waveshaper drive (1.0 = light tube warmth, 3.0 = heavy tape saturation)
+# rolloff_hz: high-frequency bandwidth limit (anti-halation backing ↔ tape formulation)
+# wow_rate: LFO rate in Hz for pitch modulation (reciprocity failure ↔ capstan speed variance)
+# wow_depth: LFO depth [0,1] (tape tension variation)
+# warmth_db: low-frequency shelf boost in dB (color temperature ↔ tonal weight)
+AUDIO_STOCKS = {
+  tape_250:  { noise_amp: 0.003, sat_drive: 1.4, rolloff_hz: 14_500, wow_rate: 0.40, wow_depth: 0.003, warmth_db: 2.5 },
+  tape_500:  { noise_amp: 0.006, sat_drive: 2.2, rolloff_hz: 12_500, wow_rate: 0.45, wow_depth: 0.004, warmth_db: 4.0 },
+  vinyl:     { noise_amp: 0.009, sat_drive: 1.0, rolloff_hz: 18_000, wow_rate: 0.50, wow_depth: 0.015, warmth_db: 2.0 },
+  cassette:  { noise_amp: 0.015, sat_drive: 0.8, rolloff_hz: 10_500, wow_rate: 0.50, wow_depth: 0.025, warmth_db: 1.5 },
+  acetate:   { noise_amp: 0.022, sat_drive: 1.1, rolloff_hz:  9_500, wow_rate: 0.80, wow_depth: 0.040, warmth_db: 5.0 },
+}.freeze
+
+# Analog grade presets — concept map:
+# tape_saturation  ↔ H&D film curve (soft-knee waveshaper)
+# analog_noise     ↔ Newson-Delon grain (noise floor with midtone envelope)
+# harmonic_bloom   ↔ halation (even-harmonic enrichment, energy bleeding adjacent)
+# spectral_warmth  ↔ color temperature EQ
+# parallel_compress↔ bleach bypass (parallel NY compression)
+# multiband_tone   ↔ split toning / split grade
+# wow_flutter      ↔ reciprocity failure (pitch/time modulation)
+# vinyl_crackle    ↔ faded print (aging artifacts)
+# transient_sharpen↔ micro-contrast (presence boost)
+# stereo_width     ↔ chromatic aberration (M/S spread)
+GRADE_PRESETS = {
+  tape_warm:   { fx: %w[spectral_warmth tape_saturation analog_noise transient_sharpen], stock: :tape_250 },
+  tape_hot:    { fx: %w[tape_saturation harmonic_bloom analog_noise multiband_tone],      stock: :tape_500 },
+  vinyl_press: { fx: %w[spectral_warmth analog_noise wow_flutter vinyl_crackle],          stock: :vinyl    },
+  lo_fi:       { fx: %w[spectral_warmth tape_saturation analog_noise wow_flutter],        stock: :cassette },
+  broadcast:   { fx: %w[parallel_compress multiband_tone transient_sharpen],              stock: :tape_250 },
+  sp1200:      { fx: %w[tape_saturation analog_noise transient_sharpen],                  stock: :tape_500 },
+}.freeze
+
+# J Dilla drunk quantization: deliberate timing displacement from the grid.
+# Each hit is offset by ±DRUNK_MAX_MS milliseconds of random swing — the
+# characteristic feel of an MPC3000 played slightly loose on purpose.
+DRUNK_MAX_MS = 22
+
 CHORD_TEMPLATES = {
   "maj" => [0, 4, 7],
   "min" => [0, 3, 7],
@@ -472,6 +512,235 @@ ensure
   previous ? ENV["BARS"] = previous : ENV.delete("BARS")
 end
 
+# --- Analog grade engine ---
+
+# Build an ffmpeg filter fragment for one grade effect using stock params.
+# Each filter maps to a postpro analog concept (see GRADE_PRESETS comment).
+def grade_filter(fx, stock)
+  case fx
+  when "tape_saturation"
+    # H&D characteristic curve analog: tanh waveshaper, gain-neutral.
+    d = stock[:sat_drive]
+    n = Math.tanh(d).round(6)
+    "aeval=exprs='tanh(#{d}*val(0))/#{n}:tanh(#{d}*val(1))/#{n}'"
+  when "analog_noise"
+    # Newson-Delon grain analog: flat Gaussian noise floor at stock amplitude.
+    a = stock[:noise_amp]
+    "aeval=exprs='val(0)+#{a}*(random(0)-0.5):val(1)+#{a}*(random(1)-0.5)'"
+  when "harmonic_bloom"
+    # Halation analog: even-harmonic enrichment (tube/transformer bloom).
+    # x|x| adds 2nd+3rd order harmonics without DC offset.
+    "aeval=exprs='val(0)+0.07*val(0)*abs(val(0)):val(1)+0.07*val(1)*abs(val(1))'"
+  when "spectral_warmth"
+    # Color temperature analog: low-shelf boost + high-shelf cut.
+    db  = stock[:warmth_db].round(1)
+    cut = (db * 0.65).round(1)
+    "equalizer=f=90:width_type=o:width=2:g=#{db},equalizer=f=9500:width_type=o:width=2:g=-#{cut}"
+  when "parallel_compress"
+    # Bleach bypass analog: New York parallel compression.
+    "acompressor=threshold=-22dB:ratio=7:attack=6:release=55:makeup=3:mix=0.45"
+  when "multiband_tone"
+    # Split grade analog: three-band independent tonal shaping.
+    "equalizer=f=110:width_type=o:width=2:g=1.8,equalizer=f=900:width_type=o:width=2:g=0.5,equalizer=f=7000:width_type=o:width=2:g=-1.2"
+  when "wow_flutter"
+    # Reciprocity failure analog: capstan speed LFO (wow=slow, flutter=fast).
+    r = stock[:wow_rate]
+    d = stock[:wow_depth]
+    "vibrato=f=#{r}:d=#{d}"
+  when "vinyl_crackle"
+    # Faded print analog: stochastic crackle bursts at ~0.08% of samples.
+    "aeval=exprs='val(0)+(random(0)<8e-4?(random(1)-0.5)*0.22:0):val(1)+(random(2)<8e-4?(random(3)-0.5)*0.22:0)'"
+  when "transient_sharpen"
+    # Micro-contrast analog: presence boost via high-mid shelf.
+    "equalizer=f=4000:width_type=o:width=1.5:g=2.0"
+  when "stereo_width"
+    # Chromatic aberration analog: M/S stereo widening.
+    "extrastereo=m=1.35"
+  end
+end
+
+def grade(input = nil, output = nil, preset_name = nil)
+  input       ||= prompt("audio path")
+  preset_name ||= prompt("preset (#{GRADE_PRESETS.keys.join(', ')})")
+  output      ||= input.sub(/(\.\w+)\z/, "_#{preset_name}\\1")
+  abort "missing #{input}" unless File.exist?(input)
+  p = GRADE_PRESETS[preset_name.to_sym] or abort "unknown preset: #{preset_name}. valid: #{GRADE_PRESETS.keys.join(', ')}"
+  stock   = AUDIO_STOCKS[p[:stock]]
+  filters = p[:fx].filter_map { |fx| grade_filter(fx, stock) }
+  abort "no filters for preset #{preset_name}" if filters.empty?
+  chain = [filters, "lowpass=f=#{stock[:rolloff_hz]}"].flatten.join(",")
+  sh! "ffmpeg", "-y", "-i", input, "-af", chain, "-c:a", "pcm_s16le", output
+  puts "wrote #{output}"
+end
+
+def grade_list
+  GRADE_PRESETS.each do |name, p|
+    stock = p[:stock]
+    puts "#{name}: #{p[:fx].join(' → ')} [#{stock}]"
+  end
+end
+
+# --- Live playback ---
+
+# Render a short preview and play it immediately via ffplay.
+def play(preset_name = nil, bars_count = 8)
+  abort "ffplay required" unless tool_available?("ffplay")
+  preset_name ||= "dilla"
+  tmp = File.join(ROOT, ".play_tmp.mp3")
+  prev = ENV["BARS"]
+  ENV["BARS"] = bars_count.to_s
+  if preset_name == "dilla"
+    render_dilla(tmp)
+  else
+    render(tmp)
+  end
+  sh! "ffplay", "-nodisp", "-autoexit", tmp
+ensure
+  prev ? ENV["BARS"] = prev : ENV.delete("BARS")
+  FileUtils.rm_f(tmp)
+end
+
+# Stream audio live from ffplay without writing a file — generative beat.
+def live(bars_count = 32)
+  abort "ffplay required" unless tool_available?("ffplay")
+  duration = (beat_seconds * 4.0 * bars_count).round(3)
+  drunk    = drunk_offsets(4 * bars_count)
+  expr     = chord_expression
+  kick_p   = (beat_seconds * 2.0).round(6)
+  # Build the same filter as render but pipe direct to ffplay
+  tmp = File.join(ROOT, ".live_tmp.wav")
+  render_dilla(tmp, bars_count)
+  puts "streaming #{bars_count} bars... Ctrl-C to stop"
+  exec "ffplay", "-nodisp", "-loop", "0", tmp
+rescue SystemCallError => e
+  abort "ffplay failed: #{e.message}"
+end
+
+# Instantly play a modulating bass tone — good for local audio system check.
+def bass(root_hz = 55.0)
+  abort "ffplay required" unless tool_available?("ffplay")
+  # Warbling sub bass: fundamental + slow pitch LFO + low harmonic content.
+  # Models J Dilla's low-end: not a clean sine, has movement and weight.
+  lfo_hz   = 0.18
+  lfo_amt  = root_hz * 0.04
+  expr_l   = "0.45*sin(2*PI*(#{root_hz}+#{lfo_amt}*sin(2*PI*#{lfo_hz}*t))*t)" \
+             "+0.08*sin(2*PI*#{(root_hz * 2).round(2)}*t)" \
+             "+0.03*sin(2*PI*#{(root_hz * 3).round(2)}*t)"
+  filter   = "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
+  puts "playing bass #{root_hz}Hz (Ctrl-C to stop)"
+  exec "ffplay", "-f", "lavfi", "-i", "aevalsrc=0", "-nodisp",
+       "-af", "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
+rescue SystemCallError => e
+  abort "ffplay failed: #{e.message}"
+end
+
+# --- J Dilla style beat engine ---
+
+# Drunk quantization: return an array of per-beat timing offsets in seconds.
+# Dilla's signature feel — hits land slightly before or after the grid,
+# never random but never locked, like a human with perfect rhythm who chose not to use it.
+def drunk_offsets(n)
+  n.times.map { (rand * 2 - 1) * DRUNK_MAX_MS / 1000.0 }
+end
+
+# Build kick expression with drunk timing: each kick is offset from the grid.
+def dilla_kick_expr(duration, drunk)
+  beat_p = beat_seconds * 2.0
+  # Kicks on beats 1 and 3, offset by drunk timing
+  kicks  = drunk.each_slice(4).flat_map do |slice|
+    [ 0.0 + slice[0].to_f,
+      beat_seconds * 2.0 + slice[2].to_f ]
+  end.uniq
+  parts = kicks.first(64).map do |offset|
+    t_mod = "mod(t-#{offset.round(6)},#{(beat_seconds * 4.0).round(6)})"
+    "0.72*sin(2*PI*(46+88*exp(-#{t_mod.inspect}*20))*#{t_mod.inspect})*exp(-#{t_mod.inspect}*10)"
+  end
+  "(#{parts.join('+')})"
+rescue
+  "0.72*sin(2*PI*(46+88*exp(-mod(t,#{(beat_seconds * 2.0).round(6)})*18))*t)*exp(-mod(t,#{(beat_seconds * 2.0).round(6)})*9)"
+end
+
+# Snare on 2 and 4 with drunk timing + ghost notes at 1/8th positions.
+def dilla_snare_expr(duration, drunk)
+  beat2  = beat_seconds + (drunk[1] || 0.0)
+  beat4  = beat_seconds * 3.0 + (drunk[3] || 0.0)
+  bar    = beat_seconds * 4.0
+  ghosts = [beat_seconds * 0.5, beat_seconds * 1.5, beat_seconds * 2.5, beat_seconds * 3.5].map do |pos|
+    t_mod = "mod(t-#{pos.round(4)},#{bar.round(6)})"
+    "0.05*(random(0)-0.5)*lt(#{t_mod},0.04)*exp(-#{t_mod}*50)"
+  end
+  main = [beat2, beat4].map do |pos|
+    t_mod = "mod(t-#{pos.round(4)},#{bar.round(6)})"
+    "0.52*(random(1)-0.5)*lt(#{t_mod},0.06)*exp(-#{t_mod}*28)"
+  end
+  "(#{(main + ghosts).join('+').gsub(/"/, '')})"
+end
+
+# Warbling Dilla bass: frequency modulated by an LFO for that loose,
+# slightly sharp-flat feel. Octave sub below + harmonic above.
+def dilla_bass_expr(root_hz = 43.0)
+  lfo_rate = 0.12
+  lfo_amt  = root_hz * 0.03
+  fund     = "#{root_hz}+#{lfo_amt}*sin(2*PI*#{lfo_rate}*t)"
+  "0.60*sin(2*PI*(#{fund})*t)+0.10*sin(2*PI*2*(#{fund})*t)"
+end
+
+# Full Dilla-style render: drunk drums, warbling bass, pad chords, soul sample.
+def render_dilla(destination = File.join(ROOT, "dilla_beat.mp3"), bars_count = nil)
+  abort "ffmpeg required" unless tool_available?("ffmpeg")
+  FileUtils.mkdir_p(File.dirname(destination))
+  n_bars   = bars_count || bars
+  duration = (beat_seconds * 4.0 * n_bars).round(3)
+  drunk    = drunk_offsets(n_bars * 4)
+
+  kick_expr  = dilla_kick_expr(duration, drunk)
+  snare_expr = dilla_snare_expr(duration, drunk)
+  bass_expr  = dilla_bass_expr
+  hat_off    = (drunk[0] || 0.0) * 0.5
+  hat_p      = (beat_seconds / 2.0).round(6)
+  hat_expr   = "0.11*(random(0)-0.5)*lt(mod(t+#{hat_off.abs.round(4)},#{hat_p}),0.025)*exp(-mod(t,#{hat_p})*90)"
+
+  command = ["ffmpeg", "-y",
+             "-f", "lavfi", "-i", "aevalsrc='#{chord_expression}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{bass_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{kick_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{snare_expr}':d=#{duration}:s=#{SAMPLE_RATE}",
+             "-f", "lavfi", "-i", "aevalsrc='#{hat_expr}':d=#{duration}:s=#{SAMPLE_RATE}"]
+
+  sample_input = nil
+  if File.exist?(SAMPLE_CLEAN)
+    sample_input = 5
+    command += ["-stream_loop", "-1", "-i", SAMPLE_CLEAN]
+  end
+
+  labels  = %w[[pads] [bass] [kick] [snare] [hats]]
+  weights = %w[0.85 0.90 0.82 0.58 0.20]
+  filter  = []
+  filter << "[0:a]aformat=channel_layouts=stereo,lowpass=f=4000,adelay=5|11[pads]"
+  filter << "[1:a]aformat=channel_layouts=stereo,lowpass=f=180,equalizer=f=80:width_type=o:width=2:g=4[bass]"
+  filter << "[2:a]aformat=channel_layouts=stereo,lowpass=f=160[kick]"
+  filter << "[3:a]aformat=channel_layouts=stereo,highpass=f=200,lowpass=f=6000[snare]"
+  filter << "[4:a]aformat=channel_layouts=stereo,highpass=f=7000[hats]"
+
+  if sample_input
+    filter << "[#{sample_input}:a]aformat=channel_layouts=stereo,atrim=0:#{duration},asetpts=PTS-STARTPTS," \
+              "highpass=f=80,lowpass=f=14000,acrusher=bits=12:samples=2:mix=0.25[sample]"
+    labels  << "[sample]"
+    weights << "0.78"
+  end
+
+  mix_chain = "#{labels.join}amix=inputs=#{labels.length}:weights=#{weights.join(' ')}:duration=first," \
+              "aeval=exprs='tanh(1.6*val(0))/#{Math.tanh(1.6).round(6)}:tanh(1.6*val(1))/#{Math.tanh(1.6).round(6)}'," \
+              "acompressor=threshold=-18dB:ratio=2.5:attack=20:release=120," \
+              "acrusher=bits=12:samples=2:mix=0.15," \
+              "alimiter=limit=0.93:level_out=0.95[out]"
+  filter << mix_chain
+
+  command += ["-filter_complex", filter.join(";"), "-map", "[out]", "-t", duration.to_s, *codec_for(destination), destination]
+  sh!(*command)
+  puts "wrote #{destination}"
+end
+
 case ARGV.shift
 when "scan" then scan
 when "sweep" then sweep
@@ -491,7 +760,13 @@ when "rhythm" then rhythm(ARGV.shift)
 when "melody" then melody(ARGV.shift)
 when "harmony" then harmony(ARGV.shift)
 when "semantics" then semantics(ARGV.shift)
-when "ears" then ears(ARGV.shift || File.join(ROOT, "full_track.mp3"))
+when "ears"       then ears(ARGV.shift || File.join(ROOT, "full_track.mp3"))
+when "play"       then play(ARGV.shift, (ARGV.shift || 8).to_i)
+when "live"       then live((ARGV.shift || 32).to_i)
+when "bass"       then bass((ARGV.shift || 55.0).to_f)
+when "grade"      then grade(ARGV.shift, ARGV.shift, ARGV.shift)
+when "grade_list" then grade_list
+when "dilla"      then render_dilla(ARGV.shift || File.join(ROOT, "dilla_beat.mp3"))
 else
   puts "commands: #{COMMANDS.join(' | ')}"
 end
