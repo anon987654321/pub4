@@ -7,6 +7,19 @@
   <%= tag.meta name: "color-scheme", content: "dark" %>
   <%= tag.meta name: "theme-color", content: "#000000" %>
   <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
+  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Brgen — city communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <link rel="canonical" href="<%= request.original_url.split("?").first %>">
+  <meta property="og:site_name" content="Brgen">
+  <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
+  <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <meta property="og:url" content="<%= request.original_url %>">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Brgen" %>">
+  <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "City communities across Scandinavia and Europe. Connect, post, and discover your city." %>">
+  <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>

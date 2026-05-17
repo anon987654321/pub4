@@ -3,10 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#1a1a1a">
   <meta name="turbo-cache-control" content="no-preview">
-  <title><%= content_for?(:title) ? yield(:title) + " – Amber" : "Amber" %></title>
+  <title><%= content_for?(:title) ? "#{yield :title} — Amber" : "Amber" %></title>
+  <meta name="description" content="<%= content_for?(:description) ? yield(:description) : "Amber — AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style." %>">
+  <link rel="canonical" href="<%= request.original_url.split("?").first %>">
+  <meta property="og:site_name" content="Amber">
+  <meta property="og:title" content="<%= content_for?(:title) ? yield(:title) : "Amber" %>">
+  <meta property="og:description" content="<%= content_for?(:description) ? yield(:description) : "AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style." %>">
+  <meta property="og:url" content="<%= request.original_url %>">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="<%= content_for?(:title) ? yield(:title) : "Amber" %>">
+  <meta name="twitter:description" content="<%= content_for?(:description) ? yield(:description) : "AI wardrobe management. Build capsule wardrobes, plan outfits, and discover your personal style." %>">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
 </head>
