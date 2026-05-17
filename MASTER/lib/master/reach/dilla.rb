@@ -9,8 +9,8 @@ module Master
       TIER = :dangerous
       NAME = "dilla".freeze
       DESCRIPTION = "Capture, separate, study, render, and score audio with the dilla lab.".freeze
-      ACTIONS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody ears].freeze
-      INPUT_REQUIRED = %w[source livestream separate clean study rhythm melody ears sample].freeze
+      ACTIONS = %w[scan sweep council debug sample source livestream separate render verify chords clean stems study rhythm melody harmony semantics ears].freeze
+      INPUT_REQUIRED = %w[source livestream separate clean study rhythm melody harmony semantics ears sample].freeze
 
       def initialize(root:, governor:, event_bus: nil)
         @root = root
@@ -49,7 +49,7 @@ module Master
         return first unless first.fetch(:exit).zero?
         second = run(script, env, ["separate", source_path])
         return second unless second.fetch(:exit).zero?
-        stem = JSON.parse(second.fetch(:text)).fetch("other")
+        stem = parse_last_json(second.fetch(:text)).fetch("other")
         run(script, env, ["clean", File.expand_path(stem, File.dirname(script)), clean_path])
       rescue JSON::ParserError, KeyError => error
         { exit: 1, text: "sample: #{error.message}" }
@@ -63,13 +63,19 @@ module Master
       def build_argv(action, input:, output:, kind:)
         case action
         when "source", "livestream" then [action, input, output].compact
-        when "separate", "verify", "rhythm", "melody", "ears" then [action, input].compact
+        when "separate", "verify", "rhythm", "melody", "harmony", "semantics", "ears" then [action, input].compact
         when "render" then [action, output].compact
         when "clean" then [action, input, output].compact
         when "stems" then [action, input, output].compact
         when "study" then [action, kind || "rhythm", input].compact
         else [action]
         end
+      end
+
+      def parse_last_json(text)
+        start = text.rindex("{")
+        raise JSON::ParserError, "no json object" unless start
+        JSON.parse(text[start..])
       end
 
       def runtime_env(live_seconds:, bpm:, bars:)
