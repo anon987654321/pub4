@@ -1530,9 +1530,47 @@ def run_one_shot
   $cli_logger.info "ok preset=#{preset_name} out=#{output_path}"
 end
 
+def watch_mode?
+  ARGV.include?("--watch")
+end
+
+def run_watch
+  dir     = argv_flag("--watch") || "/sdcard/DCIM/Camera"
+  preset_name = (argv_flag("--preset") || "cinematic").to_sym
+  unless PRESETS.key?(preset_name)
+    $cli_logger.error "Unknown preset: #{preset_name}"
+    exit 1
+  end
+  seen    = Dir.glob(File.join(dir, "IMG_*.{jpg,jpeg,JPG,JPEG}")).map { |f| [f, File.mtime(f)] }.to_h
+  PostproBootstrap.dmesg "watch dir=#{dir} preset=#{preset_name} known=#{seen.size}"
+  loop do
+    sleep 2
+    Dir.glob(File.join(dir, "IMG_*.{jpg,jpeg,JPG,JPEG}")).each do |path|
+      mtime = File.mtime(path)
+      next if seen[path] == mtime
+      seen[path] = mtime
+      next if File.size(path) < 50_000
+      ext  = File.extname(path)
+      base = File.basename(path, ext)
+      out  = File.join(dir, "#{base}_#{preset_name}#{ext}")
+      PostproBootstrap.dmesg "new path=#{File.basename(path)} -> #{File.basename(out)}"
+      begin
+        image     = load_image(path)
+        processed = preset(image, preset_name)
+        processed = rgb_bands(processed)
+        processed.write_to_file(out, Q: CONFIG["jpeg_quality"] || 95)
+        $cli_logger.info "ok preset=#{preset_name} out=#{out}"
+      rescue => e
+        $cli_logger.error "watch error: #{e.message}"
+      end
+    end
+  end
+end
+
 def auto_launch
   return run_introspect if introspect_mode?
-  return run_one_shot if one_shot_mode?
+  return run_watch       if watch_mode?
+  return run_one_shot    if one_shot_mode?
   if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-repligen"))
     input = auto_mode
   elsif ARGV.include?("--from-repligen") && REPLIGEN_PRESENT
