@@ -1120,14 +1120,16 @@ function _doResize() {
   let wakeLock = null;
   async function acquireWakeLock() {
     if (!('wakeLock' in navigator)) return;
-    try {
-      wakeLock = await navigator.wakeLock.request('screen');
-      document.addEventListener('visibilitychange', async () => {
-        if (document.visibilityState === 'visible' && !wakeLock) {
-          try { wakeLock = await navigator.wakeLock.request('screen'); } catch (_e) {}
-        }
-      });
-    } catch (_e) {}
+    async function _request() {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      } catch (_e) {}
+    }
+    await _request();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && !wakeLock) _request();
+    });
   }
 
   // Square-wave beep — 8-bit state feedback
@@ -2166,5 +2168,4 @@ function _doResize() {
 
   // boot
   _doResize();
-  fadePaletteTo(timePalette(), 1000);
   requestAnimationFrame(frame);
