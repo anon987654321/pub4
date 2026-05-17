@@ -270,102 +270,161 @@ GRAIN_CHAN_SCALE = {
 # micro_contrast×2, highlight_roll, shadow_lift] → grain → dual_base_density.
 # micro_contrast listed twice dispatches at radius 4 (texture) then 12 (structure).
 PRESETS = {
-  portrait:       { fx: %w[optical_blur spectral_temp film_curve dir_coupler split_grade
-                            skin_protect shadow_lift highlight_roll micro_contrast micro_contrast
-                            grain color_temp base_tint dual_base_density],
-                    stock: :kodak_portra,       temp: 5200, intensity: 1.0 },
+  # --- portrait & people ---
+  portrait:         { fx: %w[optical_blur spectral_temp tonemap film_curve dir_coupler split_grade
+                              skin_protect warmth shadow_lift highlight_roll bloom_pro
+                              micro_contrast micro_contrast grain color_temp base_tint dual_base_density],
+                      stock: :kodak_portra,        temp: 5200, intensity: 1.0 },
 
-  landscape:      { fx: %w[optical_blur tonemap film_curve color_separate halation highlight_roll
-                            shadow_lift micro_contrast micro_contrast chromatic_aberration
-                            grain vintage_lens dual_base_density],
-                    stock: :fuji_velvia,        temp: 5800, intensity: 1.1, lens: "zeiss" },
+  indie:            { fx: %w[optical_blur film_curve shadow_lift highlight_roll vintage_lens
+                              split_toning micro_contrast micro_contrast chromatic_aberration
+                              grain faded_print dual_base_density],
+                      stock: :kodak_portra,        temp: 5400, intensity: 1.0, lens: "helios" },
 
-  street:         { fx: %w[optical_blur film_curve push_pull shadow_lift highlight_roll
-                            micro_contrast micro_contrast vintage_lens grain lith_print dual_base_density],
-                    stock: :tri_x,              temp: 5600, intensity: 1.2, stops: 1.0 },
+  polaroid:         { fx: %w[optical_blur film_curve faded_print warmth bloom_pro shadow_lift
+                              highlight_roll split_toning grain base_tint dual_base_density],
+                      stock: :kodak_portra,        temp: 5000, intensity: 1.0, lens: "helios" },
 
-  blockbuster:    { fx: %w[optical_blur tonemap bleach_bypass halation film_curve dir_coupler
-                            shadow_lift split_grade teal_orange micro_contrast micro_contrast
-                            grain bloom_pro highlight_roll dual_base_density],
-                    stock: :kodak_vision3,      temp: 4800, intensity: 1.3 },
+  # --- landscape & nature ---
+  landscape:        { fx: %w[optical_blur spectral_temp tonemap film_curve color_separate halation
+                              highlight_roll shadow_lift bloom_pro micro_contrast micro_contrast
+                              chromatic_aberration grain vintage_lens dual_base_density],
+                      stock: :fuji_velvia,         temp: 5800, intensity: 1.1, lens: "zeiss" },
 
-  dream:          { fx: %w[optical_blur cross_fade film_curve halation shadow_lift desaturate
-                            color_separate chromatic_aberration vintage_lens split_toning
-                            grain dual_base_density],
-                    stock: :ektachrome_100,     temp: 5800, intensity: 1.0, lens: "leica" },
+  magic_hour:       { fx: %w[optical_blur spectral_temp tonemap film_curve halation bloom_pro warmth
+                              dir_coupler shadow_lift highlight_roll micro_contrast micro_contrast
+                              grain color_temp dual_base_density],
+                      stock: :fuji_velvia,         temp: 5000, intensity: 1.2 },
 
-  neon_night:     { fx: %w[optical_blur push_pull reciprocity_failure tonemap film_curve halation
-                            shadow_lift teal_orange micro_contrast micro_contrast chromatic_aberration
-                            grain highlight_roll dual_base_density],
-                    stock: :cinestill_800t,     temp: 3200, intensity: 1.2,
-                    stops: 0.5, exposure_secs: 30.0 },
+  reversal:         { fx: %w[optical_blur tonemap film_curve color_separate halation highlight_roll
+                              shadow_lift micro_contrast micro_contrast chromatic_aberration
+                              grain dual_base_density],
+                      stock: :fuji_velvia,         temp: 5600, intensity: 1.2 },
 
-  horror:         { fx: %w[optical_blur film_curve green_push desaturate shadow_lift
-                            micro_contrast micro_contrast grain split_toning highlight_roll],
-                    stock: :tri_x,              temp: 5600, intensity: 1.1 },
+  process_e6:       { fx: %w[optical_blur push_pull tonemap film_curve color_separate halation
+                              highlight_roll chromatic_aberration micro_contrast micro_contrast
+                              grain base_tint dual_base_density],
+                      stock: :ektachrome_100,      temp: 5600, intensity: 1.3, stops: 2.0 },
 
-  golden_age:     { fx: %w[optical_blur spectral_temp film_curve halation warmth dir_coupler
-                            chromatic_aberration vintage_lens shadow_lift micro_contrast micro_contrast
-                            grain faded_print dual_base_density],
-                    stock: :kodak_vision3_50d,  temp: 5200, intensity: 1.0, lens: "cooke" },
+  # --- cinematic ---
+  cinematic:        { fx: %w[optical_blur spectral_temp tonemap bleach_bypass halation film_curve
+                              dir_coupler shadow_lift split_grade micro_contrast micro_contrast
+                              grain highlight_roll dual_base_density],
+                      stock: :kodak_vision3_500t,  temp: 4500, intensity: 1.2 },
 
-  indie:          { fx: %w[optical_blur film_curve shadow_lift highlight_roll vintage_lens
-                            micro_contrast chromatic_aberration grain faded_print dual_base_density],
-                    stock: :kodak_portra,       temp: 5400, intensity: 1.0, lens: "helios" },
+  blockbuster:      { fx: %w[optical_blur spectral_temp tonemap bleach_bypass halation film_curve
+                              dir_coupler shadow_lift split_grade teal_orange bloom_pro
+                              micro_contrast micro_contrast grain highlight_roll dual_base_density],
+                      stock: :kodak_vision3,       temp: 4800, intensity: 1.3 },
 
-  cinematic:      { fx: %w[optical_blur tonemap bleach_bypass halation film_curve dir_coupler
-                            shadow_lift split_grade micro_contrast micro_contrast
-                            grain highlight_roll dual_base_density],
-                    stock: :kodak_vision3_500t, temp: 4500, intensity: 1.2 },
+  golden_age:       { fx: %w[optical_blur spectral_temp tonemap film_curve halation warmth dir_coupler
+                              technicolor bloom_pro chromatic_aberration vintage_lens shadow_lift
+                              micro_contrast micro_contrast grain faded_print dual_base_density],
+                      stock: :kodak_vision3_50d,   temp: 5200, intensity: 1.0, lens: "cooke" },
 
-  kodachrome_look:{ fx: %w[optical_blur tonemap film_curve kodachrome_sim dir_coupler
-                            highlight_roll micro_contrast micro_contrast grain color_separate
-                            dual_base_density],
-                    stock: :kodachrome,         temp: 5600, intensity: 1.1 },
+  bleached:         { fx: %w[optical_blur spectral_temp tonemap bleach_bypass halation film_curve
+                              split_grade micro_contrast micro_contrast grain highlight_roll dual_base_density],
+                      stock: :kodak_vision3,       temp: 4800, intensity: 1.2 },
 
-  cross_process:  { fx: %w[optical_blur push_pull film_curve color_separate shadow_lift
-                            highlight_roll micro_contrast grain split_toning chromatic_aberration],
-                    stock: :fuji_velvia,        temp: 5500, intensity: 1.3, stops: 0.5 },
+  # --- night & neon ---
+  neon_night:       { fx: %w[optical_blur push_pull reciprocity_failure tonemap film_curve halation
+                              bloom_pro shadow_lift teal_orange micro_contrast micro_contrast
+                              chromatic_aberration grain highlight_roll dual_base_density],
+                      stock: :cinestill_800t,      temp: 3200, intensity: 1.2,
+                      stops: 0.5, exposure_secs: 30.0 },
 
-  silver_gelatin: { fx: %w[optical_blur film_curve push_pull shadow_lift highlight_roll
-                            micro_contrast micro_contrast grain lith_print dual_base_density],
-                    stock: :tri_x,              temp: 5600, intensity: 1.0, stops: 0.5 },
+  tokyo_night:      { fx: %w[optical_blur push_pull reciprocity_failure tonemap film_curve halation
+                              bloom_pro teal_orange shadow_lift micro_contrast micro_contrast
+                              chromatic_aberration grain highlight_roll dual_base_density],
+                      stock: :cinestill_800t,      temp: 3000, intensity: 1.3,
+                      stops: 1.0, exposure_secs: 45.0 },
 
-  vintage_chrome: { fx: %w[optical_blur film_curve dir_coupler spectral_temp color_separate
-                            chromatic_aberration highlight_roll grain split_toning
-                            faded_print dual_base_density],
-                    stock: :ektachrome_100,     temp: 5200, intensity: 1.0 },
+  tungsten:         { fx: %w[optical_blur spectral_temp tonemap film_curve halation push_pull bloom_pro
+                              dir_coupler split_grade shadow_lift micro_contrast micro_contrast
+                              grain highlight_roll dual_base_density],
+                      stock: :kodak_vision3_500t,  temp: 3200, intensity: 1.2,
+                      stops: 0.3, exposure_secs: 8.0 },
 
-  infrared_look:  { fx: %w[optical_blur push_pull infrared film_curve highlight_roll
-                            micro_contrast micro_contrast grain dual_base_density],
-                    stock: :tri_x,              temp: 5600, intensity: 1.0, stops: 0.5 },
+  # --- street & documentary ---
+  street:           { fx: %w[optical_blur tonemap bleach_bypass film_curve push_pull shadow_lift
+                              highlight_roll teal_orange micro_contrast micro_contrast vintage_lens
+                              grain lith_print dual_base_density],
+                      stock: :tri_x,              temp: 5600, intensity: 1.2, stops: 1.0 },
 
-  tungsten:       { fx: %w[optical_blur tonemap spectral_temp film_curve halation push_pull
-                            dir_coupler split_grade shadow_lift micro_contrast micro_contrast
-                            grain highlight_roll dual_base_density],
-                    stock: :kodak_vision3_500t, temp: 3200, intensity: 1.2,
-                    stops: 0.3, exposure_secs: 8.0 },
+  war_doc:          { fx: %w[optical_blur tonemap push_pull film_curve bleach_bypass green_push
+                              desaturate shadow_lift micro_contrast micro_contrast grain
+                              highlight_roll lith_print],
+                      stock: :tri_x,              temp: 5600, intensity: 1.3, stops: 2.0 },
 
-  reversal:       { fx: %w[optical_blur film_curve color_separate highlight_roll shadow_lift
-                            micro_contrast micro_contrast chromatic_aberration grain dual_base_density],
-                    stock: :fuji_velvia,        temp: 5600, intensity: 1.1 },
+  # --- black & white ---
+  silver_gelatin:   { fx: %w[optical_blur film_curve push_pull bleach_bypass shadow_lift highlight_roll
+                              micro_contrast micro_contrast grain lith_print dual_base_density],
+                      stock: :tri_x,              temp: 5600, intensity: 1.0, stops: 0.5 },
 
-  lith:           { fx: %w[optical_blur film_curve push_pull shadow_lift highlight_roll
-                            lith_print micro_contrast micro_contrast grain dual_base_density],
-                    stock: :tri_x,              temp: 5600, intensity: 1.2, stops: 1.5 },
+  lith:             { fx: %w[optical_blur tonemap film_curve push_pull bleach_bypass shadow_lift
+                              highlight_roll lith_print micro_contrast micro_contrast
+                              grain split_toning dual_base_density],
+                      stock: :tri_x,              temp: 5600, intensity: 1.3, stops: 1.5 },
 
-  bleached:       { fx: %w[optical_blur tonemap bleach_bypass halation film_curve split_grade
-                            micro_contrast micro_contrast grain highlight_roll dual_base_density],
-                    stock: :kodak_vision3,      temp: 4800, intensity: 1.2 },
+  noir:             { fx: %w[optical_blur tonemap film_curve bleach_bypass push_pull desaturate
+                              shadow_lift highlight_roll lith_print micro_contrast micro_contrast
+                              grain dual_base_density],
+                      stock: :tri_x,              temp: 5600, intensity: 1.4, stops: 2.0 },
 
-  dreamscape:     { fx: %w[optical_blur cross_fade film_curve halation shadow_lift desaturate
-                            split_toning grain dual_base_density],
-                    stock: :ektachrome_100,     temp: 5800, intensity: 1.0 },
+  # --- dreamlike & experimental ---
+  dream:            { fx: %w[optical_blur cross_fade film_curve halation bloom_pro shadow_lift
+                              desaturate color_separate chromatic_aberration vintage_lens
+                              split_toning grain dual_base_density],
+                      stock: :ektachrome_100,      temp: 5800, intensity: 1.0, lens: "leica" },
 
-  process_e6:     { fx: %w[optical_blur push_pull film_curve color_separate highlight_roll
-                            chromatic_aberration micro_contrast micro_contrast grain
-                            base_tint dual_base_density],
-                    stock: :ektachrome_100,     temp: 5600, intensity: 1.3, stops: 2.0 },
+  dreamscape:       { fx: %w[optical_blur cross_fade film_curve halation bloom_pro shadow_lift
+                              desaturate split_toning grain dual_base_density],
+                      stock: :ektachrome_100,      temp: 5800, intensity: 1.0 },
+
+  lo_fi:            { fx: %w[optical_blur film_curve push_pull faded_print warmth split_toning
+                              chromatic_aberration grain vintage_lens dual_base_density],
+                      stock: :kodak_portra,        temp: 4800, intensity: 1.2, lens: "helios" },
+
+  # --- horror & cold ---
+  horror:           { fx: %w[optical_blur tonemap film_curve bleach_bypass green_push desaturate
+                              push_pull shadow_lift micro_contrast micro_contrast grain
+                              split_toning highlight_roll],
+                      stock: :tri_x,              temp: 5600, intensity: 1.1 },
+
+  arctic:           { fx: %w[optical_blur tonemap film_curve desaturate bleach_bypass color_separate
+                              highlight_roll shadow_lift micro_contrast micro_contrast
+                              grain dual_base_density],
+                      stock: :tri_x,              temp: 6500, intensity: 1.1 },
+
+  # --- film stocks & processes ---
+  kodachrome_look:  { fx: %w[optical_blur tonemap film_curve kodachrome_sim dir_coupler halation
+                              highlight_roll micro_contrast micro_contrast grain color_separate
+                              technicolor dual_base_density],
+                      stock: :kodachrome,          temp: 5600, intensity: 1.1 },
+
+  technicolor_3strip: { fx: %w[optical_blur spectral_temp film_curve technicolor dir_coupler halation
+                                highlight_roll warmth micro_contrast micro_contrast
+                                grain bloom_pro dual_base_density],
+                        stock: :kodachrome,        temp: 5500, intensity: 1.2 },
+
+  cross_process:    { fx: %w[optical_blur push_pull tonemap film_curve color_separate shadow_lift
+                              teal_orange highlight_roll micro_contrast micro_contrast grain
+                              split_toning chromatic_aberration],
+                      stock: :fuji_velvia,         temp: 5500, intensity: 1.3, stops: 0.5 },
+
+  vintage_chrome:   { fx: %w[optical_blur film_curve dir_coupler spectral_temp color_separate bloom_pro
+                              chromatic_aberration highlight_roll grain split_toning
+                              faded_print dual_base_density],
+                      stock: :ektachrome_100,      temp: 5200, intensity: 1.0 },
+
+  # --- alt process ---
+  infrared_look:    { fx: %w[optical_blur push_pull infrared film_curve bleach_bypass highlight_roll
+                              micro_contrast micro_contrast grain halation dual_base_density],
+                      stock: :tri_x,              temp: 5600, intensity: 1.1, stops: 0.5 },
+
+  cyanotype_look:   { fx: %w[optical_blur film_curve desaturate cyanotype shadow_lift highlight_roll
+                              micro_contrast grain dual_base_density],
+                      stock: :tri_x,              temp: 6000, intensity: 1.0 },
 }.freeze
 
 def halation_tint_for(stock)
