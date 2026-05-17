@@ -117,9 +117,9 @@ function _doResize() {
   computeZones(); assignHomes();
 }
 
-  // Face zones (Fibonacci-sphere-projected anchors)
+  // Face zones — Fibonacci-sphere-projected home anchors per zone
   const Face = {
-    zones: {}, anchors: [],
+    zones: {},
     yaw: 0, yawTarget: 0, pitch: 0, pitchTarget: 0,
     blink: 0, blinkPhase: 0,
     gaze: [0, 0], gazeTarget: [0, 0],
@@ -522,7 +522,6 @@ function _doResize() {
     const sidesB = buildSideAnchors(cx, cy, s);
     zonesB.sideL = sidesB.sideL; zonesB.sideR = sidesB.sideR;
     Face.zones = zonesA;
-    Face.anchors = [].concat(...Object.values(zonesA));
   }
 
   // Particles
@@ -824,7 +823,6 @@ function _doResize() {
       m.push({ x: tx, y: cy + s * 0.96, zone: 'mouth' });
     }
     Face.zones.mouth = m;
-    Face.anchors = [].concat(...Object.values(Face.zones));
     // Update only mouth-zone particles — preserve hx2/hy2/hz2 for active mask transitions
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
