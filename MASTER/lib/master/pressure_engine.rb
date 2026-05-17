@@ -16,6 +16,44 @@ module Master
 
     HISTORY_CAP = 120
 
+    # Each rule: [weight, :name|:payload_bool|:payload_float, pattern_or_key]
+    # Negative weights subtract. :payload_float multiplies weight by the payload value.
+    FIELD_DELTAS = {
+      entropy: [
+        [+0.18, :name,         /error|failed|rollback|exception/],
+        [+0.12, :name,         /contradiction|conflict/],
+        [+0.08, :payload_bool, :uncertain],
+        [-0.05, :name,         /resolved|stabilized|merged/]
+      ],
+      confidence: [
+        [+0.08, :payload_float, :confidence],
+        [-0.12, :name,          /fallback|guess|uncertain/],
+        [-0.18, :name,          /contradiction|failed/],
+        [+0.06, :name,          /verified|confirmed|tested/]
+      ],
+      contradiction: [
+        [+0.35, :name,         /contradiction|fracture|disagree/],
+        [+0.12, :payload_bool, :veto],
+        [-0.08, :name,         /consensus|aligned|merged/]
+      ],
+      turbulence: [
+        [+0.18, :name,         /retry|loop|escalat/],
+        [+0.10, :payload_bool, :parallel],
+        [+0.12, :payload_bool, :recursive],
+        [-0.06, :name,         /stable|idle/]
+      ],
+      gravity: [
+        [+0.16, :name,         /memory|retrieve|reference|evidence/],
+        [+0.08, :payload_bool, :citations],
+        [-0.04, :name,         /drift|fragment/]
+      ],
+      scrutiny: [
+        [+0.16, :name,         /judge|scrutiny|epistemic|verify/],
+        [+0.10, :payload_bool, :critique],
+        [-0.05, :name,         /blind|unchecked/]
+      ]
+    }.freeze
+
     attr_reader :fields
 
     def initialize(event_bus: nil)
@@ -26,12 +64,7 @@ module Master
 
     def ingest(event:, payload: {})
       name = event.to_s
-      apply_entropy(name, payload)
-      apply_confidence(name, payload)
-      apply_contradiction(name, payload)
-      apply_turbulence(name, payload)
-      apply_gravity(name, payload)
-      apply_scrutiny(name, payload)
+      apply_all(name, payload)
       normalize!
       snapshot(name)
       emit(name)
@@ -69,55 +102,18 @@ module Master
 
     private
 
-    def apply_entropy(name, payload)
-      d  = 0.0
-      d += 0.18 if name.match?(/error|failed|rollback|exception/)
-      d += 0.12 if name.match?(/contradiction|conflict/)
-      d += 0.08 if payload[:uncertain]
-      d -= 0.05 if name.match?(/resolved|stabilized|merged/)
-      fields[:entropy] += d
-    end
-
-    def apply_confidence(name, payload)
-      d  = 0.0
-      d += payload[:confidence].to_f * 0.08 if payload.key?(:confidence)
-      d -= 0.12 if name.match?(/fallback|guess|uncertain/)
-      d -= 0.18 if name.match?(/contradiction|failed/)
-      d += 0.06 if name.match?(/verified|confirmed|tested/)
-      fields[:confidence] += d
-    end
-
-    def apply_contradiction(name, payload)
-      d  = 0.0
-      d += 0.35 if name.match?(/contradiction|fracture|disagree/)
-      d += 0.12 if payload[:veto]
-      d -= 0.08 if name.match?(/consensus|aligned|merged/)
-      fields[:contradiction] += d
-    end
-
-    def apply_turbulence(name, payload)
-      d  = 0.0
-      d += 0.18 if name.match?(/retry|loop|escalat/)
-      d += 0.10 if payload[:parallel]
-      d += 0.12 if payload[:recursive]
-      d -= 0.06 if name.match?(/stable|idle/)
-      fields[:turbulence] += d
-    end
-
-    def apply_gravity(name, payload)
-      d  = 0.0
-      d += 0.16 if name.match?(/memory|retrieve|reference|evidence/)
-      d += 0.08 if payload[:citations]
-      d -= 0.04 if name.match?(/drift|fragment/)
-      fields[:gravity] += d
-    end
-
-    def apply_scrutiny(name, payload)
-      d  = 0.0
-      d += 0.16 if name.match?(/judge|scrutiny|epistemic|verify/)
-      d += 0.10 if payload[:critique]
-      d -= 0.05 if name.match?(/blind|unchecked/)
-      fields[:scrutiny] += d
+    def apply_all(name, payload)
+      FIELD_DELTAS.each do |field, rules|
+        d = rules.sum do |weight, source, matcher|
+          case source
+          when :name         then name.match?(matcher) ? weight : 0.0
+          when :payload_bool then payload[matcher] ? weight : 0.0
+          when :payload_float then payload.key?(matcher) ? payload[matcher].to_f * weight : 0.0
+          else 0.0
+          end
+        end
+        @fields[field] += d
+      end
     end
 
     def normalize!

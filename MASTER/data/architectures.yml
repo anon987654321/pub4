@@ -46,7 +46,9 @@ architectures:
       no LLM call, no token cost, no false negative. Sweep already calls
       rubocop -A for Ruby; this extends that to YAML/HTML/CSS/JS via
       language-specific transformers.
-    wired_to: lib/master/judge/scan/ast_fixer.rb (TODO)
+    wired_to:
+      - lib/master/judge/scan/ast_fixer.rb (frozen_string_literal + bare_rescue + null_comparison)
+      - lib/master/loop/super_loop.rb (fast_pass tier 1)
     ref: "#4"
 
   - id: diff_only_fixes
@@ -70,13 +72,12 @@ architectures:
       than a direct LLM rewrite. Council proposes, votes, applies only on
       consensus. Slower; much higher quality for high-stakes changes.
     wired_to:
-      - lib/master/judge/council/deliberation.rb (existing)
-      - "lib/master/loop/rule_loop.rb (council mode for severity error, TODO)"
+      - lib/master/loop/rule_loop.rb (council_fix — 3-persona skeptic/security/maintainer veto)
     ref: "#6"
 
   - id: reactive_event_driven
     name: "File-watcher reactive trigger — no polling"
-    status: scaffolded
+    status: implemented
     description: >
       Rather than sleeping and polling, listen for filesystem events (inotify
       on Linux, kqueue on OpenBSD, FSEvents on macOS). A changed file triggers
@@ -131,7 +132,7 @@ architectures:
 
   - id: constitution_type_system
     name: "Constitution as a type system on the AST IR"
-    status: scaffolded
+    status: implemented
     description: >
       Encode constitutional rules as type constraints on a typed AST IR.
       Violations become type errors. Fixes are derivable from the complement
@@ -142,7 +143,7 @@ architectures:
 
   - id: datalog_rules
     name: "Datalog/Prolog rule engine — logical clause rules"
-    status: scaffolded
+    status: implemented
     description: >
       Each rule is a logical Horn clause. Violations are queries against
       the program's fact base (AST facts). Fixes are derived from the
@@ -153,7 +154,7 @@ architectures:
 
   - id: crdt_convergence
     name: "CRDT-based codebase convergence for distributed agents"
-    status: scaffolded
+    status: implemented
     description: >
       Treat the codebase as a CRDT. Rules define merge functions. Multiple
       agents make concurrent fixes; the CRDT guarantees eventual consistency
@@ -172,8 +173,9 @@ architectures:
       sort key. High-probability rules run first; low-probability rules
       skip files where they've never fired before.
     wired_to:
-      - lib/master/loop/super_loop.rb (priority queue, existing scaffold)
-      - data/violation_priors.yml (TODO)
+      - data/violation_priors.yml (cold-start priors + language_modifiers for all rules)
+      - lib/master/loop/super_loop.rb (ordered_rules — language-weighted adjusted prior)
+      - lib/master/loop/super_loop.rb (extension_weights — computes ext distribution per target)
     ref: "#14"
 
   - id: embodied_codebase

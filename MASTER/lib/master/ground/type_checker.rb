@@ -44,7 +44,7 @@ module Master
       return unless node.is_a?(Prism::Node)
       @constraints.each do |rule_id, constraint|
         violation = constraint.call(node, source)
-        errors << TypeErrors.new(node: node, rule: rule_id, **violation) if violation
+        errors << TypeError.new(node: node, rule: rule_id, **violation) if violation
       end
       node.child_nodes.compact.each { |c| walk(c, source, errors) }
     end

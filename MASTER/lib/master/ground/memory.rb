@@ -61,6 +61,7 @@ module Master
     }.freeze
 
     include Search
+    include Reach::AtomicWrite
 
     def initialize(root: Dir.pwd)
       @root  = root
@@ -241,14 +242,8 @@ module Master
     end
 
     def persist
-      dir = File.dirname(@path)
-      FileUtils.mkdir_p(dir)
-      tmp_path = "#{@path}.tmp.#{Process.pid}"
-      File.write(tmp_path, @store.to_yaml)
-      File.rename(tmp_path, @path)
-    rescue StandardError => e
-      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
-      raise e
+      FileUtils.mkdir_p(File.dirname(@path))
+      write_atomic(@path, @store.to_yaml)
     end
 
   end

@@ -50,20 +50,11 @@ module Master
     def task_type      = self['task_type'].to_s
     def auto_testing?  = self['auto_testing'] == true
 
-    # Persist atomically; fsync ensures durability.
-    def save!
-      dir = File.dirname(@path)
-      FileUtils.mkdir_p(dir)
+    include Reach::AtomicWrite
 
-      tmp_path = "#{@path}.tmp.#{Process.pid}"
-      File.open(tmp_path, 'w') do |f|
-        f.write(@data.to_yaml)
-        f.flush
-        f.fsync
-      end
-      File.rename(tmp_path, @path)
-    ensure
-      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
+    def save!
+      FileUtils.mkdir_p(File.dirname(@path))
+      write_atomic(@path, @data.to_yaml, fsync: true)
     end
 
     def reload!

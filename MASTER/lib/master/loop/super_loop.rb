@@ -90,7 +90,7 @@ module Master
 
     private
 
-    # Tier 1: rubocop -A on .rb files + AstFixer transforms. No LLM.
+    # Tier 1: rubocop -A + AstFixer transforms + TypeChecker + DatalogEngine. No LLM.
     def fast_pass(files)
       fixed  = 0
       rb     = files.select { |f| f.end_with?(".rb") }
@@ -100,11 +100,30 @@ module Master
       end
       rb.each do |path|
         next unless File.exist?(path)
-        src    = File.read(path, encoding: "UTF-8")
-        result = Judge::Scan::AstFixer.fix(path, src)
-        next unless result&.changed
-        fixed += result.transforms.size
-        @bus&.publish("super_loop:ast_fixed", file: path.delete_prefix("#{@root}/"), transforms: result.transforms)
+        src = File.read(path, encoding: "UTF-8")
+
+        # Architecture #4: AST autofixes — no LLM, deterministic transforms.
+        ast_result = Judge::Scan::AstFixer.fix(path, src)
+        if ast_result&.changed
+          fixed += ast_result.transforms.size
+          @bus&.publish("super_loop:ast_fixed", file: path.delete_prefix("#{@root}/"), transforms: ast_result.transforms)
+          src = File.read(path, encoding: "UTF-8")  # re-read after mutation
+        end
+
+        # Architecture #11: type-system constraint checks — sound, complete, no LLM.
+        type_errors = Ground::TypeChecker.check(path, src)
+        type_errors.each do |te|
+          @bus&.publish("super_loop:type_error", file: path.delete_prefix("#{@root}/"),
+                        rule: te.rule, message: te.message)
+        end
+
+        # Architecture #12: Datalog fact extraction + logical rule evaluation.
+        dl = Judge::Scan::DatalogEngine.from_ruby(path, src)
+        dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[2]} — use rescue StandardError" }
+        dl.evaluate.each do |finding|
+          @bus&.publish("super_loop:datalog_finding", file: path.delete_prefix("#{@root}/"),
+                        rule: finding.rule_id, message: finding.message)
+        end
       rescue StandardError => e
         @bus&.publish("super_loop:fast_error", file: path, error: e.message)
       end
@@ -158,13 +177,18 @@ module Master
       nil
     end
 
-    # Architecture #1 + #2 + #10 + #14: density + fix_quality + Bayesian + topological ordering.
+    # Architecture #1 + #2 + #10 + #14: density + fix_quality + language-adjusted Bayesian + topological.
     def ordered_rules
-      deps   = load_deps
-      priors = load_priors
-      rules  = @rules.sort_by do |r|
-        density = @violation_counts[r.id].to_f + priors.dig(r.id, "prior_p").to_f
-        quality = @learnings&.fix_quality(rule: r.id) || 0.5
+      deps    = load_deps
+      priors  = load_priors
+      ext_wts = extension_weights(@root)
+      rules   = @rules.sort_by do |r|
+        base_prior = priors.dig(r.id, "prior_p").to_f
+        modifiers  = priors.dig(r.id, "language_modifiers") || {}
+        # Weighted prior: sum(base × modifier × extension_weight) across file types present.
+        adjusted = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
+        density  = @violation_counts[r.id].to_f + adjusted
+        quality  = @learnings&.fix_quality(rule: r.id) || 0.5
         [-density, -quality]
       end
       topo_sort(rules, deps)
@@ -231,6 +255,21 @@ module Master
       @git.commit(msg)
     rescue StandardError => e
       @bus&.publish("super_loop:commit_error", error: e.message)
+    end
+
+    # Returns { "rb" => 0.6, "yml" => 0.2, ... } — fractional weight per extension.
+    # Used by ordered_rules to apply language_modifiers from violation_priors.yml.
+    def extension_weights(target)
+      counts = Hash.new(0)
+      collect_files(target).each do |f|
+        ext = File.extname(f).delete(".").downcase
+        counts[ext] += 1 unless ext.empty?
+      end
+      total = counts.values.sum.to_f
+      return {} if total.zero?
+      counts.transform_values { |n| n / total }
+    rescue StandardError
+      {}
     end
 
     def load_deps

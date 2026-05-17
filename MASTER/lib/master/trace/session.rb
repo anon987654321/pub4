@@ -80,9 +80,11 @@ module Master
       self
     end
 
-    def exists?    = File.exist?(@path)
-    def clear!     = (@messages = [] ; @cost = 0.0 ; @name = nil ; @topic = nil ; self)
-    def token_est  = @messages.sum { |m| m[:content].to_s.bytesize / TOKENS_PER_CHAR }
+    def self.estimate_tokens(text) = text.to_s.bytesize / TOKENS_PER_CHAR
+
+    def exists?   = File.exist?(@path)
+    def clear!    = (@messages = [] ; @cost = 0.0 ; @name = nil ; @topic = nil ; self)
+    def token_est = @messages.sum { |m| Session.estimate_tokens(m[:content]) }
 
     private
 

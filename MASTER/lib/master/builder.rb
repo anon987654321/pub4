@@ -10,8 +10,8 @@ module Master
     def build(root: Dir.pwd)
       Master.configure_providers!
       infra = build_infrastructure(root)
-      ai = build_ai_stack(root, infra)
-      pipeline, gateway = build_pipeline_and_gateway(root, infra, ai)
+      ai = Plugins::Judge.build_ai(root, infra)
+      pipeline, gateway = Plugins::Now.build_pipeline(root, infra, ai)
       infra.merge(ai).merge(pipeline:, gateway:, root:)
     end
 
@@ -57,9 +57,6 @@ module Master
       { config:, boot_config:, renderer:, code_index:, diag:, pressure: }
         .merge(trace).merge(loop_c).merge(reach).merge(ground)
     end
-
-    def build_ai_stack(root, infra)   = Plugins::Judge.build_ai(root, infra)
-    def build_pipeline_and_gateway(root, infra, ai) = Plugins::Now.build_pipeline(root, infra, ai)
 
   end
 end
