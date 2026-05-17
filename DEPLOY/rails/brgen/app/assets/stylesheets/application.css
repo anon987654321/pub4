@@ -743,4 +743,36 @@ article mark { background: rgba(244, 33, 46, .15); color: #f87171; padding: 1px 
 
 .nearby-alert-close:hover { color: var(--text); }
 
+/* ── Share + push-enable buttons ── */
+.btn-share {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 9999px;
+  padding: 5px 14px;
+  font-size: .875rem;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn-share:hover { color: var(--text); border-color: var(--text-dim); }
+
+.push-enable-btn {
+  position: fixed;
+  bottom: calc(72px + var(--safe-bottom) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 9999px;
+  padding: 10px 20px;
+  font-size: .9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: calc(var(--z-splash) - 1);
+  box-shadow: 0 4px 20px rgba(29, 155, 240, .4);
+  animation: nearby-in 300ms cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
 .splash a { color: inherit; }

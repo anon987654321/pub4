@@ -1,4 +1,4 @@
-const CACHE = "brgen-v1"
+const CACHE = "brgen-v2"
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/"])))
@@ -14,7 +14,33 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+  e.respondWith(caches.match(e.request).then(cached => cached || fetch(e.request)))
+})
+
+self.addEventListener("push", e => {
+  const data = e.data?.json() ?? {}
+  const title = data.title || "Brgen"
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body:  data.body  || "",
+      icon:  "/icon.png",
+      badge: "/icon.png",
+      data:  { url: data.url || "/" },
+      vibrate: [80, 40, 80]
+    }).then(() => self.registration.getNotifications())
+      .then(notes => navigator.setAppBadge?.(notes.length))
+  )
+})
+
+self.addEventListener("notificationclick", e => {
+  e.notification.close()
+  e.waitUntil(
+    self.registration.getNotifications().then(notes => navigator.setAppBadge?.(notes.length)).then(() =>
+      clients.matchAll({ type: "window", includeUncontrolled: true }).then(wins => {
+        const url = e.notification.data?.url || "/"
+        const match = wins.find(w => w.url.includes(url))
+        return match ? match.focus() : clients.openWindow(url)
+      })
+    )
   )
 })

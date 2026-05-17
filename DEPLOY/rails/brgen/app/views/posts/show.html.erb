@@ -27,6 +27,12 @@
   <% if @post.content.present? %>
     <p><%= @post.content %></p>
   <% end %>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn-share" data-controller="share"
+            data-share-title-value="<%= @post.title %>"
+            data-share-url-value="<%= request.original_url %>"
+            data-action="click->share#share">Share</button>
+  </div>
 </article>
 
 <section id="comments-section">

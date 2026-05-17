@@ -27,6 +27,7 @@ gem "acts_as_tenant"
 gem "pagy"
 gem "image_processing"
 gem "geocoder"
+gem "webpush"
 
 # Discovery — vision-LLM scrapers (lib/tasks/{reddit,amazon}.rake)
 gem "ferrum"

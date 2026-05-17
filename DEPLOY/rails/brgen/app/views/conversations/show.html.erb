@@ -1,4 +1,5 @@
 <%= turbo_stream_from @conversation %>
+<% content_for :body_attrs do %>data-action="turbo:load->push#clearBadge"<% end %>
 
 <% other = (@conversation.participants - [Current.user]).first %>
 <header>

@@ -97,6 +97,7 @@ Rails.application.routes.draw do
   end
 
   patch "location" => "locations#update", as: :location
+  resources :push_subscriptions, only: [:create, :destroy]
   get   "nearby"   => "nearby#index",   as: :nearby
   post  "nearby"   => "nearby#create"
 

@@ -30,7 +30,16 @@
 
   <div id="nearby-alerts" class="nearby-alerts" data-turbo-permanent aria-live="polite"></div>
   <div data-controller="geolocation" data-geolocation-url-value="<%= location_path %>" data-turbo-permanent></div>
-  <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" if Current.user %>
+  <% if Current.user %>
+    <%= turbo_stream_from "nearby_alerts_#{Current.user.id}" %>
+    <% unread = Conversation.for_user(Current.user).sum { |c| c.unread_count_for(Current.user) } %>
+    <div data-controller="push"
+         data-push-vapid-key-value="<%= ENV.fetch("VAPID_PUBLIC_KEY", "") %>"
+         data-push-subscribe-url-value="<%= push_subscriptions_path %>"
+         data-push-unread-value="<%= unread %>"
+         data-turbo-permanent></div>
+    <button id="push-enable-btn" class="push-enable-btn" hidden>Enable notifications</button>
+  <% end %>
 
   <h1 id="cityCarousel" class="city-carousel" data-turbo-permanent aria-hidden="true">
     <div class="carousel-container">

@@ -14,6 +14,7 @@ class User < ApplicationRecord
   has_many :playlist_listens, class_name: "Playlist::Listen", dependent: :destroy
   has_many :playlist_playlists, class_name: "Playlist::Playlist", dependent: :destroy
   has_many :posts, dependent: :destroy
+  has_many :push_subscriptions, dependent: :destroy
   has_many :reputation_scores, dependent: :destroy
   has_many :sessions, dependent: :destroy
   has_many :takeaway_orders, class_name: "Takeaway::Order", dependent: :destroy

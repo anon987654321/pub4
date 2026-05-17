@@ -7,6 +7,13 @@ class MessagesController < ApplicationController
     @message.sender = Current.user
 
     if @message.save
+      @conversation.participants.excluding(Current.user).each do |recipient|
+        Pushable.push_to(recipient,
+          title: Current.user.display_name,
+          body:  @message.content.to_s.truncate(120),
+          url:   conversation_path(@conversation)
+        )
+      end
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to @conversation }
