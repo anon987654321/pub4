@@ -88,7 +88,7 @@ const _curl = new Float32Array(2);
 const _zxVotes = new Uint8Array(16);
 
 // Frame counters
-let _repulseFrame = 0, _bfSkip = 0;
+let _repulseFrame = 0, _bfSkip = 0, _flashFrame = 0;
 
 // Battery 30fps cap
 let _fps30 = false;
@@ -823,7 +823,15 @@ function _doResize() {
     }
     Face.zones.mouth = m;
     Face.anchors = [].concat(...Object.values(Face.zones));
-    assignHomes();
+    // Update only mouth-zone particles — preserve hx2/hy2/hz2 for active mask transitions
+    const mPool = m;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (p.zone !== 'mouth') continue;
+      const a = mPool[i % mPool.length];
+      p.hx1 = a.x + p.ox; p.hy1 = a.y + p.oy; p.hz1 = (a.z || 0) + p.oz;
+      p.hx = p.hx1; p.hy = p.hy1; p.hz = p.hz1;
+    }
   }
 
   // STT (long-press to talk)
@@ -1720,7 +1728,7 @@ function _doResize() {
     }
 
     // Error / mute XOR flash
-    if (FX.errorFlash > 0.6 && (performance.now() / 60 | 0) & 1) buf.fill(0xFFFFFFFF);
+    if (FX.errorFlash > 0.6 && (++_flashFrame & 1)) buf.fill(0xFFFFFFFF);
 
     lpxCtx.putImageData(imgd, 0, 0);
     ctx.imageSmoothingEnabled = false;
@@ -2034,7 +2042,7 @@ function _doResize() {
     const modeCode = HUD_MODE[State.mode] || State.mode.slice(0, 3).toUpperCase();
     const m = tts.muted ? ' [M]' : '';
     const lorenzTag = State.lorenzMode ? ' LZ' : '';
-    ctx.fillText(`${modeCode} ${State.mood} ${PIXEL_PAL_NAMES[pixelPal]}${m}${lorenzTag}`, 8, 8);
+    ctx.fillText(`${modeCode} ${State.mood.slice(0, 8)} ${PIXEL_PAL_NAMES[pixelPal]}${m}${lorenzTag}`, 8, 8);
     ctx.textBaseline = 'alphabetic';
   }
 
