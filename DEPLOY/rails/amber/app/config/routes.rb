@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   end
 
   resources :outfits do
+    collection { get :dressing_room }
     member { post :like }
   end
 

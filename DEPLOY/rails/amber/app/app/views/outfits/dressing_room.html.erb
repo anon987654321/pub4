@@ -1,0 +1,60 @@
+<% content_for :title, "Style" %>
+<%
+  zones_json = @zones.transform_values { |items|
+    items.map { |item|
+      { id: item.id, name: item.title, color: item.color.to_s,
+        url: item.photos.attached? ? url_for(item.photos.first.variant(resize_to_limit: [480, 480])) : nil }
+    }
+  }.to_json
+%>
+
+<div class="dressing-room" data-controller="wardrobe-carousel" data-wardrobe-carousel-zones-value="<%= zones_json %>">
+
+  <div class="mannequin-stage">
+    <div class="mannequin">
+      <svg class="mannequin-svg" viewBox="0 0 160 390" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <ellipse cx="80" cy="34" rx="26" ry="30" fill="#2a2a2a"/>
+        <rect x="73" y="63" width="14" height="15" rx="2" fill="#2a2a2a"/>
+        <path d="M 25 78 Q 14 84 12 98 L 10 200 L 150 200 L 148 98 Q 146 84 135 78 L 108 70 Q 80 66 52 70 Z" fill="#2a2a2a"/>
+        <path d="M 10 200 L 6 240 Q 20 254 80 256 Q 140 254 154 240 L 150 200 Z" fill="#2a2a2a"/>
+        <path d="M 6 238 L 2 372 L 46 372 L 78 256 Q 20 254 6 238 Z" fill="#2a2a2a"/>
+        <path d="M 154 238 L 158 372 L 114 372 L 82 256 Q 140 254 154 238 Z" fill="#2a2a2a"/>
+        <path d="M 1 372 L 50 372 L 54 386 L 0 386 Z" fill="#1a1a1a"/>
+        <path d="M 110 372 L 159 372 L 160 386 L 106 386 Z" fill="#1a1a1a"/>
+        <ellipse cx="80" cy="34" rx="26" ry="30" fill="none" stroke="#444" stroke-width="0.5"/>
+        <path d="M 25 78 Q 14 84 12 98 L 10 200 L 150 200 L 148 98 Q 146 84 135 78 L 108 70 Q 80 66 52 70 Z" fill="none" stroke="#444" stroke-width="0.5"/>
+      </svg>
+
+      <div class="zone zone--head">
+        <img src="" alt="" loading="lazy">
+      </div>
+      <div class="zone zone--top">
+        <img src="" alt="" loading="lazy">
+      </div>
+      <div class="zone zone--bottom">
+        <img src="" alt="" loading="lazy">
+      </div>
+      <div class="zone zone--shoes">
+        <img src="" alt="" loading="lazy">
+      </div>
+    </div>
+  </div>
+
+  <div class="zone-carousels">
+    <% { head: "Accessories", top: "Tops", bottom: "Bottoms", shoes: "Shoes" }.each do |zone, label| %>
+      <div class="zone-row">
+        <span class="zone-tag"><%= label %></span>
+        <button class="carousel-btn" data-action="wardrobe-carousel#prev" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="Previous <%= label %>">‹</button>
+        <span class="zone-info">
+          <span data-zone-label="<%= zone %>">—</span>
+          <span class="zone-count" data-zone-count="<%= zone %>"></span>
+        </span>
+        <button class="carousel-btn" data-action="wardrobe-carousel#next" data-wardrobe-carousel-zone-param="<%= zone %>" aria-label="Next <%= label %>">›</button>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="dressing-room-actions">
+    <%= link_to "Save as outfit", new_outfit_path, class: "btn" %>
+  </div>
+</div>

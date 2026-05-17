@@ -7,6 +7,16 @@ class OutfitsController < ApplicationController
     @pagy, @outfits = pagy(Current.user.outfits.order(created_at: :desc))
   end
 
+  def dressing_room
+    base = Current.user.items.active_wardrobe.with_attached_photos
+    @zones = {
+      head:   base.where(category: "Accessories"),
+      top:    base.where(category: %w[Tops Outerwear]),
+      bottom: base.where(category: %w[Bottoms Dresses]),
+      shoes:  base.where(category: "Shoes")
+    }
+  end
+
   def show; end
 
   def new
