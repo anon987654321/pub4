@@ -94,9 +94,9 @@ module Master
 
       def candidates
         [
-          File.expand_path("../dilla/dilla.rb", @root),
           File.expand_path("../DEPLOY/dilla/dilla.rb", @root),
           File.expand_path("../../DEPLOY/dilla/dilla.rb", @root),
+          File.expand_path("../dilla/dilla.rb", @root),
           File.expand_path("DEPLOY/dilla/dilla.rb", File.dirname(@root))
         ].uniq
       end

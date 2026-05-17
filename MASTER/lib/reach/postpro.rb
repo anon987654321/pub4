@@ -13,9 +13,9 @@ module Master
       DESCRIPTION = "Apply cinematic post-processing to images via ruby-vips.".freeze
       PRESETS = %w[portrait landscape street blockbuster].freeze
       SCRIPT_PATHS = [
-        "../multimedia/postpro.rb",
-        "../DEPLOY/multimedia/postpro.rb",
-        "../../DEPLOY/multimedia/postpro.rb"
+        "../DEPLOY/postpro.rb",
+        "../../DEPLOY/postpro.rb",
+        "../postpro.rb"
       ].freeze
 
       def initialize(root:, governor:, event_bus: nil)

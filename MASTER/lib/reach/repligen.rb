@@ -13,7 +13,7 @@ module Master
       NAME        = "repligen".freeze
       DESCRIPTION = "Discover, search, and run Replicate.com models (image/video/music/upscale).".freeze
       TIMEOUT     = 1200
-      SCRIPT_REL  = "../multimedia/repligen.rb".freeze
+      SCRIPT_REL  = "../DEPLOY/repligen.rb".freeze
       ACTIONS     = %w[sync search stats].freeze
 
       def initialize(root:, governor:, event_bus: nil)

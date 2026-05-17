@@ -553,7 +553,7 @@ def shadow_lift(image, lift = 0.15, preserve_blacks = true)
   inv_gray    = gray.linear(-1, 1)
   shadow_mask = preserve_blacks ? (inv_gray ** 2.0) * 0.8 : inv_gray * lift
   lift_rgb = shadow_mask.bandjoin([shadow_mask, shadow_mask])
-  safe_cast(image.linear([1.0, 1.0, 1.0], [lift_rgb * 255 * lift]))
+  safe_cast(image + lift_rgb * 255 * lift)
 end
 
 def micro_contrast(image, radius = 5, intensity = 0.3)
@@ -565,9 +565,12 @@ end
 def color_separate(image, intensity = 0.6)
   r, g, b = image.bandsplit
   
-  r_clean = (r - (g * 0.08 * intensity) - (b * 0.05 * intensity)).max(0)
-  g_clean = (g - (r * 0.06 * intensity) - (b * 0.10 * intensity)).max(0)
-  b_clean = (b - (r * 0.04 * intensity) - (g * 0.07 * intensity)).max(0)
+  r_diff = r - (g * 0.08 * intensity) - (b * 0.05 * intensity)
+  g_diff = g - (r * 0.06 * intensity) - (b * 0.10 * intensity)
+  b_diff = b - (r * 0.04 * intensity) - (g * 0.07 * intensity)
+  r_clean = (r_diff > 0).ifthenelse(r_diff, 0)
+  g_clean = (g_diff > 0).ifthenelse(g_diff, 0)
+  b_clean = (b_diff > 0).ifthenelse(b_diff, 0)
   
   separated = Vips::Image.bandjoin([r_clean, g_clean, b_clean])
   safe_cast(image * (1 - intensity) + separated * intensity)
