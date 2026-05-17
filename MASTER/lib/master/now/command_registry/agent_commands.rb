@@ -12,7 +12,6 @@ module Master
         .merge(ideate_command(ai:))
         .merge(topic_command(infra:))
         .merge(rsi_command(infra:))
-        .merge(triad_command(ai:, root:, infra:))
         .merge(why_command(infra:))
     end
 
@@ -21,46 +20,6 @@ module Master
       {
         "why" => ->(_ctx) { trace ? trace.pretty_last : "trace not configured" }
       }
-    end
-
-    AUTO_MAX_ROUNDS = 4
-    AUTO_PLATEAU_RATIO = 0.05
-
-    def triad_command(ai:, root:, infra:)
-      bus          = infra[:bus]
-      cmds         = scan_loop_commands(ai:, root:, infra:)
-      deliberation = ai[:deliberation]
-      auto = ->(ctx) {
-        target = arg_for(ctx)
-        target = "." if target.empty?
-        run_auto_cascade(target:, cmds:, deliberation:, bus:)
-      }
-      { "auto" => auto }
-    end
-
-    def run_auto_cascade(target:, cmds:, deliberation:, bus:)
-      bus&.publish("auto:start", target: target)
-      prev_violations = nil
-      transcript = []
-      AUTO_MAX_ROUNDS.times do |round|
-        scan_out  = cmds["scan"].call(args: target)
-        violations = scan_out.scan(/(\d+) violation/).flatten.map(&:to_i).sum
-        bus&.publish("auto:round", round: round + 1, violations: violations)
-        plateau = prev_violations && violations > 0 &&
-                  (prev_violations - violations).abs.to_f / prev_violations < AUTO_PLATEAU_RATIO
-        if plateau
-          transcript << "round #{round + 1}: plateau at #{violations} violation(s)"
-          break
-        end
-        sweep_out = cmds["sweep"].call(args: target)
-        artifact  = "scan:\n#{scan_out}\n\nsweep:\n#{sweep_out}"
-        verdict   = run_tribunal(deliberation:, artifact:, target:, bus:)
-        transcript << "round #{round + 1}: violations=#{violations}\n#{verdict.lines.first(3).join}"
-        prev_violations = violations
-        break if violations.zero?
-      end
-      bus&.publish("auto:done", rounds: transcript.size)
-      "auto cascade (#{transcript.size} round(s)):\n#{transcript.join("\n---\n")}"
     end
 
     def run_tribunal(deliberation:, artifact:, target:, bus: nil)
@@ -111,17 +70,7 @@ module Master
           summary = result[:rule_results].map { |r| "#{r[:rule]}: #{r[:status]} (#{r[:fixed]} fixed)" }.join("\n")
           summary.empty? ? "clean" : summary
         },
-        "self-run" => ->(_ctx) {
-          result = super_loop.run_once(root)
-          summary = result[:rule_results].map { |r| "#{r[:rule]}: #{r[:status]} (#{r[:fixed]} fixed)" }.join("\n")
-          summary.empty? ? "clean" : summary
-        },
-        "grind"    => cmd(:run_autoloop, autoloop),
         "autoloop" => cmd(:run_autoloop, autoloop),
-        "polish"   => ->(ctx) {
-          target = expand_or_root(arg_for(ctx), root)
-          run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)
-        },
         "sweep"    => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
           run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)

@@ -25,11 +25,10 @@ module Master
   scanner.render(report)
 },
 "brief"  => ->(_ctx) { dump_soul_files(root) },
-"orient" => ->(_ctx) { dump_soul_files(root) },
 "help" => ->(_ctx) {
           [
             "session: /save /clear /history [N] /tokens /undo /redo /exit",
-            "scan: /run [path] /self-run /scan [profile] [path] /polish [path] /grind [N] /ecology [path]",
+            "scan: /run [path] /scan [profile] [path] /sweep [path] /autoloop [N] /ecology [path]",
             "model: /model [id|list] /mode /persona /task",
             "memory: /mem /topic /rsi",
             "system: /diag [/section] /tree [N] /brief /guard [N] /reload /help"
