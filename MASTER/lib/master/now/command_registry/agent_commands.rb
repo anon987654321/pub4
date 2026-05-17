@@ -60,16 +60,8 @@ module Master
       scanner      = ai[:scanner]
       bus          = infra[:bus]
       deliberation = ai[:deliberation]
-      autoloop     = ai[:autoloop]
-      super_loop   = ai[:super_loop]
       code_index   = infra[:code_index]
       {
-        "check" => ->(ctx) {
-          target = expand_or_root(arg_for(ctx), root)
-          result = super_loop.run_once(target)
-          summary = result[:rule_results].map { |r| "#{r[:rule]}: #{r[:status]} (#{r[:fixed]} fixed)" }.join("\n")
-          summary.empty? ? "clean" : summary
-        },
         "fix"  => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
           run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)
