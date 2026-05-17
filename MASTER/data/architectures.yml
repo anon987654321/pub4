@@ -123,9 +123,10 @@ architectures:
       AutoLoop already tracks rule_recurrence — this extends it with
       outcome tracking.
     wired_to:
-      - lib/master/loop/auto_loop.rb#track_recurrence (existing scaffold)
-      - lib/master/learnings.rb (existing)
-      - data/learnings/ (persistence, TODO)
+      - lib/master/ground/knowledge_store.rb (KnowledgeStore — fix_outcomes + strategy_outcomes + feedback_events)
+      - lib/master/loop/rule_loop.rb (record_outcomes — :fixed | :stuck per pass)
+      - lib/master/loop/super_loop.rb (ordered_rules — fix_quality as secondary sort key)
+      - lib/master/plugins/ground.rb (boots KnowledgeStore as learnings:)
     ref: "#10"
 
   - id: constitution_type_system

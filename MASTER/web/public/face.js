@@ -126,7 +126,7 @@ function _doResize() {
     gaze: [0, 0], gazeTarget: [0, 0],
     pupil: 1.0, pupilTarget: 1.0,
     brow: 0, browTarget: 0,
-    mouth: 'neutral', mouthMorph: 0,
+    mouth: 'neutral',
     breath: 0,
     vortex: 0,
     dispersion: 0, dispersionTarget: 0,
@@ -172,7 +172,7 @@ function _doResize() {
       const u = (t - 0.5) * 2;
       if (shape === 'smile')   y = cy - Math.sin(t * Math.PI) * w * 0.18 + u * u * w * 0.05;
       if (shape === 'frown')   y = cy + Math.sin(t * Math.PI) * w * 0.18 - u * u * w * 0.05;
-      if (shape === 'O')       y = cy + Math.sin(t * Math.PI) * w * 0.32 - 0;
+      if (shape === 'O')       y = cy + Math.sin(t * Math.PI) * w * 0.32;
       if (shape === 'A')       y = cy + Math.sin(t * Math.PI) * w * 0.45;
       if (shape === 'E')       y = cy + Math.sin(t * Math.PI) * w * 0.08;
       if (shape === 'M')       y = cy + Math.sin(t * Math.PI) * w * 0.02;
