@@ -64,30 +64,18 @@ module Master
       super_loop   = ai[:super_loop]
       code_index   = infra[:code_index]
       {
-        "run"      => ->(ctx) {
+        "check" => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
           result = super_loop.run_once(target)
           summary = result[:rule_results].map { |r| "#{r[:rule]}: #{r[:status]} (#{r[:fixed]} fixed)" }.join("\n")
           summary.empty? ? "clean" : summary
         },
-        "autoloop" => cmd(:run_autoloop, autoloop),
-        "sweep"    => ->(ctx) {
+        "fix"  => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
           run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)
         },
-        "scan"     => cmd(:dispatch_scan, scanner, root)
+        "scan" => cmd(:dispatch_scan, scanner, root)
       }
-    end
-
-    def run_autoloop(autoloop, raw)
-      max = raw.to_i
-      max = Master::Loop::AutoLoop::MAX_CYCLES if max <= 0
-      result = autoloop.run(max_cycles: max) { |cycle, violations|
-        top = violations.first(3).map { |v| "#{File.basename(v[:file])}:#{v[:rule]}" }.join(" ")
-        $stdout.puts "autoloop: cycle #{cycle} #{violations.size} violation(s) #{top}"
-        $stdout.flush
-      }
-      result.ok? ? result.value! : result.message
     end
 
     def run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)
@@ -167,7 +155,7 @@ module Master
       deliberation = ai[:deliberation]
       bus          = infra[:bus]
       {
-        "council" => ->(ctx) { dispatch_council(stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
+        "review"  => ->(ctx) { dispatch_council(stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
         "swarm"   => cmd(:dispatch_swarm, swarm),
         "explain" => ->(_ctx) { explain_master(root) }
       }
@@ -175,9 +163,9 @@ module Master
 
     def dispatch_council(stage:, deliberation:, root:, bus:, arg:)
       case arg
-      when "on"     then stage.enable!;  "council: enabled in pipeline"
-      when "off"    then stage.disable!; "council: disabled in pipeline"
-      when "status" then "council: #{stage.enabled? ? "on" : "off"} in pipeline"
+      when "on"     then stage.enable!;  "review: enabled in pipeline"
+      when "off"    then stage.disable!; "review: disabled in pipeline"
+      when "status" then "review: #{stage.enabled? ? "on" : "off"} in pipeline"
       else
         target   = arg.empty? ? "." : arg
         artifact = snapshot_artifact(expand_or_root(target, root))
@@ -251,7 +239,7 @@ module Master
     def crit_command(ai:, root:)
       deliberation = ai[:deliberation]
       {
-        "crit" => cmd(:dispatch_crit, deliberation, root)
+        "critique" => cmd(:dispatch_crit, deliberation, root)
       }
     end
 

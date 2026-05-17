@@ -28,10 +28,11 @@ module Master
 "help" => ->(_ctx) {
           [
             "session: /save /clear /history [N] /tokens /undo /redo /exit",
-            "scan: /run [path] /scan [profile] [path] /sweep [path] /autoloop [N] /ecology [path]",
-            "model: /model [id|list] /mode /persona /task",
-            "memory: /mem /topic /rsi",
-            "system: /diag [/section] /tree [N] /brief /guard [N] /reload /help"
+            "scan:    /scan [profile] [path]  /fix [path]  /check [path]  /ecology [path]",
+            "review:  /review [on|off|path]   /critique <file|text>   /swarm <role> <task>",
+            "model:   /model [id|list] /mode /persona /task",
+            "memory:  /mem /topic /rsi /why <rule>",
+            "system:  /diag [section] /tree [N] /brief /dmesg /reload /help"
           ].join("\n")
         }
       )
