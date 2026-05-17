@@ -62,11 +62,6 @@ rescue StandardError => e
   $stderr.puts "web_ui: #{e.message}"
 end
 
-if ARGV.first == "orient"
-  Master::Orient.new(root: Dir.pwd).call
-  exit 0
-end
-
 cli = nil
 
 trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved"; exit 0 }

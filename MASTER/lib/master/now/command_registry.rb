@@ -24,7 +24,6 @@ module Master
   report = scanner.scan(path: path.empty? ? nil : path)
   scanner.render(report)
 },
-"brief"  => ->(_ctx) { dump_soul_files(root) },
 "help" => ->(_ctx) {
           [
             "session: /save /clear /history [N] /tokens /undo /redo /exit",
@@ -32,7 +31,7 @@ module Master
             "review:  /review [on|off|path]   /critique <file|text>   /swarm <role> <task>",
             "model:   /model [id|list] /mode /persona /task",
             "memory:  /mem /topic /rsi /why <rule>",
-            "system:  /diag [section] /tree [N] /brief /dmesg /reload /help"
+            "system:  /diag [section] /tree [N] /dmesg /reload /help"
           ].join("\n")
         }
       )
@@ -60,16 +59,6 @@ module Master
         "cost"   => ->(_ctx) { "$#{"%.4f" % session.cost}" },
         "config" => ->(_ctx) { config.data.inspect }
       }
-    end
-
-    SOUL_FILES = %w[soul rules ruby_style workflow standing_orders].freeze
-
-    def dump_soul_files(root)
-      SOUL_FILES.map { |name|
-        rel  = "data/#{name}.yml"
-        path = File.join(root, rel)
-        "# #{rel}\n#{File.exist?(path) ? File.read(path) : "# missing"}"
-      }.join("\n\n")
     end
 
     def mode_commands(config)
