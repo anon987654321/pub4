@@ -27,8 +27,6 @@ module Master
       'auto_testing'   => false
     }.freeze
 
-    attr_reader :data
-
     def initialize(root = Dir.pwd)
       @root  = root
       @path  = File.join(root, '.master', 'config.yml')
@@ -36,9 +34,9 @@ module Master
       @data  = load_config
     end
 
-    def [](key)               = @data[key.to_s]
+    def [](key)               = @mutex.synchronize { @data[key.to_s] }
     def []=(key, value)       ; @mutex.synchronize { @data[key.to_s] = value } ; end
-    def dig(key, *rest)       = (k = key.to_s; rest.empty? ? @data[k] : @data.dig(k, *rest))
+    def dig(key, *rest)       = @mutex.synchronize { k = key.to_s; rest.empty? ? @data[k] : @data.dig(k, *rest) }
 
     def model          = self['model']
     def budget_max     = self['budget_max'].to_f
@@ -65,14 +63,16 @@ module Master
     BootConfig = Data.define(:root, :model, :web_host, :web_port, :web_public_url,
                              :budget_max, :req_max, :cache_ttl, :history_max)
 
-    def freeze_boot = BootConfig.new(
-      root: @root, model: model, web_host: self["web_host"], web_port: self["web_port"].to_i,
-      web_public_url: self["web_public_url"], budget_max: budget_max, req_max: req_max,
-      cache_ttl: self["cache_ttl"].to_i, history_max: self["history_max"].to_i
-    ).freeze
+    def freeze_boot
+      snap = @mutex.synchronize { @data.dup }
+      BootConfig.new(
+        root: @root, model: snap['model'], web_host: snap['web_host'], web_port: snap['web_port'].to_i,
+        web_public_url: snap['web_public_url'], budget_max: snap['budget_max'].to_f,
+        req_max: snap['req_max'].to_f, cache_ttl: snap['cache_ttl'].to_i, history_max: snap['history_max'].to_i
+      ).freeze
+    end
 
-    # Export as plain hash (deep dup to avoid external mutation)
-    def to_h = Marshal.load(Marshal.dump(@data))
+    def to_h = @mutex.synchronize { Marshal.load(Marshal.dump(@data)) }
 
     private
 

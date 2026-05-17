@@ -10,18 +10,19 @@ module Master
   class Memory
     module Search
       def semantic_recall(query, top_n: 3)
-        return [] if @store.empty?
+        store_snap = @mutex.synchronize { @store.dup }
+        return [] if store_snap.empty?
         if Judge::Embeddings.enabled? && (qvec = Judge::Embeddings.embed(query))
-          hits = vector_recall(qvec, top_n)
+          hits = vector_recall(qvec, top_n, store_snap)
           return hits unless hits.empty?
         end
-        tfidf_recall(query, top_n)
+        tfidf_recall(query, top_n, store_snap)
       end
 
       private
 
-      def vector_recall(qvec, top_n)
-        @store.filter_map do |key, data|
+      def vector_recall(qvec, top_n, store)
+        store.filter_map do |key, data|
           next unless data.is_a?(Hash) && data["vec"].is_a?(Array)
           score = Judge::Embeddings.cosine(qvec, data["vec"])
           next if score < Judge::Embeddings::MIN_SIM
@@ -29,10 +30,10 @@ module Master
         end.sort_by { |e| -e[:score] }.first(top_n)
       end
 
-      def tfidf_recall(query, top_n)
+      def tfidf_recall(query, top_n, store)
         terms = tokenize(query)
         return [] if terms.empty?
-        @store.filter_map { |key, data|
+        store.filter_map { |key, data|
           value = data.is_a?(Hash) ? data["value"].to_s : data.to_s
           score = tfidf_score(terms, tokenize("#{key} #{value}"))
           next if score.zero?
@@ -85,27 +86,27 @@ module Master
     end
 
     def by_type(type)
-      @store.select { |k, v| v.is_a?(Hash) && v["type"] == type.to_s && !k.start_with?("archive/") }
+      @mutex.synchronize { @store.select { |k, v| v.is_a?(Hash) && v["type"] == type.to_s && !k.start_with?("archive/") } }
     end
 
     def type_counts
-      counts = Hash.new(0)
-      @store.each do |k, v|
-        next if k.start_with?("archive/") || k == "_consolidated_summary"
-        counts[v.is_a?(Hash) ? (v["type"] || "general") : "general"] += 1
+      @mutex.synchronize do
+        counts = Hash.new(0)
+        @store.each do |k, v|
+          next if k.start_with?("archive/") || k == "_consolidated_summary"
+          counts[v.is_a?(Hash) ? (v["type"] || "general") : "general"] += 1
+        end
+        counts
       end
-      counts
     end
 
-    # Heuristic auto-save. Scans text for first matching pattern; saves under "auto/<type>/<n>".
-    # Returns saved key or nil.
     def auto_save(text)
       return if text.to_s.empty?
       AUTO_SAVE_PATTERNS.each do |type, re|
         next unless (m = text.match(re))
         snippet = m[1].strip
         next if snippet.length < 3
-        n   = @store.keys.count { |k| k.start_with?("auto/#{type}/") } + 1
+        n   = @mutex.synchronize { @store.keys.count { |k| k.start_with?("auto/#{type}/") } } + 1
         key = "auto/#{type}/#{n}"
         remember(key, snippet, type: type)
         return key
@@ -114,18 +115,17 @@ module Master
     end
 
     def recall(key)
-      @store.dig(key.to_s, "value")
+      @mutex.synchronize { @store.dig(key.to_s, "value") }
     end
 
     def forget(key)
       @mutex.synchronize { @store.delete(key.to_s); persist }
     end
 
-    def all = @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v }
+    def all = @mutex.synchronize { @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v } }
 
-    # Token-limited injection for system prompt. Groups by type, caps at MAX_INJECT_TOKENS.
     def context_summary
-      active = @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
+      active = @mutex.synchronize { @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" } }
       return if active.empty?
 
       grouped = active.group_by { |_, v| v.is_a?(Hash) ? (v["type"] || "general") : "general" }
@@ -147,7 +147,7 @@ module Master
       end
       return if lines.empty?
 
-      archived_n = @store.count { |k, _| k.to_s.start_with?("archive/") }
+      archived_n = @mutex.synchronize { @store.count { |k, _| k.to_s.start_with?("archive/") } }
       summary    = recall("_consolidated_summary")
       header     = summary ? "Memory (#{summary.to_s[0, 80]}):" : "Memory:"
       header    += " [+#{archived_n} archived]" if archived_n > 0
