@@ -112,6 +112,7 @@ module Master
     body.none? { |b| b.match?(RESCUE_SINK) }
   end
 
+
   RuleDSL.rule :SILENT_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     autofix: false,
