@@ -39,8 +39,9 @@ gem "opentelemetry-sdk", "~> 1.11", require: false
 gem "sqlite3", "~> 2.9"
 
 # Architecture #7: file-watcher reactive trigger (kqueue on OpenBSD, inotify on Linux)
+# Skipped on Android/Termux — inotify gem unavailable there.
 if RUBY_PLATFORM =~ /bsd|dragonfly/i
   gem "rb-kqueue", "~> 0.2", require: false
-elsif RUBY_PLATFORM =~ /linux/
+elsif RUBY_PLATFORM =~ /linux/ && !RUBY_PLATFORM.include?("android")
   gem "rb-inotify", "~> 0.10", require: false
 end
