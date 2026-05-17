@@ -289,6 +289,17 @@ function _doResize() {
       z.crown = z.crown.concat(line(cx - s * 0.4, y, cx, y - s * 0.1, 8, 'crown'))
                         .concat(line(cx, y - s * 0.1, cx + s * 0.4, y, 8, 'crown'));
     }
+    z.browL = line(cx - s * 0.48, cy - s * 0.22, cx - s * 0.14, cy - s * 0.12, 10, 'browL');
+    z.browR = line(cx + s * 0.14, cy - s * 0.12, cx + s * 0.48, cy - s * 0.22, 10, 'browR');
+    z.noseFlare = ring(cx - s * 0.06, cy + s * 0.50, s * 0.04, Math.PI * 0.5, Math.PI * 1.5, 5, 'noseFlare')
+                 .concat(ring(cx + s * 0.06, cy + s * 0.50, s * 0.04, -Math.PI * 0.5, Math.PI * 0.5, 5, 'noseFlare'));
+    z.chin = line(cx - s * 0.14, cy + s * 1.1, cx + s * 0.14, cy + s * 1.1, 8, 'chin');
+    z.scarL = []; z.scarR = [];
+    for (let r = 0; r < 2; r++) {
+      const y = cy + s * (0.12 + r * 0.14);
+      z.scarL = z.scarL.concat(line(cx - s * 0.50, y, cx - s * 0.28, y, 6, 'scarL'));
+      z.scarR = z.scarR.concat(line(cx + s * 0.28, y, cx + s * 0.50, y, 6, 'scarR'));
+    }
     // ear/jaw bones
     z.tasselL = line(cx - s * 0.6, cy + s * 0.3, cx - s * 0.7, cy + s * 0.9, 10, 'tasselL');
     z.tasselR = line(cx + s * 0.6, cy + s * 0.3, cx + s * 0.7, cy + s * 0.9, 10, 'tasselR');
@@ -327,6 +338,18 @@ function _doResize() {
     z.mouth = ring(cx, cy + s * 0.72, s * 0.48, 0, Math.PI, 26, 'mouth');
     z.mouth = z.mouth.concat(ring(cx, cy + s * 0.63, s * 0.40, 0, Math.PI, 18, 'mouth'))
                      .concat(line(cx - s * 0.48, cy + s * 0.72, cx + s * 0.48, cy + s * 0.72, 16, 'mouth'));
+    z.browL = line(cx - s * 0.70, cy - s * 0.60, cx - s * 0.14, cy - s * 0.58, 14, 'browL');
+    z.browR = line(cx + s * 0.14, cy - s * 0.58, cx + s * 0.70, cy - s * 0.60, 14, 'browR');
+    z.noseFlare = ring(cx - s * 0.10, cy + s * 0.38, s * 0.06, Math.PI * 0.5, Math.PI * 1.5, 6, 'noseFlare')
+                 .concat(ring(cx + s * 0.10, cy + s * 0.38, s * 0.06, -Math.PI * 0.5, Math.PI * 0.5, 6, 'noseFlare'));
+    z.chin = line(cx - s * 0.22, cy + s * 1.08, cx + s * 0.22, cy + s * 1.20, 10, 'chin');
+    z.scarL = line(cx - s * 0.68, cy + s * 0.10, cx - s * 0.38, cy + s * 0.10, 8, 'scarL');
+    z.scarR = line(cx + s * 0.38, cy + s * 0.10, cx + s * 0.68, cy + s * 0.10, 8, 'scarR');
+    z.tasselL = []; z.tasselR = [];
+    for (let r = 0; r < 5; r++) {
+      z.tasselL.push({ x: cx - s * (0.90 + r * 0.04), y: cy + s * (0.20 + r * 0.18), zone: 'tasselL' });
+      z.tasselR.push({ x: cx + s * (0.90 + r * 0.04), y: cy + s * (0.20 + r * 0.18), zone: 'tasselR' });
+    }
     // antenna-like crown protrusions
     z.crown = [];
     for (let i = 0; i < 4; i++) {
@@ -354,6 +377,13 @@ function _doResize() {
     z.pupilR = disc(cx + s * 0.30, cy + s * 0.05, s * 0.06, 8, 'pupilR');
     z.noseRidge = line(cx, cy + s * 0.25, cx, cy + s * 0.7, 14, 'noseRidge');
     z.mouth = mouthArc(cx, cy + s * 0.95, s * 0.4, 'O', 20);
+    z.browL = line(cx - s * 0.52, cy - s * 0.18, cx - s * 0.10, cy - s * 0.10, 12, 'browL');
+    z.browR = line(cx + s * 0.10, cy - s * 0.10, cx + s * 0.52, cy - s * 0.18, 12, 'browR');
+    z.noseFlare = ring(cx - s * 0.07, cy + s * 0.68, s * 0.05, Math.PI * 0.5, Math.PI * 1.5, 5, 'noseFlare')
+                 .concat(ring(cx + s * 0.07, cy + s * 0.68, s * 0.05, -Math.PI * 0.5, Math.PI * 0.5, 5, 'noseFlare'));
+    z.chin = line(cx - s * 0.18, cy + s * 1.10, cx + s * 0.18, cy + s * 1.10, 8, 'chin');
+    z.scarL = line(cx - s * 0.55, cy + s * 0.25, cx - s * 0.20, cy + s * 0.25, 8, 'scarL');
+    z.scarR = line(cx + s * 0.20, cy + s * 0.25, cx + s * 0.55, cy + s * 0.25, 8, 'scarR');
     // crown — single tall point
     z.crown = line(cx, cy - s * 1.4, cx, cy - s * 1.9, 12, 'crown');
     // dense tassels both sides
@@ -376,8 +406,9 @@ function _doResize() {
       z.outlineR.push({ x: cx + w, y, zone: 'outlineR' });
     }
     // beak-like nose protrusion
+    const beakDir = maskIdx % 2 === 0 ? 1 : -1;
     z.noseRidge = line(cx, cy - s * 0.2, cx, cy + s * 0.4, 18, 'noseRidge')
-                  .concat(line(cx, cy + s * 0.4, cx - s * 0.15, cy + s * 0.55, 6, 'noseRidge'));
+                  .concat(line(cx, cy + s * 0.4, cx + beakDir * s * 0.15, cy + s * 0.55, 6, 'noseRidge'));
     // narrow slit eyes
     z.eyeL = line(cx - s * 0.45, cy - s * 0.1, cx - s * 0.18, cy - s * 0.1, 14, 'eyeL');
     z.eyeR = line(cx + s * 0.18, cy - s * 0.1, cx + s * 0.45, cy - s * 0.1, 14, 'eyeR');
@@ -393,6 +424,16 @@ function _doResize() {
       z.crown.push({ x: cx - w, y, zone: 'crown' });
       z.crown.push({ x: cx + w, y, zone: 'crown' });
       if (i % 3 === 0) z.crown.push({ x: cx, y, zone: 'crown' });
+    }
+    z.browL = line(cx - s * 0.45, cy - s * 0.20, cx - s * 0.16, cy - s * 0.14, 10, 'browL');
+    z.browR = line(cx + s * 0.16, cy - s * 0.14, cx + s * 0.45, cy - s * 0.20, 10, 'browR');
+    z.noseFlare = ring(cx - s * 0.06, cy + s * 0.44, s * 0.04, Math.PI * 0.5, Math.PI * 1.5, 4, 'noseFlare')
+                 .concat(ring(cx + s * 0.06, cy + s * 0.44, s * 0.04, -Math.PI * 0.5, Math.PI * 0.5, 4, 'noseFlare'));
+    z.chin = line(cx - s * 0.16, cy + s * 0.82, cx + s * 0.16, cy + s * 0.82, 8, 'chin');
+    z.tasselL = []; z.tasselR = [];
+    for (let r = 0; r < 5; r++) {
+      z.tasselL.push({ x: cx - s * 0.70, y: cy + s * (0.10 + r * 0.20), zone: 'tasselL' });
+      z.tasselR.push({ x: cx + s * 0.70, y: cy + s * (0.10 + r * 0.20), zone: 'tasselR' });
     }
     // openwork lattice — checkerboard diamond grid (New Ireland carved lattice)
     z.scarL = []; z.scarR = [];
@@ -417,7 +458,7 @@ function _doResize() {
     else if (name === 'tolai') z = buildTolai(cx, cy, s);
     else if (name === 'malagan') z = buildMalagan(cx, cy, s);
     else z = buildSepik(cx, cy, s);
-    return applyZ(z, s);
+    return applyZ(z, cx, cy, s);
   }
   // Z — spheroid depth field + zone sculpture displacement.
   // Head modelled as oblate spheroid (w=0.85, h=1.45, d=0.45 in face-radii).
@@ -431,8 +472,7 @@ function _doResize() {
     scarL:      0.06, scarR:     0.06,
     tasselL:   -0.12, tasselR:  -0.12,
   };
-  function applyZ(zones, s) {
-    const cx = Face.cx, cy = Face.cy;
+  function applyZ(zones, cx, cy, s) {
     for (const [name, list] of Object.entries(zones)) {
       for (let i = 0; i < list.length; i++) {
         const p = list[i];
@@ -441,7 +481,7 @@ function _doResize() {
         const my = (p.y - cy) / s;
         // Spheroid base depth — smooth dome, zero at silhouette edge
         const mxn = mx / 0.85, myn = my / 1.45;
-      const base = 0.42 * Math.sqrt(Math.max(0, 1 - mxn*mxn - myn*myn));
+        const base = 0.42 * Math.sqrt(Math.max(0, 1 - mxn*mxn - myn*myn));
         let mz;
         if (name === 'noseRidge') {
           // Bell curve peaking at ~65% down the ridge (nose tip), falling toward bridge and nostrils
@@ -540,7 +580,7 @@ function _doResize() {
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       const lead = ZONE_PHASE_LEAD[p.zone] || 0;
-      const ph = lead < 1 ? Math.min(1, Math.max(0, maskPhase - lead) / (1 - lead)) : maskPhase;
+      const ph = lead < 1 ? Math.min(1, Math.max(0, maskPhase - lead) / Math.max(0.01, 1 - lead)) : maskPhase;
       const t = easeInOutCubic(ph);
       p.hx = p.hx1 + (p.hx2 - p.hx1) * t;
       p.hy = p.hy1 + (p.hy2 - p.hy1) * t;
@@ -582,7 +622,7 @@ function _doResize() {
   function timePalette() {
     return { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' };
   }
-  let palette = timePalette(), targetPalette = palette, palBlend = 1.0;
+  let palette = timePalette(), sourcePalette = palette, targetPalette = palette, palBlend = 1.0;
   function lerpRGB(a, b, t) {
     const A = a.split(',').map(Number), B = b.split(',').map(Number);
     return `${A[0]+(B[0]-A[0])*t|0},${A[1]+(B[1]-A[1])*t|0},${A[2]+(B[2]-A[2])*t|0}`;
@@ -603,15 +643,15 @@ function _doResize() {
     unclear: { shadow: '10,10,0',  midtone: '80,80,40',  highlight: '210,210,140', accent: '200,200,100' }
   };
   function fadePaletteTo(p, ms = 600) {
-    targetPalette = p; palBlend = 0; palStart = performance.now(); palDur = ms;
+    sourcePalette = palette; targetPalette = p; palBlend = 0; palStart = performance.now(); palDur = ms;
   }
   let palStart = performance.now(), palDur = 600;
 
   function tickPalette(now) {
     if (palBlend < 1) {
       const t = Math.min(1, (now - palStart) / palDur);
-      palBlend = easeInOutCubic(t);
-      palette = lerpPalette(palette, targetPalette, palBlend < 1 ? 0.04 : 1.0);
+      const e = easeInOutCubic(t);
+      palette = lerpPalette(sourcePalette, targetPalette, e);
       if (t >= 1) { palette = targetPalette; palBlend = 1; }
     }
   }
