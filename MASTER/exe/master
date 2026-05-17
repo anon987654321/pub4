@@ -18,6 +18,22 @@ end
 
 require "master"
 
+def stable_web_secret(config)
+  return config["web_secret_key_base"] if config["web_secret_key_base"].to_s.length >= 64
+  require "securerandom"
+  secret = SecureRandom.hex(64)
+  config["web_secret_key_base"] = secret
+  config_path = File.expand_path("../.master/config.yml", __dir__)
+  require "fileutils"
+  FileUtils.mkdir_p(File.dirname(config_path))
+  require "yaml"
+  existing = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue {}
+  File.write(config_path, existing.merge("web_secret_key_base" => secret).to_yaml)
+  secret
+rescue StandardError
+  SecureRandom.hex(64)
+end
+
 def boot_web_ui(config)
   port = config["web_port"] || 53187
   host = config["web_host"] || "127.0.0.1"
@@ -36,7 +52,7 @@ def boot_web_ui(config)
     pids_out.split.each { |pid| Process.kill("TERM", pid.to_i) rescue nil }
     sleep 0.5
     spawn(
-      { "RAILS_ENV" => "production", "SECRET_KEY_BASE_DUMMY" => "1" },
+      { "RAILS_ENV" => "production", "SECRET_KEY_BASE" => stable_web_secret(config) },
       "bundle", "exec", "falcon", "serve", "--bind", "http://#{host}:#{port}",
       chdir: web_dir, out: File::NULL, err: File::NULL
     )

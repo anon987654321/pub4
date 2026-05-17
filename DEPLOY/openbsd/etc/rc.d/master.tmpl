@@ -1,6 +1,6 @@
 #!/bin/ksh
 daemon="/usr/local/bin/bundle"
-daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1${env_line} falcon serve --bind http://127.0.0.1:53187"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE='${master_secret}'${env_line} falcon serve --bind http://127.0.0.1:53187"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
 daemon_timeout="90"

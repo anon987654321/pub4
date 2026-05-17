@@ -18,6 +18,7 @@ class AuthTier
     @config_path = config_path
     @token_mutex = Mutex.new
     @cached_token = nil
+    @config_mtime = nil
   end
 
   def call(env)
@@ -44,6 +45,11 @@ class AuthTier
 
   def web_token
     @token_mutex.synchronize do
+      mtime = File.mtime(@config_path) rescue nil
+      if mtime != @config_mtime
+        @config_mtime = mtime
+        @cached_token = nil
+      end
       @cached_token ||= load_or_seed_token
     end
   end

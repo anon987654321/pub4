@@ -1,18 +1,39 @@
-<% content_for :title, "Marketplace" %>
-<h1>Marketplace</h1>
-<% if authenticated? %><%= link_to "Sell something", new_marketplace_listing_path %><% end %>
+<% content_for :title, "Markedsplass" %>
 
-<form method="get">
-  <p><input name="q" value="<%= params[:q] %>" placeholder="Search listings…"></p>
-  <p><button type="submit">Search</button></p>
-</form>
+<% unless authenticated? %>
+  <% content_for :splash do %>
+    <div>
+      <h2>Markedsplass</h2>
+      <p class="tagline">Buy and sell in your neighbourhood. Local listings in every city, in every language.</p>
+      <div class="chips">
+        <span class="chip">list a product</span>
+        <span class="chip">browse categories</span>
+        <span class="chip">buyer–seller chat</span>
+        <span class="chip">geo listings</span>
+      </div>
+      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, style: "color:inherit" %> to sell</p>
+    </div>
+  <% end %>
+<% end %>
+
+<div class="page-header">
+  <h1>Markedsplass</h1>
+  <%= link_to "Sell something", new_marketplace_listing_path, class: "btn" if authenticated? %>
+</div>
 
 <% if @categories.any? %>
-  <nav>
+  <div class="sort-tabs" style="margin-bottom:16px">
     <% @categories.each do |cat| %>
-      <%= link_to cat.name, marketplace_category_path(cat) %>
+      <%= link_to cat.name, marketplace_category_path(cat), class: "sort-tab" %>
     <% end %>
-  </nav>
+  </div>
+<% end %>
+
+<%= form_with url: marketplace_listings_path, method: :get, local: true do |f| %>
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <%= f.text_field :q, value: params[:q], placeholder: "Search listings…", style: "flex:1" %>
+    <%= f.submit "Search", class: "btn" %>
+  </div>
 <% end %>
 
 <section>
@@ -20,13 +41,15 @@
     <article>
       <% if l.photos.attached? %>
         <%= link_to marketplace_listing_path(l) do %>
-          <%= image_tag l.photos.first %>
+          <%= image_tag l.photos.first, style: "width:100%;max-height:200px;object-fit:cover;border-radius:2px;margin-bottom:8px" %>
         <% end %>
       <% end %>
-      <%= link_to l.title, marketplace_listing_path(l) %>
-      <p><strong><%= l.price_display %></strong></p>
-      <small><%= l.location %> · <%= l.condition %></small>
+      <h2><%= link_to l.title, marketplace_listing_path(l) %></h2>
+      <p><strong><%= l.price_display %></strong> · <%= l.location %> · <%= l.condition %></p>
     </article>
   <% end %>
+  <% if @listings.empty? %>
+    <div class="empty"><p>No listings yet. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
+  <% end %>
 </section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>

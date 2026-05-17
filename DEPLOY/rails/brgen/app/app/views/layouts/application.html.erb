@@ -1,36 +1,66 @@
 <!DOCTYPE html>
-<html lang="<%= Current.locale || I18n.locale %>">
+<html lang="<%= Current.locale || I18n.locale %>" dir="ltr">
 <head>
   <%= tag.meta charset: "utf-8" %>
-  <%= tag.meta name: "viewport", content: "width=device-width,initial-scale=1" %>
-
-  <title><%= content_for?(:title) ? "#{yield :title} — brgen" : "brgen" %></title>
-
+  <%= tag.meta name: "viewport", content: "width=device-width,initial-scale=1,viewport-fit=cover" %>
+  <%= tag.meta name: "mobile-web-app-capable", content: "yes" %>
+  <%= tag.meta name: "color-scheme", content: "dark" %>
+  <%= tag.meta name: "theme-color", content: "#000000" %>
+  <title><%= content_for?(:title) ? "#{yield :title} — Brgen" : "Brgen" %></title>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
 </head>
 <body>
-  <%= tag.nav do %>
-    <%= link_to "brgen", root_path %>
-    <%= link_to t("navigation.communities", default: "communities"), communities_path %>
-    <%= link_to t("navigation.posts", default: "posts"), posts_path %>
+  <canvas id="tunnel-canvas" data-turbo-permanent aria-hidden="true"></canvas>
 
-    <% if authenticated? %>
-      <%= link_to t("navigation.inbox", default: "inbox"), conversations_path %>
-      <%= link_to t("navigation.sign_out", default: "sign out"), session_path, data: { turbo_method: :delete } %>
-    <% else %>
-      <%= link_to t("navigation.sign_in", default: "sign in"), new_session_path %>
-    <% end %>
+  <h1 id="cityCarousel" class="city-carousel" data-turbo-permanent aria-hidden="true">
+    <div class="carousel-container">
+      <span class="carousel-slide active">brgen.no</span>
+      <span class="carousel-slide">longyearbyn.no</span><span class="carousel-slide">oshlo.no</span>
+      <span class="carousel-slide">stvanger.no</span><span class="carousel-slide">trmso.no</span>
+      <span class="carousel-slide">trndheim.no</span><span class="carousel-slide">reykjavk.is</span>
+      <span class="carousel-slide">kbenhvn.dk</span><span class="carousel-slide">stholm.se</span>
+      <span class="carousel-slide">mlmoe.se</span><span class="carousel-slide">gtebrg.se</span>
+      <span class="carousel-slide">hlsinki.fi</span><span class="carousel-slide">lndon.uk</span>
+      <span class="carousel-slide">mnchester.uk</span><span class="carousel-slide">edinbrgh.uk</span>
+      <span class="carousel-slide">glasgw.uk</span><span class="carousel-slide">amstrdam.nl</span>
+      <span class="carousel-slide">rottrdam.nl</span><span class="carousel-slide">brssels.be</span>
+      <span class="carousel-slide">frankfrt.de</span><span class="carousel-slide">zrich.ch</span>
+      <span class="carousel-slide">mlan.it</span><span class="carousel-slide">brdeaux.fr</span>
+      <span class="carousel-slide">lisbon.pt</span><span class="carousel-slide">wrsawa.pl</span>
+      <span class="carousel-slide">newyrk.us</span><span class="carousel-slide">lsangeles.com</span>
+      <span class="carousel-slide">chcago.us</span><span class="carousel-slide">houstn.us</span>
+    </div>
+  </h1>
+
+  <% if content_for?(:splash) %>
+    <div id="splash" class="splash" role="dialog" aria-modal="true" tabindex="0">
+      <%= yield :splash %>
+    </div>
   <% end %>
 
-  <%= tag.main do %>
-    <%= tag.p(notice, role: "status") if notice %>
-    <%= tag.p(alert, role: "alert") if alert %>
+  <div class="app-shell">
+    <nav>
+      <%= link_to "Brgen", root_path, class: "logo" %>
+      <div class="nav-links">
+        <%= link_to t("navigation.communities", default: "communities"), communities_path %>
+        <%= link_to t("navigation.posts", default: "posts"), posts_path %>
+        <% if authenticated? %>
+          <%= link_to t("navigation.inbox", default: "inbox"), conversations_path %>
+          <%= link_to t("navigation.sign_out", default: "sign out"), session_path, data: { turbo_method: :delete } %>
+        <% else %>
+          <%= link_to t("navigation.sign_in", default: "sign in"), new_session_path %>
+        <% end %>
+      </div>
+    </nav>
 
-    <%= yield %>
-  <% end %>
+    <main>
+      <%= tag.p(notice, role: "status", class: "flash-notice") if notice %>
+      <%= tag.p(alert, role: "alert", class: "flash-alert") if alert %>
+      <%= yield %>
+    </main>
+  </div>
 </body>
 </html>

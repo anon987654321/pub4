@@ -1,9 +1,28 @@
 <% content_for :title, "Brgen TV" %>
-<h1>Brgen TV</h1>
-<nav>
-  <%= link_to "All channels", tv_channels_path %>
-  <% if authenticated? %> · <%= link_to "Create channel", new_tv_channel_path %><% end %>
-</nav>
+
+<% unless authenticated? %>
+  <% content_for :splash do %>
+    <div>
+      <h2>Brgen TV</h2>
+      <p class="tagline">Live streams and videos from your city. Channels, broadcasts, subscriptions.</p>
+      <div class="chips">
+        <span class="chip">live stream</span>
+        <span class="chip">city channels</span>
+        <span class="chip">subscribe</span>
+        <span class="chip">stream key</span>
+      </div>
+      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, style: "color:inherit" %> to broadcast</p>
+    </div>
+  <% end %>
+<% end %>
+
+<div class="page-header">
+  <h1>Brgen TV</h1>
+  <div>
+    <%= link_to "All channels", tv_channels_path, class: "btn btn-ghost" %>
+    <% if authenticated? %><%= link_to "Create channel", new_tv_channel_path, class: "btn" %><% end %>
+  </div>
+</div>
 
 <% if @live.any? %>
   <section>
@@ -11,7 +30,8 @@
     <% @live.each do |b| %>
       <article>
         <%= link_to tv_channel_path(b.channel) do %>
-          <mark>LIVE</mark> <%= b.title %> — <%= b.channel.name %>
+          <span class="live-badge">Live</span>
+          <strong><%= b.title %></strong> — <%= b.channel.name %>
         <% end %>
       </article>
     <% end %>
@@ -21,7 +41,7 @@
 <section>
   <h2>Trending</h2>
   <%= render @trending %>
-  <%= @pagy_trending.series_nav if @pagy_trending.pages > 1 %>
+  <%= @pagy_trending.series_nav if @pagy_trending&.pages.to_i > 1 %>
 </section>
 
 <section>

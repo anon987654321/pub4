@@ -40,7 +40,7 @@ bootstrap_rails_app() {
   fi
 
   su -l "$app" -c "gem install --user-install rails bundler falcon" >/dev/null 2>&1 || :
-  su -l "$app" -c "cd $app_dir && RAILS_ENV=production bundle install --deployment --without development:test" \
+  su -l "$app" -c "cd $app_dir && bundle config set --local deployment true && bundle config set --local without development:test && RAILS_ENV=production bundle install" \
     || { log ERROR "bundle install failed for $app"; return 1 }
   su -l "$app" -c "cd $app_dir && RAILS_ENV=production bin/rails db:create db:migrate" \
     || log WARN "db:create/migrate non-zero for $app (idempotent skip likely)"
@@ -57,6 +57,8 @@ bootstrap_rails_app() {
   sleep 5
   typeset _c; _c=$(/usr/sbin/rcctl check $app)
   [[ $_c == *"${app}(ok)"* ]] || { log ERROR "$app not running"; return 1 }
+  typeset _http; _http=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://127.0.0.1:${port}/up 2>/dev/null)
+  [[ $_http == "200" ]] || log WARN "$app /up returned $_http — SECRET_KEY_BASE or DB may need attention"
   log INFO "  $app live on :$port"
 }
 
@@ -199,6 +201,9 @@ stage_2() {
     cd "$m3dir/web"
     bundle config set --local path vendor/bundle
     bundle install --quiet
+    typeset master_secret
+    master_secret=$(RAILS_ENV=production bundle exec rails secret 2>/dev/null | tail -1)
+    [[ ${#master_secret} -ge 64 ]] || { log ERROR "master: secret capture failed (got ${#master_secret} chars)"; exit 1 }
     typeset env_line=""
     while IFS= read -r _line; do
       [[ $_line == export* ]] || continue

@@ -1,27 +1,43 @@
 <% content_for :title, "Takeaway" %>
-<h1>Order food</h1>
-<% if authenticated? %><%= link_to "Add restaurant", new_takeaway_restaurant_path %><% end %>
 
-<form method="get">
-  <p><input name="q" value="<%= params[:q] %>" placeholder="Search restaurants…"></p>
-  <p>
-    <select name="cuisine">
-      <option value="">All cuisines</option>
-      <% Takeaway::Restaurant::CUISINE_TYPES.each do |c| %>
-        <option value="<%= c %>" <%= "selected" if params[:cuisine] == c %>><%= c %></option>
-      <% end %>
-    </select>
-  </p>
-  <p><button type="submit">Search</button></p>
-</form>
+<% unless authenticated? %>
+  <% content_for :splash do %>
+    <div>
+      <h2>Brgen Takeaway</h2>
+      <p class="tagline">Order food from local restaurants. City-native delivery, neighbourhood by neighbourhood.</p>
+      <div class="chips">
+        <span class="chip">browse restaurants</span>
+        <span class="chip">filter by cuisine</span>
+        <span class="chip">track order</span>
+      </div>
+      <p class="hint">tap anywhere to browse</p>
+    </div>
+  <% end %>
+<% end %>
+
+<div class="page-header">
+  <h1>Order food</h1>
+  <%= link_to "Add restaurant", new_takeaway_restaurant_path, class: "btn" if authenticated? %>
+</div>
+
+<%= form_with url: takeaway_restaurants_path, method: :get, local: true do |f| %>
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <%= f.text_field :q, value: params[:q], placeholder: "Search restaurants…", style: "flex:1" %>
+    <%= f.select :cuisine, [["All cuisines", ""]] + Takeaway::Restaurant::CUISINE_TYPES.map { |c| [c, c] }, {selected: params[:cuisine]}, {} %>
+    <%= f.submit "Search", class: "btn" %>
+  </div>
+<% end %>
 
 <section>
   <% @restaurants.each do |r| %>
     <article>
-      <%= link_to r.name, takeaway_restaurant_path(r) %>
-      <small><%= r.cuisine_type %> · <%= r.city %> · ★ <%= r.rating || "—" %></small>
-      <small>Min order: <%= r.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= r.delivery_fee_cents.to_i / 100.0 %> NOK</small>
+      <h2><%= link_to r.name, takeaway_restaurant_path(r) %></h2>
+      <p><%= r.cuisine_type %> · <%= r.city %> · ★ <%= r.rating || "—" %></p>
+      <p>Min order: <%= r.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= r.delivery_fee_cents.to_i / 100.0 %> NOK</p>
     </article>
   <% end %>
+  <% if @restaurants.empty? %>
+    <div class="empty"><p>No restaurants yet. <%= link_to("Add one", new_takeaway_restaurant_path) if authenticated? %></p></div>
+  <% end %>
 </section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>

@@ -31,7 +31,7 @@ const ZONE_STAMP = {
   mouth:     [[0,0],[1,0]], chin:      [[0,0],[1,0]],
   eyeL:      [[0,0],[1,0],[0,1],[1,1]], eyeR:   [[0,0],[1,0],[0,1],[1,1]],
   pupilL:    [[0,0],[1,0],[0,1],[1,1]], pupilR: [[0,0],[1,0],[0,1],[1,1]],
-  crown:     [[-1,0],[0,0],[1,0],[0,-1]],
+  crown:     [[0,0]],
   scarL:     [[0,0],[1,1]], scarR: [[1,0],[0,1]],
   noseFlare: [[0,0],[1,0]],
   tasselL:   [[0,0],[0,1]], tasselR: [[0,0],[0,1]],
@@ -68,22 +68,22 @@ const ZX_ZONE_IDX = {
   sideL:11, sideR:11,
 };
 const ZX_PALETTE = [
-  0xFFFFFFFF, // 0 default white
-  0xFFFF00FF, // 1 outline  — magenta
-  0xFFC00000, // 2 eye      — blue
-  0xFFFFFFFF, // 3 pupil    — white (high-contrast in dark socket)
-  0xFF00FF00, // 4 brow     — green
-  0xFFC0C0C0, // 5 nose     — light grey
-  0xFF0000FF, // 6 mouth    — red
-  0xFF00FFFF, // 7 chin     — yellow
-  0xFFFFFF00, // 8 crown    — cyan
-  0xFFFF00C0, // 9 scar     — warm orange
-  0xFF80FF80, // 10 tassel  — pale green
-  0xFFC0C000, // 11 side    — teal
+  0xFFFFFFFF, // 0 default — white
+  0xFFFF00FF, // 1 outline — magenta (ZX BRIGHT)
+  0xFFFF0000, // 2 eye     — blue    (ZX BRIGHT)
+  0xFFFFFFFF, // 3 pupil   — white
+  0xFF00FF00, // 4 brow    — green   (ZX BRIGHT)
+  0xFFD7D7D7, // 5 nose    — grey    (ZX non-BRIGHT white)
+  0xFF0000FF, // 6 mouth   — red     (ZX BRIGHT)
+  0xFF00FFFF, // 7 chin    — yellow  (ZX BRIGHT)
+  0xFFFFFF00, // 8 crown   — cyan    (ZX BRIGHT)
+  0xFF0000FF, // 9 scar    — red     (ZX BRIGHT)
+  0xFF00FF00, // 10 tassel — green   (ZX BRIGHT)
+  0xFFFF00FF, // 11 side   — magenta (ZX BRIGHT)
 ];
 
 // Preallocated curl output — avoids GC allocation every frame per particle
-const _curl = new Float64Array(2);
+const _curl = new Float32Array(2);
 // Scratch buffer for ZX 8×8 block vote — avoids per-block allocation
 const _zxVotes = new Uint8Array(16);
 
@@ -113,7 +113,7 @@ function _doResize() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   lpxW = W >> 1; lpxH = H >> 1;
   lpxCV.width = lpxW; lpxCV.height = lpxH;
-  _marqueeX = W >> 1;
+  _marqueeX = W;
   computeZones(); assignHomes();
 }
 
@@ -430,7 +430,6 @@ function _doResize() {
     chin:       0.14, mouth:     0.16, crown:      0.04,
     scarL:      0.06, scarR:     0.06,
     tasselL:   -0.12, tasselR:  -0.12,
-    forehead:   0.08,
   };
   function applyZ(zones, s) {
     const cx = Face.cx, cy = Face.cy;
@@ -467,14 +466,14 @@ function _doResize() {
       const t = i / 31;
       const y = cy - s * 0.72 + t * s * 1.44;
       const bulge = Math.sin(t * Math.PI) * s * 0.07;
-      L.push({ x: cx - s * 0.88 - bulge, y, z: 0, zone: 'sideL' });
-      R.push({ x: cx + s * 0.88 + bulge, y, z: 0, zone: 'sideR' });
+      L.push({ x: cx - s * 0.88 - bulge, y, z: -0.10 * s, zone: 'sideL' });
+      R.push({ x: cx + s * 0.88 + bulge, y, z: -0.10 * s, zone: 'sideR' });
     }
     return { sideL: L, sideR: R };
   }
   function computeZones() {
     const cx = W * 0.5, cy = H * 0.50;
-    const s = Math.min(W, H * 0.78) * 0.22;
+    const s = Math.max(Math.min(W, H) * 0.30, Math.min(W, H * 0.78) * 0.22);
     Face.cx = cx; Face.cy = cy; Face.s = s;
     zonesA = buildMask(MASKS[maskIdx], cx, cy, s);
     zonesB = buildMask(MASKS[maskNextIdx], cx, cy, s);
@@ -505,10 +504,23 @@ function _doResize() {
     ao: 0,
     lx: (Math.random() - 0.5) * 2, ly: (Math.random() - 0.5) * 2, lz: 24 + Math.random() * 4
   });
+  // Zone particle density weights — high-detail features get proportionally more particles
+  const ZONE_DENSITY = {
+    pupilL: 5, pupilR: 5, eyeL: 3, eyeR: 3,
+    noseRidge: 2, noseFlare: 2, mouth: 2, browL: 2, browR: 2,
+  };
+  function weightedPool(zones) {
+    const out = [];
+    for (const [name, list] of Object.entries(zones)) {
+      const w = ZONE_DENSITY[name] || 1;
+      for (let r = 0; r < w; r++) for (let i = 0; i < list.length; i++) out.push(list[i]);
+    }
+    return out;
+  }
   function assignHomes() {
     if (!zonesA) return;
-    const A = [].concat(...Object.values(zonesA));
-    const B = zonesB ? [].concat(...Object.values(zonesB)) : A;
+    const A = weightedPool(zonesA);
+    const B = zonesB ? weightedPool(zonesB) : A;
     if (!A.length) return;
     for (let i = 0; i < particles.length; i++) {
       const a = A[i % A.length];
@@ -521,7 +533,7 @@ function _doResize() {
     }
   }
   const ZONE_PHASE_LEAD = {
-    outlineL: 0, outlineR: 0, forehead: 0.12, browL: 0.22, browR: 0.22,
+    outlineL: 0, outlineR: 0, browL: 0.22, browR: 0.22,
     eyeL: 0.38, eyeR: 0.38, pupilL: 0.52, pupilR: 0.52, mouth: 0.58, chin: 0.68
   };
   function updateHomeLerp() {
@@ -558,7 +570,7 @@ function _doResize() {
     lastMaskSwitch = performance.now();
     maskNextIdx = (maskIdx + 1) % MASKS.length;
     zonesB = buildMask(MASKS[maskNextIdx], Face.cx, Face.cy, Face.s);
-    const B = [].concat(...Object.values(zonesB));
+    const B = weightedPool(zonesB);
     for (let i = 0; i < particles.length; i++) {
       const b = B[i % B.length], p = particles[i];
       p.hx2 = b.x + p.ox; p.hy2 = b.y + p.oy; p.hz2 = (b.z || 0) + p.oz;
@@ -580,15 +592,15 @@ function _doResize() {
              highlight: lerpRGB(a.highlight, b.highlight, t), accent: lerpRGB(a.accent, b.accent, t) };
   }
   const PROVIDER_TINT = {
-    claude:   { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
-    deepseek: { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
-    gemini:   { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
-    gpt:      { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' }
+    claude:   { shadow: '10,0,18',  midtone: '80,60,110', highlight: '230,210,255', accent: '200,160,255' },
+    deepseek: { shadow: '0,10,22',  midtone: '40,70,120', highlight: '180,210,255', accent: '100,170,255' },
+    gemini:   { shadow: '0,14,10',  midtone: '40,100,80', highlight: '180,255,210', accent: '80,220,160'  },
+    gpt:      { shadow: '14,14,0',  midtone: '90,90,50',  highlight: '240,240,180', accent: '220,220,100' }
   };
   const VERDICT_TINT = {
-    pass:    { shadow: '0,0,0', midtone: '85,85,85',  highlight: '255,255,255', accent: '255,255,255' },
-    veto:    { shadow: '0,0,0', midtone: '85,85,85',  highlight: '170,170,170', accent: '170,170,170' },
-    unclear: { shadow: '0,0,0', midtone: '85,85,85',  highlight: '210,210,210', accent: '210,210,210' }
+    pass:    { shadow: '0,12,4',   midtone: '40,90,55',  highlight: '180,255,200', accent: '120,255,160' },
+    veto:    { shadow: '18,0,0',   midtone: '100,30,30', highlight: '200,80,80',   accent: '255,60,60'   },
+    unclear: { shadow: '10,10,0',  midtone: '80,80,40',  highlight: '210,210,140', accent: '200,200,100' }
   };
   function fadePaletteTo(p, ms = 600) {
     targetPalette = p; palBlend = 0; palStart = performance.now(); palDur = ms;
@@ -607,7 +619,7 @@ function _doResize() {
 
   // State
   const State = {
-    mode: 'idle', // idle|listening|thinking|speaking|ack|reject|error|sleep|rain
+    mode: 'idle', // idle|listening|thinking|speaking|ack|error|sleep
     mood: 'idle', model: '', provider: '', modelName: '',
     lastTouch: performance.now(),
     sttActive: false, sttInterim: '',
@@ -623,10 +635,10 @@ function _doResize() {
   };
 
   const MOOD_PALETTE = {
-    tense:   { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
-    curious: { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
-    focused: { shadow: '0,0,0', midtone: '85,85,85', highlight: '255,255,255', accent: '255,255,255' },
-    weary:   { shadow: '0,0,0', midtone: '55,55,55', highlight: '200,200,200', accent: '200,200,200' }
+    tense:   { shadow: '18,0,0',   midtone: '100,30,30', highlight: '255,180,160', accent: '255,120,80'  },
+    curious: { shadow: '0,10,18',  midtone: '40,80,120', highlight: '180,220,255', accent: '120,200,255' },
+    focused: { shadow: '0,8,14',   midtone: '30,60,90',  highlight: '160,200,240', accent: '80,160,220'  },
+    weary:   { shadow: '8,8,12',   midtone: '55,55,65',  highlight: '170,170,190', accent: '140,140,160' }
   };
 
   // Audio (ambient pad + analyser)
@@ -695,7 +707,7 @@ function _doResize() {
     // combo counter + neon bleed on each sentence burst
     State.comboCount++;
     State.comboDecay = 2800;
-    State.comboY = Face.cy - Face.s * 0.5 - State.comboCount * 4;
+    State.comboY = Face.cy - Face.s * 0.5 - State.comboCount * 8;
     State.neonBleed = 1.0;
     ttsTick();
   }
@@ -849,7 +861,7 @@ function _doResize() {
     evtSrc.addEventListener('mood', (ev) => {
       const m = (ev.data || '').trim();
       if (!m) return;
-      tts.mood = m; State.mood = m; moodTone(m);
+      State.mood = m; moodTone(m);
       if (MOOD_PALETTE[m]) fadePaletteTo(MOOD_PALETTE[m]);
     });
     evtSrc.addEventListener('model', (ev) => {
@@ -861,7 +873,7 @@ function _doResize() {
       const v = (ev.data || '').trim();
       fadePaletteTo(VERDICT_TINT[v] || timePalette());
       pulseEdge();
-      if (v === 'pass') { triggerBlush(); exprRimshot(); beep(880, 0.06); }
+      if (v === 'pass') { triggerBlush(); exprRimshot(); beep(880, 0.06); State.mode = 'ack'; setTimeout(() => { if (State.mode === 'ack') State.mode = 'idle'; }, 2000); }
       if (v === 'veto') { triggerVein(); exprGuard(); beep(220, 0.10); }
     });
     evtSrc.addEventListener('confidence', (ev) => {
@@ -962,7 +974,7 @@ function _doResize() {
       const now = performance.now();
       if (now - Gesture.lastTap < 320) { ttsToggleMute(); Gesture.lastTap = 0; return; }
       Gesture.lastTap = now;
-      if (tts.currentUtt || tts.queue.length) ttsSkip();
+      if (tts.playing || tts.queue.length) ttsSkip();
       return;
     }
     if (d > 60 && dt < 600) handleSwipe(dx, dy);
@@ -1083,7 +1095,7 @@ function _doResize() {
   // Boids neighbor flock (light, only when idle long)
   function flock() {
     const NP = particles.length;
-    const strength = State.mode === 'idle' ? 0.010 : 0.005;
+    const strength = 0.010;
     for (let i = 0; i < NP; i += 6) {
       const p = particles[i], q = particles[(i + 137) % NP];
       // Alignment: match neighbor velocity
@@ -1099,7 +1111,6 @@ function _doResize() {
   const FX = {
     cutBlack: 0, // 1-frame canvas clear on transient
     datamosh: 0, datamoshFrames: 0, // velocity-hold smear on tool event
-    embers: false, // ember-rise mode (warm mood)
     // Manga manpu (漫符)
     sweat: 0, // embarrassment/error — teardrop from temple
     vein: 0, // anger/reject — pulsing cross on forehead
@@ -1189,15 +1200,18 @@ function _doResize() {
     }
     FX.cutBlack *= 0.4;
     if (FX.datamoshFrames > 0) FX.datamoshFrames--; else FX.datamosh *= 0.85;
-    FX.embers = (State.mood === 'curious' || State.mode === 'speaking');
     // Manga manpu ticks
     State.neonBleed *= 0.88;
     // combo decay
     if (State.comboDecay > 0) { State.comboDecay -= dt; if (State.comboDecay <= 0) { State.comboCount = 0; State.comboDecay = 0; } }
-    // CONTINUE? countdown during sleep
+    // CONTINUE? countdown during sleep — reaches 0 then wakes
     if (State.mode === 'sleep') {
       if (State.continueCount < 0) { State.continueCount = 9; State.continueTimer = performance.now(); }
-      else if (performance.now() - State.continueTimer > 1000) { State.continueTimer = performance.now(); State.continueCount--; if (State.continueCount < 0) State.continueCount = 9; }
+      else if (performance.now() - State.continueTimer > 1000) {
+        State.continueTimer = performance.now();
+        State.continueCount--;
+        if (State.continueCount < 0) { State.mode = 'idle'; Face.dispersionTarget = 0; State.continueCount = -1; }
+      }
     } else { State.continueCount = -1; }
     FX.sweat      *= 0.983;
     FX.vein        = State.mode === 'error' ? Math.min(1, FX.vein + 0.07) : FX.vein * 0.94;
@@ -1224,8 +1238,8 @@ function _doResize() {
   function drawCatalogGhost() {
     ctx.font = '8px "Silkscreen",ui-monospace,monospace';
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.fillText(`${State.session.toString(36).toUpperCase()}`, 8, H - 40);
     if (State.modelName) ctx.fillText(State.modelName, 8, H - 48);
+    ctx.fillText(`${State.session.toString(36).toUpperCase()}`, 8, H - 40);
     // Idle marquee — DMESG phrases scroll right→left across top
     if (State.mode === 'idle' && lpxW) {
       const txt = DMESG_PHRASES.join('  //  ');
@@ -1248,7 +1262,7 @@ function _doResize() {
   ];
 
   // Render loop
-  let lastT = performance.now(), idlePulse = 0, _frameSkip = 0;
+  let lastT = performance.now(), _frameSkip = 0;
   function frame(now) {
     requestAnimationFrame(frame);
     const dt = Math.min(50, now - lastT); lastT = now;
@@ -1289,7 +1303,7 @@ function _doResize() {
     const idleMs = now - State.lastTouch;
 
     sampleAudio();
-    flock();
+    if (State.mode === 'idle') flock();
     tickFX(dt);
     tickPersonalityExpressions(now);
     maybeSwitchMask(now, dt);
@@ -1303,11 +1317,13 @@ function _doResize() {
     drawSpeedLines();
     drawParticles();
 
-    // Mask wipe: column sweep left→right during crossfade
+    // Mask wipe: column sweep, alternating direction each transition
     if (maskTransitioning) {
-      const wipeX = ((1 - maskPhase) * W) | 0;
+      const leftward = maskNextIdx % 2 === 0;
+      const wipeX = leftward ? ((1 - maskPhase) * W) | 0 : (maskPhase * W) | 0;
       ctx.fillStyle = '#000';
-      ctx.fillRect(wipeX, 0, W - wipeX, H);
+      if (leftward) ctx.fillRect(wipeX, 0, W - wipeX, H);
+      else ctx.fillRect(0, 0, wipeX, H);
     }
     drawEdgePulse();
     drawThinkingOrbit(now);
@@ -1324,15 +1340,13 @@ function _doResize() {
     drawCombo();
     drawContinue();
     drawHUD();
-
-    idlePulse += dt * 0.002;
   }
 
   function tickParticles(dt, now) {
     const cx = Face.cx, cy = Face.cy, s = Face.s;
-    const rot = Face.rot, cosR = Math.cos(rot), sinR = Math.sin(rot);
-    const yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(now * 0.00022) * 0.65;
-    const pitch = Face.pitch + State.tiltY * 0.30 + Math.sin(now * 0.00015) * 0.15;
+    const yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(now * 0.00022) * 0.14;
+    const pitch = Face.pitch + State.tiltY * 0.30 + Math.sin(now * 0.00015) * 0.08;
+    const roll = Math.sin(now * 0.00011) * 0.022;
     const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
     const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
     const disp = Face.dispersion;
@@ -1341,13 +1355,13 @@ function _doResize() {
     // orbicularis oculi: smile squints the lower lid, narrowing the eye opening
     const squint = Face.mouth === 'smile' ? 0.22 : 0;
     const breathPhase = Math.sin(Face.breath * Math.PI * 2 * Face.heartRate);
-    const gazeX = (Face.gaze[0] + gazeJitter[0]) * s * 0.06;
+    const gazeX = (Face.gaze[0] + gazeJitter[0]) * s * 0.09;
     const gazeY = (Face.gaze[1] + gazeJitter[1]) * s * 0.06;
     const pupilK = Face.pupil;
     const browDrop = Face.brow * s * 0.06;
     const audioPunch = State.audioLevel;
     const NP = particles.length;
-    const doRepulse = (++_repulseFrame % 3 === 0);
+    const doRepulse = ((++_repulseFrame & 0xFFFF) % 3 === 0);
 
     for (let i = 0; i < NP; i++) {
       const p = particles[i];
@@ -1407,8 +1421,9 @@ function _doResize() {
       }
       // 3D transform around centroid: scale → roll → yaw → pitch
       let dx = (tx - cx) * scale, dy = (ty - cy) * scale, dz = tz * scale;
-      const xR = dx * cosR - dy * sinR;
-      const yR = dx * sinR + dy * cosR;
+      const cosRoll = Math.cos(Face.rot + roll), sinRoll = Math.sin(Face.rot + roll);
+      const xR = dx * cosRoll - dy * sinRoll;
+      const yR = dx * sinRoll + dy * cosRoll;
       dx = xR; dy = yR;
       const xY = dx * cosY + dz * sinY;
       const zY = -dx * sinY + dz * cosY;
@@ -1456,6 +1471,13 @@ function _doResize() {
       const d2h = (tx - p.x)*(tx - p.x) + (ty - p.y)*(ty - p.y);
       if (v2 < 0.0004 && d2h < 0.25) { p.px = p.x; p.py = p.y; continue; }
 
+      // Datamosh: freeze spring while frames remain — particles coast on current velocity
+      if (FX.datamoshFrames > 0) {
+        p.vx *= 0.97; p.vy *= 0.97;
+        p.px = p.x; p.py = p.y; p.x += p.vx; p.y += p.vy;
+        continue;
+      }
+
       // Variable spring stiffness by zone; mass-scaled acceleration
       const ZONE_K = { pupilL: 0.14, pupilR: 0.14, eyeL: 0.12, eyeR: 0.12,
                        browL: 0.10, browR: 0.10, crown: 0.04, tasselL: 0.035, tasselR: 0.035 };
@@ -1476,7 +1498,7 @@ function _doResize() {
       }
       // Lorenz attractor — advance per-particle butterfly orbit, blend into velocity
       if (State.lorenzMode) {
-        const ldt = dt * 0.004;
+        const ldt = dt * 0.0004;
         const sigma = 10, rho = 28, beta = 2.667;
         const dlx = sigma * (p.ly - p.lx) * ldt;
         const dly = (p.lx * (rho - p.lz) - p.ly) * ldt;
@@ -1513,14 +1535,19 @@ function _doResize() {
     // Phosphor decay — persistent frame energy with hard floor drain to black
     for (let j = 0; j < sz; j++) fbuf[j] = Math.max(0, fbuf[j] * 0.80 - 0.004);
 
-    // Shading constants
-    const LX = -0.30, LY = -0.50, LZ = 0.81;   // key light direction
-    const HX = -0.155, HY = -0.258, HZ = 0.953; // Blinn-Phong half-vector
-    const A2 = 0.7225, B2 = 2.1025, C2 = 0.1764; // spheroid axes²
+    // Shading constants — key light in world space
+    const LX = -0.30, LY = -0.50, LZ = 0.81;
+    const HX = -0.155, HY = -0.258, HZ = 0.953;
+    const A2 = 0.7225, B2 = 2.1025, C2 = 0.1764;
     const s = Face.s, fcx = Face.cx, fcy = Face.cy;
-    // DoF focal plane at face centre depth (spheroid apex ≈ 0.38s forward)
-    const focalZ = s * 0.38;
-    const sigma2 = (s * 0.30) * (s * 0.30) * 2;
+    // Current yaw/pitch for rotating normals into world space
+    const _yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(performance.now() * 0.00022) * 0.14;
+    const _pit = Face.pitch + State.tiltY * 0.30;
+    const _cosY = Math.cos(_yaw), _sinY = Math.sin(_yaw);
+    const _cosP = Math.cos(_pit), _sinP = Math.sin(_pit);
+    // DoF focal plane at eye/bridge plane; wide sigma keeps nose+outline visible
+    const focalZ = s * 0.32;
+    const sigma2 = (s * 0.60) * (s * 0.60) * 2;
 
     // Accumulate particle contributions — glyph stamp per zone
     for (let i = 0; i < particles.length; i++) {
@@ -1530,47 +1557,53 @@ function _doResize() {
       const sz_ = p.sz || 0;
       if (sz_ < -s * 0.4) continue;
 
-      // Spheroid normal — home coords (rest-pose), not animated p.x/p.y
+      // Spheroid normal in local face space
       const mx = (p.hx - fcx) / s, my = (p.hy - fcy) / s, mz = p.hz / s;
       const nx = mx / A2, ny = my / B2, nz = mz / C2;
       const nlen = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
-      const nnx = nx/nlen, nny = ny/nlen, nnz = nz/nlen;
+      let nnx = nx/nlen, nny = ny/nlen, nnz = nz/nlen;
+      // Rotate normal by yaw then pitch into world space so shading follows head turn
+      const nx2 = nnx * _cosY + nnz * _sinY;
+      const nz2 = -nnx * _sinY + nnz * _cosY;
+      nnx = nx2; nnz = nz2;
+      const ny2 = nny * _cosP - nnz * _sinP;
+      nny = ny2;
 
-      // Lambert diffuse + ambient (lower ambient → more shadow depth)
+      // Lambert diffuse + ambient
       const NdotL = Math.max(0, LX*nnx + LY*nny + LZ*nnz);
       const shade  = 0.15 + 0.85 * NdotL;
 
-      // Gaussian DoF — focal plane at face apex (~0.38s)
+      // Gaussian DoF — focal plane at eye/bridge
       const dz = sz_ - focalZ;
       const focus = Math.exp(-(dz * dz) / sigma2);
       let bright = (2 + 14 * focus) * shade;
 
       const zone = p.zone;
 
-      // Blinn-Phong specular — nose/brow ceramic gloss; cornea + lips wet gloss
+      // Blinn-Phong specular — nose/brow ceramic; cornea; wet lips
       if (zone === 'noseRidge' || zone === 'noseFlare' || zone === 'browL' || zone === 'browR') {
         const NdotH = Math.max(0, HX*nnx + HY*nny + HZ*nnz);
         const h2 = NdotH*NdotH, h4 = h2*h2, h8 = h4*h4, h16 = h8*h8;
-        bright += h16 * h8 * h4 * 14; // h^28
+        bright += h16 * h8 * h4 * 10; // h^28
       }
       if (zone === 'pupilL' || zone === 'pupilR') {
         const NdotH = Math.max(0, HX*nnx + HY*nny + HZ*nnz);
         const h2 = NdotH*NdotH, h4 = h2*h2, h8 = h4*h4;
-        bright += h8 * h4 * h2 * 11; // h^14 — softer cornea highlight
+        bright += h8 * h4 * h2 * 8; // h^14
       }
       if (zone === 'mouth') {
         const NdotH = Math.max(0, HX*nnx + HY*nny + HZ*nnz);
         const h2 = NdotH*NdotH, h4 = h2*h2;
-        bright += h4 * h2 * 8; // h^6 — broad wet-lip sheen
+        bright += h4 * h2 * 6; // h^6
       }
 
-      // Rim lighting — silhouette halo on outline
+      // Rim lighting — silhouette halo
       if (zone === 'outlineL' || zone === 'outlineR') {
         const NdotV = Math.abs(nnz);
         bright += (1 - NdotV) * (1 - NdotV) * 9;
       }
 
-      const val = Math.min(bright, 16) / 16; // normalise 0..1
+      const val = Math.min(bright, 24) / 24; // raised ceiling for specular headroom
 
       // Zone-specific glyph stamp — clamped add prevents specular blowout
       const zoneCol = ZX_ZONE_IDX[zone] || 0;
@@ -1780,14 +1813,18 @@ function _doResize() {
   let nextLookAway = performance.now() + 12000 + Math.random() * 6000;
   let lookAwayUntil = 0;
   function maybeLookAway(now) {
-    if (State.mode !== 'idle' || (tts.currentUtt && tts.queue.length)) return;
-    if (now > lookAwayUntil && now > nextLookAway) {
-      Face.gazeTarget = [(Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.3];
-      lookAwayUntil = now + 900 + Math.random() * 700;
-    } else if (now > lookAwayUntil && now < nextLookAway && lookAwayUntil > 0 && now - lookAwayUntil < 200) {
-      Face.gazeTarget = [0, 0];
-      nextLookAway = now + 12000 + Math.random() * 8000;
-      lookAwayUntil = 0;
+    if (State.mode !== 'idle' || tts.playing) return;
+    if (now > lookAwayUntil) {
+      if (lookAwayUntil > 0) {
+        // look-away period just ended — return to center, schedule next
+        Face.gazeTarget = [0, 0];
+        nextLookAway = now + 12000 + Math.random() * 8000;
+        lookAwayUntil = 0;
+      } else if (now > nextLookAway) {
+        // fire look-away
+        Face.gazeTarget = [(Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.3];
+        lookAwayUntil = now + 900 + Math.random() * 700;
+      }
     }
   }
 
@@ -1946,13 +1983,15 @@ function _doResize() {
     ctx.textBaseline = 'alphabetic';
   }
 
+  const HUD_MODE = { idle: 'IDL', sleep: 'SLP', speaking: 'SPK', thinking: 'THK', listening: 'LSN', error: 'ERR', ack: 'ACK' };
   function drawHUD() {
     ctx.font = '8px "Silkscreen",ui-monospace,monospace';
     ctx.textBaseline = 'top';
     ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    const modeCode = HUD_MODE[State.mode] || State.mode.slice(0, 3).toUpperCase();
     const m = tts.muted ? ' [M]' : '';
     const lorenzTag = State.lorenzMode ? ' LZ' : '';
-    ctx.fillText(`${State.mode[0].toUpperCase()} ${State.mood} ${PIXEL_PAL_NAMES[pixelPal]}${m}${lorenzTag}`, 8, 8);
+    ctx.fillText(`${modeCode} ${State.mood} ${PIXEL_PAL_NAMES[pixelPal]}${m}${lorenzTag}`, 8, 8);
     ctx.textBaseline = 'alphabetic';
   }
 

@@ -1,35 +1,55 @@
-<div class="main-col">
-  <div class="sort-tabs">
-    <span class="sort-tab active">hot</span>
-    <%= link_to "fresh", posts_path(sort: "fresh"), class: "sort-tab" %>
-  </div>
-
-  <% if @posts.any? %>
-    <% @posts.each do |post| %>
-      <%= render "posts/post", post: post %>
-    <% end %>
-  <% else %>
-    <div class="empty">
-      <p>No posts yet. <%= authenticated? ? link_to("Create one", new_post_path) : link_to("Sign in to post", new_session_path) %>.</p>
+<% unless authenticated? %>
+  <% content_for :splash do %>
+    <div>
+      <h2 id="splash-title">Brgen</h2>
+      <p class="tagline">City-native social. Post, vote, discover local communities across Europe and beyond.</p>
+      <div class="chips">
+        <span class="chip"><%= link_to "sign in", new_session_path, style: "color:inherit" %></span>
+        <span class="chip">markedsplass</span>
+        <span class="chip">tv</span>
+        <span class="chip">dating</span>
+        <span class="chip">playlist</span>
+        <span class="chip">takeaway</span>
+      </div>
+      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, style: "color:inherit" %> to post</p>
     </div>
   <% end %>
-</div>
+<% end %>
 
-<div class="side-col">
-  <div class="sidebar-card">
-    <h3>Communities</h3>
-    <ul>
-      <% @communities.each do |c| %>
-        <li><%= link_to c.name, community_path(c) %></li>
+<div class="page">
+  <div class="main-col">
+    <div class="sort-tabs">
+      <span class="sort-tab active">hot</span>
+      <%= link_to "fresh", posts_path(sort: "fresh"), class: "sort-tab" %>
+    </div>
+
+    <% if @posts.any? %>
+      <% @posts.each do |post| %>
+        <%= render "posts/post", post: post %>
       <% end %>
-    </ul>
-    <% if authenticated? %>
-      <div style="margin-top:12px"><%= link_to "+ New community", new_community_path, class: "btn btn-ghost" %></div>
+    <% else %>
+      <div class="empty">
+        <p>No posts yet. <%= authenticated? ? link_to("Create one", new_post_path) : link_to("Sign in to post", new_session_path) %>.</p>
+      </div>
     <% end %>
   </div>
-  <% if authenticated? %>
+
+  <div class="side-col">
     <div class="sidebar-card">
-      <%= link_to "New post", new_post_path, class: "btn", style: "width:100%;text-align:center" %>
+      <h3>Communities</h3>
+      <ul>
+        <% @communities.each do |c| %>
+          <li><%= link_to c.name, community_path(c) %></li>
+        <% end %>
+      </ul>
+      <% if authenticated? %>
+        <div style="margin-top:12px"><%= link_to "+ New community", new_community_path, class: "btn btn-ghost" %></div>
+      <% end %>
     </div>
-  <% end %>
+    <% if authenticated? %>
+      <div class="sidebar-card">
+        <%= link_to "New post", new_post_path, class: "btn", style: "width:100%;text-align:center" %>
+      </div>
+    <% end %>
+  </div>
 </div>

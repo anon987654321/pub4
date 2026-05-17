@@ -1,11 +1,35 @@
+<% content_for :title, "Playlist" %>
+
+<% unless authenticated? %>
+  <% content_for :splash do %>
+    <div>
+      <h2>Brgen Playlist</h2>
+      <p class="tagline">Discover music from your city. Sets, tracks, local artists — city by city.</p>
+      <div class="chips">
+        <span class="chip">create a set</span>
+        <span class="chip">add tracks</span>
+        <span class="chip">city trending</span>
+        <span class="chip">embeddable player</span>
+      </div>
+      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, style: "color:inherit" %> to create</p>
+    </div>
+  <% end %>
+<% end %>
+
+<div class="page-header">
+  <h1>Playlist</h1>
+  <%= link_to "New set", new_playlist_playlist_path, class: "btn" if authenticated? %>
+</div>
+
 <section>
   <h2>Playlists</h2>
-  <p>Discover music from Bergen and beyond.</p>
+  <% @playlists.each do |playlist| %>
+    <article>
+      <h2><%= playlist[:name] %></h2>
+      <p><strong><%= playlist[:tracks] %></strong> tracks · <%= playlist[:genre] %></p>
+    </article>
+  <% end %>
+  <% if @playlists.empty? %>
+    <div class="empty"><p>No playlists yet. <%= authenticated? ? link_to("Create one", new_playlist_playlist_path) : link_to("Sign in", new_session_path) %>.</p></div>
+  <% end %>
 </section>
-
-<% @playlists.each do |playlist| %>
-  <article>
-    <h2><%= playlist[:name] %></h2>
-    <p><strong><%= playlist[:tracks] %></strong> tracks · <%= playlist[:genre] %></p>
-  </article>
-<% end %>

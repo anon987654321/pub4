@@ -1,23 +1,48 @@
 <% content_for :title, "Dating" %>
-<h1>Discover</h1>
-<nav>
-  <%= link_to "Matches", dating_matches_path %>
-  <%= link_to "Edit profile", edit_dating_profile_path %>
-</nav>
+
+<% unless authenticated? %>
+  <% content_for :splash do %>
+    <div>
+      <h2>Brgen Dating</h2>
+      <p class="tagline">Meet people in your city. Swipe, match, message — city by city across Europe and beyond.</p>
+      <div class="chips">
+        <span class="chip">swipe to like</span>
+        <span class="chip">city + radius filter</span>
+        <span class="chip">mutual match</span>
+        <span class="chip">direct messages</span>
+      </div>
+      <p class="hint">tap anywhere to browse · <%= link_to "sign in", new_session_path, style: "color:inherit" %> to match</p>
+    </div>
+  <% end %>
+<% end %>
+
+<div class="page-header">
+  <h1>Discover</h1>
+  <nav>
+    <%= link_to "Matches", dating_matches_path, class: "btn btn-ghost" %>
+    <% if authenticated? %><%= link_to "Edit profile", edit_dating_profile_path, class: "btn btn-ghost" %><% end %>
+  </nav>
+</div>
+
 <section>
   <% @profiles.each do |p| %>
     <article>
       <% if p.photos.attached? %>
-        <%= image_tag p.photos.first %>
+        <%= image_tag p.photos.first, style: "width:100%;max-height:320px;object-fit:cover;border-radius:2px;margin-bottom:12px" %>
       <% end %>
       <h2><%= p.user.email_address.split("@").first %><% if p.age %>, <%= p.age %><% end %></h2>
       <% if p.location.present? %><p><%= p.location %></p><% end %>
       <p><%= p.bio %></p>
-      <p>
-        <%= button_to "Like", dating_likes_path(user_id: p.user_id), method: :post %>
-        <%= button_to "Pass", dating_dislikes_path(user_id: p.user_id), method: :post %>
-      </p>
+      <% if authenticated? %>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <%= button_to "Like", dating_likes_path(user_id: p.user_id), method: :post, class: "btn" %>
+          <%= button_to "Pass", dating_dislikes_path(user_id: p.user_id), method: :post, class: "btn btn-ghost" %>
+        </div>
+      <% end %>
     </article>
   <% end %>
+  <% if @profiles.empty? %>
+    <div class="empty"><p>No profiles nearby. <%= authenticated? ? link_to("Edit your profile", edit_dating_profile_path) : link_to("Sign in", new_session_path) %>.</p></div>
+  <% end %>
 </section>
-<%= @pagy.series_nav if @pagy.pages > 1 %>
+<%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>
