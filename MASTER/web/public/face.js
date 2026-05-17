@@ -120,7 +120,6 @@ function _doResize() {
   // Face zones (Fibonacci-sphere-projected anchors)
   const Face = {
     zones: {}, anchors: [],
-    rot: 0, rotTarget: 0,
     yaw: 0, yawTarget: 0, pitch: 0, pitchTarget: 0,
     blink: 0, blinkPhase: 0,
     gaze: [0, 0], gazeTarget: [0, 0],
@@ -825,11 +824,10 @@ function _doResize() {
     Face.zones.mouth = m;
     Face.anchors = [].concat(...Object.values(Face.zones));
     // Update only mouth-zone particles — preserve hx2/hy2/hz2 for active mask transitions
-    const mPool = m;
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       if (p.zone !== 'mouth') continue;
-      const a = mPool[i % mPool.length];
+      const a = m[i % m.length];
       p.hx1 = a.x + p.ox; p.hy1 = a.y + p.oy; p.hz1 = (a.z || 0) + p.oz;
       p.hx = p.hx1; p.hy = p.hy1; p.hz = p.hz1;
     }
@@ -1322,7 +1320,6 @@ function _doResize() {
     tickPalette(now);
 
     // smooth state lerps
-    Face.rot     += (Face.rotTarget - Face.rot) * 0.12;
     Face.yaw     += (Face.yawTarget - Face.yaw) * 0.12;
     Face.pitch   += (Face.pitchTarget - Face.pitch) * 0.12;
     Face.pupil   += (Face.pupilTarget - Face.pupil) * 0.10;
@@ -1472,7 +1469,7 @@ function _doResize() {
       }
       // 3D transform around centroid: scale → roll → yaw → pitch
       let dx = (tx - cx) * scale, dy = (ty - cy) * scale, dz = tz * scale;
-      const cosRoll = Math.cos(Face.rot + roll), sinRoll = Math.sin(Face.rot + roll);
+      const cosRoll = Math.cos(roll), sinRoll = Math.sin(roll);
       const xR = dx * cosRoll - dy * sinRoll;
       const yR = dx * sinRoll + dy * cosRoll;
       dx = xR; dy = yR;
