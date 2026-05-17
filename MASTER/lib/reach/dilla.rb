@@ -76,6 +76,8 @@ module Master
         start = text.rindex("{")
         raise JSON::ParserError, "no json object" unless start
         JSON.parse(text[start..])
+      rescue JSON::ParserError
+        raise
       end
 
       def runtime_env(live_seconds:, bpm:, bars:)

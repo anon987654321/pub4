@@ -62,7 +62,8 @@ module Master
       req.body = JSON.generate(model: ENV.fetch("EMBEDDINGS_MODEL", DEFAULT_MODEL), prompt: text)
       res = http.request(req)
       return unless res.is_a?(Net::HTTPSuccess)
-      vec = JSON.parse(res.body)["embedding"]
+      parsed = JSON.parse(res.body) rescue nil
+      vec = parsed&.fetch("embedding", nil)
       vec.is_a?(Array) ? vec : nil
     end
   end

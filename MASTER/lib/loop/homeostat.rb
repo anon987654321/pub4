@@ -24,7 +24,7 @@ module Master
       idle_tick:   {}
     }.freeze
 
-    attr_reader :state
+    def state = @mutex.synchronize { @state.dup }
 
     def initialize(event_bus: nil)
       @bus = event_bus
@@ -35,12 +35,13 @@ module Master
 
     def observe(event, **_kwargs)
       deltas = EVENT_DELTAS[event] || {}
-      @mutex.synchronize do
+      snap = @mutex.synchronize do
         deltas.each { |k, v| @state[k] = clamp(@state[k] + v) }
         decay_drift!
+        @state.dup
       end
-      @bus&.publish("homeostat:observe", event: event, state: @state.dup)
-      @state.dup
+      @bus&.publish("homeostat:observe", event: event, state: snap)
+      snap
     end
 
     def model_tier_bias

@@ -51,12 +51,14 @@ module Master
     end
 
     def snapshot(path, content)
-      @snapshots[path] ||= []
-      @snapshots[path] << content
+      @mutex.synchronize do
+        @snapshots[path] ||= []
+        @snapshots[path] << content
+      end
     end
 
     def last_snapshot(path)
-      @snapshots[path]&.last
+      @mutex.synchronize { @snapshots[path]&.last }
     end
 
     def save!
@@ -83,8 +85,14 @@ module Master
     def self.estimate_tokens(text) = text.to_s.bytesize / TOKENS_PER_CHAR
 
     def exists?   = File.exist?(@path)
-    def clear!    = (@messages = [] ; @cost = 0.0 ; @name = nil ; @topic = nil ; self)
-    def token_est = @messages.sum { |m| Session.estimate_tokens(m[:content]) }
+    def clear!
+      @mutex.synchronize { @messages = []; @cost = 0.0; @name = nil; @topic = nil }
+      self
+    end
+
+    def token_est
+      @mutex.synchronize { @messages.sum { |m| Session.estimate_tokens(m[:content]) } }
+    end
 
     private
 
