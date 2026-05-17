@@ -257,7 +257,3 @@ LENGTH_CALIBRATION:
 ERROR_SURFACE_IMMEDIATELY:
   prior_p: 0.35
   language_modifiers: { text: 1.2, ruby: 1.1 }
-
-OMIT_NEEDLESS:
-  prior_p: 0.65
-  language_modifiers: { text: 1.4, markdown: 1.3 }

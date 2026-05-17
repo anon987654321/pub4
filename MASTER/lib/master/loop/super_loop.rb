@@ -158,11 +158,15 @@ module Master
       nil
     end
 
-    # Architecture #1 + #2 + #14: density + topological + Bayesian ordering.
+    # Architecture #1 + #2 + #10 + #14: density + fix_quality + Bayesian + topological ordering.
     def ordered_rules
       deps   = load_deps
       priors = load_priors
-      rules  = @rules.sort_by { |r| -(@violation_counts[r.id].to_f + priors.dig(r.id, "prior_p").to_f) }
+      rules  = @rules.sort_by do |r|
+        density = @violation_counts[r.id].to_f + priors.dig(r.id, "prior_p").to_f
+        quality = @learnings&.fix_quality(rule: r.id) || 0.5
+        [-density, -quality]
+      end
       topo_sort(rules, deps)
     end
 

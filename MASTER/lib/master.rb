@@ -53,9 +53,7 @@ module Master
   loader.ignore(File.join(__dir__, "master", "reach", "bedrock_stub.rb"))
   %w[
     now/cli/signals.rb
-    now/command_registry/agent_commands.rb
     now/command_registry/memory_commands.rb
-    now/command_registry/service_commands.rb
     ground/memory/search.rb
     loop/sweep/rewriter.rb
     loop/sweep/convergence.rb

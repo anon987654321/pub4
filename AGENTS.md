@@ -16,4 +16,4 @@ Restart the service: `doas rcctl restart master`. Falcon does not hot-reload in 
 
 ## Key slash commands
 
-`/scan [profile] [path]`, `/polish`, `/grind [N]`, `/snapshot`, `/why <id>`, `/explain`. Type `/help` inside MASTER for the full list.
+`/scan [profile] [path]`, `/fix [path]`, `/review [on|off|path]`, `/critique <text>`, `/why <rule>`, `/snapshot`. Type `/help` inside MASTER for the full list.

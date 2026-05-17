@@ -140,7 +140,7 @@ function _doResize() {
   function ring(cx, cy, r, a0, a1, n, zone) {
     const out = [];
     for (let i = 0; i < n; i++) {
-      const t = a0 + (a1 - a0) * (i / (n - 1));
+      const t = a0 + (a1 - a0) * (n > 1 ? i / (n - 1) : 0);
       out.push({ x: cx + Math.cos(t) * r, y: cy + Math.sin(t) * r * 0.95, zone });
     }
     return out;
@@ -158,7 +158,7 @@ function _doResize() {
   function line(x0, y0, x1, y1, n, zone) {
     const out = [];
     for (let i = 0; i < n; i++) {
-      const t = i / (n - 1);
+      const t = n > 1 ? i / (n - 1) : 0;
       out.push({ x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t, zone });
     }
     return out;
@@ -187,7 +187,7 @@ function _doResize() {
   // Sepik River, Asmat, Baining fire dance, Tolai Tubuan, Malagan.
   // Each builder returns a flat anchor list. Cross-fade handled below.
   const MASKS = ['sepik', 'asmat', 'baining', 'tolai', 'malagan'];
-  let maskIdx = 0, maskNextIdx = 0, maskCrossfade = 1.0; // 1 = no transition
+  let maskIdx = 0, maskNextIdx = 0;
   function buildSepik(cx, cy, s) {
     const z = {};
     z.outlineL = []; z.outlineR = [];
