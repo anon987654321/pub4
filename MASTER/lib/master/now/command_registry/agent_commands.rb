@@ -56,30 +56,17 @@ module Master
     end
 
     def scan_loop_commands(ai:, root:, infra:)
-      agent        = ai[:agent]
-      scanner      = ai[:scanner]
-      bus          = infra[:bus]
-      deliberation = ai[:deliberation]
-      code_index   = infra[:code_index]
+      scanner    = ai[:scanner]
+      super_loop = ai[:super_loop]
       {
         "fix"  => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
-          run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)
+          result = super_loop.run_to_convergence(target)
+          rows   = result[:rule_results].map { |r| "#{r[:rule]}: #{r[:status]} (#{r[:fixed]} fixed)" }
+          rows.empty? ? "clean" : "#{rows.join("\n")}\n(#{result[:passes]} pass#{result[:passes] == 1 ? "" : "es"}, #{result[:converged] ? "converged" : "plateau"})"
         },
         "scan" => cmd(:dispatch_scan, scanner, root)
       }
-    end
-
-    def run_sweep(agent:, scanner:, deliberation:, root:, bus:, code_index:, target:)
-      sweeper = Master::Loop::Sweep.new(
-        agent:, scanner:, council: deliberation, root:,
-        event_bus: bus, code_index: code_index
-      )
-      result = sweeper.run(target) { |cycle, file, delta|
-        $stdout.puts "sweep: cycle #{cycle} #{file} +#{delta}"
-        $stdout.flush
-      }
-      result.ok? ? result.value! : result.message
     end
 
     def dispatch_scan(scanner, root, arg)

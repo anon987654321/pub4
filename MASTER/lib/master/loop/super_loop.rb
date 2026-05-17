@@ -43,6 +43,23 @@ module Master
       strategy == :file_first ? pass_file_first(files) : pass_rule_first(files)
     end
 
+    # Bounded: run outer loop until clean or violations plateau across consecutive passes.
+    def run_to_convergence(target = @root, max_passes: 12, plateau_window: 2)
+      history = []
+      max_passes.times do |i|
+        result    = run_once(target)
+        any_dirty = result[:rule_results].any? { |r| r[:status] != :clean }
+        total     = result[:rule_results].sum { |r| r[:fixed] }
+        emit_topology(result[:rule_results], target)
+        @bus&.publish("super_loop:pass", pass: i + 1, target:, any_dirty:, fixed: total)
+        commit_if_dirty if any_dirty
+        return result.merge(converged: true, passes: i + 1) unless any_dirty
+        history << total
+        break if history.size >= plateau_window && history.last(plateau_window).uniq.size == 1
+      end
+      run_once(target).merge(converged: false, passes: history.size)
+    end
+
     # Continuous: run forever. Sleeps IDLE_SLEEP when clean, retries immediately when dirty.
     # Launch via Thread.new — this blocks its thread.
     def run_forever(target = @root)
