@@ -1,8 +1,13 @@
-<h1>New playlist</h1>
-<%= form_with model: @playlist, url: playlist_playlists_path do |f| %>
-  <%= render "shared/errors", object: @playlist %>
-  <p><%= f.label :name %><%= f.text_field :name %></p>
-  <p><%= f.label :description %><%= f.text_area :description, rows: 3 %></p>
-  <p><%= f.check_box :public_access %> <%= f.label :public_access, "Public" %></p>
-  <p><%= f.submit "Create" %></p>
-<% end %>
+<% content_for :title, "New playlist" %>
+
+<div class="page-header"><h1>New playlist</h1></div>
+
+<div class="form-wrap">
+  <%= form_with model: @playlist, url: playlist_playlists_path do |f| %>
+    <%= render "shared/errors", object: @playlist %>
+    <div class="field"><%= f.label :name %><%= f.text_field :name %></div>
+    <div class="field"><%= f.label :description %><%= f.text_area :description, rows: 3 %></div>
+    <div class="field field--check"><%= f.check_box :public_access %><%= f.label :public_access, "Public" %></div>
+    <div class="field"><%= f.submit "Create", class: "btn btn-primary" %></div>
+  <% end %>
+</div>

@@ -1,19 +1,22 @@
 <% content_for :title, "Matches" %>
-<h1>Matches</h1>
-<%= link_to "Back to discover", dating_root_path %>
+
+<div class="page-header">
+  <h1>Matches</h1>
+  <%= link_to "Discover", dating_root_path, class: "btn btn-ghost btn-sm" %>
+</div>
+
 <% if @matches.none? %>
-  <p>No matches yet.</p>
+  <div class="empty"><p>No matches yet.</p></div>
 <% else %>
-  <section>
-    <% @matches.each do |m| %>
-      <% other = m.other_user(Current.user) %>
-      <article>
-        <% if other.dating_profile&.photos&.attached? %>
-          <%= image_tag other.dating_profile.photos.first %>
-        <% end %>
-        <p><%= other.email_address.split("@").first %></p>
-      </article>
-    <% end %>
-  </section>
+  <% @matches.each do |m| %>
+    <% other = m.other_user(Current.user) %>
+    <article>
+      <% if other.dating_profile&.photos&.attached? %>
+        <%= image_tag other.dating_profile.photos.first, style: "width:40px;height:40px;border-radius:50%;object-fit:cover;float:left;margin-right:12px" %>
+      <% end %>
+      <strong><%= other.email_address.split("@").first %></strong>
+      <p class="dim">Matched</p>
+    </article>
+  <% end %>
 <% end %>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

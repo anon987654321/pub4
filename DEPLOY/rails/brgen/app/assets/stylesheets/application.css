@@ -450,7 +450,8 @@ main {
 
 /* ── Forms ── */
 .form-wrap { padding: 24px 16px; max-width: 100%; }
-.field { margin-bottom: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.field--check { flex-direction: row; align-items: center; gap: 10px; }
 
 label { display: block; font-size: .875rem; color: var(--text-dim); margin-bottom: 6px; }
 

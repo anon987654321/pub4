@@ -1,11 +1,11 @@
 <% content_for :title, @category.name %>
-<h1><%= @category.name %></h1>
-<section>
-  <% @listings.each do |l| %>
-    <article>
-      <%= link_to l.title, marketplace_listing_path(l) %>
-      <p><strong><%= l.price_display %></strong></p>
-    </article>
-  <% end %>
-</section>
+
+<div class="page-header"><h1><%= @category.name %></h1></div>
+
+<% @listings.each do |l| %>
+  <article>
+    <h2><%= link_to l.title, marketplace_listing_path(l) %></h2>
+    <p class="dim"><strong><%= l.price_display %></strong></p>
+  </article>
+<% end %>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

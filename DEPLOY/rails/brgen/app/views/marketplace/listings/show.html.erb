@@ -1,40 +1,54 @@
 <% content_for :title, @listing.title %>
+
+<div class="page-header">
+  <h1><%= @listing.title %></h1>
+  <% if authenticated? && Current.user == @listing.user %>
+    <%= link_to "Edit", edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
+  <% end %>
+</div>
+
 <% if @listing.photos.attached? %>
-  <ul>
+  <div style="display:flex;gap:8px;padding:16px;border-bottom:1px solid var(--border);overflow-x:auto">
     <% @listing.photos.each do |photo| %>
-      <li><%= image_tag photo %></li>
+      <%= image_tag photo, style: "height:200px;width:auto;object-fit:cover;border-radius:8px;flex-shrink:0" %>
     <% end %>
-  </ul>
+  </div>
 <% end %>
 
-<h1><%= @listing.title %></h1>
-<p><strong><%= @listing.price_display %></strong></p>
-<p><%= @listing.description %></p>
-<p>Condition: <%= @listing.condition %> · Location: <%= @listing.location %></p>
-<p>Seller: <%= @listing.user.email_address.split("@").first %></p>
+<article>
+  <p style="font-size:24px;font-weight:700;margin-bottom:4px"><%= @listing.price_display %></p>
+  <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · Seller: <%= @listing.user.email_address.split("@").first %></p>
+  <p style="margin-top:12px"><%= @listing.description %></p>
+</article>
 
 <% if authenticated? && Current.user != @listing.user && !@listing.sold? %>
-  <h2>Make an offer</h2>
-  <%= form_with model: @order, url: marketplace_listing_orders_path(@listing) do |f| %>
-    <p><%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3 %></p>
-    <p><%= f.submit "Send offer" %></p>
-  <% end %>
+  <div style="padding:16px;border-bottom:1px solid var(--border)">
+    <p style="font-size:20px;font-weight:800;margin-bottom:12px">Make an offer</p>
+    <div class="form-wrap" style="padding:0">
+      <%= form_with model: @order, url: marketplace_listing_orders_path(@listing) do |f| %>
+        <div class="field"><%= f.text_area :message, placeholder: "Message to seller (optional)", rows: 3 %></div>
+        <div class="field"><%= f.submit "Send offer", class: "btn btn-primary" %></div>
+      <% end %>
+    </div>
+  </div>
 <% end %>
 
 <% if authenticated? && Current.user == @listing.user %>
-  <h2>Offers</h2>
-  <% @listing.orders.includes(:buyer).each do |o| %>
-    <article>
-      <p><%= o.buyer.email_address.split("@").first %> — <%= o.status %></p>
-      <% if o.message.present? %><p><%= o.message %></p><% end %>
-      <% if o.status == "pending" %>
-        <%= button_to "Accept",  marketplace_listing_order_path(@listing, o), params: { accept:  true }, method: :patch %>
-        <%= button_to "Decline", marketplace_listing_order_path(@listing, o), params: { decline: true }, method: :patch %>
-      <% end %>
-    </article>
-  <% end %>
-  <nav>
-    <%= link_to "Edit", edit_marketplace_listing_path(@listing) %>
-    <%= button_to "Remove", marketplace_listing_path(@listing), method: :delete %>
-  </nav>
+  <div style="padding:16px;border-bottom:1px solid var(--border)">
+    <p style="font-size:20px;font-weight:800;margin-bottom:12px">Offers</p>
+    <% @listing.orders.includes(:buyer).each do |o| %>
+      <article>
+        <strong><%= o.buyer.email_address.split("@").first %></strong>
+        <span class="dim"> — <%= o.status %></span>
+        <% if o.message.present? %><p><%= o.message %></p><% end %>
+        <% if o.status == "pending" %>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <%= button_to "Accept", marketplace_listing_order_path(@listing, o), params: { accept: true }, method: :patch, class: "btn btn-primary btn-sm" %>
+            <%= button_to "Decline", marketplace_listing_order_path(@listing, o), params: { decline: true }, method: :patch, class: "btn btn-ghost btn-sm" %>
+          </div>
+        <% end %>
+      </article>
+    <% end %>
+    <%= button_to "Remove listing", marketplace_listing_path(@listing), method: :delete, class: "btn btn-danger btn-sm", style: "margin:16px" %>
+  </div>
 <% end %>

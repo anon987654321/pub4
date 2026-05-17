@@ -1,33 +1,42 @@
 <% content_for :title, @playlist.name %>
-<h1><%= @playlist.name %></h1>
-<p><%= @playlist.description %></p>
-<p><small><%= @playlist.tracks_count %> tracks · <%= @playlist.plays_count %> plays</small></p>
 
-<% if authenticated? && Current.user == @playlist.user %>
-  <nav>
-    <%= link_to "Edit", edit_playlist_playlist_path(@playlist) %>
-    <%= button_to "Delete", playlist_playlist_path(@playlist), method: :delete, data: { turbo_confirm: "Delete?" } %>
-  </nav>
+<div class="page-header">
+  <h1><%= @playlist.name %></h1>
+  <% if authenticated? && Current.user == @playlist.user %>
+    <div style="display:flex;gap:8px">
+      <%= link_to "Edit", edit_playlist_playlist_path(@playlist), class: "btn btn-ghost btn-sm" %>
+      <%= button_to "Delete", playlist_playlist_path(@playlist), method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger btn-sm" %>
+    </div>
+  <% end %>
+</div>
+
+<article>
+  <p><%= @playlist.description %></p>
+  <p class="dim"><%= @playlist.tracks_count %> tracks · <%= @playlist.plays_count %> plays</p>
+</article>
+
+<% @tracks.each do |pt| %>
+  <article style="display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <strong><%= pt.track.title %></strong> — <%= pt.track.artist %>
+      <span class="dim"> · <%= pt.track.duration_formatted %></span>
+    </div>
+    <% if authenticated? && (Current.user == pt.user || Current.user == @playlist.user) %>
+      <%= button_to "Remove", playlist_playlist_track_path(@playlist, pt), method: :delete, class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  </article>
 <% end %>
 
-<ol>
-  <% @tracks.each do |pt| %>
-    <li>
-      <strong><%= pt.track.title %></strong> — <%= pt.track.artist %>
-      <small><%= pt.track.duration_formatted %></small>
-      <% if authenticated? && (Current.user == pt.user || Current.user == @playlist.user) %>
-        <%= button_to "Remove", playlist_playlist_track_path(@playlist, pt), method: :delete %>
-      <% end %>
-    </li>
-  <% end %>
-</ol>
-
 <% if authenticated? %>
-  <h2>Add a track</h2>
-  <%= form_with url: playlist_playlist_tracks_path(@playlist) do |f| %>
-    <p><%= f.text_field :title, placeholder: "Title", name: "playlist_track[title]" %></p>
-    <p><%= f.text_field :artist, placeholder: "Artist", name: "playlist_track[artist]" %></p>
-    <p><%= f.text_field :source_url, placeholder: "URL (optional)", name: "playlist_track[source_url]" %></p>
-    <p><%= f.submit "Add" %></p>
-  <% end %>
+  <div style="padding:16px;border-bottom:1px solid var(--border)">
+    <p style="font-size:20px;font-weight:800;margin-bottom:12px">Add a track</p>
+    <div class="form-wrap" style="padding:0">
+      <%= form_with url: playlist_playlist_tracks_path(@playlist) do |f| %>
+        <div class="field"><input placeholder="Title" name="playlist_track[title]"></div>
+        <div class="field"><input placeholder="Artist" name="playlist_track[artist]"></div>
+        <div class="field"><input placeholder="URL (optional)" name="playlist_track[source_url]"></div>
+        <div class="field"><%= f.submit "Add", class: "btn btn-primary btn-sm" %></div>
+      <% end %>
+    </div>
+  </div>
 <% end %>

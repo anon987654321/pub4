@@ -1,10 +1,14 @@
-<h1>Channels</h1>
-<section>
-  <% @channels.each do |c| %>
-    <article>
-      <%= link_to c.name, tv_channel_path(c) %>
-      <small><%= c.subscribers_count %> subscribers<% if c.live? %> · <mark>LIVE</mark><% end %></small>
-    </article>
-  <% end %>
-</section>
+<% content_for :title, "Channels" %>
+
+<div class="page-header">
+  <h1>Channels</h1>
+  <%= link_to "New channel", new_tv_channel_path, class: "btn btn-primary btn-sm" if authenticated? %>
+</div>
+
+<% @channels.each do |c| %>
+  <article>
+    <h2><%= link_to c.name, tv_channel_path(c) %><% if c.live? %> <span class="live-badge">Live</span><% end %></h2>
+    <p class="dim"><%= c.subscribers_count %> subscribers</p>
+  </article>
+<% end %>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

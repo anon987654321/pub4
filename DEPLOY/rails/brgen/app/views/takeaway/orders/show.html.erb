@@ -1,14 +1,26 @@
 <% content_for :title, "Order ##{@order.id}" %>
-<h1>Order #<%= @order.id %></h1>
-<p>Status: <strong><%= @order.status %></strong></p>
-<p>Restaurant: <%= link_to @order.restaurant.name, takeaway_restaurant_path(@order.restaurant) %></p>
-<p>Delivery to: <%= @order.delivery_address %></p>
-<ul>
-  <% @order.order_items.includes(:menu_item).each do |oi| %>
-    <li><%= oi.menu_item.name %> × <%= oi.quantity %> — <%= oi.subtotal_display %></li>
-  <% end %>
-</ul>
-<p>Total: <strong><%= @order.total_display %></strong></p>
+
+<div class="page-header"><h1>Order #<%= @order.id %></h1></div>
+
+<article>
+  <p><span class="dim">Status</span> · <strong><%= @order.status %></strong></p>
+  <p class="dim">Restaurant: <%= link_to @order.restaurant.name, takeaway_restaurant_path(@order.restaurant) %></p>
+  <p class="dim">Delivery to: <%= @order.delivery_address %></p>
+</article>
+
+<% @order.order_items.includes(:menu_item).each do |oi| %>
+  <article>
+    <strong><%= oi.menu_item.name %></strong> × <%= oi.quantity %>
+    <span class="dim" style="float:right"><%= oi.subtotal_display %></span>
+  </article>
+<% end %>
+
+<article>
+  <strong>Total: <%= @order.total_display %></strong>
+</article>
+
 <% if Current.user == @order.restaurant.user && @order.status != "delivered" %>
-  <%= button_to "Advance status", takeaway_order_path(@order), method: :patch, class: "btn btn--primary" %>
+  <div style="padding:16px">
+    <%= button_to "Advance status", takeaway_order_path(@order), method: :patch, class: "btn btn-primary" %>
+  </div>
 <% end %>

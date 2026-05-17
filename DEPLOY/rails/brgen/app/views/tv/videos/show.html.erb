@@ -1,7 +1,14 @@
 <% content_for :title, @video.title %>
+
+<div class="page-header"><h1><%= @video.title %></h1></div>
+
 <% if @video.video_file.attached? %>
-  <%= video_tag url_for(@video.video_file), controls: true, class: "video-player" %>
+  <div style="border-bottom:1px solid var(--border)">
+    <%= video_tag url_for(@video.video_file), controls: true, class: "video-player", style: "width:100%;max-height:340px;background:#000;display:block" %>
+  </div>
 <% end %>
-<h1><%= @video.title %></h1>
-<p><%= link_to @video.channel.name, tv_channel_path(@video.channel) %> · <%= @video.views_count %> views · <%= @video.duration_formatted %></p>
-<p><%= @video.description %></p>
+
+<article>
+  <p class="dim"><%= link_to @video.channel.name, tv_channel_path(@video.channel) %> · <%= @video.views_count %> views · <%= @video.duration_formatted %></p>
+  <p style="margin-top:8px"><%= @video.description %></p>
+</article>

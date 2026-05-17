@@ -1,12 +1,14 @@
 <% content_for :title, "Playlists" %>
-<h1>Playlists</h1>
-<% if authenticated? %><%= link_to "New playlist", new_playlist_playlist_path %><% end %>
-<section>
-  <% @playlists.each do |pl| %>
-    <article>
-      <%= link_to pl.name, playlist_playlist_path(pl) %>
-      <small><%= pl.tracks_count %> tracks · <%= pl.plays_count %> plays · <%= pl.user.email_address.split("@").first %></small>
-    </article>
-  <% end %>
-</section>
+
+<div class="page-header">
+  <h1>Playlists</h1>
+  <%= link_to "New playlist", new_playlist_playlist_path, class: "btn btn-primary btn-sm" if authenticated? %>
+</div>
+
+<% @playlists.each do |pl| %>
+  <article>
+    <h2><%= link_to pl.name, playlist_playlist_path(pl) %></h2>
+    <p class="dim"><%= pl.tracks_count %> tracks · <%= pl.plays_count %> plays · <%= pl.user.email_address.split("@").first %></p>
+  </article>
+<% end %>
 <%= @pagy.series_nav if @pagy.pages > 1 %>

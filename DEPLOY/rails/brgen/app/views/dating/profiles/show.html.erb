@@ -1,21 +1,24 @@
 <% content_for :title, "Your profile" %>
-<h1>Your profile</h1>
+
+<div class="page-header">
+  <h1>Your profile</h1>
+  <%= link_to "Edit", edit_dating_profile_path, class: "btn btn-ghost btn-sm" %>
+</div>
 
 <% if @profile.photos.attached? %>
-  <ul>
+  <div style="display:flex;gap:8px;padding:16px;border-bottom:1px solid var(--border)">
     <% @profile.photos.each do |photo| %>
-      <li><%= image_tag photo %></li>
+      <%= image_tag photo, style: "width:80px;height:80px;object-fit:cover;border-radius:8px" %>
     <% end %>
-  </ul>
+  </div>
 <% end %>
 
-<dl>
-  <dt>Bio</dt>           <dd><%= @profile.bio.presence || "—" %></dd>
-  <dt>Age</dt>           <dd><%= @profile.age || "—" %></dd>
-  <dt>Gender</dt>        <dd><%= @profile.gender || "—" %></dd>
-  <dt>Looking for</dt>   <dd><%= @profile.looking_for || "—" %></dd>
-  <dt>Location</dt>      <dd><%= @profile.location.presence || "—" %></dd>
-  <dt>Visibility</dt>    <dd><%= @profile.visible? ? "visible" : "hidden" %></dd>
-</dl>
-
-<%= link_to "Edit profile", edit_dating_profile_path %>
+<article>
+  <p><span class="dim">Bio</span><br><%= @profile.bio.presence || "—" %></p>
+</article>
+<article>
+  <p><span class="dim">Age</span> · <%= @profile.age || "—" %> &nbsp; <span class="dim">Gender</span> · <%= @profile.gender || "—" %> &nbsp; <span class="dim">Looking for</span> · <%= @profile.looking_for || "—" %></p>
+</article>
+<article>
+  <p><span class="dim">Location</span> · <%= @profile.location.presence || "—" %> &nbsp; <span class="dim">Visibility</span> · <%= @profile.visible? ? "visible" : "hidden" %></p>
+</article>

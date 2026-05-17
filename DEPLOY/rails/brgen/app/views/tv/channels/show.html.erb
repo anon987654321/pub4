@@ -1,13 +1,23 @@
 <% content_for :title, @channel.name %>
-<h1><%= @channel.name %></h1>
-<p><%= @channel.subscribers_count %> subscribers</p>
-<p><%= @channel.description %></p>
-<% if authenticated? && Current.user != @channel.user %>
-  <% if @channel.subscriptions.exists?(user: Current.user) %>
-    <%= button_to "Unsubscribe", unsubscribe_tv_channel_path(@channel), method: :delete %>
-  <% else %>
-    <%= button_to "Subscribe", subscribe_tv_channel_path(@channel), method: :post %>
+
+<div class="page-header">
+  <h1><%= @channel.name %></h1>
+  <% if authenticated? && Current.user != @channel.user %>
+    <% if @channel.subscriptions.exists?(user: Current.user) %>
+      <%= button_to "Unsubscribe", unsubscribe_tv_channel_path(@channel), method: :delete, class: "btn btn-ghost btn-sm" %>
+    <% else %>
+      <%= button_to "Subscribe", subscribe_tv_channel_path(@channel), method: :post, class: "btn btn-primary btn-sm" %>
+    <% end %>
   <% end %>
-<% end %>
-<section><%= render @videos %></section>
+</div>
+
+<article>
+  <p class="dim"><%= @channel.subscribers_count %> subscribers</p>
+  <p><%= @channel.description %></p>
+</article>
+
+<section>
+  <h2>Videos</h2>
+  <%= render @videos %>
+</section>
 <%= @pagy.series_nav if @pagy.pages > 1 %>
