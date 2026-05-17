@@ -1,0 +1,29 @@
+#!/bin/ksh
+PORT=53187
+[ -r /etc/master.env ] && . /etc/master.env
+daemon="/usr/local/bin/bundle"
+daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY OPENROUTER_API_KEY=$OPENROUTER_API_KEY REPLICATE_API_KEY=$REPLICATE_API_KEY WEAVIATE_API_KEY=$WEAVIATE_API_KEY GEMINI_API_KEY=$GEMINI_API_KEY falcon serve --bind http://127.0.0.1:${PORT}"
+daemon_user="dev"
+daemon_execdir="/home/dev/pub4/MASTER/web"
+daemon_logger="daemon.notice"
+daemon_timeout="90"
+. /etc/rc.d/rc.subr
+pexp="ruby34.*falcon.*${PORT}"
+rc_bg=YES
+rc_reload=NO
+
+rc_pre() {
+	# Kill any orphan processes from previous failed starts before launching.
+	pkill -f "falcon.*${PORT}" 2>/dev/null
+	pkill -f "ruby.*master.*web"  2>/dev/null
+	sleep 1
+}
+
+rc_cmd $1
+rc=$?
+if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
+	if [ "$rc" = "0" ]; then
+		ruby -ryaml -e 'c=YAML.load_file("/home/dev/pub4/MASTER/.master/config.yml") rescue {}; u=c["web_public_url"]||"http://127.0.0.1:#{c["web_port"]||53187}"; t=c["web_token"]; puts t ? "web: #{u}/?token=#{t}" : "web: #{u}"' 2>/dev/null
+	fi
+fi
+exit $rc
