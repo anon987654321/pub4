@@ -1,24 +1,159 @@
 :root {
-  --bg: #0d1117; --surface: #161b22; --border: #30363d;
-  --text: #c9d1d9; --text-dim: #8b949e; --primary: #58a6ff;
-  --green: #3fb950; --radius: 6px; --space: 8px;
+  --white: #ffffff;
+  --black: #000000;
+  --blue: #000084;
+  --light-blue: #5623ee;
+  --extra-light-grey: #f0f0f0;
+  --light-grey: #ababab;
+  --grey: #999999;
+  --dark-grey: #666666;
+  --warning-red: #b04243;
+  --radius: 4px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; gap: 1rem; align-items: center; padding: .5rem 1rem; background: var(--bg); border-bottom: 1px solid var(--border); font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; transform: translateY(-100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-nav.nav-visible { transform: translateY(0); box-shadow: 0 2px 12px rgba(0,0,0,.4); }
-nav a { color: var(--text-dim); font-size: .85rem; text-decoration: none; }
-nav a:hover { color: var(--primary); text-decoration: none; }
-nav .brand { font-weight: 700; margin-right: auto; color: var(--primary); font-size: .95rem; }
-body { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; background: var(--bg); color: var(--text); line-height: 1.5; }
-main { max-width: 1200px; margin: 0 auto; padding: calc(var(--space)*2); }
-a { color: var(--primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; }
-.badge { display: inline-block; padding: .1rem .5rem; border-radius: 2em; font-size: .75rem; font-family: system-ui, sans-serif; }
-.badge-category { background: #21262d; color: var(--text-dim); border: 1px solid var(--border); }
-.badge-version  { background: #388bfd1a; color: #58a6ff; border: 1px solid #388bfd33; }
-.port-row { display: flex; align-items: baseline; gap: .75rem; padding: .5rem 0; border-bottom: 1px solid var(--border); }
-.port-name { font-weight: 600; color: var(--primary); }
-.port-comment { color: var(--text-dim); font-family: system-ui, sans-serif; font-size: .9rem; }
-.flash-notice { background: #1a3a1a; color: #81c784; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; font-family: system-ui, sans-serif; }
-.flash-alert  { background: #3a1a1a; color: #e57373; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; font-family: system-ui, sans-serif; }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --white: #000000;
+    --black: #ffffff;
+    --blue: #5623ee;
+    --light-blue: #000084;
+    --extra-light-grey: #666666;
+    --light-grey: #999999;
+    --grey: #ababab;
+    --dark-grey: #f0f0f0;
+  }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  color: var(--black);
+  background-color: var(--white);
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: var(--light-blue); text-decoration: underline; }
+a:hover { color: var(--blue); }
+
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: .5rem 1rem;
+  background: var(--white);
+  border-bottom: 1px solid var(--extra-light-grey);
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+nav.nav-visible { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+nav a { color: var(--dark-grey); font-size: .85rem; text-decoration: none; }
+nav a:hover { color: var(--black); }
+nav .brand { font-weight: 700; margin-right: auto; color: var(--black); text-decoration: none; }
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.logo {
+  text-indent: -9999px;
+  overflow: hidden;
+  margin: 12px 0 22px;
+  width: 182px;
+  height: 44px;
+  background-image: url("bsdports_182x44.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+header {
+  width: 100%;
+  max-width: 660px;
+  display: flex;
+  justify-content: flex-end;
+
+  .tabs {
+    display: flex;
+    margin-top: 18px;
+    color: var(--light-grey);
+    border-bottom: 1px solid var(--extra-light-grey);
+
+    p {
+      padding: 0 3px 8px;
+      margin-right: 28px;
+
+      &.active {
+        color: var(--black);
+        border-bottom: 1px solid var(--black);
+      }
+    }
+  }
+}
+
+#search {
+  width: 90%;
+  max-width: 584px;
+  border: 1px solid var(--extra-light-grey);
+  border-radius: 30px;
+  font-size: 18px;
+  transition: box-shadow 100ms ease-in-out;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+
+  &:focus-within { box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+
+  input {
+    background: transparent;
+    outline: none;
+    border: none;
+    width: 100%;
+    padding: 16px 0;
+    font-size: 16px;
+    color: var(--black);
+
+    &::placeholder { color: var(--dark-grey); }
+  }
+}
+
+.browse-link { margin: 44px 0 12px; font-size: 13px; }
+
+.port-list { width: 90%; max-width: 660px; margin-top: 2rem; }
+.port-row { display: flex; align-items: baseline; gap: .75rem; padding: .5rem 0; border-bottom: 1px solid var(--extra-light-grey); }
+.port-name { font-weight: 600; color: var(--light-blue); text-decoration: none; }
+.port-name:hover { text-decoration: underline; }
+.port-comment { color: var(--dark-grey); font-size: .9rem; }
+
+.badge { display: inline-block; padding: .1rem .5rem; border-radius: 2em; font-size: .75rem; }
+.badge-category { background: var(--extra-light-grey); color: var(--dark-grey); }
+.badge-version  { background: #ede9fe; color: var(--light-blue); }
+
+.card { border: 1px solid var(--extra-light-grey); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; }
+.dim { color: var(--dark-grey); font-size: .85rem; }
+
+.flash-notice { background: #f0fdf4; color: #166534; padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
+.flash-alert  { background: #fef2f2; color: var(--warning-red); padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
+
+footer {
+  color: var(--light-grey);
+  font-size: 13px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  padding-bottom: 72px;
+}
+
+@media (max-width: 480px) {
+  footer { transform: scale(0.8); }
+}
