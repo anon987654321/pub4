@@ -5,13 +5,28 @@ let W = 0, H = 0;
 const COARSE_DPR = matchMedia('(pointer: coarse)').matches;
 let DPR = COARSE_DPR ? 1 : Math.min(window.devicePixelRatio || 1, 2);
 
-// Half-res offscreen canvas — Bayer-dithered particle layer, blitted 2× to main
+// Half-res offscreen canvas — Atkinson-dithered particle layer, blitted 2× to main
 let lpxCV = document.createElement('canvas');
 let lpxCtx = lpxCV.getContext('2d');
 let lpxW = 0, lpxH = 0;
 
-// Bayer 4×4 threshold matrix (0–15), normalized at use-time by /16
-const BAYER4 = new Uint8Array([0,8,2,10, 12,4,14,6, 3,11,1,9, 15,7,13,5]);
+// Float accumulation buffer for Atkinson dithering + phosphor persistence
+let fbuf = null, fbufSize = 0;
+
+// Zone glyph stamps — [dx, dy] offsets in lpxCV (half-res) space
+// Suggest geometric character: | for contours, — for brows, □ for eyes, + for crown
+const ZONE_STAMP = {
+  outlineL:  [[0,0],[0,1]], outlineR:  [[0,0],[0,1]],
+  noseRidge: [[0,0],[0,1]],
+  browL:     [[0,0],[1,0]], browR:     [[0,0],[1,0]],
+  mouth:     [[0,0],[1,0]], chin:      [[0,0],[1,0]],
+  eyeL:      [[0,0],[1,0],[0,1],[1,1]], eyeR: [[0,0],[1,0],[0,1],[1,1]],
+  crown:     [[-1,0],[0,0],[1,0],[0,-1]],
+  scarL:     [[0,0],[1,1]], scarR: [[1,0],[0,1]],
+  noseFlare: [[0,0],[1,0]],
+  tasselL:   [[0,0],[0,1]], tasselR: [[0,0],[0,1]],
+};
+const _STAMP_DEFAULT = [[0,0]];
 
 // Preallocated curl output — avoids GC allocation every frame per particle
 const _curl = new Float64Array(2);
@@ -1255,7 +1270,9 @@ function _doResize() {
 
     drawMandala();
     drawSpeedLines();
-    drawParticles(); // renders to lpxCV then blits
+    drawParticles();    // renders to lpxCV then blits 2×
+    drawZoneLines();    // vector polyline overlay per zone
+    drawOscilloscope(); // continuous trace when thinking/speaking
 
     // Mask wipe: column sweep left→right during crossfade
     if (maskTransitioning) {
@@ -1448,65 +1465,92 @@ function _doResize() {
 
   function drawParticles() {
     if (!lpxW || !lpxH) return;
-    const imgd = lpxCtx.getImageData(0, 0, lpxW, lpxH);
-    const buf = new Uint32Array(imgd.data.buffer);
 
-    // Phosphor fade — persist previous frame dimmed rather than clearing to black
-    for (let j = 0; j < buf.length; j++) {
-      const v = buf[j] & 0xFF;
-      buf[j] = v > 38 ? (0xFF000000 | (v - 38) * 0x010101) : 0xFF000000;
-    }
+    // Reallocate float buffer on first call or after resize
+    const sz = lpxW * lpxH;
+    if (!fbuf || fbufSize !== sz) { fbuf = new Float32Array(sz); fbufSize = sz; }
 
-    // Key light: upper-left-forward (normalized)
-    const LX = -0.30, LY = -0.50, LZ = 0.81;
-    // Blinn-Phong half-vector H = normalize(L + V), V=(0,0,1)
-    const HX = -0.155, HY = -0.258, HZ = 0.953;
-    // Ellipsoid axes² for normal computation (face-radii units)
-    const A2 = 0.7225, B2 = 2.1025, C2 = 0.1764;
-    const s = Face.s, cx = Face.cx, cy = Face.cy;
-    // DoF focal plane at z=0, sigma = 0.28*s
+    // Phosphor decay — persistent frame energy with hard floor drain to black
+    for (let j = 0; j < sz; j++) fbuf[j] = Math.max(0, fbuf[j] * 0.80 - 0.004);
+
+    // Shading constants
+    const LX = -0.30, LY = -0.50, LZ = 0.81;   // key light direction
+    const HX = -0.155, HY = -0.258, HZ = 0.953; // Blinn-Phong half-vector
+    const A2 = 0.7225, B2 = 2.1025, C2 = 0.1764; // spheroid axes²
+    const s = Face.s, fcx = Face.cx, fcy = Face.cy;
     const sigma2 = (s * 0.28) * (s * 0.28) * 2;
 
-    // Main particle pass — N·L shading + specular + rim + DoF dither
+    // Accumulate particle contributions — glyph stamp per zone
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       const px = (p.x * 0.5) | 0, py = (p.y * 0.5) | 0;
       if (px < 0 || px >= lpxW || py < 0 || py >= lpxH) continue;
-      const sz = p.sz || 0;
-      if (sz < -s * 0.4) continue;
+      const sz_ = p.sz || 0;
+      if (sz_ < -s * 0.4) continue;
 
-      // Approximate spheroid normal from current view-space position
-      const mx = (p.x - cx) / s, my = (p.y - cy) / s, mz = sz / s;
+      // Spheroid normal in view-space
+      const mx = (p.x - fcx) / s, my = (p.y - fcy) / s, mz = sz_ / s;
       const nx = mx / A2, ny = my / B2, nz = mz / C2;
       const nlen = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
-      const nnx = nx / nlen, nny = ny / nlen, nnz = nz / nlen;
+      const nnx = nx/nlen, nny = ny/nlen, nnz = nz/nlen;
 
-      // Diffuse — Lambert N·L, ambient floor 0.25
+      // Lambert diffuse + ambient
       const NdotL = Math.max(0, LX*nnx + LY*nny + LZ*nnz);
-      const shade = 0.25 + 0.75 * NdotL;
+      const shade  = 0.25 + 0.75 * NdotL;
 
-      // Depth of field — Gaussian focus falloff from z=0 focal plane
-      const focus = Math.exp(-(sz * sz) / sigma2);
-      let bright = ((3 + 13 * focus) * shade + 0.5) | 0;
+      // Gaussian DoF — sharp at z=0 focal plane
+      const focus = Math.exp(-(sz_ * sz_) / sigma2);
+      let bright = (3 + 13 * focus) * shade;
 
-      // Specular — Blinn-Phong on nose/brow (ceramic mask gloss)
       const zone = p.zone;
+
+      // Blinn-Phong specular — nose/brow ceramic gloss
       if (zone === 'noseRidge' || zone === 'noseFlare' || zone === 'browL' || zone === 'browR') {
         const NdotH = Math.max(0, HX*nnx + HY*nny + HZ*nnz);
-        bright += (Math.pow(NdotH, 28) * 14 + 0.5) | 0;
+        bright += Math.pow(NdotH, 28) * 14;
       }
 
-      // Rim lighting — silhouette halo on outline zones
+      // Rim lighting — silhouette halo on outline
       if (zone === 'outlineL' || zone === 'outlineR') {
         const NdotV = Math.abs(nnz);
-        bright += ((1 - NdotV) * (1 - NdotV) * 9 + 0.5) | 0;
+        bright += (1 - NdotV) * (1 - NdotV) * 9;
       }
 
-      const thr = BAYER4[(py & 3) * 4 + (px & 3)];
-      if (thr < Math.min(bright, 16)) buf[py * lpxW + px] = 0xFFFFFFFF;
+      const val = Math.min(bright, 16) / 16; // normalise 0..1
+
+      // Zone-specific glyph stamp into float buffer
+      const stamp = ZONE_STAMP[zone] || _STAMP_DEFAULT;
+      for (let k = 0; k < stamp.length; k++) {
+        const gx = px + stamp[k][0], gy = py + stamp[k][1];
+        if (gx >= 0 && gx < lpxW && gy >= 0 && gy < lpxH)
+          fbuf[gy * lpxW + gx] += val;
+      }
     }
 
-    // Rain
+    // Atkinson dithering — distribute 1/8 error to 6 neighbors
+    const imgd = lpxCtx.getImageData(0, 0, lpxW, lpxH);
+    const buf  = new Uint32Array(imgd.data.buffer);
+    buf.fill(0xFF000000);
+    for (let y = 0; y < lpxH; y++) {
+      for (let x = 0; x < lpxW; x++) {
+        const idx = y * lpxW + x;
+        const v   = Math.min(1, Math.max(0, fbuf[idx]));
+        const out = v >= 0.5 ? 1 : 0;
+        if (out) buf[idx] = 0xFFFFFFFF;
+        const err = (v - out) * 0.125;
+        if (err === 0) continue;
+        if (x+1 < lpxW) fbuf[idx+1]       += err;
+        if (x+2 < lpxW) fbuf[idx+2]       += err;
+        if (y+1 < lpxH) {
+          if (x > 0)    fbuf[idx+lpxW-1]  += err;
+                        fbuf[idx+lpxW]    += err;
+          if (x+1<lpxW) fbuf[idx+lpxW+1] += err;
+        }
+        if (y+2 < lpxH) fbuf[idx+lpxW*2] += err;
+      }
+    }
+
+    // Rain overlay
     if (weather.rain > 0) {
       const drops = (weather.rain * 40) | 0;
       for (let i = 0; i < drops; i++) {
@@ -1518,15 +1562,104 @@ function _doResize() {
     }
 
     // Error / mute XOR flash
-    if (FX.errorFlash > 0.6 && (performance.now() / 60 | 0) & 1) {
-      buf.fill(0xFFFFFFFF);
-    }
+    if (FX.errorFlash > 0.6 && (performance.now() / 60 | 0) & 1) buf.fill(0xFFFFFFFF);
 
     lpxCtx.putImageData(imgd, 0, 0);
-
-    // Blit half-res → main canvas (no smoothing = chunky 2× pixels)
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(lpxCV, 0, 0, W, H);
+  }
+
+  // Zone polylines — connect sorted particles per zone with quadratic bezier splines
+  function drawZoneLines() {
+    if (Face.dispersion > 0.4) return;
+    const LINE_ZONES = ['outlineL','outlineR','browL','browR','noseRidge','mouth','chin'];
+    const RING_ZONES = ['eyeL','eyeR','pupilL','pupilR','crown','tasselL','tasselR'];
+
+    // Group current particle positions by zone
+    const byZone = {};
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      (byZone[p.zone] || (byZone[p.zone] = [])).push(p);
+    }
+
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth   = 0.5;
+
+    // Contour zones — sort by home y, draw open spline
+    for (let z = 0; z < LINE_ZONES.length; z++) {
+      const pts = byZone[LINE_ZONES[z]];
+      if (!pts || pts.length < 3) continue;
+      pts.sort((a, b) => a.hy - b.hy);
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length - 1; i++) {
+        const mx = (pts[i].x + pts[i+1].x) * 0.5;
+        const my = (pts[i].y + pts[i+1].y) * 0.5;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+      }
+      ctx.lineTo(pts[pts.length-1].x, pts[pts.length-1].y);
+      ctx.stroke();
+    }
+
+    // Ring zones — sort by home angle, draw closed spline
+    for (let z = 0; z < RING_ZONES.length; z++) {
+      const pts = byZone[RING_ZONES[z]];
+      if (!pts || pts.length < 4) continue;
+      const rcx = pts.reduce((s, p) => s + p.hx, 0) / pts.length;
+      const rcy = pts.reduce((s, p) => s + p.hy, 0) / pts.length;
+      pts.sort((a, b) => Math.atan2(a.hy - rcy, a.hx - rcx) - Math.atan2(b.hy - rcy, b.hx - rcx));
+      ctx.beginPath();
+      ctx.moveTo((pts[0].x + pts[pts.length-1].x)*0.5, (pts[0].y + pts[pts.length-1].y)*0.5);
+      for (let i = 0; i < pts.length; i++) {
+        const next = pts[(i+1) % pts.length];
+        const mx = (pts[i].x + next.x) * 0.5, my = (pts[i].y + next.y) * 0.5;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  // Oscilloscope trace — single continuous sweep through all particles when active
+  const SCOPE_ZONE_ORDER = [
+    'outlineL','browL','eyeL','pupilL','noseRidge','noseFlare',
+    'pupilR','eyeR','browR','outlineR','mouth','chin','crown',
+    'scarL','scarR','tasselL','tasselR'
+  ];
+  function drawOscilloscope() {
+    if (State.mode !== 'thinking' && State.mode !== 'speaking') return;
+    const byZone = {};
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      (byZone[p.zone] || (byZone[p.zone] = [])).push(p);
+    }
+    const sweep = [];
+    for (let z = 0; z < SCOPE_ZONE_ORDER.length; z++) {
+      const pts = byZone[SCOPE_ZONE_ORDER[z]];
+      if (!pts) continue;
+      const rcx = pts.reduce((s, p) => s + p.hx, 0) / pts.length;
+      const rcy = pts.reduce((s, p) => s + p.hy, 0) / pts.length;
+      pts.sort((a, b) => Math.atan2(a.hy - rcy, a.hx - rcx) - Math.atan2(b.hy - rcy, b.hx - rcx));
+      for (let i = 0; i < pts.length; i += 3) sweep.push(pts[i]); // every 3rd = ~700 pts
+    }
+    if (sweep.length < 2) return;
+    ctx.save();
+    ctx.globalAlpha = State.mode === 'thinking' ? 0.10 : 0.07;
+    ctx.strokeStyle  = '#fff';
+    ctx.lineWidth    = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(sweep[0].x, sweep[0].y);
+    for (let i = 1; i < sweep.length; i++) {
+      const mx = (sweep[i-1].x + sweep[i].x) * 0.5;
+      const my = (sweep[i-1].y + sweep[i].y) * 0.5;
+      ctx.quadraticCurveTo(sweep[i-1].x, sweep[i-1].y, mx, my);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
   function drawEdgePulse() {}
   function drawCorona() {}
