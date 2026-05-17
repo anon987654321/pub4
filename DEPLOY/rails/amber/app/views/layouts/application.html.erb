@@ -21,14 +21,16 @@
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=swap" rel="stylesheet">
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
 </head>
 <body>
 <nav>
-  <%= link_to root_path, class: "brand" do %>
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.86H5v10c0 1.1.9 2 2 2h10a2 2 0 002-2V10h1.15a1 1 0 00.99-.86l.58-3.57a2 2 0 00-1.34-2.23z"/></svg>
-    Amber
+  <%= link_to root_path, class: "brand", aria: { label: "Amber home" } do %>
+    <%= render "shared/logo" %>
   <% end %>
   <% if authenticated? %>
     <%= link_to "Feed",      feed_posts_path %>

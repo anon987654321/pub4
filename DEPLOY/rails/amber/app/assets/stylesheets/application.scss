@@ -47,7 +47,35 @@ a {
   &:focus { outline: 2px solid #4285f4; outline-offset: 2px; }
 }
 
-// ==================== NAV ====================
+// Amber logo gradient animation
+@property --gradient-x {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+
+@property --gradient-y {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+
+.amber-logo-gradient {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at var(--gradient-x) var(--gradient-y), #FFB999 0%, #E6CCE6 33%, #CCE6CC 66%, #99E6E6 100%);
+  animation: amberGradientMove 20s infinite linear;
+}
+
+@keyframes amberGradientMove {
+  0%   { --gradient-x: 0%;   --gradient-y: 0%;   }
+  25%  { --gradient-x: 100%; --gradient-y: 0%;   }
+  50%  { --gradient-x: 100%; --gradient-y: 100%; }
+  75%  { --gradient-x: 0%;   --gradient-y: 100%; }
+  100% { --gradient-x: 0%;   --gradient-y: 0%;   }
+}
+
+// Nav
 nav {
   display: flex;
   align-items: center;
@@ -57,7 +85,17 @@ nav {
 
   a { color: inherit; }
   a:hover { text-decoration: underline; }
-  .brand { font-weight: 700; margin-right: auto; }
+
+  .brand {
+    display: block;
+    width: 96px;
+    height: 48px;
+    line-height: 0;
+    margin-right: auto;
+    flex-shrink: 0;
+
+    svg { width: 100%; height: 100%; }
+  }
 }
 
 // ==================== MAIN ====================
