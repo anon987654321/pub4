@@ -1,8 +1,6 @@
 ---
 name: Proper casing, no ASCII decorations
-description: Sentence case in prose, comments, CLI, commit messages; no ===, originSessionId: b02ce9b9-a7c7-4c65-b8d0-3b8469dc2028
----
--, [ok], •, |, › as ASCII art.
+description: Sentence case in prose, comments, CLI, commit messages; no ===, ----, [ok], bullet/separator chars as ASCII art
 type: feedback
 applies_to: prose, comments, CLI output, commit messages, log lines, section headers
 ---

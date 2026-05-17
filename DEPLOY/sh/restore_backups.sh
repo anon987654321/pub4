@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="${0:A:h:h}"
 RESTORE_TMP="$ROOT_DIR/tmp/restore"
 
 log() { printf '[restore] %s\n' "$*"; }
