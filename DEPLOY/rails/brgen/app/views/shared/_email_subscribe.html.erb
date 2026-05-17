@@ -1,0 +1,12 @@
+<div class="sidebar-card">
+  <h3>City updates</h3>
+  <p class="dim">News and deals from your city, once a week.</p>
+  <%= form_with url: email_subscriptions_path, method: :post do |f| %>
+    <div class="field" style="margin-bottom:8px">
+      <%= f.email_field :email, name: "email_subscription[email]",
+            placeholder: "your@email.com", required: true,
+            style: "width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:inherit;font-size:14px" %>
+    </div>
+    <%= f.submit "Subscribe", class: "btn btn-primary btn-sm", style: "width:100%" %>
+  <% end %>
+</div>

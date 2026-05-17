@@ -60,3 +60,8 @@
 <% end %>
 
 <%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>
+
+<% content_for :widgets do %>
+  <%= render "shared/affiliate_deals", category: params[:category] %>
+  <%= render "shared/email_subscribe" %>
+<% end %>

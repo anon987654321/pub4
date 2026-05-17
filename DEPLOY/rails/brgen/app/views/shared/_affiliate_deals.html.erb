@@ -1,0 +1,21 @@
+<% deals = Tradedoubler.deals(category: local_assigns[:category], limit: 6) %>
+<% if deals.any? %>
+  <div class="sidebar-card">
+    <h3>Deals</h3>
+    <% deals.each do |d| %>
+      <a href="<%= d.click_url %>" target="_blank" rel="noopener sponsored" class="affiliate-deal">
+        <% if d.image_url.present? %>
+          <img src="<%= d.image_url %>" alt="<%= d.title %>" loading="lazy">
+        <% end %>
+        <div>
+          <p class="affiliate-title"><%= d.title %></p>
+          <p class="affiliate-merchant dim"><%= d.merchant %></p>
+          <% if d.price.present? %>
+            <p class="deal-price"><%= d.currency %> <%= d.price %></p>
+          <% end %>
+        </div>
+      </a>
+    <% end %>
+    <p class="dim" style="font-size:11px;margin-top:8px">Affiliate links · we may earn a commission</p>
+  </div>
+<% end %>

@@ -96,6 +96,9 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :email_subscriptions, only: [:create, :destroy], param: :token
+  get "confirm_email/:token" => "email_subscriptions#confirm", as: :confirm_email_subscription
+
   patch "location" => "locations#update", as: :location
   resources :push_subscriptions, only: [:create, :destroy]
   get   "nearby"   => "nearby#index",   as: :nearby
