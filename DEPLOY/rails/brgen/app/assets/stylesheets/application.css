@@ -814,6 +814,50 @@ article mark { background: rgba(244, 33, 46, .15); color: #f87171; padding: 1px 
   justify-content: center;
 }
 
+/* ── Filter strip ── */
+.filter-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 10px 0 4px;
+}
+
+.filter-strip::-webkit-scrollbar { display: none; }
+.filter-strip:empty { display: none; }
+
+.filter-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast);
+}
+
+.filter-btn canvas {
+  width: 72px;
+  height: 72px;
+  border-radius: 7px;
+  display: block;
+}
+
+.filter-btn.active { border-color: var(--accent); }
+
+.filter-label {
+  font-size: .6875rem;
+  color: var(--text-dim);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.filter-btn.active .filter-label { color: var(--accent); }
+
 /* ── Post image ── */
 .post-image {
   width: 100%;
