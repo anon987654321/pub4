@@ -449,11 +449,11 @@ main {
 .comment-body { line-height: 1.6; font-size: 15px; }
 
 /* ── Forms ── */
-.form-wrap { padding: 24px 16px; max-width: 100%; }
+.form-wrap { padding: 24px 16px; max-width: 480px; }
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .field--check { flex-direction: row; align-items: center; gap: 10px; }
 
-label { display: block; font-size: .875rem; color: var(--text-dim); margin-bottom: 6px; }
+label { display: block; font-size: .875rem; color: var(--text-dim); }
 
 input[type=text], input[type=email], input[type=password], textarea, select {
   width: 100%;
@@ -556,3 +556,7 @@ article p { color: var(--text-dim); font-size: .9375rem; }
 article mark { background: rgba(244, 33, 46, .15); color: #f87171; padding: 1px 4px; font: 11px/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; border-radius: 4px; }
 
 .live-badge { display: inline-block; background: rgba(244, 33, 46, .15); color: #f87171; border: 1px solid rgba(244, 33, 46, .3); font: 11px/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; padding: 1px 6px; border-radius: 4px; margin-right: 6px; }
+
+.video-player { width: 100%; max-height: 360px; background: #000; display: block; }
+
+.splash a { color: inherit; }
