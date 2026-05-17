@@ -1,14 +1,50 @@
 "use strict";
 const cv = document.getElementById('face');
-  const ctx = cv.getContext('2d');
-  let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
-  function resize() {
-    W = window.innerWidth; H = window.innerHeight;
-    cv.width = W * DPR; cv.height = H * DPR;
-    cv.style.width = W + 'px'; cv.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    computeZones(); assignHomes();
-  }
+const ctx = cv.getContext('2d');
+let W = 0, H = 0;
+const COARSE_DPR = matchMedia('(pointer: coarse)').matches;
+let DPR = COARSE_DPR ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+
+// Half-res offscreen canvas — Bayer-dithered particle layer, blitted 2× to main
+let lpxCV = document.createElement('canvas');
+let lpxCtx = lpxCV.getContext('2d');
+let lpxW = 0, lpxH = 0;
+
+// Bayer 4×4 threshold matrix (0–15), normalized at use-time by /16
+const BAYER4 = new Uint8Array([0,8,2,10, 12,4,14,6, 3,11,1,9, 15,7,13,5]);
+
+// Preallocated curl output — avoids GC allocation every frame per particle
+const _curl = new Float64Array(2);
+
+// Frame counters
+let _repulseFrame = 0, _bfSkip = 0;
+
+// Battery 30fps cap
+let _fps30 = false;
+if (navigator.getBattery) navigator.getBattery().then(b => {
+  const chk = () => { _fps30 = !b.charging && b.level < 0.25; };
+  b.addEventListener('chargingchange', chk); b.addEventListener('levelchange', chk); chk();
+}).catch(() => {});
+
+// Marquee state
+let _marqueeX = 0;
+
+let _resizeTimer = 0;
+function resize() {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(_doResize, 180);
+}
+function _doResize() {
+  W = window.innerWidth; H = window.innerHeight;
+  DPR = COARSE_DPR ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * DPR; cv.height = H * DPR;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  lpxW = W >> 1; lpxH = H >> 1;
+  lpxCV.width = lpxW; lpxCV.height = lpxH;
+  _marqueeX = W >> 1;
+  computeZones(); assignHomes();
+}
 
   // Face zones (Fibonacci-sphere-projected anchors)
   const Face = {
@@ -57,7 +93,7 @@ const cv = document.getElementById('face');
     return out;
   }
   function mouthArc(cx, cy, w, shape, n) {
-    const out = [];
+    const out = new Array(n);
     for (let i = 0; i < n; i++) {
       const t = i / (n - 1);
       const x = cx - w / 2 + w * t;
@@ -71,7 +107,7 @@ const cv = document.getElementById('face');
       if (shape === 'M')       y = cy + Math.sin(t * Math.PI) * w * 0.02;
       if (shape === 'I')       y = cy + Math.sin(t * Math.PI) * w * 0.12;
       if (shape === 'U')       y = cy + Math.sin(t * Math.PI) * w * 0.25;
-      out.push({ x, y, zone: 'mouth' });
+      out[i] = { x, y, zone: 'mouth' };
     }
     return out;
   }
@@ -334,7 +370,8 @@ const cv = document.getElementById('face');
         const mx = (p.x - cx) / s;
         const my = (p.y - cy) / s;
         // Spheroid base depth — smooth dome, zero at silhouette edge
-        const base = 0.42 * Math.sqrt(Math.max(0, 1 - (mx / 0.85) ** 2 - (my / 1.45) ** 2));
+        const mxn = mx / 0.85, myn = my / 1.45;
+      const base = 0.42 * Math.sqrt(Math.max(0, 1 - mxn*mxn - myn*myn));
         let mz;
         if (name === 'noseRidge') {
           // Tip protrudes furthest; ramp from base+0.12 at root to base+0.54 at tip
@@ -618,7 +655,8 @@ const cv = document.getElementById('face');
   function ttsToggleMute() {
     tts.muted = !tts.muted;
     if (tts.muted) ttsSkip();
-    Face.coronaFlash = tts.muted ? 0.6 : 0.3;
+    beep(tts.muted ? 220 : 880, 0.05);
+    FX.errorFlash = tts.muted ? 1.2 : 0.5;
   }
   function driveViseme(text, idx) {
     const c = (text[idx] || '').toLowerCase();
@@ -731,15 +769,15 @@ const cv = document.getElementById('face');
       const v = (ev.data || '').trim();
       fadePaletteTo(VERDICT_TINT[v] || timePalette());
       pulseEdge();
-      if (v === 'pass') { triggerBlush(); exprRimshot(); }
-      if (v === 'veto') { triggerVein(); exprGuard(); }
+      if (v === 'pass') { triggerBlush(); exprRimshot(); beep(880, 0.06); }
+      if (v === 'veto') { triggerVein(); exprGuard(); beep(220, 0.10); }
     });
     evtSrc.addEventListener('confidence', (ev) => {
       const c = parseFloat(ev.data); if (isNaN(c)) return;
       State.confidence = c; Face.browTarget = 1 - c; Face.dispersionTarget = Math.max(0, (1 - c) * 0.4);
     });
     evtSrc.onerror = () => {
-      Face.coronaFlash = 1.0; FX.chromatic = 8;
+      beep(110, 0.18); FX.errorFlash = 2.0;
       State.mode = 'error'; triggerSweat();
       try { evtSrc.close(); } catch (e) {}
     };
@@ -793,9 +831,9 @@ const cv = document.getElementById('face');
   }
   function curlAt(x, y, t) {
     const k = 0.012, k2 = 0.018, k3 = 0.007;
-    const u = Math.sin(y*k + t*0.0007) - Math.cos(x*k2 - t*0.0011) + Math.sin(x*k3 + y*k3 + t*0.0005) * 0.4;
-    const v = -Math.sin(x*k + t*0.0009) + Math.cos(y*k2 + t*0.0013) + Math.cos(y*k3 - x*k3 + t*0.0006) * 0.4;
-    return [u, v];
+    _curl[0] = Math.sin(y*k + t*0.0007) - Math.cos(x*k2 - t*0.0011) + Math.sin(x*k3 + y*k3 + t*0.0005) * 0.4;
+    _curl[1] = -Math.sin(x*k + t*0.0009) + Math.cos(y*k2 + t*0.0013) + Math.cos(y*k3 - x*k3 + t*0.0006) * 0.4;
+    return _curl;
   }
   function pointerMove(e) {
     if (!Gesture.down) return;
@@ -939,6 +977,17 @@ const cv = document.getElementById('face');
     } catch (_e) {}
   }
 
+  // Square-wave beep — 8-bit state feedback
+  function beep(freq = 440, dur = 0.07) {
+    if (!actx) return;
+    const osc = actx.createOscillator(), g = actx.createGain();
+    osc.type = 'square'; osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.10, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+    osc.connect(g); g.connect(actx.destination);
+    osc.start(); osc.stop(actx.currentTime + dur);
+  }
+
   // Weather (#26) — best-effort, silent fail
   let weather = { rain: 0, fog: 0 };
   function fetchWeather() {
@@ -986,7 +1035,8 @@ const cv = document.getElementById('face');
     speedLines: 0, // thinking — radial streaks from face edge
     tears: 0, // sleep — cascading streams from eye centers
     shockEyes: 0, // surprise/tool — rings expand, pupils contract
-    chibi: 0 // error — brief vertical squash of whole face
+    chibi: 0, // error — brief vertical squash of whole face
+    errorFlash: 0 // XOR canvas flash — error / mute toggle
   };
   function chromaticPulse() { FX.chromatic = 1.0; }
   function datamosh()       { FX.datamosh  = 1.0; FX.datamoshFrames = 6; }
@@ -1085,6 +1135,7 @@ const cv = document.getElementById('face');
     FX.speedLines  = State.mode === 'thinking' ? Math.min(1, FX.speedLines + 0.06) : FX.speedLines * 0.87;
     FX.shockEyes  *= 0.91;
     FX.chibi      *= 0.86;
+    FX.errorFlash *= 0.72;
     // nose bubble: grows during extended idle/sleep, pops and resets
     const longIdle = (performance.now() - State.lastTouch) > 55000;
     if ((State.mode === 'sleep' || longIdle) && State.mode !== 'error') {
@@ -1124,10 +1175,18 @@ const cv = document.getElementById('face');
     ctx.fillRect(0, 0, W, H);
   }
   function drawCatalogGhost() {
-    ctx.fillStyle = `rgba(${palette.midtone},0.06)`;
-    ctx.font = '10px ui-monospace, monospace';
-    ctx.fillText(`MASTER-${State.session.toString(36).toUpperCase()}`, 8, H - 18);
-    if (State.modelName) ctx.fillText(State.modelName, 8, H - 8);
+    ctx.font = '8px "Silkscreen",ui-monospace,monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillText(`${State.session.toString(36).toUpperCase()}`, 8, H - 40);
+    if (State.modelName) ctx.fillText(State.modelName, 8, H - 48);
+    // Idle marquee — DMESG phrases scroll right→left across top
+    if (State.mode === 'idle' && lpxW) {
+      const txt = DMESG_PHRASES.join('  //  ');
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillText(txt, _marqueeX, 14);
+      _marqueeX -= 1;
+      if (_marqueeX < -(ctx.measureText(txt).width)) _marqueeX = W;
+    }
   }
 
   // Whisper voice (low-volume asides)
@@ -1147,6 +1206,7 @@ const cv = document.getElementById('face');
     requestAnimationFrame(frame);
     const dt = Math.min(50, now - lastT); lastT = now;
     if (State.mode === 'sleep' && dt < 20 && (++_frameSkip % 2 === 0)) return;
+    if (_fps30 && (++_bfSkip & 1)) return;
     tickPalette(now);
 
     // smooth state lerps
@@ -1180,8 +1240,6 @@ const cv = document.getElementById('face');
     Face.blink = blinkAge < 140 ? Math.sin(blinkAge / 140 * Math.PI) : 0;
 
     const idleMs = now - State.lastTouch;
-    if (idleMs > 60000 && State.mode === 'idle') State.mode = 'rain';
-    if (idleMs < 1000 && State.mode === 'rain') State.mode = 'idle';
 
     sampleAudio();
     flock();
@@ -1191,13 +1249,20 @@ const cv = document.getElementById('face');
     maybeLookAway(now);
     tickParticles(dt, now);
 
-    // bg
+    // bg — clear main canvas; particle layer has its own phosphor persistence
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
 
     drawMandala();
     drawSpeedLines();
-    drawParticles();
+    drawParticles(); // renders to lpxCV then blits
+
+    // Mask wipe: column sweep left→right during crossfade
+    if (maskTransitioning) {
+      const wipeX = ((1 - maskPhase) * W) | 0;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(wipeX, 0, W - wipeX, H);
+    }
     drawAnaglyph();
     drawGhostMirror();
     drawEdgePulse();
@@ -1238,9 +1303,18 @@ const cv = document.getElementById('face');
     const browDrop = Face.brow * s * 0.06;
     const audioPunch = State.audioLevel;
     const NP = particles.length;
+    const doRepulse = (++_repulseFrame % 3 === 0);
 
     for (let i = 0; i < NP; i++) {
       const p = particles[i];
+
+      // Blink skip — eyes fully closed, skip spring entirely
+      if (blinkClose === 1 && (p.zone === 'eyeL' || p.zone === 'eyeR' || p.zone === 'pupilL' || p.zone === 'pupilR')) {
+        p.vx *= 0.72; p.vy *= 0.72;
+        p.px = p.x; p.py = p.y; p.x += p.vx; p.y += p.vy;
+        continue;
+      }
+
       let tx = p.hx, ty = p.hy, tz = p.hz;
       if (p.zone === 'pupilL' || p.zone === 'pupilR') {
         const ex = (p.zone === 'pupilL') ? cx - s * 0.32 : cx + s * 0.32;
@@ -1327,18 +1401,17 @@ const cv = document.getElementById('face');
         tx += (ox - tx) * Face.codespaceRatio;
         ty += (oy - ty) * Face.codespaceRatio;
       }
-      if (State.mode === 'rain') {
-        const windX = Math.sin(now * 0.0004) * 0.025;
-        p.vx += windX; p.vy += 0.04;
-        if (p.y > H) { p.y = -10; p.x = Math.random() * W; p.vx = 0; p.vy = 0; }
-        tx = p.x; ty = p.y + 1;
-      }
       if (State.mode === 'sleep') {
         p.vx += (Math.random() - 0.5) * 0.03;
         p.vy += (Math.random() - 0.5) * 0.02;
         p.vx += (tx - p.x) * 0.003;
         p.vy += (ty - p.y) * 0.003;
       }
+      // Velocity early exit — particle at rest and on target
+      const v2 = p.vx*p.vx + p.vy*p.vy;
+      const d2h = (tx - p.x)*(tx - p.x) + (ty - p.y)*(ty - p.y);
+      if (v2 < 0.0004 && d2h < 0.25) { p.px = p.x; p.py = p.y; continue; }
+
       // Variable spring stiffness by zone; mass-scaled acceleration
       const ZONE_K = { pupilL: 0.14, pupilR: 0.14, eyeL: 0.12, eyeR: 0.12,
                        browL: 0.10, browR: 0.10, crown: 0.04, tasselL: 0.035, tasselR: 0.035 };
@@ -1348,20 +1421,20 @@ const cv = document.getElementById('face');
       const ay = (ty - p.y) * kActive / p.mass;
       p.vx += ax; p.vy += ay;
       // Underdamped far, overdamped near target
-      const dTarget = Math.hypot(tx - p.x, ty - p.y);
-      const damp = dTarget < 2 ? 0.72 : 0.91;
+      const damp = d2h < 4 ? 0.72 : 0.91;
       p.vx *= damp; p.vy *= damp;
       // Vorticity confinement on dispersed field
       if (disp > 0.1) {
-        const [cu, cv] = curlAt(p.x, p.y, now);
-        const cm = Math.hypot(cu, cv);
-        if (cm > 0.01) { p.vx += (cu / cm) * cm * 0.15 * disp; p.vy += (cv / cm) * cm * 0.10 * disp; }
+        const curl = curlAt(p.x, p.y, now);
+        const cu = curl[0], cv2 = curl[1];
+        const cm2 = cu*cu + cv2*cv2;
+        if (cm2 > 0.0001) { const cm = Math.sqrt(cm2); p.vx += (cu / cm) * cm * 0.15 * disp; p.vy += (cv2 / cm) * cm * 0.10 * disp; }
       }
       // Velocity ceiling
-      const v2 = p.vx*p.vx + p.vy*p.vy;
-      if (v2 > 1.96) { const kv = 1.4 / Math.sqrt(v2); p.vx *= kv; p.vy *= kv; }
-      // Sub-pixel repulsion (3 deterministic neighbors)
-      for (let kk = 0; kk < 3; kk++) {
+      const vv = p.vx*p.vx + p.vy*p.vy;
+      if (vv > 1.96) { const kv = 1.4 / Math.sqrt(vv); p.vx *= kv; p.vy *= kv; }
+      // Sub-pixel repulsion — amortized every 3rd frame
+      if (doRepulse) for (let kk = 0; kk < 3; kk++) {
         const j = (i + 137 + kk * 181) % NP;
         const q = particles[j];
         const rdx = p.x - q.x, rdy = p.y - q.y;
@@ -1374,34 +1447,50 @@ const cv = document.getElementById('face');
   }
 
   function drawParticles() {
-    const zT = Face.s * 0.07;
-    ctx.fillStyle = '#fff';
-    // Thinking: ghost trail at 1-in-4 pixel density
-    if (State.mode === 'thinking') {
-      for (let i = 0; i < particles.length; i += 2) {
-        const p = particles[i];
-        const px = p.px | 0, py = p.py | 0;
-        if (((px + py) & 3) === 0) ctx.fillRect(px, py, 1, 1);
-      }
+    if (!lpxW || !lpxH) return;
+    const imgd = lpxCtx.getImageData(0, 0, lpxW, lpxH);
+    const buf = new Uint32Array(imgd.data.buffer);
+
+    // Phosphor fade — persist previous frame dimmed rather than clearing to black
+    for (let j = 0; j < buf.length; j++) {
+      const v = buf[j] & 0xFF;
+      buf[j] = v > 38 ? (0xFF000000 | (v - 38) * 0x010101) : 0xFF000000;
     }
+
+    const zT = Face.s * 0.07;
+
+    // Main particle pass — Bayer depth dither
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
-      const px = p.x | 0, py = p.y | 0;
+      const px = (p.x * 0.5) | 0, py = (p.y * 0.5) | 0;
+      if (px < 0 || px >= lpxW || py < 0 || py >= lpxH) continue;
       const sz = p.sz || 0;
-      if (sz > zT) {
-        ctx.fillRect(px, py, 2, 2);
-      } else if (sz > -zT) {
-        if ((px + py) & 1) ctx.fillRect(px, py, 1, 1);
-      } else {
-        if (((px + py) & 3) === 0) ctx.fillRect(px, py, 1, 1);
-      }
+      const thr = BAYER4[(py & 3) * 4 + (px & 3)];
+      const bright = sz > zT ? 16 : sz > 0 ? 10 : sz > -zT ? 6 : 3;
+      if (thr < bright) buf[py * lpxW + px] = 0xFFFFFFFF;
     }
+
+    // Rain
     if (weather.rain > 0) {
-      const drops = (weather.rain * 80) | 0;
+      const drops = (weather.rain * 40) | 0;
       for (let i = 0; i < drops; i++) {
-        ctx.fillRect((idlePulse * 200 + i * 37) % W | 0, (idlePulse * 500 + i * 91) % H | 0, 1, 4);
+        const rx = ((idlePulse * 100 + i * 37) % lpxW) | 0;
+        const ry = ((idlePulse * 250 + i * 91) % (lpxH - 2)) | 0;
+        buf[ry * lpxW + rx] = 0xFFFFFFFF;
+        buf[(ry + 1) * lpxW + rx] = 0xFFFFFFFF;
       }
     }
+
+    // Error / mute XOR flash
+    if (FX.errorFlash > 0.6 && (performance.now() / 60 | 0) & 1) {
+      buf.fill(0xFFFFFFFF);
+    }
+
+    lpxCtx.putImageData(imgd, 0, 0);
+
+    // Blit half-res → main canvas (no smoothing = chunky 2× pixels)
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(lpxCV, 0, 0, W, H);
   }
   function drawEdgePulse() {}
   function drawCorona() {}
@@ -1478,22 +1567,39 @@ const cv = document.getElementById('face');
   const primer = document.getElementById('primer');
   const zshBar = document.getElementById('zsh');
   const zshIn  = document.getElementById('zin');
+  const POST_LINES = [
+    'MASTER  v1.0', 'RAM: \u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593 2048K OK',
+    'SOUL............OK', 'CONSTITUTION....OK',
+    'PIPELINE........OK', 'COUNCIL.........OK', '> READY'
+  ];
   function startEverything() {
-    primer.classList.add('gone');
-    setTimeout(() => primer.remove(), 1000);
     initAudio();
     if (actx && actx.state === 'suspended') actx.resume();
-    unlockTTS();
-    fetchWeather();
-    requestMotionPermission();
-    acquireWakeLock();
-    initVAD();
-    // dmesg→chat intro: stagger whispered boot phrases, then say "ready"
-    DMESG_PHRASES.slice(0, -1).forEach((p, i) => setTimeout(() => whisper(p), 400 + i * 600));
-    setTimeout(() => enqueueSpeech('ready'), 400 + DMESG_PHRASES.length * 600);
-    Face.dispersionTarget = 0; Face.coronaFlash = 0.3;
-    setTimeout(() => zshBar.classList.add('live'), 600);
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    // Boot POST: type lines onto canvas, then dismiss primer
+    let li = 0;
+    const postEl = Object.assign(document.createElement('pre'), {
+      style: 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:8px "Silkscreen",monospace;color:#fff;text-align:left;white-space:pre;pointer-events:none'
+    });
+    primer.appendChild(postEl);
+    const postTick = () => {
+      if (li < POST_LINES.length) {
+        postEl.textContent += POST_LINES[li] + '\n';
+        beep(li === POST_LINES.length - 1 ? 880 : 440 + li * 12, 0.04);
+        li++;
+        setTimeout(postTick, li < POST_LINES.length ? 160 : 320);
+      } else {
+        primer.classList.add('gone');
+        setTimeout(() => primer.remove(), 1000);
+        zshBar.classList.add('live');
+        unlockTTS();
+        fetchWeather(); requestMotionPermission(); acquireWakeLock(); initVAD();
+        Face.dispersionTarget = 0;
+        DMESG_PHRASES.slice(0, -1).forEach((p, i) => setTimeout(() => whisper(p), 400 + i * 600));
+        setTimeout(() => enqueueSpeech('ready'), 400 + DMESG_PHRASES.length * 600);
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
+    };
+    setTimeout(postTick, 80);
   }
   primer.addEventListener('pointerdown', startEverything, { once: true });
   
@@ -1519,6 +1625,6 @@ const cv = document.getElementById('face');
   window.sendMessage = sendMessage;
 
   // boot
-  resize();
+  _doResize();
   fadePaletteTo(timePalette(), 1000);
   requestAnimationFrame(frame);
