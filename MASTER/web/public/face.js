@@ -538,10 +538,8 @@ function _doResize() {
     hx1: 0, hy1: 0, hz1: 0,
     hx2: 0, hy2: 0, hz2: 0,
     ox: Math.sin(i * 7.13) * 0.5, oy: Math.cos(i * 11.7) * 0.5, oz: Math.sin(i * 3.97) * 0.4,
-    zone: 'crown', life: 1.0,
+    zone: 'crown', sz: 0,
     mass: 0.7 + Math.random() * 0.6,
-    activateAt: 0,
-    ao: 0,
     lx: (Math.random() - 0.5) * 2, ly: (Math.random() - 0.5) * 2, lz: 24 + Math.random() * 4
   });
   // Zone particle density weights — high-detail features get proportionally more particles
@@ -1532,9 +1530,8 @@ function _doResize() {
       const ZONE_K = { pupilL: 0.14, pupilR: 0.14, eyeL: 0.12, eyeR: 0.12,
                        browL: 0.10, browR: 0.10, crown: 0.04, tasselL: 0.035, tasselR: 0.035 };
       const k = ZONE_K[p.zone] || 0.08;
-      const kActive = (now >= p.activateAt) ? k : k * 0.04;
-      const ax = (tx - p.x) * kActive / p.mass;
-      const ay = (ty - p.y) * kActive / p.mass;
+      const ax = (tx - p.x) * k / p.mass;
+      const ay = (ty - p.y) * k / p.mass;
       p.vx += ax; p.vy += ay;
       // Underdamped far, overdamped near target
       const damp = d2h < 4 ? 0.72 : 0.91;
