@@ -193,7 +193,7 @@ module Master
         output = reply.respond_to?(:output_tokens) ? reply.output_tokens.to_i : 0
         tokens = input + output
         if tokens.zero? && reply.respond_to?(:content)
-          tokens = reply.content.to_s.bytesize / Master::Trace::Session::TOKENS_PER_CHAR
+          tokens = Master::Trace::Session.estimate_tokens(reply.content)
         end
         return if tokens.zero?
         @session.record_cost((tokens * COST_PER_TOKEN).round(6), model:, tokens:)
@@ -230,7 +230,7 @@ module Master
       end
 
       def estimate_cost(prompt)
-        (prompt.bytesize / Master::Trace::Session::TOKENS_PER_CHAR) * COST_PER_TOKEN
+        Master::Trace::Session.estimate_tokens(prompt) * COST_PER_TOKEN
       end
 
       def llm_tools(selected_model)

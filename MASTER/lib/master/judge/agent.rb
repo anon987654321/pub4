@@ -43,7 +43,7 @@ module Master
       selected_model = candidate_models.first
       prompt   = topic_anchored(message)
       context  = conversation_context
-      tokens_approx = message.bytesize / Trace::Session::TOKENS_PER_CHAR
+      tokens_approx = Trace::Session.estimate_tokens(message)
       @bus&.publish("llm:request", model: selected_model, tokens: tokens_approx)
       @deps.homeostat&.observe(:llm_call)
 
@@ -209,7 +209,7 @@ module Master
     end
 
     def publish_llm_success(model, response)
-      tokens_approx = response.to_s.bytesize / Trace::Session::TOKENS_PER_CHAR
+      tokens_approx = Trace::Session.estimate_tokens(response)
       @bus&.publish("llm:response", model:, success: true, tokens_approx:)
     end
 
