@@ -1287,7 +1287,7 @@ function _doResize() {
   function tickParticles(dt, now) {
     const cx = Face.cx, cy = Face.cy, s = Face.s;
     const rot = Face.rot, cosR = Math.cos(rot), sinR = Math.sin(rot);
-    const yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(now * 0.00022) * 0.35;
+    const yaw = Face.yaw + State.tiltX * 0.45 + Math.sin(now * 0.00022) * 0.65;
     const pitch = Face.pitch + State.tiltY * 0.30 + Math.sin(now * 0.00015) * 0.15;
     const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
     const cosP = Math.cos(pitch), sinP = Math.sin(pitch);
@@ -1372,7 +1372,7 @@ function _doResize() {
       const yP = dy * cosP - dz * sinP;
       dy = yP;
       p.sz = dz; // eye-space z — drives depth-layered rendering
-      const _fov = s * 3;
+      const _fov = s * 1.8;
       const _ps = _fov / Math.max(1, _fov - dz);
       tx = cx + dx * _ps;
       ty = cy + dy * _ps;
@@ -1457,17 +1457,53 @@ function _doResize() {
       buf[j] = v > 38 ? (0xFF000000 | (v - 38) * 0x010101) : 0xFF000000;
     }
 
-    const zT = Face.s * 0.07;
+    // Key light: upper-left-forward (normalized)
+    const LX = -0.30, LY = -0.50, LZ = 0.81;
+    // Blinn-Phong half-vector H = normalize(L + V), V=(0,0,1)
+    const HX = -0.155, HY = -0.258, HZ = 0.953;
+    // Ellipsoid axes² for normal computation (face-radii units)
+    const A2 = 0.7225, B2 = 2.1025, C2 = 0.1764;
+    const s = Face.s, cx = Face.cx, cy = Face.cy;
+    // DoF focal plane at z=0, sigma = 0.28*s
+    const sigma2 = (s * 0.28) * (s * 0.28) * 2;
 
-    // Main particle pass — Bayer depth dither
+    // Main particle pass — N·L shading + specular + rim + DoF dither
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       const px = (p.x * 0.5) | 0, py = (p.y * 0.5) | 0;
       if (px < 0 || px >= lpxW || py < 0 || py >= lpxH) continue;
       const sz = p.sz || 0;
+      if (sz < -s * 0.4) continue;
+
+      // Approximate spheroid normal from current view-space position
+      const mx = (p.x - cx) / s, my = (p.y - cy) / s, mz = sz / s;
+      const nx = mx / A2, ny = my / B2, nz = mz / C2;
+      const nlen = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
+      const nnx = nx / nlen, nny = ny / nlen, nnz = nz / nlen;
+
+      // Diffuse — Lambert N·L, ambient floor 0.25
+      const NdotL = Math.max(0, LX*nnx + LY*nny + LZ*nnz);
+      const shade = 0.25 + 0.75 * NdotL;
+
+      // Depth of field — Gaussian focus falloff from z=0 focal plane
+      const focus = Math.exp(-(sz * sz) / sigma2);
+      let bright = ((3 + 13 * focus) * shade + 0.5) | 0;
+
+      // Specular — Blinn-Phong on nose/brow (ceramic mask gloss)
+      const zone = p.zone;
+      if (zone === 'noseRidge' || zone === 'noseFlare' || zone === 'browL' || zone === 'browR') {
+        const NdotH = Math.max(0, HX*nnx + HY*nny + HZ*nnz);
+        bright += (Math.pow(NdotH, 28) * 14 + 0.5) | 0;
+      }
+
+      // Rim lighting — silhouette halo on outline zones
+      if (zone === 'outlineL' || zone === 'outlineR') {
+        const NdotV = Math.abs(nnz);
+        bright += ((1 - NdotV) * (1 - NdotV) * 9 + 0.5) | 0;
+      }
+
       const thr = BAYER4[(py & 3) * 4 + (px & 3)];
-      const bright = sz > zT ? 16 : sz > 0 ? 10 : sz > -zT ? 6 : 3;
-      if (thr < bright) buf[py * lpxW + px] = 0xFFFFFFFF;
+      if (thr < Math.min(bright, 16)) buf[py * lpxW + px] = 0xFFFFFFFF;
     }
 
     // Rain
