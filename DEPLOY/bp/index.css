@@ -1,0 +1,227 @@
+:root {
+            --primary-color: #000000;
+
+            --background-color: #ffffff;
+
+            --text-color: #333333;
+            --accent-color: #8a2be2;
+
+            --font-family: 'Inter', sans-serif;
+
+        }
+
+        body {
+
+            margin: 0;
+
+            font-family: var(--font-family);
+
+            background-color: var(--background-color);
+
+            color: var(--text-color);
+            line-height: 1.8;
+
+        }
+
+        header {
+
+            text-align: center;
+
+            padding: 3rem 1rem;
+
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+            color: white;
+        }
+
+        .logo {
+
+            font-family: 'Black Han Sans', sans-serif;
+
+            font-size: 3rem;
+
+            margin-bottom: 0.5rem;
+
+        }
+        .subtitle {
+
+            font-size: 1.2rem;
+
+            opacity: 0.9;
+
+        }
+
+        main {
+            max-width: 1200px;
+
+            margin: 3rem auto;
+
+            padding: 0 1rem;
+
+        }
+        .stats {
+
+            display: grid;
+
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+            gap: 2rem;
+
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+
+            background: #f8f9fa;
+
+            padding: 1.5rem;
+
+            border-radius: 8px;
+
+            text-align: center;
+        }
+
+        .stat-value {
+
+            font-size: 2.5rem;
+
+            font-weight: bold;
+
+            color: var(--accent-color);
+
+        }
+        .stat-label {
+
+            font-size: 0.9rem;
+
+            color: #666;
+
+            margin-top: 0.5rem;
+
+        }
+        .plans-grid {
+
+            display: grid;
+
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+
+            gap: 2rem;
+
+            margin-top: 2rem;
+        }
+
+        .plan-card {
+
+            background: white;
+
+            border: 1px solid #e0e0e0;
+
+            border-radius: 12px;
+
+            padding: 2rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+
+            cursor: pointer;
+
+        }
+
+        .plan-card:hover {
+
+            transform: translateY(-5px);
+
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+
+            font-weight: bold;
+
+            margin-bottom: 0.5rem;
+
+            color: var(--primary-color);
+        }
+
+        .plan-sector {
+
+            font-size: 0.9rem;
+
+            color: #666;
+
+            margin-bottom: 1rem;
+
+        }
+        .plan-tagline {
+
+            font-size: 0.95rem;
+
+            color: #444;
+
+            margin-bottom: 1rem;
+
+        }
+        .plan-funding {
+
+            font-size: 1.1rem;
+
+            font-weight: 600;
+
+            color: var(--accent-color);
+
+            margin-top: 1rem;
+        }
+
+        .plan-link {
+
+            display: inline-block;
+
+            margin-top: 1rem;
+
+            padding: 0.75rem 1.5rem;
+
+            background: var(--accent-color);
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 6px;
+
+            transition: background 0.3s;
+
+        }
+
+        .plan-link:hover {
+
+            background: #6a1bb2;
+
+        }
+
+        footer {
+
+            text-align: center;
+            padding: 2rem;
+
+            margin-top: 4rem;
+
+            background: #f8f9fa;
+            color: #666;
+
+        }
+
+        @media (max-width: 768px) {
+
+            .logo {
+
+                font-size: 2rem;
+
+            }
+
+            .plans-grid {
+                grid-template-columns: 1fr;
+
+            }
+
+        }
+
+    
