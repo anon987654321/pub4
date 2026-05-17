@@ -13,4 +13,4 @@ After every scp of any file under `MASTER/web/` (controllers, views, initializer
 - Allow ~2 seconds after restart before any verification curl, since Falcon cold-starts the container.
 - Lib edits (`MASTER/lib/`) follow the same rule when they're in the live require path.
 - Data file edits (`MASTER/data/*.yml`) load at boot too — restart for those as well.
-- CLI-only changes (`exe/master`, `lib/master/cli/*`) don't need a restart unless the operator is also using the web surface.
+- CLI-only changes (`bin/cli`, `lib/master/cli/*`) don't need a restart unless the operator is also using the web surface.

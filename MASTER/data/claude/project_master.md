@@ -14,6 +14,6 @@ Codebase: ~/pub4/MASTER/ — Ruby ~6K LOC, Zeitwerk-autoloaded.
 **How to apply:** All coding work must be done directly on the VPS via sshpass SSH. Never use local tools to edit VPS files — write patch scripts to ~/pub4/tmp/patch.rb and run with ruby. Use zsh builtins only — no sed/awk/grep/find/head/tail.
 
 Pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render
-Pipe mode: `echo "cmd" | bundle exec ruby exe/master`
+Pipe mode: `echo "cmd" | bundle exec ruby bin/cli`
 Session Startup: read data/standing_orders.yml, data/workflow.yml, data/rules.yml, data/models.yml
 Web UI: Rails 8 + Falcon on port 10002, proxied by relayd → ai.brgen.no:3000/4430

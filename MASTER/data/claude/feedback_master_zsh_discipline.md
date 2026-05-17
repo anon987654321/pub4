@@ -21,4 +21,4 @@ The exception that already holds: `git`, `gh`, `bundle`, `ssh`, `scp`, `sshpass`
 
 **Narrow exceptions:**
 - `eval` — only for loading exports from `.zshrc` (`eval "$(grep '^export' ~/.zshrc)"`). Banned for arbitrary code execution.
-- `bundle exec ruby exe/master` — permitted because it boots the project executable. Standalone `ruby -e` from zsh stays banned; use `tmp/patch.rb` + `ruby tmp/patch.rb` for transient scripts.
+- `bundle exec ruby bin/cli` — permitted because it boots the project executable. Standalone `ruby -e` from zsh stays banned; use `tmp/patch.rb` + `ruby tmp/patch.rb` for transient scripts.
