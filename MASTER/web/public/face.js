@@ -547,6 +547,10 @@ function _doResize() {
     pupilL: 5, pupilR: 5, eyeL: 3, eyeR: 3,
     noseRidge: 2, noseFlare: 2, mouth: 2, browL: 2, browR: 2,
   };
+  const ZONE_K = {
+    pupilL: 0.14, pupilR: 0.14, eyeL: 0.12, eyeR: 0.12,
+    browL: 0.10, browR: 0.10, crown: 0.04, tasselL: 0.035, tasselR: 0.035
+  };
   function weightedPool(zones) {
     const out = [];
     for (const [name, list] of Object.entries(zones)) {
@@ -1527,8 +1531,6 @@ function _doResize() {
       }
 
       // Variable spring stiffness by zone; mass-scaled acceleration
-      const ZONE_K = { pupilL: 0.14, pupilR: 0.14, eyeL: 0.12, eyeR: 0.12,
-                       browL: 0.10, browR: 0.10, crown: 0.04, tasselL: 0.035, tasselR: 0.035 };
       const k = ZONE_K[p.zone] || 0.08;
       const ax = (tx - p.x) * k / p.mass;
       const ay = (ty - p.y) * k / p.mass;
