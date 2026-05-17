@@ -211,3 +211,5 @@ document.addEventListener("turbo:load", () => {
   initSplash();
   updateCarouselPrefix();
 });
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker")
