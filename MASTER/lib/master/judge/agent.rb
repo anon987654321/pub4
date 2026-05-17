@@ -72,7 +72,7 @@ module Master
     end
 
     def check_rate_limit(model_id = nil)
-      @circuit_breaker.respond_to?(:check_rate!) ? @circuit_breaker.check_rate!(model_id) : nil
+      @circuit_breaker.check_rate!(model_id) if @circuit_breaker.respond_to?(:check_rate!)
       nil
     rescue Reach::CircuitBreaker::CircuitError => err
       Result.err(err.message, category: err.category)

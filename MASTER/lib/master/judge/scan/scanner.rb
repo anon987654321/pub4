@@ -73,7 +73,8 @@ module Master
         return unless RUBY_EXT.include?(File.extname(path))
         result = Prism.parse(code)
         result.success? ? result.value : nil
-      rescue StandardError => _e
+      rescue StandardError => e
+        @bus&.publish("scan:parse_error", path:, error: e.message)
         nil
       end
 
