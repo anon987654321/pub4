@@ -28,6 +28,7 @@ gem "pagy"
 gem "image_processing"
 gem "geocoder"
 gem "webpush"
+gem "ruby-vips"
 
 # Discovery — vision-LLM scrapers (lib/tasks/{reddit,amazon}.rake)
 gem "ferrum"

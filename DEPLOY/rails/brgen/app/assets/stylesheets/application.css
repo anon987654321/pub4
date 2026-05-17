@@ -814,49 +814,38 @@ article mark { background: rgba(244, 33, 46, .15); color: #f87171; padding: 1px 
   justify-content: center;
 }
 
-/* ── Filter strip ── */
-.filter-strip {
+/* ── Postpro preset strip ── */
+.preset-strip {
   display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding: 10px 0 4px;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 8px 0 2px;
 }
 
-.filter-strip::-webkit-scrollbar { display: none; }
-.filter-strip:empty { display: none; }
-
-.filter-btn {
+.preset-opt {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 5px;
-  background: none;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  padding: 3px;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color var(--transition-fast);
 }
 
-.filter-btn canvas {
-  width: 72px;
-  height: 72px;
-  border-radius: 7px;
-  display: block;
-}
+.preset-opt input[type="radio"] { display: none; }
 
-.filter-btn.active { border-color: var(--accent); }
-
-.filter-label {
-  font-size: .6875rem;
+.preset-opt span {
+  padding: 5px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  font-size: .8125rem;
   color: var(--text-dim);
-  text-align: center;
-  white-space: nowrap;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
-.filter-btn.active .filter-label { color: var(--accent); }
+.preset-opt input:checked + span {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+  font-weight: 700;
+}
 
 /* ── Post image ── */
 .post-image {

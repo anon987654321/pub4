@@ -22,6 +22,8 @@ class PostsController < ApplicationController
     @post.anonymous = true if Current.user.guest?
     @post.community = @community if @community
     if @post.save
+      preset = post_params[:preset].presence
+      PostproJob.perform_later(@post.to_gid.to_s, preset) if preset && @post.image.attached?
       redirect_to @post, notice: "Posted."
     else
       render :new, status: :unprocessable_entity
@@ -54,6 +56,6 @@ class PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image)
+    params.require(:post).permit(:title, :content, :community_id, :anonymous, :image, :preset)
   end
 end

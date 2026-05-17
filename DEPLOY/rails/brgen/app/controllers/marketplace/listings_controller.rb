@@ -22,9 +22,13 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def create
     @listing = Current.user.marketplace_listings.build(listing_params)
-    @listing.save ?
-      redirect_to(marketplace_listing_path(@listing), notice: "Listed") :
-      render(:new, status: :unprocessable_entity)
+    if @listing.save
+      preset = params[:marketplace_listing][:preset].presence
+      PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
+      redirect_to marketplace_listing_path(@listing), notice: "Listed"
+    else
+      render :new, status: :unprocessable_entity
+    end
   end
 
   def edit
@@ -46,6 +50,6 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def set_listing    = (@listing = Marketplace::Listing.find(params[:id]))
   def listing_params = params.require(:marketplace_listing).permit(
     :title, :description, :price_cents, :condition, :status, :location,
-    :category_id, photos: []
+    :category_id, :preset, photos: []
   )
 end
