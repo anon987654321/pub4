@@ -1557,9 +1557,11 @@ function _doResize() {
       const sz_ = p.sz || 0;
       if (sz_ < -s * 0.4) continue;
 
-      // Spheroid normal in local face space
-      const mx = (p.hx - fcx) / s, my = (p.hy - fcy) / s, mz = p.hz / s;
-      const nx = mx / A2, ny = my / B2, nz = mz / C2;
+      // Spheroid normal — computed from un-displaced base, not displaced hz
+      const mx = (p.hx - fcx) / s, my = (p.hy - fcy) / s;
+      const mxn = mx / 0.85, myn = my / 1.45;
+      const mzBase = 0.42 * Math.sqrt(Math.max(0, 1 - mxn*mxn - myn*myn));
+      const nx = mx / A2, ny = my / B2, nz = mzBase / C2;
       const nlen = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
       let nnx = nx/nlen, nny = ny/nlen, nnz = nz/nlen;
       // Rotate normal by yaw then pitch into world space so shading follows head turn
@@ -1751,7 +1753,7 @@ function _doResize() {
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = 0.72;
-    ctx.drawImage(scopeCV, W - 136, 8, SZ, SZ);
+    ctx.drawImage(scopeCV, W - 136, H - SZ - 40, SZ, SZ);
     ctx.restore();
   }
   function drawEdgePulse() {
@@ -1851,7 +1853,7 @@ function _doResize() {
     const cx = Face.cx, cy = Face.cy, s = Face.s, a = FX.sweat;
     const bx = cx + s * 0.72, by = cy - s * 0.22 + (1 - a) * s * 0.20;
     const r = s * 0.055;
-    ctx.fillStyle = '#fff'; ctx.globalAlpha = Math.min(1, a * 1.1);
+    ctx.fillStyle = `rgb(${palette.accent})`; ctx.globalAlpha = Math.min(1, a * 1.1);
     for (let i = 0; i < 18; i++) {
       const ang = (i / 18) * Math.PI;
       ctx.fillRect((bx + Math.cos(ang) * r) | 0, (by - Math.sin(ang) * r) | 0, 1, 1);
@@ -1868,7 +1870,7 @@ function _doResize() {
     const pulse = 0.82 + Math.sin(performance.now() * 0.018) * 0.18;
     const bx = cx + s * 0.28, by = cy - s * 0.60;
     const r = s * 0.085 * pulse;
-    ctx.fillStyle = '#fff'; ctx.globalAlpha = FX.vein;
+    ctx.fillStyle = `rgb(${palette.accent})`; ctx.globalAlpha = FX.vein;
     for (let arm = 0; arm < 4; arm++) {
       const ang = (arm / 4) * Math.PI * 2, perp = ang + Math.PI / 2;
       for (let j = 0; j <= 10; j++) {
@@ -1886,7 +1888,7 @@ function _doResize() {
     const cx = Face.cx, cy = Face.cy, s = Face.s;
     const w = s * 0.20, h = s * 0.08;
     const golden = Math.PI * (3 - Math.sqrt(5));
-    ctx.fillStyle = '#fff'; ctx.globalAlpha = FX.blush * 0.42;
+    ctx.fillStyle = `rgb(${palette.accent})`; ctx.globalAlpha = FX.blush * 0.42;
     for (const side of [-1, 1]) {
       const bx = cx + side * s * 0.54, by = cy + s * 0.14;
       for (let i = 0; i < 30; i++) {
@@ -1931,7 +1933,7 @@ function _doResize() {
     if (FX.tears < 0.05) return;
     const cx = Face.cx, cy = Face.cy, s = Face.s;
     const now = performance.now();
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = `rgb(${palette.accent})`;
     for (const side of [-1, 1]) {
       const ex = cx + side * s * 0.30, ey = cy - s * 0.04;
       for (let d = 0; d < 3; d++) {
@@ -1960,7 +1962,7 @@ function _doResize() {
     const frac = State.comboDecay / 2800;
     // float upward as it decays
     const floatY = State.comboY - (1 - frac) * Face.s * 0.18;
-    const sz = 8 + Math.min(8, (State.comboCount - 2) * 2);
+    const sz = 8 + Math.min(24, (State.comboCount - 2) * 4);
     ctx.font = `${sz}px "Silkscreen",ui-monospace,monospace`;
     ctx.textBaseline = 'top';
     ctx.fillStyle = `rgba(255,255,255,${(frac * 0.85).toFixed(2)})`;
@@ -1972,7 +1974,8 @@ function _doResize() {
     if (State.continueCount < 0) return;
     const n = State.continueCount;
     const pulse = 0.55 + Math.sin(performance.now() * 0.004) * 0.17;
-    ctx.font = '8px "Silkscreen",ui-monospace,monospace';
+    const fontSize = n <= 3 ? 8 + (4 - n) * 4 : 8;
+    ctx.font = `${fontSize}px "Silkscreen",ui-monospace,monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = n > 3
