@@ -23,6 +23,8 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <link rel="stylesheet" href="/lightgallery.css">
+  <meta name="lg-license" content="<%= ENV.fetch("LIGHTGALLERY_LICENSE", "0000-0000-000-0000") %>">
   <%= javascript_importmap_tags %>
 </head>
 <body>

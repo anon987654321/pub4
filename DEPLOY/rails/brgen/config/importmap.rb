@@ -23,3 +23,5 @@ pin "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/request_intercept
 pin "https://cdn.jsdelivr.net/npm/@rails/request.js@0.0.13/src/verbs", to: "https:----cdn.jsdelivr.net--npm--@rails--request.js@0.0.13--src--verbs.js" # @0.0.13
 pin "@rails/request.js", to: "@rails--request.js.js" # @0.0.13
 pin "sortablejs" # @1.15.7
+pin "lightgallery", to: "lightgallery.js" # @2.9.0
+pin "@stimulus-components/lightbox", to: "@stimulus-components--lightbox.js"

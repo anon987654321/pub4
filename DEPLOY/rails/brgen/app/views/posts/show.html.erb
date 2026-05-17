@@ -25,7 +25,11 @@
   </header>
   <h1><%= @post.title %></h1>
   <% if @post.image.attached? %>
-    <%= image_tag @post.image, class: "post-image" %>
+    <div data-controller="lightbox">
+      <a href="<%= url_for(@post.image) %>" data-lg-size="1600-1200">
+        <%= image_tag @post.image, class: "post-image" %>
+      </a>
+    </div>
   <% end %>
   <% if @post.content.present? %>
     <p><%= @post.content %></p>
