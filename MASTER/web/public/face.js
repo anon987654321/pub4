@@ -1516,12 +1516,14 @@ function _doResize() {
 
       const val = Math.min(bright, 16) / 16; // normalise 0..1
 
-      // Zone-specific glyph stamp into float buffer
+      // Zone-specific glyph stamp — clamped add prevents specular blowout
       const stamp = ZONE_STAMP[zone] || _STAMP_DEFAULT;
       for (let k = 0; k < stamp.length; k++) {
         const gx = px + stamp[k][0], gy = py + stamp[k][1];
-        if (gx >= 0 && gx < lpxW && gy >= 0 && gy < lpxH)
-          fbuf[gy * lpxW + gx] += val;
+        if (gx >= 0 && gx < lpxW && gy >= 0 && gy < lpxH) {
+          const idx = gy * lpxW + gx;
+          fbuf[idx] = Math.min(1, fbuf[idx] + val);
+        }
       }
     }
 
