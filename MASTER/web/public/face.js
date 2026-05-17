@@ -1270,9 +1270,7 @@ function _doResize() {
 
     drawMandala();
     drawSpeedLines();
-    drawParticles();    // renders to lpxCV then blits 2×
-    drawZoneLines();    // vector polyline overlay per zone
-    drawOscilloscope(); // continuous trace when thinking/speaking
+    drawParticles();
 
     // Mask wipe: column sweep left→right during crossfade
     if (maskTransitioning) {
