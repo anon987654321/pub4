@@ -5,6 +5,7 @@ module Master
   module Council
     class UiCritique
       COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
+      DESIGN_RULES_PATH = File.join(Master::ROOT, "data", "design_rules.yml").freeze
       WEB_ROOT     = File.join(Master::ROOT, "web").freeze
       MAX_FILE_BYTES = 32_768
 
@@ -34,10 +35,7 @@ module Master
         ideas    = ideate.ideate(
           "Generate concrete multi-solution improvements for this web UI. " \
           "Be brutally honest. Produce 3 distinct solution directions per issue found.",
-          constraints: ["must not break existing HTML semantics",
-                        "must preserve intentional CSS measurements",
-                        "animations must respect prefers-reduced-motion",
-                        "solutions must be implementable without a build step"],
+          constraints: design_constraints,
           cycles: (preset.dig("cycles") || 1).to_i
         )
 
@@ -70,7 +68,7 @@ module Master
 
           raw = File.read(path, encoding: "utf-8")
           raw = raw.byteslice(0, MAX_FILE_BYTES) + "\n... [truncated]" if raw.bytesize > MAX_FILE_BYTES
-          "=== #{rel} ===\n#{raw}"
+          "file: #{rel}\n#{raw}"
         end.join("\n\n")
 
         { combined: combined, files: files }
@@ -94,9 +92,47 @@ module Master
           - Chat panel slides in from right, oh-my-zsh style prompt
           - Edge-tts Osman voice, server-side, AudioContext playback
           - Visitor access (no token), authenticated (token) tiers
-          Critique the CSS, JS, HTML semantics, and animation approach.
-          Be brutally honest. Maximum scrutiny.
+          Critique the CSS, JS, HTML semantics, animation approach, typography, layout, hierarchy, accessibility, and data-ink economy.
+          Use the codified design rules below as measurable guidance, not rigid dogma.
+          #{design_rules_context}
+          Be brutally honest. Maximum scrutiny. Return shippable fixes.
         CTX
+      end
+
+      def design_rules_context
+        rules = File.exist?(DESIGN_RULES_PATH) ? Master.load_yaml(DESIGN_RULES_PATH) : {}
+        return "Design rules: unavailable." if rules.empty?
+
+        typography = rules.fetch("typography", {})
+        layout = rules.fetch("layout", {})
+        visual = rules.fetch("visual_design", {})
+        data = rules.fetch("data_visualization", {})
+        <<~RULES
+          Design rules:
+          - line length #{typography.dig("line_length", "min_ch")}-#{typography.dig("line_length", "max_ch")}ch, ideal #{typography.dig("line_length", "ideal_ch")}ch
+          - body line-height #{typography.dig("line_height", "body_min")}-#{typography.dig("line_height", "body_max")}; raise to #{typography.dig("line_height", "long_line_min")} when lines exceed #{typography.dig("line_height", "long_line_threshold_ch")}ch
+          - all-caps tracking #{typography.dig("letter_spacing", "all_caps_min_em")}-#{typography.dig("letter_spacing", "all_caps_max_em")}em; no letter-spaced lowercase prose
+          - hierarchy needs at least #{typography.dig("hierarchy", "min_size_ratio_between_levels")}x size contrast or #{typography.dig("hierarchy", "min_weight_delta")} font-weight delta
+          - max #{typography.dig("hierarchy", "max_font_families")} families, #{typography.dig("hierarchy", "max_font_weights")} weights, #{typography.dig("hierarchy", "max_font_sizes")} sizes
+          - contrast #{typography.dig("accessibility", "normal_text_contrast")}:1 normal, #{typography.dig("accessibility", "large_text_contrast")}:1 large
+          - grid #{layout.dig("grid", "columns")} columns, #{layout.dig("grid", "base_unit_px")}px base spacing, touch target #{layout.dig("touch", "target_min_px")}px minimum
+          - center-aligned prose must stay under #{layout.dig("alignment", "center_text_max_lines")} lines
+          - arbitrary decoration rejected: #{visual.dig("semantics", "reject_arbitrary_decoration")}
+          - data-ink target #{data["data_ink_ratio_target"]}; remove chartjunk unless it carries information
+        RULES
+      rescue StandardError => e
+        "Design rules failed to load: #{e.message}."
+      end
+
+      def design_constraints
+        [
+          "must not break existing HTML semantics",
+          "must preserve intentional CSS measurements unless a codified design rule is violated",
+          "animations must respect prefers-reduced-motion",
+          "solutions must be implementable without a build step",
+          "use typography, layout, visual_design, and data_visualization rules from data/design_rules.yml",
+          "distinguish measurable violations from subjective taste"
+        ]
       end
 
       def cherry_pick(feedback, ideas)
