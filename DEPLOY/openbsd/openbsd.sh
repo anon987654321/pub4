@@ -216,14 +216,14 @@ stage_1() {
     typeset subdomains=${domain_entry#*:}
     [[ $subdomains = $domain ]] && subdomains=""
     {
-      print -r -- "domain $domain {"
+      print -r -- "domain \"$domain\" {"
       if [[ -n $subdomains ]]; then
-        typeset altnames="$domain"
-        for sub in ${(s:,:)subdomains}; do altnames="$altnames $sub.$domain"; done
+        typeset altnames="\"$domain\""
+        for sub in ${(s:,:)subdomains}; do altnames="$altnames \"$sub.$domain\""; done
         print -r -- "  alternative names { $altnames }"
       fi
-      print -r -- "  domain key /etc/ssl/private/$domain.key"
-      print -r -- "  domain full chain certificate /etc/ssl/$domain.fullchain.pem"
+      print -r -- "  domain key \"/etc/ssl/private/$domain.key\""
+      print -r -- "  domain full chain certificate \"/etc/ssl/$domain.fullchain.pem\""
       print -r -- "  sign with letsencrypt"
       print -r -- "  challengedir \"/var/www/acme\""
       print -r -- "}"
