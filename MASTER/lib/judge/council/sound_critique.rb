@@ -79,7 +79,12 @@ module Master
           web/public/visual_bridge.js
           web/app/views/chat/index.html.erb
           lib/voice/speech.rb
+          lib/voice/dilla.rb
+          lib/voice/sonitex.rb
           lib/voice/sonitex_sox.rb
+          lib/voice/production_dna.rb
+          lib/voice/ffmpeg_lofi.rb
+          lib/voice/tts_lofi.rb
         ]
       end
 
@@ -87,21 +92,49 @@ module Master
         <<~CTX
           Review MASTER as an interactive AI agent with visual motion, chat streaming, and voice/audio affordances.
           Treat sound design as product behavior, not decoration.
-          Evaluate sonic hierarchy, timing, mix role, accessibility, graceful failure, and implementation size.
+          Evaluate sonic hierarchy, timing, mix role, accessibility, graceful failure, implementation size, and TTS quality.
           #{Deliberation.quality_brief(:sound)}
           #{sonitex_brief}
+          #{dilla_brief}
+          #{tts_lofi_brief}
           Return shippable, reversible fixes, not vague mood boards.
         CTX
       end
 
       def sonitex_brief
-        if defined?(Master::Voice::SonitexSox)
+        if defined?(Master::Voice::Sonitex)
+          Master::Voice::Sonitex.brief
+        elsif defined?(Master::Voice::SonitexSox)
           Master::Voice::SonitexSox.brief
         else
           "Sonitex/SoX policy unavailable; prefer cumulative subtle degradation and document SoX gaps."
         end
       rescue StandardError => e
         "Sonitex/SoX policy failed to load: #{e.message}."
+      end
+
+      def dilla_brief
+        if defined?(Master::Voice::Dilla)
+          Master::Voice::Dilla.brief
+        elsif defined?(Master::Voice::ProductionDna)
+          Master::Voice::ProductionDna.brief
+        else
+          "Production DNA unavailable; keep timing human, restrained, and non-quantized when musical."
+        end
+      rescue StandardError => e
+        "Dilla production profile failed to load: #{e.message}."
+      end
+
+      def tts_lofi_brief
+        if defined?(Master::Voice::TtsLofi)
+          Master::Voice::TtsLofi.brief
+        elsif defined?(Master::Voice::FfmpegLofi)
+          Master::Voice::FfmpegLofi.brief
+        else
+          "TTS lofi policy unavailable; default to clean audio and make effects opt-in."
+        end
+      rescue StandardError => e
+        "TTS lofi policy failed to load: #{e.message}."
       end
 
       def sound_constraints
@@ -113,7 +146,9 @@ module Master
           "prefer tiny generated tones or short assets over heavy dependencies",
           "preserve existing visual identity",
           "use Ruby QualityFramework sound rules from Deliberation",
-          "when lo-fi processing is proposed, prefer Master::Voice::SonitexSox presets over ad-hoc shell strings"
+          "when lo-fi processing is proposed, call Master::Voice::Sonitex rather than ad-hoc shell strings",
+          "when Dilla-style timing is proposed, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
+          "when TTS effects are proposed, call Master::Voice::TtsLofi or Master::Voice::FfmpegLofi and keep clean audio as default"
         ]
       end
 
