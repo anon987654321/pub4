@@ -23,7 +23,10 @@ module Master
       critical: "!!"
     }.freeze
 
-    SLASH_COMMANDS = %w[/exit /undo /redo /checkpoint].freeze
+    SLASH_COMMANDS = %w[
+      /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
+      /ui-critique /sound-critique /rebuild /context /checkpoint /verify
+    ].freeze
 
     attr_reader :container
 
@@ -232,6 +235,82 @@ module Master
       end
     end
 
+    def run_sound_critique
+      puts @renderer.render("sound-critique: assembling audio panel", mode: :dim)
+      critic = Master::Judge::Council::SoundCritique.new(agent: @agent, event_bus: @bus)
+      result = critic.run
+      if result.ok?
+        data  = result.value!
+        picks = data[:cherry_picks]
+        puts @renderer.render("sound-critique: #{picks.size} cherry-pick(s)", mode: :dim)
+        picks.each { |p| puts @renderer.render("  cherry: #{p}", mode: :dim) }
+        data[:feedback].each do |f|
+          puts @renderer.render("  [#{f[:persona]}] #{f[:feedback].to_s.lines.first.to_s.strip}", mode: :dim)
+        end
+      else
+        puts @renderer.render("sound-critique: #{result.message}", mode: :warning)
+      end
+    end
+
+    def run_rebuild
+      puts @renderer.render("rebuild: syntax check + session save + hot-restart", mode: :dim)
+      lib_dir = File.join(Master::ROOT, "lib")
+      errors  = []
+      changed_lib_files(lib_dir).each do |path|
+        ok = system("ruby34 -c #{path} > /dev/null 2>&1")
+        errors << path unless ok
+      end
+      if errors.any?
+        errors.each { |p| puts @renderer.render("  syntax error: #{p}", mode: :warning) }
+        puts @renderer.render("rebuild: aborted — fix errors first", mode: :warning)
+        return
+      end
+      @session.save!
+      puts @renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
+      $stdout.flush
+      Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
+    end
+
+    def run_context
+      query = @last_input.to_s
+      puts @renderer.render("context: gathering for query=#{query[0, 60]}", mode: :dim)
+      provider = Master::Ground::ContextProvider.new
+      rows     = provider.brief(query, limit: 8)
+      if rows.empty?
+        puts @renderer.render("context: nothing found", mode: :dim)
+      else
+        rows.each { |r| puts @renderer.render("  #{r}", mode: :dim) }
+      end
+      @bus&.publish("attention:context", query: query, rows: rows.size)
+    end
+
+    def run_checkpoint
+      puts @renderer.render("checkpoint: snapshotting changed files", mode: :dim)
+      lib_dir = File.join(Master::ROOT, "lib")
+      files   = changed_lib_files(lib_dir)
+      cp      = Master::Ground::Checkpoint.new
+      result  = cp.create(label: "manual", files: files)
+      id      = result.respond_to?(:fetch) ? result[:id] : result.to_s
+      puts @renderer.render("checkpoint: #{id} (#{files.size} file(s))", mode: :dim)
+    end
+
+    def run_verify
+      puts @renderer.render("verify: checking recently landed operator symbols", mode: :dim)
+      plan = {
+        files:   %w[lib/ground/intent_router.rb lib/ground/attention_context.rb
+                    lib/ground/unfinished_ledger.rb lib/ground/orchestration_policy.rb],
+        symbols: %w[Master::Ground::IntentRouter Master::Ground::AttentionContext
+                    Master::Ground::UnfinishedLedger Master::Ground::OrchestrationPolicy],
+        callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify]
+      }
+      checker = Master::Ground::DoneChecker.new
+      result  = checker.call(plan)
+      result.each do |key, val|
+        icon = val.is_a?(TrueClass) || val == :ok ? "ok" : "!!"
+        puts @renderer.render("  #{icon} #{key}", mode: val == false ? :warning : :dim)
+      end
+    end
+
     def safe_read_line
       @reader.read_line("", echo: true).chomp
     rescue StandardError => e
@@ -335,6 +414,101 @@ module Master
       $stdout.flush
     rescue StandardError => e
       @bus&.publish("cli:bg_error", error: e.message)
+    end
+
+    def chunk_accumulator(buffer)
+      lambda do |chunk|
+        text = chunk.respond_to?(:content) ? chunk.content.to_s : chunk.to_s
+        next if text.empty?
+
+        yield text
+        buffer << text
+      end
+    end
+
+    SPIN_FRAMES   = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
+    SPIN_INTERVAL = 0.25
+    DMESG_IGNORE  = %w[bus:subscribe bus:unsubscribe ring:write].freeze
+    VERDICT_GLYPH = {
+      ok: "\u2713", fail: "\u00D7", warn: "!", info: "\u00B7"
+    }.freeze
+
+    def print_thinking_indicator
+      return unless $stdout.isatty
+
+      @think_mutex = Mutex.new
+      @think_t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      @think_stage = "intake"
+      @think_sub   = @bus&.subscribe("*") do |payload|
+        update_think_stage(payload)
+        emit_dmesg_line(payload)
+      end
+
+      @spin_thread = Thread.new do
+        i = 0
+        loop do
+          @think_mutex.synchronize do
+            print "\r\e[K#{@renderer.render("#{SPIN_FRAMES[i % SPIN_FRAMES.size]} #{@think_stage}", mode: :dim)}"
+            $stdout.flush
+          end
+          sleep SPIN_INTERVAL
+          i += 1
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.spinner", event_bus: @bus)
+      end
+    end
+
+    def stop_thinking_indicator
+      @spin_thread&.kill
+      @spin_thread = nil
+      @think_sub&.call
+      @think_sub = nil
+    end
+
+    def update_think_stage(payload)
+      ev = payload[:event].to_s
+      return unless ev.start_with?("stage:")
+      stage = payload.fetch(:stage, ev.sub("stage:", ""))
+      @think_stage = stage.to_s
+    end
+
+    def glyph_for_event(ev)
+      case ev
+      when /:(done|ok|success|rendered|synthesis)\b/ then VERDICT_GLYPH[:ok]
+      when /:(error|fail|timeout|veto)\b/            then VERDICT_GLYPH[:fail]
+      when /:(warn|warning|escalat)\b/               then VERDICT_GLYPH[:warn]
+      else                                                VERDICT_GLYPH[:info]
+      end
+    end
+
+    MUTATING_TOOLS = %w[WriteFile Edit StrReplace BatchReplace AstEdit FilePatch].freeze
+
+    def emit_dmesg_line(payload)
+      ev = payload[:event].to_s
+      return if ev.empty? || DMESG_IGNORE.include?(ev)
+      ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - (@think_t0 || 0)) * 1000).to_i
+      kv = payload.reject { |k, _| %i[event ts topic].include?(k) }
+                  .map { |k, v| "#{k}=#{v.to_s[0, 60]}" }.join(" ")
+      diff = ev == "tool:after" && MUTATING_TOOLS.include?(payload[:tool].to_s) ? diff_stat(payload[:path]) : nil
+      tail = diff ? " #{diff}" : ""
+      line = "  %s [%7d] %s%s%s" % [glyph_for_event(ev), ms, ev, kv.empty? ? "" : " #{kv}", tail]
+      @think_mutex&.synchronize do
+        print "\r\e[K"
+        $stdout.puts @renderer.render(line, mode: :dim)
+        $stdout.flush
+      end
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "cli.print_event", event_bus: @bus)
+    end
+
+    def diff_stat(path)
+      return nil unless path && !path.empty?
+      out, _ = Open3.capture2e("git", "-C", @root, "diff", "--numstat", "--", path)
+      m = out.lines.first&.match(/^(\d+)\s+(\d+)/)
+      m ? "+#{m[1]}/-#{m[2]}" : nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "cli.diff_stat", event_bus: @bus)
     end
 
     INIT_FRAMES   = 20
