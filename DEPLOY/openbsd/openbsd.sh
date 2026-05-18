@@ -189,8 +189,7 @@ stage_1() {
   [[ $_nsd_check == *"nsd(ok)"* ]] || { log ERROR "nsd not running"; exit 1 }
   verify_nsd
 
-  [[ -d /var/www/acme ]] || { log ERROR "/var/www/acme missing"; exit 1 }
-  mkdir -p /var/www/acme/.well-known/acme-challenge
+  [[ -d /var/www/acme ]] || mkdir -p /var/www/acme
   install_static etc/httpd.conf /etc/httpd.conf
   httpd -n -f /etc/httpd.conf || { log ERROR "httpd.conf invalid"; exit 1 }
   /usr/sbin/rcctl enable httpd
@@ -199,9 +198,10 @@ stage_1() {
   typeset _httpd_check; _httpd_check=$(/usr/sbin/rcctl check httpd)
   [[ $_httpd_check == *"httpd(ok)"* ]] || { log ERROR "httpd not running"; exit 1 }
 
-  print -r -- test > /var/www/acme/.well-known/acme-challenge/test
+  # httpd strips /.well-known/acme-challenge/ and serves from /var/www/acme/<token>
+  print -r -- test > /var/www/acme/test
   typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" http://$BRGEN_IP/.well-known/acme-challenge/test):-000}
-  rm -f /var/www/acme/.well-known/acme-challenge/test
+  rm -f /var/www/acme/test
   [[ $http_status == "200" ]] || { log ERROR "httpd pre-flight failed (HTTP $http_status)"; exit 1 }
 
   [[ $(<"/etc/group") == *$'\n_acme:'* || $(<"/etc/group") == _acme:* ]] || groupadd -g 765 _acme
@@ -239,9 +239,9 @@ stage_1() {
     if [[ $dns_check != $BRGEN_IP ]]; then
       log WARN "DNS for $domain failed"; FAILED_CERTS[$domain]=1; continue
     fi
-    print -r -- "test_$domain" > /var/www/acme/.well-known/acme-challenge/test_$domain
+    print -r -- "test_$domain" > /var/www/acme/test_$domain
     typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $domain" http://$BRGEN_IP/.well-known/acme-challenge/test_$domain):-000}
-    rm -f /var/www/acme/.well-known/acme-challenge/test_$domain
+    rm -f /var/www/acme/test_$domain
     if [[ $http_status != 200 ]]; then
       log WARN "HTTP test for $domain failed"; FAILED_CERTS[$domain]=1; continue
     fi

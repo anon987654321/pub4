@@ -83,9 +83,9 @@ retry_failed_certs() {
   for domain in ${(k)FAILED_CERTS}; do
     typeset dns_check=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" A +short):-}
     [[ $dns_check != $BRGEN_IP ]] && { log WARN "DNS for $domain failed"; continue }
-    print -r -- "retry_$domain" > "/var/www/acme/.well-known/acme-challenge/retry_$domain"
-    typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" "http://$domain/.well-known/acme-challenge/retry_$domain"):-000}
-    rm -f "/var/www/acme/.well-known/acme-challenge/retry_$domain"
+    print -r -- "retry_$domain" > "/var/www/acme/retry_$domain"
+    typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $domain" "http://$BRGEN_IP/.well-known/acme-challenge/retry_$domain"):-000}
+    rm -f "/var/www/acme/retry_$domain"
     [[ $http_status != 200 ]] && { log WARN "HTTP test for $domain failed"; continue }
     if acme-client -v -f /etc/acme-client.conf "$domain"; then
       unset FAILED_CERTS[$domain]
