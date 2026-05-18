@@ -1,0 +1,270 @@
+# LLM operator prompts — how to get real work out of each model.
+# Used by MASTER when routing tasks. Keyed by model family.
+# Each entry: reading_gate, context_format, output_format, strengths, traps.
+#
+# Reading gate = the verification step that proves the model read the code
+# before it acts. Skip it and you get pattern-matched hallucination.
+
+operators:
+
+  grok:
+    aliases: [grok-4.3, grok-4.20, x-ai/grok-4-fast, x-ai/grok-4]
+    context_window: "1M (4.3) / 2M (4.20)"
+    strengths:
+      - Fast iteration and prototyping
+      - Real-time web context
+      - Aggressive at producing runnable code quickly
+    traps:
+      - Finishes in seconds and fakes comprehension — always gate
+      - Skips edge cases unless forced to list them first
+      - Drifts from constraints mid-task on long sessions
+    context_format: |
+      Feed files as inline text with === FILE: path === separators.
+      Never use file attachments — Grok reads inline text more reliably.
+      Include soul.yml + rules.yml first so constraints are in top-of-context.
+    reading_gate: |
+      I am going to paste the full source of MASTER.
+      Read every file before responding. Do not summarize yet.
+
+      After reading, answer ONLY these questions (no code):
+      1. What does [specific function] actually do, step by step?
+      2. Where does the pipeline fail if a tool raises?
+      3. What is the contract between [ModuleA] and [ModuleB]?
+      4. List every place error handling is inconsistent.
+      5. What are the 3 most structurally broken things?
+
+      I will approve your reading before asking for any changes.
+    output_format: |
+      After gate approval, one fix at a time:
+      "Fix #1 from your findings. Show:
+       - Which files change
+       - Exact diffs only (no prose wrapping)
+       - What breaks downstream and why it won't
+       Do NOT touch anything outside the scope of this fix."
+    escalation: "Use 4.20 (2M context) for full-codebase work; 4.3 for single-file tasks."
+
+  claude_sonnet:
+    aliases: [claude-sonnet-4-6, anthropic/claude-sonnet-4-6, claude-cli:claude-sonnet-4-6]
+    context_window: "200K"
+    strengths:
+      - Multi-file refactoring with rule consistency
+      - Enforces custom constraints (zsh discipline, style rules) reliably
+      - Best time-to-correct-answer for architectural changes
+      - Reads CLAUDE.md and MASTER/data/ as actual authority
+    traps:
+      - Can over-explain; tell it to be terse upfront
+      - May add unsolicited comments or docstrings — forbid explicitly
+      - Asks confirmation questions; CLAUDE.md auto-approve removes this
+    context_format: |
+      Claude reads CLAUDE.md automatically. Feed additional context as:
+      <file path="MASTER/lib/...">...</file> blocks or plain === FILE === separators.
+      soul.yml + rules.yml are authoritative — reference them by name.
+    reading_gate: |
+      Read MASTER/data/soul.yml, rules.yml, and workflow.yml first.
+      Then read [specific files].
+      Before writing any code, state:
+      - The invariant this change must not break
+      - Which rules from rules.yml apply
+      - Exact files touched
+    output_format: |
+      Terse. Active voice. Diffs only. No trailing summaries.
+      Commit message in Strunk & White style on completion.
+      Flag rule violations found during reading before fixing the task.
+    escalation: "Escalate to opus for > 500-line rewrites or council decisions."
+
+  claude_opus:
+    aliases: [claude-opus-4-7, anthropic/claude-opus-4-7, claude-cli:claude-opus-4-7]
+    context_window: "200K"
+    strengths:
+      - Architectural reasoning and trade-off analysis
+      - Council/tribunal deliberation
+      - Long multi-step refactors with dependency tracking
+      - Constitutional / axiom reasoning
+    traps:
+      - Slow; do not use for quick fixes or single-file edits
+      - May propose abstractions beyond scope — scope-cap explicitly
+      - Cost: use only for tier1_critical or council tasks
+    context_format: |
+      Same as claude_sonnet. Give it the full picture — it uses context well.
+      Include previous council deliberations if continuing a thread.
+    reading_gate: |
+      Before proposing any changes, produce a dependency graph of the modules
+      affected and identify which axioms in axioms.jsonl would be violated
+      by naive approaches.
+    output_format: |
+      Structured deliberation: finding → impact → options → recommendation.
+      For code: diffs with explicit axiom-compliance notes.
+    escalation: "This is the escalation target. For >0.90 quality threshold tasks only."
+
+  gpt_4o:
+    aliases: [gpt-4o, openai/gpt-4o, chatgpt]
+    context_window: "128K"
+    strengths:
+      - Broad general knowledge, good at explaining unfamiliar APIs
+      - Tool use and function calling reliability
+      - Structured JSON output
+    traps:
+      - Confidently wrong on OpenBSD-specific details — always verify
+      - Adds excessive prose; use "respond in code only" to suppress
+      - Invents method names for Ruby gems it half-knows
+      - Shorter context than Grok/Gemini; chunk large codebases
+    context_format: |
+      System prompt: include soul.yml content verbatim as constraints.
+      Feed code as user messages with === FILE === separators.
+      Keep total context under 80K to avoid degradation.
+    reading_gate: |
+      Before writing any code, list:
+      - Every method in [file] that touches [concern]
+      - The exact return type of [method]
+      - Which callers would break if [method] changes signature
+      Only proceed after I confirm your list is correct.
+    output_format: |
+      Code blocks with language tags. No markdown prose between diffs.
+      End each response with: "Files changed: [list]"
+    escalation: "Prefer DeepSeek for cost; use GPT-4o for tool-calling tasks."
+
+  deepseek_chat:
+    aliases: [deepseek-chat, deepseek/deepseek-chat-v3.1, deepseek-v3]
+    context_window: "64K"
+    strengths:
+      - Best cost/quality ratio for code tasks
+      - Strong Ruby and Rails knowledge
+      - Reliable at following explicit constraints
+    traps:
+      - Context window is tight; chunk aggressively (< 40K per call)
+      - Less reliable on OpenBSD-specific tooling
+      - Can produce subtly wrong diffs; always run a validation pass
+    context_format: |
+      Chunk into logical units: one module per call.
+      Always include rules.yml summary as system prompt prefix.
+      Keep each call focused: one concern, one module.
+    reading_gate: |
+      Summarize the responsibility of [module] in one sentence.
+      List its public interface (method names + signatures only).
+      Identify one thing that looks wrong before I give you the task.
+    output_format: |
+      Minimal diffs. No explanatory prose unless asked.
+      Flag: "Rule violation found: [rule] at [file:line]" if any.
+    escalation: "Escalate to deepseek_reasoner for multi-step logic or planning."
+
+  deepseek_reasoner:
+    aliases: [deepseek-reasoner, deepseek/deepseek-r1]
+    context_window: "64K"
+    strengths:
+      - Chain-of-thought reasoning visible in <think> blocks
+      - Best for logic bugs, algorithmic issues, planning
+      - Finds non-obvious failure modes
+    traps:
+      - Very slow; do not use for mechanical edits
+      - Reasoning tokens cost extra; scope questions tightly
+      - May over-plan and under-produce; ask for plan + code together
+    context_format: |
+      Feed the minimal reproducing context only.
+      Ask one well-scoped question: "Why does X fail when Y?"
+      Include the actual error output.
+    reading_gate: |
+      Think through the execution path step by step before answering.
+      Show your reasoning. Then give the fix.
+    output_format: |
+      Let <think> blocks run fully. Then extract the code from the final answer.
+      Ignore prose in <think>; act on the conclusion only.
+    escalation: "Use for council deliberation and hard bugs; not for bulk edits."
+
+  kimi:
+    aliases: [moonshot-v1, kimi, moonshotai/moonshot-v1-128k]
+    context_window: "128K"
+    strengths:
+      - Very large effective context for Chinese + English mixed codebases
+      - Strong at reading long documents and extracting structured info
+      - Good at summarization and cross-file dependency mapping
+    traps:
+      - Weaker at Ruby than Python/Go; double-check gem APIs
+      - Can produce overly literal translations of requirements
+      - Less familiar with OpenBSD ecosystem
+    context_format: |
+      Feed the full codebase as a single blob — it handles long context well.
+      Include MASTER/data/rules.yml inline as constraints header.
+    reading_gate: |
+      Read the full codebase. Then produce a dependency map:
+      Module → files → public methods → callers.
+      Do not write any code until the map is confirmed.
+    output_format: |
+      Structured: finding → affected files → proposed diff.
+      One change per response.
+    escalation: "Use for document analysis and cross-file mapping; code to DeepSeek."
+
+  gemini_pro:
+    aliases: [gemini-2.5-pro, google/gemini-2.5-pro]
+    context_window: "1M"
+    strengths:
+      - Largest reliable context window among readily available models
+      - Good at whole-codebase analysis in one shot
+      - Strong multimodal (can read screenshots of errors)
+    traps:
+      - Verbose by default; suppress with "respond concisely, code only"
+      - Can hallucinate Ruby gem APIs confidently
+      - Safety filters occasionally block legitimate code tasks
+    context_format: |
+      Feed entire MASTER codebase in one call — 1M context allows it.
+      Include error logs and test output alongside source.
+      Structure: [constraints] [source files] [task]
+    reading_gate: |
+      Before any changes: identify the 5 highest-coupling points in the codebase.
+      For each: name the files, the coupling type, and why it's a risk.
+      Confirm before proceeding.
+    output_format: |
+      Respond with diffs only. Use unified diff format.
+      End with: "Affected: [files]. Downstream risk: [yes/no + reason]."
+    escalation: "Best for whole-repo analysis; route code writes to DeepSeek or Sonnet."
+
+  mistral_large:
+    aliases: [mistral-large, mistralai/mistral-large]
+    context_window: "128K"
+    strengths:
+      - Strong instruction following
+      - Good at structured output (JSON, YAML)
+      - Reliable for mechanical transformations
+    traps:
+      - Less strong at architectural reasoning
+      - Can miss implicit constraints; be explicit about every rule
+    context_format: |
+      Explicit system prompt with all constraints listed as numbered rules.
+      Feed code in user messages with clear section headers.
+    reading_gate: |
+      List all constraints I just gave you, numbered, before writing any code.
+    output_format: |
+      Code blocks only. No prose. Confirm constraint compliance at end.
+    escalation: "Use for structured data tasks; route architecture to stronger models."
+
+# Universal rules that apply regardless of model:
+universal:
+  always_do:
+    - Include soul.yml + rules.yml constraints in every system prompt
+    - Gate: verify reading before acting (model-specific gate above)
+    - One fix at a time — never batch multiple concerns in one call
+    - Ask for diffs, not full file rewrites (except on < 50-line files)
+    - After any code output: ask "what breaks downstream?"
+  never_do:
+    - Trust output on OpenBSD-specific commands without man page verification
+    - Accept a response that finishes in < 5s for a > 200-line task
+    - Skip the reading gate because "it's probably fine"
+    - Let the model rename or restructure files without explicit approval
+    - Accept invented method names without grepping the actual codebase
+
+  codebase_injection_template: |
+    === CONSTRAINTS ===
+    [paste soul.yml]
+    [paste rules.yml key sections]
+
+    === CODEBASE ===
+    === FILE: MASTER/lib/now/cli.rb ===
+    [content]
+    === FILE: MASTER/lib/loop/sweep.rb ===
+    [content]
+    ... (continue for all relevant files)
+
+    === TASK ===
+    [specific ask]
+
+    === READING GATE ===
+    [model-specific gate from above]
