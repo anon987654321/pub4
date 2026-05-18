@@ -18,19 +18,30 @@ module Master
 
       # Maps each council persona to the question bank category they draw from.
       PERSONA_QUESTION = {
-        "Architect"          => "assumptions",
-        "Data Steward"       => "consistency",
-        "Ethics & Policy"    => "harm",
-        "Maintainer"         => "clarity",
-        "Performance"        => "bottlenecks",
-        "Product Strategist" => "economics",
-        "QA Engineer"        => "evidence",
-        "Pragmatist"         => "scope",
-        "Reliability"        => "failure_modes",
-        "Security"           => "attacker",
-        "Skeptic"            => "failure_modes",
-        "User"               => "edge_cases",
-        "Mentor"             => "clarity"
+        "Architect"                 => "assumptions",
+        "Data Steward"              => "consistency",
+        "Ethics & Policy"           => "harm",
+        "Maintainer"                => "clarity",
+        "Performance"               => "bottlenecks",
+        "Product Strategist"        => "economics",
+        "QA Engineer"               => "evidence",
+        "Pragmatist"                => "scope",
+        "Reliability"               => "failure_modes",
+        "Security"                  => "attacker",
+        "Skeptic"                   => "failure_modes",
+        "User"                      => "edge_cases",
+        "User Advocate"             => "edge_cases",
+        "Accessibility"             => "edge_cases",
+        "Layperson"                 => "clarity",
+        "Mentor"                    => "clarity",
+        "Graphic Designer"          => "visual",
+        "Web Designer"              => "visual",
+        "Motion Designer"           => "visual",
+        "Google CSS Engineer"       => "visual",
+        "NNGroup UX Researcher"     => "evidence",
+        "Electronic Music Producer" => "sound",
+        "Hip-Hop Producer"          => "sound",
+        "Sound Designer"            => "sound"
       }.freeze
 
       @questions = nil
