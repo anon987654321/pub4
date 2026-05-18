@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # Shared helpers: logging, backup, template install, step tracking.
+zmodload zsh/datetime
 
 log() {
   typeset level=$1; shift
