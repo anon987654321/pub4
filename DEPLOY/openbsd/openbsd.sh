@@ -200,9 +200,9 @@ stage_1() {
   [[ $_httpd_check == *"httpd(ok)"* ]] || { log ERROR "httpd not running"; exit 1 }
 
   print -r -- test > /var/www/acme/.well-known/acme-challenge/test
-  typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" http://brgen.no/.well-known/acme-challenge/test):-000}
+  typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" http://$BRGEN_IP/.well-known/acme-challenge/test):-000}
   rm -f /var/www/acme/.well-known/acme-challenge/test
-  (( http_status != 200 )) && { log ERROR "httpd pre-flight failed"; exit 1 }
+  [[ $http_status == "200" ]] || { log ERROR "httpd pre-flight failed (HTTP $http_status)"; exit 1 }
 
   [[ $(<"/etc/group") == *$'\n_acme:'* || $(<"/etc/group") == _acme:* ]] || groupadd -g 765 _acme
   [[ ! -f /etc/acme/letsencrypt_privkey.pem ]] && \
@@ -240,7 +240,7 @@ stage_1() {
       log WARN "DNS for $domain failed"; FAILED_CERTS[$domain]=1; continue
     fi
     print -r -- "test_$domain" > /var/www/acme/.well-known/acme-challenge/test_$domain
-    typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" http://$domain/.well-known/acme-challenge/test_$domain):-000}
+    typeset http_status=${$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $domain" http://$BRGEN_IP/.well-known/acme-challenge/test_$domain):-000}
     rm -f /var/www/acme/.well-known/acme-challenge/test_$domain
     if [[ $http_status != 200 ]]; then
       log WARN "HTTP test for $domain failed"; FAILED_CERTS[$domain]=1; continue
