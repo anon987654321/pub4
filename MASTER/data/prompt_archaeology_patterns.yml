@@ -1,0 +1,199 @@
+# MASTER prompt archaeology patterns
+# Derived abstractions from prompt archives and assistant behavior research.
+# Do not copy leaked prompt text into runtime prompts. Extract reusable design moves only.
+---
+
+policy:
+  id: safe_prompt_archaeology
+  rule: >
+    Use prompt archives as behavioral archaeology, not as source text. Extract
+    abstract patterns, compare assistant designs, and write first-party MASTER
+    policy in our own words.
+  forbidden:
+    - Copying large prompt blocks into MASTER runtime prompts.
+    - Treating leaked/vendor prompts as authoritative or current.
+    - Depending on private or unverified system messages for safety-critical rules.
+    - Removing provenance/risk labels from derived patterns.
+  allowed:
+    - Naming recurring design patterns.
+    - Building checklists and rubrics.
+    - Comparing orchestration roles and tool-use policies.
+    - Using archives as weak evidence alongside official docs, local behavior, and tests.
+
+clusters:
+  - id: role_stack
+    name: Role Stack and Identity Boundary
+    pattern: >
+      Strong assistants separate identity, task role, tool permissions, safety posture,
+      output style, and user preference. MASTER should keep these as layers rather
+      than one giant prompt blob.
+    sharpen_master:
+      - Split prompt builder into identity, attention context, task mode, tool policy, output contract, and safety constraints.
+      - Let attention breadcrumbs set task mode without rewriting identity.
+      - Keep user-facing tone separate from execution policy.
+
+  - id: tool_contracts
+    name: Tool Contracts and Action Boundaries
+    pattern: >
+      Good tool-using assistants make tool authority explicit: when to browse,
+      when to read files, when to mutate, when to ask, and how to report uncertainty.
+    sharpen_master:
+      - Represent every tool call as intent + authority + blast radius + rollback.
+      - Require stronger model/council review for irreversible mutations.
+      - Emit tool events into visual_bridge and cluster_miner.
+
+  - id: attention_management
+    name: Attention Management and Spatial Context
+    pattern: >
+      Long-running agent work needs an explicit map of where attention is and
+      whether the system is zooming in, zooming out, or switching targets.
+    sharpen_master:
+      - Use `attention_context.yml` to prefix complex work.
+      - Store attention context in traces.
+      - Feed zoom changes into cognition ecology and Face3D focus/arousal.
+
+  - id: evidence_first_answers
+    name: Evidence-First Answers
+    pattern: >
+      Reliable assistants distinguish observed facts, derived inferences,
+      assumptions, and open uncertainties.
+    sharpen_master:
+      - Add answer sections for Observed / Inferred / Unknown when stakes are high.
+      - Require citations or file evidence for repo claims.
+      - Mark stale or weak sources in cluster registries.
+
+  - id: refusal_and_redirect
+    name: Refusal and Redirect Design
+    pattern: >
+      Safer assistants do not merely refuse; they explain the boundary and offer
+      nearby safe help. MASTER should apply this to code execution, autonomous tools,
+      prompts, and external repos.
+    sharpen_master:
+      - Add safe alternative suggestions to veto outputs.
+      - Route policy-risk tasks through Security + Ethics council personas.
+      - Keep refusals concise and action-oriented.
+
+  - id: conversational_state_machine
+    name: Conversational State Machine
+    pattern: >
+      Strong assistants track whether they are clarifying, executing, verifying,
+      summarizing, repairing, or handing off.
+    sharpen_master:
+      - Add `act` from attention context into prompt/task state.
+      - Avoid repeated clarification after the user has already said Go ahead.
+      - Use explicit `verify` mode before landing risky changes.
+
+  - id: multi_llm_council
+    name: Multi-LLM Council Roles
+    pattern: >
+      Multi-LLM systems work best when models are assigned roles by capability,
+      cost, latency, and failure mode instead of all models answering the same prompt.
+    sharpen_master:
+      - Cheap models: classify, summarize, extract, label clusters.
+      - Fast models: draft, transform, triage, UI copy.
+      - Strong models: architecture, irreversible mutation, arbitration.
+      - Local/browser models: offline intent, embeddings, low-risk labels.
+      - Council personas: critique outputs through role lenses, not as redundant chatbots.
+
+  - id: output_contracts
+    name: Output Contracts
+    pattern: >
+      Good prompts specify output shape, brevity, failure behavior, and when to
+      omit noise. This aligns with MASTER's token-efficiency cluster.
+    sharpen_master:
+      - Default to silent success for internal gates.
+      - Emit compact diffs/summaries for landed changes.
+      - Use structured YAML/JSON only when downstream code consumes it.
+
+  - id: memory_and_personalization
+    name: Memory and Personalization Boundaries
+    pattern: >
+      Personal assistants need useful memory but must separate durable user memory,
+      session state, repo state, inferred preferences, and temporary task context.
+    sharpen_master:
+      - Store attention traces separately from durable memory.
+      - Make repo-topic clusters updateable evidence, not user identity.
+      - Use explicit provenance on all mined preferences.
+
+  - id: browser_and_mobile_agent
+    name: Browser and Mobile Agent Surface
+    pattern: >
+      Modern assistants increasingly act inside browsers and mobile shells. They
+      need permission scopes, visible action trails, and reversible operations.
+    sharpen_master:
+      - Pair mobile_web_opportunities with permissioned action harness.
+      - Add visible mobile breadcrumbs for multi-step actions.
+      - Use local-first storage for action queue and rollback metadata.
+
+  - id: self_critique_without_theater
+    name: Self-Critique Without Theater
+    pattern: >
+      Strong systems critique themselves, but user-facing output should not show
+      every internal check unless it changes the outcome.
+    sharpen_master:
+      - Run council internally.
+      - Surface only vetoes, uncertainties, and meaningful tradeoffs.
+      - Keep verbose metrics user-triggered.
+
+orchestration_blueprint:
+  name: MASTER Multi-LLM Prompt-Orchestration Loop
+  stages:
+    - id: attention_frame
+      owner: local_or_fast
+      description: Parse user request into map/zoom/act/targets.
+      output: attention_context
+    - id: task_router
+      owner: cheap_or_fast
+      description: Classify task risk, required tools, expected mutation, and evidence needs.
+      output: route_plan
+    - id: scout
+      owner: cheap_or_browser_local
+      description: Search files/repos/web and extract evidence snippets.
+      output: evidence_pack
+    - id: synthesis
+      owner: default_or_strong
+      description: Produce answer, design, or patch plan from evidence.
+      output: candidate_solution
+    - id: council_review
+      owner: council
+      description: Security/Reliability/Maintainer/Architect review based on blast radius.
+      output: approve_veto_or_revise
+    - id: mutation
+      owner: strong_only
+      description: Apply code/repo changes when authorized.
+      output: commit_or_pr
+    - id: verify
+      owner: fast_plus_tools
+      description: Read back changed files, inspect PR status, run tests where possible.
+      output: verification_report
+    - id: user_summary
+      owner: fast
+      description: Report only what changed, what is uncertain, and next action.
+      output: concise_summary
+
+risk_tiers:
+  low:
+    examples: [classification, summarization, cluster labeling, UI copy]
+    allowed_models: [cheap, fast, local, browser_local]
+    council: optional
+  medium:
+    examples: [docs, config, preview-gated browser modules]
+    allowed_models: [default, fast, strong]
+    council: targeted
+  high:
+    examples: [file mutation, autonomous actions, auth, security, production runtime]
+    allowed_models: [strong]
+    council: required
+  critical:
+    examples: [destructive commands, secret handling, permission changes, public deployment]
+    allowed_models: [strong]
+    council: security_reliability_maintainer_veto
+
+integration_targets:
+  - MASTER/data/models.yml
+  - MASTER/data/council.yml
+  - MASTER/data/attention_context.yml
+  - MASTER/docs/provider_economy.md
+  - MASTER/docs/cognitive_runtime.md
+  - MASTER/lib/now/routing/model_router.rb
+  - MASTER/lib/reach/circuit_breaker.rb

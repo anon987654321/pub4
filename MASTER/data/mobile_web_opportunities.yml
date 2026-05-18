@@ -1,0 +1,150 @@
+# MASTER mobile web opportunity clusters
+# Mobile-first web/PWA/WebGPU/local-first opportunities for MASTER.
+---
+
+clusters:
+  - id: installable_master_pwa
+    name: Installable MASTER PWA
+    confidence: high
+    opportunity: >
+      Make MASTER installable on mobile as a home-screen app with offline shell,
+      wake lock, service-worker cache, share target, and push-capable event surface.
+    repo_targets:
+      - GoogleChrome/workbox
+      - vite-pwa/vite-plugin-pwa
+      - ionic-team/ionic-framework
+      - ionic-team/capacitor
+    master_hooks:
+      - MASTER/web/app/views/chat/index.html.erb
+      - MASTER/web/public/manifest.json
+      - MASTER/web/public/face.js
+      - MASTER/web/public/visual_bridge.js
+    next_actions:
+      - Add service-worker strategy audit.
+      - Add installability checklist.
+      - Make Face3D preview mobile-safe with battery/thermal policy.
+
+  - id: offline_first_memory
+    name: Offline-First Memory and Sync
+    confidence: high
+    opportunity: >
+      Keep useful assistant state local on-device, sync later, and let MASTER operate
+      during network/provider failures.
+    repo_targets:
+      - electric-sql/electric
+      - electric-sql/pglite
+      - yjs/yjs
+      - powersync-ja/powersync-js
+      - duckdb/duckdb-wasm
+    master_hooks:
+      - MASTER/docs/provider_economy.md
+      - MASTER/data/budget.yml
+      - MASTER/data/repo_topic_clusters.yml
+      - MASTER/lib/trace/session.rb
+    next_actions:
+      - Add local transcript/cache schema.
+      - Add offline event queue.
+      - Sync cluster evidence and attention context as local-first records.
+
+  - id: browser_local_ai
+    name: Browser-Local AI Runtime
+    confidence: high
+    opportunity: >
+      Run cheap cognition in the browser before cloud escalation: classification,
+      summarization, cluster labels, intent routing, embedding-like search, and draft critique.
+    repo_targets:
+      - mlc-ai/web-llm
+      - huggingface/transformers.js
+      - xenova/transformers.js
+      - ggml-org/llama.cpp
+    master_hooks:
+      - MASTER/data/models.yml
+      - MASTER/docs/provider_economy.md
+      - MASTER/web/public/visual_bridge.js
+      - MASTER/web/public/cluster_miner.js
+    next_actions:
+      - Add `browser_local` provider tier.
+      - Route low-risk cluster labeling to local browser models.
+      - Emit provider fallback visual events when browser-local handles work.
+
+  - id: mobile_sensor_body
+    name: Mobile Sensor Body
+    confidence: medium
+    opportunity: >
+      Treat the phone as embodied assistant hardware: touch, haptics, orientation,
+      microphone, speech, wake lock, and mobile gestures shape the Face3D body.
+    repo_targets:
+      - ionic-team/capacitor
+      - tauri-apps/tauri
+      - web.dev/device-orientation
+    master_hooks:
+      - MASTER/web/public/face.js
+      - MASTER/web/public/face3d_engine.js
+      - MASTER/web/public/visual_bridge.js
+    next_actions:
+      - Map device orientation to head pose.
+      - Map vibration/haptics to verdict/tool events.
+      - Add reduced-motion and battery modes.
+
+  - id: webgpu_face_runtime
+    name: WebGPU Face Runtime
+    confidence: high
+    opportunity: >
+      Move high-density Face3D rendering to a WebGPU backend while preserving the
+      retro canvas renderer as the default aesthetic fallback.
+    repo_targets:
+      - mlc-ai/web-llm
+      - gpuweb/gpuweb
+      - webgpu/webgpu-samples
+      - nerfstudio-project/gsplat
+    paper_targets:
+      - arxiv:2412.15803 WebLLM
+      - arxiv:2604.02344 WebGPU dispatch overhead
+      - arxiv:2512.08478 WebGPU Gaussian Splatting / Visionary
+    master_hooks:
+      - MASTER/web/public/face3d_engine.js
+      - MASTER/web/public/face3d_renderer.js
+      - MASTER/web/public/face3d_preview.js
+    next_actions:
+      - Add renderer interface contract.
+      - Prototype WebGPU particle point-sprite renderer.
+      - Add thermal/fps governor.
+
+  - id: pocket_personal_assistant
+    name: Pocket Personal Assistant
+    confidence: high
+    opportunity: >
+      Combine PWA, offline memory, voice/TTS, local models, provider fallback,
+      and attention breadcrumbs into a mobile-first personal assistant runtime.
+    repo_targets:
+      - openclaw/openclaw
+      - Gen-Verse/OpenClaw-RL
+      - KroMiose/nekro-agent
+      - crewAIInc/crewAI
+      - microsoft/autogen
+    master_hooks:
+      - MASTER/data/attention_context.yml
+      - MASTER/data/models.yml
+      - MASTER/data/council.yml
+      - MASTER/web/public/face.js
+      - MASTER/web/public/cluster_miner.js
+    next_actions:
+      - Build permissioned action harness.
+      - Add mobile attention breadcrumb UI.
+      - Add voice-first interruption handling.
+      - Add safe skill registry before any autonomous mobile actions.
+
+mining_queries:
+  github:
+    - PWA offline first mobile web app service worker
+    - WebGPU browser LLM mobile PWA
+    - local first sync CRDT PWA mobile app
+    - Capacitor personal assistant AI mobile web
+    - browser local AI WebGPU voice assistant
+    - mobile WebGPU particles renderer
+  arxiv_ar5iv:
+    - WebGPU LLM inference browser mobile
+    - local first AI agents offline sync
+    - personal AI agents harness engineering
+    - browser local inference privacy mobile
+    - Gaussian splatting WebGPU mobile rendering
