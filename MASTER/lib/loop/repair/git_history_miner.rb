@@ -31,7 +31,8 @@ module Master
         )
 
         out.lines.map(&:strip)
-      rescue StandardError => _e
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "git_history_miner.recent_commits")
         []
       end
 

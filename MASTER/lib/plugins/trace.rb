@@ -16,6 +16,7 @@ module Master
       undo      = Master::Trace::Undo.new(session:, event_bus: bus, root:)
       metrics   = Master::Trace::Metrics.new(root:, event_bus: bus)
       Master::Trace::AuditLog.new(root:, event_bus: bus)
+      Master::Trace::SwallowLedger.new(event_bus: bus, root:).attach
       recorder  = Master::Trace::Recorder.new(root:, event_bus: bus)
       { event_log:, bus:, ring:, logging:, session:, undo:, metrics:, trace: recorder }
     end
@@ -34,7 +35,8 @@ module Master
         lang = Master::FILE_LANGUAGE_MAP.fetch(File.extname(f).downcase, "text")
         src  = File.read(f, encoding: "UTF-8", invalid: :replace)
         ["## #{rel}", "```#{lang}", src.rstrip, "```", ""]
-      rescue StandardError => _e
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "plugins.trace.snapshot_file", path: f)
         []
       end
       header  = ["# MASTER Snapshot", "Generated: #{Time.now.utc.iso8601}", "Files: #{files.size}", ""]

@@ -63,7 +63,8 @@ module Master
         next if @current[:events].size >= MAX_EVENTS_PER_TURN
         @current[:events] << relative(event)
       end
-    rescue StandardError; nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "recorder.ingest")
     end
 
     def relative(ev)
@@ -74,7 +75,8 @@ module Master
     def finalize(turn)
       path = File.join(@dir, "#{Time.now.strftime("%Y-%m-%d")}.jsonl")
       File.open(path, "a") { |f| f.puts JSON.generate(turn) }
-    rescue StandardError; nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "recorder.finalize", path:)
     end
 
     def load_last_from_disk
@@ -83,7 +85,9 @@ module Master
       last_line = nil
       File.foreach(files.last) { |l| last_line = l }
       last_line ? JSON.parse(last_line, symbolize_names: true) : nil
-    rescue StandardError; nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "recorder.load_last_from_disk")
+      nil
     end
   end
   end

@@ -29,23 +29,23 @@ Ten-stage turn pipeline: Intake → Infer → Route → Guard → Execute → [C
 
 ### Convergence loop architectures
 
-15 architectures across `loop/` — 11 implemented, 4 scaffolded:
+15 architectures across `loop/` — 14 implemented, 1 concept:
 
 | # | Name | Status |
 |---|------|--------|
 | 1 | Priority queue over round-robin | implemented |
 | 2 | Rule dependency graph (topological sort) | implemented |
-| 3 | File-first convergence strategy | implemented |
+| 3 | File-first convergence strategy | concept |
 | 4 | Deterministic AST autofixes (Prism) | implemented |
 | 5 | Unified diff output for large files | implemented |
 | 6 | Council deliberation for severity:error | implemented |
-| 7 | Reactive file watcher (kqueue/inotify) | scaffolded |
+| 7 | Reactive file watcher (kqueue/inotify) | implemented |
 | 8 | Staged dataflow pipeline Detect→Apply | implemented |
 | 9 | Genetic fix candidate selection | implemented |
 | 10 | Reinforcement learning fix quality | implemented |
-| 11 | Constitution as type system on AST IR | scaffolded |
-| 12 | Datalog/Prolog rule engine | scaffolded |
-| 13 | CRDT-based distributed convergence | scaffolded |
+| 11 | Constitution as type system on AST IR | implemented |
+| 12 | Datalog/Prolog rule engine | implemented |
+| 13 | CRDT-based distributed convergence | implemented |
 | 14 | Hierarchical Bayesian violation priors | implemented |
 | 15 | Codebase as embodied particle topology | implemented |
 

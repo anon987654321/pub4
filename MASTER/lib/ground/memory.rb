@@ -211,8 +211,8 @@ module Master
         next if body.empty?
         remember(key, body, type: type)
       end
-    rescue StandardError => _e
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "memory.preload_claude_md")
     end
 
     def parse_frontmatter(path)
@@ -237,7 +237,8 @@ module Master
       return {} unless File.exist?(@path)
       loaded = Master.load_yaml(@path)
       loaded.is_a?(Hash) ? loaded : {}
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "memory.load_store", path: @path)
       {}
     end
 

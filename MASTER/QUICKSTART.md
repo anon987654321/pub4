@@ -24,12 +24,11 @@ MASTER is a constitutional coding agent in Ruby. Read this first, then run `/ori
 4) How MASTER works
 - Pipeline: Intake → Infer → Route → Guard → Execute → Council/Lint → Prune → Memo → Render.
 - Scans enforce structure/style rules from `data/rules.yml` and `data/ruby_style.yml`.
-- Sweep can auto-fix but must remain safe and auditable.
+- Fixes are applied through SuperLoop and must remain safe and auditable.
 
 5) Core commands
 - `/scan [profile] [path]` check a file/dir.
-- `/sweep [path]` autofix pass.
-- `/autoloop [N]` repeated scan/fix loops.
+- `/fix [path]` apply fixes.
 - `/diag` runtime snapshot.
 - `/why <rule>` explain one rule.
 - `/help` command catalog.

@@ -244,8 +244,8 @@ module Master
       return unless @learnings
       ext = files.filter_map { |f| File.extname(f).downcase.delete(".").presence }.tally.max_by { |_, n| n }&.first || "unknown"
       @learnings.record(rule: @rule.id, file_type: ext, outcome:)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "rule_loop.record_outcomes", event_bus: @bus, rule: @rule.id)
     end
   end
   end

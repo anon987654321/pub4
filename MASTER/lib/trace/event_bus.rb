@@ -40,7 +40,9 @@ module Master
 
       def persist_event(event, payload)
         @event_log.append(event, payload)
-      rescue StandardError; nil
+      rescue StandardError => e
+        # warn-only: routing through the bus here would recurse
+        Master::Ground::Swallow.log(e, context: "event_bus.persist_event", event:)
       end
 
       def elapsed_ms

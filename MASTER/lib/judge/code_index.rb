@@ -72,7 +72,8 @@ module Master
       def const_name_safe(node)
         name = const_name(node)
         name.empty? ? nil : name
-      rescue StandardError => _e
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "code_index.const_name_safe")
         nil
       end
     end

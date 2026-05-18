@@ -3,7 +3,7 @@
 module Master
   module Loop
   # Shared helpers for fix loops — extract_code, converged?.
-  # Included by AutoLoop and RuleLoop to eliminate duplication.
+  # Included by RuleLoop to eliminate duplication.
   module FixHelpers
     CONVERGE_THRESHOLD = 0.05
 

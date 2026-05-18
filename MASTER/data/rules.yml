@@ -209,42 +209,14 @@ beauty:
     ma:        emptiness_pause
     kanso:     eliminate_essence
 
+# thresholds — only blocks with a live reader survive. Per-rule structural
+# limits (method_length, nesting_depth, cyclomatic) live on each rule's
+# detection.structural block, not here. ONE_SOURCE: no second copy.
 thresholds:
-  file:
-    max_lines: 300
-    warn_lines: 200
-    max_bytes: 8192
-    max_line_length: 80
-  method:
-    max_lines: 10
-    warn_lines: 7
-    max_params: 3
-    max_nesting: 2
-    max_complexity: 4
-  class:
+  class:           # read by voice/personality.rb for prompt substitution
     max_methods: 6
-    max_instance_vars: 3
-    max_dependencies: 2
     max_lines: 200
-  coverage:
-    minimum: 95
-  cost:
-    max_per_session: 5.00
-    max_per_request: 0.50
-    warn_at: 0.25
-  web_performance:
-    lcp_seconds: 2.5
-    inp_milliseconds: 200
-    cls: 0.1
-  accessibility:
-    minimum_contrast_ratio: 4.5
-    minimum_touch_target_pixels: 24
-    standard: WCAG_AA
-  typography:
-    line_length_ideal: 66
-    line_height_body: [1.4, 1.6]
-    base_unit: 8
-  convergence:
+  convergence:     # read by loop/super_loop.rb — authoritative copy
     consecutive_clean_runs_required: 2
     max_iterations: 15
     stagnant_threshold: 3

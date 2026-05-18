@@ -2,6 +2,10 @@
 
 Context injection for any LLM reviewing or editing MASTER. Read before touching code.
 
+The complete rule corpus — every axiom, scan rule, operator principle, and
+external lineage — is indexed in `data/CANON.md`. Read it first, every session.
+This file is the orientation; CANON.md is the directory.
+
 ## Identity
 
 MASTER is a constitutional AI coding agent written in Ruby 3.3+ on OpenBSD 7.8. It replaces Claude Code CLI for its operator. It is general-purpose and language-agnostic. Every change leaves the system in a working, deployable state.

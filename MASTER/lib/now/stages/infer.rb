@@ -77,7 +77,8 @@ module Master
           regexes = (spec["patterns"] || []).map { |src| Regexp.new(src, Regexp::IGNORECASE | Regexp::EXTENDED) }
           out[name.to_s] = { regexes: regexes, capture: spec["capture"].to_s }
         end
-      rescue StandardError => _e
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "infer.load_patterns")
         {}
       end
 

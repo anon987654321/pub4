@@ -17,7 +17,8 @@ module Master
       visitor = Visitor.new
       visitor.visit(result.value)
       visitor.sigs
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "ast_signature.from_source")
       []
     end
 

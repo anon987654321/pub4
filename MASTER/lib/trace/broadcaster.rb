@@ -15,7 +15,8 @@ module Master
           return false unless defined?(ActionCable) && ActionCable.respond_to?(:server)
           ActionCable.server.broadcast(stream, payload)
           true
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "broadcaster.broadcast", stream:)
           false
         end
       end

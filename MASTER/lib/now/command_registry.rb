@@ -20,7 +20,7 @@ module Master
         "help" => ->(_ctx) {
           [
             "session: /save /clear /history [N] /tokens /cost /undo /redo /exit",
-            "work:    /scan [profile] [path]  /fix [path]  /review [on|off|path]  /critique <text>  /why <rule>  /topic [desc]",
+            "work:    /scan [profile] [path]  /fix [path]  /review [on|off|path]  /critique <text>  /why <rule>  /axioms  /topic [desc]",
             "model:   /model [id|list] /mode /persona /task",
             "memory:  /memory  /dreams",
             "system:  /orient /tree [N] /diff [ref] /commit /snapshot /diag [section] /dmesg /reload /help"
@@ -161,8 +161,58 @@ module Master
         "critique" => cmd(:dispatch_critique, deliberation, root),
         "model"    => ->(c) { dispatch_model(agent:, config:, metrics:, root:, arg: arg_for(c)) },
         "why"      => cmd(:dispatch_why, agent, root),
+        "axioms"   => cmd(:dispatch_axioms, scanner, root),
         "topic"    => cmd(:dispatch_topic, session)
       }
+    end
+
+    # Constitutional scoreboard: per-axiom violation counts over lib/, plus a
+    # rule dep-graph completeness report. /why explains one rule; /axioms the whole.
+    AXIOM_SCAN_CAP = 400
+
+    def dispatch_axioms(scanner, root, _arg)
+      files    = axiom_scan_files(root)
+      by_axiom = tally_axioms(scanner, files)
+      [axiom_table(files, by_axiom), "", dep_graph_line(root)].join("\n")
+    end
+
+    def axiom_scan_files(root)
+      Dir.glob(File.join(root, "lib", "**", "*.rb"))
+         .reject { |p| p.include?("/knowledge/") || p.include?("/vendor/") }
+         .sort.first(AXIOM_SCAN_CAP)
+    end
+
+    # axiom_tag => violation count, across the scanned files.
+    def tally_axioms(scanner, files)
+      files.each_with_object(Hash.new(0)) do |path, acc|
+        result = scanner.scan(path, depth: :deep)
+        next unless result.ok?
+        result.value!.each { |f| Array(f[:tags]).each { |t| acc[t.to_s] += 1 } }
+      end
+    end
+
+    def axiom_table(files, by_axiom)
+      head = "constitution — #{files.size} files scanned"
+      return "#{head}\n  clean: no axiom violations" if by_axiom.empty?
+      rows = by_axiom.sort_by { |_, n| -n }.map { |tag, n| "  #{tag.ljust(24)} #{n}" }
+      ([head] + rows + ["  total#{" " * 19}#{by_axiom.values.sum}"]).join("\n")
+    end
+
+    def dep_graph_line(root)
+      gap = ungraphed_rules(root)
+      tail = gap.empty? ? " (complete)" : " — #{gap.first(8).join(", ")}"
+      "rule dep-graph: #{gap.size} rule(s) absent from rule_deps.yml#{tail}"
+    end
+
+    # Scan rules absent from the topological dep graph — surfaces silent staleness.
+    def ungraphed_rules(root)
+      registered = Master::Judge::Scan::Rule.registry.map { |k| k.new.id.upcase }.uniq
+      graph      = (Master.load_yaml(File.join(root, "data", "rule_deps.yml")) || {})["deps"] || {}
+      graphed    = (graph.keys + graph.values.flat_map { |v| Array(v["after"]) }).map(&:to_s).uniq
+      (registered - graphed).sort
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "command_registry.ungraphed_rules")
+      []
     end
 
     # scan

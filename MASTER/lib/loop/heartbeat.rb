@@ -114,7 +114,8 @@ module Master
     def model_reachable?(model_id)
       RubyLLM.chat(model: model_id).ask("ping")
       true
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "heartbeat.model_reachable?", event_bus: @bus, model_id:)
       false
     end
 
@@ -173,7 +174,8 @@ module Master
       return {} unless File.exist?(path)
 
       Master.load_yaml(path) || {}
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "heartbeat.load_state", event_bus: @bus, path:)
       {}
     end
 

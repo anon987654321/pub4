@@ -12,7 +12,7 @@ architectures:
     description: >
       Sort rules by recent violation density descending before each pass.
       Highest-impact rules run first, reducing total cycles to convergence.
-    wired_to: lib/master/loop/super_loop.rb (sort_rules_by_priority)
+    wired_to: lib/loop/super_loop.rb (ordered_rules)
     ref: "#1"
 
   - id: rule_dependency_graph
@@ -23,18 +23,19 @@ architectures:
       HOIST before MERGE). A DAG declared in data/rule_deps.yml ensures rules
       run in an order that minimises cascade re-triggering.
     wired_to:
-      - lib/master/loop/super_loop.rb (topo_sort_rules)
+      - lib/loop/super_loop.rb (topo_sort)
       - data/rule_deps.yml
     ref: "#2"
 
   - id: file_first
     name: "File-first convergence (alternative to rule-first)"
-    status: implemented
+    status: concept
     description: >
       Converge all rules on one file before moving to the next.
       Better cache locality, fewer re-reads, faster for large repos.
-      Available as strategy: :file_first on SuperLoop#run_once.
-    wired_to: "lib/master/loop/super_loop.rb (run_file_first)"
+      Was a strategy option on the pre-collapse loop; the SuperLoop
+      consolidation dropped it in favour of a fixed two-tier design.
+    wired_to: none (removed in SuperLoop collapse, a1562a6)
     ref: "#3"
 
   - id: ast_autofixes
@@ -47,8 +48,8 @@ architectures:
       rubocop -A for Ruby; this extends that to YAML/HTML/CSS/JS via
       language-specific transformers.
     wired_to:
-      - lib/master/judge/scan/ast_fixer.rb (frozen_string_literal + bare_rescue + null_comparison)
-      - lib/master/loop/super_loop.rb (fast_pass tier 1)
+      - lib/judge/scan/ast_fixer.rb (frozen_string_literal + bare_rescue + null_comparison)
+      - lib/loop/super_loop.rb (fast_pass tier 1)
     ref: "#4"
 
   - id: diff_only_fixes
@@ -59,8 +60,8 @@ architectures:
       Token cost drops 60-80% for large files. Patch is applied with a
       deterministic patcher — malformed diffs are rejected, not applied blindly.
     wired_to:
-      - lib/master/loop/patch_applier.rb
-      - lib/master/loop/rule_loop.rb (diff_fix)
+      - lib/loop/patch_applier.rb
+      - lib/loop/rule_loop.rb (diff_fix)
     ref: "#5"
 
   - id: council_fixes
@@ -72,7 +73,7 @@ architectures:
       than a direct LLM rewrite. Council proposes, votes, applies only on
       consensus. Slower; much higher quality for high-stakes changes.
     wired_to:
-      - lib/master/loop/rule_loop.rb (council_fix — 3-persona skeptic/security/maintainer veto)
+      - lib/loop/rule_loop.rb (council_fix — 3-persona skeptic/security/maintainer veto)
     ref: "#6"
 
   - id: reactive_event_driven
@@ -84,7 +85,7 @@ architectures:
       a targeted rule_loop pass on that file only. The system quiesces
       naturally. No STARTUP_DELAY, no idle sleep waste.
     wired_to:
-      - lib/master/loop/watch_loop.rb (WatchLoop, kqueue/inotify debounced)
+      - lib/loop/watch_loop.rb (WatchLoop, kqueue/inotify debounced)
       - Gemfile (rb-kqueue for OpenBSD, rb-inotify for Linux — install on VPS)
     ref: "#7"
 
@@ -97,8 +98,8 @@ architectures:
       The existing 10-stage pipeline (Intake→Render) provides the pattern;
       this extends it to the fix loop.
     wired_to:
-      - lib/master/now/pipeline.rb (existing pattern)
-      - lib/master/loop/fix_pipeline.rb
+      - lib/now/pipeline.rb (existing pattern)
+      - lib/loop/fix_pipeline.rb
     ref: "#8"
 
   - id: genetic_fixes
@@ -107,11 +108,9 @@ architectures:
     description: >
       Generate N fix candidates per violation, score each by post-fix
       violation count, apply the winner. Breed high-scoring candidates
-      across passes. Sweep#rewrite_best_of already does this for whole-file
-      rewrites; this extends it per-violation in RuleLoop.
+      across passes. RuleLoop applies this per-violation for small files.
     wired_to:
-      - lib/master/loop/sweep/rewriter.rb (rewrite_best_of, existing)
-      - lib/master/loop/rule_loop.rb (genetic_fix, best_candidate)
+      - lib/loop/rule_loop.rb (genetic_fix, best_candidate)
     ref: "#9"
 
   - id: reinforcement_learning
@@ -124,10 +123,10 @@ architectures:
       AutoLoop already tracks rule_recurrence — this extends it with
       outcome tracking.
     wired_to:
-      - lib/master/ground/knowledge_store.rb (KnowledgeStore — fix_outcomes + strategy_outcomes + feedback_events)
-      - lib/master/loop/rule_loop.rb (record_outcomes — :fixed | :stuck per pass)
-      - lib/master/loop/super_loop.rb (ordered_rules — fix_quality as secondary sort key)
-      - lib/master/plugins/ground.rb (boots KnowledgeStore as learnings:)
+      - lib/ground/knowledge_store.rb (KnowledgeStore — fix_outcomes + strategy_outcomes + feedback_events)
+      - lib/loop/rule_loop.rb (record_outcomes — :fixed | :stuck per pass)
+      - lib/loop/super_loop.rb (ordered_rules — fix_quality as secondary sort key)
+      - lib/plugins/ground.rb (boots KnowledgeStore as learnings:)
     ref: "#10"
 
   - id: constitution_type_system
@@ -138,7 +137,7 @@ architectures:
       Violations become type errors. Fixes are derivable from the complement
       constraint. The type checker is sound and complete — no LLM, no
       probabilistic inference. Requires a typed IR for every supported medium.
-    wired_to: lib/master/ground/type_checker.rb (FROZEN_STRING_LITERAL + BARE_RESCUE constraints implemented)
+    wired_to: lib/ground/type_checker.rb (FROZEN_STRING_LITERAL + BARE_RESCUE constraints implemented)
     ref: "#11"
 
   - id: datalog_rules
@@ -149,7 +148,7 @@ architectures:
       the program's fact base (AST facts). Fixes are derived from the
       complement clause. Sound, complete, no neural network involved.
       Roda/Sequel author Jeremy Evans' style: logic over magic.
-    wired_to: lib/master/judge/scan/datalog_engine.rb (Prism fact extraction + forward-chaining Datalog subset)
+    wired_to: lib/judge/scan/datalog_engine.rb (Prism fact extraction + forward-chaining Datalog subset)
     ref: "#12"
 
   - id: crdt_convergence
@@ -160,7 +159,7 @@ architectures:
       agents make concurrent fixes; the CRDT guarantees eventual consistency
       without conflict resolution overhead. Required for multi-agent MASTER
       instances on the same repo.
-    wired_to: lib/master/loop/crdt_loop.rb (LWW-Register per file + vector clock + merge protocol)
+    wired_to: lib/loop/crdt_loop.rb (LWW-Register per file + vector clock + merge protocol)
     ref: "#13"
 
   - id: bayesian_priors
@@ -174,8 +173,8 @@ architectures:
       skip files where they've never fired before.
     wired_to:
       - data/violation_priors.yml (cold-start priors + language_modifiers for all rules)
-      - lib/master/loop/super_loop.rb (ordered_rules — language-weighted adjusted prior)
-      - lib/master/loop/super_loop.rb (extension_weights — computes ext distribution per target)
+      - lib/loop/super_loop.rb (ordered_rules — language-weighted adjusted prior)
+      - lib/loop/super_loop.rb (extension_weights — computes ext distribution per target)
     ref: "#14"
 
   - id: embodied_codebase
@@ -189,7 +188,7 @@ architectures:
       Structural operations (DEFRAG, FLATTEN, MERGE, DECOUPLE) become
       observable particle migrations — you watch the codebase reorganize.
     wired_to:
-      - lib/master/loop/super_loop.rb (codebase:topology events)
+      - lib/loop/super_loop.rb (codebase:topology events)
       - web/public/visual_bridge.js (master:codebase dispatch)
       - web/public/codebase.js (particle cluster renderer)
     ref: "#15"

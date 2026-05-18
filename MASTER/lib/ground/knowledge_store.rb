@@ -9,7 +9,7 @@ module Master
   # outcomes, and RSI feedback events into one WAL-mode SQLite database.
   #
   # Replaces the split Ground::Learnings (JSONL) + Persistence::SqliteLearnings (SQLite).
-  # Single-object `learnings:` kwarg works for both AutoLoop and RuleLoop callers:
+  # Single-object `learnings:` kwarg serves the RuleLoop caller path:
   #   record(trigger:, strategy:, outcome:)  → strategy_outcomes table
   #   record(rule:, file_type:, outcome:)    → fix_outcomes table
   class KnowledgeStore

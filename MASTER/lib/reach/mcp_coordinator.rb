@@ -82,7 +82,8 @@ module Master
       require "yaml"
       data = Master.load_yaml(path) || {}
       data.fetch("servers", {})
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "mcp_coordinator.load_servers", event_bus: @bus, path:)
       {}
     end
   end

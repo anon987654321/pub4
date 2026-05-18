@@ -21,7 +21,11 @@ module Master
         warn("swallow:error #{payload.inspect}")
       end
       nil
-    rescue StandardError => _e; nil
+    rescue StandardError => e
+      # Last resort: the logger itself failed. Cannot use the bus or recurse
+      # into Swallow — write straight to stderr so the failure is not lost.
+      Kernel.warn("swallow:meta_error #{e.class}: #{e.message}")
+      nil
     end
   end
   end

@@ -22,7 +22,8 @@ module Master
     }.freeze
 
     SLASH_COMMANDS = %w[
-      /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart /ui-critique
+      /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
+      /ui-critique /sound-critique /rebuild /context /checkpoint /verify
     ].freeze
 
     attr_reader :container
@@ -196,8 +197,13 @@ module Master
       when "/chips"   then toggle_chips
       when "/propose"    then run_propose
       when "/principles"  then run_principles
-      when "/restart"     then run_restart
-      when "/ui-critique" then run_ui_critique
+      when "/restart"       then run_restart
+      when "/ui-critique"   then run_ui_critique
+      when "/sound-critique" then run_sound_critique
+      when "/rebuild"       then run_rebuild
+      when "/context"       then run_context
+      when "/checkpoint"    then run_checkpoint
+      when "/verify"        then run_verify
       when "<<"       then run_input(read_multiline)
       else                 run_input(line)
       end
@@ -329,10 +335,162 @@ module Master
       end
     end
 
+    def run_sound_critique
+      puts @renderer.render("sound-critique: assembling audio panel", mode: :dim)
+      critic = Master::Judge::Council::SoundCritique.new(agent: @agent, event_bus: @bus)
+      result = critic.run
+      if result.ok?
+        data  = result.value!
+        picks = data[:cherry_picks]
+        puts @renderer.render("sound-critique: #{picks.size} cherry-pick(s)", mode: :dim)
+        picks.each { |p| puts @renderer.render("  cherry: #{p}", mode: :dim) }
+        data[:feedback].each do |f|
+          puts @renderer.render("  [#{f[:persona]}] #{f[:feedback].to_s.lines.first.to_s.strip}", mode: :dim)
+        end
+      else
+        puts @renderer.render("sound-critique: #{result.message}", mode: :warning)
+      end
+    end
+
+    def run_rebuild
+      puts @renderer.render("rebuild: syntax check + session save + hot-restart", mode: :dim)
+      lib_dir = File.join(Master::ROOT, "lib")
+      errors  = []
+      changed_lib_files(lib_dir).each do |path|
+        ok = system("ruby34 -c #{path} > /dev/null 2>&1")
+        errors << path unless ok
+      end
+      if errors.any?
+        errors.each { |p| puts @renderer.render("  syntax error: #{p}", mode: :warning) }
+        puts @renderer.render("rebuild: aborted — fix errors first", mode: :warning)
+        return
+      end
+      @session.save!
+      puts @renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
+      $stdout.flush
+      Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
+    end
+
+    def run_context
+      query = @last_input.to_s
+      puts @renderer.render("context: gathering for query=#{query[0, 60]}", mode: :dim)
+      provider = Master::Ground::ContextProvider.new
+      rows     = provider.brief(query, limit: 8)
+      if rows.empty?
+        puts @renderer.render("context: nothing found", mode: :dim)
+      else
+        rows.each { |r| puts @renderer.render("  #{r}", mode: :dim) }
+      end
+      @bus&.publish("attention:context", query: query, rows: rows.size)
+    end
+
+    def run_checkpoint
+      puts @renderer.render("checkpoint: snapshotting changed files", mode: :dim)
+      lib_dir = File.join(Master::ROOT, "lib")
+      files   = changed_lib_files(lib_dir)
+      cp      = Master::Ground::Checkpoint.new
+      result  = cp.create(label: "manual", files: files)
+      id      = result.respond_to?(:fetch) ? result[:id] : result.to_s
+      puts @renderer.render("checkpoint: #{id} (#{files.size} file(s))", mode: :dim)
+    end
+
+    def run_verify
+      puts @renderer.render("verify: checking recently landed operator symbols", mode: :dim)
+      plan = {
+        files:   %w[lib/ground/intent_router.rb lib/ground/attention_context.rb
+                    lib/ground/unfinished_ledger.rb lib/ground/orchestration_policy.rb],
+        symbols: %w[Master::Ground::IntentRouter Master::Ground::AttentionContext
+                    Master::Ground::UnfinishedLedger Master::Ground::OrchestrationPolicy],
+        callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify]
+      }
+      checker = Master::Ground::DoneChecker.new
+      result  = checker.call(plan)
+      result.each do |key, val|
+        icon = val.is_a?(TrueClass) || val == :ok ? "ok" : "!!"
+        puts @renderer.render("  #{icon} #{key}", mode: val == false ? :warning : :dim)
+      end
+    end
+
+    def run_sound_critique
+      puts @renderer.render("sound-critique: assembling audio panel", mode: :dim)
+      critic = Master::Judge::Council::SoundCritique.new(agent: @agent, event_bus: @bus)
+      result = critic.run
+      if result.ok?
+        data  = result.value!
+        picks = data[:cherry_picks]
+        puts @renderer.render("sound-critique: #{picks.size} cherry-pick(s)", mode: :dim)
+        picks.each { |p| puts @renderer.render("  cherry: #{p}", mode: :dim) }
+        data[:feedback].each do |f|
+          puts @renderer.render("  [#{f[:persona]}] #{f[:feedback].to_s.lines.first.to_s.strip}", mode: :dim)
+        end
+      else
+        puts @renderer.render("sound-critique: #{result.message}", mode: :warning)
+      end
+    end
+
+    def run_rebuild
+      puts @renderer.render("rebuild: syntax check + session save + hot-restart", mode: :dim)
+      lib_dir = File.join(Master::ROOT, "lib")
+      errors  = []
+      changed_lib_files(lib_dir).each do |path|
+        ok = system("ruby34 -c #{path} > /dev/null 2>&1")
+        errors << path unless ok
+      end
+      if errors.any?
+        errors.each { |p| puts @renderer.render("  syntax error: #{p}", mode: :warning) }
+        puts @renderer.render("rebuild: aborted — fix errors first", mode: :warning)
+        return
+      end
+      @session.save!
+      puts @renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
+      $stdout.flush
+      Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
+    end
+
+    def run_context
+      query = @last_input.to_s
+      puts @renderer.render("context: gathering for query=#{query[0, 60]}", mode: :dim)
+      provider = Master::Ground::ContextProvider.new
+      rows     = provider.brief(query, limit: 8)
+      if rows.empty?
+        puts @renderer.render("context: nothing found", mode: :dim)
+      else
+        rows.each { |r| puts @renderer.render("  #{r}", mode: :dim) }
+      end
+      @bus&.publish("attention:context", query: query, rows: rows.size)
+    end
+
+    def run_checkpoint
+      puts @renderer.render("checkpoint: snapshotting changed files", mode: :dim)
+      lib_dir = File.join(Master::ROOT, "lib")
+      files   = changed_lib_files(lib_dir)
+      cp      = Master::Ground::Checkpoint.new
+      result  = cp.create(label: "manual", files: files)
+      id      = result.respond_to?(:fetch) ? result[:id] : result.to_s
+      puts @renderer.render("checkpoint: #{id} (#{files.size} file(s))", mode: :dim)
+    end
+
+    def run_verify
+      puts @renderer.render("verify: checking recently landed operator symbols", mode: :dim)
+      plan = {
+        files:   %w[lib/ground/intent_router.rb lib/ground/attention_context.rb
+                    lib/ground/unfinished_ledger.rb lib/ground/orchestration_policy.rb],
+        symbols: %w[Master::Ground::IntentRouter Master::Ground::AttentionContext
+                    Master::Ground::UnfinishedLedger Master::Ground::OrchestrationPolicy],
+        callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify]
+      }
+      checker = Master::Ground::DoneChecker.new
+      result  = checker.call(plan)
+      result.each do |key, val|
+        icon = val.is_a?(TrueClass) || val == :ok ? "ok" : "!!"
+        puts @renderer.render("  #{icon} #{key}", mode: val == false ? :warning : :dim)
+      end
+    end
+
     def safe_read_line
       @reader.read_line("", echo: true).chomp
-    rescue StandardError => _e
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "cli.safe_read_line", event_bus: @bus)
     end
 
     def exit_cli
@@ -406,7 +564,8 @@ module Master
       out.lines
          .map { |l| File.join(@root, l.strip) }
          .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "cli.changed_lib_files", event_bus: @bus)
       []
     end
 
@@ -471,8 +630,8 @@ module Master
           sleep SPIN_INTERVAL
           i += 1
         end
-      rescue StandardError => _e
-        nil
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.spinner", event_bus: @bus)
       end
     end
 
@@ -515,8 +674,8 @@ module Master
         $stdout.puts @renderer.render(line, mode: :dim)
         $stdout.flush
       end
-    rescue StandardError => _e
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "cli.print_event", event_bus: @bus)
     end
 
     def diff_stat(path)
@@ -524,8 +683,8 @@ module Master
       out, _ = Open3.capture2e("git", "-C", @root, "diff", "--numstat", "--", path)
       m = out.lines.first&.match(/^(\d+)\s+(\d+)/)
       m ? "+#{m[1]}/-#{m[2]}" : nil
-    rescue StandardError => _e
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "cli.diff_stat", event_bus: @bus)
     end
 
     INIT_FRAMES   = 20
@@ -537,14 +696,15 @@ module Master
       puts @renderer.render("tree0: #{File.basename(@root)} (#{lines.size} entries)", mode: :dim)
       lines.each { |l| puts @renderer.render(l, mode: :dim) }
       puts
-    rescue StandardError => _e
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "cli.print_repo_tree", event_bus: @bus)
     end
 
     def booted_before?
       flag = File.join(@root, ".master", "booted_once")
       File.exist?(flag)
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "cli.booted_before?", event_bus: @bus)
       false
     end
 
@@ -562,8 +722,8 @@ module Master
       puts
       FileUtils.mkdir_p(File.dirname(flag))
       File.write(flag, Time.now.to_s)
-    rescue StandardError => _e
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "cli.mark_booted", event_bus: @bus)
     end
 
     def display_result(result, accumulated, streamed)

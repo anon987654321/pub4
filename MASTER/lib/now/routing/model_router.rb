@@ -168,7 +168,8 @@ end
       def load_rules
         path = File.join(@root, "data", "models.yml")
         Master.load_yaml(path) || {}
-      rescue StandardError => _e
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "model_router.load_rules", path:)
         {}
       end
     end

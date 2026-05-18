@@ -22,7 +22,10 @@ module Master
         FileUtils.mkdir_p(File.dirname(@path))
         File.open(@path, "a") { |io| io.write(JSON.generate(record), "\n") }
         record
-      rescue SystemCallError, JSON::GeneratorError
+      rescue SystemCallError, JSON::GeneratorError => e
+        # The event log's own write failed — cannot route through the bus or
+        # Ground::Swallow without recursing into logging. Stderr is last resort.
+        Kernel.warn("event_log: append to #{@path} failed — #{e.class}: #{e.message}")
         nil
       end
 

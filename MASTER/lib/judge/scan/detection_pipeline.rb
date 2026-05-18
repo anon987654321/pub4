@@ -107,7 +107,8 @@ module Master
             false
           }
           count
-        rescue StandardError => _e
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "detection_pipeline.cyclomatic")
           nil
         end
 
@@ -123,7 +124,8 @@ module Master
             false
           }
           max.zero? ? nil : max
-        rescue StandardError => _e
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "detection_pipeline.max_method_length")
           nil
         end
 
@@ -131,7 +133,8 @@ module Master
           result = Prism.parse(code)
           return nil if result.failure?
           max_depth(result.value, 0)
-        rescue StandardError => _e
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "detection_pipeline.max_nesting")
           nil
         end
 

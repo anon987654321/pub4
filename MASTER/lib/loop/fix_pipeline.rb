@@ -44,16 +44,16 @@ module Master
       path = pkt[:violation][:file]
       return nil unless File.exist?(path)
       pkt.merge(src: File.read(path, encoding: "UTF-8"))
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "fix_pipeline.triage", event_bus: @bus, path:)
     end
 
     def fix(pkt)
       response = @agent.ask(fix_prompt(pkt)).to_s
       return nil if response.strip.empty? || response.strip == "UNCHANGED"
       pkt.merge(candidate: response)
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "fix_pipeline.fix", event_bus: @bus)
     end
 
     def validate(pkt)

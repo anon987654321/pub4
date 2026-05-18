@@ -73,7 +73,8 @@ module Master
       dirty = out.lines.size
       return [] if dirty.zero?
       [prop("/commit", "#{dirty} uncommitted file(s)", 0.5 + [dirty / 40.0, 0.3].min)]
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "propose.from_git", event_bus: @bus)
       []
     end
 

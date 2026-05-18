@@ -34,7 +34,8 @@ module Master
 
     def rotate!
       File.rename(@path, "#{@path}.1")
-    rescue StandardError; nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "audit_log.rotate", path: @path)
     end
   end
   end

@@ -121,7 +121,9 @@ module Master
     def load_yaml(path)
       return unless File.exist?(path)
       Master.load_yaml(path)
-    rescue StandardError; nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "rules.load_yaml", path:)
+      nil
     end
   end
   end

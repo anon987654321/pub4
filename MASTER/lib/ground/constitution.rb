@@ -37,7 +37,9 @@ module Master
     def load
       return [] unless File.directory?(@dir)
       Dir.glob(File.join(@dir, "*.md")).sort.filter_map { |f| parse(f) }.first(MAX_PRINCIPLES)
-    rescue StandardError; []
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "constitution.load", dir: @dir)
+      []
     end
 
     def parse(path)
@@ -51,7 +53,9 @@ module Master
         type:        meta["type"].to_s,
         body:        body.to_s.strip[0, MAX_BODY_CHARS]
       }
-    rescue StandardError; nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "constitution.parse", path:)
+      nil
     end
   end
   end

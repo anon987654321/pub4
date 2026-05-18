@@ -22,7 +22,8 @@ module Master
       text_str = text.to_s
       return if text_str.strip.empty?
       ollama_embed(text_str)
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "embeddings.embed")
       nil
     end
 

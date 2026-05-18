@@ -176,7 +176,8 @@ module Master
       lines = (Master.load_yaml(path) || {})["closings"]
       return nil unless lines.is_a?(Array) && lines.any?
       @p.dim(lines.sample)
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "renderer.closing")
       nil
     end
 
@@ -195,7 +196,8 @@ module Master
     def git_rev
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--short", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "renderer.git_rev")
       nil
     end
 
@@ -217,14 +219,16 @@ module Master
     def git_branch
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "rev-parse", "--abbrev-ref", "HEAD")
       st.success? ? out.strip : nil
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "renderer.git_branch")
       nil
     end
 
     def git_dirty?
       out, _, st = Open3.capture3("git", "-C", @config["root"] || Dir.pwd, "status", "--porcelain")
       st.success? && !out.strip.empty?
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "renderer.git_dirty?")
       false
     end
 

@@ -93,7 +93,8 @@ module Master
       return {} if parts.size < 3
 
       YAML.safe_load(parts[1]) || {}
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "skills.parse_frontmatter", event_bus: @bus)
       {}
     end
   end

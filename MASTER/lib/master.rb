@@ -56,9 +56,6 @@ module Master
   %w[
     now/cli/signals.rb
     now/command_registry/memory_commands.rb
-    ground/memory/search.rb
-    loop/sweep/rewriter.rb
-    loop/sweep/convergence.rb
     judge/scan/rules/lexical_rules.rb
     judge/scan/rules/ruby_rules.rb
     judge/scan/rules/web_rules.rb

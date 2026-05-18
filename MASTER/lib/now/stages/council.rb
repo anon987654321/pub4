@@ -59,7 +59,9 @@ module Master
         data = Master.load_yaml(COUNCIL_PATH)
         (data["auto_trigger_patterns"] || []).filter_map do |str|
           Regexp.new(str, Regexp::IGNORECASE)
-        rescue RegexpError => _e
+        rescue RegexpError => e
+          # Operator-authored config — a bad pattern must not vanish silently.
+          warn("council: dropped invalid auto_trigger_pattern #{str.inspect}: #{e.message}")
           nil
         end
       end

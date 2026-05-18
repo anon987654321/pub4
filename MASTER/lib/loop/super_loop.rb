@@ -15,8 +15,9 @@ module Master
   class SuperLoop
     IDLE_SLEEP      = 300
     STARTUP_DELAY   = 90
-    MAX_PASSES      = 12
-    PLATEAU_WINDOW  = 2
+    MAX_PASSES      = 15        # fallback; authoritative value in rules.yml convergence
+    CLEAN_RUNS      = 2         # fallback; authoritative value in rules.yml convergence
+    PLATEAU_WINDOW  = 3        # fallback; authoritative value in rules.yml convergence
     SKIP_DIRS       = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
     DEPS_PATH       = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
     PRIORS_PATH     = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
@@ -34,8 +35,16 @@ module Master
       @preamble         = build_preamble
     end
 
+    def convergence_cfg = @convergence ||= (@rules.thresholds["convergence"] || {})
+
+    def max_passes_default = convergence_cfg["max_iterations"] || MAX_PASSES
+
+    def clean_runs_required = convergence_cfg["consecutive_clean_runs_required"] || CLEAN_RUNS
+
+    def plateau_window = convergence_cfg["stagnant_threshold"] || PLATEAU_WINDOW
+
     # Bounded convergence loop — used by /fix and run_forever.
-    def run(target = @root, max_passes: MAX_PASSES)
+    def run(target = @root, max_passes: max_passes_default)
       files             = collect_files(target)
       history           = []
       consecutive_clean = 0
@@ -54,13 +63,14 @@ module Master
         if violations.empty?
           consecutive_clean += 1
           @bus&.publish("super_loop:clean", pass:, consecutive_clean:)
-          return Result.ok("clean after #{pass} pass(es)") if consecutive_clean >= 2
+          return Result.ok("clean after #{pass} pass(es)") if consecutive_clean >= clean_runs_required
           next
         end
         consecutive_clean = 0
 
         history << violations.size
-        if history.size >= PLATEAU_WINDOW && history.last(PLATEAU_WINDOW).uniq.size == 1
+        window = plateau_window
+        if history.size >= window && history.last(window).uniq.size == 1
           @bus&.publish("super_loop:plateau", pass:, violations: violations.size)
           break
         end
@@ -173,8 +183,8 @@ module Master
       FileUtils.mkdir_p(File.dirname(path))
       files = sample.map { |v| v[:file] }.uniq.first(3).join(", ")
       File.open(path, "a") { |f| f.write("#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n") }
-    rescue StandardError
-      nil
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "super_loop.append_improvement", event_bus: @bus, rule_id:)
     end
 
     # Architecture #1 + #2 + #10 + #14: density + fix_quality + language-adjusted Bayesian + topological.
@@ -268,20 +278,23 @@ module Master
       total = counts.values.sum.to_f
       return {} if total.zero?
       counts.transform_values { |n| n / total }
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "super_loop.extension_weights", event_bus: @bus)
       {}
     end
 
     def load_deps
       data = Master.load_yaml(DEPS_PATH)
       (data&.dig("deps") || {}).transform_values { |v| Array(v["after"] || []) }
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "super_loop.load_deps", event_bus: @bus)
       {}
     end
 
     def load_priors
       Master.load_yaml(PRIORS_PATH) || {}
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "super_loop.load_priors", event_bus: @bus)
       {}
     end
   end
