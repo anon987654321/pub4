@@ -3,7 +3,9 @@
 module Master
   module Ground
   class ContextProvider
-    PROVIDERS = %i[repo_map memory_search brain_overlay current_files].freeze
+    PROVIDERS = %i[repo_map memory_search brain_overlay current_files rails_pwa_files].freeze
+
+    RAILS_PWA_QUERY_TERMS = %w[rails pwa manifest service_worker hotwire turbo stimulus mobile audit].freeze
 
     def initialize(root: Master::ROOT)
       @root = root
@@ -20,6 +22,8 @@ module Master
           brain_overlay
         when :current_files
           current_files(query, limit)
+        when :rails_pwa_files
+          rails_pwa_files(query, limit)
         else
           []
         end
@@ -57,6 +61,30 @@ module Master
       [{ source: :brain_overlay, path: nil, text: overlay.core_brief[0, 800] }]
     rescue StandardError
       []
+    end
+
+    def rails_pwa_files(query, limit)
+      terms = query.to_s.downcase.scan(/[a-z0-9_]+/)
+      return [] unless (terms & RAILS_PWA_QUERY_TERMS).any?
+
+      deploy_rails = File.expand_path("../../DEPLOY/rails", @root)
+      return [] unless Dir.exist?(deploy_rails)
+
+      patterns = %w[
+        app/views/pwa/manifest.json.erb
+        app/views/pwa/service-worker.js
+        app/javascript/application.js
+        config/routes.rb
+        config/importmap.rb
+      ]
+
+      Dir.entries(deploy_rails).reject { |e| e.start_with?(".", "_") }.flat_map do |app|
+        patterns.filter_map do |rel|
+          path = File.join(deploy_rails, app, rel)
+          next unless File.exist?(path)
+          { source: :rails_pwa, path: "DEPLOY/rails/#{app}/#{rel}", text: "#{app}/#{rel}" }
+        end
+      end.first(limit)
     end
 
     def current_files(query, limit)

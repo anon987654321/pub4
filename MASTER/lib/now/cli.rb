@@ -23,7 +23,7 @@ module Master
 
     SLASH_COMMANDS = %w[
       /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
-      /ui-critique /sound-critique /rebuild /context /checkpoint /verify
+      /ui-critique /sound-critique /rebuild /context /checkpoint /verify /rails-pwa-audit
     ].freeze
 
     attr_reader :container
@@ -203,7 +203,8 @@ module Master
       when "/rebuild"       then run_rebuild
       when "/context"       then run_context
       when "/checkpoint"    then run_checkpoint
-      when "/verify"        then run_verify
+      when "/verify"          then run_verify
+      when "/rails-pwa-audit" then run_rails_pwa_audit
       when "<<"       then run_input(read_multiline)
       else                 run_input(line)
       end
@@ -484,6 +485,24 @@ module Master
       result.each do |key, val|
         icon = val.is_a?(TrueClass) || val == :ok ? "ok" : "!!"
         puts @renderer.render("  #{icon} #{key}", mode: val == false ? :warning : :dim)
+      end
+    end
+
+    def run_rails_pwa_audit
+      puts @renderer.render("rails-pwa-audit: scanning DEPLOY apps", mode: :dim)
+      op = Master::Rails::MobilePwaOperator.new(agent: @agent, event_bus: @bus)
+      result = op.audit_all_deploy
+      if result.ok?
+        result.value!.each do |r|
+          next puts @renderer.render("  !! #{r[:app]}: #{r[:error]}", mode: :warning) if r[:error]
+          icon = { green: "ok", amber: "--", red: "!!" }.fetch(r[:verdict], "??")
+          puts @renderer.render("  #{icon} #{r[:app]}: #{r.dig(:pwa, :findings)&.size || 0} finding(s)", mode: :dim)
+          Array(r.dig(:pwa, :recommendations)).first(3).each do |rec|
+            puts @renderer.render("     #{rec}", mode: :dim)
+          end
+        end
+      else
+        puts @renderer.render("rails-pwa-audit: #{result.message}", mode: :warning)
       end
     end
 
