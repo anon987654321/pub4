@@ -11,11 +11,15 @@ This document describes the incremental path from the current retro canvas face 
 - Use typed arrays in hot loops.
 - Make speech, mood, confidence, tool events, and verdicts drive one coherent face state.
 
-## New module
+## New modules
 
 `web/public/face3d_engine.js` adds a standalone engine namespace at `window.MasterFace3D` and exports the same API as an ES module.
 
-The module is intentionally additive. It does not replace `face.js` yet.
+`web/public/face3d_renderer.js` adds a `Face3DCanvasRenderer` adapter that can render the engine snapshot back through a retro low-resolution phosphor/dither canvas path.
+
+`web/public/face3d_preview.js` is an optional boot module. It only runs when the page URL includes `?face3d=1`, so it can be used as a safe preview path before replacing the live `face.js` renderer.
+
+The modules are intentionally additive. They do not replace `face.js` yet.
 
 ## Core concepts
 
@@ -70,30 +74,69 @@ High-level events should update one emotion vector:
 
 Blendshapes are derived from this vector, so the face feels continuous rather than event-random.
 
+### Renderer adapter
+
+The renderer consumes the engine snapshot:
+
+```js
+{
+  count,
+  x,
+  y,
+  depth,
+  brightness,
+  zone
+}
+```
+
+It accumulates particles into a low-resolution float buffer, applies phosphor decay, runs Atkinson or Bayer dithering, tints pixels by semantic zone, and blits the result to the face canvas.
+
 ### Quality controller
 
 Performance policy should live in one controller. It can lower frame rate, disable bloom, disable oscilloscope, or skip spatial repulsion when frame time or battery status requires it.
 
 ## Suggested migration order
 
-1. Load `face3d_engine.js` next to `face.js`.
-2. Use `MasterFace3D.VisemeDriver` for duration-based lipsync while keeping the existing renderer.
-3. Replace direct mouth zone mutation with blendshape-driven mouth targets.
-4. Convert existing mask builders to normalized anchors one mask at a time.
-5. Move particle storage from objects to typed arrays.
-6. Add spatial hash repulsion for high-density zones.
-7. Add an optional WebGL renderer while preserving the retro canvas renderer as default.
+1. Load `face3d_engine.js`, `face3d_renderer.js`, and `face3d_preview.js` next to `face.js`.
+2. Verify the preview with `?face3d=1`.
+3. Use `MasterFace3D.VisemeDriver` for duration-based lipsync while keeping the existing renderer.
+4. Replace direct mouth zone mutation with blendshape-driven mouth targets.
+5. Convert existing mask builders to normalized anchors one mask at a time.
+6. Move particle storage from objects to typed arrays.
+7. Add spatial hash repulsion for high-density zones.
+8. Add an optional WebGL renderer while preserving the retro canvas renderer as default.
+
+## Preview integration
+
+Add these after the existing `face.js` script:
+
+```html
+<script type="module" src="/face3d_engine.js"></script>
+<script type="module" src="/face3d_renderer.js"></script>
+<script type="module" src="/face3d_preview.js"></script>
+```
+
+Then open the chat UI with:
+
+```text
+?face3d=1
+```
+
+`face3d_preview.js` will take over the existing `#face` canvas only in that mode.
 
 ## Live integration sketch
 
 ```js
 import { Face3DEngine } from '/face3d_engine.js';
+import { Face3DCanvasRenderer } from '/face3d_renderer.js';
 
 const engine = new Face3DEngine();
+const renderer = new Face3DCanvasRenderer(document.getElementById('face'));
+
 engine.setEmotion({ focus: 0.4, confidence: 0.8 });
 engine.setPose({ yaw: 0.15, pitch: -0.04 });
 engine.tick(dt);
-const frame = engine.snapshot();
+renderer.draw(engine.snapshot());
 ```
 
 The current `face.js` can consume `snapshot()` data gradually without losing the existing visual identity.
