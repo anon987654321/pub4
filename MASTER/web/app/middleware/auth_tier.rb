@@ -39,7 +39,8 @@ class AuthTier
     request = Rack::Request.new(env)
     tok = web_token
     return false if tok.to_s.empty?
-    candidate = (request.params["token"] || env["HTTP_X_TOKEN"]).to_s
+    bearer = env["HTTP_AUTHORIZATION"].to_s.sub(/\ABearer\s+/i, "")
+    candidate = bearer.empty? ? (request.params["token"] || env["HTTP_X_TOKEN"]).to_s : bearer
     Rack::Utils.secure_compare(candidate, tok)
   end
 

@@ -1,0 +1,30 @@
+---
+openai:
+  env: [OPENAI_API_KEY]
+  strengths: [reasoning, coding, multimodal]
+  default_model: gpt-5.5-thinking
+
+anthropic:
+  env: [ANTHROPIC_API_KEY]
+  strengths: [coding, long_context, instruction_following]
+  default_model: claude-sonnet-4-6
+
+gemini:
+  env: [GOOGLE_API_KEY, GEMINI_API_KEY]
+  strengths: [long_context, multimodal]
+  default_model: gemini-2.5-flash
+
+openrouter:
+  env: [OPENROUTER_API_KEY]
+  strengths: [cheap, routing, free_tier]
+  default_model: openrouter/auto
+
+deepseek:
+  env: [DEEPSEEK_API_KEY]
+  strengths: [coding, cheap]
+  default_model: deepseek-chat
+
+local:
+  env: []
+  strengths: [privacy, offline, cheap]
+  default_model: local

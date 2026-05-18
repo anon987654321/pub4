@@ -11,6 +11,7 @@ module Master
       COMMAND_RE = /\A\s*\/([\w-]+)\s*(.*)/m.freeze
 
       def call(ctx)
+        Master::Now::PipelineContext.validate!(ctx)
         raw = ctx[:user_message]
         msg = raw.to_s.strip
         return Result.err("intake: empty message", category: :validation) if msg.empty?

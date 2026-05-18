@@ -137,6 +137,11 @@ module Master
     container = Builder.build(root:)
     Plugins::Trace.boot_snapshot(container)
     container[:heartbeat]&.start!
+    Thread.new do
+      Ground::Orders::ConstitutionDrift.new(container:).call
+    rescue StandardError => e
+      warn("constitution_drift: #{e.message}")
+    end
     container
   end
 

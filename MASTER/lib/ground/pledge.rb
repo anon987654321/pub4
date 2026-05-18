@@ -45,7 +45,9 @@ module Master
       unveil("/", "")
       unveil(root, "rwc")
       unveil(Dir.home, "rwc")
-      unveil("/tmp", "rwc")
+      tmp = File.join("/tmp", "master-#{Process.pid}")
+      FileUtils.mkdir_p(tmp) rescue nil
+      unveil(tmp, "rwc")
       unveil("/usr/bin", "rx")
       unveil("/usr/local/bin", "rx")
       unveil("/usr/local/lib", "r")
