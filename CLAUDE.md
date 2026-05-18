@@ -75,9 +75,7 @@ The CLI REPL never goes through ApplicationController — it has full tool acces
 
 ## Deploy
 
-    cd ~/pub4/MASTER/DEPLOY/openbsd
+    cd ~/pub4/DEPLOY/openbsd
     tmux new-session -d -s deploy "doas zsh openbsd.sh 2>&1 | tee /tmp/deploy.log"
-    # resume:
-    doas zsh openbsd.sh --resume
 
-Two stages: (1) DNS checks, TLS via acme-client, pkg_add. (2) app installs, relayd config, rc.d services.
+One script: DNS/DNSSEC/TLS, then a `read` pause for DS record submission and propagation, then app installs, relayd, rc.d services.
