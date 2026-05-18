@@ -34,6 +34,18 @@
   state: pending
   last_run_at: 0
 
+- name: constitution_drift
+  description: Scan lib/ against the axioms after any source mutation; emit improved/regressed/steady so regressions are caught the moment they land.
+  trigger: event
+  on: "tool:after"
+  filter: "Write|Edit|Create|FilePatch"
+  exclude: "data/|test/|knowledge/"
+  command: audit constitution
+  callable: constitution_drift
+  enabled: true
+  state: pending
+  last_run_at: 0
+
 - name: autocommit_post_chat
   description: After any turn that mutated source, generate a Strunk-style commit message and commit.
   trigger: event
