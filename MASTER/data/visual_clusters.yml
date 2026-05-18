@@ -1,0 +1,205 @@
+# MASTER visual and cognition clusters
+# Canonical registry for mining existing clusters and planning new ones.
+---
+
+clusters:
+  - id: face_particle_body
+    name: Face Particle Body
+    status: live
+    layer: embodiment
+    files:
+      - web/public/face.js
+      - web/public/face3d_engine.js
+      - web/public/face3d_renderer.js
+      - web/public/face3d_preview.js
+    signals:
+      - mood
+      - model
+      - verdict
+      - confidence
+      - tool
+      - tts
+      - stt
+      - gesture
+    purpose: >
+      Renders the assistant as a living mask/face. The current version is a retro
+      particle canvas; the Face3D modules add normalized topology, semantic zones,
+      blendshapes, typed-array particles, and preview rendering.
+    migration:
+      - Use Face3DPreview behind ?face3d=1.
+      - Move lipsync to duration-aware visemes.
+      - Convert existing 2D mask anchors to normalized 3D topology.
+      - Keep Atkinson/Bayer/ZX phosphor style as the default aesthetic.
+
+  - id: cognition_ecology
+    name: Cognition Ecology
+    status: live
+    layer: background_world
+    files:
+      - web/public/cognition_ecology.js
+    signals:
+      - master:visual
+      - entropy
+      - confidence
+      - provider
+      - topology
+    purpose: >
+      Renders cognitive terrain, weather, trails, memories, and agent spirits.
+      Runtime events become weather systems and semantic terrain impacts.
+    migration:
+      - Feed Face3D emotion vector from the same entropy/confidence/provider state.
+      - Let memory events spawn both ecology constellations and face crown halos.
+      - Share a single visual event normalizer with visual_bridge.
+
+  - id: codebase_topology
+    name: Codebase Particle Topology
+    status: live
+    layer: repository_body
+    files:
+      - web/public/codebase.js
+      - data/architectures.yml
+    signals:
+      - master:codebase
+      - master:rule_event
+      - codebase:topology
+      - rule_loop:cycle
+      - rule_loop:clean
+      - rule_loop:converged
+    purpose: >
+      Renders modules as particle clusters. Violations agitate clusters; fixes
+      settle them. This is Architecture #15 from the architecture registry.
+    migration:
+      - Promote module registry data into a reusable cluster graph.
+      - Connect dirty module agitation to face uncertainty and ecology terrain fractures.
+      - Add ReferenceGraph and SimilarityClusterer output when available.
+
+  - id: visual_bridge
+    name: Runtime Visual Bridge
+    status: live
+    layer: event_translation
+    files:
+      - web/public/visual_bridge.js
+    signals:
+      - events:stream
+      - DOM input
+      - DOM chat append
+      - status mutation
+    purpose: >
+      Classifies runtime events into visual mode, topology, entropy, confidence,
+      and provider, then emits master:visual plus codebase/rule events.
+    migration:
+      - Extract EVENT_MAP into data for reuse by face, ecology, and codebase views.
+      - Emit Face3D emotion patches directly.
+      - Preserve DOM reflection as a compatibility layer.
+
+  - id: speech_audio_body
+    name: Speech and Audio Body
+    status: partial
+    layer: voice
+    files:
+      - lib/voice/speech.rb
+      - bin/tts-worker
+      - web/public/face.js
+    signals:
+      - chat chunk
+      - sentence break
+      - tts queue
+      - analyser energy
+      - viseme
+    purpose: >
+      Turns assistant output into server-side speech, routes decoded audio through
+      the analyser, and reshapes the particle mouth while speech plays.
+    migration:
+      - Fix availability detection.
+      - Preserve audio mime type for MP3 versus WAV fallback.
+      - Use decoded audio duration and energy for viseme timing.
+      - Share VisemeDriver with Face3D.
+
+  - id: repo_ecology
+    name: Repo Ecology
+    status: planned
+    layer: repository_mining
+    files:
+      - docs/repo_ecology.md
+      - data/visual_clusters.yml
+    signals:
+      - scan
+      - classify
+      - cluster
+      - score
+      - simulate
+      - critique
+    purpose: >
+      Turns the repository into semantic topology, dependency ecology, cognitive
+      geography, architectural history, and organizational memory.
+    migration:
+      - Add cluster miner outputs as structured data.
+      - Feed similarity, reference, and dead-zone clusters into codebase topology.
+      - Keep every proposal reversible, scoped, and audited.
+
+new_clusters:
+  - id: cluster_miner
+    name: Cluster Miner
+    status: proposed
+    purpose: >
+      Scans file paths, runtime events, architecture registry, and repo ecology
+      notes to produce reusable clusters with confidence, evidence, and migration
+      candidates.
+    outputs:
+      - cluster_id
+      - members
+      - evidence
+      - confidence
+      - risks
+      - next_actions
+
+  - id: evidence_graph
+    name: Evidence Graph
+    status: proposed
+    purpose: >
+      Tracks why a file belongs to a cluster: imports, runtime events, shared
+      vocabulary, shared data files, changed-together history, or explicit docs.
+    outputs:
+      - source
+      - relation
+      - target
+      - weight
+      - reason
+
+  - id: emotion_bus
+    name: Emotion Bus
+    status: proposed
+    purpose: >
+      Converts visual_bridge entropy/confidence/mode/provider into a single
+      Face3D emotion vector shared by face, ecology, and codebase layers.
+    outputs:
+      - arousal
+      - valence
+      - focus
+      - confidence
+      - fatigue
+
+  - id: topology_registry
+    name: Topology Registry
+    status: proposed
+    purpose: >
+      Names all visual topologies in one place: papua-mask, serpent, neural,
+      torus, sphere, codebase, and future terrain/body forms.
+    outputs:
+      - topology_id
+      - renderer
+      - preferred_palette
+      - compatible_events
+
+  - id: migration_radar
+    name: Migration Radar
+    status: proposed
+    purpose: >
+      Watches the gap between current live behavior and Face3D target behavior.
+      Prioritizes small safe migrations that preserve the retro aesthetic.
+    outputs:
+      - migration_step
+      - touched_files
+      - blast_radius
+      - rollback_plan
+      - confidence

@@ -181,9 +181,9 @@ class ChatController < ApplicationController
     # :auto opts in to per-clause infer_style. Otherwise enforce whitelist.
     style = Master::Voice::Speech::DEFAULT_STYLE if style != :auto && !Master::Voice::Speech::STYLES.key?(style)
 
-    bytes = Master::Voice::Speech.synthesize_bytes(text, voice: voice, style: style)
-    if bytes && bytes.bytesize > 0
-      send_data bytes, type: "audio/mpeg", disposition: "inline"
+    audio = Master::Voice::Speech.synthesize_audio(text, voice: voice, style: style)
+    if audio&.bytes && audio.bytes.bytesize.positive?
+      send_data audio.bytes, type: audio.mime_type, disposition: "inline"
     else
       head :service_unavailable
     end

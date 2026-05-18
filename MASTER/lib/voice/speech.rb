@@ -11,6 +11,8 @@ module Master
     EDGE_TTS = File.executable?(WORKER)
     ESPEAK   = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
 
+    Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
+
     VOICES = {
       osman:   "ms-MY-OsmanNeural",
       yasmin:  "ms-MY-YasminNeural",
@@ -54,32 +56,41 @@ module Master
     module_function
 
     def available?
-      !EDGE_TTS.nil? || !ESPEAK.nil?
+      EDGE_TTS || !ESPEAK.nil?
     end
 
     def synthesize(text, voice: DEFAULT_VOICE, style: DEFAULT_STYLE)
       text_str = text.to_s.strip
       return if text_str.empty?
+      return unless available?
 
       style = infer_style(text, fallback: DEFAULT_STYLE) if style == :auto
       style = DEFAULT_STYLE unless STYLES.key?(style)
       voice = DEFAULT_VOICE unless VOICES.key?(voice)
 
       if EDGE_TTS
-        synthesize_edge(text, voice: voice, style: style)
-      elsif ESPEAK
-        synthesize_espeak(text)
+        path = synthesize_edge(text_str, voice: voice, style: style)
+        return path if path
       end
+
+      synthesize_espeak(text_str) if ESPEAK
+    end
+
+    def synthesize_audio(text, **opts)
+      path = synthesize(text, **opts)
+      return unless path
+
+      Audio.new(bytes: File.binread(path), mime_type: mime_type_for(path))
+    ensure
+      File.unlink(path) rescue nil if path
     end
 
     def synthesize_bytes(text, **opts)
-      path = synthesize(text, **opts)
-      return unless path
-      begin
-        File.binread(path)
-      ensure
-        File.unlink(path) rescue nil
-      end
+      synthesize_audio(text, **opts)&.bytes
+    end
+
+    def mime_type_for(path)
+      File.extname(path.to_s).downcase == ".wav" ? "audio/wav" : "audio/mpeg"
     end
 
     # Shells out to exe/tts-worker — Falcon's Async scheduler blocks Process.fork

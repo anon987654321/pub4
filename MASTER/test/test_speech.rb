@@ -3,7 +3,6 @@
 require_relative "test_helper"
 
 class TestSpeech < Minitest::Test
-  # module interface
   def test_available_returns_boolean
     assert_includes [true, false], Master::Voice::Speech.available?
   end
@@ -27,39 +26,34 @@ class TestSpeech < Minitest::Test
     assert_nil Master::Voice::Speech.synthesize_bytes("")
   end
 
-  # when edge-tts unavailable
-  def test_synthesize_returns_nil_when_unavailable
-    # Stub Speech.available? to false
-    Master::Voice::Speech.stub(:available?, false) do
-      assert_nil Master::Voice::Speech.synthesize("hello")
+  def test_synthesize_audio_returns_mpeg_for_mp3
+    fake_path = "/tmp/m3_tts_test_fake.mp3"
+
+    Master::Voice::Speech.stub(:synthesize, fake_path) do
+      File.write(fake_path, "fake-mp3-data")
+      audio = Master::Voice::Speech.synthesize_audio("hello")
+      assert_equal "fake-mp3-data", audio.bytes
+      assert_equal "audio/mpeg", audio.mime_type
+      refute File.exist?(fake_path), "temp file should be deleted"
     end
   end
 
-  def test_synthesize_bytes_returns_nil_when_unavailable
-    Master::Voice::Speech.stub(:available?, false) do
-      assert_nil Master::Voice::Speech.synthesize_bytes("hello")
-    end
-  end
+  def test_synthesize_audio_returns_wav_for_espeak_fallback
+    fake_path = "/tmp/m3_tts_test_fake.wav"
 
-  # when edge-tts available (mock system call)
-  def test_synthesize_calls_edge_tts_with_correct_args
-    skip "edge-tts not installed" unless Master::Voice::Speech.available?
-
-    tmp = nil
-    Master::Voice::Speech.stub(:synthesize, ->(text, **) {
-      # Just verify we can call it without raising
-      nil
-    }) do
-      tmp = Master::Voice::Speech.synthesize("test", voice: :osman, style: :deep)
+    Master::Voice::Speech.stub(:synthesize, fake_path) do
+      File.write(fake_path, "fake-wav-data")
+      audio = Master::Voice::Speech.synthesize_audio("hello")
+      assert_equal "fake-wav-data", audio.bytes
+      assert_equal "audio/wav", audio.mime_type
+      refute File.exist?(fake_path), "temp file should be deleted"
     end
-    assert_nil tmp  # mock returns nil
   end
 
   def test_synthesize_bytes_cleans_up_temp_file
     fake_path = "/tmp/m3_tts_test_fake.mp3"
 
     Master::Voice::Speech.stub(:synthesize, fake_path) do
-      # Create a fake mp3
       File.write(fake_path, "fake-mp3-data")
       bytes = Master::Voice::Speech.synthesize_bytes("hello")
       assert_equal "fake-mp3-data", bytes
@@ -67,10 +61,7 @@ class TestSpeech < Minitest::Test
     end
   end
 
-  # voice / style lookup
   def test_unknown_voice_falls_back_to_default
-    # Speech.synthesize uses VOICES.fetch(voice, VOICES[DEFAULT_VOICE])
-    # so unknown symbol falls back to Osman
     default_voice = Master::Voice::Speech::VOICES[Master::Voice::Speech::DEFAULT_VOICE]
     assert default_voice
   end
