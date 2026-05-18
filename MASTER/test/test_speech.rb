@@ -26,6 +26,30 @@ class TestSpeech < Minitest::Test
     assert_nil Master::Voice::Speech.synthesize_bytes("")
   end
 
+  def test_synthesize_audio_returns_mpeg_for_mp3
+    fake_path = "/tmp/m3_tts_test_fake.mp3"
+
+    Master::Voice::Speech.stub(:synthesize, fake_path) do
+      File.write(fake_path, "fake-mp3-data")
+      audio = Master::Voice::Speech.synthesize_audio("hello")
+      assert_equal "fake-mp3-data", audio.bytes
+      assert_equal "audio/mpeg", audio.mime_type
+      refute File.exist?(fake_path), "temp file should be deleted"
+    end
+  end
+
+  def test_synthesize_audio_returns_wav_for_espeak_fallback
+    fake_path = "/tmp/m3_tts_test_fake.wav"
+
+    Master::Voice::Speech.stub(:synthesize, fake_path) do
+      File.write(fake_path, "fake-wav-data")
+      audio = Master::Voice::Speech.synthesize_audio("hello")
+      assert_equal "fake-wav-data", audio.bytes
+      assert_equal "audio/wav", audio.mime_type
+      refute File.exist?(fake_path), "temp file should be deleted"
+    end
+  end
+
   def test_synthesize_bytes_cleans_up_temp_file
     fake_path = "/tmp/m3_tts_test_fake.mp3"
 
