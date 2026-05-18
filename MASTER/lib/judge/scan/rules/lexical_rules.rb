@@ -113,6 +113,7 @@ module Master
   end
 
 
+
   RuleDSL.rule :SILENT_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
     autofix: false,
