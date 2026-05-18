@@ -65,7 +65,11 @@ layout:
     action: Use proportional splits for major panels instead of arbitrary widths.
   whitespace:
     internal_not_greater_than_external: true
-    action: Padding should not exceed separation between unrelated groups.
+    gap_over_margin: true
+    paragraph_margin_em: 1.5
+    section_padding_min_rem: 4
+    section_padding_max_rem: 8
+    action: Padding should not exceed separation between unrelated groups; use gap before margin hacks.
   reading_patterns:
     text_heavy: f_pattern
     landing_page: z_pattern
@@ -77,12 +81,72 @@ layout:
     avoid_default_center_alignment: true
     center_text_max_lines: 3
     body_text_alignment: left
+    rag: right
     action: Use asymmetry and alignment before decoration.
   touch:
     target_min_px: 44
     target_recommended_px: 48
     thumb_zone_primary_actions: bottom_center
     action: Flag critical mobile interactions in unreachable top corners.
+
+ultraminimalism:
+  philosophy:
+    typography_is_design: true
+    absence_is_material: true
+    remove_until_nothing_left_to_remove: true
+    less_but_better: true
+    action: Prefer absence, typography, alignment, and whitespace over ornamental UI.
+  swiss_style:
+    left_aligned_ragged_right: true
+    sans_serif_default: Inter
+    alternative_faces: [Helvetica, Akzidenz-Grotesk, IBM Plex Sans]
+    visible_grid_optional: false
+    font_feature_settings:
+      Inter: '"ss03" 1'
+    action: Use an invisible mathematical grid with type-led hierarchy.
+  negative_space:
+    primary_design_material: true
+    chunk_forms_by_proximity: true
+    avoid_tunnel_vision_distance: true
+    card_padding_px: 24
+    section_gap_px: 48
+    hero_breathing_room_px: 96
+    content_width: min(65ch, 100% - 3rem)
+    action: Space communicates grouping; whitespace must clarify relationships.
+  color:
+    max_palette_roles: 4
+    roles: [primary, secondary, accent, highlight]
+    prefer_monochrome_with_one_accent: true
+    action: Reject color variety when value, spacing, and type can do the work.
+  interaction:
+    minimal_js_default: Stimulus
+    no_build_options: [Stimulus, PetiteVue, Alpine, VanJS, HTMX]
+    progressive_enhancement_required: true
+    data_attributes_bridge_behavior: true
+    action: Keep behavior small, recoverable, and legible in HTML.
+  design_tokens:
+    required_for_generation: true
+    exact_token_use: true
+    token_categories: [color, spacing, radius, typography, motion]
+    action: Inject tokens before generation; flag new ad-hoc values.
+  prompting:
+    constitutional_rules: true
+    positive_constraints_over_negative: true
+    self_refine_loop: true
+    designer_personas: [Dieter Rams, Massimo Vignelli, Josef Mueller-Brockmann]
+    require_design_rationale_before_code: true
+    action: Force design decisions before code; iterate by critique then revision.
+  automated_iteration:
+    screenshot_first: true
+    ferrum_capture: true
+    visual_regression: BackstopJS
+    max_iterations: 5
+    target_score: 95
+    action: Capture, compare, critique, patch, and repeat until differences are intentional.
+  mcp:
+    enabled_targets: [filesystem, puppeteer, git, figma, accessibility]
+    primitives: [tools, resources, prompts]
+    action: Prefer standard tool bridges over bespoke glue when integrating design automation.
 
 visual_design:
   semantics:
@@ -191,3 +255,5 @@ automated_css_analysis:
     - heading hierarchy ratios below 1.2
     - font weight differences below 200
     - decorative chart ink that does not encode data
+    - decorative UI elements that do not encode state, hierarchy, affordance, or tone
+    - non-token spacing, radius, color, or typography values in generated UI
