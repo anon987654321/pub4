@@ -23,7 +23,7 @@ module Master
 
       def call(ctx)
         raw = ctx[:output]
-        output = if raw.respond_to?(:ok?) && raw.ok?
+        output = if raw.is_a?(Master::Result) && raw.ok?
                    raw.value!.to_s
                  elsif raw.is_a?(String)
                    raw
@@ -33,7 +33,7 @@ module Master
         return Result.ok(ctx) if output.empty?
 
         cleaned = prune_mixed(output)
-        final = raw.respond_to?(:ok?) ? Result.ok(cleaned.strip) : cleaned.strip
+        final = raw.is_a?(Master::Result) ? Result.ok(cleaned.strip) : cleaned.strip
         Result.ok(ctx.merge(output: final))
       end
 

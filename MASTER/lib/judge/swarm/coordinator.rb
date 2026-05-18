@@ -109,7 +109,7 @@ module Master
 
       def build_swarm_result(results)
         successes = results.reject { |role, _| role == :timeout }
-                           .select { |_, r| r.respond_to?(:ok?) && r.ok? }
+                           .select { |_, r| r.is_a?(Master::Result) && r.ok? }
         artifacts = successes.transform_values { |r| r.value! }
         confidence = results.empty? ? 0.0 : successes.size.to_f / results.size
         lines = successes.map { |role, r| "### #{role}\n#{r.value!.to_s.strip}" }

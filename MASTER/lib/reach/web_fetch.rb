@@ -58,7 +58,7 @@ module Master
         base = "https://codepen.io/#{user}/pen/#{slug}"
         parts = %w[html css js].map do |ext|
           result = fetch_one("#{base}.#{ext}")
-          result.respond_to?(:ok?) && result.ok? ? "// #{ext}\n#{result.value!}" : nil
+          result.is_a?(Master::Result) && result.ok? ? "// #{ext}\n#{result.value!}" : nil
         end
         Result.ok(parts.compact.join("\n\n"))
       end

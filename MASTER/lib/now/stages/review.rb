@@ -32,7 +32,7 @@ module Master
 
       def run_stage(stage, ctx)
         result = stage.call(ctx)
-        return result if result.respond_to?(:ok?) && !result.ok?
+        return result if result.is_a?(Master::Result) && !result.ok?
 
         Result.wrap(result).map { |value| value || ctx }
       rescue StandardError => e

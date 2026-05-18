@@ -16,7 +16,7 @@ module Master
       (max + 1).times do |i|
         prompt = i.zero? ? task : build_revision_prompt(task, last_result, last_critique)
         last_result = yield(prompt, i)
-        return last_result if last_result.respond_to?(:ok?) && last_result.ok?
+        return last_result if last_result.is_a?(Master::Result) && last_result.ok?
 
         break if i >= max
         last_critique = critique(agent:, task:, result: last_result, fast_model:)

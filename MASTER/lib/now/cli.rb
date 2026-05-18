@@ -218,7 +218,7 @@ module Master
 
     def run_undo
       res = @undo.undo!
-      if res.respond_to?(:ok?) && res.ok?
+      if res.is_a?(Master::Result) && res.ok?
         puts @renderer.render("undo: #{Array(res.value!).join(", ")}", mode: :success)
       else
         puts @renderer.render(res.message, mode: :warning)
@@ -227,7 +227,7 @@ module Master
 
     def run_redo
       res = @undo.redo!
-      if res.respond_to?(:ok?) && res.ok?
+      if res.is_a?(Master::Result) && res.ok?
         puts @renderer.render("redo: #{Array(res.value!).join(", ")}", mode: :success)
       else
         puts @renderer.render(res.message, mode: :warning)
@@ -542,7 +542,7 @@ module Master
       lib_dir = File.join(@root, "lib")
       changed = changed_lib_files(lib_dir)
       result  = changed.any? ? scan_files(changed) : @scanner.scan_dir(lib_dir, depth: :deep)
-      return unless result.respond_to?(:ok?) && result.ok?
+      return unless result.is_a?(Master::Result) && result.ok?
 
       prev = @prev_violations
       @violations      = count_violations(result.value!)
@@ -575,14 +575,14 @@ module Master
 
     def count_violations(pairs)
       pairs.sum do |_file, file_result|
-        file_result.respond_to?(:ok?) && file_result.ok? ? file_result.value!.size : 0
+        file_result.is_a?(Master::Result) && file_result.ok? ? file_result.value!.size : 0
       end
     end
 
     def background_cycle
       lib_dir = File.join(@root, "lib")
       result  = @scanner.scan_dir(lib_dir, depth: :deep)
-      return unless result.respond_to?(:ok?) && result.ok?
+      return unless result.is_a?(Master::Result) && result.ok?
       n = count_violations(result.value!)
       return if n == @violations
       @violations = n
