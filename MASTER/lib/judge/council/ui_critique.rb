@@ -31,8 +31,7 @@ module Master
 
         feedback = result.value!
         ideas = Ideation.new(agent: @agent, event_bus: @bus).ideate(
-          "Generate concrete multi-solution improvements for this web UI. " \
-          "Be brutally honest. Produce 3 distinct solution directions per issue found.",
+          "Generate concrete multi-solution improvements for this web UI. Produce 3 distinct solution directions per issue found.",
           constraints: design_constraints,
           cycles: (preset.dig("cycles") || 1).to_i
         )
@@ -78,6 +77,7 @@ module Master
           web/public/face.js
           web/public/chat.js
           web/app/views/chat/index.html.erb
+          lib/design/platform_profiles.rb
         ]
       end
 
@@ -92,8 +92,23 @@ module Master
           - Visitor access (no token), authenticated (token) tiers
           Critique CSS, JS, HTML semantics, animation, typography, layout, hierarchy, accessibility, and data-ink economy.
           #{Deliberation.quality_brief(:design)}
-          Be brutally honest. Maximum scrutiny. Return shippable, reversible fixes.
+          #{platform_profile_brief}
+          Return shippable, reversible fixes with measurable reasons.
         CTX
+      end
+
+      def platform_profile_brief
+        if defined?(Master::Design::PlatformProfiles)
+          [
+            Master::Design::PlatformProfiles.brief(:brutal_minimal),
+            Master::Design::PlatformProfiles.brief(:medium),
+            Master::Design::PlatformProfiles.brief(:new_yorker)
+          ].join("\n")
+        else
+          "Platform design profiles unavailable; default to content-first measurable critique."
+        end
+      rescue StandardError => e
+        "Platform profile policy failed to load: #{e.message}."
       end
 
       def design_constraints
@@ -103,6 +118,7 @@ module Master
           "animations must respect prefers-reduced-motion",
           "solutions must be implementable without a build step",
           "use Ruby QualityFramework design rules from Deliberation",
+          "use Master::Design::PlatformProfiles for content-first and profile-specific critique",
           "distinguish measurable violations from subjective taste"
         ]
       end
