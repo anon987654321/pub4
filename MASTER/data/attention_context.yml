@@ -1,0 +1,111 @@
+# MASTER attention context protocol
+# Compact breadcrumbs for keeping humans, agents, and models aligned on where attention is.
+---
+
+protocol:
+  id: attention_context
+  version: 1
+  default_visibility: complex_only
+  philosophy: >
+    Use a short spatial breadcrumb when work spans multiple clusters, tools, files,
+    or abstraction levels. Avoid always-on ceremony; silence remains the default
+    for simple replies.
+
+fields:
+  map:
+    description: Slash-separated conceptual path.
+    examples:
+      - repo-mining/mobile-web/browser-local-ai
+      - Face3D/particles/lipsync
+      - prompt-archaeology/multi-llm/orchestration
+  zoom:
+    description: Current attention scale or transition.
+    allowed:
+      - wide
+      - narrow
+      - deep
+      - out
+      - lateral
+      - wide_to_deep
+      - narrow_to_wide
+  act:
+    description: Current operation mode.
+    allowed:
+      - scout
+      - mine
+      - analyze
+      - design
+      - patch
+      - land
+      - verify
+      - synthesize
+      - critique
+      - rollback
+  target:
+    description: Active attention target list.
+    examples:
+      - [repos, opportunity_clusters]
+      - [controller, tts, mime]
+      - [provider_policy, council, prompt_patterns]
+  parent:
+    description: Optional parent maps that this work belongs to.
+    examples:
+      - [repo_topic_clusters, visual_clusters]
+      - [provider_economy, council]
+
+rendering:
+  compact_text: "⟦%{map} | zoom: %{zoom} | act: %{act}⟧"
+  markdown_text: "[MAP %{map}][ZOOM %{zoom}][ACT %{act}]"
+  yaml_block: |
+    attention:
+      map: "%{map}"
+      zoom: "%{zoom}"
+      act: "%{act}"
+      target: %{target}
+      parent: %{parent}
+
+when_to_emit:
+  - multi_step_task
+  - repo_or_code_mutation
+  - broad_to_deep_research
+  - switching_attention_target
+  - user_says_go_ahead_or_go_on
+  - recovery_after_tool_error
+  - summarizing_or_landing_work
+
+when_not_to_emit:
+  - short_casual_answer
+  - single_fact_answer
+  - simple_translation
+  - user_explicitly_requests_no_prefix
+  - message_would_become_more_header_than_content
+
+runtime_uses:
+  - Include in prompt-builder metadata for long agentic tasks.
+  - Emit as `attention:context` bus event when MASTER changes major target.
+  - Feed cognition ecology as camera/zoom movement.
+  - Feed Face3D focus/arousal when zoom goes deep or error recovery starts.
+  - Store with trace/session records for replay and audit.
+
+examples:
+  - context: mining mobile web repos
+    breadcrumb:
+      map: repo-mining/mobile-web/browser-local-ai
+      zoom: wide_to_deep
+      act: scout
+      target: [repos, runtime_patterns, opportunity_clusters]
+      parent: [repo_topic_clusters]
+  - context: patching TTS
+    breadcrumb:
+      map: Face3D/speech-audio/tts-mime
+      zoom: deep
+      act: patch
+      target: [speech_rb, chat_controller, tests]
+      parent: [speech_audio_body]
+  - context: prompt archaeology
+    breadcrumb:
+      map: prompt-archaeology/multi-llm/orchestration
+      zoom: wide_to_deep
+      act: research
+      target: [system_prompt_patterns, provider_roles, council]
+      parent: [provider_economy, council]
