@@ -444,12 +444,12 @@ module Master
     def publish_snapshot(target, label)
       return "snapshot:#{label.downcase}: not found: #{target}" unless File.directory?(target)
       skip  = ->(rel) { rel.split("/").any? { |s| SKIP_SEGS.include?(s) } }
-      text? = ->(f)   { TEXT_EXTS.include?(File.extname(f).downcase) || TEXT_NAMES.include?(File.basename(f)) }
+      text_file = ->(f) { TEXT_EXTS.include?(File.extname(f).downcase) || TEXT_NAMES.include?(File.basename(f)) }
       all   = Dir.glob(File.join(target, "**", "*"))
                  .reject { |f| File.basename(f).start_with?(".") }
                  .reject { |f| skip.(f.delete_prefix("#{target}/")) }.sort
       dirs  = all.select { |f| File.directory?(f) }
-      files = all.select { |f| File.file?(f) && text?.(f) && File.size(f) < Master::CTX_WINDOW_SIZE }
+      files = all.select { |f| File.file?(f) && text_file.(f) && File.size(f) < Master::CTX_WINDOW_SIZE }
       stamp = Time.now.utc.iso8601
       md    = ["# #{label} Snapshot — #{stamp}", "", "## Tree", "```"]
       entries = (dirs.map { |d| [d, :dir] } + files.map { |f| [f, :file] })
