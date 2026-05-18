@@ -35,8 +35,11 @@ Prefer direct edits over fix-script middlemen.
 | | |
 |---|---|
 | Dev machine | OpenBSD VPS · `dev@brgen.no` · `46.23.89.226` (wheel, passwordless doas) |
-| SSH | `ssh dev@46.23.89.226 'cmd'` (key auth; no password prompt needed) |
-| Shell | zsh — ControlMaster does NOT persist across Bash tool calls; reconnect each time |
+| SSH | `ssh -i ~/.ssh/id_ed25519_brgen dev@46.23.89.226` — use `vps` alias from ~/.ssh/config; ControlMaster auto-muxes via `~/.ssh/sockets/`. **One connection per session** — rapid reconnects trigger pf bruteforce table and lock out SSH. |
+| Host server | `ssh -i ~/.ssh/id_ed25519_brgen -p 31415 dev@server4.openbsd.amsterdam` — use to flush pf or access vmctl console (`vmctl console vm23`). |
+| pf bruteforce | If locked out: connect to host server → `vmctl console vm23` → `doas pfctl -t bruteforce -T flush`. |
+| tmux | Always run long ops in tmux: `tmux new-session -d -s s 'cmd'`. Capture with `tmux capture-pane -t s -p`. |
+| Shell | zsh on VPS. Ruby: `ruby34`, `bundle34`. |
 | Local | proot-distro Ubuntu inside Termux on Android — audio production only |
 | OS | OpenBSD 7.8 on VPS, Ubuntu in proot |
 

@@ -21,15 +21,8 @@ module Master
     RSI_PROVIDER_MIN    = 3
 
     def initialize(root:)
-      path = File.join(root, DEFAULT_PATH)
-      FileUtils.mkdir_p(File.dirname(path))
-      @db = SQLite3::Database.new(path)
+      @db = open_db(root)
       @db.results_as_hash = true
-      begin
-        @db.execute("PRAGMA journal_mode = WAL")
-      rescue SQLite3::IOException
-        @db.execute("PRAGMA journal_mode = DELETE")
-      end
       ensure_schema
     end
 
@@ -161,6 +154,27 @@ module Master
     end
 
     private
+
+    def open_db(root)
+      path = File.join(root, DEFAULT_PATH)
+      FileUtils.mkdir_p(File.dirname(path))
+      db = SQLite3::Database.new(path)
+      begin
+        db.execute("PRAGMA journal_mode = WAL")
+      rescue SQLite3::IOException
+        begin
+          db.execute("PRAGMA journal_mode = DELETE")
+        rescue SQLite3::IOException
+          db.close rescue nil
+          warn "knowledge_store: file DB unavailable — using :memory:"
+          db = SQLite3::Database.new(":memory:")
+        end
+      end
+      db
+    rescue SQLite3::Exception => e
+      warn "knowledge_store: #{e.message} — using :memory:"
+      SQLite3::Database.new(":memory:")
+    end
 
     def ensure_schema
       @db.execute_batch(<<~SQL)
