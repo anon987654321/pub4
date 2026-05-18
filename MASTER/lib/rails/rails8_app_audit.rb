@@ -5,8 +5,24 @@ module Master
   class Rails8AppAudit
     DEPLOY_RAILS = File.expand_path("../../DEPLOY/rails", Master::ROOT).freeze
 
-    # Rails 8 defaults — all should be present in modern apps
-    GEMS_WANTED = %w[turbo-rails stimulus-rails importmap-rails propshaft solid_queue solid_cache solid_cable].freeze
+    # Rails Doctrine — nine pillars (rubyonrails.org/doctrine)
+    DOCTRINE = {
+      happiness:         "Optimize for programmer happiness",
+      convention:        "Convention over Configuration",
+      omakase:           "The menu is omakase",
+      no_one_paradigm:   "No one paradigm",
+      beautiful_code:    "Exalt beautiful code",
+      sharp_knives:      "Provide sharp knives",
+      integrated:        "Value integrated systems",
+      progress:          "Progress over stability",
+      big_tent:          "Push up a big tent"
+    }.freeze
+
+    # Solid Trifecta — database-backed adapters eliminating Redis/PaaS dependency
+    SOLID_TRIFECTA = %w[solid_queue solid_cache solid_cable].freeze
+
+    # Rails 8 + OpenBSD stack: full expected gem set
+    GEMS_WANTED = %w[turbo-rails stimulus-rails importmap-rails propshaft solid_queue solid_cache solid_cable falcon].freeze
 
     # Legacy — presence signals migration work needed
     GEMS_LEGACY = %w[jquery-rails rails-ujs sprockets sprockets-rails].freeze
@@ -56,12 +72,13 @@ module Master
           sprockets: gems.any? { |g| g.start_with?("sprockets") }
         },
         app_server: {
-          falcon: gems.include?("falcon"),
-          puma:   gems.include?("puma")
+          falcon: gems.include?("falcon")
         },
-        solid_adapters: subset(gems, %w[solid_queue solid_cache solid_cable]),
-        legacy_gems:    subset(gems, GEMS_LEGACY),
-        missing:        GEMS_WANTED - gems,
+        solid_adapters:  subset(gems, SOLID_TRIFECTA),
+        trifecta_complete: SOLID_TRIFECTA.all? { |g| gems.include?(g) },
+        legacy_gems:     subset(gems, GEMS_LEGACY),
+        missing:         GEMS_WANTED - gems,
+        doctrine_gaps:   doctrine_gaps(gems),
         pwa: {
           manifest:       find_file(app_path, PWA_MANIFEST_CANDIDATES),
           service_worker: find_file(app_path, SW_CANDIDATES)
@@ -138,6 +155,25 @@ module Master
     end
 
     def subset(gems, wanted) = wanted & gems
+
+    # Map missing gems → the doctrine pillar that motivates adding them
+    def doctrine_gaps(gems)
+      gaps = []
+      unless SOLID_TRIFECTA.all? { |g| gems.include?(g) }
+        missing = SOLID_TRIFECTA - gems
+        gaps << { pillar: DOCTRINE[:integrated], gap: "Solid Trifecta incomplete — missing: #{missing.join(', ')} (Redis dependency not yet eliminated)" }
+      end
+      unless gems.include?("propshaft")
+        gaps << { pillar: DOCTRINE[:convention], gap: "propshaft not present — Rails 8 default asset pipeline, replaces Sprockets" }
+      end
+      unless gems.include?("falcon")
+        gaps << { pillar: DOCTRINE[:integrated], gap: "falcon not present — expected app server for relayd/OpenBSD stack" }
+      end
+      if gems.any? { |g| GEMS_LEGACY.include?(g) }
+        gaps << { pillar: DOCTRINE[:progress], gap: "legacy gems present: #{(gems & GEMS_LEGACY).join(', ')} — migrate to Hotwire/Propshaft equivalents" }
+      end
+      gaps
+    end
   end
   end
 end
