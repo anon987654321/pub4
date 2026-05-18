@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 set -euo pipefail
 
-readonly VPS_IP="185.52.176.18"
+readonly VPS_IP="46.23.89.226"
 readonly VPS_USER="dev"
 
 cd ~/pub4

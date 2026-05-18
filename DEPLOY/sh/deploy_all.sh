@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
 # Complete VPS deployment orchestrator per master.yml v72.1.0
-# Deploys all 15 Rails apps to OpenBSD VPS 185.52.176.18
+# Deploys all 15 Rails apps to OpenBSD VPS 46.23.89.226
 set -euo pipefail
-readonly VPS_HOST="185.52.176.18"
+readonly VPS_HOST="46.23.89.226"
 readonly VPS_USER="dev"
 readonly SSH_KEY="/cygdrive/g/priv/passwd/id_rsa"
 readonly LOCAL_BASE="/cygdrive/g/pub"
@@ -54,7 +54,7 @@ vssh 'netstat -an | grep LISTEN | grep -E "1000[1-7]|11006"' || log "WARN: Expec
 log "Deployment complete!"
 log ""
 log "Next steps:"
-log "  1. Point DNS records to ns.brgen.no (185.52.176.18)"
+log "  1. Point DNS records to ns.brgen.no (46.23.89.226)"
 log "  2. Wait 24-48h for propagation"
 log "  3. Run: ssh ${VPS_USER}@${VPS_HOST} 'cd ${REMOTE_BASE}/openbsd && doas zsh openbsd.sh --post-point'"
 log ""

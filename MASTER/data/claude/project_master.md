@@ -4,8 +4,8 @@ description: pub4/MASTER — constitutional AI coding agent on OpenBSD VPS dev@b
 type: project
 originSessionId: 84fcf91d-46ea-43a5-8efa-3d33b065e6a5
 ---
-VPS: dev@brgen.no (185.52.176.18), OpenBSD 7.8, 1GB RAM, passwordless doas.
-SSH: `sshpass -p '<pass>' ssh -o StrictHostKeyChecking=no dev@185.52.176.18 'cmd'`
+VPS: dev@brgen.no (46.23.89.226), OpenBSD 7.8, 1GB RAM, passwordless doas.
+SSH: `sshpass -p '<pass>' ssh -o StrictHostKeyChecking=no dev@46.23.89.226 'cmd'`
 Password changes each session — check CLAUDE.md for current.
 Codebase: ~/pub4/MASTER/ — Ruby ~6K LOC, Zeitwerk-autoloaded.
 

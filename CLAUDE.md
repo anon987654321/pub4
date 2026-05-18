@@ -34,16 +34,16 @@ Prefer direct edits over fix-script middlemen.
 
 | | |
 |---|---|
-| Dev machine | OpenBSD VPS · `dev@brgen.no` · `185.52.176.18` (wheel, passwordless doas) |
-| SSH | `ssh dev@185.52.176.18 'cmd'` (key auth; no password prompt needed) |
+| Dev machine | OpenBSD VPS · `dev@brgen.no` · `46.23.89.226` (wheel, passwordless doas) |
+| SSH | `ssh dev@46.23.89.226 'cmd'` (key auth; no password prompt needed) |
 | Shell | zsh — ControlMaster does NOT persist across Bash tool calls; reconnect each time |
 | Local | proot-distro Ubuntu inside Termux on Android — audio production only |
 | OS | OpenBSD 7.8 on VPS, Ubuntu in proot |
 
 ## DNS (brgen.no — OpenBSD Amsterdam)
 
-    brgen.no       A     185.52.176.18
-    ai.brgen.no    A     185.52.176.18
+    brgen.no       A     46.23.89.226
+    ai.brgen.no    A     46.23.89.226
     mail.brgen.no  MX    brgen.no (priority 10)
 
 ## Repository

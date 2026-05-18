@@ -4,7 +4,7 @@ description: Termux/Android — defer CPU/IO-heavy tasks to VPS, keep device wor
 type: feedback
 originSessionId: 84fcf91d-46ea-43a5-8efa-3d33b065e6a5
 ---
-Prefer the VPS (dev@185.52.176.18) for all work. This device (Termux/Android) is a last resort.
+Prefer the VPS (dev@46.23.89.226) for all work. This device (Termux/Android) is a last resort.
 
 **Why:** User said "prefer using the VPS" and "avoid doing heavy stuff on this device."
 

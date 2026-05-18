@@ -1,6 +1,6 @@
 # OpenBSD Deploy
 
-Full VPS stack deploy for OpenBSD 7.8 at `185.52.176.18`.
+Full VPS stack deploy for OpenBSD 7.8 at `46.23.89.226`.
 
 ## Run
 

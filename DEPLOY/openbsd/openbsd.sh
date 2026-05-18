@@ -19,7 +19,7 @@ trap 'cleanup' EXIT
 trap 'error_handler $? $LINENO' ERR INT TERM
 
 # Constants
-typeset -r BRGEN_IP="185.52.176.18"
+typeset -r BRGEN_IP="46.23.89.226"
 typeset -r HYP_IP="194.63.248.53"
 typeset -r LOCALHOST="127.0.0.1"
 typeset -r EMAIL_ADDRESS="bergen@pub.attorney"
