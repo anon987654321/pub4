@@ -78,6 +78,8 @@ module Master
           web/public/face.js
           web/public/visual_bridge.js
           web/app/views/chat/index.html.erb
+          lib/voice/speech.rb
+          lib/voice/sonitex_sox.rb
         ]
       end
 
@@ -87,8 +89,19 @@ module Master
           Treat sound design as product behavior, not decoration.
           Evaluate sonic hierarchy, timing, mix role, accessibility, graceful failure, and implementation size.
           #{Deliberation.quality_brief(:sound)}
+          #{sonitex_brief}
           Return shippable, reversible fixes, not vague mood boards.
         CTX
+      end
+
+      def sonitex_brief
+        if defined?(Master::Voice::SonitexSox)
+          Master::Voice::SonitexSox.brief
+        else
+          "Sonitex/SoX policy unavailable; prefer cumulative subtle degradation and document SoX gaps."
+        end
+      rescue StandardError => e
+        "Sonitex/SoX policy failed to load: #{e.message}."
       end
 
       def sound_constraints
@@ -99,7 +112,8 @@ module Master
           "must degrade when AudioContext or media playback fails",
           "prefer tiny generated tones or short assets over heavy dependencies",
           "preserve existing visual identity",
-          "use Ruby QualityFramework sound rules from Deliberation"
+          "use Ruby QualityFramework sound rules from Deliberation",
+          "when lo-fi processing is proposed, prefer Master::Voice::SonitexSox presets over ad-hoc shell strings"
         ]
       end
 
