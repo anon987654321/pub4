@@ -11,19 +11,24 @@ module Master
 
     attr_reader :last_timings
 
-    def initialize(stages, bus: nil, trace: false, root: nil, event_bus: nil)
+    def initialize(stages, bus: nil, trace: false, root: nil, event_bus: nil, orchestrator: nil)
       @stages       = stages
       @last_timings = {}
       @bus          = bus || event_bus
       @trace        = trace
       @root         = root
+      @orchestrator = orchestrator
     end
 
     def call(initial)
+      wf_id   = "pipeline-#{Process.pid}-#{Time.now.to_i}"
       timings = {}
+      @orchestrator&.execute(intent_type: :llm_call, workflow_id: wf_id, payload: { stage: "start" }) { nil }
       final = @stages.reduce(initial) do |result, stage|
         result.and_then(stage_label(stage)) { |ctx| run_stage(stage, ctx, timings) }
       end
+      @orchestrator&.checkpoint(workflow_id: wf_id, label: final.ok? ? "ok" : "err")
+      @orchestrator&.rotate!(keep_last: 1000)
       maybe_rollback(final)
       final
     end

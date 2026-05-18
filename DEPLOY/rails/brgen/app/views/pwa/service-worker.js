@@ -14,6 +14,20 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return
+  const url = new URL(e.request.url)
+  const isNav = e.request.mode === "navigate"
+  const isAsset = /\.(js|css|png|jpg|jpeg|webp|svg|woff2?|ico)$/.test(url.pathname)
+  if (isAsset) {
+    e.respondWith(caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+      const clone = res.clone()
+      caches.open(CACHE).then(c => c.put(e.request, clone))
+      return res
+    })))
+    return
+  } else if (isNav) {
+    e.respondWith(fetch(e.request).catch(() => caches.match("/offline")))
+    return
+  }
   e.respondWith(caches.match(e.request).then(cached => cached || fetch(e.request)))
 })
 
