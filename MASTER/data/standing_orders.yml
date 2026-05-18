@@ -122,3 +122,12 @@
   enabled: true
   state: pending
   last_run_at: 0
+
+- name: zsh_ruby_only
+  description: All shell scripting must use zsh or Ruby. Bash, Python, and Perl are banned everywhere — scripts, one-liners, deploy files, and tool output.
+  trigger: pre_tool
+  on: "Write|Edit|FilePatch"
+  command: lint shell_language {target_file}
+  enabled: true
+  state: pending
+  last_run_at: 0
