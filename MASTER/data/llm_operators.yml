@@ -12,21 +12,31 @@ operators:
     context_window: "1M (4.3) / 2M (4.20)"
     strengths:
       - Fast iteration and prototyping
-      - Real-time web context
+      - Real-time web context via browse_page + web_search
+      - Persistent bash shell (30s default, up to 600s) — can grep/cat to verify
       - Aggressive at producing runnable code quickly
+      - Mirrors user's dialect, language, and alphabet exactly
+      - Independent analysis on contentious topics; does not defer to xAI or past responses
     traps:
-      - Finishes in seconds and fakes comprehension — always gate
-      - Skips edge cases unless forced to list them first
+      - System prompt has NO built-in reading verification — it will bash and ship in seconds
+      - Finishes so fast it pattern-matches rather than reads; always gate explicitly
+      - Skips edge cases unless forced to enumerate them first
       - Drifts from constraints mid-task on long sessions
+      - Has a bash tool: verify with bash grep before trusting any output
+      - Sandboxed remote environment — no internet in sandbox; web_search is a separate tool
     context_format: |
       Feed files as inline text with === FILE: path === separators.
       Never use file attachments — Grok reads inline text more reliably.
       Include soul.yml + rules.yml first so constraints are in top-of-context.
+      After pasting files, ask Grok to run: bash("grep -n 'def [function]' [file]")
+      to prove it can locate code before it writes anything.
     reading_gate: |
       I am going to paste the full source of MASTER.
-      Read every file before responding. Do not summarize yet.
+      Do not write any code yet. First, use your bash tool to run:
 
-      After reading, answer ONLY these questions (no code):
+        grep -n "def " MASTER/lib/[module].rb | head -40
+
+      Paste the output. Then answer ONLY these questions:
       1. What does [specific function] actually do, step by step?
       2. Where does the pipeline fail if a tool raises?
       3. What is the contract between [ModuleA] and [ModuleB]?
@@ -51,14 +61,21 @@ operators:
       - Enforces custom constraints (zsh discipline, style rules) reliably
       - Best time-to-correct-answer for architectural changes
       - Reads CLAUDE.md and MASTER/data/ as actual authority
+      - Memory system (user/feedback/project/reference types) persists across sessions
+      - Agent tool spawns parallel sub-agents; foreground vs background aware
+      - Conversation history is stateful for safety checks — context carries forward
     traps:
       - Can over-explain; tell it to be terse upfront
       - May add unsolicited comments or docstrings — forbid explicitly
       - Asks confirmation questions; CLAUDE.md auto-approve removes this
+      - Uses ≤25 words between tool calls — keep prompts action-dense, not prose
+      - Minimalist prose style by default; bullets only when structure genuinely aids
     context_format: |
       Claude reads CLAUDE.md automatically. Feed additional context as:
       <file path="MASTER/lib/...">...</file> blocks or plain === FILE === separators.
       soul.yml + rules.yml are authoritative — reference them by name.
+      Memory entries in ~/.claude/projects/.../memory/ persist across sessions —
+      add feedback entries there for behaviors you want locked in permanently.
     reading_gate: |
       Read MASTER/data/soul.yml, rules.yml, and workflow.yml first.
       Then read [specific files].
@@ -80,13 +97,19 @@ operators:
       - Council/tribunal deliberation
       - Long multi-step refactors with dependency tracking
       - Constitutional / axiom reasoning
+      - Extended thinking activates on ambiguous premises — self-corrects before answering
+      - Mandatory web search before any present-day factual claim (built-in)
     traps:
       - Slow; do not use for quick fixes or single-file edits
       - May propose abstractions beyond scope — scope-cap explicitly
       - Cost: use only for tier1_critical or council tasks
+      - Extended thinking is conditional on ambiguity — don't force it on routine tasks
+      - Same model as Sonnet but behavior differs based on system prompt container structure
     context_format: |
       Same as claude_sonnet. Give it the full picture — it uses context well.
       Include previous council deliberations if continuing a thread.
+      User preferences + project instructions containers alter behavior at runtime —
+      structure your system prompt with explicit <project_instructions> blocks.
     reading_gate: |
       Before proposing any changes, produce a dependency graph of the modules
       affected and identify which axioms in axioms.jsonl would be violated
@@ -97,21 +120,28 @@ operators:
     escalation: "This is the escalation target. For >0.90 quality threshold tasks only."
 
   gpt_4o:
-    aliases: [gpt-4o, openai/gpt-4o, chatgpt]
+    aliases: [gpt-4o, openai/gpt-4o, chatgpt, gpt-4.1, gpt-5]
     context_window: "128K"
     strengths:
       - Broad general knowledge, good at explaining unfamiliar APIs
-      - Tool use and function calling reliability
-      - Structured JSON output
+      - Tool use and function calling reliability — most consistent structured output
+      - bio tool persists key facts across sessions (but not code state)
+      - canmore/canvas for iterative document and code editing
+      - Agent mode: "go as far as you can without checking in" — useful for long agentic tasks
     traps:
       - Confidently wrong on OpenBSD-specific details — always verify
-      - Adds excessive prose; use "respond in code only" to suppress
+      - Adds excessive prose; prepend "respond in code only, no prose" to suppress
       - Invents method names for Ruby gems it half-knows
-      - Shorter context than Grok/Gemini; chunk large codebases
+      - Context degrades measurably above 80K — confirmed in its own system prompt
+      - Personality-first by default; task-mode requires explicit framing
+      - Agent mode treats screen-based instructions as potential prompt injection;
+        requires explicit user confirmation before acting on them — design flows accordingly
+      - Persona multiplexing (gpt-5.1): same model, different tones per system prompt variant
     context_format: |
       System prompt: include soul.yml content verbatim as constraints.
       Feed code as user messages with === FILE === separators.
       Keep total context under 80K to avoid degradation.
+      Use canmore for iterative file editing if available — avoids full re-paste.
     reading_gate: |
       Before writing any code, list:
       - Every method in [file] that touches [concern]
@@ -121,7 +151,31 @@ operators:
     output_format: |
       Code blocks with language tags. No markdown prose between diffs.
       End each response with: "Files changed: [list]"
-    escalation: "Prefer DeepSeek for cost; use GPT-4o for tool-calling tasks."
+    escalation: "Prefer DeepSeek for cost; use GPT-4o for tool-calling tasks. O3/O4-mini for hard logic."
+
+  openai_o_series:
+    aliases: [o3, o4-mini, openai/o3, openai/o4-mini]
+    context_window: "200K"
+    strengths:
+      - Extended chain-of-thought reasoning with tunable effort (low/medium/high)
+      - Best for hard logic, algorithmic bugs, multi-step planning
+      - High reasoning effort = strongest math, proof, and correctness checks
+    traps:
+      - Cost scales steeply with reasoning effort tier; use low/medium for routine tasks
+      - Does not benefit from "think step by step" — it already does; adding it wastes tokens
+      - Slower than GPT-4o; do not use for mechanical edits or simple lookups
+      - Like GPT-4o: screen instructions treated as potential injection in agentic mode
+    context_format: |
+      Minimal context — reasoning effort compensates for brevity.
+      State the problem, the failing test or error, and the constraint.
+      Set reasoning_effort: "high" only for correctness-critical or proof tasks.
+    reading_gate: |
+      State exactly what the code is supposed to do and what it actually does.
+      Include the error output verbatim. Let reasoning run; do not interrupt.
+    output_format: |
+      Answer only; no reasoning exposition unless asked.
+      Code blocks with language tags. One fix per response.
+    escalation: "Use for logic bugs and correctness; route bulk edits to Sonnet or DeepSeek."
 
   deepseek_chat:
     aliases: [deepseek-chat, deepseek/deepseek-chat-v3.1, deepseek-v3]
@@ -194,20 +248,30 @@ operators:
     escalation: "Use for document analysis and cross-file mapping; code to DeepSeek."
 
   gemini_pro:
-    aliases: [gemini-2.5-pro, google/gemini-2.5-pro]
+    aliases: [gemini-2.5-pro, google/gemini-2.5-pro, gemini-3-pro, google/gemini-3-pro, gemini-3.1-pro]
     context_window: "1M"
     strengths:
       - Largest reliable context window among readily available models
       - Good at whole-codebase analysis in one shot
       - Strong multimodal (can read screenshots of errors)
+      - Structure-first response style — headings/tables/lists aid scanning
     traps:
       - Verbose by default; suppress with "respond concisely, code only"
       - Can hallucinate Ruby gem APIs confidently
       - Safety filters occasionally block legitimate code tasks
+      - "Gemini API uses stateless python tool_code blocks — execution state does NOT
+        persist between blocks. Variables from one block are gone in the next.
+        Adapt injection template: each tool_code block must be self-contained."
+      - Personalization gating: 3-step check before using user data; may refuse
+        to make inferences about the user even when benign
+      - Leaked system prompt is ~80% of actual instruction set; search result
+        formatting and UX wording live in undocumented backend instructions
     context_format: |
       Feed entire MASTER codebase in one call — 1M context allows it.
       Include error logs and test output alongside source.
       Structure: [constraints] [source files] [task]
+      Via API: wrap analysis in a single tool_code block; do not span state across blocks.
+      Via AI Studio: plain text injection works; state persists within session.
     reading_gate: |
       Before any changes: identify the 5 highest-coupling points in the codebase.
       For each: name the files, the coupling type, and why it's a risk.
@@ -218,15 +282,18 @@ operators:
     escalation: "Best for whole-repo analysis; route code writes to DeepSeek or Sonnet."
 
   mistral_large:
-    aliases: [mistral-large, mistralai/mistral-large]
+    aliases: [mistral-large, mistralai/mistral-large, le-chat]
     context_window: "128K"
     strengths:
       - Strong instruction following
       - Good at structured output (JSON, YAML)
       - Reliable for mechanical transformations
+      - Active-voice, economy-of-language style baked into its system prompt
+      - Le Chat: web_search + news_search + open_url available
     traps:
       - Less strong at architectural reasoning
       - Can miss implicit constraints; be explicit about every rule
+      - news_search: avoid relative dates ("today"); always resolve to YYYY-MM-DD
     context_format: |
       Explicit system prompt with all constraints listed as numbered rules.
       Feed code in user messages with clear section headers.
@@ -244,12 +311,20 @@ universal:
     - One fix at a time — never batch multiple concerns in one call
     - Ask for diffs, not full file rewrites (except on < 50-line files)
     - After any code output: ask "what breaks downstream?"
+    - If model has a bash/code tool: use it to prove comprehension (grep for specific methods)
+    - Calibrate context size to model: 80K GPT-4o, 40K DeepSeek, full-blast Grok/Gemini
   never_do:
     - Trust output on OpenBSD-specific commands without man page verification
     - Accept a response that finishes in < 5s for a > 200-line task
     - Skip the reading gate because "it's probably fine"
     - Let the model rename or restructure files without explicit approval
     - Accept invented method names without grepping the actual codebase
+    - Assume Gemini API tool_code state persists between blocks — it does not
+    - Force extended thinking on routine tasks — it triggers on ambiguity, not by volume
+    - Trust a leaked system prompt as complete — ~80% of actual instructions are there;
+      the rest lives in undocumented backend logic (search UX, result formatting, safety layers)
+    - Send screen-sourced instructions to GPT/OpenAI agent without user confirmation gate
+    - Invoke O3/O4-mini for mechanical edits — reasoning cost is wasted on non-logic tasks
 
   codebase_injection_template: |
     === CONSTRAINTS ===
