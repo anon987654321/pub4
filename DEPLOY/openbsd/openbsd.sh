@@ -218,10 +218,9 @@ stage_1() {
     {
       print -r -- "domain $domain {"
       if [[ -n $subdomains ]]; then
-        print -r -- "  alternative names {"
-        print -r -- "    $domain"
-        for sub in ${(s:,:)subdomains}; do print -r -- "    $sub.$domain"; done
-        print -r -- "  }"
+        typeset altnames="$domain"
+        for sub in ${(s:,:)subdomains}; do altnames="$altnames $sub.$domain"; done
+        print -r -- "  alternative names { $altnames }"
       fi
       print -r -- "  domain key /etc/ssl/private/$domain.key"
       print -r -- "  domain full chain certificate /etc/ssl/$domain.fullchain.pem"
