@@ -1,0 +1,259 @@
+# MASTER repo topic clusters
+# Mined from anon987654321/pub4 plus public GitHub/arXiv/ar5iv-adjacent search.
+---
+
+clusters:
+  - id: token_efficiency
+    name: Token Efficiency and Context Conservation
+    status: live
+    confidence: high
+    local_evidence:
+      - MASTER/knowledge/research/token_reduction.md
+      - MASTER/docs/provider_economy.md
+      - MASTER/data/budget.yml
+      - MASTER/data/models.yml
+    external_evidence:
+      - arxiv:2604.09613 Token-Budget-Aware Pool Routing for Cost-Efficient LLM Inference
+      - arxiv:2604.08075 Dual-Pool Token-Budget Routing for Cost-Efficient and Reliable LLM Serving
+      - arxiv:2410.10456 Ada-K Routing: Boosting the Efficiency of MoE-based LLMs
+    pattern: >
+      Estimate cost before acting. Route by token budget, task risk, provider health,
+      and context pressure. Speak only when output adds value.
+    build_next:
+      - Token budget predictor for MASTER requests.
+      - Silent-success default for cluster mining and visual telemetry.
+      - Cheap-model route for summarization, classification, critique, and cluster labels.
+
+  - id: free_model_fallbacks
+    name: Free Model Fallbacks and Provider Economy
+    status: live
+    confidence: high
+    local_evidence:
+      - MASTER/data/models.yml
+      - MASTER/docs/provider_economy.md
+      - MASTER/data/budget.yml
+      - MASTER/lib/now/routing/model_router.rb
+      - MASTER/lib/reach/circuit_breaker.rb
+    pattern: >
+      Treat providers as competing infrastructure. Use free/local/cheap models for
+      low-risk work, escalate only for irreversible synthesis, and quarantine weak providers.
+    build_next:
+      - Provider health scoreboard.
+      - Failure-triggered visual events.
+      - Model fallback simulator.
+
+  - id: design_architecture_systems
+    name: Design, Architecture, and System Shape
+    status: live
+    confidence: high
+    local_evidence:
+      - MASTER/data/architectures.yml
+      - MASTER/data/workflow.yml
+      - MASTER/docs/repo_ecology.md
+      - MASTER/docs/cognitive_runtime.md
+      - DEPLOY/rails/amber/ARCHITECTURE.md
+    pattern: >
+      MASTER already thinks in architectures: rule DAGs, dataflow pipelines,
+      CRDT convergence, Bayesian priors, repo ecology, and embodied codebase topology.
+    build_next:
+      - Architecture Pattern Atlas.
+      - Design Critique Council.
+      - System-shape visualization linked to codebase topology.
+
+  - id: webgpu_browser_runtime
+    name: WebGPU Browser Runtime
+    status: new_external
+    confidence: high
+    external_evidence:
+      - arxiv:2412.15803 WebLLM: A High-Performance In-Browser LLM Inference Engine
+      - arxiv:2604.02344 Characterizing WebGPU Dispatch Overhead for LLM Inference
+      - github:mlc-ai/web-llm
+    pattern: >
+      Browser-local inference is becoming a viable runtime tier. WebGPU allows
+      private, local, low-friction inference, but dispatch overhead and kernel fusion matter.
+    build_next:
+      - Optional browser-local assistant mode.
+      - WebGPU particle renderer for Face3D.
+      - WebLLM fallback route for offline cheap cognition.
+
+  - id: webgpu_world_model_rendering
+    name: WebGPU World Models and Neural Rendering
+    status: new_external
+    confidence: high
+    external_evidence:
+      - arxiv:2512.08478 Visionary: WebGPU-Powered Gaussian Splatting Platform
+      - arxiv:2409.06765 gsplat: An Open-Source Library for Gaussian Splatting
+      - arxiv:2311.12775 SuGaR: Surface-Aligned Gaussian Splatting
+    pattern: >
+      Gaussian splats, meshes, and per-frame neural processing can become the next
+      Face3D backend: semantic particles today, neural splats tomorrow.
+    build_next:
+      - Face3D WebGPU renderer spike.
+      - Gaussian-splat avatar/world renderer experiment.
+      - Repository terrain as navigable 3D scene.
+
+  - id: openclaw_like_personal_agents
+    name: OpenClaw-like Personal Agents
+    status: new_external
+    confidence: medium
+    unresolved_terms:
+      - opencrabs: not found clearly in public search; may be private, misspelled, or meant as OpenClaw/OpenCrab-like.
+    external_evidence:
+      - openclaw/openclaw Personal AI assistant pattern
+      - arxiv:2604.11548 SemaClaw harness engineering for personal AI agents
+      - arxiv:2603.10165 OpenClaw-RL next-state learning from user/tool/GUI signals
+      - KroMiose/nekro-agent chat-platform sandboxed agent pattern
+      - crewAIInc/crewAI multi-agent workflow pattern
+    pattern: >
+      Persistent personal agents need harness engineering: permissions, sandboxing,
+      task queues, memory, tool safety, user feedback learning, and reliable rollback.
+    build_next:
+      - MASTER Harness Layer.
+      - PermissionBridge equivalent for tools/files/calendar/mail.
+      - Agent skill sandbox with signed/verified skills only.
+
+  - id: bleeding_edge_experimental_repos
+    name: Bleeding Edge Experimental Repos
+    status: new_external
+    confidence: medium
+    external_evidence:
+      - openclaw/openclaw autonomous personal agent
+      - Gen-Verse/OpenClaw-RL online RL for agents
+      - mlc-ai/web-llm browser-local WebGPU LLM inference
+      - nerfstudio-project/gsplat Gaussian splatting development library
+      - vllm-project/vllm high-throughput inference serving
+      - sgl-project/sglang structured generation and serving
+      - ggml-org/llama.cpp edge/local inference
+      - KroMiose/nekro-agent multimodal/chat-platform agent framework
+    pattern: >
+      Experimental repos cluster around local inference, persistent agents,
+      structured generation, sandboxed skills, multimodal UI, and GPU-native web runtimes.
+    build_next:
+      - External Repo Radar.
+      - Weekly cluster diff of fast-moving repos.
+      - Risk tags: security, licensing, stability, hype, reproducibility.
+
+  - id: agi_agent_ecosystem
+    name: AGI, Agents, and Multi-Agent Ecosystem
+    status: mirrored_research
+    confidence: high
+    local_evidence:
+      - github_repos/awesome-ai-agents/README.md
+      - github_repos/awesome-llm-apps/mcp_ai_agents/multi_mcp_agent/multi_mcp_agent.py
+      - MASTER/lib/judge/agent.rb
+      - MASTER/docs/cognitive_runtime.md
+    pattern: >
+      The repo contains a mirrored agent landscape plus internal agent/council/runtime work.
+    build_next:
+      - Agent framework taxonomy.
+      - MASTER subsystem comparison matrix.
+      - Multi-agent orchestration pattern miner.
+
+  - id: personal_assistants
+    name: Personal Assistants and Voice Assistants
+    status: mirrored_research
+    confidence: high
+    local_evidence:
+      - github_repos/awesome-llm-apps/ai_agent_framework_crash_course/openai_sdk_crash_course/1_starter_agent/1_personal_assistant_agent/README.md
+      - github_repos/awesome-llm-apps/ai_agent_framework_crash_course/openai_sdk_crash_course/1_starter_agent/1_personal_assistant_agent/agent.py
+      - github_repos/system_prompts_leaks/Perplexity/voice-assistant.md
+      - github_repos/system_prompts_leaks/Perplexity/comet-browser-assistant.md
+      - MASTER/web/public/face.js
+    pattern: >
+      Personal assistants combine persistent context, speech, tools, calendar/mail/files,
+      interruption handling, and social presentation.
+    build_next:
+      - Assistant Mode Map.
+      - Voice-first flow for MASTER web UI.
+      - Safe prompt-pattern extraction without copying leaked prompt text.
+
+  - id: social_intelligence
+    name: Social Intelligence and Interaction Norms
+    status: latent
+    confidence: medium
+    local_evidence:
+      - github_repos/leaked-system-prompts/discord-clyde_20230420.md
+      - github_repos/leaked-system-prompts/discord-clyde_20230716-1.md
+      - github_repos/leaked-system-prompts/meta-ai-whatsapp_20250819.md
+      - github_repos/CL4R1T4S/META/Llama4_WhatsApp.txt
+      - MASTER/web/public/face.js
+    pattern: >
+      Social intelligence appears as prompt archaeology and expressive UI gestures,
+      but needs a safe first-party interaction policy layer.
+    build_next:
+      - Social Mode Controller.
+      - Rapport/repair/escalation state machine.
+      - Face3D social expression presets.
+
+  - id: music_chord_theory
+    name: Music, Chord Theory, and Production DNA
+    status: live
+    confidence: high
+    local_evidence:
+      - MASTER/lib/voice/production_dna.rb
+      - DEPLOY/dilla/dilla_analog.rb
+      - DEPLOY/dilla/dilla.rb
+      - DEPLOY/dilla/dilla.html
+    pattern: >
+      Dilla/Madlib/FlyLo timing, chord voicings, analog drift, low-pass warmth,
+      sampler grit, and live-triggered imperfection are encoded as reusable production DNA.
+    build_next:
+      - Music theory registry.
+      - Chord graph visualizer.
+      - Beat/voice prosody bridge.
+
+  - id: lyricism_linguistics
+    name: Lyricism, Linguistics, Prosody, and Voice
+    status: latent
+    confidence: medium
+    local_evidence:
+      - MASTER/knowledge/research/tts.yml
+      - MASTER/lib/voice/production_dna.rb
+      - MASTER/lib/voice/speech.rb
+      - MASTER/web/public/face.js
+    pattern: >
+      Speech style inference, sentence-level TTS, prosody research, visemes,
+      and musical timing point toward a lyricism/linguistics engine.
+    build_next:
+      - Phoneme/rhyme/meter extractor.
+      - Prosody-to-viseme mapping.
+      - Copyright-safe lyric constraints.
+
+  - id: embodied_exoskeletons
+    name: Embodied Interfaces, Exoskeletons, and Body Augmentation
+    status: speculative
+    confidence: low
+    local_evidence:
+      - MASTER/web/public/face.js
+      - MASTER/docs/repo_ecology.md
+      - MASTER/data/architectures.yml
+    pattern: >
+      No strong physical exoskeleton repo evidence was found yet. Existing evidence
+      points to a cognitive/interface exoskeleton: face, gestures, haptics, terrain,
+      body-like repo topology, and agentic control surfaces.
+    build_next:
+      - Haptics and motion input layer.
+      - Wearable/robotics repo search pass.
+      - Embodied cognition UI taxonomy.
+
+  - id: ar5iv_research_radar
+    name: ar5iv / arXiv Research Radar
+    status: new_external
+    confidence: medium
+    notes: >
+      Direct ar5iv HTML results were not exposed by search, but arXiv equivalents
+      were found for the requested themes and can usually be checked on ar5iv by ID.
+    external_evidence:
+      - arxiv:2512.08478 WebGPU Gaussian Splatting / Visionary
+      - arxiv:2412.15803 WebLLM browser inference
+      - arxiv:2604.09613 Token-budget pool routing
+      - arxiv:2604.08075 Dual-pool token-budget routing
+      - arxiv:2604.11548 SemaClaw harness engineering
+      - arxiv:2603.10165 OpenClaw-RL online agent learning
+      - arxiv:2604.02344 WebGPU dispatch overhead
+    pattern: >
+      Use ar5iv/arXiv as a research radar feeding MASTER's design backlog.
+    build_next:
+      - arXiv/ar5iv topic watchlist.
+      - Paper-to-cluster summarizer.
+      - Implementation-readiness scoring.
