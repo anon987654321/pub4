@@ -5,6 +5,7 @@ module Master
   module Council
     class SoundCritique
       COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
+      DESIGN_RULES_PATH = File.join(Master::ROOT, "data", "design_rules.yml").freeze
       MAX_FILE_BYTES = 24_576
 
       SOUND_PANEL = [
@@ -86,14 +87,34 @@ module Master
         <<~CTX
           Review MASTER as an interactive AI agent with visual motion, chat streaming, and voice/audio affordances.
           Treat sound design as product behavior, not decoration.
-          Evaluate:
-          - sonic hierarchy: what should be foreground, background, or silent
-          - timing: attack, decay, pauses, streaming cadence, notification rhythm
-          - mix role: whether sounds sit under speech, reinforce state, or distract
-          - accessibility: mute, reduced motion, no autoplay surprise, screen-reader coexistence
-          - implementation: small browser-native assets, no build step, graceful failure
+          Evaluate sonic hierarchy, timing, mix role, accessibility, graceful failure, and implementation size.
+          Use the codified motion_and_sound and ultraminimalism rules below as measurable guidance.
+          #{sound_rules_context}
           Return shippable fixes, not vague mood boards.
         CTX
+      end
+
+      def sound_rules_context
+        rules = File.exist?(DESIGN_RULES_PATH) ? Master.load_yaml(DESIGN_RULES_PATH) : {}
+        return "Sound rules: unavailable." if rules.empty?
+
+        sound = rules.fetch("motion_and_sound", {})
+        minimalist = rules.fetch("ultraminimalism", {})
+        <<~RULES
+          Sound rules:
+          - avoid quantized feel: #{sound.dig("timing", "avoid_quantized_feel")}
+          - preserve silence: #{sound.dig("timing", "preserve_silence")}
+          - no autoplay without intent: #{sound.dig("audio_accessibility", "no_autoplay_without_intent")}
+          - mute path required: #{sound.dig("audio_accessibility", "mute_path_required")}
+          - must not mask speech: #{sound.dig("audio_accessibility", "must_not_mask_speech")}
+          - screen-reader coexistence required: #{sound.dig("audio_accessibility", "must_not_conflict_with_screen_readers")}
+          - graceful media failure required: #{sound.dig("audio_accessibility", "graceful_failure_required")}
+          - foreground sound is for #{sound.dig("sonic_hierarchy", "foreground")}
+          - minimal behavior default: #{minimalist.dig("interaction", "minimal_js_default")}
+          - progressive enhancement required: #{minimalist.dig("interaction", "progressive_enhancement_required")}
+        RULES
+      rescue StandardError => e
+        "Sound rules failed to load: #{e.message}."
       end
 
       def sound_constraints
@@ -103,7 +124,8 @@ module Master
           "must not mask speech or screen-reader output",
           "must degrade when AudioContext or media playback fails",
           "prefer tiny generated tones or short assets over heavy dependencies",
-          "preserve existing visual identity"
+          "preserve existing visual identity",
+          "use motion_and_sound and ultraminimalism rules from data/design_rules.yml"
         ]
       end
 
