@@ -1,0 +1,14 @@
+#!/bin/ksh
+
+daemon="/usr/local/bin/ruby34"
+daemon_flags="/home/hjerterom/app/config/falcon.rb"
+daemon_user="hjerterom"
+daemon_timeout=30
+
+. /etc/rc.d/rc.subr
+
+pexp="ruby34 /home/hjerterom/app/config/falcon.rb"
+rc_bg=YES
+rc_reload=NO
+
+rc_cmd $1

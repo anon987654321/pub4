@@ -1,0 +1,18 @@
+#!/bin/ksh
+
+daemon="/usr/local/bin/ruby"
+daemon_flags=""
+daemon_user="brgen"
+daemon_timeout=30
+
+. /etc/rc.d/rc.subr
+
+pexp="ruby34 /home/brgen/app/vendor/bundle/ruby/3.4/bin/rackup.*"
+rc_bg=YES
+rc_reload=NO
+
+rc_start() {
+    su -l brgen -c "cd /home/brgen/app && RAILS_ENV=production /usr/local/bin/bundle exec rackup -s falcon -o 0.0.0.0 -p 11006 -E production -D -P /home/brgen/app/tmp/pids/server.pid"
+}
+
+rc_cmd $1
