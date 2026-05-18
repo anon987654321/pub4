@@ -190,6 +190,7 @@ stage_1() {
   verify_nsd
 
   [[ -d /var/www/acme ]] || { log ERROR "/var/www/acme missing"; exit 1 }
+  mkdir -p /var/www/acme/.well-known/acme-challenge
   install_static etc/httpd.conf /etc/httpd.conf
   httpd -n -f /etc/httpd.conf || { log ERROR "httpd.conf invalid"; exit 1 }
   /usr/sbin/rcctl enable httpd
