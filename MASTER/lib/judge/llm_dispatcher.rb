@@ -143,11 +143,11 @@ module Master
       end
 
       def parse_tool_calls(text)
-        text.scan(TOOL_CALL_RE).filter_map { |match|
+        text.scan(TOOL_CALL_RE).filter_map do |match|
           JSON.parse(match.first.strip)
         rescue JSON::ParserError
           nil
-        }
+        end
       end
 
       def execute_react_tool(name, args)
