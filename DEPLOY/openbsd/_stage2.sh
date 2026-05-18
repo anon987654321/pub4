@@ -141,11 +141,6 @@ configure_relayd() {
   [[ $_c == *"relayd(ok)"* ]] || { log ERROR "relayd not running"; exit 1 }
   log INFO "relayd live — TLS+SNI on :443"
 
-  /usr/sbin/rcctl get haproxy >/dev/null 2>&1 && {
-    log INFO "Disabling legacy HAProxy"
-    /usr/sbin/rcctl stop haproxy 2>/dev/null
-    /usr/sbin/rcctl disable haproxy 2>/dev/null
-  }
 }
 
 stage_2() {

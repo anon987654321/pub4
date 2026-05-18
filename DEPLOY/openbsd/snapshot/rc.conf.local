@@ -1,6 +1,0 @@
-bsdports_flags=exec env RAILS_ENV=production SECRET_KEY_BASE=__REDACTED__ HOME=/home/bsdports falcon serve --bind http://127.0.0.1:47312
-httpd_flags=
-nsd_flags=
-pkg_scripts=postgresql redis blognet bsdports hjerterom privcam pubattorney puma blognet_rails bsdports_rails hjerterom_rails privcam_rails master amber baibl brgen
-relayd_flags=
-sndiod_flags=NO
