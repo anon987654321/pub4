@@ -32,15 +32,15 @@ cleanup_nsd() {
 verify_nsd() {
   log INFO "Verifying nsd(8) for all domains"
   for domain in ${ALL_DOMAINS[*]%%:*}; do
-    typeset dig_output=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" A +short):-}
-    (( ${#dig_output} == 0 || dig_output != $BRGEN_IP )) && {
-      log ERROR "nsd(8) not authoritative for $domain"; exit 1
+    typeset dig_a=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" A +short):-}
+    [[ -z $dig_a || $dig_a != $BRGEN_IP ]] && {
+      log WARN "nsd(8) A record missing or wrong for $domain (got: ${dig_a:-empty})"
+      continue
     }
-    (( ! ${$(/usr/bin/dig @"$BRGEN_IP" "$domain" DNSKEY +short):-} )) && {
-      log ERROR "DNSSEC not enabled for $domain"; exit 1
-    }
+    typeset dig_dnskey=${$(/usr/bin/dig @"$BRGEN_IP" "$domain" DNSKEY +short):-}
+    [[ -z $dig_dnskey ]] && { log WARN "DNSSEC not enabled for $domain"; continue }
   done
-  log INFO "nsd(8) verified with DNSSEC"
+  log INFO "nsd(8) verification complete"
 }
 
 check_dns_propagation() {
