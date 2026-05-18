@@ -10,7 +10,6 @@ module Master
       # call per file. Rules carry mode: violation (default) or opportunity —
       # the prompt frame and severity follow from that.
       class SemanticRule < Rule
-        RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
         CODE_SNIPPET_LIMIT = 2000
 
         def initialize(agent: nil)

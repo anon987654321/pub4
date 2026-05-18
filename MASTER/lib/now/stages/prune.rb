@@ -6,7 +6,6 @@ module Master
     # Prune — strip sycophancy and markdown formatting from LLM responses.
     # Rules loaded from data/rules.yml (voice.strunk). Fence-aware: prunes prose, leaves code blocks.
     class Prune
-      RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
       FENCE_RE  = /(```.*?```)/m.freeze
 
       HEADER_RE     = %r{^\#{1,6}\s+}.freeze
@@ -73,7 +72,7 @@ module Master
 
       def rules
         @rules ||= begin
-          data = File.exist?(RULES_PATH) ? Master.load_yaml(RULES_PATH) : {}
+          data = File.exist?(Master::RULES_PATH) ? Master.load_yaml(Master::RULES_PATH) : {}
           data.dig("voice", "strunk") || {}
         end
       rescue StandardError => _e

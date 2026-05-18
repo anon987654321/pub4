@@ -183,8 +183,8 @@ module Master
       }.freeze
 
       def self.questions
-        council = if File.exist?(Deliberation::COUNCIL_PATH)
-                    Master.load_yaml(Deliberation::COUNCIL_PATH).fetch("questions", {})
+        council = if File.exist?(Deliberation::Master::COUNCIL_PATH)
+                    Master.load_yaml(Deliberation::Master::COUNCIL_PATH).fetch("questions", {})
                   else
                     {}
                   end
@@ -214,8 +214,6 @@ module Master
       CONVERGENCE_ROUNDS   = 3
       CONVERGENCE_OVERLAP  = 0.7
       CONVERGENCE_TEXT_SIM = 0.6
-
-      COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
 
       # Maps each council persona to the question bank category they draw from.
       PERSONA_QUESTION = {

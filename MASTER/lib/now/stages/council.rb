@@ -9,7 +9,6 @@ module Master
     # PRAISE votes are appended to data/exemplars.yml for future reference.
     class Council
       EXEMPLARS_PATH       = File.join(Master::ROOT, "data", "exemplars.yml").freeze
-      COUNCIL_PATH         = File.join(Master::ROOT, "data", "council.yml").freeze
       EXEMPLAR_MSG_CHARS   = 120
       EXEMPLAR_FEEDBACK_CHARS = 240
 
@@ -56,7 +55,7 @@ module Master
       private
 
       def load_patterns
-        data = Master.load_yaml(COUNCIL_PATH)
+        data = Master.load_yaml(Master::COUNCIL_PATH)
         (data["auto_trigger_patterns"] || []).filter_map do |str|
           Regexp.new(str, Regexp::IGNORECASE)
         rescue RegexpError => e

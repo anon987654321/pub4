@@ -8,7 +8,6 @@ module Master
   module Judge
   module Scan
     class Scanner
-      RULES_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
       POOL_SIZE  = [Etc.nprocessors, 8].min.freeze
       SCAN_GLOB  = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
       RUBY_EXT   = %w[.rb .rake .gemspec].freeze
@@ -120,7 +119,7 @@ module Master
 
       def depth_rules
         @depth_rules ||= begin
-          data = Master.load_yaml(RULES_PATH)
+          data = Master.load_yaml(Master::RULES_PATH)
           data["scan_depths"] || {}
         end
       rescue StandardError => _e

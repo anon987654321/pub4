@@ -25,7 +25,7 @@ gem "sinatra-contrib", "~> 4.0"
 gem "rb-edge-tts", git: "https://github.com/ZPVIP/rb-edge-tts"
 
 group :test do
-  gem "minitest", "~> 5.25"
+  gem "minitest", ">= 5.25"
   gem "rack-test", "~> 2.1"
   gem "ferrum", "~> 0.15"
   gem "simplecov", require: false

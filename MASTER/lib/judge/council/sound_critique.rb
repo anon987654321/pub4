@@ -4,7 +4,6 @@ module Master
   module Judge
   module Council
     class SoundCritique
-      COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
       MAX_FILE_BYTES = 24_576
 
       SOUND_PANEL = [
@@ -47,7 +46,7 @@ module Master
       private
 
       def load_preset
-        data = File.exist?(COUNCIL_PATH) ? (Master.load_yaml(COUNCIL_PATH) || {}) : {}
+        data = File.exist?(Master::COUNCIL_PATH) ? (Master.load_yaml(Master::COUNCIL_PATH) || {}) : {}
         data.dig("presets", "sound_critique") || {}
       end
 

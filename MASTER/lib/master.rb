@@ -12,7 +12,10 @@ rescue LoadError => e
 end
 
 module Master
-  ROOT = File.expand_path("..", __dir__).freeze
+  ROOT        = File.expand_path("..", __dir__).freeze
+  DATA        = File.join(ROOT, "data").freeze
+  COUNCIL_PATH = File.join(DATA, "council.yml").freeze
+  RULES_PATH   = File.join(DATA, "rules.yml").freeze
 
   MIN_API_KEY_LENGTH = 20
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze

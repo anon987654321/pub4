@@ -4,7 +4,6 @@ module Master
   module Judge
   module Council
     class UiCritique
-      COUNCIL_PATH = File.join(Master::ROOT, "data", "council.yml").freeze
       WEB_ROOT     = File.join(Master::ROOT, "web").freeze
       MAX_FILE_BYTES = 32_768
 
@@ -44,7 +43,7 @@ module Master
       private
 
       def load_preset
-        data = File.exist?(COUNCIL_PATH) ? (Master.load_yaml(COUNCIL_PATH) || {}) : {}
+        data = File.exist?(Master::COUNCIL_PATH) ? (Master.load_yaml(Master::COUNCIL_PATH) || {}) : {}
         data.dig("presets", "ui_critique") || {}
       end
 

@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "json"
 
 module Master
   module Trace
   # Append-only tool invocation log; subscribes to tool:before on EventBus.
   class AuditLog
-    LOG_PATH  = ".master/audit.log".freeze
+    LOG_PATH  = ".master/audit.ndjson".freeze
     MAX_VAL   = 120
     MAX_BYTES = 5 * 1024 * 1024
 
@@ -20,14 +21,12 @@ module Master
     private
 
     def append(event_data)
-      payload_pairs = event_data.except(:tool)
-                                .map { |k, v| "#{k}=#{v.to_s[0, MAX_VAL].inspect}" }
-                                .join(" ")
-      log_line = "#{Time.now.utc.iso8601} tool=#{event_data[:tool]} #{payload_pairs}"
+      record = { ts: Time.now.utc.iso8601, tool: event_data[:tool] }
+                .merge(event_data.except(:tool).transform_values { |v| v.to_s[0, MAX_VAL] })
       Master::Trace::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
         @mutex.synchronize do
           rotate! if File.exist?(@path) && File.size(@path) > MAX_BYTES
-          File.open(@path, "a") { |f| f.puts(log_line) }
+          File.open(@path, "a") { |f| f.puts(JSON.generate(record)) }
         end
       end
     end
