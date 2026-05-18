@@ -46,3 +46,25 @@ text_treatment:
   messages: "Plain white text, upper-third left alignment."
   assistant_emphasis: "Temporary 1px left hairline."
   input: "Bottom hairline that expands only while typing."
+
+# Web performance and accessibility constants — single source of truth.
+# Scanner and linter rules read these; never hard-code thresholds in Ruby.
+performance:
+  lcp_max_ms:    2500    # Largest Contentful Paint — Core Web Vital
+  inp_max_ms:     200    # Interaction to Next Paint — Core Web Vital
+  cls_max:        0.1    # Cumulative Layout Shift — Core Web Vital
+  fcp_max_ms:    1800    # First Contentful Paint target
+  ttfb_max_ms:   800     # Time to First Byte target
+  bundle_max_kb: 150     # compressed JS budget
+
+accessibility:
+  contrast_normal: 4.5   # WCAG 2.1 AA — normal text
+  contrast_large:  3.0   # WCAG 2.1 AA — large text (18pt+ or 14pt bold)
+  touch_target_px: 24    # minimum tap target per WCAG 2.5.5
+  focus_visible:   true  # :focus-visible must be styled
+  reduced_motion:  true  # @media (prefers-reduced-motion) required
+
+typography:
+  line_length_ch:  66    # optimal line length (Bringhurst: 45–75ch; 66 center)
+  min_size_px:     16    # body minimum to avoid iOS zoom on input focus
+  scale_ratio:     1.25  # major third — each step × 1.25

@@ -73,6 +73,20 @@ Models: default `openrouter/auto`. Fallback chain: `qwen3-coder:free → minimax
 
 The CLI REPL never goes through ApplicationController — it has full tool access regardless of web auth state.
 
+## Infrastructure (OpenBSD Amsterdam — server4/vm23)
+
+| | |
+|---|---|
+| Host | server4.openbsd.amsterdam |
+| VM | vm23 · IPv4 46.23.89.226 · IPv6 2a03:6000:6e64:623::226 |
+| Console | `ssh dev@server4.openbsd.amsterdam -p 31415` then `vmctl console vm23` |
+| Backup | `ssh s4vm23@wingman1.openbsd.amsterdam` · 10GB free · use openrsync |
+| PTR | `curl http://46.23.80.20/token` → `curl "http://46.23.80.20/ptr4?token=TOKEN&fqdn=brgen.no."` |
+
+Backup example: `openrsync -ae ssh ~/pub4 s4vm23@wingman1.openbsd.amsterdam:backup`
+
+Payment ref: "server4 vm23" — IBAN NL31 BUNQ 2041 8338 90 (€71/yr).
+
 ## Deploy
 
     cd ~/pub4/DEPLOY/openbsd

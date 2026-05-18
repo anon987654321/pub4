@@ -221,6 +221,26 @@ thresholds:
     max_iterations: 15
     stagnant_threshold: 3
 
+# Prediction engine — per-detector autofix confidence thresholds.
+# When confidence >= threshold, autofix fires without human review.
+# Below threshold: propose fix, await approval. Never auto-delete at < 0.80.
+prediction_engine:
+  null_usage:        {confidence: 0.95, autofix: null_object_pattern}
+  abbreviation:      {confidence: 0.99, autofix: expand_to_full_name}
+  nesting_depth:     {confidence: 0.92, autofix: extract_method}
+  bare_rescue:       {confidence: 0.98, autofix: rescue_standard_error}
+  frozen_string:     {confidence: 0.99, autofix: add_frozen_string_literal}
+  trailing_ws:       {confidence: 0.99, autofix: strip_trailing_whitespace}
+  debug_output:      {confidence: 0.97, autofix: remove_debug_call}
+  todo_comment:      {confidence: 0.70, autofix: create_issue}
+  magic_number:      {confidence: 0.85, autofix: extract_named_constant}
+  long_line:         {confidence: 0.90, autofix: wrap_at_120}
+  sycophancy:        {confidence: 0.99, autofix: delete_phrase}
+  future_tense:      {confidence: 0.95, autofix: rewrite_indicative}
+  duplicate_code:    {confidence: 0.75, autofix: extract_shared_method}
+  god_class:         {confidence: 0.60, autofix: propose_decomposition}
+  n_plus_one:        {confidence: 0.88, autofix: add_includes}
+
 scan_depths:
   # Class names for named Rule subclasses; lowercase ids for DSL-defined rules.
   # Phantom entries silently exclude rules — InterconnectRule catches drift.

@@ -120,6 +120,21 @@ universal_scope:
   semantic_rules: all_known_languages
   adversarial_rules: all_known_languages
 
+incremental_scanning:
+  enabled: true
+  strategy: modified_files_only
+  triggers:
+    full_scan:
+      - new_principle_added
+      - master_yml_modified
+      - user_requests_full_scan
+    incremental:
+      - file_saved
+      - git_stage
+      - git_commit
+  speedup_estimate: "60-85% fewer files on typical edit"
+  fallback: full_scan_on_error
+
 autoloop:
   background: true
   idle_sleep: 60
