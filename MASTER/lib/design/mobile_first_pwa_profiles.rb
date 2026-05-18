@@ -84,10 +84,30 @@ module Master
     def recommendations(audit_result)
       Array(audit_result[:violations])
         .sort_by { |v| %i[high medium low].index(v[:severity]) || 9 }
-        .map { |v| "[#{v[:severity].upcase}] #{v[:id]}: #{v[:message]}" }
+        .map { |v| heuristic_prefix(v) + "[#{v[:severity].upcase}] #{v[:id]}: #{v[:message]}" }
     end
 
     private
+
+    HEURISTIC_MAP = {
+      font_size_too_small:         :h8_minimalism,
+      line_height_too_low:         :h8_minimalism,
+      touch_target_too_small:      :h6_recognition,
+      animation_no_reduced_motion: :h8_minimalism,
+      raw_primary_color:           :h8_minimalism,
+      linear_timing:               :h8_minimalism,
+      landmarks:                   :h4_consistency,
+      focus_ring:                  :h6_recognition,
+      form_labels:                 :h5_error_prevention
+    }.freeze
+
+    def heuristic_prefix(violation)
+      key = violation.is_a?(Hash) ? violation[:id] : nil
+      h_key = HEURISTIC_MAP[key&.to_sym]
+      return "" unless h_key
+      num = h_key.to_s.match(/h(\d+)/)[1]
+      "[Nielsen ##{num}] "
+    end
 
     def audit_css(path)
       css_files = Dir.glob(File.join(path, "**", "*.{css,scss}"))
