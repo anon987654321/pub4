@@ -66,12 +66,20 @@ module Master
 
     # Validate args against contract before execution.
     # Returns Result::Ok(contract) or Result::Err with violation details.
+    # For shell_exec and git_op, runs injection_guard on command/args.
     def validate(name, args = {})
       contract = find(name)
       return Result.err("unknown tool: #{name}", category: :validation) unless contract
 
       missing = contract.inputs.select { |k, req| req == :required && !args.key?(k) }.keys
       return Result.err("#{name}: missing required inputs: #{missing.join(', ')}", category: :validation) if missing.any?
+
+      if %i[shell_exec git_op].include?(name.to_sym)
+        shell_input = args[:command] || Array(args[:args]).join(" ")
+        guard = Master::Judge::Security::InjectionGuard.new
+        check = guard.safe?(shell_input.to_s)
+        return Result.err("#{name}: injection detected in input", category: :policy) unless check
+      end
 
       Result.ok(contract)
     end

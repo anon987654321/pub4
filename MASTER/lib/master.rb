@@ -51,7 +51,10 @@ module Master
     "code_index"      => "CodeIndex",
     "git_context"     => "GitContext",
     "ast_edit"        => "AstEdit",
-    "rule_dsl"        => "RuleDSL"
+    "rule_dsl"        => "RuleDSL",
+    "tts"             => "TTS",
+    "pwa_audit"       => "PwaAudit",
+    "mobile_pwa_operator" => "MobilePwaOperator"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"
   loader.ignore(File.join(__dir__, "reach", "ruby_llm_patch.rb"))

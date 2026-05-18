@@ -49,14 +49,15 @@ module Master
       score
     end
 
-    def quarantine(model:, reason:, duration: DEFAULT_DURATION)
+    def quarantine(model:, reason:, duration: nil)
       return if quarantined?(model)
       now        = @now.call
-      expires_at = now + duration
+      exp_duration = duration || exponential_duration(model)
+      expires_at = now + exp_duration
       entry      = { model: model.to_s, reason:, quarantined_at: now.iso8601,
-                     expires_at: expires_at.iso8601, duration: }
+                     expires_at: expires_at.iso8601, duration: exp_duration }
       append(entry)
-      @bus&.publish("provider:quarantined", model:, reason:, expires_at: expires_at.iso8601)
+      @bus&.publish("provider:quarantined", model:, reason:, expires_at: expires_at.iso8601, duration: exp_duration)
       entry
     end
 
@@ -79,6 +80,11 @@ module Master
     end
 
     private
+
+    def exponential_duration(model)
+      past = all_entries.count { |e| e["model"] == model.to_s && e["expires_at"] && !e["action"] }
+      [DEFAULT_DURATION * (2**past), MAX_DURATION].min
+    end
 
     def active_quarantine(model_id)
       all_entries

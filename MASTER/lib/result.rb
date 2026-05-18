@@ -25,7 +25,7 @@ module Master
       Err.new(msg, category)
     end
 
-    def self.wrap(val) = val.respond_to?(:ok?) ? val : Ok.new(val)
+    def self.wrap(val) = val.is_a?(Result) ? val : Ok.new(val)
 
     class Ok
       attr_reader :value
@@ -46,7 +46,7 @@ module Master
 
       def and_then(label = nil, &blk)
         result = blk.call(@value)
-        result.respond_to?(:ok?) ? result : Result.ok(result)
+        result.is_a?(Result) ? result : Result.ok(result)
       rescue StandardError => e
         Result.err("#{label || "stage"}: #{e.message}", category: :infrastructure)
       end

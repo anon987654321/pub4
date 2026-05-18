@@ -163,6 +163,21 @@ module Master
     end
   end
 
+  RuleDSL.rule :ONE_SOURCE,
+    severity: :warning, tags: %i[COUPLING],
+    description: "constants defined locally when a canonical ONE_SOURCE exists" do |src, path:|
+    next [] if path.to_s.include?("/judge/scan/rules/")
+    next [] if path.to_s.include?("master.rb")
+    patterns = [
+      [/COUNCIL_PATH\s*=/, "define COUNCIL_PATH once in master.rb; reference Master::COUNCIL_PATH"],
+      [/RULES_PATH\s*=/, "define RULES_PATH once in master.rb; reference Master::RULES_PATH"],
+      [/DATA_DIR\s*=\s*File\.join.*\bdata\b/, "use Master::DATA constant"]
+    ]
+    src.each_line.with_index(1).flat_map do |line, n|
+      patterns.filter_map { |re, msg| finding(line: n, message: msg) if re.match?(line) }
+    end
+  end
+
   end
   end
   end

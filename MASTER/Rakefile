@@ -49,3 +49,23 @@ namespace :test do
     sh "ruby -Ilib:test test/test_web_ui.rb"
   end
 end
+
+namespace :lint do
+  desc "Check all Ruby files have # frozen_string_literal: true"
+  task :frozen do
+    missing = Dir.glob(File.join(__dir__, "lib", "**", "*.rb")).reject do |f|
+      File.read(f, 100).include?("# frozen_string_literal: true")
+    end
+    if missing.empty?
+      puts "lint:frozen: all files frozen"
+    else
+      missing.each { |f| puts "  missing: #{f.sub("#{__dir__}/", "")}" }
+      abort "lint:frozen: #{missing.size} file(s) missing frozen_string_literal"
+    end
+  end
+end
+
+desc "Full audit: constitution + lint:frozen"
+task audit: %i[constitution lint:frozen] do
+  puts "audit: passed"
+end

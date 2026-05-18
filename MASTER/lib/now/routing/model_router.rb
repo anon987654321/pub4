@@ -129,24 +129,30 @@ module Master
         }.sort_by { |x| -x[:total] }
       end
 
-INTENT_PATTERNS = {
-  code_generation: /\b(implement|build|add|create|write|make|generate|scaffold|port|wire)\b/i,
-  refactoring:     /\b(refactor|rename|clean ?up|simplify|extract|inline|dedup|consolidate|tidy)\b/i,
-  architecture:    /\b(design|architect|structure|plan|approach|module|boundary|layer|topology)\b/i,
-  review:          /\b(review|critique|audit|check|council|tribunal|inspect|evaluate|judge)\b/i,
-  explanation:     /\b(explain|what is|how does|why does|describe|clarify|walk me through)\b/i
-}.freeze
+      INTENT_PATTERNS = {
+        code_generation: /\b(implement|build|add|create|write|make|generate|scaffold|port|wire)\b/i,
+        refactoring:     /\b(refactor|rename|clean ?up|simplify|extract|inline|dedup|consolidate|tidy)\b/i,
+        architecture:    /\b(design|architect|structure|plan|approach|module|boundary|layer|topology)\b/i,
+        review:          /\b(review|critique|audit|check|council|tribunal|inspect|evaluate|judge)\b/i,
+        explanation:     /\b(explain|what is|how does|why does|describe|clarify|walk me through)\b/i
+      }.freeze
 
-def classify_intent(text)
-  s = text.to_s
-  return :exploration if s.strip.empty?
-  INTENT_PATTERNS.each { |intent, re| return intent if re.match?(s) }
-  :exploration
-end
+      def classify_intent(text)
+        s = text.to_s
+        return :exploration if s.strip.empty?
+        INTENT_PATTERNS.each { |intent, re| return intent if re.match?(s) }
+        :exploration
+      end
 
-def preferred_for(text)
-  preferred(task_type: classify_intent(text))
-end
+      def preferred_for(text)
+        preferred(task_type: classify_intent(text))
+      end
+
+      def runtime_choice(task: :exploration)
+        Master::Ground::RuntimeRegistry.new.choose(task:)
+      rescue StandardError
+        { provider: :local, model: preferred, score: 0.5, quarantined: [] }
+      end
 
       private
 

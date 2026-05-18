@@ -87,6 +87,19 @@ module Master
       stream_events(workflow_id:).last(n)
     end
 
+    def rotate!(keep_last: 1000)
+      return unless File.file?(@path)
+      lines = File.readlines(@path, chomp: true)
+      return if lines.size <= keep_last
+      tail = lines.last(keep_last)
+      File.write(@path, tail.join("\n") + "\n")
+      emit(:stream_rotated, workflow_id: "system", payload: { kept: keep_last, dropped: lines.size - keep_last })
+      Result.ok(lines.size - keep_last)
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "EventSequenceOrchestrator.rotate!", event_bus: @bus)
+      Result.err(e.message, category: :infrastructure)
+    end
+
     private
 
     def emit(type, workflow_id:, payload: {})

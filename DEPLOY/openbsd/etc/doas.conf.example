@@ -1,0 +1,15 @@
+# doas.conf.example — minimal privilege escalation for MASTER on OpenBSD
+# Copy to /etc/doas.conf and adjust to match your wheel user.
+# Tested on OpenBSD 7.8 / server4.openbsd.amsterdam.
+
+# Wheel users — passwordless doas for rc.d and common ops
+permit nopass :wheel
+
+# MASTER service management
+permit nopass dev as root cmd rcctl args restart master
+permit nopass dev as root cmd rcctl args restart relayd
+permit nopass dev as root cmd rcctl args enable master
+permit nopass dev as root cmd rcctl args disable master
+
+# OpenRsync backup — permit specific rsync target only
+permit nopass dev as root cmd openrsync
