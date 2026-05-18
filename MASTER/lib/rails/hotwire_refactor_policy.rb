@@ -111,6 +111,10 @@ module Master
         steps << { priority: 4, action: "bundle add solid_cache && bin/rails solid_cache:install" }
       end
 
+      if missing.include?("propshaft")
+        steps << { priority: 3, action: "bundle add propshaft && bundle remove sprockets sprockets-rails — Propshaft is the Rails 8 default asset pipeline" }
+      end
+
       if app_state.dig(:pwa, :manifest) && !app_state.dig(:pwa, :manifest_has_192)
         steps << { priority: 5, action: "Add 192x192 icon to manifest — required for Lighthouse installability" }
       end

@@ -5,8 +5,11 @@ module Master
   class Rails8AppAudit
     DEPLOY_RAILS = File.expand_path("../../DEPLOY/rails", Master::ROOT).freeze
 
-    GEMS_WANTED = %w[turbo-rails stimulus-rails solid_queue solid_cache solid_cable].freeze
-    GEMS_LEGACY = %w[jquery-rails rails-ujs].freeze
+    # Rails 8 defaults — all should be present in modern apps
+    GEMS_WANTED = %w[turbo-rails stimulus-rails importmap-rails propshaft solid_queue solid_cache solid_cable].freeze
+
+    # Legacy — presence signals migration work needed
+    GEMS_LEGACY = %w[jquery-rails rails-ujs sprockets sprockets-rails].freeze
 
     # Rails 8 serves PWA files via controller from app/views/pwa/
     PWA_MANIFEST_CANDIDATES = %w[
@@ -47,6 +50,14 @@ module Master
           stimulus:  gems.include?("stimulus-rails"),
           importmap: gems.include?("importmap-rails"),
           jsbundling: gems.include?("jsbundling-rails")
+        },
+        assets: {
+          propshaft: gems.include?("propshaft"),
+          sprockets: gems.any? { |g| g.start_with?("sprockets") }
+        },
+        app_server: {
+          falcon: gems.include?("falcon"),
+          puma:   gems.include?("puma")
         },
         solid_adapters: subset(gems, %w[solid_queue solid_cache solid_cable]),
         legacy_gems:    subset(gems, GEMS_LEGACY),
