@@ -2,75 +2,53 @@
 
 module Master
   module Trace
-    # Ground::Swallow.log makes a tolerated failure *visible* by publishing a
-    # `swallow:error` event. Visible is not the same as observed — without a
-    # listener those events scroll past and vanish.
-    #
-    # SwallowLedger subscribes once at boot and tallies every swallow by its
-    # `context:` tag, appending a periodic snapshot to
-    # runtime/swallow_ledger.jsonl. A swallow that fires twice a day is noise;
-    # the same context firing 400 times an hour is a defect wearing a
-    # tolerated-failure costume. The ledger is what tells the two apart.
-    #
-    # Wire once: SwallowLedger.new(event_bus: bus, root: root).attach
+    # Tallies swallow:error events per context — a spike in one context is a defect, not noise.
     class SwallowLedger
-      LEDGER_PATH      = "runtime/swallow_ledger.jsonl"
-      SNAPSHOT_EVERY   = 50  # flush a snapshot line every N swallows
+      LEDGER_PATH    = "runtime/swallow_ledger.jsonl"
+      SNAPSHOT_EVERY = 50
 
       def initialize(event_bus:, root: Master::ROOT)
-        @bus     = event_bus
-        @root    = root
-        @counts  = Hash.new(0)
-        @total   = 0
-        @mutex   = Mutex.new
+        @bus    = event_bus
+        @root   = root
+        @counts = Hash.new(0)
+        @total  = 0
+        @mutex  = Mutex.new
       end
 
-      # Subscribe to the swallow stream. Idempotent-friendly: call once.
+      # Subscribe to the swallow stream. Call once at boot.
       def attach
-        return self unless @bus
-
-        @bus.subscribe("swallow:error") do |payload|
-          record(payload)
-        end
+        @bus&.subscribe("swallow:error") { |payload| record(payload) }
         self
       end
 
-      # Current tally — context => count. Useful for /axioms and tests.
-      def snapshot
-        @mutex.synchronize { @counts.dup }
-      end
+      # context => count. Used by /axioms and tests.
+      def snapshot = @mutex.synchronize { @counts.dup }
 
-      def total
-        @mutex.synchronize { @total }
-      end
+      def total = @mutex.synchronize { @total }
 
       private
 
       def record(payload)
         context = payload[:context] || payload["context"] || "unknown"
-        flush_due = false
+        flush if tally(context)
+      end
 
+      # Increment under lock; true when a snapshot flush is due.
+      def tally(context)
         @mutex.synchronize do
           @counts[context] += 1
           @total += 1
-          flush_due = (@total % SNAPSHOT_EVERY).zero?
+          (@total % SNAPSHOT_EVERY).zero?
         end
-
-        flush if flush_due
       end
 
       def flush
         path = File.join(@root, LEDGER_PATH)
         FileUtils.mkdir_p(File.dirname(path))
-        line = JSON.generate(
-          at:     Time.now.utc.iso8601,
-          total:  total,
-          counts: snapshot
-        )
+        line = JSON.generate(at: Time.now.utc.iso8601, total:, counts: snapshot)
         File.open(path, "a") { |io| io.write(line, "\n") }
       rescue StandardError => e
-        # The ledger's own write failed. It cannot route through Swallow.log
-        # without recursing into the very stream it observes — stderr only.
+        # Cannot route through Swallow.log — it would recurse into this stream.
         Kernel.warn("swallow_ledger: flush failed — #{e.class}: #{e.message}")
       end
     end
