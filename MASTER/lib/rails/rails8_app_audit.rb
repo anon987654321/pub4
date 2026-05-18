@@ -5,21 +5,8 @@ module Master
   class Rails8AppAudit
     DEPLOY_RAILS = File.expand_path("../../DEPLOY/rails", Master::ROOT).freeze
 
-    # Rails Doctrine — nine pillars (rubyonrails.org/doctrine)
-    DOCTRINE = {
-      happiness:         "Optimize for programmer happiness",
-      convention:        "Convention over Configuration",
-      omakase:           "The menu is omakase",
-      no_one_paradigm:   "No one paradigm",
-      beautiful_code:    "Exalt beautiful code",
-      sharp_knives:      "Provide sharp knives",
-      integrated:        "Value integrated systems",
-      progress:          "Progress over stability",
-      big_tent:          "Push up a big tent"
-    }.freeze
-
-    # Solid Trifecta — database-backed adapters eliminating Redis/PaaS dependency
-    SOLID_TRIFECTA = %w[solid_queue solid_cache solid_cable].freeze
+    DOCTRINE       = Master::Ground::Axioms::RailsDoctrine::PILLARS
+    SOLID_TRIFECTA = Master::Ground::Axioms::RailsDoctrine::SOLID_TRIFECTA
 
     # Rails 8 + OpenBSD stack: full expected gem set
     GEMS_WANTED = %w[turbo-rails stimulus-rails importmap-rails propshaft solid_queue solid_cache solid_cable falcon].freeze

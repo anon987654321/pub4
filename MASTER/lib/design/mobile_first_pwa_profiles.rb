@@ -5,12 +5,9 @@ module Master
   class MobileFirstPwaProfiles
     Rule = Data.define(:id, :pattern, :extract, :threshold, :message, :severity)
 
-    # WCAG 2.5.8 (AA): 24x24px minimum; 2.5.3 (AAA): 44x44px recommended
-    TOUCH_TARGET_MIN_PX = 44
-
-    # WCAG 1.4.8 / readable-typography baseline
-    BODY_FONT_MIN_PX    = 16
-    LINE_HEIGHT_MIN     = 1.5
+    TOUCH_TARGET_MIN_PX = Master::Ground::Axioms::Wcag::TOUCH_TARGET_AAA_PX
+    BODY_FONT_MIN_PX    = Master::Ground::Axioms::Wcag::BODY_FONT_MIN_PX
+    LINE_HEIGHT_MIN     = Master::Ground::Axioms::Wcag::LINE_HEIGHT_MIN
     LINE_LENGTH_MIN_CH  = 45
     LINE_LENGTH_MAX_CH  = 75
 
@@ -102,11 +99,10 @@ module Master
     }.freeze
 
     def heuristic_prefix(violation)
-      key = violation.is_a?(Hash) ? violation[:id] : nil
-      h_key = HEURISTIC_MAP[key&.to_sym]
+      key  = violation.is_a?(Hash) ? violation[:id]&.to_sym : nil
+      h_key = HEURISTIC_MAP[key]
       return "" unless h_key
-      num = h_key.to_s.match(/h(\d+)/)[1]
-      "[Nielsen ##{num}] "
+      "[Nielsen ##{Master::Ground::Axioms::UxHeuristics.number(h_key)}] "
     end
 
     def audit_css(path)

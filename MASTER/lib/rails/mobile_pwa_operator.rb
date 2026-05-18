@@ -7,10 +7,7 @@ module Master
 
     MODES = %i[generate_from_blank refactor_existing redesign_ui audit_pwa mine_reference_repos].freeze
 
-    # Rails Doctrine pillars cited in recommendations (rubyonrails.org/doctrine)
-    DOCTRINE_OMAKASE   = "The menu is omakase"
-    DOCTRINE_INTEGRATED = "Value integrated systems"
-    DOCTRINE_CONVENTION = "Convention over Configuration"
+    DOCTRINE = Master::Ground::Axioms::RailsDoctrine::PILLARS
 
     INTENT_MODE = {
       generate_rails_pwa:   :generate_from_blank,
@@ -147,9 +144,9 @@ module Master
     def generation_plan(goal)
       name = goal.to_s.downcase.gsub(/[^a-z0-9]/, "_").squeeze("_")
       [
-        "[#{DOCTRINE_OMAKASE}] rails new #{name} --skip-action-mailer --skip-action-mailbox --skip-action-text",
-        "[#{DOCTRINE_INTEGRATED}] Solid Trifecta: bundle add solid_queue solid_cache solid_cable && bin/rails solid_queue:install solid_cache:install solid_cable:install",
-        "[#{DOCTRINE_CONVENTION}] Propshaft: bundle add propshaft (default asset pipeline, replaces Sprockets)",
+        "[#{DOCTRINE[:omakase]}] rails new #{name} --skip-action-mailer --skip-action-mailbox --skip-action-text",
+        "[#{DOCTRINE[:integrated]}] Solid Trifecta: bundle add solid_queue solid_cache solid_cable && bin/rails solid_queue:install solid_cache:install solid_cable:install",
+        "[#{DOCTRINE[:convention]}] Propshaft: bundle add propshaft (default asset pipeline, replaces Sprockets)",
         "Generate mobile-first layout: <header>, <nav>, <main>, <footer> landmarks",
         "Add 192x192 and 512x512 icons; populate app/views/pwa/manifest.json.erb",
         "Upgrade app/views/pwa/service-worker.js: network-first for HTML, cache-first for static assets, network-only for auth routes",
