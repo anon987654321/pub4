@@ -1,5 +1,5 @@
 ---
-name: "Run X through MASTER" = scan + sweep + tribunal
+name: '"Run X through MASTER" = scan + sweep + tribunal'
 description: User shorthand — "run X through master" means /triad = scan + sweep + tribunal (called "council" in code, "tribunal" in user vocabulary), not just /scan
 type: feedback
 originSessionId: 0c593fb2-cd49-4fd7-9e89-d77dd7e909ae

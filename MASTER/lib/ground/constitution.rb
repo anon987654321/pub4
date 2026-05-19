@@ -46,7 +46,7 @@ module Master
       raw = File.read(path, encoding: "UTF-8")
       return nil unless raw.start_with?(YAML_FRONT_MATTER_MARKER)
       _, frontmatter, body = raw.split(YAML_FRONT_MATTER_RE, 3)
-      meta = YAML.safe_load(frontmatter.to_s) || {}
+      meta = begin; YAML.safe_load(frontmatter.to_s) || {}; rescue Psych::Exception; {}; end
       {
         name:        meta["name"].to_s,
         description: meta["description"].to_s,

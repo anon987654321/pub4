@@ -219,7 +219,7 @@ module Master
       raw = File.read(path, encoding: "UTF-8")
       m = raw.match(/\A---\n(.*?)\n---\n(.*)/m)
       return ["general", raw.strip] unless m
-      meta = YAML.safe_load(m[1]) || {}
+      meta = begin; YAML.safe_load(m[1]) || {}; rescue Psych::Exception; {}; end
       [meta["type"].to_s, m[2].strip]
     end
 
