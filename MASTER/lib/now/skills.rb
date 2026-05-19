@@ -86,13 +86,7 @@ module Master
     end
 
     def parse_skill_md(path)
-      content = File.read(path, encoding: "UTF-8")
-      return {} unless content.start_with?("---")
-
-      parts = content.split("---", 3)
-      return {} if parts.size < 3
-
-      YAML.safe_load(parts[1]) || {}
+      Master::Ground::Frontmatter.parse_file(path)[:meta]
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "skills.parse_frontmatter", event_bus: @bus)
       {}
