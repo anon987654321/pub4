@@ -115,37 +115,23 @@ module Master
       end
     end
 
-    def run_ui_critique
-      puts @renderer.render("ui-critique: assembling panel — brutal honesty mode", mode: :dim)
-      critic = Master::Judge::Council::UiCritique.new(agent: @agent, event_bus: @bus)
-      result = critic.run
-      if result.ok?
-        data = result.value!
-        picks = data[:cherry_picks]
-        puts @renderer.render("ui-critique: #{picks.size} cherry-pick(s)", mode: :dim)
-        picks.each { |p| puts @renderer.render("  cherry: #{p}", mode: :dim) }
-        data[:feedback].each do |f|
-          puts @renderer.render("  [#{f[:persona]}] #{f[:feedback].to_s.lines.first.to_s.strip}", mode: :dim)
-        end
-      else
-        puts @renderer.render("ui-critique: #{result.message}", mode: :warning)
-      end
-    end
+    def run_ui_critique    = run_critique(:ui, label: "ui-critique", intro: "assembling panel — brutal honesty mode")
+    def run_sound_critique = run_critique(:sound, label: "sound-critique", intro: "assembling audio panel")
 
-    def run_sound_critique
-      puts @renderer.render("sound-critique: assembling audio panel", mode: :dim)
-      critic = Master::Judge::Council::SoundCritique.new(agent: @agent, event_bus: @bus)
+    def run_critique(mode, label:, intro:)
+      puts @renderer.render("#{label}: #{intro}", mode: :dim)
+      critic = Master::Judge::Council::Critique.new(mode: mode, agent: @agent, event_bus: @bus)
       result = critic.run
-      if result.ok?
-        data  = result.value!
-        picks = data[:cherry_picks]
-        puts @renderer.render("sound-critique: #{picks.size} cherry-pick(s)", mode: :dim)
-        picks.each { |p| puts @renderer.render("  cherry: #{p}", mode: :dim) }
-        data[:feedback].each do |f|
-          puts @renderer.render("  [#{f[:persona]}] #{f[:feedback].to_s.lines.first.to_s.strip}", mode: :dim)
-        end
-      else
-        puts @renderer.render("sound-critique: #{result.message}", mode: :warning)
+      unless result.ok?
+        puts @renderer.render("#{label}: #{result.message}", mode: :warning)
+        return
+      end
+      data  = result.value!
+      picks = data[:cherry_picks]
+      puts @renderer.render("#{label}: #{picks.size} cherry-pick(s)", mode: :dim)
+      picks.each { |p| puts @renderer.render("  cherry: #{p}", mode: :dim) }
+      data[:feedback].each do |f|
+        puts @renderer.render("  [#{f[:persona]}] #{f[:feedback].to_s.lines.first.to_s.strip}", mode: :dim)
       end
     end
 
