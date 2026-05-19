@@ -22,8 +22,9 @@ module Master
     DEPS_PATH       = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
     PRIORS_PATH     = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
 
-    def initialize(rules:, agent:, scanner:, root:, bus: nil, git: nil, learnings: nil)
+    def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil)
       @rules            = rules
+      @axioms           = axioms
       @agent            = agent
       @scanner          = scanner
       @root             = root
@@ -35,7 +36,7 @@ module Master
       @preamble         = build_preamble
     end
 
-    def convergence_cfg = @convergence ||= (@rules.thresholds["convergence"] || {})
+    def convergence_cfg = @convergence ||= (@axioms&.thresholds&.[]("convergence") || {})
 
     def max_passes_default = convergence_cfg["max_iterations"] || MAX_PASSES
 

@@ -11,7 +11,7 @@ module Master
       { homeostat:, governor:, diff_stager:, phase_gates: }
     end
 
-    def self.boot_autonomous(root:, infra:, agent:, scanner:, soul:)
+    def self.boot_autonomous(root:, infra:, agent:, scanner:, soul:, axioms: nil)
       bus        = infra[:bus]
       standing   = Master::Ground::StandingOrders.new(pipeline: nil, event_bus: bus)
       git        = Master::Reach::GitOperations.new(root)
@@ -19,7 +19,7 @@ module Master
       learnings  = infra[:learnings]
 
       super_loop = Master::Loop::SuperLoop.new(
-        rules:, agent:, scanner:, root:, bus:, git:, learnings:
+        rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:
       )
       Thread.new { super_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
 
