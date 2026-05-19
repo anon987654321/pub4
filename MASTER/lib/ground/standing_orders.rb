@@ -3,6 +3,7 @@
 module Master
   module Ground
   class StandingOrders
+    include AtomicWrite
     DAILY_INTERVAL   = 86_400
     WEEKLY_INTERVAL  = 604_800
     ERROR_TRUNCATE   = 200
@@ -149,12 +150,7 @@ module Master
     def persist
       return unless @orders.is_a?(Array)
       FileUtils.mkdir_p(File.dirname(STORE_PATH))
-      tmp_path = "#{STORE_PATH}.tmp.#{Process.pid}"
-      File.write(tmp_path, YAML.dump(@orders))
-      File.rename(tmp_path, STORE_PATH)
-    rescue StandardError => e
-      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
-      raise e
+      write_atomic(STORE_PATH, @orders.to_yaml)
     end
   end
   end

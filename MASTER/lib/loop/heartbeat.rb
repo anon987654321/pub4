@@ -5,6 +5,7 @@ require "yaml"
 module Master
   module Loop
   class Heartbeat
+    include Master::Ground::AtomicWrite
     POLL_INTERVAL = 60
     JOURNAL_KEEP = 50
     DATA_PATH  = File.join(Master::ROOT, "data", "heartbeat.yml").freeze
@@ -182,12 +183,7 @@ module Master
     def persist_state
       path = File.join(@root, STATE_PATH)
       FileUtils.mkdir_p(File.dirname(path))
-      tmp_path = "#{path}.tmp.#{Process.pid}"
-      File.write(tmp_path, @state.to_yaml)
-      File.rename(tmp_path, path)
-    rescue StandardError => e
-      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
-      raise e
+      write_atomic(path, @state.to_yaml)
     end
   end
   end

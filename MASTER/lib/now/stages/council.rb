@@ -8,6 +8,7 @@ module Master
     # Council — 6-persona deliberation on dangerous or multi-file changes.
     # PRAISE votes are appended to data/exemplars.yml for future reference.
     class Council
+      include Master::Ground::AtomicWrite
       EXEMPLARS_PATH       = File.join(Master::ROOT, "data", "exemplars.yml").freeze
       EXEMPLAR_MSG_CHARS   = 120
       EXEMPLAR_FEEDBACK_CHARS = 240
@@ -111,9 +112,7 @@ module Master
         @exemplar_mutex.synchronize do
           loaded   = File.exist?(EXEMPLARS_PATH) ? Master.load_yaml(EXEMPLARS_PATH, default: []) : []
           existing = loaded.is_a?(Array) ? loaded : []
-          tmp_path = "#{EXEMPLARS_PATH}.tmp.#{Process.pid}"
-          File.write(tmp_path, YAML.dump(existing + [entry]))
-          File.rename(tmp_path, EXEMPLARS_PATH)
+          write_atomic(EXEMPLARS_PATH, (existing + [entry]).to_yaml)
         end
       rescue StandardError => e
         @bus&.publish("council:exemplar_error", error: e.message)

@@ -5,6 +5,7 @@ module Master
   PHASES = %w[discover analyze ideate design implement validate deliver idle].freeze
 
   class PhaseGates
+    include AtomicWrite
     PHASE_STATE_PATH = "data/phase_state.yml".freeze
 
     GATES = {
@@ -89,12 +90,7 @@ module Master
     def persist
       path = File.join(@root, PHASE_STATE_PATH)
       FileUtils.mkdir_p(File.dirname(path))
-      tmp_path = "#{path}.tmp.#{Process.pid}"
-      File.write(tmp_path, YAML.dump(@state))
-      File.rename(tmp_path, path)
-    rescue StandardError => e
-      File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
-      raise e
+      write_atomic(path, @state.to_yaml)
     end
   end
   end
