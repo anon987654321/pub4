@@ -51,14 +51,14 @@ module Master
     end
 
     def current_tree
-      Dir.glob(File.join(@root, "lib", "*")).sort.flat_map do |entry|
-        if File.directory?(entry)
-          subs = Dir.glob(File.join(entry, "*")).sort.map { |f| "  #{File.basename(f)}#{File.directory?(f) ? "/" : ""}" }
-          ["#{File.basename(entry)}/", *subs]
-        else
-          [File.basename(entry)]
-        end
-      end.first(120).join("\n")
+      entries = Dir.glob(File.join(@root, "lib", "*")).sort.flat_map { |e| describe_entry(e) }
+      entries.first(120).join("\n")
+    end
+
+    def describe_entry(entry)
+      return [File.basename(entry)] unless File.directory?(entry)
+      subs = Dir.glob(File.join(entry, "*")).sort.map { |f| "  #{File.basename(f)}#{File.directory?(f) ? "/" : ""}" }
+      ["#{File.basename(entry)}/", *subs]
     end
 
     def prompt(tree, n)
