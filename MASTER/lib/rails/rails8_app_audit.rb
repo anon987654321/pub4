@@ -127,8 +127,10 @@ module Master
     def cache_first_sw?(path)
       sw_rel = find_file(path, SW_CANDIDATES)
       return false unless sw_rel
-      src = File.read(File.join(path, sw_rel)) rescue return false
+      src = File.read(File.join(path, sw_rel))
       src.match?(/caches\.match.*\|\|.*fetch/m)
+    rescue StandardError
+      false
     end
 
     def count_partials(path)
