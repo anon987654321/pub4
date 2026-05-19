@@ -14,7 +14,7 @@ module Master
 
       def call(ctx)
         ctx = run_council(ctx)
-        ctx = run_stage(@lint, ctx)
+        ctx = run_stage(@lint, ctx).value_or(ctx)
         run_stage(@prune, ctx)
       rescue StandardError => e
         @bus&.publish("review:error", message: e.message)
