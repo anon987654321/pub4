@@ -54,7 +54,8 @@ module Master
         dl.each { |l| lines << @p.dim(l) }
         lines << ""
       end
-      lines << d("MASTER ##{rev}: #{now.strftime('%a %b %e %H:%M:%S %Z %Y')} #{user}@#{host}")
+      lines << d("MASTER (CONSTITUTIONAL) ##{rev}: #{now.strftime('%a %b %e %H:%M:%S %Z %Y')}")
+      lines << d("    #{user}@#{host}:#{@config["root"] || Dir.pwd}")
       lines << d("runtime0: #{RUBY_PLATFORM} ruby #{RUBY_VERSION} #{shell} #{user}#{pchar}")
       lines << d("model0: #{short_model(model)}")
       lines << d("rev0: #{rev}")

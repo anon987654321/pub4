@@ -89,8 +89,10 @@ module Master
       sections["master_constitution_absolute"] = [
         "<master_constitution tier=\"absolute\">",
         "golden_rule: #{constitution["golden_rule"]}",
-        "never: #{(banned + no_open + no_end).uniq.join(", ")}",
-        "evidence_only: show diff or file content, never assert, active voice",
+        "output_never: #{banned.join(", ")}",
+        "opener_never: #{no_open.join(" / ")}",
+        "closer_never: #{no_end.join(" / ")}",
+        "evidence_only: show diff or file content; never assert; active voice",
         "</master_constitution>"
       ].join("\n")
       kernel = @rules.kernel
@@ -205,9 +207,6 @@ module Master
         XML
       end
 
-      sections["master_tools"] = "<master_tools>\n" \
-        "Read tool descriptions carefully; honor required_context, usage_rules, and error_recovery.\n" \
-        "</master_tools>"
       ordered = ordering.empty? ? sections.keys : ordering
       ordered.filter_map { |key| sections[key] }.join("\n\n")
     end

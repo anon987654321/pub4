@@ -1332,8 +1332,7 @@ function _doResize() {
   }
   // Boot phrases — whispered at startup
   const DMESG_PHRASES = [
-    'Master booting', 'Soul loaded', 'Constitution online', 'Tools registered',
-    'Pipeline armed', 'Council convened', 'Ready'
+    'soul', 'constitution', 'pipeline', 'council', 'ready'
   ];
 
   // Render loop
@@ -2102,9 +2101,12 @@ function _doResize() {
   const zshBar = document.getElementById('zsh');
   const zshIn  = document.getElementById('zin');
   const POST_LINES = [
-    'MASTER  v1.0', 'RAM: \u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593 2048K OK',
-    'SOUL............OK', 'CONSTITUTION....OK',
-    'PIPELINE........OK', 'COUNCIL.........OK', '> READY'
+    'MASTER (CONSTITUTIONAL)',
+    'soul: ok',
+    'constitution: ok',
+    'pipeline: ok',
+    'council: ok',
+    'ready'
   ];
   function startEverything() {
     initAudio();

@@ -13,14 +13,13 @@ language:
 
 prompt_ordering:
   - master_identity
+  - master_output_format
   - master_meta_instruction
-  - master_priority
   - master_constitution_absolute
+  - master_priority
   - master_constitution_kernel
   - master_refusal_policy
   - master_style
-  - master_tools
-  - master_output_format
 
 absolute:
   golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
@@ -92,6 +91,10 @@ evolution_log:
   - version: "2.4.0"
     date: "2026-05-14"
     change: add interaction code_rules — REGISTER_STABLE, MIRROR_EXPERTISE, SURFACE_ERRORS_FIRST, NO_DEAD_ENDS, PREEMPT_FOLLOWUP
+    author: dev
+  - version: "2.5.0"
+    date: "2026-05-19"
+    change: prompt_ordering resequenced; master_output_format hoisted to slot 2; master_tools section removed; never list split into output_never/opener_never/closer_never
     author: dev
   - version: "2.5.0"
     date: "2026-05-16"
