@@ -98,7 +98,6 @@ module Master
     end
 
     def write_back(content)
-      require_relative "../../reach/atomic_write"
       tmp = "#{@path}.ast_fix.#{Process.pid}.tmp"
       File.write(tmp, content, encoding: "UTF-8")
       File.rename(tmp, @path)

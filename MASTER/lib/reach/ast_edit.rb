@@ -7,7 +7,7 @@ module Master
     # Uses Ripper::SexpBuilder for structure-awareness without external gem dependencies.
     class AstEdit
       include PathGuard
-      include AtomicWrite
+      include Master::Ground::AtomicWrite
       TIER        = :guarded
       NAME        = "ast_edit".freeze
       DESCRIPTION = "AST-aware code editing: find, rename, or restructure Ruby methods safely.".freeze

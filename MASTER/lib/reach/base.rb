@@ -7,7 +7,7 @@ module Master
     # Tool classes include Base, set NAME/TIER, and call commit_write inside safely.
     module Base
       include PathGuard
-      include AtomicWrite
+      include Master::Ground::AtomicWrite
 
       def permit(ctx = nil)
         @governor.permit?(self.class::NAME, self.class::TIER, ctx)

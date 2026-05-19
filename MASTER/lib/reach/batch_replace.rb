@@ -4,7 +4,7 @@ module Master
   module Reach
     # BatchReplace — apply multiple search-and-replace operations in one pass.
     class BatchReplace
-      include AtomicWrite
+      include Master::Ground::AtomicWrite
       TIER        = :guarded
       NAME        = "replace".freeze
       DESCRIPTION = "Find and replace text across all files in a directory.".freeze

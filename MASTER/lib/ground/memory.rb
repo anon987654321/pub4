@@ -62,7 +62,7 @@ module Master
     }.freeze
 
     include Search
-    include Reach::AtomicWrite
+    include AtomicWrite
 
     def initialize(root: Dir.pwd)
       @root  = root

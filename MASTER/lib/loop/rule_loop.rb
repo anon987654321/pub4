@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "tempfile"
-require_relative "../reach/atomic_write"
+require_relative "../ground/atomic_write"
 require_relative "constants"
 require_relative "fix_helpers"
 require_relative "patch_applier"
@@ -23,7 +23,7 @@ module Master
     SEVERITY_RANK = Master::SEVERITY_RANK
     MIN_SEVERITY  = SEVERITY_RANK[:warning]
 
-    include Master::Reach::AtomicWrite
+    include Master::Ground::AtomicWrite
     include Master::Loop::FixHelpers
 
     def initialize(rule:, agent:, scanner:, root:, bus: nil, learnings: nil)

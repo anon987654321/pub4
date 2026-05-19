@@ -48,7 +48,7 @@ module Master
     def task_type      = self['task_type'].to_s
     def auto_testing?  = self['auto_testing'] == true
 
-    include Reach::AtomicWrite
+    include AtomicWrite
 
     def save!
       FileUtils.mkdir_p(File.dirname(@path))
