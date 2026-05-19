@@ -78,10 +78,10 @@
     document.documentElement.style.setProperty("--master-confidence", String(visual.confidence));
 
     if (!face) return;
-    const blur = visual.entropy > 0.7 ? 0.6 : 0;
+    const blur = Math.max(0, (visual.entropy - 0.42) * 1.35);
     const saturation = 0.9 + visual.confidence * 0.35;
     const contrast = 0.95 + visual.entropy * 0.20;
-    face.style.filter = `saturate(${saturation}) contrast(${contrast}) blur(${blur}px)`;
+    face.style.filter = `saturate(${saturation.toFixed(3)}) contrast(${contrast.toFixed(3)}) blur(${blur.toFixed(3)}px)`;
   }
 
   function clamp(value, min, max) {
