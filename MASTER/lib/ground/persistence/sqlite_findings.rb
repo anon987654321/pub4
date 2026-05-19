@@ -10,13 +10,11 @@ module Master
     # otherwise no-op so existing JSONL flow continues unaltered. Exposes time-series
     # queries the JSONL stream cannot answer (rule frequency over time, by directory).
     class SqliteFindings
+      include SqliteStore
       DEFAULT_PATH = ".master/findings.sqlite3"
 
       def initialize(root:)
-        path = File.join(root, DEFAULT_PATH)
-        FileUtils.mkdir_p(File.dirname(path))
-        @db = SQLite3::Database.new(path)
-        @db.execute "PRAGMA journal_mode = WAL"
+        @db = open_sqlite(root, DEFAULT_PATH)
         ensure_schema
       end
 

@@ -9,13 +9,11 @@ module Master
     # once entries cross a few dozen. Each record carries a kind (user/feedback/
     # project/reference), a name, and body; FTS5 indexes name+body for /recall.
     class SqliteMemory
+      include SqliteStore
       DEFAULT_PATH = ".master/memory.sqlite3"
 
       def initialize(root:)
-        path = File.join(root, DEFAULT_PATH)
-        FileUtils.mkdir_p(File.dirname(path))
-        @db = SQLite3::Database.new(path)
-        @db.execute "PRAGMA journal_mode = WAL"
+        @db = open_sqlite(root, DEFAULT_PATH)
         ensure_schema
       end
 

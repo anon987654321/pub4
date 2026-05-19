@@ -13,6 +13,7 @@ module Master
   #   record(trigger:, strategy:, outcome:)  → strategy_outcomes table
   #   record(rule:, file_type:, outcome:)    → fix_outcomes table
   class KnowledgeStore
+    include Master::Ground::Persistence::SqliteStore
     DEFAULT_PATH        = ".master/knowledge.sqlite3"
     QUALITY_WINDOW_DAYS = 30
     RSI_WINDOW_DAYS     = 7
@@ -156,24 +157,7 @@ module Master
     private
 
     def open_db(root)
-      path = File.join(root, DEFAULT_PATH)
-      FileUtils.mkdir_p(File.dirname(path))
-      db = SQLite3::Database.new(path)
-      begin
-        db.execute("PRAGMA journal_mode = WAL")
-      rescue SQLite3::IOException
-        begin
-          db.execute("PRAGMA journal_mode = DELETE")
-        rescue SQLite3::IOException
-          db.close rescue nil
-          warn "knowledge_store: file DB unavailable — using :memory:"
-          db = SQLite3::Database.new(":memory:")
-        end
-      end
-      db
-    rescue SQLite3::Exception => e
-      warn "knowledge_store: #{e.message} — using :memory:"
-      SQLite3::Database.new(":memory:")
+      open_sqlite(root, DEFAULT_PATH)
     end
 
     def ensure_schema
