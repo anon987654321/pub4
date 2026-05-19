@@ -22,10 +22,7 @@ module Master
       critical: "!!"
     }.freeze
 
-    SLASH_COMMANDS = %w[
-      /exit /undo /redo /history /why /focus /last /cmd /dmesg /chips /propose /principles /restart
-      /ui-critique /sound-critique /rebuild /context /checkpoint /verify /rails-pwa-audit /rails-pwa-fix /swallow-report
-    ].freeze
+    SLASH_COMMANDS = %w[/exit /undo /redo /checkpoint].freeze
 
     attr_reader :container
 
@@ -182,34 +179,55 @@ module Master
       @proposer
     end
 
+    NL_DISPATCH = [
+      [/\b(?:show|print|list)\s+(?:undo\s+)?histor/i,              :run_history],
+      [/\b(?:why|how)\s+(?:this|that|did|was)\b/i,                 :run_why],
+      [/\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i,          :toggle_focus],
+      [/\b(?:last|prev(?:ious)?)\s+(?:input|message|prompt)\b/i,   :run_last],
+      [/\b(?:suggest|what(?:'s|\s+is)\s+next|next\s+steps?)\b/i,   :run_propose],
+      [/\b(?:show|list)\s+(?:my\s+)?principles\b/i,                :run_principles],
+      [/\brestart\b|\bhot[\s-]?reload\b/i,                         :run_restart],
+      [/\bui[\s-]?critique\b/i,                                    :run_ui_critique],
+      [/\bsound[\s-]?critique\b/i,                                 :run_sound_critique],
+      [/\brebuild\b/i,                                             :run_rebuild],
+      [/\bshow\s+context\b|\bcontext\s+window\b/i,                 :run_context],
+      [/\bverifie?d?\b/i,                                          :run_verify],
+      [/\brails[\s-]?pwa[\s-]?audit\b/i,                           :run_rails_pwa_audit],
+      [/\brails[\s-]?pwa[\s-]?fix\b/i,                             :run_rails_pwa_fix],
+      [/\bswallow[\s-]?report\b|\berror\s+ledger\b/i,              :run_swallow_report],
+      [/\btoggle\s+chips?\b|\bchips?\s+(?:on|off)\b/i,             :toggle_chips],
+      [/\btoggle\s+dmesg\b|\bdmesg\s+(?:on|off)\b/i,               :toggle_dmesg],
+    ].freeze
+
     def handle_repl_line(line)
       stripped = line.strip
       return accept_top_suggestion if stripped.empty?
+      NL_DISPATCH.each { |pat, meth| return send(meth) if stripped.match?(pat) }
       case stripped
-      when "/exit"    then exit_cli
-      when "/undo"    then run_undo
-      when "/redo"    then run_redo
-      when "/history" then run_history
-      when "/why"     then run_why
-      when "/focus"   then toggle_focus
-      when "/last"    then run_last
-      when "/cmd"     then run_cmd
-      when "/dmesg"   then toggle_dmesg
-      when "/chips"   then toggle_chips
-      when "/propose"    then run_propose
-      when "/principles"  then run_principles
+      when "/exit", "/quit" then exit_cli
+      when "/undo"          then run_undo
+      when "/redo"          then run_redo
+      when "/checkpoint"    then run_checkpoint
+      when "/history"       then run_history
+      when "/why"           then run_why
+      when "/focus"         then toggle_focus
+      when "/last"          then run_last
+      when "/cmd"           then run_cmd
+      when "/dmesg"         then toggle_dmesg
+      when "/chips"         then toggle_chips
+      when "/propose"       then run_propose
+      when "/principles"    then run_principles
       when "/restart"       then run_restart
       when "/ui-critique"   then run_ui_critique
       when "/sound-critique" then run_sound_critique
       when "/rebuild"       then run_rebuild
       when "/context"       then run_context
-      when "/checkpoint"    then run_checkpoint
-      when "/verify"          then run_verify
+      when "/verify"        then run_verify
       when "/rails-pwa-audit"  then run_rails_pwa_audit
       when "/rails-pwa-fix"    then run_rails_pwa_fix
       when "/swallow-report"   then run_swallow_report
-      when "<<"       then run_input(read_multiline)
-      else                 run_input(line)
+      when "<<"             then run_input(read_multiline)
+      else                       run_input(line)
       end
     end
 

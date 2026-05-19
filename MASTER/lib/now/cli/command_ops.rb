@@ -67,7 +67,8 @@ module Master
     end
 
     def run_cmd
-      SLASH_COMMANDS.each { |c| puts @renderer.render("  #{c}", mode: :dim) }
+      puts @renderer.render("explicit: #{SLASH_COMMANDS.join("  ")}", mode: :dim)
+      puts @renderer.render("or describe what you want — intent is inferred", mode: :dim)
     end
 
     def toggle_dmesg

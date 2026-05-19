@@ -96,3 +96,43 @@ commands:
     patterns:
       - '\b(?:standing\s+orders?|show\s+orders?|list\s+orders?)\b'
     capture: orders_subcmd
+
+  history:
+    patterns:
+      - '\b(?:show|print|list)\s+(?:undo\s+)?histor(?:y|ies)\b'
+      - '\bwhat\s+(?:did\s+(?:i|we)\s+do|have\s+(?:i|we)\s+done|was\s+(?:changed|done))\b'
+    capture: none
+
+  why:
+    patterns:
+      - '\b(?:which|current|show)\s+model\s+(?:routing|selection|why)\b'
+      - '\bwhy\s+(?:this|that)\s+model\b'
+      - '\bmodel\s+scoring\b'
+    capture: none
+
+  principles:
+    patterns:
+      - '\b(?:show|list|what\s+are)\s+(?:the\s+)?(?:my\s+)?principles\b'
+      - '\bconstitution(?:al)?\s+(?:rules?|principles?|axioms?)\b'
+    capture: none
+
+  propose:
+    patterns:
+      - '\b(?:what(?:''s|\s+is)\s+(?:next|suggested)|suggest(?:ed)?\s+(?:action|step)s?|next\s+steps?|what\s+should\s+(?:i|we)\s+do)\b'
+    capture: none
+
+  context:
+    patterns:
+      - '\b(?:show|what(?:''s|\s+is)\s+in)\s+(?:the\s+)?(?:context|attention)\s+(?:window|state)?\b'
+      - '\bcontext\s+window\b'
+    capture: none
+
+  verify:
+    patterns:
+      - '\b(?:verifie?d?|confirm|check)\s+(?:everything\s+(?:is\s+)?(?:wired|connected|working)|(?:all\s+)?symbols?)\b'
+    capture: none
+
+  restart:
+    patterns:
+      - '\b(?:restart|hot[\s-]?reload|respawn)\s+(?:master|the\s+agent|process)?\b'
+    capture: none
