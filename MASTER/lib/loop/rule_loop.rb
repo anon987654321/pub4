@@ -64,7 +64,7 @@ module Master
         ext = File.extname(path).downcase
         result.value!
               .select { |f| (SEVERITY_RANK[f[:severity]] || 0) >= MIN_SEVERITY }
-              .map    { |f| f.merge(file: path, ext:) }
+              .map    { |f| f.to_h.merge(file: path, ext:) }
       end
     end
 

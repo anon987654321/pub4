@@ -161,7 +161,7 @@ module Master
       files.flat_map do |path|
         next [] unless File.exist?(path)
         result = @scanner.scan(path)
-        Result.wrap(result).value_or([]).map { |v| v.merge(file: path.delete_prefix("#{@root}/")) }
+        Result.wrap(result).value_or([]).map { |v| v.to_h.merge(file: path.delete_prefix("#{@root}/")) }
       end
     end
 
