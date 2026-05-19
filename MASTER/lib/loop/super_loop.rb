@@ -107,7 +107,7 @@ module Master
       fixed  = 0
       rb     = files.select { |f| f.end_with?(".rb") }
       if rb.any?
-        _, status = Open3.capture2e("bundle", "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
+        _, status = Open3.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
         fixed += rb.size if status.success?
       end
       rb.each do |path|

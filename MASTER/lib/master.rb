@@ -17,6 +17,7 @@ module Master
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
   RULES_PATH   = File.join(DATA, "rules.yml").freeze
 
+  BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH = 20
   SEVERITY_RANK = { info: 0, warning: 1, error: 2, critical: 3 }.freeze
   CTX_WINDOW_SIZE = 200_000

@@ -25,7 +25,7 @@ module Master
           return [] unless path.end_with?(".rb") && rubocop_available?
 
           stdout, _stderr, status = Open3.capture3(
-            "bundle", "exec", "rubocop", "--format", "json", "--no-color", path,
+            Master::BUNDLE_BIN, "exec", "rubocop", "--format", "json", "--no-color", path,
             chdir: @root
           )
           return [] if stdout.empty?

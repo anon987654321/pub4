@@ -25,7 +25,7 @@ module Master
           return [] unless path.end_with?(".rb") && reek_available?
 
           stdout, _stderr, _status = Open3.capture3(
-            "bundle", "exec", "reek", "--format", "json", path,
+            Master::BUNDLE_BIN, "exec", "reek", "--format", "json", path,
             chdir: @root
           )
           return [] if stdout.empty?
