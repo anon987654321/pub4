@@ -58,7 +58,9 @@ module Master
       rescue Reach::CircuitBreaker::CircuitError => err
         Result.err(err.message, category: err.category)
       rescue StandardError => err
-        Result.err("llm_request: #{err.message}", category: :llm_call_failure)
+        msg = err.message.to_s
+        msg = "no API key — set ANTHROPIC_API_KEY (or OPENROUTER_API_KEY) in env" if msg.match?(/missing configuration/i)
+        Result.err(msg, category: :llm_call_failure)
       end
 
       def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
