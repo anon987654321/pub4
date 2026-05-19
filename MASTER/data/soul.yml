@@ -3,7 +3,7 @@
 # ABSOLUTE sections require constitutional override to amend.
 # Negotiable sections: soul propose -> soul approve -> bump version.
 
-version: "2.4.0"
+version: "2.5.0"
 persona: malay
 voice: ms-MY-OsmanNeural
 language:
