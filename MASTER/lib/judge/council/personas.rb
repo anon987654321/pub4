@@ -5,7 +5,7 @@ module Master
   module Council
     module Personas
       Persona = Data.define(:name, :role, :bias, :prompt, :veto_role,
-                            :emphasizes, :weight, :aliases, :question) do
+                            :emphasizes, :weight, :aliases, :question, :model) do
         def veto? = veto_role == true
       end
 
@@ -14,7 +14,8 @@ module Master
         emphasizes: [].freeze,
         weight: 0.05,
         aliases: [].freeze,
-        question: nil
+        question: nil,
+        model: nil
       }.freeze
 
       ROOT_DATA_PATH = File.join(File.expand_path("../../../..", __dir__), "data", "council.yml").freeze

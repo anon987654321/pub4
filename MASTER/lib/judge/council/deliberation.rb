@@ -259,12 +259,13 @@ module Master
         QualityFramework.brief(domain)
       end
 
-      def initialize(personas:, agent:, event_bus: nil, axioms: nil, judge_enabled: true)
+      def initialize(personas:, agent:, event_bus: nil, axioms: nil, judge_enabled: true, mode: :parallel)
         @personas      = personas
         @agent         = agent
         @bus           = event_bus
         @rules         = axioms
         @judge_enabled = judge_enabled
+        @mode          = mode
         validate_dependencies!
       end
 
@@ -289,30 +290,7 @@ module Master
       def review(code, context: nil)
         return Master::Result.err("council: no personas configured", category: :validation) if @personas.empty?
 
-        slots = Mutex.new
-        available = MAX_CONCURRENT
-        ready = ConditionVariable.new
-
-        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
-        threads = @personas.map do |persona|
-          Thread.new do
-            slots.synchronize { ready.wait(slots) until available > 0; available -= 1 }
-            begin
-              response = @agent.ask(build_prompt(persona, code, context))
-              entry = { persona: persona.name, role: persona.role,
-                        veto_role: veto_role?(persona), axiom: primary_axiom(persona),
-                        feedback: response, confidence: score_confidence(response) }
-              @bus&.publish(:council_feedback, entry)
-              entry
-            rescue StandardError => e
-              @bus&.publish("council:persona_error", persona: persona.name, error: e.message)
-              nil
-            ensure
-              slots.synchronize { available += 1; ready.broadcast }
-            end
-          end
-        end
-        feedback = threads.filter_map { |t| join_or_kill(t, deadline) }
+        feedback = @mode == :sequential ? collect_sequential(code, context) : collect_parallel(code, context)
         if feedback.size < MIN_QUORUM
           @bus&.publish(:council_timeout, completed: feedback.size, total: @personas.size)
           quorum_msg = "council: quorum not reached (#{feedback.size}/#{@personas.size})"
@@ -342,6 +320,59 @@ module Master
       end
 
       private
+
+      # Parallel fan-out — all personas in flight at once, bounded by MAX_CONCURRENT.
+      def collect_parallel(code, context)
+        slots = Mutex.new
+        available = MAX_CONCURRENT
+        ready = ConditionVariable.new
+
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
+        threads = @personas.map do |persona|
+          Thread.new do
+            slots.synchronize { ready.wait(slots) until available > 0; available -= 1 }
+            begin
+              ask_persona(persona, code, context)
+            ensure
+              slots.synchronize { available += 1; ready.broadcast }
+            end
+          end
+        end
+        threads.filter_map { |t| join_or_kill(t, deadline) }
+      end
+
+      # Sequential handoff — each persona sees prior personas' feedback as context.
+      # Slower than parallel but lets personas react to each other rather than
+      # all speaking in isolation. Use when reactions and rebuttals matter more
+      # than independent reads.
+      def collect_sequential(code, context)
+        deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
+        acc = []
+        @personas.each do |persona|
+          break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+          turn_ctx = acc.empty? ? context : "#{context}\n\nprior turns:\n#{format_prior_turns(acc)}"
+          entry = ask_persona(persona, code, turn_ctx)
+          acc << entry if entry
+        end
+        acc
+      end
+
+      def ask_persona(persona, code, context)
+        prompt   = build_prompt(persona, code, context)
+        response = persona.model ? @agent.ask_once(prompt, model: persona.model) : @agent.ask(prompt)
+        entry = { persona: persona.name, role: persona.role,
+                  veto_role: veto_role?(persona), axiom: primary_axiom(persona),
+                  model: persona.model, feedback: response, confidence: score_confidence(response) }
+        @bus&.publish(:council_feedback, entry)
+        entry
+      rescue StandardError => e
+        @bus&.publish("council:persona_error", persona: persona.name, error: e.message)
+        nil
+      end
+
+      def format_prior_turns(entries)
+        entries.map { |e| "#{e[:persona]} (#{e[:role]}): #{e[:feedback].to_s.lines.first(3).join.strip}" }.join("\n\n")
+      end
 
       def join_or_kill(thread, deadline)
         remaining = [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0.1].max
