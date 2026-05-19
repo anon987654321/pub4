@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Tv::ChannelsController < Tv::BaseController
   allow_unauthenticated_access only: %i[index show]
   before_action :set_channel, only: %i[show edit update destroy subscribe unsubscribe]

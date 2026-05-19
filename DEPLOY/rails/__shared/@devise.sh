@@ -1,3 +1,5 @@
+set -euo pipefail
+
 cd "$BASE_DIR"
 
 # -- SET UP DEVISE FOR USER AUTHENTICATION --

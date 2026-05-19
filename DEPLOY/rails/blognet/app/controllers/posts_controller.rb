@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PostsController < ApplicationController
   before_action :require_authentication, except: %i[index show]
   before_action :set_blog

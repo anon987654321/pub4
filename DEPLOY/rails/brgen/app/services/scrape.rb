@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "ferrum"
 require "net/http"
 require "json"

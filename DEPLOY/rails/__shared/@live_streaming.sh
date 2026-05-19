@@ -1,3 +1,5 @@
+set -euo pipefail
+
 
 #!/usr/bin/env zsh
 

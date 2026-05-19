@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PlaylistController < ApplicationController
   def index
     @playlists = [

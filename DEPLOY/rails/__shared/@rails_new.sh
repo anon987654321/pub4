@@ -1,3 +1,5 @@
+set -euo pipefail
+
 cd "$BASE_DIR"
 
 gem install bundler --user-install

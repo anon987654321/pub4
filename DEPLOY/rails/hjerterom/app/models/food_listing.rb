@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FoodListing < ApplicationRecord
   belongs_to :user
   has_many :food_requests, dependent: :destroy

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class OutfitItem < ApplicationRecord
   belongs_to :outfit
   belongs_to :item

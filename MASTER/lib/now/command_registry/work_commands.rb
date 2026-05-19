@@ -18,19 +18,19 @@ module Master
       config       = infra[:config]
       metrics      = infra[:metrics]
       {
-        "scan"     => cmd(:dispatch_scan, scanner, root),
-        "fix"      => ->(ctx) {
+        "scan" => cmd(:dispatch_scan, scanner, root),
+        "fix" => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
           result = super_loop.run_to_convergence(target)
           rows   = result[:rule_results].map { |r| "#{r[:rule]}: #{r[:status]} (#{r[:fixed]} fixed)" }
           rows.empty? ? "clean" : "#{rows.join("\n")}\n(#{result[:passes]} pass#{result[:passes] == 1 ? "" : "es"}, #{result[:converged] ? "converged" : "plateau"})"
         },
-        "review"   => ->(ctx) { dispatch_review(council_stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
+        "review" => ->(ctx) { dispatch_review(council_stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
         "critique" => cmd(:dispatch_critique, deliberation, root),
-        "model"    => ->(c) { dispatch_model(agent:, config:, metrics:, root:, arg: arg_for(c)) },
-        "why"      => cmd(:dispatch_why, agent, root),
-        "axioms"   => cmd(:dispatch_axioms, scanner, root),
-        "topic"    => cmd(:dispatch_topic, session)
+        "model" => ->(c) { dispatch_model(agent:, config:, metrics:, root:, arg: arg_for(c)) },
+        "why" => cmd(:dispatch_why, agent, root),
+        "axioms" => cmd(:dispatch_axioms, scanner, root),
+        "topic" => cmd(:dispatch_topic, session)
       }
     end
 

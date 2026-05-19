@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PortUpdate < ApplicationRecord
   belongs_to :port
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Marketplace::OrdersController < Marketplace::BaseController
   before_action :set_listing
 

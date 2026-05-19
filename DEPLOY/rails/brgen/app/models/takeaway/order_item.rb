@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Takeaway::OrderItem < ApplicationRecord
   belongs_to :order,     class_name: "Takeaway::Order"
   belongs_to :menu_item, class_name: "Takeaway::MenuItem"

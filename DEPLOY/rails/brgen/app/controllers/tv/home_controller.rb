@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Tv::HomeController < Tv::BaseController
   allow_unauthenticated_access
 

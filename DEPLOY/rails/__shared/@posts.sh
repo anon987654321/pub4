@@ -1,3 +1,5 @@
+set -euo pipefail
+
 cd "$BASE_DIR"
 
 echo "Generating Posts, Communities, and Comments..."

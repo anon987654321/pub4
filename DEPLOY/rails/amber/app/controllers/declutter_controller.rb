@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DeclutterController < ApplicationController
   before_action :require_authentication
   before_action :set_item, only: %i[review update_review move challenge complete_challenge outcome last_chance]

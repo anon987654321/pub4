@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Follow < ApplicationRecord
   belongs_to :follower, class_name: "User", touch: true
   belongs_to :followee, class_name: "User", touch: true

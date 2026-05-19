@@ -179,10 +179,12 @@ module Master
     end
 
     def append_improvement(rule_id, sample)
+      files = sample.map { |v| v[:file] }.uniq.first(3).join(", ")
+      @bus&.publish("loop:recurrence", rule: rule_id, files:, at: Time.now.utc.iso8601)
       path = File.join(@root, "runtime", "improvements.md")
       FileUtils.mkdir_p(File.dirname(path))
-      files = sample.map { |v| v[:file] }.uniq.first(3).join(", ")
-      File.open(path, "a") { |f| f.write("#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n") }
+      File.write(path, "#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n",
+                 mode: "a")
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "super_loop.append_improvement", event_bus: @bus, rule_id:)
     end

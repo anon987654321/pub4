@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Tv::Channel < ApplicationRecord
   belongs_to :user
   has_many :videos,        class_name: "Tv::Video",        foreign_key: :tv_channel_id, dependent: :destroy

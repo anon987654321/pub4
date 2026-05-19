@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PlannedOutfitsController < ApplicationController
   before_action :require_authentication
 

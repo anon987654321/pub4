@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Port < ApplicationRecord
   belongs_to :category
   has_many :dependencies, dependent: :destroy

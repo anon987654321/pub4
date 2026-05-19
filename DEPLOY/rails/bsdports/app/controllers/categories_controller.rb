@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CategoriesController < ApplicationController
   allow_unauthenticated_access only: %i[index show]
 

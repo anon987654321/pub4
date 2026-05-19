@@ -7,14 +7,14 @@ module Master
 
     class Rule
       EXT_LANG = {
-        ".rb"      => "ruby",        ".rake"  => "ruby",   ".gemspec" => "ruby",
-        ".erb"     => "html",        ".html"  => "html",   ".htm"     => "html",
-        ".css"     => "css",         ".scss"  => "scss",   ".sass"    => "scss",
-        ".js"      => "javascript",  ".ts"    => "javascript",
-        ".jsx"     => "javascript",  ".tsx"   => "javascript",
-        ".zsh"     => "zsh",         ".sh"    => "zsh",    ".bash"    => "zsh",
-        ".yml"     => "yaml",        ".yaml"  => "yaml",
-        ".md"      => "markdown",    ".json"  => "json",
+        ".rb" => "ruby",        ".rake" => "ruby",   ".gemspec" => "ruby",
+        ".erb" => "html",        ".html" => "html",   ".htm" => "html",
+        ".css" => "css",         ".scss" => "scss",   ".sass" => "scss",
+        ".js" => "javascript",  ".ts" => "javascript",
+        ".jsx" => "javascript",  ".tsx" => "javascript",
+        ".zsh" => "zsh",         ".sh" => "zsh",    ".bash" => "zsh",
+        ".yml" => "yaml",        ".yaml" => "yaml",
+        ".md" => "markdown",    ".json" => "json",
       }.freeze
 
       attr_reader :id, :description, :severity, :rule_tags, :auto_fix

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Playlist::PlaylistsController < Playlist::BaseController
   allow_unauthenticated_access only: %i[index show]
   before_action :set_playlist, only: %i[show edit update destroy]

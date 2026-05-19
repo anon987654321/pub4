@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PortsController < ApplicationController
   allow_unauthenticated_access only: %i[index show]
   before_action :set_port, only: %i[show watch unwatch]

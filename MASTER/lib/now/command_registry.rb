@@ -38,8 +38,8 @@ module Master
       logging = infra[:logging]
       config  = infra[:config]
       {
-        "clear"   => ->(_ctx) { session.clear!; "context cleared" },
-        "save"    => ->(_ctx) { session.save!; "session saved" },
+        "clear" => ->(_ctx) { session.clear!; "context cleared" },
+        "save" => ->(_ctx) { session.save!; "session saved" },
         "history" => ->(ctx) {
           n = ctx[:args].to_s.strip.to_i
           n = 10 if n <= 0
@@ -47,12 +47,12 @@ module Master
           next "history: empty" if recent.empty?
           recent.map { |m| "[#{m[:role]}] #{m[:content].to_s.gsub(/\s+/, " ")[0, 120]}" }.join("\n")
         },
-        "tokens"  => ->(_ctx) { "~#{session.token_est} tokens" },
-        "cost"    => ->(_ctx) { "$#{"%.4f" % session.cost}" },
-        "undo"    => ->(_ctx) { r = undo.undo!;  r.ok? ? "reverted: #{r.value!}"   : r.message },
-        "redo"    => ->(_ctx) { r = undo.redo!;  r.ok? ? "reapplied: #{r.value!}"  : r.message },
-        "dmesg"   => ->(_ctx) { logging.dmesg },
-        "config"  => ->(_ctx) { config.to_h.inspect }
+        "tokens" => ->(_ctx) { "~#{session.token_est} tokens" },
+        "cost" => ->(_ctx) { "$#{"%.4f" % session.cost}" },
+        "undo" => ->(_ctx) { r = undo.undo!;  r.ok? ? "reverted: #{r.value!}"   : r.message },
+        "redo" => ->(_ctx) { r = undo.redo!;  r.ok? ? "reapplied: #{r.value!}"  : r.message },
+        "dmesg" => ->(_ctx) { logging.dmesg },
+        "config" => ->(_ctx) { config.to_h.inspect }
       }
     end
 
@@ -102,7 +102,7 @@ module Master
     def control_commands(standing, soul)
       {
         "orders" => cmd(:dispatch_orders, standing),
-        "soul"   => cmd(:dispatch_soul, soul)
+        "soul" => cmd(:dispatch_soul, soul)
       }
     end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class GarmentTaxonomy
   CATEGORY_ALIASES = {
     "top" => "Tops",

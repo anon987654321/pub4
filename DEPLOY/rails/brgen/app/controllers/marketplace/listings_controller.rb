@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Marketplace::ListingsController < Marketplace::BaseController
   allow_unauthenticated_access only: %i[index show]
   before_action :set_listing, only: %i[show edit update destroy]

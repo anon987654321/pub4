@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CommunitiesController < ApplicationController
   before_action :require_real_user, only: [:new, :create]
   before_action :set_community,     only: [:show]

@@ -15,14 +15,14 @@ module Master
 
     # Persona → task-domain mapping. Council reviews the domain, not the answer.
     COUNCIL_ROLES = {
-      "Security"          => %i[auth secrets tool_execution permission_changes],
-      "Reliability"       => %i[network provider runtime fallback],
-      "Maintainer"        => %i[code_mutation refactor file_deletion],
-      "Architect"         => %i[system_shape migration design],
-      "User Advocate"     => %i[ui mobile accessibility],
-      "Accessibility"     => %i[ui mobile accessibility],
-      "Music Producer"    => %i[sonic visual_rhythm pacing],
-      "Hip-Hop Producer"  => %i[sonic visual_rhythm pacing]
+      "Security" => %i[auth secrets tool_execution permission_changes],
+      "Reliability" => %i[network provider runtime fallback],
+      "Maintainer" => %i[code_mutation refactor file_deletion],
+      "Architect" => %i[system_shape migration design],
+      "User Advocate" => %i[ui mobile accessibility],
+      "Accessibility" => %i[ui mobile accessibility],
+      "Music Producer" => %i[sonic visual_rhythm pacing],
+      "Hip-Hop Producer" => %i[sonic visual_rhythm pacing]
     }.freeze
 
     # Required output sections for high/critical risk responses.

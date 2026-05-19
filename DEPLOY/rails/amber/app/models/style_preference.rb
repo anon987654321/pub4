@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class StylePreference < ApplicationRecord
   belongs_to :user
 

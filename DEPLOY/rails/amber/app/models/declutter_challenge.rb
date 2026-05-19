@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DeclutterChallenge < ApplicationRecord
   belongs_to :user
   belongs_to :item

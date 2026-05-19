@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ReadingPlan < ApplicationRecord
   belongs_to :user, optional: true
   has_many :reading_plan_days, dependent: :destroy

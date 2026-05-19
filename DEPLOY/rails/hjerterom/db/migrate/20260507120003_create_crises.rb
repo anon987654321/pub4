@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateCrises < ActiveRecord::Migration[8.1]
   def change
     create_table :crises do |t|

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreatorWardrobeItem < ApplicationRecord
   belongs_to :creator_profile
   belongs_to :item

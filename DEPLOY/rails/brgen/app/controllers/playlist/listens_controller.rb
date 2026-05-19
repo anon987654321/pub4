@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Playlist::ListensController < Playlist::BaseController
   def create
     track = Playlist::Track.find(params[:track_id])

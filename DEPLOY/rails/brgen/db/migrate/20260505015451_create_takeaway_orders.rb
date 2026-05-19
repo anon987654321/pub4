@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateTakeawayOrders < ActiveRecord::Migration[8.1]
   def change
     create_table :takeaway_orders do |t|

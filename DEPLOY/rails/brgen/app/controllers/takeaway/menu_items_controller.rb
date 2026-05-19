@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Takeaway::MenuItemsController < Takeaway::BaseController
   before_action :set_restaurant
 

@@ -11,20 +11,20 @@ module Master
     DEFAULT_WEB_PORT = 53_187
 
     DEFAULTS = {
-      'model'          => 'claude-opus-4-7',
-      'web_host'       => '127.0.0.1',
+      'model' => 'claude-opus-4-7',
+      'web_host' => '127.0.0.1',
       'web_public_url' => 'https://ai.brgen.no',
-      'web_port'       => DEFAULT_WEB_PORT,
-      'budget_max'     => BUDGET_MAX_DEFAULT,
-      'req_max'        => 1.0,
-      'trace'          => 0,
-      'prescan'        => true,
-      'auto'           => false,
-      'cache_ttl'      => 3_600,
-      'history_max'    => 500,
+      'web_port' => DEFAULT_WEB_PORT,
+      'budget_max' => BUDGET_MAX_DEFAULT,
+      'req_max' => 1.0,
+      'trace' => 0,
+      'prescan' => true,
+      'auto' => false,
+      'cache_ttl' => 3_600,
+      'history_max' => 500,
       'reasoning_mode' => 'direct',
-      'task_type'      => 'code_generation',
-      'auto_testing'   => false
+      'task_type' => 'code_generation',
+      'auto_testing' => false
     }.freeze
 
     def initialize(root = Dir.pwd)

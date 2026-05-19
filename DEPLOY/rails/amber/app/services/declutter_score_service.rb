@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DeclutterScoreService
   def initialize(item)
     @item = item

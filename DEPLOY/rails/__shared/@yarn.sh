@@ -1,3 +1,5 @@
+set -euo pipefail
+
 #!/bin/zsh
 
 if ! command_exists yarn; then

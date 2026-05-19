@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateDatingDislikes < ActiveRecord::Migration[8.1]
   def change
     create_table :dating_dislikes do |t|

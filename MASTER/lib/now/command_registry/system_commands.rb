@@ -13,12 +13,12 @@ module Master
 
     def system_commands(agent, diag, root)
       {
-        "tree"     => cmd(:dispatch_tree, root),
-        "diff"     => cmd(:dispatch_diff, root),
-        "commit"   => ->(_ctx) { dispatch_commit(agent, root) },
+        "tree" => cmd(:dispatch_tree, root),
+        "diff" => cmd(:dispatch_diff, root),
+        "commit" => ->(_ctx) { dispatch_commit(agent, root) },
         "snapshot" => ->(_ctx) { dispatch_snapshot(root) },
-        "diag"     => ->(ctx) { diag ? diag.render(ctx[:args].to_s.strip) : "diag: not configured" },
-        "reload"   => ->(_ctx) { "reload: not supported in this context" }
+        "diag" => ->(ctx) { diag ? diag.render(ctx[:args].to_s.strip) : "diag: not configured" },
+        "reload" => ->(_ctx) { "reload: not supported in this context" }
       }
     end
 

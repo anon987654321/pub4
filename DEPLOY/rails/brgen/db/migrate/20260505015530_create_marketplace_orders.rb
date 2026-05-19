@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateMarketplaceOrders < ActiveRecord::Migration[8.1]
   def change
     create_table :marketplace_orders do |t|

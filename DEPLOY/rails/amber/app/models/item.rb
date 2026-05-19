@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Item < ApplicationRecord
   belongs_to :user
   has_one :garment_embedding, dependent: :destroy

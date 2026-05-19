@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreatePorts < ActiveRecord::Migration[8.1]
   def change
     create_table :ports do |t|

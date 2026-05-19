@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateFoodRequests < ActiveRecord::Migration[8.1]
   def change
     create_table :food_requests do |t|

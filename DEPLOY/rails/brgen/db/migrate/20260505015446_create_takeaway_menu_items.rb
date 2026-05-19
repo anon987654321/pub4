@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateTakeawayMenuItems < ActiveRecord::Migration[8.1]
   def change
     create_table :takeaway_menu_items do |t|

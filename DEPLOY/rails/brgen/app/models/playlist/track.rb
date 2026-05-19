@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Playlist::Track < ApplicationRecord
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
            foreign_key: :playlist_track_id, dependent: :destroy

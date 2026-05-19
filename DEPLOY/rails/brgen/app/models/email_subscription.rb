@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class EmailSubscription < ApplicationRecord
   before_create :generate_token
 

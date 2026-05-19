@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Dating::Profile < ApplicationRecord
   belongs_to :user
   has_many_attached :photos

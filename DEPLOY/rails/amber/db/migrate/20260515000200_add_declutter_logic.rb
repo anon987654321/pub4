@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddDeclutterLogic < ActiveRecord::Migration[8.1]
   def change
     add_column :items, :lifecycle_state, :string, null: false, default: "active" unless column_exists?(:items, :lifecycle_state)

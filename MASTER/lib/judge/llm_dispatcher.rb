@@ -17,18 +17,18 @@ module Master
       TOOL_RESULT_ROLE = "user"
 
       LLM_TOOL_MAP = {
-        Reach::ReadFile        => Reach::LLM::ReadFile,
-        Reach::WriteFile       => Reach::LLM::WriteFile,
-        Reach::StrReplace      => Reach::LLM::StrReplace,
-        Reach::ListDir         => Reach::LLM::ListDir,
-        Reach::SearchFiles     => Reach::LLM::SearchFiles,
-        Reach::Shell           => Reach::LLM::Shell,
-        Reach::WebSearch       => Reach::LLM::WebSearch,
-        Reach::AskLlm          => Reach::LLM::AskLlm,
-        Reach::GitContext      => Reach::LLM::GitContext,
-        Reach::AstEdit         => Reach::LLM::AstEdit,
+        Reach::ReadFile => Reach::LLM::ReadFile,
+        Reach::WriteFile => Reach::LLM::WriteFile,
+        Reach::StrReplace => Reach::LLM::StrReplace,
+        Reach::ListDir => Reach::LLM::ListDir,
+        Reach::SearchFiles => Reach::LLM::SearchFiles,
+        Reach::Shell => Reach::LLM::Shell,
+        Reach::WebSearch => Reach::LLM::WebSearch,
+        Reach::AskLlm => Reach::LLM::AskLlm,
+        Reach::GitContext => Reach::LLM::GitContext,
+        Reach::AstEdit => Reach::LLM::AstEdit,
         Reach::SearchKnowledge => Reach::LLM::SearchKnowledge,
-        Reach::FeedbackRecord  => Reach::LLM::FeedbackRecord
+        Reach::FeedbackRecord => Reach::LLM::FeedbackRecord
       }.freeze
 
       def self.build_tool_capable_re

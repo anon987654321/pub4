@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pushable
   VAPID = {
     subject:     -> { "mailto:#{ENV.fetch("VAPID_SUBJECT", "admin@brgen.no")}" },

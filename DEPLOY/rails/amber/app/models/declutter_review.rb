@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DeclutterReview < ApplicationRecord
   belongs_to :user
   belongs_to :item

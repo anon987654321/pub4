@@ -6,15 +6,29 @@ module Master
   # Does not mutate runtime behavior; downstream systems read pressure/stability/weather_state.
   class PressureEngine
     DEFAULT_FIELDS = {
-      entropy:       0.0,
-      confidence:    1.0,
+      entropy: 0.0,
+      confidence: 1.0,
       contradiction: 0.0,
-      turbulence:    0.0,
-      gravity:       0.0,
-      scrutiny:      0.0
+      turbulence: 0.0,
+      gravity: 0.0,
+      scrutiny: 0.0
     }.freeze
 
     HISTORY_CAP = 120
+
+    # Pressure formula weights (must sum to 1.0 across all fields)
+    PRESSURE_W = {
+      entropy: 0.28,
+      contradiction: 0.24,
+      turbulence: 0.20,
+      scrutiny: 0.14,
+      confidence_inv: 0.14
+    }.freeze
+    STABILITY_GRAVITY_W = 0.25
+    WEATHER_FRACTURE = 0.85
+    WEATHER_STORM    = 0.65
+    WEATHER_UNSTABLE = 0.45
+    WEATHER_ACTIVE   = 0.25
 
     # Each rule: [weight, :name|:payload_bool|:payload_float, pattern_or_key]
     # Negative weights subtract. :payload_float multiplies weight by the payload value.
@@ -72,20 +86,20 @@ module Master
     end
 
     def pressure
-      (fields[:entropy]       * 0.28 +
-       fields[:contradiction] * 0.24 +
-       fields[:turbulence]    * 0.20 +
-       fields[:scrutiny]      * 0.14 +
-       (1.0 - fields[:confidence]) * 0.14).clamp(0.0, 1.0)
+      (fields[:entropy]       * PRESSURE_W[:entropy] +
+       fields[:contradiction] * PRESSURE_W[:contradiction] +
+       fields[:turbulence]    * PRESSURE_W[:turbulence] +
+       fields[:scrutiny]      * PRESSURE_W[:scrutiny] +
+       (1.0 - fields[:confidence]) * PRESSURE_W[:confidence_inv]).clamp(0.0, 1.0)
     end
 
-    def stability = (1.0 - pressure + fields[:gravity] * 0.25).clamp(0.0, 1.0)
+    def stability = (1.0 - pressure + fields[:gravity] * STABILITY_GRAVITY_W).clamp(0.0, 1.0)
 
     def weather_state
-      return :fracture if pressure >= 0.85
-      return :storm    if pressure >= 0.65
-      return :unstable if pressure >= 0.45
-      return :active   if pressure >= 0.25
+      return :fracture if pressure >= WEATHER_FRACTURE
+      return :storm    if pressure >= WEATHER_STORM
+      return :unstable if pressure >= WEATHER_UNSTABLE
+      return :active   if pressure >= WEATHER_ACTIVE
       :calm
     end
 

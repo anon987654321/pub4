@@ -5,8 +5,6 @@
 # trigger: manual  — only runs when explicitly called via /command
 #
 # Runtime state (state/last_run_at/last_error) lives here temporarily.
-# TODO: move state fields to .master/standing_orders_state.yml once
-#       standing_orders.rb splits config from FSM state.
 
 - name: auto_default
   description: Scan + sweep + council after any source mutation. Primary self-maintenance loop.

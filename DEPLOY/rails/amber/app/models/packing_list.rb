@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PackingList < ApplicationRecord
   belongs_to :user
   has_many :packing_list_items, dependent: :destroy

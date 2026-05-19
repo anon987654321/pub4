@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PackingListItem < ApplicationRecord
   belongs_to :packing_list
   belongs_to :item

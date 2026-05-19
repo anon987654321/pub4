@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SegmentGarmentImageJob < ApplicationJob
   queue_as :default
 

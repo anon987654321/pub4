@@ -45,7 +45,7 @@ jobs:
 
       - name: Autoloop
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           cycles="${{ inputs.max_autoloop_cycles }}"
           echo "/autoloop $cycles" | bundle exec ruby exe/master
@@ -54,7 +54,7 @@ jobs:
       - name: Run triad (if enabled)
         if: inputs.run_triad == true
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           echo "/triad ." | bundle exec ruby exe/master
         continue-on-error: true

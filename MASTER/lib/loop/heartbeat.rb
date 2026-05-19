@@ -17,9 +17,9 @@ module Master
     JOB_HANDLERS = {
       "prune_memory" => :prune_memory,
       "check_models" => :check_model_availability,
-      "self_test"    => :run_self_test,
-      "prune_undo"   => :prune_undo_journal,
-      "snapshot"     => :run_snapshot
+      "self_test" => :run_self_test,
+      "prune_undo" => :prune_undo_journal,
+      "snapshot" => :run_snapshot
     }.freeze
 
     def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil, homeostat: nil)

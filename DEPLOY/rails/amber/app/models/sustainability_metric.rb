@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SustainabilityMetric < ApplicationRecord
   belongs_to :item
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Takeaway::OrdersController < Takeaway::BaseController
   before_action :set_restaurant, only: %i[new create]
 

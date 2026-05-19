@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ScripturesController < ApplicationController
   allow_unauthenticated_access only: %i[index book chapter search word_study]
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
   # Vertical subdomains share one app. The Rails module name (Tv:: etc.) is fixed;
   # the public subdomain varies per locale (markedsplass = NO marketplace).

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class NearbyController < ApplicationController
   def index
     lat = Current.user&.latitude

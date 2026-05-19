@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class OutfitCompatibilityService
   OCCASION_WEIGHTS = {
     "work" => 0.72,

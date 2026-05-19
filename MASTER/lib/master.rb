@@ -42,18 +42,18 @@ module Master
   loader.push_dir(__dir__, namespace: Master)
   loader.ignore(__FILE__)
   loader.inflector.inflect(
-    "cli"             => "CLI",
-    "llm"             => "LLM",
-    "llm_dispatcher"  => "LLMDispatcher",
-    "mcp_server"      => "MCPServer",
+    "cli" => "CLI",
+    "llm" => "LLM",
+    "llm_dispatcher" => "LLMDispatcher",
+    "mcp_server" => "MCPServer",
     "mcp_coordinator" => "McpCoordinator",
-    "diff_stager"     => "DiffStager",
-    "code_index"      => "CodeIndex",
-    "git_context"     => "GitContext",
-    "ast_edit"        => "AstEdit",
-    "rule_dsl"        => "RuleDSL",
-    "tts"             => "TTS",
-    "pwa_audit"       => "PwaAudit",
+    "diff_stager" => "DiffStager",
+    "code_index" => "CodeIndex",
+    "git_context" => "GitContext",
+    "ast_edit" => "AstEdit",
+    "rule_dsl" => "RuleDSL",
+    "tts" => "TTS",
+    "pwa_audit" => "PwaAudit",
     "mobile_pwa_operator" => "MobilePwaOperator"
   )
   loader.enable_reloading if defined?(MASTER_DEV_MODE) || ENV["MASTER_DEV"].to_s == "1"

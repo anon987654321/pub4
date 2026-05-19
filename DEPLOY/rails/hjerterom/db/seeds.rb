@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 admin = User.find_or_create_by!(email_address: "admin@hjerterom.no") do |u|
   u.password = u.password_confirmation = "password123"
 end

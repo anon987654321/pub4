@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AffiliateLink < ApplicationRecord
   belongs_to :item
 

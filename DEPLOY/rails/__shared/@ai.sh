@@ -1,3 +1,5 @@
+set -euo pipefail
+
 cd "$BASE_DIR"
 
 doas pkg_add llvm

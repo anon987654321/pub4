@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Playlist::Playlist < ApplicationRecord
   belongs_to :user
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",

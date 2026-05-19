@@ -12,10 +12,10 @@ module Master
 
     # Fallback if data/personas.yml is missing or malformed.
     FALLBACK_PERSONA = {
-      "voice"       => "ms-MY-OsmanNeural",
-      "tts_rate"    => "-35%",
-      "tts_pitch"   => "-150Hz",
-      "style"       => "deep",
+      "voice" => "ms-MY-OsmanNeural",
+      "tts_rate" => "-35%",
+      "tts_pitch" => "-150Hz",
+      "style" => "deep",
       "description" => "Terse. Direct. No filler. Dark."
     }.freeze
 

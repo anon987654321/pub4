@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Dating::HomeController < Dating::BaseController
   def index
     profile = Current.user.dating_profile

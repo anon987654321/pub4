@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Marketplace::Category < ApplicationRecord
   belongs_to :parent, class_name: "Marketplace::Category", optional: true
   has_many :children, class_name: "Marketplace::Category", foreign_key: :parent_id, dependent: :nullify

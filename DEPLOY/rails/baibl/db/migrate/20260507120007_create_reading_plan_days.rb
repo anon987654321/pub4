@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateReadingPlanDays < ActiveRecord::Migration[8.1]
   def change
     create_table :reading_plan_days do |t|

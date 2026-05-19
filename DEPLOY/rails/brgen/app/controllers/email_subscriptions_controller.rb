@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class EmailSubscriptionsController < ApplicationController
   skip_before_action :require_real_user, raise: false
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CalculateSustainabilityJob < ApplicationJob
   queue_as :default
 

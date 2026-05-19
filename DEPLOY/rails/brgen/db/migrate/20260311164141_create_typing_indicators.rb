@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateTypingIndicators < ActiveRecord::Migration[8.1]
   def change
     create_table :typing_indicators do |t|

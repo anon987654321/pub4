@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ItemsController < ApplicationController
   before_action :require_authentication
   before_action :set_item, only: %i[show edit update destroy spark_joy declutter wear]

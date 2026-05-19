@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FoodRequestsController < ApplicationController
   def create
     listing  = FoodListing.find(params[:food_listing_id])

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CrossReference < ApplicationRecord
   belongs_to :verse
   belongs_to :target_verse, class_name: "Verse"

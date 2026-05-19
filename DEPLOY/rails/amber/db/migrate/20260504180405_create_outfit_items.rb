@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateOutfitItems < ActiveRecord::Migration[8.1]
   def change
     create_table :outfit_items do |t|

@@ -73,9 +73,9 @@ module Master
       current:     "cache-first for all GET requests",
       recommended: {
         "static assets (*.js, *.css, images)" => "CacheFirst with versioned cache name",
-        "navigation (HTML pages)"             => "NetworkFirst with 10s timeout, fallback to cache",
-        "API / user data"                     => "NetworkFirst — never serve stale user content",
-        "auth routes (/login, /session)"      => "NetworkOnly — never cache"
+        "navigation (HTML pages)" => "NetworkFirst with 10s timeout, fallback to cache",
+        "API / user data" => "NetworkFirst — never serve stale user content",
+        "auth routes (/login, /session)" => "NetworkOnly — never cache"
       },
       severity: :medium
     }.freeze

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PushSubscriptionsController < ApplicationController
   def create
     data = JSON.parse(request.body.read)

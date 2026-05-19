@@ -12,8 +12,8 @@ module Master
 
       def self.table
         @table ||= {
-          "autocommit"         => Autocommit,
-          "restart_master"     => RestartMaster,
+          "autocommit" => Autocommit,
+          "restart_master" => RestartMaster,
           "architecture_audit" => ArchitectureAudit,
           "constitution_drift" => ConstitutionDrift
         }

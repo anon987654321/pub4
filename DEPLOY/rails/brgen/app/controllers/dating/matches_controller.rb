@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Dating::MatchesController < Dating::BaseController
   def index
     @pagy, @matches = pagy(

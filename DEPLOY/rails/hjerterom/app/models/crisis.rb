@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Crisis < ApplicationRecord
   validates :title, :phone, presence: true
 

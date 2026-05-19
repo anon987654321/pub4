@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Marketplace::Order < ApplicationRecord
   belongs_to :buyer,   class_name: "User"
   belongs_to :listing, class_name: "Marketplace::Listing"

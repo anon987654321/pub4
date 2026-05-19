@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddExtendedFieldsToItems < ActiveRecord::Migration[8.1]
   def change
     add_column :items, :mood_effect, :string

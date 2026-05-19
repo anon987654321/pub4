@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TypingIndicator < ApplicationRecord
   belongs_to :conversation
   belongs_to :user

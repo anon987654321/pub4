@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Takeaway::Restaurant < ApplicationRecord
   belongs_to :user
   has_many :menu_items, class_name: "Takeaway::MenuItem", dependent: :destroy

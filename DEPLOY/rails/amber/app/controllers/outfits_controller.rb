@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class OutfitsController < ApplicationController
   before_action :require_authentication
   before_action :set_outfit, only: %i[show edit update destroy like]

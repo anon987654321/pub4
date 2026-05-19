@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreatorProfile < ApplicationRecord
   belongs_to :user
   has_many :creator_wardrobe_items, dependent: :destroy

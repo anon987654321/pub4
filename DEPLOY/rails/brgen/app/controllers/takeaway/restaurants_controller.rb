@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Takeaway::RestaurantsController < Takeaway::BaseController
   allow_unauthenticated_access only: %i[index show]
   before_action :set_restaurant, only: %i[show edit update destroy]

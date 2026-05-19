@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Dating::ProfilesController < Dating::BaseController
   before_action :set_profile, only: %i[show edit update]
 

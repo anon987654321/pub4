@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateDatingProfiles < ActiveRecord::Migration[8.1]
   def change
     create_table :dating_profiles do |t|

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RemoveBackgroundJob < ApplicationJob
   queue_as :default
 

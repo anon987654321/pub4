@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateHighlights < ActiveRecord::Migration[8.1]
   def change
     create_table :highlights do |t|

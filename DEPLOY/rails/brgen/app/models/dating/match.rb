@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Dating::Match < ApplicationRecord
   belongs_to :initiator, class_name: "User"
   belongs_to :receiver,  class_name: "User"

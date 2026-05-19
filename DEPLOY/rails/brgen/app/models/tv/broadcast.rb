@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Tv::Broadcast < ApplicationRecord
   belongs_to :channel, class_name: "Tv::Channel", foreign_key: :tv_channel_id
   belongs_to :user

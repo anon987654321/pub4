@@ -5,15 +5,15 @@ module Master
   module Security
     module Permissions
       TOOL_TIERS = {
-        "read_file"    => :safe,
-        "list_dir"     => :safe,
+        "read_file" => :safe,
+        "list_dir" => :safe,
         "search_files" => :safe,
-        "write_file"   => :guarded,
-        "str_replace"  => :guarded,
-        "apply_diff"   => :guarded,
-        "ask_llm"      => :guarded,
-        "web_search"   => :guarded,
-        "zsh"          => :dangerous
+        "write_file" => :guarded,
+        "str_replace" => :guarded,
+        "apply_diff" => :guarded,
+        "ask_llm" => :guarded,
+        "web_search" => :guarded,
+        "zsh" => :dangerous
       }.freeze
 
       BLOCKLIST = [

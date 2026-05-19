@@ -83,10 +83,10 @@ module Master
       @constitution ||= begin
         absolute = @soul_data["absolute"] || {}
         {
-          "golden_rule"         => absolute["golden_rule"]      || @data["golden_rule"],
-          "protection"          => absolute["protection_tiers"] || @data["protection"],
-          "banned_output"       => voice["banned_output"],
-          "anti_simulation"     => absolute["anti_simulation"]  || voice["anti_simulation"],
+          "golden_rule" => absolute["golden_rule"]      || @data["golden_rule"],
+          "protection" => absolute["protection_tiers"] || @data["protection"],
+          "banned_output" => voice["banned_output"],
+          "anti_simulation" => absolute["anti_simulation"]  || voice["anti_simulation"],
           "communication_style" => voice["style"]
         }.freeze
       end

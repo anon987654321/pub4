@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Marketplace::Listing < ApplicationRecord
   belongs_to :user
   belongs_to :category, class_name: "Marketplace::Category",

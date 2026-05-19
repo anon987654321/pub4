@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WardrobeVisibilityPolicy
   def initialize(viewer:, owner:)
     @viewer = viewer

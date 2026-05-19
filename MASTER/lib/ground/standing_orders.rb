@@ -66,7 +66,7 @@ module Master
       if existing
         existing.merge!(
           "description" => description, "trigger" => trigger.to_s,
-          "interval_s"  => interval_s.to_i, "command" => command.to_s, "enabled" => enabled
+          "interval_s" => interval_s.to_i, "command" => command.to_s, "enabled" => enabled
         )
       else
         @orders << {

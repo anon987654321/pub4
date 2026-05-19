@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateWatches < ActiveRecord::Migration[8.1]
   def change
     create_table :watches do |t|

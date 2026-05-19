@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateWordStudies < ActiveRecord::Migration[8.1]
   def change
     create_table :word_studies do |t|

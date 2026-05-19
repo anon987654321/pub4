@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateEmailSubscriptions < ActiveRecord::Migration[8.1]
   def change
     create_table :email_subscriptions do |t|

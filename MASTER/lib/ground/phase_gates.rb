@@ -8,14 +8,14 @@ module Master
     PHASE_STATE_PATH = "data/phase_state.yml".freeze
 
     GATES = {
-      "discover"  => %w[problem_stated success_measurable],
-      "analyze"   => %w[components_distinct dependencies_noted],
-      "ideate"    => %w[alternatives_gte_3],
-      "design"    => %w[interfaces_noted errors_noted],
+      "discover" => %w[problem_stated success_measurable],
+      "analyze" => %w[components_distinct dependencies_noted],
+      "ideate" => %w[alternatives_gte_3],
+      "design" => %w[interfaces_noted errors_noted],
       "implement" => %w[],
-      "validate"  => %w[tests_noted],
-      "deliver"   => %w[deployed_noted],
-      "idle"      => %w[]
+      "validate" => %w[tests_noted],
+      "deliver" => %w[deployed_noted],
+      "idle" => %w[]
     }.freeze
 
     def initialize(root:, event_bus: nil)

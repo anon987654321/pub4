@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ReadingPlanDay < ApplicationRecord
   belongs_to :reading_plan
   belongs_to :book

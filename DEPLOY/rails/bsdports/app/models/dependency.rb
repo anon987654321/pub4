@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Dependency < ApplicationRecord
   belongs_to :port
   belongs_to :depends_on, class_name: "Port"

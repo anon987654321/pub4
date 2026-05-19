@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class EmailSubscriptionMailer < ApplicationMailer
   default from: "Brgen <noreply@brgen.no>"
 

@@ -23,14 +23,14 @@ module Master
     }.freeze
 
     STANDING_SEMANTICS = {
-      "go ahead"        => :continue_prior_plan,
-      "land it"         => :write_repo_changes,
-      "codify"          => :codify_policy,
-      "wire"            => :wire_existing_module,
-      "verify"          => :verify_patch_landed,
-      "yes"             => :continue_prior_plan,
-      "ship"            => :write_repo_changes,
-      "proceed"         => :continue_prior_plan
+      "go ahead" => :continue_prior_plan,
+      "land it" => :write_repo_changes,
+      "codify" => :codify_policy,
+      "wire" => :wire_existing_module,
+      "verify" => :verify_patch_landed,
+      "yes" => :continue_prior_plan,
+      "ship" => :write_repo_changes,
+      "proceed" => :continue_prior_plan
     }.freeze
 
     RISK_TIERS = {

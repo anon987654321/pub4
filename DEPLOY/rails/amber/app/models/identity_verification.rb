@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class IdentityVerification < ApplicationRecord
   belongs_to :user
 

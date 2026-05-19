@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Playlist::Listen < ApplicationRecord
   belongs_to :user
   belongs_to :track, class_name: "Playlist::Track", foreign_key: :playlist_track_id

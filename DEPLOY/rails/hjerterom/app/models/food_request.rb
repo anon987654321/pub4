@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FoodRequest < ApplicationRecord
   belongs_to :food_listing
   belongs_to :user

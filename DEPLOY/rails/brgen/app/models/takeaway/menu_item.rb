@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Takeaway::MenuItem < ApplicationRecord
   belongs_to :restaurant, class_name: "Takeaway::Restaurant"
   has_one_attached :photo

@@ -1,3 +1,5 @@
+set -euo pipefail
+
 if ! command_exists psql; then
   echo "PostgreSQL is not installed. Installing..."
   doas pkg_add -U postgresql-server || { echo "Failed to install PostgreSQL."; exit 1; }
