@@ -378,33 +378,20 @@ module Master
         nil
       end
 
+      PROMPTS_PATH = File.join(Master::ROOT, "data", "prompts", "council.yml").freeze
+
+      def self.prompts
+        @prompts ||= Master.load_yaml(PROMPTS_PATH) || {}
+      end
+
       def build_judge_prompt(feedback, code, _context)
         rounds = feedback.map do |f|
           axiom_tag = f[:axiom] ? "[#{f[:axiom]}] " : ""
           "#{axiom_tag}#{f[:persona]} (#{f[:role]}): #{f[:feedback]}"
         end.join("\n\n")
-        <<~PROMPT
-          You are the Council judge. Each juror below speaks for a distinct constitutional
-          axiom. Extract the load-bearing critique, drop redundancy, surface unresolved
-          disagreement.
-
-          #{self.class.quality_brief(:general)}
-
-          Jurors:
-          #{rounds}
-
-          Classify the finding:
-          - TRIVIAL (safe to auto-fix): output exactly → AUTOFIX: <one-line description of the fix>
-          - NON-TRIVIAL (needs a decision): output exactly →
-              ISSUE: <one sentence>
-              OPTION 1: <approach and trade-off>
-              OPTION 2: <approach and trade-off>
-              OPTION 3: <approach and trade-off>
-              RECOMMEND: <which option and why in one sentence>
-
-          Non-trivial if: spans more than one file, touches architecture, security, accessibility, privacy, or user content integrity.
-          3-8 lines total. No preamble.
-        PROMPT
+        format(self.class.prompts.fetch("judge"),
+               quality_brief: self.class.quality_brief(:general),
+               rounds: rounds)
       end
 
       def primary_axiom(persona)
@@ -441,15 +428,11 @@ module Master
         quality_block = self.class.quality_brief(QualityFramework.domain_for(persona.name))
         question = self.class.sample_question(persona.name)
         question_block = question ? "\nAdversarial question for this turn: #{question}\n" : ""
-        <<~PROMPT
-          You are #{persona.name} (#{persona.role}, bias: #{persona.bias}).#{ctx}
-          #{axiom_block}#{quality_block}
-          #{persona.prompt}#{question_block}
-          Code:
-          #{safe_code}
-
-          Provide terse, actionable feedback. Prefer reversible fixes.#{veto_hint}
-        PROMPT
+        format(self.class.prompts.fetch("juror"),
+               persona_name: persona.name, persona_role: persona.role,
+               persona_bias: persona.bias, persona_prompt: persona.prompt,
+               ctx: ctx, axiom_block: axiom_block, quality_block: quality_block,
+               question_block: question_block, safe_code: safe_code, veto_hint: veto_hint)
       end
 
       def truncate_code(code)
