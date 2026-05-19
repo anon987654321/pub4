@@ -174,7 +174,7 @@ module Master
     end
 
     def proposer
-      @proposer ||= Master::Propose.new(container: @container)
+      @proposer ||= Propose.new(container: @container)
       @proposer.violations = @violations
       @proposer
     end
