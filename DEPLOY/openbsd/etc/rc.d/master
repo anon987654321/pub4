@@ -1,6 +1,6 @@
 #!/bin/ksh
 PORT=53187
-daemon="/usr/local/bin/bundle"
+daemon="/usr/local/bin/bundle34"
 daemon_flags="exec env RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 DEEPSEEK_API_KEY=__REDACTED__ OPENROUTER_API_KEY=__REDACTED__ REPLICATE_API_KEY=__REDACTED__ WEAVIATE_API_KEY=__REDACTED__ GEMINI_API_KEY=__REDACTED__ falcon serve --bind http://127.0.0.1:${PORT}"
 daemon_user="dev"
 daemon_execdir="/home/dev/pub4/MASTER/web"
