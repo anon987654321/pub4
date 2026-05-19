@@ -12,22 +12,18 @@ module Master
     end
 
     def gather(query:, providers: PROVIDERS, limit: 20)
-      providers.flat_map do |provider|
-        case provider.to_sym
-        when :repo_map
-          repo_map(query, limit)
-        when :memory_search
-          memory_search(query, limit)
-        when :brain_overlay
-          brain_overlay
-        when :current_files
-          current_files(query, limit)
-        when :rails_pwa_files
-          rails_pwa_files(query, limit)
-        else
-          []
-        end
-      end.compact
+      providers.flat_map { |p| dispatch_provider(p, query, limit) }.compact
+    end
+
+    def dispatch_provider(provider, query, limit)
+      case provider.to_sym
+      when :repo_map        then repo_map(query, limit)
+      when :memory_search   then memory_search(query, limit)
+      when :brain_overlay   then brain_overlay
+      when :current_files   then current_files(query, limit)
+      when :rails_pwa_files then rails_pwa_files(query, limit)
+      else []
+      end
     end
 
     def brief(query, limit: 10)
@@ -78,26 +74,35 @@ module Master
         config/importmap.rb
       ]
 
-      Dir.entries(deploy_rails).reject { |e| e.start_with?(".", "_") }.flat_map do |app|
-        patterns.filter_map do |rel|
-          path = File.join(deploy_rails, app, rel)
-          next unless File.exist?(path)
-          { source: :rails_pwa, path: "DEPLOY/rails/#{app}/#{rel}", text: "#{app}/#{rel}" }
-        end
-      end.first(limit)
+      apps = Dir.entries(deploy_rails).reject { |e| e.start_with?(".", "_") }
+      rows = apps.flat_map { |app| pwa_rows_for_app(app, deploy_rails, patterns) }
+      rows.first(limit)
+    end
+
+    def pwa_rows_for_app(app, deploy_rails, patterns)
+      patterns.filter_map do |rel|
+        path = File.join(deploy_rails, app, rel)
+        next unless File.exist?(path)
+        { source: :rails_pwa, path: "DEPLOY/rails/#{app}/#{rel}", text: "#{app}/#{rel}" }
+      end
     end
 
     def current_files(query, limit)
       terms = query.to_s.downcase.scan(/[a-z0-9_\-]+/)
       return [] if terms.empty?
 
-      Dir.glob(File.join(@root, "lib", "**", "*.rb")).select do |path|
-        rel = path.sub(%r{\A#{Regexp.escape(@root)}/?}, "")
-        terms.any? { |term| rel.downcase.include?(term) }
-      end.first(limit).map do |path|
-        rel = path.sub(%r{\A#{Regexp.escape(@root)}/?}, "")
-        { source: :current_files, path: rel, text: rel }
-      end
+      paths = Dir.glob(File.join(@root, "lib", "**", "*.rb")).select { |p| matches_terms?(p, terms) }
+      paths.first(limit).map { |path| current_files_row(path) }
+    end
+
+    def matches_terms?(path, terms)
+      rel = path.sub(%r{\A#{Regexp.escape(@root)}/?}, "")
+      terms.any? { |term| rel.downcase.include?(term) }
+    end
+
+    def current_files_row(path)
+      rel = path.sub(%r{\A#{Regexp.escape(@root)}/?}, "")
+      { source: :current_files, path: rel, text: rel }
     end
   end
   end

@@ -36,33 +36,35 @@ module Master
     end
 
     def splash(model)
-      now   = Time.now
-      host  = (Socket.gethostname rescue "openbsd")
-      user  = ENV["USER"] || "dev"
-      shell = File.basename(ENV["SHELL"] || "zsh")
-      pchar = shell == "zsh" ? "%" : "$"
-      rev   = git_rev || "1"
-      url   = @config["web_public_url"] || "https://ai.brgen.no"
-      token = @config["web_token"]
-      web   = token ? "#{url}/?token=#{token}" : url
+      now       = Time.now
+      host      = (Socket.gethostname rescue "openbsd")
+      user      = ENV["USER"] || "dev"
+      shell     = File.basename(ENV["SHELL"] || "zsh")
+      pchar     = shell == "zsh" ? "%" : "$"
+      rev       = git_rev || "1"
+      url       = @config["web_public_url"] || "https://ai.brgen.no"
+      token     = @config["web_token"]
+      web       = token ? "#{url}/?token=#{token}" : url
       pledge_ok = RUBY_PLATFORM.include?("openbsd")
+      dl        = dmesg_lines
 
       lines = []
       lines << ""
-      dmesg_lines.each { |l| lines << @p.dim(l) }
-      lines << ""
-      lines << d("MASTER (CONSTITUTIONAL) ##{rev}: #{now.strftime('%a %b %e %H:%M:%S %Z %Y')}")
-      lines << d("    #{user}@#{host}:#{@config["root"] || Dir.pwd}")
-      lines << d("runtime0:  #{RUBY_PLATFORM}  ruby #{RUBY_VERSION}  #{shell} #{user}#{pchar}")
-      lines << d("model0:    #{short_model(model)}")
-      lines << d("rev0:      #{rev}")
-      lines << d("soul0:     #{soul_version}")
-      lines << d("orders0:   #{active_orders_count} active")
+      unless dl == ["dmesg unavailable"]
+        dl.each { |l| lines << @p.dim(l) }
+        lines << ""
+      end
+      lines << d("MASTER ##{rev}: #{now.strftime('%a %b %e %H:%M:%S %Z %Y')} #{user}@#{host}")
+      lines << d("runtime0: #{RUBY_PLATFORM} ruby #{RUBY_VERSION} #{shell} #{user}#{pchar}")
+      lines << d("model0: #{short_model(model)}")
+      lines << d("rev0: #{rev}")
+      lines << d("soul0: #{soul_version}")
+      lines << d("orders0: #{active_orders_count} active")
       lines << d("security0: #{pledge_ok ? "pledge armed" : "pledge unavailable"}")
-      lines << d("web0:      #{web}")
-      lines << d("modules0:  ground trace voice now loop judge reach ok")
+      lines << d("web0: #{web}")
+      lines << d("modules0: ground trace voice now loop judge reach ok")
       elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i - @boot_ms)
-      lines << d("boot0:     #{elapsed}ms")
+      lines << d("boot0: #{elapsed}ms")
       lines << ""
       lines << @p.bold.red("master") + @p.dim("@#{host} ready")
       lines << ""

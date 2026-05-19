@@ -86,9 +86,9 @@ module Master
       end
 
       def parallel_each(items)
-        cursor = Mutex.new
-        index  = 0
-        Array.new(POOL_SIZE) do
+        cursor  = Mutex.new
+        index   = 0
+        threads = Array.new(POOL_SIZE) do
           Thread.new do
             loop do
               i = cursor.synchronize { (index += 1) - 1 }
@@ -96,7 +96,8 @@ module Master
               yield items[i], i
             end
           end
-        end.each(&:join)
+        end
+        threads.each(&:join)
       end
 
       def scan_one(dir:, path:, depth:, stream:)

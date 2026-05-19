@@ -94,13 +94,15 @@ module Master
 
     def list
       return "no standing orders defined" if @orders.empty?
-      @orders.map do |o|
-        st   = state_of(o)
-        flag = o["enabled"] ? "on" : "off"
-        last = o["last_run_at"].to_i > 0 ? Time.at(o["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
-        err  = o["last_error"] ? "  !! #{o["last_error"][0, 60]}" : ""
-        "#{o['name']} [#{flag}|#{st}] - #{o['description']} (last: #{last})#{err}"
-      end.join("\n")
+      @orders.map { |o| format_order(o) }.join("\n")
+    end
+
+    def format_order(o)
+      st   = state_of(o)
+      flag = o["enabled"] ? "on" : "off"
+      last = o["last_run_at"].to_i > 0 ? Time.at(o["last_run_at"].to_i).strftime("%Y-%m-%d") : "never"
+      err  = o["last_error"] ? "  !! #{o["last_error"][0, 60]}" : ""
+      "#{o['name']} [#{flag}|#{st}] - #{o['description']} (last: #{last})#{err}"
     end
 
     private

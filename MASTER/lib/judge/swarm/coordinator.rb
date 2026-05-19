@@ -55,15 +55,7 @@ module Master
           end
         end
 
-        results = threads.map do |th|
-          if th.join(timeout)
-            th.value
-          else
-            begin; th.kill; rescue ThreadError; nil; end
-            @bus&.publish(:swarm_worker_timeout, timeout:)
-            [:timeout, Result.err("worker timed out after #{timeout}s", category: :timeout)]
-          end
-        end.to_h
+        results = threads.map { |th| join_or_timeout(th, timeout) }.to_h
 
         sr = build_swarm_result(results)
         @bus&.publish(:swarm_fan_out_done, roles: results.keys, verdict: sr.verdict,
@@ -88,15 +80,7 @@ module Master
           end
         end
 
-        results = threads.map do |th|
-          if th.join(deadline)
-            th.value
-          else
-            begin; th.kill; rescue ThreadError; nil; end
-            @bus&.publish(:swarm_parallel_timeout, deadline:)
-            [nil, Result.err("worker exceeded shared deadline", category: :timeout)]
-          end
-        end.to_h
+        results = threads.map { |th| join_or_parallel_timeout(th, deadline) }.to_h
 
         sr = build_swarm_result(results)
         @bus&.publish(:swarm_dispatch_parallel_done, roles: results.keys, verdict: sr.verdict)
@@ -106,6 +90,20 @@ module Master
       def worker_roles = WORKER_CLASSES.keys
 
       private
+
+      def join_or_timeout(th, timeout)
+        return th.value if th.join(timeout)
+        begin; th.kill; rescue ThreadError; nil; end
+        @bus&.publish(:swarm_worker_timeout, timeout:)
+        [:timeout, Result.err("worker timed out after #{timeout}s", category: :timeout)]
+      end
+
+      def join_or_parallel_timeout(th, deadline)
+        return th.value if th.join(deadline)
+        begin; th.kill; rescue ThreadError; nil; end
+        @bus&.publish(:swarm_parallel_timeout, deadline:)
+        [nil, Result.err("worker exceeded shared deadline", category: :timeout)]
+      end
 
       def build_swarm_result(results)
         successes = results.reject { |role, _| role == :timeout }

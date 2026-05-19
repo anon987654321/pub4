@@ -13,12 +13,13 @@ module Master
       terms = query.to_s.downcase.scan(/[a-z0-9_\-]{3,}/)
       return [] if terms.empty?
 
-      docs.values.map do |doc|
-        score = score_doc(doc, terms)
-        next if score <= 0
+      scored = docs.values.filter_map { |doc| score_or_skip(doc, terms) }
+      scored.sort_by { |doc| -doc["score"] }.first(limit)
+    end
 
-        doc.merge("score" => score)
-      end.compact.sort_by { |doc| -doc["score"] }.first(limit)
+    def score_or_skip(doc, terms)
+      score = score_doc(doc, terms)
+      score > 0 ? doc.merge("score" => score) : nil
     end
 
     def brief(query, limit: 5)

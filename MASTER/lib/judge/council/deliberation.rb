@@ -312,10 +312,7 @@ module Master
             end
           end
         end
-        feedback = threads.map do |thread|
-          remaining = [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0.1].max
-          thread.join(remaining) ? thread.value : (thread.kill; nil)
-        end.compact
+        feedback = threads.filter_map { |t| join_or_kill(t, deadline) }
         if feedback.size < MIN_QUORUM
           @bus&.publish(:council_timeout, completed: feedback.size, total: @personas.size)
           quorum_msg = "council: quorum not reached (#{feedback.size}/#{@personas.size})"
@@ -345,6 +342,11 @@ module Master
       end
 
       private
+
+      def join_or_kill(thread, deadline)
+        remaining = [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0.1].max
+        thread.join(remaining) ? thread.value : (thread.kill; nil)
+      end
 
       def converged?(prev, curr)
         return false if prev.empty? || curr.empty? || prev.size != curr.size
@@ -385,13 +387,15 @@ module Master
       end
 
       def build_judge_prompt(feedback, code, _context)
-        rounds = feedback.map do |f|
-          axiom_tag = f[:axiom] ? "[#{f[:axiom]}] " : ""
-          "#{axiom_tag}#{f[:persona]} (#{f[:role]}): #{f[:feedback]}"
-        end.join("\n\n")
+        rounds = feedback.map { |f| format_round(f) }.join("\n\n")
         format(self.class.prompts.fetch("judge"),
                quality_brief: self.class.quality_brief(:general),
                rounds: rounds)
+      end
+
+      def format_round(f)
+        axiom_tag = f[:axiom] ? "[#{f[:axiom]}] " : ""
+        "#{axiom_tag}#{f[:persona]} (#{f[:role]}): #{f[:feedback]}"
       end
 
       def primary_axiom(persona)

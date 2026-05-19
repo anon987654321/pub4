@@ -61,10 +61,12 @@ module Master
           pairs
         end
 
+        def format_pair(p, idx)
+          "[#{idx}] line #{p[:line]}\nCOMMENT: #{p[:comment]}\nCODE:\n#{p[:body]}"
+        end
+
         def build_prompt(pairs, path)
-          numbered = pairs.each_with_index.map do |p, idx|
-            "[#{idx}] line #{p[:line]}\nCOMMENT: #{p[:comment]}\nCODE:\n#{p[:body]}"
-          end.join("\n---\n")
+          numbered = pairs.each_with_index.map { |p, idx| format_pair(p, idx) }.join("\n---\n")
           <<~PROMPT
             Audit #{File.basename(path)} for comment drift. For each numbered pair,
             decide whether the comment accurately describes what the code does.
