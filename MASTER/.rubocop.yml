@@ -57,3 +57,4 @@ Naming/MethodParameterName:
 Layout/LineLength:
   Enabled: true
   Max: 120
+  AutoCorrect: false
