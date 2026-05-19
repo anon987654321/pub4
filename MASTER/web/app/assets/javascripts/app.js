@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('turbo:load',()=>{
   const input=document.getElementById('input');
   const status=document.getElementById('status');
   let frames=0;

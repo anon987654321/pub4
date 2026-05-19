@@ -9,6 +9,11 @@ gem "sqlite3", ">= 2.1"
 gem "falcon"
 gem "webrick"
 
+# Solid Trifecta — DB-backed queue, cache, and WebSocket cable
+gem "solid_queue"
+gem "solid_cache"
+gem "solid_cable"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
