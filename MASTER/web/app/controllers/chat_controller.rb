@@ -83,6 +83,11 @@ class ChatController < ApplicationController
       # Bridge bus state → named SSE events so the face UI can react gesturally.
       mood_sub      = container[:bus].subscribe("agent:mood")        { |ev| sse.write("event: mood\ndata: #{ev[:mood] || ev[:value]}\n\n") rescue nil }
       model_sub     = container[:bus].subscribe("llm:request")       { |ev| sse.write("event: model\ndata: #{ev[:model]}\n\n") rescue nil }
+      # dmesg stream — all bus activity as OpenBSD dmesg(8)-style dim lines.
+      dmesg_sub = container[:bus].subscribe("*") do |ev|
+        line = dmesg_format(ev[:event].to_s, ev)
+        sse.write("event: dmesg\ndata: #{line.to_json}\n\n") rescue nil
+      end
       verdict_sub   = container[:bus].subscribe("tribunal:rendered") do |ev|
         v = ev[:vetoes].to_i.positive? ? "veto" : (ev[:judge] ? "pass" : "unclear")
         sse.write("event: verdict\ndata: #{v}\n\n") rescue nil
@@ -172,6 +177,7 @@ class ChatController < ApplicationController
         verdict_sub.call if defined?(verdict_sub) && verdict_sub
         escalate_sub.call if defined?(escalate_sub) && escalate_sub
         enhance_sub.call  if defined?(enhance_sub)  && enhance_sub
+        dmesg_sub.call    if defined?(dmesg_sub)    && dmesg_sub
       rescue StandardError => _e
         nil
       end
@@ -205,5 +211,48 @@ class ChatController < ApplicationController
   rescue StandardError => e
     logger.error "TTS failed: #{e.message}"
     head :service_unavailable
+  end
+
+  private
+
+  # Format any bus event as an OpenBSD dmesg(8)-style line.
+  # Pattern: <subsystem><unit> at <bus>: <description>
+  def dmesg_format(event, payload)
+    sub, rest = event.split(":", 2)
+    desc = case event
+           when "tool:before"
+             tool = payload[:tool].to_s.downcase.split("::").last
+             path = payload[:path].to_s
+             path.empty? ? tool : "#{tool} #{path}"
+           when "llm:request"
+             model = payload[:model].to_s.split("/").last
+             tokens = payload[:tokens]
+             tokens ? "→ #{model} (#{tokens} tokens)" : "→ #{model}"
+           when "llm:escalation"    then "escalation depth #{payload[:depth]}"
+           when "enhance:rewrite"
+             o = payload[:original].to_s.length
+             e = payload[:enhanced].to_s.length
+             "rewrite #{o}→#{e} chars"
+           when "pipeline:rollback" then "rollback #{payload[:category]} #{payload[:tag].to_s.split(":").last}"
+           when "pipeline:stage"    then "stage #{payload[:stage]} #{payload[:ms]}ms"
+           when "super_loop:pass_start" then "pass #{payload[:pass]}"
+           when "super_loop:clean"      then "clean #{payload[:consecutive_clean]}/2"
+           when "super_loop:plateau"    then "plateau #{payload[:violations]} violations"
+           when "super_loop:ast_fixed"  then "ast #{payload[:transforms]&.join(",")}"
+           when "tribunal:rendered"
+             v = payload[:vetoes].to_i.positive? ? "veto" : "pass"
+             "#{v} #{payload[:judge]}"
+           when "backup:ok"         then "synced #{payload[:bytes]}B"
+           when "backup:error"      then "error #{payload[:error]}"
+           when "scan:complete"     then "#{payload[:count]} violations"
+           when "autoloop:cycle"    then "autoloop #{payload[:pass]}/#{payload[:max]}"
+           when "pressure:updated"  then return nil  # too noisy — skip
+           when /\Apipeline:/       then return nil  # internal, skip
+           when /\Acanvas_/         then return nil
+           else
+             rest&.tr("_", " ") || sub
+           end
+    return nil if desc.nil?
+    "#{sub}0 at master0: #{desc}"
   end
 end
