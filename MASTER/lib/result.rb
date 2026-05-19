@@ -27,7 +27,7 @@ module Master
 
     def self.wrap(val) = val.is_a?(Result) ? val : Ok.new(val)
 
-    class Ok
+    class Ok < Result
       attr_reader :value
 
       def initialize(value)
@@ -56,7 +56,7 @@ module Master
       def inspect                 = "Ok(#{@value.inspect})"
     end
 
-    class Err
+    class Err < Result
       attr_reader :message, :category
 
       RETRIABLE = %i[infrastructure timeout].freeze
