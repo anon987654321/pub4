@@ -639,16 +639,18 @@ function _doResize() {
     return { shadow: lerpRGB(a.shadow, b.shadow, t), midtone: lerpRGB(a.midtone, b.midtone, t),
              highlight: lerpRGB(a.highlight, b.highlight, t), accent: lerpRGB(a.accent, b.accent, t) };
   }
+  // Cinema-grade triplets: cool shadow ↔ warm highlight (or inverse), midtone bridges,
+  // accent anchors. No raw 255 channels — keeps tinted phosphor coherent.
   const PROVIDER_TINT = {
-    claude:   { shadow: '10,0,18',  midtone: '80,60,110', highlight: '230,210,255', accent: '200,160,255' },
-    deepseek: { shadow: '0,10,22',  midtone: '40,70,120', highlight: '180,210,255', accent: '100,170,255' },
-    gemini:   { shadow: '0,14,10',  midtone: '40,100,80', highlight: '180,255,210', accent: '80,220,160'  },
-    gpt:      { shadow: '14,14,0',  midtone: '90,90,50',  highlight: '240,240,180', accent: '220,220,100' }
+    claude:   { shadow: '8,6,20',   midtone: '78,62,108', highlight: '228,212,244', accent: '196,162,236' },
+    deepseek: { shadow: '4,12,24',  midtone: '42,72,118', highlight: '186,212,240', accent: '108,172,232' },
+    gemini:   { shadow: '6,16,14',  midtone: '46,98,82',  highlight: '188,238,212', accent: '102,212,168' },
+    gpt:      { shadow: '16,14,4',  midtone: '92,86,52',  highlight: '234,228,178', accent: '212,206,108' }
   };
   const VERDICT_TINT = {
-    pass:    { shadow: '0,12,4',   midtone: '40,90,55',  highlight: '180,255,200', accent: '120,255,160' },
-    veto:    { shadow: '18,0,0',   midtone: '100,30,30', highlight: '200,80,80',   accent: '255,60,60'   },
-    unclear: { shadow: '10,10,0',  midtone: '80,80,40',  highlight: '210,210,140', accent: '200,200,100' }
+    pass:    { shadow: '4,14,8',   midtone: '44,92,58',  highlight: '186,236,198', accent: '128,228,158' },
+    veto:    { shadow: '20,4,8',   midtone: '102,34,34', highlight: '208,96,88',   accent: '236,80,70'   },
+    unclear: { shadow: '12,12,4',  midtone: '84,80,44',  highlight: '214,208,148', accent: '204,196,104' }
   };
   function fadePaletteTo(p, ms = 600) {
     sourcePalette = palette; targetPalette = p; palBlend = 0; palStart = performance.now(); palDur = ms;
@@ -683,10 +685,10 @@ function _doResize() {
   };
 
   const MOOD_PALETTE = {
-    tense:   { shadow: '18,0,0',   midtone: '100,30,30', highlight: '255,180,160', accent: '255,120,80'  },
-    curious: { shadow: '0,10,18',  midtone: '40,80,120', highlight: '180,220,255', accent: '120,200,255' },
-    focused: { shadow: '0,8,14',   midtone: '30,60,90',  highlight: '160,200,240', accent: '80,160,220'  },
-    weary:   { shadow: '8,8,12',   midtone: '55,55,65',  highlight: '170,170,190', accent: '140,140,160' }
+    tense:   { shadow: '20,4,4',   midtone: '102,32,30', highlight: '238,182,162', accent: '232,126,86'  },
+    curious: { shadow: '4,14,22',  midtone: '44,82,124', highlight: '188,222,244', accent: '128,204,236' },
+    focused: { shadow: '4,12,18',  midtone: '32,62,94',  highlight: '168,204,236', accent: '92,168,220'  },
+    weary:   { shadow: '10,10,14', midtone: '58,58,68',  highlight: '174,172,188', accent: '142,140,158' }
   };
 
   // Audio (ambient pad + analyser)
