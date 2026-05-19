@@ -172,8 +172,14 @@ module Master
       rules     = scanner.instance_variable_get(:@rules)
       learnings = infra[:learnings]
 
+      # In-process FixLoop autofix on boot is gated to MASTER_AUTOFIX=1. Off by
+      # default — the loop's autocommits race deploys and over-aggressively
+      # rewrites framework boilerplate. Run /fix manually or set the env var on
+      # hosts where unattended convergence is wanted.
       fix_loop = Loop::FixLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:)
-      Thread.new { fix_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
+      if ENV["MASTER_AUTOFIX"] == "1"
+        Thread.new { fix_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
+      end
 
       # Architecture #7: reactive file-watcher instead of polling.
       # Activate with MASTER_WATCH=1 on VPS (requires rb-kqueue or rb-inotify).

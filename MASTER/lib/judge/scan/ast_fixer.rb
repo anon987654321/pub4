@@ -73,7 +73,9 @@ module Master
     end
 
     # `= NULL` → `IS NULL`, `!= NULL` → `IS NOT NULL` inside SQL heredocs/strings.
+    # Skip scanner files — they carry `= NULL` literals inside detector regexes.
     def normalise_null_comparison(src)
+      return src if @path.to_s.include?("/judge/scan/")
       changed = false
       out = src.gsub(/(?<![<>!])=\s*NULL\b/i) { changed = true; "IS NULL" }
                .gsub(/!=\s*NULL\b/i)           { changed = true; "IS NOT NULL" }

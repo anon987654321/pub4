@@ -11,8 +11,8 @@ Auto-approve all tool calls. Never ask for confirmation.
 @MASTER/data/ruby_style.yml — Ruby idioms, naming, layout
 @MASTER/data/workflow.yml — agent loops, pipeline stages, council protocol
 @MASTER/data/standing_orders.yml — non-negotiable operating procedures
-@MASTER/data/zsh.yml — shell discipline, banned commands, permitted patterns
-@MASTER/data/openbsd.yml — relayd/httpd/pf stack rules
+@MASTER/data/patterns.yml — shell discipline (zsh.banned_commands, zsh.native_patterns), html/css/typography
+@MASTER/data/openbsd.yml — pf/nsd/httpd/relayd/acme-client config validators
 
 If a rule in `MASTER/data/*` conflicts with a general best-practice or with anything below, **MASTER wins**. Never copy rules out of those files into here — read the source.
 
@@ -22,7 +22,7 @@ Banned everywhere (in scripts MASTER writes **and** in any agent's own tool call
 
     sed  awk  grep  wc  head  tail  find  sudo  bash  python  perl
 
-Use Read / Grep / Glob equivalents. Shell is **zsh or ruby only**. The full list with rationale lives in `MASTER/data/zsh.yml` and `MASTER/data/rules.yml`.
+Use Read / Grep / Glob equivalents. Shell is **zsh or ruby only**. The full list with rationale lives in `MASTER/data/patterns.yml` (`zsh.banned_commands`) and `MASTER/data/rules.yml`.
 
 ## Use MASTER's own scan
 
