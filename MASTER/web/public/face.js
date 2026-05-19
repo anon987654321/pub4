@@ -941,6 +941,9 @@ function _doResize() {
       const c = parseFloat(ev.data); if (isNaN(c)) return;
       State.confidence = c; Face.browTarget = 1 - c; Face.dispersionTarget = Math.max(0, (1 - c) * 0.4);
     });
+    evtSrc.addEventListener('dmesg', (ev) => {
+      try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
+    });
     evtSrc.onerror = () => {
       beep(110, 0.18); FX.errorFlash = 2.0;
       State.mode = 'error'; triggerSweat();

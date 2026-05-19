@@ -62,6 +62,16 @@ window._chatOnChunk = (raw) => {
 window._chatOnDone  = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => c.remove()); };
 window._chatOnError = () => { _streamEl = null; document.querySelectorAll('.cursor').forEach(c => c.remove()); };
 
+window._chatOnDmesg = (line) => {
+  if (!line) return;
+  const d = document.createElement('div');
+  d.className = 'dmesg-line';
+  d.textContent = line;
+  const asst = log.querySelector('.message.assistant:last-of-type');
+  asst ? log.insertBefore(d, asst) : log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+};
+
 (function applyTier() {
   const tier = document.querySelector('meta[name=master-tier]')?.content
     || (location.search.includes('token=') ? 'authenticated' : 'visitor');
