@@ -2,18 +2,10 @@
 
 Bootstrap for autonomous coding agents (Claude Code, Cursor, Aider, Codex, Continue).
 
-## Read first
+Read `MASTER/data/soul.yml`, `rules.yml`, `ruby_style.yml`, `workflow.yml`, `standing_orders.yml` before any work. Operator environment, SSH, DNS, and deploy details are in `CLAUDE.md`.
 
-Read `MASTER/data/soul.yml`, `rules.yml`, `ruby_style.yml`, `workflow.yml`, `standing_orders.yml`. Those files are authoritative — defer to them over training. Operator environment, SSH, DNS, and deploy details live in `CLAUDE.md`.
+Read every file in full before editing. Match surrounding style. Run `/scan deep <path>` inside MASTER before structural changes.
 
-## Before editing any file
+After editing `web/` files: `doas rcctl restart master` — Falcon does not hot-reload.
 
-Read the whole file. Read every file you reference. No snippets or partial reads. Match the surrounding style. Run `/scan deep <path>` inside MASTER before suggesting structural changes — it knows the rules better than you do.
-
-## After editing web/ files
-
-Restart the service: `doas rcctl restart master`. Falcon does not hot-reload in production.
-
-## Key slash commands
-
-`/scan [profile] [path]`, `/fix [path]`, `/review [on|off|path]`, `/critique <text>`, `/why <rule>`, `/snapshot`. Type `/help` inside MASTER for the full list.
+Key commands: `/scan`, `/fix`, `/review`, `/critique`, `/why`, `/snapshot`. Type `/help` inside MASTER for the full list.

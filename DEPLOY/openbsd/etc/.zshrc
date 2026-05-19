@@ -14,4 +14,4 @@ export PATH="/home/dev/.local/share/gem/ruby/3.4/bin:$PATH"
 [[ -n $MASTER_NOAUTOSTART ]] && return
 
 (cd ~/pub4 && RUBYOPT=-W0 git pull -q 2>/dev/null)
-cd ~/pub4/MASTER && exec bundle exec ruby exe/master
+cd ~/pub4/MASTER && exec bundle34 exec ruby34 bin/cli
