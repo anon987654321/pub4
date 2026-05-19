@@ -67,7 +67,9 @@ module Master
       Result.err("rate_limit: #{e.message}", category: :rate_limit)
     rescue StandardError => e
       on_failure
-      Result.err(e.message, category: :provider_error)
+      msg = e.message.to_s
+      msg = "no API key — set ANTHROPIC_API_KEY (or OPENROUTER_API_KEY) in env" if msg.match?(/missing configuration/i)
+      Result.err(msg, category: :provider_error)
     end
 
     def check_budget(estimate)
