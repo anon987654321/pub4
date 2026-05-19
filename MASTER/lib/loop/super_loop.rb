@@ -84,7 +84,8 @@ module Master
 
       Result.ok("plateau or max passes reached")
     rescue StandardError => e
-      Result.err("super_loop: #{e.message}", category: :unknown)
+      @bus&.publish("super_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
+      Result.err("super_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
     end
 
     # Background daemon — blocks its thread. Launch via Thread.new.
@@ -105,9 +106,9 @@ module Master
     def fast_pass(files)
       fixed  = 0
       rb     = files.select { |f| f.end_with?(".rb") }
-      if rb.any? && system("bundle", "exec", "rubocop", "-A", "--no-color", "-q", *rb,
-                           out: File::NULL, err: File::NULL, chdir: @root)
-        fixed += rb.size
+      if rb.any?
+        _, status = Open3.capture2e("bundle", "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
+        fixed += rb.size if status.success?
       end
       rb.each do |path|
         next unless File.exist?(path)
