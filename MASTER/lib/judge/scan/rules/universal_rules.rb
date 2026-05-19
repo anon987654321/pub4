@@ -178,6 +178,19 @@ module Master
     end
   end
 
+  RuleDSL.rule :H1_VISIBILITY,
+    severity: :warning, tags: %i[TYPOGRAPHY],
+    description: "every page must have exactly one visible h1" do |src, path:|
+    next [] unless path.to_s.match?(/\.(html|erb|haml|slim)\z/)
+    h1_count = src.scan(/<h1[\s>]/i).size
+    hidden   = src.match?(/h1[^}]*display\s*:\s*none|h1[^}]*visibility\s*:\s*hidden/i)
+    findings = []
+    findings << finding(line: 1, message: "no h1 found — every page needs exactly one visible h1") if h1_count.zero?
+    findings << finding(line: 1, message: "multiple h1 elements — only one h1 per page") if h1_count > 1
+    findings << finding(line: 1, message: "h1 is hidden — screen readers and search engines require a visible h1") if hidden
+    findings
+  end
+
   end
   end
   end
