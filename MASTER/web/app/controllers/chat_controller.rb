@@ -3,7 +3,7 @@
 require "open3"
 
 class ChatController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:message, :tts, :speak]
+  skip_before_action :verify_authenticity_token, only: [:message, :tts, :speak, :enhance]
 
   def index
     @model = container[:agent].model.to_s.split("/").last
@@ -48,6 +48,16 @@ class ChatController < ApplicationController
     render json: { output: "Error: #{e.message}" }, status: 500
   end
 
+  def enhance
+    msg = params[:message].to_s.strip
+    return render(json: { changed: false }) if msg.empty?
+
+    result = Master::Now::Stages::Enhance.run(msg, agent: container[:agent], event_bus: container[:bus])
+    render json: result
+  rescue StandardError => e
+    render json: { changed: false, error: e.message }
+  end
+
   def message
     input = params[:message].to_s.strip
     return head(:bad_request) if input.empty?
@@ -78,6 +88,9 @@ class ChatController < ApplicationController
         sse.write("event: verdict\ndata: #{v}\n\n") rescue nil
       end
       escalate_sub  = container[:bus].subscribe("llm:escalation")    { |_| sse.write("event: confidence\ndata: 0.4\n\n") rescue nil }
+      enhance_sub   = container[:bus].subscribe("enhance:rewrite") do |ev|
+        sse.write("event: enhance\ndata: #{ev[:enhanced].to_s.gsub("\n", "\\n").to_json}\n\n") rescue nil
+      end
       # Publish incoming canvas state into bus so prompt-builder can include it.
       if (st = params[:state]).present?
         mood, mode, idle_s, palette = st.to_s.split("|")
@@ -91,6 +104,7 @@ class ChatController < ApplicationController
       }
 
       ctx = { user_message: input, on_chunk: on_chunk, visitor: visitor }
+      ctx[:pre_enhanced] = true if params[:pre_enhanced].present?
       ctx[:voice] = true if params[:voice].present?
       if (img = params[:image]).present?
         ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
@@ -157,6 +171,7 @@ class ChatController < ApplicationController
         model_sub.call if defined?(model_sub) && model_sub
         verdict_sub.call if defined?(verdict_sub) && verdict_sub
         escalate_sub.call if defined?(escalate_sub) && escalate_sub
+        enhance_sub.call  if defined?(enhance_sub)  && enhance_sub
       rescue StandardError => _e
         nil
       end

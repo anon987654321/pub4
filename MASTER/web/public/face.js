@@ -863,15 +863,29 @@ function _doResize() {
 
   // SSE chat — raw text chunks, named events for state
   let evtSrc = null;
-  function sendMessage(text) {
+  async function sendMessage(text) {
     if (evtSrc) { try { evtSrc.close(); } catch (e) {} }
     ttsSkip();
+    const token = new URLSearchParams(window.location.search).get('token') || '';
+
+    // Enhance gate: fetch rewrite, show dim y/n confirm, resolve to chosen message.
+    let finalText = text;
+    let preEnhanced = false;
+    try {
+      const r = await fetch(`/chat/enhance?token=${encodeURIComponent(token)}&message=${encodeURIComponent(text)}`);
+      const data = await r.json();
+      if (data.changed && data.enhanced && data.enhanced !== text) {
+        const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
+        preEnhanced = chosen === data.enhanced;
+        finalText = chosen;
+      }
+    } catch (_) {}
+
     State.mode = 'thinking';
     Face.dispersionTarget = 0.35;
     Face.browTarget = 0.4;
-    const token = new URLSearchParams(window.location.search).get('token') || '';
     const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|${palIdx}`);
-    const url = `/chat/message?token=${encodeURIComponent(token)}&message=${encodeURIComponent(text)}&state=${stateBlob}`;
+    const url = `/chat/message?token=${encodeURIComponent(token)}&message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}`;
     evtSrc = new EventSource(url);
     let pending = '';
     evtSrc.onmessage = (ev) => {
