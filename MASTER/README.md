@@ -25,7 +25,7 @@ Four layers:
 3. **Orchestration** — routing, voting, fallback, quorum, workflow execution, tool contracts, convergence loops.
 4. **Interface** — CLI, web face, canvas, dashboard, traces, graph, timelines.
 
-Ten-stage turn pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render. Council and Lint run concurrently with a 30 s timeout.
+Eleven-stage turn pipeline: Intake → Enhance → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render. Enhance rewrites user input for clarity and intent density with y/n approval in the web UI. Council and Lint run concurrently with a 30 s timeout.
 
 ### Convergence loop architectures
 
