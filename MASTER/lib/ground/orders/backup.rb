@@ -17,7 +17,8 @@ module Master
              src, "#{REMOTE_HOST}:#{REMOTE_PATH}"]
       out, status = Open3.capture2e(*cmd)
       if status.success?
-        bus&.publish("backup:ok", bytes: File.size(src) rescue nil)
+        bytes = begin; File.size(src); rescue StandardError; nil; end
+        bus&.publish("backup:ok", bytes:)
         Result.ok("backup: synced #{File.basename(src)} → #{REMOTE_HOST}")
       else
         bus&.publish("backup:error", error: out.lines.last.to_s.strip)
