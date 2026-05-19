@@ -100,6 +100,13 @@ if (navigator.getBattery) navigator.getBattery().then(b => {
 // Marquee state
 let _marqueeX = 0;
 
+// Frame-rate-independent smoothing — reference is 60 fps (16.667 ms).
+// _dtL: per-frame lerp rate r → effective rate over dt ms. Preserves exact rate at 60 fps.
+// _dtN: per-frame decay factor k → effective factor over dt ms. Same property.
+const _DT_REF = 16.667;
+const _dtL = (r, dt) => 1 - Math.pow(1 - r, dt / _DT_REF);
+const _dtN = (k, dt) => Math.pow(k, dt / _DT_REF);
+
 let _resizeTimer = 0;
 function resize() {
   clearTimeout(_resizeTimer);
@@ -1336,26 +1343,27 @@ function _doResize() {
     if (_fps30 && (++_bfSkip & 1)) return;
     tickPalette(now);
 
-    // smooth state lerps
-    Face.yaw     += (Face.yawTarget - Face.yaw) * 0.12;
-    Face.pitch   += (Face.pitchTarget - Face.pitch) * 0.12;
-    Face.pupil   += (Face.pupilTarget - Face.pupil) * 0.10;
-    Face.brow    += (Face.browTarget - Face.brow) * 0.08;
-    Face.dispersion += (Face.dispersionTarget - Face.dispersion) * 0.06;
+    // Smooth state lerps — dt-scaled so 30 fps feels identical to 60 fps.
+    Face.yaw     += (Face.yawTarget - Face.yaw) * _dtL(0.12, dt);
+    Face.pitch   += (Face.pitchTarget - Face.pitch) * _dtL(0.12, dt);
+    Face.pupil   += (Face.pupilTarget - Face.pupil) * _dtL(0.10, dt);
+    Face.brow    += (Face.browTarget - Face.brow) * _dtL(0.08, dt);
+    Face.dispersion += (Face.dispersionTarget - Face.dispersion) * _dtL(0.06, dt);
     // Saccadic profile: ballistic when far (>0.12), slow settle when close.
     const gazeDist = Math.hypot(Face.gazeTarget[0] - Face.gaze[0], Face.gazeTarget[1] - Face.gaze[1]);
     const gazeRate = gazeDist > 0.12 ? 0.30 : 0.08;
-    Face.gaze[0] += (Face.gazeTarget[0] - Face.gaze[0]) * gazeRate;
-    Face.gaze[1] += (Face.gazeTarget[1] - Face.gaze[1]) * gazeRate;
+    const gazeK = _dtL(gazeRate, dt);
+    Face.gaze[0] += (Face.gazeTarget[0] - Face.gaze[0]) * gazeK;
+    Face.gaze[1] += (Face.gazeTarget[1] - Face.gaze[1]) * gazeK;
     tickMicrosaccades(dt);
     Face.breath  += dt * 0.001;
     Face.heartRate = 1.0 + (State.mode === 'thinking' ? 0.6 : 0) + (State.mode === 'error' ? 1.2 : 0);
     Face.bodyScale = 1.0 + Math.sin(Face.breath * Math.PI * 2 * Face.heartRate) * 0.012;
     Face.dispersionTarget += Math.sin(Face.breath * Math.PI * 2 * Face.heartRate) * 0.012;
-    Face.coronaFlash    *= 0.94;
-    Face.edgePulse      *= 0.96;
-    Face.vortex         *= 0.93;
-    Face.codespaceRatio += (Face.codespaceTarget - Face.codespaceRatio) * 0.03;
+    Face.coronaFlash    *= _dtN(0.94, dt);
+    Face.edgePulse      *= _dtN(0.96, dt);
+    Face.vortex         *= _dtN(0.93, dt);
+    Face.codespaceRatio += (Face.codespaceTarget - Face.codespaceRatio) * _dtL(0.03, dt);
 
     // blink scheduler — cosine envelope, low confidence blinks more often
     Face.blinkPhase += dt * 0.001;
@@ -1550,8 +1558,10 @@ function _doResize() {
       const ax = (tx - p.x) * k / p.mass;
       const ay = (ty - p.y) * k / p.mass;
       p.vx += ax; p.vy += ay;
-      // Underdamped far, overdamped near target
-      const damp = d2h < 4 ? 0.72 : 0.91;
+      // Underdamped far, overdamped near target — smooth ramp avoids visible discontinuity
+      // at the 0.72→0.91 threshold as a particle crosses d2h = 4.
+      const dampT = Math.min(1, d2h * 0.25);
+      const damp = 0.72 + 0.19 * (dampT * dampT * (3 - 2 * dampT));
       p.vx *= damp; p.vy *= damp;
       // Lorenz attractor — advance per-particle butterfly orbit, blend into velocity
       if (State.lorenzMode) {
@@ -1612,7 +1622,10 @@ function _doResize() {
       const px = (p.x * 0.5) | 0, py = (p.y * 0.5) | 0;
       if (px < 0 || px >= lpxW || py < 0 || py >= lpxH) continue;
       const sz_ = p.sz || 0;
-      if (sz_ < -s * 0.4) continue;
+      // Soft z-fade — particles behind the head dim over [-0.40 s, -0.20 s] instead of popping.
+      const _zFar = -s * 0.40, _zNear = -s * 0.20;
+      if (sz_ < _zFar) continue;
+      const zFade = sz_ < _zNear ? (sz_ - _zFar) / (_zNear - _zFar) : 1;
 
       // Spheroid normal — computed from un-displaced base, not displaced hz
       const mx = (p.hx - fcx) / s, my = (p.hy - fcy) / s;
@@ -1662,7 +1675,7 @@ function _doResize() {
         bright += (1 - NdotV) * (1 - NdotV) * 9;
       }
 
-      const val = Math.min(bright, 24) / 24; // raised ceiling for specular headroom
+      const val = Math.min(bright, 24) / 24 * zFade; // raised ceiling for specular headroom
 
       // Zone-specific glyph stamp — clamped add prevents specular blowout
       const zoneCol = ZX_ZONE_IDX[zone] || 0;
