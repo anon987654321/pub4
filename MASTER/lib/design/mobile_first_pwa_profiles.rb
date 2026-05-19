@@ -111,7 +111,11 @@ module Master
       findings = []
 
       css_files.each do |file|
-        source = File.read(file) rescue next
+        source = begin
+          File.read(file)
+        rescue StandardError
+          next
+        end
         has_reduced_motion = source.match?(/prefers-reduced-motion/)
 
         CSS_RULES.each do |rule|
