@@ -27,10 +27,11 @@ canvas { position: fixed; inset: 0; display: block; image-rendering: pixelated; 
 .msg-body { color: rgba(255,255,255,0.80); }
 .cursor { display: inline-block; width: 8px; height: 8px; background: #fff; vertical-align: text-bottom; animation: blink 1s step-end infinite; }
 .enhance-confirm { margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; }
-.enhance-arrow { color: rgba(255,255,255,0.22); }
+.enhance-arrow { color: rgba(255,255,255,0.22); animation: blink 0.5s step-end 4; }
 .enhance-text { color: rgba(255,255,255,0.32); font-style: italic; }
 .enhance-yn { color: rgba(255,255,255,0.18); }
-.dmesg-line { font: 7px/1.6 'Silkscreen',ui-monospace,monospace; color: rgba(255,255,255,0.18); margin-bottom: 1px; white-space: pre-wrap; word-break: break-all; }
+.dmesg-line { font: 7px/1.6 'Silkscreen',ui-monospace,monospace; color: rgba(255,255,255,0.18); margin-bottom: 1px; white-space: pre-wrap; word-break: break-all; transition: opacity 0.8s steps(4, end); }
+.dmesg-fade { opacity: 0; }
 @keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
 
 #zsh {

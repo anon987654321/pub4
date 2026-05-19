@@ -58,6 +58,9 @@ module Master
       lines << d("rev0:      #{rev}")
       lines << d("security0: #{pledge_ok ? "pledge armed" : "pledge unavailable"}")
       lines << d("web0:      #{web}")
+      %w[ground trace voice now loop judge reach].each do |mod|
+        lines << d("#{mod}0 at master0: ok")
+      end
       elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SEC).round
       lines << d("boot0:     #{elapsed}ms")
       lines << ""

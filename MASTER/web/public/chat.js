@@ -70,6 +70,7 @@ window._chatOnDmesg = (line) => {
   const asst = log.querySelector('.message.assistant:last-of-type');
   asst ? log.insertBefore(d, asst) : log.appendChild(d);
   log.scrollTop = log.scrollHeight;
+  setTimeout(() => { d.classList.add('dmesg-fade'); setTimeout(() => d.remove(), 800); }, 7000);
 };
 
 (function applyTier() {
