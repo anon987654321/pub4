@@ -4,6 +4,7 @@
 require "pastel"
 require "open3"
 require "socket"
+require "yaml"
 
 module Master
   module Voice
@@ -35,7 +36,6 @@ module Master
     end
 
     def splash(model)
-      t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       now   = Time.now
       host  = (Socket.gethostname rescue "openbsd")
       user  = ENV["USER"] || "dev"
@@ -54,14 +54,14 @@ module Master
       lines << d("MASTER (CONSTITUTIONAL) ##{rev}: #{now.strftime('%a %b %e %H:%M:%S %Z %Y')}")
       lines << d("    #{user}@#{host}:#{@config["root"] || Dir.pwd}")
       lines << d("runtime0:  #{RUBY_PLATFORM}  ruby #{RUBY_VERSION}  #{shell} #{user}#{pchar}")
-      lines << d("model0:    #{short_model(model)} (#{provider_for(model)})")
+      lines << d("model0:    #{short_model(model)}")
       lines << d("rev0:      #{rev}")
+      lines << d("soul0:     #{soul_version}")
+      lines << d("orders0:   #{active_orders_count} active")
       lines << d("security0: #{pledge_ok ? "pledge armed" : "pledge unavailable"}")
       lines << d("web0:      #{web}")
-      %w[ground trace voice now loop judge reach].each do |mod|
-        lines << d("#{mod}0 at master0: ok")
-      end
-      elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SEC).round
+      lines << d("modules0:  ground trace voice now loop judge reach ok")
+      elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) * MS_PER_SEC).to_i - @boot_ms)
       lines << d("boot0:     #{elapsed}ms")
       lines << ""
       lines << @p.bold.red("master") + @p.dim("@#{host} ready")
@@ -245,6 +245,20 @@ module Master
       [parts[0].to_i, parts[1].to_i]
     rescue StandardError => _e
       [0, 0]
+    end
+
+    def soul_version
+      data = YAML.safe_load(File.read(File.join(Master::DATA, "soul.yml"), encoding: "UTF-8"))
+      data["version"] || "unknown"
+    rescue StandardError => _e
+      "unknown"
+    end
+
+    def active_orders_count
+      orders = YAML.safe_load(File.read(File.join(Master::DATA, "standing_orders.yml"), encoding: "UTF-8"))
+      Array(orders).count { |o| o["enabled"] != false }
+    rescue StandardError => _e
+      "?"
     end
 
     def dmesg_lines

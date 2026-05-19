@@ -20,11 +20,12 @@ module Master
         "orient" => ->(_ctx) { Master::Orient.render(root:) },
         "help" => ->(_ctx) {
           [
-            "session: /save /clear /history [N] /tokens /cost /undo /redo /exit",
-            "work:    /scan [profile] [path]  /fix [path]  /review [on|off|path]  /critique <text>  /why <rule>  /axioms  /topic [desc]  /propose-tree",
-            "model:   /model [id|list] /mode /persona /task",
-            "memory:  /memory  /dreams",
-            "system:  /orient /tree [N] /diff [ref] /commit /snapshot /diag [section] /dmesg /reload /help"
+            "scan:    /scan /fix /why /axioms /topic /propose-tree",
+            "review:  /critique /review",
+            "session: /save /clear /history /tokens /cost /undo /redo /checkpoint /dmesg /exit",
+            "model:   /model /mode /persona /task",
+            "memory:  /memory /dreams",
+            "system:  /orient /tree /diff /commit /snapshot /diag /reload /help"
           ].join("\n")
         }
       )
