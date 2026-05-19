@@ -186,7 +186,12 @@ module Master
       heartbeat = Loop::Heartbeat.new(root:, agent:, scanner:, memory: infra[:memory], event_bus: bus, homeostat: infra[:homeostat])
       triggers  = Trace::Triggers.new(event_bus: bus, scanner:, agent:)
       triggers.install_defaults!
-      { standing:, super_loop:, watch_loop:, heartbeat:, triggers: }
+
+      propose_tree = Loop::ProposeTree.new(root:, agent:, event_bus: bus)
+      bus.subscribe("super_loop:clean")    { Thread.new { propose_tree.call } }
+      bus.subscribe("super_loop:plateau")  { Thread.new { propose_tree.call } }
+
+      { standing:, super_loop:, watch_loop:, heartbeat:, triggers:, propose_tree: }
     end
 
     def boot_skills(root, bus)

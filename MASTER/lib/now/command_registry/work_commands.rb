@@ -13,6 +13,7 @@ module Master
       deliberation = ai[:deliberation]
       council_stage = ai[:council_stage]
       agent        = ai[:agent]
+      propose_tree = ai[:propose_tree]
       session      = infra[:session]
       bus          = infra[:bus]
       config       = infra[:config]
@@ -29,7 +30,8 @@ module Master
         "model" => ->(c) { dispatch_model(agent:, config:, metrics:, root:, arg: arg_for(c)) },
         "why" => cmd(:dispatch_why, agent, root),
         "axioms" => cmd(:dispatch_axioms, scanner, root),
-        "topic" => cmd(:dispatch_topic, session)
+        "topic" => cmd(:dispatch_topic, session),
+        "propose-tree" => ->(_ctx) { propose_tree&.call || "propose-tree: not wired" }
       }
     end
 

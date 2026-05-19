@@ -21,7 +21,7 @@ module Master
         "help" => ->(_ctx) {
           [
             "session: /save /clear /history [N] /tokens /cost /undo /redo /exit",
-            "work:    /scan [profile] [path]  /fix [path]  /review [on|off|path]  /critique <text>  /why <rule>  /axioms  /topic [desc]",
+            "work:    /scan [profile] [path]  /fix [path]  /review [on|off|path]  /critique <text>  /why <rule>  /axioms  /topic [desc]  /propose-tree",
             "model:   /model [id|list] /mode /persona /task",
             "memory:  /memory  /dreams",
             "system:  /orient /tree [N] /diff [ref] /commit /snapshot /diag [section] /dmesg /reload /help"
