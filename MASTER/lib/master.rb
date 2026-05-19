@@ -76,14 +76,6 @@ module Master
   end
   loader.setup
 
-  def self.plugin(name, **opts)
-    mod = Plugin.load(name)
-    extend(mod::ClassMethods)    if mod.const_defined?(:ClassMethods, false)
-    include(mod::InstanceMethods) if mod.const_defined?(:InstanceMethods, false)
-    mod.configure(self, **opts)  if mod.respond_to?(:configure)
-    mod
-  end
-
   def self.configure_providers!
     # Stub Bedrock before ruby_llm loads — avoids openssl.so on OpenBSD/LibreSSL.
     # MASTER only uses OpenRouter; Bedrock is never needed.
@@ -137,7 +129,7 @@ module Master
   def self.bootstrap_container(root: Dir.pwd)
     Trace::Telemetry.bootstrap!(root: root)
     container = Builder.build(root:)
-    Plugins::Trace.boot_snapshot(container)
+    Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
     Thread.new do
       Ground::Orders::ConstitutionDrift.new(container:).call
