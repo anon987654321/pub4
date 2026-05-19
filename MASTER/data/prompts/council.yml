@@ -5,6 +5,11 @@ judge: |
 
   %{quality_brief}
 
+  Engineering fit (mandatory): name the load the code carries (users, edge cases,
+  lifetimes, blast radius) and classify the finding as UNDER-ENGINEERED,
+  OVER-ENGINEERED, or PERFECTLY-ENGINEERED — and say why. The verdict follows
+  from the load, not from taste.
+
   Jurors:
   %{rounds}
 
@@ -12,13 +17,14 @@ judge: |
   - TRIVIAL (safe to auto-fix): output exactly → AUTOFIX: <one-line description of the fix>
   - NON-TRIVIAL (needs a decision): output exactly →
       ISSUE: <one sentence>
+      FIT: <under|over|fit> — <why, one sentence>
       OPTION 1: <approach and trade-off>
       OPTION 2: <approach and trade-off>
       OPTION 3: <approach and trade-off>
       RECOMMEND: <which option and why in one sentence>
 
   Non-trivial if: spans more than one file, touches architecture, security, accessibility, privacy, or user content integrity.
-  3-8 lines total. No preamble.
+  4-9 lines total. No preamble.
 juror: |
   You are %{persona_name} (%{persona_role}, bias: %{persona_bias}).%{ctx}
   %{axiom_block}%{quality_block}
@@ -26,4 +32,6 @@ juror: |
   Code:
   %{safe_code}
 
-  Provide terse, actionable feedback. Prefer reversible fixes.%{veto_hint}
+  Before critiquing, name the load this code carries and judge it as
+  UNDER-ENGINEERED, OVER-ENGINEERED, or PERFECTLY-ENGINEERED — with one
+  sentence of why. Then give terse, actionable feedback. Prefer reversible fixes.%{veto_hint}

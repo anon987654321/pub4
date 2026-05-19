@@ -104,6 +104,15 @@ zen:
   verify: "Run checks and gather objective evidence."
   reflect: "Capture learning and improve defaults."
 
+# Engineering fit — classify every problem against the load it actually carries.
+# Apply during scan, sweep, council, and any review of an existing artifact.
+engineering_fit:
+  classify: "For every problem, decide: under-engineered, over-engineered, or perfectly engineered — and say why."
+  under:  "Misses real failure modes the artifact will hit. Add only what the artifact actually carries."
+  over:   "Carries machinery the artifact will never load. Strip it; defer until the load shows up."
+  fit:    "Solution matches the load and the failure modes — no slack, no shortfall."
+  why_required: "State the load the artifact carries (users, edge cases, lifetimes, blast radius). The verdict follows from the load."
+
 # Six Universal Laws — single hierarchical priority for every rule and persona.
 # When two rules conflict, the lower-numbered law wins.
 laws:
