@@ -53,7 +53,7 @@ module Master
       unveil("/etc/ssl", "r")
       unveil("/etc/resolv.conf", "r")
       unveil("/dev/urandom", "r")
-      unveil("/dev/null", "rw")
+      unveil("/dev/null", "rwc")
       unveil("/var/run", "r")
       GEM_DIRS.each { |d| (dir = File.join(Dir.home, d); unveil(dir, "r") if Dir.exist?(dir)) }
     end

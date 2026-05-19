@@ -15,6 +15,8 @@ module Master
       def to_h
         { rule:, message:, line:, severity:, fix:, tags: }
       end
+
+      def merge(extras) = to_h.merge(extras)
     end
   end
   end
