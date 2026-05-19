@@ -222,7 +222,7 @@ module Master
 
     # Architecture #2: Kahn's topological sort on rule dependency graph.
     def topo_sort(rules, deps)
-      id_map = rules.index_by(&:id)
+      id_map = rules.to_h { |r| [r.id, r] }
       in_deg = Hash.new(0)
       adj    = Hash.new { |h, k| h[k] = [] }
       rules.each do |rule|
