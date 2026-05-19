@@ -21,9 +21,8 @@ module Master
         "scan" => cmd(:dispatch_scan, scanner, root),
         "fix" => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
-          result = super_loop.run_to_convergence(target)
-          rows   = result[:rule_results].map { |r| "#{r[:rule]}: #{r[:status]} (#{r[:fixed]} fixed)" }
-          rows.empty? ? "clean" : "#{rows.join("\n")}\n(#{result[:passes]} pass#{result[:passes] == 1 ? "" : "es"}, #{result[:converged] ? "converged" : "plateau"})"
+          result = super_loop.run(target)
+          result.ok? ? result.value! : "fix: #{result.message}"
         },
         "review" => ->(ctx) { dispatch_review(council_stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
         "critique" => cmd(:dispatch_critique, deliberation, root),
