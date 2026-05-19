@@ -12,7 +12,7 @@ architectures:
     description: >
       Sort rules by recent violation density descending before each pass.
       Highest-impact rules run first, reducing total cycles to convergence.
-    wired_to: lib/loop/super_loop.rb (ordered_rules)
+    wired_to: lib/loop/fix_loop.rb (ordered_rules)
     ref: "#1"
 
   - id: rule_dependency_graph
@@ -23,7 +23,7 @@ architectures:
       HOIST before MERGE). A DAG declared in data/rule_deps.yml ensures rules
       run in an order that minimises cascade re-triggering.
     wired_to:
-      - lib/loop/super_loop.rb (topo_sort)
+      - lib/loop/fix_loop.rb (topo_sort)
       - data/rule_deps.yml
     ref: "#2"
 
@@ -33,9 +33,9 @@ architectures:
     description: >
       Converge all rules on one file before moving to the next.
       Better cache locality, fewer re-reads, faster for large repos.
-      Was a strategy option on the pre-collapse loop; the SuperLoop
+      Was a strategy option on the pre-collapse loop; the FixLoop
       consolidation dropped it in favour of a fixed two-tier design.
-    wired_to: none (removed in SuperLoop collapse, a1562a6)
+    wired_to: none (removed in FixLoop collapse, a1562a6)
     ref: "#3"
 
   - id: ast_autofixes
@@ -49,7 +49,7 @@ architectures:
       language-specific transformers.
     wired_to:
       - lib/judge/scan/ast_fixer.rb (frozen_string_literal + bare_rescue + null_comparison)
-      - lib/loop/super_loop.rb (fast_pass tier 1)
+      - lib/loop/fix_loop.rb (fast_pass tier 1)
     ref: "#4"
 
   - id: diff_only_fixes
@@ -119,13 +119,13 @@ architectures:
     description: >
       Record which rule+file_type pairs produce fixes that stick (no
       regression in next scan). Update a fix_quality score per rule.
-      SuperLoop's priority queue uses fix_quality as secondary sort key.
+      FixLoop's priority queue uses fix_quality as secondary sort key.
       AutoLoop already tracks rule_recurrence — this extends it with
       outcome tracking.
     wired_to:
       - lib/ground/knowledge_store.rb (KnowledgeStore — fix_outcomes + strategy_outcomes + feedback_events)
       - lib/loop/rule_loop.rb (record_outcomes — :fixed | :stuck per pass)
-      - lib/loop/super_loop.rb (ordered_rules — fix_quality as secondary sort key)
+      - lib/loop/fix_loop.rb (ordered_rules — fix_quality as secondary sort key)
       - lib/plugins/ground.rb (boots KnowledgeStore as learnings:)
     ref: "#10"
 
@@ -167,14 +167,14 @@ architectures:
     status: implemented
     description: >
       Each rule has a prior probability of firing per language and file type.
-      Posterior updated by observed violation counts. SuperLoop's priority
+      Posterior updated by observed violation counts. FixLoop's priority
       queue uses expected violation rate (prior × posterior) as primary
       sort key. High-probability rules run first; low-probability rules
       skip files where they've never fired before.
     wired_to:
       - data/violation_priors.yml (cold-start priors + language_modifiers for all rules)
-      - lib/loop/super_loop.rb (ordered_rules — language-weighted adjusted prior)
-      - lib/loop/super_loop.rb (extension_weights — computes ext distribution per target)
+      - lib/loop/fix_loop.rb (ordered_rules — language-weighted adjusted prior)
+      - lib/loop/fix_loop.rb (extension_weights — computes ext distribution per target)
     ref: "#14"
 
   - id: embodied_codebase
@@ -188,7 +188,7 @@ architectures:
       Structural operations (DEFRAG, FLATTEN, MERGE, DECOUPLE) become
       observable particle migrations — you watch the codebase reorganize.
     wired_to:
-      - lib/loop/super_loop.rb (codebase:topology events)
+      - lib/loop/fix_loop.rb (codebase:topology events)
       - web/public/visual_bridge.js (master:codebase dispatch)
       - web/public/codebase.js (particle cluster renderer)
     ref: "#15"

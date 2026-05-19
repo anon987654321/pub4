@@ -7,7 +7,7 @@ module Master
   module Loop
   # Asks the agent for N radically simplified tree layouts, ranks them by
   # sketch compactness (radical = fewer files), writes top K to runtime/proposals.md.
-  # Triggered manually via /propose-tree or by the bus on super_loop:clean|plateau.
+  # Triggered manually via /propose-tree or by the bus on fix_loop:clean|plateau.
   class ProposeTree
     OUT_PATH      = "runtime/proposals.md"
     DRAFT_N       = 10

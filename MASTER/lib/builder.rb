@@ -172,8 +172,8 @@ module Master
       rules     = scanner.instance_variable_get(:@rules)
       learnings = infra[:learnings]
 
-      super_loop = Loop::SuperLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:)
-      Thread.new { super_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
+      fix_loop = Loop::FixLoop.new(rules:, axioms:, agent:, scanner:, root:, bus:, git:, learnings:)
+      Thread.new { fix_loop.run_forever(root) }.tap { |t| t.abort_on_exception = false }
 
       # Architecture #7: reactive file-watcher instead of polling.
       # Activate with MASTER_WATCH=1 on VPS (requires rb-kqueue or rb-inotify).
@@ -188,10 +188,10 @@ module Master
       triggers.install_defaults!
 
       propose_tree = Loop::ProposeTree.new(root:, agent:, event_bus: bus)
-      bus.subscribe("super_loop:clean")    { Thread.new { propose_tree.call } }
-      bus.subscribe("super_loop:plateau")  { Thread.new { propose_tree.call } }
+      bus.subscribe("fix_loop:clean")    { Thread.new { propose_tree.call } }
+      bus.subscribe("fix_loop:plateau")  { Thread.new { propose_tree.call } }
 
-      { standing:, super_loop:, watch_loop:, heartbeat:, triggers:, propose_tree: }
+      { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree: }
     end
 
     def boot_skills(root, bus)

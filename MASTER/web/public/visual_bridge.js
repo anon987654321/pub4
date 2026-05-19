@@ -23,9 +23,9 @@
     [/tool|scan|sweep|audit/i, { topology: "torus", entropy: 0.38, confidence: 0.70, mode: "tool" }],
     [/error|rollback|failed|failure/i, { topology: "serpent", entropy: 0.78, confidence: 0.24, mode: "error" }],
     [/done|complete|success|response/i, { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "complete" }],
-    [/codebase:topology|super_loop:pass/i, { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
+    [/codebase:topology|fix_loop:pass/i, { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
     [/rule_loop:cycle|rule_loop:clean/i, { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
-    [/super_loop:idle/i, { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
+    [/fix_loop:idle/i, { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
     [/rule_loop:converged/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
   ];
 

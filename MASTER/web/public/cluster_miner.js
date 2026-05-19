@@ -17,7 +17,7 @@
       emotion: { arousal: 0.22, focus: 0.18 }
     },
     codebase_topology: {
-      match: /codebase|rule_loop|super_loop|violation|clean|converged|topology/i,
+      match: /codebase|rule_loop|fix_loop|violation|clean|converged|topology/i,
       layer: "repository_body",
       emotion: { arousal: 0.32, focus: 0.45 }
     },

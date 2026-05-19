@@ -12,7 +12,7 @@ module Master
   #
   # Stops when violations reach zero (2 consecutive clean passes) or plateau.
   # run_forever wraps run in an idle-sleep loop for the background daemon.
-  class SuperLoop
+  class FixLoop
     IDLE_SLEEP      = 300
     STARTUP_DELAY   = 90
     MAX_PASSES      = 15        # fallback; authoritative value in rules.yml convergence
@@ -52,18 +52,18 @@ module Master
 
       max_passes.times do |i|
         pass = i + 1
-        @bus&.publish("super_loop:pass_start", pass:, target:)
+        @bus&.publish("fix_loop:pass_start", pass:, target:)
 
         # Tier 1 — fast: rubocop -A + AstFixer, no LLM
         fast_fixed = fast_pass(files)
-        commit_if_dirty("super_loop: fast-fix [pass #{pass}]") if fast_fixed > 0
+        commit_if_dirty("fix_loop: fast-fix [pass #{pass}]") if fast_fixed > 0
 
         violations = scan_violations(files)
         emit_topology(violations, target)
 
         if violations.empty?
           consecutive_clean += 1
-          @bus&.publish("super_loop:clean", pass:, consecutive_clean:)
+          @bus&.publish("fix_loop:clean", pass:, consecutive_clean:)
           return Result.ok("clean after #{pass} pass(es)") if consecutive_clean >= clean_runs_required
           next
         end
@@ -72,20 +72,20 @@ module Master
         history << violations.size
         window = plateau_window
         if history.size >= window && history.last(window).uniq.size == 1
-          @bus&.publish("super_loop:plateau", pass:, violations: violations.size)
+          @bus&.publish("fix_loop:plateau", pass:, violations: violations.size)
           break
         end
 
         # Tier 2 — LLM: one pass per rule in priority order
         llm_fixed = llm_pass(violations, files, pass)
-        commit_if_dirty("super_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
+        commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
         track_recurrence(violations)
       end
 
       Result.ok("plateau or max passes reached")
     rescue StandardError => e
-      @bus&.publish("super_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
-      Result.err("super_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
+      @bus&.publish("fix_loop:crash", error: e.message, backtrace: e.backtrace&.first(8))
+      Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
     end
 
     # Background daemon — blocks its thread. Launch via Thread.new.
@@ -93,11 +93,11 @@ module Master
       sleep STARTUP_DELAY
       loop do
         run(target)
-        @bus&.publish("super_loop:idle", sleep: IDLE_SLEEP)
+        @bus&.publish("fix_loop:idle", sleep: IDLE_SLEEP)
         sleep IDLE_SLEEP
       end
     rescue StandardError => e
-      @bus&.publish("super_loop:error", error: e.message)
+      @bus&.publish("fix_loop:error", error: e.message)
     end
 
     private
@@ -118,14 +118,14 @@ module Master
         ast_result = Judge::Scan::AstFixer.fix(path, src)
         if ast_result&.changed
           fixed += ast_result.transforms.size
-          @bus&.publish("super_loop:ast_fixed", file: path.delete_prefix("#{@root}/"), transforms: ast_result.transforms)
+          @bus&.publish("fix_loop:ast_fixed", file: path.delete_prefix("#{@root}/"), transforms: ast_result.transforms)
           src = File.read(path, encoding: "UTF-8")  # re-read after mutation
         end
 
         # Architecture #11: type-system constraint checks — sound, complete, no LLM.
         type_errors = Ground::TypeChecker.check(path, src)
         type_errors.each do |te|
-          @bus&.publish("super_loop:type_error", file: path.delete_prefix("#{@root}/"),
+          @bus&.publish("fix_loop:type_error", file: path.delete_prefix("#{@root}/"),
                         rule: te.rule, message: te.message)
         end
 
@@ -133,11 +133,11 @@ module Master
         dl = Judge::Scan::DatalogEngine.from_ruby(path, src)
         dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[2]} — use rescue StandardError" }
         dl.evaluate.each do |finding|
-          @bus&.publish("super_loop:datalog_finding", file: path.delete_prefix("#{@root}/"),
+          @bus&.publish("fix_loop:datalog_finding", file: path.delete_prefix("#{@root}/"),
                         rule: finding.rule_id, message: finding.message)
         end
       rescue StandardError => e
-        @bus&.publish("super_loop:fast_error", file: path, error: e.message)
+        @bus&.publish("fix_loop:fast_error", file: path, error: e.message)
       end
       fixed
     end
@@ -153,7 +153,7 @@ module Master
         result = rl.run_once(files)
         @violation_counts[rule.id] += result[:fixed]
         fixed += result[:fixed]
-        @bus&.publish("super_loop:rule_result", pass:, rule: rule.id, **result)
+        @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
       end
       fixed
     end
@@ -174,7 +174,7 @@ module Master
         next unless @rule_recurrence[rule_id] >= 3
         @rule_recurrence.delete(rule_id)
         sample = violations.select { |v| v[:rule].to_s == rule_id }.first(5)
-        @bus&.publish("super_loop:soul_proposal", rule: rule_id, sample:)
+        @bus&.publish("fix_loop:soul_proposal", rule: rule_id, sample:)
         append_improvement(rule_id, sample)
       end
       (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
@@ -188,7 +188,7 @@ module Master
       File.write(path, "#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n",
                  mode: "a")
     rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "super_loop.append_improvement", event_bus: @bus, rule_id:)
+      Master::Ground::Swallow.log(e, context: "fix_loop.append_improvement", event_bus: @bus, rule_id:)
     end
 
     # Architecture #1 + #2 + #10 + #14: density + fix_quality + language-adjusted Bayesian + topological.
@@ -268,7 +268,7 @@ module Master
       @git.add_lib_files
       @git.commit(msg)
     rescue StandardError => e
-      @bus&.publish("super_loop:commit_error", error: e.message)
+      @bus&.publish("fix_loop:commit_error", error: e.message)
     end
 
     # Returns { "rb" => 0.6, "yml" => 0.2, ... } — fractional weight per extension.
@@ -283,7 +283,7 @@ module Master
       return {} if total.zero?
       counts.transform_values { |n| n / total }
     rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "super_loop.extension_weights", event_bus: @bus)
+      Master::Ground::Swallow.log(e, context: "fix_loop.extension_weights", event_bus: @bus)
       {}
     end
 
@@ -291,14 +291,14 @@ module Master
       data = Master.load_yaml(DEPS_PATH)
       (data&.dig("deps") || {}).transform_values { |v| Array(v["after"] || []) }
     rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "super_loop.load_deps", event_bus: @bus)
+      Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
       {}
     end
 
     def load_priors
       Master.load_yaml(PRIORS_PATH) || {}
     rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "super_loop.load_priors", event_bus: @bus)
+      Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
       {}
     end
   end

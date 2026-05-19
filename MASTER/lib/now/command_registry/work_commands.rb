@@ -9,7 +9,7 @@ module Master
 
     def work_commands(ai:, root:, infra:)
       scanner      = ai[:scanner]
-      super_loop   = ai[:super_loop]
+      fix_loop     = ai[:fix_loop]
       deliberation = ai[:deliberation]
       council_stage = ai[:council_stage]
       agent        = ai[:agent]
@@ -22,7 +22,7 @@ module Master
         "scan" => cmd(:dispatch_scan, scanner, root),
         "fix" => ->(ctx) {
           target = expand_or_root(arg_for(ctx), root)
-          result = super_loop.run(target)
+          result = fix_loop.run(target)
           result.ok? ? result.value! : "fix: #{result.message}"
         },
         "review" => ->(ctx) { dispatch_review(council_stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },

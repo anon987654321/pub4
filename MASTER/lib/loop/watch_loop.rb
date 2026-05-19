@@ -11,7 +11,7 @@ module Master
   #   WatchLoop.new(rules:, agent:, scanner:, root:, bus:).run
   class WatchLoop
     DEBOUNCE_SECONDS = 1.0
-    SKIP_DIRS        = SuperLoop::SKIP_DIRS
+    SKIP_DIRS        = FixLoop::SKIP_DIRS
 
     def initialize(rules:, agent:, scanner:, root:, bus: nil, learnings: nil)
       @rules     = rules

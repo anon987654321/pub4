@@ -1,7 +1,7 @@
 # Bayesian violation priors — architecture #14.
 # prior_p: base probability a random file contains this violation (0.0–1.0).
 # language_modifiers: multiplicative adjustments per language (1.0 = neutral).
-# SuperLoop#ordered_rules uses (prior_p × posterior) as secondary sort key
+# FixLoop#ordered_rules uses (prior_p × posterior) as secondary sort key
 # after violation_counts. High-probability rules run early; rules that have
 # never fired on a given extension are deprioritised.
 #

@@ -9,7 +9,7 @@ require_relative "patch_applier"
 module Master
   module Loop
   # Single-pass fixer for one rule across a set of files.
-  # SuperLoop owns the outer convergence loop; RuleLoop fixes one batch per call.
+  # FixLoop owns the outer convergence loop; RuleLoop fixes one batch per call.
   #
   # Fix routing (per violation severity + file size):
   #   error tier  → council_fix   (3-reviewer veto before apply)

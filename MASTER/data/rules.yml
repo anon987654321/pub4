@@ -225,7 +225,7 @@ thresholds:
   class:           # read by voice/personality.rb for prompt substitution
     max_methods: 6
     max_lines: 200
-  convergence:     # read by loop/super_loop.rb — authoritative copy
+  convergence:     # read by loop/fix_loop.rb — authoritative copy
     consecutive_clean_runs_required: 2
     max_iterations: 15
     stagnant_threshold: 3

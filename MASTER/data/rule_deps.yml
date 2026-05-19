@@ -1,7 +1,7 @@
-# Rule dependency graph — topological ordering for SuperLoop passes.
+# Rule dependency graph — topological ordering for FixLoop passes.
 # A rule listed under 'after' must not run before all its dependencies complete.
 # This prevents fix cascades where rule A's fix re-introduces rule B's violation.
-# Loaded by SuperLoop#topo_sort_rules.
+# Loaded by FixLoop#topo_sort_rules.
 ---
 
 deps:
