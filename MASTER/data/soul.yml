@@ -64,7 +64,7 @@ absolute:
 
 negotiable:
   style: sentence_case
-  default_model: openrouter/auto
+  default_model: claude-opus-4-7
   tts_voice: ms-MY-OsmanNeural
   language_detection: true
 

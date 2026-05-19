@@ -99,15 +99,13 @@ module Master
   end
 
   def self.default_model
-    return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
-    return "nvidia/nemotron-3-super-120b-a12b:free" if api_key_present?("OPENROUTER_API_KEY")
-    return "nvidia/nemotron-3-super-120b-a12b:free" if api_key_present?("REPLICATE_API_KEY")
-    return "claude-sonnet-4-6" if api_key_present?("ANTHROPIC_API_KEY")
-    return "gpt-4o" if api_key_present?("OPENAI_API_KEY")
+    return "claude-opus-4-7" if api_key_present?("ANTHROPIC_API_KEY")
+    return "openrouter/auto"  if api_key_present?("OPENROUTER_API_KEY")
+    return "deepseek-chat"    if api_key_present?("DEEPSEEK_API_KEY")
+    return "gpt-4o"           if api_key_present?("OPENAI_API_KEY")
     return "gemini-2.5-flash" if api_key_present?("GEMINI_API_KEY")
     return "mistral-large-latest" if api_key_present?("MISTRAL_API_KEY")
-    raise "No LLM API key found. Set DEEPSEEK_API_KEY, OPENROUTER_API_KEY, " \
-          "ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, or MISTRAL_API_KEY."
+    "openrouter/auto"
   end
 
   def self.load_yaml(path, symbolize_names: false, default: {})
