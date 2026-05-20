@@ -6,16 +6,6 @@
 #
 # Runtime state (state/last_run_at/last_error) lives here temporarily.
 
-- name: data_integrity_check
-  description: Scan data/ YAML files for corruption after any data/ write.
-  trigger: event
-  on: "tool:after"
-  filter: "data/"
-  command: /scan data/
-  enabled: true
-  state: pending
-  last_run_at: 0
-
 - name: dreams
   description: Consolidate memories. Run via /dreams or after session end.
   trigger: manual
@@ -63,70 +53,6 @@
   filter: "web/"
   command: doas rcctl restart master
   callable: restart_master
-  enabled: true
-  state: pending
-  last_run_at: 0
-
-- name: pre_edit_scan
-  description: Before any Edit/Write, scan the target file and surface existing violations alongside the proposed change.
-  trigger: pre_tool
-  on: "Write|Edit|FilePatch"
-  command: scan {target_file}
-  enabled: true
-  state: pending
-  last_run_at: 0
-
-- name: live_preview_gate
-  description: After editing a web view or asset, verify the page renders within 10s. Block commit on failure.
-  trigger: event
-  on: "tool:after"
-  filter: "web/app/views/|web/app/assets/"
-  command: preview gate
-  enabled: true
-  state: pending
-  last_run_at: 0
-
-- name: reverse_introspection
-  description: Every 10th commit, feed MASTER its own last 5 commits and ask whether it approves them.
-  trigger: event
-  on: "git:commit"
-  every: 10
-  command: audit introspect
-  enabled: true
-  state: pending
-  last_run_at: 0
-
-- name: test_generation
-  description: When a scan rule definition changes, auto-generate test cases proving it fires and passes correctly.
-  trigger: event
-  on: "tool:after"
-  filter: "judge/scan/rules/"
-  command: test generate rules
-  enabled: true
-  state: pending
-  last_run_at: 0
-
-- name: rails_stack_audit
-  description: Audit Rails apps for the StimulusReflex stack. Run via /audit rails.
-  trigger: manual
-  command: scan rails_stack
-  enabled: false
-  state: pending
-  last_run_at: 0
-
-- name: man_first
-  description: Read the man page (or upstream reference docs) before using any command, config file, framework, operating system, or programming language. Flags, syntax, and behavior differ between vendors and versions — assumptions from training data are unreliable.
-  trigger: manual
-  command: man {tool}
-  enabled: true
-  state: pending
-  last_run_at: 0
-
-- name: zsh_ruby_only
-  description: All shell scripting must use zsh or Ruby. Bash, Python, and Perl are banned everywhere — scripts, one-liners, deploy files, and tool output.
-  trigger: pre_tool
-  on: "Write|Edit|FilePatch"
-  command: lint shell_language {target_file}
   enabled: true
   state: pending
   last_run_at: 0
