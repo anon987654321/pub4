@@ -65,7 +65,8 @@ module Master
     end
 
     def service_status
-      out, _, st = Open3.capture3("rcctl", "check", "master")
+      rcctl = File.executable?("/usr/sbin/rcctl") ? "/usr/sbin/rcctl" : "rcctl"
+      out, _, st = Open3.capture3(rcctl, "check", "master")
       { state: st.success? ? "ok" : "down", detail: out.strip }
     rescue StandardError
       { state: "?", detail: "rcctl unavailable" }
@@ -84,13 +85,15 @@ module Master
     def recent_events(root, n)
       path = File.join(root, "runtime", "events", "activity.jsonl")
       return [] unless File.exist?(path)
-      now = Time.now
+      now = Time.now.utc
       File.foreach(path).to_a.last(n).map { |line|
         rec  = JSON.parse(line) rescue next
-        ts   = Time.parse(rec["timestamp"]) rescue now
-        secs = (now - ts).to_i
+        ts   = (Time.parse(rec["timestamp"]) rescue now)
+        secs = (now - ts).to_i.abs
         ago  = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
-        { ago: ago.rjust(4), event: rec["event"].to_s, summary: rec["payload"].to_s[0, 80] }
+        pay  = rec["payload"]
+        sum  = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
+        { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
       }.compact
     rescue StandardError
       []
