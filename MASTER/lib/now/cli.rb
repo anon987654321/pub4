@@ -402,7 +402,7 @@ module Master
       end
     end
 
-    MUTATING_TOOLS = %w[WriteFile Edit StrReplace BatchReplace AstEdit FilePatch].freeze
+    MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
 
     def emit_dmesg_line(payload)
       ev = payload[:event].to_s

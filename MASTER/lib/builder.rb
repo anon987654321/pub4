@@ -6,7 +6,7 @@ module Master
   # Single source of truth for container wiring. Each `boot_*` method assembles
   # one subsystem from primitive dependencies. `build` runs them in order.
   module Builder
-    MUTATING_TOOLS     = %w[WriteFile StrReplace AstEdit Shell].freeze
+    MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
     RING_SIZE          = 1000
     SNAPSHOT_MAX_BYTES = 50_000
     SNAPSHOT_DIRS      = %w[bin lib data].freeze
@@ -65,7 +65,7 @@ module Master
       code_index = Judge::CodeIndex.new(root:, event_bus: bus)
       code_index.build_async
       bus.subscribe("tool:after") do |ev|
-        next unless ev[:path] && MUTATING_TOOLS.include?(ev[:tool].to_s.split("::").last)
+        next unless ev[:path] && MUTATING_TOOLS.include?(ev[:tool].to_s)
         code_index.reindex(ev[:path])
       end
       diag     = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging])
