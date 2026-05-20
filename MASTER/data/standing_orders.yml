@@ -1,6 +1,6 @@
 ---
 # Standing orders — event and manual triggers wired through StandingOrders.
-# trigger: event  — fires when matching bus event publishes (currently tool:after)
+# trigger: event  — fires when bus publishes event: key (currently tool:after)
 # trigger: manual — only runs when explicitly called via /orders or its callable
 # Every entry needs a callable: key registered in Master::Ground::Orders::Registry.
 # Runtime state (state/last_run_at/last_error) lives here temporarily.
@@ -17,7 +17,7 @@
 - name: constitution_drift
   description: Scan lib/ against the axioms after any source mutation; emit improved/regressed/steady so regressions are caught the moment they land.
   trigger: event
-  on: "tool:after"
+  event: "tool:after"
   filter: "write_file|str_replace|ast_edit|replace"
   exclude: "data/|test/|knowledge/"
   command: audit constitution
@@ -29,7 +29,7 @@
 - name: autocommit_post_chat
   description: After any turn that mutated source, generate a Strunk-style commit message and commit.
   trigger: event
-  on: "tool:after"
+  event: "tool:after"
   filter: "write_file|str_replace|ast_edit|replace"
   command: git autocommit
   callable: autocommit
@@ -40,7 +40,7 @@
 - name: restart_master_on_web_edit
   description: Restart MASTER service when web/ files change so edits take effect immediately.
   trigger: event
-  on: "tool:after"
+  event: "tool:after"
   filter: "web/"
   command: doas rcctl restart master
   callable: restart_master

@@ -133,7 +133,7 @@ module Master
     def event_match?(order, event_name, payload)
       return false unless order["enabled"]
       return false unless order["trigger"] == "event"
-      return false unless order["on"].to_s == event_name
+      return false unless order["event"].to_s == event_name
       filter_match?(order, payload) && !exclude_match?(order, payload)
     end
 
