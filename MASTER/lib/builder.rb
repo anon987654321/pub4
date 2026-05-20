@@ -197,7 +197,15 @@ module Master
       bus.subscribe("fix_loop:clean")    { Thread.new { propose_tree.call } }
       bus.subscribe("fix_loop:plateau")  { Thread.new { propose_tree.call } }
 
-      { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree: }
+      # Architecture: continuous OpenBSD load watcher.
+      # Default on; MASTER_WATCHER=0 disables. Sampler is read-only.
+      watcher = Loop::Watcher.new(bus:, root:)
+      if ENV["MASTER_WATCHER"] != "0"
+        Thread.new { watcher.run_forever }.tap { |t| t.abort_on_exception = false }
+      end
+      bus.subscribe("system:crit") { Thread.new { fix_loop.stop_background! if fix_loop.background_alive? } }
+
+      { standing:, fix_loop:, watch_loop:, heartbeat:, triggers:, propose_tree:, watcher: }
     end
 
     def boot_skills(root, bus)

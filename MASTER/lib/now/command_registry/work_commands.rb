@@ -65,9 +65,10 @@ module Master
     end
 
     def service_status
-      rcctl = File.executable?("/usr/sbin/rcctl") ? "/usr/sbin/rcctl" : "rcctl"
-      out, _, st = Open3.capture3(rcctl, "check", "master")
+      out, _, st = Open3.capture3("/usr/sbin/rcctl", "check", "master")
       { state: st.success? ? "ok" : "down", detail: out.strip }
+    rescue Errno::ENOENT
+      { state: "n/a", detail: "rcctl absent — not OpenBSD" }
     rescue StandardError => e
       { state: "?", detail: "rcctl err: #{e.class}: #{e.message[0, 60]}" }
     end

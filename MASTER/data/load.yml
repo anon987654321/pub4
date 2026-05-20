@@ -1,0 +1,29 @@
+# load.yml — Watcher thresholds.
+# OS-level pressure that should make MASTER back off scans, defer autofix, or alert.
+# Read by lib/loop/watcher.rb. Crossings publish system:warn / system:crit.
+
+interval_seconds: 30
+
+thresholds:
+  load_avg_1m:
+    warn: 2.0
+    crit: 4.0
+
+  mem_free_pct:      # lower = worse
+    warn: 15.0
+    crit: 5.0
+
+  disk_root_pct:
+    warn: 80
+    crit: 95
+
+  master_rss_mb:
+    warn: 1024
+    crit: 2048
+
+# Back-off policy: heartbeat and fix_loop subscribe to system:warn/crit.
+# - warn: skip the next idle scan cycle, log only.
+# - crit: stop fix_loop background, defer autofix until system:sample shows ok.
+policy:
+  warn: skip_idle_scan
+  crit: stop_fix_loop_background
