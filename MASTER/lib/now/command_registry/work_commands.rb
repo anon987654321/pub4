@@ -52,7 +52,7 @@ module Master
       branch = git.branch || "?"
       lines = [
         "status",
-        "service master/#{svc[:state]}",
+        "service master/#{svc[:state]} #{svc[:detail]}",
         "git     #{branch}@#{head} ahead=#{ahead} behind=#{behind} #{dirty ? "dirty" : "clean"}",
         "fix     bg=#{bg} autofix=#{af}",
         "bundle  #{bndl}",
@@ -68,8 +68,8 @@ module Master
       rcctl = File.executable?("/usr/sbin/rcctl") ? "/usr/sbin/rcctl" : "rcctl"
       out, _, st = Open3.capture3(rcctl, "check", "master")
       { state: st.success? ? "ok" : "down", detail: out.strip }
-    rescue StandardError
-      { state: "?", detail: "rcctl unavailable" }
+    rescue StandardError => e
+      { state: "?", detail: "rcctl err: #{e.class}: #{e.message[0, 60]}" }
     end
 
     def bundle_status(repo)
