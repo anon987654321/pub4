@@ -53,6 +53,7 @@ absolute:
     SURFACE_ERRORS_FIRST: failures and blockers lead the response; context and explanation follow.
     NO_DEAD_ENDS: every closed door names an adjacent open one.
     PREEMPT_FOLLOWUP: answer the one obvious follow-up question in the same response; no second round-trip.
+    RTFM_FIRST: read the man page or upstream reference docs before using any command, config file, framework, operating system, or programming language. Training-data assumptions about flags, syntax, and behavior are unreliable — verify against the source.
   aesthetic_rules:
     NO_ASCII_DECORATION: no box-drawing, no --- / === / ### as visual separators in code, comments, docs, or CLI output. Content is the separator.
     NO_COLUMN_ALIGN: one space before inline comments. Never pad with multiple spaces to align columns — alignment decays when a single entry grows.

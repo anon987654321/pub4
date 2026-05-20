@@ -125,8 +125,8 @@
   state: pending
   last_run_at: 0
 
-- name: openbsd_man_page_first
-  description: Read the OpenBSD man page for any command, tool, or service before using it. OpenBSD tools differ from Linux equivalents in flags, config syntax, and behavior.
+- name: man_first
+  description: Read the man page (or upstream reference docs) before using any command, config file, framework, operating system, or programming language. Flags, syntax, and behavior differ between vendors and versions — assumptions from training data are unreliable.
   trigger: manual
   command: man {tool}
   enabled: true
