@@ -265,7 +265,7 @@ module Master
 
     def commit_if_dirty(msg)
       return unless @git&.dirty?(".")
-      @git.add_lib_files
+      @git.add_all
       @git.commit(msg)
     rescue StandardError => e
       @bus&.publish("fix_loop:commit_error", error: e.message)

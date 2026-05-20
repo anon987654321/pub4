@@ -15,8 +15,8 @@ module Master
       !out.strip.empty?
     end
 
-    def add_lib_files
-      Open3.capture2e("git", "-C", @root_path, "add", "-A", "lib/")
+    def add_all
+      Open3.capture2e("git", "-C", @root_path, "add", "-A")
     end
 
     def commit(message)
