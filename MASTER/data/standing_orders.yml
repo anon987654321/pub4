@@ -6,17 +6,6 @@
 #
 # Runtime state (state/last_run_at/last_error) lives here temporarily.
 
-- name: auto_default
-  description: Scan + sweep + council after any source mutation. Primary self-maintenance loop.
-  trigger: event
-  on: "tool:after"
-  filter: "Write|Edit|Create|FilePatch"
-  exclude: "data/|test/"
-  command: auto .
-  enabled: true
-  state: pending
-  last_run_at: 0
-
 - name: data_integrity_check
   description: Scan data/ YAML files for corruption after any data/ write.
   trigger: event
