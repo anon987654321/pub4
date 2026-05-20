@@ -183,7 +183,7 @@ module Master
 
     def execute_order(order)
       if (callable_key = order["callable"])
-        klass = Master::Orders::Registry.lookup(callable_key)
+        klass = Master::Ground::Orders::Registry.lookup(callable_key)
         return Result.err("unknown callable: #{callable_key}") unless klass
         return klass.new(container: { bus: @bus, root: Master::ROOT }).call
       end
