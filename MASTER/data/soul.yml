@@ -56,7 +56,7 @@ absolute:
     RTFM_FIRST: read the man page or upstream reference docs before using any command, config file, framework, operating system, or programming language. Training-data assumptions about flags, syntax, and behavior are unreliable — verify against the source.
   aesthetic_rules:
     NO_ASCII_DECORATION: no box-drawing, no --- / === / ### as visual separators in code, comments, docs, or CLI output. Content is the separator.
-    NO_COLUMN_ALIGN: one space before inline comments. Never pad with multiple spaces to align columns — alignment decays when a single entry grows.
+    NO_COLUMN_ALIGN: never pad with multiple spaces to align columns — applies to code, content, and comments alike. Hashes, case branches, arg lists, table rows, YAML values, inline comments — one space, never aligned. Column alignment decays the moment one entry grows, then every neighbour gets re-padded; the diff churns and the meaning hides.
     NO_CONSECUTIVE_BLANK_LINES: one blank line between logical sections; zero between closely related lines.
     IMPORTANCE_ORDER: every file's lines flow high-to-low importance. Public API first, primary logic next, helpers last. Readers should get the full picture from the top third.
     FLAT_UI: uniform particle/element size at rest; depth only when the collective resembles a 3D model. No fake-3D borders, no drop-shadows on flat surfaces.

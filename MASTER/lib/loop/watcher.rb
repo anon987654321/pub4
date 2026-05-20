@@ -54,12 +54,12 @@ module Master
 
       def build_sample
         {
-          ts:            Time.now.utc.iso8601,
-          load_1m:       load_avg_1m,
-          mem_free_pct:  mem_free_pct,
+          ts: Time.now.utc.iso8601,
+          load_1m: load_avg_1m,
+          mem_free_pct: mem_free_pct,
           disk_root_pct: disk_root_pct,
           master_rss_mb: master_rss_mb,
-          master_alive:  master_alive?
+          master_alive: master_alive?
         }
       end
 
@@ -125,14 +125,14 @@ module Master
 
       def classify(s)
         return :crit if s[:master_alive] == false ||
-                        over?(s[:load_1m],       "load_avg_1m",    "crit") ||
-                        under?(s[:mem_free_pct], "mem_free_pct",   "crit") ||
-                        over?(s[:disk_root_pct], "disk_root_pct",  "crit") ||
-                        over?(s[:master_rss_mb], "master_rss_mb",  "crit")
-        return :warn if over?(s[:load_1m],       "load_avg_1m",    "warn") ||
-                        under?(s[:mem_free_pct], "mem_free_pct",   "warn") ||
-                        over?(s[:disk_root_pct], "disk_root_pct",  "warn") ||
-                        over?(s[:master_rss_mb], "master_rss_mb",  "warn")
+                        over?(s[:load_1m], "load_avg_1m", "crit") ||
+                        under?(s[:mem_free_pct], "mem_free_pct", "crit") ||
+                        over?(s[:disk_root_pct], "disk_root_pct", "crit") ||
+                        over?(s[:master_rss_mb], "master_rss_mb", "crit")
+        return :warn if over?(s[:load_1m], "load_avg_1m", "warn") ||
+                        under?(s[:mem_free_pct], "mem_free_pct", "warn") ||
+                        over?(s[:disk_root_pct], "disk_root_pct", "warn") ||
+                        over?(s[:master_rss_mb], "master_rss_mb", "warn")
         :ok
       end
 
