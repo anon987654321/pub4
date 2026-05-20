@@ -20,8 +20,9 @@ module Master
         "orient" => ->(_ctx) { Master::Orient.render(root:) },
         "help" => ->(_ctx) {
           [
-            "scan:    /scan /fix /why /axioms /topic /propose-tree",
+            "scan:    /scan /fix [loop|preview|stop] /why /axioms /topic /propose-tree",
             "review:  /critique /review",
+            "health:  /status /resync [--dry-run] /tail [N] [pattern]",
             "session: /save /clear /history /tokens /cost /undo /redo /checkpoint /dmesg /exit",
             "model:   /model /mode /persona /task",
             "memory:  /memory /dreams",

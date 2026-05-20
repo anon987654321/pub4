@@ -100,6 +100,38 @@ module Master
       @bus&.publish("fix_loop:error", error: e.message)
     end
 
+    # /fix loop — non-blocking: start the daemon in a tracked background thread.
+    def start_background!(target = @root)
+      return Result.err("fix_loop already running") if @bg_thread&.alive?
+      @bg_thread = Thread.new { run_forever(target) }
+      @bg_thread.abort_on_exception = false
+      @bus&.publish("fix_loop:background_start", target:)
+      Result.ok("fix_loop background started")
+    end
+
+    def stop_background!
+      return Result.err("fix_loop not running") unless @bg_thread&.alive?
+      @bg_thread.kill
+      @bg_thread = nil
+      @bus&.publish("fix_loop:background_stop")
+      Result.ok("fix_loop background stopped")
+    end
+
+    def background_alive? = @bg_thread&.alive? || false
+
+    # /fix preview — scan only, no commit, no mutation. Returns what would change.
+    def preview(target = @root)
+      files      = collect_files(target)
+      violations = scan_violations(files)
+      by_rule    = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
+      by_file    = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
+      Result.ok(
+        total: violations.size,
+        rules: by_rule.sort_by { |_, n| -n }.first(10).to_h,
+        files: by_file.sort_by { |_, n| -n }.first(10).to_h
+      )
+    end
+
     private
 
     # Tier 1: rubocop -A + AstFixer transforms + TypeChecker + DatalogEngine. No LLM.

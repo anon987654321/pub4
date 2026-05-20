@@ -60,6 +60,7 @@ module Master
       lines << d("model0: #{short_model(model)}")
       lines << d("rev0: #{rev}")
       lines << d("soul0: #{soul_version}")
+      lines << d("imports0: #{imports_loaded.join(" ")}")
       lines << d("orders0: #{active_orders_count} active")
       lines << d("security0: #{pledge_ok ? "pledge armed" : "pledge unavailable"}")
       lines << d("web0: #{web}")
@@ -262,6 +263,14 @@ module Master
       Array(orders).count { |o| o["enabled"] != false }
     rescue StandardError => _e
       "?"
+    end
+
+    IMPORT_YMLS = %w[soul rules ruby_style workflow standing_orders patterns openbsd vocabulary].freeze
+
+    def imports_loaded
+      IMPORT_YMLS.select { |n| File.exist?(File.join(Master::DATA, "#{n}.yml")) }
+    rescue StandardError => _e
+      []
     end
 
     def dmesg_lines

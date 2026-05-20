@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require "json"
+require "open3"
+require "time"
+
 module Master
   module Now
   module CommandRegistry
@@ -20,11 +24,10 @@ module Master
       metrics      = infra[:metrics]
       {
         "scan" => cmd(:dispatch_scan, scanner, root),
-        "fix" => ->(ctx) {
-          target = expand_or_root(arg_for(ctx), root)
-          result = fix_loop.run(target)
-          result.ok? ? result.value! : "fix: #{result.message}"
-        },
+        "fix" => ->(ctx) { dispatch_fix(fix_loop, root, arg_for(ctx)) },
+        "status" => ->(_c) { dispatch_status(root:, fix_loop:, bus:) },
+        "resync" => ->(c) { dispatch_resync(root:, fix_loop:, arg: arg_for(c)) },
+        "tail" => ->(c) { dispatch_tail(root:, arg: arg_for(c)) },
         "review" => ->(ctx) { dispatch_review(council_stage:, deliberation:, root:, bus:, arg: arg_for(ctx)) },
         "critique" => cmd(:dispatch_critique, deliberation, root),
         "model" => ->(c) { dispatch_model(agent:, config:, metrics:, root:, arg: arg_for(c)) },
@@ -33,6 +36,147 @@ module Master
         "topic" => cmd(:dispatch_topic, session),
         "propose-tree" => ->(_ctx) { propose_tree&.call || "propose-tree: not wired" }
       }
+    end
+
+    # /status — one-frame health panel. Replaces seven probing tool calls.
+    def dispatch_status(root:, fix_loop:, bus:)
+      git   = Reach::GitOperations.new(File.expand_path("..", root))
+      ahead, behind = git.ahead_behind
+      head  = git.head || "?"
+      dirty = git.dirty?(".")
+      svc   = service_status
+      bg    = fix_loop&.background_alive? ? "running" : "stopped"
+      af    = ENV["MASTER_AUTOFIX"] == "1" ? "on" : "off"
+      bndl  = bundle_status(File.expand_path("..", root))
+      evts  = recent_events(root, 5)
+      branch = git.branch || "?"
+      lines = [
+        "status",
+        "service master/#{svc[:state]}",
+        "git     #{branch}@#{head} ahead=#{ahead} behind=#{behind} #{dirty ? "dirty" : "clean"}",
+        "fix     bg=#{bg} autofix=#{af}",
+        "bundle  #{bndl}",
+        "events  (last #{evts.size})"
+      ]
+      evts.each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
+      lines.join("\n")
+    rescue StandardError => e
+      "status: #{e.message}"
+    end
+
+    def service_status
+      out, _, st = Open3.capture3("rcctl", "check", "master")
+      { state: st.success? ? "ok" : "down", detail: out.strip }
+    rescue StandardError
+      { state: "?", detail: "rcctl unavailable" }
+    end
+
+    def bundle_status(repo)
+      mas, = Open3.capture2e("bundle34", "check", chdir: File.join(repo, "MASTER"))
+      web, = Open3.capture2e("bundle34", "check", chdir: File.join(repo, "MASTER/web"))
+      mas_ok = mas.include?("dependencies are satisfied")
+      web_ok = web.include?("dependencies are satisfied")
+      mas_ok && web_ok ? "ok (MASTER+web satisfied)" : "drift — run bundle install"
+    rescue StandardError => e
+      "unknown (#{e.class})"
+    end
+
+    def recent_events(root, n)
+      path = File.join(root, "runtime", "events", "activity.jsonl")
+      return [] unless File.exist?(path)
+      now = Time.now
+      File.foreach(path).to_a.last(n).map { |line|
+        rec  = JSON.parse(line) rescue next
+        ts   = Time.parse(rec["timestamp"]) rescue now
+        secs = (now - ts).to_i
+        ago  = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
+        { ago: ago.rjust(4), event: rec["event"].to_s, summary: rec["payload"].to_s[0, 80] }
+      }.compact
+    rescue StandardError
+      []
+    end
+
+    # /resync — divergence repair: tag, fetch, reset, bundle, restart.
+    def dispatch_resync(root:, fix_loop:, arg:)
+      repo = File.expand_path("..", root)
+      git  = Reach::GitOperations.new(repo)
+      stop_msg = fix_loop&.background_alive? ? (fix_loop.stop_background!; "stopped fix_loop bg; ") : ""
+      tag_name = "backup/#{Time.now.strftime("%Y%m%d-%H%M")}-resync"
+      old_head = git.head
+      lines = ["#{stop_msg}resync starting — tag=#{tag_name} was=#{old_head}"]
+      git.tag(tag_name); lines << "  tagged #{tag_name}"
+      git.fetch;         lines << "  fetched origin"
+      if arg.include?("--dry-run")
+        ahead, behind = git.ahead_behind
+        return (lines + ["  dry-run: would reset --hard origin/main (ahead=#{ahead} behind=#{behind})"]).join("\n")
+      end
+      git.reset_hard("origin/main"); lines << "  reset --hard origin/main → #{git.head}"
+      lines << bundle_install_line(File.join(repo, "MASTER"), "MASTER")
+      lines << bundle_install_line(File.join(repo, "MASTER/web"), "MASTER/web")
+      Open3.capture2e("doas", "rcctl", "restart", "master")
+      sleep 2
+      lines << "  rcctl restart master — #{service_status[:state]}"
+      lines.join("\n")
+    rescue StandardError => e
+      "resync: #{e.message}"
+    end
+
+    def bundle_install_line(dir, label)
+      out, st = Open3.capture2e("bundle34", "install", chdir: dir)
+      ok = st.success? && out.include?("Bundle complete")
+      "  bundle install #{label} — #{ok ? "ok" : "FAILED"}"
+    rescue StandardError => e
+      "  bundle install #{label} — error: #{e.message}"
+    end
+
+    # /tail [N] [pattern] — last N events matching pattern. Default N=20.
+    def dispatch_tail(root:, arg:)
+      n_arg, pattern = arg.split(/\s+/, 2)
+      n    = n_arg.to_i.positive? ? n_arg.to_i : 20
+      path = File.join(root, "runtime", "events", "activity.jsonl")
+      return "tail: no event log at #{path}" unless File.exist?(path)
+      rx    = pattern && !pattern.empty? ? Regexp.new(pattern) : nil
+      lines = File.foreach(path).to_a
+      lines = lines.select { |l| l.include?(pattern) } if rx && pattern.match?(/\A[a-z0-9_:.-]+\z/i)
+      lines = lines.last(n)
+      lines.map { |l|
+        rec = JSON.parse(l) rescue next
+        next if rx && !rec["event"].to_s.match?(rx)
+        ts  = rec["timestamp"].to_s.sub(/\..+/, "").sub("T", " ")
+        "#{ts} #{rec["event"].ljust(28)} #{rec["payload"].to_s[0, 100]}"
+      }.compact.join("\n")
+    rescue StandardError => e
+      "tail: #{e.message}"
+    end
+
+    def dispatch_fix(fix_loop, root, arg)
+      sub, rest = arg.split(/\s+/, 2)
+      case sub
+      when "loop"
+        result = fix_loop.start_background!(expand_or_root(rest.to_s.strip, root))
+        result.ok? ? result.value! : "fix loop: #{result.message}"
+      when "stop"
+        result = fix_loop.stop_background!
+        result.ok? ? result.value! : "fix stop: #{result.message}"
+      when "preview"
+        result = fix_loop.preview(expand_or_root(rest.to_s.strip, root))
+        return "fix preview: #{result.message}" unless result.ok?
+        format_fix_preview(result.value!)
+      else
+        target = expand_or_root(arg, root)
+        result = fix_loop.run(target)
+        result.ok? ? result.value! : "fix: #{result.message}"
+      end
+    end
+
+    def format_fix_preview(data)
+      total = data[:total]
+      return "preview: clean — no violations" if total.zero?
+      rule_lines = data[:rules].map { |r, n| "  #{r.ljust(28)} #{n}" }
+      file_lines = data[:files].map { |f, n| "  #{f[0, 60].ljust(60)} #{n}" }
+      ["preview: #{total} violations (no changes made)",
+       "by rule:", *rule_lines,
+       "top files:", *file_lines].join("\n")
     end
 
     # Constitutional scoreboard: per-axiom violation counts over lib/, plus a

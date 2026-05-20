@@ -30,6 +30,8 @@ absolute:
     - CONVENTIONS.md
     - README.md
     - .claude/
+    - lib/judge/scan/
+    - bin/cli
   anti_simulation:
     forbidden: [will, would, could, might]
     require_evidence:
