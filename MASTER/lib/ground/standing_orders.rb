@@ -21,17 +21,22 @@ module Master
         trigger: "scheduled", interval_s: 604_800, command: "scan", enabled: false }
     ].freeze
 
-    def initialize(pipeline: nil, event_bus: nil)
-      @pipeline = pipeline
-      @bus      = event_bus
-      @orders   = load_orders
-      @mutex    = Mutex.new
-      @running  = Set.new
+    def initialize(pipeline: nil, event_bus: nil, container: {})
+      @pipeline  = pipeline
+      @bus       = event_bus
+      @container = container
+      @orders    = load_orders
+      @mutex     = Mutex.new
+      @running   = Set.new
       subscribe_events!
     end
 
     def wire_pipeline(pipeline)
       @pipeline = pipeline
+    end
+
+    def wire_container(container)
+      @container = container
     end
 
     def due
@@ -185,7 +190,7 @@ module Master
       if (callable_key = order["callable"])
         klass = Master::Ground::Orders::Registry.lookup(callable_key)
         return Result.err("unknown callable: #{callable_key}") unless klass
-        return klass.new(container: { bus: @bus, root: Master::ROOT }).call
+        return klass.new(container: @container.merge(bus: @bus, root: Master::ROOT)).call
       end
       return Result.err("no pipeline") unless @pipeline
       @pipeline.call(Result.ok(user_message: order["command"].to_s))

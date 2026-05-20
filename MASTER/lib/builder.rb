@@ -147,6 +147,7 @@ module Master
       guard         = Judge::Security::InjectionGuard.new
       autonomous    = boot_autonomous(root:, infra:, agent:, scanner:, axioms:)
                         .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
+      autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
       { agent:, soul: soul_doc, scanner:, swarm:, deliberation:, council_stage:, ideation:, guard: }.merge(autonomous)
     end
 
