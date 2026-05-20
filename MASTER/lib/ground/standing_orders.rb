@@ -1,14 +1,18 @@
 # frozen_string_literal: true
 
+require "set"
+
 module Master
   module Ground
   class StandingOrders
     include AtomicWrite
-    DAILY_INTERVAL   = 86_400
-    WEEKLY_INTERVAL  = 604_800
-    ERROR_TRUNCATE   = 200
-    STORE_PATH       = File.join(Master::ROOT, "data", "standing_orders.yml")
-    VALID_STATES    = %w[pending running done error].freeze
+    DAILY_INTERVAL = 86_400
+    WEEKLY_INTERVAL = 604_800
+    ERROR_TRUNCATE = 200
+    DEBOUNCE_S = 10
+    STORE_PATH = File.join(Master::ROOT, "data", "standing_orders.yml")
+    VALID_STATES = %w[pending running done error].freeze
+    EVENT_SUBSCRIPTIONS = %w[tool:after].freeze
 
     BUILTIN_ORDERS = [
       { name: "nightly_dreams", description: "Consolidate memories during low-activity periods",
@@ -21,6 +25,9 @@ module Master
       @pipeline = pipeline
       @bus      = event_bus
       @orders   = load_orders
+      @mutex    = Mutex.new
+      @running  = Set.new
+      subscribe_events!
     end
 
     def wire_pipeline(pipeline)
@@ -106,6 +113,71 @@ module Master
     end
 
     private
+
+    def subscribe_events!
+      return unless @bus
+      EVENT_SUBSCRIPTIONS.each do |event_name|
+        @bus.subscribe(event_name) { |ev| dispatch_event(event_name, ev) }
+      end
+    end
+
+    def dispatch_event(event_name, payload)
+      @orders.each do |order|
+        next unless event_match?(order, event_name, payload)
+        next if debounced?(order)
+        next unless @mutex.synchronize { @running.add?(order["name"]) }
+        Thread.new { run_event_order(order) }.tap { |t| t.abort_on_exception = false }
+      end
+    end
+
+    def event_match?(order, event_name, payload)
+      return false unless order["enabled"]
+      return false unless order["trigger"] == "event"
+      return false unless order["on"].to_s == event_name
+      filter_match?(order, payload) && !exclude_match?(order, payload)
+    end
+
+    def filter_match?(order, payload)
+      pattern = order["filter"].to_s
+      return true if pattern.empty?
+      payload_strings(payload).any? { |s| Regexp.new(pattern).match?(s) }
+    end
+
+    def exclude_match?(order, payload)
+      pattern = order["exclude"].to_s
+      return false if pattern.empty?
+      payload_strings(payload).any? { |s| Regexp.new(pattern).match?(s) }
+    end
+
+    def payload_strings(payload)
+      [payload[:tool], payload[:path], payload[:full]].compact.map(&:to_s)
+    end
+
+    def debounced?(order)
+      last = order["last_run_at"].to_i
+      last.positive? && (Time.now.to_i - last) < DEBOUNCE_S
+    end
+
+    def run_event_order(order)
+      name = order["name"]
+      result = execute_order(order)
+      @mutex.synchronize do
+        order["last_run_at"] = Time.now.to_i
+        if result.ok?
+          order["state"] = "done"
+          order.delete("last_error")
+        else
+          order["state"] = "error"
+          order["last_error"] = result.message.to_s[0, ERROR_TRUNCATE]
+        end
+        persist
+      end
+      @bus&.publish("standing_order:ran", name:, ok: result.ok?, trigger: "event")
+    rescue StandardError => e
+      @bus&.publish("standing_order:error", name: order["name"], error: e.message)
+    ensure
+      @mutex.synchronize { @running.delete(order["name"]) }
+    end
 
     def state_of(order) = VALID_STATES.include?(order["state"]) ? order["state"] : "done"
 

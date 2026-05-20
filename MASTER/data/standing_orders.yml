@@ -1,18 +1,9 @@
 ---
-# Standing orders — event and manual triggers only. No scheduled intervals.
-# trigger: event  — fires when matching bus event is published
-# trigger: pre_tool — fires before a tool call matching on: pattern
-# trigger: manual  — only runs when explicitly called via /command
-#
+# Standing orders — event and manual triggers wired through StandingOrders.
+# trigger: event  — fires when matching bus event publishes (currently tool:after)
+# trigger: manual — only runs when explicitly called via /orders or its callable
+# Every entry needs a callable: key registered in Master::Ground::Orders::Registry.
 # Runtime state (state/last_run_at/last_error) lives here temporarily.
-
-- name: dreams
-  description: Consolidate memories. Run via /dreams or after session end.
-  trigger: manual
-  command: dreams consolidate
-  enabled: true
-  state: pending
-  last_run_at: 0
 
 - name: architecture_audit
   description: Review data/* for shape misfit (files >200 lines, overlapping keys, misnamed modules). Run via /audit architecture.
@@ -27,7 +18,7 @@
   description: Scan lib/ against the axioms after any source mutation; emit improved/regressed/steady so regressions are caught the moment they land.
   trigger: event
   on: "tool:after"
-  filter: "Write|Edit|Create|FilePatch"
+  filter: "write_file|str_replace|ast_edit|replace"
   exclude: "data/|test/|knowledge/"
   command: audit constitution
   callable: constitution_drift
@@ -39,7 +30,7 @@
   description: After any turn that mutated source, generate a Strunk-style commit message and commit.
   trigger: event
   on: "tool:after"
-  filter: "Write|Edit|Create|FilePatch"
+  filter: "write_file|str_replace|ast_edit|replace"
   command: git autocommit
   callable: autocommit
   enabled: true
