@@ -136,21 +136,26 @@ module Master
     # /tail [N] [pattern] — last N events matching pattern. Default N=20.
     def dispatch_tail(root:, arg:)
       n_arg, pattern = arg.split(/\s+/, 2)
-      n    = n_arg.to_i.positive? ? n_arg.to_i : 20
+      n = n_arg.to_i.positive? ? n_arg.to_i : 20
       path = File.join(root, "runtime", "events", "activity.jsonl")
       return "tail: no event log at #{path}" unless File.exist?(path)
-      rx    = pattern && !pattern.empty? ? Regexp.new(pattern) : nil
+      rx = pattern && !pattern.empty? ? Regexp.new(pattern) : nil
       lines = File.foreach(path).to_a
       lines = lines.select { |l| l.include?(pattern) } if rx && pattern.match?(/\A[a-z0-9_:.-]+\z/i)
       lines = lines.last(n)
       lines.map { |l|
         rec = JSON.parse(l) rescue next
         next if rx && !rec["event"].to_s.match?(rx)
-        ts  = rec["timestamp"].to_s.sub(/\..+/, "").sub("T", " ")
-        "#{ts} #{rec["event"].ljust(28)} #{rec["payload"].to_s[0, 100]}"
+        ts = rec["timestamp"].to_s.sub(/\..+/, "").sub("T", " ")
+        "#{ts} #{rec["event"].ljust(28)} #{format_payload(rec["payload"])}"
       }.compact.join("\n")
     rescue StandardError => e
       "tail: #{e.message}"
+    end
+
+    def format_payload(pay)
+      return pay.to_s[0, 100] unless pay.is_a?(Hash)
+      pay.map { |k, v| "#{k}=#{v.to_s.tr('"', '')[0, 30]}" }.join(" ")[0, 100]
     end
 
     def dispatch_fix(fix_loop, root, arg)
