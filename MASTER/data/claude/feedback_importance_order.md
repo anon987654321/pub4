@@ -6,7 +6,7 @@ originSessionId: 038b16d9-fc5e-4144-9a47-5bd746b2d3ac
 ---
 Every file I touch gets reordered so the most important content sits at the top. Newspaper-style inverted pyramid.
 
-**Why:** A reader who stops halfway must still have the gist. The user explicitly asked for this on 2026-05-07 ("every file must have all its lines rearranged to flow by importance so most important stuff comes top"). Encoded into `MASTER/data/ruby_style.yml` (`line_order:` section) and `MASTER/data/sweep_prompts.yml` (`IMPORTANCE_ORDER` structural technique) so MASTER's auto-triad propagates the rule.
+**Why:** A reader who stops halfway must still have the gist. The user explicitly asked for this on 2026-05-07 ("every file must have all its lines rearranged to flow by importance so most important stuff comes top"). Encoded into `MASTER/data/ruby_style.yml` (`line_order:` section) and `MASTER/data/sweep_prompts.yml` (`IMPORTANCE_ORDER` structural technique) so MASTER's auto-sweep propagates the rule.
 
 **How to apply:**
 - Order: requires → module/class declaration + headline doc → public API (ordered by importance/call-frequency) → primary algorithm → private helpers (in dependency order) → constants/tables → edge-case handlers/rescues.

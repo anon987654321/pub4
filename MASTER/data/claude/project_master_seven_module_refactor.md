@@ -4,7 +4,7 @@ description: User approved collapse of lib/master/ into 7 time-oriented modules 
 type: project
 originSessionId: 0c593fb2-cd49-4fd7-9e89-d77dd7e909ae
 ---
-User approved the radical 7-directory tree on 2026-05-08 ("i approve of all your suggestions") after the /triad runs on lib/ and DEPLOY surfaced the duplication patterns.
+User approved the radical 7-directory tree on 2026-05-08 ("i approve of all your suggestions") after scan + sweep + council runs on lib/ and DEPLOY surfaced the duplication patterns.
 
 Target tree (lib/master/):
 - now/      cli, repl, pipeline executor — synchronous user turn

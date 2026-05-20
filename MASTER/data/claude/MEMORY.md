@@ -31,5 +31,5 @@
 - [MASTER has two Gemfiles](project_master_dual_gemfile.md) — MASTER/Gemfile and MASTER/web/Gemfile are independent; gems used by lib/ from web must be in both
 - [Falcon + EM = subprocess](project_falcon_em_subprocess.md) — Process.fork in a Falcon fiber raises "Closing scheduler"; EM-based gems must shell out to exe/<name>-worker
 - [Diverged branch sync via cherry-pick](feedback_diverged_branch_sync.md) — when local + remote both moved, backup-tag + reset to origin + cherry-pick targeted commits, never force-push or rebase mixed history
-- ["Run X through MASTER" = scan+sweep+tribunal](feedback_run_through_master_triad.md) — /triad on target; user vocabulary is "tribunal", code is "council"; current /triad's 3rd step is a buggy on/off toggle, not actual deliberation
+- ["Run X through MASTER" = scan+sweep+council](feedback_run_through_master_triad.md) — manual chain `/scan → /sweep → /council`; user vocabulary is "tribunal", code is "council"
 - [No unnecessary piping/concat in shell calls](feedback_no_shell_piping.md) — pure Ruby/zsh patterns; banned shell cmds rule applies to my Bash calls too
