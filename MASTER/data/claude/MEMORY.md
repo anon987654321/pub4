@@ -21,7 +21,7 @@
 - [No consecutive whitespace](feedback_no_consecutive_whitespace.md) — single space, single blank line max, no trailing/aligned-column padding; all file types
 - [Proper casing, no ASCII decorations](feedback_proper_casing.md) — sentence case in prose/comments/CLI; no === ---- [ok] • | as ASCII art. Boot dmesg banner is sacred.
 - [Restart MASTER after every web edit](feedback_restart_rails.md) — `doas rcctl restart master` after each scp under MASTER/web/, never batch and restart once at end
-- [Defrag/dedup/rename plan 2026-05](project_defrag_plan_2026_05.md) — multi-commit refactor; priority-1 = Master::Orient + slim AGENTS/CLAUDE + .zshrc fix
+- [Defrag/dedup/rename plan 2026-05](project_defrag_plan_2026_05.md) — multi-commit refactor; Master::Orient reverted 2026-05-20, rest of plan still open
 - [MASTER 7-module refactor approved 2026-05-08](project_master_seven_module_refactor.md) — now/loop/judge/voice/ground/reach/trace; pass-by-pass on VPS, supersedes the 6 dedup proposals
 - [OpenCrabs (Rust MASTER cousin)](reference_opencrabs.md) — github.com/adolfousier/opencrabs; brain-files-per-turn, FTS5 memory, /rebuild + exec() hot-restart
 - [Grok UI/CLI patterns](reference_grok_ui_cli_patterns.md) — StyleCoach prompt, htmx+SSE, tty-prompt/spinner, char-stream Claude CLI for MASTER polish

@@ -17,7 +17,6 @@ module Master
         work_commands(ai:, root:, infra:),
         control_commands(ai[:standing], ai[:soul]),
         system_commands(ai[:agent], infra[:diag], root),
-        "orient" => ->(_ctx) { Master::Orient.render(root:) },
         "help" => ->(_ctx) {
           [
             "scan:    /scan /fix [loop|preview|stop] /why /axioms /topic /propose-tree",
@@ -26,7 +25,7 @@ module Master
             "session: /save /clear /history /tokens /cost /undo /redo /checkpoint /dmesg /exit",
             "model:   /model /mode /persona /task",
             "memory:  /memory /dreams",
-            "system:  /orient /tree /diff /commit /snapshot /diag /reload /help"
+            "system:  /tree /diff /commit /snapshot /diag /reload /help"
           ].join("\n")
         }
       )

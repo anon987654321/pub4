@@ -1,9 +1,11 @@
 ---
 name: pub4 defrag/dedup/rename plan (2026-05-07)
-description: Multi-commit refactor plan from a sister chat — collapse duplication across docs, shrink data/, flatten repo root, rename for clarity. Priority-1 patch is Master::Orient + slim docs + .zshrc fix.
+description: Multi-commit refactor plan from a sister chat — collapse duplication across docs, shrink data/, flatten repo root, rename for clarity. Priority-1 (Master::Orient) shipped then reverted on 2026-05-20 as a useless wrapper.
 type: project
 originSessionId: 038b16d9-fc5e-4144-9a47-5bd746b2d3ac
 ---
+**Update 2026-05-20:** Master::Orient and the `/orient` slash command were removed. The five constitutional YAMLs are already injected into every system prompt by Constitution/Personality — `/orient` just re-exposed data the LLM already had. The rest of the plan (data/ shrinks, top-level shrinks, renames, smoothing) is independent.
+
 User shared a full defrag/dedup/rename proposal on 2026-05-07 covering:
 
 1. **Single source of truth** — banned commands, voice rules, ASCII-art ban, house rules currently duplicated across AGENTS.md / CLAUDE.md / data/*.yml. Move each fact to one yml file; prose docs reference, never restate.
