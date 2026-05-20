@@ -71,13 +71,27 @@ module Master
         nil
       end
 
+      # OpenBSD does not expose vm.uvmexp.free via sysctl — parse vmstat instead.
       def mem_free_pct
-        free,  _, st1 = Open3.capture3("/sbin/sysctl", "-n", "vm.uvmexp.free")
-        total, _, st2 = Open3.capture3("/sbin/sysctl", "-n", "vm.uvmexp.npages")
-        return nil unless st1.success? && st2.success? && total.to_f.positive?
-        ((free.to_f / total.to_f) * 100).round(1)
+        out, _, st = Open3.capture3("/usr/bin/vmstat")
+        return nil unless st.success?
+        cols = out.lines.last.to_s.strip.split
+        return nil if cols.length < 4
+        free_bytes = parse_size(cols[3])
+        total, _, st2 = Open3.capture3("/sbin/sysctl", "-n", "hw.physmem")
+        return nil unless st2.success? && total.to_f.positive?
+        ((free_bytes / total.to_f) * 100).round(1)
       rescue StandardError
         nil
+      end
+
+      def parse_size(str)
+        case str
+        when /\A(\d+(?:\.\d+)?)G\z/i then Regexp.last_match(1).to_f * 1_073_741_824
+        when /\A(\d+(?:\.\d+)?)M\z/i then Regexp.last_match(1).to_f * 1_048_576
+        when /\A(\d+(?:\.\d+)?)K\z/i then Regexp.last_match(1).to_f * 1024
+        else str.to_f
+        end
       end
 
       def disk_root_pct
@@ -88,25 +102,29 @@ module Master
         nil
       end
 
+      # The master daemon runs as `falcon serve` on port 53187.
       def master_rss_mb
         out, _, st = Open3.capture3("/bin/ps", "-Ao", "rss,command")
         return nil unless st.success?
-        rss = out.lines.select { |l| l.include?("bin/master") || l.include?("MASTER") }
-                       .sum { |l| l.strip.split.first.to_i }
-        (rss / 1024.0).round
+        rss_kb = out.lines
+                    .select { |l| l.include?("falcon serve") || l.include?(":53187") }
+                    .sum { |l| l.strip.split.first.to_i }
+        return nil if rss_kb.zero?
+        (rss_kb / 1024.0).round
       rescue StandardError
         nil
       end
 
+      # nil = unknown (e.g. rcctl errored); false = explicitly down.
       def master_alive?
         _, _, st = Open3.capture3("/usr/sbin/rcctl", "check", "master")
         st.success?
       rescue StandardError
-        false
+        nil
       end
 
       def classify(s)
-        return :crit if !s[:master_alive] ||
+        return :crit if s[:master_alive] == false ||
                         over?(s[:load_1m],       "load_avg_1m",    "crit") ||
                         under?(s[:mem_free_pct], "mem_free_pct",   "crit") ||
                         over?(s[:disk_root_pct], "disk_root_pct",  "crit") ||
