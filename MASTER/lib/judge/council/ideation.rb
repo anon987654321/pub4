@@ -5,27 +5,34 @@ module Master
   module Council
     class Ideation
       DEFAULT_CYCLES = 2
+      BUDGET_SECONDS = 4 * 60
 
       def initialize(agent:, event_bus: nil)
         @agent = agent
-        @bus   = event_bus
+        @bus = event_bus
       end
 
-      def ideate(prompt, constraints: [], cycles: DEFAULT_CYCLES)
-        ideas     = []
+      def ideate(prompt, constraints: [], cycles: DEFAULT_CYCLES, budget_seconds: BUDGET_SECONDS)
+        ideas = []
         critiques = []
+        deadline = Time.now + budget_seconds
 
         cycles.times do |cycle|
+          return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
+          return Master::Result.err("ideation: circuit open", category: :infrastructure) if circuit_open?
           brainstorm_result = brainstorm(prompt, ideas, constraints)
           return brainstorm_result if brainstorm_result.err?
           ideas += brainstorm_result.value
           @bus&.publish("ideation:cycle", cycle: cycle + 1, ideas: ideas.size)
 
+          return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
+          return Master::Result.err("ideation: circuit open", category: :infrastructure) if circuit_open?
           critique_result = critique(ideas)
           return critique_result if critique_result.err?
           critiques << critique_result.value
         end
 
+        return Master::Result.err("ideation: budget expired", category: :timeout) if Time.now >= deadline
         synth_result = synthesize(prompt:, ideas:, critiques:, constraints:)
         return synth_result if synth_result.err?
 
@@ -33,6 +40,14 @@ module Master
       end
 
       private
+
+      def circuit_open?
+        breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
+        return false unless breaker.respond_to?(:open_models)
+        !breaker.open_models.empty?
+      rescue StandardError
+        false
+      end
 
       def brainstorm(prompt, prior, constraints)
         context           = prior.any? ? "Prior ideas (avoid repeating): #{prior.join('; ')}\n\n" : ""

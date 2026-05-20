@@ -323,6 +323,7 @@ module Master
 
       # Parallel fan-out — all personas in flight at once, bounded by MAX_CONCURRENT.
       def collect_parallel(code, context)
+        return [] if circuit_open?
         slots = Mutex.new
         available = MAX_CONCURRENT
         ready = ConditionVariable.new
@@ -350,11 +351,20 @@ module Master
         acc = []
         @personas.each do |persona|
           break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+          break if circuit_open?
           turn_ctx = acc.empty? ? context : "#{context}\n\nprior turns:\n#{format_prior_turns(acc)}"
           entry = ask_persona(persona, code, turn_ctx)
           acc << entry if entry
         end
         acc
+      end
+
+      def circuit_open?
+        breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
+        return false unless breaker.respond_to?(:open_models)
+        !breaker.open_models.empty?
+      rescue StandardError
+        false
       end
 
       def ask_persona(persona, code, context)
