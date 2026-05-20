@@ -13,14 +13,16 @@ module Master
   # Stops when violations reach zero (2 consecutive clean passes) or plateau.
   # run_forever wraps run in an idle-sleep loop for the background daemon.
   class FixLoop
-    IDLE_SLEEP      = 300
-    STARTUP_DELAY   = 90
-    MAX_PASSES      = 15        # fallback; authoritative value in rules.yml convergence
-    CLEAN_RUNS      = 2         # fallback; authoritative value in rules.yml convergence
-    PLATEAU_WINDOW  = 3        # fallback; authoritative value in rules.yml convergence
-    SKIP_DIRS       = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
-    DEPS_PATH       = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
-    PRIORS_PATH     = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
+    IDLE_SLEEP = 300
+    STARTUP_DELAY = 90
+    MAX_PASSES = 15
+    CLEAN_RUNS = 2
+    PLATEAU_WINDOW = 3
+    RUN_BUDGET_SECONDS = 30 * 60
+    PASS_BUDGET_SECONDS = 8 * 60
+    SKIP_DIRS = %w[vendor/ knowledge/ node_modules/ .git/ .bundle/ tmp/ log/ dist/].freeze
+    DEPS_PATH = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
+    PRIORS_PATH = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
 
     def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil)
       @rules            = rules
@@ -45,13 +47,22 @@ module Master
     def plateau_window = convergence_cfg["stagnant_threshold"] || PLATEAU_WINDOW
 
     # Bounded convergence loop — used by /fix and run_forever.
-    def run(target = @root, max_passes: max_passes_default)
-      files             = collect_files(target)
-      history           = []
+    # Three guards prevent wedging when the LLM provider degrades:
+    #   - wall-clock budget on the whole run
+    #   - per-pass deadline on the LLM tier (Tier 1 still runs cheap)
+    #   - circuit-open early-exit so we don't burn time waiting on dead breakers
+    def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS)
+      files = collect_files(target)
+      history = []
       consecutive_clean = 0
+      deadline = Time.now + budget_seconds
 
       max_passes.times do |i|
         pass = i + 1
+        if Time.now >= deadline
+          @bus&.publish("fix_loop:timeout", pass:, budget_seconds:)
+          return Result.ok("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)")
+        end
         @bus&.publish("fix_loop:pass_start", pass:, target:)
 
         # Tier 1 — fast: rubocop -A + AstFixer, no LLM
@@ -76,10 +87,15 @@ module Master
           break
         end
 
-        # Tier 2 — LLM: one pass per rule in priority order
-        llm_fixed = llm_pass(violations, files, pass)
-        commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
-        track_recurrence(violations)
+        # Tier 2 — LLM: skip when circuit open; bound by pass + run deadlines.
+        if circuit_open?
+          @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
+        else
+          pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
+          llm_fixed = llm_pass(violations, files, pass, pass_deadline)
+          commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
+          track_recurrence(violations)
+        end
       end
 
       Result.ok("plateau or max passes reached")
@@ -175,10 +191,19 @@ module Master
     end
 
     # Tier 2: one RuleLoop pass per rule, highest-priority rules first.
-    def llm_pass(violations, files, pass)
+    # Bails early if the deadline passes or the LLM circuit opens mid-pass.
+    def llm_pass(violations, files, pass, deadline = nil)
       fixed = 0
       ordered_rules.each do |rule|
         next unless violations.any? { |v| v[:rule] == rule.id }
+        if deadline && Time.now >= deadline
+          @bus&.publish("fix_loop:pass_timeout", pass:, rule_skipped: rule.id)
+          break
+        end
+        if circuit_open?
+          @bus&.publish("fix_loop:llm_skipped", pass:, rule_skipped: rule.id, reason: "circuit_open")
+          break
+        end
         rl = RuleLoop.new(rule:, agent: @agent, scanner: @scanner, root: @root,
                           bus: @bus, learnings: @learnings)
         rl.injected_preamble = @preamble
@@ -188,6 +213,20 @@ module Master
         @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
       end
       fixed
+    end
+
+    def circuit_open?
+      breaker = @agent.respond_to?(:circuit_breaker) ? @agent.circuit_breaker : nil
+      return false unless breaker.respond_to?(:open_models)
+      !breaker.open_models.empty?
+    rescue StandardError
+      false
+    end
+
+    def open_breakers
+      @agent.respond_to?(:circuit_breaker) ? Array(@agent.circuit_breaker&.open_models) : []
+    rescue StandardError
+      []
     end
 
     def scan_violations(files)
