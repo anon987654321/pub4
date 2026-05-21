@@ -10,7 +10,9 @@ module Master
     WEEKLY_INTERVAL = 604_800
     ERROR_TRUNCATE = 200
     DEBOUNCE_S = 10
-    STORE_PATH = File.join(Master::ROOT, "data", "standing_orders.yml")
+    DEFS_PATH = File.join(Master::ROOT, "data", "standing_orders.yml")
+    STATE_PATH = File.join(Master::ROOT, ".master", "standing_orders_state.yml")
+    STATE_KEYS = %w[state last_run_at last_error].freeze
     VALID_STATES = %w[pending running done error].freeze
     EVENT_SUBSCRIPTIONS = %w[tool:after].freeze
 
@@ -207,13 +209,22 @@ module Master
     end
 
     def load_orders
-      if File.exist?(STORE_PATH)
-        orders = Master.load_yaml(STORE_PATH)
-        unless orders.is_a?(Array)
-          @bus&.publish("standing_orders:corrupt", path: STORE_PATH, got: orders.class.name)
-          return builtin_orders
-        end
-        orders.select { |o| o.is_a?(Hash) }.each { |o| o["state"] ||= "done" }
+      defs = read_defs
+      state = read_state
+      defs.each do |order|
+        carry = state[order["name"]] || {}
+        order["state"] = carry["state"] || "pending"
+        order["last_run_at"] = carry["last_run_at"] || 0
+        order["last_error"] = carry["last_error"] if carry["last_error"]
+      end
+      defs
+    end
+
+    def read_defs
+      if File.exist?(DEFS_PATH)
+        raw = Master.load_yaml(DEFS_PATH)
+        return builtin_orders unless raw.is_a?(Array)
+        raw.select { |o| o.is_a?(Hash) }
       else
         builtin_orders
       end
@@ -222,14 +233,25 @@ module Master
       builtin_orders
     end
 
+    def read_state
+      return {} unless File.exist?(STATE_PATH)
+      raw = Master.load_yaml(STATE_PATH)
+      raw.is_a?(Hash) ? raw : {}
+    rescue Psych::Exception, Errno::ENOENT, TypeError
+      {}
+    end
+
     def builtin_orders
       BUILTIN_ORDERS.map { |o| o.transform_keys(&:to_s).merge("last_run_at" => 0, "state" => "pending") }
     end
 
     def persist
       return unless @orders.is_a?(Array)
-      FileUtils.mkdir_p(File.dirname(STORE_PATH))
-      write_atomic(STORE_PATH, @orders.to_yaml)
+      state = @orders.each_with_object({}) do |order, acc|
+        acc[order["name"]] = STATE_KEYS.each_with_object({}) { |k, h| h[k] = order[k] if order.key?(k) }
+      end
+      FileUtils.mkdir_p(File.dirname(STATE_PATH))
+      write_atomic(STATE_PATH, state.to_yaml)
     end
   end
   end

@@ -3,7 +3,7 @@
 # trigger: event  — fires when bus publishes event: key (currently tool:after)
 # trigger: manual — only runs when explicitly called via /orders or its callable
 # Every entry needs a callable: key registered in Master::Ground::Orders::Registry.
-# Runtime state (state/last_run_at/last_error) lives here temporarily.
+# Runtime state (state/last_run_at/last_error) lives in .master/standing_orders_state.yml.
 
 - name: architecture_audit
   description: Review data/* for shape misfit (files >200 lines, overlapping keys, misnamed modules). Run via /audit architecture.
@@ -11,8 +11,6 @@
   command: audit architecture
   callable: architecture_audit
   enabled: true
-  state: pending
-  last_run_at: 0
 
 - name: constitution_drift
   description: Scan lib/ against the axioms after any source mutation; emit improved/regressed/steady so regressions are caught the moment they land.
@@ -23,8 +21,6 @@
   command: audit constitution
   callable: constitution_drift
   enabled: true
-  state: pending
-  last_run_at: 0
 
 - name: autocommit_post_chat
   description: After any turn that mutated source, generate a Strunk-style commit message and commit.
@@ -34,8 +30,6 @@
   command: git autocommit
   callable: autocommit
   enabled: true
-  state: pending
-  last_run_at: 0
 
 - name: restart_master_on_web_edit
   description: Restart MASTER service when web/ files change so edits take effect immediately.
@@ -45,5 +39,3 @@
   command: doas rcctl restart master
   callable: restart_master
   enabled: true
-  state: pending
-  last_run_at: 0
