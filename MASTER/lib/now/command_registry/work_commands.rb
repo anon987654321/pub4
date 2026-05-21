@@ -243,7 +243,7 @@ module Master
     end
 
     def collect_scan_pairs(scanner:, root:, arg:, depth:)
-      raw_arg    = arg.sub(/\A(?:critical|solid|axioms)\s*/, "").strip
+      raw_arg    = arg.sub(/\A(?:critical|solid|axioms|standard|deep|quick|hunt|critique|frontend)\s+/, "").strip
       target_arg = raw_arg.empty? ? nil : File.expand_path(raw_arg)
       if target_arg && File.file?(target_arg)
         [[target_arg, scanner.scan(target_arg, depth:)]]
