@@ -3,7 +3,7 @@
 module Master
   module Now
   module Stages
-    # Infer — promote natural-language messages to :command intent via data/infer_patterns.yml.
+    # Infer — promote natural-language messages to :command intent via data/patterns.yml (infer namespace).
     class Infer
       # Heuristic task-type detection — used by ModelRouter for tiered model selection.
       PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
@@ -36,7 +36,7 @@ module Master
         qa:       /\?(?:\s*$|\s+[A-Z])/m,
       }.freeze
 
-      PATTERNS_PATH = File.join(Master::ROOT, "data", "infer_patterns.yml").freeze
+      PATTERNS_PATH = File.join(Master::ROOT, "data", "patterns.yml").freeze
 
       def initialize
         @patterns = load_patterns
@@ -72,7 +72,7 @@ module Master
       def load_patterns
         return {} unless File.exist?(PATTERNS_PATH)
         data = Master.load_yaml(PATTERNS_PATH) || {}
-        commands = data["commands"] || {}
+        commands = data.dig("infer", "commands") || {}
         commands.each_with_object({}) do |(name, spec), out|
           regexes = (spec["patterns"] || []).map { |src| Regexp.new(src, Regexp::IGNORECASE | Regexp::EXTENDED) }
           out[name.to_s] = { regexes: regexes, capture: spec["capture"].to_s }

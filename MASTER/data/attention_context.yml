@@ -50,7 +50,7 @@ fields:
   parent:
     description: Optional parent maps that this work belongs to.
     examples:
-      - [repo_topic_clusters, visual_clusters]
+      - [repo_topics, visual_clusters]
       - [provider_economy, council]
 
 rendering:
@@ -94,7 +94,7 @@ examples:
       zoom: wide_to_deep
       act: scout
       target: [repos, runtime_patterns, opportunity_clusters]
-      parent: [repo_topic_clusters]
+      parent: [repo_topics]
   - context: patching TTS
     breadcrumb:
       map: Face3D/speech-audio/tts-mime

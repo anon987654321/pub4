@@ -39,7 +39,7 @@ clusters:
     master_hooks:
       - MASTER/docs/provider_economy.md
       - MASTER/data/budget.yml
-      - MASTER/data/repo_topic_clusters.yml
+      - MASTER/data/patterns.yml#repo_topics
       - MASTER/lib/trace/session.rb
     next_actions:
       - Add local transcript/cache schema.
