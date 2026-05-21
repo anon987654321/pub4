@@ -875,13 +875,13 @@ function _doResize() {
   async function sendMessage(text) {
     if (evtSrc) { try { evtSrc.close(); } catch (e) {} }
     ttsSkip();
-    const token = new URLSearchParams(window.location.search).get('token') || '';
 
     // Enhance gate: fetch rewrite, show dim y/n confirm, resolve to chosen message.
+    // Auth rides on the master_session cookie set by AuthTier on first hit.
     let finalText = text;
     let preEnhanced = false;
     try {
-      const r = await fetch(`/chat/enhance?token=${encodeURIComponent(token)}&message=${encodeURIComponent(text)}`);
+      const r = await fetch(`/chat/enhance?message=${encodeURIComponent(text)}`);
       const data = await r.json();
       if (data.changed && data.enhanced && data.enhanced !== text) {
         const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
@@ -894,7 +894,7 @@ function _doResize() {
     Face.dispersionTarget = 0.35;
     Face.browTarget = 0.4;
     const stateBlob = encodeURIComponent(`${State.mood}|${State.mode}|${((performance.now() - State.lastTouch)/1000)|0}|${palIdx}`);
-    const url = `/chat/message?token=${encodeURIComponent(token)}&message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}`;
+    const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}`;
     evtSrc = new EventSource(url);
     let pending = '';
     evtSrc.onmessage = (ev) => {

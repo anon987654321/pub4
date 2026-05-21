@@ -74,8 +74,7 @@ window._chatOnDmesg = (line) => {
 };
 
 (function applyTier() {
-  const tier = document.querySelector('meta[name=master-tier]')?.content
-    || (location.search.includes('token=') ? 'authenticated' : 'visitor');
+  const tier = document.querySelector('meta[name=master-tier]')?.content || 'visitor';
   const pp = document.querySelector('#zsh .pp');
   if (pp) pp.textContent = tier === 'authenticated' ? 'dev' : 'visitor';
 })();

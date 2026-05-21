@@ -86,9 +86,11 @@ Config lives at `.master/config.yml`. Override any key at runtime with `/config 
 
 | Tier | Trigger | Access |
 |---|---|---|
-| Authenticated | `?token=…` | Full — filesystem, git, all tools |
-| Visitor | no token | LLM chat only (`AskLlm`, `WebSearch`) |
+| Authenticated | `Authorization: Bearer`, `X-Token`, `master_session` cookie | Full — filesystem, git, all tools |
+| Visitor | no credential | LLM chat only (`AskLlm`, `WebSearch`) |
 | Public | `/up`, `/health` | Always |
+
+First-hit `?token=…` is accepted once; the middleware sets an `HttpOnly; Secure; SameSite=Strict` cookie and 302s to the same path stripped of the token. After the handshake, the URL never carries the secret — query strings leak through proxy logs, browser history, and `Referer` headers; cookies do not.
 
 ## Modules
 

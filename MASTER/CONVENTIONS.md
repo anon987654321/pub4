@@ -121,7 +121,7 @@ After every scp under `MASTER/web/`, immediately `doas rcctl restart master` so 
 
 ## Web auth tiers
 
-`?token=...` matches the value in `~/pub4/.master/config.yml` and grants full tool access. No token = visitor — chat works, but `Thread.current[:master_visitor]` is set so `Master::Agent::LlmDispatch#build_llm_tools` filters tools to the visitor allow-list (currently `AskLlm`, `WebSearch`). The CLI REPL bypasses this entirely and always has full access.
+Token in `~/pub4/.master/config.yml` is accepted via `Authorization: Bearer`, `X-Token` header, or `master_session` cookie. First-hit `?token=...` triggers the handshake: AuthTier sets an `HttpOnly; Secure; SameSite=Strict` cookie and 302s to the same path with the token stripped, keeping the secret out of logs and history. No credential = visitor — chat works, but `Thread.current[:master_visitor]` is set so `Master::Agent::LlmDispatch#build_llm_tools` filters tools to the visitor allow-list (currently `AskLlm`, `WebSearch`). The CLI REPL bypasses this entirely and always has full access.
 
 ## Slash commands
 

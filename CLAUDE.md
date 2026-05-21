@@ -98,9 +98,11 @@ Models: default `openrouter/auto`. Fallback chain: `qwen3-coder:free → minimax
 
 | Tier | Trigger | Tool access |
 |---|---|---|
-| Authenticated | `?token=...` | Full, including filesystem |
-| Visitor | no token | LLM-only via `VISITOR_ALLOWED_TOOLS` (`AskLlm`, `WebSearch`) |
+| Authenticated | `Authorization: Bearer`, `X-Token` header, `master_session` cookie | Full, including filesystem |
+| Visitor | no credential | LLM-only via `VISITOR_ALLOWED_TOOLS` (`AskLlm`, `WebSearch`) |
 | Public | `/up`, `/health` | Always |
+
+First-hit `?token=...` triggers a cookie handshake — AuthTier sets `HttpOnly; Secure; SameSite=Strict; Path=/` and 302s to the same path without the token. Subsequent requests ride the cookie; the URL never carries the secret.
 
 CLI REPL bypasses ApplicationController — full tool access regardless of web auth state.
 
