@@ -13,6 +13,7 @@ module Master
 
     def system_commands(agent, diag, root)
       {
+        "orient" => cmd(:dispatch_orient, root),
         "tree" => cmd(:dispatch_tree, root),
         "diff" => cmd(:dispatch_diff, root),
         "commit" => ->(_ctx) { dispatch_commit(agent, root) },
@@ -20,6 +21,35 @@ module Master
         "diag" => ->(ctx) { diag ? diag.render(ctx[:args].to_s.strip) : "diag: not configured" },
         "reload" => ->(_ctx) { "reload: not supported in this context" }
       }
+    end
+
+    ORIENT_FILES = {
+      "soul" => ["data/soul.yml", "constitution: axioms, voice, persona, prompt order"],
+      "rules" => ["data/rules.yml", "universal cross-disciplinary rules"],
+      "style" => ["data/ruby_style.yml", "ruby/shell/git/css/html/typography idioms"],
+      "workflow" => ["data/workflow.yml", "agent loops, pipeline, council, gates"],
+      "orders" => ["data/standing_orders.yml", "event triggers and standing operating procedures"],
+      "patterns" => ["data/patterns.yml", "gh/openbsd/zsh tool idioms"],
+      "openbsd" => ["data/openbsd.yml", "pf/nsd/httpd/relayd config validators"]
+    }.freeze
+
+    def dispatch_orient(root, arg)
+      return cat_orient(root, arg) unless arg.empty?
+      [
+        "MASTER — constitutional AI runtime for any text artifact",
+        "modules: now · loop · judge · voice · ground · reach · trace",
+        "pipeline: Intake → Infer → Route → Guard → Execute → [Council ‖ Lint] → Prune → Memo → Render",
+        "",
+        "constitution:",
+        *ORIENT_FILES.map { |k, (path, desc)| "  /orient #{k.ljust(10)} #{path.ljust(28)} #{desc}" }
+      ].join("\n")
+    end
+
+    def cat_orient(root, arg)
+      entry = ORIENT_FILES[arg]
+      return "unknown: #{arg} (try: #{ORIENT_FILES.keys.join(", ")})" unless entry
+      full = File.join(root, entry[0])
+      File.exist?(full) ? File.read(full) : "missing: #{full}"
     end
 
     def dispatch_tree(root, arg)

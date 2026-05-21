@@ -25,7 +25,7 @@ module Master
             "session: /save /clear /history /tokens /cost /undo /redo /checkpoint /dmesg /exit",
             "model:   /model /mode /persona /task",
             "memory:  /memory /dreams",
-            "system:  /tree /diff /commit /snapshot /diag /reload /help"
+            "system:  /orient [topic] /tree /diff /commit /snapshot /diag /reload /help"
           ].join("\n")
         }
       )
