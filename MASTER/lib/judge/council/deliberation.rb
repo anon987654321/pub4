@@ -215,44 +215,16 @@ module Master
       CONVERGENCE_OVERLAP  = 0.7
       CONVERGENCE_TEXT_SIM = 0.6
 
-      # Maps each council persona to the question bank category they draw from.
-      PERSONA_QUESTION = {
-        "Architect" => "assumptions",
-        "Data Steward" => "consistency",
-        "Ethics & Policy" => "harm",
-        "Maintainer" => "clarity",
-        "Performance" => "bottlenecks",
-        "Product Strategist" => "economics",
-        "QA Engineer" => "evidence",
-        "Pragmatist" => "scope",
-        "Reliability" => "failure_modes",
-        "Security" => "attacker",
-        "Skeptic" => "failure_modes",
-        "User" => "edge_cases",
-        "User Advocate" => "edge_cases",
-        "Accessibility" => "a11y_ux",
-        "Layperson" => "clarity",
-        "Mentor" => "clarity",
-        "Graphic Designer" => "visual",
-        "Web Designer" => "visual",
-        "Motion Designer" => "visual",
-        "Google CSS Engineer" => "visual",
-        "NNGroup UX Researcher" => "a11y_ux",
-        "Electronic Music Producer" => "sound",
-        "Hip-Hop Producer" => "sound",
-        "Sound Designer" => "sound"
-      }.freeze
-
       @questions = nil
 
       def self.questions
         @questions ||= QualityFramework.questions
       end
 
-      def self.sample_question(persona_name)
-        cat = PERSONA_QUESTION[persona_name.to_s]
-        bank = questions[cat]
-        bank&.sample
+      def self.sample_question(persona)
+        lens = persona.respond_to?(:cognitive_lens) ? persona.cognitive_lens : nil
+        return nil unless lens
+        questions[lens.to_s]&.sample
       end
 
       def self.quality_brief(domain = :general)
@@ -471,7 +443,7 @@ module Master
         axiom = axiom_line(persona)
         axiom_block = axiom.empty? ? "" : "#{axiom}\n"
         quality_block = self.class.quality_brief(QualityFramework.domain_for(persona.name))
-        question = self.class.sample_question(persona.name)
+        question = self.class.sample_question(persona)
         question_block = question ? "\nAdversarial question for this turn: #{question}\n" : ""
         format(self.class.prompts.fetch("juror"),
                persona_name: persona.name, persona_role: persona.role,

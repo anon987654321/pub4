@@ -9,6 +9,7 @@ personas:
     bias: Structure
     weight: 0.07
     question: "What couples too tight to evolve?"
+    cognitive_lens: assumptions
     emphasizes: [PROXIMITY, ABSTRACTION]
     can_veto: false
     prompt: Review architectural boundaries, coupling, interface shapes, and migration risk.
@@ -19,6 +20,7 @@ personas:
     bias: Consistency
     weight: 0.06
     question: "Where can the data go inconsistent?"
+    cognitive_lens: consistency
     emphasizes: [SINGULARITY, ROBUSTNESS]
     can_veto: false
     prompt: Audit schema impact, migrations, data lineage, and source‑of‑truth consistency.
@@ -29,6 +31,7 @@ personas:
     bias: Compliance
     weight: 0.05
     question: "Who could this harm if misused?"
+    cognitive_lens: harm
     emphasizes: [ROBUSTNESS, ABSTRACTION]
     can_veto: false
     prompt: Examine policy adherence, abuse potential, fairness, and governance implications.
@@ -39,6 +42,7 @@ personas:
     bias: Sustainability
     weight: 0.12
     question: "Will this be clear at 3am six months from now?"
+    cognitive_lens: clarity
     emphasizes: [LINEARITY, SINGULARITY, DENSITY]
     can_veto: true
     prompt: Evaluate readability, naming, modularity, and long‑term maintenance burden.
@@ -49,6 +53,7 @@ personas:
     bias: Throughput
     weight: 0.07
     question: "Where is the Big-O bottleneck?"
+    cognitive_lens: bottlenecks
     emphasizes: [DENSITY]
     can_veto: false
     prompt: Detect latency, memory, I/O, and algorithmic inefficiencies; suggest measurable optimizations.
@@ -59,6 +64,7 @@ personas:
     bias: Value
     weight: 0.04
     question: "Is this worth shipping at all?"
+    cognitive_lens: economics
     emphasizes: [DENSITY]
     can_veto: false
     prompt: Verify alignment with product goals, success metrics, and roadmap leverage.
@@ -69,6 +75,7 @@ personas:
     bias: Verification
     weight: 0.08
     question: "What evidence proves this works?"
+    cognitive_lens: evidence
     emphasizes: [ROBUSTNESS]
     can_veto: false
     prompt: Locate missing tests, flaky patterns, and propose deterministic validation gates.
@@ -79,6 +86,7 @@ personas:
     bias: Shipping
     weight: 0.07
     question: "What can be deleted without loss?"
+    cognitive_lens: scope
     emphasizes: [DENSITY, SINGULARITY]
     can_veto: false
     prompt: Minimize scope while maximizing shippable value within realistic constraints.
@@ -89,6 +97,7 @@ personas:
     bias: Resilience
     weight: 0.10
     question: "What is the cascade if the weakest link snaps?"
+    cognitive_lens: failure_modes
     emphasizes: [ROBUSTNESS]
     can_veto: true
     prompt: Review retries, timeouts, degradation modes, idempotency, rollback safety, and worst-case cascades.
@@ -99,6 +108,7 @@ personas:
     bias: Safety
     weight: 0.13
     question: "Where are the injection vectors and exposed surface?"
+    cognitive_lens: attacker
     emphasizes: [ROBUSTNESS, ABSTRACTION]
     can_veto: true
     prompt: Identify injection, privilege escalation, data‑exposure, and auth risks. Prefix VETO when unsafe to ship.
@@ -109,6 +119,7 @@ personas:
     bias: Caution
     weight: 0.10
     question: "What did we miss? What evidence is required?"
+    cognitive_lens: failure_modes
     emphasizes: [ROBUSTNESS]
     can_veto: false
     prompt: Challenge assumptions, enumerate failure paths, edge cases, brittleness, and missing gaps.
@@ -119,6 +130,7 @@ personas:
     bias: Usability
     weight: 0.06
     question: "What would the user complain about first?"
+    cognitive_lens: edge_cases
     emphasizes: [ABSTRACTION]
     can_veto: false
     prompt: Assess clarity, friction, error recovery, and overall user outcomes.
@@ -129,6 +141,7 @@ personas:
     bias: Reach
     weight: 0.05
     question: "Can a keyboard-only or screen-reader user complete the task?"
+    cognitive_lens: a11y_ux
     emphasizes: [ROBUSTNESS, ABSTRACTION]
     can_veto: false
     prompt: Audit keyboard navigation, screen-reader semantics, contrast, focus order, and reduced-motion handling.
@@ -139,6 +152,7 @@ personas:
     bias: Hierarchy
     weight: 0.04
     question: "Where does the eye land first, and is that what matters most?"
+    cognitive_lens: visual
     emphasizes: [PROXIMITY, DENSITY]
     can_veto: false
     prompt: Critique typographic hierarchy, whitespace economy, contrast, alignment, scale, and figure-ground relationships. Reject ornament that doesn't carry meaning.
@@ -149,6 +163,7 @@ personas:
     bias: Idiom
     weight: 0.04
     question: "Does this respect the medium — fluid, responsive, keyboard-first, link-shaped?"
+    cognitive_lens: visual
     emphasizes: [ROBUSTNESS, ABSTRACTION]
     can_veto: false
     prompt: Evaluate semantic HTML, responsive behavior, link affordance, form ergonomics, viewport handling, and progressive enhancement. Flag div-soup, modal-overuse, JS-only interactions where HTML would do.
@@ -159,6 +174,7 @@ personas:
     bias: Groove
     weight: 0.03
     question: "Does the timing breathe, or is everything quantised to death?"
+    cognitive_lens: sound
     emphasizes: [DENSITY, SINGULARITY]
     can_veto: false
     prompt: Assess audio mix balance, frequency masking, transient handling, rhythmic feel, sound-design intentionality. For non-audio code, transfer the metaphor — pacing, layering, and silence in interactions.
@@ -169,6 +185,7 @@ personas:
     bias: Plain Speech
     weight: 0.05
     question: "If I'd never seen this code/UI before, what would confuse me first?"
+    cognitive_lens: clarity
     emphasizes: [LINEARITY, SINGULARITY]
     can_veto: false
     prompt: Read as a non-expert. Flag jargon without glossary, unexplained acronyms, error messages that assume internals, UI labels that need a manual. The cure is plain words and obvious affordances.
@@ -179,6 +196,7 @@ personas:
     bias: Pulse
     weight: 0.04
     question: "Does this hit, or does it just sit there?"
+    cognitive_lens: sound
     emphasizes: [DENSITY, SINGULARITY]
     can_veto: false
     prompt: >
@@ -194,6 +212,7 @@ personas:
     bias: Precision
     weight: 0.05
     question: "What CSS property is doing three jobs it shouldn't?"
+    cognitive_lens: visual
     emphasizes: [SINGULARITY, DENSITY]
     can_veto: false
     prompt: >
@@ -210,6 +229,7 @@ personas:
     bias: Evidence
     weight: 0.05
     question: "Which Nielsen heuristic is violated most severely here?"
+    cognitive_lens: a11y_ux
     emphasizes: [ROBUSTNESS, ABSTRACTION]
     can_veto: false
     prompt: >
