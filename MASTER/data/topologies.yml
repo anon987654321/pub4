@@ -1,0 +1,106 @@
+# Canonical topologies for the Pixel Field. Each topology names a renderable
+# semantic shape — face, codebase, ecology, attention. The registry consumes
+# this file at boot; particle_kernel.js renders cells per topology rules.
+
+canonical_events:
+  - master:emotion    # arousal, valence, focus, confidence, fatigue
+  - master:clusters   # repository clusters with weight + evidence
+  - master:topology   # topology switch
+  - master:runtime    # runtime pressure, throughput, drift
+  - master:attention  # zoom/map/act/targets from attention_context
+  - master:pressure   # codebase + memory pressure heatmap
+  - master:tooling    # tool dispatch + blast radius
+
+palettes:
+  operator: { bg: "#000000", fg: "#ffffff", accent: "#ff3344" }
+  review:   { bg: "#0a0a0a", fg: "#cccccc", accent: "#3366ff" }
+  visitor:  { bg: "#111111", fg: "#999999", accent: "#666666" }
+
+runtime_modes:
+  operator: { palette: operator, motion: 1.0, density: 1.0, topology_exposure: full }
+  review:   { palette: review,   motion: 0.5, density: 0.8, topology_exposure: high }
+  visitor:  { palette: visitor,  motion: 0.3, density: 0.4, topology_exposure: low }
+
+resolutions:
+  small:  { w: 320, h: 180 }
+  medium: { w: 480, h: 270 }
+  large:  { w: 640, h: 360 }
+
+cell_grammar:
+  single_pixel: signal
+  block_2x2:    stable_entity
+  checker:      uncertainty
+  solid_rect:   confidence
+  split:        disagreement
+  jagged_edge:  risk
+  marching:     data_flow
+  fading:       memory_decay
+  pulsation:    active_attention
+  static_tile:  persistence
+  spray:        entropy
+  collapsing:   failure
+  converging:   consensus
+
+emotional_mapping:
+  confidence: solidity
+  uncertainty: dithering
+  pressure: density
+  focus: convergence
+  overload: fragmentation
+  agreement: synchronization
+  risk: instability
+  memory: persistence
+  volatility: flicker
+  recovery: gradual_recomposition
+
+topologies:
+  - id: face
+    label: Cognition Mask
+    purpose: Symbolic cognition surface — brows, eyes, mouth, attention vectors, asymmetry, confidence zones
+    renderer: face.js
+    anchors: [brow_left, brow_right, eye_left, eye_right, mouth, jaw, crown]
+    zones:   [eyes, mouth, brows, jaw, crown, attention_vector]
+    transitions: [thinking, speaking, listening, escalating, settling, error]
+    palette: operator
+    cell_rules:
+      eyes:   { kind: focus,      density: 0.7, decay: slow }
+      mouth:  { kind: speech,     density: 0.5, decay: fast }
+      brows:  { kind: tension,    density: 0.3, decay: medium }
+      crown:  { kind: memory,     density: 0.4, decay: slow }
+    attention_behavior: track_user_cursor
+
+  - id: codebase
+    label: Repository Body
+    purpose: Modules as clusters, dependencies as bridges, fractures as risk, density as ownership
+    renderer: codebase.js
+    anchors: [module_centroids]
+    zones:   [districts, vectors, bridges, fractures, field_density]
+    transitions: [scanning, fixing, converged, drifting]
+    palette: operator
+    cell_rules:
+      district: { kind: module,     density: 0.6, decay: slow }
+      bridge:   { kind: dependency, density: 0.4, decay: medium }
+      fracture: { kind: violation,  density: 0.9, decay: fast }
+    attention_behavior: focus_on_active_file
+
+  - id: ecology
+    label: Runtime Ecosystem
+    purpose: Memory, pressure, tools, councils, fix loops, risk, drift as habitat
+    renderer: cognition_ecology.js
+    anchors: [habitat_centers]
+    zones:   [habitats, flows, clusters, storms, dead_zones, growth]
+    transitions: [calm, storming, draining, regenerating]
+    palette: review
+    cell_rules:
+      habitat:   { kind: memory,    density: 0.5, decay: slow }
+      storm:     { kind: pressure,  density: 0.8, decay: fast }
+      flow:      { kind: tool_call, density: 0.4, decay: medium }
+      dead_zone: { kind: decay,     density: 0.2, decay: very_slow }
+    attention_behavior: drift_with_runtime_pressure
+
+  - id: face3d
+    label: Semantic Bitmap Face
+    purpose: Anatomical regions as runtime signals — Gmail6 redesign
+    renderer: face3d_renderer.js
+    status: planned
+    palette: operator

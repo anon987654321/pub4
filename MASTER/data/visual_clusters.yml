@@ -137,6 +137,47 @@ clusters:
       - Feed similarity, reference, and dead-zone clusters into codebase topology.
       - Keep every proposal reversible, scoped, and audited.
 
+  - id: pixel_field
+    name: Pixel Field Kernel
+    status: live
+    layer: render_kernel
+    files:
+      - web/public/particle_kernel.js
+      - web/public/topology_registry.js
+      - data/topologies.yml
+    signals:
+      - master:emotion
+      - master:clusters
+      - master:topology
+      - master:runtime
+      - master:attention
+      - master:pressure
+      - master:tooling
+    purpose: >
+      Typed-array cell pool, fixed-timestep update, bitmap rendering primitives
+      (integer scaling, hard edges, palette discipline, Bayer dithering).
+      Renders semantic cells, not decorative particles. Face/codebase/ecology
+      will migrate onto the kernel one at a time.
+    migration:
+      - Port face.js mouth + brow loops onto ParticleKernel.createPool.
+      - Port codebase.js module clusters onto kernel cells.
+      - Port cognition_ecology.js habitats onto kernel cells.
+      - Switch all canvases to internal 320x180/480x270/640x360 with integer upscale.
+
+  - id: topology_registry
+    name: Topology Registry
+    status: live
+    layer: render_kernel
+    files:
+      - web/public/topology_registry.js
+      - data/topologies.yml
+    signals:
+      - master:topology
+    purpose: >
+      Canonical naming for face, codebase, ecology, face3d topologies and the
+      master:* event bus. Renderers ask the registry which topology owns an
+      event; document.dataset.masterTopology mirrors active topology.
+
 new_clusters:
   - id: cluster_miner
     name: Cluster Miner
@@ -178,18 +219,6 @@ new_clusters:
       - focus
       - confidence
       - fatigue
-
-  - id: topology_registry
-    name: Topology Registry
-    status: proposed
-    purpose: >
-      Names all visual topologies in one place: papua-mask, serpent, neural,
-      torus, sphere, codebase, and future terrain/body forms.
-    outputs:
-      - topology_id
-      - renderer
-      - preferred_palette
-      - compatible_events
 
   - id: migration_radar
     name: Migration Radar
