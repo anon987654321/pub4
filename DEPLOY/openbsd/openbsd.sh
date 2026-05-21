@@ -410,6 +410,19 @@ configure_relayd() {
   log INFO "relayd live — TLS+SNI on :443"
 }
 
+configure_dev_ssh() {
+  typeset cfg=/home/dev/.ssh/config
+  install -d -o dev -g dev -m 700 /home/dev/.ssh
+  [[ -f $cfg ]] || install -o dev -g dev -m 600 /dev/null "$cfg"
+  typeset existing="$(<$cfg)"
+  if [[ $existing != *"Host github.com"* ]]; then
+    print -r -- $'\nHost github.com\n  IdentityFile ~/.ssh/id_ed25519_brgen\n  IdentitiesOnly yes' >>"$cfg"
+    chown dev:dev "$cfg"
+    chmod 600 "$cfg"
+    log INFO "dev ssh: github.com block installed"
+  fi
+}
+
 stage_2() {
   log INFO "Stage 2: services and apps"
 
@@ -453,6 +466,8 @@ stage_2() {
     /usr/sbin/rcctl enable $svc_name
     /usr/sbin/rcctl start $svc_name || log WARN "$svc_name start failed (may need manual start)"
   done
+
+  configure_dev_ssh
 
   log INFO "Deploying MASTER web UI"
   typeset m3dir="/home/dev/pub4/MASTER"
