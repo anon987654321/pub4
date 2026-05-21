@@ -48,7 +48,7 @@
     state.provider = detail.provider || state.provider;
     state.active = !/complete|idle|done/.test(name);
 
-    const canonical = window.MASTERTopology?.classifyEvent(name);
+    const canonical = window.MASTERTopology?.topologyForEvent?.(name);
     const visual = {
       name,
       topology: state.topology,

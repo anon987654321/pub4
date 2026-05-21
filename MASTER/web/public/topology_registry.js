@@ -16,6 +16,21 @@
     "master:tooling"
   ];
 
+  const EVENT_CLASSIFIER = [
+    [/llm:escalation|fallback|retry/i,         { topology: "ecology",  entropy: 0.62, confidence: 0.46, mode: "escalation" }],
+    [/llm:request|agent:start|pipeline:start/i, { topology: "face",    entropy: 0.32, confidence: 0.72, mode: "thinking" }],
+    [/memory|retriev|context|compact/i,         { topology: "ecology", entropy: 0.28, confidence: 0.76, mode: "memory" }],
+    [/tool|scan|sweep|audit/i,                  { topology: "ecology", entropy: 0.38, confidence: 0.70, mode: "tool" }],
+    [/error|rollback|failed|failure/i,          { topology: "ecology", entropy: 0.78, confidence: 0.24, mode: "error" }],
+    [/done|complete|success|response/i,         { topology: "face",    entropy: 0.14, confidence: 0.92, mode: "complete" }],
+    [/codebase:topology|fix_loop:pass/i,        { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
+    [/rule_loop:cycle|rule_loop:clean/i,        { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
+    [/fix_loop:idle/i,                          { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
+    [/rule_loop:converged/i,                    { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
+  ];
+
+  const PROVIDER_DETECT = /claude|deepseek|gemini|gpt|openai|openrouter|mistral/i;
+
   const TOPOLOGIES = {
     face: {
       id: "face",
@@ -69,12 +84,17 @@
     large:  { w: 640, h: 360 }
   };
 
-  function classifyEvent(name) {
-    for (const id in TOPOLOGIES) {
-      const topology = TOPOLOGIES[id];
-      if (topology.events.some(pattern => name.includes(pattern))) return id;
-    }
-    return "face";
+  function classifyEvent(name, payload) {
+    const text = payload ? `${name} ${JSON.stringify(payload)}` : name;
+    const matched = EVENT_CLASSIFIER.find(([pattern]) => pattern.test(text));
+    const mapped = matched ? { ...matched[1] } : { topology: "face", entropy: 0.24, confidence: 0.68, mode: "event" };
+    const provider = text.match(PROVIDER_DETECT)?.[0]?.toLowerCase();
+    if (provider) mapped.provider = provider;
+    return mapped;
+  }
+
+  function topologyForEvent(name) {
+    return classifyEvent(name).topology;
   }
 
   function topology(id) {
@@ -95,11 +115,13 @@
 
   window.MASTERTopology = {
     CANONICAL_EVENTS,
+    EVENT_CLASSIFIER,
     TOPOLOGIES,
     PALETTES,
     RUNTIME_MODES,
     RESOLUTIONS,
     classifyEvent,
+    topologyForEvent,
     topology,
     palette,
     runtimeMode,

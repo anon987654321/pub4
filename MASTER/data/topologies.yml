@@ -2,6 +2,20 @@
 # semantic shape — face, codebase, ecology, attention. The registry consumes
 # this file at boot; particle_kernel.js renders cells per topology rules.
 
+event_classifier:
+  - { pattern: "llm:escalation|fallback|retry",         topology: ecology,  entropy: 0.62, confidence: 0.46, mode: escalation }
+  - { pattern: "llm:request|agent:start|pipeline:start", topology: face,    entropy: 0.32, confidence: 0.72, mode: thinking }
+  - { pattern: "memory|retriev|context|compact",         topology: ecology, entropy: 0.28, confidence: 0.76, mode: memory }
+  - { pattern: "tool|scan|sweep|audit",                  topology: ecology, entropy: 0.38, confidence: 0.70, mode: tool }
+  - { pattern: "error|rollback|failed|failure",          topology: ecology, entropy: 0.78, confidence: 0.24, mode: error }
+  - { pattern: "done|complete|success|response",         topology: face,    entropy: 0.14, confidence: 0.92, mode: complete }
+  - { pattern: "codebase:topology|fix_loop:pass",        topology: codebase, entropy: 0.28, confidence: 0.78, mode: codebase }
+  - { pattern: "rule_loop:cycle|rule_loop:clean",        topology: codebase, entropy: 0.45, confidence: 0.62, mode: fixing }
+  - { pattern: "fix_loop:idle",                          topology: codebase, entropy: 0.10, confidence: 0.95, mode: settled }
+  - { pattern: "rule_loop:converged",                    topology: codebase, entropy: 0.20, confidence: 0.82, mode: converged }
+
+provider_detect: "claude|deepseek|gemini|gpt|openai|openrouter|mistral"
+
 canonical_events:
   - master:emotion    # arousal, valence, focus, confidence, fatigue
   - master:clusters   # repository clusters with weight + evidence
