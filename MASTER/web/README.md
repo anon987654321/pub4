@@ -7,7 +7,7 @@ Rails 8 + Falcon server. Internal port 53187; relayd proxies to ai.brgen.no:4430
 | Route | Description |
 |---|---|
 | `GET /` | Chat interface |
-| `POST /chat/message` | SSE streaming response |
+| `GET /chat/message` | SSE streaming response |
 | `POST /chat/tts` | TTS synthesis |
 | `POST /chat/speak` | Speak text |
 | `GET /chat/metrics` | Session metrics |
