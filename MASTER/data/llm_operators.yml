@@ -127,7 +127,7 @@ operators:
       - Tool use and function calling reliability — most consistent structured output
       - bio tool persists key facts across sessions (but not code state)
       - canmore/canvas for iterative document and code editing
-      - Agent mode: "go as far as you can without checking in" — useful for long agentic tasks
+      - 'Agent mode: "go as far as you can without checking in" — useful for long agentic tasks'
     traps:
       - Confidently wrong on OpenBSD-specific details — always verify
       - Adds excessive prose; prepend "respond in code only, no prose" to suppress
@@ -262,8 +262,8 @@ operators:
       - "Gemini API uses stateless python tool_code blocks — execution state does NOT
         persist between blocks. Variables from one block are gone in the next.
         Adapt injection template: each tool_code block must be self-contained."
-      - Personalization gating: 3-step check before using user data; may refuse
-        to make inferences about the user even when benign
+      - "Personalization gating: 3-step check before using user data; may refuse
+        to make inferences about the user even when benign"
       - Leaked system prompt is ~80% of actual instruction set; search result
         formatting and UX wording live in undocumented backend instructions
     context_format: |

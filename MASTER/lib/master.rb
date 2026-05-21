@@ -63,6 +63,7 @@ module Master
   %w[
     now/cli/signals.rb
     now/cli/command_ops.rb
+    now/cli/thinking_indicator.rb
     now/command_registry/memory_commands.rb
     now/command_registry/work_commands.rb
     now/command_registry/system_commands.rb
@@ -111,6 +112,24 @@ module Master
     default
   end
 
+  # Strict re-parse of every data/*.yml — silent swallow in load_yaml hides
+  # corruption from sweep/LLM rewrites. Boot must surface failures, not mask them.
+  def self.validate_data!(root: ROOT, bus: nil)
+    errors = {}
+    Dir.glob(File.join(root, "data", "**/*.yml")).sort.each do |path|
+      YAML.safe_load_file(path, aliases: true)
+    rescue Psych::Exception => e
+      errors[path.sub("#{root}/", "")] = e.message.lines.first.to_s.strip
+    end
+    return errors if errors.empty?
+
+    errors.each do |rel, msg|
+      warn("yaml_validation: #{rel}: #{msg}")
+      bus&.publish("data:yaml_parse_error", path: rel, error: msg)
+    end
+    errors
+  end
+
   # Loads rules.yml meta + merges split data/rules/*.yml into ["rules"] key.
   def self.load_rules(root: ROOT)
     data_dir = File.join(root, "data")
@@ -129,6 +148,7 @@ module Master
   def self.bootstrap_container(root: Dir.pwd)
     Trace::Telemetry.bootstrap!(root: root)
     container = Builder.build(root:)
+    validate_data!(root: root, bus: container[:bus])
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
     Thread.new do
