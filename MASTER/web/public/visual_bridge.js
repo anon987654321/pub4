@@ -48,9 +48,11 @@
     state.provider = detail.provider || state.provider;
     state.active = !/complete|idle|done/.test(name);
 
+    const canonical = window.MASTERTopology?.classifyEvent(name);
     const visual = {
       name,
       topology: state.topology,
+      canonical_topology: canonical,
       entropy: state.entropy,
       confidence: state.confidence,
       provider: state.provider,
@@ -59,6 +61,10 @@
     };
 
     window.dispatchEvent(new CustomEvent("master:visual", { detail: visual }));
+    if (canonical && canonical !== state.canonicalTopology) {
+      state.canonicalTopology = canonical;
+      window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: canonical, source: name } }));
+    }
 
     if (window.MASTERMask && typeof window.MASTERMask.event === "function") {
       window.MASTERMask.event(name, visual);
@@ -73,7 +79,7 @@
 
   function reflectToDom(visual) {
     document.documentElement.dataset.masterMode = visual.mode;
-    document.documentElement.dataset.masterTopology = visual.topology;
+    document.documentElement.dataset.masterTopology = visual.canonical_topology || visual.topology;
     document.documentElement.style.setProperty("--master-entropy", String(visual.entropy));
     document.documentElement.style.setProperty("--master-confidence", String(visual.confidence));
 
