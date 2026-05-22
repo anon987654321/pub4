@@ -16,7 +16,7 @@ module Master
       'web_public_url' => 'https://ai.brgen.no',
       'web_port' => DEFAULT_WEB_PORT,
       'budget_max' => BUDGET_MAX_DEFAULT,
-      'req_max' => 1.0,
+      'req_max' => 60.0,
       'trace' => 0,
       'prescan' => true,
       'auto' => false,
