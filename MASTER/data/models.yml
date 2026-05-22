@@ -180,6 +180,7 @@ models:
     - *gemini_flash
     - *command_r_plus
   cheap:
+    - *nemotron_super
     - *gemini_flash
     - *mistral_small
     - *llama_70b
