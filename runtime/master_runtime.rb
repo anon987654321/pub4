@@ -42,7 +42,7 @@ module MASTER
       raise ConstitutionViolation, missing.join(",") unless missing.empty?
 
       REQUIRED.each do |field|
-        instance_variable_set(":@#{field}", attrs[field])
+        instance_variable_set("@#{field}", attrs[field])
       end
     end
 
