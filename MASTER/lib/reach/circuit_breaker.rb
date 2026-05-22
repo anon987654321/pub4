@@ -68,7 +68,7 @@ module Master
     rescue StandardError => e
       on_failure
       msg = e.message.to_s
-      msg = "no API key — set ANTHROPIC_API_KEY (or OPENROUTER_API_KEY) in env" if msg.match?(/missing configuration/i)
+      return Result.err(Master.no_api_key_message, category: :no_api_key) if msg.match?(/missing configuration/i) || !Master.any_api_key_present?
       Result.err(msg, category: :provider_error)
     end
 
