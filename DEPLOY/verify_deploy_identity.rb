@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Verifies low-level DEPLOY identity hygiene without requiring app dependencies.
 # Run from the repository root:

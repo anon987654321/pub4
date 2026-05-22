@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 # Mirror live VPS config into snapshot/ with secret redaction.
 # Run on VPS: doas ruby ~/pub4/DEPLOY/openbsd/snapshot/sync.rb
 

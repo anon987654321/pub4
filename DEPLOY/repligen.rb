@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 # Repligen - Replicate.com AI Generation CLI
 # Version: 5.0.0 - Consolidated (zero sprawl per master.json)
 #
@@ -328,7 +329,7 @@ class ChainBuilder
         total_cost += model.cost
         puts "  ✓ $#{model.cost.round(3)}"
         sleep 1 # Rate limit
-      rescue => e
+      rescue StandardError => e
         puts "  ✗ #{e.message}"
         puts "  → Continuing with previous output"
       end

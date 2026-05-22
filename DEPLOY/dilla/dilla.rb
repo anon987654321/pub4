@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 require "fileutils"
 require "json"
@@ -656,7 +657,7 @@ def dilla_kick_expr(duration, drunk)
     "0.72*sin(2*PI*(46+88*exp(-#{t_mod.inspect}*20))*#{t_mod.inspect})*exp(-#{t_mod.inspect}*10)"
   end
   "(#{parts.join('+')})"
-rescue
+rescue StandardError
   "0.72*sin(2*PI*(46+88*exp(-mod(t,#{(beat_seconds * 2.0).round(6)})*18))*t)*exp(-mod(t,#{(beat_seconds * 2.0).round(6)})*9)"
 end
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 #
 # J Dilla — MPC-style hip-hop beat synthesized from primitives.
 # 86 BPM × 8 bars. Off-grid kicks, snare drag, hat swing, vinyl crackle.

@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# frozen_string_literal: true
 
 # Postpro.rb - Professional Cinematic Post-Processing
 # Version: 16.0.0 - Full Analog Science
@@ -43,7 +44,7 @@ module PostproBootstrap
         probe_and_install_libvips
         false
       end
-    rescue => e
+    rescue StandardError => e
       dmesg "WARN ruby-vips unavailable: #{e.message}"
       false
     end
@@ -63,7 +64,7 @@ module PostproBootstrap
         dmesg "WARN tty-prompt install failed, degraded prompt experience"
         false
       end
-    rescue => e
+    rescue StandardError => e
       dmesg "WARN tty-prompt unavailable: #{e.message}"
       false
     end
@@ -142,7 +143,7 @@ module PostproBootstrap
         if vendor && data["profiles"]
           profiles[vendor] = data["profiles"]
         end
-      rescue => e
+      rescue StandardError => e
         dmesg "WARN failed to load profile #{File.basename(file)}: #{e.message}"
       end
     end
@@ -160,7 +161,7 @@ module PostproBootstrap
       config = master.dig("config", "multimedia", "postpro") || {}
       dmesg "OK loaded defaults from master.json"
       config
-    rescue => e
+    rescue StandardError => e
       dmesg "WARN failed to parse master.json: #{e.message}"
       {}
     end
@@ -540,7 +541,7 @@ def get_camera_profile(image)
     end
     
     nil
-  rescue => e
+  rescue StandardError => e
     $logger.debug "EXIF read failed: #{e.message}"
     nil
   end
@@ -578,7 +579,7 @@ def apply_camera_profile(image, profile)
     end
     
     safe_cast(result)
-  rescue => e
+  rescue StandardError => e
     $logger.error "Camera profile failed: #{e.message}"
     image
   end
@@ -1619,7 +1620,7 @@ def run_watch
         processed = rgb_bands(processed)
         processed.write_to_file(out, Q: CONFIG["jpeg_quality"] || 95)
         $cli_logger.info "ok preset=#{preset_name} out=#{out}"
-      rescue => e
+      rescue StandardError => e
         $cli_logger.error "watch error: #{e.message}"
       end
     end

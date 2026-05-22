@@ -136,7 +136,7 @@ class WardrobeAiService
   rescue JSON::ParserError => e
     Rails.logger.warn("WardrobeAI invalid JSON: #{e.message}")
     fallback_response(prompt)
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("WardrobeAI error: #{e.class}: #{e.message}")
     fallback_response(prompt)
   end

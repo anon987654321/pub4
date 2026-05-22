@@ -17,7 +17,7 @@ class WeatherService
       wind:        current["windspeed_10m"].to_f,
       description: decode_weather(current["weathercode"].to_i)
     }
-  rescue => e
+  rescue StandardError => e
     Rails.logger.warn("WeatherService: #{e.message}")
     nil
   end
