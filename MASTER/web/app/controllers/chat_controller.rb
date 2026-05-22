@@ -135,7 +135,7 @@ class ChatController < ApplicationController
                  val = result.value
                  val.is_a?(Hash) && val[:rendered] ? val[:rendered] : val.to_s
                when Master::Result::Err
-                 "ERROR: #{result.message}"
+                 result.category == :no_api_key ? result.message : "ERROR: #{result.message}"
                end
         unless text.to_s.strip.empty?
           encoded = text.to_s.gsub("\\", "\\\\").gsub("\n", "\\n")

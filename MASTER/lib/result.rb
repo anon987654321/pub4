@@ -8,6 +8,7 @@ module Master
       provider_error: "upstream model / network failure",
       llm_failure: "LLM returned unusable output",
       llm_call_failure: "LLM dispatch exception (network / SDK)",
+      no_api_key: "no LLM API key configured in env",
       infrastructure: "system / disk / git error",
       handler_exception: "unexpected error during handler execution",
       timeout: "operation exceeded deadline",
