@@ -183,6 +183,21 @@ required: true
         end
       end
 
+      class MemoryRecord < RubyLLM::Tool
+        description "Write a durable markdown memory record (user facts, feedback, project context, or external references)."
+        param :key,         desc: "Snake-case identifier, e.g. user_role or feedback_no_python", required: true
+        param :description, desc: "One-line hook surfaced in the memory index", required: true
+        param :body,        desc: "Full memory body (markdown)", required: true
+        param :type,        desc: "One of: user, feedback, project, reference, general", required: false
+
+        def initialize(tool) = @tool = tool
+
+        def execute(key:, description:, body:, type: "general")
+          result = @tool.call(key: key.to_s, description: description.to_s, body: body.to_s, type: type.to_s)
+          result.ok? ? result.value! : "Error: #{result.message}"
+        end
+      end
+
       class Postpro < RubyLLM::Tool
         description "Apply cinematic post-processing (film stocks, presets, recipes) to images " \
           "via ruby-vips. Writes processed copies next to originals."

@@ -28,7 +28,8 @@ module Master
         Reach::GitContext => Reach::LLM::GitContext,
         Reach::AstEdit => Reach::LLM::AstEdit,
         Reach::SearchKnowledge => Reach::LLM::SearchKnowledge,
-        Reach::FeedbackRecord => Reach::LLM::FeedbackRecord
+        Reach::FeedbackRecord => Reach::LLM::FeedbackRecord,
+        Reach::MemoryRecord => Reach::LLM::MemoryRecord
       }.freeze
 
       def self.build_tool_capable_re
@@ -58,9 +59,17 @@ module Master
       rescue Reach::CircuitBreaker::CircuitError => err
         Result.err(err.message, category: err.category)
       rescue StandardError => err
+        return Result.err(Master.no_api_key_message, category: :no_api_key) if missing_key_error?(err)
+        Result.err(err.message.to_s, category: :llm_call_failure)
+      end
+
+      def missing_key_error?(err)
         msg = err.message.to_s
-        msg = "no API key — set ANTHROPIC_API_KEY (or OPENROUTER_API_KEY) in env" if msg.match?(/missing configuration/i)
-        Result.err(msg, category: :llm_call_failure)
+        msg.match?(/missing configuration/i) ||
+          msg.match?(/api[_\- ]?key/i) ||
+          msg.match?(/unauthorized/i) ||
+          msg.match?(/401/) ||
+          !Master.any_api_key_present?
       end
 
       def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")

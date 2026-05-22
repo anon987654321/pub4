@@ -27,7 +27,8 @@ module Master
       "WebFetch"        => ->(r, i) { Reach::WebFetch.new(governor: i[:governor], event_bus: i[:bus]) },
       "WebSearch"       => ->(r, i) { Reach::WebSearch.new(governor: i[:governor], event_bus: i[:bus]) },
       "Clean"           => ->(r, i) { Reach::Clean.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
-      "FeedbackRecord"  => ->(r, i) { Reach::FeedbackRecord.new(learnings: i[:learnings]) }
+      "FeedbackRecord"  => ->(r, i) { Reach::FeedbackRecord.new(learnings: i[:learnings]) },
+      "MemoryRecord"    => ->(r, i) { Reach::MemoryRecord.new(memory: i[:memory], root: r, event_bus: i[:bus]) }
     }.freeze
 
     module_function
