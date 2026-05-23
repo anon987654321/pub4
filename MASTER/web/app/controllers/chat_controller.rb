@@ -3,7 +3,7 @@
 require "open3"
 
 class ChatController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:message, :tts, :speak, :enhance]
+  skip_before_action :verify_authenticity_token, only: [:message, :enhance]
 
   def index
     @model = container[:agent].model.to_s.split("/").last
@@ -115,9 +115,6 @@ class ChatController < ApplicationController
         ctx[:image] = { data: img[:data].to_s, mime: img[:mime].to_s, name: img[:name].to_s }
       end
 
-      # P2: ack backchannel for long messages — bridges silence while LLM thinks.
-      container[:bus].publish("speak:backchannel", reason: "user_long_input") if input.length >= 120
-
       mutated_flag    = false
       mutated_paths   = []
       mutate_sub = container[:bus].subscribe("tool:after") do |ev|
@@ -183,34 +180,6 @@ class ChatController < ApplicationController
       end
       sse.close
     end
-  end
-
-  def speak
-    text = params[:text].to_s.strip
-    return head(:bad_request) if text.empty?
-    container[:bus].publish("speak:text", { text: text })
-    head :ok
-  end
-
-  def tts
-    text = params[:text].to_s.strip
-    return head(:bad_request) if text.empty?
-
-    voice = params[:voice].to_s.downcase.to_sym
-    style = params[:style].to_s.downcase.to_sym
-    voice = Master::Voice::Speech::DEFAULT_VOICE unless Master::Voice::Speech::VOICES.key?(voice)
-    # :auto opts in to per-clause infer_style. Otherwise enforce whitelist.
-    style = Master::Voice::Speech::DEFAULT_STYLE if style != :auto && !Master::Voice::Speech::STYLES.key?(style)
-
-    audio = Master::Voice::Speech.synthesize_audio(text, voice: voice, style: style)
-    if audio&.bytes && audio.bytes.bytesize.positive?
-      send_data audio.bytes, type: audio.mime_type, disposition: "inline"
-    else
-      head :service_unavailable
-    end
-  rescue StandardError => e
-    logger.error "TTS failed: #{e.message}"
-    head :service_unavailable
   end
 
   private
