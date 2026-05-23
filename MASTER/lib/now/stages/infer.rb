@@ -8,14 +8,6 @@ module Master
       # Heuristic task-type detection — used by ModelRouter for tiered model selection.
       PRESSURE_PATTERN = /\b(?:urgent|asap|immediately|critical|now|hurry|fast|quick(?:ly)?|emergency|sos)\b/i.freeze
 
-      VAGUE_STUBS = Regexp.new(
-        '\A(?:help(?:\s+me)?|hmm+|idk|ugh|ok+|yeah|yep|nope?|hi+|hey|hello|' \
-        'good\s+\w+|test(?:ing)?|please)\z', Regexp::IGNORECASE
-      ).freeze
-
-      GREETING_STUBS = /\A(?:hi+|hey|hello|good\s+\w+)\z/i.freeze
-      ELICIT_DEFAULT = "be specific: which file or function, and what should change?".freeze
-
       TASK_TYPE_PATTERNS = {
         architecture: Regexp.new(
           '\b(?:restructur|reorganiz|hierarch|layout|folder|director|module\s+boundar|' \
@@ -54,15 +46,6 @@ module Master
           end
         end
 
-        if vague?(msg)
-          if msg.match?(GREETING_STUBS)
-            return Result.ok(ctx.merge(
-              intent: :clarify, clarifying_question: "ready. what are you working on? (try /help)"
-            ))
-          end
-          return Result.ok(ctx.merge(intent: :clarify, clarifying_question: ELICIT_DEFAULT))
-        end
-
         pressure = msg.match?(PRESSURE_PATTERN)
         Result.ok(ctx.merge(task_type: infer_task_type(msg), pressure: pressure || ctx[:pressure]))
       end
@@ -81,8 +64,6 @@ module Master
         Master::Ground::Swallow.log(e, context: "infer.load_patterns")
         {}
       end
-
-      def vague?(msg) = msg.match?(VAGUE_STUBS)
 
       def infer_task_type(msg)
         TASK_TYPE_PATTERNS.each { |type, pat| return type if msg.match?(pat) }

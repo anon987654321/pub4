@@ -19,7 +19,6 @@ module Master
         case ctx[:intent]
         when :command  then route_command(ctx)
         when :llm      then Result.ok(ctx.merge(handler: @agent))
-        when :clarify  then Result.ok(ctx.merge(handler: ->(_c) { ctx[:clarifying_question] }))
         else                Result.err("route: unknown intent #{ctx[:intent].inspect}", category: :validation)
         end
       end
