@@ -3,7 +3,8 @@
 require "open3"
 
 class ChatController < ApplicationController
-  # GET routes need no skip; Rails enforces CSRF on non-GET only.
+  # CSRF guarded by SameSite=Strict session cookie set in AuthTier.
+  skip_before_action :verify_authenticity_token, only: :command
 
   def index
     @model = container[:agent].model.to_s.split("/").last

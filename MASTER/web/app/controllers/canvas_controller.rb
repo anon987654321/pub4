@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class CanvasController < ApplicationController
+  # CSRF guarded by SameSite=Strict session cookie set in AuthTier.
+  skip_before_action :verify_authenticity_token
+
   ALLOWED_TOPICS = %w[
     canvas:mood canvas:mode canvas:gesture canvas:idle canvas:tilt
     canvas:palette canvas:energy canvas:breath
