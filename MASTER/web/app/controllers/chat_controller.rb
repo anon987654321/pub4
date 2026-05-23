@@ -3,7 +3,7 @@
 require "open3"
 
 class ChatController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:message, :enhance]
+  # GET routes need no skip; Rails enforces CSRF on non-GET only.
 
   def index
     @model = container[:agent].model.to_s.split("/").last

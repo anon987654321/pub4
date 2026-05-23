@@ -6,6 +6,11 @@ Rails.application.config.after_initialize do
   container = Master.bootstrap_container(root: Rails.root.join("..").to_s)
   Rails.application.config.x.master_container = container
 
+  # Tighten perms on secret/data files; ignore if absent.
+  Dir.glob(Rails.root.join("storage", "*.sqlite3")).each { |p| File.chmod(0o640, p) rescue nil }
+  secret = Rails.root.join("tmp", "local_secret.txt")
+  File.chmod(0o600, secret) if File.exist?(secret)
+
   Thread.new do
     sleep 300
     loop do

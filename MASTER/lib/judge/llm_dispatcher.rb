@@ -8,13 +8,19 @@ require "open3"
 module Master
   module Judge
     class LLMDispatcher
-      COST_PER_TOKEN   = 0.000_015
-      CACHE_WINDOW     = 4
-      REACT_MAX_STEPS  = 8
-      NEMOTRON3_RE     = /nemotron-3/i.freeze
+      COST_PER_TOKEN = 0.000_015
+      CACHE_WINDOW = 4
+      REACT_MAX_STEPS = 8
+      NEMOTRON3_RE = /nemotron-3/i.freeze
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
-      TOOL_CALL_RE     = /<tool_call>(.*?)<\/tool_call>/m.freeze
+      TOOL_CALL_RE = /<tool_call>(.*?)<\/tool_call>/m.freeze
       TOOL_RESULT_ROLE = "user"
+      KEY_PATTERNS = [
+        /sk-[A-Za-z0-9_\-]{16,}/,
+        /sk-ant-[A-Za-z0-9_\-]{16,}/,
+        /Bearer\s+[A-Za-z0-9_\-\.]{16,}/i,
+        /\b[A-Za-z0-9]{32,}\b/
+      ].freeze
 
       LLM_TOOL_MAP = {
         Reach::ReadFile => Reach::LLM::ReadFile,
@@ -57,10 +63,16 @@ module Master
           }
         }
       rescue Reach::CircuitBreaker::CircuitError => err
-        Result.err(err.message, category: err.category)
+        Result.err(redact_secrets(err.message), category: err.category)
       rescue StandardError => err
         return Result.err(Master.no_api_key_message, category: :no_api_key) if missing_key_error?(err)
-        Result.err(err.message.to_s, category: :llm_call_failure)
+        Result.err(redact_secrets(err.message.to_s), category: :llm_call_failure)
+      end
+
+      def redact_secrets(text)
+        out = text.to_s
+        KEY_PATTERNS.each { |re| out = out.gsub(re, "[REDACTED]") }
+        out
       end
 
       def missing_key_error?(err)

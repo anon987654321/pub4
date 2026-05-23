@@ -14,11 +14,11 @@ require "rack/utils"
 # leaves the URL after one hop. Query strings live in proxy logs, browser
 # history, and Referer headers; cookies do not.
 class AuthTier
-  PUBLIC_PATHS   = %w[/up /health /manifest.json /icon.png /icon.svg /sw.js /face.css /face.js].freeze
-  PUBLIC_PREFIX  = %w[/assets/].freeze
+  PUBLIC_PATHS = %w[/up /health /manifest.json /icon.png /icon.svg /sw.js /face.css /face.js].freeze
+  PUBLIC_PREFIX = %w[/assets/].freeze
   TOKEN_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".chars.freeze
-  TOKEN_LENGTH   = 16
-  COOKIE_NAME    = "master_session"
+  TOKEN_LENGTH = 16
+  COOKIE_NAME = "master_session"
   COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
   def initialize(app, config_path:)
@@ -74,9 +74,9 @@ class AuthTier
 
   def handshake_redirect(env, tok)
     [302,
-     { "Location"       => clean_url(env),
-       "Set-Cookie"     => build_cookie(env, tok),
-       "Cache-Control"  => "no-store",
+     { "Location" => clean_url(env),
+       "Set-Cookie" => build_cookie(env, tok),
+       "Cache-Control" => "no-store",
        "Content-Length" => "0" },
      []]
   end
@@ -139,10 +139,20 @@ class AuthTier
 
   def seed_token(cfg)
     require "securerandom"
-    tok = Array.new(TOKEN_LENGTH) { TOKEN_ALPHABET.sample(random: SecureRandom) }.join
-    cfg["web_token"] = tok
     FileUtils.mkdir_p(File.dirname(@config_path))
-    File.write(@config_path, cfg.to_yaml)
-    tok
+    lock_path = "#{@config_path}.lock"
+    File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
+      lock.flock(File::LOCK_EX)
+      existing = YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) rescue nil
+      if existing.is_a?(Hash) && existing["web_token"].to_s.length.positive?
+        return existing["web_token"]
+      end
+      tok = Array.new(TOKEN_LENGTH) { TOKEN_ALPHABET.sample(random: SecureRandom) }.join
+      cfg["web_token"] = tok
+      tmp = "#{@config_path}.tmp.#{Process.pid}"
+      File.open(tmp, File::WRONLY | File::CREAT | File::TRUNC, 0o600) { |f| f.write(cfg.to_yaml) }
+      File.rename(tmp, @config_path)
+      tok
+    end
   end
 end
