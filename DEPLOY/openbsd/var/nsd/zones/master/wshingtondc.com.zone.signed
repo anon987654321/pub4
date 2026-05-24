@@ -1,0 +1,44 @@
+wshingtondc.com.	3600	IN	SOA	ns.brgen.no. hostmaster.wshingtondc.com. 2026051819 1800 900 604800 86400
+wshingtondc.com.	3600	IN	RRSIG	SOA 13 2 3600 20260615170636 20260518170636 51068 wshingtondc.com. U1RCVUj30T/EzpWiU3/9ti6w2VDI9P9Wd+pSTChTeGKU73hXsKscHpTbPI5MG+VGV/OYXptRZdncmwLHBS8JnA==
+wshingtondc.com.	3600	IN	A	46.23.89.226
+wshingtondc.com.	3600	IN	RRSIG	A 13 2 3600 20260615170636 20260518170636 51068 wshingtondc.com. 8JscZVCuQ49DfjJpR7Cyws8/vAfo8BrUC4F/nMK3yBjiwOmsGqHsOWTb7GETVbVbtCXOQkjXLGvAaIUI/NowGw==
+wshingtondc.com.	3600	IN	NS	ns.hyp.net.
+wshingtondc.com.	3600	IN	NS	ns.brgen.no.
+wshingtondc.com.	3600	IN	RRSIG	NS 13 2 3600 20260615170636 20260518170636 51068 wshingtondc.com. lrxRgXYXPLJHUmR7OipfoklA5k9TZi0hO3IdKrnlDSLalxxAKmIgSIh26aap/Zbz94Bvv28ocPf6hmC+S7Pgwg==
+wshingtondc.com.	3600	IN	MX	10 mail.wshingtondc.com.
+wshingtondc.com.	3600	IN	RRSIG	MX 13 2 3600 20260615170636 20260518170636 51068 wshingtondc.com. c/k3dd8t5p1SmO6rI9PlikpaGyxcibKWjtvNqbAGq3BypFqgVl00loSi3ytxKiEQ3Dy5CUV3WeG1uJBOKXKLRQ==
+wshingtondc.com.	3600	IN	DNSKEY	256 3 13 oSDIhOx+2CUZLsJhnAWUyHWJApusAQ3iakaKuwRas8LSdTX9SCTrL8RvXbpCxNy2chUteMDyNyczTMIroBj++w== ;{id = 51068 (zsk), size = 256b}
+wshingtondc.com.	3600	IN	DNSKEY	257 3 13 NV2g/FDhV4M270uWou/Wn3rvXS6SAbvDdI9vehWj70jtoSN597Kt6l55BmfIHahC0/QTpEsZiRxy8cjs6ZrdXw== ;{id = 55387 (ksk), size = 256b}
+wshingtondc.com.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170636 20260518170636 55387 wshingtondc.com. uc9wTK33rhvbbGPfCmZBO3TCIogvM61jhhOb9OK8GRbNi+vuR/bdLUlETLHfqoBG1Rc1WBhCmOQFToPwNm7EPw==
+wshingtondc.com.	3600	IN	NSEC3PARAM	1 0 1 8afe6913e1db63bd783f4cdedf3f9038e61da771 
+wshingtondc.com.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170636 20260518170636 51068 wshingtondc.com. 8ORVV8wqq+doIaLQaPRUfMl1vGb6Kwqe0PqmqQYrBIlh147AAblp4Ioho72EsWZszLZVhCrQMWXREuij+KYoWQ==
+7fjfm51nl2e5opkd0jojb0jr8mh82b4f.wshingtondc.com.	3600	IN	NSEC3	1 1 1 8afe6913e1db63bd783f4cdedf3f9038e61da771  7r0fefno112s17581bkfgoikp3fsr9ig A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+7fjfm51nl2e5opkd0jojb0jr8mh82b4f.wshingtondc.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. 9IyYnlBmsUewpC8VlgEpRT4dEwF7hiU3HVPbtRutm9UiC9H3/FvJyBxIsHGrvdf+RZKf/wN4VsAR560z+sWpwQ==
+dating.wshingtondc.com.	3600	IN	A	46.23.89.226
+dating.wshingtondc.com.	3600	IN	RRSIG	A 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. phtFXGogTAJ4k9Arb4ZulP/JA98nbqAjUZn40UEakAgntsXqfLXdsN8Vv5yapkx30QT5r9sBdeCTSyw5HPvWlw==
+seqjli3f3mh6tf355uedfnkei0lu4590.wshingtondc.com.	3600	IN	NSEC3	1 1 1 8afe6913e1db63bd783f4cdedf3f9038e61da771  so6bdg8n6bhafg8n6ubs68vhr8ae7ntd A RRSIG 
+seqjli3f3mh6tf355uedfnkei0lu4590.wshingtondc.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. svOFfg4HvFbwdLyj44vcc88DEYqbVmQ+Plr/MzKiOISt9VBb+J7330SjCkssQ8KtybT4v2ogerw1PJoDRfFP4w==
+mail.wshingtondc.com.	3600	IN	A	46.23.89.226
+mail.wshingtondc.com.	3600	IN	RRSIG	A 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. l5Dd1dIWbtG5WLpoOfXjUQ39gExSm2RflnvqghyGZRJklMpdMGW3eZj2uLv6Nqha0vayTtmYs4BHSa5DNqwahA==
+qgi8q1o3juk9s60bjahm592d5ghe5024.wshingtondc.com.	3600	IN	NSEC3	1 1 1 8afe6913e1db63bd783f4cdedf3f9038e61da771  seqjli3f3mh6tf355uedfnkei0lu4590 A RRSIG 
+qgi8q1o3juk9s60bjahm592d5ghe5024.wshingtondc.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. nkWa6NxuoEN8p2bJWqM7ZGGDrk+BiNZZIYMNB+Zk0zZh8GNekNKfaJIPsspF1E8s3opEfNa4uwj/56OatVDv4g==
+maps.wshingtondc.com.	3600	IN	A	46.23.89.226
+maps.wshingtondc.com.	3600	IN	RRSIG	A 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. W9HD84rKQ9mkJWDHMr965uqzNoEUJMUc+CQa7cR6t/r61IWSNgJ/9b2uqxJmLFfXiIRVz9k1JTJw0+IBZ2LKhw==
+so6bdg8n6bhafg8n6ubs68vhr8ae7ntd.wshingtondc.com.	3600	IN	NSEC3	1 1 1 8afe6913e1db63bd783f4cdedf3f9038e61da771  7fjfm51nl2e5opkd0jojb0jr8mh82b4f A RRSIG 
+so6bdg8n6bhafg8n6ubs68vhr8ae7ntd.wshingtondc.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. e/vha+9APpQnGKWhA2a4nYYWdVR6HsZIZxAadx7EIUW1XkRYfVb5DOvUTG9b0gcTRS+LmyWi+VSc3xycnUmp2w==
+marketplace.wshingtondc.com.	3600	IN	A	46.23.89.226
+marketplace.wshingtondc.com.	3600	IN	RRSIG	A 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. 6T30OBghvojYYEuHk+lIVGHUn/+EITZ3SSZs4QnC9E4WE/mHGr53jCFBp2hRfky86Uy3b5On2AyzVuS1bRsxrg==
+ekio2r2sttptcfhsmt72q1mtsh1laq91.wshingtondc.com.	3600	IN	NSEC3	1 1 1 8afe6913e1db63bd783f4cdedf3f9038e61da771  h2rrslkeuac911csplvdte7p04kqs20o A RRSIG 
+ekio2r2sttptcfhsmt72q1mtsh1laq91.wshingtondc.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. WEbUaZNGpZZmMO8zs8EMVvQ/v1QVTkd24csXq7RsRAPBrm0R03lNfdWcmZgMvQ8gIRsHbEUisDeUFP1yfPyzQg==
+playlist.wshingtondc.com.	3600	IN	A	46.23.89.226
+playlist.wshingtondc.com.	3600	IN	RRSIG	A 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. JHSL8YvjpT20JrO+VwICOgTWj6V+H+CI6ulxT3fUmPd9Bc12y0eiLjHz+dZOImOrX/S0YIcPNDRu4a5W3351MA==
+h2rrslkeuac911csplvdte7p04kqs20o.wshingtondc.com.	3600	IN	NSEC3	1 1 1 8afe6913e1db63bd783f4cdedf3f9038e61da771  qgi8q1o3juk9s60bjahm592d5ghe5024 A RRSIG 
+h2rrslkeuac911csplvdte7p04kqs20o.wshingtondc.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. pBZAwMWIt9u9GAQaxY3zQTBVD5NA5YCX3OsjIoHVXSPTaDFBTKgV6+pogIi0b61OxklbT3xipDGFEyoGNi/Bpw==
+takeaway.wshingtondc.com.	3600	IN	A	46.23.89.226
+takeaway.wshingtondc.com.	3600	IN	RRSIG	A 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. HPkIS6ZtK2aY7CLk8tikcde85iwfhtbpYcJxf+Rv9hPBnhrsjYGwlOWY3qBD1yO3/ywkgMSeC5YeMybLcNUk6w==
+bpkifkid3t76qmc62sp4tf5dnlaiakik.wshingtondc.com.	3600	IN	NSEC3	1 1 1 8afe6913e1db63bd783f4cdedf3f9038e61da771  ekio2r2sttptcfhsmt72q1mtsh1laq91 A RRSIG 
+bpkifkid3t76qmc62sp4tf5dnlaiakik.wshingtondc.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. po+oUOXSxtDe+Fa0AfmqgvSNV1Bcbl1FCrj58Atsg7ABpcdO0klgYb+42WCOYPMhr9ZoJu5rpIF/bC28JvagFg==
+tv.wshingtondc.com.	3600	IN	A	46.23.89.226
+tv.wshingtondc.com.	3600	IN	RRSIG	A 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. 46pldoE4Sy/gWqmk87lvon2XTAcJOol3nLSdLY33C65AFTWS6MM2oITTeVctrxHjIgXwacv+5xcY1qAcu00Pnw==
+7r0fefno112s17581bkfgoikp3fsr9ig.wshingtondc.com.	3600	IN	NSEC3	1 1 1 8afe6913e1db63bd783f4cdedf3f9038e61da771  bpkifkid3t76qmc62sp4tf5dnlaiakik A RRSIG 
+7r0fefno112s17581bkfgoikp3fsr9ig.wshingtondc.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170636 20260518170636 51068 wshingtondc.com. DM39cVFbuQZf8dSmiRlv5bUy7qYPKyKxaGBadZgWRL5/hD6bha03c6IbIdziUhoBl6NWZ8ur2W3yylgAkWYFUA==

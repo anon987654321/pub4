@@ -1,0 +1,20 @@
+antigamblingblog.com.	3600	IN	SOA	ns.brgen.no. hostmaster.antigamblingblog.com. 2026051819 1800 900 604800 86400
+antigamblingblog.com.	3600	IN	RRSIG	SOA 13 2 3600 20260615170642 20260518170642 17539 antigamblingblog.com. /u8MXd5VpgIeSY+B/tKrucT6PlTAqhu1IPmEuvIRw3nX0n5X08KjfjQHRTEzkK2UypwdrTMiGSosh4qFjj5baQ==
+antigamblingblog.com.	3600	IN	A	46.23.89.226
+antigamblingblog.com.	3600	IN	RRSIG	A 13 2 3600 20260615170642 20260518170642 17539 antigamblingblog.com. SVsi2rYtV2owgaTWhTaQZGR1jhb9Nq3SkM64fcErxo+aOkIzR5ImC0WHiygpYq4Ote51FA0QioJ0aUWxNfoOGA==
+antigamblingblog.com.	3600	IN	NS	ns.hyp.net.
+antigamblingblog.com.	3600	IN	NS	ns.brgen.no.
+antigamblingblog.com.	3600	IN	RRSIG	NS 13 2 3600 20260615170642 20260518170642 17539 antigamblingblog.com. +oqlHG3czyzlyGZcaD4oZdaCSm1VFJxt+6/IE3hReimtoeWTMjyzeHXXrWUAfTT6gcoh5PAGSf1PSwEbu2Mm2g==
+antigamblingblog.com.	3600	IN	MX	10 mail.antigamblingblog.com.
+antigamblingblog.com.	3600	IN	RRSIG	MX 13 2 3600 20260615170642 20260518170642 17539 antigamblingblog.com. 8zmUSRcA+aE3I1cRVcupAo5kSUVBlQR8oHdmvHwwD2nzf8H5jS9G5ztUxmdnl01uCv+Uyc7Min3tTdzqYwsRow==
+antigamblingblog.com.	3600	IN	DNSKEY	256 3 13 VhF8XJhZK3KAw225ldmIi0hNP2hZHYeEGFcu3hiY94UYmACuXdiGOn/1rec9NTsKhb1nrhLPr4/AK2c+ZfP9EQ== ;{id = 17539 (zsk), size = 256b}
+antigamblingblog.com.	3600	IN	DNSKEY	257 3 13 q6CTwQ8uhJ1MjSZ+LgShevQWHwTbMlQrAVcVvDrgkzSe40YlPeXa+q3JHZcZ0GUBIcWv99A4joRLIzXdww3kLQ== ;{id = 57912 (ksk), size = 256b}
+antigamblingblog.com.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170642 20260518170642 57912 antigamblingblog.com. P8szfcX9K1QiUotvjdJXj9pW1anznRlczZsu93oGxk3wBxbY5QGEDHPjpO8mmjz9elsQ/osytPLsoSFtLyY77g==
+antigamblingblog.com.	3600	IN	NSEC3PARAM	1 0 1 30e243afe3b29f49a40d1f4005a66c137d5b4b0f 
+antigamblingblog.com.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170642 20260518170642 17539 antigamblingblog.com. FEl4FE1WLzXmwXszPMA+RZBMI5K7xSy9DjCmH5+ICKwzXHprBi1HCIK/uVjGkwEjpJiUFWHocEkdIvKMll78Tg==
+kje75tb52r14k1u3siekff1htan5knss.antigamblingblog.com.	3600	IN	NSEC3	1 1 1 30e243afe3b29f49a40d1f4005a66c137d5b4b0f  6gahlfbm9dc6tefllmgrhl86tcbh92mn A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+kje75tb52r14k1u3siekff1htan5knss.antigamblingblog.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170642 20260518170642 17539 antigamblingblog.com. TTXiUbyCsfqzfO4U77z4PrTYLl5lBI9Uh9/7u1jre1YNzqhjtizTfnWaeho8qwX22rvRYPjb0gvpKXEzGM1VLA==
+mail.antigamblingblog.com.	3600	IN	A	46.23.89.226
+mail.antigamblingblog.com.	3600	IN	RRSIG	A 13 3 3600 20260615170642 20260518170642 17539 antigamblingblog.com. kMbQKAQhi03GYjDvoqLUSomHSeeFu1uhOhBRjjLMBaL7Qp3mu9ou+iKkMUaIOdHFFeBeJmI7BEaM/Gg1a6SHyg==
+6gahlfbm9dc6tefllmgrhl86tcbh92mn.antigamblingblog.com.	3600	IN	NSEC3	1 1 1 30e243afe3b29f49a40d1f4005a66c137d5b4b0f  kje75tb52r14k1u3siekff1htan5knss A RRSIG 
+6gahlfbm9dc6tefllmgrhl86tcbh92mn.antigamblingblog.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170642 20260518170642 17539 antigamblingblog.com. IyyNBd3ue4JxgpNuF1kIfK3zozVUPUX5PXEEtf7MR5o30PCYSRwjRpjC9mOFSgkPifbEvSw6HuBo3NufB5wfgg==

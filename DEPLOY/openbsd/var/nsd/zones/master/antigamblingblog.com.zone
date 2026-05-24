@@ -1,0 +1,9 @@
+$ORIGIN antigamblingblog.com.
+$TTL 3600
+@ IN SOA ns.brgen.no. hostmaster.antigamblingblog.com. (
+    2026051819 1800 900 604800 86400)
+@ IN NS ns.brgen.no.
+@ IN NS ns.hyp.net.
+@ IN A 46.23.89.226
+@ IN MX 10 mail.antigamblingblog.com.
+mail IN A 46.23.89.226

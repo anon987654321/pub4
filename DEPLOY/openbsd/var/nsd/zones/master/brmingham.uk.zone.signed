@@ -1,0 +1,44 @@
+brmingham.uk.	3600	IN	SOA	ns.brgen.no. hostmaster.brmingham.uk. 2026051819 1800 900 604800 86400
+brmingham.uk.	3600	IN	RRSIG	SOA 13 2 3600 20260615170618 20260518170618 52796 brmingham.uk. SYmCKy3l7NSAJXTUOT2wCUnZUwT/6FR2rQSdFG8VNl2w9Ya9DPm44h3pK7jGVgk+OantIJFj17goj7sWR+NpiQ==
+brmingham.uk.	3600	IN	A	46.23.89.226
+brmingham.uk.	3600	IN	RRSIG	A 13 2 3600 20260615170618 20260518170618 52796 brmingham.uk. sAjaNTBplaG5HOMGjoKgpYEFtiLlNh+ZtLmLDNyMrXwO0kC78rnx0y6vETHVcOJJGLRlSJHk7OxOdE68y9ErdA==
+brmingham.uk.	3600	IN	NS	ns.hyp.net.
+brmingham.uk.	3600	IN	NS	ns.brgen.no.
+brmingham.uk.	3600	IN	RRSIG	NS 13 2 3600 20260615170618 20260518170618 52796 brmingham.uk. y4R9tgRsatzPh+LRbqrVon1U+vkHxKXTeJe9vjTjEpKMS2iG8lGNi+On/HcW9IsF3fzyT5xLC+uxs6aB7XHTLA==
+brmingham.uk.	3600	IN	MX	10 mail.brmingham.uk.
+brmingham.uk.	3600	IN	RRSIG	MX 13 2 3600 20260615170618 20260518170618 52796 brmingham.uk. Fox05l5a3RRaTLwpGHLAw6xBxME0GMOC/xKCsDMKO6fpFB2JEgTdSoU5FWg1mvjDkcI8UvE1tVMmENlcHq/r9g==
+brmingham.uk.	3600	IN	DNSKEY	256 3 13 Tece0zytXIhBINiqiMq+SdQ+PgYhfteHJAo8G3B9JKLKqQeEKyI5UlaEoA+TF5uyqxFZrRL6I7JwTBKDS5X8/w== ;{id = 52796 (zsk), size = 256b}
+brmingham.uk.	3600	IN	DNSKEY	257 3 13 0MJCjvKCz9uibPLe0+bJfCNGqf1561WE+XgfLAjdCftYAOzIPXyAXJ5SRA/GD1GAFYPYz5wjJW6ntIgCtNJBOw== ;{id = 42715 (ksk), size = 256b}
+brmingham.uk.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170618 20260518170618 42715 brmingham.uk. Kl6ZDTRPoNmgWAjPQgrSCHfxdNS/VXHiC8A7tBNDA4pwpnBof45M6pfSU+BGBcPR/ZK2wpFqeIgXVdR6cLhBow==
+brmingham.uk.	3600	IN	NSEC3PARAM	1 0 1 77e71968e987c20bc94e4f9ddaea5304e9bca766 
+brmingham.uk.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170618 20260518170618 52796 brmingham.uk. Xwuj6xm2Ud+3nETvVb3GriRiVREzg/+798AhKb1U8jWp1lo9RXelej8Uf9iwICdGlRILmhGLEflik7g8fRDpDA==
+2bbmih7449lcq3idgvar4ao8gsudgmtn.brmingham.uk.	3600	IN	NSEC3	1 1 1 77e71968e987c20bc94e4f9ddaea5304e9bca766  3h2cburk1vnhd4cpcbl43jpgmc047f2v A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+2bbmih7449lcq3idgvar4ao8gsudgmtn.brmingham.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. vNZbSdfOJevYPZUKO2pP8MLjbPs27sn/PzV1n3YiVrzvzXbR/Jae7RneH77HjaaSKsvQHsSWVibK9DO6CYT7Vw==
+dating.brmingham.uk.	3600	IN	A	46.23.89.226
+dating.brmingham.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. 3alCBsq80mtwxUkKGqoV2Lk3PL6621aA4veGLF82ueJdoGvOsMadqwKu8BqyI76of4LA6ix7O3/lw23gbTiEZw==
+un08av4m01irbr9auat318v90835guoo.brmingham.uk.	3600	IN	NSEC3	1 1 1 77e71968e987c20bc94e4f9ddaea5304e9bca766  vn134isje2j382ludfanc9mb99jsdc15 A RRSIG 
+un08av4m01irbr9auat318v90835guoo.brmingham.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. 80tleHkwuyPTaV4Mrouww0kY0y2gv8c0mz/bm7P0ScJenUbsPYiQd8DBUBAc22lvvWLd+yc/uIGeZccQ3lyj0A==
+mail.brmingham.uk.	3600	IN	A	46.23.89.226
+mail.brmingham.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. sM5lN89OxYNbF3+GhppV52qyU8o2ZDE71CMZgdjGxqQzs7rHzM8u8dWDEceh2XjXqkZptlv28ZFvMuH7e/Ekcg==
+n4g55hnrerkrlukln7vtdafcu2f892u7.brmingham.uk.	3600	IN	NSEC3	1 1 1 77e71968e987c20bc94e4f9ddaea5304e9bca766  u7s0oreu2iai4a7sldtrcm09979fhlgv A RRSIG 
+n4g55hnrerkrlukln7vtdafcu2f892u7.brmingham.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. ukD0EKr+SFsoMDGjX8v6nT/U9UWdTPqgWxLlAQSCWxmIVJHimgBfgitX6i59tA0ME9kRCWuOhXjq/H6wFR4+Gw==
+maps.brmingham.uk.	3600	IN	A	46.23.89.226
+maps.brmingham.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. RRLAc7yxo5QrnVM46HJb5P/euaq5jiy9vdyPwzG+9jghiL1RAyHfxv9FF6R0K1zdhZA+p5ZtZBBN7QL6ZTOSyQ==
+4cp5rmo9761hokvarti8b6rh62rfjsg1.brmingham.uk.	3600	IN	NSEC3	1 1 1 77e71968e987c20bc94e4f9ddaea5304e9bca766  jvcmm6621hr3i3jn13ve59n1s3oflbua A RRSIG 
+4cp5rmo9761hokvarti8b6rh62rfjsg1.brmingham.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. rLPYHSfx4CDZ9G6GWHF1FagSJqOAvKc8Ny8U5j3FexQLsG/kaCqHJxSAsr30VfgOOJZpBImUjQDuq7zA3pidhA==
+marketplace.brmingham.uk.	3600	IN	A	46.23.89.226
+marketplace.brmingham.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. xZs2Ai2pGTAVgdd/ju9wY3ujAj4OQp/FNVE91ruD/VE3u8WBukTY2KEkrOWHiKNZfNFWs1JsAcuiJ/aJizCuCQ==
+3h2cburk1vnhd4cpcbl43jpgmc047f2v.brmingham.uk.	3600	IN	NSEC3	1 1 1 77e71968e987c20bc94e4f9ddaea5304e9bca766  4cp5rmo9761hokvarti8b6rh62rfjsg1 A RRSIG 
+3h2cburk1vnhd4cpcbl43jpgmc047f2v.brmingham.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. 9/wEPzpwbyGTMeP+ahO/z7I3awTf5Dc6h8Eb53TWPXMpLPHdLuhSMjmaq8uGdvlJrmijYwmWI6/0ozwHni6z2A==
+playlist.brmingham.uk.	3600	IN	A	46.23.89.226
+playlist.brmingham.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. QEjg8fFwDwdA2qHEt14uRtV/a6kNsfmLexng9ZkX16GmK9yR/6fCnpmsk5Qs8F+eeDTvolEV5bElhjkgF1NBXw==
+vn134isje2j382ludfanc9mb99jsdc15.brmingham.uk.	3600	IN	NSEC3	1 1 1 77e71968e987c20bc94e4f9ddaea5304e9bca766  2bbmih7449lcq3idgvar4ao8gsudgmtn A RRSIG 
+vn134isje2j382ludfanc9mb99jsdc15.brmingham.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. ZH1jOoc2jtmDOVc756W6melQMJ0hgn4YYLAtIKxO8WKBo9ndzmIUpw5MRex7FkDrLXtMe7hF8/+WuHXCuN8mDw==
+takeaway.brmingham.uk.	3600	IN	A	46.23.89.226
+takeaway.brmingham.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. DAvbPxsOyAj/mHeLilLoWSoAa3Bdq7BRJTZy6Z7kqliZaKkzdhkkkaMDe5rEZMbLu/+gNsDiR9tsQouV8xQvAg==
+u7s0oreu2iai4a7sldtrcm09979fhlgv.brmingham.uk.	3600	IN	NSEC3	1 1 1 77e71968e987c20bc94e4f9ddaea5304e9bca766  un08av4m01irbr9auat318v90835guoo A RRSIG 
+u7s0oreu2iai4a7sldtrcm09979fhlgv.brmingham.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. 4qvP4jiNI77pmipzVQnOhTNz18XU6w+Sl3mvkmeSjIEWsYaD2wryjGluOIUxwOnD40x24XfF77FjhtWeVR1YzA==
+tv.brmingham.uk.	3600	IN	A	46.23.89.226
+tv.brmingham.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. RO6AoAPAY1WBNjt91ouVjggnMWh/PFmjtp0pRdv3gXSzCQDdCfpzL3kPBzGeOCyCYARfAmoStNYP3MYZIIHUOA==
+jvcmm6621hr3i3jn13ve59n1s3oflbua.brmingham.uk.	3600	IN	NSEC3	1 1 1 77e71968e987c20bc94e4f9ddaea5304e9bca766  n4g55hnrerkrlukln7vtdafcu2f892u7 A RRSIG 
+jvcmm6621hr3i3jn13ve59n1s3oflbua.brmingham.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170618 20260518170618 52796 brmingham.uk. w0wxEkYhg1Y9LIB9BpwStEufRgQnS7wIkGqerySd0+kOn8T3TXrWBWmHRnIlUquWpiewEy0yK2JkRfv2CYfkFw==

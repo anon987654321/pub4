@@ -1,0 +1,44 @@
+longyearbyn.no.	3600	IN	SOA	ns.brgen.no. hostmaster.longyearbyn.no. 2026051819 1800 900 604800 86400
+longyearbyn.no.	3600	IN	RRSIG	SOA 13 2 3600 20260615170612 20260518170612 41857 longyearbyn.no. GVrwce661WVsaqebEgCafmy8F9v4a6VlLHPH3Ua3dmvgUgwESPzvJSV5ZqHRrOCqCLvqJdStbpaprfzfpeNIAQ==
+longyearbyn.no.	3600	IN	A	46.23.89.226
+longyearbyn.no.	3600	IN	RRSIG	A 13 2 3600 20260615170612 20260518170612 41857 longyearbyn.no. 8v5RNUxEKqbuJK2FFLd321uEL+PZl/wwP4x8dB2ZvvBMmVt0PJ6goozV4z/kQ+YtArOYsyBJjX0Jv4Ppk07p2Q==
+longyearbyn.no.	3600	IN	NS	ns.hyp.net.
+longyearbyn.no.	3600	IN	NS	ns.brgen.no.
+longyearbyn.no.	3600	IN	RRSIG	NS 13 2 3600 20260615170612 20260518170612 41857 longyearbyn.no. YThBnpzru9ezPykIip6Ii9mKDRyIUzpy5LhxMsAk/h/NOudr59oyOcLhmLziw/qSs2U/3YDixZVPmM4OkvFv3A==
+longyearbyn.no.	3600	IN	MX	10 mail.longyearbyn.no.
+longyearbyn.no.	3600	IN	RRSIG	MX 13 2 3600 20260615170612 20260518170612 41857 longyearbyn.no. Oa3WCdF8uwsWqGevsT1GSzkUE78Vjx8gbt39cI3Pq4G821y7SCePts/9/SjfNGM7DcVls4MarIbjhKrlPIxL3w==
+longyearbyn.no.	3600	IN	DNSKEY	256 3 13 WWP5qVAhdaCfv2gt9vrcXbe7hGX8pl9H+zjqn1Yp/D/vDBcQozktI89An01lr3Sq7BIfnWV5XOVFjpG2Oi3cKg== ;{id = 41857 (zsk), size = 256b}
+longyearbyn.no.	3600	IN	DNSKEY	257 3 13 A8ihsCUFMy40hltx96Uz38LS67QXeWKC65WANNpW1OeTn4gISdBLdPlouiz4MNuF5MU4X3D2kKvF1GVZNGR+Bg== ;{id = 13660 (ksk), size = 256b}
+longyearbyn.no.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170612 20260518170612 13660 longyearbyn.no. NzD39wjEuVXVA6E9ybXsKYbXBmtteNWzmJymy96dES9BQaI91LL2LcA9IIq1+Sd3/Go+Mq80vYclfM7neka+FA==
+longyearbyn.no.	3600	IN	NSEC3PARAM	1 0 1 d62f2b7b32061a5b32881089e88fabc0868f747a 
+longyearbyn.no.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170612 20260518170612 41857 longyearbyn.no. pnPkgb816eu4Fo2dSgJb6cObZ5/6jXhyYj30kkyUE5haXZcKXCM0PC34Wt+OA6IjiTtrWj88pQxDOeg1qSdn0A==
+90gs7sn2u4rmsma8i353qefqroiaspl6.longyearbyn.no.	3600	IN	NSEC3	1 1 1 d62f2b7b32061a5b32881089e88fabc0868f747a  hipd77ufbu29krvqlrq1kerdjm1gqqfp A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+90gs7sn2u4rmsma8i353qefqroiaspl6.longyearbyn.no.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. SuNFfXK/bt7jbdEqfvKi7V925ImPfjdTxckcFqTFFtAavjip9dxhWtVN58QcTKjx0pCQ6YuHNw4LCES//ESvAQ==
+dating.longyearbyn.no.	3600	IN	A	46.23.89.226
+dating.longyearbyn.no.	3600	IN	RRSIG	A 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. HUYuTiMQwT9t16WLjWnfbadelmqvxEEOLUitr+Hyw5AhdqKgowSOil2bT7IF61ejDQyG4KenDk+s0NaEyaflgg==
+hipd77ufbu29krvqlrq1kerdjm1gqqfp.longyearbyn.no.	3600	IN	NSEC3	1 1 1 d62f2b7b32061a5b32881089e88fabc0868f747a  i9injr7fcdijohord1obp31gspftgi86 A RRSIG 
+hipd77ufbu29krvqlrq1kerdjm1gqqfp.longyearbyn.no.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. svjbvELpi+C7idx7KhfeP3vg3/Gj8vhmT4DkXrS/PHq/niWv1Fm0ZFUk/QX1lU3qhtm3Q+xs0bUpPQYIG8L/Hg==
+mail.longyearbyn.no.	3600	IN	A	46.23.89.226
+mail.longyearbyn.no.	3600	IN	RRSIG	A 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. gOx4EpNUXM4NWJMrgdVOMVmF92abfzbR4Ln+huZIyJBkkZR8zKGmMp0EsPA4wINmfRkRauINKj2aDAeNSxtskw==
+qfe1klubfr7te3f5n4ob51v7euqotr82.longyearbyn.no.	3600	IN	NSEC3	1 1 1 d62f2b7b32061a5b32881089e88fabc0868f747a  30citps74gs7nt4vpoep2p1opqvrerr0 A RRSIG 
+qfe1klubfr7te3f5n4ob51v7euqotr82.longyearbyn.no.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. 1hVetuN8ihnrkWTL0k3oDEjHHbyDM0/8d9xGPeQJdqSzsAkRE+VhFaujPXeucb7PdQ6hghBWyPX0NMLEvMmsow==
+maps.longyearbyn.no.	3600	IN	A	46.23.89.226
+maps.longyearbyn.no.	3600	IN	RRSIG	A 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. XDWRaBH5DJl64j8IhSkTmOSnE5UHNEWPuuPDaeBpDJ98nFgMBfeccEGppwvx3Q+g0TgHLuEcffTthCsUJKunOA==
+m6qisprh8lpipmu032bh5bd8chabk5dj.longyearbyn.no.	3600	IN	NSEC3	1 1 1 d62f2b7b32061a5b32881089e88fabc0868f747a  qfe1klubfr7te3f5n4ob51v7euqotr82 A RRSIG 
+m6qisprh8lpipmu032bh5bd8chabk5dj.longyearbyn.no.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. 6YfGIti4VDaslOB1bl/VkZTPLeb2aQAnLCh/FVRjv7RupiE9M11nIvojIgMBgZY8d15NmiufuSeW+RPmXXeMVg==
+markedsplass.longyearbyn.no.	3600	IN	A	46.23.89.226
+markedsplass.longyearbyn.no.	3600	IN	RRSIG	A 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. 12EqJIBxAKO94l7APmK/Crrt9SuR+fzToh3PLRTmOKwaf7gzk2H3uw7Fadf+nm5A1wY2vczTsLh3QsXTkwGSRg==
+30citps74gs7nt4vpoep2p1opqvrerr0.longyearbyn.no.	3600	IN	NSEC3	1 1 1 d62f2b7b32061a5b32881089e88fabc0868f747a  90gs7sn2u4rmsma8i353qefqroiaspl6 A RRSIG 
+30citps74gs7nt4vpoep2p1opqvrerr0.longyearbyn.no.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. dO8qnWKUdROF1l6uA1impk8hgLABH41rsJCXROwEgJQfgSRcGi8F7UiJtK16Aw9ttpWSk5LwwiqtMlI6leJF0w==
+playlist.longyearbyn.no.	3600	IN	A	46.23.89.226
+playlist.longyearbyn.no.	3600	IN	RRSIG	A 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. 6AWQWJ1oxn0lc4SIPPVhRHpulVaQuzJSRACupa8cm1QrD1s49ArB+xE08sA58WoK/Q6G74xpmRdN6G3VcgkOgw==
+i9injr7fcdijohord1obp31gspftgi86.longyearbyn.no.	3600	IN	NSEC3	1 1 1 d62f2b7b32061a5b32881089e88fabc0868f747a  im84k5e1rr3dq7ba9iivs1u77fhd85n5 A RRSIG 
+i9injr7fcdijohord1obp31gspftgi86.longyearbyn.no.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. 0IeSamjUBuKS1eux37VQiDhidOIv3ea5fT3u2MxWc1Pqtd51zhAz2b8Y/jdxC8ItM6qiaBu/rjHfOnuw+3P4QA==
+takeaway.longyearbyn.no.	3600	IN	A	46.23.89.226
+takeaway.longyearbyn.no.	3600	IN	RRSIG	A 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. zoTHemA2NiJQbsNM/wMkPqKi8S3GaDCsI6lfJUSUw3zRwgLHWk7TafXs4by1w9FVBxFx7eEaEgj5H7Mwe2Q9hA==
+im84k5e1rr3dq7ba9iivs1u77fhd85n5.longyearbyn.no.	3600	IN	NSEC3	1 1 1 d62f2b7b32061a5b32881089e88fabc0868f747a  kqvbrca978g351r9ee8j8lcqk09a4e93 A RRSIG 
+im84k5e1rr3dq7ba9iivs1u77fhd85n5.longyearbyn.no.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. /HEJcpOz5Te9ruPmu48JM9H5QU4UakKj0utiTxUkc0gRGW82BeM5szHCRrAfwYNIeb9tJgB3dGPQnLC1uwG/Aw==
+tv.longyearbyn.no.	3600	IN	A	46.23.89.226
+tv.longyearbyn.no.	3600	IN	RRSIG	A 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. dKWKNfYOTzVyclBB4MNLKM+P+s0w2nlc2b8TLXCdOOWmLW9iIeWM+pWoJbrHsi5Rxv/XVvfdCZcyrIj1PRMI5w==
+kqvbrca978g351r9ee8j8lcqk09a4e93.longyearbyn.no.	3600	IN	NSEC3	1 1 1 d62f2b7b32061a5b32881089e88fabc0868f747a  m6qisprh8lpipmu032bh5bd8chabk5dj A RRSIG 
+kqvbrca978g351r9ee8j8lcqk09a4e93.longyearbyn.no.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170612 20260518170612 41857 longyearbyn.no. 32OJTvFCzRFsCT49LvlbkvatjjePdwQGYkxXz3XYsHpTjN8YXdApREFmN+ARY75nDRjx1DyDpVxC9El7WfgxEA==

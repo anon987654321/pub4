@@ -1,0 +1,15 @@
+$ORIGIN lverpool.uk.
+$TTL 3600
+@ IN SOA ns.brgen.no. hostmaster.lverpool.uk. (
+    2026051819 1800 900 604800 86400)
+@ IN NS ns.brgen.no.
+@ IN NS ns.hyp.net.
+@ IN A 46.23.89.226
+@ IN MX 10 mail.lverpool.uk.
+mail IN A 46.23.89.226
+marketplace IN A 46.23.89.226
+playlist IN A 46.23.89.226
+dating IN A 46.23.89.226
+tv IN A 46.23.89.226
+takeaway IN A 46.23.89.226
+maps IN A 46.23.89.226

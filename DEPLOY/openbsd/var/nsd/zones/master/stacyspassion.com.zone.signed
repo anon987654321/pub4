@@ -1,0 +1,20 @@
+stacyspassion.com.	3600	IN	SOA	ns.brgen.no. hostmaster.stacyspassion.com. 2026051819 1800 900 604800 86400
+stacyspassion.com.	3600	IN	RRSIG	SOA 13 2 3600 20260615170640 20260518170640 10927 stacyspassion.com. FdbOdUs0EnG0irtM+1WzWIU6+By7l8KCrvIAInSIMOe1KerNeaxr9DXnYTyjooZRj9uj2YaKInF8ozsVMWEEIg==
+stacyspassion.com.	3600	IN	A	46.23.89.226
+stacyspassion.com.	3600	IN	RRSIG	A 13 2 3600 20260615170640 20260518170640 10927 stacyspassion.com. XInHfJwmkdn5RihV/Y0rX2M6ldYSeN+jjxT35iyMy9YBAQHkA6IK14vJY6qOO46lKAnVvxFppzVQGXTROGfBSw==
+stacyspassion.com.	3600	IN	NS	ns.hyp.net.
+stacyspassion.com.	3600	IN	NS	ns.brgen.no.
+stacyspassion.com.	3600	IN	RRSIG	NS 13 2 3600 20260615170640 20260518170640 10927 stacyspassion.com. uA0chz4mTfaZ6D51qUTh10JPtouYj8lCT85HwPd+pcukMpyk1NEAByYPzpf6JkFl4ASUqUZ0RMx+BSZgptp7WA==
+stacyspassion.com.	3600	IN	MX	10 mail.stacyspassion.com.
+stacyspassion.com.	3600	IN	RRSIG	MX 13 2 3600 20260615170640 20260518170640 10927 stacyspassion.com. sjinnJdtjJTQEPObhFb8I9fh93RD+qD913dQMhPLw02D6p/k9dD47yzyjlPNS6bfUe2QraKfNoJ2udykCOvsHg==
+stacyspassion.com.	3600	IN	DNSKEY	256 3 13 oA0ByQvByClsx+mUjPomEZK9flPK4m3nJCHjHG3t5Iq+oFru7my4rTRZGiVGBZiOzhigr6hxkSWycPMTP5WIsQ== ;{id = 10927 (zsk), size = 256b}
+stacyspassion.com.	3600	IN	DNSKEY	257 3 13 Ww0ZUM8QYygDu89uyA1SIOOF4Cj9cz7MlxGZaqT9b30G628r8C7/LIEkIop+V5Nzh2Y8X7f/f0+m6BQokDLRCA== ;{id = 3888 (ksk), size = 256b}
+stacyspassion.com.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170640 20260518170640 3888 stacyspassion.com. k3AoHbE9mfvRPZ2KHrnl79ulRSLDeM4UlPN6qGGCebYEt7Z011Dhwqlg7LTDyNSYZXP0fvj00GRBEIizs0sH7Q==
+stacyspassion.com.	3600	IN	NSEC3PARAM	1 0 1 d3b350dfe8c3d16a84986912c0ddb2b4e2d51197 
+stacyspassion.com.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170640 20260518170640 10927 stacyspassion.com. 69XsNs2TG0hTS2R9jQAtLvnOT9zpv73oqOcTzAgzwa0RK/yKzO3SAlwDGAM42Zt/CAWE6/Bg5sSGv0s2M7ThWQ==
+tu9pdlsp7ov4pq0qv3h1khphcmlh90s9.stacyspassion.com.	3600	IN	NSEC3	1 1 1 d3b350dfe8c3d16a84986912c0ddb2b4e2d51197  37ekja70v9gns6r63t26ekrm2f87q9mu A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+tu9pdlsp7ov4pq0qv3h1khphcmlh90s9.stacyspassion.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170640 20260518170640 10927 stacyspassion.com. FBwxMjn27tjko5wOlSAnGOCzwJfyhFsZc2KOreFq6w1Af+u3FKPQVP5z96AdKRYO3XZ3a8xP0/CQv8cjtCa77w==
+mail.stacyspassion.com.	3600	IN	A	46.23.89.226
+mail.stacyspassion.com.	3600	IN	RRSIG	A 13 3 3600 20260615170640 20260518170640 10927 stacyspassion.com. hOinL1AxUjbKxFgrqa62cfsM2lTQLqJJlGvnbfIIbXFXgrPkezKL1fqWrts2KgcQKKehvflEprY6QVcY5yBOgg==
+37ekja70v9gns6r63t26ekrm2f87q9mu.stacyspassion.com.	3600	IN	NSEC3	1 1 1 d3b350dfe8c3d16a84986912c0ddb2b4e2d51197  tu9pdlsp7ov4pq0qv3h1khphcmlh90s9 A RRSIG 
+37ekja70v9gns6r63t26ekrm2f87q9mu.stacyspassion.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170640 20260518170640 10927 stacyspassion.com. jur04w+v9csdN1UdVUF2C+TUix1mNJYm4O3GzAz1/PcayWw1C5nuSnZD+mwR/xzbdV45NnjPYRMCB5lz2UqV0w==

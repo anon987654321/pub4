@@ -1,0 +1,44 @@
+mrseille.fr.	3600	IN	SOA	ns.brgen.no. hostmaster.mrseille.fr. 2026051819 1800 900 604800 86400
+mrseille.fr.	3600	IN	RRSIG	SOA 13 2 3600 20260615170626 20260518170626 26497 mrseille.fr. uamWsBwV8jWnXQGmXm1SpAixApJPVK3bO+qxIySMoEIt+scITRMNN/lwELwdqniTflHq3hOxNrVc/CW9/YiL0g==
+mrseille.fr.	3600	IN	A	46.23.89.226
+mrseille.fr.	3600	IN	RRSIG	A 13 2 3600 20260615170626 20260518170626 26497 mrseille.fr. w0mvlwfnUR+/ohMP4qWriAbRql5A0BLOtLY4vFH+7XubcAed/zVfgoGiLa2GmHRzFrBjeBrV2PfSMsVWYQYbLg==
+mrseille.fr.	3600	IN	NS	ns.hyp.net.
+mrseille.fr.	3600	IN	NS	ns.brgen.no.
+mrseille.fr.	3600	IN	RRSIG	NS 13 2 3600 20260615170626 20260518170626 26497 mrseille.fr. UcrSaDSngyyYNHqyG3VIHIbLcDSwmmzFADzXbgfqbN1NamZ+GpDwO7xgGhXsdwqvEJTkhFl/tHYsW2c2JmT15Q==
+mrseille.fr.	3600	IN	MX	10 mail.mrseille.fr.
+mrseille.fr.	3600	IN	RRSIG	MX 13 2 3600 20260615170626 20260518170626 26497 mrseille.fr. btiN9YxZBarjjqISiCMHkqq4tdMbsMwkSOmtjtguU5uhnQLt5bUvxlat6UdBaOoiVyxci0qnkZ90LN2ugZPchQ==
+mrseille.fr.	3600	IN	DNSKEY	256 3 13 KOG52KoLQtpZXsNzFbqCY6G5X/b+rWyr4Tn40sM2CSRzCXH9WajfEjzXKm3MN/Hp0DVymkLnWTKlcZijsei5Yw== ;{id = 26497 (zsk), size = 256b}
+mrseille.fr.	3600	IN	DNSKEY	257 3 13 JqVW+3H4NOIlnndeTrQnPRt6BurSXnNxS+KT7ywwAR9Ia6jkYAIQH9IxZw1vfFngVJatVyCWGX2I4RJzc88f0w== ;{id = 32722 (ksk), size = 256b}
+mrseille.fr.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170626 20260518170626 32722 mrseille.fr. vbE+JayRZ+N8FpA9JyZKN1jhJV8IkVhD4aKF3jGXMXrCYBhBiA5tgBp5KgYrh0SqawTXR+UzO6MGytwidyZP2Q==
+mrseille.fr.	3600	IN	NSEC3PARAM	1 0 1 6fdeb49a77407eab964d94c8e124d0d3477da5fe 
+mrseille.fr.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170626 20260518170626 26497 mrseille.fr. r+UeSg+JsFoN9VATEzifqxoRdIUQUIb9giWeJDkMAbzQ2MsfCGC+cSei7RvzYbe49xpO5ZjN7RoyLnSj9KAxww==
+imd4k5mmnh1ngstrjrmco31556po9336.mrseille.fr.	3600	IN	NSEC3	1 1 1 6fdeb49a77407eab964d94c8e124d0d3477da5fe  jfceg8tqh7blve468k2rt2ulfdkt41i1 A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+imd4k5mmnh1ngstrjrmco31556po9336.mrseille.fr.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. 0U5rVDwj7tPzsyCHykO9tGhztyfgYPITMEJZgwrk9Jj1inUhd8HiL+52E9TqK5/jJSbiLGIbYyeee0kh3/ZXTA==
+dating.mrseille.fr.	3600	IN	A	46.23.89.226
+dating.mrseille.fr.	3600	IN	RRSIG	A 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. d6PJo1jxA1uX5nDF08umEFuguiLO4rdGfZjR3OY1tDlq08jZcKo/evgZpB3vbJA665l/pNF00tGIo76odqs+JQ==
+vb5dbebn5mm6de9vl7rh3l5r33pi8td7.mrseille.fr.	3600	IN	NSEC3	1 1 1 6fdeb49a77407eab964d94c8e124d0d3477da5fe  vg8cse7gp8l0kqien840osa1epkree5s A RRSIG 
+vb5dbebn5mm6de9vl7rh3l5r33pi8td7.mrseille.fr.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. Pc3xTdnGiZ9V0K+lTKGQIuf3Er0ydMIxWjRYDZGYK4h+ho4qURprN5JZmEGKHaqMHpsSJHwr8ECMKl31Xnsliw==
+mail.mrseille.fr.	3600	IN	A	46.23.89.226
+mail.mrseille.fr.	3600	IN	RRSIG	A 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. viRLZVRc7T3Y7zN1JuxktBb144gSeUkLimLuknAK/Sjtm2EbYaJwqYI873BT6SDI7vPiiCtBEQHZxFVZIK0sKw==
+uabl5m2hi1tu6ac2a1l6hfij0jqgjt04.mrseille.fr.	3600	IN	NSEC3	1 1 1 6fdeb49a77407eab964d94c8e124d0d3477da5fe  vb5dbebn5mm6de9vl7rh3l5r33pi8td7 A RRSIG 
+uabl5m2hi1tu6ac2a1l6hfij0jqgjt04.mrseille.fr.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. Wf96HwpPJLbzwiPED40b5UiEn47S79HgtPKB9VkocIUJH3MtY+dRB4HjiI0eCxcFNtT1IwtMrRadRgsi9vws1g==
+maps.mrseille.fr.	3600	IN	A	46.23.89.226
+maps.mrseille.fr.	3600	IN	RRSIG	A 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. usexW7efY4zmPHcnfhN0UnVeM2z8MObDEqjHSVJ23rF4vT9sspWfHOIzFAarRY6kld/CEJpfKWS//MiPTEbFzw==
+vg8cse7gp8l0kqien840osa1epkree5s.mrseille.fr.	3600	IN	NSEC3	1 1 1 6fdeb49a77407eab964d94c8e124d0d3477da5fe  1r4n17dfsijhgfh8j6mo98i6e5p2uon8 A RRSIG 
+vg8cse7gp8l0kqien840osa1epkree5s.mrseille.fr.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. zNczSmFnCqVim6chm4DfHSB7bzDCYo+TlwKXPqHFEPeoXTDjGugMyI1dYoRiUlEOZVuYEp1RLbsxLQax3P3vwA==
+marche.mrseille.fr.	3600	IN	A	46.23.89.226
+marche.mrseille.fr.	3600	IN	RRSIG	A 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. FHwSwDyj3mtYI1aOcl6SMeSVHwQFDs8UH2MnTkB2BYyEvdPEBMtA8/Sko2tuLX73zf9z/l6M5GnJx0+tOdg2Vg==
+q7ctl5jsre4vpbf59umf4o04roo7ifhf.mrseille.fr.	3600	IN	NSEC3	1 1 1 6fdeb49a77407eab964d94c8e124d0d3477da5fe  uabl5m2hi1tu6ac2a1l6hfij0jqgjt04 A RRSIG 
+q7ctl5jsre4vpbf59umf4o04roo7ifhf.mrseille.fr.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. +HfAmQlFYFeWrQZw2bqXiJQwWwdPmRtNlgNkRAzcp+3Sf77wBoK415YfnseRcSOqXYCzH4wzjROccVsdjxx98Q==
+playlist.mrseille.fr.	3600	IN	A	46.23.89.226
+playlist.mrseille.fr.	3600	IN	RRSIG	A 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. bwvCqlugXPgPG5SLrOrTaNSrvBuHPRckgENqWVS1C9W8KfP5nlkGqBIP+2Y1Ta56zj+n4O/pLvZFnvRFuFDQhw==
+1r4n17dfsijhgfh8j6mo98i6e5p2uon8.mrseille.fr.	3600	IN	NSEC3	1 1 1 6fdeb49a77407eab964d94c8e124d0d3477da5fe  9u12p4v97dnmvb0ti1c7s3pdr1vse5fn A RRSIG 
+1r4n17dfsijhgfh8j6mo98i6e5p2uon8.mrseille.fr.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. ZgUjkq+590EvYGebXtNQrT2Qq/t+DQzWp3tQ3mWS2YJkUap3cwqTPZgbPUn7PI0EmeIiAR0bbuQCmT0+hLxsWQ==
+takeaway.mrseille.fr.	3600	IN	A	46.23.89.226
+takeaway.mrseille.fr.	3600	IN	RRSIG	A 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. 682tsBhtO93DSGEDD1bhXKQmxcFKhF9iEx17JdDIUVOXeOKlfIXQ7XRsQpOQ2Ce1tOhLSzaDVc78o7PQYb4BGQ==
+9u12p4v97dnmvb0ti1c7s3pdr1vse5fn.mrseille.fr.	3600	IN	NSEC3	1 1 1 6fdeb49a77407eab964d94c8e124d0d3477da5fe  imd4k5mmnh1ngstrjrmco31556po9336 A RRSIG 
+9u12p4v97dnmvb0ti1c7s3pdr1vse5fn.mrseille.fr.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. uMep09ZwakaVb2cs73JNVv0lQs3orsgWV35vLNl8QRPlJXTt6UJ0FwKaj1K4A140Udued89wRxSwCyOsyoQMnA==
+tv.mrseille.fr.	3600	IN	A	46.23.89.226
+tv.mrseille.fr.	3600	IN	RRSIG	A 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. 2xEEQVGOXNSotlmMjWYrSL0x6uzQgmluGz8BFGhvW/4ucKbyUyhcc/JDrd/EDp/ti6AP7WseJQPk4F8yzQknpw==
+jfceg8tqh7blve468k2rt2ulfdkt41i1.mrseille.fr.	3600	IN	NSEC3	1 1 1 6fdeb49a77407eab964d94c8e124d0d3477da5fe  q7ctl5jsre4vpbf59umf4o04roo7ifhf A RRSIG 
+jfceg8tqh7blve468k2rt2ulfdkt41i1.mrseille.fr.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170626 20260518170626 26497 mrseille.fr. Ma2Ja6sdIhpkT0+Uw4Yl0zzLtzu8Fgw60fbmNvKbTNIEsBexoOEVBPh9c688F8zbwYKK5GClldAgrhg9ZmxdwA==

@@ -1,0 +1,44 @@
+mnchester.uk.	3600	IN	SOA	ns.brgen.no. hostmaster.mnchester.uk. 2026051819 1800 900 604800 86400
+mnchester.uk.	3600	IN	RRSIG	SOA 13 2 3600 20260615170621 20260518170621 16184 mnchester.uk. z5EZbWgH9KMNy6sxVef5SSNEP+UX5hnQ6KDYWDiohYR0d+thmuTuVPMPgN81eNjfeIf5LUW+CydK7tZG7LPLOQ==
+mnchester.uk.	3600	IN	A	46.23.89.226
+mnchester.uk.	3600	IN	RRSIG	A 13 2 3600 20260615170621 20260518170621 16184 mnchester.uk. EFlSwL8UPYGJlCte8tU2iDIu4OuOyKRmzFTBI7+Mxb1ERenWoWGxt05G4Mkfm830rsLNNcS/44QqJCQU9uuvuw==
+mnchester.uk.	3600	IN	NS	ns.hyp.net.
+mnchester.uk.	3600	IN	NS	ns.brgen.no.
+mnchester.uk.	3600	IN	RRSIG	NS 13 2 3600 20260615170621 20260518170621 16184 mnchester.uk. IhW2zfjuA+rYBKLFAp8nBsyySjre40Xa/sy9IUf+cBvemrazH/jR7DjW9yujVD+AJw1Z94w6d6Kx5jFKyuLFXA==
+mnchester.uk.	3600	IN	MX	10 mail.mnchester.uk.
+mnchester.uk.	3600	IN	RRSIG	MX 13 2 3600 20260615170621 20260518170621 16184 mnchester.uk. aC2/2xTkKHjSBaFqf7fO9zJZ0713bwjNcJ6iK6lJenqmmDqGMDI2uIOBWuN+7jwACwUiaC0IfU+wPitsfc/nKA==
+mnchester.uk.	3600	IN	DNSKEY	256 3 13 cBqa3023/VYZDq62dY7HolPUp1iKbPMlFdkPrn3LLKIzwu5JmkUvwVueJ0qrrJJ0SAQZxn/Zq6K8TljdlciyIA== ;{id = 16184 (zsk), size = 256b}
+mnchester.uk.	3600	IN	DNSKEY	257 3 13 nh8sbYeAjdzD+0DCZVUyjAmMUesGDZ00SqWg8pPuQRT3F7Cp6LiE7aeoUB63DkKFEZmscbuhVXkdhjGaWw9l9g== ;{id = 9722 (ksk), size = 256b}
+mnchester.uk.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170621 20260518170621 9722 mnchester.uk. FS0MRaayssx8GIpZ71T+fDXP7WTN6cn0Nrm8ta9XEQes+UcX8DHa8Zemhgtfto+8Ba42kXSfQye1bhJq7RXY6w==
+mnchester.uk.	3600	IN	NSEC3PARAM	1 0 1 7c75c15afb368d1ae99db24ab9a57dea4202e227 
+mnchester.uk.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170621 20260518170621 16184 mnchester.uk. HqzHQb3HPBau2LkTkiwFYlQPoaC3xtyCYs5BumDHouU2C/52yXr4r8y5sM23g6fwOgq8GHEkhRcpOXammK0h0g==
+dtpop7knqkk8q124keh1a984doj75q54.mnchester.uk.	3600	IN	NSEC3	1 1 1 7c75c15afb368d1ae99db24ab9a57dea4202e227  s62ue7b0t3fmcqid2nio23nhjtrdflnk A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+dtpop7knqkk8q124keh1a984doj75q54.mnchester.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. 0pK8LyAqI0Tvkx9uJnJNvDO1uu5ylbFMUPaO8OQsMK0zhZsEtAF0S8TvfFRzXTjuUKqCwVljfiSkj+SVG3XTwA==
+dating.mnchester.uk.	3600	IN	A	46.23.89.226
+dating.mnchester.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. RWSjjUH5fyDlbMov5aJk58wWsFQ2Duwk2koO/wzXzlPBoew+ReOiZrFjpQPNAi4Ta+XwUOAA+3ECGIT4wX8MyA==
+3o73qugl1pc42cj6ru5ield4ka4ojck4.mnchester.uk.	3600	IN	NSEC3	1 1 1 7c75c15afb368d1ae99db24ab9a57dea4202e227  7pcd446sq1ehv3kdodm8l4q62gd3chku A RRSIG 
+3o73qugl1pc42cj6ru5ield4ka4ojck4.mnchester.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. BYfnKQRcNWCn+SJzRjrznAF+dq+Qi3e67J5dc0afIMRu6l91ft2uFQe0ulsZu9t+ICynPnj9Zyng79tiIJt6zg==
+mail.mnchester.uk.	3600	IN	A	46.23.89.226
+mail.mnchester.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. u0L1fsAx/oAV8FVkAsjCppDoyTj6NJ/+3AZyvzOy9+8kvefmXNMALK0DPbUPBs2S3BFCdztxBqnT/ShY+kRe+Q==
+d17a741eco9iu939e5l0k2l4l8kt0u4r.mnchester.uk.	3600	IN	NSEC3	1 1 1 7c75c15afb368d1ae99db24ab9a57dea4202e227  dtpop7knqkk8q124keh1a984doj75q54 A RRSIG 
+d17a741eco9iu939e5l0k2l4l8kt0u4r.mnchester.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. liXiYIE7fjZQGnruKV7ODToPx1OiT2Bwl+gUkvwljxqWlyHyfyY6WlKJT8gtefEqeymoWJE9LtAG3JyL2vUhFQ==
+maps.mnchester.uk.	3600	IN	A	46.23.89.226
+maps.mnchester.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. cu/RsGranuiENUHKQx2Cj60fOoLGdYzbjDArq1VDMu4G6a5dDCCmlbWmv60bRAWCUSI3k09uuhWkwgKHXo9hWw==
+uskogthujagepv05atubv13e7r9nofqp.mnchester.uk.	3600	IN	NSEC3	1 1 1 7c75c15afb368d1ae99db24ab9a57dea4202e227  vt82i3cf2nthdvprjbplq37s2ah7bpfe A RRSIG 
+uskogthujagepv05atubv13e7r9nofqp.mnchester.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. g8YSJRmC7GsJMwPe+9g1dr+CSChuF72M80phaZsFMn6uV0borVZCNhSr432+z3RR5i59WifXdjb2AXV3eWuXXA==
+marketplace.mnchester.uk.	3600	IN	A	46.23.89.226
+marketplace.mnchester.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. 3s/3hDq4AIe8sOAah6DaMIuW3jF4VMjToMS9VhnuLdhq8/CT98bYt1GB/n3JNhLRNSihIfFt4yJwk7JavQ3slw==
+vt82i3cf2nthdvprjbplq37s2ah7bpfe.mnchester.uk.	3600	IN	NSEC3	1 1 1 7c75c15afb368d1ae99db24ab9a57dea4202e227  3o73qugl1pc42cj6ru5ield4ka4ojck4 A RRSIG 
+vt82i3cf2nthdvprjbplq37s2ah7bpfe.mnchester.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. PggsfZP/iXKgEGCHezsxaG8Upy5nB9jb7DOjs9wjg4ele2NQwQqyww0kjKfXg2QbYp2TCHF0EIPge0v6fXrryg==
+playlist.mnchester.uk.	3600	IN	A	46.23.89.226
+playlist.mnchester.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. /rs+yrZVRUZaZpgfFiqCWzBpOVOdqqKhcDq0NvJnXUvOcNLWtoDbsqtV6YaC/FSapGWpjbVgEapmzDz7wqndSw==
+s62ue7b0t3fmcqid2nio23nhjtrdflnk.mnchester.uk.	3600	IN	NSEC3	1 1 1 7c75c15afb368d1ae99db24ab9a57dea4202e227  uskogthujagepv05atubv13e7r9nofqp A RRSIG 
+s62ue7b0t3fmcqid2nio23nhjtrdflnk.mnchester.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. 6W7CWLcpoxF1iWRXSbjqyCgiaIp0bWGXwtVYDHIKQIyLzlv9cR/uEJszxeAfBRCS2OkDjxFjy0/QiYgQDsqFWg==
+takeaway.mnchester.uk.	3600	IN	A	46.23.89.226
+takeaway.mnchester.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. 8KiW8rXrS/3aKfjHyP3rLTbZZH7afh+EOayFfCCyxegMVLonBflO7tewy+1woQNsEStKOTsywECp+ZaoyumW7w==
+9i899lf41b8iuajaps5uhuhk5sp47fk7.mnchester.uk.	3600	IN	NSEC3	1 1 1 7c75c15afb368d1ae99db24ab9a57dea4202e227  d17a741eco9iu939e5l0k2l4l8kt0u4r A RRSIG 
+9i899lf41b8iuajaps5uhuhk5sp47fk7.mnchester.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. kAqZAbKO1+zFjfAZBGi17p9ELrMuzGw+IMcsLt8Ijg+yrNCfwmIkBpsj2Hv4GHVpr2lEG2ZyPXCGx0yYRM1Bew==
+tv.mnchester.uk.	3600	IN	A	46.23.89.226
+tv.mnchester.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. c3PyiZo0nhE5NW8dloaZkbGrJak6ZdXJUtnt4MlbkyGvwt/tokJG3jbp1aolaen0UPxBkD62kV1+mmJo4jq4jg==
+7pcd446sq1ehv3kdodm8l4q62gd3chku.mnchester.uk.	3600	IN	NSEC3	1 1 1 7c75c15afb368d1ae99db24ab9a57dea4202e227  9i899lf41b8iuajaps5uhuhk5sp47fk7 A RRSIG 
+7pcd446sq1ehv3kdodm8l4q62gd3chku.mnchester.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170621 20260518170621 16184 mnchester.uk. vD8BhIBTD2GhGOJWTtvIWePhP/+iHu/+Nz0WnRxQMVAibLPzu/PzlY9qoTqwRmSdj12BvcKBID6k/b3MGBkAeQ==

@@ -1,0 +1,20 @@
+discordb.org.	3600	IN	SOA	ns.brgen.no. hostmaster.discordb.org. 2026051819 1800 900 604800 86400
+discordb.org.	3600	IN	RRSIG	SOA 13 2 3600 20260615170639 20260518170639 29249 discordb.org. bgCMk1JA0ne2K2WUanRMS4+Kc2P1aTtdDV688clt/1QXcuNkSMP3X42yATh171VMZSqU70X4rPj69lyFdkZ9tw==
+discordb.org.	3600	IN	A	46.23.89.226
+discordb.org.	3600	IN	RRSIG	A 13 2 3600 20260615170639 20260518170639 29249 discordb.org. hxy9vZJlosaooNvVc+OwUDvlBA5DbMXORjFiHa3kxcV5IK7iK1Zy14Zo85aG4dM6fDvlkvNp6DjNg50Kf3v3iA==
+discordb.org.	3600	IN	NS	ns.hyp.net.
+discordb.org.	3600	IN	NS	ns.brgen.no.
+discordb.org.	3600	IN	RRSIG	NS 13 2 3600 20260615170639 20260518170639 29249 discordb.org. 0gIiENbDK47Suf+I8c1QnfnuIy5nHL4MxLgRZLGiPsISYWyb4ZIkpeTVI3Edjf7cxLXVrsBsQUQ+ycHMd9z5VQ==
+discordb.org.	3600	IN	MX	10 mail.discordb.org.
+discordb.org.	3600	IN	RRSIG	MX 13 2 3600 20260615170639 20260518170639 29249 discordb.org. xoFjC23dvHqLNUTTICs3+otLv+683q4qKCW3cn+QbqcnVX8sqCVDFtsYe7e8eDsGKywKpGmDYrVH/KaWifyb0A==
+discordb.org.	3600	IN	DNSKEY	256 3 13 9qscR0jODABxV/1ZdYT1YMoHTNqcSK6ZeSg+hWdIxOazf63V8+MJziIuspeX8bpRJuSDlStRFCeaLzlLSwJYuw== ;{id = 29249 (zsk), size = 256b}
+discordb.org.	3600	IN	DNSKEY	257 3 13 2t1EFp9TtPDf+orvPMey313ku85kKvR2jePCIwTCyBKugpJ+78FlxoZgNgTAKgf+a1VxUmwyxcVCuZoBEZ/Qqw== ;{id = 18885 (ksk), size = 256b}
+discordb.org.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170639 20260518170639 18885 discordb.org. OrII3FBqJMwWM+pH2VcA0Uq2fc+Z4b+4QaP2hzDGphOSZwiI9f8oEaZJ+4V80hfLc1dhAv+mwiLTUi4qapVY2Q==
+discordb.org.	3600	IN	NSEC3PARAM	1 0 1 5b78169e17a26cbb1cdbb5206bbb8088f0e9da47 
+discordb.org.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170639 20260518170639 29249 discordb.org. 7oQxY7CD6F7bakqGPn4j+81GfegAthzSnP+uJi+CDQTtK/+0uvFHZQUK47Ya3THLvEZ4t0XBBAQXiOmdMpn2yw==
+4npc67ss7imddropetgdc3l238toja51.discordb.org.	3600	IN	NSEC3	1 1 1 5b78169e17a26cbb1cdbb5206bbb8088f0e9da47  e8jfipebbm8ai9ki133i9o1fjosuc42n A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+4npc67ss7imddropetgdc3l238toja51.discordb.org.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170639 20260518170639 29249 discordb.org. mHGZI1f4xkMAQ3gLXkYkpxDYfsSQ5im/Fjv89YP3mzRk8mvubRjmCO7Rtb9abJhrtMtnX9nvwfVzMSj3ty8DeQ==
+mail.discordb.org.	3600	IN	A	46.23.89.226
+mail.discordb.org.	3600	IN	RRSIG	A 13 3 3600 20260615170639 20260518170639 29249 discordb.org. Ega5LHia4yMqAqZ1YjDk6LqVSbvYZK23Nh/CdcRpqjkswJshyzY+ulGCuiu+7yUmty2F4P/yCthpXvQxpcx0mQ==
+e8jfipebbm8ai9ki133i9o1fjosuc42n.discordb.org.	3600	IN	NSEC3	1 1 1 5b78169e17a26cbb1cdbb5206bbb8088f0e9da47  4npc67ss7imddropetgdc3l238toja51 A RRSIG 
+e8jfipebbm8ai9ki133i9o1fjosuc42n.discordb.org.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170639 20260518170639 29249 discordb.org. AbzmVXNPuo0pFj1diu+SvP2MuunQyc9qISY+rEdyR/nVVKI2rAqkowAZ1wSq91V2UYd2ZP3gC+sgh3x5Y8WIqQ==

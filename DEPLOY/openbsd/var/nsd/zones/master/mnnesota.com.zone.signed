@@ -1,0 +1,44 @@
+mnnesota.com.	3600	IN	SOA	ns.brgen.no. hostmaster.mnnesota.com. 2026051819 1800 900 604800 86400
+mnnesota.com.	3600	IN	RRSIG	SOA 13 2 3600 20260615170634 20260518170634 51391 mnnesota.com. gUPvApgEl5Qb61xHqtdevdfwmyM85Z8c+fLhQfNRH7b1mkDUdzyGl0F+YJutHUOsR14enZ/y21fDeDO+GXGDng==
+mnnesota.com.	3600	IN	A	46.23.89.226
+mnnesota.com.	3600	IN	RRSIG	A 13 2 3600 20260615170634 20260518170634 51391 mnnesota.com. pC6qjWXIs5jFCvYKPvqKWqv2Lo54cXGc43l6e15E90ehN/NBOcx1K3Z81noqYZXClK659NBYbfmDBKEQ0+SqEA==
+mnnesota.com.	3600	IN	NS	ns.hyp.net.
+mnnesota.com.	3600	IN	NS	ns.brgen.no.
+mnnesota.com.	3600	IN	RRSIG	NS 13 2 3600 20260615170634 20260518170634 51391 mnnesota.com. h7J09NOeJRBk45aP5SMY8DvSOzWO8ZezFzuAGpYzqX4wlb+rPko4/10sBX82Wf/1GWbPeW+UEZWIGPAc5DD74A==
+mnnesota.com.	3600	IN	MX	10 mail.mnnesota.com.
+mnnesota.com.	3600	IN	RRSIG	MX 13 2 3600 20260615170634 20260518170634 51391 mnnesota.com. RjTByfce9aLYhXtU+aT2W4hC4ufJruMeRjwKdpgDKzr5icMlpRaCbeARd1qpmkmie+piQW+iGsiJ/fhSxUMUUQ==
+mnnesota.com.	3600	IN	DNSKEY	256 3 13 8zMy7YhZepmpsIOloR4gat90bYPClb3BoVnDRb+ozUDYprVXbha1NeavxEfq2uPyWoWA1Evwkl7FALneNmNT6w== ;{id = 51391 (zsk), size = 256b}
+mnnesota.com.	3600	IN	DNSKEY	257 3 13 ULNdX11zoeQwrFWcegaM0g+x4TKN3DpqThL4r2+R0Bl03scrBZp2+peuXsL/B2TtDFL249yUJjKJfOQRlO3FKg== ;{id = 24283 (ksk), size = 256b}
+mnnesota.com.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170634 20260518170634 24283 mnnesota.com. 6b/+I94lQCsiy7x+OaiXVrg+yKiKIK55ZE2O7j1zr6o9qX2v0/JDrlb7NnZ1ajXDPDKrRNbBWuzi1GdXKpBnLQ==
+mnnesota.com.	3600	IN	NSEC3PARAM	1 0 1 9658d133bbf95a9dd6e0dce58be3e89feea687ca 
+mnnesota.com.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170634 20260518170634 51391 mnnesota.com. HzrpjUzjlZCmcAkCCOBz0h7706guGgXNYVHf35WCLmeQTgPeGhM4uGaObCkzXMAM3TZTMKqug4Lz16vjBZkWqw==
+oafb9atulrm8325vo0ibm18i49c7iri7.mnnesota.com.	3600	IN	NSEC3	1 1 1 9658d133bbf95a9dd6e0dce58be3e89feea687ca  thv2sjss008npdhbqemfk1lplrcrjhbt A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+oafb9atulrm8325vo0ibm18i49c7iri7.mnnesota.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. jG1KDST5QjF3Vm33shjmASn7EapGbLZ3suTNvI35ditlltVMRjA606wxOb/ujXC1uNCSHr1Pc23wCh/MCv7LBQ==
+dating.mnnesota.com.	3600	IN	A	46.23.89.226
+dating.mnnesota.com.	3600	IN	RRSIG	A 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. DH60SLp+gIFHKYwK+RIUctnCU6wp87W2lDRWOBsUdFeEoL2POkJdo8rXVhj8kcOOt/3eLMgE+YA4wRzP9khvNQ==
+eg9vghv23p79rbmvctf9ef2n01ahfvi8.mnnesota.com.	3600	IN	NSEC3	1 1 1 9658d133bbf95a9dd6e0dce58be3e89feea687ca  oafb9atulrm8325vo0ibm18i49c7iri7 A RRSIG 
+eg9vghv23p79rbmvctf9ef2n01ahfvi8.mnnesota.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. NNSG9FkD8ZjCL/A9YYvjDIh6ESELun+qYE/r3+7r5vT0Wt3AmU2/XKUY8hl6lI7deXudveenCNfGWd+z6oNBug==
+mail.mnnesota.com.	3600	IN	A	46.23.89.226
+mail.mnnesota.com.	3600	IN	RRSIG	A 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. tYwlFzQxsz3Au6m6w5UGb/jWFrlM4Y30NxPrGQMGfxhe6vQBqD6xTQOJ/ePEdW2oDCbDNKwgZmcAYkswPtCRsQ==
+thv2sjss008npdhbqemfk1lplrcrjhbt.mnnesota.com.	3600	IN	NSEC3	1 1 1 9658d133bbf95a9dd6e0dce58be3e89feea687ca  uvavfjbi2rj6ks3rqguu4b7nv0kvebd6 A RRSIG 
+thv2sjss008npdhbqemfk1lplrcrjhbt.mnnesota.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. EWxNrG9knhPfqFwHAgVPAio2mC9/fhTH04Pma7w9cq+Z5iPjyUj22NY1RGJQbgTGm4aHWcz/cctPly4GXKEkAg==
+maps.mnnesota.com.	3600	IN	A	46.23.89.226
+maps.mnnesota.com.	3600	IN	RRSIG	A 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. 2lH8T1CDiZQuPwluIggcaRbWQTYdatwDRbyQ/p7pdW4fCP7Bwl3tXvu8791PRPHJUZdekbBL4woq4FD8DxFsTQ==
+5ba77216b0bh7tt3od8e20nalhd46taq.mnnesota.com.	3600	IN	NSEC3	1 1 1 9658d133bbf95a9dd6e0dce58be3e89feea687ca  6fugr9hu8mof52arh43u6ja5iih3jc09 A RRSIG 
+5ba77216b0bh7tt3od8e20nalhd46taq.mnnesota.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. IgeLTZH58UWOl3WdB88fOeoAD0eW1Ef0qQMba4l69Ba9fArwtYUZhnLp4xXJYXHtwlRqEz3ddgcPWQobnYSHqw==
+marketplace.mnnesota.com.	3600	IN	A	46.23.89.226
+marketplace.mnnesota.com.	3600	IN	RRSIG	A 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. mL9eAW22CQETj4vjV3pofjd5UPFEyAeJ2iXS6uadahsK2EIFDt8cQkJkU3OVXm+mUiwr3vzbp1o+qej4KbQnRw==
+vqi7k0121ilsggheldahsjkcfv142evm.mnnesota.com.	3600	IN	NSEC3	1 1 1 9658d133bbf95a9dd6e0dce58be3e89feea687ca  05ca8lb17f89vlsvacsgmc0ddsosms3o A RRSIG 
+vqi7k0121ilsggheldahsjkcfv142evm.mnnesota.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. Lcc5+FoJr1UZRfZWC6dhI2DOnRIaXcirs8qDUFK0BZz2yV1fwp8O/KFBWt1lcpC2GEsda2/nkfzo8mP3sMEYFQ==
+playlist.mnnesota.com.	3600	IN	A	46.23.89.226
+playlist.mnnesota.com.	3600	IN	RRSIG	A 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. GrDSACj6v/68cfg8irGXVf3c0ETmSEe/1GWcevmTTlL79wORZ6a0v+d4GS8AaTzJboVnop31dl53nip34Evz3w==
+6fugr9hu8mof52arh43u6ja5iih3jc09.mnnesota.com.	3600	IN	NSEC3	1 1 1 9658d133bbf95a9dd6e0dce58be3e89feea687ca  eg9vghv23p79rbmvctf9ef2n01ahfvi8 A RRSIG 
+6fugr9hu8mof52arh43u6ja5iih3jc09.mnnesota.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. nLu0t7cD06aDsJUCtmZdKVSghLLQZJ97tFX4wAIMMu7ecgJWtTrQw/mmVtfX1/t5GyvyMt+0veRkpzwQXJmFKQ==
+takeaway.mnnesota.com.	3600	IN	A	46.23.89.226
+takeaway.mnnesota.com.	3600	IN	RRSIG	A 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. EUkBpKC4fMAxLVkNm/AFrYPOw8CkxW5mk4RalNJDV9fRJsRD+GrNCLRwMcib5K44bPvSTqitn5dd7Ovi2YpJag==
+05ca8lb17f89vlsvacsgmc0ddsosms3o.mnnesota.com.	3600	IN	NSEC3	1 1 1 9658d133bbf95a9dd6e0dce58be3e89feea687ca  5ba77216b0bh7tt3od8e20nalhd46taq A RRSIG 
+05ca8lb17f89vlsvacsgmc0ddsosms3o.mnnesota.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. 0VRj3mCCE3VlLk5Qzf1FFm0n6+f+pzbF/CM1QTrxQG5Blz96fDUwtEgC5eTU/XHdCpDudh/3WW/U3HS/C+eb9w==
+tv.mnnesota.com.	3600	IN	A	46.23.89.226
+tv.mnnesota.com.	3600	IN	RRSIG	A 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. Quhub7NffXWPv/qcK7SwVB50dBpuxwkNjdnofHYTahu0VcqbpCD7Qomhilv4w6zaSaOyUyBlgqk2JgAOGurIxQ==
+uvavfjbi2rj6ks3rqguu4b7nv0kvebd6.mnnesota.com.	3600	IN	NSEC3	1 1 1 9658d133bbf95a9dd6e0dce58be3e89feea687ca  vqi7k0121ilsggheldahsjkcfv142evm A RRSIG 
+uvavfjbi2rj6ks3rqguu4b7nv0kvebd6.mnnesota.com.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170634 20260518170634 51391 mnnesota.com. SB6b+2U1ncGhCb46Dl6SzLjGVzIPA8psEkroihkH/IA433s9+kX8/H8uNX9JXkJLWoUQKiJk76vKy+ulub8ngw==

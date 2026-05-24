@@ -1,0 +1,44 @@
+glasgw.uk.	3600	IN	SOA	ns.brgen.no. hostmaster.glasgw.uk. 2026051819 1800 900 604800 86400
+glasgw.uk.	3600	IN	RRSIG	SOA 13 2 3600 20260615170619 20260518170619 23917 glasgw.uk. UsfL4DCDmlMQv1/3OF3PS7GuaSf25LqpsnlBYO3ZdEhO72lKleVOiGew3RrxtDUFpADdNKeNITgZDpOxy3rteg==
+glasgw.uk.	3600	IN	A	46.23.89.226
+glasgw.uk.	3600	IN	RRSIG	A 13 2 3600 20260615170619 20260518170619 23917 glasgw.uk. Pyxjut78fYrk7hpnMiqoyQHxrjnxu1j30RK7NE+1FFljCAAdTaXywhLhAAVZ5CqDsZNAqyZzM2L3tbZZ/tH5rg==
+glasgw.uk.	3600	IN	NS	ns.hyp.net.
+glasgw.uk.	3600	IN	NS	ns.brgen.no.
+glasgw.uk.	3600	IN	RRSIG	NS 13 2 3600 20260615170619 20260518170619 23917 glasgw.uk. Zf6BCxoWqHpju17WJaOw5o8bhwP6Cy9Zqi+YNQXd7xVaMldhQBFfYLOzQudIuJ1lflwWAFXOyxvpfIGTj0QaLw==
+glasgw.uk.	3600	IN	MX	10 mail.glasgw.uk.
+glasgw.uk.	3600	IN	RRSIG	MX 13 2 3600 20260615170619 20260518170619 23917 glasgw.uk. BhtlkvJCrzRco3Lpv6gO+eiv1iqxZyHGMvSVQOnn9EfOMduE4SxG9ONhyCgZk4++r1L94CMP8ZE9tnM7QYyHrQ==
+glasgw.uk.	3600	IN	DNSKEY	256 3 13 Syj24MN6tS6SP3KMuKzoDtae6Sy7PRmKEqLGWStKvjQMCd1PhIxVZUoWlgm+snwyAZdVTzSbHo8xoohrBbFZ+A== ;{id = 23917 (zsk), size = 256b}
+glasgw.uk.	3600	IN	DNSKEY	257 3 13 KRxPcq4SIJbUjxGdvGxvQueL4E9MQSfKEKoeoI71k0gzeZw4Qtvw1H5hbfHwVqJqQgQqnu0cQGkNMTp3ty8Azg== ;{id = 1750 (ksk), size = 256b}
+glasgw.uk.	3600	IN	RRSIG	DNSKEY 13 2 3600 20260615170619 20260518170619 1750 glasgw.uk. 6EMeo9Dqv0DPKD8HEhrgRAweFa6EcOyOu40POErrzyLBXWdGGFdPqNhwFJbHdMRUmCAgIuLOwL6aUf5V4OcUUA==
+glasgw.uk.	3600	IN	NSEC3PARAM	1 0 1 3ddf9fda111af1dad93170209d15b2bf1acb79fb 
+glasgw.uk.	3600	IN	RRSIG	NSEC3PARAM 13 2 3600 20260615170619 20260518170619 23917 glasgw.uk. a9TrW3ZsHrUuzGfh44PJbyQs88eDY+wLDvHnO0WdDQsK0+lUjeG22483+8mXdfdT6Z6ufaDLpqPWe/CDcEmQ8A==
+q6a2o92lvskolaunem0814a2pstougv0.glasgw.uk.	3600	IN	NSEC3	1 1 1 3ddf9fda111af1dad93170209d15b2bf1acb79fb  qorct07jj6fn12n2lig4mbd167cm8dm9 A NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+q6a2o92lvskolaunem0814a2pstougv0.glasgw.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170619 20260518170619 23917 glasgw.uk. C251lqvZzajJs3JsnCR1YzOSTobi7Y34IFuXkuQJXdYMCovcHZOntDTpiWxv27/kRNEDbKeTHq2dY41QGhWOHg==
+dating.glasgw.uk.	3600	IN	A	46.23.89.226
+dating.glasgw.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170619 20260518170619 23917 glasgw.uk. HhmAgkuIbA9BFcq1gxEBC2qB2mSIUs7obWBqx1rUH+GezQZxw0/l4BO4tOhZOif74G8ab0tmnSyT+2a2Epvn1g==
+72sigr0fengsdgehq9b8q311r0ubgq66.glasgw.uk.	3600	IN	NSEC3	1 1 1 3ddf9fda111af1dad93170209d15b2bf1acb79fb  9jvbdkdguu50ugafqvcod0nqbdjqekov A RRSIG 
+72sigr0fengsdgehq9b8q311r0ubgq66.glasgw.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170619 20260518170619 23917 glasgw.uk. cF5YyZZxXCa+mIW43rXjh74jjTWlXBguspsJXk8ozPY4YKSNO1OvS3at6f2tMs/0lHrC45Q7UktjFuX1EKv0tw==
+mail.glasgw.uk.	3600	IN	A	46.23.89.226
+mail.glasgw.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170619 20260518170619 23917 glasgw.uk. Xeqv/kaK+/lAafbbWAGCEUQyPCO+9a3oqZG2t096+0ZDtgzeZ47lGWkBId6a3PPzkH6ATZCFaVdvSHSyrioaTw==
+3132umtd035vhn5o600672ehit2aslo1.glasgw.uk.	3600	IN	NSEC3	1 1 1 3ddf9fda111af1dad93170209d15b2bf1acb79fb  72sigr0fengsdgehq9b8q311r0ubgq66 A RRSIG 
+3132umtd035vhn5o600672ehit2aslo1.glasgw.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170619 20260518170619 23917 glasgw.uk. 7HsudkgchGmY8IplM1E83ticxJdgNt+DIyji0oRicl2/VkwqXc7yt+lX/Wpkl7ovczF/k0ZIvaD+z4nJcSCP9w==
+maps.glasgw.uk.	3600	IN	A	46.23.89.226
+maps.glasgw.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170619 20260518170619 23917 glasgw.uk. tXG+zxLlfIE+oh/8qVOGatfcnaaZKN4xswdpXMzGoEWszLT3GheYPZrWx50y9KIKZV6v1mA2HGGR7g0AEXTF5A==
+qorct07jj6fn12n2lig4mbd167cm8dm9.glasgw.uk.	3600	IN	NSEC3	1 1 1 3ddf9fda111af1dad93170209d15b2bf1acb79fb  tsd9jaf5qik7jk4gldec55n0bpbe476l A RRSIG 
+qorct07jj6fn12n2lig4mbd167cm8dm9.glasgw.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170619 20260518170619 23917 glasgw.uk. sp/lNCW9W9mqmHfCfoZiWci6uN2jOko41xbvMR6pDGBfzOuhujywh7qxOQFGEBxi7Z7eXhucBEoM/8AV5Ma/BQ==
+marketplace.glasgw.uk.	3600	IN	A	46.23.89.226
+marketplace.glasgw.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170620 20260518170620 23917 glasgw.uk. rKkdIhweHwPuiLf9BD26abFTnvmVZhOraYTXpgDZoGvdruK5zbar8KvL8RuxK+E8q0cASYw9n85Fg2RSlfNyXg==
+9jvbdkdguu50ugafqvcod0nqbdjqekov.glasgw.uk.	3600	IN	NSEC3	1 1 1 3ddf9fda111af1dad93170209d15b2bf1acb79fb  d6fcom9jfg0v193fiql2et5lg7jdn04a A RRSIG 
+9jvbdkdguu50ugafqvcod0nqbdjqekov.glasgw.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170620 20260518170620 23917 glasgw.uk. WU5RO+s4BkmI//4n7XUnnwFT17kjHk4yNLZYG2YMPLtuKULHz1x3bcSDjaoUASpm3sNMLd6RYsAzi2fcftvCtA==
+playlist.glasgw.uk.	3600	IN	A	46.23.89.226
+playlist.glasgw.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170620 20260518170620 23917 glasgw.uk. aYEKjj9CkGOlHctKq3sprhimB1Y2ErOhOz9wK7nKSZEAzUVYtu/tsZyqkcHXLX9Yv1TSgsmbmQHH96hJtujZ1g==
+d6fcom9jfg0v193fiql2et5lg7jdn04a.glasgw.uk.	3600	IN	NSEC3	1 1 1 3ddf9fda111af1dad93170209d15b2bf1acb79fb  paovii90bacs6dejri3d7gqeoafosu5o A RRSIG 
+d6fcom9jfg0v193fiql2et5lg7jdn04a.glasgw.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170620 20260518170620 23917 glasgw.uk. UMg1m3oxRFWZ3+sltchWkulEDTceCOaEy2sDWTayV0noOMXWzzp3fTNYwN/4jGtTTjpkNbbkNjTcbnp+XZytiQ==
+takeaway.glasgw.uk.	3600	IN	A	46.23.89.226
+takeaway.glasgw.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170620 20260518170620 23917 glasgw.uk. X3iRtx2pIo8scKBsQqhYTFBY4UDTpRSd5YKT3jzzrIzRbKz3OQQcBGfPlwdW6FFnLx/xgQ0kv/nU1j1jHjzx7w==
+paovii90bacs6dejri3d7gqeoafosu5o.glasgw.uk.	3600	IN	NSEC3	1 1 1 3ddf9fda111af1dad93170209d15b2bf1acb79fb  q6a2o92lvskolaunem0814a2pstougv0 A RRSIG 
+paovii90bacs6dejri3d7gqeoafosu5o.glasgw.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170620 20260518170620 23917 glasgw.uk. SON+21jouE0xtRiEIwbTDuHHthnTTFJT7iBSc+oOHomcOw5lxYzeed/YthK0DReZRiqsgzm4hDDohZxsVyyGwQ==
+tv.glasgw.uk.	3600	IN	A	46.23.89.226
+tv.glasgw.uk.	3600	IN	RRSIG	A 13 3 3600 20260615170620 20260518170620 23917 glasgw.uk. Me2SaeR9YeTkHpVYtdgP3sAg01GyfPJZG8gcrgCFOKg0LxGY6qPGSAGG0CvzWgSERHIhnYGvRctZeOm3Upcw3g==
+tsd9jaf5qik7jk4gldec55n0bpbe476l.glasgw.uk.	3600	IN	NSEC3	1 1 1 3ddf9fda111af1dad93170209d15b2bf1acb79fb  3132umtd035vhn5o600672ehit2aslo1 A RRSIG 
+tsd9jaf5qik7jk4gldec55n0bpbe476l.glasgw.uk.	3600	IN	RRSIG	NSEC3 13 3 3600 20260615170620 20260518170620 23917 glasgw.uk. xA9425UpRyus4R39XgGJPn9SWgcqCehp4VqZLUn0SzyxfNu5yxCo0Z1wE0UaSkJuFQr5oK9qagVsPAZj/uXwqA==
