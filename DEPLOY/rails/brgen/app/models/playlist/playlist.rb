@@ -14,11 +14,14 @@ class Playlist::Playlist < ApplicationRecord
   scope :recent,            -> { order(created_at: :desc) }
 
   def add_track!(track, user:)
-    pos = playlist_tracks.maximum(:position).to_i + 1
-    playlist_tracks.find_or_create_by!(track: track) do |pt|
-      pt.position = pos
-      pt.user     = user
-    end
+    position = playlist_tracks.maximum(:position).to_i + 1
+    playlist_track = playlist_tracks.find_or_initialize_by(track: track)
+    return playlist_track if playlist_track.persisted?
+
+    playlist_track.position = position
+    playlist_track.user = user
+    playlist_track.save!
     increment!(:tracks_count)
+    playlist_track
   end
 end
