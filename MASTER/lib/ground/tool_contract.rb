@@ -55,6 +55,16 @@ module Master
         name: :scan, inputs: { path: :required, depth: :optional },
         output_shape: [:findings], permission: :read, timeout_s: 60, max_retries: 0,
         side_effects: [:none], category: :judge
+      ),
+      postpro: Contract.new(
+        name: :postpro, inputs: { args: :optional },
+        output_shape: [:stdout, :stderr, :exit_code], permission: :exec, timeout_s: 600,
+        max_retries: 0, side_effects: [:process, :filesystem], category: :reach
+      ),
+      repligen: Contract.new(
+        name: :repligen, inputs: { args: :optional },
+        output_shape: [:stdout, :stderr, :exit_code], permission: :network, timeout_s: 900,
+        max_retries: 0, side_effects: [:network, :process, :filesystem], category: :reach
       )
     }.freeze
 
