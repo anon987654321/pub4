@@ -1,0 +1,38 @@
+<main>
+  <header>
+    <h1>Declutter</h1>
+    <p>Review low-use, duplicate, and decision-ready wardrobe items.</p>
+  </header>
+
+  <% if @summary.present? %>
+    <section>
+      <h2>Summary</h2>
+      <dl>
+        <% @summary.each do |key, value| %>
+          <dt><%= key.to_s.humanize %></dt>
+          <dd><%= value %></dd>
+        <% end %>
+      </dl>
+    </section>
+  <% end %>
+
+  <section>
+    <h2>Duplicate groups</h2>
+    <% if @duplicates.present? %>
+      <% @duplicates.each do |group| %>
+        <article>
+          <% items = group.respond_to?(:items) ? group.items : Array(group[:items] || group["items"] || group) %>
+          <h3><%= pluralize(items.size, "item") %></h3>
+          <div class="items-grid">
+            <% items.each do |item| %>
+              <%= render "items/item", item: item %>
+              <%= link_to "Review", review_declutter_path(item), class: "btn-sm" %>
+            <% end %>
+          </div>
+        </article>
+      <% end %>
+    <% else %>
+      <p>No duplicate groups need review.</p>
+    <% end %>
+  </section>
+</main>
