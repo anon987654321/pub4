@@ -1,9 +1,21 @@
 <% content_for :title, "Order from #{@restaurant.name}" %>
 
 <header class="page-header">
-  <h1>Order from <%= @restaurant.name %></h1>
-  <p><%= @restaurant.address %></p>
+  <div>
+    <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.city %></p>
+    <h1>Order from <%= @restaurant.name %></h1>
+    <p><%= @restaurant.address %></p>
+  </div>
 </header>
+
+<article>
+  <p><%= @restaurant.description %></p>
+  <div class="chips">
+    <span class="chip">Minimum <%= number_to_currency(@restaurant.min_order_cents.to_i / 100.0, unit: "kr ") %></span>
+    <span class="chip">Delivery <%= number_to_currency(@restaurant.delivery_fee_cents.to_i / 100.0, unit: "kr ") %></span>
+    <span class="chip"><%= @menu_items.size %> available items</span>
+  </div>
+</article>
 
 <%= form_with model: @order, url: takeaway_restaurant_orders_path(@restaurant) do |form| %>
   <%= render "shared/errors", object: @order %>
@@ -12,14 +24,22 @@
     <h2>Menu</h2>
     <% if @menu_items.any? %>
       <% @menu_items.each do |item| %>
-        <article>
-          <h3><%= item.name %></h3>
-          <% if item.description.present? %>
-            <p><%= item.description %></p>
-          <% end %>
-          <p><%= number_to_currency(item.price_cents.to_i / 100.0, unit: "kr ") %></p>
-          <%= label_tag "takeaway_order_items_#{item.id}", "Quantity" %>
-          <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, id: "takeaway_order_items_#{item.id}" %>
+        <article style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+          <div>
+            <h3><%= item.name %></h3>
+            <% if item.description.present? %>
+              <p><%= item.description %></p>
+            <% end %>
+            <p class="dim">
+              <%= number_to_currency(item.price_cents.to_i / 100.0, unit: "kr ") %>
+              <% if item.vegetarian? %> · vegetarian<% end %>
+              <% if item.vegan? %> · vegan<% end %>
+            </p>
+          </div>
+          <div>
+            <%= label_tag "takeaway_order_items_#{item.id}", "Qty" %>
+            <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, id: "takeaway_order_items_#{item.id}", style: "width:72px" %>
+          </div>
         </article>
       <% end %>
     <% else %>
@@ -31,12 +51,17 @@
     <h2>Delivery</h2>
     <div class="field">
       <%= form.label :delivery_address %>
-      <%= form.text_field :delivery_address, required: true %>
+      <%= form.text_field :delivery_address, required: true, autocomplete: "street-address" %>
     </div>
     <div class="field">
       <%= form.label :special_instructions %>
-      <%= form.text_area :special_instructions, rows: 3 %>
+      <%= form.text_area :special_instructions, rows: 3, placeholder: "Door code, allergies, delivery notes…" %>
     </div>
+  </section>
+
+  <section>
+    <h2>Payment</h2>
+    <p class="dim">Payment is arranged directly with the restaurant for now.</p>
   </section>
 
   <%= form.submit "Place order", class: "btn btn-primary" %>
