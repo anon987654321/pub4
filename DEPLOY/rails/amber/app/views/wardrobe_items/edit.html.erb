@@ -1,0 +1,6 @@
+<% content_for :title, t("amber.wardrobe.edit", default: "Edit wardrobe item") %>
+
+<%= tag.section class: "wardrobe-form" do %>
+  <%= tag.h1 t("amber.wardrobe.edit", default: "Edit wardrobe item") %>
+  <%= render "form", wardrobe_item: @wardrobe_item %>
+<% end %>
