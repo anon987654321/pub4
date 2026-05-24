@@ -23,8 +23,24 @@ class Takeaway::Order < ApplicationRecord
 
   def advance_status!
     idx = STATUSES.index(status)
-    update!(status: STATUSES[idx + 1]) if idx && idx < STATUSES.length - 1
+    return unless idx && idx < STATUSES.length - 1
+
+    update!(status: STATUSES[idx + 1])
+    notify_customer!("Order #{status.humanize.downcase}")
   end
 
-  def total_display   = "#{total_cents.to_i / 100.0} NOK"
+  def total_display = "#{total_cents.to_i / 100.0} NOK"
+
+  private
+
+  def notify_customer!(title)
+    return unless defined?(Notification)
+
+    user.notifications.create!(
+      title: title,
+      body: "Your order from #{restaurant.name} is now #{status.humanize.downcase}.",
+      source_type: self.class.name,
+      source_id: id
+    )
+  end
 end
