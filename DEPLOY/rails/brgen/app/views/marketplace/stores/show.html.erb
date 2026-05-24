@@ -1,0 +1,18 @@
+<% content_for :title, @store.name %>
+
+<%= tag.section class: "marketplace-store" do %>
+  <%= tag.header do %>
+    <%= tag.h1 @store.name %>
+    <%= tag.p @store.vertical&.humanize if @store.vertical.present? %>
+    <%= tag.p @store.description if @store.description.present? %>
+  <% end %>
+
+  <%= tag.div class: "listing-grid" do %>
+    <% @listings.each do |listing| %>
+      <%= tag.article class: "listing-card" do %>
+        <%= tag.h2 link_to(listing.title, marketplace_listing_path(listing)) %>
+        <%= tag.p listing.price_display %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
