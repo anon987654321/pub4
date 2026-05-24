@@ -24,44 +24,50 @@
 <div class="deal-search">
   <%= form_with url: marketplace_listings_path, method: :get, local: true do |f| %>
     <%= f.text_field :q, value: params[:q], placeholder: "Search deals…" %>
+    <%= f.select :category_id,
+          options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
+          { include_blank: "All categories" } %>
     <%= f.submit "Search", class: "btn btn-sm" %>
   <% end %>
 </div>
 
 <% if @categories.any? %>
   <div class="deal-cats">
-    <%= link_to "All", marketplace_listings_path, class: "deal-cat#{" active" unless params[:category]}" %>
+    <%= link_to "All", marketplace_listings_path, class: "deal-cat#{" active" unless params[:category_id]}" %>
     <% @categories.each do |cat| %>
-      <%= link_to cat.name, marketplace_category_path(cat), class: "deal-cat#{" active" if params[:category] == cat.slug}" %>
+      <%= link_to cat.name, marketplace_listings_path(category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" %>
     <% end %>
   </div>
 <% end %>
 
 <% if @listings.any? %>
   <div class="deal-grid">
-    <% @listings.each do |l| %>
+    <% @listings.each do |listing| %>
       <div class="deal-card">
-        <a href="<%= marketplace_listing_path(l) %>" class="deal-card-img">
-          <% if l.photos.attached? %>
-            <%= image_tag l.photos.first, alt: l.title %>
+        <a href="<%= marketplace_listing_path(listing) %>" class="deal-card-img">
+          <% if listing.photos.attached? %>
+            <%= image_tag listing.photos.first, alt: listing.title %>
+          <% else %>
+            <span><%= listing.title.first %></span>
           <% end %>
         </a>
         <div class="deal-card-body">
-          <p class="deal-card-title"><%= l.title %></p>
-          <p class="deal-meta"><%= l.location %> · <%= l.condition %></p>
-          <p class="deal-price"><%= l.price_display %></p>
+          <p class="deal-card-title"><%= listing.title %></p>
+          <p class="deal-meta"><%= listing.location %> · <%= listing.condition %></p>
+          <p class="deal-meta"><%= listing.category&.name %> · <%= pluralize(listing.views_count.to_i, "view") %></p>
+          <p class="deal-price"><%= listing.price_display %></p>
         </div>
-        <%= link_to "View deal", marketplace_listing_path(l), class: "deal-cta" %>
+        <%= link_to "View deal", marketplace_listing_path(listing), class: "deal-cta" %>
       </div>
     <% end %>
   </div>
 <% else %>
-  <div class="empty"><p>No listings yet. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
+  <div class="empty"><p>No listings match this search. <%= link_to("Sell something", new_marketplace_listing_path) if authenticated? %></p></div>
 <% end %>
 
 <%= @pagy.series_nav if @pagy&.pages.to_i > 1 %>
 
 <% content_for :widgets do %>
-  <%= render "shared/affiliate_deals", category: params[:category] %>
+  <%= render "shared/affiliate_deals", category: params[:category_id] %>
   <%= render "shared/email_subscribe" %>
 <% end %>
