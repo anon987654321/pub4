@@ -1,0 +1,29 @@
+<%= form_with model: [:marketplace, store], url: store.persisted? ? marketplace_shop_path(store.slug) : marketplace_shops_path do |form| %>
+  <% if store.errors.any? %>
+    <%= tag.section role: "alert" do %>
+      <%= tag.h2 t("shared.errors", default: "Please review the form") %>
+      <%= tag.ul do %>
+        <% store.errors.full_messages.each do |message| %>
+          <%= tag.li message %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :name %>
+    <%= form.text_field :name, required: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :vertical %>
+    <%= form.select :vertical, Marketplace::Store::VERTICALS.map { |vertical| [vertical.humanize, vertical] }, include_blank: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :description %>
+    <%= form.text_area :description, rows: 5, data: { controller: "textarea-autogrow" } %>
+  <% end %>
+
+  <%= form.submit %>
+<% end %>
