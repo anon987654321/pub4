@@ -1,0 +1,34 @@
+<%= form_with model: wardrobe_item do |form| %>
+  <% if wardrobe_item.errors.any? %>
+    <%= tag.section role: "alert" do %>
+      <%= tag.h2 t("shared.errors", count: wardrobe_item.errors.count, default: "Please review the form") %>
+      <%= tag.ul do %>
+        <% wardrobe_item.errors.full_messages.each do |message| %>
+          <%= tag.li message %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :item_id %>
+    <%= form.number_field :item_id, required: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :condition %>
+    <%= form.select :condition, WardrobeItem::CONDITIONS, include_blank: true %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :acquisition_date %>
+    <%= form.date_field :acquisition_date %>
+  <% end %>
+
+  <%= tag.fieldset do %>
+    <%= form.label :notes %>
+    <%= form.text_area :notes, rows: 4, data: { controller: "textarea-autogrow" } %>
+  <% end %>
+
+  <%= form.submit %>
+<% end %>

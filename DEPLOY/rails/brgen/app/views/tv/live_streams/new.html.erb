@@ -1,0 +1,19 @@
+<% content_for :title, t("tv.live_streams.new", default: "New live stream") %>
+
+<%= tag.section class: "tv-live-stream-form" do %>
+  <%= tag.h1 t("tv.live_streams.new", default: "New live stream") %>
+
+  <%= form_with model: [:tv, @live_stream] do |form| %>
+    <%= tag.fieldset do %>
+      <%= form.label :title %>
+      <%= form.text_field :title, required: true %>
+    <% end %>
+
+    <%= tag.fieldset do %>
+      <%= form.label :description %>
+      <%= form.text_area :description, rows: 5 %>
+    <% end %>
+
+    <%= form.submit %>
+  <% end %>
+<% end %>

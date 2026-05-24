@@ -8,4 +8,11 @@ class Dependency < ApplicationRecord
 
   validates :dep_type, inclusion: { in: TYPES }, allow_nil: true
   validates :port_id, uniqueness: { scope: %i[depends_on_id dep_type] }
+
+  scope :runtime, -> { where(dep_type: "run") }
+  scope :buildtime, -> { where(dep_type: "build") }
+
+  def label
+    [dep_type.presence || "run", depends_on&.name].compact.join(": ")
+  end
 end

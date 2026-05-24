@@ -1,0 +1,23 @@
+<% content_for :title, @live_stream.title %>
+
+<%= tag.article class: "tv-live-stream" do %>
+  <%= tag.header do %>
+    <%= tag.h1 @live_stream.title %>
+    <%= tag.p @live_stream.status %>
+  <% end %>
+
+  <%= tag.section class: "live-stream-details" do %>
+    <%= tag.p @live_stream.description if @live_stream.description.present? %>
+    <%= tag.p t("tv.live_streams.viewers", count: @live_stream.viewer_count, default: "%{count} viewers") %>
+  <% end %>
+
+  <%= tag.section class: "live-stream-chat" do %>
+    <%= tag.h2 t("tv.live_streams.chat", default: "Chat") %>
+    <%= turbo_stream_from "tv:live_stream:#{@live_stream.id}:entries" %>
+    <%= tag.div id: "tv-live-stream-#{@live_stream.id}-entries" do %>
+      <% @stream_chats.each do |entry| %>
+        <%= tag.p entry.message %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

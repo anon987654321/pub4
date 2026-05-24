@@ -1,0 +1,48 @@
+<%# Copy selected examples into each app. Keep plain links/forms functional without JS. %>
+
+<%# Notification toast target %>
+<div
+  data-controller="notification"
+  data-notification-delay-value="2500"
+  class="notification"
+  hidden>
+</div>
+
+<%# Clipboard: copy link/command/text %>
+<div data-controller="clipboard" data-clipboard-success-content-value="Copied">
+  <input data-clipboard-target="source" type="text" value="<%= local_assigns.fetch(:copy_text, request.original_url) %>" readonly>
+  <button type="button" data-action="clipboard#copy" data-clipboard-target="button">Copy</button>
+</div>
+
+<%# Reveal: progressive advanced panel %>
+<section data-controller="reveal">
+  <button type="button" data-action="reveal#toggle">Advanced</button>
+  <div data-reveal-target="item" hidden>
+    <%= yield if block_given? %>
+  </div>
+</section>
+
+<%# Content loader + auto submit: live search container %>
+<form action="<%= local_assigns.fetch(:search_path, request.path) %>" method="get" data-controller="auto-submit">
+  <input type="search" name="q" value="<%= params[:q] %>" placeholder="Search" data-action="input->auto-submit#submit">
+</form>
+<div data-controller="content-loader" data-content-loader-url-value="<%= local_assigns.fetch(:search_path, request.path) %>">
+  <p>Loading…</p>
+</div>
+
+<%# Lightbox gallery %>
+<div data-controller="lightbox">
+  <% Array(local_assigns[:images]).each do |image| %>
+    <a href="<%= image %>"><img src="<%= image %>" alt=""></a>
+  <% end %>
+</div>
+
+<%# Sortable list %>
+<ul data-controller="sortable" data-sortable-resource-name-value="item">
+  <% Array(local_assigns[:items]).each do |item| %>
+    <li data-sortable-update-url="<%= item.respond_to?(:to_param) ? url_for(item) : '#' %>"><%= item %></li>
+  <% end %>
+</ul>
+
+<%# Timeago %>
+<time datetime="<%= Time.current.iso8601 %>" data-controller="timeago"></time>
