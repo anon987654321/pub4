@@ -1,0 +1,23 @@
+<% content_for :title, t("amber.wardrobe.title", default: "Wardrobe") %>
+
+<%= tag.section class: "wardrobe-items" do %>
+  <%= tag.header do %>
+    <%= tag.h1 t("amber.wardrobe.title", default: "Wardrobe") %>
+    <%= link_to t("amber.wardrobe.add", default: "Add item"), new_wardrobe_item_path %>
+  <% end %>
+
+  <% if @wardrobe_items.any? %>
+    <%= tag.div class: "wardrobe-grid" do %>
+      <% @wardrobe_items.each do |wardrobe_item| %>
+        <%= tag.article class: "wardrobe-card" do %>
+          <%= tag.h2 wardrobe_item.item&.title || wardrobe_item.item&.name || t("amber.wardrobe.untitled", default: "Untitled item") %>
+          <%= tag.p wardrobe_item.condition if wardrobe_item.condition.present? %>
+          <%= tag.p wardrobe_item.notes if wardrobe_item.notes.present? %>
+          <%= link_to t("shared.view", default: "View"), wardrobe_item_path(wardrobe_item) %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% else %>
+    <%= tag.p t("amber.wardrobe.empty", default: "No wardrobe items yet.") %>
+  <% end %>
+<% end %>
