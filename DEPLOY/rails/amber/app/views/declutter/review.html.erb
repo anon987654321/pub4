@@ -1,0 +1,81 @@
+<main>
+  <header>
+    <h1>Declutter review</h1>
+    <p><%= @item.title %></p>
+  </header>
+
+  <section>
+    <%= render "items/item", item: @item %>
+  </section>
+
+  <% if @score.present? %>
+    <section>
+      <h2>Score</h2>
+      <p><%= @score %></p>
+    </section>
+  <% end %>
+
+  <% if @action.present? %>
+    <section>
+      <h2>Recommended action</h2>
+      <p><%= @action[:recommendation] || @action["recommendation"] || @action %></p>
+    </section>
+  <% end %>
+
+  <section>
+    <h2>Decision</h2>
+    <%= form_with model: @review, url: update_review_declutter_path(@item), method: :patch do |form| %>
+      <div>
+        <%= form.label :decision %>
+        <%= form.select :decision, %w[keep wear_this_week repair sell donate release], include_blank: true %>
+      </div>
+
+      <div>
+        <%= form.label :reason_kept %>
+        <%= form.text_field :reason_kept %>
+      </div>
+
+      <div>
+        <%= form.label :notes %>
+        <%= form.text_area :notes, rows: 4 %>
+      </div>
+
+      <%= form.submit "Save review" %>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Move item</h2>
+    <nav>
+      <% %w[keep wear_this_week repair sell donate release].each do |target| %>
+        <%= button_to target.humanize, move_declutter_path(@item, target: target), method: :patch, class: "btn-sm" %>
+      <% end %>
+    </nav>
+  </section>
+
+  <section>
+    <h2>Wear-it-this-week challenge</h2>
+    <%= form_with url: challenge_declutter_path(@item), method: :post do |form| %>
+      <div>
+        <%= form.label :due_on %>
+        <%= form.date_field :due_on %>
+      </div>
+      <div>
+        <%= form.label :note %>
+        <%= form.text_field :note %>
+      </div>
+      <%= form.submit "Create challenge" %>
+    <% end %>
+  </section>
+
+  <% if @last_chance.present? %>
+    <section>
+      <h2>Last chance outfits</h2>
+      <ul>
+        <% @last_chance.each do |suggestion| %>
+          <li><%= suggestion.respond_to?(:title) ? suggestion.title : suggestion %></li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</main>
