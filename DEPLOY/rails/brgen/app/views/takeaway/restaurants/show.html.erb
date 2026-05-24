@@ -14,7 +14,7 @@
 <article>
   <p><%= @restaurant.description %></p>
   <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city %></p>
-  <p class="dim">Min order: <%= @restaurant.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= @restaurant.delivery_fee_cents.to_i / 100.0 %> NOK</p>
+  <p class="dim">Min order: <%= @restaurant.min_order_display %> · Delivery: <%= @restaurant.delivery_fee_display %></p>
 </article>
 
 <% if authenticated? && Current.user == @restaurant.user %>
