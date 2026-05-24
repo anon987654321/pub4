@@ -68,6 +68,7 @@ module Master
     now/command_registry/memory_commands.rb
     now/command_registry/work_commands.rb
     now/command_registry/system_commands.rb
+    now/command_registry/tool_commands.rb
     judge/scan/rules/lexical_rules.rb
     judge/scan/rules/ruby_rules.rb
     judge/scan/rules/web_rules.rb
