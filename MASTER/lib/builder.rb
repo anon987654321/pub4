@@ -16,7 +16,7 @@ module Master
       "WriteFile"       => ->(r, i) { Reach::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus], diff_stager: i[:diff_stager]) },
       "StrReplace"      => ->(r, i) { Reach::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus], diff_stager: i[:diff_stager]) },
       "BatchReplace"    => ->(r, i) { Reach::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
-      "AstEdit"         => ->(r, i) { Reach::AstEdit.new(root: r, undo: i[:undo], event_bus: i[:bus]) },
+      "AstEdit"         => ->(r, i) { Reach::AstEdit.new(root: r, undo: i[:undo], governor: i[:governor], event_bus: i[:bus]) },
       "Tree"            => ->(r, i) { Reach::Tree.new(root: r, event_bus: i[:bus]) },
       "ListDir"         => ->(r, i) { Reach::ListDir.new(root: r, event_bus: i[:bus]) },
       "SearchFiles"     => ->(r, i) { Reach::SearchFiles.new(root: r, event_bus: i[:bus]) },

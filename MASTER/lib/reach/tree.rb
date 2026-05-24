@@ -7,15 +7,21 @@ module Master
     # Tree — lists directory structure using sh/tree.sh.
     # Safe: read-only, no writes.
     class Tree
+      include PathGuard
       SCRIPT = File.expand_path("../../../sh/tree.sh", __dir__).freeze
 
       def initialize(root:, event_bus: nil)
         @bus = event_bus
-        @root = root
+        @root = File.realpath(root)
       end
 
       def call(path: nil)
-        target = path ? File.expand_path(path, @root) : @root
+        target = @root
+        if path
+          resolved = resolve(path)
+          return resolved if resolved.err?
+          target = resolved.value!
+        end
         return Result.err("path not found: #{target}", category: :validation) unless Dir.exist?(target)
 
         out, err, status = Open3.capture3("zsh", SCRIPT, target)

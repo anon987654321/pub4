@@ -8,6 +8,8 @@ module Master
     # from text files under a given path, using sh/clean.sh.
     class Clean
       SCRIPT = File.expand_path("../../../sh/clean.sh", __dir__).freeze
+      NAME   = "clean".freeze
+      TIER   = :dangerous
 
       def initialize(root:, governor:, event_bus: nil)
         @bus = event_bus
@@ -20,8 +22,8 @@ module Master
         return Result.err("path not found: #{target}",
                           category: :validation) unless File.exist?(target) || Dir.exist?(target)
 
-        guard = @governor.guard("clean #{target}")
-        return Result.err(guard.message, category: :policy) if guard.err?
+        guard = @governor.permit?(NAME, TIER, "clean #{target}")
+        return guard if guard.err?
 
         out, err, status = Open3.capture3("zsh", SCRIPT, target)
         return Result.err("clean failed: #{err.strip}", category: :unknown) unless status.success?

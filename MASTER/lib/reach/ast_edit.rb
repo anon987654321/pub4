@@ -12,10 +12,11 @@ module Master
       NAME        = "ast_edit".freeze
       DESCRIPTION = "AST-aware code editing: find, rename, or restructure Ruby methods safely.".freeze
 
-      def initialize(root:, undo:, event_bus: nil)
-        @root = File.realpath(root)
-        @undo = undo
-        @bus  = event_bus
+      def initialize(root:, undo:, governor: nil, event_bus: nil)
+        @root     = File.realpath(root)
+        @undo     = undo
+        @governor = governor
+        @bus      = event_bus
       end
 
       def call(operation:, path:, **opts)
@@ -56,6 +57,9 @@ module Master
         return Result.err("ast_edit: invalid name: #{to}",
           category: :validation) unless to.match?(/\A[a-z_][a-zA-Z0-9_]*[?!]?\z/)
 
+        perm = @governor&.permit?(NAME, TIER, fp)
+        return perm if perm&.err?
+
         @undo.snapshot(fp)
         updated = src
           .gsub(/\bdef\s+#{Regexp.escape(from)}\b/, "def #{to}")
@@ -74,6 +78,9 @@ module Master
         ranges = method_line_ranges(src)
         entry  = ranges.find { |r| r[:name] == after_name }
         return Result.err("ast_edit: method not found: #{after_name}", category: :validation) unless entry
+
+        perm = @governor&.permit?(NAME, TIER, fp)
+        return perm if perm&.err?
 
         lines = src.lines
         insert_at = entry[:end]
