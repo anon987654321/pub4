@@ -45,6 +45,18 @@ class Item < ApplicationRecord
     (price / times_worn).round(2)
   end
 
+  def value_label
+    cost_per_wear ? "#{cost_per_wear} per wear" : "not worn yet"
+  end
+
+  def underused?
+    times_worn.to_i < 3
+  end
+
+  def capsule_candidate?
+    spark_joy? && !released? && !in_declutter_box?
+  end
+
   def occasions
     occasion_tags.to_s.split(",").map(&:strip).reject(&:blank?)
   end
