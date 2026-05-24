@@ -107,6 +107,8 @@ Rails.application.routes.draw do
   constraints(subdomain: MARKETPLACE_SUBDOMAINS) do
     scope module: "marketplace", as: "marketplace" do
       root "listings#index", as: :marketplace_root
+      resources :shops, controller: "stores"
+      resources :deals, only: %i[index show]
       resources :listings do
         resources :orders, only: %i[create update]
       end
