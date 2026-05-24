@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+
+ROOT = File.expand_path("..", __dir__)
+REPO = File.expand_path("..", ROOT)
+COMMANDS = {
+  master: [
+    "/scan .",
+    "/fix .",
+    "/scan .",
+    "/critique .",
+    "/review ."
+  ].freeze,
+  deploy: [
+    "/scan ../DEPLOY",
+    "/fix ../DEPLOY",
+    "/scan ../DEPLOY",
+    "/critique ../DEPLOY",
+    "/review ../DEPLOY"
+  ].freeze
+}.freeze
+
+def run_command(*argv, chdir: ROOT)
+  puts "$ #{argv.join(" ")}"
+  stdout, status = Open3.capture2e(*argv, chdir: chdir)
+  puts stdout
+  abort "err: command failed: #{argv.join(" ")}" unless status.success?
+end
+
+def run_master_line(line)
+  puts "master> #{line}"
+  stdout, status = Open3.capture2e("bundle", "exec", "ruby", "bin/cli", chdir: ROOT, stdin_data: "#{line}\n")
+  puts stdout
+  abort "err: MASTER command failed: #{line}" unless status.success?
+end
+
+def git_diff(*paths)
+  run_command("git", "diff", "--", *paths, chdir: REPO)
+end
+
+def assert_clean(*paths)
+  run_command("git", "diff", "--exit-code", "--", *paths, chdir: REPO)
+end
+
+COMMANDS[:master].each { |line| run_master_line(line) }
+git_diff("MASTER")
+assert_clean("MASTER")
+
+COMMANDS[:deploy].each { |line| run_master_line(line) }
+git_diff("DEPLOY", "MASTER")
+assert_clean("DEPLOY", "MASTER")
+
+puts "ok: MASTER gate clean"
