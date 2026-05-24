@@ -1,0 +1,66 @@
+name: MASTER through MASTER
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  master-self-fix:
+    name: MASTER autofixes MASTER
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: MASTER
+
+      - name: Run MASTER self-autofix
+        working-directory: MASTER
+        run: |
+          printf '/fix .\n' | bundle exec ruby bin/cli
+
+      - name: Show MASTER autofix diff
+        run: |
+          git diff -- MASTER
+
+      - name: Fail if MASTER autofix changed files
+        run: |
+          git diff --exit-code -- MASTER
+
+  deploy-fix:
+    name: MASTER autofixes DEPLOY
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: master-self-fix
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: MASTER
+
+      - name: Run DEPLOY autofix through MASTER
+        working-directory: MASTER
+        run: |
+          printf '/fix ../DEPLOY\n' | bundle exec ruby bin/cli
+
+      - name: Show DEPLOY autofix diff
+        run: |
+          git diff -- DEPLOY MASTER
+
+      - name: Fail if DEPLOY autofix changed files
+        run: |
+          git diff --exit-code -- DEPLOY MASTER
