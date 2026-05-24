@@ -40,7 +40,7 @@
 <nav>
   <%= link_to "Reorder", takeaway_restaurant_path(@order.restaurant), class: "btn" %>
   <%= link_to "All orders", takeaway_orders_path, class: "btn btn-ghost" %>
-  <% if Current.user == @order.restaurant.user && @order.status != "delivered" %>
-    <%= button_to "Advance status", takeaway_order_path(@order), method: :patch, class: "btn btn-primary" %>
+  <% if authenticated? && Current.user == @order.restaurant.user && @order.status != "delivered" %>
+    <%= button_to "Advance", takeaway_order_path(@order), method: :patch, class: "btn btn-primary" %>
   <% end %>
 </nav>
