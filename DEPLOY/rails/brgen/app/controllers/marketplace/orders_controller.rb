@@ -7,20 +7,35 @@ class Marketplace::OrdersController < Marketplace::BaseController
     @order = @listing.orders.build(buyer: Current.user,
                                    message: params.dig(:marketplace_order, :message),
                                    price_cents: @listing.price_cents)
-    @order.save ?
-      redirect_to(marketplace_listing_path(@listing), notice: "Offer sent") :
-      redirect_to(marketplace_listing_path(@listing), alert: "Could not send offer")
+    if @order.save
+      notify_seller!
+      redirect_to marketplace_listing_path(@listing), notice: "Offer sent"
+    else
+      redirect_to marketplace_listing_path(@listing), alert: "Could not send offer"
+    end
   end
 
   def update
     @order = Marketplace::Order.find(params[:id])
     if @order.seller == Current.user
-      @order.accept!   if params[:accept]
-      @order.decline!  if params[:decline]
+      @order.accept! if params[:accept]
+      @order.decline! if params[:decline]
     end
     redirect_to marketplace_listing_path(@listing)
   end
 
   private
+
   def set_listing = (@listing = Marketplace::Listing.find(params[:listing_id]))
+
+  def notify_seller!
+    return unless defined?(Notification)
+
+    @listing.user.notifications.create!(
+      title: "New marketplace offer",
+      body: "#{Current.user.display_name} sent an offer for #{@listing.title}.",
+      source_type: @order.class.name,
+      source_id: @order.id
+    )
+  end
 end
