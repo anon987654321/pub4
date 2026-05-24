@@ -9,6 +9,7 @@ Rails.application.routes.draw do
 
   resource  :session
   resources :passwords, param: :token
+  resources :activity_events, only: :index
   resources :notifications, only: %i[index update]
 
   resources :communities do
