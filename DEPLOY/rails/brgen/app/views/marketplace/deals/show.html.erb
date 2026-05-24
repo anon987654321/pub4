@@ -1,0 +1,14 @@
+<% content_for :title, @deal.headline %>
+
+<%= tag.article class: "marketplace-deal" do %>
+  <%= tag.header do %>
+    <%= tag.h1 @deal.headline %>
+    <%= tag.p @deal.badge if @deal.badge.present? %>
+  <% end %>
+
+  <%= tag.section class: "deal-listing" do %>
+    <%= tag.h2 link_to(@listing.title, marketplace_listing_path(@listing)) %>
+    <%= tag.p @listing.price_display %>
+    <%= tag.p @listing.description if @listing.description.present? %>
+  <% end %>
+<% end %>
