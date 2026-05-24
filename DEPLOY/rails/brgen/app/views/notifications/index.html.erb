@@ -12,12 +12,12 @@
     <article>
       <h2><%= notification.title %></h2>
       <% if notification.body.present? %><p><%= notification.body %></p><% end %>
-      <p class="dim"><%= time_ago_in_words(notification.created_at) %> ago</p>
+      <p class="dim"><%= time_ago_in_words(notification.created_at) %> ago<% if notification.read? %> · read<% end %></p>
       <% unless notification.read? %>
-        <%= button_to "Mark read", notification_path(notification), method: :patch, class: "btn btn-ghost btn-sm" %>
+        <%= button_to "Mark as read", notification_path(notification), method: :patch, class: "btn btn-ghost btn-sm" %>
       <% end %>
     </article>
   <% end %>
 <% else %>
-  <div class="empty"><p>No notifications yet.</p></div>
+  <div class="empty"><p>No notifications. Offers, orders, and local updates will appear here.</p></div>
 <% end %>
