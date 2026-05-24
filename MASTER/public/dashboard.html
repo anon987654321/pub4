@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASTER particle face</title>
+<style>
+:root { --bg: #0a0a0a; --text: #c0c0c0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; font-family: "Courier New", monospace; }
+canvas { width: 100vw; height: 100vh; display: block; }
+#status { position: absolute; bottom: 1rem; left: 1rem; font-size: 12px; text-transform: lowercase; opacity: 0.7; }
+</style>
+</head>
+<body>
+<canvas id="face"></canvas>
+<div id="status">initializing particle matrix...</div>
+<script>
+(() => {
+  const canvas = document.getElementById("face");
+  const statusEl = document.getElementById("status");
+  const gl = canvas.getContext("webgl2", { alpha: false, antialias: false });
+  if (!gl) { statusEl.textContent = "err: webgl2 missing"; return; }
+
+  const vertexSource = `#version 300 es
+    uniform float u_time;
+    uniform float u_bias;
+    uniform float u_freq;
+    in vec2 a_pos;
+    out float v_life;
+    void main() {
+      v_life = sin(u_time * 0.005 + a_pos.x);
+      float dynamicBias = u_bias + u_freq * 0.1;
+      vec2 ring = vec2(cos(a_pos.x + u_time * 0.002), sin(a_pos.x + u_time * 0.002)) * (0.5 + dynamicBias * 0.1);
+      gl_Position = vec4(mix(a_pos, ring, 0.6), 0.0, 1.0);
+      gl_PointSize = 1.8;
+    }`;
+
+  const fragmentSource = `#version 300 es
+    precision highp float;
+    uniform vec3 u_color;
+    in float v_life;
+    out vec4 outColor;
+    void main() { outColor = vec4(u_color.r, u_color.g + v_life * 0.1, u_color.b, 0.85); }`;
+
+  function shader(source, type) {
+    const compiled = gl.createShader(type);
+    gl.shaderSource(compiled, source);
+    gl.compileShader(compiled);
+    if (!gl.getShaderParameter(compiled, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(compiled));
+    return compiled;
+  }
+
+  const program = gl.createProgram();
+  gl.attachShader(program, shader(vertexSource, gl.VERTEX_SHADER));
+  gl.attachShader(program, shader(fragmentSource, gl.FRAGMENT_SHADER));
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+  gl.useProgram(program);
+
+  const particleCount = 16384;
+  const positions = new Float32Array(particleCount * 2);
+  const velocities = new Float32Array(particleCount * 2);
+  for (let index = 0; index < particleCount; index += 1) {
+    positions[index * 2] = (Math.random() - 0.5) * 2.0;
+    positions[index * 2 + 1] = (Math.random() - 0.5) * 2.0;
+  }
+
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, positions, gl.DYNAMIC_DRAW);
+  const location = gl.getAttribLocation(program, "a_pos");
+  gl.enableVertexAttribArray(location);
+  gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+
+  const uTime = gl.getUniformLocation(program, "u_time");
+  const uBias = gl.getUniformLocation(program, "u_bias");
+  const uFreq = gl.getUniformLocation(program, "u_freq");
+  const uColor = gl.getUniformLocation(program, "u_color");
+
+  const gridResolution = 64;
+  const grid = Array.from({ length: gridResolution * gridResolution }, () => []);
+  let color = [0.0, 0.9, 0.4];
+  let bias = 0.0;
+
+  function spatialRepulsion() {
+    for (const cell of grid) cell.length = 0;
+    for (let index = 0; index < particleCount; index += 1) {
+      const x = positions[index * 2];
+      const y = positions[index * 2 + 1];
+      const cellX = Math.max(0, Math.min(gridResolution - 1, Math.floor((x + 1) * 0.5 * gridResolution)));
+      const cellY = Math.max(0, Math.min(gridResolution - 1, Math.floor((y + 1) * 0.5 * gridResolution)));
+      grid[cellY * gridResolution + cellX].push(index);
+    }
+
+    for (let index = 0; index < particleCount; index += 1) {
+      const x = positions[index * 2];
+      const y = positions[index * 2 + 1];
+      const cellX = Math.max(0, Math.min(gridResolution - 1, Math.floor((x + 1) * 0.5 * gridResolution)));
+      const cellY = Math.max(0, Math.min(gridResolution - 1, Math.floor((y + 1) * 0.5 * gridResolution)));
+      for (let yy = -1; yy <= 1; yy += 1) {
+        for (let xx = -1; xx <= 1; xx += 1) {
+          const nx = cellX + xx;
+          const ny = cellY + yy;
+          if (nx < 0 || ny < 0 || nx >= gridResolution || ny >= gridResolution) continue;
+          for (const other of grid[ny * gridResolution + nx]) {
+            if (other === index) continue;
+            const ox = positions[other * 2];
+            const oy = positions[other * 2 + 1];
+            const dx = x - ox;
+            const dy = y - oy;
+            const distance2 = dx * dx + dy * dy;
+            if (distance2 > 0.0 && distance2 < 0.0009) {
+              velocities[index * 2] += dx * 0.0008 / distance2;
+              velocities[index * 2 + 1] += dy * 0.0008 / distance2;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function resize() {
+    if (canvas.width === window.innerWidth && canvas.height === window.innerHeight) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  function draw(time) {
+    resize();
+    spatialRepulsion();
+    for (let index = 0; index < particleCount; index += 1) {
+      const px = index * 2;
+      const py = px + 1;
+      velocities[px] *= 0.94;
+      velocities[py] *= 0.94;
+      positions[px] += velocities[px];
+      positions[py] += velocities[py];
+      if (positions[px] < -1 || positions[px] > 1) velocities[px] *= -1;
+      if (positions[py] < -1 || positions[py] > 1) velocities[py] *= -1;
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, positions);
+    gl.clearColor(0.04, 0.04, 0.04, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uTime, time);
+    gl.uniform1f(uBias, bias);
+    gl.uniform1f(uFreq, 0.0);
+    gl.uniform3fv(uColor, color);
+    gl.drawArrays(gl.POINTS, 0, particleCount);
+    requestAnimationFrame(draw);
+  }
+
+  statusEl.textContent = "ok: swarm linked with spatial repulsion";
+  const events = new EventSource("/events");
+  events.addEventListener("face_state", (event) => {
+    const data = JSON.parse(event.data);
+    statusEl.textContent = data.state || "idle";
+    if (data.state === "speaking") color = [0.0, 0.7, 0.9];
+    else if (data.state === "error") color = [0.9, 0.1, 0.1];
+    else color = [0.0, 0.9, 0.4];
+  });
+  events.onerror = () => { statusEl.textContent = "err: stream disconnected"; };
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

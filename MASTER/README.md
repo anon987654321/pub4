@@ -1,8 +1,10 @@
-# MASTER
+# MASTER 2.0.1
 
 Constitutional AI runtime for any text artifact — code, prose, design, structure. Ruby. OpenBSD. Self-hosting.
 
 Models propose. The constitution validates. Convergence loops digest violations. Memory learns what fixes stick. Pressure fields track epistemic health. Providers compete by capability, cost, and evidence.
+
+2.0.1 adds a standalone Converge kernel: topologically ordered rules, oscillation tracking, append-only SQLite runtime ledger, event streaming, personas, and a particle face dashboard.
 
 ## Quickstart
 
@@ -15,6 +17,26 @@ bundle exec ruby bin/cli
 Pipe input for one-shot mode. The web face starts on port 53187 behind relayd at `https://ai.brgen.no`.
 
 Deploy: `doas zsh DEPLOY/openbsd/openbsd.sh`
+
+## Converge kernel
+
+```ruby
+require_relative "lib/converge"
+
+engine = Converge::Engine.new("data/converge_rules.yml")
+engine.subscribe { |event| warn(event.inspect) }
+engine.run(code: "", reply_text: "plain reply")
+```
+
+The kernel canon lives at `data/converge_rules.yml`. The existing scanner corpus remains in `data/rules.yml`.
+
+Core guarantees:
+
+- rules run in dependency order
+- convergence stops at a fixpoint or 16 cycles
+- repeated state signatures are recorded as feedback loops
+- every applied rule emits a runtime event
+- runtime deltas are stored in `~/.master/state.db`
 
 ## Architecture
 
@@ -94,7 +116,7 @@ First-hit `?token=…` is accepted once; the middleware sets an `HttpOnly; Secur
 
 ## Modules
 
-`now` · `loop` · `judge` · `voice` · `ground` · `reach` · `trace`
+`now` · `loop` · `judge` · `voice` · `ground` · `reach` · `trace` · `converge`
 
 Constitution lives in `data/`. Runtime state in `.master/`. Knowledge store at `.master/knowledge.sqlite3`.
 

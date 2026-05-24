@@ -2,6 +2,8 @@
 OUTPUT_*.md
 *.gem
 *.rbc
+*.tgz
+*.tar.gz
 .bundle
 vendor/bundle
 

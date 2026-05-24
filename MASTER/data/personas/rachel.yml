@@ -1,0 +1,15 @@
+name: rachel
+voice:
+  enabled: true
+  provider: elevenlabs
+  voice_id: rachel
+  style: warm_friend
+face:
+  enabled: true
+  mood_colors:
+    clean: "#00FF00"
+    warning: "#FFD700"
+    error: "#FF0000"
+web:
+  enabled: true
+  port: 3737
