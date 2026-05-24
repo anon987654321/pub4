@@ -1,7 +1,16 @@
 <% content_for :title, "Activity" %>
 
 <div class="page-header">
-  <h1>Activity</h1>
+  <div>
+    <p class="dim">Local graph</p>
+    <h1>Activity</h1>
+  </div>
+</div>
+
+<div class="chips" style="padding:12px 16px;border-bottom:1px solid var(--border)">
+  <% %w[marketplace takeaway dating tv playlist core].each do |vertical| %>
+    <%= link_to vertical.humanize, activity_events_path(vertical: vertical), class: "chip" %>
+  <% end %>
 </div>
 
 <% if @events.any? %>
@@ -9,6 +18,7 @@
     <article>
       <h2><%= event.event_name.to_s.humanize %></h2>
       <p class="dim"><%= event.source_vertical %> · <%= event.object_type %> · <%= time_ago_in_words(event.created_at) %> ago</p>
+      <% if event.locality.present? %><p class="dim"><%= event.locality %></p><% end %>
     </article>
   <% end %>
 <% else %>
