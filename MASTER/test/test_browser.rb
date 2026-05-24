@@ -19,7 +19,7 @@
 # would be required.
 #
 # To run browser tests against the live server from a non-OpenBSD machine:
-#   WEB_URL=https://ai.brgen.no:4430 bundle exec ruby test/test_browser.rb
+#   WEB_URL=https://ai.brgen.no bundle exec ruby test/test_browser.rb
 #
 # HTTP smoke tests (test_web_http.rb) cover: page load, overlay presence,
 # JS syntax, metrics JSON, and SSE stream — and run fine on OpenBSD.

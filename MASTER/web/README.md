@@ -1,6 +1,6 @@
 # MASTER Web UI
 
-Rails 8 + Falcon server. Internal port 53187; relayd proxies to ai.brgen.no:4430.
+Rails 8 + Falcon server. Internal port 53187; relayd proxies to https://ai.brgen.no (443).
 
 ## Routes
 
