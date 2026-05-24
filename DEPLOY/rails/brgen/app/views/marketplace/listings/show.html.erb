@@ -5,9 +5,17 @@
     <p class="dim">Marketplace / <%= @listing.category&.name || "Listing" %></p>
     <h1><%= @listing.title %></h1>
   </div>
-  <% if authenticated? && Current.user == @listing.user %>
-    <%= link_to "Edit", edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
-  <% end %>
+  <nav>
+    <% if authenticated? && Current.user == @listing.user %>
+      <%= link_to "Edit", edit_marketplace_listing_path(@listing), class: "btn btn-ghost btn-sm" %>
+    <% elsif authenticated? %>
+      <% if @listing.favorite_for(Current.user) %>
+        <%= button_to "Unsave", marketplace_listing_favorite_path(@listing), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to "Save", marketplace_listing_favorite_path(@listing), method: :post, class: "btn btn-primary btn-sm" %>
+      <% end %>
+    <% end %>
+  </nav>
 </div>
 
 <% if @listing.photos.attached? %>
@@ -23,7 +31,7 @@
 <article>
   <p style="font-size:28px;font-weight:800;color:#e63230;margin-bottom:6px"><%= @listing.price_display %></p>
   <p class="dim"><%= @listing.condition %> · <%= @listing.location %> · <%= @listing.user.email_address.split("@").first %></p>
-  <p class="dim"><%= pluralize(@listing.views_count.to_i, "view") %> · status: <%= @listing.status %></p>
+  <p class="dim"><%= pluralize(@listing.views_count.to_i, "view") %> · <%= pluralize(@listing.favorites.size, "save") %> · status: <%= @listing.status %></p>
   <p style="margin-top:12px"><%= simple_format(@listing.description) %></p>
   <button class="btn-share" style="margin-top:12px" data-controller="share"
           data-share-title-value="<%= @listing.title %>"
@@ -53,6 +61,7 @@
     <div class="chips">
       <span class="chip"><%= pluralize(@listing.views_count.to_i, "view") %></span>
       <span class="chip"><%= pluralize(@listing.orders.size, "offer") %></span>
+      <span class="chip"><%= pluralize(@listing.favorites.size, "save") %></span>
       <span class="chip"><%= @listing.status %></span>
     </div>
   </div>
