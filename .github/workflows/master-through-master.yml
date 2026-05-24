@@ -9,9 +9,9 @@ on:
 
 jobs:
   master-self-converge:
-    name: MASTER scan-fix-scan on MASTER
+    name: MASTER scan-fix-scan-critique-council on MASTER
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,14 +42,24 @@ jobs:
         run: |
           printf '/scan .\n' | bundle exec ruby bin/cli
 
+      - name: Critique MASTER
+        working-directory: MASTER
+        run: |
+          printf '/critique .\n' | bundle exec ruby bin/cli
+
+      - name: Council review MASTER
+        working-directory: MASTER
+        run: |
+          printf '/review .\n' | bundle exec ruby bin/cli
+
       - name: Fail if MASTER autofix changed files
         run: |
           git diff --exit-code -- MASTER
 
   deploy-converge:
-    name: MASTER scan-fix-scan on DEPLOY
+    name: MASTER scan-fix-scan-critique-council on DEPLOY
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     needs: master-self-converge
     steps:
       - name: Checkout
@@ -80,6 +90,16 @@ jobs:
         working-directory: MASTER
         run: |
           printf '/scan ../DEPLOY\n' | bundle exec ruby bin/cli
+
+      - name: Critique DEPLOY through MASTER
+        working-directory: MASTER
+        run: |
+          printf '/critique ../DEPLOY\n' | bundle exec ruby bin/cli
+
+      - name: Council review DEPLOY through MASTER
+        working-directory: MASTER
+        run: |
+          printf '/review ../DEPLOY\n' | bundle exec ruby bin/cli
 
       - name: Fail if DEPLOY autofix changed files
         run: |
