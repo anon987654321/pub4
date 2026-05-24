@@ -3,7 +3,7 @@
 module TestFixture
   def risky_read
     File.read("/tmp/x")
-  rescue
+  rescue StandardError
     nil
   end
 end

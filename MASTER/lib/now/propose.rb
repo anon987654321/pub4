@@ -99,7 +99,7 @@ module Master
 
     def from_bus_tail
       return [] unless @bus.respond_to?(:tail)
-      events = begin; @bus.tail(20); rescue => _e; []; end
+      events = begin; @bus.tail(20); rescue StandardError => _e; []; end
       return [] if events.empty?
       out = []
       escalations = events.count { |e| e[:event].to_s.include?("escalation") }

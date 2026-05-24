@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Restart server after editing.
 Rails.application.configure do
   config.content_security_policy do |policy|

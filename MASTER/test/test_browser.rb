@@ -38,13 +38,13 @@ FREE_MEM_MB = begin
   free_pages     = stats[/(\d+) pages free/,    1].to_i
   inactive_pages = stats[/(\d+) pages inactive/, 1].to_i
   (free_pages + inactive_pages) * 4 / 1024  # 4KB pages → MB
-rescue
+rescue StandardError
   999
 end
 
 SKIP_REASON = if CHROME_PATH.nil?
   "Chromium not found"
-elsif begin; TCPSocket.new("127.0.0.1", 10002).close; false; rescue; true; end
+elsif begin; TCPSocket.new("127.0.0.1", 10002).close; false; rescue StandardError; true; end
   "Web server not running on port 10002"
 elsif FREE_MEM_MB < 300
   "Insufficient free memory (#{FREE_MEM_MB}MB < 300MB required for Chrome)"
@@ -144,7 +144,7 @@ class TestBrowserUI < Minitest::Test
     skip "Web server not running" unless begin
       TCPSocket.new("127.0.0.1", 10002).close
       true
-    rescue
+    rescue StandardError
       false
     end
     uri  = URI("#{WEB_URL}/chat/metrics")
