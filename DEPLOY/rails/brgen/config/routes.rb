@@ -1,42 +1,39 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  # Vertical subdomains share one app. The Rails module name (Tv:: etc.) is fixed;
-  # the public subdomain varies per locale (markedsplass = NO marketplace).
-  TV_SUBDOMAINS         = %w[tv].freeze
-  DATING_SUBDOMAINS     = %w[dating].freeze
-  PLAYLIST_SUBDOMAINS   = %w[playlist].freeze
-  TAKEAWAY_SUBDOMAINS   = %w[takeaway].freeze
-  MARKETPLACE_SUBDOMAINS = %w[
-    markedsplass markadur marknadsplats marktplaats marktplatz
-    marche mercato mercado markkinapaikka marketplace
-  ].freeze
+  TV_SUBDOMAINS          = %w[tv].freeze
+  DATING_SUBDOMAINS      = %w[dating].freeze
+  PLAYLIST_SUBDOMAINS    = %w[playlist].freeze
+  TAKEAWAY_SUBDOMAINS    = %w[takeaway].freeze
+  MARKETPLACE_SUBDOMAINS = %w[markedsplass markadur marknadsplats marktplaats marktplatz marche mercato mercado markkinapaikka marketplace].freeze
 
   resource  :session
   resources :passwords, param: :token
+  resources :activity_events, only: :index
+  resources :notifications, only: %i[index update]
 
   resources :communities do
     resources :posts, shallow: true do
       resources :comments, shallow: true do
         resources :comments, shallow: true, as: :replies
       end
-      resource  :vote, only: [:create], controller: "votes"
+      resource :vote, only: [:create], controller: "votes"
     end
   end
 
   resources :posts do
     resources :comments, shallow: true
-    resource  :vote, only: [:create], controller: "votes"
+    resource :vote, only: [:create], controller: "votes"
   end
 
   resources :comments do
-    resource  :vote, only: [:create], controller: "votes"
+    resource :vote, only: [:create], controller: "votes"
     resources :comments, only: [:create], as: :replies
   end
 
   resources :users, only: [:show] do
     member do
-      post   :follow,   to: "follows#create"
+      post :follow, to: "follows#create"
       delete :unfollow, to: "follows#destroy"
     end
     resources :conversations, only: [:create]
@@ -70,10 +67,10 @@ Rails.application.routes.draw do
   constraints(subdomain: DATING_SUBDOMAINS) do
     scope module: "dating", as: "dating" do
       root "home#index", as: :dating_root
-      resource  :profile,  only: %i[new create edit update show]
-      resources :likes,    only: :create
+      resource :profile, only: %i[new create edit update show]
+      resources :likes, only: :create
       resources :dislikes, only: :create
-      resources :matches,  only: :index
+      resources :matches, only: :index
     end
   end
 
@@ -96,8 +93,9 @@ Rails.application.routes.draw do
     scope module: "takeaway", as: "takeaway" do
       root "restaurants#index", as: :takeaway_root
       resources :restaurants do
+        resource :favorite_restaurant, only: %i[create destroy]
         resources :menu_items, only: %i[create destroy]
-        resources :orders,     only: %i[new create]
+        resources :orders, only: %i[new create]
       end
       resources :delivery_drivers, only: %i[index show update]
       resources :orders, only: %i[index show update]
@@ -110,9 +108,11 @@ Rails.application.routes.draw do
       resources :shops, controller: "stores"
       resources :deals, only: %i[index show]
       resources :listings do
+        resource :favorite, only: %i[create destroy]
         resources :orders, only: %i[create update]
       end
       resources :categories, only: :show, param: :id
+      resources :saved_searches, only: %i[index create destroy]
     end
   end
 
@@ -121,9 +121,9 @@ Rails.application.routes.draw do
 
   patch "location" => "locations#update", as: :location
   resources :push_subscriptions, only: [:create, :destroy]
-  get   "nearby"   => "nearby#index",   as: :nearby
-  post  "nearby"   => "nearby#create"
+  get "nearby" => "nearby#index", as: :nearby
+  post "nearby" => "nearby#create"
 
   root "home#index"
-  get  "up" => "rails/health#show", as: :rails_health_check
+  get "up" => "rails/health#show", as: :rails_health_check
 end

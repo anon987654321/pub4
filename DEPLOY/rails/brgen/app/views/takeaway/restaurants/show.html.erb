@@ -2,24 +2,30 @@
 
 <div class="page-header">
   <h1><%= @restaurant.name %></h1>
-  <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" if authenticated? && Current.user == @restaurant.user %>
+  <nav>
+    <% if authenticated? && Current.user == @restaurant.user %>
+      <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
+    <% elsif authenticated? %>
+      <%= button_to "Save", takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn btn-primary btn-sm" %>
+    <% end %>
+  </nav>
 </div>
 
 <article>
   <p><%= @restaurant.description %></p>
   <p class="dim"><%= @restaurant.cuisine_type %> · <%= @restaurant.address %>, <%= @restaurant.city %></p>
-  <p class="dim">Min order: <%= @restaurant.min_order_cents.to_i / 100.0 %> NOK · Delivery: <%= @restaurant.delivery_fee_cents.to_i / 100.0 %> NOK</p>
+  <p class="dim">Min order: <%= @restaurant.min_order_display %> · Delivery: <%= @restaurant.delivery_fee_display %></p>
 </article>
 
 <% if authenticated? && Current.user == @restaurant.user %>
   <div style="padding:16px;border-bottom:1px solid var(--border)">
     <p style="font-size:20px;font-weight:800;margin-bottom:12px">Add menu item</p>
     <div class="form-wrap" style="padding:0">
-      <%= form_with url: takeaway_restaurant_menu_items_path(@restaurant) do |f| %>
-        <div class="field"><input name="takeaway_menu_item[name]" placeholder="Name" required class=""></div>
-        <div class="field"><input name="takeaway_menu_item[price_cents]" type="number" placeholder="Price (øre)" required></div>
-        <div class="field"><input name="takeaway_menu_item[description]" placeholder="Description"></div>
-        <div class="field"><button type="submit" class="btn btn-primary btn-sm">Add</button></div>
+      <%= form_with scope: :takeaway_menu_item, url: takeaway_restaurant_menu_items_path(@restaurant) do |f| %>
+        <div class="field"><%= f.text_field :name, placeholder: "Name", required: true %></div>
+        <div class="field"><%= f.number_field :price_cents, placeholder: "Price (øre)", required: true %></div>
+        <div class="field"><%= f.text_field :description, placeholder: "Description" %></div>
+        <div class="field"><%= f.submit "Add", class: "btn btn-primary btn-sm" %></div>
       <% end %>
     </div>
   </div>
@@ -28,19 +34,19 @@
 <div style="padding:16px;border-bottom:1px solid var(--border)">
   <p style="font-size:20px;font-weight:800;margin-bottom:12px">Menu</p>
   <% if authenticated? %>
-    <%= form_with url: takeaway_restaurant_orders_path(@restaurant) do |f| %>
+    <%= form_with scope: :takeaway_order, url: takeaway_restaurant_orders_path(@restaurant) do |f| %>
       <% @menu_items.each do |item| %>
         <article style="display:flex;align-items:center;justify-content:space-between">
           <div>
             <strong><%= item.name %></strong> · <%= item.price_display %>
             <% if item.description.present? %><p class="dim"><%= item.description %></p><% end %>
           </div>
-          <input type="number" name="takeaway_order[items][<%= item.id %>]" min="0" value="0" style="width:60px">
+          <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, style: "width:60px", aria: { label: "Quantity for #{item.name}" } %>
         </article>
       <% end %>
-      <div class="field" style="margin-top:12px"><input name="takeaway_order[delivery_address]" placeholder="Delivery address" required></div>
-      <div class="field"><textarea name="takeaway_order[special_instructions]" placeholder="Special instructions (optional)"></textarea></div>
-      <div class="field"><button type="submit" class="btn btn-primary">Place order</button></div>
+      <div class="field" style="margin-top:12px"><%= f.text_field :delivery_address, placeholder: "Delivery address", required: true %></div>
+      <div class="field"><%= f.text_area :special_instructions, placeholder: "Special instructions (optional)" %></div>
+      <div class="field"><%= f.submit "Place order", class: "btn btn-primary" %></div>
     <% end %>
   <% else %>
     <p><%= link_to "Sign in to order", new_session_path %></p>

@@ -4,21 +4,27 @@ class User < ApplicationRecord
   has_secure_password
 
   has_many :account_merges, dependent: :destroy
+  has_many :activity_events, foreign_key: :actor_id, dependent: :nullify
   has_many :comments, dependent: :destroy
   has_many :communities
   has_many :conversation_participants, dependent: :destroy
   has_many :conversations, through: :conversation_participants
   has_many :external_identities, dependent: :destroy
   has_many :identity_assurances, dependent: :destroy
+  has_many :marketplace_favorites, class_name: "Marketplace::ListingFavorite", dependent: :destroy
   has_many :marketplace_listings, class_name: "Marketplace::Listing", dependent: :destroy
   has_many :marketplace_orders, class_name: "Marketplace::Order", foreign_key: :buyer_id, dependent: :destroy
+  has_many :marketplace_saved_searches, class_name: "Marketplace::SavedSearch", dependent: :destroy
   has_many :moderation_flags, dependent: :destroy
+  has_many :moderation_reports, dependent: :destroy
+  has_many :notifications, dependent: :destroy
   has_many :playlist_listens, class_name: "Playlist::Listen", dependent: :destroy
   has_many :playlist_playlists, class_name: "Playlist::Playlist", dependent: :destroy
   has_many :posts, dependent: :destroy
   has_many :push_subscriptions, dependent: :destroy
   has_many :reputation_scores, dependent: :destroy
   has_many :sessions, dependent: :destroy
+  has_many :takeaway_favorite_restaurants, class_name: "Takeaway::FavoriteRestaurant", dependent: :destroy
   has_many :takeaway_orders, class_name: "Takeaway::Order", dependent: :destroy
   has_many :takeaway_restaurants, class_name: "Takeaway::Restaurant", dependent: :destroy
   has_many :trust_signals, dependent: :destroy

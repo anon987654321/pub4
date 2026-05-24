@@ -1,0 +1,14 @@
+<% attachments = local_assigns.fetch(:attachments, []) %>
+<% title = local_assigns.fetch(:title, "Gallery") %>
+
+<% if attachments.any? %>
+  <section data-controller="lightbox" aria-label="<%= title %>">
+    <div class="media-gallery">
+      <% attachments.each do |attachment| %>
+        <%= link_to url_for(attachment), class: "media-gallery__item" do %>
+          <%= image_tag attachment, alt: title, loading: "lazy" %>
+        <% end %>
+      <% end %>
+    </div>
+  </section>
+<% end %>

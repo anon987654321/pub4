@@ -4,7 +4,7 @@
   <% end %>
   <%= link_to item.title, item, class: "item-title" %>
   <span class="dim"><%= item.category %><%= " · #{item.color}" if item.color.present? %></span>
-  <span class="dim">Worn <%= item.times_worn.to_i %>×<%= " · #{number_to_currency(item.price)}" if item.price? %></span>
+  <span class="dim">Worn <%= item.times_worn.to_i %>× · <%= item.value_label %></span>
   <nav>
     <%= button_to "Wear", wear_item_path(item), method: :post, class: "btn-sm" %>
     <% unless item.spark_joy? %>

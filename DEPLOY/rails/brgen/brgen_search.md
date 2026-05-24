@@ -1,30 +1,5 @@
 # Brgen Search
 
-Brgen should use one shared search and discovery layer.
+Canonical search rules now live in `brgen_CORE.md`.
 
-## Search sources
-
-- posts
-- comments
-- listings
-- recipes
-- playlists
-- videos
-- profiles
-- restaurants
-- events
-
-## Search goals
-
-- locality-aware discovery
-- semantic search
-- realtime indexing
-- moderation-aware visibility
-- trending detection
-- recommendation integration
-
-## Shared indexing direction
-
-Use one indexing pipeline rather than separate per-vertical search systems.
-
-Subapps contribute indexed entities and ranking metadata.
+Keep search behavior in Ruby and Hotwire surfaces. Do not split search policy into separate vertical documents unless the code needs a vertical-specific adapter.

@@ -1,26 +1,46 @@
 <% content_for :title, "Order ##{@order.id}" %>
 
-<div class="page-header"><h1>Order #<%= @order.id %></h1></div>
+<div class="page-header">
+  <div>
+    <p class="dim"><%= link_to @order.restaurant.name, takeaway_restaurant_path(@order.restaurant) %></p>
+    <h1>Order #<%= @order.id %></h1>
+  </div>
+  <span class="chip"><%= @order.status.humanize %></span>
+</div>
 
 <article>
-  <p><span class="dim">Status</span> · <strong><%= @order.status %></strong></p>
-  <p class="dim">Restaurant: <%= link_to @order.restaurant.name, takeaway_restaurant_path(@order.restaurant) %></p>
+  <h2>Status timeline</h2>
+  <div class="chips">
+    <% Takeaway::Order::STATUSES.each do |status| %>
+      <span class="chip"><%= status.humanize %><%= " ✓" if @order.status == status %></span>
+    <% end %>
+  </div>
   <p class="dim">Delivery to: <%= @order.delivery_address %></p>
+  <% if @order.special_instructions.present? %>
+    <p><strong>Instructions:</strong> <%= @order.special_instructions %></p>
+  <% end %>
 </article>
 
-<% @order.order_items.includes(:menu_item).each do |oi| %>
-  <article>
-    <strong><%= oi.menu_item.name %></strong> × <%= oi.quantity %>
-    <span class="dim" style="float:right"><%= oi.subtotal_display %></span>
-  </article>
-<% end %>
+<section>
+  <h2>Items</h2>
+  <% @order.order_items.includes(:menu_item).each do |order_item| %>
+    <article>
+      <strong><%= order_item.menu_item.name %></strong> × <%= order_item.quantity %>
+      <span class="dim" style="float:right"><%= order_item.subtotal_display %></span>
+    </article>
+  <% end %>
+</section>
 
 <article>
+  <p class="dim">Subtotal: <%= @order.subtotal_display %></p>
+  <p class="dim">Delivery: <%= @order.delivery_fee_display %></p>
   <strong>Total: <%= @order.total_display %></strong>
 </article>
 
-<% if Current.user == @order.restaurant.user && @order.status != "delivered" %>
-  <div style="padding:16px">
-    <%= button_to "Advance status", takeaway_order_path(@order), method: :patch, class: "btn btn-primary" %>
-  </div>
-<% end %>
+<nav>
+  <%= link_to "Reorder", takeaway_restaurant_path(@order.restaurant), class: "btn" %>
+  <%= link_to "All orders", takeaway_orders_path, class: "btn btn-ghost" %>
+  <% if authenticated? && Current.user == @order.restaurant.user && @order.status != "delivered" %>
+    <%= button_to "Advance", takeaway_order_path(@order), method: :patch, class: "btn btn-primary" %>
+  <% end %>
+</nav>

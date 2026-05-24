@@ -12,4 +12,16 @@ class Outfit < ApplicationRecord
   def like!
     increment!(:likes_count)
   end
+
+  def context_label
+    [season, category, occasion].compact_blank.join(" · ")
+  end
+
+  def total_wears
+    items.sum { |item| item.times_worn.to_i }
+  end
+
+  def estimated_value
+    items.sum { |item| item.price.to_f }
+  end
 end

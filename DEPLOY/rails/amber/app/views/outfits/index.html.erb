@@ -1,8 +1,27 @@
 <% content_for :title, "Outfits" %>
 <%= turbo_stream_from "outfits" %>
+
 <header>
-  <h1>Outfits</h1>
-  <%= link_to "New outfit", new_outfit_path, class: "btn" %>
+  <div>
+    <p class="dim">Style combinations</p>
+    <h1>Outfits</h1>
+  </div>
+  <nav>
+    <%= link_to "New outfit", new_outfit_path, class: "btn" %>
+    <%= link_to "Dressing room", dressing_room_outfits_path, class: "btn" %>
+  </nav>
 </header>
+
+<div class="tag-row">
+  <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.items.count }, "linked item") %></span>
+  <span class="tag"><%= pluralize(@outfits.sum { |outfit| outfit.likes_count.to_i }, "like") %></span>
+  <span class="tag"><%= pluralize(@outfits.sum(&:total_wears), "combined wear") %></span>
+</div>
+
 <div class="item-grid" id="outfits"><%= render @outfits %></div>
+
+<% if @outfits.empty? %>
+  <div class="empty"><p>No outfits yet. Start with a capsule, event, season, or mood.</p></div>
+<% end %>
+
 <%= pagy_nav(@pagy) if @pagy.pages > 1 %>

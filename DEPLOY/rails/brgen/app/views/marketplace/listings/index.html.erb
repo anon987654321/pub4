@@ -18,7 +18,10 @@
 
 <div class="page-header">
   <h1>Markedsplass</h1>
-  <%= link_to "Sell", new_marketplace_listing_path, class: "btn btn-sm" if authenticated? %>
+  <nav>
+    <%= link_to "Sell", new_marketplace_listing_path, class: "btn btn-sm" if authenticated? %>
+    <%= link_to "Saved searches", marketplace_saved_searches_path, class: "btn btn-ghost btn-sm" if authenticated? %>
+  </nav>
 </div>
 
 <div class="deal-search">
@@ -30,6 +33,18 @@
     <%= f.submit "Search", class: "btn btn-sm" %>
   <% end %>
 </div>
+
+<% if authenticated? && (params[:q].present? || params[:category_id].present?) %>
+  <div class="form-wrap" style="padding:12px 16px">
+    <%= form_with model: Marketplace::SavedSearch.new, url: marketplace_saved_searches_path do |form| %>
+      <%= form.hidden_field :query, value: params[:q] %>
+      <%= form.hidden_field :category_id, value: params[:category_id] %>
+      <%= form.hidden_field :location, value: params[:location] %>
+      <%= form.hidden_field :name, value: "Marketplace search" %>
+      <%= form.submit "Save this search", class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  </div>
+<% end %>
 
 <% if @categories.any? %>
   <div class="deal-cats">
