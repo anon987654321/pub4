@@ -1,0 +1,48 @@
+<% content_for :title, "Edit post" %>
+
+<div class="page-header"><h1>Edit post</h1></div>
+
+<div class="form-wrap">
+  <%= form_with model: @post do |f| %>
+    <%= render "shared/errors", object: @post %>
+    <div class="field">
+      <%= f.label :community_id, "Community (optional)" %>
+      <%= f.collection_select :community_id, Community.order(:name), :id, :name, { include_blank: "— no community —" } %>
+    </div>
+    <div class="field">
+      <%= f.label :title %>
+      <%= f.text_field :title, placeholder: "Title", autofocus: true %>
+    </div>
+    <div class="field">
+      <%= f.label :content, "Body (optional)" %>
+      <%= f.text_area :content, placeholder: "Text (optional)", rows: 5 %>
+    </div>
+    <div class="field" data-controller="media-picker">
+      <%= f.file_field :image,
+            accept: "image/*",
+            capture: "environment",
+            class: "media-input-hidden",
+            data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
+      <div class="media-actions">
+        <button type="button" class="media-btn" data-action="click->media-picker#trigger">Photo / Camera</button>
+      </div>
+      <div class="media-preview" data-media-picker-target="preview"></div>
+      <div class="preset-strip">
+        <% %w[none portrait landscape street blockbuster].each do |preset| %>
+          <label class="preset-opt">
+            <input type="radio" name="post[preset]" value="<%= preset %>" <%= "checked" if preset == "none" %>>
+            <span><%= preset.capitalize %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+    <div class="field field--check">
+      <%= f.check_box :anonymous %>
+      <%= f.label :anonymous, "Post anonymously" %>
+    </div>
+    <div class="field">
+      <%= f.submit "Save", class: "btn btn-primary" %>
+      <%= link_to "Cancel", @post, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+</div>
