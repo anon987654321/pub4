@@ -1,12 +1,146 @@
-/*
- * This is a manifest file that'll be compiled into application.css.
- *
- * With Propshaft, assets are served efficiently without preprocessing steps. You can still include
- * application-wide styles in this file, but keep in mind that CSS precedence will follow the standard
- * cascading order, meaning styles declared later in the document or manifest will override earlier ones,
- * depending on specificity.
- *
- * Consider organizing styles into separate files for maintainability.
- */
-#input { width: 100%; }
-#status { font-family: monospace; min-height: 1rem; }
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  color-scheme: dark;
+  --master-bg: #000;
+  --master-fg: #fff;
+  --master-muted: rgba(255, 255, 255, 0.42);
+  --master-dim: rgba(255, 255, 255, 0.18);
+  --master-line: rgba(255, 255, 255, 0.28);
+  --master-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --master-console-height: calc(3rem + var(--master-safe-bottom));
+}
+
+html {
+  min-height: 100%;
+  background: var(--master-bg);
+}
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+  overflow: hidden;
+  background: var(--master-bg);
+  color: var(--master-fg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+body[data-runtime-visible="false"] canvas {
+  filter: brightness(0.45) contrast(0.85);
+}
+
+body[data-runtime-profile="battery"] canvas {
+  filter: grayscale(0.25) brightness(0.75);
+}
+
+canvas {
+  position: fixed;
+  inset: 0;
+  display: block;
+  inline-size: 100vw;
+  block-size: 100dvh;
+  image-rendering: pixelated;
+  transition: filter 0.24s steps(4, end);
+}
+
+#app-shell {
+  position: relative;
+  z-index: 2;
+  min-height: calc(100dvh - var(--master-console-height));
+  padding: 1rem;
+  pointer-events: none;
+}
+
+nav {
+  position: fixed;
+  inset-block-start: 0.75rem;
+  inset-inline-start: 0.75rem;
+  z-index: 4;
+}
+
+nav a {
+  color: var(--master-muted);
+  text-decoration: none;
+}
+
+nav a:focus-visible,
+nav a:hover {
+  color: var(--master-fg);
+  outline: 0;
+}
+
+.runtime-console {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  min-height: var(--master-console-height);
+  padding: 0.5rem 1rem calc(0.5rem + var(--master-safe-bottom));
+  border-block-start: 1px solid var(--master-line);
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(8px);
+}
+
+#input {
+  width: 100%;
+  max-height: 40dvh;
+  resize: none;
+  overflow: hidden;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--master-fg);
+  font: inherit;
+  line-height: 1.45;
+  caret-color: var(--master-fg);
+}
+
+#input::placeholder {
+  color: var(--master-dim);
+}
+
+#status {
+  min-height: 1.45em;
+  color: var(--master-muted);
+  white-space: nowrap;
+}
+
+#status[data-runtime-status="busy"]::after {
+  content: "";
+  display: inline-block;
+  inline-size: 0.55em;
+  block-size: 0.55em;
+  margin-inline-start: 0.35em;
+  background: currentColor;
+  animation: master-blink 1s step-end infinite;
+}
+
+@keyframes master-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    scroll-behavior: auto;
+    transition-duration: 0.01ms;
+  }
+}
+
+@media (min-width: 48rem) {
+  #app-shell {
+    padding: 1.5rem;
+  }
+
+  .runtime-console {
+    padding-inline: 1.5rem;
+  }
+}
