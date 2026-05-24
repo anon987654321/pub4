@@ -119,8 +119,7 @@ async function sendMessageWithPhoto(text) {
   window._chatOnUser?.(text);
 
   const enhanced = await enhanceMessage(text);
-  const state = encodeURIComponent('idle|thinking|0|0');
-  const params = new URLSearchParams({ message: enhanced.text, state });
+  const params = new URLSearchParams({ message: enhanced.text, state: 'idle|thinking|0|0' });
   if (enhanced.preEnhanced) params.set('pre_enhanced', '1');
   if (_pendingPhoto?.token) params.set('image_token', _pendingPhoto.token);
 
