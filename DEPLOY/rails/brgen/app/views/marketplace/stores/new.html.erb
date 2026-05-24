@@ -1,0 +1,6 @@
+<% content_for :title, t("marketplace.stores.new", default: "Open a store") %>
+
+<%= tag.section class: "store-form" do %>
+  <%= tag.h1 t("marketplace.stores.new", default: "Open a store") %>
+  <%= render "form", store: @store %>
+<% end %>
