@@ -32,8 +32,8 @@
 </section>
 
 <article>
-  <p class="dim">Subtotal: <%= number_to_currency(@order.subtotal_cents.to_i / 100.0, unit: "kr ") %></p>
-  <p class="dim">Delivery: <%= number_to_currency(@order.delivery_fee_cents.to_i / 100.0, unit: "kr ") %></p>
+  <p class="dim">Subtotal: <%= @order.subtotal_display %></p>
+  <p class="dim">Delivery: <%= @order.delivery_fee_display %></p>
   <strong>Total: <%= @order.total_display %></strong>
 </article>
 
