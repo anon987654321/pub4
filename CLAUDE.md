@@ -31,14 +31,16 @@ Don't external-grep the codebase when MASTER can scan itself:
     cd ~/pub4/MASTER && echo "/scan deep lib/" | bundle34 exec ruby34 bin/cli
     cd ~/pub4/MASTER && echo "/snapshot"       | bundle34 exec ruby34 bin/cli
 
-## File editing over SSH
+## Remote work — Ruby over one SSH
 
-Prefer direct edits over fix-script middlemen.
+Default to **pure Ruby payloads piped over a single multiplexed ssh** for any work on the VPS. Same rule applies to MASTER's `reach/*` shell-outs.
 
-- Read whole files with `cat path` over SSH.
-- For non-trivial changes: write locally, `scp` up.
-- For trivial in-place tweaks: write to `~/pub4/tmp/patch.rb`, then `ruby34 ~/pub4/tmp/patch.rb`. Never `ruby -i` with heredoc — it empties the file on script error.
-- After any edit under `MASTER/web/`: `ssh vps 'doas rcctl restart master'`. Don't batch and restart once at end.
+- Write the probe/patch as a Ruby script in `~/pub4/tmp/<name>.rb` locally.
+- Stream it over one session: `ssh vps 'ruby34' < ~/pub4/tmp/<name>.rb`.
+- Batch every read/check/write/restart into that one script — no follow-up `ssh vps '…'` calls. ControlMaster (`~/.ssh/sockets/`) reuses the connection, but extra round-trips still cost wall-clock and risk pf bruteforce throttling.
+- For non-trivial file changes: write locally, `scp` up in the same script via `system("scp", …)`.
+- Never `ruby -i` with heredoc — it empties the file on script error.
+- After any edit under `MASTER/web/`: trigger `doas rcctl restart master` from inside the Ruby payload (`system("doas", "rcctl", "restart", "master")`). Don't batch and restart once at end.
 
 ## Launch
 
@@ -59,9 +61,9 @@ Prefer direct edits over fix-script middlemen.
 
 ## SSH command pattern
 
-Remote shells start in `$HOME`, not the project. Always anchor:
+Remote shells start in `$HOME`, not the project. Anchor inside the Ruby payload:
 
-    ssh vps 'cd ~/pub4/MASTER && bundle34 exec ruby34 bin/cli ...'
+    Dir.chdir("/home/dev/pub4/MASTER") { … }
 
 Single tmux session per op. Never hammer the connection.
 
@@ -83,7 +85,7 @@ Never force-push to main. Cherry-pick from the backup tag if a divergent commit 
 
 ## MASTER
 
-Path: `~/pub4/MASTER/`. Binary: `bin/cli`. Module: `Master` (Zeitwerk). rc.d: `master` (port 53187, 127.0.0.1). Web: relayd → `https://ai.brgen.no:4430`.
+Path: `~/pub4/MASTER/`. Binary: `bin/cli`. Module: `Master` (Zeitwerk). rc.d: `master` (port 53187, 127.0.0.1). Web: relayd → `https://ai.brgen.no` (443).
 
 Modules: `now` (CLI/pipeline) · `loop` (sweep/autoloop/fix) · `judge` (scan/council/security/swarm) · `voice` (soul/personality/renderer/TTS) · `ground` (config/constitution/axioms) · `reach` (tools) · `trace` (events/telemetry/session).
 
