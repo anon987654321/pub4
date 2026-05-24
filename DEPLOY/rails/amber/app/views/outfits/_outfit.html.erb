@@ -1,5 +1,6 @@
 <article class="item-card" id="<%= dom_id(outfit) %>">
   <%= link_to outfit.name, outfit, class: "item-title" %>
-  <span class="dim"><%= [outfit.season, outfit.occasion].compact.join(" · ") %></span>
-  <span class="dim"><%= outfit.items.count %> items · <%= outfit.likes_count %> likes</span>
+  <span class="dim"><%= outfit.context_label.presence || "No context yet" %></span>
+  <span class="dim"><%= outfit.items.count %> items · <%= outfit.likes_count.to_i %> likes</span>
+  <span class="dim"><%= pluralize(outfit.total_wears, "combined wear") %></span>
 </article>
