@@ -28,7 +28,7 @@ const State = {
   mode: 'idle', mood: 'idle', model: '', modelName: '',
   lastTouch: performance.now(), confidence: 1.0,
   tiltX: 0, tiltY: 0, mouseX: 0, mouseY: 0,
-  audioLevel: 0, viseme: 'neutral', visemeAmp: 0,
+  viseme: 'neutral', visemeAmp: 0,
   flash: 0, shake: 0, pulse: 0, sttActive: false,
   hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
   coarsePointer: matchMedia('(pointer: coarse)').matches
@@ -133,12 +133,9 @@ function edgeMidpointPositions(geom) {
 const vertPositions = uniqueVertexPositions(head);
 const edgePositions = edgeMidpointPositions(head);
 const VERT_COUNT = vertPositions.length / 3;
-const EDGE_COUNT = edgePositions.length / 3;
 
 const vertHome = vertPositions.slice();
-const edgeHome = edgePositions.slice();
 const vertVel  = new Float32Array(VERT_COUNT * 3);
-const edgeVel  = new Float32Array(EDGE_COUNT * 3);
 
 const mouthMask = new Uint8Array(VERT_COUNT);
 const eyeMask   = new Uint8Array(VERT_COUNT);
@@ -311,13 +308,11 @@ if (window.DeviceMotionEvent) {
   }, { passive: true });
 }
 
-let actx = null, analyser = null, freqData = null;
+let actx = null;
 function initAudio() {
   if (actx) return;
   try {
     actx = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = actx.createAnalyser(); analyser.fftSize = 128;
-    freqData = new Uint8Array(analyser.frequencyBinCount);
   } catch (_) {}
 }
 function beep(freq, dur) {
