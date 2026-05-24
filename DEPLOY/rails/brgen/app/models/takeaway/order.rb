@@ -27,6 +27,7 @@ class Takeaway::Order < ApplicationRecord
 
     update!(status: STATUSES[idx + 1])
     notify_customer!("Order #{status.humanize.downcase}")
+    record_status_activity!
   end
 
   def total_display = "#{total_cents.to_i / 100.0} NOK"
@@ -41,6 +42,19 @@ class Takeaway::Order < ApplicationRecord
       body: "Your order from #{restaurant.name} is now #{status.humanize.downcase}.",
       source_type: self.class.name,
       source_id: id
+    )
+  end
+
+  def record_status_activity!
+    return unless defined?(ActivityEventRecorder)
+
+    ActivityEventRecorder.call(
+      actor: restaurant.user,
+      event_name: "TakeawayOrderUpdated",
+      object: self,
+      source_vertical: "takeaway",
+      locality: restaurant.city,
+      visibility: "private"
     )
   end
 end
