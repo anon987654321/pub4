@@ -42,6 +42,8 @@ class ChatController < ApplicationController
 
   def command
     cmd = params[:command] || JSON.parse(request.body.read)["command"]
+    return head(:forbidden) if visitor? && cmd.to_s.strip.start_with?("/")
+
     result = container[:gateway].receive(channel: :cli, message: cmd)
     output = result.ok? ? (result.value[:rendered] || result.value.to_s) : result.message
     render json: { output: output }
@@ -62,6 +64,7 @@ class ChatController < ApplicationController
   def message
     input = params[:message].to_s.strip
     return head(:bad_request) if input.empty?
+    return head(:forbidden) if visitor? && input.start_with?("/")
 
     response.headers["Content-Type"]      = "text/event-stream"
     response.headers["Cache-Control"]     = "no-cache"

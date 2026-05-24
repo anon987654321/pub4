@@ -29,6 +29,8 @@ class EventsController < ApplicationController
   MAX_STREAM_S       = 600   # hard cap — 10 minute stream ceiling
 
   def stream
+    return head(:forbidden) if visitor?
+
     response.headers["Content-Type"]      = "text/event-stream"
     response.headers["Cache-Control"]     = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"  # nginx passthrough
