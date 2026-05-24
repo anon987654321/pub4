@@ -1,18 +1,44 @@
 <% content_for :title, "Wardrobe" %>
 <%= turbo_stream_from "items" %>
+
 <section data-controller="filter">
   <header>
-    <h1>Wardrobe (<%= @pagy.count %>)</h1>
-    <%= link_to "Add item", new_item_path, class: "btn" %>
-    <select data-action="change->filter#filter" data-filter-target="select">
+    <div>
+      <p class="dim">Closet intelligence</p>
+      <h1>Wardrobe (<%= @pagy.count %>)</h1>
+    </div>
+    <nav>
+      <%= link_to "Add item", new_item_path, class: "btn" %>
+      <%= link_to "Plan outfit", new_outfit_path, class: "btn" %>
+      <%= link_to "Declutter", declutter_index_path, class: "btn" %>
+    </nav>
+  </header>
+
+  <div class="tag-row">
+    <span class="tag"><%= pluralize(@items.sum { |item| item.times_worn.to_i }, "wear") %> on this page</span>
+    <span class="tag"><%= @items.count(&:spark_joy?) %> joy keepers</span>
+    <span class="tag"><%= @items.map(&:category).compact.uniq.size %> categories</span>
+  </div>
+
+  <div class="field">
+    <label for="category-filter">Filter by category</label>
+    <select id="category-filter" data-action="change->filter#filter" data-filter-target="select">
       <option value="">All</option>
-      <% Item::CATEGORIES.each do |cat| %>
-        <option value="<%= cat %>"><%= cat %></option>
+      <% Item::CATEGORIES.each do |category| %>
+        <option value="<%= category %>"><%= category %></option>
       <% end %>
     </select>
-  </header>
+  </div>
+
   <div class="item-grid" id="items" data-filter-target="grid">
     <%= render @items %>
   </div>
+
+  <% if @items.empty? %>
+    <div class="empty">
+      <p>No wardrobe items yet. Add your first item to start recommendations, capsules, and decluttering.</p>
+    </div>
+  <% end %>
+
   <%= pagy_nav(@pagy) if @pagy.pages > 1 %>
 </section>
