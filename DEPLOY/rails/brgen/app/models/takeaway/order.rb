@@ -6,14 +6,15 @@ class Takeaway::Order < ApplicationRecord
   has_many :order_items, class_name: "Takeaway::OrderItem", dependent: :destroy
 
   STATUSES = %w[pending confirmed preparing out_for_delivery delivered cancelled].freeze
+  CENTS_PER_KRONE = 100.0
 
   validates :status, inclusion: { in: STATUSES }
   validates :delivery_address, presence: true
 
   before_validation { self.status ||= "pending" }
 
-  scope :active,  -> { where.not(status: %w[delivered cancelled]) }
-  scope :recent,  -> { order(created_at: :desc) }
+  scope :active, -> { where.not(status: %w[delivered cancelled]) }
+  scope :recent, -> { order(created_at: :desc) }
 
   def calculate_totals!
     sub = order_items.sum { |oi| oi.unit_price_cents * oi.quantity }
@@ -30,9 +31,23 @@ class Takeaway::Order < ApplicationRecord
     record_status_activity!
   end
 
-  def total_display = "#{total_cents.to_i / 100.0} NOK"
+  def subtotal_display
+    amount_display(subtotal_cents)
+  end
+
+  def delivery_fee_display
+    amount_display(delivery_fee_cents)
+  end
+
+  def total_display
+    amount_display(total_cents)
+  end
 
   private
+
+  def amount_display(cents)
+    format("%.2f NOK", cents.to_i / CENTS_PER_KRONE)
+  end
 
   def notify_customer!(title)
     return unless defined?(Notification)
