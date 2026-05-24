@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  master-self-fix:
-    name: MASTER autofixes MASTER
+  master-self-converge:
+    name: MASTER scan-fix-scan on MASTER
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,7 +23,12 @@ jobs:
           bundler-cache: true
           working-directory: MASTER
 
-      - name: Run MASTER self-autofix
+      - name: Scan MASTER baseline
+        working-directory: MASTER
+        run: |
+          printf '/scan .\n' | bundle exec ruby bin/cli
+
+      - name: Autofix MASTER
         working-directory: MASTER
         run: |
           printf '/fix .\n' | bundle exec ruby bin/cli
@@ -32,15 +37,20 @@ jobs:
         run: |
           git diff -- MASTER
 
+      - name: Verify MASTER after autofix
+        working-directory: MASTER
+        run: |
+          printf '/scan .\n' | bundle exec ruby bin/cli
+
       - name: Fail if MASTER autofix changed files
         run: |
           git diff --exit-code -- MASTER
 
-  deploy-fix:
-    name: MASTER autofixes DEPLOY
+  deploy-converge:
+    name: MASTER scan-fix-scan on DEPLOY
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: master-self-fix
+    timeout-minutes: 45
+    needs: master-self-converge
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,7 +62,12 @@ jobs:
           bundler-cache: true
           working-directory: MASTER
 
-      - name: Run DEPLOY autofix through MASTER
+      - name: Scan DEPLOY baseline through MASTER
+        working-directory: MASTER
+        run: |
+          printf '/scan ../DEPLOY\n' | bundle exec ruby bin/cli
+
+      - name: Autofix DEPLOY through MASTER
         working-directory: MASTER
         run: |
           printf '/fix ../DEPLOY\n' | bundle exec ruby bin/cli
@@ -60,6 +75,11 @@ jobs:
       - name: Show DEPLOY autofix diff
         run: |
           git diff -- DEPLOY MASTER
+
+      - name: Verify DEPLOY after autofix through MASTER
+        working-directory: MASTER
+        run: |
+          printf '/scan ../DEPLOY\n' | bundle exec ruby bin/cli
 
       - name: Fail if DEPLOY autofix changed files
         run: |
