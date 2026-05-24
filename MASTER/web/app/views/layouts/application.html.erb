@@ -3,11 +3,12 @@
   <head>
     <meta charset="utf-8">
     <title><%= content_for(:title) || "MASTER" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="MASTER">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="master-tier" content="<%= request.env['master.tier'] || 'visitor' %>">
+    <meta name="theme-color" content="#000000">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -23,13 +24,19 @@
     <%= javascript_include_tag :app, defer: true %>
   </head>
 
-  <body>
-    <canvas id="mask"></canvas>
-    <%= yield %>
-    <nav><a href="/">chat</a></nav>
-    <section>
-      <textarea id="input" rows="1" placeholder="type here..."></textarea>
-      <div id="status" aria-live="polite"></div>
+  <body
+    data-master-tier="<%= request.env['master.tier'] || 'visitor' %>"
+    data-runtime-profile="auto"
+    data-runtime-visible="true"
+    data-visual-runtime="rails">
+    <canvas id="mask" aria-hidden="true"></canvas>
+    <main id="app-shell">
+      <%= yield %>
+    </main>
+    <nav aria-label="Primary"><a href="/">chat</a></nav>
+    <section class="runtime-console" aria-label="MASTER prompt">
+      <textarea id="input" rows="1" placeholder="type here..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+      <div id="status" aria-live="polite" data-runtime-status="idle">ready</div>
     </section>
     <script src="/topology_registry.js" defer></script>
     <script src="/particle_kernel.js" defer></script>
