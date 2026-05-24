@@ -8,7 +8,7 @@ module Master
   # validate! is called at Intake boundary to catch wrong callers early.
   module PipelineContext
     # Keys guaranteed present after Intake
-    INTAKE_KEYS = %i[user_message on_chunk].freeze
+    INTAKE_KEYS = %i[user_message].freeze
     # Keys added by Intake
     INTAKE_OUT  = %i[intent].freeze
     # Keys added by Route
