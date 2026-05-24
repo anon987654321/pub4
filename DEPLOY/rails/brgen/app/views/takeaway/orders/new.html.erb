@@ -1,0 +1,43 @@
+<% content_for :title, "Order from #{@restaurant.name}" %>
+
+<header class="page-header">
+  <h1>Order from <%= @restaurant.name %></h1>
+  <p><%= @restaurant.address %></p>
+</header>
+
+<%= form_with model: @order, url: takeaway_restaurant_orders_path(@restaurant) do |form| %>
+  <%= render "shared/errors", object: @order %>
+
+  <section>
+    <h2>Menu</h2>
+    <% if @menu_items.any? %>
+      <% @menu_items.each do |item| %>
+        <article>
+          <h3><%= item.name %></h3>
+          <% if item.description.present? %>
+            <p><%= item.description %></p>
+          <% end %>
+          <p><%= number_to_currency(item.price_cents.to_i / 100.0, unit: "kr ") %></p>
+          <%= label_tag "takeaway_order_items_#{item.id}", "Quantity" %>
+          <%= number_field_tag "takeaway_order[items][#{item.id}]", 0, min: 0, id: "takeaway_order_items_#{item.id}" %>
+        </article>
+      <% end %>
+    <% else %>
+      <p>No menu items are currently available.</p>
+    <% end %>
+  </section>
+
+  <section>
+    <h2>Delivery</h2>
+    <div class="field">
+      <%= form.label :delivery_address %>
+      <%= form.text_field :delivery_address, required: true %>
+    </div>
+    <div class="field">
+      <%= form.label :special_instructions %>
+      <%= form.text_area :special_instructions, rows: 3 %>
+    </div>
+  </section>
+
+  <%= form.submit "Place order", class: "btn btn-primary" %>
+<% end %>
