@@ -1,12 +1,38 @@
 <% content_for :title, @outfit.name %>
+
 <header>
-  <h1><%= @outfit.name %></h1>
-  <span class="dim"><%= [@outfit.season, @outfit.category, @outfit.occasion].compact.join(" · ") %></span>
+  <div>
+    <p class="dim"><%= @outfit.context_label.presence || "Outfit" %></p>
+    <h1><%= @outfit.name %></h1>
+  </div>
 </header>
-<p><%= @outfit.description %></p>
-<div class="item-grid"><%= render @outfit.items %></div>
+
+<div class="tag-row">
+  <span class="tag"><%= pluralize(@outfit.items.count, "item") %></span>
+  <span class="tag"><%= pluralize(@outfit.likes_count.to_i, "like") %></span>
+  <span class="tag"><%= pluralize(@outfit.total_wears, "combined wear") %></span>
+  <% if @outfit.estimated_value.positive? %><span class="tag"><%= number_to_currency(@outfit.estimated_value) %> wardrobe value</span><% end %>
+</div>
+
+<% if @outfit.description.present? %>
+  <p><%= @outfit.description %></p>
+<% else %>
+  <p class="dim">Add a description to capture why this outfit works.</p>
+<% end %>
+
+<section>
+  <h2>Items</h2>
+  <div class="item-grid"><%= render @outfit.items %></div>
+</section>
+
+<section>
+  <h2>Style intelligence</h2>
+  <p class="dim">Use this outfit as a signal for future capsules, weather-aware recommendations, event styling, and declutter decisions.</p>
+</section>
+
 <nav>
-  <%= button_to "Like (#{@outfit.likes_count})", like_outfit_path(@outfit), method: :post, class: "btn" %>
+  <%= button_to "Like (#{@outfit.likes_count.to_i})", like_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= link_to "Edit", edit_outfit_path(@outfit), class: "btn" %>
+  <%= link_to "All outfits", outfits_path, class: "btn" %>
   <%= button_to "Delete", @outfit, method: :delete, data: { turbo_confirm: "Delete?" }, class: "btn btn-danger" %>
 </nav>
