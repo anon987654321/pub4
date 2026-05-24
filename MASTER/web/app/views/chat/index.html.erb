@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#000000">
+  <meta name="master-runtime" content="face">
+  <meta name="master-visual-profile" content="auto">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,21 +16,28 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
   <link rel="preload" href="/face.css" as="style">
+  <link rel="modulepreload" href="/three.module.js">
   <link rel="modulepreload" href="/face.js">
+  <link rel="modulepreload" href="/face3d_engine.js">
+  <link rel="modulepreload" href="/face3d_renderer.js">
+  <link rel="modulepreload" href="/face3d_preview.js">
   <link rel="stylesheet" href="/face.css">
 </head>
-<body>
-  <canvas id="cognition-ecology"></canvas>
-  <canvas id="face"></canvas>
-  <div id="primer"></div>
-  <div id="chat-log"></div>
-  <div id="zsh">
+<body data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+  <canvas id="cognition-ecology" aria-hidden="true"></canvas>
+  <canvas id="face" aria-hidden="true"></canvas>
+  <div id="primer" role="button" tabindex="0" aria-label="Start MASTER"></div>
+  <main id="chat-shell" aria-label="MASTER chat">
+    <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
+  </main>
+  <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
     <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
-    <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything">
-  </div>
+    <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
+  </form>
   <script src="/topology_registry.js" defer></script>
   <script src="/particle_kernel.js" defer></script>
   <script type="module" src="/face.js"></script>
+  <script type="module" src="/face3d_preview.js"></script>
   <script src="/visual_bridge.js" defer></script>
   <script src="/cognition_ecology.js" defer></script>
   <script src="/codebase.js" defer></script>
