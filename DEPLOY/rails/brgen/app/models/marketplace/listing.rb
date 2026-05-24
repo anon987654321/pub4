@@ -6,6 +6,9 @@ class Marketplace::Listing < ApplicationRecord
              foreign_key: :category_id, optional: true
   has_many :orders, class_name: "Marketplace::Order",
            foreign_key: :listing_id, dependent: :destroy
+  has_many :favorites, class_name: "Marketplace::ListingFavorite",
+           foreign_key: :listing_id, dependent: :destroy
+  has_many :favorited_by_users, through: :favorites, source: :user
   has_many_attached :photos
 
   CONDITIONS = %w[new like_new good fair poor].freeze
@@ -22,6 +25,7 @@ class Marketplace::Listing < ApplicationRecord
   scope :recent,   -> { order(created_at: :desc) }
   scope :popular,  -> { order(views_count: :desc) }
 
-  def price_display  = "#{price_cents / 100.0} #{currency}"
-  def sold?          = status == "sold"
+  def price_display = "#{price_cents / 100.0} #{currency}"
+  def sold? = status == "sold"
+  def favorite_for(user) = favorites.find_by(user: user)
 end
