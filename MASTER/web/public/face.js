@@ -5,6 +5,7 @@ const cv = document.getElementById('face');
 const primer = document.getElementById('primer');
 const zshBar = document.getElementById('zsh');
 const zshIn  = document.getElementById('zin');
+const rootBody = document.body;
 
 const TINT = {
   idle:    new THREE.Color(0.62, 0.86, 1.00),
@@ -28,8 +29,27 @@ const State = {
   lastTouch: performance.now(), confidence: 1.0,
   tiltX: 0, tiltY: 0, mouseX: 0, mouseY: 0,
   audioLevel: 0, viseme: 'neutral', visemeAmp: 0,
-  flash: 0, shake: 0, pulse: 0, sttActive: false
+  flash: 0, shake: 0, pulse: 0, sttActive: false,
+  hidden: document.hidden, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  coarsePointer: matchMedia('(pointer: coarse)').matches
 };
+
+function updateRuntimeProfile() {
+  State.hidden = document.hidden;
+  rootBody.dataset.runtimeVisible = State.hidden ? 'false' : 'true';
+  rootBody.dataset.runtimeProfile = (State.hidden || State.reducedMotion || State.coarsePointer) ? 'battery' : 'full';
+}
+
+updateRuntimeProfile();
+matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => {
+  State.reducedMotion = event.matches;
+  updateRuntimeProfile();
+});
+matchMedia('(pointer: coarse)').addEventListener('change', event => {
+  State.coarsePointer = event.matches;
+  updateRuntimeProfile();
+});
+document.addEventListener('visibilitychange', updateRuntimeProfile, { passive: true });
 
 const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true, powerPreference: 'low-power' });
 renderer.setClearColor(0x000000, 1);
@@ -40,41 +60,32 @@ camera.position.set(0, 0, 4.6);
 let W = 0, H = 0, DPR = 1;
 function resize() {
   W = window.innerWidth; H = window.innerHeight;
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  DPR = Math.min(window.devicePixelRatio || 1, State.coarsePointer ? 1.25 : 2);
   renderer.setPixelRatio(DPR);
   renderer.setSize(W, H, false);
   camera.aspect = W / H;
   camera.updateProjectionMatrix();
 }
-window.addEventListener('resize', resize);
-
-// ── head construction ─────────────────────────────────────────────
-// Icosahedron base, deformed into a head silhouette. Then deduped
-// vertex set + edge midpoints feeds two THREE.Points layers.
+window.addEventListener('resize', resize, { passive: true });
 
 function buildHeadGeometry() {
   const base = new THREE.IcosahedronGeometry(1.0, 4);
   const pos = base.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    y *= 1.22;                                              // taller than wide
-    z *= 0.92;                                              // flatter front-to-back
-    // jaw narrowing
+    y *= 1.22;
+    z *= 0.92;
     const jaw = Math.max(0, -y - 0.2);
     x *= 1 - jaw * 0.45;
-    // eye sockets — recess at (±0.32, 0.22, 0.78)
     for (const sx of [-1, 1]) {
       const dx = x - 0.32 * sx, dy = y - 0.22, dz = z - 0.78;
       const d2 = dx*dx + dy*dy + dz*dz;
       if (d2 < 0.10) z -= (0.10 - d2) * 1.4;
     }
-    // nose ridge — push forward at (0, 0, 1)
     const nd2 = x*x + (y + 0.02)*(y + 0.02);
     if (nd2 < 0.06 && z > 0.6) z += (0.06 - nd2) * 1.6;
-    // mouth indent at (0, -0.38, 0.84)
     const md = Math.hypot(x, (y + 0.38) * 1.4, (z - 0.84) * 1.4);
     if (md < 0.22 && z > 0.5) z -= (0.22 - md) * 0.8;
-    // crown lift
     if (y > 0.85) y += (y - 0.85) * 0.4;
     pos.setXYZ(i, x, y, z);
   }
@@ -83,7 +94,6 @@ function buildHeadGeometry() {
 
 const head = buildHeadGeometry();
 
-// Vertex deduplication (icosahedron has many shared verts)
 function uniqueVertexPositions(geom) {
   const pos = geom.attributes.position;
   const seen = new Map();
@@ -98,7 +108,6 @@ function uniqueVertexPositions(geom) {
   return new Float32Array(out);
 }
 
-// Edge midpoints from index buffer — gives a denser, secondary constellation
 function edgeMidpointPositions(geom) {
   const pos = geom.attributes.position;
   const idx = geom.index;
@@ -126,13 +135,11 @@ const edgePositions = edgeMidpointPositions(head);
 const VERT_COUNT = vertPositions.length / 3;
 const EDGE_COUNT = edgePositions.length / 3;
 
-// Home positions kept for displacement reference + per-vertex jitter velocity
 const vertHome = vertPositions.slice();
 const edgeHome = edgePositions.slice();
 const vertVel  = new Float32Array(VERT_COUNT * 3);
 const edgeVel  = new Float32Array(EDGE_COUNT * 3);
 
-// Mouth-zone mask: which vertices animate with visemes
 const mouthMask = new Uint8Array(VERT_COUNT);
 const eyeMask   = new Uint8Array(VERT_COUNT);
 for (let i = 0; i < VERT_COUNT; i++) {
@@ -145,7 +152,6 @@ for (let i = 0; i < VERT_COUNT; i++) {
   }
 }
 
-// Round soft sprite — drawn once into a canvas texture
 function makeSprite() {
   const c = document.createElement('canvas');
   c.width = c.height = 64;
@@ -182,12 +188,10 @@ const edgeMat = new THREE.PointsMaterial({
 const edgePoints = new THREE.Points(edgeGeom, edgeMat);
 scene.add(edgePoints);
 
-// Color targets for smooth palette blends
 const colorCurrent = TINT.idle.clone();
 const colorTarget  = TINT.idle.clone();
 function fadeColorTo(c) { colorTarget.copy(c); }
 
-// ── render loop ──────────────────────────────────────────────────
 let lastT = performance.now();
 const head3 = new THREE.Object3D();
 scene.add(head3);
@@ -195,27 +199,29 @@ head3.add(vertPoints);
 head3.add(edgePoints);
 
 function frame(t) {
-  const dt = Math.min(50, t - lastT); lastT = t;
+  if (State.hidden) {
+    lastT = t;
+    requestAnimationFrame(frame);
+    return;
+  }
+
+  const dt = Math.min(State.coarsePointer ? 66 : 50, t - lastT); lastT = t;
   const sec = t * 0.001;
 
-  // smooth tint blend
-  colorCurrent.lerp(colorTarget, 0.04);
+  colorCurrent.lerp(colorTarget, State.reducedMotion ? 0.12 : 0.04);
   vertMat.color.copy(colorCurrent);
   edgeMat.color.copy(colorCurrent).multiplyScalar(0.78);
 
-  // idle yaw — turntable; mouse + tilt add orbit
   const yaw   = State.mouseX * 0.7 + State.tiltX * 0.5 + Math.sin(sec * 0.2) * 0.05;
   const pitch = State.mouseY * 0.4 + State.tiltY * 0.4 + Math.sin(sec * 0.27) * 0.03;
   head3.rotation.y += (yaw   - head3.rotation.y) * 0.06;
   head3.rotation.x += (pitch - head3.rotation.x) * 0.06;
 
-  // breath scale + pulse
-  const breath = 1 + Math.sin(sec * 1.1) * 0.012 + State.pulse * 0.08;
+  const breath = State.reducedMotion ? 1 : 1 + Math.sin(sec * 1.1) * 0.012 + State.pulse * 0.08;
   head3.scale.setScalar(breath);
   State.pulse *= 0.92;
 
-  // error shake
-  if (State.shake > 0.01) {
+  if (State.shake > 0.01 && !State.reducedMotion) {
     head3.position.x = (Math.random() - 0.5) * State.shake * 0.18;
     head3.position.y = (Math.random() - 0.5) * State.shake * 0.18;
     State.shake *= 0.86;
@@ -223,7 +229,6 @@ function frame(t) {
     head3.position.set(0, 0, 0);
   }
 
-  // viseme + per-vertex jitter (mouth + eye zones)
   const vPos = vertGeom.attributes.position.array;
   const visAmp = State.visemeAmp;
   const visOpen = (State.viseme === 'A' || State.viseme === 'O' || State.viseme === 'U') ? 1.0
@@ -237,11 +242,10 @@ function frame(t) {
       hy -= open * 0.05;
       hz += open * 0.04;
     }
-    if (eyeMask[i] && Math.random() < 0.02) {
+    if (eyeMask[i] && !State.reducedMotion && Math.random() < 0.02) {
       vertVel[i3]   += (Math.random() - 0.5) * 0.004;
       vertVel[i3+1] += (Math.random() - 0.5) * 0.004;
     }
-    // spring back
     const sx = vertVel[i3]   = vertVel[i3]   * 0.9 + (hx - vPos[i3])   * 0.18;
     const sy = vertVel[i3+1] = vertVel[i3+1] * 0.9 + (hy - vPos[i3+1]) * 0.18;
     const sz = vertVel[i3+2] = vertVel[i3+2] * 0.9 + (hz - vPos[i3+2]) * 0.18;
@@ -252,7 +256,6 @@ function frame(t) {
   State.visemeAmp *= 0.85;
   vertGeom.attributes.position.needsUpdate = true;
 
-  // flash on error / verdict
   vertMat.opacity = 1 - State.flash * 0.4;
   State.flash *= 0.9;
 
@@ -260,14 +263,13 @@ function frame(t) {
   requestAnimationFrame(frame);
 }
 
-// ── pointer / motion ─────────────────────────────────────────────
 let pressTimer = null, pressStart = 0;
 cv.addEventListener('pointermove', (e) => {
   State.mouseX = (e.clientX / innerWidth  - 0.5) * 1.6;
   State.mouseY = (e.clientY / innerHeight - 0.5) * 0.9;
 }, { passive: true });
 
-cv.addEventListener('pointerdown', (e) => {
+cv.addEventListener('pointerdown', () => {
   pressStart = performance.now();
   State.lastTouch = pressStart;
   pressTimer = setTimeout(startSTT, 420);
@@ -285,7 +287,7 @@ function bindOrientation() {
   window.addEventListener('deviceorientation', (e) => {
     if (e.gamma != null) State.tiltX = e.gamma / 90;
     if (e.beta  != null) State.tiltY = (e.beta - 45) / 90;
-  });
+  }, { passive: true });
 }
 async function requestMotionPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' &&
@@ -306,10 +308,9 @@ if (window.DeviceMotionEvent) {
     lastAccel = [a.x, a.y, a.z];
     const now = performance.now();
     if (m > 24 && now - lastShake > 800) { lastShake = now; ttsSkip(); State.shake = 1.2; }
-  });
+  }, { passive: true });
 }
 
-// ── audio analyser (drives micro-pulse) ──────────────────────────
 let actx = null, analyser = null, freqData = null;
 function initAudio() {
   if (actx) return;
@@ -329,7 +330,6 @@ function beep(freq, dur) {
   o.start(); o.stop(actx.currentTime + dur);
 }
 
-// ── TTS via browser SpeechSynthesis (no API key, no server hop) ──
 const tts = { queue: [], muted: false, playing: false, voice: null, current: null };
 
 function pickVoice() {
@@ -386,7 +386,6 @@ function ttsToggleMute() {
   beep(tts.muted ? 220 : 880, 0.05);
 }
 
-// ── STT (long-press to talk) ─────────────────────────────────────
 let recognition = null;
 if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -411,7 +410,6 @@ function stopSTT() {
   try { recognition.stop(); } catch (_) {}
 }
 
-// ── chat SSE wiring (preserved verbatim) ─────────────────────────
 let evtSrc = null;
 async function sendMessage(text) {
   if (evtSrc) { try { evtSrc.close(); } catch (_) {} }
@@ -496,7 +494,6 @@ async function sendMessage(text) {
   };
 }
 
-// ── periodic state ping (closed-loop canvas → MASTER) ───────────
 setInterval(() => {
   if (document.hidden) return;
   const idleS = ((performance.now() - State.lastTouch) / 1000) | 0;
@@ -508,7 +505,6 @@ setInterval(() => {
   try { fetch('/canvas/state', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, keepalive: true }); } catch (_) {}
 }, 8000);
 
-// ── wake lock ────────────────────────────────────────────────────
 let wakeLock = null;
 async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) return;
@@ -517,7 +513,6 @@ async function acquireWakeLock() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !wakeLock) req(); });
 }
 
-// ── boot POST (sacred dmesg banner) ──────────────────────────────
 const POST_LINES = [
   'MASTER (CONSTITUTIONAL)',
   'soul: ok',
@@ -552,13 +547,16 @@ function startEverything() {
   setTimeout(tick, 80);
 }
 primer.addEventListener('pointerdown', startEverything, { once: true });
+primer.addEventListener('keydown', event => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  startEverything();
+}, { once: true });
 
-// ── zsh prompt ───────────────────────────────────────────────────
-zshIn.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return;
+zshBar.addEventListener('submit', (e) => {
+  e.preventDefault();
   const v = zshIn.value.trim();
   if (!v) return;
-  e.preventDefault();
   window._chatOnUser?.(v);
   zshIn.value = '';
   State.pulse = 0.4;
@@ -573,6 +571,5 @@ document.addEventListener('keydown', (e) => {
 
 window.sendMessage = sendMessage;
 
-// ── go ───────────────────────────────────────────────────────────
 resize();
 requestAnimationFrame(frame);
