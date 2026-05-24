@@ -17,7 +17,10 @@
 <% end %>
 
 <div class="page-header">
-  <h1>Discover</h1>
+  <div>
+    <p class="dim">Local discovery</p>
+    <h1>Discover</h1>
+  </div>
   <nav>
     <%= link_to "Matches", dating_matches_path, class: "btn btn-ghost" %>
     <% if authenticated? %><%= link_to "Edit profile", edit_dating_profile_path, class: "btn btn-ghost" %><% end %>
@@ -25,19 +28,34 @@
 </div>
 
 <section>
-  <% @profiles.each do |p| %>
-    <article>
-      <% if p.photos.attached? %>
-        <%= image_tag p.photos.first, style: "width:100%;max-height:320px;object-fit:cover;border-radius:2px;margin-bottom:12px" %>
+  <% @profiles.each do |profile| %>
+    <article style="overflow:hidden">
+      <% if profile.photos.attached? %>
+        <%= image_tag profile.photos.first, style: "width:100%;max-height:420px;object-fit:cover;border-radius:2px;margin-bottom:12px" %>
+      <% else %>
+        <div style="height:220px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--border);border-radius:2px;margin-bottom:12px">
+          <span style="font-size:64px;font-weight:900"><%= profile.user.email_address.first.upcase %></span>
+        </div>
       <% end %>
-      <h2><%= p.user.email_address.split("@").first %><% if p.age %>, <%= p.age %><% end %></h2>
-      <% if p.location.present? %><p><%= p.location %></p><% end %>
-      <p><%= p.bio %></p>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <h2><%= profile.user.email_address.split("@").first %><% if profile.age %>, <%= profile.age %><% end %></h2>
+          <% if profile.location.present? %><p class="dim"><%= profile.location %></p><% end %>
+        </div>
+        <span class="chip"><%= profile.visible? ? "visible" : "paused" %></span>
+      </div>
+      <% if profile.bio.present? %><p><%= profile.bio %></p><% end %>
+      <div class="chips">
+        <% if profile.gender.present? %><span class="chip"><%= profile.gender %></span><% end %>
+        <% if profile.looking_for.present? %><span class="chip">Looking for <%= profile.looking_for %></span><% end %>
+      </div>
       <% if authenticated? %>
         <div style="display:flex;gap:8px;margin-top:12px">
-          <%= button_to "Like", dating_likes_path(user_id: p.user_id), method: :post, class: "btn" %>
-          <%= button_to "Pass", dating_dislikes_path(user_id: p.user_id), method: :post, class: "btn btn-ghost" %>
+          <%= button_to "Like", dating_likes_path(user_id: profile.user_id), method: :post, class: "btn" %>
+          <%= button_to "Pass", dating_dislikes_path(user_id: profile.user_id), method: :post, class: "btn btn-ghost" %>
         </div>
+      <% else %>
+        <p class="dim"><%= link_to "Sign in", new_session_path %> to like or pass.</p>
       <% end %>
     </article>
   <% end %>
