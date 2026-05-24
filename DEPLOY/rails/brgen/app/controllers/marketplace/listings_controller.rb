@@ -27,6 +27,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     if @listing.save
       preset = params[:marketplace_listing][:preset].presence
       PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
+      record_listing_activity!
       redirect_to marketplace_listing_path(@listing), notice: "Listed"
     else
       render :new, status: :unprocessable_entity
@@ -49,9 +50,25 @@ class Marketplace::ListingsController < Marketplace::BaseController
   end
 
   private
-  def set_listing    = (@listing = Marketplace::Listing.find(params[:id]))
-  def listing_params = params.require(:marketplace_listing).permit(
-    :title, :description, :price_cents, :condition, :status, :location,
-    :category_id, :preset, photos: []
-  )
+
+  def set_listing = (@listing = Marketplace::Listing.find(params[:id]))
+
+  def listing_params
+    params.require(:marketplace_listing).permit(
+      :title, :description, :price_cents, :condition, :status, :location,
+      :category_id, :preset, photos: []
+    )
+  end
+
+  def record_listing_activity!
+    return unless defined?(ActivityEventRecorder)
+
+    ActivityEventRecorder.call(
+      actor: Current.user,
+      event_name: "ListingCreated",
+      object: @listing,
+      source_vertical: "marketplace",
+      locality: @listing.location
+    )
+  end
 end
