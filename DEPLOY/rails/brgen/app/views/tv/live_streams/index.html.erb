@@ -1,0 +1,17 @@
+<% content_for :title, t("tv.live_streams.title", default: "Live streams") %>
+
+<%= tag.section class: "tv-live-streams" do %>
+  <%= tag.header do %>
+    <%= tag.h1 t("tv.live_streams.title", default: "Live streams") %>
+  <% end %>
+
+  <%= tag.div class: "live-stream-grid" do %>
+    <% @live_streams.each do |live_stream| %>
+      <%= tag.article class: "live-stream-card" do %>
+        <%= tag.h2 link_to(live_stream.title, tv_live_stream_path(live_stream)) %>
+        <%= tag.p live_stream.status %>
+        <%= tag.p live_stream.description if live_stream.description.present? %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
