@@ -66,9 +66,12 @@ module Master
       # API rate limit is infrastructure noise — don't open the circuit.
       Result.err("rate_limit: #{e.message}", category: :rate_limit)
     rescue StandardError => e
-      on_failure
       msg = e.message.to_s
-      return Result.err(Master.no_api_key_message, category: :no_api_key) if msg.match?(/missing configuration/i) || !Master.any_api_key_present?
+      # Config errors aren't backend failures — don't penalize the breaker.
+      if msg.match?(/missing configuration/i) || !Master.any_api_key_present?
+        return Result.err(Master.no_api_key_message, category: :no_api_key)
+      end
+      on_failure
       Result.err(msg, category: :provider_error)
     end
 
@@ -92,6 +95,7 @@ module Master
             raise CircuitError.new("circuit open: #{(COOLDOWN_S - elapsed).ceil}s cooldown remaining", :infrastructure)
           end
           @state = :half_open
+          @failures = 0
         end
       end
     end
