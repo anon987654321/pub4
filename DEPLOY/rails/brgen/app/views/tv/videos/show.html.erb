@@ -1,14 +1,56 @@
 <% content_for :title, @video.title %>
 
-<div class="page-header"><h1><%= @video.title %></h1></div>
+<div class="page-header">
+  <div>
+    <p class="dim"><%= link_to @video.channel.name, tv_channel_path(@video.channel) %></p>
+    <h1><%= @video.title %></h1>
+  </div>
+  <button class="btn-share" data-controller="share"
+          data-share-title-value="<%= @video.title %>"
+          data-share-url-value="<%= request.original_url %>"
+          data-action="click->share#share">Share</button>
+</div>
 
 <% if @video.video_file.attached? %>
   <div style="border-bottom:1px solid var(--border)">
-    <%= video_tag url_for(@video.video_file), controls: true, class: "video-player", style: "width:100%;max-height:340px;background:#000;display:block" %>
+    <%= video_tag url_for(@video.video_file), controls: true, class: "video-player", style: "width:100%;max-height:420px;background:#000;display:block" %>
+  </div>
+<% elsif @video.thumbnail.attached? %>
+  <div style="border-bottom:1px solid var(--border)">
+    <%= image_tag @video.thumbnail, style: "width:100%;max-height:420px;object-fit:cover;display:block" %>
   </div>
 <% end %>
 
 <article>
-  <p class="dim"><%= link_to @video.channel.name, tv_channel_path(@video.channel) %> · <%= @video.views_count %> views · <%= @video.duration_formatted %></p>
-  <p style="margin-top:8px"><%= @video.description %></p>
+  <div class="chips">
+    <span class="chip"><%= pluralize(@video.views_count.to_i, "view") %></span>
+    <span class="chip"><%= @video.duration_formatted %></span>
+    <span class="chip"><%= @video.status %></span>
+    <% if @video.published_at.present? %><span class="chip"><%= time_ago_in_words(@video.published_at) %> ago</span><% end %>
+  </div>
+  <% if @video.description.present? %>
+    <p style="margin-top:12px"><%= simple_format(@video.description) %></p>
+  <% else %>
+    <p class="dim">No description yet.</p>
+  <% end %>
 </article>
+
+<section>
+  <h2>Channel</h2>
+  <article>
+    <strong><%= link_to @video.channel.name, tv_channel_path(@video.channel) %></strong>
+    <p class="dim"><%= pluralize(@video.channel.subscribers_count.to_i, "subscriber") %> · <%= pluralize(@video.channel.total_views.to_i, "total view") %></p>
+    <% if authenticated? && Current.user != @video.channel.user %>
+      <% if @video.channel.subscriptions.exists?(user: Current.user) %>
+        <%= button_to "Unsubscribe", unsubscribe_tv_channel_path(@video.channel), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to "Subscribe", subscribe_tv_channel_path(@video.channel), method: :post, class: "btn btn-primary btn-sm" %>
+      <% end %>
+    <% end %>
+  </article>
+</section>
+
+<section>
+  <h2>Discussion</h2>
+  <p class="dim">Comments are being prepared for this channel. Share the video or subscribe meanwhile.</p>
+</section>
