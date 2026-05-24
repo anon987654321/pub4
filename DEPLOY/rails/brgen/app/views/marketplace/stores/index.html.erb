@@ -1,0 +1,24 @@
+<% content_for :title, t("marketplace.stores.title", default: "Stores") %>
+
+<%= tag.section class: "marketplace-stores" do %>
+  <%= tag.header do %>
+    <%= tag.h1 t("marketplace.stores.title", default: "Stores") %>
+    <%= link_to t("marketplace.stores.open", default: "Open a store"), new_marketplace_shop_path %>
+  <% end %>
+
+  <%= tag.nav aria: { label: t("marketplace.verticals", default: "Store categories") } do %>
+    <% Marketplace::Store::VERTICALS.each do |vertical| %>
+      <%= link_to vertical.humanize, marketplace_shops_path(vertical: vertical) %>
+    <% end %>
+  <% end %>
+
+  <%= tag.div class: "store-grid" do %>
+    <% @stores.each do |store| %>
+      <%= tag.article class: "store-card" do %>
+        <%= tag.h2 link_to(store.name, marketplace_shop_path(store.slug)) %>
+        <%= tag.p store.vertical&.humanize if store.vertical.present? %>
+        <%= tag.p store.description if store.description.present? %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
