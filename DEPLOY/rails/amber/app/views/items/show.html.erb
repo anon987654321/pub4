@@ -1,16 +1,30 @@
 <% content_for :title, @item.title %>
+
 <article class="item-detail">
   <% if @item.photos.attached? %>
     <div class="item-photos">
-      <% @item.photos.each do |p| %>
-        <%= image_tag p.variant(resize_to_limit: [600, 600]) %>
+      <% @item.photos.each do |photo| %>
+        <%= image_tag photo.variant(resize_to_limit: [600, 600]) %>
       <% end %>
     </div>
   <% end %>
+
   <header>
-    <h1><%= @item.title %></h1>
+    <div>
+      <p class="dim"><%= @item.category %><%= " · #{@item.brand}" if @item.brand.present? %></p>
+      <h1><%= @item.title %></h1>
+    </div>
     <% if @item.spark_joy? %><span class="badge">Sparks joy</span><% end %>
   </header>
+
+  <div class="tag-row">
+    <span class="tag"><%= pluralize(@item.times_worn.to_i, "wear") %></span>
+    <% if @item.price? && @item.times_worn.to_i.positive? %>
+      <span class="tag"><%= number_to_currency(@item.price / @item.times_worn.to_i) %> per wear</span>
+    <% end %>
+    <% if @item.lifecycle_state.present? %><span class="tag"><%= @item.lifecycle_state.humanize %></span><% end %>
+  </div>
+
   <dl class="meta">
     <dt>Category</dt><dd><%= @item.category %></dd>
     <% if @item.color.present? %><dt>Color</dt><dd><%= @item.color %></dd><% end %>
@@ -21,18 +35,26 @@
     <dt>Worn</dt><dd><%= @item.times_worn.to_i %> times</dd>
     <% if @item.purchase_date? %><dt>Purchased</dt><dd><%= @item.purchase_date.strftime("%b %Y") %></dd><% end %>
   </dl>
+
   <% if @item.mood_effect.present? || @item.life_phase.present? %>
     <div class="tag-row">
       <% if @item.mood_effect.present? %><span class="tag">Mood: <%= @item.mood_effect %></span><% end %>
       <% if @item.life_phase.present? %><span class="tag tag--phase"><%= @item.life_phase %></span><% end %>
     </div>
   <% end %>
-  <div id="item_<%= @item.id %>_analysis"></div>
-  <div id="item_<%= @item.id %>_tags"></div>
+
+  <section>
+    <h2>Wardrobe intelligence</h2>
+    <p class="dim">Use AI analysis for tags, mood, capsule fit, and declutter decisions.</p>
+    <div id="item_<%= @item.id %>_analysis"></div>
+    <div id="item_<%= @item.id %>_tags"></div>
+  </section>
+
   <nav>
     <%= button_to "Worn today", wear_item_path(@item), method: :post, class: "btn" %>
     <%= button_to "AI analyse", ai_analyze_item_path(@item), method: :post, class: "btn" %>
     <%= button_to "AI tag mood", ai_tag_item_path(@item), method: :post, class: "btn" %>
+    <%= link_to "Declutter review", review_declutter_path(@item), class: "btn" %>
     <%= link_to "Edit", edit_item_path(@item), class: "btn" %>
     <%= button_to "Delete", @item, method: :delete, data: { turbo_confirm: "Remove this item?" }, class: "btn btn-danger" %>
   </nav>
