@@ -1,0 +1,33 @@
+#zsh {
+  gap: 8px;
+}
+
+#photo-button {
+  appearance: none;
+  border: 1px solid var(--face-fg);
+  background: transparent;
+  color: var(--face-fg);
+  font: inherit;
+  inline-size: 18px;
+  block-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+#photo-button[data-state="busy"] {
+  opacity: 0.55;
+}
+
+#photo-button[data-state="ready"],
+#photo-button[data-state="raw"] {
+  background: var(--face-fg);
+  color: var(--face-bg);
+}
+
+#photo-button:focus-visible {
+  outline: 1px solid var(--face-fg);
+  outline-offset: 2px;
+}
