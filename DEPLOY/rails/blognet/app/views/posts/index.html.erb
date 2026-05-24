@@ -1,0 +1,24 @@
+<% content_for :title, "Posts · #{@blog.name}" %>
+
+<header>
+  <h1><%= @blog.name %></h1>
+  <p><%= @blog.description %></p>
+  <% if @blog.user == Current.user %>
+    <%= link_to "New post", new_blog_post_path(@blog) %>
+  <% end %>
+</header>
+
+<section id="posts">
+  <% if @posts.any? %>
+    <% @posts.each do |post| %>
+      <article>
+        <h2><%= link_to post.title, blog_post_path(@blog, post) %></h2>
+        <small><%= post.published_at&.strftime("%b %-d, %Y") %> · <%= post.views_count %> views · <%= post.comments_count %> comments</small>
+      </article>
+    <% end %>
+  <% else %>
+    <p>No posts published yet.</p>
+  <% end %>
+</section>
+
+<%= @pagy.series_nav if @pagy.pages > 1 %>
