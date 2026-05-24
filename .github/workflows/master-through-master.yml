@@ -8,13 +8,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  master-self-converge:
-    name: MASTER scan-fix-scan-critique-council on MASTER
+  master-gate:
+    name: Inventory, history audit, MASTER gate
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
-      - name: Checkout
+      - name: Checkout full history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -23,84 +25,15 @@ jobs:
           bundler-cache: true
           working-directory: MASTER
 
-      - name: Scan MASTER baseline
+      - name: Inventory current repo sprawl
+        run: |
+          ruby MASTER/tools/repo_inventory.rb --json | tee repo_inventory.json
+
+      - name: Audit git history for lost valuables
+        run: |
+          ruby MASTER/tools/history_valuables.rb MASTER DEPLOY .github README.md MASTER.md CLAUDE.md
+
+      - name: Run MASTER gate
         working-directory: MASTER
         run: |
-          printf '/scan .\n' | bundle exec ruby bin/cli
-
-      - name: Autofix MASTER
-        working-directory: MASTER
-        run: |
-          printf '/fix .\n' | bundle exec ruby bin/cli
-
-      - name: Show MASTER autofix diff
-        run: |
-          git diff -- MASTER
-
-      - name: Verify MASTER after autofix
-        working-directory: MASTER
-        run: |
-          printf '/scan .\n' | bundle exec ruby bin/cli
-
-      - name: Critique MASTER
-        working-directory: MASTER
-        run: |
-          printf '/critique .\n' | bundle exec ruby bin/cli
-
-      - name: Council review MASTER
-        working-directory: MASTER
-        run: |
-          printf '/review .\n' | bundle exec ruby bin/cli
-
-      - name: Fail if MASTER autofix changed files
-        run: |
-          git diff --exit-code -- MASTER
-
-  deploy-converge:
-    name: MASTER scan-fix-scan-critique-council on DEPLOY
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    needs: master-self-converge
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-          bundler-cache: true
-          working-directory: MASTER
-
-      - name: Scan DEPLOY baseline through MASTER
-        working-directory: MASTER
-        run: |
-          printf '/scan ../DEPLOY\n' | bundle exec ruby bin/cli
-
-      - name: Autofix DEPLOY through MASTER
-        working-directory: MASTER
-        run: |
-          printf '/fix ../DEPLOY\n' | bundle exec ruby bin/cli
-
-      - name: Show DEPLOY autofix diff
-        run: |
-          git diff -- DEPLOY MASTER
-
-      - name: Verify DEPLOY after autofix through MASTER
-        working-directory: MASTER
-        run: |
-          printf '/scan ../DEPLOY\n' | bundle exec ruby bin/cli
-
-      - name: Critique DEPLOY through MASTER
-        working-directory: MASTER
-        run: |
-          printf '/critique ../DEPLOY\n' | bundle exec ruby bin/cli
-
-      - name: Council review DEPLOY through MASTER
-        working-directory: MASTER
-        run: |
-          printf '/review ../DEPLOY\n' | bundle exec ruby bin/cli
-
-      - name: Fail if DEPLOY autofix changed files
-        run: |
-          git diff --exit-code -- DEPLOY MASTER
+          ruby bin/gate
