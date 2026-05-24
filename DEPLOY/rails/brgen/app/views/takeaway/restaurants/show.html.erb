@@ -2,7 +2,13 @@
 
 <div class="page-header">
   <h1><%= @restaurant.name %></h1>
-  <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" if authenticated? && Current.user == @restaurant.user %>
+  <nav>
+    <% if authenticated? && Current.user == @restaurant.user %>
+      <%= link_to "Edit", edit_takeaway_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
+    <% elsif authenticated? %>
+      <%= button_to "Save", takeaway_restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn btn-primary btn-sm" %>
+    <% end %>
+  </nav>
 </div>
 
 <article>
