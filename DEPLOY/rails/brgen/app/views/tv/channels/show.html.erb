@@ -1,23 +1,45 @@
 <% content_for :title, @channel.name %>
 
 <div class="page-header">
-  <h1><%= @channel.name %></h1>
-  <% if authenticated? && Current.user != @channel.user %>
-    <% if @channel.subscriptions.exists?(user: Current.user) %>
-      <%= button_to "Unsubscribe", unsubscribe_tv_channel_path(@channel), method: :delete, class: "btn btn-ghost btn-sm" %>
-    <% else %>
-      <%= button_to "Subscribe", subscribe_tv_channel_path(@channel), method: :post, class: "btn btn-primary btn-sm" %>
+  <div>
+    <p class="dim">Brgen TV channel</p>
+    <h1><%= @channel.name %></h1>
+  </div>
+  <nav>
+    <% if authenticated? && Current.user == @channel.user %>
+      <%= link_to "Upload video", new_tv_channel_video_path(@channel), class: "btn btn-primary btn-sm" %>
+      <%= link_to "Edit", edit_tv_channel_path(@channel), class: "btn btn-ghost btn-sm" %>
+    <% elsif authenticated? %>
+      <% if @channel.subscriptions.exists?(user: Current.user) %>
+        <%= button_to "Unsubscribe", unsubscribe_tv_channel_path(@channel), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <% else %>
+        <%= button_to "Subscribe", subscribe_tv_channel_path(@channel), method: :post, class: "btn btn-primary btn-sm" %>
+      <% end %>
     <% end %>
-  <% end %>
+  </nav>
 </div>
 
 <article>
-  <p class="dim"><%= @channel.subscribers_count %> subscribers</p>
-  <p><%= @channel.description %></p>
+  <div class="chips">
+    <span class="chip"><%= pluralize(@channel.subscribers_count.to_i, "subscriber") %></span>
+    <span class="chip"><%= pluralize(@channel.total_views.to_i, "total view") %></span>
+    <span class="chip"><%= pluralize(@videos.count, "video") %> shown</span>
+  </div>
+  <% if @channel.description.present? %>
+    <p><%= simple_format(@channel.description) %></p>
+  <% else %>
+    <p class="dim">This channel has not added a description yet.</p>
+  <% end %>
 </article>
 
 <section>
   <h2>Videos</h2>
-  <%= render @videos %>
+  <% if @videos.any? %>
+    <%= render @videos %>
+  <% else %>
+    <div class="empty">
+      <p>No published videos yet.</p>
+    </div>
+  <% end %>
 </section>
 <%= @pagy.series_nav if @pagy.pages > 1 %>
