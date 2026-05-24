@@ -1,0 +1,29 @@
+<% content_for :title, t("marketplace.deals.title", default: "Deals") %>
+
+<%= tag.section class: "marketplace-deals" do %>
+  <%= tag.header do %>
+    <%= tag.h1 t("marketplace.deals.title", default: "Deals") %>
+  <% end %>
+
+  <% if @featured_deals.any? %>
+    <%= tag.section class: "featured-deals" do %>
+      <%= tag.h2 t("marketplace.deals.featured", default: "Featured deals") %>
+      <% @featured_deals.each do |deal| %>
+        <%= tag.article class: "deal-card featured" do %>
+          <%= tag.h3 link_to(deal.headline, marketplace_deal_path(deal)) %>
+          <%= tag.p deal.badge if deal.badge.present? %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= tag.div class: "deal-grid" do %>
+    <% @deals.each do |deal| %>
+      <%= tag.article class: "deal-card" do %>
+        <%= tag.h2 link_to(deal.headline, marketplace_deal_path(deal)) %>
+        <%= tag.p deal.listing.title %>
+        <%= tag.p deal.listing.price_display %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
