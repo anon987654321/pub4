@@ -18,15 +18,7 @@
   </nav>
 </div>
 
-<% if @listing.photos.attached? %>
-  <div data-controller="lightbox" style="display:flex;gap:8px;padding:16px;border-bottom:1px solid var(--border);overflow-x:auto">
-    <% @listing.photos.each do |photo| %>
-      <a href="<%= url_for(photo) %>">
-        <%= image_tag photo, style: "height:240px;width:auto;object-fit:cover;border-radius:6px;flex-shrink:0" %>
-      </a>
-    <% end %>
-  </div>
-<% end %>
+<%= render "shared/media_gallery", attachments: @listing.photos, title: @listing.title %>
 
 <article>
   <p style="font-size:28px;font-weight:800;color:#e63230;margin-bottom:6px"><%= @listing.price_display %></p>
