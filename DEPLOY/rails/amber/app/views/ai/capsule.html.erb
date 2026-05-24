@@ -1,20 +1,39 @@
 <% content_for :title, "Capsule Optimizer" %>
-<h1>Capsule Wardrobe Optimizer</h1>
+
+<header>
+  <div>
+    <p class="dim">Capsule builder</p>
+    <h1>Capsule Wardrobe Optimizer</h1>
+  </div>
+  <nav>
+    <%= link_to "Wardrobe", items_path, class: "btn" %>
+    <%= link_to "Outfits", outfits_path, class: "btn" %>
+  </nav>
+</header>
+
 <% if @result["items"] %>
+  <div class="tag-row">
+    <span class="tag"><%= pluralize(@result["items"].size, "item reviewed") %></span>
+    <span class="tag"><%= pluralize(Array(@result["gap_items"]).size, "gap") %></span>
+  </div>
+
   <div class="capsule-list">
     <% @result["items"].each do |item| %>
       <div class="capsule-row capsule-row--<%= item["decision"] %>">
-        <span class="capsule-decision"><%= item["decision"] %></span>
+        <span class="capsule-decision"><%= item["decision"].to_s.humanize %></span>
         <strong><%= item["title"] %></strong>
         <span class="dim"><%= item["reason"] %></span>
       </div>
     <% end %>
   </div>
+
   <% if @result["gap_items"]&.any? %>
-    <h2>Gap items to consider buying</h2>
-    <ul><% @result["gap_items"].each do |g| %><li><%= g %></li><% end %></ul>
+    <section>
+      <h2>Gap items to consider</h2>
+      <p class="dim">Use these as intentional purchases, not impulse buys.</p>
+      <ul><% @result["gap_items"].each do |gap_item| %><li><%= gap_item %></li><% end %></ul>
+    </section>
   <% end %>
 <% else %>
-  <p class="dim">Add more items to your wardrobe first.</p>
+  <div class="empty"><p>Add more items to your wardrobe first.</p></div>
 <% end %>
-<p><%= link_to "← Dashboard", root_path %></p>
