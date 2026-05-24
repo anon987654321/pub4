@@ -1,0 +1,29 @@
+<% content_for :title, "Saved searches" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Marketplace alerts</p>
+    <h1>Saved searches</h1>
+  </div>
+  <%= link_to "Browse listings", marketplace_listings_path, class: "btn btn-ghost" %>
+</div>
+
+<% if @saved_searches.any? %>
+  <% @saved_searches.each do |saved_search| %>
+    <article>
+      <h2><%= saved_search.title %></h2>
+      <p class="dim">
+        <%= saved_search.query.presence || "Any query" %>
+        <% if saved_search.category %> · <%= saved_search.category.name %><% end %>
+        <% if saved_search.location.present? %> · <%= saved_search.location %><% end %>
+        <% if saved_search.notify? %> · notifications on<% end %>
+      </p>
+      <nav>
+        <%= link_to "Run search", marketplace_listings_path(q: saved_search.query, category_id: saved_search.category_id), class: "btn btn-sm" %>
+        <%= button_to "Delete", marketplace_saved_search_path(saved_search), method: :delete, class: "btn btn-ghost btn-sm" %>
+      </nav>
+    </article>
+  <% end %>
+<% else %>
+  <div class="empty"><p>No saved searches yet. Save one from the marketplace search page.</p></div>
+<% end %>
