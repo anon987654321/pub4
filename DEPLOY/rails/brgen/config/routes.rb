@@ -78,6 +78,7 @@ Rails.application.routes.draw do
     scope module: "takeaway", as: "takeaway" do
       root "restaurants#index", as: :takeaway_root
       resources :restaurants do
+        resource :favorite_restaurant, only: %i[create destroy]
         resources :menu_items, only: %i[create destroy]
         resources :orders, only: %i[new create]
       end
