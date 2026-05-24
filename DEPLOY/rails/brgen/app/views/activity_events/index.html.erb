@@ -1,0 +1,16 @@
+<% content_for :title, "Activity" %>
+
+<div class="page-header">
+  <h1>Activity</h1>
+</div>
+
+<% if @events.any? %>
+  <% @events.each do |event| %>
+    <article>
+      <h2><%= event.event_name.to_s.humanize %></h2>
+      <p class="dim"><%= event.source_vertical %> · <%= event.object_type %> · <%= time_ago_in_words(event.created_at) %> ago</p>
+    </article>
+  <% end %>
+<% else %>
+  <div class="empty"><p>No activity yet.</p></div>
+<% end %>
