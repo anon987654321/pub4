@@ -6,7 +6,8 @@ class Marketplace::SavedSearchesController < Marketplace::BaseController
   end
 
   def create
-    Current.user.marketplace_saved_searches.create!(saved_search_params)
+    saved_search = Current.user.marketplace_saved_searches.create!(saved_search_params)
+    record_activity!(saved_search)
     redirect_back fallback_location: marketplace_listings_path, notice: "Saved search"
   end
 
@@ -19,5 +20,18 @@ class Marketplace::SavedSearchesController < Marketplace::BaseController
 
   def saved_search_params
     params.require(:marketplace_saved_search).permit(:name, :query, :category_id, :location, :notify)
+  end
+
+  def record_activity!(saved_search)
+    return unless defined?(ActivityEventRecorder)
+
+    ActivityEventRecorder.call(
+      actor: Current.user,
+      event_name: "MarketplaceSearchSaved",
+      object: saved_search,
+      source_vertical: "marketplace",
+      locality: saved_search.location,
+      visibility: "private"
+    )
   end
 end
