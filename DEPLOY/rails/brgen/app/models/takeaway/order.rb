@@ -6,6 +6,7 @@ class Takeaway::Order < ApplicationRecord
   has_many :order_items, class_name: "Takeaway::OrderItem", dependent: :destroy
 
   STATUSES = %w[pending confirmed preparing out_for_delivery delivered cancelled].freeze
+  TERMINAL_STATUSES = %w[delivered cancelled].freeze
   CENTS_PER_KRONE = 100.0
 
   validates :status, inclusion: { in: STATUSES }
@@ -13,7 +14,7 @@ class Takeaway::Order < ApplicationRecord
 
   before_validation { self.status ||= "pending" }
 
-  scope :active, -> { where.not(status: %w[delivered cancelled]) }
+  scope :active, -> { where.not(status: TERMINAL_STATUSES) }
   scope :recent, -> { order(created_at: :desc) }
 
   def calculate_totals!
@@ -29,6 +30,10 @@ class Takeaway::Order < ApplicationRecord
     update!(status: STATUSES[idx + 1])
     notify_customer!("Order #{status.humanize.downcase}")
     record_status_activity!
+  end
+
+  def advanceable?
+    STATUSES.include?(status) && TERMINAL_STATUSES.exclude?(status)
   end
 
   def subtotal_display
