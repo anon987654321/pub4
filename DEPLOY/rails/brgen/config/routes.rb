@@ -52,8 +52,18 @@ Rails.application.routes.draw do
       resources :channels, param: :slug do
         member { post :subscribe; delete :unsubscribe }
         resources :videos, only: %i[new create]
+        resources :live_streams, only: %i[new create]
       end
-      resources :videos, only: %i[show destroy]
+      resources :videos, only: %i[show destroy] do
+        resources :video_notes, only: :create
+      end
+      resources :live_streams, only: %i[index show update destroy] do
+        resources :stream_chats, only: :create
+        member do
+          patch :go_live
+          patch :end_live
+        end
+      end
     end
   end
 
@@ -73,6 +83,11 @@ Rails.application.routes.draw do
       resources :playlists do
         resources :tracks, only: %i[create destroy]
       end
+      resources :sets do
+        resources :tracks, only: %i[create destroy]
+        resources :collaborations, only: %i[create destroy]
+        resource :like, only: %i[create destroy]
+      end
       resources :listens, only: :create
     end
   end
@@ -84,6 +99,7 @@ Rails.application.routes.draw do
         resources :menu_items, only: %i[create destroy]
         resources :orders,     only: %i[new create]
       end
+      resources :delivery_drivers, only: %i[index show update]
       resources :orders, only: %i[index show update]
     end
   end
