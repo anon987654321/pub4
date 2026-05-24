@@ -9,6 +9,7 @@ class Marketplace::OrdersController < Marketplace::BaseController
                                    price_cents: @listing.price_cents)
     if @order.save
       notify_seller!
+      record_offer_activity!
       redirect_to marketplace_listing_path(@listing), notice: "Offer sent"
     else
       redirect_to marketplace_listing_path(@listing), alert: "Could not send offer"
@@ -36,6 +37,18 @@ class Marketplace::OrdersController < Marketplace::BaseController
       body: "#{Current.user.display_name} sent an offer for #{@listing.title}.",
       source_type: @order.class.name,
       source_id: @order.id
+    )
+  end
+
+  def record_offer_activity!
+    return unless defined?(ActivityEventRecorder)
+
+    ActivityEventRecorder.call(
+      actor: Current.user,
+      event_name: "MarketplaceOfferSent",
+      object: @order,
+      source_vertical: "marketplace",
+      locality: @listing.location
     )
   end
 end
