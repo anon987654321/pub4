@@ -3,8 +3,12 @@
 const log   = document.getElementById('chat-log');
 const zsh   = document.getElementById('zsh');
 const input = document.getElementById('zin');
+const photoButton = document.getElementById('photo-button');
+const photoInput  = document.getElementById('photo');
 
 let _streamEl = null;
+let _evtSrc = null;
+let _pendingPhoto = null;
 
 function appendMsg(role, text = '') {
   const d = document.createElement('div');
@@ -73,8 +77,107 @@ window._chatOnDmesg = (line) => {
   setTimeout(() => { d.classList.add('dmesg-fade'); setTimeout(() => d.remove(), 800); }, 7000);
 };
 
+function csrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
+
+function setPhotoState(state, text) {
+  if (!photoButton) return;
+  photoButton.dataset.state = state;
+  photoButton.textContent = text;
+}
+
+async function uploadPhoto(file) {
+  const form = new FormData();
+  form.append('photo', file);
+  setPhotoState('busy', '…');
+  const response = await fetch('/chat/photo', {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': csrfToken() },
+    credentials: 'same-origin',
+    body: form
+  });
+  if (!response.ok) throw new Error(`photo upload failed: ${response.status}`);
+  _pendingPhoto = await response.json();
+  setPhotoState(_pendingPhoto.processed ? 'ready' : 'raw', '1');
+}
+
+async function enhanceMessage(text) {
+  try {
+    const r = await fetch(`/chat/enhance?message=${encodeURIComponent(text)}`);
+    const data = await r.json();
+    if (data.changed && data.enhanced && data.enhanced !== text) {
+      const chosen = await (window._chatConfirmEnhance?.(text, data.enhanced) ?? Promise.resolve(text));
+      return { text: chosen, preEnhanced: chosen === data.enhanced };
+    }
+  } catch (_) {}
+  return { text, preEnhanced: false };
+}
+
+async function sendMessageWithPhoto(text) {
+  if (_evtSrc) { try { _evtSrc.close(); } catch (_) {} }
+  window._chatOnUser?.(text);
+
+  const enhanced = await enhanceMessage(text);
+  const state = encodeURIComponent('idle|thinking|0|0');
+  const params = new URLSearchParams({ message: enhanced.text, state });
+  if (enhanced.preEnhanced) params.set('pre_enhanced', '1');
+  if (_pendingPhoto?.token) params.set('image_token', _pendingPhoto.token);
+
+  _pendingPhoto = null;
+  if (photoInput) photoInput.value = '';
+  setPhotoState('idle', '+');
+
+  _evtSrc = new EventSource(`/chat/message?${params.toString()}`);
+  _evtSrc.onmessage = (ev) => {
+    const raw = ev.data || '';
+    if (raw === '[DONE]') {
+      try { _evtSrc.close(); } catch (_) {}
+      window._chatOnDone?.();
+      return;
+    }
+    if (raw.startsWith('ERROR:')) {
+      window._chatOnChunk?.('\n' + raw + '\n');
+      window._chatOnError?.();
+      return;
+    }
+    window._chatOnChunk?.(raw);
+  };
+  _evtSrc.addEventListener('dmesg', (ev) => {
+    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (_) {}
+  });
+  _evtSrc.onerror = () => {
+    try { _evtSrc.close(); } catch (_) {}
+    window._chatOnError?.();
+  };
+}
+
+photoButton?.addEventListener('click', () => photoInput?.click());
+photoInput?.addEventListener('change', async () => {
+  const file = photoInput.files && photoInput.files[0];
+  if (!file) return;
+  try {
+    await uploadPhoto(file);
+  } catch (err) {
+    setPhotoState('idle', '+');
+    appendMsg('assistant', `photo upload failed: ${err.message}`);
+    window._chatOnDone?.();
+  }
+});
+
+zsh?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  sendMessageWithPhoto(text);
+}, true);
+
 (function applyTier() {
   const tier = document.querySelector('meta[name=master-tier]')?.content || 'visitor';
   const pp = document.querySelector('#zsh .pp');
   if (pp) pp.textContent = tier === 'authenticated' ? 'dev' : 'visitor';
 })();
+
+setPhotoState('idle', '+');
