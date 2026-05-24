@@ -88,6 +88,7 @@ Rails.application.routes.draw do
       root "listings#index", as: :marketplace_root
       resources :saved_searches, only: %i[index create destroy]
       resources :listings do
+        resource :favorite, only: %i[create destroy]
         resources :orders, only: %i[create update]
       end
       resources :categories, only: :show, param: :id
