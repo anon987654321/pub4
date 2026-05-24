@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# Mirror live VPS config into snapshot/ with secret redaction.
-# Run on VPS: doas ruby ~/pub4/DEPLOY/openbsd/snapshot/sync.rb
+# Mirror live VPS config into DEPLOY/openbsd/ with secret redaction.
+# Run on VPS: doas ruby34 ~/pub4/DEPLOY/openbsd/sync.rb
 
 require "fileutils"
 
 MIRROR = File.expand_path("..", __FILE__)
 
-SOURCES = [
+FIXED_SOURCES = [
   "/etc/rc.d/master", "/etc/rc.d/brgen", "/etc/rc.d/brgen_tv", "/etc/rc.d/brgen_rails",
   "/etc/rc.d/amber", "/etc/rc.d/amber_rails", "/etc/rc.d/baibl",
   "/etc/rc.d/blognet", "/etc/rc.d/blognet_rails",
@@ -18,6 +18,17 @@ SOURCES = [
   "/etc/login.conf", "/etc/rc.conf.local",
   "/home/dev/.zshrc",
 ].freeze
+
+# Public DNS data — zone files, signed zones, public keys, DS records.
+# Excludes K*.private (DNSSEC signing keys) and runtime state (*.db).
+NSD_ZONE_GLOBS = %w[
+  /var/nsd/zones/master/*.zone
+  /var/nsd/zones/master/*.zone.signed
+  /var/nsd/zones/master/K*.key
+  /var/nsd/zones/master/K*.ds
+].freeze
+
+SOURCES = (FIXED_SOURCES + NSD_ZONE_GLOBS.flat_map { |g| Dir[g] }).uniq.freeze
 
 SECRET_PATTERNS = [
   /(_API_KEY=)\S+/,
@@ -34,11 +45,12 @@ end
 
 def dest_for(path)
   case path
-  when %r{^/etc/rc\.d/(.+)}   then File.join(MIRROR, "etc", "rc.d", $1)
-  when %r{^/etc/(.+)}         then File.join(MIRROR, "etc", $1)
-  when %r{^/var/nsd/etc/(.+)} then File.join(MIRROR, "var", "nsd", "etc", $1)
-  when %r{^/home/dev/(.+)}    then File.join(MIRROR, "etc", File.basename($1))
-  else                              File.join(MIRROR, "etc", File.basename(path))
+  when %r{^/etc/rc\.d/(.+)}        then File.join(MIRROR, "etc", "rc.d", $1)
+  when %r{^/etc/(.+)}              then File.join(MIRROR, "etc", $1)
+  when %r{^/var/nsd/etc/(.+)}      then File.join(MIRROR, "var", "nsd", "etc", $1)
+  when %r{^/var/nsd/zones/(.+)}    then File.join(MIRROR, "var", "nsd", "zones", $1)
+  when %r{^/home/dev/(.+)}         then File.join(MIRROR, "etc", File.basename($1))
+  else                                   File.join(MIRROR, "etc", File.basename(path))
   end
 end
 
