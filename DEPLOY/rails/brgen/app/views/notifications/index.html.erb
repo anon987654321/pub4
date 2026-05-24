@@ -1,0 +1,23 @@
+<% content_for :title, "Notifications" %>
+
+<div class="page-header">
+  <div>
+    <p class="dim">Brgen inbox</p>
+    <h1>Notifications</h1>
+  </div>
+</div>
+
+<% if @notifications.any? %>
+  <% @notifications.each do |notification| %>
+    <article>
+      <h2><%= notification.title %></h2>
+      <% if notification.body.present? %><p><%= notification.body %></p><% end %>
+      <p class="dim"><%= time_ago_in_words(notification.created_at) %> ago</p>
+      <% unless notification.read? %>
+        <%= button_to "Mark read", notification_path(notification), method: :patch, class: "btn btn-ghost btn-sm" %>
+      <% end %>
+    </article>
+  <% end %>
+<% else %>
+  <div class="empty"><p>No notifications yet.</p></div>
+<% end %>
