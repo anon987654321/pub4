@@ -9,10 +9,12 @@ Dir.chdir(root) do
     "spec/ops/boot_safety_spec.rb",
     "spec/ops/gate_contract_spec.rb",
     "spec/web/visual_governor_spec.rb",
+    "spec/web/web_screenshot_spec.rb",
     "spec/social/assistant_contract_spec.rb",
     "spec/social/tool_honesty_spec.rb",
     "spec/providers/catalog_index_spec.rb",
-    "spec/smoke/static_syntax_spec.rb"
+    "spec/smoke/static_syntax_spec.rb",
+    "spec/tools/lifecycle_tools_spec.rb"
   ]
 
   failed = specs.reject do |spec|
