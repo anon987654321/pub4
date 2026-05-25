@@ -3,11 +3,11 @@
 module Master
   module Now
   class CLI
-    SPIN_FRAMES   = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
-    SPIN_INTERVAL = 0.25
+    SPIN_FRAMES   = ["-", "\\", "|", "/"].freeze
+    SPIN_INTERVAL = 0.12
     DMESG_IGNORE  = %w[bus:subscribe bus:unsubscribe ring:write].freeze
     VERDICT_GLYPH = {
-      ok: "\u2713", fail: "\u00D7", warn: "!", info: "\u00B7"
+      ok: "OK", fail: "FAIL", warn: "WARN", info: "INFO"
     }.freeze
     MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
 
@@ -28,7 +28,8 @@ module Master
         i = 0
         loop do
           @think_mutex.synchronize do
-            print "\r\e[K#{@renderer.render("#{SPIN_FRAMES[i % SPIN_FRAMES.size]} #{@think_stage}", mode: :dim)}"
+            frame = SPIN_FRAMES[i % SPIN_FRAMES.size]
+            print "\r\e[K#{@renderer.render("#{frame} #{@think_stage}", mode: :dim)}"
             $stdout.flush
           end
           sleep SPIN_INTERVAL
@@ -44,6 +45,8 @@ module Master
       @spin_thread = nil
       @think_sub&.call
       @think_sub = nil
+      print "\r\e[K" if $stdout.isatty
+      $stdout.flush
     end
 
     def update_think_stage(payload)
