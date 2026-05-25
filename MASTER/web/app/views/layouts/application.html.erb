@@ -22,6 +22,7 @@
 
   <body
     data-master-tier="<%= request.env['master.tier'] || 'visitor' %>"
+    data-master-state="idle"
     data-runtime-profile="calm"
     data-runtime-visible="true"
     data-visual-runtime="rails">
@@ -41,6 +42,7 @@
       <textarea id="input" rows="1" placeholder="type here..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
       <div id="status" aria-live="polite" data-runtime-status="idle">ready</div>
     </section>
+    <script src="/face_state.js" defer></script>
     <script src="/visual_governor.js" defer></script>
     <script src="/topology_registry.js" defer></script>
     <script src="/particle_kernel.js" defer></script>
