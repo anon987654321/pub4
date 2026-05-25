@@ -1666,7 +1666,7 @@ def run_random
   experimental = ARGV.include?("experimental")
   dir = downloads_dir
   files = Dir.glob(File.join(dir, "**", "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}"))
-             .reject { |f| File.basename(f).match?(/processed|masterpiece|postpro/) }
+             .reject { |f| File.basename(f).match?(/processed|masterpiece|postpro|_v\d+_/) }
 
   if files.empty?
     $cli_logger.error "No images in #{dir}"
