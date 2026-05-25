@@ -3,25 +3,39 @@
 module Master
   module Now
   # PipelineContext — canonical key inventory for the pipeline Hash.
-  # Stages pass a plain Hash for compatibility, but all known keys are
-  # declared here so readers have ONE place to look up context shape.
-  # validate! is called at Intake boundary to catch wrong callers early.
+  # All keys flowing through the pipeline are declared here.
+  # validate! is called at the Intake boundary to catch wrong callers early.
+  # fetch! is the safe read — raises KeyError on missing keys, never returns nil.
   module PipelineContext
-    # Keys guaranteed present after Intake
-    INTAKE_KEYS = %i[user_message].freeze
-    # Keys added by Intake
-    INTAKE_OUT  = %i[intent].freeze
-    # Keys added by Route
-    ROUTE_KEYS  = %i[model].freeze
-    # Keys added by Execute
-    EXECUTE_KEYS = %i[output tool_calls].freeze
+    # Required on entry — validate! enforces this
+    INTAKE_REQUIRED = %i[user_message].freeze
+
+    # Keys set by each stage (all optional after Intake)
+    STAGE_KEYS = {
+      intake:   %i[intent command args message],
+      infer:    %i[task_type pressure original_message],
+      route:    %i[handler model last_tool_tier],
+      execute:  %i[output tool_calls written_files source],
+      council:  %i[council_feedback],
+      lint:     %i[lint_report lint_error],
+      review:   %i[review_error],
+      enhance:  %i[pre_enhanced],
+      render:   %i[rendered voice],
+      memory:   []
+    }.freeze
+
+    ALL_KEYS = (INTAKE_REQUIRED + STAGE_KEYS.values.flatten).uniq.freeze
 
     module_function
 
     def validate!(ctx)
-      missing = INTAKE_KEYS.reject { |k| ctx.key?(k) }
+      missing = INTAKE_REQUIRED.reject { |k| ctx.key?(k) }
       return if missing.empty?
       raise ArgumentError, "PipelineContext missing required keys: #{missing.join(', ')}"
+    end
+
+    def fetch!(ctx, key)
+      ctx.fetch(key) { raise KeyError, "PipelineContext: missing key #{key.inspect}" }
     end
 
     def build(user_message:, **opts)
