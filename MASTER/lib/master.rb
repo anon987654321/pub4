@@ -77,7 +77,11 @@ module Master
   ].each do |rel|
     loader.ignore(File.join(__dir__, rel))
   end
+  loader.ignore(File.join(__dir__,"converge.rb"))
+  loader.ignore(File.join(__dir__,"converge"))
   loader.setup
+
+  require_relative "converge/converge"
 
   def self.configure_providers!
     # Stub Bedrock before ruby_llm loads — avoids openssl.so on OpenBSD/LibreSSL.
