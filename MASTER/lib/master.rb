@@ -93,6 +93,28 @@ module Master
     end
   end
 
+  def self.apply_process_defaults!
+    return if ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
+
+    ENV["MASTER_SAFE_MODE"] ||= "1"
+    ENV["MASTER_BACKGROUND"] ||= "0"
+    ENV["MASTER_AUTOFIX"] ||= "0"
+    ENV["MASTER_WATCH"] ||= "0"
+    ENV["MASTER_WATCHER"] ||= "0"
+    ENV["MASTER_HEARTBEAT"] ||= "0"
+  end
+
+  def self.install_process_guards!
+    require_relative "ops/loop_slot"
+    require_relative "ops/process_budget"
+    require_relative "ops/runtime_loop_guards"
+    Ops::LoopSlot.validate!
+    Ops::ProcessBudget.validate_loop_slot!
+    Ops::RuntimeLoopGuards.install!
+  rescue LoadError => e
+    warn("process_guards: #{e.message}")
+  end
+
   def self.api_key_present?(env_var)
     ENV[env_var].to_s.length >= MIN_API_KEY_LENGTH
   end
@@ -159,8 +181,10 @@ module Master
   end
 
   def self.bootstrap_container(root: Dir.pwd)
+    install_process_guards!
     Trace::Telemetry.bootstrap!(root: root)
     container = Builder.build(root:)
+    install_process_guards!
     validate_data!(root: root, bus: container[:bus])
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
@@ -173,8 +197,11 @@ module Master
   end
 
   def self.boot(root: Dir.pwd)
+    apply_process_defaults!
+    install_process_guards!
     Ground::Pledge.stage1_boot!(root)
     container = bootstrap_container(root: root)
+    install_process_guards!
     Ground::Pledge.stage2_lock!
     Now::CLI.new(container:)
   end
