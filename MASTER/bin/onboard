@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "optparse"
+require "securerandom"
+require "yaml"
+
+ROOT = File.expand_path("..", __dir__)
+CONFIG_DIR = File.expand_path("../.master", ROOT)
+CONFIG_PATH = File.join(CONFIG_DIR, "config.yml")
+
+options = {
+  interactive: $stdin.tty?,
+  model: nil,
+  budget_max: nil,
+  req_max: nil,
+  token: nil
+}
+
+OptionParser.new do |opts|
+  opts.banner = "usage: onboard [--no-interactive] [--model MODEL] [--budget-max N] [--req-max N] [--token TOKEN]"
+  opts.on("--interactive") { options[:interactive] = true }
+  opts.on("--no-interactive") { options[:interactive] = false }
+  opts.on("--model MODEL") { |value| options[:model] = value }
+  opts.on("--budget-max N", Float) { |value| options[:budget_max] = value }
+  opts.on("--req-max N", Float) { |value| options[:req_max] = value }
+  opts.on("--token TOKEN") { |value| options[:token] = value }
+end.parse!
+
+def prompt(label, default)
+  print "#{label} [#{default}]: "
+  value = $stdin.gets.to_s.strip
+  value.empty? ? default : value
+end
+
+FileUtils.mkdir_p(CONFIG_DIR)
+config = if File.exist?(CONFIG_PATH)
+           YAML.safe_load_file(CONFIG_PATH, aliases: true) || {}
+         else
+           {}
+         end
+
+config["model"] ||= "openrouter/auto"
+config["budget_max"] ||= 10.0
+config["req_max"] ||= 1.0
+config["reasoning_mode"] ||= "direct"
+config["trace"] ||= 0
+config["cache_ttl"] ||= 3600
+config["token"] ||= SecureRandom.hex(24)
+config["allowed_paths"] ||= ["."]
+
+if options[:interactive]
+  puts "MASTER onboard"
+  config["model"] = prompt("model", config["model"])
+  config["budget_max"] = prompt("budget max", config["budget_max"]).to_f
+  config["req_max"] = prompt("request max", config["req_max"]).to_f
+  config["reasoning_mode"] = prompt("reasoning mode", config["reasoning_mode"])
+  config["trace"] = prompt("trace", config["trace"]).to_i
+else
+  config["model"] = options[:model] if options[:model]
+  config["budget_max"] = options[:budget_max] if options[:budget_max]
+  config["req_max"] = options[:req_max] if options[:req_max]
+  config["token"] = options[:token] if options[:token]
+end
+
+File.write(CONFIG_PATH, config.to_yaml)
+puts "OK onboard: #{CONFIG_PATH}"
