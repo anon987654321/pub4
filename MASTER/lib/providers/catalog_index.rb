@@ -13,11 +13,18 @@ module Providers
     SOURCES = {
       "openrouter" => {
         url: "https://openrouter.ai/api/v1/models",
-        kind: "llm_router"
+        kind: "llm_router",
+        normalizer: "openrouter"
       },
       "replicate" => {
         url: "https://api.replicate.com/v1/models",
-        kind: "model_marketplace"
+        kind: "model_marketplace",
+        normalizer: "replicate"
+      },
+      "replicate_github" => {
+        url: ENV["REPLICATE_MODELS_INDEX_URL"],
+        kind: "github_model_index",
+        normalizer: "replicate"
       }
     }.freeze
 
@@ -27,11 +34,23 @@ module Providers
       migrate
     end
 
-    def refresh(source_name, token: nil)
+    def refresh(source_name, token: nil, url: nil)
       source = SOURCES.fetch(source_name)
-      payload = fetch_json(source.fetch(:url), token: token)
-      upsert_snapshot(source_name, source.fetch(:kind), source.fetch(:url), payload)
-      rows = normalize(source_name, payload)
+      source_url = url || source.fetch(:url)
+      raise "missing URL for #{source_name}; set REPLICATE_MODELS_INDEX_URL or pass --url" if source_url.nil? || source_url.empty?
+
+      payload = fetch_json(source_url, token: token)
+      upsert_snapshot(source_name, source.fetch(:kind), source_url, payload)
+      rows = normalize(source.fetch(:normalizer), payload)
+      replace_models(source_name, rows)
+      rows.size
+    end
+
+    def import_file(source_name, path, normalizer: nil)
+      source = SOURCES.fetch(source_name, { kind: "file_import", normalizer: normalizer || source_name })
+      payload = JSON.parse(File.read(path))
+      upsert_snapshot(source_name, source.fetch(:kind), path, payload)
+      rows = normalize(source.fetch(:normalizer), payload)
       replace_models(source_name, rows)
       rows.size
     end
@@ -97,6 +116,7 @@ module Providers
       uri = URI(url)
       request = Net::HTTP::Get.new(uri)
       request["Authorization"] = "Bearer #{token}" if token && !token.empty?
+      request["Accept"] = "application/json"
       request["User-Agent"] = "MASTER provider catalog index"
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") { |http| http.request(request) }
       raise "#{url} returned #{response.code}: #{response.body[0, 200]}" unless response.is_a?(Net::HTTPSuccess)
@@ -122,15 +142,25 @@ module Providers
       end
     end
 
-    def normalize(source, payload)
-      case source
+    def normalize(kind, payload)
+      case kind
       when "openrouter"
         Array(payload["data"]).map { |model| normalize_openrouter(model) }
       when "replicate"
-        Array(payload["results"] || payload["data"]).map { |model| normalize_replicate(model) }
+        replicate_items(payload).map { |model| normalize_replicate(model) }
       else
         []
       end.compact
+    end
+
+    def replicate_items(payload)
+      case payload
+      when Array then payload
+      when Hash
+        payload["results"] || payload["data"] || payload["models"] || payload.values.find { |value| value.is_a?(Array) } || []
+      else
+        []
+      end
     end
 
     def normalize_openrouter(model)
@@ -151,18 +181,21 @@ module Providers
     end
 
     def normalize_replicate(model)
-      owner = model["owner"]
-      name = model["name"]
+      owner = model["owner"] || model.dig("user", "username") || model["namespace"]
+      name = model["name"] || model["model_name"] || model["slug"]
+      id = model["id"] || model["full_name"] || [owner, name].compact.join("/")
+      return nil if id.nil? || id.empty?
+
       {
-        id: [owner, name].compact.join("/"),
-        name: name,
-        description: model["description"],
+        id: id,
+        name: name || id,
+        description: model["description"] || model["summary"],
         context_length: nil,
-        input_modalities: "",
-        output_modalities: "",
+        input_modalities: Array(model["input_modalities"] || model["inputs"]).join(","),
+        output_modalities: Array(model["output_modalities"] || model["outputs"]).join(","),
         price_prompt: nil,
         price_completion: nil,
-        tags: Array(model["tags"]).join(","),
+        tags: Array(model["tags"] || model["categories"]).join(","),
         raw: model
       }
     end
