@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "optparse"
+require_relative "../lib/providers/catalog_index"
+
+options = { limit: 50 }
+command = ARGV.shift
+parser = OptionParser.new do |opts|
+  opts.banner = "usage: provider-catalog refresh SOURCE | search [QUERY] [--source SOURCE] [--limit N]"
+  opts.on("--source SOURCE") { |value| options[:source] = value }
+  opts.on("--limit N", Integer) { |value| options[:limit] = value }
+  opts.on("--token TOKEN") { |value| options[:token] = value }
+end
+parser.parse!(ARGV)
+
+index = Providers::CatalogIndex.new
+
+case command
+when "refresh"
+  source = ARGV.shift || options[:source]
+  abort parser.to_s unless source
+  token = options[:token] || ENV["#{source.upcase}_API_TOKEN"] || ENV["#{source.upcase}_API_KEY"]
+  count = index.refresh(source, token: token)
+  puts JSON.pretty_generate(source: source, refreshed: count)
+when "search"
+  query = ARGV.join(" ")
+  puts JSON.pretty_generate(index.search(query, source: options[:source], limit: options[:limit]))
+when "sources"
+  puts JSON.pretty_generate(Providers::CatalogIndex::SOURCES)
+else
+  abort parser.to_s
+end
