@@ -27,6 +27,8 @@ unless ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
 end
 
 require "master"
+require "ops/loop_slot"
+Master::Ops::LoopSlot.validate!
 
 def stable_web_secret(config)
   return config["web_secret_key_base"] if config["web_secret_key_base"].to_s.length >= 64
