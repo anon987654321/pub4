@@ -216,17 +216,29 @@ CONFIG = BOOTSTRAP[:config]
 # Dmax caps highlights (shoulder), pivot is the linear midtone fulcrum (≈0.18),
 # gamma is contrast (>1 = steeper). Per-channel offsets create stock colour cast.
 STOCKS = {
-  kodak_portra: { grain: 15, matrix: [1.05, -0.02, -0.03, 0.02, 0.98, 0.00, 0.01, -0.05, 1.04],
+  kodak_portra: { grain: 15,
+                  sublayers: [{ sensitivity_shift: 0.0, grain_scale: 1.4, weight: 0.45 },
+                               { sensitivity_shift: -0.5, grain_scale: 1.0, weight: 0.55 }],
+                  matrix: [1.05, -0.02, -0.03, 0.02, 0.98, 0.00, 0.01, -0.05, 1.04],
                   hd: { r: [0.06, 0.93, 0.18, 1.10], g: [0.05, 0.94, 0.18, 1.10], b: [0.04, 0.92, 0.20, 1.05] } },
-  kodak_vision3: { grain: 20, matrix: [1.08, -0.05, -0.03, 0.03, 0.95, 0.02, 0.02, -0.08, 1.06],
+  kodak_vision3: { grain: 20,
+                   sublayers: [{ sensitivity_shift: 0.3, grain_scale: 1.5, weight: 0.40 },
+                                { sensitivity_shift: 0.0, grain_scale: 1.1, weight: 0.35 },
+                                { sensitivity_shift: -0.6, grain_scale: 0.85, weight: 0.25 }],
+                   matrix: [1.08, -0.05, -0.03, 0.03, 0.95, 0.02, 0.02, -0.08, 1.06],
                    hd: { r: [0.07, 0.95, 0.17, 1.15], g: [0.06, 0.95, 0.18, 1.20], b: [0.08, 0.90, 0.20, 1.10] } },
   kodak_vision3_50d: { grain: 8, matrix: [1.06, -0.03, -0.02, 0.02, 0.96, 0.01, 0.01, -0.05, 1.04],
                        hd: { r: [0.05, 0.95, 0.18, 1.08], g: [0.04, 0.95, 0.18, 1.12], b: [0.03, 0.93, 0.20, 1.05] } },
   kodak_vision3_500t: { grain: 20, matrix: [1.10, -0.06, -0.04, 0.04, 0.94, 0.03, 0.04, -0.10, 1.09],
-                        hd: { r: [0.08, 0.95, 0.17, 1.18], g: [0.06, 0.95, 0.18, 1.22], b: [0.10, 0.90, 0.20, 1.15] } },
-  cinestill_800t: { grain: 22, matrix: [1.12, -0.07, -0.05, 0.04, 0.93, 0.03, 0.05, -0.12, 1.10],
+                        hd: { r: [0.08, 0.95, 0.17, 1.18], g: [0.06, 0.95, 0.18, 1.22], b: [0.10, 0.90, 0.20, 1.15] },
+                        focal_plane_offset: 1.1 },
+  cinestill_800t: { grain: 22,
+                    sublayers: [{ sensitivity_shift: 0.4, grain_scale: 1.6, weight: 0.35 },
+                                 { sensitivity_shift: 0.0, grain_scale: 1.2, weight: 0.40 },
+                                 { sensitivity_shift: -0.5, grain_scale: 0.9, weight: 0.25 }],
+                    matrix: [1.12, -0.07, -0.05, 0.04, 0.93, 0.03, 0.05, -0.12, 1.10],
                     hd: { r: [0.09, 0.96, 0.17, 1.20], g: [0.07, 0.95, 0.18, 1.25], b: [0.12, 0.88, 0.20, 1.18] },
-                    halation: 0.8 },
+                    halation: 0.8, focal_plane_offset: 1.2 },
   ektachrome_100: { grain: 10, matrix: [1.08, -0.04, -0.04, 0.02, 1.02, -0.02, 0.01, -0.08, 1.07],
                     hd: { r: [0.02, 0.97, 0.18, 1.30], g: [0.02, 0.97, 0.18, 1.35], b: [0.03, 0.96, 0.20, 1.25] } },
   fuji_velvia: { grain: 8, matrix: [1.12, -0.08, -0.04, 0.05, 1.05, -0.02, 0.01, -0.12, 1.11],
@@ -778,19 +790,27 @@ GRAIN_BLUR_INVERSE = 1.0 / 0.36
 # layers — red layer is coarsest, blue finest on most stocks. Operates in
 # linearized sRGB so noise stays photometric.
 def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
-  data    = STOCKS[stock] || STOCKS[:kodak_portra]
-  scales  = GRAIN_CHAN_SCALE[stock] || [1.0, 1.0, 1.0]
-  spatial = [data[:grain] / GRAIN_SPATIAL_DIV.to_f, 0.5].max
-  target  = data[:grain] * Math.sqrt(iso / 100.0) * intensity / GRAIN_TARGET_DIV
-  pre     = [target * spatial * GRAIN_BLUR_INVERSE, 0.001].max
+  data      = STOCKS[stock] || STOCKS[:kodak_portra]
+  scales    = GRAIN_CHAN_SCALE[stock] || [1.0, 1.0, 1.0]
+  sublayers = data[:sublayers] || [{ sensitivity_shift: 0.0, grain_scale: 1.0, weight: 1.0 }]
+  spatial   = [data[:grain] / GRAIN_SPATIAL_DIV.to_f, 0.5].max
+  target    = data[:grain] * Math.sqrt(iso / 100.0) * intensity / GRAIN_TARGET_DIV
+  pre       = [target * spatial * GRAIN_BLUR_INVERSE, 0.001].max
 
   linear = image.colourspace("scrgb")
   r, g, b = linear.bandsplit
   luma = r * 0.2126 + g * 0.7152 + b * 0.0722
   envelope = (luma * luma.linear([-1], [1])).linear([4], [0])
 
-  bands = scales.map do |scale|
-    Vips::Image.gaussnoise(image.width, image.height, sigma: pre * scale, mean: 0.0).gaussblur(spatial)
+  # Sum per-sublayer noise; gaussblur(1.2) approximates dye-cloud MTF band-limiting.
+  bands = scales.map do |chan_scale|
+    sublayers.map { |sl|
+      sigma = [pre * chan_scale * sl[:grain_scale], 0.001].max
+      Vips::Image.gaussnoise(image.width, image.height, sigma: sigma, mean: 0.0)
+                .gaussblur(spatial)
+                .gaussblur(1.2)
+                .linear([sl[:weight]], [0])
+    }.reduce(:+)
   end
   noise = Vips::Image.bandjoin(bands)
   safe_cast((linear + noise * envelope).colourspace("srgb"))
@@ -871,6 +891,22 @@ rescue StandardError => e
   $logger.error "optical_blur: #{e.message}"; image
 end
 
+# Emulsion depth defocus: each dye layer sits at a different depth in the
+# multilayer emulsion stack. Blue layer (top, nearest lens) is sharpest;
+# red (deepest) sees the most focus spread from incident + substrate-reflected
+# light. focal_plane_offset is stock-specific — cinestill_800t (remjet removed)
+# has the most scatter; slow daylight stocks have little.
+def emulsion_defocus(image, stock = :kodak_portra)
+  data   = STOCKS[stock] || STOCKS[:kodak_portra]
+  offset = data.fetch(:focal_plane_offset, 1.0)
+  r, g, b = image.bandsplit
+  r2 = offset > 0 ? safe_cast(r.gaussblur(0.6 * offset)) : r
+  g2 = offset > 0 ? safe_cast(g.gaussblur(0.3 * offset)) : g
+  safe_cast(Vips::Image.bandjoin([r2, g2, b]))
+rescue StandardError => e
+  $logger.error "emulsion_defocus: #{e.message}"; image
+end
+
 # Lateral chromatic aberration: R/B fringe separation at sensor edges.
 def chromatic_aberration(image, strength = 0.5)
   shift = [(strength * 3.0).round, 1].max
@@ -888,8 +924,17 @@ def dir_coupler(image, strength = 0.15)
   blurred   = image.gaussblur(2.0)
   high_pass = image.cast("float") - blurred.cast("float")
   gray      = image.colourspace("grey16").colourspace("srgb").cast("float")
-  img_f     = image.cast("float")
-  desatd    = img_f * (1.0 - strength * 0.3) + gray * (strength * 0.3)
+  img_f     = image.cast("float") / 255.0
+  # Lateral inhibition: each dye layer's development byproducts diffuse σ≈0.8px
+  # and suppress adjacent layers — desaturates pure hues, sharpens colour edges.
+  r_d, g_d, b_d = img_f.bandsplit.map { |ch| ch.gaussblur(0.8) }
+  inhibition = Vips::Image.bandjoin([
+    r_d - g_d * (0.08 * strength) - b_d * (0.04 * strength),
+    g_d - r_d * (0.12 * strength) - b_d * (0.07 * strength),
+    b_d - r_d * (0.06 * strength) - g_d * (0.10 * strength)
+  ])
+  inhibited = clamp01(inhibition) * 255.0
+  desatd = inhibited * (1.0 - strength * 0.3) + gray * (strength * 0.3)
   safe_cast((desatd + high_pass * (strength * 0.5)).cast("uchar"))
 rescue StandardError => e
   $logger.error "dir_coupler: #{e.message}"; image
@@ -1105,9 +1150,11 @@ end
 # antihalation is near-perfect (drop intensity), Tri-X has none (boost it).
 # Pipeline: linearize → soft-threshold highlights at L≈0.7 → wide gaussian on
 # the mono source map → tint asymmetrically (R>G>>B) → add back → re-encode.
-HALATION_TINT_VISION3 = [1.0,  0.35, 0.08].freeze
-HALATION_TINT_PORTRA  = [1.0,  0.30, 0.06].freeze
-HALATION_TINT_TRI_X   = [0.55, 0.55, 0.55].freeze
+# Physics-calibrated: fraction of incident energy reflected per dye layer depth.
+# Red penetrates deepest (0.92), green mid-layer (0.15), blue nearest surface (0.04).
+HALATION_TINT_VISION3 = [0.92, 0.15, 0.04].freeze
+HALATION_TINT_PORTRA  = [0.88, 0.12, 0.04].freeze
+HALATION_TINT_TRI_X   = [0.45, 0.45, 0.45].freeze
 HALATION_THRESHOLD    = 0.7
 
 # Halation: resolution-aware σ ≈ width/45 (≈43px at 2K, calibrated from agx
@@ -1124,9 +1171,10 @@ def halation(image, intensity = 1.0, tint: HALATION_TINT_VISION3)
   luma    = r * 0.2126 + g * 0.7152 + b * 0.0722
   excess  = luma.linear([1], [-HALATION_THRESHOLD])
   bright  = (excess > 0).ifthenelse(excess, 0) ** 2
-  halo_r  = bright.gaussblur(sigma_r) * (tint[0] * intensity)
-  halo_g  = bright.gaussblur(sigma_g) * (tint[1] * intensity)
-  halo_b  = bright.gaussblur(sigma_b) * (tint[2] * intensity)
+  # Lorentzian-approx PSF: sharp core (30%) + wide wings (70%) per wavelength band.
+  halo_r = (bright.gaussblur(sigma_r * 0.7) * 0.30 + bright.gaussblur(sigma_r * 1.6) * 0.70) * (tint[0] * intensity)
+  halo_g = (bright.gaussblur(sigma_g * 0.7) * 0.30 + bright.gaussblur(sigma_g * 1.6) * 0.70) * (tint[1] * intensity)
+  halo_b = (bright.gaussblur(sigma_b * 0.7) * 0.30 + bright.gaussblur(sigma_b * 1.6) * 0.70) * (tint[2] * intensity)
   halo    = Vips::Image.bandjoin([halo_r, halo_g, halo_b])
   safe_cast(clamp01(linear + halo).colourspace("srgb"))
 end
@@ -1239,6 +1287,7 @@ def preset(image, name)
              when "faded_print" then faded_print(result, p.fetch(:age, 0.45))
              when "base_tint" then base_tint(result, [255, 250, 242], 0.09)
              when "dual_base_density" then dual_base_density(result, [255, 248, 236], 0.08)
+             when "emulsion_defocus" then emulsion_defocus(result, p[:stock])
              else result
              end
     result = result.copy_memory
@@ -1349,6 +1398,7 @@ RECIPE_ALLOWED = %w[
   lith_print technicolor kodachrome_sim faded_print base_tint dual_base_density
   reciprocity_failure bloom_pro teal_orange grain_basic leaks_basic sepia_basic
   bloom_basic cross_basic vhs_basic chroma_basic glitch_basic flare_basic
+  emulsion_defocus
 ].freeze
 
 def recipe(image, recipe_data)
@@ -1593,6 +1643,58 @@ def watch_mode?
   ARGV.include?("--watch")
 end
 
+def random_mode?
+  ARGV.include?("--random")
+end
+
+# Resolve the best available downloads directory on Android/Termux or desktop.
+def downloads_dir
+  candidates = [
+    argv_flag("--random"),
+    File.expand_path("~/storage/downloads"),
+    "/sdcard/Download",
+    File.expand_path("~/Downloads"),
+    Dir.pwd
+  ]
+  candidates.compact.find { |d| File.directory?(d) }
+end
+
+# --random [DIR] [experimental]
+# Without "experimental": random preset per file (uplift — maximally cinematic).
+# With "experimental": chaotic short random chains (happy accidents).
+def run_random
+  experimental = ARGV.include?("experimental")
+  dir = downloads_dir
+  files = Dir.glob(File.join(dir, "**", "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}"))
+             .reject { |f| File.basename(f).match?(/processed|masterpiece|postpro/) }
+
+  if files.empty?
+    $cli_logger.error "No images in #{dir}"
+    return
+  end
+
+  PostproBootstrap.dmesg "random dir=#{dir} files=#{files.count} mode=#{experimental ? 'experimental' : 'uplift'}"
+  variations = CONFIG["variations"] || 2
+  uplift_presets = %i[portrait cinematic magic_hour blockbuster golden_age reversal]
+
+  files.each_with_index do |file, index|
+    $cli_logger.info "#{index + 1}/#{files.count}: #{File.basename(file)}"
+    begin
+      if experimental
+        fx_pool = %w[grain leaks sepia bloom teal_orange cross vhs chroma glitch flare]
+        effects = fx_pool.shuffle.take(rand(4..7))
+        process_file(file, variations, nil, nil, effects, "experimental")
+      else
+        preset_name = uplift_presets.sample
+        process_file(file, variations, preset_name)
+      end
+      GC.start if (index % 5).zero?
+    rescue StandardError => e
+      $cli_logger.error "Error #{File.basename(file)}: #{e.message}"
+    end
+  end
+end
+
 def run_watch
   dir     = argv_flag("--watch") || "/sdcard/DCIM/Camera"
   preset_name = (argv_flag("--preset") || "cinematic").to_sym
@@ -1630,6 +1732,7 @@ def auto_launch
   return run_introspect if introspect_mode?
   return run_watch       if watch_mode?
   return run_one_shot    if one_shot_mode?
+  return run_random      if random_mode?
   if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-repligen"))
     input = auto_mode
   elsif ARGV.include?("--from-repligen") && REPLIGEN_PRESENT
