@@ -30,8 +30,10 @@ require "set"
 require "master"
 require "ops/loop_slot"
 require "ops/process_budget"
+require "ops/runtime_loop_guards"
 Master::Ops::LoopSlot.validate!
 Master::Ops::ProcessBudget.validate_loop_slot!
+Master::Ops::RuntimeLoopGuards.install!
 
 def stable_web_secret(config)
   return config["web_secret_key_base"] if config["web_secret_key_base"].to_s.length >= 64
