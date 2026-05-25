@@ -52,10 +52,8 @@ module Master
       @homeostat = homeostat
     end
 
-    # Injected before every LLM call. Pulls from rules.yml via Axioms.
-    # Recomputed each call so mood/phase updates propagate.
     def system_prompt
-      build_system_prompt
+      @system_prompt ||= build_system_prompt
     end
 
     private

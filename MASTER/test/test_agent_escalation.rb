@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "minitest/autorun"
+require_relative "test_helper"
 
 class AgentEscalationTest < Minitest::Test
   ResultOk  = Struct.new(:value) { def ok? = true;  def to_s = value }

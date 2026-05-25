@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class TestAstOmissionRule < Minitest::Test
   def setup
-    @rule = Master::Judge::Scan::AstOmissionRule.new
+    @rule = Master::Judge::Scan::Rules::AstOmissionRule.new
   end
 
   def test_responds_to_check

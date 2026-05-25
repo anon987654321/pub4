@@ -93,29 +93,6 @@ module Master
     end
   end
 
-  def self.apply_process_defaults!
-    return if ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
-
-    ENV["MASTER_SAFE_MODE"] ||= "1"
-    ENV["MASTER_BACKGROUND"] ||= "0"
-    ENV["MASTER_AUTOFIX"] ||= "0"
-    ENV["MASTER_WATCH"] ||= "0"
-    ENV["MASTER_WATCHER"] ||= "0"
-    ENV["MASTER_HEARTBEAT"] ||= "0"
-    ENV["MASTER_DRIFT"] ||= "0"
-  end
-
-  def self.install_process_guards!
-    require_relative "ops/loop_slot"
-    require_relative "ops/process_budget"
-    require_relative "ops/runtime_loop_guards"
-    Ops::LoopSlot.validate!
-    Ops::ProcessBudget.validate_loop_slot!
-    Ops::RuntimeLoopGuards.install!
-  rescue LoadError => e
-    warn("process_guards: #{e.message}")
-  end
-
   def self.api_key_present?(env_var)
     ENV[env_var].to_s.length >= MIN_API_KEY_LENGTH
   end
@@ -148,6 +125,8 @@ module Master
     default
   end
 
+  # Strict re-parse of every data/*.yml — silent swallow in load_yaml hides
+  # corruption from sweep/LLM rewrites. Boot must surface failures, not mask them.
   def self.validate_data!(root: ROOT, bus: nil)
     errors = {}
     Dir.glob(File.join(root, "data", "**/*.yml")).sort.each do |path|
@@ -164,6 +143,7 @@ module Master
     errors
   end
 
+  # Loads rules.yml meta + merges split data/rules/*.yml into ["rules"] key.
   def self.load_rules(root: ROOT)
     data_dir = File.join(root, "data")
     base     = load_yaml(File.join(data_dir, "rules.yml"))
@@ -174,38 +154,32 @@ module Master
     base.merge("rules" => merged)
   end
 
+  def self.const_missing(sym)
+    return Judge::Agent if sym == :Agent
+    super
+  end
+
   def self.build(root: Dir.pwd)
     ENV["MASTER_SCAN_ONLY"] == "1" ? Builder.build_scan_only(root:) : Builder.build(root:)
   end
 
-  def self.start_constitution_drift(container)
-    return unless ENV["MASTER_DRIFT"] == "1"
-
+  def self.bootstrap_container(root: Dir.pwd)
+    Trace::Telemetry.bootstrap!(root: root)
+    container = Builder.build(root:)
+    validate_data!(root: root, bus: container[:bus])
+    Builder.boot_snapshot(container)
+    container[:heartbeat]&.start!
     Thread.new do
       Ground::Orders::ConstitutionDrift.new(container:).call
     rescue StandardError => e
       warn("constitution_drift: #{e.message}")
     end
-  end
-
-  def self.bootstrap_container(root: Dir.pwd)
-    install_process_guards!
-    Trace::Telemetry.bootstrap!(root: root)
-    container = Builder.build(root:)
-    install_process_guards!
-    validate_data!(root: root, bus: container[:bus])
-    Builder.boot_snapshot(container)
-    container[:heartbeat]&.start!
-    start_constitution_drift(container)
     container
   end
 
   def self.boot(root: Dir.pwd)
-    apply_process_defaults!
-    install_process_guards!
     Ground::Pledge.stage1_boot!(root)
     container = bootstrap_container(root: root)
-    install_process_guards!
     Ground::Pledge.stage2_lock!
     Now::CLI.new(container:)
   end
