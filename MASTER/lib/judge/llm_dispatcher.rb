@@ -9,8 +9,11 @@ module Master
   module Judge
     class LLMDispatcher
       COST_PER_TOKEN = 0.000_015
+      CACHE_READ_RATIO = 0.10
+      CACHE_WRITE_RATIO = 1.25
       CACHE_WINDOW = 4
       REACT_MAX_STEPS = 8
+      CLAUDE_RE = /\Aclaude-|anthropic\/claude/i.freeze
       NEMOTRON3_RE = /nemotron-3/i.freeze
       LLAMA_NEMOTRON_RE = /llama.*nemotron|nemotron.*llama/i.freeze
       TOOL_CALL_RE = /<tool_call>(.*?)<\/tool_call>/m.freeze
@@ -87,6 +90,7 @@ module Master
       def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
       def web_chat_model?(model_id)   = model_id.to_s.start_with?("web-chat:")
       def tool_capable?(model_id)     = TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
+      def claude_model?(model_id)     = CLAUDE_RE.match?(model_id.to_s)
 
       private
 
@@ -192,7 +196,7 @@ module Master
 
       def send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
         chat_session = RubyLLM.chat(model: selected_model)
-        final_sys    = nemotron_system_prompt(selected_model, sys)
+        final_sys    = build_final_system(selected_model, sys)
         chat_session.with_instructions(final_sys) if final_sys
         messages.each { |msg| chat_session.add_message(role: msg[:role].to_s, content: msg[:content].to_s) }
 
@@ -210,14 +214,25 @@ module Master
 
       def record_usage(reply, model)
         return unless @session
-        input  = reply.respond_to?(:input_tokens)  ? reply.input_tokens.to_i  : 0
+        input = reply.respond_to?(:input_tokens) ? reply.input_tokens.to_i : 0
         output = reply.respond_to?(:output_tokens) ? reply.output_tokens.to_i : 0
+        cached = reply.respond_to?(:cached_tokens) ? reply.cached_tokens.to_i : 0
+        cache_write = reply.respond_to?(:cache_creation_tokens) ? reply.cache_creation_tokens.to_i : 0
         tokens = input + output
         if tokens.zero? && reply.respond_to?(:content)
           tokens = Master::Trace::Session.estimate_tokens(reply.content)
+          return if tokens.zero?
+          @session.record_cost((tokens * COST_PER_TOKEN).round(6), model:, tokens:)
+          return
         end
         return if tokens.zero?
-        @session.record_cost((tokens * COST_PER_TOKEN).round(6), model:, tokens:)
+        regular = [input - cached - cache_write, 0].max
+        cost = ((regular * COST_PER_TOKEN) +
+                (cached * COST_PER_TOKEN * CACHE_READ_RATIO) +
+                (cache_write * COST_PER_TOKEN * CACHE_WRITE_RATIO) +
+                (output * COST_PER_TOKEN)).round(6)
+        @session.record_cost(cost, model:, tokens:)
+        @bus&.publish("cache:hit", model:, cached:, cache_write:) if cached.positive? || cache_write.positive?
       rescue StandardError => e
         @bus&.publish("cost:record_error", error: e.message)
       end
@@ -241,6 +256,14 @@ module Master
         return sys unless LLAMA_NEMOTRON_RE.match?(selected_model)
         directive = @config["reasoning_mode"] != "none" ? "detailed thinking on" : "detailed thinking off"
         [directive, sys].compact.join("\n\n")
+      end
+
+      def build_final_system(selected_model, sys)
+        base = nemotron_system_prompt(selected_model, sys)
+        return base unless base.is_a?(String) && claude_model?(selected_model)
+        RubyLLM::Content::Raw.new([
+          { type: "text", text: base, cache_control: { type: "ephemeral" } }
+        ])
       end
 
       def cache_key_for(message, context, model = nil)
