@@ -6,10 +6,9 @@ module Master
   module Judge
   module Swarm
     class Coordinator
-      SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, :votes, keyword_init: true) do
+      SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, keyword_init: true) do
         def ok?      = verdict != :error
         def approved? = verdict == :approved
-        def consensus? = votes.is_a?(Hash) && votes[:approved].to_i > votes[:rejected].to_i
       end
 
       WORKER_CLASSES = {
@@ -18,6 +17,9 @@ module Master
         reviewer:   Workers::Reviewer,
         researcher: Workers::Researcher
       }.freeze
+
+      # Higher weight = more authority in verdict calculation.
+      WORKER_WEIGHTS = { reviewer: 3, analyst: 2, researcher: 2, coder: 1 }.freeze
 
       WORKER_TIMEOUT = 30
       SHARED_DEADLINE = 60
@@ -107,41 +109,42 @@ module Master
       end
 
       def build_swarm_result(results)
-        successes = results.reject { |role, _| role == :timeout }
-                           .select { |_, r| r.is_a?(Master::Result) && r.ok? }
+        eligible  = results.reject { |role, _| role == :timeout }
+        successes = eligible.select { |_, r| r.is_a?(Master::Result) && r.ok? }
         artifacts = successes.transform_values { |r| r.value! }
-        confidence = results.empty? ? 0.0 : successes.size.to_f / results.size
+
+        total_weight   = eligible.sum { |role, _| WORKER_WEIGHTS.fetch(role, 1) }
+        success_weight = successes.sum { |role, _| WORKER_WEIGHTS.fetch(role, 1) }
+        confidence = total_weight.zero? ? 0.0 : success_weight.to_f / total_weight
+
         lines = successes.map { |role, r| "### #{role}\n#{r.value!.to_s.strip}" }
         reasoning = lines.empty? ? "(no results)" : lines.join("\n\n")
-        votes = tally_votes(artifacts)
-        verdict = derive_verdict(confidence, votes)
-        SwarmResult.new(verdict:, confidence:, reasoning:, artifacts:, votes:)
+
+        conflict = conflict?(artifacts)
+        verdict = if eligible.empty? || successes.empty? then :error
+                 elsif conflict then :conflict
+                 elsif confidence >= 0.8 then :approved
+                 elsif confidence >= 0.5 then :mixed
+                 else :rejected
+                 end
+        SwarmResult.new(verdict:, confidence:, reasoning:, artifacts:)
       end
 
-      def tally_votes(artifacts)
-        approved_count = rejected_count = neutral_count = 0
-        artifacts.each_value do |art|
-          next unless art.is_a?(Hash)
-          explicit = art["approved"]
-          if explicit == true  then approved_count += 1
-          elsif explicit == false then rejected_count += 1
-          else neutral_count += 1
+      def conflict?(artifacts)
+        signals = artifacts.map do |_role, v|
+          if v.is_a?(Hash) && v.key?("approved")
+            v["approved"] ? :approve : :reject
+          else
+            text = v.to_s.downcase
+            if text.match?(/\b(approv(e|ed)|looks good|no issues)\b/)
+              :approve
+            elsif text.match?(/\b(reject|fail|error|violation|problem)\b/)
+              :reject
+            end
           end
-        end
-        { approved: approved_count, rejected: rejected_count, neutral: neutral_count }
-      end
-
-      def derive_verdict(confidence, votes)
-        voted = votes[:approved] + votes[:rejected]
-        if voted > 0
-          return :approved if votes[:approved] > votes[:rejected]
-          return :rejected if votes[:rejected] > votes[:approved]
-        end
-        if confidence >= 0.8 then :approved
-        elsif confidence >= 0.5 then :mixed
-        elsif confidence.zero? then :error
-        else :rejected
-        end
+        end.compact
+        return false if signals.size < 2
+        signals.include?(:approve) && signals.include?(:reject)
       end
 
       def worker_for(role)
