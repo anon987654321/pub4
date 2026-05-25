@@ -2,6 +2,7 @@
 
 require "json"
 require "open3"
+require "set"
 require "time"
 
 module Master
@@ -34,6 +35,7 @@ module Master
         "why" => cmd(:dispatch_why, agent, root),
         "axioms" => cmd(:dispatch_axioms, scanner, root),
         "topic" => cmd(:dispatch_topic, session),
+        "process" => ->(_c) { JSON.pretty_generate(process: Master::Ops::ProcessBudget.status, loop_slot: Master::Ops::LoopSlot.status) },
         "propose-tree" => ->(_ctx) { propose_tree&.call || "propose-tree: not wired" }
       }
     end
