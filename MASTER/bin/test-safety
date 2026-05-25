@@ -12,6 +12,8 @@ Dir.chdir(root) do
     "spec/ops/gate_contract_spec.rb",
     "spec/web/visual_governor_spec.rb",
     "spec/web/web_screenshot_spec.rb",
+    "spec/web/face_state_spec.rb",
+    "spec/voice/speech_contract_spec.rb",
     "spec/social/assistant_contract_spec.rb",
     "spec/social/tool_honesty_spec.rb",
     "spec/providers/catalog_index_spec.rb",
