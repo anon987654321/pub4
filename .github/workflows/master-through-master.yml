@@ -9,11 +9,11 @@ on:
 
 jobs:
   master-gate:
-    name: Inventory, history audit, MASTER gate
+    name: Full-history inventory, valuables audit, MASTER gate
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
-      - name: Checkout full history
+      - name: Checkout complete pub4 history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -25,13 +25,19 @@ jobs:
           bundler-cache: true
           working-directory: MASTER
 
+      - name: Verify complete history checkout
+        run: |
+          git rev-parse --is-inside-work-tree
+          git rev-list --count HEAD
+          git log --oneline --decorate -n 20
+
       - name: Inventory current repo sprawl
         run: |
           ruby MASTER/tools/repo_inventory.rb --json | tee repo_inventory.json
 
-      - name: Audit git history for lost valuables
+      - name: Audit entire pub4 history for lost valuables
         run: |
-          ruby MASTER/tools/history_valuables.rb MASTER DEPLOY .github README.md MASTER.md CLAUDE.md
+          HISTORY_WINDOW=--all ruby MASTER/tools/history_valuables.rb . | tee history_valuables.json
 
       - name: Run MASTER gate
         working-directory: MASTER
