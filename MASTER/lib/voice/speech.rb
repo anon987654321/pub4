@@ -22,36 +22,18 @@ module Master
     }.freeze
 
     STYLES = {
-      deep:     { rate: "-32%", pitch: "-180Hz" },
-      heavy:    { rate: "-30%", pitch: "-120Hz" },
-      normal:   { rate: "+0%",  pitch: "+0Hz"   },
-      slow:     { rate: "-20%", pitch: "-60Hz"  },
-      natural:  { rate: "+8%",  pitch: "+20Hz"  },
-      # Clause-aware; all rebased darker so fluctuations stay in Osman's low register.
-      question: { rate: "-8%",  pitch: "-90Hz"  },
-      exclaim:  { rate: "+10%", pitch: "-60Hz"  },
-      whisper:  { rate: "-18%", pitch: "-200Hz" },
-      grave:    { rate: "-28%", pitch: "-220Hz" }
+      neutral:  { rate: "+0%",  pitch: "+0Hz"   },
+      clear:    { rate: "+4%",  pitch: "+0Hz"   },
+      calm:     { rate: "-6%",  pitch: "-20Hz"  },
+      brief:    { rate: "+8%",  pitch: "+0Hz"   },
+      warn:     { rate: "-4%",  pitch: "-20Hz"  },
+      fail:     { rate: "-8%",  pitch: "-40Hz"  },
+      question: { rate: "+0%",  pitch: "+15Hz"  }
     }.freeze
 
-    DEFAULT_VOICE = :osman
-    DEFAULT_STYLE = :deep
-
-    # Picks a style from text shape when caller passes :auto.
-    # Dark base (deep) for statements; rises/drops per clause type.
-    def infer_style(text, fallback: DEFAULT_STYLE)
-      t = text.to_s.strip
-      return fallback if t.empty?
-      return :exclaim  if t.match?(/!{1,3}\s*$/) || t.match?(/\b[A-Z]{4,}\b/)
-      return :question if t.end_with?("?")
-      return :grave    if t.match?(/\.{3,}\s*$|\u2026\s*$/) ||
-                         t.match?(/\b(sorry|i'?m sorry|condolences|grief|loss|failed|broken)\b/i) ||
-                         (t.split.size <= 5 && t.end_with?("."))
-      return :whisper  if (t.start_with?("(") && t.end_with?(")")) ||
-                         t.match?(/\b(between us|quietly|note|aside)\b/i)
-      return :heavy    if t.match?(/\b(critical|error|warning|abort|fail)\b/i)
-      fallback
-    end
+    DEFAULT_VOICE = :ryan
+    DEFAULT_STYLE = :clear
+    MAX_CHARS = 900
 
     module_function
 
@@ -59,12 +41,40 @@ module Master
       EDGE_TTS || !ESPEAK.nil?
     end
 
+    def infer_style(text, fallback: DEFAULT_STYLE)
+      t = text.to_s.strip
+      return fallback if t.empty?
+      return :fail if t.match?(/\b(fail|failed|broken|blocked|error|abort)\b/i)
+      return :warn if t.match?(/\b(warn|warning|careful|risk|unsafe)\b/i)
+      return :question if t.end_with?("?")
+      return :brief if t.split.size <= 12
+      fallback
+    end
+
+    def clean_text(text)
+      text.to_s
+          .gsub(/```.*?```/m, " code omitted. ")
+          .gsub(/`([^`]+)`/, "\\1")
+          .gsub(/https?:\/\/\S+/, " link omitted ")
+          .gsub(/[*_#>\[\]{}]/, " ")
+          .gsub(/\s+/, " ")
+          .strip[0, MAX_CHARS]
+    end
+
+    def chunks(text, max: 260)
+      clean = clean_text(text)
+      return [] if clean.empty?
+
+      parts = clean.scan(/.{1,#{max}}(?:\s|\z)/).map(&:strip)
+      parts.empty? ? [clean] : parts
+    end
+
     def synthesize(text, voice: DEFAULT_VOICE, style: DEFAULT_STYLE)
-      text_str = text.to_s.strip
+      text_str = clean_text(text)
       return if text_str.empty?
       return unless available?
 
-      style = infer_style(text, fallback: DEFAULT_STYLE) if style == :auto
+      style = infer_style(text_str, fallback: DEFAULT_STYLE) if style == :auto
       style = DEFAULT_STYLE unless STYLES.key?(style)
       voice = DEFAULT_VOICE unless VOICES.key?(voice)
 
@@ -93,9 +103,6 @@ module Master
       File.extname(path.to_s).downcase == ".wav" ? "audio/wav" : "audio/mpeg"
     end
 
-    # Shells out to exe/tts-worker — Falcon's Async scheduler blocks Process.fork
-    # ("Closing scheduler with blocked operations"), and EventMachine.run inside a
-    # request fiber conflicts with Falcon's reactor. A subprocess sidesteps both.
     def synthesize_edge(text, voice:, style:)
       audio_path   = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
       voice_name   = VOICES.fetch(voice.to_sym, VOICES[DEFAULT_VOICE])
@@ -113,7 +120,7 @@ module Master
     def synthesize_espeak(text)
       audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.wav"
       ok         = system(
-        ESPEAK, "-s", "140", "-p", "30", "-a", "150",
+        ESPEAK, "-s", "162", "-p", "42", "-a", "125",
         "-w", audio_path, text.to_s,
         out: File::NULL, err: File::NULL
       )
