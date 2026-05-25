@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require_relative "../ops/process_budget"
 
 module Master
   module Loop
@@ -106,12 +107,15 @@ module Master
 
     # Background daemon — blocks its thread. Launch via Thread.new.
     def run_forever(target = @root)
-      sleep STARTUP_DELAY
-      loop do
-        run(target)
-        @bus&.publish("fix_loop:idle", sleep: IDLE_SLEEP)
-        sleep IDLE_SLEEP
+      budget_result = Master::Ops::ProcessBudget.run("autofix") do
+        sleep STARTUP_DELAY
+        loop do
+          run(target)
+          @bus&.publish("fix_loop:idle", sleep: IDLE_SLEEP)
+          sleep IDLE_SLEEP
+        end
       end
+      @bus&.publish("fix_loop:budget_stop", result: budget_result) unless budget_result.nil?
     rescue StandardError => e
       @bus&.publish("fix_loop:error", error: e.message)
     end
@@ -119,6 +123,7 @@ module Master
     # /fix loop — non-blocking: start the daemon in a tracked background thread.
     def start_background!(target = @root)
       return Result.err("fix_loop already running") if @bg_thread&.alive?
+      return Result.err("autofix loop disabled by process budget") unless Master::Ops::ProcessBudget.allowed_to_start?("autofix")
       @bg_thread = Thread.new { run_forever(target) }
       @bg_thread.abort_on_exception = false
       @bus&.publish("fix_loop:background_start", target:)
