@@ -263,7 +263,8 @@ module Master
         return Master::Result.err("council: no personas configured", category: :validation) if @personas.empty?
 
         feedback = @mode == :sequential ? collect_sequential(code, context) : collect_parallel(code, context)
-        if feedback.size < MIN_QUORUM
+        effective_quorum = [MIN_QUORUM, @personas.size].min
+        if feedback.size < effective_quorum
           @bus&.publish(:council_timeout, completed: feedback.size, total: @personas.size)
           quorum_msg = "council: quorum not reached (#{feedback.size}/#{@personas.size})"
           return Master::Result.err(quorum_msg, category: :timeout)

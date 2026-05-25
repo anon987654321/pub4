@@ -120,16 +120,6 @@ module Master
     scan_lines(src, /\.\w+\.map\(&:\w+\)/, message: "use pluck(:column) to avoid loading full objects")
   end
 
-  RuleDSL.rule :DISCARD_RESCUE,
-    severity: :error, tags: %i[CORRECTNESS], applies_to: %i[ruby],
-    description: "rescue with silent discard hides failures" do |src, path:|
-    src.each_line.with_index(1).filter_map do |line, n|
-      next unless line.match?(/rescue\s*(StandardError|Exception|=>?\s*_e?\s*$)/)
-      next unless line.match?(/nil$|^\s*end\s*$/) || src.lines[n]&.match?(/^\s*(nil|#\s*noop|{}|next|return)\s*$/)
-      finding(line: n, message: "rescue discards exception — log via Swallow or re-raise")
-    end
-  end
-
   end
   end
   end

@@ -23,6 +23,8 @@ module Master
 
     STYLES = {
       neutral:  { rate: "+0%",  pitch: "+0Hz"   },
+      normal:   { rate: "+0%",  pitch: "+0Hz"   },
+      deep:     { rate: "-10%", pitch: "-30Hz"  },
       clear:    { rate: "+4%",  pitch: "+0Hz"   },
       calm:     { rate: "-6%",  pitch: "-20Hz"  },
       brief:    { rate: "+8%",  pitch: "+0Hz"   },

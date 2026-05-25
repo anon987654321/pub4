@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module Master
   module Trace
     # Tallies swallow:error events per context — a spike in one context is a defect, not noise.
