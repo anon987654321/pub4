@@ -42,8 +42,7 @@ module Master
           files: %w[
             web/public/chat.js web/public/face.js web/public/visual_bridge.js
             web/app/views/chat/index.html.erb lib/voice/speech.rb lib/voice/dilla.rb
-            lib/voice/sonitex.rb lib/voice/sonitex_sox.rb lib/voice/production_dna.rb
-            lib/voice/ffmpeg_lofi.rb lib/voice/tts_lofi.rb
+            lib/voice/production_dna.rb
           ],
           quality_kind:    :sound,
           ideation_prompt: "Generate concrete improvements for MASTER sound design, voice " \
@@ -59,9 +58,7 @@ module Master
             "prefer tiny generated tones or short assets over heavy dependencies",
             "preserve existing visual identity",
             "use Ruby QualityFramework sound rules from Deliberation",
-            "when lo-fi processing is proposed, call Master::Voice::Sonitex rather than ad-hoc shell strings",
             "when Dilla-style timing is proposed, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
-            "when TTS effects are proposed, call Master::Voice::TtsLofi or Master::Voice::FfmpegLofi and keep clean audio as default"
           ]
         }
       }.freeze
@@ -157,7 +154,7 @@ module Master
 
       def domain_briefs
         return platform_profile_brief if @mode[:preset_key] == "ui_critique"
-        [sonitex_brief, dilla_brief, tts_lofi_brief].join("\n")
+        [dilla_brief].join("\n")
       end
 
       def platform_profile_brief
@@ -168,28 +165,12 @@ module Master
         "Platform profile policy failed to load: #{e.message}."
       end
 
-      def sonitex_brief
-        return Master::Voice::Sonitex.brief    if defined?(Master::Voice::Sonitex)
-        return Master::Voice::SonitexSox.brief if defined?(Master::Voice::SonitexSox)
-        "Sonitex/SoX policy unavailable; prefer cumulative subtle degradation and document SoX gaps."
-      rescue StandardError => e
-        "Sonitex/SoX policy failed to load: #{e.message}."
-      end
-
       def dilla_brief
         return Master::Voice::Dilla.brief         if defined?(Master::Voice::Dilla)
         return Master::Voice::ProductionDna.brief if defined?(Master::Voice::ProductionDna)
         "Production DNA unavailable; keep timing human, restrained, and non-quantized when musical."
       rescue StandardError => e
         "Dilla production profile failed to load: #{e.message}."
-      end
-
-      def tts_lofi_brief
-        return Master::Voice::TtsLofi.brief    if defined?(Master::Voice::TtsLofi)
-        return Master::Voice::FfmpegLofi.brief if defined?(Master::Voice::FfmpegLofi)
-        "TTS lofi policy unavailable; default to clean audio and make effects opt-in."
-      rescue StandardError => e
-        "TTS lofi policy failed to load: #{e.message}."
       end
 
       def ideation_value(ir)
