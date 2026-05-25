@@ -6,6 +6,7 @@ Dir.chdir(root) do
   specs = [
     "spec/ops/process_budget_spec.rb",
     "spec/ops/runtime_loop_guards_spec.rb",
+    "spec/ops/loop_owner_spec.rb",
     "spec/ops/boot_safety_spec.rb",
     "spec/ops/gate_contract_spec.rb",
     "spec/web/visual_governor_spec.rb",
