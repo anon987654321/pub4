@@ -1,30 +1,37 @@
-// MASTER visual governor: cap animation pressure before mask.js loads.
+// MASTER visual governor: state-aware animation pressure control before mask.js loads.
 (() => {
-  const maxFps = 24;
-  const maxParticles = 200;
+  const maxFps = 18;
+  const maxParticles = 96;
   const minFrameMs = 1000 / maxFps;
   const nativeRaf = window.requestAnimationFrame.bind(window);
   const nativePush = Array.prototype.push;
   let last = 0;
   let hiddenWaiters = [];
 
+  function frozen() {
+    return document.body?.dataset.visualRuntime === "frozen" || document.body?.dataset.masterState === "fail";
+  }
+
   function particleLike(value) {
     return value &&
       typeof value === "object" &&
-      typeof value.x === "number" &&
-      typeof value.y === "number" &&
+      typeof value.vx === "number" &&
+      typeof value.vy === "number" &&
+      typeof value.vz === "number" &&
+      typeof value.index === "number" &&
       typeof value.group === "string";
   }
 
   Array.prototype.push = function(...items) {
-    if (this.length >= maxParticles && items.some(particleLike)) return this.length;
+    if (items.some(particleLike) && this.length >= maxParticles) return this.length;
     return nativePush.apply(this, items);
   };
 
   window.MASTER_VISUAL_LIMITS = Object.freeze({
     maxFps,
     maxParticles,
-    pauseWhenHidden: true
+    pauseWhenHidden: true,
+    freezeOnFail: true
   });
 
   document.addEventListener("visibilitychange", () => {
@@ -35,7 +42,7 @@
   }, { passive: true });
 
   window.requestAnimationFrame = (callback) => {
-    if (document.hidden) {
+    if (document.hidden || frozen()) {
       hiddenWaiters.push(callback);
       return hiddenWaiters.length;
     }
