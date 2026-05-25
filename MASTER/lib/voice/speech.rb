@@ -36,6 +36,7 @@ module Master
     DEFAULT_VOICE = :ryan
     DEFAULT_STYLE = :clear
     MAX_CHARS = 900
+    CHUNK_CHARS = 220
 
     module_function
 
@@ -43,7 +44,19 @@ module Master
       EDGE_TTS || !ESPEAK.nil?
     end
 
-    def infer_style(text, fallback: DEFAULT_STYLE)
+    def default_voice
+      ENV.fetch("MASTER_TTS_VOICE", DEFAULT_VOICE.to_s).to_sym.tap do |voice|
+        return VOICES.key?(voice) ? voice : DEFAULT_VOICE
+      end
+    end
+
+    def default_style
+      ENV.fetch("MASTER_TTS_STYLE", DEFAULT_STYLE.to_s).to_sym.tap do |style|
+        return STYLES.key?(style) ? style : DEFAULT_STYLE
+      end
+    end
+
+    def infer_style(text, fallback: default_style)
       t = text.to_s.strip
       return fallback if t.empty?
       return :fail if t.match?(/\b(fail|failed|broken|blocked|error|abort)\b/i)
@@ -58,27 +71,40 @@ module Master
           .gsub(/```.*?```/m, " code omitted. ")
           .gsub(/`([^`]+)`/, "\\1")
           .gsub(/https?:\/\/\S+/, " link omitted ")
-          .gsub(/[*_#>\[\]{}]/, " ")
+          .gsub(/[•●▪▫◦]/, ". ")
+          .gsub(/[\t\r\n]+/, ". ")
+          .gsub(/[*_#>\[\]{}|]/, " ")
           .gsub(/\s+/, " ")
+          .gsub(/\.{3,}/, ".")
           .strip[0, MAX_CHARS]
     end
 
-    def chunks(text, max: 260)
+    def chunks(text, max: CHUNK_CHARS)
       clean = clean_text(text)
       return [] if clean.empty?
 
-      parts = clean.scan(/.{1,#{max}}(?:\s|\z)/).map(&:strip)
-      parts.empty? ? [clean] : parts
+      sentences = clean.scan(/[^.!?]+[.!?]?/).map(&:strip).reject(&:empty?)
+      out = []
+      sentences.each do |sentence|
+        if out.any? && (out[-1].length + sentence.length + 1) <= max
+          out[-1] = "#{out[-1]} #{sentence}"
+        elsif sentence.length > max
+          out.concat(sentence.scan(/.{1,#{max}}(?:\s|\z)/).map(&:strip).reject(&:empty?))
+        else
+          out << sentence
+        end
+      end
+      out.empty? ? [clean] : out
     end
 
-    def synthesize(text, voice: DEFAULT_VOICE, style: DEFAULT_STYLE)
+    def synthesize(text, voice: default_voice, style: default_style)
       text_str = clean_text(text)
       return if text_str.empty?
       return unless available?
 
-      style = infer_style(text_str, fallback: DEFAULT_STYLE) if style == :auto
-      style = DEFAULT_STYLE unless STYLES.key?(style)
-      voice = DEFAULT_VOICE unless VOICES.key?(voice)
+      style = infer_style(text_str, fallback: default_style) if style == :auto
+      style = default_style unless STYLES.key?(style)
+      voice = default_voice unless VOICES.key?(voice)
 
       if EDGE_TTS
         path = synthesize_edge(text_str, voice: voice, style: style)
@@ -107,8 +133,8 @@ module Master
 
     def synthesize_edge(text, voice:, style:)
       audio_path   = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
-      voice_name   = VOICES.fetch(voice.to_sym, VOICES[DEFAULT_VOICE])
-      style_config = STYLES.fetch(style.to_sym, STYLES[DEFAULT_STYLE])
+      voice_name   = VOICES.fetch(voice.to_sym, VOICES[default_voice])
+      style_config = STYLES.fetch(style.to_sym, STYLES[default_style])
 
       _out, _err, status = Open3.capture3(
         WORKER, voice_name, style_config[:rate], style_config[:pitch], audio_path,
