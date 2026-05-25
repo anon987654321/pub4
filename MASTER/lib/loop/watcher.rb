@@ -29,6 +29,8 @@ module Master
       end
 
       def run_forever
+        return unless ENV["MASTER_WATCHER"] == "1"
+
         loop do
           sample!
           sleep @interval
