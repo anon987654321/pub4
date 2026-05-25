@@ -25,12 +25,15 @@ module Master
       self
     end
 
+    # Body predicates accept:
+    #   :pred          — fact :pred must exist (positive)
+    #   [:not, :pred]  — fact :pred must NOT exist (negation-as-failure)
     def rule(head_pred, *body_preds, &action)
       @rules << { head: head_pred, body: body_preds, action: action }
       self
     end
 
-    # Query: return all facts matching predicate + optional arg pattern.
+    # Query: return all facts matching predicate + optional arg pattern (nil = wildcard).
     def query(predicate, *pattern)
       @facts.select do |f|
         f.predicate == predicate.to_sym &&
@@ -38,13 +41,19 @@ module Master
       end
     end
 
-    # Forward-chain all rules once. Returns derived findings.
+    # Forward-chain all rules once. Evaluates all body predicates — positive and
+    # negated — and derives a finding for each positive primary-body fact that
+    # satisfies all constraints.
     def evaluate
       findings = []
       @rules.each do |r|
-        body_matches = r[:body].map { |bp| query(bp) }
-        next if body_matches.any?(&:empty?)
-        body_matches.first.each do |fact|
+        positive_preds, negated_preds = r[:body].partition { |bp| !naf?(bp) }
+        # All negated predicates must have zero matching facts.
+        next if negated_preds.any? { |bp| query(bp[1]).any? }
+        # Primary body is the first positive predicate; all others must be non-empty.
+        next if positive_preds.empty?
+        next if positive_preds.drop(1).any? { |bp| query(bp).empty? }
+        query(positive_preds.first).each do |fact|
           findings << Finding.new(rule_id: r[:head], fact: fact,
                                   message: r[:action]&.call(fact) || r[:head].to_s)
         end
@@ -61,6 +70,8 @@ module Master
       extract_facts(result.value, path, engine)
       engine
     end
+
+    def naf?(body_pred) = body_pred.is_a?(Array) && body_pred[0] == :not
 
     def self.extract_facts(node, path, engine)
       return engine unless node.is_a?(Prism::Node)
