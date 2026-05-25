@@ -102,6 +102,7 @@ module Master
     ENV["MASTER_WATCH"] ||= "0"
     ENV["MASTER_WATCHER"] ||= "0"
     ENV["MASTER_HEARTBEAT"] ||= "0"
+    ENV["MASTER_DRIFT"] ||= "0"
   end
 
   def self.install_process_guards!
@@ -147,8 +148,6 @@ module Master
     default
   end
 
-  # Strict re-parse of every data/*.yml — silent swallow in load_yaml hides
-  # corruption from sweep/LLM rewrites. Boot must surface failures, not mask them.
   def self.validate_data!(root: ROOT, bus: nil)
     errors = {}
     Dir.glob(File.join(root, "data", "**/*.yml")).sort.each do |path|
@@ -165,7 +164,6 @@ module Master
     errors
   end
 
-  # Loads rules.yml meta + merges split data/rules/*.yml into ["rules"] key.
   def self.load_rules(root: ROOT)
     data_dir = File.join(root, "data")
     base     = load_yaml(File.join(data_dir, "rules.yml"))
@@ -180,6 +178,16 @@ module Master
     ENV["MASTER_SCAN_ONLY"] == "1" ? Builder.build_scan_only(root:) : Builder.build(root:)
   end
 
+  def self.start_constitution_drift(container)
+    return unless ENV["MASTER_DRIFT"] == "1"
+
+    Thread.new do
+      Ground::Orders::ConstitutionDrift.new(container:).call
+    rescue StandardError => e
+      warn("constitution_drift: #{e.message}")
+    end
+  end
+
   def self.bootstrap_container(root: Dir.pwd)
     install_process_guards!
     Trace::Telemetry.bootstrap!(root: root)
@@ -188,11 +196,7 @@ module Master
     validate_data!(root: root, bus: container[:bus])
     Builder.boot_snapshot(container)
     container[:heartbeat]&.start!
-    Thread.new do
-      Ground::Orders::ConstitutionDrift.new(container:).call
-    rescue StandardError => e
-      warn("constitution_drift: #{e.message}")
-    end
+    start_constitution_drift(container)
     container
   end
 
