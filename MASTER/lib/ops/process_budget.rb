@@ -2,6 +2,7 @@
 
 require "timeout"
 require "yaml"
+require_relative "loop_owner"
 
 module Master
   module Ops
@@ -62,6 +63,7 @@ module Master
           valid: valid_loop_slot?,
           active_loops: active_loops,
           max_active_loops: max_active_loops,
+          owner: LoopOwner.active,
           loops: loop_names.to_h { |name| [name, loop_status(name)] }
         }
       end
@@ -74,7 +76,9 @@ module Master
                  st[:max_run_seconds], st[:min_sleep_seconds])
         end
         head = valid_loop_slot? ? "OK process" : "FAIL process"
-        (["#{head}: active=#{active_loops.join(',').empty? ? 'none' : active_loops.join(',')} max=#{max_active_loops}"] + rows).join("\n")
+        owner = LoopOwner.active
+        owner_text = owner ? " owner=#{owner.fetch("loop", "unknown")}" : " owner=none"
+        (["#{head}: active=#{active_loops.join(',').empty? ? 'none' : active_loops.join(',')} max=#{max_active_loops}#{owner_text}"] + rows).join("\n")
       end
 
       def loop_status(name)
@@ -105,6 +109,7 @@ module Master
       def allowed_to_start?(name)
         validate_loop_slot!
         return false unless enabled?(name)
+        return false if LoopOwner.active
         cooldown_elapsed?(name)
       end
 
@@ -122,11 +127,14 @@ module Master
       def run(name)
         validate_loop_slot!
         return :disabled unless enabled?(name)
+        return :busy if LoopOwner.active
         return :cooldown unless cooldown_elapsed?(name)
 
         mark!(name)
         seconds = loop_config(name)["max_run_seconds"].to_i
-        seconds.positive? ? Timeout.timeout(seconds) { yield } : yield
+        LoopOwner.with_claim(name) do
+          seconds.positive? ? Timeout.timeout(seconds) { yield } : yield
+        end || :busy
       rescue Timeout::Error
         :timeout
       end
