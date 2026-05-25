@@ -37,6 +37,7 @@ module Master
     end
 
     def start!
+      return unless ENV["MASTER_HEARTBEAT"] == "1"
       return if @jobs.empty?
 
       @stop   = false
