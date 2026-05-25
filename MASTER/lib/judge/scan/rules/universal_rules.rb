@@ -171,6 +171,21 @@ module Master
     end
   end
 
+  # Detects 2+ spaces before hash rocket, assignment, or inline comment to
+  # catch column-alignment padding. Skips heredocs, string content, and
+  # lines that are themselves just operators.
+  RuleDSL.rule :NO_COLUMN_ALIGN,
+    severity: :info, tags: %i[DENSITY],
+    description: "one space before operators — no column padding" do |src, path:|
+    src.each_line.with_index(1).filter_map do |line, n|
+      stripped = line.strip
+      next if stripped.start_with?("#", "//", "*")
+      next if stripped.match?(/\A[-=]+\z/)
+      next unless stripped.match?(/\S {2,}(?:=>|[^=!<>]=[^=>]|:\s)/)
+      finding(line: n, message: "column alignment — one space before operators; padding decays and hides diffs")
+    end
+  end
+
   RuleDSL.rule :H1_VISIBILITY,
     severity: :warning, tags: %i[TYPOGRAPHY],
     description: "every page must have exactly one visible h1" do |src, path:|

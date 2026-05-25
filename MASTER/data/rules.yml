@@ -322,10 +322,7 @@ scan_depths:
     - no_flag_arguments
     - meta_charset
     - no_var
-    - named_routes
     - js_module_size
-    - readme_structure
-    - active_voice_docs
     - no_column_align
   frontend: &frontend
     - html_lang

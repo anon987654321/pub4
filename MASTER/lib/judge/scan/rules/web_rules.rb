@@ -88,6 +88,14 @@ module Master
       message: "media-query font-size — use clamp(min, fluid, max) instead")
   end
 
+  RuleDSL.rule :META_CHARSET,
+    severity: :error, tags: %i[CORRECTNESS], applies_to: %i[html],
+    description: "HTML must declare charset early in <head>" do |src, path:|
+    next [] unless path.to_s.match?(/\.(html|erb|haml|slim)\z/)
+    next [] if src.match?(/<meta\s+charset=/i)
+    [finding(line: 1, message: "missing <meta charset=UTF-8> — declare encoding as first element in <head>")]
+  end
+
   end
   end
   end

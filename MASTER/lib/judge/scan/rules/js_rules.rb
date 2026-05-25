@@ -55,6 +55,20 @@ module Master
     scan_lines(src, /`[^`]+`/, message: "backtick substitution — use $(command) for clarity")
   end
 
+  RuleDSL.rule :NO_VAR,
+    severity: :error, tags: %i[CORRECTNESS], applies_to: %i[javascript],
+    description: "var is function-scoped and hoisted — use const or let" do |src, path:|
+    scan_lines(src, /\bvar\s+\w/, message: "var declaration — use const (default) or let (when reassigned)")
+  end
+
+  RuleDSL.rule :JS_MODULE_SIZE,
+    severity: :warning, tags: %i[SMALL_PARTS], applies_to: %i[javascript],
+    description: "JS files over 300 lines — split at module boundaries" do |src, path:|
+    line_count = src.lines.size
+    next [] if line_count <= 300
+    [finding(line: 1, message: "JS file #{line_count} lines — split at 300; extract cohesive modules")]
+  end
+
   end
   end
   end
