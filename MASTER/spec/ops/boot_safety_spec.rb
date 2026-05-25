@@ -15,6 +15,7 @@ class BootSafetySpec < Minitest::Test
     assert_includes source, 'ENV["MASTER_WATCH"] ||= "0"'
     assert_includes source, 'ENV["MASTER_WATCHER"] ||= "0"'
     assert_includes source, 'ENV["MASTER_HEARTBEAT"] ||= "0"'
+    assert_includes source, 'ENV["MASTER_DRIFT"] ||= "0"'
   end
 
   def test_master_boot_installs_process_guards
@@ -32,9 +33,10 @@ class BootSafetySpec < Minitest::Test
     assert_operator source.index("RuntimeLoopGuards.install!"), :<, source.index("Master.boot")
   end
 
-  def test_constitution_drift_is_still_visible_backlog
+  def test_constitution_drift_requires_explicit_env
     source = File.read(MASTER)
-    assert_includes source, "ConstitutionDrift"
-    assert_includes source, "Thread.new"
+    assert_includes source, "def self.start_constitution_drift"
+    assert_includes source, 'return unless ENV["MASTER_DRIFT"] == "1"'
+    assert_includes source, "start_constitution_drift(container)"
   end
 end
