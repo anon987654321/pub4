@@ -17,11 +17,14 @@ module Master
     DUPLICATE_BASENAME_LIMIT = 4
     MAX_DEAD_CANDIDATES = 40
     MAX_CLUSTERS = 20
+    CO_CHANGE_COMMITS = 200
+    MAX_CO_CHANGE_PAIRS = 20
 
-    def initialize(root:, event_bus: nil, ignore_dirs: DEFAULT_IGNORE_DIRS)
+    def initialize(root:, event_bus: nil, ignore_dirs: DEFAULT_IGNORE_DIRS, code_index: nil)
       @root = File.expand_path(root)
       @bus = event_bus
       @ignore_dirs = ignore_dirs.to_set
+      @code_index = code_index
     end
 
     def scan(path: nil)
@@ -39,7 +42,8 @@ module Master
         similar_clusters: similar_clusters(records),
         sprawl: sprawl(records),
         large_files: large_files(records),
-        extension_mix: extension_mix(records)
+        extension_mix: extension_mix(records),
+        co_change_pairs: co_change_pairs
       }
       @bus&.publish("repo_ecology:scan", files: records.size, score: report[:score])
       report
@@ -61,7 +65,10 @@ module Master
         "#{item[:signature]} ×#{item[:count]}: #{item[:paths].first(5).join(', ')}"
       })
       lines.concat(render_section("Large files", report[:large_files]) { |item|
-        "#{item[:path]} — #{item[:lines]} lines"
+        "#{item[:path]} — #{item[:lines]} lines (#{item[:symbol_count]} symbols)"
+      })
+      lines.concat(render_section("Co-change pairs (hidden coupling)", report[:co_change_pairs]) { |item|
+        "#{item[:a]} ↔ #{item[:b]} (#{item[:count]} commits)"
       })
       lines << ""
       sprawl = report[:sprawl]
@@ -92,6 +99,7 @@ module Master
       rel = relative(file)
       content = File.read(file, encoding: "UTF-8", invalid: :replace, undef: :replace)
       tokens = content.downcase.scan(/[a-z][a-z0-9_]{2,}/)
+      symbol_count = @code_index ? (@code_index.symbols_in(rel).size rescue 0) : 0
       {
         path: rel,
         full_path: file,
@@ -100,6 +108,7 @@ module Master
         ext: File.extname(file).downcase,
         bytes: content.bytesize,
         lines: content.lines.size,
+        symbol_count: symbol_count,
         tokens: tokens,
         digest: Digest::SHA256.hexdigest(content),
         signature: signature(tokens, rel),
@@ -186,9 +195,27 @@ module Master
 
     def large_files(records)
       records.compact.select { |record| record[:lines] >= LARGE_FILE_LINES }
-             .map { |record| { path: record[:path], lines: record[:lines] } }
+             .map { |record| { path: record[:path], lines: record[:lines], symbol_count: record[:symbol_count] } }
              .sort_by { |item| -item[:lines] }
              .first(25)
+    end
+
+    def co_change_pairs
+      raw = IO.popen(["git", "-C", @root, "log", "--name-only",
+                      "--pretty=format:COMMIT", "-#{CO_CHANGE_COMMITS}"],
+                     err: File::NULL) { |io| io.read }
+      pair_counts = Hash.new(0)
+      raw.split("COMMIT").each do |block|
+        files = block.lines.map(&:strip).reject(&:empty?).uniq
+        files.combination(2) { |a, b| pair_counts[[a, b].sort] += 1 }
+      end
+      pair_counts.select { |_, count| count >= 2 }
+                 .sort_by { |_, count| -count }
+                 .first(MAX_CO_CHANGE_PAIRS)
+                 .map { |(a, b), count| { a:, b:, count: } }
+    rescue StandardError => e
+      @bus&.publish("repo_ecology:co_change_error", error: e.message)
+      []
     end
 
     def extension_mix(records)
