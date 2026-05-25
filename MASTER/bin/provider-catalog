@@ -8,10 +8,12 @@ require_relative "../lib/providers/catalog_index"
 options = { limit: 50 }
 command = ARGV.shift
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: provider-catalog refresh SOURCE | search [QUERY] [--source SOURCE] [--limit N]"
+  opts.banner = "usage: provider-catalog refresh SOURCE [--url URL] | import SOURCE FILE [--normalizer NAME] | search [QUERY] [--source SOURCE] [--limit N]"
   opts.on("--source SOURCE") { |value| options[:source] = value }
   opts.on("--limit N", Integer) { |value| options[:limit] = value }
   opts.on("--token TOKEN") { |value| options[:token] = value }
+  opts.on("--url URL") { |value| options[:url] = value }
+  opts.on("--normalizer NAME") { |value| options[:normalizer] = value }
 end
 parser.parse!(ARGV)
 
@@ -22,8 +24,14 @@ when "refresh"
   source = ARGV.shift || options[:source]
   abort parser.to_s unless source
   token = options[:token] || ENV["#{source.upcase}_API_TOKEN"] || ENV["#{source.upcase}_API_KEY"]
-  count = index.refresh(source, token: token)
+  count = index.refresh(source, token: token, url: options[:url])
   puts JSON.pretty_generate(source: source, refreshed: count)
+when "import"
+  source = ARGV.shift || options[:source]
+  path = ARGV.shift
+  abort parser.to_s unless source && path
+  count = index.import_file(source, path, normalizer: options[:normalizer])
+  puts JSON.pretty_generate(source: source, imported: count)
 when "search"
   query = ARGV.join(" ")
   puts JSON.pretty_generate(index.search(query, source: options[:source], limit: options[:limit]))
