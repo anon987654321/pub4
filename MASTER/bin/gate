@@ -5,6 +5,15 @@ require "open3"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
+SAFE_ENV = {
+  "MASTER_SAFE_MODE" => "1",
+  "MASTER_BACKGROUND" => "0",
+  "MASTER_AUTOFIX" => "0",
+  "MASTER_WATCH" => "0",
+  "MASTER_WATCHER" => "0",
+  "MASTER_HEARTBEAT" => "0"
+}.freeze
+
 COMMANDS = {
   master: [
     "/scan .",
@@ -31,7 +40,7 @@ end
 
 def run_master_line(line)
   puts "master> #{line}"
-  stdout, status = Open3.capture2e("bundle", "exec", "ruby", "bin/cli", chdir: ROOT, stdin_data: "#{line}\n")
+  stdout, status = Open3.capture2e(SAFE_ENV, "bundle", "exec", "ruby", "bin/cli", chdir: ROOT, stdin_data: "#{line}\n")
   puts stdout
   abort "err: MASTER command failed: #{line}" unless status.success?
 end
