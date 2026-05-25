@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "json"
+require "open3"
+require "optparse"
+require "time"
+
+ROOT = File.expand_path("..", __dir__)
+REPO = File.expand_path("..", ROOT)
+REPORT_DIR = File.join(ROOT, "reports", "cleanup")
+STAMP = Time.now.utc.strftime("%Y%m%d-%H%M%S")
+
+options = { apply: false }
+OptionParser.new do |opts|
+  opts.banner = "usage: cleanup [--apply]"
+  opts.on("--apply") { options[:apply] = true }
+end.parse!
+
+def capture(*argv, chdir: REPO)
+  stdout, stderr, status = Open3.capture3(*argv, chdir: chdir)
+  raise "#{argv.join(' ')} failed: #{stderr}" unless status.success?
+  stdout
+end
+
+def clean_tree?
+  capture("git", "status", "--porcelain", chdir: REPO).strip.empty?
+end
+
+def write_report(name, body)
+  FileUtils.mkdir_p(REPORT_DIR)
+  path = File.join(REPORT_DIR, "#{name}_#{STAMP}")
+  File.write(path, body)
+  path
+end
+
+def maybe_run_tool(name, *argv)
+  capture(*argv, chdir: ROOT)
+rescue StandardError => e
+  "#{name}: unavailable: #{e.message}\n"
+end
+
+abort "FAIL cleanup: working tree dirty" unless clean_tree?
+
+inventory = maybe_run_tool("inventory", "ruby", "tools/repo_inventory.rb", "--json")
+history = maybe_run_tool("history", "ruby", "tools/history_valuables.rb", ".")
+
+puts "OK wrote #{write_report('inventory_before.json', inventory)}"
+puts "OK wrote #{write_report('history_before.txt', history)}"
+
+candidates = Dir.glob(File.join(REPO, "test_*.jpg")).map { |path| path.sub(REPO + "/", "") }
+puts candidates.empty? ? "OK no root test_*.jpg candidates" : "WARN cleanup candidates:\n#{candidates.map { |c| "  #{c}" }.join("\n")}" 
+
+if options[:apply]
+  candidates.each { |rel| File.delete(File.join(REPO, rel)) if File.file?(File.join(REPO, rel)) }
+  capture("git", "add", "-u", *candidates, chdir: REPO) unless candidates.empty?
+  puts "OK applied cleanup candidates"
+else
+  puts "OK dry-run only; rerun with --apply to remove candidates"
+end
