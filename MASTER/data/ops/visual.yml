@@ -1,0 +1,6 @@
+visual:
+  max_fps: 24
+  max_particles: 200
+  reduced_motion_particles: 64
+  pause_when_hidden: true
+  freeze_on_fail: true
