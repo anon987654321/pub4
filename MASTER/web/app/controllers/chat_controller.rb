@@ -67,6 +67,24 @@ class ChatController < ApplicationController
     render json: { output: "Error: #{e.message}" }, status: 500
   end
 
+  def tts
+    return head(:forbidden) if visitor?
+
+    text = params[:text].to_s.strip
+    return head(:bad_request) if text.empty?
+
+    voice_key = params[:voice].to_s.strip.to_sym
+    voice_key = Master::Voice::Speech::DEFAULT_VOICE unless Master::Voice::Speech::VOICES.key?(voice_key)
+
+    bytes = Master::Voice::Speech.synthesize_bytes(text, voice: voice_key)
+    return head(:service_unavailable) if bytes.nil? || bytes.empty?
+
+    send_data bytes, type: Master::Voice::Speech.mime_type_for(".mp3"), disposition: "inline"
+  rescue StandardError => e
+    Rails.logger.warn("tts failed: #{e.class}: #{e.message}")
+    head(:internal_server_error)
+  end
+
   def enhance
     msg = params[:message].to_s.strip
     return render(json: { changed: false }) if msg.empty?
