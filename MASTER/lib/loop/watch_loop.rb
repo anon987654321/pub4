@@ -25,6 +25,8 @@ module Master
     end
 
     def run
+      return unless ENV["MASTER_WATCH"] == "1"
+
       @bus&.publish("watch_loop:start", root: @root)
       Thread.new { drain_queue }
       @watcher.run
