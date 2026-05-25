@@ -1,0 +1,39 @@
+# frozen_string_literal: true
+
+# MASTER security defaults.
+# Local-first, zero-listener, explicit pairing, fail-closed tool policy.
+
+gateway:
+  listen: false
+  bind: "127.0.0.1"
+  port: 18789
+
+dashboard:
+  enabled: false
+  bind: "127.0.0.1"
+  port: 18800
+
+sessions:
+  main:
+    trust: owner
+    sandbox: none
+  channel_default:
+    trust: untrusted
+    sandbox: restricted
+
+pairing:
+  required_for_remote_channels: true
+  code_ttl_seconds: 600
+  allowlist_path: "MASTER/data/security/allowlist.yml"
+
+tools:
+  custom:
+    enabled: true
+    require_scope: true
+    require_review_for_destructive: true
+  deny_patterns:
+    - "secret_read_then_network"
+    - "broad_delete"
+    - "ci_permission_edit"
+    - "unknown_package_install"
+    - "hidden_generated_file"
