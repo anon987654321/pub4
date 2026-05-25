@@ -18,8 +18,13 @@ class GateContractSpec < Minitest::Test
     assert_includes source, "assert_clean(\"DEPLOY\", \"MASTER\")"
   end
 
-  def test_gate_safe_env_patch_is_still_backlog_if_missing
+  def test_gate_forces_safe_env
     source = File.read(GATE)
-    refute_includes source, "MASTER_SAFE_MODE"
+    assert_includes source, "SAFE_ENV"
+    assert_includes source, '"MASTER_SAFE_MODE" => "1"'
+    assert_includes source, '"MASTER_AUTOFIX" => "0"'
+    assert_includes source, '"MASTER_WATCH" => "0"'
+    assert_includes source, '"MASTER_WATCHER" => "0"'
+    assert_includes source, '"MASTER_HEARTBEAT" => "0"'
   end
 end
