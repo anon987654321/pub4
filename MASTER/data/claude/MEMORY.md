@@ -33,3 +33,5 @@
 - [Diverged branch sync via cherry-pick](feedback_diverged_branch_sync.md) — when local + remote both moved, backup-tag + reset to origin + cherry-pick targeted commits, never force-push or rebase mixed history
 - ["Run X through MASTER" = scan+sweep+council](feedback_run_through_master_triad.md) — manual chain `/scan → /sweep → /council`; user vocabulary is "tribunal", code is "council"
 - [No unnecessary piping/concat in shell calls](feedback_no_shell_piping.md) — pure Ruby/zsh patterns; banned shell cmds rule applies to my Bash calls too
+
+- [personality rb comment audit](personality_rb_comment_audit.md) — Comment audit results for personality.rb

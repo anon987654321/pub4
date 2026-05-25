@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <%= csrf_meta_tags %>
+  <meta name="theme-color" content="#000000">
+  <meta name="master-runtime" content="face">
+  <meta name="master-visual-profile" content="auto">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>MASTER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="/face.css" as="style">
+  <link rel="modulepreload" href="/three.module.js">
+  <link rel="modulepreload" href="/face.js">
+  <link rel="stylesheet" href="/face.css">
+  <link rel="stylesheet" href="/photo_upload.css">
+</head>
+<body data-runtime-profile="boot" data-runtime-visible="true" data-visual-runtime="face">
+  <canvas id="cognition-ecology" aria-hidden="true"></canvas>
+  <canvas id="face" aria-hidden="true"></canvas>
+  <div id="primer" role="button" tabindex="0" aria-label="Start MASTER"></div>
+  <main id="chat-shell" aria-label="MASTER chat">
+    <div id="chat-log" aria-live="polite" aria-relevant="additions text"></div>
+  </main>
+  <form id="zsh" role="search" aria-label="MASTER prompt" autocomplete="off">
+    <button id="photo-button" type="button" aria-label="Attach photo">+</button>
+    <input id="photo" type="file" accept="image/*" capture="environment" hidden>
+    <span class="pp">visitor</span><span class="sep">@master</span><span class="sep2"> $ </span>
+    <input id="zin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="ask anything" aria-label="Message">
+  </form>
+  <script src="/topology_registry.js" defer></script>
+  <script src="/particle_kernel.js" defer></script>
+  <script type="module" src="/face.js"></script>
+  <script src="/visual_bridge.js" defer></script>
+  <script src="/cognition_ecology.js" defer></script>
+  <script src="/codebase.js" defer></script>
+  <script src="/chat.js" defer></script>
+</body>
+</html>
