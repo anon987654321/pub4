@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
+require "digest"
 require "open3"
-require_relative "../ops/process_budget"
+require "set"
 
 module Master
   module Loop
@@ -55,6 +56,7 @@ module Master
     def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS)
       files = collect_files(target)
       history = []
+      seen_snapshots = Set.new
       consecutive_clean = 0
       deadline = Time.now + budget_seconds
 
@@ -80,6 +82,13 @@ module Master
           next
         end
         consecutive_clean = 0
+
+        snap = violation_snapshot(violations)
+        if seen_snapshots.include?(snap)
+          @bus&.publish("fix_loop:oscillation", pass:, violations: violations.size)
+          break
+        end
+        seen_snapshots << snap
 
         history << violations.size
         window = plateau_window
@@ -107,15 +116,12 @@ module Master
 
     # Background daemon — blocks its thread. Launch via Thread.new.
     def run_forever(target = @root)
-      budget_result = Master::Ops::ProcessBudget.run("autofix") do
-        sleep STARTUP_DELAY
-        loop do
-          run(target)
-          @bus&.publish("fix_loop:idle", sleep: IDLE_SLEEP)
-          sleep IDLE_SLEEP
-        end
+      sleep STARTUP_DELAY
+      loop do
+        run(target)
+        @bus&.publish("fix_loop:idle", sleep: IDLE_SLEEP)
+        sleep IDLE_SLEEP
       end
-      @bus&.publish("fix_loop:budget_stop", result: budget_result) unless budget_result.nil?
     rescue StandardError => e
       @bus&.publish("fix_loop:error", error: e.message)
     end
@@ -123,7 +129,6 @@ module Master
     # /fix loop — non-blocking: start the daemon in a tracked background thread.
     def start_background!(target = @root)
       return Result.err("fix_loop already running") if @bg_thread&.alive?
-      return Result.err("autofix loop disabled by process budget") unless Master::Ops::ProcessBudget.allowed_to_start?("autofix")
       @bg_thread = Thread.new { run_forever(target) }
       @bg_thread.abort_on_exception = false
       @bus&.publish("fix_loop:background_start", target:)
@@ -376,6 +381,11 @@ module Master
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "fix_loop.load_priors", event_bus: @bus)
       {}
+    end
+
+    def violation_snapshot(violations)
+      key = violations.map { |v| "#{v[:rule]}:#{v[:file]}:#{v[:line].to_i}" }.sort.join("|")
+      Digest::SHA256.hexdigest(key)
     end
   end
   end
