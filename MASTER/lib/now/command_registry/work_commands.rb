@@ -15,6 +15,7 @@ module Master
     def work_commands(ai:, root:, infra:)
       scanner      = ai[:scanner]
       fix_loop     = ai[:fix_loop]
+      ecology      = ai[:ecology]
       deliberation = ai[:deliberation]
       council_stage = ai[:council_stage]
       agent        = ai[:agent]
@@ -36,7 +37,8 @@ module Master
         "axioms" => cmd(:dispatch_axioms, scanner, root),
         "topic" => cmd(:dispatch_topic, session),
         "process" => ->(_c) { JSON.pretty_generate(process: Master::Ops::ProcessBudget.status, loop_slot: Master::Ops::LoopSlot.status) },
-        "propose-tree" => ->(_ctx) { propose_tree&.call || "propose-tree: not wired" }
+        "propose-tree" => ->(_ctx) { propose_tree&.call || "propose-tree: not wired" },
+        "ecology" => ->(ctx) { dispatch_ecology(ecology, arg_for(ctx)) }
       }
     end
 
@@ -381,6 +383,15 @@ module Master
       return local if local
       agent.ask_once("Explain the MASTER coding rule '#{rule}' in 2-3 sentences, " \
                      "give a before/after Ruby example, and state why it matters.")
+    end
+
+    def dispatch_ecology(ecology, arg)
+      return "ecology: not wired" unless ecology
+      path = arg.to_s.strip.empty? ? nil : File.expand_path(arg.strip)
+      report = ecology.scan(path: path)
+      ecology.render(report)
+    rescue StandardError => e
+      "ecology: #{e.message}"
     end
 
     def dispatch_topic(session, arg)

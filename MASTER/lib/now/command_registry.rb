@@ -21,7 +21,7 @@ module Master
         system_commands(ai[:agent], infra[:diag], root),
         "help" => ->(_ctx) {
           [
-            "scan:    /scan /fix [loop|preview|stop] /why /axioms /topic /propose-tree",
+            "scan:    /scan /fix [loop|preview|stop] /why /axioms /topic /propose-tree /ecology",
             "review:  /critique /review",
             "health:  /status /resync [--dry-run] /tail [N] [pattern]",
             "session: /save /clear /history /tokens /cost /undo /redo /checkpoint /dmesg /exit",
