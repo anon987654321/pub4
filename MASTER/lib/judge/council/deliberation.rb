@@ -342,10 +342,11 @@ module Master
 
       def ask_persona(persona, code, context)
         prompt   = build_prompt(persona, code, context)
-        response = persona.model ? @agent.ask_once(prompt, model: persona.model) : @agent.ask(prompt)
+        model    = persona.respond_to?(:model) ? persona.model : nil
+        response = model ? @agent.ask_once(prompt, model: model) : @agent.ask(prompt)
         entry = { persona: persona.name, role: persona.role,
                   veto_role: veto_role?(persona), axiom: primary_axiom(persona),
-                  model: persona.model, feedback: response, confidence: score_confidence(response) }
+                  model: model, feedback: response, confidence: score_confidence(response) }
         @bus&.publish(:council_feedback, entry)
         entry
       rescue StandardError => e
