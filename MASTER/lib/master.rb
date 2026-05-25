@@ -79,6 +79,16 @@ module Master
   end
   loader.ignore(File.join(__dir__,"converge.rb"))
   loader.ignore(File.join(__dir__,"converge"))
+  loader.ignore(File.join(__dir__, 'master_paths.rb'))
+  loader.ignore(File.join(__dir__, 'council/member.rb'))
+  loader.ignore(File.join(__dir__, 'council/runner.rb'))
+  loader.ignore(File.join(__dir__, 'harness/registry.rb'))
+  loader.ignore(File.join(__dir__, 'history/fossils.rb'))
+  loader.ignore(File.join(__dir__, 'providers/catalog_index.rb'))
+  loader.ignore(File.join(__dir__, 'providers/fallback_chain.rb'))
+  loader.ignore(File.join(__dir__, 'quality/slop_budget.rb'))
+  loader.ignore(File.join(__dir__, 'repo/inventory.rb'))
+  loader.ignore(File.join(__dir__, 'scope/ledger.rb'))
   loader.setup
 
   require_relative "converge/converge"
