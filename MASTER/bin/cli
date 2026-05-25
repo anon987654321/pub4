@@ -24,6 +24,8 @@ unless ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
   ENV["MASTER_AUTOFIX"] ||= "0"
   ENV["MASTER_WATCH"] ||= "0"
   ENV["MASTER_WATCHER"] ||= "0"
+  ENV["MASTER_HEARTBEAT"] ||= "0"
+  ENV["MASTER_DRIFT"] ||= "0"
 end
 
 require "set"
