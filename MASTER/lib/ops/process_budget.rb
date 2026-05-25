@@ -1,34 +1,44 @@
 # frozen_string_literal: true
 
-require "yaml"
 require "timeout"
+require "yaml"
 
 module Master
   module Ops
     module ProcessBudget
       CONFIG_PATH = File.join(Master::ROOT, "data", "ops", "process.yml").freeze
+      NON_SLOT_LOOPS = %w[heartbeat].freeze
       @last_run = {}
 
       module_function
 
       def config
-        @config ||= begin
-          if File.exist?(CONFIG_PATH)
-            YAML.safe_load_file(CONFIG_PATH, aliases: true) || {}
-          else
-            {}
-          end
-        rescue StandardError
-          {}
-        end
+        @config ||= load_config
+      end
+
+      def reload!
+        @config = load_config
+      end
+
+      def load_config
+        return {} unless File.exist?(CONFIG_PATH)
+        YAML.safe_load_file(CONFIG_PATH, aliases: true) || {}
+      rescue StandardError
+        {}
       end
 
       def loop_config(name)
         config.fetch("loops", {}).fetch(name.to_s, {})
       end
 
+      def slot_loop?(name, spec)
+        return false if NON_SLOT_LOOPS.include?(name.to_s)
+        spec.fetch("slot", true) != false
+      end
+
       def active_loops
         config.fetch("loops", {}).filter_map do |name, spec|
+          next unless slot_loop?(name, spec)
           env = spec["env"]
           name if env && ENV[env] == "1"
         end
@@ -72,11 +82,7 @@ module Master
 
         mark!(name)
         seconds = loop_config(name)["max_run_seconds"].to_i
-        if seconds.positive?
-          Timeout.timeout(seconds) { yield }
-        else
-          yield
-        end
+        seconds.positive? ? Timeout.timeout(seconds) { yield } : yield
       rescue Timeout::Error
         :timeout
       end
