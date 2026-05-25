@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "json"
 require "time"
 require_relative "../master_paths"
@@ -34,14 +35,16 @@ module Scope
     end
 
     def record(command:, touched_paths: [], inferred_scope: nil)
+      command = command.to_s
+      paths = Array(touched_paths).map(&:to_s)
       event = Event.new(
         timestamp: Time.now.utc.iso8601,
         requested_scope: @requested_scope,
-        inferred_scope: inferred_scope || infer_scope(touched_paths),
-        touched_paths: touched_paths,
+        inferred_scope: inferred_scope || infer_scope(paths),
+        touched_paths: paths,
         command_class: classify(command),
         network: command.match?(NETWORK),
-        secret_risk: command.match?(SECRET) || touched_paths.any? { |path| path.match?(SECRET) },
+        secret_risk: command.match?(SECRET) || paths.any? { |path| path.match?(SECRET) },
         destructive: command.match?(DESTRUCTIVE)
       )
       @events << event
