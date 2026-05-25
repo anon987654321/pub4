@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+require "json"
+
 module Master
   module Judge
   module Swarm
     # Base worker — receives only the context slice it needs (need-to-know).
     class Worker
       PREFERRED_MODEL = nil
+      FALLBACK_MODEL  = nil
 
       UNCERTAINTY_PHRASES = %w[unclear uncertain not\ sure cannot\ determine
                                 i\ don't\ know limited\ information probably].freeze
@@ -26,8 +29,7 @@ module Master
         prompt = build_prompt(task, context_slice)
         @bus&.publish(:swarm_worker_start, role: @role, task: task[0..60])
 
-        preferred = self.class::PREFERRED_MODEL
-        raw = @agent.ask_once(prompt, model: preferred, system: worker_system_prompt)
+        raw = ask_with_fallback(prompt)
         @result, @confidence = parse_result(raw)
 
         @bus&.publish(:swarm_worker_done, role: @role, ok: @result.ok?)
@@ -45,6 +47,16 @@ module Master
 
       def role_description = "General-purpose assistant."
       def build_prompt(task, ctx) = "#{ctx_summary(ctx)}\n\nTask: #{task}"
+
+      def ask_with_fallback(prompt)
+        preferred = self.class::PREFERRED_MODEL
+        fallback  = self.class::FALLBACK_MODEL
+        @agent.ask_once(prompt, model: preferred, system: worker_system_prompt)
+      rescue StandardError => e
+        raise unless fallback
+        @bus&.publish(:swarm_worker_fallback, role: @role, reason: e.class.name)
+        @agent.ask_once(prompt, model: fallback, system: worker_system_prompt)
+      end
 
       def parse_result(raw)
         text = raw.to_s.strip

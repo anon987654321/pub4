@@ -7,6 +7,7 @@ module Master
       # Synthesizes research from external sources. No codebase context.
       class Researcher < Worker
         PREFERRED_MODEL = "google/gemini-2.0-flash-lite:free".freeze
+        FALLBACK_MODEL  = "openrouter/auto".freeze
         private
 
         def role_description
