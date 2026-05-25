@@ -22,10 +22,17 @@
 
   <body
     data-master-tier="<%= request.env['master.tier'] || 'visitor' %>"
-    data-runtime-profile="auto"
+    data-runtime-profile="calm"
     data-runtime-visible="true"
     data-visual-runtime="rails">
     <canvas id="mask" aria-hidden="true"></canvas>
+    <section class="face-plate" aria-hidden="true">
+      <div class="face-core">
+        <span class="face-eye face-eye-left"></span>
+        <span class="face-eye face-eye-right"></span>
+        <span class="face-mouth"></span>
+      </div>
+    </section>
     <main id="app-shell">
       <%= yield %>
     </main>
