@@ -2,11 +2,15 @@
 
 :root {
   color-scheme: dark;
-  --master-bg: #000;
-  --master-fg: #fff;
-  --master-muted: rgba(255, 255, 255, 0.42);
-  --master-dim: rgba(255, 255, 255, 0.18);
-  --master-line: rgba(255, 255, 255, 0.28);
+  --master-bg: #050505;
+  --master-fg: #f4f1ea;
+  --master-muted: rgba(244, 241, 234, 0.56);
+  --master-dim: rgba(244, 241, 234, 0.22);
+  --master-line: rgba(244, 241, 234, 0.18);
+  --master-ok: #8fe3bd;
+  --master-warn: #f1c36d;
+  --master-fail: #ef7567;
+  --master-work: #92b7ff;
   --master-safe-bottom: env(safe-area-inset-bottom, 0px);
   --master-console-height: calc(3rem + var(--master-safe-bottom));
 }
@@ -20,19 +24,22 @@ body {
   min-height: 100dvh;
   margin: 0;
   overflow: hidden;
-  background: var(--master-bg);
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255,255,255,0.075), transparent 30rem),
+    linear-gradient(180deg, #0b0a09, #030303 70%);
   color: var(--master-fg);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
 }
 
-body[data-runtime-visible="false"] canvas {
-  filter: brightness(0.45) contrast(0.85);
+body[data-runtime-visible="false"] canvas,
+body[data-runtime-visible="false"] .face-plate {
+  filter: brightness(0.5) contrast(0.85);
 }
 
 body[data-runtime-profile="battery"] canvas {
-  filter: grayscale(0.25) brightness(0.75);
+  opacity: 0.16;
 }
 
 canvas {
@@ -41,8 +48,88 @@ canvas {
   display: block;
   inline-size: 100vw;
   block-size: 100dvh;
-  image-rendering: pixelated;
-  transition: filter 0.24s steps(4, end);
+  opacity: 0.22;
+  filter: blur(0.25px) saturate(0.72) contrast(0.88);
+  transition: opacity 0.24s ease, filter 0.24s ease;
+}
+
+.face-plate {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.face-core {
+  position: relative;
+  inline-size: min(42vmin, 23rem);
+  aspect-ratio: 0.78;
+  border: 1px solid rgba(244, 241, 234, 0.22);
+  border-radius: 48% 48% 42% 42% / 34% 34% 58% 58%;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255,255,255,0.10), transparent 18%),
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008));
+  box-shadow:
+    0 0 4rem rgba(143, 227, 189, 0.07),
+    inset 0 0 4rem rgba(255,255,255,0.035);
+  opacity: 0.88;
+}
+
+.face-core::before {
+  content: "";
+  position: absolute;
+  inset: 16% 49% 25%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(244,241,234,0.38), rgba(244,241,234,0.06));
+  opacity: 0.72;
+}
+
+.face-eye {
+  position: absolute;
+  inset-block-start: 33%;
+  inline-size: 14%;
+  block-size: 3.5%;
+  border-radius: 999px;
+  background: var(--master-ok);
+  box-shadow: 0 0 1.2rem color-mix(in srgb, var(--master-ok), transparent 42%);
+  opacity: 0.82;
+}
+
+.face-eye-left { inset-inline-start: 25%; }
+.face-eye-right { inset-inline-end: 25%; }
+
+.face-mouth {
+  position: absolute;
+  inset-inline: 36%;
+  inset-block-end: 27%;
+  block-size: 1px;
+  border-radius: 999px;
+  background: rgba(244, 241, 234, 0.56);
+  opacity: 0.72;
+}
+
+body:has(#status[data-runtime-status="busy"]) .face-eye {
+  background: var(--master-work);
+  box-shadow: 0 0 1.4rem color-mix(in srgb, var(--master-work), transparent 35%);
+}
+
+body:has(#status[data-runtime-status="busy"]) .face-core {
+  box-shadow: 0 0 4.5rem rgba(146,183,255,0.10), inset 0 0 4rem rgba(255,255,255,0.04);
+}
+
+body:has(#status[data-runtime-status="warn"]) .face-eye {
+  background: var(--master-warn);
+}
+
+body:has(#status[data-runtime-status="fail"]) .face-eye {
+  background: var(--master-fail);
+}
+
+body:has(#status[data-runtime-status="fail"]) .face-core {
+  border-color: color-mix(in srgb, var(--master-fail), transparent 35%);
+  box-shadow: 0 0 4rem rgba(239,117,103,0.13), inset 0 0 4rem rgba(239,117,103,0.05);
 }
 
 #app-shell {
@@ -83,8 +170,8 @@ nav a:hover {
   min-height: var(--master-console-height);
   padding: 0.5rem 1rem calc(0.5rem + var(--master-safe-bottom));
   border-block-start: 1px solid var(--master-line);
-  background: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(8px);
+  background: rgba(5, 5, 5, 0.86);
+  backdrop-filter: blur(12px);
 }
 
 #input {
@@ -111,6 +198,10 @@ nav a:hover {
   white-space: nowrap;
 }
 
+#status[data-runtime-status="busy"] { color: var(--master-work); }
+#status[data-runtime-status="warn"] { color: var(--master-warn); }
+#status[data-runtime-status="fail"] { color: var(--master-fail); }
+
 #status[data-runtime-status="busy"]::after {
   content: "";
   display: inline-block;
@@ -133,14 +224,12 @@ nav a:hover {
     scroll-behavior: auto;
     transition-duration: 0.01ms;
   }
+
+  canvas { display: none; }
+  .face-core { box-shadow: none; }
 }
 
 @media (min-width: 48rem) {
-  #app-shell {
-    padding: 1.5rem;
-  }
-
-  .runtime-console {
-    padding-inline: 1.5rem;
-  }
+  #app-shell { padding: 1.5rem; }
+  .runtime-console { padding-inline: 1.5rem; }
 }
