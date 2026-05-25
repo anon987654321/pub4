@@ -31,7 +31,11 @@ module Master
         config.fetch("loops", {}).fetch(name.to_s, {})
       end
 
-      def slot_loop?(name, spec)
+      def loop_names
+        config.fetch("loops", {}).keys.sort
+      end
+
+      def slot_loop?(name, spec = loop_config(name))
         return false if NON_SLOT_LOOPS.include?(name.to_s)
         spec.fetch("slot", true) != false
       end
@@ -44,13 +48,42 @@ module Master
         end
       end
 
-      def validate_loop_slot!
+      def max_active_loops
         max = config.dig("defaults", "max_active_loops").to_i
-        max = 1 if max <= 0
-        active = active_loops
-        return true if active.size <= max
+        max <= 0 ? 1 : max
+      end
 
-        raise ArgumentError, "too many active MASTER loops: #{active.join(', ')}; max=#{max}"
+      def valid_loop_slot?
+        active_loops.size <= max_active_loops
+      end
+
+      def status
+        {
+          valid: valid_loop_slot?,
+          active_loops: active_loops,
+          max_active_loops: max_active_loops,
+          loops: loop_names.to_h { |name| [name, loop_status(name)] }
+        }
+      end
+
+      def loop_status(name)
+        spec = loop_config(name)
+        env = spec["env"]
+        {
+          enabled: enabled?(name),
+          slot: slot_loop?(name, spec),
+          env: env,
+          env_value: env ? ENV.fetch(env, "0") : nil,
+          cooldown_elapsed: cooldown_elapsed?(name),
+          max_run_seconds: spec["max_run_seconds"].to_i,
+          min_sleep_seconds: spec["min_sleep_seconds"].to_i
+        }
+      end
+
+      def validate_loop_slot!
+        return true if valid_loop_slot?
+
+        raise ArgumentError, "too many active MASTER loops: #{active_loops.join(', ')}; max=#{max_active_loops}"
       end
 
       def enabled?(name)
