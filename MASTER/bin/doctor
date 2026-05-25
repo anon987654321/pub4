@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+require "yaml"
+
+ROOT = File.expand_path("..", __dir__)
+REPO = File.expand_path("..", ROOT)
+
+Check = Struct.new(:name, :ok, :detail, keyword_init: true)
+
+def run(*argv, chdir: ROOT)
+  stdout, stderr, status = Open3.capture3(*argv, chdir: chdir)
+  [status.success?, stdout.strip, stderr.strip]
+rescue Errno::ENOENT => e
+  [false, "", e.message]
+end
+
+def check_ruby
+  ok, out, err = run("ruby", "--version")
+  version = out[/ruby (\d+\.\d+\.\d+)/, 1]
+  good = ok && version && Gem::Version.new(version) >= Gem::Version.new("3.3.0")
+  Check.new(name: "ruby", ok: good, detail: out.empty? ? err : out)
+end
+
+def check_command(name, *cmd)
+  ok, out, err = run(*cmd, chdir: REPO)
+  Check.new(name: name, ok: ok, detail: ok ? out.lines.first.to_s.strip : err)
+end
+
+def check_bundle
+  ok, out, err = run("bundle", "check", chdir: ROOT)
+  Check.new(name: "bundle", ok: ok, detail: ok ? "dependencies satisfied" : (err.empty? ? out : err))
+end
+
+def check_yaml
+  errors = Dir.glob(File.join(ROOT, "data", "**", "*.yml")).filter_map do |path|
+    YAML.safe_load_file(path, aliases: true)
+    nil
+  rescue Psych::Exception => e
+    "#{path.sub(ROOT + '/', '')}: #{e.message.lines.first.to_s.strip}"
+  end
+  Check.new(name: "yaml", ok: errors.empty?, detail: errors.empty? ? "ok" : errors.join("; "))
+end
+
+def check_provider_catalog
+  path = File.join(ROOT, "bin", "provider-catalog")
+  Check.new(name: "provider-catalog", ok: File.exist?(path), detail: File.exist?(path) ? path : "missing")
+end
+
+def check_safety_tests
+  path = File.join(ROOT, "bin", "test-safety")
+  Check.new(name: "test-safety", ok: File.exist?(path), detail: File.exist?(path) ? path : "missing")
+end
+
+checks = [
+  check_ruby,
+  check_command("git", "git", "--version"),
+  check_command("sqlite3", "ruby", "-e", "require 'sqlite3'; puts SQLite3::SQLITE_VERSION"),
+  check_bundle,
+  check_yaml,
+  check_provider_catalog,
+  check_safety_tests
+]
+
+puts "MASTER doctor"
+checks.each do |check|
+  puts "#{check.ok ? 'OK' : 'FAIL'} #{check.name}: #{check.detail}"
+end
+
+failed = checks.reject(&:ok)
+exit(failed.empty? ? 0 : 1)
