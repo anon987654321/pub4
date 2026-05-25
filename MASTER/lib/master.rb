@@ -77,19 +77,19 @@ module Master
   ].each do |rel|
     loader.ignore(File.join(__dir__, rel))
   end
-  loader.ignore(File.join(__dir__,"converge.rb"))
-  loader.ignore(File.join(__dir__,"converge"))
-  loader.ignore(File.join(__dir__, 'master_paths.rb'))
-  loader.ignore(File.join(__dir__, 'council/member.rb'))
-  loader.ignore(File.join(__dir__, 'council/runner.rb'))
-  loader.ignore(File.join(__dir__, 'harness/registry.rb'))
-  loader.ignore(File.join(__dir__, 'history/fossils.rb'))
-  loader.ignore(File.join(__dir__, 'providers/catalog_index.rb'))
-  loader.ignore(File.join(__dir__, 'providers/fallback_chain.rb'))
-  loader.ignore(File.join(__dir__, 'quality/slop_budget.rb'))
-  loader.ignore(File.join(__dir__, 'repo/inventory.rb'))
-  loader.ignore(File.join(__dir__, 'scope/ledger.rb'))
-  loader.ignore(File.join(__dir__, 'loop/datalog_engine.rb'))
+  loader.ignore(File.join(__dir__, "converge.rb"))
+  loader.ignore(File.join(__dir__, "converge"))
+  loader.ignore(File.join(__dir__, "master_paths.rb"))
+  loader.ignore(File.join(__dir__, "council/member.rb"))
+  loader.ignore(File.join(__dir__, "council/runner.rb"))
+  loader.ignore(File.join(__dir__, "harness/registry.rb"))
+  loader.ignore(File.join(__dir__, "history/fossils.rb"))
+  loader.ignore(File.join(__dir__, "providers/catalog_index.rb"))
+  loader.ignore(File.join(__dir__, "providers/fallback_chain.rb"))
+  loader.ignore(File.join(__dir__, "quality/slop_budget.rb"))
+  loader.ignore(File.join(__dir__, "repo/inventory.rb"))
+  loader.ignore(File.join(__dir__, "scope/ledger.rb"))
+  loader.ignore(File.join(__dir__, "loop/datalog_engine.rb"))
   loader.setup
 
   require_relative "converge/converge"
@@ -106,6 +106,29 @@ module Master
         cfg.public_send("#{attr}=", api_key) if api_key.length >= MIN_API_KEY_LENGTH
       end
     end
+  end
+
+  def self.apply_process_defaults!
+    return if ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
+
+    ENV["MASTER_SAFE_MODE"] ||= "1"
+    ENV["MASTER_BACKGROUND"] ||= "0"
+    ENV["MASTER_AUTOFIX"] ||= "0"
+    ENV["MASTER_WATCH"] ||= "0"
+    ENV["MASTER_WATCHER"] ||= "0"
+    ENV["MASTER_HEARTBEAT"] ||= "0"
+    ENV["MASTER_DRIFT"] ||= "0"
+  end
+
+  def self.install_process_guards!
+    require_relative "ops/loop_slot"
+    require_relative "ops/process_budget"
+    require_relative "ops/runtime_loop_guards"
+    Ops::LoopSlot.validate!
+    Ops::ProcessBudget.validate_loop_slot!
+    Ops::RuntimeLoopGuards.install!
+  rescue LoadError => e
+    warn("process_guards: #{e.message}")
   end
 
   def self.api_key_present?(env_var)
@@ -140,8 +163,6 @@ module Master
     default
   end
 
-  # Strict re-parse of every data/*.yml — silent swallow in load_yaml hides
-  # corruption from sweep/LLM rewrites. Boot must surface failures, not mask them.
   def self.validate_data!(root: ROOT, bus: nil)
     errors = {}
     Dir.glob(File.join(root, "data", "**/*.yml")).sort.each do |path|
@@ -158,7 +179,6 @@ module Master
     errors
   end
 
-  # Loads rules.yml meta + merges split data/rules/*.yml into ["rules"] key.
   def self.load_rules(root: ROOT)
     data_dir = File.join(root, "data")
     base     = load_yaml(File.join(data_dir, "rules.yml"))
@@ -178,23 +198,34 @@ module Master
     ENV["MASTER_SCAN_ONLY"] == "1" ? Builder.build_scan_only(root:) : Builder.build(root:)
   end
 
-  def self.bootstrap_container(root: Dir.pwd)
-    Trace::Telemetry.bootstrap!(root: root)
-    container = Builder.build(root:)
-    validate_data!(root: root, bus: container[:bus])
-    Builder.boot_snapshot(container)
-    container[:heartbeat]&.start!
+  def self.start_constitution_drift(container)
+    return unless ENV["MASTER_DRIFT"] == "1"
+
     Thread.new do
       Ground::Orders::ConstitutionDrift.new(container:).call
     rescue StandardError => e
       warn("constitution_drift: #{e.message}")
     end
+  end
+
+  def self.bootstrap_container(root: Dir.pwd)
+    install_process_guards!
+    Trace::Telemetry.bootstrap!(root: root)
+    container = Builder.build(root:)
+    install_process_guards!
+    validate_data!(root: root, bus: container[:bus])
+    Builder.boot_snapshot(container)
+    container[:heartbeat]&.start!
+    start_constitution_drift(container)
     container
   end
 
   def self.boot(root: Dir.pwd)
+    apply_process_defaults!
+    install_process_guards!
     Ground::Pledge.stage1_boot!(root)
     container = bootstrap_container(root: root)
+    install_process_guards!
     Ground::Pledge.stage2_lock!
     Now::CLI.new(container:)
   end
