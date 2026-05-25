@@ -66,6 +66,17 @@ module Master
         }
       end
 
+      def compact_status
+        rows = loop_names.map do |name|
+          st = loop_status(name)
+          format("%-10s enabled=%-5s slot=%-5s cool=%-5s max=%ss sleep=%ss",
+                 name, st[:enabled], st[:slot], st[:cooldown_elapsed],
+                 st[:max_run_seconds], st[:min_sleep_seconds])
+        end
+        head = valid_loop_slot? ? "OK process" : "FAIL process"
+        (["#{head}: active=#{active_loops.join(',').empty? ? 'none' : active_loops.join(',')} max=#{max_active_loops}"] + rows).join("\n")
+      end
+
       def loop_status(name)
         spec = loop_config(name)
         env = spec["env"]
