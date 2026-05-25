@@ -95,6 +95,7 @@ trap("TERM") { cli&.container&.dig(:session)&.save! rescue nil; exit 0 }
 
 boot_banner
 cli = Master.boot(root: Dir.pwd)
+Master::Ops::RuntimeLoopGuards.install!
 
 if $stdin.tty?
   boot_web_ui(cli.container[:config])
