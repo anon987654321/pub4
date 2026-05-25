@@ -7,9 +7,8 @@ module Master
   # Violations are queries against a fact base derived from the AST.
   # Fixes are derived from the complement clause. No neural network involved.
   #
-  # Status: scaffolded. Fact extraction is implemented for Ruby via Prism.
-  # Horn clause evaluation is a minimal forward-chaining Datalog subset.
-  # Full Prolog (negation, cuts) is future work.
+  # Fact extraction implemented for Ruby via Prism. Horn clause evaluation
+  # is a minimal forward-chaining Datalog subset.
   class DatalogEngine
     Fact    = Struct.new(:predicate, :args, keyword_init: true)
     Rule    = Struct.new(:head, :body, keyword_init: true)   # head :- body[]

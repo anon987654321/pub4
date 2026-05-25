@@ -189,7 +189,7 @@ module Master
 
         # Architecture #12: Datalog fact extraction + logical rule evaluation.
         dl = Judge::Scan::DatalogEngine.from_ruby(path, src)
-        dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[2]} — use rescue StandardError" }
+        dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[1]} — use rescue StandardError" }
         dl.evaluate.each do |finding|
           @bus&.publish("fix_loop:datalog_finding", file: path.delete_prefix("#{@root}/"),
                         rule: finding.rule_id, message: finding.message)
