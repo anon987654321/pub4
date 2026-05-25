@@ -275,7 +275,7 @@ scan_depths:
     - migration_find_or_create_by
     - safe_navigation
     - each_with_object
-    - keyword_args
+
     - kernel_coercion
     - percent_literal
     - hash_fetch
@@ -350,6 +350,7 @@ scan_depths:
     - no_column_align
     - typographic_excellence
     - typography_discipline
+    - h1_visibility
   standard: &standard
     - CoChangeCouplingRule
     - InterconnectRule

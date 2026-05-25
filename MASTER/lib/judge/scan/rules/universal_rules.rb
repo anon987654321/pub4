@@ -28,16 +28,9 @@ module Master
 
   RuleDSL.rule :FEW_ARGUMENTS,
     severity: :warning, tags: %i[SMALL_PARTS],
-    description: "ideal is zero to two arguments" do |src, path:|
-    scan_lines(src, /def \w+\([^)]*,[^:)]+,[^:)]+,[^:)]+\)/,
-      message: "4+ positional args — refactor into keyword args or a value object")
-  end
-
-  RuleDSL.rule :KEYWORD_ARGS,
-    severity: :info, tags: %i[SMALL_PARTS],
-    description: "keyword arguments for 3+ parameters" do |src, path:|
-    scan_lines(src, /def \w+\([^)]*,\s*[^:)]+,\s*[^:)]+,\s*[^:)]+\)/,
-      message: "3+ positional args — use keyword arguments")
+    description: "ideal is zero to two positional arguments" do |src, path:|
+    scan_lines(src, /def \w+\([^)]*,[^:)]+,[^:)]+\)/,
+      message: "3+ positional args — use keyword arguments or a value object")
   end
 
   RuleDSL.rule :N_PLUS_ONE,
