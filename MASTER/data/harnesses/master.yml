@@ -1,0 +1,10 @@
+name: MASTER
+paths:
+  - MASTER/
+setup: bundle install
+test: bundle exec ruby -Itest -Ispec spec/converge/engine_spec.rb
+lint: bundle exec rubocop
+smoke: ruby bin/gate
+rollback: git checkout -- MASTER
+ timeout_seconds: 900
+known_flaky: []
