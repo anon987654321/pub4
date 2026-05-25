@@ -26,6 +26,7 @@ unless ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] == "1"
   ENV["MASTER_WATCHER"] ||= "0"
 end
 
+require "set"
 require "master"
 require "ops/loop_slot"
 require "ops/process_budget"
@@ -46,6 +47,13 @@ def stable_web_secret(config)
   secret
 rescue StandardError
   SecureRandom.hex(64)
+end
+
+def boot_banner
+  return unless ENV["MASTER_BOOT_STATUS"] == "1"
+  status = Master::Ops::LoopSlot.status
+  budget = Master::Ops::ProcessBudget.status
+  $stderr.puts "process: safe=#{ENV.fetch("MASTER_SAFE_MODE", "1")} background=#{ENV.fetch("MASTER_BACKGROUND", "0")} web=#{ENV.fetch("MASTER_WEB", "0")} loop=#{status[:selected] || "none"} valid=#{budget[:valid]}"
 end
 
 def boot_web_ui(config)
@@ -83,6 +91,7 @@ cli = nil
 trap("INT")  { cli&.container&.dig(:session)&.save! rescue nil; $stderr.puts "\nsaved"; exit 0 }
 trap("TERM") { cli&.container&.dig(:session)&.save! rescue nil; exit 0 }
 
+boot_banner
 cli = Master.boot(root: Dir.pwd)
 
 if $stdin.tty?
