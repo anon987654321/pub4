@@ -36,7 +36,7 @@ module Master
     KEY_TYPES = {
       user_message: [String],
       task_type:    [String, Symbol, NilClass],
-      handler:      [Symbol, String, NilClass],
+      handler:      [Symbol, String, Proc, NilClass],
       model:        [String, NilClass],
       output:       [String, NilClass],
       pressure:     [TrueClass, FalseClass, NilClass],
