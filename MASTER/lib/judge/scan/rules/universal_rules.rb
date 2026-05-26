@@ -80,7 +80,7 @@ module Master
   RuleDSL.rule :MEANINGFUL_NAMES,
     severity: :info, tags: %i[READABILITY],
     description: "names reveal intent" do |src, path:|
-    scan_lines(src, /\b(tmp|temp|val|ret|obj|arr|buf)\b\s*=/,
+    scan_lines(src, /\b(tmp|temp|data|result|val|ret|obj|str|arr|buf)\b\s*=/,
       message: "generic name — use a name that reveals intent")
   end
 
