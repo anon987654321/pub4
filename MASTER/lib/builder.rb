@@ -146,7 +146,7 @@ module Master
       ideation      = Judge::Council::Ideation.new(agent:, event_bus: bus)
       council_stage = Now::Stages::Council.new(deliberation:, config: infra[:config], event_bus: bus)
       guard         = Judge::Security::InjectionGuard.new
-      ecology       = Judge::RepoEcology.new(root:, event_bus: bus)
+      ecology       = Judge::RepoEcology.new(root:, event_bus: bus, code_index: infra[:code_index])
       autonomous    = boot_autonomous(root:, infra:, agent:, scanner:, axioms:)
                         .merge(learnings: infra[:learnings], skills: boot_skills(root, bus))
       autonomous[:standing].wire_container(scanner:, agent:, root:, bus:)
