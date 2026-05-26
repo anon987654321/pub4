@@ -115,6 +115,7 @@ module Master
 
     def run_stage(stage, ctx, timings)
       label = stage_label(stage)
+      Master::Now::PipelineContext.assert_stage!(ctx, label.downcase.to_sym)
       t0    = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       stage_result = stage.call(ctx)
       ms    = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0) * MS_PER_SECOND).round
