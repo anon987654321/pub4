@@ -60,8 +60,9 @@ module Master
         end
 
         results = threads.map { |th| join_or_timeout(th, timeout) }.to_h
-
         sr = build_swarm_result(results)
+        sr = direct_fallback(tasks.first&.dig(:task).to_s) if sr.verdict == :error
+
         @bus&.publish(:swarm_fan_out_done, roles: results.keys, verdict: sr.verdict,
                       synthesis: sr.reasoning[0..SYNTHESIS_TRUNCATE_LIMIT])
         Result.ok(sr)
@@ -121,10 +122,9 @@ module Master
         lines = successes.map { |role, r| "### #{role}\n#{r.value!.to_s.strip}" }
         reasoning = lines.empty? ? "(no results)" : lines.join("\n\n")
 
-        conflict = conflict?(artifacts)
         verdict = if eligible.empty? || successes.empty? then :error
                  elsif successes.size < MIN_QUORUM then :insufficient_quorum
-                 elsif conflict then :conflict
+                 elsif conflict?(artifacts) then resolve_conflict(artifacts)
                  elsif confidence >= 0.8 then :approved
                  elsif confidence >= 0.5 then :mixed
                  else :rejected
@@ -133,21 +133,48 @@ module Master
         SwarmResult.new(verdict:, confidence:, reasoning:, artifacts:)
       end
 
+      def direct_fallback(task)
+        @bus&.publish(:swarm_fallback_start, task: task[0..60])
+        response = @agent.ask(task)
+        SwarmResult.new(verdict: :approved, confidence: 0.5,
+                        reasoning: response.to_s, artifacts: { fallback: response })
+      rescue StandardError => e
+        @bus&.publish(:swarm_fallback_failed, error: e.message)
+        SwarmResult.new(verdict: :error, confidence: 0.0, reasoning: e.message, artifacts: {})
+      end
+
       def conflict?(artifacts)
-        signals = artifacts.map do |_role, v|
-          if v.is_a?(Hash) && v.key?("approved")
-            v["approved"] ? :approve : :reject
-          else
-            text = v.to_s.downcase
-            if text.match?(/\b(approv(e|ed)|looks good|no issues)\b/)
-              :approve
-            elsif text.match?(/\b(reject|fail|error|violation|problem)\b/)
-              :reject
-            end
-          end
-        end.compact
+        signals = artifacts.map { |_role, v| conflict_signal(v) }.compact
         return false if signals.size < 2
         signals.include?(:approve) && signals.include?(:reject)
+      end
+
+      def resolve_conflict(artifacts)
+        approve_weight = 0
+        reject_weight = 0
+        artifacts.each do |role, v|
+          w = WORKER_WEIGHTS.fetch(role, 1)
+          case conflict_signal(v)
+          when :approve then approve_weight += w
+          when :reject  then reject_weight  += w
+          end
+        end
+        return :approved if approve_weight > reject_weight
+        return :rejected if reject_weight  > approve_weight
+        :conflict
+      end
+
+      def conflict_signal(v)
+        if v.is_a?(Hash) && v.key?("approved")
+          v["approved"] ? :approve : :reject
+        else
+          text = v.to_s.downcase
+          if text.match?(/\b(approv(e|ed)|looks good|no issues)\b/)
+            :approve
+          elsif text.match?(/\b(reject|fail|error|violation|problem)\b/)
+            :reject
+          end
+        end
       end
 
       def worker_for(role)

@@ -89,7 +89,6 @@ module Master
   loader.ignore(File.join(__dir__, "quality/slop_budget.rb"))
   loader.ignore(File.join(__dir__, "repo/inventory.rb"))
   loader.ignore(File.join(__dir__, "scope/ledger.rb"))
-  loader.ignore(File.join(__dir__, "loop/datalog_engine.rb"))
   loader.setup
 
   require_relative "converge/converge"
