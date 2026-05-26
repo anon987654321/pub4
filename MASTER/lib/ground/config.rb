@@ -36,7 +36,9 @@ module Master
 
     def [](key) = @mutex.synchronize { @data[key.to_s] }
     def []=(key, value); @mutex.synchronize { @data[key.to_s] = value }; end
-    def dig(key, *rest) = @mutex.synchronize { k = key.to_s; rest.empty? ? @data[k] : @data.dig(k, *rest) }
+    def dig(key, *rest)
+      @mutex.synchronize { k = key.to_s; rest.empty? ? @data[k] : @data.dig(k, *rest) }
+    end
 
     def model = self["model"]
     def budget_max = self["budget_max"].to_f
@@ -59,9 +61,9 @@ module Master
       @mutex.synchronize { @data = load_config }
     end
 
-    # Frozen snapshot of read-only boot values — safe to share across threads.
+    # Frozen snapshot of boot values — safe to share across threads.
     BootConfig = Data.define(:root, :model, :web_host, :web_port, :web_public_url,
-                             :budget_max, :req_max, :cache_ttl, :history_max)
+      :budget_max, :req_max, :cache_ttl, :history_max)
 
     def freeze_boot
       snap = @mutex.synchronize { @data.dup }
@@ -79,7 +81,7 @@ module Master
     def load_config
       defaults = deep_dup(DEFAULTS)
       return defaults unless File.exist?(@path)
-      raw    = Master.load_yaml(@path)
+      raw = Master.load_yaml(@path)
       loaded = raw.is_a?(Hash) ? raw : {}
       deep_merge(defaults, stringify_keys(loaded))
     rescue Psych::Exception => e

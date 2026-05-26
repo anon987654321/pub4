@@ -44,10 +44,10 @@ module Master
       return nil if fm[:meta].empty?
       meta = fm[:meta]
       {
-        name:        meta["name"].to_s,
+        name: meta["name"].to_s,
         description: meta["description"].to_s,
-        type:        meta["type"].to_s,
-        body:        fm[:body][0, MAX_BODY_CHARS]
+        type: meta["type"].to_s,
+        body: fm[:body][0, MAX_BODY_CHARS]
       }
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "constitution.parse", path:)

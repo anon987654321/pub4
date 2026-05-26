@@ -15,7 +15,7 @@ module Master
     end
 
     def create(label:, files: [])
-      id = "#{Time.now.utc.strftime('%Y%m%d%H%M%S')}-#{slug(label)}"
+      id = "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}-#{slug(label)}"
       target = File.join(dir, id)
       FileUtils.mkdir_p(target)
       Array(files).each do |rel|
@@ -58,7 +58,8 @@ module Master
     private
 
     def slug(text)
-      text.to_s.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-|\-\z/, "")[0, 48]
+      clean = text.to_s.downcase.gsub(/[^a-z0-9]+/, "-")
+      clean.gsub(/\A-|-\z/, "")[0, 48]
     end
   end
   end

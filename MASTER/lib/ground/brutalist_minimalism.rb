@@ -73,7 +73,8 @@ module Master
         - forbidden CSS properties: #{FORBIDDEN_CSS.join(', ')}.
         - HTML must be semantic, accessible, heading-ordered, and screen-reader friendly.
         - JavaScript is forbidden unless critical; external resources are forbidden unless essential.
-        - target: sub-#{METRICS[:load_time_2g_s]}s on 2G, HTML+CSS under #{METRICS[:total_bytes_max]} bytes, Lighthouse 100/100/100/100.
+        - target: sub-#{METRICS[:load_time_2g_s]}s on 2G; HTML+CSS under #{METRICS[:total_bytes_max]}B;
+          Lighthouse 100/100/100/100.
       TEXT
     end
   end

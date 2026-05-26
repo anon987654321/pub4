@@ -17,10 +17,10 @@ module Master
 
     def dispatch_provider(provider, query, limit)
       case provider.to_sym
-      when :repo_map        then repo_map(query, limit)
-      when :memory_search   then memory_search(query, limit)
-      when :brain_overlay   then brain_overlay
-      when :current_files   then current_files(query, limit)
+      when :repo_map then repo_map(query, limit)
+      when :memory_search then memory_search(query, limit)
+      when :brain_overlay then brain_overlay
+      when :current_files then current_files(query, limit)
       when :rails_pwa_files then rails_pwa_files(query, limit)
       else []
       end
@@ -44,7 +44,8 @@ module Master
       return [] unless defined?(Master::Ground::MemorySearch)
 
       Master::Ground::MemorySearch.new.search(query, limit: limit).map do |doc|
-        { source: :memory, path: doc["path"], text: "#{doc['path']} #{doc['title']} score=#{format('%.2f', doc['score'])}" }
+        score = format("%.2f", doc["score"])
+        { source: :memory, path: doc["path"], text: "#{doc["path"]} #{doc["title"]} score=#{score}" }
       end
     rescue StandardError
       []
@@ -91,7 +92,8 @@ module Master
       terms = query.to_s.downcase.scan(/[a-z0-9_\-]+/)
       return [] if terms.empty?
 
-      paths = Dir.glob(File.join(@root, "lib", "**", "*.rb")).select { |p| matches_terms?(p, terms) }
+      paths = Dir.glob(File.join(@root, "lib", "**", "*.rb"))
+        .select { |p| matches_terms?(p, terms) }
       paths.first(limit).map { |path| current_files_row(path) }
     end
 

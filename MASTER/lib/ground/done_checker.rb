@@ -32,11 +32,11 @@ module Master
     private
 
     def normalize(plan)
-      hash = plan.respond_to?(:to_h) ? plan.to_h : {}
+      data = plan.respond_to?(:to_h) ? plan.to_h : {}
       {
-        files: Array(hash[:files] || hash["files"]),
-        symbols: Array(hash[:symbols] || hash["symbols"]),
-        callers: hash[:callers] || hash["callers"] || {}
+        files: Array(data[:files] || data["files"]),
+        symbols: Array(data[:symbols] || data["symbols"]),
+        callers: data[:callers] || data["callers"] || {}
       }
     end
   end
