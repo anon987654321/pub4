@@ -25,7 +25,7 @@ module Master
           '\b(?:search|find\s+(?:all|every|info)|research|look\s+up|what\s+is|' \
           'explain\s+(?:how|what|why)|tell\s+me\s+about)\b', Regexp::IGNORECASE
         ),
-        qa:       /\?(?:\s*$|\s+[A-Z])/m,
+        qa: /\?(?:\s*$|\s+[A-Z])/m,
       }.freeze
 
       PATTERNS_PATH = File.join(Master::ROOT, "data", "patterns.yml").freeze
