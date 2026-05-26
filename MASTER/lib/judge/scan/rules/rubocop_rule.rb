@@ -7,18 +7,17 @@ module Master
   module Judge
   module Scan
     module Rules
-      # Runs RuboCop on .rb files and surfaces violations as findings.
       class RubocopRule < Rule
         def self.auto_build? = false
 
         def initialize(root:)
           super()
-          @id          = "rubocop"
+          @id = "rubocop"
           @description = "RuboCop style/lint violation"
-          @severity    = :warning
-          @auto_fix    = false
-          @rule_tags  = %i[STYLE LINT]
-          @root        = root
+          @severity = :warning
+          @auto_fix = false
+          @rule_tags = %i[STYLE LINT]
+          @root = root
         end
 
         def check(code, path:)
@@ -34,7 +33,7 @@ module Master
           offenses = data.dig("files", 0, "offenses") || []
           offenses.map do |o|
             finding(
-              line:    o.dig("location", "line") || 1,
+              line: o.dig("location", "line") || 1,
               message: "rubocop: #{o["cop_name"]} — #{o["message"]}"
             )
           end

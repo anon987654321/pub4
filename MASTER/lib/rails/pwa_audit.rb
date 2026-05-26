@@ -7,7 +7,6 @@ module Master
   class PwaAudit
     # Lighthouse 11 installability — all 5 required
     MANIFEST_REQUIRED = %w[name start_url display icons].freeze
-    # short_name strongly recommended but not hard-blocking
     MANIFEST_RECOMMENDED = %w[short_name description theme_color background_color scope].freeze
 
     # Lighthouse requires 192x192 AND 512x512 for installability
@@ -33,7 +32,7 @@ module Master
 
     def audit(app_path = @root)
       manifest_rel = find_manifest(app_path)
-      sw_rel       = find_sw(app_path)
+      sw_rel = find_sw(app_path)
 
       manifest_findings = manifest_rel ? audit_manifest(app_path, manifest_rel) : [
         Finding.new(field: :manifest, message: "no manifest found (expected app/views/pwa/manifest.json.erb)", severity: :critical)
@@ -45,11 +44,11 @@ module Master
       csrf_findings = audit_csrf(app_path)
       all = manifest_findings + sw_findings + csrf_findings
       {
-        manifest:       manifest_rel,
+        manifest: manifest_rel,
         service_worker: sw_rel,
-        installable:    manifest_rel && sw_rel && all.none? { |f| f.severity == :critical },
-        findings:       all,
-        violations:     all.map(&:message),
+        installable: manifest_rel && sw_rel && all.none? { |f| f.severity == :critical },
+        findings: all,
+        violations: all.map(&:message),
         recommendations: recommendations(all)
       }
     end
@@ -79,7 +78,6 @@ module Master
       source = File.read(File.join(root, rel))
       findings = []
 
-      # ERB manifests — check for field presence as string literals
       MANIFEST_REQUIRED.each do |field|
         unless source.match?(/["']#{Regexp.escape(field)}["']/)
           findings << Finding.new(field: field.to_sym, message: "manifest missing required field: #{field}", severity: :critical)
@@ -92,19 +90,16 @@ module Master
         end
       end
 
-      # Icon size audit — check for required sizes
       ICON_SIZES_REQUIRED.each do |size|
         unless source.include?(size)
           findings << Finding.new(field: :icons, message: "manifest missing #{size} icon (Lighthouse installability requires both 192x192 and 512x512)", severity: :high)
         end
       end
 
-      # Display mode
       unless source.match?(/#{INSTALLABLE_DISPLAY_MODES.map { |m| Regexp.escape(m) }.join("|")}/)
         findings << Finding.new(field: :display, message: "display mode must be standalone, minimal-ui, or fullscreen", severity: :high)
       end
 
-      # prefer_related_applications: true blocks installation
       if source.match?(/prefer_related_applications.*true/)
         findings << Finding.new(field: :prefer_related_applications, message: "prefer_related_applications: true blocks installability", severity: :critical)
       end
@@ -118,28 +113,25 @@ module Master
       source = File.read(File.join(root, rel))
       findings = []
 
-      # Private route caching
       PRIVATE_PATTERNS.each do |pattern|
         if source.match?(/["']#{Regexp.escape(pattern)}/)
           findings << Finding.new(field: :cache_policy, message: "service worker caches private path #{pattern} — never cache auth/session routes", severity: :critical)
         end
       end
 
-      # Cache-first for all requests — fine for static assets, wrong for dynamic
+      # Cache-first for all requests is wrong for dynamic content; network-first required.
       if source.match?(CACHE_FIRST_ONLY_SIGNAL) && !source.match?(/network.?first|NetworkFirst|networkFirst/i)
         findings << Finding.new(
-          field:    :strategy,
-          message:  "cache-first applied to all GET requests — dynamic content (feeds, profiles) should use network-first or stale-while-revalidate",
+          field: :strategy,
+          message: "cache-first applied to all GET requests — dynamic content (feeds, profiles) should use network-first or stale-while-revalidate",
           severity: :medium
         )
       end
 
-      # Offline fallback
       unless source.match?(/offline|fallback/i)
         findings << Finding.new(field: :offline, message: "no offline fallback page — add a /offline route and cache it at SW install time", severity: :low)
       end
 
-      # Background sync candidate
       unless source.match?(/sync|background.?sync/i)
         findings << Finding.new(field: :background_sync, message: "no background sync — consider queuing form submissions for offline resilience", severity: :low)
       end
@@ -155,8 +147,8 @@ module Master
       source = File.read(controller_base)
       return [] unless source.match?(CSRF_LEGACY_SIGNAL)
       [Finding.new(
-        field:    :csrf,
-        message:  "protect_from_forgery with: :null_session is deprecated in Rails 8.1 — migrate to Sec-Fetch-Site header strategy",
+        field: :csrf,
+        message: "protect_from_forgery with: :null_session is deprecated in Rails 8.1 — migrate to Sec-Fetch-Site header strategy",
         severity: :medium
       )]
     rescue StandardError

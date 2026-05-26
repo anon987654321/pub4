@@ -5,72 +5,72 @@ module Master
   class HotwireRefactorPolicy
     Rule = Data.define(:id, :signal, :replace_with, :severity, :guide)
 
-    # Signals that survive post-jQuery Hotwire adoption — common upgrade gaps
+    # Common upgrade gaps after jQuery → Hotwire adoption.
     JS_RULES = [
       Rule.new(
-        id:           :dom_content_loaded,
-        signal:       /DOMContentLoaded/,
+        id: :dom_content_loaded,
+        signal: /DOMContentLoaded/,
         replace_with: "turbo:load or turbo:frame-load event listener",
-        severity:     :high,
-        guide:        "DOMContentLoaded does not fire on Turbo navigations after the first page load"
+        severity: :high,
+        guide: "DOMContentLoaded does not fire on Turbo navigations after the first page load"
       ),
       Rule.new(
-        id:           :jquery_present,
-        signal:       /\$\(|\bjQuery\b/,
+        id: :jquery_present,
+        signal: /\$\(|\bjQuery\b/,
         replace_with: "Stimulus controller with targets and data-action",
-        severity:     :high,
-        guide:        "jQuery selectors are incompatible with Turbo — DOM nodes are replaced on navigation"
+        severity: :high,
+        guide: "jQuery selectors are incompatible with Turbo — DOM nodes are replaced on navigation"
       ),
       Rule.new(
-        id:           :remote_true,
-        signal:       /remote:\s*true|data-remote/,
+        id: :remote_true,
+        signal: /remote:\s*true|data-remote/,
         replace_with: "Turbo Frame wrapping the target + standard form/link",
-        severity:     :high,
-        guide:        "data-remote is rails-ujs; Turbo handles AJAX forms natively"
+        severity: :high,
+        guide: "data-remote is rails-ujs; Turbo handles AJAX forms natively"
       ),
       Rule.new(
-        id:           :ujs_confirm,
-        signal:       /data:\s*\{\s*confirm:|data-confirm=/,
+        id: :ujs_confirm,
+        signal: /data:\s*\{\s*confirm:|data-confirm=/,
         replace_with: "Stimulus confirm controller (stimulus-components/confirm)",
-        severity:     :low,
-        guide:        "data-confirm is rails-ujs — use a Stimulus controller for modal confirmation"
+        severity: :low,
+        guide: "data-confirm is rails-ujs — use a Stimulus controller for modal confirmation"
       ),
       Rule.new(
-        id:           :turbo_disabled,
-        signal:       /data-turbo=["']false["']|turbo:\s*false/,
+        id: :turbo_disabled,
+        signal: /data-turbo=["']false["']|turbo:\s*false/,
         replace_with: "investigate and re-enable Turbo unless form has file upload or third-party SDK",
-        severity:     :low,
-        guide:        "data-turbo=false disables Hotwire navigation — usually a crutch for unresolved JS errors"
+        severity: :low,
+        guide: "data-turbo=false disables Hotwire navigation — usually a crutch for unresolved JS errors"
       ),
       Rule.new(
-        id:           :full_page_link_in_frame,
-        signal:       /turbo_frame_tag.*src:|<turbo-frame/,
+        id: :full_page_link_in_frame,
+        signal: /turbo_frame_tag.*src:|<turbo-frame/,
         replace_with: "add data-turbo-frame='_top' to links inside frames that should navigate the full page",
-        severity:     :low,
-        guide:        "Links inside Turbo Frames target the frame by default — add _top for full page navigation"
+        severity: :low,
+        guide: "Links inside Turbo Frames target the frame by default — add _top for full page navigation"
       )
     ].freeze
 
     ERB_RULES = [
       Rule.new(
-        id:           :render_partial_ajax_candidate,
-        signal:       /render\s+partial:.*locals:/,
+        id: :render_partial_ajax_candidate,
+        signal: /render\s+partial:.*locals:/,
         replace_with: "Turbo Frame with lazy src: for independently navigable sections",
-        severity:     :low,
-        guide:        "Partials rendered with locals that power AJAX tabs/panels are better as turbo_frame_tag with src:"
+        severity: :low,
+        guide: "Partials rendered with locals that power AJAX tabs/panels are better as turbo_frame_tag with src:"
       ),
       Rule.new(
-        id:           :respond_to_js,
-        signal:       /format\.js\s*\{|\.js\.erb/,
+        id: :respond_to_js,
+        signal: /format\.js\s*\{|\.js\.erb/,
         replace_with: "respond_to { |f| f.turbo_stream } with turbo_stream.replace/append/prepend",
-        severity:     :high,
-        guide:        "format.js with RJS/JS.ERB templates should become Turbo Stream responses"
+        severity: :high,
+        guide: "format.js with RJS/JS.ERB templates should become Turbo Stream responses"
       )
     ].freeze
 
     SW_UPGRADE = {
-      id:          :cache_strategy_upgrade,
-      current:     "cache-first for all GET requests",
+      id: :cache_strategy_upgrade,
+      current: "cache-first for all GET requests",
       recommended: {
         "static assets (*.js, *.css, images)" => "CacheFirst with versioned cache name",
         "navigation (HTML pages)" => "NetworkFirst with 10s timeout, fallback to cache",

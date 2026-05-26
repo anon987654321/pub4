@@ -7,18 +7,17 @@ module Master
   module Judge
   module Scan
     module Rules
-      # Runs Reek on .rb files and surfaces code smell violations.
       class ReekRule < Rule
         def self.auto_build? = false
 
         def initialize(root:)
           super()
-          @id          = "reek"
+          @id = "reek"
           @description = "Reek code smell detected"
-          @severity    = :warning
-          @auto_fix    = false
-          @rule_tags  = %i[SMELL ONE_JOB]
-          @root        = root
+          @severity = :warning
+          @auto_fix = false
+          @rule_tags = %i[SMELL ONE_JOB]
+          @root = root
         end
 
         def check(code, path:)
@@ -35,7 +34,7 @@ module Master
             locations = smell["lines"] || [1]
             locations.map do |line|
               finding(
-                line:    line,
+                line: line,
                 message: "reek: #{smell["smell_type"]} — #{smell["message"]}"
               )
             end

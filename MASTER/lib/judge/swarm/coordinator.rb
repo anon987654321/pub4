@@ -12,13 +12,13 @@ module Master
       end
 
       WORKER_CLASSES = {
-        analyst:    Workers::Analyst,
-        coder:      Workers::Coder,
-        reviewer:   Workers::Reviewer,
+        analyst: Workers::Analyst,
+        coder: Workers::Coder,
+        reviewer: Workers::Reviewer,
         researcher: Workers::Researcher
       }.freeze
 
-      # Higher weight = more authority in verdict calculation.
+      # Reviewer carries highest authority in verdict calculation.
       WORKER_WEIGHTS = { reviewer: 3, analyst: 2, researcher: 2, coder: 1 }.freeze
 
       WORKER_TIMEOUT = 30
@@ -28,7 +28,7 @@ module Master
 
       def initialize(agent:, event_bus: nil)
         @agent = agent
-        @bus   = event_bus
+        @bus = event_bus
         @workers = {}
       end
 
@@ -40,11 +40,11 @@ module Master
 
       def analyse_and_review(file_path:, code:)
         fan_out([
-          { role: :analyst,  task: "identify all issues",          context_slice: { file: file_path, code: code } },
+          { role: :analyst, task: "identify all issues", context_slice: { file: file_path, code: code } },
           { role: :reviewer, task: "security and correctness review", context_slice: { code: code } }
         ]).and_then do |sr|
           analysis = sr.artifacts[:analyst]
-          review   = sr.artifacts[:reviewer]
+          review = sr.artifacts[:reviewer]
           Result.ok({ analysis:, review:, approved: review.is_a?(Hash) && review["approved"] })
         end
       end
@@ -111,11 +111,11 @@ module Master
       end
 
       def build_swarm_result(results)
-        eligible  = results.reject { |role, _| role == :timeout }
+        eligible = results.reject { |role, _| role == :timeout }
         successes = eligible.select { |_, r| r.is_a?(Master::Result) && r.ok? }
         artifacts = successes.transform_values { |r| r.value! }
 
-        total_weight   = eligible.sum { |role, _| WORKER_WEIGHTS.fetch(role, 1) }
+        total_weight = eligible.sum { |role, _| WORKER_WEIGHTS.fetch(role, 1) }
         success_weight = successes.sum { |role, _| WORKER_WEIGHTS.fetch(role, 1) }
         confidence = total_weight.zero? ? 0.0 : success_weight.to_f / total_weight
 
@@ -156,11 +156,11 @@ module Master
           w = WORKER_WEIGHTS.fetch(role, 1)
           case conflict_signal(v)
           when :approve then approve_weight += w
-          when :reject  then reject_weight  += w
+          when :reject then reject_weight += w
           end
         end
         return :approved if approve_weight > reject_weight
-        return :rejected if reject_weight  > approve_weight
+        return :rejected if reject_weight > approve_weight
         :conflict
       end
 

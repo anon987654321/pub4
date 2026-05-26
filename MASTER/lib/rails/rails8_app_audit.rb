@@ -5,16 +5,12 @@ module Master
   class Rails8AppAudit
     DEPLOY_RAILS = File.expand_path("../../DEPLOY/rails", Master::ROOT).freeze
 
-    DOCTRINE       = Master::Ground::Axioms::RailsDoctrine::PILLARS
+    DOCTRINE = Master::Ground::Axioms::RailsDoctrine::PILLARS
     SOLID_TRIFECTA = Master::Ground::Axioms::RailsDoctrine::SOLID_TRIFECTA
 
-    # Rails 8 + OpenBSD stack: full expected gem set
     GEMS_WANTED = %w[turbo-rails stimulus-rails importmap-rails propshaft solid_queue solid_cache solid_cable falcon].freeze
-
-    # Legacy — presence signals migration work needed
     GEMS_LEGACY = %w[jquery-rails rails-ujs sprockets sprockets-rails].freeze
 
-    # Rails 8 serves PWA files via controller from app/views/pwa/
     PWA_MANIFEST_CANDIDATES = %w[
       app/views/pwa/manifest.json.erb
       app/views/pwa/manifest.webmanifest.erb
@@ -41,16 +37,16 @@ module Master
     end
 
     def scan(app_path = @root)
-      gems    = gemfile_gems(app_path)
-      js_src  = read_js(app_path)
+      gems = gemfile_gems(app_path)
+      js_src = read_js(app_path)
 
       {
-        app:           File.basename(app_path),
-        path:          app_path,
+        app: File.basename(app_path),
+        path: app_path,
         rails_version: detect_rails_version(app_path),
         hotwire: {
-          turbo:     gems.include?("turbo-rails"),
-          stimulus:  gems.include?("stimulus-rails"),
+          turbo: gems.include?("turbo-rails"),
+          stimulus: gems.include?("stimulus-rails"),
           importmap: gems.include?("importmap-rails"),
           jsbundling: gems.include?("jsbundling-rails")
         },
@@ -61,16 +57,16 @@ module Master
         app_server: {
           falcon: gems.include?("falcon")
         },
-        solid_adapters:  subset(gems, SOLID_TRIFECTA),
+        solid_adapters: subset(gems, SOLID_TRIFECTA),
         trifecta_complete: SOLID_TRIFECTA.all? { |g| gems.include?(g) },
-        legacy_gems:     subset(gems, GEMS_LEGACY),
-        missing:         GEMS_WANTED - gems,
-        doctrine_gaps:   doctrine_gaps(gems),
+        legacy_gems: subset(gems, GEMS_LEGACY),
+        missing: GEMS_WANTED - gems,
+        doctrine_gaps: doctrine_gaps(gems),
         pwa: {
-          manifest:       find_file(app_path, PWA_MANIFEST_CANDIDATES),
+          manifest: find_file(app_path, PWA_MANIFEST_CANDIDATES),
           service_worker: find_file(app_path, SW_CANDIDATES)
         },
-        js_signals:    js_signals(js_src, app_path),
+        js_signals: js_signals(js_src, app_path),
         partial_count: count_partials(app_path),
         shared_layout: shared_layout?(app_path)
       }
@@ -116,10 +112,10 @@ module Master
     def js_signals(source, path)
       signals = []
       signals << :dom_content_loaded if source.match?(/DOMContentLoaded/)
-      signals << :turbo_lifecycle     if source.match?(/turbo:load|turbo:frame-load/)
-      signals << :jquery_present      if source.match?(/\$\(|\bjQuery\b/)
-      signals << :sw_registered       if source.match?(/serviceWorker\.register/)
-      signals << :cache_first_sw      if cache_first_sw?(path)
+      signals << :turbo_lifecycle if source.match?(/turbo:load|turbo:frame-load/)
+      signals << :jquery_present if source.match?(/\$\(|\bjQuery\b/)
+      signals << :sw_registered if source.match?(/serviceWorker\.register/)
+      signals << :cache_first_sw if cache_first_sw?(path)
       signals
     end
 
@@ -145,7 +141,7 @@ module Master
 
     def subset(gems, wanted) = wanted & gems
 
-    # Map missing gems → the doctrine pillar that motivates adding them
+    # Maps missing gems to the doctrine pillar that motivates adding them.
     def doctrine_gaps(gems)
       gaps = []
       unless SOLID_TRIFECTA.all? { |g| gems.include?(g) }

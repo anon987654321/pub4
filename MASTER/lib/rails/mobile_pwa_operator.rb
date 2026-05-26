@@ -10,33 +10,33 @@ module Master
     DOCTRINE = Master::Ground::Axioms::RailsDoctrine::PILLARS
 
     INTENT_MODE = {
-      generate_rails_pwa:   :generate_from_blank,
-      refactor_rails_app:   :refactor_existing,
-      redesign_mobile_pwa:  :redesign_ui,
-      audit_rails_pwa:      :audit_pwa
+      generate_rails_pwa: :generate_from_blank,
+      refactor_rails_app: :refactor_existing,
+      redesign_mobile_pwa: :redesign_ui,
+      audit_rails_pwa: :audit_pwa
     }.freeze
 
     def initialize(agent: nil, root: Master::ROOT, event_bus: nil)
-      @agent   = agent
-      @root    = root
-      @bus     = event_bus
-      @audit   = Rails8AppAudit.new(root:)
+      @agent = agent
+      @root = root
+      @bus = event_bus
+      @audit = Rails8AppAudit.new(root:)
       @hotwire = HotwireRefactorPolicy.new
-      @pwa     = PwaAudit.new(root:)
-      @design  = Master::Design::MobileFirstPwaProfiles.new
+      @pwa = PwaAudit.new(root:)
+      @design = Master::Design::MobileFirstPwaProfiles.new
       @catalog = Master::Ground::RepoMining::MobileWebClusterCatalog.new
     end
 
     def call(intent:, app: nil, goal: nil)
-      mode     = INTENT_MODE.fetch(intent.to_sym, :audit_pwa)
+      mode = INTENT_MODE.fetch(intent.to_sym, :audit_pwa)
       app_path = resolve_app_path(app)
 
       @bus&.publish("rails_pwa:start", mode:, app: File.basename(app_path))
 
       result = case mode
-               when :audit_pwa           then audit(app_path)
-               when :refactor_existing   then refactor(app_path, goal:)
-               when :redesign_ui         then redesign(app_path)
+               when :audit_pwa then audit(app_path)
+               when :refactor_existing then refactor(app_path, goal:)
+               when :redesign_ui then redesign(app_path)
                when :generate_from_blank then generate(goal:)
                when :mine_reference_repos then mine(intent)
                end
@@ -45,17 +45,16 @@ module Master
       result
     end
 
-    # Audit all DEPLOY apps at once
     def audit_all_deploy
       results = Rails8AppAudit.new.scan_all_deploy.map do |app_state|
         next app_state if app_state[:error]
-        pwa_result    = @pwa.audit(app_state[:path])
+        pwa_result = @pwa.audit(app_state[:path])
         design_result = @design.audit(app_state[:path])
         {
-          app:     app_state[:app],
-          state:   app_state,
-          pwa:     pwa_result,
-          design:  design_result,
+          app: app_state[:app],
+          state: app_state,
+          pwa: pwa_result,
+          design: design_result,
           verdict: verdict(pwa_result, design_result)
         }
       end
@@ -71,18 +70,18 @@ module Master
     end
 
     def audit(app_path)
-      app_state     = @audit.scan(app_path)
-      pwa_result    = @pwa.audit(app_path)
+      app_state = @audit.scan(app_path)
+      pwa_result = @pwa.audit(app_path)
       design_result = @design.audit(app_path)
-      refs          = @catalog.for_intent(:audit_rails_pwa)
+      refs = @catalog.for_intent(:audit_rails_pwa)
 
       Result.ok({
-        app:        app_state,
-        pwa:        pwa_result,
-        design:     design_result,
+        app: app_state,
+        pwa: pwa_result,
+        design: design_result,
         references: refs.map { |r| "#{r.repo} — #{r.why}" },
-        verdict:    verdict(pwa_result, design_result),
-        plan:       @hotwire.plan_for(app_state)
+        verdict: verdict(pwa_result, design_result),
+        plan: @hotwire.plan_for(app_state)
       })
     end
 
@@ -91,29 +90,29 @@ module Master
       js_source = read_js(app_path)
       erb_source = read_erb(app_path)
 
-      js_violations  = @hotwire.violations_in(js_source,  type: :js)
+      js_violations = @hotwire.violations_in(js_source, type: :js)
       erb_violations = @hotwire.violations_in(erb_source, type: :erb)
-      plan           = @hotwire.plan_for(app_state)
-      refs           = @catalog.for_intent(:refactor_existing)
+      plan = @hotwire.plan_for(app_state)
+      refs = @catalog.for_intent(:refactor_existing)
 
       Result.ok({
-        app:            app_state,
+        app: app_state,
         js_violations:,
         erb_violations:,
         plan:,
-        references:     refs.map { |r| "#{r.repo} — #{r.why}" },
+        references: refs.map { |r| "#{r.repo} — #{r.why}" },
         goal:
       })
     end
 
     def redesign(app_path)
       design_result = @design.audit(app_path)
-      refs          = @catalog.for_intent(:redesign_mobile_pwa)
+      refs = @catalog.for_intent(:redesign_mobile_pwa)
 
       Result.ok({
-        design:         design_result,
+        design: design_result,
         recommendations: @design.recommendations(design_result),
-        references:      refs.map { |r| "#{r.repo} — #{r.why}" }
+        references: refs.map { |r| "#{r.repo} — #{r.why}" }
       })
     end
 
@@ -121,8 +120,8 @@ module Master
       refs = @catalog.for_intent(:generate_rails_pwa)
       Result.ok({
         goal:,
-        stack:      %i[rails_8 hotwire turbo stimulus solid_queue solid_cache solid_cable importmap],
-        plan:       generation_plan(goal),
+        stack: %i[rails_8 hotwire turbo stimulus solid_queue solid_cache solid_cable importmap],
+        plan: generation_plan(goal),
         references: refs.map { |r| "#{r.repo} — #{r.why}" }
       })
     end
@@ -134,9 +133,9 @@ module Master
 
     def verdict(pwa_result, design_result)
       critical = pwa_result[:findings].count { |f| f.severity == :critical }
-      high     = pwa_result[:findings].count { |f| f.severity == :high } +
-                 design_result[:violations].count { |v| v.is_a?(Hash) && v[:severity] == :high }
-      return :red   if critical.positive?
+      high = pwa_result[:findings].count { |f| f.severity == :high } +
+             design_result[:violations].count { |v| v.is_a?(Hash) && v[:severity] == :high }
+      return :red if critical.positive?
       return :amber if high.positive?
       :green
     end
