@@ -25,7 +25,7 @@ module Master
     # Keys that MUST exist before each stage starts.
     STAGE_PREREQUISITES = {
       infer:   %i[user_message],
-      route:   %i[user_message task_type],
+      route:   %i[user_message],
       execute: %i[user_message handler],
       council: %i[output],
       lint:    %i[output],
