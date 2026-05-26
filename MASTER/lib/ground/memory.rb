@@ -6,7 +6,6 @@ require "fileutils"
 module Master
   module Ground
   # Memory — persistent cross-session store with TF-IDF semantic search.
-  # Stored at .master/memory.yml. Survives restarts.
   class Memory
     module Search
       def semantic_recall(query, top_n: 3)
@@ -65,8 +64,8 @@ module Master
     include AtomicWrite
 
     def initialize(root: Dir.pwd)
-      @root  = root
-      @path  = File.join(root, ".master", "memory.yml")
+      @root = root
+      @path = File.join(root, ".master", "memory.yml")
       @mutex = Mutex.new
       @store = load_store
       import_external!
@@ -86,7 +85,9 @@ module Master
     end
 
     def by_type(type)
-      @mutex.synchronize { @store.select { |k, v| v.is_a?(Hash) && v["type"] == type.to_s && !k.start_with?("archive/") } }
+      @mutex.synchronize do
+        @store.select { |k, v| v.is_a?(Hash) && v["type"] == type.to_s && !k.start_with?("archive/") }
+      end
     end
 
     def type_counts
@@ -106,7 +107,7 @@ module Master
         next unless (m = text.match(re))
         snippet = m[1].strip
         next if snippet.length < 3
-        n   = @mutex.synchronize { @store.keys.count { |k| k.start_with?("auto/#{type}/") } } + 1
+        n = @mutex.synchronize { @store.keys.count { |k| k.start_with?("auto/#{type}/") } } + 1
         key = "auto/#{type}/#{n}"
         remember(key, snippet, type: type)
         return key
@@ -125,12 +126,15 @@ module Master
     def all = @mutex.synchronize { @store.transform_values { |v| v.is_a?(Hash) ? v["value"] : v } }
 
     def context_summary
-      active = @mutex.synchronize { @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" } }
+      active = @mutex.synchronize do
+        @store.reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
+      end
       return if active.empty?
 
       grouped = active.group_by { |_, v| v.is_a?(Hash) ? (v["type"] || "general") : "general" }
-      ordered = TYPES.flat_map { |t| (grouped[t] || []).sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) } }
-                     .first(MAX_INJECT_ENTRIES * 2)
+      ordered = TYPES.flat_map { |t|
+        (grouped[t] || []).sort_by { |_, v| -(v.is_a?(Hash) ? v["ts"].to_i : 0) }
+      }.first(MAX_INJECT_ENTRIES * 2)
       lines, token_sum, current_type = [], 0, nil
 
       ordered.each do |k, v|
@@ -140,7 +144,7 @@ module Master
           current_type = type
         end
         text = "- #{k}: #{v.is_a?(Hash) ? v["value"] : v}"
-        est  = text.bytesize / Master::Trace::Session::TOKENS_PER_CHAR
+        est = text.bytesize / Master::Trace::Session::TOKENS_PER_CHAR
         break if token_sum + est > MAX_INJECT_TOKENS
         lines << text
         token_sum += est
@@ -148,13 +152,12 @@ module Master
       return if lines.empty?
 
       archived_n = @mutex.synchronize { @store.count { |k, _| k.to_s.start_with?("archive/") } }
-      summary    = recall("_consolidated_summary")
-      header     = summary ? "Memory (#{summary.to_s[0, 80]}):" : "Memory:"
-      header    += " [+#{archived_n} archived]" if archived_n > 0
+      summary = recall("_consolidated_summary")
+      header = summary ? "Memory (#{summary.to_s[0, 80]}):" : "Memory:"
+      header += " [+#{archived_n} archived]" if archived_n > 0
       "#{header}\n#{lines.join("\n")}"
     end
 
-    # Three-phase consolidation: light (score), deep (archive), REM (LLM summary).
     def consolidate!(agent: nil)
       return "nothing to consolidate" if @store.empty?
 
@@ -164,8 +167,8 @@ module Master
 
       @mutex.synchronize do
         entries = @store.reject { |k, _| k.to_s.start_with?("archive/") }
-        scored  = entries.map do |key, data|
-          ts    = data.is_a?(Hash) ? data["ts"].to_i : 0
+        scored = entries.map do |key, data|
+          ts = data.is_a?(Hash) ? data["ts"].to_i : 0
           age_d = (now - ts) / 86_400.0
           { key: key, score: 1.0 / (1.0 + age_d / TTL_DAYS.to_f) }
         end
@@ -182,7 +185,7 @@ module Master
         active_text = @mutex.synchronize do
           @store
             .reject { |k, _| k.to_s.start_with?("archive/") || k == "_consolidated_summary" }
-            .map    { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
+            .map { |k, v| "#{k}: #{v.is_a?(Hash) ? v["value"] : v}" }
             .join("\n")
         end
         unless active_text.strip.empty?
@@ -199,7 +202,6 @@ module Master
     private
 
     # Imports markdown memory files from data/claude/ on first boot.
-    # Each file's frontmatter type maps to MASTER's memory type; body becomes the value.
     def import_external!
       dir = File.join(@root, "data", "claude")
       return unless Dir.exist?(dir)
