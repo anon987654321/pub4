@@ -118,23 +118,23 @@ module Master
         candidates = @rules.dig("models", current_tier(task_type:)).to_a
         weights = @rules.fetch("weights", {})
         qw = [weights.fetch("quality", 1.0).to_f, 0.01].max
-        sw = [weights.fetch("speed",   1.0).to_f, 0.01].max
-        cw = [weights.fetch("cost",    1.0).to_f, 0.01].max
+        sw = [weights.fetch("speed", 1.0).to_f, 0.01].max
+        cw = [weights.fetch("cost", 1.0).to_f, 0.01].max
         candidates.map { |m|
           s = m["score"] || {}
           q = s.fetch("quality", 0.5).to_f * qw
           sp = [s.fetch("speed", 1.0).to_f * sw, 0.01].max
-          co = [s.fetch("cost",  0.5).to_f * cw, 0.001].max
+          co = [s.fetch("cost", 0.5).to_f * cw, 0.001].max
           { id: m["id"], q:, s: sp, c: co, total: q * sp * co }
         }.sort_by { |x| -x[:total] }
       end
 
       INTENT_PATTERNS = {
         code_generation: /\b(implement|build|add|create|write|make|generate|scaffold|port|wire)\b/i,
-        refactoring:     /\b(refactor|rename|clean ?up|simplify|extract|inline|dedup|consolidate|tidy)\b/i,
-        architecture:    /\b(design|architect|structure|plan|approach|module|boundary|layer|topology)\b/i,
-        review:          /\b(review|critique|audit|check|council|tribunal|inspect|evaluate|judge)\b/i,
-        explanation:     /\b(explain|what is|how does|why does|describe|clarify|walk me through)\b/i
+        refactoring: /\b(refactor|rename|clean ?up|simplify|extract|inline|dedup|consolidate|tidy)\b/i,
+        architecture: /\b(design|architect|structure|plan|approach|module|boundary|layer|topology)\b/i,
+        review: /\b(review|critique|audit|check|council|tribunal|inspect|evaluate|judge)\b/i,
+        explanation: /\b(explain|what is|how does|why does|describe|clarify|walk me through)\b/i
       }.freeze
 
       def classify_intent(text)
@@ -163,11 +163,11 @@ module Master
       def weighted_score(score)
         weights = @rules.fetch("weights", {})
         qw = [weights.fetch("quality", 1.0).to_f, 0.01].max
-        sw = [weights.fetch("speed",   1.0).to_f, 0.01].max
-        cw = [weights.fetch("cost",    1.0).to_f, 0.01].max
+        sw = [weights.fetch("speed", 1.0).to_f, 0.01].max
+        cw = [weights.fetch("cost", 1.0).to_f, 0.01].max
         q = score.fetch("quality", 0.5).to_f * qw
         s = [score.fetch("speed", 1.0).to_f * sw, 0.01].max
-        c = [score.fetch("cost",  0.5).to_f * cw, 0.001].max
+        c = [score.fetch("cost", 0.5).to_f * cw, 0.001].max
         q * s * c
       end
 

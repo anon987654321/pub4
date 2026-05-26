@@ -7,7 +7,6 @@ require_relative "command_registry/tool_commands"
 
 module Master
   module Now
-  # CommandRegistry — all pipeline-routable slash commands.
   module CommandRegistry
     module_function
 
@@ -34,13 +33,11 @@ module Master
       )
     end
 
-    # ── Session ──────────────────────────────────────────────────────────────
-
     def session_commands(infra)
       session = infra[:session]
-      undo    = infra[:undo]
+      undo = infra[:undo]
       logging = infra[:logging]
-      config  = infra[:config]
+      config = infra[:config]
       {
         "clear" => ->(_ctx) { session.clear!; "context cleared" },
         "save" => ->(_ctx) { session.save!; "session saved" },
@@ -53,14 +50,12 @@ module Master
         },
         "tokens" => ->(_ctx) { "~#{session.token_est} tokens" },
         "cost" => ->(_ctx) { "$#{"%.4f" % session.cost}" },
-        "undo" => ->(_ctx) { r = undo.undo!;  r.ok? ? "reverted: #{r.value!}"   : r.message },
-        "redo" => ->(_ctx) { r = undo.redo!;  r.ok? ? "reapplied: #{r.value!}"  : r.message },
+        "undo" => ->(_ctx) { r = undo.undo!; r.ok? ? "reverted: #{r.value!}" : r.message },
+        "redo" => ->(_ctx) { r = undo.redo!; r.ok? ? "reapplied: #{r.value!}" : r.message },
         "dmesg" => ->(_ctx) { logging.dmesg },
         "config" => ->(_ctx) { config.to_h.inspect }
       }
     end
-
-    # ── Mode / persona / model flag commands ─────────────────────────────────
 
     def mode_commands(config)
       reasoning_commands(config).merge(persona_commands(config)).merge(flag_commands(config))
@@ -101,8 +96,6 @@ module Master
       end
     end
 
-    # ── Control (standing orders, soul) ──────────────────────────────────────
-
     def control_commands(standing, soul)
       {
         "orders" => cmd(:dispatch_orders, standing),
@@ -112,12 +105,12 @@ module Master
 
     def dispatch_orders(standing, arg)
       case arg
-      when "list", ""                    then standing.list
-      when /\Aenable (.+)\z/             then standing.enable($1.strip)
-      when /\Adisable (.+)\z/            then standing.disable($1.strip)
+      when "list", "" then standing.list
+      when /\Aenable (.+)\z/ then standing.enable($1.strip)
+      when /\Adisable (.+)\z/ then standing.disable($1.strip)
       when /\Aadd name=(\S+) cmd=(.+)\z/ then standing.upsert(name: $1, command: $2.strip)
-      when "run"                         then run_due_orders(standing)
-      when /\Areset (.+)\z/              then standing.reset($1.strip)
+      when "run" then run_due_orders(standing)
+      when /\Areset (.+)\z/ then standing.reset($1.strip)
       else "usage: /orders  /orders enable|disable|reset <name>  /orders run"
       end
     end
@@ -130,18 +123,16 @@ module Master
 
     def dispatch_soul(soul, arg)
       case arg
-      when "", "show"             then soul.summary
+      when "", "show" then soul.summary
       when "version", "changelog" then soul.changelog
-      when "diff"                 then soul.diff
-      when "approve"              then soul.approve
-      when "reject"               then soul.reject
-      when "rollback"             then soul.rollback
-      when /\Apropose (.+)\z/     then soul.propose($1.strip)
+      when "diff" then soul.diff
+      when "approve" then soul.approve
+      when "reject" then soul.reject
+      when "rollback" then soul.rollback
+      when /\Apropose (.+)\z/ then soul.propose($1.strip)
       else "soul  soul version  soul diff  soul approve  soul reject  soul rollback  soul propose <rationale>"
       end
     end
-
-    # ── Helpers ──────────────────────────────────────────────────────────────
 
     def arg_for(ctx) = ctx[:args].to_s.strip
     def expand_or_root(arg, root) = arg.empty? ? root : File.expand_path(arg, root)

@@ -7,14 +7,7 @@ require "time"
 module Master
   module Now
   module Orchestration
-  # EventSequenceOrchestrator — append-only event coordination layer.
-  # Issue #396 items 1, 4, 8: replace implicit mutable state with append-only
-  # event streams; separate cognition from orchestration; replay/checkpoint.
-  #
-  # Every intent proposed by a model is validated before execution. Every
-  # mutation emits a before/after event. The event stream is replayable from
-  # any checkpoint. Orchestration state is derived from the stream, never stored
-  # separately.
+  # Append-only event stream; state derived by replay, never stored separately (#396 items 1, 4, 8).
   class EventSequenceOrchestrator
     STREAM_PATH    = File.join(Master::ROOT, "runtime", "events", "sequence.ndjson").freeze
     CHECKPOINT_DIR = File.join(Master::ROOT, "runtime", "checkpoints").freeze
@@ -34,7 +27,6 @@ module Master
       @now            = now
     end
 
-    # Validate an intent before allowing execution
     def propose(intent_type:, workflow_id:, payload: {})
       unless VALID_INTENT_TYPES.include?(intent_type.to_sym)
         return Result.err("unknown intent type: #{intent_type}", category: :validation)
@@ -43,7 +35,6 @@ module Master
       Result.ok(event)
     end
 
-    # Wrap execution with before/after events; capture outcome
     def execute(intent_type:, workflow_id:, payload: {}, &block)
       proposal = propose(intent_type:, workflow_id:, payload:)
       return proposal unless proposal.ok?
@@ -58,7 +49,6 @@ module Master
       Result.err("execution failed: #{e.message}", category: :infrastructure)
     end
 
-    # Create a replayable checkpoint at the current stream offset
     def checkpoint(workflow_id:, label: "auto")
       FileUtils.mkdir_p(@checkpoint_dir)
       offset = stream_size
@@ -72,7 +62,6 @@ module Master
       Result.err(e.message, category: :infrastructure)
     end
 
-    # Replay events from a checkpoint offset — yields each event to the block
     def replay(from_offset: 0, workflow_id: nil)
       return Result.err("no block given", category: :validation) unless block_given?
       events = stream_events(from_offset:, workflow_id:)
@@ -104,9 +93,9 @@ module Master
 
     def emit(type, workflow_id:, payload: {})
       event = {
-        id:          SecureRandom.hex(8),
-        ts:          @now.call.iso8601,
-        type:        type.to_s,
+        id: SecureRandom.hex(8),
+        ts: @now.call.iso8601,
+        type: type.to_s,
         workflow_id: workflow_id.to_s,
         payload:
       }

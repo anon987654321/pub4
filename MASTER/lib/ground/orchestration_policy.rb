@@ -4,16 +4,15 @@ module Master
   module Ground
   class OrchestrationPolicy
     MODEL_TIERS = {
-      cheap:         %i[low],
-      fast:          %i[low medium],
-      strong:        %i[high critical],
-      local:         %i[low medium],
+      cheap: %i[low],
+      fast: %i[low medium],
+      strong: %i[high critical],
+      local: %i[low medium],
       browser_local: %i[low]
     }.freeze
 
     COUNCIL_TIERS = %i[high critical].freeze
 
-    # Persona → task-domain mapping. Council reviews the domain, not the answer.
     COUNCIL_ROLES = {
       "Security" => %i[auth secrets tool_execution permission_changes],
       "Reliability" => %i[network provider runtime fallback],
@@ -34,18 +33,18 @@ module Master
     end
 
     def evaluate(text)
-      route   = @router.route(text)
-      intent  = route[:intent]
-      risk    = route[:risk]
-      model   = select_model(risk)
+      route = @router.route(text)
+      intent = route[:intent]
+      risk = route[:risk]
+      model = select_model(risk)
       council = COUNCIL_TIERS.include?(risk)
       {
-        intent:          intent,
-        risk:            risk,
-        model_tier:      model,
-        use_council:     council,
-        council_roles:   council ? roles_for(intent) : [],
-        evidence_req:    council,
+        intent: intent,
+        risk: risk,
+        model_tier: model,
+        use_council: council,
+        council_roles: council ? roles_for(intent) : [],
+        evidence_req: council,
         evidence_fields: council ? EVIDENCE_CONTRACT : []
       }
     end
@@ -73,10 +72,10 @@ module Master
     def intent_domain(intent)
       case intent
       when :wire_existing_module, :verify_patch_landed, :write_repo_changes then :code_mutation
-      when :delete_redundant_config                                          then :file_deletion
-      when :run_ui_review                                                    then :ui
-      when :run_sound_review                                                 then :sonic
-      when :codify_policy, :refactor_to_ruby                                then :refactor
+      when :delete_redundant_config then :file_deletion
+      when :run_ui_review then :ui
+      when :run_sound_review then :sonic
+      when :codify_policy, :refactor_to_ruby then :refactor
       else :general
       end
     end

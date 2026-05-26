@@ -4,12 +4,6 @@ require "yaml"
 
 module Master
   module Now
-  # Skills — discovers and loads composable skill directories.
-  # Each skill is a directory under skills/ containing:
-  #   SKILL.md   — metadata (name, description, trigger patterns)
-  #   skill.rb   — optional Ruby implementation (loaded as a tool)
-  #
-  # Skills discovered at boot are available via /skills; tool registration is pending.
   class Skills
     SKILLS_DIR = "skills".freeze
 
@@ -63,11 +57,11 @@ module Master
       metadata ||= { "name" => name, "description" => name }
 
       skill = {
-        name:        metadata["name"] || name,
+        name: metadata["name"] || name,
         description: metadata["description"] || name,
-        triggers:    metadata["triggers"] || [],
-        dir:         dir,
-        has_ruby:    File.exist?(rb_path)
+        triggers: metadata["triggers"] || [],
+        dir: dir,
+        has_ruby: File.exist?(rb_path)
       }
 
       if File.exist?(rb_path)
