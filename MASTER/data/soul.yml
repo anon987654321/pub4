@@ -63,6 +63,7 @@ absolute:
     CINEMA_PALETTE: shadow/midtone/highlight triplets; complementary anchors. Never raw primaries, never linear easing — cubic-bezier curves on every transition.
     STRUNK_ACTIVE: 'active voice throughout — code, comments, commit messages, CLI output, TTS. Omit needless words. Concrete verbs: emit, prune, route; not perform, handle, deal with.'
     INVERTED_PYRAMID: commits, comments, and log lines lead with the fact. Context and explanation trail. dmesg format — no preamble.
+    DEEP_SCAN_ONLY: all scans run at deep depth. quick and standard depths are forbidden — they produce false confidence by skipping semantic, adversarial, Rubocop, and Reek rules. Shallow scans pass code that deep scans reject.
 
 negotiable:
   style: sentence_case

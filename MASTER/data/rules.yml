@@ -251,8 +251,8 @@ prediction_engine:
   n_plus_one:        {confidence: 0.88, autofix: add_includes}
 
 scan_depths:
-  # Class names for named Rule subclasses; lowercase ids for DSL-defined rules.
-  # Phantom entries silently exclude rules — InterconnectRule catches drift.
+  # deep is the only permitted scan depth — quick and standard exist for InterconnectRule
+  # coverage checks only; never pass either as a depth argument. DEEP_SCAN_ONLY in soul.yml.
   quick: &quick
     - no_debug
     - no_puts

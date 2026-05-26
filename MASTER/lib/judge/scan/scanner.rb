@@ -8,22 +8,23 @@ module Master
   module Judge
   module Scan
     class Scanner
-      POOL_SIZE  = [Etc.nprocessors, 8].min.freeze
-      SCAN_GLOB  = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
-      RUBY_EXT   = %w[.rb .rake .gemspec].freeze
+      POOL_SIZE = [Etc.nprocessors, 8].min.freeze
+      SCAN_GLOB = "**/*.{rb,rake,erb,html,htm,css,scss,js,ts,jsx,tsx,zsh,sh,yml,yaml,md}".freeze
+      RUBY_EXT = %w[.rb .rake .gemspec].freeze
+      FORBIDDEN_DEPTHS = %i[quick standard shallow].freeze
 
       def initialize(rules: nil, event_bus: nil)
         @rules = Array(rules)
-        @bus   = event_bus
+        @bus = event_bus
         @mutex = Mutex.new
       end
 
-      # rules: override skips depth filtering — used by RuleLoop for per-rule passes.
       def scan(path, depth: :deep, rules: nil)
+        raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)" if FORBIDDEN_DEPTHS.include?(depth)
         return Result.err("file not found: #{path}", category: :validation) unless File.exist?(path)
 
-        code     = File.read(path, encoding: "UTF-8")
-        ast      = parse_ruby(code, path)
+        code = File.read(path, encoding: "UTF-8")
+        ast = parse_ruby(code, path)
         rule_set = rules || active_rules(depth)
         findings = rule_set.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
         @bus&.publish("scan:complete", path:, depth:, count: findings.size)
@@ -34,6 +35,7 @@ module Master
       end
 
       def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
+        raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)" if FORBIDDEN_DEPTHS.include?(depth)
         paths   = Dir.glob(File.join(dir, glob)).sort
         results = Array.new(paths.size)
         parallel_each(paths) { |path, idx| results[idx] = scan_one(dir:, path:, depth:, stream:) }
@@ -42,8 +44,8 @@ module Master
         Result.err("scan_dir: #{e.message}", category: :infrastructure)
       end
 
-      # Scan only files changed since git ref — orders of magnitude faster on big repos.
       def scan_since(ref = "HEAD~1", dir: ".", depth: :deep, stream: false)
+        raise ArgumentError, "forbidden scan depth #{depth.inspect} — deep only (DEEP_SCAN_ONLY)" if FORBIDDEN_DEPTHS.include?(depth)
         out, _, status = Open3.capture3("git", "-C", dir, "diff", "--name-only", "#{ref}...HEAD")
         return Result.err("git diff failed", category: :validation) unless status.success?
         paths = out.lines.map(&:strip).reject(&:empty?)
