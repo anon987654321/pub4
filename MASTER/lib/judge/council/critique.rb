@@ -10,18 +10,18 @@ module Master
       MODES = {
         ui: {
           preset_key: "ui_critique",
-          max_bytes:  32_768,
-          panel:      nil,
+          max_bytes: 32_768,
+          panel: nil,
           files: %w[
             web/public/face.css web/public/face.js web/public/chat.js
             web/app/views/chat/index.html.erb lib/design/platform_profiles.rb
           ],
-          quality_kind:    :design,
+          quality_kind: :design,
           ideation_prompt: "Generate concrete multi-solution improvements for this web UI. " \
                            "Produce 3 distinct solution directions per issue found.",
-          cycles_default:  1,
-          start_event:     :ui_critique_start,
-          done_event:      :ui_critique_done,
+          cycles_default: 1,
+          start_event: :ui_critique_start,
+          done_event: :ui_critique_done,
           constraints: [
             "must not break existing HTML semantics",
             "must preserve intentional CSS measurements unless a measurable rule is violated",
@@ -34,8 +34,8 @@ module Master
         },
         sound: {
           preset_key: "sound_critique",
-          max_bytes:  24_576,
-          panel:      %w[
+          max_bytes: 24_576,
+          panel: %w[
             Electronic\ Music\ Producer Hip-Hop\ Producer User\ Advocate
             Accessibility Layperson Skeptic
           ],
@@ -44,12 +44,12 @@ module Master
             web/app/views/chat/index.html.erb lib/voice/speech.rb lib/voice/dilla.rb
             lib/voice/production_dna.rb
           ],
-          quality_kind:    :sound,
+          quality_kind: :sound,
           ideation_prompt: "Generate concrete improvements for MASTER sound design, voice " \
                            "playback, sonic timing, and audio feedback.",
-          cycles_default:  2,
-          start_event:     :sound_critique_start,
-          done_event:      :sound_critique_done,
+          cycles_default: 2,
+          start_event: :sound_critique_start,
+          done_event: :sound_critique_done,
           constraints: [
             "no autoplay without user intent",
             "must expose mute or silence path",
@@ -64,29 +64,29 @@ module Master
       }.freeze
 
       def initialize(mode:, agent:, event_bus: nil)
-        @mode  = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
+        @mode = MODES.fetch(mode) { raise ArgumentError, "unknown critique mode: #{mode}" }
         @agent = agent
-        @bus   = event_bus
+        @bus = event_bus
       end
 
       def run
-        preset  = load_preset
-        panel   = build_panel(preset)
+        preset = load_preset
+        panel = build_panel(preset)
         payload = build_payload(preset)
         @bus&.publish(@mode[:start_event], files: payload[:files], personas: panel.map(&:name))
 
-        delib  = Deliberation.new(personas: panel, agent: @agent, event_bus: @bus, judge_enabled: true)
+        delib = Deliberation.new(personas: panel, agent: @agent, event_bus: @bus, judge_enabled: true)
         result = delib.review(payload[:combined], context: build_context)
         return result unless result.ok?
 
         ideation_result = Ideation.new(agent: @agent, event_bus: @bus).ideate(
           @mode[:ideation_prompt],
           constraints: @mode[:constraints],
-          cycles:      (preset["cycles"] || @mode[:cycles_default]).to_i
+          cycles: (preset["cycles"] || @mode[:cycles_default]).to_i
         )
 
         feedback = result.value!
-        cherry   = cherry_pick_from(feedback, ideation_result)
+        cherry = cherry_pick_from(feedback, ideation_result)
         @bus&.publish(@mode[:done_event], cherry_picks: cherry.size)
         Master::Result.ok({ feedback: feedback, ideas: ideation_value(ideation_result), cherry_picks: cherry })
       end
@@ -100,7 +100,7 @@ module Master
       end
 
       def build_panel(preset)
-        all   = Personas.load
+        all = Personas.load
         names = Array(preset["panel"] || @mode[:panel]).map(&:downcase)
         return all if names.empty?
         picked = all.select { |p| names.include?(p.name.downcase) }
@@ -108,7 +108,7 @@ module Master
       end
 
       def build_payload(preset)
-        files    = Array(preset["files"]).any? ? preset["files"] : @mode[:files]
+        files = Array(preset["files"]).any? ? preset["files"] : @mode[:files]
         combined = files.filter_map { |rel| read_truncated(rel) }.join("\n\n")
         { combined: combined, files: files }
       end
@@ -166,7 +166,7 @@ module Master
       end
 
       def dilla_brief
-        return Master::Voice::Dilla.brief         if defined?(Master::Voice::Dilla)
+        return Master::Voice::Dilla.brief if defined?(Master::Voice::Dilla)
         return Master::Voice::ProductionDna.brief if defined?(Master::Voice::ProductionDna)
         "Production DNA unavailable; keep timing human, restrained, and non-quantized when musical."
       rescue StandardError => e

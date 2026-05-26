@@ -3,8 +3,7 @@
 require "zeitwerk"
 require "yaml"
 
-# Pre-load openssl before pledge stage1 engages — faraday-net_http requires it
-# lazily on first HTTPS call, which fails after unveil restricts dlopen paths.
+# Faraday-net_http requires openssl lazily on first HTTPS call, which fails after unveil restricts dlopen paths.
 begin
   require "openssl"
 rescue LoadError => e
@@ -12,10 +11,10 @@ rescue LoadError => e
 end
 
 module Master
-  ROOT        = File.expand_path("..", __dir__).freeze
-  DATA        = File.join(ROOT, "data").freeze
+  ROOT = File.expand_path("..", __dir__).freeze
+  DATA = File.join(ROOT, "data").freeze
   COUNCIL_PATH = File.join(DATA, "council.yml").freeze
-  RULES_PATH   = File.join(DATA, "rules.yml").freeze
+  RULES_PATH = File.join(DATA, "rules.yml").freeze
 
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH = 20
@@ -32,12 +31,12 @@ module Master
   }.freeze
 
   API_KEY_PROVIDERS = {
-    anthropic_api_key:  "ANTHROPIC_API_KEY",
-    openai_api_key:     "OPENAI_API_KEY",
-    gemini_api_key:     "GEMINI_API_KEY",
+    anthropic_api_key: "ANTHROPIC_API_KEY",
+    openai_api_key: "OPENAI_API_KEY",
+    gemini_api_key: "GEMINI_API_KEY",
     openrouter_api_key: "OPENROUTER_API_KEY",
-    mistral_api_key:    "MISTRAL_API_KEY",
-    deepseek_api_key:   "DEEPSEEK_API_KEY"
+    mistral_api_key: "MISTRAL_API_KEY",
+    deepseek_api_key: "DEEPSEEK_API_KEY"
   }.freeze
 
   loader = Zeitwerk::Loader.new
@@ -95,7 +94,6 @@ module Master
 
   def self.configure_providers!
     # Stub Bedrock before ruby_llm loads — avoids openssl.so on OpenBSD/LibreSSL.
-    # MASTER only uses OpenRouter; Bedrock is never needed.
     require_relative "reach/bedrock_stub"
     require "ruby_llm"
     require_relative "reach/ruby_llm_patch"
@@ -135,11 +133,11 @@ module Master
   end
 
   def self.default_model
-    return NEMOTRON_PRIMARY       if api_key_present?("OPENROUTER_API_KEY")
-    return "claude-opus-4-7"      if api_key_present?("ANTHROPIC_API_KEY")
-    return "deepseek-chat"        if api_key_present?("DEEPSEEK_API_KEY")
-    return "gpt-4o"               if api_key_present?("OPENAI_API_KEY")
-    return "gemini-2.5-flash"     if api_key_present?("GEMINI_API_KEY")
+    return NEMOTRON_PRIMARY if api_key_present?("OPENROUTER_API_KEY")
+    return "claude-opus-4-7" if api_key_present?("ANTHROPIC_API_KEY")
+    return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
+    return "gpt-4o" if api_key_present?("OPENAI_API_KEY")
+    return "gemini-2.5-flash" if api_key_present?("GEMINI_API_KEY")
     return "mistral-large-latest" if api_key_present?("MISTRAL_API_KEY")
     NEMOTRON_PRIMARY
   end
@@ -180,7 +178,7 @@ module Master
 
   def self.load_rules(root: ROOT)
     data_dir = File.join(root, "data")
-    base     = load_yaml(File.join(data_dir, "rules.yml"))
+    base = load_yaml(File.join(data_dir, "rules.yml"))
     rules_dir = File.join(data_dir, "rules")
     merged = Dir.glob(File.join(rules_dir, "*.yml")).sort.each_with_object({}) do |f, h|
       (load_yaml(f) || {}).each { |scope, list| (h[scope] ||= []).concat(Array(list)) }

@@ -31,7 +31,7 @@ module Master
       ALLOWLIST_TOKEN = /\AMASTER_TRUSTED:[A-Za-z0-9]{16,}/.freeze
 
       def initialize(mode: :permissive)
-        @mode     = mode
+        @mode = mode
         @patterns = load_or_default
       end
 
@@ -62,11 +62,10 @@ module Master
         return DEFAULTS unless File.exist?(DATA_PATH)
         data = Master.load_yaml(DATA_PATH) || {}
         prompt = (data["prompt_injection"] || []).map { |s| Regexp.new(s, Regexp::IGNORECASE) }
-        shell  = data.dig("shell_injection", "multiline_pattern")
+        shell = data.dig("shell_injection", "multiline_pattern")
         {
           prompt_injection: prompt.empty? ? DEFAULTS[:prompt_injection] : prompt.freeze,
-          shell_injection:  shell ? Regexp.new(shell,
-Regexp::MULTILINE | Regexp::IGNORECASE) : DEFAULTS[:shell_injection],
+          shell_injection: shell ? Regexp.new(shell, Regexp::MULTILINE | Regexp::IGNORECASE) : DEFAULTS[:shell_injection],
         }
       rescue StandardError => _e
         DEFAULTS

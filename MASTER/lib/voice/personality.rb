@@ -20,17 +20,17 @@ module Master
     }.freeze
 
     MOOD_LINES = {
-      tense:   "Mood: tense — error rate elevated. Be conservative; verify before asserting.",
-      weary:   "Mood: weary — fatigue high. Cut non-essential elaboration; defer deep dives.",
+      tense: "Mood: tense — error rate elevated. Be conservative; verify before asserting.",
+      weary: "Mood: weary — fatigue high. Cut non-essential elaboration; defer deep dives.",
       curious: "Mood: curious — novelty hunger. Explore lateral framings when warranted.",
       focused: "Mood: focused — drives at setpoint. Default depth and tier."
     }.freeze
 
     PHASE_LINES = {
-      morning:   "Phase: morning. Bias toward structural work; prefer rigorous review.",
+      morning: "Phase: morning. Bias toward structural work; prefer rigorous review.",
       afternoon: "Phase: afternoon. Steady throughput; pragmatic decisions.",
-      evening:   "Phase: evening. Wrap loops; avoid starting large refactors.",
-      night:     "Phase: night. Minimal voice; conserve cycles; defer non-urgent."
+      evening: "Phase: evening. Wrap loops; avoid starting large refactors.",
+      night: "Phase: night. Minimal voice; conserve cycles; defer non-urgent."
     }.freeze
 
     attr_reader :name, :voice, :tts_rate, :tts_pitch, :style
@@ -40,15 +40,15 @@ module Master
     end
 
     def initialize(name = DEFAULT, root: nil, homeostat: nil)
-      @name      = name.to_sym
-      @rules    = Ground::Rules.new(root:)
-      personas   = @rules.data(:personas)
-      persona    = personas[@name.to_s] || personas[DEFAULT.to_s] || FALLBACK_PERSONA
-      @voice     = persona["voice"]
-      @tts_rate  = persona["tts_rate"]
+      @name = name.to_sym
+      @rules = Ground::Rules.new(root:)
+      personas = @rules.data(:personas)
+      persona = personas[@name.to_s] || personas[DEFAULT.to_s] || FALLBACK_PERSONA
+      @voice = persona["voice"]
+      @tts_rate = persona["tts_rate"]
       @tts_pitch = persona["tts_pitch"]
-      @style     = persona["style"]&.to_sym
-      @desc      = persona["description"]
+      @style = persona["style"]&.to_sym
+      @desc = persona["description"]
       @homeostat = homeostat
     end
 
@@ -81,9 +81,9 @@ module Master
       end
       constitution = @rules.constitution
       strunk = @rules.strunk
-      banned  = (constitution["banned_output"] || [])
+      banned = (constitution["banned_output"] || [])
       no_open = (strunk["preambles"] || []).first(4)
-      no_end  = (strunk["endings"]   || []).first(3)
+      no_end = (strunk["endings"] || []).first(3)
       sections["master_constitution_absolute"] = [
         "<master_constitution tier=\"absolute\">",
         "golden_rule: #{constitution["golden_rule"]}",
@@ -118,7 +118,6 @@ module Master
         </master_priority>
       XML
 
-      # Hard formatting rules — [K] enforced
       sections["master_output_format"] = <<~XML.strip
         <master_output_format>
         Plain prose. Sentence case throughout. No markdown headers, bold, bullet lists, or numbered lists.
@@ -128,9 +127,9 @@ module Master
 
       code_rules = @rules.code_rules
       if code_rules.any?
-        thresholds  = @rules.thresholds
-        subs        = { max_lines: thresholds.dig("class", "max_lines") || 200,
-                        max_methods: thresholds.dig("class", "max_methods") || 6 }
+        thresholds = @rules.thresholds
+        subs = { max_lines: thresholds.dig("class", "max_lines") || 200,
+                 max_methods: thresholds.dig("class", "max_methods") || 6 }
         sections["master_style"] = "<master_style>\nCode axioms:\n"
         code_rules.each { |id, stmt| sections["master_style"] += "#{id}: #{stmt % subs}\n" }
         sections["master_style"] += "</master_style>"

@@ -7,30 +7,30 @@ require "open3"
 module Master
   module Voice
   module Speech
-    WORKER   = File.expand_path("../../../bin/tts-worker", __dir__)
+    WORKER = File.expand_path("../../../bin/tts-worker", __dir__)
     EDGE_TTS = File.executable?(WORKER)
-    ESPEAK   = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
+    ESPEAK = %w[/usr/bin/espeak /usr/local/bin/espeak].find { |p| File.executable?(p) }
 
     Audio = Struct.new(:bytes, :mime_type, keyword_init: true)
 
     VOICES = {
-      osman:   "ms-MY-OsmanNeural",
-      yasmin:  "ms-MY-YasminNeural",
-      ryan:    "en-GB-RyanNeural",
-      finn:    "nb-NO-FinnNeural",
+      osman: "ms-MY-OsmanNeural",
+      yasmin: "ms-MY-YasminNeural",
+      ryan: "en-GB-RyanNeural",
+      finn: "nb-NO-FinnNeural",
       steffan: "en-US-SteffanNeural"
     }.freeze
 
     STYLES = {
-      neutral:  { rate: "+0%",  pitch: "+0Hz"   },
-      normal:   { rate: "+0%",  pitch: "+0Hz"   },
-      deep:     { rate: "-10%", pitch: "-30Hz"  },
-      clear:    { rate: "+4%",  pitch: "+0Hz"   },
-      calm:     { rate: "-6%",  pitch: "-20Hz"  },
-      brief:    { rate: "+8%",  pitch: "+0Hz"   },
-      warn:     { rate: "-4%",  pitch: "-20Hz"  },
-      fail:     { rate: "-8%",  pitch: "-40Hz"  },
-      question: { rate: "+0%",  pitch: "+15Hz"  }
+      neutral: { rate: "+0%", pitch: "+0Hz" },
+      normal: { rate: "+0%", pitch: "+0Hz" },
+      deep: { rate: "-10%", pitch: "-30Hz" },
+      clear: { rate: "+4%", pitch: "+0Hz" },
+      calm: { rate: "-6%", pitch: "-20Hz" },
+      brief: { rate: "+8%", pitch: "+0Hz" },
+      warn: { rate: "-4%", pitch: "-20Hz" },
+      fail: { rate: "-8%", pitch: "-40Hz" },
+      question: { rate: "+0%", pitch: "+15Hz" }
     }.freeze
 
     DEFAULT_VOICE = :ryan
@@ -132,8 +132,8 @@ module Master
     end
 
     def synthesize_edge(text, voice:, style:)
-      audio_path   = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
-      voice_name   = VOICES.fetch(voice.to_sym, VOICES[default_voice])
+      audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+      voice_name = VOICES.fetch(voice.to_sym, VOICES[default_voice])
       style_config = STYLES.fetch(style.to_sym, STYLES[default_style])
 
       _out, _err, status = Open3.capture3(
@@ -147,7 +147,7 @@ module Master
 
     def synthesize_espeak(text)
       audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.wav"
-      ok         = system(
+      ok = system(
         ESPEAK, "-s", "162", "-p", "42", "-a", "125",
         "-w", audio_path, text.to_s,
         out: File::NULL, err: File::NULL

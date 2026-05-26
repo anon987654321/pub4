@@ -12,9 +12,9 @@ module Master
       STREAM_PATTERN = /\A[a-z0-9_\-]+\z/
 
       def initialize(root: Master::ROOT, stream: DEFAULT_STREAM)
-        @root   = root
+        @root = root
         @stream = normalize_stream(stream)
-        @path   = File.join(@root, "runtime", "events", "#{@stream}.jsonl")
+        @path = File.join(@root, "runtime", "events", "#{@stream}.jsonl")
       end
 
       def append(event, payload = {})
@@ -23,8 +23,7 @@ module Master
         File.open(@path, "a") { |io| io.write(JSON.generate(record), "\n") }
         record
       rescue SystemCallError, JSON::GeneratorError => e
-        # The event log's own write failed — cannot route through the bus or
-        # Ground::Swallow without recursing into logging. Stderr is last resort.
+        # Stderr is last resort — cannot route through bus without risking recursion.
         Kernel.warn("event_log: append to #{@path} failed — #{e.class}: #{e.message}")
         nil
       end
@@ -34,10 +33,10 @@ module Master
       def build_record(event, payload)
         now = Time.now.utc
         {
-          id:        SecureRandom.uuid,
+          id: SecureRandom.uuid,
           timestamp: now.iso8601(6),
-          event:     event.to_s,
-          payload:   payload || {}
+          event: event.to_s,
+          payload: payload || {}
         }
       end
 

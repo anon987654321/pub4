@@ -2,15 +2,16 @@
 
 module Master
   module Reach
-    # SymbolLookup — query the live symbol graph; returns definition, callers, and impact.
+    # Query the live symbol graph; returns definition, callers, and impact.
     class SymbolLookup
-      NAME        = "symbol_lookup".freeze
+      NAME = "symbol_lookup".freeze
       DESCRIPTION = "Look up a Ruby class, module, or method in the codebase. " \
                     "Returns file, line, and all cross-file references (callers/usages). " \
                     "Use before refactoring to understand impact.".freeze
+
       def initialize(code_index:, event_bus: nil)
         @index = code_index
-        @bus   = event_bus
+        @bus = event_bus
       end
 
       def call(name:)
@@ -30,7 +31,7 @@ module Master
       def format_hit(h)
         lines = ["#{h[:fqn]} (#{h[:type]})"]
         lines << "  defined: #{h[:file]}:#{h[:line]}"
-        lines << "  parent:  #{h[:parent]}" if h[:parent] && h[:parent] != "Object"
+        lines << "  parent: #{h[:parent]}" if h[:parent] && h[:parent] != "Object"
         if h[:used_in].any?
           lines << "  used in:"
           h[:used_in].each { |ref| lines << "    #{ref}" }

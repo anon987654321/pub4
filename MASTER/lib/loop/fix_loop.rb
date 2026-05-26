@@ -7,13 +7,6 @@ require "set"
 module Master
   module Loop
   # Two-tier act-react loop — architectures #1, #2, #3, #14, #15.
-  #
-  # Each pass:
-  #   Tier 1 (fast)  — rubocop -A + AstFixer; no LLM; instant.
-  #   Tier 2 (LLM)   — one RuleLoop pass per rule, ordered by priority.
-  #
-  # Stops when violations reach zero (2 consecutive clean passes) or plateau.
-  # run_forever wraps run in an idle-sleep loop for the background daemon.
   class FixLoop
     IDLE_SLEEP = 300
     STARTUP_DELAY = 90
@@ -27,17 +20,17 @@ module Master
     PRIORS_PATH = File.join(Master::ROOT, "data", "violation_priors.yml").freeze
 
     def initialize(rules:, agent:, scanner:, root:, axioms: nil, bus: nil, git: nil, learnings: nil)
-      @rules            = rules
-      @axioms           = axioms
-      @agent            = agent
-      @scanner          = scanner
-      @root             = root
-      @bus              = bus
-      @git              = git || Reach::GitOperations.new(root)
-      @learnings        = learnings
+      @rules = rules
+      @axioms = axioms
+      @agent = agent
+      @scanner = scanner
+      @root = root
+      @bus = bus
+      @git = git || Reach::GitOperations.new(root)
+      @learnings = learnings
       @violation_counts = Hash.new(0)
-      @rule_recurrence  = Hash.new(0)
-      @preamble         = build_preamble
+      @rule_recurrence = Hash.new(0)
+      @preamble = build_preamble
     end
 
     def convergence_cfg = @convergence ||= (@axioms&.thresholds&.[]("convergence") || {})
@@ -48,11 +41,8 @@ module Master
 
     def plateau_window = convergence_cfg["stagnant_threshold"] || PLATEAU_WINDOW
 
-    # Bounded convergence loop — used by /fix and run_forever.
     # Three guards prevent wedging when the LLM provider degrades:
-    #   - wall-clock budget on the whole run
-    #   - per-pass deadline on the LLM tier (Tier 1 still runs cheap)
-    #   - circuit-open early-exit so we don't burn time waiting on dead breakers
+    # wall-clock budget, per-pass deadline, circuit-open early-exit.
     def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS)
       files = collect_files(target)
       history = []
@@ -68,7 +58,6 @@ module Master
         end
         @bus&.publish("fix_loop:pass_start", pass:, target:)
 
-        # Tier 1 — fast: rubocop -A + AstFixer, no LLM
         fast_fixed = fast_pass(files)
         commit_if_dirty("fix_loop: fast-fix [pass #{pass}]") if fast_fixed > 0
 
@@ -97,7 +86,6 @@ module Master
           break
         end
 
-        # Tier 2 — LLM: skip when circuit open; bound by pass + run deadlines.
         if circuit_open?
           @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
         else
@@ -114,7 +102,7 @@ module Master
       Result.err("fix_loop: #{e.message} @ #{e.backtrace&.first(3)&.join(" | ")}", category: :unknown)
     end
 
-    # Background daemon — blocks its thread. Launch via Thread.new.
+    # Blocks its thread; launch via Thread.new.
     def run_forever(target = @root)
       sleep STARTUP_DELAY
       loop do
@@ -126,7 +114,6 @@ module Master
       @bus&.publish("fix_loop:error", error: e.message)
     end
 
-    # /fix loop — non-blocking: start the daemon in a tracked background thread.
     def start_background!(target = @root)
       return Result.err("fix_loop already running") if @bg_thread&.alive?
       @bg_thread = Thread.new { run_forever(target) }
@@ -145,12 +132,12 @@ module Master
 
     def background_alive? = @bg_thread&.alive? || false
 
-    # /fix preview — scan only, no commit, no mutation. Returns what would change.
+    # Scan only — no commit, no mutation. Returns what would change.
     def preview(target = @root)
-      files      = collect_files(target)
+      files = collect_files(target)
       violations = scan_violations(files)
-      by_rule    = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
-      by_file    = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
+      by_rule = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
+      by_file = violations.group_by { |v| v[:file].to_s }.transform_values(&:size)
       Result.ok(
         total: violations.size,
         rules: by_rule.sort_by { |_, n| -n }.first(10).to_h,
@@ -160,10 +147,10 @@ module Master
 
     private
 
-    # Tier 1: rubocop -A + AstFixer transforms + TypeChecker + DatalogEngine. No LLM.
+    # Tier 1: rubocop -A + AstFixer + TypeChecker + DatalogEngine. No LLM.
     def fast_pass(files)
-      fixed  = 0
-      rb     = files.select { |f| f.end_with?(".rb") }
+      fixed = 0
+      rb = files.select { |f| f.end_with?(".rb") }
       if rb.any?
         _, status = Open3.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", "-q", *rb, chdir: @root)
         fixed += rb.size if status.success?
@@ -172,22 +159,19 @@ module Master
         next unless File.exist?(path)
         src = File.read(path, encoding: "UTF-8")
 
-        # Architecture #4: AST autofixes — no LLM, deterministic transforms.
         ast_result = Judge::Scan::AstFixer.fix(path, src)
         if ast_result&.changed
           fixed += ast_result.transforms.size
           @bus&.publish("fix_loop:ast_fixed", file: path.delete_prefix("#{@root}/"), transforms: ast_result.transforms)
-          src = File.read(path, encoding: "UTF-8")  # re-read after mutation
+          src = File.read(path, encoding: "UTF-8")
         end
 
-        # Architecture #11: type-system constraint checks — sound, complete, no LLM.
         type_errors = Ground::TypeChecker.check(path, src)
         type_errors.each do |te|
           @bus&.publish("fix_loop:type_error", file: path.delete_prefix("#{@root}/"),
                         rule: te.rule, message: te.message)
         end
 
-        # Architecture #12: Datalog fact extraction + logical rule evaluation.
         dl = Judge::Scan::DatalogEngine.from_ruby(path, src)
         dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[1]} — use rescue StandardError" }
         dl.evaluate.each do |finding|
@@ -247,7 +231,7 @@ module Master
       end
     end
 
-    # Soul learning — flag rules recurring across 3+ consecutive passes.
+    # Flag rules recurring across 3+ consecutive passes for soul proposals.
     def track_recurrence(violations)
       tally = violations.group_by { |v| v[:rule].to_s }.transform_values(&:size)
       tally.each do |rule_id, _|
@@ -272,41 +256,40 @@ module Master
       Master::Ground::Swallow.log(e, context: "fix_loop.append_improvement", event_bus: @bus, rule_id:)
     end
 
-    # Architecture #1 + #2 + #10 + #14: density + fix_quality + language-adjusted Bayesian + topological.
+    # Density + fix_quality + language-adjusted Bayesian + topological — architectures #1, #2, #10, #14.
     def ordered_rules
-      deps    = load_deps
-      priors  = load_priors
+      deps = load_deps
+      priors = load_priors
       ext_wts = extension_weights(@root)
-      rules   = @rules.sort_by do |r|
+      rules = @rules.sort_by do |r|
         base_prior = priors.dig(r.id, "prior_p").to_f
-        modifiers  = priors.dig(r.id, "language_modifiers") || {}
-        # Weighted prior: sum(base × modifier × extension_weight) across file types present.
+        modifiers = priors.dig(r.id, "language_modifiers") || {}
         adjusted = ext_wts.sum { |ext, w| base_prior * (modifiers[ext] || 1.0) * w }
-        density  = @violation_counts[r.id].to_f + adjusted
-        quality  = @learnings&.fix_quality(rule: r.id) || 0.5
+        density = @violation_counts[r.id].to_f + adjusted
+        quality = @learnings&.fix_quality(rule: r.id) || 0.5
         [-density, -quality]
       end
       topo_sort(rules, deps)
     end
 
-    # Architecture #15: emit module-grouped topology for particle visualisation.
+    # Emit module-grouped topology for particle visualisation — architecture #15.
     def emit_topology(violations, target)
       by_mod = violations.group_by { |v| v[:file].to_s.split("/").first(3).join("/") }
                          .transform_values(&:size)
       @bus&.publish("codebase:topology", {
-        timestamp:        Time.now.utc.iso8601,
-        target:           target.delete_prefix("#{@root}/"),
+        timestamp: Time.now.utc.iso8601,
+        target: target.delete_prefix("#{@root}/"),
         total_violations: violations.size,
-        any_dirty:        violations.any?,
-        modules:          by_mod.map { |path, count| { path:, violations: count } }
+        any_dirty: violations.any?,
+        modules: by_mod.map { |path, count| { path:, violations: count } }
       })
     end
 
-    # Architecture #2: Kahn's topological sort on rule dependency graph.
+    # Kahn's topological sort on rule dependency graph — architecture #2.
     def topo_sort(rules, deps)
       id_map = rules.to_h { |r| [r.id, r] }
       in_deg = Hash.new(0)
-      adj    = Hash.new { |h, k| h[k] = [] }
+      adj = Hash.new { |h, k| h[k] = [] }
       rules.each do |rule|
         (deps[rule.id] || []).each do |dep_id|
           next unless id_map[dep_id]
@@ -314,7 +297,7 @@ module Master
           in_deg[rule.id] += 1
         end
       end
-      queue  = rules.select { |r| in_deg[r.id].zero? }.map(&:id)
+      queue = rules.select { |r| in_deg[r.id].zero? }.map(&:id)
       sorted = []
       until queue.empty?
         id = queue.shift
@@ -325,11 +308,11 @@ module Master
     end
 
     def build_preamble
-      soul   = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
-      abs    = soul.fetch("absolute", {})
+      soul = Master.load_yaml(File.join(Master::ROOT, "data", "soul.yml"))
+      abs = soul.fetch("absolute", {})
       golden = abs["golden_rule"] || "PRESERVE_THEN_IMPROVE_NEVER_BREAK"
-      lines  = ["Golden rule: #{golden}",
-                "Minimum change that eliminates the violation. Do not touch unrelated code."]
+      lines = ["Golden rule: #{golden}",
+               "Minimum change that eliminates the violation. Do not touch unrelated code."]
       abs.fetch("code_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
       abs.fetch("aesthetic_rules", {}).each { |k, v| lines << "- #{k}: #{v}" }
       lines.join("\n")
@@ -352,8 +335,7 @@ module Master
       @bus&.publish("fix_loop:commit_error", error: e.message)
     end
 
-    # Returns { "rb" => 0.6, "yml" => 0.2, ... } — fractional weight per extension.
-    # Used by ordered_rules to apply language_modifiers from violation_priors.yml.
+    # Fractional weight per extension; used by ordered_rules to apply language_modifiers.
     def extension_weights(target)
       counts = Hash.new(0)
       collect_files(target).each do |f|

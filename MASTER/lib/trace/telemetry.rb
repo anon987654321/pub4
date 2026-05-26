@@ -4,14 +4,13 @@ require "json"
 
 module Master
   module Trace
-  # OpenTelemetry tracer wrapper. Soft-optional — if the SDK isn't loaded,
-  # span() degrades to a plain yield. Spans emit JSONL to .master/traces.log.
+  # Soft-optional OpenTelemetry wrapper; span() degrades to plain yield when SDK absent.
   module Telemetry
     TRACE_PATH = ".master/traces.log".freeze
 
     @enabled = false
-    @tracer  = nil
-    @io      = nil
+    @tracer = nil
+    @io = nil
 
     class << self
       attr_reader :enabled, :tracer
@@ -31,7 +30,7 @@ module Master
           OpenTelemetry::SDK::Trace::Export::SimpleSpanProcessor.new(JsonlExporter.new(@io))
         )
       end
-      @tracer  = OpenTelemetry.tracer_provider.tracer(service)
+      @tracer = OpenTelemetry.tracer_provider.tracer(service)
       @enabled = true
     rescue LoadError; @enabled = false
     rescue StandardError; @enabled = false
@@ -58,14 +57,14 @@ module Master
       def export(spans, timeout: nil)
         spans.each do |s|
           @io.puts(JSON.generate(
-            name:    s.name,
-            kind:    s.kind.to_s,
-            start:   s.start_timestamp,
-            end:     s.end_timestamp,
-            dur_us:  ((s.end_timestamp - s.start_timestamp) / 1000),
-            attrs:   s.attributes,
-            trace:   s.hex_trace_id,
-            span:    s.hex_span_id
+            name: s.name,
+            kind: s.kind.to_s,
+            start: s.start_timestamp,
+            end: s.end_timestamp,
+            dur_us: ((s.end_timestamp - s.start_timestamp) / 1000),
+            attrs: s.attributes,
+            trace: s.hex_trace_id,
+            span: s.hex_span_id
           ))
         end
         SUCCESS
@@ -73,7 +72,7 @@ module Master
       end
 
       def force_flush(timeout: nil) = SUCCESS
-      def shutdown(timeout: nil)    = SUCCESS
+      def shutdown(timeout: nil) = SUCCESS
     end
   end
   end

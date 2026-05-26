@@ -2,8 +2,7 @@
 
 module Master
   module Trace
-  # Local lookup for /why <id>: laws, scan rules, anti-patterns, style keys.
-  # Returns nil when nothing matches; caller falls back to the LLM.
+  # Local lookup for /why <id>; falls back to LLM when nothing matches.
   class WhyExplainer
     SCAN_RULES_DIR = "lib/judge/scan/rules"
 
@@ -32,9 +31,9 @@ module Master
       hit = laws[key.upcase] or return
       [
         "law: #{key.upcase}",
-        "  priority:  #{hit["priority"]}",
+        "  priority: #{hit["priority"]}",
         "  principle: #{hit["principle"]}",
-        "  applies:   #{Array(hit["applies_to"]).join(", ")}"
+        "  applies: #{Array(hit["applies_to"]).join(", ")}"
       ].join("\n")
     end
 
@@ -48,8 +47,8 @@ module Master
       [
         "scan rule: #{slug}",
         "  description: #{desc}",
-        ("  axioms:      #{tags}" unless tags.empty?),
-        "  source:      #{SCAN_RULES_DIR}/#{slug}_rule.rb"
+        ("  axioms: #{tags}" unless tags.empty?),
+        "  source: #{SCAN_RULES_DIR}/#{slug}_rule.rb"
       ].compact.join("\n")
     end
 
@@ -61,7 +60,7 @@ module Master
           next unless reason.include?(key) || entry["pattern"].to_s.include?(key)
           return [
             "anti-pattern: #{reason}",
-            "  level:   #{level}",
+            "  level: #{level}",
             "  pattern: #{entry["pattern"]}"
           ].join("\n")
         end
@@ -82,7 +81,7 @@ module Master
     def render(node, indent: 0)
       pad = " " * indent
       case node
-      when Hash  then node.map { |k, v|
+      when Hash then node.map { |k, v|
  "#{pad}#{k}: #{v.is_a?(Hash) || v.is_a?(Array) ? "\n" + render(v, indent: indent + 2) : v}" }.join("\n") + "\n"
       when Array then node.map { |v|
  "#{pad}- #{v.is_a?(Hash) ? "\n" + render(v, indent: indent + 2) : v}" }.join("\n") + "\n"

@@ -16,9 +16,9 @@ module Master
     end
 
     def initialize(path, source)
-      @path   = path
+      @path = path
       @source = source
-      @lines  = source.lines
+      @lines = source.lines
     end
 
     def segment
@@ -56,19 +56,19 @@ module Master
       s = node.location.start_line
       e = node.location.end_line
       Unit.new(
-        name:       name,
-        type:       type,
+        name: name,
+        type: type,
         start_line: s,
-        end_line:   e,
-        source:     @lines[(s - 1)..(e - 1)].join
+        end_line: e,
+        source: @lines[(s - 1)..(e - 1)].join
       )
     end
 
     # Blank-line delimited paragraph units — works for prose, YAML, config, HTML.
     def prose_units
-      units  = []
+      units = []
       buffer = []
-      start  = 1
+      start = 1
       @lines.each_with_index do |line, idx|
         lineno = idx + 1
         if line.strip.empty?
@@ -77,7 +77,7 @@ module Master
                               start_line: start, end_line: lineno - 1, source: buffer.join)
           end
           buffer = []
-          start  = lineno + 1
+          start = lineno + 1
         else
           buffer << line
         end

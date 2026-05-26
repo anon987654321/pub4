@@ -2,13 +2,10 @@
 
 module Master
   module Reach
-    # FeedbackRecord — LLM-callable tool to record RSI feedback events.
-    # Event types: tool_success, tool_failure, user_correction, provider_error, user_feedback.
-    # Dimension: tool name, provider name, or pattern label.
-    # Pattern from OpenCrabs: tools self-report outcomes; RSI reads the ledger.
+    # LLM-callable tool; tools self-report outcomes so RSI reads the ledger.
     class FeedbackRecord
-      TIER        = :open
-      NAME        = "feedback_record".freeze
+      TIER = :open
+      NAME = "feedback_record".freeze
       DESCRIPTION = "Record a feedback event for RSI self-improvement. " \
                     "Call after tool success/failure or when user corrects output.".freeze
 
@@ -26,9 +23,9 @@ module Master
 
         @learnings.record_event(
           event_type: event_type.to_s,
-          dimension:  dimension.to_s,
-          value:      value&.to_f,
-          metadata:   metadata&.to_s
+          dimension: dimension.to_s,
+          value: value&.to_f,
+          metadata: metadata&.to_s
         )
         Result.ok("recorded: #{event_type} / #{dimension}")
       rescue StandardError => e
