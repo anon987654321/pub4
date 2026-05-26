@@ -30,7 +30,8 @@ module Master
         @bus&.publish(:swarm_worker_start, role: @role, task: task[0..60])
 
         raw = ask_with_fallback(prompt)
-        @result, @confidence = parse_result(raw)
+        @result = parse_result(raw)
+        @confidence = @result.ok? && @result.value!.is_a?(Hash) ? (@result.value![:confidence] || 1.0) : 0.0
 
         @bus&.publish(:swarm_worker_done, role: @role, ok: @result.ok?)
         @result
@@ -60,9 +61,12 @@ module Master
 
       def parse_result(raw)
         text = raw.to_s.strip
+        Result.ok({ text:, confidence: uncertainty_confidence(text) })
+      end
+
+      def uncertainty_confidence(text)
         hits = UNCERTAINTY_PHRASES.count { |p| text.downcase.include?(p) }
-        conf = [1.0 - (hits.to_f / [UNCERTAINTY_PHRASES.size, 1].max * 0.5), 0.0].max.round(2)
-        [Result.ok({ text: text, confidence: conf }), conf]
+        [1.0 - (hits.to_f / [UNCERTAINTY_PHRASES.size, 1].max * 0.5), 0.0].max.round(2)
       end
 
       def ctx_summary(ctx)

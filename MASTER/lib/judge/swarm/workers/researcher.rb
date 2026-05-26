@@ -32,15 +32,10 @@ module Master
           summary = parsed["summary"] || text
           sources = Array(parsed["sources"])
           conf_key = parsed["confidence"].to_s.downcase
-          conf = CONFIDENCE_MAP.fetch(conf_key, nil) || super_confidence(text)
+          conf = CONFIDENCE_MAP.fetch(conf_key, nil) || uncertainty_confidence(text)
           Result.ok({ summary:, sources:, confidence: conf })
         rescue JSON::ParserError
-          Result.ok({ summary: text, sources: [], confidence: super_confidence(text) })
-        end
-
-        def super_confidence(text)
-          hits = UNCERTAINTY_PHRASES.count { |p| text.downcase.include?(p) }
-          [1.0 - (hits.to_f / [UNCERTAINTY_PHRASES.size, 1].max * 0.5), 0.0].max.round(2)
+          Result.ok({ summary: text, sources: [], confidence: uncertainty_confidence(text) })
         end
       end
     end

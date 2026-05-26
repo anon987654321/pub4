@@ -50,13 +50,6 @@ module Master
       :default
     end
 
-    def reasoning_depth_bias
-      score = @state[:energy] - @state[:fatigue] - @state[:error_rate]
-      return 2 if score > 0.5
-      return 1 if score > 0.0
-      0
-    end
-
     def mood
       return :tense   if @state[:error_rate] > 0.4
       return :weary   if @state[:fatigue] > 0.6 || @state[:energy] < 0.3
