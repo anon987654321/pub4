@@ -4,22 +4,22 @@ module Master
   module Ground
   class IntentRouter
     INTENTS = {
-      codify_policy:          %w[codify policy make it ruby turn into],
-      refactor_to_ruby:       %w[refactor move ruby extract simplify],
-      wire_existing_module:   %w[wire connect hook up route plug],
-      create_facade:          %w[facade wrap adapter interface],
+      codify_policy: %w[codify policy make it ruby turn into],
+      refactor_to_ruby: %w[refactor move ruby extract simplify],
+      wire_existing_module: %w[wire connect hook up route plug],
+      create_facade: %w[facade wrap adapter interface],
       delete_redundant_config: %w[delete remove kill purge drop],
-      verify_patch_landed:    %w[verify check confirm did it land],
-      run_sound_review:       %w[sound review audio critique listen],
-      run_ui_review:          %w[ui critique design visual look review],
-      generate_rails_pwa:     %w[generate create new rails pwa app scaffold blank],
-      refactor_rails_app:     %w[refactor upgrade migrate modernize rails hotwire turbo stimulus],
-      redesign_mobile_pwa:    %w[redesign mobile touch layout responsive accessibility],
-      audit_rails_pwa:        %w[audit scan check pwa manifest service worker rails],
+      verify_patch_landed: %w[verify check confirm did it land],
+      run_sound_review: %w[sound review audio critique listen],
+      run_ui_review: %w[ui critique design visual look review],
+      generate_rails_pwa: %w[generate create new rails pwa app scaffold blank],
+      refactor_rails_app: %w[refactor upgrade migrate modernize rails hotwire turbo stimulus],
+      redesign_mobile_pwa: %w[redesign mobile touch layout responsive accessibility],
+      audit_rails_pwa: %w[audit scan check pwa manifest service worker rails],
       apply_user_style_rules: %w[style format lint clean],
-      continue_prior_plan:    %w[go ahead continue land it proceed ship],
-      write_repo_changes:     %w[land write commit save push apply],
-      prefer_ruby:            %w[ruby not markdown no yaml keep ruby]
+      continue_prior_plan: %w[go ahead continue land it proceed ship],
+      write_repo_changes: %w[land write commit save push apply],
+      prefer_ruby: %w[ruby not markdown no yaml keep ruby]
     }.freeze
 
     STANDING_SEMANTICS = {
@@ -34,9 +34,12 @@ module Master
     }.freeze
 
     RISK_TIERS = {
-      low:      %i[codify_policy refactor_to_ruby create_facade apply_user_style_rules run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa],
-      medium:   %i[wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app],
-      high:     %i[write_repo_changes delete_redundant_config],
+      low: %i[
+        codify_policy refactor_to_ruby create_facade apply_user_style_rules
+        run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa
+      ],
+      medium: %i[wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app],
+      high: %i[write_repo_changes delete_redundant_config],
       critical: []
     }.freeze
 

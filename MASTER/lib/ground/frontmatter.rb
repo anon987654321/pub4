@@ -4,11 +4,10 @@ require "yaml"
 
 module Master
   module Ground
-    # YAML frontmatter parser for markdown files.
-    # Returns {meta: Hash, body: String}; empty meta when no frontmatter or malformed.
+    # Parses YAML frontmatter from markdown; returns {meta: Hash, body: String}.
     module Frontmatter
       MARKER = "---"
-      RE     = /\A---\n(.*?)\n---\n?(.*)/m
+      RE = /\A---\n(.*?)\n---\n?(.*)/m
 
       module_function
 
