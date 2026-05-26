@@ -4,16 +4,15 @@ module Master
   module Ground
   class AttentionContext
     VALID_ZOOMS = %w[wide narrow wide_to_deep deep_to_wide deep].freeze
-    VALID_ACTS  = %w[scout mine repair land verify rollback checkpoint review].freeze
+    VALID_ACTS = %w[scout mine repair land verify rollback checkpoint review].freeze
+    COMPLEX_ACTS = %w[mine repair rollback checkpoint verify].freeze
 
     attr_reader :map, :zoom, :act, :target, :parent
 
-    COMPLEX_ACTS = %w[mine repair rollback checkpoint verify].freeze
-
     def initialize(map: nil, zoom: "wide", act: "scout", target: [], parent: [])
-      @map    = map.to_s
-      @zoom   = VALID_ZOOMS.include?(zoom.to_s) ? zoom.to_s : "wide"
-      @act    = VALID_ACTS.include?(act.to_s)   ? act.to_s  : "scout"
+      @map = map.to_s
+      @zoom = VALID_ZOOMS.include?(zoom.to_s) ? zoom.to_s : "wide"
+      @act = VALID_ACTS.include?(act.to_s) ? act.to_s : "scout"
       @target = Array(target).map(&:to_s)
       @parent = Array(parent).map(&:to_s)
     end
@@ -25,7 +24,7 @@ module Master
     def to_s
       parts = ["map: #{@map}"].tap do |p|
         p << "zoom: #{@zoom}" if @zoom != "wide"
-        p << "act: #{@act}"   if @act  != "scout"
+        p << "act: #{@act}" if @act != "scout"
       end
       "⟦#{parts.join(" | ")}⟧"
     end
@@ -38,9 +37,9 @@ module Master
       return new unless File.exist?(path)
       data = Master.load_yaml(path) || {}
       new(
-        map:    data["map"],
-        zoom:   data["zoom"]   || "wide",
-        act:    data["act"]    || "scout",
+        map: data["map"],
+        zoom: data["zoom"] || "wide",
+        act: data["act"] || "scout",
         target: data["target"] || [],
         parent: data["parent"] || []
       )

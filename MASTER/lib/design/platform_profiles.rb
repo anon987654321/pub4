@@ -7,7 +7,8 @@ module Master
       brutal_minimal: {
         philosophy: "content-first, invisible design, delete anything that does not improve readability",
         layout: %w[single_column semantic_html system_fonts black_white max_65ch],
-        avoid: %w[shadows glows gradients rounded_corners decorative_borders hero_banners loading_theatrics custom_fonts],
+        avoid: %w[shadows glows gradients rounded_corners decorative_borders
+          hero_banners loading_theatrics custom_fonts],
         metrics: { max_total_kb: 10, contrast: 4.5, line_min_ch: 45, line_max_ch: 75 }
       },
       medium: {
@@ -50,7 +51,9 @@ module Master
 
     def brief(name)
       p = fetch(name)
-      "#{name}: #{p[:philosophy]}; layout=#{p[:layout].join(', ')}; avoid=#{p[:avoid].join(', ')}; metrics=#{p[:metrics]}"
+      parts = ["#{name}: #{p[:philosophy]}", "layout=#{p[:layout].join(', ')}",
+        "avoid=#{p[:avoid].join(', ')}", "metrics=#{p[:metrics]}"]
+      parts.join("; ")
     end
 
     def constraints(name)

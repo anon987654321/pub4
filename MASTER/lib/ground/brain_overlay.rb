@@ -32,7 +32,7 @@ module Master
     end
 
     def core_brief
-      lines = ["Brain overlay: Ruby policy is authoritative; markdown is legacy/contextual unless explicitly requested."]
+      lines = ["Brain overlay: Ruby policy is authoritative; markdown is legacy/contextual."]
       lines << Master::Ground::ToolProtocol.brief if defined?(Master::Ground::ToolProtocol)
       lines << Master::Ground::EvidenceBase.brief if defined?(Master::Ground::EvidenceBase)
       lines << Master::Ground::WorkflowPolicy.brief if defined?(Master::Ground::WorkflowPolicy)
@@ -49,7 +49,9 @@ module Master
 
     def load_context(name_or_pattern)
       pattern = name_or_pattern.to_s
-      match = markdown_files.find { |path| relative(path).include?(pattern) || File.basename(path).include?(pattern) }
+      match = markdown_files.find { |path|
+        relative(path).include?(pattern) || File.basename(path).include?(pattern)
+      }
       return nil unless match
 
       File.read(match, encoding: "utf-8")
@@ -62,7 +64,9 @@ module Master
     private
 
     def markdown_files
-      @markdown_dirs.flat_map { |dir| Dir.glob(File.join(dir, "**", "*.md")) }.select { |path| File.file?(path) }
+      @markdown_dirs
+        .flat_map { |dir| Dir.glob(File.join(dir, "**", "*.md")) }
+        .select { |path| File.file?(path) }
     end
 
     def relative(path)
