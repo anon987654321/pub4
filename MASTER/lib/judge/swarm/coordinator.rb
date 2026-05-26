@@ -7,7 +7,7 @@ module Master
   module Swarm
     class Coordinator
       SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, keyword_init: true) do
-        def ok?      = verdict != :error
+        def ok?      = !%i[error insufficient_quorum].include?(verdict)
         def approved? = verdict == :approved
       end
 
@@ -24,6 +24,7 @@ module Master
       WORKER_TIMEOUT = 30
       SHARED_DEADLINE = 60
       SYNTHESIS_TRUNCATE_LIMIT = 200
+      MIN_QUORUM = 2
 
       def initialize(agent:, event_bus: nil)
         @agent = agent
@@ -122,11 +123,13 @@ module Master
 
         conflict = conflict?(artifacts)
         verdict = if eligible.empty? || successes.empty? then :error
+                 elsif successes.size < MIN_QUORUM then :insufficient_quorum
                  elsif conflict then :conflict
                  elsif confidence >= 0.8 then :approved
                  elsif confidence >= 0.5 then :mixed
                  else :rejected
                  end
+        @bus&.publish("swarm:mixed_verdict", confidence:, reasoning: reasoning[0..120]) if verdict == :mixed
         SwarmResult.new(verdict:, confidence:, reasoning:, artifacts:)
       end
 
