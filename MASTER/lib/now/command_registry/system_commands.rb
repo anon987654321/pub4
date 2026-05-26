@@ -14,6 +14,7 @@ module Master
     def system_commands(agent, diag, root)
       {
         "orient" => cmd(:dispatch_orient, root),
+        "explain" => ->(_ctx) { dispatch_orient(root, "") },
         "tree" => cmd(:dispatch_tree, root),
         "diff" => cmd(:dispatch_diff, root),
         "commit" => ->(_ctx) { dispatch_commit(agent, root) },

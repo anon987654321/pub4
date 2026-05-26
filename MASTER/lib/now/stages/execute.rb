@@ -9,9 +9,10 @@ module Master
         handler = ctx[:handler]
         return Result.err("execute: no handler", category: :validation) unless handler
 
-        output = handler.call(ctx)
-        return output if output.is_a?(Master::Result::Err)
+        raw = handler.call(ctx)
+        return raw if raw.is_a?(Master::Result::Err)
 
+        output = raw.is_a?(Master::Result) ? raw.value!.to_s : raw.to_s
         Result.ok(ctx.merge(output: output))
       rescue StandardError => e
         Result.err("execute: #{e.message}", category: :unknown)
