@@ -97,10 +97,12 @@ module Converge
       signature = "#{rule_id}:#{current_hash}"
 
       if @context[:tracking_hashes].include?(signature)
-        @db.execute(
-          "INSERT INTO feedback_loops (signature) VALUES (?) ON CONFLICT(signature) DO UPDATE SET hit_count = hit_count + 1, updated_at = CURRENT_TIMESTAMP",
-          [signature]
-        )
+        sql = <<~SQL
+          INSERT INTO feedback_loops (signature) VALUES (?)
+          ON CONFLICT(signature) DO UPDATE SET
+            hit_count = hit_count + 1, updated_at = CURRENT_TIMESTAMP
+        SQL
+        @db.execute(sql, [signature])
         raise "oscillation_detected: rule #{rule_id} generated a cyclical state mutation"
       end
 
@@ -119,7 +121,7 @@ module Converge
     end
 
     def serializable_context
-      @context.reject { |key, _| [:events, :tracking_hashes].include?(key) }
+      @context.reject { |key, _| %i[events tracking_hashes].include?(key) }
     end
   end
 end

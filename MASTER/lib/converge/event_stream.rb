@@ -21,7 +21,7 @@ module Converge
     end
 
     def <<(entry)
-      emit(entry.fetch(:type), entry.fetch(:payload, entry.reject { |key, _| key == :type }))
+      emit(entry.fetch(:type), entry.fetch(:payload, entry.except(:type)))
     end
   end
 end
