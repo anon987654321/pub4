@@ -3,13 +3,11 @@
 module Master
   module Now
   class CLI
-    SPIN_FRAMES   = ["-", "\\", "|", "/"].freeze
-    SPIN_INTERVAL = 0.12
-    DMESG_IGNORE  = %w[bus:subscribe bus:unsubscribe ring:write].freeze
-    VERDICT_GLYPH = {
-      ok: "OK", fail: "FAIL", warn: "WARN", info: "INFO"
-    }.freeze
-    MUTATING_TOOLS = %w[write_file str_replace ast_edit].freeze
+    SPIN_FRAMES = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
+    SPIN_INTERVAL = 0.25
+    DMESG_IGNORE = %w[bus:subscribe bus:unsubscribe ring:write].freeze
+    VERDICT_GLYPH = { ok: "\u2713", fail: "\u00D7", warn: "!", info: "\u00B7" }.freeze
+    MUTATING_TOOLS = %w[WriteFile Edit StrReplace BatchReplace AstEdit FilePatch].freeze
 
     private
 
