@@ -13,10 +13,11 @@ module Master
       RUBY_EXT = %w[.rb .rake .gemspec].freeze
       FORBIDDEN_DEPTHS = %i[quick standard shallow].freeze
 
-      def initialize(rules: nil, event_bus: nil)
+      def initialize(rules: nil, event_bus: nil, file_sleep_s: 0)
         @rules = Array(rules)
         @bus = event_bus
         @mutex = Mutex.new
+        @file_sleep_s = file_sleep_s.to_f
       end
 
       def scan(path, depth: :deep, rules: nil)
@@ -103,6 +104,7 @@ module Master
       end
 
       def scan_one(dir:, path:, depth:, stream:)
+        sleep @file_sleep_s if @file_sleep_s > 0
         file_result = scan(path, depth:)
         stream_progress(dir, path, file_result) if stream
         [path, file_result]

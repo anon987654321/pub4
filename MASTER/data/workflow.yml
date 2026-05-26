@@ -137,12 +137,14 @@ incremental_scanning:
 
 autoloop:
   background: true
-  idle_sleep: 60
+  idle_sleep: 300
   scan_depth: deep
+  scan_nice: 15
+  scan_file_sleep_s: 2
   fix_depth: llm
-  batch_size: 3
+  batch_size: 1
   max_cycles: 12
-  rate_limit_sleep: 15
+  rate_limit_sleep: 30
   max_file_bytes: 16000
   max_fix_retries: 3
   confidence_threshold: 0.60
