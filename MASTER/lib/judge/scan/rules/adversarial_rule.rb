@@ -28,10 +28,10 @@ module Master
 
         def initialize(agent: nil)
           super()
-          @agent       = agent
-          @id          = "adversarial"
+          @agent = agent
+          @id = "adversarial"
           @description = "Red-team scan: steelman then challenge — suppresses false positives"
-          @severity    = :error
+          @severity = :error
           @rule_tags = %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE]
         end
 

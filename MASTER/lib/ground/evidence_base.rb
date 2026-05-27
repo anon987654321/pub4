@@ -61,11 +61,16 @@ module Master
       <<~TEXT.strip
         Evidence-based assistant policy:
         - duplication: 70% similarity, 100+ tokens, abstract on 3rd occurrence; avoid hasty abstractions.
-        - resilience: 600s request timeout, 5s connect timeout, 2-3 retries, jittered exponential backoff capped at 20s, 50% circuit-breaker threshold.
-        - context: keep 4 attention-sink tokens, use 512-token balanced RAG chunks with 10-20% overlap, compress up to 20x when needed.
-        - verification: 5 semantic-entropy samples, 5-10 self-consistency paths, Chain-of-Verification before high-stakes claims.
-        - output: unified diffs, no line-number dependence, function-level hunks, continue on truncation.
-        - permissions: deny beats allow; security veto -> authorization -> normalization -> quality -> output verification.
+        - resilience: 600s request timeout, 5s connect timeout, 2-3 retries,
+          jittered exponential backoff capped at 20s, 50% circuit-breaker threshold.
+        - context: keep 4 attention-sink tokens, use 512-token balanced RAG chunks
+          with 10-20% overlap, compress up to 20x when needed.
+        - verification: 5 semantic-entropy samples, 5-10 self-consistency paths,
+          Chain-of-Verification before high-stakes claims.
+        - output: unified diffs, no line-number dependence, function-level hunks,
+          continue on truncation.
+        - permissions: deny beats allow; security veto -> authorization ->
+          normalization -> quality -> output verification.
       TEXT
     end
   end
