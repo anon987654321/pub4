@@ -65,14 +65,14 @@ module Master
     def apply_stage(pkt)
       return nil unless pkt[:valid]
       path = pkt[:violation][:file]
-      tmp = "#{path}.pipeline.#{Process.pid}.tmp"
-      File.write(tmp, pkt[:candidate], encoding: "UTF-8")
-      File.rename(tmp, path)
+      temporary_path = "#{path}.pipeline.#{Process.pid}.tmp"
+      File.write(temporary_path, pkt[:candidate], encoding: "UTF-8")
+      File.rename(temporary_path, path)
       @bus&.publish("fix_pipeline:applied", file: path)
       pkt
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "FixPipeline.apply_stage", event_bus: @bus, path:)
-      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      File.delete(temporary_path) if defined?(temporary_path) && File.exist?(temporary_path) rescue nil
       @bus&.publish("fix_pipeline:write_error", file: path, error: e.message)
       nil
     end

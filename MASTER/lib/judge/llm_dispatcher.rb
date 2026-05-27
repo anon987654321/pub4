@@ -79,11 +79,11 @@ module Master
       end
 
       def missing_key_error?(err)
-        msg = err.message.to_s
-        msg.match?(/missing configuration/i) ||
-          msg.match?(/api[_\- ]?key/i) ||
-          msg.match?(/unauthorized/i) ||
-          msg.match?(/401/) ||
+        error_message = err.message.to_s
+        error_message.match?(/missing configuration/i) ||
+          error_message.match?(/api[_\- ]?key/i) ||
+          error_message.match?(/unauthorized/i) ||
+          error_message.match?(/401/) ||
           !Master.any_api_key_present?
       end
 
@@ -198,7 +198,7 @@ module Master
         chat_session = RubyLLM.chat(model: selected_model)
         final_sys = build_final_system(selected_model, sys)
         chat_session.with_instructions(final_sys) if final_sys
-        messages.each { |msg| chat_session.add_message(role: msg[:role].to_s, content: msg[:content].to_s) }
+        messages.each { |message_entry| chat_session.add_message(role: message_entry[:role].to_s, content: message_entry[:content].to_s) }
 
         available_tools = llm_tools(selected_model)
         chat_session.with_tools(*available_tools) unless available_tools.empty?

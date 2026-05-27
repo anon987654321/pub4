@@ -68,12 +68,12 @@ module Master
     def apply_to_disk(path, content)
       full_path = path.start_with?("/") ? path : File.join(@root, path)
       return unless File.exist?(full_path)
-      tmp = "#{full_path}.crdt.#{Process.pid}.tmp"
-      File.write(tmp, content, encoding: "UTF-8")
-      File.rename(tmp, full_path)
+      temporary_path = "#{full_path}.crdt.#{Process.pid}.tmp"
+      File.write(temporary_path, content, encoding: "UTF-8")
+      File.rename(temporary_path, full_path)
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "CrdtLoop.apply_to_disk", event_bus: @bus, path:)
-      File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
+      File.delete(temporary_path) if defined?(temporary_path) && File.exist?(temporary_path) rescue nil
       @bus&.publish("crdt_loop:write_error", path: path, error: e.message)
     end
   end

@@ -28,12 +28,12 @@ module Master
         channel = channel.to_sym
         return Result.err("unknown channel: #{channel}", category: :validation) unless CHANNELS.include?(channel)
 
-        msg = message.to_s.strip
+        message_text = message.to_s.strip
         turn_id = "#{Process.pid}-#{Time.now.to_i}-#{rand(36**4).to_s(36)}"
-        @bus&.publish("gateway:turn_start", turn_id:, channel:, message: msg[0, 200])
-        @bus&.publish("gateway:receive", channel: channel, size: msg.bytesize)
+        @bus&.publish("gateway:turn_start", turn_id:, channel:, message: message_text[0, 200])
+        @bus&.publish("gateway:receive", channel: channel, size: message_text.bytesize)
 
-        ctx = { user_message: msg, channel: channel, metadata: metadata, turn_id: }
+        ctx = { user_message: message_text, channel: channel, metadata: metadata, turn_id: }
         result = @pipeline.call(Result.ok(ctx))
 
         if (adapter = @adapters[channel])
