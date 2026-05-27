@@ -38,17 +38,17 @@ module Master
 
       def remember_user_text(text)
         ts = Time.now.to_i
-        remember_matches(text, REMEMBER_RE, "note", "general", ts)
-        remember_matches(text, DECISION_RE, "decision", "project", ts)
-        remember_matches(text, DONT_RE, "rule", "feedback", ts) { |value| "don't #{value}" }
+        remember_matches(text:, regexp: REMEMBER_RE, prefix: "note", type: "general", timestamp: ts)
+        remember_matches(text:, regexp: DECISION_RE, prefix: "decision", type: "project", timestamp: ts)
+        remember_matches(text:, regexp: DONT_RE, prefix: "rule", type: "feedback", timestamp: ts) { |value| "don't #{value}" }
         remember_preferences(text, ts)
         remember_role(text)
       end
 
-      def remember_matches(text, regexp, prefix, type, ts)
+      def remember_matches(text:, regexp:, prefix:, type:, timestamp:)
         text.scan(regexp).each_with_index do |(value), i|
           value = yield(value.strip) if block_given?
-          @memory.remember("#{prefix}_#{ts}_#{i}", value.strip, type:)
+          @memory.remember("#{prefix}_#{timestamp}_#{i}", value.strip, type:)
         end
       end
 

@@ -90,7 +90,7 @@ module Master
           @bus&.publish("fix_loop:llm_skipped", pass:, reason: "circuit_open", open: open_breakers)
         else
           pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
-          llm_fixed = llm_pass(violations, files, pass, pass_deadline)
+          llm_fixed = llm_pass(violations:, files:, pass:, deadline: pass_deadline)
           commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
           track_recurrence(violations)
         end
@@ -186,7 +186,7 @@ module Master
 
     # Tier 2: one RuleLoop pass per rule, highest-priority rules first.
     # Bails early if the deadline passes or the LLM circuit opens mid-pass.
-    def llm_pass(violations, files, pass, deadline = nil)
+    def llm_pass(violations:, files:, pass:, deadline: nil)
       fixed = 0
       ordered_rules.each do |rule|
         next unless violations.any? { |v| v[:rule] == rule.id }

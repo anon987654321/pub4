@@ -43,7 +43,7 @@ module Providers
       end
 
       payload = fetch_json(source_url, token: token)
-      upsert_snapshot(source_name, source.fetch(:kind), source_url, payload)
+      upsert_snapshot(source: source_name, kind: source.fetch(:kind), url: source_url, payload:)
       rows = normalize(source.fetch(:normalizer), payload)
       replace_models(source_name, rows)
       rows.size
@@ -52,7 +52,7 @@ module Providers
     def import_file(source_name, path, normalizer: nil)
       source = SOURCES.fetch(source_name, { kind: "file_import", normalizer: normalizer || source_name })
       payload = JSON.parse(File.read(path))
-      upsert_snapshot(source_name, source.fetch(:kind), path, payload)
+      upsert_snapshot(source: source_name, kind: source.fetch(:kind), url: path, payload:)
       rows = normalize(source.fetch(:normalizer), payload)
       replace_models(source_name, rows)
       rows.size
@@ -132,7 +132,7 @@ module Providers
       JSON.parse(response.body)
     end
 
-    def upsert_snapshot(source, kind, url, payload)
+    def upsert_snapshot(source:, kind:, url:, payload:)
       db.execute(<<~SQL, [source, kind, url, Time.now.utc.iso8601, JSON.generate(payload)])
         INSERT INTO provider_snapshots(source, kind, url, fetched_at, raw_json)
         VALUES(?, ?, ?, ?, ?)
