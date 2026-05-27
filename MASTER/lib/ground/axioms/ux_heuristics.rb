@@ -49,8 +49,8 @@ module Master
 
     def self.cite(heuristic_key, violation, medium: :web)
       h = HEURISTICS.fetch(heuristic_key, heuristic_key.to_s)
-      num = heuristic_key.to_s[/\d+/]
-      "[Nielsen ##{num} — #{h.split(' — ').first}] #{violation}"
+      heuristic_number = heuristic_key.to_s[/\d+/]
+      "[Nielsen ##{heuristic_number} — #{h.split(' — ').first}] #{violation}"
     end
 
     def self.number(heuristic_key)

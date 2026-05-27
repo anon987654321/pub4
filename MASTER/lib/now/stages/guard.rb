@@ -12,10 +12,10 @@ module Master
       end
 
       def call(ctx)
-        msg = ctx[:message].to_s
-        return Result.ok(ctx) if msg.empty?
+        message_text = ctx[:message].to_s
+        return Result.ok(ctx) if message_text.empty?
 
-        scan = @injection_guard.scan(msg)
+        scan = @injection_guard.scan(message_text)
         return Result.err("guard: #{scan.message}", category: :validation) if scan.err?
 
         Result.ok(ctx)

@@ -69,8 +69,8 @@ module Master
     private
 
     def next_phase
-      idx = PHASES.index(current) || 0
-      PHASES[[idx + 1, PHASES.size - 1].min]
+      phase_index = PHASES.index(current) || 0
+      PHASES[[phase_index + 1, PHASES.size - 1].min]
     end
 
     def unmet_gates(phase)

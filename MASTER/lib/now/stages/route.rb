@@ -31,9 +31,9 @@ module Master
         cmd = @commands[ctx[:command]]
         unless cmd
           suggestion = closest_command(ctx[:command])
-          msg = "unknown command: /#{ctx[:command]}"
-          msg += " -- did you mean /#{suggestion}?" if suggestion
-          return Result.err(msg, category: :validation)
+          error_message = "unknown command: /#{ctx[:command]}"
+          error_message += " -- did you mean /#{suggestion}?" if suggestion
+          return Result.err(error_message, category: :validation)
         end
         Result.ok(ctx.merge(handler: cmd))
       end
