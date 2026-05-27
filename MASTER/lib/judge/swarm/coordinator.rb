@@ -24,6 +24,7 @@ module Master
       SHARED_DEADLINE = 60
       SYNTHESIS_TRUNCATE_LIMIT = 200
       MIN_QUORUM = 2
+      CONSENSUS_THRESHOLD = 0.66
 
       def initialize(agent:, event_bus: nil)
         @agent = agent
@@ -92,6 +93,52 @@ module Master
       end
 
       def worker_roles = WORKER_CLASSES.keys
+
+      # Spawn N workers in parallel, collect results within timeout, then run
+      # confidence-weighted voting. Returns Result.ok with consensus/dissent/
+      # arbitrated/workers keys. Partial quorum (>= MIN_QUORUM ok results)
+      # proceeds; timed-out/errored slots carry Result.err payloads.
+      def swarm_vote(tasks, timeout: WORKER_TIMEOUT)
+        mutex = Mutex.new
+        workers_out = []
+        deadline = Time.now + timeout
+
+        threads = tasks.map do |task_spec|
+          Thread.new do
+            role = task_spec[:role]
+            result = dispatch(role, task: task_spec[:task],
+                              context_slice: task_spec.fetch(:context_slice, {}))
+            confidence = extract_confidence(result)
+            entry = { role:, output: result, confidence: }
+            mutex.synchronize { workers_out << entry }
+          rescue StandardError => error
+            entry = { role: task_spec[:role],
+                      output: Result.err("worker error: #{error.message}", category: :infrastructure),
+                      confidence: 0.0 }
+            mutex.synchronize { workers_out << entry }
+          end
+        end
+
+        threads.each do |thread|
+          remaining = [deadline - Time.now, 0].max
+          unless thread.join(remaining)
+            thread.kill rescue ThreadError
+            @bus&.publish(:swarm_worker_timeout, timeout:)
+          end
+        end
+
+        ok_workers = workers_out.select { |w| w[:output].ok? }
+
+        if ok_workers.size < MIN_QUORUM
+          @bus&.publish(:swarm_vote_insufficient_quorum, count: ok_workers.size)
+          return Result.ok({ consensus: nil, dissent: workers_out, arbitrated: false,
+                             workers: workers_out, verdict: :insufficient_quorum })
+        end
+
+        consensus, dissent, arbitrated = vote(ok_workers, tasks.first&.dig(:task).to_s)
+        @bus&.publish(:swarm_vote_done, arbitrated:, consensus: consensus.to_s[0..80])
+        Result.ok({ consensus:, dissent:, arbitrated:, workers: workers_out })
+      end
 
       private
 
@@ -174,6 +221,71 @@ module Master
             :reject
           end
         end
+      end
+
+      # Confidence-weighted vote across ok_workers. Returns [consensus, dissent, arbitrated].
+      # consensus is the recommendation text with >= CONSENSUS_THRESHOLD weighted agreement.
+      # dissent is the array of worker entries that did not agree with the consensus.
+      # arbitrated is true when the agent broke a tie; false otherwise.
+      def vote(ok_workers, task_context)
+        total_weight = ok_workers.sum { |w| WORKER_WEIGHTS.fetch(w[:role], 1) * w[:confidence] }
+
+        # Group workers by their recommendation signal (:approve / :reject / :neutral).
+        by_signal = ok_workers.group_by { |w| recommendation_signal(w[:output]) }
+
+        best_signal, best_workers = by_signal.max_by do |_signal, workers|
+          workers.sum { |w| WORKER_WEIGHTS.fetch(w[:role], 1) * w[:confidence] }
+        end
+
+        best_weight = best_workers&.sum { |w| WORKER_WEIGHTS.fetch(w[:role], 1) * w[:confidence] } || 0.0
+        agreement = total_weight.positive? ? best_weight / total_weight : 0.0
+
+        if agreement >= CONSENSUS_THRESHOLD
+          consensus = summarize_outputs(best_workers)
+          dissent = ok_workers - best_workers
+          [consensus, dissent, false]
+        else
+          consensus = arbitrate(ok_workers, task_context)
+          [consensus, [], true]
+        end
+      end
+
+      def extract_confidence(result)
+        return 0.0 unless result.ok?
+        value = result.value!
+        conf = value.is_a?(Hash) ? (value[:confidence] || value["confidence"]) : nil
+        conf ? conf.to_f.clamp(0.0, 1.0) : 1.0
+      end
+
+      def recommendation_signal(result)
+        return :neutral unless result.ok?
+        value = result.value!
+        if value.is_a?(Hash)
+          approved = value["approved"] || value[:approved]
+          return :approve if approved == true
+          return :reject  if approved == false
+        end
+        text = value.to_s.downcase
+        return :approve if text.match?(/\b(approv(e|ed)|looks good|no issues|lgtm)\b/)
+        return :reject  if text.match?(/\b(reject|fail|error|violation|problem|insecure)\b/)
+        :neutral
+      end
+
+      def summarize_outputs(workers)
+        workers.map { |w| "#{w[:role]}: #{w[:output].value!.to_s.strip}" }.join("\n\n")
+      end
+
+      # Agent arbitrates when workers cannot reach consensus. Sends all outputs.
+      def arbitrate(ok_workers, task_context)
+        context = ok_workers.map { |w|
+          "#{w[:role]} (confidence #{w[:confidence].round(2)}): #{w[:output].value!}"
+        }.join("\n\n")
+        prompt = "Workers could not reach consensus on: #{task_context}\n\nWorker outputs:\n#{context}\n\nPick the best recommendation and explain why."
+        @bus&.publish(:swarm_arbitration_start, task: task_context[0..60])
+        @agent.ask(prompt)
+      rescue StandardError => error
+        @bus&.publish(:swarm_arbitration_failed, error: error.message)
+        "(arbitration failed: #{error.message})"
       end
 
       def worker_for(role)
