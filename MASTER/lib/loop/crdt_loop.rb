@@ -16,11 +16,11 @@ module Master
 
     def initialize(agent_id:, root:, bus: nil)
       @agent_id = agent_id
-      @root     = root
-      @bus      = bus
-      @state    = {}   # path → LwwRegister
-      @clock    = 0
-      @mutex    = Mutex.new
+      @root = root
+      @bus = bus
+      @state = {} # path → LwwRegister
+      @clock = 0
+      @mutex = Mutex.new
     end
 
     # Apply a fix proposal from any agent. Wins if timestamp is newer.
@@ -72,6 +72,7 @@ module Master
       File.write(tmp, content, encoding: "UTF-8")
       File.rename(tmp, full_path)
     rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "CrdtLoop.apply_to_disk", event_bus: @bus, path:)
       File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
       @bus&.publish("crdt_loop:write_error", path: path, error: e.message)
     end

@@ -12,11 +12,11 @@ module Master
 
     def initialize(session:, event_bus: nil, root: Dir.pwd)
       @session = session
-      @bus     = event_bus
-      @root    = root
+      @bus = event_bus
+      @root = root
       @journal = File.join(root, ".master", "undo_journal.jsonl")
-      @stack   = load_journal
-      @redo    = []
+      @stack = load_journal
+      @redo = []
     end
 
     def snapshot(path)
@@ -37,7 +37,7 @@ module Master
       paths = []
 
       steps.times do
-        entry   = @stack.pop
+        entry = @stack.pop
         current = File.exist?(entry["path"]) ? File.read(entry["path"]) : nil
         @redo << { "path" => entry["path"], "content" => current, "ts" => Time.now.to_i }
         restore(entry["path"], entry["content"])
@@ -55,7 +55,7 @@ module Master
       steps = [steps, @redo.size].min
       paths = []
       steps.times do
-        entry   = @redo.pop
+        entry = @redo.pop
         current = File.exist?(entry["path"]) ? File.read(entry["path"]) : nil
         @stack << { "path" => entry["path"], "content" => current, "ts" => Time.now.to_i }
         restore(entry["path"], entry["content"])
@@ -88,14 +88,15 @@ module Master
       end
     rescue StandardError => e
       File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
-      raise e
+      raise
     end
 
     def load_journal
       return [] unless File.exist?(@journal)
       File.readlines(@journal).filter_map do |line|
         JSON.parse(line.strip)
-      rescue JSON::ParserError; nil
+      rescue JSON::ParserError
+        nil
       end
     rescue StandardError => e
       @bus&.publish("undo:read_error", error: e.message) if defined?(@bus)
@@ -109,7 +110,7 @@ module Master
       File.rename(tmp_path, @journal)
     rescue StandardError => e
       File.delete(tmp_path) if defined?(tmp_path) && File.exist?(tmp_path) rescue nil
-      raise e
+      raise
     end
   end
   end

@@ -9,22 +9,22 @@ module Master
   # sketch compactness (radical = fewer files), writes top K to runtime/proposals.md.
   # Triggered manually via /propose-tree or by the bus on fix_loop:clean|plateau.
   class ProposeTree
-    OUT_PATH      = "runtime/proposals.md"
-    DRAFT_N       = 10
-    KEEP_TOP      = 3
+    OUT_PATH = "runtime/proposals.md"
+    DRAFT_N = 10
+    KEEP_TOP = 3
     COOLDOWN_SECS = 86_400
 
     def initialize(root:, agent:, event_bus: nil)
-      @root  = root
+      @root = root
       @agent = agent
-      @bus   = event_bus
+      @bus = event_bus
     end
 
     def call(n: DRAFT_N)
       return cooldown_message if cooling_down?
 
-      tree      = current_tree
-      response  = @agent.ask(prompt(tree, n))
+      tree = current_tree
+      response = @agent.ask(prompt(tree, n))
       proposals = parse(response)
       return "propose-tree: parse failed" if proposals.empty?
 

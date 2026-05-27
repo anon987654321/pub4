@@ -12,13 +12,13 @@ module Master
     TIER_RATE_LIMITS = { guarded: 10, dangerous: 3 }.freeze
 
     def initialize(config:, event_bus: nil)
-      @config        = config
-      @bus           = event_bus
-      @prompt        = $stdout.isatty ? TTY::Prompt.new : nil
-      @auto          = config.auto?
-      @approve_all   = false
-      @rate_windows  = Hash.new { |h, k| h[k] = [] }
-      @rate_mutex    = Mutex.new
+      @config = config
+      @bus = event_bus
+      @prompt = $stdout.isatty ? TTY::Prompt.new : nil
+      @auto = config.auto?
+      @approve_all = false
+      @rate_windows = Hash.new { |h, k| h[k] = [] }
+      @rate_mutex = Mutex.new
     end
 
     def check_permit(tool_name, tier, description = nil)
@@ -30,8 +30,8 @@ module Master
       end
 
       case tier
-      when :safe      then return Result.ok(true)
-      when :guarded   then return Result.ok(true) if @auto || @approve_all
+      when :safe then return Result.ok(true)
+      when :guarded then return Result.ok(true) if @auto || @approve_all
       when :dangerous
         return Result.ok(true) if @auto || @approve_all
         return Result.ok(true) unless needs_human?(description)
@@ -44,7 +44,7 @@ module Master
 
     alias permit? check_permit
 
-    def approve_all!   = @approve_all = true
+    def approve_all! = @approve_all = true
     def reset_approve! = @approve_all = false
 
     private
@@ -73,25 +73,26 @@ module Master
     def ask_user(tool_name, tier, description)
       return Result.err("non-TTY: cannot prompt for approval", category: :validation) unless @prompt
 
-      label  = description ? "#{tool_name}: #{description}" : tool_name
+      label = description ? "#{tool_name}: #{description}" : tool_name
       choice = @prompt.select("#{tier_icon(tier)} #{label}", [
         { name: "approve", value: :approve },
-        { name: "deny",    value: :deny },
-        { name: "quit",    value: :quit }
+        { name: "deny", value: :deny },
+        { name: "quit", value: :quit }
       ])
 
       case choice
       when :approve then Result.ok(true)
-      when :deny    then @bus&.publish("tool:denied", tool: tool_name)
-                         Result.err("denied by user", category: :validation)
-      when :quit    then Result.err("quit", category: :shutdown)
+      when :deny
+        @bus&.publish("tool:denied", tool: tool_name)
+        Result.err("denied by user", category: :validation)
+      when :quit then Result.err("quit", category: :shutdown)
       end
     end
 
     def tier_icon(tier)
       case tier
-      when :safe      then "i"
-      when :guarded   then "!"
+      when :safe then "i"
+      when :guarded then "!"
       when :dangerous then "!!"
       end
     end

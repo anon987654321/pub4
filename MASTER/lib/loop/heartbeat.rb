@@ -8,12 +8,12 @@ module Master
     include Master::Ground::AtomicWrite
     POLL_INTERVAL = 60
     JOURNAL_KEEP = 50
-    DATA_PATH  = File.join(Master::ROOT, "data", "heartbeat.yml").freeze
+    DATA_PATH = File.join(Master::ROOT, "data", "heartbeat.yml").freeze
     STATE_PATH = ".master/heartbeat_state.yml".freeze
 
-    RESULT_TRUNCATE     = 200
-    SECONDS_PER_HOUR    = 3600
-    SECONDS_PER_2HOURS  = 7200
+    RESULT_TRUNCATE = 200
+    SECONDS_PER_HOUR = 3600
+    SECONDS_PER_2HOURS = 7200
 
     JOB_HANDLERS = {
       "prune_memory" => :prune_memory,
@@ -24,23 +24,23 @@ module Master
     }.freeze
 
     def initialize(root:, agent: nil, scanner: nil, memory: nil, event_bus: nil, homeostat: nil)
-      @root      = root
-      @agent     = agent
-      @scanner   = scanner
-      @memory    = memory
-      @bus       = event_bus
+      @root = root
+      @agent = agent
+      @scanner = scanner
+      @memory = memory
+      @bus = event_bus
       @homeostat = homeostat
-      @jobs      = load_jobs
-      @state     = load_state
-      @thread    = nil
-      @stop      = false
+      @jobs = load_jobs
+      @state = load_state
+      @thread = nil
+      @stop = false
     end
 
     def start!
       return unless ENV["MASTER_HEARTBEAT"] == "1"
       return if @jobs.empty?
 
-      @stop   = false
+      @stop = false
       @thread = Thread.new do
         loop do
           break if @stop
@@ -64,7 +64,7 @@ module Master
       results = []
 
       @jobs.each do |job|
-        name     = job["name"]
+        name = job["name"]
         interval = job["interval_seconds"].to_i
         last_run = @state.dig(name, "last_run").to_i
 
@@ -83,7 +83,7 @@ module Master
     def list
       @jobs.map do |job|
         last = @state.dig(job["name"], "last_run").to_i
-        ago  = last.zero? ? "never" : "#{(Time.now.to_i - last) / 60}m ago"
+        ago = last.zero? ? "never" : "#{(Time.now.to_i - last) / 60}m ago"
         "#{job["name"]}: every #{job["interval_seconds"] / 60}m, last: #{ago}"
       end.join("\n")
     end
@@ -117,7 +117,7 @@ module Master
       RubyLLM.chat(model: model_id).ask("ping")
       true
     rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "heartbeat.model_reachable?", event_bus: @bus, model_id:)
+      Master::Ground::Swallow.log(e, context: "Heartbeat.model_reachable?", event_bus: @bus, model_id:)
       false
     end
 
@@ -158,7 +158,8 @@ module Master
       result = Master.load_yaml(path)
       jobs = result.is_a?(Array) ? result : default_jobs
       jobs.select { |j| j["enabled"] != false }
-    rescue StandardError => _e
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "Heartbeat.load_jobs", event_bus: @bus)
       default_jobs
     end
 
@@ -177,7 +178,7 @@ module Master
 
       Master.load_yaml(path) || {}
     rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "heartbeat.load_state", event_bus: @bus, path:)
+      Master::Ground::Swallow.log(e, context: "Heartbeat.load_state", event_bus: @bus, path:)
       {}
     end
 

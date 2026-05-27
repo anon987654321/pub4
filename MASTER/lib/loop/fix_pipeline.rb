@@ -9,14 +9,14 @@ module Master
     Stage = Struct.new(:name, :handler, keyword_init: true)
 
     def initialize(agent:, scanner:, bus: nil)
-      @agent   = agent
+      @agent = agent
       @scanner = scanner
-      @bus     = bus
-      @stages  = [
-        Stage.new(name: :triage,   handler: method(:triage)),
-        Stage.new(name: :fix,      handler: method(:fix)),
+      @bus = bus
+      @stages = [
+        Stage.new(name: :triage, handler: method(:triage)),
+        Stage.new(name: :fix, handler: method(:fix)),
         Stage.new(name: :validate, handler: method(:validate)),
-        Stage.new(name: :apply,    handler: method(:apply_stage)),
+        Stage.new(name: :apply, handler: method(:apply_stage)),
       ]
     end
 
@@ -45,7 +45,7 @@ module Master
       return nil unless File.exist?(path)
       pkt.merge(src: File.read(path, encoding: "UTF-8"))
     rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "fix_pipeline.triage", event_bus: @bus, path:)
+      Master::Ground::Swallow.log(e, context: "FixPipeline.triage", event_bus: @bus, path:)
     end
 
     def fix(pkt)
@@ -53,7 +53,7 @@ module Master
       return nil if response.strip.empty? || response.strip == "UNCHANGED"
       pkt.merge(candidate: response)
     rescue StandardError => e
-      Master::Ground::Swallow.log(e, context: "fix_pipeline.fix", event_bus: @bus)
+      Master::Ground::Swallow.log(e, context: "FixPipeline.fix", event_bus: @bus)
     end
 
     def validate(pkt)
@@ -65,12 +65,13 @@ module Master
     def apply_stage(pkt)
       return nil unless pkt[:valid]
       path = pkt[:violation][:file]
-      tmp  = "#{path}.pipeline.#{Process.pid}.tmp"
+      tmp = "#{path}.pipeline.#{Process.pid}.tmp"
       File.write(tmp, pkt[:candidate], encoding: "UTF-8")
       File.rename(tmp, path)
       @bus&.publish("fix_pipeline:applied", file: path)
       pkt
     rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "FixPipeline.apply_stage", event_bus: @bus, path:)
       File.delete(tmp) if defined?(tmp) && File.exist?(tmp) rescue nil
       @bus&.publish("fix_pipeline:write_error", file: path, error: e.message)
       nil
