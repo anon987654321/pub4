@@ -80,11 +80,7 @@ module Master
           web/app/views/chat/index.html.erb
           lib/voice/speech.rb
           lib/voice/dilla.rb
-          lib/voice/sonitex.rb
-          lib/voice/sonitex_sox.rb
           lib/voice/production_dna.rb
-          lib/voice/ffmpeg_lofi.rb
-          lib/voice/tts_lofi.rb
         ]
       end
 
@@ -102,15 +98,7 @@ module Master
       end
 
       def sonitex_brief
-        if defined?(Master::Voice::Sonitex)
-          Master::Voice::Sonitex.brief
-        elsif defined?(Master::Voice::SonitexSox)
-          Master::Voice::SonitexSox.brief
-        else
-          "Sonitex/SoX policy unavailable; prefer cumulative subtle degradation and document SoX gaps."
-        end
-      rescue StandardError => e
-        "Sonitex/SoX policy failed to load: #{e.message}."
+        "Lo-fi chain: prefer cumulative subtle degradation; document any SoX/ffmpeg gaps as opt-in."
       end
 
       def dilla_brief
@@ -126,15 +114,7 @@ module Master
       end
 
       def tts_lofi_brief
-        if defined?(Master::Voice::TtsLofi)
-          Master::Voice::TtsLofi.brief
-        elsif defined?(Master::Voice::FfmpegLofi)
-          Master::Voice::FfmpegLofi.brief
-        else
-          "TTS lofi policy unavailable; default to clean audio and make effects opt-in."
-        end
-      rescue StandardError => e
-        "TTS lofi policy failed to load: #{e.message}."
+        "TTS policy: edge-tts primary (ms-MY-OsmanNeural via bin/tts-worker); espeak hard fallback; clean audio default; lofi effects opt-in only."
       end
 
       def sound_constraints
@@ -146,9 +126,9 @@ module Master
           "prefer tiny generated tones or short assets over heavy dependencies",
           "preserve existing visual identity",
           "use Ruby QualityFramework sound rules from Deliberation",
-          "when lo-fi processing is proposed, call Master::Voice::Sonitex rather than ad-hoc shell strings",
+          "when lo-fi processing is proposed, document it as opt-in and shell out via a dedicated worker, not inline",
           "when Dilla-style timing is proposed, call Master::Voice::Dilla for swing, nudge, chord, and preset data",
-          "when TTS effects are proposed, call Master::Voice::TtsLofi or Master::Voice::FfmpegLofi and keep clean audio as default"
+          "TTS backend is edge-tts via bin/tts-worker; espeak is the only fallback; no other TTS backends"
         ]
       end
 
