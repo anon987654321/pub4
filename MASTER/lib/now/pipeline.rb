@@ -5,8 +5,8 @@ require "open3"
 module Master
   module Now
   class Pipeline
-    ROLLBACK_CATEGORIES   = %i[validation axiom_violation unknown provider_error llm_call_failure].freeze
-    MS_PER_SECOND         = 1000
+    ROLLBACK_CATEGORIES = %i[validation axiom_violation unknown provider_error llm_call_failure].freeze
+    MS_PER_SECOND = 1000
     ROLLBACK_MSG_TRUNCATE = 120
 
     attr_reader :last_timings
@@ -74,7 +74,8 @@ module Master
         thread.kill
         @bus&.publish("pipeline:stage_timeout", stage: stage.class.name)
         Result.ok(frozen.merge(_parallel_timeout: stage.class.name))
-      rescue ThreadError => _e
+      rescue ThreadError => e
+        Master::Ground::Swallow.log(e, context: "Pipeline::ParallelGroup.handle_timeout")
         Result.ok(frozen.merge(_parallel_timeout: stage.class.name))
       end
 

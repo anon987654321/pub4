@@ -9,17 +9,17 @@ module Master
     # PRAISE votes are appended to data/exemplars.yml for future reference.
     class Council
       include Master::Ground::AtomicWrite
-      EXEMPLARS_PATH       = File.join(Master::ROOT, "data", "exemplars.yml").freeze
-      EXEMPLAR_MSG_CHARS   = 120
+      EXEMPLARS_PATH = File.join(Master::ROOT, "data", "exemplars.yml").freeze
+      EXEMPLAR_MSG_CHARS = 120
       EXEMPLAR_FEEDBACK_CHARS = 240
 
       def initialize(deliberation:, config: nil, enabled: false, event_bus: nil)
-        @deliberation      = deliberation
-        @config            = config
-        @bus               = event_bus
-        @enabled           = @config&.[]("council") == true || enabled
+        @deliberation = deliberation
+        @config = config
+        @bus = event_bus
+        @enabled = @config&.[]("council") == true || enabled
         @dangerous_patterns = load_patterns
-        @exemplar_mutex    = Mutex.new
+        @exemplar_mutex = Mutex.new
       end
 
       def call(ctx)

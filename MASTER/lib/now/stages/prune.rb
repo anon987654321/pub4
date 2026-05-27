@@ -6,15 +6,15 @@ module Master
     # Prune — strip sycophancy and markdown formatting from LLM responses.
     # Rules loaded from data/rules.yml (voice.strunk). Fence-aware: prunes prose, leaves code blocks.
     class Prune
-      FENCE_RE  = /(```.*?```)/m.freeze
+      FENCE_RE = /(```.*?```)/m.freeze
 
-      HEADER_RE     = %r{^\#{1,6}\s+}.freeze
-      BOLD_RE       = /\*\*(.+?)\*\*/
-      ITALIC_RE     = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/
-      BULLET_RE     = /^\s*[-*+]\s+/
-      NUMBERED_RE   = /^\s*\d+\.\s+/
-      HR_RE         = /^-{3,}\s*$/
-      LINK_RE       = /\[([^\]]+)\]\([^)]+\)/
+      HEADER_RE = %r{^\#{1,6}\s+}.freeze
+      BOLD_RE = /\*\*(.+?)\*\*/
+      ITALIC_RE = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/
+      BULLET_RE = /^\s*[-*+]\s+/
+      NUMBERED_RE = /^\s*\d+\.\s+/
+      HR_RE = /^-{3,}\s*$/
+      LINK_RE = /\[([^\]]+)\]\([^)]+\)/
       SYCOPHANCY_RE = /\A\s*(?:
         certainly|of[ ]course|great[ ]question|absolutely|sure|
         happy[ ]to[ ]help|i(?:'d|[ ]would)[ ]be[ ](?:happy|glad)|no[ ]problem
@@ -75,7 +75,8 @@ module Master
           data = File.exist?(Master::RULES_PATH) ? Master.load_yaml(Master::RULES_PATH) : {}
           data.dig("voice", "strunk") || {}
         end
-      rescue StandardError => _e
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Prune.rules")
         @rules = {}
       end
     end

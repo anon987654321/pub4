@@ -14,10 +14,13 @@ module Master
   # expires or it is explicitly cleared. All decisions are appended to NDJSON so
   # the quarantine state is replayable from the event log.
   class ProviderQuarantineManager
-    QUARANTINE_PATH    = File.join(Master::ROOT, "runtime", "telemetry", "quarantine.ndjson").freeze
-    DEFAULT_DURATION   = 300  # seconds — 5 minutes initial quarantine
-    MAX_DURATION       = 3600 # 1 hour ceiling
-    QUARANTINE_THRESHOLD = 0.10 # score at or below this triggers quarantine
+    QUARANTINE_PATH = File.join(Master::ROOT, "runtime", "telemetry", "quarantine.ndjson").freeze
+    # 5 minutes initial quarantine
+    DEFAULT_DURATION = 300
+    # 1 hour ceiling
+    MAX_DURATION = 3600
+    # score at or below this triggers quarantine
+    QUARANTINE_THRESHOLD = 0.10
 
     QuarantineEntry = Data.define(:model, :reason, :quarantined_at, :expires_at, :duration)
 
@@ -97,7 +100,8 @@ module Master
       File.readlines(@path, chomp: true).filter_map do |line|
         next if line.strip.empty?
         JSON.parse(line)
-      rescue JSON::ParserError
+      rescue JSON::ParserError => e
+        Master::Ground::Swallow.log(e, context: "ProviderQuarantineManager.all_entries")
         nil
       end
     end

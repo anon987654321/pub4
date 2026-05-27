@@ -80,10 +80,10 @@ module Master
 
     def from_phase
       case @session.phase.to_s
-      when "discover"  then [prop("/scan",  "discover phase — survey state",    0.4)]
-      when "implement" then [prop("/diff",  "implement phase — review staging", 0.45)]
-      when "audit"     then [prop("/council", "audit phase — convene council", 0.5)]
-      else                  []
+      when "discover" then [prop("/scan", "discover phase — survey state", 0.4)]
+      when "implement" then [prop("/diff", "implement phase — review staging", 0.45)]
+      when "audit" then [prop("/council", "audit phase — convene council", 0.5)]
+      else []
       end
     end
 
@@ -99,7 +99,12 @@ module Master
 
     def from_bus_tail
       return [] unless @bus.respond_to?(:tail)
-      events = begin; @bus.tail(20); rescue StandardError => _e; []; end
+      events = begin
+        @bus.tail(20)
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Propose.from_bus_tail")
+        []
+      end
       return [] if events.empty?
       out = []
       escalations = events.count { |e| e[:event].to_s.include?("escalation") }

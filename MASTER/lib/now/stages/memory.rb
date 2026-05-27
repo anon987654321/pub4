@@ -5,11 +5,11 @@ module Master
   module Stages
     # Memory — one stage for durable user/project memories and voice episodes.
     class Memory
-      REMEMBER_RE   = /\bremember\s+(?:that\s+)?(.{10,200}?)(?:[.!]|$)/im.freeze
-      DECISION_RE   = /\bwe(?:'ve|\s+have)?\s+decided\s+(?:to\s+)?(.{10,150}?)(?:[.!]|$)/im.freeze
-      PREFER_RE     = /\bI\s+prefer\s+(.{5,100}?)(?:[.!]|$)/im.freeze
-      ROLE_RE       = /\bI(?:'m| am)\s+(?:a\s+|the\s+)?([a-z][a-z\s-]{3,40}?)(?:[.,!]|\s+(?:and|but|so|who))/im.freeze
-      DONT_RE       = /\b(?:don'?t|stop|never)\s+(.{5,120}?)(?:[.!]|$)/im.freeze
+      REMEMBER_RE = /\bremember\s+(?:that\s+)?(.{10,200}?)(?:[.!]|$)/im.freeze
+      DECISION_RE = /\bwe(?:'ve|\s+have)?\s+decided\s+(?:to\s+)?(.{10,150}?)(?:[.!]|$)/im.freeze
+      PREFER_RE = /\bI\s+prefer\s+(.{5,100}?)(?:[.!]|$)/im.freeze
+      ROLE_RE = /\bI(?:'m| am)\s+(?:a\s+|the\s+)?([a-z][a-z\s-]{3,40}?)(?:[.,!]|\s+(?:and|but|so|who))/im.freeze
+      DONT_RE = /\b(?:don'?t|stop|never)\s+(.{5,120}?)(?:[.!]|$)/im.freeze
       EPISODE_CHARS = 160
 
       def initialize(memory:, event_bus: nil)

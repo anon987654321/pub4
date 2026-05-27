@@ -37,6 +37,7 @@ module Master
 
         Result.ok(ctx.merge(lint_report: findings))
       rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Lint.call", event_bus: @bus)
         Result.ok(ctx.merge(lint_error: e.message))
       end
 

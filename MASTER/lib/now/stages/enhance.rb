@@ -71,7 +71,8 @@ module Master
         return { enhanced: msg, changed: false } if skip?(msg)
 
         with_timeout { enhance(msg) } || { enhanced: msg, changed: false }
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Enhance.call_raw")
         { enhanced: msg, changed: false }
       end
 
@@ -92,7 +93,8 @@ module Master
         else
           { enhanced: msg, changed: false }
         end
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Enhance.enhance")
         { enhanced: msg, changed: false }
       end
 

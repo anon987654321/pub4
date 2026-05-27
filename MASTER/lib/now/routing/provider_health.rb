@@ -68,7 +68,8 @@ module Master
             next if line.strip.empty?
 
             JSON.parse(line)
-          rescue JSON::ParserError => _e
+          rescue JSON::ParserError => e
+            Master::Ground::Swallow.log(e, context: "ProviderHealth.events_for")
             nil
           end.select { |event| event["model"].to_s == model_id }
         end
