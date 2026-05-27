@@ -45,9 +45,12 @@ module Master
     def decide(command)
       source = command.to_s.strip
       return Decision.new(mode: :deny, reason: "empty command") if source.empty?
-      return Decision.new(mode: :deny, reason: "matched deny pattern") if DENY_PATTERNS.any? { |pattern| source.match?(pattern) }
-      return Decision.new(mode: :ask, reason: "matched ask pattern") if ASK_PATTERNS.any? { |pattern| source.match?(pattern) }
-      return Decision.new(mode: :allow, reason: "matched safe allow pattern") if ALLOW_PATTERNS.any? { |pattern| source.match?(pattern) }
+      return Decision.new(mode: :deny, reason: "matched deny pattern") if
+        DENY_PATTERNS.any? { |p| source.match?(p) }
+      return Decision.new(mode: :ask, reason: "matched ask pattern") if
+        ASK_PATTERNS.any? { |p| source.match?(p) }
+      return Decision.new(mode: :allow, reason: "matched safe allow pattern") if
+        ALLOW_PATTERNS.any? { |p| source.match?(p) }
 
       Decision.new(mode: :ask, reason: "unknown command risk")
     end
@@ -57,7 +60,8 @@ module Master
     end
 
     def brief
-      "Sandbox policy: deny destructive/system commands, ask for pushes/deploy/db/reset, allow read-only git and test/lint commands."
+      "Sandbox policy: deny destructive/system commands, " \
+        "ask for pushes/deploy/db/reset, allow read-only git and test/lint commands."
     end
   end
   end

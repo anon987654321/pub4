@@ -27,12 +27,12 @@ module Master
       end
 
       def lock_unveil! = LibC.unveil(Fiddle::NULL, Fiddle::NULL)
-      def openbsd?     = true
+      def openbsd? = true
     else
-      def pledge(*)    = nil
-      def unveil(*)    = nil
+      def pledge(*) = nil
+      def unveil(*) = nil
       def lock_unveil! = nil
-      def openbsd?     = false
+      def openbsd? = false
     end
 
     GEM_DIRS = [".local/share/gem", ".gem"].freeze

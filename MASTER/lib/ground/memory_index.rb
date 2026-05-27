@@ -14,7 +14,11 @@ module Master
 
     attr_reader :root, :index_path
 
-    def initialize(root: Master::ROOT, dirs: DEFAULT_DIRS, index_path: File.join(Master::ROOT, ".master", "memory_index.json"))
+    def initialize(
+      root: Master::ROOT,
+      dirs: DEFAULT_DIRS,
+      index_path: File.join(Master::ROOT, ".master", "memory_index.json")
+    )
       @root = root
       @dirs = dirs
       @index_path = index_path
@@ -30,7 +34,9 @@ module Master
         out[rel] = if old && old["hash"] == hash
                      old
                    else
-                     tokenize(body).merge("hash" => hash, "path" => rel, "title" => title(body, path), "bytes" => body.bytesize)
+                     tokenize(body).merge(
+                       "hash" => hash, "path" => rel, "title" => title(body, path), "bytes" => body.bytesize
+                     )
                    end
       end
       FileUtils.mkdir_p(File.dirname(index_path))

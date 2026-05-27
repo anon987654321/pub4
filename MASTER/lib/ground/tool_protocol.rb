@@ -3,7 +3,8 @@
 module Master
   module Ground
   module ToolProtocol
-    CLAIM_WORDS = /\b(read|fetched|opened|searched|ran|executed|wrote|created|updated|deleted|patched|committed|verified)\b/i.freeze
+    CLAIM_WORDS = /\b(read|fetched|opened|searched|ran|executed|wrote|created|updated|
+                       deleted|patched|committed|verified)\b/xi.freeze
     COMMAND_BLOCK = /```(?:bash|sh|zsh|python|ruby|powershell|shell)\b/i.freeze
 
     REQUIREMENTS = [

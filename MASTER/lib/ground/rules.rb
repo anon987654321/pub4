@@ -21,7 +21,7 @@ module Master
 
     # mtime-aware cache. Reloads automatically when data/<name>.yml changes on disk.
     def data(name)
-      key  = name.to_sym
+      key = name.to_sym
       path = File.join(@data_dir, "#{name}.yml")
       return @cache[key]&.first || {} unless File.exist?(path)
 
@@ -57,7 +57,7 @@ module Master
       limit ? @philosophy.first(limit) : @philosophy
     end
 
-    def all_rules     = @all_rules ||= (@data["rules"] || {}).values.flatten.freeze
+    def all_rules = @all_rules ||= (@data["rules"] || {}).values.flatten.freeze
     def rules_for_scope(scope) = (@data.dig("rules", scope.to_s) || []).freeze
 
     def kernel_block

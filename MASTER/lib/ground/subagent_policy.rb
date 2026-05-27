@@ -21,7 +21,8 @@ module Master
       },
       plan: {
         label: "plan",
-        prompt: "Architecture planning agent. Read current state and produce a concrete file-by-file plan. Do not modify files.",
+        prompt: "Architecture planning agent. Read current state and produce a concrete " \
+                "file-by-file plan. Do not modify files.",
         allow: %w[read_file glob grep ls search fetch fetch_file bash]
       },
       code: {

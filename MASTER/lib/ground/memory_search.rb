@@ -25,7 +25,8 @@ module Master
       rows = search(query, limit: limit)
       return "Memory search: no hits for #{query.inspect}." if rows.empty?
 
-      "Memory search hits:\n" + rows.map { |doc| "- #{doc['path']} score=#{format('%.2f', doc['score'])} title=#{doc['title']}" }.join("\n")
+      lines = rows.map { |doc| "- #{doc['path']} score=#{format('%.2f', doc['score'])} title=#{doc['title']}" }
+      "Memory search hits:\n#{lines.join("\n")}"
     end
 
     private
