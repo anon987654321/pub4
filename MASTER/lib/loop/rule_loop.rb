@@ -17,21 +17,21 @@ module Master
   #   small file  → genetic_fix   (N candidates, rescan, best wins; arch #9)
   class RuleLoop
     RATE_LIMIT_SLEEP = 10
-    MAX_FIX_RETRIES  = 2
-    CANDIDATE_COUNT  = 3 # arch #9
+    MAX_FIX_RETRIES = 2
+    CANDIDATE_COUNT = 3
 
     SEVERITY_RANK = Master::SEVERITY_RANK
-    MIN_SEVERITY  = SEVERITY_RANK[:warning]
+    MIN_SEVERITY = SEVERITY_RANK[:warning]
 
     include Master::Ground::AtomicWrite
     include Master::Loop::FixHelpers
 
     def initialize(rule:, agent:, scanner:, root:, bus: nil, learnings: nil)
-      @rule      = rule
-      @agent     = agent
-      @scanner   = scanner
-      @root      = root
-      @bus       = bus
+      @rule = rule
+      @agent = agent
+      @scanner = scanner
+      @root = root
+      @bus = bus
       @learnings = learnings
     end
 
@@ -162,7 +162,8 @@ module Master
       return candidates.first if candidates.size == 1
       scored = candidates.filter_map { |c| [rescan_candidate(c, path), c] }
       scored.empty? ? candidates.first : scored.min_by(&:first).last
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "RuleLoop.best_candidate", rule: @rule.id)
       candidates.first
     end
 
@@ -172,7 +173,8 @@ module Master
         result = @scanner.scan(f.path, rules: [@rule])
         result.ok? ? result.value!.size : 99
       end
-    rescue StandardError
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context: "RuleLoop.rescan_candidate", rule: @rule.id)
       99
     end
 

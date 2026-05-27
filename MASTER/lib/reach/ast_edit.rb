@@ -8,15 +8,15 @@ module Master
     class AstEdit
       include PathGuard
       include Master::Ground::AtomicWrite
-      TIER        = :guarded
-      NAME        = "ast_edit".freeze
+      TIER = :guarded
+      NAME = "ast_edit".freeze
       DESCRIPTION = "AST-aware code editing: find, rename, or restructure Ruby methods safely.".freeze
 
       def initialize(root:, undo:, governor: nil, event_bus: nil)
-        @root     = File.realpath(root)
-        @undo     = undo
+        @root = File.realpath(root)
+        @undo = undo
         @governor = governor
-        @bus      = event_bus
+        @bus = event_bus
       end
 
       def call(operation:, path:, **opts)
@@ -40,7 +40,6 @@ module Master
 
       private
 
-      # Find a method definition and return its source lines
       def find_method(src, name)
         lines  = src.lines
         ranges = method_line_ranges(src)
@@ -51,7 +50,6 @@ module Master
         Result.ok("# #{name} (lines #{entry[:start]}–#{entry[:end]})\n#{slice}")
       end
 
-      # Rename all occurrences of a method definition and calls
       def rename_method(fp:, src:, from:, to:)
         return Result.err("ast_edit: from/to required", category: :validation) if from.empty? || to.empty?
         return Result.err("ast_edit: invalid name: #{to}",
@@ -71,7 +69,6 @@ module Master
         Result.ok("renamed #{from} → #{to} in #{File.basename(fp)}")
       end
 
-      # Insert a new method directly after an existing one
       def add_after_method(fp:, src:, after_name:, code:)
         return Result.err("ast_edit: after/code required", category: :validation) if after_name.empty? || code.empty?
 
@@ -92,7 +89,6 @@ module Master
         Result.ok("inserted method after #{after_name} in #{File.basename(fp)}")
       end
 
-      # Return start/end line numbers for each method definition
       def method_lines(src, name)
         ranges = method_line_ranges(src)
         entry  = ranges.find { |r| r[:name] == name }
@@ -112,7 +108,6 @@ module Master
           when :on_kw
             case token
             when "def"
-              # next identifier token is the method name
               stack.push({ name: nil, start: _line, depth: depth })
               depth += 1
             when "class", "module", "do", "begin", "for", "if", "unless",

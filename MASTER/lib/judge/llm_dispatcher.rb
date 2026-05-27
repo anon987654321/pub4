@@ -44,7 +44,7 @@ module Master
       def self.build_tool_capable_re
         yml_path = File.join(Master::ROOT, "data", "models.yml")
         prefixes = Master.load_yaml(yml_path).fetch("tool_capable_prefixes", [])
-        escaped  = prefixes.map { |p| Regexp.escape(p) }
+        escaped = prefixes.map { |p| Regexp.escape(p) }
         Regexp.new("\\A(?:#{escaped.join("|")})(?:[:\\/@\\-.].+)?\\z", Regexp::IGNORECASE).freeze
       end
 
@@ -53,8 +53,8 @@ module Master
       def initialize(deps:, system_prompt:)
         @config, @cache, @circuit_breaker = deps.config, deps.cache, deps.circuit_breaker
         @tools, @bus, @system_prompt_proc = deps.tools, deps.bus, system_prompt
-        @model_router  = deps.model_router
-        @session       = deps.session
+        @model_router = deps.model_router
+        @session = deps.session
         @tool_registry = load_tool_registry
       end
 
@@ -196,7 +196,7 @@ module Master
 
       def send_ruby_llm(selected_model, messages, sys:, stream:, &blk)
         chat_session = RubyLLM.chat(model: selected_model)
-        final_sys    = build_final_system(selected_model, sys)
+        final_sys = build_final_system(selected_model, sys)
         chat_session.with_instructions(final_sys) if final_sys
         messages.each { |msg| chat_session.add_message(role: msg[:role].to_s, content: msg[:content].to_s) }
 
@@ -286,7 +286,7 @@ module Master
       def build_llm_tools(visitor: false)
         tier = @model_router&.tier_for_model(@config.model).to_s
         @tools.filter_map do |tool|
-          wrapper  = LLM_TOOL_MAP[tool.class]
+          wrapper = LLM_TOOL_MAP[tool.class]
           next unless wrapper
           name = tool.class.name.split("::").last
           meta = @tool_registry.fetch(name, {})

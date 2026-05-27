@@ -18,7 +18,6 @@ module Master
         researcher: Workers::Researcher
       }.freeze
 
-      # Reviewer carries highest authority in verdict calculation.
       WORKER_WEIGHTS = { reviewer: 3, analyst: 2, researcher: 2, coder: 1 }.freeze
 
       WORKER_TIMEOUT = 30
@@ -98,14 +97,14 @@ module Master
 
       def join_or_timeout(th, timeout)
         return th.value if th.join(timeout)
-        begin; th.kill; rescue ThreadError; nil; end
+        th.kill rescue ThreadError
         @bus&.publish(:swarm_worker_timeout, timeout:)
         [:timeout, Result.err("worker timed out after #{timeout}s", category: :timeout)]
       end
 
       def join_or_parallel_timeout(th, deadline)
         return th.value if th.join(deadline)
-        begin; th.kill; rescue ThreadError; nil; end
+        th.kill rescue ThreadError
         @bus&.publish(:swarm_parallel_timeout, deadline:)
         [nil, Result.err("worker exceeded shared deadline", category: :timeout)]
       end

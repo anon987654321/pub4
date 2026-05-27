@@ -7,9 +7,9 @@ module Master
   module CommandRegistry
     module_function
 
-    TEXT_EXTS  = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini .env].to_set.freeze
+    TEXT_EXTS = %w[.rb .py .js .ts .zsh .sh .bash .md .yml .yaml .json .toml .gemspec .txt .erb .conf .ini .env].to_set.freeze
     TEXT_NAMES = %w[Gemfile Rakefile Makefile Dockerfile].to_set.freeze
-    SKIP_SEGS  = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
+    SKIP_SEGS = %w[.git vendor tmp var node_modules .bundle coverage log dist knowledge].to_set.freeze
 
     def system_commands(agent, diag, root)
       {

@@ -80,7 +80,11 @@ module Master
         @dmesg_sub = @bus&.subscribe("*") do |payload|
           ts = payload.fetch(:ts, 0)
           line = "  [#{ts.to_s.rjust(7)}] #{payload[:event]}"
-          $stdout.puts @renderer.render(line, mode: :dim) rescue nil
+          begin
+            $stdout.puts @renderer.render(line, mode: :dim)
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "CLI.toggle_dmesg")
+          end
         end
         puts @renderer.render("dmesg: on (events stream below)", mode: :dim)
       end
@@ -202,7 +206,12 @@ module Master
         return
       end
       lines = File.readlines(ledger_path, chomp: true).last(5)
-      last  = lines.last && JSON.parse(lines.last) rescue nil
+      last = begin
+        lines.last && JSON.parse(lines.last)
+      rescue JSON::ParserError, StandardError => e
+        Master::Ground::Swallow.log(e, context: "CLI.run_swallow_report")
+        nil
+      end
       unless last
         puts @renderer.render("swallow-report: ledger empty or unreadable", mode: :dim)
         return
