@@ -13,17 +13,17 @@ module Master
     VIOLATION_TRUNCATE = Master::VIOLATION_TRUNCATE
 
     def work_commands(ai:, root:, infra:)
-      scanner      = ai[:scanner]
-      fix_loop     = ai[:fix_loop]
-      ecology      = ai[:ecology]
+      scanner = ai[:scanner]
+      fix_loop = ai[:fix_loop]
+      ecology = ai[:ecology]
       deliberation = ai[:deliberation]
       council_stage = ai[:council_stage]
-      agent        = ai[:agent]
+      agent = ai[:agent]
       propose_tree = ai[:propose_tree]
-      session      = infra[:session]
-      bus          = infra[:bus]
-      config       = infra[:config]
-      metrics      = infra[:metrics]
+      session = infra[:session]
+      bus = infra[:bus]
+      config = infra[:config]
+      metrics = infra[:metrics]
       {
         "scan" => cmd(:dispatch_scan, scanner, root),
         "fix" => ->(ctx) { dispatch_fix(fix_loop, root, arg_for(ctx)) },
@@ -44,15 +44,15 @@ module Master
 
     # /status — one-frame health panel. Replaces seven probing tool calls.
     def dispatch_status(root:, fix_loop:, bus:)
-      git   = Reach::GitOperations.new(File.expand_path("..", root))
+      git = Reach::GitOperations.new(File.expand_path("..", root))
       ahead, behind = git.ahead_behind
-      head  = git.head || "?"
+      head = git.head || "?"
       dirty = git.dirty?(".")
-      svc   = service_status
-      bg    = fix_loop&.background_alive? ? "running" : "stopped"
-      af    = ENV["MASTER_AUTOFIX"] == "1" ? "on" : "off"
-      bndl  = bundle_status(File.expand_path("..", root))
-      evts  = recent_events(root, 5)
+      svc = service_status
+      bg = fix_loop&.background_alive? ? "running" : "stopped"
+      af = ENV["MASTER_AUTOFIX"] == "1" ? "on" : "off"
+      bndl = bundle_status(File.expand_path("..", root))
+      evts = recent_events(root, 5)
       branch = git.branch || "?"
       lines = [
         "status",
@@ -92,12 +92,12 @@ module Master
       return [] unless File.exist?(path)
       now = Time.now.utc
       File.foreach(path).to_a.last(n).map { |line|
-        rec  = JSON.parse(line) rescue next
-        ts   = (Time.parse(rec["timestamp"]) rescue now)
+        rec = JSON.parse(line) rescue next
+        ts = (Time.parse(rec["timestamp"]) rescue now)
         secs = (now - ts).to_i.abs
-        ago  = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
-        pay  = rec["payload"]
-        sum  = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
+        ago = secs < 60 ? "#{secs}s" : (secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h")
+        pay = rec["payload"]
+        sum = pay.is_a?(Hash) ? pay.first(3).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
         { ago: ago.rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
       }.compact
     rescue StandardError
@@ -107,7 +107,7 @@ module Master
     # /resync — divergence repair: tag, fetch, reset, bundle, restart.
     def dispatch_resync(root:, fix_loop:, arg:)
       repo = File.expand_path("..", root)
-      git  = Reach::GitOperations.new(repo)
+      git = Reach::GitOperations.new(repo)
       stop_msg = fix_loop&.background_alive? ? (fix_loop.stop_background!; "stopped fix_loop bg; ") : ""
       tag_name = "backup/#{Time.now.strftime("%Y%m%d-%H%M")}-resync"
       old_head = git.head
@@ -197,7 +197,7 @@ module Master
     AXIOM_SCAN_CAP = 400
 
     def dispatch_axioms(scanner, root, _arg)
-      files    = axiom_scan_files(root)
+      files = axiom_scan_files(root)
       by_axiom = tally_axioms(scanner, files)
       [axiom_table(files, by_axiom), "", dep_graph_line(root)].join("\n")
     end
@@ -231,8 +231,8 @@ module Master
 
     def ungraphed_rules(root)
       registered = Master::Judge::Scan::Rule.registry.map { |k| k.new.id.upcase }.uniq
-      graph      = (Master.load_yaml(File.join(root, "data", "rule_deps.yml")) || {})["deps"] || {}
-      graphed    = (graph.keys + graph.values.flat_map { |v| Array(v["after"]) }).map(&:to_s).uniq
+      graph = (Master.load_yaml(File.join(root, "data", "rule_deps.yml")) || {})["deps"] || {}
+      graphed = (graph.keys + graph.values.flat_map { |v| Array(v["after"]) }).map(&:to_s).uniq
       (registered - graphed).sort
     rescue StandardError => e
       Master::Ground::Swallow.log(e, context: "command_registry.ungraphed_rules")
@@ -247,7 +247,7 @@ module Master
     end
 
     def collect_scan_pairs(scanner:, root:, arg:, depth:)
-      raw_arg    = arg.sub(/\A(?:critical|solid|axioms|standard|deep|quick|hunt|critique|frontend)\s+/, "").strip
+      raw_arg = arg.sub(/\A(?:critical|solid|axioms|standard|deep|quick|hunt|critique|frontend)\s+/, "").strip
       target_arg = raw_arg.empty? ? nil : File.expand_path(raw_arg)
       if target_arg && File.file?(target_arg)
         [[target_arg, scanner.scan(target_arg, depth:)]]
@@ -266,7 +266,7 @@ module Master
           by_rule[v[:rule].to_s] << v
         end
       end
-      total  = by_rule.values.sum(&:size)
+      total = by_rule.values.sum(&:size)
       header = profile ? "[profile: #{profile}] " : ""
       return "#{header}clean -- no violations" if total.zero?
       lines = by_rule.sort_by { |_, vs| -vs.size }.flat_map do |rule, vs|
@@ -280,8 +280,8 @@ module Master
       groups, profiles = load_workflow_profiles(root)
       profile_name = %w[critical solid axioms].find { |p| arg.start_with?(p) }
       return [nil, :deep, nil] if profile_name.nil?
-      cfg         = profiles[profile_name] || {}
-      rule_ids    = groups[cfg["rules"].to_s]
+      cfg = profiles[profile_name] || {}
+      rule_ids = groups[cfg["rules"].to_s]
       rule_filter = (rule_ids && cfg["rules"] != "*") ? rule_ids.map(&:to_s).to_set : nil
       [profile_name, :deep, rule_filter]
     end
@@ -295,11 +295,11 @@ module Master
 
     def dispatch_review(council_stage:, deliberation:, root:, bus:, arg:)
       case arg
-      when "on"     then council_stage.enable!;  "review: enabled in pipeline"
+      when "on"     then council_stage.enable!; "review: enabled in pipeline"
       when "off"    then council_stage.disable!; "review: disabled in pipeline"
       when "status" then "review: #{council_stage.enabled? ? "on" : "off"} in pipeline"
       else
-        target   = arg.empty? ? "." : arg
+        target = arg.empty? ? "." : arg
         artifact = snapshot_artifact(expand_or_root(target, root))
         run_tribunal(deliberation:, artifact:, target:, bus:)
       end
@@ -315,7 +315,7 @@ module Master
     end
 
     def format_tribunal(feedback, bus = nil)
-      judge  = feedback.find { |f| f[:role] == "Synthesis" }
+      judge = feedback.find { |f| f[:role] == "Synthesis" }
       jurors = feedback.reject { |f| f[:role] == "Synthesis" }
       vetoes = jurors.select { |f| f[:veto_role] && f[:feedback].to_s.strip =~ /\AVETO:/i }
       out = []
@@ -327,7 +327,7 @@ module Master
       out << "" << "jurors:"
       jurors.each do |f|
         axiom = f[:axiom] ? "[#{f[:axiom]}] " : ""
-        body  = f[:feedback].to_s.strip.lines.first(3).map(&:chomp).join(" ")
+        body = f[:feedback].to_s.strip.lines.first(3).map(&:chomp).join(" ")
         out << "  #{axiom}#{f[:persona]} (#{f[:role]}): #{body}"
       end
       bus&.publish("tribunal:rendered", jurors: jurors.size, vetoes: vetoes.size, judge: !judge.nil?)
@@ -343,9 +343,9 @@ module Master
 
     def dispatch_critique(deliberation, root, arg)
       return "usage: /critique <file|text>" if arg.empty?
-      path    = File.expand_path(arg, root)
+      path = File.expand_path(arg, root)
       payload = File.exist?(path) ? File.read(path, encoding: "UTF-8") : arg
-      result  = deliberation.review_convergent(payload, context: "explicit /critique session")
+      result = deliberation.review_convergent(payload, context: "explicit /critique session")
       return result.message if result.err?
       deliberation_feedback(result.value!)
     end
@@ -366,9 +366,9 @@ module Master
     def list_models(root, metrics, agent)
       yml_path = File.join(root, "data", "models.yml")
       return "model: #{agent.model}" unless File.exist?(yml_path)
-      data  = Master.load_yaml(yml_path)
+      data = Master.load_yaml(yml_path)
       tiers = data["models"] || {}
-      model_lines   = tiers.flat_map { |tier, ms| ms.to_a.map { |mod| "  [#{tier}] #{mod["id"]}" } }
+      model_lines = tiers.flat_map { |tier, ms| ms.to_a.map { |mod| "  [#{tier}] #{mod["id"]}" } }
       quality_lines = metrics&.model_quality&.map { |mod, stat|
         "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
       } || []

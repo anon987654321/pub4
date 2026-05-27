@@ -20,10 +20,10 @@ module Master
       end
 
       def initialize(bus:, root:, interval: nil)
-        @bus        = bus
-        @root       = root
-        cfg         = load_config
-        @interval   = interval || cfg["interval_seconds"] || DEFAULT_INTERVAL
+        @bus = bus
+        @root = root
+        cfg = load_config
+        @interval = interval || cfg["interval_seconds"] || DEFAULT_INTERVAL
         @thresholds = cfg["thresholds"] || {}
         @prev_level = :ok
       end

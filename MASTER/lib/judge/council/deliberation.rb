@@ -205,14 +205,14 @@ module Master
     end
 
     class Deliberation
-      MAX_CONCURRENT       = 4
-      MAX_CODE_BYTES       = 8_192
-      TRUNCATE_MARKER      = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
-      JUDGE_TIMEOUT        = 30
-      TOTAL_BUDGET_S       = 120
-      MIN_QUORUM           = 3
-      CONVERGENCE_ROUNDS   = 3
-      CONVERGENCE_OVERLAP  = 0.7
+      MAX_CONCURRENT = 4
+      MAX_CODE_BYTES = 8_192
+      TRUNCATE_MARKER = "\n... [truncated to #{MAX_CODE_BYTES} bytes for review]".freeze
+      JUDGE_TIMEOUT = 30
+      TOTAL_BUDGET_S = 120
+      MIN_QUORUM = 3
+      CONVERGENCE_ROUNDS = 3
+      CONVERGENCE_OVERLAP = 0.7
       CONVERGENCE_TEXT_SIM = 0.6
 
       @questions = nil
@@ -232,12 +232,12 @@ module Master
       end
 
       def initialize(personas:, agent:, event_bus: nil, axioms: nil, judge_enabled: true, mode: :parallel)
-        @personas      = personas
-        @agent         = agent
-        @bus           = event_bus
-        @rules         = axioms
+        @personas = personas
+        @agent = agent
+        @bus = event_bus
+        @rules = axioms
         @judge_enabled = judge_enabled
-        @mode          = mode
+        @mode = mode
         validate_dependencies!
       end
 
@@ -341,8 +341,8 @@ module Master
       end
 
       def ask_persona(persona, code, context)
-        prompt   = build_prompt(persona, code, context)
-        model    = persona.respond_to?(:model) ? persona.model : nil
+        prompt = build_prompt(persona, code, context)
+        model = persona.respond_to?(:model) ? persona.model : nil
         response = model ? @agent.ask_once(prompt, model: model) : @agent.ask(prompt)
         entry = { persona: persona.name, role: persona.role,
                   veto_role: veto_role?(persona), axiom: primary_axiom(persona),

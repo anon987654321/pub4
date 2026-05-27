@@ -36,17 +36,17 @@ module Master
     end
 
     def splash(model)
-      now       = Time.now
-      host      = (Socket.gethostname rescue "openbsd")
-      user      = ENV["USER"] || "dev"
-      shell     = File.basename(ENV["SHELL"] || "zsh")
-      pchar     = shell == "zsh" ? "%" : "$"
-      rev       = git_rev || "1"
-      url       = @config["web_public_url"] || "https://ai.brgen.no"
-      token     = @config["web_token"]
-      web       = token ? "#{url}/?token=#{token}" : url
+      now = Time.now
+      host = (Socket.gethostname rescue "openbsd")
+      user = ENV["USER"] || "dev"
+      shell = File.basename(ENV["SHELL"] || "zsh")
+      pchar = shell == "zsh" ? "%" : "$"
+      rev = git_rev || "1"
+      url = @config["web_public_url"] || "https://ai.brgen.no"
+      token = @config["web_token"]
+      web = token ? "#{url}/?token=#{token}" : url
       pledge_ok = RUBY_PLATFORM.include?("openbsd")
-      dl        = dmesg_lines
+      dl = dmesg_lines
 
       lines = []
       lines << ""
@@ -76,32 +76,32 @@ module Master
     alias banner splash
 
     def prompt_line(model, phase, last_ok: true, violations: 0, tokens: nil, cost: nil)
-      branch        = git_branch || "detached"
-      dirty         = git_dirty?
+      branch = git_branch || "detached"
+      dirty = git_dirty?
       ahead, behind = git_ahead_behind
-      bar           = token_bar(tokens)
-      usage         = token_label(tokens)
-      model_str     = @p.dim(short_model(model))
-      dirty_glyph   = dirty ? @p.red("●") : @p.dim("○")
-      ahead_str     = ahead  > 0 ? @p.dim(" ↑#{ahead}")    : ""
-      behind_str    = behind > 0 ? @p.yellow(" ↓#{behind}") : ""
-      branch_str    = @p.red(branch) + dirty_glyph + ahead_str + behind_str
-      vbadge        = violations > 0 ? @p.bold.red(" [#{violations}v]") : ""
-      phase_str     = phase && phase.to_s != "idle" ? phase_tinted(" :#{phase}", phase) : ""
-      cost_str      = cost_label(cost)
-      cost_seg      = cost_str.empty? ? "" : "#{cost_str} "
-      prompt        = phase_prompt(last_ok, phase)
+      bar = token_bar(tokens)
+      usage = token_label(tokens)
+      model_str = @p.dim(short_model(model))
+      dirty_glyph = dirty ? @p.red("●") : @p.dim("○")
+      ahead_str = ahead > 0 ? @p.dim(" ↑#{ahead}") : ""
+      behind_str = behind > 0 ? @p.yellow(" ↓#{behind}") : ""
+      branch_str = @p.red(branch) + dirty_glyph + ahead_str + behind_str
+      vbadge = violations > 0 ? @p.bold.red(" [#{violations}v]") : ""
+      phase_str = phase && phase.to_s != "idle" ? phase_tinted(" :#{phase}", phase) : ""
+      cost_str = cost_label(cost)
+      cost_seg = cost_str.empty? ? "" : "#{cost_str} "
+      prompt = phase_prompt(last_ok, phase)
       ["#{branch_str}  #{model_str}  ↖ #{bar}#{usage}  #{cost_seg}#{vbadge}#{phase_str}", prompt + " "]
     end
 
     def phase_tinted(text, phase)
       case phase.to_s
-      when "discover"        then @p.dim.yellow(text)
-      when "implement"       then @p.dim.cyan(text)
-      when "audit"           then @p.dim.red(text)
+      when "discover" then @p.dim.yellow(text)
+      when "implement" then @p.dim.cyan(text)
+      when "audit" then @p.dim.red(text)
       when "grind", "polish" then @p.dim.magenta(text)
-      when "watch"           then @p.dim.blue(text)
-      else                        @p.dim(text)
+      when "watch" then @p.dim.blue(text)
+      else @p.dim(text)
       end
     end
 
@@ -109,12 +109,12 @@ module Master
       base = "master$"
       return @p.red(base) unless last_ok
       case phase.to_s
-      when "discover"        then @p.bold.yellow(base)
-      when "implement"       then @p.bold.cyan(base)
-      when "audit"           then @p.bold.red(base)
+      when "discover" then @p.bold.yellow(base)
+      when "implement" then @p.bold.cyan(base)
+      when "audit" then @p.bold.red(base)
       when "grind", "polish" then @p.bold.magenta(base)
-      when "watch"           then @p.bold.blue(base)
-      else                        @p.bold.red(base)
+      when "watch" then @p.bold.blue(base)
+      else @p.bold.red(base)
       end
     end
 
