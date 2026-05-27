@@ -32,7 +32,7 @@ module Master
           @id          = "adversarial"
           @description = "Red-team scan: steelman then challenge — suppresses false positives"
           @severity    = :error
-          @rule_tags  = %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE]
+          @rule_tags = %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE]
         end
 
         def self.auto_build? = false

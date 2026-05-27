@@ -10,14 +10,15 @@ module Master
   # Fact extraction implemented for Ruby via Prism. Horn clause evaluation
   # is a minimal forward-chaining Datalog subset.
   class DatalogEngine
-    Fact    = Struct.new(:predicate, :args, keyword_init: true)
-    Rule    = Struct.new(:head, :body, keyword_init: true)   # head :- body[]
-    Clause  = Struct.new(:predicate, :args, keyword_init: true)
+    Fact = Struct.new(:predicate, :args, keyword_init: true)
+    # head :- body[]
+    Rule = Struct.new(:head, :body, keyword_init: true)
+    Clause = Struct.new(:predicate, :args, keyword_init: true)
     Finding = Struct.new(:rule_id, :fact, :message, keyword_init: true)
 
     def initialize
-      @facts  = []
-      @rules  = []
+      @facts = []
+      @rules = []
     end
 
     def assert(predicate, *args)
