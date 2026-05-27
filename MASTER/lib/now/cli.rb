@@ -304,9 +304,9 @@ module Master
       }
       checker = Master::Ground::DoneChecker.new
       result = checker.call(plan)
-      result.each do |key, val|
-        icon = val.is_a?(TrueClass) || val == :ok ? "ok" : "!!"
-        puts @renderer.render("  #{icon} #{key}", mode: val == false ? :warning : :dim)
+      result.each do |key, check_result|
+        icon = check_result.is_a?(TrueClass) || check_result == :ok ? "ok" : "!!"
+        puts @renderer.render("  #{icon} #{key}", mode: check_result == false ? :warning : :dim)
       end
     end
 
