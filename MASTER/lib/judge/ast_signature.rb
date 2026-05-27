@@ -57,7 +57,7 @@ module Master
 
       def visit_def_node(node)
         base = @ns.join("::")
-        sep  = node.receiver&.is_a?(Prism::SelfNode) ? "." : "#"
+        sep = node.receiver&.is_a?(Prism::SelfNode) ? "." : "#"
         full = base.empty? ? node.name.to_s : "#{base}#{sep}#{node.name}"
         @sigs << Sig.new(type: :method, name: full, line: node.location.start_line)
       end

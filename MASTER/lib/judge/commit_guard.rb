@@ -11,7 +11,7 @@ module Master
     Omission = Data.define(:path, :name, :type, :last_seen_at)
 
     def initialize(root: Dir.pwd, depth: DEFAULT_DEPTH)
-      @root  = root
+      @root = root
       @depth = depth
     end
 
