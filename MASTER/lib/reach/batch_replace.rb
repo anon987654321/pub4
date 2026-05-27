@@ -5,16 +5,16 @@ module Master
     # BatchReplace — apply multiple search-and-replace operations in one pass.
     class BatchReplace
       include Master::Ground::AtomicWrite
-      TIER        = :guarded
-      NAME        = "replace".freeze
+      TIER = :guarded
+      NAME = "replace".freeze
       DESCRIPTION = "Find and replace text across all files in a directory.".freeze
 
       SAFE_EXTENSIONS = %w[.rb .erb .yml .yaml .md .sh .js .css .html .json .txt].freeze
 
       def initialize(root:, governor:, event_bus: nil)
-        @root     = root
+        @root = root
         @governor = governor
-        @bus      = event_bus
+        @bus = event_bus
       end
 
       def call(old_str:, new_str:, dir: nil, rename_files: false)

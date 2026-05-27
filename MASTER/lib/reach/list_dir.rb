@@ -3,21 +3,21 @@
 module Master
   module Reach
     class ListDir
-      TIER        = :safe
-      NAME        = "list_dir".freeze
+      TIER = :safe
+      NAME = "list_dir".freeze
       DESCRIPTION = "List directory contents, depth-limited.".freeze
-      MAX_DEPTH   = 5
+      MAX_DEPTH = 5
 
       def initialize(root:, event_bus: nil)
         @root = File.realpath(root)
-        @bus  = event_bus
+        @bus = event_bus
       end
 
       def call(path: ".", depth: 2, pattern: nil)
         resolved = resolve(path)
         return resolved if resolved.err?
 
-        full  = resolved.value!
+        full = resolved.value!
         depth = [depth.to_i, MAX_DEPTH].min
         lines = list_tree(base: full, dir: full, depth:, pattern:)
         Result.ok(lines.join("\n"))

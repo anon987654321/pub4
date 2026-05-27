@@ -10,14 +10,14 @@ module Master
 
       def initialize(root:, event_bus: nil)
         @root = File.realpath(root)
-        @bus  = event_bus
+        @bus = event_bus
       end
 
       def call(operation:, path: nil, limit: 20)
         case operation.to_s
-        when "log"    then git_log(path, limit.to_i)
-        when "blame"  then git_blame(path)
-        when "diff"   then git_diff(path)
+        when "log" then git_log(path, limit.to_i)
+        when "blame" then git_blame(path)
+        when "diff" then git_diff(path)
         when "status" then git_status
         when "show"   then git_show(path)
         else

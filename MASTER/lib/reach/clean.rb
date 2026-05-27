@@ -8,12 +8,12 @@ module Master
     # from text files under a given path, using sh/clean.sh.
     class Clean
       SCRIPT = File.expand_path("../../../sh/clean.sh", __dir__).freeze
-      NAME   = "clean".freeze
-      TIER   = :dangerous
+      NAME = "clean".freeze
+      TIER = :dangerous
 
       def initialize(root:, governor:, event_bus: nil)
         @bus = event_bus
-        @root     = root
+        @root = root
         @governor = governor
       end
 

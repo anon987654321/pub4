@@ -5,15 +5,15 @@ module Master
     # ReadFile — read file contents with line-range support and undo tracking.
     class ReadFile
       include PathGuard
-      TIER        = :safe
-      MAX_LINES   = 2000
-      NAME        = "read_file".freeze
+      TIER = :safe
+      MAX_LINES = 2000
+      NAME = "read_file".freeze
       DESCRIPTION = "Read a file with line numbers. Guarded to project root.".freeze
 
       def initialize(root:, undo:, event_bus: nil)
-        @root  = File.realpath(root)
-        @undo  = undo
-        @bus   = event_bus
+        @root = File.realpath(root)
+        @undo = undo
+        @bus = event_bus
         @cache = {}
       end
 
@@ -37,7 +37,7 @@ module Master
         slice = lines[offset, limit] || []
 
         numbered = slice.each_with_index.map { |l, i| "#{offset + i + 1}\t#{l}" }.join
-        suffix   = total > offset + limit ? "\n[...truncated, #{total} total lines]" : ""
+        suffix = total > offset + limit ? "\n[...truncated, #{total} total lines]" : ""
 
         result = Result.ok(numbered + suffix)
         @cache[key] = result
